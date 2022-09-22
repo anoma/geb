@@ -631,8 +631,9 @@ diffToLte {m} {n} {k=(S k)} pleq =
     pleq
 
 public export
-multDivLTLemma : (k, m, n, mnk : Nat) ->
-  mnk + S k = m * S n -> (divk : Nat ** divk + S (div' k k n) = m)
+multDivLTLemma : (k, m, n, diffmsnsk : Nat) ->
+  diffmsnsk + S k = m * S n ->
+  (diffmdivksn : Nat ** diffmdivksn + S (divNatNZ k (S n) SIsNonZero) = m)
 multDivLTLemma Z Z n Z Refl impossible
 multDivLTLemma Z Z n (S mnk) Refl impossible
 multDivLTLemma Z (S m) Z Z mkneq =
@@ -646,10 +647,11 @@ multDivLT : {k, m, n : Nat} ->
   LT k (m * n) -> (nz : NonZero n) -> LT (divNatNZ k n nz) m
 multDivLT {k} {m} {n=(S n)} lt SIsNonZero =
   let
-    (mnk ** mnkeq) = lteToDiff lt
-    (divk ** divkeq) = multDivLTLemma k m n mnk mnkeq
+    (diffmsnsk ** diffmsnskeq) = lteToDiff lt
+    (diffmdivksn ** diffmdivksneq) = multDivLTLemma k m n diffmsnsk diffmsnskeq
   in
-  diffToLte {m=(S (divNatNZ k (S n) SIsNonZero))} {n=m} {k=divk} divkeq
+  diffToLte
+    {m=(S (divNatNZ k (S n) SIsNonZero))} {n=m} {k=diffmdivksn} diffmdivksneq
 
 public export
 multAddLT : {k, m, n, p : Nat} ->
