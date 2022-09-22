@@ -209,26 +209,25 @@ FSBaseChange {m} {n} fam f = finFToVect $ FSTypeFamObj fam . FSApply f
 
 public export
 FSIndexedPair : {m, n : FSObj} ->
-  FSMorph m n -> FSTypeFam m -> FSTypeFam n -> FSElem m -> Type
-FSIndexedPair f fam fam' i =
-  (FSTypeFamType fam i, FSTypeFamType fam' (FSApply f i))
+  FSTypeFam m -> FSMorph m n -> FSElem n -> Type
+FSIndexedPair fam f i =
+  (j : Fin m ** (FSApply f j = i, FSElem $ FSTypeFamObj fam j))
 
 public export
-FSDepSumType : {m, n : FSObj} ->
-  FSMorph m n -> FSTypeFam m -> FSTypeFam n -> Type
-FSDepSumType {m} {n} f fam fam' = (i : FSElem m ** FSIndexedPair f fam fam' i)
+FSDepCoproductTypes : {m, n : FSObj} ->
+  FSTypeFam m -> FSMorph m n -> Vect n Type
+FSDepCoproductTypes {m} {n} fam f = finFToVect $ FSIndexedPair fam f
 
 public export
 FSIndexedMorph : {m, n : FSObj} ->
-  FSMorph m n -> FSTypeFam m -> FSTypeFam n -> FSElem m -> Type
-FSIndexedMorph f fam fam' i =
-  FSMorph (FSTypeFamObj fam i) (FSTypeFamObj fam' $ FSApply f i)
+  FSTypeFam m -> FSMorph m n -> FSElem n -> Type
+FSIndexedMorph {m} {n} fam f i =
+  (j : Fin m) -> FSApply f j = i -> FSElem $ FSTypeFamObj fam j
 
 public export
-FSDepProductType : {m, n : FSObj} ->
-  FSMorph m n -> FSTypeFam m -> FSTypeFam n -> Type
-FSDepProductType {m} {n} f fam fam' =
-  HVect {k=m} $ finFToVect $ FSIndexedMorph f fam fam'
+FSDepProductTypes : {m, n : FSObj} ->
+  FSTypeFam m -> FSMorph m n -> Vect n Type
+FSDepProductTypes {m} {n} fam f = finFToVect $ FSIndexedMorph fam f
 
 ---------------------------------
 ---------------------------------
