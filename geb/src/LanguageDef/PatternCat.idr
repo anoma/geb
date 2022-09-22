@@ -575,7 +575,7 @@ FSPNTApply {p=(FSPArena ap)} {q=(FSPArena aq)} (onPos ** onDir) n =
   ?FSPNTApply_hole
 
 public export
-InterpFSPNT : {0 p, q : FSPolyF} -> FSPNatTrans p q ->
+InterpFSPNT : {p, q : FSPolyF} -> FSPNatTrans p q ->
   SliceMorphism {a=Type} (InterpFSPolyF p) (InterpFSPolyF q)
-InterpFSPNT {p=(FSPArena ap)} {q=(FSPArena aq)} (onPos ** onDir) x elem =
-  ?FSPNtoType_hole
+InterpFSPNT {p=(FSPArena ap)} {q=(FSPArena aq)} (onPos ** onDir) x (i ** v) =
+  (FSApply onPos i ** finFToVect $ \j => index (FSApply (finFGet i onDir) j) v)
