@@ -641,7 +641,12 @@ multDivLTLemma Z (S m) Z Z diffmsnskeq =
 multDivLTLemma Z (S m) (S n) Z Refl impossible
 multDivLTLemma Z (S m) n (S diffmsnsk) diffmsnskeq =
   (m ** rewrite plusCommutative 1 m in Refl)
-multDivLTLemma (S k) m n diffmsnsk diffmsnskeq = ?multDivLTLemma_hole_s
+multDivLTLemma (S k) m n diffmsnsk diffmsnskeq
+    with (lte (S k) n) proof lteskn
+  multDivLTLemma (S k) m n diffmsnsk diffmsnskeq | True =
+    ?multDivLTLemma_gte_hole_t
+  multDivLTLemma (S k) m n diffmsnsk diffmsnskeq | False =
+    ?multDivLTLemma_gte_hole_f
 
 public export
 multDivLT : {k, m, n : Nat} ->
