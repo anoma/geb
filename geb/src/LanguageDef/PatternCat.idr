@@ -571,7 +571,7 @@ fspNT alpha = (fspOnPosF alpha ** fspOnDirF alpha)
 -- one for each `FSObj`, with the domain and codomain given by the
 -- application of `p` and `q` respectively.
 --
--- The data required to generate this family of functions constitute prexisely
+-- The data required to generate this family of functions constitute precisely
 -- an `FSPNatTrans`.
 public export
 FSPolyMorph : (p, q : FSPolyF) -> Type
