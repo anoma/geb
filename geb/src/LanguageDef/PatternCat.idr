@@ -204,6 +204,10 @@ FSTypeFamTypes : {n : FSObj} -> FSTypeFam n -> Vect n Type
 FSTypeFamTypes {n} = finFToVect . FSTypeFamType {n}
 
 public export
+FSBaseChange : {m, n : FSObj} -> FSTypeFam m -> FSMorph n m -> FSTypeFam n
+FSBaseChange {m} {n} fam f = finFToVect $ FSTypeFamObj fam . FSApply f
+
+public export
 FSIndexedPair : {m, n : FSObj} ->
   FSMorph m n -> FSTypeFam m -> FSTypeFam n -> FSElem m -> Type
 FSIndexedPair f fam fam' i =
