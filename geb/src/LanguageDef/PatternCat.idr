@@ -567,10 +567,18 @@ public export
 fspNT : {p, q : FSPolyF} -> FSPNatTrans p q -> PolyNatTrans (fspPF p) (fspPF q)
 fspNT alpha = (fspOnPosF alpha ** fspOnDirF alpha)
 
+-- A polymorphic function in FinSet, or equivalently, a family of functions,
+-- one for each `FSObj`, with the domain and codomain given by the
+-- application of `p` and `q` respectively.
+--
+-- The data required to generate this family of functions constitute prexisely
+-- an `FSPNatTrans`.
 public export
-FSPNTApply : {0 p, q : FSPolyF} ->
-  (alpha : FSPNatTrans p q) -> (n : FSObj) ->
-  FSMorph (FSPolyApply p n) (FSPolyApply q n)
+FSPolyMorph : (p, q : FSPolyF) -> Type
+FSPolyMorph p q = (n : FSObj) -> FSMorph (FSPolyApply p n) (FSPolyApply q n)
+
+public export
+FSPNTApply : {p, q : FSPolyF} -> FSPNatTrans p q -> FSPolyMorph p q
 FSPNTApply {p=(FSPArena ap)} {q=(FSPArena aq)} (onPos ** onDir) n =
   ?FSPNTApply_hole
 
