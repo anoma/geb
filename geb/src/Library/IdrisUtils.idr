@@ -639,7 +639,8 @@ multDivLTLemma Z Z n (S mnk) Refl impossible
 multDivLTLemma Z (S m) Z Z mkneq =
   (0 ** cong S $ trans (injective mkneq) (multOneRightNeutral m))
 multDivLTLemma Z (S m) (S n) Z Refl impossible
-multDivLTLemma Z (S m) n (S mnk) mkneq = ?multDivLTLemma_hole_zss
+multDivLTLemma Z (S m) n (S mnk) mkneq =
+  (m ** rewrite plusCommutative 1 m in Refl)
 multDivLTLemma (S k) m n mnk mkneq = ?multDivLTLemma_hole_s
 
 public export
