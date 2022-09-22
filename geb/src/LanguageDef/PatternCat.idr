@@ -428,6 +428,11 @@ fsPolyProd : (p : FSPolyF) -> fsPolyPos p -> Type -> Type
 fsPolyProd p i = Vect (fsPolyNDir p i)
 
 public export
+FSPolyMap : (p : FSPolyF) -> {m, n : FSObj} ->
+  FSMorph m n -> FSMorph (FSPolyApply p m) (FSPolyApply p n)
+FSPolyMap (FSPArena a) {m} {n} v = finFToVect $ \i => ?FSPolyMap_hole
+
+public export
 InterpFSPolyF : FSPolyF -> Type -> Type
 InterpFSPolyF p x = (i : fsPolyPos p ** fsPolyProd p i x)
 
