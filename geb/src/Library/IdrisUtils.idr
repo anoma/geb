@@ -633,7 +633,13 @@ diffToLte {m} {n} {k=(S k)} pleq =
 public export
 multDivLTLemma : (k, m, n, mnk : Nat) ->
   mnk + S k = m * S n -> (divk : Nat ** divk + S (div' k k n) = m)
-multDivLTLemma k m n mnk mkneq = ?multDivLTLemma_hole
+multDivLTLemma Z Z n Z Refl impossible
+multDivLTLemma Z Z n (S mnk) Refl impossible
+multDivLTLemma Z (S m) Z Z mkneq =
+  (0 ** cong S $ trans (injective mkneq) (multOneRightNeutral m))
+multDivLTLemma Z (S m) (S n) Z Refl impossible
+multDivLTLemma Z (S m) n (S mnk) mkneq = ?multDivLTLemma_hole_zss
+multDivLTLemma (S k) m n mnk mkneq = ?multDivLTLemma_hole_s
 
 public export
 multDivLT : {k, m, n : Nat} ->
