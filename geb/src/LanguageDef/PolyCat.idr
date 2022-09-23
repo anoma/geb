@@ -4414,7 +4414,7 @@ SNot = SMCase (SMInjRight _ _) (SMInjLeft _ _)
 
 public export
 SHigherAnd : SubstMorph SubstBool (SubstBool !-> SubstBool)
-SHigherAnd = SMPair (SMId SubstBool) (soConst $ SMInjRight _ _)
+SHigherAnd = SMPair (SMId SubstBool) (soConst $ SMInjRight Subst1 Subst1)
 
 public export
 SHigherOr : SubstMorph SubstBool (SubstBool !-> SubstBool)
