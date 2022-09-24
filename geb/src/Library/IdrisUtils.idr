@@ -345,6 +345,24 @@ indexToFinLTS {n} {i} {okS} {ok} {x} {v} =
   indexToFinS {a} {m=i} {n=n} {ltS=(fromIsYes okS)} {lt=(fromIsYes ok)} {x} {v}
 
 public export
+finFTail : {0 a : Type} -> {n : Nat} -> (Fin (S n) -> a) -> (Fin n -> a)
+finFTail {a} {n} f = f . FS
+
+public export
+finFToVectOnto : {0 a : Type} -> {m, n : Nat} ->
+  (Fin m -> a) -> Vect n a -> Vect (m + n) a
+finFToVectOnto {a} {m=Z} {n} f v = v
+finFToVectOnto {a} {m=(S m)} {n} f v =
+  rewrite plusSuccRightSucc m n in
+  finFToVectOnto {a} {m} {n=(S n)} (finFTail f) (f FZ :: v)
+
+public export
+finFToVectTR : {0 a : Type} -> {m : Nat} -> (Fin m -> a) -> Vect m a
+finFToVectTR {a} {m} f =
+  rewrite sym (plusZeroRightNeutral m) in
+  reverse $ finFToVectOnto {a} {m} {n=Z} f []
+
+public export
 finFToVect : {0 a : Type} -> {n : Nat} -> (Fin n -> a) -> Vect n a
 finFToVect {a} {n=Z} f = []
 finFToVect {a} {n=(S n)} f = f FZ :: finFToVect {n} (f . FS)
