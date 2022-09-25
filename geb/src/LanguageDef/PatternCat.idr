@@ -605,17 +605,21 @@ FSPolyMorph : (p, q : FSPolyF) -> Type
 FSPolyMorph p q = (n : FSObj) -> FSMorph (FSPolyApply p n) (FSPolyApply q n)
 
 public export
+FSPNTApplyList : {ap, aq : List Nat} ->
+  FSPNatTrans (FSPArena ap) (FSPArena aq) ->
+  FSPolyMorph (FSPArena ap) (FSPArena aq)
+FSPNTApplyList {ap=[]} {aq}
+    ([] ** []) n =
+  []
+FSPNTApplyList {ap=(m :: ap')} {aq}
+    (onPosHd :: onPosTl ** onDirHd :: onDirTl) n =
+  fsCopElim
+    ?FSPNTApplyList_hole_l
+    (FSPNTApplyList {ap=ap'} {aq} (onPosTl ** onDirTl) n)
+
+public export
 FSPNTApply : {p, q : FSPolyF} -> FSPNatTrans p q -> FSPolyMorph p q
-FSPNTApply {p=(FSPArena [])} {q=(FSPArena aq)}
-  ([] ** []) n =
-    []
-FSPNTApply {p=(FSPArena (m :: ap'))} {q=(FSPArena aq)}
-  (onPosHd :: onPosTl ** onDirHd :: onDirTl) n =
-    let
-      r = FSPNTApply {p=(FSPArena ap')} {q=(FSPArena aq)} (onPosTl ** onDirTl) n
-      g = finFGet ?gindex onDirTl
-    in
-    ?FSPNTApply_hole
+FSPNTApply {p=(FSPArena ap)} {q=(FSPArena aq)} = FSPNTApplyList {ap} {aq}
 
 public export
 InterpFSPNT : {p, q : FSPolyF} -> FSPNatTrans p q ->
