@@ -280,11 +280,11 @@ FSEqualizerPred {a} {b} f g =
 
 public export
 FSCoproductList : List FSObj -> FSObj
-FSCoproductList = foldl FSCoproduct FSInitial
+FSCoproductList = foldr FSCoproduct FSInitial
 
 public export
 FSProductList : List FSObj -> FSObj
-FSProductList = foldl FSProduct FSTerminal
+FSProductList = foldr FSProduct FSTerminal
 
 public export
 FSFoldConstructor : FSObj -> FSObj -> FSObj -> FSObj
@@ -417,7 +417,7 @@ fsPolyDir p i = FSElem (fsPolyNDir p i)
 
 public export
 FSPolyApply : FSPolyF -> FSObj -> FSObj
-FSPolyApply (FSPArena a) n = foldl (FSFoldConstructor n) FSInitial a
+FSPolyApply (FSPArena a) n = FSCoproductList (map (FSExpObj n) a)
 
 public export
 fspPF : FSPolyF -> PolyFunc
@@ -428,9 +428,31 @@ fsPolyProd : (p : FSPolyF) -> fsPolyPos p -> Type -> Type
 fsPolyProd p i = Vect (fsPolyNDir p i)
 
 public export
+FSRepresentableMap : {m, n, x : Nat} ->
+  FSMorph m n -> FSMorph (power m x) (power n x)
+FSRepresentableMap {m} {n} {x=Z} f = [FZ]
+FSRepresentableMap {m} {n} {x=(S x)} f =
+  let
+    l = fsProdElimLeft m (power m x)
+    r = fsProdElimRight m (power m x)
+  in
+  fsProdIntro {a=(mult m (power m x))} {b=n} {c=(power n x)}
+    (FSCompose f l)
+    (FSCompose (FSRepresentableMap {m} {n} {x} f) r)
+
+public export
+FSPolyMapList : (l : List Nat) -> {m, n : FSObj} ->
+  FSMorph m n ->
+  FSMorph (FSPolyApply (FSPArena l) m) (FSPolyApply (FSPArena l) n)
+FSPolyMapList [] {m} {n} v = []
+FSPolyMapList (x :: xs) {m} {n} v =
+  map (weakenN (foldr (+) 0 (map (power n) xs))) (FSRepresentableMap v) ++
+  map (shift (power n x)) (FSPolyMapList xs {m} {n} v)
+
+public export
 FSPolyMap : (p : FSPolyF) -> {m, n : FSObj} ->
   FSMorph m n -> FSMorph (FSPolyApply p m) (FSPolyApply p n)
-FSPolyMap (FSPArena a) {m} {n} v = finFToVect $ \i => ?FSPolyMap_hole
+FSPolyMap (FSPArena l) v = FSPolyMapList l v
 
 public export
 InterpFSPolyF : FSPolyF -> Type -> Type
