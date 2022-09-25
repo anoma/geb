@@ -416,8 +416,12 @@ fsPolyDir : (p : FSPolyF) -> fsPolyPos p -> Type
 fsPolyDir p i = FSElem (fsPolyNDir p i)
 
 public export
+FSExpMap : FSObj -> List FSObj -> List FSObj
+FSExpMap n l = map (FSExpObj n) l
+
+public export
 FSPolyApply : FSPolyF -> FSObj -> FSObj
-FSPolyApply (FSPArena a) n = FSCoproductList (map (FSExpObj n) a)
+FSPolyApply (FSPArena a) n = FSCoproductList (FSExpMap n a)
 
 public export
 fspPF : FSPolyF -> PolyFunc
@@ -446,7 +450,7 @@ FSPolyMapList : (l : List Nat) -> {m, n : FSObj} ->
   FSMorph (FSPolyApply (FSPArena l) m) (FSPolyApply (FSPArena l) n)
 FSPolyMapList [] {m} {n} v = []
 FSPolyMapList (x :: xs) {m} {n} v =
-  map (weakenN (foldr (+) 0 (map (power n) xs))) (FSRepresentableMap v) ++
+  map (weakenN (FSCoproductList (FSExpMap n xs))) (FSRepresentableMap v) ++
   map (shift (power n x)) (FSPolyMapList xs {m} {n} v)
 
 public export
@@ -605,6 +609,12 @@ FSPolyMorph : (p, q : FSPolyF) -> Type
 FSPolyMorph p q = (n : FSObj) -> FSMorph (FSPolyApply p n) (FSPolyApply q n)
 
 public export
+FSPosApply : {m, n : Nat} -> (aq : List Nat) ->
+  (hd : Fin (length aq)) -> FSMorph (index' aq hd) m ->
+  FSMorph (power n m) (FSCoproductList $ FSExpMap n aq)
+FSPosApply {m} {n} aq hd v = ?FSPosApply_hole
+
+public export
 FSPNTApplyList : {ap, aq : List Nat} ->
   FSPNatTrans (FSPArena ap) (FSPArena aq) ->
   FSPolyMorph (FSPArena ap) (FSPArena aq)
@@ -614,7 +624,7 @@ FSPNTApplyList {ap=[]} {aq}
 FSPNTApplyList {ap=(m :: ap')} {aq}
     (onPosHd :: onPosTl ** onDirHd :: onDirTl) n =
   fsCopElim
-    ?FSPNTApplyList_hole_l
+    (FSPosApply {m} {n} aq onPosHd onDirHd)
     (FSPNTApplyList {ap=ap'} {aq} (onPosTl ** onDirTl) n)
 
 public export
