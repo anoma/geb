@@ -609,13 +609,19 @@ FSPolyMorph : (p, q : FSPolyF) -> Type
 FSPolyMorph p q = (n : FSObj) -> FSMorph (FSPolyApply p n) (FSPolyApply q n)
 
 public export
+FSProjM : (n : Nat) -> {m : Nat} -> FSElem m -> FSMorph (power n m) n
+FSProjM n {m=(S m)} FZ = fsProdElimLeft n (power n m)
+FSProjM n {m=(S m)} (FS i) =
+  FSCompose (FSProjM n {m} i) (fsProdElimRight n (power n m))
+
+public export
 FSConstructorMap : {k, m, n : Nat} ->
   FSMorph k m -> FSMorph (power n m) (power n k)
 FSConstructorMap {k=Z} {m} {n} [] =
   rewrite sym (multOneRightNeutral (power n m)) in
   vectRepeat {b=1} {c=1} (power n m) [FZ]
 FSConstructorMap {k=(S k)} {m} {n} (i :: v) =
-  fsProdIntro ?FSConstructorMap_hole_s $ FSConstructorMap {k} {m} {n} v
+  fsProdIntro (FSProjM n i) (FSConstructorMap {k} {m} {n} v)
 
 public export
 FSPosApply : {m, n : Nat} -> (aq : List Nat) ->
