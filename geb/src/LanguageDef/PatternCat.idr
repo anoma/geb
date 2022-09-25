@@ -611,8 +611,13 @@ FSPolyMorph p q = (n : FSObj) -> FSMorph (FSPolyApply p n) (FSPolyApply q n)
 public export
 FSPosApply : {m, n : Nat} -> (aq : List Nat) ->
   (hd : Fin (length aq)) -> FSMorph (index' aq hd) m ->
-  FSMorph (power n m) (FSCoproductList $ FSExpMap n aq)
-FSPosApply {m} {n} aq hd v = ?FSPosApply_hole
+  FSMorph (power n m) (FSPolyApply (FSPArena aq) n)
+FSPosApply {m} {n} [] hd v = absurd hd
+FSPosApply {m} {n} (k :: aq') FZ v =
+  let foo = FSRepresentableMap v in
+  map (weakenN (FSCoproductList (FSExpMap n aq'))) ?FSPosApply_hole
+FSPosApply {m} {n} (k :: aq') (FS hd') v =
+  map (shift (power n k)) (FSPosApply {m} {n} aq' hd' v)
 
 public export
 FSPNTApplyList : {ap, aq : List Nat} ->
