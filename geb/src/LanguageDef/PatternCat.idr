@@ -609,13 +609,21 @@ FSPolyMorph : (p, q : FSPolyF) -> Type
 FSPolyMorph p q = (n : FSObj) -> FSMorph (FSPolyApply p n) (FSPolyApply q n)
 
 public export
+FSConstructorMap : {k, m, n : Nat} ->
+  FSMorph k m -> FSMorph (power n m) (power n k)
+FSConstructorMap {k=Z} {m} {n} [] =
+  rewrite sym (multOneRightNeutral (power n m)) in
+  vectRepeat {b=1} {c=1} (power n m) [FZ]
+FSConstructorMap {k=(S k)} {m} {n} (i :: v) =
+  fsProdIntro ?FSConstructorMap_hole_s $ FSConstructorMap {k} {m} {n} v
+
+public export
 FSPosApply : {m, n : Nat} -> (aq : List Nat) ->
   (hd : Fin (length aq)) -> FSMorph (index' aq hd) m ->
   FSMorph (power n m) (FSPolyApply (FSPArena aq) n)
 FSPosApply {m} {n} [] hd v = absurd hd
 FSPosApply {m} {n} (k :: aq') FZ v =
-  let foo = FSRepresentableMap v in
-  map (weakenN (FSCoproductList (FSExpMap n aq'))) ?FSPosApply_hole
+  map (weakenN (FSCoproductList (FSExpMap n aq'))) (FSConstructorMap {n} v)
 FSPosApply {m} {n} (k :: aq') (FS hd') v =
   map (shift (power n k)) (FSPosApply {m} {n} aq' hd' v)
 
