@@ -32,6 +32,7 @@
    ;; API
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    :pair-to-list
+   :same-type-to-list
    :mlist
    :commutes))
 

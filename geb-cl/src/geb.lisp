@@ -8,6 +8,12 @@
                     (cons (mcar pair) acc))
       (reverse (list* (mcdr pair) (mcar pair) acc))))
 
+(defun same-type-to-list (pair type &optional acc)
+  "converts the given type to a list format"
+  (if (typep (mcadr pair) type)
+      (same-type-to-list (mcadr pair) type (cons (mcar pair) acc))
+      (reverse (list* (mcadr pair) (mcar pair) acc))))
+
 (-> mlist (substmorph &rest substmorph) pair)
 (defun mlist (v1 &rest values)
   (if (null values)

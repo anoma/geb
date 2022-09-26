@@ -10,6 +10,23 @@
          (prod8 (prod prod4 prod4)))
     (prod prod8 prod8)))
 
+(def coprod16
+  (let* ((coprod4 (coprod (alias bool (coprod so0 so1)) (coprod so0 so1)))
+         (coprod8 (coprod coprod4 coprod4)))
+    (coprod coprod8 coprod8)))
+
+
+(def mixprod16
+  (let* ((coprod4 (coprod (alias bool (coprod so0 so1)) (coprod so0 so1)))
+         (prod8 (prod coprod4 coprod4)))
+    (coprod prod8 prod8)))
+
+(def prod32 (prod prod16 prod16))
+
+(def coprod32 (coprod coprod16 coprod16))
+
+(def mixprod32 (coprod mixprod16 mixprod16))
+
 
 (def test-value
   (mlist (<-left so1 so1)

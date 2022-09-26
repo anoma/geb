@@ -44,13 +44,37 @@
 ;; Subst Constructor Printer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Prefix Prod, no collapse
 (defmethod print-object ((obj prod) stream)
-  (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "×~1:I ~W ~:_~W" (mcar obj) (mcadr obj))))
+  (pprint-logical-block (stream nil :prefix "(|" :suffix ")")
+    (format stream "×~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
 
+;; Prefix coprod, no collapse
 (defmethod print-object ((obj coprod) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "+~1:I ~W ~:_~W" (mcar obj) (mcadr obj))))
+    (format stream "+~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
+
+
+;; infix prod
+(defmethod print-object ((obj prod) stream)
+  (pprint-logical-block (stream nil :prefix "[" :suffix "]")
+    (format stream "~-1I~{~W~^~_, ~}" (same-type-to-list obj 'prod))))
+
+;; infix corpod
+(defmethod print-object ((obj coprod) stream)
+  (pprint-logical-block (stream nil :prefix "[" :suffix "]")
+    (format stream "~-1I~{~W~^~_ | ~}" (same-type-to-list obj 'coprod))))
+
+;; liberties prod
+(defmethod print-object ((obj prod) stream)
+  (pprint-logical-block (stream nil :prefix "{" :suffix "}")
+    (format stream "~-1I~{~W~^~_ ~}" (same-type-to-list obj 'prod))))
+
+;; liberties coprod
+(defmethod print-object ((obj coprod) stream)
+  (pprint-logical-block (stream nil :prefix "[" :suffix "]")
+    (format stream "~-1I~{~W~^~_ ~}" (same-type-to-list obj 'coprod))))
+
 
 (defmethod print-object ((obj so1) stream)
   (format stream "s-1"))
@@ -67,7 +91,7 @@
 
 (defmethod print-object ((obj comp) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "∘~1:I ~W ~:_~W" (mcar obj) (mcadr obj))))
+    (format stream "∘~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
 
 (defmethod print-object ((obj terminal) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
@@ -79,28 +103,28 @@
 
 (defmethod print-object ((obj inject-left) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "left->~1:I ~W ~:_~W" (mcar obj) (mcadr obj))))
+    (format stream "left->~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
 
 (defmethod print-object ((obj inject-right) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "right->~1:I ~W ~:_~W" (mcar obj) (mcadr obj))))
+    (format stream "right->~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
 
 (defmethod print-object ((obj project-left) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "<-left~1:I ~W ~:_~W" (mcar obj) (mcadr obj))))
+    (format stream "<-left~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
 
 (defmethod print-object ((obj project-right) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "<-right~1:I ~W ~:_~W" (mcar obj) (mcadr obj))))
+    (format stream "<-right~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
 
 (defmethod print-object ((obj case) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "case~1:I ~W ~:_~W" (mcar obj) (mcadr obj))))
+    (format stream "case~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
 
 (defmethod print-object ((obj distribute) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "dist~1:I ~W ~:_~W ~:_~W" (mcar obj) (mcadr obj) (mcaddr obj))))
+    (format stream "dist~1:I ~W ~_~W ~_~W" (mcar obj) (mcadr obj) (mcaddr obj))))
 
 (defmethod print-object ((obj pair) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "~-1I~{~W~^~:_ ~}" (pair-to-list obj))))
+    (format stream "~-1I~{~W~^~_ ~}" (pair-to-list obj))))
