@@ -678,4 +678,5 @@ FSNTToFSSliceMorph : {0 p, q : FSPolyF} ->
     {n=(fsPolyNPos p)}
     (replace {p=(flip Vect FSObj)} (sym eqpos) (FSPolyFToSlice q))
     (FSPolyFToSlice p)
-FSNTToFSSliceMorph {p} {q} {eqpos} alpha = ?FSNTToFSSliceMorph_hole
+FSNTToFSSliceMorph {p} {q} {eqpos} (onPos ** onDir) isId =
+  ?FSNTToFSSliceMorph_hole
