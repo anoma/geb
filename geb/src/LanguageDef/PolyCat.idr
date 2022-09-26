@@ -36,13 +36,13 @@ PreImage {a} {b} f elemb = Subset0 a (Equal elemb . f)
 -- Right adjoint to the base change functor.
 public export
 DepProdF : {a, b : Type} -> (a -> b) -> SliceFunctor a b
-DepProdF {a} {b} f sla elemb = (elema : a) -> f elema = elemb -> sla elema
+DepProdF {a} {b} f sla elemb = (elema : PreImage f elemb) -> sla (fst0 elema)
 
 -- The dependent coproduct functor induced by the given morphism.
 -- Left adjoint to the base change functor.
 public export
 DepCoprodF : {a, b : Type} -> (a -> b) -> SliceFunctor a b
-DepCoprodF {a} {b} f sla elemb = (elema : a ** (f elema = elemb, sla elema))
+DepCoprodF {a} {b} f sla elemb = (elema : PreImage f elemb ** sla (fst0 elema))
 
 -- A special case of `DepProdF` where `b` is the terminal object and
 -- `f` is the unique morphism into it.  A slice object over the terminal
