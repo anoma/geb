@@ -662,9 +662,12 @@ InterpFSPNT {p=(FSPArena ap)} {q=(FSPArena aq)} (onPos ** onDir) x (i ** v) =
 -- identity.)
 
 public export
-FSSliceMorphismToFSNT : {0 n : FSObj} -> {0 s, s' : FSSlice n} ->
+FSSliceMorphismToFSNT : {n : FSObj} -> {0 s, s' : FSSlice n} ->
   FSSliceMorphism s s' -> FSPNatTrans (SliceToFSPolyF s') (SliceToFSPolyF s)
-FSSliceMorphismToFSNT {n} {s} {s'} m = ?FSSliceMorphismToFSNT_hole
+FSSliceMorphismToFSNT {n} {s} {s'} m =
+  let islice = FSId n in
+  (?FSSliceMorphismToFSNT_hole_onpos **
+   ?FSSliceMorphismToFSNT_hole_ondir)
 
 public export
 FSNTToFSSliceMorph : {0 p, q : FSPolyF} ->

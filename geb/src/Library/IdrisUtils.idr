@@ -530,6 +530,28 @@ equalNatCorrect {m=Z} = Refl
 equalNatCorrect {m=(S m')} = equalNatCorrect {m=m'}
 
 public export
+foldLengthSucc : {0 a : Type} -> {n : Nat} -> (l : List a) -> (v : Vect n a) ->
+  List.length (foldrImpl (::) [] ((++) l) v) =
+    length l + (List.length (foldrImpl (::) [] (id {a=(List a)}) v))
+foldLengthSucc {a} {n=Z} l [] =
+  rewrite appendNilRightNeutral l in
+  rewrite plusZeroRightNeutral (length l) in
+  Refl
+foldLengthSucc {a} {n=(S n)} l (x' :: v) =
+  let r = foldLengthSucc {a} {n} (l ++ [x']) v in
+  let r' = foldLengthSucc {a} {n} [x'] v in
+  trans
+    ?foldLengthSucc_hole_s
+    (cong ((+) (length l)) (sym r'))
+
+public export
+toListLength : {n : Nat} -> {0 a : Type} ->
+  (v : Vect n a) -> length (toList v) = n
+toListLength {n=Z} {a} [] = Refl
+toListLength {n=(S n)} {a} (x :: v) =
+  trans (foldLengthSucc [x] v) (cong S $ toListLength {n} {a} v)
+
+public export
 predLen : {0 a : Type} -> List a -> Nat
 predLen = pred . length
 
