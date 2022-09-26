@@ -655,3 +655,25 @@ InterpFSPNT : {p, q : FSPolyF} -> FSPNatTrans p q ->
   SliceMorphism {a=Type} (InterpFSPolyF p) (InterpFSPolyF q)
 InterpFSPNT {p=(FSPArena ap)} {q=(FSPArena aq)} (onPos ** onDir) x (i ** v) =
   (FSApply onPos i ** finFToVect $ \j => index (FSApply (finFGet i onDir) j) v)
+
+-- A slice morphism can be viewed as a special case of a natural transformation
+-- between the polynomial endofunctors as which the codomain and domain slices
+-- may be viewed.  (The special case is that the on-positions function is the
+-- identity.)
+
+public export
+FSSliceMorphismToFSNT : {0 n : FSObj} -> {0 s, s' : FSSlice n} ->
+  FSSliceMorphism s s' -> FSPNatTrans (SliceToFSPolyF s') (SliceToFSPolyF s)
+FSSliceMorphismToFSNT {n} {s} {s'} m = ?FSSliceMorphismToFSNT_hole
+
+public export
+FSNTToFSSliceMorph : {0 p, q : FSPolyF} ->
+  {eqpos : fsPolyNPos p = fsPolyNPos q} ->
+  (alpha : FSPNatTrans p q) ->
+  (fspOnPos {p} {q} alpha =
+   replace {p=(Vect (fsPolyNPos p) . Fin)} eqpos (FSId (fsPolyNPos p))) ->
+  FSSliceMorphism
+    {n=(fsPolyNPos p)}
+    (replace {p=(flip Vect FSObj)} (sym eqpos) (FSPolyFToSlice q))
+    (FSPolyFToSlice p)
+FSNTToFSSliceMorph {p} {q} {eqpos} alpha = ?FSNTToFSSliceMorph_hole
