@@ -28,6 +28,10 @@ public export
 BaseChangeF : {a, b : Type} -> (b -> a) -> SliceFunctor a b
 BaseChangeF f sla elemb = sla $ f elemb
 
+public export
+PreImage : {a, b : Type} -> (a -> b) -> b -> Type
+PreImage {a} {b} f elemb = Subset0 a (Equal elemb . f)
+
 -- The dependent product functor induced by the given morphism.
 -- Right adjoint to the base change functor.
 public export
