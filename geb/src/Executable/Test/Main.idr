@@ -3,7 +3,7 @@ module Executable.Test.Main
 import Test.TestLibrary
 import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
-import LanguageDef.Test.PatternCatTest
+import LanguageDef.Test.NatPrefixCatTest
 import LanguageDef.Test.PolyCatTest
 import LanguageDef.Test.AtomTest
 import LanguageDef.Test.RefinedADTTest
@@ -37,4 +37,4 @@ main = do
   LanguageDef.Test.EmbeddedTest.languageDefEmbeddedTest
   Library.Test.CategoryTheoryTest.libraryCategoryTheoryTest
   LanguageDef.Test.PolyCatTest.polyCatTest
-  LanguageDef.Test.PatternCatTest.patternCatTest
+  LanguageDef.Test.NatPrefixCatTest.natPrefixCatTest

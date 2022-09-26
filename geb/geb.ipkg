@@ -5,7 +5,7 @@ modules =
     , Library.IdrisUtils
     , Library.IdrisCategories
     , Library.CategoryTheory
-    , LanguageDef.PatternCat
+    , LanguageDef.NatPrefixCat
     , LanguageDef.PolyCat
     , LanguageDef.Atom
     , LanguageDef.RefinedADT
@@ -18,7 +18,7 @@ modules =
     , LanguageDef.ComputationalEffects
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
-    , LanguageDef.Test.PatternCatTest
+    , LanguageDef.Test.NatPrefixCatTest
     , LanguageDef.Test.PolyCatTest
     , LanguageDef.Test.AtomTest
     , LanguageDef.Test.RefinedADTTest

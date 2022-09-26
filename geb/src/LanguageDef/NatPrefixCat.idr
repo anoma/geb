@@ -1,4 +1,4 @@
-module LanguageDef.PatternCat
+module LanguageDef.NatPrefixCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
