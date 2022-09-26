@@ -665,8 +665,7 @@ public export
 FSSliceMorphismToFSNT : {n : FSObj} -> {0 s, s' : FSSlice n} ->
   FSSliceMorphism s s' -> FSPNatTrans (SliceToFSPolyF s') (SliceToFSPolyF s)
 FSSliceMorphismToFSNT {n} {s} {s'} m =
-  let islice = FSId n in
-  (?FSSliceMorphismToFSNT_hole_onpos **
+  (?FSSliceMorphismToFSNT_hole_onpos (FSId n) **
    ?FSSliceMorphismToFSNT_hole_ondir)
 
 public export

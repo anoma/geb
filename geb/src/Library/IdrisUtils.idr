@@ -2,11 +2,13 @@ module Library.IdrisUtils
 
 import public Data.Maybe
 import public Data.List
+import public Data.List.Equalities
 import public Data.List.Reverse
 import public Data.Nat
 import public Data.Nat.Order.Properties
 import public Data.Nat.Division
 import public Data.Vect
+import public Data.Vect.Properties.Foldr
 import public Data.HVect
 import public Data.Fin
 import public Data.DPair
@@ -530,26 +532,28 @@ equalNatCorrect {m=Z} = Refl
 equalNatCorrect {m=(S m')} = equalNatCorrect {m=m'}
 
 public export
-foldLengthSucc : {0 a : Type} -> {n : Nat} -> (l : List a) -> (v : Vect n a) ->
+foldAppendExtensional : {0 a : Type} -> {n : Nat} ->
+  (l : List a) -> (v : Vect n a) ->
+  foldrImpl (::) [] ((++) l) v = l ++ foldrImpl (::) [] (id {a=(List a)}) v
+foldAppendExtensional {a} {n} l v = ?foldAppendExtensional_hole
+
+public export
+foldLengthAppend : {0 a : Type} -> {n : Nat} ->
+  (l : List a) -> (v : Vect n a) ->
   List.length (foldrImpl (::) [] ((++) l) v) =
     length l + (List.length (foldrImpl (::) [] (id {a=(List a)}) v))
-foldLengthSucc {a} {n=Z} l [] =
-  rewrite appendNilRightNeutral l in
-  rewrite plusZeroRightNeutral (length l) in
-  Refl
-foldLengthSucc {a} {n=(S n)} l (x' :: v) =
-  let r = foldLengthSucc {a} {n} (l ++ [x']) v in
-  let r' = foldLengthSucc {a} {n} [x'] v in
+foldLengthAppend {a} {n} l v =
+  let h = foldrVectHomomorphism in
   trans
-    ?foldLengthSucc_hole_s
-    (cong ((+) (length l)) (sym r'))
+    ?foldLengthAppend_hole
+    (lengthDistributesOverAppend _ _)
 
 public export
 toListLength : {n : Nat} -> {0 a : Type} ->
   (v : Vect n a) -> length (toList v) = n
 toListLength {n=Z} {a} [] = Refl
 toListLength {n=(S n)} {a} (x :: v) =
-  trans (foldLengthSucc [x] v) (cong S $ toListLength {n} {a} v)
+  trans (foldLengthAppend [x] v) (cong S $ toListLength {n} {a} v)
 
 public export
 predLen : {0 a : Type} -> List a -> Nat
