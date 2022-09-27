@@ -1,4 +1,4 @@
-module LanguageDef.PatternCat
+module LanguageDef.NatPrefixCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
@@ -204,27 +204,30 @@ FSTypeFamTypes : {n : FSObj} -> FSTypeFam n -> Vect n Type
 FSTypeFamTypes {n} = finFToVect . FSTypeFamType {n}
 
 public export
-FSIndexedPair : {m, n : FSObj} ->
-  FSMorph m n -> FSTypeFam m -> FSTypeFam n -> FSElem m -> Type
-FSIndexedPair f fam fam' i =
-  (FSTypeFamType fam i, FSTypeFamType fam' (FSApply f i))
+FSBaseChange : {m, n : FSObj} -> FSTypeFam m -> FSMorph n m -> FSTypeFam n
+FSBaseChange {m} {n} fam f = finFToVect $ FSTypeFamObj fam . FSApply f
 
 public export
-FSDepSumType : {m, n : FSObj} ->
-  FSMorph m n -> FSTypeFam m -> FSTypeFam n -> Type
-FSDepSumType {m} {n} f fam fam' = (i : FSElem m ** FSIndexedPair f fam fam' i)
+FSIndexedPair : {m, n : FSObj} ->
+  FSTypeFam m -> FSMorph m n -> FSElem n -> Type
+FSIndexedPair fam f i =
+  (j : Fin m ** (FSApply f j = i, FSElem $ FSTypeFamObj fam j))
+
+public export
+FSDepCoproductTypes : {m, n : FSObj} ->
+  FSTypeFam m -> FSMorph m n -> Vect n Type
+FSDepCoproductTypes {m} {n} fam f = finFToVect $ FSIndexedPair fam f
 
 public export
 FSIndexedMorph : {m, n : FSObj} ->
-  FSMorph m n -> FSTypeFam m -> FSTypeFam n -> FSElem m -> Type
-FSIndexedMorph f fam fam' i =
-  FSMorph (FSTypeFamObj fam i) (FSTypeFamObj fam' $ FSApply f i)
+  FSTypeFam m -> FSMorph m n -> FSElem n -> Type
+FSIndexedMorph {m} {n} fam f i =
+  (j : Fin m) -> FSApply f j = i -> FSElem $ FSTypeFamObj fam j
 
 public export
-FSDepProductType : {m, n : FSObj} ->
-  FSMorph m n -> FSTypeFam m -> FSTypeFam n -> Type
-FSDepProductType {m} {n} f fam fam' =
-  HVect {k=m} $ finFToVect $ FSIndexedMorph f fam fam'
+FSDepProductTypes : {m, n : FSObj} ->
+  FSTypeFam m -> FSMorph m n -> Vect n Type
+FSDepProductTypes {m} {n} fam f = finFToVect $ FSIndexedMorph fam f
 
 ---------------------------------
 ---------------------------------
@@ -277,11 +280,11 @@ FSEqualizerPred {a} {b} f g =
 
 public export
 FSCoproductList : List FSObj -> FSObj
-FSCoproductList = foldl FSCoproduct FSInitial
+FSCoproductList = foldr FSCoproduct FSInitial
 
 public export
 FSProductList : List FSObj -> FSObj
-FSProductList = foldl FSProduct FSTerminal
+FSProductList = foldr FSProduct FSTerminal
 
 public export
 FSFoldConstructor : FSObj -> FSObj -> FSObj -> FSObj
@@ -413,8 +416,12 @@ fsPolyDir : (p : FSPolyF) -> fsPolyPos p -> Type
 fsPolyDir p i = FSElem (fsPolyNDir p i)
 
 public export
+FSExpMap : FSObj -> List FSObj -> List FSObj
+FSExpMap n l = map (FSExpObj n) l
+
+public export
 FSPolyApply : FSPolyF -> FSObj -> FSObj
-FSPolyApply (FSPArena a) n = foldl (FSFoldConstructor n) FSInitial a
+FSPolyApply (FSPArena a) n = FSCoproductList (FSExpMap n a)
 
 public export
 fspPF : FSPolyF -> PolyFunc
@@ -423,6 +430,33 @@ fspPF p = (fsPolyPos p ** fsPolyDir p)
 public export
 fsPolyProd : (p : FSPolyF) -> fsPolyPos p -> Type -> Type
 fsPolyProd p i = Vect (fsPolyNDir p i)
+
+public export
+FSRepresentableMap : {m, n, x : Nat} ->
+  FSMorph m n -> FSMorph (power m x) (power n x)
+FSRepresentableMap {m} {n} {x=Z} f = [FZ]
+FSRepresentableMap {m} {n} {x=(S x)} f =
+  let
+    l = fsProdElimLeft m (power m x)
+    r = fsProdElimRight m (power m x)
+  in
+  fsProdIntro {a=(mult m (power m x))} {b=n} {c=(power n x)}
+    (FSCompose f l)
+    (FSCompose (FSRepresentableMap {m} {n} {x} f) r)
+
+public export
+FSPolyMapList : (l : List Nat) -> {m, n : FSObj} ->
+  FSMorph m n ->
+  FSMorph (FSPolyApply (FSPArena l) m) (FSPolyApply (FSPArena l) n)
+FSPolyMapList [] {m} {n} v = []
+FSPolyMapList (x :: xs) {m} {n} v =
+  map (weakenN (FSCoproductList (FSExpMap n xs))) (FSRepresentableMap v) ++
+  map (shift (power n x)) (FSPolyMapList xs {m} {n} v)
+
+public export
+FSPolyMap : (p : FSPolyF) -> {m, n : FSObj} ->
+  FSMorph m n -> FSMorph (FSPolyApply p m) (FSPolyApply p n)
+FSPolyMap (FSPArena l) v = FSPolyMapList l v
 
 public export
 InterpFSPolyF : FSPolyF -> Type -> Type
@@ -564,15 +598,126 @@ public export
 fspNT : {p, q : FSPolyF} -> FSPNatTrans p q -> PolyNatTrans (fspPF p) (fspPF q)
 fspNT alpha = (fspOnPosF alpha ** fspOnDirF alpha)
 
+-- A polymorphic function in FinSet, or equivalently, a family of functions,
+-- one for each `FSObj`, with the domain and codomain given by the
+-- application of `p` and `q` respectively.
+--
+-- The data required to generate this family of functions constitute precisely
+-- an `FSPNatTrans`.
 public export
-FSPNTApply : {0 p, q : FSPolyF} ->
-  (alpha : FSPNatTrans p q) -> (n : FSObj) ->
-  FSMorph (FSPolyApply p n) (FSPolyApply q n)
-FSPNTApply {p=(FSPArena ap)} {q=(FSPArena aq)} (onPos ** onDir) n =
-  ?FSPNTApply_hole
+FSPolyMorph : (p, q : FSPolyF) -> Type
+FSPolyMorph p q = (n : FSObj) -> FSMorph (FSPolyApply p n) (FSPolyApply q n)
 
 public export
-InterpFSPNT : {0 p, q : FSPolyF} -> FSPNatTrans p q ->
+FSProjM : (n : Nat) -> {m : Nat} -> FSElem m -> FSMorph (power n m) n
+FSProjM n {m=(S m)} FZ = fsProdElimLeft n (power n m)
+FSProjM n {m=(S m)} (FS i) =
+  FSCompose (FSProjM n {m} i) (fsProdElimRight n (power n m))
+
+public export
+FSConstructorMap : {k, m, n : Nat} ->
+  FSMorph k m -> FSMorph (power n m) (power n k)
+FSConstructorMap {k=Z} {m} {n} [] =
+  rewrite sym (multOneRightNeutral (power n m)) in
+  vectRepeat {b=1} {c=1} (power n m) [FZ]
+FSConstructorMap {k=(S k)} {m} {n} (i :: v) =
+  fsProdIntro (FSProjM n i) (FSConstructorMap {k} {m} {n} v)
+
+public export
+FSPosApply : {m, n : Nat} -> (aq : List Nat) ->
+  (hd : Fin (length aq)) -> FSMorph (index' aq hd) m ->
+  FSMorph (power n m) (FSPolyApply (FSPArena aq) n)
+FSPosApply {m} {n} [] hd v = absurd hd
+FSPosApply {m} {n} (k :: aq') FZ v =
+  map (weakenN (FSCoproductList (FSExpMap n aq'))) (FSConstructorMap {n} v)
+FSPosApply {m} {n} (k :: aq') (FS hd') v =
+  map (shift (power n k)) (FSPosApply {m} {n} aq' hd' v)
+
+public export
+FSPNTApplyList : {ap, aq : List Nat} ->
+  FSPNatTrans (FSPArena ap) (FSPArena aq) ->
+  FSPolyMorph (FSPArena ap) (FSPArena aq)
+FSPNTApplyList {ap=[]} {aq}
+    ([] ** []) n =
+  []
+FSPNTApplyList {ap=(m :: ap')} {aq}
+    (onPosHd :: onPosTl ** onDirHd :: onDirTl) n =
+  fsCopElim
+    (FSPosApply {m} {n} aq onPosHd onDirHd)
+    (FSPNTApplyList {ap=ap'} {aq} (onPosTl ** onDirTl) n)
+
+public export
+FSPNTApply : {p, q : FSPolyF} -> FSPNatTrans p q -> FSPolyMorph p q
+FSPNTApply {p=(FSPArena ap)} {q=(FSPArena aq)} = FSPNTApplyList {ap} {aq}
+
+public export
+InterpFSPNT : {p, q : FSPolyF} -> FSPNatTrans p q ->
   SliceMorphism {a=Type} (InterpFSPolyF p) (InterpFSPolyF q)
-InterpFSPNT {p=(FSPArena ap)} {q=(FSPArena aq)} (onPos ** onDir) x elem =
-  ?FSPNtoType_hole
+InterpFSPNT {p=(FSPArena ap)} {q=(FSPArena aq)} (onPos ** onDir) x (i ** v) =
+  (FSApply onPos i ** finFToVect $ \j => index (FSApply (finFGet i onDir) j) v)
+
+-- A slice morphism can be viewed as a special case of a natural transformation
+-- between the polynomial endofunctors as which the codomain and domain slices
+-- may be viewed.  (The special case is that the on-positions function is the
+-- identity.)
+
+public export
+FSSliceMorphismToFSNT : {n : FSObj} -> {0 s, s' : FSSlice n} ->
+  FSSliceMorphism s s' -> FSPNatTrans (SliceToFSPolyF s') (SliceToFSPolyF s)
+FSSliceMorphismToFSNT {n} {s} {s'} m =
+  (?FSSliceMorphismToFSNT_hole_onpos (FSId n) **
+   ?FSSliceMorphismToFSNT_hole_ondir)
+
+public export
+FSNTToFSSliceMorph : {0 p, q : FSPolyF} ->
+  {eqpos : fsPolyNPos p = fsPolyNPos q} ->
+  (alpha : FSPNatTrans p q) ->
+  (fspOnPos {p} {q} alpha =
+   replace {p=(Vect (fsPolyNPos p) . Fin)} eqpos (FSId (fsPolyNPos p))) ->
+  FSSliceMorphism
+    {n=(fsPolyNPos p)}
+    (replace {p=(flip Vect FSObj)} (sym eqpos) (FSPolyFToSlice q))
+    (FSPolyFToSlice p)
+FSNTToFSSliceMorph {p} {q} {eqpos} (onPos ** onDir) isId =
+  ?FSNTToFSSliceMorph_hole
+
+------------------------------------------------
+---- Algebras of FinSet polynomial functors ----
+------------------------------------------------
+
+public export
+FSPAlg : FSPolyF -> FSObj -> Type
+FSPAlg p n = FSMorph (FSPolyApply p n) n
+
+public export
+FSListToPFAlg : {n : FSObj} -> {l : List Nat} ->
+  FSPAlg (FSPArena l) n -> PFAlg (fspPF (FSPArena l)) (FSElem n)
+FSListToPFAlg {n} {l=[]} alg i f = absurd i
+FSListToPFAlg {n} {l=(x :: l')} alg FZ f =
+  FSApply (take (power n x) alg) $ finPowFin $ finFToVect f
+FSListToPFAlg {n} {l=(x :: l')} alg (FS i) f =
+  FSListToPFAlg {n} {l=l'} (drop (power n x) alg) i f
+
+public export
+FSPToPFAlg : {n : FSObj} -> {p : FSPolyF} ->
+  FSPAlg p n -> PFAlg (fspPF p) (FSElem n)
+FSPToPFAlg {n} {p=(FSPArena l)} alg i = FSListToPFAlg {n} {l} alg i
+
+--------------------------------------------------------
+---- Initial algebras of FinSet polynomial functors ----
+--------------------------------------------------------
+
+public export
+data FSPolyFMu : FSPolyF -> Type where
+  InFSP : {0 p : FSPolyF} ->
+    (i : fsPolyPos p) -> Vect (fsPolyNDir p i) (FSPolyFMu p) -> FSPolyFMu p
+
+-----------------------------------------------------
+---- Catamorphisms of FinSet polynomial functors ----
+-----------------------------------------------------
+
+public export
+fspCata : {p : FSPolyF} -> {0 a : FSObj} ->
+  FSPAlg p a -> FSPolyFMu p -> FSElem a
+fspCata {p=(FSPArena l)} {a} alg (InFSP i v) =
+  ?fspCata_hole

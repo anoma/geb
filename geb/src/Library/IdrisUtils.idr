@@ -2,11 +2,13 @@ module Library.IdrisUtils
 
 import public Data.Maybe
 import public Data.List
+import public Data.List.Equalities
 import public Data.List.Reverse
 import public Data.Nat
 import public Data.Nat.Order.Properties
 import public Data.Nat.Division
 import public Data.Vect
+import public Data.Vect.Properties.Foldr
 import public Data.HVect
 import public Data.Fin
 import public Data.DPair
@@ -345,6 +347,24 @@ indexToFinLTS {n} {i} {okS} {ok} {x} {v} =
   indexToFinS {a} {m=i} {n=n} {ltS=(fromIsYes okS)} {lt=(fromIsYes ok)} {x} {v}
 
 public export
+finFTail : {0 a : Type} -> {n : Nat} -> (Fin (S n) -> a) -> (Fin n -> a)
+finFTail {a} {n} f = f . FS
+
+public export
+finFToVectOnto : {0 a : Type} -> {m, n : Nat} ->
+  (Fin m -> a) -> Vect n a -> Vect (m + n) a
+finFToVectOnto {a} {m=Z} {n} f v = v
+finFToVectOnto {a} {m=(S m)} {n} f v =
+  rewrite plusSuccRightSucc m n in
+  finFToVectOnto {a} {m} {n=(S n)} (finFTail f) (f FZ :: v)
+
+public export
+finFToVectTR : {0 a : Type} -> {m : Nat} -> (Fin m -> a) -> Vect m a
+finFToVectTR {a} {m} f =
+  rewrite sym (plusZeroRightNeutral m) in
+  reverse $ finFToVectOnto {a} {m} {n=Z} f []
+
+public export
 finFToVect : {0 a : Type} -> {n : Nat} -> (Fin n -> a) -> Vect n a
 finFToVect {a} {n=Z} f = []
 finFToVect {a} {n=(S n)} f = f FZ :: finFToVect {n} (f . FS)
@@ -483,6 +503,22 @@ finPow (S (S m)) (S n) i =
   finPlus fp $ finMul _ m fp
 
 public export
+finMulFin : {m, n : Nat} -> Fin m -> Fin n -> Fin (m * n)
+finMulFin {m=Z} {n} i j = absurd i
+finMulFin {m} {n=Z} i j = absurd j
+finMulFin {m=(S m)} {n=(S n)} FZ j = FZ
+finMulFin {m=(S m)} {n=(S n)} (FS i) FZ = FZ
+finMulFin {m=(S m)} {n=(S n)} (FS i) (FS j) =
+  rewrite multRightSuccPlus m n in
+  -- (1 + i) * (1 + j) = 1 + j + i + i * j
+  FS $ finPlus j $ finPlus i $ finMulFin {m} {n} i j
+
+public export
+finPowFin : {m, n : Nat} -> Vect m (Fin n) -> Fin (power n m)
+finPowFin {m=Z} {n} [] = FZ
+finPowFin {m=(S m)} {n} (x :: v) = finMulFin x $ finPowFin {m} {n} v
+
+public export
 foldrNat : (a -> a) -> a -> Nat -> a
 foldrNat f acc Z = acc
 foldrNat f acc (S n) = foldrNat f (f acc) n
@@ -510,6 +546,30 @@ public export
 equalNatCorrect : {m : Nat} -> equalNat m m = True
 equalNatCorrect {m=Z} = Refl
 equalNatCorrect {m=(S m')} = equalNatCorrect {m=m'}
+
+public export
+foldAppendExtensional : {0 a : Type} -> {n : Nat} ->
+  (l : List a) -> (v : Vect n a) ->
+  foldrImpl (::) [] ((++) l) v = l ++ foldrImpl (::) [] (id {a=(List a)}) v
+foldAppendExtensional {a} {n} l v = ?foldAppendExtensional_hole
+
+public export
+foldLengthAppend : {0 a : Type} -> {n : Nat} ->
+  (l : List a) -> (v : Vect n a) ->
+  List.length (foldrImpl (::) [] ((++) l) v) =
+    length l + (List.length (foldrImpl (::) [] (id {a=(List a)}) v))
+foldLengthAppend {a} {n} l v =
+  let h = foldrVectHomomorphism in
+  trans
+    ?foldLengthAppend_hole
+    (lengthDistributesOverAppend _ _)
+
+public export
+toListLength : {n : Nat} -> {0 a : Type} ->
+  (v : Vect n a) -> length (toList v) = n
+toListLength {n=Z} {a} [] = Refl
+toListLength {n=(S n)} {a} (x :: v) =
+  trans (foldLengthAppend [x] v) (cong S $ toListLength {n} {a} v)
 
 public export
 predLen : {0 a : Type} -> List a -> Nat
@@ -631,19 +691,21 @@ diffToLte {m} {n} {k=(S k)} pleq =
     pleq
 
 public export
-multDivLTLemma : (k, m, n, mnk : Nat) ->
-  mnk + S k = m * S n -> (divk : Nat ** divk + S (div' k k n) = m)
-multDivLTLemma k m n mnk mkneq = ?multDivLTLemma_hole
+multDivLTLemma : (k, m, n, diffmsnsk : Nat) ->
+  diffmsnsk + S k = m * S n ->
+  (diffmdivksn : Nat ** diffmdivksn + S (divNatNZ k (S n) SIsNonZero) = m)
+multDivLTLemma k m n diffmsnsk diffmsnskeq = ?multDivLTLemma_hole
 
 public export
 multDivLT : {k, m, n : Nat} ->
   LT k (m * n) -> (nz : NonZero n) -> LT (divNatNZ k n nz) m
 multDivLT {k} {m} {n=(S n)} lt SIsNonZero =
   let
-    (mnk ** mnkeq) = lteToDiff lt
-    (divk ** divkeq) = multDivLTLemma k m n mnk mnkeq
+    (diffmsnsk ** diffmsnskeq) = lteToDiff lt
+    (diffmdivksn ** diffmdivksneq) = multDivLTLemma k m n diffmsnsk diffmsnskeq
   in
-  diffToLte {m=(S (divNatNZ k (S n) SIsNonZero))} {n=m} {k=divk} divkeq
+  diffToLte
+    {m=(S (divNatNZ k (S n) SIsNonZero))} {n=m} {k=diffmdivksn} diffmdivksneq
 
 public export
 multAddLT : {k, m, n, p : Nat} ->
