@@ -19,7 +19,7 @@ natPrefixCatTest = do
   putStrLn "Begin NatPrefixCatTest:"
   putStrLn "-----------------------"
   putStrLn ""
-  putStrLn "-----------------------"
+  putStrLn "---------------------"
   putStrLn "End NatPrefixCatTest."
-  putStrLn "======================="
+  putStrLn "====================="
   pure ()

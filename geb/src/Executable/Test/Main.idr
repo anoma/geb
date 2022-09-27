@@ -4,6 +4,7 @@ import Test.TestLibrary
 import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
 import LanguageDef.Test.NatPrefixCatTest
+import LanguageDef.Test.ADTCatTest
 import LanguageDef.Test.PolyCatTest
 import LanguageDef.Test.AtomTest
 import LanguageDef.Test.RefinedADTTest
@@ -38,3 +39,4 @@ main = do
   Library.Test.CategoryTheoryTest.libraryCategoryTheoryTest
   LanguageDef.Test.PolyCatTest.polyCatTest
   LanguageDef.Test.NatPrefixCatTest.natPrefixCatTest
+  LanguageDef.Test.ADTCatTest.adtCatTest
