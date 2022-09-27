@@ -702,3 +702,12 @@ public export
 FSPToPFAlg : {n : FSObj} -> {p : FSPolyF} ->
   FSPAlg p n -> PFAlg (fspPF p) (FSElem n)
 FSPToPFAlg {n} {p=(FSPArena l)} alg i = FSListToPFAlg {n} {l} alg i
+
+--------------------------------------------------------
+---- Initial algebras of FinSet polynomial functors ----
+--------------------------------------------------------
+
+public export
+data FSPolyFMu : FSPolyF -> Type where
+  InFSP : {0 p : FSPolyF} ->
+    (i : fsPolyPos p) -> Vect (fsPolyNDir p i) (FSPolyFMu p) -> FSPolyFMu p
