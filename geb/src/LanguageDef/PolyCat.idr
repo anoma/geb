@@ -3355,6 +3355,37 @@ public export
 SubstContradiction : SubstObjMu -> Type
 SubstContradiction = substObjCata SubstContradictionAlg
 
+-------------------------------------
+---- Hom-objects from an algebra ----
+-------------------------------------
+
+public export
+SubstHomObjAlg : MetaSOAlg (SubstObjMu -> SubstObjMu)
+-- 0 -> x == 1
+SubstHomObjAlg SO0 _ = Subst1
+-- 1 -> x == x
+SubstHomObjAlg SO1 q = q
+-- (p + q) -> r == (p -> r) * (q -> r)
+SubstHomObjAlg (p !!+ q) r = p r !* q r
+-- (p * q) -> r == p -> q -> r
+SubstHomObjAlg (p !!* q) r = p $ q r
+
+public export
+SubstHomObj' : SubstObjMu -> SubstObjMu -> SubstObjMu
+SubstHomObj' = substObjCata SubstHomObjAlg
+
+---------------------------------------------
+---- Morphisms from terms of hom-objects ----
+---------------------------------------------
+
+public export
+SubstMorph' : SubstObjMu -> SubstObjMu -> Type
+SubstMorph' = SubstTerm .* SubstHomObj'
+
+-----------------------------
+---- Universal morphisms ----
+-----------------------------
+
 infixr 1 <!
 public export
 data SubstMorph : SubstObjMu -> SubstObjMu -> Type where
