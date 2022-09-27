@@ -4,6 +4,213 @@ import Library.IdrisUtils
 
 %default total
 
+---------------------------------------
+---------------------------------------
+---- Dependent types, categorially ----
+---------------------------------------
+---------------------------------------
+
+-- Objects of the slice category `Type` over `a`.
+-- If we treat `a` as a discrete category, then we could also view
+-- a slice object over `a` as a functor from `a` to `Type`.
+public export
+SliceObj : Type -> Type
+SliceObj a = a -> Type
+
+public export
+SliceFunctor : Type -> Type -> Type
+SliceFunctor a b = SliceObj a -> SliceObj b
+
+-- The base change functor induced by the given morphism.
+-- Also sometimes called the pullback functor.
+public export
+BaseChangeF : {a, b : Type} -> (b -> a) -> SliceFunctor a b
+BaseChangeF f sla elemb = sla $ f elemb
+
+public export
+PreImage : {a, b : Type} -> (a -> b) -> b -> Type
+PreImage {a} {b} f elemb = Subset0 a (Equal elemb . f)
+
+-- The dependent product functor induced by the given morphism.
+-- Right adjoint to the base change functor.
+public export
+DepProdF : {a, b : Type} -> (a -> b) -> SliceFunctor a b
+DepProdF {a} {b} f sla elemb = (elema : PreImage f elemb) -> sla (fst0 elema)
+
+-- The dependent coproduct functor induced by the given morphism.
+-- Left adjoint to the base change functor.
+public export
+DepCoprodF : {a, b : Type} -> (a -> b) -> SliceFunctor a b
+DepCoprodF {a} {b} f sla elemb = (elema : PreImage f elemb ** sla (fst0 elema))
+
+-- A special case of `DepProdF` where `b` is the terminal object and
+-- `f` is the unique morphism into it.  A slice object over the terminal
+-- object is isomorphic to its domain, so the slice category of a category
+-- over its terminal object is isomorphic to the category itself.
+-- That is, `SliceObj ()` is effectively just `Type`.
+public export
+Pi : {a : Type} -> SliceObj a -> Type
+Pi {a} p = (x : a) -> p x
+
+-- We can view this as the total space of a bundle represented by
+-- a slice object.  It is a special case of `DepCoprodF` where `b` is
+-- the terminal object and `f` is the unique morphism into it.
+public export
+Sigma : {a : Type} -> SliceObj a -> Type
+Sigma {a} p = (x : a ** p x)
+
+public export
+SigmaToPair : {0 a, b : Type} -> (Sigma {a} (const b)) -> (a, b)
+SigmaToPair (x ** y) = (x, y)
+
+public export
+PairToSigma : {0 a, b : Type} -> (a, b) -> (Sigma {a} (const b))
+PairToSigma (x, y) = (x ** y)
+
+-- If we view `a` as a discrete category, and slice objects of it as
+-- functors from `a` to `Type`, then this type can also be viewed as
+-- a natural transformation.
+public export
+SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
+SliceMorphism {a} s s' = (e : a) -> s e -> s' e
+
+public export
+SliceFMorphism : {a : Type} -> SliceObj a -> (a -> a) -> Type
+SliceFMorphism s f = SliceMorphism s (s . f)
+
+public export
+ArrowObj : Type
+ArrowObj = (sig : (Type, Type) ** (fst sig -> snd sig))
+
+--------------------------------------------------
+--------------------------------------------------
+---- Natural number induction and coinduction ----
+--------------------------------------------------
+--------------------------------------------------
+
+-------------------------------------------------------
+---- Dependent (slice) category of natural numbers ----
+-------------------------------------------------------
+
+public export
+NatSliceObj : Type
+NatSliceObj = SliceObj Nat
+
+public export
+NatPi : NatSliceObj -> Type
+NatPi = Pi {a=Nat}
+
+public export
+NatSigma : NatSliceObj -> Type
+NatSigma = Sigma {a=Nat}
+
+public export
+NatSliceMorphism : NatSliceObj -> NatSliceObj -> Type
+NatSliceMorphism = SliceMorphism {a=Nat}
+
+public export
+NatSliceFMorphism : NatSliceObj -> (Nat -> Nat) -> Type
+NatSliceFMorphism = SliceFMorphism {a=Nat}
+
+public export
+NatDepAlgebra : NatSliceObj -> Type
+NatDepAlgebra p = (p Z, NatSliceFMorphism p S)
+
+public export
+natNonTailRecursiveIter : {0 p : Nat -> Type} ->
+  NatSliceFMorphism p S -> (n, i : Nat) -> p i -> p (n + i)
+natNonTailRecursiveIter {p} op Z i acc = acc
+natNonTailRecursiveIter {p} op (S n) i acc =
+  op (n + i) $ natNonTailRecursiveIter op n i acc
+
+public export
+natNonTailRecursiveCata : {0 p : NatSliceObj} ->
+  NatDepAlgebra p -> NatPi p
+natNonTailRecursiveCata (z, s) n = replace {p} (plusZeroRightNeutral n) $
+  natNonTailRecursiveIter {p} s n 0 z
+
+public export
+natDepFoldIdx : {0 p : Nat -> Type} ->
+  NatSliceFMorphism p S -> (n, i : Nat) -> p i -> p (n + i)
+natDepFoldIdx op Z i acc = acc
+natDepFoldIdx op (S n) i acc = replace {p} (sym (plusSuccRightSucc n i)) $
+  natDepFoldIdx op n (S i) (op i acc)
+
+public export
+natDepCata : {0 p : NatSliceObj} ->
+  NatDepAlgebra p -> NatPi p
+natDepCata (z, s) n = replace {p} (plusZeroRightNeutral n) $
+  natDepFoldIdx s n 0 z
+
+public export
+natDepCataZ : {0 p : NatSliceObj} ->
+  {0 alg : NatDepAlgebra p} ->
+  natDepCata {p} alg Z = fst alg
+natDepCataZ {p} {alg=(_, _)} = Refl
+
+public export
+NatDepCoalgebra : NatSliceObj -> Type
+NatDepCoalgebra p = NatSliceMorphism p (Maybe . p . S)
+
+public export
+natDepAna : {0 p : NatSliceObj} ->
+  NatDepCoalgebra p -> NatSigma p -> Inf (Maybe (NatSigma p))
+natDepAna coalg (n ** x) with (coalg n x)
+  natDepAna coalg (n ** x) | Nothing = Nothing
+  natDepAna coalg (n ** x) | Just x' = Delay (natDepAna coalg (S n ** x'))
+
+public export
+NatDepGenAlgebra : NatSliceObj -> Type
+NatDepGenAlgebra p =
+  (p Z, (n : Nat) -> ((m : Nat) -> LTE m n -> p m) -> p (S n))
+
+public export
+natDepGenIndStrengthened : {0 p : NatSliceObj} ->
+  NatDepGenAlgebra p ->
+  (x : Nat) -> (y : Nat) -> LTE y x -> p y
+natDepGenIndStrengthened {p} (p0, pS) =
+  natDepCata
+    {p=(\x => (y : Nat) -> LTE y x -> p y)}
+    (\n, lte => replace {p} (lteZeroIsZero lte) p0,
+     \n, hyp, y, lteySn => case lteSuccEitherEqLte lteySn of
+      Left eq => replace {p} (sym eq) $ pS n hyp
+      Right lteyn => hyp y lteyn)
+
+public export
+natDepGenInd : {0 p : NatSliceObj} ->
+  NatDepGenAlgebra p ->
+  NatPi p
+natDepGenInd alg k = natDepGenIndStrengthened alg k k reflexive
+
+-----------------------
+---- Non-dependent ----
+-----------------------
+
+public export
+NatAlgebra : Type -> Type
+NatAlgebra a = (a, Nat -> a -> a)
+
+public export
+natCata : {0 a : Type} -> NatAlgebra a -> Nat -> a
+natCata = natDepCata {p=(const a)}
+
+public export
+NatCoalgebra : Type -> Type
+NatCoalgebra a = Nat -> a -> Maybe a
+
+public export
+natAna : {0 a : Type} -> NatCoalgebra a -> (Nat, a) -> Inf (Maybe (Nat, a))
+natAna coalg nx =
+  map {f=Maybe} SigmaToPair $ natDepAna {p=(const a)} coalg $ PairToSigma nx
+
+public export
+NatGenAlgebra : Type -> Type
+NatGenAlgebra a = (a, (n : Nat) -> ((m : Nat) -> LTE m n -> a) -> a)
+
+public export
+natGenInd : {0 a : Type} -> NatGenAlgebra a -> Nat -> a
+natGenInd = natDepGenInd {p=(const a)}
+
 -------------------------------
 -------------------------------
 ---- Equivalence relations ----
