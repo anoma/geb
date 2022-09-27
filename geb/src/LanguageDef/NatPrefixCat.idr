@@ -711,3 +711,13 @@ public export
 data FSPolyFMu : FSPolyF -> Type where
   InFSP : {0 p : FSPolyF} ->
     (i : fsPolyPos p) -> Vect (fsPolyNDir p i) (FSPolyFMu p) -> FSPolyFMu p
+
+-----------------------------------------------------
+---- Catamorphisms of FinSet polynomial functors ----
+-----------------------------------------------------
+
+public export
+fspCata : {p : FSPolyF} -> {0 a : FSObj} ->
+  FSPAlg p a -> FSPolyFMu p -> FSElem a
+fspCata {p=(FSPArena l)} {a} alg (InFSP i v) =
+  ?fspCata_hole
