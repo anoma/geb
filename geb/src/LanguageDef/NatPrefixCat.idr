@@ -680,3 +680,25 @@ FSNTToFSSliceMorph : {0 p, q : FSPolyF} ->
     (FSPolyFToSlice p)
 FSNTToFSSliceMorph {p} {q} {eqpos} (onPos ** onDir) isId =
   ?FSNTToFSSliceMorph_hole
+
+------------------------------------------------
+---- Algebras of FinSet polynomial functors ----
+------------------------------------------------
+
+public export
+FSPAlg : FSPolyF -> FSObj -> Type
+FSPAlg p n = FSMorph (FSPolyApply p n) n
+
+public export
+FSListToPFAlg : {n : FSObj} -> {l : List Nat} ->
+  FSPAlg (FSPArena l) n -> PFAlg (fspPF (FSPArena l)) (FSElem n)
+FSListToPFAlg {n} {l=[]} alg i f = absurd i
+FSListToPFAlg {n} {l=(x :: l')} alg FZ f =
+  FSApply (take (power n x) alg) $ finPowFin $ finFToVect f
+FSListToPFAlg {n} {l=(x :: l')} alg (FS i) f =
+  FSListToPFAlg {n} {l=l'} (drop (power n x) alg) i f
+
+public export
+FSPToPFAlg : {n : FSObj} -> {p : FSPolyF} ->
+  FSPAlg p n -> PFAlg (fspPF p) (FSElem n)
+FSPToPFAlg {n} {p=(FSPArena l)} alg i = FSListToPFAlg {n} {l} alg i

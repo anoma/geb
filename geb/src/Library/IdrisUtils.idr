@@ -503,6 +503,22 @@ finPow (S (S m)) (S n) i =
   finPlus fp $ finMul _ m fp
 
 public export
+finMulFin : {m, n : Nat} -> Fin m -> Fin n -> Fin (m * n)
+finMulFin {m=Z} {n} i j = absurd i
+finMulFin {m} {n=Z} i j = absurd j
+finMulFin {m=(S m)} {n=(S n)} FZ j = FZ
+finMulFin {m=(S m)} {n=(S n)} (FS i) FZ = FZ
+finMulFin {m=(S m)} {n=(S n)} (FS i) (FS j) =
+  rewrite multRightSuccPlus m n in
+  -- (1 + i) * (1 + j) = 1 + j + i + i * j
+  FS $ finPlus j $ finPlus i $ finMulFin {m} {n} i j
+
+public export
+finPowFin : {m, n : Nat} -> Vect m (Fin n) -> Fin (power n m)
+finPowFin {m=Z} {n} [] = FZ
+finPowFin {m=(S m)} {n} (x :: v) = finMulFin x $ finPowFin {m} {n} v
+
+public export
 foldrNat : (a -> a) -> a -> Nat -> a
 foldrNat f acc Z = acc
 foldrNat f acc (S n) = foldrNat f (f acc) n
