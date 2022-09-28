@@ -120,17 +120,22 @@ termDepth = termCataZeroUsage TermDepthAlg
 
 -- A stack-machine implementation of term processing by a metalanguage
 -- function.
-public export
-termFold : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a
-termFold alg cont (InADTT t) = case t of
-  ADTUnit =>
-    cont (alg ADTUnit)
-  ADTLeft l =>
-    termFold alg (cont . alg . ADTLeft) l
-  ADTRight r =>
-    termFold alg (cont . alg . ADTRight) r
-  ADTPair l r =>
-    termFold alg (\l' => termFold alg (cont . alg . ADTPair l') r) l
+mutual
+  public export
+  termFold : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a
+  termFold alg cont (InADTT t) = case t of
+    ADTUnit =>
+      cont (alg ADTUnit)
+    ADTLeft l =>
+      termFold alg (cont . alg . ADTLeft) l
+    ADTRight r =>
+      termFold alg (cont . alg . ADTRight) r
+    ADTPair l r =>
+      termFold alg (termFoldPair alg cont r) l
+
+  public export
+  termFoldPair : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a -> a
+  termFoldPair alg cont r l = termFold alg (cont . alg . ADTPair l) r
 
 ----------------------------
 ---- Term catamorphisms ----
