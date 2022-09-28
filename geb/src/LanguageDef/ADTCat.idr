@@ -124,14 +124,10 @@ mutual
   public export
   termFold : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a
   termFold alg cont (InADTT t) = case t of
-    ADTUnit =>
-      cont (alg ADTUnit)
-    ADTLeft l =>
-      termFold alg (cont . alg . ADTLeft) l
-    ADTRight r =>
-      termFold alg (cont . alg . ADTRight) r
-    ADTPair l r =>
-      termFold alg (termFoldPair alg cont r) l
+    ADTUnit => cont (alg ADTUnit)
+    ADTLeft l => termFold alg (cont . alg . ADTLeft) l
+    ADTRight r => termFold alg (cont . alg . ADTRight) r
+    ADTPair l r => termFold alg (termFoldPair alg cont r) l
 
   public export
   termFoldPair : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a -> a
