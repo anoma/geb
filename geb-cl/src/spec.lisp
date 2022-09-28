@@ -129,10 +129,10 @@
          :accessor mcar
          :type substmorph
          :documentation "Head of the pair cell")
-   (mcadr :initarg :mcdr
-          :accessor mcdr
-          :type substmorph
-          :documentation "Tail of the pair cell"))
+   (mcdr :initarg :mcdr
+         :accessor mcdr
+         :type substmorph
+         :documentation "Tail of the pair cell"))
   (:documentation "Consing Morphisms"))
 
 (defclass project-left ()

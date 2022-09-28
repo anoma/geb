@@ -27,7 +27,6 @@
 
 (def mixprod32 (coprod mixprod16 mixprod16))
 
-
 (def test-value
   (mlist (<-left so1 so1)
          (commutes so1 so1)
@@ -59,5 +58,4 @@
                 (<-LEFT S-1 S-1) (<-LEFT S-1 S-1) (<-LEFT S-1 S-1) (<-LEFT S-1 S-1)
                 (<-RIGHT S-1 S-1) (<-LEFT S-1 S-1))))
   (is (equalp (read-from-string (format nil "~A" prod16))
-              '(× (× (× BOOL (× s-0 s-1)) (× BOOL (× s-0 s-1)))
-                  (× (× BOOL (× s-0 s-1)) (× BOOL (× s-0 s-1)))))))
+              '(× (× (× BOOL S-0 S-1) BOOL S-0 S-1) (× BOOL S-0 S-1) BOOL S-0 S-1))))

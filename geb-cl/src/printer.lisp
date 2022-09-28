@@ -44,37 +44,15 @@
 ;; Subst Constructor Printer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Prefix Prod, no collapse
+;; Prefix Prod, collapse
 (defmethod print-object ((obj prod) stream)
-  (pprint-logical-block (stream nil :prefix "(|" :suffix ")")
-    (format stream "×~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
+  (pprint-logical-block (stream nil :prefix "(" :suffix ")")
+    (format stream "×~0:I ~{~W~^~_ ~}" (same-type-to-list obj 'prod))))
 
-;; Prefix coprod, no collapse
+;; Prefix coprod, collapse
 (defmethod print-object ((obj coprod) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "+~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
-
-
-;; infix prod
-(defmethod print-object ((obj prod) stream)
-  (pprint-logical-block (stream nil :prefix "[" :suffix "]")
-    (format stream "~-1I~{~W~^~_, ~}" (same-type-to-list obj 'prod))))
-
-;; infix corpod
-(defmethod print-object ((obj coprod) stream)
-  (pprint-logical-block (stream nil :prefix "[" :suffix "]")
-    (format stream "~-1I~{~W~^~_ | ~}" (same-type-to-list obj 'coprod))))
-
-;; liberties prod
-(defmethod print-object ((obj prod) stream)
-  (pprint-logical-block (stream nil :prefix "{" :suffix "}")
-    (format stream "~-1I~{~W~^~_ ~}" (same-type-to-list obj 'prod))))
-
-;; liberties coprod
-(defmethod print-object ((obj coprod) stream)
-  (pprint-logical-block (stream nil :prefix "[" :suffix "]")
-    (format stream "~-1I~{~W~^~_ ~}" (same-type-to-list obj 'coprod))))
-
+    (format stream "+~0:I ~{~W~^~_ ~}" (same-type-to-list obj 'coprod))))
 
 (defmethod print-object ((obj so1) stream)
   (format stream "s-1"))
