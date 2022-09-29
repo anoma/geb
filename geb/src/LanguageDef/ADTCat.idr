@@ -114,12 +114,10 @@ public export
 0 termDepth : (0 _ : ADTTerm) -> Nat
 termDepth = termCataZeroUsage TermDepthAlg
 
----------------------------------------
----- Term-processing stack machine ----
----------------------------------------
+----------------------------------------------
+---- Continuation-passing-style term fold ----
+----------------------------------------------
 
--- A stack-machine implementation of term processing by a metalanguage
--- function.
 mutual
   public export
   termFold : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a
@@ -133,9 +131,48 @@ mutual
   termFoldPair : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a -> a
   termFoldPair alg cont r l = termFold alg (cont . alg . ADTPair l) r
 
-----------------------------
----- Term catamorphisms ----
-----------------------------
+---------------------------------------
+---- Term-processing stack machine ----
+---------------------------------------
+
+-- This is a concrete data-structure representation of the continuation
+-- function `a -> a` in `termFold`/`termFoldPair`.
+public export
+data TermStackElem : (0 _ : Type) -> Type where
+  TSELeft : {0 a : Type} -> TermStackElem a
+  TSERight : {0 a : Type} -> TermStackElem a
+  TSEPairWithRightTerm : {0 a : Type} -> ADTTerm -> TermStackElem a
+  TSEPairWithLeftResult : {0 a : Type} -> a -> TermStackElem a
+
+public export
+TermStack : (0 _ : Type) -> Type
+TermStack a = List (TermStackElem a)
+
+mutual
+  public export
+  partial
+  termStackRun : {0 a : Type} ->
+    TermAlg a -> TermStack a -> ADTTerm -> a
+  termStackRun alg stack (InADTT t) = case t of
+    ADTUnit => termContRun alg stack (alg ADTUnit)
+    ADTLeft l => termStackRun alg (TSELeft :: stack) l
+    ADTRight r => termStackRun alg (TSERight :: stack) r
+    ADTPair l r => termStackRun alg (TSEPairWithRightTerm r :: stack) l
+
+  public export
+  partial
+  termContRun : {0 a : Type} -> TermAlg a -> TermStack a -> a -> a
+  termContRun {a} alg [] result = result
+  termContRun {a} alg (elem :: stack) result = case elem of
+    TSELeft => termContRun alg stack (alg $ ADTLeft result)
+    TSERight => termContRun alg stack (alg $ ADTRight result)
+    TSEPairWithRightTerm r =>
+      termStackRun alg (TSEPairWithLeftResult result :: stack) r
+    TSEPairWithLeftResult l => termContRun alg stack (alg $ ADTPair l result)
+
+------------------------------------------
+---- Tail-recursive term catamorphism ----
+------------------------------------------
 
 public export
 termCata : {0 a : Type} -> TermAlg a -> ADTTerm -> a
