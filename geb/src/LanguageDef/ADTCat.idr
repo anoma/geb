@@ -135,8 +135,9 @@ mutual
 ---- Term-processing stack machine ----
 ---------------------------------------
 
--- This is a concrete data-structure representation of the continuation
+-- `TermStack` is a concrete data-structure representation of the continuation
 -- function `a -> a` in `termFold`/`termFoldPair`.
+
 public export
 data TermStackElem : (0 _ : Type) -> Type where
   TSELeft : {0 a : Type} -> TermStackElem a
