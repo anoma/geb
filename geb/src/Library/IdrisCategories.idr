@@ -378,8 +378,57 @@ ProductF : (Type -> Type) -> (Type -> Type) -> Type -> Type
 ProductF f g a = (f a, g a)
 
 public export
-(Functor f, Functor g) => Functor (ProductF f g) where
-  map m (x, y) = (map m x, map m y)
+ProdFunctor : {0 f, g : Type -> Type} ->
+  Functor f -> Functor g -> Functor (ProductF f g)
+ProdFunctor (MkFunctor mapf) (MkFunctor mapg) =
+  MkFunctor (\m, p => (mapf m (fst p), mapg m (snd p)))
+
+public export
+[ProdFunctorI] (l : Functor f) => (r : Functor g) => Functor (ProductF f g)
+    where
+  map = case ProdFunctor l r of MkFunctor mp => mp
+
+public export
+ProdApplicative : {0 f, g : Type -> Type} ->
+  {funcf : Functor f} -> {funcg : Functor g} ->
+  Applicative f -> Applicative g -> Applicative (ProductF f g)
+ProdApplicative {funcf} {funcg} applf applg =
+  let _ = ProdFunctor funcf funcg in
+  MkApplicative
+    (\elem => (pure elem, pure elem))
+    (\fp, ep => (fst fp <*> fst ep, snd fp <*> snd ep))
+
+public export
+[ProdApplicativeI] (funcf : Functor f) => (funcg : Functor g) =>
+    (Functor (ProductF f g)) =>
+    (l : Applicative f) => (r : Applicative g) =>
+    Applicative (ProductF f g) where
+  pure = case ProdApplicative {funcf} {funcg} l r of MkApplicative pp _ => pp
+  (<*>) = case ProdApplicative {funcf} {funcg} l r of MkApplicative _ ap => ap
+
+public export
+ProdMonad : {0 f, g : Type -> Type} ->
+  {funcf : Functor f} -> {funcg : Functor g} ->
+  {applf : Applicative f} -> {applg : Applicative g} ->
+  Monad f -> Monad g -> Monad (ProductF f g)
+ProdMonad {f} {g} {funcf} {funcg} {applf} {applg} monf mong =
+  let _ = ProdFunctor funcf funcg in
+  let _ = ProdApplicative {funcf} {funcg} applf applg in
+  MkMonad
+    (\ep, fp => (fst ep >>= fst . fp, snd ep >>= snd . fp))
+    (\ep => (fst ep >>= fst, snd ep >>= snd))
+
+public export
+[ProdMonadI] (funcf : Functor f) => (funcg : Functor g) =>
+    (applf : Applicative f) => (applg : Applicative g) =>
+    (Functor (ProductF f g)) =>
+    (Applicative (ProductF f g)) =>
+    (l : Monad f) => (r : Monad g) =>
+    Monad (ProductF f g) where
+  (>>=) = case ProdMonad {funcf} {funcg} {applf} {applg} l r of
+    MkMonad bp _ => bp
+  join = case ProdMonad {funcf} {funcg} {applf} {applg} l r of
+    MkMonad _ jp => jp
 
 public export
 ProductMonad : Type -> Type
