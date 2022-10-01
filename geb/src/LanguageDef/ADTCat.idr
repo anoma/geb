@@ -77,25 +77,20 @@ public export
 FreeMaybeSqArena = PolyFuncFreeM MaybeSqArena
 
 public export
-data FreeMaybeSq : Type -> Type where
-  InTV : {0 a : Type} -> a -> FreeMaybeSq a
-  InTC : {0 a : Type} -> MaybeSq (FreeMaybeSq a) -> FreeMaybeSq a
+FreeMaybeSq : Type -> Type
+FreeMaybeSq = InterpPolyFuncFreeM MaybeSqArena
 
 public export
 MuMaybeSq : Type
-MuMaybeSq = FreeMaybeSq Void
+MuMaybeSq = PolyFuncMu MaybeSqArena
 
 public export
-PosFreeMaybeSq : Type
-PosFreeMaybeSq = FreeMaybeSq Unit
-
-public export
-data CofreeMaybeSq : Type -> Type where
-  InTN : {0 a : Type} -> a -> Inf (MaybeSq (FreeMaybeSq a)) -> CofreeMaybeSq a
+CofreeMaybeSq : Type -> Type
+CofreeMaybeSq = PolyFuncCofreeCMFromScale MaybeSqArena
 
 public export
 NuMaybeSq : Type
-NuMaybeSq = CofreeMaybeSq Unit
+NuMaybeSq = PolyFuncNu MaybeSqArena
 
 -------------------------------------
 ---- Definition and constructors ----
