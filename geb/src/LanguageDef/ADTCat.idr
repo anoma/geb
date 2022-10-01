@@ -2,6 +2,7 @@ module LanguageDef.ADTCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import LanguageDef.PolyCat
 
 %default total
 
@@ -16,10 +17,6 @@ import Library.IdrisCategories
 -----------------------------
 
 public export
-PolyArena : Type
-PolyArena = (pos : Type ** pos -> Type)
-
-public export
 MaybeSq : Type -> Type
 MaybeSq = ProductF Maybe Maybe
 
@@ -29,7 +26,7 @@ MaybeSqNPos = 4
 
 public export
 MaybeSqPos : Type
-MaybeSqPos = Fin MaybeSQNPos
+MaybeSqPos = Fin MaybeSqNPos
 
 public export
 MaybeSqUnit : MaybeSqPos
@@ -37,22 +34,22 @@ MaybeSqUnit = FZ
 
 public export
 MaybeSqLeft : MaybeSqPos
-MaybeSqLeft = FS MaybeSqUnit
+MaybeSqLeft = finS MaybeSqUnit
 
 public export
 MaybeSqRight : MaybeSqPos
-MaybeSqRight = FS MaybeSqLeft
+MaybeSqRight = finS MaybeSqLeft
 
 public export
 MaybeSqPair : MaybeSqPos
-MaybeSqPair = FS MaybeSqRight
+MaybeSqPair = finS MaybeSqRight
 
 public export
 MaybeSqPosPred : Type -> Type
 MaybeSqPosPred = Vect MaybeSqNPos
 
 public export
-maybeSqPosFunc : {0 a : Type} -> MaybeSqPred a -> MaybeSqPos -> a
+maybeSqPosFunc : {0 a : Type} -> MaybeSqPosPred a -> MaybeSqPos -> a
 maybeSqPosFunc = flip index
 
 public export
@@ -64,20 +61,20 @@ MaybeSqDir : MaybeSqPos -> Type
 MaybeSqDir = Fin . MaybeSqNDir
 
 public export
-MaybeSqArena : PolyArena
+MaybeSqArena : PolyFunc
 MaybeSqArena = (MaybeSqPos ** MaybeSqDir)
 
 public export
 0 FreeMaybeSqPos : Type
-FreeMaybeSqPos = ?FreeMaybeSqPos_hole
+FreeMaybeSqPos = PolyFuncFreeMPos MaybeSqArena
 
 public export
 0 FreeMaybeSqDir : FreeMaybeSqPos -> Type
-FreeMaybeSqDir i = ?FreeMaybeSqDir_hole
+FreeMaybeSqDir = PolyFuncFreeMDir MaybeSqArena
 
 public export
-0 FreeMaybeSqArena : PolyArena
-FreeMaybeSqArena = (FreeMaybeSqPos ** FreeMaybeSqDir)
+0 FreeMaybeSqArena : PolyFunc
+FreeMaybeSqArena = PolyFuncFreeM MaybeSqArena
 
 public export
 data FreeMaybeSq : Type -> Type where
