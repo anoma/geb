@@ -23,6 +23,19 @@ import Library.IdrisCategories
 -- That is isomorphic to `(1 + I) ^ 2`, which provides another way
 -- of looking at it:  as a tree node with up to two children.
 public export
+MaybeSq : Type -> Type
+MaybeSq = ProductF Maybe Maybe
+
+public export
+data FreeMaybeSq : Type -> Type where
+  InTV : {0 a : Type} -> a -> FreeMaybeSq a
+  InTC : {0 a : Type} -> MaybeSq (FreeMaybeSq a) -> FreeMaybeSq a
+
+public export
+data CofreeMaybeSq : Type -> Type where
+  InTN : {0 a : Type} -> a -> Inf (MaybeSq (FreeMaybeSq a)) -> CofreeMaybeSq a
+
+public export
 data ADTTermF : Type -> Type where
   ADTUnit : {0 carrier : Type} -> ADTTermF carrier
   ADTLeft : {0 carrier : Type} -> carrier -> ADTTermF carrier
