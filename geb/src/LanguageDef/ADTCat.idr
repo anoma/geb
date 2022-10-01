@@ -13,11 +13,71 @@ import Library.IdrisCategories
 
 -----------------------------
 ---- Nameless definition ----
----- Nameless definition ----
+-----------------------------
+
+public export
+PolyArena : Type
+PolyArena = (pos : Type ** pos -> Type)
 
 public export
 MaybeSq : Type -> Type
 MaybeSq = ProductF Maybe Maybe
+
+public export
+MaybeSqNPos : Nat
+MaybeSqNPos = 4
+
+public export
+MaybeSqPos : Type
+MaybeSqPos = Fin MaybeSQNPos
+
+public export
+MaybeSqUnit : MaybeSqPos
+MaybeSqUnit = FZ
+
+public export
+MaybeSqLeft : MaybeSqPos
+MaybeSqLeft = FS MaybeSqUnit
+
+public export
+MaybeSqRight : MaybeSqPos
+MaybeSqRight = FS MaybeSqLeft
+
+public export
+MaybeSqPair : MaybeSqPos
+MaybeSqPair = FS MaybeSqRight
+
+public export
+MaybeSqPosPred : Type -> Type
+MaybeSqPosPred = Vect MaybeSqNPos
+
+public export
+maybeSqPosFunc : {0 a : Type} -> MaybeSqPred a -> MaybeSqPos -> a
+maybeSqPosFunc = flip index
+
+public export
+MaybeSqNDir : MaybeSqPos -> Nat
+MaybeSqNDir = maybeSqPosFunc [0, 1, 1, 2]
+
+public export
+MaybeSqDir : MaybeSqPos -> Type
+MaybeSqDir = Fin . MaybeSqNDir
+
+public export
+MaybeSqArena : PolyArena
+MaybeSqArena = (MaybeSqPos ** MaybeSqDir)
+
+public export
+0 FreeMaybeSqPos : Type
+FreeMaybeSqPos = ?FreeMaybeSqPos_hole
+
+public export
+0 FreeMaybeSqDir : FreeMaybeSqPos -> Type
+FreeMaybeSqDir i = ?FreeMaybeSqDir_hole
+
+public export
+0 FreeMaybeSqArena : PolyArena
+FreeMaybeSqArena = (FreeMaybeSqPos ** FreeMaybeSqDir)
 
 public export
 data FreeMaybeSq : Type -> Type where
