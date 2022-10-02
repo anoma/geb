@@ -142,12 +142,12 @@ metaPolyAnaCPS coalg = metaPolyUnfold id where
       p $$* q => metaPolyAnaCont ($$*) cont p q
 
 public export
-MetaPolyPairAlg : Type -> Type
-MetaPolyPairAlg x = MetaPolyAlg (PolyMu -> x)
+MetaPolyPairAdjAlg : Type -> Type
+MetaPolyPairAdjAlg x = MetaPolyAlg (PolyMu -> x)
 
 public export
-metaPolyPairCata : MetaPolyPairAlg x -> PolyMu -> PolyMu -> x
-metaPolyPairCata = metaPolyCata
+metaPolyPairAdjCata : MetaPolyPairAdjAlg x -> PolyMu -> PolyMu -> x
+metaPolyPairAdjCata = metaPolyCata
 
 -------------------
 ---- Utilities ----
@@ -205,7 +205,7 @@ PolyShowAlg PFI = "id"
 PolyShowAlg PF0 = "0"
 PolyShowAlg PF1 = "1"
 PolyShowAlg (x $$+ y) = "(" ++ x ++ " + " ++ y ++ ")"
-PolyShowAlg (x $$* y) = x ++ " * " ++ y
+PolyShowAlg (x $$* y) = "[" ++ x ++ " * " ++ y ++ "]"
 
 public export
 Show PolyMu where
@@ -216,7 +216,7 @@ Show PolyMu where
 ---------------------------------------------
 
 public export
-PolyMuEqAlg : MetaPolyPairAlg Bool
+PolyMuEqAlg : MetaPolyPairAdjAlg Bool
 PolyMuEqAlg PFI (InPCom PFI) = True
 PolyMuEqAlg PFI _ = False
 PolyMuEqAlg PF0 (InPCom PF0) = True
@@ -230,7 +230,7 @@ PolyMuEqAlg (p $$* q) _ = False
 
 public export
 Eq PolyMu where
-  (==) = metaPolyPairCata PolyMuEqAlg
+  (==) = metaPolyPairAdjCata PolyMuEqAlg
 
 --------------------------------------------------
 ---- Normalization of polynomial endofunctors ----
