@@ -17,10 +17,6 @@ import LanguageDef.PolyCat
 -----------------------------
 
 public export
-MaybeSq : Type -> Type
-MaybeSq = ProductF Maybe Maybe
-
-public export
 MaybeSqNPos : Nat
 MaybeSqNPos = 4
 
@@ -63,6 +59,10 @@ MaybeSqDir = Fin . MaybeSqNDir
 public export
 MaybeSqArena : PolyFunc
 MaybeSqArena = (MaybeSqPos ** MaybeSqDir)
+
+public export
+MaybeSq : Type -> Type
+MaybeSq = InterpPolyFunc MaybeSqArena
 
 public export
 0 FreeMaybeSqPos : Type
