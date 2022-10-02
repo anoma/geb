@@ -461,7 +461,9 @@ public export
 data PolyMuNTAlg : MetaPolyPairAdjAlg Type where
   PNTFrom0 : (q : PolyMu) -> PolyMuNTAlg PF0 q
   PNTFrom1 : (q : PolyMu) -> ?polymunt_from1_app0_hole -> PolyMuNTAlg PF1 q
-  PNTFromI : (q : PolyMu) -> ?polymunt_fromI_alldirs_hole -> PolyMuNTAlg PFI q
+  PNTFromI : (q : PolyMu) ->
+    (qdir : ?polymunt_fromI_non0dir_hole) ->
+    ?polymunt_fromI_alldirs_hole qdir -> PolyMuNTAlg PFI q
   PNTFromCop : {p, q : PolyMu -> Type} -> {r : PolyMu} ->
     p r -> q r -> PolyMuNTAlg (p $$+ q) r
   PNTFromProd : {p, q : PolyMu -> Type} -> {r : PolyMu} ->
