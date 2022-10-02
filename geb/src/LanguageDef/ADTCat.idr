@@ -44,14 +44,6 @@ Functor PolyF where
   map m (p $$+ q) = m p $$+ m q
   map m (p $$* q) = m p $$* m q
 
-public export
-MetaPolyAlg : Type -> Type
-MetaPolyAlg x = PolyF x -> x
-
-public export
-MetaPolyCoalg : Type -> Type
-MetaPolyCoalg x = x -> PolyF x
-
 -----------------------------------------------------------------------
 ---- Polynomial functors as least fixed point of generator functor ----
 -----------------------------------------------------------------------
@@ -82,6 +74,10 @@ public export
 public export
 ($*) : PolyMu -> PolyMu -> PolyMu
 ($*) = InPCom .* ($$*)
+
+public export
+MetaPolyAlg : Type -> Type
+MetaPolyAlg x = PolyF x -> x
 
 public export
 metaPolyCata : MetaPolyAlg x -> PolyMu -> x
@@ -115,6 +111,10 @@ data PolyNu : Type where
   InPLabel : Inf (PolyF PolyNu) -> PolyNu
 
 public export
+MetaPolyCoalg : Type -> Type
+MetaPolyCoalg x = x -> PolyF x
+
+public export
 metaPolyAna : MetaPolyCoalg x -> x -> Inf PolyNu
 metaPolyAna coalg t = case coalg t of
   PFI => InPLabel PFI
@@ -141,6 +141,7 @@ metaPolyAnaCPS coalg = metaPolyUnfold id where
       p $$+ q => metaPolyAnaCont ($$+) cont p q
       p $$* q => metaPolyAnaCont ($$*) cont p q
 
+-- Catamorphism on a pair of `PolyMu`s using the product-hom adjunction.
 public export
 MetaPolyPairAdjAlg : Type -> Type
 MetaPolyPairAdjAlg x = MetaPolyAlg (PolyMu -> x)
@@ -148,6 +149,19 @@ MetaPolyPairAdjAlg x = MetaPolyAlg (PolyMu -> x)
 public export
 metaPolyPairAdjCata : MetaPolyPairAdjAlg x -> PolyMu -> PolyMu -> x
 metaPolyPairAdjCata = metaPolyCata
+
+-- Catamorphism on a pair of `PolyMu`s using all combinations of cases.
+public export
+MetaPolyPairAlg : Type -> Type
+MetaPolyPairAlg x = PolyF (PolyMu -> x) -> PolyF PolyMu -> x
+
+public export
+MetaPolyPairAlgToAdj : {0 x : Type} -> MetaPolyPairAlg x -> MetaPolyPairAdjAlg x
+MetaPolyPairAlgToAdj alg f (InPCom p) = alg f p
+
+public export
+metaPolyPairCata : MetaPolyPairAlg x -> PolyMu -> PolyMu -> x
+metaPolyPairCata alg = metaPolyPairAdjCata (MetaPolyPairAlgToAdj alg)
 
 -------------------
 ---- Utilities ----
@@ -216,21 +230,21 @@ Show PolyMu where
 ---------------------------------------------
 
 public export
-PolyMuEqAlg : MetaPolyPairAdjAlg Bool
-PolyMuEqAlg PFI (InPCom PFI) = True
+PolyMuEqAlg : MetaPolyPairAlg Bool
+PolyMuEqAlg PFI PFI = True
 PolyMuEqAlg PFI _ = False
-PolyMuEqAlg PF0 (InPCom PF0) = True
+PolyMuEqAlg PF0 PF0 = True
 PolyMuEqAlg PF0 _ = False
-PolyMuEqAlg PF1 (InPCom PF1) = True
+PolyMuEqAlg PF1 PF1 = True
 PolyMuEqAlg PF1 _ = False
-PolyMuEqAlg (p $$+ q) (InPCom (r $$+ s)) = p r && q s
+PolyMuEqAlg (p $$+ q) (r $$+ s) = p r && q s
 PolyMuEqAlg (p $$+ q) _ = False
-PolyMuEqAlg (p $$* q) (InPCom (r $$* s)) = p r && q s
+PolyMuEqAlg (p $$* q) (r $$* s) = p r && q s
 PolyMuEqAlg (p $$* q) _ = False
 
 public export
 Eq PolyMu where
-  (==) = metaPolyPairAdjCata PolyMuEqAlg
+  (==) = metaPolyPairCata PolyMuEqAlg
 
 --------------------------------------------------
 ---- Normalization of polynomial endofunctors ----
