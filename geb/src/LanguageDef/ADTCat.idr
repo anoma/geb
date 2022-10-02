@@ -432,7 +432,7 @@ MetaPolyFNat = metaPolyCata MetaPolyFNatAlg
 ----------------------------------------------------------
 
 public export
-PolyHomObjAlg : MetaPolyAlg (PolyMu -> PolyMu)
+PolyHomObjAlg : MetaPolyPairAdjAlg PolyMu
 -- id -> r == r . (id + 1) (see formula 4.27 in _Polynomial Functors: A General
 -- Theory of Interaction_)
 PolyHomObjAlg PFI r = r $. (PolyI $+ Poly1)
@@ -447,7 +447,7 @@ PolyHomObjAlg (p $$* q) r = p $ q r
 
 public export
 PolyHomObj : PolyMu -> PolyMu -> PolyMu
-PolyHomObj = metaPolyCata PolyHomObjAlg
+PolyHomObj = metaPolyPairAdjCata PolyHomObjAlg
 
 public export
 PolyExp : PolyMu -> PolyMu -> PolyMu
