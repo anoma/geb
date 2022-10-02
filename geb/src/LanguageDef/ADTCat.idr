@@ -85,7 +85,16 @@ public export
 
 public export
 metaPolyCata : MetaPolyAlg x -> PolyMu -> x
-metaPolyCata alg = metaPolyFold id where
+metaPolyCata alg (InPCom p) = alg $ case p of
+  PFI => PFI
+  PF0 => PF0
+  PF1 => PF1
+  p $$+ q => metaPolyCata alg p $$+ metaPolyCata alg q
+  p $$* q => metaPolyCata alg p $$* metaPolyCata alg q
+
+public export
+metaPolyCataCPS : MetaPolyAlg x -> PolyMu -> x
+metaPolyCataCPS alg = metaPolyFold id where
   mutual
     metaPolyCataCont : (x -> x -> PolyF x) ->
       (x -> x) -> PolyMu -> PolyMu -> x
