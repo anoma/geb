@@ -297,7 +297,7 @@ polyRemoveOne = metaPolyCata PolyRemoveOneAlg
 ---------------------------------------------------------------
 
 public export
-PolyComposeAlg : MetaPolyAlg (PolyMu -> PolyMu)
+PolyComposeAlg : MetaPolyPairAdjAlg PolyMu
 PolyComposeAlg PFI q = q
 PolyComposeAlg PF0 _ = Poly0
 PolyComposeAlg PF1 _ = Poly1
@@ -307,7 +307,7 @@ PolyComposeAlg (p $$* q) r = p r $* q r
 infixr 2 $.
 public export
 ($.) : PolyMu -> PolyMu -> PolyMu
-($.) = metaPolyCata PolyComposeAlg
+($.) = metaPolyPairAdjCata PolyComposeAlg
 
 -----------------------------------------------------
 ---- Multiplication by a constant (via addition) ----
