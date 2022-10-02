@@ -116,7 +116,16 @@ data PolyNu : Type where
 
 public export
 metaPolyAna : MetaPolyCoalg x -> x -> Inf PolyNu
-metaPolyAna coalg = metaPolyUnfold id where
+metaPolyAna coalg t = case coalg t of
+  PFI => InPLabel PFI
+  PF0 => InPLabel PF0
+  PF1 => InPLabel PF1
+  p $$+ q => InPLabel $ metaPolyAna coalg p $$+ metaPolyAna coalg q
+  p $$* q => InPLabel $ metaPolyAna coalg p $$* metaPolyAna coalg q
+
+public export
+metaPolyAnaCPS : MetaPolyCoalg x -> x -> Inf PolyNu
+metaPolyAnaCPS coalg = metaPolyUnfold id where
   mutual
     metaPolyAnaCont : (PolyNu -> PolyNu -> PolyF PolyNu) ->
       (PolyNu -> PolyNu) -> x -> x -> PolyNu
