@@ -458,12 +458,18 @@ PolyExp = flip PolyHomObj
 ---------------------------------
 
 public export
-data PolyMuNT : PolyMu -> PolyMu -> Type where
-  PNTFrom0 : (p : PolyMu) -> PolyMuNT Poly0 p
-  PNTFromCop : {p, q, r : PolyMu} ->
-    PolyMuNT p r -> PolyMuNT q r -> PolyMuNT (p $+ q) r
-  PNTFromProd : {p, q, r : PolyMu} ->
-    PolyMuNT p (PolyHomObj q r) -> PolyMuNT (p $* q) r
+data PolyMuNTAlg : MetaPolyPairAdjAlg Type where
+  PNTFrom0 : (q : PolyMu) -> PolyMuNTAlg PF0 q
+  PNTFrom1 : (q : PolyMu) -> ?polymunt_from1_app0_hole -> PolyMuNTAlg PF1 q
+  PNTFromI : (q : PolyMu) -> ?polymunt_fromI_alldirs_hole -> PolyMuNTAlg PFI q
+  PNTFromCop : {p, q : PolyMu -> Type} -> {r : PolyMu} ->
+    p r -> q r -> PolyMuNTAlg (p $$+ q) r
+  PNTFromProd : {p, q : PolyMu -> Type} -> {r : PolyMu} ->
+    p (PolyHomObj ?polymunt_fromprod_origq_hole r) -> PolyMuNTAlg (p $$* q) r
+
+public export
+PolyMuNT : PolyMu -> PolyMu -> Type
+PolyMuNT = metaPolyPairAdjCata PolyMuNTAlg
 
 ----------------------------------------
 ---- Polynomial monads and comonads ----
