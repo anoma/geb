@@ -523,7 +523,7 @@ public export
 PolyPosDir : (p : PolyMu) -> PolyPos p -> Type
 PolyPosDir p = pfDir {p=(PolyArena p)}
 
--- A direction of an endofunctor.
+-- Any direction of an endofunctor.
 public export
 PolyDir : PolyMu -> Type
 PolyDir p = DPair (PolyPos p) (PolyPosDir p)
