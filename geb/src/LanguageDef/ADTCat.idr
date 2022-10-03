@@ -42,7 +42,28 @@ public export
 soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
 soCata = pfCata {p=SubstObjPF}
 
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+SOSizeAlg : SOAlg Nat
+SOSizeAlg SOPos0 dir = 1
+SOSizeAlg SOPos1 dir = 1
+SOSizeAlg SOPosC dir = dir SODirL + dir SODirR
+SOSizeAlg SOPosP dir = dir SODir1 + dir SODir2
+
+public export
+soSize : SOMu -> Nat
+soSize = soCata SOSizeAlg
+
 ----------------------------------------------------------------------
+----------------------------------------------------------------------
+---- Inductive definition of substitutive polynomial endofunctors ----
+----                 (Not using PolyFunc)                         ----
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+
 ----------------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial endofunctors ----
 ----------------------------------------------------------------------
@@ -80,8 +101,26 @@ SEFAlg : Type -> Type
 SEFAlg = PFAlg SubstEFPF
 
 public export
+sefToSoAlg : {0 a : Type} ->
+  SOAlg a -> (pos : SubstObjPos) -> (SubstEFDir (SEFPosU pos) -> a) -> a
+sefToSoAlg alg pos dir = alg pos $ dir . SEFDirU {pos}
+
+public export
 sefCata : {0 a : Type} -> SEFAlg a -> SEFMu -> a
 sefCata = pfCata {p=SubstEFPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+SEFSizeAlg : SEFAlg Nat
+SEFSizeAlg (SEFPosU pos) dir = sefToSoAlg SOSizeAlg pos dir
+SEFSizeAlg SEFPosI dir = 1
+
+public export
+sefSize : SEFMu -> Nat
+sefSize = sefCata SEFSizeAlg
 
 --------------------------------------------------------------------------
 ---- Functor which generates polynomial functors (not using PolyFunc) ----
