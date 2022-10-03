@@ -153,6 +153,20 @@ metaPolyAnaCPS coalg = metaPolyUnfold id where
 ---- Derived variants of catamorphism ----
 ------------------------------------------
 
+-- Catamorphism which passes not only the output of the previous
+-- induction steps but also the original `PolyMu` to the algebra.
+public export
+MetaPolyArgAlg : Type -> Type
+MetaPolyArgAlg x = PolyF (PolyMu, x) -> x
+
+public export
+MetaPolyAlgFromArg : {0 x : Type} -> MetaPolyArgAlg x -> MetaPolyAlg (PolyMu, x)
+MetaPolyAlgFromArg alg t = (InPCom $ map fst t, alg t)
+
+public export
+metaPolyArgCata : MetaPolyArgAlg x -> PolyMu -> x
+metaPolyArgCata alg t = snd $ metaPolyCata (MetaPolyAlgFromArg alg) t
+
 -- Catamorphism on a pair of `PolyMu`s using the product-hom adjunction.
 public export
 MetaPolyPairAdjAlg : Type -> Type
@@ -161,6 +175,16 @@ MetaPolyPairAdjAlg x = MetaPolyAlg (PolyMu -> x)
 public export
 metaPolyPairAdjCata : MetaPolyPairAdjAlg x -> PolyMu -> PolyMu -> x
 metaPolyPairAdjCata = metaPolyCata
+
+-- Catamorphism on a pair of `PolyMu`s using the product-hom adjunction,
+-- where the original first `PolyMu` is also available to the algebra.
+public export
+MetaPolyPairAdjArgAlg : Type -> Type
+MetaPolyPairAdjArgAlg x = PolyF (PolyMu, PolyMu -> x) -> PolyMu -> x
+
+public export
+metaPolyPairAdjArgCata : MetaPolyPairAdjArgAlg x -> PolyMu -> PolyMu -> x
+metaPolyPairAdjArgCata = metaPolyArgCata
 
 -- Catamorphism on a pair of `PolyMu`s using all combinations of cases.
 public export
@@ -470,20 +494,20 @@ PolyExp = flip PolyHomObj
 ---------------------------------
 
 public export
-data PolyMuNTAlg : MetaPolyPairAdjAlg Type where
+data PolyMuNTAlg : MetaPolyPairAdjArgAlg Type where
   PNTFrom0 : (q : PolyMu) -> PolyMuNTAlg PF0 q
   PNTFrom1 : (q : PolyMu) -> ?polymunt_from1_app0_hole -> PolyMuNTAlg PF1 q
   PNTFromI : (q : PolyMu) ->
     (qdir : ?polymunt_fromI_non0dir_hole) ->
     ?polymunt_fromI_alldirs_hole qdir -> PolyMuNTAlg PFI q
-  PNTFromCop : {p, q : PolyMu -> Type} -> {r : PolyMu} ->
-    p r -> q r -> PolyMuNTAlg (p $$+ q) r
-  PNTFromProd : {p, q : PolyMu -> Type} -> {r : PolyMu} ->
-    p (PolyHomObj ?polymunt_fromprod_origq_hole r) -> PolyMuNTAlg (p $$* q) r
+  PNTFromCop : {p, q : (PolyMu, PolyMu -> Type)} -> {r : PolyMu} ->
+    snd p r -> snd q r -> PolyMuNTAlg (p $$+ q) r
+  PNTFromProd : {p, q : (PolyMu, PolyMu -> Type)} -> {r : PolyMu} ->
+    snd p (PolyHomObj (fst q) r) -> PolyMuNTAlg (p $$* q) r
 
 public export
 PolyMuNT : PolyMu -> PolyMu -> Type
-PolyMuNT = metaPolyPairAdjCata PolyMuNTAlg
+PolyMuNT = metaPolyPairAdjArgCata PolyMuNTAlg
 
 ----------------------------------------
 ---- Polynomial monads and comonads ----
