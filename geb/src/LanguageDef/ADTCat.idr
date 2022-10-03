@@ -550,8 +550,8 @@ PolyMuNTAlg : MetaPolyPairAdjArgAlg Type
 PolyMuNTAlg PFI q = PolyDir q
 PolyMuNTAlg PF0 _ = ()
 PolyMuNTAlg PF1 q = PolyZeroPos q
-PolyMuNTAlg (p $$+ q) r = Pair (snd p r) (snd q r)
-PolyMuNTAlg (p $$* q) r = snd p $ PolyHomObj (fst q) r
+PolyMuNTAlg ((_, p) $$+ (_, q)) r = Pair (p r) (q r)
+PolyMuNTAlg ((_, p) $$* (q, _)) r = p $ PolyHomObj q r
 
 public export
 PolyMuNT : PolyMu -> PolyMu -> Type
