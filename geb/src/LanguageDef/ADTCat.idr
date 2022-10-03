@@ -535,17 +535,12 @@ PolyZeroPos = metaPolyCata PolyZeroPosAlg
 ---------------------------------
 
 public export
-data PolyMuNTAlg : MetaPolyPairAdjArgAlg Type where
-  PNTFrom0 : (q : PolyMu) ->
-    PolyMuNTAlg PF0 q
-  PNTFrom1 : (q : PolyMu) ->
-    PolyZeroPos q -> PolyMuNTAlg PF1 q
-  PNTFromI : (q : PolyMu) ->
-    PolyDir q -> PolyMuNTAlg PFI q
-  PNTFromCop : {p, q : (PolyMu, PolyMu -> Type)} -> {r : PolyMu} ->
-    snd p r -> snd q r -> PolyMuNTAlg (p $$+ q) r
-  PNTFromProd : {p, q : (PolyMu, PolyMu -> Type)} -> {r : PolyMu} ->
-    snd p (PolyHomObj (fst q) r) -> PolyMuNTAlg (p $$* q) r
+PolyMuNTAlg : MetaPolyPairAdjArgAlg Type
+PolyMuNTAlg PFI q = PolyDir q
+PolyMuNTAlg PF0 _ = ()
+PolyMuNTAlg PF1 q = PolyZeroPos q
+PolyMuNTAlg (p $$+ q) r = Pair (snd p r) (snd q r)
+PolyMuNTAlg (p $$* q) r = snd p $ PolyHomObj (fst q) r
 
 public export
 PolyMuNT : PolyMu -> PolyMu -> Type
