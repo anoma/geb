@@ -493,23 +493,26 @@ PolyExp = flip PolyHomObj
 ---- Position/direction view of polynomial functors ----
 --------------------------------------------------------
 
--- The "positions" of an endofunctor, in the arena viewpoint.
+-- The arena of an endofunctor.
+public export
+PolyArenaAlg : MetaPolyAlg PolyFunc
+PolyArenaAlg p = ?PolyArenaAlg_hole
 
 public export
-PolyPosAlg : MetaPolyAlg Type
-PolyPosAlg p = ?PolyPosAlg_hole
+PolyArena : PolyMu -> PolyFunc
+PolyArena = metaPolyCata PolyArenaAlg
 
+-- The "positions" of an endofunctor, in the arena viewpoint.
 public export
 PolyPos : PolyMu -> Type
-PolyPos = metaPolyCata PolyPosAlg
+PolyPos = DPair.fst . PolyArena
 
 -- The "directions" of a given position, in the arena viewpoint.
 public export
-PolyDir : {0 p : PolyMu} -> PolyPos p -> Type
-PolyDir {p} pos = ?PolyDir_hole
+PolyDir : (p : PolyMu) -> PolyPos p -> Type
+PolyDir p = snd (PolyArena p)
 
 -- The zero-power positions -- that is, the ones with no directions.
-
 public export
 PolyZeroPosAlg : MetaPolyAlg Type
 PolyZeroPosAlg p = ?PolyZeroPosAlg_hole
@@ -524,10 +527,12 @@ PolyZeroPos = metaPolyCata PolyZeroPosAlg
 
 public export
 data PolyMuNTAlg : MetaPolyPairAdjArgAlg Type where
-  PNTFrom0 : (q : PolyMu) -> PolyMuNTAlg PF0 q
-  PNTFrom1 : (q : PolyMu) -> PolyZeroPos q -> PolyMuNTAlg PF1 q
+  PNTFrom0 : (q : PolyMu) ->
+    PolyMuNTAlg PF0 q
+  PNTFrom1 : (q : PolyMu) ->
+    PolyZeroPos q -> PolyMuNTAlg PF1 q
   PNTFromI : (q : PolyMu) ->
-    (qpos : PolyPos q) -> PolyDir {p=q} qpos -> PolyMuNTAlg PFI q
+    (qpos : PolyPos q) -> PolyDir q qpos -> PolyMuNTAlg PFI q
   PNTFromCop : {p, q : (PolyMu, PolyMu -> Type)} -> {r : PolyMu} ->
     snd p r -> snd q r -> PolyMuNTAlg (p $$+ q) r
   PNTFromProd : {p, q : (PolyMu, PolyMu -> Type)} -> {r : PolyMu} ->

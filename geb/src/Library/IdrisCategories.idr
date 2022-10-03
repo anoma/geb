@@ -105,6 +105,11 @@ public export
 SliceObj : Type -> Type
 SliceObj a = a -> Type
 
+-- An object of some slice category of `Type`.
+public export
+Slice : Type
+Slice = DPair Type SliceObj
+
 public export
 SliceFunctor : Type -> Type -> Type
 SliceFunctor a b = SliceObj a -> SliceObj b
