@@ -6,6 +6,30 @@ import public LanguageDef.PolyCat
 
 %default total
 
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+---- Inductive definition of substitutive polynomial objects ----
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+public export
+data SubstObjPos : Type where
+  SOPos0 : SubstObjPos -- Initial object
+  SOPos1 : SubstObjPos -- Terminal object
+  SOPosC : SubstObjPos -- Coproduct
+  SOPosP : SubstObjPos -- Product
+
+public export
+data SubstObjDir : SubstObjPos -> Type where
+  SODirL : SubstObjDir SOPosC -- left object of coproduct
+  SODirR : SubstObjDir SOPosC -- right object of coproduct
+  SODir1 : SubstObjDir SOPosP -- first object of product
+  SODir2 : SubstObjDir SOPosP -- second object of product
+
+public export
+SubstObjPF : PolyFunc
+SubstObjPF = (SubstObjPos ** SubstObjDir)
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial endofunctors ----
@@ -15,6 +39,25 @@ import public LanguageDef.PolyCat
 -----------------------------------------------------
 ---- Functor which generates polynomial functors ----
 -----------------------------------------------------
+
+public export
+data SubstEFPos : Type where
+  SEFPosU : SubstObjPos -> SubstEFPos -- same universal objects as `SubstObjPF`
+  SEFPosI : SubstEFPos -- identity endofunctor
+
+public export
+data SubstEFDir : SubstEFPos -> Type where
+  -- Same directions for corresponding positions as `SubstObjPF`
+  SEFDirU : {0 pos : SubstObjPos} -> SubstObjDir p -> SubstEFDir (SEFPosU p)
+  -- Although the identity endofunctor has one position, the position
+  -- corresponding to the identity of the endofunctor which _generates_
+  -- endofunctors has no positions, because there is just one identity
+  -- functor -- the constructor which generates the identity endofunctor does
+  -- not take any endofunctors as parameters
+
+public export
+SubstEFPF : PolyFunc
+SubstEFPF = (SubstEFPos ** SubstEFDir)
 
 infixr 8 $$+
 infixr 9 $$*
