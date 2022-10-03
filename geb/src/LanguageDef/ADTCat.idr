@@ -489,6 +489,35 @@ public export
 PolyExp : PolyMu -> PolyMu -> PolyMu
 PolyExp = flip PolyHomObj
 
+--------------------------------------------------------
+---- Position/direction view of polynomial functors ----
+--------------------------------------------------------
+
+-- The "positions" of an endofunctor, in the arena viewpoint.
+
+public export
+PolyPosAlg : MetaPolyAlg Type
+PolyPosAlg p = ?PolyPosAlg_hole
+
+public export
+PolyPos : PolyMu -> Type
+PolyPos = metaPolyCata PolyPosAlg
+
+-- The "directions" of a given position, in the arena viewpoint.
+public export
+PolyDir : {0 p : PolyMu} -> PolyPos p -> Type
+PolyDir {p} pos = ?PolyDir_hole
+
+-- The zero-power positions -- that is, the ones with no directions.
+
+public export
+PolyZeroPosAlg : MetaPolyAlg Type
+PolyZeroPosAlg p = ?PolyZeroPosAlg_hole
+
+public export
+PolyZeroPos : PolyMu -> Type
+PolyZeroPos = metaPolyCata PolyZeroPosAlg
+
 ---------------------------------
 ---- Natural transformations ----
 ---------------------------------
@@ -496,10 +525,9 @@ PolyExp = flip PolyHomObj
 public export
 data PolyMuNTAlg : MetaPolyPairAdjArgAlg Type where
   PNTFrom0 : (q : PolyMu) -> PolyMuNTAlg PF0 q
-  PNTFrom1 : (q : PolyMu) -> ?polymunt_from1_app0_hole -> PolyMuNTAlg PF1 q
+  PNTFrom1 : (q : PolyMu) -> PolyZeroPos q -> PolyMuNTAlg PF1 q
   PNTFromI : (q : PolyMu) ->
-    (qdir : ?polymunt_fromI_non0dir_hole) ->
-    ?polymunt_fromI_alldirs_hole qdir -> PolyMuNTAlg PFI q
+    (qpos : PolyPos q) -> PolyDir {p=q} qpos -> PolyMuNTAlg PFI q
   PNTFromCop : {p, q : (PolyMu, PolyMu -> Type)} -> {r : PolyMu} ->
     snd p r -> snd q r -> PolyMuNTAlg (p $$+ q) r
   PNTFromProd : {p, q : (PolyMu, PolyMu -> Type)} -> {r : PolyMu} ->
