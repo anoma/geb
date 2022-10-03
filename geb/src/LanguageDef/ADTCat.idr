@@ -493,13 +493,24 @@ PolyExp = flip PolyHomObj
 ---- Position/direction view of polynomial functors ----
 --------------------------------------------------------
 
+-- An alternate name since `PolyFunc` is close to `PolyMu`.
+public export
+PFArena : Type
+PFArena = PolyFunc
+
 -- The arena of an endofunctor.
 public export
-PolyArenaAlg : MetaPolyAlg PolyFunc
-PolyArenaAlg p = ?PolyArenaAlg_hole
+PolyArenaAlg : MetaPolyAlg PFArena
+PolyArenaAlg PFI = (Unit ** const Unit)
+PolyArenaAlg PF0 = (Void ** voidF Type)
+PolyArenaAlg PF1 = (Unit ** const Void)
+PolyArenaAlg ((ppos ** pdir) $$+ (qpos ** qdir)) =
+  (Either ppos qpos ** ?PolyArenaAlg_hole_coproduct)
+PolyArenaAlg ((ppos ** pdir) $$* (qpos ** qdir)) =
+  (Pair ppos qpos ** ?PolyArenaAlg_hole_product)
 
 public export
-PolyArena : PolyMu -> PolyFunc
+PolyArena : PolyMu -> PFArena
 PolyArena = metaPolyCata PolyArenaAlg
 
 -- The "positions" of an endofunctor, in the arena viewpoint.
@@ -651,7 +662,7 @@ MaybeSqDir : MaybeSqPos -> Type
 MaybeSqDir = Fin . MaybeSqNDir
 
 public export
-MaybeSqArena : PolyFunc
+MaybeSqArena : PFArena
 MaybeSqArena = (MaybeSqPos ** MaybeSqDir)
 
 public export
@@ -667,7 +678,7 @@ public export
 FreeMaybeSqDir = PolyFuncFreeMDir MaybeSqArena
 
 public export
-0 FreeMaybeSqArena : PolyFunc
+0 FreeMaybeSqArena : PFArena
 FreeMaybeSqArena = PolyFuncFreeM MaybeSqArena
 
 public export
