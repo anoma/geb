@@ -30,6 +30,18 @@ public export
 SubstObjPF : PolyFunc
 SubstObjPF = (SubstObjPos ** SubstObjDir)
 
+public export
+SOMu : Type
+SOMu = PolyFuncMu SubstObjPF
+
+public export
+SOAlg : Type -> Type
+SOAlg = PFAlg SubstObjPF
+
+public export
+soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
+soCata = pfCata {p=SubstObjPF}
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial endofunctors ----
@@ -58,6 +70,22 @@ data SubstEFDir : SubstEFPos -> Type where
 public export
 SubstEFPF : PolyFunc
 SubstEFPF = (SubstEFPos ** SubstEFDir)
+
+public export
+SEFMu : Type
+SEFMu = PolyFuncMu SubstEFPF
+
+public export
+SEFAlg : Type -> Type
+SEFAlg = PFAlg SubstEFPF
+
+public export
+sefCata : {0 a : Type} -> SEFAlg a -> SEFMu -> a
+sefCata = pfCata {p=SubstEFPF}
+
+--------------------------------------------------------------------------
+---- Functor which generates polynomial functors (not using PolyFunc) ----
+--------------------------------------------------------------------------
 
 infixr 8 $$+
 infixr 9 $$*
