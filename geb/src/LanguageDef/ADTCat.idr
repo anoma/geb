@@ -516,12 +516,12 @@ PolyArena = metaPolyCata PolyArenaAlg
 -- The "positions" of an endofunctor, in the arena viewpoint.
 public export
 PolyPos : PolyMu -> Type
-PolyPos = DPair.fst . PolyArena
+PolyPos = pfPos . PolyArena
 
 -- The "directions" of a given position, in the arena viewpoint.
 public export
 PolyPosDir : (p : PolyMu) -> PolyPos p -> Type
-PolyPosDir p = snd (PolyArena p)
+PolyPosDir p = pfDir {p=(PolyArena p)}
 
 -- A direction of an endofunctor.
 public export
