@@ -52,6 +52,10 @@ public export
 data PolyMu : Type where
   InPCom : PolyF PolyMu -> PolyMu
 
+public export
+data PolyNu : Type where
+  InPLabel : Inf (PolyF PolyNu) -> PolyNu
+
 infixr 8 $+
 infixr 9 $*
 
@@ -74,6 +78,10 @@ public export
 public export
 ($*) : PolyMu -> PolyMu -> PolyMu
 ($*) = InPCom .* ($$*)
+
+----------------------------------
+---- Algebra and catamorphism ----
+----------------------------------
 
 public export
 MetaPolyAlg : Type -> Type
@@ -106,9 +114,9 @@ metaPolyCataCPS alg = metaPolyFold id where
       p $$+ q => metaPolyCataCont ($$+) cont p q
       p $$* q => metaPolyCataCont ($$*) cont p q
 
-public export
-data PolyNu : Type where
-  InPLabel : Inf (PolyF PolyNu) -> PolyNu
+-----------------------------------
+---- Coalgebra and anamorphism ----
+-----------------------------------
 
 public export
 MetaPolyCoalg : Type -> Type
@@ -140,6 +148,10 @@ metaPolyAnaCPS coalg = metaPolyUnfold id where
       PF1 => cont (InPLabel PF1)
       p $$+ q => metaPolyAnaCont ($$+) cont p q
       p $$* q => metaPolyAnaCont ($$*) cont p q
+
+------------------------------------------
+---- Derived variants of catamorphism ----
+------------------------------------------
 
 -- Catamorphism on a pair of `PolyMu`s using the product-hom adjunction.
 public export
