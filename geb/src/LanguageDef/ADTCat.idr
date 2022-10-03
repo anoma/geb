@@ -509,13 +509,22 @@ PolyPos = DPair.fst . PolyArena
 
 -- The "directions" of a given position, in the arena viewpoint.
 public export
-PolyDir : (p : PolyMu) -> PolyPos p -> Type
-PolyDir p = snd (PolyArena p)
+PolyPosDir : (p : PolyMu) -> PolyPos p -> Type
+PolyPosDir p = snd (PolyArena p)
+
+-- A direction of an endofunctor.
+public export
+PolyDir : PolyMu -> Type
+PolyDir p = DPair (PolyPos p) (PolyPosDir p)
 
 -- The zero-power positions -- that is, the ones with no directions.
 public export
 PolyZeroPosAlg : MetaPolyAlg Type
-PolyZeroPosAlg p = ?PolyZeroPosAlg_hole
+PolyZeroPosAlg PFI = Void
+PolyZeroPosAlg PF0 = Void
+PolyZeroPosAlg PF1 = Unit
+PolyZeroPosAlg (p $$+ q) = Either p q
+PolyZeroPosAlg (p $$* q) = Pair p q
 
 public export
 PolyZeroPos : PolyMu -> Type
@@ -532,7 +541,7 @@ data PolyMuNTAlg : MetaPolyPairAdjArgAlg Type where
   PNTFrom1 : (q : PolyMu) ->
     PolyZeroPos q -> PolyMuNTAlg PF1 q
   PNTFromI : (q : PolyMu) ->
-    (qpos : PolyPos q) -> PolyDir q qpos -> PolyMuNTAlg PFI q
+    PolyDir q -> PolyMuNTAlg PFI q
   PNTFromCop : {p, q : (PolyMu, PolyMu -> Type)} -> {r : PolyMu} ->
     snd p r -> snd q r -> PolyMuNTAlg (p $$+ q) r
   PNTFromProd : {p, q : (PolyMu, PolyMu -> Type)} -> {r : PolyMu} ->
