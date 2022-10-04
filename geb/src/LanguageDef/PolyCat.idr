@@ -280,7 +280,7 @@ pfnFold {p=p@(pos ** dir)} {a} alg = pfnFold' id where
 -- induction steps but also the original `PolyFuncMu` to the algebra.
 public export
 PFArgAlg : PolyFunc -> Type -> Type
-PFArgAlg p@(pos ** dir) a = PolyFuncMu p -> (i : pos) -> (dir i -> a) -> a
+PFArgAlg p a = PolyFuncMu p -> PFAlg p a
 
 public export
 pfArgCata : {0 p : PolyFunc} -> {0 a : Type} ->
@@ -289,30 +289,31 @@ pfArgCata {p=p@(_ ** _)} {a} alg elem =
   pfCata {p} {a=(PolyFuncMu p -> a)}
     (\i, d, e' => alg e' i $ flip d e') elem elem
 
--- Catamorphism on a pair of `PolyFuncMu`s using the product-hom adjunction.
+-- Catamorphism with an extra parameter of some given type.
 public export
-PFPairAdjAlg : PolyFunc -> PolyFunc -> Type -> Type
-PFPairAdjAlg p q a = PFAlg p (PolyFuncMu q -> a)
+PFParamAlg : PolyFunc -> Type -> Type -> Type
+PFParamAlg p x a = PFAlg p (x -> a)
 
 public export
-pfPairAdjCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
-  PFPairAdjAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
-pfPairAdjCata = pfCata
+pfParamCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
+  PFParamAlg p x a -> PolyFuncMu p -> x -> a
+pfParamCata = pfCata
 
 -- Catamorphism on a pair of `PolyFuncMu`s using the product-hom adjunction,
 -- where the original first `PolyFuncMu` is also available to the algebra.
 public export
-PFPairAdjArgAlg : PolyFunc -> PolyFunc -> Type -> Type
-PFPairAdjArgAlg p@(pos ** dir) q a =
+PFPairArgAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFPairArgAlg p@(pos ** dir) q a =
   PolyFuncMu p -> (i : pos) -> (dir i -> PolyFuncMu p -> a) -> PolyFuncMu q -> a
 
 public export
-pfPairAdjArgCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+pfPairArgCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
   PFArgAlg p a -> PolyFuncMu p -> PolyFuncMu q -> a
-pfPairAdjArgCata {p=p@(_ ** _)} {q} {a} alg =
+pfPairArgCata {p=p@(_ ** _)} {q} {a} alg =
   pfArgCata {p} {a=(PolyFuncMu q -> a)} $ \e, i, d => alg e i . flip d
 
--- Catamorphism on a pair of `PolyFuncMu`s using all combinations of cases.
+-- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
+-- to the algebra, and using the product-hom adjunction.
 public export
 PFPairCaseAlg : PolyFunc -> PolyFunc -> Type -> Type
 PFPairCaseAlg p q a = PFAlg p (PFAlg q a)
