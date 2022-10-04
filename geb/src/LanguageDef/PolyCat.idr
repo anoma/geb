@@ -138,6 +138,16 @@ PolyNatTransToSliceMorphism : {0 p, q : PolyFunc} ->
 PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
   (_ ** ondir) onPosId i sp = ondir i $ replace {p=qdir} (sym (onPosId i)) sp
 
+-------------------------------------------------
+-------------------------------------------------
+---- Polynomial-functor universal properties ----
+-------------------------------------------------
+-------------------------------------------------
+
+public export
+pfCoproductPos : PolyFunc -> PolyFunc -> Type
+pfCoproductPos p q = ?pfCoproductPos_hole
+
 ------------------------------------
 ------------------------------------
 ---- Polynomial-functor algebra ----
@@ -205,6 +215,56 @@ pfnFold {p=p@(pos ** dir)} {a} alg = pfnFold' id where
     pfnFoldMap Z cont _ = cont []
     pfnFoldMap (S n) cont v =
       pfnFoldMap n (\v' => cont $ (pfnFold' id $ v FZ) :: v') $ v . FS
+
+-------------------------------------------------------------
+---- Derived variants of polynomial-functor catamorphism ----
+-------------------------------------------------------------
+
+-- Catamorphism which passes not only the output of the previous
+-- induction steps but also the original `PolyFuncMu` to the algebra.
+public export
+PFArgAlg : PolyFunc -> Type -> Type
+PFArgAlg p@(pos ** dir) a = PolyFuncMu p -> (i : pos) -> (dir i -> a) -> a
+
+public export
+pfArgCata : {0 p : PolyFunc} -> {0 a : Type} ->
+  PFArgAlg p a -> PolyFuncMu p -> a
+pfArgCata {p=p@(_ ** _)} {a} alg elem =
+  pfCata {p} {a=(PolyFuncMu p -> a)}
+    (\i, d, e' => alg e' i $ flip d e') elem elem
+
+-- Catamorphism on a pair of `PolyFuncMu`s using the product-hom adjunction.
+public export
+PFPairAdjAlg : PolyFunc -> Type -> Type
+PFPairAdjAlg p a = PFAlg p (PolyFuncMu p -> a)
+
+public export
+pfPairAdjCata : {0 p : PolyFunc} -> {0 a : Type} ->
+  PFPairAdjAlg p a -> PolyFuncMu p -> PolyFuncMu p -> a
+pfPairAdjCata = pfCata
+
+-- Catamorphism on a pair of `PolyFuncMu`s using the product-hom adjunction,
+-- where the original first `PolyFuncMu` is also available to the algebra.
+public export
+PFPairAdjArgAlg : PolyFunc -> Type -> Type
+PFPairAdjArgAlg p@(pos ** dir) a =
+  PolyFuncMu p -> (i : pos) -> (dir i -> PolyFuncMu p -> a) -> PolyFuncMu p -> a
+
+public export
+pfPairAdjArgCata : {0 p : PolyFunc} -> {0 a : Type} ->
+  PFArgAlg p a -> PolyFuncMu p -> PolyFuncMu p -> a
+pfPairAdjArgCata {p=p@(_ ** _)} {a} alg =
+  pfArgCata {p} {a=(PolyFuncMu p -> a)} $ \e, i, d => alg e i . flip d
+
+-- Catamorphism on a pair of `PolyFuncMu`s using all combinations of cases.
+public export
+PFPairCaseAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFPairCaseAlg p q a = PFAlg p (PFAlg q a)
+
+public export
+pfPairCaseCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFPairCaseAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfPairCaseCata {p} {q} alg ep eq = pfCata {p=q} (pfCata {p} alg ep) eq
 
 ----------------------------------
 ---- Polynomial (free) monads ----
