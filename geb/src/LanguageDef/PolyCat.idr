@@ -169,6 +169,18 @@ PFTerminalArena : PolyFunc
 PFTerminalArena = (PFTerminalPos ** PFTerminalDir)
 
 public export
+PFIdentityPos : Type
+PFIdentityPos = Unit
+
+public export
+PFIdentityDir : PFIdentityPos -> Type
+PFIdentityDir = const Unit
+
+public export
+PFIdentityArena : PolyFunc
+PFIdentityArena = (PFIdentityPos ** PFIdentityDir)
+
+public export
 pfCoproductPos : PolyFunc -> PolyFunc -> Type
 pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
 

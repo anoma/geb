@@ -612,9 +612,9 @@ PFArena = PolyFunc
 -- The arena of an endofunctor.
 public export
 PolyArenaAlg : MetaPolyAlg PFArena
-PolyArenaAlg PFI = (Unit ** const Unit)
-PolyArenaAlg PF0 = (Void ** voidF Type)
-PolyArenaAlg PF1 = (Unit ** const Void)
+PolyArenaAlg PFI = PFIdentityArena
+PolyArenaAlg PF0 = PFInitialArena
+PolyArenaAlg PF1 = PFTerminalArena
 PolyArenaAlg (p $$+ q) = pfCoproductArena p q
 PolyArenaAlg (p $$* q) = pfProductArena p q
 
