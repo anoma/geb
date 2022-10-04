@@ -615,10 +615,8 @@ PolyArenaAlg : MetaPolyAlg PFArena
 PolyArenaAlg PFI = (Unit ** const Unit)
 PolyArenaAlg PF0 = (Void ** voidF Type)
 PolyArenaAlg PF1 = (Unit ** const Void)
-PolyArenaAlg ((ppos ** pdir) $$+ (qpos ** qdir)) =
-  (Either ppos qpos ** eitherElim pdir qdir)
-PolyArenaAlg ((ppos ** pdir) $$* (qpos ** qdir)) =
-  (Pair ppos qpos ** (uncurry Pair . bimap pdir qdir))
+PolyArenaAlg (p $$+ q) = pfCoproductArena p q
+PolyArenaAlg (p $$* q) = pfProductArena p q
 
 public export
 PolyArena : PolyMu -> PFArena

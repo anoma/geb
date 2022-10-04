@@ -146,7 +146,27 @@ PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
 
 public export
 pfCoproductPos : PolyFunc -> PolyFunc -> Type
-pfCoproductPos p q = ?pfCoproductPos_hole
+pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
+
+public export
+pfCoproductDir : (p, q : PolyFunc) -> pfCoproductPos p q -> Type
+pfCoproductDir (ppos ** pdir) (qpos ** qdir) = eitherElim pdir qdir
+
+public export
+pfCoproductArena : PolyFunc -> PolyFunc -> PolyFunc
+pfCoproductArena p q = (pfCoproductPos p q ** pfCoproductDir p q)
+
+public export
+pfProductPos : PolyFunc -> PolyFunc -> Type
+pfProductPos (ppos ** pdir) (qpos ** qdir) = Pair ppos qpos
+
+public export
+pfProductDir : (p, q : PolyFunc) -> pfProductPos p q -> Type
+pfProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Pair . bimap pdir qdir
+
+public export
+pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
+pfProductArena p q = (pfProductPos p q ** pfProductDir p q)
 
 ------------------------------------
 ------------------------------------
