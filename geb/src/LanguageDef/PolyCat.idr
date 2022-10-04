@@ -300,7 +300,7 @@ pfArgCata {p=p@(_ ** _)} {a} alg elem =
     (\i, d, e' => alg e' i $ flip d e') elem elem
 
 -- Catamorphism with both the original `PolyFuncMu` available as an
--- argument to the algebra and an extra parameter of the given type.
+-- argument to the algebra and an extra parameter of a given type.
 public export
 PFParamArgAlg : PolyFunc -> Type -> Type -> Type
 PFParamArgAlg p@(pos ** dir) x a =
@@ -315,13 +315,13 @@ pfParamArgCata {p=p@(_ ** _)} {x} {a} alg =
 -- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
 -- to the algebra.  Uses the product-hom adjunction.
 public export
-PFProductAdjAlg : PolyFunc -> PolyFunc -> Type -> Type
-PFProductAdjAlg p q a = PFAlg p (PFAlg q a)
+PFProductHomAdjAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFProductHomAdjAlg p q a = PFAlg p (PFAlg q a)
 
 public export
-pfProductAdjCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
-  PFProductAdjAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
-pfProductAdjCata {p} {q} alg ep eq = pfCata {p=q} (pfCata {p} alg ep) eq
+pfProductHomAdjCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFProductHomAdjAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfProductHomAdjCata {p} {q} alg ep eq = pfCata {p=q} (pfCata {p} alg ep) eq
 
 ----------------------------------
 ---- Polynomial (free) monads ----
