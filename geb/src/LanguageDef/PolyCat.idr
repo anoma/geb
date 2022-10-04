@@ -272,9 +272,19 @@ pfnFold {p=p@(pos ** dir)} {a} alg = pfnFold' id where
     pfnFoldMap (S n) cont v =
       pfnFoldMap n (\v' => cont $ (pfnFold' id $ v FZ) :: v') $ v . FS
 
--------------------------------------------------------------
----- Derived variants of polynomial-functor catamorphism ----
--------------------------------------------------------------
+--------------------------------------------------------------------------
+---- Variants of polynomial-functor catamorphism (recursion schemes ) ----
+--------------------------------------------------------------------------
+
+-- Catamorphism with an extra parameter of some given type.
+public export
+PFParamAlg : PolyFunc -> Type -> Type -> Type
+PFParamAlg p x a = PFAlg p (x -> a)
+
+public export
+pfParamCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
+  PFParamAlg p x a -> PolyFuncMu p -> x -> a
+pfParamCata = pfCata
 
 -- Catamorphism which passes not only the output of the previous
 -- induction steps but also the original `PolyFuncMu` to the algebra.
@@ -289,28 +299,18 @@ pfArgCata {p=p@(_ ** _)} {a} alg elem =
   pfCata {p} {a=(PolyFuncMu p -> a)}
     (\i, d, e' => alg e' i $ flip d e') elem elem
 
--- Catamorphism with an extra parameter of some given type.
+-- Catamorphism with both the original `PolyFuncMu` available as an
+-- argument to the algebra -- and an extra parameter of the given type.
 public export
-PFParamAlg : PolyFunc -> Type -> Type -> Type
-PFParamAlg p x a = PFAlg p (x -> a)
+PFParamArgAlg : PolyFunc -> Type -> Type -> Type
+PFParamArgAlg p@(pos ** dir) x a =
+  PolyFuncMu p -> (i : pos) -> (dir i -> PolyFuncMu p -> a) -> x -> a
 
 public export
-pfParamCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
-  PFParamAlg p x a -> PolyFuncMu p -> x -> a
-pfParamCata = pfCata
-
--- Catamorphism on a pair of `PolyFuncMu`s using the product-hom adjunction,
--- where the original first `PolyFuncMu` is also available to the algebra.
-public export
-PFPairArgAlg : PolyFunc -> PolyFunc -> Type -> Type
-PFPairArgAlg p@(pos ** dir) q a =
-  PolyFuncMu p -> (i : pos) -> (dir i -> PolyFuncMu p -> a) -> PolyFuncMu q -> a
-
-public export
-pfPairArgCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
-  PFArgAlg p a -> PolyFuncMu p -> PolyFuncMu q -> a
-pfPairArgCata {p=p@(_ ** _)} {q} {a} alg =
-  pfArgCata {p} {a=(PolyFuncMu q -> a)} $ \e, i, d => alg e i . flip d
+pfParamArgCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
+  PFArgAlg p a -> PolyFuncMu p -> x -> a
+pfParamArgCata {p=p@(_ ** _)} {x} {a} alg =
+  pfArgCata {p} {a=(x -> a)} $ \e, i, d => alg e i . flip d
 
 -- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
 -- to the algebra, and using the product-hom adjunction.
