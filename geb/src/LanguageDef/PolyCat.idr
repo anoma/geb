@@ -315,13 +315,13 @@ pfParamArgCata {p=p@(_ ** _)} {x} {a} alg =
 -- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
 -- to the algebra.  Uses the product-hom adjunction.
 public export
-PFPairAlg : PolyFunc -> PolyFunc -> Type -> Type
-PFPairAlg p q a = PFAlg p (PFAlg q a)
+PFProductAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFProductAlg p q a = PFAlg p (PFAlg q a)
 
 public export
-pfPairCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
-  PFPairAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
-pfPairCata {p} {q} alg ep eq = pfCata {p=q} (pfCata {p} alg ep) eq
+pfProductCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFProductAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfProductCata {p} {q} alg ep eq = pfCata {p=q} (pfCata {p} alg ep) eq
 
 ----------------------------------
 ---- Polynomial (free) monads ----
