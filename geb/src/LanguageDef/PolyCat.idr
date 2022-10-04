@@ -291,26 +291,26 @@ pfArgCata {p=p@(_ ** _)} {a} alg elem =
 
 -- Catamorphism on a pair of `PolyFuncMu`s using the product-hom adjunction.
 public export
-PFPairAdjAlg : PolyFunc -> Type -> Type
-PFPairAdjAlg p a = PFAlg p (PolyFuncMu p -> a)
+PFPairAdjAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFPairAdjAlg p q a = PFAlg p (PolyFuncMu q -> a)
 
 public export
-pfPairAdjCata : {0 p : PolyFunc} -> {0 a : Type} ->
-  PFPairAdjAlg p a -> PolyFuncMu p -> PolyFuncMu p -> a
+pfPairAdjCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFPairAdjAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
 pfPairAdjCata = pfCata
 
 -- Catamorphism on a pair of `PolyFuncMu`s using the product-hom adjunction,
 -- where the original first `PolyFuncMu` is also available to the algebra.
 public export
-PFPairAdjArgAlg : PolyFunc -> Type -> Type
-PFPairAdjArgAlg p@(pos ** dir) a =
-  PolyFuncMu p -> (i : pos) -> (dir i -> PolyFuncMu p -> a) -> PolyFuncMu p -> a
+PFPairAdjArgAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFPairAdjArgAlg p@(pos ** dir) q a =
+  PolyFuncMu p -> (i : pos) -> (dir i -> PolyFuncMu p -> a) -> PolyFuncMu q -> a
 
 public export
-pfPairAdjArgCata : {0 p : PolyFunc} -> {0 a : Type} ->
-  PFArgAlg p a -> PolyFuncMu p -> PolyFuncMu p -> a
-pfPairAdjArgCata {p=p@(_ ** _)} {a} alg =
-  pfArgCata {p} {a=(PolyFuncMu p -> a)} $ \e, i, d => alg e i . flip d
+pfPairAdjArgCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFArgAlg p a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfPairAdjArgCata {p=p@(_ ** _)} {q} {a} alg =
+  pfArgCata {p} {a=(PolyFuncMu q -> a)} $ \e, i, d => alg e i . flip d
 
 -- Catamorphism on a pair of `PolyFuncMu`s using all combinations of cases.
 public export
