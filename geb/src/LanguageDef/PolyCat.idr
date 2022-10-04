@@ -145,6 +145,30 @@ PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
 -------------------------------------------------
 
 public export
+PFInitialPos : Type
+PFInitialPos = Void
+
+public export
+PFInitialDir : PFInitialPos -> Type
+PFInitialDir = voidF Type
+
+public export
+PFInitialArena : PolyFunc
+PFInitialArena = (PFInitialPos ** PFInitialDir)
+
+public export
+PFTerminalPos : Type
+PFTerminalPos = Unit
+
+public export
+PFTerminalDir : PFTerminalPos -> Type
+PFTerminalDir = const Void
+
+public export
+PFTerminalArena : PolyFunc
+PFTerminalArena = (PFTerminalPos ** PFTerminalDir)
+
+public export
 pfCoproductPos : PolyFunc -> PolyFunc -> Type
 pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
 
