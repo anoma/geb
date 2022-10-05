@@ -6,11 +6,59 @@ import public LanguageDef.PolyCat
 
 %default total
 
+-------------------------------------------
+-------------------------------------------
+---- Inductive definition of term type ----
+-------------------------------------------
+-------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+public export
+data SubstTermPos : Type where
+  STPosLeaf : SubstTermPos
+  STPosLeft : SubstTermPos
+  STPosRight : SubstTermPos
+  STPosPair : SubstTermPos
+
+public export
+data SubstTermDir : SubstTermPos -> Type where
+  STDirL : SubstTermDir STPosLeft
+  STDirR : SubstTermDir STPosRight
+  STDir1 : SubstTermDir STPosPair
+  STDir2 : SubstTermDir STPosPair
+
+public export
+SubstTermPF : PolyFunc
+SubstTermPF = (SubstTermPos ** SubstTermDir)
+
+----------------------------------------------------
+---- Least fixed point, algebras, catamorphisms ----
+----------------------------------------------------
+
+public export
+STMu : Type
+STMu = PolyFuncMu SubstTermPF
+
+public export
+STAlg : Type -> Type
+STAlg = PFAlg SubstTermPF
+
+public export
+stCata : {0 a : Type} -> STAlg a -> STMu -> a
+stCata = pfCata {p=SubstTermPF}
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial objects ----
 -----------------------------------------------------------------
 -----------------------------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
 
 public export
 data SubstObjPos : Type where
@@ -29,6 +77,10 @@ data SubstObjDir : SubstObjPos -> Type where
 public export
 SubstObjPF : PolyFunc
 SubstObjPF = (SubstObjPos ** SubstObjDir)
+
+----------------------------------------------------
+---- Least fixed point, algebras, catamorphisms ----
+----------------------------------------------------
 
 public export
 SOMu : Type
@@ -63,9 +115,9 @@ soSize = soCata SOSizeAlg
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 
------------------------------------------------------
----- Functor which generates polynomial functors ----
------------------------------------------------------
+----------------------------------
+---- Positions and directions ----
+----------------------------------
 
 public export
 data SubstEFPos : Type where
@@ -85,6 +137,10 @@ data SubstEFDir : SubstEFPos -> Type where
 public export
 SubstEFPF : PolyFunc
 SubstEFPF = (SubstEFPos ** SubstEFDir)
+
+----------------------------------------------------
+---- Least fixed point, algebras, catamorphisms ----
+----------------------------------------------------
 
 public export
 SEFMu : Type
