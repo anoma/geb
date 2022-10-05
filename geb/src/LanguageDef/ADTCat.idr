@@ -56,7 +56,7 @@ stCata = pfCata {p=SubstTermPF}
 
 public export
 STSizeAlg : STAlg Nat
-STSizeAlg STPosLeaf dir = 1
+STSizeAlg STPosLeaf dir = 0
 STSizeAlg STPosLeft dir = 1 + dir STDirL
 STSizeAlg STPosRight dir = 1 + dir STDirR
 STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
@@ -64,6 +64,37 @@ STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
 public export
 stSize : STMu -> Nat
 stSize = stCata STSizeAlg
+
+public export
+STDepthAlg : STAlg Nat
+STDepthAlg STPosLeaf dir = 0
+STDepthAlg STPosLeft dir = 1 + dir STDirL
+STDepthAlg STPosRight dir = 1 + dir STDirR
+STDepthAlg STPosPair dir = smax (dir STDirFst) (dir STDirSnd)
+
+public export
+stDepth : STMu -> Nat
+stDepth = stCata STDepthAlg
+
+---------------------
+---- Refinements ----
+---------------------
+
+public export
+STEitherAlg : Type -> Type -> Type
+STEitherAlg = STAlg .* Either
+
+public export
+STRefinementAlg : Type
+STRefinementAlg = STEitherAlg Unit Unit
+
+public export
+RefinedST : (0 _ : DecPred STMu) -> Type
+RefinedST = Refinement {a=STMu}
+
+public export
+AlgRefinedST : STRefinementAlg -> Type
+AlgRefinedST alg = RefinedST (isRight . stCata alg)
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------

@@ -1,6 +1,7 @@
 module Library.IdrisUtils
 
 import public Data.Maybe
+import public Data.Either
 import public Data.List
 import public Data.List.Equalities
 import public Data.List.Reverse
