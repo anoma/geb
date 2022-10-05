@@ -27,8 +27,8 @@ public export
 data SubstTermDir : SubstTermPos -> Type where
   STDirL : SubstTermDir STPosLeft
   STDirR : SubstTermDir STPosRight
-  STDir1 : SubstTermDir STPosPair
-  STDir2 : SubstTermDir STPosPair
+  STDirFst : SubstTermDir STPosPair
+  STDirSnd : SubstTermDir STPosPair
 
 public export
 SubstTermPF : PolyFunc
@@ -49,6 +49,21 @@ STAlg = PFAlg SubstTermPF
 public export
 stCata : {0 a : Type} -> STAlg a -> STMu -> a
 stCata = pfCata {p=SubstTermPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+STSizeAlg : STAlg Nat
+STSizeAlg STPosLeaf dir = 1
+STSizeAlg STPosLeft dir = 1 + dir STDirL
+STSizeAlg STPosRight dir = 1 + dir STDirR
+STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
+
+public export
+stSize : STMu -> Nat
+stSize = stCata STSizeAlg
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -102,8 +117,8 @@ public export
 SOSizeAlg : SOAlg Nat
 SOSizeAlg SOPos0 dir = 1
 SOSizeAlg SOPos1 dir = 1
-SOSizeAlg SOPosC dir = dir SODirL + dir SODirR
-SOSizeAlg SOPosP dir = dir SODir1 + dir SODir2
+SOSizeAlg SOPosC dir = 1 + dir SODirL + dir SODirR
+SOSizeAlg SOPosP dir = 1 + dir SODir1 + dir SODir2
 
 public export
 soSize : SOMu -> Nat
