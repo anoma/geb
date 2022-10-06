@@ -645,6 +645,10 @@ public export
 polyPosShow : PolyMu -> String
 polyPosShow = psPosShow . toPolyShape
 
+public export
+polyNPos : PolyMu -> Nat
+polyNPos = sumPTCoeff . toPolyShape
+
 -- Create a polynomial from a list of (power, coefficient) pairs.
 public export
 fromPolyShapeAcc : PolyShape -> PolyMu -> PolyMu

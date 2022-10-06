@@ -165,6 +165,54 @@ polyDepth3BinTree = polyf1
 polyDepth3BinTreeFixed : PolyMu
 polyDepth3BinTreeFixed = polyDepth3BinTree $. Poly0
 
+pmMaybe : PolyMu
+pmMaybe = Poly1 $+ PolyI
+
+pmMaybeSq : PolyMu
+pmMaybeSq = pmMaybe $*^ 2
+
+pmMaybeSqFactored : PolyMu
+pmMaybeSqFactored = Poly1 $+ PolyI $+ PolyI $+ PolyI $*^ 2
+
+pmMaybeSqAppBool : PolyMu
+pmMaybeSqAppBool = pmMaybeSq $. polybool
+
+pmMaybeSqBoolAlg : PolyMu
+pmMaybeSqBoolAlg = PolyHomObj pmMaybeSqAppBool polybool
+
+pmFinObj : PolyMu
+pmFinObj = 2 $:* Poly1 $+ 2 $:* PolyI
+
+pmFinObjTermPair : PolyMu
+pmFinObjTermPair = pmFinObj $* pmMaybeSq
+
+pmFinObjTermPairToBool : PolyMu
+pmFinObjTermPairToBool = PolyHomObj pmFinObjTermPair polybool
+
+pmMaybeSqIter : Nat -> PolyMu
+pmMaybeSqIter = ($.^) pmMaybeSq
+
+showPMIter : Nat -> IO ()
+showPMIter n = do
+  putStrLn $ "pmMaybeSqIter " ++ show n ++ " = " ++
+    show (pmMaybeSqIter n)
+  putStrLn $ "shape(pmMaybeSqIter " ++ show n ++ ") = " ++
+    showPolyShape (pmMaybeSqIter n)
+  putStrLn $ "npos(pmMaybeSqIter " ++ show n ++ ") = " ++
+    show (polyNPos $ pmMaybeSqIter n)
+
+pmMaybeSqRaise : Nat -> PolyMu
+pmMaybeSqRaise = ($*^) pmMaybeSq
+
+showPMRaise : Nat -> IO ()
+showPMRaise n = do
+  putStrLn $ "pmMaybeSqRaise " ++ show n ++ " = " ++
+    show (pmMaybeSqRaise n)
+  putStrLn $ "shape(pmMaybeSqRaise " ++ show n ++ ") = " ++
+    showPolyShape (pmMaybeSqRaise n)
+  putStrLn $ "npos(pmMaybeSqRaise " ++ show n ++ ") = " ++
+    show (polyNPos $ pmMaybeSqRaise n)
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -232,6 +280,34 @@ adtCatTest = do
     show (polyDistrib (((PolyI $* PolyI $+ PolyI) $. (PolyI $*^ 3 $+ Poly1))))
   putStrLn $ "exercise 5.8.3 composite = " ++
     show (toPolyShape (((PolyI $* PolyI $+ PolyI) $. (PolyI $*^ 3 $+ Poly1))))
+  putStrLn ""
+  putStrLn $ "maybeSq(bool) = " ++ show pmMaybeSqAppBool
+  putStrLn $ "shape(maybeSq(bool)) = " ++ showPolyShape pmMaybeSqAppBool
+  putStrLn $ "maybeSqBoolAlg = " ++ show pmMaybeSqBoolAlg
+  putStrLn $ "shape(maybeSqBoolAlg) = " ++ showPolyShape pmMaybeSqBoolAlg
+  putStrLn $ "pmFinObj = " ++ show pmFinObj
+  putStrLn $ "shape(pmFinObj) = " ++ showPolyShape pmFinObj
+  putStrLn $ "pmFinObjTermPair = " ++ show pmFinObjTermPair
+  putStrLn $ "shape(pmFinObjTermPair) = " ++ showPolyShape pmFinObjTermPair
+  putStrLn $ "pmFinObjTermPairToBool = " ++ show pmFinObjTermPairToBool
+  putStrLn $ "shape(pmFinObjTermPairToBool) = " ++
+    showPolyShape pmFinObjTermPairToBool
+  putStrLn ""
+  showPMIter 0
+  showPMIter 1
+  showPMIter 2
+  showPMIter 3
+  showPMIter 4
+  putStrLn ""
+  showPMRaise 0
+  showPMRaise 1
+  showPMRaise 2
+  showPMRaise 3
+  showPMRaise 4
+  showPMRaise 5
+  showPMRaise 6
+  showPMRaise 7
+  showPMRaise 8
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."
