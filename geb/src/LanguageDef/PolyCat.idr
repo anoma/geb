@@ -110,6 +110,8 @@ pntOnDir : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
   (i : pfPos p) -> pfDir {p=q} (pntOnPos {p} {q} alpha i) -> pfDir {p} i
 pntOnDir {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onDir
 
+-- A natural transformation may be viewed as a morphism in the
+-- slice category of `Type` over `Type`.
 public export
 InterpPolyNT : {0 p, q : PolyFunc} -> PolyNatTrans p q ->
   SliceMorphism (InterpPolyFunc p) (InterpPolyFunc q)
@@ -137,6 +139,42 @@ PolyNatTransToSliceMorphism : {0 p, q : PolyFunc} ->
     (PolyFuncToSlice p)
 PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
   (_ ** ondir) onPosId i sp = ondir i $ replace {p=qdir} (sym (onPosId i)) sp
+
+----------------------------------------------------------------------------
+---- Vertical-Cartesian factoring of polynomial natural transformations ----
+----------------------------------------------------------------------------
+
+public export
+VertCartFactPos : {p, q : PolyFunc} -> PolyNatTrans p q -> Type
+VertCartFactPos {p} {q} alpha = pfPos p
+
+public export
+VertCartFactDir : {p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  VertCartFactPos {p} {q} alpha -> Type
+VertCartFactDir {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i =
+  qdir (onPos i)
+
+public export
+VertCartFactFunc : {p, q : PolyFunc} -> PolyNatTrans p q -> PolyFunc
+VertCartFactFunc alpha = (VertCartFactPos alpha ** VertCartFactDir alpha)
+
+public export
+VertFactOnPos : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  pfPos p -> VertCartFactPos {p} {q} alpha
+VertFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i = i
+
+public export
+VertFactOnDir :
+  {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) -> (i : pfPos p) ->
+  VertCartFactDir {p} {q} alpha (VertFactOnPos {p} {q} alpha i) -> pfDir {p} i
+VertFactOnDir {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) i j =
+  onDir i j
+
+public export
+VertFactNatTrans : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  PolyNatTrans p (VertCartFactFunc {p} {q} alpha)
+VertFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+  (VertFactOnPos {p} {q} alpha ** VertFactOnDir {p} {q} alpha)
 
 -------------------------------------------------
 -------------------------------------------------
@@ -731,6 +769,12 @@ public export
 SPFCofreeCMFromNu : {x : Type} -> SlicePolyEndoF x -> SliceObj x -> SliceObj x
 SPFCofreeCMFromNu spf sx =
   SPFNu {a=x} (SPFScale {x} {y=x} spf (Sigma sx) (const id))
+
+------------------------------------------------
+------------------------------------------------
+---- `Poly` as the arrow category of `Type` ----
+------------------------------------------------
+------------------------------------------------
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------

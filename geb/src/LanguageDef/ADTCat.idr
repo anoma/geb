@@ -34,13 +34,25 @@ public export
 SubstTermPF : PolyFunc
 SubstTermPF = (SubstTermPos ** SubstTermDir)
 
-----------------------------------------------------
----- Least fixed point, algebras, catamorphisms ----
-----------------------------------------------------
+---------------------------------------------
+---- Least fixed point (initial algebra) ----
+---------------------------------------------
 
 public export
 STMu : Type
 STMu = PolyFuncMu SubstTermPF
+
+---------------------
+---- Refinements ----
+---------------------
+
+------------------------
+---- Dependent fold ----
+------------------------
+
+----------------------------------------------------
+---- Least fixed point, algebras, catamorphisms ----
+----------------------------------------------------
 
 public export
 STAlg : Type -> Type

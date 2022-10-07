@@ -141,6 +141,10 @@ DepCoprodF {a} {b} f sla elemb = (elema : PreImage f elemb ** sla (fst0 elema))
 -- object is isomorphic to its domain, so the slice category of a category
 -- over its terminal object is isomorphic to the category itself.
 -- That is, `SliceObj ()` is effectively just `Type`.
+--
+-- Note that another way of looking at this type is as a natural transformation
+-- from the polynomial endofunctor which represents the slice object to the
+-- identity endofunctor.
 public export
 Pi : {a : Type} -> SliceObj a -> Type
 Pi {a} p = (x : a) -> p x
