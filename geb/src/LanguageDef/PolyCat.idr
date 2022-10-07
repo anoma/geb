@@ -176,6 +176,27 @@ VertFactNatTrans : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
 VertFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
   (VertFactOnPos {p} {q} alpha ** VertFactOnDir {p} {q} alpha)
 
+public export
+CartFactOnPos : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  VertCartFactPos {p} {q} alpha -> pfPos q
+CartFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i =
+  onPos i
+
+public export
+CartFactOnDir :
+  {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  (i : VertCartFactPos {p} {q} alpha) ->
+  pfDir {p=q} (CartFactOnPos {p} {q} alpha i) ->
+  VertCartFactDir {p} {q} alpha i
+CartFactOnDir {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) i j =
+  j
+
+public export
+CartFactNatTrans : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  PolyNatTrans (VertCartFactFunc {p} {q} alpha) q
+CartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+  (CartFactOnPos {p} {q} alpha ** CartFactOnDir {p} {q} alpha)
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Polynomial-functor universal properties ----
