@@ -238,6 +238,10 @@ interface Profunctor f where
   rmap : (b -> d) -> f a b -> f a d
   rmap = dimap id
 
+public export
+ProfunctorDP : Type
+ProfunctorDP = DPair (Type -> Type -> Type) Profunctor
+
 --------------------------------------------------------------
 --------------------------------------------------------------
 ---- Idris categories: `[Type]`, product, and endofunctor ----
@@ -1978,6 +1982,10 @@ DirichFunc ((coeff, rep) :: l) ty =
 ---------------------------------------
 ---------------------------------------
 
+-- For this and the following optics, see "What You Needa Know About Yoneda"
+-- by Boisseau and Gibbons (I have added one or two duals that they didn't
+-- explicitly mention).
+
 public export
 record Yo (f : Type -> Type) (a : Type) where
   constructor MkYo
@@ -2063,6 +2071,49 @@ public export
 Profunctor DoubleYo where
   dimap mca mbd (MkDoubleYo y) =
     MkDoubleYo $ \f, isF, x => map {f} mbd $ y f isF $ map {f} mca x
+
+---------------------------
+---------------------------
+---- Profunctor optics ----
+---------------------------
+---------------------------
+
+public export
+PfSliceObj : Type
+PfSliceObj = SliceObj ProfunctorDP
+
+public export
+PfObj : PfSliceObj
+PfObj = const Unit
+
+public export
+record PfOptic (sl : PfSliceObj) (a, b, s, t : Type) where
+  constructor MkPfOptic
+  opticP : (p : ProfunctorDP) -> sl p -> DPair.fst p a b -> DPair.fst p s t
+
+public export
+PfOpticSig : Type
+PfOpticSig = Type -> Type -> Type -> Type -> Type
+
+public export
+PfOpticDP : PfOpticSig
+PfOpticDP a b s t = (sl : PfSliceObj ** PfOptic sl a b s t)
+
+-- "Concrete" adapter.
+public export
+record Adapter (a, b, s, t : Type) where
+  constructor MkAdapter
+  adaptFrom : s -> a
+  adaptTo : b -> t
+
+-- Profunctor version of adapter.
+public export
+PfAdapter : PfSliceObj
+PfAdapter = PfObj
+
+public export
+AdapterP : PfOpticSig
+AdapterP = PfOptic PfAdapter
 
 --------------------
 --------------------
