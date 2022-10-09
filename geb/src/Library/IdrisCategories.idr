@@ -242,6 +242,14 @@ public export
 ProfunctorDP : Type
 ProfunctorDP = DPair (Type -> Type -> Type) Profunctor
 
+public export
+PfSliceObj : Type
+PfSliceObj = SliceObj ProfunctorDP
+
+public export
+PfCatObj : PfSliceObj
+PfCatObj = const Unit
+
 --------------------------------------------------------------
 --------------------------------------------------------------
 ---- Idris categories: `[Type]`, product, and endofunctor ----
@@ -2079,14 +2087,6 @@ Profunctor DoubleYo where
 ---------------------------
 
 public export
-PfSliceObj : Type
-PfSliceObj = SliceObj ProfunctorDP
-
-public export
-PfObj : PfSliceObj
-PfObj = const Unit
-
-public export
 record PfOptic (sl : PfSliceObj) (a, b, s, t : Type) where
   constructor MkPfOptic
   opticP : (p : ProfunctorDP) -> sl p -> DPair.fst p a b -> DPair.fst p s t
@@ -2109,7 +2109,7 @@ record Adapter (a, b, s, t : Type) where
 -- Profunctor version of adapter.
 public export
 PfAdapter : PfSliceObj
-PfAdapter = PfObj
+PfAdapter = PfCatObj
 
 public export
 AdapterP : PfOpticSig
