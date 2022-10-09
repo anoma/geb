@@ -2087,15 +2087,24 @@ Profunctor DoubleYo where
 ---------------------------
 
 public export
-record ProfOptic (sl : PfSliceObj) (a, b, s, t : Type) where
+ProfShape : Type
+ProfShape = PfSliceObj
+
+public export
+record ProfOptic (sl : ProfShape) (a, b, s, t : Type) where
   constructor MkProfOptic
   opticP : (p : ProfunctorDP) -> sl p -> DPair.fst p a b -> DPair.fst p s t
 
 public export
-ProfOpticCompose : {sl : PfSliceObj} -> {a, b, c, d, t, u : Type} ->
-  ProfOptic sl c d t u -> ProfOptic sl a b c d -> ProfOptic sl a b t u
+ConjoinShapes : ProfShape -> ProfShape -> ProfShape
+ConjoinShapes s s' p = Pair (s p) (s' p)
+
+public export
+ProfOpticCompose : {sh, sh' : ProfShape} -> {a, b, c, d, s, t : Type} ->
+  ProfOptic sh c d s t -> ProfOptic sh' a b c d ->
+  ProfOptic (ConjoinShapes sh sh') a b s t
 ProfOpticCompose (MkProfOptic pg) (MkProfOptic pf) =
-  MkProfOptic $ \dp, sldp => pg dp sldp . pf dp sldp
+  MkProfOptic $ \dp, sldp => pg dp (fst sldp) . pf dp (snd sldp)
 
 public export
 OpticSig : Type
@@ -2122,10 +2131,6 @@ ConcreteExOptic : FShape -> OpticSig
 ConcreteExOptic fs a b s t =
   (f : Type -> Type ** isF : Functor f **
    isShaped : fs (f ** isF) ** Pair (s -> f a) (f b -> t))
-
-public export
-ProfShape : Type
-ProfShape = PfSliceObj
 
 public export
 PFShaped : ProfShape -> Type
