@@ -2209,6 +2209,51 @@ TraversalP = ExOpticP TraversalShape
 -----------------------
 -----------------------
 
+public export
+Continuation : Type -> Type
+Continuation = Yo id
+
+public export
+CPSTransformSig : (a, b : Type) -> Type
+CPSTransformSig a b = (b -> a) -> b -> Continuation a
+
+----------------------------
+----------------------------
+---- Closure conversion ----
+----------------------------
+----------------------------
+
+-- See https://prl.ccs.neu.edu/blog/2017/08/28/closure-conversion-as-coyoneda/
+
+public export
+Closure : Type -> Type -> Type
+Closure a b = (r : Type ** Pair r (Pair r a -> b))
+
+public export
+ClosureConversionSig : (a, b : Type) -> Type
+ClosureConversionSig a b = (a -> b) -> Closure a b
+
+public export
+ClosureConversionF : Type -> Type -> Type -> Type
+ClosureConversionF a b d = Pair d a -> b
+
+public export
+[ClosureConversionContravariant] Contravariant (ClosureConversionF a b) where
+  contramap fab fbdb (x', x) = fbdb (fab x', x)
+
+public export
+ClosureConversionContra :
+  (a, b : Type) -> Contravariant (ClosureConversionF a b)
+ClosureConversionContra a b = ClosureConversionContravariant
+
+public export
+closureConvert : {a, b : Type} -> ClosureConversionSig a b
+closureConvert {a} {b} m =
+  let isC = ClosureConversionContra a b in
+  let y = toContraCoYo {f=(ClosureConversionF a b)} {b=Unit} (m . snd) in
+  let (r ** (f, c)) = ContraCoYoEmbed y in
+  (r ** (c (), f))
+
 --------------------
 --------------------
 ---- Core types ----
