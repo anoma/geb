@@ -2099,9 +2099,8 @@ public export
 PfOpticDP : PfOpticSig
 PfOpticDP a b s t = (sl : PfSliceObj ** PfOptic sl a b s t)
 
--- "Concrete" adapter.
 public export
-record Adapter (a, b, s, t : Type) where
+record ConcreteAdapter (a, b, s, t : Type) where
   constructor MkAdapter
   adaptFrom : s -> a
   adaptTo : b -> t
@@ -2114,6 +2113,36 @@ PfAdapter = PfCatObj
 public export
 AdapterP : PfOpticSig
 AdapterP = PfOptic PfAdapter
+
+public export
+record ConcreteLens (a, b, s, t : Type) where
+  constructor MkLens
+  lensview : s -> a
+  lensupdate : Pair s b -> t
+
+public export
+CartesianP : PfSliceObj
+CartesianP (p ** isP) =
+  (a, b, c : Type) -> p a b -> p (Pair c a) (Pair c b)
+
+public export
+LensP : PfOpticSig
+LensP = PfOptic CartesianP
+
+public export
+record ConcretePrism (a, b, s, t : Type) where
+  constructor MkPrism
+  lensmatch : s -> Either t a
+  lensbuild : b -> t
+
+public export
+CocartesianP : PfSliceObj
+CocartesianP (p ** isP) =
+  (a, b, c : Type) -> p a b -> p (Either c a) (Either c b)
+
+public export
+PrismP : PfOpticSig
+PrismP = PfOptic CocartesianP
 
 --------------------
 --------------------
