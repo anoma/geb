@@ -121,7 +121,7 @@ InterpPolyNT {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) a (pi ** pd) =
 -- A slice morphism can be viewed as a special case of a natural transformation
 -- between the polynomial endofunctors as which the codomain and domain slices
 -- may be viewed.  (The special case is that the on-positions function is the
--- identity.)
+-- identity, so the natural transformation is vertical.)
 
 public export
 SliceMorphismToPolyNatTrans : {0 a : Type} -> {0 s, s' : SliceObj a} ->
