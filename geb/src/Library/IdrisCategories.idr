@@ -1990,6 +1990,23 @@ public export
 Contravariant (ContraYo f) where
   contramap mba (MkContraYo y) = MkContraYo $ \ty, mtyb => y ty $ mba . mtyb
 
+public export
+record CoYo (f : Type -> Type) (r : Type) where
+  constructor MkCoYo
+  CoYoEmbed : (a : Type ** (f a, a -> r))
+
+public export
+fromCoYo : Functor f => CoYo f b -> f b
+fromCoYo (MkCoYo (ty ** (x, h))) = map {f} h x
+
+public export
+toCoYo : Functor f => {b : Type} -> f b -> CoYo f b
+toCoYo {b} y = MkCoYo (b ** (y, id))
+
+public export
+Functor (CoYo f) where
+  map g (MkCoYo (ty ** (x, h))) = MkCoYo (ty ** (x, g . h))
+
 --------------------
 --------------------
 ---- Core types ----
