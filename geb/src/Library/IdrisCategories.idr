@@ -2092,6 +2092,12 @@ record ProfOptic (sl : PfSliceObj) (a, b, s, t : Type) where
   opticP : (p : ProfunctorDP) -> sl p -> DPair.fst p a b -> DPair.fst p s t
 
 public export
+ProfOpticCompose : {sl : PfSliceObj} -> {a, b, c, d, t, u : Type} ->
+  ProfOptic sl c d t u -> ProfOptic sl a b c d -> ProfOptic sl a b t u
+ProfOpticCompose (MkProfOptic pg) (MkProfOptic pf) =
+  MkProfOptic $ \dp, sldp => pg dp sldp . pf dp sldp
+
+public export
 OpticSig : Type
 OpticSig = Type -> Type -> Type -> Type -> Type
 
