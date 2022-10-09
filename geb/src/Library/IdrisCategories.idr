@@ -1950,6 +1950,29 @@ DirichFunc [] _ = Void
 DirichFunc ((coeff, rep) :: l) ty =
   Either (coeff, ContravarHomFunc rep ty) (DirichFunc l ty)
 
+---------------------------------------
+---------------------------------------
+---- Yoneda variants / corollaries ----
+---------------------------------------
+---------------------------------------
+
+public export
+record Yo (f : Type -> Type) (a : Type) where
+  constructor MkYo
+  YoEmbed : NaturalTransformation (CovarHomFunc a) f
+
+public export
+fromYo : {f : Type -> Type} -> {a : Type} -> Yo f a -> f a
+fromYo {f} {a} (MkYo y) = y a id
+
+public export
+toYo : Functor f => {a : Type} -> f a -> Yo f a
+toYo {f} {a} x = MkYo $ \ty, maty => map {f} maty x
+
+public export
+Functor (Yo f) where
+  map mab (MkYo y) = MkYo $ \ty, mbty => y ty $ mbty . mab
+
 --------------------
 --------------------
 ---- Core types ----
