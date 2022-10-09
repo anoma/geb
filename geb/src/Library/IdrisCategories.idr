@@ -1973,6 +1973,23 @@ public export
 Functor (Yo f) where
   map mab (MkYo y) = MkYo $ \ty, mbty => y ty $ mbty . mab
 
+public export
+record ContraYo (f : Type -> Type) (a : Type) where
+  constructor MkContraYo
+  ContraYoEmbed : NaturalTransformation (ContravarHomFunc a) f
+
+public export
+fromContraYo : {f : Type -> Type} -> {a : Type} -> ContraYo f a -> f a
+fromContraYo {f} {a} (MkContraYo y) = y a id
+
+public export
+toContraYo : Contravariant f => {a : Type} -> f a -> ContraYo f a
+toContraYo {f} {a} x = MkContraYo $ \ty, mtya => contramap {f} mtya x
+
+public export
+Contravariant (ContraYo f) where
+  contramap mba (MkContraYo y) = MkContraYo $ \ty, mtyb => y ty $ mba . mtyb
+
 --------------------
 --------------------
 ---- Core types ----
