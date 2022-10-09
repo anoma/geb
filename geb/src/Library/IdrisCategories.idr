@@ -2087,17 +2087,53 @@ Profunctor DoubleYo where
 ---------------------------
 
 public export
-record PfOptic (sl : PfSliceObj) (a, b, s, t : Type) where
-  constructor MkPfOptic
+record ProfOptic (sl : PfSliceObj) (a, b, s, t : Type) where
+  constructor MkProfOptic
   opticP : (p : ProfunctorDP) -> sl p -> DPair.fst p a b -> DPair.fst p s t
 
 public export
-PfOpticSig : Type
-PfOpticSig = Type -> Type -> Type -> Type -> Type
+OpticSig : Type
+OpticSig = Type -> Type -> Type -> Type -> Type
 
 public export
-PfOpticDP : PfOpticSig
-PfOpticDP a b s t = (sl : PfSliceObj ** PfOptic sl a b s t)
+ProfOpticDP : OpticSig
+ProfOpticDP a b s t = (sl : PfSliceObj ** ProfOptic sl a b s t)
+
+public export
+FunctorDP : Type
+FunctorDP = (f : Type -> Type ** Functor f)
+
+public export
+FShape : Type
+FShape = SliceObj FunctorDP
+
+public export
+FShaped : FShape -> Type
+FShaped fs = DPair FunctorDP fs
+
+public export
+ConcreteExOptic : FShape -> OpticSig
+ConcreteExOptic fs a b s t =
+  (f : Type -> Type ** isF : Functor f **
+   isShaped : fs (f ** isF) ** Pair (s -> f a) (f b -> t))
+
+public export
+ProfShape : Type
+ProfShape = PfSliceObj
+
+public export
+PFShaped : ProfShape -> Type
+PFShaped pfs = DPair ProfunctorDP pfs
+
+public export
+ProfRespectsShape : FShape -> ProfShape
+ProfRespectsShape fs (pf ** isP) =
+  (f : Type -> Type) -> (isF : Functor f) -> fs (f ** isF) ->
+  (a, b : Type) -> pf a b -> pf (f a) (f b)
+
+public export
+ExOpticP : FShape -> OpticSig
+ExOpticP fs = ProfOptic (ProfRespectsShape fs)
 
 public export
 record ConcreteAdapter (a, b, s, t : Type) where
@@ -2111,8 +2147,8 @@ PfAdapter : PfSliceObj
 PfAdapter = PfCatObj
 
 public export
-AdapterP : PfOpticSig
-AdapterP = PfOptic PfAdapter
+AdapterP : OpticSig
+AdapterP = ProfOptic PfAdapter
 
 public export
 record ConcreteLens (a, b, s, t : Type) where
@@ -2126,8 +2162,8 @@ CartesianP (p ** isP) =
   (a, b, c : Type) -> p a b -> p (Pair c a) (Pair c b)
 
 public export
-LensP : PfOpticSig
-LensP = PfOptic CartesianP
+LensP : OpticSig
+LensP = ProfOptic CartesianP
 
 public export
 record ConcretePrism (a, b, s, t : Type) where
@@ -2139,10 +2175,22 @@ public export
 CocartesianP : PfSliceObj
 CocartesianP (p ** isP) =
   (a, b, c : Type) -> p a b -> p (Either c a) (Either c b)
-
+--------------------
 public export
-PrismP : PfOpticSig
-PrismP = PfOptic CocartesianP
+PrismP : OpticSig
+PrismP = ProfOptic CocartesianP
+
+{-
+public export
+TraversalP : OpticSig
+TraversalP = ProfOptic Traversable
+-}
+
+-----------------------
+-----------------------
+---- Continuations ----
+-----------------------
+-----------------------
 
 --------------------
 --------------------
