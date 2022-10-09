@@ -2180,11 +2180,17 @@ public export
 PrismP : OpticSig
 PrismP = ProfOptic CocartesianP
 
-{-
+public export
+TraversalShape : FShape
+TraversalShape (f ** isF) = Traversable f
+
+public export
+ConcreteTraversal : OpticSig
+ConcreteTraversal = ConcreteExOptic TraversalShape
+
 public export
 TraversalP : OpticSig
-TraversalP = ProfOptic Traversable
--}
+TraversalP = ExOpticP TraversalShape
 
 -----------------------
 -----------------------
