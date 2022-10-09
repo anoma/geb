@@ -216,6 +216,28 @@ public export
 Bifunctor f => Bifunctor (flip f) where
   bimap f g = bimap g f
 
+---------------------
+---------------------
+---- Profunctors ----
+---------------------
+---------------------
+
+public export
+interface Profunctor f where
+  constructor MkProfunctor
+
+  total
+  dimap : (c -> a) -> (b -> d) -> f a b -> f c d
+  dimap f g = lmap f . rmap g
+
+  total
+  lmap : (c -> a) -> f a b -> f c b
+  lmap = flip dimap id
+
+  total
+  rmap : (b -> d) -> f a b -> f a d
+  rmap = dimap id
+
 --------------------------------------------------------------
 --------------------------------------------------------------
 ---- Idris categories: `[Type]`, product, and endofunctor ----
@@ -2006,6 +2028,24 @@ toCoYo {b} y = MkCoYo (b ** (y, id))
 public export
 Functor (CoYo f) where
   map g (MkCoYo (ty ** (x, h))) = MkCoYo (ty ** (x, g . h))
+
+public export
+record DoubleYo (a, b : Type) where
+  constructor MkDoubleYo
+  DoubleYoEmbed : (f : Type -> Type) -> Functor f -> f a -> f b
+
+public export
+toDoubleYo : (a -> b) -> DoubleYo a b
+toDoubleYo m = MkDoubleYo $ \f, isF, x => map {f} m x
+
+public export
+fromDoubleYo : DoubleYo a b -> a -> b
+fromDoubleYo (MkDoubleYo y) = y id (MkFunctor id)
+
+public export
+Profunctor DoubleYo where
+  dimap mca mbd (MkDoubleYo y) =
+    MkDoubleYo $ \f, isF, x => map {f} mbd $ y f isF $ map {f} mca x
 
 --------------------
 --------------------
