@@ -2030,6 +2030,23 @@ Functor (CoYo f) where
   map g (MkCoYo (ty ** (x, h))) = MkCoYo (ty ** (x, g . h))
 
 public export
+record ContraCoYo (f : Type -> Type) (r : Type) where
+  constructor MkContraCoYo
+  ContraCoYoEmbed : (a : Type ** (f a, r -> a))
+
+public export
+fromContraCoYo : Contravariant f => ContraCoYo f b -> f b
+fromContraCoYo (MkContraCoYo (ty ** (x, g))) = contramap {f} g x
+
+public export
+toContraCoYo : Contravariant f => {b : Type} -> f b -> ContraCoYo f b
+toContraCoYo {b} y = MkContraCoYo (b ** (y, id))
+
+public export
+Contravariant (ContraCoYo f) where
+  contramap g (MkContraCoYo (ty ** (x, h))) = MkContraCoYo (ty ** (x, h . g))
+
+public export
 record DoubleYo (a, b : Type) where
   constructor MkDoubleYo
   DoubleYoEmbed : (f : Type -> Type) -> Functor f -> f a -> f b
