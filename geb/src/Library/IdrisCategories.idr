@@ -2272,6 +2272,11 @@ interface (Functor f, Monad m) => FreeLike f m where
   wrap : (a : Type) -> f (m a) -> m a
 
 public export
+FreeMonadFreeLike : {f : Type -> Type} -> Functor f ->
+  {auto isM : Monad (FreeMonad f)} -> FreeLike f (FreeMonad f)
+FreeMonadFreeLike isF {isM} = MkFreeLike $ \a, x => InFree $ TermComposite x
+
+public export
 CodensityFreeLike : {f, m : Type -> Type} ->
   FreeLike f m -> FreeLike f (Codensity m)
 CodensityFreeLike {f} {m} (MkFreeLike wrapm) =
@@ -2281,6 +2286,14 @@ CodensityFreeLike {f} {m} (MkFreeLike wrapm) =
     \a, mafx, y, may =>
       wrapm y $ map {f} {a=((x : Type) -> (a -> m x) -> m x)} {b=(m y)}
         (\mamx => mamx y may) mafx
+
+public export
+improve : {f : Type -> Type} -> Functor f ->
+  {a : Type} -> ((m : Type -> Type) -> FreeLike f m -> m a) ->
+  {auto isM : Monad (FreeMonad f)} -> FreeMonad f a
+improve isF allWrap {isM} =
+  lowerCodensity {f=(FreeMonad f)} $ \ty, aty => join $ map aty $
+    allWrap (FreeMonad f) (FreeMonadFreeLike isF)
 
 -- XXX delimited continuation
 
