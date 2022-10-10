@@ -2186,7 +2186,7 @@ public export
 CocartesianP : PfSliceObj
 CocartesianP (p ** isP) =
   (a, b, c : Type) -> p a b -> p (Either c a) (Either c b)
---------------------
+
 public export
 PrismP : OpticSig
 PrismP = ProfOptic CocartesianP
@@ -2209,6 +2209,10 @@ TraversalP = ExOpticP TraversalShape
 -----------------------
 -----------------------
 
+-- Drawn from:
+--  https://www.austinseipp.com/hs-asai/doc/Control-Delimited.html
+--  https://hackage.haskell.org/package/kan-extensions-5.2.5/docs/Control-Monad-Codensity.html
+
 public export
 Continuation : Type -> Type
 Continuation = Yo id
@@ -2216,6 +2220,51 @@ Continuation = Yo id
 public export
 CPSTransformSig : (a, b : Type) -> Type
 CPSTransformSig a b = (b -> a) -> b -> Continuation a
+
+public export
+FunctorExp : (Type -> Type) -> Type -> Type -> Type
+FunctorExp g a b = a -> g b
+
+public export
+Codensity : (Type -> Type) -> Type -> Type
+-- Codensity m a = (b : Type) -> (a -> m b) -> m b
+Codensity m a = NaturalTransformation (FunctorExp m a) m
+
+public export
+CodensityFunctor : (f : Type -> Type) -> Functor (Codensity f)
+CodensityFunctor f = MkFunctor $ \ma, k, ty, mb => k ty $ mb . ma
+
+public export
+CodensityApplicative : (f : Type -> Type) -> Applicative (Codensity f)
+CodensityApplicative f =
+  let _ = CodensityFunctor f in
+  MkApplicative
+    (\x, ty, m => m x)
+    (\mf, ma, ty, mb => mf ty $ \mab => ma ty $ mb . mab)
+
+public export
+CodensityMonad : (f : Type -> Type) -> Monad (Codensity f)
+CodensityMonad f =
+  let cda = CodensityApplicative f in
+  MkMonad cmbind cmjoin
+  where
+    public export
+    cmbind : Codensity f a -> (a -> Codensity f b) -> Codensity f b
+    cmbind ma mab ty mb = ma ty $ \x => mab x ty mb
+
+    public export
+    cmjoin : Codensity f (Codensity f a) -> Codensity f a
+    cmjoin = flip cmbind id
+
+public export
+MonadTrans Codensity where
+  lift x ty f = x >>= f
+
+-- XXX delimited continuation
+
+-- XXX shift/reset
+
+-- XXX other stuff from Haskell Codensity code (and the relevant PDFs I have open)
 
 ----------------------------
 ----------------------------
