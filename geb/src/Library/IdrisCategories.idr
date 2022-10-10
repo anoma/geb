@@ -2212,6 +2212,7 @@ TraversalP = ExOpticP TraversalShape
 -- Drawn from:
 --  https://www.austinseipp.com/hs-asai/doc/Control-Delimited.html
 --  https://hackage.haskell.org/package/kan-extensions-5.2.5/docs/Control-Monad-Codensity.html
+--  https://www.semanticscholar.org/paper/Asymptotic-Improvement-of-Computations-over-Free-Voigtl%C3%A4nder/f25608a741652a4448afc6164856231f3565d517
 
 public export
 Continuation : Type -> Type
@@ -2259,6 +2260,27 @@ CodensityMonad f =
 public export
 MonadTrans Codensity where
   lift x ty f = x >>= f
+
+public export
+lowerCodensity : Applicative f => {a : Type} -> Codensity f a -> f a
+lowerCodensity {f} {a} ma = ma a $ pure {f}
+
+public export
+interface (Functor f, Monad m) => FreeLike f m where
+  constructor MkFreeLike
+  total
+  wrap : (a : Type) -> f (m a) -> m a
+
+public export
+CodensityFreeLike : {f, m : Type -> Type} ->
+  FreeLike f m -> FreeLike f (Codensity m)
+CodensityFreeLike {f} {m} (MkFreeLike wrapm) =
+  let _ = CodensityFunctor f in
+  let _ = CodensityMonad m in
+  MkFreeLike $
+    \a, mafx, y, may =>
+      wrapm y $ map {f} {a=((x : Type) -> (a -> m x) -> m x)} {b=(m y)}
+        (\mamx => mamx y may) mafx
 
 -- XXX delimited continuation
 
