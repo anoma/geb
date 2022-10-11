@@ -2291,16 +2291,12 @@ CodensityFreeLike {f} {m} (MkFreeLike wrapm) =
       wrapm ty $ map {f} {a=(Codensity m a)} {b=(m ty)}
         (\ca => runCodensity ca ty maty) fca
 
--- This is more complicated than the Haskell, which does not appear
--- to me to be using any analogue of `>>= afty`; I can't seem to find
--- a direct analogue which typechecks.  I haven't figured out why.
 public export
 improve : {f : Type -> Type} -> Functor f ->
   {a : Type} -> ((m : Type -> Type) -> FreeLike f m -> m a) ->
   {auto isM : Monad (FreeMonad f)} -> FreeMonad f a
-improve isF allWrap {isM} =
-  lowerCodensity $ MkCodensity $
-    \ty, afty => allWrap (FreeMonad f) (FreeMonadFreeLike isF) >>= afty
+improve {f} isF allWrap {isM} =
+  lowerCodensity $ lift $ allWrap (FreeMonad f) (FreeMonadFreeLike isF)
 
 public export
 wrapCodensity :
