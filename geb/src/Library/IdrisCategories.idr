@@ -2295,11 +2295,20 @@ improve isF allWrap {isM} =
   lowerCodensity {f=(FreeMonad f)} $ \ty, aty => join $ map aty $
     allWrap (FreeMonad f) (FreeMonadFreeLike isF)
 
--- XXX delimited continuation
+public export
+wrapCodensity :
+  {m : Type -> Type} -> ((a : Type) -> m a -> m a) -> Codensity m ()
+wrapCodensity f ty k = f ty (k ())
 
--- XXX shift/reset
+public export
+reset : Monad m => {a : Type} -> Codensity m a -> Codensity m a
+reset = lift {m} {t=Codensity} . lowerCodensity {f=m}
 
--- XXX other stuff from Haskell Codensity code (and the relevant PDFs I have open)
+-- This also looks more complicated than the Haskell.
+public export
+shift : Monad m => {a : Type} ->
+  ((b : Type) -> (a -> m b) -> Codensity m b) -> Codensity m a
+shift {a} f y amy = lowerCodensity {f=m} (f a pure) >>= amy
 
 ----------------------------
 ----------------------------
