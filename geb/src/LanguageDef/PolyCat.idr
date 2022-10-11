@@ -110,6 +110,8 @@ pntOnDir : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
   (i : pfPos p) -> pfDir {p=q} (pntOnPos {p} {q} alpha i) -> pfDir {p} i
 pntOnDir {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onDir
 
+-- A natural transformation may be viewed as a morphism in the
+-- slice category of `Type` over `Type`.
 public export
 InterpPolyNT : {0 p, q : PolyFunc} -> PolyNatTrans p q ->
   SliceMorphism (InterpPolyFunc p) (InterpPolyFunc q)
@@ -119,7 +121,7 @@ InterpPolyNT {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) a (pi ** pd) =
 -- A slice morphism can be viewed as a special case of a natural transformation
 -- between the polynomial endofunctors as which the codomain and domain slices
 -- may be viewed.  (The special case is that the on-positions function is the
--- identity.)
+-- identity, so the natural transformation is vertical.)
 
 public export
 SliceMorphismToPolyNatTrans : {0 a : Type} -> {0 s, s' : SliceObj a} ->
@@ -137,6 +139,129 @@ PolyNatTransToSliceMorphism : {0 p, q : PolyFunc} ->
     (PolyFuncToSlice p)
 PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
   (_ ** ondir) onPosId i sp = ondir i $ replace {p=qdir} (sym (onPosId i)) sp
+
+----------------------------------------------------------------------------
+---- Vertical-Cartesian factoring of polynomial natural transformations ----
+----------------------------------------------------------------------------
+
+public export
+VertCartFactPos : {p, q : PolyFunc} -> PolyNatTrans p q -> Type
+VertCartFactPos {p} {q} alpha = pfPos p
+
+public export
+VertCartFactDir : {p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  VertCartFactPos {p} {q} alpha -> Type
+VertCartFactDir {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i =
+  qdir (onPos i)
+
+public export
+VertCartFactFunc : {p, q : PolyFunc} -> PolyNatTrans p q -> PolyFunc
+VertCartFactFunc alpha = (VertCartFactPos alpha ** VertCartFactDir alpha)
+
+public export
+VertFactOnPos : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  pfPos p -> VertCartFactPos {p} {q} alpha
+VertFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i = i
+
+public export
+VertFactOnDir :
+  {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) -> (i : pfPos p) ->
+  VertCartFactDir {p} {q} alpha (VertFactOnPos {p} {q} alpha i) -> pfDir {p} i
+VertFactOnDir {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) i j =
+  onDir i j
+
+public export
+VertFactNatTrans : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  PolyNatTrans p (VertCartFactFunc {p} {q} alpha)
+VertFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+  (VertFactOnPos {p} {q} alpha ** VertFactOnDir {p} {q} alpha)
+
+public export
+CartFactOnPos : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  VertCartFactPos {p} {q} alpha -> pfPos q
+CartFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i =
+  onPos i
+
+public export
+CartFactOnDir :
+  {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  (i : VertCartFactPos {p} {q} alpha) ->
+  pfDir {p=q} (CartFactOnPos {p} {q} alpha i) ->
+  VertCartFactDir {p} {q} alpha i
+CartFactOnDir {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) i j =
+  j
+
+public export
+CartFactNatTrans : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
+  PolyNatTrans (VertCartFactFunc {p} {q} alpha) q
+CartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+  (CartFactOnPos {p} {q} alpha ** CartFactOnDir {p} {q} alpha)
+
+-------------------------------------------------
+-------------------------------------------------
+---- Polynomial-functor universal properties ----
+-------------------------------------------------
+-------------------------------------------------
+
+public export
+PFInitialPos : Type
+PFInitialPos = Void
+
+public export
+PFInitialDir : PFInitialPos -> Type
+PFInitialDir = voidF Type
+
+public export
+PFInitialArena : PolyFunc
+PFInitialArena = (PFInitialPos ** PFInitialDir)
+
+public export
+PFTerminalPos : Type
+PFTerminalPos = Unit
+
+public export
+PFTerminalDir : PFTerminalPos -> Type
+PFTerminalDir = const Void
+
+public export
+PFTerminalArena : PolyFunc
+PFTerminalArena = (PFTerminalPos ** PFTerminalDir)
+
+public export
+PFIdentityPos : Type
+PFIdentityPos = Unit
+
+public export
+PFIdentityDir : PFIdentityPos -> Type
+PFIdentityDir = const Unit
+
+public export
+PFIdentityArena : PolyFunc
+PFIdentityArena = (PFIdentityPos ** PFIdentityDir)
+
+public export
+pfCoproductPos : PolyFunc -> PolyFunc -> Type
+pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
+
+public export
+pfCoproductDir : (p, q : PolyFunc) -> pfCoproductPos p q -> Type
+pfCoproductDir (ppos ** pdir) (qpos ** qdir) = eitherElim pdir qdir
+
+public export
+pfCoproductArena : PolyFunc -> PolyFunc -> PolyFunc
+pfCoproductArena p q = (pfCoproductPos p q ** pfCoproductDir p q)
+
+public export
+pfProductPos : PolyFunc -> PolyFunc -> Type
+pfProductPos (ppos ** pdir) (qpos ** qdir) = Pair ppos qpos
+
+public export
+pfProductDir : (p, q : PolyFunc) -> pfProductPos p q -> Type
+pfProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Pair . bimap pdir qdir
+
+public export
+pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
+pfProductArena p q = (pfProductPos p q ** pfProductDir p q)
 
 ------------------------------------
 ------------------------------------
@@ -205,6 +330,57 @@ pfnFold {p=p@(pos ** dir)} {a} alg = pfnFold' id where
     pfnFoldMap Z cont _ = cont []
     pfnFoldMap (S n) cont v =
       pfnFoldMap n (\v' => cont $ (pfnFold' id $ v FZ) :: v') $ v . FS
+
+--------------------------------------------------------------------------
+---- Variants of polynomial-functor catamorphism (recursion schemes ) ----
+--------------------------------------------------------------------------
+
+-- Catamorphism with an extra parameter of some given type.
+public export
+PFParamAlg : PolyFunc -> Type -> Type -> Type
+PFParamAlg p x a = PFAlg p (x -> a)
+
+public export
+pfParamCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
+  PFParamAlg p x a -> PolyFuncMu p -> x -> a
+pfParamCata = pfCata
+
+-- Catamorphism which passes not only the output of the previous
+-- induction steps but also the original `PolyFuncMu` to the algebra.
+public export
+PFArgAlg : PolyFunc -> Type -> Type
+PFArgAlg p a = PolyFuncMu p -> PFAlg p a
+
+public export
+pfArgCata : {0 p : PolyFunc} -> {0 a : Type} ->
+  PFArgAlg p a -> PolyFuncMu p -> a
+pfArgCata {p=p@(_ ** _)} {a} alg elem =
+  pfCata {p} {a=(PolyFuncMu p -> a)}
+    (\i, d, e' => alg e' i $ flip d e') elem elem
+
+-- Catamorphism with both the original `PolyFuncMu` available as an
+-- argument to the algebra and an extra parameter of a given type.
+public export
+PFParamArgAlg : PolyFunc -> Type -> Type -> Type
+PFParamArgAlg p@(pos ** dir) x a =
+  PolyFuncMu p -> (i : pos) -> (dir i -> PolyFuncMu p -> a) -> x -> a
+
+public export
+pfParamArgCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
+  PFArgAlg p a -> PolyFuncMu p -> x -> a
+pfParamArgCata {p=p@(_ ** _)} {x} {a} alg =
+  pfArgCata {p} {a=(x -> a)} $ \e, i, d => alg e i . flip d
+
+-- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
+-- to the algebra.  Uses the product-hom adjunction.
+public export
+PFProductHomAdjAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFProductHomAdjAlg p q a = PFAlg p (PFAlg q a)
+
+public export
+pfProductHomAdjCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFProductHomAdjAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfProductHomAdjCata {p} {q} alg ep eq = pfCata {p=q} (pfCata {p} alg ep) eq
 
 ----------------------------------
 ---- Polynomial (free) monads ----
@@ -614,6 +790,12 @@ public export
 SPFCofreeCMFromNu : {x : Type} -> SlicePolyEndoF x -> SliceObj x -> SliceObj x
 SPFCofreeCMFromNu spf sx =
   SPFNu {a=x} (SPFScale {x} {y=x} spf (Sigma sx) (const id))
+
+------------------------------------------------
+------------------------------------------------
+---- `Poly` as the arrow category of `Type` ----
+------------------------------------------------
+------------------------------------------------
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
@@ -3326,9 +3508,9 @@ public export
 (!*^) : SubstObjMu -> Nat -> SubstObjMu
 p !*^ n = foldrNatNoUnit ((!*) p) Subst1 p n
 
---------------------------------------------
----- Morphisms of substitutive category ----
---------------------------------------------
+----------------------------------------
+---- Terms of substitutive category ----
+----------------------------------------
 
 public export
 SubstTermAlg : MetaSOAlg Type
@@ -3354,6 +3536,37 @@ SubstContradictionAlg (x !!* y) = Either x y
 public export
 SubstContradiction : SubstObjMu -> Type
 SubstContradiction = substObjCata SubstContradictionAlg
+
+-------------------------------------
+---- Hom-objects from an algebra ----
+-------------------------------------
+
+public export
+SubstHomObjAlg : MetaSOAlg (SubstObjMu -> SubstObjMu)
+-- 0 -> x == 1
+SubstHomObjAlg SO0 _ = Subst1
+-- 1 -> x == x
+SubstHomObjAlg SO1 q = q
+-- (p + q) -> r == (p -> r) * (q -> r)
+SubstHomObjAlg (p !!+ q) r = p r !* q r
+-- (p * q) -> r == p -> q -> r
+SubstHomObjAlg (p !!* q) r = p $ q r
+
+public export
+SubstHomObj' : SubstObjMu -> SubstObjMu -> SubstObjMu
+SubstHomObj' = substObjCata SubstHomObjAlg
+
+---------------------------------------------
+---- Morphisms from terms of hom-objects ----
+---------------------------------------------
+
+public export
+SubstMorph' : SubstObjMu -> SubstObjMu -> Type
+SubstMorph' = SubstTerm .* SubstHomObj'
+
+-----------------------------
+---- Universal morphisms ----
+-----------------------------
 
 infixr 1 <!
 public export
@@ -3856,11 +4069,11 @@ SNot = SMCase (SMInjRight _ _) (SMInjLeft _ _)
 
 public export
 SHigherAnd : SubstMorph SubstBool (SubstBool !-> SubstBool)
-SHigherAnd = SMPair (SMId SubstBool) (soConst $ SMInjRight Subst1 Subst1)
+SHigherAnd = SMPair (soConst SFalse) (SMId SubstBool)
 
 public export
 SHigherOr : SubstMorph SubstBool (SubstBool !-> SubstBool)
-SHigherOr = SMPair (soConst $ SMInjLeft _ _) (SMId SubstBool)
+SHigherOr = SMPair (SMId SubstBool) (soConst STrue)
 
 public export
 SAnd : SubstMorph (SubstBool !* SubstBool) SubstBool
@@ -4329,487 +4542,6 @@ SMADTCheckSigAlg (SMAAssoc x y z (d, c)) =
 public export
 smadtCheckSig : SubstMorphADT -> Maybe (SubstObjMu, SubstObjMu)
 smadtCheckSig = substMorphADTCata SMADTCheckSigAlg
-
-----------------------------------------------------------------------
-----------------------------------------------------------------------
----- Inductive definition of substitutive polynomial endofunctors ----
-----------------------------------------------------------------------
-----------------------------------------------------------------------
-
------------------------------------------------------
----- Functor which generates polynomial functors ----
------------------------------------------------------
-
-infixr 8 $$+
-infixr 9 $$*
-
-public export
-data PolyF : Type -> Type where
-  -- Identity
-  PFI : PolyF carrier
-
-  -- Initial
-  PF0 : PolyF carrier
-
-  -- Terminal
-  PF1 : PolyF carrier
-
-  -- Coproduct
-  ($$+) : carrier -> carrier -> PolyF carrier
-
-  -- Product
-  ($$*) : carrier -> carrier -> PolyF carrier
-
-public export
-Functor PolyF where
-  map m PFI = PFI
-  map m PF0 = PF0
-  map m PF1 = PF1
-  map m (p $$+ q) = m p $$+ m q
-  map m (p $$* q) = m p $$* m q
-
-public export
-MetaPolyAlg : Type -> Type
-MetaPolyAlg x = PolyF x -> x
-
-public export
-MetaPolyCoalg : Type -> Type
-MetaPolyCoalg x = x -> PolyF x
-
------------------------------------------------------------------------
----- Polynomial functors as least fixed point of generator functor ----
------------------------------------------------------------------------
-
-public export
-data PolyMu : Type where
-  InPCom : PolyF PolyMu -> PolyMu
-
-infixr 8 $+
-infixr 9 $*
-
-public export
-PolyI : PolyMu
-PolyI = InPCom PFI
-
-public export
-Poly0 : PolyMu
-Poly0 = InPCom PF0
-
-public export
-Poly1 : PolyMu
-Poly1 = InPCom PF1
-
-public export
-($+) : PolyMu -> PolyMu -> PolyMu
-($+) = InPCom .* ($$+)
-
-public export
-($*) : PolyMu -> PolyMu -> PolyMu
-($*) = InPCom .* ($$*)
-
-public export
-metaPolyCata : MetaPolyAlg x -> PolyMu -> x
-metaPolyCata alg = metaPolyFold id where
-  mutual
-    metaPolyCataCont : (x -> x -> PolyF x) ->
-      (x -> x) -> PolyMu -> PolyMu -> x
-    metaPolyCataCont op cont p q =
-      metaPolyFold
-        (\p' => metaPolyFold (\q' => cont $ alg $ op p' q') q) p
-
-    metaPolyFold : (x -> x) -> PolyMu -> x
-    metaPolyFold cont (InPCom p) = case p of
-      PFI => cont (alg PFI)
-      PF0 => cont (alg PF0)
-      PF1 => cont (alg PF1)
-      p $$+ q => metaPolyCataCont ($$+) cont p q
-      p $$* q => metaPolyCataCont ($$*) cont p q
-
-public export
-data PolyNu : Type where
-  InPLabel : Inf (PolyF PolyNu) -> PolyNu
-
-public export
-metaPolyAna : MetaPolyCoalg x -> x -> Inf PolyNu
-metaPolyAna coalg = metaPolyUnfold id where
-  mutual
-    metaPolyAnaCont : (PolyNu -> PolyNu -> PolyF PolyNu) ->
-      (PolyNu -> PolyNu) -> x -> x -> PolyNu
-    metaPolyAnaCont op cont x y =
-      metaPolyUnfold
-        (\x' => metaPolyUnfold (\y' => cont $ InPLabel $ op x' y') y) x
-
-    metaPolyUnfold : (PolyNu -> PolyNu) -> x -> Inf PolyNu
-    metaPolyUnfold cont t = case coalg t of
-      PFI => cont (InPLabel PFI)
-      PF0 => cont (InPLabel PF0)
-      PF1 => cont (InPLabel PF1)
-      p $$+ q => metaPolyAnaCont ($$+) cont p q
-      p $$* q => metaPolyAnaCont ($$*) cont p q
-
-public export
-MetaPolyPairAlg : Type -> Type
-MetaPolyPairAlg x = MetaPolyAlg (PolyMu -> x)
-
-public export
-metaPolyPairCata : MetaPolyPairAlg x -> PolyMu -> PolyMu -> x
-metaPolyPairCata = metaPolyCata
-
--------------------
----- Utilities ----
--------------------
-
-public export
-PolySizeAlg : MetaPolyAlg Nat
-PolySizeAlg PFI = 1
-PolySizeAlg PF0 = 1
-PolySizeAlg PF1 = 1
-PolySizeAlg (p $$+ q) = p + q
-PolySizeAlg (p $$* q) = p + q
-
-public export
-polySize : PolyMu -> Nat
-polySize = metaPolyCata PolySizeAlg
-
-public export
-PolyDepthAlg : MetaPolyAlg Nat
-PolyDepthAlg PFI = 0
-PolyDepthAlg PF0 = 0
-PolyDepthAlg PF1 = 0
-PolyDepthAlg (p $$+ q) = smax p q
-PolyDepthAlg (p $$* q) = smax p q
-
-public export
-polyDepth : PolyMu -> Nat
-polyDepth = metaPolyCata PolyDepthAlg
-
--- The cardinality of the type that would result from applying
--- the given polynomial to a type of the given cardinality.
-public export
-PolyCardAlg : Nat -> MetaPolyAlg Nat
-PolyCardAlg n PFI = n
-PolyCardAlg n PF0 = 0
-PolyCardAlg n PF1 = 1
-PolyCardAlg n (p $$+ q) = p + q
-PolyCardAlg n (p $$* q) = p * q
-
-public export
-polyCard : Nat -> PolyMu -> Nat
-polyCard = metaPolyCata . PolyCardAlg
-
-public export
-polyTCard : PolyMu -> Nat
-polyTCard = polyCard 0
-
---------------------------------------------
----- Displaying polynomial endofunctors ----
---------------------------------------------
-
-public export
-PolyShowAlg : MetaPolyAlg String
-PolyShowAlg PFI = "id"
-PolyShowAlg PF0 = "0"
-PolyShowAlg PF1 = "1"
-PolyShowAlg (x $$+ y) = "(" ++ x ++ " + " ++ y ++ ")"
-PolyShowAlg (x $$* y) = x ++ " * " ++ y
-
-public export
-Show PolyMu where
-  show = metaPolyCata PolyShowAlg
-
----------------------------------------------
----- Equality on polynomial endofunctors ----
----------------------------------------------
-
-public export
-PolyMuEqAlg : MetaPolyPairAlg Bool
-PolyMuEqAlg PFI (InPCom PFI) = True
-PolyMuEqAlg PFI _ = False
-PolyMuEqAlg PF0 (InPCom PF0) = True
-PolyMuEqAlg PF0 _ = False
-PolyMuEqAlg PF1 (InPCom PF1) = True
-PolyMuEqAlg PF1 _ = False
-PolyMuEqAlg (p $$+ q) (InPCom (r $$+ s)) = p r && q s
-PolyMuEqAlg (p $$+ q) _ = False
-PolyMuEqAlg (p $$* q) (InPCom (r $$* s)) = p r && q s
-PolyMuEqAlg (p $$* q) _ = False
-
-public export
-Eq PolyMu where
-  (==) = metaPolyPairCata PolyMuEqAlg
-
---------------------------------------------------
----- Normalization of polynomial endofunctors ----
---------------------------------------------------
-
-public export
-PolyRemoveZeroAlg : MetaPolyAlg PolyMu
-PolyRemoveZeroAlg PFI = PolyI
-PolyRemoveZeroAlg PF0 = Poly0
-PolyRemoveZeroAlg PF1 = Poly1
-PolyRemoveZeroAlg (p $$+ q) = case p of
-  InPCom p' => case p' of
-    PF0 => q
-    _ => case q of
-      InPCom q' => case q' of
-        PF0 => p
-        _ => p $+ q
-PolyRemoveZeroAlg (p $$* q) = case p of
-  InPCom p' => case p' of
-    PF0 => Poly0
-    _ => case q of
-      InPCom q' => case q' of
-        PF0 => Poly0
-        _ => p $* q
-
-public export
-polyRemoveZero : PolyMu -> PolyMu
-polyRemoveZero = metaPolyCata PolyRemoveZeroAlg
-
-public export
-PolyRemoveOneAlg : MetaPolyAlg PolyMu
-PolyRemoveOneAlg PFI = PolyI
-PolyRemoveOneAlg PF0 = Poly0
-PolyRemoveOneAlg PF1 = Poly1
-PolyRemoveOneAlg (p $$+ q) = p $+ q
-PolyRemoveOneAlg (p $$* q) = case p of
-  InPCom p' => case p' of
-    PF1 => q
-    _ => case q of
-      InPCom q' => case q' of
-        PF1 => p
-        _ => p $* q
-
-public export
-polyRemoveOne : PolyMu -> PolyMu
-polyRemoveOne = metaPolyCata PolyRemoveOneAlg
-
----------------------------------------------------------------
----- Composition of polynomial endofunctors (substitution) ----
----------------------------------------------------------------
-
-public export
-PolyComposeAlg : MetaPolyAlg (PolyMu -> PolyMu)
-PolyComposeAlg PFI q = q
-PolyComposeAlg PF0 _ = Poly0
-PolyComposeAlg PF1 _ = Poly1
-PolyComposeAlg (p $$+ q) r = p r $+ q r
-PolyComposeAlg (p $$* q) r = p r $* q r
-
-infixr 2 $.
-public export
-($.) : PolyMu -> PolyMu -> PolyMu
-($.) = metaPolyCata PolyComposeAlg
-
------------------------------------------------------
----- Multiplication by a constant (via addition) ----
------------------------------------------------------
-
-infix 10 $:*
-public export
-($:*) : Nat -> PolyMu -> PolyMu
-n $:* p = foldrNatNoUnit (($+) p) Poly0 p n
-
----------------------------------------
----- Multiplicative exponentiation ----
----------------------------------------
-
-infix 10 $*^
-public export
-($*^) : PolyMu -> Nat -> PolyMu
-p $*^ n = foldrNatNoUnit (($*) p) Poly1 p n
-
---------------------------------------------------
----- Compositional exponentiation (iteration) ----
---------------------------------------------------
-
-infix 10 $.^
-public export
-($.^) : PolyMu -> Nat -> PolyMu
-p $.^ n = foldrNatNoUnit (($.) p) PolyI p n
-
----------------------------------------
----- Composition with zero and one ----
----------------------------------------
-
-public export
-polyAppZero : PolyMu -> PolyMu
-polyAppZero p = polyRemoveZero (p $. Poly0)
-
-public export
-polyAppOne : PolyMu -> PolyMu
-polyAppOne p = polyRemoveOne (p $. Poly1)
-
--------------------------------------------------
----- Conversion to and from algebraic format ----
--------------------------------------------------
-
-public export
-CountOnesAlg : MetaPolyAlg Nat
-CountOnesAlg PFI = 0
-CountOnesAlg PF0 = 0
-CountOnesAlg PF1 = 1
-CountOnesAlg (p $$+ q) = p + q
-CountOnesAlg (p $$* q) = p + q
-
-public export
-countOnes : PolyMu -> Nat
-countOnes = metaPolyCata CountOnesAlg
-
-public export
-CountIdsAlg : MetaPolyAlg Nat
-CountIdsAlg PFI = 1
-CountIdsAlg PF0 = 0
-CountIdsAlg PF1 = 0
-CountIdsAlg (p $$+ q) = p + q
-CountIdsAlg (p $$* q) = p + q
-
-public export
-countIds : PolyMu -> Nat
-countIds = metaPolyCata CountIdsAlg
-
-public export
-ToPolyShapeAlg : MetaPolyAlg PolyShape
-ToPolyShapeAlg PFI = idPolyShape
-ToPolyShapeAlg PF0 = initialPolyShape
-ToPolyShapeAlg PF1 = terminalPolyShape
-ToPolyShapeAlg (p $$+ q) = addPolyShape p q
-ToPolyShapeAlg (p $$* q) = mulPolyShape p q
-
-public export
-toPolyShape : PolyMu -> PolyShape
-toPolyShape = metaPolyCata ToPolyShapeAlg
-
-public export
-showPolyShape : PolyMu -> String
-showPolyShape = show . toPolyShape
-
-public export
-polyPosShow : PolyMu -> String
-polyPosShow = psPosShow . toPolyShape
-
--- Create a polynomial from a list of (power, coefficient) pairs.
-public export
-fromPolyShapeAcc : PolyShape -> PolyMu -> PolyMu
-fromPolyShapeAcc [] q = q
-fromPolyShapeAcc ((p, c) :: l) q =
-  fromPolyShapeAcc l (c $:* (PolyI $*^ p) $+ q)
-
-public export
-fromPolyShape : PolyShape -> PolyMu
-fromPolyShape l = fromPolyShapeAcc l Poly0
-
-public export
-polyDistrib : PolyMu -> PolyMu
-polyDistrib = fromPolyShape . toPolyShape
-
------------------------------------------------------------------------------
----- Interpretation of polynomial functors as natural-number polymomials ----
------------------------------------------------------------------------------
-
-public export
-MetaPolyFNatAlg : MetaPolyAlg (Nat -> Nat)
-MetaPolyFNatAlg PFI = id
-MetaPolyFNatAlg PF0 = const 0
-MetaPolyFNatAlg PF1 = const 1
-MetaPolyFNatAlg (p $$+ q) = \n => p n + q n
-MetaPolyFNatAlg (p $$* q) = \n => p n * q n
-
-public export
-MetaPolyFNat : PolyMu -> Nat -> Nat
-MetaPolyFNat = metaPolyCata MetaPolyFNatAlg
-
-----------------------------------------------------------
----- Exponentiation (hom-objects) of polynomial types ----
-----------------------------------------------------------
-
-public export
-PolyHomObjAlg : MetaPolyAlg (PolyMu -> PolyMu)
--- id -> r == r . (id + 1) (see formula 4.27 in _Polynomial Functors: A General
--- Theory of Interaction_)
-PolyHomObjAlg PFI r = r $. (PolyI $+ Poly1)
--- 0 -> x == 1
-PolyHomObjAlg PF0 _ = Poly1
--- 1 -> x == x
-PolyHomObjAlg PF1 q = q
--- (p + q) -> r == (p -> r) * (q -> r)
-PolyHomObjAlg (p $$+ q) r = p r $* q r
--- (p * q) -> r == p -> q -> r
-PolyHomObjAlg (p $$* q) r = p $ q r
-
-public export
-PolyHomObj : PolyMu -> PolyMu -> PolyMu
-PolyHomObj = metaPolyCata PolyHomObjAlg
-
-public export
-PolyExp : PolyMu -> PolyMu -> PolyMu
-PolyExp = flip PolyHomObj
-
----------------------------------
----- Natural transformations ----
----------------------------------
-
-public export
-data PolyMuNT : PolyMu -> PolyMu -> Type where
-  PNTFrom0 : (p : PolyMu) -> PolyMuNT Poly0 p
-  PNTFromCop : {p, q, r : PolyMu} ->
-    PolyMuNT p r -> PolyMuNT q r -> PolyMuNT (p $+ q) r
-  PNTFromProd : {p, q, r : PolyMu} ->
-    PolyMuNT p (PolyHomObj q r) -> PolyMuNT (p $* q) r
-
-----------------------------------------
----- Polynomial monads and comonads ----
-----------------------------------------
-
-public export
-record PolyMonad where
-  constructor MkPolyMonad
-  pmFunctor : PolyMu
-  pmUnit : PolyMuNT PolyI pmFunctor
-  pmMul : PolyMuNT (pmFunctor $.^ 2) pmFunctor
-
-public export
-record PolyComonad where
-  constructor MkPolyComonad
-  pmFunctor : PolyMu
-  pmEraser : PolyMuNT pmFunctor PolyI
-  pmDuplicator : PolyMuNT pmFunctor (pmFunctor $.^ 2)
-
-------------------------------------------------------------------------
----- Interpretation of polynomial functors as metalanguage functors ----
-------------------------------------------------------------------------
-
-public export
-MetaPolyMetaFAlg : MetaPolyAlg (Type -> Type)
-MetaPolyMetaFAlg PFI = id
-MetaPolyMetaFAlg PF0 = const Void
-MetaPolyMetaFAlg PF1 = const Unit
-MetaPolyMetaFAlg (p $$+ q) = CoproductF p q
-MetaPolyMetaFAlg (p $$* q) = ProductF p q
-
-public export
-MetaPolyFMetaF : PolyMu -> Type -> Type
-MetaPolyFMetaF = metaPolyCata MetaPolyMetaFAlg
-
-public export
-ConstComponent : PolyMu -> Type
-ConstComponent p = MetaPolyFMetaF (polyAppZero p) Void
-
-public export
-PositionType : PolyMu -> Type
-PositionType p = MetaPolyFMetaF (polyAppOne p) Unit
-
----------------------------------------------------
----- The free monad in the polynomial category ----
----------------------------------------------------
-
-public export
-MetaPolyFreeM : PolyMu -> (0 _ : Type) -> Type
-MetaPolyFreeM (InPCom p) = FreeM (MetaPolyFMetaF $ InPCom p)
-
-public export
-MetaPolyMu : PolyMu -> Type
-MetaPolyMu p = MetaPolyFreeM p Void
 
 -------------------------------------------------------------
 -------------------------------------------------------------

@@ -39,14 +39,12 @@
   x y f)
 
 (def higher-and
-  (pair bool
-        ;; Is this right!? hard to tell with Idris's unification
-        (so-const mtrue bool)))
-
-(def higher-or
-  ;; Is this right!? hard to tell with Idris's unification
   (pair (so-const mfalse bool)
         bool))
+
+(def higher-or
+  (pair bool
+        (so-const mtrue bool)))
 
 ;; (def sand
 ;;   (alias and

@@ -105,6 +105,11 @@ public export
 SliceObj : Type -> Type
 SliceObj a = a -> Type
 
+-- An object of some slice category of `Type`.
+public export
+Slice : Type
+Slice = DPair Type SliceObj
+
 public export
 SliceFunctor : Type -> Type -> Type
 SliceFunctor a b = SliceObj a -> SliceObj b
@@ -136,6 +141,10 @@ DepCoprodF {a} {b} f sla elemb = (elema : PreImage f elemb ** sla (fst0 elema))
 -- object is isomorphic to its domain, so the slice category of a category
 -- over its terminal object is isomorphic to the category itself.
 -- That is, `SliceObj ()` is effectively just `Type`.
+--
+-- Note that another way of looking at this type is as a natural transformation
+-- from the polynomial endofunctor which represents the slice object to the
+-- identity endofunctor.
 public export
 Pi : {a : Type} -> SliceObj a -> Type
 Pi {a} p = (x : a) -> p x
@@ -206,6 +215,40 @@ Bifunctor f => Functor (f a) where
 public export
 Bifunctor f => Bifunctor (flip f) where
   bimap f g = bimap g f
+
+---------------------
+---------------------
+---- Profunctors ----
+---------------------
+---------------------
+
+public export
+interface Profunctor f where
+  constructor MkProfunctor
+
+  total
+  dimap : (c -> a) -> (b -> d) -> f a b -> f c d
+  dimap f g = lmap f . rmap g
+
+  total
+  lmap : (c -> a) -> f a b -> f c b
+  lmap = flip dimap id
+
+  total
+  rmap : (b -> d) -> f a b -> f a d
+  rmap = dimap id
+
+public export
+ProfunctorDP : Type
+ProfunctorDP = DPair (Type -> Type -> Type) Profunctor
+
+public export
+PfSliceObj : Type
+PfSliceObj = SliceObj ProfunctorDP
+
+public export
+PfCatObj : PfSliceObj
+PfCatObj = const Unit
 
 --------------------------------------------------------------
 --------------------------------------------------------------
@@ -378,8 +421,57 @@ ProductF : (Type -> Type) -> (Type -> Type) -> Type -> Type
 ProductF f g a = (f a, g a)
 
 public export
-(Functor f, Functor g) => Functor (ProductF f g) where
-  map m (x, y) = (map m x, map m y)
+ProdFunctor : {0 f, g : Type -> Type} ->
+  Functor f -> Functor g -> Functor (ProductF f g)
+ProdFunctor (MkFunctor mapf) (MkFunctor mapg) =
+  MkFunctor (\m, p => (mapf m (fst p), mapg m (snd p)))
+
+public export
+[ProdFunctorI] (l : Functor f) => (r : Functor g) => Functor (ProductF f g)
+    where
+  map = case ProdFunctor l r of MkFunctor mp => mp
+
+public export
+ProdApplicative : {0 f, g : Type -> Type} ->
+  {funcf : Functor f} -> {funcg : Functor g} ->
+  Applicative f -> Applicative g -> Applicative (ProductF f g)
+ProdApplicative {funcf} {funcg} applf applg =
+  let _ = ProdFunctor funcf funcg in
+  MkApplicative
+    (\elem => (pure elem, pure elem))
+    (\fp, ep => (fst fp <*> fst ep, snd fp <*> snd ep))
+
+public export
+[ProdApplicativeI] (funcf : Functor f) => (funcg : Functor g) =>
+    (Functor (ProductF f g)) =>
+    (l : Applicative f) => (r : Applicative g) =>
+    Applicative (ProductF f g) where
+  pure = case ProdApplicative {funcf} {funcg} l r of MkApplicative pp _ => pp
+  (<*>) = case ProdApplicative {funcf} {funcg} l r of MkApplicative _ ap => ap
+
+public export
+ProdMonad : {0 f, g : Type -> Type} ->
+  {funcf : Functor f} -> {funcg : Functor g} ->
+  {applf : Applicative f} -> {applg : Applicative g} ->
+  Monad f -> Monad g -> Monad (ProductF f g)
+ProdMonad {f} {g} {funcf} {funcg} {applf} {applg} monf mong =
+  let _ = ProdFunctor funcf funcg in
+  let _ = ProdApplicative {funcf} {funcg} applf applg in
+  MkMonad
+    (\ep, fp => (fst ep >>= fst . fp, snd ep >>= snd . fp))
+    (\ep => (fst ep >>= fst, snd ep >>= snd))
+
+public export
+[ProdMonadI] (funcf : Functor f) => (funcg : Functor g) =>
+    (applf : Applicative f) => (applg : Applicative g) =>
+    (Functor (ProductF f g)) =>
+    (Applicative (ProductF f g)) =>
+    (l : Monad f) => (r : Monad g) =>
+    Monad (ProductF f g) where
+  (>>=) = case ProdMonad {funcf} {funcg} {applf} {applg} l r of
+    MkMonad bp _ => bp
+  join = case ProdMonad {funcf} {funcg} {applf} {applg} l r of
+    MkMonad _ jp => jp
 
 public export
 ProductMonad : Type -> Type
@@ -1891,6 +1983,371 @@ DirichFunc : PolyData -> (Type -> Type)
 DirichFunc [] _ = Void
 DirichFunc ((coeff, rep) :: l) ty =
   Either (coeff, ContravarHomFunc rep ty) (DirichFunc l ty)
+
+---------------------------------------
+---------------------------------------
+---- Yoneda variants / corollaries ----
+---------------------------------------
+---------------------------------------
+
+-- For this and the following optics, see "What You Needa Know About Yoneda"
+-- by Boisseau and Gibbons (I have added one or two duals that they didn't
+-- explicitly mention).
+
+public export
+record Yo (f : Type -> Type) (a : Type) where
+  constructor MkYo
+  YoEmbed : NaturalTransformation (CovarHomFunc a) f
+
+public export
+fromYo : {f : Type -> Type} -> {a : Type} -> Yo f a -> f a
+fromYo {f} {a} (MkYo y) = y a id
+
+public export
+toYo : Functor f => {a : Type} -> f a -> Yo f a
+toYo {f} {a} x = MkYo $ \ty, maty => map {f} maty x
+
+public export
+Functor (Yo f) where
+  map mab (MkYo y) = MkYo $ \ty, mbty => y ty $ mbty . mab
+
+public export
+record ContraYo (f : Type -> Type) (a : Type) where
+  constructor MkContraYo
+  ContraYoEmbed : NaturalTransformation (ContravarHomFunc a) f
+
+public export
+fromContraYo : {f : Type -> Type} -> {a : Type} -> ContraYo f a -> f a
+fromContraYo {f} {a} (MkContraYo y) = y a id
+
+public export
+toContraYo : Contravariant f => {a : Type} -> f a -> ContraYo f a
+toContraYo {f} {a} x = MkContraYo $ \ty, mtya => contramap {f} mtya x
+
+public export
+Contravariant (ContraYo f) where
+  contramap mba (MkContraYo y) = MkContraYo $ \ty, mtyb => y ty $ mba . mtyb
+
+public export
+record CoYo (f : Type -> Type) (r : Type) where
+  constructor MkCoYo
+  CoYoEmbed : (a : Type ** (f a, a -> r))
+
+public export
+fromCoYo : Functor f => CoYo f b -> f b
+fromCoYo (MkCoYo (ty ** (x, h))) = map {f} h x
+
+public export
+toCoYo : Functor f => {b : Type} -> f b -> CoYo f b
+toCoYo {b} y = MkCoYo (b ** (y, id))
+
+public export
+Functor (CoYo f) where
+  map g (MkCoYo (ty ** (x, h))) = MkCoYo (ty ** (x, g . h))
+
+public export
+record ContraCoYo (f : Type -> Type) (r : Type) where
+  constructor MkContraCoYo
+  ContraCoYoEmbed : (a : Type ** (f a, r -> a))
+
+public export
+fromContraCoYo : Contravariant f => ContraCoYo f b -> f b
+fromContraCoYo (MkContraCoYo (ty ** (x, g))) = contramap {f} g x
+
+public export
+toContraCoYo : Contravariant f => {b : Type} -> f b -> ContraCoYo f b
+toContraCoYo {b} y = MkContraCoYo (b ** (y, id))
+
+public export
+Contravariant (ContraCoYo f) where
+  contramap g (MkContraCoYo (ty ** (x, h))) = MkContraCoYo (ty ** (x, h . g))
+
+public export
+record DoubleYo (a, b : Type) where
+  constructor MkDoubleYo
+  DoubleYoEmbed : (f : Type -> Type) -> Functor f -> f a -> f b
+
+public export
+toDoubleYo : (a -> b) -> DoubleYo a b
+toDoubleYo m = MkDoubleYo $ \f, isF, x => map {f} m x
+
+public export
+fromDoubleYo : DoubleYo a b -> a -> b
+fromDoubleYo (MkDoubleYo y) = y id (MkFunctor id)
+
+public export
+Profunctor DoubleYo where
+  dimap mca mbd (MkDoubleYo y) =
+    MkDoubleYo $ \f, isF, x => map {f} mbd $ y f isF $ map {f} mca x
+
+---------------------------
+---------------------------
+---- Profunctor optics ----
+---------------------------
+---------------------------
+
+public export
+ProfShape : Type
+ProfShape = PfSliceObj
+
+public export
+record ProfOptic (sl : ProfShape) (a, b, s, t : Type) where
+  constructor MkProfOptic
+  opticP : (p : ProfunctorDP) -> sl p -> DPair.fst p a b -> DPair.fst p s t
+
+public export
+ConjoinShapes : ProfShape -> ProfShape -> ProfShape
+ConjoinShapes s s' p = Pair (s p) (s' p)
+
+public export
+ProfOpticCompose : {sh, sh' : ProfShape} -> {a, b, c, d, s, t : Type} ->
+  ProfOptic sh c d s t -> ProfOptic sh' a b c d ->
+  ProfOptic (ConjoinShapes sh sh') a b s t
+ProfOpticCompose (MkProfOptic pg) (MkProfOptic pf) =
+  MkProfOptic $ \dp, sldp => pg dp (fst sldp) . pf dp (snd sldp)
+
+public export
+OpticSig : Type
+OpticSig = Type -> Type -> Type -> Type -> Type
+
+public export
+ProfOpticDP : OpticSig
+ProfOpticDP a b s t = (sl : PfSliceObj ** ProfOptic sl a b s t)
+
+public export
+FunctorDP : Type
+FunctorDP = (f : Type -> Type ** Functor f)
+
+public export
+FShape : Type
+FShape = SliceObj FunctorDP
+
+public export
+FShaped : FShape -> Type
+FShaped fs = DPair FunctorDP fs
+
+public export
+ConcreteExOptic : FShape -> OpticSig
+ConcreteExOptic fs a b s t =
+  (f : Type -> Type ** isF : Functor f **
+   isShaped : fs (f ** isF) ** Pair (s -> f a) (f b -> t))
+
+public export
+PFShaped : ProfShape -> Type
+PFShaped pfs = DPair ProfunctorDP pfs
+
+public export
+ProfRespectsShape : FShape -> ProfShape
+ProfRespectsShape fs (pf ** isP) =
+  (f : Type -> Type) -> (isF : Functor f) -> fs (f ** isF) ->
+  (a, b : Type) -> pf a b -> pf (f a) (f b)
+
+public export
+ExOpticP : FShape -> OpticSig
+ExOpticP fs = ProfOptic (ProfRespectsShape fs)
+
+public export
+record ConcreteAdapter (a, b, s, t : Type) where
+  constructor MkAdapter
+  adaptFrom : s -> a
+  adaptTo : b -> t
+
+-- Profunctor version of adapter.
+public export
+PfAdapter : PfSliceObj
+PfAdapter = PfCatObj
+
+public export
+AdapterP : OpticSig
+AdapterP = ProfOptic PfAdapter
+
+public export
+record ConcreteLens (a, b, s, t : Type) where
+  constructor MkLens
+  lensview : s -> a
+  lensupdate : Pair s b -> t
+
+public export
+CartesianP : PfSliceObj
+CartesianP (p ** isP) =
+  (a, b, c : Type) -> p a b -> p (Pair c a) (Pair c b)
+
+public export
+LensP : OpticSig
+LensP = ProfOptic CartesianP
+
+public export
+record ConcretePrism (a, b, s, t : Type) where
+  constructor MkPrism
+  lensmatch : s -> Either t a
+  lensbuild : b -> t
+
+public export
+CocartesianP : PfSliceObj
+CocartesianP (p ** isP) =
+  (a, b, c : Type) -> p a b -> p (Either c a) (Either c b)
+
+public export
+PrismP : OpticSig
+PrismP = ProfOptic CocartesianP
+
+public export
+TraversalShape : FShape
+TraversalShape (f ** isF) = Traversable f
+
+public export
+ConcreteTraversal : OpticSig
+ConcreteTraversal = ConcreteExOptic TraversalShape
+
+public export
+TraversalP : OpticSig
+TraversalP = ExOpticP TraversalShape
+
+-----------------------
+-----------------------
+---- Continuations ----
+-----------------------
+-----------------------
+
+-- Drawn from:
+--  https://www.austinseipp.com/hs-asai/doc/Control-Delimited.html
+--  https://hackage.haskell.org/package/kan-extensions-5.2.5/docs/Control-Monad-Codensity.html
+--  https://www.semanticscholar.org/paper/Asymptotic-Improvement-of-Computations-over-Free-Voigtl%C3%A4nder/f25608a741652a4448afc6164856231f3565d517
+
+public export
+Continuation : Type -> Type
+Continuation = Yo id
+
+public export
+CPSTransformSig : (a, b : Type) -> Type
+CPSTransformSig a b = (b -> a) -> b -> Continuation a
+
+public export
+FunctorExp : (Type -> Type) -> Type -> Type -> Type
+FunctorExp g a b = a -> g b
+
+public export
+record Codensity (m : Type -> Type) (a : Type) where
+  constructor MkCodensity
+  -- Codensity m a = (b : Type) -> (a -> m b) -> m b
+  runCodensity : NaturalTransformation (FunctorExp m a) m
+
+public export
+CodensityFunctor : (f : Type -> Type) -> Functor (Codensity f)
+CodensityFunctor f =
+  MkFunctor
+    (\fab, c => MkCodensity $ \ty, fbty => runCodensity c ty $ fbty . fab)
+
+public export
+CodensityApplicative : (f : Type -> Type) -> Applicative (Codensity f)
+CodensityApplicative f =
+  let _ = CodensityFunctor f in
+  MkApplicative
+    (\x => MkCodensity $ \ty, faty => faty x)
+    (\cab, ca => MkCodensity $ \ty, fbty =>
+      runCodensity cab ty $ \fab => runCodensity ca ty $ fbty . fab)
+
+public export
+CodensityMonad : (f : Type -> Type) -> Monad (Codensity f)
+CodensityMonad f =
+  let cda = CodensityApplicative f in
+  MkMonad cmbind cmjoin
+  where
+    public export
+    cmbind : Codensity f a -> (a -> Codensity f b) -> Codensity f b
+    cmbind ca acb = MkCodensity $
+      \ty, fbty => runCodensity ca ty $ \x => runCodensity (acb x) ty fbty
+
+    public export
+    cmjoin : Codensity f (Codensity f a) -> Codensity f a
+    cmjoin = flip cmbind id
+
+public export
+MonadTrans Codensity where
+  lift m = MkCodensity $ \ty => (>>=) m
+
+public export
+lowerCodensity : Applicative f => {a : Type} -> Codensity f a -> f a
+lowerCodensity {f} {a} ca = runCodensity ca a $ pure {f}
+
+public export
+interface (Functor f, Monad m) => FreeLike f m where
+  constructor MkFreeLike
+  total
+  wrap : (a : Type) -> f (m a) -> m a
+
+public export
+FreeMonadFreeLike : {f : Type -> Type} -> Functor f ->
+  {auto isM : Monad (FreeMonad f)} -> FreeLike f (FreeMonad f)
+FreeMonadFreeLike isF {isM} = MkFreeLike $ \a, x => InFree $ TermComposite x
+
+public export
+CodensityFreeLike : {f, m : Type -> Type} ->
+  FreeLike f m -> FreeLike f (Codensity m)
+CodensityFreeLike {f} {m} (MkFreeLike wrapm) =
+  let _ = CodensityFunctor f in
+  let _ = CodensityMonad m in
+  MkFreeLike $ \a, fca => MkCodensity $ \ty, maty =>
+      wrapm ty $ map {f} {a=(Codensity m a)} {b=(m ty)}
+        (\ca => runCodensity ca ty maty) fca
+
+public export
+improve : {f : Type -> Type} -> Functor f ->
+  {a : Type} -> ((m : Type -> Type) -> FreeLike f m -> m a) ->
+  {auto isM : Monad (FreeMonad f)} -> FreeMonad f a
+improve {f} isF allWrap {isM} =
+  lowerCodensity $ lift $ allWrap (FreeMonad f) (FreeMonadFreeLike isF)
+
+public export
+wrapCodensity :
+  {m : Type -> Type} -> ((a : Type) -> m a -> m a) -> Codensity m ()
+wrapCodensity f = MkCodensity $ \ty, k => f ty (k ())
+
+public export
+reset : Monad m => {a : Type} -> Codensity m a -> Codensity m a
+reset = lift {m} {t=Codensity} . lowerCodensity {f=m}
+
+public export
+shift : Monad m => {a : Type} ->
+  ((b : Type) -> (a -> m b) -> Codensity m b) -> Codensity m a
+shift {a} f = MkCodensity $ \y => lowerCodensity . f y
+
+----------------------------
+----------------------------
+---- Closure conversion ----
+----------------------------
+----------------------------
+
+-- See https://prl.ccs.neu.edu/blog/2017/08/28/closure-conversion-as-coyoneda/
+
+public export
+Closure : Type -> Type -> Type
+Closure a b = (r : Type ** Pair r (Pair r a -> b))
+
+public export
+ClosureConversionSig : (a, b : Type) -> Type
+ClosureConversionSig a b = (a -> b) -> Closure a b
+
+public export
+ClosureConversionF : Type -> Type -> Type -> Type
+ClosureConversionF a b d = Pair d a -> b
+
+public export
+[ClosureConversionContravariant] Contravariant (ClosureConversionF a b) where
+  contramap fab fbdb (x', x) = fbdb (fab x', x)
+
+public export
+ClosureConversionContra :
+  (a, b : Type) -> Contravariant (ClosureConversionF a b)
+ClosureConversionContra a b = ClosureConversionContravariant
+
+public export
+closureConvert : {a, b : Type} -> ClosureConversionSig a b
+closureConvert {a} {b} m =
+  let isC = ClosureConversionContra a b in
+  let y = toContraCoYo {f=(ClosureConversionF a b)} {b=Unit} (m . snd) in
+  let (r ** (f, c)) = ContraCoYoEmbed y in
+  (r ** (c (), f))
 
 --------------------
 --------------------
