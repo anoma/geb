@@ -2227,21 +2227,25 @@ FunctorExp : (Type -> Type) -> Type -> Type -> Type
 FunctorExp g a b = a -> g b
 
 public export
-Codensity : (Type -> Type) -> Type -> Type
--- Codensity m a = (b : Type) -> (a -> m b) -> m b
-Codensity m a = NaturalTransformation (FunctorExp m a) m
+record Codensity (m : Type -> Type) (a : Type) where
+  constructor MkCodensity
+  -- Codensity m a = (b : Type) -> (a -> m b) -> m b
+  runCodensity : NaturalTransformation (FunctorExp m a) m
 
 public export
 CodensityFunctor : (f : Type -> Type) -> Functor (Codensity f)
-CodensityFunctor f = MkFunctor $ \ma, k, ty, mb => k ty $ mb . ma
+CodensityFunctor f =
+  MkFunctor
+    (\fab, c => MkCodensity $ \ty, fbty => runCodensity c ty $ fbty . fab)
 
 public export
 CodensityApplicative : (f : Type -> Type) -> Applicative (Codensity f)
 CodensityApplicative f =
   let _ = CodensityFunctor f in
   MkApplicative
-    (\x, ty, m => m x)
-    (\mf, ma, ty, mb => mf ty $ \mab => ma ty $ mb . mab)
+    (\x => MkCodensity $ \ty, faty => faty x)
+    (\cab, ca => MkCodensity $ \ty, fbty =>
+      runCodensity cab ty $ \fab => runCodensity ca ty $ fbty . fab)
 
 public export
 CodensityMonad : (f : Type -> Type) -> Monad (Codensity f)
@@ -2251,7 +2255,8 @@ CodensityMonad f =
   where
     public export
     cmbind : Codensity f a -> (a -> Codensity f b) -> Codensity f b
-    cmbind ma mab ty mb = ma ty $ \x => mab x ty mb
+    cmbind ca acb = MkCodensity $
+      \ty, fbty => runCodensity ca ty $ \x => runCodensity (acb x) ty fbty
 
     public export
     cmjoin : Codensity f (Codensity f a) -> Codensity f a
@@ -2259,11 +2264,11 @@ CodensityMonad f =
 
 public export
 MonadTrans Codensity where
-  lift x ty f = x >>= f
+  lift m = MkCodensity $ \ty => (>>=) m
 
 public export
 lowerCodensity : Applicative f => {a : Type} -> Codensity f a -> f a
-lowerCodensity {f} {a} ma = ma a $ pure {f}
+lowerCodensity {f} {a} ca = runCodensity ca a $ pure {f}
 
 public export
 interface (Functor f, Monad m) => FreeLike f m where
@@ -2282,33 +2287,34 @@ CodensityFreeLike : {f, m : Type -> Type} ->
 CodensityFreeLike {f} {m} (MkFreeLike wrapm) =
   let _ = CodensityFunctor f in
   let _ = CodensityMonad m in
-  MkFreeLike $
-    \a, mafx, y, may =>
-      wrapm y $ map {f} {a=((x : Type) -> (a -> m x) -> m x)} {b=(m y)}
-        (\mamx => mamx y may) mafx
+  MkFreeLike $ \a, fca => MkCodensity $ \ty, maty =>
+      wrapm ty $ map {f} {a=(Codensity m a)} {b=(m ty)}
+        (\ca => runCodensity ca ty maty) fca
 
+-- This is more complicated than the Haskell, which does not appear
+-- to me to be using any analogue of `>>= afty`; I can't seem to find
+-- a direct analogue which typechecks.  I haven't figured out why.
 public export
 improve : {f : Type -> Type} -> Functor f ->
   {a : Type} -> ((m : Type -> Type) -> FreeLike f m -> m a) ->
   {auto isM : Monad (FreeMonad f)} -> FreeMonad f a
 improve isF allWrap {isM} =
-  lowerCodensity {f=(FreeMonad f)} $ \ty, aty => join $ map aty $
-    allWrap (FreeMonad f) (FreeMonadFreeLike isF)
+  lowerCodensity $ MkCodensity $
+    \ty, afty => allWrap (FreeMonad f) (FreeMonadFreeLike isF) >>= afty
 
 public export
 wrapCodensity :
   {m : Type -> Type} -> ((a : Type) -> m a -> m a) -> Codensity m ()
-wrapCodensity f ty k = f ty (k ())
+wrapCodensity f = MkCodensity $ \ty, k => f ty (k ())
 
 public export
 reset : Monad m => {a : Type} -> Codensity m a -> Codensity m a
 reset = lift {m} {t=Codensity} . lowerCodensity {f=m}
 
--- This also looks more complicated than the Haskell.
 public export
 shift : Monad m => {a : Type} ->
   ((b : Type) -> (a -> m b) -> Codensity m b) -> Codensity m a
-shift {a} f y amy = lowerCodensity {f=m} (f a pure) >>= amy
+shift {a} f = MkCodensity $ \y => lowerCodensity . f y
 
 ----------------------------
 ----------------------------
