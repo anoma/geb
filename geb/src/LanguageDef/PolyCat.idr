@@ -263,6 +263,15 @@ public export
 pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
 pfProductArena p q = (pfProductPos p q ** pfProductDir p q)
 
+public export
+pfCompositionPos : PolyFunc -> PolyFunc -> Type
+pfCompositionPos q p = (i : pfPos q ** (pfDir {p=q} i -> pfPos p))
+
+public export
+pfCompositionDir : (p, q : PolyFunc) -> pfCompositionPos p q -> Type
+pfCompositionDir q p (qpos ** qdir2ppos) =
+  (qdir : pfDir {p=q} qpos ** pfDir {p} $ qdir2ppos qdir)
+
 ------------------------------------
 ------------------------------------
 ---- Polynomial-functor algebra ----
