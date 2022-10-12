@@ -257,11 +257,23 @@ pfProductPos (ppos ** pdir) (qpos ** qdir) = Pair ppos qpos
 
 public export
 pfProductDir : (p, q : PolyFunc) -> pfProductPos p q -> Type
-pfProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Pair . bimap pdir qdir
+pfProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Either . bimap pdir qdir
 
 public export
 pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
 pfProductArena p q = (pfProductPos p q ** pfProductDir p q)
+
+public export
+pfParProductPos : PolyFunc -> PolyFunc -> Type
+pfParProductPos = pfProductPos
+
+public export
+pfParProductDir : (p, q : PolyFunc) -> pfParProductPos p q -> Type
+pfParProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Pair . bimap pdir qdir
+
+public export
+pfParProductArena : PolyFunc -> PolyFunc -> PolyFunc
+pfParProductArena p q = (pfParProductPos p q ** pfParProductDir p q)
 
 public export
 pfCompositionPos : PolyFunc -> PolyFunc -> Type
@@ -271,6 +283,10 @@ public export
 pfCompositionDir : (p, q : PolyFunc) -> pfCompositionPos p q -> Type
 pfCompositionDir q p (qpos ** qdir2ppos) =
   (qdir : pfDir {p=q} qpos ** pfDir {p} $ qdir2ppos qdir)
+
+public export
+pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
+pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
 
 ------------------------------------
 ------------------------------------
