@@ -288,6 +288,19 @@ public export
 pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
 pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
 
+public export
+pfBaseChangePos : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> Type
+pfBaseChangePos p {a} f = a
+
+public export
+pfBaseChangeDir : (p : PolyFunc) -> {a : Type} -> (f : a -> pfPos p) ->
+  pfBaseChangePos p {a} f -> Type
+pfBaseChangeDir (pos ** dir) {a} f i = dir $ f i
+
+public export
+pfBaseChangeArena : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> PolyFunc
+pfBaseChangeArena p {a} f = (pfBaseChangePos p {a} f ** pfBaseChangeDir p {a} f)
+
 ------------------------------------
 ------------------------------------
 ---- Polynomial-functor algebra ----
