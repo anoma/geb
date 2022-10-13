@@ -42,14 +42,6 @@ public export
 STMu : Type
 STMu = PolyFuncMu SubstTermPF
 
----------------------
----- Refinements ----
----------------------
-
-------------------------
----- Dependent fold ----
-------------------------
-
 ----------------------------------------------------
 ---- Least fixed point, algebras, catamorphisms ----
 ----------------------------------------------------
@@ -107,6 +99,10 @@ RefinedST = Refinement {a=STMu}
 public export
 AlgRefinedST : STRefinementAlg -> Type
 AlgRefinedST alg = RefinedST (isRight . stCata alg)
+
+------------------------
+---- Dependent fold ----
+------------------------
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
