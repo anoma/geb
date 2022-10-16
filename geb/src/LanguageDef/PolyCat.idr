@@ -304,6 +304,12 @@ pfSetProductArena {a} ps =
    (\fpos : ((x' : a) -> fst $ ps x') => (x' : a ** snd (ps x') $ fpos x')))
 
 public export
+pfSetParProductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
+pfSetParProductArena {a} ps =
+  (((x : a) -> fst $ ps x) **
+   (\fpos : ((x' : a) -> fst $ ps x') => ((x' : a) -> snd (ps x') $ fpos x')))
+
+public export
 pfHomObj : PolyFunc -> PolyFunc -> PolyFunc
 pfHomObj q r =
   pfSetProductArena {a=(pfPos q)} $
