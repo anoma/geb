@@ -240,6 +240,10 @@ PFIdentityArena : PolyFunc
 PFIdentityArena = (PFIdentityPos ** PFIdentityDir)
 
 public export
+PFConstArena : Type -> PolyFunc
+PFConstArena a = (a ** const Void)
+
+public export
 pfCoproductPos : PolyFunc -> PolyFunc -> Type
 pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
 
@@ -289,6 +293,34 @@ pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
 pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
 
 public export
+pfSetCoproductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
+pfSetCoproductArena {a} ps =
+  ((x : a ** fst $ ps x) ** (\xpos => snd (ps $ fst xpos) $ snd xpos))
+
+public export
+pfSetProductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
+pfSetProductArena {a} ps =
+  (((x : a) -> fst $ ps x) **
+   (\fpos : ((x' : a) -> fst $ ps x') => (x' : a ** snd (ps x') $ fpos x')))
+
+public export
+pfHomObj : PolyFunc -> PolyFunc -> PolyFunc
+pfHomObj q r =
+  pfSetProductArena {a=(pfPos q)} $
+    \j =>
+      pfCompositionArena r $
+        pfCoproductArena PFIdentityArena $ PFConstArena $ pfDir {p=q} j
+
+public export
+pfExpObj : PolyFunc -> PolyFunc -> PolyFunc
+pfExpObj = flip pfHomObj
+
+public export
+pfParProdClosure : PolyFunc -> PolyFunc -> PolyFunc
+pfParProdClosure q r =
+  (PolyNatTrans q r ** \f => (j : pfPos q ** pfDir {p=r} $ pntOnPos f j))
+
+public export
 pfBaseChangePos : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> Type
 pfBaseChangePos p {a} f = a
 
@@ -300,6 +332,10 @@ pfBaseChangeDir (pos ** dir) {a} f i = dir $ f i
 public export
 pfBaseChangeArena : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> PolyFunc
 pfBaseChangeArena p {a} f = (pfBaseChangePos p {a} f ** pfBaseChangeDir p {a} f)
+
+public export
+pfLeftCoclosure : (q, p : PolyFunc) -> PolyFunc
+pfLeftCoclosure q p = (pfPos p ** InterpPolyFunc q . pfDir {p})
 
 ------------------------------------
 ------------------------------------
