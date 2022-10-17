@@ -240,8 +240,16 @@ PFIdentityArena : PolyFunc
 PFIdentityArena = (PFIdentityPos ** PFIdentityDir)
 
 public export
+PFConstPos : Type -> Type
+PFConstPos a = a
+
+public export
+PFConstDir : {0 a : Type} -> PFConstPos a -> Type
+PFConstDir i = Void
+
+public export
 PFConstArena : Type -> PolyFunc
-PFConstArena a = (a ** const Void)
+PFConstArena a = (PFConstPos a ** PFConstDir {a})
 
 public export
 pfCoproductPos : PolyFunc -> PolyFunc -> Type
@@ -293,38 +301,67 @@ pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
 pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
 
 public export
+pfSetCoproductPos : {a : Type} -> (a -> PolyFunc) -> Type
+pfSetCoproductPos {a} ps = DPair a (fst . ps)
+
+public export
+pfSetCoproductDir : {a : Type} ->
+  (ps : a -> PolyFunc) -> pfSetCoproductPos ps -> Type
+pfSetCoproductDir ps (x ** xpos) = snd (ps x) xpos
+
+public export
 pfSetCoproductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
-pfSetCoproductArena {a} ps =
-  ((x : a ** fst $ ps x) ** (\xpos => snd (ps $ fst xpos) $ snd xpos))
+pfSetCoproductArena ps = (pfSetCoproductPos ps ** pfSetCoproductDir ps)
+
+public export
+pfSetProductPos : {a : Type} -> (a -> PolyFunc) -> Type
+pfSetProductPos {a} ps = (x : a) -> fst $ ps x
+
+public export
+pfSetProductDir : {a : Type} ->
+  (ps : a -> PolyFunc) -> pfSetProductPos ps -> Type
+pfSetProductDir {a} ps fpos = (x : a ** snd (ps x) $ fpos x)
 
 public export
 pfSetProductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
-pfSetProductArena {a} ps =
-  (((x : a) -> fst $ ps x) **
-   (\fpos : ((x' : a) -> fst $ ps x') => (x' : a ** snd (ps x') $ fpos x')))
+pfSetProductArena {a} ps = (pfSetProductPos ps ** pfSetProductDir ps)
+
+public export
+pfSetParProductPos : {a : Type} -> (a -> PolyFunc) -> Type
+pfSetParProductPos = pfSetProductPos
+
+public export
+pfSetParProductDir : {a : Type} ->
+  (ps : a -> PolyFunc) -> pfSetParProductPos ps -> Type
+pfSetParProductDir {a} ps fpos = ((x : a) -> snd (ps x) $ fpos x)
 
 public export
 pfSetParProductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
-pfSetParProductArena {a} ps =
-  (((x : a) -> fst $ ps x) **
-   (\fpos : ((x' : a) -> fst $ ps x') => ((x' : a) -> snd (ps x') $ fpos x')))
+pfSetParProductArena {a} ps = (pfSetParProductPos ps ** pfSetParProductDir ps)
 
 public export
 pfHomObj : PolyFunc -> PolyFunc -> PolyFunc
 pfHomObj q r =
   pfSetProductArena {a=(pfPos q)} $
-    \j =>
-      pfCompositionArena r $
-        pfCoproductArena PFIdentityArena $ PFConstArena $ pfDir {p=q} j
+    pfCompositionArena r .
+    pfCoproductArena PFIdentityArena .
+    PFConstArena . pfDir {p=q}
 
 public export
 pfExpObj : PolyFunc -> PolyFunc -> PolyFunc
 pfExpObj = flip pfHomObj
 
 public export
+pfParProdClosurePos : PolyFunc -> PolyFunc -> Type
+pfParProdClosurePos = PolyNatTrans
+
+public export
+pfParProdClosureDir : (q, r : PolyFunc) -> pfParProdClosurePos q r -> Type
+pfParProdClosureDir q r f = DPair (pfPos q) (pfDir {p=r} . pntOnPos f)
+
+public export
 pfParProdClosure : PolyFunc -> PolyFunc -> PolyFunc
-pfParProdClosure q r =
-  (PolyNatTrans q r ** \f => (j : pfPos q ** pfDir {p=r} $ pntOnPos f j))
+pfParProdClosure q r = (pfParProdClosurePos q r ** pfParProdClosureDir q r)
 
 public export
 pfBaseChangePos : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> Type
@@ -340,8 +377,16 @@ pfBaseChangeArena : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> PolyFunc
 pfBaseChangeArena p {a} f = (pfBaseChangePos p {a} f ** pfBaseChangeDir p {a} f)
 
 public export
+pfLeftCoclosurePos : (q, p : PolyFunc) -> Type
+pfLeftCoclosurePos q p = pfPos p
+
+public export
+pfLeftCoclosureDir : (q, p : PolyFunc) -> pfLeftCoclosurePos q p -> Type
+pfLeftCoclosureDir q p = InterpPolyFunc q . pfDir {p}
+
+public export
 pfLeftCoclosure : (q, p : PolyFunc) -> PolyFunc
-pfLeftCoclosure q p = (pfPos p ** InterpPolyFunc q . pfDir {p})
+pfLeftCoclosure q p = (pfLeftCoclosurePos q p ** pfLeftCoclosureDir q p)
 
 ------------------------------------
 ------------------------------------
