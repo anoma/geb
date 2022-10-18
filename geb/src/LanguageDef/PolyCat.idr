@@ -483,18 +483,6 @@ InPFMN : {0 p : PolyFuncN} ->
   (i : pfnPos p) -> Vect (pfnDir p i) (PolyFuncNMu p) -> PolyFuncNMu p
 InPFMN {p=(pos ** dir)} i = InPFM i . flip index
 
--------------------------------
----- Paths through p-trees ----
--------------------------------
-
-public export
-PolyPath : PolyFunc -> Type
-PolyPath = List . pfPDir
-
-public export
-PolyTree : PolyFunc -> Type
-PolyTree p = PolyPath p -> pfPos p
-
 ----------------------------------------------
 ---- Catamorphisms of polynomial functors ----
 ----------------------------------------------
@@ -686,6 +674,14 @@ pfNuCata : {0 p : PolyFunc} -> {0 a : Type} -> PFAlg p a -> PolyFuncNu p -> a
 pfNuCata {p=p@(pos ** dir)} {a} alg (InPFN i da) =
   alg i $ \d : dir i => pfNuCata {p} alg $ da d
 
+-------------------------------
+---- Paths through p-trees ----
+-------------------------------
+
+public export
+PolyTree : PolyFunc -> Type
+PolyTree p = (a : Type ** PFCoalg p a)
+
 --------------------------------------
 ---- Polynomial (cofree) comonads ----
 --------------------------------------
@@ -717,10 +713,8 @@ PolyFuncCofreeCMPosFromFunc = PolyTree
 public export
 PolyFuncCofreeCMPosScaleToFunc : {p : PolyFunc} ->
   PolyFuncCofreeCMPosFromScale p -> PolyFuncCofreeCMPosFromFunc p
-PolyFuncCofreeCMPosScaleToFunc {p=(pos ** dir)}
-  (InPFN (PFNode () i) d) [] = i
-PolyFuncCofreeCMPosScaleToFunc {p=(pos ** dir)}
-  (InPFN (PFNode () i) d) ((i' ** d') :: l) = ?PolyFuncCofreeCMPosScaleToFunc_hole_1
+PolyFuncCofreeCMPosScaleToFunc {p=(pos ** dir)} =
+  ?PolyFuncCofreeCMPosScaleToFunc_hole
 
 public export
 PolyFuncCofreeCMPosFuncToScale : {p : PolyFunc} ->
