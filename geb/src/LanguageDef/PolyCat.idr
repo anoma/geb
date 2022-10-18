@@ -34,6 +34,10 @@ pfDir : {p : PolyFunc} -> pfPos p -> Type
 pfDir {p=(pos ** dir)} i = dir i
 
 public export
+pfPDir : PolyFunc -> Type
+pfPDir p = DPair (pfPos p) (pfDir {p})
+
+public export
 InterpPolyFunc : PolyFunc -> Type -> Type
 InterpPolyFunc (pos ** dir) x = (i : pos ** (dir i -> x))
 
@@ -429,6 +433,18 @@ InPFMN : {0 p : PolyFuncN} ->
   (i : pfnPos p) -> Vect (pfnDir p i) (PolyFuncNMu p) -> PolyFuncNMu p
 InPFMN {p=(pos ** dir)} i = InPFM i . flip index
 
+-------------------------------
+---- Paths through p-trees ----
+-------------------------------
+
+public export
+PolyPath : PolyFunc -> Type
+PolyPath = List . pfPDir
+
+public export
+PolyTree : PolyFunc -> Type
+PolyTree p = PolyPath p -> pfPos p
+
 ----------------------------------------------
 ---- Catamorphisms of polynomial functors ----
 ----------------------------------------------
@@ -633,6 +649,51 @@ PFScale p a = (PFScalePos p a ** PFScaleDir p a)
 public export
 PolyFuncCofreeCMFromScale : PolyFunc -> Type -> Type
 PolyFuncCofreeCMFromScale = PolyFuncNu .* PFScale
+
+public export
+PolyFuncCofreeCMPosFromScale : PolyFunc -> Type
+PolyFuncCofreeCMPosFromScale p = PolyFuncCofreeCMFromScale p ()
+
+public export
+PolyFuncCofreeCMPosFromFunc : PolyFunc -> Type
+PolyFuncCofreeCMPosFromFunc = PolyTree
+
+public export
+PolyFuncCofreeCMPosScaleToFunc : {p : PolyFunc} ->
+  PolyFuncCofreeCMPosFromScale p -> PolyFuncCofreeCMPosFromFunc p
+PolyFuncCofreeCMPosScaleToFunc = ?PolyFuncCofreeCMPosScaleToFunc_hole
+
+public export
+PolyFuncCofreeCMPosFuncToScale : {p : PolyFunc} ->
+  PolyFuncCofreeCMPosFromFunc p -> PolyFuncCofreeCMPosFromScale p
+PolyFuncCofreeCMPosFuncToScale = ?PolyFuncCofreeCMPosFuncToScale_hole
+
+public export
+PolyFuncCofreeCMPos : PolyFunc -> Type
+PolyFuncCofreeCMPos = PolyFuncCofreeCMPosFromFunc
+
+public export
+PolyFuncCofreeCMDir : (p : PolyFunc) -> PolyFuncCofreeCMPos p -> Type
+PolyFuncCofreeCMDir p = ?PolyFuncCofreeCMDirFromScale_hole
+
+public export
+PolyFuncCofreeCM: PolyFunc -> PolyFunc
+PolyFuncCofreeCM p = (PolyFuncCofreeCMPos p ** PolyFuncCofreeCMDir p)
+
+public export
+InterpPolyFuncCofreeCM : PolyFunc -> Type -> Type
+InterpPolyFuncCofreeCM = InterpPolyFunc . PolyFuncCofreeCM
+
+public export
+PolyCFCMInterpToScaleCurried : (p : PolyFunc) -> (a : Type) ->
+  (mpos : PolyFuncCofreeCMPos p) -> (PolyFuncCofreeCMDir p mpos -> a) ->
+  PolyFuncCofreeCMFromScale p a
+PolyCFCMInterpToScaleCurried (pos ** dir) a = ?PolyCFCMInterpToScaleCurried_hole
+
+public export
+PolyCFCMInterpToScale : (p : PolyFunc) -> (a : Type) ->
+  InterpPolyFuncCofreeCM p a -> PolyFuncCofreeCMFromScale p a
+PolyCFCMInterpToScale p a (em ** d) = PolyCFCMInterpToScaleCurried p a em d
 
 ---------------------------------------
 ---------------------------------------
