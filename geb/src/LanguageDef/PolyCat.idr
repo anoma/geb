@@ -711,10 +711,19 @@ PolyFuncCofreeCMPosFromFunc : PolyFunc -> Type
 PolyFuncCofreeCMPosFromFunc = PolyTree
 
 public export
+partial
 PolyFuncCofreeCMPosScaleToFunc : {p : PolyFunc} ->
   PolyFuncCofreeCMPosFromScale p -> PolyFuncCofreeCMPosFromFunc p
-PolyFuncCofreeCMPosScaleToFunc {p=(pos ** dir)} =
-  ?PolyFuncCofreeCMPosScaleToFunc_hole
+PolyFuncCofreeCMPosScaleToFunc {p=p@(pos ** dir)} (InPFN (PFNode () i) d) =
+  (PolyTree p ** (\coalg => (i ** \d' =>
+    let
+      (coalgty ** coalgf) = coalg
+      (recty ** recf) = PolyFuncCofreeCMPosScaleToFunc $ d d'
+    in
+    (Either coalgty recty **
+     eitherElim
+      (\coalgx => (fst (coalgf coalgx) ** Left . snd (coalgf coalgx)))
+      (\rectyx => (fst (recf rectyx) ** Right . snd (recf rectyx)))))))
 
 public export
 PolyFuncCofreeCMPosFuncToScale : {p : PolyFunc} ->
