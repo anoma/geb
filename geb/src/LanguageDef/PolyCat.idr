@@ -695,6 +695,18 @@ PolyCFCMInterpToScale : (p : PolyFunc) -> (a : Type) ->
   InterpPolyFuncCofreeCM p a -> PolyFuncCofreeCMFromScale p a
 PolyCFCMInterpToScale p a (em ** d) = PolyCFCMInterpToScaleCurried p a em d
 
+public export
+PolyCFCMScaleToInterpAlg : (p : PolyFunc) -> (a : Type) ->
+  (i : PFScalePos p a) ->
+  (PFScaleDir p a i -> InterpPolyFuncCofreeCM p a) ->
+  InterpPolyFuncCofreeCM p a
+PolyCFCMScaleToInterpAlg (pos ** dir) a = ?PolyCFCMScaleToInterpAlg_hole
+
+public export
+PolyCFCMScaleToInterp : (p : PolyFunc) -> (a : Type) ->
+  PolyFuncCofreeCMFromScale p a -> InterpPolyFuncCofreeCM p a
+PolyCFCMScaleToInterp p a = ?PolyCFCMScaleToInterp_hole
+
 ---------------------------------------
 ---------------------------------------
 ---- Dependent polynomial functors ----
