@@ -244,6 +244,18 @@ PFIdentityArena : PolyFunc
 PFIdentityArena = (PFIdentityPos ** PFIdentityDir)
 
 public export
+PFHomPos : Type -> Type
+PFHomPos _ = Unit
+
+public export
+PFHomDir : (a : Type) -> PFHomPos a -> Type
+PFHomDir a () = a
+
+public export
+PFHomArena : Type -> PolyFunc
+PFHomArena a = (PFHomPos a ** PFHomDir a)
+
+public export
 PFConstPos : Type -> Type
 PFConstPos a = a
 
@@ -391,6 +403,18 @@ pfLeftCoclosureDir q p = InterpPolyFunc q . pfDir {p}
 public export
 pfLeftCoclosure : (q, p : PolyFunc) -> PolyFunc
 pfLeftCoclosure q p = (pfLeftCoclosurePos q p ** pfLeftCoclosureDir q p)
+
+public export
+pfHomComposePos : Type -> Type -> Type
+pfHomComposePos a b = pfCompositionPos (PFHomArena a) (PFHomArena b)
+
+public export
+pfHomComposeDir : (a, b : Type) -> pfHomComposePos a b -> Type
+pfHomComposeDir a b = pfCompositionDir (PFHomArena a) (PFHomArena b)
+
+public export
+pfHomComposeArena : Type -> Type -> PolyFunc
+pfHomComposeArena a b = pfCompositionArena (PFHomArena a) (PFHomArena b)
 
 ------------------------------------
 ------------------------------------
@@ -715,6 +739,76 @@ public export
 PolyCFCMScaleToInterp : (p : PolyFunc) -> (a : Type) ->
   PolyFuncCofreeCMFromScale p a -> InterpPolyFuncCofreeCM p a
 PolyCFCMScaleToInterp p a = ?PolyCFCMScaleToInterp_hole
+
+----------------------------------------------
+----------------------------------------------
+---- General polynomial monoids/comonoids ----
+----------------------------------------------
+----------------------------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+public export
+record PFMonoid (p : PolyFunc) where
+  constructor MkPFMonoid
+  pmonReturn : PolyNatTrans PFIdentityArena p
+  pmonJoin : PolyNatTrans (pfCompositionArena p p) p
+
+public export
+PFMonad : Type
+PFMonad = DPair PolyFunc PFMonoid
+
+public export
+record PFComonoid (p : PolyFunc) where
+  constructor MkPFComonoid
+  pcomErase : PolyNatTrans p PFIdentityArena
+  pcomDup : PolyNatTrans p (pfCompositionArena p p)
+
+public export
+PFComonad : Type
+PFComonad = DPair PolyFunc PFComonoid
+
+------------------------------------
+---- Specific monoids/comonoids ----
+------------------------------------
+
+public export
+PFReaderReturnOnPos : (env : Type) -> PFIdentityPos -> PFHomPos env
+PFReaderReturnOnPos env () = ()
+
+public export
+PFReaderReturnOnDir : (env : Type) -> (i : PFIdentityPos) ->
+  PFHomDir env (PFReaderReturnOnPos env i) -> PFIdentityDir i
+PFReaderReturnOnDir env () i = ()
+
+public export
+PFReaderReturn : (env : Type) -> PolyNatTrans PFIdentityArena (PFHomArena env)
+PFReaderReturn env = (PFReaderReturnOnPos env ** PFReaderReturnOnDir env)
+
+public export
+PFReaderJoinOnPos : (env : Type) -> pfHomComposePos env env -> PFHomPos env
+PFReaderJoinOnPos env (() ** _) = ()
+
+public export
+PFReaderJoinOnDir : (env : Type) -> (i : pfHomComposePos env env) ->
+  PFHomDir env (PFReaderJoinOnPos env i) -> pfHomComposeDir env env i
+PFReaderJoinOnDir env (() ** i) d with (i d) proof ideq
+  PFReaderJoinOnDir env (() ** i) d | () = (d ** rewrite ideq in d)
+
+public export
+PFReaderJoin : (env : Type) ->
+  PolyNatTrans (pfHomComposeArena env env) (PFHomArena env)
+PFReaderJoin env = (PFReaderJoinOnPos env ** PFReaderJoinOnDir env)
+
+public export
+PFReaderMonoid : (env : Type) -> PFMonoid (PFHomArena env)
+PFReaderMonoid env = MkPFMonoid (PFReaderReturn env) (PFReaderJoin env)
+
+public export
+PFReaderMonad : Type -> PFMonad
+PFReaderMonad env = (PFHomArena env ** PFReaderMonoid env)
 
 ---------------------------------------
 ---------------------------------------
