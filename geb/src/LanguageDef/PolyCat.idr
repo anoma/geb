@@ -268,6 +268,19 @@ PFConstArena : Type -> PolyFunc
 PFConstArena a = (PFConstPos a ** PFConstDir {a})
 
 public export
+pfEitherPos : Type -> Type
+pfEitherPos a = Either Unit a
+
+public export
+pfEitherDir : (a : Type) -> pfEitherPos a -> Type
+pfEitherDir a (Left ()) = Unit
+pfEitherDir a (Right _) = Void
+
+public export
+pfEitherArena : Type -> PolyFunc
+pfEitherArena a = (pfEitherPos a ** pfEitherDir a)
+
+public export
 pfCoproductPos : PolyFunc -> PolyFunc -> Type
 pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
 
@@ -415,6 +428,19 @@ pfHomComposeDir a b = pfCompositionDir (PFHomArena a) (PFHomArena b)
 public export
 pfHomComposeArena : Type -> Type -> PolyFunc
 pfHomComposeArena a b = pfCompositionArena (PFHomArena a) (PFHomArena b)
+
+public export
+pfEitherComposePos : Type -> Type -> Type
+pfEitherComposePos a b = pfCompositionPos (pfEitherArena a) (pfEitherArena b)
+
+public export
+pfEitherComposeDir : (a, b : Type) -> pfEitherComposePos a b -> Type
+pfEitherComposeDir a b = pfCompositionDir (pfEitherArena a) (pfEitherArena b)
+
+public export
+pfEitherComposeArena : Type -> Type -> PolyFunc
+pfEitherComposeArena a b =
+  pfCompositionArena (pfEitherArena a) (pfEitherArena b)
 
 ------------------------------------
 ------------------------------------
@@ -771,8 +797,14 @@ PFComonad : Type
 PFComonad = DPair PolyFunc PFComonoid
 
 ------------------------------------
+------------------------------------
 ---- Specific monoids/comonoids ----
 ------------------------------------
+------------------------------------
+
+----------------------
+---- Reader monad ----
+----------------------
 
 public export
 PFReaderReturnOnPos : (env : Type) -> PFIdentityPos -> PFHomPos env
@@ -809,6 +841,49 @@ PFReaderMonoid env = MkPFMonoid (PFReaderReturn env) (PFReaderJoin env)
 public export
 PFReaderMonad : Type -> PFMonad
 PFReaderMonad env = (PFHomArena env ** PFReaderMonoid env)
+
+----------------------
+---- Either monad ----
+----------------------
+
+public export
+PFEitherReturnOnPos : (a : Type) -> PFIdentityPos -> pfEitherPos a
+PFEitherReturnOnPos a () = Left ()
+
+public export
+PFEitherReturnOnDir : (a : Type) -> (i : PFIdentityPos) ->
+  pfEitherDir a (PFEitherReturnOnPos a i) -> PFIdentityDir i
+PFEitherReturnOnDir a () () = ()
+
+public export
+PFEitherReturn : (a : Type) -> PolyNatTrans PFIdentityArena (pfEitherArena a)
+PFEitherReturn a = (PFEitherReturnOnPos a ** PFEitherReturnOnDir a)
+
+public export
+PFEitherJoinOnPos : (a : Type) -> pfEitherComposePos a a -> pfEitherPos a
+PFEitherJoinOnPos a (Left () ** d) = d ()
+PFEitherJoinOnPos a (Right x ** d) = Right x
+
+public export
+PFEitherJoinOnDir : (a : Type) -> (i : pfEitherComposePos a a) ->
+  pfEitherDir a (PFEitherJoinOnPos a i) -> pfEitherComposeDir a a i
+PFEitherJoinOnDir a (Left () ** d) i with (d ()) proof deq
+  PFEitherJoinOnDir a (Left () ** d) i | Left () = (() ** rewrite deq in ())
+  PFEitherJoinOnDir a (Left () ** d) i | Right x = void i
+PFEitherJoinOnDir a (Right x ** _) d = void d
+
+public export
+PFEitherJoin : (a : Type) ->
+  PolyNatTrans (pfEitherComposeArena a a) (pfEitherArena a)
+PFEitherJoin a = (PFEitherJoinOnPos a ** PFEitherJoinOnDir a)
+
+public export
+PFEitherMonoid : (a : Type) -> PFMonoid (pfEitherArena a)
+PFEitherMonoid a = MkPFMonoid (PFEitherReturn a) (PFEitherJoin a)
+
+public export
+PFEitherMonad : Type -> PFMonad
+PFEitherMonad a = (pfEitherArena a ** PFEitherMonoid a)
 
 ---------------------------------------
 ---------------------------------------
