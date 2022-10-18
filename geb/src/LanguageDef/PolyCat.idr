@@ -630,6 +630,12 @@ pfAna : {0 p : PolyFunc} -> {0 a : Type} -> PFCoalg p a -> a -> PolyFuncNu p
 pfAna {p=p@(pos ** dir)} {a} coalg e = case coalg e of
   (i ** da) => InPFN i $ \d : dir i => pfAna coalg $ da d
 
+public export
+partial
+pfNuCata : {0 p : PolyFunc} -> {0 a : Type} -> PFAlg p a -> PolyFuncNu p -> a
+pfNuCata {p=p@(pos ** dir)} {a} alg (InPFN i da) =
+  alg i $ \d : dir i => pfNuCata {p} alg $ da d
+
 --------------------------------------
 ---- Polynomial (cofree) comonads ----
 --------------------------------------
@@ -661,7 +667,10 @@ PolyFuncCofreeCMPosFromFunc = PolyTree
 public export
 PolyFuncCofreeCMPosScaleToFunc : {p : PolyFunc} ->
   PolyFuncCofreeCMPosFromScale p -> PolyFuncCofreeCMPosFromFunc p
-PolyFuncCofreeCMPosScaleToFunc = ?PolyFuncCofreeCMPosScaleToFunc_hole
+PolyFuncCofreeCMPosScaleToFunc {p=(pos ** dir)}
+  (InPFN (PFNode () i) d) [] = i
+PolyFuncCofreeCMPosScaleToFunc {p=(pos ** dir)}
+  (InPFN (PFNode () i) d) ((i' ** d') :: l) = ?PolyFuncCofreeCMPosScaleToFunc_hole_1
 
 public export
 PolyFuncCofreeCMPosFuncToScale : {p : PolyFunc} ->
