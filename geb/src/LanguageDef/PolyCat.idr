@@ -631,40 +631,41 @@ InterpPolyFuncFreeM : PolyFunc -> Type -> Type
 InterpPolyFuncFreeM = InterpPolyFunc . PolyFuncFreeM
 
 public export
-PolyFuncFreeMFromTranslate : PolyFunc -> Type -> Type
-PolyFuncFreeMFromTranslate = PolyFuncMu .* PFTranslate
+PolyFuncFreeMFromMuTranslate : PolyFunc -> Type -> Type
+PolyFuncFreeMFromMuTranslate = PolyFuncMu .* PFTranslate
 
 public export
-PolyFMInterpToTranslateCurried : (p : PolyFunc) -> (a : Type) ->
+PolyFMInterpToMuTranslateCurried : (p : PolyFunc) -> (a : Type) ->
   (mpos : PolyFuncFreeMPos p) -> (PolyFuncFreeMDir p mpos -> a) ->
-  PolyFuncFreeMFromTranslate p a
-PolyFMInterpToTranslateCurried (pos ** dir) a (InPFM (PFVar ()) f) dircat =
+  PolyFuncFreeMFromMuTranslate p a
+PolyFMInterpToMuTranslateCurried (pos ** dir) a (InPFM (PFVar ()) f) dircat =
   InPFM (PFVar $ dircat ()) (voidF _)
-PolyFMInterpToTranslateCurried (pos ** dir) a (InPFM (PFCom i) f) dircat =
+PolyFMInterpToMuTranslateCurried (pos ** dir) a (InPFM (PFCom i) f) dircat =
   InPFM (PFCom i) $
     \di : dir i =>
-      PolyFMInterpToTranslateCurried (pos ** dir) a (f di) $
+      PolyFMInterpToMuTranslateCurried (pos ** dir) a (f di) $
         (\d => dircat (di ** d))
 
 public export
-PolyFMInterpToTranslate : (p : PolyFunc) -> (a : Type) ->
-  InterpPolyFuncFreeM p a -> PolyFuncFreeMFromTranslate p a
-PolyFMInterpToTranslate p a (em ** d) = PolyFMInterpToTranslateCurried p a em d
+PolyFMInterpToMuTranslate : (p : PolyFunc) -> (a : Type) ->
+  InterpPolyFuncFreeM p a -> PolyFuncFreeMFromMuTranslate p a
+PolyFMInterpToMuTranslate p a (em ** d) =
+  PolyFMInterpToMuTranslateCurried p a em d
 
 public export
-PolyFMTranslateToInterpAlg : (p : PolyFunc) -> (a : Type) ->
+PolyFMMuTranslateToInterpAlg : (p : PolyFunc) -> (a : Type) ->
   (i : PFTranslatePos p a) ->
   (PFTranslateDir p a i -> InterpPolyFuncFreeM p a) ->
   InterpPolyFuncFreeM p a
-PolyFMTranslateToInterpAlg (pos ** dir) a (PFVar ea) hyp =
+PolyFMMuTranslateToInterpAlg (pos ** dir) a (PFVar ea) hyp =
   (InPFM (PFVar ()) (voidF _) ** const ea)
-PolyFMTranslateToInterpAlg (pos ** dir) a (PFCom i) hyp =
+PolyFMMuTranslateToInterpAlg (pos ** dir) a (PFCom i) hyp =
   (InPFM (PFCom i) (fst . hyp) ** \dp => case dp of (d ** c) => snd (hyp d) c)
 
 public export
-PolyFMTranslateToInterp : (p : PolyFunc) -> (a : Type) ->
-  PolyFuncFreeMFromTranslate p a -> InterpPolyFuncFreeM p a
-PolyFMTranslateToInterp p a = pfCata $ PolyFMTranslateToInterpAlg p a
+PolyFMMuTranslateToInterp : (p : PolyFunc) -> (a : Type) ->
+  PolyFuncFreeMFromMuTranslate p a -> InterpPolyFuncFreeM p a
+PolyFMMuTranslateToInterp p a = pfCata $ PolyFMMuTranslateToInterpAlg p a
 
 --------------------------------------
 --------------------------------------
@@ -743,40 +744,40 @@ InterpPolyFuncCofreeCM : PolyFunc -> Type -> Type
 InterpPolyFuncCofreeCM = InterpPolyFunc . PolyFuncCofreeCM
 
 public export
-PolyFuncCofreeCMFromScale : PolyFunc -> Type -> Type
-PolyFuncCofreeCMFromScale = PolyFuncNu .* PFScale
+PolyFuncCofreeCMFromNuScale : PolyFunc -> Type -> Type
+PolyFuncCofreeCMFromNuScale = PolyFuncNu .* PFScale
 
 public export
-PolyFuncCofreeCMPosFromScale : PolyFunc -> Type
-PolyFuncCofreeCMPosFromScale p = PolyFuncCofreeCMFromScale p ()
+PolyFuncCofreeCMPosFromNuScale : PolyFunc -> Type
+PolyFuncCofreeCMPosFromNuScale p = PolyFuncCofreeCMFromNuScale p ()
 
 public export
 partial
 PolyFuncCofreeCMPosScaleToFunc : {p : PolyFunc} ->
-  PolyFuncCofreeCMPosFromScale p -> PolyFuncCofreeCMPos p
+  PolyFuncCofreeCMPosFromNuScale p -> PolyFuncCofreeCMPos p
 PolyFuncCofreeCMPosScaleToFunc {p=p@(pos ** dir)} (InPFN (PFNode () i) d) =
   InPFM (PFNode () i) $ \di : dir i => PolyFuncCofreeCMPosScaleToFunc (d di)
 
 public export
-PolyFuncCofreeCMPosFuncToScale : {p : PolyFunc} ->
-  PolyFuncCofreeCMPos p -> PolyFuncCofreeCMPosFromScale p
-PolyFuncCofreeCMPosFuncToScale {p=p@(pos ** dir)} (InPFM (PFNode () i) d) =
-  InPFN (PFNode () i) $ \di : dir i => PolyFuncCofreeCMPosFuncToScale (d di)
+PolyFuncCofreeCMPosFuncToNuScale : {p : PolyFunc} ->
+  PolyFuncCofreeCMPos p -> PolyFuncCofreeCMPosFromNuScale p
+PolyFuncCofreeCMPosFuncToNuScale {p=p@(pos ** dir)} (InPFM (PFNode () i) d) =
+  InPFN (PFNode () i) $ \di : dir i => PolyFuncCofreeCMPosFuncToNuScale (d di)
 
 public export
-PolyCFCMInterpToScaleCurried : (p : PolyFunc) -> (a : Type) ->
+PolyCFCMInterpToNuScaleCurried : (p : PolyFunc) -> (a : Type) ->
   (mpos : PolyFuncCofreeCMPos p) -> (PolyFuncCofreeCMDir p mpos -> a) ->
-  PolyFuncCofreeCMFromScale p a
-PolyCFCMInterpToScaleCurried p@(pos ** dir) a (InPFM (PFNode () i) f) dircat =
+  PolyFuncCofreeCMFromNuScale p a
+PolyCFCMInterpToNuScaleCurried p@(pos ** dir) a (InPFM (PFNode () i) f) dircat =
   InPFN (PFNode (dircat $ Left ()) i) $
     \di : dir i =>
-      PolyCFCMInterpToScaleCurried p a (f di) $
+      PolyCFCMInterpToNuScaleCurried p a (f di) $
         \d => dircat $ Right (di ** d)
 
 public export
-PolyCFCMInterpToScale : (p : PolyFunc) -> (a : Type) ->
-  InterpPolyFuncCofreeCM p a -> PolyFuncCofreeCMFromScale p a
-PolyCFCMInterpToScale p a (em ** d) = PolyCFCMInterpToScaleCurried p a em d
+PolyCFCMInterpToNuScale : (p : PolyFunc) -> (a : Type) ->
+  InterpPolyFuncCofreeCM p a -> PolyFuncCofreeCMFromNuScale p a
+PolyCFCMInterpToNuScale p a (em ** d) = PolyCFCMInterpToNuScaleCurried p a em d
 
 public export
 PolyCFCMScaleToInterpAlg : (p : PolyFunc) -> (a : Type) ->
@@ -792,7 +793,7 @@ PolyCFCMScaleToInterpAlg (pos ** dir) a (PFNode x i) hyp =
 public export
 partial
 PolyCFCMScaleToInterp : (p : PolyFunc) -> (a : Type) ->
-  PolyFuncCofreeCMFromScale p a -> InterpPolyFuncCofreeCM p a
+  PolyFuncCofreeCMFromNuScale p a -> InterpPolyFuncCofreeCM p a
 PolyCFCMScaleToInterp p a = pfNuCata $ PolyCFCMScaleToInterpAlg p a
 
 ----------------------------------------------
