@@ -961,6 +961,7 @@ PFFreeJoinOnPos p (i ** f) = PolyFuncFreeMJoinOnPosCurried p i f
 
 mutual
   public export
+  partial
   PFFreeJoinOnDir : (p : PolyFunc) -> (i : pfFreeComposePos p p) ->
     PolyFuncFreeMDir p (PFFreeJoinOnPos p i) -> pfFreeComposeDir p p i
   PFFreeJoinOnDir (pos ** dir) ((InPFM (PFVar ()) d') ** f) di = (() ** di)
@@ -968,6 +969,7 @@ mutual
     PFFreeJoinOnDirCom (pos ** dir) i' d' f di
 
   public export
+  partial
   PFFreeJoinOnDirCom : (p : PolyFunc) -> (i : pfPos p) ->
     (d : pfDir {p} i -> PolyFuncFreeMPos p) ->
     (f : (d' : pfDir {p} i ** pfCata {p=(PFTranslate p ())} (PolyFuncFreeMDirAlg p) (d d')) -> PolyFuncMu (PFTranslatePos p () ** PFTranslateDir p ())) ->
@@ -977,26 +979,49 @@ mutual
     PFFreeJoinOnDirComCurried p i d f di pfc
 
   public export
+  partial
   PFFreeJoinOnDirComCurried : (p : PolyFunc) -> (i : pfPos p) ->
     (d : pfDir {p} i -> PolyFuncFreeMPos p) ->
     (f : (d' : pfDir {p} i ** pfCata {p=(PFTranslate p ())} (PolyFuncFreeMDirAlg p) (d d')) -> PolyFuncMu (PFTranslatePos p () ** PFTranslateDir p ())) ->
-    (d' : pfDir {p} i) ->
-    (pfCata {p=(PFTranslate p ())} (PolyFuncFreeMDirAlg p) (PolyFuncFreeMJoinOnPosCurried p (d d') (\dirc => f (d' ** dirc)))) ->
+    (di : pfDir {p} i) ->
+    (pfCata {p=(PFTranslate p ())} (PolyFuncFreeMDirAlg p) (PolyFuncFreeMJoinOnPosCurried p (d di) (\dirc => f (di ** dirc)))) ->
     (qdir : (d' : pfDir {p} i ** pfCata {p=(PFTranslate p ())} (PolyFuncFreeMDirAlg p) (d d')) ** pfCata {p=(PFTranslate p ())} (PolyFuncFreeMDirAlg p) (f qdir))
-  PFFreeJoinOnDirComCurried (pos ** dir) i d f di pfc with (d di) proof deq
-    PFFreeJoinOnDirComCurried (pos ** dir) i d f di pfc | x =
-      ?PFFreeJoinOnDirComCurried_hole
+  PFFreeJoinOnDirComCurried p i d f di pfc =
+    PFFreeJoinOnDirCom' p i d f di pfc (d di) Refl
+
+  public export
+  partial
+  PFFreeJoinOnDirCom' : (p : PolyFunc) -> (i : pfPos p) ->
+    (d : pfDir {p} i -> PolyFuncFreeMPos p) ->
+    (f : (d' : pfDir {p} i ** pfCata {p=(PFTranslate p ())} (PolyFuncFreeMDirAlg p) (d d')) -> PolyFuncMu (PFTranslatePos p () ** PFTranslateDir p ())) ->
+    (di : pfDir {p} i) ->
+    (pfCata {p=(PFTranslate p ())} (PolyFuncFreeMDirAlg p) (PolyFuncFreeMJoinOnPosCurried p (d di) (\dirc => f (di ** dirc)))) ->
+    (freepos : PolyFuncFreeMPos p) ->
+    (freepos = d di) ->
+    (qdir : (d' : pfDir {p} i ** pfCata {p=(PFTranslate p ())} (PolyFuncFreeMDirAlg p) (d d')) ** pfCata {p=(PFTranslate p ())} (PolyFuncFreeMDirAlg p) (f qdir))
+  PFFreeJoinOnDirCom' (pos ** dir) i d f di pfc freepos peq =
+    let
+      r = PFFreeJoinOnDir (pos ** dir)
+        (freepos **
+         \pfcf =>
+          (f (di ** replace {p=(PolyFuncFreeMDir (pos ** dir))} peq pfcf)))
+        (rewrite peq in pfc)
+    in
+    ((di ** replace {p=(PolyFuncFreeMDir (pos ** dir))} peq (fst r)) ** snd r)
 
 public export
+partial
 PFFreeJoin : (p : PolyFunc) ->
   PolyNatTrans (pfFreeComposeArena p p) (PolyFuncFreeM p)
 PFFreeJoin p = (PFFreeJoinOnPos p ** PFFreeJoinOnDir p)
 
 public export
+partial
 PFFreeMonoid : (p : PolyFunc) -> PFMonoid (PolyFuncFreeM p)
 PFFreeMonoid p = MkPFMonoid (PFFreeReturn p) (PFFreeJoin p)
 
 public export
+partial
 PFFreeMonad : PolyFunc -> PFMonad
 PFFreeMonad p = (PolyFuncFreeM p ** PFFreeMonoid p)
 
