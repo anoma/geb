@@ -619,7 +619,7 @@ PolyFuncFreeMPos p = PolyFuncFreeMFromTranslate p ()
 
 public export
 PolyFuncFreeMDirAlg : (p : PolyFunc) -> PFAlg (PFTranslate p ()) Type
-PolyFuncFreeMDirAlg (pos ** dir) (PFVar ()) d = ()
+PolyFuncFreeMDirAlg (pos ** dir) (PFVar ()) d = Unit
 PolyFuncFreeMDirAlg (pos ** dir) (PFCom i) d = DPair (dir i) d
 
 public export
@@ -753,11 +753,13 @@ PolyFuncCofreeCMPos = PolyFuncCofreeCMPosFromFunc
 public export
 PolyFuncCofreeCMDirAlg : (p : PolyFunc) -> PFAlg (PFScale p ()) Type
 PolyFuncCofreeCMDirAlg (pos ** dir) (PFNode () i) d =
-  Pair Unit $ (di : dir i) -> d di
+  Either Unit (DPair (dir i) d)
 
 public export
 PolyFuncCofreeCMDir : (p : PolyFunc) -> PolyFuncCofreeCMPos p -> Type
-PolyFuncCofreeCMDir p = pfCata $ PolyFuncCofreeCMDirAlg p
+PolyFuncCofreeCMDir p (InPFM i da) =
+  PolyFuncCofreeCMDirAlg p i $
+    \d : (PFScaleDir p ()) i => PolyFuncCofreeCMDir p $ da d
 
 public export
 PolyFuncCofreeCM: PolyFunc -> PolyFunc
@@ -771,7 +773,11 @@ public export
 PolyCFCMInterpToScaleCurried : (p : PolyFunc) -> (a : Type) ->
   (mpos : PolyFuncCofreeCMPos p) -> (PolyFuncCofreeCMDir p mpos -> a) ->
   PolyFuncCofreeCMFromScale p a
-PolyCFCMInterpToScaleCurried (pos ** dir) a = ?PolyCFCMInterpToScaleCurried_hole
+PolyCFCMInterpToScaleCurried p@(pos ** dir) a (InPFM (PFNode () i) f) dircat =
+  InPFN (PFNode (dircat $ Left ()) i) $
+    \di : dir i =>
+      PolyCFCMInterpToScaleCurried p a (f di) $
+        \d => dircat $ Right (di ** d)
 
 public export
 PolyCFCMInterpToScale : (p : PolyFunc) -> (a : Type) ->
