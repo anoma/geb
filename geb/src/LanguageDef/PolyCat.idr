@@ -964,11 +964,7 @@ PFFreeJoinOnDir : (p : PolyFunc) -> (i : pfFreeComposePos p p) ->
   PolyFuncFreeMDir p (PFFreeJoinOnPos p i) -> pfFreeComposeDir p p i
 PFFreeJoinOnDir p@(_ ** _) ((InPFM (PFVar ()) d') ** f) di = (() ** di)
 PFFreeJoinOnDir p@(_ ** _) ((InPFM (PFCom i') d') ** f) (di ** pfc) =
-  let
-    r = PFFreeJoinOnDir p
-      ((d' di) ** \pfcf => (f (di ** pfcf)))
-      pfc
-  in
+  let r = PFFreeJoinOnDir p ((d' di) ** \pfcf => (f (di ** pfcf))) pfc in
   ((di ** (fst r)) ** snd r)
 
 public export
