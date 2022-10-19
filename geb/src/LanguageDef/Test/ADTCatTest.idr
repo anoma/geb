@@ -213,6 +213,15 @@ showPMRaise n = do
   putStrLn $ "npos(pmMaybeSqRaise " ++ show n ++ ") = " ++
     show (polyNPos $ pmMaybeSqRaise n)
 
+--------------
+--------------
+---- STMu ----
+--------------
+--------------
+
+stMuExp1 : STMu
+stMuExp1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -310,6 +319,12 @@ adtCatTest = do
   showPMRaise 8
   putStrLn ""
   putStrLn "---------------"
+  putStrLn "---- PolyF ----"
+  putStrLn "---------------"
+  putStrLn "---------------"
+  putStrLn ""
+  putStrLn $ "stMu1 = " ++ show stMuExp1
+  putStrLn ""
   putStrLn "End ADTCatTest."
   putStrLn "==============="
   pure ()

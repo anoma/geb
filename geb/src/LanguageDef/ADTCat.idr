@@ -59,6 +59,24 @@ stCata = pfCata {p=SubstTermPF}
 -------------------
 
 public export
+InSTUnit : STMu
+InSTUnit = InPFM STPosLeaf $ \d => case d of _ impossible
+
+public export
+InSTLeft : STMu -> STMu
+InSTLeft x = InPFM STPosLeft $ \d => case d of STDirL => x
+
+public export
+InSTRight : STMu -> STMu
+InSTRight y = InPFM STPosRight $ \d => case d of STDirR => y
+
+public export
+InSTPair : STMu -> STMu -> STMu
+InSTPair x y = InPFM STPosPair $ \d => case d of
+  STDirFst => x
+  STDirSnd => y
+
+public export
 STSizeAlg : STAlg Nat
 STSizeAlg STPosLeaf dir = 0
 STSizeAlg STPosLeft dir = 1 + dir STDirL
@@ -79,6 +97,17 @@ STDepthAlg STPosPair dir = smax (dir STDirFst) (dir STDirSnd)
 public export
 stDepth : STMu -> Nat
 stDepth = stCata STDepthAlg
+
+public export
+STShowAlg : STAlg String
+STShowAlg STPosLeaf dir = "!"
+STShowAlg STPosLeft dir = "< [" ++ dir STDirL ++ "]"
+STShowAlg STPosRight dir = "> [" ++ dir STDirR ++ "]"
+STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
+
+public export
+Show STMu where
+  show = stCata STShowAlg
 
 ---------------------
 ---- Refinements ----
