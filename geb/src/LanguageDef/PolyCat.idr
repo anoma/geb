@@ -961,6 +961,24 @@ public export
 PFFreeJoinOnPos : (p : PolyFunc) -> pfFreeComposePos p p -> PolyFuncFreeMPos p
 PFFreeJoinOnPos p (i ** f) = PolyFuncFreeMJoinOnPosCurried p i f
 
+public export
+PFFreeJoinOnDir : (p : PolyFunc) -> (i : pfFreeComposePos p p) ->
+  PolyFuncFreeMDir p (PFFreeJoinOnPos p i) -> pfFreeComposeDir p p i
+PFFreeJoinOnDir p (i ** f) d = ?PFFreeJoinOnDir_hole
+
+public export
+PFFreeJoin : (p : PolyFunc) ->
+  PolyNatTrans (pfFreeComposeArena p p) (PolyFuncFreeM p)
+PFFreeJoin p = (PFFreeJoinOnPos p ** PFFreeJoinOnDir p)
+
+public export
+PFFreeMonoid : (p : PolyFunc) -> PFMonoid (PolyFuncFreeM p)
+PFFreeMonoid p = MkPFMonoid (PFFreeReturn p) (PFFreeJoin p)
+
+public export
+PFFreeMonad : PolyFunc -> PFMonad
+PFFreeMonad p = (PolyFuncFreeM p ** PFFreeMonoid p)
+
 ---------------------------------------
 ---------------------------------------
 ---- Dependent polynomial functors ----
