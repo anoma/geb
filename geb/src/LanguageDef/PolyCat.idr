@@ -757,9 +757,7 @@ PolyFuncCofreeCMDirAlg (pos ** dir) (PFNode () i) d =
 
 public export
 PolyFuncCofreeCMDir : (p : PolyFunc) -> PolyFuncCofreeCMPos p -> Type
-PolyFuncCofreeCMDir p (InPFM i da) =
-  PolyFuncCofreeCMDirAlg p i $
-    \d : (PFScaleDir p ()) i => PolyFuncCofreeCMDir p $ da d
+PolyFuncCofreeCMDir p = pfCata {p=(PFScale p ())} $ PolyFuncCofreeCMDirAlg p
 
 public export
 PolyFuncCofreeCM: PolyFunc -> PolyFunc
