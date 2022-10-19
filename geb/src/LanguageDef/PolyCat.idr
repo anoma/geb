@@ -330,6 +330,22 @@ pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
 pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
 
 public export
+pfCompositionPowerArena : PolyFunc -> Nat -> PolyFunc
+pfCompositionPowerArena p Z =
+  PFIdentityArena
+pfCompositionPowerArena p (S n) =
+  pfCompositionArena p (pfCompositionPowerArena p n)
+
+public export
+pfCompositionPowerPos : PolyFunc -> Nat -> Type
+pfCompositionPowerPos p n = pfPos (pfCompositionPowerArena p n)
+
+public export
+pfCompositionPowerDir : (p : PolyFunc) -> (n : Nat) ->
+  pfCompositionPowerPos p n -> Type
+pfCompositionPowerDir p n = pfDir {p=(pfCompositionPowerArena p n)}
+
+public export
 pfSetCoproductPos : {a : Type} -> (a -> PolyFunc) -> Type
 pfSetCoproductPos {a} ps = DPair a (fst . ps)
 
@@ -441,6 +457,20 @@ public export
 pfEitherComposeArena : Type -> Type -> PolyFunc
 pfEitherComposeArena a b =
   pfCompositionArena (pfEitherArena a) (pfEitherArena b)
+
+------------------------------
+------------------------------
+---- Trees on polynomials ----
+------------------------------
+------------------------------
+
+public export
+StageNPreTree : PolyFunc -> Nat -> Type
+StageNPreTree = pfCompositionPowerPos
+
+public export
+HeightNLeaf : (p : PolyFunc) -> (n : Nat) -> StageNPreTree p n -> Type
+HeightNLeaf = pfCompositionPowerDir
 
 ------------------------------------
 ------------------------------------
@@ -674,14 +704,6 @@ pfNuCata : {0 p : PolyFunc} -> {0 a : Type} -> PFAlg p a -> PolyFuncNu p -> a
 pfNuCata {p=p@(pos ** dir)} {a} alg (InPFN i da) =
   alg i $ \d : dir i => pfNuCata {p} alg $ da d
 
--------------------------------
----- Paths through p-trees ----
--------------------------------
-
-public export
-PolyTree : PolyFunc -> Type
-PolyTree p = (a : Type ** PFCoalg p a)
-
 --------------------------------------
 ---- Polynomial (cofree) comonads ----
 --------------------------------------
@@ -706,24 +728,17 @@ public export
 PolyFuncCofreeCMPosFromScale : PolyFunc -> Type
 PolyFuncCofreeCMPosFromScale p = PolyFuncCofreeCMFromScale p ()
 
+-- Uses Mu instead of Nu -- the type is a closure.
 public export
 PolyFuncCofreeCMPosFromFunc : PolyFunc -> Type
-PolyFuncCofreeCMPosFromFunc = PolyTree
+PolyFuncCofreeCMPosFromFunc p = PolyFuncMu $ PFScale p ()
 
 public export
 partial
 PolyFuncCofreeCMPosScaleToFunc : {p : PolyFunc} ->
   PolyFuncCofreeCMPosFromScale p -> PolyFuncCofreeCMPosFromFunc p
 PolyFuncCofreeCMPosScaleToFunc {p=p@(pos ** dir)} (InPFN (PFNode () i) d) =
-  (PolyTree p ** (\coalg => (i ** \d' =>
-    let
-      (coalgty ** coalgf) = coalg
-      (recty ** recf) = PolyFuncCofreeCMPosScaleToFunc $ d d'
-    in
-    (Either coalgty recty **
-     eitherElim
-      (\coalgx => (fst (coalgf coalgx) ** Left . snd (coalgf coalgx)))
-      (\rectyx => (fst (recf rectyx) ** Right . snd (recf rectyx)))))))
+  InPFM (PFNode () i) $ \di : dir i => PolyFuncCofreeCMPosScaleToFunc (d di)
 
 public export
 PolyFuncCofreeCMPosFuncToScale : {p : PolyFunc} ->
