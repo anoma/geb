@@ -786,9 +786,10 @@ PolyCFCMScaleToInterpAlg : (p : PolyFunc) -> (a : Type) ->
 PolyCFCMScaleToInterpAlg (pos ** dir) a = ?PolyCFCMScaleToInterpAlg_hole
 
 public export
+partial
 PolyCFCMScaleToInterp : (p : PolyFunc) -> (a : Type) ->
   PolyFuncCofreeCMFromScale p a -> InterpPolyFuncCofreeCM p a
-PolyCFCMScaleToInterp p a = ?PolyCFCMScaleToInterp_hole
+PolyCFCMScaleToInterp p a = pfNuCata $ PolyCFCMScaleToInterpAlg p a
 
 ----------------------------------------------
 ----------------------------------------------
