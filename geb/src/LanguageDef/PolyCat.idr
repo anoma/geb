@@ -631,6 +631,19 @@ InterpPolyFuncFreeM : PolyFunc -> Type -> Type
 InterpPolyFuncFreeM = InterpPolyFunc . PolyFuncFreeM
 
 public export
+pfFreeComposePos : PolyFunc -> PolyFunc -> Type
+pfFreeComposePos q p = pfCompositionPos (PolyFuncFreeM q) (PolyFuncFreeM p)
+
+public export
+pfFreeComposeDir : (q, p : PolyFunc) -> pfFreeComposePos q p -> Type
+pfFreeComposeDir q p = pfCompositionDir (PolyFuncFreeM q) (PolyFuncFreeM p)
+
+public export
+pfFreeComposeArena : PolyFunc -> PolyFunc -> PolyFunc
+pfFreeComposeArena q p =
+  pfCompositionArena (PolyFuncFreeM q) (PolyFuncFreeM p)
+
+public export
 PolyFuncFreeMFromMuTranslate : PolyFunc -> Type -> Type
 PolyFuncFreeMFromMuTranslate = PolyFuncMu .* PFTranslate
 
@@ -914,6 +927,39 @@ PFEitherMonoid a = MkPFMonoid (PFEitherReturn a) (PFEitherJoin a)
 public export
 PFEitherMonad : Type -> PFMonad
 PFEitherMonad a = (pfEitherArena a ** PFEitherMonoid a)
+
+--------------------
+---- Free monad ----
+--------------------
+
+public export
+PFFreeReturnOnPos : (p : PolyFunc) -> PFIdentityPos -> PolyFuncFreeMPos p
+PFFreeReturnOnPos (pos ** dir) () = InPFM (PFVar ()) (voidF _)
+
+public export
+PFFreeReturnOnDir : (p : PolyFunc) -> (i : PFIdentityPos) ->
+  PolyFuncFreeMDir p (PFFreeReturnOnPos p i) -> PFIdentityDir i
+PFFreeReturnOnDir (pos ** dir) () () = ()
+
+public export
+PFFreeReturn : (p : PolyFunc) -> PolyNatTrans PFIdentityArena (PolyFuncFreeM p)
+PFFreeReturn p = (PFFreeReturnOnPos p ** PFFreeReturnOnDir p)
+
+public export
+PolyFuncFreeMJoinOnPosCurried : (p : PolyFunc) ->
+  (i : PolyFuncFreeMPos p) -> (PolyFuncFreeMDir p i -> PolyFuncFreeMPos p) ->
+  PolyFuncFreeMPos p
+PolyFuncFreeMJoinOnPosCurried (pos ** dir) (InPFM (PFVar ()) d) f =
+  InPFM (PFVar ()) (voidF _)
+PolyFuncFreeMJoinOnPosCurried (pos ** dir) (InPFM (PFCom i) d) f =
+  InPFM (PFCom i) $
+    \di =>
+      PolyFuncFreeMJoinOnPosCurried (pos ** dir) (d di) $
+        \dirc => f (di ** dirc)
+
+public export
+PFFreeJoinOnPos : (p : PolyFunc) -> pfFreeComposePos p p -> PolyFuncFreeMPos p
+PFFreeJoinOnPos p (i ** f) = PolyFuncFreeMJoinOnPosCurried p i f
 
 ---------------------------------------
 ---------------------------------------
