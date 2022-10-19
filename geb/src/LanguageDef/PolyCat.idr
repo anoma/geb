@@ -743,15 +743,21 @@ PolyFuncCofreeCMPosScaleToFunc {p=p@(pos ** dir)} (InPFN (PFNode () i) d) =
 public export
 PolyFuncCofreeCMPosFuncToScale : {p : PolyFunc} ->
   PolyFuncCofreeCMPosFromFunc p -> PolyFuncCofreeCMPosFromScale p
-PolyFuncCofreeCMPosFuncToScale = ?PolyFuncCofreeCMPosFuncToScale_hole
+PolyFuncCofreeCMPosFuncToScale {p=p@(pos ** dir)} (InPFM (PFNode () i) d) =
+  InPFN (PFNode () i) $ \di : dir i => PolyFuncCofreeCMPosFuncToScale (d di)
 
 public export
 PolyFuncCofreeCMPos : PolyFunc -> Type
 PolyFuncCofreeCMPos = PolyFuncCofreeCMPosFromFunc
 
 public export
+PolyFuncCofreeCMDirAlg : (p : PolyFunc) -> PFAlg (PFScale p ()) Type
+PolyFuncCofreeCMDirAlg (pos ** dir) (PFNode () i) d =
+  Pair Unit $ (di : dir i) -> d di
+
+public export
 PolyFuncCofreeCMDir : (p : PolyFunc) -> PolyFuncCofreeCMPos p -> Type
-PolyFuncCofreeCMDir p = ?PolyFuncCofreeCMDirFromScale_hole
+PolyFuncCofreeCMDir p = pfCata $ PolyFuncCofreeCMDirAlg p
 
 public export
 PolyFuncCofreeCM: PolyFunc -> PolyFunc
