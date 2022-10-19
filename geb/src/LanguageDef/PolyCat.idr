@@ -789,7 +789,11 @@ PolyCFCMScaleToInterpAlg : (p : PolyFunc) -> (a : Type) ->
   (i : PFScalePos p a) ->
   (PFScaleDir p a i -> InterpPolyFuncCofreeCM p a) ->
   InterpPolyFuncCofreeCM p a
-PolyCFCMScaleToInterpAlg (pos ** dir) a = ?PolyCFCMScaleToInterpAlg_hole
+PolyCFCMScaleToInterpAlg (pos ** dir) a (PFNode x i) hyp =
+  (InPFM (PFNode () i) (fst . hyp) **
+   \dp => case dp of
+    Left () => x
+    Right (di ** cmdi) => snd (hyp di) cmdi)
 
 public export
 partial
