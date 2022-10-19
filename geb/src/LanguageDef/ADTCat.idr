@@ -943,7 +943,7 @@ MuMaybeSq = PolyFuncMu MaybeSqArena
 
 public export
 CofreeMaybeSq : Type -> Type
-CofreeMaybeSq = PolyFuncCofreeCMFromScale MaybeSqArena
+CofreeMaybeSq = PolyFuncCofreeCMFromNuScale MaybeSqArena
 
 public export
 NuMaybeSq : Type
