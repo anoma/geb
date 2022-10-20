@@ -238,12 +238,12 @@ MkWNS (S n) s with (MkWNS n s)
     PFVar () =>
       (InPFM (PFCom ()) (const $ InPFM (PFVar ()) (voidF _)) ** const $ strs ())
     PFCom () =>
-      (InPFM (PFCom ()) (const $ InPFM (PFCom ()) (const (InPFM i dirs))) **
+      (InPFM (PFCom ()) (const $ InPFM i dirs) **
        \di => case di of
-        (() ** (() ** (() ** di'))) => strs (() ** di'))
+        (() ** (() ** di')) => strs (() ** di'))
 
-wns0 : WriterNatString
-wns0 = MkWNS 3 "wns0"
+wns3 : WriterNatString
+wns3 = MkWNS 3 "wns3"
 
 wnsNatAlg : PFTranslateAlg PFIdentityArena String Nat
 wnsNatAlg (PFVar s) dn = 0
@@ -262,8 +262,8 @@ wnsStr = pfFreeCata wnsStrAlg
 Show WriterNatString where
   show wns = "(" ++ show (wnsNat wns) ++ ", " ++ show (wnsStr wns) ++ ")"
 
-wns0s : String
-wns0s = show wns0
+wns3s : String
+wns3s = show wns3
 
 ----------------------------------
 ----------------------------------
@@ -371,7 +371,7 @@ adtCatTest = do
   putStrLn "---- Monads/comonads ----"
   putStrLn "-------------------------"
   putStrLn ""
-  putStrLn $ "wns0 = " ++ wns0s
+  putStrLn $ "wns3 = " ++ wns3s
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."
