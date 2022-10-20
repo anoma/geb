@@ -234,13 +234,7 @@ WriterNatString = pfFreeIdF String
 MkWNS : Nat -> String -> WriterNatString
 MkWNS Z s = (InPFM (PFVar ()) (voidF _) ** const s)
 MkWNS (S n) s with (MkWNS n s)
-  MkWNS (S n) s | (InPFM i dirs ** strs) = case i of
-    PFVar () =>
-      (InPFM (PFCom ()) (const $ InPFM (PFVar ()) (voidF _)) ** const $ strs ())
-    PFCom () =>
-      (InPFM (PFCom ()) (const $ InPFM i dirs) **
-       \di => case di of
-        (() ** (() ** di')) => strs (() ** di'))
+  MkWNS (S n) s | (i ** strs) = (InPFM (PFCom()) (const i) ** strs . snd)
 
 wns3 : WriterNatString
 wns3 = MkWNS 3 "wns3"
