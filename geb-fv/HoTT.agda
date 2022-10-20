@@ -35,6 +35,9 @@ module HoTT where
     ind𝟘 : ∀ {l} (C : Empty → Type l) → ((x : Empty) → C x)
     ind𝟘 C ()
 
+    rec𝟘 : {l : Level} (C : Type l) → Empty → C
+    rec𝟘 C ()
+
     𝟘 : Type lzero
     𝟘 = Empty
 
@@ -121,7 +124,7 @@ module HoTT where
     data _≡_ {l1} {A : Type l1} :  A → A → Type l1  where
       refl : ∀ (a : A) →  a ≡ a
 
-    ind≡ : {l1 l2 : Level}  {A : Type l1 } (C : ∀ {x y : A} -> ( (x ≡ y) -> (Type l2) )) → ( ∀ (x : A) → (C (refl x)) ) → ({a b : A}  (p : a ≡ b) → (C p) )
+    ind≡ : {l1 l2 : Level}  {A : Type l1 } (C : ∀ {x y : A} -> ( (x ≡ y) -> (Type l2) )) → ( ∀ (z : A) → (C (refl z)) ) → ({a b : A}  (p : a ≡ b) → (C p) )
     ind≡ C f (refl x) = f x
 
     rec≡ : {l1 l2 : Level} {A : Type l1 } (C : Type l2) → ( ∀ (x : A) → C ) → (( a b : A)  (p : a ≡ b) → C )
@@ -296,10 +299,8 @@ module HoTT where
     path-uniq-inv :  {l1 : Level} {A : Type l1} {x y : A} (p : x ≡ y) (q : y ≡ x) → (p · q ≡ (refl _)) → (q ≡ inv-path p)
     path-uniq-inv (refl _) q r = concat r (refl _)
 
-
     con-inv :   {l1 : Level} {A : Type l1} (x y z : A) (p : x ≡ y) (q : y ≡ z) (r : x ≡ z) → (p · q ≡ r) → (p ≡ r · (inv-path q))
     con-inv x y z (refl x) q r t = concat (inv-path (right-inv q)) (fun-ap (λ l → (l · (inv-path q))) t)
-
 
     lift :  {l1 l2 : Level} {A : Type l1} (B : A → Type l2) {a x : A} (p : a ≡ x) (b : B a) → deppair a b ≡ deppair x (transp B p b)
     lift B (refl x) b = refl _
@@ -455,6 +456,9 @@ zero-not-succ (succ m) = λ (p : zero ≡ succ (succ m)) → {!!} -}
                                                                                                                     ,
                                                                                                        ((prod-id-to-Σ-id x1 x2) ,, Σ-eq-right-equiv x1 x2))
 
+   {- Σ-nondep-pair : {l1 l2 l3} (A : Type l1) (B : Type l2) (C : A → B → Type l3) → (Σ[ a ∶ A ] (Σ[ b ∶ B ] (C a b))) ≃ (Σ[ x ∶ (A × B) ] (C (pr₁ x) (pr₂ x))) -}
+
+    
     is-embed : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → Type (l1 ⊔ l2)
     is-embed f = (x y : _) → is-an-equiv (fun-ap {_} {_} {_} {_} {x} {y} f)
 
@@ -466,10 +470,30 @@ qinverse-left-embed f P a1 a2 eq = {!!} -}
 equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((transp (λ F → g (f a1) ≡ F (f a1) ) (qinverses-are-equal-with-funext f (((g ,, x) , (g' ,, y)))) (refl _)) · y  a1) ⁻¹) ·
                                                                                                                                                ((fun-ap g p) · (transp (λ k → g (f a2) ≡ k (f a2)) (qinverses-are-equal-with-funext f (((g ,, x) , (g' ,, y)))) (refl _) · y a2))) ,, {!!}) , {!!} -}
 
-{- is-an-equiv-to-is-Contr-fib : {l1 l2 : Level} (A : Type l1) (B : Type l2) (f : A → B) → (is-an-equiv f) → (is-Contr-fib f)
-is-an-equiv-to-is-Contr-fib A B f ((g ,, x) , (g' ,, y)) b = (g b ,, x b) ,, λ { (a ,, p) → prod-id-to-Σ-id (g b ,, x b) (a ,, p) ((((fun-ap g p ⁻¹) · transp (λ k → k (f a) ≡  a) ((qinverses-are-equal-with-funext f (((g ,, x) , (g' ,, y)))) ⁻¹) (y a)) ) ,, {!!})} -}
+    ishae : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → Type (l1 ⊔ l2)
+    ishae {_} {_} {A} {B} f = Σ[ g ∶ (B → A) ] Σ[ η-ϵ ∶ (((g ∘ f) ∼ (id A)) × ((f ∘ g) ∼ (id B)))  ] ((a : A) → fun-ap f ((pr₁ η-ϵ) a) ≡ (pr₂ η-ϵ) (f a) )
 
-{- is-Contr-fib-iff-is-an-equiv : {l1 l2 : Level} (A : Type l1) (B : Type l2) (f : A → B) → (is-an-equiv f) ↔ (is-Contr-fib f)is-Contr-fib-iff-is-an-equiv A B f = {!!} , is-Contr-fib-to-is-an-equiv A B f -}
+    ishae-to-is-equiv : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → ishae f → is-an-equiv f
+    ishae-to-is-equiv f (g ,, ((η , ϵ) ,, F)) = (g ,, ϵ) , (g ,, η)
+
+    
+    homotopy-naturality : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f g : A → B) (H : f ∼ g) {x y : A} (p : x ≡ y) → (H x) · (fun-ap g p) ≡ (fun-ap f p) · (H y)
+    homotopy-naturality f g H (refl _) = refl-r _
+
+    homotopy-whiskering : {l1 l2 : Level} {A : Type l1} (f : A → A) (H : f ∼ (id A)) (x : A) → H (f x) ≡ fun-ap f (H x)
+    homotopy-whiskering {l1} {l2} {A} f H x = ((refl-r (H (f x))) ⁻¹) · (fun-ap (λ p → (H (f x) · p)) (right-inv (H x) ⁻¹) ·
+                                (((concat-assoc (H (f x)) (H x) (inv-path (H x)) ) ⁻¹) · ( fun-ap (λ p → (p) · (inv-path (H x)))
+                                (fun-ap (λ q → (H (f x)) · q ) (ap-id (H x)) · homotopy-naturality f (id A) H (H x)) 
+                               · (concat-assoc (fun-ap f (H x)) (H (id A x)) (inv-path (H x)) ·
+                               (fun-ap (λ q → (fun-ap f (H x)) · q) (right-inv (H x))
+                               · refl-r _)))))
+
+    Σ-eq-is-contr : {l1 : Level} (A : Type l1) (a : A) → is-Contr (Σ[ x ∶ A ] (a ≡ x))
+    Σ-eq-is-contr A a = (a ,, refl a) ,, λ { (x ,, refl .x) → refl _}
+
+ {-   is-an-equiv-to-is-Contr-fib : {l1 l2 : Level} (A : Type l1) (B : Type l2) (f : A → B) → (is-an-equiv f) → (is-Contr-fib f)
+    is-an-equiv-to-is-Contr-fib A B f ((g1 ,, h1) , (g2 ,, h2)) b = ((g1 b) ,, (h1 b)) ,, λ { (a ,, refl .(f a)) → {!!}}  -}
+
 
     l-homotopy : {l1 l2 : Level} {A : Type l1} {B : Type l2} {f : A → B} (P :  is-an-equiv f) → ( ((f ∘ (proj₁ ( pr₁ P))) ∼ (id _) ))
     l-homotopy P = proj₂ (pr₁ P)
@@ -598,12 +622,33 @@ is-an-equiv-to-is-Contr-fib A B f ((g ,, x) , (g' ,, y)) b = (g b ,, x b) ,, λ 
 
     [_,_] : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} → (A → C) → (B → C) → (A + B → C)
     [ f , g ] = u-mor-coprod f g
+
+    u-mor-coprod-up-to-eq :  {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} {D : Type (l1 ⊔ l2)} (p : A + B ≡ D) → (D → C) → (D → C) → (D → C)
+    u-mor-coprod-up-to-eq (refl .(_ + _)) f g = [ f ∘ inl , g ∘ inr ]
+
+    constructor-el-+ : {l1 l2 : Level} {A : Type l1} {B : Type l2} (x : A + B) → (Σ[ a ∶ A ] ( x ≡ inl a)) + (Σ[ b ∶ B ] (x ≡ inr b))
+    constructor-el-+ (inl x) = inl (x ,, refl _)
+    constructor-el-+ (inr x) = inr (x ,, (refl _))
+    
+    l-type-+ :  {l1 l2 : Level} (A : Type l1) (B : Type l2) {D : Type (l1 ⊔ l2)} (p : A + B ≡ D) → Type l1
+    l-type-+ A B (refl .(_ + _)) = A
+
+    r-type-+ :  {l1 l2 : Level} (A : Type l1) (B : Type l2) {D : Type (l1 ⊔ l2)} (p : A + B ≡ D) → Type l2
+    r-type-+ A B (refl .(A + B)) = B
+
+    id-up-to-eq : {l1 : Level} {A B : Type l1} (p : A ≡ B) → A → B
+    id-up-to-eq (refl _) = id _
     
     u-mor-coprod-qinverse : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} → (A + B → C) → ((A → C) × (B → C))
     u-mor-coprod-qinverse f = (λ x → f (inl x)) , λ x → f (inr x)
 
     functions-from-+-from-uni-prop : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} (f : A + B → C) → Σ[ F ∶ ((A → C) × (B → C)) ] (f ≡ [ (pr₁ F) , (pr₂ F) ])
     functions-from-+-from-uni-prop f = (u-mor-coprod-qinverse f) ,, funext _ _ λ { (inl x) → refl _ ; (inr x) → refl _}
+
+    comp-with-+-mor : {l1 l2 l3 l4 : Level} {A : Type l1} {B : Type l2} {C : Type l3} {D : Type l4} (g : A + B → C) (f : C → D) → (pr₁ (proj₁ (functions-from-+-from-uni-prop (f ∘ g)))) ≡  (f ∘ pr₁ (proj₁ (functions-from-+-from-uni-prop g)))
+    comp-with-+-mor g f = refl _
+
+--  functions-from-+-up-to-eq-from-uni-prop : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {D : Type (l1 ⊔ l2)} {C : Type l3} (p : A + B ≡ D) (f : D → C) → Σ[ F ∶ (((l-type-+ A B D) → C) × ((r-type-+ A B D) → C)) ] (f ≡ )
 
     u-mor-prod : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} → (C → A) → (C → B) → (C → A × B)
     u-mor-prod f g c = (f c) , (g c)
@@ -627,6 +672,10 @@ is-an-equiv-to-is-Contr-fib A B f ((g ,, x) , (g' ,, y)) b = (g b ,, x b) ,, λ 
     uncurry : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} → (A → (B → C)) →  (A × B → C)
     uncurry f (a , b) = f a b
 
+    curry-pr-eq : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} (g : A × B → C) (x : A × B) →
+                  (g x ≡ curry g (pr₁ x) (pr₂ x))
+    curry-pr-eq g (x , y) = refl _
+
 
   module Univalence where
     open Basics public
@@ -641,3 +690,5 @@ is-an-equiv-to-is-Contr-fib A B f ((g ,, x) , (g' ,, y)) b = (g b ,, x b) ,, λ 
       Univalence-elim : {l1 : Level} {A B : Type l1} → ( (refl-to-id {l1} {A} {B}) ≡ (λ p → (transp (λ X → A ≃ X) p (equiv-refl A))))
       Univalence-compeq : {l1 : Level} {A B : Type l1} (p : A ≡ B) → ( p ≡ (ua( (λ p → (transp (λ X → A ≃ X) p (equiv-refl A))) p) ))
       Univalence-compfun : {l1 l2 : Level} {A B : Type l1} (f : A → B) (P : is-an-equiv f) (a : A) → (proj₁ ((refl-to-id {l1} {A} {B}) (ua (f ,, P))) a) ≡ f   a 
+
+  
