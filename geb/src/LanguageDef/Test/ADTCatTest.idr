@@ -228,6 +228,10 @@ stMuExp1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
 ---------------------------
 ---------------------------
 
+-----------------------
+---- Free identity ----
+-----------------------
+
 WriterNatString : Type
 WriterNatString = pfFreeIdF String
 
@@ -258,6 +262,64 @@ Show WriterNatString where
 
 wns3s : String
 wns3s = show wns3
+
+-------------------------
+---- Cofree identity ----
+-------------------------
+
+StreamNatGen : PolyFunc
+StreamNatGen = PFIdentityArena
+
+StreamNatGenPos : Type
+StreamNatGenPos = pfPos StreamNatGen
+
+StreamNatGenDir : StreamNatGenPos -> Type
+StreamNatGenDir = pfDir {p=StreamNatGen}
+
+StreamNatF : PolyFunc
+StreamNatF = PolyFuncCofreeCM PFIdentityArena
+
+StreamNatFPos : Type
+StreamNatFPos = pfPos StreamNatF
+
+StreamNatFDir : StreamNatFPos -> Type
+StreamNatFDir = pfDir {p=StreamNatF}
+
+StreamType : Type
+StreamType = Nat
+
+StreamNat : Type
+StreamNat = InterpPolyFunc StreamNatF StreamType
+
+StreamRet : Type
+StreamRet = (StreamType, StreamNatGenPos -> StreamNat)
+
+mutual
+  partial
+  sn0 : StreamNat
+  sn0 = (InPFM (PFNode () ()) (const $ fst sn0) ** sn0Dir sn0)
+
+  partial
+  sn0Dir :
+    (sn : StreamNat) ->
+    Either () (d : () ** StreamNatFDir (fst sn)) ->
+    StreamType
+  sn0Dir sn (Left ()) = 0
+  sn0Dir (InPFM (PFNode () ()) sn' ** d') (Right (() ** x)) =
+    S $ sn0Dir (sn' () ** \x => d' $ Right (() ** x)) $
+      case x of
+        Left () => Left ()
+        Right (() ** x') => Right (() ** x')
+
+partial
+getSN : StreamNat -> StreamNatGenPos -> StreamRet
+getSN (InPFM (PFNode () ()) di' ** d') =
+  \u => case u of
+    () => getSN (di' () ** \pfc => d' $ Right (() ** pfc)) ()
+
+partial
+sn0_0 : StreamRet
+sn0_0 = getSN sn0 ()
 
 ----------------------------------
 ----------------------------------
@@ -366,6 +428,7 @@ adtCatTest = do
   putStrLn "-------------------------"
   putStrLn ""
   putStrLn $ "wns3 = " ++ wns3s
+  -- putStrLn $ "sn0_0 = " ++ show (fst sn0_0)
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."
