@@ -886,6 +886,13 @@ PFMonad : Type
 PFMonad = DPair PolyFunc PFMonoid
 
 public export
+record PFMonoidCorrect (p : PolyFunc) (c : PFMonoid p) where
+  constructor MkPFMonoidCorrect
+
+public export
+PFCorrectMonad : Type
+PFCorrectMonad = (p : PolyFunc ** c : PFMonoid p ** PFMonoidCorrect p c)
+
 record PFComonoid (p : PolyFunc) where
   constructor MkPFComonoid
   pcomErase : PolyNatTrans p PFIdentityArena
@@ -894,6 +901,14 @@ record PFComonoid (p : PolyFunc) where
 public export
 PFComonad : Type
 PFComonad = DPair PolyFunc PFComonoid
+
+public export
+record PFComonoidCorrect (p : PolyFunc) (c : PFComonoid p) where
+  constructor MkPFComonoidCorrect
+
+public export
+PFCorrectComonad : Type
+PFCorrectComonad = (p : PolyFunc ** c : PFComonoid p ** PFComonoidCorrect p c)
 
 -----------------------------------------------------------
 -----------------------------------------------------------
@@ -908,6 +923,14 @@ record CatSig where
   catMorph : catObj -> catObj -> Type
   catId : (a : catObj) -> catMorph a a
   catComp : {a, b, c : catObj} -> catMorph b c -> catMorph a b -> catMorph a c
+
+public export
+record CatSigCorrect (c : CatSig) where
+  constructor MkCatSigCorrect
+
+public export
+CorrectCatSig : Type
+CorrectCatSig = DPair CatSig CatSigCorrect
 
 public export
 CatToPolyPos : CatSig -> Type
