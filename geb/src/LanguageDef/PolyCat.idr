@@ -925,8 +925,18 @@ record CatSig where
   catComp : {a, b, c : catObj} -> catMorph b c -> catMorph a b -> catMorph a c
 
 public export
-record CatSigCorrect (c : CatSig) where
+record CatSigCorrect (cat : CatSig) where
   constructor MkCatSigCorrect
+  catLeftId : {a, b : catObj cat} ->
+    (m : catMorph cat a b) -> catComp cat {a} {b} {c=b} (catId cat b) m = m
+  catRightId : {a, b : catObj cat} ->
+    (m : catMorph cat a b) -> catComp cat {a} {b=a} {c=b} m (catId cat a) = m
+  catAssoc : {a, b, c, d : catObj cat} ->
+    (h : catMorph cat c d) ->
+    (g : catMorph cat b c) ->
+    (f : catMorph cat a b) ->
+    catComp cat {a} {b=c} {c=d} h (catComp cat {a} {b} {c} g f) =
+      catComp cat {a} {b} {c=d} (catComp cat {a=b} {b=c} {c=d} h g) f
 
 public export
 CorrectCatSig : Type
