@@ -330,6 +330,18 @@ pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
 pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
 
 public export
+pfDuplicateArena : PolyFunc -> PolyFunc
+pfDuplicateArena p = pfCompositionArena p p
+
+public export
+pfDuplicatePos : PolyFunc -> Type
+pfDuplicatePos = pfPos . pfDuplicateArena
+
+public export
+pfDuplicateDir : (p : PolyFunc) -> pfPos (pfDuplicateArena p) -> Type
+pfDuplicateDir p = pfDir {p=(pfDuplicateArena p)}
+
+public export
 pfCompositionPowerArena : PolyFunc -> Nat -> PolyFunc
 pfCompositionPowerArena p Z =
   PFIdentityArena
@@ -867,7 +879,7 @@ public export
 record PFMonoid (p : PolyFunc) where
   constructor MkPFMonoid
   pmonReturn : PolyNatTrans PFIdentityArena p
-  pmonJoin : PolyNatTrans (pfCompositionArena p p) p
+  pmonJoin : PolyNatTrans (pfDuplicateArena p) p
 
 public export
 PFMonad : Type
@@ -877,11 +889,69 @@ public export
 record PFComonoid (p : PolyFunc) where
   constructor MkPFComonoid
   pcomErase : PolyNatTrans p PFIdentityArena
-  pcomDup : PolyNatTrans p (pfCompositionArena p p)
+  pcomDup : PolyNatTrans p (pfDuplicateArena p)
 
 public export
 PFComonad : Type
 PFComonad = DPair PolyFunc PFComonoid
+
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- Polynomial comands as categories (and vice versa) ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+public export
+record CatSig where
+  constructor MkCatSig
+  catObj : Type
+  catMorph : catObj -> catObj -> Type
+
+public export
+CatToPolyPos : CatSig -> Type
+CatToPolyPos (MkCatSig o m) = o
+
+public export
+CatToPolyDir : (c : CatSig) -> CatToPolyPos c -> Type
+CatToPolyDir = ?catToPolyDir_hole
+
+public export
+CatToPoly : CatSig -> PolyFunc
+CatToPoly c = (CatToPolyPos c ** CatToPolyDir c)
+
+public export
+CatToComonoidErase : (c : CatSig) -> PolyNatTrans (CatToPoly c) PFIdentityArena
+CatToComonoidErase = ?catToComonoidErase_hole
+
+public export
+CatToComonoidDup : (c : CatSig) ->
+  PolyNatTrans (CatToPoly c) (pfDuplicateArena (CatToPoly c))
+CatToComonoidDup = ?catToComonoidDup_hole
+
+public export
+CatToComonoid : (c : CatSig) -> PFComonoid (CatToPoly c)
+CatToComonoid c = MkPFComonoid (CatToComonoidErase c) (CatToComonoidDup c)
+
+public export
+CatToComonad : CatSig -> PFComonad
+CatToComonad c = (CatToPoly c ** CatToComonoid c)
+
+public export
+ComonoidToCatObj : {p : PolyFunc} -> PFComonoid p -> Type
+ComonoidToCatObj = ?ComonoidToCatObj_hole
+
+public export
+ComonoidToCatMorph : {p : PolyFunc} ->
+  (c : PFComonoid p) -> ComonoidToCatObj c -> ComonoidToCatObj c -> Type
+ComonoidToCatMorph = ?ComonoidToCatMorph_hole
+
+public export
+ComonoidToCat : {p : PolyFunc} -> PFComonoid p -> CatSig
+ComonoidToCat c = MkCatSig (ComonoidToCatObj c) (ComonoidToCatMorph c)
+
+public export
+ComonadToCat : PFComonad -> CatSig
+ComonadToCat (p ** c) = ComonoidToCat {p} c
 
 ------------------------------------
 ------------------------------------
