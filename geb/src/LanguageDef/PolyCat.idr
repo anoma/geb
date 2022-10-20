@@ -680,6 +680,16 @@ PolyFMMuTranslateToInterp : (p : PolyFunc) -> (a : Type) ->
   PolyFuncFreeMFromMuTranslate p a -> InterpPolyFuncFreeM p a
 PolyFMMuTranslateToInterp p a = pfCata $ PolyFMMuTranslateToInterpAlg p a
 
+public export
+PFTranslateAlg : PolyFunc -> Type -> Type -> Type
+PFTranslateAlg p a b = PFAlg (PFTranslate p a) b
+
+public export
+pfFreeCata : {p : PolyFunc} -> {a, b : Type} ->
+  PFTranslateAlg p a b -> InterpPolyFuncFreeM p a -> b
+pfFreeCata {p} {a} {b} alg =
+  pfCata {p=(PFTranslate p a)} {a=b} alg . PolyFMInterpToMuTranslate p a
+
 --------------------------------------
 --------------------------------------
 ---- Polynomial-functor coalgebra ----
