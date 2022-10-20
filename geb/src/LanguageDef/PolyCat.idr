@@ -980,6 +980,34 @@ public export
 PFFreeMonad : PolyFunc -> PFMonad
 PFFreeMonad p = (PolyFuncFreeM p ** PFFreeMonoid p)
 
+------------------------
+---- Cofree comonad ----
+------------------------
+
+------------------------------------
+---- Writer Nat (Free Identity) ----
+------------------------------------
+
+public export
+pfFreeId : PolyFunc
+pfFreeId = PolyFuncFreeM PFIdentityArena
+
+public export
+pfFreeIdF : Type -> Type
+pfFreeIdF = InterpPolyFunc pfFreeId
+
+-------------------------------------------
+---- Infinite stream (Cofree Identity) ----
+-------------------------------------------
+
+public export
+pfCofreeId : PolyFunc
+pfCofreeId = PolyFuncCofreeCM PFIdentityArena
+
+public export
+pfCofreeIdF : Type -> Type
+pfCofreeIdF = InterpPolyFunc pfCofreeId
+
 ---------------------------------------
 ---------------------------------------
 ---- Dependent polynomial functors ----

@@ -222,6 +222,42 @@ showPMRaise n = do
 stMuExp1 : STMu
 stMuExp1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
 
+---------------------------
+---------------------------
+---- Monads / comonads ----
+---------------------------
+---------------------------
+
+WriterNatString : Type
+WriterNatString = pfFreeIdF String
+
+MkWNS : Nat -> String -> WriterNatString
+MkWNS Z s = (InPFM (PFVar ()) (voidF _) ** const s)
+MkWNS (S n) s with (MkWNS n s)
+  MkWNS (S n) s | (InPFM i dirs ** strs) = case i of
+    PFVar () =>
+      (InPFM (PFCom ()) (const $ InPFM (PFVar ()) (voidF _)) ** const $ strs ())
+    PFCom () =>
+      (InPFM (PFCom ()) (const $ InPFM (PFCom ()) (const (InPFM i dirs))) **
+       \di => case di of
+        (() ** (() ** (() ** di'))) => strs (() ** di'))
+
+wns0 : WriterNatString
+wns0 = MkWNS 3 "wns0"
+
+wnsNat : WriterNatString -> Nat
+wnsNat (InPFM (PFVar ()) d ** s) = 0
+wnsNat (InPFM (PFCom ()) d ** s) = ?wnsNat_hole
+
+wnsStr : WriterNatString -> String
+wnsStr wns = ?wnsStr_hole
+
+Show WriterNatString where
+  show wns = "(" ++ show (wnsNat wns) ++ ", " ++ show (wnsStr wns) ++ ")"
+
+wns0s : String
+wns0s = show wns0
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -321,10 +357,16 @@ adtCatTest = do
   putStrLn "---------------"
   putStrLn "---- PolyF ----"
   putStrLn "---------------"
-  putStrLn "---------------"
   putStrLn ""
   putStrLn $ "stMu1 = " ++ show stMuExp1
   putStrLn ""
+  putStrLn "-------------------------"
+  putStrLn "---- Monads/comonads ----"
+  putStrLn "-------------------------"
+  putStrLn ""
+  -- putStrLn $ "wns0 = " ++ wns0s
+  putStrLn ""
+  putStrLn "---------------"
   putStrLn "End ADTCatTest."
   putStrLn "==============="
   pure ()
