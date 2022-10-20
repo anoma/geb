@@ -837,6 +837,22 @@ PolyCFCMScaleToInterp : (p : PolyFunc) -> (a : Type) ->
   PolyFuncCofreeCMFromNuScale p a -> InterpPolyFuncCofreeCM p a
 PolyCFCMScaleToInterp p a = pfNuCata $ PolyCFCMScaleToInterpAlg p a
 
+public export
+PFScaleCoalg : PolyFunc -> Type -> Type -> Type
+PFScaleCoalg p a b = PFCoalg (PFScale p a) b
+
+public export
+pfCofreeAnaScale : {p : PolyFunc} -> {a, b : Type} ->
+  PFScaleCoalg p a b -> b -> PolyFuncCofreeCMFromNuScale p a
+pfCofreeAnaScale {p} = pfAna {p=(PFScale p a)}
+
+public export
+partial
+pfCofreeAna : {p : PolyFunc} -> {a, b : Type} ->
+  PFScaleCoalg p a b -> b -> InterpPolyFuncCofreeCM p a
+pfCofreeAna {p} {a} {b} =
+  PolyCFCMScaleToInterp p a .* pfCofreeAnaScale {p} {a} {b}
+
 ----------------------------------------------
 ----------------------------------------------
 ---- General polynomial monoids/comonoids ----
