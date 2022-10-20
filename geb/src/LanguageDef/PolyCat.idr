@@ -322,8 +322,8 @@ pfCompositionPos q p = (i : pfPos q ** (pfDir {p=q} i -> pfPos p))
 
 public export
 pfCompositionDir : (p, q : PolyFunc) -> pfCompositionPos p q -> Type
-pfCompositionDir q p (qpos ** qdir2ppos) =
-  (qdir : pfDir {p=q} qpos ** pfDir {p} $ qdir2ppos qdir)
+pfCompositionDir q p qppos =
+  (qdir : pfDir {p=q} (fst qppos) ** pfDir {p} $ snd qppos qdir)
 
 public export
 pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
@@ -950,7 +950,8 @@ ComonoidToCatEmanate {p} (MkPFComonoid e d) a = pfDir {p} a
 public export
 ComonoidToCatCodom : {p : PolyFunc} -> (c : PFComonoid p) ->
   (a : ComonoidToCatObj c) -> ComonoidToCatEmanate c a -> ComonoidToCatObj c
-ComonoidToCatCodom {p} (MkPFComonoid e d) a di = ?ComonoidToCatCodom_hole
+ComonoidToCatCodom {p=(pos ** dir)} (MkPFComonoid e (dOnPos ** dOnDir)) a di =
+  ?ComonoidToCatCodom_hole
 
 public export
 ComonoidToCatMorph : {p : PolyFunc} ->
