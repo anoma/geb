@@ -292,7 +292,7 @@ StreamNat : Type
 StreamNat = InterpPolyFunc StreamNatF StreamType
 
 StreamRet : Type
-StreamRet = (StreamType, StreamNatGenPos -> StreamNat)
+StreamRet = (StreamType, StreamNat)
 
 mutual
   partial
