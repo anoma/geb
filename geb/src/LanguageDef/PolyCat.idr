@@ -648,6 +648,17 @@ PolyFuncFreeMFromMuTranslate : PolyFunc -> Type -> Type
 PolyFuncFreeMFromMuTranslate = PolyFuncMu .* PFTranslate
 
 public export
+InPVar : {0 p : PolyFunc} -> {0 a : Type} ->
+  a -> PolyFuncFreeMFromMuTranslate p a
+InPVar {p=(_ ** _)} {a} x = InPFM (PFVar x) (voidF _)
+
+public export
+InPCom : {0 p : PolyFunc} -> {0 a : Type} ->
+  (i : pfPos p) -> (pfDir {p} i -> PolyFuncFreeMFromMuTranslate p a) ->
+  PolyFuncFreeMFromMuTranslate p a
+InPCom {p=(pos ** dir)} {a} i d = InPFM (PFCom i) d
+
+public export
 PolyFMInterpToMuTranslateCurried : (p : PolyFunc) -> (a : Type) ->
   (mpos : PolyFuncFreeMPos p) -> (PolyFuncFreeMDir p mpos -> a) ->
   PolyFuncFreeMFromMuTranslate p a
@@ -773,6 +784,13 @@ PolyFuncCofreeCMFromNuScale = PolyFuncNu .* PFScale
 public export
 PolyFuncCofreeCMPosFromNuScale : PolyFunc -> Type
 PolyFuncCofreeCMPosFromNuScale p = PolyFuncCofreeCMFromNuScale p ()
+
+public export
+InPNode : {0 p : PolyFunc} -> {0 a : Type} ->
+  a -> (i : pfPos p) ->
+  (pfDir {p} i -> Inf (PolyFuncCofreeCMFromNuScale p a)) ->
+  PolyFuncCofreeCMFromNuScale p a
+InPNode {p=(_ ** _)} {a} i d = InPFN (PFNode i d)
 
 public export
 partial

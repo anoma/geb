@@ -232,9 +232,9 @@ WriterNatString : Type
 WriterNatString = pfFreeIdF String
 
 MkWNS : Nat -> String -> WriterNatString
-MkWNS Z s = (InPFM (PFVar ()) (voidF _) ** const s)
+MkWNS Z s = (InPVar () ** const s)
 MkWNS (S n) s with (MkWNS n s)
-  MkWNS (S n) s | (i ** strs) = (InPFM (PFCom ()) (const i) ** strs . snd)
+  MkWNS (S n) s | (i ** strs) = (InPCom () (const i) ** strs . snd)
 
 wns3 : WriterNatString
 wns3 = MkWNS 3 "wns3"
