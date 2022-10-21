@@ -536,6 +536,10 @@ pfHomToCompArena p q r =
 ------------------------------------------------
 ------------------------------------------------
 
+public export
+pntId : (p : PolyFunc) -> PolyNatTrans p p
+pntId (pos ** dir) = ?pntId_hole
+
 -- Vertical composition of natural transformations, which is the categorial
 -- composition in the category of polynomial functors.
 public export
@@ -1006,12 +1010,30 @@ PFMonad : Type
 PFMonad = DPair PolyFunc PFMonoid
 
 public export
-record PFMonoidCorrect (p : PolyFunc) (c : PFMonoid p) where
+record PFMonoidCorrect (p : PolyFunc) (m : PFMonoid p) where
   constructor MkPFMonoidCorrect
+  leftIdentity :
+    pntVCatComp
+      {p} {q=(pfDuplicateArena p)} {r=p}
+      (pmonJoin m)
+      (pntVCatComp
+        {p} {q=(pfCompositionArena PFIdentityArena p)} {r=(pfDuplicateArena p)}
+        (polyWhiskerLeft {p=PFIdentityArena} {q=p} (pmonReturn m) p)
+        (pntToIdLeft p)) =
+    pntId p
+  rightIdentity :
+    pntVCatComp
+      {p} {q=(pfDuplicateArena p)} {r=p}
+      (pmonJoin m)
+      (pntVCatComp
+        {p} {q=(pfCompositionArena p PFIdentityArena)} {r=(pfDuplicateArena p)}
+        (polyWhiskerRight {p=PFIdentityArena} {q=p} p (pmonReturn m))
+        (pntToIdRight p)) =
+    pntId p
 
 public export
 PFCorrectMonad : Type
-PFCorrectMonad = (p : PolyFunc ** c : PFMonoid p ** PFMonoidCorrect p c)
+PFCorrectMonad = (p : PolyFunc ** m : PFMonoid p ** PFMonoidCorrect p m)
 
 record PFComonoid (p : PolyFunc) where
   constructor MkPFComonoid
