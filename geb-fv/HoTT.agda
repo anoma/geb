@@ -645,6 +645,13 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
     functions-from-+-from-uni-prop : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} (f : A + B → C) → Σ[ F ∶ ((A → C) × (B → C)) ] (f ≡ [ (pr₁ F) , (pr₂ F) ])
     functions-from-+-from-uni-prop f = (u-mor-coprod-qinverse f) ,, funext _ _ λ { (inl x) → refl _ ; (inr x) → refl _}
 
+    id-from-uni-prop-gives-inl : {l1 l2 : Level} {A : Type l1} {B : Type l2} → (pr₁ (proj₁ (functions-from-+-from-uni-prop (id (A + B))))) ≡ (inl)
+    id-from-uni-prop-gives-inl = refl _
+
+    inl-from-uni-prop-gives-inl :  {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} →
+                                   (pr₁ (proj₁ (functions-from-+-from-uni-prop {_} {_} {_} {A} {B} {(A + B) + C}  (inl)))) ≡ inl ∘ inl
+    inl-from-uni-prop-gives-inl = refl _
+
     comp-with-+-mor : {l1 l2 l3 l4 : Level} {A : Type l1} {B : Type l2} {C : Type l3} {D : Type l4} (g : A + B → C) (f : C → D) → (pr₁ (proj₁ (functions-from-+-from-uni-prop (f ∘ g)))) ≡  (f ∘ pr₁ (proj₁ (functions-from-+-from-uni-prop g)))
     comp-with-+-mor g f = refl _
 
@@ -661,6 +668,9 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
 
     functions-from-×-from-uni-prop : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} (f : C → A × B) → Σ[ F ∶ ((C → A) × (C → B)) ] (f ≡ < (pr₁ F) , (pr₂ F) >)
     functions-from-×-from-uni-prop f = u-mor-prod-qinverse f ,, funext _ _ λ c → ind× (λ x → x ≡ ((pr₁ x , pr₂ x))) (λ a b → refl _) (f c)
+
+    𝟙-is-Contr : is-Contr 𝟙
+    𝟙-is-Contr = pt ,, λ { pt → refl _}
 
     n-ary-binary-fun : {l1 : Level} {A : Type l1} (f : A × A → A) (z : A) (x : A) (n : ℕ) → A
     n-ary-binary-fun f z x zero = z
@@ -690,5 +700,3 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
       Univalence-elim : {l1 : Level} {A B : Type l1} → ( (refl-to-id {l1} {A} {B}) ≡ (λ p → (transp (λ X → A ≃ X) p (equiv-refl A))))
       Univalence-compeq : {l1 : Level} {A B : Type l1} (p : A ≡ B) → ( p ≡ (ua( (λ p → (transp (λ X → A ≃ X) p (equiv-refl A))) p) ))
       Univalence-compfun : {l1 l2 : Level} {A B : Type l1} (f : A → B) (P : is-an-equiv f) (a : A) → (proj₁ ((refl-to-id {l1} {A} {B}) (ua (f ,, P))) a) ≡ f   a 
-
-  
