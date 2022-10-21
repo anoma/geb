@@ -1162,12 +1162,12 @@ CatToComonad c = (CatToPoly c ** CatToComonoid c)
 
 public export
 ComonoidToCatObj : {p : PolyFunc} -> PFComonoid p -> Type
-ComonoidToCatObj {p} (MkPFComonoid e d) = pfPos p
+ComonoidToCatObj {p} com = pfPos p
 
 public export
 ComonoidToCatEmanate : {p : PolyFunc} ->
   (c : PFComonoid p) -> ComonoidToCatObj c -> Type
-ComonoidToCatEmanate {p} (MkPFComonoid e d) a = pfDir {p} a
+ComonoidToCatEmanate {p} com a = pfDir {p} a
 
 public export
 ComonoidToCatCodom : {p : PolyFunc} -> (c : PFComonoid p) ->
@@ -1183,8 +1183,9 @@ public export
 ComonoidToCatMorph : {p : PolyFunc} ->
   (c : PFComonoid p) -> (holds : PFComonoidCorrect p c) ->
   ComonoidToCatObj c -> ComonoidToCatObj c -> Type
-ComonoidToCatMorph {p=(pos ** dir)} (MkPFComonoid e d) holds a b =
-  (m : dir a ** ?ComonoidToCatMorph_hole)
+ComonoidToCatMorph {p=p@(pos ** dir)} com@(MkPFComonoid e d) holds a b =
+  (m : ComonoidToCatEmanate {p} com a **
+   ComonoidToCatCodom {p} com holds a m = b)
 
 public export
 ComonoidToCatId : {p : PolyFunc} ->
