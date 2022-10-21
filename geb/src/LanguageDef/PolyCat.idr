@@ -1171,9 +1171,13 @@ ComonoidToCatEmanate {p} (MkPFComonoid e d) a = pfDir {p} a
 
 public export
 ComonoidToCatCodom : {p : PolyFunc} -> (c : PFComonoid p) ->
+  (holds : PFComonoidCorrect p c) ->
   (a : ComonoidToCatObj c) -> ComonoidToCatEmanate c a -> ComonoidToCatObj c
-ComonoidToCatCodom {p=(pos ** dir)} (MkPFComonoid e (dOnPos ** dOnDir)) a di =
-  ?ComonoidToCatCodom_hole
+ComonoidToCatCodom {p=(pos ** dir)}
+  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds a di =
+    let re = rightErasure holds in
+    let onPosId = mkDPairInjectiveFst $ fcong $ mkDPairInjectiveFst re in
+    snd (dOnPos a) $ replace {p=dir} (sym onPosId) di
 
 public export
 ComonoidToCatMorph : {p : PolyFunc} ->

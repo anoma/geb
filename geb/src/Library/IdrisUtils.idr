@@ -48,6 +48,10 @@ public export
 (.**) = (.) . (.) . (.)
 
 public export
+fcong : {0 a, b : Type} -> {0 f, g : a -> b} -> (f = g) -> {x : a} -> f x = g x
+fcong Refl = Refl
+
+public export
 maybeElim : {0 a, b : Type} -> (a -> b) -> b -> Maybe a -> b
 maybeElim f g (Just e) = f e
 maybeElim f g Nothing = g
