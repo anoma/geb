@@ -1143,12 +1143,14 @@ CatToPoly c = (CatToPolyPos c ** CatToPolyDir c)
 
 public export
 CatToComonoidErase : (c : CatSig) -> PolyNatTrans (CatToPoly c) PFIdentityArena
-CatToComonoidErase (MkCatSig o m i comp) = ?catToComonoidErase_hole
+CatToComonoidErase (MkCatSig o m i comp) = (const () ** \a, _ => (a ** i a))
 
 public export
 CatToComonoidDup : (c : CatSig) ->
   PolyNatTrans (CatToPoly c) (pfDuplicateArena (CatToPoly c))
-CatToComonoidDup (MkCatSig o m i comp) = ?catToComonoidDup_hole
+CatToComonoidDup (MkCatSig o m i comp) =
+  (\a => (a ** \d => fst d) **
+   \a, qd => let ((b ** f) ** (c ** g)) = qd in (c ** comp g f))
 
 public export
 CatToComonoid : (c : CatSig) -> PFComonoid (CatToPoly c)
