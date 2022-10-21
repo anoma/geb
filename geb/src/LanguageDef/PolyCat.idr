@@ -1097,6 +1097,14 @@ public export
 PFCorrectComonad : Type
 PFCorrectComonad = (p : PolyFunc ** c : PFComonoid p ** PFComonoidCorrect p c)
 
+public export
+ComonoidDupOnPosId : {p : PolyFunc} -> (c : PFComonoid p) ->
+  (holds : PFComonoidCorrect p c) -> (i : pfPos p) ->
+  DPair.fst (pntOnPos {p} {q=(pfDuplicateArena p)} (pcomDup c) i) = i
+ComonoidDupOnPosId {p=(pos ** dir)}
+  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds i =
+    mkDPairInjectiveFst $ fcong $ mkDPairInjectiveFst $ rightErasure holds
+
 -----------------------------------------------------------
 -----------------------------------------------------------
 ---- Polynomial comands as categories (and vice versa) ----
@@ -1174,10 +1182,8 @@ ComonoidToCatCodom : {p : PolyFunc} -> (c : PFComonoid p) ->
   (holds : PFComonoidCorrect p c) ->
   (a : ComonoidToCatObj c) -> ComonoidToCatEmanate c a -> ComonoidToCatObj c
 ComonoidToCatCodom {p=(pos ** dir)}
-  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds a di =
-    let re = rightErasure holds in
-    let onPosId = mkDPairInjectiveFst $ fcong $ mkDPairInjectiveFst re in
-    snd (dOnPos a) $ replace {p=dir} (sym onPosId) di
+  c@(MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds a di =
+    snd (dOnPos a) $ replace {p=dir} (sym $ ComonoidDupOnPosId c holds a) di
 
 public export
 ComonoidToCatMorph : {p : PolyFunc} ->
@@ -1191,7 +1197,9 @@ public export
 ComonoidToCatId : {p : PolyFunc} ->
   (c : PFComonoid p) -> (holds : PFComonoidCorrect p c) ->
   (a : ComonoidToCatObj c) -> ComonoidToCatMorph c holds a a
-ComonoidToCatId = ?ComonoidToCatId_hole
+ComonoidToCatId {p=(pos ** dir)}
+  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds a =
+    (eOnDir a () ** ?ComonoidToCatId_hole)
 
 public export
 ComonoidToCatComp : {p : PolyFunc} ->
@@ -1200,7 +1208,9 @@ ComonoidToCatComp : {p : PolyFunc} ->
   ComonoidToCatMorph com holds b c ->
   ComonoidToCatMorph com holds a b ->
   ComonoidToCatMorph com holds a c
-ComonoidToCatComp = ?ComonoidToCatComp_hole
+ComonoidToCatComp {p=(pos ** dir)}
+  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDi)) holds {a} {b} {c} g f =
+    ?ComonoidToCatComp_hole
 
 public export
 ComonoidToCat : {p : PolyFunc} ->
