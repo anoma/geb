@@ -1181,36 +1181,40 @@ ComonoidToCatCodom {p=(pos ** dir)}
 
 public export
 ComonoidToCatMorph : {p : PolyFunc} ->
-  (c : PFComonoid p) -> ComonoidToCatObj c -> ComonoidToCatObj c -> Type
-ComonoidToCatMorph {p=(pos ** dir)} (MkPFComonoid e d) a b =
+  (c : PFComonoid p) -> (holds : PFComonoidCorrect p c) ->
+  ComonoidToCatObj c -> ComonoidToCatObj c -> Type
+ComonoidToCatMorph {p=(pos ** dir)} (MkPFComonoid e d) holds a b =
   (m : dir a ** ?ComonoidToCatMorph_hole)
 
 public export
 ComonoidToCatId : {p : PolyFunc} ->
-  (c : PFComonoid p) -> (a : ComonoidToCatObj c) -> ComonoidToCatMorph c a a
+  (c : PFComonoid p) -> (holds : PFComonoidCorrect p c) ->
+  (a : ComonoidToCatObj c) -> ComonoidToCatMorph c holds a a
 ComonoidToCatId = ?ComonoidToCatId_hole
 
 public export
 ComonoidToCatComp : {p : PolyFunc} ->
-  (cat : PFComonoid p) ->
-  {a, b, c : ComonoidToCatObj cat} ->
-  ComonoidToCatMorph cat b c ->
-  ComonoidToCatMorph cat a b ->
-  ComonoidToCatMorph cat a c
+  (com : PFComonoid p) -> (holds : PFComonoidCorrect p com) ->
+  {a, b, c : ComonoidToCatObj com} ->
+  ComonoidToCatMorph com holds b c ->
+  ComonoidToCatMorph com holds a b ->
+  ComonoidToCatMorph com holds a c
 ComonoidToCatComp = ?ComonoidToCatComp_hole
 
 public export
-ComonoidToCat : {p : PolyFunc} -> PFComonoid p -> CatSig
-ComonoidToCat c =
+ComonoidToCat : {p : PolyFunc} ->
+  (c : PFComonoid p) -> PFComonoidCorrect p c -> CatSig
+ComonoidToCat c holds =
   MkCatSig
     (ComonoidToCatObj c)
-    (ComonoidToCatMorph c)
-    (ComonoidToCatId c)
-    (ComonoidToCatComp c)
+    (ComonoidToCatMorph c holds)
+    (ComonoidToCatId c holds)
+    (ComonoidToCatComp c holds)
 
 public export
-ComonadToCat : PFComonad -> CatSig
-ComonadToCat (p ** c) = ComonoidToCat {p} c
+ComonadToCat : (com : PFComonad) ->
+  PFComonoidCorrect (fst com) (snd com) -> CatSig
+ComonadToCat (p ** c) holds = ComonoidToCat {p} c holds
 
 ------------------------------------
 ------------------------------------
