@@ -222,6 +222,105 @@ showPMRaise n = do
 stMuExp1 : STMu
 stMuExp1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
 
+---------------------------
+---------------------------
+---- Monads / comonads ----
+---------------------------
+---------------------------
+
+-----------------------
+---- Free identity ----
+-----------------------
+
+WriterNatString : Type
+WriterNatString = pfFreeIdF String
+
+MkWNS : Nat -> String -> WriterNatString
+MkWNS Z s = (InPVar () ** const s)
+MkWNS (S n) s with (MkWNS n s)
+  MkWNS (S n) s | (i ** strs) = (InPCom () (const i) ** strs . snd)
+
+wns3 : WriterNatString
+wns3 = MkWNS 3 "wns3"
+
+wnsNatAlg : PFTranslateAlg PFIdentityArena String Nat
+wnsNatAlg (PFVar s) dn = 0
+wnsNatAlg (PFCom ()) dn = S $ dn ()
+
+wnsNat : WriterNatString -> Nat
+wnsNat = pfFreeCata wnsNatAlg
+
+wnsStrAlg : PFTranslateAlg PFIdentityArena String String
+wnsStrAlg (PFVar s) ds = s
+wnsStrAlg (PFCom ()) ds = ds ()
+
+wnsStr : WriterNatString -> String
+wnsStr = pfFreeCata wnsStrAlg
+
+Show WriterNatString where
+  show wns = "(" ++ show (wnsNat wns) ++ ", " ++ wnsStr wns ++ ")"
+
+wns3s : String
+wns3s = show wns3
+
+-------------------------
+---- Cofree identity ----
+-------------------------
+
+StreamNatGen : PolyFunc
+StreamNatGen = PFIdentityArena
+
+StreamNatGenPos : Type
+StreamNatGenPos = pfPos StreamNatGen
+
+StreamNatGenDir : StreamNatGenPos -> Type
+StreamNatGenDir = pfDir {p=StreamNatGen}
+
+StreamNatF : PolyFunc
+StreamNatF = PolyFuncCofreeCM PFIdentityArena
+
+StreamNatFPos : Type
+StreamNatFPos = pfPos StreamNatF
+
+StreamNatFDir : StreamNatFPos -> Type
+StreamNatFDir = pfDir {p=StreamNatF}
+
+StreamType : Type
+StreamType = Nat
+
+StreamNat : Type
+StreamNat = InterpPolyFunc StreamNatF StreamType
+
+StreamRet : Type
+StreamRet = (StreamType, StreamNat)
+
+mutual
+  partial
+  sn0 : StreamNat
+  sn0 = (InPFM (PFNode () ()) (const $ fst sn0) ** sn0Dir sn0)
+
+  partial
+  sn0Dir :
+    (sn : StreamNat) ->
+    Either () (d : () ** StreamNatFDir (fst sn)) ->
+    StreamType
+  sn0Dir sn (Left ()) = 0
+  sn0Dir (InPFM (PFNode () ()) sn' ** d') (Right (() ** x)) =
+    S $ sn0Dir (sn' () ** \x => d' $ Right (() ** x)) $
+      case x of
+        Left () => Left ()
+        Right (() ** x') => Right (() ** x')
+
+partial
+getSN : StreamNat -> StreamNatGenPos -> StreamRet
+getSN (InPFM (PFNode () ()) di' ** d') =
+  \u => case u of
+    () => getSN (di' () ** \pfc => d' $ Right (() ** pfc)) ()
+
+partial
+sn0_0 : StreamRet
+sn0_0 = getSN sn0 ()
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -321,10 +420,17 @@ adtCatTest = do
   putStrLn "---------------"
   putStrLn "---- PolyF ----"
   putStrLn "---------------"
-  putStrLn "---------------"
   putStrLn ""
   putStrLn $ "stMu1 = " ++ show stMuExp1
   putStrLn ""
+  putStrLn "-------------------------"
+  putStrLn "---- Monads/comonads ----"
+  putStrLn "-------------------------"
+  putStrLn ""
+  putStrLn $ "wns3 = " ++ wns3s
+  -- putStrLn $ "sn0_0 = " ++ show (fst sn0_0)
+  putStrLn ""
+  putStrLn "---------------"
   putStrLn "End ADTCatTest."
   putStrLn "==============="
   pure ()

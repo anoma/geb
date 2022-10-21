@@ -830,7 +830,7 @@ binBoolTree1Test : BinBoolTree2
 binBoolTree1Test = (BBNode ** InBBDir (InBBLeaf True) (InBBLeaf False))
 
 BBFMFT : Type
-BBFMFT = PolyFuncFreeMFromTranslate BinBoolTreePF Nat
+BBFMFT = PolyFuncFreeMFromMuTranslate BinBoolTreePF Nat
 
 BBFM : PolyFunc
 BBFM = PolyFuncFreeM BinBoolTreePF
