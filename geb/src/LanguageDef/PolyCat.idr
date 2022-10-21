@@ -1113,8 +1113,15 @@ ComonoidDupOnDirPosId : {p : PolyFunc} -> (c : PFComonoid p) ->
       (pntOnDir {p} {q=PFIdentityArena} (pcomErase {p} c) i) ())
     = i
 ComonoidDupOnDirPosId {p=(pos ** dir)}
-  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds i =
-    ?ComonoidDupOnDirPosId_hole
+  c@(MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds i =
+  let
+    le = leftErasure holds
+    re = rightErasure holds
+    onPosId = ComonoidDupOnPosId c holds i
+    zigZagIdF = mkDPairInjectiveSndHet $ fcong {x=i} $ mkDPairInjectiveFst le
+    zigZagId = fcong {x=()} zigZagIdF
+  in
+  ?ComonoidDupOnDirPosId_hole
 
 -----------------------------------------------------------
 -----------------------------------------------------------
