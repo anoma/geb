@@ -570,15 +570,17 @@ polyWhiskerLeft : {p, q : PolyFunc} ->
   PolyNatTrans (pfCompositionArena p r) (pfCompositionArena q r)
 polyWhiskerLeft {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (onPos ** onDir) (rpos ** rdir) =
-    (?polyWhiskerLeft_hole_onpos ** ?polyWhiskerLeft_hole_ondir)
+    (\pri => (onPos (fst pri) ** snd pri . onDir (fst pri)) **
+     \pri, qd => (onDir (fst pri) (fst qd) ** snd qd))
 
 public export
 polyWhiskerRight : {p, q : PolyFunc} ->
   (r : PolyFunc) -> (nu : PolyNatTrans p q) ->
   PolyNatTrans (pfCompositionArena r p) (pfCompositionArena r q)
 polyWhiskerRight {p=(ppos ** pdir)} {q=(qpos ** qdir)}
-  (onPos ** onDir) (rpos ** rdir) =
-    (?polyWhiskerRight_hole_onpos ** ?polyWhiskerRight_hole_ondir)
+  (rpos ** rdir) (onPos ** onDir) =
+    (\rpi => (fst rpi ** onPos . snd rpi) **
+     \rpi, qd => (fst qd ** onDir (snd rpi (fst qd)) (snd qd)))
 
 public export
 pntToIdLeft : (p : PolyFunc) ->
