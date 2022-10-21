@@ -585,19 +585,23 @@ polyWhiskerRight {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 public export
 pntToIdLeft : (p : PolyFunc) ->
   PolyNatTrans p (pfCompositionArena PFIdentityArena p)
-pntToIdLeft (pos ** dir) = ?pntToIdLeft_hole
+pntToIdLeft (pos ** dir) = (\i => (() ** const i) ** \_, qd => snd qd)
 
 public export
 pntToIdRight : (p : PolyFunc) ->
   PolyNatTrans p (pfCompositionArena p PFIdentityArena)
-pntToIdRight (pos ** dir) = ?pntToIdRight_hole
+pntToIdRight (pos ** dir) = (\i => (i ** const ()) ** \_, qd => fst qd)
 
 public export
 pntAssociate : (p, q, r : PolyFunc) ->
   PolyNatTrans
     (pfCompositionArena (pfCompositionArena p q) r)
     (pfCompositionArena p (pfCompositionArena q r))
-pntAssociate (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) = ?pntAssociate_hole
+pntAssociate (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) =
+  (\pqi =>
+    (fst (fst pqi) **
+     \pd => (snd (fst pqi) pd ** \qd => snd pqi (pd ** qd))) **
+   \pqi, qd => ((fst qd ** fst (snd qd)) ** snd (snd qd)))
 
 ------------------------------
 ------------------------------
