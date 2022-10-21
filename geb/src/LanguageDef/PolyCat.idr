@@ -547,6 +547,16 @@ polyWhiskerRight {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (onPos ** onDir) (rpos ** rdir) =
     (?polyWhiskerRight_hole_onpos ** ?polyWhiskerRight_hole_ondir)
 
+public export
+pntToIdLeft : (p : PolyFunc) ->
+  PolyNatTrans p (pfCompositionArena PFIdentityArena p)
+pntToIdLeft (pos ** dir) = ?pntToIdLeft_hole
+
+public export
+pntToIdRight : (p : PolyFunc) ->
+  PolyNatTrans p (pfCompositionArena p PFIdentityArena)
+pntToIdRight (pos ** dir) = ?pntToIdRight_hole
+
 ------------------------------
 ------------------------------
 ---- Trees on polynomials ----
@@ -982,8 +992,12 @@ PFComonad = DPair PolyFunc PFComonoid
 public export
 record PFComonoidCorrect (p : PolyFunc) (c : PFComonoid p) where
   constructor MkPFComonoidCorrect
-  rightErasurePos : (i : pfPos p) ->
-    fst (pntOnPos {p} {q=(pfDuplicateArena p)} (pcomDup c) i) = i
+  rightErasure :
+    pntVCatComp
+      {p} {q=(pfDuplicateArena p)} {r=(pfCompositionArena PFIdentityArena p)}
+      (polyWhiskerLeft {p} {q=PFIdentityArena} (pcomErase c) p)
+      (pcomDup c) =
+    pntToIdLeft p
 
 public export
 PFCorrectComonad : Type
