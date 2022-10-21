@@ -1121,6 +1121,10 @@ ComonoidDupOnDirPosId {p=(pos ** dir)}
     zigZagIdF = mkDPairInjectiveSndHet $ fcong {x=i} $ mkDPairInjectiveFst le
     zigZagId = fcong {x=()} zigZagIdF
   in
+  {-
+  replace {p=
+    (\i' => (.) (snd (dOnPos i')) (eOnDir (fst (dOnPos i'))) () = const i' ())}
+  -}
   ?ComonoidDupOnDirPosId_hole
 
 -----------------------------------------------------------
