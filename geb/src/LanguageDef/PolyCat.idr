@@ -1030,6 +1030,18 @@ record PFMonoidCorrect (p : PolyFunc) (m : PFMonoid p) where
         (polyWhiskerRight {p=PFIdentityArena} {q=p} p (pmonReturn m))
         (pntToIdRight p)) =
     pntId p
+  mAssociative :
+    (pntVCatComp
+      {p=(pfTriplicateArenaLeft p)} {q=(pfDuplicateArena p)} {r=p}
+      (pmonJoin m)
+      (polyWhiskerLeft {p=(pfDuplicateArena p)} {q=p} (pmonJoin m) p)) =
+    pntVCatComp
+      {p=(pfTriplicateArenaLeft p)} {q=(pfTriplicateArenaRight p)} {r=p}
+      (pntVCatComp
+        {p=(pfTriplicateArenaRight p)} {q=(pfDuplicateArena p)} {r=p}
+        (pmonJoin m)
+        (polyWhiskerRight {p=(pfDuplicateArena p)} {q=p} p (pmonJoin m)))
+      (pntAssociate p p p)
 
 public export
 PFCorrectMonad : Type
