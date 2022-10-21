@@ -470,6 +470,19 @@ pfEitherComposeArena : Type -> Type -> PolyFunc
 pfEitherComposeArena a b =
   pfCompositionArena (pfEitherArena a) (pfEitherArena b)
 
+public export
+pfDayConvPos : PolyFunc -> PolyFunc -> Type
+pfDayConvPos p q = Pair (pfPos p) (pfPos q)
+
+public export
+pfDayConvDir : (m : Type -> Type -> Type) ->
+  (p, q : PolyFunc) -> pfDayConvPos p q -> Type
+pfDayConvDir m p q (pi, qi) = m (pfDir {p} pi) (pfDir {p=q} qi)
+
+public export
+pfDayConvArena : (m : Type -> Type -> Type) -> PolyFunc -> PolyFunc -> PolyFunc
+pfDayConvArena m p q = (pfDayConvPos p q ** pfDayConvDir m p q)
+
 ------------------------------
 ------------------------------
 ---- Trees on polynomials ----
@@ -905,6 +918,8 @@ PFComonad = DPair PolyFunc PFComonoid
 public export
 record PFComonoidCorrect (p : PolyFunc) (c : PFComonoid p) where
   constructor MkPFComonoidCorrect
+  rightErasurePos : (i : pfPos p) ->
+    fst (pntOnPos {p} {q=(pfDuplicateArena p)} (pcomDup c) i) = i
 
 public export
 PFCorrectComonad : Type
