@@ -342,6 +342,32 @@ pfDuplicateDir : (p : PolyFunc) -> pfPos (pfDuplicateArena p) -> Type
 pfDuplicateDir p = pfDir {p=(pfDuplicateArena p)}
 
 public export
+pfTriplicateArenaLeft : PolyFunc -> PolyFunc
+pfTriplicateArenaLeft p = pfCompositionArena (pfDuplicateArena p) p
+
+public export
+pfTriplicatePosLeft : PolyFunc -> Type
+pfTriplicatePosLeft = pfPos . pfTriplicateArenaLeft
+
+public export
+pfTriplicateDirLeft :
+  (p : PolyFunc) -> pfPos (pfTriplicateArenaLeft p) -> Type
+pfTriplicateDirLeft p = pfDir {p=(pfTriplicateArenaLeft p)}
+
+public export
+pfTriplicateArenaRight : PolyFunc -> PolyFunc
+pfTriplicateArenaRight p = pfCompositionArena p (pfDuplicateArena p)
+
+public export
+pfTriplicatePosRight : PolyFunc -> Type
+pfTriplicatePosRight = pfPos . pfTriplicateArenaRight
+
+public export
+pfTriplicateDirRight :
+  (p : PolyFunc) -> pfPos (pfTriplicateArenaRight p) -> Type
+pfTriplicateDirRight p = pfDir {p=(pfTriplicateArenaRight p)}
+
+public export
 pfCompositionPowerArena : PolyFunc -> Nat -> PolyFunc
 pfCompositionPowerArena p Z =
   PFIdentityArena
@@ -556,6 +582,13 @@ public export
 pntToIdRight : (p : PolyFunc) ->
   PolyNatTrans p (pfCompositionArena p PFIdentityArena)
 pntToIdRight (pos ** dir) = ?pntToIdRight_hole
+
+public export
+pntAssociate : (p, q, r : PolyFunc) ->
+  PolyNatTrans
+    (pfCompositionArena (pfCompositionArena p q) r)
+    (pfCompositionArena p (pfCompositionArena q r))
+pntAssociate (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) = ?pntAssociate_hole
 
 ------------------------------
 ------------------------------
@@ -1004,6 +1037,18 @@ record PFComonoidCorrect (p : PolyFunc) (c : PFComonoid p) where
       (polyWhiskerRight {p} {q=PFIdentityArena} p (pcomErase c))
       (pcomDup c) =
     pntToIdRight p
+  cmCoassociative :
+    pntVCatComp
+      {p} {q=(pfTriplicateArenaLeft p)} {r=(pfTriplicateArenaRight p)}
+      (pntAssociate p p p)
+      (pntVCatComp
+        {p} {q=(pfDuplicateArena p)} {r=(pfTriplicateArenaLeft p)}
+        (polyWhiskerLeft {p} {q=(pfDuplicateArena p)} (pcomDup c) p)
+        (pcomDup c)) =
+      pntVCatComp
+        {p} {q=(pfDuplicateArena p)} {r=(pfTriplicateArenaRight p)}
+        (polyWhiskerRight {p} {q=(pfDuplicateArena p)} p (pcomDup c))
+        (pcomDup c)
 
 public export
 PFCorrectComonad : Type
