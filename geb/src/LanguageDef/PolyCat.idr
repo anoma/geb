@@ -538,7 +538,7 @@ pfHomToCompArena p q r =
 
 public export
 pntId : (p : PolyFunc) -> PolyNatTrans p p
-pntId (pos ** dir) = ?pntId_hole
+pntId (pos ** dir) = (id ** \_ => id)
 
 -- Vertical composition of natural transformations, which is the categorial
 -- composition in the category of polynomial functors.
@@ -547,7 +547,7 @@ pntVCatComp : {0 p, q, r : PolyFunc} ->
   PolyNatTrans q r -> PolyNatTrans p q -> PolyNatTrans p r
 pntVCatComp {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
   (gOnPos ** gOnDir) (fOnPos ** fOnDir) =
-    (?pntVCatComp_hole_onpos ** ?pntVCatComp_hole_ondir)
+    (gOnPos . fOnPos ** \pi, rd => fOnDir pi $ gOnDir (fOnPos pi) rd)
 
 -- Horizontal composition of natural transformations, also known as
 -- the monoidal product or composition product.
@@ -559,7 +559,10 @@ pntHProdComp
   {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   {p'=(ppos' ** pdir')} {q'=(qpos' ** qdir')}
   (fOnPos ** fOnDir) (gOnPos ** gOnDir) =
-    (?pntHProdComp_hole_onpos ** ?pntHProdComp_hole_ondir)
+    (\qpi => (fOnPos (fst qpi) ** gOnPos . snd qpi . fOnDir (fst qpi)) **
+     \qpi, qdi' =>
+      (fOnDir (fst qpi) (fst qdi') **
+       gOnDir (snd qpi (fOnDir (fst qpi) (fst qdi'))) (snd qdi')))
 
 public export
 polyWhiskerLeft : {p, q : PolyFunc} ->
