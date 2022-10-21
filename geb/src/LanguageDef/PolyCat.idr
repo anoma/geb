@@ -504,6 +504,49 @@ pfHomToCompArena p q r =
   pfSetCoproductArena {a=(pfPos p -> pfPos q)} $
     \f => pfHomObj (pfPosChangeArena p q f) r
 
+------------------------------------------------
+------------------------------------------------
+---- Composition of natural transformations ----
+------------------------------------------------
+------------------------------------------------
+
+-- Vertical composition of natural transformations, which is the categorial
+-- composition in the category of polynomial functors.
+public export
+pntVCatComp : {0 p, q, r : PolyFunc} ->
+  PolyNatTrans q r -> PolyNatTrans p q -> PolyNatTrans p r
+pntVCatComp {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
+  (gOnPos ** gOnDir) (fOnPos ** fOnDir) =
+    (?pntVCatComp_hole_onpos ** ?pntVCatComp_hole_ondir)
+
+-- Horizontal composition of natural transformations, also known as
+-- the monoidal product or composition product.
+public export
+pntHProdComp : {0 p, q, p', q' : PolyFunc} ->
+  PolyNatTrans p p' -> PolyNatTrans q q' ->
+  PolyNatTrans (pfCompositionArena p q) (pfCompositionArena p' q')
+pntHProdComp
+  {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  {p'=(ppos' ** pdir')} {q'=(qpos' ** qdir')}
+  (fOnPos ** fOnDir) (gOnPos ** gOnDir) =
+    (?pntHProdComp_hole_onpos ** ?pntHProdComp_hole_ondir)
+
+public export
+polyWhiskerLeft : {p, q : PolyFunc} ->
+  (nu : PolyNatTrans p q) -> (r : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena p r) (pfCompositionArena q r)
+polyWhiskerLeft {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (onPos ** onDir) (rpos ** rdir) =
+    (?polyWhiskerLeft_hole_onpos ** ?polyWhiskerLeft_hole_ondir)
+
+public export
+polyWhiskerRight : {p, q : PolyFunc} ->
+  (r : PolyFunc) -> (nu : PolyNatTrans p q) ->
+  PolyNatTrans (pfCompositionArena r p) (pfCompositionArena r q)
+polyWhiskerRight {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (onPos ** onDir) (rpos ** rdir) =
+    (?polyWhiskerRight_hole_onpos ** ?polyWhiskerRight_hole_ondir)
+
 ------------------------------
 ------------------------------
 ---- Trees on polynomials ----
