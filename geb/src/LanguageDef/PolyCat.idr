@@ -483,6 +483,27 @@ public export
 pfDayConvArena : (m : Type -> Type -> Type) -> PolyFunc -> PolyFunc -> PolyFunc
 pfDayConvArena m p q = (pfDayConvPos p q ** pfDayConvDir m p q)
 
+-- Formula 5.81 from the "General Theory of Interaction" book.
+public export
+pfPosChangePos : (p, q : PolyFunc) -> (pfPos p -> pfPos q) -> Type
+pfPosChangePos p q f = (i : pfPos p ** pfDir {p=q} $ f i)
+
+public export
+pfPosChangeDir : (p, q : PolyFunc) -> (f : pfPos p -> pfPos q) ->
+  (i : pfPosChangePos p q f) -> Type
+pfPosChangeDir p q f (pi ** qdfpi) = pfDir {p} pi
+
+public export
+pfPosChangeArena : (p, q : PolyFunc) -> (pfPos p -> pfPos q) -> PolyFunc
+pfPosChangeArena p q f = (pfPosChangePos p q f ** pfPosChangeDir p q f)
+
+-- Formula 5.84 from the "General Theory of Interaction" book (I think).
+public export
+pfHomToCompArena : PolyFunc -> PolyFunc -> PolyFunc -> PolyFunc
+pfHomToCompArena p q r =
+  pfSetCoproductArena {a=(pfPos p -> pfPos q)} $
+    \f => pfHomObj (pfPosChangeArena p q f) r
+
 ------------------------------
 ------------------------------
 ---- Trees on polynomials ----
