@@ -51,6 +51,21 @@ public export
 fcong : {0 a, b : Type} -> {0 f, g : a -> b} -> (f = g) -> {x : a} -> f x = g x
 fcong Refl = Refl
 
+export
+mkDPairInjectiveFstHet :
+  {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
+  {x : a} -> {y : b} -> {f : p x} -> {g : q y} ->
+  MkDPair {a} {p} x f = MkDPair {a=b} {p=q} y g -> x = y
+mkDPairInjectiveFstHet Refl = Refl
+
+export
+mkDPairInjectiveSndHet :
+  {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
+  {x : a} -> {y : b} -> {f : p x} -> {g : q y} ->
+  (dpeq : MkDPair {a} {p} x f = MkDPair {a=b} {p=q} y g) ->
+  f ~=~ g
+mkDPairInjectiveSndHet Refl = Refl
+
 public export
 maybeElim : {0 a, b : Type} -> (a -> b) -> b -> Maybe a -> b
 maybeElim f g (Just e) = f e
