@@ -1231,8 +1231,9 @@ ComonoidToCatComp : {p : PolyFunc} ->
   ComonoidToCatMorph com holds a b ->
   ComonoidToCatMorph com holds a c
 ComonoidToCatComp {p=(pos ** dir)}
-  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDi)) holds {a} {b} {c} g f =
-    ?ComonoidToCatComp_hole
+  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds {a} {b} {c} g f =
+    (?ComonoidToCatComp_hole_gf **
+     ?ComonoidToCatComp_hole_codomain_correct)
 
 public export
 ComonoidToCat : {p : PolyFunc} ->
