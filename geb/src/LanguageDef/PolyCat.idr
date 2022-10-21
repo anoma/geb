@@ -1105,6 +1105,17 @@ ComonoidDupOnPosId {p=(pos ** dir)}
   (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds i =
     mkDPairInjectiveFst $ fcong $ mkDPairInjectiveFst $ rightErasure holds
 
+public export
+ComonoidDupOnDirPosId : {p : PolyFunc} -> (c : PFComonoid p) ->
+  (holds : PFComonoidCorrect p c) -> (i : pfPos p) ->
+  DPair.snd (pntOnPos {p} {q=(pfDuplicateArena p)} (pcomDup {p} c) i)
+    (rewrite ComonoidDupOnPosId {p} c holds i in
+      (pntOnDir {p} {q=PFIdentityArena} (pcomErase {p} c) i) ())
+    = i
+ComonoidDupOnDirPosId {p=(pos ** dir)}
+  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds i =
+    ?ComonoidDupOnDirPosId_hole
+
 -----------------------------------------------------------
 -----------------------------------------------------------
 ---- Polynomial comands as categories (and vice versa) ----
@@ -1198,8 +1209,8 @@ ComonoidToCatId : {p : PolyFunc} ->
   (c : PFComonoid p) -> (holds : PFComonoidCorrect p c) ->
   (a : ComonoidToCatObj c) -> ComonoidToCatMorph c holds a a
 ComonoidToCatId {p=(pos ** dir)}
-  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds a =
-    (eOnDir a () ** ?ComonoidToCatId_hole)
+  c@(MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds a =
+    (eOnDir a () ** ComonoidDupOnDirPosId c holds a)
 
 public export
 ComonoidToCatComp : {p : PolyFunc} ->
