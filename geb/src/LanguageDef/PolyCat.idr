@@ -992,12 +992,18 @@ PFComonad = DPair PolyFunc PFComonoid
 public export
 record PFComonoidCorrect (p : PolyFunc) (c : PFComonoid p) where
   constructor MkPFComonoidCorrect
-  rightErasure :
+  leftErasure :
     pntVCatComp
       {p} {q=(pfDuplicateArena p)} {r=(pfCompositionArena PFIdentityArena p)}
       (polyWhiskerLeft {p} {q=PFIdentityArena} (pcomErase c) p)
       (pcomDup c) =
     pntToIdLeft p
+  rightErasure :
+    pntVCatComp
+      {p} {q=(pfDuplicateArena p)} {r=(pfCompositionArena p PFIdentityArena)}
+      (polyWhiskerRight {p} {q=PFIdentityArena} p (pcomErase c))
+      (pcomDup c) =
+    pntToIdRight p
 
 public export
 PFCorrectComonad : Type
