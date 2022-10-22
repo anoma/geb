@@ -118,7 +118,7 @@ SliceFunctor a b = SliceObj a -> SliceObj b
 -- Also sometimes called the pullback functor.
 public export
 BaseChangeF : {a, b : Type} -> (b -> a) -> SliceFunctor a b
-BaseChangeF f sla elemb = sla $ f elemb
+BaseChangeF f sla = sla . f
 
 public export
 PreImage : {a, b : Type} -> (a -> b) -> b -> Type
@@ -972,6 +972,37 @@ public export
 CoeqCoalg : {f : Type -> Type} -> {pf : CoeqPredF f} ->
   NormalizerF pf -> Coequalized -> Type
 CoeqCoalg nf x = CoequalizedMorphism x (CoequalizedF nf x)
+
+---------------------------------------------
+---------------------------------------------
+---- Refined polynomial (slice) functors ----
+---------------------------------------------
+---------------------------------------------
+
+-- The dependent product functor induced by the given subtype family.
+-- Right adjoint to the base change functor.
+public export
+RefinedProdF : {a, b : Type} -> (b -> DecPred a) -> SliceFunctor a b
+RefinedProdF {a} {b} pred sla elemb =
+  (elema : Refinement {a} (pred elemb)) -> sla (shape elema)
+
+-- The dependent product functor induced by the given subtype family.
+-- Left adjoint to the base change functor.
+public export
+RefinedCoprodF : {a, b : Type} -> (b -> DecPred a) -> SliceFunctor a b
+RefinedCoprodF {a} {b} pred sla elemb =
+  (elema : Refinement {a} (pred elemb) ** sla (shape elema))
+
+-- A dependent polynomial functor can be defined as a composition of
+-- a base change followed by a dependent product followed by a dependent
+-- coproduct.
+public export
+RefinedPolyF : {w, x, y, z : Type} ->
+  (x -> w) -> (y -> DecPred x) -> (z -> DecPred y) -> SliceFunctor w z
+RefinedPolyF {w} {x} {y} {z} fxw predxy predyz slw =
+  RefinedCoprodF {a=y} {b=z} predyz
+    (RefinedProdF {a=x} {b=y} predxy
+      (BaseChangeF fxw slw))
 
 --------------------------------------------------
 --------------------------------------------------
