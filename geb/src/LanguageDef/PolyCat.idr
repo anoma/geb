@@ -1460,7 +1460,7 @@ spfIdx : {0 a, b : Type} ->
 spfIdx {spf} = DPair.snd spf
 
 public export
-InterpSPFunc : {a, b : Type} -> SlicePolyFunc a b -> SliceObj a -> SliceObj b
+InterpSPFunc : {a, b : Type} -> SlicePolyFunc a b -> SliceFunctor a b
 InterpSPFunc {a} {b} ((pos ** dir) ** idx) sa eb =
   (i : pos **
    param : dir i -> a **
