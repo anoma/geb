@@ -999,10 +999,10 @@ RefinedCoprodF {a} {b} pred sla elemb =
 public export
 RefinedPolyF : {w, x, y, z : Type} ->
   (x -> w) -> (y -> DecPred x) -> (z -> DecPred y) -> SliceFunctor w z
-RefinedPolyF {w} {x} {y} {z} fxw predxy predyz slw =
+RefinedPolyF {w} {x} {y} {z} fxw predxy predyz =
   RefinedCoprodF {a=y} {b=z} predyz
-    (RefinedProdF {a=x} {b=y} predxy
-      (BaseChangeF fxw slw))
+  . RefinedProdF {a=x} {b=y} predxy
+  . BaseChangeF fxw
 
 --------------------------------------------------
 --------------------------------------------------
