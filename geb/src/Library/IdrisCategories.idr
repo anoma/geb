@@ -1005,6 +1005,20 @@ RefinedPolyF {w} {x} {y} {z} fxw predyx predzy =
   . BaseChangeF fxw
 
 public export
+RefinedPolyFPred : {w, x, y, z : Type} ->
+  (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
+  (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) -> DecPred z
+RefinedPolyFPred {w} {x} {y} {z} fxw predyx predzy p q f ez =
+  ?RefinedPolyFPred_hole
+
+public export
+RefinedPolyFSignature : {w, x, y, z : Type} ->
+  (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
+  (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) -> Type
+RefinedPolyFSignature {w} {x} {y} {z} fxw predyx predzy p q f =
+  Refinement {a=z} $ RefinedPolyFPred {w} {x} {y} {z} fxw predyx predzy p q f
+
+public export
 SigmaSigmaRefinedPolyF : {w, x, y, z : Type} ->
   (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
   (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
