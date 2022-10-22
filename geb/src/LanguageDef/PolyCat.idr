@@ -1106,7 +1106,7 @@ ComonoidDupOnPosId {p=(pos ** dir)}
     mkDPairInjectiveFst $ fcong $ mkDPairInjectiveFst $ rightErasure holds
 
 public export
-ComonoidDupOnDirPosId : {p : PolyFunc} -> (c : PFComonoid p) ->
+0 ComonoidDupOnDirPosId : {p : PolyFunc} -> (c : PFComonoid p) ->
   (holds : PFComonoidCorrect p c) -> (i : pfPos p) ->
   DPair.snd (pntOnPos {p} {q=(pfDuplicateArena p)} (pcomDup {p} c) i)
     (rewrite ComonoidDupOnPosId {p} c holds i in
@@ -1212,8 +1212,8 @@ ComonoidToCatMorph : {p : PolyFunc} ->
   (c : PFComonoid p) -> (holds : PFComonoidCorrect p c) ->
   ComonoidToCatObj c -> ComonoidToCatObj c -> Type
 ComonoidToCatMorph {p=p@(pos ** dir)} com@(MkPFComonoid e d) holds a b =
-  (m : ComonoidToCatEmanate {p} com a **
-   ComonoidToCatCodom {p} com holds a m = b)
+  Subset0 (ComonoidToCatEmanate {p} com a)
+    (\m => ComonoidToCatCodom {p} com holds a m = b)
 
 public export
 ComonoidToCatId : {p : PolyFunc} ->
@@ -1221,7 +1221,7 @@ ComonoidToCatId : {p : PolyFunc} ->
   (a : ComonoidToCatObj c) -> ComonoidToCatMorph c holds a a
 ComonoidToCatId {p=(pos ** dir)}
   c@(MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds a =
-    (eOnDir a () ** ComonoidDupOnDirPosId c holds a)
+    Element0 (eOnDir a ()) (ComonoidDupOnDirPosId c holds a)
 
 public export
 ComonoidToCatComp : {p : PolyFunc} ->
@@ -1231,9 +1231,14 @@ ComonoidToCatComp : {p : PolyFunc} ->
   ComonoidToCatMorph com holds a b ->
   ComonoidToCatMorph com holds a c
 ComonoidToCatComp {p=(pos ** dir)}
-  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds {a} {b} {c} g f =
-    (?ComonoidToCatComp_hole_gf **
-     ?ComonoidToCatComp_hole_codomain_correct)
+  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds {a} {b} {c}
+  (Element0 gm gcod) (Element0 fm fcod) =
+    let onPosId = ComonoidDupOnPosId _ holds in
+    Element0
+      (dOnDir a
+        (replace {p=dir} (sym (onPosId a)) fm **
+         replace {p=dir} (sym fcod) gm))
+      (trans (?ComonoidToCatComp_hole_codomain_correct) gcod)
 
 public export
 ComonoidToCat : {p : PolyFunc} ->
