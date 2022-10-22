@@ -1009,16 +1009,17 @@ SigmaSigmaRefinedPolyF : {w, x, y, z : Type} ->
   (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
   (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
   Sigma p -> Sigma (q . f)
-SigmaSigmaRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f sigp =
-  ?SigmaSigmaRefinedPolyF_hole
+SigmaSigmaRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f (ew ** ep) =
+  (?SigmaSigmaRefinedPolyF_hole_ew **
+   ?SigmaSigmaRefinedPolyF_hole_eq)
 
 public export
 SigmaPiRefinedPolyF : {w, x, y, z : Type} ->
   (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
   (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
   Sigma p -> Pi (q . f)
-SigmaPiRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f sigp =
-  ?SigmaPiRefinedPolyF_hole
+SigmaPiRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f (ew ** ep) ew' =
+  ?SigmaPiRefinedPolyF_hole_eq
 
 public export
 PiSigmaRefinedPolyF : {w, x, y, z : Type} ->
@@ -1026,15 +1027,16 @@ PiSigmaRefinedPolyF : {w, x, y, z : Type} ->
   (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
   Pi p -> Sigma (q . f)
 PiSigmaRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f pip =
-  ?PiSigmaRefinedPolyF_hole
+  (?PiSigmaRefinedPolyF_hole_ew **
+   ?PiSigmaRefinedPolyF_hole_eq)
 
 public export
 PiPiRefinedPolyF : {w, x, y, z : Type} ->
   (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
   (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
   Pi p -> Pi (q . f)
-PiPiRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f pip =
-  ?PiPiRefinedPolyF_hole
+PiPiRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f pip ew =
+  ?PiPiRefinedPolyF_hole_eq
 
 --------------------------------------------------
 --------------------------------------------------
