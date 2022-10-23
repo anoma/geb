@@ -2303,7 +2303,7 @@ CPSTransformSig a b = (b -> a) -> b -> Continuation a
 
 public export
 FunctorExp : (Type -> Type) -> Type -> Type -> Type
-FunctorExp g a b = a -> g b
+FunctorExp g a = CovarHomFunc a . g
 
 public export
 record Codensity (m : Type -> Type) (a : Type) where
@@ -2379,7 +2379,7 @@ improve {f} isF allWrap {isM} =
 
 public export
 wrapCodensity :
-  {m : Type -> Type} -> ((a : Type) -> m a -> m a) -> Codensity m ()
+  {m : Type -> Type} -> (NaturalTransformation m m) -> Codensity m ()
 wrapCodensity f = MkCodensity $ \ty, k => f ty (k ())
 
 public export
@@ -2388,7 +2388,7 @@ reset = lift {m} {t=Codensity} . lowerCodensity {f=m}
 
 public export
 shift : Monad m => {a : Type} ->
-  ((b : Type) -> (a -> m b) -> Codensity m b) -> Codensity m a
+  (NaturalTransformation (FunctorExp m a) (Codensity m)) -> Codensity m a
 shift {a} f = MkCodensity $ \y => lowerCodensity . f y
 
 ----------------------------

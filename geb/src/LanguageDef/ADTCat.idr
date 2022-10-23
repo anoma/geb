@@ -42,9 +42,9 @@ public export
 STMu : Type
 STMu = PolyFuncMu SubstTermPF
 
-----------------------------------------------------
----- Least fixed point, algebras, catamorphisms ----
-----------------------------------------------------
+---------------------------------
+---- Algebras, catamorphisms ----
+---------------------------------
 
 public export
 STAlg : Type -> Type
