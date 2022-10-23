@@ -2301,7 +2301,7 @@ public export
 ExpFunctor : (Type -> Type) -> Type -> Type -> Type
 ExpFunctor g a = ContravarHomFunc a . g
 
--- The left Kan extension of `g` along `j` (sometimes written `g/j`).
+-- The left Kan extension of `g` along `j`.
 public export
 LKanExt : (g, j : Type -> Type) -> Type -> Type
 LKanExt g j a = (b : Type ** ExpFunctor j a b -> g b)
