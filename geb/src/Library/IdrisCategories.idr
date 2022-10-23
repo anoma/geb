@@ -2282,6 +2282,30 @@ public export
 TraversalP : OpticSig
 TraversalP = ExOpticP TraversalShape
 
+-------------------------
+-------------------------
+----- Kan extensions ----
+-------------------------
+-------------------------
+
+public export
+FunctorExp : (Type -> Type) -> Type -> Type -> Type
+FunctorExp g a = CovarHomFunc a . g
+
+-- The right Kan extension of `g` along `j` (sometimes written `g/j`).
+public export
+RKanExt : (g, j : Type -> Type) -> Type -> Type
+RKanExt g j a = NaturalTransformation (FunctorExp j a) g
+
+public export
+ExpFunctor : (Type -> Type) -> Type -> Type -> Type
+ExpFunctor g a = ContravarHomFunc a . g
+
+-- The left Kan extension of `g` along `j` (sometimes written `g/j`).
+public export
+LKanExt : (g, j : Type -> Type) -> Type -> Type
+LKanExt g j a = (b : Type ** ExpFunctor j a b -> g b)
+
 -----------------------
 -----------------------
 ---- Continuations ----
@@ -2302,14 +2326,10 @@ CPSTransformSig : (a, b : Type) -> Type
 CPSTransformSig a b = (b -> a) -> b -> Continuation a
 
 public export
-FunctorExp : (Type -> Type) -> Type -> Type -> Type
-FunctorExp g a = CovarHomFunc a . g
-
-public export
 record Codensity (m : Type -> Type) (a : Type) where
   constructor MkCodensity
   -- Codensity m a = (b : Type) -> (a -> m b) -> m b
-  runCodensity : NaturalTransformation (FunctorExp m a) m
+  runCodensity : RKanExt m m a
 
 public export
 CodensityFunctor : (f : Type -> Type) -> Functor (Codensity f)
@@ -2390,6 +2410,18 @@ public export
 shift : Monad m => {a : Type} ->
   (NaturalTransformation (FunctorExp m a) (Codensity m)) -> Codensity m a
 shift {a} f = MkCodensity $ \y => lowerCodensity . f y
+
+-------------------------
+-------------------------
+---- Density comonad ----
+-------------------------
+-------------------------
+
+public export
+record Density (m : Type -> Type) (a : Type) where
+  constructor MkDensity
+  -- Density m a = (b : Type) -> (m b -> a) -> m b
+  runDensity : LKanExt m m a
 
 ----------------------------
 ----------------------------
