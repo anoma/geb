@@ -1368,6 +1368,88 @@ public export
 PFEitherMonad : Type -> PFMonad
 PFEitherMonad a = (pfEitherArena a ** PFEitherMonoid a)
 
+-----------------------
+---- Product monad ----
+-----------------------
+
+public export
+PFProductReturnOnPos : {p, q : PolyFunc} -> PFMonoid p -> PFMonoid q ->
+  PFIdentityPos -> pfProductPos p q
+PFProductReturnOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+  (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir)) () =
+    (prOnPos (), qrOnPos ())
+
+public export
+PFProductReturnOnDir : {p, q : PolyFunc} ->
+  (pmon : PFMonoid p) -> (qmon : PFMonoid q) ->
+  (i : PFIdentityPos) ->
+  pfProductDir p q (PFProductReturnOnPos pmon qmon i) -> PFIdentityDir i
+PFProductReturnOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+  (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir)) () d =
+    ()
+
+public export
+PFProductReturn : {p, q : PolyFunc} ->
+  (pmon : PFMonoid p) -> (qmon : PFMonoid q) ->
+  PolyNatTrans PFIdentityArena (pfProductArena p q)
+PFProductReturn pmon qmon =
+  (PFProductReturnOnPos pmon qmon ** PFProductReturnOnDir pmon qmon)
+
+public export
+PFProductJoinOnPos : {p, q : PolyFunc} -> PFMonoid p -> PFMonoid q ->
+  pfCompositionPos (pfProductArena p q) (pfProductArena p q) ->
+  pfProductPos p q
+PFProductJoinOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+  (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir))
+  ((pi, qi) ** d) =
+    (pjOnPos (pi ** fst . d . Left),
+     qjOnPos (qi ** snd . d . Right))
+
+public export
+PFProductJoinOnDir : {p, q : PolyFunc} ->
+  (pmon : PFMonoid p) -> (qmon : PFMonoid q) ->
+  (i : pfCompositionPos (pfProductArena p q) (pfProductArena p q)) ->
+  pfProductDir p q (PFProductJoinOnPos pmon qmon i) ->
+  pfCompositionDir (pfProductArena p q) (pfProductArena p q) i
+PFProductJoinOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+  (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir))
+  ((pi, qi) ** di) (Left dl)
+    with (di $ Left $ fst $ pjOnDir (pi ** fst . di . Left) dl) proof prf
+      PFProductJoinOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+        (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+        (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir))
+        ((pi, qi) ** di) (Left dl) | (pil, qil) =
+          (Left (fst (pjOnDir (pi ** fst . di . Left) dl)) **
+           rewrite prf in
+           rewrite sym (cong fst prf) in
+           Left $ snd $ pjOnDir (pi ** fst . di . Left) dl)
+PFProductJoinOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+  (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir))
+  ((pi, qi) ** di) (Right dr)
+    with (di $ Right $ fst $ qjOnDir (qi ** snd . di . Right) dr) proof prf
+      PFProductJoinOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+        (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+        (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir))
+        ((pi, qi) ** di) (Right dr) | (pir, qir) =
+          (Right (fst (qjOnDir (qi ** snd . di . Right) dr)) **
+           rewrite prf in
+           rewrite sym (cong snd prf) in
+           Right $ snd $ qjOnDir (qi ** snd . di . Right) dr)
+
+public export
+PFProductJoin : {p, q : PolyFunc} ->
+  (pmon : PFMonoid p) -> (qmon : PFMonoid q) ->
+  PolyNatTrans
+    (pfCompositionArena (pfProductArena p q) (pfProductArena p q))
+    (pfProductArena p q)
+PFProductJoin pmon qmon =
+  (PFProductJoinOnPos pmon qmon ** PFProductJoinOnDir pmon qmon)
+
 --------------------
 ---- Free monad ----
 --------------------
