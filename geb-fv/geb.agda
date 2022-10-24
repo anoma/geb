@@ -2,7 +2,7 @@
  
 open import Agda.Primitive using (Level; lzero; lsuc; _⊔_; Setω)
 
-module geb where
+module geb-test where
 
   import HoTT
 
@@ -203,6 +203,9 @@ module geb where
   mors-from-⊕G-come-from-coprod : {x y z : ObjGEBCat} (f : (x ⊕G y) ↦ z) → Σ[ fg ∶ ((x ↦ z) × (y ↦ z))] (uncurry ([_,_]G) fg ≡ f)
   mors-from-⊕G-come-from-coprod f = proj₁ (proj₁ (CoProdMorAx f)) ,,  (proj₂ (proj₁ (CoProdMorAx f)))
 
+  coprod-mor-to-uni : {x y z : ObjGEBCat} → ( (x ⊕G y) ↦ z ) → ( (x ⊕G y) ↦ z)
+  coprod-mor-to-uni f =  [ pr₁ ( proj₁ (proj₁ (CoProdMorAx f))) , pr₂ ( proj₁ (proj₁ (CoProdMorAx f))) ]G 
+
   
 
   inx-are-joint-epi : {x y z : ObjGEBCat} (f g : (x ⊕G y) ↦ z) → ((f ● inlG ≡ g ● inlG) × (f ● inrG ≡ g ● inrG)) → (f ≡ g)
@@ -224,6 +227,9 @@ module geb where
                                     pr₂ ((CoProdMorLegAx (pr₁ ((proj₁ (mors-from-⊕G-come-from-coprod g)))) (pr₂ ((proj₁ (mors-from-⊕G-come-from-coprod g))))))
                                      ))))))) ·
                                     proj₂ (mors-from-⊕G-come-from-coprod g))
+
+  inl-as-coprod : {x y z : ObjGEBCat} → inlG {x ⊕G y} {z} ≡ [ inlG ● inlG , inlG ● inrG ]G
+  inl-as-coprod = inx-are-joint-epi _ _ (((pr₁ (CoProdMorLegAx _ _)) ⁻¹) , ((pr₂ (CoProdMorLegAx _ _)) ⁻¹))
 
   comp-with-coprod-mor : {x y z z' : ObjGEBCat} (f : x ↦ z) (g : y ↦ z) (h : z ↦ z') → (h ● [ f , g ]G ) ≡ ([ h ● f , h ● g ]G)
   comp-with-coprod-mor f g h = inx-are-joint-epi _ _
@@ -355,14 +361,10 @@ module geb where
   FinSet-to-ω-mor : (x y : FinSet) → (MorFinSet x y) → (Morω (FinSet-to-ω-obj x) (FinSet-to-ω-obj y))
   FinSet-to-ω-mor ((A , n) ,, e) ((B , m) ,, e2) f = proj₁ (equiv-symm e2) ∘ (f ∘ proj₁ e)
 
---  ω-to-Geb-first-proj : (n m : ℕ) → (f : Morω (succ (succ (succ (succ n)))) m) → (( (ω-to-Geb-mor _ m f) ● inlG) ≡ ( ( pr₁ (proj₁ (mors-from-⊕G-come-from-coprod (ω-to-Geb-mor _ m f)))) ● inlG))
-  
-  ω-to-Geb-mor-full : ( m : ℕ) (f : Term ↦ ω-to-Geb-obj m) → Σ[ f' ∶ (Morω (succ zero) m) ] (f ≡ (ω-to-Geb-mor (succ zero) m f'))
+{-  ω-to-Geb-mor-full : ( m : ℕ) (f : Term ↦ ω-to-Geb-obj m) → Σ[ f' ∶ (Morω (succ zero) m) ] (f ≡ (ω-to-Geb-mor (succ zero) m f'))
   ω-to-Geb-mor-full zero f = rec𝟘 (Σ-syntax (Morω (succ zero) zero) (λ f' → f ≡ ω-to-Geb-mor (succ zero) zero f')) ((Geb-into-FinSet-mor (Term) (Init) f) pt)
   ω-to-Geb-mor-full (succ zero) f = (id _) ,, (TermMorAx _ · ((TermMorAx _) ⁻¹))
-  ω-to-Geb-mor-full (succ (succ m)) f = {!!}
-
--- We use this to establish equalities arizing from 0   
+  ω-to-Geb-mor-full (succ (succ m)) f = {!!} -}  
 
 -- We also need to prove the identity preservaton and composition preservation of the above function to use in the functoriality proof
 
@@ -370,65 +372,86 @@ module geb where
   IdMor-is-coprod-of-inj : {x y : ObjGEBCat} → IdMor (x ⊕G y) ≡ [ inlG , inrG ]G
   IdMor-is-coprod-of-inj = inx-are-joint-epi _ _ ((pr₁ (IdMorAx inlG) · ((pr₁ (CoProdMorLegAx _ _)) ⁻¹)) , (pr₁ (IdMorAx inrG) · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹)))
 
-
-
-{-  term-univ-coprod : (x y : ObjGEBCat) (f : Term ↦ (x ⊕G y)) → ( Σ[ f1 ∶ (Term ↦ x) ] (f ≡ (inlG ● f1)) ) + (Σ[ f2 ∶ (Term ↦ y) ] (f ≡ (inrG ● f2)) )
-  term-univ-coprod x y f = {!!} -}
-
-
-
-
-  ω-to-Geb-mor-preserves-inl : (n : ℕ) → ω-to-Geb-mor (succ n) (succ (succ n)) inl ≡ inlG
-  ω-to-Geb-mor-preserves-inl zero = pr₂ (IdMorAx _)
-  ω-to-Geb-mor-preserves-inl (succ zero) = inx-are-joint-epi _ _
-                                           ((pr₁ (CoProdMorLegAx _ _) · fun-ap (λ k → inlG ● k) (pr₂ (IdMorAx _)))
-                                           ,
-                                           pr₂ (CoProdMorLegAx _ _))                                      
-  ω-to-Geb-mor-preserves-inl (succ (succ n)) = inx-are-joint-epi _ _
-                                               ((pr₁ (CoProdMorLegAx _ _) · inx-are-joint-epi _ _
-                                                           (((pr₁ (CoProdMorLegAx _ _)) ·
-                                                                                         (fun-ap
-                                                                                            (λ k →
-                                                                                               ω-to-Geb-mor (succ n) (succ (succ (succ (succ n))))
-                                                                                               (pr₁ (proj₁ (functions-from-+-from-uni-prop k))))
-                                                                                            inl-from-uni-prop-gives-inl · {!!}))
-                                                           , {!!}))
-                                               , {!!})
+-- Here is a basic observation about the morphism assignment
 
   term-to-mor : (n : ℕ) (x : Fin n) → obj-of-FinSet-to-⨁G-Term n x ≡ ω-to-Geb-mor (succ zero) (n) (λ t → x)
   term-to-mor n x = refl _
 
-  ω-to-Geb-mor-preserves-comp : (n m k : ℕ) (f : Morω m k) (g : Morω n m) → ω-to-Geb-mor n k (f ∘ g ) ≡  (ω-to-Geb-mor m k f) ● (ω-to-Geb-mor n m g)
-  ω-to-Geb-mor-preserves-comp zero m k f g = (InitMorAx _) ⁻¹
-  ω-to-Geb-mor-preserves-comp (succ zero) zero k f g = rec𝟘 _ (g (pt))
-  ω-to-Geb-mor-preserves-comp (succ zero) (succ zero) k f g = transp (λ x → (obj-of-FinSet-to-⨁G-Term k (f (x))) ≡ (ω-to-Geb-mor (succ zero) k f))
-                                                              ((proj₂ (𝟙-is-Contr)) (g pt)) (refl _) · ((pr₂ (IdMorAx _)) ⁻¹) 
-  ω-to-Geb-mor-preserves-comp (succ zero) (succ (succ m)) k f g =  rec+  (λ { (el ,, p1) → transp
-                                                                                           (λ t →
+-- The lemma below provides one of the main ingredients for the (n := succ (succ n)) step in the functoriality proof
+
+  Lemma-ω-to-Geb-mor-preserves-comp : (m k : ℕ) (f : Morω m k) (g : Morω one m) → ω-to-Geb-mor (one) k (f ∘ g ) ≡  (ω-to-Geb-mor m k f) ● (ω-to-Geb-mor (one) m g)
+  Lemma-ω-to-Geb-mor-preserves-comp = indℕ (λ m →  (k : ℕ) (f : Morω m k) (g : Morω (one) m) →
+                                                  ω-to-Geb-mor (one) k (f ∘ g) ≡
+                                                  (ω-to-Geb-mor m k f ● ω-to-Geb-mor (one) m g))
+                                                  (λ k f g → rec𝟘 _ (g (pt)) )
+                                                  λ m IH → indℕ (λ (m : ℕ) → (k : ℕ) (f : Morω (succ m) k) (g : Morω (one) (succ m)) →
+                                                  ω-to-Geb-mor (one) k (f ∘ g) ≡
+                                                  (ω-to-Geb-mor (succ m) k f ● ω-to-Geb-mor (one) (succ m) g))
+                                                  (λ k f g → transp (λ x → (obj-of-FinSet-to-⨁G-Term k (f (x))) ≡ (ω-to-Geb-mor (succ zero) k f))    
+                                                              ((proj₂ (𝟙-is-Contr)) (g pt)) (refl _) · ((pr₂ (IdMorAx _)) ⁻¹))
+                                                  (λ m IHsm1 → λ k f g → rec+ (λ {(x ,, p1) → transp
+                                                                                          ((λ t →
                                                                                               obj-of-FinSet-to-⨁G-Term k (f t) ≡
                                                                                               (CoProdMor (ω-to-Geb-mor (succ m) k (λ x₁ → f (inl x₁)))
                                                                                                (obj-of-FinSet-to-⨁G-Term k (f (inr pt)))
-                                                                                               ● obj-of-FinSet-to-⨁G-Term (succ (succ m)) t))
-                                                                                           (p1 ⁻¹) (((refl _ ·
-                                                                                           ω-to-Geb-mor-preserves-comp (succ zero) (succ m) k (f ∘ inl) (λ t → el))
-                                                                                           · fun-ap (λ F → F ● obj-of-FinSet-to-⨁G-Term (succ m) el)
-                                                                                           (pr₁ (CoProdMorLegAx _ _) ⁻¹))
-                                                                                           · ((CompAssocAx _ _ _ _ _ _ _) ⁻¹))})
-                                                                        (λ {(x ,, p1) → transp
+                                                                                               ● obj-of-FinSet-to-⨁G-Term (succ (succ m)) t)))
+                                                                                               (p1 ⁻¹) (IHsm1 _ ((f ∘ inl)) ((λ t → x)) ·
+                                                                                               (fun-ap (λ F → F ● obj-of-FinSet-to-⨁G-Term (succ m) x) ((pr₁ (CoProdMorLegAx _ _)) ⁻¹)
+                                                                                               · (((CompAssocAx _ _ _ _ _ _ _) ⁻¹))))})
+                                                                                           (λ {(x ,, p1) →  transp
                                                                                           (λ t →
                                                                                              obj-of-FinSet-to-⨁G-Term k (f t) ≡
                                                                                              (CoProdMor (ω-to-Geb-mor (succ m) k (λ x₁ → f (inl x₁)))
                                                                                               (obj-of-FinSet-to-⨁G-Term k (f (inr pt)))
                                                                                               ● obj-of-FinSet-to-⨁G-Term (succ (succ m)) t))
                                                                                           (p1 ⁻¹) (fun-ap (λ l → obj-of-FinSet-to-⨁G-Term k (f (inr l))) (constructor-el-𝟙 x) · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹))})
-                                                                        (constructor-el-+ (g pt))
-  ω-to-Geb-mor-preserves-comp (succ (succ n)) m k f g = inx-are-joint-epi _ _
-                                                           ((pr₁ (CoProdMorLegAx _ _) · (ω-to-Geb-mor-preserves-comp (succ n) m k (f) (g ∘ inl) · ((pr₁ (CoProdMorLegAx _ _)) ⁻¹)))
-                                                           , ((pr₂ (CoProdMorLegAx _ _)) · (ω-to-Geb-mor-preserves-comp (succ (zero)) m k (f) (g ∘ inr) · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹))))
-                                                           · ((comp-with-coprod-mor _ _ _) ⁻¹) 
+                                                                                           ((constructor-el-+ (g pt)))) m
+
+  ω-to-Geb-mor-preserves-comp : (n m k : ℕ) (f : Morω m k) (g : Morω n m) → ω-to-Geb-mor n k (f ∘ g ) ≡  (ω-to-Geb-mor m k f) ● (ω-to-Geb-mor n m g)
+  ω-to-Geb-mor-preserves-comp n = indℕ (λ n → (m k : ℕ) (f : Morω m k) (g : Morω n m) →  ω-to-Geb-mor n k (f ∘ g) ≡  (ω-to-Geb-mor m k f) ● (ω-to-Geb-mor n m g) )
+                                  (λ m k f g → (InitMorAx _) ⁻¹)    -- Base case on n :=0
+                                  (λ n IHs → indℕ                  -- Double induction on n
+                                               (λ (n : ℕ) →
+                                                  (m k : ℕ) (f : Morω m k) (g : Morω (succ n) m) →
+                                                  ω-to-Geb-mor (succ n) k (f ∘ g) ≡
+                                                  (ω-to-Geb-mor m k f ● ω-to-Geb-mor (succ n) m g))
+                                               ( indℕ (λ (m : ℕ) → (k : ℕ) (f : Morω m k) (g : Morω (succ zero) m) →                                           -- We now induct on m -- The middle layer corresponds to the Lemma proof
+                                                            ω-to-Geb-mor (succ zero) k (f ∘ g ) ≡  (ω-to-Geb-mor m k f) ● (ω-to-Geb-mor (succ zero) m g))
+                                                 (λ (k : ℕ) f g → rec𝟘 _ (g (pt)))                                                                              -- Base case for n := 1, m := 0
+                                                 λ (m : ℕ) (IHsm0) → indℕ                                                                                       -- IHsm0 inductiv h-s
+                                                               (λ (m : ℕ) →
+                                                                  (k : ℕ) (f : Morω (succ m) k) (g : Morω (succ zero) (succ m)) →
+                                                                  ω-to-Geb-mor (succ zero) k (f ∘ g) ≡
+                                                                  (ω-to-Geb-mor (succ m) k f ● ω-to-Geb-mor (succ zero) (succ m) g))
+                                                               (λ k f g → transp (λ x → (obj-of-FinSet-to-⨁G-Term k (f (x))) ≡ (ω-to-Geb-mor (succ zero) k f))    
+                                                              ((proj₂ (𝟙-is-Contr)) (g pt)) (refl _) · ((pr₂ (IdMorAx _)) ⁻¹))
+                                                               (λ m IHsm1 → λ k f g → rec+ (λ {(x ,, p1) → transp
+                                                                                          ((λ t →
+                                                                                              obj-of-FinSet-to-⨁G-Term k (f t) ≡
+                                                                                              (CoProdMor (ω-to-Geb-mor (succ m) k (λ x₁ → f (inl x₁)))
+                                                                                               (obj-of-FinSet-to-⨁G-Term k (f (inr pt)))
+                                                                                               ● obj-of-FinSet-to-⨁G-Term (succ (succ m)) t)))
+                                                                                               (p1 ⁻¹) (IHsm1 _ ((f ∘ inl)) ((λ t → x)) ·
+                                                                                               (fun-ap (λ F → F ● obj-of-FinSet-to-⨁G-Term (succ m) x) ((pr₁ (CoProdMorLegAx _ _)) ⁻¹)
+                                                                                               · (((CompAssocAx _ _ _ _ _ _ _) ⁻¹))))})
+                                                                                           (λ {(x ,, p1) →  transp
+                                                                                          (λ t →
+                                                                                             obj-of-FinSet-to-⨁G-Term k (f t) ≡
+                                                                                             (CoProdMor (ω-to-Geb-mor (succ m) k (λ x₁ → f (inl x₁)))
+                                                                                              (obj-of-FinSet-to-⨁G-Term k (f (inr pt)))
+                                                                                              ● obj-of-FinSet-to-⨁G-Term (succ (succ m)) t))
+                                                                                          (p1 ⁻¹) (fun-ap (λ l → obj-of-FinSet-to-⨁G-Term k (f (inr l))) (constructor-el-𝟙 x) · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹))})
+                                                                                           ((constructor-el-+ (g pt)))) m)
+                                               (λ n IHsn1 → λ m k f g → inx-are-joint-epi _ _
+                                               ((((pr₁ (CoProdMorLegAx _ _))) · (IHsn1 m k f ((g ∘ inl)) · ((((CompAssocAx _ _ _ _ _ _ _) ⁻¹) · fun-ap (λ F → ω-to-Geb-mor m k f ● F) (pr₁ (CoProdMorLegAx _ _))) ⁻¹)))
+                                               ,
+                                               ((pr₂ (CoProdMorLegAx _ _)) · ((Lemma-ω-to-Geb-mor-preserves-comp m k (f) (g ∘ inr) · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹)) · fun-ap (λ F → F ● inrG) ((comp-with-coprod-mor _ _ _) ⁻¹))))) n) n  -- Note the Lemma       
 
 
-{-  ω-to-Geb-mor-preserves-comp : (n m k : ℕ) (f : Morω m k) (g : Morω n m) → ω-to-Geb-mor n k (f ∘ g ) ≡  (ω-to-Geb-mor m k f) ● (ω-to-Geb-mor n m g)
+-- One may also look at the commented-out composition preservation proof below. Agda did not recognize the recursive calls in the (n := succ zero) case
+
+{-
+  ω-to-Geb-mor-preserves-comp : (n m k : ℕ) (f : Morω m k) (g : Morω n m) → ω-to-Geb-mor n k (f ∘ g ) ≡  (ω-to-Geb-mor m k f) ● (ω-to-Geb-mor n m g)
   ω-to-Geb-mor-preserves-comp zero m k f g = (InitMorAx _) ⁻¹
   ω-to-Geb-mor-preserves-comp (succ zero) zero k f g = rec𝟘 _ (g (pt))
   ω-to-Geb-mor-preserves-comp (succ zero) (succ zero) k f g = transp (λ x → (obj-of-FinSet-to-⨁G-Term k (f (x))) ≡ (ω-to-Geb-mor (succ zero) k f))
@@ -455,8 +478,20 @@ module geb where
   ω-to-Geb-mor-preserves-comp (succ (succ n)) m k f g =  inx-are-joint-epi _ _
                                                            ((pr₁ (CoProdMorLegAx _ _) · (ω-to-Geb-mor-preserves-comp (succ n) m k (f) (g ∘ inl) · ((pr₁ (CoProdMorLegAx _ _)) ⁻¹)))
                                                            , ((pr₂ (CoProdMorLegAx _ _)) · (ω-to-Geb-mor-preserves-comp (succ (zero)) m k (f) (g ∘ inr) · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹))))
-                                                           · ((comp-with-coprod-mor _ _ _) ⁻¹) 
+                                                           · ((comp-with-coprod-mor _ _ _) ⁻¹)
 -}
+
+-- A good indication for the equivalence to actually suceed is that the coproduct structure is preserved. For that we need some extra lemmas
+
+  
+
+  ω-to-Geb-mor-preserves-inl : (n : ℕ) → ω-to-Geb-mor (succ n) (succ (succ n)) inl ≡ inlG
+  ω-to-Geb-mor-preserves-inl zero =  pr₂ (IdMorAx _)
+  ω-to-Geb-mor-preserves-inl (succ zero) = inx-are-joint-epi _ _
+                                           ((pr₁ (CoProdMorLegAx _ _) · fun-ap (λ k → inlG ● k) (pr₂ (IdMorAx _)))
+                                           ,
+                                           pr₂ (CoProdMorLegAx _ _)) 
+  ω-to-Geb-mor-preserves-inl (succ (succ n)) = {!!} · (inl-as-coprod  ⁻¹)
 
 
 
@@ -467,3 +502,4 @@ module geb where
                                                               (((pr₁ (CoProdMorLegAx _ _)) · ((fun-ap (ω-to-Geb-mor (succ n) (succ (succ n))) id-from-uni-prop-gives-inl · {!!}) · (pr₁ (IdMorAx _) ⁻¹)))
                                                               ,
                                                               (pr₂ (CoProdMorLegAx _ _) · (pr₁ (IdMorAx _) ⁻¹)))
+
