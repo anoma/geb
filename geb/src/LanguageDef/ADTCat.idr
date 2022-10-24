@@ -177,6 +177,29 @@ public export
 soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
 soCata = pfCata {p=SubstObjPF}
 
+-----------------------------------------------------
+---- Term representation of substitutive objects ----
+-----------------------------------------------------
+
+public export
+AsSubstObjAlg : PFAlg SubstTermPF (Maybe SOMu)
+AsSubstObjAlg STPosLeaf dir = ?IsSubstObj_alg_hole_0
+AsSubstObjAlg STPosLeft dir = ?IsSubstObj_alg_hole_1
+AsSubstObjAlg STPosRight dir = ?IsSubstObj_alg_hole_2
+AsSubstObjAlg STPosPair dir = ?IsSubstObj_alg_hole_3
+
+public export
+asSubstObj : STMu -> Maybe SOMu
+asSubstObj = pfCata AsSubstObjAlg
+
+public export
+isSubstObj : STMu -> Bool
+isSubstObj = isJust . asSubstObj
+
+public export
+SubstObjTerm : Type
+SubstObjTerm = RefinedST isSubstObj
+
 -------------------
 ---- Utilities ----
 -------------------
