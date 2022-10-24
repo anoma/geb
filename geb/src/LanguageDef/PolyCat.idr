@@ -281,6 +281,18 @@ pfEitherArena : Type -> PolyFunc
 pfEitherArena a = (pfEitherPos a ** pfEitherDir a)
 
 public export
+pfMaybeArena : PolyFunc
+pfMaybeArena = pfEitherArena Unit
+
+public export
+pfMaybePos : Type
+pfMaybePos = pfPos pfMaybeArena
+
+public export
+pfMaybeDir : PolyCat.pfMaybePos -> Type
+pfMaybeDir = pfDir {p=pfMaybeArena}
+
+public export
 pfCoproductPos : PolyFunc -> PolyFunc -> Type
 pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
 
@@ -303,6 +315,18 @@ pfProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Either . bimap pdir qdir
 public export
 pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
 pfProductArena p q = (pfProductPos p q ** pfProductDir p q)
+
+public export
+pfSquareArena : PolyFunc -> PolyFunc
+pfSquareArena p = pfProductArena p p
+
+public export
+pfSquarePos : PolyFunc -> Type
+pfSquarePos = pfPos . pfSquareArena
+
+public export
+pfSquareDir : (p : PolyFunc) -> pfSquarePos p -> Type
+pfSquareDir p = pfDir {p=(pfSquareArena p)}
 
 public export
 pfParProductPos : PolyFunc -> PolyFunc -> Type
