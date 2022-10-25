@@ -1,12 +1,23 @@
 (asdf:defsystem :geb
-  :depends-on (:trivia :alexandria :serapeum)
+  :depends-on (:trivia :alexandria :serapeum :fset :fare-quasiquote-extras)
   :version "0.0.1"
   :description "Gödel, Escher, Bach, a categorical view of computation"
   :author "Mariari"
   :license "MIT"
   :pathname "src/"
   :components
-  ((:file package)
+  ((:module vampir
+    :serial t
+    :description "The Vampir Extraction Module"
+    :components ((:file package)
+                 (:file spec)
+                 (:file vampir)))
+   (:module lambda
+    :serial t
+    :description "A simple Lambda calculus model"
+    :components ((:file package)
+                 (:file lambda)))
+   (:file package)
    (:file spec    :depends-on (package))
    (:file printer :depends-on (package spec))
    (:file geb     :depends-on (package spec))
@@ -19,8 +30,9 @@
   :pathname "test/"
   :serial t
   :components
-  ((:file "package")
-   (:file "geb")
-   (:file "run-tests"))
+  ((:file package)
+   (:file geb)
+   (:file lambda)
+   (:file run-tests))
   :perform (asdf:test-op (o s)
                          (uiop:symbol-call :geb-test :run-tests)))
