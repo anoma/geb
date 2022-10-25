@@ -35,12 +35,13 @@
   (match term
     (`(lambda ,param ,body)
       (let ((new-depth (1+ (context-depth context))))
-        (list 'lambda (nameless body
-                            (make-context
-                             :depth new-depth
-                             :mapping (fset:with (context-mapping context)
-                                                 param
-                                                 (- new-depth)))))))
+        (list 'lambda
+              (nameless body
+                        (make-context
+                         :depth new-depth
+                         :mapping (fset:with (context-mapping context)
+                                             param
+                                             (- new-depth)))))))
     ((cons f xs)
      (cons (nameless f context) (nameless xs context)))
     ;; we only care if it's in the map, if it isn't ignore it!
