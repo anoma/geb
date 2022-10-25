@@ -17,7 +17,8 @@
     :depends-on (bool)
     :description "A simple Lambda calculus model"
     :components ((:file package)
-                 (:file lambda)))
+                 (:file lambda)
+                 (:file lambda-conversion)))
    (:file package :depends-on ())
    (:file spec    :depends-on (package))
    (:file printer :depends-on (package spec))

@@ -1,5 +1,7 @@
 (in-package :geb.lambda-conversion)
 
+(named-readtables:in-readtable :fare-quasiquote)
+
 ;; returns a functor
 (defun convert-term (term)
   (match term
