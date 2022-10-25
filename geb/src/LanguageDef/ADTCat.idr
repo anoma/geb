@@ -182,15 +182,16 @@ soCata = pfCata {p=SubstObjPF}
 -----------------------------------------------------
 
 public export
-AsSubstObjAlg : PFAlg SubstTermPF (Maybe SOMu)
-AsSubstObjAlg STPosLeaf dir = ?IsSubstObj_alg_hole_0
-AsSubstObjAlg STPosLeft dir = ?IsSubstObj_alg_hole_1
-AsSubstObjAlg STPosRight dir = ?IsSubstObj_alg_hole_2
-AsSubstObjAlg STPosPair dir = ?IsSubstObj_alg_hole_3
+AsSubstObjAlg :
+  PFParamAlg SubstTermPF (SubstObjPos, SOMu -> Maybe SOMu) (Maybe SOMu)
+AsSubstObjAlg STPosLeaf dir (i, cont) = ?IsSubstObj_alg_hole_0
+AsSubstObjAlg STPosLeft dir (i, cont) = ?IsSubstObj_alg_hole_1
+AsSubstObjAlg STPosRight dir (i, cont) = ?IsSubstObj_alg_hole_2
+AsSubstObjAlg STPosPair dir (i, cont) = ?IsSubstObj_alg_hole_3
 
 public export
 asSubstObj : STMu -> Maybe SOMu
-asSubstObj = pfCata AsSubstObjAlg
+asSubstObj = pfParamCata AsSubstObjAlg (SOPos0, const Nothing)
 
 public export
 isSubstObj : STMu -> Bool

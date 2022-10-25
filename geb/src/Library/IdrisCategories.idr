@@ -156,6 +156,17 @@ public export
 Sigma : {a : Type} -> SliceObj a -> Type
 Sigma {a} p = (x : a ** p x)
 
+-- A dependent polynomial functor can be defined as a composition of
+-- a base change followed by a dependent product followed by a dependent
+-- coproduct.
+public export
+DepPolyF : {w, x, y, z : Type} ->
+  (x -> w) -> (x -> y) -> (y -> z) -> SliceFunctor w z
+DepPolyF {w} {x} {y} {z} fxw predyx predzy =
+  DepCoprodF {a=y} {b=z} predzy
+  . DepProdF {a=x} {b=y} predyx
+  . BaseChangeF fxw
+
 public export
 SigmaToPair : {0 a, b : Type} -> (Sigma {a} (const b)) -> (a, b)
 SigmaToPair (x ** y) = (x, y)

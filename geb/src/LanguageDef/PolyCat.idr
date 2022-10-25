@@ -720,8 +720,8 @@ PFParamAlg p x a = PFAlg p (x -> a)
 
 public export
 pfParamCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
-  PFParamAlg p x a -> PolyFuncMu p -> x -> a
-pfParamCata = pfCata
+  PFParamAlg p x a -> x -> PolyFuncMu p -> a
+pfParamCata alg = flip $ pfCata alg
 
 -- Catamorphism which passes not only the output of the previous
 -- induction steps but also the original `PolyFuncMu` to the algebra.
@@ -745,9 +745,9 @@ PFParamArgAlg p@(pos ** dir) x a =
 
 public export
 pfParamArgCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
-  PFArgAlg p a -> PolyFuncMu p -> x -> a
+  PFArgAlg p a -> x -> PolyFuncMu p -> a
 pfParamArgCata {p=p@(_ ** _)} {x} {a} alg =
-  pfArgCata {p} {a=(x -> a)} $ \e, i, d => alg e i . flip d
+  flip $ pfArgCata {p} {a=(x -> a)} $ \e, i, d => alg e i . flip d
 
 -- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
 -- to the algebra.  Uses the product-hom adjunction.
