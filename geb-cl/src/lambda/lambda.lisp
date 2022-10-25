@@ -4,6 +4,8 @@
 
 (named-readtables:in-readtable :fare-quasiquote)
 
+(setf trivia:*arity-check-by-test-call* nil)
+
 ;; we are being lazy no need for defclass for something so short lived
 ;; IMO
 (defstruct context
@@ -26,11 +28,10 @@
     ((cons x xs)
      (cons (curry-lambda x)
            (curry-lambda xs)))
-    (a a)))
+    (_ term)))
 
 (-> nameless (t &optional context) t)
 (defun nameless (term &optional (context (make-context)))
-  context
   (match term
     (`(lambda ,param ,body)
       (let ((new-depth (1+ (context-depth context))))
@@ -43,9 +44,8 @@
     ((cons f xs)
      (cons (nameless f context) (nameless xs context)))
     ;; we only care if it's in the map, if it isn't ignore it!
-    ((guard a (and (atom a)))
-     (let ((depth (fset:@ (context-mapping context) a)))
+    (_
+     (let ((depth (fset:@ (context-mapping context) term)))
        (if depth
            (make-index :depth (+ (context-depth context) depth))
-           a)))
-    (a a)))
+           term)))))

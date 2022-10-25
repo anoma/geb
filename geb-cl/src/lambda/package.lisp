@@ -1,7 +1,6 @@
-(defpackage #:geb.lambda
+(uiop:define-package #:geb.lambda
   (:documentation "A basic lambda calculus model")
-  (:import-from :trivia :guard :match)
-  (:use #:common-lisp #:serapeum)
+  (:mix #:trivia #:serapeum #:common-lisp)
   (:export
    :curry-lambda :nameless
 
