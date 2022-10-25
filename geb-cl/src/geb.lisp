@@ -30,3 +30,13 @@
 
 (defun commutes (x y)
   (pair (<-right x y) (<-left x y)))
+
+(defun !-> (a b)
+  (etypecase-of substobj a
+    (so0    so1)
+    (so1    b)
+    (alias  (!-> (obj a) b))
+    (coprod (prod (!-> (mcar a)  b)
+                  (!-> (mcadr a) b)))
+    (prod   (!-> (mcar a)
+                 (!-> (mcadr a) b)))))

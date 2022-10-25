@@ -14,10 +14,11 @@
                  (:file vampir)))
    (:module lambda
     :serial t
+    :depends-on (bool)
     :description "A simple Lambda calculus model"
     :components ((:file package)
                  (:file lambda)))
-   (:file package)
+   (:file package :depends-on ())
    (:file spec    :depends-on (package))
    (:file printer :depends-on (package spec))
    (:file geb     :depends-on (package spec))

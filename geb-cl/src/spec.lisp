@@ -12,7 +12,8 @@
        alias
        comp init terminal case pair distribute
        inject-left inject-right
-       project-left project-right))
+       project-left project-right
+       functor))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subst Constructor Objects
@@ -28,14 +29,20 @@
         :documentation "The underlying geb object"))
   (:documentation "an alias for a geb object"))
 
+(defclass functor ()
+  ((obj :initarg :obj
+        :accessor obj)
+   (func :initarg :func
+         :accessor func)))
+
 ;; these could be keywords, but maybe in the future not?
 (defclass so0 ()
   ()
-  (:documentation "The Initial/Unit Object"))
+  (:documentation "The Initial/Void Object"))
 
 (defclass so1 ()
   ()
-  (:documentation "The Terminal/Void Object"))
+  (:documentation "The Terminal/Unit Object"))
 
 ;; please make better names and documentation strings!
 
@@ -261,7 +268,8 @@
   (values
    (make-instance 'distribute :mcar mcar :mcadr mcadr :mcaddr mcaddr)))
 
-
+(defun make-functor (&key obj func)
+  (make-instance 'functor :func func :obj obj))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Matching conveniences
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

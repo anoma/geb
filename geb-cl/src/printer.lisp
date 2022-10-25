@@ -67,10 +67,6 @@
 ;; Subst Morphism Printer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmethod print-object ((obj comp) stream)
-  (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "∘~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
-
 (defmethod print-object ((obj terminal) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
     (format stream "->1~1:I ~W" (obj obj))))
@@ -99,6 +95,10 @@
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
     (format stream "case~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
 
+(defmethod print-object ((obj comp) stream)
+  (pprint-logical-block (stream nil :prefix "(" :suffix ")")
+    (format stream "∘~1:I ~{~W~^~_ ~}" (same-type-to-list obj 'comp))))
+
 (defmethod print-object ((obj distribute) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
     (format stream "dist~1:I ~W ~_~W ~_~W" (mcar obj) (mcadr obj) (mcaddr obj))))
@@ -106,3 +106,7 @@
 (defmethod print-object ((obj pair) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
     (format stream "~-1I~{~W~^~_ ~}" (pair-to-list obj))))
+
+(defmethod print-object ((obj functor) stream)
+  (pprint-logical-block (stream nil :prefix "(" :suffix ")")
+    (format stream "FUNCTOR<>")))

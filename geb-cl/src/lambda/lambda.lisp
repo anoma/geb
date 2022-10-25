@@ -8,12 +8,21 @@
 
 ;; we are being lazy no need for defclass for something so short lived
 ;; IMO
-(defstruct context
-  (depth   0          :type fixnum)
-  (mapping (fset:map) :type fset:map))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defstruct context
+    (depth   0          :type fixnum)
+    (mapping (fset:map) :type fset:map))
 
-(defstruct index
-  (depth 0 :type fixnum))
+  (defstruct index
+    (depth 0 :type fixnum)))
+
+`(-> a b)
+`void
+`unit
+`coprod
+`product
+`number
+
 
 (-> curry-lambda (t) t)
 (defun curry-lambda (term)
@@ -21,7 +30,7 @@
   (match term
     (`(lambda ,param ,body)
       (let ((body (curry-lambda body)))
-        (mvfoldr (cl:lambda (param body)
+        (mvfoldr (lambda (param body)
                    (list 'lambda param body))
                  (butlast param)
                  (list 'lambda (car (last param)) body))))

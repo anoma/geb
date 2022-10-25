@@ -12,8 +12,9 @@
    ;; Product Types
    :alias :so0 :so1 :prod :coprod :compose
 
-   :comp :init :terminal :pair :case :distribute
+   :comp :init :terminal :pair :case :distribute :functor
    :inject-left :inject-right :project-right :project-left
+   :make-functor
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; Constructors
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,14 +28,15 @@
    ;; accessors
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    :mcar :mcadr :mcdr :mcaddr
-   :obj :name
+   :obj :name :func
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;; API
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    :pair-to-list
    :same-type-to-list
    :mlist
-   :commutes))
+   :commutes
+   :!->))
 
 (uiop:define-package #:geb-bool
   (:documentation "Defines out booleans for the geb language")
