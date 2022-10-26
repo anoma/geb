@@ -6178,6 +6178,17 @@ stlcCtxToSOMu : STLC_Context -> SubstObjMu
 stlcCtxToSOMu = foldr (!*) Subst1
 
 public export
+stlcCtxProj :
+  (ctx : STLC_Context) -> (n : Nat) -> {auto 0 ok : InBounds n ctx} ->
+  SubstMorph (stlcCtxToSOMu ctx) (index n ctx {ok})
+stlcCtxProj (ty :: ctx) Z {ok=InFirst} =
+  SMProjLeft ty (stlcCtxToSOMu ctx)
+stlcCtxProj (ty :: ctx) Z {ok=InLater} impossible
+stlcCtxProj (ty :: ctx) (S n) {ok=InFirst} impossible
+stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
+  stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)
+
+public export
 stlcToCCC_ctx :
   STLC_Context ->
   STLC_Term ->
@@ -6223,9 +6234,17 @@ stlcToCCC_ctx ctx (STLC_Snd x) = do
   case cod of
     InSO (codl !!* codr) => Just ((dom, codr) ** SMProjRight codl codr <! m)
     _ => Nothing
-stlcToCCC_ctx ctx (STLC_Lambda x y) = ?stlcToCCC_ctx_8
-stlcToCCC_ctx ctx (STLC_App x y) = ?stlcToCCC_ctx_9
-stlcToCCC_ctx ctx (STLC_Index k) = ?stlcToCCC_ctx_10
+stlcToCCC_ctx ctx (STLC_Lambda vty t) = stlcToCCC_ctx (vty :: ctx) t
+stlcToCCC_ctx ctx (STLC_App f x) = do
+  ((fdom, fcod) ** fm) <- stlcToCCC_ctx ctx f
+  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
+  case decEq xcod fdom of
+    Yes Refl => Just ((xdom, fcod) ** fm <! xm)
+    No _ => Nothing
+stlcToCCC_ctx ctx (STLC_Index v) = case inBounds v ctx of
+  Yes ok =>
+    Just ((stlcCtxToSOMu ctx, index v ctx {ok}) ** stlcCtxProj ctx v {ok})
+  No _ => Nothing
 
 public export
 stlcToCCC :
