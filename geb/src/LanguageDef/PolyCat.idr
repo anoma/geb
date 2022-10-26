@@ -6116,6 +6116,78 @@ evalByGN x y m n with (substGNumToMorph x y m, natToSubstTerm x n)
   evalByGN x y m n | (Just f, Just t) = Just $ substTermToNat {a=y} (f <! t)
   evalByGN x y m n | _ = Nothing
 
+---------------------------------------
+---------------------------------------
+---- STLC-to-SubstObjMu/SubstMorph ----
+---------------------------------------
+---------------------------------------
+
+public export
+data STLC_Term : Type where
+  -- The "void" or "absurd" function, which takes a term of type Void
+  -- to any type; there's no explicit constructor for terms of type Void,
+  -- but a lambda could introduce one.  The SubstObjMu is the type of the
+  -- resulting term (since we can get any type from a term of Void).
+  STLC_Absurd : STLC_Term -> SubstObjMu -> STLC_Term
+
+  -- The only term of type Unit.
+  STLC_Unit : STLC_Term
+
+  -- Construct coproducts.  In each case, the type of the injected term
+  -- tells us the type of one side of the coproduct, so we provide a
+  -- SubstObjMu to tell us the type of the other side.
+  STLC_Left : STLC_Term -> SubstObjMu -> STLC_Term
+  STLC_Right : SubstObjMu -> STLC_Term -> STLC_Term
+
+  -- Case statement : parameters are expression to case on, which must be
+  -- a coproduct, and then left and right case, which must be of the same
+  -- type, which becomes the type of the overall term.
+  STLC_Case : STLC_Term -> STLC_Term -> STLC_Term -> STLC_Term
+
+  -- Construct a term of a pair type
+  STLC_Pair : STLC_Term -> STLC_Term -> STLC_Term
+
+  -- Projections; in each case, the given term must be of a product type
+  STLC_Fst : STLC_Term -> STLC_Term
+  STLC_Snd : STLC_Term -> STLC_Term
+
+  -- Lambda abstraction:  introduce into the context a (de Bruijn-indexed)
+  -- variable of the given type, and produce a term with that extended context.
+  STLC_Lambda : SubstObjMu -> STLC_Term -> STLC_Term
+
+  -- Function application
+  STLC_App : STLC_Term -> STLC_Term -> STLC_Term
+
+  -- The variable at the given de Bruijn index
+  STLC_Index : Nat -> STLC_Term
+
+public export
+STLC_Context : Type
+STLC_Context = List SubstObjMu
+
+public export
+stlcToCCC_ctx :
+  STLC_Context ->
+  STLC_Term ->
+  (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
+stlcToCCC_ctx ctx (STLC_Absurd x y) = ?stlcToCCC_ctx_0
+stlcToCCC_ctx ctx STLC_Unit = ?stlcToCCC_ctx_1
+stlcToCCC_ctx ctx (STLC_Left x y) = ?stlcToCCC_ctx_2
+stlcToCCC_ctx ctx (STLC_Right x y) = ?stlcToCCC_ctx_3
+stlcToCCC_ctx ctx (STLC_Case x y z) = ?stlcToCCC_ctx_4
+stlcToCCC_ctx ctx (STLC_Pair x y) = ?stlcToCCC_ctx_5
+stlcToCCC_ctx ctx (STLC_Fst x) = ?stlcToCCC_ctx_6
+stlcToCCC_ctx ctx (STLC_Snd x) = ?stlcToCCC_ctx_7
+stlcToCCC_ctx ctx (STLC_Lambda x y) = ?stlcToCCC_ctx_8
+stlcToCCC_ctx ctx (STLC_App x y) = ?stlcToCCC_ctx_9
+stlcToCCC_ctx ctx (STLC_Index k) = ?stlcToCCC_ctx_10
+
+public export
+stlcToCCC :
+  STLC_Term ->
+  (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
+stlcToCCC = stlcToCCC_ctx []
+
 ---------------------------------------------------
 ---------------------------------------------------
 ---- Older version of polynomial-type category ----
