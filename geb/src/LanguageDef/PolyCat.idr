@@ -6169,8 +6169,12 @@ public export
 stlcToCCC_ctx :
   STLC_Context ->
   STLC_Term ->
-  (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
-stlcToCCC_ctx ctx (STLC_Absurd x y) = ?stlcToCCC_ctx_0
+  Maybe (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
+stlcToCCC_ctx ctx (STLC_Absurd t ty) = do
+  t' <- stlcToCCC_ctx ctx t
+  case t' of
+    ((dom, InSO SO0) ** m) => Just ((dom, ty) ** SMFromInit ty <! m)
+    _ => Nothing
 stlcToCCC_ctx ctx STLC_Unit = ?stlcToCCC_ctx_1
 stlcToCCC_ctx ctx (STLC_Left x y) = ?stlcToCCC_ctx_2
 stlcToCCC_ctx ctx (STLC_Right x y) = ?stlcToCCC_ctx_3
@@ -6185,7 +6189,7 @@ stlcToCCC_ctx ctx (STLC_Index k) = ?stlcToCCC_ctx_10
 public export
 stlcToCCC :
   STLC_Term ->
-  (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
+  Maybe (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
 stlcToCCC = stlcToCCC_ctx []
 
 ---------------------------------------------------
