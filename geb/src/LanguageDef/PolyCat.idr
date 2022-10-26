@@ -4463,6 +4463,14 @@ public export
 Eq SubstObjMu where
   (==) = substObjPairCata SubstObjMuEqAlg
 
+public export
+substObjMuDecEq : (x, y : SubstObjMu) -> Dec (x = y)
+substObjMuDecEq x y = ?SubstObjMuDecEq_hole
+
+public export
+DecEq SubstObjMu where
+  decEq = substObjMuDecEq
+
 -----------------------------------------------
 ---- Normalization of substitutive objects ----
 -----------------------------------------------
@@ -6166,6 +6174,10 @@ STLC_Context : Type
 STLC_Context = List SubstObjMu
 
 public export
+stlcCtxToSOMu : STLC_Context -> SubstObjMu
+stlcCtxToSOMu = foldr (!*) Subst1
+
+public export
 stlcToCCC_ctx :
   STLC_Context ->
   STLC_Term ->
@@ -6175,13 +6187,42 @@ stlcToCCC_ctx ctx (STLC_Absurd t ty) = do
   case t' of
     ((dom, InSO SO0) ** m) => Just ((dom, ty) ** SMFromInit ty <! m)
     _ => Nothing
-stlcToCCC_ctx ctx STLC_Unit = ?stlcToCCC_ctx_1
-stlcToCCC_ctx ctx (STLC_Left x y) = ?stlcToCCC_ctx_2
-stlcToCCC_ctx ctx (STLC_Right x y) = ?stlcToCCC_ctx_3
-stlcToCCC_ctx ctx (STLC_Case x y z) = ?stlcToCCC_ctx_4
-stlcToCCC_ctx ctx (STLC_Pair x y) = ?stlcToCCC_ctx_5
-stlcToCCC_ctx ctx (STLC_Fst x) = ?stlcToCCC_ctx_6
-stlcToCCC_ctx ctx (STLC_Snd x) = ?stlcToCCC_ctx_7
+stlcToCCC_ctx ctx STLC_Unit =
+  let dom = stlcCtxToSOMu ctx in
+  Just ((dom, Subst1) ** SMToTerminal dom)
+stlcToCCC_ctx ctx (STLC_Left t ty) = do
+  ((dom, cod) ** m) <- stlcToCCC_ctx ctx t
+  Just ((dom, cod !+ ty) ** SMInjLeft cod ty <! m)
+stlcToCCC_ctx ctx (STLC_Right ty t) = do
+  ((dom, cod) ** m) <- stlcToCCC_ctx ctx t
+  Just ((dom, ty !+ cod) ** SMInjRight ty cod <! m)
+stlcToCCC_ctx ctx (STLC_Case x l r) = do
+  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
+  ((ldom, lcod) ** lm) <- stlcToCCC_ctx ctx l
+  ((rdom, rcod) ** rm) <- stlcToCCC_ctx ctx r
+  case xcod of
+    (InSO (xcodl !!+ xcodr)) => case
+      (decEq xcodl ldom, decEq xcodr rdom, decEq lcod rcod) of
+        (Yes Refl, Yes Refl, Yes Refl) =>
+          Just ((xdom, lcod) ** SMCase lm rm <! xm)
+        _ => Nothing
+    _ => Nothing
+stlcToCCC_ctx ctx (STLC_Pair t1 t2) = do
+  ((dom1, cod1) ** m1) <- stlcToCCC_ctx ctx t1
+  ((dom2, cod2) ** m2) <- stlcToCCC_ctx ctx t2
+  case decEq dom1 dom2 of
+    Yes Refl => Just ((dom2, cod1 !* cod2) ** SMPair m1 m2)
+    _ => Nothing
+stlcToCCC_ctx ctx (STLC_Fst x) = do
+  ((dom, cod) ** m) <- stlcToCCC_ctx ctx x
+  case cod of
+    InSO (codl !!* codr) => Just ((dom, codl) ** SMProjLeft codl codr <! m)
+    _ => Nothing
+stlcToCCC_ctx ctx (STLC_Snd x) = do
+  ((dom, cod) ** m) <- stlcToCCC_ctx ctx x
+  case cod of
+    InSO (codl !!* codr) => Just ((dom, codr) ** SMProjRight codl codr <! m)
+    _ => Nothing
 stlcToCCC_ctx ctx (STLC_Lambda x y) = ?stlcToCCC_ctx_8
 stlcToCCC_ctx ctx (STLC_App x y) = ?stlcToCCC_ctx_9
 stlcToCCC_ctx ctx (STLC_Index k) = ?stlcToCCC_ctx_10
