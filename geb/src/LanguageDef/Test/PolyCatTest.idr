@@ -1043,6 +1043,23 @@ reflectionTestMorphism = TermAsMorph reflectionPairedTerm
 reflectionTestTerm : SOTerm (SUNat 8)
 reflectionTestTerm = reflectionTestMorphism <! MkSUNat {m=8} 1
 
+----------------------------------------
+----------------------------------------
+---- STLC-to-SubstObjMu translation ----
+----------------------------------------
+----------------------------------------
+
+stlcTest : STLC_Term -> IO ()
+stlcTest t = putStrLn $ "STLC[" ++ show t ++ "] " ++ case stlcToCCC t of
+  Just m => "=> " ++ "SubstMorph[" ++ show m ++ "]"
+  Nothing => "is ill-typed"
+
+stlc_t0 : STLC_Term
+stlc_t0 = STLC_Unit
+
+stlc_t0_so : SignedSubstMorph
+stlc_t0_so = stlcToCCC_valid stlc_t0
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -1410,6 +1427,15 @@ polyCatTest = do
   putStrLn $ "eval (bnat4chi) 10000 9 = " ++
     show (evalByGN bnat4 SubstBool 10000 9)
   putStrLn $ "reflectionTestTerm = " ++ show (substTermToNat reflectionTestTerm)
+  putStrLn "------------------------------------"
+  putStrLn ""
+  putStrLn "------------------------------------"
+  putStrLn "---- Unrefined polynomial types ----"
+  putStrLn "------------------------------------"
+  putStrLn ""
+  stlcTest stlc_t0
+  putStrLn ""
+  putStrLn "------------------------------------"
   putStrLn ""
   putStrLn "----------------"
   putStrLn "End polyCatTest."

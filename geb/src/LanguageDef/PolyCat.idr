@@ -6170,6 +6170,21 @@ data STLC_Term : Type where
   STLC_Index : Nat -> STLC_Term
 
 public export
+Show STLC_Term where
+  show (STLC_Absurd t ty) = "absurd(" ++ show t ++ ")"
+  show STLC_Unit = "()"
+  show (STLC_Left t ty) = "inl(" ++ show t ++ ")"
+  show (STLC_Right ty t) = "inr(" ++ show t ++ ")"
+  show (STLC_Case x l r) =
+    "(" ++ show x ++ " ? " ++ show l ++ " | " ++ show r ++ ")"
+  show (STLC_Pair x y) = "(" ++ show x ++ ", " ++ show y ++ ")"
+  show (STLC_Fst x) = "fst(" ++ show x ++ ")"
+  show (STLC_Snd x) = "snd(" ++ show x ++ ")"
+  show (STLC_Lambda ty x) = "\"" ++ show ty ++ ".[" ++ show x ++ "]"
+  show (STLC_App x y) = "app(" ++ show x ++ ", " ++ show y ++ ")"
+  show (STLC_Index k) = "v" ++ show k
+
+public export
 STLC_Context : Type
 STLC_Context = List SubstObjMu
 
@@ -6189,10 +6204,15 @@ stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
   stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)
 
 public export
+SignedSubstMorph : Type
+SignedSubstMorph =
+  (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
+
+public export
 stlcToCCC_ctx :
   STLC_Context ->
   STLC_Term ->
-  Maybe (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
+  Maybe SignedSubstMorph
 stlcToCCC_ctx ctx (STLC_Absurd t ty) = do
   t' <- stlcToCCC_ctx ctx t
   case t' of
@@ -6249,8 +6269,20 @@ stlcToCCC_ctx ctx (STLC_Index v) = case inBounds v ctx of
 public export
 stlcToCCC :
   STLC_Term ->
-  Maybe (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
+  Maybe SignedSubstMorph
 stlcToCCC = stlcToCCC_ctx []
+
+public export
+stlcToCCC_valid :
+  (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (stlcToCCC t)} ->
+  SignedSubstMorph
+stlcToCCC_valid t {isValid} = fromIsJust isValid
+
+public export
+Show SignedSubstMorph where
+  show ((dom, cod) ** m) =
+    "(" ++ show dom ++ " -> " ++ show cod ++ " : " ++ showSubstMorph m ++ ")"
 
 ---------------------------------------------------
 ---------------------------------------------------
