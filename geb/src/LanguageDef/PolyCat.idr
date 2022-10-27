@@ -6145,6 +6145,15 @@ public export
 showMaybeSubstMorph : {x, y : SubstObjMu} -> Maybe (SubstMorph x y) -> String
 showMaybeSubstMorph = maybeElim showSubstMorph (show (Nothing {ty=()}))
 
+public export
+SignedBNCMorph : Type
+SignedBNCMorph = (Nat, Nat, BNCPolyM)
+
+public export
+Show SignedBNCMorph where
+  show (dom, cod, m) =
+    "(" ++ show dom ++ " -> " ++ show cod ++ " : " ++ show m ++ ")"
+
 --------------------------------
 ---- Test utility functions ----
 --------------------------------
@@ -6331,6 +6340,15 @@ public export
 Show SignedSubstMorph where
   show ((dom, cod) ** m) =
     "(" ++ show dom ++ " -> " ++ show cod ++ " : " ++ showSubstMorph m ++ ")"
+
+public export
+stlcToBNC :
+  (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (stlcToCCC t)} ->
+  SignedBNCMorph
+stlcToBNC t {isValid} =
+  let ((dom, cod) ** m) = stlcToCCC_valid t {isValid} in
+  (substObjToNat dom, substObjToNat cod, substMorphToBNC m)
 
 ---------------------------------------------------
 ---------------------------------------------------

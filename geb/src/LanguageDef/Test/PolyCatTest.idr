@@ -1054,6 +1054,15 @@ stlcTest t = putStrLn $ "STLC[" ++ show t ++ "] " ++ case stlcToCCC t of
   Just m => "=> " ++ "SubstMorph[" ++ show m ++ "]"
   Nothing => "is ill-typed"
 
+stlcAppTest :
+  (t : STLC_Term) -> {auto isValid : IsJustTrue (stlcToCCC t)} -> Nat -> IO ()
+stlcAppTest t {isValid} n = do
+  let ((dom, cod) ** m) = stlcToCCC_valid t {isValid}
+  putStrLn $ "STLC[" ++ show t ++ "] = " ++ show (substMorphToBNC m)
+  putStrLn $ "%(" ++ show n ++ ") = " ++
+    show (substMorphToFunc m $ natToInteger n)
+
+-- The unique term of type Unit.
 stlc_t0 : STLC_Term
 stlc_t0 = STLC_Unit
 
@@ -1063,6 +1072,10 @@ stlc_t0_so = stlcToCCC_valid stlc_t0
 -- The unique function from Void to Bool.
 stlc_t1 : STLC_Term
 stlc_t1 = STLC_Lambda Subst0 (STLC_Absurd (STLC_Var 0) SubstBool)
+
+-- The identity function on 3.
+stlc_t2 : STLC_Term
+stlc_t2 = STLC_Lambda (SUNat 3) (STLC_Var 0)
 
 ----------------------------------
 ----------------------------------
@@ -1439,6 +1452,7 @@ polyCatTest = do
   putStrLn ""
   stlcTest stlc_t0
   stlcTest stlc_t1
+  stlcTest stlc_t2
   putStrLn ""
   putStrLn "------------------------------------"
   putStrLn ""
