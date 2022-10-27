@@ -4465,7 +4465,42 @@ Eq SubstObjMu where
 
 public export
 substObjMuDecEq : (x, y : SubstObjMu) -> Dec (x = y)
-substObjMuDecEq x y = ?SubstObjMuDecEq_hole
+substObjMuDecEq (InSO SO0) (InSO SO0) = Yes Refl
+substObjMuDecEq (InSO SO0) (InSO SO1) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO0) (InSO (_ !!+ _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO0) (InSO (_ !!* _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO1) (InSO SO0) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO1) (InSO SO1) = Yes Refl
+substObjMuDecEq (InSO SO1) (InSO (_ !!+ _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO1) (InSO (_ !!* _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!+ _)) (InSO SO0) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!+ _)) (InSO SO1) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (w !!+ x)) (InSO (y !!+ z)) =
+  case (substObjMuDecEq w y, substObjMuDecEq x z) of
+    (Yes Refl, Yes Refl) => Yes Refl
+    (Yes Refl, No neq) => No $ \eq => case eq of Refl => neq Refl
+    (No neq, _) => No $ \eq => case eq of Refl => neq Refl
+substObjMuDecEq (InSO (_ !!+ _)) (InSO (_ !!* _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!* _)) (InSO SO0) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!* _)) (InSO SO1) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!* _)) (InSO (y !!+ w)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (w !!* x)) (InSO (y !!* z)) =
+  case (substObjMuDecEq w y, substObjMuDecEq x z) of
+    (Yes Refl, Yes Refl) => Yes Refl
+    (Yes Refl, No neq) => No $ \eq => case eq of Refl => neq Refl
+    (No neq, _) => No $ \eq => case eq of Refl => neq Refl
 
 public export
 DecEq SubstObjMu where
