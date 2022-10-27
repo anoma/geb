@@ -6201,6 +6201,10 @@ data STLC_Term : Type where
   -- Function application
   STLC_App : STLC_Term -> STLC_Term -> STLC_Term
 
+  -- Lisp-style eval: interpret a term as a function and apply it.
+  -- The type parameter is the output type.
+  STLC_Eval : SubstObjMu -> STLC_Term -> STLC_Term -> STLC_Term
+
   -- The variable at the given de Bruijn index
   STLC_Var : Nat -> STLC_Term
 
@@ -6217,6 +6221,8 @@ Show STLC_Term where
   show (STLC_Snd x) = "snd(" ++ show x ++ ")"
   show (STLC_Lambda ty x) = "\\" ++ show ty ++ ".[" ++ show x ++ "]"
   show (STLC_App x y) = "app(" ++ show x ++ ", " ++ show y ++ ")"
+  show (STLC_Eval ty f x) =
+    "eval((" ++ show ty ++ ")" ++ show f ++ ", " ++ show x ++ ")"
   show (STLC_Var k) = "v" ++ show k
 
 public export
@@ -6296,6 +6302,13 @@ stlcToCCC_ctx ctx (STLC_App f x) = do
   case decEq xcod fdom of
     Yes Refl => Just ((xdom, fcod) ** fm <! xm)
     No _ => Nothing
+stlcToCCC_ctx ctx (STLC_Eval ty f x) = do
+  ((fdom, fcod) ** fm) <- stlcToCCC_ctx ctx f
+  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
+  case (decEq fdom xdom, decEq fcod (xcod !-> ty)) of
+    (Yes Refl, Yes eq) =>
+      Just ((xdom, ty) ** soEval xcod ty <! SMPair (rewrite sym eq in fm) xm)
+    (_, _) => Nothing
 stlcToCCC_ctx ctx (STLC_Var v) = case inBounds v ctx of
   Yes ok =>
     Just ((stlcCtxToSOMu ctx, index v ctx {ok}) ** stlcCtxProj ctx v {ok})
