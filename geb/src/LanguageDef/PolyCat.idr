@@ -281,6 +281,18 @@ pfEitherArena : Type -> PolyFunc
 pfEitherArena a = (pfEitherPos a ** pfEitherDir a)
 
 public export
+pfMaybeArena : PolyFunc
+pfMaybeArena = pfEitherArena Unit
+
+public export
+pfMaybePos : Type
+pfMaybePos = pfPos pfMaybeArena
+
+public export
+pfMaybeDir : PolyCat.pfMaybePos -> Type
+pfMaybeDir = pfDir {p=pfMaybeArena}
+
+public export
 pfCoproductPos : PolyFunc -> PolyFunc -> Type
 pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
 
@@ -303,6 +315,18 @@ pfProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Either . bimap pdir qdir
 public export
 pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
 pfProductArena p q = (pfProductPos p q ** pfProductDir p q)
+
+public export
+pfSquareArena : PolyFunc -> PolyFunc
+pfSquareArena p = pfProductArena p p
+
+public export
+pfSquarePos : PolyFunc -> Type
+pfSquarePos = pfPos . pfSquareArena
+
+public export
+pfSquareDir : (p : PolyFunc) -> pfSquarePos p -> Type
+pfSquareDir p = pfDir {p=(pfSquareArena p)}
 
 public export
 pfParProductPos : PolyFunc -> PolyFunc -> Type
@@ -696,8 +720,8 @@ PFParamAlg p x a = PFAlg p (x -> a)
 
 public export
 pfParamCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
-  PFParamAlg p x a -> PolyFuncMu p -> x -> a
-pfParamCata = pfCata
+  PFParamAlg p x a -> x -> PolyFuncMu p -> a
+pfParamCata alg = flip $ pfCata alg
 
 -- Catamorphism which passes not only the output of the previous
 -- induction steps but also the original `PolyFuncMu` to the algebra.
@@ -721,9 +745,9 @@ PFParamArgAlg p@(pos ** dir) x a =
 
 public export
 pfParamArgCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
-  PFArgAlg p a -> PolyFuncMu p -> x -> a
+  PFArgAlg p a -> x -> PolyFuncMu p -> a
 pfParamArgCata {p=p@(_ ** _)} {x} {a} alg =
-  pfArgCata {p} {a=(x -> a)} $ \e, i, d => alg e i . flip d
+  flip $ pfArgCata {p} {a=(x -> a)} $ \e, i, d => alg e i . flip d
 
 -- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
 -- to the algebra.  Uses the product-hom adjunction.
@@ -1097,6 +1121,36 @@ public export
 PFCorrectComonad : Type
 PFCorrectComonad = (p : PolyFunc ** c : PFComonoid p ** PFComonoidCorrect p c)
 
+public export
+ComonoidDupOnPosId : {p : PolyFunc} -> (c : PFComonoid p) ->
+  (holds : PFComonoidCorrect p c) -> (i : pfPos p) ->
+  DPair.fst (pntOnPos {p} {q=(pfDuplicateArena p)} (pcomDup c) i) = i
+ComonoidDupOnPosId {p=(pos ** dir)}
+  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds i =
+    mkDPairInjectiveFst $ fcong $ mkDPairInjectiveFst $ rightErasure holds
+
+public export
+0 ComonoidDupOnDirPosId : {p : PolyFunc} -> (c : PFComonoid p) ->
+  (holds : PFComonoidCorrect p c) -> (i : pfPos p) ->
+  DPair.snd (pntOnPos {p} {q=(pfDuplicateArena p)} (pcomDup {p} c) i)
+    (rewrite ComonoidDupOnPosId {p} c holds i in
+      (pntOnDir {p} {q=PFIdentityArena} (pcomErase {p} c) i) ())
+    = i
+ComonoidDupOnDirPosId {p=(pos ** dir)}
+  c@(MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds i =
+  let
+    le = leftErasure holds
+    re = rightErasure holds
+    onPosId = ComonoidDupOnPosId c holds i
+    zigZagIdF = mkDPairInjectiveSndHet $ fcong {x=i} $ mkDPairInjectiveFst le
+    zigZagId = fcong {x=()} zigZagIdF
+  in
+  {-
+  replace {p=
+    (\i' => (.) (snd (dOnPos i')) (eOnDir (fst (dOnPos i'))) () = const i' ())}
+  -}
+  ?ComonoidDupOnDirPosId_hole
+
 -----------------------------------------------------------
 -----------------------------------------------------------
 ---- Polynomial comands as categories (and vice versa) ----
@@ -1143,12 +1197,14 @@ CatToPoly c = (CatToPolyPos c ** CatToPolyDir c)
 
 public export
 CatToComonoidErase : (c : CatSig) -> PolyNatTrans (CatToPoly c) PFIdentityArena
-CatToComonoidErase (MkCatSig o m i comp) = ?catToComonoidErase_hole
+CatToComonoidErase (MkCatSig o m i comp) = (const () ** \a, _ => (a ** i a))
 
 public export
 CatToComonoidDup : (c : CatSig) ->
   PolyNatTrans (CatToPoly c) (pfDuplicateArena (CatToPoly c))
-CatToComonoidDup (MkCatSig o m i comp) = ?catToComonoidDup_hole
+CatToComonoidDup (MkCatSig o m i comp) =
+  (\a => (a ** \d => fst d) **
+   \a, qd => let ((b ** f) ** (c ** g)) = qd in (c ** comp g f))
 
 public export
 CatToComonoid : (c : CatSig) -> PFComonoid (CatToPoly c)
@@ -1160,51 +1216,68 @@ CatToComonad c = (CatToPoly c ** CatToComonoid c)
 
 public export
 ComonoidToCatObj : {p : PolyFunc} -> PFComonoid p -> Type
-ComonoidToCatObj {p} (MkPFComonoid e d) = pfPos p
+ComonoidToCatObj {p} com = pfPos p
 
 public export
 ComonoidToCatEmanate : {p : PolyFunc} ->
   (c : PFComonoid p) -> ComonoidToCatObj c -> Type
-ComonoidToCatEmanate {p} (MkPFComonoid e d) a = pfDir {p} a
+ComonoidToCatEmanate {p} com a = pfDir {p} a
 
 public export
 ComonoidToCatCodom : {p : PolyFunc} -> (c : PFComonoid p) ->
+  (holds : PFComonoidCorrect p c) ->
   (a : ComonoidToCatObj c) -> ComonoidToCatEmanate c a -> ComonoidToCatObj c
-ComonoidToCatCodom {p=(pos ** dir)} (MkPFComonoid e (dOnPos ** dOnDir)) a di =
-  ?ComonoidToCatCodom_hole
+ComonoidToCatCodom {p=(pos ** dir)}
+  c@(MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds a di =
+    snd (dOnPos a) $ replace {p=dir} (sym $ ComonoidDupOnPosId c holds a) di
 
 public export
 ComonoidToCatMorph : {p : PolyFunc} ->
-  (c : PFComonoid p) -> ComonoidToCatObj c -> ComonoidToCatObj c -> Type
-ComonoidToCatMorph {p=(pos ** dir)} (MkPFComonoid e d) a b =
-  (m : dir a ** ?ComonoidToCatMorph_hole)
+  (c : PFComonoid p) -> (holds : PFComonoidCorrect p c) ->
+  ComonoidToCatObj c -> ComonoidToCatObj c -> Type
+ComonoidToCatMorph {p=p@(pos ** dir)} com@(MkPFComonoid e d) holds a b =
+  Subset0 (ComonoidToCatEmanate {p} com a)
+    (\m => ComonoidToCatCodom {p} com holds a m = b)
 
 public export
 ComonoidToCatId : {p : PolyFunc} ->
-  (c : PFComonoid p) -> (a : ComonoidToCatObj c) -> ComonoidToCatMorph c a a
-ComonoidToCatId = ?ComonoidToCatId_hole
+  (c : PFComonoid p) -> (holds : PFComonoidCorrect p c) ->
+  (a : ComonoidToCatObj c) -> ComonoidToCatMorph c holds a a
+ComonoidToCatId {p=(pos ** dir)}
+  c@(MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds a =
+    Element0 (eOnDir a ()) (ComonoidDupOnDirPosId c holds a)
 
 public export
 ComonoidToCatComp : {p : PolyFunc} ->
-  (cat : PFComonoid p) ->
-  {a, b, c : ComonoidToCatObj cat} ->
-  ComonoidToCatMorph cat b c ->
-  ComonoidToCatMorph cat a b ->
-  ComonoidToCatMorph cat a c
-ComonoidToCatComp = ?ComonoidToCatComp_hole
+  (com : PFComonoid p) -> (holds : PFComonoidCorrect p com) ->
+  {a, b, c : ComonoidToCatObj com} ->
+  ComonoidToCatMorph com holds b c ->
+  ComonoidToCatMorph com holds a b ->
+  ComonoidToCatMorph com holds a c
+ComonoidToCatComp {p=(pos ** dir)}
+  (MkPFComonoid (eOnPos ** eOnDir) (dOnPos ** dOnDir)) holds {a} {b} {c}
+  (Element0 gm gcod) (Element0 fm fcod) =
+    let onPosId = ComonoidDupOnPosId _ holds in
+    Element0
+      (dOnDir a
+        (replace {p=dir} (sym (onPosId a)) fm **
+         replace {p=dir} (sym fcod) gm))
+      (trans (?ComonoidToCatComp_hole_codomain_correct) gcod)
 
 public export
-ComonoidToCat : {p : PolyFunc} -> PFComonoid p -> CatSig
-ComonoidToCat c =
+ComonoidToCat : {p : PolyFunc} ->
+  (c : PFComonoid p) -> PFComonoidCorrect p c -> CatSig
+ComonoidToCat c holds =
   MkCatSig
     (ComonoidToCatObj c)
-    (ComonoidToCatMorph c)
-    (ComonoidToCatId c)
-    (ComonoidToCatComp c)
+    (ComonoidToCatMorph c holds)
+    (ComonoidToCatId c holds)
+    (ComonoidToCatComp c holds)
 
 public export
-ComonadToCat : PFComonad -> CatSig
-ComonadToCat (p ** c) = ComonoidToCat {p} c
+ComonadToCat : (com : PFComonad) ->
+  PFComonoidCorrect (fst com) (snd com) -> CatSig
+ComonadToCat (p ** c) holds = ComonoidToCat {p} c holds
 
 ------------------------------------
 ------------------------------------
@@ -1294,6 +1367,88 @@ PFEitherMonoid a = MkPFMonoid (PFEitherReturn a) (PFEitherJoin a)
 public export
 PFEitherMonad : Type -> PFMonad
 PFEitherMonad a = (pfEitherArena a ** PFEitherMonoid a)
+
+-----------------------
+---- Product monad ----
+-----------------------
+
+public export
+PFProductReturnOnPos : {p, q : PolyFunc} -> PFMonoid p -> PFMonoid q ->
+  PFIdentityPos -> pfProductPos p q
+PFProductReturnOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+  (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir)) () =
+    (prOnPos (), qrOnPos ())
+
+public export
+PFProductReturnOnDir : {p, q : PolyFunc} ->
+  (pmon : PFMonoid p) -> (qmon : PFMonoid q) ->
+  (i : PFIdentityPos) ->
+  pfProductDir p q (PFProductReturnOnPos pmon qmon i) -> PFIdentityDir i
+PFProductReturnOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+  (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir)) () d =
+    ()
+
+public export
+PFProductReturn : {p, q : PolyFunc} ->
+  (pmon : PFMonoid p) -> (qmon : PFMonoid q) ->
+  PolyNatTrans PFIdentityArena (pfProductArena p q)
+PFProductReturn pmon qmon =
+  (PFProductReturnOnPos pmon qmon ** PFProductReturnOnDir pmon qmon)
+
+public export
+PFProductJoinOnPos : {p, q : PolyFunc} -> PFMonoid p -> PFMonoid q ->
+  pfCompositionPos (pfProductArena p q) (pfProductArena p q) ->
+  pfProductPos p q
+PFProductJoinOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+  (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir))
+  ((pi, qi) ** d) =
+    (pjOnPos (pi ** fst . d . Left),
+     qjOnPos (qi ** snd . d . Right))
+
+public export
+PFProductJoinOnDir : {p, q : PolyFunc} ->
+  (pmon : PFMonoid p) -> (qmon : PFMonoid q) ->
+  (i : pfCompositionPos (pfProductArena p q) (pfProductArena p q)) ->
+  pfProductDir p q (PFProductJoinOnPos pmon qmon i) ->
+  pfCompositionDir (pfProductArena p q) (pfProductArena p q) i
+PFProductJoinOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+  (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir))
+  ((pi, qi) ** di) (Left dl)
+    with (di $ Left $ fst $ pjOnDir (pi ** fst . di . Left) dl) proof prf
+      PFProductJoinOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+        (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+        (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir))
+        ((pi, qi) ** di) (Left dl) | (pil, qil) =
+          (Left (fst (pjOnDir (pi ** fst . di . Left) dl)) **
+           rewrite prf in
+           rewrite sym (cong fst prf) in
+           Left $ snd $ pjOnDir (pi ** fst . di . Left) dl)
+PFProductJoinOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+  (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir))
+  ((pi, qi) ** di) (Right dr)
+    with (di $ Right $ fst $ qjOnDir (qi ** snd . di . Right) dr) proof prf
+      PFProductJoinOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+        (MkPFMonoid (prOnPos ** prOnDir) (pjOnPos ** pjOnDir))
+        (MkPFMonoid (qrOnPos ** qrOnDir) (qjOnPos ** qjOnDir))
+        ((pi, qi) ** di) (Right dr) | (pir, qir) =
+          (Right (fst (qjOnDir (qi ** snd . di . Right) dr)) **
+           rewrite prf in
+           rewrite sym (cong snd prf) in
+           Right $ snd $ qjOnDir (qi ** snd . di . Right) dr)
+
+public export
+PFProductJoin : {p, q : PolyFunc} ->
+  (pmon : PFMonoid p) -> (qmon : PFMonoid q) ->
+  PolyNatTrans
+    (pfCompositionArena (pfProductArena p q) (pfProductArena p q))
+    (pfProductArena p q)
+PFProductJoin pmon qmon =
+  (PFProductJoinOnPos pmon qmon ** PFProductJoinOnDir pmon qmon)
 
 --------------------
 ---- Free monad ----
@@ -1411,7 +1566,7 @@ spfIdx : {0 a, b : Type} ->
 spfIdx {spf} = DPair.snd spf
 
 public export
-InterpSPFunc : {a, b : Type} -> SlicePolyFunc a b -> SliceObj a -> SliceObj b
+InterpSPFunc : {a, b : Type} -> SlicePolyFunc a b -> SliceFunctor a b
 InterpSPFunc {a} {b} ((pos ** dir) ** idx) sa eb =
   (i : pos **
    param : dir i -> a **
@@ -4308,6 +4463,49 @@ public export
 Eq SubstObjMu where
   (==) = substObjPairCata SubstObjMuEqAlg
 
+public export
+substObjMuDecEq : (x, y : SubstObjMu) -> Dec (x = y)
+substObjMuDecEq (InSO SO0) (InSO SO0) = Yes Refl
+substObjMuDecEq (InSO SO0) (InSO SO1) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO0) (InSO (_ !!+ _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO0) (InSO (_ !!* _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO1) (InSO SO0) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO1) (InSO SO1) = Yes Refl
+substObjMuDecEq (InSO SO1) (InSO (_ !!+ _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO1) (InSO (_ !!* _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!+ _)) (InSO SO0) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!+ _)) (InSO SO1) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (w !!+ x)) (InSO (y !!+ z)) =
+  case (substObjMuDecEq w y, substObjMuDecEq x z) of
+    (Yes Refl, Yes Refl) => Yes Refl
+    (Yes Refl, No neq) => No $ \eq => case eq of Refl => neq Refl
+    (No neq, _) => No $ \eq => case eq of Refl => neq Refl
+substObjMuDecEq (InSO (_ !!+ _)) (InSO (_ !!* _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!* _)) (InSO SO0) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!* _)) (InSO SO1) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!* _)) (InSO (y !!+ w)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (w !!* x)) (InSO (y !!* z)) =
+  case (substObjMuDecEq w y, substObjMuDecEq x z) of
+    (Yes Refl, Yes Refl) => Yes Refl
+    (Yes Refl, No neq) => No $ \eq => case eq of Refl => neq Refl
+    (No neq, _) => No $ \eq => case eq of Refl => neq Refl
+
+public export
+DecEq SubstObjMu where
+  decEq = substObjMuDecEq
+
 -----------------------------------------------
 ---- Normalization of substitutive objects ----
 -----------------------------------------------
@@ -5960,6 +6158,179 @@ evalByGN : (x, y : SubstObjMu) -> Nat -> Nat -> Maybe Nat
 evalByGN x y m n with (substGNumToMorph x y m, natToSubstTerm x n)
   evalByGN x y m n | (Just f, Just t) = Just $ substTermToNat {a=y} (f <! t)
   evalByGN x y m n | _ = Nothing
+
+---------------------------------------
+---------------------------------------
+---- STLC-to-SubstObjMu/SubstMorph ----
+---------------------------------------
+---------------------------------------
+
+public export
+data STLC_Term : Type where
+  -- The "void" or "absurd" function, which takes a term of type Void
+  -- to any type; there's no explicit constructor for terms of type Void,
+  -- but a lambda could introduce one.  The SubstObjMu is the type of the
+  -- resulting term (since we can get any type from a term of Void).
+  STLC_Absurd : STLC_Term -> SubstObjMu -> STLC_Term
+
+  -- The only term of type Unit.
+  STLC_Unit : STLC_Term
+
+  -- Construct coproducts.  In each case, the type of the injected term
+  -- tells us the type of one side of the coproduct, so we provide a
+  -- SubstObjMu to tell us the type of the other side.
+  STLC_Left : STLC_Term -> SubstObjMu -> STLC_Term
+  STLC_Right : SubstObjMu -> STLC_Term -> STLC_Term
+
+  -- Case statement : parameters are expression to case on, which must be
+  -- a coproduct, and then left and right case, which must be of the same
+  -- type, which becomes the type of the overall term.
+  STLC_Case : STLC_Term -> STLC_Term -> STLC_Term -> STLC_Term
+
+  -- Construct a term of a pair type
+  STLC_Pair : STLC_Term -> STLC_Term -> STLC_Term
+
+  -- Projections; in each case, the given term must be of a product type
+  STLC_Fst : STLC_Term -> STLC_Term
+  STLC_Snd : STLC_Term -> STLC_Term
+
+  -- Lambda abstraction:  introduce into the context a (de Bruijn-indexed)
+  -- variable of the given type, and produce a term with that extended context.
+  STLC_Lambda : SubstObjMu -> STLC_Term -> STLC_Term
+
+  -- Function application
+  STLC_App : STLC_Term -> STLC_Term -> STLC_Term
+
+  -- Lisp-style eval: interpret a term as a function and apply it.
+  -- The type parameter is the output type.
+  STLC_Eval : SubstObjMu -> STLC_Term -> STLC_Term -> STLC_Term
+
+  -- The variable at the given de Bruijn index
+  STLC_Var : Nat -> STLC_Term
+
+public export
+Show STLC_Term where
+  show (STLC_Absurd t ty) = "absurd(" ++ show t ++ ")"
+  show STLC_Unit = "()"
+  show (STLC_Left t ty) = "inl(" ++ show t ++ ")"
+  show (STLC_Right ty t) = "inr(" ++ show t ++ ")"
+  show (STLC_Case x l r) =
+    "(" ++ show x ++ " ? " ++ show l ++ " | " ++ show r ++ ")"
+  show (STLC_Pair x y) = "(" ++ show x ++ ", " ++ show y ++ ")"
+  show (STLC_Fst x) = "fst(" ++ show x ++ ")"
+  show (STLC_Snd x) = "snd(" ++ show x ++ ")"
+  show (STLC_Lambda ty x) = "\\" ++ show ty ++ ".[" ++ show x ++ "]"
+  show (STLC_App x y) = "app(" ++ show x ++ ", " ++ show y ++ ")"
+  show (STLC_Eval ty f x) =
+    "eval((" ++ show ty ++ ")" ++ show f ++ ", " ++ show x ++ ")"
+  show (STLC_Var k) = "v" ++ show k
+
+public export
+STLC_Context : Type
+STLC_Context = List SubstObjMu
+
+public export
+stlcCtxToSOMu : STLC_Context -> SubstObjMu
+stlcCtxToSOMu = foldr (!*) Subst1
+
+public export
+stlcCtxProj :
+  (ctx : STLC_Context) -> (n : Nat) -> {auto 0 ok : InBounds n ctx} ->
+  SubstMorph (stlcCtxToSOMu ctx) (index n ctx {ok})
+stlcCtxProj (ty :: ctx) Z {ok=InFirst} =
+  SMProjLeft ty (stlcCtxToSOMu ctx)
+stlcCtxProj (ty :: ctx) Z {ok=InLater} impossible
+stlcCtxProj (ty :: ctx) (S n) {ok=InFirst} impossible
+stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
+  stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)
+
+public export
+SignedSubstMorph : Type
+SignedSubstMorph =
+  (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
+
+public export
+stlcToCCC_ctx :
+  STLC_Context ->
+  STLC_Term ->
+  Maybe SignedSubstMorph
+stlcToCCC_ctx ctx (STLC_Absurd t ty) = do
+  t' <- stlcToCCC_ctx ctx t
+  case t' of
+    ((dom, InSO SO0) ** m) => Just ((dom, ty) ** SMFromInit ty <! m)
+    _ => Nothing
+stlcToCCC_ctx ctx STLC_Unit =
+  let dom = stlcCtxToSOMu ctx in
+  Just ((dom, Subst1) ** SMToTerminal dom)
+stlcToCCC_ctx ctx (STLC_Left t ty) = do
+  ((dom, cod) ** m) <- stlcToCCC_ctx ctx t
+  Just ((dom, cod !+ ty) ** SMInjLeft cod ty <! m)
+stlcToCCC_ctx ctx (STLC_Right ty t) = do
+  ((dom, cod) ** m) <- stlcToCCC_ctx ctx t
+  Just ((dom, ty !+ cod) ** SMInjRight ty cod <! m)
+stlcToCCC_ctx ctx (STLC_Case x l r) = do
+  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
+  ((ldom, lcod) ** lm) <- stlcToCCC_ctx ctx l
+  ((rdom, rcod) ** rm) <- stlcToCCC_ctx ctx r
+  case xcod of
+    (InSO (xcodl !!+ xcodr)) => case
+      (decEq xcodl ldom, decEq xcodr rdom, decEq lcod rcod) of
+        (Yes Refl, Yes Refl, Yes Refl) =>
+          Just ((xdom, lcod) ** SMCase lm rm <! xm)
+        _ => Nothing
+    _ => Nothing
+stlcToCCC_ctx ctx (STLC_Pair t1 t2) = do
+  ((dom1, cod1) ** m1) <- stlcToCCC_ctx ctx t1
+  ((dom2, cod2) ** m2) <- stlcToCCC_ctx ctx t2
+  case decEq dom1 dom2 of
+    Yes Refl => Just ((dom2, cod1 !* cod2) ** SMPair m1 m2)
+    _ => Nothing
+stlcToCCC_ctx ctx (STLC_Fst x) = do
+  ((dom, cod) ** m) <- stlcToCCC_ctx ctx x
+  case cod of
+    InSO (codl !!* codr) => Just ((dom, codl) ** SMProjLeft codl codr <! m)
+    _ => Nothing
+stlcToCCC_ctx ctx (STLC_Snd x) = do
+  ((dom, cod) ** m) <- stlcToCCC_ctx ctx x
+  case cod of
+    InSO (codl !!* codr) => Just ((dom, codr) ** SMProjRight codl codr <! m)
+    _ => Nothing
+stlcToCCC_ctx ctx (STLC_Lambda vty t) = stlcToCCC_ctx (vty :: ctx) t
+stlcToCCC_ctx ctx (STLC_App f x) = do
+  ((fdom, fcod) ** fm) <- stlcToCCC_ctx ctx f
+  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
+  case decEq xcod fdom of
+    Yes Refl => Just ((xdom, fcod) ** fm <! xm)
+    No _ => Nothing
+stlcToCCC_ctx ctx (STLC_Eval ty f x) = do
+  ((fdom, fcod) ** fm) <- stlcToCCC_ctx ctx f
+  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
+  case (decEq fdom xdom, decEq fcod (xcod !-> ty)) of
+    (Yes Refl, Yes eq) =>
+      Just ((xdom, ty) ** soEval xcod ty <! SMPair (rewrite sym eq in fm) xm)
+    (_, _) => Nothing
+stlcToCCC_ctx ctx (STLC_Var v) = case inBounds v ctx of
+  Yes ok =>
+    Just ((stlcCtxToSOMu ctx, index v ctx {ok}) ** stlcCtxProj ctx v {ok})
+  No _ => Nothing
+
+public export
+stlcToCCC :
+  STLC_Term ->
+  Maybe SignedSubstMorph
+stlcToCCC = stlcToCCC_ctx []
+
+public export
+stlcToCCC_valid :
+  (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (stlcToCCC t)} ->
+  SignedSubstMorph
+stlcToCCC_valid t {isValid} = fromIsJust isValid
+
+public export
+Show SignedSubstMorph where
+  show ((dom, cod) ** m) =
+    "(" ++ show dom ++ " -> " ++ show cod ++ " : " ++ showSubstMorph m ++ ")"
 
 ---------------------------------------------------
 ---------------------------------------------------

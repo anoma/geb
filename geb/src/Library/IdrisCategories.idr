@@ -118,7 +118,7 @@ SliceFunctor a b = SliceObj a -> SliceObj b
 -- Also sometimes called the pullback functor.
 public export
 BaseChangeF : {a, b : Type} -> (b -> a) -> SliceFunctor a b
-BaseChangeF f sla elemb = sla $ f elemb
+BaseChangeF f sla = sla . f
 
 public export
 PreImage : {a, b : Type} -> (a -> b) -> b -> Type
@@ -155,6 +155,17 @@ Pi {a} p = (x : a) -> p x
 public export
 Sigma : {a : Type} -> SliceObj a -> Type
 Sigma {a} p = (x : a ** p x)
+
+-- A dependent polynomial functor can be defined as a composition of
+-- a base change followed by a dependent product followed by a dependent
+-- coproduct.
+public export
+DepPolyF : {w, x, y, z : Type} ->
+  (x -> w) -> (x -> y) -> (y -> z) -> SliceFunctor w z
+DepPolyF {w} {x} {y} {z} fxw predyx predzy =
+  DepCoprodF {a=y} {b=z} predzy
+  . DepProdF {a=x} {b=y} predyx
+  . BaseChangeF fxw
 
 public export
 SigmaToPair : {0 a, b : Type} -> (Sigma {a} (const b)) -> (a, b)
@@ -972,6 +983,85 @@ public export
 CoeqCoalg : {f : Type -> Type} -> {pf : CoeqPredF f} ->
   NormalizerF pf -> Coequalized -> Type
 CoeqCoalg nf x = CoequalizedMorphism x (CoequalizedF nf x)
+
+---------------------------------------------
+---------------------------------------------
+---- Refined polynomial (slice) functors ----
+---------------------------------------------
+---------------------------------------------
+
+-- The dependent product functor induced by the given subtype family.
+-- Right adjoint to the base change functor.
+public export
+RefinedProdF : {a, b : Type} -> (b -> DecPred a) -> SliceFunctor a b
+RefinedProdF {a} {b} pred sla elemb =
+  (elema : Refinement {a} (pred elemb)) -> sla (shape elema)
+
+-- The dependent product functor induced by the given subtype family.
+-- Left adjoint to the base change functor.
+public export
+RefinedCoprodF : {a, b : Type} -> (b -> DecPred a) -> SliceFunctor a b
+RefinedCoprodF {a} {b} pred sla elemb =
+  (elema : Refinement {a} (pred elemb) ** sla (shape elema))
+
+-- A dependent polynomial functor can be defined as a composition of
+-- a base change followed by a dependent product followed by a dependent
+-- coproduct.
+public export
+RefinedPolyF : {w, x, y, z : Type} ->
+  (x -> w) -> (y -> DecPred x) -> (z -> DecPred y) -> SliceFunctor w z
+RefinedPolyF {w} {x} {y} {z} fxw predyx predzy =
+  RefinedCoprodF {a=y} {b=z} predzy
+  . RefinedProdF {a=x} {b=y} predyx
+  . BaseChangeF fxw
+
+public export
+RefinedPolyFPred : {w, x, y, z : Type} ->
+  (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
+  (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) -> DecPred z
+RefinedPolyFPred {w} {x} {y} {z} fxw predyx predzy p q f ez =
+  ?RefinedPolyFPred_hole
+
+public export
+RefinedPolyFSignature : {w, x, y, z : Type} ->
+  (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
+  (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) -> Type
+RefinedPolyFSignature {w} {x} {y} {z} fxw predyx predzy p q f =
+  Refinement {a=z} $ RefinedPolyFPred {w} {x} {y} {z} fxw predyx predzy p q f
+
+public export
+SigmaSigmaRefinedPolyF : {w, x, y, z : Type} ->
+  (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
+  (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
+  Sigma p -> Sigma (q . f)
+SigmaSigmaRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f (ew ** ep) =
+  (?SigmaSigmaRefinedPolyF_hole_ew **
+   ?SigmaSigmaRefinedPolyF_hole_eq)
+
+public export
+SigmaPiRefinedPolyF : {w, x, y, z : Type} ->
+  (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
+  (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
+  Sigma p -> Pi (q . f)
+SigmaPiRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f (ew ** ep) ew' =
+  ?SigmaPiRefinedPolyF_hole_eq
+
+public export
+PiSigmaRefinedPolyF : {w, x, y, z : Type} ->
+  (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
+  (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
+  Pi p -> Sigma (q . f)
+PiSigmaRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f pip =
+  (?PiSigmaRefinedPolyF_hole_ew **
+   ?PiSigmaRefinedPolyF_hole_eq)
+
+public export
+PiPiRefinedPolyF : {w, x, y, z : Type} ->
+  (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
+  (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
+  Pi p -> Pi (q . f)
+PiPiRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f pip ew =
+  ?PiPiRefinedPolyF_hole_eq
 
 --------------------------------------------------
 --------------------------------------------------
@@ -2203,6 +2293,30 @@ public export
 TraversalP : OpticSig
 TraversalP = ExOpticP TraversalShape
 
+-------------------------
+-------------------------
+----- Kan extensions ----
+-------------------------
+-------------------------
+
+public export
+FunctorExp : (Type -> Type) -> Type -> Type -> Type
+FunctorExp g a = CovarHomFunc a . g
+
+-- The right Kan extension of `g` along `j` (sometimes written `g/j`).
+public export
+RKanExt : (g, j : Type -> Type) -> Type -> Type
+RKanExt g j a = NaturalTransformation (FunctorExp j a) g
+
+public export
+ExpFunctor : (Type -> Type) -> Type -> Type -> Type
+ExpFunctor g a = ContravarHomFunc a . g
+
+-- The left Kan extension of `g` along `j`.
+public export
+LKanExt : (g, j : Type -> Type) -> Type -> Type
+LKanExt g j a = (b : Type ** ExpFunctor j a b -> g b)
+
 -----------------------
 -----------------------
 ---- Continuations ----
@@ -2223,14 +2337,10 @@ CPSTransformSig : (a, b : Type) -> Type
 CPSTransformSig a b = (b -> a) -> b -> Continuation a
 
 public export
-FunctorExp : (Type -> Type) -> Type -> Type -> Type
-FunctorExp g a b = a -> g b
-
-public export
 record Codensity (m : Type -> Type) (a : Type) where
   constructor MkCodensity
   -- Codensity m a = (b : Type) -> (a -> m b) -> m b
-  runCodensity : NaturalTransformation (FunctorExp m a) m
+  runCodensity : RKanExt m m a
 
 public export
 CodensityFunctor : (f : Type -> Type) -> Functor (Codensity f)
@@ -2300,7 +2410,7 @@ improve {f} isF allWrap {isM} =
 
 public export
 wrapCodensity :
-  {m : Type -> Type} -> ((a : Type) -> m a -> m a) -> Codensity m ()
+  {m : Type -> Type} -> (NaturalTransformation m m) -> Codensity m ()
 wrapCodensity f = MkCodensity $ \ty, k => f ty (k ())
 
 public export
@@ -2309,8 +2419,20 @@ reset = lift {m} {t=Codensity} . lowerCodensity {f=m}
 
 public export
 shift : Monad m => {a : Type} ->
-  ((b : Type) -> (a -> m b) -> Codensity m b) -> Codensity m a
+  (NaturalTransformation (FunctorExp m a) (Codensity m)) -> Codensity m a
 shift {a} f = MkCodensity $ \y => lowerCodensity . f y
+
+-------------------------
+-------------------------
+---- Density comonad ----
+-------------------------
+-------------------------
+
+public export
+record Density (m : Type -> Type) (a : Type) where
+  constructor MkDensity
+  -- Density m a = (b : Type) -> (m b -> a) -> m b
+  runDensity : LKanExt m m a
 
 ----------------------------
 ----------------------------

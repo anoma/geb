@@ -42,9 +42,9 @@ public export
 STMu : Type
 STMu = PolyFuncMu SubstTermPF
 
-----------------------------------------------------
----- Least fixed point, algebras, catamorphisms ----
-----------------------------------------------------
+---------------------------------
+---- Algebras, catamorphisms ----
+---------------------------------
 
 public export
 STAlg : Type -> Type
@@ -176,6 +176,30 @@ SOAlg = PFAlg SubstObjPF
 public export
 soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
 soCata = pfCata {p=SubstObjPF}
+
+-----------------------------------------------------
+---- Term representation of substitutive objects ----
+-----------------------------------------------------
+
+public export
+AsSubstObjAlg :
+  PFParamAlg SubstTermPF (SubstObjPos, SOMu -> Maybe SOMu) (Maybe SOMu)
+AsSubstObjAlg STPosLeaf dir (i, cont) = ?IsSubstObj_alg_hole_0
+AsSubstObjAlg STPosLeft dir (i, cont) = ?IsSubstObj_alg_hole_1
+AsSubstObjAlg STPosRight dir (i, cont) = ?IsSubstObj_alg_hole_2
+AsSubstObjAlg STPosPair dir (i, cont) = ?IsSubstObj_alg_hole_3
+
+public export
+asSubstObj : STMu -> Maybe SOMu
+asSubstObj = pfParamCata AsSubstObjAlg (SOPos0, const Nothing)
+
+public export
+isSubstObj : STMu -> Bool
+isSubstObj = isJust . asSubstObj
+
+public export
+SubstObjTerm : Type
+SubstObjTerm = RefinedST isSubstObj
 
 -------------------
 ---- Utilities ----
