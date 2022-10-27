@@ -1433,9 +1433,9 @@ polyCatTest = do
   putStrLn $ "reflectionTestTerm = " ++ show (substTermToNat reflectionTestTerm)
   putStrLn "------------------------------------"
   putStrLn ""
-  putStrLn "------------------------------------"
-  putStrLn "---- Unrefined polynomial types ----"
-  putStrLn "------------------------------------"
+  putStrLn "---------------------------------"
+  putStrLn "---- STLC-to-CCC translation ----"
+  putStrLn "---------------------------------"
   putStrLn ""
   stlcTest stlc_t0
   stlcTest stlc_t1
