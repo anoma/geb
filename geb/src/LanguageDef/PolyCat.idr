@@ -6202,7 +6202,7 @@ data STLC_Term : Type where
   STLC_App : STLC_Term -> STLC_Term -> STLC_Term
 
   -- The variable at the given de Bruijn index
-  STLC_Index : Nat -> STLC_Term
+  STLC_Var : Nat -> STLC_Term
 
 public export
 Show STLC_Term where
@@ -6215,9 +6215,9 @@ Show STLC_Term where
   show (STLC_Pair x y) = "(" ++ show x ++ ", " ++ show y ++ ")"
   show (STLC_Fst x) = "fst(" ++ show x ++ ")"
   show (STLC_Snd x) = "snd(" ++ show x ++ ")"
-  show (STLC_Lambda ty x) = "\"" ++ show ty ++ ".[" ++ show x ++ "]"
+  show (STLC_Lambda ty x) = "\\" ++ show ty ++ ".[" ++ show x ++ "]"
   show (STLC_App x y) = "app(" ++ show x ++ ", " ++ show y ++ ")"
-  show (STLC_Index k) = "v" ++ show k
+  show (STLC_Var k) = "v" ++ show k
 
 public export
 STLC_Context : Type
@@ -6296,7 +6296,7 @@ stlcToCCC_ctx ctx (STLC_App f x) = do
   case decEq xcod fdom of
     Yes Refl => Just ((xdom, fcod) ** fm <! xm)
     No _ => Nothing
-stlcToCCC_ctx ctx (STLC_Index v) = case inBounds v ctx of
+stlcToCCC_ctx ctx (STLC_Var v) = case inBounds v ctx of
   Yes ok =>
     Just ((stlcCtxToSOMu ctx, index v ctx {ok}) ** stlcCtxProj ctx v {ok})
   No _ => Nothing

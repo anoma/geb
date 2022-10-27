@@ -1060,6 +1060,10 @@ stlc_t0 = STLC_Unit
 stlc_t0_so : SignedSubstMorph
 stlc_t0_so = stlcToCCC_valid stlc_t0
 
+-- The unique function from Void to Bool.
+stlc_t1 : STLC_Term
+stlc_t1 = STLC_Lambda Subst0 (STLC_Absurd (STLC_Var 0) SubstBool)
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -1434,6 +1438,7 @@ polyCatTest = do
   putStrLn "------------------------------------"
   putStrLn ""
   stlcTest stlc_t0
+  stlcTest stlc_t1
   putStrLn ""
   putStrLn "------------------------------------"
   putStrLn ""
