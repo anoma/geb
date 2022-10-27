@@ -2,7 +2,7 @@
  
 open import Agda.Primitive using (Level; lzero; lsuc; _⊔_; Setω)
 
-module geb-test where
+module geb where
 
   import HoTT
 
