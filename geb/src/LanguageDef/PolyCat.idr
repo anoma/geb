@@ -924,47 +924,68 @@ pfNuCata {p=p@(pos ** dir)} {a} alg (InPFN i da) =
 ---- P-trees ----
 -----------------
 
+-- A path through a p-tree whose last vertex is labeled with the given position.
 public export
-PPath : PolyFunc -> Type
-PPath p = List $ pfDerivativePos p
+data PPathPos : (p : PolyFunc) -> pfPos p -> Type where
+  PPRoot : {p : PolyFunc} -> (i : pfPos p) -> PPathPos p i
+  PPPath : {p : PolyFunc} -> {i : pfPos p} ->
+    PPathPos p i -> pfDir {p} i -> (j : pfPos p) -> PPathPos p j
 
 public export
-dirToDP : {p : PolyFunc} -> {i : pfPos p} ->
-  pfDir {p} i -> DPair (pfPos p) (pfDir {p})
-dirToDP {p} {i} di = (i ** di)
+PPath : PolyFunc -> Type
+PPath p = DPair (pfPos p) (PPathPos p)
 
 public export
 PPathPred : PolyFunc -> Type
-PPathPred p = PPath p -> Maybe (pfPos p)
+PPathPred p = (i : pfPos p) -> PPathPos p i -> pfDir {p} i -> Maybe (pfPos p)
+
+-- A proof that the given predicate can generate the given path.
+public export
+data PPathPredGenPos : {p : PolyFunc} ->
+    PPathPred p -> (i : pfPos p) -> PPathPos p i -> Type where
+  PPGRoot : {p : PolyFunc} -> (pred : PPathPred p) ->
+    (i : pfPos p) -> PPathPredGenPos pred i (PPRoot i)
+  PPGPath : {p : PolyFunc} -> {pred : PPathPred p} ->
+    {i : pfPos p} -> {ppi : PPathPos p i} ->
+    PPathPredGenPos {p} pred i ppi ->
+    (di : pfDir {p} i) -> (j : pfPos p) -> pred i ppi di = Just j ->
+    PPathPredGenPos {p} pred j (PPPath {p} {i} ppi di j)
 
 public export
-PPathPredCovers : {p : PolyFunc} -> PPathPred p -> PPath p -> Type
-PPathPredCovers {p} pred pp = IsJustTrue $ pred pp
+PPathPredNotGenPos : {p : PolyFunc} ->
+  PPathPred p -> (i : pfPos p) -> PPathPos p i -> Type
+PPathPredNotGenPos {p} pp i ppi = Not $ PPathPredGenPos pp i ppi
 
 public export
-ppathPredNext : {p : PolyFunc} -> (pred : PPathPred p) -> (pp : PPath p) ->
-  {auto covers : PPathPredCovers {p} pred pp} -> pfPos p
-ppathPredNext {p} pred pp {covers} = fromIsJust covers
+PPathPredGen : {p : PolyFunc} -> PPathPred p -> PPath p -> Type
+PPathPredGen {p} pred (i ** ppi) = PPathPredGenPos {p} pred i ppi
 
 public export
-PPathPredCoversNil : {p : PolyFunc} -> PPathPred p -> Type
-PPathPredCoversNil {p} pred = PPathPredCovers {p} pred []
+PPathPredNotGen : {p : PolyFunc} -> PPathPred p -> PPath p -> Type
+PPathPredNotGen {p} pred pp = Not $ PPathPredGen {p} pred pp
 
 public export
-PPathPredCoversCons : {p : PolyFunc} -> PPathPred p -> Type
-PPathPredCoversCons {p} pred =
-  (pp : PPath p) -> {auto covers : PPathPredCovers pred pp} ->
-  (di : pfDir {p} (ppathPredNext {p} pred pp {covers})) ->
-  PPathPredCovers pred (dirToDP di :: pp)
+PPathPredGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
+PPathPredGenCorrect {p} pred =
+  (i : pfPos p) -> (ppi : PPathPos p i) ->
+  PPathPredGenPos {p} pred i ppi -> (di : pfDir {p} i) ->
+  IsJustTrue (pred i ppi di)
 
 public export
-PPathPredIsCovering : {p : PolyFunc} -> PPathPred p -> Type
-PPathPredIsCovering {p} pred =
-  (PPathPredCoversNil {p} pred, PPathPredCoversCons {p} pred)
+PPathPredNotGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
+PPathPredNotGenCorrect {p} pred =
+  (i : pfPos p) -> (ppi : PPathPos p i) ->
+  PPathPredNotGenPos {p} pred i ppi -> (di : pfDir {p} i) ->
+  IsNothingTrue (pred i ppi di)
+
+public export
+PPathPredCorrect : {p : PolyFunc} -> PPathPred p -> Type
+PPathPredCorrect {p} pred =
+  (PPathPredGenCorrect {p} pred, PPathPredNotGenCorrect {p} pred)
 
 public export
 PTree : PolyFunc -> Type
-PTree p = DPair (PPathPred p) (PPathPredIsCovering {p})
+PTree p = DPair (PPathPred p) (PPathPredCorrect {p})
 
 --------------------------------------
 ---- Polynomial (cofree) comonads ----

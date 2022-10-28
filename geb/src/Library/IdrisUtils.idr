@@ -262,6 +262,10 @@ IsJustTrue : {a : Type} -> Maybe a -> Type
 IsJustTrue x = isJust x = True
 
 public export
+IsNothingTrue : {a : Type} -> Maybe a -> Type
+IsNothingTrue x = isJust x = False
+
+public export
 andLeft : {p, q : Bool} -> IsTrue (p && q) -> IsTrue p
 andLeft {p=True} {q=True} Refl = Refl
 andLeft {p=True} {q=False} Refl impossible
