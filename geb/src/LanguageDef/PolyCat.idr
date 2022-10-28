@@ -554,6 +554,18 @@ pfHomToCompArena p q r =
   pfSetCoproductArena {a=(pfPos p -> pfPos q)} $
     \f => pfHomObj (pfPosChangeArena p q f) r
 
+public export
+pfDerivativePos : PolyFunc -> Type
+pfDerivativePos p = DPair (pfPos p) (pfDir {p})
+
+public export
+pfDerivativeDir : (p : PolyFunc) -> pfDerivativePos p -> Type
+pfDerivativeDir p (i ** di) = DPair (pfDir {p} i) (Not . Equal di)
+
+public export
+pfDerivativeArena : PolyFunc -> Type
+pfDerivativeArena p = DPair (pfDerivativePos p) (pfDerivativeDir p)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Composition of natural transformations ----
