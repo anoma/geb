@@ -926,7 +926,7 @@ pfNuCata {p=p@(pos ** dir)} {a} alg (InPFN i da) =
 
 public export
 PPath : PolyFunc -> Type
-PPath p = List (DPair (pfPos p) (pfDir {p}))
+PPath p = List $ pfDerivativePos p
 
 public export
 dirToDP : {p : PolyFunc} -> {i : pfPos p} ->
