@@ -4768,6 +4768,15 @@ soProdLeftAssoc {w} {x} {y} {z} f =
       (SMProjLeft _ _ <! SMProjLeft _ _)
       (SMPair (SMProjRight _ _ <! SMProjLeft _ _) (SMProjRight _ _))
 
+public export
+soProdRightAssoc : {w, x, y, z : SubstObjMu} ->
+  SubstMorph ((w !* x) !* y) z -> SubstMorph (w !* (x !* y)) z
+soProdRightAssoc {w} {x} {y} {z} f =
+  f <!
+    SMPair
+      (SMPair (SMProjLeft _ _) (SMProjLeft _ _ <! SMProjRight _ _))
+      (SMProjRight _ _ <! SMProjRight _ _)
+
 -- The inverse of SMDistrib.
 public export
 soGather : (x, y, z : SubstObjMu) ->
@@ -5052,6 +5061,24 @@ soReflectedFlip =
         (SMProjLeft _ _ <! SMProjLeft _ _)
         (SMProjRight _ _))
       (SMProjRight _ _ <! SMProjLeft _ _)))
+
+public export
+ctxCompose : {w, x, y, z : SubstObjMu} ->
+  SubstMorph w (y !-> z) -> SubstMorph w (x !-> y) -> SubstMorph w (x !-> z)
+ctxCompose {w} {x} {y} {z} g f = soReflectedCompose x y z <! SMPair g f
+
+public export
+soCaseAbstract : {w, x, y, z : SubstObjMu} ->
+  SubstMorph (w !-> (x !+ y)) ((x !-> z) !-> (y !-> z) !-> (w !-> z))
+soCaseAbstract {w} {x} {y} {z} =
+  soCurry $ soCurry $ soCurry $ soProdCommutesLeft $ soProdRightAssoc $
+    soUncurry $ soProdRightAssoc $ soUncurry $ soProdCommutesLeft $
+    SMCase
+      (soCurry $ soCurry $ soEval x z <! soProdCommutes _ _ <!
+        SMProjLeft _ _)
+      (soCurry $ soCurry $ soEval y z <! soProdCommutes _ _ <!
+        soForgetMiddle _ _ _)
+    <! soEval w (x !+ y)
 
 -------------------------------------------------------
 -------------------------------------------------------
@@ -6259,18 +6286,23 @@ SignedSubstMorph =
   (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
 
 public export
+SignedSubstCtxMorph : STLC_Context -> Type
+SignedSubstCtxMorph ctx =
+  (sig : (SubstObjMu, SubstObjMu) **
+   SubstMorph (stlcCtxToSOMu ctx !* fst sig) (snd sig))
+
+public export
 stlcToCCC_ctx :
-  STLC_Context ->
+  (ctx : STLC_Context) ->
   STLC_Term ->
-  Maybe SignedSubstMorph
+  Maybe (SignedSubstCtxMorph ctx)
 stlcToCCC_ctx ctx (STLC_Absurd t ty) = do
   t' <- stlcToCCC_ctx ctx t
   case t' of
     ((dom, InSO SO0) ** m) => Just ((dom, ty) ** SMFromInit ty <! m)
     _ => Nothing
 stlcToCCC_ctx ctx STLC_Unit =
-  let dom = stlcCtxToSOMu ctx in
-  Just ((dom, Subst1) ** SMToTerminal dom)
+  Just ((Subst1, Subst1) ** SMToTerminal $ stlcCtxToSOMu ctx !* Subst1)
 stlcToCCC_ctx ctx (STLC_Left t ty) = do
   ((dom, cod) ** m) <- stlcToCCC_ctx ctx t
   Just ((dom, cod !+ ty) ** SMInjLeft cod ty <! m)
@@ -6278,6 +6310,7 @@ stlcToCCC_ctx ctx (STLC_Right ty t) = do
   ((dom, cod) ** m) <- stlcToCCC_ctx ctx t
   Just ((dom, ty !+ cod) ** SMInjRight ty cod <! m)
 stlcToCCC_ctx ctx (STLC_Case x l r) = do
+  let ctx' = stlcCtxToSOMu ctx
   ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
   ((ldom, lcod) ** lm) <- stlcToCCC_ctx ctx l
   ((rdom, rcod) ** rm) <- stlcToCCC_ctx ctx r
@@ -6285,7 +6318,11 @@ stlcToCCC_ctx ctx (STLC_Case x l r) = do
     (InSO (xcodl !!+ xcodr)) => case
       (decEq xcodl ldom, decEq xcodr rdom, decEq lcod rcod) of
         (Yes Refl, Yes Refl, Yes Refl) =>
-          Just ((xdom, lcod) ** SMCase lm rm <! xm)
+          Just
+            ((xdom, lcod) **
+             soUncurry
+              (soUncurry soCaseAbstract
+               <! SMPair (soCurry xm) (SMPair (soCurry lm) (soCurry rm))))
         _ => Nothing
     _ => Nothing
 stlcToCCC_ctx ctx (STLC_Pair t1 t2) = do
@@ -6304,12 +6341,19 @@ stlcToCCC_ctx ctx (STLC_Snd x) = do
   case cod of
     InSO (codl !!* codr) => Just ((dom, codr) ** SMProjRight codl codr <! m)
     _ => Nothing
-stlcToCCC_ctx ctx (STLC_Lambda vty t) = stlcToCCC_ctx (vty :: ctx) t
+stlcToCCC_ctx ctx (STLC_Lambda vty t) = case stlcToCCC_ctx (vty :: ctx) t of
+  Just ((dom, cod) ** m) =>
+    Just ((vty !* dom, cod) ** m <!
+      SMPair
+        (SMPair (SMProjLeft _ _ <! SMProjRight _ _) (SMProjLeft _ _))
+        (SMProjRight _ _ <! SMProjRight _ _))
+  Nothing => Nothing
 stlcToCCC_ctx ctx (STLC_App f x) = do
   ((fdom, fcod) ** fm) <- stlcToCCC_ctx ctx f
   ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
   case decEq xcod fdom of
-    Yes Refl => Just ((xdom, fcod) ** fm <! xm)
+    Yes Refl =>
+      Just ((xdom, fcod) ** soUncurry $ ctxCompose (soCurry fm) (soCurry xm))
     No _ => Nothing
 stlcToCCC_ctx ctx (STLC_Eval ty f x) = do
   ((fdom, fcod) ** fm) <- stlcToCCC_ctx ctx f
@@ -6319,15 +6363,17 @@ stlcToCCC_ctx ctx (STLC_Eval ty f x) = do
       Just ((xdom, ty) ** soEval xcod ty <! SMPair (rewrite sym eq in fm) xm)
     (_, _) => Nothing
 stlcToCCC_ctx ctx (STLC_Var v) = case inBounds v ctx of
-  Yes ok =>
-    Just ((stlcCtxToSOMu ctx, index v ctx {ok}) ** stlcCtxProj ctx v {ok})
+  Yes ok => let proj = stlcCtxProj ctx v {ok} in
+    Just ((stlcCtxToSOMu ctx, index v ctx {ok}) ** proj <! SMProjLeft _ _)
   No _ => Nothing
 
 public export
 stlcToCCC :
   STLC_Term ->
   Maybe SignedSubstMorph
-stlcToCCC = stlcToCCC_ctx []
+stlcToCCC t with (stlcToCCC_ctx [] t)
+  stlcToCCC t | Just ((dom, cod) ** m) = Just ((dom, cod) ** soProd1LeftElim m)
+  stlcToCCC t | Nothing = Nothing
 
 public export
 stlcToCCC_valid :

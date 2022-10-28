@@ -1051,14 +1051,16 @@ reflectionTestTerm = reflectionTestMorphism <! MkSUNat {m=8} 1
 
 stlcTest : STLC_Term -> IO ()
 stlcTest t = putStrLn $ "STLC[" ++ show t ++ "] " ++ case stlcToCCC t of
-  Just m => "=> " ++ "SubstMorph[" ++ show m ++ "]"
+  Just m => "=> SubstMorph[" ++ show m ++ "]"
   Nothing => "is ill-typed"
 
 stlcAppTest :
   (t : STLC_Term) -> {auto isValid : IsJustTrue (stlcToCCC t)} -> Nat -> IO ()
 stlcAppTest t {isValid} n = do
-  let ((dom, cod) ** m) = stlcToCCC_valid t {isValid}
-  putStrLn $ "STLC[" ++ show t ++ "] = " ++ show (substMorphToBNC m)
+  let sm = stlcToCCC_valid t {isValid}
+  let ((dom, cod) ** m) = sm
+  putStrLn $ "STLC[" ++ show t ++ "] => SubstMorph[" ++ show sm ++ "]"
+  putStrLn $ "BNC(%) = " ++ show (substMorphToBNC m)
   putStrLn $ "%(" ++ show n ++ ") = " ++
     show (substMorphToFunc m $ natToInteger n)
 
@@ -1076,6 +1078,13 @@ stlc_t1 = STLC_Lambda Subst0 (STLC_Absurd (STLC_Var 0) SubstBool)
 -- The identity function on 3.
 stlc_t2 : STLC_Term
 stlc_t2 = STLC_Lambda (SUNat 3) (STLC_Var 0)
+
+-- Boolean AND.
+stlc_t3 : STLC_Term
+stlc_t3 = STLC_Lambda (SubstBool !* SubstBool) $
+  STLC_Case (STLC_Fst $ STLC_Var 0)
+    (STLC_Left STLC_Unit Subst1)
+    (STLC_Snd $ STLC_Var 0)
 
 ----------------------------------
 ----------------------------------
@@ -1450,9 +1459,12 @@ polyCatTest = do
   putStrLn "---- STLC-to-CCC translation ----"
   putStrLn "---------------------------------"
   putStrLn ""
-  stlcTest stlc_t0
-  stlcTest stlc_t1
-  stlcTest stlc_t2
+  stlcAppTest stlc_t0 0
+  stlcAppTest stlc_t1 0
+  stlcAppTest stlc_t2 0
+  stlcAppTest stlc_t2 1
+  stlcAppTest stlc_t2 2
+  stlcTest stlc_t3
   putStrLn ""
   putStrLn "------------------------------------"
   putStrLn ""
