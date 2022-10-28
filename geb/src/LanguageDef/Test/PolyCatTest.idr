@@ -748,7 +748,7 @@ bncpmt11 : Assertion
 bncpmt11 = Assert $ metaBNCPolyM 200 (bncpm0 #- bncpm1) 3 == 75
 
 bncpmt12 : Assertion
-bncpmt12 = Assert $ metaBNCPolyM 200 (bncpm1 #- bncpm0) 3 == -75
+bncpmt12 = Assert $ metaBNCPolyM 200 (bncpm1 #- bncpm0) 3 == 126
 
 bncpmt13 : Assertion
 bncpmt13 = Assert $ metaBNCPolyM 200 (bncpm0 #/ bncpm1) 3 == 2
