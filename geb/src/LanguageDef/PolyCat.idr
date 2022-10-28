@@ -908,6 +908,52 @@ pfNuCata : {0 p : PolyFunc} -> {0 a : Type} -> PFAlg p a -> PolyFuncNu p -> a
 pfNuCata {p=p@(pos ** dir)} {a} alg (InPFN i da) =
   alg i $ \d : dir i => pfNuCata {p} alg $ da d
 
+-----------------
+---- P-trees ----
+-----------------
+
+public export
+PPath : PolyFunc -> Type
+PPath p = List (DPair (pfPos p) (pfDir {p}))
+
+public export
+dirToDP : {p : PolyFunc} -> {i : pfPos p} ->
+  pfDir {p} i -> DPair (pfPos p) (pfDir {p})
+dirToDP {p} {i} di = (i ** di)
+
+public export
+PPathPred : PolyFunc -> Type
+PPathPred p = PPath p -> Maybe (pfPos p)
+
+public export
+PPathPredCovers : {p : PolyFunc} -> PPathPred p -> PPath p -> Type
+PPathPredCovers {p} pred pp = IsJustTrue $ pred pp
+
+public export
+ppathPredNext : {p : PolyFunc} -> (pred : PPathPred p) -> (pp : PPath p) ->
+  {auto covers : PPathPredCovers {p} pred pp} -> pfPos p
+ppathPredNext {p} pred pp {covers} = fromIsJust covers
+
+public export
+PPathPredCoversNil : {p : PolyFunc} -> PPathPred p -> Type
+PPathPredCoversNil {p} pred = PPathPredCovers {p} pred []
+
+public export
+PPathPredCoversCons : {p : PolyFunc} -> PPathPred p -> Type
+PPathPredCoversCons {p} pred =
+   (pp : PPath p) -> {auto covers : PPathPredCovers pred pp} ->
+   (di : pfDir {p} (ppathPredNext {p} pred pp {covers})) ->
+   PPathPredCovers pred (dirToDP di :: pp)
+
+public export
+PPathPredIsCovering : {p : PolyFunc} -> PPathPred p -> Type
+PPathPredIsCovering {p} pred =
+  (PPathPredCoversNil {p} pred, PPathPredCoversCons {p} pred)
+
+public export
+PTree : PolyFunc -> Type
+PTree p = DPair (PPathPred p) (PPathPredIsCovering {p})
+
 --------------------------------------
 ---- Polynomial (cofree) comonads ----
 --------------------------------------
