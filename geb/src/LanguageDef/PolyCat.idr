@@ -939,6 +939,24 @@ public export
 PPathPred : PolyFunc -> Type
 PPathPred p = (i : pfPos p) -> PPathPos p i -> pfDir {p} i -> Maybe (pfPos p)
 
+public export
+PPathPredGenPosT : {p : PolyFunc} ->
+  PPathPred p -> (i : pfPos p) -> PPathPos p i -> Type
+PPathPredGenPosT pred i (PPRoot i) = ()
+PPathPredGenPosT pred j (PPPath {i} pp di j) =
+  Pair (PPathPredGenPosT pred i pp) (pred i pp di = Just j)
+
+public export
+PPathPredGenPosDec : {p : PolyFunc} ->
+  (dirDec : (i' : pfPos p) -> (di', di'' : pfDir {p} i') -> Dec (di' = di'')) ->
+  (pred : PPathPred p) -> (i : pfPos p) -> (pp : PPathPos p i) ->
+  Dec (PPathPredGenPosT {p} pred i pp)
+PPathPredGenPosDec {p} dirDec pred i (PPRoot i) =
+  ?PPathPredGenPosDec_hole_root
+PPathPredGenPosDec {p} dirDec pred j (PPPath {i} pp di j) =
+  let r = PPathPredGenPosDec {p} dirDec pred i pp in
+  ?PPathPredGenPosDec_hole_path
+
 -- A proof that the given predicate can generate the given path.
 public export
 data PPathPredGenPos : {p : PolyFunc} ->
