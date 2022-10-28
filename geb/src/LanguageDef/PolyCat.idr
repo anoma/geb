@@ -941,9 +941,9 @@ PPathPredCoversNil {p} pred = PPathPredCovers {p} pred []
 public export
 PPathPredCoversCons : {p : PolyFunc} -> PPathPred p -> Type
 PPathPredCoversCons {p} pred =
-   (pp : PPath p) -> {auto covers : PPathPredCovers pred pp} ->
-   (di : pfDir {p} (ppathPredNext {p} pred pp {covers})) ->
-   PPathPredCovers pred (dirToDP di :: pp)
+  (pp : PPath p) -> {auto covers : PPathPredCovers pred pp} ->
+  (di : pfDir {p} (ppathPredNext {p} pred pp {covers})) ->
+  PPathPredCovers pred (dirToDP di :: pp)
 
 public export
 PPathPredIsCovering : {p : PolyFunc} -> PPathPred p -> Type
