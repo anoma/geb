@@ -957,6 +957,14 @@ PPathPredGenPosDec {p} dirDec pred j (PPPath {i} pp di j) =
   let r = PPathPredGenPosDec {p} dirDec pred i pp in
   ?PPathPredGenPosDec_hole_path
 
+public export
+PPathPredGenPosDecPred : {p : PolyFunc} ->
+  (dirDec : (i' : pfPos p) -> (di', di'' : pfDir {p} i') -> Dec (di' = di'')) ->
+  (pred : PPathPred p) -> (i : pfPos p) -> (pp : PPathPos p i) ->
+  Bool
+PPathPredGenPosDecPred {p} dirDec pred i pp =
+  isYes $ PPathPredGenPosDec {p} dirDec pred i pp
+
 -- A proof that the given predicate can generate the given path.
 public export
 data PPathPredGenPos : {p : PolyFunc} ->
