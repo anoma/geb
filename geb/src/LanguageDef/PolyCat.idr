@@ -1005,6 +1005,10 @@ public export
 PTree : PolyFunc -> Type
 PTree p = DPair (PPathPred p) (PPathPredCorrect {p})
 
+public export
+PVertex : {p : PolyFunc} -> PTree p -> Type
+PVertex {p} pt = DPair (PPath p) (PPathPredGen {p} $ fst pt)
+
 --------------------------------------
 ---- Polynomial (cofree) comonads ----
 --------------------------------------
