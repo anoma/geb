@@ -1056,6 +1056,19 @@ PolyFuncCofreeCMPosFromNuScale : PolyFunc -> Type
 PolyFuncCofreeCMPosFromNuScale p = PolyFuncCofreeCMFromNuScale p ()
 
 public export
+partial
+PolyFuncCofreeCMDirFromNuScale :
+  (p : PolyFunc) -> PolyFuncCofreeCMPosFromNuScale p -> Type
+PolyFuncCofreeCMDirFromNuScale p =
+  pfNuCata {p=(PFScale p ())} $ PolyFuncCofreeCMDirAlg p
+
+public export
+partial
+PolyFuncCofreeCMArenaFromNuScale : PolyFunc -> PolyFunc
+PolyFuncCofreeCMArenaFromNuScale p =
+  (PolyFuncCofreeCMPosFromNuScale p ** PolyFuncCofreeCMDirFromNuScale p)
+
+public export
 InPNode : {0 p : PolyFunc} -> {0 a : Type} ->
   a -> (i : pfPos p) ->
   (pfDir {p} i -> Inf (PolyFuncCofreeCMFromNuScale p a)) ->
@@ -1122,6 +1135,53 @@ pfCofreeAna : {p : PolyFunc} -> {a, b : Type} ->
   PFScaleCoalg p a b -> b -> InterpPolyFuncCofreeCM p a
 pfCofreeAna {p} {a} {b} =
   PolyCFCMScaleToInterp p a .* pfCofreeAnaScale {p} {a} {b}
+
+public export
+PolyFuncCofreeCMFromPTreePos : PolyFunc -> Type
+PolyFuncCofreeCMFromPTreePos = PTree
+
+public export
+PolyFuncCofreeCMFromPTreeDir :
+  (p : PolyFunc) -> PolyFuncCofreeCMFromPTreePos p -> Type
+PolyFuncCofreeCMFromPTreeDir p = PVertex {p}
+
+public export
+PolyFuncCofreeCMFromPTreeArena : PolyFunc -> PolyFunc
+PolyFuncCofreeCMFromPTreeArena p =
+  (PolyFuncCofreeCMFromPTreePos p ** PolyFuncCofreeCMFromPTreeDir p)
+
+public export
+InterpPolyFuncCofreeCMFromPTree : PolyFunc -> Type -> Type
+InterpPolyFuncCofreeCMFromPTree =
+  InterpPolyFunc . PolyFuncCofreeCMFromPTreeArena
+
+public export
+PolyFuncCofreeCMPosNuScaleToPTree : {p : PolyFunc} ->
+  PolyFuncCofreeCMPosFromNuScale p -> PolyFuncCofreeCMFromPTreePos p
+PolyFuncCofreeCMPosNuScaleToPTree {p=p@(pos ** dir)} (InPFN (PFNode () i) d) =
+  ?PolyFuncCofreeCMPosNuScaleToPTree_hole
+
+public export
+PolyFuncCofreeCMPosPTreeToNuScale : {p : PolyFunc} ->
+  PolyFuncCofreeCMFromPTreePos p -> PolyFuncCofreeCMPosFromNuScale p
+PolyFuncCofreeCMPosPTreeToNuScale {p=p@(pos ** dir)} =
+  ?PolyFuncCofreeCMPosPTreeToNuScale_hole
+
+public export
+PolyFuncCofreeCMDirNuScaleToPTree : {p : PolyFunc} ->
+  (i : PolyFuncCofreeCMPosFromNuScale p) ->
+  PolyFuncCofreeCMDirFromNuScale p i ->
+  PolyFuncCofreeCMFromPTreeDir p (PolyFuncCofreeCMPosNuScaleToPTree i)
+PolyFuncCofreeCMDirNuScaleToPTree {p=(pos ** dir)} i di =
+  ?PolyFuncCofreeCMDirNuScaleToPTree_hole
+
+public export
+PolyFuncCofreeCMDirPTreeToNuScale : {p : PolyFunc} ->
+  (i : PolyFuncCofreeCMFromPTreePos p) ->
+  PolyFuncCofreeCMFromPTreeDir p i ->
+  PolyFuncCofreeCMDirFromNuScale p (PolyFuncCofreeCMPosPTreeToNuScale i)
+PolyFuncCofreeCMDirPTreeToNuScale {p=(pos ** dir)} i di =
+  ?PolyFuncCofreeCMDPTreeToNuScale_hole
 
 ----------------------------------------------
 ----------------------------------------------
