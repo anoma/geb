@@ -5038,15 +5038,15 @@ soPartialAppTerm : {w, x, y, z : SubstObjMu} ->
 soPartialAppTerm g t = soProd1LeftElim $ soPartialApp {w=Subst1} g t
 
 public export
-covarYonedaEmbed : {a, b : SubstObjMu} ->
+contravarYonedaEmbed : {a, b : SubstObjMu} ->
   SubstMorph b a -> (x : SubstObjMu) -> SubstMorph (a !-> x) (b !-> x)
-covarYonedaEmbed {a} {b} f x =
+contravarYonedaEmbed {a} {b} f x =
   soCurry (soEval a x <! SMPair (SMProjLeft _ _) (f <! SMProjRight _ _))
 
 public export
-contravarYonedaEmbed : {a, b : SubstObjMu} ->
+covarYonedaEmbed : {a, b : SubstObjMu} ->
   SubstMorph a b -> (x : SubstObjMu) -> SubstMorph (x !-> a) (x !-> b)
-contravarYonedaEmbed {a} {b} f x =
+covarYonedaEmbed {a} {b} f x =
   soCurry (f <! soEval x a)
 
 public export
@@ -5189,7 +5189,7 @@ soReflectedPair (InSO (w !!* x)) y z =
     xyz = soReflectedPair x y z
     wxyz = soReflectedPair w (x !-> y) (x !-> z)
   in
-  contravarYonedaEmbed xyz w <! wxyz
+  covarYonedaEmbed xyz w <! wxyz
 
 public export
 soReflectedCompose : (x, y, z : SubstObjMu) ->
