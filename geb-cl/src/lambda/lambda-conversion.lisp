@@ -10,6 +10,7 @@
     (`(unit)
       (let ((dom (stlc-ctx-to-mu context)))
         (list dom so1 (terminal dom))))
+    ;; Left Right Extension
     (`(left ,term ,type-other)
       (match (stlc-to-ccc context term)
         ((list dom cod m)
@@ -24,6 +25,7 @@
                (coprod type-other cod)
                (comp (right-> type-other cod) m)))
         (_ nil)))
+    ;; Cons Car and Cdr extension
     (`(pair ,t1 ,t2)
       (match (list (stlc-to-ccc context t1)
                    (stlc-to-ccc context t2))
@@ -33,26 +35,16 @@
          dom1
          (list dom2 (prod cod1 cod2) (pair m1 m2)))
         (_ nil)))
-    (`(lambda ,vty ,term)
-      (stlc-to-ccc (cons vty context) term))
-
-    ((cons f x)
-     (match (list (stlc-to-ccc context f)
-                  (stlc-to-ccc context x))
-       ((list (list fdom fcod fm)
-              (list xdom xcod xm))
-        ;; TODO :: check that the doms are the same
-        xcod fdom
-        (list xdom fcod (comp fm xm)))
-       (_ nil)))
     (`(car ,x)
       (match (stlc-to-ccc context x)
         ((list dom (prod codl codr) m) (list dom codl (comp (<-left codl codr) m)))
         (_                             nil)))
+
     (`(cdr ,x)
       (match (stlc-to-ccc context x)
         ((list dom (prod codl codr) m) (list dom codr (comp (<-right codl codr) m)))
         (_                             nil)))
+
     ;; variable indexing
     ((index depth)
      (let* ((context-value   (nth depth context))
@@ -72,7 +64,18 @@
                                (<-right (car values-to-point)
                                         prod-context)
                                (mcadr prod-context)))
-                 proj-index))))))
+                 proj-index))))
+    (`(lambda ,vty ,term)
+      (stlc-to-ccc (cons vty context) term))
+    ((cons f x)
+     (match (list (stlc-to-ccc context f)
+                  (stlc-to-ccc context x))
+       ((list (list fdom fcod fm)
+              (list xdom xcod xm))
+        ;; TODO :: check that the doms are the same
+        xcod fdom
+        (list xdom fcod (comp fm xm)))
+       (_ nil)))))
 
 (-> stlc-ctx-to-mu (stlc-context) substobj)
 (defun stlc-ctx-to-mu (context)
@@ -173,3 +176,5 @@
 
 
 (stlc-to-ccc nil (nameless `(lambda (x ,so1) x)))
+
+(stlc-to-ccc nil (nameless `(lambda (x ,so1) (car (pair x x)))))
