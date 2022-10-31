@@ -6374,6 +6374,69 @@ public export
 STLC_Context : Type
 STLC_Context = List SubstObjMu
 
+-- Indexed by the context and the type of the term within that context
+-- to which the term compiles. (Thus, the type of the term abstracted over
+-- the context is `ctx -> ty`.)
+public export
+data Checked_STLC_Term : STLC_Context -> SubstObjMu -> Type where
+  -- The "void" or "absurd" function, which takes a term of type Void
+  -- to any type; there's no explicit constructor for terms of type Void,
+  -- but a lambda could introduce one.  The SubstObjMu is the type of the
+  -- resulting term (since we can get any type from a term of Void).
+  Checked_STLC_Absurd : {ctx : STLC_Context} -> {cod : SubstObjMu} ->
+    Checked_STLC_Term ctx Subst0 -> Checked_STLC_Term ctx cod
+
+  -- The only term of type Unit.
+  Checked_STLC_Unit : {ctx : STLC_Context} ->
+    Checked_STLC_Term ctx Subst1
+
+  -- Construct coproducts.  In each case, the type of the injected term
+  -- tells us the type of one side of the coproduct, so we provide a
+  -- SubstObjMu to tell us the type of the other side.
+  Checked_STLC_Left :
+    {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
+      Checked_STLC_Term ctx lty -> Checked_STLC_Term ctx (lty !+ rty)
+  Checked_STLC_Right :
+    {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
+      Checked_STLC_Term ctx rty -> Checked_STLC_Term ctx (lty !+ rty)
+
+  -- Case statement : parameters are expression to case on, which must be
+  -- a coproduct, and then left and right case, which must be of the same
+  -- type, which becomes the type of the overall term.  The cases receive
+  -- the the result of the coproduct elimination in their contexts.
+  Checked_STLC_Case :
+    {ctx : STLC_Context} -> {lty, rty, cod : SubstObjMu} ->
+    Checked_STLC_Term ctx (lty !+ rty) ->
+    Checked_STLC_Term (lty :: ctx) cod -> Checked_STLC_Term (rty :: ctx) cod ->
+    Checked_STLC_Term ctx cod
+
+  -- Construct a term of a pair type
+  Checked_STLC_Pair : {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
+    Checked_STLC_Term ctx lty -> Checked_STLC_Term ctx rty ->
+    Checked_STLC_Term ctx (lty !* rty)
+
+  -- Projections; in each case, the given term must be of a product type
+  Checked_STLC_Fst : {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
+    Checked_STLC_Term ctx (lty !* rty) -> Checked_STLC_Term ctx lty
+  Checked_STLC_Snd :
+    Checked_STLC_Term ctx (lty !* rty) -> Checked_STLC_Term ctx rty
+
+  -- Lambda abstraction:  introduce into the context a (de Bruijn-indexed)
+  -- variable of the given type.
+  Checked_STLC_Lambda :
+    {ctx : STLC_Context} -> {vty, tty : SubstObjMu} ->
+    Checked_STLC_Term (vty :: ctx) tty -> Checked_STLC_Term ctx (vty !-> tty)
+
+  -- Function application
+  Checked_STLC_App : {ctx : STLC_Context} -> {dom, cod : SubstObjMu} ->
+    Checked_STLC_Term ctx (dom !-> cod) -> Checked_STLC_Term ctx dom ->
+    Checked_STLC_Term ctx cod
+
+  -- The variable at the given de Bruijn index
+  Checked_STLC_Var :
+    {ctx : STLC_Context} -> {i : Nat} -> {auto ok : InBounds i ctx} ->
+    Checked_STLC_Term ctx (index i ctx {ok})
+
 public export
 stlcCtxToSOMu : STLC_Context -> SubstObjMu
 stlcCtxToSOMu = foldr (!*) Subst1
