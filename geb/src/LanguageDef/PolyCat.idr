@@ -6371,6 +6371,36 @@ evalByGN x y m n with (substGNumToMorph x y m, natToSubstTerm x n)
 ---------------------------------------
 
 public export
+STLC_Context : Type
+STLC_Context = List SubstObjMu
+
+public export
+stlcCtxToSOMu : STLC_Context -> SubstObjMu
+stlcCtxToSOMu = foldr (!*) Subst1
+
+public export
+stlcCtxProj :
+  (ctx : STLC_Context) -> (n : Nat) -> {auto 0 ok : InBounds n ctx} ->
+  SubstMorph (stlcCtxToSOMu ctx) (index n ctx {ok})
+stlcCtxProj (ty :: ctx) Z {ok=InFirst} =
+  SMProjLeft ty (stlcCtxToSOMu ctx)
+stlcCtxProj (ty :: ctx) Z {ok=InLater} impossible
+stlcCtxProj (ty :: ctx) (S n) {ok=InFirst} impossible
+stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
+  stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)
+
+public export
+SignedSubstMorph : Type
+SignedSubstMorph =
+  (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
+
+public export
+SignedSubstCtxMorph : STLC_Context -> Type
+SignedSubstCtxMorph ctx =
+  (sig : (SubstObjMu, SubstObjMu) **
+   SubstMorph (stlcCtxToSOMu ctx !* fst sig) (snd sig))
+
+public export
 data STLC_Term : Type where
   -- The "void" or "absurd" function, which takes a term of type Void
   -- to any type; there's no explicit constructor for terms of type Void,
@@ -6429,36 +6459,6 @@ Show STLC_Term where
   show (STLC_Eval ty f x) =
     "eval((" ++ show ty ++ ")" ++ show f ++ ", " ++ show x ++ ")"
   show (STLC_Var k) = "v" ++ show k
-
-public export
-STLC_Context : Type
-STLC_Context = List SubstObjMu
-
-public export
-stlcCtxToSOMu : STLC_Context -> SubstObjMu
-stlcCtxToSOMu = foldr (!*) Subst1
-
-public export
-stlcCtxProj :
-  (ctx : STLC_Context) -> (n : Nat) -> {auto 0 ok : InBounds n ctx} ->
-  SubstMorph (stlcCtxToSOMu ctx) (index n ctx {ok})
-stlcCtxProj (ty :: ctx) Z {ok=InFirst} =
-  SMProjLeft ty (stlcCtxToSOMu ctx)
-stlcCtxProj (ty :: ctx) Z {ok=InLater} impossible
-stlcCtxProj (ty :: ctx) (S n) {ok=InFirst} impossible
-stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
-  stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)
-
-public export
-SignedSubstMorph : Type
-SignedSubstMorph =
-  (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
-
-public export
-SignedSubstCtxMorph : STLC_Context -> Type
-SignedSubstCtxMorph ctx =
-  (sig : (SubstObjMu, SubstObjMu) **
-   SubstMorph (stlcCtxToSOMu ctx !* fst sig) (snd sig))
 
 public export
 stlcToCCC_ctx :
