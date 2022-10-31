@@ -1026,7 +1026,7 @@ l5_5_fold_add = sumlist_20 {k=5} <! l5_5
 reflectionTestPair : {x : SubstObjMu} -> {n : Nat} ->
   SubstMorph ((x !-> SUNat n) !* (x !-> SUNat n)) (x !-> SUNat n)
 reflectionTestPair {x} {n} =
-  contravarYonedaEmbed (suAddUnrolled {k=n}) x
+  covarYonedaEmbed (suAddUnrolled {k=n}) x
   <! soReflectedPair x (SUNat n) (SUNat n)
 
 reflectionPairTerm : SOTerm ((SUNat 8 !-> SUNat 8) !* (SUNat 8 !-> SUNat 8))
