@@ -12,14 +12,14 @@
   '(lambda x (lambda y (lambda z (+ x y (lambda a (lambda b (lambda c (+ a b c z)))))))))
 
 (def nameless-term
-  `(lambda
-     (lambda
-       (lambda
+  `(lambda nil
+     (lambda nil
+       (lambda nil
          (+ ,(geb.lambda:make-index :depth 2)
             ,(geb.lambda:make-index :depth 1)
-            (lambda
-              (lambda
-                (lambda
+            (lambda nil
+              (lambda nil
+                (lambda nil
                   (+ ,(geb.lambda:make-index :depth 2)
                      ,(geb.lambda:make-index :depth 1)
                      ,(geb.lambda:make-index :depth 0)

@@ -43,8 +43,13 @@
 (defun nameless (term &optional (context (make-context)))
   (match term
     (`(lambda ,param ,body)
-      (let ((new-depth (1+ (context-depth context))))
+      (let* ((param-ty (when (consp param) (cadr param)))
+             (param    (if (consp param)
+                           (car param)
+                           param))
+             (new-depth (1+ (context-depth context))))
         (list 'lambda
+              param-ty
               (nameless body
                         (make-context
                          :depth new-depth

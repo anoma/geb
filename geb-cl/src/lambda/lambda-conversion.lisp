@@ -2,6 +2,83 @@
 
 (named-readtables:in-readtable :fare-quasiquote)
 
+(deftype stlc-context () `list)
+
+(-> stlc-to-ccc (stlc-context t) t)
+(defun stlc-to-ccc (context term)
+  (match term
+    (`(unit)
+      (let ((dom (stlc-ctx-to-mu context)))
+        (list dom so1 (terminal dom))))
+    (`(left ,term ,type-other)
+      (match (stlc-to-ccc context term)
+        ((list dom cod m)
+         (list dom
+               (coprod cod type-other)
+               (comp (left-> cod type-other) m)))
+        (_ nil)))
+    (`(right ,type-other ,term)
+      (match (stlc-to-ccc context term)
+        ((list dom cod m)
+         (list dom
+               (coprod type-other cod)
+               (comp (right-> type-other cod) m)))
+        (_ nil)))
+    (`(pair ,t1 ,t2)
+      (match (list (stlc-to-ccc context t1)
+                   (stlc-to-ccc context t2))
+        ((list (list dom1 cod1 m1)
+               (list dom2 cod2 m2))
+         ;; TODO :: check that the doms are the same
+         dom1
+         (list dom2 (prod cod1 cod2) (pair m1 m2)))
+        (_ nil)))
+    (`(lambda ,vty ,term)
+      (stlc-to-ccc (cons vty context) term))
+
+    ((cons f x)
+     (match (list (stlc-to-ccc context f)
+                  (stlc-to-ccc context x))
+       ((list (list fdom fcod fm)
+              (list xdom xcod xm))
+        ;; TODO :: check that the doms are the same
+        xcod fdom
+        (list xdom fcod (comp fm xm)))
+       (_ nil)))
+    (`(car ,x)
+      (match (stlc-to-ccc context x)
+        ((list dom (prod codl codr) m) (list dom codl (comp (<-left codl codr) m)))
+        (_                             nil)))
+    (`(cdr ,x)
+      (match (stlc-to-ccc context x)
+        ((list dom (prod codl codr) m) (list dom codr (comp (<-right codl codr) m)))
+        (_                             nil)))
+    ;; variable indexing
+    ((index depth)
+     (let* ((context-value   (nth depth context))
+            (values-to-point (take depth context))
+            (prod-context    (stlc-ctx-to-mu context))
+            (proj-index      (<-left context-value
+                                     (stlc-ctx-to-mu (drop depth context)))))
+       (list (stlc-ctx-to-mu context)
+             context-value
+             (if values-to-point
+                 (comp proj-index
+                       (mvfold (lambda (term x prod-context-left)
+                                 (values
+                                  (comp term (<-right x prod-context-left))
+                                  (mcadr prod-context-left)))
+                               (cdr values-to-point)
+                               (<-right (car values-to-point)
+                                        prod-context)
+                               (mcadr prod-context)))
+                 proj-index))))))
+
+(-> stlc-ctx-to-mu (stlc-context) substobj)
+(defun stlc-ctx-to-mu (context)
+  (mvfoldr #'prod context so1))
+
+
 ;; returns a functor
 (defun convert-term (term)
   (match term
@@ -93,3 +170,6 @@
        geb-bool:bool))
 
 (call-objmap (convert-term test-case) test-type)
+
+
+(stlc-to-ccc nil (nameless `(lambda (x ,so1) x)))
