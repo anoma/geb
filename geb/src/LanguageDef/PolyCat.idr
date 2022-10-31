@@ -6453,6 +6453,21 @@ stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
   stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)
 
 public export
+compileCheckedTerm : {ctx : STLC_Context} -> {ty : SubstObjMu} ->
+  Checked_STLC_Term ctx ty -> SubstMorph (stlcCtxToSOMu ctx) ty
+compileCheckedTerm {ctx} {ty} (Checked_STLC_Absurd x) = ?compileCheckedTerm_hole_0
+compileCheckedTerm {ctx} {ty=Subst1} Checked_STLC_Unit = ?compileCheckedTerm_hole_1
+compileCheckedTerm {ctx} {ty=(lty !+ rty)} (Checked_STLC_Left x) = ?compileCheckedTerm_hole_2
+compileCheckedTerm {ctx} {ty=(lty !+ rty)} (Checked_STLC_Right x) = ?compileCheckedTerm_hole_3
+compileCheckedTerm {ctx} {ty} (Checked_STLC_Case x y z) = ?compileCheckedTerm_hole_4
+compileCheckedTerm {ctx} {ty=(lty !* rty)} (Checked_STLC_Pair x y) = ?compileCheckedTerm_hole_5
+compileCheckedTerm {ctx} {ty} (Checked_STLC_Fst x) = ?compileCheckedTerm_hole_6
+compileCheckedTerm {ctx} {ty} (Checked_STLC_Snd x) = ?compileCheckedTerm_hole_7
+compileCheckedTerm {ctx} {ty=(vty !-> tty)} (Checked_STLC_Lambda x) = ?compileCheckedTerm_hole_8
+compileCheckedTerm {ctx} {ty} (Checked_STLC_App x y) = ?compileCheckedTerm_hole_9
+compileCheckedTerm {ctx} {ty=(index i ctx {ok})} (Checked_STLC_Var {ctx} {i} {ok}) = ?compileCheckedTerm_hole_10
+
+public export
 SignedSubstMorph : Type
 SignedSubstMorph =
   (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
