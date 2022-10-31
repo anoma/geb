@@ -5237,6 +5237,10 @@ ctxCompose : {w, x, y, z : SubstObjMu} ->
 ctxCompose {w} {x} {y} {z} g f = soReflectedCompose x y z <! SMPair g f
 
 public export
+removeImpl : {x, y : SubstObjMu} -> SubstMorph x (x !-> y) -> SubstMorph x y
+removeImpl {x} {y} f = soEval x y <! SMPair f (SMId x)
+
+public export
 soCaseAbstract : {w, x, y, z : SubstObjMu} ->
   SubstMorph (w !-> (x !+ y)) ((x !-> z) !-> (y !-> z) !-> (w !-> z))
 soCaseAbstract {w} {x} {y} {z} =
@@ -6418,7 +6422,7 @@ data Checked_STLC_Term : STLC_Context -> SubstObjMu -> Type where
   -- Projections; in each case, the given term must be of a product type
   Checked_STLC_Fst : {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
     Checked_STLC_Term ctx (lty !* rty) -> Checked_STLC_Term ctx lty
-  Checked_STLC_Snd :
+  Checked_STLC_Snd : {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
     Checked_STLC_Term ctx (lty !* rty) -> Checked_STLC_Term ctx rty
 
   -- Lambda abstraction:  introduce into the context a (de Bruijn-indexed)
@@ -6455,17 +6459,39 @@ stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
 public export
 compileCheckedTerm : {ctx : STLC_Context} -> {ty : SubstObjMu} ->
   Checked_STLC_Term ctx ty -> SubstMorph (stlcCtxToSOMu ctx) ty
-compileCheckedTerm {ctx} {ty} (Checked_STLC_Absurd x) = ?compileCheckedTerm_hole_0
-compileCheckedTerm {ctx} {ty=Subst1} Checked_STLC_Unit = ?compileCheckedTerm_hole_1
-compileCheckedTerm {ctx} {ty=(lty !+ rty)} (Checked_STLC_Left x) = ?compileCheckedTerm_hole_2
-compileCheckedTerm {ctx} {ty=(lty !+ rty)} (Checked_STLC_Right x) = ?compileCheckedTerm_hole_3
-compileCheckedTerm {ctx} {ty} (Checked_STLC_Case x y z) = ?compileCheckedTerm_hole_4
-compileCheckedTerm {ctx} {ty=(lty !* rty)} (Checked_STLC_Pair x y) = ?compileCheckedTerm_hole_5
-compileCheckedTerm {ctx} {ty} (Checked_STLC_Fst x) = ?compileCheckedTerm_hole_6
-compileCheckedTerm {ctx} {ty} (Checked_STLC_Snd x) = ?compileCheckedTerm_hole_7
-compileCheckedTerm {ctx} {ty=(vty !-> tty)} (Checked_STLC_Lambda x) = ?compileCheckedTerm_hole_8
-compileCheckedTerm {ctx} {ty} (Checked_STLC_App x y) = ?compileCheckedTerm_hole_9
-compileCheckedTerm {ctx} {ty=(index i ctx {ok})} (Checked_STLC_Var {ctx} {i} {ok}) = ?compileCheckedTerm_hole_10
+compileCheckedTerm {ctx} {ty} (Checked_STLC_Absurd v) =
+  SMFromInit ty <! compileCheckedTerm {ctx} {ty=Subst0} v
+compileCheckedTerm {ctx} {ty=Subst1} Checked_STLC_Unit =
+  SMToTerminal (stlcCtxToSOMu ctx)
+compileCheckedTerm {ctx} {ty=(lty !+ rty)} (Checked_STLC_Left t) =
+  SMInjLeft lty rty <! compileCheckedTerm {ctx} {ty=lty} t
+compileCheckedTerm {ctx} {ty=(lty !+ rty)} (Checked_STLC_Right t) =
+  SMInjRight lty rty <! compileCheckedTerm {ctx} {ty=rty} t
+compileCheckedTerm {ctx} {ty} (Checked_STLC_Case {lty} {rty} {cod=ty} t l r) =
+  let
+    t' = compileCheckedTerm {ctx} {ty=(lty !+ rty)} t
+    l' = soCurry $ compileCheckedTerm {ctx=(lty :: ctx)} {ty} l
+    r' = soCurry $ compileCheckedTerm {ctx=(rty :: ctx)} {ty} r
+    lr' = SMCase l' r'
+    lrt' = lr' <! t'
+  in
+  removeImpl lrt'
+compileCheckedTerm {ctx} {ty=(lty !* rty)} (Checked_STLC_Pair {lty} {rty} l r) =
+  SMPair
+    (compileCheckedTerm {ctx} {ty=lty} l)
+    (compileCheckedTerm {ctx} {ty=rty} r)
+compileCheckedTerm {ctx} {ty=lty} (Checked_STLC_Fst {lty} {rty} p) =
+  SMProjLeft lty rty <! compileCheckedTerm {ctx} {ty=(lty !* rty)} p
+compileCheckedTerm {ctx} {ty=rty} (Checked_STLC_Snd {lty} {rty} p) =
+  SMProjRight lty rty <! compileCheckedTerm {ctx} {ty=(lty !* rty)} p
+compileCheckedTerm
+  {ctx} {ty=(vty !-> tty)} (Checked_STLC_Lambda {vty} {tty} t) =
+    soCurry $ soProdCommutesLeft $ compileCheckedTerm t
+compileCheckedTerm {ctx} {ty=cod} (Checked_STLC_App {dom} {cod} f x) =
+  soEval dom cod <! SMPair (compileCheckedTerm f) (compileCheckedTerm x)
+compileCheckedTerm
+  {ctx} {ty=(index i ctx {ok})} (Checked_STLC_Var {ctx} {i} {ok}) =
+    stlcCtxProj ctx i {ok}
 
 public export
 SignedSubstMorph : Type
