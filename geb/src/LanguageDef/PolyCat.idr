@@ -6442,6 +6442,10 @@ data Checked_STLC_Term : SOMu_Context -> SubstObjMu -> Type where
     Checked_STLC_Term ctx (index i ctx {ok})
 
 public export
+Checked_Closed_STLC_Function : SubstObjMu -> SubstObjMu -> Type
+Checked_Closed_STLC_Function x y = Checked_STLC_Term [] (x !-> y)
+
+public export
 stlcCtxToSOMu : SOMu_Context -> SubstObjMu
 stlcCtxToSOMu = foldr (!*) Subst1
 
@@ -6624,6 +6628,26 @@ checkSTLC ctx (STLC_Eval ty f x) = do
 checkSTLC ctx (STLC_Var i) = case inBounds i ctx of
   Yes ok => Just (index i ctx {ok} ** Checked_STLC_Var {ok})
   No _ => Nothing
+
+public export
+checkSTLC_valid :
+  (ctx : SOMu_Context) -> (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (checkSTLC ctx t)} ->
+  SignedCheckedSTLCTerm ctx
+checkSTLC_valid ctx t {isValid} = fromIsJust isValid
+
+public export
+checkSTLC_closed_function_valid :
+  (dom, cod : SubstObjMu) -> (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (checkSTLC [] t)} ->
+  {auto expectedSig :
+    DPair.fst (fromIsJust {x=(checkSTLC [] t)} isValid) = (dom !-> cod)} ->
+  Checked_Closed_STLC_Function dom cod
+checkSTLC_closed_function_valid dom cod t {isValid} {expectedSig}
+  with (fromIsJust isValid)
+    checkSTLC_closed_function_valid dom cod t {isValid} {expectedSig}
+      | (ty ** m) =
+        replace {p=(Checked_STLC_Term [])} expectedSig m
 
 public export
 stlcToCCC_ctx :

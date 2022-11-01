@@ -1061,7 +1061,7 @@ stlcAppTest ctx t {isValid} n = do
   let sm = stlcToCCC_ctx_valid ctx t {isValid}
   let (ty ** m) = sm
   putStrLn $ "STLC[" ++ show ctx ++ " |- " ++ show t ++
-    "] => SubstMorph[" ++ showSubstMorph m ++ "]"
+    "] => SubstMorph[" ++ show ty ++ " : " ++ showSubstMorph m ++ "]"
   putStrLn $ "BNC(%) = " ++ show (substMorphToBNC m)
   putStrLn $ "%(" ++ show n ++ ") = " ++
     show (substMorphToFunc m $ natToInteger n)
