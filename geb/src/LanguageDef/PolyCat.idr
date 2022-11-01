@@ -6375,33 +6375,33 @@ evalByGN x y m n with (substGNumToMorph x y m, natToSubstTerm x n)
 ---------------------------------------
 
 public export
-STLC_Context : Type
-STLC_Context = List SubstObjMu
+SOMu_Context : Type
+SOMu_Context = List SubstObjMu
 
 -- Indexed by the context and the type of the term within that context
 -- to which the term compiles. (Thus, the type of the term abstracted over
 -- the context is `ctx -> ty`.)
 public export
-data Checked_STLC_Term : STLC_Context -> SubstObjMu -> Type where
+data Checked_STLC_Term : SOMu_Context -> SubstObjMu -> Type where
   -- The "void" or "absurd" function, which takes a term of type Void
   -- to any type; there's no explicit constructor for terms of type Void,
   -- but a lambda could introduce one.  The SubstObjMu is the type of the
   -- resulting term (since we can get any type from a term of Void).
-  Checked_STLC_Absurd : {ctx : STLC_Context} -> {cod : SubstObjMu} ->
+  Checked_STLC_Absurd : {ctx : SOMu_Context} -> {cod : SubstObjMu} ->
     Checked_STLC_Term ctx Subst0 -> Checked_STLC_Term ctx cod
 
   -- The only term of type Unit.
-  Checked_STLC_Unit : {ctx : STLC_Context} ->
+  Checked_STLC_Unit : {ctx : SOMu_Context} ->
     Checked_STLC_Term ctx Subst1
 
   -- Construct coproducts.  In each case, the type of the injected term
   -- tells us the type of one side of the coproduct, so we provide a
   -- SubstObjMu to tell us the type of the other side.
   Checked_STLC_Left :
-    {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
+    {ctx : SOMu_Context} -> {lty, rty : SubstObjMu} ->
       Checked_STLC_Term ctx lty -> Checked_STLC_Term ctx (lty !+ rty)
   Checked_STLC_Right :
-    {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
+    {ctx : SOMu_Context} -> {lty, rty : SubstObjMu} ->
       Checked_STLC_Term ctx rty -> Checked_STLC_Term ctx (lty !+ rty)
 
   -- Case statement : parameters are expression to case on, which must be
@@ -6409,45 +6409,45 @@ data Checked_STLC_Term : STLC_Context -> SubstObjMu -> Type where
   -- type, which becomes the type of the overall term.  The cases receive
   -- the the result of the coproduct elimination in their contexts.
   Checked_STLC_Case :
-    {ctx : STLC_Context} -> {lty, rty, cod : SubstObjMu} ->
+    {ctx : SOMu_Context} -> {lty, rty, cod : SubstObjMu} ->
     Checked_STLC_Term ctx (lty !+ rty) ->
     Checked_STLC_Term (lty :: ctx) cod -> Checked_STLC_Term (rty :: ctx) cod ->
     Checked_STLC_Term ctx cod
 
   -- Construct a term of a pair type
-  Checked_STLC_Pair : {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
+  Checked_STLC_Pair : {ctx : SOMu_Context} -> {lty, rty : SubstObjMu} ->
     Checked_STLC_Term ctx lty -> Checked_STLC_Term ctx rty ->
     Checked_STLC_Term ctx (lty !* rty)
 
   -- Projections; in each case, the given term must be of a product type
-  Checked_STLC_Fst : {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
+  Checked_STLC_Fst : {ctx : SOMu_Context} -> {lty, rty : SubstObjMu} ->
     Checked_STLC_Term ctx (lty !* rty) -> Checked_STLC_Term ctx lty
-  Checked_STLC_Snd : {ctx : STLC_Context} -> {lty, rty : SubstObjMu} ->
+  Checked_STLC_Snd : {ctx : SOMu_Context} -> {lty, rty : SubstObjMu} ->
     Checked_STLC_Term ctx (lty !* rty) -> Checked_STLC_Term ctx rty
 
   -- Lambda abstraction:  introduce into the context a (de Bruijn-indexed)
   -- variable of the given type.
   Checked_STLC_Lambda :
-    {ctx : STLC_Context} -> {vty, tty : SubstObjMu} ->
+    {ctx : SOMu_Context} -> {vty, tty : SubstObjMu} ->
     Checked_STLC_Term (vty :: ctx) tty -> Checked_STLC_Term ctx (vty !-> tty)
 
   -- Function application
-  Checked_STLC_App : {ctx : STLC_Context} -> {dom, cod : SubstObjMu} ->
+  Checked_STLC_App : {ctx : SOMu_Context} -> {dom, cod : SubstObjMu} ->
     Checked_STLC_Term ctx (dom !-> cod) -> Checked_STLC_Term ctx dom ->
     Checked_STLC_Term ctx cod
 
   -- The variable at the given de Bruijn index
   Checked_STLC_Var :
-    {ctx : STLC_Context} -> {i : Nat} -> {auto ok : InBounds i ctx} ->
+    {ctx : SOMu_Context} -> {i : Nat} -> {auto ok : InBounds i ctx} ->
     Checked_STLC_Term ctx (index i ctx {ok})
 
 public export
-stlcCtxToSOMu : STLC_Context -> SubstObjMu
+stlcCtxToSOMu : SOMu_Context -> SubstObjMu
 stlcCtxToSOMu = foldr (!*) Subst1
 
 public export
 stlcCtxProj :
-  (ctx : STLC_Context) -> (n : Nat) -> {auto 0 ok : InBounds n ctx} ->
+  (ctx : SOMu_Context) -> (n : Nat) -> {auto 0 ok : InBounds n ctx} ->
   SubstMorph (stlcCtxToSOMu ctx) (index n ctx {ok})
 stlcCtxProj (ty :: ctx) Z {ok=InFirst} =
   SMProjLeft ty (stlcCtxToSOMu ctx)
@@ -6457,7 +6457,7 @@ stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
   stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)
 
 public export
-compileCheckedTerm : {ctx : STLC_Context} -> {ty : SubstObjMu} ->
+compileCheckedTerm : {ctx : SOMu_Context} -> {ty : SubstObjMu} ->
   Checked_STLC_Term ctx ty -> SubstMorph (stlcCtxToSOMu ctx) ty
 compileCheckedTerm {ctx} {ty} (Checked_STLC_Absurd v) =
   SMFromInit ty <! compileCheckedTerm {ctx} {ty=Subst0} v
@@ -6492,6 +6492,18 @@ compileCheckedTerm {ctx} {ty=cod} (Checked_STLC_App {dom} {cod} f x) =
 compileCheckedTerm
   {ctx} {ty=(index i ctx {ok})} (Checked_STLC_Var {ctx} {i} {ok}) =
     stlcCtxProj ctx i {ok}
+
+public export
+data STLC_Type : Type where
+  STLC_Void : STLC_Type
+  STLC_UnitTy : STLC_Type
+  STLC_Either : STLC_Type -> STLC_Type -> STLC_Type
+  STLC_PairTy : STLC_Type -> STLC_Type -> STLC_Type
+  STLC_Function : STLC_Type -> STLC_Type -> STLC_Type
+
+public export
+STLC_Context : Type
+STLC_Context = List STLC_Type
 
 public export
 data STLC_Term : Type where
@@ -6555,11 +6567,11 @@ Show STLC_Term where
   show (STLC_Var k) = "v" ++ show k
 
 public export
-SignedCheckedSTLCTerm : STLC_Context -> Type
+SignedCheckedSTLCTerm : SOMu_Context -> Type
 SignedCheckedSTLCTerm ctx = DPair SubstObjMu (Checked_STLC_Term ctx)
 
 public export
-SignedSubstCtxMorph : STLC_Context -> Type
+SignedSubstCtxMorph : SOMu_Context -> Type
 SignedSubstCtxMorph ctx = DPair SubstObjMu (SubstMorph $ stlcCtxToSOMu ctx)
 
 public export
@@ -6568,7 +6580,7 @@ SignedSubstTerm = (ty : SubstObjMu ** SubstMorph Subst1 ty)
 
 public export
 checkSTLC :
-  (ctx : STLC_Context) -> STLC_Term -> Maybe (SignedCheckedSTLCTerm ctx)
+  (ctx : SOMu_Context) -> STLC_Term -> Maybe (SignedCheckedSTLCTerm ctx)
 checkSTLC ctx (STLC_Absurd t ty) = do
   (ty' ** t') <- checkSTLC ctx t
   case ty' of
@@ -6627,7 +6639,7 @@ checkSTLC ctx (STLC_Var i) = case inBounds i ctx of
 
 public export
 stlcToCCC_ctx :
-  (ctx : STLC_Context) ->
+  (ctx : SOMu_Context) ->
   STLC_Term ->
   Maybe (SignedSubstCtxMorph ctx)
 stlcToCCC_ctx ctx t = do
@@ -6636,7 +6648,7 @@ stlcToCCC_ctx ctx t = do
 
 public export
 stlcToCCC_ctx_valid :
-  (ctx : STLC_Context) ->
+  (ctx : SOMu_Context) ->
   (t : STLC_Term) ->
   {auto isValid : IsJustTrue (stlcToCCC_ctx ctx t)} ->
   SignedSubstCtxMorph ctx
