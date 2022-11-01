@@ -554,6 +554,18 @@ pfHomToCompArena p q r =
   pfSetCoproductArena {a=(pfPos p -> pfPos q)} $
     \f => pfHomObj (pfPosChangeArena p q f) r
 
+public export
+pfDerivativePos : PolyFunc -> Type
+pfDerivativePos p = DPair (pfPos p) (pfDir {p})
+
+public export
+pfDerivativeDir : (p : PolyFunc) -> pfDerivativePos p -> Type
+pfDerivativeDir p (i ** di) = DPair (pfDir {p} i) (Not . Equal di)
+
+public export
+pfDerivativeArena : PolyFunc -> Type
+pfDerivativeArena p = DPair (pfDerivativePos p) (pfDerivativeDir p)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Composition of natural transformations ----
@@ -908,6 +920,103 @@ pfNuCata : {0 p : PolyFunc} -> {0 a : Type} -> PFAlg p a -> PolyFuncNu p -> a
 pfNuCata {p=p@(pos ** dir)} {a} alg (InPFN i da) =
   alg i $ \d : dir i => pfNuCata {p} alg $ da d
 
+-----------------
+---- P-trees ----
+-----------------
+
+-- A path through a p-tree whose last vertex is labeled with the given position.
+public export
+data PPathPos : (p : PolyFunc) -> pfPos p -> Type where
+  PPRoot : {p : PolyFunc} -> (i : pfPos p) -> PPathPos p i
+  PPPath : {p : PolyFunc} -> {i : pfPos p} ->
+    PPathPos p i -> pfDir {p} i -> (j : pfPos p) -> PPathPos p j
+
+public export
+PPath : PolyFunc -> Type
+PPath p = DPair (pfPos p) (PPathPos p)
+
+public export
+PPathPred : PolyFunc -> Type
+PPathPred p = (i : pfPos p) -> PPathPos p i -> pfDir {p} i -> Maybe (pfPos p)
+
+public export
+PPathPredGenPosT : {p : PolyFunc} ->
+  PPathPred p -> (i : pfPos p) -> PPathPos p i -> Type
+PPathPredGenPosT pred i (PPRoot i) = ()
+PPathPredGenPosT pred j (PPPath {i} pp di j) =
+  Pair (PPathPredGenPosT pred i pp) (pred i pp di = Just j)
+
+public export
+PPathPredGenPosDec : {p : PolyFunc} ->
+  (dirDec : (i' : pfPos p) -> (di', di'' : pfDir {p} i') -> Dec (di' = di'')) ->
+  (pred : PPathPred p) -> (i : pfPos p) -> (pp : PPathPos p i) ->
+  Dec (PPathPredGenPosT {p} pred i pp)
+PPathPredGenPosDec {p} dirDec pred i (PPRoot i) =
+  ?PPathPredGenPosDec_hole_root
+PPathPredGenPosDec {p} dirDec pred j (PPPath {i} pp di j) =
+  let r = PPathPredGenPosDec {p} dirDec pred i pp in
+  ?PPathPredGenPosDec_hole_path
+
+public export
+PPathPredGenPosDecPred : {p : PolyFunc} ->
+  (dirDec : (i' : pfPos p) -> (di', di'' : pfDir {p} i') -> Dec (di' = di'')) ->
+  (pred : PPathPred p) -> (i : pfPos p) -> (pp : PPathPos p i) ->
+  Bool
+PPathPredGenPosDecPred {p} dirDec pred i pp =
+  isYes $ PPathPredGenPosDec {p} dirDec pred i pp
+
+-- A proof that the given predicate can generate the given path.
+public export
+data PPathPredGenPos : {p : PolyFunc} ->
+    PPathPred p -> (i : pfPos p) -> PPathPos p i -> Type where
+  PPGRoot : {p : PolyFunc} -> (pred : PPathPred p) ->
+    (i : pfPos p) -> PPathPredGenPos pred i (PPRoot i)
+  PPGPath : {p : PolyFunc} -> {pred : PPathPred p} ->
+    {i : pfPos p} -> {ppi : PPathPos p i} ->
+    PPathPredGenPos {p} pred i ppi ->
+    (di : pfDir {p} i) -> (j : pfPos p) -> pred i ppi di = Just j ->
+    PPathPredGenPos {p} pred j (PPPath {p} {i} ppi di j)
+
+public export
+PPathPredNotGenPos : {p : PolyFunc} ->
+  PPathPred p -> (i : pfPos p) -> PPathPos p i -> Type
+PPathPredNotGenPos {p} pp i ppi = Not $ PPathPredGenPos pp i ppi
+
+public export
+PPathPredGen : {p : PolyFunc} -> PPathPred p -> PPath p -> Type
+PPathPredGen {p} pred (i ** ppi) = PPathPredGenPos {p} pred i ppi
+
+public export
+PPathPredNotGen : {p : PolyFunc} -> PPathPred p -> PPath p -> Type
+PPathPredNotGen {p} pred pp = Not $ PPathPredGen {p} pred pp
+
+public export
+PPathPredGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
+PPathPredGenCorrect {p} pred =
+  (i : pfPos p) -> (ppi : PPathPos p i) ->
+  PPathPredGenPos {p} pred i ppi -> (di : pfDir {p} i) ->
+  IsJustTrue (pred i ppi di)
+
+public export
+PPathPredNotGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
+PPathPredNotGenCorrect {p} pred =
+  (i : pfPos p) -> (ppi : PPathPos p i) ->
+  PPathPredNotGenPos {p} pred i ppi -> (di : pfDir {p} i) ->
+  IsNothingTrue (pred i ppi di)
+
+public export
+PPathPredCorrect : {p : PolyFunc} -> PPathPred p -> Type
+PPathPredCorrect {p} pred =
+  (PPathPredGenCorrect {p} pred, PPathPredNotGenCorrect {p} pred)
+
+public export
+PTree : PolyFunc -> Type
+PTree p = Subset0 (PPathPred p) (PPathPredCorrect {p})
+
+public export
+PVertex : {p : PolyFunc} -> PTree p -> Type
+PVertex {p} pt = Subset0 (PPath p) (PPathPredGen {p} $ fst0 pt)
+
 --------------------------------------
 ---- Polynomial (cofree) comonads ----
 --------------------------------------
@@ -953,6 +1062,19 @@ PolyFuncCofreeCMFromNuScale = PolyFuncNu .* PFScale
 public export
 PolyFuncCofreeCMPosFromNuScale : PolyFunc -> Type
 PolyFuncCofreeCMPosFromNuScale p = PolyFuncCofreeCMFromNuScale p ()
+
+public export
+partial
+PolyFuncCofreeCMDirFromNuScale :
+  (p : PolyFunc) -> PolyFuncCofreeCMPosFromNuScale p -> Type
+PolyFuncCofreeCMDirFromNuScale p =
+  pfNuCata {p=(PFScale p ())} $ PolyFuncCofreeCMDirAlg p
+
+public export
+partial
+PolyFuncCofreeCMArenaFromNuScale : PolyFunc -> PolyFunc
+PolyFuncCofreeCMArenaFromNuScale p =
+  (PolyFuncCofreeCMPosFromNuScale p ** PolyFuncCofreeCMDirFromNuScale p)
 
 public export
 InPNode : {0 p : PolyFunc} -> {0 a : Type} ->
@@ -1021,6 +1143,53 @@ pfCofreeAna : {p : PolyFunc} -> {a, b : Type} ->
   PFScaleCoalg p a b -> b -> InterpPolyFuncCofreeCM p a
 pfCofreeAna {p} {a} {b} =
   PolyCFCMScaleToInterp p a .* pfCofreeAnaScale {p} {a} {b}
+
+public export
+PolyFuncCofreeCMFromPTreePos : PolyFunc -> Type
+PolyFuncCofreeCMFromPTreePos = PTree
+
+public export
+PolyFuncCofreeCMFromPTreeDir :
+  (p : PolyFunc) -> PolyFuncCofreeCMFromPTreePos p -> Type
+PolyFuncCofreeCMFromPTreeDir p = PVertex {p}
+
+public export
+PolyFuncCofreeCMFromPTreeArena : PolyFunc -> PolyFunc
+PolyFuncCofreeCMFromPTreeArena p =
+  (PolyFuncCofreeCMFromPTreePos p ** PolyFuncCofreeCMFromPTreeDir p)
+
+public export
+InterpPolyFuncCofreeCMFromPTree : PolyFunc -> Type -> Type
+InterpPolyFuncCofreeCMFromPTree =
+  InterpPolyFunc . PolyFuncCofreeCMFromPTreeArena
+
+public export
+PolyFuncCofreeCMPosNuScaleToPTree : {p : PolyFunc} ->
+  PolyFuncCofreeCMPosFromNuScale p -> PolyFuncCofreeCMFromPTreePos p
+PolyFuncCofreeCMPosNuScaleToPTree {p=p@(pos ** dir)} (InPFN (PFNode () i) d) =
+  ?PolyFuncCofreeCMPosNuScaleToPTree_hole
+
+public export
+PolyFuncCofreeCMPosPTreeToNuScale : {p : PolyFunc} ->
+  PolyFuncCofreeCMFromPTreePos p -> PolyFuncCofreeCMPosFromNuScale p
+PolyFuncCofreeCMPosPTreeToNuScale {p=p@(pos ** dir)} =
+  ?PolyFuncCofreeCMPosPTreeToNuScale_hole
+
+public export
+PolyFuncCofreeCMDirNuScaleToPTree : {p : PolyFunc} ->
+  (i : PolyFuncCofreeCMPosFromNuScale p) ->
+  PolyFuncCofreeCMDirFromNuScale p i ->
+  PolyFuncCofreeCMFromPTreeDir p (PolyFuncCofreeCMPosNuScaleToPTree i)
+PolyFuncCofreeCMDirNuScaleToPTree {p=(pos ** dir)} i di =
+  ?PolyFuncCofreeCMDirNuScaleToPTree_hole
+
+public export
+PolyFuncCofreeCMDirPTreeToNuScale : {p : PolyFunc} ->
+  (i : PolyFuncCofreeCMFromPTreePos p) ->
+  PolyFuncCofreeCMFromPTreeDir p i ->
+  PolyFuncCofreeCMDirFromNuScale p (PolyFuncCofreeCMPosPTreeToNuScale i)
+PolyFuncCofreeCMDirPTreeToNuScale {p=(pos ** dir)} i di =
+  ?PolyFuncCofreeCMDPTreeToNuScale_hole
 
 ----------------------------------------------
 ----------------------------------------------
@@ -4768,6 +4937,15 @@ soProdLeftAssoc {w} {x} {y} {z} f =
       (SMProjLeft _ _ <! SMProjLeft _ _)
       (SMPair (SMProjRight _ _ <! SMProjLeft _ _) (SMProjRight _ _))
 
+public export
+soProdRightAssoc : {w, x, y, z : SubstObjMu} ->
+  SubstMorph ((w !* x) !* y) z -> SubstMorph (w !* (x !* y)) z
+soProdRightAssoc {w} {x} {y} {z} f =
+  f <!
+    SMPair
+      (SMPair (SMProjLeft _ _) (SMProjLeft _ _ <! SMProjRight _ _))
+      (SMProjRight _ _ <! SMProjRight _ _)
+
 -- The inverse of SMDistrib.
 public export
 soGather : (x, y, z : SubstObjMu) ->
@@ -4860,15 +5038,15 @@ soPartialAppTerm : {w, x, y, z : SubstObjMu} ->
 soPartialAppTerm g t = soProd1LeftElim $ soPartialApp {w=Subst1} g t
 
 public export
-covarYonedaEmbed : {a, b : SubstObjMu} ->
+contravarYonedaEmbed : {a, b : SubstObjMu} ->
   SubstMorph b a -> (x : SubstObjMu) -> SubstMorph (a !-> x) (b !-> x)
-covarYonedaEmbed {a} {b} f x =
+contravarYonedaEmbed {a} {b} f x =
   soCurry (soEval a x <! SMPair (SMProjLeft _ _) (f <! SMProjRight _ _))
 
 public export
-contravarYonedaEmbed : {a, b : SubstObjMu} ->
+covarYonedaEmbed : {a, b : SubstObjMu} ->
   SubstMorph a b -> (x : SubstObjMu) -> SubstMorph (x !-> a) (x !-> b)
-contravarYonedaEmbed {a} {b} f x =
+covarYonedaEmbed {a} {b} f x =
   soCurry (f <! soEval x a)
 
 public export
@@ -5011,7 +5189,7 @@ soReflectedPair (InSO (w !!* x)) y z =
     xyz = soReflectedPair x y z
     wxyz = soReflectedPair w (x !-> y) (x !-> z)
   in
-  contravarYonedaEmbed xyz w <! wxyz
+  covarYonedaEmbed xyz w <! wxyz
 
 public export
 soReflectedCompose : (x, y, z : SubstObjMu) ->
@@ -5052,6 +5230,28 @@ soReflectedFlip =
         (SMProjLeft _ _ <! SMProjLeft _ _)
         (SMProjRight _ _))
       (SMProjRight _ _ <! SMProjLeft _ _)))
+
+public export
+ctxCompose : {w, x, y, z : SubstObjMu} ->
+  SubstMorph w (y !-> z) -> SubstMorph w (x !-> y) -> SubstMorph w (x !-> z)
+ctxCompose {w} {x} {y} {z} g f = soReflectedCompose x y z <! SMPair g f
+
+public export
+removeImpl : {x, y : SubstObjMu} -> SubstMorph x (x !-> y) -> SubstMorph x y
+removeImpl {x} {y} f = soEval x y <! SMPair f (SMId x)
+
+public export
+soCaseAbstract : {w, x, y, z : SubstObjMu} ->
+  SubstMorph (w !-> (x !+ y)) ((x !-> z) !-> (y !-> z) !-> (w !-> z))
+soCaseAbstract {w} {x} {y} {z} =
+  soCurry $ soCurry $ soCurry $ soProdCommutesLeft $ soProdRightAssoc $
+    soUncurry $ soProdRightAssoc $ soUncurry $ soProdCommutesLeft $
+    SMCase
+      (soCurry $ soCurry $ soEval x z <! soProdCommutes _ _ <!
+        SMProjLeft _ _)
+      (soCurry $ soCurry $ soEval y z <! soProdCommutes _ _ <!
+        soForgetMiddle _ _ _)
+    <! soEval w (x !+ y)
 
 -------------------------------------------------------
 -------------------------------------------------------
@@ -6145,6 +6345,15 @@ public export
 showMaybeSubstMorph : {x, y : SubstObjMu} -> Maybe (SubstMorph x y) -> String
 showMaybeSubstMorph = maybeElim showSubstMorph (show (Nothing {ty=()}))
 
+public export
+SignedBNCMorph : Type
+SignedBNCMorph = (Nat, Nat, BNCPolyM)
+
+public export
+Show SignedBNCMorph where
+  show (dom, cod, m) =
+    "(" ++ show dom ++ " -> " ++ show cod ++ " : " ++ show m ++ ")"
+
 --------------------------------
 ---- Test utility functions ----
 --------------------------------
@@ -6164,6 +6373,129 @@ evalByGN x y m n with (substGNumToMorph x y m, natToSubstTerm x n)
 ---- STLC-to-SubstObjMu/SubstMorph ----
 ---------------------------------------
 ---------------------------------------
+
+public export
+SOMu_Context : Type
+SOMu_Context = List SubstObjMu
+
+-- Indexed by the context and the type of the term within that context
+-- to which the term compiles. (Thus, the type of the term abstracted over
+-- the context is `ctx -> ty`.)
+public export
+data Checked_STLC_Term : SOMu_Context -> SubstObjMu -> Type where
+  -- The "void" or "absurd" function, which takes a term of type Void
+  -- to any type; there's no explicit constructor for terms of type Void,
+  -- but a lambda could introduce one.  The SubstObjMu is the type of the
+  -- resulting term (since we can get any type from a term of Void).
+  Checked_STLC_Absurd : {ctx : SOMu_Context} -> {cod : SubstObjMu} ->
+    Checked_STLC_Term ctx Subst0 -> Checked_STLC_Term ctx cod
+
+  -- The only term of type Unit.
+  Checked_STLC_Unit : {ctx : SOMu_Context} ->
+    Checked_STLC_Term ctx Subst1
+
+  -- Construct coproducts.  In each case, the type of the injected term
+  -- tells us the type of one side of the coproduct, so we provide a
+  -- SubstObjMu to tell us the type of the other side.
+  Checked_STLC_Left :
+    {ctx : SOMu_Context} -> {lty, rty : SubstObjMu} ->
+      Checked_STLC_Term ctx lty -> Checked_STLC_Term ctx (lty !+ rty)
+  Checked_STLC_Right :
+    {ctx : SOMu_Context} -> {lty, rty : SubstObjMu} ->
+      Checked_STLC_Term ctx rty -> Checked_STLC_Term ctx (lty !+ rty)
+
+  -- Case statement : parameters are expression to case on, which must be
+  -- a coproduct, and then left and right case, which must be of the same
+  -- type, which becomes the type of the overall term.  The cases receive
+  -- the the result of the coproduct elimination in their contexts.
+  Checked_STLC_Case :
+    {ctx : SOMu_Context} -> {lty, rty, cod : SubstObjMu} ->
+    Checked_STLC_Term ctx (lty !+ rty) ->
+    Checked_STLC_Term (lty :: ctx) cod -> Checked_STLC_Term (rty :: ctx) cod ->
+    Checked_STLC_Term ctx cod
+
+  -- Construct a term of a pair type
+  Checked_STLC_Pair : {ctx : SOMu_Context} -> {lty, rty : SubstObjMu} ->
+    Checked_STLC_Term ctx lty -> Checked_STLC_Term ctx rty ->
+    Checked_STLC_Term ctx (lty !* rty)
+
+  -- Projections; in each case, the given term must be of a product type
+  Checked_STLC_Fst : {ctx : SOMu_Context} -> {lty, rty : SubstObjMu} ->
+    Checked_STLC_Term ctx (lty !* rty) -> Checked_STLC_Term ctx lty
+  Checked_STLC_Snd : {ctx : SOMu_Context} -> {lty, rty : SubstObjMu} ->
+    Checked_STLC_Term ctx (lty !* rty) -> Checked_STLC_Term ctx rty
+
+  -- Lambda abstraction:  introduce into the context a (de Bruijn-indexed)
+  -- variable of the given type.
+  Checked_STLC_Lambda :
+    {ctx : SOMu_Context} -> {vty, tty : SubstObjMu} ->
+    Checked_STLC_Term (vty :: ctx) tty -> Checked_STLC_Term ctx (vty !-> tty)
+
+  -- Function application
+  Checked_STLC_App : {ctx : SOMu_Context} -> {dom, cod : SubstObjMu} ->
+    Checked_STLC_Term ctx (dom !-> cod) -> Checked_STLC_Term ctx dom ->
+    Checked_STLC_Term ctx cod
+
+  -- The variable at the given de Bruijn index
+  Checked_STLC_Var :
+    {ctx : SOMu_Context} -> {i : Nat} -> {auto ok : InBounds i ctx} ->
+    Checked_STLC_Term ctx (index i ctx {ok})
+
+public export
+Checked_Closed_STLC_Function : SubstObjMu -> SubstObjMu -> Type
+Checked_Closed_STLC_Function x y = Checked_STLC_Term [] (x !-> y)
+
+public export
+stlcCtxToSOMu : SOMu_Context -> SubstObjMu
+stlcCtxToSOMu = foldr (!*) Subst1
+
+public export
+stlcCtxProj :
+  (ctx : SOMu_Context) -> (n : Nat) -> {auto 0 ok : InBounds n ctx} ->
+  SubstMorph (stlcCtxToSOMu ctx) (index n ctx {ok})
+stlcCtxProj (ty :: ctx) Z {ok=InFirst} =
+  SMProjLeft ty (stlcCtxToSOMu ctx)
+stlcCtxProj (ty :: ctx) Z {ok=InLater} impossible
+stlcCtxProj (ty :: ctx) (S n) {ok=InFirst} impossible
+stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
+  stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)
+
+public export
+compileCheckedTerm : {ctx : SOMu_Context} -> {ty : SubstObjMu} ->
+  Checked_STLC_Term ctx ty -> SubstMorph (stlcCtxToSOMu ctx) ty
+compileCheckedTerm {ctx} {ty} (Checked_STLC_Absurd v) =
+  SMFromInit ty <! compileCheckedTerm {ctx} {ty=Subst0} v
+compileCheckedTerm {ctx} {ty=Subst1} Checked_STLC_Unit =
+  SMToTerminal (stlcCtxToSOMu ctx)
+compileCheckedTerm {ctx} {ty=(lty !+ rty)} (Checked_STLC_Left t) =
+  SMInjLeft lty rty <! compileCheckedTerm {ctx} {ty=lty} t
+compileCheckedTerm {ctx} {ty=(lty !+ rty)} (Checked_STLC_Right t) =
+  SMInjRight lty rty <! compileCheckedTerm {ctx} {ty=rty} t
+compileCheckedTerm {ctx} {ty} (Checked_STLC_Case {lty} {rty} {cod=ty} t l r) =
+  let
+    t' = compileCheckedTerm {ctx} {ty=(lty !+ rty)} t
+    l' = soCurry $ compileCheckedTerm {ctx=(lty :: ctx)} {ty} l
+    r' = soCurry $ compileCheckedTerm {ctx=(rty :: ctx)} {ty} r
+    lr' = SMCase l' r'
+    lrt' = lr' <! t'
+  in
+  removeImpl lrt'
+compileCheckedTerm {ctx} {ty=(lty !* rty)} (Checked_STLC_Pair {lty} {rty} l r) =
+  SMPair
+    (compileCheckedTerm {ctx} {ty=lty} l)
+    (compileCheckedTerm {ctx} {ty=rty} r)
+compileCheckedTerm {ctx} {ty=lty} (Checked_STLC_Fst {lty} {rty} p) =
+  SMProjLeft lty rty <! compileCheckedTerm {ctx} {ty=(lty !* rty)} p
+compileCheckedTerm {ctx} {ty=rty} (Checked_STLC_Snd {lty} {rty} p) =
+  SMProjRight lty rty <! compileCheckedTerm {ctx} {ty=(lty !* rty)} p
+compileCheckedTerm
+  {ctx} {ty=(vty !-> tty)} (Checked_STLC_Lambda {vty} {tty} t) =
+    soCurry $ soProdCommutesLeft $ compileCheckedTerm t
+compileCheckedTerm {ctx} {ty=cod} (Checked_STLC_App {dom} {cod} f x) =
+  soEval dom cod <! SMPair (compileCheckedTerm f) (compileCheckedTerm x)
+compileCheckedTerm
+  {ctx} {ty=(index i ctx {ok})} (Checked_STLC_Var {ctx} {i} {ok}) =
+    stlcCtxProj ctx i {ok}
 
 public export
 data STLC_Term : Type where
@@ -6198,8 +6530,8 @@ data STLC_Term : Type where
   -- variable of the given type, and produce a term with that extended context.
   STLC_Lambda : SubstObjMu -> STLC_Term -> STLC_Term
 
-  -- Function application
-  STLC_App : STLC_Term -> STLC_Term -> STLC_Term
+  -- Function application; the first parameter is the function's domain
+  STLC_App : SubstObjMu -> STLC_Term -> STLC_Term -> STLC_Term
 
   -- Lisp-style eval: interpret a term as a function and apply it.
   -- The type parameter is the output type.
@@ -6220,117 +6552,231 @@ Show STLC_Term where
   show (STLC_Fst x) = "fst(" ++ show x ++ ")"
   show (STLC_Snd x) = "snd(" ++ show x ++ ")"
   show (STLC_Lambda ty x) = "\\" ++ show ty ++ ".[" ++ show x ++ "]"
-  show (STLC_App x y) = "app(" ++ show x ++ ", " ++ show y ++ ")"
+  show (STLC_App ty x y) =
+    "app(" ++ show ty ++ ": " ++ show x ++ ", " ++ show y ++ ")"
   show (STLC_Eval ty f x) =
     "eval((" ++ show ty ++ ")" ++ show f ++ ", " ++ show x ++ ")"
   show (STLC_Var k) = "v" ++ show k
 
 public export
-STLC_Context : Type
-STLC_Context = List SubstObjMu
+SignedCheckedSTLCTerm : SOMu_Context -> Type
+SignedCheckedSTLCTerm ctx = DPair SubstObjMu (Checked_STLC_Term ctx)
 
 public export
-stlcCtxToSOMu : STLC_Context -> SubstObjMu
-stlcCtxToSOMu = foldr (!*) Subst1
+SignedSubstCtxMorph : SOMu_Context -> Type
+SignedSubstCtxMorph ctx = DPair SubstObjMu (SubstMorph $ stlcCtxToSOMu ctx)
 
 public export
-stlcCtxProj :
-  (ctx : STLC_Context) -> (n : Nat) -> {auto 0 ok : InBounds n ctx} ->
-  SubstMorph (stlcCtxToSOMu ctx) (index n ctx {ok})
-stlcCtxProj (ty :: ctx) Z {ok=InFirst} =
-  SMProjLeft ty (stlcCtxToSOMu ctx)
-stlcCtxProj (ty :: ctx) Z {ok=InLater} impossible
-stlcCtxProj (ty :: ctx) (S n) {ok=InFirst} impossible
-stlcCtxProj (ty :: ctx) (S n) {ok=(InLater ok)} =
-  stlcCtxProj ctx n {ok} <! SMProjRight ty (stlcCtxToSOMu ctx)
+SignedSubstTerm : Type
+SignedSubstTerm = (ty : SubstObjMu ** SubstMorph Subst1 ty)
 
 public export
-SignedSubstMorph : Type
-SignedSubstMorph =
-  (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
-
-public export
-stlcToCCC_ctx :
-  STLC_Context ->
-  STLC_Term ->
-  Maybe SignedSubstMorph
-stlcToCCC_ctx ctx (STLC_Absurd t ty) = do
-  t' <- stlcToCCC_ctx ctx t
-  case t' of
-    ((dom, InSO SO0) ** m) => Just ((dom, ty) ** SMFromInit ty <! m)
+checkSTLC :
+  (ctx : SOMu_Context) -> STLC_Term -> Maybe (SignedCheckedSTLCTerm ctx)
+checkSTLC ctx (STLC_Absurd t ty) = do
+  (ty' ** t') <- checkSTLC ctx t
+  case ty' of
+    InSO SO0 => Just (ty ** Checked_STLC_Absurd {cod=ty} t')
     _ => Nothing
-stlcToCCC_ctx ctx STLC_Unit =
-  let dom = stlcCtxToSOMu ctx in
-  Just ((dom, Subst1) ** SMToTerminal dom)
-stlcToCCC_ctx ctx (STLC_Left t ty) = do
-  ((dom, cod) ** m) <- stlcToCCC_ctx ctx t
-  Just ((dom, cod !+ ty) ** SMInjLeft cod ty <! m)
-stlcToCCC_ctx ctx (STLC_Right ty t) = do
-  ((dom, cod) ** m) <- stlcToCCC_ctx ctx t
-  Just ((dom, ty !+ cod) ** SMInjRight ty cod <! m)
-stlcToCCC_ctx ctx (STLC_Case x l r) = do
-  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
-  ((ldom, lcod) ** lm) <- stlcToCCC_ctx ctx l
-  ((rdom, rcod) ** rm) <- stlcToCCC_ctx ctx r
-  case xcod of
-    (InSO (xcodl !!+ xcodr)) => case
-      (decEq xcodl ldom, decEq xcodr rdom, decEq lcod rcod) of
-        (Yes Refl, Yes Refl, Yes Refl) =>
-          Just ((xdom, lcod) ** SMCase lm rm <! xm)
-        _ => Nothing
+checkSTLC ctx STLC_Unit = Just (Subst1 ** Checked_STLC_Unit {ctx})
+checkSTLC ctx (STLC_Left t ty) = do
+  (ty' ** t') <- checkSTLC ctx t
+  Just (ty' !+ ty ** Checked_STLC_Left {ctx} {lty=ty'} {rty=ty} t')
+checkSTLC ctx (STLC_Right ty t) = do
+  (ty' ** t') <- checkSTLC ctx t
+  Just (ty !+ ty' ** Checked_STLC_Right {ctx} {lty=ty} {rty=ty'} t')
+checkSTLC ctx (STLC_Case t l r) = do
+  (ty ** t') <- checkSTLC ctx t
+  case ty of
+    InSO (lty !!+ rty) => do
+      (lcod ** l') <- checkSTLC (lty :: ctx) l
+      (rcod ** r') <- checkSTLC (rty :: ctx) r
+      case decEq lcod rcod of
+        Yes Refl =>
+          Just (rcod ** Checked_STLC_Case {ctx} {lty} {rty} {cod=rcod} t' l' r')
+        No _ => Nothing
     _ => Nothing
-stlcToCCC_ctx ctx (STLC_Pair t1 t2) = do
-  ((dom1, cod1) ** m1) <- stlcToCCC_ctx ctx t1
-  ((dom2, cod2) ** m2) <- stlcToCCC_ctx ctx t2
-  case decEq dom1 dom2 of
-    Yes Refl => Just ((dom2, cod1 !* cod2) ** SMPair m1 m2)
+checkSTLC ctx (STLC_Pair l r) = do
+  (lty ** l') <- checkSTLC ctx l
+  (rty ** r') <- checkSTLC ctx r
+  Just (lty !* rty ** Checked_STLC_Pair l' r')
+checkSTLC ctx (STLC_Fst p) = do
+  (pty ** p') <- checkSTLC ctx p
+  case pty of
+    InSO (lty !!* rty) => Just (lty ** Checked_STLC_Fst {ctx} {lty} {rty} p')
     _ => Nothing
-stlcToCCC_ctx ctx (STLC_Fst x) = do
-  ((dom, cod) ** m) <- stlcToCCC_ctx ctx x
-  case cod of
-    InSO (codl !!* codr) => Just ((dom, codl) ** SMProjLeft codl codr <! m)
+checkSTLC ctx (STLC_Snd p) = do
+  (pty ** p') <- checkSTLC ctx p
+  case pty of
+    InSO (lty !!* rty) => Just (rty ** Checked_STLC_Snd {ctx} {lty} {rty} p')
     _ => Nothing
-stlcToCCC_ctx ctx (STLC_Snd x) = do
-  ((dom, cod) ** m) <- stlcToCCC_ctx ctx x
-  case cod of
-    InSO (codl !!* codr) => Just ((dom, codr) ** SMProjRight codl codr <! m)
-    _ => Nothing
-stlcToCCC_ctx ctx (STLC_Lambda vty t) = stlcToCCC_ctx (vty :: ctx) t
-stlcToCCC_ctx ctx (STLC_App f x) = do
-  ((fdom, fcod) ** fm) <- stlcToCCC_ctx ctx f
-  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
-  case decEq xcod fdom of
-    Yes Refl => Just ((xdom, fcod) ** fm <! xm)
+checkSTLC ctx (STLC_Lambda vty t) = do
+  (tty ** t') <- checkSTLC (vty :: ctx) t
+  Just (vty !-> tty ** Checked_STLC_Lambda {ctx} {vty} {tty} t')
+checkSTLC ctx (STLC_App ty f x) = do
+  (fty ** f') <- checkSTLC ctx f
+  (xty ** x') <- checkSTLC ctx x
+  case decEq fty (xty !-> ty) of
+    Yes Refl => Just (ty ** Checked_STLC_App {ctx} {dom=xty} {cod=ty} f' x')
     No _ => Nothing
-stlcToCCC_ctx ctx (STLC_Eval ty f x) = do
-  ((fdom, fcod) ** fm) <- stlcToCCC_ctx ctx f
-  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
-  case (decEq fdom xdom, decEq fcod (xcod !-> ty)) of
-    (Yes Refl, Yes eq) =>
-      Just ((xdom, ty) ** soEval xcod ty <! SMPair (rewrite sym eq in fm) xm)
-    (_, _) => Nothing
-stlcToCCC_ctx ctx (STLC_Var v) = case inBounds v ctx of
-  Yes ok =>
-    Just ((stlcCtxToSOMu ctx, index v ctx {ok}) ** stlcCtxProj ctx v {ok})
+checkSTLC ctx (STLC_Eval ty f x) = do
+  (fty ** f') <- checkSTLC ctx f
+  (xty ** x') <- checkSTLC ctx x
+  case decEq fty (xty !-> ty) of
+    Yes Refl => Just (ty ** Checked_STLC_App {ctx} {dom=xty} {cod=ty} f' x')
+    No _ => Nothing
+checkSTLC ctx (STLC_Var i) = case inBounds i ctx of
+  Yes ok => Just (index i ctx {ok} ** Checked_STLC_Var {ok})
   No _ => Nothing
 
 public export
-stlcToCCC :
+checkSTLC_valid :
+  (ctx : SOMu_Context) -> (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (checkSTLC ctx t)} ->
+  SignedCheckedSTLCTerm ctx
+checkSTLC_valid ctx t {isValid} = fromIsJust isValid
+
+public export
+checkSTLC_closed_function_valid :
+  (dom, cod : SubstObjMu) -> (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (checkSTLC [] t)} ->
+  {auto expectedSig :
+    DPair.fst (fromIsJust {x=(checkSTLC [] t)} isValid) = (dom !-> cod)} ->
+  Checked_Closed_STLC_Function dom cod
+checkSTLC_closed_function_valid dom cod t {isValid} {expectedSig}
+  with (fromIsJust isValid)
+    checkSTLC_closed_function_valid dom cod t {isValid} {expectedSig}
+      | (ty ** m) =
+        replace {p=(Checked_STLC_Term [])} expectedSig m
+
+public export
+stlcToCCC_ctx :
+  (ctx : SOMu_Context) ->
   STLC_Term ->
-  Maybe SignedSubstMorph
-stlcToCCC = stlcToCCC_ctx []
+  Maybe (SignedSubstCtxMorph ctx)
+stlcToCCC_ctx ctx t = do
+  (ty ** t') <- checkSTLC ctx t
+  Just $ (ty ** compileCheckedTerm {ty} t')
+
+public export
+stlcToCCC_ctx_valid :
+  (ctx : SOMu_Context) ->
+  (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (stlcToCCC_ctx ctx t)} ->
+  SignedSubstCtxMorph ctx
+stlcToCCC_ctx_valid ctx t {isValid} = fromIsJust isValid
+
+public export
+compile_closed_function_valid :
+  (dom, cod : SubstObjMu) -> (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (checkSTLC [] t)} ->
+  {auto expectedSig :
+    DPair.fst (fromIsJust {x=(checkSTLC [] t)} isValid) = (dom !-> cod)} ->
+  SubstMorph dom cod
+compile_closed_function_valid dom cod t {isValid} {expectedSig} =
+  TermAsMorph $
+    compileCheckedTerm {ctx=[]} {ty=(dom !-> cod)} $
+    checkSTLC_closed_function_valid dom cod t {isValid} {expectedSig}
+
+public export
+stlcToCCC : STLC_Term -> Maybe SignedSubstTerm
+stlcToCCC t = stlcToCCC_ctx [] t
 
 public export
 stlcToCCC_valid :
   (t : STLC_Term) ->
   {auto isValid : IsJustTrue (stlcToCCC t)} ->
-  SignedSubstMorph
+  SignedSubstTerm
 stlcToCCC_valid t {isValid} = fromIsJust isValid
 
 public export
-Show SignedSubstMorph where
-  show ((dom, cod) ** m) =
-    "(" ++ show dom ++ " -> " ++ show cod ++ " : " ++ showSubstMorph m ++ ")"
+Show SignedSubstTerm where
+  show (ty ** m) =
+    "(" ++ show ty ++ " : " ++ showSubstMorph m ++ ")"
+
+public export
+stlcToBNC :
+  (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (stlcToCCC t)} ->
+  SignedBNCMorph
+stlcToBNC t {isValid} =
+  let (ty ** m) = stlcToCCC_valid t {isValid} in
+  (substObjToNat Subst1, substObjToNat ty, substMorphToBNC m)
+
+-------------------------------------------------------------------------------
+---- Typed STLC terms (for possible future use in dividing passes further) ----
+-------------------------------------------------------------------------------
+
+public export
+data STLC_Type : Type where
+  STLC_Void : STLC_Type
+  STLC_UnitTy : STLC_Type
+  STLC_Either : STLC_Type -> STLC_Type -> STLC_Type
+  STLC_PairTy : STLC_Type -> STLC_Type -> STLC_Type
+  STLC_Function : STLC_Type -> STLC_Type -> STLC_Type
+
+public export
+Show STLC_Type where
+  show STLC_Void = "void"
+  show STLC_UnitTy = "unit"
+  show (STLC_Either x y) = "(" ++ show x ++ " | " ++ show y ++ ")"
+  show (STLC_PairTy x y) = "(" ++ show x ++ " , " ++ show y ++ ")"
+  show (STLC_Function x y) = "(" ++ show x ++ " -> " ++ show y ++ ")"
+
+public export
+STLC_Context : Type
+STLC_Context = List STLC_Type
+
+public export
+data TSTLC_Term : STLC_Context -> STLC_Type -> Type where
+  -- The "void" or "absurd" function, which takes a term of type Void
+  -- to any type; there's no explicit constructor for terms of type Void,
+  -- but a lambda could introduce one.  The SubstObjMu is the type of the
+  -- resulting term (since we can get any type from a term of Void).
+  TSTLC_Absurd : {ctx : STLC_Context} -> {ty : STLC_Type} ->
+    TSTLC_Term ctx STLC_Void -> TSTLC_Term ctx ty
+
+  -- The only term of type Unit.
+  TSTLC_Unit : {ctx : STLC_Context} -> TSTLC_Term ctx STLC_UnitTy
+
+  -- Construct coproducts
+  TSTLC_Left : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
+    TSTLC_Term ctx lty -> TSTLC_Term ctx (STLC_Either lty rty)
+  TSTLC_Right : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
+    TSTLC_Term ctx rty -> TSTLC_Term ctx (STLC_Either lty rty)
+
+  -- Case statement : parameters are expression to case on, which must be
+  -- a coproduct, and then left and right case, which must be of the same
+  -- type, which becomes the type of the overall term.
+  TSTLC_Case : {ctx : STLC_Context} -> {lty, rty, cod : STLC_Type} ->
+    TSTLC_Term ctx (STLC_Either lty rty) ->
+    TSTLC_Term (lty :: ctx) cod -> TSTLC_Term (rty :: ctx) cod ->
+    TSTLC_Term ctx cod
+
+  -- Construct a term of a pair type
+  TSTLC_Pair : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
+    TSTLC_Term ctx lty -> TSTLC_Term ctx rty ->
+    TSTLC_Term ctx (STLC_PairTy lty rty)
+
+  -- Projections; in each case, the given term must be of a product type
+  TSTLC_Fst : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
+    TSTLC_Term ctx (STLC_PairTy lty rty) -> TSTLC_Term ctx lty
+  TSTLC_Snd : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
+    TSTLC_Term ctx (STLC_PairTy lty rty) -> TSTLC_Term ctx rty
+
+  -- Lambda abstraction:  introduce into the context a (de Bruijn-indexed)
+  -- variable of the given type, and produce a term with that extended context.
+  TSTLC_Lambda : {ctx : STLC_Context} -> {dom, cod : STLC_Type} ->
+    TSTLC_Term (dom :: ctx) cod -> TSTLC_Term ctx (STLC_Function dom cod)
+
+  -- Function application; the first parameter is the function's domain
+  TSTLC_App : {ctx : STLC_Context} -> {dom, cod : STLC_Type} ->
+    TSTLC_Term ctx (STLC_Function dom cod) -> TSTLC_Term ctx dom ->
+    TSTLC_Term ctx cod
+
+  -- The variable at the given de Bruijn index
+  TSTLC_Var : (ctx : STLC_Context) -> (i : Nat) -> {auto ok : InBounds n ctx} ->
+    TSTLC_Term ctx (index n ctx {ok})
 
 ---------------------------------------------------
 ---------------------------------------------------

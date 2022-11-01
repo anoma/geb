@@ -748,7 +748,7 @@ bncpmt11 : Assertion
 bncpmt11 = Assert $ metaBNCPolyM 200 (bncpm0 #- bncpm1) 3 == 75
 
 bncpmt12 : Assertion
-bncpmt12 = Assert $ metaBNCPolyM 200 (bncpm1 #- bncpm0) 3 == -75
+bncpmt12 = Assert $ metaBNCPolyM 200 (bncpm1 #- bncpm0) 3 == 126
 
 bncpmt13 : Assertion
 bncpmt13 = Assert $ metaBNCPolyM 200 (bncpm0 #/ bncpm1) 3 == 2
@@ -1026,7 +1026,7 @@ l5_5_fold_add = sumlist_20 {k=5} <! l5_5
 reflectionTestPair : {x : SubstObjMu} -> {n : Nat} ->
   SubstMorph ((x !-> SUNat n) !* (x !-> SUNat n)) (x !-> SUNat n)
 reflectionTestPair {x} {n} =
-  contravarYonedaEmbed (suAddUnrolled {k=n}) x
+  covarYonedaEmbed (suAddUnrolled {k=n}) x
   <! soReflectedPair x (SUNat n) (SUNat n)
 
 reflectionPairTerm : SOTerm ((SUNat 8 !-> SUNat 8) !* (SUNat 8 !-> SUNat 8))
@@ -1051,18 +1051,45 @@ reflectionTestTerm = reflectionTestMorphism <! MkSUNat {m=8} 1
 
 stlcTest : STLC_Term -> IO ()
 stlcTest t = putStrLn $ "STLC[" ++ show t ++ "] " ++ case stlcToCCC t of
-  Just m => "=> " ++ "SubstMorph[" ++ show m ++ "]"
+  Just m => "=> SubstMorph[" ++ show m ++ "]"
   Nothing => "is ill-typed"
 
+stlcAppTest :
+  (dom, cod : SubstObjMu) -> (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (checkSTLC [] t)} ->
+  {auto expectedSig :
+    DPair.fst (fromIsJust {x=(checkSTLC [] t)} isValid) = (dom !-> cod)} ->
+  Nat -> IO ()
+stlcAppTest dom cod t {isValid} {expectedSig} n = do
+  let m = compile_closed_function_valid dom cod t {isValid} {expectedSig}
+  putStrLn $ "STLC[" ++ show t ++
+    "] => SubstMorph[" ++ show dom ++ " -> " ++ show cod ++
+    " : " ++ showSubstMorph m ++ "]"
+  putStrLn $ "BNC(%) = " ++ show (substMorphToBNC m)
+  putStrLn $ "%(" ++ show n ++ ") = " ++
+    show (substMorphToFunc m $ natToInteger n)
+
+-- The unique term of type Unit.
 stlc_t0 : STLC_Term
 stlc_t0 = STLC_Unit
 
-stlc_t0_so : SignedSubstMorph
+stlc_t0_so : SignedSubstTerm
 stlc_t0_so = stlcToCCC_valid stlc_t0
 
 -- The unique function from Void to Bool.
 stlc_t1 : STLC_Term
 stlc_t1 = STLC_Lambda Subst0 (STLC_Absurd (STLC_Var 0) SubstBool)
+
+-- The identity function on 3.
+stlc_t2 : STLC_Term
+stlc_t2 = STLC_Lambda (SUNat 3) (STLC_Var 0)
+
+-- Boolean AND.
+stlc_t3 : STLC_Term
+stlc_t3 = STLC_Lambda (SubstBool !* SubstBool) $
+  STLC_Case (STLC_Fst $ STLC_Var 0)
+    (STLC_Left STLC_Unit Subst1)
+    (STLC_Snd $ STLC_Var 1)
 
 ----------------------------------
 ----------------------------------
@@ -1433,12 +1460,19 @@ polyCatTest = do
   putStrLn $ "reflectionTestTerm = " ++ show (substTermToNat reflectionTestTerm)
   putStrLn "------------------------------------"
   putStrLn ""
-  putStrLn "------------------------------------"
-  putStrLn "---- Unrefined polynomial types ----"
-  putStrLn "------------------------------------"
+  putStrLn "---------------------------------"
+  putStrLn "---- STLC-to-CCC translation ----"
+  putStrLn "---------------------------------"
   putStrLn ""
-  stlcTest stlc_t0
-  stlcTest stlc_t1
+  stlcAppTest Subst1 Subst1 stlc_t0 0
+  stlcAppTest Subst0 SubstBool stlc_t1 0
+  stlcAppTest (SUNat 3) (SUNat 3) stlc_t2 0
+  stlcAppTest (SUNat 3) (SUNat 3) stlc_t2 1
+  stlcAppTest (SUNat 3) (SUNat 3) stlc_t2 2
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 0
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 1
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 2
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 3
   putStrLn ""
   putStrLn "------------------------------------"
   putStrLn ""
