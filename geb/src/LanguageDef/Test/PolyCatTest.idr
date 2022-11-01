@@ -1055,11 +1055,13 @@ stlcTest t = putStrLn $ "STLC[" ++ show t ++ "] " ++ case stlcToCCC t of
   Nothing => "is ill-typed"
 
 stlcAppTest :
-  (t : STLC_Term) -> {auto isValid : IsJustTrue (stlcToCCC t)} -> Nat -> IO ()
-stlcAppTest t {isValid} n = do
-  let sm = stlcToCCC_valid t {isValid}
-  let ((dom, cod) ** m) = sm
-  putStrLn $ "STLC[" ++ show t ++ "] => SubstMorph[" ++ show sm ++ "]"
+  (ctx : SOMu_Context) -> (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (stlcToCCC_ctx ctx t)} -> Nat -> IO ()
+stlcAppTest ctx t {isValid} n = do
+  let sm = stlcToCCC_ctx_valid ctx t {isValid}
+  let (ty ** m) = sm
+  putStrLn $ "STLC[" ++ show ctx ++ " |- " ++ show t ++
+    "] => SubstMorph[" ++ showSubstMorph m ++ "]"
   putStrLn $ "BNC(%) = " ++ show (substMorphToBNC m)
   putStrLn $ "%(" ++ show n ++ ") = " ++
     show (substMorphToFunc m $ natToInteger n)
@@ -1068,7 +1070,7 @@ stlcAppTest t {isValid} n = do
 stlc_t0 : STLC_Term
 stlc_t0 = STLC_Unit
 
-stlc_t0_so : SignedSubstMorph
+stlc_t0_so : SignedSubstTerm
 stlc_t0_so = stlcToCCC_valid stlc_t0
 
 -- The unique function from Void to Bool.
@@ -1459,11 +1461,11 @@ polyCatTest = do
   putStrLn "---- STLC-to-CCC translation ----"
   putStrLn "---------------------------------"
   putStrLn ""
-  stlcAppTest stlc_t0 0
-  stlcAppTest stlc_t1 0
-  stlcAppTest stlc_t2 0
-  stlcAppTest stlc_t2 1
-  stlcAppTest stlc_t2 2
+  stlcAppTest [] stlc_t0 0
+  stlcAppTest [] stlc_t1 0
+  stlcAppTest [] stlc_t2 0
+  stlcAppTest [] stlc_t2 1
+  stlcAppTest [] stlc_t2 2
   stlcTest stlc_t3
   putStrLn ""
   putStrLn "------------------------------------"
