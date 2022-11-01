@@ -6667,6 +6667,18 @@ stlcToCCC_ctx_valid :
 stlcToCCC_ctx_valid ctx t {isValid} = fromIsJust isValid
 
 public export
+compile_closed_function_valid :
+  (dom, cod : SubstObjMu) -> (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (checkSTLC [] t)} ->
+  {auto expectedSig :
+    DPair.fst (fromIsJust {x=(checkSTLC [] t)} isValid) = (dom !-> cod)} ->
+  SubstMorph dom cod
+compile_closed_function_valid dom cod t {isValid} {expectedSig} =
+  TermAsMorph $
+    compileCheckedTerm {ctx=[]} {ty=(dom !-> cod)} $
+    checkSTLC_closed_function_valid dom cod t {isValid} {expectedSig}
+
+public export
 stlcToCCC : STLC_Term -> Maybe SignedSubstTerm
 stlcToCCC t = stlcToCCC_ctx [] t
 

@@ -1055,13 +1055,16 @@ stlcTest t = putStrLn $ "STLC[" ++ show t ++ "] " ++ case stlcToCCC t of
   Nothing => "is ill-typed"
 
 stlcAppTest :
-  (ctx : SOMu_Context) -> (t : STLC_Term) ->
-  {auto isValid : IsJustTrue (stlcToCCC_ctx ctx t)} -> Nat -> IO ()
-stlcAppTest ctx t {isValid} n = do
-  let sm = stlcToCCC_ctx_valid ctx t {isValid}
-  let (ty ** m) = sm
-  putStrLn $ "STLC[" ++ show ctx ++ " |- " ++ show t ++
-    "] => SubstMorph[" ++ show ty ++ " : " ++ showSubstMorph m ++ "]"
+  (dom, cod : SubstObjMu) -> (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (checkSTLC [] t)} ->
+  {auto expectedSig :
+    DPair.fst (fromIsJust {x=(checkSTLC [] t)} isValid) = (dom !-> cod)} ->
+  Nat -> IO ()
+stlcAppTest dom cod t {isValid} {expectedSig} n = do
+  let m = compile_closed_function_valid dom cod t {isValid} {expectedSig}
+  putStrLn $ "STLC[" ++ show t ++
+    "] => SubstMorph[" ++ show dom ++ " -> " ++ show cod ++
+    " : " ++ showSubstMorph m ++ "]"
   putStrLn $ "BNC(%) = " ++ show (substMorphToBNC m)
   putStrLn $ "%(" ++ show n ++ ") = " ++
     show (substMorphToFunc m $ natToInteger n)
@@ -1086,7 +1089,7 @@ stlc_t3 : STLC_Term
 stlc_t3 = STLC_Lambda (SubstBool !* SubstBool) $
   STLC_Case (STLC_Fst $ STLC_Var 0)
     (STLC_Left STLC_Unit Subst1)
-    (STLC_Snd $ STLC_Var 0)
+    (STLC_Snd $ STLC_Var 1)
 
 ----------------------------------
 ----------------------------------
@@ -1461,12 +1464,15 @@ polyCatTest = do
   putStrLn "---- STLC-to-CCC translation ----"
   putStrLn "---------------------------------"
   putStrLn ""
-  stlcAppTest [] stlc_t0 0
-  stlcAppTest [] stlc_t1 0
-  stlcAppTest [] stlc_t2 0
-  stlcAppTest [] stlc_t2 1
-  stlcAppTest [] stlc_t2 2
-  stlcTest stlc_t3
+  stlcAppTest Subst1 Subst1 stlc_t0 0
+  stlcAppTest Subst0 SubstBool stlc_t1 0
+  stlcAppTest (SUNat 3) (SUNat 3) stlc_t2 0
+  stlcAppTest (SUNat 3) (SUNat 3) stlc_t2 1
+  stlcAppTest (SUNat 3) (SUNat 3) stlc_t2 2
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 0
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 1
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 2
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 3
   putStrLn ""
   putStrLn "------------------------------------"
   putStrLn ""
