@@ -6494,17 +6494,6 @@ compileCheckedTerm
     stlcCtxProj ctx i {ok}
 
 public export
-SignedSubstMorph : Type
-SignedSubstMorph =
-  (sig : (SubstObjMu, SubstObjMu) ** SubstMorph (fst sig) (snd sig))
-
-public export
-SignedSubstCtxMorph : STLC_Context -> Type
-SignedSubstCtxMorph ctx =
-  (sig : (SubstObjMu, SubstObjMu) **
-   SubstMorph (stlcCtxToSOMu ctx !* fst sig) (snd sig))
-
-public export
 data STLC_Term : Type where
   -- The "void" or "absurd" function, which takes a term of type Void
   -- to any type; there's no explicit constructor for terms of type Void,
@@ -6537,8 +6526,8 @@ data STLC_Term : Type where
   -- variable of the given type, and produce a term with that extended context.
   STLC_Lambda : SubstObjMu -> STLC_Term -> STLC_Term
 
-  -- Function application
-  STLC_App : STLC_Term -> STLC_Term -> STLC_Term
+  -- Function application; the first parameter is the function's domain
+  STLC_App : SubstObjMu -> STLC_Term -> STLC_Term -> STLC_Term
 
   -- Lisp-style eval: interpret a term as a function and apply it.
   -- The type parameter is the output type.
@@ -6559,106 +6548,115 @@ Show STLC_Term where
   show (STLC_Fst x) = "fst(" ++ show x ++ ")"
   show (STLC_Snd x) = "snd(" ++ show x ++ ")"
   show (STLC_Lambda ty x) = "\\" ++ show ty ++ ".[" ++ show x ++ "]"
-  show (STLC_App x y) = "app(" ++ show x ++ ", " ++ show y ++ ")"
+  show (STLC_App ty x y) =
+    "app(" ++ show ty ++ ": " ++ show x ++ ", " ++ show y ++ ")"
   show (STLC_Eval ty f x) =
     "eval((" ++ show ty ++ ")" ++ show f ++ ", " ++ show x ++ ")"
   show (STLC_Var k) = "v" ++ show k
+
+public export
+SignedCheckedSTLCTerm : STLC_Context -> Type
+SignedCheckedSTLCTerm ctx = DPair SubstObjMu (Checked_STLC_Term ctx)
+
+public export
+SignedSubstCtxMorph : STLC_Context -> Type
+SignedSubstCtxMorph ctx = DPair SubstObjMu (SubstMorph $ stlcCtxToSOMu ctx)
+
+public export
+SignedSubstTerm : Type
+SignedSubstTerm = (ty : SubstObjMu ** SubstMorph Subst1 ty)
+
+public export
+checkSTLC :
+  (ctx : STLC_Context) -> STLC_Term -> Maybe (SignedCheckedSTLCTerm ctx)
+checkSTLC ctx (STLC_Absurd t ty) = do
+  (ty' ** t') <- checkSTLC ctx t
+  case ty' of
+    InSO SO0 => Just (ty ** Checked_STLC_Absurd {cod=ty} t')
+    _ => Nothing
+checkSTLC ctx STLC_Unit = Just (Subst1 ** Checked_STLC_Unit {ctx})
+checkSTLC ctx (STLC_Left t ty) = do
+  (ty' ** t') <- checkSTLC ctx t
+  Just (ty' !+ ty ** Checked_STLC_Left {ctx} {lty=ty'} {rty=ty} t')
+checkSTLC ctx (STLC_Right ty t) = do
+  (ty' ** t') <- checkSTLC ctx t
+  Just (ty !+ ty' ** Checked_STLC_Right {ctx} {lty=ty} {rty=ty'} t')
+checkSTLC ctx (STLC_Case t l r) = do
+  (ty ** t') <- checkSTLC ctx t
+  case ty of
+    InSO (lty !!+ rty) => do
+      (lcod ** l') <- checkSTLC (lty :: ctx) l
+      (rcod ** r') <- checkSTLC (rty :: ctx) r
+      case decEq lcod rcod of
+        Yes Refl =>
+          Just (rcod ** Checked_STLC_Case {ctx} {lty} {rty} {cod=rcod} t' l' r')
+        No _ => Nothing
+    _ => Nothing
+checkSTLC ctx (STLC_Pair l r) = do
+  (lty ** l') <- checkSTLC ctx l
+  (rty ** r') <- checkSTLC ctx r
+  Just (lty !* rty ** Checked_STLC_Pair l' r')
+checkSTLC ctx (STLC_Fst p) = do
+  (pty ** p') <- checkSTLC ctx p
+  case pty of
+    InSO (lty !!* rty) => Just (lty ** Checked_STLC_Fst {ctx} {lty} {rty} p')
+    _ => Nothing
+checkSTLC ctx (STLC_Snd p) = do
+  (pty ** p') <- checkSTLC ctx p
+  case pty of
+    InSO (lty !!* rty) => Just (rty ** Checked_STLC_Snd {ctx} {lty} {rty} p')
+    _ => Nothing
+checkSTLC ctx (STLC_Lambda vty t) = do
+  (tty ** t') <- checkSTLC (vty :: ctx) t
+  Just (vty !-> tty ** Checked_STLC_Lambda {ctx} {vty} {tty} t')
+checkSTLC ctx (STLC_App ty f x) = do
+  (fty ** f') <- checkSTLC ctx f
+  (xty ** x') <- checkSTLC ctx x
+  case decEq fty (xty !-> ty) of
+    Yes Refl => Just (ty ** Checked_STLC_App {ctx} {dom=xty} {cod=ty} f' x')
+    No _ => Nothing
+checkSTLC ctx (STLC_Eval ty f x) = do
+  (fty ** f') <- checkSTLC ctx f
+  (xty ** x') <- checkSTLC ctx x
+  case decEq fty (xty !-> ty) of
+    Yes Refl => Just (ty ** Checked_STLC_App {ctx} {dom=xty} {cod=ty} f' x')
+    No _ => Nothing
+checkSTLC ctx (STLC_Var i) = case inBounds i ctx of
+  Yes ok => Just (index i ctx {ok} ** Checked_STLC_Var {ok})
+  No _ => Nothing
 
 public export
 stlcToCCC_ctx :
   (ctx : STLC_Context) ->
   STLC_Term ->
   Maybe (SignedSubstCtxMorph ctx)
-stlcToCCC_ctx ctx (STLC_Absurd t ty) = do
-  t' <- stlcToCCC_ctx ctx t
-  case t' of
-    ((dom, InSO SO0) ** m) => Just ((dom, ty) ** SMFromInit ty <! m)
-    _ => Nothing
-stlcToCCC_ctx ctx STLC_Unit =
-  Just ((Subst1, Subst1) ** SMToTerminal $ stlcCtxToSOMu ctx !* Subst1)
-stlcToCCC_ctx ctx (STLC_Left t ty) = do
-  ((dom, cod) ** m) <- stlcToCCC_ctx ctx t
-  Just ((dom, cod !+ ty) ** SMInjLeft cod ty <! m)
-stlcToCCC_ctx ctx (STLC_Right ty t) = do
-  ((dom, cod) ** m) <- stlcToCCC_ctx ctx t
-  Just ((dom, ty !+ cod) ** SMInjRight ty cod <! m)
-stlcToCCC_ctx ctx (STLC_Case x l r) = do
-  let ctx' = stlcCtxToSOMu ctx
-  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
-  ((ldom, lcod) ** lm) <- stlcToCCC_ctx ctx l
-  ((rdom, rcod) ** rm) <- stlcToCCC_ctx ctx r
-  case xcod of
-    (InSO (xcodl !!+ xcodr)) => case
-      (decEq xcodl ldom, decEq xcodr rdom, decEq lcod rcod) of
-        (Yes Refl, Yes Refl, Yes Refl) =>
-          Just
-            ((xdom, lcod) **
-             soUncurry
-              (soUncurry soCaseAbstract
-               <! SMPair (soCurry xm) (SMPair (soCurry lm) (soCurry rm))))
-        _ => Nothing
-    _ => Nothing
-stlcToCCC_ctx ctx (STLC_Pair t1 t2) = do
-  ((dom1, cod1) ** m1) <- stlcToCCC_ctx ctx t1
-  ((dom2, cod2) ** m2) <- stlcToCCC_ctx ctx t2
-  case decEq dom1 dom2 of
-    Yes Refl => Just ((dom2, cod1 !* cod2) ** SMPair m1 m2)
-    _ => Nothing
-stlcToCCC_ctx ctx (STLC_Fst x) = do
-  ((dom, cod) ** m) <- stlcToCCC_ctx ctx x
-  case cod of
-    InSO (codl !!* codr) => Just ((dom, codl) ** SMProjLeft codl codr <! m)
-    _ => Nothing
-stlcToCCC_ctx ctx (STLC_Snd x) = do
-  ((dom, cod) ** m) <- stlcToCCC_ctx ctx x
-  case cod of
-    InSO (codl !!* codr) => Just ((dom, codr) ** SMProjRight codl codr <! m)
-    _ => Nothing
-stlcToCCC_ctx ctx (STLC_Lambda vty t) = case stlcToCCC_ctx (vty :: ctx) t of
-  Just ((dom, cod) ** m) =>
-    Just ((vty !* dom, cod) ** m <!
-      SMPair
-        (SMPair (SMProjLeft _ _ <! SMProjRight _ _) (SMProjLeft _ _))
-        (SMProjRight _ _ <! SMProjRight _ _))
-  Nothing => Nothing
-stlcToCCC_ctx ctx (STLC_App f x) = do
-  ((fdom, fcod) ** fm) <- stlcToCCC_ctx ctx f
-  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
-  case decEq xcod fdom of
-    Yes Refl =>
-      Just ((xdom, fcod) ** soUncurry $ ctxCompose (soCurry fm) (soCurry xm))
-    No _ => Nothing
-stlcToCCC_ctx ctx (STLC_Eval ty f x) = do
-  ((fdom, fcod) ** fm) <- stlcToCCC_ctx ctx f
-  ((xdom, xcod) ** xm) <- stlcToCCC_ctx ctx x
-  case (decEq fdom xdom, decEq fcod (xcod !-> ty)) of
-    (Yes Refl, Yes eq) =>
-      Just ((xdom, ty) ** soEval xcod ty <! SMPair (rewrite sym eq in fm) xm)
-    (_, _) => Nothing
-stlcToCCC_ctx ctx (STLC_Var v) = case inBounds v ctx of
-  Yes ok => let proj = stlcCtxProj ctx v {ok} in
-    Just ((stlcCtxToSOMu ctx, index v ctx {ok}) ** proj <! SMProjLeft _ _)
-  No _ => Nothing
+stlcToCCC_ctx ctx t = do
+  (ty ** t') <- checkSTLC ctx t
+  Just $ (ty ** compileCheckedTerm {ty} t')
 
 public export
-stlcToCCC :
-  STLC_Term ->
-  Maybe SignedSubstMorph
-stlcToCCC t with (stlcToCCC_ctx [] t)
-  stlcToCCC t | Just ((dom, cod) ** m) = Just ((dom, cod) ** soProd1LeftElim m)
-  stlcToCCC t | Nothing = Nothing
+stlcToCCC_ctx_valid :
+  (ctx : STLC_Context) ->
+  (t : STLC_Term) ->
+  {auto isValid : IsJustTrue (stlcToCCC_ctx ctx t)} ->
+  SignedSubstCtxMorph ctx
+stlcToCCC_ctx_valid ctx t {isValid} = fromIsJust isValid
+
+public export
+stlcToCCC : STLC_Term -> Maybe SignedSubstTerm
+stlcToCCC t = stlcToCCC_ctx [] t
 
 public export
 stlcToCCC_valid :
   (t : STLC_Term) ->
   {auto isValid : IsJustTrue (stlcToCCC t)} ->
-  SignedSubstMorph
+  SignedSubstTerm
 stlcToCCC_valid t {isValid} = fromIsJust isValid
 
 public export
-Show SignedSubstMorph where
-  show ((dom, cod) ** m) =
-    "(" ++ show dom ++ " -> " ++ show cod ++ " : " ++ showSubstMorph m ++ ")"
+Show SignedSubstTerm where
+  show (ty ** m) =
+    "(" ++ show ty ++ " : " ++ showSubstMorph m ++ ")"
 
 public export
 stlcToBNC :
@@ -6666,8 +6664,8 @@ stlcToBNC :
   {auto isValid : IsJustTrue (stlcToCCC t)} ->
   SignedBNCMorph
 stlcToBNC t {isValid} =
-  let ((dom, cod) ** m) = stlcToCCC_valid t {isValid} in
-  (substObjToNat dom, substObjToNat cod, substMorphToBNC m)
+  let (ty ** m) = stlcToCCC_valid t {isValid} in
+  (substObjToNat Subst1, substObjToNat ty, substMorphToBNC m)
 
 ---------------------------------------------------
 ---------------------------------------------------
