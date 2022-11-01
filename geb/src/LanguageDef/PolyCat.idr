@@ -6375,77 +6375,6 @@ evalByGN x y m n with (substGNumToMorph x y m, natToSubstTerm x n)
 ---------------------------------------
 
 public export
-data STLC_Type : Type where
-  STLC_Void : STLC_Type
-  STLC_UnitTy : STLC_Type
-  STLC_Either : STLC_Type -> STLC_Type -> STLC_Type
-  STLC_PairTy : STLC_Type -> STLC_Type -> STLC_Type
-  STLC_Function : STLC_Type -> STLC_Type -> STLC_Type
-
-public export
-Show STLC_Type where
-  show STLC_Void = "void"
-  show STLC_UnitTy = "unit"
-  show (STLC_Either x y) = "(" ++ show x ++ " | " ++ show y ++ ")"
-  show (STLC_PairTy x y) = "(" ++ show x ++ " , " ++ show y ++ ")"
-  show (STLC_Function x y) = "(" ++ show x ++ " -> " ++ show y ++ ")"
-
-public export
-STLC_Context : Type
-STLC_Context = List STLC_Type
-
-public export
-data TSTLC_Term : STLC_Context -> STLC_Type -> Type where
-  -- The "void" or "absurd" function, which takes a term of type Void
-  -- to any type; there's no explicit constructor for terms of type Void,
-  -- but a lambda could introduce one.  The SubstObjMu is the type of the
-  -- resulting term (since we can get any type from a term of Void).
-  TSTLC_Absurd : {ctx : STLC_Context} -> {ty : STLC_Type} ->
-    TSTLC_Term ctx STLC_Void -> TSTLC_Term ctx ty
-
-  -- The only term of type Unit.
-  TSTLC_Unit : {ctx : STLC_Context} -> TSTLC_Term ctx STLC_UnitTy
-
-  -- Construct coproducts
-  TSTLC_Left : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
-    TSTLC_Term ctx lty -> TSTLC_Term ctx (STLC_Either lty rty)
-  TSTLC_Right : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
-    TSTLC_Term ctx rty -> TSTLC_Term ctx (STLC_Either lty rty)
-
-  -- Case statement : parameters are expression to case on, which must be
-  -- a coproduct, and then left and right case, which must be of the same
-  -- type, which becomes the type of the overall term.
-  TSTLC_Case : {ctx : STLC_Context} -> {lty, rty, cod : STLC_Type} ->
-    TSTLC_Term ctx (STLC_Either lty rty) ->
-    TSTLC_Term (lty :: ctx) cod -> TSTLC_Term (rty :: ctx) cod ->
-    TSTLC_Term ctx cod
-
-  -- Construct a term of a pair type
-  TSTLC_Pair : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
-    TSTLC_Term ctx lty -> TSTLC_Term ctx rty ->
-    TSTLC_Term ctx (STLC_PairTy lty rty)
-
-  -- Projections; in each case, the given term must be of a product type
-  TSTLC_Fst : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
-    TSTLC_Term ctx (STLC_PairTy lty rty) -> TSTLC_Term ctx lty
-  TSTLC_Snd : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
-    TSTLC_Term ctx (STLC_PairTy lty rty) -> TSTLC_Term ctx rty
-
-  -- Lambda abstraction:  introduce into the context a (de Bruijn-indexed)
-  -- variable of the given type, and produce a term with that extended context.
-  TSTLC_Lambda : {ctx : STLC_Context} -> {dom, cod : STLC_Type} ->
-    TSTLC_Term (dom :: ctx) cod -> TSTLC_Term ctx (STLC_Function dom cod)
-
-  -- Function application; the first parameter is the function's domain
-  TSTLC_App : {ctx : STLC_Context} -> {dom, cod : STLC_Type} ->
-    TSTLC_Term ctx (STLC_Function dom cod) -> TSTLC_Term ctx dom ->
-    TSTLC_Term ctx cod
-
-  -- The variable at the given de Bruijn index
-  TSTLC_Var : (ctx : STLC_Context) -> (i : Nat) -> {auto ok : InBounds n ctx} ->
-    TSTLC_Term ctx (index n ctx {ok})
-
-public export
 SOMu_Context : Type
 SOMu_Context = List SubstObjMu
 
@@ -6737,6 +6666,81 @@ stlcToBNC :
 stlcToBNC t {isValid} =
   let (ty ** m) = stlcToCCC_valid t {isValid} in
   (substObjToNat Subst1, substObjToNat ty, substMorphToBNC m)
+
+-------------------------------------------------------------------------------
+---- Typed STLC terms (for possible future use in dividing passes further) ----
+-------------------------------------------------------------------------------
+
+public export
+data STLC_Type : Type where
+  STLC_Void : STLC_Type
+  STLC_UnitTy : STLC_Type
+  STLC_Either : STLC_Type -> STLC_Type -> STLC_Type
+  STLC_PairTy : STLC_Type -> STLC_Type -> STLC_Type
+  STLC_Function : STLC_Type -> STLC_Type -> STLC_Type
+
+public export
+Show STLC_Type where
+  show STLC_Void = "void"
+  show STLC_UnitTy = "unit"
+  show (STLC_Either x y) = "(" ++ show x ++ " | " ++ show y ++ ")"
+  show (STLC_PairTy x y) = "(" ++ show x ++ " , " ++ show y ++ ")"
+  show (STLC_Function x y) = "(" ++ show x ++ " -> " ++ show y ++ ")"
+
+public export
+STLC_Context : Type
+STLC_Context = List STLC_Type
+
+public export
+data TSTLC_Term : STLC_Context -> STLC_Type -> Type where
+  -- The "void" or "absurd" function, which takes a term of type Void
+  -- to any type; there's no explicit constructor for terms of type Void,
+  -- but a lambda could introduce one.  The SubstObjMu is the type of the
+  -- resulting term (since we can get any type from a term of Void).
+  TSTLC_Absurd : {ctx : STLC_Context} -> {ty : STLC_Type} ->
+    TSTLC_Term ctx STLC_Void -> TSTLC_Term ctx ty
+
+  -- The only term of type Unit.
+  TSTLC_Unit : {ctx : STLC_Context} -> TSTLC_Term ctx STLC_UnitTy
+
+  -- Construct coproducts
+  TSTLC_Left : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
+    TSTLC_Term ctx lty -> TSTLC_Term ctx (STLC_Either lty rty)
+  TSTLC_Right : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
+    TSTLC_Term ctx rty -> TSTLC_Term ctx (STLC_Either lty rty)
+
+  -- Case statement : parameters are expression to case on, which must be
+  -- a coproduct, and then left and right case, which must be of the same
+  -- type, which becomes the type of the overall term.
+  TSTLC_Case : {ctx : STLC_Context} -> {lty, rty, cod : STLC_Type} ->
+    TSTLC_Term ctx (STLC_Either lty rty) ->
+    TSTLC_Term (lty :: ctx) cod -> TSTLC_Term (rty :: ctx) cod ->
+    TSTLC_Term ctx cod
+
+  -- Construct a term of a pair type
+  TSTLC_Pair : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
+    TSTLC_Term ctx lty -> TSTLC_Term ctx rty ->
+    TSTLC_Term ctx (STLC_PairTy lty rty)
+
+  -- Projections; in each case, the given term must be of a product type
+  TSTLC_Fst : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
+    TSTLC_Term ctx (STLC_PairTy lty rty) -> TSTLC_Term ctx lty
+  TSTLC_Snd : {ctx : STLC_Context} -> {lty, rty : STLC_Type} ->
+    TSTLC_Term ctx (STLC_PairTy lty rty) -> TSTLC_Term ctx rty
+
+  -- Lambda abstraction:  introduce into the context a (de Bruijn-indexed)
+  -- variable of the given type, and produce a term with that extended context.
+  TSTLC_Lambda : {ctx : STLC_Context} -> {dom, cod : STLC_Type} ->
+    TSTLC_Term (dom :: ctx) cod -> TSTLC_Term ctx (STLC_Function dom cod)
+
+  -- Function application; the first parameter is the function's domain
+  TSTLC_App : {ctx : STLC_Context} -> {dom, cod : STLC_Type} ->
+    TSTLC_Term ctx (STLC_Function dom cod) -> TSTLC_Term ctx dom ->
+    TSTLC_Term ctx cod
+
+  -- The variable at the given de Bruijn index
+  TSTLC_Var : (ctx : STLC_Context) -> (i : Nat) -> {auto ok : InBounds n ctx} ->
+    TSTLC_Term ctx (index n ctx {ok})
 
 ---------------------------------------------------
 ---------------------------------------------------
