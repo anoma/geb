@@ -6530,7 +6530,8 @@ data STLC_Term : Type where
   -- variable of the given type, and produce a term with that extended context.
   STLC_Lambda : SubstObjMu -> STLC_Term -> STLC_Term
 
-  -- Function application; the first parameter is the function's domain
+  -- Function application; the first parameter is the function's codomain
+  -- (and hence the type of the overall term)
   STLC_App : SubstObjMu -> STLC_Term -> STLC_Term -> STLC_Term
 
   -- The variable at the given de Bruijn index

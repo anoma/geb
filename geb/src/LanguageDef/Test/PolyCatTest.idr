@@ -1052,7 +1052,8 @@ reflectionTestTerm = reflectionTestMorphism <! MkSUNat {m=8} 1
 stlcTest : STLC_Term -> IO ()
 stlcTest t = putStrLn $ "STLC[" ++ show t ++ "] " ++ case stlcToCCC t of
   Just m =>
-    "=> SubstMorph[" ++ show m ++ "]; %(Unit) = " ++
+    -- "=> SubstMorph[" ++ show m ++ "]; %(Unit) = " ++
+    "(Unit) = " ++
     show (substMorphToFunc (snd m) $ natToInteger 0)
   Nothing => "is ill-typed"
 
@@ -1105,11 +1106,11 @@ stlc_t4 = STLC_Lambda (SubstBool !* SubstBool) $
     (STLC_Right Subst1 STLC_Unit)
 
 stlc_t5 : STLC_Term
-stlc_t5 = STLC_App (SubstBool !* SubstBool) stlc_t3
+stlc_t5 = STLC_App SubstBool stlc_t3
   (STLC_Pair (STLC_Left STLC_Unit Subst1) (STLC_Right Subst1 STLC_Unit))
 
 stlc_t6 : STLC_Term
-stlc_t6 = STLC_App (SubstBool !* SubstBool) stlc_t4
+stlc_t6 = STLC_App SubstBool stlc_t4
   (STLC_Pair (STLC_Left STLC_Unit Subst1) (STLC_Right Subst1 STLC_Unit))
 
 ----------------------------------
