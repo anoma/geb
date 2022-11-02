@@ -6530,12 +6530,9 @@ data STLC_Term : Type where
   -- variable of the given type, and produce a term with that extended context.
   STLC_Lambda : SubstObjMu -> STLC_Term -> STLC_Term
 
-  -- Function application; the first parameter is the function's domain
+  -- Function application; the first parameter is the function's codomain
+  -- (and hence the type of the overall term)
   STLC_App : SubstObjMu -> STLC_Term -> STLC_Term -> STLC_Term
-
-  -- Lisp-style eval: interpret a term as a function and apply it.
-  -- The type parameter is the output type.
-  STLC_Eval : SubstObjMu -> STLC_Term -> STLC_Term -> STLC_Term
 
   -- The variable at the given de Bruijn index
   STLC_Var : Nat -> STLC_Term
@@ -6554,8 +6551,6 @@ Show STLC_Term where
   show (STLC_Lambda ty x) = "\\" ++ show ty ++ ".[" ++ show x ++ "]"
   show (STLC_App ty x y) =
     "app(" ++ show ty ++ ": " ++ show x ++ ", " ++ show y ++ ")"
-  show (STLC_Eval ty f x) =
-    "eval((" ++ show ty ++ ")" ++ show f ++ ", " ++ show x ++ ")"
   show (STLC_Var k) = "v" ++ show k
 
 public export
@@ -6614,12 +6609,6 @@ checkSTLC ctx (STLC_Lambda vty t) = do
   (tty ** t') <- checkSTLC (vty :: ctx) t
   Just (vty !-> tty ** Checked_STLC_Lambda {ctx} {vty} {tty} t')
 checkSTLC ctx (STLC_App ty f x) = do
-  (fty ** f') <- checkSTLC ctx f
-  (xty ** x') <- checkSTLC ctx x
-  case decEq fty (xty !-> ty) of
-    Yes Refl => Just (ty ** Checked_STLC_App {ctx} {dom=xty} {cod=ty} f' x')
-    No _ => Nothing
-checkSTLC ctx (STLC_Eval ty f x) = do
   (fty ** f') <- checkSTLC ctx f
   (xty ** x') <- checkSTLC ctx x
   case decEq fty (xty !-> ty) of
