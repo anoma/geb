@@ -1062,11 +1062,15 @@ stlcAppTest :
   Nat -> IO ()
 stlcAppTest dom cod t {isValid} {expectedSig} n = do
   let m = compile_closed_function_valid dom cod t {isValid} {expectedSig}
+  {-
   putStrLn $ "STLC[" ++ show t ++
     "] => SubstMorph[" ++ show dom ++ " -> " ++ show cod ++
     " : " ++ showSubstMorph m ++ "]"
   putStrLn $ "BNC(%) = " ++ show (substMorphToBNC m)
   putStrLn $ "%(" ++ show n ++ ") = " ++
+    show (substMorphToFunc m $ natToInteger n)
+  -}
+  putStrLn $ "STLC[" ++ show t ++ "](" ++ show n ++ ") = " ++
     show (substMorphToFunc m $ natToInteger n)
 
 -- The unique term of type Unit.
@@ -1090,6 +1094,13 @@ stlc_t3 = STLC_Lambda (SubstBool !* SubstBool) $
   STLC_Case (STLC_Fst $ STLC_Var 0)
     (STLC_Left STLC_Unit Subst1)
     (STLC_Snd $ STLC_Var 1)
+
+-- Boolean OR.
+stlc_t4 : STLC_Term
+stlc_t4 = STLC_Lambda (SubstBool !* SubstBool) $
+  STLC_Case (STLC_Fst $ STLC_Var 0)
+    (STLC_Snd $ STLC_Var 1)
+    (STLC_Right Subst1 STLC_Unit)
 
 ----------------------------------
 ----------------------------------
@@ -1473,6 +1484,10 @@ polyCatTest = do
   stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 1
   stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 2
   stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 3
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t4 0
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t4 1
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t4 2
+  stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t4 3
   putStrLn ""
   putStrLn "------------------------------------"
   putStrLn ""
