@@ -4752,9 +4752,18 @@ SubstTermAlg SO1 = ()
 SubstTermAlg (x !!+ y) = Either x y
 SubstTermAlg (x !!* y) = Pair x y
 
+-- Variant from an algebra rather than explicit recursion
+public export
+SubstTerm' : SubstObjMu -> Type
+SubstTerm' = substObjCata SubstTermAlg
+
+-- Variant using explicit recursion
 public export
 SubstTerm : SubstObjMu -> Type
-SubstTerm = substObjCata SubstTermAlg
+SubstTerm (InSO SO0) = Void
+SubstTerm (InSO SO1) = ()
+SubstTerm (InSO (x !!+ y)) = Either (SubstTerm x) (SubstTerm y)
+SubstTerm (InSO (x !!* y)) = Pair (SubstTerm x) (SubstTerm y)
 
 public export
 SubstContradictionAlg : MetaSOAlg Type
@@ -5252,6 +5261,23 @@ soCaseAbstract {w} {x} {y} {z} =
       (soCurry $ soCurry $ soEval y z <! soProdCommutes _ _ <!
         soForgetMiddle _ _ _)
     <! soEval w (x !+ y)
+
+--------------------------------------------
+--------------------------------------------
+---- SubstTerm / SubstMorph equivalence ----
+--------------------------------------------
+--------------------------------------------
+
+public export
+SubstTermToSOTerm : (x : SubstObjMu) -> SubstTerm x -> SOTerm x
+SubstTermToSOTerm (InSO SO0) t impossible
+SubstTermToSOTerm (InSO SO1) () = SMId Subst1
+SubstTermToSOTerm (InSO (x !!+ y)) (Left t) =
+  SMInjLeft x y <! SubstTermToSOTerm x t
+SubstTermToSOTerm (InSO (x !!+ y)) (Right t) =
+  SMInjRight x y <! SubstTermToSOTerm y t
+SubstTermToSOTerm (InSO (x !!* y)) (t1, t2) =
+  SMPair (SubstTermToSOTerm x t1) (SubstTermToSOTerm y t2)
 
 -------------------------------------------------------
 -------------------------------------------------------
