@@ -5272,13 +5272,32 @@ public export
 SubstHomTerm : SubstObjMu -> SubstObjMu -> Type
 SubstHomTerm x y = SubstTerm (x !-> y)
 
+public export
+SubstConstTerm : {x, y : SubstObjMu} -> SubstTerm y -> SubstHomTerm x y
+SubstConstTerm {x=(InSO SO0)} t = ()
+SubstConstTerm {x=(InSO SO1)} t = t
+SubstConstTerm {x=(InSO (_ !!+ _))} t = (SubstConstTerm t, SubstConstTerm t)
+SubstConstTerm {x=(InSO (_ !!* _))} t = SubstConstTerm (SubstConstTerm t)
+
 mutual
   public export
   SubstIdTerm : (x : SubstObjMu) -> SubstHomTerm x x
   SubstIdTerm (InSO SO0) = ()
   SubstIdTerm (InSO SO1) = ()
   SubstIdTerm (InSO (x !!+ y)) = (SubstInjLeftTerm x y, SubstInjRightTerm x y)
-  SubstIdTerm (InSO (x !!* y)) = ?SubstIdTerm_hole_4
+  SubstIdTerm (InSO (x !!* y)) = SubstPairIdTerm x y
+
+  public export
+  SubstPairIdTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) (x !* y)
+  SubstPairIdTerm (InSO SO0) y = ()
+  SubstPairIdTerm (InSO SO1) y = SubstPairTerm (SubstUnitTerm y) (SubstIdTerm y)
+  SubstPairIdTerm (InSO (x !!+ x')) y = ?SubstPairIdTerm_hole_1
+  SubstPairIdTerm (InSO (x !!* x')) y = ?SubstPairIdTerm_hole_2
+
+  public export
+  SubstBiPairTerm : (x, x', y, y' : SubstObjMu) ->
+    SubstHomTerm ((x !-> x') !* (y !-> y')) ((x !* y) !-> (x' !* y'))
+  SubstBiPairTerm x x' y y' = ?SubstBiPairTerm_hole
 
   public export
   SubstTermComp : {x, y, z : SubstObjMu} ->
@@ -5328,6 +5347,11 @@ mutual
   SubstUncurry : {x, y, z : SubstObjMu} ->
     SubstHomTerm x (y !-> z) -> SubstHomTerm (x !* y) z
   SubstUncurry f = ?SubstUncurry_hole
+
+  public export
+  SubstPartialApp : {w, x, y, z : SubstObjMu} ->
+    SubstHomTerm (x !* y) z -> SubstHomTerm w x -> SubstHomTerm (w !* y) z
+  SubstPartialApp g f = ?SubstPartialApp_hole
 
 public export
 SubstTermToSOTerm : (x : SubstObjMu) -> SubstTerm x -> SOTerm x
