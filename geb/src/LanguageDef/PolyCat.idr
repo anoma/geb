@@ -5268,6 +5268,31 @@ soCaseAbstract {w} {x} {y} {z} =
 --------------------------------------------
 --------------------------------------------
 
+mutual
+  public export
+  SubstIdTerm : (x : SubstObjMu) -> SubstTerm (SubstHomObj x x)
+  SubstIdTerm (InSO SO0) = ()
+  SubstIdTerm (InSO SO1) = ()
+  SubstIdTerm (InSO (x !!+ y)) = (SMInjLeftTerm x y, SMInjRightTerm x y)
+  SubstIdTerm (InSO (x !!* y)) = ?SubstIdTerm_hole_4
+
+  public export
+  SubstTermComp : {x, y, z : SubstObjMu} ->
+    SubstTerm (y !-> z) -> SubstTerm (x !-> y) -> SubstTerm (x !-> z)
+  SubstTermComp g f = ?SubstTermComp_hole
+
+  public export
+  SubstUnitTerm : (x : SubstObjMu) -> SubstTerm (SubstHomObj x Subst1)
+  SubstUnitTerm x = ?SubstUnitTerm_hole
+
+  public export
+  SMInjLeftTerm : (x, y : SubstObjMu) -> SubstTerm (SubstHomObj x (x !+ y))
+  SMInjLeftTerm x y = ?SMInjLeftTerm_hole
+
+  public export
+  SMInjRightTerm : (x, y : SubstObjMu) -> SubstTerm (SubstHomObj y (x !+ y))
+  SMInjRightTerm x y = ?SMInjRightTerm_hole
+
 public export
 SubstTermToSOTerm : (x : SubstObjMu) -> SubstTerm x -> SOTerm x
 SubstTermToSOTerm (InSO SO0) t impossible
@@ -5308,28 +5333,9 @@ mutual
   SubstMorphToSubstTerm (SMDistrib x y z) = ?SubstMorphToSubstTerm_hole_10
 
   public export
-  SubstIdTerm : (x : SubstObjMu) -> SubstTerm (SubstHomObj x x)
-  SubstIdTerm (InSO SO0) = ()
-  SubstIdTerm (InSO SO1) = ()
-  SubstIdTerm (InSO (x !!+ y)) = ?SubstIdTerm_hole_3
-  SubstIdTerm (InSO (x !!* y)) = ?SubstIdTerm_hole_4
-
-  public export
   SubstCompToSubstTerm : {x, y, z : SubstObjMu} ->
     SubstMorph y z -> SubstMorph x y -> SubstTerm (x !-> z)
   SubstCompToSubstTerm g f = ?SubstCompToSubstTerm_hole
-
-  public export
-  SubstUnitTerm : (x : SubstObjMu) -> SubstTerm (SubstHomObj x Subst1)
-  SubstUnitTerm x = ?SubstUnitTerm_hole
-
-  public export
-  SMInjLeftTerm : (x, y : SubstObjMu) -> SubstTerm (SubstHomObj x (x !+ y))
-  SMInjLeftTerm x y = ?SMInjLeftTerm_hole
-
-  public export
-  SMInjRightTerm : (x, y : SubstObjMu) -> SubstTerm (SubstHomObj y (x !+ y))
-  SMInjRightTerm x y = ?SMInjRightTerm_hole
 
 public export
 SOTermToSubstTerm : (x : SubstObjMu) -> SOTerm x -> SubstTerm x
