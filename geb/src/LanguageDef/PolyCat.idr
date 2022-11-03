@@ -5297,7 +5297,10 @@ mutual
   public export
   SubstBiPairTerm : (x, x', y, y' : SubstObjMu) ->
     SubstHomTerm ((x !-> x') !* (y !-> y')) ((x !* y) !-> (x' !* y'))
-  SubstBiPairTerm x x' y y' = ?SubstBiPairTerm_hole
+  SubstBiPairTerm (InSO SO0) x' y y' = ?SubstBiPairTerm_hole_1
+  SubstBiPairTerm (InSO SO1) x' y y' = ?SubstBiPairTerm_hole_2
+  SubstBiPairTerm (InSO (w !!+ x)) x' y y' = ?SubstBiPairTerm_hole_3
+  SubstBiPairTerm (InSO (w !!* x)) x' y y' = ?SubstBiPairTerm_hole_4
 
   public export
   SubstTermComp : {x, y, z : SubstObjMu} ->
