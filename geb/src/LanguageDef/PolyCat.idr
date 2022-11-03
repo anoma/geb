@@ -5279,6 +5279,62 @@ SubstTermToSOTerm (InSO (x !!+ y)) (Right t) =
 SubstTermToSOTerm (InSO (x !!* y)) (t1, t2) =
   SMPair (SubstTermToSOTerm x t1) (SubstTermToSOTerm y t2)
 
+public export
+SubstTermToSubstMorph : {x, y : SubstObjMu} ->
+  SubstTerm (x !-> y) -> SubstMorph x y
+SubstTermToSubstMorph {x=(InSO SO0)} t = ?SubstTermToSubstMorph_hole_1
+SubstTermToSubstMorph {x=(InSO SO1)} t = ?SubstTermToSubstMorph_hole_2
+SubstTermToSubstMorph {x=(InSO (x !!+ y))} t = ?SubstTermToSubstMorph_hole_3
+SubstTermToSubstMorph {x=(InSO (x !!* y))} t = ?SubstTermToSubstMorph_hole_4
+
+mutual
+  public export
+  SubstMorphToSubstTerm : {x, y : SubstObjMu} ->
+    SubstMorph x y -> SubstTerm (x !-> y)
+  SubstMorphToSubstTerm (SMId x) = SubstIdTerm x
+  SubstMorphToSubstTerm (g <! f) = SubstCompToSubstTerm g f
+  SubstMorphToSubstTerm (SMFromInit y) = ()
+  SubstMorphToSubstTerm (SMToTerminal x) = SubstUnitTerm x
+  SubstMorphToSubstTerm (SMInjLeft x y) = SMInjLeftTerm x y
+  SubstMorphToSubstTerm (SMInjRight x y) = SMInjRightTerm x y
+  SubstMorphToSubstTerm (SMCase f g) = ?SubstMorphToSubstTerm_hole_6
+  SubstMorphToSubstTerm (SMPair f g) = ?SubstMorphToSubstTerm_hole_7
+  SubstMorphToSubstTerm (SMProjLeft x y) = ?SubstMorphToSubstTerm_hole_8
+  SubstMorphToSubstTerm (SMProjRight x y) = ?SubstMorphToSubstTerm_hole_9
+  SubstMorphToSubstTerm (SMDistrib x y z) = ?SubstMorphToSubstTerm_hole_10
+
+  public export
+  SubstIdTerm : (x : SubstObjMu) -> SubstTerm (SubstHomObj x x)
+  SubstIdTerm (InSO SO0) = ()
+  SubstIdTerm (InSO SO1) = ()
+  SubstIdTerm (InSO (x !!+ y)) = ?SubstIdTerm_hole_3
+  SubstIdTerm (InSO (x !!* y)) = ?SubstIdTerm_hole_4
+
+  public export
+  SubstCompToSubstTerm : {x, y, z : SubstObjMu} ->
+    SubstMorph y z -> SubstMorph x y -> SubstTerm (x !-> z)
+  SubstCompToSubstTerm g f = ?SubstCompToSubstTerm_hole
+
+  public export
+  SubstUnitTerm : (x : SubstObjMu) -> SubstTerm (SubstHomObj x Subst1)
+  SubstUnitTerm x = ?SubstUnitTerm_hole
+
+  public export
+  SMInjLeftTerm : (x, y : SubstObjMu) -> SubstTerm (SubstHomObj x (x !+ y))
+  SMInjLeftTerm x y = ?SMInjLeftTerm_hole
+
+  public export
+  SMInjRightTerm : (x, y : SubstObjMu) -> SubstTerm (SubstHomObj y (x !+ y))
+  SMInjRightTerm x y = ?SMInjRightTerm_hole
+
+public export
+SOTermToSubstTerm : (x : SubstObjMu) -> SOTerm x -> SubstTerm x
+SOTermToSubstTerm x t = SubstMorphToSubstTerm {x=Subst1} {y=x} t
+
+public export
+SubstMorphReduce : {x, y : SubstObjMu} -> SubstMorph x y -> SubstMorph x y
+SubstMorphReduce f = (SubstTermToSubstMorph (SubstMorphToSubstTerm f))
+
 -------------------------------------------------------
 -------------------------------------------------------
 ---- Utility functions for SubstObjMu / SubstMorph ----
