@@ -5289,18 +5289,39 @@ mutual
 
   public export
   SubstPairIdTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) (x !* y)
-  SubstPairIdTerm (InSO SO0) y = ()
-  SubstPairIdTerm (InSO SO1) y = SubstPairTerm (SubstUnitTerm y) (SubstIdTerm y)
-  SubstPairIdTerm (InSO (x !!+ x')) y = ?SubstPairIdTerm_hole_1
-  SubstPairIdTerm (InSO (x !!* x')) y = ?SubstPairIdTerm_hole_2
+  SubstPairIdTerm x y = SubstBiPairTerm (SubstIdTerm x) (SubstIdTerm y)
 
   public export
-  SubstBiPairTerm : (x, x', y, y' : SubstObjMu) ->
-    SubstHomTerm ((x !-> x') !* (y !-> y')) ((x !* y) !-> (x' !* y'))
-  SubstBiPairTerm (InSO SO0) x' y y' = ?SubstBiPairTerm_hole_1
-  SubstBiPairTerm (InSO SO1) x' y y' = ?SubstBiPairTerm_hole_2
-  SubstBiPairTerm (InSO (w !!+ x)) x' y y' = ?SubstBiPairTerm_hole_3
-  SubstBiPairTerm (InSO (w !!* x)) x' y y' = ?SubstBiPairTerm_hole_4
+  SubstReflectedConstTerm :
+    (x, y : SubstObjMu) -> SubstHomTerm y (SubstHomObj x y)
+  SubstReflectedConstTerm (InSO SO0) y = SubstUnitTerm y
+  SubstReflectedConstTerm (InSO SO1) y = SubstIdTerm y
+  SubstReflectedConstTerm (InSO (x !!+ x')) y =
+    SubstPairTerm (SubstReflectedConstTerm x y) (SubstReflectedConstTerm x' y)
+  SubstReflectedConstTerm (InSO (x !!* x')) y =
+    SubstTermSwapArgs $ SubstConstTerm $ SubstReflectedConstTerm x' y
+
+  public export
+  SubstBiPairTerm : {x, x', y, y' : SubstObjMu} ->
+    SubstHomTerm x x' -> SubstHomTerm y y' ->
+    SubstHomTerm (x !* y) (x' !* y')
+  SubstBiPairTerm fx fy =
+    SubstPairTerm {x=(x !* y)}
+      (SubstTermComp (SubstReflectedConstTerm y x') fx)
+      (SubstConstTerm fy)
+
+  public export
+  SubstTermCommuteProd : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) (y !* x)
+  SubstTermCommuteProd x y =
+    SubstPairTerm {x=(x !* y)} {y} {z=x}
+      (SubstProjRightTerm x y)
+      (SubstProjLeftTerm x y)
+
+  public export
+  SubstTermSwapArgs : {x, y, z : SubstObjMu} ->
+    SubstTerm ((x !* y) !-> z) -> SubstTerm ((y !* x) !-> z)
+  SubstTermSwapArgs f =
+    SubstTermComp {x=(y !* x)} {y=(x !* y)} {z} f (SubstTermCommuteProd y x)
 
   public export
   SubstTermComp : {x, y, z : SubstObjMu} ->
