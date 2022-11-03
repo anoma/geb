@@ -5282,10 +5282,14 @@ SubstTermToSOTerm (InSO (x !!* y)) (t1, t2) =
 public export
 SubstTermToSubstMorph : {x, y : SubstObjMu} ->
   SubstTerm (x !-> y) -> SubstMorph x y
-SubstTermToSubstMorph {x=(InSO SO0)} t = ?SubstTermToSubstMorph_hole_1
-SubstTermToSubstMorph {x=(InSO SO1)} t = ?SubstTermToSubstMorph_hole_2
-SubstTermToSubstMorph {x=(InSO (x !!+ y))} t = ?SubstTermToSubstMorph_hole_3
-SubstTermToSubstMorph {x=(InSO (x !!* y))} t = ?SubstTermToSubstMorph_hole_4
+SubstTermToSubstMorph {x=(InSO SO0)} {y} () =
+  SMFromInit y
+SubstTermToSubstMorph {x=(InSO SO1)} {y} t =
+  SubstTermToSOTerm y t
+SubstTermToSubstMorph {x=(InSO (x !!+ x'))} {y} (t, t') =
+  SMCase (SubstTermToSubstMorph t) (SubstTermToSubstMorph t')
+SubstTermToSubstMorph {x=(InSO (x !!* x'))} {y} t =
+  soUncurry $ SubstTermToSubstMorph {x} {y=(x' !-> y)} t
 
 mutual
   public export
