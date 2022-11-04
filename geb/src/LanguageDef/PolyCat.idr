@@ -6737,8 +6737,8 @@ SignedSubstCtxMorph : SOMu_Context -> Type
 SignedSubstCtxMorph ctx = DPair SubstObjMu (SubstMorph $ stlcCtxToSOMu ctx)
 
 public export
-SignedSubstTerm : Type
-SignedSubstTerm = (ty : SubstObjMu ** SubstMorph Subst1 ty)
+SignedSubstMorph : Type
+SignedSubstMorph = (ty : SubstObjMu ** SubstMorph Subst1 ty)
 
 public export
 checkSTLC :
@@ -6843,18 +6843,18 @@ compile_closed_function_valid dom cod t {isValid} {expectedSig} =
     checkSTLC_closed_function_valid dom cod t {isValid} {expectedSig}
 
 public export
-stlcToCCC : STLC_Term -> Maybe SignedSubstTerm
+stlcToCCC : STLC_Term -> Maybe SignedSubstMorph
 stlcToCCC t = stlcToCCC_ctx [] t
 
 public export
 stlcToCCC_valid :
   (t : STLC_Term) ->
   {auto isValid : IsJustTrue (stlcToCCC t)} ->
-  SignedSubstTerm
+  SignedSubstMorph
 stlcToCCC_valid t {isValid} = fromIsJust isValid
 
 public export
-Show SignedSubstTerm where
+Show SignedSubstMorph where
   show (ty ** m) =
     "(" ++ show ty ++ " : " ++ showSubstMorph m ++ ")"
 

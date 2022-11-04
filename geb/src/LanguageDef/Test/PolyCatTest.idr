@@ -1080,7 +1080,7 @@ stlcAppTest dom cod t {isValid} {expectedSig} n = do
 stlc_t0 : STLC_Term
 stlc_t0 = STLC_Unit
 
-stlc_t0_so : SignedSubstTerm
+stlc_t0_so : SignedSubstMorph
 stlc_t0_so = stlcToCCC_valid stlc_t0
 
 -- The unique function from Void to Bool.
@@ -1098,12 +1098,26 @@ stlc_t3 = STLC_Lambda (SubstBool !* SubstBool) $
     (STLC_Left STLC_Unit Subst1)
     (STLC_Snd $ STLC_Var 1)
 
+stlc_t3_morph : SubstMorph (SubstBool !* SubstBool) SubstBool
+stlc_t3_morph =
+  compile_closed_function_valid (SubstBool !* SubstBool) SubstBool stlc_t3
+
+stlc_t3_reduced : SubstMorph (SubstBool !* SubstBool) SubstBool
+stlc_t3_reduced = SubstMorphReduce stlc_t3_morph
+
 -- Boolean OR.
 stlc_t4 : STLC_Term
 stlc_t4 = STLC_Lambda (SubstBool !* SubstBool) $
   STLC_Case (STLC_Fst $ STLC_Var 0)
     (STLC_Snd $ STLC_Var 1)
     (STLC_Right Subst1 STLC_Unit)
+
+stlc_t4_morph : SubstMorph (SubstBool !* SubstBool) SubstBool
+stlc_t4_morph =
+  compile_closed_function_valid (SubstBool !* SubstBool) SubstBool stlc_t4
+
+stlc_t4_reduced : SubstMorph (SubstBool !* SubstBool) SubstBool
+stlc_t4_reduced = SubstMorphReduce stlc_t4_morph
 
 stlc_t5 : STLC_Term
 stlc_t5 = STLC_App SubstBool stlc_t3
@@ -1495,10 +1509,26 @@ polyCatTest = do
   stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 1
   stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 2
   stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t3 3
+  putStrLn $ "stlc_t3_reduced[0] = " ++
+    show (substMorphToFunc stlc_t3_reduced 0)
+  putStrLn $ "stlc_t3_reduced[1] = " ++
+    show (substMorphToFunc stlc_t3_reduced 1)
+  putStrLn $ "stlc_t3_reduced[2] = " ++
+    show (substMorphToFunc stlc_t3_reduced 2)
+  putStrLn $ "stlc_t3_reduced[3] = " ++
+    show (substMorphToFunc stlc_t3_reduced 3)
   stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t4 0
   stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t4 1
   stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t4 2
   stlcAppTest (SubstBool !* SubstBool) SubstBool stlc_t4 3
+  putStrLn $ "stlc_t4_reduced[0] = " ++
+    show (substMorphToFunc stlc_t4_reduced 0)
+  putStrLn $ "stlc_t4_reduced[1] = " ++
+    show (substMorphToFunc stlc_t4_reduced 1)
+  putStrLn $ "stlc_t4_reduced[2] = " ++
+    show (substMorphToFunc stlc_t4_reduced 2)
+  putStrLn $ "stlc_t4_reduced[3] = " ++
+    show (substMorphToFunc stlc_t4_reduced 3)
   stlcTest stlc_t5
   stlcTest stlc_t6
   putStrLn ""
