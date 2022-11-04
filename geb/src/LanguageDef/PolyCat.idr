@@ -5369,6 +5369,11 @@ SubstPartialApp : {w, x, y, z : SubstObjMu} ->
 SubstPartialApp g f = ?SubstPartialApp_hole
 
 public export
+SubstDistribTerm : (x, y, z : SubstObjMu) ->
+  SubstHomTerm (x !* (y !+ z)) ((x !* y) !+ (x !* z))
+SubstDistribTerm x y z = ?SubstDistribTerm_hole
+
+public export
 SubstTermToSOTerm : (x : SubstObjMu) -> SubstTerm x -> SOTerm x
 SubstTermToSOTerm (InSO SO0) t impossible
 SubstTermToSOTerm (InSO SO1) () = SMId Subst1
@@ -5397,15 +5402,17 @@ SubstMorphToSubstTerm : {x, y : SubstObjMu} ->
 SubstMorphToSubstTerm (SMId x) = SubstIdTerm x
 SubstMorphToSubstTerm (g <! f) =
   SubstTermComp (SubstMorphToSubstTerm g) (SubstMorphToSubstTerm f)
-SubstMorphToSubstTerm (SMFromInit y) = ()
+SubstMorphToSubstTerm (SMFromInit y) = SubstExFalsoTerm x
 SubstMorphToSubstTerm (SMToTerminal x) = SubstUnitTerm x
 SubstMorphToSubstTerm (SMInjLeft x y) = SubstInjLeftTerm x y
 SubstMorphToSubstTerm (SMInjRight x y) = SubstInjRightTerm x y
-SubstMorphToSubstTerm (SMCase f g) = ?SubstMorphToSubstTerm_hole_6
-SubstMorphToSubstTerm (SMPair f g) = ?SubstMorphToSubstTerm_hole_7
-SubstMorphToSubstTerm (SMProjLeft x y) = ?SubstMorphToSubstTerm_hole_8
-SubstMorphToSubstTerm (SMProjRight x y) = ?SubstMorphToSubstTerm_hole_9
-SubstMorphToSubstTerm (SMDistrib x y z) = ?SubstMorphToSubstTerm_hole_10
+SubstMorphToSubstTerm (SMCase f g) =
+  SubstCaseTerm (SubstMorphToSubstTerm f) (SubstMorphToSubstTerm g)
+SubstMorphToSubstTerm (SMPair f g) =
+  SubstPairTerm (SubstMorphToSubstTerm f) (SubstMorphToSubstTerm g)
+SubstMorphToSubstTerm (SMProjLeft x y) = SubstProjLeftTerm x y
+SubstMorphToSubstTerm (SMProjRight x y) = SubstProjRightTerm x y
+SubstMorphToSubstTerm (SMDistrib x y z) = SubstDistribTerm x y z
 
 public export
 SOTermToSubstTerm : (x : SubstObjMu) -> SOTerm x -> SubstTerm x
