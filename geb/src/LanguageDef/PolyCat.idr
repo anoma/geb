@@ -5273,6 +5273,28 @@ SubstHomTerm : SubstObjMu -> SubstObjMu -> Type
 SubstHomTerm x y = SubstTerm (x !-> y)
 
 public export
+substHomTermToFunc : {x, y : SubstObjMu} ->
+  SubstHomTerm x y -> (SubstTerm x -> SubstTerm y)
+substHomTermToFunc {x=(InSO SO0)} f t =
+  void t
+substHomTermToFunc {x=(InSO SO1)} f () =
+  f
+substHomTermToFunc {x=(InSO (x !!+ x'))} (f, f') (Left t) =
+  substHomTermToFunc f t
+substHomTermToFunc {x=(InSO (x !!+ x'))} (f, f') (Right t) =
+  substHomTermToFunc f' t
+substHomTermToFunc {x=(InSO (x !!* x'))} f (t, t') =
+  substHomTermToFunc {x=x'} {y} (substHomTermToFunc {x} {y=(x' !-> y)} f t) t'
+
+public export
+substFuncToHomTerm : {x, y : SubstObjMu} ->
+  (SubstTerm x -> SubstTerm y) -> SubstHomTerm x y
+substFuncToHomTerm {x=(InSO SO0)} f = ?substFuncToHomTerm_hole_0
+substFuncToHomTerm {x=(InSO SO1)} f = ?substFuncToHomTerm_hole_1
+substFuncToHomTerm {x=(InSO (x !!+ x'))} f = ?substFuncToHomTerm_hole_2
+substFuncToHomTerm {x=(InSO (x !!* x'))} f = ?substFuncToHomTerm_hole_3
+
+public export
 SubstConstTerm : {x, y : SubstObjMu} -> SubstTerm y -> SubstHomTerm x y
 SubstConstTerm {x=(InSO SO0)} t = ()
 SubstConstTerm {x=(InSO SO1)} t = t
@@ -5330,11 +5352,16 @@ mutual
 
   public export
   SubstUnitTerm : (x : SubstObjMu) -> SubstHomTerm x Subst1
-  SubstUnitTerm x = ?SubstUnitTerm_hole
+  SubstUnitTerm x = SubstConstTerm ()
 
   public export
   SubstInjLeftTerm : (x, y : SubstObjMu) -> SubstHomTerm x (x !+ y)
-  SubstInjLeftTerm x y = ?SubstInjLeftTerm_hole
+  SubstInjLeftTerm (InSO SO0) y = ()
+  SubstInjLeftTerm (InSO SO1) y = Left ()
+  SubstInjLeftTerm (InSO (x !!+ x')) y =
+    (?SubstInjLeftTerm_hole_3a,
+     ?SubstInjLeftTerm_hole_3b)
+  SubstInjLeftTerm (InSO (x !!* x')) y = ?SubstInjLeftTerm_hole_4
 
   public export
   SubstInjRightTerm : (x, y : SubstObjMu) -> SubstHomTerm y (x !+ y)
