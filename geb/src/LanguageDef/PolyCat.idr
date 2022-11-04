@@ -5289,10 +5289,15 @@ substHomTermToFunc {x=(InSO (x !!* x'))} f (t, t') =
 public export
 substFuncToHomTerm : {x, y : SubstObjMu} ->
   (SubstTerm x -> SubstTerm y) -> SubstHomTerm x y
-substFuncToHomTerm {x=(InSO SO0)} f = ?substFuncToHomTerm_hole_0
-substFuncToHomTerm {x=(InSO SO1)} f = ?substFuncToHomTerm_hole_1
-substFuncToHomTerm {x=(InSO (x !!+ x'))} f = ?substFuncToHomTerm_hole_2
-substFuncToHomTerm {x=(InSO (x !!* x'))} f = ?substFuncToHomTerm_hole_3
+substFuncToHomTerm {x=(InSO SO0)} f =
+  ()
+substFuncToHomTerm {x=(InSO SO1)} f =
+  f ()
+substFuncToHomTerm {x=(InSO (x !!+ x'))} f =
+  (substFuncToHomTerm $ f . Left, substFuncToHomTerm $ f . Right)
+substFuncToHomTerm {x=(InSO (x !!* x'))} f =
+  substFuncToHomTerm {x} {y=(x' !-> y)} $
+    \t => substFuncToHomTerm {x=x'} {y} $ \t' => f (t, t')
 
 public export
 SubstConstTerm : {x, y : SubstObjMu} -> SubstTerm y -> SubstHomTerm x y
