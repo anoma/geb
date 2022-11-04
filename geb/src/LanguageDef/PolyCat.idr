@@ -5300,114 +5300,73 @@ substFuncToHomTerm {x=(InSO (x !!* x'))} f =
     \t => substFuncToHomTerm {x=x'} {y} $ \t' => f (t, t')
 
 public export
+SubstIdTerm : (x : SubstObjMu) -> SubstHomTerm x x
+SubstIdTerm x = substFuncToHomTerm (id {a=(SubstTerm x)})
+
+public export
+SubstTermComp : {x, y, z : SubstObjMu} ->
+  SubstHomTerm y z -> SubstHomTerm x y -> SubstHomTerm x z
+SubstTermComp g f =
+  substFuncToHomTerm (substHomTermToFunc g . substHomTermToFunc f)
+
+public export
+SubstExFalsoTerm : (x : SubstObjMu) -> SubstHomTerm Subst0 x
+SubstExFalsoTerm x = ()
+
+public export
 SubstConstTerm : {x, y : SubstObjMu} -> SubstTerm y -> SubstHomTerm x y
-SubstConstTerm {x=(InSO SO0)} t = ()
-SubstConstTerm {x=(InSO SO1)} t = t
-SubstConstTerm {x=(InSO (_ !!+ _))} t = (SubstConstTerm t, SubstConstTerm t)
-SubstConstTerm {x=(InSO (_ !!* _))} t = SubstConstTerm (SubstConstTerm t)
+SubstConstTerm = substFuncToHomTerm . const
 
-mutual
-  public export
-  SubstIdTerm : (x : SubstObjMu) -> SubstHomTerm x x
-  SubstIdTerm (InSO SO0) = ()
-  SubstIdTerm (InSO SO1) = ()
-  SubstIdTerm (InSO (x !!+ y)) = (SubstInjLeftTerm x y, SubstInjRightTerm x y)
-  SubstIdTerm (InSO (x !!* y)) = SubstPairIdTerm x y
+public export
+SubstUnitTerm : (x : SubstObjMu) -> SubstHomTerm x Subst1
+SubstUnitTerm x = SubstConstTerm ()
 
-  public export
-  SubstPairIdTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) (x !* y)
-  SubstPairIdTerm x y = SubstBiPairTerm (SubstIdTerm x) (SubstIdTerm y)
+public export
+SubstInjLeftTerm : (x, y : SubstObjMu) -> SubstHomTerm x (x !+ y)
+SubstInjLeftTerm x y =
+  substFuncToHomTerm (Left {a=(SubstTerm x)} {b=(SubstTerm y)})
 
-  public export
-  SubstReflectedConstTerm :
-    (x, y : SubstObjMu) -> SubstHomTerm y (SubstHomObj x y)
-  SubstReflectedConstTerm (InSO SO0) y = SubstUnitTerm y
-  SubstReflectedConstTerm (InSO SO1) y = SubstIdTerm y
-  SubstReflectedConstTerm (InSO (x !!+ x')) y =
-    SubstPairTerm (SubstReflectedConstTerm x y) (SubstReflectedConstTerm x' y)
-  SubstReflectedConstTerm (InSO (x !!* x')) y =
-    SubstTermSwapArgs $ SubstConstTerm $ SubstReflectedConstTerm x' y
+public export
+SubstInjRightTerm : (x, y : SubstObjMu) -> SubstHomTerm y (x !+ y)
+SubstInjRightTerm x y =
+  substFuncToHomTerm (Right {a=(SubstTerm x)} {b=(SubstTerm y)})
 
-  public export
-  SubstBiPairTerm : {x, x', y, y' : SubstObjMu} ->
-    SubstHomTerm x x' -> SubstHomTerm y y' ->
-    SubstHomTerm (x !* y) (x' !* y')
-  SubstBiPairTerm fx fy =
-    SubstPairTerm {x=(x !* y)}
-      (SubstTermComp (SubstReflectedConstTerm y x') fx)
-      (SubstConstTerm fy)
+public export
+SubstCaseTerm : {x, y, z : SubstObjMu} ->
+  SubstHomTerm x z -> SubstHomTerm y z -> SubstHomTerm (x !+ y) z
+SubstCaseTerm f g = ?SubstCaseTerm_hole
 
-  public export
-  SubstTermCommuteProd : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) (y !* x)
-  SubstTermCommuteProd x y =
-    SubstPairTerm {x=(x !* y)} {y} {z=x}
-      (SubstProjRightTerm x y)
-      (SubstProjLeftTerm x y)
+public export
+SubstPairTerm : {x, y, z : SubstObjMu} ->
+  SubstHomTerm x y -> SubstHomTerm x z -> SubstHomTerm x (y !* z)
+SubstPairTerm f g = ?SubstPairTerm_hole
 
-  public export
-  SubstTermSwapArgs : {x, y, z : SubstObjMu} ->
-    SubstTerm ((x !* y) !-> z) -> SubstTerm ((y !* x) !-> z)
-  SubstTermSwapArgs f =
-    SubstTermComp {x=(y !* x)} {y=(x !* y)} {z} f (SubstTermCommuteProd y x)
+public export
+SubstProjLeftTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) x
+SubstProjLeftTerm x y = ?SubstProjLeftTerm_hole
 
-  public export
-  SubstTermComp : {x, y, z : SubstObjMu} ->
-    SubstHomTerm y z -> SubstHomTerm x y -> SubstHomTerm x z
-  SubstTermComp g f = ?SubstTermComp_hole
+public export
+SubstProjRightTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) y
+SubstProjRightTerm x y = ?SubstProjRightTerm_hole
 
-  public export
-  SubstUnitTerm : (x : SubstObjMu) -> SubstHomTerm x Subst1
-  SubstUnitTerm x = SubstConstTerm ()
+public export
+SubstEval : (x, y : SubstObjMu) -> SubstHomTerm ((x !-> y) !* x) y
+SubstEval x y = ?SubstEval_hole
 
-  public export
-  SubstInjLeftTerm : (x, y : SubstObjMu) -> SubstHomTerm x (x !+ y)
-  SubstInjLeftTerm (InSO SO0) y = ()
-  SubstInjLeftTerm (InSO SO1) y = Left ()
-  SubstInjLeftTerm (InSO (x !!+ x')) y =
-    (?SubstInjLeftTerm_hole_3a,
-     ?SubstInjLeftTerm_hole_3b)
-  SubstInjLeftTerm (InSO (x !!* x')) y = ?SubstInjLeftTerm_hole_4
+public export
+SubstCurry : {x, y, z : SubstObjMu} ->
+  SubstHomTerm (x !* y) z -> SubstHomTerm x (y !-> z)
+SubstCurry f = ?SubstCurry_hole
 
-  public export
-  SubstInjRightTerm : (x, y : SubstObjMu) -> SubstHomTerm y (x !+ y)
-  SubstInjRightTerm x y = ?SubstInjRightTerm_hole
+public export
+SubstUncurry : {x, y, z : SubstObjMu} ->
+  SubstHomTerm x (y !-> z) -> SubstHomTerm (x !* y) z
+SubstUncurry f = ?SubstUncurry_hole
 
-  public export
-  SubstCaseTerm : {x, y, z : SubstObjMu} ->
-    SubstHomTerm x z -> SubstHomTerm y z -> SubstHomTerm (x !+ y) z
-  SubstCaseTerm f g = ?SubstCaseTerm_hole
-
-  public export
-  SubstPairTerm : {x, y, z : SubstObjMu} ->
-    SubstHomTerm x y -> SubstHomTerm x z -> SubstHomTerm x (y !* z)
-  SubstPairTerm f g = ?SubstPairTerm_hole
-
-  public export
-  SubstProjLeftTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) x
-  SubstProjLeftTerm x y = ?SubstProjLeftTerm_hole
-
-  public export
-  SubstProjRightTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) y
-  SubstProjRightTerm x y = ?SubstProjRightTerm_hole
-
-  public export
-  SubstEval : (x, y : SubstObjMu) -> SubstHomTerm ((x !-> y) !* x) y
-  SubstEval x y = ?SubstEval_hole
-
-  public export
-  SubstCurry : {x, y, z : SubstObjMu} ->
-    SubstHomTerm (x !* y) z -> SubstHomTerm x (y !-> z)
-  SubstCurry f = ?SubstCurry_hole
-
-  public export
-  SubstUncurry : {x, y, z : SubstObjMu} ->
-    SubstHomTerm x (y !-> z) -> SubstHomTerm (x !* y) z
-  SubstUncurry f = ?SubstUncurry_hole
-
-  public export
-  SubstPartialApp : {w, x, y, z : SubstObjMu} ->
-    SubstHomTerm (x !* y) z -> SubstHomTerm w x -> SubstHomTerm (w !* y) z
-  SubstPartialApp g f = ?SubstPartialApp_hole
+public export
+SubstPartialApp : {w, x, y, z : SubstObjMu} ->
+  SubstHomTerm (x !* y) z -> SubstHomTerm w x -> SubstHomTerm (w !* y) z
+SubstPartialApp g f = ?SubstPartialApp_hole
 
 public export
 SubstTermToSOTerm : (x : SubstObjMu) -> SubstTerm x -> SOTerm x
@@ -5432,26 +5391,21 @@ SubstTermToSubstMorph {x=(InSO (x !!+ x'))} {y} (t, t') =
 SubstTermToSubstMorph {x=(InSO (x !!* x'))} {y} t =
   soUncurry $ SubstTermToSubstMorph {x} {y=(x' !-> y)} t
 
-mutual
-  public export
-  SubstMorphToSubstTerm : {x, y : SubstObjMu} ->
-    SubstMorph x y -> SubstTerm (x !-> y)
-  SubstMorphToSubstTerm (SMId x) = SubstIdTerm x
-  SubstMorphToSubstTerm (g <! f) = SubstCompToSubstTerm g f
-  SubstMorphToSubstTerm (SMFromInit y) = ()
-  SubstMorphToSubstTerm (SMToTerminal x) = SubstUnitTerm x
-  SubstMorphToSubstTerm (SMInjLeft x y) = SubstInjLeftTerm x y
-  SubstMorphToSubstTerm (SMInjRight x y) = SubstInjRightTerm x y
-  SubstMorphToSubstTerm (SMCase f g) = ?SubstMorphToSubstTerm_hole_6
-  SubstMorphToSubstTerm (SMPair f g) = ?SubstMorphToSubstTerm_hole_7
-  SubstMorphToSubstTerm (SMProjLeft x y) = ?SubstMorphToSubstTerm_hole_8
-  SubstMorphToSubstTerm (SMProjRight x y) = ?SubstMorphToSubstTerm_hole_9
-  SubstMorphToSubstTerm (SMDistrib x y z) = ?SubstMorphToSubstTerm_hole_10
-
-  public export
-  SubstCompToSubstTerm : {x, y, z : SubstObjMu} ->
-    SubstMorph y z -> SubstMorph x y -> SubstTerm (x !-> z)
-  SubstCompToSubstTerm g f = ?SubstCompToSubstTerm_hole
+public export
+SubstMorphToSubstTerm : {x, y : SubstObjMu} ->
+  SubstMorph x y -> SubstHomTerm x y
+SubstMorphToSubstTerm (SMId x) = SubstIdTerm x
+SubstMorphToSubstTerm (g <! f) =
+  SubstTermComp (SubstMorphToSubstTerm g) (SubstMorphToSubstTerm f)
+SubstMorphToSubstTerm (SMFromInit y) = ()
+SubstMorphToSubstTerm (SMToTerminal x) = SubstUnitTerm x
+SubstMorphToSubstTerm (SMInjLeft x y) = SubstInjLeftTerm x y
+SubstMorphToSubstTerm (SMInjRight x y) = SubstInjRightTerm x y
+SubstMorphToSubstTerm (SMCase f g) = ?SubstMorphToSubstTerm_hole_6
+SubstMorphToSubstTerm (SMPair f g) = ?SubstMorphToSubstTerm_hole_7
+SubstMorphToSubstTerm (SMProjLeft x y) = ?SubstMorphToSubstTerm_hole_8
+SubstMorphToSubstTerm (SMProjRight x y) = ?SubstMorphToSubstTerm_hole_9
+SubstMorphToSubstTerm (SMDistrib x y z) = ?SubstMorphToSubstTerm_hole_10
 
 public export
 SOTermToSubstTerm : (x : SubstObjMu) -> SOTerm x -> SubstTerm x
