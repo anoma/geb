@@ -1531,6 +1531,13 @@ polyCatTest = do
     show (substMorphToFunc stlc_t4_reduced 3)
   stlcTest stlc_t5
   stlcTest stlc_t6
+  putStrLn $ "unreduced t3: " ++ showSubstMorph stlc_t3_morph
+  putStrLn $ "reduced t3: " ++ showSubstMorph stlc_t3_reduced
+  putStrLn $ "t3 as hom-term: " ++
+    showSubstHomTerm {x=(SubstBool !* SubstBool)} {y=SubstBool}
+      (SubstMorphToSubstTerm stlc_t3_morph)
+  putStrLn $ "t3 as hom-term with Idris show: " ++
+    show (SubstMorphToSubstTerm stlc_t3_morph)
   putStrLn ""
   putStrLn "------------------------------------"
   putStrLn ""

@@ -4766,6 +4766,23 @@ SubstTerm (InSO (x !!+ y)) = Either (SubstTerm x) (SubstTerm y)
 SubstTerm (InSO (x !!* y)) = Pair (SubstTerm x) (SubstTerm y)
 
 public export
+showSubstTerm : {x : SubstObjMu} -> SubstTerm x -> String
+showSubstTerm {x=(InSO SO0)} t =
+  void t
+showSubstTerm {x=(InSO SO1)} t =
+  "!"
+showSubstTerm {x=(InSO (x !!+ y))} (Left t) =
+  "L[" ++ showSubstTerm t ++ "]"
+showSubstTerm {x=(InSO (x !!+ y))} (Right t) =
+  "R[" ++ showSubstTerm t ++ "]"
+showSubstTerm {x=(InSO (x !!* y))} (t, t') =
+  "(" ++ showSubstTerm t ++ "," ++ showSubstTerm t' ++ ")"
+
+public export
+(x : SubstObjMu) => Show (SubstTerm x) where
+  show = showSubstTerm
+
+public export
 SubstContradictionAlg : MetaSOAlg Type
 SubstContradictionAlg SO0 = ()
 SubstContradictionAlg SO1 = Void
@@ -5271,6 +5288,10 @@ soCaseAbstract {w} {x} {y} {z} =
 public export
 SubstHomTerm : SubstObjMu -> SubstObjMu -> Type
 SubstHomTerm x y = SubstTerm (x !-> y)
+
+public export
+showSubstHomTerm : {x, y : SubstObjMu} -> SubstHomTerm x y -> String
+showSubstHomTerm {x} {y} = showSubstTerm {x=(x !-> y)}
 
 public export
 substHomTermToFunc : {x, y : SubstObjMu} ->
