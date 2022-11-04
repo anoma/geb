@@ -5334,44 +5334,50 @@ SubstInjRightTerm x y =
 public export
 SubstCaseTerm : {x, y, z : SubstObjMu} ->
   SubstHomTerm x z -> SubstHomTerm y z -> SubstHomTerm (x !+ y) z
-SubstCaseTerm f g = ?SubstCaseTerm_hole
+SubstCaseTerm f g =
+  substFuncToHomTerm {x=(x !+ y)} {y=z} $ eitherElim
+    (substHomTermToFunc f) (substHomTermToFunc g)
 
 public export
 SubstPairTerm : {x, y, z : SubstObjMu} ->
   SubstHomTerm x y -> SubstHomTerm x z -> SubstHomTerm x (y !* z)
-SubstPairTerm f g = ?SubstPairTerm_hole
+SubstPairTerm f g =
+  substFuncToHomTerm {x} {y=(y !* z)} $ \t =>
+    (substHomTermToFunc f t, substHomTermToFunc g t)
 
 public export
 SubstProjLeftTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) x
-SubstProjLeftTerm x y = ?SubstProjLeftTerm_hole
+SubstProjLeftTerm x y = substFuncToHomTerm {x=(x !* y)} {y=x} fst
 
 public export
 SubstProjRightTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) y
-SubstProjRightTerm x y = ?SubstProjRightTerm_hole
+SubstProjRightTerm x y = substFuncToHomTerm {x=(x !* y)} {y} snd
 
 public export
 SubstEval : (x, y : SubstObjMu) -> SubstHomTerm ((x !-> y) !* x) y
-SubstEval x y = ?SubstEval_hole
+SubstEval x y = substFuncToHomTerm (id {a=(SubstHomTerm x y)})
 
 public export
 SubstCurry : {x, y, z : SubstObjMu} ->
   SubstHomTerm (x !* y) z -> SubstHomTerm x (y !-> z)
-SubstCurry f = ?SubstCurry_hole
+SubstCurry = id
 
 public export
 SubstUncurry : {x, y, z : SubstObjMu} ->
   SubstHomTerm x (y !-> z) -> SubstHomTerm (x !* y) z
-SubstUncurry f = ?SubstUncurry_hole
+SubstUncurry = id
 
 public export
 SubstPartialApp : {w, x, y, z : SubstObjMu} ->
   SubstHomTerm (x !* y) z -> SubstHomTerm w x -> SubstHomTerm (w !* y) z
-SubstPartialApp g f = ?SubstPartialApp_hole
+SubstPartialApp = SubstTermComp
 
 public export
 SubstDistribTerm : (x, y, z : SubstObjMu) ->
   SubstHomTerm (x !* (y !+ z)) ((x !* y) !+ (x !* z))
-SubstDistribTerm x y z = ?SubstDistribTerm_hole
+SubstDistribTerm x y z = substFuncToHomTerm $ \tx =>
+  (substFuncToHomTerm $ \ty => Left (tx, ty),
+   substFuncToHomTerm $ \tz => Right (tx, tz))
 
 public export
 SubstTermToSOTerm : (x : SubstObjMu) -> SubstTerm x -> SOTerm x
