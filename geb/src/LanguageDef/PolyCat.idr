@@ -4752,9 +4752,18 @@ SubstTermAlg SO1 = ()
 SubstTermAlg (x !!+ y) = Either x y
 SubstTermAlg (x !!* y) = Pair x y
 
+-- Variant from an algebra rather than explicit recursion
+public export
+SubstTerm' : SubstObjMu -> Type
+SubstTerm' = substObjCata SubstTermAlg
+
+-- Variant using explicit recursion
 public export
 SubstTerm : SubstObjMu -> Type
-SubstTerm = substObjCata SubstTermAlg
+SubstTerm (InSO SO0) = Void
+SubstTerm (InSO SO1) = ()
+SubstTerm (InSO (x !!+ y)) = Either (SubstTerm x) (SubstTerm y)
+SubstTerm (InSO (x !!* y)) = Pair (SubstTerm x) (SubstTerm y)
 
 public export
 SubstContradictionAlg : MetaSOAlg Type
@@ -5252,6 +5261,172 @@ soCaseAbstract {w} {x} {y} {z} =
       (soCurry $ soCurry $ soEval y z <! soProdCommutes _ _ <!
         soForgetMiddle _ _ _)
     <! soEval w (x !+ y)
+
+--------------------------------------------
+--------------------------------------------
+---- SubstTerm / SubstMorph equivalence ----
+--------------------------------------------
+--------------------------------------------
+
+public export
+SubstHomTerm : SubstObjMu -> SubstObjMu -> Type
+SubstHomTerm x y = SubstTerm (x !-> y)
+
+public export
+substHomTermToFunc : {x, y : SubstObjMu} ->
+  SubstHomTerm x y -> (SubstTerm x -> SubstTerm y)
+substHomTermToFunc {x=(InSO SO0)} f t =
+  void t
+substHomTermToFunc {x=(InSO SO1)} f () =
+  f
+substHomTermToFunc {x=(InSO (x !!+ x'))} (f, f') (Left t) =
+  substHomTermToFunc f t
+substHomTermToFunc {x=(InSO (x !!+ x'))} (f, f') (Right t) =
+  substHomTermToFunc f' t
+substHomTermToFunc {x=(InSO (x !!* x'))} f (t, t') =
+  substHomTermToFunc {x=x'} {y} (substHomTermToFunc {x} {y=(x' !-> y)} f t) t'
+
+public export
+substFuncToHomTerm : {x, y : SubstObjMu} ->
+  (SubstTerm x -> SubstTerm y) -> SubstHomTerm x y
+substFuncToHomTerm {x=(InSO SO0)} f =
+  ()
+substFuncToHomTerm {x=(InSO SO1)} f =
+  f ()
+substFuncToHomTerm {x=(InSO (x !!+ x'))} f =
+  (substFuncToHomTerm $ f . Left, substFuncToHomTerm $ f . Right)
+substFuncToHomTerm {x=(InSO (x !!* x'))} f =
+  substFuncToHomTerm {x} {y=(x' !-> y)} $
+    \t => substFuncToHomTerm {x=x'} {y} $ \t' => f (t, t')
+
+public export
+SubstIdTerm : (x : SubstObjMu) -> SubstHomTerm x x
+SubstIdTerm x = substFuncToHomTerm (id {a=(SubstTerm x)})
+
+public export
+SubstTermComp : {x, y, z : SubstObjMu} ->
+  SubstHomTerm y z -> SubstHomTerm x y -> SubstHomTerm x z
+SubstTermComp g f =
+  substFuncToHomTerm (substHomTermToFunc g . substHomTermToFunc f)
+
+public export
+SubstExFalsoTerm : (x : SubstObjMu) -> SubstHomTerm Subst0 x
+SubstExFalsoTerm x = ()
+
+public export
+SubstConstTerm : {x, y : SubstObjMu} -> SubstTerm y -> SubstHomTerm x y
+SubstConstTerm = substFuncToHomTerm . const
+
+public export
+SubstUnitTerm : (x : SubstObjMu) -> SubstHomTerm x Subst1
+SubstUnitTerm x = SubstConstTerm ()
+
+public export
+SubstInjLeftTerm : (x, y : SubstObjMu) -> SubstHomTerm x (x !+ y)
+SubstInjLeftTerm x y =
+  substFuncToHomTerm (Left {a=(SubstTerm x)} {b=(SubstTerm y)})
+
+public export
+SubstInjRightTerm : (x, y : SubstObjMu) -> SubstHomTerm y (x !+ y)
+SubstInjRightTerm x y =
+  substFuncToHomTerm (Right {a=(SubstTerm x)} {b=(SubstTerm y)})
+
+public export
+SubstCaseTerm : {x, y, z : SubstObjMu} ->
+  SubstHomTerm x z -> SubstHomTerm y z -> SubstHomTerm (x !+ y) z
+SubstCaseTerm f g =
+  substFuncToHomTerm {x=(x !+ y)} {y=z} $ eitherElim
+    (substHomTermToFunc f) (substHomTermToFunc g)
+
+public export
+SubstPairTerm : {x, y, z : SubstObjMu} ->
+  SubstHomTerm x y -> SubstHomTerm x z -> SubstHomTerm x (y !* z)
+SubstPairTerm f g =
+  substFuncToHomTerm {x} {y=(y !* z)} $ \t =>
+    (substHomTermToFunc f t, substHomTermToFunc g t)
+
+public export
+SubstProjLeftTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) x
+SubstProjLeftTerm x y = substFuncToHomTerm {x=(x !* y)} {y=x} fst
+
+public export
+SubstProjRightTerm : (x, y : SubstObjMu) -> SubstHomTerm (x !* y) y
+SubstProjRightTerm x y = substFuncToHomTerm {x=(x !* y)} {y} snd
+
+public export
+SubstEval : (x, y : SubstObjMu) -> SubstHomTerm ((x !-> y) !* x) y
+SubstEval x y = substFuncToHomTerm (id {a=(SubstHomTerm x y)})
+
+public export
+SubstCurry : {x, y, z : SubstObjMu} ->
+  SubstHomTerm (x !* y) z -> SubstHomTerm x (y !-> z)
+SubstCurry = id
+
+public export
+SubstUncurry : {x, y, z : SubstObjMu} ->
+  SubstHomTerm x (y !-> z) -> SubstHomTerm (x !* y) z
+SubstUncurry = id
+
+public export
+SubstPartialApp : {w, x, y, z : SubstObjMu} ->
+  SubstHomTerm (x !* y) z -> SubstHomTerm w x -> SubstHomTerm (w !* y) z
+SubstPartialApp = SubstTermComp
+
+public export
+SubstDistribTerm : (x, y, z : SubstObjMu) ->
+  SubstHomTerm (x !* (y !+ z)) ((x !* y) !+ (x !* z))
+SubstDistribTerm x y z = substFuncToHomTerm $ \tx =>
+  (substFuncToHomTerm $ \ty => Left (tx, ty),
+   substFuncToHomTerm $ \tz => Right (tx, tz))
+
+public export
+SubstTermToSOTerm : (x : SubstObjMu) -> SubstTerm x -> SOTerm x
+SubstTermToSOTerm (InSO SO0) t impossible
+SubstTermToSOTerm (InSO SO1) () = SMId Subst1
+SubstTermToSOTerm (InSO (x !!+ y)) (Left t) =
+  SMInjLeft x y <! SubstTermToSOTerm x t
+SubstTermToSOTerm (InSO (x !!+ y)) (Right t) =
+  SMInjRight x y <! SubstTermToSOTerm y t
+SubstTermToSOTerm (InSO (x !!* y)) (t1, t2) =
+  SMPair (SubstTermToSOTerm x t1) (SubstTermToSOTerm y t2)
+
+public export
+SubstTermToSubstMorph : {x, y : SubstObjMu} ->
+  SubstTerm (x !-> y) -> SubstMorph x y
+SubstTermToSubstMorph {x=(InSO SO0)} {y} () =
+  SMFromInit y
+SubstTermToSubstMorph {x=(InSO SO1)} {y} t =
+  SubstTermToSOTerm y t
+SubstTermToSubstMorph {x=(InSO (x !!+ x'))} {y} (t, t') =
+  SMCase (SubstTermToSubstMorph t) (SubstTermToSubstMorph t')
+SubstTermToSubstMorph {x=(InSO (x !!* x'))} {y} t =
+  soUncurry $ SubstTermToSubstMorph {x} {y=(x' !-> y)} t
+
+public export
+SubstMorphToSubstTerm : {x, y : SubstObjMu} ->
+  SubstMorph x y -> SubstHomTerm x y
+SubstMorphToSubstTerm (SMId x) = SubstIdTerm x
+SubstMorphToSubstTerm (g <! f) =
+  SubstTermComp (SubstMorphToSubstTerm g) (SubstMorphToSubstTerm f)
+SubstMorphToSubstTerm (SMFromInit y) = SubstExFalsoTerm x
+SubstMorphToSubstTerm (SMToTerminal x) = SubstUnitTerm x
+SubstMorphToSubstTerm (SMInjLeft x y) = SubstInjLeftTerm x y
+SubstMorphToSubstTerm (SMInjRight x y) = SubstInjRightTerm x y
+SubstMorphToSubstTerm (SMCase f g) =
+  SubstCaseTerm (SubstMorphToSubstTerm f) (SubstMorphToSubstTerm g)
+SubstMorphToSubstTerm (SMPair f g) =
+  SubstPairTerm (SubstMorphToSubstTerm f) (SubstMorphToSubstTerm g)
+SubstMorphToSubstTerm (SMProjLeft x y) = SubstProjLeftTerm x y
+SubstMorphToSubstTerm (SMProjRight x y) = SubstProjRightTerm x y
+SubstMorphToSubstTerm (SMDistrib x y z) = SubstDistribTerm x y z
+
+public export
+SOTermToSubstTerm : (x : SubstObjMu) -> SOTerm x -> SubstTerm x
+SOTermToSubstTerm x t = SubstMorphToSubstTerm {x=Subst1} {y=x} t
+
+public export
+SubstMorphReduce : {x, y : SubstObjMu} -> SubstMorph x y -> SubstMorph x y
+SubstMorphReduce f = (SubstTermToSubstMorph (SubstMorphToSubstTerm f))
 
 -------------------------------------------------------
 -------------------------------------------------------
