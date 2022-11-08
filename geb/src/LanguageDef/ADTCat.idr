@@ -823,7 +823,7 @@ PolyZeroPos = metaPolyCata PolyZeroPosAlg
 
 public export
 PolyMuNTAlg : MetaPolyPairAdjArgAlg Type
-PolyMuNTAlg PFI q = PolyDir q
+PolyMuNTAlg PFI q = PolyPos q
 PolyMuNTAlg PF0 _ = ()
 PolyMuNTAlg PF1 q = PolyZeroPos q
 PolyMuNTAlg ((_, p) $$+ (_, q)) r = Pair (p r) (q r)
