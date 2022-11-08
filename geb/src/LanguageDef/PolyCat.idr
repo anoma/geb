@@ -503,7 +503,7 @@ pfParProdClosurePosNT = PolyNatTrans
 
 public export
 pfParProdClosureDirNT : (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> Type
-pfParProdClosureDirNT q r f = DPair (pfPos q) (pfDir {p=r} . pntOnPos f)
+pfParProdClosureDirNT q r alpha = DPair (pfPos q) (pfDir {p=r} . pntOnPos alpha)
 
 public export
 pfParProdClosureNT : PolyFunc -> PolyFunc -> PolyFunc
