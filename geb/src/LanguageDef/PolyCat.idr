@@ -446,6 +446,7 @@ public export
 pfSetParProductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
 pfSetParProductArena {a} ps = (pfSetParProductPos ps ** pfSetParProductDir ps)
 
+-- Formula 4.27 from "Polynomial Functors: A General Theory of Interaction".
 public export
 pfHomObj : PolyFunc -> PolyFunc -> PolyFunc
 pfHomObj q r =
@@ -455,20 +456,59 @@ pfHomObj q r =
     PFConstArena . pfDir {p=q}
 
 public export
+pfHomObjPos : PolyFunc -> PolyFunc -> Type
+pfHomObjPos = pfPos .* pfHomObj
+
+public export
+pfHomObjDir : (p, q : PolyFunc) -> pfHomObjPos p q -> Type
+pfHomObjDir p q = pfDir {p=(pfHomObj p q)}
+
+public export
 pfExpObj : PolyFunc -> PolyFunc -> PolyFunc
 pfExpObj = flip pfHomObj
 
 public export
-pfParProdClosurePos : PolyFunc -> PolyFunc -> Type
-pfParProdClosurePos = PolyNatTrans
+pfExpObjPos : PolyFunc -> PolyFunc -> Type
+pfExpObjPos = pfPos .* pfExpObj
 
 public export
-pfParProdClosureDir : (q, r : PolyFunc) -> pfParProdClosurePos q r -> Type
-pfParProdClosureDir q r f = DPair (pfPos q) (pfDir {p=r} . pntOnPos f)
+pfExpObjDir : (p, q : PolyFunc) -> pfExpObjPos p q -> Type
+pfExpObjDir p q = pfDir {p=(pfExpObj p q)}
 
+-- Formula 3.78 from "Polynomial Functors: A General Theory of Interaction".
 public export
 pfParProdClosure : PolyFunc -> PolyFunc -> PolyFunc
-pfParProdClosure q r = (pfParProdClosurePos q r ** pfParProdClosureDir q r)
+pfParProdClosure q r =
+  pfSetProductArena {a=(pfPos q)} $
+    pfCompositionArena r .
+    pfProductArena PFIdentityArena .
+    PFConstArena . pfDir {p=q}
+
+public export
+pfParProdClosurePos : PolyFunc -> PolyFunc -> Type
+pfParProdClosurePos = pfPos .* pfParProdClosure
+
+public export
+pfParProdClosureDir : (p, q : PolyFunc) -> pfParProdClosurePos p q -> Type
+pfParProdClosureDir p q = pfDir {p=(pfParProdClosure p q)}
+
+-- Formula 3.82 from "Polynomial Functors: A General Theory of Interaction":
+-- this is isomorphic to `pfParProdClosure` (that isomorphism shows that
+-- `pfParProdClosure` can be used as a way of computing the natural
+-- transformations between polynomial functors as the positions of a polynomial
+-- functor).
+public export
+pfParProdClosurePosNT : PolyFunc -> PolyFunc -> Type
+pfParProdClosurePosNT = PolyNatTrans
+
+public export
+pfParProdClosureDirNT : (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> Type
+pfParProdClosureDirNT q r f = DPair (pfPos q) (pfDir {p=r} . pntOnPos f)
+
+public export
+pfParProdClosureNT : PolyFunc -> PolyFunc -> PolyFunc
+pfParProdClosureNT q r =
+  (pfParProdClosurePosNT q r ** pfParProdClosureDirNT q r)
 
 public export
 pfBaseChangePos : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> Type

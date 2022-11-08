@@ -1527,6 +1527,122 @@ CoproductToCoproductFAlg :
 CoproductToCoproductFAlg f g f' g' a =
   (f a -> CoproductF f' g' a, g a -> CoproductF f' g' a)
 
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- Adjoint (un)folds, conjugate (para-)hylomorphisms ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+-----------------------------------
+---- Adjoint folds and unfolds ----
+-----------------------------------
+
+-- See:
+-- https://www.researchgate.net/publication/221440236_Adjoint_Folds_and_Unfolds
+-- https://www.semanticscholar.org/paper/Adjoint-folds-and-unfolds-An-extended-study-Hinze/ab88bbc168e2f3a26ac67adb221e89080c9746c3
+
+public export
+partial
+muFree : Functor f => TermAlgebra f v a -> FreeMonad f v -> a
+muFree alg (InFree x) = alg $ case x of
+  TermVar x => TermVar x
+  TermComposite x => TermComposite $ map (muFree alg) x
+
+public export
+voidalg : Algebra f a -> Algebra (TermFunctor f Void) a
+voidalg alg (TermVar _) impossible
+voidalg alg (TermComposite x) = alg x
+
+public export
+partial
+mu : {f : Type -> Type} -> Functor f => Algebra f a -> Mu f -> a
+mu = muFree . voidalg
+
+export
+partial
+adjointFoldFree : {f : Type -> Type} -> (Functor f, Functor l, Functor r) =>
+  (counit : (a : Type) -> l (r a) -> a) ->
+  {v, a : Type} ->
+  Algebra (TermFunctor f v) (r a) -> l (FreeMonad f v) -> a
+adjointFoldFree counit {a} alg = counit a . map {f=l} (muFree alg)
+
+export
+partial
+adjointFold : {f : Type -> Type} -> (Functor f, Functor l, Functor r) =>
+  (counit : (a : Type) -> l (r a) -> a) ->
+  {a : Type} -> Algebra f (r a) -> l (Mu f) -> a
+adjointFold counit {a} alg = counit a . map {f=l} (mu alg)
+
+public export
+partial
+nuFree : {f : Type -> Type} -> Functor f => {v, a : Type} ->
+  Coalgebra (TreeFunctor f v) a -> a -> CofreeComonad f v
+nuFree coalg x with (coalg x)
+  nuFree coalg x | TreeNode x' v' =
+    InCofree $ TreeNode x' $ map (nuFree coalg) v'
+
+export
+partial
+adjointUnfoldFree : {f, l, r : Type -> Type} ->
+  (Functor f, Functor l, Functor r) =>
+  (unit : (a : Type) -> a -> r (l a)) ->
+  {v, a : Type} ->
+  Coalgebra (TreeFunctor f v) (l a) -> a -> r (CofreeComonad f v)
+adjointUnfoldFree unit {a} coalg = map {f=r} (nuFree coalg) . unit a
+
+public export
+unitcoalg : {f : Type -> Type} -> {a : Type} ->
+  Coalgebra f a -> Coalgebra (TreeFunctor f ()) a
+unitcoalg coalg = TreeNode () . coalg
+
+export
+partial
+adjointUnfold : {f, l, r : Type -> Type} -> (Functor f, Functor l, Functor r) =>
+  (unit : (a : Type) -> a -> r (l a)) ->
+  {a : Type} -> Coalgebra f (l a) -> a -> r (Nu f)
+adjointUnfold unit = adjointUnfoldFree unit . unitcoalg
+
+--------------------------------------
+---- Conjugate para-hylomorphisms ----
+--------------------------------------
+
+-- See:
+-- https://www.semanticscholar.org/paper/Conjugate-Hylomorphisms-Or%3A-The-Mother-of-All-Hinze-Wu/248e7e6143bbd346f88b766d2afc71439da2c26b
+
+-- Uses a data structure represented by a "data functor" `d` internally to
+-- compute a function from `c` to `a`.  An adjunction `l` |- `r` transforms
+-- `d` into a "control functor" which specifies the recursion scheme.
+export
+partial
+hyloFree : {v, c, a : Type} ->
+  {d, l, r : Type -> Type} -> (Functor d, Functor l, Functor r) =>
+  (unit : (ty : Type) -> ty -> r (l ty)) ->
+  (coalg : c -> (TreeFunctor d v) c) ->
+  (alg : (l c, (l . (TreeFunctor d v) . r) a) -> a) ->
+  l c -> a
+hyloFree unit coalg alg x =
+  let
+    transport = map {f=l} . map {f=(TreeFunctor d v)} . map {f=r}
+    hylo_trans = transport $ hyloFree unit coalg alg
+    unfolded = map {f=l} coalg x
+    unfolded_trans = map (map {f=(TreeFunctor d v)} (unit c)) unfolded
+  in
+  alg (x, hylo_trans unfolded_trans)
+
+export
+partial
+hylomorphism : {c, a : Type} ->
+  {d, l, r : Type -> Type} -> (Functor d, Functor l, Functor r) =>
+  (unit : (ty : Type) -> ty -> r (l ty)) ->
+  (coalg : c -> d c) ->
+  (alg : (l c, (l . d . r) a) -> a) ->
+  l c -> a
+hylomorphism {d} {l} {r} unit coalg alg =
+  hyloFree {v=()} {d} {l} {r} unit (unitcoalg coalg) unitalg
+    where
+    unitalg : (l c, (l . TreeFunctor d () . r) a) -> a
+    unitalg (x, x') = alg (x, map treeSubtree x')
+
 ----------------------------------------
 ----------------------------------------
 ---- Representables and polynomials ----
