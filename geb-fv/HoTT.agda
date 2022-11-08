@@ -378,21 +378,21 @@ module HoTT where
     refl-Eqℕ zero = pt
     refl-Eqℕ (succ n) = refl-Eqℕ n
 
+    Eqℕ-≡ : (n m : ℕ) → ( (n ≡ m) → (Eqℕ n m))
+    Eqℕ-≡ n .n (refl .n) = refl-Eqℕ n
+
+    ≡-Eqℕ : (n m : ℕ) → Eqℕ n m → n ≡ m
+    ≡-Eqℕ zero zero = λ x → refl _
+    ≡-Eqℕ zero (succ m) = λ x → rec𝟘 _ x
+    ≡-Eqℕ (succ n) zero = λ x → rec𝟘 _ x
+    ≡-Eqℕ (succ n) (succ m) = fun-ap succ ∘ ≡-Eqℕ n m
+
     true-to-one-false-to-zero : Bool → Type lzero
     true-to-one-false-to-zero true = 𝟙
     true-to-one-false-to-zero false = 𝟘
 
     true-not-false : ¬ (true ≡ false)
     true-not-false = λ (x : true ≡ false) → transp true-to-one-false-to-zero x pt
-
-{- zero-not-succ : (m : ℕ) → ¬ (zero ≡ succ m)
-zero-not-succ zero = λ (x : zero ≡ succ zero) → transp (indℕ (λ x → Type lzero) 𝟙 λ n x₁ → 𝟘) x pt
-zero-not-succ (succ m) = λ (p : zero ≡ succ (succ m)) → {!!} -}
-
-{- ℕ-eq-iff-Eqℕ : ∀ (m n : ℕ) → ( (m ≡ n) ↔ Eqℕ m n)
-ℕ-eq-iff-Eqℕ m n  = pair (ind≡ (λ  {x y} →  λ p → Eqℕ x y ) λ x → refl-Eqℕ x) ((indℕ  (λ x →  (Eqℕ x n → (x ≡ n)))
-                  (indℕ (λ y → (Eqℕ zero y → (zero ≡ y))) (ind𝟙 (const-type-fam (zero ≡ zero)) (refl zero))
-                           (λ (n₁ : ℕ) f (x₁ : Eqℕ zero (succ n₁)) → ind𝟘 (const-type-fam (zero ≡ succ n₁)) x₁) n) (λ (n₁ : ℕ) f (x₁ : Eqℕ (succ n₁) n)  → {!!}) m)  ) -}
 
 
 {- HoTT Core Definitions -}
@@ -500,6 +500,12 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
 
     r-homotopy : {l1 l2 : Level} {A : Type l1} {B : Type l2} {f : A → B} (P :  is-an-equiv f) → ( (((proj₁ ( pr₂ P)) ∘ f) ∼ (id _) ))
     r-homotopy P = proj₂ (pr₂ P)
+
+    equiv-qinv : {l1 l2 : Level} {A : Type l1} {B : Type l2} {f : A → B} (P :  is-an-equiv f) → (B → A)
+    equiv-qinv ((g ,, x₃) , y) = g
+
+    ≃-qinv : {l1 l2 : Level} {A : Type l1} {B : Type l2} → (A ≃ B) → (B → A)
+    ≃-qinv (x ,, ((g ,, x₃) , x₂)) = g
 
 
     functions-into-𝟘-give-equivs : {l : Level} {A : Type l} → (f : A → 𝟘) → (is-an-equiv f) 
@@ -629,6 +635,9 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
     constructor-el-+ : {l1 l2 : Level} {A : Type l1} {B : Type l2} (x : A + B) → (Σ[ a ∶ A ] ( x ≡ inl a)) + (Σ[ b ∶ B ] (x ≡ inr b))
     constructor-el-+ (inl x) = inl (x ,, refl _)
     constructor-el-+ (inr x) = inr (x ,, (refl _))
+
+    constructor-el-𝟙 : (x : 𝟙) → (x ≡ pt)
+    constructor-el-𝟙 pt = refl _
     
     l-type-+ :  {l1 l2 : Level} (A : Type l1) (B : Type l2) {D : Type (l1 ⊔ l2)} (p : A + B ≡ D) → Type l1
     l-type-+ A B (refl .(_ + _)) = A
@@ -686,6 +695,54 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
                   (g x ≡ curry g (pr₁ x) (pr₂ x))
     curry-pr-eq g (x , y) = refl _
 
+    curry-pointwise : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} (f : A → B → C) (x : A × B) →
+                                                                                   f (pr₁ x) (pr₂ x) ≡ (uncurry f) x
+    curry-pointwise f (x , y) = refl _
+
+-- A type is characterized by the homset from the terminal object
+
+    type-equiv-homset : {l : Level} {A : Type l} → ((𝟙 → A) ≃ A)
+    type-equiv-homset = (λ f → f pt) ,, (((λ { a x → a}) ,, λ x → refl _) ,
+                                       ((λ a x → a) ,, λ x → funext (λ x₁ → x pt) (x) λ { pt → refl _}))
+
+-- Left coleg of a double coproduct is the universal morphism from the left coleg and identity
+
+    uni-mor-inl : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} → inl {l1 ⊔ l2} {l3} {A + B} {C} ≡ [ (inl ∘ inl) , inl ∘ inr ]
+    uni-mor-inl = funext _ _ λ { (inl x) → refl _ ; (inr x) → refl _}
+
+-- Discrimination on constructors for +
+
+    inl-𝟙-inr-𝟘 : {l1 l2 : Level} {A : Type l1} {B : Type l2} → (A + B) → Type lzero
+    inl-𝟙-inr-𝟘 (inl x) = 𝟙
+    inl-𝟙-inr-𝟘 (inr x) = 𝟘
+
+    inl-not-inr : {l1 l2 : Level} {A : Type l1} {B : Type l2} (a : A) (b : B) → (¬ (inl a ≡ inr b))
+    inl-not-inr a b = λ x → rec𝟘 _ (transp (λ k → inl-𝟙-inr-𝟘 k) x pt)
+
+-- Decidability
+
+    decidable : {l1 : Level} (A : Type l1) → Type l1
+    decidable A = A + (¬ A)
+
+    decidable-eq : {l1 : Level} (A : Type l1) → Type l1
+    decidable-eq A = (x y : A) → ((x ≡ y) + (¬ (x ≡ y)))
+
+    decidable-bi : {l1 l2 : Level} {A B : Type l1} (f : A → B) (g : B → A) → (decidable A) → (decidable B)
+    decidable-bi f g = f +fun λ k b → k (g b)
+
+    𝟙-decidable : decidable 𝟙
+    𝟙-decidable = inl pt
+
+    𝟘-decidable : decidable 𝟘
+    𝟘-decidable = inr (id _)
+
+    Eqℕ-decidable : (n m : ℕ) → decidable (Eqℕ n m)
+    Eqℕ-decidable zero zero = 𝟙-decidable
+    Eqℕ-decidable zero (succ m) = 𝟘-decidable
+    Eqℕ-decidable (succ n) zero = 𝟘-decidable
+    Eqℕ-decidable (succ n) (succ m) = Eqℕ-decidable n m
+
+--
 
   module Univalence where
     open Basics public
@@ -700,3 +757,6 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
       Univalence-elim : {l1 : Level} {A B : Type l1} → ( (refl-to-id {l1} {A} {B}) ≡ (λ p → (transp (λ X → A ≃ X) p (equiv-refl A))))
       Univalence-compeq : {l1 : Level} {A B : Type l1} (p : A ≡ B) → ( p ≡ (ua( (λ p → (transp (λ X → A ≃ X) p (equiv-refl A))) p) ))
       Univalence-compfun : {l1 l2 : Level} {A B : Type l1} (f : A → B) (P : is-an-equiv f) (a : A) → (proj₁ ((refl-to-id {l1} {A} {B}) (ua (f ,, P))) a) ≡ f   a 
+
+  
+
