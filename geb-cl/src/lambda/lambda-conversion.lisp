@@ -4,6 +4,45 @@
 
 (deftype stlc-context () `list)
 
+(defgeneric compile-checked-term (context type term)
+  (:documentation "Compiles a checked term into SubstMorph category"))
+
+
+ (defmethod empty ((class (eql (find-class 'list)))) nil)
+
+
+(defmethod compile-checked-term (context type (term <stlc>))
+  (match-of stlc term
+    ((absurd v)
+     (comp (init type)
+           (compile-checked-term context so0 v)))
+    (unit
+     (terminal (stlc-ctx-to-mu context)))
+    ((left term)
+     (assert (typep type 'coprod) nil "invalid lambda type to left ~A" type)
+     (comp (left-> (mcar type) (mcadr type))
+           (compile-checked-term context (mcar type) term)))
+    ((right term)
+     (assert (typep type 'coprod) nil "invalid lambda type to right ~A" type)
+     (comp (right-> (mcar type) (mcadr type))
+           (compile-checked-term context (mcar type) term)))
+    ((case-on lty rty cod on l r)
+     lty rty cod on l r)
+    ;; I would make an alias, but people would need a newer version of sbcl
+    ((geb.lambda.spec:pair lty rty l r)
+     lty rty l r)
+    ((fst lty rty value)
+     (assert (eql (class-of lty) (class-of type)) nil "Types should match on fst: ~A ~A"
+             term type))
+    ((snd lty rty value)
+     (assert (eql (class-of rty) (class-of type)) nil "Types should match on fst: ~A ~A"
+             term type))
+    ((lamb vty tty term))
+    ((app dom com f x)
+     (assert (eql dom type) nil "Types should match for application: ~A ~A" dom type))
+    ((index i)
+     t)))
+
 (-> stlc-to-ccc (stlc-context t) t)
 (defun stlc-to-ccc (context term)
   (match term
@@ -82,60 +121,6 @@
   (mvfoldr #'prod context so1))
 
 
-;; returns a functor
-(defun convert-term (term)
-  (match term
-    (`(lambda ,body)
-      (let ((functor-body (convert-term body)))
-        (make-functor
-         :obj (lambda (a)
-                (!-> a (call-objmap functor-body a)))
-         ;; functions in geb -> geb
-         :func (func functor-body))))
-    ((index depth)
-     (make-functor
-      :obj  (lambda (a)     (index-to-obj depth a))
-      :func (lambda (m a b) (index-to-projection depth a b m))))
-    ;; application case
-    ((cons f x)
-     (let ((func (convert-term f))
-           (arg  (convert-term x)))
-       (make-functor
-        :obj (lambda (a)
-               (call-objmap func (call-objmap arg a)))
-        :func (lambda (a b m)
-                (comp (call-morphmap (func func)
-                                     (call-objmap func a)
-                                     (call-objmap func b)
-                                     m)
-                      (call-morphmap (func arg)
-                                     (call-objmap arg a)
-                                     (call-objmap arg b)
-                                     m))))))
-    (_
-     (make-functor
-      :obj (lambda (a) a)
-      :func (lambda (a b m)
-              (declare (ignore a b))
-              m)))
-    ;; (`(car ,a)
-    ;;   (make-functor
-    ;;    :obj  (convert-cont a)
-    ;;    ;; functions in geb -> geb
-    ;;    :func (convert-term a)))
-    ;; (`(cdr ,a)
-    ;;   (make-functor
-    ;;    :obj  (convert-cont a)
-    ;;    ;; functions in geb -> geb
-    ;;    :func (convert-term a)))
-    ;; (`(cons ,a ,b)
-    ;;   (make-functor
-    ;;    :obj  (convert-cont body)
-    ;;    ;; functions in geb -> geb
-    ;;    :func (convert-term body)))
-    ))
-
-
 (defun index-to-projection (depth typ-a typ-b prod)
   (if (zerop depth)
       (comp (<-left typ-a typ-b) prod)
@@ -171,10 +156,3 @@
              (prod geb-bool:bool
                    so1))
        geb-bool:bool))
-
-(call-objmap (convert-term test-case) test-type)
-
-
-(stlc-to-ccc nil (nameless `(lambda (x ,so1) x)))
-
-(stlc-to-ccc nil (nameless `(lambda (x ,so1) (car (pair x x)))))
