@@ -36,7 +36,8 @@
    :same-type-to-list
    :mlist
    :commutes
-   :!->))
+   :!->
+   :so-eval))
 
 (uiop:define-package #:geb-bool
   (:documentation "Defines out booleans for the geb language")

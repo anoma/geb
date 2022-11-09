@@ -22,19 +22,6 @@
   ;; Is this right!? hard to tell with Idris's unification
   (comp f (terminal x)))
 
-(defun so-eval (x z)
-  ;; should we have better ways of preserving aliases?
-  (match-of substobj x
-    ((alias _ x)  (so-eval x z))
-    ((so0)        (comp (init z) (<-right so1 so0)))
-    ((so1)        (<-left z so1))
-    ((coprod a b) (mcase (comp (so-eval a z)
-                               (error "idk how to hole fill"))
-                         (comp (so-eval b z)
-                               (error "idk how to hole fill"))))
-    ((prod a b)
-     a b (error "please fix"))))
-
 (defun so-uncurry (x y f)
   x y f)
 

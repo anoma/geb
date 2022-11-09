@@ -27,21 +27,32 @@
      (comp (right-> (mcar type) (mcadr type))
            (compile-checked-term context (mcar type) term)))
     ((case-on lty rty cod on l r)
-     lty rty cod on l r)
+     (comp (mcase (so-curry (compile-checked-term (cons lty context) cod l))
+                  (so-curry (compile-checked-term (cons rty context) cod r)))
+           (compile-checked-term context (coprod lty rty) on)))
     ;; I would make an alias, but people would need a newer version of sbcl
     ((geb.lambda.spec:pair lty rty l r)
-     lty rty l r)
+     (pair (compile-checked-term context lty l)
+           (compile-checked-term context rty r)))
     ((fst lty rty value)
      (assert (eql (class-of lty) (class-of type)) nil "Types should match on fst: ~A ~A"
-             term type))
+             term type)
+     (comp (<-left lty rty) (compile-checked-term context (prod lty rty) value)))
     ((snd lty rty value)
      (assert (eql (class-of rty) (class-of type)) nil "Types should match on fst: ~A ~A"
-             term type))
-    ((lamb vty tty term))
+             term type)
+     (comp (<-right lty rty) (compile-checked-term context (prod lty rty) value)))
+    ((lamb vty tty term)
+     vty tty term
+     (error "not implemented"))
     ((app dom com f x)
-     (assert (eql dom type) nil "Types should match for application: ~A ~A" dom type))
+     (assert (eql dom type) nil "Types should match for application: ~A ~A" dom type)
+     (comp
+      (so-eval dom com)
+      (pair (compile-checked-term context dom f)
+            (compile-checked-term context com x))))
     ((index i)
-     t)))
+     (stlc-ctx-proj context i))))
 
 (-> stlc-to-ccc (stlc-context t) t)
 (defun stlc-to-ccc (context term)
@@ -116,10 +127,20 @@
         (list xdom fcod (comp fm xm)))
        (_ nil)))))
 
+(defun so-curry (x)
+  (error "don't know how to fill in hole ~A" x))
+
 (-> stlc-ctx-to-mu (stlc-context) substobj)
 (defun stlc-ctx-to-mu (context)
   (mvfoldr #'prod context so1))
 
+(defun stlc-ctx-proj (context depth)
+  (if (zerop depth)
+      (<-left (car context)
+              (stlc-ctx-to-mu (cdr context)))
+      (comp (stlc-ctx-proj (cdr context) (1- depth))
+            (<-right (car context)
+                     (stlc-ctx-to-mu (cdr context))))))
 
 (defun index-to-projection (depth typ-a typ-b prod)
   (if (zerop depth)
