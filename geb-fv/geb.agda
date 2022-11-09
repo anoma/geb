@@ -493,8 +493,10 @@ module geb where
   ω-Geb=mor-inl zero m f = ω-to-Geb-mor zero m f
   ω-Geb=mor-inl (succ n) m f = cases _ (ℕ-decidable-eq m (succ (succ n)))
                                                                        (λ { (refl .(succ (succ n))) →
-                                                                                                      cases _ {!!} {!!} {!!}})
-                                                                       {!!}
+                                                                                                      cases _ (FinMor-decidable-eq _ _ f inl)
+                                                                                                                                             (λ x → inlG)
+                                                                                                                                             λ x → ω-to-Geb-mor _ _ f})
+                                                                       λ x → ω-to-Geb-mor _ _ f
 
 
 -- function as before but make it consider whether it is an injection i.e. whether m = n + 2 
@@ -734,3 +736,4 @@ module geb where
   ω-to-Geb-mor-preserves-id : (n : ℕ) → ω-to-Geb-mor n n (id _) ≡ IdMor (⨁G Term n)
   ω-to-Geb-mor-preserves-id zero = (InitMorAx _) ⁻¹
   ω-to-Geb-mor-preserves-id (succ n) = {!!}
+
