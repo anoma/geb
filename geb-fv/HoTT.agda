@@ -1,4 +1,7 @@
-{-# OPTIONS --without-K --exact-split #-} 
+{-# OPTIONS --without-K --exact-split #-}
+
+
+-- This is the formalization of basic type-theoretic constructions. Almost everything is a formalization of claims/exercises as stated either in Rijke's or the HoTT books. A separate library was made for stability purposes of the formal verification procedure. 
  
 
 open import Agda.Primitive using (Level; lzero; lsuc; _⊔_; Setω)
@@ -368,6 +371,13 @@ module HoTT where
     mult-ℕ-assoc (succ m) n k = (mult-ℕ-distrib-right (m ·ℕ n) n k) ·
                           (fun-ap (λ x → x +ℕ (n ·ℕ k)) (mult-ℕ-assoc m n k))
 
+    expℕ : (n m : ℕ) → ℕ
+    expℕ n zero = one
+    expℕ n (succ m) = (expℕ n m) ·ℕ n
+
+    zero-exp : (m : ℕ) → expℕ zero (succ m) ≡ zero
+    zero-exp m = zero-mult-r-ℕ (expℕ zero m)
+    
     Eqℕ : ∀ (n m : ℕ) → Type lzero
     Eqℕ zero zero = 𝟙
     Eqℕ zero (succ m) = 𝟘
@@ -414,6 +424,18 @@ module HoTT where
     qinverses-are-equal-with-funext :  {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → (Q : is-an-equiv f) → (proj₁ (pr₁ Q)) ≡ (proj₁ (pr₂ Q))
     qinverses-are-equal-with-funext f ((g ,, x) , (g' ,, y)) = funext g g' λ b → ((y (g b))⁻¹ ) · ((fun-comp-assoc g f g' b ⁻¹) · fun-ap g' (x b))
 
+    has-inv : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → Type (l1 ⊔ l2)
+    has-inv {_} {_} {A} {B} f = Σ[ g ∶ (B → A) ] (((f ∘ g) ∼ id _) × ((g ∘ f) ∼ id _))
+
+    has-inv-then-equiv :  {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → has-inv f → is-an-equiv f
+    has-inv-then-equiv f (g ,, (p1 , p2)) = (g ,, p1) , (g ,, p2)
+
+    equiv-has-inv-funext :   {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → is-an-equiv f → has-inv f
+    equiv-has-inv-funext f ((g1 ,, p1) , (g2 ,, p2)) = g1 ,, (p1 , (transp (λ g → (g ∘ f) ∼ id _) ((qinverses-are-equal-with-funext f (((g1 ,, p1) , (g2 ,, p2)))) ⁻¹) p2))
+
+    inv-has-inv :  {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (p : has-inv f) → has-inv (proj₁ p)
+    inv-has-inv f (g ,, (p1 , p2)) = f ,, (p2 , p1)
+
     fib : {l1 l2 : Level} {A : Type l1} {B  : Type l2} (f : A → B) (b : B) → Type (l1 ⊔ l2)
     fib {_} {_} {A} {_} f b = Σ[ a ∶ A ] (f a ≡ b)
 
@@ -431,6 +453,15 @@ module HoTT where
 
     is-Contr-then-is-Prop : {l1 : Level} (A : Type l1) → (is-Contr A) → (is-Prop A)
     is-Contr-then-is-Prop A P a1 a2 = ((proj₂ P a1) ⁻¹) · proj₂ P a2
+
+    is-Prop-equiv : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (p : is-Prop A) → is-an-equiv f → is-Prop B
+    is-Prop-equiv f p ((g1 ,, p1) , (g2 ,, p2)) = λ x y → ((p1 x) ⁻¹) · (fun-ap f (p _ _) · p1 y)
+
+    is-Prop-inh-Contr : {l1 : Level} {A : Type l1} (p : is-Prop A) (a : A) → is-Contr A
+    is-Prop-inh-Contr p a = a ,, λ a' → p _ _
+
+    is-Contr-equiv : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (p : is-Contr A) → is-an-equiv f → is-Contr B
+    is-Contr-equiv f p e = is-Prop-inh-Contr (is-Prop-equiv f (is-Contr-then-is-Prop _ p) e) (f (proj₁ p))
 
     is-Contr-fib-to-is-an-equiv : {l1 l2 : Level} (A : Type l1) (B : Type l2) (f : A → B) → (is-Contr-fib f) → (is-an-equiv f)
     is-Contr-fib-to-is-an-equiv A B f (P {-: is-Contr-fib f-}) = ((is-Contr-fib-qinverse _ _ f P) ,, (λ (b : B) → proj₂ (proj₁ (P b))))
@@ -462,19 +493,19 @@ module HoTT where
     is-embed : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → Type (l1 ⊔ l2)
     is-embed f = (x y : _) → is-an-equiv (fun-ap {_} {_} {_} {_} {x} {y} f)
 
-
-{- qinverse-left-embed :  {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → (P : is-an-equiv f) → (a1 a2 : A) → ( (fun-ap f ∘   (λ p → ((transp (λ F →  (proj₁ (pr₁ P)) (f a1) ≡ F (f a1)) (qinverses-are-equal-with-funext f P)  (refl ( (proj₁ (pr₁ P))  (f a1)))   · (proj₂ (pr₂ P)) a1)⁻¹)     ·    (fun-ap  (proj₁ (pr₁ P))  p ·  (transp (λ k →  (proj₁ (pr₁ P))  (f a2) ≡ k (f a2))  (qinverses-are-equal-with-funext f P) (refl ( (proj₁ (pr₁ P)) (f a2))) · (proj₂ (pr₂ P)) a2)))) ∼ id (f a1 ≡ f a2) )
-qinverse-left-embed f P a1 a2 eq = {!!} -}
-
-{- equiv-is-embed :  {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → (is-an-equiv f) → (is-embed f)
-equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((transp (λ F → g (f a1) ≡ F (f a1) ) (qinverses-are-equal-with-funext f (((g ,, x) , (g' ,, y)))) (refl _)) · y  a1) ⁻¹) ·
-                                                                                                                                               ((fun-ap g p) · (transp (λ k → g (f a2) ≡ k (f a2)) (qinverses-are-equal-with-funext f (((g ,, x) , (g' ,, y)))) (refl _) · y a2))) ,, {!!}) , {!!} -}
-
     ishae : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → Type (l1 ⊔ l2)
     ishae {_} {_} {A} {B} f = Σ[ g ∶ (B → A) ] Σ[ η-ϵ ∶ (((g ∘ f) ∼ (id A)) × ((f ∘ g) ∼ (id B)))  ] ((a : A) → fun-ap f ((pr₁ η-ϵ) a) ≡ (pr₂ η-ϵ) (f a) )
 
     ishae-to-is-equiv : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → ishae f → is-an-equiv f
     ishae-to-is-equiv f (g ,, ((η , ϵ) ,, F)) = (g ,, ϵ) , (g ,, η)
+
+    Eqfib : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (b : B) (x, y : fib f b) → Type (l1 ⊔ l2)
+    Eqfib f b (x1 ,, x2) (y1 ,, y2) = Σ[ α ∶ (x1 ≡ y1) ] (x2 ≡ ((fun-ap f α) · y2))
+
+-- Hedberg's Theorem
+
+    refl-rel : {l1 l2 : Level} (A : Type l1) (R : A → A → Type l2) → Type (l1 ⊔ l2)
+    refl-rel A R = ( (a1 a2 : A) → (is-Prop (R a1 a2)) × (R a1 a2 )) 
 
     
     homotopy-naturality : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f g : A → B) (H : f ∼ g) {x y : A} (p : x ≡ y) → (H x) · (fun-ap g p) ≡ (fun-ap f p) · (H y)
@@ -654,6 +685,9 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
     functions-from-+-from-uni-prop : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} (f : A + B → C) → Σ[ F ∶ ((A → C) × (B → C)) ] (f ≡ [ (pr₁ F) , (pr₂ F) ])
     functions-from-+-from-uni-prop f = (u-mor-coprod-qinverse f) ,, funext _ _ λ { (inl x) → refl _ ; (inr x) → refl _}
 
+    +-qinv-eq :  {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {D : Type l3} (f : A + B → D) → f ≡ [ pr₁ (u-mor-coprod-qinverse f) , pr₂ (u-mor-coprod-qinverse f) ]
+    +-qinv-eq f = funext _ _ λ { (inl x) → refl _ ; (inr x) → refl _}
+
     id-from-uni-prop-gives-inl : {l1 l2 : Level} {A : Type l1} {B : Type l2} → (pr₁ (proj₁ (functions-from-+-from-uni-prop (id (A + B))))) ≡ (inl)
     id-from-uni-prop-gives-inl = refl _
 
@@ -719,6 +753,11 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
     inl-not-inr : {l1 l2 : Level} {A : Type l1} {B : Type l2} (a : A) (b : B) → (¬ (inl a ≡ inr b))
     inl-not-inr a b = λ x → rec𝟘 _ (transp (λ k → inl-𝟙-inr-𝟘 k) x pt)
 
+-- Contractibility of initial morphisms
+
+    initial-mor-contr : {l1 : Level} {A : Type l1} → is-Contr (𝟘 → A)
+    initial-mor-contr = (λ { ()}) ,, λ a' → funext _ _ λ { ()}
+
 -- Decidability
 
     decidable : {l1 : Level} (A : Type l1) → Type l1
@@ -727,7 +766,7 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
     decidable-eq : {l1 : Level} (A : Type l1) → Type l1
     decidable-eq A = (x y : A) → ((x ≡ y) + (¬ (x ≡ y)))
 
-    decidable-bi : {l1 l2 : Level} {A B : Type l1} (f : A → B) (g : B → A) → (decidable A) → (decidable B)
+    decidable-bi : {l1 : Level} {A B : Type l1} (f : A → B) (g : B → A) → (decidable A) → (decidable B)
     decidable-bi f g = f +fun λ k b → k (g b)
 
     𝟙-decidable : decidable 𝟙
@@ -741,6 +780,79 @@ equiv-is-embed {_} {_} {A} {B} f ((g ,, x) , (g' ,, y)) a1 a2 = ((λ p → (((tr
     Eqℕ-decidable zero (succ m) = 𝟘-decidable
     Eqℕ-decidable (succ n) zero = 𝟘-decidable
     Eqℕ-decidable (succ n) (succ m) = Eqℕ-decidable n m
+
+    ℕ-decidable-eq : decidable-eq ℕ
+    ℕ-decidable-eq n m = decidable-bi (≡-Eqℕ n m) (Eqℕ-≡ n m) (Eqℕ-decidable n m)
+
+    decidable-prod : {l1 l2 : Level} {A : Type l1} {B : Type l2} (p1 : decidable A) (p2 : decidable B) → decidable (A × B)
+    decidable-prod (inl x) (inl y) = inl (x , y)
+    decidable-prod (inl x) (inr f) = inr λ { (a , b) →  f b}
+    decidable-prod (inr f) p2 = inr (λ { (a , x₁) → f a})
+
+    cases : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} (C : Type l3) (p : A + B) → (A → C) → (B → C) → C
+    cases C p f g = [ f , g ] p
+
+-- We need cases evaluation proofs
+
+    cases-inl : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} (C : Type l3) (f : A → C) (g : B → C) (a : A) → (cases _ (inl a) f g) ≡ f a
+    cases-inl C f g a = refl _
+
+-- Total maps and fundamental theorem of identity types
+
+    tot : {l1 l2 l3 : Level} {A : Type l1} {B : A → Type l2} {C : A → Type l3} (f : (x : A) → B x → C x) → Σ[ x ∶ A ] (B x) → Σ[ x ∶ A ] (C x)
+    tot f (a ,, b_a) = a ,, (f a b_a)
+
+    fibtot-equiv-map : {l1 l2 l3 : Level} {A : Type l1} {B : A → Type l2} {C : A → Type l3} (f : (x : A) → B x → C x) (t : Σ[ x ∶ A ] (C x)) → fib (tot f) t → fib (f (proj₁ t)) (proj₂ t)
+    fibtot-equiv-map f .(tot f (x ,, y)) ((x ,, y) ,, refl .(tot f (x ,, y))) = y ,, refl _
+
+    fibtot-equiv-qinv : {l1 l2 l3 : Level} {A : Type l1} {B : A → Type l2} {C : A → Type l3} (f : (x : A) → B x → C x) (t : Σ[ x ∶ A ] (C x)) →  fib (f (proj₁ t)) (proj₂ t) → fib (tot f) t
+    fibtot-equiv-qinv {_} {_} {_} {_} {_} {C} f (x₁ ,, .(f x₁ x)) (x ,, refl .(proj₂ {_} {_} {_} {C} (x₁ ,, f x₁ x))) = ((x₁ ,, x)) ,, (refl _)
+
+    fibtot-left-hom : {l1 l2 l3 : Level} {A : Type l1} {B : A → Type l2} {C : A → Type l3} (f : (x : A) → B x → C x) (t : Σ[ x ∶ A ] (C x))
+                                                                                           → ((fibtot-equiv-qinv f t) ∘ (fibtot-equiv-map f t)) ∼ id _
+    fibtot-left-hom f (x₂ ,, .(f x₂ x₁)) ((.x₂ ,, x₁) ,, refl .(x₂ ,, f x₂ x₁)) = refl _
+
+    fibtot-r-hom : {l1 l2 l3 : Level} {A : Type l1} {B : A → Type l2} {C : A → Type l3} (f : (x : A) → B x → C x) (t : Σ[ x ∶ A ] (C x))
+                                                                                           → ((fibtot-equiv-map f t) ∘ (fibtot-equiv-qinv f t)) ∼ id _
+    fibtot-r-hom {_} {_} {_} {_} {_} {C} f (x₁ ,, .(f x₁ x)) (x ,, refl .(proj₂ {_} {_} {_} {C} (x₁ ,, f x₁ x))) = refl _
+
+    fibtot-equiv : {l1 l2 l3 : Level} {A : Type l1} {B : A → Type l2} {C : A → Type l3} (f : (x : A) → B x → C x) (t : Σ[ x ∶ A ] (C x)) → fib (tot f) t ≃ fib (f (proj₁ t)) (proj₂ t)
+    fibtot-equiv f t = (fibtot-equiv-map f t) ,, (((fibtot-equiv-qinv f t) ,, (fibtot-r-hom f t)) , ((fibtot-equiv-qinv f t) ,, (fibtot-left-hom f t)))
+
+-- FINISH UP THE PROOF FOR THE POSTULATE
+
+    postulate
+      equiv-is-Contr : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → is-an-equiv f → is-Contr-fib f
+
+    fam-tot-equiv : {l1 l2 l3 : Level} {A : Type l1} {B : A → Type l2} {C : A → Type l3} (f : (x : A) → B x → C x) → ((x : A) → is-an-equiv (f x)) → (is-an-equiv (tot f))
+    fam-tot-equiv f g = is-Contr-fib-to-is-an-equiv _ _ (tot f) λ t → is-Contr-equiv (fibtot-equiv-qinv f t) {!!} {!!}
+
+--  is-Contr (fib (tot f) t)
+ 
+-- Observational equality for ℕ addtional lemmas
+
+    Eqℕ-Prop : (n m : ℕ) → is-Prop (Eqℕ n m)
+    Eqℕ-Prop zero zero = is-Contr-then-is-Prop 𝟙 𝟙-is-Contr
+    Eqℕ-Prop (succ n) zero ()
+    Eqℕ-Prop (succ n) (succ m) = Eqℕ-Prop n m
+
+    constr-dep-ℕ : ℕ → Type lzero
+    constr-dep-ℕ zero = 𝟘
+    constr-dep-ℕ (succ n) = 𝟙
+
+    succ-not-zero : (n : ℕ) → (¬ (zero ≡ (succ n)))
+    succ-not-zero n x = transp constr-dep-ℕ (x ⁻¹) pt
+    
+{-    Eqℕ-≡-equiv : (n m : ℕ) → is-an-equiv (≡-Eqℕ n m)
+    Eqℕ-≡-equiv zero zero = (Eqℕ-≡ zero zero ,, λ { (refl .zero) → refl _}) , ((Eqℕ-≡ zero zero) ,, (λ { pt → refl _ }))
+    Eqℕ-≡-equiv zero (succ m) = ((Eqℕ-≡ _ _) ,, λ x → rec𝟘 _ (succ-not-zero m x)) , ((Eqℕ-≡ _ _) ,, λ { ()})
+    Eqℕ-≡-equiv (succ n) zero =  ((Eqℕ-≡ _ _) ,, (λ x → rec𝟘 _ (succ-not-zero n (x ⁻¹)))) , ((Eqℕ-≡ _ _) ,, λ { ()})
+    Eqℕ-≡-equiv (succ n) (succ m) = {!!} -}
+
+    eval : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (a : A) → B
+    eval f a = f a
+
+    
 
 --
 
