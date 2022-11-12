@@ -161,6 +161,8 @@ public export
 pfBaseChangeArena : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> PolyFunc
 pfBaseChangeArena p {a} f = (pfBaseChangePos p {a} f ** pfBaseChangeDir p {a} f)
 
+-- The intermediate polynomial functor in the vertical-Cartesian
+-- factoring of a natural transformation.
 public export
 VertCartFactFunc : {p, q : PolyFunc} -> PolyNatTrans p q -> PolyFunc
 VertCartFactFunc {p} {q} alpha =
