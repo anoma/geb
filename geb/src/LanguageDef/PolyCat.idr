@@ -149,18 +149,31 @@ PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
 ----------------------------------------------------------------------------
 
 public export
+pfBaseChangePos : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> Type
+pfBaseChangePos p {a} f = a
+
+public export
+pfBaseChangeDir : (p : PolyFunc) -> {a : Type} -> (f : a -> pfPos p) ->
+  pfBaseChangePos p {a} f -> Type
+pfBaseChangeDir (pos ** dir) {a} f i = dir $ f i
+
+public export
+pfBaseChangeArena : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> PolyFunc
+pfBaseChangeArena p {a} f = (pfBaseChangePos p {a} f ** pfBaseChangeDir p {a} f)
+
+public export
+VertCartFactFunc : {p, q : PolyFunc} -> PolyNatTrans p q -> PolyFunc
+VertCartFactFunc {p} {q} alpha =
+  pfBaseChangeArena q {a=(pfPos p)} (pntOnPos alpha)
+
+public export
 VertCartFactPos : {p, q : PolyFunc} -> PolyNatTrans p q -> Type
-VertCartFactPos {p} {q} alpha = pfPos p
+VertCartFactPos {p} {q} alpha = pfPos (VertCartFactFunc {p} {q} alpha)
 
 public export
 VertCartFactDir : {p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
   VertCartFactPos {p} {q} alpha -> Type
-VertCartFactDir {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i =
-  qdir (onPos i)
-
-public export
-VertCartFactFunc : {p, q : PolyFunc} -> PolyNatTrans p q -> PolyFunc
-VertCartFactFunc alpha = (VertCartFactPos alpha ** VertCartFactDir alpha)
+VertCartFactDir {p} {q} alpha = pfDir {p=(VertCartFactFunc {p} {q} alpha)}
 
 public export
 VertFactOnPos : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
@@ -476,6 +489,7 @@ pfExpObjDir : (p, q : PolyFunc) -> pfExpObjPos p q -> Type
 pfExpObjDir p q = pfDir {p=(pfExpObj p q)}
 
 -- Formula 3.78 from "Polynomial Functors: A General Theory of Interaction".
+-- See also the section on formula 3.82 below.
 public export
 pfParProdClosure : PolyFunc -> PolyFunc -> PolyFunc
 pfParProdClosure q r =
@@ -492,24 +506,11 @@ public export
 pfParProdClosureDir : (p, q : PolyFunc) -> pfParProdClosurePos p q -> Type
 pfParProdClosureDir p q = pfDir {p=(pfParProdClosure p q)}
 
-public export
-pfBaseChangePos : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> Type
-pfBaseChangePos p {a} f = a
-
-public export
-pfBaseChangeDir : (p : PolyFunc) -> {a : Type} -> (f : a -> pfPos p) ->
-  pfBaseChangePos p {a} f -> Type
-pfBaseChangeDir (pos ** dir) {a} f i = dir $ f i
-
-public export
-pfBaseChangeArena : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> PolyFunc
-pfBaseChangeArena p {a} f = (pfBaseChangePos p {a} f ** pfBaseChangeDir p {a} f)
-
 -- Formula 3.82 from "Polynomial Functors: A General Theory of Interaction":
 -- this is isomorphic to `pfParProdClosure` (that isomorphism shows that
 -- `pfParProdClosure` can be used as a way of computing the natural
 -- transformations between polynomial functors as the positions of a polynomial
--- functor).
+-- functor).  See the section on formula 3.78 above.
 public export
 pfParProdClosurePosNT : PolyFunc -> PolyFunc -> Type
 pfParProdClosurePosNT = PolyNatTrans
@@ -517,8 +518,7 @@ pfParProdClosurePosNT = PolyNatTrans
 public export
 pfParProdClosureDirPolyFunc :
   (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> PolyFunc
-pfParProdClosureDirPolyFunc q r alpha =
-  pfBaseChangeArena r {a=(pfPos q)} (pntOnPos alpha)
+pfParProdClosureDirPolyFunc q r alpha = VertCartFactFunc {p=q} {q=r} alpha
 
 public export
 pfParProdClosureDirNT :
