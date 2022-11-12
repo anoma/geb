@@ -502,8 +502,15 @@ pfParProdClosurePosNT : PolyFunc -> PolyFunc -> Type
 pfParProdClosurePosNT = PolyNatTrans
 
 public export
-pfParProdClosureDirNT : (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> Type
-pfParProdClosureDirNT q r alpha = DPair (pfPos q) (pfDir {p=r} . pntOnPos alpha)
+pfParProdClosureDirPolyFunc :
+  (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> PolyFunc
+pfParProdClosureDirPolyFunc q r alpha =
+  (pfPos q ** pfDir {p=r} . pntOnPos alpha)
+
+public export
+pfParProdClosureDirNT :
+  (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> Type
+pfParProdClosureDirNT q r alpha = pfPDir (pfParProdClosureDirPolyFunc q r alpha)
 
 public export
 pfParProdClosureNT : PolyFunc -> PolyFunc -> PolyFunc
@@ -5453,7 +5460,7 @@ SubstTermToSOTerm (InSO (x !!* y)) (t1, t2) =
 
 public export
 SubstTermToSubstMorph : {x, y : SubstObjMu} ->
-  SubstTerm (x !-> y) -> SubstMorph x y
+  SubstHomTerm x y -> SubstMorph x y
 SubstTermToSubstMorph {x=(InSO SO0)} {y} () =
   SMFromInit y
 SubstTermToSubstMorph {x=(InSO SO1)} {y} t =
