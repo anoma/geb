@@ -492,6 +492,19 @@ public export
 pfParProdClosureDir : (p, q : PolyFunc) -> pfParProdClosurePos p q -> Type
 pfParProdClosureDir p q = pfDir {p=(pfParProdClosure p q)}
 
+public export
+pfBaseChangePos : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> Type
+pfBaseChangePos p {a} f = a
+
+public export
+pfBaseChangeDir : (p : PolyFunc) -> {a : Type} -> (f : a -> pfPos p) ->
+  pfBaseChangePos p {a} f -> Type
+pfBaseChangeDir (pos ** dir) {a} f i = dir $ f i
+
+public export
+pfBaseChangeArena : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> PolyFunc
+pfBaseChangeArena p {a} f = (pfBaseChangePos p {a} f ** pfBaseChangeDir p {a} f)
+
 -- Formula 3.82 from "Polynomial Functors: A General Theory of Interaction":
 -- this is isomorphic to `pfParProdClosure` (that isomorphism shows that
 -- `pfParProdClosure` can be used as a way of computing the natural
@@ -505,7 +518,7 @@ public export
 pfParProdClosureDirPolyFunc :
   (q, r : PolyFunc) -> pfParProdClosurePosNT q r -> PolyFunc
 pfParProdClosureDirPolyFunc q r alpha =
-  (pfPos q ** pfDir {p=r} . pntOnPos alpha)
+  pfBaseChangeArena r {a=(pfPos q)} (pntOnPos alpha)
 
 public export
 pfParProdClosureDirNT :
@@ -516,19 +529,6 @@ public export
 pfParProdClosureNT : PolyFunc -> PolyFunc -> PolyFunc
 pfParProdClosureNT q r =
   (pfParProdClosurePosNT q r ** pfParProdClosureDirNT q r)
-
-public export
-pfBaseChangePos : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> Type
-pfBaseChangePos p {a} f = a
-
-public export
-pfBaseChangeDir : (p : PolyFunc) -> {a : Type} -> (f : a -> pfPos p) ->
-  pfBaseChangePos p {a} f -> Type
-pfBaseChangeDir (pos ** dir) {a} f i = dir $ f i
-
-public export
-pfBaseChangeArena : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> PolyFunc
-pfBaseChangeArena p {a} f = (pfBaseChangePos p {a} f ** pfBaseChangeDir p {a} f)
 
 public export
 pfLeftCoclosurePos : (q, p : PolyFunc) -> Type
