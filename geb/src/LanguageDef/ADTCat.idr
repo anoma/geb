@@ -177,6 +177,63 @@ public export
 soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
 soCata = pfCata {p=SubstObjPF}
 
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InSO0 : SOMu
+InSO0 = InPFM SOPos0 $ \d => case d of _ impossible
+
+public export
+InSO1 : SOMu
+InSO1 = InPFM SOPos1 $ \d => case d of _ impossible
+
+public export
+InSOC : SOMu -> SOMu -> SOMu
+InSOC x y = InPFM SOPosC $ \d => case d of
+  SODirL => x
+  SODirR => y
+
+public export
+InSOP : SOMu -> SOMu -> SOMu
+InSOP x y = InPFM SOPosP $ \d => case d of
+  SODir1 => x
+  SODir2 => y
+
+public export
+SOSizeAlg : SOAlg Nat
+SOSizeAlg SOPos0 dir = 1
+SOSizeAlg SOPos1 dir = 1
+SOSizeAlg SOPosC dir = 1 + dir SODirL + dir SODirR
+SOSizeAlg SOPosP dir = 1 + dir SODir1 + dir SODir2
+
+public export
+soSize : SOMu -> Nat
+soSize = soCata SOSizeAlg
+
+public export
+SODepthAlg : SOAlg Nat
+SODepthAlg SOPos0 dir = 0
+SODepthAlg SOPos1 dir = 0
+SODepthAlg SOPosC dir = smax (dir SODirL) (dir SODirR)
+SODepthAlg SOPosP dir = smax (dir SODir1) (dir SODir2)
+
+public export
+soDepth : SOMu -> Nat
+soDepth = soCata SODepthAlg
+
+public export
+SOShowAlg : SOAlg String
+SOShowAlg SOPos0 dir = "!0"
+SOShowAlg SOPos1 dir = "!1"
+SOShowAlg SOPosC dir = "[" ++ dir SODirL ++ "|" ++ dir SODirR ++ "]"
+SOShowAlg SOPosP dir = "(" ++ dir SODir1 ++ "," ++ dir SODir2 ++ ")"
+
+public export
+Show SOMu where
+  show = soCata SOShowAlg
+
 -----------------------------------------------------
 ---- Term representation of substitutive objects ----
 -----------------------------------------------------
@@ -200,21 +257,6 @@ isSubstObj = isJust . asSubstObj
 public export
 SubstObjTerm : Type
 SubstObjTerm = RefinedST isSubstObj
-
--------------------
----- Utilities ----
--------------------
-
-public export
-SOSizeAlg : SOAlg Nat
-SOSizeAlg SOPos0 dir = 1
-SOSizeAlg SOPos1 dir = 1
-SOSizeAlg SOPosC dir = 1 + dir SODirL + dir SODirR
-SOSizeAlg SOPosP dir = 1 + dir SODir1 + dir SODir2
-
-public export
-soSize : SOMu -> Nat
-soSize = soCata SOSizeAlg
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
