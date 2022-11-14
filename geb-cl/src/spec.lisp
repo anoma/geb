@@ -186,10 +186,14 @@
 ;; this is considered bad style, one should call their constructors
 ;; make, but it does not matter
 
-(defparameter *so0* (make-instance 'so0))
-(def so0 *so0*)
-(defparameter *so1* (make-instance 'so1))
-(def so1 *so1*)
+(defparameter *so0* (make-instance 'so0)
+  "The Initial Object")
+(def so0 *so0*
+  "The Initial Object")
+(defparameter *so1* (make-instance 'so1)
+  "The Terminal Object")
+(def so1 *so1*
+  "The Terminal Object")
 
 (-> prod (t t) prod)
 (defun prod (car cadr)
