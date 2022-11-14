@@ -316,9 +316,32 @@ sefCata = pfCata {p=SubstEFPF}
 -------------------
 
 public export
-InSEFU : SOMu -> SEFMu
-InSEFU = soCata $
-  \i, alg => InPFM (SEFPosU i) $ \d => case d of (SEFDirU d') => alg d'
+InSEFU : (i : SubstObjPos) -> (SubstObjDir i -> SEFMu) -> SEFMu
+InSEFU i dir = InPFM (SEFPosU i) $ \d => case d of (SEFDirU d') => dir d'
+
+public export
+InSEFO : SOMu -> SEFMu
+InSEFO = soCata InSEFU
+
+public export
+InSEF0 : SEFMu
+InSEF0 = InSEFO InSO0
+
+public export
+InSEF1 : SEFMu
+InSEF1 = InSEFO InSO1
+
+public export
+InSEFC : SOMu -> SOMu -> SEFMu
+InSEFC x y = InSEFU SOPosC $ \d => case d of
+  SODirL => InSEFO x
+  SODirR => InSEFO y
+
+public export
+InSEFP : SOMu -> SOMu -> SEFMu
+InSEFP x y = InSEFU SOPosP $ \d => case d of
+  SODir1 => InSEFO x
+  SODir2 => InSEFO y
 
 public export
 InSEFI : SEFMu
@@ -327,12 +350,6 @@ InSEFI = InPFM SEFPosI $ \d => case d of _ impossible
 public export
 InSEFPar : SEFMu -> SEFMu -> SEFMu
 InSEFPar x y = InPFM SEFPosPar $ \d => case d of
-  SEFDirPar1 => x
-  SEFDirPar2 => y
-
-public export
-InSEFP : SEFMu -> SEFMu -> SEFMu
-InSEFP x y = InPFM SEFPosPar $ \d => case d of
   SEFDirPar1 => x
   SEFDirPar2 => y
 
