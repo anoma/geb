@@ -436,6 +436,9 @@ module HoTT where
     inv-has-inv :  {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (p : has-inv f) → has-inv (proj₁ p)
     inv-has-inv f (g ,, (p1 , p2)) = f ,, (p2 , p1)
 
+    qinv-are-equivs : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (p : is-an-equiv f) → is-an-equiv (proj₁ (pr₁ p))
+    qinv-are-equivs f ((g1 ,, p1) , (g2 ,, p2) )= (f ,, λ x → transp (λ g → (g (f x)) ≡ x) ((qinverses-are-equal-with-funext f (((g1 ,, p1) , (g2 ,, p2) ))) ⁻¹) (p2 x)) , (f ,, p1)
+
     fib : {l1 l2 : Level} {A : Type l1} {B  : Type l2} (f : A → B) (b : B) → Type (l1 ⊔ l2)
     fib {_} {_} {A} {_} f b = Σ[ a ∶ A ] (f a ≡ b)
 
@@ -451,6 +454,9 @@ module HoTT where
     is-Prop : {l1 : Level} (A : Type l1) → Type l1
     is-Prop A = (x y : A) → x ≡ y
 
+    is-Set : {l1 : Level} (A : Type l1) → Type l1
+    is-Set A = (a1 a2 : A ) → is-Prop (a1 ≡ a2)
+
     is-Contr-then-is-Prop : {l1 : Level} (A : Type l1) → (is-Contr A) → (is-Prop A)
     is-Contr-then-is-Prop A P a1 a2 = ((proj₂ P a1) ⁻¹) · proj₂ P a2
 
@@ -462,6 +468,11 @@ module HoTT where
 
     is-Contr-equiv : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (p : is-Contr A) → is-an-equiv f → is-Contr B
     is-Contr-equiv f p e = is-Prop-inh-Contr (is-Prop-equiv f (is-Contr-then-is-Prop _ p) e) (f (proj₁ p))
+
+    map-Contr-equiv :  {l1 l2 : Level} {A : Type l1} {B : Type l2} (p : is-Contr A) (q : is-Contr B) (f : A → B) → is-an-equiv f
+    map-Contr-equiv (c1 ,, p1) (c2 ,, p2) f = ((λ x → c1) ,, (λ x → is-Contr-then-is-Prop _ ((c2 ,, p2)) _ _))
+                                              ,
+                                              ((λ x → c1) ,, λ x → is-Contr-then-is-Prop _ ((c1 ,, p1)) _ _)
 
     is-Contr-fib-to-is-an-equiv : {l1 l2 : Level} (A : Type l1) (B : Type l2) (f : A → B) → (is-Contr-fib f) → (is-an-equiv f)
     is-Contr-fib-to-is-an-equiv A B f (P {-: is-Contr-fib f-}) = ((is-Contr-fib-qinverse _ _ f P) ,, (λ (b : B) → proj₂ (proj₁ (P b))))
@@ -487,6 +498,9 @@ module HoTT where
                                                                                                                     ,
                                                                                                        ((prod-id-to-Σ-id x1 x2) ,, Σ-eq-right-equiv x1 x2))
 
+    Σ-dep-prop-id : {l1 l2 : Level} {A : Type l1} {B : A → Type l2} (x1 x2 : Σ A B) → ((a : A) → is-Prop (B a)) → (proj₁ (x1) ≡ proj₁ (x2)) → x1 ≡ x2
+    Σ-dep-prop-id (a1 ,, b1) (a2 ,, b2) Q p = prod-id-to-Σ-id ((a1 ,, b1)) ((a2 ,, b2)) (p ,, Q _ _ _)
+
    {- Σ-nondep-pair : {l1 l2 l3} (A : Type l1) (B : Type l2) (C : A → B → Type l3) → (Σ[ a ∶ A ] (Σ[ b ∶ B ] (C a b))) ≃ (Σ[ x ∶ (A × B) ] (C (pr₁ x) (pr₂ x))) -}
 
     
@@ -501,11 +515,6 @@ module HoTT where
 
     Eqfib : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (b : B) (x, y : fib f b) → Type (l1 ⊔ l2)
     Eqfib f b (x1 ,, x2) (y1 ,, y2) = Σ[ α ∶ (x1 ≡ y1) ] (x2 ≡ ((fun-ap f α) · y2))
-
--- Hedberg's Theorem
-
-    refl-rel : {l1 l2 : Level} (A : Type l1) (R : A → A → Type l2) → Type (l1 ⊔ l2)
-    refl-rel A R = ( (a1 a2 : A) → (is-Prop (R a1 a2)) × (R a1 a2 )) 
 
     
     homotopy-naturality : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f g : A → B) (H : f ∼ g) {x y : A} (p : x ≡ y) → (H x) · (fun-ap g p) ≡ (fun-ap f p) · (H y)
@@ -715,6 +724,9 @@ module HoTT where
     𝟙-is-Contr : is-Contr 𝟙
     𝟙-is-Contr = pt ,, λ { pt → refl _}
 
+    𝟘-is-Prop : is-Prop 𝟘
+    𝟘-is-Prop = λ { ()}
+
     n-ary-binary-fun : {l1 : Level} {A : Type l1} (f : A × A → A) (z : A) (x : A) (n : ℕ) → A
     n-ary-binary-fun f z x zero = z
     n-ary-binary-fun f z x (succ n) = f ((n-ary-binary-fun f z x n) , x)
@@ -825,9 +837,50 @@ module HoTT where
       equiv-is-Contr : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) → is-an-equiv f → is-Contr-fib f
 
     fam-tot-equiv : {l1 l2 l3 : Level} {A : Type l1} {B : A → Type l2} {C : A → Type l3} (f : (x : A) → B x → C x) → ((x : A) → is-an-equiv (f x)) → (is-an-equiv (tot f))
-    fam-tot-equiv f g = is-Contr-fib-to-is-an-equiv _ _ (tot f) λ t → is-Contr-equiv (fibtot-equiv-qinv f t) {!!} {!!}
+    fam-tot-equiv f g = is-Contr-fib-to-is-an-equiv _ _ (tot f) λ t →
+                                                  is-Contr-equiv (fibtot-equiv-qinv f t) (equiv-is-Contr _ (g _) _) (qinv-are-equivs (fibtot-equiv-map f t) (proj₂ (fibtot-equiv f t)))
 
---  is-Contr (fib (tot f) t)
+    tot-fam-equiv : {l1 l2 l3 : Level} {A : Type l1} {B : A → Type l2} {C : A → Type l3} (f : (x : A) → B x → C x) → (is-an-equiv (tot f)) →  ((x : A) → is-an-equiv (f x))
+    tot-fam-equiv f g a = is-Contr-fib-to-is-an-equiv _ _ (f a) (λ b →
+                                                     is-Contr-equiv (fibtot-equiv-map f ((a ,, b))) (equiv-is-Contr _ g _) (proj₂ (fibtot-equiv f (a ,, b))))
+
+-- Hedberg's Theorem
+
+    refl-rel : {l1 l2 : Level} (A : Type l1) (R : A → A → Type l2) → Type (l1 ⊔ l2)
+    refl-rel A R = ((a1 a2 : A) → (is-Prop (R a1 a2))) × ( (a : A) → R a a)
+
+    Hedberg-lemma-set :  {l1 l2 : Level} {A : Type l1} (R : A → A → Type l2) → refl-rel A R  → ((a1 a2 : A) → (R a1 a2 ≃ (a1 ≡ a2))) → is-Set A
+    Hedberg-lemma-set R refl-r eq-prf = λ a1 a2 p1 p2 → is-Prop-equiv (proj₁ (eq-prf a1 a2)) ((pr₁ refl-r) a1 a2) (proj₂ (eq-prf a1 a2)) p1 p2
+
+    Hedberg-lemma : {l1 l2 : Level} {A : Type l1} (R : A → A → Type l2) → refl-rel A R → ((a1 a2 : A) → R a1 a2 → (a1 ≡ a2))  → ((a1 a2 : A) → (R a1 a2 ≃ (a1 ≡ a2)))
+    Hedberg-lemma R refl-R R-id a1 a2 = R-id a1 a2 ,, tot-fam-equiv (R-id a1)
+                                                      (map-Contr-equiv ((a1 ,, (pr₂ (refl-R)) a1 ) ,,
+                                                                                 λ {(a' ,, p) → Σ-dep-prop-id _ _ ((pr₁ refl-R) a1) (R-id _ _ p )})
+                                                      (Σ-eq-is-contr _ _) _) a2
+
+    Hedberg-rel-set : {l1 l2 : Level} {A : Type l1} (R : A → A → Type l2) → refl-rel A R → ((a1 a2 : A) → R a1 a2 → (a1 ≡ a2)) → is-Set A
+    Hedberg-rel-set R refl-r R-id = Hedberg-lemma-set R refl-r (Hedberg-lemma _ refl-r R-id)
+
+
+    double-neg-rel : {l1 : Level} {A : Type l1} → refl-rel A (λ x y → (¬ (¬ (x ≡ y))))
+    double-neg-rel = (λ a3 a4 x y → funext _ _ λ x₁ → 𝟘-is-Prop _ _)
+                           ,
+                           (λ a f → f (refl _))
+
+    
+    double-neg-to-set : {l1 : Level} {A : Type l1} → ((a1 a2 : A) → ((¬ (¬ (a1 ≡ a2)))) → a1 ≡ a2) → is-Set A
+    double-neg-to-set id-impl = Hedberg-rel-set (λ x x₁ → ¬(¬ (x ≡ x₁))) (double-neg-rel) id-impl
+
+    decid-double-neg : {l1 : Level} {A : Type l1} → decidable A → (¬ (¬ A) → A)
+    decid-double-neg (inl x) f = x
+    decid-double-neg (inr x) f = rec𝟘 _ (f x)
+
+    Hedberg : {l1 : Level} {A : Type l1} → decidable-eq A → is-Set A
+    Hedberg decid = double-neg-to-set (λ a1 a2 → decid-double-neg (decid a1 a2))
+
+    ℕ-is-Set : is-Set ℕ
+    ℕ-is-Set = Hedberg ℕ-decidable-eq
+    
  
 -- Observational equality for ℕ addtional lemmas
 
@@ -842,12 +895,6 @@ module HoTT where
 
     succ-not-zero : (n : ℕ) → (¬ (zero ≡ (succ n)))
     succ-not-zero n x = transp constr-dep-ℕ (x ⁻¹) pt
-    
-{-    Eqℕ-≡-equiv : (n m : ℕ) → is-an-equiv (≡-Eqℕ n m)
-    Eqℕ-≡-equiv zero zero = (Eqℕ-≡ zero zero ,, λ { (refl .zero) → refl _}) , ((Eqℕ-≡ zero zero) ,, (λ { pt → refl _ }))
-    Eqℕ-≡-equiv zero (succ m) = ((Eqℕ-≡ _ _) ,, λ x → rec𝟘 _ (succ-not-zero m x)) , ((Eqℕ-≡ _ _) ,, λ { ()})
-    Eqℕ-≡-equiv (succ n) zero =  ((Eqℕ-≡ _ _) ,, (λ x → rec𝟘 _ (succ-not-zero n (x ⁻¹)))) , ((Eqℕ-≡ _ _) ,, λ { ()})
-    Eqℕ-≡-equiv (succ n) (succ m) = {!!} -}
 
     eval : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (a : A) → B
     eval f a = f a
@@ -871,4 +918,6 @@ module HoTT where
       Univalence-compfun : {l1 l2 : Level} {A B : Type l1} (f : A → B) (P : is-an-equiv f) (a : A) → (proj₁ ((refl-to-id {l1} {A} {B}) (ua (f ,, P))) a) ≡ f   a 
 
   
+
+
 
