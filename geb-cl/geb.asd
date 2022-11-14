@@ -1,5 +1,6 @@
 (asdf:defsystem :geb
-  :depends-on (:trivia :alexandria :serapeum :fset :fare-quasiquote-extras)
+  :depends-on (:trivia :alexandria :serapeum :fset :fare-quasiquote-extras
+                       :mgl-pax)
   :version "0.0.1"
   :description "Gödel, Escher, Bach, a categorical view of computation"
   :author "Mariari"
@@ -39,3 +40,14 @@
    (:file run-tests))
   :perform (asdf:test-op (o s)
                          (uiop:symbol-call :geb-test :run-tests)))
+
+(asdf:defsystem :geb/documentation
+  :depends-on (:geb :fiveam :MGL-PAX/FULL)
+  :description "geb full documentation exploration"
+  :serial t
+  :pathname "docs/"
+  :serial t
+  :components ((:file documentation))
+  :perform (asdf:test-op (o s)
+                         (uiop:symbol-call :geb-test :run-tests)))
+

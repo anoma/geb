@@ -43,7 +43,7 @@
              term type)
      (comp (<-right lty rty) (compile-checked-term context (prod lty rty) value)))
     ((lamb vty tty term)
-     vty tty term
+     (compile-checked-term (cons vty context) tty term)
      (error "not implemented"))
     ((app dom com f x)
      (assert (eql dom type) nil "Types should match for application: ~A ~A" dom type)
