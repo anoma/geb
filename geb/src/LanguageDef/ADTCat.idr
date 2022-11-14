@@ -177,6 +177,63 @@ public export
 soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
 soCata = pfCata {p=SubstObjPF}
 
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InSO0 : SOMu
+InSO0 = InPFM SOPos0 $ \d => case d of _ impossible
+
+public export
+InSO1 : SOMu
+InSO1 = InPFM SOPos1 $ \d => case d of _ impossible
+
+public export
+InSOC : SOMu -> SOMu -> SOMu
+InSOC x y = InPFM SOPosC $ \d => case d of
+  SODirL => x
+  SODirR => y
+
+public export
+InSOP : SOMu -> SOMu -> SOMu
+InSOP x y = InPFM SOPosP $ \d => case d of
+  SODir1 => x
+  SODir2 => y
+
+public export
+SOSizeAlg : SOAlg Nat
+SOSizeAlg SOPos0 dir = 1
+SOSizeAlg SOPos1 dir = 1
+SOSizeAlg SOPosC dir = 1 + dir SODirL + dir SODirR
+SOSizeAlg SOPosP dir = 1 + dir SODir1 + dir SODir2
+
+public export
+soSize : SOMu -> Nat
+soSize = soCata SOSizeAlg
+
+public export
+SODepthAlg : SOAlg Nat
+SODepthAlg SOPos0 dir = 0
+SODepthAlg SOPos1 dir = 0
+SODepthAlg SOPosC dir = smax (dir SODirL) (dir SODirR)
+SODepthAlg SOPosP dir = smax (dir SODir1) (dir SODir2)
+
+public export
+soDepth : SOMu -> Nat
+soDepth = soCata SODepthAlg
+
+public export
+SOShowAlg : SOAlg String
+SOShowAlg SOPos0 dir = "0"
+SOShowAlg SOPos1 dir = "1"
+SOShowAlg SOPosC dir = "[" ++ dir SODirL ++ "|" ++ dir SODirR ++ "]"
+SOShowAlg SOPosP dir = "(" ++ dir SODir1 ++ "," ++ dir SODir2 ++ ")"
+
+public export
+Show SOMu where
+  show = soCata SOShowAlg
+
 -----------------------------------------------------
 ---- Term representation of substitutive objects ----
 -----------------------------------------------------
@@ -201,21 +258,6 @@ public export
 SubstObjTerm : Type
 SubstObjTerm = RefinedST isSubstObj
 
--------------------
----- Utilities ----
--------------------
-
-public export
-SOSizeAlg : SOAlg Nat
-SOSizeAlg SOPos0 dir = 1
-SOSizeAlg SOPos1 dir = 1
-SOSizeAlg SOPosC dir = 1 + dir SODirL + dir SODirR
-SOSizeAlg SOPosP dir = 1 + dir SODir1 + dir SODir2
-
-public export
-soSize : SOMu -> Nat
-soSize = soCata SOSizeAlg
-
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial endofunctors ----
@@ -230,6 +272,7 @@ public export
 data SubstEFPos : Type where
   SEFPosU : SubstObjPos -> SubstEFPos -- same universal objects as `SubstObjPF`
   SEFPosI : SubstEFPos -- identity endofunctor
+  SEFPosPar : SubstEFPos -- parallel product
 
 public export
 data SubstEFDir : SubstEFPos -> Type where
@@ -240,6 +283,8 @@ data SubstEFDir : SubstEFPos -> Type where
   -- endofunctors has no positions, because there is just one identity
   -- functor -- the constructor which generates the identity endofunctor does
   -- not take any endofunctors as parameters
+  SEFDirPar1 : SubstEFDir SEFPosPar -- first component of parallel product
+  SEFDirPar2 : SubstEFDir SEFPosPar -- second component of parallel product
 
 public export
 SubstEFPF : PolyFunc
@@ -271,13 +316,80 @@ sefCata = pfCata {p=SubstEFPF}
 -------------------
 
 public export
+InSEFU : (i : SubstObjPos) -> (SubstObjDir i -> SEFMu) -> SEFMu
+InSEFU i dir = InPFM (SEFPosU i) $ \d => case d of (SEFDirU d') => dir d'
+
+public export
+InSEFO : SOMu -> SEFMu
+InSEFO = soCata InSEFU
+
+public export
+InSEF0 : SEFMu
+InSEF0 = InSEFO InSO0
+
+public export
+InSEF1 : SEFMu
+InSEF1 = InSEFO InSO1
+
+public export
+InSEFC : SOMu -> SOMu -> SEFMu
+InSEFC x y = InSEFU SOPosC $ \d => case d of
+  SODirL => InSEFO x
+  SODirR => InSEFO y
+
+public export
+InSEFP : SOMu -> SOMu -> SEFMu
+InSEFP x y = InSEFU SOPosP $ \d => case d of
+  SODir1 => InSEFO x
+  SODir2 => InSEFO y
+
+public export
+InSEFI : SEFMu
+InSEFI = InPFM SEFPosI $ \d => case d of _ impossible
+
+public export
+InSEFPar : SEFMu -> SEFMu -> SEFMu
+InSEFPar x y = InPFM SEFPosPar $ \d => case d of
+  SEFDirPar1 => x
+  SEFDirPar2 => y
+
+public export
 SEFSizeAlg : SEFAlg Nat
 SEFSizeAlg (SEFPosU pos) dir = sefToSoAlg SOSizeAlg pos dir
 SEFSizeAlg SEFPosI dir = 1
+SEFSizeAlg SEFPosPar dir = 1 + dir SEFDirPar1 + dir SEFDirPar2
 
 public export
 sefSize : SEFMu -> Nat
 sefSize = sefCata SEFSizeAlg
+
+public export
+SEFDepthAlg : SEFAlg Nat
+SEFDepthAlg (SEFPosU pos) dir = sefToSoAlg SODepthAlg pos dir
+SEFDepthAlg SEFPosI dir = 0
+SEFDepthAlg SEFPosPar dir = smax (dir SEFDirPar1) (dir SEFDirPar2)
+
+public export
+sefDepth : SEFMu -> Nat
+sefDepth = sefCata SEFDepthAlg
+
+public export
+SEFShowAlg : SEFAlg String
+SEFShowAlg (SEFPosU pos) dir = case pos of
+  SOPos0 => "!0"
+  SOPos1 => "!1"
+  SOPosC =>
+    "![" ++ dir (SEFDirU {pos=SOPosC} SODirL) ++ "|" ++
+    dir (SEFDirU {pos=SOPosC} SODirR) ++ "]"
+  SOPosP =>
+    "!(" ++ dir (SEFDirU {pos=SOPosP} SODir1) ++ "," ++
+    dir (SEFDirU {pos=SOPosP} SODir2) ++ ")"
+SEFShowAlg SEFPosI dir = "{id}"
+SEFShowAlg SEFPosPar dir = "<" ++ dir SEFDirPar1 ++ "x" ++ dir SEFDirPar2 ++ ">"
+
+public export
+Show SEFMu where
+  show = sefCata SEFShowAlg
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
