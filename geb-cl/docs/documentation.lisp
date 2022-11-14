@@ -1,19 +1,29 @@
-(in-package :geb)
+(pax:define-package #:geb-docs/docs
+  (:use #:cl)
+  (:import-from #:geb
+                #:@geb)
+  (:export build-docs))
+
+(in-package geb-docs/docs)
+
+(pax:defsection @index (:title "The GEB Manual")
+  "Welcome to the GEB project"
+  (geb:@geb pax:section))
 
 (defun geb-sections ()
-  (list geb:@geb))
+  (list @index))
 
 (defun geb-pages ()
   `((:objects
-     (,geb:@geb)
+     (, @index)
      :source-uri-fn
      ,(pax:make-github-source-uri-fn :geb "https://github.com/anoma/geb"))))
 
 (defun build-docs ()
   (mgl-pax:update-asdf-system-readmes
-   geb:@geb :geb)
+   @index :geb)
   (mgl-pax:update-asdf-system-html-docs
-   geb:@geb :geb
+   @index :geb
    :target-dir (asdf/system:system-relative-pathname :geb "../docs/")
    :pages (geb-pages)))
 

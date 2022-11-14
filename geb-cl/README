@@ -1,15 +1,38 @@
-# Geb User manual
+# The GEB Manual
+
+###### \[in package GEB-DOCS/DOCS with nicknames EXAMPLE-DOCS\]
+Welcome to the GEB project
+
+## Geb User manual
 
 ###### \[in package GEB\]
 The Main GEB model. Everything here relates directly to the
 underlying machinery of GEB, or to abstractions that help extend
 it.
 
-## Types
+### Accessors
+
+These functions relate to grabbing slots out of the various GEBMOPRH and GEBOBJ types
+
+- [generic-function] MCAR OBJECT
+
+- [generic-function] MCADR OBJECT
+
+- [generic-function] MCDR OBJECT
+
+- [generic-function] MCADDR OBJECT
+
+- [generic-function] OBJ OBJECT
+
+- [generic-function] NAME OBJECT
+
+- [generic-function] FUNC OBJECT
+
+### Types
 
 Types Surrounding the GEB categories
 
-### Subst Obj
+#### Subst Obj
 
 This Category covers the objects of the GEB category. Every value
 that is a SUBSTOBJ is automatically lifted into a SUBSTMORPH when a
@@ -41,7 +64,7 @@ The various constructors that form the SUBSTOBJ type
 
     an alias for a geb object
 
-### Subst Morph
+#### Subst Morph
 
 The moprhisms of the GEB category.
 
@@ -89,7 +112,7 @@ The various constructors that form the SUBSTMORPH type
 
     an alias for a geb object
 
-## Constructors
+### Constructors
 
 The API for creating GEB terms. All the functions and variables
 here relate to instantiating a term
@@ -130,7 +153,7 @@ More Ergonomic API variants for *SO0* and *SO1*
 
 - [function] MAKE-FUNCTOR &KEY OBJ FUNC
 
-## api
+### api
 
 Various functions that make working with GEB easier
 
@@ -150,7 +173,7 @@ Various functions that make working with GEB easier
 
 - [function] SO-EVAL X Y
 
-## Examples
+### Examples
 
 PLACEHOLDER: TO SHOW OTHERS HOW EXAMPLES WORK
 

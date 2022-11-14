@@ -1,7 +1,8 @@
 (pax:define-package #:geb
   (:documentation "Gödel, Escher, Bach categorical model")
   (:use #:common-lisp #:serapeum)
-  (:shadow :left :right :prod :case))
+  (:shadow :left :right :prod :case)
+  (:export :prod :case))
 
 (uiop:define-package #:geb-bool
   (:documentation "Defines out booleans for the geb language")
@@ -16,6 +17,7 @@
   "The Main GEB model. Everything here relates directly to the
    underlying machinery of GEB, or to abstractions that help extend
    it."
+  (@geb-accessors pax:section)
   (@geb-types pax:section)
   (@geb-constructors pax:section)
   (@geb-api pax:section)
@@ -79,8 +81,13 @@
 
 (pax:defsection @geb-accessors (:title "Accessors")
   "These functions relate to grabbing slots out of the various GEBMOPRH and GEBOBJ types"
-  (mcar pax:method) (mcadr pax:method) (mcdr pax:method) (mcaddr pax:method)
-  (obj pax:method) (name pax:method) (func pax:method))
+  (mcar pax:generic-function)
+  (mcadr pax:generic-function)
+  (mcdr pax:generic-function)
+  (mcaddr pax:generic-function)
+  (obj pax:generic-function)
+  (name pax:generic-function)
+  (func pax:generic-function))
 
 (pax:defsection @geb-examples (:title "Examples")
   "PLACEHOLDER: TO SHOW OTHERS HOW EXAMPLES WORK"
