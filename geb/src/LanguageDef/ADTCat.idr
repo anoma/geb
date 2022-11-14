@@ -225,8 +225,8 @@ soDepth = soCata SODepthAlg
 
 public export
 SOShowAlg : SOAlg String
-SOShowAlg SOPos0 dir = "!0"
-SOShowAlg SOPos1 dir = "!1"
+SOShowAlg SOPos0 dir = "0"
+SOShowAlg SOPos1 dir = "1"
 SOShowAlg SOPosC dir = "[" ++ dir SODirL ++ "|" ++ dir SODirR ++ "]"
 SOShowAlg SOPosP dir = "(" ++ dir SODir1 ++ "," ++ dir SODir2 ++ ")"
 
@@ -272,6 +272,7 @@ public export
 data SubstEFPos : Type where
   SEFPosU : SubstObjPos -> SubstEFPos -- same universal objects as `SubstObjPF`
   SEFPosI : SubstEFPos -- identity endofunctor
+  SEFPosPar : SubstEFPos -- parallel product
 
 public export
 data SubstEFDir : SubstEFPos -> Type where
@@ -282,6 +283,8 @@ data SubstEFDir : SubstEFPos -> Type where
   -- endofunctors has no positions, because there is just one identity
   -- functor -- the constructor which generates the identity endofunctor does
   -- not take any endofunctors as parameters
+  SEFDirPar1 : SubstEFDir SEFPosPar -- first component of parallel product
+  SEFDirPar2 : SubstEFDir SEFPosPar -- second component of parallel product
 
 public export
 SubstEFPF : PolyFunc
@@ -313,13 +316,63 @@ sefCata = pfCata {p=SubstEFPF}
 -------------------
 
 public export
+InSEFU : SOMu -> SEFMu
+InSEFU = soCata $
+  \i, alg => InPFM (SEFPosU i) $ \d => case d of (SEFDirU d') => alg d'
+
+public export
+InSEFI : SEFMu
+InSEFI = InPFM SEFPosI $ \d => case d of _ impossible
+
+public export
+InSEFPar : SEFMu -> SEFMu -> SEFMu
+InSEFPar x y = InPFM SEFPosPar $ \d => case d of
+  SEFDirPar1 => x
+  SEFDirPar2 => y
+
+public export
+InSEFP : SEFMu -> SEFMu -> SEFMu
+InSEFP x y = InPFM SEFPosPar $ \d => case d of
+  SEFDirPar1 => x
+  SEFDirPar2 => y
+
+public export
 SEFSizeAlg : SEFAlg Nat
 SEFSizeAlg (SEFPosU pos) dir = sefToSoAlg SOSizeAlg pos dir
 SEFSizeAlg SEFPosI dir = 1
+SEFSizeAlg SEFPosPar dir = 1 + dir SEFDirPar1 + dir SEFDirPar2
 
 public export
 sefSize : SEFMu -> Nat
 sefSize = sefCata SEFSizeAlg
+
+public export
+SEFDepthAlg : SEFAlg Nat
+SEFDepthAlg (SEFPosU pos) dir = sefToSoAlg SODepthAlg pos dir
+SEFDepthAlg SEFPosI dir = 0
+SEFDepthAlg SEFPosPar dir = smax (dir SEFDirPar1) (dir SEFDirPar2)
+
+public export
+sefDepth : SEFMu -> Nat
+sefDepth = sefCata SEFDepthAlg
+
+public export
+SEFShowAlg : SEFAlg String
+SEFShowAlg (SEFPosU pos) dir = case pos of
+  SOPos0 => "!0"
+  SOPos1 => "!1"
+  SOPosC =>
+    "![" ++ dir (SEFDirU {pos=SOPosC} SODirL) ++ "|" ++
+    dir (SEFDirU {pos=SOPosC} SODirR) ++ "]"
+  SOPosP =>
+    "!(" ++ dir (SEFDirU {pos=SOPosP} SODir1) ++ "," ++
+    dir (SEFDirU {pos=SOPosP} SODir2) ++ ")"
+SEFShowAlg SEFPosI dir = "{id}"
+SEFShowAlg SEFPosPar dir = "<" ++ dir SEFDirPar1 ++ "x" ++ dir SEFDirPar2 ++ ">"
+
+public export
+Show SEFMu where
+  show = sefCata SEFShowAlg
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
