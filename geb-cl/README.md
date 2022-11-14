@@ -7,14 +7,14 @@
 - [2 api][6228]
 
 ###### \[in package GEB\]
-The Main GEB model. Everything here relates directly to the
-underlying machinery of GEB, or to abstractions that help extend
+The Main `GEB` model. Everything here relates directly to the
+underlying machinery of `GEB`, or to abstractions that help extend
 it.
 
 <a id="x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Constructors
 
-The API for creating GEB terms. All the functions and variables
+The API for creating `GEB` terms. All the functions and variables
 here relate to instantiating a term
 
 <a id="x-28GEB-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
@@ -52,7 +52,7 @@ here relate to instantiating a term
 <a id="x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
 ## 2 api
 
-Various functions that make working with GEB easier
+Various functions that make working with `GEB` easier
 
 <a id="x-28GEB-3APAIR-TO-LIST-20FUNCTION-29"></a>
 - [function] **PAIR-TO-LIST** *PAIR &OPTIONAL ACC*
