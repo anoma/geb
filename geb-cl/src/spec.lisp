@@ -107,7 +107,7 @@
           :accessor mcadr
           :type substobj
           :documentation ""))
-  (:documentation ""))
+  (:documentation "Left injection (coproduct introduction)"))
 
 (defclass inject-right ()
   ((mcar :initarg :mcar
@@ -118,7 +118,7 @@
           :accessor mcadr
           :type substobj
           :documentation ""))
-  (:documentation ""))
+  (:documentation "Right injection (coproduct introduction)"))
 
 (defclass case ()
   ((mcar :initarg :mcar
@@ -129,7 +129,7 @@
           :accessor mcadr
           :type substmorph
           :documentation ""))
-  (:documentation "Casing on objects"))
+  (:documentation "Coproduct elimination (case statement)"))
 
 (defclass pair ()
   ((mcar :initarg :mcar
@@ -140,7 +140,7 @@
          :accessor mcdr
          :type substmorph
          :documentation "Tail of the pair cell"))
-  (:documentation "Consing Morphisms"))
+  (:documentation "Product introduction (morphism pairing)"))
 
 (defclass project-left ()
   ((mcar :initarg :mcar
@@ -151,7 +151,7 @@
           :accessor mcadr
           :type substobj
           :documentation ""))
-  (:documentation ""))
+  (:documentation "Left projection (product elimination)"))
 
 (defclass project-right ()
   ((mcar :initarg :mcar
@@ -161,7 +161,7 @@
    (mcadr :initarg :mcadr
           :accessor mcadr
           :type substobj
-          :documentation ""))
+          :documentation "Right projection (product elimination)"))
   (:documentation ""))
 
 (defclass distribute ()
@@ -177,7 +177,7 @@
            :accessor mcaddr
            :type substobj
            :documentation ""))
-  (:documentation "The distribute law"))
+  (:documentation "The distributive law"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constructors for the base types
