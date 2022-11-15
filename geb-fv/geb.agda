@@ -2,7 +2,7 @@
  
 open import Agda.Primitive using (Level; lzero; lsuc; _⊔_; Setω)
 
-module geb where
+module geb-test where
 
   import HoTT
 
@@ -192,6 +192,11 @@ module geb where
 
   FinMor-decidable-eq : (n m : ℕ) → decidable-eq (Fin n → Fin m)
   FinMor-decidable-eq n m f g = decidable-bi (EqFinMor-≡ n m f g) (≡-EqFinMor n m f g) (EqFinMor-decidable n m f g)
+
+-- And finally use Hedberg's theorem for the core result 
+
+  FinMor-is-Set : (n m : ℕ) → is-Set (Fin n → Fin m)
+  FinMor-is-Set n m = Hedberg (FinMor-decidable-eq n m)
 
 -- This is a function establishing an extension property: each type dependent on the skeleton can be extended canonically to the one of the entire FinSet
 
@@ -387,15 +392,6 @@ module geb where
                               λG {x'} {y} {z} (pr₂ (proj₁ (⊕G-mor-fib (f ● (proj₁ (DistribAx {z} {x} {x'}))) ))) >G    
   λG {x ⊗G x'} {y} {z} f = λG {x} {InHom x' y} (λG {x'} (f ● prod-1-assoc-lr))
 
-{-  ⊗G-Init-1-id : {x : ObjGEBCat} → (x ⊗G Init) ≃G x
-  ⊗G-Init-1-id = p1G ,, ({!!} ,, {!!})
-
-  λG-diag : {x y z : ObjGEBCat} (f : (z ⊗G x) ↦ y) → f ≡ ((evalG _ _) ● < (λG f) ● p1G , (IdMor _) ● p2G >G)
-  λG-diag {Init} f = {!!}   -- use the fact that y ≃G Init 
-  λG-diag {Term} f = {!!} · (pr₁ (ProdMorLegAx _ _) ⁻¹)
-  λG-diag {x ⊕G x₁} f = {!!}
-  λG-diag {x ⊗G x₁} f = {!!} -}
-
 -- We also need to prove the identity preservaton and composition preservation of the above function to use in the functoriality proof
 
   
@@ -489,14 +485,21 @@ module geb where
 -- The problem with the above definition is that it will not give us enough information about what is happening on left inclusions
 -- However, using decidability, we can establish this explicitly:
 
-  ω-Geb=mor-inl : (n m : ℕ) (f : Morω n m) → (ω-to-Geb-obj n ↦ ω-to-Geb-obj m)
-  ω-Geb=mor-inl zero m f = ω-to-Geb-mor zero m f
-  ω-Geb=mor-inl (succ n) m f = cases _ (ℕ-decidable-eq m (succ (succ n)))
-                                                                       (λ { (refl .(succ (succ n))) →
-                                                                                                      cases _ (FinMor-decidable-eq _ _ f inl)
-                                                                                                                                             (λ x → inlG)
-                                                                                                                                             λ x → ω-to-Geb-mor _ _ f})
-                                                                       λ x → ω-to-Geb-mor _ _ f
+  case-inl-eq : {n : ℕ} (f : Morω (succ n) (succ (succ n))) → (f ≡ inl) → (ω-to-Geb-obj (succ n) ↦ ω-to-Geb-obj (succ (succ n)))
+  case-inl-eq f p = inlG
+
+  case-inl-neq : {n : ℕ} (f : Morω (succ n) (succ (succ n))) → (¬ (f ≡ inl)) → (ω-to-Geb-obj (succ n) ↦ ω-to-Geb-obj (succ (succ n)))
+  case-inl-neq f np =  ω-to-Geb-mor _ _ f
+
+  case-ℕ-eq : (n m : ℕ) (f : Morω (succ n) m) → ((m ≡ (succ (succ n)))) → (ω-to-Geb-obj (succ n) ↦ ω-to-Geb-obj m)
+  case-ℕ-eq n .(succ (succ n)) f (refl .(succ (succ n))) = [ case-inl-eq f , case-inl-neq f ] (FinMor-decidable-eq _ _ f inl)
+
+  case-ℕ-neq : (n m : ℕ) (f : Morω (succ n) m) → (¬ (m ≡ (succ (succ n)))) → (ω-to-Geb-obj (succ n) ↦ ω-to-Geb-obj m)
+  case-ℕ-neq n m f np = ω-to-Geb-mor _ _ f
+
+  ω-Geb-mor-inl : (n m : ℕ) (f : Morω n m) → (ω-to-Geb-obj n ↦ ω-to-Geb-obj m)
+  ω-Geb-mor-inl zero m f = ω-to-Geb-mor zero m f
+  ω-Geb-mor-inl (succ n) m f = cases _ (ℕ-decidable-eq m (succ (succ n))) (case-ℕ-eq n m f) (case-ℕ-neq n m f)
 
 
 -- function as before but make it consider whether it is an injection i.e. whether m = n + 2 
@@ -580,28 +583,6 @@ module geb where
                                               ,
                                               pr₂ (CoProdMorLegAx _ _)))
 
-{-  mor-to-init : {x y : ObjGEBCat} → (y ≃G Init) → (x ↦ y) → (x ≃G Init)
-  mor-to-init p (_●_ {x} {y} {z} (g) f) =  mor-to-init (mor-to-init p g) (f) 
-  mor-to-init p (IdMor _) = p
-  mor-to-init p (InitMor _) = (IdMor _) ,, IdMor-is-iso
-  mor-to-init p (TermMor _) = rec𝟘 _ ((Geb-into-FinSet-mor _ _ (proj₁ p)) pt)
-  mor-to-init p (CoProdMor f f₁) = {!!}
-  mor-to-init p (ProdMor f f₁) = {!!}
-  mor-to-init p DistribMor = {!!}
-  mor-to-init p inlG = {!!}
-  mor-to-init p inrG = {!!}
-  mor-to-init p p1G = {!!}
-  mor-to-init p p2G = {!!} -}
-
-{-  mor-to-init' : (x : ObjGEBCat) → (x ↦ Init) → (x ≃G Init)
-  mor-to-init' Init f = (IdMor _) ,, IdMor-is-iso
-  mor-to-init' Term f = rec𝟘 _ ((Geb-into-FinSet-mor _ _ f) pt)
-  mor-to-init' (x ⊕G x₁) f = f ,, ((InitMor _) ,,
-                                               ((fun-ap (λ k → InitMor (x ⊕G x₁) ● k) ((proj₂ (⊕G-mor-fib _)) ⁻¹) · {!!})
-                                               ,
-                                               (InitMorAx _ · ((InitMorAx _) ⁻¹))))
-  mor-to-init' (x ⊗G x₁) f = rec𝟘 _ {!Geb-!} -}
-
 -- Here is a basic observation about the morphism assignment
 
   term-to-mor : (n : ℕ) (x : Fin n) → obj-of-FinSet-to-⨁G-Term n x ≡ ω-to-Geb-mor (succ zero) (n) (λ t → x)
@@ -636,6 +617,8 @@ module geb where
                                                                                               ● obj-of-FinSet-to-⨁G-Term (succ (succ m)) t))
                                                                                           (p1 ⁻¹) (fun-ap (λ l → obj-of-FinSet-to-⨁G-Term k (f (inr l))) (constructor-el-𝟙 x) · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹))})
                                                                                            ((constructor-el-+ (g pt)))) m
+
+  
 
   ω-to-Geb-mor-preserves-comp : (n m k : ℕ) (f : Morω m k) (g : Morω n m) → ω-to-Geb-mor n k (f ∘ g ) ≡  (ω-to-Geb-mor m k f) ● (ω-to-Geb-mor n m g)
   ω-to-Geb-mor-preserves-comp n = indℕ (λ n → (m k : ℕ) (f : Morω m k) (g : Morω n m) →  ω-to-Geb-mor n k (f ∘ g) ≡  (ω-to-Geb-mor m k f) ● (ω-to-Geb-mor n m g) )
@@ -719,21 +702,15 @@ module geb where
                                                                ,
                                                                ((pr₂ (CoProdMorLegAx _ _)) · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹)))
 
-  ω-to-Geb-mor-preserves-inl : (n : ℕ) → ω-to-Geb-mor (succ n) (succ (succ n)) inl ≡ inlG
-  ω-to-Geb-mor-preserves-inl zero =  pr₂ (IdMorAx _)
-  ω-to-Geb-mor-preserves-inl (succ n) = {!!}
-{-  ω-to-Geb-mor-preserves-inl zero =  pr₂ (IdMorAx _)
-  ω-to-Geb-mor-preserves-inl (succ zero) = inx-are-joint-epi _ _
-                                           ((pr₁ (CoProdMorLegAx _ _) · fun-ap (λ k → inlG ● k) (pr₂ (IdMorAx _)))
-                                           ,
-                                           pr₂ (CoProdMorLegAx _ _)) 
-  ω-to-Geb-mor-preserves-inl (succ (succ n)) = {!!} -}
-
--- Idea: Prove that Geb-to-ω-mor is an embedding
+  ω-Geb-mor-inl-pres :  (n : ℕ) → ω-Geb-mor-inl (succ n) (succ (succ n)) inl ≡ inlG
+  ω-Geb-mor-inl-pres zero = refl _
+  ω-Geb-mor-inl-pres (succ n) = fun-ap (λ k → cases _ k (case-ℕ-eq (succ n) (succ (succ (succ n))) inl) (case-ℕ-neq _ _ inl ))
+                                       (prop-decidable (ℕ-is-Set (succ (succ (succ n))) (succ (succ (succ n)))) (ℕ-decidable-eq _ _) (inl (refl _)))
+                               · (fun-ap (λ k → [ case-inl-eq inl , case-inl-neq inl ] k)
+                                         (prop-decidable (FinMor-is-Set _ _ inl inl) (FinMor-decidable-eq _ _ _ _) (inl (refl inl))))
 
 
 
   ω-to-Geb-mor-preserves-id : (n : ℕ) → ω-to-Geb-mor n n (id _) ≡ IdMor (⨁G Term n)
   ω-to-Geb-mor-preserves-id zero = (InitMorAx _) ⁻¹
   ω-to-Geb-mor-preserves-id (succ n) = {!!}
-
