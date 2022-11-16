@@ -2,13 +2,16 @@
   (:use #:cl)
   (:import-from #:geb
                 #:@geb)
+  (:import-from #:geb.mixins
+                #:@mixins)
   (:export build-docs))
 
 (in-package geb-docs/docs)
 
 (pax:defsection @index (:title "The GEB Manual")
   "Welcome to the GEB project"
-  (geb:@geb pax:section))
+  (@geb    pax:section)
+  (@mixins pax:section))
 
 (defun geb-sections ()
   (list @index))

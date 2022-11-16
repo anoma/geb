@@ -11,8 +11,12 @@
     - [1.3 Constructors][0c5c]
     - [1.4 api][6228]
     - [1.5 Examples][a17b]
+- [2 Mixins][723a]
+    - [2.1 Pointwise Mixins][d5d3]
+    - [2.2 Pointwise API][2fcf]
+    - [2.3 Mixins Examples][4938]
 
-###### \[in package GEB-DOCS/DOCS with nicknames EXAMPLE-DOCS\]
+###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project
 
 <a id="x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29"></a>
@@ -345,16 +349,114 @@ with GEB:
 ```
 
 
+<a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
+## 2 Mixins
+
+###### \[in package GEB.MIXINS\]
+Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
+project. Overall all these offer various services to the rest of the
+project
+
+<a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
+### 2.1 Pointwise Mixins
+
+Here we provide various mixins that deal with classes in a pointwise
+manner. Normally, objects can not be compared in a pointwise manner,
+instead instances are compared. This makes functional idioms like
+updating a slot in a pure manner (allocating a new object), or even
+checking if two objects are [`EQUAL`][96d0]-able adhoc. The pointwise API,
+however, derives the behavior and naturally allows such idioms
+
+<a id="x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29"></a>
+- [class] **POINTWISE-MIXIN**
+
+    Provides the service of giving point wise
+    operations to classes
+
+Further we may wish to hide any values inherited from our superclass
+due to this we can instead compare only the slots defined directly
+in our class
+
+<a id="x-28GEB-2EMIXINS-3ADIRECT-POINTWISE-MIXIN-20CLASS-29"></a>
+- [class] **DIRECT-POINTWISE-MIXIN** *[POINTWISE-MIXIN][445d]*
+
+    Work like [`POINTWISE-MIXIN`][445d], however functions on
+    `POINTWISE-MIXIN`s will only operate on direct-slots
+    instead of all slots the class may contain.
+    
+    Further all `DIRECT-POINTWISE-MIXIN`'s are `POINTWISE-MIXIN`'s
+
+<a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
+### 2.2 Pointwise API
+
+These are the general API functions on any class that have the
+[`POINTWISE-MIXIN`][445d] service.
+
+Functions like [`TO-POINTWISE-LIST`][58a9] allow generic list traversal APIs to
+be built off the key-value pair of the raw object form, while
+[`OBJ-EQUALP`][c111] allows the checking of functional equality between
+objects. Overall the API is focused on allowing more generic
+operations on classes that make them as useful for generic data
+traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
+
+<a id="x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **TO-POINTWISE-LIST** *OBJ*
+
+    Turns a given object into a pointwise `LIST`([`0`][592c] [`1`][98f9]). listing
+    the [`KEYWORD`][4850] slot-name next to their value.
+
+<a id="x-28GEB-2EMIXINS-3AOBJ-EQUALP-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **OBJ-EQUALP** *OBJECT1 OBJECT2*
+
+    Compares objects with pointwise equality. This is a
+    much weaker form of equality comparison than
+    [`STANDARD-OBJECT`][a802] [`EQUALP`][c721], which just does the much
+    stronger pointer quality
+
+<a id="x-28GEB-2EMIXINS-3APOINTWISE-SLOTS-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **POINTWISE-SLOTS** *OBJ*
+
+    Work like `C2MOP:COMPUTE-SLOTS` however on the object
+    rather than the class
+
+<a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
+### 2.3 Mixins Examples
+
+Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
+
+```common-lisp
+(obj-equalp (geb:terminal geb:so1)
+            (geb:terminal geb:so1))
+=> t
+
+(to-pointwise-list (geb:coprod geb:so1 geb:so1))
+=> ((:MCAR . s-1) (:MCADR . s-1))
+```
+
+
   [0c5c]: #x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Constructors"
+  [2fcf]: #x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29 "Pointwise API"
+  [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
+  [4850]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD TYPE"
+  [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
   [49e9]: #x-28GEB-3A-40GEB-TYPES-20MGL-PAX-3ASECTION-29 "Types"
+  [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
+  [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "api"
   [6380]: #x-28GEB-3A-2ASO1-2A-20VARIABLE-29 "GEB:*SO1* VARIABLE"
   [718e]: #x-28GEB-3ASUBSTOBJ-20TYPE-29 "GEB:SUBSTOBJ TYPE"
+  [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
+  [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
+  [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9f7a]: #x-28GEB-3A-2ASO0-2A-20VARIABLE-29 "GEB:*SO0* VARIABLE"
   [a17b]: #x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29 "Examples"
+  [a802]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT TYPE"
   [b26a]: #x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
+  [c111]: #x-28GEB-2EMIXINS-3AOBJ-EQUALP-20GENERIC-FUNCTION-29 "GEB.MIXINS:OBJ-EQUALP GENERIC-FUNCTION"
   [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "Geb User manual"
+  [c721]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP FUNCTION"
   [ca6e]: #x-28GEB-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29 "Subst Obj"
+  [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
   [e5d9]: #x-28GEB-3ASUBSTMORPH-20TYPE-29 "GEB:SUBSTMORPH TYPE"
   [ffb7]: #x-28GEB-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29 "Subst Morph"
 

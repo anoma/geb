@@ -5,9 +5,11 @@
                    operations to classes"))
 
 (defclass direct-pointwise-mixin (pointwise-mixin) ()
-  (:documentation "Works like POINTWISE-MIXIN, however functions on
-                   pointwise-mixin will only operate on direct-slots
-                   instead of all slots the class may contain"))
+  (:documentation "Works like `POINTWISE-MIXIN`, however functions on
+                   `POINTWISE-MIXIN`s will only operate on direct-slots
+                   instead of all slots the class may contain.
+
+                   Further all `DIRECT-POINTWISE-MIXIN`'s are `POINTWISE-MIXIN`'s"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; API for Pointwise
@@ -15,7 +17,7 @@
 
 ;; my way of coping with no meta classes by default
 (defgeneric pointwise-slots (obj)
-  (:documentation "Work like C2MOP:COMPUTE-SLOTS however on the object
+  (:documentation "Works like C2MOP:COMPUTE-SLOTS however on the object
                    rather than the class")
   ;; should we specialize it on pointwise-mixin instead? Should all
   ;; objects be able to give their pointwise slots?
@@ -25,14 +27,15 @@
 (defgeneric obj-equalp (object1 object2)
   (:documentation "Compares objects with pointwise equality. This is a
                    much weaker form of equality comparison than
-                   STANDARD-OBJECT EQUALP, which just does the much
+                   STANDARD-OBJECT EQUALP, which does the much
                    stronger pointer quality")
   (:method ((obj1 standard-object) (obj2 standard-object))
     "for non pointwise objects, compute the standard equalp"
     (equalp obj1 obj2)))
 
 (defgeneric to-pointwise-list (obj)
-  (:documentation "Turns a given object into a pointwise LIST")
+  (:documentation "Turns a given object into a pointwise LIST. listing
+                   the KEYWORD slot-name next to their value.")
   (:method ((obj pointwise-mixin))
     (mapcar (lambda (x)
               (cons (util:symbol-to-keyword x)

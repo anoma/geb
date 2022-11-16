@@ -1,6 +1,6 @@
 # The GEB Manual
 
-###### \[in package GEB-DOCS/DOCS with nicknames EXAMPLE-DOCS\]
+###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project
 
 ## Geb User manual
@@ -256,6 +256,82 @@ with GEB:
 
 (+ 1 2 3 4)
 => 10
+```
+
+
+## Mixins
+
+###### \[in package GEB.MIXINS\]
+Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
+project. Overall all these offer various services to the rest of the
+project
+
+### Pointwise Mixins
+
+Here we provide various mixins that deal with classes in a pointwise
+manner. Normally, objects can not be compared in a pointwise manner,
+instead instances are compared. This makes functional idioms like
+updating a slot in a pure manner (allocating a new object), or even
+checking if two objects are `EQUAL`-able adhoc. The pointwise API,
+however, derives the behavior and naturally allows such idioms
+
+- [class] POINTWISE-MIXIN
+
+    Provides the service of giving point wise
+    operations to classes
+
+Further we may wish to hide any values inherited from our superclass
+due to this we can instead compare only the slots defined directly
+in our class
+
+- [class] DIRECT-POINTWISE-MIXIN POINTWISE-MIXIN
+
+    Work like `POINTWISE-MIXIN`, however functions on
+    `POINTWISE-MIXIN`s will only operate on direct-slots
+    instead of all slots the class may contain.
+    
+    Further all `DIRECT-POINTWISE-MIXIN`'s are `POINTWISE-MIXIN`'s
+
+### Pointwise API
+
+These are the general API functions on any class that have the
+POINTWISE-MIXIN service.
+
+Functions like TO-POINTWISE-LIST allow generic list traversal APIs to
+be built off the key-value pair of the raw object form, while
+OBJ-EQUALP allows the checking of functional equality between
+objects. Overall the API is focused on allowing more generic
+operations on classes that make them as useful for generic data
+traversal as `LIST`'s are
+
+- [generic-function] TO-POINTWISE-LIST OBJ
+
+    Turns a given object into a pointwise LIST. listing
+    the KEYWORD slot-name next to their value.
+
+- [generic-function] OBJ-EQUALP OBJECT1 OBJECT2
+
+    Compares objects with pointwise equality. This is a
+    much weaker form of equality comparison than
+    STANDARD-OBJECT EQUALP, which just does the much
+    stronger pointer quality
+
+- [generic-function] POINTWISE-SLOTS OBJ
+
+    Work like C2MOP:COMPUTE-SLOTS however on the object
+    rather than the class
+
+### Mixins Examples
+
+Let's see some example uses of POINTWISE-MIXIN:
+
+```common-lisp
+(obj-equalp (geb:terminal geb:so1)
+            (geb:terminal geb:so1))
+=> t
+
+(to-pointwise-list (geb:coprod geb:so1 geb:so1))
+=> ((:MCAR . s-1) (:MCADR . s-1))
 ```
 
 
