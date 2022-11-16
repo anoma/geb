@@ -5,18 +5,21 @@
 
 - [1 Links][9bc5]
 - [2 Getting Started][3d47]
-- [3 Geb User manual][c1fb]
-    - [3.1 Types][49e9]
-        - [3.1.1 Subst Obj][ca6e]
-        - [3.1.2 Subst Morph][ffb7]
-    - [3.2 Accessors][b26a]
-    - [3.3 Constructors][0c5c]
-    - [3.4 api][6228]
-    - [3.5 Examples][a17b]
-- [4 Mixins][723a]
-    - [4.1 Pointwise Mixins][d5d3]
-    - [4.2 Pointwise API][2fcf]
-    - [4.3 Mixins Examples][4938]
+- [3 Categorical Model][c2e9]
+    - [3.1 Morphisms][ada9]
+    - [3.2 Objects][dbe7]
+- [4 The Geb Model][c1fb]
+    - [4.1 Core Categories][5d9d]
+        - [4.1.1 Subst Obj][ca6e]
+        - [4.1.2 Subst Morph][ffb7]
+    - [4.2 Accessors][b26a]
+    - [4.3 Constructors][0c5c]
+    - [4.4 api][6228]
+    - [4.5 Examples][a17b]
+- [5 Mixins][723a]
+    - [5.1 Pointwise Mixins][d5d3]
+    - [5.2 Pointwise API][2fcf]
+    - [5.3 Mixins Examples][4938]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -32,21 +35,35 @@ and the [HTML documentation](https://anoma.github.io/geb/geb.html) for the lates
 
 Welcome to the GEB Project
 
+<a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
+## 3 Categorical Model
+
+The GEB theoretical model is one of category theorey
+
+<a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
+### 3.1 Morphisms
+
+
+<a id="x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29"></a>
+### 3.2 Objects
+
+
 <a id="x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29"></a>
-## 3 Geb User manual
+## 4 The Geb Model
 
 ###### \[in package GEB\]
-The Main GEB model. Everything here relates directly to the
-underlying machinery of GEB, or to abstractions that help extend
-it.
+Everything here relates directly to the underlying machinery of
+GEB, or to abstractions that help extend it.
 
-<a id="x-28GEB-3A-40GEB-TYPES-20MGL-PAX-3ASECTION-29"></a>
-### 3.1 Types
+<a id="x-28GEB-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
+### 4.1 Core Categories
 
-Types Surrounding the GEB categories
+The underlying category of GEB. With [Subst Obj][ca6e] covering the
+shapes and forms ([Objects][dbe7]) of data while [Subst Morph][ffb7]
+deals with concrete [Morphisms][ada9] within the category
 
 <a id="x-28GEB-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
-#### 3.1.1 Subst Obj
+#### 4.1.1 Subst Obj
 
 This Category covers the objects of the GEB category. Every value
 that is a [`SUBSTOBJ`][718e] is automatically lifted into a [`SUBSTMORPH`][e5d9] when a
@@ -99,7 +116,7 @@ The [Accessors][b26a] specific to [Subst Obj][ca6e]
 - [method] **MCADR** *(COPROD COPROD)*
 
 <a id="x-28GEB-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
-#### 3.1.2 Subst Morph
+#### 4.1.2 Subst Morph
 
 The moprhisms of the GEB category.
 
@@ -236,7 +253,7 @@ The [Accessors][b26a] specific to [Subst Morph][ffb7]
     Right projection (product elimination)
 
 <a id="x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
-### 3.2 Accessors
+### 4.2 Accessors
 
 These functions relate to grabbing slots out of the various
 [Subst Morph][ffb7] and [Subst Obj][ca6e] types. See those sections for
@@ -264,7 +281,7 @@ specific instance documentation
 - [generic-function] **FUNC** *OBJECT*
 
 <a id="x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
-### 3.3 Constructors
+### 4.3 Constructors
 
 The API for creating GEB terms. All the functions and variables
 here relate to instantiating a term
@@ -317,7 +334,7 @@ More Ergonomic API variants for [`*SO0*`][9f7a] and [`*SO1*`][6380]
 - [function] **MAKE-FUNCTOR** *&KEY OBJ FUNC*
 
 <a id="x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
-### 3.4 api
+### 4.4 api
 
 Various functions that make working with GEB easier
 
@@ -344,7 +361,7 @@ Various functions that make working with GEB easier
 - [function] **SO-EVAL** *X Y*
 
 <a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 3.5 Examples
+### 4.5 Examples
 
 PLACEHOLDER: TO SHOW OTHERS HOW `EXAMPLE`s WORK
 
@@ -363,7 +380,7 @@ with GEB:
 
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
-## 4 Mixins
+## 5 Mixins
 
 ###### \[in package GEB.MIXINS\]
 Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
@@ -371,7 +388,7 @@ project. Overall all these offer various services to the rest of the
 project
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
-### 4.1 Pointwise Mixins
+### 5.1 Pointwise Mixins
 
 Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -400,7 +417,7 @@ in our class
     Further all `DIRECT-POINTWISE-MIXIN`'s are [`POINTWISE-MIXIN`][445d]'s
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
-### 4.2 Pointwise API
+### 5.2 Pointwise API
 
 These are the general API functions on any class that have the
 [`POINTWISE-MIXIN`][445d] service.
@@ -433,7 +450,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
     rather than the class
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 4.3 Mixins Examples
+### 5.3 Mixins Examples
 
 Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
@@ -453,9 +470,9 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
   [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
   [4850]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD TYPE"
   [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
-  [49e9]: #x-28GEB-3A-40GEB-TYPES-20MGL-PAX-3ASECTION-29 "Types"
   [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
+  [5d9d]: #x-28GEB-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29 "Core Categories"
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "api"
   [6380]: #x-28GEB-3A-2ASO1-2A-20VARIABLE-29 "GEB:*SO1* VARIABLE"
   [718e]: #x-28GEB-3ASUBSTOBJ-20TYPE-29 "GEB:SUBSTOBJ TYPE"
@@ -466,12 +483,15 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
   [9f7a]: #x-28GEB-3A-2ASO0-2A-20VARIABLE-29 "GEB:*SO0* VARIABLE"
   [a17b]: #x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29 "Examples"
   [a802]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT TYPE"
+  [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
   [b26a]: #x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
   [c111]: #x-28GEB-2EMIXINS-3AOBJ-EQUALP-20GENERIC-FUNCTION-29 "GEB.MIXINS:OBJ-EQUALP GENERIC-FUNCTION"
-  [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "Geb User manual"
+  [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "The Geb Model"
+  [c2e9]: #x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29 "Categorical Model"
   [c721]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP FUNCTION"
   [ca6e]: #x-28GEB-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29 "Subst Obj"
   [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
+  [dbe7]: #x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29 "Objects"
   [e5d9]: #x-28GEB-3ASUBSTMORPH-20TYPE-29 "GEB:SUBSTMORPH TYPE"
   [ffb7]: #x-28GEB-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29 "Subst Morph"
 

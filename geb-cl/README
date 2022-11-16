@@ -12,16 +12,27 @@ and the [HTML documentation](https://anoma.github.io/geb/geb.html) for the lates
 
 Welcome to the GEB Project
 
-## Geb User manual
+## Categorical Model
+
+The GEB theoretical model is one of category theorey
+
+### Morphisms
+
+
+### Objects
+
+
+## The Geb Model
 
 ###### \[in package GEB\]
-The Main GEB model. Everything here relates directly to the
-underlying machinery of GEB, or to abstractions that help extend
-it.
+Everything here relates directly to the underlying machinery of
+GEB, or to abstractions that help extend it.
 
-### Types
+### Core Categories
 
-Types Surrounding the GEB categories
+The underlying category of GEB. With @GEB-SUBSTMU covering the
+shapes and forms (GEB-DOCS/DOCS:@OBJECTS) of data while @GEB-SUBSTMORPH
+deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category
 
 #### Subst Obj
 

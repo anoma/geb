@@ -12,6 +12,7 @@
   "Welcome to the GEB project."
   (@links           pax:section)
   (@getting-started pax:section)
+  (@model           pax:section)
   (@geb             pax:section)
   (@mixins          pax:section))
 
@@ -20,9 +21,18 @@
 Here is the [official repository](https://github.com/anoma/geb/tree/main/geb-cl)
 and the [HTML documentation](https://anoma.github.io/geb/geb.html) for the latest version")
 
+;; please insert more text here about category theory
+(pax:defsection @model (:title "Categorical Model")
+  "The GEB theoretical model is one of category theorey"
+  (@morphisms pax:section)
+  (@objects pax:section))
+
+(pax:defsection @morphisms (:title "Morphisms"))
+
+(pax:defsection @objects (:title "Objects"))
+
 (pax:defsection @getting-started (:title "Getting Started")
   "Welcome to the GEB Project")
-
 
 (defun geb-sections ()
   (list @index))

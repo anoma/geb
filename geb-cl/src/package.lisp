@@ -17,19 +17,20 @@
 ;; Geb Package Documentation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(pax:defsection @geb (:title "Geb User manual")
-  "The Main GEB model. Everything here relates directly to the
-   underlying machinery of GEB, or to abstractions that help extend
-   it."
-  (@geb-types pax:section)
-  (@geb-accessors pax:section)
+(pax:defsection @geb (:title "The Geb Model")
+  "Everything here relates directly to the underlying machinery of
+   GEB, or to abstractions that help extend it."
+  (@geb-categories   pax:section)
+  (@geb-accessors    pax:section)
   (@geb-constructors pax:section)
-  (@geb-api pax:section)
-  (@geb-examples pax:section))
+  (@geb-api          pax:section)
+  (@geb-examples     pax:section))
 
-(pax:defsection @geb-types (:title "Types")
-  "Types Surrounding the GEB categories"
-  (@geb-substmu pax:section)
+(pax:defsection @geb-categories (:title "Core Categories")
+  "The underlying category of GEB. With @GEB-SUBSTMU covering the
+shapes and forms (GEB-DOCS/DOCS:@OBJECTS) of data while @GEB-SUBSTMORPH
+deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
+  (@geb-substmu    pax:section)
   (@geb-substmorph pax:section))
 
 (pax:defsection @geb-substmu (:title "Subst Obj")
