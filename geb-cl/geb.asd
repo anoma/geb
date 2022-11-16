@@ -37,6 +37,7 @@
   ((:file package)
    (:file geb)
    (:file lambda)
+   (:file lambda-conversion)
    (:file run-tests))
   :perform (asdf:test-op (o s)
                          (uiop:symbol-call :geb-test :run-tests)))
