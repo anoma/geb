@@ -46,6 +46,6 @@
   (geb:terminal so-unit-type))
 
 (test compile-unit
-  (is (equalp (geb.lambda-conversion:compile-checked-term
-                nil so-unit-type stlc-unit-term)
-              so-unit-term)))
+  (is (obj-equalp (geb.lambda-conversion:compile-checked-term
+                   nil so-unit-type stlc-unit-term)
+                  so-unit-term)))

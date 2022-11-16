@@ -1,6 +1,6 @@
 (pax:define-package #:geb
   (:documentation "Gödel, Escher, Bach categorical model")
-  (:use #:common-lisp #:serapeum)
+  (:use #:common-lisp #:serapeum #:geb.mixins)
   (:shadow :left :right :prod :case)
   (:export :prod :case))
 
@@ -13,6 +13,10 @@
 
 (in-package :geb)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Geb Package Documentation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (pax:defsection @geb (:title "Geb User manual")
   "The Main GEB model. Everything here relates directly to the
    underlying machinery of GEB, or to abstractions that help extend
@@ -22,7 +26,6 @@
   (@geb-constructors pax:section)
   (@geb-api pax:section)
   (@geb-examples pax:section))
-
 
 (pax:defsection @geb-types (:title "Types")
   "Types Surrounding the GEB categories"
