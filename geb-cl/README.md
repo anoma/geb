@@ -28,7 +28,7 @@ Welcome to the GEB project.
 ## 1 Links
 
 Here is the [official repository](https://github.com/anoma/geb/tree/main/geb-cl)
-and the [HTML documentation](https://anoma.github.io/geb/geb.html) for the latest version
+and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -53,19 +53,19 @@ The GEB theoretical model is one of category theorey
 
 ###### \[in package GEB\]
 Everything here relates directly to the underlying machinery of
-GEB, or to abstractions that help extend it.
+`GEB`, or to abstractions that help extend it.
 
 <a id="x-28GEB-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
 ### 4.1 Core Categories
 
-The underlying category of GEB. With [Subst Obj][ca6e] covering the
+The underlying category of `GEB`. With [Subst Obj][ca6e] covering the
 shapes and forms ([Objects][dbe7]) of data while [Subst Morph][ffb7]
 deals with concrete [Morphisms][ada9] within the category
 
 <a id="x-28GEB-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
 #### 4.1.1 Subst Obj
 
-This Category covers the objects of the GEB category. Every value
+This Category covers the objects of the `GEB` category. Every value
 that is a [`SUBSTOBJ`][718e] is automatically lifted into a [`SUBSTMORPH`][e5d9] when a
 `SUBSTMORPH` is expected.
 
@@ -118,7 +118,7 @@ The [Accessors][b26a] specific to [Subst Obj][ca6e]
 <a id="x-28GEB-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
 #### 4.1.2 Subst Morph
 
-The moprhisms of the GEB category.
+The moprhisms of the `GEB` category.
 
 The Type that encomposes the SUBSTMOPRH category
 
@@ -283,7 +283,7 @@ specific instance documentation
 <a id="x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
 ### 4.3 Constructors
 
-The API for creating GEB terms. All the functions and variables
+The API for creating `GEB` terms. All the functions and variables
 here relate to instantiating a term
 
 <a id="x-28GEB-3A-2ASO0-2A-20VARIABLE-29"></a>
@@ -336,7 +336,7 @@ More Ergonomic API variants for [`*SO0*`][9f7a] and [`*SO1*`][6380]
 <a id="x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
 ### 4.4 api
 
-Various functions that make working with GEB easier
+Various functions that make working with `GEB` easier
 
 <a id="x-28GEB-3APAIR-TO-LIST-20FUNCTION-29"></a>
 - [function] **PAIR-TO-LIST** *PAIR &OPTIONAL ACC*
@@ -366,7 +366,7 @@ Various functions that make working with GEB easier
 PLACEHOLDER: TO SHOW OTHERS HOW `EXAMPLE`s WORK
 
 Let's see the transcript of a real session of someone working
-with GEB:
+with `GEB`:
 
 ```common-lisp
 (values (princ :hello) (list 1 2))

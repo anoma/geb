@@ -19,7 +19,7 @@
 (pax:defsection @links (:title "Links")
   "
 Here is the [official repository](https://github.com/anoma/geb/tree/main/geb-cl)
-and the [HTML documentation](https://anoma.github.io/geb/geb.html) for the latest version")
+and the [HTML documentation](https://anoma.github.io/geb/) for the latest version")
 
 ;; please insert more text here about category theory
 (pax:defsection @model (:title "Categorical Model")
