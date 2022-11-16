@@ -1,5 +1,7 @@
 (in-package :geb)
 
+(defclass <substobj> (direct-pointwise-mixin) ()
+  (:documentation "the class corresponding to SUBSTOBJ"))
 (deftype substobj ()
   `(or alias prod coprod so0 so1))
 
@@ -7,6 +9,8 @@
 ;; that to ill typed (substobj is a substmorph as far as type checking
 ;; is concerned without an explicit id constrcutor), then we can
 ;; include it and remove it from the or type here.
+(defclass <substmorph> (direct-pointwise-mixin) ()
+  (:documentation "the class type corresponding to SUBSTMORPH"))
 (deftype substmorph ()
   `(or substobj
        alias
@@ -19,7 +23,7 @@
 ;; Subst Constructor Objects
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defclass alias ()
+(defclass alias (<substmorph> <substobj>)
   ((name :initarg :name
          :accessor name
          :type     symbol
@@ -29,24 +33,18 @@
         :documentation "The underlying geb object"))
   (:documentation "an alias for a geb object"))
 
-(defclass functor ()
-  ((obj :initarg :obj
-        :accessor obj)
-   (func :initarg :func
-         :accessor func)))
-
 ;; these could be keywords, but maybe in the future not?
-(defclass so0 ()
+(defclass so0 (<substobj>)
   ()
   (:documentation "The Initial/Void Object"))
 
-(defclass so1 ()
+(defclass so1 (<substobj>)
   ()
   (:documentation "The Terminal/Unit Object"))
 
 ;; please make better names and documentation strings!
 
-(defclass prod ()
+(defclass prod (<substobj>)
   ((mcar :initarg :mcar
          :accessor mcar
          :documentation "")
@@ -55,7 +53,7 @@
           :documentation ""))
   (:documentation "the product"))
 
-(defclass coprod ()
+(defclass coprod (<substobj>)
   ((mcar :initarg :mcar
          :accessor mcar
          :documentation "")
@@ -71,7 +69,13 @@
 ;; Subst Morphism Objects
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defclass comp ()
+(defclass functor (<substmorph>)
+  ((obj :initarg :obj
+        :accessor obj)
+   (func :initarg :func
+         :accessor func)))
+
+(defclass comp (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
          :type substmorph
@@ -82,14 +86,14 @@
           :documentation "the second morphism"))
   (:documentation "Composition of morphism"))
 
-(defclass init ()
+(defclass init (<substmorph>)
   ((obj :initarg :obj
         :accessor obj
         :type substobj
         :documentation ""))
   (:documentation "The initial Morphism"))
 
-(defclass terminal ()
+(defclass terminal (<substmorph>)
   ((obj :initarg :obj
         :accessor obj
         :type substobj
@@ -98,7 +102,7 @@
 
 ;; Please name all of these better plz
 
-(defclass inject-left ()
+(defclass inject-left (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
          :type substobj
@@ -107,9 +111,9 @@
           :accessor mcadr
           :type substobj
           :documentation ""))
-  (:documentation ""))
+  (:documentation "Left injection (coproduct introduction)"))
 
-(defclass inject-right ()
+(defclass inject-right (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
          :type substobj
@@ -118,9 +122,9 @@
           :accessor mcadr
           :type substobj
           :documentation ""))
-  (:documentation ""))
+  (:documentation "Right injection (coproduct introduction)"))
 
-(defclass case ()
+(defclass case (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
          :type substmorph
@@ -129,9 +133,9 @@
           :accessor mcadr
           :type substmorph
           :documentation ""))
-  (:documentation "Casing on objects"))
+  (:documentation "Coproduct elimination (case statement)"))
 
-(defclass pair ()
+(defclass pair (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
          :type substmorph
@@ -140,9 +144,9 @@
          :accessor mcdr
          :type substmorph
          :documentation "Tail of the pair cell"))
-  (:documentation "Consing Morphisms"))
+  (:documentation "Product introduction (morphism pairing)"))
 
-(defclass project-left ()
+(defclass project-left (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
          :type substobj
@@ -151,9 +155,9 @@
           :accessor mcadr
           :type substobj
           :documentation ""))
-  (:documentation ""))
+  (:documentation "Left projection (product elimination)"))
 
-(defclass project-right ()
+(defclass project-right (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
          :type substobj
@@ -161,10 +165,10 @@
    (mcadr :initarg :mcadr
           :accessor mcadr
           :type substobj
-          :documentation ""))
+          :documentation "Right projection (product elimination)"))
   (:documentation ""))
 
-(defclass distribute ()
+(defclass distribute (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
          :type substobj
@@ -177,7 +181,7 @@
            :accessor mcaddr
            :type substobj
            :documentation ""))
-  (:documentation "The distribute law"))
+  (:documentation "The distributive law"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constructors for the base types

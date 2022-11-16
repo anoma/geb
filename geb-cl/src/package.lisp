@@ -1,6 +1,6 @@
 (pax:define-package #:geb
   (:documentation "Gödel, Escher, Bach categorical model")
-  (:use #:common-lisp #:serapeum)
+  (:use #:common-lisp #:serapeum #:geb.mixins)
   (:shadow :left :right :prod :case)
   (:export :prod :case))
 
@@ -13,20 +13,24 @@
 
 (in-package :geb)
 
-(pax:defsection @geb (:title "Geb User manual")
-  "The Main GEB model. Everything here relates directly to the
-   underlying machinery of GEB, or to abstractions that help extend
-   it."
-  (@geb-accessors pax:section)
-  (@geb-types pax:section)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Geb Package Documentation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(pax:defsection @geb (:title "The Geb Model")
+  "Everything here relates directly to the underlying machinery of
+   GEB, or to abstractions that help extend it."
+  (@geb-categories   pax:section)
+  (@geb-accessors    pax:section)
   (@geb-constructors pax:section)
-  (@geb-api pax:section)
-  (@geb-examples pax:section))
+  (@geb-api          pax:section)
+  (@geb-examples     pax:section))
 
-
-(pax:defsection @geb-types (:title "Types")
-  "Types Surrounding the GEB categories"
-  (@geb-substmu pax:section)
+(pax:defsection @geb-categories (:title "Core Categories")
+  "The underlying category of GEB. With @GEB-SUBSTMU covering the
+shapes and forms (GEB-DOCS/DOCS:@OBJECTS) of data while @GEB-SUBSTMORPH
+deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
+  (@geb-substmu    pax:section)
   (@geb-substmorph pax:section))
 
 (pax:defsection @geb-substmu (:title "Subst Obj")
@@ -40,19 +44,61 @@
   (coprod pax:type)
   (so0 pax:type)
   (so1 pax:type)
-  (alias pax:type))
+  (alias pax:type)
+  "The @GEB-ACCESSORS specific to @GEB-SUBSTMU"
+  (mcar (pax:method () (prod)))
+  (mcadr (pax:method () (prod)))
+
+  (mcar  (pax:method () (coprod)))
+  (mcadr (pax:method () (coprod))))
 
 (pax:defsection @geb-substmorph (:title "Subst Morph")
   "The moprhisms of the GEB category."
   "The Type that encomposes the SUBSTMOPRH category"
   (substmorph pax:type)
   "The various constructors that form the SUBSTMORPH type"
-  (comp pax:type) (init pax:type) (terminal pax:type)
-  (case pax:type) (pair pax:type) (distribute pax:type)
-  (inject-left  pax:type) (inject-right  pax:type)
-  (project-left pax:type) (project-right pax:type)
-  (functor pax:type)
-  (alias pax:type))
+  (comp          pax:type)
+  (case          pax:type)
+  (init          pax:type)
+  (terminal      pax:type)
+  (pair          pax:type)
+  (distribute    pax:type)
+  (inject-left   pax:type)
+  (inject-right  pax:type)
+  (project-left  pax:type)
+  (project-right pax:type)
+  (functor       pax:type)
+  (alias         pax:type)
+  "The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH"
+
+  (mcar  (pax:method () (comp)))
+  (mcadr (pax:method () (comp)))
+
+  (obj (pax:method () (init)))
+
+  (obj (pax:method () (init)))
+
+  (mcar  (pax:method () (case)))
+  (mcadr (pax:method () (case)))
+
+  (mcar (pax:method () (pair)))
+  (mcdr (pax:method () (pair)))
+
+  (mcar   (pax:method () (distribute)))
+  (mcadr  (pax:method () (distribute)))
+  (mcaddr (pax:method () (distribute)))
+
+  (mcar  (pax:method () (inject-left)))
+  (mcadr (pax:method () (inject-left)))
+
+  (mcar  (pax:method () (inject-right)))
+  (mcadr (pax:method () (inject-right)))
+
+  (mcar  (pax:method () (project-left)))
+  (mcadr (pax:method () (project-left)))
+
+  (mcar  (pax:method () (project-right)))
+  (mcadr (pax:method () (project-right))))
 
 (pax:defsection @geb-constructors (:title "Constructors")
   "The API for creating GEB terms. All the functions and variables
@@ -80,7 +126,9 @@
   (so-eval pax:function))
 
 (pax:defsection @geb-accessors (:title "Accessors")
-  "These functions relate to grabbing slots out of the various GEBMOPRH and GEBOBJ types"
+  "These functions relate to grabbing slots out of the various
+   @GEB-SUBSTMORPH and @GEB-SUBSTMU types. See those sections for
+   specific instance documentation"
   (mcar pax:generic-function)
   (mcadr pax:generic-function)
   (mcdr pax:generic-function)

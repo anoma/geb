@@ -7,7 +7,18 @@
   :license "MIT"
   :pathname "src/"
   :components
-  ((:module vampir
+  ((:module util
+    :serial t
+    :description "Internal utility functions"
+    :components ((:file package)
+                 (:file utils)))
+   (:module mixins
+    :serial t
+    :description "Mixin Utility Functions"
+    :depends-on (util)
+    :components ((:file package)
+                 (:file mixins)))
+   (:module vampir
     :serial t
     :description "The Vampir Extraction Module"
     :components ((:file package)
@@ -22,7 +33,7 @@
                  (:file lambda)
                  (:file lambda-conversion)))
    (:file package :depends-on ())
-   (:file spec    :depends-on (package))
+   (:file spec    :depends-on (package mixins))
    (:file printer :depends-on (package spec))
    (:file geb     :depends-on (package spec))
    (:file bool    :depends-on (geb package spec)))
@@ -37,6 +48,7 @@
   ((:file package)
    (:file geb)
    (:file lambda)
+   (:file lambda-conversion)
    (:file run-tests))
   :perform (asdf:test-op (o s)
                          (uiop:symbol-call :geb-test :run-tests)))
@@ -49,5 +61,6 @@
   :serial t
   :components ((:file documentation))
   :perform (asdf:test-op (o s)
-                         (uiop:symbol-call :geb-test :run-tests)))
+                         (uiop:symbol-call :geb-test :run-tests))
+  :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 

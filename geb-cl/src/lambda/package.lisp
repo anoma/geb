@@ -32,6 +32,7 @@
     (uiop:define-package #:geb.lambda-conversion
       (:documentation "A basic lambda calculus model")
       (:mix #:trivia #:geb #:serapeum #:common-lisp :geb.lambda.spec #:geb.lambda)
-      (:export))))
+      (:export
+       :compile-checked-term :stlc-ctx-to-mu))))
 
 

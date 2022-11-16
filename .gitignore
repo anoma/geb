@@ -4,3 +4,4 @@
 *.fasl
 *.*fsl
 *.*fas
+.vscode
