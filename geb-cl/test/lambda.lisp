@@ -31,7 +31,3 @@
 
 (test nameless-works-properly
   (is (equalp nameless-term (geb.lambda:nameless curried-term))))
-
-(test compile-nil-context
-  (is (equalp (geb.lambda-conversion:stlc-ctx-to-mu nil)
-              geb:so1)))
