@@ -1,7 +1,16 @@
 # The GEB Manual
 
 ###### \[in package GEB-DOCS/DOCS\]
-Welcome to the GEB project
+Welcome to the GEB project.
+
+## Links
+
+Here is the [official repository](https://github.com/anoma/geb/tree/main/geb-cl)
+and the [HTML documentation](https://anoma.github.io/geb/geb.html) for the latest version
+
+## Getting Started
+
+Welcome to the GEB Project
 
 ## Geb User manual
 
@@ -286,11 +295,11 @@ in our class
 
 - [class] DIRECT-POINTWISE-MIXIN POINTWISE-MIXIN
 
-    Work like `POINTWISE-MIXIN`, however functions on
-    `POINTWISE-MIXIN`s will only operate on direct-slots
+    Works like POINTWISE-MIXIN, however functions on
+    POINTWISE-MIXIN will only operate on direct-slots
     instead of all slots the class may contain.
     
-    Further all `DIRECT-POINTWISE-MIXIN`'s are `POINTWISE-MIXIN`'s
+    Further all `DIRECT-POINTWISE-MIXIN`'s are POINTWISE-MIXIN's
 
 ### Pointwise API
 
@@ -313,12 +322,12 @@ traversal as `LIST`'s are
 
     Compares objects with pointwise equality. This is a
     much weaker form of equality comparison than
-    STANDARD-OBJECT EQUALP, which just does the much
+    STANDARD-OBJECT EQUALP, which does the much
     stronger pointer quality
 
 - [generic-function] POINTWISE-SLOTS OBJ
 
-    Work like C2MOP:COMPUTE-SLOTS however on the object
+    Works like C2MOP:COMPUTE-SLOTS however on the object
     rather than the class
 
 ### Mixins Examples

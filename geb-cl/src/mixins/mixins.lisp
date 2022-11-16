@@ -5,11 +5,11 @@
                    operations to classes"))
 
 (defclass direct-pointwise-mixin (pointwise-mixin) ()
-  (:documentation "Works like `POINTWISE-MIXIN`, however functions on
-                   `POINTWISE-MIXIN`s will only operate on direct-slots
+  (:documentation "Works like POINTWISE-MIXIN, however functions on
+                   [POINTWISE-MIXIN] will only operate on direct-slots
                    instead of all slots the class may contain.
 
-                   Further all `DIRECT-POINTWISE-MIXIN`'s are `POINTWISE-MIXIN`'s"))
+                   Further all `DIRECT-POINTWISE-MIXIN`'s are [POINTWISE-MIXIN]'s"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; API for Pointwise
