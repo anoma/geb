@@ -10,24 +10,6 @@ The Main GEB model. Everything here relates directly to the
 underlying machinery of GEB, or to abstractions that help extend
 it.
 
-### Accessors
-
-These functions relate to grabbing slots out of the various GEBMOPRH and GEBOBJ types
-
-- [generic-function] MCAR OBJECT
-
-- [generic-function] MCADR OBJECT
-
-- [generic-function] MCDR OBJECT
-
-- [generic-function] MCADDR OBJECT
-
-- [generic-function] OBJ OBJECT
-
-- [generic-function] NAME OBJECT
-
-- [generic-function] FUNC OBJECT
-
 ### Types
 
 Types Surrounding the GEB categories
@@ -64,6 +46,16 @@ The various constructors that form the SUBSTOBJ type
 
     an alias for a geb object
 
+The @GEB-ACCESSORS specific to @GEB-SUBSTMU
+
+- [method] MCAR (PROD PROD)
+
+- [method] MCADR (PROD PROD)
+
+- [method] MCAR (COPROD COPROD)
+
+- [method] MCADR (COPROD COPROD)
+
 #### Subst Morph
 
 The moprhisms of the GEB category.
@@ -78,6 +70,10 @@ The various constructors that form the SUBSTMORPH type
 
     Composition of morphism
 
+- [type] CASE
+
+    Coproduct elimination (case statement)
+
 - [type] INIT
 
     The initial Morphism
@@ -86,23 +82,25 @@ The various constructors that form the SUBSTMORPH type
 
     The terminal Morhpism
 
-- [type] CASE
-
-    Casing on objects
-
 - [type] PAIR
 
-    Consing Morphisms
+    Product introduction (morphism pairing)
 
 - [type] DISTRIBUTE
 
-    The distribute law
+    The distributive law
 
 - [type] INJECT-LEFT
 
+    Left injection (coproduct introduction)
+
 - [type] INJECT-RIGHT
 
+    Right injection (coproduct introduction)
+
 - [type] PROJECT-LEFT
+
+    Left projection (product elimination)
 
 - [type] PROJECT-RIGHT
 
@@ -111,6 +109,76 @@ The various constructors that form the SUBSTMORPH type
 - [type] ALIAS
 
     an alias for a geb object
+
+The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH
+
+- [method] MCAR (COMP COMP)
+
+    The first composed morphism
+
+- [method] MCADR (COMP COMP)
+
+    the second morphism
+
+- [method] OBJ (INIT INIT)
+
+- [method] OBJ (INIT INIT)
+
+- [method] MCAR (CASE CASE)
+
+- [method] MCADR (CASE CASE)
+
+- [method] MCAR (PAIR PAIR)
+
+    Head of the pair cell
+
+- [method] MCDR (PAIR PAIR)
+
+    Tail of the pair cell
+
+- [method] MCAR (DISTRIBUTE DISTRIBUTE)
+
+- [method] MCADR (DISTRIBUTE DISTRIBUTE)
+
+- [method] MCADDR (DISTRIBUTE DISTRIBUTE)
+
+- [method] MCAR (INJECT-LEFT INJECT-LEFT)
+
+- [method] MCADR (INJECT-LEFT INJECT-LEFT)
+
+- [method] MCAR (INJECT-RIGHT INJECT-RIGHT)
+
+- [method] MCADR (INJECT-RIGHT INJECT-RIGHT)
+
+- [method] MCAR (PROJECT-LEFT PROJECT-LEFT)
+
+- [method] MCADR (PROJECT-LEFT PROJECT-LEFT)
+
+- [method] MCAR (PROJECT-RIGHT PROJECT-RIGHT)
+
+- [method] MCADR (PROJECT-RIGHT PROJECT-RIGHT)
+
+    Right projection (product elimination)
+
+### Accessors
+
+These functions relate to grabbing slots out of the various
+@GEB-SUBSTMORPH and @GEB-SUBSTMU types. See those sections for
+specific instance documentation
+
+- [generic-function] MCAR OBJECT
+
+- [generic-function] MCADR OBJECT
+
+- [generic-function] MCDR OBJECT
+
+- [generic-function] MCADDR OBJECT
+
+- [generic-function] OBJ OBJECT
+
+- [generic-function] NAME OBJECT
+
+- [generic-function] FUNC OBJECT
 
 ### Constructors
 

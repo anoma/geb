@@ -4,10 +4,10 @@
 ## Table of Contents
 
 - [1 Geb User manual][c1fb]
-    - [1.1 Accessors][b26a]
-    - [1.2 Types][49e9]
-        - [1.2.1 Subst Obj][ca6e]
-        - [1.2.2 Subst Morph][ffb7]
+    - [1.1 Types][49e9]
+        - [1.1.1 Subst Obj][ca6e]
+        - [1.1.2 Subst Morph][ffb7]
+    - [1.2 Accessors][b26a]
     - [1.3 Constructors][0c5c]
     - [1.4 api][6228]
     - [1.5 Examples][a17b]
@@ -23,39 +23,13 @@ The Main GEB model. Everything here relates directly to the
 underlying machinery of GEB, or to abstractions that help extend
 it.
 
-<a id="x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
-### 1.1 Accessors
-
-These functions relate to grabbing slots out of the various GEBMOPRH and GEBOBJ types
-
-<a id="x-28GEB-3AMCAR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCAR** *OBJECT*
-
-<a id="x-28GEB-3AMCADR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCADR** *OBJECT*
-
-<a id="x-28GEB-3AMCDR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCDR** *OBJECT*
-
-<a id="x-28GEB-3AMCADDR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCADDR** *OBJECT*
-
-<a id="x-28GEB-3AOBJ-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **OBJ** *OBJECT*
-
-<a id="x-28GEB-3ANAME-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **NAME** *OBJECT*
-
-<a id="x-28GEB-3AFUNC-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **FUNC** *OBJECT*
-
 <a id="x-28GEB-3A-40GEB-TYPES-20MGL-PAX-3ASECTION-29"></a>
-### 1.2 Types
+### 1.1 Types
 
 Types Surrounding the GEB categories
 
 <a id="x-28GEB-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
-#### 1.2.1 Subst Obj
+#### 1.1.1 Subst Obj
 
 This Category covers the objects of the GEB category. Every value
 that is a [`SUBSTOBJ`][718e] is automatically lifted into a [`SUBSTMORPH`][e5d9] when a
@@ -93,8 +67,22 @@ The various constructors that form the [`SUBSTOBJ`][718e] type
 
     an alias for a geb object
 
+The [Accessors][b26a] specific to [Subst Obj][ca6e]
+
+<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APROD-29-29-29"></a>
+- [method] **MCAR** *(PROD PROD)*
+
+<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROD-29-29-29"></a>
+- [method] **MCADR** *(PROD PROD)*
+
+<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACOPROD-29-29-29"></a>
+- [method] **MCAR** *(COPROD COPROD)*
+
+<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACOPROD-29-29-29"></a>
+- [method] **MCADR** *(COPROD COPROD)*
+
 <a id="x-28GEB-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
-#### 1.2.2 Subst Morph
+#### 1.1.2 Subst Morph
 
 The moprhisms of the GEB category.
 
@@ -110,6 +98,11 @@ The various constructors that form the [`SUBSTMORPH`][e5d9] type
 
     Composition of morphism
 
+<a id="x-28GEB-3ACASE-20TYPE-29"></a>
+- [type] **CASE**
+
+    Coproduct elimination (case statement)
+
 <a id="x-28GEB-3AINIT-20TYPE-29"></a>
 - [type] **INIT**
 
@@ -120,29 +113,30 @@ The various constructors that form the [`SUBSTMORPH`][e5d9] type
 
     The terminal Morhpism
 
-<a id="x-28GEB-3ACASE-20TYPE-29"></a>
-- [type] **CASE**
-
-    Casing on objects
-
 <a id="x-28GEB-3APAIR-20TYPE-29"></a>
 - [type] **PAIR**
 
-    Consing Morphisms
+    Product introduction (morphism pairing)
 
 <a id="x-28GEB-3ADISTRIBUTE-20TYPE-29"></a>
 - [type] **DISTRIBUTE**
 
-    The distribute law
+    The distributive law
 
 <a id="x-28GEB-3AINJECT-LEFT-20TYPE-29"></a>
 - [type] **INJECT-LEFT**
 
+    Left injection (coproduct introduction)
+
 <a id="x-28GEB-3AINJECT-RIGHT-20TYPE-29"></a>
 - [type] **INJECT-RIGHT**
 
+    Right injection (coproduct introduction)
+
 <a id="x-28GEB-3APROJECT-LEFT-20TYPE-29"></a>
 - [type] **PROJECT-LEFT**
+
+    Left projection (product elimination)
 
 <a id="x-28GEB-3APROJECT-RIGHT-20TYPE-29"></a>
 - [type] **PROJECT-RIGHT**
@@ -154,6 +148,103 @@ The various constructors that form the [`SUBSTMORPH`][e5d9] type
 - [type] **ALIAS**
 
     an alias for a geb object
+
+The [Accessors][b26a] specific to [Subst Morph][ffb7]
+
+<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
+- [method] **MCAR** *(COMP COMP)*
+
+    The first composed morphism
+
+<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
+- [method] **MCADR** *(COMP COMP)*
+
+    the second morphism
+
+<a id="x-28GEB-3AOBJ-20-28METHOD-20NIL-20-28GEB-3AINIT-29-29-29"></a>
+- [method] **OBJ** *(INIT INIT)*
+
+<a id="x-28GEB-3AOBJ-20-28METHOD-20NIL-20-28GEB-3AINIT-29-29-29"></a>
+- [method] **OBJ** *(INIT INIT)*
+
+<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACASE-29-29-29"></a>
+- [method] **MCAR** *(CASE CASE)*
+
+<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACASE-29-29-29"></a>
+- [method] **MCADR** *(CASE CASE)*
+
+<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
+- [method] **MCAR** *(PAIR PAIR)*
+
+    Head of the pair cell
+
+<a id="x-28GEB-3AMCDR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
+- [method] **MCDR** *(PAIR PAIR)*
+
+    Tail of the pair cell
+
+<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
+- [method] **MCAR** *(DISTRIBUTE DISTRIBUTE)*
+
+<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
+- [method] **MCADR** *(DISTRIBUTE DISTRIBUTE)*
+
+<a id="x-28GEB-3AMCADDR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
+- [method] **MCADDR** *(DISTRIBUTE DISTRIBUTE)*
+
+<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3AINJECT-LEFT-29-29-29"></a>
+- [method] **MCAR** *(INJECT-LEFT INJECT-LEFT)*
+
+<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3AINJECT-LEFT-29-29-29"></a>
+- [method] **MCADR** *(INJECT-LEFT INJECT-LEFT)*
+
+<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3AINJECT-RIGHT-29-29-29"></a>
+- [method] **MCAR** *(INJECT-RIGHT INJECT-RIGHT)*
+
+<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3AINJECT-RIGHT-29-29-29"></a>
+- [method] **MCADR** *(INJECT-RIGHT INJECT-RIGHT)*
+
+<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APROJECT-LEFT-29-29-29"></a>
+- [method] **MCAR** *(PROJECT-LEFT PROJECT-LEFT)*
+
+<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROJECT-LEFT-29-29-29"></a>
+- [method] **MCADR** *(PROJECT-LEFT PROJECT-LEFT)*
+
+<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APROJECT-RIGHT-29-29-29"></a>
+- [method] **MCAR** *(PROJECT-RIGHT PROJECT-RIGHT)*
+
+<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROJECT-RIGHT-29-29-29"></a>
+- [method] **MCADR** *(PROJECT-RIGHT PROJECT-RIGHT)*
+
+    Right projection (product elimination)
+
+<a id="x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
+### 1.2 Accessors
+
+These functions relate to grabbing slots out of the various
+[Subst Morph][ffb7] and [Subst Obj][ca6e] types. See those sections for
+specific instance documentation
+
+<a id="x-28GEB-3AMCAR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCAR** *OBJECT*
+
+<a id="x-28GEB-3AMCADR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCADR** *OBJECT*
+
+<a id="x-28GEB-3AMCDR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCDR** *OBJECT*
+
+<a id="x-28GEB-3AMCADDR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCADDR** *OBJECT*
+
+<a id="x-28GEB-3AOBJ-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **OBJ** *OBJECT*
+
+<a id="x-28GEB-3ANAME-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **NAME** *OBJECT*
+
+<a id="x-28GEB-3AFUNC-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **FUNC** *OBJECT*
 
 <a id="x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
 ### 1.3 Constructors
