@@ -57,12 +57,13 @@
 <li><a href="#GEB:@GEB-API%20MGL-PAX:SECTION" title="api">4.4 api</a></li>
 <li><a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION" title="Examples">4.5 Examples</a></li>
 </ul></li>
-<li><a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">5 Mixins</a>
+<li><a href="#GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION" title="motivation">5 motivation</a></li>
+<li><a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">6 Mixins</a>
 
 <ul>
-<li><a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">5.1 Pointwise Mixins</a></li>
-<li><a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">5.2 Pointwise API</a></li>
-<li><a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">5.3 Mixins Examples</a></li>
+<li><a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">6.1 Pointwise Mixins</a></li>
+<li><a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">6.2 Pointwise API</a></li>
+<li><a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">6.3 Mixins Examples</a></li>
 </ul></li>
 </ul>
 
@@ -96,7 +97,7 @@ and the <a href="https://anoma.github.io/geb/" >HTML documentation</a> for the l
 
 <h2><a href="#GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION">3 Categorical Model</a></h2>
 
-<p>The GEB theoretical model is one of category theorey</p>
+<p>The GEB theoretical model is one of category theory</p>
 
 <p><a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 <a id="GEB-DOCS%2FDOCS:@MORPHISMS%20MGL-PAX:SECTION"></a></p>
@@ -142,17 +143,26 @@ deals with concrete <a href="#GEB-DOCS%2FDOCS:@MORPHISMS%20MGL-PAX:SECTION" titl
 
 <h4><a href="#GEB:@GEB-SUBSTMU%20MGL-PAX:SECTION">4.1.1 Subst Obj</a></h4>
 
-<p>This Category covers the objects of the <code>GEB</code> category. Every value
+<p>This section covers the objects of the <code>GEB</code> category. Every value
 that is a <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOBJ</code></a> is automatically lifted into a <a href="#GEB:SUBSTMORPH%20TYPE" title="GEB:SUBSTMORPH TYPE"><code>SUBSTMORPH</code></a> when a
 <code>SUBSTMORPH</code> is expected.</p>
 
-<p>The Type that encomposes the <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOBJ</code></a> category</p>
+<p>The Type that encomposes the <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOBJ</code></a> class</p>
 
 <p><a id="x-28GEB-3ASUBSTOBJ-20TYPE-29"></a>
 <a id="GEB:SUBSTOBJ%20TYPE"></a></p>
 
 <ul>
 <li><span class=reference-bullet><span class=reference><span class="locative-type">[type]</span> <span class="reference-object"><a href="#GEB:SUBSTOBJ%20TYPE" >SUBSTOBJ</a></span></span></span></li>
+</ul>
+
+<p><a id="x-28GEB-3A-3CSUBSTOBJ-3E-20TYPE-29"></a>
+<a id="GEB:%3CSUBSTOBJ%3E%20TYPE"></a></p>
+
+<ul>
+<li><p><span class=reference-bullet><span class=reference><span class="locative-type">[type]</span> <span class="reference-object"><a href="#GEB:%3CSUBSTOBJ%3E%20TYPE" >&lt;SUBSTOBJ&gt;</a></span></span></span></p>
+
+<p>the class corresponding to <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOBJ</code></a></p></li>
 </ul>
 
 <p>The various constructors that form the <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOBJ</code></a> type</p>
@@ -241,13 +251,22 @@ that is a <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOB
 
 <p>The moprhisms of the <code>GEB</code> category.</p>
 
-<p>The Type that encomposes the SUBSTMOPRH category</p>
+<p>The Type that encomposes the SUBSTMOPRH class</p>
 
 <p><a id="x-28GEB-3ASUBSTMORPH-20TYPE-29"></a>
 <a id="GEB:SUBSTMORPH%20TYPE"></a></p>
 
 <ul>
 <li><span class=reference-bullet><span class=reference><span class="locative-type">[type]</span> <span class="reference-object"><a href="#GEB:SUBSTMORPH%20TYPE" >SUBSTMORPH</a></span></span></span></li>
+</ul>
+
+<p><a id="x-28GEB-3A-3CSUBSTMORPH-3E-20TYPE-29"></a>
+<a id="GEB:%3CSUBSTMORPH%3E%20TYPE"></a></p>
+
+<ul>
+<li><p><span class=reference-bullet><span class=reference><span class="locative-type">[type]</span> <span class="reference-object"><a href="#GEB:%3CSUBSTMORPH%3E%20TYPE" >&lt;SUBSTMORPH&gt;</a></span></span></span></p>
+
+<p>the class type corresponding to <a href="#GEB:SUBSTMORPH%20TYPE" title="GEB:SUBSTMORPH TYPE"><code>SUBSTMORPH</code></a></p></li>
 </ul>
 
 <p>The various constructors that form the <a href="#GEB:SUBSTMORPH%20TYPE" title="GEB:SUBSTMORPH TYPE"><code>SUBSTMORPH</code></a> type</p>
@@ -720,7 +739,7 @@ here relate to instantiating a term</p>
 <p><a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
 <a id="GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION"></a></p>
 
-<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB:@GEB-API%20MGL-PAX:SECTION" title="api">&#8592;</a> <a href="#GEB:@GEB%20MGL-PAX:SECTION" title="The Geb Model">&#8593;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8594;</a> <a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION" title="Examples">&#8634;</a></span></span></p>
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB:@GEB-API%20MGL-PAX:SECTION" title="api">&#8592;</a> <a href="#GEB:@GEB%20MGL-PAX:SECTION" title="The Geb Model">&#8593;</a> <a href="#GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION" title="motivation">&#8594;</a> <a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION" title="Examples">&#8634;</a></span></span></p>
 
 <h3><a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION">4.5 Examples</a></h3>
 
@@ -737,12 +756,19 @@ with <code>GEB</code>:</p>
 <span class="paren1">(<span class="code">+ 1 2 3 4</span>)</span>
 =&gt; 10</span></code></pre>
 
+<p><a id="x-28GEB-DOCS-2FDOCS-3A-40MOTIVATION-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION"></a></p>
+
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION" title="Examples">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8594;</a> <a href="#GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION" title="motivation">&#8634;</a></span></span></p>
+
+<h2><a href="#GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION">5 motivation</a></h2>
+
 <p><a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
 <a id="GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION"></a></p>
 
-<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION" title="Examples">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">&#8594;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8634;</a></span></span></p>
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION" title="motivation">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">&#8594;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8634;</a></span></span></p>
 
-<h2><a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION">5 Mixins</a></h2>
+<h2><a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION">6 Mixins</a></h2>
 
 <h6>[in package GEB.MIXINS]</h6>
 
@@ -755,7 +781,7 @@ project</p>
 
 <p><span class="outer-navigation"><span class="navigation"> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8592;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8593;</a> <a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">&#8594;</a> <a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">&#8634;</a></span></span></p>
 
-<h3><a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION">5.1 Pointwise Mixins</a></h3>
+<h3><a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION">6.1 Pointwise Mixins</a></h3>
 
 <p>Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -796,7 +822,7 @@ instead of all slots the class may contain.</p>
 
 <p><span class="outer-navigation"><span class="navigation"> <a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">&#8592;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8593;</a> <a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">&#8594;</a> <a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">&#8634;</a></span></span></p>
 
-<h3><a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION">5.2 Pointwise API</a></h3>
+<h3><a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION">6.2 Pointwise API</a></h3>
 
 <p>These are the general API functions on any class that have the
 <a href="#GEB.MIXINS:POINTWISE-MIXIN%20CLASS" title="GEB.MIXINS:POINTWISE-MIXIN CLASS"><code>POINTWISE-MIXIN</code></a> service.</p>
@@ -845,7 +871,7 @@ rather than the class</p></li>
 
 <p><span class="outer-navigation"><span class="navigation"> <a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">&#8592;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8593;</a> <a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">&#8634;</a></span></span></p>
 
-<h3><a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION">5.3 Mixins Examples</a></h3>
+<h3><a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION">6.3 Mixins Examples</a></h3>
 
 <p>Let's see some example uses of <a href="#GEB.MIXINS:POINTWISE-MIXIN%20CLASS" title="GEB.MIXINS:POINTWISE-MIXIN CLASS"><code>POINTWISE-MIXIN</code></a>:</p>
 

@@ -16,10 +16,11 @@
     - [4.3 Constructors][0c5c]
     - [4.4 api][6228]
     - [4.5 Examples][a17b]
-- [5 Mixins][723a]
-    - [5.1 Pointwise Mixins][d5d3]
-    - [5.2 Pointwise API][2fcf]
-    - [5.3 Mixins Examples][4938]
+- [5 motivation][7513]
+- [6 Mixins][723a]
+    - [6.1 Pointwise Mixins][d5d3]
+    - [6.2 Pointwise API][2fcf]
+    - [6.3 Mixins Examples][4938]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -38,7 +39,7 @@ Welcome to the GEB Project
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 3 Categorical Model
 
-The GEB theoretical model is one of category theorey
+The GEB theoretical model is one of category theory
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 3.1 Morphisms
@@ -65,14 +66,19 @@ deals with concrete [Morphisms][ada9] within the category
 <a id="x-28GEB-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
 #### 4.1.1 Subst Obj
 
-This Category covers the objects of the `GEB` category. Every value
+This section covers the objects of the `GEB` category. Every value
 that is a [`SUBSTOBJ`][718e] is automatically lifted into a [`SUBSTMORPH`][e5d9] when a
 `SUBSTMORPH` is expected.
 
-The Type that encomposes the [`SUBSTOBJ`][718e] category
+The Type that encomposes the [`SUBSTOBJ`][718e] class
 
 <a id="x-28GEB-3ASUBSTOBJ-20TYPE-29"></a>
 - [type] **SUBSTOBJ**
+
+<a id="x-28GEB-3A-3CSUBSTOBJ-3E-20TYPE-29"></a>
+- [type] **\<SUBSTOBJ\>**
+
+    the class corresponding to [`SUBSTOBJ`][718e]
 
 The various constructors that form the [`SUBSTOBJ`][718e] type
 
@@ -120,10 +126,15 @@ The [Accessors][b26a] specific to [Subst Obj][ca6e]
 
 The moprhisms of the `GEB` category.
 
-The Type that encomposes the SUBSTMOPRH category
+The Type that encomposes the SUBSTMOPRH class
 
 <a id="x-28GEB-3ASUBSTMORPH-20TYPE-29"></a>
 - [type] **SUBSTMORPH**
+
+<a id="x-28GEB-3A-3CSUBSTMORPH-3E-20TYPE-29"></a>
+- [type] **\<SUBSTMORPH\>**
+
+    the class type corresponding to [`SUBSTMORPH`][e5d9]
 
 The various constructors that form the [`SUBSTMORPH`][e5d9] type
 
@@ -379,8 +390,12 @@ with `GEB`:
 ```
 
 
+<a id="x-28GEB-DOCS-2FDOCS-3A-40MOTIVATION-20MGL-PAX-3ASECTION-29"></a>
+## 5 motivation
+
+
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
-## 5 Mixins
+## 6 Mixins
 
 ###### \[in package GEB.MIXINS\]
 Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
@@ -388,7 +403,7 @@ project. Overall all these offer various services to the rest of the
 project
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
-### 5.1 Pointwise Mixins
+### 6.1 Pointwise Mixins
 
 Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -417,7 +432,7 @@ in our class
     Further all `DIRECT-POINTWISE-MIXIN`'s are [`POINTWISE-MIXIN`][445d]'s
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
-### 5.2 Pointwise API
+### 6.2 Pointwise API
 
 These are the general API functions on any class that have the
 [`POINTWISE-MIXIN`][445d] service.
@@ -450,7 +465,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
     rather than the class
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 5.3 Mixins Examples
+### 6.3 Mixins Examples
 
 Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
@@ -477,6 +492,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
   [6380]: #x-28GEB-3A-2ASO1-2A-20VARIABLE-29 "GEB:*SO1* VARIABLE"
   [718e]: #x-28GEB-3ASUBSTOBJ-20TYPE-29 "GEB:SUBSTOBJ TYPE"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
+  [7513]: #x-28GEB-DOCS-2FDOCS-3A-40MOTIVATION-20MGL-PAX-3ASECTION-29 "motivation"
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"

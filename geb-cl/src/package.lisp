@@ -38,7 +38,8 @@ deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
    that is a SUBSTOBJ is automatically lifted into a SUBSTMORPH when a
    SUBSTMORPH is expected."
   "The Type that encomposes the SUBSTOBJ class"
-  (substobj pax:type)
+  (substobj   pax:type)
+  (<substobj> pax:type)
   "The various constructors that form the SUBSTOBJ type"
   (prod pax:type)
   (coprod pax:type)
@@ -55,7 +56,8 @@ deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
 (pax:defsection @geb-substmorph (:title "Subst Morph")
   "The moprhisms of the GEB category."
   "The Type that encomposes the SUBSTMOPRH class"
-  (substmorph pax:type)
+  (substmorph   pax:type)
+  (<substmorph> pax:type)
   "The various constructors that form the SUBSTMORPH type"
   (comp          pax:type)
   (case          pax:type)

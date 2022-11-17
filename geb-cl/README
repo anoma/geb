@@ -14,7 +14,7 @@ Welcome to the GEB Project
 
 ## Categorical Model
 
-The GEB theoretical model is one of category theorey
+The GEB theoretical model is one of category theory
 
 ### Morphisms
 
@@ -36,13 +36,17 @@ deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category
 
 #### Subst Obj
 
-This Category covers the objects of the GEB category. Every value
+This section covers the objects of the GEB category. Every value
 that is a SUBSTOBJ is automatically lifted into a SUBSTMORPH when a
 SUBSTMORPH is expected.
 
-The Type that encomposes the SUBSTOBJ category
+The Type that encomposes the SUBSTOBJ class
 
 - [type] SUBSTOBJ
+
+- [type] <SUBSTOBJ>
+
+    the class corresponding to SUBSTOBJ
 
 The various constructors that form the SUBSTOBJ type
 
@@ -80,9 +84,13 @@ The @GEB-ACCESSORS specific to @GEB-SUBSTMU
 
 The moprhisms of the GEB category.
 
-The Type that encomposes the SUBSTMOPRH category
+The Type that encomposes the SUBSTMOPRH class
 
 - [type] SUBSTMORPH
+
+- [type] <SUBSTMORPH>
+
+    the class type corresponding to SUBSTMORPH
 
 The various constructors that form the SUBSTMORPH type
 
@@ -277,6 +285,9 @@ with GEB:
 (+ 1 2 3 4)
 => 10
 ```
+
+
+## motivation
 
 
 ## Mixins
