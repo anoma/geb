@@ -34,10 +34,10 @@ deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
   (@geb-substmorph pax:section))
 
 (pax:defsection @geb-substmu (:title "Subst Obj")
-  "This Category covers the objects of the GEB category. Every value
+  "This section covers the objects of the GEB category. Every value
    that is a SUBSTOBJ is automatically lifted into a SUBSTMORPH when a
    SUBSTMORPH is expected."
-  "The Type that encomposes the SUBSTOBJ category"
+  "The Type that encomposes the SUBSTOBJ class"
   (substobj pax:type)
   "The various constructors that form the SUBSTOBJ type"
   (prod pax:type)
@@ -54,7 +54,7 @@ deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
 
 (pax:defsection @geb-substmorph (:title "Subst Morph")
   "The moprhisms of the GEB category."
-  "The Type that encomposes the SUBSTMOPRH category"
+  "The Type that encomposes the SUBSTMOPRH class"
   (substmorph pax:type)
   "The various constructors that form the SUBSTMORPH type"
   (comp          pax:type)
