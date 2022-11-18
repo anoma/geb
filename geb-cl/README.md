@@ -5,6 +5,8 @@
 
 - [1 Links][9bc5]
 - [2 Getting Started][3d47]
+    - [2.1 installation][8fa5]
+    - [2.2 loading][a7d5]
 - [3 Categorical Model][c2e9]
     - [3.1 Morphisms][ada9]
     - [3.2 Objects][dbe7]
@@ -16,11 +18,10 @@
     - [4.3 Constructors][0c5c]
     - [4.4 api][6228]
     - [4.5 Examples][a17b]
-- [5 motivation][7513]
-- [6 Mixins][723a]
-    - [6.1 Pointwise Mixins][d5d3]
-    - [6.2 Pointwise API][2fcf]
-    - [6.3 Mixins Examples][4938]
+- [5 Mixins][723a]
+    - [5.1 Pointwise Mixins][d5d3]
+    - [5.2 Pointwise API][2fcf]
+    - [5.3 Mixins Examples][4938]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -34,7 +35,64 @@ and the [HTML documentation](https://anoma.github.io/geb/) for the latest versio
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
 
-Welcome to the GEB Project
+Welcome to the GEB Project!
+
+<a id="x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29"></a>
+### 2.1 installation
+
+This project uses [common lisp](https://common-lisp.net/), so a few
+   dependencies are needed to get around the code-base and start hacking. Namely:
+
+1. [lisp with quicklisp](https://lisp-lang.org/learn/getting-started/).
+
+2. [Emacs](https://en.wikipedia.org/wiki/Emacs) along with one of the following:
+
+    - [sly](https://github.com/joaotavora/sly)
+
+        - [sly user manual](http://joaotavora.github.io/sly/)
+
+    - [slime](https://github.com/slime/slime)
+
+        - [slime user manual](http://www.chiark.greenend.org.uk/doc/slime/slime.pdf)
+
+
+<a id="x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29"></a>
+### 2.2 loading
+
+Now that we have an environment setup, we can load the project, this
+   can be done in a few steps.
+
+1. Open the `REPL` (sbcl (terminal), `M-x` sly, `M-x` swank)
+
+    - For the terminal, this is just calling the [common
+       lisp](https://common-lisp.net/) implementation from the
+       terminal.
+
+        `user@system:geb-directory % sbcl`.
+
+    - For Emacs, this is simply calling either `M-x sly` or `M-x slime`
+       if you are using either [sly](https://github.com/joaotavora/sly) or [slime](https://github.com/slime/slime)
+
+2. From Emacs: open `geb.asd` and press `C-ck` (`sly-compile-and-load-file`, or
+   `swank-compile-and-load-file` if you are using swank).
+
+Now that we have the file open, we can now load the system by
+writing:
+
+```lisp
+;; only necessary for the first time!
+(ql:quickload :geb/documentation)
+
+;; if you want to load it in the future
+(asdf:load-system :geb/documentation)
+
+;; if you want to load the codbase and run tests at the same time
+(asdf:test-system :geb/documentation)
+
+;; if you want to run the tests once the system is loaded!
+(geb-test:run-tests)
+```
+
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 3 Categorical Model
@@ -390,12 +448,8 @@ with `GEB`:
 ```
 
 
-<a id="x-28GEB-DOCS-2FDOCS-3A-40MOTIVATION-20MGL-PAX-3ASECTION-29"></a>
-## 5 motivation
-
-
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
-## 6 Mixins
+## 5 Mixins
 
 ###### \[in package GEB.MIXINS\]
 Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
@@ -403,7 +457,7 @@ project. Overall all these offer various services to the rest of the
 project
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
-### 6.1 Pointwise Mixins
+### 5.1 Pointwise Mixins
 
 Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -432,7 +486,7 @@ in our class
     Further all `DIRECT-POINTWISE-MIXIN`'s are [`POINTWISE-MIXIN`][445d]'s
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
-### 6.2 Pointwise API
+### 5.2 Pointwise API
 
 These are the general API functions on any class that have the
 [`POINTWISE-MIXIN`][445d] service.
@@ -465,7 +519,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
     rather than the class
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 6.3 Mixins Examples
+### 5.3 Mixins Examples
 
 Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
@@ -492,12 +546,13 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
   [6380]: #x-28GEB-3A-2ASO1-2A-20VARIABLE-29 "GEB:*SO1* VARIABLE"
   [718e]: #x-28GEB-3ASUBSTOBJ-20TYPE-29 "GEB:SUBSTOBJ TYPE"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
-  [7513]: #x-28GEB-DOCS-2FDOCS-3A-40MOTIVATION-20MGL-PAX-3ASECTION-29 "motivation"
+  [8fa5]: #x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29 "installation"
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"
   [9f7a]: #x-28GEB-3A-2ASO0-2A-20VARIABLE-29 "GEB:*SO0* VARIABLE"
   [a17b]: #x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29 "Examples"
+  [a7d5]: #x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29 "loading"
   [a802]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT TYPE"
   [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
   [b26a]: #x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"

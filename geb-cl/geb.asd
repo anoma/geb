@@ -54,7 +54,7 @@
                          (uiop:symbol-call :geb-test :run-tests)))
 
 (asdf:defsystem :geb/documentation
-  :depends-on (:geb :fiveam :MGL-PAX/FULL)
+  :depends-on (:geb :fiveam :MGL-PAX/FULL :cl-environments)
   :description "geb full documentation exploration"
   :serial t
   :pathname "docs/"

@@ -36,7 +36,12 @@
 
 <ul>
 <li><a href="#GEB-DOCS%2FDOCS:@LINKS%20MGL-PAX:SECTION" title="Links">1 Links</a></li>
-<li><a href="#GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION" title="Getting Started">2 Getting Started</a></li>
+<li><a href="#GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION" title="Getting Started">2 Getting Started</a>
+
+<ul>
+<li><a href="#GEB-DOCS%2FDOCS:@INSTALLATION%20MGL-PAX:SECTION" title="installation">2.1 installation</a></li>
+<li><a href="#GEB-DOCS%2FDOCS:@LOADING%20MGL-PAX:SECTION" title="loading">2.2 loading</a></li>
+</ul></li>
 <li><a href="#GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION" title="Categorical Model">3 Categorical Model</a>
 
 <ul>
@@ -57,13 +62,12 @@
 <li><a href="#GEB:@GEB-API%20MGL-PAX:SECTION" title="api">4.4 api</a></li>
 <li><a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION" title="Examples">4.5 Examples</a></li>
 </ul></li>
-<li><a href="#GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION" title="motivation">5 motivation</a></li>
-<li><a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">6 Mixins</a>
+<li><a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">5 Mixins</a>
 
 <ul>
-<li><a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">6.1 Pointwise Mixins</a></li>
-<li><a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">6.2 Pointwise API</a></li>
-<li><a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">6.3 Mixins Examples</a></li>
+<li><a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">5.1 Pointwise Mixins</a></li>
+<li><a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">5.2 Pointwise API</a></li>
+<li><a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">5.3 Mixins Examples</a></li>
 </ul></li>
 </ul>
 
@@ -84,16 +88,85 @@ and the <a href="https://anoma.github.io/geb/" >HTML documentation</a> for the l
 <p><a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 <a id="GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION"></a></p>
 
-<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB-DOCS%2FDOCS:@LINKS%20MGL-PAX:SECTION" title="Links">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION" title="Categorical Model">&#8594;</a> <a href="#GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION" title="Getting Started">&#8634;</a></span></span></p>
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB-DOCS%2FDOCS:@LINKS%20MGL-PAX:SECTION" title="Links">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB-DOCS%2FDOCS:@INSTALLATION%20MGL-PAX:SECTION" title="installation">&#8594;</a> <a href="#GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION" title="Getting Started">&#8634;</a></span></span></p>
 
 <h2><a href="#GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION">2 Getting Started</a></h2>
 
-<p>Welcome to the GEB Project</p>
+<p>Welcome to the GEB Project!</p>
+
+<p><a id="x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@INSTALLATION%20MGL-PAX:SECTION"></a></p>
+
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION" title="Getting Started">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION" title="Getting Started">&#8593;</a> <a href="#GEB-DOCS%2FDOCS:@LOADING%20MGL-PAX:SECTION" title="loading">&#8594;</a> <a href="#GEB-DOCS%2FDOCS:@INSTALLATION%20MGL-PAX:SECTION" title="installation">&#8634;</a></span></span></p>
+
+<h3><a href="#GEB-DOCS%2FDOCS:@INSTALLATION%20MGL-PAX:SECTION">2.1 installation</a></h3>
+
+<p>This project uses <a href="https://common-lisp.net/" >common lisp</a>, so a few
+   dependencies are needed to get around the code-base and start hacking. Namely:</p>
+
+<ol>
+<li><p><a href="https://lisp-lang.org/learn/getting-started/" >lisp with quicklisp</a>.</p></li>
+<li><p><a href="https://en.wikipedia.org/wiki/Emacs" >Emacs</a> along with one of the following:</p>
+
+<ul>
+<li><p><a href="https://github.com/joaotavora/sly" >sly</a></p>
+
+<ul>
+<li><a href="http://joaotavora.github.io/sly/" >sly user manual</a></li>
+</ul></li>
+<li><p><a href="https://github.com/slime/slime" >slime</a></p>
+
+<ul>
+<li><a href="http://www.chiark.greenend.org.uk/doc/slime/slime.pdf" >slime user manual</a></li>
+</ul></li>
+</ul></li>
+</ol>
+
+<p><a id="x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB-DOCS%2FDOCS:@LOADING%20MGL-PAX:SECTION"></a></p>
+
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB-DOCS%2FDOCS:@INSTALLATION%20MGL-PAX:SECTION" title="installation">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION" title="Getting Started">&#8593;</a> <a href="#GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION" title="Categorical Model">&#8594;</a> <a href="#GEB-DOCS%2FDOCS:@LOADING%20MGL-PAX:SECTION" title="loading">&#8634;</a></span></span></p>
+
+<h3><a href="#GEB-DOCS%2FDOCS:@LOADING%20MGL-PAX:SECTION">2.2 loading</a></h3>
+
+<p>Now that we have an environment setup, we can load the project, this
+   can be done in a few steps.</p>
+
+<ol>
+<li><p>Open the <code>REPL</code> (sbcl (terminal), <code>M-x</code> sly, <code>M-x</code> swank)</p>
+
+<ul>
+<li><p>For the terminal, this is just calling the <a href="https://common-lisp.net/" >common
+   lisp</a> implementation from the
+   terminal.</p>
+
+<p><code>user@system:geb-directory % sbcl</code>.</p></li>
+<li><p>For Emacs, this is simply calling either <code>M-x sly</code> or <code>M-x slime</code>
+   if you are using either <a href="https://github.com/joaotavora/sly" >sly</a> or <a href="https://github.com/slime/slime" >slime</a></p></li>
+</ul></li>
+<li><p>From Emacs: open <code>geb.asd</code> and press <code>C-ck</code> (<code>sly-compile-and-load-file</code>, or
+   <code>swank-compile-and-load-file</code> if you are using swank).</p></li>
+</ol>
+
+<p>Now that we have the file open, we can now load the system by
+writing:</p>
+
+<pre><code><span class="code"><span class="comment">;; only necessary for the first time!
+</span><span class="paren1">(<span class="code">ql:quickload <span class="keyword">:geb/documentation</span></span>)</span>
+
+<span class="comment">;; if you want to load it in the future
+</span><span class="paren1">(<span class="code">asdf:load-system <span class="keyword">:geb/documentation</span></span>)</span>
+
+<span class="comment">;; if you want to load the codbase and run tests at the same time
+</span><span class="paren1">(<span class="code">asdf:test-system <span class="keyword">:geb/documentation</span></span>)</span>
+
+<span class="comment">;; if you want to run the tests once the system is loaded!
+</span><span class="paren1">(<span class="code">geb-test:run-tests</span>)</span></span></code></pre>
 
 <p><a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 <a id="GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION"></a></p>
 
-<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB-DOCS%2FDOCS:@GETTING-STARTED%20MGL-PAX:SECTION" title="Getting Started">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB-DOCS%2FDOCS:@MORPHISMS%20MGL-PAX:SECTION" title="Morphisms">&#8594;</a> <a href="#GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION" title="Categorical Model">&#8634;</a></span></span></p>
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB-DOCS%2FDOCS:@LOADING%20MGL-PAX:SECTION" title="loading">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB-DOCS%2FDOCS:@MORPHISMS%20MGL-PAX:SECTION" title="Morphisms">&#8594;</a> <a href="#GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION" title="Categorical Model">&#8634;</a></span></span></p>
 
 <h2><a href="#GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION">3 Categorical Model</a></h2>
 
@@ -739,7 +812,7 @@ here relate to instantiating a term</p>
 <p><a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
 <a id="GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION"></a></p>
 
-<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB:@GEB-API%20MGL-PAX:SECTION" title="api">&#8592;</a> <a href="#GEB:@GEB%20MGL-PAX:SECTION" title="The Geb Model">&#8593;</a> <a href="#GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION" title="motivation">&#8594;</a> <a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION" title="Examples">&#8634;</a></span></span></p>
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB:@GEB-API%20MGL-PAX:SECTION" title="api">&#8592;</a> <a href="#GEB:@GEB%20MGL-PAX:SECTION" title="The Geb Model">&#8593;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8594;</a> <a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION" title="Examples">&#8634;</a></span></span></p>
 
 <h3><a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION">4.5 Examples</a></h3>
 
@@ -756,19 +829,12 @@ with <code>GEB</code>:</p>
 <span class="paren1">(<span class="code">+ 1 2 3 4</span>)</span>
 =&gt; 10</span></code></pre>
 
-<p><a id="x-28GEB-DOCS-2FDOCS-3A-40MOTIVATION-20MGL-PAX-3ASECTION-29"></a>
-<a id="GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION"></a></p>
-
-<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION" title="Examples">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8594;</a> <a href="#GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION" title="motivation">&#8634;</a></span></span></p>
-
-<h2><a href="#GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION">5 motivation</a></h2>
-
 <p><a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
 <a id="GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION"></a></p>
 
-<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB-DOCS%2FDOCS:@MOTIVATION%20MGL-PAX:SECTION" title="motivation">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">&#8594;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8634;</a></span></span></p>
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB:@GEB-EXAMPLES%20MGL-PAX:SECTION" title="Examples">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">&#8594;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8634;</a></span></span></p>
 
-<h2><a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION">6 Mixins</a></h2>
+<h2><a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION">5 Mixins</a></h2>
 
 <h6>[in package GEB.MIXINS]</h6>
 
@@ -781,7 +847,7 @@ project</p>
 
 <p><span class="outer-navigation"><span class="navigation"> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8592;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8593;</a> <a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">&#8594;</a> <a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">&#8634;</a></span></span></p>
 
-<h3><a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION">6.1 Pointwise Mixins</a></h3>
+<h3><a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION">5.1 Pointwise Mixins</a></h3>
 
 <p>Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -822,7 +888,7 @@ instead of all slots the class may contain.</p>
 
 <p><span class="outer-navigation"><span class="navigation"> <a href="#GEB.MIXINS:@POINTWISE%20MGL-PAX:SECTION" title="Pointwise Mixins">&#8592;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8593;</a> <a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">&#8594;</a> <a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">&#8634;</a></span></span></p>
 
-<h3><a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION">6.2 Pointwise API</a></h3>
+<h3><a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION">5.2 Pointwise API</a></h3>
 
 <p>These are the general API functions on any class that have the
 <a href="#GEB.MIXINS:POINTWISE-MIXIN%20CLASS" title="GEB.MIXINS:POINTWISE-MIXIN CLASS"><code>POINTWISE-MIXIN</code></a> service.</p>
@@ -871,7 +937,7 @@ rather than the class</p></li>
 
 <p><span class="outer-navigation"><span class="navigation"> <a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">&#8592;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8593;</a> <a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">&#8634;</a></span></span></p>
 
-<h3><a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION">6.3 Mixins Examples</a></h3>
+<h3><a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION">5.3 Mixins Examples</a></h3>
 
 <p>Let's see some example uses of <a href="#GEB.MIXINS:POINTWISE-MIXIN%20CLASS" title="GEB.MIXINS:POINTWISE-MIXIN CLASS"><code>POINTWISE-MIXIN</code></a>:</p>
 
