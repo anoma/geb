@@ -69,7 +69,7 @@ writing:
 
 ## Categorical Model
 
-The GEB theoretical model is one of category theory
+GEB is organizing programming language concepts using [category theory](https://plato.stanford.edu/entries/category-theory/), originally developped by mathematicians, but very much alive in (theoretical) computer science. 
 
 ### Morphisms
 
@@ -197,11 +197,7 @@ The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH
 
 - [method] MCAR (COMP COMP)
 
-    The first composed morphism
-
 - [method] MCADR (COMP COMP)
-
-    the second morphism
 
 - [method] OBJ (INIT INIT)
 
@@ -213,11 +209,7 @@ The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH
 
 - [method] MCAR (PAIR PAIR)
 
-    Head of the pair cell
-
 - [method] MCDR (PAIR PAIR)
-
-    Tail of the pair cell
 
 - [method] MCAR (DISTRIBUTE DISTRIBUTE)
 
@@ -241,27 +233,25 @@ The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH
 
 - [method] MCADR (PROJECT-RIGHT PROJECT-RIGHT)
 
-    Right projection (product elimination)
-
 ### Accessors
 
 These functions relate to grabbing slots out of the various
 @GEB-SUBSTMORPH and @GEB-SUBSTMU types. See those sections for
 specific instance documentation
 
-- [generic-function] MCAR OBJECT
+- [generic-function] MCAR X
 
-- [generic-function] MCADR OBJECT
+- [generic-function] MCADR X
 
-- [generic-function] MCDR OBJECT
+- [generic-function] MCDR X
 
-- [generic-function] MCADDR OBJECT
+- [generic-function] MCADDR X
 
-- [generic-function] OBJ OBJECT
+- [generic-function] OBJ X
 
-- [generic-function] NAME OBJECT
+- [generic-function] NAME X
 
-- [generic-function] FUNC OBJECT
+- [generic-function] FUNC X
 
 ### Constructors
 

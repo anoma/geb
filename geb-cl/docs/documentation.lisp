@@ -23,13 +23,13 @@ and the [HTML documentation](https://anoma.github.io/geb/) for the latest versio
 
 ;; please insert more text here about category theory
 (pax:defsection @model (:title "Categorical Model")
-  (concatenate
-   'string
-   "GEB is organizing programming language concepts "
-   "using [category theory](https://plato.stanford.edu/entries/category-theory/), "
-   "originally developped by mathematicians, "
-   "but very much alive in (theoretical) computer science. "
-   )
+  #.(concatenate
+    'string
+    "GEB is organizing programming language concepts "
+    "using [category theory](https://plato.stanford.edu/entries/category-theory/), "
+    "originally developped by mathematicians, "
+    "but very much alive in (theoretical) computer science. "
+    )
 
   (@morphisms pax:section)
   (@objects pax:section))

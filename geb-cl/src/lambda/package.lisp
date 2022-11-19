@@ -1,5 +1,5 @@
-(locally (declare (sb-ext:muffle-conditions sb-int:package-at-variance))
-  (handler-bind ((sb-int:package-at-variance #'muffle-warning))
+(locally (declare #+sbcl (sb-ext:muffle-conditions sb-int:package-at-variance))
+  (handler-bind (#+sbcl (sb-int:package-at-variance #'muffle-warning))
     (uiop:define-package #:geb.lambda.spec
       (:documentation "Basic spec for creating lambda terms")
       (:mix #:trivia #:serapeum #:common-lisp)

@@ -97,7 +97,7 @@ writing:
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 3 Categorical Model
 
-The GEB theoretical model is one of category theory
+GEB is organizing programming language concepts using [category theory](https://plato.stanford.edu/entries/category-theory/), originally developped by mathematicians, but very much alive in (theoretical) computer science. 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 3.1 Morphisms
@@ -112,19 +112,19 @@ The GEB theoretical model is one of category theory
 
 ###### \[in package GEB\]
 Everything here relates directly to the underlying machinery of
-`GEB`, or to abstractions that help extend it.
+GEB, or to abstractions that help extend it.
 
 <a id="x-28GEB-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
 ### 4.1 Core Categories
 
-The underlying category of `GEB`. With [Subst Obj][ca6e] covering the
+The underlying category of GEB. With [Subst Obj][ca6e] covering the
 shapes and forms ([Objects][dbe7]) of data while [Subst Morph][ffb7]
 deals with concrete [Morphisms][ada9] within the category
 
 <a id="x-28GEB-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
 #### 4.1.1 Subst Obj
 
-This section covers the objects of the `GEB` category. Every value
+This section covers the objects of the GEB category. Every value
 that is a [`SUBSTOBJ`][718e] is automatically lifted into a [`SUBSTMORPH`][e5d9] when a
 `SUBSTMORPH` is expected.
 
@@ -182,7 +182,7 @@ The [Accessors][b26a] specific to [Subst Obj][ca6e]
 <a id="x-28GEB-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
 #### 4.1.2 Subst Morph
 
-The moprhisms of the `GEB` category.
+The moprhisms of the GEB category.
 
 The Type that encomposes the SUBSTMOPRH class
 
@@ -257,12 +257,8 @@ The [Accessors][b26a] specific to [Subst Morph][ffb7]
 <a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
 - [method] **MCAR** *(COMP COMP)*
 
-    The first composed morphism
-
 <a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
 - [method] **MCADR** *(COMP COMP)*
-
-    the second morphism
 
 <a id="x-28GEB-3AOBJ-20-28METHOD-20NIL-20-28GEB-3AINIT-29-29-29"></a>
 - [method] **OBJ** *(INIT INIT)*
@@ -279,12 +275,8 @@ The [Accessors][b26a] specific to [Subst Morph][ffb7]
 <a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
 - [method] **MCAR** *(PAIR PAIR)*
 
-    Head of the pair cell
-
 <a id="x-28GEB-3AMCDR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
 - [method] **MCDR** *(PAIR PAIR)*
-
-    Tail of the pair cell
 
 <a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
 - [method] **MCAR** *(DISTRIBUTE DISTRIBUTE)*
@@ -319,8 +311,6 @@ The [Accessors][b26a] specific to [Subst Morph][ffb7]
 <a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROJECT-RIGHT-29-29-29"></a>
 - [method] **MCADR** *(PROJECT-RIGHT PROJECT-RIGHT)*
 
-    Right projection (product elimination)
-
 <a id="x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
 ### 4.2 Accessors
 
@@ -329,30 +319,30 @@ These functions relate to grabbing slots out of the various
 specific instance documentation
 
 <a id="x-28GEB-3AMCAR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCAR** *OBJECT*
+- [generic-function] **MCAR** *X*
 
 <a id="x-28GEB-3AMCADR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCADR** *OBJECT*
+- [generic-function] **MCADR** *X*
 
 <a id="x-28GEB-3AMCDR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCDR** *OBJECT*
+- [generic-function] **MCDR** *X*
 
 <a id="x-28GEB-3AMCADDR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCADDR** *OBJECT*
+- [generic-function] **MCADDR** *X*
 
 <a id="x-28GEB-3AOBJ-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **OBJ** *OBJECT*
+- [generic-function] **OBJ** *X*
 
 <a id="x-28GEB-3ANAME-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **NAME** *OBJECT*
+- [generic-function] **NAME** *X*
 
 <a id="x-28GEB-3AFUNC-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **FUNC** *OBJECT*
+- [generic-function] **FUNC** *X*
 
 <a id="x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
 ### 4.3 Constructors
 
-The API for creating `GEB` terms. All the functions and variables
+The API for creating GEB terms. All the functions and variables
 here relate to instantiating a term
 
 <a id="x-28GEB-3A-2ASO0-2A-20VARIABLE-29"></a>
@@ -405,7 +395,7 @@ More Ergonomic API variants for [`*SO0*`][9f7a] and [`*SO1*`][6380]
 <a id="x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
 ### 4.4 api
 
-Various functions that make working with `GEB` easier
+Various functions that make working with GEB easier
 
 <a id="x-28GEB-3APAIR-TO-LIST-20FUNCTION-29"></a>
 - [function] **PAIR-TO-LIST** *PAIR &OPTIONAL ACC*
@@ -435,7 +425,7 @@ Various functions that make working with `GEB` easier
 PLACEHOLDER: TO SHOW OTHERS HOW `EXAMPLE`s WORK
 
 Let's see the transcript of a real session of someone working
-with `GEB`:
+with GEB:
 
 ```common-lisp
 (values (princ :hello) (list 1 2))

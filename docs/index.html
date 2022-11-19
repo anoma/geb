@@ -170,7 +170,7 @@ writing:</p>
 
 <h2><a href="#GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION">3 Categorical Model</a></h2>
 
-<p>The GEB theoretical model is one of category theory</p>
+<p>GEB is organizing programming language concepts using <a href="https://plato.stanford.edu/entries/category-theory/" >category theory</a>, originally developped by mathematicians, but very much alive in (theoretical) computer science. </p>
 
 <p><a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 <a id="GEB-DOCS%2FDOCS:@MORPHISMS%20MGL-PAX:SECTION"></a></p>
@@ -196,7 +196,7 @@ writing:</p>
 <h6>[in package GEB]</h6>
 
 <p>Everything here relates directly to the underlying machinery of
-<code>GEB</code>, or to abstractions that help extend it.</p>
+GEB, or to abstractions that help extend it.</p>
 
 <p><a id="x-28GEB-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
 <a id="GEB:@GEB-CATEGORIES%20MGL-PAX:SECTION"></a></p>
@@ -205,7 +205,7 @@ writing:</p>
 
 <h3><a href="#GEB:@GEB-CATEGORIES%20MGL-PAX:SECTION">4.1 Core Categories</a></h3>
 
-<p>The underlying category of <code>GEB</code>. With <a href="#GEB:@GEB-SUBSTMU%20MGL-PAX:SECTION" title="Subst Obj">Subst Obj</a> covering the
+<p>The underlying category of GEB. With <a href="#GEB:@GEB-SUBSTMU%20MGL-PAX:SECTION" title="Subst Obj">Subst Obj</a> covering the
 shapes and forms (<a href="#GEB-DOCS%2FDOCS:@OBJECTS%20MGL-PAX:SECTION" title="Objects">Objects</a>) of data while <a href="#GEB:@GEB-SUBSTMORPH%20MGL-PAX:SECTION" title="Subst Morph">Subst Morph</a>
 deals with concrete <a href="#GEB-DOCS%2FDOCS:@MORPHISMS%20MGL-PAX:SECTION" title="Morphisms">Morphisms</a> within the category</p>
 
@@ -216,7 +216,7 @@ deals with concrete <a href="#GEB-DOCS%2FDOCS:@MORPHISMS%20MGL-PAX:SECTION" titl
 
 <h4><a href="#GEB:@GEB-SUBSTMU%20MGL-PAX:SECTION">4.1.1 Subst Obj</a></h4>
 
-<p>This section covers the objects of the <code>GEB</code> category. Every value
+<p>This section covers the objects of the GEB category. Every value
 that is a <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOBJ</code></a> is automatically lifted into a <a href="#GEB:SUBSTMORPH%20TYPE" title="GEB:SUBSTMORPH TYPE"><code>SUBSTMORPH</code></a> when a
 <code>SUBSTMORPH</code> is expected.</p>
 
@@ -322,7 +322,7 @@ that is a <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOB
 
 <h4><a href="#GEB:@GEB-SUBSTMORPH%20MGL-PAX:SECTION">4.1.2 Subst Morph</a></h4>
 
-<p>The moprhisms of the <code>GEB</code> category.</p>
+<p>The moprhisms of the GEB category.</p>
 
 <p>The Type that encomposes the SUBSTMOPRH class</p>
 
@@ -454,18 +454,14 @@ that is a <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOB
 <a id="GEB:MCAR%20%28METHOD%20NIL%20%28GEB:COMP%29%29"></a></p>
 
 <ul>
-<li><p><span class=reference-bullet><span class=reference><span class="locative-type">[method]</span> <span class="reference-object"><a href="#GEB:MCAR%20%28METHOD%20NIL%20%28GEB:COMP%29%29" >MCAR</a></span></span> <span class="locative-args">(COMP COMP)</span></span></p>
-
-<p>The first composed morphism</p></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[method]</span> <span class="reference-object"><a href="#GEB:MCAR%20%28METHOD%20NIL%20%28GEB:COMP%29%29" >MCAR</a></span></span> <span class="locative-args">(COMP COMP)</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
 <a id="GEB:MCADR%20%28METHOD%20NIL%20%28GEB:COMP%29%29"></a></p>
 
 <ul>
-<li><p><span class=reference-bullet><span class=reference><span class="locative-type">[method]</span> <span class="reference-object"><a href="#GEB:MCADR%20%28METHOD%20NIL%20%28GEB:COMP%29%29" >MCADR</a></span></span> <span class="locative-args">(COMP COMP)</span></span></p>
-
-<p>the second morphism</p></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[method]</span> <span class="reference-object"><a href="#GEB:MCADR%20%28METHOD%20NIL%20%28GEB:COMP%29%29" >MCADR</a></span></span> <span class="locative-args">(COMP COMP)</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3AOBJ-20-28METHOD-20NIL-20-28GEB-3AINIT-29-29-29"></a>
@@ -500,18 +496,14 @@ that is a <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOB
 <a id="GEB:MCAR%20%28METHOD%20NIL%20%28GEB:PAIR%29%29"></a></p>
 
 <ul>
-<li><p><span class=reference-bullet><span class=reference><span class="locative-type">[method]</span> <span class="reference-object"><a href="#GEB:MCAR%20%28METHOD%20NIL%20%28GEB:PAIR%29%29" >MCAR</a></span></span> <span class="locative-args">(PAIR PAIR)</span></span></p>
-
-<p>Head of the pair cell</p></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[method]</span> <span class="reference-object"><a href="#GEB:MCAR%20%28METHOD%20NIL%20%28GEB:PAIR%29%29" >MCAR</a></span></span> <span class="locative-args">(PAIR PAIR)</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3AMCDR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
 <a id="GEB:MCDR%20%28METHOD%20NIL%20%28GEB:PAIR%29%29"></a></p>
 
 <ul>
-<li><p><span class=reference-bullet><span class=reference><span class="locative-type">[method]</span> <span class="reference-object"><a href="#GEB:MCDR%20%28METHOD%20NIL%20%28GEB:PAIR%29%29" >MCDR</a></span></span> <span class="locative-args">(PAIR PAIR)</span></span></p>
-
-<p>Tail of the pair cell</p></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[method]</span> <span class="reference-object"><a href="#GEB:MCDR%20%28METHOD%20NIL%20%28GEB:PAIR%29%29" >MCDR</a></span></span> <span class="locative-args">(PAIR PAIR)</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
@@ -588,9 +580,7 @@ that is a <a href="#GEB:SUBSTOBJ%20TYPE" title="GEB:SUBSTOBJ TYPE"><code>SUBSTOB
 <a id="GEB:MCADR%20%28METHOD%20NIL%20%28GEB:PROJECT-RIGHT%29%29"></a></p>
 
 <ul>
-<li><p><span class=reference-bullet><span class=reference><span class="locative-type">[method]</span> <span class="reference-object"><a href="#GEB:MCADR%20%28METHOD%20NIL%20%28GEB:PROJECT-RIGHT%29%29" >MCADR</a></span></span> <span class="locative-args">(PROJECT-RIGHT PROJECT-RIGHT)</span></span></p>
-
-<p>Right projection (product elimination)</p></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[method]</span> <span class="reference-object"><a href="#GEB:MCADR%20%28METHOD%20NIL%20%28GEB:PROJECT-RIGHT%29%29" >MCADR</a></span></span> <span class="locative-args">(PROJECT-RIGHT PROJECT-RIGHT)</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
@@ -608,49 +598,49 @@ specific instance documentation</p>
 <a id="GEB:MCAR%20GENERIC-FUNCTION"></a></p>
 
 <ul>
-<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:MCAR%20GENERIC-FUNCTION" >MCAR</a></span></span> <span class="locative-args">OBJECT</span></span></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:MCAR%20GENERIC-FUNCTION" >MCAR</a></span></span> <span class="locative-args">X</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3AMCADR-20GENERIC-FUNCTION-29"></a>
 <a id="GEB:MCADR%20GENERIC-FUNCTION"></a></p>
 
 <ul>
-<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:MCADR%20GENERIC-FUNCTION" >MCADR</a></span></span> <span class="locative-args">OBJECT</span></span></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:MCADR%20GENERIC-FUNCTION" >MCADR</a></span></span> <span class="locative-args">X</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3AMCDR-20GENERIC-FUNCTION-29"></a>
 <a id="GEB:MCDR%20GENERIC-FUNCTION"></a></p>
 
 <ul>
-<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:MCDR%20GENERIC-FUNCTION" >MCDR</a></span></span> <span class="locative-args">OBJECT</span></span></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:MCDR%20GENERIC-FUNCTION" >MCDR</a></span></span> <span class="locative-args">X</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3AMCADDR-20GENERIC-FUNCTION-29"></a>
 <a id="GEB:MCADDR%20GENERIC-FUNCTION"></a></p>
 
 <ul>
-<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:MCADDR%20GENERIC-FUNCTION" >MCADDR</a></span></span> <span class="locative-args">OBJECT</span></span></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:MCADDR%20GENERIC-FUNCTION" >MCADDR</a></span></span> <span class="locative-args">X</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3AOBJ-20GENERIC-FUNCTION-29"></a>
 <a id="GEB:OBJ%20GENERIC-FUNCTION"></a></p>
 
 <ul>
-<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:OBJ%20GENERIC-FUNCTION" >OBJ</a></span></span> <span class="locative-args">OBJECT</span></span></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:OBJ%20GENERIC-FUNCTION" >OBJ</a></span></span> <span class="locative-args">X</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3ANAME-20GENERIC-FUNCTION-29"></a>
 <a id="GEB:NAME%20GENERIC-FUNCTION"></a></p>
 
 <ul>
-<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:NAME%20GENERIC-FUNCTION" >NAME</a></span></span> <span class="locative-args">OBJECT</span></span></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:NAME%20GENERIC-FUNCTION" >NAME</a></span></span> <span class="locative-args">X</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3AFUNC-20GENERIC-FUNCTION-29"></a>
 <a id="GEB:FUNC%20GENERIC-FUNCTION"></a></p>
 
 <ul>
-<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:FUNC%20GENERIC-FUNCTION" >FUNC</a></span></span> <span class="locative-args">OBJECT</span></span></li>
+<li><span class=reference-bullet><span class=reference><span class="locative-type">[generic-function]</span> <span class="reference-object"><a href="#GEB:FUNC%20GENERIC-FUNCTION" >FUNC</a></span></span> <span class="locative-args">X</span></span></li>
 </ul>
 
 <p><a id="x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
@@ -660,7 +650,7 @@ specific instance documentation</p>
 
 <h3><a href="#GEB:@GEB-CONSTRUCTORS%20MGL-PAX:SECTION">4.3 Constructors</a></h3>
 
-<p>The API for creating <code>GEB</code> terms. All the functions and variables
+<p>The API for creating GEB terms. All the functions and variables
 here relate to instantiating a term</p>
 
 <p><a id="x-28GEB-3A-2ASO0-2A-20VARIABLE-29"></a>
@@ -761,7 +751,7 @@ here relate to instantiating a term</p>
 
 <h3><a href="#GEB:@GEB-API%20MGL-PAX:SECTION">4.4 api</a></h3>
 
-<p>Various functions that make working with <code>GEB</code> easier</p>
+<p>Various functions that make working with GEB easier</p>
 
 <p><a id="x-28GEB-3APAIR-TO-LIST-20FUNCTION-29"></a>
 <a id="GEB:PAIR-TO-LIST%20FUNCTION"></a></p>
@@ -819,7 +809,7 @@ here relate to instantiating a term</p>
 <p>PLACEHOLDER: TO SHOW OTHERS HOW <code>EXAMPLE</code>s WORK</p>
 
 <p>Let's see the transcript of a real session of someone working
-with <code>GEB</code>:</p>
+with GEB:</p>
 
 <pre><code><span class="code"><span class="paren1">(<span class="code">values <span class="paren2">(<span class="code">princ <span class="keyword">:hello</span></span>)</span> <span class="paren2">(<span class="code">list 1 2</span>)</span></span>)</span>
 .. HELLO
