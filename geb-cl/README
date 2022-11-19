@@ -69,7 +69,10 @@ writing:
 
 ## Categorical Model
 
-GEB is organizing programming language concepts using [category theory](https://plato.stanford.edu/entries/category-theory/), originally developped by mathematicians, but very much alive in (theoretical) computer science. 
+GEB is organizing programming language concepts using
+[category theory](https://plato.stanford.edu/entries/category-theory/),
+originally developped by mathematicians,
+but very much alive in (theoretical) computer science.
 
 ### Morphisms
 
