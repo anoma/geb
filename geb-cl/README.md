@@ -22,6 +22,7 @@
     - [5.1 Pointwise Mixins][d5d3]
     - [5.2 Pointwise API][2fcf]
     - [5.3 Mixins Examples][4938]
+- [6 Geb Utilities][4ffa]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -97,8 +98,8 @@ writing:
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 3 Categorical Model
 
-GEB is organizing programming language concepts using
-[category theory](https://plato.stanford.edu/entries/category-theory/),
+GEB is organizing programming language concepts
+using [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developped by mathematicians,
 but very much alive in (theoretical) computer science.
 
@@ -526,12 +527,49 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 ```
 
 
+<a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+## 6 Geb Utilities
+
+###### \[in package GEB.UTILS\]
+The Utilities package provide general utility functionality that is
+used throughout the GEB codebase
+
+<a id="x-28GEB-2EUTILS-3ASYMBOL-TO-KEYWORD-20FUNCTION-29"></a>
+- [function] **SYMBOL-TO-KEYWORD** *SYMBOL*
+
+    Turns a [symbol][7f9f] into a [keyword][4850]
+
+<a id="x-28GEB-2EUTILS-3AMUFFLE-PACKAGE-VARIANCE-20MGL-PAX-3AMACRO-29"></a>
+- [macro] **MUFFLE-PACKAGE-VARIANCE** *&REST PACKAGE-DECLARATIONS*
+
+    Muffle any errors about package variance and stating exports out of order.
+    This is particularly an issue for SBCL as it will error when using MGL-PAX
+    to do the [export][bf07] instead of [`DEFPACKAGE`][42d7].
+    
+    This is more modular thank
+    [MGL-PAX:DEFINE-PACKAGE](https://melisgl.Githubc.io/mgl-pax-world/mgl-pax-manual.html#MGL-PAX:DEFINE-PACKAGE%20MGL-PAX:MACRO)
+    in that this can be used with any package creation function like
+    [UIOP:DEFINE-PACKAGE](https://privet-kitty.github.io/etc/uiop.html#UIOP_002fPACKAGE).
+    
+    Here is an example usage:
+    
+    ```lisp
+         (geb.utils:muffle-package-variance
+           (uiop:define-package #:geb.lambda-conversion
+             (:mix #:trivia #:geb #:serapeum #:common-lisp)
+             (:export
+              :compile-checked-term :stlc-ctx-to-mu)))
+    ```
+
+
   [0c5c]: #x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Constructors"
   [2fcf]: #x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29 "Pointwise API"
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
+  [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
   [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
   [4850]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD TYPE"
   [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
+  [4ffa]: #x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29 "Geb Utilities"
   [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
   [5d9d]: #x-28GEB-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29 "Core Categories"
@@ -539,6 +577,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
   [6380]: #x-28GEB-3A-2ASO1-2A-20VARIABLE-29 "GEB:*SO1* VARIABLE"
   [718e]: #x-28GEB-3ASUBSTOBJ-20TYPE-29 "GEB:SUBSTOBJ TYPE"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
+  [7f9f]: http://www.lispworks.com/documentation/HyperSpec/Body/t_symbol.htm "SYMBOL TYPE"
   [8fa5]: #x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29 "installation"
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
@@ -549,6 +588,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
   [a802]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT TYPE"
   [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
   [b26a]: #x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
+  [bf07]: http://www.lispworks.com/documentation/HyperSpec/Body/f_export.htm "EXPORT FUNCTION"
   [c111]: #x-28GEB-2EMIXINS-3AOBJ-EQUALP-20GENERIC-FUNCTION-29 "GEB.MIXINS:OBJ-EQUALP GENERIC-FUNCTION"
   [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "The Geb Model"
   [c2e9]: #x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29 "Categorical Model"

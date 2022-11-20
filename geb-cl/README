@@ -69,8 +69,8 @@ writing:
 
 ## Categorical Model
 
-GEB is organizing programming language concepts using
-[category theory](https://plato.stanford.edu/entries/category-theory/),
+GEB is organizing programming language concepts
+using [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developped by mathematicians,
 but very much alive in (theoretical) computer science.
 
@@ -409,6 +409,38 @@ Let's see some example uses of POINTWISE-MIXIN:
 (to-pointwise-list (geb:coprod geb:so1 geb:so1))
 => ((:MCAR . s-1) (:MCADR . s-1))
 ```
+
+
+## Geb Utilities
+
+###### \[in package GEB.UTILS\]
+The Utilities package provide general utility functionality that is
+used throughout the GEB codebase
+
+- [function] SYMBOL-TO-KEYWORD SYMBOL
+
+    Turns a symbol into a keyword
+
+- [macro] MUFFLE-PACKAGE-VARIANCE &REST PACKAGE-DECLARATIONS
+
+    Muffle any errors about package variance and stating exports out of order.
+    This is particularly an issue for SBCL as it will error when using MGL-PAX
+    to do the export instead of DEFPACKAGE.
+    
+    This is more modular thank
+    [MGL-PAX:DEFINE-PACKAGE](https://melisgl.Githubc.io/mgl-pax-world/mgl-pax-manual.html#MGL-PAX:DEFINE-PACKAGE%20MGL-PAX:MACRO)
+    in that this can be used with any package creation function like
+    [UIOP:DEFINE-PACKAGE](https://privet-kitty.github.io/etc/uiop.html#UIOP_002fPACKAGE).
+    
+    Here is an example usage:
+    
+    ```lisp
+         (geb.utils:muffle-package-variance
+           (uiop:define-package #:geb.lambda-conversion
+             (:mix #:trivia #:geb #:serapeum #:common-lisp)
+             (:export
+              :compile-checked-term :stlc-ctx-to-mu)))
+    ```
 
 
 * * *

@@ -4,17 +4,20 @@
                 #:@geb)
   (:import-from #:geb.mixins
                 #:@mixins)
+  (:import-from #:geb.utils
+                #:@geb-utils-manual)
   (:export build-docs))
 
 (in-package geb-docs/docs)
 
 (pax:defsection @index (:title "The GEB Manual")
   "Welcome to the GEB project."
-  (@links           pax:section)
-  (@getting-started pax:section)
-  (@model           pax:section)
-  (@geb             pax:section)
-  (@mixins          pax:section))
+  (@links            pax:section)
+  (@getting-started  pax:section)
+  (@model            pax:section)
+  (@geb              pax:section)
+  (@mixins           pax:section)
+  (@geb-utils-manual pax:section))
 
 (pax:defsection @links (:title "Links")
   "

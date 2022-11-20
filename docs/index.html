@@ -69,6 +69,7 @@
 <li><a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">5.2 Pointwise API</a></li>
 <li><a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">5.3 Mixins Examples</a></li>
 </ul></li>
+<li><a href="#GEB.UTILS:@GEB-UTILS-MANUAL%20MGL-PAX:SECTION" title="Geb Utilities">6 Geb Utilities</a></li>
 </ul>
 
 <h6>[in package GEB-DOCS/DOCS]</h6>
@@ -170,8 +171,8 @@ writing:</p>
 
 <h2><a href="#GEB-DOCS%2FDOCS:@MODEL%20MGL-PAX:SECTION">3 Categorical Model</a></h2>
 
-<p>GEB is organizing programming language concepts using
-<a href="https://plato.stanford.edu/entries/category-theory/" >category theory</a>,
+<p>GEB is organizing programming language concepts
+using <a href="https://plato.stanford.edu/entries/category-theory/" >category theory</a>,
 originally developped by mathematicians,
 but very much alive in (theoretical) computer science.</p>
 
@@ -928,7 +929,7 @@ rather than the class</p></li>
 <p><a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
 <a id="GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION"></a></p>
 
-<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">&#8592;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8593;</a> <a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">&#8634;</a></span></span></p>
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB.MIXINS:@POINTWISE-API%20MGL-PAX:SECTION" title="Pointwise API">&#8592;</a> <a href="#GEB.MIXINS:@MIXINS%20MGL-PAX:SECTION" title="Mixins">&#8593;</a> <a href="#GEB.UTILS:@GEB-UTILS-MANUAL%20MGL-PAX:SECTION" title="Geb Utilities">&#8594;</a> <a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">&#8634;</a></span></span></p>
 
 <h3><a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION">5.3 Mixins Examples</a></h3>
 
@@ -940,6 +941,51 @@ rather than the class</p></li>
 
 <span class="paren1">(<span class="code">to-pointwise-list <span class="paren2">(<span class="code">geb:coprod geb:so1 geb:so1</span>)</span></span>)</span>
 =&gt; <span class="paren1">(<span class="code"><span class="paren2">(<span class="code"><span class="keyword">:MCAR</span> . s-1</span>)</span> <span class="paren2">(<span class="code"><span class="keyword">:MCADR</span> . s-1</span>)</span></span>)</span></span></code></pre>
+
+<p><a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+<a id="GEB.UTILS:@GEB-UTILS-MANUAL%20MGL-PAX:SECTION"></a></p>
+
+<p><span class="outer-navigation"><span class="navigation"> <a href="#GEB.MIXINS:@MIXIN-EXAMPLES%20MGL-PAX:SECTION" title="Mixins Examples">&#8592;</a> <a href="#GEB-DOCS%2FDOCS:@INDEX%20MGL-PAX:SECTION" title="The GEB Manual">&#8593;</a> <a href="#GEB.UTILS:@GEB-UTILS-MANUAL%20MGL-PAX:SECTION" title="Geb Utilities">&#8634;</a></span></span></p>
+
+<h2><a href="#GEB.UTILS:@GEB-UTILS-MANUAL%20MGL-PAX:SECTION">6 Geb Utilities</a></h2>
+
+<h6>[in package GEB.UTILS]</h6>
+
+<p>The Utilities package provide general utility functionality that is
+used throughout the GEB codebase</p>
+
+<p><a id="x-28GEB-2EUTILS-3ASYMBOL-TO-KEYWORD-20FUNCTION-29"></a>
+<a id="GEB.UTILS:SYMBOL-TO-KEYWORD%20FUNCTION"></a></p>
+
+<ul>
+<li><p><span class=reference-bullet><span class=reference><span class="locative-type">[function]</span> <span class="reference-object"><a href="#GEB.UTILS:SYMBOL-TO-KEYWORD%20FUNCTION" >SYMBOL-TO-KEYWORD</a></span></span> <span class="locative-args">SYMBOL</span></span></p>
+
+<p>Turns a <a href="http://www.lispworks.com/documentation/HyperSpec/Body/t_symbol.htm" title="SYMBOL TYPE">symbol</a> into a <a href="http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm" title="KEYWORD TYPE">keyword</a></p></li>
+</ul>
+
+<p><a id="x-28GEB-2EUTILS-3AMUFFLE-PACKAGE-VARIANCE-20MGL-PAX-3AMACRO-29"></a>
+<a id="GEB.UTILS:MUFFLE-PACKAGE-VARIANCE%20MGL-PAX:MACRO"></a></p>
+
+<ul>
+<li><p><span class=reference-bullet><span class=reference><span class="locative-type">[macro]</span> <span class="reference-object"><a href="#GEB.UTILS:MUFFLE-PACKAGE-VARIANCE%20MGL-PAX:MACRO" >MUFFLE-PACKAGE-VARIANCE</a></span></span> <span class="locative-args">&amp;REST PACKAGE-DECLARATIONS</span></span></p>
+
+<p>Muffle any errors about package variance and stating exports out of order.
+This is particularly an issue for SBCL as it will error when using MGL-PAX
+to do the <a href="http://www.lispworks.com/documentation/HyperSpec/Body/f_export.htm" title="EXPORT FUNCTION">export</a> instead of <a href="http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm" title="DEFPACKAGE MGL-PAX:MACRO"><code>DEFPACKAGE</code></a>.</p>
+
+<p>This is more modular thank
+<a href="https://melisgl.Githubc.io/mgl-pax-world/mgl-pax-manual.html#MGL-PAX:DEFINE-PACKAGE%20MGL-PAX:MACRO" >MGL-PAX:DEFINE-PACKAGE</a>
+in that this can be used with any package creation function like
+<a href="https://privet-kitty.github.io/etc/uiop.html#UIOP_002fPACKAGE" >UIOP:DEFINE-PACKAGE</a>.</p>
+
+<p>Here is an example usage:</p>
+
+<pre><code><span class="code">     <span class="paren1">(<span class="code">geb.utils:muffle-package-variance
+       <span class="paren2">(<span class="code"><i><span class="symbol">uiop:define-package</span></i> <span class="keyword">#:geb.lambda-conversion</span>
+         <span class="paren3">(<span class="code"><span class="keyword">:mix</span> <span class="keyword">#:trivia</span> <span class="keyword">#:geb</span> <span class="keyword">#:serapeum</span> <span class="keyword">#:common-lisp</span></span>)</span>
+         <span class="paren3">(<span class="code"><span class="keyword">:export</span>
+          <span class="keyword">:compile-checked-term</span> <span class="keyword">:stlc-ctx-to-mu</span></span>)</span></span>)</span></span>)</span></span></code></pre></li>
+</ul>
   </div>
 </div>
 <script>$('#page-toc').toc({'selectors': 'h1,h2,h3,h4'});</script>
