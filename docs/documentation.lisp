@@ -21,7 +21,7 @@
 
 (pax:defsection @links (:title "Links")
   "
-Here is the [official repository](https://github.com/anoma/geb/tree/main/geb-cl)
+Here is the [official repository](https://github.com/anoma/geb/)
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version")
 
 ;; please insert more text here about category theory
@@ -111,7 +111,7 @@ writing:
    @index :geb)
   (mgl-pax:update-asdf-system-html-docs
    @index :geb
-   :target-dir (asdf/system:system-relative-pathname :geb "../docs/")
+   :target-dir (asdf/system:system-relative-pathname :geb "docs/")
    :pages (geb-pages)))
 
 (pax:register-doc-in-pax-world :geb (geb-sections) (geb-pages))
