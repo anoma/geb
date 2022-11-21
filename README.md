@@ -7,22 +7,25 @@
 - [2 Getting Started][3d47]
     - [2.1 installation][8fa5]
     - [2.2 loading][a7d5]
-- [3 Categorical Model][c2e9]
-    - [3.1 Morphisms][ada9]
-    - [3.2 Objects][dbe7]
-- [4 The Geb Model][c1fb]
-    - [4.1 Core Categories][5d9d]
-        - [4.1.1 Subst Obj][ca6e]
-        - [4.1.2 Subst Morph][ffb7]
-    - [4.2 Accessors][b26a]
-    - [4.3 Constructors][0c5c]
-    - [4.4 api][6228]
-    - [4.5 Examples][a17b]
-- [5 Mixins][723a]
-    - [5.1 Pointwise Mixins][d5d3]
-    - [5.2 Pointwise API][2fcf]
-    - [5.3 Mixins Examples][4938]
-- [6 Geb Utilities][4ffa]
+- [3 Original Efforts][3686]
+    - [3.1 Geb's Idris Code][8311]
+    - [3.2 Geb's Agda Code][29b7]
+- [4 Categorical Model][c2e9]
+    - [4.1 Morphisms][ada9]
+    - [4.2 Objects][dbe7]
+- [5 The Geb Model][c1fb]
+    - [5.1 Core Categories][5d9d]
+        - [5.1.1 Subst Obj][ca6e]
+        - [5.1.2 Subst Morph][ffb7]
+    - [5.2 Accessors][b26a]
+    - [5.3 Constructors][0c5c]
+    - [5.4 api][6228]
+    - [5.5 Examples][a17b]
+- [6 Mixins][723a]
+    - [6.1 Pointwise Mixins][d5d3]
+    - [6.2 Pointwise API][2fcf]
+    - [6.3 Mixins Examples][4938]
+- [7 Geb Utilities][4ffa]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -30,7 +33,7 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
-Here is the [official repository](https://github.com/anoma/geb/tree/main/geb-cl)
+Here is the [official repository](https://github.com/anoma/geb/)
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
@@ -95,8 +98,42 @@ writing:
 ```
 
 
+<a id="x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29"></a>
+## 3 Original Efforts
+
+Originally GEB started off as an Idris codebase written by the
+designer and creator of GEB, Terence Rokop, However further efforts
+spawned for even further formal verification by Artem Gureev. Due
+to this, we have plenty of code not in Common Lisp that ought to be
+a good read.
+
+<a id="x-28GEB-DOCS-2FDOCS-3A-40IDRIS-20MGL-PAX-3ASECTION-29"></a>
+### 3.1 Geb's Idris Code
+
+The Idris folder can be found in the
+[geb-idris](https://github.com/anoma/geb/tree/main/geb-idris) folder
+provided in the codebase
+
+At the time of this document, there is over 16k lines of Idris code
+written. This serves as the bulk of the POC that is GEB and is a
+treasure trove of interesting information surrounding category
+theorey.
+
+<a id="x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29"></a>
+### 3.2 Geb's Agda Code
+
+The Agda folder can be found in the
+[geb-agda](https://github.com/anoma/geb/tree/main/geb-agda) folder
+provided in the codebase
+
+The Agda codebase serves as a great place to view formally verified
+properties about the GEB project. Although [Geb's Idris Code][8311] is written in a
+dependently typed language, it serves as reference example of GEB,
+while [Geb's Agda Code][29b7] serves as the mathematical formalism proving various
+conjectures about GEB
+
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
-## 3 Categorical Model
+## 4 Categorical Model
 
 GEB is organizing programming language concepts
 using [category theory](https://plato.stanford.edu/entries/category-theory/),
@@ -104,29 +141,29 @@ originally developped by mathematicians,
 but very much alive in (theoretical) computer science.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
-### 3.1 Morphisms
+### 4.1 Morphisms
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29"></a>
-### 3.2 Objects
+### 4.2 Objects
 
 
 <a id="x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29"></a>
-## 4 The Geb Model
+## 5 The Geb Model
 
 ###### \[in package GEB\]
 Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 
 <a id="x-28GEB-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
-### 4.1 Core Categories
+### 5.1 Core Categories
 
 The underlying category of GEB. With [Subst Obj][ca6e] covering the
 shapes and forms ([Objects][dbe7]) of data while [Subst Morph][ffb7]
 deals with concrete [Morphisms][ada9] within the category
 
 <a id="x-28GEB-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
-#### 4.1.1 Subst Obj
+#### 5.1.1 Subst Obj
 
 This section covers the objects of the GEB category. Every value
 that is a [`SUBSTOBJ`][718e] is automatically lifted into a [`SUBSTMORPH`][e5d9] when a
@@ -184,7 +221,7 @@ The [Accessors][b26a] specific to [Subst Obj][ca6e]
 - [method] **MCADR** *(COPROD COPROD)*
 
 <a id="x-28GEB-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
-#### 4.1.2 Subst Morph
+#### 5.1.2 Subst Morph
 
 The moprhisms of the GEB category.
 
@@ -261,8 +298,12 @@ The [Accessors][b26a] specific to [Subst Morph][ffb7]
 <a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
 - [method] **MCAR** *(COMP COMP)*
 
+    The first composed morphism
+
 <a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
 - [method] **MCADR** *(COMP COMP)*
+
+    the second morphism
 
 <a id="x-28GEB-3AOBJ-20-28METHOD-20NIL-20-28GEB-3AINIT-29-29-29"></a>
 - [method] **OBJ** *(INIT INIT)*
@@ -279,8 +320,12 @@ The [Accessors][b26a] specific to [Subst Morph][ffb7]
 <a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
 - [method] **MCAR** *(PAIR PAIR)*
 
+    Head of the pair cell
+
 <a id="x-28GEB-3AMCDR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
 - [method] **MCDR** *(PAIR PAIR)*
+
+    Tail of the pair cell
 
 <a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
 - [method] **MCAR** *(DISTRIBUTE DISTRIBUTE)*
@@ -315,36 +360,57 @@ The [Accessors][b26a] specific to [Subst Morph][ffb7]
 <a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROJECT-RIGHT-29-29-29"></a>
 - [method] **MCADR** *(PROJECT-RIGHT PROJECT-RIGHT)*
 
+    Right projection (product elimination)
+
 <a id="x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
-### 4.2 Accessors
+### 5.2 Accessors
 
 These functions relate to grabbing slots out of the various
 [Subst Morph][ffb7] and [Subst Obj][ca6e] types. See those sections for
 specific instance documentation
 
 <a id="x-28GEB-3AMCAR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCAR** *X*
+- [generic-function] **MCAR** *OBJ*
+
+    Can be seen as calling [`CAR`][8c99] on a generic CLOS
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-3AMCADR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCADR** *X*
+- [generic-function] **MCADR** *OBJ*
+
+    like [`MCAR`][493b] but for the [`CADR`][74ab]
 
 <a id="x-28GEB-3AMCDR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCDR** *X*
+- [generic-function] **MCDR** *OBJ*
+
+    Similar to [`MCAR`][493b], however acts like a [`CDR`][2570] for
+    [classes][7e58] that we wish to view as a [`SEQUENCE`][b9c1]
 
 <a id="x-28GEB-3AMCADDR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCADDR** *X*
+- [generic-function] **MCADDR** *OBJ*
+
+    like [`MCAR`][493b] but for the [`CADDR`][8bb8]
 
 <a id="x-28GEB-3AOBJ-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **OBJ** *X*
+- [generic-function] **OBJ** *OBJ*
+
+    Grabs the underlying
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-3ANAME-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **NAME** *X*
+- [generic-function] **NAME** *OBJ*
+
+    the name of the given
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-3AFUNC-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **FUNC** *X*
+- [generic-function] **FUNC** *OBJ*
+
+    the function of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
-### 4.3 Constructors
+### 5.3 Constructors
 
 The API for creating GEB terms. All the functions and variables
 here relate to instantiating a term
@@ -397,7 +463,7 @@ More Ergonomic API variants for [`*SO0*`][9f7a] and [`*SO1*`][6380]
 - [function] **MAKE-FUNCTOR** *&KEY OBJ FUNC*
 
 <a id="x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
-### 4.4 api
+### 5.4 api
 
 Various functions that make working with GEB easier
 
@@ -424,7 +490,7 @@ Various functions that make working with GEB easier
 - [function] **SO-EVAL** *X Y*
 
 <a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 4.5 Examples
+### 5.5 Examples
 
 PLACEHOLDER: TO SHOW OTHERS HOW `EXAMPLE`s WORK
 
@@ -443,7 +509,7 @@ with GEB:
 
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
-## 5 Mixins
+## 6 Mixins
 
 ###### \[in package GEB.MIXINS\]
 Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
@@ -451,7 +517,7 @@ project. Overall all these offer various services to the rest of the
 project
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
-### 5.1 Pointwise Mixins
+### 6.1 Pointwise Mixins
 
 Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -480,7 +546,7 @@ in our class
     Further all `DIRECT-POINTWISE-MIXIN`'s are [`POINTWISE-MIXIN`][445d]'s
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
-### 5.2 Pointwise API
+### 6.2 Pointwise API
 
 These are the general API functions on any class that have the
 [`POINTWISE-MIXIN`][445d] service.
@@ -513,7 +579,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
     rather than the class
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 5.3 Mixins Examples
+### 6.3 Mixins Examples
 
 Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
@@ -528,7 +594,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 6 Geb Utilities
+## 7 Geb Utilities
 
 ###### \[in package GEB.UTILS\]
 The Utilities package provide general utility functionality that is
@@ -563,12 +629,16 @@ used throughout the GEB codebase
 
 
   [0c5c]: #x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Constructors"
+  [2570]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CDR FUNCTION"
+  [29b7]: #x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29 "Geb's Agda Code"
   [2fcf]: #x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29 "Pointwise API"
+  [3686]: #x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29 "Original Efforts"
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
   [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
   [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
   [4850]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD TYPE"
   [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
+  [493b]: #x-28GEB-3AMCAR-20GENERIC-FUNCTION-29 "GEB:MCAR GENERIC-FUNCTION"
   [4ffa]: #x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29 "Geb Utilities"
   [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
@@ -577,7 +647,12 @@ used throughout the GEB codebase
   [6380]: #x-28GEB-3A-2ASO1-2A-20VARIABLE-29 "GEB:*SO1* VARIABLE"
   [718e]: #x-28GEB-3ASUBSTOBJ-20TYPE-29 "GEB:SUBSTOBJ TYPE"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
+  [74ab]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADR FUNCTION"
+  [7e58]: http://www.lispworks.com/documentation/HyperSpec/Body/t_class.htm "CLASS CLASS"
   [7f9f]: http://www.lispworks.com/documentation/HyperSpec/Body/t_symbol.htm "SYMBOL TYPE"
+  [8311]: #x-28GEB-DOCS-2FDOCS-3A-40IDRIS-20MGL-PAX-3ASECTION-29 "Geb's Idris Code"
+  [8bb8]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDR FUNCTION"
+  [8c99]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CAR FUNCTION"
   [8fa5]: #x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29 "installation"
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
@@ -588,6 +663,7 @@ used throughout the GEB codebase
   [a802]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT TYPE"
   [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
   [b26a]: #x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
+  [b9c1]: http://www.lispworks.com/documentation/HyperSpec/Body/t_seq.htm "SEQUENCE TYPE"
   [bf07]: http://www.lispworks.com/documentation/HyperSpec/Body/f_export.htm "EXPORT FUNCTION"
   [c111]: #x-28GEB-2EMIXINS-3AOBJ-EQUALP-20GENERIC-FUNCTION-29 "GEB.MIXINS:OBJ-EQUALP GENERIC-FUNCTION"
   [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "The Geb Model"

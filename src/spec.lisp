@@ -20,6 +20,39 @@
        functor))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;               Generic Constructors declarations
+;; These aren't needed but serve as a good place to put a default doc.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defgeneric mcar (obj)
+  (:documentation
+   "Can be seen as calling CAR on a generic CLOS
+[object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
+(defgeneric mcdr (obj)
+  (:documentation "Similar to MCAR, however acts like a CDR for
+                   [classes] that we wish to view as a SEQUENCE"))
+(defgeneric mcadr (obj)
+  (:documentation "like MCAR but for the CADR"))
+
+(defgeneric mcaddr (obj)
+  (:documentation "like MCAR but for the CADDR"))
+
+(defgeneric obj (obj)
+  (:documentation
+   "Grabs the underlying
+[object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
+
+(defgeneric name (obj)
+  (:documentation
+   "the name of the given
+[object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
+
+(defgeneric func (obj)
+  (:documentation
+   "the function of the
+[object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subst Constructor Objects
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -14,6 +14,7 @@
   "Welcome to the GEB project."
   (@links            pax:section)
   (@getting-started  pax:section)
+  (@original-efforts pax:section)
   (@model            pax:section)
   (@geb              pax:section)
   (@mixins           pax:section)
@@ -21,10 +22,42 @@
 
 (pax:defsection @links (:title "Links")
   "
-Here is the [official repository](https://github.com/anoma/geb/tree/main/geb-cl)
+Here is the [official repository](https://github.com/anoma/geb/)
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version")
 
-;; please insert more text here about category theory
+(pax:defsection @getting-started (:title "Getting Started")
+  "Welcome to the GEB Project!"
+  (@installation pax:section)
+  (@loading pax:section))
+
+(pax:defsection @original-efforts (:title "Original Efforts")
+  "Originally GEB started off as an Idris codebase written by the
+   designer and creator of GEB, Terence Rokop, However further efforts
+   spawned for even further formal verification by Artem Gureev. Due
+   to this, we have plenty of code not in Common Lisp that ought to be
+   a good read."
+  (@idris pax:section)
+  (@agda  pax:section))
+
+(pax:defsection @idris (:title "Geb's Idris Code")
+  "The Idris folder can be found in the
+[geb-idris](https://github.com/anoma/geb/tree/main/geb-idris) folder
+provided in the codebase"
+  "At the time of this document, there is over 16k lines of Idris code
+written. This serves as the bulk of the POC that is GEB and is a
+treasure trove of interesting information surrounding category
+theorey.")
+
+(pax:defsection @agda (:title "Geb's Agda Code")
+  "The Agda folder can be found in the
+[geb-agda](https://github.com/anoma/geb/tree/main/geb-agda) folder
+provided in the codebase"
+  "The Agda codebase serves as a great place to view formally verified
+properties about the GEB project. Although @IDRIS is written in a
+dependently typed language, it serves as reference example of GEB,
+while @AGDA serves as the mathematical formalism proving various
+conjectures about GEB")
+
 (pax:defsection @model (:title "Categorical Model")
   "GEB is organizing programming language concepts
    using [category theory](https://plato.stanford.edu/entries/category-theory/),
@@ -33,14 +66,10 @@ and the [HTML documentation](https://anoma.github.io/geb/) for the latest versio
   (@morphisms pax:section)
   (@objects pax:section))
 
+;; please insert more text here about category theory
 (pax:defsection @morphisms (:title "Morphisms"))
 
 (pax:defsection @objects (:title "Objects"))
-
-(pax:defsection @getting-started (:title "Getting Started")
-  "Welcome to the GEB Project!"
-  (@installation pax:section)
-  (@loading pax:section))
 
 (pax:defsection @installation (:title "installation")
   "This project uses [common lisp](https://common-lisp.net/), so a few
@@ -111,7 +140,7 @@ writing:
    @index :geb)
   (mgl-pax:update-asdf-system-html-docs
    @index :geb
-   :target-dir (asdf/system:system-relative-pathname :geb "../docs/")
+   :target-dir (asdf/system:system-relative-pathname :geb "docs/")
    :pages (geb-pages)))
 
 (pax:register-doc-in-pax-world :geb (geb-sections) (geb-pages))

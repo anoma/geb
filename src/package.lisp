@@ -131,13 +131,13 @@ deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
   "These functions relate to grabbing slots out of the various
    @GEB-SUBSTMORPH and @GEB-SUBSTMU types. See those sections for
    specific instance documentation"
-  (mcar pax:generic-function)
-  (mcadr pax:generic-function)
-  (mcdr pax:generic-function)
+  (mcar   pax:generic-function)
+  (mcadr  pax:generic-function)
+  (mcdr   pax:generic-function)
   (mcaddr pax:generic-function)
-  (obj pax:generic-function)
-  (name pax:generic-function)
-  (func pax:generic-function))
+  (obj    pax:generic-function)
+  (name   pax:generic-function)
+  (func   pax:generic-function))
 
 (pax:defsection @geb-examples (:title "Examples")
   "PLACEHOLDER: TO SHOW OTHERS HOW EXAMPLES WORK"
