@@ -1,9 +1,7 @@
 (in-package :geb-test)
 
-(def-suite geb.lambda-conversion
-    :description "Tests the geb.lambda-conversion package")
-
-(in-suite geb.lambda-conversion)
+(define-test geb.lambda-conversion
+  :parent geb-test-suite)
 
 (def so-unit-type
   geb:so1)
@@ -14,10 +12,14 @@
 (def so-unit-term
   (geb:terminal so-unit-type))
 
-(test compile-nil-context
-  (is (equalp (geb.lambda-conversion:stlc-ctx-to-mu nil)
-              geb:so1)))
+(define-test compile-checked-term :parent geb.lambda-conversion
+  (is obj-equalp
+      (conversion:compile-checked-term nil so-unit-type stlc-unit-term)
+      so-unit-term
+      "compile unit"))
 
-(test compile-unit
-  (is (obj-equalp (conversion:compile-checked-term nil so-unit-type stlc-unit-term)
-                  so-unit-term)))
+(define-test stlc-ctx-to-mu :parent compile-checked-term
+  (is equalp
+      (conversion:stlc-ctx-to-mu nil)
+      geb:so1
+      "compile in a nil context"))

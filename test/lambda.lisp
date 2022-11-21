@@ -1,10 +1,6 @@
 (in-package :geb-test)
 
-(def-suite geb.lambda
-    :description "Tests the geb.lambda package")
-
-(in-suite geb.lambda)
-
+(define-test geb.lambda :parent geb-test-suite)
 
 (def test-term '(lambda (x y z) (+ x y (lambda (a b c) (+ a b c z)))))
 
@@ -25,9 +21,11 @@
                      ,(geb.lambda:make-index :depth 0)
                      ,(geb.lambda:make-index :depth 3))))))))))
 
-(test curry-expands-properly
-  (is (equalp (geb.lambda:curry-lambda test-term)
-              curried-term)))
+(define-test curry-expands-properly
+  :parent geb.lambda
+  (is equalp (geb.lambda:curry-lambda test-term)
+              curried-term))
 
-(test nameless-works-properly
-  (is (equalp nameless-term (geb.lambda:nameless curried-term))))
+(define-test nameless-works-properly
+  :parent geb.lambda
+  (is equalp (geb.lambda:nameless curried-term) nameless-term))

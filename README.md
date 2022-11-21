@@ -26,6 +26,7 @@
     - [6.2 Pointwise API][2fcf]
     - [6.3 Mixins Examples][4938]
 - [7 Geb Utilities][4ffa]
+- [8 Testing][9bcb]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -628,6 +629,34 @@ used throughout the GEB codebase
     ```
 
 
+<a id="x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+## 8 Testing
+
+###### \[in package GEB-TEST\]
+We use [parachtue](https://quickref.common-lisp.net/parachute.html)
+as our testing framework.
+
+Please read the
+[manual](https://quickref.common-lisp.net/parachute.html) for extra
+features and how to better lay out future tests
+
+<a id="x-28GEB-TEST-3ARUN-TESTS-20FUNCTION-29"></a>
+- [function] **RUN-TESTS** *&KEY (INTERACTIVE? NIL) (SUMMARY? NIL) (PLAIN? T) (DESIGNATORS '(GEB-TEST-SUITE))*
+
+    Here we run all the tests. We have many flags to determine how the
+    tests ought to work
+    
+    ```lisp
+    (run-tests :plain? nil :interactive? t) ==> 'interactive
+    (run-tests :summary? t :interactive? t) ==> 'noisy-summary
+    (run-tests :interactive? t)             ==> 'noisy-interactive
+    (run-tests :summary? t)                 ==> 'summary
+    (run-tests)                             ==> 'plain
+    
+    (run-tests :designators '(geb geb.lambda)) ==> run only those packages
+    ```
+
+
   [0c5c]: #x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Constructors"
   [2570]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CDR FUNCTION"
   [29b7]: #x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29 "Geb's Agda Code"
@@ -657,6 +686,7 @@ used throughout the GEB codebase
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"
+  [9bcb]: #x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29 "Testing"
   [9f7a]: #x-28GEB-3A-2ASO0-2A-20VARIABLE-29 "GEB:*SO0* VARIABLE"
   [a17b]: #x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29 "Examples"
   [a7d5]: #x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29 "loading"

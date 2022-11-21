@@ -1,11 +1,9 @@
 (pax:define-package #:geb-docs/docs
   (:use #:cl)
-  (:import-from #:geb
-                #:@geb)
-  (:import-from #:geb.mixins
-                #:@mixins)
-  (:import-from #:geb.utils
-                #:@geb-utils-manual)
+  (:import-from #:geb        #:@geb)
+  (:import-from #:geb.mixins #:@mixins)
+  (:import-from #:geb.utils  #:@geb-utils-manual)
+  (:import-from #:geb-test   #:@geb-test-manual)
   (:export build-docs))
 
 (in-package geb-docs/docs)
@@ -18,7 +16,8 @@
   (@model            pax:section)
   (@geb              pax:section)
   (@mixins           pax:section)
-  (@geb-utils-manual pax:section))
+  (@geb-utils-manual pax:section)
+  (@geb-test-manual  pax:section))
 
 (pax:defsection @links (:title "Links")
   "

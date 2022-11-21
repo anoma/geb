@@ -40,7 +40,7 @@
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 
 (asdf:defsystem :geb/test
-  :depends-on (:geb :fiveam)
+  :depends-on (:geb :parachute)
   :description "Testing geb"
   :pathname "test/"
   :serial t
@@ -60,7 +60,5 @@
   :pathname "docs/"
   :serial t
   :components ((:file documentation))
-  :perform (asdf:test-op (o s)
-                         (uiop:symbol-call :geb-test :run-tests))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 
