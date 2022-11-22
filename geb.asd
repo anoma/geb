@@ -39,7 +39,8 @@
     :depends-on (util geb)
     :components ((:file package)
                  (:file spec)
-                 (:file printer)))
+                 (:file printer)
+                 (:file trans)))
    (:module lambda
     :serial t
     :depends-on (geb)
