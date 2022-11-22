@@ -5,9 +5,12 @@
    (:shadow :+ :* :/ :- :mod)
    (:use #:geb.utils #:cl))
 
+ (uiop:define-package #:geb.poly.trans
+   (:mix #:geb.poly.spec #:cl #:serapeum #:geb.utils))
+
  (uiop:define-package #:geb.poly
    (:use #:geb.utils)
-   (:mix #:geb.poly.spec #:cl-user)
+   (:mix #:geb.poly.spec #:cl)
    (:reexport #:geb.poly.spec)))
 
 (in-package :geb.poly.spec)
@@ -45,4 +48,4 @@ constructors"
   (if-zero pax:function)
   (if-lt   pax:function))
 
-(in-package :geb.poly)
+(in-package :geb.poly.trans)

@@ -12,6 +12,12 @@
     :description "Internal utility functions"
     :components ((:file package)
                  (:file utils)))
+   (:module vampir
+    :serial t
+    :description "The Vampir Extraction Module"
+    :components ((:file package)
+                 (:file spec)
+                 (:file vampir)))
    (:module mixins
     :serial t
     :description "Mixin Utility Functions"
@@ -30,16 +36,10 @@
    (:module poly
     :serial t
     :description "Polynomial"
-    :depends-on (util)
+    :depends-on (util geb)
     :components ((:file package)
                  (:file spec)
                  (:file printer)))
-   (:module vampir
-    :serial t
-    :description "The Vampir Extraction Module"
-    :components ((:file package)
-                 (:file spec)
-                 (:file vampir)))
    (:module lambda
     :serial t
     :depends-on (geb)
