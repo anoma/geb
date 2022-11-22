@@ -3,6 +3,9 @@
 (defgeneric moprh-to-poly (morphism)
   (:documentation "Turns a GEB:SUBSTMORPH into a POLY"))
 
+(defmethod morph-to-poly ((obj geb:<substmorph>))
+  (error "Subclass Responsbility for ~A" (class-name (class-of obj))))
+
 (defmethod morph-to-poly ((obj geb:<substobj>))
   (declare (ignore obj))
   ident)
