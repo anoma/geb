@@ -268,31 +268,73 @@ SubstObjTerm = RefinedST isSubstObj
 ---- Positions and directions ----
 ----------------------------------
 
+-- Extensions to the positions of endofunctors beyond those of objects,
+-- all of which it shares (since the category of endofunctors also has
+-- all the universal properties of the the `STMu` category).
 public export
-data SubstEFPos : Type where
-  SEFPosU : SubstObjPos -> SubstEFPos -- same universal objects as `SubstObjPF`
-  SEFPosI : SubstEFPos -- identity endofunctor
-  SEFPosPar : SubstEFPos -- parallel product
+data SubstEFPosExt : Type where
+  SEFPosExtI : SubstEFPosExt -- identity endofunctor
+  SEFPosExtPar : SubstEFPosExt -- parallel product
 
 public export
-data SubstEFDir : SubstEFPos -> Type where
-  -- Same directions for corresponding positions as `SubstObjPF`
-  SEFDirU : {0 pos : SubstObjPos} -> SubstObjDir p -> SubstEFDir (SEFPosU p)
+data SubstEFDirExt : SubstEFPosExt -> Type where
   -- Although the identity endofunctor has one position, the position
   -- corresponding to the identity of the endofunctor which _generates_
   -- endofunctors has no positions, because there is just one identity
   -- functor -- the constructor which generates the identity endofunctor does
   -- not take any endofunctors as parameters
-  SEFDirPar1 : SubstEFDir SEFPosPar -- first component of parallel product
-  SEFDirPar2 : SubstEFDir SEFPosPar -- second component of parallel product
+  SEFDirExtPar1 : SubstEFDirExt SEFPosExtPar
+    -- first component of parallel product
+  SEFDirExtPar2 : SubstEFDirExt SEFPosExtPar
+    -- second component of parallel product
+
+public export
+SubstEFExt : PolyFunc
+SubstEFExt = (SubstEFPosExt ** SubstEFDirExt)
 
 public export
 SubstEFPF : PolyFunc
-SubstEFPF = (SubstEFPos ** SubstEFDir)
+SubstEFPF = pfCoproductArena SubstObjPF SubstEFExt
+
+public export
+SubstEFPos : Type
+SubstEFPos = pfPos SubstEFPF
+
+public export
+SubstEFDir : SubstEFPos -> Type
+SubstEFDir = pfDir {p=SubstEFPF}
+
+public export
+SEFPos0 : SubstEFPos
+SEFPos0 = Left SOPos0
+
+public export
+SEFPos1 : SubstEFPos
+SEFPos1 = Left SOPos1
+
+public export
+SEFPosC : SubstEFPos
+SEFPosC = Left SOPosC
+
+public export
+SEFPosP : SubstEFPos
+SEFPosP = Left SOPosP
+
+public export
+SEFPosI : SubstEFPos
+SEFPosI = Right SEFPosExtI
+
+public export
+SEFPosPar : SubstEFPos
+SEFPosPar = Right SEFPosExtPar
 
 ----------------------------------------------------
 ---- Least fixed point, algebras, catamorphisms ----
 ----------------------------------------------------
+
+public export
+SEFMuExt : Type
+SEFMuExt = PolyFuncMu SubstEFExt
 
 public export
 SEFMu : Type
@@ -303,9 +345,12 @@ SEFAlg : Type -> Type
 SEFAlg = PFAlg SubstEFPF
 
 public export
-sefToSoAlg : {0 a : Type} ->
-  SOAlg a -> (pos : SubstObjPos) -> (SubstEFDir (SEFPosU pos) -> a) -> a
-sefToSoAlg alg pos dir = alg pos $ dir . SEFDirU {pos}
+SEFAlgExt : Type -> Type
+SEFAlgExt = PFAlg SubstEFExt
+
+public export
+sefCataExt : {0 a : Type} -> SEFAlgExt a -> SEFMuExt -> a
+sefCataExt = pfCata {p=SubstEFExt}
 
 public export
 sefCata : {0 a : Type} -> SEFAlg a -> SEFMu -> a
@@ -316,12 +361,20 @@ sefCata = pfCata {p=SubstEFPF}
 -------------------
 
 public export
-InSEFU : (i : SubstObjPos) -> (SubstObjDir i -> SEFMu) -> SEFMu
-InSEFU i dir = InPFM (SEFPosU i) $ \d => case d of (SEFDirU d') => dir d'
+InSEFL : (i : SubstObjPos) -> (SubstObjDir i -> SEFMu) -> SEFMu
+InSEFL i = InPFM (Left i)
+
+public export
+InSEFR : (i : SubstEFPosExt) -> (SubstEFDirExt i -> SEFMu) -> SEFMu
+InSEFR i = InPFM (Right i)
 
 public export
 InSEFO : SOMu -> SEFMu
-InSEFO = soCata InSEFU
+InSEFO = soCata InSEFL
+
+public export
+InSEFExt : SEFMuExt -> SEFMu
+InSEFExt = sefCataExt InSEFR
 
 public export
 InSEF0 : SEFMu
@@ -333,15 +386,11 @@ InSEF1 = InSEFO InSO1
 
 public export
 InSEFC : SOMu -> SOMu -> SEFMu
-InSEFC x y = InSEFU SOPosC $ \d => case d of
-  SODirL => InSEFO x
-  SODirR => InSEFO y
+InSEFC = InSEFO .* InSOC
 
 public export
 InSEFP : SOMu -> SOMu -> SEFMu
-InSEFP x y = InSEFU SOPosP $ \d => case d of
-  SODir1 => InSEFO x
-  SODir2 => InSEFO y
+InSEFP = InSEFO .* InSOP
 
 public export
 InSEFI : SEFMu
@@ -350,42 +399,49 @@ InSEFI = InPFM SEFPosI $ \d => case d of _ impossible
 public export
 InSEFPar : SEFMu -> SEFMu -> SEFMu
 InSEFPar x y = InPFM SEFPosPar $ \d => case d of
-  SEFDirPar1 => x
-  SEFDirPar2 => y
+  SEFDirExtPar1 => x
+  SEFDirExtPar2 => y
+
+public export
+SEFSizeAlgExt : SEFAlgExt Nat
+SEFSizeAlgExt SEFPosExtI dir = 1
+SEFSizeAlgExt SEFPosExtPar dir = 1 + dir SEFDirExtPar1 + dir SEFDirExtPar2
 
 public export
 SEFSizeAlg : SEFAlg Nat
-SEFSizeAlg (SEFPosU pos) dir = sefToSoAlg SOSizeAlg pos dir
-SEFSizeAlg SEFPosI dir = 1
-SEFSizeAlg SEFPosPar dir = 1 + dir SEFDirPar1 + dir SEFDirPar2
+SEFSizeAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOSizeAlg SEFSizeAlgExt
 
 public export
 sefSize : SEFMu -> Nat
 sefSize = sefCata SEFSizeAlg
 
 public export
+SEFDepthAlgExt : SEFAlgExt Nat
+SEFDepthAlgExt SEFPosExtI dir = 0
+SEFDepthAlgExt SEFPosExtPar dir = smax (dir SEFDirExtPar1) (dir SEFDirExtPar2)
+
+public export
 SEFDepthAlg : SEFAlg Nat
-SEFDepthAlg (SEFPosU pos) dir = sefToSoAlg SODepthAlg pos dir
-SEFDepthAlg SEFPosI dir = 0
-SEFDepthAlg SEFPosPar dir = smax (dir SEFDirPar1) (dir SEFDirPar2)
+SEFDepthAlg =
+  PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SODepthAlg SEFDepthAlgExt
 
 public export
 sefDepth : SEFMu -> Nat
 sefDepth = sefCata SEFDepthAlg
 
 public export
+SEFShowAlgObj : SOAlg String
+SEFShowAlgObj pos dir = "!" ++ SOShowAlg pos dir
+
+public export
+SEFShowAlgExt : SEFAlgExt String
+SEFShowAlgExt SEFPosExtI dir = "{id}"
+SEFShowAlgExt SEFPosExtPar dir =
+  "<" ++ dir SEFDirExtPar1 ++ "x" ++ dir SEFDirExtPar2 ++ ">"
+
+public export
 SEFShowAlg : SEFAlg String
-SEFShowAlg (SEFPosU pos) dir = case pos of
-  SOPos0 => "!0"
-  SOPos1 => "!1"
-  SOPosC =>
-    "![" ++ dir (SEFDirU {pos=SOPosC} SODirL) ++ "|" ++
-    dir (SEFDirU {pos=SOPosC} SODirR) ++ "]"
-  SOPosP =>
-    "!(" ++ dir (SEFDirU {pos=SOPosP} SODir1) ++ "," ++
-    dir (SEFDirU {pos=SOPosP} SODir2) ++ ")"
-SEFShowAlg SEFPosI dir = "{id}"
-SEFShowAlg SEFPosPar dir = "<" ++ dir SEFDirPar1 ++ "x" ++ dir SEFDirPar2 ++ ">"
+SEFShowAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOShowAlg SEFShowAlgExt
 
 public export
 Show SEFMu where
@@ -939,7 +995,7 @@ PolyMuNTAlg PFI q = PolyPos q
 PolyMuNTAlg PF0 _ = ()
 PolyMuNTAlg PF1 q = PolyZeroPos q
 PolyMuNTAlg ((_, p) $$+ (_, q)) r = Pair (p r) (q r)
-PolyMuNTAlg ((_, p) $$* (q, _)) r = p $ PolyHomObj q r
+PolyMuNTAlg ((_, p) $$* (q, _)) r = ?PolyMuNTAlg_product_domain_hole
 
 public export
 PolyMuNT : PolyMu -> PolyMu -> Type

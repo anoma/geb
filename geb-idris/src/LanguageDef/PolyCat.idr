@@ -62,6 +62,24 @@ public export
 SliceToPolyFunc : {a : Type} -> SliceObj a -> PolyFunc
 SliceToPolyFunc {a} sl = (a ** sl)
 
+-- Interpret the same data as determine a polynomial functor --
+-- namely, a dependent set, AKA arena -- as a Dirichlet functor
+-- (rather than a polynomial functor).  While a polynomial
+-- functor is a sum of covariant representables, a Dirichlet
+-- functor is a sum of contravariant representables.
+public export
+InterpDirichFunc : PolyFunc -> Type -> Type
+InterpDirichFunc (pos ** dir) x = (i : pos ** (x -> dir i))
+
+public export
+InterpDFMap : (p : PolyFunc) -> {0 a, b : Type} ->
+  (a -> b) -> InterpDirichFunc p b -> InterpDirichFunc p a
+InterpDFMap (_ ** _) m (i ** d) = (i ** d . m)
+
+public export
+(p : PolyFunc) => Contravariant (InterpDirichFunc p) where
+  contramap {p} = InterpDFMap p
+
 --------------------------------------------------------
 ---- Polynomial functors with finite direction-sets ----
 --------------------------------------------------------
@@ -118,7 +136,7 @@ pntOnDir {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onDir
 -- slice category of `Type` over `Type`.
 public export
 InterpPolyNT : {0 p, q : PolyFunc} -> PolyNatTrans p q ->
-  SliceMorphism (InterpPolyFunc p) (InterpPolyFunc q)
+  SliceMorphism {a=Type} (InterpPolyFunc p) (InterpPolyFunc q)
 InterpPolyNT {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) a (pi ** pd) =
   (onPos pi ** (pd . onDir pi))
 
@@ -143,6 +161,33 @@ PolyNatTransToSliceMorphism : {0 p, q : PolyFunc} ->
     (PolyFuncToSlice p)
 PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
   (_ ** ondir) onPosId i sp = ondir i $ replace {p=qdir} (sym (onPosId i)) sp
+
+------------------------------------------------------------
+---- Natural transformations on polynomial endofunctors ----
+------------------------------------------------------------
+
+public export
+DirichNatTrans : PolyFunc -> PolyFunc -> Type
+DirichNatTrans (ppos ** pdir) (qpos ** qdir) =
+  (onPos : ppos -> qpos ** SliceMorphism pdir (qdir . onPos))
+
+public export
+dntOnPos : {0 p, q : PolyFunc} -> DirichNatTrans p q ->
+  pfPos p -> pfPos q
+dntOnPos {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onPos
+
+public export
+dntOnDir : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
+  (i : pfPos p) -> pfDir {p} i -> pfDir {p=q} (dntOnPos {p} {q} alpha i)
+dntOnDir {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onDir
+
+-- A natural transformation between Dirichlet functors may be viewed as a
+-- morphism in the slice category of `Type` over `Type`.
+public export
+InterpDirichNT : {0 p, q : PolyFunc} -> DirichNatTrans p q ->
+  SliceMorphism {a=Type} (InterpDirichFunc p) (InterpDirichFunc q)
+InterpDirichNT {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) a (pi ** pd) =
+  (onPos pi ** onDir pi . pd)
 
 ----------------------------------------------------------------------------
 ---- Vertical-Cartesian factoring of polynomial natural transformations ----
@@ -215,6 +260,68 @@ CartFactNatTrans : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
   PolyNatTrans (VertCartFactFunc {p} {q} alpha) q
 CartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
   (CartFactOnPos {p} {q} alpha ** CartFactOnDir {p} {q} alpha)
+
+---------------------------------------------------------------------------
+---- Vertical-Cartesian factoring of Dirichlet natural transformations ----
+---------------------------------------------------------------------------
+
+-- The intermediate Dirichlet functor in the vertical-Cartesian
+-- factoring of a natural transformation between Dirichlet functors.
+public export
+DirichVertCartFactFunc : {p, q : PolyFunc} -> DirichNatTrans p q -> PolyFunc
+DirichVertCartFactFunc {p} {q} alpha =
+  pfBaseChangeArena q {a=(pfPos p)} (dntOnPos alpha)
+
+public export
+DirichVertCartFactPos : {p, q : PolyFunc} -> DirichNatTrans p q -> Type
+DirichVertCartFactPos {p} {q} alpha =
+  pfPos (DirichVertCartFactFunc {p} {q} alpha)
+
+public export
+DirichVertCartFactDir : {p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
+  DirichVertCartFactPos {p} {q} alpha -> Type
+DirichVertCartFactDir {p} {q} alpha =
+  pfDir {p=(DirichVertCartFactFunc {p} {q} alpha)}
+
+public export
+DirichVertFactOnPos : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
+  pfPos p -> DirichVertCartFactPos {p} {q} alpha
+DirichVertFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i = i
+
+public export
+DirichVertFactOnDir :
+  {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) -> (i : pfPos p) ->
+  pfDir {p} i ->
+  DirichVertCartFactDir {p} {q} alpha (DirichVertFactOnPos {p} {q} alpha i)
+DirichVertFactOnDir {p=p@(_ ** _)} {q=q@(_ ** _)} (onPos ** onDir) i j =
+  onDir i j
+
+public export
+DirichVertFactNatTrans : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
+  DirichNatTrans p (DirichVertCartFactFunc {p} {q} alpha)
+DirichVertFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+  (DirichVertFactOnPos {p} {q} alpha ** DirichVertFactOnDir {p} {q} alpha)
+
+public export
+DirichCartFactOnPos : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
+  DirichVertCartFactPos {p} {q} alpha -> pfPos q
+DirichCartFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i =
+  onPos i
+
+public export
+DirichCartFactOnDir :
+  {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
+  (i : DirichVertCartFactPos {p} {q} alpha) ->
+  DirichVertCartFactDir {p} {q} alpha i ->
+  pfDir {p=q} (DirichCartFactOnPos {p} {q} alpha i)
+DirichCartFactOnDir {p=p@(_ ** _)} {q=q@(_ ** _)} (_ ** _) i j =
+  j
+
+public export
+DirichCartFactNatTrans : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
+  DirichNatTrans (DirichVertCartFactFunc {p} {q} alpha) q
+DirichCartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+  (DirichCartFactOnPos {p} {q} alpha ** DirichCartFactOnDir {p} {q} alpha)
 
 -------------------------------------------------
 -------------------------------------------------
@@ -545,6 +652,10 @@ pfLeftCoclosure : (q, p : PolyFunc) -> PolyFunc
 pfLeftCoclosure q p = (pfLeftCoclosurePos q p ** pfLeftCoclosureDir q p)
 
 public export
+PolyLKanExt : (g, j : PolyFunc) -> PolyFunc
+PolyLKanExt = flip pfLeftCoclosure
+
+public export
 pfHomComposePos : Type -> Type -> Type
 pfHomComposePos a b = pfCompositionPos (PFHomArena a) (PFHomArena b)
 
@@ -614,6 +725,18 @@ pfDerivativeDir p (i ** di) = DPair (pfDir {p} i) (Not . Equal di)
 public export
 pfDerivativeArena : PolyFunc -> Type
 pfDerivativeArena p = DPair (pfDerivativePos p) (pfDerivativeDir p)
+
+public export
+pfMonomialPos : Type -> Type -> Type
+pfMonomialPos a b = a
+
+public export
+pfMonomialDir : (a, b : Type) -> pfMonomialPos a b -> Type
+pfMonomialDir a b i = b
+
+public export
+pfMonomialArena : Type -> Type -> PolyFunc
+pfMonomialArena a b = (pfMonomialPos a b ** pfMonomialDir a b)
 
 ------------------------------------------------
 ------------------------------------------------
@@ -688,6 +811,44 @@ pntAssociate (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) =
      \pd => (snd (fst pqi) pd ** \qd => snd pqi (pd ** qd))) **
    \pqi, qd => ((fst qd ** fst (snd qd)) ** snd (snd qd)))
 
+public export
+VertCartFactIsCorrect : {0 p, q : PolyFunc} ->
+  (alpha : PolyNatTrans p q) ->
+  (pntVCatComp {p} {q=(VertCartFactFunc {p} {q} alpha)} {r=q}
+    (CartFactNatTrans {p} {q} alpha) (VertFactNatTrans {p} {q} alpha))
+  = alpha
+VertCartFactIsCorrect {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) =
+  Refl
+
+----------------------------------------------------------
+----------------------------------------------------------
+---- Composition of Dirichlet natural transformations ----
+----------------------------------------------------------
+----------------------------------------------------------
+
+public export
+dntId : (p : PolyFunc) -> DirichNatTrans p p
+dntId (pos ** dir) = (id ** \_ => id)
+
+-- Vertical composition of natural transformations, which is the categorial
+-- composition in the category of Dirichlet functors.
+public export
+dntVCatComp : {0 p, q, r : PolyFunc} ->
+  DirichNatTrans q r -> DirichNatTrans p q -> DirichNatTrans p r
+dntVCatComp {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
+  (gOnPos ** gOnDir) (fOnPos ** fOnDir) =
+    (gOnPos . fOnPos ** \pi, rd => gOnDir (fOnPos pi) $ fOnDir pi rd)
+
+public export
+DirichVertCartFactIsCorrect : {0 p, q : PolyFunc} ->
+  (alpha : DirichNatTrans p q) ->
+  (dntVCatComp {p} {q=(DirichVertCartFactFunc {p} {q} alpha)} {r=q}
+    (DirichCartFactNatTrans {p} {q} alpha)
+    (DirichVertFactNatTrans {p} {q} alpha))
+  = alpha
+DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) =
+  Refl
+
 ------------------------------
 ------------------------------
 ---- Trees on polynomials ----
@@ -717,6 +878,23 @@ PFAlg : PolyFunc -> Type -> Type
 PFAlg (pos ** dir) a = (i : pos) -> (dir i -> a) -> a
 
 public export
+PFAlgCPS : PolyFunc -> Type -> Type
+PFAlgCPS (pos ** dir) a = (i : pos) -> (dir i -> a) -> Continuation a
+
+public export
+PFBaseF : PolyFunc -> Type -> Type
+PFBaseF p a =
+  NaturalTransformation (ContravarHomFunc a) (ExpFunctor (InterpPolyFunc p) a)
+
+public export
+PFBaseFToAlg : {p : PolyFunc} -> {a : Type} -> PFBaseF p a -> PFAlg p a
+PFBaseFToAlg {p=(pos ** dir)} {a} f = \i, d => f a id (i ** d)
+
+public export
+PFAlgToBaseF : {p : PolyFunc} -> {a : Type} -> PFAlg p a -> PFBaseF p a
+PFAlgToBaseF {p=(pos ** dir)} {a} alg b f (i ** d) = alg i $ \di => f $ d di
+
+public export
 PFNAlg : PolyFuncN -> Type -> Type
 PFNAlg (pos ** dir) a = (i : pos) -> Vect (dir i) a -> a
 
@@ -724,6 +902,14 @@ public export
 PFAlgFromN : {0 a : Type} -> {p : PolyFuncN} ->
   PFNAlg p a -> PFAlg (pfnFunc p) a
 PFAlgFromN {a} {p=(pos ** dir)} alg i = alg i . finFToVect
+
+public export
+PFCoprodAlg : {p, q : PolyFunc} -> {a : Type} ->
+  PFAlg p a -> PFAlg q a -> PFAlg (pfCoproductArena p q) a
+PFCoprodAlg {p=(ppos ** pdir)} {q=(qpos ** qdir)} {a} algp algq (Left i) d =
+  algp i d
+PFCoprodAlg {p=(ppos ** pdir)} {q=(qpos ** qdir)} {a} algp algq (Right i) d =
+  algq i d
 
 -------------------------------------------------
 ---- Initial algebras of polynomial functors ----
@@ -943,7 +1129,48 @@ pfFreeCata {p} {a} {b} alg =
 
 public export
 PFCoalg : PolyFunc -> Type -> Type
-PFCoalg (pos ** dir) a = a -> (i : pos ** (dir i -> a))
+PFCoalg p a = a -> InterpPolyFunc p a
+
+public export
+PFCoalgCPS : PolyFunc -> Type -> Type
+PFCoalgCPS p a = a -> Continuation $ InterpPolyFunc p a
+
+public export
+PFCobaseF : PolyFunc -> Type -> Type
+PFCobaseF p a =
+  NaturalTransformation (CovarHomFunc a) (FunctorExp (InterpPolyFunc p) a)
+
+public export
+PFCobaseFToCoalg : {p : PolyFunc} -> {a : Type} -> PFCobaseF p a -> PFCoalg p a
+PFCobaseFToCoalg {p=(pos ** dir)} {a} = \f, x => f a id x
+
+public export
+PFCoalgToCobaseF : {p : PolyFunc} -> {a : Type} -> PFCoalg p a -> PFCobaseF p a
+PFCoalgToCobaseF {p=(pos ** dir)} {a} coalg b f x =
+  let (i ** d) = coalg x in (i ** f . d)
+
+{- One direction of 5.71 from "A General Theory of Interaction". -}
+public export
+PFMonoToCofunc : {p : PolyFunc} -> {a, b : Type} ->
+  PolyNatTrans (pfMonomialArena a b) p -> a -> InterpPolyFunc p b
+PFMonoToCofunc {p=(pos ** dir)} {a} {b} (onPos ** onDir) x =
+  (onPos x ** onDir x)
+
+public export
+PFMonoToCoalg : {p : PolyFunc} -> {a : Type} ->
+  PolyNatTrans (pfMonomialArena a a) p -> PFCoalg p a
+PFMonoToCoalg {p=(pos ** dir)} {a} = PFMonoToCofunc {p=(pos ** dir)} {a} {b=a}
+
+{- The other direction of 5.71 from "A General Theory of Interaction". -}
+public export
+PFCofuncToMono : {p : PolyFunc} -> {a, b : Type} ->
+  (a -> InterpPolyFunc p b) -> PolyNatTrans (pfMonomialArena a b) p
+PFCofuncToMono {p=(pos ** dir)} {a} {b} f = (fst . f ** \x => snd (f x))
+
+public export
+PFCoalgToMono : {p : PolyFunc} -> {a : Type} ->
+  PFCoalg p a -> PolyNatTrans (pfMonomialArena a a) p
+PFCoalgToMono {p=(pos ** dir)} {a} = PFCofuncToMono {p=(pos ** dir)} {a} {b=a}
 
 ----------------------------------------------------
 ---- Terminal coalgebras of polynomial functors ----
