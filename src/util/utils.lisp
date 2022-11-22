@@ -23,9 +23,10 @@ Here is an example usage:
          (:export
           :compile-checked-term :stlc-ctx-to-mu)))
 ```"
-  `(locally (declare #+sbcl (sb-ext:muffle-conditions sb-int:package-at-variance))
-     (handler-bind (#+sbcl (sb-int:package-at-variance #'muffle-warning))
-       ,@package-declarations)))
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (locally (declare #+sbcl (sb-ext:muffle-conditions sb-int:package-at-variance))
+       (handler-bind (#+sbcl (sb-int:package-at-variance #'muffle-warning))
+         ,@package-declarations))))
 
 (defmacro make-pattern (object-name &rest constructor-names)
   "make pattern matching position style instead of record style. This
