@@ -2,18 +2,21 @@
  
 open import Agda.Primitive using (Level; lzero; lsuc; _⊔_; Setω)
 
-module geb where
+module geb-test where
 
   import HoTT
 
   open HoTT.Basics
 
--- We first introduce the definition of FinSet as well as a structure of what will later proven to be the morphisms
+-- We first introduce the standard definition of FinSet as well as a structure of what will later proven to be the morphisms
 
   Fin : (n : ℕ) → Type lzero
   Fin zero = 𝟘
   Fin (succ zero) = 𝟙
   Fin (succ (succ n)) = (Fin (succ n)) + 𝟙
+
+-- Read as: elements of FinSet are types A with some proof that there exists a natural number n with a n equivalence (working with UIP+funext think of it as a bijection) of Fin n and A.
+-- We need not care in this context about (-1)-truncating. On the categorical level it will make no diffrence up to equivalence.
 
   FinSet : Type (lsuc lzero)
   FinSet = Σ[ A-n ∶ ((Type lzero) × ℕ) ] (Fin (pr₂ A-n) ≃ pr₁ A-n)
@@ -54,10 +57,6 @@ module geb where
   Fin-decidable-eq : (k : ℕ) → decidable-eq (Fin k)
   Fin-decidable-eq k x y = decidable-bi (Eq-Fin-≡ k x y) (≡-Eq-Fin k x y) (Eq-Fin-decidable k x y)
   
-
-
-
--- Read as: elements of FinSet are types A with some proof that there exists a natural number n with a n equivalence (working with UIP think of it as a bijection) of Fin n and A. We need not care in this context about truncating. On the categorical level it will make no diffrence up to equivalence.
 -- Now we specify the morphisms
                              
   MorFinSet : FinSet → FinSet → Type (lzero)
@@ -136,7 +135,7 @@ module geb where
   ⨁F-one = n-ary-binary-fun (uncurry (_⊕F_)) ((𝟘 , zero) ,, refl-to-equiv (refl _)) ((𝟙 , one) ,, refl-to-equiv (refl 𝟙))
 
   Fin-as-obj-of-FinSet : (n : ℕ) → FinSet
-  Fin-as-obj-of-FinSet n = ((Fin n) , n) ,, (refl-to-equiv (refl _) ) 
+  Fin-as-obj-of-FinSet n = ((Fin n) , n) ,, (refl-to-equiv (refl _) )
 
   descent-to-skeleton : {x y : FinSet} → MorFinSet x y → MorFinSet (Fin-as-obj-of-FinSet (pr₂ (proj₁ x))) (Fin-as-obj-of-FinSet (pr₂ (proj₁ y)))
   descent-to-skeleton {(x , n) ,, (f1 ,, (h1 , h2))} {(y , m) ,, (f2 ,, ((g ,, h3) , h4))} f = (g ∘ f) ∘ f1
@@ -198,7 +197,7 @@ module geb where
   FinMor-is-Set : (n m : ℕ) → is-Set (Fin n → Fin m)
   FinMor-is-Set n m = Hedberg (FinMor-decidable-eq n m)
 
--- This is a function establishing an extension property: each type dependent on the skeleton can be extended canonically to the one of the entire FinSet
+-- This is a function establishing an extension property: each type dependent on the skeleton can be extended canonically to the one of the entire FinSet, if one wants to work with this
 
   FinSet-skel : Type (lsuc lzero)
   FinSet-skel = Σ[ X ∶ ((Type lzero) × ℕ) ] ((Fin (pr₂ X)) ≡ (pr₁ X))
@@ -482,11 +481,11 @@ module geb where
   ω-to-Geb-mor (succ (succ n)) m f = [ ω-to-Geb-mor (succ n) m (pr₁ (proj₁ (functions-from-+-from-uni-prop f)))
                                                     , obj-of-FinSet-to-⨁G-Term m ((pr₂ (proj₁ (functions-from-+-from-uni-prop f))) pt )]G
 
--- The problem with the above definition is that it will not give us enough information about what is happening on left inclusions
--- However, using decidability, we can establish this explicitly:
-
   case-inl-eq : {n : ℕ} (f : Morω (succ n) (succ (succ n))) → (f ≡ inl) → (ω-to-Geb-obj (succ n) ↦ ω-to-Geb-obj (succ (succ n)))
   case-inl-eq f p = inlG
+
+-- The problem with the above definition is that it will not give us enough information about what is happening on left inclusions
+-- However, using decidability, we can establish this explicitly:
 
   case-inl-neq : {n : ℕ} (f : Morω (succ n) (succ (succ n))) → (¬ (f ≡ inl)) → (ω-to-Geb-obj (succ n) ↦ ω-to-Geb-obj (succ (succ n)))
   case-inl-neq f np =  ω-to-Geb-mor _ _ f
@@ -500,6 +499,14 @@ module geb where
   ω-Geb-mor-inl : (n m : ℕ) (f : Morω n m) → (ω-to-Geb-obj n ↦ ω-to-Geb-obj m)
   ω-Geb-mor-inl zero m f = ω-to-Geb-mor zero m f
   ω-Geb-mor-inl (succ n) m f = cases _ (ℕ-decidable-eq m (succ (succ n))) (case-ℕ-eq n m f) (case-ℕ-neq n m f)
+
+
+-- Check if needed extra 
+
+  ω-Geb-mor-inl' : (n m : ℕ) (f : Morω n m) → (ω-to-Geb-obj n ↦ ω-to-Geb-obj m)
+  ω-Geb-mor-inl' zero m f =  ω-to-Geb-mor zero m f
+  ω-Geb-mor-inl' (succ zero) m f = cases _ (ℕ-decidable-eq m (succ (succ zero))) (case-ℕ-eq zero m f) (case-ℕ-neq zero m f)
+  ω-Geb-mor-inl' (succ (succ n)) m f = cases _ (ℕ-decidable-eq m (succ (succ (succ n)))) (case-ℕ-eq (succ n) m f) (case-ℕ-neq (succ n) m f)
 
 
 -- function as before but make it consider whether it is an injection i.e. whether m = n + 2 
@@ -573,6 +580,57 @@ module geb where
   Geb-to-ω-mor (p1G {x} {y}) = pr₁ ∘ ≃-qinv ((prod-of-finsets (Geb-to-ω-obj x) (Geb-to-ω-obj y)))
   Geb-to-ω-mor (p2G {x} {y}) = pr₂ ∘ ≃-qinv ((prod-of-finsets (Geb-to-ω-obj x) (Geb-to-ω-obj y))) -}
 
+-- Density of Geb-into-FinSet. Recall that by definition of morphisms of FinSet as underlying functions of types,
+-- the isomorphisms of the category are equivalences of underlying types, assuming funext.
+
+  FinSet-skel-iso : (A : FinSet) → (pr₁ (proj₁ A)) ≃ (Fin (pr₂ (proj₁ (A))))
+  FinSet-skel-iso ((A , n) ,, p) = equiv-symm p 
+
+-- We are looking at the density of the inclusion of Geb into FinSet. In particular, that means, given the above result, that every Fin (succ (succ n))
+-- will be isomorphic to Fin (⨁ₙ 1) but this follows from basic arithmetic and reflexivity of equivalences, as initial and terminal objects will be hit.
+
+  pluses-1 : (n : ℕ) → ℕ
+  pluses-1 zero = zero
+  pluses-1 (succ zero) = one
+  pluses-1 (succ (succ n)) = (pluses-1 (succ n)) +ℕ one
+
+  ℕ-as-plus-one : (n : ℕ) → n ≡ (pluses-1 n)
+  ℕ-as-plus-one zero = refl _
+  ℕ-as-plus-one (succ zero) = refl _
+  ℕ-as-plus-one (succ (succ n)) = ((fun-ap (λ k → add-ℕ k one) ((ℕ-as-plus-one (succ n)) ⁻¹)) · ((fun-ap (λ k → succ k) (right-succ-law-add-ℕ n zero))
+                                                                                               · fun-ap (λ k → succ (succ k)) (right-unit-law-add-ℕ _))) ⁻¹
+
+-- In particular, suppose (A ,, n), p is a finite set. Then it will be isomorphic to, firstly Fin n with evident proofs of equivalence and this in turn
+-- will be isomorphic to Fin (⨁ₙ 1) := ⨁Fₙ (Fin 1) := ⨁Fₙ (𝟙) via refl-to-equiv
+
+  density-lemma-Geb-FinSet : (n : ℕ) → Fin n ≃ (Fin (pluses-1 n))
+  density-lemma-Geb-FinSet n = refl-to-equiv (fun-ap (λ k → Fin k) (ℕ-as-plus-one n))
+
+  ⊕F-func : (A B : FinSet) → ( (pr₁ (proj₁ (A ⊕F B))) ≡ ((pr₁ (proj₁ A)) + (pr₁ (proj₁ B))))
+  ⊕F-func ((A , n) ,, pA) ((B , m) ,, pB) = refl _
+
+  density-Geb-FinSet : (A : FinSet) → Σ[ a ∶ ObjGEBCat ] ((pr₁ (proj₁ A)) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))
+  density-Geb-FinSet ((A , zero) ,, p) = Init ,, FinSet-skel-iso (((A , zero) ,, p))
+  density-Geb-FinSet ((A , succ n) ,, p) = dep-eval {lsuc lzero} {lsuc lzero}
+                                               (dep-eval {lsuc lzero} {lsuc lzero} (indℕ (λ k → (B : Type lzero) (q : (Fin (succ k) ≃ B)) →
+                                                                       Σ {_} {lzero} (ObjGEBCat) ( λ a → ((pr₁ {_} {lzero} {_} {_} (proj₁ {_} {_} {_} {λ t → (Fin (pr₂ t)) ≃ pr₁ t} ((B , succ k) ,, q ))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))))
+                                                          (λ B q → Term ,, (FinSet-skel-iso (((B , one) ,, q))))
+                                                          (λ n' IHs B q → ((proj₁ {_} {_} {_} {λ a → ((pr₁ (proj₁ (Fin-as-obj-of-FinSet (succ n')))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))}
+                                                                                  (IHs (Fin (succ n')) (refl-to-equiv (refl _)))) ⊕G Term) ,,
+                                                                          is-equiv-trans (FinSet-skel-iso ((B , (succ (succ n'))) ,, q))
+                                                                          (is-equiv-trans
+                                                                                        (+-preserves-equivs (proj₂ {_} {_} {_} {λ a → ((pr₁ (proj₁ (Fin-as-obj-of-FinSet (succ n')))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))}
+                                                                                                                  (IHs (Fin (succ n')) (refl-to-equiv (refl _))))
+                                                                                                            (refl-to-equiv (refl 𝟙))) 
+                                                                           (equiv-symm (refl-to-equiv
+                                                                             (⊕F-func (Geb-into-FinSet-obj (proj₁ {_} {_} {_} {λ a → ((pr₁ (proj₁ (Fin-as-obj-of-FinSet (succ n')))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))}
+                                                                                                                  (IHs (Fin (succ n')) (refl-to-equiv (refl _))))) (Fin-as-obj-of-FinSet one))))))
+                                                          n)
+                                               A)
+                                            p
+
+-- Note that this does not just say that our functor is essentially surjective but that it is split essentially surjective. We get structure rather then properties, so that the equivalence is rescued constructively
+-- after proving that the assignment is full and faithful. 
 
 -- Properties of coproducts and products with initial/terminal objects
 
@@ -658,7 +716,7 @@ module geb where
                                                (λ n IHsn1 → λ m k f g → inx-are-joint-epi _ _
                                                ((((pr₁ (CoProdMorLegAx _ _))) · (IHsn1 m k f ((g ∘ inl)) · ((((CompAssocAx _ _ _) ⁻¹) · fun-ap (λ F → ω-to-Geb-mor m k f ● F) (pr₁ (CoProdMorLegAx _ _))) ⁻¹)))
                                                ,
-                                               ((pr₂ (CoProdMorLegAx _ _)) · ((Lemma-ω-to-Geb-mor-preserves-comp m k (f) (g ∘ inr) · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹)) · fun-ap (λ F → F ● inrG) ((comp-with-coprod-mor _ _ _) ⁻¹))))) n) n  -- Note the Lemma       
+                                               ((pr₂ (CoProdMorLegAx _ _)) · ((Lemma-ω-to-Geb-mor-preserves-comp m k (f) (g ∘ inr) · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹)) · fun-ap (λ F → F ● inrG) ((comp-with-coprod-mor _ _ _) ⁻¹))))) n) n  -- Note the Lemma
 
 
 -- One may also look at the commented-out composition preservation proof below. Agda did not recognize the recursive calls in the (n := succ zero) case
@@ -708,9 +766,5 @@ module geb where
                                        (prop-decidable (ℕ-is-Set (succ (succ (succ n))) (succ (succ (succ n)))) (ℕ-decidable-eq _ _) (inl (refl _)))
                                · (fun-ap (λ k → [ case-inl-eq inl , case-inl-neq inl ] k)
                                          (prop-decidable (FinMor-is-Set _ _ inl inl) (FinMor-decidable-eq _ _ _ _) (inl (refl inl))))
+                              
 
-
-
-  ω-to-Geb-mor-preserves-id : (n : ℕ) → ω-to-Geb-mor n n (id _) ≡ IdMor (⨁G Term n)
-  ω-to-Geb-mor-preserves-id zero = (InitMorAx _) ⁻¹
-  ω-to-Geb-mor-preserves-id (succ n) = {!!}
