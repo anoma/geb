@@ -8,5 +8,23 @@
 (pax:defsection @geb-utils-manual (:title "Geb Utilities")
   "The Utilities package provide general utility functionality that is
 used throughout the GEB codebase"
-  (symbol-to-keyword pax:function)
-  (muffle-package-variance pax:macro))
+  (symbol-to-keyword       pax:function)
+  (muffle-package-variance pax:macro)
+  (make-pattern            pax:macro)
+  (@geb-accessors          pax:section))
+
+(pax:defsection @geb-accessors (:title "Accessors")
+  "These functions are generic lenses of the GEB codebase. If a class is
+   defined, where the names are not known, then these accessors are
+   likely to be used. They may even augment existing classes."
+  (mcar      pax:generic-function)
+  (mcadr     pax:generic-function)
+  (mcaddr    pax:generic-function)
+  (mcadddr   pax:generic-function)
+  (mcdr      pax:generic-function)
+  (obj       pax:generic-function)
+  (name      pax:generic-function)
+  (func      pax:generic-function)
+  (predicate pax:generic-function)
+  (then      pax:generic-function)
+  (else      pax:generic-function))

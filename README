@@ -279,9 +279,10 @@ The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH
 
 ### Accessors
 
-These functions relate to grabbing slots out of the various
-@GEB-SUBSTMORPH and @GEB-SUBSTMU types. See those sections for
-specific instance documentation
+###### \[in package GEB.UTILS\]
+These functions are generic lenses of the GEB codebase. If a class is
+defined, where the names are not known, then these accessors are
+likely to be used. They may even augment existing classes.
 
 - [generic-function] MCAR OBJ
 
@@ -292,14 +293,18 @@ specific instance documentation
 
     like MCAR but for the CADR
 
+- [generic-function] MCADDR OBJ
+
+    like MCAR but for the CADDR
+
+- [generic-function] MCADDDR OBJ
+
+    like MCAR but for the CADDDR
+
 - [generic-function] MCDR OBJ
 
     Similar to MCAR, however acts like a CDR for
     classes that we wish to view as a SEQUENCE
-
-- [generic-function] MCADDR OBJ
-
-    like MCAR but for the CADDR
 
 - [generic-function] OBJ OBJ
 
@@ -314,6 +319,21 @@ specific instance documentation
 - [generic-function] FUNC OBJ
 
     the function of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] PREDICATE OBJ
+
+    the PREDICATE of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] THEN OBJ
+
+    the then branch of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] ELSE OBJ
+
+    the then branch of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 ### Constructors
@@ -394,6 +414,85 @@ with GEB:
 => 10
 ```
 
+
+## Polynomial Specification
+
+###### \[in package GEB.POLY.SPEC\]
+This covers a GEB view of Polynomials. In particular this type will
+be used in translating GEB's view of Polynomials into Vampir
+
+### Polynomial Types
+
+This section covers the types of things one can find in the POLY
+constructors
+
+- [type] POLY
+
+- [type] <POLY>
+
+- [type] IDENT
+
+    The Identity Element
+
+- [type] +
+
+- [type] *
+
+- [type] /
+
+- [type] -
+
+- [type] MOD
+
+- [type] COMPOSE
+
+- [type] IF-ZERO
+
+    compare with zero: equal takes first branch;
+    not-equal takes second branch
+
+- [type] IF-LT
+
+    If the MCAR argument is strictly less than the MCADR then the
+    THEN branch is taken, otherwise the ELSE branch is taken.
+
+### Polynomial Constructors
+
+Every accessor for each of the CLASS's found here are from @GEB-ACCESSORS
+
+- [symbol-macro] IDENT
+
+- [function] + MCAR MCADR &REST ARGS
+
+    Creates a multiway constructor for +
+
+- [function] * MCAR MCADR &REST ARGS
+
+    Creates a multiway constructor for \*
+
+- [function] / MCAR MCADR &REST ARGS
+
+    Creates a multiway constructor for /
+
+- [function] - MCAR MCADR &REST ARGS
+
+    Creates a multiway constructor for -
+
+- [function] MOD MCAR MCADR
+
+    MOD ARG1 by ARG2
+
+- [function] COMPOSE MCAR MCADR &REST ARGS
+
+    Creates a multiway constructor for COMPOSE
+
+- [function] IF-ZERO PRED THEN ELSE
+
+    checks if PREDICATE is zero then take then THEN branch otherwise the ELSE branch
+
+- [function] IF-LT MCAR MCADR THEN ELSE
+
+    Checks if the MCAR is less than the MCADR and chooses the appropriate branch
 
 ## Mixins
 
@@ -502,6 +601,85 @@ used throughout the GEB codebase
               :compile-checked-term :stlc-ctx-to-mu)))
     ```
 
+
+- [macro] MAKE-PATTERN OBJECT-NAME &REST CONSTRUCTOR-NAMES
+
+    make pattern matching position style instead of record style. This
+    removes the record constructor style, however it can be brought back
+    if wanted
+    
+    ```lisp
+    (defclass alias (<substmorph> <substobj>)
+      ((name :initarg :name
+             :accessor name
+             :type     symbol
+             :documentation "The name of the GEB object")
+       (obj :initarg :obj
+            :accessor obj
+            :documentation "The underlying geb object"))
+      (:documentation "an alias for a geb object"))
+    
+    (make-pattern alias name obj)
+    ```
+
+
+### Accessors
+
+These functions are generic lenses of the GEB codebase. If a class is
+defined, where the names are not known, then these accessors are
+likely to be used. They may even augment existing classes.
+
+- [generic-function] MCAR OBJ
+
+    Can be seen as calling CAR on a generic CLOS
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] MCADR OBJ
+
+    like MCAR but for the CADR
+
+- [generic-function] MCADDR OBJ
+
+    like MCAR but for the CADDR
+
+- [generic-function] MCADDDR OBJ
+
+    like MCAR but for the CADDDR
+
+- [generic-function] MCDR OBJ
+
+    Similar to MCAR, however acts like a CDR for
+    classes that we wish to view as a SEQUENCE
+
+- [generic-function] OBJ OBJ
+
+    Grabs the underlying
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] NAME OBJ
+
+    the name of the given
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] FUNC OBJ
+
+    the function of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] PREDICATE OBJ
+
+    the PREDICATE of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] THEN OBJ
+
+    the then branch of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] ELSE OBJ
+
+    the then branch of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 ## Testing
 

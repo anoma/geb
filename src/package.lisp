@@ -1,8 +1,8 @@
 (pax:define-package #:geb
   (:documentation "Gödel, Escher, Bach categorical model")
-  (:use #:common-lisp #:serapeum #:geb.mixins)
+  (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils)
   (:shadow :left :right :prod :case)
-  (:export :prod :case))
+  (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj))
 
 (uiop:define-package #:geb-bool
   (:documentation "Defines out booleans for the geb language")
@@ -72,7 +72,7 @@ deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
   (functor       pax:type)
   (alias         pax:type)
   "The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH"
-
+  
   (mcar  (pax:method () (comp)))
   (mcadr (pax:method () (comp)))
 

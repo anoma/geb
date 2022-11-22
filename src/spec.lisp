@@ -20,39 +20,6 @@
        functor))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;               Generic Constructors declarations
-;; These aren't needed but serve as a good place to put a default doc.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defgeneric mcar (obj)
-  (:documentation
-   "Can be seen as calling CAR on a generic CLOS
-[object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
-(defgeneric mcdr (obj)
-  (:documentation "Similar to MCAR, however acts like a CDR for
-                   [classes] that we wish to view as a SEQUENCE"))
-(defgeneric mcadr (obj)
-  (:documentation "like MCAR but for the CADR"))
-
-(defgeneric mcaddr (obj)
-  (:documentation "like MCAR but for the CADDR"))
-
-(defgeneric obj (obj)
-  (:documentation
-   "Grabs the underlying
-[object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
-
-(defgeneric name (obj)
-  (:documentation
-   "the name of the given
-[object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
-
-(defgeneric func (obj)
-  (:documentation
-   "the function of the
-[object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subst Constructor Objects
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -314,18 +281,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Matching conveniences
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defmacro make-pattern (object-name &rest constructor-names)
-  "make pattern matching position style instead of record style. This
-removes the record constructor style, however it can be brought back
-if wanted"
-  `(trivia.level2:defpattern ,object-name
-       (&optional ,@constructor-names)
-     (list 'and
-           (list 'type ',object-name)
-           ,@(mapcar (lambda (x)
-                       `(list 'trivia.level2:access '',x ,x))
-                     constructor-names))))
 
 ;; less safe than I wanted due to the names can be out of sync, but
 ;; w/e I can fix it with a better defclass macro

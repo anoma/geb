@@ -4,6 +4,7 @@
   (:import-from #:geb.mixins #:@mixins)
   (:import-from #:geb.utils  #:@geb-utils-manual)
   (:import-from #:geb-test   #:@geb-test-manual)
+  (:import-from #:geb.poly   #:@poly-manual)
   (:export build-docs))
 
 (in-package geb-docs/docs)
@@ -15,6 +16,7 @@
   (@original-efforts pax:section)
   (@model            pax:section)
   (@geb              pax:section)
+  (@poly-manual      pax:section)
   (@mixins           pax:section)
   (@geb-utils-manual pax:section)
   (@geb-test-manual  pax:section))

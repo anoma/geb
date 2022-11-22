@@ -18,6 +18,13 @@
     :depends-on (util)
     :components ((:file package)
                  (:file mixins)))
+   (:module poly
+    :serial t
+    :description "Polynomial"
+    :depends-on (util)
+    :components ((:file package)
+                 (:file spec)
+                 (:file printer)))
    (:module vampir
     :serial t
     :description "The Vampir Extraction Module"
@@ -32,7 +39,7 @@
                  (:file spec)
                  (:file lambda)
                  (:file lambda-conversion)))
-   (:file package :depends-on ())
+   (:file package :depends-on (util))
    (:file spec    :depends-on (package mixins))
    (:file printer :depends-on (package spec))
    (:file geb     :depends-on (package spec))
@@ -54,9 +61,8 @@
                          (uiop:symbol-call :geb-test :run-tests)))
 
 (asdf:defsystem :geb/documentation
-  :depends-on (:geb :fiveam :MGL-PAX/FULL :cl-environments)
+  :depends-on (:geb :fiveam :MGL-PAX/FULL :cl-environments :geb/test)
   :description "geb full documentation exploration"
-  :serial t
   :pathname "docs/"
   :serial t
   :components ((:file documentation))

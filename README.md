@@ -17,16 +17,20 @@
     - [5.1 Core Categories][5d9d]
         - [5.1.1 Subst Obj][ca6e]
         - [5.1.2 Subst Morph][ffb7]
-    - [5.2 Accessors][b26a]
+    - [5.2 Accessors][cc51]
     - [5.3 Constructors][0c5c]
     - [5.4 api][6228]
     - [5.5 Examples][a17b]
-- [6 Mixins][723a]
-    - [6.1 Pointwise Mixins][d5d3]
-    - [6.2 Pointwise API][2fcf]
-    - [6.3 Mixins Examples][4938]
-- [7 Geb Utilities][4ffa]
-- [8 Testing][9bcb]
+- [6 Polynomial Specification][f5ac]
+    - [6.1 Polynomial Types][bd81]
+    - [6.2 Polynomial Constructors][b76d]
+- [7 Mixins][723a]
+    - [7.1 Pointwise Mixins][d5d3]
+    - [7.2 Pointwise API][2fcf]
+    - [7.3 Mixins Examples][4938]
+- [8 Geb Utilities][4ffa]
+    - [8.1 Accessors][cc51]
+- [9 Testing][9bcb]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -207,18 +211,18 @@ The various constructors that form the [`SUBSTOBJ`][718e] type
 
     an alias for a geb object
 
-The [Accessors][b26a] specific to [Subst Obj][ca6e]
+The [Accessors][cc51] specific to [Subst Obj][ca6e]
 
-<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APROD-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APROD-29-29-29"></a>
 - [method] **MCAR** *(PROD PROD)*
 
-<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROD-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROD-29-29-29"></a>
 - [method] **MCADR** *(PROD PROD)*
 
-<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACOPROD-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACOPROD-29-29-29"></a>
 - [method] **MCAR** *(COPROD COPROD)*
 
-<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACOPROD-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACOPROD-29-29-29"></a>
 - [method] **MCADR** *(COPROD COPROD)*
 
 <a id="x-28GEB-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
@@ -294,120 +298,144 @@ The various constructors that form the [`SUBSTMORPH`][e5d9] type
 
     an alias for a geb object
 
-The [Accessors][b26a] specific to [Subst Morph][ffb7]
+The [Accessors][cc51] specific to [Subst Morph][ffb7]
 
-<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
 - [method] **MCAR** *(COMP COMP)*
 
     The first composed morphism
 
-<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACOMP-29-29-29"></a>
 - [method] **MCADR** *(COMP COMP)*
 
     the second morphism
 
-<a id="x-28GEB-3AOBJ-20-28METHOD-20NIL-20-28GEB-3AINIT-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AOBJ-20-28METHOD-20NIL-20-28GEB-3AINIT-29-29-29"></a>
 - [method] **OBJ** *(INIT INIT)*
 
-<a id="x-28GEB-3AOBJ-20-28METHOD-20NIL-20-28GEB-3AINIT-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AOBJ-20-28METHOD-20NIL-20-28GEB-3AINIT-29-29-29"></a>
 - [method] **OBJ** *(INIT INIT)*
 
-<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACASE-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ACASE-29-29-29"></a>
 - [method] **MCAR** *(CASE CASE)*
 
-<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACASE-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ACASE-29-29-29"></a>
 - [method] **MCADR** *(CASE CASE)*
 
-<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
 - [method] **MCAR** *(PAIR PAIR)*
 
     Head of the pair cell
 
-<a id="x-28GEB-3AMCDR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCDR-20-28METHOD-20NIL-20-28GEB-3APAIR-29-29-29"></a>
 - [method] **MCDR** *(PAIR PAIR)*
 
     Tail of the pair cell
 
-<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
 - [method] **MCAR** *(DISTRIBUTE DISTRIBUTE)*
 
-<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
 - [method] **MCADR** *(DISTRIBUTE DISTRIBUTE)*
 
-<a id="x-28GEB-3AMCADDR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADDR-20-28METHOD-20NIL-20-28GEB-3ADISTRIBUTE-29-29-29"></a>
 - [method] **MCADDR** *(DISTRIBUTE DISTRIBUTE)*
 
-<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3AINJECT-LEFT-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-3AINJECT-LEFT-29-29-29"></a>
 - [method] **MCAR** *(INJECT-LEFT INJECT-LEFT)*
 
-<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3AINJECT-LEFT-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-3AINJECT-LEFT-29-29-29"></a>
 - [method] **MCADR** *(INJECT-LEFT INJECT-LEFT)*
 
-<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3AINJECT-RIGHT-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-3AINJECT-RIGHT-29-29-29"></a>
 - [method] **MCAR** *(INJECT-RIGHT INJECT-RIGHT)*
 
-<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3AINJECT-RIGHT-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-3AINJECT-RIGHT-29-29-29"></a>
 - [method] **MCADR** *(INJECT-RIGHT INJECT-RIGHT)*
 
-<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APROJECT-LEFT-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APROJECT-LEFT-29-29-29"></a>
 - [method] **MCAR** *(PROJECT-LEFT PROJECT-LEFT)*
 
-<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROJECT-LEFT-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROJECT-LEFT-29-29-29"></a>
 - [method] **MCADR** *(PROJECT-LEFT PROJECT-LEFT)*
 
-<a id="x-28GEB-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APROJECT-RIGHT-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-3APROJECT-RIGHT-29-29-29"></a>
 - [method] **MCAR** *(PROJECT-RIGHT PROJECT-RIGHT)*
 
-<a id="x-28GEB-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROJECT-RIGHT-29-29-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-3APROJECT-RIGHT-29-29-29"></a>
 - [method] **MCADR** *(PROJECT-RIGHT PROJECT-RIGHT)*
 
     Right projection (product elimination)
 
-<a id="x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
+<a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
 ### 5.2 Accessors
 
-These functions relate to grabbing slots out of the various
-[Subst Morph][ffb7] and [Subst Obj][ca6e] types. See those sections for
-specific instance documentation
+###### \[in package GEB.UTILS\]
+These functions are generic lenses of the GEB codebase. If a class is
+defined, where the names are not known, then these accessors are
+likely to be used. They may even augment existing classes.
 
-<a id="x-28GEB-3AMCAR-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **MCAR** *OBJ*
 
     Can be seen as calling [`CAR`][8c99] on a generic CLOS
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
-<a id="x-28GEB-3AMCADR-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **MCADR** *OBJ*
 
-    like [`MCAR`][493b] but for the [`CADR`][74ab]
+    like [`MCAR`][f1ce] but for the [`CADR`][74ab]
 
-<a id="x-28GEB-3AMCDR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCDR** *OBJ*
-
-    Similar to [`MCAR`][493b], however acts like a [`CDR`][2570] for
-    [classes][7e58] that we wish to view as a [`SEQUENCE`][b9c1]
-
-<a id="x-28GEB-3AMCADDR-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADDR-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **MCADDR** *OBJ*
 
-    like [`MCAR`][493b] but for the [`CADDR`][8bb8]
+    like [`MCAR`][f1ce] but for the [`CADDR`][8bb8]
 
-<a id="x-28GEB-3AOBJ-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2EUTILS-3AMCADDDR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCADDDR** *OBJ*
+
+    like [`MCAR`][f1ce] but for the [`CADDDR`][1791]
+
+<a id="x-28GEB-2EUTILS-3AMCDR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCDR** *OBJ*
+
+    Similar to [`MCAR`][f1ce], however acts like a [`CDR`][2570] for
+    [classes][7e58] that we wish to view as a [`SEQUENCE`][b9c1]
+
+<a id="x-28GEB-2EUTILS-3AOBJ-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **OBJ** *OBJ*
 
     Grabs the underlying
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
-<a id="x-28GEB-3ANAME-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2EUTILS-3ANAME-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **NAME** *OBJ*
 
     the name of the given
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
-<a id="x-28GEB-3AFUNC-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2EUTILS-3AFUNC-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **FUNC** *OBJ*
 
     the function of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+<a id="x-28GEB-2EUTILS-3APREDICATE-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **PREDICATE** *OBJ*
+
+    the `PREDICATE` of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+<a id="x-28GEB-2EUTILS-3ATHEN-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **THEN** *OBJ*
+
+    the then branch of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+<a id="x-28GEB-2EUTILS-3AELSE-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **ELSE** *OBJ*
+
+    the then branch of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
@@ -509,8 +537,110 @@ with GEB:
 ```
 
 
+<a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+## 6 Polynomial Specification
+
+###### \[in package GEB.POLY.SPEC\]
+This covers a `GEB` view of Polynomials. In particular this type will
+be used in translating `GEB`'s view of Polynomials into Vampir
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-20MGL-PAX-3ASECTION-29"></a>
+### 6.1 Polynomial Types
+
+This section covers the types of things one can find in the [`POLY`][8bf3]
+constructors
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3APOLY-20TYPE-29"></a>
+- [type] **POLY**
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A-3CPOLY-3E-20TYPE-29"></a>
+- [type] **\<POLY\>**
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3AIDENT-20TYPE-29"></a>
+- [type] **IDENT**
+
+    The Identity Element
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A-2B-20TYPE-29"></a>
+- [type] **+**
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A-2A-20TYPE-29"></a>
+- [type] **\***
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A-2F-20TYPE-29"></a>
+- [type] **/**
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A--20TYPE-29"></a>
+- [type] **-**
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3AMOD-20TYPE-29"></a>
+- [type] **MOD**
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20TYPE-29"></a>
+- [type] **COMPOSE**
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3AIF-ZERO-20TYPE-29"></a>
+- [type] **IF-ZERO**
+
+    compare with zero: equal takes first branch;
+    not-equal takes second branch
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3AIF-LT-20TYPE-29"></a>
+- [type] **IF-LT**
+
+    If the [`MCAR`][f1ce] argument is strictly less than the [`MCADR`][cc87] then the
+    [`THEN`][bfa9] branch is taken, otherwise the [`ELSE`][365a] branch is taken.
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
+### 6.2 Polynomial Constructors
+
+Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors][cc51]
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3AIDENT-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+- [symbol-macro] **IDENT**
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A-2B-20FUNCTION-29"></a>
+- [function] **+** *MCAR MCADR &REST ARGS*
+
+    Creates a multiway constructor for [+][c144]
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A-2A-20FUNCTION-29"></a>
+- [function] **\*** *MCAR MCADR &REST ARGS*
+
+    Creates a multiway constructor for [\*][0ae3]
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A-2F-20FUNCTION-29"></a>
+- [function] **/** *MCAR MCADR &REST ARGS*
+
+    Creates a multiway constructor for [/][c2f9]
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3A--20FUNCTION-29"></a>
+- [function] **-** *MCAR MCADR &REST ARGS*
+
+    Creates a multiway constructor for [-][2c5e]
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3AMOD-20FUNCTION-29"></a>
+- [function] **MOD** *MCAR MCADR*
+
+    `MOD` `ARG1` by `ARG2`
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20FUNCTION-29"></a>
+- [function] **COMPOSE** *MCAR MCADR &REST ARGS*
+
+    Creates a multiway constructor for [`COMPOSE`][9162]
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3AIF-ZERO-20FUNCTION-29"></a>
+- [function] **IF-ZERO** *PRED THEN ELSE*
+
+    checks if [`PREDICATE`][8da6] is zero then take then [`THEN`][bfa9] branch otherwise the [`ELSE`][365a] branch
+
+<a id="x-28GEB-2EPOLY-2ESPEC-3AIF-LT-20FUNCTION-29"></a>
+- [function] **IF-LT** *MCAR MCADR THEN ELSE*
+
+    Checks if the [`MCAR`][f1ce] is less than the [`MCADR`][cc87] and chooses the appropriate branch
+
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
-## 6 Mixins
+## 7 Mixins
 
 ###### \[in package GEB.MIXINS\]
 Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
@@ -518,7 +648,7 @@ project. Overall all these offer various services to the rest of the
 project
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
-### 6.1 Pointwise Mixins
+### 7.1 Pointwise Mixins
 
 Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -547,7 +677,7 @@ in our class
     Further all `DIRECT-POINTWISE-MIXIN`'s are [`POINTWISE-MIXIN`][445d]'s
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
-### 6.2 Pointwise API
+### 7.2 Pointwise API
 
 These are the general API functions on any class that have the
 [`POINTWISE-MIXIN`][445d] service.
@@ -580,7 +710,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
     rather than the class
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 6.3 Mixins Examples
+### 7.3 Mixins Examples
 
 Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
@@ -595,7 +725,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 7 Geb Utilities
+## 8 Geb Utilities
 
 ###### \[in package GEB.UTILS\]
 The Utilities package provide general utility functionality that is
@@ -629,8 +759,100 @@ used throughout the GEB codebase
     ```
 
 
+<a id="x-28GEB-2EUTILS-3AMAKE-PATTERN-20MGL-PAX-3AMACRO-29"></a>
+- [macro] **MAKE-PATTERN** *OBJECT-NAME &REST CONSTRUCTOR-NAMES*
+
+    make pattern matching position style instead of record style. This
+    removes the record constructor style, however it can be brought back
+    if wanted
+    
+    ```lisp
+    (defclass alias (<substmorph> <substobj>)
+      ((name :initarg :name
+             :accessor name
+             :type     symbol
+             :documentation "The name of the GEB object")
+       (obj :initarg :obj
+            :accessor obj
+            :documentation "The underlying geb object"))
+      (:documentation "an alias for a geb object"))
+    
+    (make-pattern alias name obj)
+    ```
+
+
+<a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
+### 8.1 Accessors
+
+These functions are generic lenses of the GEB codebase. If a class is
+defined, where the names are not known, then these accessors are
+likely to be used. They may even augment existing classes.
+
+<a id="x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCAR** *OBJ*
+
+    Can be seen as calling [`CAR`][8c99] on a generic CLOS
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+<a id="x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCADR** *OBJ*
+
+    like [`MCAR`][f1ce] but for the [`CADR`][74ab]
+
+<a id="x-28GEB-2EUTILS-3AMCADDR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCADDR** *OBJ*
+
+    like [`MCAR`][f1ce] but for the [`CADDR`][8bb8]
+
+<a id="x-28GEB-2EUTILS-3AMCADDDR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCADDDR** *OBJ*
+
+    like [`MCAR`][f1ce] but for the [`CADDDR`][1791]
+
+<a id="x-28GEB-2EUTILS-3AMCDR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MCDR** *OBJ*
+
+    Similar to [`MCAR`][f1ce], however acts like a [`CDR`][2570] for
+    [classes][7e58] that we wish to view as a [`SEQUENCE`][b9c1]
+
+<a id="x-28GEB-2EUTILS-3AOBJ-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **OBJ** *OBJ*
+
+    Grabs the underlying
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+<a id="x-28GEB-2EUTILS-3ANAME-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **NAME** *OBJ*
+
+    the name of the given
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+<a id="x-28GEB-2EUTILS-3AFUNC-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **FUNC** *OBJ*
+
+    the function of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+<a id="x-28GEB-2EUTILS-3APREDICATE-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **PREDICATE** *OBJ*
+
+    the `PREDICATE` of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+<a id="x-28GEB-2EUTILS-3ATHEN-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **THEN** *OBJ*
+
+    the then branch of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+<a id="x-28GEB-2EUTILS-3AELSE-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **ELSE** *OBJ*
+
+    the then branch of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
 <a id="x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 8 Testing
+## 9 Testing
 
 ###### \[in package GEB-TEST\]
 We use [parachtue](https://quickref.common-lisp.net/parachute.html)
@@ -657,17 +879,20 @@ features and how to better lay out future tests
     ```
 
 
+  [0ae3]: #x-28GEB-2EPOLY-2ESPEC-3A-2A-20TYPE-29 "GEB.POLY.SPEC:* TYPE"
   [0c5c]: #x-28GEB-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Constructors"
+  [1791]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDDR FUNCTION"
   [2570]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CDR FUNCTION"
   [29b7]: #x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29 "Geb's Agda Code"
+  [2c5e]: #x-28GEB-2EPOLY-2ESPEC-3A--20TYPE-29 "GEB.POLY.SPEC:- TYPE"
   [2fcf]: #x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29 "Pointwise API"
+  [365a]: #x-28GEB-2EUTILS-3AELSE-20GENERIC-FUNCTION-29 "GEB.UTILS:ELSE GENERIC-FUNCTION"
   [3686]: #x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29 "Original Efforts"
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
   [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
   [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
   [4850]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD TYPE"
   [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
-  [493b]: #x-28GEB-3AMCAR-20GENERIC-FUNCTION-29 "GEB:MCAR GENERIC-FUNCTION"
   [4ffa]: #x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29 "Geb Utilities"
   [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
@@ -681,8 +906,11 @@ features and how to better lay out future tests
   [7f9f]: http://www.lispworks.com/documentation/HyperSpec/Body/t_symbol.htm "SYMBOL TYPE"
   [8311]: #x-28GEB-DOCS-2FDOCS-3A-40IDRIS-20MGL-PAX-3ASECTION-29 "Geb's Idris Code"
   [8bb8]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDR FUNCTION"
+  [8bf3]: #x-28GEB-2EPOLY-2ESPEC-3APOLY-20TYPE-29 "GEB.POLY.SPEC:POLY TYPE"
   [8c99]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CAR FUNCTION"
+  [8da6]: #x-28GEB-2EUTILS-3APREDICATE-20GENERIC-FUNCTION-29 "GEB.UTILS:PREDICATE GENERIC-FUNCTION"
   [8fa5]: #x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29 "installation"
+  [9162]: #x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20TYPE-29 "GEB.POLY.SPEC:COMPOSE TYPE"
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"
@@ -692,17 +920,25 @@ features and how to better lay out future tests
   [a7d5]: #x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29 "loading"
   [a802]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT TYPE"
   [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
-  [b26a]: #x-28GEB-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
+  [b76d]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Polynomial Constructors"
   [b9c1]: http://www.lispworks.com/documentation/HyperSpec/Body/t_seq.htm "SEQUENCE TYPE"
+  [bd81]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-20MGL-PAX-3ASECTION-29 "Polynomial Types"
   [bf07]: http://www.lispworks.com/documentation/HyperSpec/Body/f_export.htm "EXPORT FUNCTION"
+  [bfa9]: #x-28GEB-2EUTILS-3ATHEN-20GENERIC-FUNCTION-29 "GEB.UTILS:THEN GENERIC-FUNCTION"
   [c111]: #x-28GEB-2EMIXINS-3AOBJ-EQUALP-20GENERIC-FUNCTION-29 "GEB.MIXINS:OBJ-EQUALP GENERIC-FUNCTION"
+  [c144]: #x-28GEB-2EPOLY-2ESPEC-3A-2B-20TYPE-29 "GEB.POLY.SPEC:+ TYPE"
   [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "The Geb Model"
   [c2e9]: #x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29 "Categorical Model"
+  [c2f9]: #x-28GEB-2EPOLY-2ESPEC-3A-2F-20TYPE-29 "GEB.POLY.SPEC:/ TYPE"
   [c721]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP FUNCTION"
   [ca6e]: #x-28GEB-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29 "Subst Obj"
+  [cc51]: #x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
+  [cc87]: #x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCADR GENERIC-FUNCTION"
   [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
   [dbe7]: #x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29 "Objects"
   [e5d9]: #x-28GEB-3ASUBSTMORPH-20TYPE-29 "GEB:SUBSTMORPH TYPE"
+  [f1ce]: #x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCAR GENERIC-FUNCTION"
+  [f5ac]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29 "Polynomial Specification"
   [ffb7]: #x-28GEB-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29 "Subst Morph"
 
 * * *
