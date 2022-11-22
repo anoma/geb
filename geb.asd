@@ -36,7 +36,7 @@
    (:module poly
     :serial t
     :description "Polynomial"
-    :depends-on (util geb)
+    :depends-on (util geb vampir)
     :components ((:file package)
                  (:file spec)
                  (:file printer)

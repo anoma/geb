@@ -759,6 +759,12 @@ used throughout the GEB codebase
     ```
 
 
+<a id="x-28GEB-2EUTILS-3ASUBCLASS-RESPONSIBILITY-20FUNCTION-29"></a>
+- [function] **SUBCLASS-RESPONSIBILITY** *OBJ*
+
+    Denotes that the given method is the subclasses
+    responsibility. Inspired from Smalltalk
+
 <a id="x-28GEB-2EUTILS-3AMAKE-PATTERN-20MGL-PAX-3AMACRO-29"></a>
 - [macro] **MAKE-PATTERN** *OBJECT-NAME &REST CONSTRUCTOR-NAMES*
 

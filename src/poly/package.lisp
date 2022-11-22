@@ -6,7 +6,7 @@
    (:use #:geb.utils #:cl))
 
  (uiop:define-package #:geb.poly.trans
-   (:mix #:geb.poly.spec #:cl #:serapeum #:geb.utils))
+   (:mix #:geb.poly.spec #:cl #:serapeum #:geb.utils #:geb.vampir.spec))
 
  (uiop:define-package #:geb.poly
    (:use #:geb.utils)

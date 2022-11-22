@@ -602,6 +602,11 @@ used throughout the GEB codebase
     ```
 
 
+- [function] SUBCLASS-RESPONSIBILITY OBJ
+
+    Denotes that the given method is the subclasses
+    responsibility. Inspired from Smalltalk
+
 - [macro] MAKE-PATTERN OBJECT-NAME &REST CONSTRUCTOR-NAMES
 
     make pattern matching position style instead of record style. This

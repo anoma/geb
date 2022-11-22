@@ -10,6 +10,7 @@
 used throughout the GEB codebase"
   (symbol-to-keyword       pax:function)
   (muffle-package-variance pax:macro)
+  (subclass-responsibility pax:function)
   (make-pattern            pax:macro)
   (@geb-accessors          pax:section))
 

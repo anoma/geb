@@ -3,8 +3,18 @@
 (defgeneric moprh-to-poly (morphism)
   (:documentation "Turns a GEB:SUBSTMORPH into a POLY"))
 
+
+;; I really should move where this function lives
+;; probably best to move where all transition functions live!?
+(defgeneric poly-to-vampir (morphism)
+  (:documentation "Turns a POLY term into a Vampir term"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Morph to Poly Implementation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defmethod morph-to-poly ((obj geb:<substmorph>))
-  (error "Subclass Responsbility for ~A" (class-name (class-of obj))))
+  (subclass-responsibility obj))
 
 (defmethod morph-to-poly ((obj geb:<substobj>))
   (declare (ignore obj))
@@ -59,5 +69,65 @@
                  (+ (* cz xin) (- yzin cy) (* cx cy)))))))
 
 (defun obj-to-nat (obj)
-  obj
-  (error "not implemented"))
+  (so-card-alg obj))
+
+(defgeneric so-card-alg (obj))
+
+(defmethod so-card-alg ((obj geb:<substobj>))
+  ;; we don't use the cata morphism so here we are. Doesn't give me
+  ;; much extra
+  (match-of geb:substobj obj
+    (geb:alias        (so-card-alg (obj obj)))
+    ((geb:prod a b)   (cl:* (so-card-alg a)
+                            (so-card-alg b)))
+    ((geb:coprod a b) (cl:+ (so-card-alg a)
+                            (so-card-alg b)))
+    (geb:so0          1)
+    (geb:so1          1)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Poly to Vampir Implementation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmethod poly-to-vampir ((obj <poly>))
+  (subclass-responsibility obj))
+
+(-> direct-fields-to-list-vampir (geb.mixins:direct-pointwise-mixin) list)
+(defun direct-fields-to-list-vampir (obj)
+  (mapcar (alexandria:compose #'poly-to-vampir #'cdr)
+          (geb.mixins:to-pointwise-list obj)))
+
+(defmethod poly-to-vampir ((obj integer))
+  (make-constant :const obj))
+
+(defmethod poly-to-vampir ((obj ident))
+  ;; should we compile this to the identity function, thus a gate? yet
+  ;; we take nothing, so I'm not sure how this translation quite works
+  (make-constant :const 1))
+
+(defmethod poly-to-vampir ((obj +))
+  (make-infix :op :+
+              :lhs (poly-to-vampir (mcar obj))
+              :rhs (poly-to-vampir (mcadr obj))))
+
+(defmethod poly-to-vampir ((obj *))
+  (make-infix :op :*
+              :lhs (poly-to-vampir (mcar obj))
+              :rhs (poly-to-vampir (mcadr obj))))
+
+(defmethod poly-to-vampir ((obj -))
+  (make-infix :op :-
+              :lhs (poly-to-vampir (mcar obj))
+              :rhs (poly-to-vampir (mcadr obj))))
+
+;; we should error on this as well as no general division is had either
+(defmethod poly-to-vampir ((obj /))
+  (make-infix :op :/
+              :lhs (poly-to-vampir (mcar obj))
+              :rhs (poly-to-vampir (mcadr obj))))
+
+(defmethod poly-to-vampir ((obj compose))
+  (error "not sure of the logic yet"))
+
+(defmethod poly-to-vampir ((obj mod))
+  (error "mod logic not in yet"))

@@ -1,5 +1,10 @@
 (in-package :geb.utils)
 
+(defun subclass-responsibility (obj)
+  "Denotes that the given method is the subclasses
+   responsibility. Inspired from Smalltalk"
+  (error "Subclass Responsbility for ~A" (class-name (class-of obj))))
+
 (defun symbol-to-keyword (symbol)
   "Turns a [symbol] into a [keyword]"
   (intern (symbol-name symbol) :keyword))
