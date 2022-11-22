@@ -43,6 +43,10 @@
   obj
   (error "not implemented"))
 
+(defmethod morph-to-poly ((obj geb:pair))
+  obj
+  (error "not implemented"))
+
 (defmethod morph-to-poly ((obj geb:project-right))
   (let ((nat (obj-to-nat (mcadr obj))))
     (if (zerop nat)
@@ -97,8 +101,13 @@
   (mapcar (alexandria:compose #'poly-to-vampir #'cdr)
           (geb.mixins:to-pointwise-list obj)))
 
+;; all of this is likely wrong, as we are taking morph-isms which
+;; evaluate to themselves but I'm unsure of how this works on an input
+;; level
+
 (defmethod poly-to-vampir ((obj integer))
   (make-constant :const obj))
+
 
 (defmethod poly-to-vampir ((obj ident))
   ;; should we compile this to the identity function, thus a gate? yet
