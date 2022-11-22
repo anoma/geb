@@ -18,6 +18,15 @@
     :depends-on (util)
     :components ((:file package)
                  (:file mixins)))
+   (:module geb
+    :serial t
+    :description "The Main Geb Module"
+    :depends-on (util)
+    :components ((:file package)
+                 (:file spec)
+                 (:file printer)
+                 (:file geb)
+                 (:file bool)))
    (:module poly
     :serial t
     :description "Polynomial"
@@ -33,17 +42,12 @@
                  (:file vampir)))
    (:module lambda
     :serial t
-    :depends-on (bool)
+    :depends-on (geb)
     :description "A simple Lambda calculus model"
     :components ((:file package)
                  (:file spec)
                  (:file lambda)
-                 (:file lambda-conversion)))
-   (:file package :depends-on (util))
-   (:file spec    :depends-on (package mixins))
-   (:file printer :depends-on (package spec))
-   (:file geb     :depends-on (package spec))
-   (:file bool    :depends-on (geb package spec)))
+                 (:file lambda-conversion))))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 
 (asdf:defsystem :geb/test

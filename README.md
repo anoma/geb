@@ -541,8 +541,8 @@ with GEB:
 ## 6 Polynomial Specification
 
 ###### \[in package GEB.POLY.SPEC\]
-This covers a `GEB` view of Polynomials. In particular this type will
-be used in translating `GEB`'s view of Polynomials into Vampir
+This covers a GEB view of Polynomials. In particular this type will
+be used in translating GEB's view of Polynomials into Vampir
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-20MGL-PAX-3ASECTION-29"></a>
 ### 6.1 Polynomial Types
@@ -622,7 +622,7 @@ Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors]
 <a id="x-28GEB-2EPOLY-2ESPEC-3AMOD-20FUNCTION-29"></a>
 - [function] **MOD** *MCAR MCADR*
 
-    `MOD` `ARG1` by `ARG2`
+    `MOD` ARG1 by ARG2
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20FUNCTION-29"></a>
 - [function] **COMPOSE** *MCAR MCADR &REST ARGS*
