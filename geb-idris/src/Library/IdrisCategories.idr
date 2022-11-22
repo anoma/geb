@@ -121,20 +121,12 @@ BaseChangeF : {a, b : Type} -> (b -> a) -> SliceFunctor a b
 BaseChangeF f sla = sla . f
 
 public export
+Equalizer : {a, b : Type} -> (f, g : a -> b) -> Type
+Equalizer {a} {b} f g = Subset0 a (\x : a => f x = g x)
+
+public export
 PreImage : {a, b : Type} -> (a -> b) -> b -> Type
-PreImage {a} {b} f elemb = Subset0 a (Equal elemb . f)
-
--- The dependent product functor induced by the given morphism.
--- Right adjoint to the base change functor.
-public export
-DepProdF : {a, b : Type} -> (a -> b) -> SliceFunctor a b
-DepProdF {a} {b} f sla elemb = (elema : PreImage f elemb) -> sla (fst0 elema)
-
--- The dependent coproduct functor induced by the given morphism.
--- Left adjoint to the base change functor.
-public export
-DepCoprodF : {a, b : Type} -> (a -> b) -> SliceFunctor a b
-DepCoprodF {a} {b} f sla elemb = (elema : PreImage f elemb ** sla (fst0 elema))
+PreImage {a} {b} f elemb = Equalizer f (const elemb)
 
 -- A special case of `DepProdF` where `b` is the terminal object and
 -- `f` is the unique morphism into it.  A slice object over the terminal
@@ -156,6 +148,20 @@ public export
 Sigma : {a : Type} -> SliceObj a -> Type
 Sigma {a} p = (x : a ** p x)
 
+-- The dependent product functor induced by the given morphism.
+-- Right adjoint to the base change functor.
+public export
+DepProdF : {a, b : Type} -> (a -> b) -> SliceFunctor a b
+DepProdF {a} {b} f sla elemb =
+  Pi {a=(PreImage f elemb)} (BaseChangeF fst0 sla)
+
+-- The dependent coproduct functor induced by the given morphism.
+-- Left adjoint to the base change functor.
+public export
+DepCoprodF : {a, b : Type} -> (a -> b) -> SliceFunctor a b
+DepCoprodF {a} {b} f sla elemb =
+  Sigma {a=(PreImage f elemb)} (BaseChangeF fst0 sla)
+
 -- A dependent polynomial functor can be defined as a composition of
 -- a base change followed by a dependent product followed by a dependent
 -- coproduct.
@@ -166,6 +172,37 @@ DepPolyF {w} {x} {y} {z} fxw predyx predzy =
   DepCoprodF {a=y} {b=z} predzy
   . DepProdF {a=x} {b=y} predyx
   . BaseChangeF fxw
+
+-- Dependent product in terms of a predicate instead of a morphism.
+public export
+PredDepProdF : {a : Type} -> (p : SliceObj a) -> SliceFunctor (Sigma {a} p) a
+PredDepProdF {a} p slp elema =
+  Pi {a=(p elema)} (BaseChangeF (MkDPair elema) slp)
+
+-- Dependent coproduct in terms of a predicate instead of a morphism.
+public export
+PredDepCoprodF : {a : Type} -> (p : SliceObj a) -> SliceFunctor (Sigma {a} p) a
+PredDepCoprodF {a} p slp elema =
+  Sigma {a=(p elema)} (BaseChangeF (MkDPair elema) slp)
+
+-- A dependent polynomial functor in terms of predicates instead of morphisms.
+public export
+PredDepPolyF : {w, z : Type} ->
+  (pz : SliceObj z) ->
+  (pspz : SliceObj (Sigma {a=z} pz)) ->
+  (Sigma {a=(Sigma {a=z} pz)} pspz -> w) ->
+  SliceFunctor w z
+PredDepPolyF {w} {z} pz pspz fspspzw =
+  PredDepCoprodF {a=z} pz
+  . PredDepProdF {a=(Sigma pz)} pspz
+  . BaseChangeF fspspzw
+
+-- A dependent polynomial functor in terms of predicates instead of morphisms.
+public export
+PredDepPolyEndoF : {z : Type} ->
+  (pz : z -> Type) -> (pspz : Sigma pz -> Type) -> (Sigma pspz -> z) ->
+  SliceFunctor z z
+PredDepPolyEndoF {z} = PredDepPolyF {w=z} {z}
 
 public export
 SigmaToPair : {0 a, b : Type} -> (Sigma {a} (const b)) -> (a, b)
@@ -197,8 +234,12 @@ ArrowObj = (sig : (Type, Type) ** (fst sig -> snd sig))
 ----------------------------------------------------
 
 public export
+AppFunctor : (f, g : Type -> Type) -> Type -> Type
+AppFunctor f g a = f a -> g a
+
+public export
 NaturalTransformation : (Type -> Type) -> (Type -> Type) -> Type
-NaturalTransformation f g = (x : Type) -> f x -> g x
+NaturalTransformation f g = Pi (AppFunctor f g)
 
 public export
 AdjUnit : (Type -> Type) -> Type
@@ -735,6 +776,22 @@ public export
 0 RefinedPred : (r : Refined) -> DecPred (ErasedType r)
 RefinedPred (Element0 _ p) = p
 
+public export
+RefinedType : Refined -> Type
+RefinedType r = Refinement {a=(ErasedType r)} (RefinedPred r)
+
+public export
+RefinedSlice : Type -> Type
+RefinedSlice a = a -> Refined
+
+public export
+RefinedSigma : {a : Type} -> RefinedSlice a -> Type
+RefinedSigma {a} p = Sigma {a} (RefinedType . p)
+
+public export
+RefinedPi : {a : Type} -> RefinedSlice a -> Type
+RefinedPi {a} p = Pi {a} (RefinedType . p)
+
 --------------------------
 ---- Refined functors ----
 --------------------------
@@ -990,19 +1047,40 @@ CoeqCoalg nf x = CoequalizedMorphism x (CoequalizedF nf x)
 ---------------------------------------------
 ---------------------------------------------
 
+public export
+RefinedDepProdF : {a : Type} ->
+  (p : RefinedSlice a) -> SliceFunctor (RefinedSigma {a} p) a
+RefinedDepProdF {a} p = PredDepProdF {a} (RefinedType . p)
+
+public export
+RefinedDepCoprodF : {a : Type} ->
+  (p : RefinedSlice a) -> SliceFunctor (RefinedSigma {a} p) a
+RefinedDepCoprodF {a} p = PredDepCoprodF {a} (RefinedType . p)
+
+public export
+RefinedDepPolyF : {w, z : Type} ->
+  (pz : RefinedSlice z) ->
+  (pspz : RefinedSlice (RefinedSigma {a=z} pz)) ->
+  (RefinedSigma {a=(RefinedSigma {a=z} pz)} pspz -> w) ->
+  SliceFunctor w z
+RefinedDepPolyF {w} {z} pz pspz fspspzw =
+  RefinedDepCoprodF {a=z} pz
+  . RefinedDepProdF {a=(RefinedSigma pz)} pspz
+  . BaseChangeF fspspzw
+
 -- The dependent product functor induced by the given subtype family.
 -- Right adjoint to the base change functor.
 public export
 RefinedProdF : {a, b : Type} -> (b -> DecPred a) -> SliceFunctor a b
 RefinedProdF {a} {b} pred sla elemb =
-  (elema : Refinement {a} (pred elemb)) -> sla (shape elema)
+  Pi {a=(Refinement {a} (pred elemb))} (BaseChangeF shape sla)
 
 -- The dependent product functor induced by the given subtype family.
 -- Left adjoint to the base change functor.
 public export
 RefinedCoprodF : {a, b : Type} -> (b -> DecPred a) -> SliceFunctor a b
 RefinedCoprodF {a} {b} pred sla elemb =
-  (elema : Refinement {a} (pred elemb) ** sla (shape elema))
+  Sigma {a=(Refinement {a} (pred elemb))} (BaseChangeF shape sla)
 
 -- A dependent polynomial functor can be defined as a composition of
 -- a base change followed by a dependent product followed by a dependent
@@ -2417,21 +2495,25 @@ TraversalP = ExOpticP TraversalShape
 
 public export
 FunctorExp : (Type -> Type) -> Type -> Type -> Type
-FunctorExp g a = CovarHomFunc a . g
+FunctorExp g = flip (.) g . CovarHomFunc
 
 -- The right Kan extension of `g` along `j` (sometimes written `g/j`).
 public export
 RKanExt : (g, j : Type -> Type) -> Type -> Type
-RKanExt g j a = NaturalTransformation (FunctorExp j a) g
+RKanExt g j = flip NaturalTransformation g . FunctorExp j
 
 public export
 ExpFunctor : (Type -> Type) -> Type -> Type -> Type
-ExpFunctor g a = ContravarHomFunc a . g
+ExpFunctor g = flip (.) g . ContravarHomFunc
+
+public export
+LKanExtSnd : (g, j : Type -> Type) -> (a, b : Type) -> Type
+LKanExtSnd g j = flip AppFunctor g . ExpFunctor j
 
 -- The left Kan extension of `g` along `j`.
 public export
 LKanExt : (g, j : Type -> Type) -> Type -> Type
-LKanExt g j a = (b : Type ** ExpFunctor j a b -> g b)
+LKanExt g j = DPair Type . LKanExtSnd g j
 
 -----------------------
 -----------------------
@@ -2449,14 +2531,101 @@ Continuation : Type -> Type
 Continuation = Yo id
 
 public export
-CPSTransformSig : (a, b : Type) -> Type
-CPSTransformSig a b = (b -> a) -> b -> Continuation a
+CPSSig : (a, b : Type) -> Type
+CPSSig a b = a -> Continuation b
 
+public export
+CPSTransformSig : (a, b : Type) -> Type
+CPSTransformSig a b = (a -> b) -> CPSSig a b
+
+public export
+CPSTransform : {a, b : Type} -> CPSTransformSig a b
+CPSTransform = (.) toYo
+
+public export
+record Delim (s, t, b : Type) where
+  constructor MkDelim
+  unDelim : (b -> s) -> t
+
+public export
+DelimNoAnsTypeMod : Type -> Type -> Type
+DelimNoAnsTypeMod s b = Delim s s b
+
+public export
+PolyDelim : Type -> Type
+PolyDelim b = (r : Type) -> DelimNoAnsTypeMod r b
+
+-- PolyDelim is another way of getting to `Continuation`.
+public export
+PolyDelimToCont : {a : Type} -> PolyDelim a -> Continuation a
+PolyDelimToCont f = MkYo $ \r => unDelim (f r)
+
+public export
+ContToPolyDelim : {a : Type} -> Continuation a -> PolyDelim a
+ContToPolyDelim (MkYo f) r = MkDelim $ f r
+
+public export
+DelimEndo : Type -> Type -> Type
+DelimEndo s t = Delim s t s
+
+public export
+DelimTrans : Type -> Type -> Type
+DelimTrans a b =
+  NaturalTransformation (flip DelimNoAnsTypeMod a) (flip DelimNoAnsTypeMod b)
+
+public export
+resetDelim : {s, t : Type} -> DelimEndo s t -> PolyDelim t
+resetDelim {s} {t} (MkDelim {b=s} {s} {t} f) s' =
+  MkDelim {s=s'} {t=s'} {b=t} $ \k : (t -> s') => k (f id)
+
+public export
+shift0 : {s, t, b : Type} -> ((b -> s) -> t) -> Delim s t b
+shift0 = MkDelim
+
+public export
+shift1 : {a, b, s, t : Type} -> ((b -> s) -> Delim a t a) -> Delim s t b
+shift1 f = shift0 (\k => unDelim (f k) id)
+
+public export
+DelimReturnI : {b, s : Type} -> b -> DelimNoAnsTypeMod s b
+DelimReturnI x = MkDelim (\k : (b -> s) => k x)
+
+public export
+shift2 : {a, b, s, t : Type} ->
+  ((b -> PolyDelim s) -> DelimEndo a t) -> Delim s t b
+shift2 {a} {b} {s} {t} f =
+  shift1 $
+    \k : (b -> s) => f $ \x : b, r : Type => DelimReturnI {b=s} {s=r} $ k x
+
+public export
+callCC : {a, b, s, t, u : Type} ->
+  ((b -> Delim u s a) -> Delim s t b) -> Delim s t b
+callCC f = shift0 (\k => unDelim (f (\a => shift0 $ \_ => k a)) k)
+
+public export
+runDelim : {t : Type} -> Delim t t t -> t
+runDelim (MkDelim f) = f id
+
+-- One way of viewing the Codensity monad is that if `m` maps a type `a`
+-- to a data structure containing free variables drawn from `a` -- for
+-- example, if `m` is a free monad -- then a term of type `Codensity m a`
+-- represents a term of type `m a` as a polymorphic function which substitutes
+-- terms of type `m b` for some arbitrary type `b` into the free variables
+-- of the term of type `m a`.
 public export
 record Codensity (m : Type -> Type) (a : Type) where
   constructor MkCodensity
   -- Codensity m a = (b : Type) -> (a -> m b) -> m b
   runCodensity : RKanExt m m a
+
+-- `Codensity id` is the same as `Continuation`.
+public export
+CodensityIdToCont : {a : Type} -> Codensity Prelude.id a -> Continuation a
+CodensityIdToCont (MkCodensity f) = MkYo f
+
+public export
+ContToCodensity : {a : Type} -> Continuation a -> Codensity Prelude.id a
+ContToCodensity (MkYo f) = MkCodensity f
 
 public export
 CodensityFunctor : (f : Type -> Type) -> Functor (Codensity f)
@@ -2488,13 +2657,28 @@ CodensityMonad f =
     cmjoin : Codensity f (Codensity f a) -> Codensity f a
     cmjoin = flip cmbind id
 
+-- Also known as `rep`.
 public export
 MonadTrans Codensity where
   lift m = MkCodensity $ \ty => (>>=) m
 
+-- Also known as `abs`.
 public export
 lowerCodensity : Applicative f => {a : Type} -> Codensity f a -> f a
 lowerCodensity {f} {a} ca = runCodensity ca a $ pure {f}
+
+public export
+wrapCodensity :
+  {m : Type -> Type} -> (NaturalTransformation m m) -> Codensity m ()
+wrapCodensity f = MkCodensity $ \ty, k => f ty (k ())
+
+public export
+reset : Monad m => {a : Type} -> Codensity m a -> Codensity m a
+reset = lift {m} {t=Codensity} . lowerCodensity {f=m}
+
+public export
+shift : Monad m => {a : Type} -> RKanExt (Codensity m) m a -> Codensity m a
+shift {a} f = MkCodensity $ \y => lowerCodensity . f y
 
 public export
 interface (Functor f, Monad m) => FreeLike f m where
@@ -2523,20 +2707,6 @@ improve : {f : Type -> Type} -> Functor f ->
   {auto isM : Monad (FreeMonad f)} -> FreeMonad f a
 improve {f} isF allWrap {isM} =
   lowerCodensity $ lift $ allWrap (FreeMonad f) (FreeMonadFreeLike isF)
-
-public export
-wrapCodensity :
-  {m : Type -> Type} -> (NaturalTransformation m m) -> Codensity m ()
-wrapCodensity f = MkCodensity $ \ty, k => f ty (k ())
-
-public export
-reset : Monad m => {a : Type} -> Codensity m a -> Codensity m a
-reset = lift {m} {t=Codensity} . lowerCodensity {f=m}
-
-public export
-shift : Monad m => {a : Type} ->
-  (NaturalTransformation (FunctorExp m a) (Codensity m)) -> Codensity m a
-shift {a} f = MkCodensity $ \y => lowerCodensity . f y
 
 -------------------------
 -------------------------
