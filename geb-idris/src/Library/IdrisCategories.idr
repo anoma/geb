@@ -743,27 +743,46 @@ Refined = Subset0 Type DecPred
 
 public export
 ErasedType : Refined -> Type
-ErasedType (Element0 a _) = a
+ErasedType = fst0
 
 public export
 0 RefinedPred : (r : Refined) -> DecPred (ErasedType r)
-RefinedPred (Element0 _ p) = p
+RefinedPred = snd0
 
 public export
 RefinedType : Refined -> Type
 RefinedType r = Refinement {a=(ErasedType r)} (RefinedPred r)
 
 public export
-RefinedSlice : Type -> Type
-RefinedSlice a = a -> Refined
+RefinedSlice : Refined -> Type
+RefinedSlice a = RefinedType a -> Refined
 
 public export
-RefinedSigma : {a : Type} -> RefinedSlice a -> Type
-RefinedSigma {a} p = Sigma {a} (RefinedType . p)
+RefinedDPair : {a : Refined} -> RefinedSlice a -> Type
+RefinedDPair {a} p = DPair (RefinedType a) (RefinedType . p)
 
 public export
-RefinedPi : {a : Type} -> RefinedSlice a -> Type
-RefinedPi {a} p = Pi {a} (RefinedType . p)
+RefinedSigma : {a : Refined} -> RefinedSlice a -> Refined
+RefinedSigma {a} p =
+  Element0 (DPair (RefinedType a) (fst0 . p)) (\x => snd0 (p (fst x)) (snd x))
+
+public export
+RefinedSigmaType : {a : Refined} -> RefinedSlice a -> Type
+RefinedSigmaType {a} p = RefinedType (RefinedSigma {a} p)
+
+public export
+RefinedDPairToSigma : {a : Refined} -> {p : RefinedSlice a} ->
+  RefinedDPair {a} p -> RefinedSigmaType {a} p
+RefinedDPairToSigma r = Element0 (fst r ** fst0 (snd r)) (snd0 (snd r))
+
+public export
+RefinedSigmaToDPair : {a : Refined} -> {p : RefinedSlice a} ->
+  RefinedSigmaType {a} p -> RefinedDPair {a} p
+RefinedSigmaToDPair r = (fst (fst0 r) ** Element0 (snd (fst0 r)) (snd0 r))
+
+public export
+RefinedPi : {a : Refined} -> RefinedSlice a -> Type
+RefinedPi {a} p = Pi {a=(RefinedType a)} (RefinedType . p)
 
 --------------------------
 ---- Refined functors ----

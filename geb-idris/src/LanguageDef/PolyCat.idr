@@ -2058,31 +2058,40 @@ PredDepPolyEndoF {base} = PredDepPolyF {parambase=base} {posbase=base}
 -----------------------------------------------------------
 
 public export
-RefinedDepProdF : {a : Type} ->
-  (p : RefinedSlice a) -> SliceFunctor (RefinedSigma {a} p) a
-RefinedDepProdF {a} p = PredDepProdF {a} (RefinedType . p)
+RefinedDepProdF : {a : Refined} ->
+  (p : RefinedSlice a) -> SliceFunctor (RefinedSigmaType {a} p) (RefinedType a)
+RefinedDepProdF {a} p =
+  PredDepProdF {a=(RefinedType a)} (RefinedType . p) .
+    BaseChangeF RefinedDPairToSigma
 
 public export
-RefinedDepCoprodF : {a : Type} ->
-  (p : RefinedSlice a) -> SliceFunctor (RefinedSigma {a} p) a
-RefinedDepCoprodF {a} p = PredDepCoprodF {a} (RefinedType . p)
+RefinedDepCoprodF : {a : Refined} ->
+  (p : RefinedSlice a) -> SliceFunctor (RefinedSigmaType {a} p) (RefinedType a)
+RefinedDepCoprodF {a} p =
+  PredDepCoprodF {a=(RefinedType a)} (RefinedType . p) .
+    BaseChangeF RefinedDPairToSigma
 
 public export
-RefinedDepPolyF : {parambase, posbase : Type} ->
+RefinedDepPolyF : {parambase, posbase : Refined} ->
   (posdep : RefinedSlice posbase) ->
-  (dirdep : RefinedSlice (RefinedSigma posdep)) ->
-  (assign : RefinedSigma dirdep -> parambase) ->
-  SliceFunctor parambase posbase
+  (dirdep : RefinedSlice (RefinedSigma {a=posbase} posdep)) ->
+  (assign :
+    RefinedSigmaType {a=(RefinedSigma {a=posbase} posdep)} dirdep ->
+    RefinedType parambase) ->
+  SliceFunctor (RefinedType parambase) (RefinedType posbase)
 RefinedDepPolyF {parambase} {posbase} posdep dirdep assign =
-  PredDepPolyF
-    {parambase} {posbase} (RefinedType . posdep) (RefinedType . dirdep) assign
+  RefinedDepCoprodF {a=posbase} posdep
+  . RefinedDepProdF {a=(RefinedSigma {a=posbase} posdep)} dirdep
+  . BaseChangeF assign
 
 public export
-RefinedDepPolyEndoF : {base : Type} ->
+RefinedDepPolyEndoF : {base : Refined} ->
   (posdep : RefinedSlice base) ->
-  (dirdep : RefinedSlice (RefinedSigma posdep)) ->
-  (assign : RefinedSigma dirdep -> base) ->
-  SliceFunctor base base
+  (dirdep : RefinedSlice (RefinedSigma {a=base} posdep)) ->
+  (assign :
+    RefinedSigmaType {a=(RefinedSigma {a=base} posdep)} dirdep ->
+    RefinedType base) ->
+  SliceFunctor (RefinedType base) (RefinedType base)
 RefinedDepPolyEndoF {base} = RefinedDepPolyF {parambase=base} {posbase=base}
 
 --------------------------------------------------------------------
