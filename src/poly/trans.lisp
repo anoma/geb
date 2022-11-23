@@ -3,10 +3,12 @@
 (defgeneric to-vampir (morphism value)
   (:documentation "Turns a POLY term into a Vamp-IR term with a given value"))
 
-(defun poly-to-circuit (morphism)
-  "Turns a POLY term into a Vamp-IR Gate"
-  morphism
-  (error "not implemented"))
+(defun to-circuit (morphism name)
+  "Turns a POLY term into a Vamp-IR Gate with the given name"
+  (let ((wire (vamp:make-wire :var :x)))
+    (vamp:make-alias :name name
+                     :inputs (list wire)
+                     :body (list (to-vampir morphism wire)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Poly to Vampir Implementation

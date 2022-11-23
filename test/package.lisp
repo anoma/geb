@@ -2,6 +2,7 @@
   (:shadowing-import-from :geb :prod :case)
   (:shadowing-import-from :parachute :name)
   (:shadowing-import-from :serapeum  :true)
+  (:local-nicknames  (#:poly #:geb.poly))
   (:use #:serapeum #:cl #:geb #:parachute #:geb.mixins)
   (:local-nicknames (:conversion :geb.lambda-conversion)))
 
