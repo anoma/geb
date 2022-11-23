@@ -1099,15 +1099,16 @@ RefinedDepCoprodF : {a : Type} ->
 RefinedDepCoprodF {a} p = PredDepCoprodF {a} (RefinedType . p)
 
 public export
-RefinedDepPolyF : {w, z : Type} ->
-  (pz : RefinedSlice z) ->
-  (pspz : RefinedSlice (RefinedSigma {a=z} pz)) ->
-  (RefinedSigma {a=(RefinedSigma {a=z} pz)} pspz -> w) ->
-  SliceFunctor w z
-RefinedDepPolyF {w} {z} pz pspz fspspzw =
-  RefinedDepCoprodF {a=z} pz
-  . RefinedDepProdF {a=(RefinedSigma pz)} pspz
-  . BaseChangeF fspspzw
+RefinedDepPolyF : {parambase, posbase : Type} ->
+  (posdep : RefinedSlice posbase) ->
+  (dirdep : RefinedSlice (RefinedSigma {a=posbase} posdep)) ->
+  (assign :
+    RefinedSigma {a=(RefinedSigma {a=posbase} posdep)} dirdep -> parambase) ->
+  SliceFunctor parambase posbase
+RefinedDepPolyF {parambase} {posbase} posdep dirdep assign =
+  RefinedDepCoprodF {a=posbase} posdep
+  . RefinedDepProdF {a=(RefinedSigma posdep)} dirdep
+  . BaseChangeF assign
 
 -- The dependent product functor induced by the given subtype family.
 -- Right adjoint to the base change functor.
