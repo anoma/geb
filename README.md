@@ -13,24 +13,25 @@
 - [4 Categorical Model][c2e9]
     - [4.1 Morphisms][ada9]
     - [4.2 Objects][dbe7]
-- [5 The Geb Model][56e3]
-    - [5.1 Core Categories][cb9e]
-        - [5.1.1 Subst Obj][c1b3]
-        - [5.1.2 Subst Morph][d2d1]
-    - [5.2 Accessors][cc51]
-    - [5.3 Constructors][2ad4]
-    - [5.4 api][9ebb]
-    - [5.5 Examples][5577]
-- [6 Polynomial Specification][f5ac]
-    - [6.1 Polynomial Types][bd81]
-    - [6.2 Polynomial Constructors][b76d]
-- [7 Mixins][723a]
-    - [7.1 Pointwise Mixins][d5d3]
-    - [7.2 Pointwise API][2fcf]
-    - [7.3 Mixins Examples][4938]
-- [8 Geb Utilities][4ffa]
-    - [8.1 Accessors][cc51]
-- [9 Testing][9bcb]
+- [5 Spec Files and Project Layout][9f9c]
+- [6 The Geb Model][56e3]
+    - [6.1 Core Categories][cb9e]
+        - [6.1.1 Subst Obj][c1b3]
+        - [6.1.2 Subst Morph][d2d1]
+    - [6.2 Accessors][cc51]
+    - [6.3 Constructors][2ad4]
+    - [6.4 api][9ebb]
+    - [6.5 Examples][5577]
+- [7 Polynomial Specification][f5ac]
+    - [7.1 Polynomial Types][bd81]
+    - [7.2 Polynomial Constructors][b76d]
+- [8 Mixins][723a]
+    - [8.1 Pointwise Mixins][d5d3]
+    - [8.2 Pointwise API][2fcf]
+    - [8.3 Mixins Examples][4938]
+- [9 Geb Utilities][4ffa]
+    - [9.1 Accessors][cc51]
+- [10 Testing][9bcb]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -153,22 +154,51 @@ but very much alive in (theoretical) computer science.
 ### 4.2 Objects
 
 
+<a id="x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29"></a>
+## 5 Spec Files and Project Layout
+
+###### \[in package GEB.SPECS\]
+The codebase is split between many files. Each folder can be seen as
+a different idea within geb itself! Thus the `poly` has packages
+revolving around polynomials, the `geb` folder has packages regarding
+the main types of geb [Subst Obj][c1b3] and
+[Subst Morph][d2d1], etc etc.
+
+The general layout quirk of the codebase is that packages like
+`geb.package.spec` defines the specification for the base types for
+any category we wish to model, and these reside in the `specs` folder
+not in the folder that talks about the packages of those types. This
+is due to loading order issues, we thus load the `specs` packages
+before each of their surrounding packages, so that each package can
+build off the last.
+
+Further to make working with each package of an
+idea easy, we have the main package of the folder (typically named the
+same as the folder name) rexport their specifications so if one wants
+to work with the fully fledged versions of the package they can simply
+without having to import too many packages at once.
+
+For example, the `geb.poly.spec` defines out the types and data
+structures of the [Polynomial Specification][f5ac], this is then rexported
+in `geb.poly`, giving the module `geb.poly` a convenient interface for
+all functions that operate on `geb.poly`.
+
 <a id="x-28GEB-2ESPEC-3A-40GEB-20MGL-PAX-3ASECTION-29"></a>
-## 5 The Geb Model
+## 6 The Geb Model
 
 ###### \[in package GEB.SPEC\]
 Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
-### 5.1 Core Categories
+### 6.1 Core Categories
 
 The underlying category of GEB. With [Subst Obj][c1b3] covering the
 shapes and forms ([Objects][dbe7]) of data while [Subst Morph][d2d1]
 deals with concrete [Morphisms][ada9] within the category
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
-#### 5.1.1 Subst Obj
+#### 6.1.1 Subst Obj
 
 This section covers the objects of the GEB category. Every value
 that is a [`SUBSTOBJ`][3173] is automatically lifted into a [`SUBSTMORPH`][57dc] when a
@@ -226,7 +256,7 @@ The [Accessors][cc51] specific to [Subst Obj][c1b3]
 - [method] **MCADR** *(COPROD COPROD)*
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
-#### 5.1.2 Subst Morph
+#### 6.1.2 Subst Morph
 
 The moprhisms of the GEB category.
 
@@ -368,7 +398,7 @@ The [Accessors][cc51] specific to [Subst Morph][d2d1]
     Right projection (product elimination)
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
-### 5.2 Accessors
+### 6.2 Accessors
 
 ###### \[in package GEB.UTILS\]
 These functions are generic lenses of the GEB codebase. If a class is
@@ -439,7 +469,7 @@ likely to be used. They may even augment existing classes.
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
-### 5.3 Constructors
+### 6.3 Constructors
 
 The API for creating GEB terms. All the functions and variables
 here relate to instantiating a term
@@ -492,7 +522,7 @@ More Ergonomic API variants for [`*SO0*`][e982] and [`*SO1*`][b960]
 - [function] **MAKE-FUNCTOR** *&KEY OBJ FUNC*
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
-### 5.4 api
+### 6.4 api
 
 Various functions that make working with GEB easier
 
@@ -519,7 +549,7 @@ Various functions that make working with GEB easier
 - [function] **SO-EVAL** *X Y*
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 5.5 Examples
+### 6.5 Examples
 
 PLACEHOLDER: TO SHOW OTHERS HOW `EXAMPLE`s WORK
 
@@ -538,14 +568,14 @@ with GEB:
 
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 6 Polynomial Specification
+## 7 Polynomial Specification
 
 ###### \[in package GEB.POLY.SPEC\]
 This covers a GEB view of Polynomials. In particular this type will
 be used in translating GEB's view of Polynomials into Vampir
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-20MGL-PAX-3ASECTION-29"></a>
-### 6.1 Polynomial Types
+### 7.1 Polynomial Types
 
 This section covers the types of things one can find in the [`POLY`][8bf3]
 constructors
@@ -592,7 +622,7 @@ constructors
     [`THEN`][bfa9] branch is taken, otherwise the [`ELSE`][365a] branch is taken.
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
-### 6.2 Polynomial Constructors
+### 7.2 Polynomial Constructors
 
 Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors][cc51]
 
@@ -640,7 +670,7 @@ Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors]
     Checks if the [`MCAR`][f1ce] is less than the [`MCADR`][cc87] and chooses the appropriate branch
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
-## 7 Mixins
+## 8 Mixins
 
 ###### \[in package GEB.MIXINS\]
 Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
@@ -648,7 +678,7 @@ project. Overall all these offer various services to the rest of the
 project
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
-### 7.1 Pointwise Mixins
+### 8.1 Pointwise Mixins
 
 Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -677,7 +707,7 @@ in our class
     Further all `DIRECT-POINTWISE-MIXIN`'s are [`POINTWISE-MIXIN`][445d]'s
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
-### 7.2 Pointwise API
+### 8.2 Pointwise API
 
 These are the general API functions on any class that have the
 [`POINTWISE-MIXIN`][445d] service.
@@ -710,7 +740,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
     rather than the class
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 7.3 Mixins Examples
+### 8.3 Mixins Examples
 
 Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
@@ -725,7 +755,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 8 Geb Utilities
+## 9 Geb Utilities
 
 ###### \[in package GEB.UTILS\]
 The Utilities package provide general utility functionality that is
@@ -788,7 +818,7 @@ used throughout the GEB codebase
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
-### 8.1 Accessors
+### 9.1 Accessors
 
 These functions are generic lenses of the GEB codebase. If a class is
 defined, where the names are not known, then these accessors are
@@ -858,7 +888,7 @@ likely to be used. They may even augment existing classes.
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 9 Testing
+## 10 Testing
 
 ###### \[in package GEB-TEST\]
 We use [parachtue](https://quickref.common-lisp.net/parachute.html)
@@ -922,6 +952,7 @@ features and how to better lay out future tests
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"
   [9bcb]: #x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29 "Testing"
   [9ebb]: #x-28GEB-2ESPEC-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "api"
+  [9f9c]: #x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29 "Spec Files and Project Layout"
   [a7d5]: #x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29 "loading"
   [a802]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT TYPE"
   [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"

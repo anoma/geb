@@ -36,7 +36,10 @@
                  (:file geb-printer)
                  (:file lambda)
                  (:file poly)
-                 (:file poly-printer)))
+                 (:file poly-printer)
+                 ;; HACK: to make the package properly refer to the
+                 ;; right symbols
+                 (:file ../util/package)))
    (:module geb
     :serial t
     :description "The Main Geb Module"

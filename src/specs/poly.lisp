@@ -128,7 +128,7 @@
   (make-instance 'mod :mcar mcar :mcadr mcadr))
 
 (defun if-zero (pred then else)
-  "checks if [PREDICATE] is zero then take then [THEN] branch otherwise the [ELSE] branch"
+  "checks if [PREDICATE] is zero then take the [THEN] branch otherwise the [ELSE] branch"
   (make-instance 'if- :predicate pred :then then :else else))
 
 (defun if-lt (mcar mcadr then else)

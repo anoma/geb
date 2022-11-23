@@ -5,6 +5,7 @@
   (:import-from #:geb.utils  #:@geb-utils-manual)
   (:import-from #:geb-test   #:@geb-test-manual)
   (:import-from #:geb.poly   #:@poly-manual)
+  (:import-from #:geb.specs  #:@geb-specs)
   (:export build-docs))
 
 (in-package geb-docs/docs)
@@ -15,6 +16,7 @@
   (@getting-started  pax:section)
   (@original-efforts pax:section)
   (@model            pax:section)
+  (@geb-specs        pax:section)
   (@geb              pax:section)
   (@poly-manual      pax:section)
   (@mixins           pax:section)

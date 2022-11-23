@@ -41,16 +41,31 @@
 
 (in-package :geb.specs)
 
-(pax:defsection @geb-specs (:title "Spec Files and Layouts")
-  "The general layout of the codebase is one where the GEB.Package.Spec
-defines the specification for the base types for any category we wish
-to model. Due to loading order issues, we put all specifications and
-their printers in the `specs` folder. Each Section will then in turn
-properly rexport their specification."
-  "For example, the GEB.POLY.SPEC defines out the types and data
-structures of the Poly category, this is then rexported in GEB.POLY,
-giving the module GEB.POLY a convenient interface for all functions
-that operate on GEB.POLY.")
+(pax:defsection @geb-specs (:title "Spec Files and Project Layout")
+  "The codebase is split between many files. Each folder can be seen as
+a different idea within geb itself! Thus the `poly` has packages
+revolving around polynomials, the `geb` folder has packages regarding
+the main types of geb GEB.SPEC:@GEB-SUBSTMU and
+GEB.SPEC:@GEB-SUBSTMORPH, etc etc.
+
+The general layout quirk of the codebase is that packages like
+`geb.package.spec` defines the specification for the base types for
+any category we wish to model, and these reside in the `specs` folder
+not in the folder that talks about the packages of those types. This
+is due to loading order issues, we thus load the `specs` packages
+before each of their surrounding packages, so that each package can
+build off the last.
+
+Further to make working with each package of an
+idea easy, we have the main package of the folder (typically named the
+same as the folder name) rexport their specifications so if one wants
+to work with the fully fledged versions of the package they can simply
+without having to import too many packages at once.
+
+For example, the `geb.poly.spec` defines out the types and data
+structures of the GEB.POLY.SPEC:@POLY-MANUAL, this is then rexported
+in `geb.poly`, giving the module `geb.poly` a convenient interface for
+all functions that operate on `geb.poly`.")
 
 (in-package :geb.poly.spec)
 
