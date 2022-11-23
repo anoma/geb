@@ -44,7 +44,10 @@
 ;; Statement Product Types
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defclass alias ()
+(defclass mixins (geb.mixins:direct-pointwise-mixin) ())
+
+
+(defclass alias (mixins)
   ((name :initarg :name
          :type    keyword
          :accessor name
@@ -65,7 +68,7 @@
          :type     constraint-list))
   (:documentation "An alias gate in vamp-ir"))
 
-(defclass pub ()
+(defclass pub (mixins)
   ((wires :initarg :wires
           :type    list
           :accessor wires)))
@@ -74,7 +77,7 @@
 ;; Expression Product Types
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defclass infix ()
+(defclass infix (mixins)
   ((op :initarg :op
        :accessor op
        :type     primitive
@@ -88,7 +91,7 @@
         :type     expression
         :documentation "the argument to the right of the op")))
 
-(defclass application ()
+(defclass application (mixins)
   ((func :initarg :function
          :accessor func
          :type     keyword
@@ -99,7 +102,7 @@
               :accessor arguments
               :documentation "The arguments in which the gate is called upon")))
 
-(defclass bind ()
+(defclass bind (mixins)
   ((names :initarg :names
           :accessor names
           :type     normal-form-list)
@@ -108,7 +111,7 @@
           ;; can't be a constant however!
           :type     expression)))
 
-(defclass equality ()
+(defclass equality (mixins)
   ((lhs :initarg  :lhs
         :accessor lhs
         :type     expression
@@ -118,7 +121,7 @@
         :type     expression
         :documentation "the argument to the rigth of the =")))
 
-(defclass tuple ()
+(defclass tuple (mixins)
   ((wires :initarg :wires
           :type    list
           :accessor wires)))
@@ -127,13 +130,13 @@
 ;; Normal Form Product Types
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defclass wire ()
+(defclass wire (mixins)
   ((var :initarg :var
         :accessor var
         :type     keyword))
   (:documentation "A reference in vamp-ir"))
 
-(defclass constant ()
+(defclass constant (mixins)
   ((const :initarg :const
           :accessor const)))
 
