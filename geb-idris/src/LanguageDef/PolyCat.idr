@@ -2077,6 +2077,14 @@ RefinedDepPolyF {parambase} {posbase} posdep dirdep assign =
   PredDepPolyF
     {parambase} {posbase} (RefinedType . posdep) (RefinedType . dirdep) assign
 
+public export
+RefinedDepPolyEndoF : {base : Type} ->
+  (posdep : RefinedSlice base) ->
+  (dirdep : RefinedSlice (RefinedSigma posdep)) ->
+  (assign : RefinedSigma dirdep -> base) ->
+  SliceFunctor base base
+RefinedDepPolyEndoF {base} = RefinedDepPolyF {parambase=base} {posbase=base}
+
 --------------------------------------------------------------------
 ---- Dependent polynomials as functors between slice categories ----
 --------------------------------------------------------------------
