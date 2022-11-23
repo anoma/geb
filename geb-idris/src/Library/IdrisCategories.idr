@@ -1105,9 +1105,8 @@ RefinedDepPolyF : {parambase, posbase : Type} ->
   (assign : RefinedSigma dirdep -> parambase) ->
   SliceFunctor parambase posbase
 RefinedDepPolyF {parambase} {posbase} posdep dirdep assign =
-  RefinedDepCoprodF {a=posbase} posdep
-  . RefinedDepProdF {a=(RefinedSigma posdep)} dirdep
-  . BaseChangeF assign
+  PredDepPolyF
+    {parambase} {posbase} (RefinedType . posdep) (RefinedType . dirdep) assign
 
 -- The dependent product functor induced by the given subtype family.
 -- Right adjoint to the base change functor.
