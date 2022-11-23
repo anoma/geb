@@ -1,4 +1,4 @@
-(in-package :geb.poly.trans)
+(in-package :geb.poly)
 
 (defgeneric to-vampir (morphism value)
   (:documentation "Turns a POLY term into a Vamp-IR term with a given value"))
@@ -33,16 +33,16 @@
 (defmethod to-vampir ((obj integer) value)
   "Numbers act like a constant function, ignoring input"
   (declare (ignore value))
-  (make-constant :const obj))
+  (vamp:make-constant :const obj))
 
 (defmethod to-vampir ((obj ident) value)
   "Identity acts as the identity function"
   value)
 
 (defun infix-creation (symbol obj value)
-  (make-infix :op symbol
-              :lhs (to-vampir (mcar obj) value)
-              :rhs (to-vampir (mcadr obj) value)))
+  (vamp:make-infix :op symbol
+                   :lhs (to-vampir (mcar obj) value)
+                   :rhs (to-vampir (mcadr obj) value)))
 
 (defmethod to-vampir ((obj +) value)
   "Propagates the value and adds them"
@@ -63,7 +63,7 @@
 
 (defmethod to-vampir ((obj compose) value)
   (to-vampir (mcar obj)
-                  (to-vampir (mcadr obj) value)))
+             (to-vampir (mcadr obj) value)))
 
 (defmethod to-vampir ((obj mod) value)
   (error "mod logic not in yet"))
