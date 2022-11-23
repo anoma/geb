@@ -1981,6 +1981,102 @@ pfCofreeIdF = InterpPolyFunc pfCofreeId
 ---------------------------------------
 ---------------------------------------
 
+---------------------------------------------------------
+---- Dependent polynomial functors in Idris's `Type` ----
+---------------------------------------------------------
+
+-- Dependent product in terms of a predicate instead of a morphism.
+public export
+PredDepProdF : {a : Type} -> (p : SliceObj a) -> SliceFunctor (Sigma {a} p) a
+PredDepProdF {a} p slp elema =
+  Pi {a=(p elema)} (BaseChangeF (MkDPair elema) slp)
+
+-- Dependent coproduct in terms of a predicate instead of a morphism.
+public export
+PredDepCoprodF : {a : Type} -> (p : SliceObj a) -> SliceFunctor (Sigma {a} p) a
+PredDepCoprodF {a} p slp elema =
+  Sigma {a=(p elema)} (BaseChangeF (MkDPair elema) slp)
+
+-- A dependent polynomial functor in terms of predicates instead of morphisms.
+public export
+PredDepPolyF : {parambase, posbase : Type} ->
+  (posdep : SliceObj posbase) ->
+  (dirdep : SliceObj (Sigma posdep)) ->
+  (assign : Sigma dirdep -> parambase) ->
+  SliceFunctor parambase posbase
+PredDepPolyF {parambase} {posbase} posdep dirdep assign =
+  PredDepCoprodF {a=posbase} posdep
+  . PredDepProdF {a=(Sigma posdep)} dirdep
+  . BaseChangeF assign
+
+-- The same function as `PredDepPolyF`, but compressed into a single computation
+-- purely as documentation for cases in which this might be more clear.
+public export
+PredDepPolyF' : {parambase, posbase : Type} ->
+  (posdep : SliceObj posbase) ->
+  (dirdep : SliceObj (Sigma posdep)) ->
+  (assign : Sigma dirdep -> parambase) ->
+  SliceFunctor parambase posbase
+PredDepPolyF' posdep dirdep assign parampred posi =
+  (pos : posdep posi **
+   ((dir : dirdep (posi ** pos)) -> parampred (assign ((posi ** pos) ** dir))))
+
+public export
+PredDepPolyF'_correct : {parambase, posbase : Type} ->
+  (posdep : SliceObj posbase) ->
+  (dirdep : SliceObj (Sigma posdep)) ->
+  (assign : Sigma dirdep -> parambase) ->
+  (parampred : SliceObj parambase) ->
+  (posi : posbase) ->
+  PredDepPolyF posdep dirdep assign parampred posi =
+    PredDepPolyF' posdep dirdep assign parampred posi
+PredDepPolyF'_correct posdep dirdep assign parampred posi = Refl
+
+-- The morphism-map component of the functor induced by a `PredDepPolyF`.
+PredDepPolyFMap : {parambase, posbase : Type} ->
+  (posdep : SliceObj posbase) ->
+  (dirdep : SliceObj (Sigma posdep)) ->
+  (assign : Sigma dirdep -> parambase) ->
+  (p, p' : SliceObj parambase) ->
+  SliceMorphism p p' ->
+  SliceMorphism
+    (PredDepPolyF posdep dirdep assign p)
+    (PredDepPolyF posdep dirdep assign p')
+PredDepPolyFMap posdep dirdep assign p p' m posi (pos ** dir) =
+  (pos ** \di => m (assign ((posi ** pos) ** di)) (dir di))
+
+public export
+PredDepPolyEndoF : {base : Type} ->
+  (posdep : SliceObj base) ->
+  (dirdep : SliceObj (Sigma posdep)) ->
+  (assign : Sigma dirdep -> base) ->
+  SliceFunctor base base
+PredDepPolyEndoF {base} = PredDepPolyF {parambase=base} {posbase=base}
+
+-----------------------------------------------------------
+---- Refined versions of dependent polynomial functors ----
+-----------------------------------------------------------
+
+public export
+RefinedDepProdF : {a : Type} ->
+  (p : RefinedSlice a) -> SliceFunctor (RefinedSigma {a} p) a
+RefinedDepProdF {a} p = PredDepProdF {a} (RefinedType . p)
+
+public export
+RefinedDepCoprodF : {a : Type} ->
+  (p : RefinedSlice a) -> SliceFunctor (RefinedSigma {a} p) a
+RefinedDepCoprodF {a} p = PredDepCoprodF {a} (RefinedType . p)
+
+public export
+RefinedDepPolyF : {parambase, posbase : Type} ->
+  (posdep : RefinedSlice posbase) ->
+  (dirdep : RefinedSlice (RefinedSigma posdep)) ->
+  (assign : RefinedSigma dirdep -> parambase) ->
+  SliceFunctor parambase posbase
+RefinedDepPolyF {parambase} {posbase} posdep dirdep assign =
+  PredDepPolyF
+    {parambase} {posbase} (RefinedType . posdep) (RefinedType . dirdep) assign
+
 --------------------------------------------------------------------
 ---- Dependent polynomials as functors between slice categories ----
 --------------------------------------------------------------------
