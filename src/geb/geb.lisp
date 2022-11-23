@@ -1,19 +1,5 @@
 (in-package :geb)
 
-(-> pair-to-list (pair &optional list) list)
-(defun pair-to-list (pair &optional acc)
-  "converts excess pairs to a list format"
-  (if (typep (mcdr pair) 'pair)
-      (pair-to-list (mcdr pair)
-                    (cons (mcar pair) acc))
-      (reverse (list* (mcdr pair) (mcar pair) acc))))
-
-(defun same-type-to-list (pair type &optional acc)
-  "converts the given type to a list format"
-  (if (typep (mcadr pair) type)
-      (same-type-to-list (mcadr pair) type (cons (mcar pair) acc))
-      (reverse (list* (mcadr pair) (mcar pair) acc))))
-
 (-> mlist (substmorph &rest substmorph) pair)
 (defun mlist (v1 &rest values)
   (if (null values)

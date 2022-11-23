@@ -113,7 +113,7 @@ but very much alive in (theoretical) computer science.
 
 ## The Geb Model
 
-###### \[in package GEB\]
+###### \[in package GEB.SPEC\]
 Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 

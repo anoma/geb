@@ -3,7 +3,6 @@
 (defgeneric moprh-to-poly (morphism)
   (:documentation "Turns a GEB:SUBSTMORPH into a POLY"))
 
-
 ;; I really should move where this function lives
 ;; probably best to move where all transition functions live!?
 (defgeneric poly-to-vampir (morphism value)

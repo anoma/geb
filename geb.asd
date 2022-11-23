@@ -1,5 +1,8 @@
 (asdf:defsystem :geb
   :depends-on (:trivia :alexandria :serapeum :fset :fare-quasiquote-extras
+                       ;; wed are only importing this for now until I
+                       ;; give good instructions to update the asdf of sbcl
+                       :cl-reexport
                        :mgl-pax)
   :version "0.0.1"
   :description "Gödel, Escher, Bach, a categorical view of computation"
@@ -12,41 +15,46 @@
     :description "Internal utility functions"
     :components ((:file package)
                  (:file utils)))
-   (:module vampir
-    :serial t
-    :description "The Vampir Extraction Module"
-    :components ((:file package)
-                 (:file spec)
-                 (:file vampir)))
    (:module mixins
     :serial t
     :description "Mixin Utility Functions"
     :depends-on (util)
     :components ((:file package)
                  (:file mixins)))
+   (:module vampir
+    :serial t
+    :description "The Vampir Extraction Module"
+    :components ((:file package)
+                 (:file spec)
+                 (:file vampir)))
+   (:module specs
+    :serial t
+    :depends-on (util mixins)
+    :description "Internal utility functions"
+    :components ((:file package)
+                 (:file geb)
+                 (:file geb-printer)
+                 (:file lambda)
+                 (:file poly)
+                 (:file poly-printer)))
    (:module geb
     :serial t
     :description "The Main Geb Module"
-    :depends-on (util)
+    :depends-on (util specs)
     :components ((:file package)
-                 (:file spec)
-                 (:file printer)
                  (:file geb)
                  (:file bool)))
    (:module poly
     :serial t
     :description "Polynomial"
-    :depends-on (util geb vampir)
+    :depends-on (util geb vampir specs)
     :components ((:file package)
-                 (:file spec)
-                 (:file printer)
                  (:file trans)))
    (:module lambda
     :serial t
-    :depends-on (geb)
+    :depends-on (geb specs)
     :description "A simple Lambda calculus model"
     :components ((:file package)
-                 (:file spec)
                  (:file lambda)
                  (:file lambda-conversion))))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))

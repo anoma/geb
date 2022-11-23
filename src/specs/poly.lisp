@@ -1,6 +1,5 @@
 (in-package #:geb.poly.spec)
 
-
 (deftype poly ()
   `(or compose + * / - mod integer if-zero if-lt ident))
 

@@ -1,4 +1,4 @@
-(in-package :geb)
+(in-package :geb.spec)
 
 (defclass <substobj> (direct-pointwise-mixin) ()
   (:documentation "the class corresponding to SUBSTOBJ"))

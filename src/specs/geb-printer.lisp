@@ -34,7 +34,7 @@
 ;; TopLevel Extraction
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(in-package :geb)
+(in-package :geb.spec)
 
 ;; normal s-expression pretty printer.
 ;; only doing this as Ι think we want to be reflective in the future.
@@ -43,6 +43,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subst Constructor Printer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun same-type-to-list (pair type &optional acc)
+  "converts the given type to a list format"
+  (if (typep (mcadr pair) type)
+      (same-type-to-list (mcadr pair) type (cons (mcar pair) acc))
+      (reverse (list* (mcadr pair) (mcar pair) acc))))
+
+(-> pair-to-list (pair &optional list) list)
+(defun pair-to-list (pair &optional acc)
+  "converts excess pairs to a list format"
+  (if (typep (mcdr pair) 'pair)
+      (pair-to-list (mcdr pair)
+                    (cons (mcar pair) acc))
+      (reverse (list* (mcdr pair) (mcar pair) acc))))
 
 ;; Prefix Prod, collapse
 (defmethod print-object ((obj prod) stream)
