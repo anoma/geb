@@ -6,14 +6,24 @@
 
 ;; I really should move where this function lives
 ;; probably best to move where all transition functions live!?
-(defgeneric poly-to-vampir (morphism)
-  (:documentation "Turns a POLY term into a Vampir term"))
+(defgeneric poly-to-vampir (morphism value)
+  (:documentation "Turns a POLY term into a Vamp-IR term with a given value"))
+
+(defun poly-to-circuit (morphism)
+  "Turns a POLY term into a Vamp-IR Gate"
+  morphism
+  (error "not implemented"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Morph to Poly Implementation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; we could get exhaustion here over poly, with
+;; subclass-responsibility implemented for any value that does not
+;; match. See the commented code.
 (defmethod morph-to-poly ((obj geb:<substmorph>))
+  ;; (typecase-of poly obj
+  ;;   (otherwise (subclass-responsibility obj)))
   (subclass-responsibility obj))
 
 (defmethod morph-to-poly ((obj geb:<substobj>))
@@ -75,7 +85,8 @@
 (defun obj-to-nat (obj)
   (so-card-alg obj))
 
-(defgeneric so-card-alg (obj))
+(defgeneric so-card-alg (obj)
+  (:documentation "Gets the cardinality of the given object"))
 
 (defmethod so-card-alg ((obj geb:<substobj>))
   ;; we don't use the cata morphism so here we are. Doesn't give me
@@ -93,50 +104,62 @@
 ;; Poly to Vampir Implementation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmethod poly-to-vampir ((obj <poly>))
+;; we could get exhaustion here over poly, with
+;; subclass-responsibility implemented for any value that does not
+;; match. See the commented code.
+(defmethod poly-to-vampir ((obj <poly>) value)
+  ;; (typecase-of poly obj
+  ;;   (otherwise (subclass-responsibility obj)))
   (subclass-responsibility obj))
 
 (-> direct-fields-to-list-vampir (geb.mixins:direct-pointwise-mixin) list)
-(defun direct-fields-to-list-vampir (obj)
-  (mapcar (alexandria:compose #'poly-to-vampir #'cdr)
-          (geb.mixins:to-pointwise-list obj)))
+(defun direct-fields-to-list (obj)
+  (mapcar #'cdr (geb.mixins:to-pointwise-list obj)))
 
 ;; all of this is likely wrong, as we are taking morph-isms which
 ;; evaluate to themselves but I'm unsure of how this works on an input
 ;; level
 
-(defmethod poly-to-vampir ((obj integer))
+(defmethod poly-to-vampir ((obj integer) value)
+  "Numbers act like a constant function, ignoring input"
+  (declare (ignore value))
   (make-constant :const obj))
 
+(defmethod poly-to-vampir ((obj ident) value)
+  "Identity acts as the identity function"
+  value)
 
-(defmethod poly-to-vampir ((obj ident))
-  ;; should we compile this to the identity function, thus a gate? yet
-  ;; we take nothing, so I'm not sure how this translation quite works
-  (make-constant :const 1))
+(defun infix-creation (symbol obj value)
+  (make-infix :op symbol
+              :lhs (poly-to-vampir (mcar obj) value)
+              :rhs (poly-to-vampir (mcadr obj) value)))
 
-(defmethod poly-to-vampir ((obj +))
-  (make-infix :op :+
-              :lhs (poly-to-vampir (mcar obj))
-              :rhs (poly-to-vampir (mcadr obj))))
+(defmethod poly-to-vampir ((obj +) value)
+  "Propagates the value and adds them"
+  (infix-creation :+ obj value))
 
-(defmethod poly-to-vampir ((obj *))
-  (make-infix :op :*
-              :lhs (poly-to-vampir (mcar obj))
-              :rhs (poly-to-vampir (mcadr obj))))
+(defmethod poly-to-vampir ((obj *) value)
+  "Propagates the value and times them"
+  (infix-creation :* obj value))
 
-(defmethod poly-to-vampir ((obj -))
-  (make-infix :op :-
-              :lhs (poly-to-vampir (mcar obj))
-              :rhs (poly-to-vampir (mcadr obj))))
+(defmethod poly-to-vampir ((obj -) value)
+  "Propagates the value and subtracts them"
+  (infix-creation :- obj value))
 
-;; we should error on this as well as no general division is had either
-(defmethod poly-to-vampir ((obj /))
-  (make-infix :op :/
-              :lhs (poly-to-vampir (mcar obj))
-              :rhs (poly-to-vampir (mcadr obj))))
 
-(defmethod poly-to-vampir ((obj compose))
-  (error "not sure of the logic yet"))
+(defmethod poly-to-vampir ((obj /) value)
+  ;; this should error
+  (infix-creation :/ obj value))
 
-(defmethod poly-to-vampir ((obj mod))
+(defmethod poly-to-vampir ((obj compose) value)
+  (poly-to-vampir (mcar obj)
+                  (poly-to-vampir (mcadr obj) value)))
+
+(defmethod poly-to-vampir ((obj mod) value)
+  (error "mod logic not in yet"))
+
+(defmethod poly-to-vampir ((obj if-zero) value)
+  (error "mod logic not in yet"))
+
+(defmethod poly-to-vampir ((obj if-lt) value)
   (error "mod logic not in yet"))
