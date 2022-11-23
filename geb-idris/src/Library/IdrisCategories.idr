@@ -148,6 +148,33 @@ public export
 Sigma : {a : Type} -> SliceObj a -> Type
 Sigma {a} p = (x : a ** p x)
 
+public export
+SigmaToPair : {0 a, b : Type} -> (Sigma {a} (const b)) -> (a, b)
+SigmaToPair (x ** y) = (x, y)
+
+public export
+PairToSigma : {0 a, b : Type} -> (a, b) -> (Sigma {a} (const b))
+PairToSigma (x, y) = (x ** y)
+
+-- If we view `a` as a discrete category, and slice objects of it as
+-- functors from `a` to `Type`, then this type can also be viewed as
+-- a natural transformation.
+public export
+SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
+SliceMorphism {a} s s' = (e : a) -> s e -> s' e
+
+public export
+SliceFMorphism : {a : Type} -> SliceObj a -> (a -> a) -> Type
+SliceFMorphism s f = SliceMorphism s (s . f)
+
+public export
+ArrowObj : Type
+ArrowObj = (sig : (Type, Type) ** (fst sig -> snd sig))
+
+-------------------------------------------
+---- Dependent polynomial endofunctors ----
+-------------------------------------------
+
 -- The dependent product functor induced by the given morphism.
 -- Right adjoint to the base change functor.
 public export
@@ -197,35 +224,26 @@ PredDepPolyF {w} {z} pz pspz fspspzw =
   . PredDepProdF {a=(Sigma pz)} pspz
   . BaseChangeF fspspzw
 
--- A dependent polynomial functor in terms of predicates instead of morphisms.
+-- The morphism-map component of the functor induced by a `PredDepPolyF`.
+PredDepPolyFMap : {w, z : Type} ->
+  (pz : SliceObj z) ->
+  (pspz : SliceObj (Sigma {a=z} pz)) ->
+  (fspspzw : Sigma {a=(Sigma {a=z} pz)} pspz -> w) ->
+  (pw, pw' : SliceObj w) ->
+  SliceMorphism pw pw' ->
+  SliceMorphism
+    (PredDepPolyF pz pspz fspspzw pw)
+    (PredDepPolyF pz pspz fspspzw pw')
+PredDepPolyFMap
+  {w} {z} pz pspz fspspzw pw pw' m elemz (epz ** mpspz) =
+    (epz ** \epspz => m (fspspzw ((elemz ** epz) ** epspz)) (mpspz epspz))
+
+-- A dependent polynomial endofunctor in terms of predicates instead of morphisms.
 public export
 PredDepPolyEndoF : {z : Type} ->
   (pz : z -> Type) -> (pspz : Sigma pz -> Type) -> (Sigma pspz -> z) ->
   SliceFunctor z z
 PredDepPolyEndoF {z} = PredDepPolyF {w=z} {z}
-
-public export
-SigmaToPair : {0 a, b : Type} -> (Sigma {a} (const b)) -> (a, b)
-SigmaToPair (x ** y) = (x, y)
-
-public export
-PairToSigma : {0 a, b : Type} -> (a, b) -> (Sigma {a} (const b))
-PairToSigma (x, y) = (x ** y)
-
--- If we view `a` as a discrete category, and slice objects of it as
--- functors from `a` to `Type`, then this type can also be viewed as
--- a natural transformation.
-public export
-SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
-SliceMorphism {a} s s' = (e : a) -> s e -> s' e
-
-public export
-SliceFMorphism : {a : Type} -> SliceObj a -> (a -> a) -> Type
-SliceFMorphism s f = SliceMorphism s (s . f)
-
-public export
-ArrowObj : Type
-ArrowObj = (sig : (Type, Type) ** (fst sig -> snd sig))
 
 ----------------------------------------------------
 ----------------------------------------------------
