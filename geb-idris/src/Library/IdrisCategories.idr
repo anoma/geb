@@ -214,59 +214,59 @@ PredDepCoprodF {a} p slp elema =
 
 -- A dependent polynomial functor in terms of predicates instead of morphisms.
 public export
-PredDepPolyF : {w, z : Type} ->
-  (pz : SliceObj z) ->
-  (pspz : SliceObj (Sigma {a=z} pz)) ->
-  (Sigma {a=(Sigma {a=z} pz)} pspz -> w) ->
-  SliceFunctor w z
-PredDepPolyF {w} {z} pz pspz fspspzw =
-  PredDepCoprodF {a=z} pz
-  . PredDepProdF {a=(Sigma pz)} pspz
-  . BaseChangeF fspspzw
+PredDepPolyF : {parambase, posbase : Type} ->
+  (posdep : SliceObj posbase) ->
+  (dirdep : SliceObj (Sigma posdep)) ->
+  (assign : Sigma dirdep -> parambase) ->
+  SliceFunctor parambase posbase
+PredDepPolyF {parambase} {posbase} posdep dirdep assign =
+  PredDepCoprodF {a=posbase} posdep
+  . PredDepProdF {a=(Sigma posdep)} dirdep
+  . BaseChangeF assign
 
 -- The same function as `PredDepPolyF`, but compressed into a single computation
 -- purely as documentation for cases in which this might be more clear.
 public export
 PredDepPolyF' : {parambase, posbase : Type} ->
   (posdep : SliceObj posbase) ->
-  (dirdep : SliceObj (Sigma {a=posbase} posdep)) ->
-  (assign : Sigma {a=(Sigma {a=posbase} posdep)} dirdep ->
-    parambase) ->
+  (dirdep : SliceObj (Sigma posdep)) ->
+  (assign : Sigma dirdep -> parambase) ->
   SliceFunctor parambase posbase
-PredDepPolyF' {parambase} {posbase} posdep dirdep assign parampred posi =
+PredDepPolyF' posdep dirdep assign parampred posi =
   (pos : posdep posi **
    ((dir : dirdep (posi ** pos)) -> parampred (assign ((posi ** pos) ** dir))))
 
 public export
-PredDepPolyF'_correct : {w, z : Type} ->
-  (pz : SliceObj z) ->
-  (pspz : SliceObj (Sigma {a=z} pz)) ->
-  (fspspzw : Sigma {a=(Sigma {a=z} pz)} pspz -> w) ->
-  (pw : SliceObj w) ->
-  (elemz : z) ->
-  PredDepPolyF pz pspz fspspzw pw elemz = PredDepPolyF' pz pspz fspspzw pw elemz
-PredDepPolyF'_correct {w} {z} pz pspz fspspzw pw elemz = Refl
+PredDepPolyF'_correct : {parambase, posbase : Type} ->
+  (posdep : SliceObj posbase) ->
+  (dirdep : SliceObj (Sigma posdep)) ->
+  (assign : Sigma dirdep -> parambase) ->
+  (parampred : SliceObj parambase) ->
+  (posi : posbase) ->
+  PredDepPolyF posdep dirdep assign parampred posi =
+    PredDepPolyF' posdep dirdep assign parampred posi
+PredDepPolyF'_correct posdep dirdep assign parampred posi = Refl
 
 -- The morphism-map component of the functor induced by a `PredDepPolyF`.
-PredDepPolyFMap : {w, z : Type} ->
-  (pz : SliceObj z) ->
-  (pspz : SliceObj (Sigma {a=z} pz)) ->
-  (fspspzw : Sigma {a=(Sigma {a=z} pz)} pspz -> w) ->
-  (pw, pw' : SliceObj w) ->
-  SliceMorphism pw pw' ->
+PredDepPolyFMap : {parambase, posbase : Type} ->
+  (posdep : SliceObj posbase) ->
+  (dirdep : SliceObj (Sigma posdep)) ->
+  (assign : Sigma dirdep -> parambase) ->
+  (p, p' : SliceObj parambase) ->
+  SliceMorphism p p' ->
   SliceMorphism
-    (PredDepPolyF pz pspz fspspzw pw)
-    (PredDepPolyF pz pspz fspspzw pw')
-PredDepPolyFMap
-  {w} {z} pz pspz fspspzw pw pw' m elemz (epz ** mpspz) =
-    (epz ** \epspz => m (fspspzw ((elemz ** epz) ** epspz)) (mpspz epspz))
+    (PredDepPolyF posdep dirdep assign p)
+    (PredDepPolyF posdep dirdep assign p')
+PredDepPolyFMap posdep dirdep assign p p' m posi (pos ** dir) =
+  (pos ** \di => m (assign ((posi ** pos) ** di)) (dir di))
 
--- A dependent polynomial endofunctor in terms of predicates instead of morphisms.
 public export
-PredDepPolyEndoF : {z : Type} ->
-  (pz : z -> Type) -> (pspz : Sigma pz -> Type) -> (Sigma pspz -> z) ->
-  SliceFunctor z z
-PredDepPolyEndoF {z} = PredDepPolyF {w=z} {z}
+PredDepPolyEndoF : {base : Type} ->
+  (posdep : SliceObj base) ->
+  (dirdep : SliceObj (Sigma posdep)) ->
+  (assign : Sigma dirdep -> base) ->
+  SliceFunctor base base
+PredDepPolyEndoF {base} = PredDepPolyF {parambase=base} {posbase=base}
 
 ----------------------------------------------------
 ----------------------------------------------------
