@@ -1101,9 +1101,8 @@ RefinedDepCoprodF {a} p = PredDepCoprodF {a} (RefinedType . p)
 public export
 RefinedDepPolyF : {parambase, posbase : Type} ->
   (posdep : RefinedSlice posbase) ->
-  (dirdep : RefinedSlice (RefinedSigma {a=posbase} posdep)) ->
-  (assign :
-    RefinedSigma {a=(RefinedSigma {a=posbase} posdep)} dirdep -> parambase) ->
+  (dirdep : RefinedSlice (RefinedSigma posdep)) ->
+  (assign : RefinedSigma dirdep -> parambase) ->
   SliceFunctor parambase posbase
 RefinedDepPolyF {parambase} {posbase} posdep dirdep assign =
   RefinedDepCoprodF {a=posbase} posdep
