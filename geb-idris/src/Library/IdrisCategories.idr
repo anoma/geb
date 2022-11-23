@@ -227,14 +227,15 @@ PredDepPolyF {w} {z} pz pspz fspspzw =
 -- The same function as `PredDepPolyF`, but compressed into a single computation
 -- purely as documentation for cases in which this might be more clear.
 public export
-PredDepPolyF' : {w, z : Type} ->
-  (pz : SliceObj z) ->
-  (pspz : SliceObj (Sigma {a=z} pz)) ->
-  (Sigma {a=(Sigma {a=z} pz)} pspz -> w) ->
-  SliceFunctor w z
-PredDepPolyF' {w} {z} pz pspz fspspzw pw elemz =
-  (epz : pz elemz **
-   (epspz : pspz (elemz ** epz)) -> pw (fspspzw ((elemz ** epz) ** epspz)))
+PredDepPolyF' : {parambase, posbase : Type} ->
+  (posdep : SliceObj posbase) ->
+  (dirdep : SliceObj (Sigma {a=posbase} posdep)) ->
+  (assign : Sigma {a=(Sigma {a=posbase} posdep)} dirdep ->
+    parambase) ->
+  SliceFunctor parambase posbase
+PredDepPolyF' {parambase} {posbase} posdep dirdep assign parampred posi =
+  (pos : posdep posi **
+   ((dir : dirdep (posi ** pos)) -> parampred (assign ((posi ** pos) ** dir))))
 
 public export
 PredDepPolyF'_correct : {w, z : Type} ->
