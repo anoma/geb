@@ -224,6 +224,28 @@ PredDepPolyF {w} {z} pz pspz fspspzw =
   . PredDepProdF {a=(Sigma pz)} pspz
   . BaseChangeF fspspzw
 
+-- The same function as `PredDepPolyF`, but compressed into a single computation
+-- purely as documentation for cases in which this might be more clear.
+public export
+PredDepPolyF' : {w, z : Type} ->
+  (pz : SliceObj z) ->
+  (pspz : SliceObj (Sigma {a=z} pz)) ->
+  (Sigma {a=(Sigma {a=z} pz)} pspz -> w) ->
+  SliceFunctor w z
+PredDepPolyF' {w} {z} pz pspz fspspzw pw elemz =
+  (epz : pz elemz **
+   (epspz : pspz (elemz ** epz)) -> pw (fspspzw ((elemz ** epz) ** epspz)))
+
+public export
+PredDepPolyF'_correct : {w, z : Type} ->
+  (pz : SliceObj z) ->
+  (pspz : SliceObj (Sigma {a=z} pz)) ->
+  (fspspzw : Sigma {a=(Sigma {a=z} pz)} pspz -> w) ->
+  (pw : SliceObj w) ->
+  (elemz : z) ->
+  PredDepPolyF pz pspz fspspzw pw elemz = PredDepPolyF' pz pspz fspspzw pw elemz
+PredDepPolyF'_correct {w} {z} pz pspz fspspzw pw elemz = Refl
+
 -- The morphism-map component of the functor induced by a `PredDepPolyF`.
 PredDepPolyFMap : {w, z : Type} ->
   (pz : SliceObj z) ->
