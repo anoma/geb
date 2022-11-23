@@ -14,14 +14,15 @@
     - [4.1 Morphisms][ada9]
     - [4.2 Objects][dbe7]
 - [5 Spec Files and Project Layout][9f9c]
-- [6 The Geb Model][56e3]
+- [6 The Geb Model][c1fb]
     - [6.1 Core Categories][cb9e]
         - [6.1.1 Subst Obj][c1b3]
         - [6.1.2 Subst Morph][d2d1]
     - [6.2 Accessors][cc51]
     - [6.3 Constructors][2ad4]
-    - [6.4 api][9ebb]
-    - [6.5 Examples][5577]
+    - [6.4 API][6228]
+        - [6.4.1 Translation Functions][0caf]
+    - [6.5 Examples][a17b]
 - [7 Polynomial Specification][f5ac]
     - [7.1 Polynomial Types][bd81]
     - [7.2 Polynomial Constructors][b76d]
@@ -183,16 +184,17 @@ structures of the [Polynomial Specification][f5ac], this is then rexported
 in `geb.poly`, giving the module `geb.poly` a convenient interface for
 all functions that operate on `geb.poly`.
 
-<a id="x-28GEB-2ESPEC-3A-40GEB-20MGL-PAX-3ASECTION-29"></a>
+<a id="x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29"></a>
 ## 6 The Geb Model
 
-###### \[in package GEB.SPEC\]
+###### \[in package GEB\]
 Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
 ### 6.1 Core Categories
 
+###### \[in package GEB.SPEC\]
 The underlying category of GEB. With [Subst Obj][c1b3] covering the
 shapes and forms ([Objects][dbe7]) of data while [Subst Morph][d2d1]
 deals with concrete [Morphisms][ada9] within the category
@@ -471,6 +473,7 @@ likely to be used. They may even augment existing classes.
 <a id="x-28GEB-2ESPEC-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
 ### 6.3 Constructors
 
+###### \[in package GEB.SPEC\]
 The API for creating GEB terms. All the functions and variables
 here relate to instantiating a term
 
@@ -521,8 +524,8 @@ More Ergonomic API variants for [`*SO0*`][e982] and [`*SO1*`][b960]
 <a id="x-28GEB-2ESPEC-3AMAKE-FUNCTOR-20FUNCTION-29"></a>
 - [function] **MAKE-FUNCTOR** *&KEY OBJ FUNC*
 
-<a id="x-28GEB-2ESPEC-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
-### 6.4 api
+<a id="x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
+### 6.4 API
 
 Various functions that make working with GEB easier
 
@@ -536,19 +539,38 @@ Various functions that make working with GEB easier
 
     converts the given type to a list format
 
-<a id="x-28GEB-2ESPEC-3AMLIST-20FUNCTION-29"></a>
+<a id="x-28GEB-3AMLIST-20FUNCTION-29"></a>
 - [function] **MLIST** *V1 &REST VALUES*
 
-<a id="x-28GEB-2ESPEC-3ACOMMUTES-20FUNCTION-29"></a>
+<a id="x-28GEB-3ACOMMUTES-20FUNCTION-29"></a>
 - [function] **COMMUTES** *X Y*
 
-<a id="x-28GEB-2ESPEC-3A-21--3E-20FUNCTION-29"></a>
+<a id="x-28GEB-3A-21--3E-20FUNCTION-29"></a>
 - [function] **!-\>** *A B*
 
-<a id="x-28GEB-2ESPEC-3ASO-EVAL-20FUNCTION-29"></a>
+<a id="x-28GEB-3ASO-EVAL-20FUNCTION-29"></a>
 - [function] **SO-EVAL** *X Y*
 
-<a id="x-28GEB-2ESPEC-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
+<a id="x-28GEB-3ASO-CARD-ALG-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **SO-CARD-ALG** *OBJ*
+
+    Gets the cardinality of the given object
+
+<a id="x-28GEB-3ASO-CARD-ALG-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
+- [method] **SO-CARD-ALG** *(OBJ \<SUBSTOBJ\>)*
+
+<a id="x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29"></a>
+#### 6.4.1 Translation Functions
+
+These cover various conversions from [Subst Morph][d2d1] and [Subst Obj][c1b3]
+into other categorical data structures.
+
+<a id="x-28GEB-3ATO-POLY-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **TO-POLY** *MORPHISM*
+
+    Turns a [Subst Morph][d2d1] into a [`POLY:POLY`][8bf3]
+
+<a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
 ### 6.5 Examples
 
 PLACEHOLDER: TO SHOW OTHERS HOW `EXAMPLE`s WORK
@@ -662,7 +684,7 @@ Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors]
 <a id="x-28GEB-2EPOLY-2ESPEC-3AIF-ZERO-20FUNCTION-29"></a>
 - [function] **IF-ZERO** *PRED THEN ELSE*
 
-    checks if [`PREDICATE`][8da6] is zero then take then [`THEN`][bfa9] branch otherwise the [`ELSE`][365a] branch
+    checks if [`PREDICATE`][8da6] is zero then take the [`THEN`][bfa9] branch otherwise the [`ELSE`][365a] branch
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3AIF-LT-20FUNCTION-29"></a>
 - [function] **IF-LT** *MCAR MCADR THEN ELSE*
@@ -916,6 +938,7 @@ features and how to better lay out future tests
 
 
   [0ae3]: #x-28GEB-2EPOLY-2ESPEC-3A-2A-20TYPE-29 "GEB.POLY.SPEC:* TYPE"
+  [0caf]: #x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29 "Translation Functions"
   [1791]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDDR FUNCTION"
   [2570]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CDR FUNCTION"
   [29b7]: #x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29 "Geb's Agda Code"
@@ -931,11 +954,10 @@ features and how to better lay out future tests
   [4850]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD TYPE"
   [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
   [4ffa]: #x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29 "Geb Utilities"
-  [5577]: #x-28GEB-2ESPEC-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29 "Examples"
-  [56e3]: #x-28GEB-2ESPEC-3A-40GEB-20MGL-PAX-3ASECTION-29 "The Geb Model"
   [57dc]: #x-28GEB-2ESPEC-3ASUBSTMORPH-20TYPE-29 "GEB.SPEC:SUBSTMORPH TYPE"
   [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
+  [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
   [74ab]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADR FUNCTION"
   [7e58]: http://www.lispworks.com/documentation/HyperSpec/Body/t_class.htm "CLASS CLASS"
@@ -951,8 +973,8 @@ features and how to better lay out future tests
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"
   [9bcb]: #x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29 "Testing"
-  [9ebb]: #x-28GEB-2ESPEC-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "api"
   [9f9c]: #x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29 "Spec Files and Project Layout"
+  [a17b]: #x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29 "Examples"
   [a7d5]: #x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29 "loading"
   [a802]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT TYPE"
   [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
@@ -965,6 +987,7 @@ features and how to better lay out future tests
   [c111]: #x-28GEB-2EMIXINS-3AOBJ-EQUALP-20GENERIC-FUNCTION-29 "GEB.MIXINS:OBJ-EQUALP GENERIC-FUNCTION"
   [c144]: #x-28GEB-2EPOLY-2ESPEC-3A-2B-20TYPE-29 "GEB.POLY.SPEC:+ TYPE"
   [c1b3]: #x-28GEB-2ESPEC-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29 "Subst Obj"
+  [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "The Geb Model"
   [c2e9]: #x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29 "Categorical Model"
   [c2f9]: #x-28GEB-2EPOLY-2ESPEC-3A-2F-20TYPE-29 "GEB.POLY.SPEC:/ TYPE"
   [c721]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP FUNCTION"

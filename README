@@ -141,12 +141,13 @@ all functions that operate on `geb.poly`.
 
 ## The Geb Model
 
-###### \[in package GEB.SPEC\]
+###### \[in package GEB\]
 Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 
 ### Core Categories
 
+###### \[in package GEB.SPEC\]
 The underlying category of GEB. With @GEB-SUBSTMU covering the
 shapes and forms (GEB-DOCS/DOCS:@OBJECTS) of data while @GEB-SUBSTMORPH
 deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category
@@ -366,6 +367,7 @@ likely to be used. They may even augment existing classes.
 
 ### Constructors
 
+###### \[in package GEB.SPEC\]
 The API for creating GEB terms. All the functions and variables
 here relate to instantiating a term
 
@@ -405,7 +407,7 @@ More Ergonomic API variants for *SO0* and *SO1*
 
 - [function] MAKE-FUNCTOR &KEY OBJ FUNC
 
-### api
+### API
 
 Various functions that make working with GEB easier
 
@@ -424,6 +426,21 @@ Various functions that make working with GEB easier
 - [function] !-> A B
 
 - [function] SO-EVAL X Y
+
+- [generic-function] SO-CARD-ALG OBJ
+
+    Gets the cardinality of the given object
+
+- [method] SO-CARD-ALG (OBJ \<SUBSTOBJ\>)
+
+#### Translation Functions
+
+These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
+into other categorical data structures.
+
+- [generic-function] TO-POLY MORPHISM
+
+    Turns a @GEB-SUBSTMORPH into a POLY:POLY
 
 ### Examples
 
@@ -516,7 +533,7 @@ Every accessor for each of the CLASS's found here are from @GEB-ACCESSORS
 
 - [function] IF-ZERO PRED THEN ELSE
 
-    checks if PREDICATE is zero then take then THEN branch otherwise the ELSE branch
+    checks if PREDICATE is zero then take the THEN branch otherwise the ELSE branch
 
 - [function] IF-LT MCAR MCADR THEN ELSE
 

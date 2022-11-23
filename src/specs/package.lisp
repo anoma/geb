@@ -32,7 +32,8 @@
   (:documentation "Gödel, Escher, Bach categorical model")
   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils)
   (:shadow :left :right :prod :case)
-  (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj))
+  (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj
+   :same-type-to-list :pair-to-list))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb Poly Package Documentation
@@ -107,15 +108,6 @@ constructors"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (in-package :geb.spec)
-
-(pax:defsection @geb (:title "The Geb Model")
-  "Everything here relates directly to the underlying machinery of
-   GEB, or to abstractions that help extend it."
-  (@geb-categories   pax:section)
-  (@geb-accessors    pax:section)
-  (@geb-constructors pax:section)
-  (@geb-api          pax:section)
-  (@geb-examples     pax:section))
 
 (pax:defsection @geb-categories (:title "Core Categories")
   "The underlying category of GEB. With @GEB-SUBSTMU covering the
@@ -208,15 +200,6 @@ deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
   (mcase pax:function)
   (make-functor pax:function))
 
-(pax:defsection @geb-api (:title "api")
-  "Various functions that make working with GEB easier"
-  (pair-to-list pax:function)
-  (same-type-to-list pax:function)
-  (mlist  pax:function)
-  (commutes pax:function)
-  (!-> pax:function)
-  (so-eval pax:function))
-
 (pax:defsection @geb-accessors (:title "Accessors")
   "These functions relate to grabbing slots out of the various
    @GEB-SUBSTMORPH and @GEB-SUBSTMU types. See those sections for
@@ -228,18 +211,3 @@ deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
   (obj    pax:generic-function)
   (name   pax:generic-function)
   (func   pax:generic-function))
-
-(pax:defsection @geb-examples (:title "Examples")
-  "PLACEHOLDER: TO SHOW OTHERS HOW EXAMPLES WORK"
-  "Let's see the transcript of a real session of someone working
-  with GEB:
-
-  ```cl-transcript
-  (values (princ :hello) (list 1 2))
-  .. HELLO
-  => :HELLO
-  => (1 2)
-
-  (+ 1 2 3 4)
-  => 10
-  ```")

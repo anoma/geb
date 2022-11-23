@@ -16,8 +16,7 @@
        alias
        comp init terminal case pair distribute
        inject-left inject-right
-       project-left project-right
-       functor))
+       project-left project-right))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subst Constructor Objects

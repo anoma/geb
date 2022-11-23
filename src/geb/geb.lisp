@@ -1,3 +1,5 @@
+;; General Functions about geb
+
 (in-package :geb)
 
 (-> mlist (substmorph &rest substmorph) pair)
@@ -21,6 +23,22 @@
                   (!-> (mcadr a) b)))
     (prod   (!-> (mcar a)
                  (!-> (mcadr a) b)))))
+
+(defgeneric so-card-alg (obj)
+  (:documentation "Gets the cardinality of the given object"))
+
+(defmethod so-card-alg ((obj <substobj>))
+  ;; we don't use the cata morphism so here we are. Doesn't give me
+  ;; much extra
+  (match-of geb:substobj obj
+    (geb:alias        (so-card-alg (obj obj)))
+    ((geb:prod a b)   (* (so-card-alg a)
+                         (so-card-alg b)))
+    ((geb:coprod a b) (+ (so-card-alg a)
+                         (so-card-alg b)))
+    (geb:so0          1)
+    (geb:so1          1)))
+
 
 (-> so-eval (substobj substobj) substmorph)
 (defun so-eval (x y)

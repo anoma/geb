@@ -46,7 +46,8 @@
     :depends-on (util specs)
     :components ((:file package)
                  (:file geb)
-                 (:file bool)))
+                 (:file bool)
+                 (:file trans)))
    (:module poly
     :serial t
     :description "Polynomial"
