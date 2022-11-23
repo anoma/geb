@@ -23,7 +23,10 @@ module HoTT where
 
     indℕ :  {l : Level} (C : ℕ → Type l) → (C (zero)) → ( (n : ℕ) → (C n → (C (succ n)))) → ( (n : ℕ) → C n)
     indℕ C p f zero = p 
-    indℕ C p f (succ n) = f n (indℕ C p f n) 
+    indℕ C p f (succ n) = f n (indℕ C p f n)
+
+    indℕ-Frob : {l1 l2 : Level} (C : ℕ → Type l1) (D : (n : ℕ) → C n → Type l2) (p : (n : ℕ) → C n) → (D zero (p zero)) →  ( (n : ℕ) → (D n (p n)  → D (succ n) ((p (succ n))))) → ((n : ℕ) → D n (p n))
+    indℕ-Frob C D p = indℕ λ x → D x (p x)
 
     data Bool : Type lzero where
       true : Bool
@@ -121,8 +124,6 @@ module HoTT where
     data Ty where 
       U : ∀ {Γ} → Ty Γ
       Π : ∀ {Γ} (A : Ty Γ) (B : Ty (Γ ,,, A)) → Ty Γ
-
-
 
     data _≡_ {l1} {A : Type l1} :  A → A → Type l1  where
       refl : ∀ (a : A) →  a ≡ a
@@ -880,6 +881,14 @@ module HoTT where
 
     ℕ-is-Set : is-Set ℕ
     ℕ-is-Set = Hedberg ℕ-decidable-eq
+
+-- Lemma for β-computation of case analysis
+
+    prop-decidable : {l1 : Level} {A : Type l1} → is-Prop A → is-Prop (decidable A)
+    prop-decidable P (inl x) (inl y) = fun-ap inl (P x y)
+    prop-decidable P (inl x) (inr f) = rec𝟘 _ (f x)
+    prop-decidable P (inr f) (inl x) = rec𝟘 _ (f x)
+    prop-decidable P (inr f) (inr g) = fun-ap inr (funext f g λ x → rec𝟘 _ (f x))
     
  
 -- Observational equality for ℕ addtional lemmas
@@ -896,12 +905,19 @@ module HoTT where
     succ-not-zero : (n : ℕ) → (¬ (zero ≡ (succ n)))
     succ-not-zero n x = transp constr-dep-ℕ (x ⁻¹) pt
 
+
     eval : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f : A → B) (a : A) → B
     eval f a = f a
 
+    dep-eval : {l1 l2 : Level} {A : Type l1} {B : A → Type l2} (f : (a : A) → B a) (a : A) → B a
+    dep-eval f a = f a
+
+    succ-not-dsucc : (n : ℕ) → (¬ (n ≡ succ n))
+    succ-not-dsucc zero = succ-not-zero zero
+    succ-not-dsucc (succ n) p {- succ n == succ succ n -} = rec𝟘 _ (eval ((succ-not-dsucc n ∘ ≡-Eqℕ n (succ n)) ∘ (Eqℕ-≡ (succ n) (succ (succ n)))) p)
     
 
---
+-- Univalence module. Note that it will not be used to prove the FinSet equivalence as our formulation of the type of leveled categories uses UIP
 
   module Univalence where
     open Basics public
@@ -918,6 +934,4 @@ module HoTT where
       Univalence-compfun : {l1 l2 : Level} {A B : Type l1} (f : A → B) (P : is-an-equiv f) (a : A) → (proj₁ ((refl-to-id {l1} {A} {B}) (ua (f ,, P))) a) ≡ f   a 
 
   
-
-
 
