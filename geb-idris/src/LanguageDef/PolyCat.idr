@@ -2146,22 +2146,40 @@ public export
 RefinedPolyEndoFunc : Refined -> Type
 RefinedPolyEndoFunc base = RefinedPolyFunc base base
 
+public export
+spfPos : {0 a, b : Type} -> SlicePolyFunc a b -> SliceObj b
+spfPos = fst
+
+public export
+spfDir : {0 a, b : Type} ->
+  (spf : SlicePolyFunc a b) -> SliceObj (Sigma (spfPos spf))
+spfDir spf = fst (snd spf)
+
+public export
+spfAssign : {0 a, b : Type} ->
+  (spf : SlicePolyFunc a b) -> Sigma (spfDir spf) -> a
+spfAssign spf = snd (snd spf)
+
+public export
+rpfPos : {0 a, b : Refined} -> RefinedPolyFunc a b -> RefinedSlice b
+rpfPos = fst
+
+public export
+rpfDir : {0 a, b : Refined} ->
+  (rpf : RefinedPolyFunc a b) ->
+  RefinedSlice (RefinedSigma {a=b} (rpfPos {a} {b} rpf))
+rpfDir rpf = fst (snd rpf)
+
+public export
+rpfAssign : {0 a, b : Refined} ->
+  (rpf : RefinedPolyFunc a b) ->
+  RefinedSigmaType
+    {a=(RefinedSigma {a=b} (rpfPos {a} {b} rpf))}
+    (rpfDir {a} {b} rpf) ->
+  RefinedType a
+rpfAssign rpf = snd (snd rpf)
+
 {-
-SlicePolyFunc : Type -> Type -> Type
-SlicePolyFunc a b = (p : PolyFunc ** SliceIdx p a b)
-
-public export
-spfFunc : {0 a, b : Type} -> SlicePolyFunc a b -> PolyFunc
-spfFunc = DPair.fst
-
-public export
-spfPos : {0 a, b : Type} -> SlicePolyFunc a b -> Type
-spfPos = pfPos . spfFunc
-
-public export
-spfDir : {0 a, b : Type} -> {spf : SlicePolyFunc a b} -> spfPos spf -> Type
-spfDir {spf} = pfDir {p=(spfFunc spf)}
-
 public export
 spfIdx : {0 a, b : Type} ->
   {spf : SlicePolyFunc a b} -> SliceIdx (spfFunc spf) a b
