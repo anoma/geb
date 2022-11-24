@@ -2111,10 +2111,42 @@ RefinedDepPolyEndoF {base} = RefinedDepPolyF {parambase=base} {posbase=base}
 --------------------------------------------------------------------
 
 public export
-SliceIdx : PolyFunc -> Type -> Type -> Type
-SliceIdx p a b = (i : pfPos p) -> (pfDir {p} i -> a) -> b
+SlicePolyFunc : Type -> Type -> Type
+SlicePolyFunc parambase posbase =
+  (posdep : SliceObj posbase **
+   dirdep : SliceObj (Sigma posdep) **
+   Sigma dirdep -> parambase)
 
 public export
+SlicePolyEndoFunc : Type -> Type
+SlicePolyEndoFunc base = SlicePolyFunc base base
+
+public export
+RefinedPolyFunc : Refined -> Refined -> Type
+RefinedPolyFunc parambase posbase =
+  (posdep : RefinedSlice posbase **
+   dirdep : RefinedSlice (RefinedSigma {a=posbase} posdep) **
+   RefinedSigmaType {a=(RefinedSigma {a=posbase} posdep)} dirdep ->
+    RefinedType parambase)
+
+public export
+RPFToSPF : {parambase, posbase : Refined} ->
+  RefinedPolyFunc parambase posbase ->
+  SlicePolyFunc (RefinedType parambase) (RefinedType posbase)
+RPFToSPF {parambase} {posbase} (posdep ** dirdep ** assign) =
+  (RefinedType . posdep **
+   BaseChangeF RefinedDPairToSigma (RefinedType . dirdep) **
+   assign .
+    (\x =>
+      Element0
+        (RefinedDPairToSigma (fst x) ** (fst0 (snd x)))
+        (Subset0.snd0 (snd x))))
+
+public export
+RefinedPolyEndoFunc : Refined -> Type
+RefinedPolyEndoFunc base = RefinedPolyFunc base base
+
+{-
 SlicePolyFunc : Type -> Type -> Type
 SlicePolyFunc a b = (p : PolyFunc ** SliceIdx p a b)
 
@@ -2154,11 +2186,13 @@ InterpSPFMap ((_ ** dir) ** _) m _ (i ** param ** (eqidx, da)) =
 public export
 SlicePolyEndoF : Type -> Type
 SlicePolyEndoF a = SlicePolyFunc a a
+-}
 
 -----------------------------------------------------------------------
 ---- Natural transformations on dependent polynomial endofunctors ----
 -----------------------------------------------------------------------
 
+{-
 public export
 SPNatTransOnIdx : {x, y : Type} -> (p, q : SlicePolyFunc x y) ->
   PolyNatTrans (spfFunc p) (spfFunc q) -> Type
@@ -2203,6 +2237,7 @@ InterpSPNT {x} {y} {p=((ppos ** pdir) ** pidx)} {q=((qpos ** qdir) ** qidx)}
      pparam . onDir pi **
      (\funext => trans (onIdx pi pparam) (extEq funext),
       \qd : qdir (onPos pi) => pda $ onDir pi qd))
+    -}
 
 -----------------------------------------------
 -----------------------------------------------
@@ -2214,14 +2249,17 @@ InterpSPNT {x} {y} {p=((ppos ** pdir) ** pidx)} {q=((qpos ** qdir) ** qidx)}
 ---- Algebras of dependent polynomial functors ----
 ---------------------------------------------------
 
+{-
 public export
 SPFAlg : {a : Type} -> SlicePolyEndoF a -> SliceObj a -> Type
 SPFAlg spf sa = SliceMorphism (InterpSPFunc spf sa) sa
+-}
 
 ---------------------------------------------------
 ---- Initial algebras of dependent polynomials ----
 ---------------------------------------------------
 
+{-
 public export
 spfMu : {0 a : Type} -> SlicePolyEndoF a -> Type
 spfMu = PolyFuncMu . spfFunc
@@ -2244,11 +2282,13 @@ InSPFM : {0 a : Type} -> {spf : SlicePolyEndoF a} ->
 InSPFM {a} {spf=spf@((pos ** dir) ** slidx)} i param sli =
   (InPFM i (\di => fst (sli di)) **
    (\funext => cong (slidx i) $ funExt $ \di => snd (sli di) funext))
+-}
 
 --------------------------------------------------------
 ---- Catamorphisms of dependent polynomial functors ----
 --------------------------------------------------------
 
+{-
 public export
 spfCataCurried : {0 a : Type} -> {spf : SlicePolyEndoF a} ->
   {0 sa : SliceObj a} -> {funext : FunExt} -> SPFAlg spf sa ->
@@ -2274,11 +2314,13 @@ spfCata : {0 a : Type} -> {spf : SlicePolyEndoF a} -> {0 sa : SliceObj a} ->
   {funext : FunExt} -> SPFAlg spf sa -> (ea : a) -> SPFMu spf ea -> sa ea
 spfCata {a} {spf=spf@((_ ** _) ** _)} {sa} {funext} alg ea (em ** slieq) =
   spfCataCurried {a} {spf} {funext} alg ea em slieq
+  -}
 
 --------------------------------------------
 ---- Dependent polynomial (free) monads ----
 --------------------------------------------
 
+{-
 public export
 SPFTranslatePos : {0 x, y : Type} -> SlicePolyFunc x y -> Type -> Type
 SPFTranslatePos = PFTranslatePos . spfFunc
@@ -2308,6 +2350,7 @@ public export
 SPFFreeMFromMu : {x : Type} -> SlicePolyEndoF x -> SliceObj x -> SliceObj x
 SPFFreeMFromMu spf sx =
   SPFMu {a=x} (SPFTranslate {x} {y=x} spf (Sigma sx) DPair.fst)
+  -}
 
 -------------------------------------------------
 -------------------------------------------------
@@ -2319,14 +2362,17 @@ SPFFreeMFromMu spf sx =
 ---- Coalgebras of dependent polynomial functors ----
 -----------------------------------------------------
 
+{-
 public export
 SPFCoalg : {a : Type} -> SlicePolyEndoF a -> SliceObj a -> Type
 SPFCoalg spf sa = SliceMorphism sa (InterpSPFunc spf sa)
+-}
 
 ------------------------------------------------------
 ---- Terminal coalgebras of dependent polynomials ----
 ------------------------------------------------------
 
+{-
 public export
 data SPFNu : {0 a : Type} -> SlicePolyEndoF a -> SliceObj a where
   InSPFN : {0 a : Type} -> {0 spf : SlicePolyEndoF a} ->
@@ -2334,11 +2380,13 @@ data SPFNu : {0 a : Type} -> SlicePolyEndoF a -> SliceObj a where
     (param : spfDir {spf} i -> a) ->
     ((di : spfDir {spf} i) -> Inf (SPFNu {a} spf (param di))) ->
     SPFNu {a} spf (spfIdx {spf} i param)
+    -}
 
 -------------------------------------------------------
 ---- Anamorphisms of dependent polynomial functors ----
 -------------------------------------------------------
 
+{-
 public export
 spfAna : {0 a : Type} -> {spf : SlicePolyEndoF a} -> {0 sa : SliceObj a} ->
   {funext : FunExt} -> SPFCoalg spf sa -> (ea : a) -> sa ea -> SPFNu spf ea
@@ -2348,11 +2396,13 @@ spfAna {a} {spf=((pos ** dir) ** idx)} {sa} {funext} coalg ea esa =
       Refl =>
         InSPFN {spf=((pos ** dir) ** idx)} i param $
           \di : dir i => spfAna {funext} coalg (param di) (da di)
+          -}
 
 ------------------------------------------------
 ---- Dependent polynomial (cofree) comonads ----
 ------------------------------------------------
 
+{-
 public export
 SPFScalePos : {0 x, y : Type} -> SlicePolyFunc x y -> Type -> Type
 SPFScalePos = PFScalePos . spfFunc
@@ -2380,7 +2430,8 @@ SPFScale spf a f = (SPFScaleFunc spf a ** SPFScaleIdx spf a f)
 public export
 SPFCofreeCMFromNu : {x : Type} -> SlicePolyEndoF x -> SliceObj x -> SliceObj x
 SPFCofreeCMFromNu spf sx =
-  SPFNu {a=x} (SPFScale {x} {y=x} spf (Sigma sx) (const id))
+  SPFNu {a=-x} (SPFScale {x} {y=x} spf (Sigma sx) (const id))
+  -}
 
 ------------------------------------------------
 ------------------------------------------------
@@ -2450,6 +2501,7 @@ public export
 FinTObj : Type
 FinTObj = PolyFuncMu FinTPolyF
 
+{-
 -- Compute the depth index of a type generated by `FinTPolyF`.
 public export
 FinTPolyIdx : SliceIdx FinTPolyF Nat Nat
@@ -2672,6 +2724,7 @@ FinDepthMorph {funext} (m ** (_, tm)) (n ** (_, tn)) =
 public export
 MuFinMorph : {funext : FunExt} -> MuFinTF -> MuFinTF -> Type
 MuFinMorph {funext} (m ** tm) (n ** tn) = FinNewMorph {funext} tm tn
+-}
 
 ------------------------
 ------------------------
