@@ -758,6 +758,10 @@ RefinedSlice : Refined -> Type
 RefinedSlice a = RefinedType a -> Refined
 
 public export
+RefinedSliceFunctor : Refined -> Refined -> Type
+RefinedSliceFunctor a b = SliceFunctor (RefinedType a) (RefinedType b)
+
+public export
 RefinedDPair : {a : Refined} -> RefinedSlice a -> Type
 RefinedDPair {a} p = DPair (RefinedType a) (RefinedType . p)
 

@@ -2090,7 +2090,7 @@ RefinedDepPolyF : {parambase, posbase : Refined} ->
   (assign :
     RefinedSigmaType {a=(RefinedSigma {a=posbase} posdep)} dirdep ->
     RefinedType parambase) ->
-  SliceFunctor (RefinedType parambase) (RefinedType posbase)
+  RefinedSliceFunctor parambase posbase
 RefinedDepPolyF {parambase} {posbase} posdep dirdep assign =
   RefinedDepCoprodF {a=posbase} posdep
   . RefinedDepProdF {a=(RefinedSigma {a=posbase} posdep)} dirdep
@@ -2103,7 +2103,7 @@ RefinedDepPolyEndoF : {base : Refined} ->
   (assign :
     RefinedSigmaType {a=(RefinedSigma {a=base} posdep)} dirdep ->
     RefinedType base) ->
-  SliceFunctor (RefinedType base) (RefinedType base)
+  RefinedSliceFunctor base base
 RefinedDepPolyEndoF {base} = RefinedDepPolyF {parambase=base} {posbase=base}
 
 --------------------------------------------------------------------
@@ -2179,32 +2179,24 @@ rpfAssign : {0 a, b : Refined} ->
   RefinedType a
 rpfAssign rpf = snd (snd rpf)
 
-{-
 public export
-spfIdx : {0 a, b : Type} ->
-  {spf : SlicePolyFunc a b} -> SliceIdx (spfFunc spf) a b
-spfIdx {spf} = DPair.snd spf
+InterpSPFunc : {a, b : Type} ->
+  SlicePolyFunc a b -> SliceFunctor a b
+InterpSPFunc spf = PredDepPolyF (spfPos spf) (spfDir spf) (spfAssign spf)
 
 public export
-InterpSPFunc : {a, b : Type} -> SlicePolyFunc a b -> SliceFunctor a b
-InterpSPFunc {a} {b} ((pos ** dir) ** idx) sa eb =
-  (i : pos **
-   param : dir i -> a **
-   (FunExt -> idx i param = eb,
-    (d : dir i) -> sa $ param d))
+InterpRPFunc : {a, b : Refined} ->
+  RefinedPolyFunc a b -> RefinedSliceFunctor a b
+InterpRPFunc rpf = RefinedDepPolyF (rpfPos rpf) (rpfDir rpf) (rpfAssign rpf)
 
 public export
-InterpSPFMap : {0 a, b : Type} -> (spf : SlicePolyFunc a b) ->
-  {0 sa, sa' : SliceObj a} ->
+InterpSPFMap : {a, b : Type} -> (spf : SlicePolyFunc a b) ->
+  {sa, sa' : SliceObj a} ->
   SliceMorphism sa sa' ->
   SliceMorphism (InterpSPFunc spf sa) (InterpSPFunc spf sa')
-InterpSPFMap ((_ ** dir) ** _) m _ (i ** param ** (eqidx, da)) =
-  (i ** param ** (eqidx, \d : dir i => m (param d) (da d)))
-
-public export
-SlicePolyEndoF : Type -> Type
-SlicePolyEndoF a = SlicePolyFunc a a
--}
+InterpSPFMap {a} {b} spf {sa} {sa'} =
+  PredDepPolyFMap
+    {parambase=a} {posbase=b} (spfPos spf) (spfDir spf) (spfAssign spf) sa sa'
 
 -----------------------------------------------------------------------
 ---- Natural transformations on dependent polynomial endofunctors ----
