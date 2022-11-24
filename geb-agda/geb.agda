@@ -2,7 +2,7 @@
  
 open import Agda.Primitive using (Level; lzero; lsuc; _⊔_; Setω)
 
-module geb-test where
+module geb where
 
   import HoTT
 
@@ -613,7 +613,9 @@ module geb-test where
   density-Geb-FinSet ((A , zero) ,, p) = Init ,, FinSet-skel-iso (((A , zero) ,, p))
   density-Geb-FinSet ((A , succ n) ,, p) = dep-eval {lsuc lzero} {lsuc lzero}
                                                (dep-eval {lsuc lzero} {lsuc lzero} (indℕ (λ k → (B : Type lzero) (q : (Fin (succ k) ≃ B)) →
-                                                                       Σ {_} {lzero} (ObjGEBCat) ( λ a → ((pr₁ {_} {lzero} {_} {_} (proj₁ {_} {_} {_} {λ t → (Fin (pr₂ t)) ≃ pr₁ t} ((B , succ k) ,, q ))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))))
+                                                                       Σ {_} {lzero} (ObjGEBCat)
+                                                                                ( λ a → ((pr₁ {_} {lzero} {_} {_} (proj₁ {_} {_} {_} {λ t → (Fin (pr₂ t)) ≃ pr₁ t}
+                                                                                                                         ((B , succ k) ,, q ))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))))
                                                           (λ B q → Term ,, (FinSet-skel-iso (((B , one) ,, q))))
                                                           (λ n' IHs B q → ((proj₁ {_} {_} {_} {λ a → ((pr₁ (proj₁ (Fin-as-obj-of-FinSet (succ n')))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))}
                                                                                   (IHs (Fin (succ n')) (refl-to-equiv (refl _)))) ⊕G Term) ,,
@@ -766,5 +768,109 @@ module geb-test where
                                        (prop-decidable (ℕ-is-Set (succ (succ (succ n))) (succ (succ (succ n)))) (ℕ-decidable-eq _ _) (inl (refl _)))
                                · (fun-ap (λ k → [ case-inl-eq inl , case-inl-neq inl ] k)
                                          (prop-decidable (FinMor-is-Set _ _ inl inl) (FinMor-decidable-eq _ _ _ _) (inl (refl inl))))
+
+-- Proofs that the Geb category is spanned by coproducts of TermMor
+
+  ⊕G-pres-iso : {a b c d : ObjGEBCat} (iso1 : a ≃G b) (iso2 : c ≃G d) → (a ⊕G c) ≃G (b ⊕G d)
+  ⊕G-pres-iso iso1 iso2 = [ (inlG ● (proj₁ (iso1))) , (inrG ● (proj₁ (iso2))) ]G ,,
+                                   ([ (inlG ● (proj₁ (proj₂ iso1))) , (inrG ● (proj₁ (proj₂ iso2))) ]G ,,
+                                       ((((comp-with-coprod-mor _ _ _) · inx-are-joint-epi _ _
+                                                                        ((pr₁ (CoProdMorLegAx _ _) ·
+                                                                        (((CompAssocAx _ _ _) ·
+                                                                        ((fun-ap (λ f → f ● proj₁ iso1) (pr₁ (CoProdMorLegAx _ _))) ·
+                                                                        (((CompAssocAx _ _ _) ⁻¹) ·
+                                                                        (fun-ap (λ f → inlG ● f) (pr₁ (proj₂ (proj₂ iso1)))
+                                                                        · pr₂ (IdMorAx _)))))
+                                                                        · ((pr₁ (CoProdMorLegAx _ _)) ⁻¹)))
+                                                                        ,
+                                                                        (pr₂ (CoProdMorLegAx _ _) ·
+                                                                        (CompAssocAx _ _ _ ·
+                                                                        ((fun-ap (λ f → f ● proj₁ iso2) (pr₂ (CoProdMorLegAx _ _)) ·
+                                                                        (((CompAssocAx _ _ _) ⁻¹) ·
+                                                                        (fun-ap (λ f → inrG ● f) (pr₁ (proj₂ (proj₂ (iso2))))
+                                                                        · pr₂ (IdMorAx _)))) ·
+                                                                        ((pr₂ (CoProdMorLegAx _ _)) ⁻¹))))))
+                                              · (IdMor-is-coprod-of-inj ⁻¹))
+                                      ,
+                                         (((comp-with-coprod-mor _ _ _) · inx-are-joint-epi _ _
+                                                                          (((pr₁ (CoProdMorLegAx _ _)) · (CompAssocAx _ _ _
+                                                                          · ((fun-ap (λ f → f ● proj₁ (proj₂ iso1)) (pr₁ (CoProdMorLegAx _ _))
+                                                                          · (((CompAssocAx _ _ _) ⁻¹)
+                                                                          · ((fun-ap (λ f → inlG ● f) (pr₂ (proj₂ (proj₂ iso1))))
+                                                                          · pr₂ (IdMorAx _))))
+                                                                          · ((pr₁ (CoProdMorLegAx _ _)) ⁻¹))))
+                                                                          ,
+                                                                          (((pr₂ (CoProdMorLegAx _ _))
+                                                                          · (CompAssocAx _ _ _
+                                                                          · ((fun-ap (λ f → f ● proj₁ (proj₂ iso2)) (pr₂ (CoProdMorLegAx _ _)))
+                                                                          · (((CompAssocAx _ _ _) ⁻¹)
+                                                                          · ((fun-ap (λ f → inrG ● f) (pr₂ (proj₂ (proj₂ (iso2)))))
+                                                                          · pr₂ (IdMorAx _))))))
+                                                                          · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹))))
+                                         · (IdMor-is-coprod-of-inj ⁻¹))))
+
+  ≃G-refl : {a : ObjGEBCat} → a ≃G a
+  ≃G-refl = (IdMor _) ,, IdMor-is-iso
+
+  ≃G-symm : {a b : ObjGEBCat} → (a ≃G b) → (b ≃G a)
+  ≃G-symm (f ,, (g ,, (p1 , p2))) = g ,, (f ,, (p2 , p1))
+
+  ⊕G-1comm : {a b : ObjGEBCat} → ((a ⊕G b) ≃G (b ⊕G a))
+  ⊕G-1comm = [ inrG , inlG ]G ,,
+               ([ inrG , inlG ]G ,,
+                  ((inx-are-joint-epi _ _
+                                         ((((CompAssocAx _ _ _) ⁻¹) · ((fun-ap (λ f → [ inrG , inlG ]G ● f) (pr₁ (CoProdMorLegAx _ _)))
+                                         · ((pr₂ (CoProdMorLegAx _ _)) · (pr₁ (IdMorAx _) ⁻¹))))
+                                         ,
+                                         (((CompAssocAx _ _ _) ⁻¹) · ((fun-ap (λ f → [ inrG , inlG ]G ● f) (pr₂ (CoProdMorLegAx _ _)))
+                                         · ((pr₁ (CoProdMorLegAx _ _)) · ((pr₁ (IdMorAx _)) ⁻¹))))))
+                  ,
+                  inx-are-joint-epi _ _
+                                        ((((CompAssocAx _ _ _) ⁻¹) · ((fun-ap (λ f → [ inrG , inlG ]G ● f) (pr₁ (CoProdMorLegAx _ _)))
+                                        · ((pr₂ (CoProdMorLegAx _ _)) · ((pr₁ (IdMorAx _)) ⁻¹))))
+                                        ,
+                                        (((CompAssocAx _ _ _) ⁻¹) · ((fun-ap (λ f → [ inrG , inlG ]G ● f) (pr₂ (CoProdMorLegAx _ _)))
+                                        · ((pr₁ (CoProdMorLegAx _ _)) · ((pr₁ (IdMorAx _)) ⁻¹)))))))
+
+  ⊕G-1assoc : {a b c : ObjGEBCat} → (((a ⊕G b) ⊕G c) ≃G (a ⊕G (b ⊕G c)))
+  ⊕G-1assoc = [ [ inlG , inrG ● inlG ]G , (inrG ● inrG) ]G ,,
+                 ([ (inlG ● inlG) , [ (inlG ● inrG) , inrG ]G ]G ,,
+                     (((comp-with-coprod-mor _ _ _) · inx-are-joint-epi _ _
+                                                                       (((pr₁ (CoProdMorLegAx _ _)) · ((comp-with-coprod-mor _ _ _)
+                                                                       · inx-are-joint-epi _ _
+                                                                                           (((pr₁ (CoProdMorLegAx _ _)) · (pr₁ (CoProdMorLegAx _ _)
+                                                                                           · transp (λ k → (inlG ● inlG) ≡ (k ● inlG))
+                                                                                                    ((pr₁ (IdMorAx _)) ⁻¹) (refl _)))
+                                                                                           ,
+                                                                                           (pr₂ (CoProdMorLegAx _ _) · (CompAssocAx _ _ _
+                                                                                           · ((fun-ap (λ f → f ● inlG) (pr₂ (CoProdMorLegAx _ _)))
+                                                                                           · ((pr₁ (CoProdMorLegAx _ _))
+                                                                                           · transp (λ k → (inlG ● inrG) ≡ (k ● inrG)) ((pr₁ (IdMorAx _)) ⁻¹) (refl _))))))))
+                                                                       ,
+                                                                       ((pr₂ (CoProdMorLegAx _ _)) · ((CompAssocAx _ _ _) · ((fun-ap (λ f → f ● inrG) (pr₂ (CoProdMorLegAx _ _)))
+                                                                       · ((pr₂ (CoProdMorLegAx _ _)) · ((pr₁ (IdMorAx _)) ⁻¹)))))))
+                     ,
+                     (comp-with-coprod-mor _ _ _ · inx-are-joint-epi _ _
+                                                                    ((pr₁ (CoProdMorLegAx _ _) · ((CompAssocAx _ _ _) · ((fun-ap (λ f → f ● inlG) (pr₁ (CoProdMorLegAx _ _)))
+                                                                    · (pr₁ (CoProdMorLegAx _ _) · ((pr₁ (IdMorAx _)) ⁻¹)))))
+                                                                    ,
+                                                                    inx-are-joint-epi _ _
+                                                                                      (((fun-ap (λ f → f ● inlG) (pr₂ (CoProdMorLegAx _ _))) · (fun-ap (λ f → f ● inlG) (comp-with-coprod-mor _ _ _)
+                                                                                      · ((pr₁ (CoProdMorLegAx _ _)) · ((CompAssocAx _ _ _) · ((fun-ap (λ f → f ● inrG) (pr₁ (CoProdMorLegAx _ _)))
+                                                                                      · ((pr₂ (CoProdMorLegAx _ _)) · (transp (λ k → (inrG ● inlG) ≡ ((k) ● inlG)) ((pr₁ (IdMorAx _)) ⁻¹) (refl _))))))))
+                                                                                      ,
+                                                                                      ((fun-ap (λ f → f ● inrG) (pr₂ (CoProdMorLegAx _ _))) · (fun-ap (λ f → f ● inrG) (comp-with-coprod-mor _ _ _)
+                                                                                      · ((pr₂ (CoProdMorLegAx _ _)) · ((pr₂ (CoProdMorLegAx _ _)) · (transp (λ k → (inrG ● inrG) ≡ (k ● inrG)) ((pr₁ (IdMorAx _)) ⁻¹) (refl _)))))))))))
+ 
+  Gebskel-⊕G-lemma : {a b : ObjGEBCat} (n m : ℕ) (iso1 : a ≃G ⨁G Term n) (iso2 : b ≃G ⨁G Term m) → ( (a ⊕G b) ≃G (⨁G Term (n +ℕ m)))
+  Gebskel-⊕G-lemma zero m  iso1 iso2 = ≃G-trans (⊕G-pres-iso iso1 iso2) (Init-coprod-iso _)
+  Gebskel-⊕G-lemma (succ zero) zero iso1 iso2 = ≃G-trans (⊕G-pres-iso iso1 iso2)
+                                                          (≃G-trans ⊕G-1comm (Init-coprod-iso Term))
+  Gebskel-⊕G-lemma (succ zero) (succ m) iso1 iso2 = ≃G-trans (⊕G-pres-iso iso1 iso2) ⊕G-1comm
+  Gebskel-⊕G-lemma (succ (succ n)) m iso1 iso2 = ≃G-trans (⊕G-pres-iso iso1 iso2)
+                                                           (≃G-trans ⊕G-1assoc
+                                                                      (≃G-trans (⊕G-pres-iso ≃G-refl ⊕G-1comm)
+                                                                                 (≃G-trans (≃G-symm ⊕G-1assoc) (⊕G-pres-iso (Gebskel-⊕G-lemma (succ n) m ≃G-refl ≃G-refl)
+                                                                                                                               ≃G-refl))))
                               
 
