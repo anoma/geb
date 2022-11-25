@@ -66,36 +66,88 @@ conjectures about GEB")
    [category theory](https://plato.stanford.edu/entries/category-theory/),
    originally developped by mathematicians,
    but very much alive in (theoretical) computer science.
-   One way to get into category theory 
-   starts from a simple well-known example:
+   Let us look at a simple well-known example:
    the category of sets and functions. 
    The lattter _together_ form **a** category—based on 
    function composition;
    lets call it _sets-'n'-functions_. 
+   It is the bread and butter example:
+   sets $A,B,C,…$ play the role of _objects_, 
+   functions are _arrows_ between objects $A—f→B$, 
+   and the latter _compose_ as functions do,
+   such that every path of fitting functions
+   $$A—f→B—g→C—h→D$$
+   composes to a correponding composite function 
+   $$A—f;g;h→D$$ (or $h∘g∘f$ if you prefer)
+   and we enjoy the luxury of not having to worry about 
+   the order in which we compose. 
+   This example,
+   even if you want to restrict to finite sets, 
+   will permeate through GEB.
+   <!--
+   although the “weird” habit of avoiding
+   talk about elements of sets as much as possible.
+   -->
    
-   One of the first lessons learned is that one can 
-   characterise 
+   One of the first lessons (in any introduction to category theory)
+   about _sets-'n'-functions_ is in fact the characterization of
    [product](https://en.wikipedia.org/wiki/Product_(category_theory)#Product_of_two_objects)s 
    and [disjoint sum](https://en.wikipedia.org/wiki/Coproduct#Definition)s of sets
-   using universal properties of functions (in _sets-'n'-functions_),
-   **without talking about elements of sets _at all_**.
-   One of the first actual surprises comes along if 
-   we replace functions by partial functions,
-   relations, or even multi-relations.  
-   _We obtain very different categories!_
+   in terms of functions alone,
+   i.e., **without _ever_ talking about elements of sets**, 
+   known as _universal properties_ of products and co-products. 
+   One of the first surprises follows suit 
+   when we replace functions by partial functions, 
+   relations, or even multi-relations. 
+   _We obtain **very** different categories!_
    For example, 
    in the category [_sets-'n'-relations_](https://en.wikipedia.org/wiki/Category_of_relations), 
-   the disjoint union of sets features as both a product and a co-product. 
+   the disjoint union of sets features as both a product and a co-product,
+   in terms of their universal properties. 
+
+   _Do not fear!_
+   The usual definition of products in terms of elements of sets are
+   absolutely compatible with the
+   universal properties in  _sets-'n'-functions_. 
+   However we gain the possibililty 
+   to compare the “effect” of the  _universal properties of products_ in 
+   _sets-'n'-functions_ with its “effect” in _sets-'n'-relations_,
+   because the _universal properties_ apply to **every** category.
    
    For the hasty reader, 
-   we mainly are interested in the following structure 
-   of the category of _sets_: 
+   for the purposes of GEB, 
+   a solid understanding of _sets-'n'-functions_ will already be quite useful:
+   many phenomena can be understood  
+   in analogy to what happens in _sets-'n'-functions_. 
+   In particular,
+   we shall rely on the following structure of _sets-'n'-functions_: 
 
-   ‼
+   1. The formation of binary products $A × B$ of sets $A,B$, and the empty product $1$.  
+
+   2. The formation of “function spaces” $B^A$ of sets $A,B$, called _exponentials_, 
+      i.e., collections of functions between pairs of sets. 
+       
+   3. The so-called [_currying_](https://en.wikipedia.org/wiki/Currying)
+       of functions, 
+      $C^{(B^A)} ≃ C^{(A × B)}$, 
+      such that providing several arguments to a function can done
+      either simultaneously, or in sequence. 
+
+   4. The formation of sums (a.k.a.  co-products) $A + B$ of sets $A,B$, 
+      corresponding to forming disjoint unions of sets; 
+      the empty sum is $0$. 
+
+   Seing product sums and exponentials—ignoring currying for the momement—it 
+   makes sense to ask for a counterpart of polynomial expressions $4x^3 +x^2 - 3x^0$. 
+   We are not making this up. 
+   A [whole book](https://topos.site/poly-book.pdf) has been written essentially on this very topic.
+   If you are ready,
+   buckle up and read @POLY-SETS about 
+   or review the details about @OBJECTS and @MORPHISMS.
    "
   (@morphisms pax:section)
   (@objects pax:section)
-  (@footnotes-model pax:section)
+  (@poly-sets pax:section)
 )
 
 ;; please insert more text here about category theory
@@ -103,15 +155,7 @@ conjectures about GEB")
 
 (pax:defsection @objects (:title "Objects"))
 
-(pax:defsection @footnotes-model (:title " ")
-  "
-   ---
-
-
-  "
-)
-   
-
+(pax:defsection @poly-sets (:title "Poly in Sets"))
 
 (pax:defsection @installation (:title "installation")
   "This project uses [common lisp](https://common-lisp.net/), so a few
