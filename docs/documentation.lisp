@@ -62,17 +62,56 @@ while @AGDA serves as the mathematical formalism proving various
 conjectures about GEB")
 
 (pax:defsection @model (:title "Categorical Model")
-  "GEB is organizing programming language concepts
-   using [category theory](https://plato.stanford.edu/entries/category-theory/),
+  "GEB is organizing programming language concepts (and entities!) using
+   [category theory](https://plato.stanford.edu/entries/category-theory/),
    originally developped by mathematicians,
-   but very much alive in (theoretical) computer science."
+   but very much alive in (theoretical) computer science.
+   One way to get into category theory 
+   starts from a simple well-known example:
+   the category of sets and functions. 
+   The lattter _together_ form **a** category—based on 
+   function composition;
+   lets call it _sets-'n'-functions_. 
+   
+   One of the first lessons learned is that one can 
+   characterise 
+   [product](https://en.wikipedia.org/wiki/Product_(category_theory)#Product_of_two_objects)s 
+   and [disjoint sum](https://en.wikipedia.org/wiki/Coproduct#Definition)s of sets
+   using universal properties of functions (in _sets-'n'-functions_),
+   **without talking about elements of sets _at all_**.
+   One of the first actual surprises comes along if 
+   we replace functions by partial functions,
+   relations, or even multi-relations.  
+   _We obtain very different categories!_
+   For example, 
+   in the category [_sets-'n'-relations_](https://en.wikipedia.org/wiki/Category_of_relations), 
+   the disjoint union of sets features as both a product and a co-product. 
+   
+   For the hasty reader, 
+   we mainly are interested in the following structure 
+   of the category of _sets_: 
+
+   ‼
+   "
   (@morphisms pax:section)
-  (@objects pax:section))
+  (@objects pax:section)
+  (@footnotes-model pax:section)
+)
 
 ;; please insert more text here about category theory
 (pax:defsection @morphisms (:title "Morphisms"))
 
 (pax:defsection @objects (:title "Objects"))
+
+(pax:defsection @footnotes-model (:title " ")
+  "
+   ---
+
+
+  "
+)
+   
+
 
 (pax:defsection @installation (:title "installation")
   "This project uses [common lisp](https://common-lisp.net/), so a few
