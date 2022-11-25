@@ -2,7 +2,7 @@
  
 open import Agda.Primitive using (Level; lzero; lsuc; _⊔_; Setω)
 
-module geb where
+module geb-test where
 
   import HoTT
 
@@ -872,5 +872,126 @@ module geb where
                                                                       (≃G-trans (⊕G-pres-iso ≃G-refl ⊕G-1comm)
                                                                                  (≃G-trans (≃G-symm ⊕G-1assoc) (⊕G-pres-iso (Gebskel-⊕G-lemma (succ n) m ≃G-refl ≃G-refl)
                                                                                                                                ≃G-refl))))
+
+  ⊗G-mor' : {x y z : ObjGEBCat} (f : z ↦ (x ⊗G y)) → Σ[ fg ∶ ((z ↦ x) × (z ↦ y))] (uncurry (<_,_>G) fg ≡ f)
+  ⊗G-mor' f = (proj₁ (proj₁ (ProdMorAx f))) ,, (proj₂ (proj₁ (ProdMorAx f)))
+
+-- Add more natural axioms for universal properties
+
+  postulate
+    ProdUniAx : {x y z : ObjGEBCat} (f1 : z ↦ x) (f2 : z ↦ y) (g : z ↦ (x ⊗G y)) → ( f1 ≡ p1G ● g) → ( f2 ≡ p2G ● g) → < f1 , f2 >G ≡ g
+    CoProdUniAx : {x y z : ObjGEBCat} (f1 : x ↦ z) (f2 : y ↦ z) (g : (x ⊕G y) ↦ z) → (f1 ≡ g ● inlG) → (f2 ≡ g ● inrG) → [ f1 , f2 ]G ≡ g
+
+  ⊗G-mor-fun :  {x y z : ObjGEBCat} → (g : z ↦ (x ⊗G y)) → (z ↦ (x ⊗G y))
+  ⊗G-mor-fun g = < (p1G ● g) , (p2G ● g) >G
+
+  ⊗G-mor-eq : {x y z : ObjGEBCat} → (g : z ↦ (x ⊗G y)) → (⊗G-mor-fun g ≡ g)
+  ⊗G-mor-eq g = ProdUniAx _ _ _ (refl _) (refl _)
+
+  pr-joint-mono : {x y z : ObjGEBCat} ( f g : z ↦ (x ⊗G y)) → ((p1G ● f) ≡ (p1G ● g)) × ((p2G ● f) ≡ (p2G ● g)) → (f ≡ g)
+  pr-joint-mono f g (p1 , p2) = ((⊗G-mor-eq f) ⁻¹) · ProdUniAx _ _ _ p1 p2
+
+  prod-comp : {x y z z' : ObjGEBCat} (f : z ↦ z') (f1 : z' ↦ x) (f2 : z' ↦ y)  → < f1 , f2 >G ● f ≡ < f1 ● f , f2 ● f >G
+  prod-comp f f1 f2 = pr-joint-mono _ _
+                                    (((CompAssocAx _ _ _) · ((fun-ap (λ k → k ● f) (pr₁ (ProdMorLegAx _ _))) · ((pr₁ (ProdMorLegAx _ _)) ⁻¹)))
+                                    ,
+                                    ((CompAssocAx _ _ _) · ((fun-ap (λ k → k ● f) (pr₂ (ProdMorLegAx _ _))) · ((pr₂ (ProdMorLegAx _ _)) ⁻¹))))
+
+  ⊗G-pres-iso : {a b c d : ObjGEBCat} (iso1 : a ≃G b) (iso2 : c ≃G d) → (a ⊗G c) ≃G (b ⊗G d)
+  ⊗G-pres-iso iso1 iso2 = < proj₁ (iso1) ● p1G , proj₁ (iso2) ● p2G >G ,,
+                              (< proj₁ (proj₂ (iso1 )) ● p1G  , (proj₁ (proj₂ (iso2))) ● p2G >G
+                                    ,,   (((prod-comp _ _ _) · pr-joint-mono _ _
+                                                                            (((pr₁ (ProdMorLegAx _ _)) · (((CompAssocAx _ _ _) ⁻¹)
+                                                                               · ((fun-ap (λ k → proj₁ (proj₂ iso1) ● k) (pr₁ (ProdMorLegAx _ _)))
+                                                                               · ((CompAssocAx _ _ _) · (fun-ap (λ k → k ● p1G) (pr₁ (proj₂ (proj₂ iso1)))
+                                                                               · ((pr₁ (IdMorAx _)) · ((pr₂ (IdMorAx _)) ⁻¹)))))))
+                                                                            , ((pr₂ (ProdMorLegAx _ _)) · (((CompAssocAx _ _ _) ⁻¹)
+                                                                                · ((fun-ap (λ k → proj₁ (proj₂ iso2) ● k) (pr₂ (ProdMorLegAx _ _)))
+                                                                                · ((CompAssocAx _ _ _) · ((fun-ap (λ k → k ● p2G) (pr₁ (proj₂ (proj₂ iso2))))
+                                                                                · ((pr₁ (IdMorAx _)) · ((pr₂ (IdMorAx _)) ⁻¹)))))))))
+                                        ,
+                                         ((prod-comp _ _ _) · (pr-joint-mono _ _
+                                                                              ((((pr₁ (ProdMorLegAx _ _))) · ((((CompAssocAx _ _ _) ⁻¹))
+                                                                                · (fun-ap (λ k → proj₁ iso1 ● k) ((pr₁ (ProdMorLegAx _ _)))
+                                                                                · (((CompAssocAx _ _ _) · (fun-ap (λ k → k ● p1G) (pr₂ (proj₂ (proj₂ iso1)))
+                                                                               · ((pr₁ (IdMorAx _)) · ((pr₂ (IdMorAx _)) ⁻¹))))))))
+                                                                            ,
+                                                                              (((pr₂ (ProdMorLegAx _ _)) · (((CompAssocAx _ _ _) ⁻¹)
+                                                                                · ((fun-ap (λ k → proj₁ iso2 ● k) (pr₂ (ProdMorLegAx _ _)))
+                                                                                · ((CompAssocAx _ _ _) · ((fun-ap (λ k → k ● p2G) (pr₂ (proj₂ (proj₂ iso2))))
+                                                                                · ((pr₁ (IdMorAx _)) · ((pr₂ (IdMorAx _)) ⁻¹)))))))))))))
+
+  ⊗G-1comm : {a b : ObjGEBCat} → ((a ⊗G b) ≃G (b ⊗G a))
+  ⊗G-1comm = < p2G , p1G >G
+                    ,, (< p2G , p1G >G
+                       ,,   (((prod-comp _ _ _) · pr-joint-mono _ _
+                                                                (((pr₁ (ProdMorLegAx _ _)) · ((pr₂ (ProdMorLegAx _ _)) · ((pr₂ (IdMorAx _)) ⁻¹)))
+                                                               ,
+                                                                ((pr₂ (ProdMorLegAx _ _)) · ((pr₁ (ProdMorLegAx _ _)) · ((pr₂ (IdMorAx _)) ⁻¹)))))
+                          , ((prod-comp _ _ _) · (pr-joint-mono _ _
+                                                                ((((pr₁ (ProdMorLegAx _ _)) · ((pr₂ (ProdMorLegAx _ _)) · ((pr₂ (IdMorAx _)) ⁻¹)))
+                                                               ,
+                                                                ((pr₂ (ProdMorLegAx _ _)) · ((pr₁ (ProdMorLegAx _ _)) · ((pr₂ (IdMorAx _)) ⁻¹)))))))))
+
+
+-- We formalize the proofs of the strictness of the initial objects in distributive categories
+
+  distrib-c : {a b c : ObjGEBCat} → (((a ⊗G b) ⊕G (a ⊗G c)) ↦ (a ⊗G ((b ⊕G c))))
+  distrib-c = [ < p1G , (inlG ● p2G) >G , < p1G , (inrG ● p2G) >G ]G
+
+  postulate
+    distrib-c-iso : {a b c : ObjGEBCat} → proj₁ (DistribAx {a} {b} {c}) ≡ distrib-c
+
+  inv-iso : {a b : ObjGEBCat} (f : a ↦ b) (P : is-an-intern-iso f) → (is-an-intern-iso (proj₁ P))
+  inv-iso f (g ,, (p1 , p2)) = f ,, (p2 , p1)
+
+  distrib-c-is-iso : {a b c : ObjGEBCat} → is-an-intern-iso (distrib-c {a} {b} {c})
+  distrib-c-is-iso = DistribMor ,, ((transp (λ k → (DistribMor ● k) ≡ IdMor _) distrib-c-iso (pr₂ (proj₂ DistribAx)))
+                                   , transp (λ k → (k ● DistribMor) ≡ IdMor _) distrib-c-iso (pr₁ (proj₂ DistribAx)))
+ 
+  Init-coprod : (Init ⊕G Init) ≃G Init
+  Init-coprod = Init-coprod-iso Init
+
+  iso-mono : {a b c : ObjGEBCat} (f g : a ↦ b ) (m : b ↦ c) → (is-an-intern-iso m) → (m ● f ≡ m ● g) → (f ≡ g)
+  iso-mono f g m (k ,, (p1 , p2)) q = (((pr₁ (IdMorAx _))) ⁻¹) · ((fun-ap (λ x → x ● f) (p1 ⁻¹)) · (((CompAssocAx _ _ _) ⁻¹)
+                                      · ((fun-ap (λ x → k ● x) q) · ((CompAssocAx _ _ _) · ((fun-ap (λ x → x ● g) p1)
+                                      · (pr₁ (IdMorAx _)))))))
+
+  InitCoprod-inx-eq : inlG {Init} {Init} ≡ inrG {Init} {Init}
+  InitCoprod-inx-eq = iso-mono inlG inrG [ (InitMor _) , (IdMor _) ]G (proj₂ (Init-coprod-iso Init))
+                               ((InitMorAx _) · ((InitMorAx _) ⁻¹))
+
+  Init-strict-lemma : {a : ObjGEBCat} → inlG {a ⊗G Init} {a ⊗G Init} ≡ inrG
+  Init-strict-lemma = iso-mono inlG inrG distrib-c distrib-c-is-iso
+                                                                   ((pr₁ (CoProdMorLegAx _ _)) · (fun-ap (λ k → < p1G , k ● p2G >G) InitCoprod-inx-eq
+                                                                   · ((pr₂ (CoProdMorLegAx _ _)) ⁻¹)))
+
+  Init-⊗G-uniprop : {a b : ObjGEBCat} → is-Contr ((a ⊗G Init) ↦ b)
+  Init-⊗G-uniprop {a} {b} = (InitMor _ ● p2G)
+                                      ,, (λ f → ((pr₂ (CoProdMorLegAx f (InitMor _ ● p2G)) ⁻¹) · fun-ap (λ k → [ f , InitMor b ● p2G ]G ● k) (Init-strict-lemma ⁻¹))
+                                         · pr₁ (CoProdMorLegAx {a ⊗G Init} {a ⊗G Init} (f) (InitMor _ ● p2G)))
+
+  iso-epi :  {a b c : ObjGEBCat} (f g : a ↦ b ) (e : c ↦ a) → (is-an-intern-iso e) → (f ● e ≡ g ● e) → f ≡ g
+  iso-epi f g e (k ,, (p1 , p2)) q = ((((pr₂ (IdMorAx _))) ⁻¹)) · (fun-ap (λ x → f ● x) (p2 ⁻¹) · ((CompAssocAx _ _ _)
+                                     · (((fun-ap (λ x → x ● k) q)) · (((CompAssocAx _ _ _) ⁻¹) · ((fun-ap (λ x → g ● x) p2) · pr₂ (IdMorAx _))))))
+
+  Init-⊗G-uniprop-symm : {a b : ObjGEBCat} → is-Contr ((Init ⊗G a) ↦ b)
+  Init-⊗G-uniprop-symm {a} {b} = (InitMor _ ● p1G) ,, λ f → iso-epi _ _ (proj₁ (⊗G-1comm)) (proj₂ (⊗G-1comm)) (is-Contr-then-is-Prop _ Init-⊗G-uniprop _ _)
+  
+  Init-⊗G-ann : {a : ObjGEBCat} → (Init ⊗G a) ≃G Init
+  Init-⊗G-ann = p1G ,, ((InitMor _)
+                                 ,,  (is-Contr-then-is-Prop _ Init-⊗G-uniprop-symm _ _
+                                    ,
+                                     ((InitMorAx _) · ((InitMorAx _) ⁻¹))))
+
+  Init-strict-fact : {a : ObjGEBCat} (f : a ↦ Init) → (a ≃G (a ⊗G Init))
+  Init-strict-fact f = < (IdMor _) , f >G ,, (p1G ,, ((pr₁ (ProdMorLegAx _ _)) , (is-Contr-then-is-Prop _ Init-⊗G-uniprop _ _)))
+
+  Init-strict : {a : ObjGEBCat} (f : a ↦ Init) → a ≃G Init
+  Init-strict f = ≃G-trans (Init-strict-fact f) (≃G-trans ⊗G-1comm Init-⊗G-ann)
+
+{-  Gebskel-⊗G-lemma : {a b : ObjGEBCat} (n m : ℕ) (iso1 : a ≃G ⨁G Term n) (iso2 : b ≃G ⨁G Term m) → ( (a ⊗G b) ≃G (⨁G Term (n ·ℕ m)))
+  Gebskel-⊗G-lemma zero m isoa isob = {!!}
+  Gebskel-⊗G-lemma (succ n) m isoa isob = {!!}  -}
                               
 
