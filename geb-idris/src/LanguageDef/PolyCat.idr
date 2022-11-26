@@ -2231,7 +2231,7 @@ spntOnDir : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
       (pos ** dirf))
     (spfAssign g
       ((fst pos ** spntOnPos {f} {g} alpha (fst pos) (snd pos)) ** dirg)))
-spntOnDir alpha = snd alpha
+spntOnDir = snd
 
 public export
 InterpSPNT : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
@@ -2252,40 +2252,21 @@ InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
 ---- Algebras of dependent polynomial functors ----
 ---------------------------------------------------
 
-{-
 public export
-SPFAlg : {a : Type} -> SlicePolyEndoF a -> SliceObj a -> Type
+SPFAlg : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a -> Type
 SPFAlg spf sa = SliceMorphism (InterpSPFunc spf sa) sa
--}
 
 ---------------------------------------------------
 ---- Initial algebras of dependent polynomials ----
 ---------------------------------------------------
 
-{-
 public export
-spfMu : {0 a : Type} -> SlicePolyEndoF a -> Type
-spfMu = PolyFuncMu . spfFunc
-
-public export
-spfMuIdx : {0 a : Type} -> (spf : SlicePolyEndoF a) -> spfMu spf -> a
-spfMuIdx (p@(pos ** dir) ** sli) = pfCata {p} sli
-
-public export
-SPFMu : {0 a : Type} -> SlicePolyEndoF a -> SliceObj a
-SPFMu {a} spf@(p ** sli) ea =
-  (em : PolyFuncMu p ** FunExt -> spfMuIdx spf em = ea)
-
-public export
-InSPFM : {0 a : Type} -> {spf : SlicePolyEndoF a} ->
-  (i : spfPos spf) ->
-  (param : spfDir {spf} i -> a) ->
-  ((di : spfDir {spf} i) -> SPFMu {a} spf (param di)) ->
-  SPFMu {a} spf (spfIdx {spf} i param)
-InSPFM {a} {spf=spf@((pos ** dir) ** slidx)} i param sli =
-  (InPFM i (\di => fst (sli di)) **
-   (\funext => cong (slidx i) $ funExt $ \di => snd (sli di) funext))
--}
+data SPFMu : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a where
+  InSPFM :
+    {a : Type} -> {spf : SlicePolyEndoFunc a} ->
+    (pos : Sigma (spfPos spf)) ->
+    ((dir : spfDir spf pos) -> SPFMu spf (spfAssign spf (pos ** dir))) ->
+    SPFMu spf (fst pos)
 
 --------------------------------------------------------
 ---- Catamorphisms of dependent polynomial functors ----
