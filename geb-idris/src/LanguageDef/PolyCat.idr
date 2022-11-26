@@ -2275,11 +2275,9 @@ data SPFMu : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a where
 public export
 spfCata : {a : Type} -> {spf : SlicePolyEndoFunc a} -> {sa : SliceObj a} ->
   SPFAlg spf sa -> SliceMorphism {a} (SPFMu spf) sa
-spfCata {a} {spf=spf@(posdep ** dirdep ** assign)} {sa} alg _
-  (InSPFM (posi ** pos) dir) =
-    alg posi
-      (pos **
-       \d => spfCata {a} {spf} {sa} alg (assign ((posi ** pos) ** d)) (dir d))
+spfCata {spf} alg _ (InSPFM (posi ** pos) dir) =
+  alg posi
+    (pos ** \d => spfCata alg (spfAssign spf ((posi ** pos) ** d)) (dir d))
 
 --------------------------------------------
 ---- Dependent polynomial (free) monads ----
