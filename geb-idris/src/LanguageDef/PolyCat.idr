@@ -2090,7 +2090,7 @@ RefinedDepPolyF : {parambase, posbase : Refined} ->
   (assign :
     RefinedSigmaType {a=(RefinedSigma {a=posbase} posdep)} dirdep ->
     RefinedType parambase) ->
-  RefinedSliceFunctor parambase posbase
+  RefinedSliceFunctorType parambase posbase
 RefinedDepPolyF {parambase} {posbase} posdep dirdep assign =
   RefinedDepCoprodF {a=posbase} posdep
   . RefinedDepProdF {a=(RefinedSigma {a=posbase} posdep)} dirdep
@@ -2103,7 +2103,7 @@ RefinedDepPolyEndoF : {base : Refined} ->
   (assign :
     RefinedSigmaType {a=(RefinedSigma {a=base} posdep)} dirdep ->
     RefinedType base) ->
-  RefinedSliceFunctor base base
+  RefinedSliceFunctorType base base
 RefinedDepPolyEndoF {base} = RefinedDepPolyF {parambase=base} {posbase=base}
 
 --------------------------------------------------------------------
@@ -2186,7 +2186,7 @@ InterpSPFunc spf = PredDepPolyF (spfPos spf) (spfDir spf) (spfAssign spf)
 
 public export
 InterpRPFunc : {a, b : Refined} ->
-  RefinedPolyFunc a b -> RefinedSliceFunctor a b
+  RefinedPolyFunc a b -> RefinedSliceFunctorType a b
 InterpRPFunc rpf = RefinedDepPolyF (rpfPos rpf) (rpfDir rpf) (rpfAssign rpf)
 
 public export

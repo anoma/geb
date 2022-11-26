@@ -759,7 +759,16 @@ RefinedSlice a = RefinedType a -> Refined
 
 public export
 RefinedSliceFunctor : Refined -> Refined -> Type
-RefinedSliceFunctor a b = SliceFunctor (RefinedType a) (RefinedType b)
+RefinedSliceFunctor a b = RefinedSlice a -> RefinedSlice b
+
+public export
+RefinedSliceFunctorType : Refined -> Refined -> Type
+RefinedSliceFunctorType a b = SliceFunctor (RefinedType a) (RefinedType b)
+
+public export
+RefinedSliceMorphism : {a : Refined} -> RefinedSlice a -> RefinedSlice a -> Type
+RefinedSliceMorphism {a} s s' =
+  SliceMorphism {a=(RefinedType a)} (RefinedType . s) (RefinedType . s')
 
 public export
 RefinedDPair : {a : Refined} -> RefinedSlice a -> Type
