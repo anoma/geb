@@ -128,6 +128,20 @@ public export
 PreImage : {a, b : Type} -> (a -> b) -> b -> Type
 PreImage {a} {b} f elemb = Equalizer f (const elemb)
 
+public export
+Pullback : {a, b, c : Type} -> (a -> c) -> (b -> c) -> Type
+Pullback {a} {b} {c} f g = Subset0 (a, b) (\(x, y) => f x = g y)
+
+public export
+pbProj1 : {a, b, c : Type} -> {f : a -> c} -> {g : b -> c} ->
+  Pullback f g -> a
+pbProj1 {a} {b} {c} {f} {g} (Element0 (x, y) eq) = x
+
+public export
+pbProj2 : {a, b, c : Type} -> {f : a -> c} -> {g : b -> c} ->
+  Pullback f g -> b
+pbProj2 {a} {b} {c} {f} {g} (Element0 (x, y) eq) = y
+
 -- A special case of `DepProdF` where `b` is the terminal object and
 -- `f` is the unique morphism into it.  A slice object over the terminal
 -- object is isomorphic to its domain, so the slice category of a category
@@ -170,6 +184,10 @@ SliceFMorphism s f = SliceMorphism s (s . f)
 public export
 ArrowObj : Type
 ArrowObj = (sig : (Type, Type) ** (fst sig -> snd sig))
+
+public export
+SliceNatTrans : {x, y : Type} -> (f, g : SliceFunctor x y) -> Type
+SliceNatTrans {x} {y} f g = (s : SliceObj x) -> SliceMorphism (f s) (g s)
 
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
