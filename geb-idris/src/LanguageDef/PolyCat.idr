@@ -2206,13 +2206,13 @@ public export
 SPNatTrans : {w, z : Type} -> SlicePolyFunc w z -> SlicePolyFunc w z -> Type
 SPNatTrans {w} {z} f g =
   (onPos : SliceMorphism {a=z} (spfPos f) (spfPos g) **
-   onDir : (posi : z) -> (pos : spfPos f posi) ->
-    spfDir g (posi ** (onPos posi pos)) ->
-    spfDir f (posi ** pos) **
+   onDir : (pos : Sigma (spfPos f)) ->
+    spfDir g (fst pos ** (onPos (fst pos) (snd pos))) ->
+    spfDir f pos **
    (posi : z) -> (pos : spfPos f posi) ->
     (dirg : spfDir g (posi ** (onPos posi pos))) ->
     (slw : SliceObj w) ->
-    slw (spfAssign f ((posi ** pos) ** (onDir posi pos dirg))) ->
+    slw (spfAssign f ((posi ** pos) ** (onDir (posi ** pos) dirg))) ->
     slw (spfAssign g ((posi ** onPos posi pos) ** dirg)))
 
 public export
@@ -2223,9 +2223,9 @@ spntOnPos = fst
 public export
 spntOnDir : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
   (alpha : SPNatTrans {w} {z} f g) ->
-  (posi : z) -> (pos : spfPos f posi) ->
-  spfDir g (posi ** (spntOnPos {w} {z} {f} {g} alpha posi pos)) ->
-  spfDir f (posi ** pos)
+  (pos : Sigma {a=z} (spfPos f)) ->
+  spfDir g (fst pos ** (spntOnPos {w} {z} {f} {g} alpha (fst pos) (snd pos))) ->
+  spfDir f pos
 spntOnDir alpha = fst (snd alpha)
 
 public export
@@ -2236,7 +2236,7 @@ spntOnAssign : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
   (slw : SliceObj w) ->
   slw
     (spfAssign f
-      ((posi ** pos) ** (spntOnDir {w} {z} {f} {g} alpha posi pos dirg))) ->
+      ((posi ** pos) ** (spntOnDir {w} {z} {f} {g} alpha (posi ** pos) dirg))) ->
   slw
     (spfAssign g
       ((posi ** spntOnPos {w} {z} {f} {g} alpha posi pos) ** dirg))
@@ -2249,7 +2249,7 @@ InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
   (spntOnPos alpha posfi posf **
    \dirsg =>
     spntOnAssign alpha posfi posf dirsg slw $
-      dirsf $ spntOnDir alpha posfi posf dirsg)
+      dirsf $ spntOnDir alpha (posfi ** posf) dirsg)
 
 -----------------------------------------------
 -----------------------------------------------
