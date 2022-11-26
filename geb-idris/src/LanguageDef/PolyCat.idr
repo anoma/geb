@@ -2236,10 +2236,10 @@ spntOnAssign : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
   (slw : SliceObj w) ->
   slw
     (spfAssign f
-      ((posi ** pos) ** (spntOnDir {w} {z} {f} {g} alpha (posi ** pos) dirg))) ->
+      ((posi ** pos) ** (spntOnDir {f} {g} alpha (posi ** pos) dirg))) ->
   slw
     (spfAssign g
-      ((posi ** spntOnPos {w} {z} {f} {g} alpha posi pos) ** dirg))
+      ((posi ** spntOnPos {f} {g} alpha posi pos) ** dirg))
 spntOnAssign alpha = snd (snd alpha)
 
 public export
