@@ -2202,44 +2202,50 @@ InterpSPFMap {a} {b} spf {sa} {sa'} =
 ---- Natural transformations on dependent polynomial endofunctors ----
 -----------------------------------------------------------------------
 
-{-
 public export
-SPNatTrans : {x, y : Type} -> SlicePolyFunc x y -> SlicePolyFunc x y -> Type
-SPNatTrans {x} p q =
-  (pnt : PolyNatTrans (spfFunc p) (spfFunc q) ** SPNatTransOnIdx p q pnt)
+SPNatTrans : {w, z : Type} -> SlicePolyFunc w z -> SlicePolyFunc w z -> Type
+SPNatTrans {w} {z} f g =
+  (onPos : SliceMorphism {a=z} (spfPos f) (spfPos g) **
+   onDir : (posi : z) -> (pos : spfPos f posi) ->
+    spfDir g (posi ** (onPos posi pos)) ->
+    spfDir f (posi ** pos) **
+   (posi : z) -> (pos : spfPos f posi) ->
+    (dirg : spfDir g (posi ** (onPos posi pos))) ->
+    (slw : SliceObj w) ->
+    slw (spfAssign f ((posi ** pos) ** (onDir posi pos dirg))) ->
+    slw (spfAssign g ((posi ** onPos posi pos) ** dirg)))
 
 public export
-spntPnt : {0 x, y : Type} -> {0 p, q : SlicePolyFunc x y} ->
-  SPNatTrans p q -> PolyNatTrans (spfFunc p) (spfFunc q)
-spntPnt = DPair.fst
+spntOnPos : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
+  SPNatTrans f g -> SliceMorphism {a=z} (spfPos f) (spfPos g)
+spntOnPos = fst
 
 public export
-spntOnPos : {0 x, y : Type} -> {0 p, q : SlicePolyFunc x y} -> SPNatTrans p q ->
-  spfPos p -> spfPos q
-spntOnPos = pntOnPos . spntPnt
+spntOnDir : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
+  (alpha : SPNatTrans {w} {z} f g) ->
+  (posi : z) -> (pos : spfPos f posi) ->
+  spfDir g (posi ** (spntOnPos {w} {z} {f} {g} alpha posi pos)) ->
+  spfDir f (posi ** pos)
+spntOnDir alpha = fst (snd alpha)
 
 public export
-spntOnDir : {0 x, y : Type} -> {0 p, q : SlicePolyFunc x y} ->
-  (alpha : SPNatTrans p q) ->
-  SliceMorphism (spfDir {spf=q} . spntOnPos {p} {q} alpha) (spfDir {spf=p})
-spntOnDir alpha i = pntOnDir (spntPnt alpha) i
+spntOnAssign : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
+  (alpha : SPNatTrans {w} {z} f g) ->
+  (posi : z) -> (pos : spfPos f posi) ->
+  (dirg : spfDir g (posi ** (spntOnPos {w} {z} {f} {g} alpha posi pos))) ->
+  (slw : SliceObj w) ->
+  slw (spfAssign f ((posi ** pos) ** (spntOnDir {w} {z} {f} {g} alpha posi pos dirg))) ->
+  slw (spfAssign g ((posi ** spntOnPos {w} {z} {f} {g} alpha posi pos) ** dirg))
+spntOnAssign alpha = snd (snd alpha)
 
 public export
-spntOnIdx : {0 x, y : Type} -> {0 p, q : SlicePolyFunc x y} ->
-  (alpha : SPNatTrans p q) -> SPNatTransOnIdx p q (spntPnt {p} {q} alpha)
-spntOnIdx = DPair.snd
-
-public export
-InterpSPNT : {0 x, y : Type} -> {p, q : SlicePolyFunc x y} ->
-  SPNatTrans p q -> {0 sx : SliceObj x} ->
-  SliceMorphism {a=y} (InterpSPFunc p sx) (InterpSPFunc q sx)
-InterpSPNT {x} {y} {p=((ppos ** pdir) ** pidx)} {q=((qpos ** qdir) ** qidx)}
-  ((onPos ** onDir) ** onIdx) {sx} ey (pi ** pparam ** (extEq, pda)) =
-    (onPos pi **
-     pparam . onDir pi **
-     (\funext => trans (onIdx pi pparam) (extEq funext),
-      \qd : qdir (onPos pi) => pda $ onDir pi qd))
-    -}
+InterpSPNT : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
+  SPNatTrans f g -> SliceNatTrans {x=w} {y=z} (InterpSPFunc f) (InterpSPFunc g)
+InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
+  (spntOnPos alpha posfi posf **
+   \dirsg =>
+    spntOnAssign alpha posfi posf dirsg slw $
+      dirsf $ spntOnDir alpha posfi posf dirsg)
 
 -----------------------------------------------
 -----------------------------------------------
