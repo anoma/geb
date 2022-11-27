@@ -2325,41 +2325,34 @@ SPFFreeMFromMu spf sx =
 ---- Coalgebras of dependent polynomial functors ----
 -----------------------------------------------------
 
-{-
 public export
-SPFCoalg : {a : Type} -> SlicePolyEndoF a -> SliceObj a -> Type
+SPFCoalg : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a -> Type
 SPFCoalg spf sa = SliceMorphism sa (InterpSPFunc spf sa)
--}
 
 ------------------------------------------------------
 ---- Terminal coalgebras of dependent polynomials ----
 ------------------------------------------------------
 
-{-
 public export
-data SPFNu : {0 a : Type} -> SlicePolyEndoF a -> SliceObj a where
-  InSPFN : {0 a : Type} -> {0 spf : SlicePolyEndoF a} ->
-    (i : spfPos spf) ->
-    (param : spfDir {spf} i -> a) ->
-    ((di : spfDir {spf} i) -> Inf (SPFNu {a} spf (param di))) ->
-    SPFNu {a} spf (spfIdx {spf} i param)
-    -}
+data SPFNu : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a where
+  InSPFN :
+    {a : Type} -> {spf : SlicePolyEndoFunc a} ->
+    (pos : Sigma (spfPos spf)) ->
+    ((dir : spfDir spf pos) -> Inf (SPFNu spf (spfAssign spf (pos ** dir)))) ->
+    SPFNu spf (fst pos)
 
 -------------------------------------------------------
 ---- Anamorphisms of dependent polynomial functors ----
 -------------------------------------------------------
 
-{-
 public export
-spfAna : {0 a : Type} -> {spf : SlicePolyEndoF a} -> {0 sa : SliceObj a} ->
-  {funext : FunExt} -> SPFCoalg spf sa -> (ea : a) -> sa ea -> SPFNu spf ea
-spfAna {a} {spf=((pos ** dir) ** idx)} {sa} {funext} coalg ea esa =
-  case coalg ea esa of
-    (i ** param ** (extEq, da)) => case (extEq funext) of
-      Refl =>
-        InSPFN {spf=((pos ** dir) ** idx)} i param $
-          \di : dir i => spfAna {funext} coalg (param di) (da di)
-          -}
+spfAna : {a : Type} -> {spf : SlicePolyEndoFunc a} -> {sa : SliceObj a} ->
+  SPFCoalg spf sa -> SliceMorphism {a} sa (SPFNu spf)
+spfAna {a} {spf} {sa} coalg elema elemsa =
+  case coalg elema elemsa of
+    (pos ** dir) =>
+      InSPFN {a} {spf} (elema ** pos) $
+        \di => spfAna coalg (spfAssign spf ((elema ** pos) ** di)) (dir di)
 
 ------------------------------------------------
 ---- Dependent polynomial (cofree) comonads ----
