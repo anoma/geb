@@ -13,6 +13,7 @@
 (pax:defsection @index (:title "The GEB Manual")
   "Welcome to the GEB project."
   (@links            pax:section)
+  (@math-playground  pax:section)
   (@getting-started  pax:section)
   (@original-efforts pax:section)
   (@model            pax:section)
@@ -24,10 +25,26 @@
   (@geb-test-manual  pax:section))
 
 (pax:defsection @links (:title "Links")
-  "
+  """
 Here is the [official repository](https://github.com/anoma/geb/)
-and the [HTML documentation](https://anoma.github.io/geb/) for the latest version")
 
+and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
+""")
+
+(pax:defsection @math-playground (:title "math-playground")
+  """
+$\mathsf{3} = \\{ 1, 2, 3 \\}$
+
+$\mathsf{3} = \{ 1, 2, 3 \}$
+\curly{}
+$$\mathsf{3} = \{ 1, 2, 3 \}$$
+
+An inline $\int_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$
+
+a standlone $$\int_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$$
+""")
+
+(pythonic-string-reader:enable-pythonic-string-syntax)
 (pax:defsection @getting-started (:title "Getting Started")
   "Welcome to the GEB Project!"
   (@installation pax:section)

@@ -79,7 +79,7 @@
                          (uiop:symbol-call :geb-test :run-tests)))
 
 (asdf:defsystem :geb/documentation
-  :depends-on (:geb :fiveam :MGL-PAX/FULL :cl-environments :geb/test)
+  :depends-on (:geb :fiveam :MGL-PAX/FULL :cl-environments :geb/test :pythonic-string-reader)
   :description "geb full documentation exploration"
   :pathname "docs/"
   :serial t
