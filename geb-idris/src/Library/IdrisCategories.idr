@@ -2719,7 +2719,7 @@ improve {f} isF allWrap {isM} =
 public export
 record Density (m : Type -> Type) (a : Type) where
   constructor MkDensity
-  -- Density m a = (b : Type ** (m b -> a) -> m b)
+  -- Density m a = (b : Type ** Pair (m b -> a) (m b))
   runDensity : LKanExt m m a
 
 ----------------------------
