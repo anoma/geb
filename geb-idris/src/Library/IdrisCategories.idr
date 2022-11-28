@@ -2510,7 +2510,7 @@ ExpFunctor g = flip (.) g . ContravarHomFunc
 
 public export
 LKanExtSnd : (g, j : Type -> Type) -> (a, b : Type) -> Type
-LKanExtSnd g j = flip AppFunctor g . ExpFunctor j
+LKanExtSnd g j a b = Pair (ExpFunctor j a b) (g b)
 
 -- The left Kan extension of `g` along `j`.
 public export
