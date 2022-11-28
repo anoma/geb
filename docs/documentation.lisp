@@ -10,6 +10,8 @@
 
 (in-package geb-docs/docs)
 
+(pythonic-string-reader:enable-pythonic-string-syntax)
+
 (pax:defsection @index (:title "The GEB Manual")
   "Welcome to the GEB project."
   (@links            pax:section)
@@ -33,26 +35,25 @@ and the [HTML documentation](https://anoma.github.io/geb/) for the latest versio
 
 (pax:defsection @math-playground (:title "math-playground")
   """
-$\\lbrace \\text{and} \\rbrace$
+$\lbrace \text{and} \rbrace$
 
-$\\begin{cases} f^oo & \text{bla} //// \\end{cases}$
+$\begin{cases} f^oo & \text{bla} //// \end{cases}$
 
-$\\lambda \\in \\{ 2,3 \\}.$
+$\lambda \in \{ 2,3 \}.$
 
-$\\mathsf{3} = \\{ 1, 2, 3 \\}$
+$\mathsf{3} = \{ 1, 2, 3 \}$
 
-$\\mathsf{3} = \\{ 1, 2, 3 \\}$
+$\mathsf{3} = \{ 1, 2, 3 \}$
 
-\\curly{}
+\curly{}
 
-$$\\mathsf{3} = \\{ 1, 2, 3 \\}$$
+$$\mathsf{3} = \{ 1, 2, 3 \}$$
 
-An inline $\\int_0^\\infty e^{-x^2} dx=\\frac{\\sqrt{\\pi}}{2}$
+An inline $\int_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$
 
-a display $$\\int_0^\\infty e^{-x^2} dx=\\frac{\\sqrt{\\pi}}{2}$$
+a display $$\int_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$$
 """)
 
-(pythonic-string-reader:enable-pythonic-string-syntax)
 (pax:defsection @getting-started (:title "Getting Started")
   "Welcome to the GEB Project!"
   (@installation pax:section)
