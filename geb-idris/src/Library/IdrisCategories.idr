@@ -128,6 +128,20 @@ public export
 PreImage : {a, b : Type} -> (a -> b) -> b -> Type
 PreImage {a} {b} f elemb = Equalizer f (const elemb)
 
+public export
+Pullback : {a, b, c : Type} -> (a -> c) -> (b -> c) -> Type
+Pullback {a} {b} {c} f g = Subset0 (a, b) (\(x, y) => f x = g y)
+
+public export
+pbProj1 : {a, b, c : Type} -> {f : a -> c} -> {g : b -> c} ->
+  Pullback f g -> a
+pbProj1 {a} {b} {c} {f} {g} (Element0 (x, y) eq) = x
+
+public export
+pbProj2 : {a, b, c : Type} -> {f : a -> c} -> {g : b -> c} ->
+  Pullback f g -> b
+pbProj2 {a} {b} {c} {f} {g} (Element0 (x, y) eq) = y
+
 -- A special case of `DepProdF` where `b` is the terminal object and
 -- `f` is the unique morphism into it.  A slice object over the terminal
 -- object is isomorphic to its domain, so the slice category of a category
@@ -147,6 +161,37 @@ Pi {a} p = (x : a) -> p x
 public export
 Sigma : {a : Type} -> SliceObj a -> Type
 Sigma {a} p = (x : a ** p x)
+
+public export
+SigmaToPair : {0 a, b : Type} -> (Sigma {a} (const b)) -> (a, b)
+SigmaToPair (x ** y) = (x, y)
+
+public export
+PairToSigma : {0 a, b : Type} -> (a, b) -> (Sigma {a} (const b))
+PairToSigma (x, y) = (x ** y)
+
+-- If we view `a` as a discrete category, and slice objects of it as
+-- functors from `a` to `Type`, then this type can also be viewed as
+-- a natural transformation.
+public export
+SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
+SliceMorphism {a} s s' = (e : a) -> s e -> s' e
+
+public export
+SliceFMorphism : {a : Type} -> SliceObj a -> (a -> a) -> Type
+SliceFMorphism s f = SliceMorphism s (s . f)
+
+public export
+ArrowObj : Type
+ArrowObj = (sig : (Type, Type) ** (fst sig -> snd sig))
+
+public export
+SliceNatTrans : {x, y : Type} -> (f, g : SliceFunctor x y) -> Type
+SliceNatTrans {x} {y} f g = (s : SliceObj x) -> SliceMorphism (f s) (g s)
+
+-------------------------------------------
+---- Dependent polynomial endofunctors ----
+-------------------------------------------
 
 -- The dependent product functor induced by the given morphism.
 -- Right adjoint to the base change functor.
@@ -172,60 +217,6 @@ DepPolyF {w} {x} {y} {z} fxw predyx predzy =
   DepCoprodF {a=y} {b=z} predzy
   . DepProdF {a=x} {b=y} predyx
   . BaseChangeF fxw
-
--- Dependent product in terms of a predicate instead of a morphism.
-public export
-PredDepProdF : {a : Type} -> (p : SliceObj a) -> SliceFunctor (Sigma {a} p) a
-PredDepProdF {a} p slp elema =
-  Pi {a=(p elema)} (BaseChangeF (MkDPair elema) slp)
-
--- Dependent coproduct in terms of a predicate instead of a morphism.
-public export
-PredDepCoprodF : {a : Type} -> (p : SliceObj a) -> SliceFunctor (Sigma {a} p) a
-PredDepCoprodF {a} p slp elema =
-  Sigma {a=(p elema)} (BaseChangeF (MkDPair elema) slp)
-
--- A dependent polynomial functor in terms of predicates instead of morphisms.
-public export
-PredDepPolyF : {w, z : Type} ->
-  (pz : SliceObj z) ->
-  (pspz : SliceObj (Sigma {a=z} pz)) ->
-  (Sigma {a=(Sigma {a=z} pz)} pspz -> w) ->
-  SliceFunctor w z
-PredDepPolyF {w} {z} pz pspz fspspzw =
-  PredDepCoprodF {a=z} pz
-  . PredDepProdF {a=(Sigma pz)} pspz
-  . BaseChangeF fspspzw
-
--- A dependent polynomial functor in terms of predicates instead of morphisms.
-public export
-PredDepPolyEndoF : {z : Type} ->
-  (pz : z -> Type) -> (pspz : Sigma pz -> Type) -> (Sigma pspz -> z) ->
-  SliceFunctor z z
-PredDepPolyEndoF {z} = PredDepPolyF {w=z} {z}
-
-public export
-SigmaToPair : {0 a, b : Type} -> (Sigma {a} (const b)) -> (a, b)
-SigmaToPair (x ** y) = (x, y)
-
-public export
-PairToSigma : {0 a, b : Type} -> (a, b) -> (Sigma {a} (const b))
-PairToSigma (x, y) = (x ** y)
-
--- If we view `a` as a discrete category, and slice objects of it as
--- functors from `a` to `Type`, then this type can also be viewed as
--- a natural transformation.
-public export
-SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
-SliceMorphism {a} s s' = (e : a) -> s e -> s' e
-
-public export
-SliceFMorphism : {a : Type} -> SliceObj a -> (a -> a) -> Type
-SliceFMorphism s f = SliceMorphism s (s . f)
-
-public export
-ArrowObj : Type
-ArrowObj = (sig : (Type, Type) ** (fst sig -> snd sig))
 
 ----------------------------------------------------
 ----------------------------------------------------
@@ -770,27 +761,59 @@ Refined = Subset0 Type DecPred
 
 public export
 ErasedType : Refined -> Type
-ErasedType (Element0 a _) = a
+ErasedType = fst0
 
 public export
 0 RefinedPred : (r : Refined) -> DecPred (ErasedType r)
-RefinedPred (Element0 _ p) = p
+RefinedPred = snd0
 
 public export
 RefinedType : Refined -> Type
 RefinedType r = Refinement {a=(ErasedType r)} (RefinedPred r)
 
 public export
-RefinedSlice : Type -> Type
-RefinedSlice a = a -> Refined
+RefinedSlice : Refined -> Type
+RefinedSlice a = RefinedType a -> Refined
 
 public export
-RefinedSigma : {a : Type} -> RefinedSlice a -> Type
-RefinedSigma {a} p = Sigma {a} (RefinedType . p)
+RefinedSliceFunctor : Refined -> Refined -> Type
+RefinedSliceFunctor a b = RefinedSlice a -> RefinedSlice b
 
 public export
-RefinedPi : {a : Type} -> RefinedSlice a -> Type
-RefinedPi {a} p = Pi {a} (RefinedType . p)
+RefinedSliceFunctorType : Refined -> Refined -> Type
+RefinedSliceFunctorType a b = SliceFunctor (RefinedType a) (RefinedType b)
+
+public export
+RefinedSliceMorphism : {a : Refined} -> RefinedSlice a -> RefinedSlice a -> Type
+RefinedSliceMorphism {a} s s' =
+  SliceMorphism {a=(RefinedType a)} (RefinedType . s) (RefinedType . s')
+
+public export
+RefinedDPair : {a : Refined} -> RefinedSlice a -> Type
+RefinedDPair {a} p = DPair (RefinedType a) (RefinedType . p)
+
+public export
+RefinedSigma : {a : Refined} -> RefinedSlice a -> Refined
+RefinedSigma {a} p =
+  Element0 (DPair (RefinedType a) (fst0 . p)) (\x => snd0 (p (fst x)) (snd x))
+
+public export
+RefinedSigmaType : {a : Refined} -> RefinedSlice a -> Type
+RefinedSigmaType {a} p = RefinedType (RefinedSigma {a} p)
+
+public export
+RefinedDPairToSigma : {a : Refined} -> {p : RefinedSlice a} ->
+  RefinedDPair {a} p -> RefinedSigmaType {a} p
+RefinedDPairToSigma r = Element0 (fst r ** fst0 (snd r)) (snd0 (snd r))
+
+public export
+RefinedSigmaToDPair : {a : Refined} -> {p : RefinedSlice a} ->
+  RefinedSigmaType {a} p -> RefinedDPair {a} p
+RefinedSigmaToDPair r = (fst (fst0 r) ** Element0 (snd (fst0 r)) (snd0 r))
+
+public export
+RefinedPi : {a : Refined} -> RefinedSlice a -> Type
+RefinedPi {a} p = Pi {a=(RefinedType a)} (RefinedType . p)
 
 --------------------------
 ---- Refined functors ----
@@ -1046,27 +1069,6 @@ CoeqCoalg nf x = CoequalizedMorphism x (CoequalizedF nf x)
 ---- Refined polynomial (slice) functors ----
 ---------------------------------------------
 ---------------------------------------------
-
-public export
-RefinedDepProdF : {a : Type} ->
-  (p : RefinedSlice a) -> SliceFunctor (RefinedSigma {a} p) a
-RefinedDepProdF {a} p = PredDepProdF {a} (RefinedType . p)
-
-public export
-RefinedDepCoprodF : {a : Type} ->
-  (p : RefinedSlice a) -> SliceFunctor (RefinedSigma {a} p) a
-RefinedDepCoprodF {a} p = PredDepCoprodF {a} (RefinedType . p)
-
-public export
-RefinedDepPolyF : {w, z : Type} ->
-  (pz : RefinedSlice z) ->
-  (pspz : RefinedSlice (RefinedSigma {a=z} pz)) ->
-  (RefinedSigma {a=(RefinedSigma {a=z} pz)} pspz -> w) ->
-  SliceFunctor w z
-RefinedDepPolyF {w} {z} pz pspz fspspzw =
-  RefinedDepCoprodF {a=z} pz
-  . RefinedDepProdF {a=(RefinedSigma pz)} pspz
-  . BaseChangeF fspspzw
 
 -- The dependent product functor induced by the given subtype family.
 -- Right adjoint to the base change functor.
@@ -2508,7 +2510,7 @@ ExpFunctor g = flip (.) g . ContravarHomFunc
 
 public export
 LKanExtSnd : (g, j : Type -> Type) -> (a, b : Type) -> Type
-LKanExtSnd g j = flip AppFunctor g . ExpFunctor j
+LKanExtSnd g j a b = Pair (ExpFunctor j a b) (g b)
 
 -- The left Kan extension of `g` along `j`.
 public export
@@ -2717,8 +2719,37 @@ improve {f} isF allWrap {isM} =
 public export
 record Density (m : Type -> Type) (a : Type) where
   constructor MkDensity
-  -- Density m a = (b : Type) -> (m b -> a) -> m b
+  -- Density m a = (b : Type ** Pair (m b -> a) (m b))
   runDensity : LKanExt m m a
+
+public export
+mapDensity : (0 f : Type -> Type) -> {0 isF : Functor f} -> {0 a, b : Type} ->
+  (m : a -> b) -> Density f a -> Density f b
+mapDensity f {isF} m (MkDensity (b' ** (k, x))) = MkDensity (b' ** (m . k, x))
+
+public export
+DensityFunctor : (0 f : Type -> Type) -> {0 isF : Functor f} ->
+  Functor (Density f)
+DensityFunctor f {isF} = MkFunctor $ mapDensity f {isF}
+
+public export
+(isF : Functor f) => Functor (Density f) where
+  map {f} {isF} = mapDensity f {isF}
+
+public export
+eraseDensity : (0 f : Type -> Type) -> {0 a : Type} -> Density f a -> a
+eraseDensity f {a} (MkDensity (b' ** (k, x))) = k x
+
+public export
+duplicateDensity : (0 f : Type -> Type) -> {0 a : Type} ->
+  Density f a -> Density f (Density f a)
+duplicateDensity f {a} (MkDensity (b ** (k, x))) =
+  MkDensity (b ** (MkDensity . MkDPair b . MkPair k, x))
+
+public export
+extendDensity : (0 f : Type -> Type) -> {isF : Functor f} -> {0 a, b : Type} ->
+  (Density f a -> b) -> Density f a -> Density f b
+extendDensity f {isF} {a} m = map {f=(Density f)} m . duplicateDensity f
 
 ----------------------------
 ----------------------------
