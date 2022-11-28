@@ -2722,6 +2722,34 @@ record Density (m : Type -> Type) (a : Type) where
   -- Density m a = (b : Type ** Pair (m b -> a) (m b))
   runDensity : LKanExt m m a
 
+public export
+mapDensity : (0 f : Type -> Type) -> {0 isF : Functor f} -> {0 a, b : Type} ->
+  (m : a -> b) -> Density f a -> Density f b
+mapDensity f {isF} m (MkDensity (b' ** (k, x))) = MkDensity (b' ** (m . k, x))
+
+public export
+DensityFunctor : (0 f : Type -> Type) -> {0 isF : Functor f} ->
+  Functor (Density f)
+DensityFunctor f {isF} = MkFunctor $ mapDensity f {isF}
+
+public export
+(isF : Functor f) => Functor (Density f) where
+  map {f} {isF} = mapDensity f {isF}
+
+public export
+eraseDensity : (0 f : Type -> Type) -> {0 a : Type} -> Density f a -> a
+eraseDensity f {a} (MkDensity (b' ** (k, x))) = ?eraseDensity_hole
+
+public export
+duplicateDensity : (0 f : Type -> Type) -> {0 a : Type} ->
+  Density f a -> Density f (Density f a)
+duplicateDensity f {a} (MkDensity (b' ** (k, x))) = ?duplicateDensity_hole
+
+public export
+extendDensity : (0 f : Type -> Type) -> {isF : Functor f} -> {0 a, b : Type} ->
+  (Density f a -> b) -> Density f a -> Density f b
+extendDensity f {isF} {a} m = map {f=(Density f)} m . duplicateDensity f
+
 ----------------------------
 ----------------------------
 ---- Closure conversion ----
