@@ -33,6 +33,11 @@ and the [HTML documentation](https://anoma.github.io/geb/) for the latest versio
 
 (pax:defsection @math-playground (:title "math-playground")
   """
+$\lbrace and \rbrace$
+$\begin{cases} foo \end{cases}$
+
+$\lambda \in \{ 2,3 \}$.
+
 $\mathsf{3} = \\{ 1, 2, 3 \\}$
 
 $\mathsf{3} = \{ 1, 2, 3 \}$
@@ -79,112 +84,113 @@ while @AGDA serves as the mathematical formalism proving various
 conjectures about GEB")
 
 (pax:defsection @model (:title "Categorical Model")
-  "Geb is organizing programming language concepts (and entities!) using
+  """Geb is organizing programming language concepts (and entities!) using
    [category theory](https://plato.stanford.edu/entries/category-theory/),
    originally developed by mathematicians,
    but very much alive in programming language theory.
    Let us look at a simple well-known example:
-   the category of sets and functions. 
+   the category of sets and functions.
    It is the bread and butter example:
-   sets $A,B,C,…$ play the role of _objects_, 
-   functions are _arrows_ between objects $A—f→B$, 
+   sets $A,B,C,…$ play the role of _objects_,
+   functions are _arrows_ between objects $A—f→B$,
    and the latter _compose_ as functions do,
    such that every path of matching functions
    $$A—f→B—g→C—h→D$$
-   composes to a corresponding composite function 
+   composes to a corresponding composite function
    $$A—f;g;h→D$$ (or $h∘g∘f$ if you prefer)
-   and we enjoy the luxury of not having to worry about 
+   and we enjoy the luxury of not having to worry about
    the order in which we compose;
    for the sake of completeness,
    there are identify functions $A —\\mathrm{id}_A→ A$ on each set $A$,
-   serving as identities. 
-   Sets and functions _together_ form **a** category—based on 
+   serving as identities.
+   Sets and functions _together_ form **a** category—based on
    function composition;
-   thus, let's call this category _sets-'n'-functions_. 
-   This example, 
-   even “restricted” to  _finite sets-'n'-functions_, 
+   thus, let's call this category _sets-'n'-functions_.
+   This example,
+   even “restricted” to  _finite sets-'n'-functions_,
    will permeate through Geb.
    <!--
    although the “weird” habit of avoiding
    talk about elements of sets as much as possible.
    -->
-   
+
    One of the first lessons (in any introduction to category theory)
    about _sets-'n'-functions_ is the characterization of
-   [product](https://en.wikipedia.org/wiki/Product_(category_theory)#Product_of_two_objects)s 
+   [product](https://en.wikipedia.org/wiki/Product_(category_theory)#Product_of_two_objects)s
    and [disjoint sum](https://en.wikipedia.org/wiki/Coproduct#Definition)s of sets
    in terms of functions alone,
-   i.e., 
-   **without _ever_ talking about elements of sets**.  
-   Products and co-products are the simplest examples of 
-   _universal constructions_. 
-   One of the first surprises follows suit 
-   when we generalize functions to partial functions, 
-   relations, or even multi-relations: 
+   i.e.,
+   **without _ever_ talking about elements of sets**.
+   Products and co-products are the simplest examples of
+   _universal constructions_.
+   One of the first surprises follows suit
+   when we generalize functions to partial functions,
+   relations, or even multi-relations:
    _we obtain **very** different categories!_
-   For example, 
-   in the category [_sets-'n'-relations_](https://en.wikipedia.org/wiki/Category_of_relations), 
-   the disjoint union of sets features as both a product and a co-product, 
-   as a categorical construction. 
+   For example,
+   in the category [_sets-'n'-relations_](https://en.wikipedia.org/wiki/Category_of_relations),
+   the disjoint union of sets features as both a product and a co-product,
+   as a categorical construction.
 
    _Do not fear!_
    The usual definition of products in terms of elements of sets are
    absolutely compatible with the
-   universal construction in _sets-'n'-functions_. 
-   However we gain the possibility 
-   to compare the “result” of the  _universal constructions_ 
+   universal construction in _sets-'n'-functions_.
+   However we gain the possibility
+   to compare the “result” of the  _universal constructions_
    in _sets-'n'-functions_ with the one in _sets-'n'-relations_
-   (as both actually do have products). 
-   
+   (as both actually do have products).
+
    For the hasty reader, for the purposes of Geb,
-   a solid understanding of _sets-'n'-functions_ will 
+   a solid understanding of _sets-'n'-functions_ will
    already be quite useful:
-   many phenomena can be understood  
-   in analogy to what happens in _sets-'n'-functions_. 
+   many phenomena can be understood
+   in analogy to what happens in _sets-'n'-functions_.
    In particular,
-   we shall rely on the following structure of _sets-'n'-functions_: 
+   we shall rely on the following structure of _sets-'n'-functions_:
 
-   1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $1$.  
+   1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $1$.
 
-   2. The construction of “function spaces” $B^A$ of sets $A,B$, called _exponentials_, 
-      i.e., collections of functions between pairs of sets. 
-       
+   2. The construction of “function spaces” $B^A$ of sets $A,B$, called _exponentials_,
+      i.e., collections of functions between pairs of sets.
+
    3. The so-called [_currying_](https://en.wikipedia.org/wiki/Currying)
-       of functions, 
-      $C^{(B^A)} \\cong C^{(A × B)}$, 
+       of functions,
+      $C^{(B^A)} \cong C^{(A × B)}$,
       such that providing several arguments to a function can done
-      either simultaneously, or in sequence. 
+      either simultaneously, or in sequence.
 
-   4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$, 
-      corresponding to forming disjoint unions of sets; 
-      the empty sum is $0$. 
+   4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
+      corresponding to forming disjoint unions of sets;
+      the empty sum is $0$.
 
-   Product, sums and exponentials 
+   Product, sums and exponentials
    are the (almost) complete tool chest to write
-   polynomial expressions like $Ax^{\\rm 2} +x^{\\rm 1} - Dx^{\\rm 0}$ 
+   polynomial expressions like $Ax^{\rm 2} +x^{\rm 1} - Dx^{\rm 0}$
    with sets instead of numbers/constants
+   where $\lbrace x \rbrace$
    <!--
-    where $\{ \\{ \\\{ {{x}}\\\} \\} \}$ TODO math braces we need 
+    where $\{ \{ \\{ {{x}}\\} \} \}$ TODO math braces we need
    -->.
-   The one missing element is a counterpart for _variables_! 
+   The one missing element is a counterpart for _variables_!
    Somewhat surprisingly,
-   this last building block can be taken from 
-   one of the most-well known fundamental results about category theory, 
+   this last building block can be taken from
+   one of the most-well known fundamental results about category theory,
    generalizing Cayley's Theorem:
    the [Yoneda-Lemma](https://en.wikipedia.org/wiki/Yoneda_lemma).
-   
+
    If you are ready,
-   buckle up and jump to @POLY-SETS, 
-   have a look at our stream lined account of @YONEDA-LEMMA, 
-   or take it slow and review the background in one of 
+   buckle up and jump to @POLY-SETS,
+   have a look at our stream lined account of @YONEDA-LEMMA,
+   or take it slow and review the background in one of
    the classic or popular
-   [textbooks](https://www.goodreads.com/shelf/show/category-theory). 
-   "
+   [textbooks](https://www.goodreads.com/shelf/show/category-theory).
+   """
   (@morphisms pax:section)
   (@objects pax:section)
   (@yoneda-lemma pax:section)
   (@poly-sets pax:section)
-)
+  )
 
 ;; please insert more text here about category theory
 (pax:defsection @morphisms (:title "Morphisms"))
