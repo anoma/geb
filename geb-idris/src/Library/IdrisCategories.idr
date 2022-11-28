@@ -2738,12 +2738,13 @@ public export
 
 public export
 eraseDensity : (0 f : Type -> Type) -> {0 a : Type} -> Density f a -> a
-eraseDensity f {a} (MkDensity (b' ** (k, x))) = ?eraseDensity_hole
+eraseDensity f {a} (MkDensity (b' ** (k, x))) = k x
 
 public export
 duplicateDensity : (0 f : Type -> Type) -> {0 a : Type} ->
   Density f a -> Density f (Density f a)
-duplicateDensity f {a} (MkDensity (b' ** (k, x))) = ?duplicateDensity_hole
+duplicateDensity f {a} (MkDensity (b ** (k, x))) =
+  MkDensity (b ** (MkDensity . MkDPair b . MkPair k, x))
 
 public export
 extendDensity : (0 f : Type -> Type) -> {isF : Functor f} -> {0 a, b : Type} ->
