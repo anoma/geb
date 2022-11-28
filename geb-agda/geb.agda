@@ -2,7 +2,7 @@
  
 open import Agda.Primitive using (Level; lzero; lsuc; _⊔_; Setω)
 
-module geb where
+module geb-test where
 
   import HoTT
 
@@ -933,6 +933,37 @@ module geb where
                                                                ,
                                                                 ((pr₂ (ProdMorLegAx _ _)) · ((pr₁ (ProdMorLegAx _ _)) · ((pr₂ (IdMorAx _)) ⁻¹)))))))))
 
+  ⊗G-1assoc : {a b c : ObjGEBCat} → ((a ⊗G b) ⊗G c) ≃G (a ⊗G (b ⊗G c))
+  ⊗G-1assoc = < (p1G ● p1G) , < (p2G ● p1G) , p2G >G >G
+                  ,, (< < p1G , (p1G ● p2G) >G , (p2G ● p2G) >G
+                          ,, (((prod-comp _ _ _) · (pr-joint-mono _ _
+                                                                  (((pr₁ (ProdMorLegAx _ _)) · (prod-comp _ _ _
+                                                                  · pr-joint-mono _ _
+                                                                                     (((pr₁ (ProdMorLegAx _ _)) · ((pr₁ (ProdMorLegAx _ _))
+                                                                                     · transp (λ k → (p1G ● p1G) ≡ (p1G ● k)) (pr₂ (IdMorAx _) ⁻¹) (refl _)))
+                                                                                   ,
+                                                                                     ((pr₂ (ProdMorLegAx _ _)) · (((CompAssocAx _ _ _) ⁻¹)
+                                                                                     · ((fun-ap (λ k → p1G ● k) (pr₂ (ProdMorLegAx _ _)))
+                                                                                     · ((pr₁ (ProdMorLegAx _ _)) · (transp (λ k → (p2G ● p1G) ≡ (p2G ● k)) ((pr₂ (IdMorAx _)) ⁻¹) (refl _)))))))))
+                                                                ,
+                                                                  ((pr₂ (ProdMorLegAx _ _)) · (((CompAssocAx _ _ _) ⁻¹)
+                                                                  · ((fun-ap (λ k → p2G ● k) (pr₂ (ProdMorLegAx _ _))) · ((pr₂ (ProdMorLegAx _ _))
+                                                                  · ((pr₂ (IdMorAx _)) ⁻¹))))))))
+                            ,
+                              ((prod-comp _ _ _) · (pr-joint-mono _ _
+                                                                    (((pr₁ (ProdMorLegAx _ _)) · (((CompAssocAx _ _ _) ⁻¹)
+                                                                    · ((fun-ap (λ k → p1G ● k) (pr₁ (ProdMorLegAx _ _)))
+                                                                    · ((pr₁ (ProdMorLegAx _ _)) · ((pr₂ (IdMorAx _)) ⁻¹)))))
+                                                                  ,
+                                                                    ((pr₂ (ProdMorLegAx _ _)) · ((prod-comp _ _ _)
+                                                                    · (pr-joint-mono _ _
+                                                                                         (((pr₁ (ProdMorLegAx _ _)) · (((CompAssocAx _ _ _) ⁻¹)
+                                                                                         · ((fun-ap (λ k → p2G ● k) (pr₁ (ProdMorLegAx _ _)))
+                                                                                         · ((pr₂ (ProdMorLegAx _ _))
+                                                                                         · (fun-ap (λ k → p1G ● k) ((pr₂ (IdMorAx _)) ⁻¹))))))
+                                                                                       ,
+                                                                                         ((pr₂ (ProdMorLegAx _ _)) · ((pr₂ (ProdMorLegAx _ _))
+                                                                                         · (fun-ap (λ k → p2G ● k) ((pr₂ (IdMorAx _)) ⁻¹)))))))))))))
 
 -- We formalize the proofs of the strictness of the initial objects in distributive categories
 
@@ -990,8 +1021,36 @@ module geb where
   Init-strict : {a : ObjGEBCat} (f : a ↦ Init) → a ≃G Init
   Init-strict f = ≃G-trans (Init-strict-fact f) (≃G-trans ⊗G-1comm Init-⊗G-ann)
 
-{-  Gebskel-⊗G-lemma : {a b : ObjGEBCat} (n m : ℕ) (iso1 : a ≃G ⨁G Term n) (iso2 : b ≃G ⨁G Term m) → ( (a ⊗G b) ≃G (⨁G Term (n ·ℕ m)))
-  Gebskel-⊗G-lemma zero m isoa isob = {!!}
-  Gebskel-⊗G-lemma (succ n) m isoa isob = {!!}  -}
+  ⊗G-Term : {a : ObjGEBCat} → ((Term ⊗G a) ≃G a)
+  ⊗G-Term = p2G
+                ,, (< TermMor _ , IdMor _ >G ,,
+                          ((pr-joint-mono _ _
+                                            (((CompAssocAx _ _ _) · (fun-ap (λ k → k ● p2G) (pr₁ (ProdMorLegAx _ _))
+                                            · ((TermMorAx _) · ((TermMorAx _) ⁻¹))))
+                                          ,
+                                            ((CompAssocAx _ _ _) · ((fun-ap (λ k → k ● p2G) (pr₂ (ProdMorLegAx _ _)))
+                                            · ((pr₁ (IdMorAx _)) · ((pr₂ (IdMorAx _)) ⁻¹))))))
+                        ,
+                          pr₂ (ProdMorLegAx _ _)))
+
+  Gebskel-⊗G-lemma : {a b : ObjGEBCat} (n m : ℕ) (iso1 : a ≃G ⨁G Term n) (iso2 : b ≃G ⨁G Term m) → ( (a ⊗G b) ≃G (⨁G Term (n ·ℕ m)))
+  Gebskel-⊗G-lemma zero m isoa isob = ≃G-trans (⊗G-pres-iso isoa isob) Init-⊗G-ann
+  Gebskel-⊗G-lemma (succ zero) m isoa isob = ≃G-trans (⊗G-pres-iso isoa isob) ⊗G-Term
+  Gebskel-⊗G-lemma (succ (succ n)) m isoa isob = ≃G-trans (⊗G-pres-iso isoa isob)
+                                                    (≃G-trans ⊗G-1comm
+                                                        (≃G-trans (DistribMor  ,, DistribAx)
+                                                          (≃G-trans (⊕G-pres-iso ⊗G-1comm ⊗G-1comm)
+                                                            (≃G-trans (⊕G-pres-iso (Gebskel-⊗G-lemma (succ n) m ≃G-refl ≃G-refl) ⊗G-Term)
+                                                              (Gebskel-⊕G-lemma _ m ≃G-refl ≃G-refl)))))
+
+  GebSkel : (a : ObjGEBCat) → Σ[ n ∶ ℕ ] (a ≃G ⨁G Term n)
+  GebSkel Init = zero ,, ≃G-refl
+  GebSkel Term = one ,, ≃G-refl
+  GebSkel (a ⊕G b) = ((proj₁ (GebSkel a)) +ℕ (proj₁ (GebSkel b)))
+                                         ,, (Gebskel-⊕G-lemma ((proj₁ (GebSkel a))) ((proj₁ (GebSkel b))) (proj₂ (GebSkel a)) (proj₂ (GebSkel b)))
+  GebSkel (a ⊗G b) = (((proj₁ (GebSkel a)) ·ℕ (proj₁ (GebSkel b))))
+                                         ,, (Gebskel-⊗G-lemma ((proj₁ (GebSkel a))) ((proj₁ (GebSkel b))) ((proj₂ (GebSkel a))) ((proj₂ (GebSkel b))))
+
+-- This steblishes an evident skeleton of the Geb category, which we will not prove is equivalent to ω
                               
 
