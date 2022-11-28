@@ -137,16 +137,26 @@ conjectures about GEB")
       corresponding to forming disjoint unions of sets; 
       the empty sum is $0$. 
 
-   Seing product sums and exponentials—ignoring currying for the momement—it 
-   makes sense to ask for a counterpart of polynomial expressions $4x^3 +x^2 - 3x^0$. 
-   We are not making this up. 
-   A [whole book](https://topos.site/poly-book.pdf) has been written essentially on this very topic.
+   Seing product sums and exponentials, 
+   note that we have all the operations to build polynomial 
+   expressions like $4x^3 +x^2 - 3x^0$,
+   except for _variables_! 
+   Somewhat surprisingly,
+   this last building block can be taken from 
+   one of the most-well known fundamental results about category theory:
+   the [Yoneda-Lemma](https://en.wikipedia.org/wiki/Yoneda_lemma), 
+   which can be understood as a generalization of Cayley's Theorem. 
+   
    If you are ready,
-   buckle up and read @POLY-SETS about 
-   or review the details about @OBJECTS and @MORPHISMS.
+   buckle up and jump to @POLY-SETS, 
+   have a look at our stream lined account of @yoneda-lemma, 
+   or take it slow and review the background in one of 
+   the classic or popular
+   [textbooks](https://www.goodreads.com/shelf/show/category-theory). 
    "
   (@morphisms pax:section)
   (@objects pax:section)
+  (@yoneda-lemma pax:section)
   (@poly-sets pax:section)
 )
 
@@ -154,6 +164,8 @@ conjectures about GEB")
 (pax:defsection @morphisms (:title "Morphisms"))
 
 (pax:defsection @objects (:title "Objects"))
+
+(pax:defsection @yoneda-lemma (:title "The Yoneda Lemma"))
 
 (pax:defsection @poly-sets (:title "Poly in Sets"))
 
