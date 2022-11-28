@@ -33,20 +33,23 @@ and the [HTML documentation](https://anoma.github.io/geb/) for the latest versio
 
 (pax:defsection @math-playground (:title "math-playground")
   """
-$\lbrace and \rbrace$
-$\begin{cases} foo \end{cases}$
+$\\lbrace \\text{and} \\rbrace$
 
-$\lambda \in \{ 2,3 \}$.
+$\\begin{cases} f^oo & \text{bla} //// \\end{cases}$
 
-$\mathsf{3} = \\{ 1, 2, 3 \\}$
+$\\lambda \\in \\{ 2,3 \\}.$
 
-$\mathsf{3} = \{ 1, 2, 3 \}$
-\curly{}
-$$\mathsf{3} = \{ 1, 2, 3 \}$$
+$\\mathsf{3} = \\{ 1, 2, 3 \\}$
 
-An inline $\int_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$
+$\\mathsf{3} = \\{ 1, 2, 3 \\}$
 
-a standlone $$\int_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$$
+\\curly{}
+
+$$\\mathsf{3} = \\{ 1, 2, 3 \\}$$
+
+An inline $\\int_0^\\infty e^{-x^2} dx=\\frac{\\sqrt{\\pi}}{2}$
+
+a display $$\\int_0^\\infty e^{-x^2} dx=\\frac{\\sqrt{\\pi}}{2}$$
 """)
 
 (pythonic-string-reader:enable-pythonic-string-syntax)
