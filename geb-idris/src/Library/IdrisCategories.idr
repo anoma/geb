@@ -2320,7 +2320,7 @@ LKanExt g j a = (b : Type ** (ExpFunctor j a b, g b))
 public export
 record Yo (f : Type -> Type) (a : Type) where
   constructor MkYo
-  YoEmbed : NaturalTransformation (CovarHomFunc a) f
+  YoEmbed : RKanExt f Prelude.id a
 
 public export
 fromYo : {f : Type -> Type} -> {a : Type} -> Yo f a -> f a
@@ -2354,19 +2354,19 @@ Contravariant (ContraYo f) where
 public export
 record CoYo (f : Type -> Type) (r : Type) where
   constructor MkCoYo
-  CoYoEmbed : (a : Type ** (f a, a -> r))
+  CoYoEmbed : LKanExt f Prelude.id r
 
 public export
 fromCoYo : Functor f => CoYo f b -> f b
-fromCoYo (MkCoYo (ty ** (x, h))) = map {f} h x
+fromCoYo (MkCoYo (ty ** (h, x))) = map {f} h x
 
 public export
 toCoYo : Functor f => {b : Type} -> f b -> CoYo f b
-toCoYo {b} y = MkCoYo (b ** (y, id))
+toCoYo {b} y = MkCoYo (b ** (id, y))
 
 public export
 Functor (CoYo f) where
-  map g (MkCoYo (ty ** (x, h))) = MkCoYo (ty ** (x, g . h))
+  map g (MkCoYo (ty ** (h, x))) = MkCoYo (ty ** (g . h, x))
 
 public export
 record ContraCoYo (f : Type -> Type) (r : Type) where
