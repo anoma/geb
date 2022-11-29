@@ -639,6 +639,16 @@ pfParProdClosureNT : PolyFunc -> PolyFunc -> PolyFunc
 pfParProdClosureNT q r =
   (pfParProdClosurePosNT q r ** pfParProdClosureDirNT q r)
 
+-- I don't actually know whether this is correct!  I'm conjecturing
+-- that the closure of the parallel product is a right Kan extension,
+-- similarly to how the left coclosure of the composition product is
+-- a left Kan extension (_that_ part is given by the _General Theory of
+-- Interaction_ book), but I could be wrong.  Here I'm experimenting
+-- with the conjecture.
+public export
+PolyRKanExt : (g, j : PolyFunc) -> PolyFunc
+PolyRKanExt = flip pfParProdClosureNT
+
 public export
 pfLeftCoclosurePos : (q, p : PolyFunc) -> Type
 pfLeftCoclosurePos q p = pfPos p
@@ -1959,6 +1969,10 @@ public export
 PFFreeMonad : PolyFunc -> PFMonad
 PFFreeMonad p = (PolyFuncFreeM p ** PFFreeMonoid p)
 
+-------------------------
+---- Codensity monad ----
+-------------------------
+
 ------------------------
 ---- Cofree comonad ----
 ------------------------
@@ -1986,6 +2000,30 @@ pfCofreeId = PolyFuncCofreeCM PFIdentityArena
 public export
 pfCofreeIdF : Type -> Type
 pfCofreeIdF = InterpPolyFunc pfCofreeId
+
+-------------------------
+---- Density comonad ----
+-------------------------
+
+-------------------------------------
+-------------------------------------
+---- Density comonad as category ----
+-------------------------------------
+-------------------------------------
+
+public export
+PolyDensityComonad : PolyFunc -> PolyFunc
+PolyDensityComonad p = PolyLKanExt p p
+
+public export
+densityToCat : PolyFunc -> CatSig
+densityToCat (ppos ** pdir) =
+  let (dcpos ** dcdir) = PolyDensityComonad (ppos ** pdir) in
+  MkCatSig
+    dcpos
+    ?densityToCat_hole_morph
+    ?densityToCat_hole_id
+    ?densityToCat_hole_comp
 
 ---------------------------------------
 ---------------------------------------

@@ -2495,27 +2495,36 @@ TraversalP = ExOpticP TraversalShape
 -------------------------
 -------------------------
 
+-- `FunctorExp j a` is sometimes written `j ^ a`.
+-- Note that `FunctorExp j a` can be read as
+-- `CovarHomFunc a . j`.
 public export
 FunctorExp : (Type -> Type) -> Type -> Type -> Type
-FunctorExp g = flip (.) g . CovarHomFunc
+FunctorExp j a b = a -> j b
 
 -- The right Kan extension of `g` along `j` (sometimes written `g/j`).
+-- (Note that the Haskell standard libraries reverse the parameters.
+-- "First parameter along second parameter" sounds easier to remember
+-- to me, but I could be wrong.)
+-- (Note that `RKanExt g j a` can be read as a natural transformation from
+-- `FunctorExp j a` to `g`.)
 public export
 RKanExt : (g, j : Type -> Type) -> Type -> Type
-RKanExt g j = flip NaturalTransformation g . FunctorExp j
+RKanExt g j a = (b : Type) -> FunctorExp j a b -> g b
 
+-- Note that `ExpFunctor j a` can be read as
+-- `ContravarHomFunc a . j`.
 public export
 ExpFunctor : (Type -> Type) -> Type -> Type -> Type
-ExpFunctor g = flip (.) g . ContravarHomFunc
-
-public export
-LKanExtSnd : (g, j : Type -> Type) -> (a, b : Type) -> Type
-LKanExtSnd g j a b = Pair (ExpFunctor j a b) (g b)
+ExpFunctor j a b = j b -> a
 
 -- The left Kan extension of `g` along `j`.
+-- (Note that the Haskell standard libraries reverse the parameters.)
+-- "First parameter along second parameter" sounds easier to remember
+-- to me, but I could be wrong.)
 public export
 LKanExt : (g, j : Type -> Type) -> Type -> Type
-LKanExt g j = DPair Type . LKanExtSnd g j
+LKanExt g j a = (b : Type ** (ExpFunctor j a b, g b))
 
 -----------------------
 -----------------------
