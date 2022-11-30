@@ -2025,6 +2025,36 @@ densityToCat (ppos ** pdir) =
     ?densityToCat_hole_id
     ?densityToCat_hole_comp
 
+-----------------------------------
+-----------------------------------
+---- Polynomial Kan extensions ----
+-----------------------------------
+-----------------------------------
+
+public export
+InterpPolyLKan : (p, q : PolyFunc) -> (a : Type) ->
+  InterpPolyFunc (PolyLKanExt p q) a ->
+  LKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
+InterpPolyLKan (ppos ** pdir) (qpos ** qdir) a = ?InterpPolyLKan_hole
+
+public export
+InterpPolyLKanInv : (p, q : PolyFunc) -> (a : Type) ->
+  LKanExt (InterpPolyFunc p) (InterpPolyFunc q) a ->
+  InterpPolyFunc (PolyLKanExt p q) a
+InterpPolyLKanInv (ppos ** pdir) (qpos ** qdir) a = ?InterpPolyLKanInv_hole
+
+public export
+InterpPolyRKan : (p, q : PolyFunc) -> (a : Type) ->
+  InterpPolyFunc (PolyRKanExt p q) a ->
+  RKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
+InterpPolyRKan (ppos ** pdir) (qpos ** qdir) a = ?InterpPolyRKan_hole
+
+public export
+InterpPolyRKanInv : (p, q : PolyFunc) -> (a : Type) ->
+  RKanExt (InterpPolyFunc p) (InterpPolyFunc q) a ->
+  InterpPolyFunc (PolyRKanExt p q) a
+InterpPolyRKanInv (ppos ** pdir) (qpos ** qdir) a = ?InterpPolyRKanInv_hole
+
 ---------------------------------------
 ---------------------------------------
 ---- Dependent polynomial functors ----
