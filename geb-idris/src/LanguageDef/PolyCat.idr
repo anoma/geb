@@ -39,7 +39,7 @@ pfPDir p = DPair (pfPos p) (pfDir {p})
 
 public export
 InterpPolyFunc : PolyFunc -> Type -> Type
-InterpPolyFunc (pos ** dir) x = (i : pos ** (dir i -> x))
+InterpPolyFunc p x = (i : pfPos p ** (pfDir {p} i -> x))
 
 public export
 InterpPFMap : (p : PolyFunc) -> {0 a, b : Type} ->
@@ -119,8 +119,9 @@ pfnFunc p = (pfnPos p ** pfnDirFromN p)
 
 public export
 PolyNatTrans : PolyFunc -> PolyFunc -> Type
-PolyNatTrans (ppos ** pdir) (qpos ** qdir) =
-  (onPos : ppos -> qpos ** SliceMorphism (qdir . onPos) pdir)
+PolyNatTrans p q =
+  (onPos : pfPos p -> pfPos q **
+   SliceMorphism (pfDir {p=q} . onPos) (pfDir {p}))
 
 public export
 pntOnPos : {0 p, q : PolyFunc} -> PolyNatTrans p q ->
@@ -2055,15 +2056,13 @@ public export
 InterpPolyRKan : (p, q : PolyFunc) -> (a : Type) ->
   InterpPolyFunc (PolyRKanExt p q) a ->
   RKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
-InterpPolyRKan (ppos ** pdir) (qpos ** qdir) a ((qi, (onPos ** onDir)) ** pd)
-  b qf =
-    InterpPolyNT
-      {p=(pfCompositionArena (PFHomArena a) (qpos ** qdir))}
-      {q=(ppos ** pdir)}
-      (PolyRKanPoly
-        (ppos ** pdir) (qpos ** qdir) a ((qi, (onPos ** onDir)) ** pd))
-      b
-      ((() ** fst . qf) ** \(x ** qd) => snd (qf x) qd)
+InterpPolyRKan p q a rk b qf =
+  InterpPolyNT
+    {p=(pfCompositionArena (PFHomArena a) q)}
+    {q=p}
+    (PolyRKanPoly p q a rk)
+    b
+    ((() ** DPair.fst . qf) ** \(x ** qd) => DPair.snd (qf x) qd)
 
 ---------------------------------------
 ---------------------------------------
