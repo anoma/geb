@@ -2671,7 +2671,11 @@ CodensityMonad f =
 -- Also known as `rep`.
 public export
 MonadTrans Codensity where
-  lift m = MkCodensity $ \ty => (>>=) m
+  lift {m} {a} ma = MkCodensity $ \ty => (>>=) {m} {a} {b=ty} ma
+
+public export
+liftCodensity : Monad m => {a : Type} -> m a -> Codensity m a
+liftCodensity {m} {a} = lift {t=Codensity} {m} {a}
 
 -- Also known as `abs`.
 public export
