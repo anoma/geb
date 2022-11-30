@@ -1051,6 +1051,31 @@ module geb where
   GebSkel (a ⊗G b) = (((proj₁ (GebSkel a)) ·ℕ (proj₁ (GebSkel b))))
                                          ,, (Gebskel-⊗G-lemma ((proj₁ (GebSkel a))) ((proj₁ (GebSkel b))) ((proj₂ (GebSkel a))) ((proj₂ (GebSkel b))))
 
--- This steblishes an evident skeleton of the Geb category, which we will not prove is equivalent to ω
-                              
+-- This establishes an evident skeleton of the Geb category, which we will not prove is equivalent to ω
+  
+  
+  GebSkel-cat : cat-w-level (lsuc lzero) (lzero)
+  GebSkel-cat = ℕ
+                  ,, ((λ n m → ⨁G Term n ↦ ⨁G Term m)
+                      ,, (_●_
+                      ,, ((λ A → IdMor _)
+                      ,, (((λ A B f g → (pr₁ (IdMorAx g)) , pr₂ (IdMorAx f))) , λ A B C D → CompAssocAx ))))
 
+  GS-F-obj : (n : ℕ) → FinSet
+  GS-F-obj n = Fin-as-obj-of-FinSet n
+                                                                         
+-- Any distributive category on a category is extensive and as 1 has two subobjects - namely 0 and 1 - we have the fact that for all f : 1 ↦ a ⊕G b it is either inl ● fa or inr ● fb
+-- Explicit proofs will be added later
+
+  postulate
+    coprod-term : {a b : ObjGEBCat} (f : Term ↦ (a ⊕G b)) → (Σ[ ga ∶ (Term ↦ a) ] (f ≡ inlG ● ga)) + (Σ[ gb ∶ (Term ↦ b) ] (f ≡ inrG ● gb))
+
+  GS-F-mor : (n m : ℕ) (f : (⨁G Term n) ↦ (⨁G Term m)) → (Fin n → Fin m)
+  GS-F-mor zero m f = λ { ()}
+  GS-F-mor (succ zero) zero f = rec𝟘 _ (eval (Geb-into-FinSet-mor Term Init f) pt)
+  GS-F-mor (succ zero) (succ zero) f = id _
+  GS-F-mor (succ zero) (succ (succ m)) f = cases _ (coprod-term f)
+                                                                  (λ { (ga ,, p) → inl ∘ GS-F-mor one (succ m) ga})
+                                                                  λ p → inr
+  GS-F-mor (succ (succ n)) m f = [ (GS-F-mor (succ n) m (pr₁ (proj₁ (⊕G-mor-fib f)))) ,
+                                   (GS-F-mor one m (pr₂ (proj₁ (⊕G-mor-fib f)))) ]
