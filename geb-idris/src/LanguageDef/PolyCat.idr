@@ -39,7 +39,7 @@ pfPDir p = DPair (pfPos p) (pfDir {p})
 
 public export
 InterpPolyFunc : PolyFunc -> Type -> Type
-InterpPolyFunc (pos ** dir) x = (i : pos ** (dir i -> x))
+InterpPolyFunc p x = (i : pfPos p ** (pfDir {p} i -> x))
 
 public export
 InterpPFMap : (p : PolyFunc) -> {0 a, b : Type} ->
@@ -119,8 +119,9 @@ pfnFunc p = (pfnPos p ** pfnDirFromN p)
 
 public export
 PolyNatTrans : PolyFunc -> PolyFunc -> Type
-PolyNatTrans (ppos ** pdir) (qpos ** qdir) =
-  (onPos : ppos -> qpos ** SliceMorphism (qdir . onPos) pdir)
+PolyNatTrans p q =
+  (onPos : pfPos p -> pfPos q **
+   SliceMorphism (pfDir {p=q} . onPos) (pfDir {p}))
 
 public export
 pntOnPos : {0 p, q : PolyFunc} -> PolyNatTrans p q ->
@@ -638,6 +639,18 @@ public export
 pfParProdClosureNT : PolyFunc -> PolyFunc -> PolyFunc
 pfParProdClosureNT q r =
   (pfParProdClosurePosNT q r ** pfParProdClosureDirNT q r)
+
+public export
+PolyRKanExtPos : PolyFunc -> PolyFunc -> Type
+PolyRKanExtPos g j = (pfPos j, PolyNatTrans j g)
+
+public export
+PolyRKanExtDir : (g, j : PolyFunc) -> PolyRKanExtPos g j -> Type
+PolyRKanExtDir g j (pi, alpha) = pfDir {p=j} pi
+
+public export
+PolyRKanExt : (g, j : PolyFunc) -> PolyFunc
+PolyRKanExt g j = (PolyRKanExtPos g j ** PolyRKanExtDir g j)
 
 public export
 pfLeftCoclosurePos : (q, p : PolyFunc) -> Type
@@ -1959,6 +1972,10 @@ public export
 PFFreeMonad : PolyFunc -> PFMonad
 PFFreeMonad p = (PolyFuncFreeM p ** PFFreeMonoid p)
 
+-------------------------
+---- Codensity monad ----
+-------------------------
+
 ------------------------
 ---- Cofree comonad ----
 ------------------------
@@ -1986,6 +2003,66 @@ pfCofreeId = PolyFuncCofreeCM PFIdentityArena
 public export
 pfCofreeIdF : Type -> Type
 pfCofreeIdF = InterpPolyFunc pfCofreeId
+
+-------------------------
+---- Density comonad ----
+-------------------------
+
+-------------------------------------
+-------------------------------------
+---- Density comonad as category ----
+-------------------------------------
+-------------------------------------
+
+public export
+PolyDensityComonad : PolyFunc -> PolyFunc
+PolyDensityComonad p = PolyLKanExt p p
+
+public export
+densityToCat : PolyFunc -> CatSig
+densityToCat (ppos ** pdir) =
+  let (dcpos ** dcdir) = PolyDensityComonad (ppos ** pdir) in
+  MkCatSig
+    dcpos
+    ?densityToCat_hole_morph
+    ?densityToCat_hole_id
+    ?densityToCat_hole_comp
+
+-----------------------------------
+-----------------------------------
+---- Polynomial Kan extensions ----
+-----------------------------------
+-----------------------------------
+
+public export
+InterpPolyLKan : (p, q : PolyFunc) -> (a : Type) ->
+  InterpPolyFunc (PolyLKanExt p q) a ->
+  LKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
+InterpPolyLKan (ppos ** pdir) (qpos ** qdir) a (i ** f) =
+  (pdir i ** (f, (i ** id)))
+
+public export
+PolyRKanPoly : (p, q : PolyFunc) -> (a : Type) ->
+  InterpPolyFunc (PolyRKanExt p q) a ->
+  PolyNatTrans (pfCompositionArena (PFHomArena a) q) p
+PolyRKanPoly (ppos ** pdir) (qpos ** qdir) a ((qi, (onPos ** onDir)) ** pd) =
+  (\(u ** di) => case u of () => onPos qi **
+   \(u ** di), pdi => case u of
+    () =>
+      (pd (onDir qi pdi) **
+       onDir (di (pd (onDir qi pdi))) ?PolyRKanPoly_hole_ondir))
+
+public export
+InterpPolyRKan : (p, q : PolyFunc) -> (a : Type) ->
+  InterpPolyFunc (PolyRKanExt p q) a ->
+  RKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
+InterpPolyRKan p q a rk b qf =
+  InterpPolyNT
+    {p=(pfCompositionArena (PFHomArena a) q)}
+    {q=p}
+    (PolyRKanPoly p q a rk)
+    b
+    ((() ** DPair.fst . qf) ** \(x ** qd) => DPair.snd (qf x) qd)
 
 ---------------------------------------
 ---------------------------------------

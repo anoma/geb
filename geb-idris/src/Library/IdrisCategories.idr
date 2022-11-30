@@ -2270,6 +2270,43 @@ DirichFunc [] _ = Void
 DirichFunc ((coeff, rep) :: l) ty =
   Either (coeff, ContravarHomFunc rep ty) (DirichFunc l ty)
 
+-------------------------
+-------------------------
+----- Kan extensions ----
+-------------------------
+-------------------------
+
+-- `FunctorExp j a` is sometimes written `j ^ a`.
+-- Note that `FunctorExp j a` can be read as
+-- `CovarHomFunc a . j`.
+public export
+FunctorExp : (Type -> Type) -> Type -> Type -> Type
+FunctorExp j a b = a -> j b
+
+-- The right Kan extension of `g` along `j` (sometimes written `g/j`).
+-- (Note that the Haskell standard libraries reverse the parameters.
+-- "First parameter along second parameter" sounds easier to remember
+-- to me, but I could be wrong.)
+-- (Note that `RKanExt g j a` can be read as a natural transformation from
+-- `FunctorExp j a` to `g`.)
+public export
+RKanExt : (g, j : Type -> Type) -> Type -> Type
+RKanExt g j a = (b : Type) -> FunctorExp j a b -> g b
+
+-- Note that `ExpFunctor j a` can be read as
+-- `ContravarHomFunc a . j`.
+public export
+ExpFunctor : (Type -> Type) -> Type -> Type -> Type
+ExpFunctor j a b = j b -> a
+
+-- The left Kan extension of `g` along `j`.
+-- (Note that the Haskell standard libraries reverse the parameters.)
+-- "First parameter along second parameter" sounds easier to remember
+-- to me, but I could be wrong.)
+public export
+LKanExt : (g, j : Type -> Type) -> Type -> Type
+LKanExt g j a = (b : Type ** (ExpFunctor j a b, g b))
+
 ---------------------------------------
 ---------------------------------------
 ---- Yoneda variants / corollaries ----
@@ -2283,7 +2320,7 @@ DirichFunc ((coeff, rep) :: l) ty =
 public export
 record Yo (f : Type -> Type) (a : Type) where
   constructor MkYo
-  YoEmbed : NaturalTransformation (CovarHomFunc a) f
+  YoEmbed : RKanExt f Prelude.id a
 
 public export
 fromYo : {f : Type -> Type} -> {a : Type} -> Yo f a -> f a
@@ -2317,19 +2354,19 @@ Contravariant (ContraYo f) where
 public export
 record CoYo (f : Type -> Type) (r : Type) where
   constructor MkCoYo
-  CoYoEmbed : (a : Type ** (f a, a -> r))
+  CoYoEmbed : LKanExt f Prelude.id r
 
 public export
 fromCoYo : Functor f => CoYo f b -> f b
-fromCoYo (MkCoYo (ty ** (x, h))) = map {f} h x
+fromCoYo (MkCoYo (ty ** (h, x))) = map {f} h x
 
 public export
 toCoYo : Functor f => {b : Type} -> f b -> CoYo f b
-toCoYo {b} y = MkCoYo (b ** (y, id))
+toCoYo {b} y = MkCoYo (b ** (id, y))
 
 public export
 Functor (CoYo f) where
-  map g (MkCoYo (ty ** (x, h))) = MkCoYo (ty ** (x, g . h))
+  map g (MkCoYo (ty ** (h, x))) = MkCoYo (ty ** (g . h, x))
 
 public export
 record ContraCoYo (f : Type -> Type) (r : Type) where
@@ -2489,34 +2526,6 @@ public export
 TraversalP : OpticSig
 TraversalP = ExOpticP TraversalShape
 
--------------------------
--------------------------
------ Kan extensions ----
--------------------------
--------------------------
-
-public export
-FunctorExp : (Type -> Type) -> Type -> Type -> Type
-FunctorExp g = flip (.) g . CovarHomFunc
-
--- The right Kan extension of `g` along `j` (sometimes written `g/j`).
-public export
-RKanExt : (g, j : Type -> Type) -> Type -> Type
-RKanExt g j = flip NaturalTransformation g . FunctorExp j
-
-public export
-ExpFunctor : (Type -> Type) -> Type -> Type -> Type
-ExpFunctor g = flip (.) g . ContravarHomFunc
-
-public export
-LKanExtSnd : (g, j : Type -> Type) -> (a, b : Type) -> Type
-LKanExtSnd g j a b = Pair (ExpFunctor j a b) (g b)
-
--- The left Kan extension of `g` along `j`.
-public export
-LKanExt : (g, j : Type -> Type) -> Type -> Type
-LKanExt g j = DPair Type . LKanExtSnd g j
-
 -----------------------
 -----------------------
 ---- Continuations ----
@@ -2662,7 +2671,11 @@ CodensityMonad f =
 -- Also known as `rep`.
 public export
 MonadTrans Codensity where
-  lift m = MkCodensity $ \ty => (>>=) m
+  lift {m} {a} ma = MkCodensity $ \ty => (>>=) {m} {a} {b=ty} ma
+
+public export
+liftCodensity : Monad m => {a : Type} -> m a -> Codensity m a
+liftCodensity {m} {a} = lift {t=Codensity} {m} {a}
 
 -- Also known as `abs`.
 public export
