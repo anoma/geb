@@ -2044,8 +2044,12 @@ public export
 PolyRKanPoly : (p, q : PolyFunc) -> (a : Type) ->
   InterpPolyFunc (PolyRKanExt p q) a ->
   PolyNatTrans (pfCompositionArena (PFHomArena a) q) p
-PolyRKanPoly (ppos ** pdir) (qpos ** qdir) a (pi ** pd) =
-  ?PolyRKanPoly_hole
+PolyRKanPoly (ppos ** pdir) (qpos ** qdir) a ((qi, (onPos ** onDir)) ** pd) =
+  (\(u ** di) => case u of () => onPos qi **
+   \(u ** di), pdi => case u of
+    () =>
+      (pd (onDir qi pdi) **
+       onDir (di (pd (onDir qi pdi))) ?PolyRKanPoly_hole_ondir))
 
 public export
 InterpPolyRKan : (p, q : PolyFunc) -> (a : Type) ->
