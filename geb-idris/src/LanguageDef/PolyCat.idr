@@ -639,15 +639,17 @@ pfParProdClosureNT : PolyFunc -> PolyFunc -> PolyFunc
 pfParProdClosureNT q r =
   (pfParProdClosurePosNT q r ** pfParProdClosureDirNT q r)
 
--- I don't actually know whether this is correct!  I'm conjecturing
--- that the closure of the parallel product is a right Kan extension,
--- similarly to how the left coclosure of the composition product is
--- a left Kan extension (_that_ part is given by the _General Theory of
--- Interaction_ book), but I could be wrong.  Here I'm experimenting
--- with the conjecture.
+public export
+PolyRKanExtPos : PolyFunc -> PolyFunc -> Type
+PolyRKanExtPos g j = (pfPos j, PolyNatTrans j g)
+
+public export
+PolyRKanExtDir : (g, j : PolyFunc) -> PolyRKanExtPos g j -> Type
+PolyRKanExtDir g j (pi, alpha) = pfDir {p=j} pi
+
 public export
 PolyRKanExt : (g, j : PolyFunc) -> PolyFunc
-PolyRKanExt = flip pfParProdClosureNT
+PolyRKanExt g j = (PolyRKanExtPos g j ** PolyRKanExtDir g j)
 
 public export
 pfLeftCoclosurePos : (q, p : PolyFunc) -> Type
@@ -2035,25 +2037,29 @@ public export
 InterpPolyLKan : (p, q : PolyFunc) -> (a : Type) ->
   InterpPolyFunc (PolyLKanExt p q) a ->
   LKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
-InterpPolyLKan (ppos ** pdir) (qpos ** qdir) a = ?InterpPolyLKan_hole
+InterpPolyLKan (ppos ** pdir) (qpos ** qdir) a (i ** f) =
+  (pdir i ** (f, (i ** id)))
 
 public export
-InterpPolyLKanInv : (p, q : PolyFunc) -> (a : Type) ->
-  LKanExt (InterpPolyFunc p) (InterpPolyFunc q) a ->
-  InterpPolyFunc (PolyLKanExt p q) a
-InterpPolyLKanInv (ppos ** pdir) (qpos ** qdir) a = ?InterpPolyLKanInv_hole
+PolyRKanPoly : (p, q : PolyFunc) -> (a : Type) ->
+  InterpPolyFunc (PolyRKanExt p q) a ->
+  PolyNatTrans (pfCompositionArena (PFHomArena a) q) p
+PolyRKanPoly (ppos ** pdir) (qpos ** qdir) a (pi ** pd) =
+  ?PolyRKanPoly_hole
 
 public export
 InterpPolyRKan : (p, q : PolyFunc) -> (a : Type) ->
   InterpPolyFunc (PolyRKanExt p q) a ->
   RKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
-InterpPolyRKan (ppos ** pdir) (qpos ** qdir) a = ?InterpPolyRKan_hole
-
-public export
-InterpPolyRKanInv : (p, q : PolyFunc) -> (a : Type) ->
-  RKanExt (InterpPolyFunc p) (InterpPolyFunc q) a ->
-  InterpPolyFunc (PolyRKanExt p q) a
-InterpPolyRKanInv (ppos ** pdir) (qpos ** qdir) a = ?InterpPolyRKanInv_hole
+InterpPolyRKan (ppos ** pdir) (qpos ** qdir) a ((qi, (onPos ** onDir)) ** pd)
+  b qf =
+    InterpPolyNT
+      {p=(pfCompositionArena (PFHomArena a) (qpos ** qdir))}
+      {q=(ppos ** pdir)}
+      (PolyRKanPoly
+        (ppos ** pdir) (qpos ** qdir) a ((qi, (onPos ** onDir)) ** pd))
+      b
+      ((() ** fst . qf) ** \(x ** qd) => snd (qf x) qd)
 
 ---------------------------------------
 ---------------------------------------
