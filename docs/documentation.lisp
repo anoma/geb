@@ -106,7 +106,8 @@ conjectures about GEB")
    the order in which we compose;
    for the sake of completeness,
    there are identify functions $A —\\mathrm{id}_A→ A$ on each set $A$,
-   serving as identities.
+   serving as identities 
+   (which correspond to the composite of the empty path on an object).
    Sets and functions _together_ form **a** category—based on
    function composition;
    thus, let's call this category _sets-'n'-functions_.
@@ -145,15 +146,16 @@ conjectures about GEB")
    in _sets-'n'-functions_ with the one in _sets-'n'-relations_
    (as both actually do have products).
 
-   For the hasty reader, for the purposes of Geb,
-   a solid understanding of _sets-'n'-functions_ will
-   already be quite useful:
-   many phenomena can be understood
-   in analogy to what happens in _sets-'n'-functions_.
+   for the purposes of Geb,
+   many things can be expressed in analogy to
+   the category of _sets-'n'-functions_;
+   thus a solid understanding of the latter
+   will be quite useful.
    In particular,
-   we shall rely on the following structure of _sets-'n'-functions_:
+   we shall rely on the following 
+   universal constructions: 
 
-   1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $1$.
+   1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
    2. The construction of “function spaces” $B^A$ of sets $A,B$, called _exponentials_,
       i.e., collections of functions between pairs of sets.
@@ -166,29 +168,39 @@ conjectures about GEB")
 
    4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
       corresponding to forming disjoint unions of sets;
-      the empty sum is $0$.
+      the empty sum is $\varnothing$.
 
    Product, sums and exponentials
-   are the (almost) complete tool chest to write
-   polynomial expressions like $Ax^{\rm 2} +x^{\rm 1} - Dx^{\rm 0}$
-   with sets instead of numbers/constants
-   where $\lbrace x \rbrace$
-   <!--
-    where $\{ \{ \\{ {{x}}\\} \} \}$ TODO math braces we need
-   -->.
-   The one missing element is a counterpart for _variables_!
-   Somewhat surprisingly,
-   this last building block can be taken from
-   one of the most-well known fundamental results about category theory,
-   generalizing Cayley's Theorem:
-   the [Yoneda-Lemma](https://en.wikipedia.org/wiki/Yoneda_lemma).
+   are the (almost) complete tool chest for writing
+   polynomial expressions, e.g., 
+   $$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+   (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
+   In the above expression,
+   we have sets instead of numbers/constants
+   where $\mathsf{2} = \lbrace 1, 2 \rbrace$, 
+   $\mathsf{1} = \lbrace 1 \rbrace$, 
+   $\mathsf{0} = \lbrace  \rbrace = \varnothing$,
+   and $A$ and $B$ are arbitrary (finite) sets. 
+   We are only missing a counterpart for the _variable_!
+   Raising an arbitrary set to “the power” of a constant set
+   happens to have a very natural counterpart:
+   the central actor of
+   [the most-well known fundamental result about categories](https://en.wikipedia.org/wiki/Yoneda_lemma),
+   which generalizes Cayley's Theorem, i.e., the [Yoneda embedding](https://en.wikipedia.org/wiki/Yoneda_lemma#The_Yoneda_embedding).
 
-   If you are ready,
-   buckle up and jump to @POLY-SETS,
-   have a look at our stream lined account of @YONEDA-LEMMA,
-   or take it slow and review the background in one of
-   the classic or popular
+   If you are familiar with the latter,
+   buckle up and jump to @POLY-SETS.
+   Have a look at our streamlined account of @YONEDA-LEMMA
+   if you are familiar with Cartesian closed categories,
+   or take it slow and read up on the background in 
+   one of the classic or popular
    [textbooks](https://www.goodreads.com/shelf/show/category-theory).
+   Tastes tend to vary. 
+   However, 
+   Benjamin Pierce's
+   [_Basic Category Theory for Computer Scientists_](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
+   as it is very amenable _and_ 
+   covers the background we need in 60 short pages. 
    """
   (@morphisms pax:section)
   (@objects pax:section)
