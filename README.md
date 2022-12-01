@@ -4,35 +4,38 @@
 ## Table of Contents
 
 - [1 Links][9bc5]
-- [2 Getting Started][3d47]
-    - [2.1 installation][8fa5]
-    - [2.2 loading][a7d5]
-- [3 Original Efforts][3686]
-    - [3.1 Geb's Idris Code][8311]
-    - [3.2 Geb's Agda Code][29b7]
-- [4 Categorical Model][c2e9]
-    - [4.1 Morphisms][ada9]
-    - [4.2 Objects][dbe7]
-- [5 Spec Files and Project Layout][9f9c]
-- [6 The Geb Model][c1fb]
-    - [6.1 Core Categories][cb9e]
-        - [6.1.1 Subst Obj][c1b3]
-        - [6.1.2 Subst Morph][d2d1]
-    - [6.2 Accessors][cc51]
-    - [6.3 Constructors][2ad4]
-    - [6.4 API][6228]
-        - [6.4.1 Translation Functions][0caf]
-    - [6.5 Examples][a17b]
-- [7 Polynomial Specification][f5ac]
-    - [7.1 Polynomial Types][bd81]
-    - [7.2 Polynomial Constructors][b76d]
-- [8 Mixins][723a]
-    - [8.1 Pointwise Mixins][d5d3]
-    - [8.2 Pointwise API][2fcf]
-    - [8.3 Mixins Examples][4938]
-- [9 Geb Utilities][4ffa]
-    - [9.1 Accessors][cc51]
-- [10 Testing][9bcb]
+- [2 math-playground][89fa]
+- [3 Getting Started][3d47]
+    - [3.1 installation][8fa5]
+    - [3.2 loading][a7d5]
+- [4 Original Efforts][3686]
+    - [4.1 Geb's Idris Code][8311]
+    - [4.2 Geb's Agda Code][29b7]
+- [5 Categorical Model][c2e9]
+    - [5.1 Morphisms][ada9]
+    - [5.2 Objects][dbe7]
+    - [5.3 The Yoneda Lemma][0e00]
+    - [5.4 Poly in Sets][925b]
+- [6 Spec Files and Project Layout][9f9c]
+- [7 The Geb Model][c1fb]
+    - [7.1 Core Categories][cb9e]
+        - [7.1.1 Subst Obj][c1b3]
+        - [7.1.2 Subst Morph][d2d1]
+    - [7.2 Accessors][cc51]
+    - [7.3 Constructors][2ad4]
+    - [7.4 API][6228]
+        - [7.4.1 Translation Functions][0caf]
+    - [7.5 Examples][a17b]
+- [8 Polynomial Specification][f5ac]
+    - [8.1 Polynomial Types][bd81]
+    - [8.2 Polynomial Constructors][b76d]
+- [9 Mixins][723a]
+    - [9.1 Pointwise Mixins][d5d3]
+    - [9.2 Pointwise API][2fcf]
+    - [9.3 Mixins Examples][4938]
+- [10 Geb Utilities][4ffa]
+    - [10.1 Accessors][cc51]
+- [11 Testing][9bcb]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -41,15 +44,35 @@ Welcome to the GEB project.
 ## 1 Links
 
 Here is the [official repository](https://github.com/anoma/geb/)
+
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
 
+<a id="x-28GEB-DOCS-2FDOCS-3A-40MATH-PLAYGROUND-20MGL-PAX-3ASECTION-29"></a>
+## 2 math-playground
+
+$\lbrace \text{and} \rbrace$
+
+$\lambda \in { 2,3 }.$
+
+$\mathsf{3} = { 1, 2, 3 }$
+
+$\mathsf{3} = { 1, 2, 3 }$
+
+\curly{}
+
+$$\mathsf{3} = { 1, 2, 3 }$$
+
+An inline $\int\_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$
+
+a display $$\int\_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$$
+
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
-## 2 Getting Started
+## 3 Getting Started
 
 Welcome to the GEB Project!
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29"></a>
-### 2.1 installation
+### 3.1 installation
 
 This project uses [common lisp](https://common-lisp.net/), so a few
    dependencies are needed to get around the code-base and start hacking. Namely:
@@ -68,7 +91,7 @@ This project uses [common lisp](https://common-lisp.net/), so a few
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29"></a>
-### 2.2 loading
+### 3.2 loading
 
 Now that we have an environment setup, we can load the project, this
    can be done in a few steps.
@@ -106,7 +129,7 @@ writing:
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29"></a>
-## 3 Original Efforts
+## 4 Original Efforts
 
 Originally GEB started off as an Idris codebase written by the
 designer and creator of GEB, Terence Rokop, However further efforts
@@ -115,7 +138,7 @@ to this, we have plenty of code not in Common Lisp that ought to be
 a good read.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40IDRIS-20MGL-PAX-3ASECTION-29"></a>
-### 3.1 Geb's Idris Code
+### 4.1 Geb's Idris Code
 
 The Idris folder can be found in the
 [geb-idris](https://github.com/anoma/geb/tree/main/geb-idris) folder
@@ -127,7 +150,7 @@ treasure trove of interesting information surrounding category
 theorey.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29"></a>
-### 3.2 Geb's Agda Code
+### 4.2 Geb's Agda Code
 
 The Agda folder can be found in the
 [geb-agda](https://github.com/anoma/geb/tree/main/geb-agda) folder
@@ -140,23 +163,140 @@ while [Geb's Agda Code][29b7] serves as the mathematical formalism proving vario
 conjectures about GEB
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
-## 4 Categorical Model
+## 5 Categorical Model
 
-GEB is organizing programming language concepts
-using [category theory](https://plato.stanford.edu/entries/category-theory/),
-originally developped by mathematicians,
-but very much alive in (theoretical) computer science.
+Geb is organizing programming language concepts (and entities!) using
+[category theory](https://plato.stanford.edu/entries/category-theory/),
+originally developed by mathematicians,
+but very much alive in programming language theory.
+Let us look at a simple well-known example:
+the category of sets and functions.
+It is the bread and butter example:
+sets $A,B,C,…$ play the role of *objects*,
+functions are *arrows* between objects $A—f→B$,
+and the latter *compose* as functions do,
+such that every path of matching functions
+$$A—f→B—g→C—h→D$$
+composes to a corresponding composite function
+$$A—f;g;h→D$$ (or $h∘g∘f$ if you prefer)
+and we enjoy the luxury of not having to worry about
+the order in which we compose;
+for the sake of completeness,
+there are identify functions $A —\mathrm{id}\_A→ A$ on each set $A$,
+serving as identities 
+(which correspond to the composite of the empty path on an object).
+Sets and functions *together* form **a** category—based on
+function composition;
+thus, let's call this category *sets-'n'-functions*.
+This example,
+even “restricted” to  *finite sets-'n'-functions*,
+will permeate through Geb.
+<!--
+although the “weird” habit of avoiding
+talk about elements of sets as much as possible.
+-->
+
+One of the first lessons (in any introduction to category theory)
+about *sets-'n'-functions* is the characterization of
+[product](https://en.wikipedia.org/wiki/Product_(category_theory)#Product_of_two_objects)s
+and [disjoint sum](https://en.wikipedia.org/wiki/Coproduct#Definition)s of sets
+in terms of functions alone,
+i.e.,
+**without *ever* talking about elements of sets**.
+Products and co-products are the simplest examples of
+*universal constructions*.
+One of the first surprises follows suit
+when we generalize functions to partial functions,
+relations, or even multi-relations:
+*we obtain **very** different categories!*
+For example,
+in the category [*sets-'n'-relations*](https://en.wikipedia.org/wiki/Category_of_relations),
+the disjoint union of sets features as both a product and a co-product,
+as a categorical construction.
+
+*Do not fear!*
+The usual definition of products in terms of elements of sets are
+absolutely compatible with the
+universal construction in *sets-'n'-functions*.
+However we gain the possibility
+to compare the “result” of the  *universal constructions*
+in *sets-'n'-functions* with the one in *sets-'n'-relations*
+(as both actually do have products).
+
+for the purposes of Geb,
+many things can be expressed in analogy to
+the category of *sets-'n'-functions*;
+thus a solid understanding of the latter
+will be quite useful.
+In particular,
+we shall rely on the following 
+universal constructions: 
+
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+
+2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
+   i.e., collections of functions between pairs of sets.
+
+3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
+of functions,
+   $C^{(B^A)} \cong C^{(A × B)}$,
+   such that providing several arguments to a function can done
+   either simultaneously, or in sequence.
+
+4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
+   corresponding to forming disjoint unions of sets;
+   the empty sum is $\varnothing$.
+
+Product, sums and exponentials
+are the (almost) complete tool chest for writing
+polynomial expressions, e.g., 
+$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+(We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
+In the above expression,
+we have sets instead of numbers/constants
+where $\mathsf{2} = \lbrace 1, 2 \rbrace$, 
+$\mathsf{1} = \lbrace 1 \rbrace$, 
+$\mathsf{0} = \lbrace  \rbrace = \varnothing$,
+and $A$ and $B$ are arbitrary (finite) sets. 
+We are only missing a counterpart for the *variable*!
+Raising an arbitrary set to “the power” of a constant set
+happens to have a very natural counterpart:
+the central actor of
+[the most-well known fundamental result about categories](https://en.wikipedia.org/wiki/Yoneda_lemma),
+which generalizes Cayley's Theorem, i.e., the [Yoneda embedding](https://en.wikipedia.org/wiki/Yoneda_lemma#The_Yoneda_embedding).
+
+If you are familiar with the latter,
+buckle up and jump to [Poly in Sets][925b].
+Have a look at our streamlined account of [The Yoneda Lemma][0e00]
+if you are familiar with Cartesian closed categories,
+or take it slow and read up on the background in 
+one of the classic or popular
+[textbooks](https://www.goodreads.com/shelf/show/category-theory).
+Tastes tend to vary. 
+However, 
+Benjamin Pierce's
+[*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
+as it is very amenable *and* 
+covers the background we need in 60 short pages.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
-### 4.1 Morphisms
+### 5.1 Morphisms
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29"></a>
-### 4.2 Objects
+### 5.2 Objects
+
+
+<a id="x-28GEB-DOCS-2FDOCS-3A-40YONEDA-LEMMA-20MGL-PAX-3ASECTION-29"></a>
+### 5.3 The Yoneda Lemma
+
+
+<a id="x-28GEB-DOCS-2FDOCS-3A-40POLY-SETS-20MGL-PAX-3ASECTION-29"></a>
+### 5.4 Poly in Sets
 
 
 <a id="x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29"></a>
-## 5 Spec Files and Project Layout
+## 6 Spec Files and Project Layout
 
 ###### \[in package GEB.SPECS\]
 The codebase is split between many files. Each folder can be seen as
@@ -185,14 +325,14 @@ in `geb.poly`, giving the module `geb.poly` a convenient interface for
 all functions that operate on `geb.poly`.
 
 <a id="x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29"></a>
-## 6 The Geb Model
+## 7 The Geb Model
 
 ###### \[in package GEB\]
 Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
-### 6.1 Core Categories
+### 7.1 Core Categories
 
 ###### \[in package GEB.SPEC\]
 The underlying category of GEB. With [Subst Obj][c1b3] covering the
@@ -200,7 +340,7 @@ shapes and forms ([Objects][dbe7]) of data while [Subst Morph][d2d1]
 deals with concrete [Morphisms][ada9] within the category
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
-#### 6.1.1 Subst Obj
+#### 7.1.1 Subst Obj
 
 This section covers the objects of the GEB category. Every value
 that is a [`SUBSTOBJ`][3173] is automatically lifted into a [`SUBSTMORPH`][57dc] when a
@@ -258,7 +398,7 @@ The [Accessors][cc51] specific to [Subst Obj][c1b3]
 - [method] **MCADR** *(COPROD COPROD)*
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
-#### 6.1.2 Subst Morph
+#### 7.1.2 Subst Morph
 
 The moprhisms of the GEB category.
 
@@ -400,7 +540,7 @@ The [Accessors][cc51] specific to [Subst Morph][d2d1]
     Right projection (product elimination)
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
-### 6.2 Accessors
+### 7.2 Accessors
 
 ###### \[in package GEB.UTILS\]
 These functions are generic lenses of the GEB codebase. If a class is
@@ -471,7 +611,7 @@ likely to be used. They may even augment existing classes.
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
-### 6.3 Constructors
+### 7.3 Constructors
 
 ###### \[in package GEB.SPEC\]
 The API for creating GEB terms. All the functions and variables
@@ -525,7 +665,7 @@ More Ergonomic API variants for [`*SO0*`][e982] and [`*SO1*`][b960]
 - [function] **MAKE-FUNCTOR** *&KEY OBJ FUNC*
 
 <a id="x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
-### 6.4 API
+### 7.4 API
 
 Various functions that make working with GEB easier
 
@@ -560,7 +700,7 @@ Various functions that make working with GEB easier
 - [method] **SO-CARD-ALG** *(OBJ \<SUBSTOBJ\>)*
 
 <a id="x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29"></a>
-#### 6.4.1 Translation Functions
+#### 7.4.1 Translation Functions
 
 These cover various conversions from [Subst Morph][d2d1] and [Subst Obj][c1b3]
 into other categorical data structures.
@@ -571,7 +711,7 @@ into other categorical data structures.
     Turns a [Subst Morph][d2d1] into a [`POLY:POLY`][8bf3]
 
 <a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 6.5 Examples
+### 7.5 Examples
 
 PLACEHOLDER: TO SHOW OTHERS HOW `EXAMPLE`s WORK
 
@@ -590,14 +730,14 @@ with GEB:
 
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 7 Polynomial Specification
+## 8 Polynomial Specification
 
 ###### \[in package GEB.POLY.SPEC\]
 This covers a GEB view of Polynomials. In particular this type will
 be used in translating GEB's view of Polynomials into Vampir
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-20MGL-PAX-3ASECTION-29"></a>
-### 7.1 Polynomial Types
+### 8.1 Polynomial Types
 
 This section covers the types of things one can find in the [`POLY`][8bf3]
 constructors
@@ -644,7 +784,7 @@ constructors
     [`THEN`][bfa9] branch is taken, otherwise the [`ELSE`][365a] branch is taken.
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
-### 7.2 Polynomial Constructors
+### 8.2 Polynomial Constructors
 
 Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors][cc51]
 
@@ -692,7 +832,7 @@ Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors]
     Checks if the [`MCAR`][f1ce] is less than the [`MCADR`][cc87] and chooses the appropriate branch
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
-## 8 Mixins
+## 9 Mixins
 
 ###### \[in package GEB.MIXINS\]
 Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
@@ -700,7 +840,7 @@ project. Overall all these offer various services to the rest of the
 project
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
-### 8.1 Pointwise Mixins
+### 9.1 Pointwise Mixins
 
 Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -729,7 +869,7 @@ in our class
     Further all `DIRECT-POINTWISE-MIXIN`'s are [`POINTWISE-MIXIN`][445d]'s
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
-### 8.2 Pointwise API
+### 9.2 Pointwise API
 
 These are the general API functions on any class that have the
 [`POINTWISE-MIXIN`][445d] service.
@@ -762,7 +902,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
     rather than the class
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 8.3 Mixins Examples
+### 9.3 Mixins Examples
 
 Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
@@ -777,7 +917,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 9 Geb Utilities
+## 10 Geb Utilities
 
 ###### \[in package GEB.UTILS\]
 The Utilities package provide general utility functionality that is
@@ -840,7 +980,7 @@ used throughout the GEB codebase
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
-### 9.1 Accessors
+### 10.1 Accessors
 
 These functions are generic lenses of the GEB codebase. If a class is
 defined, where the names are not known, then these accessors are
@@ -910,7 +1050,7 @@ likely to be used. They may even augment existing classes.
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 10 Testing
+## 11 Testing
 
 ###### \[in package GEB-TEST\]
 We use [parachtue](https://quickref.common-lisp.net/parachute.html)
@@ -939,6 +1079,7 @@ features and how to better lay out future tests
 
   [0ae3]: #x-28GEB-2EPOLY-2ESPEC-3A-2A-20TYPE-29 "GEB.POLY.SPEC:* TYPE"
   [0caf]: #x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29 "Translation Functions"
+  [0e00]: #x-28GEB-DOCS-2FDOCS-3A-40YONEDA-LEMMA-20MGL-PAX-3ASECTION-29 "The Yoneda Lemma"
   [1791]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDDR FUNCTION"
   [2570]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CDR FUNCTION"
   [29b7]: #x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29 "Geb's Agda Code"
@@ -963,12 +1104,14 @@ features and how to better lay out future tests
   [7e58]: http://www.lispworks.com/documentation/HyperSpec/Body/t_class.htm "CLASS CLASS"
   [7f9f]: http://www.lispworks.com/documentation/HyperSpec/Body/t_symbol.htm "SYMBOL TYPE"
   [8311]: #x-28GEB-DOCS-2FDOCS-3A-40IDRIS-20MGL-PAX-3ASECTION-29 "Geb's Idris Code"
+  [89fa]: #x-28GEB-DOCS-2FDOCS-3A-40MATH-PLAYGROUND-20MGL-PAX-3ASECTION-29 "math-playground"
   [8bb8]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDR FUNCTION"
   [8bf3]: #x-28GEB-2EPOLY-2ESPEC-3APOLY-20TYPE-29 "GEB.POLY.SPEC:POLY TYPE"
   [8c99]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CAR FUNCTION"
   [8da6]: #x-28GEB-2EUTILS-3APREDICATE-20GENERIC-FUNCTION-29 "GEB.UTILS:PREDICATE GENERIC-FUNCTION"
   [8fa5]: #x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29 "installation"
   [9162]: #x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20TYPE-29 "GEB.POLY.SPEC:COMPOSE TYPE"
+  [925b]: #x-28GEB-DOCS-2FDOCS-3A-40POLY-SETS-20MGL-PAX-3ASECTION-29 "Poly in Sets"
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"

@@ -6,7 +6,26 @@ Welcome to the GEB project.
 ## Links
 
 Here is the [official repository](https://github.com/anoma/geb/)
+
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
+
+## math-playground
+
+$\lbrace \text{and} \rbrace$
+
+$\lambda \in { 2,3 }.$
+
+$\mathsf{3} = { 1, 2, 3 }$
+
+$\mathsf{3} = { 1, 2, 3 }$
+
+\curly{}
+
+$$\mathsf{3} = { 1, 2, 3 }$$
+
+An inline $\int\_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$
+
+a display $$\int\_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$$
 
 ## Getting Started
 
@@ -100,15 +119,130 @@ conjectures about GEB
 
 ## Categorical Model
 
-GEB is organizing programming language concepts
-using [category theory](https://plato.stanford.edu/entries/category-theory/),
-originally developped by mathematicians,
-but very much alive in (theoretical) computer science.
+Geb is organizing programming language concepts (and entities!) using
+[category theory](https://plato.stanford.edu/entries/category-theory/),
+originally developed by mathematicians,
+but very much alive in programming language theory.
+Let us look at a simple well-known example:
+the category of sets and functions.
+It is the bread and butter example:
+sets $A,B,C,…$ play the role of *objects*,
+functions are *arrows* between objects $A—f→B$,
+and the latter *compose* as functions do,
+such that every path of matching functions
+$$A—f→B—g→C—h→D$$
+composes to a corresponding composite function
+$$A—f;g;h→D$$ (or $h∘g∘f$ if you prefer)
+and we enjoy the luxury of not having to worry about
+the order in which we compose;
+for the sake of completeness,
+there are identify functions $A —\mathrm{id}\_A→ A$ on each set $A$,
+serving as identities 
+(which correspond to the composite of the empty path on an object).
+Sets and functions *together* form **a** category—based on
+function composition;
+thus, let's call this category *sets-'n'-functions*.
+This example,
+even “restricted” to  *finite sets-'n'-functions*,
+will permeate through Geb.
+<!--
+although the “weird” habit of avoiding
+talk about elements of sets as much as possible.
+-->
+
+One of the first lessons (in any introduction to category theory)
+about *sets-'n'-functions* is the characterization of
+[product](https://en.wikipedia.org/wiki/Product_(category_theory)#Product_of_two_objects)s
+and [disjoint sum](https://en.wikipedia.org/wiki/Coproduct#Definition)s of sets
+in terms of functions alone,
+i.e.,
+**without *ever* talking about elements of sets**.
+Products and co-products are the simplest examples of
+*universal constructions*.
+One of the first surprises follows suit
+when we generalize functions to partial functions,
+relations, or even multi-relations:
+*we obtain **very** different categories!*
+For example,
+in the category [*sets-'n'-relations*](https://en.wikipedia.org/wiki/Category_of_relations),
+the disjoint union of sets features as both a product and a co-product,
+as a categorical construction.
+
+*Do not fear!*
+The usual definition of products in terms of elements of sets are
+absolutely compatible with the
+universal construction in *sets-'n'-functions*.
+However we gain the possibility
+to compare the “result” of the  *universal constructions*
+in *sets-'n'-functions* with the one in *sets-'n'-relations*
+(as both actually do have products).
+
+for the purposes of Geb,
+many things can be expressed in analogy to
+the category of *sets-'n'-functions*;
+thus a solid understanding of the latter
+will be quite useful.
+In particular,
+we shall rely on the following 
+universal constructions: 
+
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+
+2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
+   i.e., collections of functions between pairs of sets.
+
+3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
+of functions,
+   $C^{(B^A)} \cong C^{(A × B)}$,
+   such that providing several arguments to a function can done
+   either simultaneously, or in sequence.
+
+4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
+   corresponding to forming disjoint unions of sets;
+   the empty sum is $\varnothing$.
+
+Product, sums and exponentials
+are the (almost) complete tool chest for writing
+polynomial expressions, e.g., 
+$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+(We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
+In the above expression,
+we have sets instead of numbers/constants
+where $\mathsf{2} = \lbrace 1, 2 \rbrace$, 
+$\mathsf{1} = \lbrace 1 \rbrace$, 
+$\mathsf{0} = \lbrace  \rbrace = \varnothing$,
+and $A$ and $B$ are arbitrary (finite) sets. 
+We are only missing a counterpart for the *variable*!
+Raising an arbitrary set to “the power” of a constant set
+happens to have a very natural counterpart:
+the central actor of
+[the most-well known fundamental result about categories](https://en.wikipedia.org/wiki/Yoneda_lemma),
+which generalizes Cayley's Theorem, i.e., the [Yoneda embedding](https://en.wikipedia.org/wiki/Yoneda_lemma#The_Yoneda_embedding).
+
+If you are familiar with the latter,
+buckle up and jump to @POLY-SETS.
+Have a look at our streamlined account of @YONEDA-LEMMA
+if you are familiar with Cartesian closed categories,
+or take it slow and read up on the background in 
+one of the classic or popular
+[textbooks](https://www.goodreads.com/shelf/show/category-theory).
+Tastes tend to vary. 
+However, 
+Benjamin Pierce's
+[*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
+as it is very amenable *and* 
+covers the background we need in 60 short pages.
 
 ### Morphisms
 
 
 ### Objects
+
+
+### The Yoneda Lemma
+
+
+### Poly in Sets
 
 
 ## Spec Files and Project Layout

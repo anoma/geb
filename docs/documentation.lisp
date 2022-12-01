@@ -15,7 +15,6 @@
 (pax:defsection @index (:title "The GEB Manual")
   "Welcome to the GEB project."
   (@links            pax:section)
-  (@math-playground  pax:section)
   (@getting-started  pax:section)
   (@original-efforts pax:section)
   (@model            pax:section)
@@ -35,9 +34,10 @@ and the [HTML documentation](https://anoma.github.io/geb/) for the latest versio
 
 (pax:defsection @math-playground (:title "math-playground")
   """
+Disabled by default, put in the @index if you want to render this
+
 $\lbrace \text{and} \rbrace$
 
-$\begin{cases} f^oo & \text{bla} //// \end{cases}$
 
 $\lambda \in \{ 2,3 \}.$
 
