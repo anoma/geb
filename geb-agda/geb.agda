@@ -1070,12 +1070,25 @@ module geb where
   postulate
     coprod-term : {a b : ObjGEBCat} (f : Term ↦ (a ⊕G b)) → (Σ[ ga ∶ (Term ↦ a) ] (f ≡ inlG ● ga)) + (Σ[ gb ∶ (Term ↦ b) ] (f ≡ inrG ● gb))
 
-  GS-F-mor : (n m : ℕ) (f : (⨁G Term n) ↦ (⨁G Term m)) → (Fin n → Fin m)
-  GS-F-mor zero m f = λ { ()}
-  GS-F-mor (succ zero) zero f = rec𝟘 _ (eval (Geb-into-FinSet-mor Term Init f) pt)
-  GS-F-mor (succ zero) (succ zero) f = id _
-  GS-F-mor (succ zero) (succ (succ m)) f = cases _ (coprod-term f)
-                                                                  (λ { (ga ,, p) → inl ∘ GS-F-mor one (succ m) ga})
-                                                                  λ p → inr
-  GS-F-mor (succ (succ n)) m f = [ (GS-F-mor (succ n) m (pr₁ (proj₁ (⊕G-mor-fib f)))) ,
-                                   (GS-F-mor one m (pr₂ (proj₁ (⊕G-mor-fib f)))) ]
+  GS-ω-lemma-one : (m : ℕ) (f : (Term) ↦ (⨁G Term m)) → (𝟙 → Fin m)
+  GS-ω-lemma-one zero f = rec𝟘 _ (eval (Geb-into-FinSet-mor Term Init f) pt)
+  GS-ω-lemma-one (succ m) f = eval (indℕ (λ n → (Term ↦ (⨁G Term (succ n)) ) → (𝟙 → Fin (succ n)))
+                                                           (λ f' → id _)
+                                                           (λ n IHs f' → cases _ (coprod-term f')
+                                                                                                 ((λ { (ga ,, p) → inl ∘ IHs ga}))
+                                                                                                 (λ p → inr))
+                                                           m) f
+
+  GS-ω : (n m : ℕ) (f : (⨁G Term n) ↦ (⨁G Term m)) → (Fin n → Fin m)
+  GS-ω zero m f =  λ { ()}
+  GS-ω (succ n) m f = eval
+                          (indℕ (λ n' → ((⨁G Term (succ n')) ↦ (⨁G Term m)) → (Fin ((succ n')) → Fin m ))
+                                                                                 (GS-ω-lemma-one m)                 -- We use the lemma here
+                                                                                 (λ n' {-ℕ-} IHs f' →
+                                                                                             [ (IHs ((pr₁ (proj₁ (⊕G-mor-fib f')))))
+                                                                                             ,
+                                                                                             GS-ω-lemma-one m (((pr₂ (proj₁ (⊕G-mor-fib f'))))) ])
+                       n) f
+
+  
+
