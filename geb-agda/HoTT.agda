@@ -728,6 +728,12 @@ module HoTT where
     𝟘-is-Prop : is-Prop 𝟘
     𝟘-is-Prop = λ { ()}
 
+    𝟘-fun-Prop : {l : Level} {A : Type l} → is-Prop (𝟘 → A)
+    𝟘-fun-Prop = λ {x y → funext x y λ { ()}}
+
+    𝟙-fun-Prop : {l : Level} {A : Type l} → is-Prop (A → 𝟙)
+    𝟙-fun-Prop = λ x y → funext x y (λ x₁ → is-Contr-then-is-Prop _ 𝟙-is-Contr (x x₁) (y x₁))
+
     n-ary-binary-fun : {l1 : Level} {A : Type l1} (f : A × A → A) (z : A) (x : A) (n : ℕ) → A
     n-ary-binary-fun f z x zero = z
     n-ary-binary-fun f z x (succ n) = f ((n-ary-binary-fun f z x n) , x)
@@ -745,6 +751,8 @@ module HoTT where
     curry-pointwise : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} (f : A → B → C) (x : A × B) →
                                                                                    f (pr₁ x) (pr₂ x) ≡ (uncurry f) x
     curry-pointwise f (x , y) = refl _
+    
+
 
 -- A type is characterized by the homset from the terminal object
 
@@ -934,4 +942,5 @@ module HoTT where
       Univalence-compfun : {l1 l2 : Level} {A B : Type l1} (f : A → B) (P : is-an-equiv f) (a : A) → (proj₁ ((refl-to-id {l1} {A} {B}) (ua (f ,, P))) a) ≡ f   a 
 
   
+
 
