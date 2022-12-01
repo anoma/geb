@@ -133,6 +133,61 @@ AlgRefinedST alg = RefinedST (isRight . stCata alg)
 ---- Dependent fold ----
 ------------------------
 
+------------------------------------------------
+------------------------------------------------
+---- Type of terms of arbitrary finite size ----
+------------------------------------------------
+------------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+-- A position of the product term functor is the number of sub-terms.
+public export
+ProdTermPos : Type
+ProdTermPos = Nat
+
+-- A product term's position, which is a natural number, has that number
+-- of sub-terms, so its type of directions at that position is (isomorphic to)
+-- the type of natural numbers strictly less than the position.
+public export
+ProdTermDir : ProdTermPos -> Type
+ProdTermDir = Fin
+
+public export
+ProdTermPF : PolyFunc
+ProdTermPF = (ProdTermPos ** ProdTermDir)
+
+-- A position of the coproduct term functor is the index of the sub-term.
+public export
+CoprodTermPos : Type
+CoprodTermPos = Sigma {a=Nat} Fin
+
+-- Any coproduct term position has exactly one direction, which corresponds
+-- to the term being injected into a coproduct term at the index given by
+-- the position.
+public export
+CoprodTermDir : CoprodTermPos -> Type
+CoprodTermDir (n ** i) = Unit
+
+public export
+CoprodTermPF : PolyFunc
+CoprodTermPF = (CoprodTermPos ** CoprodTermDir)
+
+-- An ADT term is either a product term or a coproduct term.
+public export
+ADTTermPF : PolyFunc
+ADTTermPF = pfCoproductArena ProdTermPF CoprodTermPF
+
+public export
+ADTTermPos : Type
+ADTTermPos = pfPos ADTTermPF
+
+public export
+ADTTermDir : ADTTermPos -> Type
+ADTTermDir = pfDir {p=ADTTermPF}
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial objects ----
