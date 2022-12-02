@@ -313,6 +313,26 @@ public export
 SubstObjTerm : Type
 SubstObjTerm = RefinedST isSubstObj
 
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+---- Inductive definition of substitutive polynomial morphisms ----
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+public export
+data SubstMorphPos : SOMu -> Type where
+
+public export
+data SubstMorphDir : Sigma SubstMorphPos -> Type where
+
+public export
+SubstMorphPF : SlicePolyEndoFunc SOMu
+SubstMorphPF = SlicePolyEndoFuncId SubstMorphPos SubstMorphDir
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial endofunctors ----
