@@ -2199,6 +2199,13 @@ SlicePolyEndoFunc : Type -> Type
 SlicePolyEndoFunc base = SlicePolyFunc base base
 
 public export
+SlicePolyEndoFuncId : {base : Type} ->
+  (posdep : SliceObj base) -> SliceObj (Sigma posdep) ->
+  SlicePolyEndoFunc base
+SlicePolyEndoFuncId {base} posdep dirdep =
+  (posdep ** dirdep ** fst . fst)
+
+public export
 RefinedPolyFunc : Refined -> Refined -> Type
 RefinedPolyFunc parambase posbase =
   (posdep : RefinedSlice posbase **
@@ -2344,6 +2351,10 @@ data SPFMu : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a where
     (pos : Sigma (spfPos spf)) ->
     ((dir : spfDir spf pos) -> SPFMu spf (spfAssign spf (pos ** dir))) ->
     SPFMu spf (fst pos)
+
+public export
+SPFMuPoly : {a : Type} -> SlicePolyEndoFunc a -> PolyFunc
+SPFMuPoly {a} spf = (a ** SPFMu {a} spf)
 
 --------------------------------------------------------
 ---- Catamorphisms of dependent polynomial functors ----
