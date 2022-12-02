@@ -319,19 +319,70 @@ SubstObjTerm = RefinedST isSubstObj
 -------------------------------------------------------------------
 -------------------------------------------------------------------
 
-----------------------------------
----- Positions and directions ----
-----------------------------------
+-----------------------------------------------------
+---- Positions and directions of unrefined terms ----
+-----------------------------------------------------
 
 public export
-data SubstMorphPos : SOMu -> Type where
+data SubstMorphPos : Type where
+  SMPosId : SOMu -> SubstMorphPos
+  SMPosInit : SOMu -> SubstMorphPos -- from initial
+  SMPosTerm : SOMu -> SubstMorphPos -- to terminal
+  SMPosL : SOMu -> SubstMorphPos -- left injection
+  SMPosR : SOMu -> SubstMorphPos -- right injection
+  SMPosCase : SubstMorphPos
+  SMPosPair : SubstMorphPos
+  SMPos1 : SOMu -> SubstMorphPos -- first projection
+  SMPos2 : SOMu -> SubstMorphPos -- second projection
+  SMPosDistrib : SubstMorphPos
 
 public export
-data SubstMorphDir : Sigma SubstMorphPos -> Type where
+Zero : Type
+Zero = Void
 
 public export
-SubstMorphPF : SlicePolyEndoFunc SOMu
-SubstMorphPF = SlicePolyEndoFuncId SubstMorphPos SubstMorphDir
+One : Type
+One = Unit
+
+public export
+Two : Type
+Two = Either Unit Unit
+
+-- The directions of a `SubstMorphPos` indicate the number of input
+-- morphisms required to construct a morphism of the type corresponding
+-- to the position.
+public export
+SubstMorphDir : SubstMorphPos -> Type
+SubstMorphDir (SMPosId x) = Zero
+SubstMorphDir (SMPosInit x) = Zero
+SubstMorphDir (SMPosTerm x) = Zero
+SubstMorphDir (SMPosL x) = One
+SubstMorphDir (SMPosR x) = One
+SubstMorphDir SMPosCase = Two
+SubstMorphDir SMPosPair = Two
+SubstMorphDir (SMPos1 x) = One
+SubstMorphDir (SMPos2 x) = One
+SubstMorphDir SMPosDistrib = One
+
+public export
+SubstMorphF : PolyFunc
+SubstMorphF = (SubstMorphPos ** SubstMorphDir)
+
+public export
+SubstMorphFree : PolyFunc
+SubstMorphFree = PolyFuncFreeM SubstMorphF
+
+-------------------------
+---- Typed morphisms ----
+-------------------------
+
+public export
+SubstMorphSig : Type
+SubstMorphSig = (SOMu, SOMu)
+
+public export
+SubstMorphPosDep : SubstMorphSig -> SubstMorphPos -> Type
+SubstMorphPosDep sig pos = ?SubstMorphPosDep_hole
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
