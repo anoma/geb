@@ -923,6 +923,14 @@ module HoTT where
     succ-not-dsucc : (n : ℕ) → (¬ (n ≡ succ n))
     succ-not-dsucc zero = succ-not-zero zero
     succ-not-dsucc (succ n) p {- succ n == succ succ n -} = rec𝟘 _ (eval ((succ-not-dsucc n ∘ ≡-Eqℕ n (succ n)) ∘ (Eqℕ-≡ (succ n) (succ (succ n)))) p)
+
+    feq-ptfeq : {l1 l2 : Level} {A : Type l1} {B : Type l2} (f g : A → B) → (f ≡ g) → (f ∼ g)
+    feq-ptfeq f .f (refl .f) = λ x → refl _
+
+-- Disjointness of products
+
+    Type-disjoint : {l1 l2 l3 : Level} {A : Type l1} {B : Type l2} {C : Type l3} (f : C → A) (g : C → B) → (inl ∘ f ≡ inr ∘ g) → (C → 𝟘)
+    Type-disjoint f g p c = rec𝟘 _ (inl-not-inr (f c) (g c) (feq-ptfeq _ _ p c))
     
 
 -- Univalence module. Note that it will not be used to prove the FinSet equivalence as our formulation of the type of leveled categories uses UIP
@@ -942,5 +950,4 @@ module HoTT where
       Univalence-compfun : {l1 l2 : Level} {A B : Type l1} (f : A → B) (P : is-an-equiv f) (a : A) → (proj₁ ((refl-to-id {l1} {A} {B}) (ua (f ,, P))) a) ≡ f   a 
 
   
-
 
