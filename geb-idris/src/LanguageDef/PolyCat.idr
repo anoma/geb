@@ -669,6 +669,10 @@ PolyLKanExt : (g, j : PolyFunc) -> PolyFunc
 PolyLKanExt = flip pfLeftCoclosure
 
 public export
+PolyDensityComonad : PolyFunc -> PolyFunc
+PolyDensityComonad f = PolyLKanExt f f
+
+public export
 pfHomComposePos : Type -> Type -> Type
 pfHomComposePos a b = pfCompositionPos (PFHomArena a) (PFHomArena b)
 
@@ -2008,6 +2012,19 @@ pfCofreeIdF = InterpPolyFunc pfCofreeId
 ---- Density comonad ----
 -------------------------
 
+public export
+PFDensityComonoid : (p : PolyFunc) -> PFComonoid (PolyDensityComonad p)
+PFDensityComonoid p = ?PFDensityComonoid_hole
+
+public export
+PFDensityComonad : PolyFunc -> PFComonad
+PFDensityComonad p = (PolyDensityComonad p ** PFDensityComonoid p)
+
+public export
+PFDensityComonadCorrect : (p : PolyFunc) ->
+  PFComonoidCorrect (PolyDensityComonad p) (PFDensityComonoid p)
+PFDensityComonadCorrect p = ?PFDensityComonadCorrect_hole
+
 -------------------------------------
 -------------------------------------
 ---- Density comonad as category ----
@@ -2015,18 +2032,29 @@ pfCofreeIdF = InterpPolyFunc pfCofreeId
 -------------------------------------
 
 public export
-PolyDensityComonad : PolyFunc -> PolyFunc
-PolyDensityComonad p = PolyLKanExt p p
+pfToCat : PolyFunc -> CatSig
+pfToCat (ppos ** pdir) =
+  MkCatSig
+    ppos
+    (\x, y => pdir y -> pdir x)
+    (\_ => id)
+    (\f, g => g . f)
 
 public export
 densityToCat : PolyFunc -> CatSig
-densityToCat (ppos ** pdir) =
-  let (dcpos ** dcdir) = PolyDensityComonad (ppos ** pdir) in
-  MkCatSig
-    dcpos
-    ?densityToCat_hole_morph
-    ?densityToCat_hole_id
-    ?densityToCat_hole_comp
+densityToCat p = ComonadToCat (PFDensityComonad p) (PFDensityComonadCorrect p)
+
+public export
+pfDensityToCatConsistent : (p : PolyFunc) -> FunExt ->
+  pfToCat p = densityToCat p
+pfDensityToCatConsistent (ppos ** pdir) funext with
+  (PolyDensityComonad (ppos ** pdir)) proof prf
+    pfDensityToCatConsistent (ppos ** pdir) funext | (dcpos ** dcdir) =
+      let
+        fsteq = mkDPairInjectiveFst prf
+        sndeq = mkDPairInjectiveSndHet prf
+      in
+      ?pfDensityToCatConsistent_hole
 
 -----------------------------------
 -----------------------------------
