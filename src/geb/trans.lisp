@@ -21,7 +21,7 @@
 ;; so both styles are acceptable
 (defmethod to-poly ((obj <substmorph>))
   (typecase-of substmorph obj
-    (alias        (to-poly (obj obj)))
+    (alias        (error "impossible"))
     (substobj     (error "impossible"))
     (init          0)
     (terminal      0)
@@ -52,8 +52,15 @@
                                        (poly:+ (poly:* cz xin)
                                                (poly:- yzin cy)
                                                (poly:* cx cy)))))))
-    (otherwise (subclass-responsibility obj)))
-  (subclass-responsibility obj))
+    (otherwise (subclass-responsibility obj))))
+
+;; put here just to avoid confusion
+(defmethod to-poly ((obj alias))
+  (to-poly (obj obj)))
+
+(defmethod to-poly ((obj <substobj>))
+  (declare (ignore obj))
+  poly:ident)
 
 (defun obj-to-nat (obj)
   (so-card-alg obj))

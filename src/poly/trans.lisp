@@ -58,7 +58,6 @@
   "Propagates the value and subtracts them"
   (infix-creation :- obj value))
 
-
 (defmethod to-vampir ((obj /) value)
   ;; this should error
   (infix-creation :/ obj value))
