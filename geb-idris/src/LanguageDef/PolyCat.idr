@@ -2362,23 +2362,47 @@ InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
 
 public export
 PolyBiFunc : Type
-PolyBiFunc = (pf : PolyFunc ** pfPDir pf -> Bool)
+PolyBiFunc = (pos : Type ** pos -> (Type, Type))
 
 public export
 PolyBiToPF : PolyBiFunc -> PolyFunc
-PolyBiToPF = DPair.fst
+PolyBiToPF (pos ** dir) = (pos ** uncurry Either . dir)
 
 public export
-PolyBiToAssign : (pbf : PolyBiFunc) ->
-  pfPDir (PolyBiToPF pbf) -> Bool
-PolyBiToAssign = DPair.snd
+PolyBiPos : PolyBiFunc -> Type
+PolyBiPos = DPair.fst . PolyBiToPF
 
 public export
-PolyBiToSlice : PolyBiFunc -> SlicePolyFunc Bool Unit
-PolyBiToSlice ((pos ** dir) ** assign) =
-  ((\u => case u of () => pos) **
-   (\i => case i of (() ** i') => dir i') **
-   (\d => case d of ((() ** i') ** d') => assign (i' ** d')))
+PolyBiDir : (pbf : PolyBiFunc) -> PolyBiPos pbf -> Type
+PolyBiDir pbf = DPair.snd $ PolyBiToPF pbf
+
+public export
+PolyBiDirTot : PolyBiFunc -> Type
+PolyBiDirTot = pfPDir . PolyBiToPF
+
+public export
+PolyBiDirIsCovar : (pbf : PolyBiFunc) -> PolyBiDirTot pbf -> Bool
+PolyBiDirIsCovar (pos ** dir) (i ** di) with (dir i)
+  PolyBiDirIsCovar (pos ** dir) (i ** di) | (contraDir, covarDir) = isRight di
+
+public export
+PolyBiPosDep : PolyBiFunc -> SliceObj Unit
+PolyBiPosDep (pos ** dir) () = pos
+
+public export
+PolyBiDirDep : (pbf : PolyBiFunc) -> SliceObj (Sigma (PolyBiPosDep pbf))
+PolyBiDirDep (pos ** dir) (() ** i') = uncurry Either $ dir i'
+
+public export
+PolyBiDirAssign : (pbf : PolyBiFunc) -> Sigma (PolyBiDirDep pbf) -> Bool
+PolyBiDirAssign (pos ** dir) ((() ** i) ** di) with (dir i)
+  PolyBiDirAssign (pos ** dir) ((() ** i) ** di) | (contraDir, covarDir) =
+    isRight di
+
+public export
+PolyBiToSliceFunc : PolyBiFunc -> SlicePolyFunc Bool Unit
+PolyBiToSliceFunc pbf =
+  (PolyBiPosDep pbf ** PolyBiDirDep pbf ** PolyBiDirAssign pbf)
 
 -----------------------------------------------
 -----------------------------------------------
