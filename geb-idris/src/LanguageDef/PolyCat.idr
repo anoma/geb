@@ -2369,16 +2369,28 @@ PolyBiFunc : Type
 PolyBiFunc = (pos : Type ** pos -> (Type, Type))
 
 public export
-PolyBiToPF : PolyBiFunc -> PolyFunc
-PolyBiToPF (pos ** dir) = (pos ** uncurry Either . dir)
-
-public export
 PolyBiPos : PolyBiFunc -> Type
-PolyBiPos = DPair.fst . PolyBiToPF
+PolyBiPos = fst
 
 public export
-PolyBiDir : (pbf : PolyBiFunc) -> PolyBiPos pbf -> Type
-PolyBiDir pbf = DPair.snd $ PolyBiToPF pbf
+PolyBiDirPairs : (pbf : PolyBiFunc) -> PolyBiPos pbf -> (Type, Type)
+PolyBiDirPairs = snd
+
+public export
+PolyBiContraDir : (pbf : PolyBiFunc) -> PolyBiPos pbf -> Type
+PolyBiContraDir pbf = fst . PolyBiDirPairs pbf
+
+public export
+PolyBiCovarDir : (pbf : PolyBiFunc) -> PolyBiPos pbf -> Type
+PolyBiCovarDir pbf = snd . PolyBiDirPairs pbf
+
+public export
+PolyBiTotDir : (pbf : PolyBiFunc) -> PolyBiPos pbf -> Type
+PolyBiTotDir pbf = uncurry Either . PolyBiDirPairs pbf
+
+public export
+PolyBiToPF : PolyBiFunc -> PolyFunc
+PolyBiToPF pbf = (PolyBiPos pbf ** PolyBiTotDir pbf)
 
 public export
 PolyBiDirTot : PolyBiFunc -> Type
@@ -2387,21 +2399,20 @@ PolyBiDirTot = pfPDir . PolyBiToPF
 public export
 PolyBiDirIsCovar : (pbf : PolyBiFunc) -> PolyBiDirTot pbf -> Bool
 PolyBiDirIsCovar (pos ** dir) (i ** di) with (dir i)
-  PolyBiDirIsCovar (pos ** dir) (i ** di) | (contraDir, covarDir) = isRight di
+  PolyBiDirIsCovar (pos ** dir) (i ** di) | (contra, covar) = isRight di
 
 public export
 PolyBiPosDep : PolyBiFunc -> SliceObj Unit
-PolyBiPosDep (pos ** dir) () = pos
+PolyBiPosDep pbf () = PolyBiPos pbf
 
 public export
 PolyBiDirDep : (pbf : PolyBiFunc) -> SliceObj (Sigma (PolyBiPosDep pbf))
-PolyBiDirDep (pos ** dir) (() ** i') = uncurry Either $ dir i'
+PolyBiDirDep pbf (() ** i) = PolyBiTotDir pbf i
 
 public export
 PolyBiDirAssign : (pbf : PolyBiFunc) -> Sigma (PolyBiDirDep pbf) -> Bool
-PolyBiDirAssign (pos ** dir) ((() ** i) ** di) with (dir i)
-  PolyBiDirAssign (pos ** dir) ((() ** i) ** di) | (contraDir, covarDir) =
-    isRight di
+PolyBiDirAssign (pos ** dir) ((() ** i) ** di) =
+  PolyBiDirIsCovar (pos ** dir) (i ** di)
 
 public export
 PolyBiToSliceFunc : PolyBiFunc -> SlicePolyFunc Bool Unit
@@ -2414,13 +2425,13 @@ PolyBiToSliceFunc pbf =
 
 public export
 InterpPolyBiFunc : PolyBiFunc -> Type -> Type -> Type
-InterpPolyBiFunc (pos ** dir) x y =
-  (i : pos ** (fst (dir i) -> x, snd (dir i) -> y))
+InterpPolyBiFunc pbf x y =
+  (i : PolyBiPos pbf ** (PolyBiContraDir pbf i -> x, PolyBiCovarDir pbf i -> y))
 
 public export
 InterpPolyProFunc : PolyBiFunc -> Type -> Type -> Type
-InterpPolyProFunc (pos ** dir) x y =
-  (i : pos ** (x -> fst (dir i), snd (dir i) -> y))
+InterpPolyProFunc pbf x y =
+  (i : PolyBiPos pbf ** (x -> PolyBiContraDir pbf i, PolyBiCovarDir pbf i -> y))
 
 -----------------------------------------------
 -----------------------------------------------

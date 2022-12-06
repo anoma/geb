@@ -189,6 +189,10 @@ public export
 SliceNatTrans : {x, y : Type} -> (f, g : SliceFunctor x y) -> Type
 SliceNatTrans {x} {y} f g = (s : SliceObj x) -> SliceMorphism (f s) (g s)
 
+public export
+SliceEither : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
+SliceEither s s' x = Either (s x) (s' x)
+
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
 -------------------------------------------
