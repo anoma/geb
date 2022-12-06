@@ -63,6 +63,15 @@
                  (:file lambda-conversion))))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 
+(asdf:defsystem :geb/gui
+  :depends-on (:geb :mcclim :clim :bordeaux-threads)
+  :description "geb gui presenter"
+  :pathname "src/gui/"
+  :serial t
+  :components ((:file package)
+               (:file gui))
+  :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
+
 (asdf:defsystem :geb/test
   :depends-on (:geb :parachute)
   :description "Testing geb"
@@ -79,7 +88,7 @@
                          (uiop:symbol-call :geb-test :run-tests)))
 
 (asdf:defsystem :geb/documentation
-  :depends-on (:geb :fiveam :MGL-PAX/FULL :cl-environments :geb/test :pythonic-string-reader)
+  :depends-on (:geb :MGL-PAX/FULL :cl-environments :geb/test :pythonic-string-reader)
   :description "geb full documentation exploration"
   :pathname "docs/"
   :serial t

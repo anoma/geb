@@ -78,8 +78,8 @@
 (defun so-forget-middle (x y z)
   (pair (comp (<-left x y) (<-left (prod x y) z))
         (<-right (prod x y) z)))
-(-> so-forget-first (substobj substobj substobj) substmorph)
 
+(-> so-forget-first (substobj substobj substobj) substmorph)
 (defun so-forget-first (x y z)
   (pair (comp (<-right x y) (<-left (prod x y) z))
         (<-right (prod x y) z)))
