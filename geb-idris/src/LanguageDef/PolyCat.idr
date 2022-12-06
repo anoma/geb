@@ -2389,12 +2389,20 @@ PolyBiTotDir : (pbf : PolyBiFunc) -> PolyBiPos pbf -> Type
 PolyBiTotDir pbf = uncurry Either . PolyBiDirPairs pbf
 
 public export
-PolyBiToPF : PolyBiFunc -> PolyFunc
-PolyBiToPF pbf = (PolyBiPos pbf ** PolyBiTotDir pbf)
+PolyBiTotPF : PolyBiFunc -> PolyFunc
+PolyBiTotPF pbf = (PolyBiPos pbf ** PolyBiTotDir pbf)
+
+public export
+PolyBiContraPart : PolyBiFunc -> PolyFunc
+PolyBiContraPart pbf = (PolyBiPos pbf ** PolyBiContraDir pbf)
+
+public export
+PolyBiCovarPart : PolyBiFunc -> PolyFunc
+PolyBiCovarPart pbf = (PolyBiPos pbf ** PolyBiCovarDir pbf)
 
 public export
 PolyBiDirTot : PolyBiFunc -> Type
-PolyBiDirTot = pfPDir . PolyBiToPF
+PolyBiDirTot = pfPDir . PolyBiTotPF
 
 public export
 PolyBiDirIsCovar : (pbf : PolyBiFunc) -> PolyBiDirTot pbf -> Bool
