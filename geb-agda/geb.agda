@@ -1090,5 +1090,42 @@ module geb where
                                                                                              GS-ω-lemma-one m (((pr₂ (proj₁ (⊕G-mor-fib f'))))) ])
                        n) f
 
-  
+  _≃F_ : (A B : FinSet) → Type lzero
+  A ≃F B = (pr₁ (proj₁ (A))) ≃ (pr₁ (proj₁ (B)))
 
+  ⊕F-coprod : (X Y : FinSet) → pr₁ (proj₁ (X ⊕F Y)) ≡ (pr₁ (proj₁ X)) + (pr₁ (proj₁ Y))
+  ⊕F-coprod ((A , n) ,, ea) ((B , m) ,, eb) = refl _
+  
+  GF-⨁G-pres : (n : ℕ) → pr₁ (proj₁ (Geb-into-FinSet-obj (⨁G Term n))) ≡ (pr₁ (proj₁ (Fin-as-obj-of-FinSet n)))
+  GF-⨁G-pres zero = refl _
+  GF-⨁G-pres (succ zero) = refl _
+  GF-⨁G-pres (succ (succ n)) = (⊕F-coprod (Geb-into-FinSet-obj (⨁G Term (succ n))) (Fin-as-obj-of-FinSet one))
+                                · fun-ap (λ K → K + 𝟙) (GF-⨁G-pres (succ n))
+
+-- Usual property of isomorphism preservation for functors
+
+  GF-iso-pres : {a b : ObjGEBCat} → (a ≃G b) → (Geb-into-FinSet-obj a) ≃F (Geb-into-FinSet-obj b)
+  GF-iso-pres (f ,, (g ,, (p1 , p2)))= (Geb-into-FinSet-mor _ _ f) ,,
+                                                                  has-inv-then-equiv _
+                                                                  ((Geb-into-FinSet-mor _ _ g)
+                                                                        ,, (feq-ptfeq _ (id _) (fun-ap (Geb-into-FinSet-mor _ _) p2)
+                                                                                ,
+                                                                            feq-ptfeq _ (id _) (fun-ap ((Geb-into-FinSet-mor _ _)) p1)))
+
+-- Now we establish the fact that Geb is coherent
+
+  coh-lemma : (a b c : ObjGEBCat) (f : c ↦ a) (g : c ↦ b) → (inlG ● f ≡ inrG ● g) → ((inl {lzero} {lzero} {pr₁ (proj₁ (Geb-into-FinSet-obj a))} { pr₁ (proj₁ (Geb-into-FinSet-obj b))} ∘
+     Geb-into-FinSet-mor (⨁G Term (proj₁ (GebSkel c))) a
+     (f ● proj₁ (proj₂ (proj₂ (GebSkel c)))))
+    ≡
+    (inr {_} {_} {pr₁ (proj₁ (Geb-into-FinSet-obj a))} { pr₁ (proj₁ (Geb-into-FinSet-obj b))} ∘
+     Geb-into-FinSet-mor (⨁G Term (proj₁ (GebSkel c))) b
+     (g ● proj₁ (proj₂ (proj₂ (GebSkel c))))))
+  coh-lemma a b c f g ()     
+
+  Geb-coherency : (a b c : ObjGEBCat) (f : c ↦ a) (g : c ↦ b) → (inlG ● f ≡ inrG ● g) → (c ↦ Init)
+  Geb-coherency a b c f g p = eval ((ω-to-Geb-mor _ zero)) (transp {_} {_} {Type lzero} (λ A → A → 𝟘) ( (GF-⨁G-pres (proj₁ (GebSkel c))))
+                                                                                         (Type-disjoint ((Geb-into-FinSet-mor _ a (f ● ( proj₁ (proj₂ (proj₂ (GebSkel c)))))))
+                                                                                                         ((Geb-into-FinSet-mor _ b (g ● ( proj₁ (proj₂ (proj₂ (GebSkel c)))))))
+                                                                                                         (coh-lemma a b c f g p)))
+                              ● ((proj₁ (proj₂ (GebSkel _))))
