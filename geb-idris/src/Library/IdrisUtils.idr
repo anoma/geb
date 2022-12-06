@@ -76,6 +76,10 @@ eitherElim : {0 a, b, c : Type} -> (a -> c) -> (b -> c) -> Either a b -> c
 eitherElim f g (Left e) = f e
 eitherElim f g (Right e) = g e
 
+public export
+codiag : {0 a : Type} -> Either a a -> a
+codiag {a} = eitherElim {a} {b=a} {c=a} id id
+
 -- Like Idris's standard `Subset`, but with even the `pred` type
 -- parameter erased.
 public export

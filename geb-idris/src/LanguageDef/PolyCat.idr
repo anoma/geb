@@ -2354,6 +2354,32 @@ InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
     let (dirf ** eq) = spntOnDir alpha (posfi ** posf) dirsg in
     replace {p=slw} eq $ dirsf dirf)
 
+------------------------------------------------
+------------------------------------------------
+----- Polynomial bifunctors and profunctors ----
+------------------------------------------------
+------------------------------------------------
+
+public export
+PolyBiFunc : Type
+PolyBiFunc = (pf : PolyFunc ** pfPDir pf -> Bool)
+
+public export
+PolyBiToPF : PolyBiFunc -> PolyFunc
+PolyBiToPF = DPair.fst
+
+public export
+PolyBiToAssign : (pbf : PolyBiFunc) ->
+  pfPDir (PolyBiToPF pbf) -> Bool
+PolyBiToAssign = DPair.snd
+
+public export
+PolyBiToSlice : PolyBiFunc -> SlicePolyFunc Bool Unit
+PolyBiToSlice ((pos ** dir) ** assign) =
+  ((\u => case u of () => pos) **
+   (\i => case i of (() ** i') => dir i') **
+   (\d => case d of ((() ** i') ** d') => assign (i' ** d')))
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Dependent-polynomial-functors algebra ----
