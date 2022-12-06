@@ -2429,9 +2429,27 @@ InterpPolyBiFunc pbf x y =
   (i : PolyBiPos pbf ** (PolyBiContraDir pbf i -> x, PolyBiCovarDir pbf i -> y))
 
 public export
+InterpPFBimap : (pbf : PolyBiFunc) -> {0 a, b, c, d: Type} ->
+  (a -> c) -> (b -> d) -> InterpPolyBiFunc p a b -> InterpPolyBiFunc p c d
+InterpPFBimap pbf f g (i ** (contra, covar)) = (i ** (f . contra, g . covar))
+
+public export
+(pbf : PolyBiFunc) => Bifunctor (InterpPolyBiFunc pbf) where
+  bimap {pbf} = InterpPFBimap pbf
+
+public export
 InterpPolyProFunc : PolyBiFunc -> Type -> Type -> Type
 InterpPolyProFunc pbf x y =
   (i : PolyBiPos pbf ** (x -> PolyBiContraDir pbf i, PolyBiCovarDir pbf i -> y))
+
+public export
+InterpPFDimap : (pbf : PolyBiFunc) -> {0 a, b, c, d: Type} ->
+  (c -> a) -> (b -> d) -> InterpPolyProFunc p a b -> InterpPolyProFunc p c d
+InterpPFDimap pbf f g (i ** (contra, covar)) = (i ** (contra . f, g . covar))
+
+public export
+(pbf : PolyBiFunc) => Profunctor (InterpPolyProFunc pbf) where
+  dimap {pbf} = InterpPFDimap pbf
 
 -----------------------------------------------
 -----------------------------------------------
