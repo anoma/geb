@@ -2360,6 +2360,10 @@ InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
 ------------------------------------------------
 ------------------------------------------------
 
+------------------------------------------------------------
+---- Data determining a polynomial bifunctor/profunctor ----
+------------------------------------------------------------
+
 public export
 PolyBiFunc : Type
 PolyBiFunc = (pos : Type ** pos -> (Type, Type))
@@ -2403,6 +2407,20 @@ public export
 PolyBiToSliceFunc : PolyBiFunc -> SlicePolyFunc Bool Unit
 PolyBiToSliceFunc pbf =
   (PolyBiPosDep pbf ** PolyBiDirDep pbf ** PolyBiDirAssign pbf)
+
+--------------------------------------------------
+---- Interpretation of bifunctors/profunctors ----
+--------------------------------------------------
+
+public export
+InterpPolyBiFunc : PolyBiFunc -> Type -> Type -> Type
+InterpPolyBiFunc (pos ** dir) x y =
+  (i : pos ** (fst (dir i) -> x, snd (dir i) -> y))
+
+public export
+InterpPolyProFunc : PolyBiFunc -> Type -> Type -> Type
+InterpPolyProFunc (pos ** dir) x y =
+  (i : pos ** (x -> fst (dir i), snd (dir i) -> y))
 
 -----------------------------------------------
 -----------------------------------------------
