@@ -2236,6 +2236,26 @@ SlicePolyEndoFuncFromId : {base : Type} ->
 SlicePolyEndoFuncFromId {base} (posdep ** dirdep) =
   (posdep ** dirdep ** fst . fst)
 
+-- Another way of looking at the `EndoFuncId` special case of `SlicePolyFunc`
+-- is that it represents a parameterized polynomial functor.  The type of
+-- the parameter becomes the object on whose slice category the dependent
+-- polynomial functor is an endofunctor on.
+public export
+ParamPolyFunc : Type -> Type
+ParamPolyFunc x = x -> PolyFunc
+
+public export
+ParamPolyFuncToSliceEndoId : {base : Type} ->
+  ParamPolyFunc base -> SlicePolyEndoFuncId base
+ParamPolyFuncToSliceEndoId {base} p =
+  (DPair.fst . p ** \(i ** j) => snd (p i) j)
+
+public export
+ParamPolyFuncFromSliceEndoId : {base : Type} ->
+  SlicePolyEndoFuncId base -> ParamPolyFunc base
+ParamPolyFuncFromSliceEndoId {base} (posdep ** dirdep) i =
+  (posdep i ** \pi => dirdep (i ** pi))
+
 public export
 RefinedPolyFunc : Refined -> Refined -> Type
 RefinedPolyFunc parambase posbase =
@@ -2366,22 +2386,6 @@ InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
 --------------------------------------------------
 ---- Data determining a polynomial profunctor ----
 --------------------------------------------------
-
-public export
-ParamPolyFunc : Type -> Type
-ParamPolyFunc x = x -> PolyFunc
-
-public export
-ParamPolyFuncToSliceEndoId : {base : Type} ->
-  ParamPolyFunc base -> SlicePolyEndoFuncId base
-ParamPolyFuncToSliceEndoId {base} p =
-  (DPair.fst . p ** \(i ** j) => snd (p i) j)
-
-public export
-ParamPolyFuncFromSliceEndoId : {base : Type} ->
-  SlicePolyEndoFuncId base -> ParamPolyFunc base
-ParamPolyFuncFromSliceEndoId {base} (posdep ** dirdep) i =
-  (posdep i ** \pi => dirdep (i ** pi))
 
 public export
 RepProFromParam : {pos : Type} -> ParamPolyFunc pos -> Type -> PolyFunc
