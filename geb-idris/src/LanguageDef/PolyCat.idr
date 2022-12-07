@@ -2365,19 +2365,37 @@ InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
 --------------------------------------------------
 
 public export
+ParamPolyFunc : Type -> Type
+ParamPolyFunc x = x -> PolyFunc
+
+public export
+PolyFuncFromParam : {pos : Type} -> ParamPolyFunc pos -> Type -> PolyFunc
+PolyFuncFromParam {pos} p x = (pos ** flip InterpPolyFunc x . p)
+
+public export
+InterpParamPolyFunc : {pos : Type} ->
+  ParamPolyFunc pos -> Type -> Type -> Type
+InterpParamPolyFunc {pos} p = InterpPolyFunc . PolyFuncFromParam {pos} p
+
+public export
+InterpParamDirichFunc : {pos : Type} ->
+  ParamPolyFunc pos -> Type -> Type -> Type
+InterpParamDirichFunc {pos} p = InterpDirichFunc . PolyFuncFromParam {pos} p
+
+public export
 record PolyProFunc where
   constructor MkPolyProFunc
   contravarPos : Type
   covarPos : Type
-  contravarDir : contravarPos -> PolyFunc
-  covarDir : covarPos -> PolyFunc
+  contravarDir : ParamPolyFunc contravarPos
+  covarDir : ParamPolyFunc covarPos
 
 public export
 InterpPolyProFunc : PolyProFunc -> Type -> Type -> Type
 InterpPolyProFunc ppf x y =
   Either
-    (i : ppf.contravarPos ** x -> InterpPolyFunc (ppf.contravarDir i) y)
-    (i : ppf.covarPos ** InterpPolyFunc (ppf.covarDir i) x -> y)
+    (InterpParamDirichFunc ppf.contravarDir y x)
+    (InterpParamPolyFunc ppf.covarDir x y)
 
 public export
 InterpPFDimap : (ppf : PolyProFunc) -> {0 a, b, c, d: Type} ->
