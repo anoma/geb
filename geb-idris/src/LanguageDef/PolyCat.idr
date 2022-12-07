@@ -2369,18 +2369,18 @@ ParamPolyFunc : Type -> Type
 ParamPolyFunc x = x -> PolyFunc
 
 public export
-PolyFuncFromParam : {pos : Type} -> ParamPolyFunc pos -> Type -> PolyFunc
-PolyFuncFromParam {pos} p x = (pos ** flip InterpPolyFunc x . p)
+RepProFromParam : {pos : Type} -> ParamPolyFunc pos -> Type -> PolyFunc
+RepProFromParam {pos} p x = (pos ** flip InterpPolyFunc x . p)
 
 public export
-InterpParamPolyFunc : {pos : Type} ->
+InterpCovarRepProFunc : {pos : Type} ->
   ParamPolyFunc pos -> Type -> Type -> Type
-InterpParamPolyFunc {pos} p = InterpPolyFunc . PolyFuncFromParam {pos} p
+InterpCovarRepProFunc {pos} p = InterpPolyFunc . RepProFromParam {pos} p
 
 public export
-InterpParamDirichFunc : {pos : Type} ->
+InterpContravarRepProFunc : {pos : Type} ->
   ParamPolyFunc pos -> Type -> Type -> Type
-InterpParamDirichFunc {pos} p = InterpDirichFunc . PolyFuncFromParam {pos} p
+InterpContravarRepProFunc {pos} p = InterpDirichFunc . RepProFromParam {pos} p
 
 public export
 record PolyProFunc where
@@ -2394,8 +2394,8 @@ public export
 InterpPolyProFunc : PolyProFunc -> Type -> Type -> Type
 InterpPolyProFunc ppf x y =
   Either
-    (InterpParamDirichFunc ppf.contravarDir y x)
-    (InterpParamPolyFunc ppf.covarDir x y)
+    (InterpContravarRepProFunc ppf.contravarDir y x)
+    (InterpCovarRepProFunc ppf.covarDir x y)
 
 public export
 InterpPFDimap : (ppf : PolyProFunc) -> {0 a, b, c, d: Type} ->
