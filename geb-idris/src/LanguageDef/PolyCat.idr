@@ -2459,6 +2459,22 @@ public export
 (pbf : PolyBiFunc) => Profunctor (InterpPolyProFunc pbf) where
   dimap {pbf} = InterpPFDimap pbf
 
+-------------------------------------------
+-------------------------------------------
+---- Polynomial profunctor as category ----
+-------------------------------------------
+-------------------------------------------
+
+public export
+profToCat : PolyBiFunc -> CatSig
+profToCat pbf =
+  MkCatSig
+    (PolyBiPos pbf)
+    (\x, y =>
+      InterpPolyProFunc pbf (PolyBiContraDir pbf x) (PolyBiCovarDir pbf y))
+    (\x' => (x' ** (id, id)))
+    (\f, g => ?profToCat_hole_comp)
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Dependent-polynomial-functors algebra ----
