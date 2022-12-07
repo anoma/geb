@@ -2227,10 +2227,13 @@ SlicePolyEndoFunc : Type -> Type
 SlicePolyEndoFunc base = SlicePolyFunc base base
 
 public export
-SlicePolyEndoFuncId : {base : Type} ->
-  (posdep : SliceObj base) -> SliceObj (Sigma posdep) ->
-  SlicePolyEndoFunc base
-SlicePolyEndoFuncId {base} posdep dirdep =
+SlicePolyEndoFuncId : Type -> Type
+SlicePolyEndoFuncId base = DPair (SliceObj base) (SliceObj . Sigma)
+
+public export
+SlicePolyEndoFuncFromId : {base : Type} ->
+  SlicePolyEndoFuncId base -> SlicePolyEndoFunc base
+SlicePolyEndoFuncFromId {base} (posdep ** dirdep) =
   (posdep ** dirdep ** fst . fst)
 
 public export
