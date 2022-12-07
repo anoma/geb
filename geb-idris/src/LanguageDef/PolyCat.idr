@@ -2372,6 +2372,18 @@ ParamPolyFunc : Type -> Type
 ParamPolyFunc x = x -> PolyFunc
 
 public export
+ParamPolyFuncToSliceEndoId : {base : Type} ->
+  ParamPolyFunc base -> SlicePolyEndoFuncId base
+ParamPolyFuncToSliceEndoId {base} p =
+  (DPair.fst . p ** \(i ** j) => snd (p i) j)
+
+public export
+ParamPolyFuncFromSliceEndoId : {base : Type} ->
+  SlicePolyEndoFuncId base -> ParamPolyFunc base
+ParamPolyFuncFromSliceEndoId {base} (posdep ** dirdep) i =
+  (posdep i ** \pi => dirdep (i ** pi))
+
+public export
 RepProFromParam : {pos : Type} -> ParamPolyFunc pos -> Type -> PolyFunc
 RepProFromParam {pos} p x = (pos ** flip InterpPolyFunc x . p)
 
