@@ -2471,9 +2471,10 @@ profToCat pbf =
   MkCatSig
     (PolyBiPos pbf)
     (\x, y =>
-      InterpPolyProFunc pbf (PolyBiContraDir pbf x) (PolyBiCovarDir pbf y))
-    (\x' => (x' ** (id, id)))
-    (\f, g => ?profToCat_hole_comp)
+      (PolyBiCovarDir pbf y -> PolyBiCovarDir pbf x,
+       PolyBiContraDir pbf x -> PolyBiContraDir pbf y))
+    (\x' => (id, id))
+    (\f, g => (fst g . fst f, snd f . snd g))
 
 -----------------------------------------------
 -----------------------------------------------
