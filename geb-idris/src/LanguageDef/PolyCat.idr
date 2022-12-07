@@ -2360,6 +2360,37 @@ InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
 ------------------------------------------------
 ------------------------------------------------
 
+--------------------------------------------------
+---- Data determining a polynomial profunctor ----
+--------------------------------------------------
+
+public export
+record PolyProFunc where
+  constructor MkPolyProFunc
+  contravarPos : Type
+  covarPos : Type
+  contravarDir : contravarPos -> PolyFunc
+  covarDir : covarPos -> PolyFunc
+
+public export
+InterpPolyProFunc : PolyProFunc -> Type -> Type -> Type
+InterpPolyProFunc ppf x y =
+  Either
+    (i : ppf.contravarPos ** x -> InterpPolyFunc (ppf.contravarDir i) y)
+    (i : ppf.covarPos ** InterpPolyFunc (ppf.covarDir i) x -> y)
+
+public export
+InterpPFDimap : (ppf : PolyProFunc) -> {0 a, b, c, d: Type} ->
+  (c -> a) -> (b -> d) -> InterpPolyProFunc ppf a b -> InterpPolyProFunc ppf c d
+InterpPFDimap ppf f g (Left (i ** m)) =
+  Left (i ** InterpPFMap (ppf.contravarDir i) g . m . f)
+InterpPFDimap ppf f g (Right (i ** m)) =
+  Right (i ** g . m . InterpPFMap (ppf.covarDir i) f)
+
+public export
+(ppf : PolyProFunc) => Profunctor (InterpPolyProFunc ppf) where
+  dimap {ppf} = InterpPFDimap ppf
+
 ------------------------------------------------------------
 ---- Data determining a polynomial bifunctor/profunctor ----
 ------------------------------------------------------------
@@ -2446,18 +2477,18 @@ public export
   bimap {pbf} = InterpPFBimap pbf
 
 public export
-InterpPolyProFunc : PolyBiFunc -> Type -> Type -> Type
-InterpPolyProFunc pbf x y =
+InterpPolyProFunc' : PolyBiFunc -> Type -> Type -> Type
+InterpPolyProFunc' pbf x y =
   (i : PolyBiPos pbf ** (x -> PolyBiContraDir pbf i, PolyBiCovarDir pbf i -> y))
 
 public export
-InterpPFDimap : (pbf : PolyBiFunc) -> {0 a, b, c, d: Type} ->
-  (c -> a) -> (b -> d) -> InterpPolyProFunc p a b -> InterpPolyProFunc p c d
-InterpPFDimap pbf f g (i ** (contra, covar)) = (i ** (contra . f, g . covar))
+InterpPFDimap' : (pbf : PolyBiFunc) -> {0 a, b, c, d: Type} ->
+  (c -> a) -> (b -> d) -> InterpPolyProFunc' p a b -> InterpPolyProFunc' p c d
+InterpPFDimap' pbf f g (i ** (contra, covar)) = (i ** (contra . f, g . covar))
 
 public export
-(pbf : PolyBiFunc) => Profunctor (InterpPolyProFunc pbf) where
-  dimap {pbf} = InterpPFDimap pbf
+(pbf : PolyBiFunc) => Profunctor (InterpPolyProFunc' pbf) where
+  dimap {pbf} = InterpPFDimap' pbf
 
 -------------------------------------------
 -------------------------------------------
