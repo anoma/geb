@@ -1,6 +1,6 @@
 # Geb Formal Verification
 
-This repository is concerned with formally proving the categorical properties of Geb without dependent types. 
+This repository is concerned with formally proving the categorical properties of Geb without dependent types, specifically focusing on the conjecture that Geb's core category is equivalent to **FinSet**
 
 The overall framework used is MLTT + fun-ext + UIP
 
