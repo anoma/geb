@@ -138,6 +138,48 @@ public export
 termToRATerm : TermMu -> RATerm
 termToRATerm = termCataRec termToRATermAlg
 
+------------------------
+---- More utilities ----
+------------------------
+
+public export
+TermSizeAlg : TermAlgRec Nat
+TermSizeAlg = MkTermAlg (foldl (+) 1) (const $ (+) 1)
+
+public export
+termSize : TermMu -> Nat
+termSize = termCataRec TermSizeAlg
+
+public export
+TermDepthAlg : TermAlgRec Nat
+TermDepthAlg = MkTermAlg (foldl max 1) (const $ (+) 1)
+
+public export
+termDepth : TermMu -> Nat
+termDepth = termCataRec TermDepthAlg
+
+public export
+termShowList : List String -> String
+termShowList [] = ""
+termShowList [t] = t
+termShowList (t :: ts@(_ :: _)) = show t ++ "," ++ termShowList ts
+
+public export
+termShowProduct : List String -> String
+termShowProduct ts = "(" ++ termShowList ts ++ ")"
+
+public export
+termShowCoproduct : Nat -> String -> String
+termShowCoproduct n t = "[" ++ show n ++ ":" ++ t ++ "]"
+
+public export
+TermShowAlg : TermAlgRec String
+TermShowAlg = MkTermAlg termShowProduct termShowCoproduct
+
+public export
+Show TermMu where
+  show = termCataRec TermShowAlg
+
 -------------------------------------------
 -------------------------------------------
 ---- Inductive definition of term type ----
@@ -1427,26 +1469,26 @@ termCataZeroUsage alg (InADTT t) = alg $ case t of
 --------------------------------------
 
 public export
-TermSizeAlg : TermAlg' Nat
-TermSizeAlg ADTUnit = 1
-TermSizeAlg (ADTLeft t) = S t
-TermSizeAlg (ADTRight t) = S t
-TermSizeAlg (ADTPair t t') = S (t + t')
+TermSizeAlg' : TermAlg' Nat
+TermSizeAlg' ADTUnit = 1
+TermSizeAlg' (ADTLeft t) = S t
+TermSizeAlg' (ADTRight t) = S t
+TermSizeAlg' (ADTPair t t') = S (t + t')
 
 public export
-0 termSize : (0 _ : ADTTerm) -> Nat
-termSize = termCataZeroUsage TermSizeAlg
+0 termSize' : (0 _ : ADTTerm) -> Nat
+termSize' = termCataZeroUsage TermSizeAlg'
 
 public export
-TermDepthAlg : TermAlg' Nat
-TermDepthAlg ADTUnit = 1
-TermDepthAlg (ADTLeft t) = S t
-TermDepthAlg (ADTRight t) = S t
-TermDepthAlg (ADTPair t t') = smax t t'
+TermDepthAlg' : TermAlg' Nat
+TermDepthAlg' ADTUnit = 1
+TermDepthAlg' (ADTLeft t) = S t
+TermDepthAlg' (ADTRight t) = S t
+TermDepthAlg' (ADTPair t t') = smax t t'
 
 public export
-0 termDepth : (0 _ : ADTTerm) -> Nat
-termDepth = termCataZeroUsage TermDepthAlg
+0 termDepth' : (0 _ : ADTTerm) -> Nat
+termDepth' = termCataZeroUsage TermDepthAlg'
 
 ----------------------------------------------
 ---- Continuation-passing-style term fold ----

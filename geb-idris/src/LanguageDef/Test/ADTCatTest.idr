@@ -321,6 +321,12 @@ partial
 sn0_0 : StreamRet
 sn0_0 = getSN sn0 ()
 
+-------------------------------
+-------------------------------
+---- Generalized ADT terms ----
+-------------------------------
+-------------------------------
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -429,6 +435,12 @@ adtCatTest = do
   putStrLn ""
   putStrLn $ "wns3 = " ++ wns3s
   -- putStrLn $ "sn0_0 = " ++ show (fst sn0_0)
+  putStrLn ""
+  putStrLn "-------------------------------"
+  putStrLn "-------------------------------"
+  putStrLn "---- Generalized ADT terms ----"
+  putStrLn "-------------------------------"
+  putStrLn "-------------------------------"
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."
