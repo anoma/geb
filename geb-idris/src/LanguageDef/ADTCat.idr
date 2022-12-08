@@ -162,7 +162,7 @@ public export
 termShowList : List String -> String
 termShowList [] = ""
 termShowList [t] = t
-termShowList (t :: ts@(_ :: _)) = show t ++ "," ++ termShowList ts
+termShowList (t :: ts@(_ :: _)) = t ++ "," ++ termShowList ts
 
 public export
 termShowProduct : List String -> String
