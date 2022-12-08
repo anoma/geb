@@ -108,8 +108,8 @@ termCata = pfCata {p=ADTTermPF}
 public export
 record TermAlgRec (a : Type) where
   constructor MkTermAlg
-  talgProd : List a -> a
-  talgCoprod : Nat -> a -> a
+  talgProd : ProdAlg a
+  talgCoprod : CoprodAlg a
 
 public export
 talgFromRec : {0 a : Type} -> TermAlgRec a -> TermAlg a
