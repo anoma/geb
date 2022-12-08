@@ -321,6 +321,27 @@ partial
 sn0_0 : StreamRet
 sn0_0 = getSN sn0 ()
 
+-------------------------------
+-------------------------------
+---- Generalized ADT terms ----
+-------------------------------
+-------------------------------
+
+termShowFull : String -> TermMu -> IO ()
+termShowFull name term = do
+  putStrLn $ name ++ " = " ++ show term
+  putStrLn $ "size[name] = " ++ show (termSize term)
+  putStrLn $ "depth[name] = " ++ show (termDepth term)
+
+termShowFullList : List (String, TermMu) -> IO ()
+termShowFullList = foldlM (const $ uncurry termShowFull) ()
+
+adtT1 : TermMu
+adtT1 = InProd []
+
+adtT2 : TermMu
+adtT2 = InCoprod 0 adtT1
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -429,6 +450,17 @@ adtCatTest = do
   putStrLn ""
   putStrLn $ "wns3 = " ++ wns3s
   -- putStrLn $ "sn0_0 = " ++ show (fst sn0_0)
+  putStrLn ""
+  putStrLn "-------------------------------"
+  putStrLn "-------------------------------"
+  putStrLn "---- Generalized ADT terms ----"
+  putStrLn "-------------------------------"
+  putStrLn "-------------------------------"
+  putStrLn ""
+  termShowFullList [
+      ("adtT1", adtT1)
+    , ("adtT2", adtT2)
+    ]
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."

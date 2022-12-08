@@ -669,6 +669,10 @@ PolyLKanExt : (g, j : PolyFunc) -> PolyFunc
 PolyLKanExt = flip pfLeftCoclosure
 
 public export
+PolyDensityComonad : PolyFunc -> PolyFunc
+PolyDensityComonad f = PolyLKanExt f f
+
+public export
 pfHomComposePos : Type -> Type -> Type
 pfHomComposePos a b = pfCompositionPos (PFHomArena a) (PFHomArena b)
 
@@ -2008,6 +2012,19 @@ pfCofreeIdF = InterpPolyFunc pfCofreeId
 ---- Density comonad ----
 -------------------------
 
+public export
+PFDensityComonoid : (p : PolyFunc) -> PFComonoid (PolyDensityComonad p)
+PFDensityComonoid p = ?PFDensityComonoid_hole
+
+public export
+PFDensityComonad : PolyFunc -> PFComonad
+PFDensityComonad p = (PolyDensityComonad p ** PFDensityComonoid p)
+
+public export
+PFDensityComonadCorrect : (p : PolyFunc) ->
+  PFComonoidCorrect (PolyDensityComonad p) (PFDensityComonoid p)
+PFDensityComonadCorrect p = ?PFDensityComonadCorrect_hole
+
 -------------------------------------
 -------------------------------------
 ---- Density comonad as category ----
@@ -2015,18 +2032,29 @@ pfCofreeIdF = InterpPolyFunc pfCofreeId
 -------------------------------------
 
 public export
-PolyDensityComonad : PolyFunc -> PolyFunc
-PolyDensityComonad p = PolyLKanExt p p
+pfToCat : PolyFunc -> CatSig
+pfToCat (ppos ** pdir) =
+  MkCatSig
+    ppos
+    (\x, y => pdir y -> pdir x)
+    (\_ => id)
+    (\f, g => g . f)
 
 public export
 densityToCat : PolyFunc -> CatSig
-densityToCat (ppos ** pdir) =
-  let (dcpos ** dcdir) = PolyDensityComonad (ppos ** pdir) in
-  MkCatSig
-    dcpos
-    ?densityToCat_hole_morph
-    ?densityToCat_hole_id
-    ?densityToCat_hole_comp
+densityToCat p = ComonadToCat (PFDensityComonad p) (PFDensityComonadCorrect p)
+
+public export
+pfDensityToCatConsistent : (p : PolyFunc) -> FunExt ->
+  pfToCat p = densityToCat p
+pfDensityToCatConsistent (ppos ** pdir) funext with
+  (PolyDensityComonad (ppos ** pdir)) proof prf
+    pfDensityToCatConsistent (ppos ** pdir) funext | (dcpos ** dcdir) =
+      let
+        fsteq = mkDPairInjectiveFst prf
+        sndeq = mkDPairInjectiveSndHet prf
+      in
+      ?pfDensityToCatConsistent_hole
 
 -----------------------------------
 -----------------------------------
@@ -2199,6 +2227,36 @@ SlicePolyEndoFunc : Type -> Type
 SlicePolyEndoFunc base = SlicePolyFunc base base
 
 public export
+SlicePolyEndoFuncId : Type -> Type
+SlicePolyEndoFuncId base = DPair (SliceObj base) (SliceObj . Sigma)
+
+public export
+SlicePolyEndoFuncFromId : {base : Type} ->
+  SlicePolyEndoFuncId base -> SlicePolyEndoFunc base
+SlicePolyEndoFuncFromId {base} (posdep ** dirdep) =
+  (posdep ** dirdep ** fst . fst)
+
+-- Another way of looking at the `EndoFuncId` special case of `SlicePolyFunc`
+-- is that it represents a parameterized polynomial functor.  The type of
+-- the parameter becomes the object on whose slice category the dependent
+-- polynomial functor is an endofunctor on.
+public export
+ParamPolyFunc : Type -> Type
+ParamPolyFunc x = x -> PolyFunc
+
+public export
+ParamPolyFuncToSliceEndoId : {base : Type} ->
+  ParamPolyFunc base -> SlicePolyEndoFuncId base
+ParamPolyFuncToSliceEndoId {base} p =
+  (DPair.fst . p ** \(i ** j) => snd (p i) j)
+
+public export
+ParamPolyFuncFromSliceEndoId : {base : Type} ->
+  SlicePolyEndoFuncId base -> ParamPolyFunc base
+ParamPolyFuncFromSliceEndoId {base} (posdep ** dirdep) i =
+  (posdep i ** \pi => dirdep (i ** pi))
+
+public export
 RefinedPolyFunc : Refined -> Refined -> Type
 RefinedPolyFunc parambase posbase =
   (posdep : RefinedSlice posbase **
@@ -2319,6 +2377,173 @@ InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
     let (dirf ** eq) = spntOnDir alpha (posfi ** posf) dirsg in
     replace {p=slw} eq $ dirsf dirf)
 
+------------------------------------------------
+------------------------------------------------
+----- Polynomial bifunctors and profunctors ----
+------------------------------------------------
+------------------------------------------------
+
+--------------------------------------------------
+---- Data determining a polynomial profunctor ----
+--------------------------------------------------
+
+public export
+RepProFromParam : {pos : Type} -> ParamPolyFunc pos -> Type -> PolyFunc
+RepProFromParam {pos} p x = (pos ** flip InterpPolyFunc x . p)
+
+public export
+InterpCovarRepProFunc : {pos : Type} ->
+  ParamPolyFunc pos -> Type -> Type -> Type
+InterpCovarRepProFunc {pos} p = InterpPolyFunc . RepProFromParam {pos} p
+
+public export
+InterpContravarRepProFunc : {pos : Type} ->
+  ParamPolyFunc pos -> Type -> Type -> Type
+InterpContravarRepProFunc {pos} p = InterpDirichFunc . RepProFromParam {pos} p
+
+public export
+record PolyProFunc where
+  constructor MkPolyProFunc
+  contravarPos : Type
+  covarPos : Type
+  contravarDir : ParamPolyFunc contravarPos
+  covarDir : ParamPolyFunc covarPos
+
+public export
+InterpPolyProFunc : PolyProFunc -> Type -> Type -> Type
+InterpPolyProFunc ppf x y =
+  Either
+    (InterpContravarRepProFunc ppf.contravarDir y x)
+    (InterpCovarRepProFunc ppf.covarDir x y)
+
+public export
+InterpPFDimap : (ppf : PolyProFunc) -> {0 a, b, c, d: Type} ->
+  (c -> a) -> (b -> d) -> InterpPolyProFunc ppf a b -> InterpPolyProFunc ppf c d
+InterpPFDimap ppf f g (Left (i ** m)) =
+  Left (i ** InterpPFMap (ppf.contravarDir i) g . m . f)
+InterpPFDimap ppf f g (Right (i ** m)) =
+  Right (i ** g . m . InterpPFMap (ppf.covarDir i) f)
+
+public export
+(ppf : PolyProFunc) => Profunctor (InterpPolyProFunc ppf) where
+  dimap {ppf} = InterpPFDimap ppf
+
+------------------------------------------------------------
+---- Data determining a polynomial bifunctor/profunctor ----
+------------------------------------------------------------
+
+public export
+PolyBiFunc : Type
+PolyBiFunc = (pos : Type ** pos -> (Type, Type))
+
+public export
+PolyBiPos : PolyBiFunc -> Type
+PolyBiPos = fst
+
+public export
+PolyBiDirPairs : (pbf : PolyBiFunc) -> PolyBiPos pbf -> (Type, Type)
+PolyBiDirPairs = snd
+
+public export
+PolyBiContraDir : (pbf : PolyBiFunc) -> PolyBiPos pbf -> Type
+PolyBiContraDir pbf = fst . PolyBiDirPairs pbf
+
+public export
+PolyBiCovarDir : (pbf : PolyBiFunc) -> PolyBiPos pbf -> Type
+PolyBiCovarDir pbf = snd . PolyBiDirPairs pbf
+
+public export
+PolyBiTotDir : (pbf : PolyBiFunc) -> PolyBiPos pbf -> Type
+PolyBiTotDir pbf = uncurry Either . PolyBiDirPairs pbf
+
+public export
+PolyBiTotPF : PolyBiFunc -> PolyFunc
+PolyBiTotPF pbf = (PolyBiPos pbf ** PolyBiTotDir pbf)
+
+public export
+PolyBiContraPart : PolyBiFunc -> PolyFunc
+PolyBiContraPart pbf = (PolyBiPos pbf ** PolyBiContraDir pbf)
+
+public export
+PolyBiCovarPart : PolyBiFunc -> PolyFunc
+PolyBiCovarPart pbf = (PolyBiPos pbf ** PolyBiCovarDir pbf)
+
+public export
+PolyBiDirTot : PolyBiFunc -> Type
+PolyBiDirTot = pfPDir . PolyBiTotPF
+
+public export
+PolyBiDirIsCovar : (pbf : PolyBiFunc) -> PolyBiDirTot pbf -> Bool
+PolyBiDirIsCovar (pos ** dir) (i ** di) with (dir i)
+  PolyBiDirIsCovar (pos ** dir) (i ** di) | (contra, covar) = isRight di
+
+public export
+PolyBiPosDep : PolyBiFunc -> SliceObj Unit
+PolyBiPosDep pbf () = PolyBiPos pbf
+
+public export
+PolyBiDirDep : (pbf : PolyBiFunc) -> SliceObj (Sigma (PolyBiPosDep pbf))
+PolyBiDirDep pbf (() ** i) = PolyBiTotDir pbf i
+
+public export
+PolyBiDirAssign : (pbf : PolyBiFunc) -> Sigma (PolyBiDirDep pbf) -> Bool
+PolyBiDirAssign (pos ** dir) ((() ** i) ** di) =
+  PolyBiDirIsCovar (pos ** dir) (i ** di)
+
+public export
+PolyBiToSliceFunc : PolyBiFunc -> SlicePolyFunc Bool Unit
+PolyBiToSliceFunc pbf =
+  (PolyBiPosDep pbf ** PolyBiDirDep pbf ** PolyBiDirAssign pbf)
+
+--------------------------------------------------
+---- Interpretation of bifunctors/profunctors ----
+--------------------------------------------------
+
+public export
+InterpPolyBiFunc : PolyBiFunc -> Type -> Type -> Type
+InterpPolyBiFunc pbf x y =
+  (i : PolyBiPos pbf ** (PolyBiContraDir pbf i -> x, PolyBiCovarDir pbf i -> y))
+
+public export
+InterpPFBimap : (pbf : PolyBiFunc) -> {0 a, b, c, d: Type} ->
+  (a -> c) -> (b -> d) -> InterpPolyBiFunc p a b -> InterpPolyBiFunc p c d
+InterpPFBimap pbf f g (i ** (contra, covar)) = (i ** (f . contra, g . covar))
+
+public export
+(pbf : PolyBiFunc) => Bifunctor (InterpPolyBiFunc pbf) where
+  bimap {pbf} = InterpPFBimap pbf
+
+public export
+InterpPolyProFunc' : PolyBiFunc -> Type -> Type -> Type
+InterpPolyProFunc' pbf x y =
+  (i : PolyBiPos pbf ** (x -> PolyBiContraDir pbf i, PolyBiCovarDir pbf i -> y))
+
+public export
+InterpPFDimap' : (pbf : PolyBiFunc) -> {0 a, b, c, d: Type} ->
+  (c -> a) -> (b -> d) -> InterpPolyProFunc' p a b -> InterpPolyProFunc' p c d
+InterpPFDimap' pbf f g (i ** (contra, covar)) = (i ** (contra . f, g . covar))
+
+public export
+(pbf : PolyBiFunc) => Profunctor (InterpPolyProFunc' pbf) where
+  dimap {pbf} = InterpPFDimap' pbf
+
+-------------------------------------------
+-------------------------------------------
+---- Polynomial profunctor as category ----
+-------------------------------------------
+-------------------------------------------
+
+public export
+profToCat : PolyBiFunc -> CatSig
+profToCat pbf =
+  MkCatSig
+    (PolyBiPos pbf)
+    (\x, y =>
+      (PolyBiCovarDir pbf y -> PolyBiCovarDir pbf x,
+       PolyBiContraDir pbf x -> PolyBiContraDir pbf y))
+    (\x' => (id, id))
+    (\f, g => (fst g . fst f, snd f . snd g))
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Dependent-polynomial-functors algebra ----
@@ -2344,6 +2569,10 @@ data SPFMu : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a where
     (pos : Sigma (spfPos spf)) ->
     ((dir : spfDir spf pos) -> SPFMu spf (spfAssign spf (pos ** dir))) ->
     SPFMu spf (fst pos)
+
+public export
+SPFMuPoly : {a : Type} -> SlicePolyEndoFunc a -> PolyFunc
+SPFMuPoly {a} spf = (a ** SPFMu {a} spf)
 
 --------------------------------------------------------
 ---- Catamorphisms of dependent polynomial functors ----

@@ -189,6 +189,10 @@ public export
 SliceNatTrans : {x, y : Type} -> (f, g : SliceFunctor x y) -> Type
 SliceNatTrans {x} {y} f g = (s : SliceObj x) -> SliceMorphism (f s) (g s)
 
+public export
+SliceEither : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
+SliceEither s s' x = Either (s x) (s' x)
+
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
 -------------------------------------------
@@ -790,12 +794,20 @@ RefinedSliceMorphism {a} s s' =
 
 public export
 RefinedDPair : {a : Refined} -> RefinedSlice a -> Type
-RefinedDPair {a} p = DPair (RefinedType a) (RefinedType . p)
+RefinedDPair {a} p = Sigma {a=(RefinedType a)} (RefinedType . p)
+
+public export
+ErasedDPair : {a : Refined} -> RefinedSlice a -> Type
+ErasedDPair {a} p = Sigma {a=(RefinedType a)} (ErasedType . p)
+
+public export
+0 ErasedPred : {a : Refined} ->
+  (p : RefinedSlice a) -> ErasedDPair {a} p -> Bool
+ErasedPred {a} p dp = RefinedPred (p (fst dp)) (snd dp)
 
 public export
 RefinedSigma : {a : Refined} -> RefinedSlice a -> Refined
-RefinedSigma {a} p =
-  Element0 (DPair (RefinedType a) (fst0 . p)) (\x => snd0 (p (fst x)) (snd x))
+RefinedSigma {a} p = Element0 (ErasedDPair {a} p) (ErasedPred {a} p)
 
 public export
 RefinedSigmaType : {a : Refined} -> RefinedSlice a -> Type

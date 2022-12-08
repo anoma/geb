@@ -6,6 +6,180 @@ import public LanguageDef.PolyCat
 
 %default total
 
+------------------------------------------------
+------------------------------------------------
+---- Type of terms of arbitrary finite size ----
+------------------------------------------------
+------------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+-- A position of the product term functor is the number of sub-terms.
+public export
+ProdTermPos : Type
+ProdTermPos = Nat
+
+-- A product term's position, which is a natural number, has that number
+-- of sub-terms, so its type of directions at that position is (isomorphic to)
+-- the type of natural numbers strictly less than the position.
+public export
+ProdTermDir : ProdTermPos -> Type
+ProdTermDir = Fin
+
+public export
+ProdTermPF : PolyFunc
+ProdTermPF = (ProdTermPos ** ProdTermDir)
+
+-- A position of the coproduct term functor is the index of the sub-term.
+public export
+CoprodTermPos : Type
+CoprodTermPos = Nat
+
+-- Any coproduct term position has exactly one direction, which corresponds
+-- to the term being injected into a coproduct term at the index given by
+-- the position.
+public export
+CoprodTermDir : CoprodTermPos -> Type
+CoprodTermDir n = Unit
+
+public export
+CoprodTermPF : PolyFunc
+CoprodTermPF = (CoprodTermPos ** CoprodTermDir)
+
+-- An ADT term is either a product term or a coproduct term.
+public export
+ADTTermPF : PolyFunc
+ADTTermPF = pfCoproductArena ProdTermPF CoprodTermPF
+
+public export
+ADTTermPos : Type
+ADTTermPos = pfPos ADTTermPF
+
+public export
+ADTTermDir : ADTTermPos -> Type
+ADTTermDir = pfDir {p=ADTTermPF}
+
+---------------------------------------------
+---- Least fixed point (initial algebra) ----
+---------------------------------------------
+
+public export
+TermMu : Type
+TermMu = PolyFuncMu ADTTermPF
+
+---------------------------------
+---- Algebras, catamorphisms ----
+---------------------------------
+
+public export
+TermAlg : Type -> Type
+TermAlg = PFAlg ADTTermPF
+
+public export
+termCata : {0 a : Type} -> TermAlg a -> TermMu -> a
+termCata = pfCata {p=ADTTermPF}
+
+public export
+record TermAlgRec (a : Type) where
+  constructor MkTermAlg
+  talgProd : List a -> a
+  talgCoprod : Nat -> a -> a
+
+public export
+talgFromRec : {0 a : Type} -> TermAlgRec a -> TermAlg a
+talgFromRec alg (Left len) ts = alg.talgProd $ toList $ finFToVect ts
+talgFromRec alg (Right idx) t = alg.talgCoprod idx $ t ()
+
+public export
+termCataRec : {0 a : Type} -> TermAlgRec a -> TermMu -> a
+termCataRec = termCata . talgFromRec
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InProd : List TermMu -> TermMu
+InProd ts = InPFM (Left $ length ts) $ index' ts
+
+public export
+InCoprod : Nat -> TermMu -> TermMu
+InCoprod n t = InPFM (Right n) $ \() => t
+
+--------------------------------------------------------------------------------
+---- Explicitly recursive ADT equivalent to generalized polynomial ADT term ----
+--------------------------------------------------------------------------------
+
+public export
+data RATerm : Type where
+  RARecordTerm : List RATerm -> RATerm
+  RASumTerm : Nat -> RATerm -> RATerm
+
+mutual
+  public export
+  raTermToADTTerm : RATerm -> TermMu
+  raTermToADTTerm (RARecordTerm ts) = InProd $ raTermListToADTTermList ts
+  raTermToADTTerm (RASumTerm n t) = InCoprod n $ raTermToADTTerm t
+
+  public export
+  raTermListToADTTermList : List RATerm -> List TermMu
+  raTermListToADTTermList [] =
+    []
+  raTermListToADTTermList (t :: ts) =
+    raTermToADTTerm t :: raTermListToADTTermList ts
+
+public export
+termToRATermAlg : TermAlgRec RATerm
+termToRATermAlg = MkTermAlg RARecordTerm RASumTerm
+
+public export
+termToRATerm : TermMu -> RATerm
+termToRATerm = termCataRec termToRATermAlg
+
+------------------------
+---- More utilities ----
+------------------------
+
+public export
+TermSizeAlg : TermAlgRec Nat
+TermSizeAlg = MkTermAlg (foldl (+) 1) (const $ (+) 1)
+
+public export
+termSize : TermMu -> Nat
+termSize = termCataRec TermSizeAlg
+
+public export
+TermDepthAlg : TermAlgRec Nat
+TermDepthAlg = MkTermAlg (foldl max 1) (const $ (+) 1)
+
+public export
+termDepth : TermMu -> Nat
+termDepth = termCataRec TermDepthAlg
+
+public export
+termShowList : List String -> String
+termShowList [] = ""
+termShowList [t] = t
+termShowList (t :: ts@(_ :: _)) = show t ++ "," ++ termShowList ts
+
+public export
+termShowProduct : List String -> String
+termShowProduct ts = "(" ++ termShowList ts ++ ")"
+
+public export
+termShowCoproduct : Nat -> String -> String
+termShowCoproduct n t = "[" ++ show n ++ ":" ++ t ++ "]"
+
+public export
+TermShowAlg : TermAlgRec String
+TermShowAlg = MkTermAlg termShowProduct termShowCoproduct
+
+public export
+Show TermMu where
+  show = termCataRec TermShowAlg
+
 -------------------------------------------
 -------------------------------------------
 ---- Inductive definition of term type ----
@@ -257,6 +431,77 @@ isSubstObj = isJust . asSubstObj
 public export
 SubstObjTerm : Type
 SubstObjTerm = RefinedST isSubstObj
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+---- Inductive definition of substitutive polynomial morphisms ----
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+
+-----------------------------------------------------
+---- Positions and directions of unrefined terms ----
+-----------------------------------------------------
+
+public export
+data SubstMorphPos : Type where
+  SMPosId : SOMu -> SubstMorphPos
+  SMPosInit : SOMu -> SubstMorphPos -- from initial
+  SMPosTerm : SOMu -> SubstMorphPos -- to terminal
+  SMPosL : SOMu -> SubstMorphPos -- left injection
+  SMPosR : SOMu -> SubstMorphPos -- right injection
+  SMPosCase : SubstMorphPos
+  SMPosPair : SubstMorphPos
+  SMPos1 : SOMu -> SubstMorphPos -- first projection
+  SMPos2 : SOMu -> SubstMorphPos -- second projection
+  SMPosDistrib : SubstMorphPos
+
+public export
+Zero : Type
+Zero = Void
+
+public export
+One : Type
+One = Unit
+
+public export
+Two : Type
+Two = Either Unit Unit
+
+-- The directions of a `SubstMorphPos` indicate the number of input
+-- morphisms required to construct a morphism of the type corresponding
+-- to the position.
+public export
+SubstMorphDir : SubstMorphPos -> Type
+SubstMorphDir (SMPosId x) = Zero
+SubstMorphDir (SMPosInit x) = Zero
+SubstMorphDir (SMPosTerm x) = Zero
+SubstMorphDir (SMPosL x) = One
+SubstMorphDir (SMPosR x) = One
+SubstMorphDir SMPosCase = Two
+SubstMorphDir SMPosPair = Two
+SubstMorphDir (SMPos1 x) = One
+SubstMorphDir (SMPos2 x) = One
+SubstMorphDir SMPosDistrib = One
+
+public export
+SubstMorphF : PolyFunc
+SubstMorphF = (SubstMorphPos ** SubstMorphDir)
+
+public export
+SubstMorphFree : PolyFunc
+SubstMorphFree = PolyFuncFreeM SubstMorphF
+
+-------------------------
+---- Typed morphisms ----
+-------------------------
+
+public export
+SubstMorphSig : Type
+SubstMorphSig = (SOMu, SOMu)
+
+public export
+SubstMorphPosDep : SubstMorphSig -> SubstMorphPos -> Type
+SubstMorphPosDep sig pos = ?SubstMorphPosDep_hole
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -1200,19 +1445,19 @@ t $$ t' = InADTT (ADTPair t t')
 ----------------------
 
 public export
-TermAlg : Type -> Type
-TermAlg a = ADTTermF a -> a
+TermAlg' : Type -> Type
+TermAlg' a = ADTTermF a -> a
 
 public export
 TermEndoAlg : Type
-TermEndoAlg = TermAlg ADTTerm
+TermEndoAlg = TermAlg' ADTTerm
 
 ----------------------------------------------------------
 ---- Zero-usage (compile-time-only) term catamorphism ----
 ----------------------------------------------------------
 
 public export
-0 termCataZeroUsage : {0 a : Type} -> (0 _ : TermAlg a) -> (0 _ : ADTTerm) -> a
+0 termCataZeroUsage : {0 a : Type} -> (0 _ : TermAlg' a) -> (0 _ : ADTTerm) -> a
 termCataZeroUsage alg (InADTT t) = alg $ case t of
   ADTUnit => ADTUnit
   ADTLeft t => ADTLeft (termCataZeroUsage alg t)
@@ -1224,26 +1469,26 @@ termCataZeroUsage alg (InADTT t) = alg $ case t of
 --------------------------------------
 
 public export
-TermSizeAlg : TermAlg Nat
-TermSizeAlg ADTUnit = 1
-TermSizeAlg (ADTLeft t) = S t
-TermSizeAlg (ADTRight t) = S t
-TermSizeAlg (ADTPair t t') = S (t + t')
+TermSizeAlg' : TermAlg' Nat
+TermSizeAlg' ADTUnit = 1
+TermSizeAlg' (ADTLeft t) = S t
+TermSizeAlg' (ADTRight t) = S t
+TermSizeAlg' (ADTPair t t') = S (t + t')
 
 public export
-0 termSize : (0 _ : ADTTerm) -> Nat
-termSize = termCataZeroUsage TermSizeAlg
+0 termSize' : (0 _ : ADTTerm) -> Nat
+termSize' = termCataZeroUsage TermSizeAlg'
 
 public export
-TermDepthAlg : TermAlg Nat
-TermDepthAlg ADTUnit = 1
-TermDepthAlg (ADTLeft t) = S t
-TermDepthAlg (ADTRight t) = S t
-TermDepthAlg (ADTPair t t') = smax t t'
+TermDepthAlg' : TermAlg' Nat
+TermDepthAlg' ADTUnit = 1
+TermDepthAlg' (ADTLeft t) = S t
+TermDepthAlg' (ADTRight t) = S t
+TermDepthAlg' (ADTPair t t') = smax t t'
 
 public export
-0 termDepth : (0 _ : ADTTerm) -> Nat
-termDepth = termCataZeroUsage TermDepthAlg
+0 termDepth' : (0 _ : ADTTerm) -> Nat
+termDepth' = termCataZeroUsage TermDepthAlg'
 
 ----------------------------------------------
 ---- Continuation-passing-style term fold ----
@@ -1251,7 +1496,7 @@ termDepth = termCataZeroUsage TermDepthAlg
 
 mutual
   public export
-  termFold : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a
+  termFold : {0 a : Type} -> TermAlg' a -> (a -> a) -> ADTTerm -> a
   termFold alg cont (InADTT t) = case t of
     ADTUnit => cont (alg ADTUnit)
     ADTLeft l => termFold alg (cont . alg . ADTLeft) l
@@ -1259,7 +1504,7 @@ mutual
     ADTPair l r => termFold alg (termFoldPair alg cont r) l
 
   public export
-  termFoldPair : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a -> a
+  termFoldPair : {0 a : Type} -> TermAlg' a -> (a -> a) -> ADTTerm -> a -> a
   termFoldPair alg cont r l = termFold alg (cont . alg . ADTPair l) r
 
 ---------------------------------------
@@ -1284,7 +1529,7 @@ mutual
   public export
   partial
   termStackRun : {0 a : Type} ->
-    TermAlg a -> TermStack a -> ADTTerm -> a
+    TermAlg' a -> TermStack a -> ADTTerm -> a
   termStackRun alg stack (InADTT t) = case t of
     ADTUnit => termContRun alg stack (alg ADTUnit)
     ADTLeft l => termStackRun alg (TSELeft :: stack) l
@@ -1293,7 +1538,7 @@ mutual
 
   public export
   partial
-  termContRun : {0 a : Type} -> TermAlg a -> TermStack a -> a -> a
+  termContRun : {0 a : Type} -> TermAlg' a -> TermStack a -> a -> a
   termContRun {a} alg [] result = result
   termContRun {a} alg (elem :: stack) result = case elem of
     TSELeft => termContRun alg stack (alg $ ADTLeft result)
@@ -1307,5 +1552,5 @@ mutual
 ------------------------------------------
 
 public export
-termCata : {0 a : Type} -> TermAlg a -> ADTTerm -> a
-termCata alg = termFold alg id
+termCata' : {0 a : Type} -> TermAlg' a -> ADTTerm -> a
+termCata' alg = termFold alg id
