@@ -24,7 +24,7 @@ where `Fin n` is defined by pattern-matching:
     Fin (succ zero) = 𝟙
     Fin (succ (succ n)) = (Fin (succ n)) + 𝟙
 
-Hence we define a finite set as a type alongisde a proof that it is equivalent to some finite type. Interpreting MLTT + functional extensionality in **Set**, equivalences manifest as bijections while `Σ[ n : ℕ ] Fin n` as $\omega$. We do not care for (-1)-truncating the equivalence proofs since up to (1-categorical) equivalence this will serve the exact same purpose.
+Hence we define a finite set as a type alongisde a proof that it is equivalent to some finite type. Interpreting MLTT in **Set**, equivalences manifest as bijections while `Σ[ n : ℕ ] Fin n` as $\omega$. We do not care for (-1)-truncating the equivalence proofs since up to (1-categorical) equivalence this will serve the exact same purpose.
 
 We make these into objects of a category by making morphisms the $\Pi$-types between underlying types.
 
