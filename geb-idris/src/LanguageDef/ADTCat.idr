@@ -6,6 +6,124 @@ import public LanguageDef.PolyCat
 
 %default total
 
+------------------------------------------------
+------------------------------------------------
+---- Type of terms of arbitrary finite size ----
+------------------------------------------------
+------------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+-- A position of the product term functor is the number of sub-terms.
+public export
+ProdTermPos : Type
+ProdTermPos = Nat
+
+-- A product term's position, which is a natural number, has that number
+-- of sub-terms, so its type of directions at that position is (isomorphic to)
+-- the type of natural numbers strictly less than the position.
+public export
+ProdTermDir : ProdTermPos -> Type
+ProdTermDir = Fin
+
+public export
+ProdTermPF : PolyFunc
+ProdTermPF = (ProdTermPos ** ProdTermDir)
+
+-- A position of the coproduct term functor is the index of the sub-term.
+public export
+CoprodTermPos : Type
+CoprodTermPos = Nat
+
+-- Any coproduct term position has exactly one direction, which corresponds
+-- to the term being injected into a coproduct term at the index given by
+-- the position.
+public export
+CoprodTermDir : CoprodTermPos -> Type
+CoprodTermDir n = Unit
+
+public export
+CoprodTermPF : PolyFunc
+CoprodTermPF = (CoprodTermPos ** CoprodTermDir)
+
+-- An ADT term is either a product term or a coproduct term.
+public export
+ADTTermPF : PolyFunc
+ADTTermPF = pfCoproductArena ProdTermPF CoprodTermPF
+
+public export
+ADTTermPos : Type
+ADTTermPos = pfPos ADTTermPF
+
+public export
+ADTTermDir : ADTTermPos -> Type
+ADTTermDir = pfDir {p=ADTTermPF}
+
+---------------------------------------------
+---- Least fixed point (initial algebra) ----
+---------------------------------------------
+
+public export
+TermMu : Type
+TermMu = PolyFuncMu ADTTermPF
+
+---------------------------------
+---- Algebras, catamorphisms ----
+---------------------------------
+
+public export
+TermAlg : Type -> Type
+TermAlg = PFAlg ADTTermPF
+
+public export
+termCata : {0 a : Type} -> TermAlg a -> TermMu -> a
+termCata = pfCata {p=ADTTermPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InProd : List TermMu -> TermMu
+InProd ts = InPFM (Left $ length ts) $ index' ts
+
+public export
+InCoprod : Nat -> TermMu -> TermMu
+InCoprod n t = InPFM (Right n) $ \() => t
+
+--------------------------------------------------------------------------------
+---- Explicitly recursive ADT equivalent to generalized polynomial ADT term ----
+--------------------------------------------------------------------------------
+
+public export
+data RATerm : Type where
+  RARecordTerm : List RATerm -> RATerm
+  RASumTerm : Nat -> RATerm -> RATerm
+
+mutual
+  public export
+  raTermToADTTerm : RATerm -> TermMu
+  raTermToADTTerm (RARecordTerm ts) = InProd $ raTermListToADTTermList ts
+  raTermToADTTerm (RASumTerm n t) = InCoprod n $ raTermToADTTerm t
+
+  public export
+  raTermListToADTTermList : List RATerm -> List TermMu
+  raTermListToADTTermList [] =
+    []
+  raTermListToADTTermList (t :: ts) =
+    raTermToADTTerm t :: raTermListToADTTermList ts
+
+public export
+termToRATermAlg : TermAlg RATerm
+termToRATermAlg (Left len) ts = RARecordTerm $ toList $ finFToVect ts
+termToRATermAlg (Right idx) t = RASumTerm idx $ t ()
+
+public export
+termToRATerm : TermMu -> RATerm
+termToRATerm = termCata termToRATermAlg
+
 -------------------------------------------
 -------------------------------------------
 ---- Inductive definition of term type ----
@@ -132,124 +250,6 @@ AlgRefinedST alg = RefinedST (isRight . stCata alg)
 ------------------------
 ---- Dependent fold ----
 ------------------------
-
-------------------------------------------------
-------------------------------------------------
----- Type of terms of arbitrary finite size ----
-------------------------------------------------
-------------------------------------------------
-
-----------------------------------
----- Positions and directions ----
-----------------------------------
-
--- A position of the product term functor is the number of sub-terms.
-public export
-ProdTermPos : Type
-ProdTermPos = Nat
-
--- A product term's position, which is a natural number, has that number
--- of sub-terms, so its type of directions at that position is (isomorphic to)
--- the type of natural numbers strictly less than the position.
-public export
-ProdTermDir : ProdTermPos -> Type
-ProdTermDir = Fin
-
-public export
-ProdTermPF : PolyFunc
-ProdTermPF = (ProdTermPos ** ProdTermDir)
-
--- A position of the coproduct term functor is the index of the sub-term.
-public export
-CoprodTermPos : Type
-CoprodTermPos = Nat
-
--- Any coproduct term position has exactly one direction, which corresponds
--- to the term being injected into a coproduct term at the index given by
--- the position.
-public export
-CoprodTermDir : CoprodTermPos -> Type
-CoprodTermDir n = Unit
-
-public export
-CoprodTermPF : PolyFunc
-CoprodTermPF = (CoprodTermPos ** CoprodTermDir)
-
--- An ADT term is either a product term or a coproduct term.
-public export
-ADTTermPF : PolyFunc
-ADTTermPF = pfCoproductArena ProdTermPF CoprodTermPF
-
-public export
-ADTTermPos : Type
-ADTTermPos = pfPos ADTTermPF
-
-public export
-ADTTermDir : ADTTermPos -> Type
-ADTTermDir = pfDir {p=ADTTermPF}
-
----------------------------------------------
----- Least fixed point (initial algebra) ----
----------------------------------------------
-
-public export
-TermMu : Type
-TermMu = PolyFuncMu ADTTermPF
-
----------------------------------
----- Algebras, catamorphisms ----
----------------------------------
-
-public export
-TermAlg : Type -> Type
-TermAlg = PFAlg ADTTermPF
-
-public export
-termCata : {0 a : Type} -> TermAlg a -> TermMu -> a
-termCata = pfCata {p=ADTTermPF}
-
--------------------
----- Utilities ----
--------------------
-
-public export
-InProd : List TermMu -> TermMu
-InProd ts = InPFM (Left $ length ts) $ index' ts
-
-public export
-InCoprod : Nat -> TermMu -> TermMu
-InCoprod n t = InPFM (Right n) $ \() => t
-
---------------------------------------------------------------------------------
----- Explicitly recursive ADT equivalent to generalized polynomial ADT term ----
---------------------------------------------------------------------------------
-
-public export
-data RATerm : Type where
-  RARecordTerm : List RATerm -> RATerm
-  RASumTerm : Nat -> RATerm -> RATerm
-
-mutual
-  public export
-  raTermToADTTerm : RATerm -> TermMu
-  raTermToADTTerm (RARecordTerm ts) = InProd $ raTermListToADTTermList ts
-  raTermToADTTerm (RASumTerm n t) = InCoprod n $ raTermToADTTerm t
-
-  public export
-  raTermListToADTTermList : List RATerm -> List TermMu
-  raTermListToADTTermList [] =
-    []
-  raTermListToADTTermList (t :: ts) =
-    raTermToADTTerm t :: raTermListToADTTermList ts
-
-public export
-termToRATermAlg : TermAlg RATerm
-termToRATermAlg (Left len) ts = RARecordTerm $ toList $ finFToVect ts
-termToRATermAlg (Right idx) t = RASumTerm idx $ t ()
-
-public export
-termToRATerm : TermMu -> RATerm
-termToRATerm = termCata termToRATermAlg
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
