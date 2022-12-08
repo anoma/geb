@@ -81,6 +81,21 @@ public export
 termCata : {0 a : Type} -> TermAlg a -> TermMu -> a
 termCata = pfCata {p=ADTTermPF}
 
+public export
+record TermAlgRec (a : Type) where
+  constructor MkTermAlg
+  talgProd : List a -> a
+  talgCoprod : Nat -> a -> a
+
+public export
+talgFromRec : {0 a : Type} -> TermAlgRec a -> TermAlg a
+talgFromRec alg (Left len) ts = alg.talgProd $ toList $ finFToVect ts
+talgFromRec alg (Right idx) t = alg.talgCoprod idx $ t ()
+
+public export
+termCataRec : {0 a : Type} -> TermAlgRec a -> TermMu -> a
+termCataRec = termCata . talgFromRec
+
 -------------------
 ---- Utilities ----
 -------------------
@@ -116,13 +131,12 @@ mutual
     raTermToADTTerm t :: raTermListToADTTermList ts
 
 public export
-termToRATermAlg : TermAlg RATerm
-termToRATermAlg (Left len) ts = RARecordTerm $ toList $ finFToVect ts
-termToRATermAlg (Right idx) t = RASumTerm idx $ t ()
+termToRATermAlg : TermAlgRec RATerm
+termToRATermAlg = MkTermAlg RARecordTerm RASumTerm
 
 public export
 termToRATerm : TermMu -> RATerm
-termToRATerm = termCata termToRATermAlg
+termToRATerm = termCataRec termToRATermAlg
 
 -------------------------------------------
 -------------------------------------------
