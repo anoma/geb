@@ -330,17 +330,37 @@ sn0_0 = getSN sn0 ()
 termShowFull : String -> TermMu -> IO ()
 termShowFull name term = do
   putStrLn $ name ++ " = " ++ show term
-  putStrLn $ "size[name] = " ++ show (termSize term)
-  putStrLn $ "depth[name] = " ++ show (termDepth term)
+  putStrLn $ "size[" ++ name ++ "] = " ++ show (termSize term)
+  putStrLn $ "depth[" ++ name ++ "] = " ++ show (termDepth term)
+
+termShowFullTerminated : (String, TermMu) -> IO ()
+termShowFullTerminated (name, term) = do
+  termShowFull name term
+  putStrLn "----"
 
 termShowFullList : List (String, TermMu) -> IO ()
-termShowFullList = foldlM (const $ uncurry termShowFull) ()
+termShowFullList [] = pure ()
+termShowFullList ts@(_ :: _) = do
+  putStrLn "----"
+  foldlM (const $ termShowFullTerminated) () ts
 
 adtT1 : TermMu
 adtT1 = InProd []
 
 adtT2 : TermMu
 adtT2 = InCoprod 0 adtT1
+
+adtT3 : TermMu
+adtT3 = InProd [adtT1, adtT2]
+
+adtT4 : TermMu
+adtT4 = InCoprod 1 adtT3
+
+adtT5 : TermMu
+adtT5 = InCoprod 2 adtT3
+
+adtT6 : TermMu
+adtT6 = InProd [adtT4, adtT5]
 
 ----------------------------------
 ----------------------------------
@@ -460,6 +480,10 @@ adtCatTest = do
   termShowFullList [
       ("adtT1", adtT1)
     , ("adtT2", adtT2)
+    , ("adtT3", adtT3)
+    , ("adtT4", adtT4)
+    , ("adtT5", adtT5)
+    , ("adtT6", adtT6)
     ]
   putStrLn ""
   putStrLn "---------------"
