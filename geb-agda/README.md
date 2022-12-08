@@ -8,8 +8,8 @@ The overall framework used is MLTT + fun-ext + UIP
 ## Content outline
 - `HoTT` file contains basic type-theoretic constructions with an added Univalence module not used for verification purposes
 - `uip-cat` contains formalization of category theory using UIP
-- `geb` contains all the relevant code of the formal verification process, as well as properties of FinSet.
-- `Lambek` contains a compact proof of the equivalence of the category of simply typed $\lambda$-calculi and the category of Cartesian Closed Categories lifted from *Introduction to Higher Order Categorical Logic* while using some theory of essentially algebraic theories.
+- `geb` contains all the relevant code of the formal verification process, as well as properties of finite sets
+- `Lambek` contains a compact proof of the equivalence of the category of simply typed $\lambda$-calculi and the category of Cartesian Closed Categories lifted from *Introduction to Higher Order Categorical Logic* while using some result from the study of essentially algebraic theories
 
 ## Core constructions
 
