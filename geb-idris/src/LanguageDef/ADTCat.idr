@@ -152,7 +152,7 @@ termSize = termCataRec TermSizeAlg
 
 public export
 TermDepthAlg : TermAlgRec Nat
-TermDepthAlg = MkTermAlg (foldl max 1) (const $ (+) 1)
+TermDepthAlg = MkTermAlg (S . foldl max 0) (const $ (+) 1)
 
 public export
 termDepth : TermMu -> Nat
