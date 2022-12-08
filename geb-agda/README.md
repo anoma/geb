@@ -35,14 +35,14 @@ Morω n m = Fin n → Fin m
 ```
 - `ObjGebCat` and `MorGebCat` mimic the core constructions of the Idris Geb code while making it more readable by getting rid of one of the constructors. In paticular, we establish `ObjGebCat` without using `Subst`.
 
-Note this indeed forms a category info after adding appropriate axioms, e.g. :
+Note this indeed forms category data after adding appropriate axioms, e.g. :
 
     postulate
 
       InitMorAx : {x : ObjGEBCat} (f : Init ↦ x) → (f ≡ InitMor x)
 for the universal property of the initial object.
 
-- `GebSkel-cat` is a skeleton of `Geb-cat` where objects are natural numbers and morphisms **GebSkel-cat**$(n, m) :=$  **Geb-cat**$(\bigoplus_{n}$ Term $, \bigoplus_{m}$ Term$)$ 
+- `GebSkel-cat` is a skeleton of `Geb-cat` where objects are natural numbers and morphisms **GebSkel-cat**$(n, m) :=$  **Geb-cat**$(\bigoplus_{n}$ Term $, \bigoplus_{m}$ Term $)$ 
 
 ## Proof outline
 We define appropriate categories `FinSet-cat`, `Geb-cat` as described above, after which we establish `ω-cat`, the skeleton of `the former.
