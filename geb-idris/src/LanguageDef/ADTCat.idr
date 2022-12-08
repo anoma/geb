@@ -275,7 +275,10 @@ fbcObjRep = fbcObjCataRec FBCObjRepAlg
 
 public export
 FBCObjParseAlg : TermAlgRec (Maybe FinBCObjMu)
-FBCObjParseAlg = MkTermAlg ?FBCObjParse_hole_prod ?FBCObjParse_hole_coprod
+FBCObjParseAlg =
+  MkTermAlg
+    (\ts => let tra = sequence ts in map ?FBCObjParse_hole_prod tra)
+    (\ts => ?FBCObjParse_hole_coprod)
 
 public export
 fbcObjParse : TermMu -> Maybe FinBCObjMu
