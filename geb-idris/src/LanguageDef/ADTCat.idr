@@ -162,14 +162,14 @@ ProdTermPF = (ProdTermPos ** ProdTermDir)
 -- A position of the coproduct term functor is the index of the sub-term.
 public export
 CoprodTermPos : Type
-CoprodTermPos = Sigma {a=Nat} Fin
+CoprodTermPos = Nat
 
 -- Any coproduct term position has exactly one direction, which corresponds
 -- to the term being injected into a coproduct term at the index given by
 -- the position.
 public export
 CoprodTermDir : CoprodTermPos -> Type
-CoprodTermDir (n ** i) = Unit
+CoprodTermDir n = Unit
 
 public export
 CoprodTermPF : PolyFunc
@@ -187,6 +187,69 @@ ADTTermPos = pfPos ADTTermPF
 public export
 ADTTermDir : ADTTermPos -> Type
 ADTTermDir = pfDir {p=ADTTermPF}
+
+---------------------------------------------
+---- Least fixed point (initial algebra) ----
+---------------------------------------------
+
+public export
+TermMu : Type
+TermMu = PolyFuncMu ADTTermPF
+
+---------------------------------
+---- Algebras, catamorphisms ----
+---------------------------------
+
+public export
+TermAlg : Type -> Type
+TermAlg = PFAlg ADTTermPF
+
+public export
+termCata : {0 a : Type} -> TermAlg a -> TermMu -> a
+termCata = pfCata {p=ADTTermPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InProd : List TermMu -> TermMu
+InProd ts = InPFM (Left $ length ts) $ index' ts
+
+public export
+InCoprod : Nat -> TermMu -> TermMu
+InCoprod n t = InPFM (Right n) $ \() => t
+
+--------------------------------------------------------------------------------
+---- Explicitly recursive ADT equivalent to generalized polynomial ADT term ----
+--------------------------------------------------------------------------------
+
+public export
+data RATerm : Type where
+  RARecordTerm : List RATerm -> RATerm
+  RASumTerm : Nat -> RATerm -> RATerm
+
+mutual
+  public export
+  raTermToADTTerm : RATerm -> TermMu
+  raTermToADTTerm (RARecordTerm ts) = InProd $ raTermListToADTTermList ts
+  raTermToADTTerm (RASumTerm n t) = InCoprod n $ raTermToADTTerm t
+
+  public export
+  raTermListToADTTermList : List RATerm -> List TermMu
+  raTermListToADTTermList [] =
+    []
+  raTermListToADTTermList (t :: ts) =
+    raTermToADTTerm t :: raTermListToADTTermList ts
+
+public export
+termToRATermAlg : TermAlg RATerm
+termToRATermAlg (Left len) ts = RARecordTerm $ toList $ finFToVect ts
+termToRATermAlg (Right idx) t = RASumTerm idx $ t ()
+
+public export
+termToRATerm : TermMu -> RATerm
+termToRATerm = termCata termToRATermAlg
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -1326,19 +1389,19 @@ t $$ t' = InADTT (ADTPair t t')
 ----------------------
 
 public export
-TermAlg : Type -> Type
-TermAlg a = ADTTermF a -> a
+TermAlg' : Type -> Type
+TermAlg' a = ADTTermF a -> a
 
 public export
 TermEndoAlg : Type
-TermEndoAlg = TermAlg ADTTerm
+TermEndoAlg = TermAlg' ADTTerm
 
 ----------------------------------------------------------
 ---- Zero-usage (compile-time-only) term catamorphism ----
 ----------------------------------------------------------
 
 public export
-0 termCataZeroUsage : {0 a : Type} -> (0 _ : TermAlg a) -> (0 _ : ADTTerm) -> a
+0 termCataZeroUsage : {0 a : Type} -> (0 _ : TermAlg' a) -> (0 _ : ADTTerm) -> a
 termCataZeroUsage alg (InADTT t) = alg $ case t of
   ADTUnit => ADTUnit
   ADTLeft t => ADTLeft (termCataZeroUsage alg t)
@@ -1350,7 +1413,7 @@ termCataZeroUsage alg (InADTT t) = alg $ case t of
 --------------------------------------
 
 public export
-TermSizeAlg : TermAlg Nat
+TermSizeAlg : TermAlg' Nat
 TermSizeAlg ADTUnit = 1
 TermSizeAlg (ADTLeft t) = S t
 TermSizeAlg (ADTRight t) = S t
@@ -1361,7 +1424,7 @@ public export
 termSize = termCataZeroUsage TermSizeAlg
 
 public export
-TermDepthAlg : TermAlg Nat
+TermDepthAlg : TermAlg' Nat
 TermDepthAlg ADTUnit = 1
 TermDepthAlg (ADTLeft t) = S t
 TermDepthAlg (ADTRight t) = S t
@@ -1377,7 +1440,7 @@ termDepth = termCataZeroUsage TermDepthAlg
 
 mutual
   public export
-  termFold : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a
+  termFold : {0 a : Type} -> TermAlg' a -> (a -> a) -> ADTTerm -> a
   termFold alg cont (InADTT t) = case t of
     ADTUnit => cont (alg ADTUnit)
     ADTLeft l => termFold alg (cont . alg . ADTLeft) l
@@ -1385,7 +1448,7 @@ mutual
     ADTPair l r => termFold alg (termFoldPair alg cont r) l
 
   public export
-  termFoldPair : {0 a : Type} -> TermAlg a -> (a -> a) -> ADTTerm -> a -> a
+  termFoldPair : {0 a : Type} -> TermAlg' a -> (a -> a) -> ADTTerm -> a -> a
   termFoldPair alg cont r l = termFold alg (cont . alg . ADTPair l) r
 
 ---------------------------------------
@@ -1410,7 +1473,7 @@ mutual
   public export
   partial
   termStackRun : {0 a : Type} ->
-    TermAlg a -> TermStack a -> ADTTerm -> a
+    TermAlg' a -> TermStack a -> ADTTerm -> a
   termStackRun alg stack (InADTT t) = case t of
     ADTUnit => termContRun alg stack (alg ADTUnit)
     ADTLeft l => termStackRun alg (TSELeft :: stack) l
@@ -1419,7 +1482,7 @@ mutual
 
   public export
   partial
-  termContRun : {0 a : Type} -> TermAlg a -> TermStack a -> a -> a
+  termContRun : {0 a : Type} -> TermAlg' a -> TermStack a -> a -> a
   termContRun {a} alg [] result = result
   termContRun {a} alg (elem :: stack) result = case elem of
     TSELeft => termContRun alg stack (alg $ ADTLeft result)
@@ -1433,5 +1496,5 @@ mutual
 ------------------------------------------
 
 public export
-termCata : {0 a : Type} -> TermAlg a -> ADTTerm -> a
-termCata alg = termFold alg id
+termCata' : {0 a : Type} -> TermAlg' a -> ADTTerm -> a
+termCata' alg = termFold alg id
