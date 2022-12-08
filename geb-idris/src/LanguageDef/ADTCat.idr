@@ -61,6 +61,30 @@ public export
 ADTTermDir : ADTTermPos -> Type
 ADTTermDir = pfDir {p=ADTTermPF}
 
+public export
+ProdAlg : Type -> Type
+ProdAlg a = List a -> a
+
+public export
+MkProdAlg : {0 a : Type} -> ProdAlg a -> PFAlg ProdTermPF a
+MkProdAlg alg len = alg . toList . finFToVect {n=len}
+
+public export
+prodCata : {0 a : Type} -> ProdAlg a -> PolyFuncMu ProdTermPF -> a
+prodCata = pfCata {p=ProdTermPF} . MkProdAlg
+
+public export
+CoprodAlg : Type -> Type
+CoprodAlg a = Nat -> a -> a
+
+public export
+MkCoprodAlg : {0 a : Type} -> CoprodAlg a -> PFAlg CoprodTermPF a
+MkCoprodAlg alg n x = alg n $ x ()
+
+public export
+coprodCata : {0 a : Type} -> CoprodAlg a -> PolyFuncMu CoprodTermPF -> a
+coprodCata = pfCata {p=CoprodTermPF} . MkCoprodAlg
+
 ---------------------------------------------
 ---- Least fixed point (initial algebra) ----
 ---------------------------------------------
@@ -89,16 +113,16 @@ record TermAlgRec (a : Type) where
 
 public export
 talgFromRec : {0 a : Type} -> TermAlgRec a -> TermAlg a
-talgFromRec alg (Left len) ts = alg.talgProd $ toList $ finFToVect ts
-talgFromRec alg (Right idx) t = alg.talgCoprod idx $ t ()
+talgFromRec alg (Left len) ts = MkProdAlg alg.talgProd len ts
+talgFromRec alg (Right idx) t = MkCoprodAlg alg.talgCoprod idx t
 
 public export
 termCataRec : {0 a : Type} -> TermAlgRec a -> TermMu -> a
 termCataRec = termCata . talgFromRec
 
--------------------
----- Utilities ----
--------------------
+----------------------
+---- Constructors ----
+----------------------
 
 public export
 InProd : List TermMu -> TermMu
@@ -109,7 +133,7 @@ InCoprod : Nat -> TermMu -> TermMu
 InCoprod n t = InPFM (Right n) $ \() => t
 
 --------------------------------------------------------------------------------
----- Explicitly recursive ADT equivalent to generalized polynomial ADT term ----
+---- Explicitly-recursive ADT equivalent to generalized polynomial ADT term ----
 --------------------------------------------------------------------------------
 
 public export
@@ -138,9 +162,9 @@ public export
 termToRATerm : TermMu -> RATerm
 termToRATerm = termCataRec termToRATermAlg
 
-------------------------
----- More utilities ----
-------------------------
+-------------------
+---- Utilities ----
+-------------------
 
 public export
 TermSizeAlg : TermAlgRec Nat
