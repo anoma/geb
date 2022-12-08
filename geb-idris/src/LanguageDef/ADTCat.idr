@@ -227,6 +227,25 @@ public export
 FinBCObjDir : FinBCObjPos -> Type
 FinBCObjDir = pfDir {p=FinBCObjPF}
 
+public export
+record FinBCObjAlgRec (a : Type) where
+  constructor MkFinBCObjAlg
+  fbcAlgProd : ProdAlg a
+  fbcAlgCoprod : ProdAlg a
+
+public export
+fbcAlgFromRec : {0 a : Type} -> FinBCObjAlgRec a -> PFAlg FinBCObjPF a
+fbcAlgFromRec alg (Left len) ts = MkProdAlg alg.fbcAlgProd len ts
+fbcAlgFromRec alg (Right len) ts = MkProdAlg alg.fbcAlgCoprod len ts
+
+public export
+FinBCObjMu : Type
+FinBCObjMu = PolyFuncMu FinBCObjPF
+
+public export
+fbcObjCataRec : {0 a : Type} -> FinBCObjAlgRec a -> FinBCObjMu -> a
+fbcObjCataRec = pfCata {p=FinBCObjPF} . fbcAlgFromRec
+
 -------------------------------------------
 -------------------------------------------
 ---- Inductive definition of term type ----
