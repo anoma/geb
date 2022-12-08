@@ -342,7 +342,6 @@ adtT1 = InProd []
 adtT2 : TermMu
 adtT2 = InCoprod 0 adtT1
 
-
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
