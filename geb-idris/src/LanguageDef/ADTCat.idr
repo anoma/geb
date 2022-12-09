@@ -120,6 +120,11 @@ public export
 termCataRec : {0 a : Type} -> TermAlgRec a -> TermMu -> a
 termCataRec = termCata . talgFromRec
 
+public export
+termCataCtx : {0 ctx, a : Type} -> (ctx -> TermAlgRec a) -> ctx -> TermMu -> a
+termCataCtx {ctx} {a} alg =
+  pfParamCata {p=ADTTermPF} {x=ctx} {a} ?termCataCtx_hole
+
 ----------------------
 ---- Constructors ----
 ----------------------
