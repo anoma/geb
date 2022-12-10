@@ -905,11 +905,33 @@ HeightNLeaf = pfCompositionPowerDir
 
 public export
 PFAlg : PolyFunc -> Type -> Type
-PFAlg (pos ** dir) a = (i : pos) -> (dir i -> a) -> a
+PFAlg p a = (i : pfPos p) -> (pfDir {p} i -> a) -> a
 
 public export
 PFAlgCPS : PolyFunc -> Type -> Type
-PFAlgCPS (pos ** dir) a = (i : pos) -> (dir i -> a) -> Continuation a
+PFAlgCPS p = PFAlg p . Continuation
+
+public export
+PolyContinuation : Type -> Type
+PolyContinuation a = PolyNatTrans (PFHomArena a) PFIdentityArena
+
+public export
+ContinuationFromPoly : {a : Type} -> PolyContinuation a -> Continuation a
+ContinuationFromPoly {a} (unitId ** d) = toYo $ d () ()
+
+public export
+ContinuationToPoly : {a : Type} -> Continuation a -> PolyContinuation a
+ContinuationToPoly {a} cont = (id {a=Unit} ** \(), () => fromYo cont)
+
+-- This is equivalent to `Codensity (InterpPolyFunc p)`.
+public export
+PolyValuedContinuation : PolyFunc -> Type -> Type
+PolyValuedContinuation p = PolyContinuation . InterpPolyFunc p
+
+public export
+PolyContNT : PolyFunc -> PolyFunc -> Type
+PolyContNT p q =
+  NaturalTransformation (PolyValuedContinuation p) (PolyValuedContinuation q)
 
 public export
 PFBaseF : PolyFunc -> Type -> Type
@@ -1152,6 +1174,13 @@ pfFreeCata : {p : PolyFunc} -> {a, b : Type} ->
   PFTranslateAlg p a b -> InterpPolyFuncFreeM p a -> b
 pfFreeCata {p} {a} {b} alg =
   pfCata {p=(PFTranslate p a)} {a=b} alg . PolyFMInterpToMuTranslate p a
+
+public export
+pfFreeContCata : {p, q : PolyFunc} ->
+  PolyContNT p q ->
+  PolyContNT (PolyFuncFreeM p) (PolyFuncFreeM q)
+pfFreeContCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} cont =
+  ?pfFreeContCata_hole
 
 --------------------------------------
 --------------------------------------
