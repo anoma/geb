@@ -212,7 +212,7 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
@@ -225,7 +225,7 @@ of functions,
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $\varnothing$.
+   the empty sum is $\varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
@@ -455,8 +455,12 @@ The [Accessors][cc51] specific to [Subst Morph][d2d1]
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ACOMP-29-29-29"></a>
 - [method] **MCAR** *(COMP COMP)*
 
+    The first composed morphism
+
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ACOMP-29-29-29"></a>
 - [method] **MCADR** *(COMP COMP)*
+
+    the second morphism
 
 <a id="x-28GEB-2EUTILS-3AOBJ-20-28METHOD-20NIL-20-28GEB-2ESPEC-3AINIT-29-29-29"></a>
 - [method] **OBJ** *(INIT INIT)*
@@ -473,8 +477,12 @@ The [Accessors][cc51] specific to [Subst Morph][d2d1]
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APAIR-29-29-29"></a>
 - [method] **MCAR** *(PAIR PAIR)*
 
+    Head of the pair cell
+
 <a id="x-28GEB-2EUTILS-3AMCDR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APAIR-29-29-29"></a>
 - [method] **MCDR** *(PAIR PAIR)*
+
+    Tail of the pair cell
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ADISTRIBUTE-29-29-29"></a>
 - [method] **MCAR** *(DISTRIBUTE DISTRIBUTE)*
@@ -508,6 +516,8 @@ The [Accessors][cc51] specific to [Subst Morph][d2d1]
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APROJECT-RIGHT-29-29-29"></a>
 - [method] **MCADR** *(PROJECT-RIGHT PROJECT-RIGHT)*
+
+    Right projection (product elimination)
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
 ### 6.2 Accessors
@@ -894,7 +904,7 @@ The Utilities package provide general utility functionality that is
 used throughout the GEB codebase
 
 <a id="x-28GEB-2EUTILS-3ALIST-OF-20TYPE-29"></a>
-- [type] **LIST-OF**
+- [type] **LIST-OF** *TY*
 
     Allows us to state a list contains a given type.
     
@@ -906,6 +916,24 @@ used throughout the GEB codebase
     element. This is an issue with how lists are defined in the
     language. Thus this should be be used for intent purposes.
     
+    ---
+    
+    For a more proper version that checks all elements please look at writing code like
+    
+    ```cl
+    (deftype normal-form-list ()
+      `(satisfies normal-form-list))
+    
+    (defun normal-form-list (list)
+      (and (listp list)
+           (every (lambda (x) (typep x 'normal-form)) list)))
+    
+    (deftype normal-form ()
+      `(or wire constant))
+    ```
+    
+    Example usage of this can be used with [`typep`][d908]
+    
     ```common-lisp
     (typep '(1 . 23) '(list-of fixnum))
     => NIL
@@ -915,6 +943,17 @@ used throughout the GEB codebase
     
     (typep '(1 3 4 "hi" 23) '(list-of fixnum))
     => T
+    
+    (typep '(1 23 . 5) '(list-of fixnum))
+    => T
+    ```
+    
+    Further this can be used in type signatures
+    
+    ```cl
+    (-> foo (fixnum) (list-of fixnum))
+    (defun foo (x)
+      (list x))
     ```
 
 
@@ -1133,6 +1172,7 @@ features and how to better lay out future tests
   [cc87]: #x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCADR GENERIC-FUNCTION"
   [d2d1]: #x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29 "Subst Morph"
   [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
+  [d908]: http://www.lispworks.com/documentation/HyperSpec/Body/f_typep.htm "TYPEP FUNCTION"
   [dbe7]: #x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29 "Objects"
   [e982]: #x-28GEB-2ESPEC-3A-2ASO0-2A-20VARIABLE-29 "GEB.SPEC:*SO0* VARIABLE"
   [f1ce]: #x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCAR GENERIC-FUNCTION"

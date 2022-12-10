@@ -74,6 +74,24 @@ This does not type check the whole list, but only the first
 element. This is an issue with how lists are defined in the
 language. Thus this should be be used for intent purposes.
 
+-------------
+
+For a more proper version that checks all elements please look at writing code like
+
+```cl
+(deftype normal-form-list ()
+  `(satisfies normal-form-list))
+
+(defun normal-form-list (list)
+  (and (listp list)
+       (every (lambda (x) (typep x 'normal-form)) list)))
+
+(deftype normal-form ()
+  `(or wire constant))
+```
+
+Example usage of this can be used with `typep`
+
 ```cl-transcript
 (typep '(1 . 23) '(list-of fixnum))
 => NIL
@@ -83,9 +101,20 @@ language. Thus this should be be used for intent purposes.
 
 (typep '(1 3 4 \"hi\" 23) '(list-of fixnum))
 => T
+
+(typep '(1 23 . 5) '(list-of fixnum))
+=> T
+```
+
+Further this can be used in type signatures
+
+```cl
+(-> foo (fixnum) (list-of fixnum))
+(defun foo (x)
+  (list x))
 ```
 "
-  `(cons ,ty cons))
+  `(cons ,ty (or null cons)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;               Generic Constructors declarations

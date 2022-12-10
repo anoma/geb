@@ -155,7 +155,7 @@ conjectures about GEB")
    we shall rely on the following
    universal constructions:
 
-   1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+   1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
    2. The construction of “function spaces” $B^A$ of sets $A,B$, called _exponentials_,
       i.e., collections of functions between pairs of sets.
@@ -168,7 +168,7 @@ conjectures about GEB")
 
    4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
       corresponding to forming disjoint unions of sets;
-      the empty sum is $\varnothing$.
+      the empty sum is $\varnothing$.
 
    Product, sums and exponentials
    are the (almost) complete tool chest for writing
