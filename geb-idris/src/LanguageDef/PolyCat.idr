@@ -1176,10 +1176,16 @@ pfFreeCata {p} {a} {b} alg =
   pfCata {p=(PFTranslate p a)} {a=b} alg . PolyFMInterpToMuTranslate p a
 
 public export
+pfFreePolyCata : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
+pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+  ?pfFreePolyCata_hole
+
+public export
 pfFreeContCata : {p, q : PolyFunc} ->
   PolyContNT p q ->
   PolyContNT (PolyFuncFreeM p) (PolyFuncFreeM q)
-pfFreeContCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} cont =
+pfFreeContCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} cont x =
   ?pfFreeContCata_hole
 
 --------------------------------------
