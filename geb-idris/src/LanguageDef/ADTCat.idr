@@ -156,36 +156,6 @@ public export
 InCoprod : Nat -> TermMu -> TermMu
 InCoprod = InCoprodIdx . NatIndex
 
---------------------------------------------------------------------------------
----- Explicitly-recursive ADT equivalent to generalized polynomial ADT term ----
---------------------------------------------------------------------------------
-
-public export
-data RATerm : Type where
-  RARecordTerm : List RATerm -> RATerm
-  RASumTerm : CoprodIndex -> RATerm -> RATerm
-
-mutual
-  public export
-  raTermToADTTerm : RATerm -> TermMu
-  raTermToADTTerm (RARecordTerm ts) = InProd $ raTermListToADTTermList ts
-  raTermToADTTerm (RASumTerm n t) = InCoprodIdx n $ raTermToADTTerm t
-
-  public export
-  raTermListToADTTermList : List RATerm -> List TermMu
-  raTermListToADTTermList [] =
-    []
-  raTermListToADTTermList (t :: ts) =
-    raTermToADTTerm t :: raTermListToADTTermList ts
-
-public export
-termToRATermAlg : TermAlgRec RATerm
-termToRATermAlg = MkTermAlg RARecordTerm RASumTerm
-
-public export
-termToRATerm : TermMu -> RATerm
-termToRATerm = termCataRec termToRATermAlg
-
 -------------------
 ---- Utilities ----
 -------------------
@@ -841,6 +811,16 @@ SEFtoPFalgExt SEFPosExtPar d =
 public export
 SEFtoPFalg : SEFAlg PolyFunc
 SEFtoPFalg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOtoPFalg SEFtoPFalgExt
+
+public export
+sefToPF : SEFMu -> PolyFunc
+sefToPF = sefCata SEFtoPFalg
+
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+---- Reflection of object and endofunctor definitions as endofunctors ----
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -1704,3 +1684,35 @@ mutual
 public export
 termCata' : {0 a : Type} -> TermAlg' a -> ADTTerm -> a
 termCata' alg = termFold alg id
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+---- Explicitly-recursive ADT equivalent to generalized polynomial ADT term ----
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+public export
+data RATerm : Type where
+  RARecordTerm : List RATerm -> RATerm
+  RASumTerm : CoprodIndex -> RATerm -> RATerm
+
+mutual
+  public export
+  raTermToADTTerm : RATerm -> TermMu
+  raTermToADTTerm (RARecordTerm ts) = InProd $ raTermListToADTTermList ts
+  raTermToADTTerm (RASumTerm n t) = InCoprodIdx n $ raTermToADTTerm t
+
+  public export
+  raTermListToADTTermList : List RATerm -> List TermMu
+  raTermListToADTTermList [] =
+    []
+  raTermListToADTTermList (t :: ts) =
+    raTermToADTTerm t :: raTermListToADTTermList ts
+
+public export
+termToRATermAlg : TermAlgRec RATerm
+termToRATermAlg = MkTermAlg RARecordTerm RASumTerm
+
+public export
+termToRATerm : TermMu -> RATerm
+termToRATerm = termCataRec termToRATermAlg
