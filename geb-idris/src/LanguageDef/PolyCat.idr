@@ -477,6 +477,13 @@ pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
 pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
 
 public export
+pfComposeInterp : {p : PolyFunc} -> {x : Type} ->
+  InterpPolyFunc p (InterpPolyFunc p x) ->
+  InterpPolyFunc (pfCompositionArena p p) x
+pfComposeInterp {p=(pos ** dir)} {x} (i ** d) =
+  ((i ** fst . d) ** \(i' ** d') => snd (d i') d')
+
+public export
 pfDuplicateArena : PolyFunc -> PolyFunc
 pfDuplicateArena p = pfCompositionArena p p
 
@@ -1975,6 +1982,18 @@ PFFreeMonoid p = MkPFMonoid (PFFreeReturn p) (PFFreeJoin p)
 public export
 PFFreeMonad : PolyFunc -> PFMonad
 PFFreeMonad p = (PolyFuncFreeM p ** PFFreeMonoid p)
+
+public export
+interpFreeMJoin : {p : PolyFunc} ->
+  NaturalTransformation
+    (InterpPolyFunc (PolyFuncFreeM p) . InterpPolyFunc (PolyFuncFreeM p))
+    (InterpPolyFunc (PolyFuncFreeM p))
+interpFreeMJoin {p} x =
+  InterpPolyNT
+    {p=(pfFreeComposeArena p p)} {q=(PolyFuncFreeM p)}
+    (PFFreeJoin p)
+    x .
+  pfComposeInterp {p=(PolyFuncFreeM p)} {x}
 
 -------------------------
 ---- Codensity monad ----
