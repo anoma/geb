@@ -33,17 +33,27 @@ public export
 ProdTermPF : PolyFunc
 ProdTermPF = (ProdTermPos ** ProdTermDir)
 
+public export
+data CoprodIndex : Type where
+  AtomIndex : GebAtom -> CoprodIndex
+  NatIndex : Nat -> CoprodIndex
+
+public export
+Show CoprodIndex where
+  show (AtomIndex a) = ":" ++ show a
+  show (NatIndex n) = show n
+
 -- A position of the coproduct term functor is the index of the sub-term.
 public export
 CoprodTermPos : Type
-CoprodTermPos = Nat
+CoprodTermPos = CoprodIndex
 
 -- Any coproduct term position has exactly one direction, which corresponds
 -- to the term being injected into a coproduct term at the index given by
 -- the position.
 public export
 CoprodTermDir : CoprodTermPos -> Type
-CoprodTermDir n = Unit
+CoprodTermDir i = Unit
 
 public export
 CoprodTermPF : PolyFunc
@@ -76,7 +86,7 @@ prodCata = pfCata {p=ProdTermPF} . MkProdAlg
 
 public export
 CoprodAlg : Type -> Type
-CoprodAlg a = Nat -> a -> a
+CoprodAlg a = CoprodIndex -> a -> a
 
 public export
 MkCoprodAlg : {0 a : Type} -> CoprodAlg a -> PFAlg CoprodTermPF a
@@ -135,8 +145,16 @@ InProd : List TermMu -> TermMu
 InProd ts = InPFM (Left $ length ts) $ index' ts
 
 public export
+InCoprodIdx : CoprodIndex -> TermMu -> TermMu
+InCoprodIdx n t = InPFM (Right n) $ \() => t
+
+public export
+InCoprodAtom : GebAtom -> TermMu -> TermMu
+InCoprodAtom = InCoprodIdx . AtomIndex
+
+public export
 InCoprod : Nat -> TermMu -> TermMu
-InCoprod n t = InPFM (Right n) $ \() => t
+InCoprod = InCoprodIdx . NatIndex
 
 --------------------------------------------------------------------------------
 ---- Explicitly-recursive ADT equivalent to generalized polynomial ADT term ----
@@ -145,13 +163,13 @@ InCoprod n t = InPFM (Right n) $ \() => t
 public export
 data RATerm : Type where
   RARecordTerm : List RATerm -> RATerm
-  RASumTerm : Nat -> RATerm -> RATerm
+  RASumTerm : CoprodIndex -> RATerm -> RATerm
 
 mutual
   public export
   raTermToADTTerm : RATerm -> TermMu
   raTermToADTTerm (RARecordTerm ts) = InProd $ raTermListToADTTermList ts
-  raTermToADTTerm (RASumTerm n t) = InCoprod n $ raTermToADTTerm t
+  raTermToADTTerm (RASumTerm n t) = InCoprodIdx n $ raTermToADTTerm t
 
   public export
   raTermListToADTTermList : List RATerm -> List TermMu
@@ -199,7 +217,7 @@ termShowProduct : List String -> String
 termShowProduct ts = "(" ++ termShowList ts ++ ")"
 
 public export
-termShowCoproduct : Nat -> String -> String
+termShowCoproduct : CoprodIndex -> String -> String
 termShowCoproduct n t = "[" ++ show n ++ ":" ++ t ++ "]"
 
 public export
