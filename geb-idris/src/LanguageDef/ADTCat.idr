@@ -820,6 +820,28 @@ public export
 Show SEFMu where
   show = sefCata SEFShowAlg
 
+---------------------------------------------
+---- Interpretation of SEFMu as PolyFunc ----
+---------------------------------------------
+
+public export
+SOtoPFalg : SOAlg PolyFunc
+SOtoPFalg SOPos0 d = PFInitialArena
+SOtoPFalg SOPos1 d = PFTerminalArena
+SOtoPFalg SOPosC d = pfCoproductArena (d SODirL) (d SODirR)
+SOtoPFalg SOPosP d = pfProductArena (d SODir1) (d SODir2)
+
+public export
+SEFtoPFalgExt : SEFAlgExt PolyFunc
+SEFtoPFalgExt SEFPosExtI d =
+  PFIdentityArena
+SEFtoPFalgExt SEFPosExtPar d =
+  pfParProductArena (d SEFDirExtPar1) (d SEFDirExtPar2)
+
+public export
+SEFtoPFalg : SEFAlg PolyFunc
+SEFtoPFalg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOtoPFalg SEFtoPFalgExt
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial endofunctors ----
