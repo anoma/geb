@@ -42,13 +42,9 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -149,8 +145,6 @@ conjectures about GEB
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 4 Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -169,7 +163,7 @@ and we enjoy the luxury of not having to worry about
 the order in which we compose;
 for the sake of completeness,
 there are identify functions $A —\mathrm{id}\_A→ A$ on each set $A$,
-serving as identities 
+serving as identities
 (which correspond to the composite of the empty path on an object).
 Sets and functions *together* form **a** category—based on
 function composition;
@@ -215,35 +209,35 @@ the category of *sets-'n'-functions*;
 thus a solid understanding of the latter
 will be quite useful.
 In particular,
-we shall rely on the following 
-universal constructions: 
+we shall rely on the following
+universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} cong C^{(A × B)}$,
+   $C^{(B^A)} \cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $varnothing$.
+   the empty sum is $\varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
-polynomial expressions, e.g., 
-$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
+polynomial expressions, e.g.,
+$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $mathsf{2} = lbrace 1, 2 rbrace$, 
-$mathsf{1} = lbrace 1 rbrace$, 
-$mathsf{0} = lbrace  rbrace = varnothing$,
-and $A$ and $B$ are arbitrary (finite) sets. 
+where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
+$ \mathsf{1} = \lbrace 1 \rbrace$,
+$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
+and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
 happens to have a very natural counterpart:
@@ -255,17 +249,15 @@ If you are familiar with the latter,
 buckle up and jump to [Poly in Sets][925b].
 Have a look at our streamlined account of [The Yoneda Lemma][0e00]
 if you are familiar with Cartesian closed categories,
-or take it slow and read up on the background in 
+or take it slow and read up on the background in
 one of the classic or popular
 [textbooks](https://www.goodreads.com/shelf/show/category-theory).
-Tastes tend to vary. 
-However, 
+Tastes tend to vary.
+However,
 Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
-as it is very amenable *and* 
+as it is very amenable *and*
 covers the background we need in 60 short pages.
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 4.1 Morphisms
@@ -463,12 +455,8 @@ The [Accessors][cc51] specific to [Subst Morph][d2d1]
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ACOMP-29-29-29"></a>
 - [method] **MCAR** *(COMP COMP)*
 
-    The first composed morphism
-
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ACOMP-29-29-29"></a>
 - [method] **MCADR** *(COMP COMP)*
-
-    the second morphism
 
 <a id="x-28GEB-2EUTILS-3AOBJ-20-28METHOD-20NIL-20-28GEB-2ESPEC-3AINIT-29-29-29"></a>
 - [method] **OBJ** *(INIT INIT)*
@@ -485,12 +473,8 @@ The [Accessors][cc51] specific to [Subst Morph][d2d1]
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APAIR-29-29-29"></a>
 - [method] **MCAR** *(PAIR PAIR)*
 
-    Head of the pair cell
-
 <a id="x-28GEB-2EUTILS-3AMCDR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APAIR-29-29-29"></a>
 - [method] **MCDR** *(PAIR PAIR)*
-
-    Tail of the pair cell
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ADISTRIBUTE-29-29-29"></a>
 - [method] **MCAR** *(DISTRIBUTE DISTRIBUTE)*
@@ -524,8 +508,6 @@ The [Accessors][cc51] specific to [Subst Morph][d2d1]
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APROJECT-RIGHT-29-29-29"></a>
 - [method] **MCADR** *(PROJECT-RIGHT PROJECT-RIGHT)*
-
-    Right projection (product elimination)
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
 ### 6.2 Accessors
@@ -910,6 +892,31 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 ###### \[in package GEB.UTILS\]
 The Utilities package provide general utility functionality that is
 used throughout the GEB codebase
+
+<a id="x-28GEB-2EUTILS-3ALIST-OF-20TYPE-29"></a>
+- [type] **LIST-OF**
+
+    Allows us to state a list contains a given type.
+    
+    ---
+    
+    *NOTE*
+    
+    This does not type check the whole list, but only the first
+    element. This is an issue with how lists are defined in the
+    language. Thus this should be be used for intent purposes.
+    
+    ```common-lisp
+    (typep '(1 . 23) '(list-of fixnum))
+    => NIL
+    
+    (typep '(1 23) '(list-of fixnum))
+    => T
+    
+    (typep '(1 3 4 "hi" 23) '(list-of fixnum))
+    => T
+    ```
+
 
 <a id="x-28GEB-2EUTILS-3ASYMBOL-TO-KEYWORD-20FUNCTION-29"></a>
 - [function] **SYMBOL-TO-KEYWORD** *SYMBOL*

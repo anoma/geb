@@ -66,7 +66,11 @@ if wanted
 (deftype list-of (ty)
   "Allows us to state a list contains a given type.
 
-NOTE :: This does not type check the whole list, but only the first
+-------------
+
+*NOTE*
+
+This does not type check the whole list, but only the first
 element. This is an issue with how lists are defined in the
 language. Thus this should be be used for intent purposes.
 

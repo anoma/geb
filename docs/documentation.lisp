@@ -106,7 +106,7 @@ conjectures about GEB")
    the order in which we compose;
    for the sake of completeness,
    there are identify functions $A —\\mathrm{id}_A→ A$ on each set $A$,
-   serving as identities 
+   serving as identities
    (which correspond to the composite of the empty path on an object).
    Sets and functions _together_ form **a** category—based on
    function composition;
@@ -152,8 +152,8 @@ conjectures about GEB")
    thus a solid understanding of the latter
    will be quite useful.
    In particular,
-   we shall rely on the following 
-   universal constructions: 
+   we shall rely on the following
+   universal constructions:
 
    1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
@@ -172,15 +172,15 @@ conjectures about GEB")
 
    Product, sums and exponentials
    are the (almost) complete tool chest for writing
-   polynomial expressions, e.g., 
+   polynomial expressions, e.g.,
    $$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
    (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
    In the above expression,
    we have sets instead of numbers/constants
-   where $\mathsf{2} = \lbrace 1, 2 \rbrace$, 
-   $\mathsf{1} = \lbrace 1 \rbrace$, 
-   $\mathsf{0} = \lbrace  \rbrace = \varnothing$,
-   and $A$ and $B$ are arbitrary (finite) sets. 
+   where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
+   $ \mathsf{1} = \lbrace 1 \rbrace$,
+   $ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
+   and $A$ and $B$ are arbitrary (finite) sets.
    We are only missing a counterpart for the _variable_!
    Raising an arbitrary set to “the power” of a constant set
    happens to have a very natural counterpart:
@@ -192,15 +192,15 @@ conjectures about GEB")
    buckle up and jump to @POLY-SETS.
    Have a look at our streamlined account of @YONEDA-LEMMA
    if you are familiar with Cartesian closed categories,
-   or take it slow and read up on the background in 
+   or take it slow and read up on the background in
    one of the classic or popular
    [textbooks](https://www.goodreads.com/shelf/show/category-theory).
-   Tastes tend to vary. 
-   However, 
+   Tastes tend to vary.
+   However,
    Benjamin Pierce's
    [_Basic Category Theory for Computer Scientists_](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
-   as it is very amenable _and_ 
-   covers the background we need in 60 short pages. 
+   as it is very amenable _and_
+   covers the background we need in 60 short pages.
    """
   (@morphisms pax:section)
   (@objects pax:section)
