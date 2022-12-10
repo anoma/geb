@@ -60,6 +60,30 @@ if wanted
                      constructor-names))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Generic type constructions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(deftype list-of (ty)
+  "Allows us to state a list contains a given type.
+
+NOTE :: This does not type check the whole list, but only the first
+element. This is an issue with how lists are defined in the
+language. Thus this should be be used for intent purposes.
+
+```cl-transcript
+(typep '(1 . 23) '(list-of fixnum))
+=> NIL
+
+(typep '(1 23) '(list-of fixnum))
+=> T
+
+(typep '(1 3 4 \"hi\" 23) '(list-of fixnum))
+=> T
+```
+"
+  `(cons ,ty cons))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;               Generic Constructors declarations
 ;; These aren't needed but serve as a good place to put a default doc.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

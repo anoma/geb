@@ -310,6 +310,12 @@
   ;; (graph-object object pane)
   )
 
+(define-display-clim-command (com-quit :name t) ()
+  (frame-exit *application-frame*))
+
+(define-display-clim-command (com-redisplay :name t) ()
+  (redisplay-frame-panes *application-frame* :force-p t))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Abstractions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
