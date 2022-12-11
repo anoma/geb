@@ -7,6 +7,22 @@ import public LanguageDef.PolyCat
 
 %default total
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+---- Explicitly-recursive ADT equivalent to generalized polynomial ADT term ----
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+public export
+data CoprodIndex : Type where
+  AtomIndex : GebAtom -> CoprodIndex
+  NatIndex : Nat -> CoprodIndex
+
+public export
+data RATerm : Type where
+  RARecordTerm : List RATerm -> RATerm
+  RASumTerm : CoprodIndex -> RATerm -> RATerm
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Type of terms of arbitrary finite size ----
@@ -32,11 +48,6 @@ ProdTermDir = Fin
 public export
 ProdTermPF : PolyFunc
 ProdTermPF = (ProdTermPos ** ProdTermDir)
-
-public export
-data CoprodIndex : Type where
-  AtomIndex : GebAtom -> CoprodIndex
-  NatIndex : Nat -> CoprodIndex
 
 public export
 Show CoprodIndex where
@@ -1685,16 +1696,9 @@ public export
 termCata' : {0 a : Type} -> TermAlg' a -> ADTTerm -> a
 termCata' alg = termFold alg id
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
----- Explicitly-recursive ADT equivalent to generalized polynomial ADT term ----
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-public export
-data RATerm : Type where
-  RARecordTerm : List RATerm -> RATerm
-  RASumTerm : CoprodIndex -> RATerm -> RATerm
+-------------------------------------------------------------
+---- Conversion to and from explicitly-recursive version ----
+-------------------------------------------------------------
 
 mutual
   public export
