@@ -20,9 +20,9 @@ record TermAtom where
   tData : Nat
 
 public export
-data RATerm : Type where
-  RARecordTerm : List RATerm -> RATerm
-  RASumTerm : TermAtom -> RATerm -> RATerm
+data GebTerm : Type where
+  GebRecordTerm : List GebTerm -> GebTerm
+  GebSumTerm : TermAtom -> GebTerm -> GebTerm
 
 ------------------------------------------------
 ------------------------------------------------
@@ -1702,21 +1702,21 @@ termCata' alg = termFold alg id
 
 mutual
   public export
-  raTermToADTTerm : RATerm -> TermMu
-  raTermToADTTerm (RARecordTerm ts) = InProd $ raTermListToADTTermList ts
-  raTermToADTTerm (RASumTerm n t) = InTermAtom n $ raTermToADTTerm t
+  gebTermToADTTerm : GebTerm -> TermMu
+  gebTermToADTTerm (GebRecordTerm ts) = InProd $ gebTermListToADTTermList ts
+  gebTermToADTTerm (GebSumTerm n t) = InTermAtom n $ gebTermToADTTerm t
 
   public export
-  raTermListToADTTermList : List RATerm -> List TermMu
-  raTermListToADTTermList [] =
+  gebTermListToADTTermList : List GebTerm -> List TermMu
+  gebTermListToADTTermList [] =
     []
-  raTermListToADTTermList (t :: ts) =
-    raTermToADTTerm t :: raTermListToADTTermList ts
+  gebTermListToADTTermList (t :: ts) =
+    gebTermToADTTerm t :: gebTermListToADTTermList ts
 
 public export
-termToRATermAlg : TermAlgRec RATerm
-termToRATermAlg = MkTermAlg RARecordTerm RASumTerm
+termToGebTermAlg : TermAlgRec GebTerm
+termToGebTermAlg = MkTermAlg GebRecordTerm GebSumTerm
 
 public export
-termToRATerm : TermMu -> RATerm
-termToRATerm = termCataRec termToRATermAlg
+termToGebTerm : TermMu -> GebTerm
+termToGebTerm = termCataRec termToGebTermAlg
