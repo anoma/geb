@@ -1176,6 +1176,14 @@ pfFreeCata {p} {a} {b} alg =
   pfCata {p=(PFTranslate p a)} {a=b} alg . PolyFMInterpToMuTranslate p a
 
 public export
+pfFreeMVoidToMu : {p : PolyFunc} -> InterpPolyFuncFreeM p Void -> PolyFuncMu p
+pfFreeMVoidToMu {p} d =
+  let
+    pfc = pfFreeCata {p} {a=Void} {b=(PolyFuncMu p)}
+  in
+  ?pfFreeMVoidToMu_hole
+
+public export
 pfFreePolyCata : {p, q : PolyFunc} ->
   PolyNatTrans p q -> PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
