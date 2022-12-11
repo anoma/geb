@@ -17,29 +17,34 @@ import Library.IdrisUtils
 
 public export
 data GebAtom : Type where
+  NAT : GebAtom
   PRODUCT : GebAtom
   COPRODUCT : GebAtom
 
 public export
 gaEncode : GebAtom -> Nat
-gaEncode PRODUCT = 0
-gaEncode COPRODUCT = 1
+gaEncode NAT = 0
+gaEncode PRODUCT = 1
+gaEncode COPRODUCT = 2
 
 public export
 gaDecode : Nat -> Maybe GebAtom
-gaDecode 0 = Just PRODUCT
-gaDecode 1 = Just COPRODUCT
+gaDecode 0 = Just NAT
+gaDecode 1 = Just PRODUCT
+gaDecode 2 = Just COPRODUCT
 gaDecode _ = Nothing
 
 public export
 gaEncodeDecodeIsJust : (a : GebAtom) -> gaDecode (gaEncode a) = Just a
+gaEncodeDecodeIsJust NAT = Refl
 gaEncodeDecodeIsJust PRODUCT = Refl
 gaEncodeDecodeIsJust COPRODUCT = Refl
 
 public export
 gaToString : GebAtom -> String
-gaToString PRODUCT = ":*:"
-gaToString COPRODUCT = ":+:"
+gaToString NAT = "#"
+gaToString PRODUCT = "*"
+gaToString COPRODUCT = "+"
 
 public export
 Show GebAtom where

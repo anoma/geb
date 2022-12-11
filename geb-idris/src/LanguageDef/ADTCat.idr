@@ -14,14 +14,15 @@ import public LanguageDef.PolyCat
 --------------------------------------------------------------------------------
 
 public export
-data CoprodIndex : Type where
-  AtomIndex : GebAtom -> CoprodIndex
-  NatIndex : Nat -> CoprodIndex
+record TermAtom where
+  constructor TAtom
+  tAtom : GebAtom
+  tData : Nat
 
 public export
 data RATerm : Type where
   RARecordTerm : List RATerm -> RATerm
-  RASumTerm : CoprodIndex -> RATerm -> RATerm
+  RASumTerm : TermAtom -> RATerm -> RATerm
 
 ------------------------------------------------
 ------------------------------------------------
@@ -50,14 +51,13 @@ ProdTermPF : PolyFunc
 ProdTermPF = (ProdTermPos ** ProdTermDir)
 
 public export
-Show CoprodIndex where
-  show (AtomIndex a) = ":" ++ show a
-  show (NatIndex n) = show n
+Show TermAtom where
+  show (TAtom a n) = show a ++ ":" ++ show n
 
 -- A position of the coproduct term functor is the index of the sub-term.
 public export
 CoprodTermPos : Type
-CoprodTermPos = CoprodIndex
+CoprodTermPos = TermAtom
 
 -- Any coproduct term position has exactly one direction, which corresponds
 -- to the term being injected into a coproduct term at the index given by
@@ -97,7 +97,7 @@ prodCata = pfCata {p=ProdTermPF} . MkProdAlg
 
 public export
 CoprodAlg : Type -> Type
-CoprodAlg a = CoprodIndex -> a -> a
+CoprodAlg a = TermAtom -> a -> a
 
 public export
 MkCoprodAlg : {0 a : Type} -> CoprodAlg a -> PFAlg CoprodTermPF a
@@ -156,16 +156,16 @@ InProd : List TermMu -> TermMu
 InProd ts = InPFM (Left $ length ts) $ index' ts
 
 public export
-InCoprodIdx : CoprodIndex -> TermMu -> TermMu
-InCoprodIdx n t = InPFM (Right n) $ \() => t
+InTermAtom : TermAtom -> TermMu -> TermMu
+InTermAtom n t = InPFM (Right n) $ \() => t
 
 public export
-InCoprodAtom : GebAtom -> TermMu -> TermMu
-InCoprodAtom = InCoprodIdx . AtomIndex
+InAtom : GebAtom -> Nat -> TermMu -> TermMu
+InAtom = InTermAtom .* TAtom
 
 public export
-InCoprod : Nat -> TermMu -> TermMu
-InCoprod = InCoprodIdx . NatIndex
+InNat : Nat -> TermMu -> TermMu
+InNat = InAtom NAT
 
 -------------------
 ---- Utilities ----
@@ -198,7 +198,7 @@ termShowProduct : List String -> String
 termShowProduct ts = "(" ++ termShowList ts ++ ")"
 
 public export
-termShowCoproduct : CoprodIndex -> String -> String
+termShowCoproduct : TermAtom -> String -> String
 termShowCoproduct n t = "[" ++ show n ++ ":" ++ t ++ "]"
 
 public export
@@ -264,15 +264,15 @@ FBCObjRepProdIdx : Nat
 FBCObjRepProdIdx = 0
 
 public export
-FBCObjRepCoprodIdx : Nat
-FBCObjRepCoprodIdx = 1
+FBCObjRepTermAtom : Nat
+FBCObjRepTermAtom = 1
 
 public export
 FBCObjRepAlg : FinBCObjAlgRec TermMu
 FBCObjRepAlg =
   MkFinBCObjAlg
-    (InCoprod FBCObjRepProdIdx . InProd)
-    (InCoprod FBCObjRepCoprodIdx . InProd)
+    (InAtom PRODUCT 0 . InProd)
+    (InAtom COPRODUCT 0 . InProd)
 
 public export
 fbcObjRep : FinBCObjMu -> TermMu
@@ -1704,7 +1704,7 @@ mutual
   public export
   raTermToADTTerm : RATerm -> TermMu
   raTermToADTTerm (RARecordTerm ts) = InProd $ raTermListToADTTermList ts
-  raTermToADTTerm (RASumTerm n t) = InCoprodIdx n $ raTermToADTTerm t
+  raTermToADTTerm (RASumTerm n t) = InTermAtom n $ raTermToADTTerm t
 
   public export
   raTermListToADTTermList : List RATerm -> List TermMu
