@@ -1208,9 +1208,15 @@ InFMCom {p=p@(pos ** dir)} {a} i d =
   PolyFMMuTranslateToInterp p a (InPCom i $ PolyFMInterpToMuTranslate p a . d)
 
 public export
+pfPolyCata : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> PolyFuncMu p -> PolyFuncMu q
+pfPolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
+  pfCata {p} {a=(PolyFuncMu q)} $ \i, d => InPFM (onPos i) (d . onDir i)
+
+public export
 pfFreePolyCata : {p, q : PolyFunc} ->
   PolyNatTrans p q -> PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
-pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
   ?pfFreePolyCata_hole
 
 public export
