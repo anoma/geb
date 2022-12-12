@@ -149,6 +149,16 @@
    :arc-drawing-options (list :line-thickness 1.4 :head-width 5)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Abstractions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Has to come before the presentation methods probably due to load order
+(defmacro center-column-cell ((stream &rest args &key &allow-other-keys)
+                              &body x)
+  `(formatting-column (,stream ,@args)
+     (formatting-cell (,stream :align-x :center :align-y :center)
+       ,@x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Presentation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -315,12 +325,3 @@
 
 (define-display-clim-command (com-redisplay :name t) ()
   (redisplay-frame-panes *application-frame* :force-p t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Abstractions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro center-column-cell ((stream &rest args &key &allow-other-keys)
-                              &body x)
-  `(formatting-column (,stream ,@args)
-     (formatting-cell (,stream :align-x :center :align-y :center)
-       ,@x)))
