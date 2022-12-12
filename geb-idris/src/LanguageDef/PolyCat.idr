@@ -1176,12 +1176,24 @@ pfFreeCata {p} {a} {b} alg =
   pfCata {p=(PFTranslate p a)} {a=b} alg . PolyFMInterpToMuTranslate p a
 
 public export
+PFFreeVoidToMuAlg : (p : PolyFunc) -> PFTranslateAlg p Void (PolyFuncMu p)
+PFFreeVoidToMuAlg (pos ** dir) (PFVar v) d = void v
+PFFreeVoidToMuAlg (pos ** dir) (PFCom c) d = InPFM c d
+
+public export
 pfFreeMVoidToMu : {p : PolyFunc} -> InterpPolyFuncFreeM p Void -> PolyFuncMu p
-pfFreeMVoidToMu {p} d =
-  let
-    pfc = pfFreeCata {p} {a=Void} {b=(PolyFuncMu p)}
-  in
-  ?pfFreeMVoidToMu_hole
+pfFreeMVoidToMu {p} =
+  pfFreeCata {p} {a=Void} {b=(PolyFuncMu p)} $ PFFreeVoidToMuAlg p
+
+public export
+PFMuToFreeMVoidAlg : (p : PolyFunc) -> PFAlg p (InterpPolyFuncFreeM p Void)
+PFMuToFreeMVoidAlg (pos ** dir) i d =
+  (InPFM (PFCom i) (fst . d) ** \(d' ** v) => snd (d d') v)
+
+public export
+pfMuToFreeMVoid : {p : PolyFunc} -> PolyFuncMu p -> InterpPolyFuncFreeM p Void
+pfMuToFreeMVoid {p} =
+  pfCata {p} {a=(InterpPolyFuncFreeM p Void)} (PFMuToFreeMVoidAlg p)
 
 public export
 pfFreePolyCata : {p, q : PolyFunc} ->
