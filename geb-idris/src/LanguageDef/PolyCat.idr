@@ -1196,6 +1196,18 @@ pfMuToFreeMVoid {p} =
   pfCata {p} {a=(InterpPolyFuncFreeM p Void)} (PFMuToFreeMVoidAlg p)
 
 public export
+InFMVar : {p : PolyFunc} -> {a : Type} ->
+  a -> InterpPolyFuncFreeM p a
+InFMVar {p} {a} x = PolyFMMuTranslateToInterp p a $ InPVar x
+
+public export
+InFMCom : {p : PolyFunc} -> {a : Type} ->
+  (i : pfPos p) -> (pfDir {p} i -> InterpPolyFuncFreeM p a) ->
+  InterpPolyFuncFreeM p a
+InFMCom {p=p@(pos ** dir)} {a} i d =
+  PolyFMMuTranslateToInterp p a (InPCom i $ PolyFMInterpToMuTranslate p a . d)
+
+public export
 pfFreePolyCata : {p, q : PolyFunc} ->
   PolyNatTrans p q -> PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
