@@ -1075,6 +1075,11 @@ data PFTranslatePos : PolyFunc -> Type -> Type where
   PFCom : {0 p : PolyFunc} -> {0 a : Type} -> pfPos p -> PFTranslatePos p a
 
 public export
+(p : PolyFunc) => Functor (PFTranslatePos p) where
+  map m (PFVar x) = PFVar (m x)
+  map m (PFCom i) = PFCom i
+
+public export
 PFTranslateDir : (p : PolyFunc) -> (a : Type) -> PFTranslatePos p a -> Type
 PFTranslateDir (pos ** dir) a (PFVar ea) = Void
 PFTranslateDir (pos ** dir) a (PFCom i) = dir i
@@ -1214,10 +1219,25 @@ pfPolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
   pfCata {p} {a=(PolyFuncMu q)} $ \i, d => InPFM (onPos i) (d . onDir i)
 
 public export
+pfTranslatePosBimap : {p, q : PolyFunc} -> {a, b : Type} ->
+  (posmap : pfPos p -> pfPos q) -> (typemap : a -> b) ->
+  PFTranslatePos p a -> PFTranslatePos q b
+pfTranslatePosBimap posmap typemap (PFVar v) = PFVar (typemap v)
+pfTranslatePosBimap posmap typemap (PFCom i) = PFCom (posmap i)
+
+public export
+pfTranslateNT : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> PolyNatTrans (PFTranslate p ()) (PFTranslate q ())
+pfTranslateNT {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
+  (pfTranslatePosBimap {p} {q} {a=()} {b=()} onPos id **
+   ?pfTranslateNT_ondir_hole)
+
+public export
 pfFreePolyCata : {p, q : PolyFunc} ->
   PolyNatTrans p q -> PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
-  ?pfFreePolyCata_hole
+  (pfPolyCata (pfTranslateNT {p} {q} (onPos ** onDir)) **
+   ?pfFreePolyCata_hole_ondir)
 
 public export
 pfFreeContCata : {p, q : PolyFunc} ->
