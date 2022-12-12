@@ -151,6 +151,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Abstractions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; Has to come before the presentation methods probably due to load order
 (defmacro center-column-cell ((stream &rest args &key &allow-other-keys)
                               &body x)
@@ -163,7 +164,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; TODO Abstract out the dualities better
-
 
 (define-presentation-method present ((object geb:alias)
                                      (type   geb:alias)
@@ -257,6 +257,16 @@
                                 (geb:coprod (geb:mcar object) (geb:mcadr object))
                                 pane))))
 
+(define-presentation-method present ((object geb:comp)
+                                     (type   geb:comp)
+                                     (pane   extended-output-stream)
+                                     (view   show-view)
+                                     &key)
+  (formatting-table (pane)
+    (center-column-cell (pane) (present-object (geb:mcadr object) pane))
+    (center-column-cell (pane) (draw-arrow* pane 0 0 50 0))
+    (center-column-cell (pane) (present-object (geb:mcar object) pane))))
+
 (define-presentation-method present ((object geb:<substmorph>)
                                      (type   geb:<substmorph>)
                                      (stream extended-output-stream)
@@ -285,6 +295,7 @@
                                      &key)
   (format pane "1"))
 
+
 (define-presentation-method present ((object symbol)
                                      (type   symbol)
                                      (stream extended-output-stream)
@@ -311,6 +322,7 @@
   (format pane "+")
   ;; (graph-object object pane)
   )
+
 (define-presentation-method present ((object geb:prod)
                                      (type   geb:prod)
                                      (pane   extended-output-stream)
