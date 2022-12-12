@@ -477,6 +477,13 @@ pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
 pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
 
 public export
+pfComposeInterp : {p : PolyFunc} -> {x : Type} ->
+  InterpPolyFunc p (InterpPolyFunc p x) ->
+  InterpPolyFunc (pfCompositionArena p p) x
+pfComposeInterp {p=(pos ** dir)} {x} (i ** d) =
+  ((i ** fst . d) ** \(i' ** d') => snd (d i') d')
+
+public export
 pfDuplicateArena : PolyFunc -> PolyFunc
 pfDuplicateArena p = pfCompositionArena p p
 
@@ -898,11 +905,33 @@ HeightNLeaf = pfCompositionPowerDir
 
 public export
 PFAlg : PolyFunc -> Type -> Type
-PFAlg (pos ** dir) a = (i : pos) -> (dir i -> a) -> a
+PFAlg p a = (i : pfPos p) -> (pfDir {p} i -> a) -> a
 
 public export
 PFAlgCPS : PolyFunc -> Type -> Type
-PFAlgCPS (pos ** dir) a = (i : pos) -> (dir i -> a) -> Continuation a
+PFAlgCPS p = PFAlg p . Continuation
+
+public export
+PolyContinuation : Type -> Type
+PolyContinuation a = PolyNatTrans (PFHomArena a) PFIdentityArena
+
+public export
+ContinuationFromPoly : {a : Type} -> PolyContinuation a -> Continuation a
+ContinuationFromPoly {a} (unitId ** d) = toYo $ d () ()
+
+public export
+ContinuationToPoly : {a : Type} -> Continuation a -> PolyContinuation a
+ContinuationToPoly {a} cont = (id {a=Unit} ** \(), () => fromYo cont)
+
+-- This is equivalent to `Codensity (InterpPolyFunc p)`.
+public export
+PolyValuedContinuation : PolyFunc -> Type -> Type
+PolyValuedContinuation p = PolyContinuation . InterpPolyFunc p
+
+public export
+PolyContNT : PolyFunc -> PolyFunc -> Type
+PolyContNT p q =
+  NaturalTransformation (PolyValuedContinuation p) (PolyValuedContinuation q)
 
 public export
 PFBaseF : PolyFunc -> Type -> Type
@@ -1145,6 +1174,27 @@ pfFreeCata : {p : PolyFunc} -> {a, b : Type} ->
   PFTranslateAlg p a b -> InterpPolyFuncFreeM p a -> b
 pfFreeCata {p} {a} {b} alg =
   pfCata {p=(PFTranslate p a)} {a=b} alg . PolyFMInterpToMuTranslate p a
+
+public export
+pfFreeMVoidToMu : {p : PolyFunc} -> InterpPolyFuncFreeM p Void -> PolyFuncMu p
+pfFreeMVoidToMu {p} d =
+  let
+    pfc = pfFreeCata {p} {a=Void} {b=(PolyFuncMu p)}
+  in
+  ?pfFreeMVoidToMu_hole
+
+public export
+pfFreePolyCata : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
+pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+  ?pfFreePolyCata_hole
+
+public export
+pfFreeContCata : {p, q : PolyFunc} ->
+  PolyContNT p q ->
+  PolyContNT (PolyFuncFreeM p) (PolyFuncFreeM q)
+pfFreeContCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} cont x =
+  ?pfFreeContCata_hole
 
 --------------------------------------
 --------------------------------------
@@ -1975,6 +2025,18 @@ PFFreeMonoid p = MkPFMonoid (PFFreeReturn p) (PFFreeJoin p)
 public export
 PFFreeMonad : PolyFunc -> PFMonad
 PFFreeMonad p = (PolyFuncFreeM p ** PFFreeMonoid p)
+
+public export
+interpFreeMJoin : {p : PolyFunc} ->
+  NaturalTransformation
+    (InterpPolyFunc (PolyFuncFreeM p) . InterpPolyFunc (PolyFuncFreeM p))
+    (InterpPolyFunc (PolyFuncFreeM p))
+interpFreeMJoin {p} x =
+  InterpPolyNT
+    {p=(pfFreeComposeArena p p)} {q=(PolyFuncFreeM p)}
+    (PFFreeJoin p)
+    x .
+  pfComposeInterp {p=(PolyFuncFreeM p)} {x}
 
 -------------------------
 ---- Codensity monad ----

@@ -348,16 +348,16 @@ adtT1 : TermMu
 adtT1 = InProd []
 
 adtT2 : TermMu
-adtT2 = InCoprod 0 adtT1
+adtT2 = InNat 0 adtT1
 
 adtT3 : TermMu
 adtT3 = InProd [adtT1, adtT2]
 
 adtT4 : TermMu
-adtT4 = InCoprod 1 adtT3
+adtT4 = InAtom PRODUCT 1 adtT3
 
 adtT5 : TermMu
-adtT5 = InCoprod 2 adtT3
+adtT5 = InNat 2 adtT3
 
 adtT6 : TermMu
 adtT6 = InProd [adtT4, adtT5]

@@ -17,35 +17,34 @@ import Library.IdrisUtils
 
 public export
 data GebAtom : Type where
+  NAT : GebAtom
   PRODUCT : GebAtom
   COPRODUCT : GebAtom
 
-  -- Must be last.
-  NATVAL : Nat -> GebAtom
-
 public export
 gaEncode : GebAtom -> Nat
-gaEncode PRODUCT = 0
-gaEncode COPRODUCT = 1
-gaEncode (NATVAL n) = 2 + n
+gaEncode NAT = 0
+gaEncode PRODUCT = 1
+gaEncode COPRODUCT = 2
 
 public export
 gaDecode : Nat -> Maybe GebAtom
-gaDecode 0 = Just PRODUCT
-gaDecode 1 = Just COPRODUCT
-gaDecode (S (S n)) = Just $ NATVAL n
+gaDecode 0 = Just NAT
+gaDecode 1 = Just PRODUCT
+gaDecode 2 = Just COPRODUCT
+gaDecode _ = Nothing
 
 public export
-gaDecodeEncodeIsJust : (a : GebAtom) -> gaDecode (gaEncode a) = Just a
-gaDecodeEncodeIsJust PRODUCT = Refl
-gaDecodeEncodeIsJust COPRODUCT = Refl
-gaDecodeEncodeIsJust (NATVAL n) = Refl
+gaEncodeDecodeIsJust : (a : GebAtom) -> gaDecode (gaEncode a) = Just a
+gaEncodeDecodeIsJust NAT = Refl
+gaEncodeDecodeIsJust PRODUCT = Refl
+gaEncodeDecodeIsJust COPRODUCT = Refl
 
 public export
 gaToString : GebAtom -> String
-gaToString PRODUCT = ":*:"
-gaToString COPRODUCT = ":+:"
-gaToString (NATVAL n) = ":" ++ show n ++ ":"
+gaToString NAT = "#"
+gaToString PRODUCT = "*"
+gaToString COPRODUCT = "+"
 
 public export
 Show GebAtom where
@@ -65,7 +64,7 @@ Ord GebAtom where
 
 public export
 gaDecEq : (a, a' : GebAtom) -> Dec (a = a')
-gaDecEq = encodingDecEq gaEncode gaDecode gaDecodeEncodeIsJust decEq
+gaDecEq = encodingDecEq gaEncode gaDecode gaEncodeDecodeIsJust decEq
 
 public export
 DecEq GebAtom where

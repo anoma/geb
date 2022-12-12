@@ -2,9 +2,27 @@ module LanguageDef.ADTCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import public LanguageDef.Atom
 import public LanguageDef.PolyCat
 
 %default total
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+---- Explicitly-recursive ADT equivalent to generalized polynomial ADT term ----
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+public export
+record TermAtom where
+  constructor TAtom
+  tAtom : GebAtom
+  tData : Nat
+
+public export
+data GebTerm : Type where
+  GebRecordTerm : List GebTerm -> GebTerm
+  GebSumTerm : TermAtom -> GebTerm -> GebTerm
 
 ------------------------------------------------
 ------------------------------------------------
@@ -32,17 +50,21 @@ public export
 ProdTermPF : PolyFunc
 ProdTermPF = (ProdTermPos ** ProdTermDir)
 
+public export
+Show TermAtom where
+  show (TAtom a n) = show a ++ ":" ++ show n
+
 -- A position of the coproduct term functor is the index of the sub-term.
 public export
 CoprodTermPos : Type
-CoprodTermPos = Nat
+CoprodTermPos = TermAtom
 
 -- Any coproduct term position has exactly one direction, which corresponds
 -- to the term being injected into a coproduct term at the index given by
 -- the position.
 public export
 CoprodTermDir : CoprodTermPos -> Type
-CoprodTermDir n = Unit
+CoprodTermDir i = Unit
 
 public export
 CoprodTermPF : PolyFunc
@@ -60,6 +82,30 @@ ADTTermPos = pfPos ADTTermPF
 public export
 ADTTermDir : ADTTermPos -> Type
 ADTTermDir = pfDir {p=ADTTermPF}
+
+public export
+ProdAlg : Type -> Type
+ProdAlg a = List a -> a
+
+public export
+MkProdAlg : {0 a : Type} -> ProdAlg a -> PFAlg ProdTermPF a
+MkProdAlg alg len = alg . toList . finFToVect {n=len}
+
+public export
+prodCata : {0 a : Type} -> ProdAlg a -> PolyFuncMu ProdTermPF -> a
+prodCata = pfCata {p=ProdTermPF} . MkProdAlg
+
+public export
+CoprodAlg : Type -> Type
+CoprodAlg a = TermAtom -> a -> a
+
+public export
+MkCoprodAlg : {0 a : Type} -> CoprodAlg a -> PFAlg CoprodTermPF a
+MkCoprodAlg alg n x = alg n $ x ()
+
+public export
+coprodCata : {0 a : Type} -> CoprodAlg a -> PolyFuncMu CoprodTermPF -> a
+coprodCata = pfCata {p=CoprodTermPF} . MkCoprodAlg
 
 ---------------------------------------------
 ---- Least fixed point (initial algebra) ----
@@ -84,63 +130,46 @@ termCata = pfCata {p=ADTTermPF}
 public export
 record TermAlgRec (a : Type) where
   constructor MkTermAlg
-  talgProd : List a -> a
-  talgCoprod : Nat -> a -> a
+  talgProd : ProdAlg a
+  talgCoprod : CoprodAlg a
 
 public export
 talgFromRec : {0 a : Type} -> TermAlgRec a -> TermAlg a
-talgFromRec alg (Left len) ts = alg.talgProd $ toList $ finFToVect ts
-talgFromRec alg (Right idx) t = alg.talgCoprod idx $ t ()
+talgFromRec alg (Left len) ts = MkProdAlg alg.talgProd len ts
+talgFromRec alg (Right idx) t = MkCoprodAlg alg.talgCoprod idx t
 
 public export
 termCataRec : {0 a : Type} -> TermAlgRec a -> TermMu -> a
 termCataRec = termCata . talgFromRec
 
--------------------
----- Utilities ----
--------------------
+public export
+termCataCtx : {0 ctx, a : Type} -> (ctx -> TermAlgRec a) -> ctx -> TermMu -> a
+termCataCtx {ctx} {a} alg =
+  pfParamCata {p=ADTTermPF} {x=ctx} {a} ?termCataCtx_hole
+
+----------------------
+---- Constructors ----
+----------------------
 
 public export
 InProd : List TermMu -> TermMu
 InProd ts = InPFM (Left $ length ts) $ index' ts
 
 public export
-InCoprod : Nat -> TermMu -> TermMu
-InCoprod n t = InPFM (Right n) $ \() => t
-
---------------------------------------------------------------------------------
----- Explicitly recursive ADT equivalent to generalized polynomial ADT term ----
---------------------------------------------------------------------------------
+InTermAtom : TermAtom -> TermMu -> TermMu
+InTermAtom n t = InPFM (Right n) $ \() => t
 
 public export
-data RATerm : Type where
-  RARecordTerm : List RATerm -> RATerm
-  RASumTerm : Nat -> RATerm -> RATerm
-
-mutual
-  public export
-  raTermToADTTerm : RATerm -> TermMu
-  raTermToADTTerm (RARecordTerm ts) = InProd $ raTermListToADTTermList ts
-  raTermToADTTerm (RASumTerm n t) = InCoprod n $ raTermToADTTerm t
-
-  public export
-  raTermListToADTTermList : List RATerm -> List TermMu
-  raTermListToADTTermList [] =
-    []
-  raTermListToADTTermList (t :: ts) =
-    raTermToADTTerm t :: raTermListToADTTermList ts
+InAtom : GebAtom -> Nat -> TermMu -> TermMu
+InAtom = InTermAtom .* TAtom
 
 public export
-termToRATermAlg : TermAlgRec RATerm
-termToRATermAlg = MkTermAlg RARecordTerm RASumTerm
+InNat : Nat -> TermMu -> TermMu
+InNat = InAtom NAT
 
-public export
-termToRATerm : TermMu -> RATerm
-termToRATerm = termCataRec termToRATermAlg
-
-------------------------
----- More utilities ----
-------------------------
+-------------------
+---- Utilities ----
+-------------------
 
 public export
 TermSizeAlg : TermAlgRec Nat
@@ -169,7 +198,7 @@ termShowProduct : List String -> String
 termShowProduct ts = "(" ++ termShowList ts ++ ")"
 
 public export
-termShowCoproduct : Nat -> String -> String
+termShowCoproduct : TermAtom -> String -> String
 termShowCoproduct n t = "[" ++ show n ++ ":" ++ t ++ "]"
 
 public export
@@ -179,6 +208,86 @@ TermShowAlg = MkTermAlg termShowProduct termShowCoproduct
 public export
 Show TermMu where
   show = termCataRec TermShowAlg
+
+----------------------------------------
+----------------------------------------
+---- Finite product/coproduct types ----
+----------------------------------------
+----------------------------------------
+
+------------------------------
+---- Structure definition ----
+------------------------------
+
+-- Types constructed from finite products and coproducts are generated by
+-- either of two products -- that is, lists of types, of which we will
+-- generate either its product or its coproduct.
+--
+-- Thus these are the objects of a free bicartesian category.
+public export
+FinBCObjPF : PolyFunc
+FinBCObjPF = pfCoproductArena ProdTermPF ProdTermPF
+
+public export
+FinBCObjPos : Type
+FinBCObjPos = pfPos FinBCObjPF
+
+public export
+FinBCObjDir : FinBCObjPos -> Type
+FinBCObjDir = pfDir {p=FinBCObjPF}
+
+public export
+record FinBCObjAlgRec (a : Type) where
+  constructor MkFinBCObjAlg
+  fbcAlgProd : ProdAlg a
+  fbcAlgCoprod : ProdAlg a
+
+public export
+fbcAlgFromRec : {0 a : Type} -> FinBCObjAlgRec a -> PFAlg FinBCObjPF a
+fbcAlgFromRec alg (Left len) ts = MkProdAlg alg.fbcAlgProd len ts
+fbcAlgFromRec alg (Right len) ts = MkProdAlg alg.fbcAlgCoprod len ts
+
+public export
+FinBCObjMu : Type
+FinBCObjMu = PolyFuncMu FinBCObjPF
+
+public export
+fbcObjCataRec : {0 a : Type} -> FinBCObjAlgRec a -> FinBCObjMu -> a
+fbcObjCataRec = pfCata {p=FinBCObjPF} . fbcAlgFromRec
+
+--------------------------------------------------
+---- Translation to and from generalized term ----
+--------------------------------------------------
+
+public export
+FBCObjRepProdIdx : Nat
+FBCObjRepProdIdx = 0
+
+public export
+FBCObjRepTermAtom : Nat
+FBCObjRepTermAtom = 1
+
+public export
+FBCObjRepAlg : FinBCObjAlgRec TermMu
+FBCObjRepAlg =
+  MkFinBCObjAlg
+    (InAtom PRODUCT 0 . InProd)
+    (InAtom COPRODUCT 0 . InProd)
+
+public export
+fbcObjRep : FinBCObjMu -> TermMu
+fbcObjRep = fbcObjCataRec FBCObjRepAlg
+
+public export
+FBCObjParseAlg : TermAlgRec (Maybe FinBCObjMu)
+FBCObjParseAlg =
+  MkTermAlg
+    (\ts => let tra = sequence ts in map ?FBCObjParse_hole_prod tra)
+    (\ts => ?FBCObjParse_hole_coprod)
+
+public export
+fbcObjParse : TermMu -> Maybe FinBCObjMu
+fbcObjParse = termCataRec FBCObjParseAlg
 
 -------------------------------------------
 -------------------------------------------
@@ -691,6 +800,38 @@ SEFShowAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOShowAlg SEFShowAlgExt
 public export
 Show SEFMu where
   show = sefCata SEFShowAlg
+
+---------------------------------------------
+---- Interpretation of SEFMu as PolyFunc ----
+---------------------------------------------
+
+public export
+SOtoPFalg : SOAlg PolyFunc
+SOtoPFalg SOPos0 d = PFInitialArena
+SOtoPFalg SOPos1 d = PFTerminalArena
+SOtoPFalg SOPosC d = pfCoproductArena (d SODirL) (d SODirR)
+SOtoPFalg SOPosP d = pfProductArena (d SODir1) (d SODir2)
+
+public export
+SEFtoPFalgExt : SEFAlgExt PolyFunc
+SEFtoPFalgExt SEFPosExtI d =
+  PFIdentityArena
+SEFtoPFalgExt SEFPosExtPar d =
+  pfParProductArena (d SEFDirExtPar1) (d SEFDirExtPar2)
+
+public export
+SEFtoPFalg : SEFAlg PolyFunc
+SEFtoPFalg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOtoPFalg SEFtoPFalgExt
+
+public export
+sefToPF : SEFMu -> PolyFunc
+sefToPF = sefCata SEFtoPFalg
+
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+---- Reflection of object and endofunctor definitions as endofunctors ----
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -1554,3 +1695,28 @@ mutual
 public export
 termCata' : {0 a : Type} -> TermAlg' a -> ADTTerm -> a
 termCata' alg = termFold alg id
+
+-------------------------------------------------------------
+---- Conversion to and from explicitly-recursive version ----
+-------------------------------------------------------------
+
+mutual
+  public export
+  gebTermToADTTerm : GebTerm -> TermMu
+  gebTermToADTTerm (GebRecordTerm ts) = InProd $ gebTermListToADTTermList ts
+  gebTermToADTTerm (GebSumTerm n t) = InTermAtom n $ gebTermToADTTerm t
+
+  public export
+  gebTermListToADTTermList : List GebTerm -> List TermMu
+  gebTermListToADTTermList [] =
+    []
+  gebTermListToADTTermList (t :: ts) =
+    gebTermToADTTerm t :: gebTermListToADTTermList ts
+
+public export
+termToGebTermAlg : TermAlgRec GebTerm
+termToGebTermAlg = MkTermAlg GebRecordTerm GebSumTerm
+
+public export
+termToGebTerm : TermMu -> GebTerm
+termToGebTerm = termCataRec termToGebTermAlg
