@@ -93,6 +93,8 @@
   :description "geb full documentation exploration"
   :pathname "docs/"
   :serial t
-  :components ((:file documentation))
+  :components ((:file package)
+               (:file glossery)
+               (:file documentation))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 

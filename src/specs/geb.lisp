@@ -1,7 +1,8 @@
 (in-package :geb.spec)
 
 (defclass <substobj> (direct-pointwise-mixin) ()
-  (:documentation "the class corresponding to SUBSTOBJ"))
+  (:documentation
+   "the class corresponding to SUBSTOBJ. See GEB-DOCS/DOCS:@OPEN-CLOSED"))
 (deftype substobj ()
   `(or alias prod coprod so0 so1))
 
@@ -10,7 +11,8 @@
 ;; is concerned without an explicit id constrcutor), then we can
 ;; include it and remove it from the or type here.
 (defclass <substmorph> (direct-pointwise-mixin) ()
-  (:documentation "the class type corresponding to SUBSTMORPH"))
+  (:documentation
+   "the class type corresponding to SUBSTMORPH. See GEB-DOCS/DOCS:@OPEN-CLOSED"))
 (deftype substmorph ()
   `(or substobj
        alias

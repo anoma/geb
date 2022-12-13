@@ -1,13 +1,3 @@
-(pax:define-package #:geb-docs/docs
-  (:use #:cl)
-  (:import-from #:geb        #:@geb)
-  (:import-from #:geb.mixins #:@mixins)
-  (:import-from #:geb.utils  #:@geb-utils-manual)
-  (:import-from #:geb-test   #:@geb-test-manual)
-  (:import-from #:geb.poly   #:@poly-manual)
-  (:import-from #:geb.specs  #:@geb-specs)
-  (:export build-docs))
-
 (in-package geb-docs/docs)
 
 (pythonic-string-reader:enable-pythonic-string-syntax)
@@ -16,9 +6,10 @@
   "Welcome to the GEB project."
   (@links            pax:section)
   (@getting-started  pax:section)
+  (@glossery         pax:section)
   (@original-efforts pax:section)
   (@model            pax:section)
-  (@geb-specs        pax:section)
+  (@idioms           pax:section)
   (@geb              pax:section)
   (@poly-manual      pax:section)
   (@mixins           pax:section)
@@ -52,6 +43,10 @@ $$\mathsf{3} = \{ 1, 2, 3 \}$$
 An inline $\int_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$
 
 a display $$\int_0^\infty e^{-x^2} dx=\frac{\sqrt{\pi}}{2}$$
+
+hello [foo](1-foo)
+
+[1-foo]: foo bar
 """)
 
 (pax:defsection @getting-started (:title "Getting Started")
@@ -205,8 +200,7 @@ conjectures about GEB")
   (@morphisms pax:section)
   (@objects pax:section)
   (@yoneda-lemma pax:section)
-  (@poly-sets pax:section)
-  )
+  (@poly-sets pax:section))
 
 ;; please insert more text here about category theory
 (pax:defsection @morphisms (:title "Morphisms"))
@@ -269,6 +263,132 @@ writing:
 (geb-test:run-tests)
 ```")
 
+
+(pax:defsection @idioms (:title "Project Idioms and Conventions")
+  "The Geb Project in written in [Common
+Lisp](https://common-lisp.net/), which means the authors have a great
+choice in freedom in how the project is laid out and operates. In
+particular the style of [Common Lisp](https://common-lisp.net/) here
+is a
+[functional](https://en.wikipedia.org/wiki/Functional_programming)
+style with some
+[OO](https://en.wikipedia.org/wiki/Object-oriented_programming) idioms
+in the style of [Smalltalk](https://en.wikipedia.org/wiki/Smalltalk).
+
+The subsections will outline many idioms that can be found throughout
+the codebase."
+  (@geb-specs   pax:section)
+  (@open-closed pax:section)
+  (@<types>     pax:section))
+
+(pax:defsection @open-closed (:title "Open Types versus Closed Types")
+  "@CLOSED-TYPE's and @OPEN-TYPE's both have their perspective
+tradeoff of openness versus exhaustiveness (see the linked articles
+for more on that). Due to this, they both have their own favorable
+applications. I would argue that a closed
+[ADT](https://en.wikipedia.org/wiki/Algebraic_data_type) type is great
+tool for looking at a function mathematically and treating the object
+as a whole rather than piecemeal. Whereas a more open extension is
+great for thinking about how a particular object/case behaves. They
+are different mindsets for different styles of code.
+
+In the geb project, we have chosen to accept both styles, and allow
+both to coexist in the same setting. We have done this with a two part
+idiom.
+
+```lisp
+(deftype substobj ()
+  `(or alias prod coprod so0 so1))
+
+(defclass <substobj> (direct-pointwise-mixin) ())
+
+(defclass so0 (<substobj>) ...)
+
+(defclass prod (<substobj>) ...)
+```
+
+The @CLOSED-TYPE is GEB:SUBSTOBJ, filling and defining every structure
+it knows about. This is a fixed idea that a programmer may statically
+update and get exhaustive warnings about. Where as GEB:\\<SUBSTOBJ\\> is
+the open interface for the type. Thus we can view [GEB:\\<SUBSTOBJ\\>] as
+the general idea of a [GEB:SUBSTOBJ]. Before delving into how we combine
+these methods, let us look at two other benefits given by [GEB:\\<SUBSTOBJ\\>]
+
+1. We can put all the @MIXINS into the superclass to enforce that any
+   type that extends it has the extended behaviors we wish. This is a
+   great way to generically enhance the capabilities of the type
+   without operating on it directly.
+
+2. We can dispatch on GEB:\\<SUBSTOBJ\\> since DEFMETHOD only works on
+   @CLOS types and not generic types in CL.
+
+#### Methods for closed and open types
+
+With these pieces in play let us explore how we write a method in a
+way that is condusive to open and closed code.
+
+```lisp
+(in-package :geb)
+
+(defgeneric to-poly (morphism))
+
+(defmethod to-poly ((obj <substmorph>))
+  (typecase-of substmorph obj
+    (alias        ...)
+    (substobj     (error \"Impossible\")
+    (init          0)
+    (terminal      0)
+    (inject-left   poly:ident)
+    (inject-right  ...)
+    (comp          ...)
+    (case          ...)
+    (pair          ...)
+    (project-right ...)
+    (project-left  ...)
+    (distribute    ...)
+    (otherwise (subclass-responsibility obj))))
+
+(defmethod to-poly ((obj <substobj>))
+  (declare (ignore obj))
+  poly:ident)
+```
+
+In this piece of code we can notice a few things:
+
+1. We case on [GEB:SUBSTMORPH] exhaustively
+
+2. We cannot hit the [GEB:\\<SUBSTOBJ\\>] case due to method dispatch
+
+3. We have this [GEB.UTILS:SUBCLASS-RESPONSIBILITY] function getting called.
+
+4. We can write further methods extending the function to other subtypes.
+
+Thus the [GEB:TO-POLY] function is written in such a way that it
+supports a closed definition and open extensions, with
+[GEB.UTILS:SUBCLASS-RESPONSIBILITY] serving to be called if an
+extension a user wrote has no handling of this method.
+
+Code can also be naturally written in a more open way as well, by
+simply running methods on each class instead.
+
+#### Potential Drawback and Fixes
+
+One nasty drawback is that we can't guarantee the method exists. In
+java this can easily be done with interfaces and then enforcing they
+are fulfilled. Sadly CL has no such equivalent. However, this is all
+easily implementable. If this ever becomes a major problem, it is
+trivial to implement this by registering the subclasses, and the
+perspective methods, and scouring the image for instance methods, and
+computing if any parent class that isn't the one calling
+responsibility fulfills it. Thus, in practice, you should be able to
+ask the system if any particular extension fulfills what extension
+sets that the base object has and give CI errors if they are not
+fulfilled, thus enforcing closed behavior when warranted.")
+
+(pax:defsection @<types> (:title "≺Types≻")
+  "These refer to the @OPEN-TYPE variant to a @CLOSED-TYPE. Thus when
+one sees a type like GEB:<SUBSTOBJ> it is the open version of
+GEB:SUBSTOBJ. Read @OPEN-CLOSED for information on how to use them.")
 
 (pax:defsection @motivation (:title "motivation"))
 

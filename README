@@ -5,9 +5,13 @@ Welcome to the GEB project.
 
 ## Links
 
+
+
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
+
+
 
 ## Getting Started
 
@@ -68,6 +72,94 @@ writing:
 ```
 
 
+## Glossery
+
+- [glossary-term] closed type
+
+    A closed type is a type that can not be extended dynamically.
+    A good example of this kind of term is an ML
+    [ADT](https://en.wikipedia.org/wiki/Algebraic_data_type)
+    
+    ```haskell
+    data Tree = Empty
+              | Leaf Int
+              | Node Tree Tree
+    ```
+    
+    In our lisp code we have a very similar convention
+    
+    ```lisp
+    (in-package :geb.spec)
+    
+    (deftype substmorph ()
+      `(or substobj
+           alias
+           comp init terminal case pair distribute
+           inject-left inject-right
+           project-left project-right))
+    ```
+    
+    This type is closed, as only one of GEB:SUBSTOBJ, GEB:INJECT-LEFT,
+    GEB:INJECT-RIGHT etc can form the GEB:SUBSTMORPH type
+    
+    The main benefit of this form is that we can be exhaustive over what can be found in GEB:SUBSTBOOL
+    
+    ```lisp
+    (defun so-hom-obj (x z)
+      (match-of substobj x
+        (so0          so1)
+        (so1          z)
+        (alias        (so-hom-obj (obj x) z))
+        ((coprod x y) (prod (so-hom-obj x z)
+                            (so-hom-obj y z)))
+        ((prod x y)   (so-hom-obj x (so-hom-obj y z)))))
+    ```
+    
+    If we forget a case, like GEB:COPROD it wanrs us with an non exhaustion warning.
+    
+    Meaning that if we update definitions this works well.
+    
+    ---
+    
+    The main downside is that we can not extend the type after the fact,
+    meaning that all interfaces on SO-HOM-OBJ must take the unaltered
+    type. This is in stark contrast to @OPEN-TYPES. To find out more about
+    the trade offs and usage in the code-base read the section @OPEN-CLOSED.
+
+- [glossary-term] open type
+
+    An open type is a type that can be extended by user code down the
+    line. A good example of this in ML is the [type class
+    system](https://en.wikipedia.org/wiki/Type_class) found in Haskell.
+    
+    In our code base, it is simple as creating a @CLOS term
+    
+    ```lisp
+    (defclass <substobj> (direct-pointwise-mixin) ())
+    ```
+    
+    and to create a child of it all we need to do is.
+    
+    ```lisp
+    (defclass so0 (<substobj>) ())
+    ```
+    
+    Now any methods on GEB:<SUBSTOBJ> will cover GEB:SO0.
+    
+    ---
+    
+    The main disadvantaged of these is that exhaustion can not be checked,
+    and thus the user has to know what methods to fill out. In a system
+    with a bit more checks this is not a problem in practice. To find out
+    more about the trade offs and usage in the code-base read the section
+    @OPEN-CLOSED.
+
+- [glossary-term] Common Lisp Object System (CLOS)
+
+    The object system found in CL. Has great features like a [Meta Object
+    Protocol](http://community.schemewiki.org/?meta-object-protocol) that
+    helps it facilitate extensions.
+
 ## Original Efforts
 
 Originally GEB started off as an Idris codebase written by the
@@ -100,6 +192,8 @@ while @AGDA serves as the mathematical formalism proving various
 conjectures about GEB
 
 ## Categorical Model
+
+
 
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
@@ -168,31 +262,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} \cong C^{(A × B)}$,
+   $C^{(B^A)} cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $\varnothing$.
+   the empty sum is $varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
-$ \mathsf{1} = \lbrace 1 \rbrace$,
-$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
+where $ mathsf{2} = lbrace 1, 2 rbrace$,
+$ mathsf{1} = lbrace 1 rbrace$,
+$ mathsf{0} = lbrace  rbrace = varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -215,6 +309,8 @@ Benjamin Pierce's
 as it is very amenable *and*
 covers the background we need in 60 short pages.
 
+
+
 ### Morphisms
 
 
@@ -227,7 +323,22 @@ covers the background we need in 60 short pages.
 ### Poly in Sets
 
 
-## Spec Files and Project Layout
+## Project Idioms and Conventions
+
+The Geb Project in written in [Common
+Lisp](https://common-lisp.net/), which means the authors have a great
+choice in freedom in how the project is laid out and operates. In
+particular the style of [Common Lisp](https://common-lisp.net/) here
+is a
+[functional](https://en.wikipedia.org/wiki/Functional_programming)
+style with some
+[OO](https://en.wikipedia.org/wiki/Object-oriented_programming) idioms
+in the style of [Smalltalk](https://en.wikipedia.org/wiki/Smalltalk).
+
+The subsections will outline many idioms that can be found throughout
+the codebase.
+
+### Spec Files and Project Layout
 
 ###### \[in package GEB.SPECS\]
 The codebase is split between many files. Each folder can be seen as
@@ -255,6 +366,117 @@ structures of the GEB.POLY.SPEC:@POLY-MANUAL, this is then rexported
 in `geb.poly`, giving the module `geb.poly` a convenient interface for
 all functions that operate on `geb.poly`.
 
+### Open Types versus Closed Types
+
+@CLOSED-TYPE's and @OPEN-TYPE's both have their perspective
+tradeoff of openness versus exhaustiveness (see the linked articles
+for more on that). Due to this, they both have their own favorable
+applications. I would argue that a closed
+[ADT](https://en.wikipedia.org/wiki/Algebraic_data_type) type is great
+tool for looking at a function mathematically and treating the object
+as a whole rather than piecemeal. Whereas a more open extension is
+great for thinking about how a particular object/case behaves. They
+are different mindsets for different styles of code.
+
+In the geb project, we have chosen to accept both styles, and allow
+both to coexist in the same setting. We have done this with a two part
+idiom.
+
+```lisp
+(deftype substobj ()
+  `(or alias prod coprod so0 so1))
+
+(defclass <substobj> (direct-pointwise-mixin) ())
+
+(defclass so0 (<substobj>) ...)
+
+(defclass prod (<substobj>) ...)
+```
+
+The @CLOSED-TYPE is GEB:SUBSTOBJ, filling and defining every structure
+it knows about. This is a fixed idea that a programmer may statically
+update and get exhaustive warnings about. Where as GEB:<SUBSTOBJ> is
+the open interface for the type. Thus we can view GEB:<SUBSTOBJ> as
+the general idea of a GEB:SUBSTOBJ. Before delving into how we combine
+these methods, let us look at two other benefits given by GEB:<SUBSTOBJ>
+
+1. We can put all the @MIXINS into the superclass to enforce that any
+   type that extends it has the extended behaviors we wish. This is a
+   great way to generically enhance the capabilities of the type
+   without operating on it directly.
+
+2. We can dispatch on GEB:<SUBSTOBJ> since DEFMETHOD only works on
+   @CLOS types and not generic types in CL.
+
+#### Methods for closed and open types
+
+With these pieces in play let us explore how we write a method in a
+way that is condusive to open and closed code.
+
+```lisp
+(in-package :geb)
+
+(defgeneric to-poly (morphism))
+
+(defmethod to-poly ((obj <substmorph>))
+  (typecase-of substmorph obj
+    (alias        ...)
+    (substobj     (error "Impossible")
+    (init          0)
+    (terminal      0)
+    (inject-left   poly:ident)
+    (inject-right  ...)
+    (comp          ...)
+    (case          ...)
+    (pair          ...)
+    (project-right ...)
+    (project-left  ...)
+    (distribute    ...)
+    (otherwise (subclass-responsibility obj))))
+
+(defmethod to-poly ((obj <substobj>))
+  (declare (ignore obj))
+  poly:ident)
+```
+
+In this piece of code we can notice a few things:
+
+1. We case on GEB:SUBSTMORPH exhaustively
+
+2. We cannot hit the GEB:<SUBSTOBJ> case due to method dispatch
+
+3. We have this GEB.UTILS:SUBCLASS-RESPONSIBILITY function getting called.
+
+4. We can write further methods extending the function to other subtypes.
+
+Thus the GEB:TO-POLY function is written in such a way that it
+supports a closed definition and open extensions, with
+GEB.UTILS:SUBCLASS-RESPONSIBILITY serving to be called if an
+extension a user wrote has no handling of this method.
+
+Code can also be naturally written in a more open way as well, by
+simply running methods on each class instead.
+
+#### Potential Drawback and Fixes
+
+One nasty drawback is that we can't guarantee the method exists. In
+java this can easily be done with interfaces and then enforcing they
+are fulfilled. Sadly CL has no such equivalent. However, this is all
+easily implementable. If this ever becomes a major problem, it is
+trivial to implement this by registering the subclasses, and the
+perspective methods, and scouring the image for instance methods, and
+computing if any parent class that isn't the one calling
+responsibility fulfills it. Thus, in practice, you should be able to
+ask the system if any particular extension fulfills what extension
+sets that the base object has and give CI errors if they are not
+fulfilled, thus enforcing closed behavior when warranted.
+
+### ≺Types≻
+
+These refer to the @OPEN-TYPE variant to a @CLOSED-TYPE. Thus when
+one sees a type like GEB:<SUBSTOBJ> it is the open version of
+GEB:SUBSTOBJ. Read @OPEN-CLOSED for information on how to use them.
+
 ## The Geb Model
 
 ###### \[in package GEB\]
@@ -280,7 +502,7 @@ The Type that encomposes the SUBSTOBJ class
 
 - [type] <SUBSTOBJ>
 
-    the class corresponding to SUBSTOBJ
+    the class corresponding to SUBSTOBJ. See GEB-DOCS/DOCS:@OPEN-CLOSED
 
 The various constructors that form the SUBSTOBJ type
 
@@ -324,7 +546,7 @@ The Type that encomposes the SUBSTMOPRH class
 
 - [type] <SUBSTMORPH>
 
-    the class type corresponding to SUBSTMORPH
+    the class type corresponding to SUBSTMORPH. See GEB-DOCS/DOCS:@OPEN-CLOSED
 
 The various constructors that form the SUBSTMORPH type
 
