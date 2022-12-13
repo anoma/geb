@@ -854,15 +854,51 @@ pntToIdRight : (p : PolyFunc) ->
 pntToIdRight (pos ** dir) = (\i => (i ** const ()) ** \_, qd => fst qd)
 
 public export
-pntAssociate : (p, q, r : PolyFunc) ->
+pntFromIdLeft : (p : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena PFIdentityArena p) p
+pntFromIdLeft (pos ** dir) =
+  (\(() ** p) => p () ** \(() ** d), di => (() ** di))
+
+public export
+pntFromIdRight : (p : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena p PFIdentityArena) p
+pntFromIdRight (pos ** dir) = (fst ** \(i ** d), di => (di ** ()))
+
+public export
+pntAssociateR : (p, q, r : PolyFunc) ->
   PolyNatTrans
     (pfCompositionArena (pfCompositionArena p q) r)
     (pfCompositionArena p (pfCompositionArena q r))
-pntAssociate (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) =
+pntAssociateR (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) =
   (\pqi =>
     (fst (fst pqi) **
      \pd => (snd (fst pqi) pd ** \qd => snd pqi (pd ** qd))) **
    \pqi, qd => ((fst qd ** fst (snd qd)) ** snd (snd qd)))
+
+public export
+pntAssociateL : (p, q, r : PolyFunc) ->
+  PolyNatTrans
+    (pfCompositionArena p (pfCompositionArena q r))
+    (pfCompositionArena (pfCompositionArena p q) r)
+pntAssociateL (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) =
+  (?pntAssociateL_hole_onpos **
+   ?pntAssociateL_hole_ondir)
+
+public export
+pntAssociateComposeL : {p, q, r, s : PolyFunc} ->
+  PolyNatTrans
+    (pfCompositionArena (pfCompositionArena p q) r)
+    s ->
+  PolyNatTrans
+    (pfCompositionArena p (pfCompositionArena q r))
+    s
+pntAssociateComposeL {p} {q} {r} {s} alpha =
+  pntVCatComp
+    {p=(pfCompositionArena p (pfCompositionArena q r))}
+    {q=(pfCompositionArena (pfCompositionArena p q) r)}
+    {r=s}
+    alpha
+    (pntAssociateL p q r)
 
 public export
 VertCartFactIsCorrect : {0 p, q : PolyFunc} ->
@@ -1675,7 +1711,7 @@ record PFMonoidCorrect (p : PolyFunc) (m : PFMonoid p) where
         {p=(pfTriplicateArenaRight p)} {q=(pfDuplicateArena p)} {r=p}
         (pmonJoin m)
         (polyWhiskerRight {p=(pfDuplicateArena p)} {q=p} p (pmonJoin m)))
-      (pntAssociate p p p)
+      (pntAssociateR p p p)
 
 public export
 PFCorrectMonad : Type
@@ -1708,7 +1744,7 @@ record PFComonoidCorrect (p : PolyFunc) (c : PFComonoid p) where
   cmCoassociative :
     pntVCatComp
       {p} {q=(pfTriplicateArenaLeft p)} {r=(pfTriplicateArenaRight p)}
-      (pntAssociate p p p)
+      (pntAssociateR p p p)
       (pntVCatComp
         {p} {q=(pfDuplicateArena p)} {r=(pfTriplicateArenaLeft p)}
         (polyWhiskerLeft {p} {q=(pfDuplicateArena p)} (pcomDup c) p)
@@ -2157,8 +2193,28 @@ pfFreeJoinN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (pfCompositionPowerArena (PolyFuncFreeM p) (S n))
     (PolyFuncFreeM p)
-pfFreeJoinN (pos ** dir) Z = ?pfFreeJoinN_hole_z
-pfFreeJoinN (pos ** dir) (S n) = ?pfFreeJoinN_hole_s
+pfFreeJoinN (pos ** dir) Z =
+  pntFromIdRight (PolyFuncFreeM (pos ** dir))
+pfFreeJoinN (pos ** dir) (S n) =
+  let
+    sS2S = polyWhiskerLeft
+      {p=(pfFreeComposeArena (pos ** dir) (pos ** dir))}
+      {q=(PolyFuncFreeM (pos ** dir))}
+      (PFFreeJoin (pos ** dir))
+      (pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) n)
+    ret = pntVCatComp
+      {p=(pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S (S n)))}
+      {q=(pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n))}
+      {r=(PolyFuncFreeM (pos ** dir))}
+      (pfFreeJoinN (pos ** dir) n)
+      (pntAssociateComposeL
+        {p=(PolyFuncFreeM (pos ** dir))}
+        {q=(PolyFuncFreeM (pos ** dir))}
+        {r=(pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) n)}
+        {s=(pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n))}
+        sS2S)
+  in
+  ret
 
 public export
 pfFreePolyCataNFree : {p, q : PolyFunc} -> {n : Nat} ->
