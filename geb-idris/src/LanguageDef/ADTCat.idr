@@ -139,6 +139,27 @@ FinPCObjAlgToPF : {a : Type} -> FinPCObjAlg a -> PFAlg FinPCObjF a
 FinPCObjAlgToPF (alg1, alg2) =
   PFCoprodAlg {p=UBTreeF} {q=UBTreeF} (UBTreeAlgToPF alg1) (UBTreeAlgToPF alg2)
 
+public export
+FinPCObjMu : Type
+FinPCObjMu = PolyFuncMu FinPCObjF
+
+public export
+finPCObjCata : {a : Type} -> FinPCObjAlg a -> FinPCObjMu -> a
+finPCObjCata = pfCata {p=FinPCObjF} . FinPCObjAlgToPF
+
+public export
+FinPCObjFreePF : PolyFunc
+FinPCObjFreePF = PolyFuncFreeM FinPCObjF
+
+public export
+FinPCObjFreeM : Type -> Type
+FinPCObjFreeM = InterpPolyFuncFreeM FinPCObjF
+
+public export
+finPCObjSubstCata : {a, b : Type} ->
+  (a -> b) -> FinPCObjAlg b -> FinPCObjFreeM a -> b
+finPCObjSubstCata subst = pfSubstCata {p=FinPCObjF} subst . FinPCObjAlgToPF
+
 --------------------------------------------
 ---- Finite-product-and-coproduct terms ----
 --------------------------------------------
@@ -146,6 +167,39 @@ FinPCObjAlgToPF (alg1, alg2) =
 public export
 FinPCTermF : PolyFunc
 FinPCTermF = pfSquareArena pfMaybeArena
+
+public export
+FinPCTermAlg : Type -> Type
+FinPCTermAlg a = (a, a -> a, a -> a, a -> a -> a)
+
+public export
+FinPCTermAlgToPF : {a : Type} -> FinPCTermAlg a -> PFAlg FinPCTermF a
+FinPCTermAlgToPF (u, l, r, p) (Right (), Right ()) d = u
+FinPCTermAlgToPF (u, l, r, p) (Right (), Left ()) d = r $ d $ Right ()
+FinPCTermAlgToPF (u, l, r, p) (Left (), Right ()) d = l $ d $ Left ()
+FinPCTermAlgToPF (u, l, r, p) (Left (), Left ()) d =
+  p (d $ Left ()) (d $ Right ())
+
+public export
+FinPCTermMu : Type
+FinPCTermMu = PolyFuncMu FinPCTermF
+
+public export
+finPCTermCata : {a : Type} -> FinPCTermAlg a -> FinPCTermMu -> a
+finPCTermCata = pfCata {p=FinPCTermF} . FinPCTermAlgToPF
+
+public export
+FinPCTermFreePF : PolyFunc
+FinPCTermFreePF = PolyFuncFreeM FinPCTermF
+
+public export
+FinPCTermFreeM : Type -> Type
+FinPCTermFreeM = InterpPolyFuncFreeM FinPCTermF
+
+public export
+finPCTermSubstCata : {a, b : Type} ->
+  (a -> b) -> FinPCTermAlg b -> FinPCTermFreeM a -> b
+finPCTermSubstCata subst = pfSubstCata subst . FinPCTermAlgToPF
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
