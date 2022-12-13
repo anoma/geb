@@ -881,8 +881,8 @@ pntAssociateL : (p, q, r : PolyFunc) ->
     (pfCompositionArena p (pfCompositionArena q r))
     (pfCompositionArena (pfCompositionArena p q) r)
 pntAssociateL (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) =
-  (?pntAssociateL_hole_onpos **
-   ?pntAssociateL_hole_ondir)
+  (\(i ** d) => ((i ** fst . d) ** \(pd ** qd) => snd (d pd) qd) **
+   \(pi ** pd), ((pd' ** qd) ** rd) => (pd' ** (qd ** rd)))
 
 public export
 pntAssociateComposeL : {p, q, r, s : PolyFunc} ->
