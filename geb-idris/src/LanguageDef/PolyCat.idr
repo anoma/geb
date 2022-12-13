@@ -391,31 +391,6 @@ PFConstArena : Type -> PolyFunc
 PFConstArena a = (PFConstPos a ** PFConstDir {a})
 
 public export
-pfEitherPos : Type -> Type
-pfEitherPos a = Either Unit a
-
-public export
-pfEitherDir : (a : Type) -> pfEitherPos a -> Type
-pfEitherDir a (Left ()) = Unit
-pfEitherDir a (Right _) = Void
-
-public export
-pfEitherArena : Type -> PolyFunc
-pfEitherArena a = (pfEitherPos a ** pfEitherDir a)
-
-public export
-pfMaybeArena : PolyFunc
-pfMaybeArena = pfEitherArena Unit
-
-public export
-pfMaybePos : Type
-pfMaybePos = pfPos pfMaybeArena
-
-public export
-pfMaybeDir : PolyCat.pfMaybePos -> Type
-pfMaybeDir = pfDir {p=pfMaybeArena}
-
-public export
 pfCoproductPos : PolyFunc -> PolyFunc -> Type
 pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
 
@@ -440,6 +415,18 @@ pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
 pfProductArena p q = (pfProductPos p q ** pfProductDir p q)
 
 public export
+pfDoubleArena : PolyFunc -> PolyFunc
+pfDoubleArena p = pfCoproductArena p p
+
+public export
+pfDoublePos : PolyFunc -> Type
+pfDoublePos = pfPos . pfDoubleArena
+
+public export
+pfDoubleDir : (p : PolyFunc) -> pfDoublePos p -> Type
+pfDoubleDir p = pfDir {p=(pfDoubleArena p)}
+
+public export
 pfSquareArena : PolyFunc -> PolyFunc
 pfSquareArena p = pfProductArena p p
 
@@ -450,6 +437,42 @@ pfSquarePos = pfPos . pfSquareArena
 public export
 pfSquareDir : (p : PolyFunc) -> pfSquarePos p -> Type
 pfSquareDir p = pfDir {p=(pfSquareArena p)}
+
+public export
+pfIdSquaredArena : PolyFunc
+pfIdSquaredArena = pfSquareArena PFIdentityArena
+
+public export
+PFIdSquaredPos : Type
+PFIdSquaredPos = pfPos pfIdSquaredArena
+
+public export
+pfIdSquaredDir : PFIdSquaredPos -> Type
+pfIdSquaredDir = pfDir {p=pfIdSquaredArena}
+
+public export
+pfEitherArena : Type -> PolyFunc
+pfEitherArena a = pfCoproductArena PFIdentityArena (PFConstArena a)
+
+public export
+pfEitherPos : Type -> Type
+pfEitherPos = pfPos . pfEitherArena
+
+public export
+pfEitherDir : (a : Type) -> pfEitherPos a -> Type
+pfEitherDir a = pfDir {p=(pfEitherArena a)}
+
+public export
+pfMaybeArena : PolyFunc
+pfMaybeArena = pfEitherArena Unit
+
+public export
+pfMaybePos : Type
+pfMaybePos = pfPos pfMaybeArena
+
+public export
+pfMaybeDir : PolyCat.pfMaybePos -> Type
+pfMaybeDir = pfDir {p=pfMaybeArena}
 
 public export
 pfParProductPos : PolyFunc -> PolyFunc -> Type
@@ -1175,10 +1198,21 @@ PFTranslateAlg : PolyFunc -> Type -> Type -> Type
 PFTranslateAlg p a b = PFAlg (PFTranslate p a) b
 
 public export
+PFAlgToTranslate : {p : PolyFunc} -> {a, b : Type} ->
+  (a -> b) -> PFAlg p b -> PFTranslateAlg p a b
+PFAlgToTranslate {p=(pos ** dir)} {a} {b} subst alg (PFVar v) d = subst v
+PFAlgToTranslate {p=(pos ** dir)} {a} {b} subst alg (PFCom t) d = alg t d
+
+public export
 pfFreeCata : {p : PolyFunc} -> {a, b : Type} ->
   PFTranslateAlg p a b -> InterpPolyFuncFreeM p a -> b
 pfFreeCata {p} {a} {b} alg =
   pfCata {p=(PFTranslate p a)} {a=b} alg . PolyFMInterpToMuTranslate p a
+
+public export
+pfSubstCata : {p : PolyFunc} -> {a, b : Type} ->
+  (a -> b) -> PFAlg p b -> InterpPolyFuncFreeM p a -> b
+pfSubstCata {p} {a} {b} subst alg = pfFreeCata (PFAlgToTranslate subst alg)
 
 public export
 PFFreeVoidToMuAlg : (p : PolyFunc) -> PFTranslateAlg p Void (PolyFuncMu p)
@@ -2685,6 +2719,10 @@ data SPFMu : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a where
 public export
 SPFMuPoly : {a : Type} -> SlicePolyEndoFunc a -> PolyFunc
 SPFMuPoly {a} spf = (a ** SPFMu {a} spf)
+
+public export
+SPFMuSigma : {a : Type} -> SlicePolyEndoFunc a -> Type
+SPFMuSigma {a} spf = Sigma {a} (SPFMu {a} spf)
 
 --------------------------------------------------------
 ---- Catamorphisms of dependent polynomial functors ----

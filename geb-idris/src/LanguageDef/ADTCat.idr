@@ -7,6 +7,146 @@ import public LanguageDef.PolyCat
 
 %default total
 
+-----------------------------------
+-----------------------------------
+---- Simple types, anonymously ----
+-----------------------------------
+-----------------------------------
+
+-------------------------------
+---- Unary natural numbers ----
+-------------------------------
+
+public export
+UNatF : PolyFunc
+UNatF = pfMaybeArena
+
+public export
+UNatAlg : Type -> Type
+UNatAlg a = (a, a -> a)
+
+public export
+UNatAlgToPF : {a : Type} -> UNatAlg a -> PFAlg UNatF a
+UNatAlgToPF (z, s) (Right ()) d = z
+UNatAlgToPF (z, s) (Left ()) d = s $ d ()
+
+public export
+UNatMu : Type
+UNatMu = PolyFuncMu UNatF
+
+public export
+unatCata : {a : Type} -> UNatAlg a -> UNatMu -> a
+unatCata = pfCata {p=UNatF} . UNatAlgToPF
+
+public export
+UNatFreePF : PolyFunc
+UNatFreePF = PolyFuncFreeM UNatF
+
+public export
+UNatFreeM : Type -> Type
+UNatFreeM = InterpPolyFuncFreeM UNatF
+
+public export
+unatSubstCata : {a, b : Type} -> (a -> b) -> UNatAlg b -> UNatFreeM a -> b
+unatSubstCata subst = pfSubstCata {p=UNatF} subst . UNatAlgToPF
+
+public export
+UNatToNativeAlg : UNatAlg Nat
+UNatToNativeAlg = (Z, S)
+
+public export
+unatToNative : UNatMu -> Nat
+unatToNative = unatCata UNatToNativeAlg
+
+public export
+unatZ : UNatMu
+unatZ = InPFM (Right ()) $ voidF _
+
+public export
+unatS : UNatMu -> UNatMu
+unatS n = InPFM (Left ()) $ const n
+
+public export
+unatFromNative : Nat -> UNatMu
+unatFromNative Z = unatZ
+unatFromNative (S n) = unatS (unatFromNative n)
+
+public export
+Show UNatMu where
+  show n = show (unatToNative n)
+
+--------------------------------
+---- Unlabeled binary trees ----
+--------------------------------
+
+public export
+UBTreeF : PolyFunc
+UBTreeF = pfCompositionArena pfMaybeArena pfIdSquaredArena
+
+public export
+UBTreeAlg : Type -> Type
+UBTreeAlg a = (a, a -> a -> a)
+
+public export
+UBTreeAlgToPF : {a : Type} -> UBTreeAlg a -> PFAlg UBTreeF a
+UBTreeAlgToPF {a} (u, p) (Right () ** i) d = u
+UBTreeAlgToPF {a} (u, p) (Left () ** i) d with (i ()) proof ieq
+  UBTreeAlgToPF {a} (u, p) (Left () ** i) d | ((), ()) =
+    p (d (() ** rewrite ieq in Left ())) (d (() ** rewrite ieq in Right ()))
+
+public export
+UBTreeMu : Type
+UBTreeMu = PolyFuncMu UBTreeF
+
+public export
+ubtreeCata : {a : Type} -> UBTreeAlg a -> UBTreeMu -> a
+ubtreeCata = pfCata {p=UBTreeF} . UBTreeAlgToPF
+
+public export
+UBTreeFreePF : PolyFunc
+UBTreeFreePF = PolyFuncFreeM UBTreeF
+
+public export
+UBTreeFreeM : Type -> Type
+UBTreeFreeM = InterpPolyFuncFreeM UBTreeF
+
+public export
+ubtreeSubstCata : {a, b : Type} -> (a -> b) -> UBTreeAlg b -> UBTreeFreeM a -> b
+ubtreeSubstCata subst = pfSubstCata {p=UBTreeF} subst . UBTreeAlgToPF
+
+public export
+UBTreeShowAlg : UBTreeAlg String
+UBTreeShowAlg = ("!", \x, y => "(" ++ x ++ "," ++ y ++ ")")
+
+public export
+Show UBTreeMu where
+  show = ubtreeCata UBTreeShowAlg
+
+----------------------------------------------------
+---- Finite-product-and-coproduct objects/types ----
+----------------------------------------------------
+
+public export
+FinPCObjF : PolyFunc
+FinPCObjF = pfDoubleArena UBTreeF
+
+public export
+FinPCObjAlg : Type -> Type
+FinPCObjAlg a = (UBTreeAlg a, UBTreeAlg a)
+
+public export
+FinPCObjAlgToPF : {a : Type} -> FinPCObjAlg a -> PFAlg FinPCObjF a
+FinPCObjAlgToPF (alg1, alg2) =
+  PFCoprodAlg {p=UBTreeF} {q=UBTreeF} (UBTreeAlgToPF alg1) (UBTreeAlgToPF alg2)
+
+--------------------------------------------
+---- Finite-product-and-coproduct terms ----
+--------------------------------------------
+
+public export
+FinPCTermF : PolyFunc
+FinPCTermF = pfSquareArena pfMaybeArena
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Explicitly-recursive ADT equivalent to generalized polynomial ADT term ----
