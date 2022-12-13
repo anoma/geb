@@ -2255,6 +2255,20 @@ pfFreePolyCataN {p} {q} {n} alpha =
   jpr
 
 public export
+pfPolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
+  PolyNatTrans
+    (pfCompositionPowerArena p (S n))
+    (pfCompositionPowerArena q (S n)) ->
+  PolyFuncMu p -> PolyFuncMu q
+pfPolyCataN {p} {q} {n} alpha =
+  let
+    alphaN = pfFreePolyCataN {p} {q} {n} alpha
+    alphaNint =
+      InterpPolyNT {p=(PolyFuncFreeM p)} {q=(PolyFuncFreeM q)} alphaN Void
+  in
+  pfFreeMVoidToMu {p=q} . alphaNint . pfMuToFreeMVoid {p}
+
+public export
 pfFreeContCata : {p, q : PolyFunc} ->
   PolyContNT p q ->
   PolyContNT (PolyFuncFreeM p) (PolyFuncFreeM q)
