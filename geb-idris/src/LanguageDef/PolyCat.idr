@@ -1273,13 +1273,6 @@ pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
   (pfPolyCata (pfTranslateNT {p} {q} (onPos ** onDir)) **
    ?pfFreePolyCata_hole_ondir)
 
-public export
-pfFreeContCata : {p, q : PolyFunc} ->
-  PolyContNT p q ->
-  PolyContNT (PolyFuncFreeM p) (PolyFuncFreeM q)
-pfFreeContCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} cont x =
-  ?pfFreeContCata_hole
-
 --------------------------------------
 --------------------------------------
 ---- Polynomial-functor coalgebra ----
@@ -2121,6 +2114,96 @@ interpFreeMJoin {p} x =
     (PFFreeJoin p)
     x .
   pfComposeInterp {p=(PolyFuncFreeM p)} {x}
+
+public export
+pfFreeReturnN : (p : PolyFunc) -> (n : Nat) ->
+  PolyNatTrans
+    (PolyFuncFreeM p)
+    (pfCompositionPowerArena (PolyFuncFreeM p) (S n))
+pfFreeReturnN (pos ** dir) Z =
+  pntToIdRight (PolyFuncFreeM (pos ** dir))
+pfFreeReturnN (pos ** dir) (S n) =
+  let
+    retn =
+      pntVCatComp
+        {p=(PolyFuncFreeM (pos ** dir))}
+        {q=(pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n))}
+        {r=(pfCompositionArena
+          PFIdentityArena
+          (pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n)))}
+        (pntToIdLeft
+          (pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n)))
+        (pfFreeReturnN (pos ** dir) n)
+    n2S = polyWhiskerLeft
+      {p=PFIdentityArena}
+      {q=(PolyFuncFreeM (pos ** dir))}
+      (PFFreeReturn (pos ** dir))
+      (pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n))
+    ret = pntVCatComp
+      {p=(PolyFuncFreeM (pos ** dir))}
+      {q=(pfCompositionArena
+        PFIdentityArena
+        (pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n)))}
+      {r=(pfCompositionArena
+        (PolyFuncFreeM (pos ** dir))
+        (pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n)))}
+      n2S
+      retn
+    in
+    ret
+
+public export
+pfFreeJoinN : (p : PolyFunc) -> (n : Nat) ->
+  PolyNatTrans
+    (pfCompositionPowerArena (PolyFuncFreeM p) (S n))
+    (PolyFuncFreeM p)
+pfFreeJoinN (pos ** dir) Z = ?pfFreeJoinN_hole_z
+pfFreeJoinN (pos ** dir) (S n) = ?pfFreeJoinN_hole_s
+
+public export
+pfFreePolyCataNFree : {p, q : PolyFunc} -> {n : Nat} ->
+  PolyNatTrans
+    (pfCompositionPowerArena p (S n))
+    (pfCompositionPowerArena q (S n)) ->
+  PolyNatTrans
+    (pfCompositionPowerArena (PolyFuncFreeM p) (S n))
+    (pfCompositionPowerArena (PolyFuncFreeM q) (S n))
+pfFreePolyCataNFree {p} {q} {n} alpha = ?pfFreePolyCataNFree_hole
+
+public export
+pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
+  PolyNatTrans
+    (pfCompositionPowerArena p (S n))
+    (pfCompositionPowerArena q (S n)) ->
+  PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
+pfFreePolyCataN {p} {q} {n} alpha =
+  let
+    retn = pfFreeReturnN p n
+    joinn = pfFreeJoinN q n
+    pcn = pfFreePolyCataNFree {p} {q} alpha
+    pr =
+      pntVCatComp
+        {p=(PolyFuncFreeM p)}
+        {q=(pfCompositionPowerArena (PolyFuncFreeM p) (S n))}
+        {r=(pfCompositionPowerArena (PolyFuncFreeM q) (S n))}
+        pcn
+        retn
+    jpr =
+      pntVCatComp
+        {p=(PolyFuncFreeM p)}
+        {q=(pfCompositionPowerArena (PolyFuncFreeM q) (S n))}
+        {r=(PolyFuncFreeM q)}
+        joinn
+        pr
+  in
+  jpr
+
+public export
+pfFreeContCata : {p, q : PolyFunc} ->
+  PolyContNT p q ->
+  PolyContNT (PolyFuncFreeM p) (PolyFuncFreeM q)
+pfFreeContCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} cont x =
+  ?pfFreeContCata_hole
 
 -------------------------
 ---- Codensity monad ----
