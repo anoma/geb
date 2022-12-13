@@ -160,6 +160,16 @@ finPCObjSubstCata : {a, b : Type} ->
   (a -> b) -> FinPCObjAlg b -> FinPCObjFreeM a -> b
 finPCObjSubstCata subst = pfSubstCata {p=FinPCObjF} subst . FinPCObjAlgToPF
 
+public export
+FinPCObjShowAlg : FinPCObjAlg String
+FinPCObjShowAlg =
+  (("1", \x, y => "(" ++ x ++ "," ++ y ++ ")"),
+   ("0", \x, y => "[" ++ x ++ "+" ++ y ++ "]"))
+
+public export
+Show FinPCObjMu where
+  show = finPCObjCata FinPCObjShowAlg
+
 --------------------------------------------
 ---- Finite-product-and-coproduct terms ----
 --------------------------------------------
@@ -200,6 +210,18 @@ public export
 finPCTermSubstCata : {a, b : Type} ->
   (a -> b) -> FinPCTermAlg b -> FinPCTermFreeM a -> b
 finPCTermSubstCata subst = pfSubstCata subst . FinPCTermAlgToPF
+
+public export
+FinPCTermShowAlg : FinPCTermAlg String
+FinPCTermShowAlg =
+  ("!",
+   \x => "l[" ++ x ++ "]",
+   \x => "r[" ++ x ++ "]",
+   \x, y => "(" ++ x ++ "," ++ y ++ ")")
+
+public export
+Show FinPCTermMu where
+  show = finPCTermCata FinPCTermShowAlg
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
