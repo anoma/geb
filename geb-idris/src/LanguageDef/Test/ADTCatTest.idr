@@ -383,8 +383,17 @@ stShowFullList ts@(_ :: _) = do
 stMu1 : STMu
 stMu1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
 
+stMu2 : STMu
+stMu2 = InSTPair (InSTLeft InSTUnit) (InSTRight $ InSTLeft $ InSTUnit)
+
 stMu1EqSelf : Assertion
 stMu1EqSelf = Assert $ stMu1 == stMu1
+
+stMu2EqSelf : Assertion
+stMu2EqSelf = Assert $ stMu2 == stMu2
+
+stMu1NotEq2 : Assertion
+stMu1NotEq2 = Assert $ stMu1 /= stMu2
 
 ----------------------------------
 ----------------------------------
@@ -510,6 +519,7 @@ adtCatTest = do
   putStrLn ""
   stShowFullList [
       ("stMu1", stMu1)
+    , ("stMu2", stMu2)
     ]
   putStrLn ""
   putStrLn "---------------"
