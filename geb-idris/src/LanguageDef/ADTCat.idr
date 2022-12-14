@@ -51,6 +51,14 @@ public export
 soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
 soCata = pfCata {p=SubstObjPF}
 
+public export
+SOPairAlg : Type -> Type
+SOPairAlg = PFProductHomAdjAlg SubstObjPF SubstObjPF
+
+public export
+soPairCata : {0 a : Type} -> SOPairAlg a -> SOMu -> SOMu -> a
+soPairCata {a} = pfProductHomAdjCata {a} {p=SubstObjPF} {q=SubstObjPF}
+
 -------------------
 ---- Utilities ----
 -------------------
@@ -118,6 +126,33 @@ SOShowAlg SOPosP dir = "(" ++ dir SODir1 ++ "," ++ dir SODir2 ++ ")"
 public export
 Show SOMu where
   show = soCata SOShowAlg
+
+public export
+SOEqAlg : SOPairAlg Bool
+SOEqAlg SOPos0 d SOPos0 d' = True
+SOEqAlg SOPos0 d SOPos1 d' = False
+SOEqAlg SOPos0 d SOPosC d' = False
+SOEqAlg SOPos0 d SOPosP d' = False
+SOEqAlg SOPos1 d SOPos0 d' = False
+SOEqAlg SOPos1 d SOPos1 d' = True
+SOEqAlg SOPos1 d SOPosC d' = False
+SOEqAlg SOPos1 d SOPosP d' = False
+SOEqAlg SOPosC d SOPos0 d' = False
+SOEqAlg SOPosC d SOPos1 d' = False
+SOEqAlg SOPosC d SOPosC d' = d SODirL SOPosC d' && d SODirR SOPosC d'
+SOEqAlg SOPosC d SOPosP d' = False
+SOEqAlg SOPosP d SOPos0 d' = False
+SOEqAlg SOPosP d SOPos1 d' = False
+SOEqAlg SOPosP d SOPosC d' = False
+SOEqAlg SOPosP d SOPosP d' = d SODir1 SOPosP d' && d SODir2 SOPosP d'
+
+public export
+soEq : SOMu -> SOMu -> Bool
+soEq = soPairCata SOEqAlg
+
+public export
+Eq SOMu where
+  (==) = soEq
 
 ----------------------------------------
 ---- Interpretation into Idris Type ----
