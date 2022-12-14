@@ -56,6 +56,10 @@ public export
 STMu : Type
 STMu = PolyFuncMu SubstTermPF
 
+public export
+STFreeM : PolyFunc
+STFreeM = PolyFuncFreeM SubstTermPF
+
 ---------------------------------
 ---- Algebras, catamorphisms ----
 ---------------------------------
@@ -75,6 +79,22 @@ STPairAlg = PFProductAlg SubstTermPF SubstTermPF
 public export
 stPairCata : {0 a : Type} -> STPairAlg a -> STMu -> STMu -> a
 stPairCata {a} = pfProductCata {a} {p=SubstTermPF} {q=SubstTermPF}
+
+public export
+STNatTrans : Type
+STNatTrans = PolyNatTrans SubstTermPF SubstTermPF
+
+public export
+STFreeNatTrans : Type
+STFreeNatTrans = PolyNatTrans STFreeM STFreeM
+
+public export
+stPolyCata : STNatTrans -> STMu -> STMu
+stPolyCata = pfPolyCata {p=SubstTermPF} {q=SubstTermPF}
+
+public export
+stFreePolyCata : STNatTrans -> STFreeNatTrans
+stFreePolyCata = pfFreePolyCata {p=SubstTermPF} {q=SubstTermPF}
 
 -------------------
 ---- Utilities ----
@@ -206,6 +226,23 @@ stMuFromRec (STRPair t t') = InSTPair (stMuFromRec t) (stMuFromRec t')
 ---------------------
 ---- Refinements ----
 ---------------------
+
+public export
+STEqualizerPred : {0 a : Type} -> DecEqPred a -> STAlg a -> a -> STMu -> Bool
+STEqualizerPred {a} eq alg elema obj = isYes $ eq elema $ stCata alg obj
+
+public export
+STEqualizer : {0 a : Type} -> DecEqPred a -> STAlg a -> SliceObj a
+STEqualizer {a} eq alg elema =
+  Refinement {a=STMu} $ STEqualizerPred eq alg elema
+
+public export
+STRefineAlg : Type
+STRefineAlg = STAlg Bool
+
+public export
+STRefinement : SliceObj STRefineAlg
+STRefinement alg = Refinement {a=STMu} $ stCata alg
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
