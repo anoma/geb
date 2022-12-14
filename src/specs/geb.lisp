@@ -174,8 +174,8 @@ Example:
 (geb-gui::visualize (left-> so1 geb-bool:bool))
 
 (comp
- (mcase geb-bool:mtrue
-        geb-bool:snot)
+ (mcase geb-bool:true
+        geb-bool:not)
  (left-> so1 geb-bool:bool))
 
 ```
@@ -195,7 +195,8 @@ otherwise flip the value of the boolean coming in."))
           :type substobj
           :documentation ""))
   (:documentation
-   "The right injection morphism. Takes two \\<SUBSTOBJ\\> values. It is the dual of INJECT-LEFT
+   "The right injection morphism. Takes two \\<SUBSTOBJ\\> values. It is
+the dual of INJECT-LEFT
 
 The formal grammar is
 
@@ -213,8 +214,8 @@ Example:
 (geb-gui::visualize (right-> so1 geb-bool:bool))
 
 (comp
- (mcase geb-bool:mtrue
-        geb-bool:snot)
+ (mcase geb-bool:true
+        geb-bool:not)
  (right-> so1 geb-bool:bool))
 
 ```
@@ -239,7 +240,7 @@ gets applied on the left coproduct while the other gets applied on the
 right coproduct. The result of each \\<SUBSTMORPH\\> values must be
 the same.
 
-The formal grammar of [CASE] is:
+The formal grammar of [CASE][type] is:
 
 ```lisp
 (mcase mcar mcadr)
@@ -253,8 +254,8 @@ Example:
 
 ```lisp
 (comp
- (mcase geb-bool:mtrue
-        geb-bool:snot)
+ (mcase geb-bool:true
+        geb-bool:not)
  (right-> so1 geb-bool:bool))
 ```
 

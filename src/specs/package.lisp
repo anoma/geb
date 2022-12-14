@@ -109,7 +109,7 @@ constructors"
 
 (in-package :geb.spec)
 
-(pax:defsection @geb-categories (:title "Core Categories")
+(pax:defsection @geb-categories (:title "Core Category")
   "The underlying category of GEB. With @GEB-SUBSTMU covering the
 shapes and forms (GEB-DOCS/DOCS:@OBJECTS) of data while @GEB-SUBSTMORPH
 deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"

@@ -88,7 +88,7 @@
                          (uiop:symbol-call :geb-test :run-tests)))
 
 (asdf:defsystem :geb/documentation
-  :depends-on (:geb :MGL-PAX/FULL :cl-environments
+  :depends-on (:geb :mgl-pax/navigate :MGL-PAX/FULL :cl-environments
                     :geb/test :pythonic-string-reader)
   :description "geb full documentation exploration"
   :pathname "docs/"
@@ -98,3 +98,10 @@
                (:file documentation))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 
+
+(defun load-docs-with-symbol-macro (&optional (ql nil))
+  (if ql
+      (progn (ql:quickload :mgl-pax/navigate)
+             (ql:quickload :geb/documentation))
+      (progn (asdf:load-system :mgl-pax/navigate)
+             (asdf:load-system :geb/documentation))))

@@ -21,13 +21,15 @@
     - [6.2 Open Types versus Closed Types][a920]
     - [6.3 ≺Types≻][a300]
 - [7 The Geb Model][c1fb]
-    - [7.1 Core Categories][cb9e]
+    - [7.1 Core Category][cb9e]
         - [7.1.1 Subst Obj][c1b3]
         - [7.1.2 Subst Morph][d2d1]
     - [7.2 Accessors][cc51]
     - [7.3 Constructors][2ad4]
     - [7.4 API][6228]
-        - [7.4.1 Translation Functions][0caf]
+        - [7.4.1 Booleans][399c]
+        - [7.4.2 Translation Functions][0caf]
+        - [7.4.3 Utility][c721]
     - [7.5 Examples][a17b]
 - [8 Polynomial Specification][f5ac]
     - [8.1 Polynomial Types][bd81]
@@ -46,9 +48,13 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
+
+
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
+
+
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -242,6 +248,8 @@ conjectures about GEB
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 5 Categorical Model
 
+
+
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -309,31 +317,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} \cong C^{(A × B)}$,
+   $C^{(B^A)} cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $\varnothing$.
+   the empty sum is $varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
-$ \mathsf{1} = \lbrace 1 \rbrace$,
-$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
+where $ mathsf{2} = lbrace 1, 2 rbrace$,
+$ mathsf{1} = lbrace 1 rbrace$,
+$ mathsf{0} = lbrace  rbrace = varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -355,6 +363,8 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
+
+
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 5.1 Morphisms
@@ -538,7 +548,7 @@ Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
-### 7.1 Core Categories
+### 7.1 Core Category
 
 ###### \[in package GEB.SPEC\]
 The underlying category of GEB. With [Subst Obj][c1b3] covering the
@@ -654,7 +664,7 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
     
     In this example we are composing two morphisms. the first morphism
     that gets applied ([`PAIR`][3bc6] ...) is the identity function on the
-    type ([`PROD`][77c2] [`SO1`][ebf5] `GEB-BOOL:BOOL`), where we pair the
+    type ([`PROD`][77c2] [`SO1`][ebf5] [`GEB-BOOL:BOOL`][0ad4]), where we pair the
     [left injection](INJECT-LEFT) and the [right
     projection](INJECT-RIGHT), followed by taking the [right
     projection](INJECT-RIGHT) of the type.
@@ -675,7 +685,7 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
     right coproduct. The result of each `<SUBSTMORPH>` values must be
     the same.
     
-    The formal grammar of `CASE` is:
+    The formal grammar of [`CASE`][59dd] is:
     
     ```lisp
     (mcase mcar mcadr)
@@ -689,13 +699,13 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
     
     ```lisp
     (comp
-     (mcase geb-bool:mtrue
-            geb-bool:snot)
+     (mcase geb-bool:true
+            geb-bool:not)
      (right-> so1 geb-bool:bool))
     ```
     
-    In the second example, we inject a term with the shape `GEB-BOOL:BOOL`
-    into a pair with the shape ([`SO1`][ebf5] × `GEB-BOOL:BOOL`), then we use
+    In the second example, we inject a term with the shape [`GEB-BOOL:BOOL`][0ad4]
+    into a pair with the shape ([`SO1`][ebf5] × [`GEB-BOOL:BOOL`][0ad4]), then we use
     [`MCASE`][cd11] to denote a morophism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]),
     then give us True, otherwise flip the value of the boolean coming in.
 
@@ -735,7 +745,7 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
                               (<-right so1 geb-bool:bool)))
     ```
     
-    Here this pair morphism takes the pair `SO1`([`0`][f4ba] [`1`][ebf5]) × `GEB-BOOL:BOOL`, and
+    Here this pair morphism takes the pair `SO1`([`0`][f4ba] [`1`][ebf5]) × [`GEB-BOOL:BOOL`][0ad4], and
     projects back the left field `SO1` as the first value of the pair and
     projects back the `GEB-BOOL:BOOL` field as the second values.
 
@@ -766,21 +776,22 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
     (geb-gui::visualize (left-> so1 geb-bool:bool))
     
     (comp
-     (mcase geb-bool:mtrue
-            geb-bool:snot)
+     (mcase geb-bool:true
+            geb-bool:not)
      (left-> so1 geb-bool:bool))
     
     ```
     
     In the second example, we inject a term with the shape `SO1`([`0`][f4ba] [`1`][ebf5]) into a pair
-    with the shape ([`SO1`][ebf5] × `GEB-BOOL:BOOL`), then we use [`MCASE`][cd11] to denote a
+    with the shape ([`SO1`][ebf5] × [`GEB-BOOL:BOOL`][0ad4]), then we use [`MCASE`][cd11] to denote a
     morophism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]), then give us True,
     otherwise flip the value of the boolean coming in.
 
 <a id="x-28GEB-2ESPEC-3AINJECT-RIGHT-20TYPE-29"></a>
 - [type] **INJECT-RIGHT**
 
-    The right injection morphism. Takes two [`<SUBSTOBJ>`][8214] values. It is the dual of [`INJECT-LEFT`][cab9]
+    The right injection morphism. Takes two [`<SUBSTOBJ>`][8214] values. It is
+    the dual of [`INJECT-LEFT`][cab9]
     
     The formal grammar is
     
@@ -798,14 +809,14 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
     (geb-gui::visualize (right-> so1 geb-bool:bool))
     
     (comp
-     (mcase geb-bool:mtrue
-            geb-bool:snot)
+     (mcase geb-bool:true
+            geb-bool:not)
      (right-> so1 geb-bool:bool))
     
     ```
     
-    In the second example, we inject a term with the shape `GEB-BOOL:BOOL`
-    into a pair with the shape ([`SO1`][ebf5] × `GEB-BOOL:BOOL`), then we use
+    In the second example, we inject a term with the shape [`GEB-BOOL:BOOL`][0ad4]
+    into a pair with the shape ([`SO1`][ebf5] × [`GEB-BOOL:BOOL`][0ad4]), then we use
     [`MCASE`][cd11] to denote a morophism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]),
     then give us True, otherwise flip the value of the boolean coming in.
 
@@ -1026,7 +1037,73 @@ More Ergonomic API variants for [`*SO0*`][e982] and [`*SO1*`][b960]
 <a id="x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
 ### 7.4 API
 
-Various functions that make working with GEB easier
+Various forms and structures built on-top of [Core Category][cb9e]
+
+<a id="x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29"></a>
+#### 7.4.1 Booleans
+
+###### \[in package GEB-BOOL\]
+Here we define out the idea of a boolean. It comes naturally from the
+concept of coproducts. In ML they often define a boolean like
+
+```haskell
+data Bool = False | True
+```
+
+We likewise define it with coproducts
+
+```lisp
+(def bool (coprod so1 so1))
+
+(def true  (right-> so1 so1))
+(def false (left->  so1 so1))
+```
+
+The functions given work on this.
+
+<a id="x-28GEB-BOOL-3ATRUE-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+- [symbol-macro] **TRUE**
+
+    The true value of a boolean type. In this case we've defined true as
+    the right unit
+
+<a id="x-28GEB-BOOL-3AFALSE-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+- [symbol-macro] **FALSE**
+
+    The false value of a boolean type. In this case we've defined true as
+    the left unit
+
+<a id="x-28GEB-BOOL-3ABOOL-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+- [symbol-macro] **BOOL**
+
+    The Boolean Type, composed of a coproduct of two unit objects 
+
+<a id="x-28GEB-BOOL-3ANOT-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+- [symbol-macro] **NOT**
+
+    Turns a [`TRUE`][f022] into a [`FALSE`][31c5] and vice versa
+
+<a id="x-28GEB-BOOL-3AAND-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+- [symbol-macro] **AND**
+
+<a id="x-28GEB-BOOL-3AOR-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+- [symbol-macro] **OR**
+
+<a id="x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29"></a>
+#### 7.4.2 Translation Functions
+
+These cover various conversions from [Subst Morph][d2d1] and [Subst Obj][c1b3]
+into other categorical data structures.
+
+<a id="x-28GEB-3ATO-POLY-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **TO-POLY** *MORPHISM*
+
+    Turns a [Subst Morph][d2d1] into a [`POLY:POLY`][8bf3]
+
+<a id="x-28GEB-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29"></a>
+#### 7.4.3 Utility
+
+Various utility functions ontop of [Core Category][cb9e]
 
 <a id="x-28GEB-2ESPEC-3APAIR-TO-LIST-20FUNCTION-29"></a>
 - [function] **PAIR-TO-LIST** *PAIR &OPTIONAL ACC*
@@ -1057,17 +1134,6 @@ Various functions that make working with GEB easier
 
 <a id="x-28GEB-3ASO-CARD-ALG-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
 - [method] **SO-CARD-ALG** *(OBJ \<SUBSTOBJ\>)*
-
-<a id="x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29"></a>
-#### 7.4.1 Translation Functions
-
-These cover various conversions from [Subst Morph][d2d1] and [Subst Obj][c1b3]
-into other categorical data structures.
-
-<a id="x-28GEB-3ATO-POLY-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **TO-POLY** *MORPHISM*
-
-    Turns a [Subst Morph][d2d1] into a [`POLY:POLY`][8bf3]
 
 <a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
 ### 7.5 Examples
@@ -1251,7 +1317,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
 
     Compares objects with pointwise equality. This is a
     much weaker form of equality comparison than
-    [`STANDARD-OBJECT`][a802] [`EQUALP`][c721], which does the much
+    [`STANDARD-OBJECT`][a802] [`EQUALP`][c7213], which does the much
     stronger pointer quality
 
 <a id="x-28GEB-2EMIXINS-3APOINTWISE-SLOTS-20GENERIC-FUNCTION-29"></a>
@@ -1490,6 +1556,7 @@ features and how to better lay out future tests
     ```
 
 
+  [0ad4]: #x-28GEB-BOOL-3ABOOL-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:BOOL MGL-PAX:SYMBOL-MACRO"
   [0ae3]: #x-28GEB-2EPOLY-2ESPEC-3A-2A-20TYPE-29 "GEB.POLY.SPEC:* TYPE"
   [0caf]: #x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29 "Translation Functions"
   [0e00]: #x-28GEB-DOCS-2FDOCS-3A-40YONEDA-LEMMA-20MGL-PAX-3ASECTION-29 "The Yoneda Lemma"
@@ -1502,8 +1569,10 @@ features and how to better lay out future tests
   [2c5e]: #x-28GEB-2EPOLY-2ESPEC-3A--20TYPE-29 "GEB.POLY.SPEC:- TYPE"
   [2fcf]: #x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29 "Pointwise API"
   [3173]: #x-28GEB-2ESPEC-3ASUBSTOBJ-20TYPE-29 "GEB.SPEC:SUBSTOBJ TYPE"
+  [31c5]: #x-28GEB-BOOL-3AFALSE-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:FALSE MGL-PAX:SYMBOL-MACRO"
   [365a]: #x-28GEB-2EUTILS-3AELSE-20GENERIC-FUNCTION-29 "GEB.UTILS:ELSE GENERIC-FUNCTION"
   [3686]: #x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29 "Original Efforts"
+  [399c]: #x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29 "Booleans"
   [3bc6]: #x-28GEB-2ESPEC-3APAIR-20TYPE-29 "GEB.SPEC:PAIR TYPE"
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
   [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
@@ -1516,6 +1585,7 @@ features and how to better lay out future tests
   [57dc]: #x-28GEB-2ESPEC-3ASUBSTMORPH-20TYPE-29 "GEB.SPEC:SUBSTMORPH TYPE"
   [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
+  [59dd]: #x-28GEB-2ESPEC-3ACASE-20TYPE-29 "GEB.SPEC:CASE TYPE"
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
   [684b]: http://www.lispworks.com/documentation/HyperSpec/Body/s_if.htm "IF MGL-PAX:MACRO"
   [7088]: #x-28GEB-2ESPEC-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO0 MGL-PAX:SYMBOL-MACRO"
@@ -1562,9 +1632,10 @@ features and how to better lay out future tests
   [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "The Geb Model"
   [c2e9]: #x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29 "Categorical Model"
   [c2f9]: #x-28GEB-2EPOLY-2ESPEC-3A-2F-20TYPE-29 "GEB.POLY.SPEC:/ TYPE"
-  [c721]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP FUNCTION"
+  [c721]: #x-28GEB-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29 "Utility"
+  [c7213]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP FUNCTION"
   [cab9]: #x-28GEB-2ESPEC-3AINJECT-LEFT-20TYPE-29 "GEB.SPEC:INJECT-LEFT TYPE"
-  [cb9e]: #x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29 "Core Categories"
+  [cb9e]: #x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29 "Core Category"
   [cc51]: #x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
   [cc87]: #x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCADR GENERIC-FUNCTION"
   [cd11]: #x-28GEB-2ESPEC-3AMCASE-20FUNCTION-29 "GEB.SPEC:MCASE FUNCTION"
@@ -1576,6 +1647,7 @@ features and how to better lay out future tests
   [ebf5]: #x-28GEB-2ESPEC-3ASO1-20TYPE-29 "GEB.SPEC:SO1 TYPE"
   [ecc6]: #x-28GEB-DOCS-2FDOCS-3A-40CLOS-20MGL-PAX-3AGLOSSARY-TERM-29 "GEB-DOCS/DOCS:@CLOS MGL-PAX:GLOSSARY-TERM"
   [effe]: #x-28GEB-2ESPEC-3ALEFT--3E-20FUNCTION-29 "GEB.SPEC:LEFT-> FUNCTION"
+  [f022]: #x-28GEB-BOOL-3ATRUE-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:TRUE MGL-PAX:SYMBOL-MACRO"
   [f1ce]: #x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCAR GENERIC-FUNCTION"
   [f4ba]: #x-28GEB-2ESPEC-3ASO1-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO1 MGL-PAX:SYMBOL-MACRO"
   [f5ac]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29 "Polynomial Specification"

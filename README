@@ -5,9 +5,13 @@ Welcome to the GEB project.
 
 ## Links
 
+
+
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
+
+
 
 ## Getting Started
 
@@ -190,6 +194,8 @@ conjectures about GEB
 
 ## Categorical Model
 
+
+
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -257,31 +263,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} \cong C^{(A × B)}$,
+   $C^{(B^A)} cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $\varnothing$.
+   the empty sum is $varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
-$ \mathsf{1} = \lbrace 1 \rbrace$,
-$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
+where $ mathsf{2} = lbrace 1, 2 rbrace$,
+$ mathsf{1} = lbrace 1 rbrace$,
+$ mathsf{0} = lbrace  rbrace = varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -303,6 +309,8 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
+
+
 
 ### Morphisms
 
@@ -476,7 +484,7 @@ GEB:SUBSTOBJ. Read @OPEN-CLOSED for information on how to use them.
 Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 
-### Core Categories
+### Core Category
 
 ###### \[in package GEB.SPEC\]
 The underlying category of GEB. With @GEB-SUBSTMU covering the
@@ -610,8 +618,8 @@ The various constructors that form the SUBSTMORPH type
     
     ```lisp
     (comp
-     (mcase geb-bool:mtrue
-            geb-bool:snot)
+     (mcase geb-bool:true
+            geb-bool:not)
      (right-> so1 geb-bool:bool))
     ```
     
@@ -682,8 +690,8 @@ The various constructors that form the SUBSTMORPH type
     (geb-gui::visualize (left-> so1 geb-bool:bool))
     
     (comp
-     (mcase geb-bool:mtrue
-            geb-bool:snot)
+     (mcase geb-bool:true
+            geb-bool:not)
      (left-> so1 geb-bool:bool))
     
     ```
@@ -695,7 +703,8 @@ The various constructors that form the SUBSTMORPH type
 
 - [type] INJECT-RIGHT
 
-    The right injection morphism. Takes two <SUBSTOBJ> values. It is the dual of INJECT-LEFT
+    The right injection morphism. Takes two <SUBSTOBJ> values. It is
+    the dual of INJECT-LEFT
     
     The formal grammar is
     
@@ -713,8 +722,8 @@ The various constructors that form the SUBSTMORPH type
     (geb-gui::visualize (right-> so1 geb-bool:bool))
     
     (comp
-     (mcase geb-bool:mtrue
-            geb-bool:snot)
+     (mcase geb-bool:true
+            geb-bool:not)
      (right-> so1 geb-bool:bool))
     
     ```
@@ -893,7 +902,63 @@ More Ergonomic API variants for *SO0* and *SO1*
 
 ### API
 
-Various functions that make working with GEB easier
+Various forms and structures built on-top of @GEB-CATEGORIES
+
+#### Booleans
+
+###### \[in package GEB-BOOL\]
+Here we define out the idea of a boolean. It comes naturally from the
+concept of coproducts. In ML they often define a boolean like
+
+```haskell
+data Bool = False | True
+```
+
+We likewise define it with coproducts
+
+```lisp
+(def bool (coprod so1 so1))
+
+(def true  (right-> so1 so1))
+(def false (left->  so1 so1))
+```
+
+The functions given work on this.
+
+- [symbol-macro] TRUE
+
+    The true value of a boolean type. In this case we've defined true as
+    the right unit
+
+- [symbol-macro] FALSE
+
+    The false value of a boolean type. In this case we've defined true as
+    the left unit
+
+- [symbol-macro] BOOL
+
+    The Boolean Type, composed of a coproduct of two unit objects 
+
+- [symbol-macro] NOT
+
+    Turns a TRUE into a FALSE and vice versa
+
+- [symbol-macro] AND
+
+- [symbol-macro] OR
+
+#### Translation Functions
+
+These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
+into other categorical data structures.
+
+- [generic-function] TO-POLY MORPHISM
+
+    Turns a @GEB-SUBSTMORPH into a POLY:POLY
+
+#### Utility
+
+Various utility functions ontop of @GEB-CATEGORIES
 
 - [function] PAIR-TO-LIST PAIR &OPTIONAL ACC
 
@@ -916,15 +981,6 @@ Various functions that make working with GEB easier
     Gets the cardinality of the given object
 
 - [method] SO-CARD-ALG (OBJ \<SUBSTOBJ\>)
-
-#### Translation Functions
-
-These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
-into other categorical data structures.
-
-- [generic-function] TO-POLY MORPHISM
-
-    Turns a @GEB-SUBSTMORPH into a POLY:POLY
 
 ### Examples
 
