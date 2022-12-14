@@ -2152,13 +2152,13 @@ interpFreeMJoin {p} x =
   pfComposeInterp {p=(PolyFuncFreeM p)} {x}
 
 public export
-pfFreeReturnN : (p : PolyFunc) -> (n : Nat) ->
+pfFreeToComposeN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (PolyFuncFreeM p)
     (pfCompositionPowerArena (PolyFuncFreeM p) (S n))
-pfFreeReturnN (pos ** dir) Z =
+pfFreeToComposeN (pos ** dir) Z =
   pntToIdRight (PolyFuncFreeM (pos ** dir))
-pfFreeReturnN (pos ** dir) (S n) =
+pfFreeToComposeN (pos ** dir) (S n) =
   let
     retn =
       pntVCatComp
@@ -2169,7 +2169,7 @@ pfFreeReturnN (pos ** dir) (S n) =
           (pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n)))}
         (pntToIdLeft
           (pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n)))
-        (pfFreeReturnN (pos ** dir) n)
+        (pfFreeToComposeN (pos ** dir) n)
     n2S = polyWhiskerLeft
       {p=PFIdentityArena}
       {q=(PolyFuncFreeM (pos ** dir))}
@@ -2189,13 +2189,13 @@ pfFreeReturnN (pos ** dir) (S n) =
     ret
 
 public export
-pfFreeJoinN : (p : PolyFunc) -> (n : Nat) ->
+pfFreeFromComposeN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (pfCompositionPowerArena (PolyFuncFreeM p) (S n))
     (PolyFuncFreeM p)
-pfFreeJoinN (pos ** dir) Z =
+pfFreeFromComposeN (pos ** dir) Z =
   pntFromIdRight (PolyFuncFreeM (pos ** dir))
-pfFreeJoinN (pos ** dir) (S n) =
+pfFreeFromComposeN (pos ** dir) (S n) =
   let
     sS2S = polyWhiskerLeft
       {p=(pfFreeComposeArena (pos ** dir) (pos ** dir))}
@@ -2206,7 +2206,7 @@ pfFreeJoinN (pos ** dir) (S n) =
       {p=(pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S (S n)))}
       {q=(pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) (S n))}
       {r=(PolyFuncFreeM (pos ** dir))}
-      (pfFreeJoinN (pos ** dir) n)
+      (pfFreeFromComposeN (pos ** dir) n)
       (pntAssociateComposeL
         {p=(PolyFuncFreeM (pos ** dir))}
         {q=(PolyFuncFreeM (pos ** dir))}
@@ -2224,7 +2224,8 @@ pfFreePolyCataNFree : {p, q : PolyFunc} -> {n : Nat} ->
   PolyNatTrans
     (pfCompositionPowerArena (PolyFuncFreeM p) (S n))
     (pfCompositionPowerArena (PolyFuncFreeM q) (S n))
-pfFreePolyCataNFree {p} {q} {n} alpha = ?pfFreePolyCataNFree_hole
+pfFreePolyCataNFree {p} {q} {n} alpha =
+  ?pfFreePolyCataNFree_hole
 
 public export
 pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
@@ -2234,8 +2235,8 @@ pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
   PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreePolyCataN {p} {q} {n} alpha =
   let
-    retn = pfFreeReturnN p n
-    joinn = pfFreeJoinN q n
+    retn = pfFreeToComposeN p n
+    joinn = pfFreeFromComposeN q n
     pcn = pfFreePolyCataNFree {p} {q} alpha
     pr =
       pntVCatComp
