@@ -68,6 +68,14 @@ public export
 stCata : {0 a : Type} -> STAlg a -> STMu -> a
 stCata = pfCata {p=SubstTermPF}
 
+public export
+STPairAlg : Type -> Type
+STPairAlg = PFProductHomAdjAlg SubstTermPF SubstTermPF
+
+public export
+stPairCata : {0 a : Type} -> STPairAlg a -> STMu -> STMu -> a
+stPairCata {a} = pfProductHomAdjCata {a} {p=SubstTermPF} {q=SubstTermPF}
+
 -------------------
 ---- Utilities ----
 -------------------
@@ -144,6 +152,34 @@ STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
 public export
 Show STMu where
   show = stCata STShowAlg
+
+public export
+STEqAlg : STPairAlg Bool
+STEqAlg STPosLeaf d STPosLeaf d' = True
+STEqAlg STPosLeaf d STPosLeft d' = False
+STEqAlg STPosLeaf d STPosRight d' = False
+STEqAlg STPosLeaf d STPosPair d' = False
+STEqAlg STPosLeft d STPosLeaf d' = False
+STEqAlg STPosLeft d STPosLeft d' = d STDirL STPosLeft d'
+STEqAlg STPosLeft d STPosRight d' = False
+STEqAlg STPosLeft d STPosPair d' = False
+STEqAlg STPosRight d STPosLeaf d' = False
+STEqAlg STPosRight d STPosLeft d' = False
+STEqAlg STPosRight d STPosRight d' = d STDirR STPosRight d'
+STEqAlg STPosRight d STPosPair d' = False
+STEqAlg STPosPair d STPosLeaf d' = False
+STEqAlg STPosPair d STPosLeft d' = False
+STEqAlg STPosPair d STPosRight d' = False
+STEqAlg STPosPair d STPosPair d' =
+  d STDirFst STPosPair d' && d STDirSnd STPosPair d'
+
+public export
+stEq : STMu -> STMu -> Bool
+stEq = stPairCata STEqAlg
+
+public export
+Eq STMu where
+  (==) = stEq
 
 ---------------------
 ---- Refinements ----
