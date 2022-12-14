@@ -1315,11 +1315,33 @@ pfTranslateNT {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
    pfTranslateDirBimap {p} {q} {a=()} {b=()} onPos id onDir)
 
 public export
+pfFreePolyCataOnPos : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> PolyFuncFreeMPos p -> PolyFuncFreeMPos q
+pfFreePolyCataOnPos {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
+  pfPolyCata (pfTranslateNT {p} {q} (onPos ** onDir))
+
+public export
+pfFreePolyCataOnDir : {p, q : PolyFunc} ->
+  (alpha : PolyNatTrans p q) ->
+  (i : PolyFuncFreeMPos p) ->
+  PolyFuncFreeMDir q (pfFreePolyCataOnPos {p} {q} alpha i) ->
+  PolyFuncFreeMDir p i
+pfFreePolyCataOnDir {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir)
+  (InPFM (PFVar ()) d) e =
+    ()
+pfFreePolyCataOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir)
+  (InPFM {p=(PFTranslate (ppos ** pdir) ())} (PFCom x) d)
+  (MkDPair qd qdi) =
+    (onDir x qd **
+     pfFreePolyCataOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+      (onPos ** onDir) (d (onDir x qd)) qdi)
+
+public export
 pfFreePolyCata : {p, q : PolyFunc} ->
   PolyNatTrans p q -> PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
-  (pfPolyCata (pfTranslateNT {p} {q} (onPos ** onDir)) **
-   ?pfFreePolyCata_hole_ondir)
+  (pfFreePolyCataOnPos {p} {q} (onPos ** onDir) **
+   pfFreePolyCataOnDir {p} {q} (onPos ** onDir))
 
 --------------------------------------
 --------------------------------------
