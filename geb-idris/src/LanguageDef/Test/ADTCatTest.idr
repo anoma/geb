@@ -213,15 +213,6 @@ showPMRaise n = do
   putStrLn $ "npos(pmMaybeSqRaise " ++ show n ++ ") = " ++
     show (polyNPos $ pmMaybeSqRaise n)
 
---------------
---------------
----- STMu ----
---------------
---------------
-
-stMuExp1 : STMu
-stMuExp1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
-
 ---------------------------
 ---------------------------
 ---- Monads / comonads ----
@@ -362,6 +353,15 @@ adtT5 = InNat 2 adtT3
 adtT6 : TermMu
 adtT6 = InProd [adtT4, adtT5]
 
+--------------
+--------------
+---- STMu ----
+--------------
+--------------
+
+stMuExp1 : STMu
+stMuExp1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -458,12 +458,6 @@ adtCatTest = do
   showPMRaise 7
   showPMRaise 8
   putStrLn ""
-  putStrLn "---------------"
-  putStrLn "---- PolyF ----"
-  putStrLn "---------------"
-  putStrLn ""
-  putStrLn $ "stMu1 = " ++ show stMuExp1
-  putStrLn ""
   putStrLn "-------------------------"
   putStrLn "---- Monads/comonads ----"
   putStrLn "-------------------------"
@@ -485,6 +479,12 @@ adtCatTest = do
     , ("adtT5", adtT5)
     , ("adtT6", adtT6)
     ]
+  putStrLn ""
+  putStrLn "--------------"
+  putStrLn "---- STMu ----"
+  putStrLn "--------------"
+  putStrLn ""
+  putStrLn $ "stMu1 = " ++ show stMuExp1
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."
