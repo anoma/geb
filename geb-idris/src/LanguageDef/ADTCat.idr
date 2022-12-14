@@ -7,6 +7,234 @@ import public LanguageDef.PolyCat
 
 %default total
 
+-------------------------------------------
+-------------------------------------------
+---- Inductive definition of term type ----
+-------------------------------------------
+-------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+public export
+data SubstTermPos : Type where
+  STPosLeaf : SubstTermPos
+  STPosLeft : SubstTermPos
+  STPosRight : SubstTermPos
+  STPosPair : SubstTermPos
+
+public export
+data SubstTermDir : SubstTermPos -> Type where
+  STDirL : SubstTermDir STPosLeft
+  STDirR : SubstTermDir STPosRight
+  STDirFst : SubstTermDir STPosPair
+  STDirSnd : SubstTermDir STPosPair
+
+public export
+SubstTermPF : PolyFunc
+SubstTermPF = (SubstTermPos ** SubstTermDir)
+
+---------------------------------------------
+---- Least fixed point (initial algebra) ----
+---------------------------------------------
+
+public export
+STMu : Type
+STMu = PolyFuncMu SubstTermPF
+
+---------------------------------
+---- Algebras, catamorphisms ----
+---------------------------------
+
+public export
+STAlg : Type -> Type
+STAlg = PFAlg SubstTermPF
+
+public export
+stCata : {0 a : Type} -> STAlg a -> STMu -> a
+stCata = pfCata {p=SubstTermPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InSTUnit : STMu
+InSTUnit = InPFM STPosLeaf $ \d => case d of _ impossible
+
+public export
+InSTLeft : STMu -> STMu
+InSTLeft x = InPFM STPosLeft $ \d => case d of STDirL => x
+
+public export
+InSTRight : STMu -> STMu
+InSTRight y = InPFM STPosRight $ \d => case d of STDirR => y
+
+public export
+InSTPair : STMu -> STMu -> STMu
+InSTPair x y = InPFM STPosPair $ \d => case d of
+  STDirFst => x
+  STDirSnd => y
+
+public export
+STSizeAlg : STAlg Nat
+STSizeAlg STPosLeaf dir = 0
+STSizeAlg STPosLeft dir = 1 + dir STDirL
+STSizeAlg STPosRight dir = 1 + dir STDirR
+STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
+
+public export
+stSize : STMu -> Nat
+stSize = stCata STSizeAlg
+
+public export
+STDepthAlg : STAlg Nat
+STDepthAlg STPosLeaf dir = 0
+STDepthAlg STPosLeft dir = 1 + dir STDirL
+STDepthAlg STPosRight dir = 1 + dir STDirR
+STDepthAlg STPosPair dir = smax (dir STDirFst) (dir STDirSnd)
+
+public export
+stDepth : STMu -> Nat
+stDepth = stCata STDepthAlg
+
+public export
+STShowAlg : STAlg String
+STShowAlg STPosLeaf dir = "!"
+STShowAlg STPosLeft dir = "< [" ++ dir STDirL ++ "]"
+STShowAlg STPosRight dir = "> [" ++ dir STDirR ++ "]"
+STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
+
+public export
+Show STMu where
+  show = stCata STShowAlg
+
+---------------------
+---- Refinements ----
+---------------------
+
+public export
+STEitherAlg : Type -> Type -> Type
+STEitherAlg = STAlg .* Either
+
+public export
+STRefinementAlg : Type
+STRefinementAlg = STEitherAlg Unit Unit
+
+public export
+RefinedST : (0 _ : DecPred STMu) -> Type
+RefinedST = Refinement {a=STMu}
+
+public export
+AlgRefinedST : STRefinementAlg -> Type
+AlgRefinedST alg = RefinedST (isRight . stCata alg)
+
+------------------------
+---- Dependent fold ----
+------------------------
+
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+---- Inductive definition of substitutive polynomial objects ----
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+public export
+data SubstObjPos : Type where
+  SOPos0 : SubstObjPos -- Initial object
+  SOPos1 : SubstObjPos -- Terminal object
+  SOPosC : SubstObjPos -- Coproduct
+  SOPosP : SubstObjPos -- Product
+
+public export
+data SubstObjDir : SubstObjPos -> Type where
+  SODirL : SubstObjDir SOPosC -- left object of coproduct
+  SODirR : SubstObjDir SOPosC -- right object of coproduct
+  SODir1 : SubstObjDir SOPosP -- first object of product
+  SODir2 : SubstObjDir SOPosP -- second object of product
+
+public export
+SubstObjPF : PolyFunc
+SubstObjPF = (SubstObjPos ** SubstObjDir)
+
+----------------------------------------------------
+---- Least fixed point, algebras, catamorphisms ----
+----------------------------------------------------
+
+public export
+SOMu : Type
+SOMu = PolyFuncMu SubstObjPF
+
+public export
+SOAlg : Type -> Type
+SOAlg = PFAlg SubstObjPF
+
+public export
+soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
+soCata = pfCata {p=SubstObjPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InSO0 : SOMu
+InSO0 = InPFM SOPos0 $ \d => case d of _ impossible
+
+public export
+InSO1 : SOMu
+InSO1 = InPFM SOPos1 $ \d => case d of _ impossible
+
+public export
+InSOC : SOMu -> SOMu -> SOMu
+InSOC x y = InPFM SOPosC $ \d => case d of
+  SODirL => x
+  SODirR => y
+
+public export
+InSOP : SOMu -> SOMu -> SOMu
+InSOP x y = InPFM SOPosP $ \d => case d of
+  SODir1 => x
+  SODir2 => y
+
+public export
+SOSizeAlg : SOAlg Nat
+SOSizeAlg SOPos0 dir = 1
+SOSizeAlg SOPos1 dir = 1
+SOSizeAlg SOPosC dir = 1 + dir SODirL + dir SODirR
+SOSizeAlg SOPosP dir = 1 + dir SODir1 + dir SODir2
+
+public export
+soSize : SOMu -> Nat
+soSize = soCata SOSizeAlg
+
+public export
+SODepthAlg : SOAlg Nat
+SODepthAlg SOPos0 dir = 0
+SODepthAlg SOPos1 dir = 0
+SODepthAlg SOPosC dir = smax (dir SODirL) (dir SODirR)
+SODepthAlg SOPosP dir = smax (dir SODir1) (dir SODir2)
+
+public export
+soDepth : SOMu -> Nat
+soDepth = soCata SODepthAlg
+
+public export
+SOShowAlg : SOAlg String
+SOShowAlg SOPos0 dir = "0"
+SOShowAlg SOPos1 dir = "1"
+SOShowAlg SOPosC dir = "[" ++ dir SODirL ++ "|" ++ dir SODirR ++ "]"
+SOShowAlg SOPosP dir = "(" ++ dir SODir1 ++ "," ++ dir SODir2 ++ ")"
+
+public export
+Show SOMu where
+  show = soCata SOShowAlg
+
 -----------------------------------
 -----------------------------------
 ---- Simple types, anonymously ----
@@ -134,6 +362,8 @@ public export
 FinPCObjAlg : Type -> Type
 FinPCObjAlg a = (UBTreeAlg a, UBTreeAlg a)
 
+-- `alg1` is the algebra for limits (the terminal object and products)
+-- while `alg2` is the algebra for colimits (the initial object and coproducts).
 public export
 FinPCObjAlgToPF : {a : Type} -> FinPCObjAlg a -> PFAlg FinPCObjF a
 FinPCObjAlgToPF (alg1, alg2) =
@@ -178,6 +408,11 @@ public export
 FinPCTermF : PolyFunc
 FinPCTermF = pfSquareArena pfMaybeArena
 
+-- Components of the algebra:
+--  - unit
+--  - left
+--  - right
+--  - pair
 public export
 FinPCTermAlg : Type -> Type
 FinPCTermAlg a = (a, a -> a, a -> a, a -> a -> a)
@@ -505,236 +740,10 @@ public export
 fbcObjParse : TermMu -> Maybe FinBCObjMu
 fbcObjParse = termCataRec FBCObjParseAlg
 
--------------------------------------------
--------------------------------------------
----- Inductive definition of term type ----
--------------------------------------------
--------------------------------------------
-
-----------------------------------
----- Positions and directions ----
-----------------------------------
-
-public export
-data SubstTermPos : Type where
-  STPosLeaf : SubstTermPos
-  STPosLeft : SubstTermPos
-  STPosRight : SubstTermPos
-  STPosPair : SubstTermPos
-
-public export
-data SubstTermDir : SubstTermPos -> Type where
-  STDirL : SubstTermDir STPosLeft
-  STDirR : SubstTermDir STPosRight
-  STDirFst : SubstTermDir STPosPair
-  STDirSnd : SubstTermDir STPosPair
-
-public export
-SubstTermPF : PolyFunc
-SubstTermPF = (SubstTermPos ** SubstTermDir)
-
----------------------------------------------
----- Least fixed point (initial algebra) ----
----------------------------------------------
-
-public export
-STMu : Type
-STMu = PolyFuncMu SubstTermPF
-
----------------------------------
----- Algebras, catamorphisms ----
----------------------------------
-
-public export
-STAlg : Type -> Type
-STAlg = PFAlg SubstTermPF
-
-public export
-stCata : {0 a : Type} -> STAlg a -> STMu -> a
-stCata = pfCata {p=SubstTermPF}
-
--------------------
----- Utilities ----
--------------------
-
-public export
-InSTUnit : STMu
-InSTUnit = InPFM STPosLeaf $ \d => case d of _ impossible
-
-public export
-InSTLeft : STMu -> STMu
-InSTLeft x = InPFM STPosLeft $ \d => case d of STDirL => x
-
-public export
-InSTRight : STMu -> STMu
-InSTRight y = InPFM STPosRight $ \d => case d of STDirR => y
-
-public export
-InSTPair : STMu -> STMu -> STMu
-InSTPair x y = InPFM STPosPair $ \d => case d of
-  STDirFst => x
-  STDirSnd => y
-
-public export
-STSizeAlg : STAlg Nat
-STSizeAlg STPosLeaf dir = 0
-STSizeAlg STPosLeft dir = 1 + dir STDirL
-STSizeAlg STPosRight dir = 1 + dir STDirR
-STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
-
-public export
-stSize : STMu -> Nat
-stSize = stCata STSizeAlg
-
-public export
-STDepthAlg : STAlg Nat
-STDepthAlg STPosLeaf dir = 0
-STDepthAlg STPosLeft dir = 1 + dir STDirL
-STDepthAlg STPosRight dir = 1 + dir STDirR
-STDepthAlg STPosPair dir = smax (dir STDirFst) (dir STDirSnd)
-
-public export
-stDepth : STMu -> Nat
-stDepth = stCata STDepthAlg
-
-public export
-STShowAlg : STAlg String
-STShowAlg STPosLeaf dir = "!"
-STShowAlg STPosLeft dir = "< [" ++ dir STDirL ++ "]"
-STShowAlg STPosRight dir = "> [" ++ dir STDirR ++ "]"
-STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
-
-public export
-Show STMu where
-  show = stCata STShowAlg
-
----------------------
----- Refinements ----
----------------------
-
-public export
-STEitherAlg : Type -> Type -> Type
-STEitherAlg = STAlg .* Either
-
-public export
-STRefinementAlg : Type
-STRefinementAlg = STEitherAlg Unit Unit
-
-public export
-RefinedST : (0 _ : DecPred STMu) -> Type
-RefinedST = Refinement {a=STMu}
-
-public export
-AlgRefinedST : STRefinementAlg -> Type
-AlgRefinedST alg = RefinedST (isRight . stCata alg)
-
-------------------------
----- Dependent fold ----
-------------------------
-
------------------------------------------------------------------
------------------------------------------------------------------
----- Inductive definition of substitutive polynomial objects ----
------------------------------------------------------------------
------------------------------------------------------------------
-
-----------------------------------
----- Positions and directions ----
-----------------------------------
-
-public export
-data SubstObjPos : Type where
-  SOPos0 : SubstObjPos -- Initial object
-  SOPos1 : SubstObjPos -- Terminal object
-  SOPosC : SubstObjPos -- Coproduct
-  SOPosP : SubstObjPos -- Product
-
-public export
-data SubstObjDir : SubstObjPos -> Type where
-  SODirL : SubstObjDir SOPosC -- left object of coproduct
-  SODirR : SubstObjDir SOPosC -- right object of coproduct
-  SODir1 : SubstObjDir SOPosP -- first object of product
-  SODir2 : SubstObjDir SOPosP -- second object of product
-
-public export
-SubstObjPF : PolyFunc
-SubstObjPF = (SubstObjPos ** SubstObjDir)
-
-----------------------------------------------------
----- Least fixed point, algebras, catamorphisms ----
-----------------------------------------------------
-
-public export
-SOMu : Type
-SOMu = PolyFuncMu SubstObjPF
-
-public export
-SOAlg : Type -> Type
-SOAlg = PFAlg SubstObjPF
-
-public export
-soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
-soCata = pfCata {p=SubstObjPF}
-
--------------------
----- Utilities ----
--------------------
-
-public export
-InSO0 : SOMu
-InSO0 = InPFM SOPos0 $ \d => case d of _ impossible
-
-public export
-InSO1 : SOMu
-InSO1 = InPFM SOPos1 $ \d => case d of _ impossible
-
-public export
-InSOC : SOMu -> SOMu -> SOMu
-InSOC x y = InPFM SOPosC $ \d => case d of
-  SODirL => x
-  SODirR => y
-
-public export
-InSOP : SOMu -> SOMu -> SOMu
-InSOP x y = InPFM SOPosP $ \d => case d of
-  SODir1 => x
-  SODir2 => y
-
-public export
-SOSizeAlg : SOAlg Nat
-SOSizeAlg SOPos0 dir = 1
-SOSizeAlg SOPos1 dir = 1
-SOSizeAlg SOPosC dir = 1 + dir SODirL + dir SODirR
-SOSizeAlg SOPosP dir = 1 + dir SODir1 + dir SODir2
-
-public export
-soSize : SOMu -> Nat
-soSize = soCata SOSizeAlg
-
-public export
-SODepthAlg : SOAlg Nat
-SODepthAlg SOPos0 dir = 0
-SODepthAlg SOPos1 dir = 0
-SODepthAlg SOPosC dir = smax (dir SODirL) (dir SODirR)
-SODepthAlg SOPosP dir = smax (dir SODir1) (dir SODir2)
-
-public export
-soDepth : SOMu -> Nat
-soDepth = soCata SODepthAlg
-
-public export
-SOShowAlg : SOAlg String
-SOShowAlg SOPos0 dir = "0"
-SOShowAlg SOPos1 dir = "1"
-SOShowAlg SOPosC dir = "[" ++ dir SODirL ++ "|" ++ dir SODirR ++ "]"
-SOShowAlg SOPosP dir = "(" ++ dir SODir1 ++ "," ++ dir SODir2 ++ ")"
-
-public export
-Show SOMu where
-  show = soCata SOShowAlg
-
+-----------------------------------------------------
 -----------------------------------------------------
 ---- Term representation of substitutive objects ----
+-----------------------------------------------------
 -----------------------------------------------------
 
 public export
