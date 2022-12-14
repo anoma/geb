@@ -88,14 +88,25 @@ soSize = soCata SOSizeAlg
 
 public export
 SODepthAlg : SOAlg Nat
-SODepthAlg SOPos0 dir = 0
-SODepthAlg SOPos1 dir = 0
+SODepthAlg SOPos0 dir = 1
+SODepthAlg SOPos1 dir = 1
 SODepthAlg SOPosC dir = smax (dir SODirL) (dir SODirR)
 SODepthAlg SOPosP dir = smax (dir SODir1) (dir SODir2)
 
 public export
 soDepth : SOMu -> Nat
 soDepth = soCata SODepthAlg
+
+public export
+SOCardAlg : SOAlg Nat
+SOCardAlg SOPos0 dir = 0
+SOCardAlg SOPos1 dir = 1
+SOCardAlg SOPosC dir = dir SODirL + dir SODirR
+SOCardAlg SOPosP dir = dir SODir1 * dir SODir2
+
+public export
+soCard : SOMu -> Nat
+soCard = soCata SOCardAlg
 
 public export
 SOShowAlg : SOAlg String
@@ -107,6 +118,36 @@ SOShowAlg SOPosP dir = "(" ++ dir SODir1 ++ "," ++ dir SODir2 ++ ")"
 public export
 Show SOMu where
   show = soCata SOShowAlg
+
+----------------------------------------
+---- Interpretation into Idris Type ----
+----------------------------------------
+
+public export
+SOInterpAlg : SOAlg Type
+SOInterpAlg SOPos0 dir = Void
+SOInterpAlg SOPos1 dir = Unit
+SOInterpAlg SOPosC dir = Either (dir SODirL) (dir SODirR)
+SOInterpAlg SOPosP dir = Pair (dir SODir1) (dir SODir2)
+
+public export
+soInterp : SOMu -> Type
+soInterp = soCata SOInterpAlg
+
+---------------------------------------------------------
+---- Embedding into PolyFunc as constant endofunctor ----
+---------------------------------------------------------
+
+public export
+SOConstEFAlg : SOAlg PolyFunc
+SOConstEFAlg SOPos0 dir = PFInitialArena
+SOConstEFAlg SOPos1 dir = PFTerminalArena
+SOConstEFAlg SOPosC dir = pfCoproductArena (dir SODirL) (dir SODirR)
+SOConstEFAlg SOPosP dir = pfProductArena (dir SODir1) (dir SODir2)
+
+public export
+soConstEF : SOMu -> PolyFunc
+soConstEF = soCata SOConstEFAlg
 
 -------------------------------------------
 -------------------------------------------
