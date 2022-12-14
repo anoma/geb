@@ -362,6 +362,10 @@ adtT6 = InProd [adtT4, adtT5]
 stShowFull : String -> STMu -> IO ()
 stShowFull name st = do
   putStrLn $ name ++ " = " ++ show st
+  putStrLn $ "numLeaves[" ++ name ++ "] = " ++
+    show (stNumLeaves st)
+  putStrLn $ "numInternalNodes[" ++ name ++ "] = " ++
+    show (stNumInternalNodes st)
   putStrLn $ "size[" ++ name ++ "] = " ++ show (stSize st)
   putStrLn $ "depth[" ++ name ++ "] = " ++ show (stDepth st)
 
