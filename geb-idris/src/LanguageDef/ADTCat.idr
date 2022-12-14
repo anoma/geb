@@ -149,26 +149,6 @@ Show STMu where
 ---- Refinements ----
 ---------------------
 
-public export
-STEitherAlg : Type -> Type -> Type
-STEitherAlg = STAlg .* Either
-
-public export
-STRefinementAlg : Type
-STRefinementAlg = STEitherAlg Unit Unit
-
-public export
-RefinedST : (0 _ : DecPred STMu) -> Type
-RefinedST = Refinement {a=STMu}
-
-public export
-AlgRefinedST : STRefinementAlg -> Type
-AlgRefinedST alg = RefinedST (isRight . stCata alg)
-
-------------------------
----- Dependent fold ----
-------------------------
-
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial objects ----
@@ -912,10 +892,6 @@ asSubstObj = pfParamCata AsSubstObjAlg (SOPos0, const Nothing)
 public export
 isSubstObj : STMu -> Bool
 isSubstObj = isJust . asSubstObj
-
-public export
-SubstObjTerm : Type
-SubstObjTerm = RefinedST isSubstObj
 
 -------------------------------------------------------------------
 -------------------------------------------------------------------
