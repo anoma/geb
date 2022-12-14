@@ -90,10 +90,7 @@ STFreeNatTrans = PolyNatTrans STFreeM STFreeM
 
 public export
 STFreeNatTransMN : Nat -> Nat -> Type
-STFreeNatTransMN m n =
-  PolyNatTrans
-    (pfCompositionPowerArenaS SubstTermPF m)
-    (pfCompositionPowerArenaS SubstTermPF n)
+STFreeNatTransMN = pfFreeNatTransMN SubstTermPF SubstTermPF
 
 public export
 stPolyCata : STNatTrans -> STMu -> STMu
