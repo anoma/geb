@@ -2217,15 +2217,18 @@ pfFreeFromComposeN (pos ** dir) (S n) =
   ret
 
 public export
-pfFreePolyCataNFree : {p, q : PolyFunc} -> {n : Nat} ->
+pfFreePolyReturnN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
-    (pfCompositionPowerArena p (S n))
-    (pfCompositionPowerArena q (S n)) ->
+    (PolyFuncFreeM p)
+    (PolyFuncFreeM (pfCompositionPowerArena p (S n)))
+pfFreePolyReturnN p n = ?pfFreePolyReturnN_hole
+
+public export
+pfFreePolyJoinN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
-    (pfCompositionPowerArena (PolyFuncFreeM p) (S n))
-    (pfCompositionPowerArena (PolyFuncFreeM q) (S n))
-pfFreePolyCataNFree {p} {q} {n} alpha =
-  ?pfFreePolyCataNFree_hole
+    (PolyFuncFreeM (pfCompositionPowerArena p (S n)))
+    (PolyFuncFreeM p)
+pfFreePolyJoinN p n = ?pfFreePolyJoinN_hole
 
 public export
 pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
@@ -2234,26 +2237,17 @@ pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
     (pfCompositionPowerArena q (S n)) ->
   PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreePolyCataN {p} {q} {n} alpha =
-  let
-    retn = pfFreeToComposeN p n
-    joinn = pfFreeFromComposeN q n
-    pcn = pfFreePolyCataNFree {p} {q} alpha
-    pr =
-      pntVCatComp
-        {p=(PolyFuncFreeM p)}
-        {q=(pfCompositionPowerArena (PolyFuncFreeM p) (S n))}
-        {r=(pfCompositionPowerArena (PolyFuncFreeM q) (S n))}
-        pcn
-        retn
-    jpr =
-      pntVCatComp
-        {p=(PolyFuncFreeM p)}
-        {q=(pfCompositionPowerArena (PolyFuncFreeM q) (S n))}
-        {r=(PolyFuncFreeM q)}
-        joinn
-        pr
-  in
-  jpr
+  pntVCatComp
+    {p=(PolyFuncFreeM p)}
+    {q=(PolyFuncFreeM (pfCompositionPowerArena q (S n)))}
+    {r=(PolyFuncFreeM q)}
+    (pfFreePolyJoinN q n)
+    (pntVCatComp
+      {p=(PolyFuncFreeM p)}
+      {q=(PolyFuncFreeM (pfCompositionPowerArena p (S n)))}
+      {r=(PolyFuncFreeM (pfCompositionPowerArena q (S n)))}
+      (pfFreePolyCata alpha)
+      (pfFreePolyReturnN p n))
 
 public export
 pfPolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
