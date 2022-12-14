@@ -359,8 +359,25 @@ adtT6 = InProd [adtT4, adtT5]
 --------------
 --------------
 
-stMuExp1 : STMu
-stMuExp1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
+stShowFull : String -> STMu -> IO ()
+stShowFull name st = do
+  putStrLn $ name ++ " = " ++ show st
+  putStrLn $ "size[" ++ name ++ "] = " ++ show (stSize st)
+  putStrLn $ "depth[" ++ name ++ "] = " ++ show (stDepth st)
+
+stShowFullSTerminated : (String, STMu) -> IO ()
+stShowFullSTerminated (name, st) = do
+  stShowFull name st
+  putStrLn "----"
+
+stShowFullList : List (String, STMu) -> IO ()
+stShowFullList [] = pure ()
+stShowFullList ts@(_ :: _) = do
+  putStrLn "----"
+  foldlM (const $ stShowFullSTerminated) () ts
+
+stMu1 : STMu
+stMu1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
 
 ----------------------------------
 ----------------------------------
@@ -484,7 +501,9 @@ adtCatTest = do
   putStrLn "---- STMu ----"
   putStrLn "--------------"
   putStrLn ""
-  putStrLn $ "stMu1 = " ++ show stMuExp1
+  stShowFullList [
+      ("stMu1", stMu1)
+    ]
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."
