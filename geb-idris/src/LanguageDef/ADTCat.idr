@@ -149,6 +149,46 @@ public export
 soConstEF : SOMu -> PolyFunc
 soConstEF = soCata SOConstEFAlg
 
+--------------------------------------------------------------
+---- Embedding into PolyFunc as representable endofunctor ----
+--------------------------------------------------------------
+
+public export
+SORepEFAlg : SOAlg PolyFunc
+SORepEFAlg SOPos0 dir = PFTerminalArena
+SORepEFAlg SOPos1 dir = PFIdentityArena
+SORepEFAlg SOPosC dir = pfProductArena (dir SODirL) (dir SODirR)
+SORepEFAlg SOPosP dir = pfParProductArena (dir SODir1) (dir SODir2)
+
+public export
+soRepEF : SOMu -> PolyFunc
+soRepEF = soCata SORepEFAlg
+
+---------------------
+---- Refinements ----
+---------------------
+
+-- Note:  this section implements refinements of the type of objects,
+-- not the types of refinements of objects.  In other words, here we are
+-- selecting classes of types, not selecting terms from individual types.
+
+public export
+SOEqualizerPred : {0 a : Type} -> DecEqPred a -> SOAlg a -> a -> SOMu -> Bool
+SOEqualizerPred {a} eq alg elema obj = isYes $ eq elema $ soCata alg obj
+
+public export
+SOEqualizer : {0 a : Type} -> DecEqPred a -> SOAlg a -> SliceObj a
+SOEqualizer {a} eq alg elema =
+  Refinement {a=SOMu} $ SOEqualizerPred eq alg elema
+
+public export
+SORefineAlg : Type
+SORefineAlg = SOAlg Bool
+
+public export
+SORefinement : SliceObj SORefineAlg
+SORefinement alg = Refinement {a=SOMu} $ soCata alg
+
 -------------------------------------------
 -------------------------------------------
 ---- Inductive definition of term type ----
