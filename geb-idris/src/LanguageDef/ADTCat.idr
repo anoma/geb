@@ -100,6 +100,13 @@ public export
 stFreePolyCata : STNatTrans -> STFreeNatTrans
 stFreePolyCata = pfFreePolyCata {p=SubstTermPF} {q=SubstTermPF}
 
+public export
+stFreePolyCataMN : {m, n : Nat} -> STFreeNatTransMN m n -> STFreeNatTrans
+stFreePolyCataMN {m=Z} {n=Z} alpha = stFreePolyCata alpha
+stFreePolyCataMN {m=Z} {n=(S n)} alpha = ?stFreePolyCataMN_hole_3
+stFreePolyCataMN {m=(S m)} {n=Z} alpha = ?stFreePolyCataMN_hole_4
+stFreePolyCataMN {m=(S m)} {n=(S n)} alpha = ?stFreePolyCataMN_hole_5
+
 -------------------
 ---- Utilities ----
 -------------------
