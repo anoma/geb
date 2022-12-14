@@ -1296,11 +1296,23 @@ pfTranslatePosBimap posmap typemap (PFVar v) = PFVar (typemap v)
 pfTranslatePosBimap posmap typemap (PFCom i) = PFCom (posmap i)
 
 public export
+pfTranslateDirBimap : {p, q : PolyFunc} -> {a, b : Type} ->
+  (posmap : pfPos p -> pfPos q) -> (typemap : a -> b) ->
+  (dirmap : (i : pfPos p) -> pfDir {p=q} (posmap i) -> pfDir {p} i) ->
+  (i : PFTranslatePos p a) ->
+  PFTranslateDir q b (pfTranslatePosBimap posmap typemap i) ->
+  PFTranslateDir p a i
+pfTranslateDirBimap {p=(ppos ** pdir)} {q=(qpos ** qdir)} posmap typemap dirmap
+  (PFVar v) d = void d
+pfTranslateDirBimap {p=(ppos ** pdir)} {q=(qpos ** qdir)} posmap typemap dirmap
+  (PFCom i) d = dirmap i d
+
+public export
 pfTranslateNT : {p, q : PolyFunc} ->
   PolyNatTrans p q -> PolyNatTrans (PFTranslate p ()) (PFTranslate q ())
 pfTranslateNT {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
   (pfTranslatePosBimap {p} {q} {a=()} {b=()} onPos id **
-   ?pfTranslateNT_ondir_hole)
+   pfTranslateDirBimap {p} {q} {a=()} {b=()} onPos id onDir)
 
 public export
 pfFreePolyCata : {p, q : PolyFunc} ->
@@ -2221,14 +2233,18 @@ pfFreePolyReturnN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (PolyFuncFreeM p)
     (PolyFuncFreeM (pfCompositionPowerArena p (S n)))
-pfFreePolyReturnN p n = ?pfFreePolyReturnN_hole
+pfFreePolyReturnN p Z =
+  pfFreePolyCata $ pntToIdRight p
+pfFreePolyReturnN p (S n) = ?pfFreePolyReturnN_hole_1
 
 public export
 pfFreePolyJoinN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (PolyFuncFreeM (pfCompositionPowerArena p (S n)))
     (PolyFuncFreeM p)
-pfFreePolyJoinN p n = ?pfFreePolyJoinN_hole
+pfFreePolyJoinN p Z =
+  pfFreePolyCata $ pntFromIdRight p
+pfFreePolyJoinN p (S n) = ?pfFreePolyJoinN_hole_1
 
 public export
 pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
