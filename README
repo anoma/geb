@@ -5,13 +5,9 @@ Welcome to the GEB project.
 
 ## Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
-
-
 
 ## Getting Started
 
@@ -78,7 +74,7 @@ writing:
 
     A closed type is a type that can not be extended dynamically.
     A good example of this kind of term is an ML
-    [ADT](https://en.wikipedia.org/wiki/Algebraic_data_type)
+    [ADT](https://en.wikipedia.org/wiki/Algebraic_data_type).
     
     ```haskell
     data Tree = Empty
@@ -86,7 +82,7 @@ writing:
               | Node Tree Tree
     ```
     
-    In our lisp code we have a very similar convention
+    In our lisp code we have a very similar convention:
     
     ```lisp
     (in-package :geb.spec)
@@ -100,9 +96,10 @@ writing:
     ```
     
     This type is closed, as only one of GEB:SUBSTOBJ, GEB:INJECT-LEFT,
-    GEB:INJECT-RIGHT etc can form the GEB:SUBSTMORPH type
+    GEB:INJECT-RIGHT etc can form the GEB:SUBSTMORPH type.
     
-    The main benefit of this form is that we can be exhaustive over what can be found in GEB:SUBSTBOOL
+    The main benefit of this form is that we can be exhaustive over what
+    can be found in GEB:SUBSTMORPH.
     
     ```lisp
     (defun so-hom-obj (x z)
@@ -193,8 +190,6 @@ conjectures about GEB
 
 ## Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -262,31 +257,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} cong C^{(A × B)}$,
+   $C^{(B^A)} \cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $varnothing$.
+   the empty sum is $\varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
+$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ mathsf{2} = lbrace 1, 2 rbrace$,
-$ mathsf{1} = lbrace 1 rbrace$,
-$ mathsf{0} = lbrace  rbrace = varnothing$,
+where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
+$ \mathsf{1} = \lbrace 1 \rbrace$,
+$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -308,8 +303,6 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
-
-
 
 ### Morphisms
 
@@ -552,11 +545,80 @@ The various constructors that form the SUBSTMORPH type
 
 - [type] COMP
 
-    Composition of morphism
+    The composition morphism. Takes two <SUBSTMORPH> values that get
+    applied in standard composition order.
+    
+    The formal grammar of COMP is
+    
+    ```lisp
+    (comp mcar mcadr)
+    ```
+    
+    which may be more familiar as
+    
+    ```haskell
+    g 。f
+    ```
+    
+    Where COMP( 。) is the constructor, MCAR(g) is the second morphism
+    that gets applied, and MCADR(f) is the first morphism that gets
+    applied.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize
+     (comp
+      (<-right so1 geb-bool:bool)
+      (pair (<-left so1 geb-bool:bool)
+            (<-right so1 geb-bool:bool))))
+    ```
+    
+    In this example we are composing two morphisms. the first morphism
+    that gets applied (PAIR ...) is the identity function on the
+    type (PROD SO1 GEB-BOOL:BOOL), where we pair the
+    [left injection](INJECT-LEFT) and the [right
+    projection](INJECT-RIGHT), followed by taking the [right
+    projection](INJECT-RIGHT) of the type.
+    
+    Since we know (COMP f id) is just f per the laws of category
+    theory, this expression just reduces to
+    
+    ```lisp
+    (<-right so1 geb-bool:bool)
+    ```
+
 
 - [type] CASE
 
-    Coproduct elimination (case statement)
+    Eliminates coproducts. Namely Takes two <SUBSTMORPH> values, one
+    gets applied on the left coproduct while the other gets applied on the
+    right coproduct. The result of each <SUBSTMORPH> values must be
+    the same.
+    
+    The formal grammar of CASE is:
+    
+    ```lisp
+    (mcase mcar mcadr)
+    ```
+    
+    Where MCASE is the constructor, MCAR is the morphism that gets
+    applied to the left coproduct, and MCADR is the morphism that gets
+    applied to the right coproduct.
+    
+    Example:
+    
+    ```lisp
+    (comp
+     (mcase geb-bool:mtrue
+            geb-bool:snot)
+     (right-> so1 geb-bool:bool))
+    ```
+    
+    In the second example, we inject a term with the shape GEB-BOOL:BOOL
+    into a pair with the shape (SO1 × GEB-BOOL:BOOL), then we use
+    MCASE to denote a morophism saying. IF the input is of the shape SO1,
+    then give us True, otherwise flip the value of the boolean coming in.
 
 - [type] INIT
 
@@ -568,7 +630,32 @@ The various constructors that form the SUBSTMORPH type
 
 - [type] PAIR
 
-    Product introduction (morphism pairing)
+    Introduces products. Namely Takes two <SUBSTMORPH> values. When
+    the PAIR morphism is applied on data, these two <SUBSTMORPH>'s are
+    applied to the object, returning a pair of the results
+    
+    The formal grammar of constructing an instance of pair is:
+    
+    ```
+    (pair mcar mcdr)
+    ```
+    
+    where PAIR is the constructor, MCAR is the left morphism, and MCDR is
+    the right morphism
+    
+    Example:
+    
+    ```lisp
+    (pair (<-left so1 geb-bool:bool)
+          (<-right so1 geb-bool:bool))
+    
+    (geb-gui::visualize (pair (<-left so1 geb-bool:bool)
+                              (<-right so1 geb-bool:bool)))
+    ```
+    
+    Here this pair morphism takes the pair SO1 × GEB-BOOL:BOOL, and
+    projects back the left field SO1 as the first value of the pair and
+    projects back the GEB-BOOL:BOOL field as the second values.
 
 - [type] DISTRIBUTE
 
@@ -576,11 +663,66 @@ The various constructors that form the SUBSTMORPH type
 
 - [type] INJECT-LEFT
 
-    Left injection (coproduct introduction)
+    The left injection morphism. Takes two <SUBSTOBJ> values. It is
+    the dual of INJECT-RIGHT
+    
+    The formal grammar is
+    
+    ```lisp
+    (left-> mcar mcadr)
+    ```
+    
+    Where LEFT-> is the constructor, MCAR is the value being injected into
+    the coproduct of MCAR + MCADR, and the MCADR is just the type for
+    the unused right constructor.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize (left-> so1 geb-bool:bool))
+    
+    (comp
+     (mcase geb-bool:mtrue
+            geb-bool:snot)
+     (left-> so1 geb-bool:bool))
+    
+    ```
+    
+    In the second example, we inject a term with the shape SO1 into a pair
+    with the shape (SO1 × GEB-BOOL:BOOL), then we use MCASE to denote a
+    morophism saying. `IF` the input is of the shape SO1, then give us True,
+    otherwise flip the value of the boolean coming in.
 
 - [type] INJECT-RIGHT
 
-    Right injection (coproduct introduction)
+    The right injection morphism. Takes two <SUBSTOBJ> values. It is the dual of INJECT-LEFT
+    
+    The formal grammar is
+    
+    ```lisp
+    (right-> mcar mcadr)
+    ```
+    
+    Where RIGHT-> is the constructor, MCADR is the value being injected into
+    the coproduct of MCAR + MCADR, and the MCAR is just the type for
+    the unused left constructor.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize (right-> so1 geb-bool:bool))
+    
+    (comp
+     (mcase geb-bool:mtrue
+            geb-bool:snot)
+     (right-> so1 geb-bool:bool))
+    
+    ```
+    
+    In the second example, we inject a term with the shape GEB-BOOL:BOOL
+    into a pair with the shape (SO1 × GEB-BOOL:BOOL), then we use
+    MCASE to denote a morophism saying. IF the input is of the shape SO1,
+    then give us True, otherwise flip the value of the boolean coming in.
 
 - [type] PROJECT-LEFT
 
@@ -610,15 +752,19 @@ The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH
 
 - [method] MCAR (CASE CASE)
 
+    The morphism that gets applied on the left coproduct
+
 - [method] MCADR (CASE CASE)
+
+    The morphism that gets applied on the right coproduct
 
 - [method] MCAR (PAIR PAIR)
 
-    Head of the pair cell
+    The left morphism
 
 - [method] MCDR (PAIR PAIR)
 
-    Tail of the pair cell
+    The right morphism
 
 - [method] MCAR (DISTRIBUTE DISTRIBUTE)
 

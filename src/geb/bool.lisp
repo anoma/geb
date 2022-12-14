@@ -17,6 +17,8 @@
   (alias not
          (mcase mtrue mfalse)))
 
+;; TODO :: refactor this to remove the x call, and instead use
+;; (terminal (codomain f))
 (defun so-const (f x)
   "composition of the term and it's terminal type" ; ???
   ;; Is this right!? hard to tell with Idris's unification

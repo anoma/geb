@@ -9,7 +9,7 @@
     @closed-type (:title "closed type")
     "A closed type is a type that can not be extended dynamically.
 A good example of this kind of term is an ML
-[ADT](https://en.wikipedia.org/wiki/Algebraic_data_type)
+[ADT](https://en.wikipedia.org/wiki/Algebraic_data_type).
 
 ```haskell
 data Tree = Empty
@@ -17,7 +17,7 @@ data Tree = Empty
           | Node Tree Tree
 ```
 
-In our lisp code we have a very similar convention
+In our lisp code we have a very similar convention:
 
 ```lisp
 (in-package :geb.spec)
@@ -31,9 +31,10 @@ In our lisp code we have a very similar convention
 ```
 
 This type is closed, as only one of GEB:SUBSTOBJ, GEB:INJECT-LEFT,
-GEB:INJECT-RIGHT etc can form the GEB:SUBSTMORPH type
+GEB:INJECT-RIGHT etc can form the GEB:SUBSTMORPH type.
 
-The main benefit of this form is that we can be exhaustive over what can be found in GEB:SUBSTBOOL
+The main benefit of this form is that we can be exhaustive over what
+can be found in GEB:SUBSTMORPH.
 
 ```lisp
 (defun so-hom-obj (x z)
@@ -55,8 +56,7 @@ Meaning that if we update definitions this works well.
 The main downside is that we can not extend the type after the fact,
 meaning that all interfaces on SO-HOM-OBJ must take the unaltered
 type. This is in stark contrast to @OPEN-TYPES. To find out more about
-the trade offs and usage in the code-base read the section @OPEN-CLOSED.
-")
+the trade offs and usage in the code-base read the section @OPEN-CLOSED.")
 
 (pax:define-glossary-term
     @open-type (:title "open type")
@@ -84,8 +84,7 @@ The main disadvantaged of these is that exhaustion can not be checked,
 and thus the user has to know what methods to fill out. In a system
 with a bit more checks this is not a problem in practice. To find out
 more about the trade offs and usage in the code-base read the section
-@OPEN-CLOSED.
-")
+@OPEN-CLOSED.")
 
 (pax:define-glossary-term
     @clos (:title "Common Lisp Object System (CLOS)")

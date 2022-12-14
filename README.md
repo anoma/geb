@@ -46,13 +46,9 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -124,7 +120,7 @@ writing:
 
     A closed type is a type that can not be extended dynamically.
     A good example of this kind of term is an ML
-    [ADT](https://en.wikipedia.org/wiki/Algebraic_data_type)
+    [ADT](https://en.wikipedia.org/wiki/Algebraic_data_type).
     
     ```haskell
     data Tree = Empty
@@ -132,7 +128,7 @@ writing:
               | Node Tree Tree
     ```
     
-    In our lisp code we have a very similar convention
+    In our lisp code we have a very similar convention:
     
     ```lisp
     (in-package :geb.spec)
@@ -146,9 +142,10 @@ writing:
     ```
     
     This type is closed, as only one of [`GEB:SUBSTOBJ`][3173], [`GEB:INJECT-LEFT`][cab9],
-    [`GEB:INJECT-RIGHT`][fae9] etc can form the [`GEB:SUBSTMORPH`][57dc] type
+    [`GEB:INJECT-RIGHT`][fae9] etc can form the [`GEB:SUBSTMORPH`][57dc] type.
     
-    The main benefit of this form is that we can be exhaustive over what can be found in GEB:SUBSTBOOL
+    The main benefit of this form is that we can be exhaustive over what
+    can be found in `GEB:SUBSTMORPH`.
     
     ```lisp
     (defun so-hom-obj (x z)
@@ -245,8 +242,6 @@ conjectures about GEB
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 5 Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -314,31 +309,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} cong C^{(A × B)}$,
+   $C^{(B^A)} \cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $varnothing$.
+   the empty sum is $\varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
+$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ mathsf{2} = lbrace 1, 2 rbrace$,
-$ mathsf{1} = lbrace 1 rbrace$,
-$ mathsf{0} = lbrace  rbrace = varnothing$,
+where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
+$ \mathsf{1} = \lbrace 1 \rbrace$,
+$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -360,8 +355,6 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 5.1 Morphisms
@@ -630,12 +623,81 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
 <a id="x-28GEB-2ESPEC-3ACOMP-20TYPE-29"></a>
 - [type] **COMP**
 
-    Composition of morphism
+    The composition morphism. Takes two [`<SUBSTMORPH>`][97fb] values that get
+    applied in standard composition order.
+    
+    The formal grammar of [`COMP`][f914] is
+    
+    ```lisp
+    (comp mcar mcadr)
+    ```
+    
+    which may be more familiar as
+    
+    ```haskell
+    g 。f
+    ```
+    
+    Where [`COMP`][f914]( 。) is the constructor, [`MCAR`][f1ce](g) is the second morphism
+    that gets applied, and [`MCADR`][cc87](f) is the first morphism that gets
+    applied.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize
+     (comp
+      (<-right so1 geb-bool:bool)
+      (pair (<-left so1 geb-bool:bool)
+            (<-right so1 geb-bool:bool))))
+    ```
+    
+    In this example we are composing two morphisms. the first morphism
+    that gets applied ([`PAIR`][3bc6] ...) is the identity function on the
+    type ([`PROD`][77c2] [`SO1`][ebf5] `GEB-BOOL:BOOL`), where we pair the
+    [left injection](INJECT-LEFT) and the [right
+    projection](INJECT-RIGHT), followed by taking the [right
+    projection](INJECT-RIGHT) of the type.
+    
+    Since we know ([`COMP`][f914] f id) is just f per the laws of category
+    theory, this expression just reduces to
+    
+    ```lisp
+    (<-right so1 geb-bool:bool)
+    ```
+
 
 <a id="x-28GEB-2ESPEC-3ACASE-20TYPE-29"></a>
 - [type] **CASE**
 
-    Coproduct elimination (case statement)
+    Eliminates coproducts. Namely Takes two [`<SUBSTMORPH>`][97fb] values, one
+    gets applied on the left coproduct while the other gets applied on the
+    right coproduct. The result of each `<SUBSTMORPH>` values must be
+    the same.
+    
+    The formal grammar of `CASE` is:
+    
+    ```lisp
+    (mcase mcar mcadr)
+    ```
+    
+    Where [`MCASE`][cd11] is the constructor, [`MCAR`][f1ce] is the morphism that gets
+    applied to the left coproduct, and [`MCADR`][cc87] is the morphism that gets
+    applied to the right coproduct.
+    
+    Example:
+    
+    ```lisp
+    (comp
+     (mcase geb-bool:mtrue
+            geb-bool:snot)
+     (right-> so1 geb-bool:bool))
+    ```
+    
+    In the second example, we inject a term with the shape `GEB-BOOL:BOOL`
+    into a pair with the shape ([`SO1`][ebf5] × `GEB-BOOL:BOOL`), then we use
+    [`MCASE`][cd11] to denote a morophism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]),
+    then give us True, otherwise flip the value of the boolean coming in.
 
 <a id="x-28GEB-2ESPEC-3AINIT-20TYPE-29"></a>
 - [type] **INIT**
@@ -650,7 +712,32 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
 <a id="x-28GEB-2ESPEC-3APAIR-20TYPE-29"></a>
 - [type] **PAIR**
 
-    Product introduction (morphism pairing)
+    Introduces products. Namely Takes two [`<SUBSTMORPH>`][97fb] values. When
+    the `PAIR` morphism is applied on data, these two [`<SUBSTMORPH>`][97fb]'s are
+    applied to the object, returning a pair of the results
+    
+    The formal grammar of constructing an instance of pair is:
+    
+    ```
+    (pair mcar mcdr)
+    ```
+    
+    where `PAIR` is the constructor, [`MCAR`][f1ce] is the left morphism, and [`MCDR`][af14] is
+    the right morphism
+    
+    Example:
+    
+    ```lisp
+    (pair (<-left so1 geb-bool:bool)
+          (<-right so1 geb-bool:bool))
+    
+    (geb-gui::visualize (pair (<-left so1 geb-bool:bool)
+                              (<-right so1 geb-bool:bool)))
+    ```
+    
+    Here this pair morphism takes the pair `SO1`([`0`][f4ba] [`1`][ebf5]) × `GEB-BOOL:BOOL`, and
+    projects back the left field `SO1` as the first value of the pair and
+    projects back the `GEB-BOOL:BOOL` field as the second values.
 
 <a id="x-28GEB-2ESPEC-3ADISTRIBUTE-20TYPE-29"></a>
 - [type] **DISTRIBUTE**
@@ -660,12 +747,67 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
 <a id="x-28GEB-2ESPEC-3AINJECT-LEFT-20TYPE-29"></a>
 - [type] **INJECT-LEFT**
 
-    Left injection (coproduct introduction)
+    The left injection morphism. Takes two [`<SUBSTOBJ>`][8214] values. It is
+    the dual of [`INJECT-RIGHT`][fae9]
+    
+    The formal grammar is
+    
+    ```lisp
+    (left-> mcar mcadr)
+    ```
+    
+    Where [`LEFT->`][effe] is the constructor, [`MCAR`][f1ce] is the value being injected into
+    the coproduct of [`MCAR`][f1ce] + [`MCADR`][cc87], and the [`MCADR`][cc87] is just the type for
+    the unused right constructor.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize (left-> so1 geb-bool:bool))
+    
+    (comp
+     (mcase geb-bool:mtrue
+            geb-bool:snot)
+     (left-> so1 geb-bool:bool))
+    
+    ```
+    
+    In the second example, we inject a term with the shape `SO1`([`0`][f4ba] [`1`][ebf5]) into a pair
+    with the shape ([`SO1`][ebf5] × `GEB-BOOL:BOOL`), then we use [`MCASE`][cd11] to denote a
+    morophism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]), then give us True,
+    otherwise flip the value of the boolean coming in.
 
 <a id="x-28GEB-2ESPEC-3AINJECT-RIGHT-20TYPE-29"></a>
 - [type] **INJECT-RIGHT**
 
-    Right injection (coproduct introduction)
+    The right injection morphism. Takes two [`<SUBSTOBJ>`][8214] values. It is the dual of [`INJECT-LEFT`][cab9]
+    
+    The formal grammar is
+    
+    ```lisp
+    (right-> mcar mcadr)
+    ```
+    
+    Where [`RIGHT->`][ff57] is the constructor, [`MCADR`][cc87] is the value being injected into
+    the coproduct of [`MCAR`][f1ce] + [`MCADR`][cc87], and the [`MCAR`][f1ce] is just the type for
+    the unused left constructor.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize (right-> so1 geb-bool:bool))
+    
+    (comp
+     (mcase geb-bool:mtrue
+            geb-bool:snot)
+     (right-> so1 geb-bool:bool))
+    
+    ```
+    
+    In the second example, we inject a term with the shape `GEB-BOOL:BOOL`
+    into a pair with the shape ([`SO1`][ebf5] × `GEB-BOOL:BOOL`), then we use
+    [`MCASE`][cd11] to denote a morophism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]),
+    then give us True, otherwise flip the value of the boolean coming in.
 
 <a id="x-28GEB-2ESPEC-3APROJECT-LEFT-20TYPE-29"></a>
 - [type] **PROJECT-LEFT**
@@ -704,18 +846,22 @@ The [Accessors][cc51] specific to [Subst Morph][d2d1]
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ACASE-29-29-29"></a>
 - [method] **MCAR** *(CASE CASE)*
 
+    The morphism that gets applied on the left coproduct
+
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ACASE-29-29-29"></a>
 - [method] **MCADR** *(CASE CASE)*
+
+    The morphism that gets applied on the right coproduct
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APAIR-29-29-29"></a>
 - [method] **MCAR** *(PAIR PAIR)*
 
-    Head of the pair cell
+    The left morphism
 
 <a id="x-28GEB-2EUTILS-3AMCDR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APAIR-29-29-29"></a>
 - [method] **MCDR** *(PAIR PAIR)*
 
-    Tail of the pair cell
+    The right morphism
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3ADISTRIBUTE-29-29-29"></a>
 - [method] **MCAR** *(DISTRIBUTE DISTRIBUTE)*
@@ -1358,6 +1504,7 @@ features and how to better lay out future tests
   [3173]: #x-28GEB-2ESPEC-3ASUBSTOBJ-20TYPE-29 "GEB.SPEC:SUBSTOBJ TYPE"
   [365a]: #x-28GEB-2EUTILS-3AELSE-20GENERIC-FUNCTION-29 "GEB.UTILS:ELSE GENERIC-FUNCTION"
   [3686]: #x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29 "Original Efforts"
+  [3bc6]: #x-28GEB-2ESPEC-3APAIR-20TYPE-29 "GEB.SPEC:PAIR TYPE"
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
   [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
   [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
@@ -1370,9 +1517,11 @@ features and how to better lay out future tests
   [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
+  [684b]: http://www.lispworks.com/documentation/HyperSpec/Body/s_if.htm "IF MGL-PAX:MACRO"
   [7088]: #x-28GEB-2ESPEC-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO0 MGL-PAX:SYMBOL-MACRO"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
   [74ab]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADR FUNCTION"
+  [77c2]: #x-28GEB-2ESPEC-3APROD-20TYPE-29 "GEB.SPEC:PROD TYPE"
   [7e58]: http://www.lispworks.com/documentation/HyperSpec/Body/t_class.htm "CLASS CLASS"
   [7f9f]: http://www.lispworks.com/documentation/HyperSpec/Body/t_symbol.htm "SYMBOL TYPE"
   [8214]: #x-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-20TYPE-29 "GEB.SPEC:<SUBSTOBJ> TYPE"
@@ -1386,6 +1535,7 @@ features and how to better lay out future tests
   [9162]: #x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20TYPE-29 "GEB.POLY.SPEC:COMPOSE TYPE"
   [925b]: #x-28GEB-DOCS-2FDOCS-3A-40POLY-SETS-20MGL-PAX-3ASECTION-29 "Poly in Sets"
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
+  [97fb]: #x-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-20TYPE-29 "GEB.SPEC:<SUBSTMORPH> TYPE"
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"
   [9bcb]: #x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29 "Testing"
@@ -1397,6 +1547,7 @@ features and how to better lay out future tests
   [a920]: #x-28GEB-DOCS-2FDOCS-3A-40OPEN-CLOSED-20MGL-PAX-3ASECTION-29 "Open Types versus Closed Types"
   [a981]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defmet.htm "DEFMETHOD MGL-PAX:MACRO"
   [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
+  [af14]: #x-28GEB-2EUTILS-3AMCDR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCDR GENERIC-FUNCTION"
   [b76d]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Polynomial Constructors"
   [b960]: #x-28GEB-2ESPEC-3A-2ASO1-2A-20VARIABLE-29 "GEB.SPEC:*SO1* VARIABLE"
   [b9c1]: http://www.lispworks.com/documentation/HyperSpec/Body/t_seq.htm "SEQUENCE TYPE"
@@ -1416,16 +1567,22 @@ features and how to better lay out future tests
   [cb9e]: #x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29 "Core Categories"
   [cc51]: #x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
   [cc87]: #x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCADR GENERIC-FUNCTION"
+  [cd11]: #x-28GEB-2ESPEC-3AMCASE-20FUNCTION-29 "GEB.SPEC:MCASE FUNCTION"
   [d2d1]: #x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29 "Subst Morph"
   [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
   [d908]: http://www.lispworks.com/documentation/HyperSpec/Body/f_typep.htm "TYPEP FUNCTION"
   [dbe7]: #x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29 "Objects"
   [e982]: #x-28GEB-2ESPEC-3A-2ASO0-2A-20VARIABLE-29 "GEB.SPEC:*SO0* VARIABLE"
+  [ebf5]: #x-28GEB-2ESPEC-3ASO1-20TYPE-29 "GEB.SPEC:SO1 TYPE"
   [ecc6]: #x-28GEB-DOCS-2FDOCS-3A-40CLOS-20MGL-PAX-3AGLOSSARY-TERM-29 "GEB-DOCS/DOCS:@CLOS MGL-PAX:GLOSSARY-TERM"
+  [effe]: #x-28GEB-2ESPEC-3ALEFT--3E-20FUNCTION-29 "GEB.SPEC:LEFT-> FUNCTION"
   [f1ce]: #x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCAR GENERIC-FUNCTION"
+  [f4ba]: #x-28GEB-2ESPEC-3ASO1-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO1 MGL-PAX:SYMBOL-MACRO"
   [f5ac]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29 "Polynomial Specification"
+  [f914]: #x-28GEB-2ESPEC-3ACOMP-20TYPE-29 "GEB.SPEC:COMP TYPE"
   [fae9]: #x-28GEB-2ESPEC-3AINJECT-RIGHT-20TYPE-29 "GEB.SPEC:INJECT-RIGHT TYPE"
   [fb12]: #x-28GEB-2ESPEC-3ACOPROD-20TYPE-29 "GEB.SPEC:COPROD TYPE"
+  [ff57]: #x-28GEB-2ESPEC-3ARIGHT--3E-20FUNCTION-29 "GEB.SPEC:RIGHT-> FUNCTION"
 
 * * *
 ###### \[generated by [MGL-PAX](https://github.com/melisgl/mgl-pax)\]

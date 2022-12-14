@@ -85,7 +85,49 @@
           :type substmorph
           :accessor mcadr
           :documentation "the second morphism"))
-  (:documentation "Composition of morphism"))
+  (:documentation
+   "The composition morphism. Takes two \\<SUBSTMORPH\\> values that get
+applied in standard composition order.
+
+The formal grammar of [COMP][type] is
+
+```lisp
+(comp mcar mcadr)
+```
+
+which may be more familiar as
+
+```haskell
+g 。f
+```
+
+Where [COMP][type]\\( 。\\) is the constructor, [MCAR]\\(g\\) is the second morphism
+that gets applied, and [MCADR]\\(f\\) is the first morphism that gets
+applied.
+
+Example:
+
+```lisp
+(geb-gui::visualize
+ (comp
+  (<-right so1 geb-bool:bool)
+  (pair (<-left so1 geb-bool:bool)
+        (<-right so1 geb-bool:bool))))
+```
+
+In this example we are composing two morphisms. the first morphism
+that gets applied ([PAIR] ...) is the identity function on the
+type ([PROD][type] [SO1][type] [GEB-BOOL:BOOL]), where we pair the
+[left injection](INJECT-LEFT) and the [right
+projection](INJECT-RIGHT), followed by taking the [right
+projection](INJECT-RIGHT) of the type.
+
+Since we know ([COMP][type] f id) is just f per the laws of category
+theory, this expression just reduces to
+
+```lisp
+(<-right so1 geb-bool:bool)
+```"))
 
 (defclass init (<substmorph>)
   ((obj :initarg :obj
@@ -106,13 +148,42 @@
 (defclass inject-left (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type substobj
+         :type <substobj>
          :documentation "")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type substobj
+          :type <substobj>
           :documentation ""))
-  (:documentation "Left injection (coproduct introduction)"))
+  (:documentation
+   "The left injection morphism. Takes two \\<SUBSTOBJ\\> values. It is
+the dual of INJECT-RIGHT
+
+The formal grammar is
+
+```lisp
+(left-> mcar mcadr)
+```
+
+Where LEFT-> is the constructor, [MCAR] is the value being injected into
+the coproduct of [MCAR] + [MCADR], and the [MCADR] is just the type for
+the unused right constructor.
+
+Example:
+
+```lisp
+(geb-gui::visualize (left-> so1 geb-bool:bool))
+
+(comp
+ (mcase geb-bool:mtrue
+        geb-bool:snot)
+ (left-> so1 geb-bool:bool))
+
+```
+
+In the second example, we inject a term with the shape SO1 into a pair
+with the shape ([SO1][type] × [GEB-BOOL:BOOL]), then we use MCASE to denote a
+morophism saying. `IF` the input is of the shape [SO1], then give us True,
+otherwise flip the value of the boolean coming in."))
 
 (defclass inject-right (<substmorph>)
   ((mcar :initarg :mcar
@@ -123,29 +194,111 @@
           :accessor mcadr
           :type substobj
           :documentation ""))
-  (:documentation "Right injection (coproduct introduction)"))
+  (:documentation
+   "The right injection morphism. Takes two \\<SUBSTOBJ\\> values. It is the dual of INJECT-LEFT
+
+The formal grammar is
+
+```lisp
+(right-> mcar mcadr)
+```
+
+Where RIGHT-> is the constructor, [MCADR] is the value being injected into
+the coproduct of [MCAR] + [MCADR], and the [MCAR] is just the type for
+the unused left constructor.
+
+Example:
+
+```lisp
+(geb-gui::visualize (right-> so1 geb-bool:bool))
+
+(comp
+ (mcase geb-bool:mtrue
+        geb-bool:snot)
+ (right-> so1 geb-bool:bool))
+
+```
+
+In the second example, we inject a term with the shape [GEB-BOOL:BOOL]
+into a pair with the shape ([SO1][type] × [GEB-BOOL:BOOL]), then we use
+[MCASE] to denote a morophism saying. IF the input is of the shape [SO1],
+then give us True, otherwise flip the value of the boolean coming in."))
 
 (defclass case (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type substmorph
-         :documentation "")
+         :type <substmorph>
+         :documentation "The morphism that gets applied on the left coproduct")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type substmorph
-          :documentation ""))
-  (:documentation "Coproduct elimination (case statement)"))
+          :type <substmorph>
+          :documentation "The morphism that gets applied on the right coproduct"))
+  (:documentation
+   "Eliminates coproducts. Namely Takes two \\<SUBSTMORPH\\> values, one
+gets applied on the left coproduct while the other gets applied on the
+right coproduct. The result of each \\<SUBSTMORPH\\> values must be
+the same.
+
+The formal grammar of [CASE] is:
+
+```lisp
+(mcase mcar mcadr)
+```
+
+Where [MCASE] is the constructor, [MCAR] is the morphism that gets
+applied to the left coproduct, and [MCADR] is the morphism that gets
+applied to the right coproduct.
+
+Example:
+
+```lisp
+(comp
+ (mcase geb-bool:mtrue
+        geb-bool:snot)
+ (right-> so1 geb-bool:bool))
+```
+
+In the second example, we inject a term with the shape [GEB-BOOL:BOOL]
+into a pair with the shape ([SO1][type] × [GEB-BOOL:BOOL]), then we use
+[MCASE] to denote a morophism saying. IF the input is of the shape [SO1],
+then give us True, otherwise flip the value of the boolean coming in."))
 
 (defclass pair (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type substmorph
-         :documentation "Head of the pair cell")
+         :type <substmorph>
+         :documentation "The left morphism")
    (mcdr :initarg :mcdr
          :accessor mcdr
-         :type substmorph
-         :documentation "Tail of the pair cell"))
-  (:documentation "Product introduction (morphism pairing)"))
+         :type <substmorph>
+         :documentation "The right morphism"))
+  (:documentation
+   "Introduces products. Namely Takes two \\<SUBSTMORPH\\> values. When
+the PAIR morphism is applied on data, these two [\\<SUBSTMORPH\\>]'s are
+applied to the object, returning a pair of the results
+
+The formal grammar of constructing an instance of pair is:
+
+```
+(pair mcar mcdr)
+```
+
+where PAIR is the constructor, MCAR is the left morphism, and MCDR is
+the right morphism
+
+Example:
+
+```lisp
+(pair (<-left so1 geb-bool:bool)
+      (<-right so1 geb-bool:bool))
+
+(geb-gui::visualize (pair (<-left so1 geb-bool:bool)
+                          (<-right so1 geb-bool:bool)))
+```
+
+Here this pair morphism takes the pair SO1 × GEB-BOOL:BOOL, and
+projects back the left field SO1 as the first value of the pair and
+projects back the GEB-BOOL:BOOL field as the second values."))
 
 (defclass project-left (<substmorph>)
   ((mcar :initarg :mcar
