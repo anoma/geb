@@ -181,6 +181,28 @@ public export
 Eq STMu where
   (==) = stEq
 
+------------------------------------
+---- Translation with Idris ADT ----
+------------------------------------
+
+public export
+STMuToRecAlg : STAlg SubstTermRec
+STMuToRecAlg STPosLeaf d = STRLeaf
+STMuToRecAlg STPosLeft d = STRLeft $ d STDirL
+STMuToRecAlg STPosRight d = STRRight $ d STDirR
+STMuToRecAlg STPosPair d = STRPair (d STDirFst) (d STDirSnd)
+
+public export
+stMuToRec : STMu -> SubstTermRec
+stMuToRec = stCata STMuToRecAlg
+
+public export
+stMuFromRec : SubstTermRec -> STMu
+stMuFromRec STRLeaf = InSTUnit
+stMuFromRec (STRLeft t) = InSTLeft $ stMuFromRec t
+stMuFromRec (STRRight t) = InSTRight $ stMuFromRec t
+stMuFromRec (STRPair t t') = InSTPair (stMuFromRec t) (stMuFromRec t')
+
 ---------------------
 ---- Refinements ----
 ---------------------
