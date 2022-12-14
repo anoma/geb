@@ -7,6 +7,133 @@ import public LanguageDef.PolyCat
 
 %default total
 
+-------------------------------------------
+-------------------------------------------
+---- Inductive definition of term type ----
+-------------------------------------------
+-------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+public export
+data SubstTermPos : Type where
+  STPosLeaf : SubstTermPos
+  STPosLeft : SubstTermPos
+  STPosRight : SubstTermPos
+  STPosPair : SubstTermPos
+
+public export
+data SubstTermDir : SubstTermPos -> Type where
+  STDirL : SubstTermDir STPosLeft
+  STDirR : SubstTermDir STPosRight
+  STDirFst : SubstTermDir STPosPair
+  STDirSnd : SubstTermDir STPosPair
+
+public export
+SubstTermPF : PolyFunc
+SubstTermPF = (SubstTermPos ** SubstTermDir)
+
+---------------------------------------------
+---- Least fixed point (initial algebra) ----
+---------------------------------------------
+
+public export
+STMu : Type
+STMu = PolyFuncMu SubstTermPF
+
+---------------------------------
+---- Algebras, catamorphisms ----
+---------------------------------
+
+public export
+STAlg : Type -> Type
+STAlg = PFAlg SubstTermPF
+
+public export
+stCata : {0 a : Type} -> STAlg a -> STMu -> a
+stCata = pfCata {p=SubstTermPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InSTUnit : STMu
+InSTUnit = InPFM STPosLeaf $ \d => case d of _ impossible
+
+public export
+InSTLeft : STMu -> STMu
+InSTLeft x = InPFM STPosLeft $ \d => case d of STDirL => x
+
+public export
+InSTRight : STMu -> STMu
+InSTRight y = InPFM STPosRight $ \d => case d of STDirR => y
+
+public export
+InSTPair : STMu -> STMu -> STMu
+InSTPair x y = InPFM STPosPair $ \d => case d of
+  STDirFst => x
+  STDirSnd => y
+
+public export
+STSizeAlg : STAlg Nat
+STSizeAlg STPosLeaf dir = 0
+STSizeAlg STPosLeft dir = 1 + dir STDirL
+STSizeAlg STPosRight dir = 1 + dir STDirR
+STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
+
+public export
+stSize : STMu -> Nat
+stSize = stCata STSizeAlg
+
+public export
+STDepthAlg : STAlg Nat
+STDepthAlg STPosLeaf dir = 0
+STDepthAlg STPosLeft dir = 1 + dir STDirL
+STDepthAlg STPosRight dir = 1 + dir STDirR
+STDepthAlg STPosPair dir = smax (dir STDirFst) (dir STDirSnd)
+
+public export
+stDepth : STMu -> Nat
+stDepth = stCata STDepthAlg
+
+public export
+STShowAlg : STAlg String
+STShowAlg STPosLeaf dir = "!"
+STShowAlg STPosLeft dir = "< [" ++ dir STDirL ++ "]"
+STShowAlg STPosRight dir = "> [" ++ dir STDirR ++ "]"
+STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
+
+public export
+Show STMu where
+  show = stCata STShowAlg
+
+---------------------
+---- Refinements ----
+---------------------
+
+public export
+STEitherAlg : Type -> Type -> Type
+STEitherAlg = STAlg .* Either
+
+public export
+STRefinementAlg : Type
+STRefinementAlg = STEitherAlg Unit Unit
+
+public export
+RefinedST : (0 _ : DecPred STMu) -> Type
+RefinedST = Refinement {a=STMu}
+
+public export
+AlgRefinedST : STRefinementAlg -> Type
+AlgRefinedST alg = RefinedST (isRight . stCata alg)
+
+------------------------
+---- Dependent fold ----
+------------------------
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial objects ----
@@ -223,133 +350,6 @@ SORefineAlg = SOAlg Bool
 public export
 SORefinement : SliceObj SORefineAlg
 SORefinement alg = Refinement {a=SOMu} $ soCata alg
-
--------------------------------------------
--------------------------------------------
----- Inductive definition of term type ----
--------------------------------------------
--------------------------------------------
-
-----------------------------------
----- Positions and directions ----
-----------------------------------
-
-public export
-data SubstTermPos : Type where
-  STPosLeaf : SubstTermPos
-  STPosLeft : SubstTermPos
-  STPosRight : SubstTermPos
-  STPosPair : SubstTermPos
-
-public export
-data SubstTermDir : SubstTermPos -> Type where
-  STDirL : SubstTermDir STPosLeft
-  STDirR : SubstTermDir STPosRight
-  STDirFst : SubstTermDir STPosPair
-  STDirSnd : SubstTermDir STPosPair
-
-public export
-SubstTermPF : PolyFunc
-SubstTermPF = (SubstTermPos ** SubstTermDir)
-
----------------------------------------------
----- Least fixed point (initial algebra) ----
----------------------------------------------
-
-public export
-STMu : Type
-STMu = PolyFuncMu SubstTermPF
-
----------------------------------
----- Algebras, catamorphisms ----
----------------------------------
-
-public export
-STAlg : Type -> Type
-STAlg = PFAlg SubstTermPF
-
-public export
-stCata : {0 a : Type} -> STAlg a -> STMu -> a
-stCata = pfCata {p=SubstTermPF}
-
--------------------
----- Utilities ----
--------------------
-
-public export
-InSTUnit : STMu
-InSTUnit = InPFM STPosLeaf $ \d => case d of _ impossible
-
-public export
-InSTLeft : STMu -> STMu
-InSTLeft x = InPFM STPosLeft $ \d => case d of STDirL => x
-
-public export
-InSTRight : STMu -> STMu
-InSTRight y = InPFM STPosRight $ \d => case d of STDirR => y
-
-public export
-InSTPair : STMu -> STMu -> STMu
-InSTPair x y = InPFM STPosPair $ \d => case d of
-  STDirFst => x
-  STDirSnd => y
-
-public export
-STSizeAlg : STAlg Nat
-STSizeAlg STPosLeaf dir = 0
-STSizeAlg STPosLeft dir = 1 + dir STDirL
-STSizeAlg STPosRight dir = 1 + dir STDirR
-STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
-
-public export
-stSize : STMu -> Nat
-stSize = stCata STSizeAlg
-
-public export
-STDepthAlg : STAlg Nat
-STDepthAlg STPosLeaf dir = 0
-STDepthAlg STPosLeft dir = 1 + dir STDirL
-STDepthAlg STPosRight dir = 1 + dir STDirR
-STDepthAlg STPosPair dir = smax (dir STDirFst) (dir STDirSnd)
-
-public export
-stDepth : STMu -> Nat
-stDepth = stCata STDepthAlg
-
-public export
-STShowAlg : STAlg String
-STShowAlg STPosLeaf dir = "!"
-STShowAlg STPosLeft dir = "< [" ++ dir STDirL ++ "]"
-STShowAlg STPosRight dir = "> [" ++ dir STDirR ++ "]"
-STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
-
-public export
-Show STMu where
-  show = stCata STShowAlg
-
----------------------
----- Refinements ----
----------------------
-
-public export
-STEitherAlg : Type -> Type -> Type
-STEitherAlg = STAlg .* Either
-
-public export
-STRefinementAlg : Type
-STRefinementAlg = STEitherAlg Unit Unit
-
-public export
-RefinedST : (0 _ : DecPred STMu) -> Type
-RefinedST = Refinement {a=STMu}
-
-public export
-AlgRefinedST : STRefinementAlg -> Type
-AlgRefinedST alg = RefinedST (isRight . stCata alg)
-
-------------------------
----- Dependent fold ----
-------------------------
 
 -----------------------------------
 -----------------------------------
