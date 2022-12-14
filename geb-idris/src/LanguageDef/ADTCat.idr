@@ -70,11 +70,11 @@ stCata = pfCata {p=SubstTermPF}
 
 public export
 STPairAlg : Type -> Type
-STPairAlg = PFProductHomAdjAlg SubstTermPF SubstTermPF
+STPairAlg = PFProductAlg SubstTermPF SubstTermPF
 
 public export
 stPairCata : {0 a : Type} -> STPairAlg a -> STMu -> STMu -> a
-stPairCata {a} = pfProductHomAdjCata {a} {p=SubstTermPF} {q=SubstTermPF}
+stPairCata {a} = pfProductCata {a} {p=SubstTermPF} {q=SubstTermPF}
 
 -------------------
 ---- Utilities ----
@@ -155,23 +155,23 @@ Show STMu where
 
 public export
 STEqAlg : STPairAlg Bool
-STEqAlg STPosLeaf d STPosLeaf d' = True
-STEqAlg STPosLeaf d STPosLeft d' = False
-STEqAlg STPosLeaf d STPosRight d' = False
-STEqAlg STPosLeaf d STPosPair d' = False
-STEqAlg STPosLeft d STPosLeaf d' = False
-STEqAlg STPosLeft d STPosLeft d' = d STDirL STPosLeft d'
-STEqAlg STPosLeft d STPosRight d' = False
-STEqAlg STPosLeft d STPosPair d' = False
-STEqAlg STPosRight d STPosLeaf d' = False
-STEqAlg STPosRight d STPosLeft d' = False
-STEqAlg STPosRight d STPosRight d' = d STDirR STPosRight d'
-STEqAlg STPosRight d STPosPair d' = False
-STEqAlg STPosPair d STPosLeaf d' = False
-STEqAlg STPosPair d STPosLeft d' = False
-STEqAlg STPosPair d STPosRight d' = False
-STEqAlg STPosPair d STPosPair d' =
-  d STDirFst STPosPair d' && d STDirSnd STPosPair d'
+STEqAlg (STPosLeaf, STPosLeaf) d = True
+STEqAlg (STPosLeaf, STPosLeft) d = False
+STEqAlg (STPosLeaf, STPosRight) d = False
+STEqAlg (STPosLeaf, STPosPair) d = False
+STEqAlg (STPosLeft, STPosLeaf) d = False
+STEqAlg (STPosLeft, STPosLeft) d = d (STDirL, STDirL)
+STEqAlg (STPosLeft, STPosRight) d = False
+STEqAlg (STPosLeft, STPosPair) d = False
+STEqAlg (STPosRight, STPosLeaf) d = False
+STEqAlg (STPosRight, STPosLeft) d = False
+STEqAlg (STPosRight, STPosRight) d = d (STDirR, STDirR)
+STEqAlg (STPosRight, STPosPair) d = False
+STEqAlg (STPosPair, STPosLeaf) d = False
+STEqAlg (STPosPair, STPosLeft) d = False
+STEqAlg (STPosPair, STPosRight) d = False
+STEqAlg (STPosPair, STPosPair) d =
+  d (STDirFst, STDirFst) && d (STDirSnd, STDirSnd)
 
 public export
 stEq : STMu -> STMu -> Bool
@@ -231,11 +231,11 @@ soCata = pfCata {p=SubstObjPF}
 
 public export
 SOPairAlg : Type -> Type
-SOPairAlg = PFProductHomAdjAlg SubstObjPF SubstObjPF
+SOPairAlg = PFProductAlg SubstObjPF SubstObjPF
 
 public export
 soPairCata : {0 a : Type} -> SOPairAlg a -> SOMu -> SOMu -> a
-soPairCata {a} = pfProductHomAdjCata {a} {p=SubstObjPF} {q=SubstObjPF}
+soPairCata {a} = pfProductCata {a} {p=SubstObjPF} {q=SubstObjPF}
 
 -------------------
 ---- Utilities ----
@@ -307,22 +307,7 @@ Show SOMu where
 
 public export
 SOEqAlg : SOPairAlg Bool
-SOEqAlg SOPos0 d SOPos0 d' = True
-SOEqAlg SOPos0 d SOPos1 d' = False
-SOEqAlg SOPos0 d SOPosC d' = False
-SOEqAlg SOPos0 d SOPosP d' = False
-SOEqAlg SOPos1 d SOPos0 d' = False
-SOEqAlg SOPos1 d SOPos1 d' = True
-SOEqAlg SOPos1 d SOPosC d' = False
-SOEqAlg SOPos1 d SOPosP d' = False
-SOEqAlg SOPosC d SOPos0 d' = False
-SOEqAlg SOPosC d SOPos1 d' = False
-SOEqAlg SOPosC d SOPosC d' = d SODirL SOPosC d' && d SODirR SOPosC d'
-SOEqAlg SOPosC d SOPosP d' = False
-SOEqAlg SOPosP d SOPos0 d' = False
-SOEqAlg SOPosP d SOPos1 d' = False
-SOEqAlg SOPosP d SOPosC d' = False
-SOEqAlg SOPosP d SOPosP d' = d SODir1 SOPosP d' && d SODir2 SOPosP d'
+SOEqAlg = ?SOEqAlg_hole
 
 public export
 soEq : SOMu -> SOMu -> Bool

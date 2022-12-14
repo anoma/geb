@@ -1114,15 +1114,20 @@ pfParamArgCata {p=p@(_ ** _)} {x} {a} alg =
   flip $ pfArgCata {p} {a=(x -> a)} $ \e, i, d => alg e i . flip d
 
 -- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
--- to the algebra.  Uses the product-hom adjunction.
+-- to the algebra.
 public export
-PFProductHomAdjAlg : PolyFunc -> PolyFunc -> Type -> Type
-PFProductHomAdjAlg p q a = PFAlg p (PFAlg q a)
+PFProductAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFProductAlg p q = PFAlg (pfParProductArena p q)
 
 public export
-pfProductHomAdjCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
-  PFProductHomAdjAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
-pfProductHomAdjCata {p} {q} alg ep eq = pfCata {p=q} (pfCata {p} alg ep) eq
+pfProductCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFProductAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfProductCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} alg
+  (InPFM pi pd) (InPFM qi qd) =
+    alg (pi, qi) $
+      \(pdi, qdi) =>
+        pfProductCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} {a}
+          alg (pd pdi) (qd qdi)
 
 ----------------------------------
 ---- Polynomial (free) monads ----

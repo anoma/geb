@@ -383,6 +383,9 @@ stShowFullList ts@(_ :: _) = do
 stMu1 : STMu
 stMu1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
 
+stMu1EqSelf : Assertion
+stMu1EqSelf = Assert $ stMu1 == stMu1
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
