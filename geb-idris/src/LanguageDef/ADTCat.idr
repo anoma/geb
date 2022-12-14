@@ -92,8 +92,8 @@ public export
 STFreeNatTransMN : Nat -> Nat -> Type
 STFreeNatTransMN m n =
   PolyNatTrans
-    (pfCompositionPowerArena SubstTermPF (S m))
-    (pfCompositionPowerArena SubstTermPF (S n))
+    (pfCompositionPowerArenaS SubstTermPF m)
+    (pfCompositionPowerArenaS SubstTermPF n)
 
 public export
 stPolyCata : STNatTrans -> STMu -> STMu
