@@ -7,11 +7,24 @@ import public LanguageDef.PolyCat
 
 %default total
 
--------------------------------------------
--------------------------------------------
----- Inductive definition of term type ----
--------------------------------------------
--------------------------------------------
+----------------------------------------------------------------
+----------------------------------------------------------------
+---- Explicitly-recursive Idris ADT definition of term type ----
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+public export
+data SubstTermRec : Type where
+  STRLeaf : SubstTermRec
+  STRLeft : SubstTermRec -> SubstTermRec
+  STRRight : SubstTermRec -> SubstTermRec
+  STRPair : SubstTermRec -> SubstTermRec -> SubstTermRec
+
+------------------------------------------
+------------------------------------------
+---- PolyFunc definition of term type ----
+------------------------------------------
+------------------------------------------
 
 ----------------------------------
 ---- Positions and directions ----
@@ -78,8 +91,30 @@ InSTPair x y = InPFM STPosPair $ \d => case d of
   STDirSnd => y
 
 public export
+STNumLeavesAlg : STAlg Nat
+STNumLeavesAlg STPosLeaf dir = 1
+STNumLeavesAlg STPosLeft dir = dir STDirL
+STNumLeavesAlg STPosRight dir = dir STDirR
+STNumLeavesAlg STPosPair dir = dir STDirFst + dir STDirSnd
+
+public export
+stNumLeaves : STMu -> Nat
+stNumLeaves = stCata STNumLeavesAlg
+
+public export
+STNumInternalNodesAlg : STAlg Nat
+STNumInternalNodesAlg STPosLeaf dir = 0
+STNumInternalNodesAlg STPosLeft dir = 1 + dir STDirL
+STNumInternalNodesAlg STPosRight dir = 1 + dir STDirR
+STNumInternalNodesAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
+
+public export
+stNumInternalNodes : STMu -> Nat
+stNumInternalNodes = stCata STNumInternalNodesAlg
+
+public export
 STSizeAlg : STAlg Nat
-STSizeAlg STPosLeaf dir = 0
+STSizeAlg STPosLeaf dir = 1
 STSizeAlg STPosLeft dir = 1 + dir STDirL
 STSizeAlg STPosRight dir = 1 + dir STDirR
 STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
@@ -101,9 +136,9 @@ stDepth = stCata STDepthAlg
 
 public export
 STShowAlg : STAlg String
-STShowAlg STPosLeaf dir = "!"
-STShowAlg STPosLeft dir = "< [" ++ dir STDirL ++ "]"
-STShowAlg STPosRight dir = "> [" ++ dir STDirR ++ "]"
+STShowAlg STPosLeaf dir = "_"
+STShowAlg STPosLeft dir = "l[" ++ dir STDirL ++ "]"
+STShowAlg STPosRight dir = "r[" ++ dir STDirR ++ "]"
 STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
 
 public export
