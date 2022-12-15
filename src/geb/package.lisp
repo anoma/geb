@@ -48,7 +48,9 @@ into other categorical data structures."
   (!->               pax:function)
   (so-eval           pax:function)
   (so-card-alg       pax:generic-function)
-  (so-card-alg       (pax:method () (<substobj>))))
+  (so-card-alg       (pax:method () (<substobj>)))
+  (dom               pax:function)
+  (codom             pax:function))
 
 (pax:defsection @geb-examples (:title "Examples")
   "PLACEHOLDER: TO SHOW OTHERS HOW EXAMPLES WORK"
