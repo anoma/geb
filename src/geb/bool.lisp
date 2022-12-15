@@ -14,7 +14,11 @@
 ;; TODO make my own custom def macro so they are with the defn!
 
 (setf (documentation 'bool 'pax:symbol-macro)
-      "The Boolean Type, composed of a coproduct of two unit objects ")
+      "The Boolean Type, composed of a coproduct of two unit objects
+
+```lisp
+(coprod so1 so1)
+```")
 
 (setf (documentation 'true 'pax:symbol-macro)
       "The true value of a boolean type. In this case we've defined true as
@@ -43,6 +47,7 @@ the left unit")
 (setf (documentation 'not 'pax:symbol-macro)
       "Turns a TRUE into a FALSE and vice versa")
 
+;; this is curried and,
 (def and
   (pair (so-const false bool)
         bool))

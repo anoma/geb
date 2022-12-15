@@ -489,15 +489,22 @@ GEB, or to abstractions that help extend it.
 ###### \[in package GEB.SPEC\]
 The underlying category of GEB. With @GEB-SUBSTMU covering the
 shapes and forms (GEB-DOCS/DOCS:@OBJECTS) of data while @GEB-SUBSTMORPH
-deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category
+deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category.
+
+From this category, most abstractions will be made, with
+SUBSTOBJ serving as a concrete type layout, with
+SUBSTMORPH serving as the morphisms between different
+SUBSTOBJ types. This category is equivalent to
+[finset](https://ncatlab.org/nlab/show/FinSet).
+
+A good example of this category at work can found within the GEB-BOOL::@GEB-BOOL section.
 
 #### Subst Obj
 
-This section covers the objects of the GEB category. Every value
-that is a SUBSTOBJ is automatically lifted into a SUBSTMORPH when a
-SUBSTMORPH is expected.
-
-The Type that encomposes the SUBSTOBJ class
+This section covers the objects of the SUBSTMORPH
+category. Note that SUBSTOBJ refers to the
+GEB-DOCS/DOCS:@CLOSED-TYPE, whereas <SUBSTOBJ> refers
+to the GEB-DOCS/DOCS:@OPEN-TYPE that allows for user extension.
 
 - [type] SUBSTOBJ
 
@@ -505,23 +512,112 @@ The Type that encomposes the SUBSTOBJ class
 
     the class corresponding to SUBSTOBJ. See GEB-DOCS/DOCS:@OPEN-CLOSED
 
-The various constructors that form the SUBSTOBJ type
+SUBSTOBJ type is not a constructor itself, instead it's
+best viewed as the sum type, with the types below forming the
+constructors for the term. In ML we would write it similarly to:
+
+```haskell
+type substobj = so0
+              | so1
+              | prod
+              | coprod
+```
+
 
 - [type] PROD
 
-    the product
+    The PRODUCT object. Takes two <SUBSTOBJ> values that
+    get put into a pair.
+    
+    The formal grammar of PRODUCT is
+    
+    ```lisp
+    (prod mcar mcadr)
+    ```
+    
+    where PROD is the constructor, MCAR is the left value of the
+    product, and MCADR is the right value of the product.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize (prod geb-bool:bool geb-bool:bool))
+    ```
+    
+    Here we create a product of two GEB-BOOL:BOOL types.
 
 - [type] COPROD
 
-    the coproduct
+    the CO-PRODUCT object. Takes <SUBSTOBJ> values that
+    get put into a choice of either value.
+    
+    The formal grammar of PRODUCT is
+    
+    ```lisp
+    (coprod mcar mcadr)
+    ```
+    
+    Where CORPOD is the constructor, MCAR is the left choice of
+    the sum, and MCADR is the right choice of the sum.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize (coprod so1 so1))
+    ```
+    
+    Here we create the boolean type, having a choice between two unit
+    values.
 
 - [type] SO0
 
-    The Initial/Void Object
+    The Initial Object. This is sometimes known as the
+    [VOID](https://en.wikipedia.org/wiki/Void_type) type.
+    
+    the formal grammar of SO0 is
+    
+    ```lisp
+    so0
+    ```
+    
+    where SO0 is `THE` initial object.
+    
+    Example
+    
+    `lisp
+    `
 
 - [type] SO1
 
-    The Terminal/Unit Object
+    The Terminal Object. This is sometimes referred to as the
+    [Unit](https://en.wikipedia.org/wiki/Unit_type) type.
+    
+    the formal grammar or SO1 is
+    
+    ```lisp
+    so1
+    ```
+    
+    where SO1 is `THE` terminal object
+    
+    Example
+    
+    ```lisp
+    (coprod so1 so1)
+    ```
+    
+    Here we construct GEB-BOOL:BOOL by simply stating that we have the
+    terminal object on either side, giving us two possible ways to fill
+    the type.
+    
+    ```lisp
+    (left-> so1 so1)
+    
+    (right-> so1 so1)
+    ```
+    
+    where applying LEFT-> gives us the left unit, while RIGHT-> gives
+    us the right unit.
 
 - [type] ALIAS
 
@@ -539,17 +635,41 @@ The @GEB-ACCESSORS specific to @GEB-SUBSTMU
 
 #### Subst Morph
 
-The moprhisms of the GEB category.
-
-The Type that encomposes the SUBSTMOPRH class
+The overarching types that categorizes the SUBSTMORPH
+category. Note that SUBSTMORPH refers to the
+GEB-DOCS/DOCS:@CLOSED-TYPE, whereas <SUBSTMORPH> refers
+to the GEB-DOCS/DOCS:@OPEN-TYPE that allows for user extension.
 
 - [type] SUBSTMORPH
+
+    The morphisms of the SUBSTMORPH category
 
 - [type] <SUBSTMORPH>
 
     the class type corresponding to SUBSTMORPH. See GEB-DOCS/DOCS:@OPEN-CLOSED
 
-The various constructors that form the SUBSTMORPH type
+SUBSTMORPH type is not a constructor itself, instead it's
+best viewed as the sum type, with the types below forming the
+constructors for the term. In ML we would write it similarly to:
+
+```haskell
+type substmorph = comp
+                | substobj
+                | case
+                | init
+                | terminal
+                | pair
+                | distribute
+                | inject-left
+                | inject-right
+                | project-left
+                | project-right
+```
+
+Note that an instance of SUBSTOBJ, acts like the identity
+morphism to the layout specified by the given SUBSTOBJ. Thus
+we can view this as automatically lifting a SUBSTOBJ into a
+SUBSTMORPH
 
 - [type] COMP
 
@@ -585,9 +705,9 @@ The various constructors that form the SUBSTMORPH type
     In this example we are composing two morphisms. the first morphism
     that gets applied (PAIR ...) is the identity function on the
     type (PROD SO1 GEB-BOOL:BOOL), where we pair the
-    [left injection](INJECT-LEFT) and the [right
-    projection](INJECT-RIGHT), followed by taking the [right
-    projection](INJECT-RIGHT) of the type.
+    [left projection](PROJECT-LEFT) and the [right
+    projection](PROJECT-RIGHT), followed by taking the [right
+    projection](PROJECT-RIGHT) of the type.
     
     Since we know (COMP f id) is just f per the laws of category
     theory, this expression just reduces to
@@ -630,11 +750,62 @@ The various constructors that form the SUBSTMORPH type
 
 - [type] INIT
 
-    The initial Morphism
+    The INITIAL Morphism, takes any <SUBSTOBJ> and
+    creates a moprhism from SO0 (also known as void) to the object given.
+    
+    The formal grammar of INITIAL is
+    
+    ```lisp
+    (init obj)
+    ```
+    
+    where INIT is the constructor. OBJ is the type of object
+    that will be conjured up from SO0, when the morphism is
+    applied onto an object.
+    
+    Example:
+    
+    ```lisp
+    (init so1)
+    ```
+    
+    In this example we are creating a unit value out of void.
 
 - [type] TERMINAL
 
-    The terminal Morhpism
+    The TERMINAL morphism, Takes any <SUBSTOBJ> and creates a
+    morphism from that object to SO1 (also known as unit).
+    
+    The formal grammar of TERMINAL is
+    
+    ```lisp
+    (terminal obj)
+    ```
+    
+    where TERMINAL is the constructor. OBJ is the type of object that
+    will be mapped to SO1, when the morphism is applied onto an
+    object.
+    
+    Example:
+    
+    ```lisp
+    (terminal (coprod so1 so1))
+    
+    (geb-gui::visualize (terminal (coprod so1 so1)))
+    
+    (comp value (terminal (codomain value)))
+    
+    (comp true (terminal bool))
+    ```
+    
+    In the first example, we make a morphism from the corpoduct of
+    SO1 and SO1 (essentially GEB-BOOL:BOOL) to
+    SO1.
+    
+    In the third example we can proclaim a constant function by ignoring
+    the input value and returning a morphism from unit to the desired type.
+    
+    The fourth example is taking a GEB-BOOL:BOOL and returning GEB-BOOL:TRUE.
 
 - [type] PAIR
 
@@ -735,9 +906,60 @@ The various constructors that form the SUBSTMORPH type
 
 - [type] PROJECT-LEFT
 
-    Left projection (product elimination)
+    The LEFT PROJECTION. Takes two
+    <SUBSTMORPH> values. When the LEFT PROJECTION morphism is then applied, it grabs the left value of a product,
+    with the type of the product being determined by the two
+    <SUBSTMORPH> values given.
+    
+    the formal grammar of a PROJECT-LEFT is:
+    
+    ```lisp
+    (<-left mcar mcadr)
+    ```
+    
+    Where <-LEFT is the constructor, MCAR is the left type of the
+    PRODUCT and MCADR is the right type of the PRODUCT.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize
+      (<-left geb-bool:bool (prod so1 geb-bool:bool)))
+    ```
+    
+    In this example, we are getting the left GEB-BOOL:BOOL from a
+    product with the shape
+    
+    (GEB-BOOL:BOOL × SO1 × GEB-BOOL:BOOL)
 
 - [type] PROJECT-RIGHT
+
+    The RIGHT PROJECTION. Takes two
+    <SUBSTMORPH> values. When the RIGHT PROJECTION morphism is then applied, it grabs the right value of a product,
+    with the type of the product being determined by the two
+    <SUBSTMORPH> values given.
+    
+    the formal grammar of a PROJECT-RIGHT is:
+    
+    ```lisp
+    (<-right mcar mcadr)
+    ```
+    
+    Where <-RIGHT is the constructor, MCAR is the right type of the
+    PRODUCT and MCADR is the right type of the PRODUCT.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize
+     (comp (<-right so1 geb-bool:bool)
+           (<-right geb-bool:bool (prod so1 geb-bool:bool))))
+    ```
+    
+    In this example, we are getting the right GEB-BOOL:BOOL from a
+    product with the shape
+    
+    (GEB-BOOL:BOOL × SO1 × GEB-BOOL:BOOL)
 
 - [type] FUNCTOR
 
@@ -937,7 +1159,12 @@ The functions given work on this.
 
 - [symbol-macro] BOOL
 
-    The Boolean Type, composed of a coproduct of two unit objects 
+    The Boolean Type, composed of a coproduct of two unit objects
+    
+    ```lisp
+    (coprod so1 so1)
+    ```
+
 
 - [symbol-macro] NOT
 

@@ -553,16 +553,23 @@ GEB, or to abstractions that help extend it.
 ###### \[in package GEB.SPEC\]
 The underlying category of GEB. With [Subst Obj][c1b3] covering the
 shapes and forms ([Objects][dbe7]) of data while [Subst Morph][d2d1]
-deals with concrete [Morphisms][ada9] within the category
+deals with concrete [Morphisms][ada9] within the category.
+
+From this category, most abstractions will be made, with
+[`SUBSTOBJ`][3173] serving as a concrete type layout, with
+[`SUBSTMORPH`][57dc] serving as the morphisms between different
+[`SUBSTOBJ`][3173] types. This category is equivalent to
+[finset](https://ncatlab.org/nlab/show/FinSet).
+
+A good example of this category at work can found within the [Booleans][399c] section.
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
 #### 7.1.1 Subst Obj
 
-This section covers the objects of the GEB category. Every value
-that is a [`SUBSTOBJ`][3173] is automatically lifted into a [`SUBSTMORPH`][57dc] when a
-`SUBSTMORPH` is expected.
-
-The Type that encomposes the [`SUBSTOBJ`][3173] class
+This section covers the objects of the [`SUBSTMORPH`][57dc]
+category. Note that [`SUBSTOBJ`][3173] refers to the
+[closed type][8932], whereas [`<SUBSTOBJ>`][8214] refers
+to the [open type][4a87] that allows for user extension.
 
 <a id="x-28GEB-2ESPEC-3ASUBSTOBJ-20TYPE-29"></a>
 - [type] **SUBSTOBJ**
@@ -572,27 +579,116 @@ The Type that encomposes the [`SUBSTOBJ`][3173] class
 
     the class corresponding to [`SUBSTOBJ`][3173]. See [Open Types versus Closed Types][a920]
 
-The various constructors that form the [`SUBSTOBJ`][3173] type
+[`SUBSTOBJ`][3173] type is not a constructor itself, instead it's
+best viewed as the sum type, with the types below forming the
+constructors for the term. In ML we would write it similarly to:
+
+```haskell
+type substobj = so0
+              | so1
+              | prod
+              | coprod
+```
+
 
 <a id="x-28GEB-2ESPEC-3APROD-20TYPE-29"></a>
 - [type] **PROD**
 
-    the product
+    The [PRODUCT][77c2] object. Takes two [`<SUBSTOBJ>`][8214] values that
+    get put into a pair.
+    
+    The formal grammar of [PRODUCT][77c2] is
+    
+    ```lisp
+    (prod mcar mcadr)
+    ```
+    
+    where [`PROD`][77c2] is the constructor, [`MCAR`][f1ce] is the left value of the
+    product, and [`MCADR`][cc87] is the right value of the product.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize (prod geb-bool:bool geb-bool:bool))
+    ```
+    
+    Here we create a product of two [`GEB-BOOL:BOOL`][0ad4] types.
 
 <a id="x-28GEB-2ESPEC-3ACOPROD-20TYPE-29"></a>
 - [type] **COPROD**
 
-    the coproduct
+    the [CO-PRODUCT][fb12] object. Takes [`<SUBSTOBJ>`][8214] values that
+    get put into a choice of either value.
+    
+    The formal grammar of [PRODUCT][77c2] is
+    
+    ```lisp
+    (coprod mcar mcadr)
+    ```
+    
+    Where [CORPOD][e755] is the constructor, [`MCAR`][f1ce] is the left choice of
+    the sum, and [`MCADR`][cc87] is the right choice of the sum.
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize (coprod so1 so1))
+    ```
+    
+    Here we create the boolean type, having a choice between two unit
+    values.
 
 <a id="x-28GEB-2ESPEC-3ASO0-20TYPE-29"></a>
 - [type] **SO0**
 
-    The Initial/Void Object
+    The Initial Object. This is sometimes known as the
+    [VOID](https://en.wikipedia.org/wiki/Void_type) type.
+    
+    the formal grammar of [`SO0`][1f3a] is
+    
+    ```lisp
+    so0
+    ```
+    
+    where [`SO0`][1f3a] is [`THE`][c767] initial object.
+    
+    Example
+    
+    `lisp
+    `
 
 <a id="x-28GEB-2ESPEC-3ASO1-20TYPE-29"></a>
 - [type] **SO1**
 
-    The Terminal/Unit Object
+    The Terminal Object. This is sometimes referred to as the
+    [Unit](https://en.wikipedia.org/wiki/Unit_type) type.
+    
+    the formal grammar or [`SO1`][ebf5] is
+    
+    ```lisp
+    so1
+    ```
+    
+    where [`SO1`][ebf5] is [`THE`][c767] terminal object
+    
+    Example
+    
+    ```lisp
+    (coprod so1 so1)
+    ```
+    
+    Here we construct [`GEB-BOOL:BOOL`][0ad4] by simply stating that we have the
+    terminal object on either side, giving us two possible ways to fill
+    the type.
+    
+    ```lisp
+    (left-> so1 so1)
+    
+    (right-> so1 so1)
+    ```
+    
+    where applying [`LEFT->`][effe] gives us the left unit, while [`RIGHT->`][ff57] gives
+    us the right unit.
 
 <a id="x-28GEB-2ESPEC-3AALIAS-20TYPE-29"></a>
 - [type] **ALIAS**
@@ -616,19 +712,43 @@ The [Accessors][cc51] specific to [Subst Obj][c1b3]
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
 #### 7.1.2 Subst Morph
 
-The moprhisms of the GEB category.
-
-The Type that encomposes the SUBSTMOPRH class
+The overarching types that categorizes the [`SUBSTMORPH`][57dc]
+category. Note that [`SUBSTMORPH`][57dc] refers to the
+[closed type][8932], whereas [`<SUBSTMORPH>`][97fb] refers
+to the [open type][4a87] that allows for user extension.
 
 <a id="x-28GEB-2ESPEC-3ASUBSTMORPH-20TYPE-29"></a>
 - [type] **SUBSTMORPH**
+
+    The morphisms of the [`SUBSTMORPH`][57dc] category
 
 <a id="x-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-20TYPE-29"></a>
 - [type] **\<SUBSTMORPH\>**
 
     the class type corresponding to [`SUBSTMORPH`][57dc]. See [Open Types versus Closed Types][a920]
 
-The various constructors that form the [`SUBSTMORPH`][57dc] type
+[`SUBSTMORPH`][57dc] type is not a constructor itself, instead it's
+best viewed as the sum type, with the types below forming the
+constructors for the term. In ML we would write it similarly to:
+
+```haskell
+type substmorph = comp
+                | substobj
+                | case
+                | init
+                | terminal
+                | pair
+                | distribute
+                | inject-left
+                | inject-right
+                | project-left
+                | project-right
+```
+
+Note that an instance of [`SUBSTOBJ`][3173], acts like the identity
+morphism to the layout specified by the given [`SUBSTOBJ`][3173]. Thus
+we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
+[`SUBSTMORPH`][57dc]
 
 <a id="x-28GEB-2ESPEC-3ACOMP-20TYPE-29"></a>
 - [type] **COMP**
@@ -665,9 +785,9 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
     In this example we are composing two morphisms. the first morphism
     that gets applied ([`PAIR`][3bc6] ...) is the identity function on the
     type ([`PROD`][77c2] [`SO1`][ebf5] [`GEB-BOOL:BOOL`][0ad4]), where we pair the
-    [left injection](INJECT-LEFT) and the [right
-    projection](INJECT-RIGHT), followed by taking the [right
-    projection](INJECT-RIGHT) of the type.
+    [left projection](PROJECT-LEFT) and the [right
+    projection](PROJECT-RIGHT), followed by taking the [right
+    projection](PROJECT-RIGHT) of the type.
     
     Since we know ([`COMP`][f914] f id) is just f per the laws of category
     theory, this expression just reduces to
@@ -712,12 +832,63 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
 <a id="x-28GEB-2ESPEC-3AINIT-20TYPE-29"></a>
 - [type] **INIT**
 
-    The initial Morphism
+    The [`INITIAL`][f899] Morphism, takes any [`<SUBSTOBJ>`][8214] and
+    creates a moprhism from [`SO0`][1f3a] (also known as void) to the object given.
+    
+    The formal grammar of [`INITIAL`][f899] is
+    
+    ```lisp
+    (init obj)
+    ```
+    
+    where [`INIT`][f899] is the constructor. [`OBJ`][f1e6] is the type of object
+    that will be conjured up from [`SO0`][1f3a], when the morphism is
+    applied onto an object.
+    
+    Example:
+    
+    ```lisp
+    (init so1)
+    ```
+    
+    In this example we are creating a unit value out of void.
 
 <a id="x-28GEB-2ESPEC-3ATERMINAL-20TYPE-29"></a>
 - [type] **TERMINAL**
 
-    The terminal Morhpism
+    The [`TERMINAL`][ae41] morphism, Takes any [`<SUBSTOBJ>`][8214] and creates a
+    morphism from that object to [`SO1`][ebf5] (also known as unit).
+    
+    The formal grammar of [`TERMINAL`][ae41] is
+    
+    ```lisp
+    (terminal obj)
+    ```
+    
+    where [`TERMINAL`][ae41] is the constructor. [`OBJ`][f1e6] is the type of object that
+    will be mapped to [`SO1`][ebf5], when the morphism is applied onto an
+    object.
+    
+    Example:
+    
+    ```lisp
+    (terminal (coprod so1 so1))
+    
+    (geb-gui::visualize (terminal (coprod so1 so1)))
+    
+    (comp value (terminal (codomain value)))
+    
+    (comp true (terminal bool))
+    ```
+    
+    In the first example, we make a morphism from the corpoduct of
+    [`SO1`][ebf5] and [`SO1`][ebf5] (essentially [`GEB-BOOL:BOOL`][0ad4]) to
+    [`SO1`][ebf5].
+    
+    In the third example we can proclaim a constant function by ignoring
+    the input value and returning a morphism from unit to the desired type.
+    
+    The fourth example is taking a [`GEB-BOOL:BOOL`][0ad4] and returning [`GEB-BOOL:TRUE`][f022].
 
 <a id="x-28GEB-2ESPEC-3APAIR-20TYPE-29"></a>
 - [type] **PAIR**
@@ -823,10 +994,61 @@ The various constructors that form the [`SUBSTMORPH`][57dc] type
 <a id="x-28GEB-2ESPEC-3APROJECT-LEFT-20TYPE-29"></a>
 - [type] **PROJECT-LEFT**
 
-    Left projection (product elimination)
+    The [`LEFT` PROJECTION][0dcc]. Takes two
+    [`<SUBSTMORPH>`][97fb] values. When the [`LEFT` PROJECTION][0dcc] morphism is then applied, it grabs the left value of a product,
+    with the type of the product being determined by the two
+    [`<SUBSTMORPH>`][97fb] values given.
+    
+    the formal grammar of a [`PROJECT-LEFT`][0dcc] is:
+    
+    ```lisp
+    (<-left mcar mcadr)
+    ```
+    
+    Where [`<-LEFT`][2882] is the constructor, [`MCAR`][f1ce] is the left type of the
+    [PRODUCT][e755] and [`MCADR`][cc87] is the right type of the [PRODUCT][e755].
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize
+      (<-left geb-bool:bool (prod so1 geb-bool:bool)))
+    ```
+    
+    In this example, we are getting the left [`GEB-BOOL:BOOL`][0ad4] from a
+    product with the shape
+    
+    ([`GEB-BOOL:BOOL`][0ad4] [×][77c2] [`SO1`][ebf5] [×][77c2] [`GEB-BOOL:BOOL`][0ad4])
 
 <a id="x-28GEB-2ESPEC-3APROJECT-RIGHT-20TYPE-29"></a>
 - [type] **PROJECT-RIGHT**
+
+    The [`RIGHT` PROJECTION][e65d]. Takes two
+    [`<SUBSTMORPH>`][97fb] values. When the [`RIGHT` PROJECTION][e65d] morphism is then applied, it grabs the right value of a product,
+    with the type of the product being determined by the two
+    [`<SUBSTMORPH>`][97fb] values given.
+    
+    the formal grammar of a [`PROJECT-RIGHT`][e65d] is:
+    
+    ```lisp
+    (<-right mcar mcadr)
+    ```
+    
+    Where [`<-RIGHT`][0dfe] is the constructor, [`MCAR`][f1ce] is the right type of the
+    [PRODUCT][e755] and [`MCADR`][cc87] is the right type of the [PRODUCT][e755].
+    
+    Example:
+    
+    ```lisp
+    (geb-gui::visualize
+     (comp (<-right so1 geb-bool:bool)
+           (<-right geb-bool:bool (prod so1 geb-bool:bool))))
+    ```
+    
+    In this example, we are getting the right [`GEB-BOOL:BOOL`][0ad4] from a
+    product with the shape
+    
+    ([`GEB-BOOL:BOOL`][0ad4] [×][77c2] [`SO1`][ebf5] [×][77c2] [`GEB-BOOL:BOOL`][0ad4])
 
 <a id="x-28GEB-2ESPEC-3AFUNCTOR-20TYPE-29"></a>
 - [type] **FUNCTOR**
@@ -1076,7 +1298,12 @@ The functions given work on this.
 <a id="x-28GEB-BOOL-3ABOOL-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
 - [symbol-macro] **BOOL**
 
-    The Boolean Type, composed of a coproduct of two unit objects 
+    The Boolean Type, composed of a coproduct of two unit objects
+    
+    ```lisp
+    (coprod so1 so1)
+    ```
+
 
 <a id="x-28GEB-BOOL-3ANOT-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
 - [symbol-macro] **NOT**
@@ -1559,11 +1786,14 @@ features and how to better lay out future tests
   [0ad4]: #x-28GEB-BOOL-3ABOOL-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:BOOL MGL-PAX:SYMBOL-MACRO"
   [0ae3]: #x-28GEB-2EPOLY-2ESPEC-3A-2A-20TYPE-29 "GEB.POLY.SPEC:* TYPE"
   [0caf]: #x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29 "Translation Functions"
+  [0dcc]: #x-28GEB-2ESPEC-3APROJECT-LEFT-20TYPE-29 "GEB.SPEC:PROJECT-LEFT TYPE"
+  [0dfe]: #x-28GEB-2ESPEC-3A-3C-RIGHT-20FUNCTION-29 "GEB.SPEC:<-RIGHT FUNCTION"
   [0e00]: #x-28GEB-DOCS-2FDOCS-3A-40YONEDA-LEMMA-20MGL-PAX-3ASECTION-29 "The Yoneda Lemma"
   [1791]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDDR FUNCTION"
   [1f3a]: #x-28GEB-2ESPEC-3ASO0-20TYPE-29 "GEB.SPEC:SO0 TYPE"
   [2276]: #x-28GEB-2EUTILS-3ASUBCLASS-RESPONSIBILITY-20FUNCTION-29 "GEB.UTILS:SUBCLASS-RESPONSIBILITY FUNCTION"
   [2570]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CDR FUNCTION"
+  [2882]: #x-28GEB-2ESPEC-3A-3C-LEFT-20FUNCTION-29 "GEB.SPEC:<-LEFT FUNCTION"
   [29b7]: #x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29 "Geb's Agda Code"
   [2ad4]: #x-28GEB-2ESPEC-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Constructors"
   [2c5e]: #x-28GEB-2EPOLY-2ESPEC-3A--20TYPE-29 "GEB.POLY.SPEC:- TYPE"
@@ -1617,6 +1847,7 @@ features and how to better lay out future tests
   [a920]: #x-28GEB-DOCS-2FDOCS-3A-40OPEN-CLOSED-20MGL-PAX-3ASECTION-29 "Open Types versus Closed Types"
   [a981]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defmet.htm "DEFMETHOD MGL-PAX:MACRO"
   [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
+  [ae41]: #x-28GEB-2ESPEC-3ATERMINAL-20TYPE-29 "GEB.SPEC:TERMINAL TYPE"
   [af14]: #x-28GEB-2EUTILS-3AMCDR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCDR GENERIC-FUNCTION"
   [b76d]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Polynomial Constructors"
   [b960]: #x-28GEB-2ESPEC-3A-2ASO1-2A-20VARIABLE-29 "GEB.SPEC:*SO1* VARIABLE"
@@ -1634,6 +1865,7 @@ features and how to better lay out future tests
   [c2f9]: #x-28GEB-2EPOLY-2ESPEC-3A-2F-20TYPE-29 "GEB.POLY.SPEC:/ TYPE"
   [c721]: #x-28GEB-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29 "Utility"
   [c7213]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP FUNCTION"
+  [c767]: http://www.lispworks.com/documentation/HyperSpec/Body/s_the.htm "THE MGL-PAX:MACRO"
   [cab9]: #x-28GEB-2ESPEC-3AINJECT-LEFT-20TYPE-29 "GEB.SPEC:INJECT-LEFT TYPE"
   [cb9e]: #x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29 "Core Category"
   [cc51]: #x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
@@ -1643,14 +1875,18 @@ features and how to better lay out future tests
   [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
   [d908]: http://www.lispworks.com/documentation/HyperSpec/Body/f_typep.htm "TYPEP FUNCTION"
   [dbe7]: #x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29 "Objects"
+  [e65d]: #x-28GEB-2ESPEC-3APROJECT-RIGHT-20TYPE-29 "GEB.SPEC:PROJECT-RIGHT TYPE"
+  [e755]: http://www.lispworks.com/documentation/HyperSpec/Body/d_type.htm "TYPE DECLARATION"
   [e982]: #x-28GEB-2ESPEC-3A-2ASO0-2A-20VARIABLE-29 "GEB.SPEC:*SO0* VARIABLE"
   [ebf5]: #x-28GEB-2ESPEC-3ASO1-20TYPE-29 "GEB.SPEC:SO1 TYPE"
   [ecc6]: #x-28GEB-DOCS-2FDOCS-3A-40CLOS-20MGL-PAX-3AGLOSSARY-TERM-29 "GEB-DOCS/DOCS:@CLOS MGL-PAX:GLOSSARY-TERM"
   [effe]: #x-28GEB-2ESPEC-3ALEFT--3E-20FUNCTION-29 "GEB.SPEC:LEFT-> FUNCTION"
   [f022]: #x-28GEB-BOOL-3ATRUE-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:TRUE MGL-PAX:SYMBOL-MACRO"
   [f1ce]: #x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCAR GENERIC-FUNCTION"
+  [f1e6]: #x-28GEB-2EUTILS-3AOBJ-20GENERIC-FUNCTION-29 "GEB.UTILS:OBJ GENERIC-FUNCTION"
   [f4ba]: #x-28GEB-2ESPEC-3ASO1-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO1 MGL-PAX:SYMBOL-MACRO"
   [f5ac]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29 "Polynomial Specification"
+  [f899]: #x-28GEB-2ESPEC-3AINIT-20TYPE-29 "GEB.SPEC:INIT TYPE"
   [f914]: #x-28GEB-2ESPEC-3ACOMP-20TYPE-29 "GEB.SPEC:COMP TYPE"
   [fae9]: #x-28GEB-2ESPEC-3AINJECT-RIGHT-20TYPE-29 "GEB.SPEC:INJECT-RIGHT TYPE"
   [fb12]: #x-28GEB-2ESPEC-3ACOPROD-20TYPE-29 "GEB.SPEC:COPROD TYPE"

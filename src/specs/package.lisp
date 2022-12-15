@@ -112,18 +112,35 @@ constructors"
 (pax:defsection @geb-categories (:title "Core Category")
   "The underlying category of GEB. With @GEB-SUBSTMU covering the
 shapes and forms (GEB-DOCS/DOCS:@OBJECTS) of data while @GEB-SUBSTMORPH
-deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
+deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category.
+
+From this category, most abstractions will be made, with
+[SUBSTOBJ][type] serving as a concrete type layout, with
+[SUBSTMORPH][type] serving as the morphisms between different
+[SUBSTOBJ][type] types. This category is equivalent to
+[finset](https://ncatlab.org/nlab/show/FinSet).
+
+A good example of this category at work can found within the GEB-BOOL::@GEB-BOOL section."
   (@geb-substmu    pax:section)
   (@geb-substmorph pax:section))
 
 (pax:defsection @geb-substmu (:title "Subst Obj")
-  "This section covers the objects of the GEB category. Every value
-   that is a SUBSTOBJ is automatically lifted into a SUBSTMORPH when a
-   SUBSTMORPH is expected."
-  "The Type that encomposes the SUBSTOBJ class"
+  "This section covers the objects of the [SUBSTMORPH][type]
+category. Note that [SUBSTOBJ][type] refers to the
+[GEB-DOCS/DOCS:@CLOSED-TYPE], whereas [\\<SUBSTOBJ\\>][type] refers
+to the [GEB-DOCS/DOCS:@OPEN-TYPE] that allows for user extension."
   (substobj   pax:type)
   (<substobj> pax:type)
-  "The various constructors that form the SUBSTOBJ type"
+  "[SUBSTOBJ][type] type is not a constructor itself, instead it's
+best viewed as the sum type, with the types below forming the
+constructors for the term. In ML we would write it similarly to:
+
+```haskell
+type substobj = so0
+              | so1
+              | prod
+              | coprod
+```"
   (prod pax:type)
   (coprod pax:type)
   (so0 pax:type)
@@ -137,11 +154,34 @@ deals with concrete GEB-DOCS/DOCS:@MORPHISMS within the category"
   (mcadr (pax:method () (coprod))))
 
 (pax:defsection @geb-substmorph (:title "Subst Morph")
-  "The moprhisms of the GEB category."
-  "The Type that encomposes the SUBSTMOPRH class"
+  "The overarching types that categorizes the [SUBSTMORPH][type]
+category. Note that [SUBSTMORPH][type] refers to the
+[GEB-DOCS/DOCS:@CLOSED-TYPE], whereas [\\<SUBSTMORPH\\>][type] refers
+to the [GEB-DOCS/DOCS:@OPEN-TYPE] that allows for user extension."
   (substmorph   pax:type)
   (<substmorph> pax:type)
-  "The various constructors that form the SUBSTMORPH type"
+  "[SUBSTMORPH][type] type is not a constructor itself, instead it's
+best viewed as the sum type, with the types below forming the
+constructors for the term. In ML we would write it similarly to:
+
+```haskell
+type substmorph = comp
+                | substobj
+                | case
+                | init
+                | terminal
+                | pair
+                | distribute
+                | inject-left
+                | inject-right
+                | project-left
+                | project-right
+```
+
+Note that an instance of [SUBSTOBJ][type], acts like the identity
+morphism to the layout specified by the given [SUBSTOBJ][type]. Thus
+we can view this as automatically lifting a [SUBSTOBJ][type] into a
+[SUBSTMORPH][type]"
   (comp          pax:type)
   (case          pax:type)
   (init          pax:type)

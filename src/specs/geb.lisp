@@ -14,6 +14,7 @@
   (:documentation
    "the class type corresponding to SUBSTMORPH. See GEB-DOCS/DOCS:@OPEN-CLOSED"))
 (deftype substmorph ()
+  "The morphisms of the [SUBSTMORPH][type] category"
   `(or substobj
        alias
        comp init terminal case pair distribute
@@ -37,11 +38,57 @@
 ;; these could be keywords, but maybe in the future not?
 (defclass so0 (<substobj>)
   ()
-  (:documentation "The Initial/Void Object"))
+  (:documentation
+   "The Initial Object. This is sometimes known as the
+[VOID](https://en.wikipedia.org/wiki/Void_type) type.
+
+the formal grammar of [SO0][type] is
+
+```lisp
+so0
+```
+
+where [SO0][type] is `THE` initial object.
+
+Example
+
+```lisp
+```
+"
+   "The Initial/Void Object"))
 
 (defclass so1 (<substobj>)
   ()
-  (:documentation "The Terminal/Unit Object"))
+  (:documentation
+   "The Terminal Object. This is sometimes referred to as the
+[Unit](https://en.wikipedia.org/wiki/Unit_type) type.
+
+the formal grammar or [SO1][type] is
+
+```lisp
+so1
+```
+
+where [SO1][type] is `THE` terminal object
+
+Example
+
+```lisp
+(coprod so1 so1)
+```
+
+Here we construct [GEB-BOOL:BOOL] by simply stating that we have the
+terminal object on either side, giving us two possible ways to fill
+the type.
+
+```lisp
+(left-> so1 so1)
+
+(right-> so1 so1)
+```
+
+where applying [LEFT->] gives us the left unit, while [RIGHT->] gives
+us the right unit."))
 
 ;; please make better names and documentation strings!
 
@@ -52,7 +99,26 @@
    (mcadr :initarg :mcadr
           :accessor mcadr
           :documentation ""))
-  (:documentation "the product"))
+  (:documentation
+   "The [PRODUCT][PROD type] object. Takes two \\<SUBSTOBJ\\> values that
+get put into a pair.
+
+The formal grammar of [PRODUCT][PROD type] is
+
+```lisp
+(prod mcar mcadr)
+```
+
+where [PROD][type] is the constructor, [MCAR] is the left value of the
+product, and [MCADR] is the right value of the product.
+
+Example:
+
+```lisp
+(geb-gui::visualize (prod geb-bool:bool geb-bool:bool))
+```
+
+Here we create a product of two [GEB-BOOL:BOOL] types."))
 
 (defclass coprod (<substobj>)
   ((mcar :initarg :mcar
@@ -61,10 +127,27 @@
    (mcadr :initarg :mcadr
           :accessor mcadr
           :documentation ""))
-  (:documentation "the coproduct"))
+  (:documentation
+   "the [CO-PRODUCT][COPROD type] object. Takes \\<SUBSTOBJ\\> values that
+get put into a choice of either value.
 
+The formal grammar of [PRODUCT][PROD type] is
 
-;; please make better names
+```lisp
+(coprod mcar mcadr)
+```
+
+Where [CORPOD][TYPE] is the constructor, [MCAR] is the left choice of
+the sum, and [MCADR] is the right choice of the sum.
+
+Example:
+
+```lisp
+(geb-gui::visualize (coprod so1 so1))
+```
+
+Here we create the boolean type, having a choice between two unit
+values."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subst Morphism Objects
@@ -118,9 +201,9 @@ Example:
 In this example we are composing two morphisms. the first morphism
 that gets applied ([PAIR] ...) is the identity function on the
 type ([PROD][type] [SO1][type] [GEB-BOOL:BOOL]), where we pair the
-[left injection](INJECT-LEFT) and the [right
-projection](INJECT-RIGHT), followed by taking the [right
-projection](INJECT-RIGHT) of the type.
+[left projection](PROJECT-LEFT) and the [right
+projection](PROJECT-RIGHT), followed by taking the [right
+projection](PROJECT-RIGHT) of the type.
 
 Since we know ([COMP][type] f id) is just f per the laws of category
 theory, this expression just reduces to
@@ -134,14 +217,67 @@ theory, this expression just reduces to
         :accessor obj
         :type substobj
         :documentation ""))
-  (:documentation "The initial Morphism"))
+  (:documentation
+   "The [INITIAL][INIT type] Morphism, takes any [\\<SUBSTOBJ\\>] and
+creates a moprhism from [SO0][type] (also known as void) to the object given.
+
+The formal grammar of [INITIAL][INIT type] is
+
+```lisp
+(init obj)
+```
+
+where [INIT][type] is the constructor. [OBJ] is the type of object
+that will be conjured up from [SO0][type], when the morphism is
+applied onto an object.
+
+Example:
+
+```lisp
+(init so1)
+```
+
+In this example we are creating a unit value out of void."))
 
 (defclass terminal (<substmorph>)
   ((obj :initarg :obj
         :accessor obj
         :type substobj
         :documentation ""))
-  (:documentation "The terminal Morhpism"))
+  (:documentation
+   "The [TERMINAL][type] morphism, Takes any [\\<SUBSTOBJ\\>] and creates a
+morphism from that object to [SO1][type] (also known as unit).
+
+The formal grammar of [TERMINAL][type] is
+
+```lisp
+(terminal obj)
+```
+
+where [TERMINAL][type] is the constructor. [OBJ] is the type of object that
+will be mapped to [SO1][type], when the morphism is applied onto an
+object.
+
+Example:
+
+```lisp
+(terminal (coprod so1 so1))
+
+(geb-gui::visualize (terminal (coprod so1 so1)))
+
+(comp value (terminal (codomain value)))
+
+(comp true (terminal bool))
+```
+
+In the first example, we make a morphism from the corpoduct of
+[SO1][type] and [SO1][type] (essentially [GEB-BOOL:BOOL]) to
+[SO1][type].
+
+In the third example we can proclaim a constant function by ignoring
+the input value and returning a morphism from unit to the desired type.
+
+The fourth example is taking a [GEB-BOOL:BOOL] and returning [GEB-BOOL:TRUE]."))
 
 ;; Please name all of these better plz
 
@@ -164,7 +300,7 @@ The formal grammar is
 (left-> mcar mcadr)
 ```
 
-Where LEFT-> is the constructor, [MCAR] is the value being injected into
+Where [LEFT->] is the constructor, [MCAR] is the value being injected into
 the coproduct of [MCAR] + [MCADR], and the [MCADR] is just the type for
 the unused right constructor.
 
@@ -304,13 +440,39 @@ projects back the GEB-BOOL:BOOL field as the second values."))
 (defclass project-left (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type substobj
+         :type <substobj>
          :documentation "")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type substobj
+          :type <substobj>
           :documentation ""))
-  (:documentation "Left projection (product elimination)"))
+  (:documentation
+   "The [LEFT PROJECTION][PROJECT-LEFT type]. Takes two
+[\\<SUBSTMORPH\\>] values. When the [LEFT PROJECTION][PROJECT-LEFT
+type] morphism is then applied, it grabs the left value of a product,
+with the type of the product being determined by the two
+[\\<SUBSTMORPH\\>] values given.
+
+the formal grammar of a [PROJECT-LEFT][type] is:
+
+```lisp
+(<-left mcar mcadr)
+```
+
+Where [<-LEFT] is the constructor, [MCAR] is the left type of the
+[PRODUCT][type] and [MCADR] is the right type of the [PRODUCT][type].
+
+Example:
+
+```lisp
+(geb-gui::visualize
+  (<-left geb-bool:bool (prod so1 geb-bool:bool)))
+```
+
+In this example, we are getting the left [GEB-BOOL:BOOL] from a
+product with the shape
+
+([GEB-BOOL:BOOL][] [×][PROD type] [SO1][type] [×][PROD type] [GEB-BOOL:BOOL])"))
 
 (defclass project-right (<substmorph>)
   ((mcar :initarg :mcar
@@ -321,7 +483,34 @@ projects back the GEB-BOOL:BOOL field as the second values."))
           :accessor mcadr
           :type substobj
           :documentation "Right projection (product elimination)"))
-  (:documentation ""))
+  (:documentation "The [RIGHT PROJECTION][PROJECT-RIGHT type]. Takes two
+[\\<SUBSTMORPH\\>] values. When the [RIGHT PROJECTION][PROJECT-RIGHT
+type] morphism is then applied, it grabs the right value of a product,
+with the type of the product being determined by the two
+[\\<SUBSTMORPH\\>] values given.
+
+
+the formal grammar of a [PROJECT-RIGHT][type] is:
+
+```lisp
+(<-right mcar mcadr)
+```
+
+Where [<-RIGHT] is the constructor, [MCAR] is the right type of the
+[PRODUCT][type] and [MCADR] is the right type of the [PRODUCT][type].
+
+Example:
+
+```lisp
+(geb-gui::visualize
+ (comp (<-right so1 geb-bool:bool)
+       (<-right geb-bool:bool (prod so1 geb-bool:bool))))
+```
+
+In this example, we are getting the right [GEB-BOOL:BOOL] from a
+product with the shape
+
+([GEB-BOOL:BOOL][] [×][PROD type] [SO1][type] [×][PROD type] [GEB-BOOL:BOOL])"))
 
 (defclass distribute (<substmorph>)
   ((mcar :initarg :mcar
@@ -433,6 +622,16 @@ projects back the GEB-BOOL:BOOL field as the second values."))
 
 (defun make-functor (&key obj func)
   (make-instance 'functor :func func :obj obj))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Extra Accessors
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmethod mcar ((obj terminal))
+  (obj obj))
+
+(defmethod mcar ((obj init))
+  (obj obj))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Matching conveniences
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
