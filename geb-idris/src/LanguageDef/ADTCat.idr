@@ -89,8 +89,8 @@ STFreeNatTrans : Type
 STFreeNatTrans = PolyNatTrans STFreeM STFreeM
 
 public export
-STFreeNatTransMN : Nat -> Nat -> Type
-STFreeNatTransMN = pfFreeNatTransMN SubstTermPF SubstTermPF
+STNatTransMN : Nat -> Nat -> Type
+STNatTransMN = pfNatTransMN SubstTermPF SubstTermPF
 
 public export
 stPolyCata : STNatTrans -> STMu -> STMu
@@ -101,7 +101,7 @@ stFreePolyCata : STNatTrans -> STFreeNatTrans
 stFreePolyCata = pfFreePolyCata {p=SubstTermPF} {q=SubstTermPF}
 
 public export
-stFreePolyCataMN : {m, n : Nat} -> STFreeNatTransMN m n -> STFreeNatTrans
+stFreePolyCataMN : {m, n : Nat} -> STNatTransMN m n -> STFreeNatTrans
 stFreePolyCataMN {m=Z} {n=Z} alpha = stFreePolyCata alpha
 stFreePolyCataMN {m=Z} {n=(S n)} alpha = ?stFreePolyCataMN_hole_3
 stFreePolyCataMN {m=(S m)} {n=Z} alpha = ?stFreePolyCataMN_hole_4

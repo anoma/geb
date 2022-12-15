@@ -2286,8 +2286,8 @@ pfFreePolyJoinN p Z = pntId $ PolyFuncFreeM p
 pfFreePolyJoinN p (S n) = ?pfFreePolyJoinN_hole_1
 
 public export
-pfFreeNatTransMN : PolyFunc -> PolyFunc -> Nat -> Nat -> Type
-pfFreeNatTransMN p q m n =
+pfNatTransMN : PolyFunc -> PolyFunc -> Nat -> Nat -> Type
+pfNatTransMN p q m n =
   PolyNatTrans (pfCompositionPowerArenaS p m) (pfCompositionPowerArenaS q n)
 
 public export
