@@ -2292,9 +2292,7 @@ pfNatTransMN p q m n =
 
 public export
 pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
-  PolyNatTrans
-    (pfCompositionPowerArenaS p n)
-    (pfCompositionPowerArenaS q n) ->
+  pfNatTransMN p q n n ->
   PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreePolyCataN {p} {q} {n} alpha =
   pntVCatComp
