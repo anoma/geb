@@ -73,6 +73,14 @@ stCata : {0 a : Type} -> STAlg a -> STMu -> a
 stCata = pfCata {p=SubstTermPF}
 
 public export
+STProdAlg : Type -> Type
+STProdAlg = PFProductAlg SubstTermPF SubstTermPF
+
+public export
+stProdCata : {0 a : Type} -> STProdAlg a -> STMu -> STMu -> a
+stProdCata {a} = pfProductCata {a} {p=SubstTermPF} {q=SubstTermPF}
+
+public export
 STParProdAlg : Type -> Type
 STParProdAlg = PFParProductAlg SubstTermPF SubstTermPF
 
