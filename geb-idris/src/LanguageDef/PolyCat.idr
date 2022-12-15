@@ -1126,20 +1126,32 @@ pfParamArgCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
 pfParamArgCata {p=p@(_ ** _)} {x} {a} alg =
   flip $ pfArgCata {p} {a=(x -> a)} $ \e, i, d => alg e i . flip d
 
--- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
--- to the algebra.
 public export
 PFProductAlg : PolyFunc -> PolyFunc -> Type -> Type
-PFProductAlg p q = PFAlg (pfParProductArena p q)
+PFProductAlg p q = PFAlg (pfProductArena p q)
 
 public export
 pfProductCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
   PFProductAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
-pfProductCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} alg
+pfProductCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} alg =
+  pfCata {p=(qpos ** qdir)} {a} .
+    pfCata {p=(ppos ** pdir)} {a=(PFAlg (qpos ** qdir) a)}
+      (\pi, pd, qi, qd => alg (pi, qi) $ eitherElim (\pdi => pd pdi qi qd) qd)
+
+-- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
+-- to the algebra.
+public export
+PFParProductAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFParProductAlg p q = PFAlg (pfParProductArena p q)
+
+public export
+pfParProductCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFParProductAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfParProductCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} alg
   (InPFM pi pd) (InPFM qi qd) =
     alg (pi, qi) $
       \(pdi, qdi) =>
-        pfProductCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} {a}
+        pfParProductCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} {a}
           alg (pd pdi) (qd qdi)
 
 ----------------------------------
