@@ -81,14 +81,6 @@ stProdCata : {0 a : Type} -> STProdAlg a -> STMu -> STMu -> a
 stProdCata {a} = pfProductCata {a} {p=SubstTermPF} {q=SubstTermPF}
 
 public export
-STParProdAlg : Type -> Type
-STParProdAlg = PFParProductAlg SubstTermPF SubstTermPF
-
-public export
-stParProdCata : {0 a : Type} -> STParProdAlg a -> STMu -> STMu -> a
-stParProdCata {a} = pfParProductCata {a} {p=SubstTermPF} {q=SubstTermPF}
-
-public export
 STNatTrans : Type
 STNatTrans = PolyNatTrans SubstTermPF SubstTermPF
 
@@ -186,7 +178,7 @@ Show STMu where
   show = stCata STShowAlg
 
 public export
-STEqAlg : STParProdAlg Bool
+STEqAlg : STProdAlg Bool
 STEqAlg (STPosLeaf, STPosLeaf) d = True
 STEqAlg (STPosLeaf, STPosLeft) d = False
 STEqAlg (STPosLeaf, STPosRight) d = False
@@ -207,7 +199,7 @@ STEqAlg (STPosPair, STPosPair) d =
 
 public export
 stEq : STMu -> STMu -> Bool
-stEq = stParProdCata STEqAlg
+stEq = stProdCata STEqAlg
 
 public export
 Eq STMu where
