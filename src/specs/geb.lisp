@@ -1,6 +1,6 @@
 (in-package :geb.spec)
 
-(defclass <substobj> (direct-pointwise-mixin) ()
+(defclass <substobj> (<substmorph> direct-pointwise-mixin) ()
   (:documentation
    "the class corresponding to SUBSTOBJ. See GEB-DOCS/DOCS:@OPEN-CLOSED"))
 (deftype substobj ()
@@ -25,7 +25,7 @@
 ;; Subst Constructor Objects
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defclass alias (<substmorph> <substobj>)
+(defclass alias (<substobj>)
   ((name :initarg :name
          :accessor name
          :type     symbol
@@ -82,12 +82,12 @@ terminal object on either side, giving us two possible ways to fill
 the type.
 
 ```lisp
-(left-> so1 so1)
+(->left so1 so1)
 
-(right-> so1 so1)
+(->right so1 so1)
 ```
 
-where applying [LEFT->] gives us the left unit, while [RIGHT->] gives
+where applying [->LEFT] gives us the left unit, while [->RIGHT] gives
 us the right unit."))
 
 ;; please make better names and documentation strings!
@@ -297,22 +297,22 @@ the dual of INJECT-RIGHT
 The formal grammar is
 
 ```lisp
-(left-> mcar mcadr)
+(->left mcar mcadr)
 ```
 
-Where [LEFT->] is the constructor, [MCAR] is the value being injected into
+Where [->LEFT] is the constructor, [MCAR] is the value being injected into
 the coproduct of [MCAR] + [MCADR], and the [MCADR] is just the type for
 the unused right constructor.
 
 Example:
 
 ```lisp
-(geb-gui::visualize (left-> so1 geb-bool:bool))
+(geb-gui::visualize (->left so1 geb-bool:bool))
 
 (comp
  (mcase geb-bool:true
         geb-bool:not)
- (left-> so1 geb-bool:bool))
+ (->left so1 geb-bool:bool))
 
 ```
 
@@ -337,22 +337,22 @@ the dual of INJECT-LEFT
 The formal grammar is
 
 ```lisp
-(right-> mcar mcadr)
+(->right mcar mcadr)
 ```
 
-Where RIGHT-> is the constructor, [MCADR] is the value being injected into
+Where ->RIGHT is the constructor, [MCADR] is the value being injected into
 the coproduct of [MCAR] + [MCADR], and the [MCAR] is just the type for
 the unused left constructor.
 
 Example:
 
 ```lisp
-(geb-gui::visualize (right-> so1 geb-bool:bool))
+(geb-gui::visualize (->right so1 geb-bool:bool))
 
 (comp
  (mcase geb-bool:true
         geb-bool:not)
- (right-> so1 geb-bool:bool))
+ (->right so1 geb-bool:bool))
 
 ```
 
@@ -392,7 +392,7 @@ Example:
 (comp
  (mcase geb-bool:true
         geb-bool:not)
- (right-> so1 geb-bool:bool))
+ (->right so1 geb-bool:bool))
 ```
 
 In the second example, we inject a term with the shape [GEB-BOOL:BOOL]
@@ -566,10 +566,13 @@ product with the shape
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; we could type the objects more if wanted
 
-(-> comp (substmorph substmorph) comp)
-(defun comp (car cadr)
-  (values
-   (make-instance 'comp :mcar car :mcadr cadr)))
+(-> comp (<substmorph> <substmorph> &rest <substmorph>) comp)
+(defun comp (car cadr &rest comps)
+  (let ((list (list* car cadr comps)))
+    (mvfoldr (lambda (x acc)
+               (make-instance 'comp :mcar x :mcadr acc))
+             (butlast list)
+             (car (last list)))))
 
 (-> init (substobj) init)
 (defun init (obj)
@@ -581,14 +584,14 @@ product with the shape
   (values
    (make-instance 'terminal :obj obj)))
 
-(-> left-> (substobj substobj) inject-left)
-(defun left-> (mcar mcadr)
+(-> ->left (substobj substobj) inject-left)
+(defun ->left (mcar mcadr)
   "injects left constructor"
   (values
    (make-instance 'inject-left :mcar mcar :mcadr mcadr)))
 
-(-> right-> (substobj substobj) inject-right)
-(defun right-> (mcar mcadr)
+(-> ->right (substobj substobj) inject-right)
+(defun ->right (mcar mcadr)
   "injects right constructor"
   (values
    (make-instance 'inject-right :mcar mcar :mcadr mcadr)))

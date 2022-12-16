@@ -2,8 +2,42 @@
 
 (in-package :geb)
 
-(-> mlist (substmorph &rest substmorph) pair)
-(defun mlist (v1 &rest values)
+(-> const (<substmorph> <substobj>) (or alias comp))
+(defun const (f x)
+  "The constant morphism.
+
+Takes a morphism from [SO1][type] to a desired value of type $B$,
+along with a [\\<SUBSTOBJ\\>] that represents the input type say of
+type $A$, giving us a morphism from $A$ to $B$.
+
+Thus if:
+F : [SO1][type] → a,
+X : b
+
+then: (const f x) : a → b
+
+```
+Γ, f : so1 → b, x : a
+----------------------
+(const f x) : a → b
+```
+
+Further, If the input `F` is an [ALIAS][type], then we wrap the output
+in a new alias to denote it's a constant version of that value.
+
+
+Example:
+
+```lisp
+(const true bool) ; bool -> bool
+```"
+  (if (typep f 'alias)
+      (make-alias :name (intern (format nil "CONST-~A" (name f))) :obj (obj f))
+      (comp f (terminal x))))
+
+(-> cleave (substmorph &rest substmorph) pair)
+(defun cleave (v1 &rest values)
+  "Applies each morphism to the object in turn."
   (if (null values)
       v1
       (mvfoldr #'pair (cons v1 (butlast values)) (car (last values)))))

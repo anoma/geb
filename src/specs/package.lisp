@@ -235,8 +235,8 @@ we can view this as automatically lifting a [SUBSTOBJ][type] into a
   (make-alias pax:function)
   (<-left pax:function)
   (<-right pax:function)
-  (left-> pax:function)
-  (right-> pax:function)
+  (->left pax:function)
+  (->right pax:function)
   (mcase pax:function)
   (make-functor pax:function))
 
