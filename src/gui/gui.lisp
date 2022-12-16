@@ -245,6 +245,7 @@
     (center-column-cell (pane) (present-object
                                 (geb:coprod (geb:mcar object) (geb:mcadr object))
                                 pane))))
+
 (define-presentation-method present ((object geb:inject-right)
                                      (type   geb:inject-right)
                                      (pane   extended-output-stream)
@@ -255,6 +256,25 @@
     (center-column-cell (pane) (draw-text-arrow* pane "ι₂" 0 0 50 0))
     (center-column-cell (pane) (present-object
                                 (geb:coprod (geb:mcar object) (geb:mcadr object))
+                                pane))))
+
+(define-presentation-method present ((object geb:distribute)
+                                     (type   geb:distribute)
+                                     (pane   extended-output-stream)
+                                     (view   show-view)
+                                     &key)
+  (formatting-table (pane)
+    (center-column-cell (pane) (present-object
+                                (geb:prod (geb:mcar object)
+                                          (geb:coprod (geb:mcadr object)
+                                                      (geb:mcaddr object)))
+                                pane))
+    (center-column-cell (pane) (draw-text-arrow* pane "Dist" 0 0 50 0))
+    (center-column-cell (pane) (present-object
+                                (geb:coprod (geb:prod (geb:mcar object)
+                                                      (geb:mcadr object))
+                                            (geb:prod (geb:mcar object)
+                                                      (geb:mcaddr object)))
                                 pane))))
 
 (define-presentation-method present ((object geb:comp)
@@ -284,6 +304,23 @@
       (formatting-row (pane)
         (formatting-cell (pane)
           (present-object (geb.utils:mcdr object) pane))))))
+
+(define-presentation-method present ((object geb:case)
+                                     (type   geb:case)
+                                     (pane   extended-output-stream)
+                                     (view   show-view)
+                                     &key)
+  (surrounding-output-with-border (pane :shape :drop-shadow)
+    (formatting-table (pane)
+      (formatting-row (pane)
+        (formatting-cell (pane :align-x :center)
+          (format pane "Case")))
+      (formatting-row (pane)
+        (formatting-cell (pane)
+          (present-object (geb.utils:mcar object) pane)))
+      (formatting-row (pane)
+        (formatting-cell (pane)
+          (present-object (geb.utils:mcadr object) pane))))))
 
 (define-presentation-method present ((object geb:<substmorph>)
                                      (type   geb:<substmorph>)
