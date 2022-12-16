@@ -62,7 +62,7 @@ the left unit")
 
 (def or
   (pair bool
-        (so-const true bool)))
+        (const true bool)))
 
 ;; (def sand
 ;;   (alias and
