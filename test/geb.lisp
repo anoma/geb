@@ -62,7 +62,25 @@
 
 (define-test dom-and-codom
   :parent geb
-  (is obj-equalp so1 (dom (pair (left-> so1 so1)
-                                (left-> so1 so1))))
-  (is obj-equalp so1 (dom (pair (left-> so1 so1)
-                                (left-> so1 so1)))))
+  (is obj-equalp so1 (dom (pair (->left so1 so1)
+                                (->left so1 so1)))
+      "Checking the dom of pair")
+  (is obj-equalp
+      (prod (obj geb-bool:bool)
+            (obj geb-bool:bool))
+      (codom (pair (->left so1 so1)
+                   (->left so1 so1)))
+      "Checking the codom of pair")
+  (is obj-equalp
+      (dom (<-left so1 geb-bool:bool))
+      (prod so1 geb-bool:bool)
+      "checking dom of projection")
+  (is obj-equalp
+      (dom (distribute geb-bool:bool so1 so1))
+      (prod geb-bool:bool (coprod so1 so1))
+      "checking dom of distribution")
+  (is obj-equalp
+      (codom (distribute geb-bool:bool so1 so1))
+      (coprod (prod geb-bool:bool so1)
+              (prod geb-bool:bool so1))
+      "checking codom of distribution"))
