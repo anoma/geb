@@ -48,13 +48,9 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -248,8 +244,6 @@ conjectures about GEB
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 5 Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -317,31 +311,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} cong C^{(A × B)}$,
+   $C^{(B^A)} \cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $varnothing$.
+   the empty sum is $\varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
+$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ mathsf{2} = lbrace 1, 2 rbrace$,
-$ mathsf{1} = lbrace 1 rbrace$,
-$ mathsf{0} = lbrace  rbrace = varnothing$,
+where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
+$ \mathsf{1} = \lbrace 1 \rbrace$,
+$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -363,8 +357,6 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 5.1 Morphisms
@@ -1394,6 +1386,16 @@ Various utility functions ontop of [Core Category][cb9e]
 
 <a id="x-28GEB-3ASO-CARD-ALG-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
 - [method] **SO-CARD-ALG** *(OBJ \<SUBSTOBJ\>)*
+
+<a id="x-28GEB-3ADOM-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **DOM** *SUBSTMORPH*
+
+    Grabs the domain of the morphism
+
+<a id="x-28GEB-3ACODOM-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **CODOM** *SUBSTMORPH*
+
+    Grabs the codomain of the morphism
 
 <a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
 ### 7.5 Examples
