@@ -652,7 +652,7 @@ product with the shape
 (make-pattern inject-left   mcar mcadr)
 (make-pattern inject-right  mcar mcadr)
 (make-pattern case          mcar mcadr)
-(make-pattern pair          mcar mcadr)
+(make-pattern pair          mcar mcdr)
 (make-pattern project-left  mcar mcadr)
 (make-pattern project-right mcar mcadr)
 (make-pattern distribute    mcar mcadr mcaddr)
