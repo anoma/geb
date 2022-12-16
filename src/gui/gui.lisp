@@ -258,6 +258,16 @@
                                 (geb:coprod (geb:mcar object) (geb:mcadr object))
                                 pane))))
 
+(define-presentation-method present ((object geb:terminal)
+                                     (type   geb:terminal)
+                                     (pane   extended-output-stream)
+                                     (view   show-view)
+                                     &key)
+  (formatting-table (pane)
+    (center-column-cell (pane) (present-object (geb:mcar object) pane))
+    (center-column-cell (pane) (draw-text-arrow* pane "" 0 0 50 0))
+    (center-column-cell (pane) (present-object geb:so1 pane))))
+
 (define-presentation-method present ((object geb:distribute)
                                      (type   geb:distribute)
                                      (pane   extended-output-stream)

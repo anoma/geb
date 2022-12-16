@@ -31,9 +31,11 @@ Example:
 ```lisp
 (const true bool) ; bool -> bool
 ```"
-  (if (typep f 'alias)
-      (make-alias :name (intern (format nil "CONST-~A" (name f))) :obj (obj f))
-      (comp f (terminal x))))
+  (let ((obj (comp f (terminal x))))
+    (if (typep f 'alias)
+        (make-alias :name (intern (format nil "CONST-~A" (name f)))
+                    :obj obj)
+        obj)))
 
 (-> cleave (substmorph &rest substmorph) pair)
 (defun cleave (v1 &rest values)
