@@ -59,3 +59,10 @@
   (is equalp (read-from-string (format nil "~A" test-value)) test-value-expansion)
   (is equalp (read-from-string (format nil "~A" prod16))
       '(× (× (× BOOL S-0 S-1) BOOL S-0 S-1) (× BOOL S-0 S-1) BOOL S-0 S-1)))
+
+(define-test dom-and-codom
+  :parent geb
+  (is obj-equalp so1 (dom (pair (left-> so1 so1)
+                                (left-> so1 so1))))
+  (is obj-equalp so1 (dom (pair (left-> so1 so1)
+                                (left-> so1 so1)))))
