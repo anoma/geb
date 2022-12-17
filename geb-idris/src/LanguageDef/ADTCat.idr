@@ -293,12 +293,12 @@ soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
 soCata = pfCata {p=SubstObjPF}
 
 public export
-SOPairAlg : Type -> Type
-SOPairAlg = PFProductAlg SubstObjPF SubstObjPF
+SOProductAlg : Type -> Type
+SOProductAlg = PFProductAlg SubstObjPF SubstObjPF
 
 public export
-soPairCata : {0 a : Type} -> SOPairAlg a -> SOMu -> SOMu -> a
-soPairCata {a} = pfProductCata {a} {p=SubstObjPF} {q=SubstObjPF}
+soProductCata : {0 a : Type} -> SOProductAlg a -> SOMu -> SOMu -> a
+soProductCata {a} = pfProductCata {a} {p=SubstObjPF} {q=SubstObjPF}
 
 -------------------
 ---- Utilities ----
@@ -369,12 +369,27 @@ Show SOMu where
   show = soCata SOShowAlg
 
 public export
-SOEqAlg : SOPairAlg Bool
-SOEqAlg = ?SOEqAlg_hole
+SOEqAlg : SOProductAlg Bool
+SOEqAlg (SOPos0, SOPos0) d = True
+SOEqAlg (SOPos0, SOPos1) d = False
+SOEqAlg (SOPos0, SOPosC) d = False
+SOEqAlg (SOPos0, SOPosP) d = False
+SOEqAlg (SOPos1, SOPos0) d = False
+SOEqAlg (SOPos1, SOPos1) d = True
+SOEqAlg (SOPos1, SOPosC) d = False
+SOEqAlg (SOPos1, SOPosP) d = False
+SOEqAlg (SOPosC, SOPos0) d = False
+SOEqAlg (SOPosC, SOPos1) d = False
+SOEqAlg (SOPosC, SOPosC) d = d (SODirL, SODirL) && d (SODirR, SODirR)
+SOEqAlg (SOPosC, SOPosP) d = False
+SOEqAlg (SOPosP, SOPos0) d = False
+SOEqAlg (SOPosP, SOPos1) d = False
+SOEqAlg (SOPosP, SOPosC) d = False
+SOEqAlg (SOPosP, SOPosP) d = d (SODir1, SODir1) && d (SODir2, SODir2)
 
 public export
 soEq : SOMu -> SOMu -> Bool
-soEq = soPairCata SOEqAlg
+soEq = soProductCata SOEqAlg
 
 public export
 Eq SOMu where
@@ -449,6 +464,12 @@ SORefineAlg = SOAlg Bool
 public export
 SORefinement : SliceObj SORefineAlg
 SORefinement alg = Refinement {a=SOMu} $ soCata alg
+
+-----------------------------------------------
+-----------------------------------------------
+---- Relationships between terms and types ----
+-----------------------------------------------
+-----------------------------------------------
 
 -----------------------------------
 -----------------------------------
