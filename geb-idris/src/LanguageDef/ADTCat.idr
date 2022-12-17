@@ -480,7 +480,7 @@ SOTermCheckAlg (SOPos0, STPosLeft) d = False
 SOTermCheckAlg (SOPos0, STPosRight) d = False
 SOTermCheckAlg (SOPos0, STPosPair) d = False
 -- Only `InSTLeaf` has type `InSO1`.
-SOTermCheckAlg (SOPos1, STPosLeaf) d = False
+SOTermCheckAlg (SOPos1, STPosLeaf) d = True
 SOTermCheckAlg (SOPos1, STPosLeft) d = False
 SOTermCheckAlg (SOPos1, STPosRight) d = False
 SOTermCheckAlg (SOPos1, STPosPair) d = False
