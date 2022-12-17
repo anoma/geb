@@ -471,6 +471,38 @@ SORefinement alg = Refinement {a=SOMu} $ soCata alg
 -----------------------------------------------
 -----------------------------------------------
 
+-- Test whether the given term is a valid term of the given type.
+public export
+SOTermCheckAlg : PFProductAlg SubstObjPF SubstTermPF Bool
+-- No term has type `InSO0`.
+SOTermCheckAlg (SOPos0, STPosLeaf) d = False
+SOTermCheckAlg (SOPos0, STPosLeft) d = False
+SOTermCheckAlg (SOPos0, STPosRight) d = False
+SOTermCheckAlg (SOPos0, STPosPair) d = False
+-- Only `InSTLeaf` has type `InSO1`.
+SOTermCheckAlg (SOPos1, STPosLeaf) d = False
+SOTermCheckAlg (SOPos1, STPosLeft) d = False
+SOTermCheckAlg (SOPos1, STPosRight) d = False
+SOTermCheckAlg (SOPos1, STPosPair) d = False
+-- A coproduct term must be either a left injection or a right injection,
+-- and its sub-term must match the corresponding sub-type.  The other
+-- sub-type could be anything.
+SOTermCheckAlg (SOPosC, STPosLeaf) d = False
+SOTermCheckAlg (SOPosC, STPosLeft) d = d (SODirL, STDirL)
+SOTermCheckAlg (SOPosC, STPosRight) d = d (SODirR, STDirR)
+SOTermCheckAlg (SOPosC, STPosPair) d = False
+-- A product term must be a pair, and each of its sub-terms must
+-- match the corresponding sub-type.
+SOTermCheckAlg (SOPosP, STPosLeaf) d = False
+SOTermCheckAlg (SOPosP, STPosLeft) d = False
+SOTermCheckAlg (SOPosP, STPosRight) d = False
+SOTermCheckAlg (SOPosP, STPosPair) d =
+  d (SODir1, STDirFst) && d (SODir2, STDirSnd)
+
+public export
+soTermCheck : SOMu -> STMu -> Bool
+soTermCheck = pfProductCata SOTermCheckAlg
+
 -----------------------------------
 -----------------------------------
 ---- Simple types, anonymously ----
