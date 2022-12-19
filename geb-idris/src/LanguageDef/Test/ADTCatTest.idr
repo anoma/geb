@@ -435,6 +435,9 @@ soMu3 = InSOC soMu1 soMu2
 soMu4 : SOMu
 soMu4 = InSOP soMu1 soMu2
 
+soMu5 : SOMu
+soMu5 = InSOP InSO1 (InSOP (InSOC InSO1 (InSOC InSO1 InSO1)) InSO1)
+
 soMu1EqSelf : Assertion
 soMu1EqSelf = Assert $ soMu1 == soMu1
 
@@ -545,14 +548,14 @@ public export
 soTermCheck19 : Assertion
 soTermCheck19 =
   Assert $ not $ soTermCheck
-    (InSOP InSO1 (InSOP (InSOC InSO1 (InSOC InSO1 InSO1)) InSO1))
+    soMu5
     (InSTPair (InSTLeft InSTUnit) InSTUnit)
 
 public export
 soTermCheck20 : Assertion
 soTermCheck20 =
   Assert $ soTermCheck
-    (InSOP InSO1 (InSOP (InSOC InSO1 (InSOC InSO1 InSO1)) InSO1))
+    soMu5
     (InSTPair InSTUnit (InSTPair (InSTRight (InSTLeft InSTUnit)) InSTUnit))
 
 ----------------------------------
@@ -680,6 +683,20 @@ adtCatTest = do
   stShowFullList [
       ("stMu1", stMu1)
     , ("stMu2", stMu2)
+    ]
+  putStrLn ""
+  putStrLn "---------------"
+  putStrLn ""
+  putStrLn "--------------"
+  putStrLn "---- SOMu ----"
+  putStrLn "--------------"
+  putStrLn ""
+  soShowFullList [
+      ("soMu1", soMu1)
+    , ("soMu2", soMu2)
+    , ("soMu3", soMu3)
+    , ("soMu4", soMu4)
+    , ("soMu5", soMu5)
     ]
   putStrLn ""
   putStrLn "---------------"
