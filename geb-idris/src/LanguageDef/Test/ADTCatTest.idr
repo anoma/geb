@@ -312,6 +312,25 @@ partial
 sn0_0 : StreamRet
 sn0_0 = getSN sn0 ()
 
+------------------------
+------------------------
+---- Test utilities ----
+------------------------
+------------------------
+
+showTerminated :
+  {0 a : Type} -> (String -> a -> IO ()) -> (String, a) -> IO ()
+showTerminated showFull (name, t) = do
+  showFull name t
+  putStrLn "----"
+
+showList :
+  {0 a : Type} -> (String -> a -> IO ()) -> List (String, a) -> IO ()
+showList showFull [] = pure ()
+showList showFull ts@(_ :: _) = do
+  putStrLn "----"
+  foldlM (const $ showTerminated showFull) () ts
+
 -------------------------------
 -------------------------------
 ---- Generalized ADT terms ----
@@ -325,15 +344,10 @@ termShowFull name term = do
   putStrLn $ "depth[" ++ name ++ "] = " ++ show (termDepth term)
 
 termShowFullTerminated : (String, TermMu) -> IO ()
-termShowFullTerminated (name, term) = do
-  termShowFull name term
-  putStrLn "----"
+termShowFullTerminated = showTerminated termShowFull
 
 termShowFullList : List (String, TermMu) -> IO ()
-termShowFullList [] = pure ()
-termShowFullList ts@(_ :: _) = do
-  putStrLn "----"
-  foldlM (const $ termShowFullTerminated) () ts
+termShowFullList = showList termShowFull
 
 adtT1 : TermMu
 adtT1 = InProd []
@@ -394,6 +408,151 @@ stMu2EqSelf = Assert $ stMu2 == stMu2
 
 stMu1NotEq2 : Assertion
 stMu1NotEq2 = Assert $ stMu1 /= stMu2
+
+--------------
+--------------
+---- SOMu ----
+--------------
+--------------
+
+soShowFull : String -> SOMu -> IO ()
+soShowFull name so = do
+  putStrLn $ name ++ " = " ++ show so
+  putStrLn $ "size[" ++ name ++ "] = " ++ show (soSize so)
+  putStrLn $ "depth[" ++ name ++ "] = " ++ show (soDepth so)
+  putStrLn $ "card[" ++ name ++ "] = " ++ show (soCard so)
+
+soMu1 : SOMu
+soMu1 = InSO0
+
+soMu2 : SOMu
+soMu2 = InSO1
+
+soMu3 : SOMu
+soMu3 = InSOC soMu1 soMu2
+
+soMu4 : SOMu
+soMu4 = InSOP soMu1 soMu2
+
+soMu1EqSelf : Assertion
+soMu1EqSelf = Assert $ soMu1 == soMu1
+
+soMu2EqSelf : Assertion
+soMu2EqSelf = Assert $ soMu2 == soMu2
+
+soMu3EqSelf : Assertion
+soMu3EqSelf = Assert $ soMu3 == soMu3
+
+soMu4EqSelf : Assertion
+soMu4EqSelf = Assert $ soMu4 == soMu4
+
+soMu1Neq2 : Assertion
+soMu1Neq2 = Assert $ soMu1 /= soMu2
+
+soMu3Neq4 : Assertion
+soMu3Neq4 = Assert $ soMu3 /= soMu4
+
+--------------------------------
+--------------------------------
+---- Term/type interactions ----
+--------------------------------
+--------------------------------
+
+public export
+soTermCheck1 : Assertion
+soTermCheck1 = Assert $ not $ soTermCheck InSO0 InSTUnit
+
+public export
+soTermCheck2 : Assertion
+soTermCheck2 = Assert $ not $ soTermCheck InSO0 (InSTLeft InSTUnit)
+
+public export
+soTermCheck3 : Assertion
+soTermCheck3 = Assert $ not $ soTermCheck InSO0 (InSTRight InSTUnit)
+
+public export
+soTermCheck4 : Assertion
+soTermCheck4 = Assert $ not $ soTermCheck InSO0 (InSTPair InSTUnit InSTUnit)
+
+public export
+soTermCheck5 : Assertion
+soTermCheck5 = Assert $ soTermCheck InSO1 InSTUnit
+
+public export
+soTermCheck6 : Assertion
+soTermCheck6 = Assert $ not $ soTermCheck InSO1 (InSTLeft InSTUnit)
+
+public export
+soTermCheck7 : Assertion
+soTermCheck7 = Assert $ not $ soTermCheck InSO1 (InSTRight InSTUnit)
+
+public export
+soTermCheck8 : Assertion
+soTermCheck8 = Assert $ not $ soTermCheck InSO1 (InSTPair InSTUnit InSTUnit)
+
+public export
+soTermCheck9 : Assertion
+soTermCheck9 = Assert $ not $ soTermCheck (InSOC InSO1 InSO0) InSTUnit
+
+public export
+soTermCheck10 : Assertion
+soTermCheck10 =
+  Assert $ soTermCheck (InSOC InSO1 InSO0) (InSTLeft InSTUnit)
+
+public export
+soTermCheck11 : Assertion
+soTermCheck11 =
+  Assert $ not $ soTermCheck (InSOC InSO1 InSO0) (InSTRight InSTUnit)
+
+public export
+soTermCheck12 : Assertion
+soTermCheck12 =
+  Assert $ not $ soTermCheck (InSOC InSO1 InSO0) (InSTPair InSTUnit InSTUnit)
+
+public export
+soTermCheck13 : Assertion
+soTermCheck13 = Assert $ not $ soTermCheck (InSOP InSO1 InSO1) InSTUnit
+
+public export
+soTermCheck14 : Assertion
+soTermCheck14 =
+  Assert $ not $ soTermCheck (InSOP InSO1 InSO1) (InSTLeft InSTUnit)
+
+public export
+soTermCheck15 : Assertion
+soTermCheck15 =
+  Assert $ not $ soTermCheck (InSOP InSO1 InSO1) (InSTRight InSTUnit)
+
+public export
+soTermCheck16 : Assertion
+soTermCheck16 =
+  Assert $ soTermCheck (InSOP InSO1 InSO1) (InSTPair InSTUnit InSTUnit)
+
+public export
+soTermCheck17 : Assertion
+soTermCheck17 =
+  Assert $ not $ soTermCheck
+    (InSOP InSO1 InSO1) (InSTPair (InSTLeft InSTUnit) InSTUnit)
+
+public export
+soTermCheck18 : Assertion
+soTermCheck18 =
+  Assert $ not $ soTermCheck
+    (InSOP InSO1 InSO1) (InSTPair (InSTLeft InSTUnit) InSTUnit)
+
+public export
+soTermCheck19 : Assertion
+soTermCheck19 =
+  Assert $ not $ soTermCheck
+    (InSOP InSO1 (InSOP (InSOC InSO1 (InSOC InSO1 InSO1)) InSO1))
+    (InSTPair (InSTLeft InSTUnit) InSTUnit)
+
+public export
+soTermCheck20 : Assertion
+soTermCheck20 =
+  Assert $ soTermCheck
+    (InSOP InSO1 (InSOP (InSOC InSO1 (InSOC InSO1 InSO1)) InSO1))
+    (InSTPair InSTUnit (InSTPair (InSTRight (InSTLeft InSTUnit)) InSTUnit))
 
 ----------------------------------
 ----------------------------------

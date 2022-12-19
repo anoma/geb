@@ -337,8 +337,8 @@ soSize = soCata SOSizeAlg
 
 public export
 SODepthAlg : SOAlg Nat
-SODepthAlg SOPos0 dir = 1
-SODepthAlg SOPos1 dir = 1
+SODepthAlg SOPos0 dir = 0
+SODepthAlg SOPos1 dir = 0
 SODepthAlg SOPosC dir = smax (dir SODirL) (dir SODirR)
 SODepthAlg SOPosP dir = smax (dir SODir1) (dir SODir2)
 
