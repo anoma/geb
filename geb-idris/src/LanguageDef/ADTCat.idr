@@ -503,6 +503,15 @@ public export
 soTermCheck : SOMu -> STMu -> Bool
 soTermCheck = pfProductCata SOTermCheckAlg
 
+public export
+STTyped : SOMu -> Type
+STTyped so = Refinement {a=STMu} $ soTermCheck so
+
+public export
+MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
+  {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
+MkSTTyped {so} t {ok} = MkRefinement t
+
 -----------------------------------
 -----------------------------------
 ---- Simple types, anonymously ----

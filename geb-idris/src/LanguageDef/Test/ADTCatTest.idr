@@ -395,6 +395,9 @@ stMu1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
 stMu2 : STMu
 stMu2 = InSTPair (InSTLeft InSTUnit) (InSTRight $ InSTLeft $ InSTUnit)
 
+stMu3 : STMu
+stMu3 = InSTPair InSTUnit (InSTPair (InSTRight (InSTLeft InSTUnit)) InSTUnit)
+
 stMu1EqSelf : Assertion
 stMu1EqSelf = Assert $ stMu1 == stMu1
 
@@ -553,10 +556,11 @@ soTermCheck19 =
 
 public export
 soTermCheck20 : Assertion
-soTermCheck20 =
-  Assert $ soTermCheck
-    soMu5
-    (InSTPair InSTUnit (InSTPair (InSTRight (InSTLeft InSTUnit)) InSTUnit))
+soTermCheck20 = Assert $ soTermCheck soMu5 stMu3
+
+public export
+stt3 : STTyped ADTCatTest.soMu5
+stt3 = MkSTTyped {so=soMu5} stMu3
 
 ----------------------------------
 ----------------------------------
@@ -683,6 +687,7 @@ adtCatTest = do
   stShowFullList [
       ("stMu1", stMu1)
     , ("stMu2", stMu2)
+    , ("stMu3", stMu3)
     ]
   putStrLn ""
   putStrLn "---------------"
@@ -698,6 +703,7 @@ adtCatTest = do
     , ("soMu4", soMu4)
     , ("soMu5", soMu5)
     ]
+  putStrLn $ "stt3 = " ++ show stt3
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."
