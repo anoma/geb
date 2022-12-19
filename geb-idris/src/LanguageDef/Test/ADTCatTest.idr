@@ -384,15 +384,10 @@ stShowFull name st = do
   putStrLn $ "depth[" ++ name ++ "] = " ++ show (stDepth st)
 
 stShowFullSTerminated : (String, STMu) -> IO ()
-stShowFullSTerminated (name, st) = do
-  stShowFull name st
-  putStrLn "----"
+stShowFullSTerminated = showTerminated stShowFull
 
 stShowFullList : List (String, STMu) -> IO ()
-stShowFullList [] = pure ()
-stShowFullList ts@(_ :: _) = do
-  putStrLn "----"
-  foldlM (const $ stShowFullSTerminated) () ts
+stShowFullList = showList stShowFull
 
 stMu1 : STMu
 stMu1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
@@ -421,6 +416,12 @@ soShowFull name so = do
   putStrLn $ "size[" ++ name ++ "] = " ++ show (soSize so)
   putStrLn $ "depth[" ++ name ++ "] = " ++ show (soDepth so)
   putStrLn $ "card[" ++ name ++ "] = " ++ show (soCard so)
+
+soShowFullTerminated : (String, SOMu) -> IO ()
+soShowFullTerminated = showTerminated soShowFull
+
+soShowFullList : List (String, SOMu) -> IO ()
+soShowFullList = showList soShowFull
 
 soMu1 : SOMu
 soMu1 = InSO0
