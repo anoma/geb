@@ -500,7 +500,7 @@ SOTermCheckAlg (SOPosP, STPosPair) d =
   d (SODir1, STDirFst) && d (SODir2, STDirSnd)
 
 public export
-soTermCheck : SOMu -> STMu -> Bool
+soTermCheck : SOMu -> DecPred STMu
 soTermCheck = pfProductCata SOTermCheckAlg
 
 public export
