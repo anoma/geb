@@ -552,6 +552,29 @@ MkSTTyped {so} t {ok} = MkRefinement t
 ----------------------------------------
 ----------------------------------------
 
+public export
+SOHomObjAlg : SOProductHomAlg SOMu
+-- 0 -> x === 1
+SOHomObjAlg SOPos0 d i' d' = InSO1
+-- 1 -> x === x
+SOHomObjAlg SOPos1 d i' d' = InPFM i' d'
+-- (x + y) -> z == (x -> z) * (y -> z)
+SOHomObjAlg SOPosC d i' d' =
+  InPFM SOPosP $ \di => case di of
+    SODir1 => d SODirL i' d'
+    SODir2 => d SODirR i' d'
+-- (x * y) -> z == x -> (y -> z)
+SOHomObjAlg SOPosP d i' d' =
+  let (InPFM iyz dyz) = d SODir2 i' d' in d SODir1 iyz dyz
+
+public export
+soHomObj : SOMu -> SOMu -> SOMu
+soHomObj = soProductHomCata SOHomObjAlg
+
+public export
+soExpObj : SOMu -> SOMu -> SOMu
+soExpObj = flip soHomObj
+
 -----------------------------------
 -----------------------------------
 ---- Simple types, anonymously ----
