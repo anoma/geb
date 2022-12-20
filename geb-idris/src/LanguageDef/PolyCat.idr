@@ -1360,13 +1360,14 @@ pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
 
 -- Product catamorphism using the product-hom adjunction.
 public export
-PFProductHomAlg : PolyFunc -> PolyFunc -> PolyFunc -> Type
-PFProductHomAlg p q r = PFAlg p (PolyNatTrans q r)
+PFProductHomAlgNT : PolyFunc -> PolyFunc -> PolyFunc -> Type
+PFProductHomAlgNT p q r = PFAlg p (PolyNatTrans q r)
 
 public export
-pfProductHomCata : {p, q, r : PolyFunc} -> PFProductHomAlg p q r ->
+pfProductHomCataNT : {p, q, r : PolyFunc} -> PFProductHomAlgNT p q r ->
   PolyFuncMu p -> PolyFuncMu q -> PolyFuncMu r
-pfProductHomCata {p} {q} {r} = pfPolyCata {p=q} {q=r} .* pfCata {p} {a=(PolyNatTrans q r)}
+pfProductHomCataNT {p} {q} {r} =
+  pfPolyCata {p=q} {q=r} .* pfCata {p} {a=(PolyNatTrans q r)}
 
 --------------------------------------
 --------------------------------------
