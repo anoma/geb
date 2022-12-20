@@ -564,8 +564,8 @@ SOHomObjAlg SOPosC d i' d' =
     SODir1 => d SODirL i' d'
     SODir2 => d SODirR i' d'
 -- (x * y) -> z == x -> (y -> z)
-SOHomObjAlg SOPosP d i' d' =
-  let (InPFM iyz dyz) = d SODir2 i' d' in d SODir1 iyz dyz
+SOHomObjAlg SOPosP d i' d' with (d SODir2 i' d')
+  SOHomObjAlg SOPosP d i' d' | InPFM iyz dyz = d SODir1 iyz dyz
 
 public export
 soHomObj : SOMu -> SOMu -> SOMu
