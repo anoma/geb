@@ -554,9 +554,13 @@ MkSTTyped {so} t {ok} = MkRefinement t
 
 public export
 SOHomObjAlg : SOAlg (SOMu -> SOMu)
+-- 0 -> x === 1
 SOHomObjAlg SOPos0 d obj = InSO1
+-- 1 -> x === x
 SOHomObjAlg SOPos1 d obj = obj
+-- (x + y) -> z == (x -> z) * (y -> z)
 SOHomObjAlg SOPosC d obj = InSOP (d SODirL obj) (d SODirR obj)
+-- (x * y) -> z == x -> (y -> z)
 SOHomObjAlg SOPosP d obj = d SODir1 $ d SODir2 obj
 
 public export
