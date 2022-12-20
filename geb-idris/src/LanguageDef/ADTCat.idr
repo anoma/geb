@@ -105,9 +105,17 @@ STProductHomAlgNT : Type
 STProductHomAlgNT = PFProductHomAlgNT SubstTermPF SubstTermPF SubstTermPF
 
 public export
-stProductHomCata : STProductHomAlgNT -> STMu -> STMu -> STMu
-stProductHomCata =
+stProductHomCataNT : STProductHomAlgNT -> STMu -> STMu -> STMu
+stProductHomCataNT =
   pfProductHomCataNT {p=SubstTermPF} {q=SubstTermPF} {r=SubstTermPF}
+
+public export
+STProductHomAlg : Type -> Type
+STProductHomAlg = PFProductHomAlg SubstTermPF SubstTermPF
+
+public export
+stProductHomCata : {a : Type} -> STProductHomAlg a -> STMu -> STMu -> a
+stProductHomCata = pfProductHomCata {p=SubstTermPF} {q=SubstTermPF}
 
 -------------------
 ---- Utilities ----
@@ -314,9 +322,17 @@ SOProductHomAlgNT : Type
 SOProductHomAlgNT = PFProductHomAlgNT SubstObjPF SubstObjPF SubstObjPF
 
 public export
-soProductHomCata : SOProductHomAlgNT -> SOMu -> SOMu -> SOMu
-soProductHomCata =
+soProductHomCataNT : SOProductHomAlgNT -> SOMu -> SOMu -> SOMu
+soProductHomCataNT =
   pfProductHomCataNT {p=SubstObjPF} {q=SubstObjPF} {r=SubstObjPF}
+
+public export
+SOProductHomAlg : Type -> Type
+SOProductHomAlg = PFProductHomAlg SubstObjPF SubstObjPF
+
+public export
+soProductHomCata : {a : Type} -> SOProductHomAlg a -> SOMu -> SOMu -> a
+soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
 
 -------------------
 ---- Utilities ----

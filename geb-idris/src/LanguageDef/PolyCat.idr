@@ -1139,6 +1139,18 @@ pfProductCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} alg =
   pfCata {p=(ppos ** pdir)} {a=(PolyFuncMu (qpos ** qdir) -> a)} $
     \pi, pd, (InPFM qi qd) => alg (pi, qi) $ \(pdi, qdi) => pd pdi $ qd qdi
 
+-- Product catamorphism using the product-hom adjunction.
+public export
+PFProductHomAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFProductHomAlg p q a = PFAlg p (PFAlg q a)
+
+public export
+pfProductHomCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFProductHomAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfProductHomCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} =
+  pfCata {p=(qpos ** qdir)} {a} .*
+    pfCata {p=(ppos ** pdir)} {a=(PFAlg (qpos ** qdir) a)}
+
 ----------------------------------
 ---- Polynomial (free) monads ----
 ----------------------------------
@@ -1358,7 +1370,9 @@ pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
   (pfFreePolyCataOnPos {p} {q} (onPos ** onDir) **
    pfFreePolyCataOnDir {p} {q} (onPos ** onDir))
 
--- Product catamorphism using the product-hom adjunction.
+-- Product catamorphism using the product-hom adjunction and a natural
+-- transformation to produce an output which also comes from an initial
+-- algebra.
 public export
 PFProductHomAlgNT : PolyFunc -> PolyFunc -> PolyFunc -> Type
 PFProductHomAlgNT p q r = PFAlg p (PolyNatTrans q r)
