@@ -100,6 +100,15 @@ public export
 stFreePolyCata : STNatTrans -> STFreeNatTrans
 stFreePolyCata = pfFreePolyCata {p=SubstTermPF} {q=SubstTermPF}
 
+public export
+STProductHomAlg : Type
+STProductHomAlg = PFProductHomAlg SubstTermPF SubstTermPF SubstTermPF
+
+public export
+stProductHomCata : STProductHomAlg -> STMu -> STMu -> STMu
+stProductHomCata =
+  pfProductHomCata {p=SubstTermPF} {q=SubstTermPF} {r=SubstTermPF}
+
 -------------------
 ---- Utilities ----
 -------------------
@@ -299,6 +308,15 @@ SOProductAlg = PFProductAlg SubstObjPF SubstObjPF
 public export
 soProductCata : {0 a : Type} -> SOProductAlg a -> SOMu -> SOMu -> a
 soProductCata {a} = pfProductCata {a} {p=SubstObjPF} {q=SubstObjPF}
+
+public export
+SOProductHomAlg : Type
+SOProductHomAlg = PFProductHomAlg SubstObjPF SubstObjPF SubstObjPF
+
+public export
+soProductHomCata : SOProductHomAlg -> SOMu -> SOMu -> SOMu
+soProductHomCata =
+  pfProductHomCata {p=SubstObjPF} {q=SubstObjPF} {r=SubstObjPF}
 
 -------------------
 ---- Utilities ----
