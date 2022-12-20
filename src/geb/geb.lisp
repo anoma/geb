@@ -2,8 +2,42 @@
 
 (in-package :geb)
 
-(-> mlist (substmorph &rest substmorph) pair)
-(defun mlist (v1 &rest values)
+(-> const (<substmorph> <substobj>) (or alias comp))
+(defun const (f x)
+  "The constant morphism.
+
+Takes a morphism from [SO1][type] to a desired value of type $B$,
+along with a [\\<SUBSTOBJ\\>] that represents the input type say of
+type $A$, giving us a morphism from $A$ to $B$.
+
+Thus if:
+F : [SO1][type] → a,
+X : b
+
+then: (const f x) : a → b
+
+```
+Γ, f : so1 → b, x : a
+----------------------
+(const f x) : a → b
+```
+
+Further, If the input `F` is an [ALIAS][type], then we wrap the output
+in a new alias to denote it's a constant version of that value.
+
+
+Example:
+
+```lisp
+(const true bool) ; bool -> bool
+```"
+  (if (typep f 'alias)
+      (make-alias :name (intern (format nil "CONST-~A" (name f))) :obj (obj f))
+      (comp f (terminal x))))
+
+(-> cleave (substmorph &rest substmorph) pair)
+(defun cleave (v1 &rest values)
+  "Applies each morphism to the object in turn."
   (if (null values)
       v1
       (mvfoldr #'pair (cons v1 (butlast values)) (car (last values)))))
@@ -83,34 +117,44 @@
 (defun so-forget-first (x y z)
   (pair (comp (<-right x y) (<-left (prod x y) z))
         (<-right (prod x y) z)))
+=======
+(defgeneric dom (substmorph)
+  (:documentation "Grabs the domain of the morphism"))
 
+(defgeneric codom (substmorph)
+  (:documentation "Grabs the codomain of the morphism"))
 
-(defun dom (x)
-  (match-of substmorph x
-    ((alias _ x) (dom x))
-    (substobj x)
-    ((comp _ x) (dom x))
-    ((init _) so0)
-    ((terminal x) x)
-    ((case x y) (coprod (dom x) (dom y)))
-    ((pair x _) (dom x))
-    ((distribute x y z) (prod x (coprod y z)))
-    ((inject-left x _) x)
-    ((inject-right _ x) x)
-    ((project-left x y) (prod x y))
-    ((project-right x y) (prod x y))))
+(defmethod dom ((x <substmorph>))
+  (if (not (typep x 'substmorph))
+      (subclass-responsibility x)
+      (match-of substmorph x
+        ((alias _ x)         (dom x))
+        (substobj            x)
+        ((terminal x)        x)
+        ((inject-left x _)   x)
+        ((inject-right _ x)  x)
+        ((init _)            so0)
+        ((comp _ x)          (dom x))
+        ((case x y)          (coprod (dom x) (dom y)))
+        ((pair x _)          (dom x))
+        ((distribute x y z)  (prod x (coprod y z)))
+        ((project-left x y)  (prod x y))
+        ((project-right x y) (prod x y)))))
 
-(defun codom (x)
-  (match-of substmorph x
-    ((alias _ x) (codom x))
-    (substobj x)
-    ((comp x _) (codom x))
-    ((init x) x)
-    ((terminal _) so1)
-    ((case x _) (codom x))
-    ((pair x y) (prod (codom x) (codom y)))
-    ((distribute x y z) (coprod (prod x y) (prod x z)))
-    ((inject-left x y) (coprod x y))
-    ((inject-right x y) (coprod x y))
-    ((project-left x _) x)
-    ((project-right _ x) x)))
+(defmethod codom ((x <substmorph>))
+  (if (not (typep x 'substmorph))
+      (subclass-responsibility x)
+      (match-of substmorph x
+        ((alias _ x)         (codom x))
+        ((terminal _)        so1)
+        ((init x)            x)
+        (substobj            x)
+        ((project-left x _)  x)
+        ((project-right _ x) x)
+        ((comp x _)          (codom x))
+        ((case x _)          (codom x))
+        ((pair x y)          (prod (codom x) (codom y)))
+        ((distribute x y z)  (coprod (prod x y) (prod x z)))
+        ((inject-left x y)   (coprod x y))
+        ((inject-right x y)  (coprod x y)))))
+>>>>>>> 5a43777ec4b15f9d5a88d301d0a1b6fc9f3d47cd

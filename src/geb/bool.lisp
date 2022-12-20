@@ -5,9 +5,9 @@
 ;; Also I want a variable to control so Ι can expand these names
 ;; only, as Ι pretty print.
 
-(def true (alias true (right-> so1 so1)))
+(def true (alias true (->right so1 so1)))
 
-(def false (alias false (left-> so1 so1)))
+(def false (alias false (->left so1 so1)))
 
 (def bool (alias bool (coprod so1 so1)))
 
@@ -28,13 +28,6 @@ the right unit")
       "The false value of a boolean type. In this case we've defined true as
 the left unit")
 
-;; TODO :: refactor this to remove the x call, and instead use
-;; (terminal (codomain f))
-(defun so-const (f x)
-  "composition of the term and it's terminal type" ; ???
-  ;; Is this right!? hard to tell with Idris's unification
-  (comp f (terminal x)))
-
 (defun so-uncurry (x y f)
   x y f)
 
@@ -48,13 +41,28 @@ the left unit")
       "Turns a TRUE into a FALSE and vice versa")
 
 ;; this is curried and,
-(def and
-  (pair (so-const false bool)
+(def cand
+  (pair (const false bool)
         bool))
+
+(def iso1
+  (let ((bool-from-so1 (<-left bool so1)))
+    (mcase (comp (->left bool bool)  bool-from-so1)
+           (comp (->right bool bool) bool-from-so1))))
+
+(def and-on-sum
+  (mcase (const false bool) bool))
+
+(def and-more-verbose
+  (comp and-on-sum iso1 (distribute bool so1 so1)))
+
+(def and
+  (comp (mcase (const false (prod bool so1)) (<-left bool so1))
+        (distribute bool so1 so1)))
 
 (def or
   (pair bool
-        (so-const true bool)))
+        (const true bool)))
 
 ;; (def sand
 ;;   (alias and

@@ -611,12 +611,12 @@ type substobj = so0
     the type.
     
     ```lisp
-    (left-> so1 so1)
+    (->left so1 so1)
     
-    (right-> so1 so1)
+    (->right so1 so1)
     ```
     
-    where applying LEFT-> gives us the left unit, while RIGHT-> gives
+    where applying ->LEFT gives us the left unit, while ->RIGHT gives
     us the right unit.
 
 - [type] ALIAS
@@ -740,7 +740,7 @@ SUBSTMORPH
     (comp
      (mcase geb-bool:true
             geb-bool:not)
-     (right-> so1 geb-bool:bool))
+     (->right so1 geb-bool:bool))
     ```
     
     In the second example, we inject a term with the shape GEB-BOOL:BOOL
@@ -848,22 +848,22 @@ SUBSTMORPH
     The formal grammar is
     
     ```lisp
-    (left-> mcar mcadr)
+    (->left mcar mcadr)
     ```
     
-    Where LEFT-> is the constructor, MCAR is the value being injected into
+    Where ->LEFT is the constructor, MCAR is the value being injected into
     the coproduct of MCAR + MCADR, and the MCADR is just the type for
     the unused right constructor.
     
     Example:
     
     ```lisp
-    (geb-gui::visualize (left-> so1 geb-bool:bool))
+    (geb-gui::visualize (->left so1 geb-bool:bool))
     
     (comp
      (mcase geb-bool:true
             geb-bool:not)
-     (left-> so1 geb-bool:bool))
+     (->left so1 geb-bool:bool))
     
     ```
     
@@ -880,22 +880,22 @@ SUBSTMORPH
     The formal grammar is
     
     ```lisp
-    (right-> mcar mcadr)
+    (->right mcar mcadr)
     ```
     
-    Where RIGHT-> is the constructor, MCADR is the value being injected into
+    Where ->RIGHT is the constructor, MCADR is the value being injected into
     the coproduct of MCAR + MCADR, and the MCAR is just the type for
     the unused left constructor.
     
     Example:
     
     ```lisp
-    (geb-gui::visualize (right-> so1 geb-bool:bool))
+    (geb-gui::visualize (->right so1 geb-bool:bool))
     
     (comp
      (mcase geb-bool:true
             geb-bool:not)
-     (right-> so1 geb-bool:bool))
+     (->right so1 geb-bool:bool))
     
     ```
     
@@ -1110,11 +1110,11 @@ More Ergonomic API variants for *SO0* and *SO1*
 
     projects right constructor
 
-- [function] LEFT-> MCAR MCADR
+- [function] ->LEFT MCAR MCADR
 
     injects left constructor
 
-- [function] RIGHT-> MCAR MCADR
+- [function] ->RIGHT MCAR MCADR
 
     injects right constructor
 
@@ -1141,8 +1141,8 @@ We likewise define it with coproducts
 ```lisp
 (def bool (coprod so1 so1))
 
-(def true  (right-> so1 so1))
-(def false (left->  so1 so1))
+(def true  (->right so1 so1))
+(def false (->left  so1 so1))
 ```
 
 The functions given work on this.
@@ -1195,7 +1195,39 @@ Various utility functions ontop of @GEB-CATEGORIES
 
     converts the given type to a list format
 
-- [function] MLIST V1 &REST VALUES
+- [function] CLEAVE V1 &REST VALUES
+
+    Applies each morphism to the object in turn.
+
+- [function] CONST F X
+
+    The constant morphism.
+    
+    Takes a morphism from SO1 to a desired value of type $B$,
+    along with a <SUBSTOBJ> that represents the input type say of
+    type $A$, giving us a morphism from $A$ to $B$.
+    
+    Thus if:
+    F : SO1 → a,
+    X : b
+    
+    then: (const f x) : a → b
+    
+    ```
+    Γ, f : so1 → b, x : a
+    ----------------------
+    (const f x) : a → b
+    ```
+    
+    Further, If the input `F` is an ALIAS, then we wrap the output
+    in a new alias to denote it's a constant version of that value.
+    
+    Example:
+    
+    ```lisp
+    (const true bool) ; bool -> bool
+    ```
+
 
 - [function] COMMUTES X Y
 

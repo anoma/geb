@@ -91,11 +91,11 @@
 
 (defmethod print-object ((obj inject-left) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "left->~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
+    (format stream "->left~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
 
 (defmethod print-object ((obj inject-right) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "right->~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
+    (format stream "->right~1:I ~W ~_~W" (mcar obj) (mcadr obj))))
 
 (defmethod print-object ((obj project-left) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
@@ -111,7 +111,7 @@
 
 (defmethod print-object ((obj comp) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
-    (format stream "∘~1:I ~{~W~^~_ ~}" (same-type-to-list obj 'comp))))
+    (format stream "∘~0:I ~{~W~^~_ ~}" (same-type-to-list obj 'comp))))
 
 (defmethod print-object ((obj distribute) stream)
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")

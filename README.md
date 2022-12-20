@@ -682,12 +682,12 @@ type substobj = so0
     the type.
     
     ```lisp
-    (left-> so1 so1)
+    (->left so1 so1)
     
-    (right-> so1 so1)
+    (->right so1 so1)
     ```
     
-    where applying [`LEFT->`][effe] gives us the left unit, while [`RIGHT->`][ff57] gives
+    where applying [`->LEFT`][e2af] gives us the left unit, while [`->RIGHT`][ba44] gives
     us the right unit.
 
 <a id="x-28GEB-2ESPEC-3AALIAS-20TYPE-29"></a>
@@ -821,7 +821,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     (comp
      (mcase geb-bool:true
             geb-bool:not)
-     (right-> so1 geb-bool:bool))
+     (->right so1 geb-bool:bool))
     ```
     
     In the second example, we inject a term with the shape [`GEB-BOOL:BOOL`][0ad4]
@@ -832,10 +832,10 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 <a id="x-28GEB-2ESPEC-3AINIT-20TYPE-29"></a>
 - [type] **INIT**
 
-    The [`INITIAL`][f899] Morphism, takes any [`<SUBSTOBJ>`][8214] and
+    The [INITIAL][f899] Morphism, takes any [`<SUBSTOBJ>`][8214] and
     creates a moprhism from [`SO0`][1f3a] (also known as void) to the object given.
     
-    The formal grammar of [`INITIAL`][f899] is
+    The formal grammar of [INITIAL][f899] is
     
     ```lisp
     (init obj)
@@ -934,22 +934,22 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     The formal grammar is
     
     ```lisp
-    (left-> mcar mcadr)
+    (->left mcar mcadr)
     ```
     
-    Where [`LEFT->`][effe] is the constructor, [`MCAR`][f1ce] is the value being injected into
+    Where [`->LEFT`][e2af] is the constructor, [`MCAR`][f1ce] is the value being injected into
     the coproduct of [`MCAR`][f1ce] + [`MCADR`][cc87], and the [`MCADR`][cc87] is just the type for
     the unused right constructor.
     
     Example:
     
     ```lisp
-    (geb-gui::visualize (left-> so1 geb-bool:bool))
+    (geb-gui::visualize (->left so1 geb-bool:bool))
     
     (comp
      (mcase geb-bool:true
             geb-bool:not)
-     (left-> so1 geb-bool:bool))
+     (->left so1 geb-bool:bool))
     
     ```
     
@@ -967,22 +967,22 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     The formal grammar is
     
     ```lisp
-    (right-> mcar mcadr)
+    (->right mcar mcadr)
     ```
     
-    Where [`RIGHT->`][ff57] is the constructor, [`MCADR`][cc87] is the value being injected into
+    Where [`->RIGHT`][ba44] is the constructor, [`MCADR`][cc87] is the value being injected into
     the coproduct of [`MCAR`][f1ce] + [`MCADR`][cc87], and the [`MCAR`][f1ce] is just the type for
     the unused left constructor.
     
     Example:
     
     ```lisp
-    (geb-gui::visualize (right-> so1 geb-bool:bool))
+    (geb-gui::visualize (->right so1 geb-bool:bool))
     
     (comp
      (mcase geb-bool:true
             geb-bool:not)
-     (right-> so1 geb-bool:bool))
+     (->right so1 geb-bool:bool))
     
     ```
     
@@ -1240,13 +1240,13 @@ More Ergonomic API variants for [`*SO0*`][e982] and [`*SO1*`][b960]
 
     projects right constructor
 
-<a id="x-28GEB-2ESPEC-3ALEFT--3E-20FUNCTION-29"></a>
-- [function] **LEFT-\>** *MCAR MCADR*
+<a id="x-28GEB-2ESPEC-3A--3ELEFT-20FUNCTION-29"></a>
+- [function] **-\>LEFT** *MCAR MCADR*
 
     injects left constructor
 
-<a id="x-28GEB-2ESPEC-3ARIGHT--3E-20FUNCTION-29"></a>
-- [function] **RIGHT-\>** *MCAR MCADR*
+<a id="x-28GEB-2ESPEC-3A--3ERIGHT-20FUNCTION-29"></a>
+- [function] **-\>RIGHT** *MCAR MCADR*
 
     injects right constructor
 
@@ -1277,8 +1277,8 @@ We likewise define it with coproducts
 ```lisp
 (def bool (coprod so1 so1))
 
-(def true  (right-> so1 so1))
-(def false (left->  so1 so1))
+(def true  (->right so1 so1))
+(def false (->left  so1 so1))
 ```
 
 The functions given work on this.
@@ -1342,8 +1342,41 @@ Various utility functions ontop of [Core Category][cb9e]
 
     converts the given type to a list format
 
-<a id="x-28GEB-3AMLIST-20FUNCTION-29"></a>
-- [function] **MLIST** *V1 &REST VALUES*
+<a id="x-28GEB-3ACLEAVE-20FUNCTION-29"></a>
+- [function] **CLEAVE** *V1 &REST VALUES*
+
+    Applies each morphism to the object in turn.
+
+<a id="x-28GEB-3ACONST-20FUNCTION-29"></a>
+- [function] **CONST** *F X*
+
+    The constant morphism.
+    
+    Takes a morphism from [`SO1`][ebf5] to a desired value of type $B$,
+    along with a [`<SUBSTOBJ>`][8214] that represents the input type say of
+    type $A$, giving us a morphism from $A$ to $B$.
+    
+    Thus if:
+    `F` : [`SO1`][ebf5] → a,
+    `X` : b
+    
+    then: (const f x) : a → b
+    
+    ```
+    Γ, f : so1 → b, x : a
+    ----------------------
+    (const f x) : a → b
+    ```
+    
+    Further, If the input `F` is an [`ALIAS`][5e72], then we wrap the output
+    in a new alias to denote it's a constant version of that value.
+    
+    Example:
+    
+    ```lisp
+    (const true bool) ; bool -> bool
+    ```
+
 
 <a id="x-28GEB-3ACOMMUTES-20FUNCTION-29"></a>
 - [function] **COMMUTES** *X Y*
@@ -1816,6 +1849,7 @@ features and how to better lay out future tests
   [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
   [59dd]: #x-28GEB-2ESPEC-3ACASE-20TYPE-29 "GEB.SPEC:CASE TYPE"
+  [5e72]: #x-28GEB-2ESPEC-3AALIAS-20TYPE-29 "GEB.SPEC:ALIAS TYPE"
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
   [684b]: http://www.lispworks.com/documentation/HyperSpec/Body/s_if.htm "IF MGL-PAX:MACRO"
   [7088]: #x-28GEB-2ESPEC-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO0 MGL-PAX:SYMBOL-MACRO"
@@ -1853,6 +1887,7 @@ features and how to better lay out future tests
   [b960]: #x-28GEB-2ESPEC-3A-2ASO1-2A-20VARIABLE-29 "GEB.SPEC:*SO1* VARIABLE"
   [b9c1]: http://www.lispworks.com/documentation/HyperSpec/Body/t_seq.htm "SEQUENCE TYPE"
   [b9f3]: #x-28GEB-DOCS-2FDOCS-3A-40IDIOMS-20MGL-PAX-3ASECTION-29 "Project Idioms and Conventions"
+  [ba44]: #x-28GEB-2ESPEC-3A--3ERIGHT-20FUNCTION-29 "GEB.SPEC:->RIGHT FUNCTION"
   [bc7a]: #x-28GEB-DOCS-2FDOCS-3A-40GLOSSERY-20MGL-PAX-3ASECTION-29 "Glossery"
   [bd81]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-20MGL-PAX-3ASECTION-29 "Polynomial Types"
   [bf07]: http://www.lispworks.com/documentation/HyperSpec/Body/f_export.htm "EXPORT FUNCTION"
@@ -1875,12 +1910,12 @@ features and how to better lay out future tests
   [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
   [d908]: http://www.lispworks.com/documentation/HyperSpec/Body/f_typep.htm "TYPEP FUNCTION"
   [dbe7]: #x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29 "Objects"
+  [e2af]: #x-28GEB-2ESPEC-3A--3ELEFT-20FUNCTION-29 "GEB.SPEC:->LEFT FUNCTION"
   [e65d]: #x-28GEB-2ESPEC-3APROJECT-RIGHT-20TYPE-29 "GEB.SPEC:PROJECT-RIGHT TYPE"
   [e755]: http://www.lispworks.com/documentation/HyperSpec/Body/d_type.htm "TYPE DECLARATION"
   [e982]: #x-28GEB-2ESPEC-3A-2ASO0-2A-20VARIABLE-29 "GEB.SPEC:*SO0* VARIABLE"
   [ebf5]: #x-28GEB-2ESPEC-3ASO1-20TYPE-29 "GEB.SPEC:SO1 TYPE"
   [ecc6]: #x-28GEB-DOCS-2FDOCS-3A-40CLOS-20MGL-PAX-3AGLOSSARY-TERM-29 "GEB-DOCS/DOCS:@CLOS MGL-PAX:GLOSSARY-TERM"
-  [effe]: #x-28GEB-2ESPEC-3ALEFT--3E-20FUNCTION-29 "GEB.SPEC:LEFT-> FUNCTION"
   [f022]: #x-28GEB-BOOL-3ATRUE-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:TRUE MGL-PAX:SYMBOL-MACRO"
   [f1ce]: #x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCAR GENERIC-FUNCTION"
   [f1e6]: #x-28GEB-2EUTILS-3AOBJ-20GENERIC-FUNCTION-29 "GEB.UTILS:OBJ GENERIC-FUNCTION"
@@ -1890,7 +1925,6 @@ features and how to better lay out future tests
   [f914]: #x-28GEB-2ESPEC-3ACOMP-20TYPE-29 "GEB.SPEC:COMP TYPE"
   [fae9]: #x-28GEB-2ESPEC-3AINJECT-RIGHT-20TYPE-29 "GEB.SPEC:INJECT-RIGHT TYPE"
   [fb12]: #x-28GEB-2ESPEC-3ACOPROD-20TYPE-29 "GEB.SPEC:COPROD TYPE"
-  [ff57]: #x-28GEB-2ESPEC-3ARIGHT--3E-20FUNCTION-29 "GEB.SPEC:RIGHT-> FUNCTION"
 
 * * *
 ###### \[generated by [MGL-PAX](https://github.com/melisgl/mgl-pax)\]

@@ -42,7 +42,8 @@ into other categorical data structures."
   "Various utility functions ontop of @GEB-CATEGORIES"
   (pair-to-list      pax:function)
   (same-type-to-list pax:function)
-  (mlist             pax:function)
+  (cleave            pax:function)
+  (const             pax:function)
   (commutes          pax:function)
   (!->               pax:function)
   (so-eval           pax:function)
@@ -81,8 +82,8 @@ We likewise define it with coproducts
 ```lisp
 (def bool (coprod so1 so1))
 
-(def true  (right-> so1 so1))
-(def false (left->  so1 so1))
+(def true  (->right so1 so1))
+(def false (->left  so1 so1))
 ```
 
 The functions given work on this."
