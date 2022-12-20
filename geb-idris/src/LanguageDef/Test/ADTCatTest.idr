@@ -704,6 +704,7 @@ adtCatTest = do
     , ("soMu5", soMu5)
     ]
   putStrLn $ "stt3 = " ++ show stt3
+  putStrLn "---------------"
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."

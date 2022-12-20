@@ -512,6 +512,12 @@ MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
   {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
 MkSTTyped {so} t {ok} = MkRefinement t
 
+----------------------------------------
+----------------------------------------
+---- Higher-order morphisms in SOMu ----
+----------------------------------------
+----------------------------------------
+
 -----------------------------------
 -----------------------------------
 ---- Simple types, anonymously ----

@@ -1358,6 +1358,14 @@ pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
   (pfFreePolyCataOnPos {p} {q} (onPos ** onDir) **
    pfFreePolyCataOnDir {p} {q} (onPos ** onDir))
 
+-- Product catamorphism using the product-hom adjunction.
+PFProductHomAlg : PolyFunc -> PolyFunc -> PolyFunc -> Type
+PFProductHomAlg p q r = PFAlg p (PolyNatTrans q r)
+
+pfProductHomCata : {p, q, r : PolyFunc} -> PFProductHomAlg p q r ->
+  PolyFuncMu p -> PolyFuncMu q -> PolyFuncMu r
+pfProductHomCata {p} {q} {r} = pfPolyCata {p=q} {q=r} .* pfCata {p} {a=(PolyNatTrans q r)}
+
 --------------------------------------
 --------------------------------------
 ---- Polynomial-functor coalgebra ----
