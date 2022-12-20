@@ -562,6 +562,46 @@ public export
 stt3 : STTyped ADTCatTest.soMu5
 stt3 = MkSTTyped {so=soMu5} stMu3
 
+public export
+soMuBool : SOMu
+soMuBool = InSOC InSO1 InSO1
+
+public export
+soMuThree : SOMu
+soMuThree = InSOC InSO1 soMuBool
+
+public export
+soMuBinFour : SOMu
+soMuBinFour = InSOP soMuBool soMuBool
+
+public export
+soMuBinFive : SOMu
+soMuBinFive = InSOC InSO1 soMuBinFour
+
+public export
+soHomBoolBool : SOMu
+soHomBoolBool = soHomObj soMuBool soMuBool
+
+public export
+soHomThreeThree : SOMu
+soHomThreeThree = soHomObj soMuThree soMuThree
+
+public export
+soHomFourFive : SOMu
+soHomFourFive = soHomObj soMuBinFour soMuBinFive
+
+public export
+soHomFiveFour : SOMu
+soHomFiveFour = soHomObj soMuBinFive soMuBinFour
+
+public export
+soHomFourFiveCardCorrect : Assertion
+soHomFourFiveCardCorrect = Assert $ soCard soHomFourFive == 625
+
+public export
+soHomFiveFourCardCorrect : Assertion
+soHomFiveFourCardCorrect = Assert $ soCard soHomFiveFour == 1024
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -702,6 +742,14 @@ adtCatTest = do
     , ("soMu3", soMu3)
     , ("soMu4", soMu4)
     , ("soMu5", soMu5)
+    , ("soMuBool", soMuBool)
+    , ("soMuThree", soMuThree)
+    , ("soMuBinFour", soMuBinFour)
+    , ("soMuBinFive", soMuBinFive)
+    , ("soHomBoolBool", soHomBoolBool)
+    , ("soHomThreeThree", soHomThreeThree)
+    , ("soHomFourFive", soHomFourFive)
+    , ("soHomFiveFour", soHomFiveFour)
     ]
   putStrLn $ "stt3 = " ++ show stt3
   putStrLn "---------------"

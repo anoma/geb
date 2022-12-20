@@ -553,23 +553,15 @@ MkSTTyped {so} t {ok} = MkRefinement t
 ----------------------------------------
 
 public export
-SOHomObjAlg : SOProductHomAlg SOMu
--- 0 -> x === 1
-SOHomObjAlg SOPos0 d i' d' = InSO1
--- 1 -> x === x
-SOHomObjAlg SOPos1 d i' d' = InPFM i' d'
--- (x + y) -> z == (x -> z) * (y -> z)
-SOHomObjAlg SOPosC d i' d' =
-  InPFM SOPosP $ \di => case di of
-    SODir1 => d SODirL i' d'
-    SODir2 => d SODirR i' d'
--- (x * y) -> z == x -> (y -> z)
-SOHomObjAlg SOPosP d i' d' with (d SODir2 i' d')
-  SOHomObjAlg SOPosP d i' d' | InPFM iyz dyz = d SODir1 iyz dyz
+SOHomObjAlg : SOAlg (SOMu -> SOMu)
+SOHomObjAlg SOPos0 d obj = InSO1
+SOHomObjAlg SOPos1 d obj = obj
+SOHomObjAlg SOPosC d obj = InSOP (d SODirL obj) (d SODirR obj)
+SOHomObjAlg SOPosP d obj = d SODir1 $ d SODir2 obj
 
 public export
 soHomObj : SOMu -> SOMu -> SOMu
-soHomObj = soProductHomCata SOHomObjAlg
+soHomObj = soCata SOHomObjAlg
 
 public export
 soExpObj : SOMu -> SOMu -> SOMu
