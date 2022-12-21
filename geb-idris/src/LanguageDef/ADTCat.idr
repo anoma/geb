@@ -546,11 +546,11 @@ MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
   {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
 MkSTTyped {so} t {ok} = MkRefinement t
 
-----------------------------------------
-----------------------------------------
----- Higher-order morphisms in SOMu ----
-----------------------------------------
-----------------------------------------
+---------------------------
+---------------------------
+---- Morphisms in SOMu ----
+---------------------------
+---------------------------
 
 public export
 SOHomObjAlg : SOAlg (SOMu -> SOMu)
@@ -558,9 +558,9 @@ SOHomObjAlg : SOAlg (SOMu -> SOMu)
 SOHomObjAlg SOPos0 d obj = InSO1
 -- 1 -> x === x
 SOHomObjAlg SOPos1 d obj = obj
--- (x + y) -> z == (x -> z) * (y -> z)
+-- (x + y) -> z === (x -> z) * (y -> z)
 SOHomObjAlg SOPosC d obj = InSOP (d SODirL obj) (d SODirR obj)
--- (x * y) -> z == x -> (y -> z)
+-- (x * y) -> z === x -> (y -> z)
 SOHomObjAlg SOPosP d obj = d SODir1 $ d SODir2 obj
 
 public export
@@ -570,6 +570,10 @@ soHomObj = soCata SOHomObjAlg
 public export
 soExpObj : SOMu -> SOMu -> SOMu
 soExpObj = flip soHomObj
+
+public export
+SOHomTerm : SOMu -> SOMu -> Type
+SOHomTerm = STTyped .* soHomObj
 
 -----------------------------------
 -----------------------------------
