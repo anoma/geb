@@ -534,6 +534,27 @@ SOTermCheckAlg (SOPosP, STPosPair) d =
   d (SODir1, STDirFst) && d (SODir2, STDirSnd)
 
 public export
+data SOTermDir :
+    (i : (SubstObjPos, SubstTermPos)) ->
+    ((SubstObjDir (fst i), SubstTermDir (snd i)) -> Type) ->
+    Type where
+  SOTermDir1L :
+    {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
+    SOTermDir (SOPos1, STPosLeaf) d
+  SOTermDirCL :
+    {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Type} ->
+    d (SODirL, STDirL) ->
+    SOTermDir (SOPosC, STPosLeft) d
+  SOTermDirCR :
+    {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Type} ->
+    d (SODirR, STDirR) ->
+    SOTermDir (SOPosC, STPosRight) d
+  SOTermDirPP :
+    {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
+    d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
+    SOTermDir (SOPosP, STPosPair) d
+
+public export
 soTermCheck : SOMu -> DecPred STMu
 soTermCheck = pfProductCata SOTermCheckAlg
 
