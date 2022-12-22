@@ -546,22 +546,22 @@ SOTermPosDep : SliceObj SOTermPos
 SOTermPosDep = SliceObj . SOTermDir
 
 public export
-data SOTermPFAlg : SliceObj (Sigma SOTermPosDep) where
-  SOTermPFAlg1L :
+data SOTermDirDep : SliceObj (Sigma SOTermPosDep) where
+  SOTermDirDep1L :
     {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
-    SOTermPFAlg ((SOPos1, STPosLeaf) ** d)
-  SOTermPFAlgCL :
+    SOTermDirDep ((SOPos1, STPosLeaf) ** d)
+  SOTermDirDepCL :
     {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Type} ->
     d (SODirL, STDirL) ->
-    SOTermPFAlg ((SOPosC, STPosLeft) ** d)
-  SOTermPFAlgCR :
+    SOTermDirDep ((SOPosC, STPosLeft) ** d)
+  SOTermDirDepCR :
     {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Type} ->
     d (SODirR, STDirR) ->
-    SOTermPFAlg ((SOPosC, STPosRight) ** d)
-  SOTermPFAlgPP :
+    SOTermDirDep ((SOPosC, STPosRight) ** d)
+  SOTermDirDepPP :
     {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
     d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
-    SOTermPFAlg ((SOPosP, STPosPair) ** d)
+    SOTermDirDep ((SOPosP, STPosPair) ** d)
 
 public export
 soTermCheck : SOMu -> DecPred STMu
