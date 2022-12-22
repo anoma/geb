@@ -534,12 +534,16 @@ SOTermCheckAlg (SOPosP, STPosPair) d =
   d (SODir1, STDirFst) && d (SODir2, STDirSnd)
 
 public export
+SOTermArena : PolyFunc
+SOTermArena = pfParProductArena SubstObjPF SubstTermPF
+
+public export
 SOTermPos : Type
-SOTermPos = (SubstObjPos, SubstTermPos)
+SOTermPos = pfPos SOTermArena
 
 public export
 SOTermDir : SliceObj SOTermPos
-SOTermDir = pfDir {p=(pfParProductArena SubstObjPF SubstTermPF)}
+SOTermDir = pfDir {p=SOTermArena}
 
 public export
 SOTermPosDep : SliceObj SOTermPos
@@ -562,6 +566,18 @@ data SOTermDirDep : SliceObj (Sigma SOTermPosDep) where
     {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
     d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
     SOTermDirDep ((SOPosP, STPosPair) ** d)
+
+public export
+SOTermSPFEndoId : SlicePolyEndoFuncId SOTermPos
+SOTermSPFEndoId = (SOTermPosDep ** SOTermDirDep)
+
+public export
+SOTermSPF : SlicePolyEndoFunc SOTermPos
+SOTermSPF = SlicePolyEndoFuncFromId SOTermSPFEndoId
+
+public export
+SOCheckedTerm : SliceObj SOTermPos
+SOCheckedTerm = SPFMu SOTermSPF
 
 public export
 soTermCheck : SOMu -> DecPred STMu
