@@ -535,11 +535,12 @@ SOTermCheckAlg (SOPosP, STPosPair) d =
 
 public export
 SOTermDir : SliceObj (SubstObjPos, SubstTermPos)
-SOTermDir i = (SubstObjDir (fst i), SubstTermDir (snd i))
+SOTermDir = pfDir {p=(pfParProductArena SubstObjPF SubstTermPF)}
 
 public export
 data SOTermPFAlg :
-    Sigma {a=(SubstObjPos, SubstTermPos)} (SliceObj . SOTermDir) -> Type where
+    SliceObj (Sigma {a=(SubstObjPos, SubstTermPos)} (SliceObj . SOTermDir))
+    where
   SOTermPFAlg1L :
     {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
     SOTermPFAlg ((SOPos1, STPosLeaf) ** d)
