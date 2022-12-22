@@ -534,10 +534,12 @@ SOTermCheckAlg (SOPosP, STPosPair) d =
   d (SODir1, STDirFst) && d (SODir2, STDirSnd)
 
 public export
+SOTermSlice : SliceObj (SubstObjPos, SubstTermPos)
+SOTermSlice i = (SubstObjDir (fst i), SubstTermDir (snd i))
+
+public export
 data SOTermDir :
-    (i : (SubstObjPos, SubstTermPos)) ->
-    ((SubstObjDir (fst i), SubstTermDir (snd i)) -> Type) ->
-    Type where
+    (i : (SubstObjPos, SubstTermPos)) -> SliceObj (SOTermSlice i) -> Type where
   SOTermDir1L :
     {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
     SOTermDir (SOPos1, STPosLeaf) d
