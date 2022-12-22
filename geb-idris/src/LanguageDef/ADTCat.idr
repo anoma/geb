@@ -539,22 +539,22 @@ SOTermSlice i = (SubstObjDir (fst i), SubstTermDir (snd i))
 
 public export
 data SOTermPFAlg :
-    (i : (SubstObjPos, SubstTermPos)) -> SliceObj (SOTermSlice i) -> Type where
+    DPair (SubstObjPos, SubstTermPos) (SliceObj . SOTermSlice) -> Type where
   SOTermPFAlg1L :
     {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
-    SOTermPFAlg (SOPos1, STPosLeaf) d
+    SOTermPFAlg ((SOPos1, STPosLeaf) ** d)
   SOTermPFAlgCL :
     {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Type} ->
     d (SODirL, STDirL) ->
-    SOTermPFAlg (SOPosC, STPosLeft) d
+    SOTermPFAlg ((SOPosC, STPosLeft) ** d)
   SOTermPFAlgCR :
     {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Type} ->
     d (SODirR, STDirR) ->
-    SOTermPFAlg (SOPosC, STPosRight) d
+    SOTermPFAlg ((SOPosC, STPosRight) ** d)
   SOTermPFAlgPP :
     {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
     d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
-    SOTermPFAlg (SOPosP, STPosPair) d
+    SOTermPFAlg ((SOPosP, STPosPair) ** d)
 
 public export
 soTermCheck : SOMu -> DecPred STMu
