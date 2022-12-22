@@ -589,8 +589,8 @@ SOTermSPF : SlicePolyEndoFunc SOTermPos
 SOTermSPF = SlicePolyEndoFuncFromId SOTermSPFEndoId
 
 public export
-SOCheckedTerm : SliceObj SOTermPos
-SOCheckedTerm = SPFMu SOTermSPF
+SOCheckedTermDir : SliceObj SOTermPos
+SOCheckedTermDir = SPFMu SOTermSPF
 
 ---------------------------
 ---------------------------
