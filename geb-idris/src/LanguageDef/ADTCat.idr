@@ -562,27 +562,26 @@ public export
 SOTermPosDep : SliceObj SOTermPos
 SOTermPosDep = SliceObj . SOTermDir
 
-public export
-data SOTermDirDep : SliceObj (Sigma SOTermPosDep) where
+data SOTermDirDep : PFProductAlg SubstObjPF SubstTermPF Type where
   SOTermDirDep1L :
     {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
-    SOTermDirDep ((SOPos1, STPosLeaf) ** d)
+    SOTermDirDep (SOPos1, STPosLeaf) d
   SOTermDirDepCL :
     {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Type} ->
     d (SODirL, STDirL) ->
-    SOTermDirDep ((SOPosC, STPosLeft) ** d)
+    SOTermDirDep (SOPosC, STPosLeft) d
   SOTermDirDepCR :
     {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Type} ->
     d (SODirR, STDirR) ->
-    SOTermDirDep ((SOPosC, STPosRight) ** d)
+    SOTermDirDep (SOPosC, STPosRight) d
   SOTermDirDepPP :
     {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
     d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
-    SOTermDirDep ((SOPosP, STPosPair) ** d)
+    SOTermDirDep (SOPosP, STPosPair) d
 
 public export
 SOTermSPFEndoId : SlicePolyEndoFuncId SOTermPos
-SOTermSPFEndoId = (SOTermPosDep ** SOTermDirDep)
+SOTermSPFEndoId = (SOTermPosDep ** \(i ** d) => SOTermDirDep i d)
 
 public export
 SOTermSPF : SlicePolyEndoFunc SOTermPos
