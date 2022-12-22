@@ -951,6 +951,18 @@ DirichVertCartFactIsCorrect : {0 p, q : PolyFunc} ->
 DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) =
   Refl
 
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- Combinators on polynomial natural transformations ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+public export
+polyNTConst : (p, q : PolyFunc) -> (qi : pfPos q) -> (pfDir {p=q} qi -> Void) ->
+  PolyNatTrans p q
+polyNTConst (ppos ** pdir) (qpos ** qdir) qi qdv =
+  (const qi ** \pi, qd => void $ qdv qd)
+
 ------------------------------
 ------------------------------
 ---- Trees on polynomials ----
