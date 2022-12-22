@@ -618,6 +618,17 @@ public export
 SOHomTerm : SOMu -> SOMu -> Type
 SOHomTerm = STTyped .* soHomObj
 
+public export
+SOHomTermFunc : SOMu -> SOMu -> PolyFunc
+SOHomTermFunc = soCheckedTermPF .* soHomObj
+
+public export
+SOMorphFuncAlg : SOAlg PolyFunc
+SOMorphFuncAlg SOPos0 d = PFTerminalArena
+SOMorphFuncAlg SOPos1 d = PFIdentityArena
+SOMorphFuncAlg SOPosC d = pfProductArena (d SODirL) (d SODirR)
+SOMorphFuncAlg SOPosP d = pfCompositionArena (d SODir1) (d SODir2)
+
 -----------------------------------
 -----------------------------------
 ---- Simple types, anonymously ----
