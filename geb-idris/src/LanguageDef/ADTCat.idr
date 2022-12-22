@@ -578,6 +578,17 @@ public export
 soCheckedTerm : SOMu -> Type
 soCheckedTerm = pfCata SOCheckedTermAlg
 
+public export
+SOCheckedTermPFAlg : SOAlg PolyFunc
+SOCheckedTermPFAlg SOPos0 d = PFInitialArena
+SOCheckedTermPFAlg SOPos1 d = PFTerminalArena
+SOCheckedTermPFAlg SOPosC d = pfCoproductArena (d SODirL) (d SODirR)
+SOCheckedTermPFAlg SOPosP d = pfProductArena (d SODir1) (d SODir2)
+
+public export
+soCheckedTermPF : SOMu -> PolyFunc
+soCheckedTermPF = pfCata SOCheckedTermPFAlg
+
 ---------------------------
 ---------------------------
 ---- Morphisms in SOMu ----
