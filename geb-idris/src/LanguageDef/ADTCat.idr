@@ -546,22 +546,26 @@ MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
   {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
 MkSTTyped {so} t {ok} = MkRefinement t
 
-data SOCheckedTermAlg : PFProductAlg SubstObjPF SubstTermPF Type where
-  SOCheckedTermAlg1L :
+data SOTermValidationAlg : PFProductAlg SubstObjPF SubstTermPF Type where
+  SOTermValidationAlg1L :
     {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
-    SOCheckedTermAlg (SOPos1, STPosLeaf) d
-  SOCheckedTermAlgCL :
+    SOTermValidationAlg (SOPos1, STPosLeaf) d
+  SOTermValidationAlgCL :
     {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Type} ->
     d (SODirL, STDirL) ->
-    SOCheckedTermAlg (SOPosC, STPosLeft) d
-  SOCheckedTermAlgCR :
+    SOTermValidationAlg (SOPosC, STPosLeft) d
+  SOTermValidationAlgCR :
     {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Type} ->
     d (SODirR, STDirR) ->
-    SOCheckedTermAlg (SOPosC, STPosRight) d
-  SOCheckedTermAlgPP :
+    SOTermValidationAlg (SOPosC, STPosRight) d
+  SOTermValidationAlgPP :
     {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
     d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
-    SOCheckedTermAlg (SOPosP, STPosPair) d
+    SOTermValidationAlg (SOPosP, STPosPair) d
+
+public export
+SOTermValidation : SOMu -> STMu -> Type
+SOTermValidation = pfProductCata SOTermValidationAlg
 
 ---------------------------
 ---------------------------
