@@ -567,6 +567,17 @@ public export
 SOTermValidation : SOMu -> STMu -> Type
 SOTermValidation = pfProductCata SOTermValidationAlg
 
+public export
+SOCheckedTermAlg : SOAlg Type
+SOCheckedTermAlg SOPos0 d = Void
+SOCheckedTermAlg SOPos1 d = Unit
+SOCheckedTermAlg SOPosC d = Either (d SODirL) (d SODirR)
+SOCheckedTermAlg SOPosP d = Pair (d SODir1) (d SODir2)
+
+public export
+soCheckedTerm : SOMu -> Type
+soCheckedTerm = pfCata SOCheckedTermAlg
+
 ---------------------------
 ---------------------------
 ---- Morphisms in SOMu ----
