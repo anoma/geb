@@ -539,7 +539,7 @@ SOTermDir i = (SubstObjDir (fst i), SubstTermDir (snd i))
 
 public export
 data SOTermPFAlg :
-    DPair (SubstObjPos, SubstTermPos) (SliceObj . SOTermDir) -> Type where
+    Sigma {a=(SubstObjPos, SubstTermPos)} (SliceObj . SOTermDir) -> Type where
   SOTermPFAlg1L :
     {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
     SOTermPFAlg ((SOPos1, STPosLeaf) ** d)
