@@ -565,20 +565,20 @@ SOTermPosDep = SliceObj . SOTermDir
 public export
 data SOTermDirDep : SliceObj (Sigma SOTermPosDep) where
   SOTermDirDep1L :
-    {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
-    SOTermDirDep ((SOPos1, STPosLeaf) ** d)
+    {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Bool} ->
+    SOTermDirDep ((SOPos1, STPosLeaf) ** IsTrue . d)
   SOTermDirDepCL :
-    {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Type} ->
-    d (SODirL, STDirL) ->
-    SOTermDirDep ((SOPosC, STPosLeft) ** d)
+    {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Bool} ->
+    IsTrue (d (SODirL, STDirL)) ->
+    SOTermDirDep ((SOPosC, STPosLeft) ** IsTrue . d)
   SOTermDirDepCR :
-    {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Type} ->
-    d (SODirR, STDirR) ->
-    SOTermDirDep ((SOPosC, STPosRight) ** d)
+    {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Bool} ->
+    IsTrue (d (SODirR, STDirR)) ->
+    SOTermDirDep ((SOPosC, STPosRight) ** IsTrue . d)
   SOTermDirDepPP :
-    {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
-    d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
-    SOTermDirDep ((SOPosP, STPosPair) ** d)
+    {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Bool} ->
+    IsTrue (d (SODir1, STDirFst)) -> IsTrue (d (SODir2, STDirSnd)) ->
+    SOTermDirDep ((SOPosP, STPosPair) ** IsTrue . d)
 
 public export
 SOTermSPFEndoId : SlicePolyEndoFuncId SOTermPos
