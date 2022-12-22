@@ -534,6 +534,19 @@ SOTermCheckAlg (SOPosP, STPosPair) d =
   d (SODir1, STDirFst) && d (SODir2, STDirSnd)
 
 public export
+soTermCheck : SOMu -> DecPred STMu
+soTermCheck = pfProductCata SOTermCheckAlg
+
+public export
+STTyped : SOMu -> Type
+STTyped so = Refinement {a=STMu} $ soTermCheck so
+
+public export
+MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
+  {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
+MkSTTyped {so} t {ok} = MkRefinement t
+
+public export
 SOTermArena : PolyFunc
 SOTermArena = pfParProductArena SubstObjPF SubstTermPF
 
@@ -578,19 +591,6 @@ SOTermSPF = SlicePolyEndoFuncFromId SOTermSPFEndoId
 public export
 SOCheckedTerm : SliceObj SOTermPos
 SOCheckedTerm = SPFMu SOTermSPF
-
-public export
-soTermCheck : SOMu -> DecPred STMu
-soTermCheck = pfProductCata SOTermCheckAlg
-
-public export
-STTyped : SOMu -> Type
-STTyped so = Refinement {a=STMu} $ soTermCheck so
-
-public export
-MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
-  {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
-MkSTTyped {so} t {ok} = MkRefinement t
 
 ---------------------------
 ---------------------------
