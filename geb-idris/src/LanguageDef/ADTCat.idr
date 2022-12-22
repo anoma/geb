@@ -546,22 +546,22 @@ MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
   {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
 MkSTTyped {so} t {ok} = MkRefinement t
 
-data SOTermDirDep : PFProductAlg SubstObjPF SubstTermPF Type where
-  SOTermDirDep1L :
+data SOCheckedTermAlg : PFProductAlg SubstObjPF SubstTermPF Type where
+  SOCheckedTermAlg1L :
     {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
-    SOTermDirDep (SOPos1, STPosLeaf) d
-  SOTermDirDepCL :
+    SOCheckedTermAlg (SOPos1, STPosLeaf) d
+  SOCheckedTermAlgCL :
     {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Type} ->
     d (SODirL, STDirL) ->
-    SOTermDirDep (SOPosC, STPosLeft) d
-  SOTermDirDepCR :
+    SOCheckedTermAlg (SOPosC, STPosLeft) d
+  SOCheckedTermAlgCR :
     {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Type} ->
     d (SODirR, STDirR) ->
-    SOTermDirDep (SOPosC, STPosRight) d
-  SOTermDirDepPP :
+    SOCheckedTermAlg (SOPosC, STPosRight) d
+  SOCheckedTermAlgPP :
     {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
     d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
-    SOTermDirDep (SOPosP, STPosPair) d
+    SOCheckedTermAlg (SOPosP, STPosPair) d
 
 ---------------------------
 ---------------------------
