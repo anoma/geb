@@ -546,22 +546,6 @@ MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
   {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
 MkSTTyped {so} t {ok} = MkRefinement t
 
-public export
-SOTermArena : PolyFunc
-SOTermArena = pfParProductArena SubstObjPF SubstTermPF
-
-public export
-SOTermPos : Type
-SOTermPos = pfPos SOTermArena
-
-public export
-SOTermDir : SliceObj SOTermPos
-SOTermDir = pfDir {p=SOTermArena}
-
-public export
-SOTermPosDep : SliceObj SOTermPos
-SOTermPosDep = SliceObj . SOTermDir
-
 data SOTermDirDep : PFProductAlg SubstObjPF SubstTermPF Type where
   SOTermDirDep1L :
     {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
@@ -578,18 +562,6 @@ data SOTermDirDep : PFProductAlg SubstObjPF SubstTermPF Type where
     {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
     d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
     SOTermDirDep (SOPosP, STPosPair) d
-
-public export
-SOTermSPFEndoId : SlicePolyEndoFuncId SOTermPos
-SOTermSPFEndoId = (SOTermPosDep ** \(i ** d) => SOTermDirDep i d)
-
-public export
-SOTermSPF : SlicePolyEndoFunc SOTermPos
-SOTermSPF = SlicePolyEndoFuncFromId SOTermSPFEndoId
-
-public export
-SOCheckedTermDir : SliceObj SOTermPos
-SOCheckedTermDir = SPFMu SOTermSPF
 
 ---------------------------
 ---------------------------
