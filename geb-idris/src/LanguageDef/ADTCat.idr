@@ -852,6 +852,23 @@ public export
 sefToPF : SEFMu -> PolyFunc
 sefToPF = sefCata SEFtoPFalg
 
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+public export
+SEFPosAlg : SEFAlg SOMu
+SEFPosAlg (Left SOPos0) d = InSO0
+SEFPosAlg (Left SOPos1) d = InSO1
+SEFPosAlg (Left SOPosC) d = InSOC (d SODirL) (d SODirR)
+SEFPosAlg (Left SOPosP) d = InSOP (d SODir1) (d SODir2)
+SEFPosAlg (Right SEFPosExtI) d = InSO1
+SEFPosAlg (Right SEFPosExtPar) d = InSOP (d SEFDirExtPar1) (d SEFDirExtPar2)
+
+public export
+sefPos : SEFMu -> SOMu
+sefPos = sefCata SEFPosAlg
+
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
 ---- Reflection of object and endofunctor definitions as endofunctors ----
