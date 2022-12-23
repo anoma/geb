@@ -731,6 +731,18 @@ public export
 sefCata : {0 a : Type} -> SEFAlg a -> SEFMu -> a
 sefCata = pfCata {p=SubstEFPF}
 
+public export
+SEFExtProductAlg : Type -> Type
+SEFExtProductAlg = PFProductAlg SubstEFExt SubstEFExt
+
+public export
+SEFProductAlg : Type -> Type
+SEFProductAlg = PFProductAlg SubstEFPF SubstEFPF
+
+public export
+sefProdCata : {0 a : Type} -> SEFProductAlg a -> SEFMu -> SEFMu -> a
+sefProdCata {a} = pfProductCata {a} {p=SubstEFPF} {q=SubstEFPF}
+
 -------------------
 ---- Utilities ----
 -------------------
@@ -753,11 +765,11 @@ InSEFExt = sefCataExt InSEFR
 
 public export
 InSEF0 : SEFMu
-InSEF0 = InSEFO InSO0
+InSEF0 = InPFM SEFPos0 $ \d => case d of _ impossible
 
 public export
 InSEF1 : SEFMu
-InSEF1 = InSEFO InSO1
+InSEF1 = InPFM SEFPos1 $ \d => case d of _ impossible
 
 public export
 InSEFC : SEFMu -> SEFMu -> SEFMu
@@ -825,6 +837,25 @@ SEFShowAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOShowAlg SEFShowAlgExt
 public export
 Show SEFMu where
   show = sefCata SEFShowAlg
+
+public export
+SEFExtEqAlg : SEFExtProductAlg Bool
+SEFExtEqAlg (SEFPosExtI, SEFPosExtI) d = True
+SEFExtEqAlg (SEFPosExtI, SEFPosExtPar) d = False
+SEFExtEqAlg (SEFPosExtPar, SEFPosExtI) d = False
+SEFExtEqAlg (SEFPosExtPar, SEFPosExtPar) d =
+  d (SEFDirExtPar1, SEFDirExtPar1) && d (SEFDirExtPar2, SEFDirExtPar2)
+
+public export
+SEFEqAlg : SEFProductAlg Bool
+SEFEqAlg ((Left i), (Left i')) d = SOEqAlg (i, i') d
+SEFEqAlg ((Left i), (Right i')) d = False
+SEFEqAlg ((Right i), (Left i')) d = False
+SEFEqAlg ((Right i), (Right i')) d = SEFExtEqAlg (i, i') d
+
+public export
+sefEq : SEFMu -> SEFMu -> Bool
+sefEq = sefProdCata SEFEqAlg
 
 ---------------------------------------------
 ---- Interpretation of SEFMu as PolyFunc ----
