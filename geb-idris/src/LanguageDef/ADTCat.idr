@@ -760,12 +760,16 @@ InSEF1 : SEFMu
 InSEF1 = InSEFO InSO1
 
 public export
-InSEFC : SOMu -> SOMu -> SEFMu
-InSEFC = InSEFO .* InSOC
+InSEFC : SEFMu -> SEFMu -> SEFMu
+InSEFC x y = InPFM SEFPosC $ \d => case d of
+  SODirL => x
+  SODirR => y
 
 public export
-InSEFP : SOMu -> SOMu -> SEFMu
-InSEFP = InSEFO .* InSOP
+InSEFP : SEFMu -> SEFMu -> SEFMu
+InSEFP x y = InPFM SEFPosP $ \d => case d of
+  SODir1 => x
+  SODir2 => y
 
 public export
 InSEFI : SEFMu
@@ -853,6 +857,46 @@ sefToPF = sefCata SEFtoPFalg
 ---- Reflection of object and endofunctor definitions as endofunctors ----
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
+
+public export
+sefDoubleF : SEFMu -> SEFMu
+sefDoubleF f = InSEFC f f
+
+public export
+sefSquareF : SEFMu -> SEFMu
+sefSquareF f = InSEFP f f
+
+public export
+sefMaybeF : SEFMu -> SEFMu
+sefMaybeF = InSEFC InSEF1
+
+public export
+sefConstBool : SEFMu
+sefConstBool = sefDoubleF InSEF1
+
+public export
+sefMaybe : SEFMu
+sefMaybe = sefMaybeF InSEFI
+
+public export
+sefTerm : SEFMu
+sefTerm = sefSquareF sefMaybe
+
+public export
+sefSquare : SEFMu
+sefSquare = sefSquareF InSEFI
+
+public export
+sefMaybeSquare : SEFMu
+sefMaybeSquare = sefMaybeF sefSquare
+
+public export
+sefSubstObj : SEFMu
+sefSubstObj = sefDoubleF sefMaybeSquare
+
+public export
+sefPolyFunc : SEFMu
+sefPolyFunc = InSEFC sefSubstObj sefConstBool
 
 -----------------------------------
 -----------------------------------
