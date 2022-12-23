@@ -633,6 +633,227 @@ public export
 soMorphPF : SOMu -> PolyFunc
 soMorphPF = pfCata SOMorphFuncAlg
 
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+---- Inductive definition of substitutive polynomial endofunctors ----
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+-- Extensions to the positions of endofunctors beyond those of objects,
+-- all of which it shares (since the category of endofunctors also has
+-- all the universal properties of the the `STMu` category).
+public export
+data SubstEFPosExt : Type where
+  SEFPosExtI : SubstEFPosExt -- identity endofunctor
+  SEFPosExtPar : SubstEFPosExt -- parallel product
+
+public export
+data SubstEFDirExt : SubstEFPosExt -> Type where
+  -- Although the identity endofunctor has one position, the position
+  -- corresponding to the identity of the endofunctor which _generates_
+  -- endofunctors has no positions, because there is just one identity
+  -- functor -- the constructor which generates the identity endofunctor does
+  -- not take any endofunctors as parameters
+  SEFDirExtPar1 : SubstEFDirExt SEFPosExtPar
+    -- first component of parallel product
+  SEFDirExtPar2 : SubstEFDirExt SEFPosExtPar
+    -- second component of parallel product
+
+public export
+SubstEFExt : PolyFunc
+SubstEFExt = (SubstEFPosExt ** SubstEFDirExt)
+
+public export
+SubstEFPF : PolyFunc
+SubstEFPF = pfCoproductArena SubstObjPF SubstEFExt
+
+public export
+SubstEFPos : Type
+SubstEFPos = pfPos SubstEFPF
+
+public export
+SubstEFDir : SubstEFPos -> Type
+SubstEFDir = pfDir {p=SubstEFPF}
+
+public export
+SEFPos0 : SubstEFPos
+SEFPos0 = Left SOPos0
+
+public export
+SEFPos1 : SubstEFPos
+SEFPos1 = Left SOPos1
+
+public export
+SEFPosC : SubstEFPos
+SEFPosC = Left SOPosC
+
+public export
+SEFPosP : SubstEFPos
+SEFPosP = Left SOPosP
+
+public export
+SEFPosI : SubstEFPos
+SEFPosI = Right SEFPosExtI
+
+public export
+SEFPosPar : SubstEFPos
+SEFPosPar = Right SEFPosExtPar
+
+----------------------------------------------------
+---- Least fixed point, algebras, catamorphisms ----
+----------------------------------------------------
+
+public export
+SEFMuExt : Type
+SEFMuExt = PolyFuncMu SubstEFExt
+
+public export
+SEFMu : Type
+SEFMu = PolyFuncMu SubstEFPF
+
+public export
+SEFAlg : Type -> Type
+SEFAlg = PFAlg SubstEFPF
+
+public export
+SEFAlgExt : Type -> Type
+SEFAlgExt = PFAlg SubstEFExt
+
+public export
+sefCataExt : {0 a : Type} -> SEFAlgExt a -> SEFMuExt -> a
+sefCataExt = pfCata {p=SubstEFExt}
+
+public export
+sefCata : {0 a : Type} -> SEFAlg a -> SEFMu -> a
+sefCata = pfCata {p=SubstEFPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InSEFL : (i : SubstObjPos) -> (SubstObjDir i -> SEFMu) -> SEFMu
+InSEFL i = InPFM (Left i)
+
+public export
+InSEFR : (i : SubstEFPosExt) -> (SubstEFDirExt i -> SEFMu) -> SEFMu
+InSEFR i = InPFM (Right i)
+
+public export
+InSEFO : SOMu -> SEFMu
+InSEFO = soCata InSEFL
+
+public export
+InSEFExt : SEFMuExt -> SEFMu
+InSEFExt = sefCataExt InSEFR
+
+public export
+InSEF0 : SEFMu
+InSEF0 = InSEFO InSO0
+
+public export
+InSEF1 : SEFMu
+InSEF1 = InSEFO InSO1
+
+public export
+InSEFC : SOMu -> SOMu -> SEFMu
+InSEFC = InSEFO .* InSOC
+
+public export
+InSEFP : SOMu -> SOMu -> SEFMu
+InSEFP = InSEFO .* InSOP
+
+public export
+InSEFI : SEFMu
+InSEFI = InPFM SEFPosI $ \d => case d of _ impossible
+
+public export
+InSEFPar : SEFMu -> SEFMu -> SEFMu
+InSEFPar x y = InPFM SEFPosPar $ \d => case d of
+  SEFDirExtPar1 => x
+  SEFDirExtPar2 => y
+
+public export
+SEFSizeAlgExt : SEFAlgExt Nat
+SEFSizeAlgExt SEFPosExtI dir = 1
+SEFSizeAlgExt SEFPosExtPar dir = 1 + dir SEFDirExtPar1 + dir SEFDirExtPar2
+
+public export
+SEFSizeAlg : SEFAlg Nat
+SEFSizeAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOSizeAlg SEFSizeAlgExt
+
+public export
+sefSize : SEFMu -> Nat
+sefSize = sefCata SEFSizeAlg
+
+public export
+SEFDepthAlgExt : SEFAlgExt Nat
+SEFDepthAlgExt SEFPosExtI dir = 0
+SEFDepthAlgExt SEFPosExtPar dir = smax (dir SEFDirExtPar1) (dir SEFDirExtPar2)
+
+public export
+SEFDepthAlg : SEFAlg Nat
+SEFDepthAlg =
+  PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SODepthAlg SEFDepthAlgExt
+
+public export
+sefDepth : SEFMu -> Nat
+sefDepth = sefCata SEFDepthAlg
+
+public export
+SEFShowAlgObj : SOAlg String
+SEFShowAlgObj pos dir = "!" ++ SOShowAlg pos dir
+
+public export
+SEFShowAlgExt : SEFAlgExt String
+SEFShowAlgExt SEFPosExtI dir = "{id}"
+SEFShowAlgExt SEFPosExtPar dir =
+  "<" ++ dir SEFDirExtPar1 ++ "x" ++ dir SEFDirExtPar2 ++ ">"
+
+public export
+SEFShowAlg : SEFAlg String
+SEFShowAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOShowAlg SEFShowAlgExt
+
+public export
+Show SEFMu where
+  show = sefCata SEFShowAlg
+
+---------------------------------------------
+---- Interpretation of SEFMu as PolyFunc ----
+---------------------------------------------
+
+public export
+SOtoPFalg : SOAlg PolyFunc
+SOtoPFalg SOPos0 d = PFInitialArena
+SOtoPFalg SOPos1 d = PFTerminalArena
+SOtoPFalg SOPosC d = pfCoproductArena (d SODirL) (d SODirR)
+SOtoPFalg SOPosP d = pfProductArena (d SODir1) (d SODir2)
+
+public export
+SEFtoPFalgExt : SEFAlgExt PolyFunc
+SEFtoPFalgExt SEFPosExtI d =
+  PFIdentityArena
+SEFtoPFalgExt SEFPosExtPar d =
+  pfParProductArena (d SEFDirExtPar1) (d SEFDirExtPar2)
+
+public export
+SEFtoPFalg : SEFAlg PolyFunc
+SEFtoPFalg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOtoPFalg SEFtoPFalgExt
+
+public export
+sefToPF : SEFMu -> PolyFunc
+sefToPF = sefCata SEFtoPFalg
+
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+---- Reflection of object and endofunctor definitions as endofunctors ----
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+
 -----------------------------------
 -----------------------------------
 ---- Simple types, anonymously ----
@@ -1230,227 +1451,6 @@ SubstMorphSig = (SOMu, SOMu)
 public export
 SubstMorphPosDep : SubstMorphSig -> SubstMorphPos -> Type
 SubstMorphPosDep sig pos = ?SubstMorphPosDep_hole
-
-----------------------------------------------------------------------
-----------------------------------------------------------------------
----- Inductive definition of substitutive polynomial endofunctors ----
-----------------------------------------------------------------------
-----------------------------------------------------------------------
-
-----------------------------------
----- Positions and directions ----
-----------------------------------
-
--- Extensions to the positions of endofunctors beyond those of objects,
--- all of which it shares (since the category of endofunctors also has
--- all the universal properties of the the `STMu` category).
-public export
-data SubstEFPosExt : Type where
-  SEFPosExtI : SubstEFPosExt -- identity endofunctor
-  SEFPosExtPar : SubstEFPosExt -- parallel product
-
-public export
-data SubstEFDirExt : SubstEFPosExt -> Type where
-  -- Although the identity endofunctor has one position, the position
-  -- corresponding to the identity of the endofunctor which _generates_
-  -- endofunctors has no positions, because there is just one identity
-  -- functor -- the constructor which generates the identity endofunctor does
-  -- not take any endofunctors as parameters
-  SEFDirExtPar1 : SubstEFDirExt SEFPosExtPar
-    -- first component of parallel product
-  SEFDirExtPar2 : SubstEFDirExt SEFPosExtPar
-    -- second component of parallel product
-
-public export
-SubstEFExt : PolyFunc
-SubstEFExt = (SubstEFPosExt ** SubstEFDirExt)
-
-public export
-SubstEFPF : PolyFunc
-SubstEFPF = pfCoproductArena SubstObjPF SubstEFExt
-
-public export
-SubstEFPos : Type
-SubstEFPos = pfPos SubstEFPF
-
-public export
-SubstEFDir : SubstEFPos -> Type
-SubstEFDir = pfDir {p=SubstEFPF}
-
-public export
-SEFPos0 : SubstEFPos
-SEFPos0 = Left SOPos0
-
-public export
-SEFPos1 : SubstEFPos
-SEFPos1 = Left SOPos1
-
-public export
-SEFPosC : SubstEFPos
-SEFPosC = Left SOPosC
-
-public export
-SEFPosP : SubstEFPos
-SEFPosP = Left SOPosP
-
-public export
-SEFPosI : SubstEFPos
-SEFPosI = Right SEFPosExtI
-
-public export
-SEFPosPar : SubstEFPos
-SEFPosPar = Right SEFPosExtPar
-
-----------------------------------------------------
----- Least fixed point, algebras, catamorphisms ----
-----------------------------------------------------
-
-public export
-SEFMuExt : Type
-SEFMuExt = PolyFuncMu SubstEFExt
-
-public export
-SEFMu : Type
-SEFMu = PolyFuncMu SubstEFPF
-
-public export
-SEFAlg : Type -> Type
-SEFAlg = PFAlg SubstEFPF
-
-public export
-SEFAlgExt : Type -> Type
-SEFAlgExt = PFAlg SubstEFExt
-
-public export
-sefCataExt : {0 a : Type} -> SEFAlgExt a -> SEFMuExt -> a
-sefCataExt = pfCata {p=SubstEFExt}
-
-public export
-sefCata : {0 a : Type} -> SEFAlg a -> SEFMu -> a
-sefCata = pfCata {p=SubstEFPF}
-
--------------------
----- Utilities ----
--------------------
-
-public export
-InSEFL : (i : SubstObjPos) -> (SubstObjDir i -> SEFMu) -> SEFMu
-InSEFL i = InPFM (Left i)
-
-public export
-InSEFR : (i : SubstEFPosExt) -> (SubstEFDirExt i -> SEFMu) -> SEFMu
-InSEFR i = InPFM (Right i)
-
-public export
-InSEFO : SOMu -> SEFMu
-InSEFO = soCata InSEFL
-
-public export
-InSEFExt : SEFMuExt -> SEFMu
-InSEFExt = sefCataExt InSEFR
-
-public export
-InSEF0 : SEFMu
-InSEF0 = InSEFO InSO0
-
-public export
-InSEF1 : SEFMu
-InSEF1 = InSEFO InSO1
-
-public export
-InSEFC : SOMu -> SOMu -> SEFMu
-InSEFC = InSEFO .* InSOC
-
-public export
-InSEFP : SOMu -> SOMu -> SEFMu
-InSEFP = InSEFO .* InSOP
-
-public export
-InSEFI : SEFMu
-InSEFI = InPFM SEFPosI $ \d => case d of _ impossible
-
-public export
-InSEFPar : SEFMu -> SEFMu -> SEFMu
-InSEFPar x y = InPFM SEFPosPar $ \d => case d of
-  SEFDirExtPar1 => x
-  SEFDirExtPar2 => y
-
-public export
-SEFSizeAlgExt : SEFAlgExt Nat
-SEFSizeAlgExt SEFPosExtI dir = 1
-SEFSizeAlgExt SEFPosExtPar dir = 1 + dir SEFDirExtPar1 + dir SEFDirExtPar2
-
-public export
-SEFSizeAlg : SEFAlg Nat
-SEFSizeAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOSizeAlg SEFSizeAlgExt
-
-public export
-sefSize : SEFMu -> Nat
-sefSize = sefCata SEFSizeAlg
-
-public export
-SEFDepthAlgExt : SEFAlgExt Nat
-SEFDepthAlgExt SEFPosExtI dir = 0
-SEFDepthAlgExt SEFPosExtPar dir = smax (dir SEFDirExtPar1) (dir SEFDirExtPar2)
-
-public export
-SEFDepthAlg : SEFAlg Nat
-SEFDepthAlg =
-  PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SODepthAlg SEFDepthAlgExt
-
-public export
-sefDepth : SEFMu -> Nat
-sefDepth = sefCata SEFDepthAlg
-
-public export
-SEFShowAlgObj : SOAlg String
-SEFShowAlgObj pos dir = "!" ++ SOShowAlg pos dir
-
-public export
-SEFShowAlgExt : SEFAlgExt String
-SEFShowAlgExt SEFPosExtI dir = "{id}"
-SEFShowAlgExt SEFPosExtPar dir =
-  "<" ++ dir SEFDirExtPar1 ++ "x" ++ dir SEFDirExtPar2 ++ ">"
-
-public export
-SEFShowAlg : SEFAlg String
-SEFShowAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOShowAlg SEFShowAlgExt
-
-public export
-Show SEFMu where
-  show = sefCata SEFShowAlg
-
----------------------------------------------
----- Interpretation of SEFMu as PolyFunc ----
----------------------------------------------
-
-public export
-SOtoPFalg : SOAlg PolyFunc
-SOtoPFalg SOPos0 d = PFInitialArena
-SOtoPFalg SOPos1 d = PFTerminalArena
-SOtoPFalg SOPosC d = pfCoproductArena (d SODirL) (d SODirR)
-SOtoPFalg SOPosP d = pfProductArena (d SODir1) (d SODir2)
-
-public export
-SEFtoPFalgExt : SEFAlgExt PolyFunc
-SEFtoPFalgExt SEFPosExtI d =
-  PFIdentityArena
-SEFtoPFalgExt SEFPosExtPar d =
-  pfParProductArena (d SEFDirExtPar1) (d SEFDirExtPar2)
-
-public export
-SEFtoPFalg : SEFAlg PolyFunc
-SEFtoPFalg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOtoPFalg SEFtoPFalgExt
-
-public export
-sefToPF : SEFMu -> PolyFunc
-sefToPF = sefCata SEFtoPFalg
-
---------------------------------------------------------------------------
---------------------------------------------------------------------------
----- Reflection of object and endofunctor definitions as endofunctors ----
---------------------------------------------------------------------------
---------------------------------------------------------------------------
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
