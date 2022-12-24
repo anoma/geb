@@ -1885,22 +1885,27 @@ record CatSig where
   constructor MkCatSig
   catObj : Type
   catMorph : catObj -> catObj -> Type
+  catMorphEq : (a, b  : catObj) -> RelationOn (catMorph a b)
   catId : (a : catObj) -> catMorph a a
   catComp : {a, b, c : catObj} -> catMorph b c -> catMorph a b -> catMorph a c
 
 public export
 record CatSigCorrect (cat : CatSig) where
   constructor MkCatSigCorrect
+  catMorphEqEquiv : (a, b : catObj cat) -> IsEquivalence (catMorphEq cat a b)
   catLeftId : {a, b : catObj cat} ->
-    (m : catMorph cat a b) -> catComp cat {a} {b} {c=b} (catId cat b) m = m
+    (m : catMorph cat a b) ->
+    catMorphEq cat a b (catComp cat {a} {b} {c=b} (catId cat b) m) m
   catRightId : {a, b : catObj cat} ->
-    (m : catMorph cat a b) -> catComp cat {a} {b=a} {c=b} m (catId cat a) = m
+    (m : catMorph cat a b) ->
+    catMorphEq cat a b (catComp cat {a} {b=a} {c=b} m (catId cat a)) m
   catAssoc : {a, b, c, d : catObj cat} ->
     (h : catMorph cat c d) ->
     (g : catMorph cat b c) ->
     (f : catMorph cat a b) ->
-    catComp cat {a} {b=c} {c=d} h (catComp cat {a} {b} {c} g f) =
-      catComp cat {a} {b} {c=d} (catComp cat {a=b} {b=c} {c=d} h g) f
+    catMorphEq cat a d
+      (catComp cat {a} {b=c} {c=d} h (catComp cat {a} {b} {c} g f))
+      (catComp cat {a} {b} {c=d} (catComp cat {a=b} {b=c} {c=d} h g) f)
 
 public export
 CorrectCatSig : Type
@@ -1908,11 +1913,11 @@ CorrectCatSig = Subset0 CatSig CatSigCorrect
 
 public export
 CatToPolyPos : CatSig -> Type
-CatToPolyPos (MkCatSig o m i comp) = o
+CatToPolyPos (MkCatSig o m eq i comp) = o
 
 public export
 CatToPolyDir : (c : CatSig) -> CatToPolyPos c -> Type
-CatToPolyDir (MkCatSig o m i comp) a = (b : o ** m a b)
+CatToPolyDir (MkCatSig o m eq i comp) a = (b : o ** m a b)
 
 public export
 CatToPoly : CatSig -> PolyFunc
@@ -1920,12 +1925,12 @@ CatToPoly c = (CatToPolyPos c ** CatToPolyDir c)
 
 public export
 CatToComonoidErase : (c : CatSig) -> PolyNatTrans (CatToPoly c) PFIdentityArena
-CatToComonoidErase (MkCatSig o m i comp) = (const () ** \a, _ => (a ** i a))
+CatToComonoidErase (MkCatSig o m eq i comp) = (const () ** \a, _ => (a ** i a))
 
 public export
 CatToComonoidDup : (c : CatSig) ->
   PolyNatTrans (CatToPoly c) (pfDuplicateArena (CatToPoly c))
-CatToComonoidDup (MkCatSig o m i comp) =
+CatToComonoidDup (MkCatSig o m eq i comp) =
   (\a => (a ** \d => fst d) **
    \a, qd => let ((b ** f) ** (c ** g)) = qd in (c ** comp g f))
 
@@ -1994,6 +1999,7 @@ ComonoidToCat c holds =
   MkCatSig
     (ComonoidToCatObj c)
     (ComonoidToCatMorph c holds)
+    (\a, b => ?ComonoidToCat_eq_hole)
     (ComonoidToCatId c holds)
     (ComonoidToCatComp c holds)
 
@@ -2423,6 +2429,7 @@ pfToCat (ppos ** pdir) =
   MkCatSig
     ppos
     (\x, y => pdir y -> pdir x)
+    (\a, b => ExtEq)
     (\_ => id)
     (\f, g => g . f)
 
@@ -2927,6 +2934,7 @@ profToCat pbf =
     (\x, y =>
       (PolyBiCovarDir pbf y -> PolyBiCovarDir pbf x,
        PolyBiContraDir pbf x -> PolyBiContraDir pbf y))
+    (\x, y, (f, g), (f', g') => (ExtEq f f', ExtEq g g'))
     (\x' => (id, id))
     (\f, g => (fst g . fst f, snd f . snd g))
 
