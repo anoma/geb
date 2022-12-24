@@ -7441,7 +7441,7 @@ PreservesRelations : {a, b : Type} ->
 PreservesRelations rel rel' f = EqualOverRelations rel rel' f f
 
 RelMorphism : {a, b : Type} -> RelationOn a -> RelationOn b -> Type
-RelMorphism rel rel' = DPair (a -> b) (PreservesRelations rel rel')
+RelMorphism rel rel' = Subset0 (a -> b) (PreservesRelations rel rel')
 
 RelFunctor : Type -> Type
 RelFunctor t = RelationOn t -> RelationOn t
