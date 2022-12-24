@@ -429,6 +429,12 @@ public export
 Eq SOMu where
   (==) = soEq
 
+public export
+SOBoundedNat : Nat -> SOMu
+SOBoundedNat 0 = InSO0
+SOBoundedNat 1 = InSO1
+SOBoundedNat (S (S n)) = InSOC InSO1 (SOBoundedNat (S n))
+
 ----------------------------------------
 ---- Interpretation into Idris Type ----
 ----------------------------------------
@@ -945,6 +951,40 @@ sefSubstObj = sefDoubleF sefMaybeSquare
 public export
 sefPolyFunc : SEFMu
 sefPolyFunc = InSEFC sefSubstObj sefConstBool
+
+-------------------------------------------------------
+-------------------------------------------------------
+---- Substitutive endofunctors indexed by position ----
+-------------------------------------------------------
+-------------------------------------------------------
+
+-- The functor which generates substitutive objects has four positions
+-- (unit, left, right, pair).
+public export
+SubstObjReflectedPos : SOMu
+SubstObjReflectedPos = SOBoundedNat 4
+
+public export
+ISEFPosAlg : SOAlg SOMu
+-- There is exactly one endofunctor with no positions, namely the
+-- initial object in the category of endofunctors (which is the
+-- constant functor whose value everywhere is the initial object).
+ISEFPosAlg SOPos0 d = InSO1
+-- An endofunctor with exactly one position is representable.  Hence,
+-- there is one such endofunctor for each substitutive object.  Hence
+-- the positions of the endofunctor which generates such endofunctors
+-- are the positions of substitutive objects.
+ISEFPosAlg SOPos1 d = SubstObjReflectedPos
+-- The positions of a coproduct of two endofunctors are the coproduct of
+-- the positions.
+ISEFPosAlg SOPosC d = InSOC (d SODirL) (d SODirR)
+-- The positions of a product of two endofunctors are the product of
+-- the positions.
+ISEFPosAlg SOPosP d = InSOP (d SODir1) (d SODir2)
+
+public export
+ISEFPos : SOMu -> SOMu
+ISEFPos = soCata ISEFPosAlg
 
 -----------------------------------
 -----------------------------------
