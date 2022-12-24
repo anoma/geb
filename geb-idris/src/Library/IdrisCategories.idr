@@ -92,6 +92,43 @@ public export
 ExtInversePair : {a, b : Type} -> (a -> b, b -> a) -> Type
 ExtInversePair (f, g) = ExtInverse f g
 
+-----------------------------------------------
+-----------------------------------------------
+---- Categories internal to Idris's `Type` ----
+-----------------------------------------------
+-----------------------------------------------
+
+public export
+record CatSig where
+  constructor MkCatSig
+  catObj : Type
+  catMorph : catObj -> catObj -> Type
+  catMorphEq : (a, b  : catObj) -> RelationOn (catMorph a b)
+  catId : (a : catObj) -> catMorph a a
+  catComp : {a, b, c : catObj} -> catMorph b c -> catMorph a b -> catMorph a c
+
+public export
+record CatSigCorrect (cat : CatSig) where
+  constructor MkCatSigCorrect
+  catMorphEqEquiv : (a, b : catObj cat) -> IsEquivalence (catMorphEq cat a b)
+  catLeftId : {a, b : catObj cat} ->
+    (m : catMorph cat a b) ->
+    catMorphEq cat a b (catComp cat {a} {b} {c=b} (catId cat b) m) m
+  catRightId : {a, b : catObj cat} ->
+    (m : catMorph cat a b) ->
+    catMorphEq cat a b (catComp cat {a} {b=a} {c=b} m (catId cat a)) m
+  catAssoc : {a, b, c, d : catObj cat} ->
+    (h : catMorph cat c d) ->
+    (g : catMorph cat b c) ->
+    (f : catMorph cat a b) ->
+    catMorphEq cat a d
+      (catComp cat {a} {b=c} {c=d} h (catComp cat {a} {b} {c} g f))
+      (catComp cat {a} {b} {c=d} (catComp cat {a=b} {b=c} {c=d} h g) f)
+
+public export
+CorrectCatSig : Type
+CorrectCatSig = Subset0 CatSig CatSigCorrect
+
 ---------------------------------------
 ---------------------------------------
 ---- Dependent types, categorially ----
