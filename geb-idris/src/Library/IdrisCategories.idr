@@ -34,6 +34,17 @@ record IsEquivalence {a : Type} (r : RelationOn a) where
   EquivTrans : IsTransitive r
 
 public export
+data EquivClosure : {a : Type} -> RelationOn a -> RelationOn a where
+  EqClGen : {a : Type} -> {r : RelationOn a} -> {x, x' : a} ->
+    r x x' -> EquivClosure {a} r x x'
+  EqClRefl : {a : Type} -> {r : RelationOn a} -> {x : a} ->
+    EquivClosure {a} r x x
+  EqClSym : {a : Type} -> {r : RelationOn a} -> {x, y : a} ->
+    EquivClosure {a} r x y -> EquivClosure {a} r y x
+  EqClTrans : {a : Type} -> {r : RelationOn a} -> {x, y, z : a} ->
+    EquivClosure {a} r x y -> EquivClosure {a} r y z -> EquivClosure {a} r x z
+
+public export
 IsDecidable : {a : Type} -> (r : RelationOn a) -> Type
 IsDecidable {a} r = (x, y : a) -> Dec (r x y)
 
