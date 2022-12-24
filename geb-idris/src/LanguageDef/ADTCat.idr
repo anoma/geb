@@ -629,15 +629,15 @@ SOHomTermFunc : SOMu -> SOMu -> PolyFunc
 SOHomTermFunc = soCheckedTermPF .* soHomObj
 
 public export
-SOHomFuncAlg : SOAlg PolyFunc
-SOHomFuncAlg SOPos0 d = PFTerminalArena
-SOHomFuncAlg SOPos1 d = PFIdentityArena
-SOHomFuncAlg SOPosC d = pfProductArena (d SODirL) (d SODirR)
-SOHomFuncAlg SOPosP d = pfCompositionArena (d SODir1) (d SODir2)
+SOCovarHomFuncAlg : SOAlg PolyFunc
+SOCovarHomFuncAlg SOPos0 d = PFTerminalArena
+SOCovarHomFuncAlg SOPos1 d = PFIdentityArena
+SOCovarHomFuncAlg SOPosC d = pfProductArena (d SODirL) (d SODirR)
+SOCovarHomFuncAlg SOPosP d = pfCompositionArena (d SODir1) (d SODir2)
 
 public export
-soHomPF : SOMu -> PolyFunc
-soHomPF = pfCata SOHomFuncAlg
+soCovarHomPF : SOMu -> PolyFunc
+soCovarHomPF = pfCata SOCovarHomFuncAlg
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
