@@ -7,6 +7,1208 @@ import public LanguageDef.PolyCat
 
 %default total
 
+----------------------------------------------------------------
+----------------------------------------------------------------
+---- Explicitly-recursive Idris ADT definition of term type ----
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+public export
+data SubstTermRec : Type where
+  STRLeaf : SubstTermRec
+  STRLeft : SubstTermRec -> SubstTermRec
+  STRRight : SubstTermRec -> SubstTermRec
+  STRPair : SubstTermRec -> SubstTermRec -> SubstTermRec
+
+------------------------------------------
+------------------------------------------
+---- PolyFunc definition of term type ----
+------------------------------------------
+------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+public export
+data SubstTermPos : Type where
+  STPosLeaf : SubstTermPos
+  STPosLeft : SubstTermPos
+  STPosRight : SubstTermPos
+  STPosPair : SubstTermPos
+
+public export
+data SubstTermDir : SubstTermPos -> Type where
+  STDirL : SubstTermDir STPosLeft
+  STDirR : SubstTermDir STPosRight
+  STDirFst : SubstTermDir STPosPair
+  STDirSnd : SubstTermDir STPosPair
+
+public export
+SubstTermPF : PolyFunc
+SubstTermPF = (SubstTermPos ** SubstTermDir)
+
+---------------------------------------------
+---- Least fixed point (initial algebra) ----
+---------------------------------------------
+
+public export
+STMu : Type
+STMu = PolyFuncMu SubstTermPF
+
+public export
+STFreeM : PolyFunc
+STFreeM = PolyFuncFreeM SubstTermPF
+
+---------------------------------
+---- Algebras, catamorphisms ----
+---------------------------------
+
+public export
+STAlg : Type -> Type
+STAlg = PFAlg SubstTermPF
+
+public export
+stCata : {0 a : Type} -> STAlg a -> STMu -> a
+stCata = pfCata {p=SubstTermPF}
+
+public export
+STProdAlg : Type -> Type
+STProdAlg = PFProductAlg SubstTermPF SubstTermPF
+
+public export
+stProdCata : {0 a : Type} -> STProdAlg a -> STMu -> STMu -> a
+stProdCata {a} = pfProductCata {a} {p=SubstTermPF} {q=SubstTermPF}
+
+public export
+STNatTrans : Type
+STNatTrans = PolyNatTrans SubstTermPF SubstTermPF
+
+public export
+STFreeNatTrans : Type
+STFreeNatTrans = PolyNatTrans STFreeM STFreeM
+
+public export
+STNatTransMN : Nat -> Nat -> Type
+STNatTransMN = pfNatTransMN SubstTermPF SubstTermPF
+
+public export
+stPolyCata : STNatTrans -> STMu -> STMu
+stPolyCata = pfPolyCata {p=SubstTermPF} {q=SubstTermPF}
+
+public export
+stFreePolyCata : STNatTrans -> STFreeNatTrans
+stFreePolyCata = pfFreePolyCata {p=SubstTermPF} {q=SubstTermPF}
+
+public export
+STProductHomAlgNT : Type
+STProductHomAlgNT = PFProductHomAlgNT SubstTermPF SubstTermPF SubstTermPF
+
+public export
+stProductHomCataNT : STProductHomAlgNT -> STMu -> STMu -> STMu
+stProductHomCataNT =
+  pfProductHomCataNT {p=SubstTermPF} {q=SubstTermPF} {r=SubstTermPF}
+
+public export
+STProductHomAlg : Type -> Type
+STProductHomAlg = PFProductHomAlg SubstTermPF SubstTermPF
+
+public export
+stProductHomCata : {a : Type} -> STProductHomAlg a -> STMu -> STMu -> a
+stProductHomCata = pfProductHomCata {p=SubstTermPF} {q=SubstTermPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InSTUnit : STMu
+InSTUnit = InPFM STPosLeaf $ \d => case d of _ impossible
+
+public export
+InSTLeft : STMu -> STMu
+InSTLeft x = InPFM STPosLeft $ \d => case d of STDirL => x
+
+public export
+InSTRight : STMu -> STMu
+InSTRight y = InPFM STPosRight $ \d => case d of STDirR => y
+
+public export
+InSTPair : STMu -> STMu -> STMu
+InSTPair x y = InPFM STPosPair $ \d => case d of
+  STDirFst => x
+  STDirSnd => y
+
+public export
+STNumLeavesAlg : STAlg Nat
+STNumLeavesAlg STPosLeaf dir = 1
+STNumLeavesAlg STPosLeft dir = dir STDirL
+STNumLeavesAlg STPosRight dir = dir STDirR
+STNumLeavesAlg STPosPair dir = dir STDirFst + dir STDirSnd
+
+public export
+stNumLeaves : STMu -> Nat
+stNumLeaves = stCata STNumLeavesAlg
+
+public export
+STNumInternalNodesAlg : STAlg Nat
+STNumInternalNodesAlg STPosLeaf dir = 0
+STNumInternalNodesAlg STPosLeft dir = 1 + dir STDirL
+STNumInternalNodesAlg STPosRight dir = 1 + dir STDirR
+STNumInternalNodesAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
+
+public export
+stNumInternalNodes : STMu -> Nat
+stNumInternalNodes = stCata STNumInternalNodesAlg
+
+public export
+STSizeAlg : STAlg Nat
+STSizeAlg STPosLeaf dir = 1
+STSizeAlg STPosLeft dir = 1 + dir STDirL
+STSizeAlg STPosRight dir = 1 + dir STDirR
+STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
+
+public export
+stSize : STMu -> Nat
+stSize = stCata STSizeAlg
+
+public export
+STDepthAlg : STAlg Nat
+STDepthAlg STPosLeaf dir = 0
+STDepthAlg STPosLeft dir = 1 + dir STDirL
+STDepthAlg STPosRight dir = 1 + dir STDirR
+STDepthAlg STPosPair dir = smax (dir STDirFst) (dir STDirSnd)
+
+public export
+stDepth : STMu -> Nat
+stDepth = stCata STDepthAlg
+
+public export
+STShowAlg : STAlg String
+STShowAlg STPosLeaf dir = "_"
+STShowAlg STPosLeft dir = "l[" ++ dir STDirL ++ "]"
+STShowAlg STPosRight dir = "r[" ++ dir STDirR ++ "]"
+STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
+
+public export
+Show STMu where
+  show = stCata STShowAlg
+
+public export
+STEqAlg : STProdAlg Bool
+STEqAlg (STPosLeaf, STPosLeaf) d = True
+STEqAlg (STPosLeaf, STPosLeft) d = False
+STEqAlg (STPosLeaf, STPosRight) d = False
+STEqAlg (STPosLeaf, STPosPair) d = False
+STEqAlg (STPosLeft, STPosLeaf) d = False
+STEqAlg (STPosLeft, STPosLeft) d = d (STDirL, STDirL)
+STEqAlg (STPosLeft, STPosRight) d = False
+STEqAlg (STPosLeft, STPosPair) d = False
+STEqAlg (STPosRight, STPosLeaf) d = False
+STEqAlg (STPosRight, STPosLeft) d = False
+STEqAlg (STPosRight, STPosRight) d = d (STDirR, STDirR)
+STEqAlg (STPosRight, STPosPair) d = False
+STEqAlg (STPosPair, STPosLeaf) d = False
+STEqAlg (STPosPair, STPosLeft) d = False
+STEqAlg (STPosPair, STPosRight) d = False
+STEqAlg (STPosPair, STPosPair) d =
+  d (STDirFst, STDirFst) && d (STDirSnd, STDirSnd)
+
+public export
+stEq : STMu -> STMu -> Bool
+stEq = stProdCata STEqAlg
+
+public export
+Eq STMu where
+  (==) = stEq
+
+------------------------------------
+---- Translation with Idris ADT ----
+------------------------------------
+
+public export
+STMuToRecAlg : STAlg SubstTermRec
+STMuToRecAlg STPosLeaf d = STRLeaf
+STMuToRecAlg STPosLeft d = STRLeft $ d STDirL
+STMuToRecAlg STPosRight d = STRRight $ d STDirR
+STMuToRecAlg STPosPair d = STRPair (d STDirFst) (d STDirSnd)
+
+public export
+stMuToRec : STMu -> SubstTermRec
+stMuToRec = stCata STMuToRecAlg
+
+public export
+stMuFromRec : SubstTermRec -> STMu
+stMuFromRec STRLeaf = InSTUnit
+stMuFromRec (STRLeft t) = InSTLeft $ stMuFromRec t
+stMuFromRec (STRRight t) = InSTRight $ stMuFromRec t
+stMuFromRec (STRPair t t') = InSTPair (stMuFromRec t) (stMuFromRec t')
+
+---------------------
+---- Refinements ----
+---------------------
+
+public export
+STEqualizerPred : {0 a : Type} -> DecEqPred a -> STAlg a -> a -> STMu -> Bool
+STEqualizerPred {a} eq alg elema obj = isYes $ eq elema $ stCata alg obj
+
+public export
+STEqualizer : {0 a : Type} -> DecEqPred a -> STAlg a -> SliceObj a
+STEqualizer {a} eq alg elema =
+  Refinement {a=STMu} $ STEqualizerPred eq alg elema
+
+public export
+STRefineAlg : Type
+STRefineAlg = STAlg Bool
+
+public export
+STRefinement : SliceObj STRefineAlg
+STRefinement alg = Refinement {a=STMu} $ stCata alg
+
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+---- Inductive definition of substitutive polynomial objects ----
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+public export
+data SubstObjPos : Type where
+  SOPos0 : SubstObjPos -- Initial object
+  SOPos1 : SubstObjPos -- Terminal object
+  SOPosC : SubstObjPos -- Coproduct
+  SOPosP : SubstObjPos -- Product
+
+public export
+data SubstObjDir : SubstObjPos -> Type where
+  SODirL : SubstObjDir SOPosC -- left object of coproduct
+  SODirR : SubstObjDir SOPosC -- right object of coproduct
+  SODir1 : SubstObjDir SOPosP -- first object of product
+  SODir2 : SubstObjDir SOPosP -- second object of product
+
+public export
+SubstObjPF : PolyFunc
+SubstObjPF = (SubstObjPos ** SubstObjDir)
+
+----------------------------------------------------
+---- Least fixed point, algebras, catamorphisms ----
+----------------------------------------------------
+
+public export
+SOMu : Type
+SOMu = PolyFuncMu SubstObjPF
+
+public export
+SOAlg : Type -> Type
+SOAlg = PFAlg SubstObjPF
+
+public export
+soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
+soCata = pfCata {p=SubstObjPF}
+
+public export
+SOProductAlg : Type -> Type
+SOProductAlg = PFProductAlg SubstObjPF SubstObjPF
+
+public export
+soProductCata : {0 a : Type} -> SOProductAlg a -> SOMu -> SOMu -> a
+soProductCata {a} = pfProductCata {a} {p=SubstObjPF} {q=SubstObjPF}
+
+public export
+SOProductHomAlgNT : Type
+SOProductHomAlgNT = PFProductHomAlgNT SubstObjPF SubstObjPF SubstObjPF
+
+public export
+soProductHomCataNT : SOProductHomAlgNT -> SOMu -> SOMu -> SOMu
+soProductHomCataNT =
+  pfProductHomCataNT {p=SubstObjPF} {q=SubstObjPF} {r=SubstObjPF}
+
+public export
+SOProductHomAlg : Type -> Type
+SOProductHomAlg = PFProductHomAlg SubstObjPF SubstObjPF
+
+public export
+soProductHomCata : {a : Type} -> SOProductHomAlg a -> SOMu -> SOMu -> a
+soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InSO0 : SOMu
+InSO0 = InPFM SOPos0 $ \d => case d of _ impossible
+
+public export
+InSO1 : SOMu
+InSO1 = InPFM SOPos1 $ \d => case d of _ impossible
+
+public export
+InSOC : SOMu -> SOMu -> SOMu
+InSOC x y = InPFM SOPosC $ \d => case d of
+  SODirL => x
+  SODirR => y
+
+public export
+InSOP : SOMu -> SOMu -> SOMu
+InSOP x y = InPFM SOPosP $ \d => case d of
+  SODir1 => x
+  SODir2 => y
+
+public export
+SOSizeAlg : SOAlg Nat
+SOSizeAlg SOPos0 dir = 1
+SOSizeAlg SOPos1 dir = 1
+SOSizeAlg SOPosC dir = 1 + dir SODirL + dir SODirR
+SOSizeAlg SOPosP dir = 1 + dir SODir1 + dir SODir2
+
+public export
+soSize : SOMu -> Nat
+soSize = soCata SOSizeAlg
+
+public export
+SODepthAlg : SOAlg Nat
+SODepthAlg SOPos0 dir = 0
+SODepthAlg SOPos1 dir = 0
+SODepthAlg SOPosC dir = smax (dir SODirL) (dir SODirR)
+SODepthAlg SOPosP dir = smax (dir SODir1) (dir SODir2)
+
+public export
+soDepth : SOMu -> Nat
+soDepth = soCata SODepthAlg
+
+public export
+SOCardAlg : SOAlg Nat
+SOCardAlg SOPos0 dir = 0
+SOCardAlg SOPos1 dir = 1
+SOCardAlg SOPosC dir = dir SODirL + dir SODirR
+SOCardAlg SOPosP dir = dir SODir1 * dir SODir2
+
+public export
+soCard : SOMu -> Nat
+soCard = soCata SOCardAlg
+
+public export
+SOShowAlg : SOAlg String
+SOShowAlg SOPos0 dir = "0"
+SOShowAlg SOPos1 dir = "1"
+SOShowAlg SOPosC dir = "[" ++ dir SODirL ++ "|" ++ dir SODirR ++ "]"
+SOShowAlg SOPosP dir = "(" ++ dir SODir1 ++ "," ++ dir SODir2 ++ ")"
+
+public export
+Show SOMu where
+  show = soCata SOShowAlg
+
+public export
+SOEqAlg : SOProductAlg Bool
+SOEqAlg (SOPos0, SOPos0) d = True
+SOEqAlg (SOPos0, SOPos1) d = False
+SOEqAlg (SOPos0, SOPosC) d = False
+SOEqAlg (SOPos0, SOPosP) d = False
+SOEqAlg (SOPos1, SOPos0) d = False
+SOEqAlg (SOPos1, SOPos1) d = True
+SOEqAlg (SOPos1, SOPosC) d = False
+SOEqAlg (SOPos1, SOPosP) d = False
+SOEqAlg (SOPosC, SOPos0) d = False
+SOEqAlg (SOPosC, SOPos1) d = False
+SOEqAlg (SOPosC, SOPosC) d = d (SODirL, SODirL) && d (SODirR, SODirR)
+SOEqAlg (SOPosC, SOPosP) d = False
+SOEqAlg (SOPosP, SOPos0) d = False
+SOEqAlg (SOPosP, SOPos1) d = False
+SOEqAlg (SOPosP, SOPosC) d = False
+SOEqAlg (SOPosP, SOPosP) d = d (SODir1, SODir1) && d (SODir2, SODir2)
+
+public export
+soEq : SOMu -> SOMu -> Bool
+soEq = soProductCata SOEqAlg
+
+public export
+Eq SOMu where
+  (==) = soEq
+
+public export
+SOBoundedNat : Nat -> SOMu
+SOBoundedNat 0 = InSO0
+SOBoundedNat 1 = InSO1
+SOBoundedNat (S (S n)) = InSOC InSO1 (SOBoundedNat (S n))
+
+----------------------------------------
+---- Interpretation into Idris Type ----
+----------------------------------------
+
+public export
+SOInterpAlg : SOAlg Type
+SOInterpAlg SOPos0 dir = Void
+SOInterpAlg SOPos1 dir = Unit
+SOInterpAlg SOPosC dir = Either (dir SODirL) (dir SODirR)
+SOInterpAlg SOPosP dir = Pair (dir SODir1) (dir SODir2)
+
+public export
+soInterp : SOMu -> Type
+soInterp = soCata SOInterpAlg
+
+---------------------------------------------------------
+---- Embedding into PolyFunc as constant endofunctor ----
+---------------------------------------------------------
+
+public export
+SOConstEFAlg : SOAlg PolyFunc
+SOConstEFAlg SOPos0 dir = PFInitialArena
+SOConstEFAlg SOPos1 dir = PFTerminalArena
+SOConstEFAlg SOPosC dir = pfCoproductArena (dir SODirL) (dir SODirR)
+SOConstEFAlg SOPosP dir = pfProductArena (dir SODir1) (dir SODir2)
+
+public export
+soConstEF : SOMu -> PolyFunc
+soConstEF = soCata SOConstEFAlg
+
+--------------------------------------------------------------
+---- Embedding into PolyFunc as representable endofunctor ----
+--------------------------------------------------------------
+
+public export
+SORepEFAlg : SOAlg PolyFunc
+SORepEFAlg SOPos0 dir = PFTerminalArena
+SORepEFAlg SOPos1 dir = PFIdentityArena
+SORepEFAlg SOPosC dir = pfProductArena (dir SODirL) (dir SODirR)
+SORepEFAlg SOPosP dir = pfParProductArena (dir SODir1) (dir SODir2)
+
+public export
+soRepEF : SOMu -> PolyFunc
+soRepEF = soCata SORepEFAlg
+
+---------------------
+---- Refinements ----
+---------------------
+
+-- Note:  this section implements refinements of the type of objects,
+-- not the types of refinements of objects.  In other words, here we are
+-- selecting classes of types, not selecting terms from individual types.
+
+public export
+SOEqualizerPred : {0 a : Type} -> DecEqPred a -> SOAlg a -> a -> SOMu -> Bool
+SOEqualizerPred {a} eq alg elema obj = isYes $ eq elema $ soCata alg obj
+
+public export
+SOEqualizer : {0 a : Type} -> DecEqPred a -> SOAlg a -> SliceObj a
+SOEqualizer {a} eq alg elema =
+  Refinement {a=SOMu} $ SOEqualizerPred eq alg elema
+
+public export
+SORefineAlg : Type
+SORefineAlg = SOAlg Bool
+
+public export
+SORefinement : SliceObj SORefineAlg
+SORefinement alg = Refinement {a=SOMu} $ soCata alg
+
+-----------------------------------------------
+-----------------------------------------------
+---- Relationships between terms and types ----
+-----------------------------------------------
+-----------------------------------------------
+
+-- Test whether the given term is a valid term of the given type.
+public export
+SOTermCheckAlg : PFProductAlg SubstObjPF SubstTermPF Bool
+-- No term has type `InSO0`.
+SOTermCheckAlg (SOPos0, STPosLeaf) d = False
+SOTermCheckAlg (SOPos0, STPosLeft) d = False
+SOTermCheckAlg (SOPos0, STPosRight) d = False
+SOTermCheckAlg (SOPos0, STPosPair) d = False
+-- Only `InSTLeaf` has type `InSO1`.
+SOTermCheckAlg (SOPos1, STPosLeaf) d = True
+SOTermCheckAlg (SOPos1, STPosLeft) d = False
+SOTermCheckAlg (SOPos1, STPosRight) d = False
+SOTermCheckAlg (SOPos1, STPosPair) d = False
+-- A coproduct term must be either a left injection or a right injection,
+-- and its sub-term must match the corresponding sub-type.  The other
+-- sub-type could be anything.
+SOTermCheckAlg (SOPosC, STPosLeaf) d = False
+SOTermCheckAlg (SOPosC, STPosLeft) d = d (SODirL, STDirL)
+SOTermCheckAlg (SOPosC, STPosRight) d = d (SODirR, STDirR)
+SOTermCheckAlg (SOPosC, STPosPair) d = False
+-- A product term must be a pair, and each of its sub-terms must
+-- match the corresponding sub-type.
+SOTermCheckAlg (SOPosP, STPosLeaf) d = False
+SOTermCheckAlg (SOPosP, STPosLeft) d = False
+SOTermCheckAlg (SOPosP, STPosRight) d = False
+SOTermCheckAlg (SOPosP, STPosPair) d =
+  d (SODir1, STDirFst) && d (SODir2, STDirSnd)
+
+public export
+soTermCheck : SOMu -> DecPred STMu
+soTermCheck = pfProductCata SOTermCheckAlg
+
+public export
+STTyped : SOMu -> Type
+STTyped so = Refinement {a=STMu} $ soTermCheck so
+
+public export
+MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
+  {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
+MkSTTyped {so} t {ok} = MkRefinement t
+
+data SOTermValidationAlg : PFProductAlg SubstObjPF SubstTermPF Type where
+  SOTermValidationAlg1L :
+    {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
+    SOTermValidationAlg (SOPos1, STPosLeaf) d
+  SOTermValidationAlgCL :
+    {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Type} ->
+    d (SODirL, STDirL) ->
+    SOTermValidationAlg (SOPosC, STPosLeft) d
+  SOTermValidationAlgCR :
+    {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Type} ->
+    d (SODirR, STDirR) ->
+    SOTermValidationAlg (SOPosC, STPosRight) d
+  SOTermValidationAlgPP :
+    {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
+    d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
+    SOTermValidationAlg (SOPosP, STPosPair) d
+
+public export
+SOTermValidation : SOMu -> STMu -> Type
+SOTermValidation = pfProductCata SOTermValidationAlg
+
+public export
+SOCheckedTermAlg : SOAlg Type
+SOCheckedTermAlg SOPos0 d = Void
+SOCheckedTermAlg SOPos1 d = Unit
+SOCheckedTermAlg SOPosC d = Either (d SODirL) (d SODirR)
+SOCheckedTermAlg SOPosP d = Pair (d SODir1) (d SODir2)
+
+public export
+soCheckedTerm : SOMu -> Type
+soCheckedTerm = pfCata SOCheckedTermAlg
+
+public export
+SOCheckedTermPFAlg : SOAlg PolyFunc
+SOCheckedTermPFAlg SOPos0 d = PFInitialArena
+SOCheckedTermPFAlg SOPos1 d = PFTerminalArena
+SOCheckedTermPFAlg SOPosC d = pfCoproductArena (d SODirL) (d SODirR)
+SOCheckedTermPFAlg SOPosP d = pfProductArena (d SODir1) (d SODir2)
+
+public export
+soCheckedTermPF : SOMu -> PolyFunc
+soCheckedTermPF = pfCata SOCheckedTermPFAlg
+
+---------------------------
+---------------------------
+---- Morphisms in SOMu ----
+---------------------------
+---------------------------
+
+public export
+SOHomObjAlg : SOAlg (SOMu -> SOMu)
+-- 0 -> x === 1
+SOHomObjAlg SOPos0 d obj = InSO1
+-- 1 -> x === x
+SOHomObjAlg SOPos1 d obj = obj
+-- (x + y) -> z === (x -> z) * (y -> z)
+SOHomObjAlg SOPosC d obj = InSOP (d SODirL obj) (d SODirR obj)
+-- (x * y) -> z === x -> (y -> z)
+SOHomObjAlg SOPosP d obj = d SODir1 $ d SODir2 obj
+
+public export
+soHomObj : SOMu -> SOMu -> SOMu
+soHomObj = soCata SOHomObjAlg
+
+public export
+soExpObj : SOMu -> SOMu -> SOMu
+soExpObj = flip soHomObj
+
+public export
+SOHomTerm : SOMu -> SOMu -> Type
+SOHomTerm = STTyped .* soHomObj
+
+public export
+SOHomTermFunc : SOMu -> SOMu -> PolyFunc
+SOHomTermFunc = soCheckedTermPF .* soHomObj
+
+public export
+SOHomFuncAlg : SOAlg PolyFunc
+SOHomFuncAlg SOPos0 d = PFTerminalArena
+SOHomFuncAlg SOPos1 d = PFIdentityArena
+SOHomFuncAlg SOPosC d = pfProductArena (d SODirL) (d SODirR)
+SOHomFuncAlg SOPosP d = pfCompositionArena (d SODir1) (d SODir2)
+
+public export
+soHomPF : SOMu -> PolyFunc
+soHomPF = pfCata SOHomFuncAlg
+
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+---- Inductive definition of substitutive polynomial endofunctors ----
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+-- Extensions to the positions of endofunctors beyond those of objects,
+-- all of which it shares (since the category of endofunctors also has
+-- all the universal properties of the the `STMu` category).
+public export
+data SubstEFPosExt : Type where
+  SEFPosExtI : SubstEFPosExt -- identity endofunctor
+  SEFPosExtPar : SubstEFPosExt -- parallel product
+
+public export
+data SubstEFDirExt : SubstEFPosExt -> Type where
+  -- Although the identity endofunctor has one position, the position
+  -- corresponding to the identity of the endofunctor which _generates_
+  -- endofunctors has no positions, because there is just one identity
+  -- functor -- the constructor which generates the identity endofunctor does
+  -- not take any endofunctors as parameters
+  SEFDirExtPar1 : SubstEFDirExt SEFPosExtPar
+    -- first component of parallel product
+  SEFDirExtPar2 : SubstEFDirExt SEFPosExtPar
+    -- second component of parallel product
+
+public export
+SubstEFExt : PolyFunc
+SubstEFExt = (SubstEFPosExt ** SubstEFDirExt)
+
+public export
+SubstEFPF : PolyFunc
+SubstEFPF = pfCoproductArena SubstObjPF SubstEFExt
+
+public export
+SubstEFPos : Type
+SubstEFPos = pfPos SubstEFPF
+
+public export
+SubstEFDir : SubstEFPos -> Type
+SubstEFDir = pfDir {p=SubstEFPF}
+
+public export
+SEFPos0 : SubstEFPos
+SEFPos0 = Left SOPos0
+
+public export
+SEFPos1 : SubstEFPos
+SEFPos1 = Left SOPos1
+
+public export
+SEFPosC : SubstEFPos
+SEFPosC = Left SOPosC
+
+public export
+SEFPosP : SubstEFPos
+SEFPosP = Left SOPosP
+
+public export
+SEFPosI : SubstEFPos
+SEFPosI = Right SEFPosExtI
+
+public export
+SEFPosPar : SubstEFPos
+SEFPosPar = Right SEFPosExtPar
+
+----------------------------------------------------
+---- Least fixed point, algebras, catamorphisms ----
+----------------------------------------------------
+
+public export
+SEFMuExt : Type
+SEFMuExt = PolyFuncMu SubstEFExt
+
+public export
+SEFMu : Type
+SEFMu = PolyFuncMu SubstEFPF
+
+public export
+SEFAlg : Type -> Type
+SEFAlg = PFAlg SubstEFPF
+
+public export
+SEFAlgExt : Type -> Type
+SEFAlgExt = PFAlg SubstEFExt
+
+public export
+sefCataExt : {0 a : Type} -> SEFAlgExt a -> SEFMuExt -> a
+sefCataExt = pfCata {p=SubstEFExt}
+
+public export
+sefCata : {0 a : Type} -> SEFAlg a -> SEFMu -> a
+sefCata = pfCata {p=SubstEFPF}
+
+public export
+SEFExtProductAlg : Type -> Type
+SEFExtProductAlg = PFProductAlg SubstEFExt SubstEFExt
+
+public export
+SEFProductAlg : Type -> Type
+SEFProductAlg = PFProductAlg SubstEFPF SubstEFPF
+
+public export
+sefProdCata : {0 a : Type} -> SEFProductAlg a -> SEFMu -> SEFMu -> a
+sefProdCata {a} = pfProductCata {a} {p=SubstEFPF} {q=SubstEFPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InSEFL : (i : SubstObjPos) -> (SubstObjDir i -> SEFMu) -> SEFMu
+InSEFL i = InPFM (Left i)
+
+public export
+InSEFR : (i : SubstEFPosExt) -> (SubstEFDirExt i -> SEFMu) -> SEFMu
+InSEFR i = InPFM (Right i)
+
+public export
+InSEFO : SOMu -> SEFMu
+InSEFO = soCata InSEFL
+
+public export
+InSEFExt : SEFMuExt -> SEFMu
+InSEFExt = sefCataExt InSEFR
+
+public export
+InSEF0 : SEFMu
+InSEF0 = InPFM SEFPos0 $ \d => case d of _ impossible
+
+public export
+InSEF1 : SEFMu
+InSEF1 = InPFM SEFPos1 $ \d => case d of _ impossible
+
+public export
+InSEFC : SEFMu -> SEFMu -> SEFMu
+InSEFC x y = InPFM SEFPosC $ \d => case d of
+  SODirL => x
+  SODirR => y
+
+public export
+InSEFP : SEFMu -> SEFMu -> SEFMu
+InSEFP x y = InPFM SEFPosP $ \d => case d of
+  SODir1 => x
+  SODir2 => y
+
+public export
+InSEFI : SEFMu
+InSEFI = InPFM SEFPosI $ \d => case d of _ impossible
+
+public export
+InSEFPar : SEFMu -> SEFMu -> SEFMu
+InSEFPar x y = InPFM SEFPosPar $ \d => case d of
+  SEFDirExtPar1 => x
+  SEFDirExtPar2 => y
+
+public export
+SEFSizeAlgExt : SEFAlgExt Nat
+SEFSizeAlgExt SEFPosExtI dir = 1
+SEFSizeAlgExt SEFPosExtPar dir = 1 + dir SEFDirExtPar1 + dir SEFDirExtPar2
+
+public export
+SEFSizeAlg : SEFAlg Nat
+SEFSizeAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOSizeAlg SEFSizeAlgExt
+
+public export
+sefSize : SEFMu -> Nat
+sefSize = sefCata SEFSizeAlg
+
+public export
+SEFDepthAlgExt : SEFAlgExt Nat
+SEFDepthAlgExt SEFPosExtI dir = 0
+SEFDepthAlgExt SEFPosExtPar dir = smax (dir SEFDirExtPar1) (dir SEFDirExtPar2)
+
+public export
+SEFDepthAlg : SEFAlg Nat
+SEFDepthAlg =
+  PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SODepthAlg SEFDepthAlgExt
+
+public export
+sefDepth : SEFMu -> Nat
+sefDepth = sefCata SEFDepthAlg
+
+public export
+SEFShowAlgObj : SOAlg String
+SEFShowAlgObj pos dir = "!" ++ SOShowAlg pos dir
+
+public export
+SEFShowAlgExt : SEFAlgExt String
+SEFShowAlgExt SEFPosExtI dir = "{id}"
+SEFShowAlgExt SEFPosExtPar dir =
+  "<" ++ dir SEFDirExtPar1 ++ "x" ++ dir SEFDirExtPar2 ++ ">"
+
+public export
+SEFShowAlg : SEFAlg String
+SEFShowAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOShowAlg SEFShowAlgExt
+
+public export
+Show SEFMu where
+  show = sefCata SEFShowAlg
+
+public export
+SEFExtEqAlg : SEFExtProductAlg Bool
+SEFExtEqAlg (SEFPosExtI, SEFPosExtI) d = True
+SEFExtEqAlg (SEFPosExtI, SEFPosExtPar) d = False
+SEFExtEqAlg (SEFPosExtPar, SEFPosExtI) d = False
+SEFExtEqAlg (SEFPosExtPar, SEFPosExtPar) d =
+  d (SEFDirExtPar1, SEFDirExtPar1) && d (SEFDirExtPar2, SEFDirExtPar2)
+
+public export
+SEFEqAlg : SEFProductAlg Bool
+SEFEqAlg ((Left i), (Left i')) d = SOEqAlg (i, i') d
+SEFEqAlg ((Left i), (Right i')) d = False
+SEFEqAlg ((Right i), (Left i')) d = False
+SEFEqAlg ((Right i), (Right i')) d = SEFExtEqAlg (i, i') d
+
+public export
+sefEq : SEFMu -> SEFMu -> Bool
+sefEq = sefProdCata SEFEqAlg
+
+---------------------------------------------
+---- Interpretation of SEFMu as PolyFunc ----
+---------------------------------------------
+
+public export
+SOtoPFalg : SOAlg PolyFunc
+SOtoPFalg SOPos0 d = PFInitialArena
+SOtoPFalg SOPos1 d = PFTerminalArena
+SOtoPFalg SOPosC d = pfCoproductArena (d SODirL) (d SODirR)
+SOtoPFalg SOPosP d = pfProductArena (d SODir1) (d SODir2)
+
+public export
+SEFtoPFalgExt : SEFAlgExt PolyFunc
+SEFtoPFalgExt SEFPosExtI d =
+  PFIdentityArena
+SEFtoPFalgExt SEFPosExtPar d =
+  pfParProductArena (d SEFDirExtPar1) (d SEFDirExtPar2)
+
+public export
+SEFtoPFalg : SEFAlg PolyFunc
+SEFtoPFalg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOtoPFalg SEFtoPFalgExt
+
+public export
+sefToPF : SEFMu -> PolyFunc
+sefToPF = sefCata SEFtoPFalg
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+public export
+SEFPosAlg : SEFAlg SOMu
+SEFPosAlg (Left SOPos0) d = InSO0
+SEFPosAlg (Left SOPos1) d = InSO1
+SEFPosAlg (Left SOPosC) d = InSOC (d SODirL) (d SODirR)
+SEFPosAlg (Left SOPosP) d = InSOP (d SODir1) (d SODir2)
+SEFPosAlg (Right SEFPosExtI) d = InSO1
+SEFPosAlg (Right SEFPosExtPar) d = InSOP (d SEFDirExtPar1) (d SEFDirExtPar2)
+
+public export
+sefPos : SEFMu -> SOMu
+sefPos = sefCata SEFPosAlg
+
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+---- Reflection of object and endofunctor definitions as endofunctors ----
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+
+public export
+sefDoubleF : SEFMu -> SEFMu
+sefDoubleF f = InSEFC f f
+
+public export
+sefSquareF : SEFMu -> SEFMu
+sefSquareF f = InSEFP f f
+
+public export
+sefMaybeF : SEFMu -> SEFMu
+sefMaybeF = InSEFC InSEF1
+
+public export
+sefConstBool : SEFMu
+sefConstBool = sefDoubleF InSEF1
+
+public export
+sefMaybe : SEFMu
+sefMaybe = sefMaybeF InSEFI
+
+public export
+sefTerm : SEFMu
+sefTerm = sefSquareF sefMaybe
+
+public export
+sefSquare : SEFMu
+sefSquare = sefSquareF InSEFI
+
+public export
+sefMaybeSquare : SEFMu
+sefMaybeSquare = sefMaybeF sefSquare
+
+public export
+sefSubstObj : SEFMu
+sefSubstObj = sefDoubleF sefMaybeSquare
+
+public export
+sefPolyFunc : SEFMu
+sefPolyFunc = InSEFC sefSubstObj sefConstBool
+
+-------------------------------------------------------
+-------------------------------------------------------
+---- Substitutive endofunctors indexed by position ----
+-------------------------------------------------------
+-------------------------------------------------------
+
+-- The functor which generates substitutive objects has four positions
+-- (unit, left, right, pair).
+public export
+SubstObjReflectedPos : SOMu
+SubstObjReflectedPos = SOBoundedNat 4
+
+public export
+ISEFPosAlg : SOAlg SOMu
+-- There is exactly one endofunctor with no positions, namely the
+-- initial object in the category of endofunctors (which is the
+-- constant functor whose value everywhere is the initial object).
+ISEFPosAlg SOPos0 d = InSO1
+-- An endofunctor with exactly one position is representable.  Hence,
+-- there is one such endofunctor for each substitutive object.  Hence
+-- the positions of the endofunctor which generates such endofunctors
+-- are the positions of substitutive objects.
+ISEFPosAlg SOPos1 d = SubstObjReflectedPos
+-- The positions of a coproduct of two endofunctors are the coproduct of
+-- the positions.
+ISEFPosAlg SOPosC d = InSOC (d SODirL) (d SODirR)
+-- The positions of a product of two endofunctors are the product of
+-- the positions.
+ISEFPosAlg SOPosP d = InSOP (d SODir1) (d SODir2)
+
+public export
+ISEFPos : SOMu -> SOMu
+ISEFPos = soCata ISEFPosAlg
+
+-----------------------------------
+-----------------------------------
+---- Simple types, anonymously ----
+-----------------------------------
+-----------------------------------
+
+-------------------------------
+---- Unary natural numbers ----
+-------------------------------
+
+public export
+UNatF : PolyFunc
+UNatF = pfMaybeArena
+
+public export
+UNatAlg : Type -> Type
+UNatAlg a = (a, a -> a)
+
+public export
+UNatAlgToPF : {a : Type} -> UNatAlg a -> PFAlg UNatF a
+UNatAlgToPF (z, s) (Right ()) d = z
+UNatAlgToPF (z, s) (Left ()) d = s $ d ()
+
+public export
+UNatMu : Type
+UNatMu = PolyFuncMu UNatF
+
+public export
+unatCata : {a : Type} -> UNatAlg a -> UNatMu -> a
+unatCata = pfCata {p=UNatF} . UNatAlgToPF
+
+public export
+UNatFreePF : PolyFunc
+UNatFreePF = PolyFuncFreeM UNatF
+
+public export
+UNatFreeM : Type -> Type
+UNatFreeM = InterpPolyFuncFreeM UNatF
+
+public export
+unatSubstCata : {a, b : Type} -> (a -> b) -> UNatAlg b -> UNatFreeM a -> b
+unatSubstCata subst = pfSubstCata {p=UNatF} subst . UNatAlgToPF
+
+public export
+UNatToNativeAlg : UNatAlg Nat
+UNatToNativeAlg = (Z, S)
+
+public export
+unatToNative : UNatMu -> Nat
+unatToNative = unatCata UNatToNativeAlg
+
+public export
+unatZ : UNatMu
+unatZ = InPFM (Right ()) $ voidF _
+
+public export
+unatS : UNatMu -> UNatMu
+unatS n = InPFM (Left ()) $ const n
+
+public export
+unatFromNative : Nat -> UNatMu
+unatFromNative Z = unatZ
+unatFromNative (S n) = unatS (unatFromNative n)
+
+public export
+Show UNatMu where
+  show n = show (unatToNative n)
+
+--------------------------------
+---- Unlabeled binary trees ----
+--------------------------------
+
+public export
+UBTreeF : PolyFunc
+UBTreeF = pfCompositionArena pfMaybeArena pfIdSquaredArena
+
+public export
+UBTreeAlg : Type -> Type
+UBTreeAlg a = (a, a -> a -> a)
+
+public export
+UBTreeAlgToPF : {a : Type} -> UBTreeAlg a -> PFAlg UBTreeF a
+UBTreeAlgToPF {a} (u, p) (Right () ** i) d = u
+UBTreeAlgToPF {a} (u, p) (Left () ** i) d with (i ()) proof ieq
+  UBTreeAlgToPF {a} (u, p) (Left () ** i) d | ((), ()) =
+    p (d (() ** rewrite ieq in Left ())) (d (() ** rewrite ieq in Right ()))
+
+public export
+UBTreeMu : Type
+UBTreeMu = PolyFuncMu UBTreeF
+
+public export
+ubtreeCata : {a : Type} -> UBTreeAlg a -> UBTreeMu -> a
+ubtreeCata = pfCata {p=UBTreeF} . UBTreeAlgToPF
+
+public export
+UBTreeFreePF : PolyFunc
+UBTreeFreePF = PolyFuncFreeM UBTreeF
+
+public export
+UBTreeFreeM : Type -> Type
+UBTreeFreeM = InterpPolyFuncFreeM UBTreeF
+
+public export
+ubtreeSubstCata : {a, b : Type} -> (a -> b) -> UBTreeAlg b -> UBTreeFreeM a -> b
+ubtreeSubstCata subst = pfSubstCata {p=UBTreeF} subst . UBTreeAlgToPF
+
+public export
+UBTreeShowAlg : UBTreeAlg String
+UBTreeShowAlg = ("!", \x, y => "(" ++ x ++ "," ++ y ++ ")")
+
+public export
+Show UBTreeMu where
+  show = ubtreeCata UBTreeShowAlg
+
+----------------------------------------------------
+---- Finite-product-and-coproduct objects/types ----
+----------------------------------------------------
+
+public export
+FinPCObjF : PolyFunc
+FinPCObjF = pfDoubleArena UBTreeF
+
+public export
+FinPCObjAlg : Type -> Type
+FinPCObjAlg a = (UBTreeAlg a, UBTreeAlg a)
+
+-- `alg1` is the algebra for limits (the terminal object and products)
+-- while `alg2` is the algebra for colimits (the initial object and coproducts).
+public export
+FinPCObjAlgToPF : {a : Type} -> FinPCObjAlg a -> PFAlg FinPCObjF a
+FinPCObjAlgToPF (alg1, alg2) =
+  PFCoprodAlg {p=UBTreeF} {q=UBTreeF} (UBTreeAlgToPF alg1) (UBTreeAlgToPF alg2)
+
+public export
+FinPCObjMu : Type
+FinPCObjMu = PolyFuncMu FinPCObjF
+
+public export
+finPCObjCata : {a : Type} -> FinPCObjAlg a -> FinPCObjMu -> a
+finPCObjCata = pfCata {p=FinPCObjF} . FinPCObjAlgToPF
+
+public export
+FinPCObjFreePF : PolyFunc
+FinPCObjFreePF = PolyFuncFreeM FinPCObjF
+
+public export
+FinPCObjFreeM : Type -> Type
+FinPCObjFreeM = InterpPolyFuncFreeM FinPCObjF
+
+public export
+finPCObjSubstCata : {a, b : Type} ->
+  (a -> b) -> FinPCObjAlg b -> FinPCObjFreeM a -> b
+finPCObjSubstCata subst = pfSubstCata {p=FinPCObjF} subst . FinPCObjAlgToPF
+
+public export
+FinPCObjShowAlg : FinPCObjAlg String
+FinPCObjShowAlg =
+  (("1", \x, y => "(" ++ x ++ "," ++ y ++ ")"),
+   ("0", \x, y => "[" ++ x ++ "+" ++ y ++ "]"))
+
+public export
+Show FinPCObjMu where
+  show = finPCObjCata FinPCObjShowAlg
+
+--------------------------------------------
+---- Finite-product-and-coproduct terms ----
+--------------------------------------------
+
+public export
+FinPCTermF : PolyFunc
+FinPCTermF = pfSquareArena pfMaybeArena
+
+-- Components of the algebra:
+--  - unit
+--  - left
+--  - right
+--  - pair
+public export
+FinPCTermAlg : Type -> Type
+FinPCTermAlg a = (a, a -> a, a -> a, a -> a -> a)
+
+public export
+FinPCTermAlgToPF : {a : Type} -> FinPCTermAlg a -> PFAlg FinPCTermF a
+FinPCTermAlgToPF (u, l, r, p) (Right (), Right ()) d = u
+FinPCTermAlgToPF (u, l, r, p) (Right (), Left ()) d = r $ d $ Right ()
+FinPCTermAlgToPF (u, l, r, p) (Left (), Right ()) d = l $ d $ Left ()
+FinPCTermAlgToPF (u, l, r, p) (Left (), Left ()) d =
+  p (d $ Left ()) (d $ Right ())
+
+public export
+FinPCTermMu : Type
+FinPCTermMu = PolyFuncMu FinPCTermF
+
+public export
+finPCTermCata : {a : Type} -> FinPCTermAlg a -> FinPCTermMu -> a
+finPCTermCata = pfCata {p=FinPCTermF} . FinPCTermAlgToPF
+
+public export
+FinPCTermFreePF : PolyFunc
+FinPCTermFreePF = PolyFuncFreeM FinPCTermF
+
+public export
+FinPCTermFreeM : Type -> Type
+FinPCTermFreeM = InterpPolyFuncFreeM FinPCTermF
+
+public export
+finPCTermSubstCata : {a, b : Type} ->
+  (a -> b) -> FinPCTermAlg b -> FinPCTermFreeM a -> b
+finPCTermSubstCata subst = pfSubstCata subst . FinPCTermAlgToPF
+
+public export
+FinPCTermShowAlg : FinPCTermAlg String
+FinPCTermShowAlg =
+  ("!",
+   \x => "l[" ++ x ++ "]",
+   \x => "r[" ++ x ++ "]",
+   \x, y => "(" ++ x ++ "," ++ y ++ ")")
+
+public export
+Show FinPCTermMu where
+  show = finPCTermCata FinPCTermShowAlg
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Explicitly-recursive ADT equivalent to generalized polynomial ADT term ----
@@ -289,236 +1491,10 @@ public export
 fbcObjParse : TermMu -> Maybe FinBCObjMu
 fbcObjParse = termCataRec FBCObjParseAlg
 
--------------------------------------------
--------------------------------------------
----- Inductive definition of term type ----
--------------------------------------------
--------------------------------------------
-
-----------------------------------
----- Positions and directions ----
-----------------------------------
-
-public export
-data SubstTermPos : Type where
-  STPosLeaf : SubstTermPos
-  STPosLeft : SubstTermPos
-  STPosRight : SubstTermPos
-  STPosPair : SubstTermPos
-
-public export
-data SubstTermDir : SubstTermPos -> Type where
-  STDirL : SubstTermDir STPosLeft
-  STDirR : SubstTermDir STPosRight
-  STDirFst : SubstTermDir STPosPair
-  STDirSnd : SubstTermDir STPosPair
-
-public export
-SubstTermPF : PolyFunc
-SubstTermPF = (SubstTermPos ** SubstTermDir)
-
----------------------------------------------
----- Least fixed point (initial algebra) ----
----------------------------------------------
-
-public export
-STMu : Type
-STMu = PolyFuncMu SubstTermPF
-
----------------------------------
----- Algebras, catamorphisms ----
----------------------------------
-
-public export
-STAlg : Type -> Type
-STAlg = PFAlg SubstTermPF
-
-public export
-stCata : {0 a : Type} -> STAlg a -> STMu -> a
-stCata = pfCata {p=SubstTermPF}
-
--------------------
----- Utilities ----
--------------------
-
-public export
-InSTUnit : STMu
-InSTUnit = InPFM STPosLeaf $ \d => case d of _ impossible
-
-public export
-InSTLeft : STMu -> STMu
-InSTLeft x = InPFM STPosLeft $ \d => case d of STDirL => x
-
-public export
-InSTRight : STMu -> STMu
-InSTRight y = InPFM STPosRight $ \d => case d of STDirR => y
-
-public export
-InSTPair : STMu -> STMu -> STMu
-InSTPair x y = InPFM STPosPair $ \d => case d of
-  STDirFst => x
-  STDirSnd => y
-
-public export
-STSizeAlg : STAlg Nat
-STSizeAlg STPosLeaf dir = 0
-STSizeAlg STPosLeft dir = 1 + dir STDirL
-STSizeAlg STPosRight dir = 1 + dir STDirR
-STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
-
-public export
-stSize : STMu -> Nat
-stSize = stCata STSizeAlg
-
-public export
-STDepthAlg : STAlg Nat
-STDepthAlg STPosLeaf dir = 0
-STDepthAlg STPosLeft dir = 1 + dir STDirL
-STDepthAlg STPosRight dir = 1 + dir STDirR
-STDepthAlg STPosPair dir = smax (dir STDirFst) (dir STDirSnd)
-
-public export
-stDepth : STMu -> Nat
-stDepth = stCata STDepthAlg
-
-public export
-STShowAlg : STAlg String
-STShowAlg STPosLeaf dir = "!"
-STShowAlg STPosLeft dir = "< [" ++ dir STDirL ++ "]"
-STShowAlg STPosRight dir = "> [" ++ dir STDirR ++ "]"
-STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
-
-public export
-Show STMu where
-  show = stCata STShowAlg
-
----------------------
----- Refinements ----
----------------------
-
-public export
-STEitherAlg : Type -> Type -> Type
-STEitherAlg = STAlg .* Either
-
-public export
-STRefinementAlg : Type
-STRefinementAlg = STEitherAlg Unit Unit
-
-public export
-RefinedST : (0 _ : DecPred STMu) -> Type
-RefinedST = Refinement {a=STMu}
-
-public export
-AlgRefinedST : STRefinementAlg -> Type
-AlgRefinedST alg = RefinedST (isRight . stCata alg)
-
-------------------------
----- Dependent fold ----
-------------------------
-
------------------------------------------------------------------
------------------------------------------------------------------
----- Inductive definition of substitutive polynomial objects ----
------------------------------------------------------------------
------------------------------------------------------------------
-
-----------------------------------
----- Positions and directions ----
-----------------------------------
-
-public export
-data SubstObjPos : Type where
-  SOPos0 : SubstObjPos -- Initial object
-  SOPos1 : SubstObjPos -- Terminal object
-  SOPosC : SubstObjPos -- Coproduct
-  SOPosP : SubstObjPos -- Product
-
-public export
-data SubstObjDir : SubstObjPos -> Type where
-  SODirL : SubstObjDir SOPosC -- left object of coproduct
-  SODirR : SubstObjDir SOPosC -- right object of coproduct
-  SODir1 : SubstObjDir SOPosP -- first object of product
-  SODir2 : SubstObjDir SOPosP -- second object of product
-
-public export
-SubstObjPF : PolyFunc
-SubstObjPF = (SubstObjPos ** SubstObjDir)
-
-----------------------------------------------------
----- Least fixed point, algebras, catamorphisms ----
-----------------------------------------------------
-
-public export
-SOMu : Type
-SOMu = PolyFuncMu SubstObjPF
-
-public export
-SOAlg : Type -> Type
-SOAlg = PFAlg SubstObjPF
-
-public export
-soCata : {0 a : Type} -> SOAlg a -> SOMu -> a
-soCata = pfCata {p=SubstObjPF}
-
--------------------
----- Utilities ----
--------------------
-
-public export
-InSO0 : SOMu
-InSO0 = InPFM SOPos0 $ \d => case d of _ impossible
-
-public export
-InSO1 : SOMu
-InSO1 = InPFM SOPos1 $ \d => case d of _ impossible
-
-public export
-InSOC : SOMu -> SOMu -> SOMu
-InSOC x y = InPFM SOPosC $ \d => case d of
-  SODirL => x
-  SODirR => y
-
-public export
-InSOP : SOMu -> SOMu -> SOMu
-InSOP x y = InPFM SOPosP $ \d => case d of
-  SODir1 => x
-  SODir2 => y
-
-public export
-SOSizeAlg : SOAlg Nat
-SOSizeAlg SOPos0 dir = 1
-SOSizeAlg SOPos1 dir = 1
-SOSizeAlg SOPosC dir = 1 + dir SODirL + dir SODirR
-SOSizeAlg SOPosP dir = 1 + dir SODir1 + dir SODir2
-
-public export
-soSize : SOMu -> Nat
-soSize = soCata SOSizeAlg
-
-public export
-SODepthAlg : SOAlg Nat
-SODepthAlg SOPos0 dir = 0
-SODepthAlg SOPos1 dir = 0
-SODepthAlg SOPosC dir = smax (dir SODirL) (dir SODirR)
-SODepthAlg SOPosP dir = smax (dir SODir1) (dir SODir2)
-
-public export
-soDepth : SOMu -> Nat
-soDepth = soCata SODepthAlg
-
-public export
-SOShowAlg : SOAlg String
-SOShowAlg SOPos0 dir = "0"
-SOShowAlg SOPos1 dir = "1"
-SOShowAlg SOPosC dir = "[" ++ dir SODirL ++ "|" ++ dir SODirR ++ "]"
-SOShowAlg SOPosP dir = "(" ++ dir SODir1 ++ "," ++ dir SODir2 ++ ")"
-
-public export
-Show SOMu where
-  show = soCata SOShowAlg
-
+-----------------------------------------------------
 -----------------------------------------------------
 ---- Term representation of substitutive objects ----
+-----------------------------------------------------
 -----------------------------------------------------
 
 public export
@@ -536,10 +1512,6 @@ asSubstObj = pfParamCata AsSubstObjAlg (SOPos0, const Nothing)
 public export
 isSubstObj : STMu -> Bool
 isSubstObj = isJust . asSubstObj
-
-public export
-SubstObjTerm : Type
-SubstObjTerm = RefinedST isSubstObj
 
 -------------------------------------------------------------------
 -------------------------------------------------------------------
@@ -611,227 +1583,6 @@ SubstMorphSig = (SOMu, SOMu)
 public export
 SubstMorphPosDep : SubstMorphSig -> SubstMorphPos -> Type
 SubstMorphPosDep sig pos = ?SubstMorphPosDep_hole
-
-----------------------------------------------------------------------
-----------------------------------------------------------------------
----- Inductive definition of substitutive polynomial endofunctors ----
-----------------------------------------------------------------------
-----------------------------------------------------------------------
-
-----------------------------------
----- Positions and directions ----
-----------------------------------
-
--- Extensions to the positions of endofunctors beyond those of objects,
--- all of which it shares (since the category of endofunctors also has
--- all the universal properties of the the `STMu` category).
-public export
-data SubstEFPosExt : Type where
-  SEFPosExtI : SubstEFPosExt -- identity endofunctor
-  SEFPosExtPar : SubstEFPosExt -- parallel product
-
-public export
-data SubstEFDirExt : SubstEFPosExt -> Type where
-  -- Although the identity endofunctor has one position, the position
-  -- corresponding to the identity of the endofunctor which _generates_
-  -- endofunctors has no positions, because there is just one identity
-  -- functor -- the constructor which generates the identity endofunctor does
-  -- not take any endofunctors as parameters
-  SEFDirExtPar1 : SubstEFDirExt SEFPosExtPar
-    -- first component of parallel product
-  SEFDirExtPar2 : SubstEFDirExt SEFPosExtPar
-    -- second component of parallel product
-
-public export
-SubstEFExt : PolyFunc
-SubstEFExt = (SubstEFPosExt ** SubstEFDirExt)
-
-public export
-SubstEFPF : PolyFunc
-SubstEFPF = pfCoproductArena SubstObjPF SubstEFExt
-
-public export
-SubstEFPos : Type
-SubstEFPos = pfPos SubstEFPF
-
-public export
-SubstEFDir : SubstEFPos -> Type
-SubstEFDir = pfDir {p=SubstEFPF}
-
-public export
-SEFPos0 : SubstEFPos
-SEFPos0 = Left SOPos0
-
-public export
-SEFPos1 : SubstEFPos
-SEFPos1 = Left SOPos1
-
-public export
-SEFPosC : SubstEFPos
-SEFPosC = Left SOPosC
-
-public export
-SEFPosP : SubstEFPos
-SEFPosP = Left SOPosP
-
-public export
-SEFPosI : SubstEFPos
-SEFPosI = Right SEFPosExtI
-
-public export
-SEFPosPar : SubstEFPos
-SEFPosPar = Right SEFPosExtPar
-
-----------------------------------------------------
----- Least fixed point, algebras, catamorphisms ----
-----------------------------------------------------
-
-public export
-SEFMuExt : Type
-SEFMuExt = PolyFuncMu SubstEFExt
-
-public export
-SEFMu : Type
-SEFMu = PolyFuncMu SubstEFPF
-
-public export
-SEFAlg : Type -> Type
-SEFAlg = PFAlg SubstEFPF
-
-public export
-SEFAlgExt : Type -> Type
-SEFAlgExt = PFAlg SubstEFExt
-
-public export
-sefCataExt : {0 a : Type} -> SEFAlgExt a -> SEFMuExt -> a
-sefCataExt = pfCata {p=SubstEFExt}
-
-public export
-sefCata : {0 a : Type} -> SEFAlg a -> SEFMu -> a
-sefCata = pfCata {p=SubstEFPF}
-
--------------------
----- Utilities ----
--------------------
-
-public export
-InSEFL : (i : SubstObjPos) -> (SubstObjDir i -> SEFMu) -> SEFMu
-InSEFL i = InPFM (Left i)
-
-public export
-InSEFR : (i : SubstEFPosExt) -> (SubstEFDirExt i -> SEFMu) -> SEFMu
-InSEFR i = InPFM (Right i)
-
-public export
-InSEFO : SOMu -> SEFMu
-InSEFO = soCata InSEFL
-
-public export
-InSEFExt : SEFMuExt -> SEFMu
-InSEFExt = sefCataExt InSEFR
-
-public export
-InSEF0 : SEFMu
-InSEF0 = InSEFO InSO0
-
-public export
-InSEF1 : SEFMu
-InSEF1 = InSEFO InSO1
-
-public export
-InSEFC : SOMu -> SOMu -> SEFMu
-InSEFC = InSEFO .* InSOC
-
-public export
-InSEFP : SOMu -> SOMu -> SEFMu
-InSEFP = InSEFO .* InSOP
-
-public export
-InSEFI : SEFMu
-InSEFI = InPFM SEFPosI $ \d => case d of _ impossible
-
-public export
-InSEFPar : SEFMu -> SEFMu -> SEFMu
-InSEFPar x y = InPFM SEFPosPar $ \d => case d of
-  SEFDirExtPar1 => x
-  SEFDirExtPar2 => y
-
-public export
-SEFSizeAlgExt : SEFAlgExt Nat
-SEFSizeAlgExt SEFPosExtI dir = 1
-SEFSizeAlgExt SEFPosExtPar dir = 1 + dir SEFDirExtPar1 + dir SEFDirExtPar2
-
-public export
-SEFSizeAlg : SEFAlg Nat
-SEFSizeAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOSizeAlg SEFSizeAlgExt
-
-public export
-sefSize : SEFMu -> Nat
-sefSize = sefCata SEFSizeAlg
-
-public export
-SEFDepthAlgExt : SEFAlgExt Nat
-SEFDepthAlgExt SEFPosExtI dir = 0
-SEFDepthAlgExt SEFPosExtPar dir = smax (dir SEFDirExtPar1) (dir SEFDirExtPar2)
-
-public export
-SEFDepthAlg : SEFAlg Nat
-SEFDepthAlg =
-  PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SODepthAlg SEFDepthAlgExt
-
-public export
-sefDepth : SEFMu -> Nat
-sefDepth = sefCata SEFDepthAlg
-
-public export
-SEFShowAlgObj : SOAlg String
-SEFShowAlgObj pos dir = "!" ++ SOShowAlg pos dir
-
-public export
-SEFShowAlgExt : SEFAlgExt String
-SEFShowAlgExt SEFPosExtI dir = "{id}"
-SEFShowAlgExt SEFPosExtPar dir =
-  "<" ++ dir SEFDirExtPar1 ++ "x" ++ dir SEFDirExtPar2 ++ ">"
-
-public export
-SEFShowAlg : SEFAlg String
-SEFShowAlg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOShowAlg SEFShowAlgExt
-
-public export
-Show SEFMu where
-  show = sefCata SEFShowAlg
-
----------------------------------------------
----- Interpretation of SEFMu as PolyFunc ----
----------------------------------------------
-
-public export
-SOtoPFalg : SOAlg PolyFunc
-SOtoPFalg SOPos0 d = PFInitialArena
-SOtoPFalg SOPos1 d = PFTerminalArena
-SOtoPFalg SOPosC d = pfCoproductArena (d SODirL) (d SODirR)
-SOtoPFalg SOPosP d = pfProductArena (d SODir1) (d SODir2)
-
-public export
-SEFtoPFalgExt : SEFAlgExt PolyFunc
-SEFtoPFalgExt SEFPosExtI d =
-  PFIdentityArena
-SEFtoPFalgExt SEFPosExtPar d =
-  pfParProductArena (d SEFDirExtPar1) (d SEFDirExtPar2)
-
-public export
-SEFtoPFalg : SEFAlg PolyFunc
-SEFtoPFalg = PFCoprodAlg {p=SubstObjPF} {q=SubstEFExt} SOtoPFalg SEFtoPFalgExt
-
-public export
-sefToPF : SEFMu -> PolyFunc
-sefToPF = sefCata SEFtoPFalg
-
---------------------------------------------------------------------------
---------------------------------------------------------------------------
----- Reflection of object and endofunctor definitions as endofunctors ----
---------------------------------------------------------------------------
---------------------------------------------------------------------------
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------

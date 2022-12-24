@@ -391,31 +391,6 @@ PFConstArena : Type -> PolyFunc
 PFConstArena a = (PFConstPos a ** PFConstDir {a})
 
 public export
-pfEitherPos : Type -> Type
-pfEitherPos a = Either Unit a
-
-public export
-pfEitherDir : (a : Type) -> pfEitherPos a -> Type
-pfEitherDir a (Left ()) = Unit
-pfEitherDir a (Right _) = Void
-
-public export
-pfEitherArena : Type -> PolyFunc
-pfEitherArena a = (pfEitherPos a ** pfEitherDir a)
-
-public export
-pfMaybeArena : PolyFunc
-pfMaybeArena = pfEitherArena Unit
-
-public export
-pfMaybePos : Type
-pfMaybePos = pfPos pfMaybeArena
-
-public export
-pfMaybeDir : PolyCat.pfMaybePos -> Type
-pfMaybeDir = pfDir {p=pfMaybeArena}
-
-public export
 pfCoproductPos : PolyFunc -> PolyFunc -> Type
 pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
 
@@ -440,6 +415,18 @@ pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
 pfProductArena p q = (pfProductPos p q ** pfProductDir p q)
 
 public export
+pfDoubleArena : PolyFunc -> PolyFunc
+pfDoubleArena p = pfCoproductArena p p
+
+public export
+pfDoublePos : PolyFunc -> Type
+pfDoublePos = pfPos . pfDoubleArena
+
+public export
+pfDoubleDir : (p : PolyFunc) -> pfDoublePos p -> Type
+pfDoubleDir p = pfDir {p=(pfDoubleArena p)}
+
+public export
 pfSquareArena : PolyFunc -> PolyFunc
 pfSquareArena p = pfProductArena p p
 
@@ -450,6 +437,42 @@ pfSquarePos = pfPos . pfSquareArena
 public export
 pfSquareDir : (p : PolyFunc) -> pfSquarePos p -> Type
 pfSquareDir p = pfDir {p=(pfSquareArena p)}
+
+public export
+pfIdSquaredArena : PolyFunc
+pfIdSquaredArena = pfSquareArena PFIdentityArena
+
+public export
+PFIdSquaredPos : Type
+PFIdSquaredPos = pfPos pfIdSquaredArena
+
+public export
+pfIdSquaredDir : PFIdSquaredPos -> Type
+pfIdSquaredDir = pfDir {p=pfIdSquaredArena}
+
+public export
+pfEitherArena : Type -> PolyFunc
+pfEitherArena a = pfCoproductArena PFIdentityArena (PFConstArena a)
+
+public export
+pfEitherPos : Type -> Type
+pfEitherPos = pfPos . pfEitherArena
+
+public export
+pfEitherDir : (a : Type) -> pfEitherPos a -> Type
+pfEitherDir a = pfDir {p=(pfEitherArena a)}
+
+public export
+pfMaybeArena : PolyFunc
+pfMaybeArena = pfEitherArena Unit
+
+public export
+pfMaybePos : Type
+pfMaybePos = pfPos pfMaybeArena
+
+public export
+pfMaybeDir : PolyCat.pfMaybePos -> Type
+pfMaybeDir = pfDir {p=pfMaybeArena}
 
 public export
 pfParProductPos : PolyFunc -> PolyFunc -> Type
@@ -522,11 +545,24 @@ pfTriplicateDirRight :
 pfTriplicateDirRight p = pfDir {p=(pfTriplicateArenaRight p)}
 
 public export
+pfCompositionPowerArenaS : PolyFunc -> Nat -> PolyFunc
+pfCompositionPowerArenaS p Z = p
+pfCompositionPowerArenaS p (S n) =
+  pfCompositionArena p (pfCompositionPowerArenaS p n)
+
+public export
+pfCompositionPowerSPos : PolyFunc -> Nat -> Type
+pfCompositionPowerSPos p n = pfPos (pfCompositionPowerArenaS p n)
+
+public export
+pfCompositionPowerSDir : (p : PolyFunc) -> (n : Nat) ->
+  pfCompositionPowerSPos p n -> Type
+pfCompositionPowerSDir p n = pfDir {p=(pfCompositionPowerArenaS p n)}
+
+public export
 pfCompositionPowerArena : PolyFunc -> Nat -> PolyFunc
-pfCompositionPowerArena p Z =
-  PFIdentityArena
-pfCompositionPowerArena p (S n) =
-  pfCompositionArena p (pfCompositionPowerArena p n)
+pfCompositionPowerArena p Z = PFIdentityArena
+pfCompositionPowerArena p (S n) = pfCompositionPowerArenaS p n
 
 public export
 pfCompositionPowerPos : PolyFunc -> Nat -> Type
@@ -831,15 +867,51 @@ pntToIdRight : (p : PolyFunc) ->
 pntToIdRight (pos ** dir) = (\i => (i ** const ()) ** \_, qd => fst qd)
 
 public export
-pntAssociate : (p, q, r : PolyFunc) ->
+pntFromIdLeft : (p : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena PFIdentityArena p) p
+pntFromIdLeft (pos ** dir) =
+  (\(() ** p) => p () ** \(() ** d), di => (() ** di))
+
+public export
+pntFromIdRight : (p : PolyFunc) ->
+  PolyNatTrans (pfCompositionArena p PFIdentityArena) p
+pntFromIdRight (pos ** dir) = (fst ** \(i ** d), di => (di ** ()))
+
+public export
+pntAssociateR : (p, q, r : PolyFunc) ->
   PolyNatTrans
     (pfCompositionArena (pfCompositionArena p q) r)
     (pfCompositionArena p (pfCompositionArena q r))
-pntAssociate (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) =
+pntAssociateR (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) =
   (\pqi =>
     (fst (fst pqi) **
      \pd => (snd (fst pqi) pd ** \qd => snd pqi (pd ** qd))) **
    \pqi, qd => ((fst qd ** fst (snd qd)) ** snd (snd qd)))
+
+public export
+pntAssociateL : (p, q, r : PolyFunc) ->
+  PolyNatTrans
+    (pfCompositionArena p (pfCompositionArena q r))
+    (pfCompositionArena (pfCompositionArena p q) r)
+pntAssociateL (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) =
+  (\(i ** d) => ((i ** fst . d) ** \(pd ** qd) => snd (d pd) qd) **
+   \(pi ** pd), ((pd' ** qd) ** rd) => (pd' ** (qd ** rd)))
+
+public export
+pntAssociateComposeL : {p, q, r, s : PolyFunc} ->
+  PolyNatTrans
+    (pfCompositionArena (pfCompositionArena p q) r)
+    s ->
+  PolyNatTrans
+    (pfCompositionArena p (pfCompositionArena q r))
+    s
+pntAssociateComposeL {p} {q} {r} {s} alpha =
+  pntVCatComp
+    {p=(pfCompositionArena p (pfCompositionArena q r))}
+    {q=(pfCompositionArena (pfCompositionArena p q) r)}
+    {r=s}
+    alpha
+    (pntAssociateL p q r)
 
 public export
 VertCartFactIsCorrect : {0 p, q : PolyFunc} ->
@@ -878,6 +950,18 @@ DirichVertCartFactIsCorrect : {0 p, q : PolyFunc} ->
   = alpha
 DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) =
   Refl
+
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- Combinators on polynomial natural transformations ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+public export
+polyNTConst : (p, q : PolyFunc) -> (qi : pfPos q) -> (pfDir {p=q} qi -> Void) ->
+  PolyNatTrans p q
+polyNTConst (ppos ** pdir) (qpos ** qdir) qi qdv =
+  (const qi ** \pi, qd => void $ qdv qd)
 
 ------------------------------
 ------------------------------
@@ -1054,16 +1138,30 @@ pfParamArgCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
 pfParamArgCata {p=p@(_ ** _)} {x} {a} alg =
   flip $ pfArgCata {p} {a=(x -> a)} $ \e, i, d => alg e i . flip d
 
--- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
--- to the algebra.  Uses the product-hom adjunction.
 public export
-PFProductHomAdjAlg : PolyFunc -> PolyFunc -> Type -> Type
-PFProductHomAdjAlg p q a = PFAlg p (PFAlg q a)
+PFProductAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFProductAlg p q = PFAlg (pfParProductArena p q)
+
+-- Catamorphism on a pair of `PolyFuncMu`s giving all combinations of cases
+-- to the algebra.
+public export
+pfProductCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFProductAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfProductCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} alg =
+  pfCata {p=(ppos ** pdir)} {a=(PolyFuncMu (qpos ** qdir) -> a)} $
+    \pi, pd, (InPFM qi qd) => alg (pi, qi) $ \(pdi, qdi) => pd pdi $ qd qdi
+
+-- Product catamorphism using the product-hom adjunction.
+public export
+PFProductHomAlg : PolyFunc -> PolyFunc -> Type -> Type
+PFProductHomAlg p q a = PFAlg p (PFAlg q a)
 
 public export
-pfProductHomAdjCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
-  PFProductHomAdjAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
-pfProductHomAdjCata {p} {q} alg ep eq = pfCata {p=q} (pfCata {p} alg ep) eq
+pfProductHomCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
+  PFProductHomAlg p q a -> PolyFuncMu p -> PolyFuncMu q -> a
+pfProductHomCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} =
+  pfCata {p=(qpos ** qdir)} {a} .*
+    pfCata {p=(ppos ** pdir)} {a=(PFAlg (qpos ** qdir) a)}
 
 ----------------------------------
 ---- Polynomial (free) monads ----
@@ -1073,6 +1171,11 @@ public export
 data PFTranslatePos : PolyFunc -> Type -> Type where
   PFVar : {0 p : PolyFunc} -> {0 a : Type} -> a -> PFTranslatePos p a
   PFCom : {0 p : PolyFunc} -> {0 a : Type} -> pfPos p -> PFTranslatePos p a
+
+public export
+(p : PolyFunc) => Functor (PFTranslatePos p) where
+  map m (PFVar x) = PFVar (m x)
+  map m (PFCom i) = PFCom i
 
 public export
 PFTranslateDir : (p : PolyFunc) -> (a : Type) -> PFTranslatePos p a -> Type
@@ -1170,31 +1273,127 @@ PFTranslateAlg : PolyFunc -> Type -> Type -> Type
 PFTranslateAlg p a b = PFAlg (PFTranslate p a) b
 
 public export
+PFAlgToTranslate : {p : PolyFunc} -> {a, b : Type} ->
+  (a -> b) -> PFAlg p b -> PFTranslateAlg p a b
+PFAlgToTranslate {p=(pos ** dir)} {a} {b} subst alg (PFVar v) d = subst v
+PFAlgToTranslate {p=(pos ** dir)} {a} {b} subst alg (PFCom t) d = alg t d
+
+public export
 pfFreeCata : {p : PolyFunc} -> {a, b : Type} ->
   PFTranslateAlg p a b -> InterpPolyFuncFreeM p a -> b
 pfFreeCata {p} {a} {b} alg =
   pfCata {p=(PFTranslate p a)} {a=b} alg . PolyFMInterpToMuTranslate p a
 
 public export
+pfSubstCata : {p : PolyFunc} -> {a, b : Type} ->
+  (a -> b) -> PFAlg p b -> InterpPolyFuncFreeM p a -> b
+pfSubstCata {p} {a} {b} subst alg = pfFreeCata (PFAlgToTranslate subst alg)
+
+public export
+PFFreeVoidToMuAlg : (p : PolyFunc) -> PFTranslateAlg p Void (PolyFuncMu p)
+PFFreeVoidToMuAlg (pos ** dir) (PFVar v) d = void v
+PFFreeVoidToMuAlg (pos ** dir) (PFCom c) d = InPFM c d
+
+public export
 pfFreeMVoidToMu : {p : PolyFunc} -> InterpPolyFuncFreeM p Void -> PolyFuncMu p
-pfFreeMVoidToMu {p} d =
-  let
-    pfc = pfFreeCata {p} {a=Void} {b=(PolyFuncMu p)}
-  in
-  ?pfFreeMVoidToMu_hole
+pfFreeMVoidToMu {p} =
+  pfFreeCata {p} {a=Void} {b=(PolyFuncMu p)} $ PFFreeVoidToMuAlg p
+
+public export
+PFMuToFreeMVoidAlg : (p : PolyFunc) -> PFAlg p (InterpPolyFuncFreeM p Void)
+PFMuToFreeMVoidAlg (pos ** dir) i d =
+  (InPFM (PFCom i) (fst . d) ** \(d' ** v) => snd (d d') v)
+
+public export
+pfMuToFreeMVoid : {p : PolyFunc} -> PolyFuncMu p -> InterpPolyFuncFreeM p Void
+pfMuToFreeMVoid {p} =
+  pfCata {p} {a=(InterpPolyFuncFreeM p Void)} (PFMuToFreeMVoidAlg p)
+
+public export
+InFMVar : {p : PolyFunc} -> {a : Type} ->
+  a -> InterpPolyFuncFreeM p a
+InFMVar {p} {a} x = PolyFMMuTranslateToInterp p a $ InPVar x
+
+public export
+InFMCom : {p : PolyFunc} -> {a : Type} ->
+  (i : pfPos p) -> (pfDir {p} i -> InterpPolyFuncFreeM p a) ->
+  InterpPolyFuncFreeM p a
+InFMCom {p=p@(pos ** dir)} {a} i d =
+  PolyFMMuTranslateToInterp p a (InPCom i $ PolyFMInterpToMuTranslate p a . d)
+
+public export
+pfPolyCata : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> PolyFuncMu p -> PolyFuncMu q
+pfPolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
+  pfCata {p} {a=(PolyFuncMu q)} $ \i, d => InPFM (onPos i) (d . onDir i)
+
+public export
+pfTranslatePosBimap : {p, q : PolyFunc} -> {a, b : Type} ->
+  (posmap : pfPos p -> pfPos q) -> (typemap : a -> b) ->
+  PFTranslatePos p a -> PFTranslatePos q b
+pfTranslatePosBimap posmap typemap (PFVar v) = PFVar (typemap v)
+pfTranslatePosBimap posmap typemap (PFCom i) = PFCom (posmap i)
+
+public export
+pfTranslateDirBimap : {p, q : PolyFunc} -> {a, b : Type} ->
+  (posmap : pfPos p -> pfPos q) -> (typemap : a -> b) ->
+  (dirmap : (i : pfPos p) -> pfDir {p=q} (posmap i) -> pfDir {p} i) ->
+  (i : PFTranslatePos p a) ->
+  PFTranslateDir q b (pfTranslatePosBimap posmap typemap i) ->
+  PFTranslateDir p a i
+pfTranslateDirBimap {p=(ppos ** pdir)} {q=(qpos ** qdir)} posmap typemap dirmap
+  (PFVar v) d = void d
+pfTranslateDirBimap {p=(ppos ** pdir)} {q=(qpos ** qdir)} posmap typemap dirmap
+  (PFCom i) d = dirmap i d
+
+public export
+pfTranslateNT : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> PolyNatTrans (PFTranslate p ()) (PFTranslate q ())
+pfTranslateNT {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
+  (pfTranslatePosBimap {p} {q} {a=()} {b=()} onPos id **
+   pfTranslateDirBimap {p} {q} {a=()} {b=()} onPos id onDir)
+
+public export
+pfFreePolyCataOnPos : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> PolyFuncFreeMPos p -> PolyFuncFreeMPos q
+pfFreePolyCataOnPos {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
+  pfPolyCata (pfTranslateNT {p} {q} (onPos ** onDir))
+
+public export
+pfFreePolyCataOnDir : {p, q : PolyFunc} ->
+  (alpha : PolyNatTrans p q) ->
+  (i : PolyFuncFreeMPos p) ->
+  PolyFuncFreeMDir q (pfFreePolyCataOnPos {p} {q} alpha i) ->
+  PolyFuncFreeMDir p i
+pfFreePolyCataOnDir {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir)
+  (InPFM (PFVar ()) d) e =
+    ()
+pfFreePolyCataOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir)
+  (InPFM {p=(PFTranslate (ppos ** pdir) ())} (PFCom x) d)
+  (MkDPair qd qdi) =
+    (onDir x qd **
+     pfFreePolyCataOnDir {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+      (onPos ** onDir) (d (onDir x qd)) qdi)
 
 public export
 pfFreePolyCata : {p, q : PolyFunc} ->
   PolyNatTrans p q -> PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
-pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
-  ?pfFreePolyCata_hole
+pfFreePolyCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} (onPos ** onDir) =
+  (pfFreePolyCataOnPos {p} {q} (onPos ** onDir) **
+   pfFreePolyCataOnDir {p} {q} (onPos ** onDir))
+
+-- Product catamorphism using the product-hom adjunction and a natural
+-- transformation to produce an output which also comes from an initial
+-- algebra.
+public export
+PFProductHomAlgNT : PolyFunc -> PolyFunc -> PolyFunc -> Type
+PFProductHomAlgNT p q r = PFAlg p (PolyNatTrans q r)
 
 public export
-pfFreeContCata : {p, q : PolyFunc} ->
-  PolyContNT p q ->
-  PolyContNT (PolyFuncFreeM p) (PolyFuncFreeM q)
-pfFreeContCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} cont x =
-  ?pfFreeContCata_hole
+pfProductHomCataNT : {p, q, r : PolyFunc} -> PFProductHomAlgNT p q r ->
+  PolyFuncMu p -> PolyFuncMu q -> PolyFuncMu r
+pfProductHomCataNT {p} {q} {r} =
+  pfPolyCata {p=q} {q=r} .* pfCata {p} {a=(PolyNatTrans q r)}
 
 --------------------------------------
 --------------------------------------
@@ -1598,7 +1797,7 @@ record PFMonoidCorrect (p : PolyFunc) (m : PFMonoid p) where
         {p=(pfTriplicateArenaRight p)} {q=(pfDuplicateArena p)} {r=p}
         (pmonJoin m)
         (polyWhiskerRight {p=(pfDuplicateArena p)} {q=p} p (pmonJoin m)))
-      (pntAssociate p p p)
+      (pntAssociateR p p p)
 
 public export
 PFCorrectMonad : Type
@@ -1631,7 +1830,7 @@ record PFComonoidCorrect (p : PolyFunc) (c : PFComonoid p) where
   cmCoassociative :
     pntVCatComp
       {p} {q=(pfTriplicateArenaLeft p)} {r=(pfTriplicateArenaRight p)}
-      (pntAssociate p p p)
+      (pntAssociateR p p p)
       (pntVCatComp
         {p} {q=(pfDuplicateArena p)} {r=(pfTriplicateArenaLeft p)}
         (polyWhiskerLeft {p} {q=(pfDuplicateArena p)} (pcomDup c) p)
@@ -1686,34 +1885,39 @@ record CatSig where
   constructor MkCatSig
   catObj : Type
   catMorph : catObj -> catObj -> Type
+  catMorphEq : (a, b  : catObj) -> RelationOn (catMorph a b)
   catId : (a : catObj) -> catMorph a a
   catComp : {a, b, c : catObj} -> catMorph b c -> catMorph a b -> catMorph a c
 
 public export
 record CatSigCorrect (cat : CatSig) where
   constructor MkCatSigCorrect
+  catMorphEqEquiv : (a, b : catObj cat) -> IsEquivalence (catMorphEq cat a b)
   catLeftId : {a, b : catObj cat} ->
-    (m : catMorph cat a b) -> catComp cat {a} {b} {c=b} (catId cat b) m = m
+    (m : catMorph cat a b) ->
+    catMorphEq cat a b (catComp cat {a} {b} {c=b} (catId cat b) m) m
   catRightId : {a, b : catObj cat} ->
-    (m : catMorph cat a b) -> catComp cat {a} {b=a} {c=b} m (catId cat a) = m
+    (m : catMorph cat a b) ->
+    catMorphEq cat a b (catComp cat {a} {b=a} {c=b} m (catId cat a)) m
   catAssoc : {a, b, c, d : catObj cat} ->
     (h : catMorph cat c d) ->
     (g : catMorph cat b c) ->
     (f : catMorph cat a b) ->
-    catComp cat {a} {b=c} {c=d} h (catComp cat {a} {b} {c} g f) =
-      catComp cat {a} {b} {c=d} (catComp cat {a=b} {b=c} {c=d} h g) f
+    catMorphEq cat a d
+      (catComp cat {a} {b=c} {c=d} h (catComp cat {a} {b} {c} g f))
+      (catComp cat {a} {b} {c=d} (catComp cat {a=b} {b=c} {c=d} h g) f)
 
 public export
 CorrectCatSig : Type
-CorrectCatSig = DPair CatSig CatSigCorrect
+CorrectCatSig = Subset0 CatSig CatSigCorrect
 
 public export
 CatToPolyPos : CatSig -> Type
-CatToPolyPos (MkCatSig o m i comp) = o
+CatToPolyPos (MkCatSig o m eq i comp) = o
 
 public export
 CatToPolyDir : (c : CatSig) -> CatToPolyPos c -> Type
-CatToPolyDir (MkCatSig o m i comp) a = (b : o ** m a b)
+CatToPolyDir (MkCatSig o m eq i comp) a = (b : o ** m a b)
 
 public export
 CatToPoly : CatSig -> PolyFunc
@@ -1721,12 +1925,12 @@ CatToPoly c = (CatToPolyPos c ** CatToPolyDir c)
 
 public export
 CatToComonoidErase : (c : CatSig) -> PolyNatTrans (CatToPoly c) PFIdentityArena
-CatToComonoidErase (MkCatSig o m i comp) = (const () ** \a, _ => (a ** i a))
+CatToComonoidErase (MkCatSig o m eq i comp) = (const () ** \a, _ => (a ** i a))
 
 public export
 CatToComonoidDup : (c : CatSig) ->
   PolyNatTrans (CatToPoly c) (pfDuplicateArena (CatToPoly c))
-CatToComonoidDup (MkCatSig o m i comp) =
+CatToComonoidDup (MkCatSig o m eq i comp) =
   (\a => (a ** \d => fst d) **
    \a, qd => let ((b ** f) ** (c ** g)) = qd in (c ** comp g f))
 
@@ -1795,6 +1999,7 @@ ComonoidToCat c holds =
   MkCatSig
     (ComonoidToCatObj c)
     (ComonoidToCatMorph c holds)
+    (\a, b => ?ComonoidToCat_eq_hole)
     (ComonoidToCatId c holds)
     (ComonoidToCatComp c holds)
 
@@ -2038,6 +2243,131 @@ interpFreeMJoin {p} x =
     x .
   pfComposeInterp {p=(PolyFuncFreeM p)} {x}
 
+public export
+pfFreeToComposeN : (p : PolyFunc) -> (n : Nat) ->
+  PolyNatTrans
+    (PolyFuncFreeM p)
+    (pfCompositionPowerArenaS (PolyFuncFreeM p) n)
+pfFreeToComposeN (pos ** dir) Z = pntId (PolyFuncFreeM (pos ** dir))
+pfFreeToComposeN (pos ** dir) (S n) =
+  let
+    retn =
+      pntVCatComp
+        {p=(PolyFuncFreeM (pos ** dir))}
+        {q=(pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) n)}
+        {r=(pfCompositionArena
+          PFIdentityArena
+          (pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) n))}
+        (pntToIdLeft
+          (pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) n))
+        (pfFreeToComposeN (pos ** dir) n)
+    n2S = polyWhiskerLeft
+      {p=PFIdentityArena}
+      {q=(PolyFuncFreeM (pos ** dir))}
+      (PFFreeReturn (pos ** dir))
+      (pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) n)
+    ret = pntVCatComp
+      {p=(PolyFuncFreeM (pos ** dir))}
+      {q=(pfCompositionArena
+        PFIdentityArena
+        (pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) n))}
+      {r=(pfCompositionArena
+        (PolyFuncFreeM (pos ** dir))
+        (pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) n))}
+      n2S
+      retn
+    in
+    ret
+
+public export
+pfFreeFromComposeN : (p : PolyFunc) -> (n : Nat) ->
+  PolyNatTrans
+    (pfCompositionPowerArenaS (PolyFuncFreeM p) n)
+    (PolyFuncFreeM p)
+pfFreeFromComposeN (pos ** dir) Z = pntId $ PolyFuncFreeM (pos ** dir)
+pfFreeFromComposeN (pos ** dir) (S n) =
+  let
+    sS2S = polyWhiskerLeft
+      {p=(pfFreeComposeArena (pos ** dir) (pos ** dir))}
+      {q=(PolyFuncFreeM (pos ** dir))}
+      (PFFreeJoin (pos ** dir))
+      (pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) n)
+    ret = pntVCatComp
+      {p=(pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) (S n))}
+      {q=(pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) n)}
+      {r=(PolyFuncFreeM (pos ** dir))}
+      (pfFreeFromComposeN (pos ** dir) n)
+      ?from_compose_sS2S_hole
+      {-
+      (pntAssociateComposeL
+        {p=(PolyFuncFreeM (pos ** dir))}
+        {q=(PolyFuncFreeM (pos ** dir))}
+        {r=(pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) n)}
+        {s=(pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) n)}
+        ?from_compose_sS2S_hole
+      -}
+  in
+  ret
+
+public export
+pfFreePolyReturnN : (p : PolyFunc) -> (n : Nat) ->
+  PolyNatTrans
+    (PolyFuncFreeM p)
+    (PolyFuncFreeM (pfCompositionPowerArenaS p n))
+pfFreePolyReturnN p Z = pntId $ PolyFuncFreeM p
+pfFreePolyReturnN p (S n) = ?pfFreePolyReturnN_hole_1
+
+public export
+pfFreePolyJoinN : (p : PolyFunc) -> (n : Nat) ->
+  PolyNatTrans
+    (PolyFuncFreeM (pfCompositionPowerArenaS p n))
+    (PolyFuncFreeM p)
+pfFreePolyJoinN p Z = pntId $ PolyFuncFreeM p
+pfFreePolyJoinN p (S n) = ?pfFreePolyJoinN_hole_1
+
+public export
+pfNatTransMN : PolyFunc -> PolyFunc -> Nat -> Nat -> Type
+pfNatTransMN p q m n =
+  PolyNatTrans (pfCompositionPowerArenaS p m) (pfCompositionPowerArenaS q n)
+
+public export
+pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
+  pfNatTransMN p q n n ->
+  PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
+pfFreePolyCataN {p} {q} {n} alpha =
+  pntVCatComp
+    {p=(PolyFuncFreeM p)}
+    {q=(PolyFuncFreeM (pfCompositionPowerArenaS q n))}
+    {r=(PolyFuncFreeM q)}
+    (pfFreePolyJoinN q n)
+    (pntVCatComp
+      {p=(PolyFuncFreeM p)}
+      {q=(PolyFuncFreeM (pfCompositionPowerArenaS p n))}
+      {r=(PolyFuncFreeM (pfCompositionPowerArenaS q n))}
+      (pfFreePolyCata alpha)
+      (pfFreePolyReturnN p n))
+
+public export
+pfPolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
+  PolyNatTrans
+    (pfCompositionPowerArenaS p n)
+    (pfCompositionPowerArenaS q n) ->
+  PolyFuncMu p -> PolyFuncMu q
+pfPolyCataN {p} {q} {n} alpha =
+  let
+    alphaN = pfFreePolyCataN {p} {q} {n} alpha
+    alphaNint =
+      InterpPolyNT {p=(PolyFuncFreeM p)} {q=(PolyFuncFreeM q)} alphaN Void
+  in
+  pfFreeMVoidToMu {p=q} . alphaNint . pfMuToFreeMVoid {p}
+
+public export
+pfFreeContCata : {p, q : PolyFunc} ->
+  PolyContNT p q ->
+  PolyContNT (PolyFuncFreeM p) (PolyFuncFreeM q)
+pfFreeContCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} cont x =
+  ?pfFreeContCata_hole
+
 -------------------------
 ---- Codensity monad ----
 -------------------------
@@ -2099,6 +2429,7 @@ pfToCat (ppos ** pdir) =
   MkCatSig
     ppos
     (\x, y => pdir y -> pdir x)
+    (\a, b => ExtEq)
     (\_ => id)
     (\f, g => g . f)
 
@@ -2603,6 +2934,7 @@ profToCat pbf =
     (\x, y =>
       (PolyBiCovarDir pbf y -> PolyBiCovarDir pbf x,
        PolyBiContraDir pbf x -> PolyBiContraDir pbf y))
+    (\x, y, (f, g), (f', g') => (ExtEq f f', ExtEq g g'))
     (\x' => (id, id))
     (\f, g => (fst g . fst f, snd f . snd g))
 
@@ -2635,6 +2967,10 @@ data SPFMu : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a where
 public export
 SPFMuPoly : {a : Type} -> SlicePolyEndoFunc a -> PolyFunc
 SPFMuPoly {a} spf = (a ** SPFMu {a} spf)
+
+public export
+SPFMuSigma : {a : Type} -> SlicePolyEndoFunc a -> Type
+SPFMuSigma {a} spf = Sigma {a} (SPFMu {a} spf)
 
 --------------------------------------------------------
 ---- Catamorphisms of dependent polynomial functors ----

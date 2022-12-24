@@ -213,15 +213,6 @@ showPMRaise n = do
   putStrLn $ "npos(pmMaybeSqRaise " ++ show n ++ ") = " ++
     show (polyNPos $ pmMaybeSqRaise n)
 
---------------
---------------
----- STMu ----
---------------
---------------
-
-stMuExp1 : STMu
-stMuExp1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
-
 ---------------------------
 ---------------------------
 ---- Monads / comonads ----
@@ -321,6 +312,25 @@ partial
 sn0_0 : StreamRet
 sn0_0 = getSN sn0 ()
 
+------------------------
+------------------------
+---- Test utilities ----
+------------------------
+------------------------
+
+showTerminated :
+  {0 a : Type} -> (String -> a -> IO ()) -> (String, a) -> IO ()
+showTerminated showFull (name, t) = do
+  showFull name t
+  putStrLn "----"
+
+showList :
+  {0 a : Type} -> (String -> a -> IO ()) -> List (String, a) -> IO ()
+showList showFull [] = pure ()
+showList showFull ts@(_ :: _) = do
+  putStrLn "----"
+  foldlM (const $ showTerminated showFull) () ts
+
 -------------------------------
 -------------------------------
 ---- Generalized ADT terms ----
@@ -334,15 +344,10 @@ termShowFull name term = do
   putStrLn $ "depth[" ++ name ++ "] = " ++ show (termDepth term)
 
 termShowFullTerminated : (String, TermMu) -> IO ()
-termShowFullTerminated (name, term) = do
-  termShowFull name term
-  putStrLn "----"
+termShowFullTerminated = showTerminated termShowFull
 
 termShowFullList : List (String, TermMu) -> IO ()
-termShowFullList [] = pure ()
-termShowFullList ts@(_ :: _) = do
-  putStrLn "----"
-  foldlM (const $ termShowFullTerminated) () ts
+termShowFullList = showList termShowFull
 
 adtT1 : TermMu
 adtT1 = InProd []
@@ -361,6 +366,241 @@ adtT5 = InNat 2 adtT3
 
 adtT6 : TermMu
 adtT6 = InProd [adtT4, adtT5]
+
+--------------
+--------------
+---- STMu ----
+--------------
+--------------
+
+stShowFull : String -> STMu -> IO ()
+stShowFull name st = do
+  putStrLn $ name ++ " = " ++ show st
+  putStrLn $ "numLeaves[" ++ name ++ "] = " ++
+    show (stNumLeaves st)
+  putStrLn $ "numInternalNodes[" ++ name ++ "] = " ++
+    show (stNumInternalNodes st)
+  putStrLn $ "size[" ++ name ++ "] = " ++ show (stSize st)
+  putStrLn $ "depth[" ++ name ++ "] = " ++ show (stDepth st)
+
+stShowFullSTerminated : (String, STMu) -> IO ()
+stShowFullSTerminated = showTerminated stShowFull
+
+stShowFullList : List (String, STMu) -> IO ()
+stShowFullList = showList stShowFull
+
+stMu1 : STMu
+stMu1 = InSTPair (InSTLeft InSTUnit) (InSTRight InSTUnit)
+
+stMu2 : STMu
+stMu2 = InSTPair (InSTLeft InSTUnit) (InSTRight $ InSTLeft $ InSTUnit)
+
+stMu3 : STMu
+stMu3 = InSTPair InSTUnit (InSTPair (InSTRight (InSTLeft InSTUnit)) InSTUnit)
+
+stMu1EqSelf : Assertion
+stMu1EqSelf = Assert $ stMu1 == stMu1
+
+stMu2EqSelf : Assertion
+stMu2EqSelf = Assert $ stMu2 == stMu2
+
+stMu1NotEq2 : Assertion
+stMu1NotEq2 = Assert $ stMu1 /= stMu2
+
+--------------
+--------------
+---- SOMu ----
+--------------
+--------------
+
+soShowFull : String -> SOMu -> IO ()
+soShowFull name so = do
+  putStrLn $ name ++ " = " ++ show so
+  putStrLn $ "size[" ++ name ++ "] = " ++ show (soSize so)
+  putStrLn $ "depth[" ++ name ++ "] = " ++ show (soDepth so)
+  putStrLn $ "card[" ++ name ++ "] = " ++ show (soCard so)
+
+soShowFullTerminated : (String, SOMu) -> IO ()
+soShowFullTerminated = showTerminated soShowFull
+
+soShowFullList : List (String, SOMu) -> IO ()
+soShowFullList = showList soShowFull
+
+soMu1 : SOMu
+soMu1 = InSO0
+
+soMu2 : SOMu
+soMu2 = InSO1
+
+soMu3 : SOMu
+soMu3 = InSOC soMu1 soMu2
+
+soMu4 : SOMu
+soMu4 = InSOP soMu1 soMu2
+
+soMu5 : SOMu
+soMu5 = InSOP InSO1 (InSOP (InSOC InSO1 (InSOC InSO1 InSO1)) InSO1)
+
+soMu1EqSelf : Assertion
+soMu1EqSelf = Assert $ soMu1 == soMu1
+
+soMu2EqSelf : Assertion
+soMu2EqSelf = Assert $ soMu2 == soMu2
+
+soMu3EqSelf : Assertion
+soMu3EqSelf = Assert $ soMu3 == soMu3
+
+soMu4EqSelf : Assertion
+soMu4EqSelf = Assert $ soMu4 == soMu4
+
+soMu1Neq2 : Assertion
+soMu1Neq2 = Assert $ soMu1 /= soMu2
+
+soMu3Neq4 : Assertion
+soMu3Neq4 = Assert $ soMu3 /= soMu4
+
+--------------------------------
+--------------------------------
+---- Term/type interactions ----
+--------------------------------
+--------------------------------
+
+public export
+soTermCheck1 : Assertion
+soTermCheck1 = Assert $ not $ soTermCheck InSO0 InSTUnit
+
+public export
+soTermCheck2 : Assertion
+soTermCheck2 = Assert $ not $ soTermCheck InSO0 (InSTLeft InSTUnit)
+
+public export
+soTermCheck3 : Assertion
+soTermCheck3 = Assert $ not $ soTermCheck InSO0 (InSTRight InSTUnit)
+
+public export
+soTermCheck4 : Assertion
+soTermCheck4 = Assert $ not $ soTermCheck InSO0 (InSTPair InSTUnit InSTUnit)
+
+public export
+soTermCheck5 : Assertion
+soTermCheck5 = Assert $ soTermCheck InSO1 InSTUnit
+
+public export
+soTermCheck6 : Assertion
+soTermCheck6 = Assert $ not $ soTermCheck InSO1 (InSTLeft InSTUnit)
+
+public export
+soTermCheck7 : Assertion
+soTermCheck7 = Assert $ not $ soTermCheck InSO1 (InSTRight InSTUnit)
+
+public export
+soTermCheck8 : Assertion
+soTermCheck8 = Assert $ not $ soTermCheck InSO1 (InSTPair InSTUnit InSTUnit)
+
+public export
+soTermCheck9 : Assertion
+soTermCheck9 = Assert $ not $ soTermCheck (InSOC InSO1 InSO0) InSTUnit
+
+public export
+soTermCheck10 : Assertion
+soTermCheck10 =
+  Assert $ soTermCheck (InSOC InSO1 InSO0) (InSTLeft InSTUnit)
+
+public export
+soTermCheck11 : Assertion
+soTermCheck11 =
+  Assert $ not $ soTermCheck (InSOC InSO1 InSO0) (InSTRight InSTUnit)
+
+public export
+soTermCheck12 : Assertion
+soTermCheck12 =
+  Assert $ not $ soTermCheck (InSOC InSO1 InSO0) (InSTPair InSTUnit InSTUnit)
+
+public export
+soTermCheck13 : Assertion
+soTermCheck13 = Assert $ not $ soTermCheck (InSOP InSO1 InSO1) InSTUnit
+
+public export
+soTermCheck14 : Assertion
+soTermCheck14 =
+  Assert $ not $ soTermCheck (InSOP InSO1 InSO1) (InSTLeft InSTUnit)
+
+public export
+soTermCheck15 : Assertion
+soTermCheck15 =
+  Assert $ not $ soTermCheck (InSOP InSO1 InSO1) (InSTRight InSTUnit)
+
+public export
+soTermCheck16 : Assertion
+soTermCheck16 =
+  Assert $ soTermCheck (InSOP InSO1 InSO1) (InSTPair InSTUnit InSTUnit)
+
+public export
+soTermCheck17 : Assertion
+soTermCheck17 =
+  Assert $ not $ soTermCheck
+    (InSOP InSO1 InSO1) (InSTPair (InSTLeft InSTUnit) InSTUnit)
+
+public export
+soTermCheck18 : Assertion
+soTermCheck18 =
+  Assert $ not $ soTermCheck
+    (InSOP InSO1 InSO1) (InSTPair (InSTLeft InSTUnit) InSTUnit)
+
+public export
+soTermCheck19 : Assertion
+soTermCheck19 =
+  Assert $ not $ soTermCheck
+    soMu5
+    (InSTPair (InSTLeft InSTUnit) InSTUnit)
+
+public export
+soTermCheck20 : Assertion
+soTermCheck20 = Assert $ soTermCheck soMu5 stMu3
+
+public export
+stt3 : STTyped ADTCatTest.soMu5
+stt3 = MkSTTyped {so=soMu5} stMu3
+
+public export
+soMuBool : SOMu
+soMuBool = InSOC InSO1 InSO1
+
+public export
+soMuThree : SOMu
+soMuThree = InSOC InSO1 soMuBool
+
+public export
+soMuBinFour : SOMu
+soMuBinFour = InSOP soMuBool soMuBool
+
+public export
+soMuBinFive : SOMu
+soMuBinFive = InSOC InSO1 soMuBinFour
+
+public export
+soHomBoolBool : SOMu
+soHomBoolBool = soHomObj soMuBool soMuBool
+
+public export
+soHomThreeThree : SOMu
+soHomThreeThree = soHomObj soMuThree soMuThree
+
+public export
+soHomFourFive : SOMu
+soHomFourFive = soHomObj soMuBinFour soMuBinFive
+
+public export
+soHomFiveFour : SOMu
+soHomFiveFour = soHomObj soMuBinFive soMuBinFour
+
+public export
+soHomFourFiveCardCorrect : Assertion
+soHomFourFiveCardCorrect = Assert $ soCard soHomFourFive == 625
+
+public export
+soHomFiveFourCardCorrect : Assertion
+soHomFiveFourCardCorrect = Assert $ soCard soHomFiveFour == 1024
 
 ----------------------------------
 ----------------------------------
@@ -458,12 +698,6 @@ adtCatTest = do
   showPMRaise 7
   showPMRaise 8
   putStrLn ""
-  putStrLn "---------------"
-  putStrLn "---- PolyF ----"
-  putStrLn "---------------"
-  putStrLn ""
-  putStrLn $ "stMu1 = " ++ show stMuExp1
-  putStrLn ""
   putStrLn "-------------------------"
   putStrLn "---- Monads/comonads ----"
   putStrLn "-------------------------"
@@ -485,6 +719,40 @@ adtCatTest = do
     , ("adtT5", adtT5)
     , ("adtT6", adtT6)
     ]
+  putStrLn ""
+  putStrLn "--------------"
+  putStrLn "---- STMu ----"
+  putStrLn "--------------"
+  putStrLn ""
+  stShowFullList [
+      ("stMu1", stMu1)
+    , ("stMu2", stMu2)
+    , ("stMu3", stMu3)
+    ]
+  putStrLn ""
+  putStrLn "---------------"
+  putStrLn ""
+  putStrLn "--------------"
+  putStrLn "---- SOMu ----"
+  putStrLn "--------------"
+  putStrLn ""
+  soShowFullList [
+      ("soMu1", soMu1)
+    , ("soMu2", soMu2)
+    , ("soMu3", soMu3)
+    , ("soMu4", soMu4)
+    , ("soMu5", soMu5)
+    , ("soMuBool", soMuBool)
+    , ("soMuThree", soMuThree)
+    , ("soMuBinFour", soMuBinFour)
+    , ("soMuBinFive", soMuBinFive)
+    , ("soHomBoolBool", soHomBoolBool)
+    , ("soHomThreeThree", soHomThreeThree)
+    , ("soHomFourFive", soHomFourFive)
+    , ("soHomFiveFour", soHomFiveFour)
+    ]
+  putStrLn $ "stt3 = " ++ show stt3
+  putStrLn "---------------"
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."
