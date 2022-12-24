@@ -1904,7 +1904,7 @@ record CatSigCorrect (cat : CatSig) where
 
 public export
 CorrectCatSig : Type
-CorrectCatSig = DPair CatSig CatSigCorrect
+CorrectCatSig = Subset0 CatSig CatSigCorrect
 
 public export
 CatToPolyPos : CatSig -> Type
