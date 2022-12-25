@@ -6,6 +6,7 @@ import Library.Test.IdrisCategoriesTest
 import LanguageDef.Test.NatPrefixCatTest
 import LanguageDef.Test.ADTCatTest
 import LanguageDef.Test.PolyCatTest
+import LanguageDef.Test.PolyProfunctorTest
 import LanguageDef.Test.AtomTest
 import LanguageDef.Test.RefinedADTTest
 import LanguageDef.Test.UniversalCategoryTest
@@ -40,3 +41,4 @@ main = do
   LanguageDef.Test.PolyCatTest.polyCatTest
   LanguageDef.Test.NatPrefixCatTest.natPrefixCatTest
   LanguageDef.Test.ADTCatTest.adtCatTest
+  LanguageDef.Test.PolyProfunctorTest.polyProfunctorTest
