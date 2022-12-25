@@ -122,3 +122,51 @@ DirichNTApp : {cat : CatSig} -> {p, q : TypeArena cat} ->
   DirichMap cat {pos=(taPos {cat} q)} (taDir {cat} q) a
 DirichNTApp {cat} {p} {q} alpha a (i ** d) =
   (taDntOnPos alpha i ** cat.catComp (taDntOnDir alpha i) d)
+
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---- `Type`-valued polynomial profunctors between arbitrary categories ----
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+-- An arena representing a (polynomial) functor from the product category of
+-- the opposite category of `cod` with `dom` to `Type`, which is also viewed
+-- as a profunctor from `dom` to `cod` (not the opposite category of `cod`).
+public export
+DirMapPair : CatSig -> CatSig -> Type -> Type
+DirMapPair dom cod pos = (DirMap dom pos, DirMap cod pos)
+
+public export
+ProfArena : CatSig -> CatSig -> Type
+ProfArena dom cod = DPair Type (DirMapPair dom cod)
+
+public export
+paPos : {dom, cod : CatSig} -> ProfArena dom cod -> Type
+paPos = DPair.fst
+
+public export
+paCovarDir : {dom, cod : CatSig} -> (ar : ProfArena dom cod) ->
+  paPos {dom} {cod} ar -> dom.catObj
+paCovarDir ar = fst (DPair.snd ar)
+
+public export
+paContravarDir : {dom, cod : CatSig} -> (ar : ProfArena dom cod) ->
+  paPos {dom} {cod} ar -> cod.catObj
+paContravarDir ar = snd (DPair.snd ar)
+
+-- Interpret a dependent object as a (polynomial) profunctor.
+public export
+ProfMap : (dom, cod : CatSig) -> {pos : Type} ->
+  DirMapPair dom cod pos -> dom.catObj -> cod.catObj -> Type
+ProfMap dom cod {pos} dir objdom objcod =
+  (i : pos **
+   (dom.catMorph (fst dir i) objdom, cod.catMorph objcod (snd dir i)))
+
+public export
+ProfFDimap : {dom, cod : CatSig} -> {pos : Type} ->
+  (dir : DirMapPair dom cod pos) ->
+  {da, db : dom.catObj} -> {ca, cb : cod.catObj} ->
+  dom.catMorph da db -> cod.catMorph cb ca ->
+  ProfMap dom cod dir da ca -> ProfMap dom cod dir db cb
+ProfFDimap {dom} {cod} {pos} dir {da} {db} {ca} {cb} f g (i ** (ddir, cdir)) =
+  (i ** (dom.catComp f ddir, cod.catComp cdir g))
