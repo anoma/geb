@@ -145,6 +145,11 @@ paPos : {dom, cod : CatSig} -> ProfArena dom cod -> Type
 paPos = DPair.fst
 
 public export
+paDir : {dom, cod : CatSig} ->
+  (ar : ProfArena dom cod) -> DirMapPair dom cod (paPos {dom} {cod} ar)
+paDir = DPair.snd
+
+public export
 paCovarDir : {dom, cod : CatSig} -> (ar : ProfArena dom cod) ->
   paPos {dom} {cod} ar -> dom.catObj
 paCovarDir ar = fst (DPair.snd ar)
@@ -170,3 +175,44 @@ ProfFDimap : {dom, cod : CatSig} -> {pos : Type} ->
   ProfMap dom cod dir da ca -> ProfMap dom cod dir db cb
 ProfFDimap {dom} {cod} {pos} dir {da} {db} {ca} {cb} f g (i ** (ddir, cdir)) =
   (i ** (dom.catComp f ddir, cod.catComp cdir g))
+
+public export
+ProfNT : {dom, cod : CatSig} -> (p, q : ProfArena dom cod) -> Type
+ProfNT {dom} {cod} p q =
+  (onPos : paPos p -> paPos q **
+   (i : paPos p) ->
+    (dom.catMorph (paCovarDir q (onPos i)) (paCovarDir p i),
+     cod.catMorph (paContravarDir p i) (paContravarDir q (onPos i))))
+
+public export
+paOnPos : {dom, cod : CatSig} -> {p, q : ProfArena dom cod} ->
+  ProfNT {dom} {cod} p q -> paPos {dom} {cod} p -> paPos {dom} {cod} q
+paOnPos = DPair.fst
+
+public export
+paCovarOnDir : {dom, cod : CatSig} -> {p, q : ProfArena dom cod} ->
+  (alpha : ProfNT {dom} {cod} p q) ->
+  (i : paPos {dom} {cod} p) ->
+  dom.catMorph
+    (paCovarDir {dom} {cod} q (paOnPos {dom} {cod} {p} {q} alpha i))
+    (paCovarDir {dom} {cod} p i)
+paCovarOnDir alpha i = fst (DPair.snd alpha i)
+
+public export
+paContravarOnDir : {dom, cod : CatSig} -> {p, q : ProfArena dom cod} ->
+  (alpha : ProfNT {dom} {cod} p q) ->
+  (i : paPos {dom} {cod} p) ->
+  cod.catMorph
+    (paContravarDir {dom} {cod} p i)
+    (paContravarDir {dom} {cod} q (paOnPos {dom} {cod} {p} {q} alpha i))
+paContravarOnDir alpha i = snd (DPair.snd alpha i)
+
+public export
+ProfNTApp : {dom, cod : CatSig} -> {p, q : ProfArena dom cod} ->
+  ProfNT {dom} {cod} p q -> (a : dom.catObj) -> (b : cod.catObj) ->
+  ProfMap dom cod {pos=(paPos {dom} {cod} p)} (paDir {dom} {cod} p) a b ->
+  ProfMap dom cod {pos=(paPos {dom} {cod} q)} (paDir {dom} {cod} q) a b
+ProfNTApp {dom} {cod} {p} {q} alpha a b (i ** (ddir, cdir)) =
+  (paOnPos alpha i **
+   (dom.catComp ddir (paCovarOnDir alpha i),
+    cod.catComp (paContravarOnDir alpha i) cdir))
