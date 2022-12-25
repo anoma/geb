@@ -2613,6 +2613,17 @@ ParamPolyFuncToSliceEndoId {base} p =
   (DPair.fst . p ** \(i ** j) => snd (p i) j)
 
 public export
+SlicePolyEndoFuncIdToPolyFunc : {base : Type} ->
+  SlicePolyEndoFuncId base -> PolyFunc
+SlicePolyEndoFuncIdToPolyFunc {base} (posdep ** dirdep) =
+  (Sigma {a=base} posdep ** dirdep)
+
+public export
+ParamPolyFuncToPolyFunc : {base : Type} -> ParamPolyFunc base -> PolyFunc
+ParamPolyFuncToPolyFunc {base} ppf =
+  ((i : base ** fst (ppf i)) ** \(i ** j) => snd (ppf i) j)
+
+public export
 ParamPolyFuncFromSliceEndoId : {base : Type} ->
   SlicePolyEndoFuncId base -> ParamPolyFunc base
 ParamPolyFuncFromSliceEndoId {base} (posdep ** dirdep) i =
