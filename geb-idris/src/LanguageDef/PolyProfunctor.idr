@@ -123,6 +123,20 @@ DirichNTApp : {cat : CatSig} -> {p, q : TypeArena cat} ->
 DirichNTApp {cat} {p} {q} alpha a (i ** d) =
   (taDntOnPos alpha i ** cat.catComp (taDntOnDir alpha i) d)
 
+----------------------------------------------------------------
+---- Inferences of hom-sets from parameterized hom-functors ----
+----------------------------------------------------------------
+
+public export
+HomSetFromParamCovarHom : {cat : CatSig} ->
+  (p : cat.catObj -> TypeArena cat) -> (a, b : cat.catObj) -> Type
+HomSetFromParamCovarHom {cat} p a b = TAPolyNT {cat} (p b) (p a)
+
+public export
+HomSetFromParamContravarHom : {cat : CatSig} ->
+  (p : cat.catObj -> TypeArena cat) -> (a, b : cat.catObj) -> Type
+HomSetFromParamContravarHom {cat} p a b = TADirichNT {cat} (p a) (p b)
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- `Type`-valued polynomial profunctors between arbitrary categories ----
@@ -246,11 +260,11 @@ ProfToContravarHom {dom} {cod} p a =
 public export
 ProfHomSetFromCovarHom : {cat : CatSig} ->
   (p : ProfArena cat cat) -> (a, b : cat.catObj) -> Type
-ProfHomSetFromCovarHom {cat} p a b =
-  TAPolyNT {cat} (ProfToCovarHom p b) (ProfToCovarHom p a)
+ProfHomSetFromCovarHom {cat} p =
+  HomSetFromParamCovarHom {cat} (ProfToCovarHom p)
 
 public export
 ProfHomSetFromContravarHom : {cat : CatSig} ->
   (p : ProfArena cat cat) -> (a, b : cat.catObj) -> Type
-ProfHomSetFromContravarHom {cat} p a b =
-  TADirichNT {cat} (ProfToContravarHom p a) (ProfToContravarHom p b)
+ProfHomSetFromContravarHom {cat} p =
+  HomSetFromParamContravarHom {cat} (ProfToContravarHom p)
