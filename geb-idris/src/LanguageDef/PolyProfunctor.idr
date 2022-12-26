@@ -129,6 +129,10 @@ DirichNTApp {cat} {p} {q} alpha a (i ** d) =
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 
+-----------------------------------------------------------------
+---- Definition and interpretation of polynomial profunctors ----
+-----------------------------------------------------------------
+
 -- An arena representing a (polynomial) functor from the product category of
 -- the opposite category of `cod` with `dom` to `Type`, which is also viewed
 -- as a profunctor from `dom` to `cod` (not the opposite category of `cod`).
@@ -176,6 +180,10 @@ ProfFDimap : {dom, cod : CatSig} -> {pos : Type} ->
 ProfFDimap {dom} {cod} {pos} dir {da} {db} {ca} {cb} f g (i ** (ddir, cdir)) =
   (i ** (dom.catComp f ddir, cod.catComp cdir g))
 
+-------------------------------------------------------
+---- Polynomial-profunctor natural transformations ----
+-------------------------------------------------------
+
 public export
 ProfNT : {dom, cod : CatSig} -> (p, q : ProfArena dom cod) -> Type
 ProfNT {dom} {cod} p q =
@@ -216,3 +224,21 @@ ProfNTApp {dom} {cod} {p} {q} alpha a b (i ** (ddir, cdir)) =
   (paOnPos alpha i **
    (dom.catComp ddir (paCovarOnDir alpha i),
     cod.catComp (paContravarOnDir alpha i) cdir))
+
+------------------------------
+---- Derived hom-functors ----
+------------------------------
+
+public export
+ProfToCovarHom : {dom, cod : CatSig} -> (p : ProfArena dom cod) ->
+  (a : cod.catObj) -> TypeArena dom
+ProfToCovarHom {dom} {cod} p a =
+  ((i : paPos p ** cod.catMorph a (paContravarDir p i)) **
+   \(i ** f) => paCovarDir p i)
+
+public export
+ProfToContravarHom : {dom, cod : CatSig} -> (p : ProfArena dom cod) ->
+  (a : dom.catObj) -> TypeArena cod
+ProfToContravarHom {dom} {cod} p a =
+  ((i : paPos p ** dom.catMorph (paCovarDir p i) a) **
+   \(i ** f) => paContravarDir p i)
