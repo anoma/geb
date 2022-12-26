@@ -242,3 +242,15 @@ ProfToContravarHom : {dom, cod : CatSig} -> (p : ProfArena dom cod) ->
 ProfToContravarHom {dom} {cod} p a =
   ((i : paPos p ** dom.catMorph (paCovarDir p i) a) **
    \(i ** f) => paContravarDir p i)
+
+public export
+ProfHomSetFromCovarHom : {cat : CatSig} ->
+  (p : ProfArena cat cat) -> (a, b : cat.catObj) -> Type
+ProfHomSetFromCovarHom {cat} p a b =
+  TAPolyNT {cat} (ProfToCovarHom p b) (ProfToCovarHom p a)
+
+public export
+ProfHomSetFromContravarHom : {cat : CatSig} ->
+  (p : ProfArena cat cat) -> (a, b : cat.catObj) -> Type
+ProfHomSetFromContravarHom {cat} p a b =
+  TADirichNT {cat} (ProfToContravarHom p a) (ProfToContravarHom p b)
