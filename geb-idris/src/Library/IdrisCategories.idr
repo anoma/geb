@@ -140,6 +140,17 @@ public export
 CorrectCatSig : Type
 CorrectCatSig = Subset0 CatSig CatSigCorrect
 
+-- Idris's `Type` itself.
+public export
+TypeCat : CatSig
+TypeCat =
+  MkCatSig
+    Type
+    (\x, y => x -> y)
+    (\x, y => ExtEq)
+    (\x => Prelude.id)
+    (\g, f => g . f)
+
 ---------------------------------------
 ---------------------------------------
 ---- Dependent types, categorially ----
