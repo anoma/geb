@@ -268,6 +268,13 @@ ProfToCovarHom {dOp} {c} p a =
   ((i : paPos p ** dOp.catMorph a (paContravarDir p i)) **
    \(i ** f) => paCovarDir p i)
 
+-- Define a profunctor purely by covariant directions.
+public export
+CovarHomToProf : {dOp, c : CatSig} ->
+  dOp.catObj -> TypeArena c -> ProfArena dOp c
+CovarHomToProf {dOp} {c} dOpTerminal (cpos ** cdir) =
+  (cpos ** (const dOpTerminal, cdir))
+
 -- If all the covariant directions are initial objects, then this is
 -- effectively just a Dirichlet (contravariant polynomial) functor from
 -- `dOp` to `Type` (whose outputs are independent of `a`).
@@ -277,6 +284,13 @@ ProfToContravarHom : {dOp, c : CatSig} -> (p : ProfArena dOp c) ->
 ProfToContravarHom {dOp} {c} p a =
   ((i : paPos p ** c.catMorph (paCovarDir p i) a) **
    \(i ** f) => paContravarDir p i)
+
+-- Define a profunctor purely by contravariant directions.
+public export
+ContravarHomToProf : {dOp, c : CatSig} ->
+  c.catObj -> TypeArena dOp -> ProfArena dOp c
+ContravarHomToProf {dOp} {c} cInitial (dOpPos ** dOpDir) =
+  (dOpPos ** (dOpDir, const cInitial))
 
 public export
 ProfHomSetFromCovarHom : {cat : CatSig} ->
