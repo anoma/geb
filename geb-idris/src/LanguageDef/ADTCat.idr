@@ -640,6 +640,10 @@ public export
 soCovarHomPF : SOMu -> PolyFunc
 soCovarHomPF = pfCata SOCovarHomFuncAlg
 
+public export
+soProfunctor : ProfArena TypeCat TypeCat
+soProfunctor = ?soProfunctor_hole
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial endofunctors ----
