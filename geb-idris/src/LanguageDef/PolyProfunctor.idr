@@ -37,6 +37,10 @@ public export
 taDir : {cat : CatSig} -> (ar : TypeArena cat) -> taPos {cat} ar -> cat.catObj
 taDir = DPair.snd
 
+public export
+TypeArenaId : (c : CatSig) -> c.catObj -> TypeArena c
+TypeArenaId c cTerminal = (() ** \() => cTerminal)
+
 -- Interpret a dependent object as a covariant polynomial functor.
 public export
 PolyMap : (cat : CatSig) -> {pos : Type} ->
@@ -326,6 +330,11 @@ ProfHomSetFromContravarHom {cat} p =
 
 -- Here we take the view of a profunctor as a correspondence -- i.e., as a
 -- morphism from `dOp` to `c`.
+
+public export
+ProfId : (c : CatSig) -> c.catObj -> EndoProfArena c
+ProfId c cTerminal =
+  CovarHomToProf {dOp=c} {c} cTerminal (TypeArenaId c cTerminal)
 
 public export
 ProfCompose : {c, d, e : CatSig} ->
