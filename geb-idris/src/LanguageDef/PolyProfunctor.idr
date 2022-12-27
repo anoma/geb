@@ -258,6 +258,9 @@ ProfNTApp {dOp} {c} {p} {q} alpha a b (i ** (ddir, cdir)) =
 ---- Derived hom-functors ----
 ------------------------------
 
+-- If all the contravariant directions are terminal objects, then this is
+-- effectively just a (covariant) polynomial functor from `c` to `Type`
+-- (whose outputs are independent of `a`).
 public export
 ProfToCovarHom : {dOp, c : CatSig} -> (p : ProfArena dOp c) ->
   (a : dOp.catObj) -> TypeArena c
@@ -265,6 +268,9 @@ ProfToCovarHom {dOp} {c} p a =
   ((i : paPos p ** dOp.catMorph a (paContravarDir p i)) **
    \(i ** f) => paCovarDir p i)
 
+-- If all the covariant directions are initial objects, then this is
+-- effectively just a Dirichlet (contravariant polynomial) functor from
+-- `dOp` to `Type` (whose outputs are independent of `a`).
 public export
 ProfToContravarHom : {dOp, c : CatSig} -> (p : ProfArena dOp c) ->
   (a : c.catObj) -> TypeArena dOp
