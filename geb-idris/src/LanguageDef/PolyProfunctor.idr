@@ -149,6 +149,12 @@ HomSetFromParamContravarHom {cat} p a b = TADirichNT {cat} (p a) (p b)
 
 -- An arena representing a (polynomial) functor from the product category of
 -- the opposite category of `dOp` with `c` to `Type`.
+--
+-- There are categories with in which the objects themselves are categories
+-- and the profunctors are morphisms in both directions -- where the profunctors
+-- are treated as morphisms from `c` to `dOp`, and where the profunctors are
+-- treated as morphisms from `dOp` to `c`.  The latter is sometimes called a
+-- "correspondence" (according to Wikipedia).
 public export
 DirMapPair : CatSig -> CatSig -> Type -> Type
 DirMapPair dOp c pos = (DirMap dOp pos, DirMap c pos)
