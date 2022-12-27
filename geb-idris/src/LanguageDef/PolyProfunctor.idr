@@ -154,6 +154,16 @@ DirMapPair : CatSig -> CatSig -> Type -> Type
 DirMapPair dOp c pos = (DirMap dOp pos, DirMap c pos)
 
 public export
+dmpCovar : {dOp, c : CatSig} -> {pos : Type} ->
+  DirMapPair dOp c pos -> DirMap c pos
+dmpCovar {dOp} {c} {pos} = snd
+
+public export
+dmpContravar : {dOp, c : CatSig} -> {pos : Type} ->
+  DirMapPair dOp c pos -> DirMap dOp pos
+dmpContravar {dOp} {c} {pos} = fst
+
+public export
 ProfArena : CatSig -> CatSig -> Type
 ProfArena dOp c = DPair Type (DirMapPair dOp c)
 
@@ -168,13 +178,13 @@ paDir = DPair.snd
 
 public export
 paCovarDir : {dOp, c : CatSig} -> (ar : ProfArena dOp c) ->
-  paPos {dOp} {c} ar -> dOp.catObj
-paCovarDir ar = fst (DPair.snd ar)
+  paPos {dOp} {c} ar -> c.catObj
+paCovarDir ar = dmpCovar (paDir ar)
 
 public export
 paContravarDir : {dOp, c : CatSig} -> (ar : ProfArena dOp c) ->
-  paPos {dOp} {c} ar -> c.catObj
-paContravarDir ar = snd (DPair.snd ar)
+  paPos {dOp} {c} ar -> dOp.catObj
+paContravarDir ar = dmpContravar (paDir ar)
 
 -- Interpret a dependent object as a (polynomial) profunctor.
 public export
@@ -182,16 +192,16 @@ ProfMap : (dOp, c : CatSig) -> {pos : Type} ->
   DirMapPair dOp c pos -> dOp.catObj -> c.catObj -> Type
 ProfMap dOp c {pos} dir objdOp objc =
   (i : pos **
-   (dOp.catMorph (fst dir i) objdOp, c.catMorph objc (snd dir i)))
+   (dOp.catMorph objdOp (dmpContravar dir i), c.catMorph (dmpCovar dir i) objc))
 
 public export
 ProfFDimap : {dOp, c : CatSig} -> {pos : Type} ->
   (dir : DirMapPair dOp c pos) ->
   {da, db : dOp.catObj} -> {ca, cb : c.catObj} ->
-  dOp.catMorph da db -> c.catMorph cb ca ->
+  dOp.catMorph db da -> c.catMorph ca cb ->
   ProfMap dOp c dir da ca -> ProfMap dOp c dir db cb
 ProfFDimap {dOp} {c} {pos} dir {da} {db} {ca} {cb} f g (i ** (ddir, cdir)) =
-  (i ** (dOp.catComp f ddir, c.catComp cdir g))
+  (i ** (dOp.catComp ddir f, c.catComp g cdir))
 
 -------------------------------------------------------
 ---- Polynomial-profunctor natural transformations ----
@@ -202,8 +212,8 @@ ProfNT : {dOp, c : CatSig} -> (p, q : ProfArena dOp c) -> Type
 ProfNT {dOp} {c} p q =
   (onPos : paPos p -> paPos q **
    (i : paPos p) ->
-    (dOp.catMorph (paCovarDir q (onPos i)) (paCovarDir p i),
-     c.catMorph (paContravarDir p i) (paContravarDir q (onPos i))))
+    (dOp.catMorph (paContravarDir p i) (paContravarDir q (onPos i)),
+     c.catMorph (paCovarDir q (onPos i)) (paCovarDir p i)))
 
 public export
 paOnPos : {dOp, c : CatSig} -> {p, q : ProfArena dOp c} ->
@@ -214,19 +224,19 @@ public export
 paCovarOnDir : {dOp, c : CatSig} -> {p, q : ProfArena dOp c} ->
   (alpha : ProfNT {dOp} {c} p q) ->
   (i : paPos {dOp} {c} p) ->
-  dOp.catMorph
+  c.catMorph
     (paCovarDir {dOp} {c} q (paOnPos {dOp} {c} {p} {q} alpha i))
     (paCovarDir {dOp} {c} p i)
-paCovarOnDir alpha i = fst (DPair.snd alpha i)
+paCovarOnDir alpha i = snd (DPair.snd alpha i)
 
 public export
 paContravarOnDir : {dOp, c : CatSig} -> {p, q : ProfArena dOp c} ->
   (alpha : ProfNT {dOp} {c} p q) ->
   (i : paPos {dOp} {c} p) ->
-  c.catMorph
+  dOp.catMorph
     (paContravarDir {dOp} {c} p i)
     (paContravarDir {dOp} {c} q (paOnPos {dOp} {c} {p} {q} alpha i))
-paContravarOnDir alpha i = snd (DPair.snd alpha i)
+paContravarOnDir alpha i = fst (DPair.snd alpha i)
 
 public export
 ProfNTApp : {dOp, c : CatSig} -> {p, q : ProfArena dOp c} ->
@@ -235,8 +245,8 @@ ProfNTApp : {dOp, c : CatSig} -> {p, q : ProfArena dOp c} ->
   ProfMap dOp c {pos=(paPos {dOp} {c} q)} (paDir {dOp} {c} q) a b
 ProfNTApp {dOp} {c} {p} {q} alpha a b (i ** (ddir, cdir)) =
   (paOnPos alpha i **
-   (dOp.catComp ddir (paCovarOnDir alpha i),
-    c.catComp (paContravarOnDir alpha i) cdir))
+   (dOp.catComp (paContravarOnDir alpha i) ddir,
+    c.catComp cdir (paCovarOnDir alpha i)))
 
 ------------------------------
 ---- Derived hom-functors ----
@@ -244,16 +254,16 @@ ProfNTApp {dOp} {c} {p} {q} alpha a b (i ** (ddir, cdir)) =
 
 public export
 ProfToCovarHom : {dOp, c : CatSig} -> (p : ProfArena dOp c) ->
-  (a : c.catObj) -> TypeArena dOp
+  (a : dOp.catObj) -> TypeArena c
 ProfToCovarHom {dOp} {c} p a =
-  ((i : paPos p ** c.catMorph a (paContravarDir p i)) **
+  ((i : paPos p ** dOp.catMorph a (paContravarDir p i)) **
    \(i ** f) => paCovarDir p i)
 
 public export
 ProfToContravarHom : {dOp, c : CatSig} -> (p : ProfArena dOp c) ->
-  (a : dOp.catObj) -> TypeArena c
+  (a : c.catObj) -> TypeArena dOp
 ProfToContravarHom {dOp} {c} p a =
-  ((i : paPos p ** dOp.catMorph (paCovarDir p i) a) **
+  ((i : paPos p ** c.catMorph (paCovarDir p i) a) **
    \(i ** f) => paContravarDir p i)
 
 public export
