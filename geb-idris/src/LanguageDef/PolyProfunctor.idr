@@ -305,13 +305,17 @@ IndependentHomsToProf {dOp} {c}
       eitherElim (const cInitial) cdir))
 
 public export
+EndoProfArena : CatSig -> Type
+EndoProfArena cat = ProfArena cat cat
+
+public export
 ProfHomSetFromCovarHom : {cat : CatSig} ->
-  (p : ProfArena cat cat) -> (a, b : cat.catObj) -> Type
+  (p : EndoProfArena cat) -> (a, b : cat.catObj) -> Type
 ProfHomSetFromCovarHom {cat} p =
   HomSetFromParamCovarHom {cat} (ProfToCovarHom p)
 
 public export
 ProfHomSetFromContravarHom : {cat : CatSig} ->
-  (p : ProfArena cat cat) -> (a, b : cat.catObj) -> Type
+  (p : EndoProfArena cat) -> (a, b : cat.catObj) -> Type
 ProfHomSetFromContravarHom {cat} p =
   HomSetFromParamContravarHom {cat} (ProfToContravarHom p)
