@@ -292,6 +292,18 @@ ContravarHomToProf : {dOp, c : CatSig} ->
 ContravarHomToProf {dOp} {c} cInitial (dOpPos ** dOpDir) =
   (dOpPos ** (dOpDir, const cInitial))
 
+-- Another special case is where there are both contravariant and covariant
+-- directions, but they do not overlap -- that is, any one position either has
+-- only contravariant or only covariant directions.
+public export
+IndependentHomsToProf : {dOp, c : CatSig} ->
+  dOp.catObj -> c.catObj -> TypeArena dOp -> TypeArena c -> ProfArena dOp c
+IndependentHomsToProf {dOp} {c}
+  dOpTerminal cInitial (dOpPos ** dOpDir) (cpos ** cdir) =
+    (Either dOpPos cpos **
+     (eitherElim dOpDir (const dOpTerminal),
+      eitherElim (const cInitial) cdir))
+
 public export
 ProfHomSetFromCovarHom : {cat : CatSig} ->
   (p : ProfArena cat cat) -> (a, b : cat.catObj) -> Type
