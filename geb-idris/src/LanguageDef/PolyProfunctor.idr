@@ -319,3 +319,18 @@ ProfHomSetFromContravarHom : {cat : CatSig} ->
   (p : EndoProfArena cat) -> (a, b : cat.catObj) -> Type
 ProfHomSetFromContravarHom {cat} p =
   HomSetFromParamContravarHom {cat} (ProfToContravarHom p)
+
+--------------------------------
+---- Profunctor composition ----
+--------------------------------
+
+-- Here we take the view of a profunctor as a correspondence -- i.e., as a
+-- morphism from `dOp` to `c`.
+
+public export
+ProfCompose : {c, d, e : CatSig} ->
+  ProfArena d c -> ProfArena e d -> ProfArena e c
+ProfCompose {c} {d} {e} (dcPos ** (dOpDir, cDir)) (edPos ** (eOpDir, dDir)) =
+  ((i : (edPos, dcPos) ** d.catMorph (dDir (fst i)) (dOpDir (snd i))) **
+   (\((edi, dci) ** dm) => eOpDir edi,
+    \((edi, dci) ** dm) => cDir dci))
