@@ -332,9 +332,8 @@ ProfHomSetFromContravarHom {cat} p =
 -- morphism from `dOp` to `c`.
 
 public export
-ProfId : (c : CatSig) -> c.catObj -> EndoProfArena c
-ProfId c cTerminal =
-  CovarHomToProf {dOp=c} {c} cTerminal (TypeArenaId c cTerminal)
+ProfId : (c : CatSig) -> EndoProfArena c
+ProfId c = (c.catObj ** (id, id))
 
 public export
 ProfCompose : {c, d, e : CatSig} ->
