@@ -132,14 +132,14 @@ DirichNTApp {cat} {p} {q} alpha a (i ** d) =
 ----------------------------------------------------------------
 
 public export
-HomSetFromParamCovarHom : {cat : CatSig} ->
+ParamCovarToNT : {cat : CatSig} ->
   (p : cat.catObj -> TypeArena cat) -> (a, b : cat.catObj) -> Type
-HomSetFromParamCovarHom {cat} p a b = TAPolyNT {cat} (p b) (p a)
+ParamCovarToNT {cat} p a b = TAPolyNT {cat} (p b) (p a)
 
 public export
-HomSetFromParamContravarHom : {cat : CatSig} ->
+ParamContravarToNT : {cat : CatSig} ->
   (p : cat.catObj -> TypeArena cat) -> (a, b : cat.catObj) -> Type
-HomSetFromParamContravarHom {cat} p a b = TADirichNT {cat} (p a) (p b)
+ParamContravarToNT {cat} p a b = TADirichNT {cat} (p a) (p b)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
@@ -266,43 +266,43 @@ ProfNTApp {dOp} {c} {p} {q} alpha a b (i ** (ddir, cdir)) =
 -- effectively just a (covariant) polynomial functor from `c` to `Type`
 -- (whose outputs are independent of `a`).
 public export
-ProfToCovarHom : {dOp, c : CatSig} -> (p : ProfArena dOp c) ->
+ProfToCovar : {dOp, c : CatSig} -> (p : ProfArena dOp c) ->
   (a : dOp.catObj) -> TypeArena c
-ProfToCovarHom {dOp} {c} p a =
+ProfToCovar {dOp} {c} p a =
   ((i : paPos p ** dOp.catMorph a (paContravarDir p i)) **
    \(i ** f) => paCovarDir p i)
 
 -- Define a profunctor purely by covariant directions.
 public export
-CovarHomToProf : {dOp, c : CatSig} ->
+CovarToProf : {dOp, c : CatSig} ->
   dOp.catObj -> TypeArena c -> ProfArena dOp c
-CovarHomToProf {dOp} {c} dOpTerminal (cpos ** cdir) =
+CovarToProf {dOp} {c} dOpTerminal (cpos ** cdir) =
   (cpos ** (const dOpTerminal, cdir))
 
 -- If all the covariant directions are initial objects, then this is
 -- effectively just a Dirichlet (contravariant polynomial) functor from
 -- `dOp` to `Type` (whose outputs are independent of `a`).
 public export
-ProfToContravarHom : {dOp, c : CatSig} -> (p : ProfArena dOp c) ->
+ProfToContravar : {dOp, c : CatSig} -> (p : ProfArena dOp c) ->
   (a : c.catObj) -> TypeArena dOp
-ProfToContravarHom {dOp} {c} p a =
+ProfToContravar {dOp} {c} p a =
   ((i : paPos p ** c.catMorph (paCovarDir p i) a) **
    \(i ** f) => paContravarDir p i)
 
 -- Define a profunctor purely by contravariant directions.
 public export
-ContravarHomToProf : {dOp, c : CatSig} ->
+ContravarToProf : {dOp, c : CatSig} ->
   c.catObj -> TypeArena dOp -> ProfArena dOp c
-ContravarHomToProf {dOp} {c} cInitial (dOpPos ** dOpDir) =
+ContravarToProf {dOp} {c} cInitial (dOpPos ** dOpDir) =
   (dOpPos ** (dOpDir, const cInitial))
 
 -- Another special case is where there are both contravariant and covariant
 -- directions, but they do not overlap -- that is, any one position either has
 -- only contravariant or only covariant directions.
 public export
-IndependentHomsToProf : {dOp, c : CatSig} ->
+IndependentDirsToProf : {dOp, c : CatSig} ->
   dOp.catObj -> c.catObj -> TypeArena dOp -> TypeArena c -> ProfArena dOp c
-IndependentHomsToProf {dOp} {c}
+IndependentDirsToProf {dOp} {c}
   dOpTerminal cInitial (dOpPos ** dOpDir) (cpos ** cdir) =
     (Either dOpPos cpos **
      (eitherElim dOpDir (const dOpTerminal),
@@ -313,16 +313,16 @@ EndoProfArena : CatSig -> Type
 EndoProfArena cat = ProfArena cat cat
 
 public export
-ProfHomSetFromCovarHom : {cat : CatSig} ->
+ProfNTFromCovar : {cat : CatSig} ->
   (p : EndoProfArena cat) -> (a, b : cat.catObj) -> Type
-ProfHomSetFromCovarHom {cat} p =
-  HomSetFromParamCovarHom {cat} (ProfToCovarHom p)
+ProfNTFromCovar {cat} p =
+  ParamCovarToNT {cat} (ProfToCovar p)
 
 public export
-ProfHomSetFromContravarHom : {cat : CatSig} ->
+ProfNTFromContravar : {cat : CatSig} ->
   (p : EndoProfArena cat) -> (a, b : cat.catObj) -> Type
-ProfHomSetFromContravarHom {cat} p =
-  HomSetFromParamContravarHom {cat} (ProfToContravarHom p)
+ProfNTFromContravar {cat} p =
+  ParamContravarToNT {cat} (ProfToContravar p)
 
 --------------------------------
 ---- Profunctor composition ----
