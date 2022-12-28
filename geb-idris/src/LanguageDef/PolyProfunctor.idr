@@ -196,6 +196,23 @@ paContravarDir : {dOp, c : CatSig} -> (ar : ProfArena dOp c) ->
   paPos {dOp} {c} ar -> dOp.catObj
 paContravarDir ar = dmpContravar (paDir ar)
 
+-- Interpret a dependent object as a (polynomial) profunctor.
+public export
+ProfMap : (dOp, c : CatSig) -> {pos : Type} ->
+  DirMapPair dOp c pos -> dOp.catObj -> c.catObj -> Type
+ProfMap dOp c {pos} dir objdOp objc =
+  (i : pos **
+   (dOp.catMorph objdOp (dmpContravar dir i), c.catMorph (dmpCovar dir i) objc))
+
+public export
+ProfFDimap : {dOp, c : CatSig} -> {pos : Type} ->
+  (dir : DirMapPair dOp c pos) ->
+  {da, db : dOp.catObj} -> {ca, cb : c.catObj} ->
+  dOp.catMorph db da -> c.catMorph ca cb ->
+  ProfMap dOp c dir da ca -> ProfMap dOp c dir db cb
+ProfFDimap {dOp} {c} {pos} dir {da} {db} {ca} {cb} f g (i ** (ddir, cdir)) =
+  (i ** (dOp.catComp ddir f, c.catComp g cdir))
+
 -------------------------------------------------------
 ---- Polynomial-profunctor natural transformations ----
 -------------------------------------------------------
@@ -230,6 +247,16 @@ paContravarOnDir : {dOp, c : CatSig} -> {p, q : ProfArena dOp c} ->
     (paContravarDir {dOp} {c} p i)
     (paContravarDir {dOp} {c} q (paOnPos {dOp} {c} {p} {q} alpha i))
 paContravarOnDir alpha i = fst (DPair.snd alpha i)
+
+public export
+ProfNTApp : {dOp, c : CatSig} -> {p, q : ProfArena dOp c} ->
+  ProfNT {dOp} {c} p q -> (a : dOp.catObj) -> (b : c.catObj) ->
+  ProfMap dOp c {pos=(paPos {dOp} {c} p)} (paDir {dOp} {c} p) a b ->
+  ProfMap dOp c {pos=(paPos {dOp} {c} q)} (paDir {dOp} {c} q) a b
+ProfNTApp {dOp} {c} {p} {q} alpha a b (i ** (ddir, cdir)) =
+  (paOnPos alpha i **
+   (dOp.catComp (paContravarOnDir alpha i) ddir,
+    c.catComp cdir (paCovarOnDir alpha i)))
 
 ------------------------------
 ---- Derived hom-functors ----
@@ -316,38 +343,3 @@ ProfCompose {c} {d} {e} (dcPos ** (dOpDir, cDir)) (edPos ** (eOpDir, dDir)) =
   ((i : (edPos, dcPos) ** d.catMorph (dDir (fst i)) (dOpDir (snd i))) **
    (\((edi, dci) ** dm) => eOpDir edi,
     \((edi, dci) ** dm) => cDir dci))
-
---------------------------------------------------
----- Interpretation of polynomial profunctors ----
---------------------------------------------------
-
--- Interpret a dependent object as a (polynomial) profunctor.
-public export
-ProfMap : (dOp, c : CatSig) -> {pos : Type} ->
-  DirMapPair dOp c pos -> dOp.catObj -> c.catObj -> Type
-ProfMap dOp c {pos} dir objdOp objc =
-  (i : pos **
-   (dOp.catMorph objdOp (dmpContravar dir i), c.catMorph (dmpCovar dir i) objc))
-
-public export
-ProfFDimap : {dOp, c : CatSig} -> {pos : Type} ->
-  (dir : DirMapPair dOp c pos) ->
-  {da, db : dOp.catObj} -> {ca, cb : c.catObj} ->
-  dOp.catMorph db da -> c.catMorph ca cb ->
-  ProfMap dOp c dir da ca -> ProfMap dOp c dir db cb
-ProfFDimap {dOp} {c} {pos} dir {da} {db} {ca} {cb} f g (i ** (ddir, cdir)) =
-  (i ** (dOp.catComp ddir f, c.catComp g cdir))
-
--------------------------------------------------------------------------
----- Interpretation of polynomial-profunctor natural transformations ----
--------------------------------------------------------------------------
-
-public export
-ProfNTApp : {dOp, c : CatSig} -> {p, q : ProfArena dOp c} ->
-  ProfNT {dOp} {c} p q -> (a : dOp.catObj) -> (b : c.catObj) ->
-  ProfMap dOp c {pos=(paPos {dOp} {c} p)} (paDir {dOp} {c} p) a b ->
-  ProfMap dOp c {pos=(paPos {dOp} {c} q)} (paDir {dOp} {c} q) a b
-ProfNTApp {dOp} {c} {p} {q} alpha a b (i ** (ddir, cdir)) =
-  (paOnPos alpha i **
-   (dOp.catComp (paContravarOnDir alpha i) ddir,
-    c.catComp cdir (paCovarOnDir alpha i)))
