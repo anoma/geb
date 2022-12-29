@@ -837,35 +837,11 @@ finDecPred {n=(S n)} p d =
 public export
 FinDecEncoding : (a : Type) -> (size : Nat) -> Type
 FinDecEncoding a size =
-  (encode : a -> Fin size ** decode : Fin size -> a **
-   (e : a) -> decode (encode e) = e)
-
-public export
-finDecEncode : {a : Type} -> {size : Nat} ->
-  (encode : a -> Fin size) -> (decode : Fin size -> a) ->
-  (complete : (e : a) -> (x : Fin size ** decode x = e)) ->
-  Maybe (FinDecEncoding a size)
-finDecEncode {a} {size} encode decode complete =
-  case
-    finDecPred {n=size}
-      _
-      (\x => decEq (encode (decode x)) x) of
-        Yes eq' => Just (encode ** decode ** \e =>
-          let (x ** eq'') = complete e in
-          rewrite sym eq'' in cong decode (eq' x))
-        No _ => Nothing
-
-public export
-MkFinDecEncoding : {a : Type} -> {size : Nat} ->
-  (encode : a -> Fin size) -> (decode : Fin size -> a) ->
-  (complete : (e : a) -> (x : Fin size ** decode x = e)) ->
-  {auto ok : IsJustTrue (finDecEncode {a} {size} encode decode complete)} ->
-  FinDecEncoding a size
-MkFinDecEncoding {a} {size} encode decode complete {ok} = fromIsJust ok
+  (decode : Fin size -> a ** (e : a) -> (x : Fin size ** decode x = e))
 
 public export
 fdeEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool
-fdeEq enc x x' = fst enc x == fst enc x'
+fdeEq enc x x' = fst (snd enc x) == fst (snd enc x')
 
 public export
 (a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => Eq a where
@@ -873,7 +849,7 @@ public export
 
 public export
 fdeLt : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool
-fdeLt enc x x' = fst enc x < fst enc x'
+fdeLt enc x x' = fst (snd enc x) < fst (snd enc x')
 
 public export
 (a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => Ord a where
@@ -881,9 +857,11 @@ public export
 
 public export
 fdeDecEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> DecEqPred a
-fdeDecEq (encode ** decode ** inv) e e' = case (decEq (encode e) (encode e')) of
-  Yes eq => Yes $ trans (sym (inv e)) (trans (cong decode eq) (inv e'))
-  No neq => No $ \yes => neq $ cong encode yes
+fdeDecEq (decode ** encode) e e' =
+  case (decEq (fst $ encode e) (fst $ encode e')) of
+    Yes eq => Yes $
+      trans (sym (snd $ encode e)) (trans (cong decode eq) (snd $ encode e'))
+    No neq => No $ \yes => neq $ case yes of Refl => Refl
 
 public export
 (a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => DecEq a where
