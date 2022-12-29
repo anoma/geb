@@ -582,8 +582,8 @@ SOCheckedTermAlg SOPosC d = Either (d SODirL) (d SODirR)
 SOCheckedTermAlg SOPosP d = Pair (d SODir1) (d SODir2)
 
 public export
-soCheckedTerm : SOMu -> Type
-soCheckedTerm = pfCata SOCheckedTermAlg
+SOCheckedTerm : SOMu -> Type
+SOCheckedTerm = pfCata SOCheckedTermAlg
 
 public export
 SOCheckedTermPFAlg : SOAlg PolyFunc
@@ -641,8 +641,8 @@ soCovarHomPF : SOMu -> PolyFunc
 soCovarHomPF = pfCata SOCovarHomFuncAlg
 
 public export
-soProfunctor : ProfArena TypeCat TypeCat
-soProfunctor = ?soProfunctor_hole
+SOMuMorph : SOMu -> SOMu -> Type
+SOMuMorph x y = SOCheckedTerm x -> SOCheckedTerm y
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
