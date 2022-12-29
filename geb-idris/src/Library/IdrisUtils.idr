@@ -835,9 +835,16 @@ finDecPred {n=(S n)} p d =
     No no => No $ \yes => no $ yes FZ
 
 public export
+FinDecoder : Type -> Nat -> Type
+FinDecoder a size = Fin size -> a
+
+public export
+FinEncoder : {a : Type} -> {size : Nat} -> FinDecoder a size -> Type
+FinEncoder {a} {size} decoder = (e : a) -> (x : Fin size ** decoder x = e)
+
+public export
 FinDecEncoding : (a : Type) -> (size : Nat) -> Type
-FinDecEncoding a size =
-  (decode : Fin size -> a ** (e : a) -> (x : Fin size ** decode x = e))
+FinDecEncoding a size = DPair (FinDecoder a size) FinEncoder
 
 public export
 fdeEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool
