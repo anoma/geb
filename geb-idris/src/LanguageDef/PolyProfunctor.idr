@@ -75,7 +75,7 @@ public export
 TAPolyNT : {cat : CatSig} -> (p, q : TypeArena cat) -> Type
 TAPolyNT {cat} p q =
   (onPos : taPos p -> taPos q **
-   (i : taPos p) -> cat.catMorph (taDir q (onPos i)) (taDir p i))
+   Pi {a=(taPos p)} $ \i => cat.catMorph ((taDir q . onPos) i) ((taDir p) i))
 
 public export
 taPntOnPos : {cat : CatSig} -> {p, q : TypeArena cat} -> TAPolyNT {cat} p q ->
@@ -95,7 +95,7 @@ public export
 TADirichNT : {cat : CatSig} -> (p, q : TypeArena cat) -> Type
 TADirichNT {cat} p q =
   (onPos : taPos p -> taPos q **
-   (i : taPos p) -> cat.catMorph (taDir p i) (taDir q (onPos i)))
+   Pi {a=(taPos p)} $ \i => cat.catMorph ((taDir p) i) ((taDir q . onPos) i))
 
 public export
 taDntOnPos : {cat : CatSig} -> {p, q : TypeArena cat} -> TADirichNT {cat} p q ->
@@ -221,7 +221,7 @@ public export
 ProfNT : {dOp, c : CatSig} -> (p, q : ProfArena dOp c) -> Type
 ProfNT {dOp} {c} p q =
   (onPos : paPos p -> paPos q **
-   (i : paPos p) ->
+   Pi {a=(paPos p)} $ \i =>
     (dOp.catMorph (paContravarDir p i) (paContravarDir q (onPos i)),
      c.catMorph (paCovarDir q (onPos i)) (paCovarDir p i)))
 
