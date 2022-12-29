@@ -812,6 +812,83 @@ encodingDecEq encode decode encodingIsCorrect bDecEq x x' with
     encodingDecEq encode decode encodingIsCorrect bDecEq x x' | No neq =
       No $ \xeq => neq $ cong encode xeq
 
+public export
+finEncodingDecEq : {a : Type} -> {size : Nat} ->
+  (encode : a -> Fin size) -> (decode : Fin size -> a) ->
+  (encodingIsCorrect : (x : a) -> decode (encode x) = x) ->
+  DecEqPred a
+finEncodingDecEq {a} {size} encode decode encodingIsCorrect =
+  encodingDecEq {a} {b=(Fin size)}
+    encode (Just . decode) (\x => rewrite encodingIsCorrect x in Refl) decEq
+
+public export
+finDecPred : {n : Nat} -> (p : Fin n -> Type) -> ((x : Fin n) -> Dec (p x)) ->
+  Dec ((x : Fin n) -> p x)
+finDecPred {n=Z} p d = Yes $ \x => case x of _ impossible
+finDecPred {n=(S n)} p d =
+  case d FZ of
+    Yes yes => case finDecPred {n} (p . FS) (\x => d $ FS x) of
+      Yes yes' => Yes $ \x => case x of
+        FZ => yes
+        FS x' => yes' x'
+      No no' => No $ \yes' => no' $ \x => yes' $ FS x
+    No no => No $ \yes => no $ yes FZ
+
+public export
+FinDecEncoding : (a : Type) -> (size : Nat) -> Type
+FinDecEncoding a size =
+  (encode : a -> Fin size ** decode : Fin size -> a **
+   (e : a) -> decode (encode e) = e)
+
+public export
+finDecEncode : {a : Type} -> {size : Nat} ->
+  (encode : a -> Fin size) -> (decode : Fin size -> a) ->
+  (complete : (e : a) -> (x : Fin size ** decode x = e)) ->
+  Maybe (FinDecEncoding a size)
+finDecEncode {a} {size} encode decode complete =
+  case
+    finDecPred {n=size}
+      _
+      (\x => decEq (encode (decode x)) x) of
+        Yes eq' => Just (encode ** decode ** \e =>
+          let (x ** eq'') = complete e in
+          rewrite sym eq'' in cong decode (eq' x))
+        No _ => Nothing
+
+public export
+MkFinDecEncoding : {a : Type} -> {size : Nat} ->
+  (encode : a -> Fin size) -> (decode : Fin size -> a) ->
+  (complete : (e : a) -> (x : Fin size ** decode x = e)) ->
+  {auto ok : IsJustTrue (finDecEncode {a} {size} encode decode complete)} ->
+  FinDecEncoding a size
+MkFinDecEncoding {a} {size} encode decode complete {ok} = fromIsJust ok
+
+public export
+fdeEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool
+fdeEq enc x x' = fst enc x == fst enc x'
+
+public export
+(a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => Eq a where
+  (==) = fdeEq {a} {n} enc
+
+public export
+fdeLt : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool
+fdeLt enc x x' = fst enc x < fst enc x'
+
+public export
+(a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => Ord a where
+  (<) = fdeLt {a} {n} enc
+
+public export
+fdeDecEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> DecEqPred a
+fdeDecEq (encode ** decode ** inv) e e' = case (decEq (encode e) (encode e')) of
+  Yes eq => Yes $ trans (sym (inv e)) (trans (cong decode eq) (inv e'))
+  No neq => No $ \yes => neq $ cong encode yes
+
+public export
+(a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => DecEq a where
+  decEq = fdeDecEq {a} {n} enc
+
 -- A list with a length stored together with it at run time.
 public export
 record LList (a : Type) (len : Nat) where
