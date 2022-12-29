@@ -2618,6 +2618,11 @@ SlicePolyEndoFuncIdToPolyFunc : {base : Type} ->
 SlicePolyEndoFuncIdToPolyFunc {base} (posdep ** dirdep) =
   (Sigma {a=base} posdep ** dirdep)
 
+-- A polynomial endofunctor in the product category `Type^n`.
+public export
+ProductPolyEndoFuncId : Nat -> Type
+ProductPolyEndoFuncId = SlicePolyEndoFuncId . Fin
+
 public export
 ParamPolyFuncToPolyFunc : {base : Type} -> ParamPolyFunc base -> PolyFunc
 ParamPolyFuncToPolyFunc {base} ppf =
