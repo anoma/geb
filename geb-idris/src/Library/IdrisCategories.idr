@@ -516,6 +516,10 @@ InitialNaturality _ v = void v
 ---- Products ----
 ------------------
 
+public export
+MkPairF : {0 a, b, c : Type} -> (a -> b) -> (a -> c) -> a -> (b, c)
+MkPairF f g x = (f x, g x)
+
 -- `ProductF` is an operator on endofunctors which takes two endofunctors
 -- to their product.  `ProductF` is therefore not itself an endofunctor; it
 -- is a higher-order functor.  (If `Poly[C]` is the category of polynomial

@@ -605,13 +605,13 @@ soCheckedTermPF = pfCata SOCheckedTermPFAlg
 public export
 SOHomObjAlg : SOAlg (SOMu -> SOMu)
 -- 0 -> x === 1
-SOHomObjAlg SOPos0 d obj = InSO1
+SOHomObjAlg SOPos0 d = const InSO1
 -- 1 -> x === x
-SOHomObjAlg SOPos1 d obj = obj
+SOHomObjAlg SOPos1 d = id
 -- (x + y) -> z === (x -> z) * (y -> z)
-SOHomObjAlg SOPosC d obj = InSOP (d SODirL obj) (d SODirR obj)
+SOHomObjAlg SOPosC d = Prelude.uncurry InSOP . MkPairF (d SODirL) (d SODirR)
 -- (x * y) -> z === x -> (y -> z)
-SOHomObjAlg SOPosP d obj = d SODir1 $ d SODir2 obj
+SOHomObjAlg SOPosP d = (.) (d SODir1) (d SODir2)
 
 public export
 soHomObj : SOMu -> SOMu -> SOMu
@@ -643,6 +643,40 @@ soCovarHomPF = PFHomArena . soInterp
 public export
 SOMuMorph : SOMu -> SOMu -> Type
 SOMuMorph x y = soInterp x -> soInterp y
+
+--------------------------------------------------------------------------
+---- Dependent-set definition of substitutive polynomial endofunctors ----
+--------------------------------------------------------------------------
+
+-- A dependent object in "Programmer's FinSet" (AKA `PFS`, the category whose
+-- types are terms of `SOMu` and whose morphisms are terms of `SOMuMorph`) --
+-- that -- is, a function from objects of `PFS` to objects of `PFS`.
+PFSDepObj : SOMu -> Type
+PFSDepObj x = soInterp x -> SOMu
+
+-- An arena with positions and directions drawn from "Programmer's FinSet"
+-- (AKA the category whose types are terms of `SOMu` and whose morphisms
+-- are terms of `SOMuMorph`).
+public export
+PFSEndoArena : Type
+PFSEndoArena = DPair SOMu PFSDepObj
+
+public export
+pfsPos : PFSEndoArena -> SOMu
+pfsPos = DPair.fst
+
+public export
+PFSPosTerm : PFSEndoArena -> Type
+PFSPosTerm = soInterp . pfsPos
+
+public export
+pfsDir : (ar : PFSEndoArena) -> PFSPosTerm ar -> SOMu
+pfsDir = DPair.snd
+
+-- Interpret an arena as a polynomial endofunctor on `PFS`.
+public export
+PFSEndoInterp : PFSEndoArena -> SOMu -> SOMu
+PFSEndoInterp ar = ?PFSEndoInterp_hole
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
