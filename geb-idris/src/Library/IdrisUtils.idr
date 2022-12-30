@@ -877,11 +877,47 @@ public export
 public export
 ListContains : {a : Type} -> List a -> a -> Type
 ListContains [] x = Void
-ListContains (x :: xs) x' = Either (x = x') (ListContains xs x)
+ListContains (x :: xs) x' = Either (x = x') (ListContains xs x')
+
+public export
+listContainsDec : {a : Type} -> DecEqPred a -> (l : List a) -> (x : a) ->
+  Dec (ListContains l x)
+listContainsDec deq [] x = No $ \v => void v
+listContainsDec deq (x :: xs) x' =
+  case deq x x' of
+    Yes Refl => Yes $ Left Refl
+    No neqx => case listContainsDec deq xs x' of
+      Yes c => Yes $ Right c
+      No nc => No $ \yes => case yes of
+        Left eqx => neqx eqx
+        Right c => nc c
+
+public export
+ListContainsTrue : {a : Type} -> DecEqPred a -> (l : List a) -> (x : a) -> Type
+ListContainsTrue deq l x = IsYesTrue $ listContainsDec deq l x
+
+public export
+ListContainsTrueUIP : {a : Type} ->
+  (deq : DecEqPred a) -> (l : List a) -> (x : a) ->
+  (c, c' : ListContainsTrue deq l x) ->
+  c = c'
+ListContainsTrueUIP deq l x c c' = uip
 
 public export
 ListMember : {a : Type} -> List a -> Type
 ListMember {a} l = Subset0 a (ListContains l)
+
+public export
+ListMemberDec : {a : Type} -> DecEqPred a -> List a -> Type
+ListMemberDec {a} deq l = Subset0 a (ListContainsTrue deq l)
+
+public export
+ListMemberDecInj : {a : Type} ->
+  (deq : DecEqPred a) -> (l : List a) -> (m, m' : ListMemberDec deq l) ->
+  fst0 m = fst0 m' -> m = m'
+ListMemberDecInj {a} deq l (Element0 x c) (Element0 x' c') eq =
+  case eq of
+    Refl => rewrite ListContainsTrueUIP deq l x c c' in Refl
 
 public export
 FinSubEncoding : Type -> Nat -> Type
