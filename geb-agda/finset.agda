@@ -283,25 +283,3 @@ module finset where
 
   ⊕F-func : (A B : FinSet) → ( (pr₁ (proj₁ (A ⊕F B))) ≡ ((pr₁ (proj₁ A)) + (pr₁ (proj₁ B))))
   ⊕F-func ((A , n) ,, pA) ((B , m) ,, pB) = refl _
-
-  density-Geb-FinSet : (A : FinSet) → Σ[ a ∶ ObjGEBCat ] ((pr₁ (proj₁ A)) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))
-  density-Geb-FinSet ((A , zero) ,, p) = Init ,, FinSet-skel-iso (((A , zero) ,, p))
-  density-Geb-FinSet ((A , succ n) ,, p) = dep-eval {lsuc lzero} {lsuc lzero}
-                                               (dep-eval {lsuc lzero} {lsuc lzero} (indℕ (λ k → (B : Type lzero) (q : (Fin (succ k) ≃ B)) →
-                                                                       Σ {_} {lzero} (ObjGEBCat)
-                                                                                ( λ a → ((pr₁ {_} {lzero} {_} {_} (proj₁ {_} {_} {_} {λ t → (Fin (pr₂ t)) ≃ pr₁ t}
-                                                                                                                         ((B , succ k) ,, q ))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))))
-                                                          (λ B q → Term ,, (FinSet-skel-iso (((B , one) ,, q))))
-                                                          (λ n' IHs B q → ((proj₁ {_} {_} {_} {λ a → ((pr₁ (proj₁ (Fin-as-obj-of-FinSet (succ n')))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))}
-                                                                                  (IHs (Fin (succ n')) (refl-to-equiv (refl _)))) ⊕G Term) ,,
-                                                                          is-equiv-trans (FinSet-skel-iso ((B , (succ (succ n'))) ,, q))
-                                                                          (is-equiv-trans
-                                                                                        (+-preserves-equivs (proj₂ {_} {_} {_} {λ a → ((pr₁ (proj₁ (Fin-as-obj-of-FinSet (succ n')))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))}
-                                                                                                                  (IHs (Fin (succ n')) (refl-to-equiv (refl _))))
-                                                                                                            (refl-to-equiv (refl 𝟙))) 
-                                                                           (equiv-symm (refl-to-equiv
-                                                                             (⊕F-func (Geb-into-FinSet-obj (proj₁ {_} {_} {_} {λ a → ((pr₁ (proj₁ (Fin-as-obj-of-FinSet (succ n')))) ≃ (pr₁ (proj₁ (Geb-into-FinSet-obj a))))}
-                                                                                                                  (IHs (Fin (succ n')) (refl-to-equiv (refl _))))) (Fin-as-obj-of-FinSet one))))))
-                                                          n)
-                                               A)
-                                            p
