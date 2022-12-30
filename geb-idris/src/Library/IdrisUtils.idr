@@ -933,7 +933,12 @@ fseList = snd
 
 public export
 FSEMember : {a : Type} -> {n : Nat} -> FinSubEncoding a n -> Type
-FSEMember enc = ListMember (fseList enc)
+FSEMember enc = ListMemberDec decEq (fseList enc)
+
+public export
+FSEMemberInj : {a : Type} -> {n : Nat} -> (fse : FinSubEncoding a n) ->
+  (x, x' : FSEMember fse) -> fst0 x = fst0 x' -> x = x'
+FSEMemberInj enc = ListMemberDecInj decEq (fseList enc)
 
 public export
 fseEq : {a : Type} -> {n : Nat} -> (enc : FinSubEncoding a n) ->
@@ -946,9 +951,11 @@ fseLt : {a : Type} -> {n : Nat} ->
 fseLt enc x x' = fdeLt (fseEnc enc) (fst0 x) (fst0 x')
 
 public export
-fseDecEq : {a : Type} -> {n : Nat} -> (enc : FinSubEncoding a n) ->
-  (x, x' : FSEMember enc) -> Dec (fst0 x = fst0 x')
-fseDecEq enc x x' = fdeDecEq (fseEnc enc) (fst0 x) (fst0 x')
+fseDecEq : {a : Type} -> {  n : Nat} -> (enc : FinSubEncoding a n) ->
+  DecEqPred (FSEMember enc)
+fseDecEq enc x x' = case fdeDecEq (fseEnc enc) (fst0 x) (fst0 x') of
+  Yes eq => Yes $ FSEMemberInj enc x x' eq
+  No neq => No $ \eq => case eq of Refl => neq Refl
 
 -- A list with a length stored together with it at run time.
 public export
