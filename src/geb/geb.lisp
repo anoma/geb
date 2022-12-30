@@ -195,11 +195,13 @@ Example:
          (error "object ~A need to be of a product type, however it is of ~A" f (dom f)))
         (t
          (let ((dom (dom f)))
-           (match-of substobj (mcadr dom)
-             (alias        (curry f))
-             (so0          (terminal (mcadr dom)))
-             (so1          (comp f (pair (mcadr dom)
-                                         (terminal (mcar dom)))))
-             ((coprod x y) (pair (curry (left (comp f (gather (mcar dom) x y))))
-                                 (curry (right (comp f (gather (mcar dom) x y))))))
-             (prod         (curry (curry (prod-left-assoc f)))))))))
+           (labels ((rec (fun fst snd)
+                      (match-of substobj snd
+                        (alias        (rec fun fst (obj snd)))
+                        (so0          (terminal snd))
+                        (so1          (comp fun (pair snd
+                                                      (terminal fst))))
+                        ((coprod x y) (pair (curry (left (comp fun (gather fst x y))))
+                                            (curry (right (comp fun (gather fst x y))))))
+                        (prod         (curry (curry (prod-left-assoc fun)))))))
+             (rec f (mcar dom) (mcadr dom)))))))
