@@ -7336,19 +7336,19 @@ subst0NewConstraintFunctorAlg = CoproductAlgL {l=Subst0TypeFCases}
 --------------------
 
 PredicateOn : Type -> Type
-PredicateOn type = type -> Type
+PredicateOn = SliceObj
 
-EmptyPred : (t : Type) -> PredicateOn t
-EmptyPred t el = Void
+InitialSliceObj : (t : Type) -> PredicateOn t
+InitialSliceObj t el = Void
 
 VoidPred : PredicateOn Void
 VoidPred v = void v
 
-FullPred : (t : Type) -> PredicateOn t
-FullPred t el = ()
+TerminalSliceObj : (t : Type) -> PredicateOn t
+TerminalSliceObj t el = ()
 
 UnitPred : PredicateOn Unit
-UnitPred = FullPred ()
+UnitPred = TerminalSliceObj ()
 
 ProductPred : PredicateOn a -> PredicateOn b -> PredicateOn (a, b)
 ProductPred p p' (el, el') = (p el, p' el')
@@ -7392,7 +7392,7 @@ data FreeMPredicate :
     FreeMPredicate f rel el
 
 PredicateMu : {t: Type} -> PredFunctor t -> PredicateOn t
-PredicateMu {t} f = FreeMPredicate f $ EmptyPred t
+PredicateMu {t} f = FreeMPredicate f $ InitialSliceObj t
 
 data PredicateTreeF : {t: Type} ->
     (f : PredFunctor t) -> (v : PredicateOn t) -> PredFunctor t where
@@ -7409,7 +7409,7 @@ data CofreeCMPredicate :
     CofreeCMPredicate f rel el
 
 PredicateNu : {t: Type} -> PredFunctor t -> PredicateOn t
-PredicateNu {t} f = CofreeCMPredicate f $ FullPred t
+PredicateNu {t} f = CofreeCMPredicate f $ TerminalSliceObj t
 
 -------------------
 ---- Relations ----
