@@ -638,7 +638,7 @@ SOCovarHomFuncAlg SOPosP d = pfCompositionArena (d SODir1) (d SODir2)
 
 public export
 soCovarHomPF : SOMu -> PolyFunc
-soCovarHomPF = pfCata SOCovarHomFuncAlg
+soCovarHomPF = PFHomArena . soInterp
 
 public export
 SOMuMorph : SOMu -> SOMu -> Type
