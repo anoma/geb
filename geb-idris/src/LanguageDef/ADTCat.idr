@@ -642,7 +642,7 @@ soCovarHomPF = PFHomArena . soInterp
 
 public export
 SOMuMorph : SOMu -> SOMu -> Type
-SOMuMorph x y = SOCheckedTerm x -> SOCheckedTerm y
+SOMuMorph x y = soInterp x -> soInterp y
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
