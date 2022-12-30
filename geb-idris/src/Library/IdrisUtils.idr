@@ -874,6 +874,46 @@ public export
 (a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => DecEq a where
   decEq = fdeDecEq {a} {n} enc
 
+public export
+ListContains : {a : Type} -> List a -> a -> Type
+ListContains [] x = Void
+ListContains (x :: xs) x' = Either (x = x') (ListContains xs x)
+
+public export
+ListMember : {a : Type} -> List a -> Type
+ListMember {a} l = Subset0 a (ListContains l)
+
+public export
+FinSubEncoding : Type -> Nat -> Type
+FinSubEncoding a size = (FinDecEncoding a size, List a)
+
+public export
+fseEnc : {a : Type} -> {n : Nat} -> FinSubEncoding a n -> FinDecEncoding a n
+fseEnc = fst
+
+public export
+fseList : {a : Type} -> {n : Nat} -> FinSubEncoding a n -> List a
+fseList = snd
+
+public export
+FSEMember : {a : Type} -> {n : Nat} -> FinSubEncoding a n -> Type
+FSEMember enc = ListMember (fseList enc)
+
+public export
+fseEq : {a : Type} -> {n : Nat} -> (enc : FinSubEncoding a n) ->
+  FSEMember enc -> FSEMember enc -> Bool
+fseEq enc x x' = fdeEq (fseEnc enc) (fst0 x) (fst0 x')
+
+public export
+fseLt : {a : Type} -> {n : Nat} ->
+  (enc : FinSubEncoding a n) -> FSEMember enc -> FSEMember enc -> Bool
+fseLt enc x x' = fdeLt (fseEnc enc) (fst0 x) (fst0 x')
+
+public export
+fseDecEq : {a : Type} -> {n : Nat} -> (enc : FinSubEncoding a n) ->
+  (x, x' : FSEMember enc) -> Dec (fst0 x = fst0 x')
+fseDecEq enc x x' = fdeDecEq (fseEnc enc) (fst0 x) (fst0 x')
+
 -- A list with a length stored together with it at run time.
 public export
 record LList (a : Type) (len : Nat) where

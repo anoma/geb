@@ -66,3 +66,11 @@ Ord GebAtom where
 public export
 DecEq GebAtom where
   decEq = fdeDecEq GebAtomEncoding
+
+public export
+GAList : Type
+GAList = List GebAtom
+
+public export
+GASubEncoding : (l : GAList) -> FinSubEncoding GebAtom GASize
+GASubEncoding l = (GebAtomEncoding, l)
