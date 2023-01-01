@@ -66,6 +66,14 @@ public export
 InTrue : BoolMu
 InTrue = InPFM True $ voidF _
 
+public export
+BoolShowAlg : BoolAlg String
+BoolShowAlg i _ = if i then "1" else "0"
+
+public export
+Show BoolMu where
+  show = boolCata BoolShowAlg
+
 ---------------------------
 ---------------------------
 ----- Pair as PolyFunc ----
@@ -98,14 +106,6 @@ PairAlg : Type -> Type
 PairAlg = PFAlg PairF
 
 public export
-PairMu : Type
-PairMu = PolyFuncMu PairF
-
-public export
-pairCata : {0 a : Type} -> PairAlg a -> PairMu -> a
-pairCata = pfCata {p=PairF}
-
-public export
 FreePairF : PolyFunc
 FreePairF = PolyFuncFreeM PairF
 
@@ -122,8 +122,8 @@ freePairCata : {a, b : Type} -> FreePairAlg a b -> FreePair a -> b
 freePairCata = pfFreeCata {p=PairF}
 
 public export
-InPair : PairMu -> PairMu -> PairMu
-InPair x y = InPFM () $ \d => if d then y else x
+PairShowAlg : PairAlg String
+PairShowAlg () d = "(" ++ d PAIRFST ++ "," ++ d PAIRSND ++ ")"
 
 --------------------------------
 --------------------------------
@@ -131,35 +131,39 @@ InPair x y = InPFM () $ \d => if d then y else x
 --------------------------------
 --------------------------------
 
--- We shall use `False` for `SexpB` and `True` for `Pair SexpB`.
+-- We shall use `False` for `atom` and `True` for `pair`.
 public export
-SexpBPosBase : Type
-SexpBPosBase = Bool
+SexpXPos : Type
+SexpXPos = Bool
+
+public export
+SEXPA : SexpXPos
+SEXPA = False
+
+public export
+SEXPP : SexpXPos
+SEXPP = True
+
+public export
+SexpXDir : SexpXPos -> Type
+SexpXDir False = Unit
+SexpXDir True = Unit
+
+public export
+data SexpBPosBase : Type where
+  SEXPB : SexpBPosBase -- a atom (which is a boolean)
+  SEXPBP : SexpBPosBase -- a pair of expressions
+  SEXPBX : SexpBPosBase -- a single expression (which may be an atom or a pair)
 
 public export
 SexpBPSlice : Type
-SexpBPSlice = BoolSlice
-
-public export
-SEXPB : SexpBPosBase
-SEXPB = False
-
-public export
-SEXPBP : SexpBPosBase
-SEXPBP = True
+SexpBPSlice = SliceObj SexpBPosBase
 
 public export
 SexpBPos : SexpBPosBase -> Type
-SexpBPos False = BoolPos
-SexpBPos True = PairPos
-
-public export
-SexpBAtomPos : Type
-SexpBAtomPos = SexpBPos False
-
-public export
-SexpBPairPos : Type
-SexpBPairPos = SexpBPos True
+SexpBPos SEXPB = BoolPos
+SexpBPos SEXPBP = PairPos
+SexpBPos SEXPBX = SexpXPos
 
 public export
 SexpBPosDP : Type
@@ -167,16 +171,24 @@ SexpBPosDP = DPair SexpBPosBase SexpBPos
 
 public export
 SexpBDir : SexpBPosDP -> Type
-SexpBDir (False ** i) = BoolDir i
-SexpBDir (True ** i) = PairDir i
+SexpBDir (SEXPB ** i) = BoolDir i
+SexpBDir (SEXPBP ** i) = PairDir i
+SexpBDir (SEXPBX ** i) = SexpXDir i
 
 public export
-SexpBEFId : SlicePolyEndoFuncId SexpBPosBase
-SexpBEFId = (SexpBPos ** SexpBDir)
+SexpBDirDP : Type
+SexpBDirDP = DPair SexpBPosDP SexpBDir
+
+public export
+sexpBAssign : SexpBDirDP -> SexpBPosBase
+sexpBAssign ((SEXPB ** _) ** d) = void d -- an atom has no sub-exps
+sexpBAssign ((SEXPBP ** ()) ** _) = SEXPBX -- each part of a pair is an exp
+sexpBAssign ((SEXPBX ** False) ** ()) = SEXPB -- an atom is a boolean
+sexpBAssign ((SEXPBX ** True) ** ()) = SEXPBP -- a pair is a pair of exps
 
 public export
 SexpBF : SlicePolyFunc SexpBPosBase SexpBPosBase
-SexpBF = SlicePolyEndoFuncFromId SexpBEFId
+SexpBF = (SexpBPos ** SexpBDir ** sexpBAssign)
 
 -- An algebra for a mutual recursion which returns potentially-different
 -- types for an S-expression and a pair of S-expressions.
@@ -185,16 +197,73 @@ SexpBAlg : SexpBPSlice -> Type
 SexpBAlg = SPFAlg SexpBF
 
 public export
-SexpBMu : SexpBPosBase -> Type
-SexpBMu = SPFMu SexpBF
+SexpBMuSlice : SexpBPosBase -> Type
+SexpBMuSlice = SPFMu SexpBF
+
+public export
+SexpBMuDP : Type
+SexpBMuDP = DPair SexpBPosBase SexpBMuSlice
+
+public export
+SexpBMuB : Type
+SexpBMuB = SexpBMuSlice SEXPB
+
+public export
+SexpBMuP : Type
+SexpBMuP = SexpBMuSlice SEXPBP
+
+public export
+SexpBMuX : Type
+SexpBMuX = SexpBMuSlice SEXPBX
 
 public export
 SexpBSliceM : SexpBPSlice -> Type
-SexpBSliceM = SliceMorphism {a=SexpBPosBase} SexpBMu
+SexpBSliceM = SliceMorphism {a=SexpBPosBase} SexpBMuSlice
 
 public export
 sexpBCata : {sa : SexpBPSlice} -> SexpBAlg sa -> SexpBSliceM sa
 sexpBCata = spfCata {spf=SexpBF}
+
+public export
+SexpBShowAlg : SexpBAlg (const String)
+SexpBShowAlg SEXPB (i ** d) = BoolShowAlg i d
+SexpBShowAlg SEXPBP (i ** d) = PairShowAlg i d
+SexpBShowAlg SEXPBX (False ** d) = d ()
+SexpBShowAlg SEXPBX (True ** d) = d ()
+
+public export
+sexpBShow : (i : SexpBPosBase) -> SexpBMuSlice i -> String
+sexpBShow = sexpBCata SexpBShowAlg
+
+public export
+InSF : SexpBMuB
+InSF = InSPFM (SEXPB ** False) $ \d => void d
+
+public export
+InST : SexpBMuB
+InST = InSPFM (SEXPB ** True) $ \d => void d
+
+public export
+InSFalse : SexpBMuX
+InSFalse = InSPFM (SEXPBX ** SEXPA) $ \() => InSF
+
+public export
+InSTrue : SexpBMuX
+InSTrue = InSPFM (SEXPBX ** SEXPA) $ \() => InST
+
+public export
+InSP : SexpBMuX -> SexpBMuX -> SexpBMuP
+InSP x y = InSPFM (SEXPBP ** ()) $ \d => case d of
+  False => x
+  True => y
+
+public export
+InSPX : SexpBMuP -> SexpBMuX
+InSPX p = InSPFM (SEXPBX ** SEXPP) $ \() => p
+
+public export
+InSPair : SexpBMuX -> SexpBMuX -> SexpBMuX
+InSPair = InSPX .* InSP
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
