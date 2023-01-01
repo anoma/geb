@@ -54,6 +54,14 @@ public export
 freeBoolCata : {a, b : Type} -> FreeBoolAlg a b -> FreeBool a -> b
 freeBoolCata = pfFreeCata {p=BoolF}
 
+public export
+InFalse : BoolMu
+InFalse = InPFM False $ voidF _
+
+public export
+InTrue : BoolMu
+InTrue = InPFM True $ voidF _
+
 ---------------------------
 ---------------------------
 ----- Pair as PolyFunc ----
@@ -68,6 +76,14 @@ PairPos = Unit
 public export
 PairDir : PairPos -> Type
 PairDir () = Bool
+
+public export
+PAIRFST : PairDir ()
+PAIRFST = False
+
+public export
+PAIRSND : PairDir ()
+PAIRSND = True
 
 public export
 PairF : PolyFunc
@@ -101,6 +117,10 @@ public export
 freePairCata : {a, b : Type} -> FreePairAlg a b -> FreePair a -> b
 freePairCata = pfFreeCata {p=PairF}
 
+public export
+InPair : PairMu -> PairMu -> PairMu
+InPair x y = InPFM () $ \d => if d then y else x
+
 --------------------------------
 --------------------------------
 ----- SExp Bool as PolyFunc ----
@@ -111,6 +131,14 @@ freePairCata = pfFreeCata {p=PairF}
 public export
 SexpBPosBase : Type
 SexpBPosBase = Bool
+
+public export
+SEXPB : SexpBPosBase
+SEXPB = False
+
+public export
+SEXPBP : SexpBPosBase
+SEXPBP = True
 
 public export
 SexpBPos : SexpBPosBase -> Type
