@@ -55,6 +55,10 @@ freeBoolCata : {a, b : Type} -> FreeBoolAlg a b -> FreeBool a -> b
 freeBoolCata = pfFreeCata {p=BoolF}
 
 public export
+BoolSlice : Type
+BoolSlice = SliceObj Bool
+
+public export
 InFalse : BoolMu
 InFalse = InPFM False $ voidF _
 
@@ -133,6 +137,10 @@ SexpBPosBase : Type
 SexpBPosBase = Bool
 
 public export
+SexpBPSlice : Type
+SexpBPSlice = BoolSlice
+
+public export
 SEXPB : SexpBPosBase
 SEXPB = False
 
@@ -159,40 +167,33 @@ SexpBPosDP = DPair SexpBPosBase SexpBPos
 
 public export
 SexpBDir : SexpBPosDP -> Type
-SexpBDir (False ** d) = BoolDir d
-SexpBDir (True ** d) = PairDir d
+SexpBDir = ?SExpBDirDep_hole
 
 public export
-SexpBF : PolyFunc
-SexpBF = (SexpBPosDP ** SexpBDir)
+SexpBEFId : SlicePolyEndoFuncId SexpBPosBase
+SexpBEFId = (SexpBPos ** SexpBDir)
 
 public export
-SexpBAlg : Type -> Type
-SexpBAlg = PFAlg SexpBF
+SexpBF : SlicePolyFunc SexpBPosBase SexpBPosBase
+SexpBF = SlicePolyEndoFuncFromId SexpBEFId
+
+-- An algebra for a mutual recursion which returns potentially-different
+-- types for an S-expression and a pair of S-expressions.
+public export
+SexpBAlg : SexpBPSlice -> Type
+SexpBAlg = SPFAlg SexpBF
 
 public export
-SexpBMu : Type
-SexpBMu = PolyFuncMu SexpBF
+SexpBMu : SexpBPosBase -> Type
+SexpBMu = SPFMu SexpBF
 
 public export
-sexpBCata : {0 a : Type} -> SexpBAlg a -> SexpBMu -> a
-sexpBCata = pfCata {p=SexpBF}
+SexpBSliceM : SexpBPSlice -> Type
+SexpBSliceM = SliceMorphism {a=SexpBPosBase} SexpBMu
 
 public export
-FreeSexpBF : PolyFunc
-FreeSexpBF = PolyFuncFreeM SexpBF
-
-public export
-FreeSexpB : Type -> Type
-FreeSexpB = InterpPolyFuncFreeM SexpBF
-
-public export
-FreeSexpBAlg : Type -> Type -> Type
-FreeSexpBAlg = PFTranslateAlg SexpBF
-
-public export
-freeSexpBCata : {a, b : Type} -> FreeSexpBAlg a b -> FreeSexpB a -> b
-freeSexpBCata = pfFreeCata {p=SexpBF}
+sexpBCata : {sa : SexpBPSlice} -> SexpBAlg sa -> SexpBSliceM sa
+sexpBCata = spfCata {spf=SexpBF}
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
