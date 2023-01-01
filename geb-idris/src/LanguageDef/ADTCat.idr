@@ -335,6 +335,25 @@ public export
 soProductHomCata : {a : Type} -> SOProductHomAlg a -> SOMu -> SOMu -> a
 soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
 
+public export
+record SOHomAlg where
+  constructor MkSOHomAlg
+  soHomVoid : SOMu -> SOMu
+  soHomUnit : SOMu -> SOMu
+  soHomCoproduct : (SOMu -> SOMu) -> (SOMu -> SOMu) -> SOMu -> SOMu
+
+public export
+SOHomAlgToFAlg : SOHomAlg -> SOAlg (SOMu -> SOMu)
+SOHomAlgToFAlg alg SOPos0 d = soHomVoid alg
+SOHomAlgToFAlg alg SOPos1 d = soHomUnit alg
+SOHomAlgToFAlg alg SOPosC d = soHomCoproduct alg (d SODirL) (d SODirR)
+-- (x * y) -> z === x -> (y -> z)
+SOHomAlgToFAlg alg SOPosP d = d SODir1 . d SODir2
+
+public export
+soHomObjCata : SOHomAlg -> SOMu -> SOMu -> SOMu
+soHomObjCata alg = soCata (SOHomAlgToFAlg alg)
+
 -------------------
 ---- Utilities ----
 -------------------
@@ -603,19 +622,18 @@ soCheckedTermPF = pfCata SOCheckedTermPFAlg
 ---------------------------
 
 public export
-SOHomObjAlg : SOAlg (SOMu -> SOMu)
--- 0 -> x === 1
-SOHomObjAlg SOPos0 d = const InSO1
--- 1 -> x === x
-SOHomObjAlg SOPos1 d = id
--- (x + y) -> z === (x -> z) * (y -> z)
-SOHomObjAlg SOPosC d = Prelude.uncurry InSOP . MkPairF (d SODirL) (d SODirR)
--- (x * y) -> z === x -> (y -> z)
-SOHomObjAlg SOPosP d = (.) (d SODir1) (d SODir2)
+SOHomObjAlg : SOHomAlg {- SOAlg (SOMu -> SOMu) -}
+SOHomObjAlg = MkSOHomAlg
+  -- 0 -> x === 1
+  (const InSO1)
+  -- 1 -> x === x
+  id
+  -- (x + y) -> z === (x -> z) * (y -> z)
+  (biapp InSOP)
 
 public export
 soHomObj : SOMu -> SOMu -> SOMu
-soHomObj = soCata SOHomObjAlg
+soHomObj = soHomObjCata SOHomObjAlg
 
 public export
 soExpObj : SOMu -> SOMu -> SOMu

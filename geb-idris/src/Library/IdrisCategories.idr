@@ -517,8 +517,12 @@ InitialNaturality _ v = void v
 ------------------
 
 public export
+biapp : {0 a, b, c, d : Type} -> (b -> c -> d) -> (a -> b) -> (a -> c) -> a -> d
+biapp h f g x = h (f x) (g x)
+
+public export
 MkPairF : {0 a, b, c : Type} -> (a -> b) -> (a -> c) -> a -> (b, c)
-MkPairF f g x = (f x, g x)
+MkPairF = biapp MkPair
 
 -- `ProductF` is an operator on endofunctors which takes two endofunctors
 -- to their product.  `ProductF` is therefore not itself an endofunctor; it
