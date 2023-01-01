@@ -167,7 +167,8 @@ SexpBPosDP = DPair SexpBPosBase SexpBPos
 
 public export
 SexpBDir : SexpBPosDP -> Type
-SexpBDir = ?SExpBDirDep_hole
+SexpBDir (False ** i) = BoolDir i
+SexpBDir (True ** i) = PairDir i
 
 public export
 SexpBEFId : SlicePolyEndoFuncId SexpBPosBase
