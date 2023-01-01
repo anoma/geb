@@ -336,14 +336,14 @@ soProductHomCata : {a : Type} -> SOProductHomAlg a -> SOMu -> SOMu -> a
 soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
 
 public export
-record SOHomAlg where
+record SOHomAlg (0 a : Type) where
   constructor MkSOHomAlg
-  soHomVoid : SOMu -> SOMu
-  soHomUnit : SOMu -> SOMu
-  soHomCoproduct : (SOMu -> SOMu) -> (SOMu -> SOMu) -> SOMu -> SOMu
+  soHomVoid : a -> a
+  soHomUnit : a -> a
+  soHomCoproduct : (a -> a) -> (a -> a) -> a -> a
 
 public export
-SOHomAlgToFAlg : SOHomAlg -> SOAlg (SOMu -> SOMu)
+SOHomAlgToFAlg : {0 a : Type} -> SOHomAlg a -> SOAlg (a -> a)
 SOHomAlgToFAlg alg SOPos0 d = soHomVoid alg
 SOHomAlgToFAlg alg SOPos1 d = soHomUnit alg
 SOHomAlgToFAlg alg SOPosC d = soHomCoproduct alg (d SODirL) (d SODirR)
@@ -351,7 +351,7 @@ SOHomAlgToFAlg alg SOPosC d = soHomCoproduct alg (d SODirL) (d SODirR)
 SOHomAlgToFAlg alg SOPosP d = d SODir1 . d SODir2
 
 public export
-soHomObjCata : SOHomAlg -> SOMu -> SOMu -> SOMu
+soHomObjCata : {0 a : Type} -> SOHomAlg a -> SOMu -> a -> a
 soHomObjCata alg = soCata (SOHomAlgToFAlg alg)
 
 -------------------
@@ -622,7 +622,7 @@ soCheckedTermPF = pfCata SOCheckedTermPFAlg
 ---------------------------
 
 public export
-SOHomObjAlg : SOHomAlg {- SOAlg (SOMu -> SOMu) -}
+SOHomObjAlg : SOHomAlg SOMu
 SOHomObjAlg = MkSOHomAlg
   -- 0 -> x === 1
   (const InSO1)
