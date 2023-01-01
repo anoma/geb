@@ -8,6 +8,164 @@ import public LanguageDef.PolyProfunctor
 
 %default total
 
+---------------------------
+---------------------------
+----- Bool as PolyFunc ----
+---------------------------
+---------------------------
+
+public export
+BoolPos : Type
+BoolPos = Bool
+
+public export
+BoolDir : BoolPos -> Type
+BoolDir = const Void
+
+public export
+BoolF : PolyFunc
+BoolF = (BoolPos ** BoolDir)
+
+public export
+BoolAlg : Type -> Type
+BoolAlg = PFAlg BoolF
+
+public export
+BoolMu : Type
+BoolMu = PolyFuncMu BoolF
+
+public export
+boolCata : {0 a : Type} -> BoolAlg a -> BoolMu -> a
+boolCata = pfCata {p=BoolF}
+
+public export
+FreeBoolF : PolyFunc
+FreeBoolF = PolyFuncFreeM BoolF
+
+public export
+FreeBool : Type -> Type
+FreeBool = InterpPolyFuncFreeM BoolF
+
+public export
+FreeBoolAlg : Type -> Type -> Type
+FreeBoolAlg = PFTranslateAlg BoolF
+
+public export
+freeBoolCata : {a, b : Type} -> FreeBoolAlg a b -> FreeBool a -> b
+freeBoolCata = pfFreeCata {p=BoolF}
+
+---------------------------
+---------------------------
+----- Pair as PolyFunc ----
+---------------------------
+---------------------------
+
+public export
+PairPos : Type
+PairPos = Unit
+
+-- We shall somewhat arbitrarily use `False` for `fst` and `True` for `snd`.
+public export
+PairDir : PairPos -> Type
+PairDir () = Bool
+
+public export
+PairF : PolyFunc
+PairF = (PairPos ** PairDir)
+
+public export
+PairAlg : Type -> Type
+PairAlg = PFAlg PairF
+
+public export
+PairMu : Type
+PairMu = PolyFuncMu PairF
+
+public export
+pairCata : {0 a : Type} -> PairAlg a -> PairMu -> a
+pairCata = pfCata {p=PairF}
+
+public export
+FreePairF : PolyFunc
+FreePairF = PolyFuncFreeM PairF
+
+public export
+FreePair : Type -> Type
+FreePair = InterpPolyFuncFreeM PairF
+
+public export
+FreePairAlg : Type -> Type -> Type
+FreePairAlg = PFTranslateAlg PairF
+
+public export
+freePairCata : {a, b : Type} -> FreePairAlg a b -> FreePair a -> b
+freePairCata = pfFreeCata {p=PairF}
+
+--------------------------------
+--------------------------------
+----- SExp Bool as PolyFunc ----
+--------------------------------
+--------------------------------
+
+-- We shall use `False` for `SexpB` and `True` for `Pair SexpB`.
+public export
+SexpBPosBase : Type
+SexpBPosBase = Bool
+
+public export
+SexpBPos : SexpBPosBase -> Type
+SexpBPos False = BoolPos
+SexpBPos True = PairPos
+
+public export
+SexpBAtomPos : Type
+SexpBAtomPos = SexpBPos False
+
+public export
+SexpBPairPos : Type
+SexpBPairPos = SexpBPos True
+
+public export
+SexpBPosDP : Type
+SexpBPosDP = DPair SexpBPosBase SexpBPos
+
+public export
+SexpBDir : SexpBPosDP -> Type
+SexpBDir (False ** d) = BoolDir d
+SexpBDir (True ** d) = PairDir d
+
+public export
+SexpBF : PolyFunc
+SexpBF = (SexpBPosDP ** SexpBDir)
+
+public export
+SexpBAlg : Type -> Type
+SexpBAlg = PFAlg SexpBF
+
+public export
+SexpBMu : Type
+SexpBMu = PolyFuncMu SexpBF
+
+public export
+sexpBCata : {0 a : Type} -> SexpBAlg a -> SexpBMu -> a
+sexpBCata = pfCata {p=SexpBF}
+
+public export
+FreeSexpBF : PolyFunc
+FreeSexpBF = PolyFuncFreeM SexpBF
+
+public export
+FreeSexpB : Type -> Type
+FreeSexpB = InterpPolyFuncFreeM SexpBF
+
+public export
+FreeSexpBAlg : Type -> Type -> Type
+FreeSexpBAlg = PFTranslateAlg SexpBF
+
+public export
+freeSexpBCata : {a, b : Type} -> FreeSexpBAlg a b -> FreeSexpB a -> b
+freeSexpBCata = pfFreeCata {p=SexpBF}
+
 ----------------------------------------------------------------
 ----------------------------------------------------------------
 ---- Explicitly-recursive Idris ADT definition of term type ----
