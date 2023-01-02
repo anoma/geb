@@ -419,12 +419,8 @@ soProductHomCata : {a : Type} -> SOProductHomAlg a -> SOMu -> SOMu -> a
 soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
 
 public export
-SOProdCompAlg : Type -> Type
-SOProdCompAlg = BinTreeAlg BoolF
-
-public export
 SOHomAlg : Type -> Type
-SOHomAlg a = SOProdCompAlg (a -> a)
+SOHomAlg a = BinTreeAlg BoolF (a -> a)
 
 public export
 SOHomAlgToFAlg : {0 a : Type} -> SOHomAlg a -> SOAlg (a -> a)
