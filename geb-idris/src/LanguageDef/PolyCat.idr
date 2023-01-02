@@ -2603,6 +2603,25 @@ SPFToPrime : {parambase, posbase : Type} ->
 SPFToPrime (posdep ** dirdep ** assign) =
   (posdep ** \i => (dirdep i ** \d => assign (i ** d)))
 
+-- Another equivalent way of specifying a `SlicePolyFunc`.
+public export
+SlicePolyFunc'' : Type -> Type -> Type
+SlicePolyFunc'' parambase posbase =
+  (posdep : SliceObj posbase ** Sigma posdep -> SliceObj parambase)
+
+public export
+SPFFromPrimes : {parambase, posbase : Type} ->
+  SlicePolyFunc'' parambase posbase -> SlicePolyFunc parambase posbase
+SPFFromPrimes (posdep ** dirdep) =
+  (posdep ** Sigma {a=parambase} . dirdep ** \i => DPair.fst $ DPair.snd i)
+
+public export
+SPFToPrimes : {parambase, posbase : Type} ->
+  (spf : SlicePolyFunc parambase posbase) ->
+  SlicePolyFunc'' (SliceObj parambase) (Sigma (fst spf))
+SPFToPrimes (posdep ** dirdep ** assign) =
+  (dirdep ** \ipos, paramslice => paramslice $ assign ipos)
+
 public export
 SlicePolyEndoFunc : Type -> Type
 SlicePolyEndoFunc base = SlicePolyFunc base base
@@ -2729,6 +2748,31 @@ InterpSPFMap : {a, b : Type} -> (spf : SlicePolyFunc a b) ->
 InterpSPFMap {a} {b} spf {sa} {sa'} =
   PredDepPolyFMap
     {parambase=a} {posbase=b} (spfPos spf) (spfDir spf) (spfAssign spf) sa sa'
+
+------------------------------
+---- Slices over PolyFunc ----
+------------------------------
+
+-- A way of specifying a `SlicePolyFunc` in terms of `PolyFunc`.
+public export
+PolySliceFunctor : PolyFunc -> PolyFunc -> Type
+PolySliceFunctor parambase posbase =
+  (depObj : SliceObj (PolyFuncMu posbase) **
+   Sigma depObj -> PFAlg parambase PolyFunc)
+
+public export
+PolySliceToPrimes : {parambase, posbase : PolyFunc} ->
+  PolySliceFunctor parambase posbase ->
+  SlicePolyFunc'' (PolyFuncMu parambase) (PolyFuncMu posbase)
+PolySliceToPrimes {parambase} {posbase} (depObj ** depDirAlg) =
+  (depObj **
+   \pos, param => PolyFuncMu $ pfCata {p=parambase} (depDirAlg pos) param)
+
+public export
+PolySliceToSPF : {parambase, posbase : PolyFunc} ->
+  PolySliceFunctor parambase posbase ->
+  SlicePolyFunc (PolyFuncMu parambase) (PolyFuncMu posbase)
+PolySliceToSPF func = SPFFromPrimes (PolySliceToPrimes func)
 
 -----------------------------------------------------------------------
 ---- Natural transformations on dependent polynomial endofunctors ----
