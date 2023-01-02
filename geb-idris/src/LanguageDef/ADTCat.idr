@@ -151,21 +151,21 @@ SexpXDir True = Unit
 
 -- We shall use 'False` for `pair` and `True` for `expression`.
 public export
-SexpCompoundPos : Type
-SexpCompoundPos = Bool
+SexpCompoundPosBase : Type
+SexpCompoundPosBase = Bool
 
 public export
-SEXPCP : SexpCompoundPos
+SEXPCP : SexpCompoundPosBase
 SEXPCP = False
 
 public export
-SEXPCX : SexpCompoundPos
+SEXPCX : SexpCompoundPosBase
 SEXPCX = True
 
 -- `Left ()` is an atom; `Right` is compound (a pair or an expression).
 public export
 SexpPosBase : Type
-SexpPosBase = Either () SexpCompoundPos
+SexpPosBase = Either () SexpCompoundPosBase
 
 public export
 SexpPSlice : Type
