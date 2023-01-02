@@ -266,6 +266,10 @@ public export
 InSPair : {a : PolyFunc} -> SexpMuX a -> SexpMuX a -> SexpMuX a
 InSPair = InSPX .* InSP
 
+----------------------------------
+---- Some specific Sexp types ----
+----------------------------------
+
 public export
 SexpB : Type
 SexpB = SexpMuX BoolF
