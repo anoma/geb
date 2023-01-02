@@ -125,11 +125,11 @@ public export
 PairShowAlg : PairAlg String
 PairShowAlg () d = "(" ++ d PAIRFST ++ "," ++ d PAIRSND ++ ")"
 
---------------------------------
---------------------------------
------ SExp Bool as PolyFunc ----
---------------------------------
---------------------------------
+---------------------------
+---------------------------
+----- SExp as PolyFunc ----
+---------------------------
+---------------------------
 
 -- We shall use `False` for `atom` and `True` for `pair`.
 public export
@@ -150,108 +150,108 @@ SexpXDir False = Unit
 SexpXDir True = Unit
 
 public export
-data SexpBPosBase : Type where
-  SEXPB : SexpBPosBase -- a atom (which is a boolean)
-  SEXPBP : SexpBPosBase -- a pair of expressions
-  SEXPBX : SexpBPosBase -- a single expression (which may be an atom or a pair)
+data SexpPosBase : Type where
+  SEXPB : SexpPosBase -- a atom (which is a boolean)
+  SEXPBP : SexpPosBase -- a pair of expressions
+  SEXPBX : SexpPosBase -- a single expression (which may be an atom or a pair)
 
 public export
-SexpBPSlice : Type
-SexpBPSlice = SliceObj SexpBPosBase
+SexpPSlice : Type
+SexpPSlice = SliceObj SexpPosBase
 
 public export
-SexpBPos : SexpBPosBase -> Type
-SexpBPos SEXPB = BoolPos
-SexpBPos SEXPBP = PairPos
-SexpBPos SEXPBX = SexpXPos
+SexpPos : SexpPosBase -> Type
+SexpPos SEXPB = BoolPos
+SexpPos SEXPBP = PairPos
+SexpPos SEXPBX = SexpXPos
 
 public export
-SexpBDir' : Sigma SexpBPos -> (dirdep : Type ** dirdep -> SexpBPosBase)
+SexpDir' : Sigma SexpPos -> (dirdep : Type ** dirdep -> SexpPosBase)
 -- An atom has no sub-exps.
-SexpBDir' (SEXPB ** i) = (BoolDir i ** voidF _)
+SexpDir' (SEXPB ** i) = (BoolDir i ** voidF _)
 -- Both parts of a pair are exps.
-SexpBDir' (SEXPBP ** ()) = (PairDir () ** const SEXPBX)
+SexpDir' (SEXPBP ** ()) = (PairDir () ** const SEXPBX)
 -- A pair is a pair of exps; an atom is a boolean.
-SexpBDir' (SEXPBX ** i) =
+SexpDir' (SEXPBX ** i) =
   (SexpXDir i ** if i then const SEXPBP else const SEXPB)
 
 public export
-SexpBF' : SlicePolyFunc' SexpBPosBase SexpBPosBase
-SexpBF' = (SexpBPos ** SexpBDir')
+SexpF' : SlicePolyFunc' SexpPosBase SexpPosBase
+SexpF' = (SexpPos ** SexpDir')
 
 public export
-SexpBF : SlicePolyFunc SexpBPosBase SexpBPosBase
-SexpBF = SPFFromPrime SexpBF'
+SexpF : SlicePolyFunc SexpPosBase SexpPosBase
+SexpF = SPFFromPrime SexpF'
 
 -- An algebra for a mutual recursion which returns potentially-different
 -- types for an S-expression and a pair of S-expressions.
 public export
-SexpBAlg : SexpBPSlice -> Type
-SexpBAlg = SPFAlg SexpBF
+SexpAlg : SexpPSlice -> Type
+SexpAlg = SPFAlg SexpF
 
 public export
-SexpBMuSlice : SexpBPosBase -> Type
-SexpBMuSlice = SPFMu SexpBF
+SexpMuSlice : SexpPosBase -> Type
+SexpMuSlice = SPFMu SexpF
 
 public export
-SexpBMuB : Type
-SexpBMuB = SexpBMuSlice SEXPB
+SexpMuB : Type
+SexpMuB = SexpMuSlice SEXPB
 
 public export
-SexpBMuP : Type
-SexpBMuP = SexpBMuSlice SEXPBP
+SexpMuP : Type
+SexpMuP = SexpMuSlice SEXPBP
 
 public export
-SexpBMuX : Type
-SexpBMuX = SexpBMuSlice SEXPBX
+SexpMuX : Type
+SexpMuX = SexpMuSlice SEXPBX
 
 public export
-SexpBSliceM : SexpBPSlice -> Type
-SexpBSliceM = SliceMorphism {a=SexpBPosBase} SexpBMuSlice
+SexpSliceM : SexpPSlice -> Type
+SexpSliceM = SliceMorphism {a=SexpPosBase} SexpMuSlice
 
 public export
-sexpBCata : {sa : SexpBPSlice} -> SexpBAlg sa -> SexpBSliceM sa
-sexpBCata = spfCata {spf=SexpBF}
+sexpBCata : {sa : SexpPSlice} -> SexpAlg sa -> SexpSliceM sa
+sexpBCata = spfCata {spf=SexpF}
 
 public export
-SexpBShowAlg : SexpBAlg (const String)
-SexpBShowAlg SEXPB (i ** d) = BoolShowAlg i d
-SexpBShowAlg SEXPBP (() ** d) = PairShowAlg () d
-SexpBShowAlg SEXPBX (False ** d) = d ()
-SexpBShowAlg SEXPBX (True ** d) = d ()
+SexpShowAlg : SexpAlg (const String)
+SexpShowAlg SEXPB (i ** d) = BoolShowAlg i d
+SexpShowAlg SEXPBP (() ** d) = PairShowAlg () d
+SexpShowAlg SEXPBX (False ** d) = d ()
+SexpShowAlg SEXPBX (True ** d) = d ()
 
 public export
-sexpBShow : (i : SexpBPosBase) -> SexpBMuSlice i -> String
-sexpBShow = sexpBCata SexpBShowAlg
+sexpBShow : (i : SexpPosBase) -> SexpMuSlice i -> String
+sexpBShow = sexpBCata SexpShowAlg
 
 public export
-InSF : SexpBMuB
+InSF : SexpMuB
 InSF = InSPFM (SEXPB ** False) $ \d => void d
 
 public export
-InST : SexpBMuB
+InST : SexpMuB
 InST = InSPFM (SEXPB ** True) $ \d => void d
 
 public export
-InSFalse : SexpBMuX
+InSFalse : SexpMuX
 InSFalse = InSPFM (SEXPBX ** SEXPA) $ \() => InSF
 
 public export
-InSTrue : SexpBMuX
+InSTrue : SexpMuX
 InSTrue = InSPFM (SEXPBX ** SEXPA) $ \() => InST
 
 public export
-InSP : SexpBMuX -> SexpBMuX -> SexpBMuP
+InSP : SexpMuX -> SexpMuX -> SexpMuP
 InSP x y = InSPFM (SEXPBP ** ()) $ \d => case d of
   False => x
   True => y
 
 public export
-InSPX : SexpBMuP -> SexpBMuX
+InSPX : SexpMuP -> SexpMuX
 InSPX p = InSPFM (SEXPBX ** SEXPP) $ \() => p
 
 public export
-InSPair : SexpBMuX -> SexpBMuX -> SexpBMuX
+InSPair : SexpMuX -> SexpMuX -> SexpMuX
 InSPair = InSPX .* InSP
 
 ----------------------------------------------------------------
