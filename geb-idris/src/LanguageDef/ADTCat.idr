@@ -169,6 +169,14 @@ InBTN {a=(pos ** dir)} x y = InPFM (Right ()) $ \i => case i of
   False => x
   True => y
 
+-----------------------------------------
+---- Some specific binary tree types ----
+-----------------------------------------
+
+public export
+BinTreeB : Type
+BinTreeB = BinTreeMu BoolF
+
 ---------------------------
 ---------------------------
 ----- SExp as PolyFunc ----
