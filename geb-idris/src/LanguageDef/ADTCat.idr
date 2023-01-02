@@ -55,10 +55,6 @@ freeBoolCata : {a, b : Type} -> FreeBoolAlg a b -> FreeBool a -> b
 freeBoolCata = pfFreeCata {p=BoolF}
 
 public export
-BoolSlice : Type
-BoolSlice = SliceObj Bool
-
-public export
 InFalse : BoolMu
 InFalse = InPFM False $ voidF _
 
@@ -73,6 +69,10 @@ BoolShowAlg i _ = if i then "1" else "0"
 public export
 Show BoolMu where
   show = boolCata BoolShowAlg
+
+public export
+BoolSlice : Type
+BoolSlice = SliceObj Bool
 
 ---------------------------
 ---------------------------
