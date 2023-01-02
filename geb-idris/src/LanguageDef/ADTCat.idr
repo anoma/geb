@@ -149,11 +149,23 @@ SexpXDir : SexpXPos -> Type
 SexpXDir False = Unit
 SexpXDir True = Unit
 
+-- We shall use 'False` for `pair` and `True` for `expression`.
+public export
+SexpPolyPos : Type
+SexpPolyPos = Bool
+
+public export
+SEXPPP : SexpPolyPos
+SEXPPP = False
+
+public export
+SEXPPX : SexpPolyPos
+SEXPPX = True
+
 public export
 data SexpPosBase : Type where
   SEXPA : SexpPosBase -- an atom
-  SEXPP : SexpPosBase -- a pair of expressions
-  SEXPX : SexpPosBase -- a single expression (which may be an atom or a pair)
+  SEXPP : SexpPolyPos -> SexpPosBase
 
 public export
 SexpPSlice : Type
@@ -162,8 +174,8 @@ SexpPSlice = SliceObj SexpPosBase
 public export
 SexpPos : PolyFunc -> SexpPosBase -> Type
 SexpPos a SEXPA = pfPos a
-SexpPos a SEXPP = PairPos
-SexpPos a SEXPX = SexpXPos
+SexpPos a (SEXPP False) = PairPos
+SexpPos a (SEXPP True) = SexpXPos
 
 public export
 SexpDir : {a : PolyFunc} ->
@@ -172,10 +184,10 @@ SexpDir : {a : PolyFunc} ->
 -- contain any further S-expressions.
 SexpDir {a} (SEXPA ** i) = (pfDir {p=a} i ** const SEXPA)
 -- Both parts of a pair are exps.
-SexpDir {a} (SEXPP ** ()) = (PairDir () ** const SEXPX)
+SexpDir {a} ((SEXPP False) ** ()) = (PairDir () ** const $ SEXPP True)
 -- An expression's dependent position indicates whether it's a pair or an atom.
-SexpDir {a} (SEXPX ** i) =
-  (SexpXDir i ** if i then const SEXPP else const SEXPA)
+SexpDir {a} ((SEXPP True) ** i) =
+  (SexpXDir i ** if i then const (SEXPP False) else const SEXPA)
 
 public export
 SexpF' : PolyFunc -> SlicePolyFunc' SexpPosBase SexpPosBase
@@ -201,11 +213,11 @@ SexpMuA a = SexpMuSlice a SEXPA
 
 public export
 SexpMuP : PolyFunc -> Type
-SexpMuP a = SexpMuSlice a SEXPP
+SexpMuP a = SexpMuSlice a (SEXPP False)
 
 public export
 SexpMuX : PolyFunc -> Type
-SexpMuX a = SexpMuSlice a SEXPX
+SexpMuX a = SexpMuSlice a (SEXPP True)
 
 public export
 SexpSliceM : PolyFunc -> SexpPSlice -> Type
@@ -219,9 +231,9 @@ sexpBCata {a} = spfCata {spf=(SexpF a)}
 public export
 SexpShowAlg : {a : PolyFunc} -> PFAlg a String -> SexpAlg a (const String)
 SexpShowAlg alg SEXPA (i ** d) = alg i d
-SexpShowAlg alg SEXPP (() ** d) = PairShowAlg () d
-SexpShowAlg alg SEXPX (False ** d) = d ()
-SexpShowAlg alg SEXPX (True ** d) = d ()
+SexpShowAlg alg (SEXPP False) (() ** d) = PairShowAlg () d
+SexpShowAlg alg (SEXPP True) (False ** d) = d ()
+SexpShowAlg alg (SEXPP True) (True ** d) = d ()
 
 public export
 sexpBShow : {a : PolyFunc} ->
@@ -234,17 +246,17 @@ InSA {a} = pfCata {p=a} $ \i, d => InSPFM (SEXPA ** i) d
 
 public export
 InSAX : {a : PolyFunc} -> PolyFuncMu a -> SexpMuX a
-InSAX x = InSPFM (SEXPX ** SEXPXA) $ \() => InSA x
+InSAX x = InSPFM (SEXPP True ** SEXPXA) $ \() => InSA x
 
 public export
 InSP : {a : PolyFunc} -> SexpMuX a -> SexpMuX a -> SexpMuP a
-InSP x y = InSPFM (SEXPP ** ()) $ \d => case d of
+InSP x y = InSPFM (SEXPP False ** ()) $ \d => case d of
   False => x
   True => y
 
 public export
 InSPX : {a : PolyFunc} -> SexpMuP a -> SexpMuX a
-InSPX p = InSPFM (SEXPX ** SEXPXP) $ \() => p
+InSPX p = InSPFM (SEXPP True ** SEXPXP) $ \() => p
 
 public export
 InSPair : {a : PolyFunc} -> SexpMuX a -> SexpMuX a -> SexpMuX a
