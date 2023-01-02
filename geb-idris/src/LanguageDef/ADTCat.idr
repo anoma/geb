@@ -166,29 +166,22 @@ SexpBPos SEXPBP = PairPos
 SexpBPos SEXPBX = SexpXPos
 
 public export
-SexpBPosDP : Type
-SexpBPosDP = DPair SexpBPosBase SexpBPos
+SexpBDir' : Sigma SexpBPos -> (dirdep : Type ** dirdep -> SexpBPosBase)
+-- An atom has no sub-exps.
+SexpBDir' (SEXPB ** i) = (BoolDir i ** voidF _)
+-- Both parts of a pair are exps.
+SexpBDir' (SEXPBP ** ()) = (PairDir () ** const SEXPBX)
+-- A pair is a pair of exps; an atom is a boolean.
+SexpBDir' (SEXPBX ** i) =
+  (SexpXDir i ** if i then const SEXPBP else const SEXPB)
 
 public export
-SexpBDir : SexpBPosDP -> Type
-SexpBDir (SEXPB ** i) = BoolDir i
-SexpBDir (SEXPBP ** i) = PairDir i
-SexpBDir (SEXPBX ** i) = SexpXDir i
-
-public export
-SexpBDirDP : Type
-SexpBDirDP = DPair SexpBPosDP SexpBDir
-
-public export
-sexpBAssign : SexpBDirDP -> SexpBPosBase
-sexpBAssign ((SEXPB ** _) ** d) = void d -- an atom has no sub-exps
-sexpBAssign ((SEXPBP ** ()) ** _) = SEXPBX -- each part of a pair is an exp
-sexpBAssign ((SEXPBX ** False) ** ()) = SEXPB -- an atom is a boolean
-sexpBAssign ((SEXPBX ** True) ** ()) = SEXPBP -- a pair is a pair of exps
+SexpBF' : SlicePolyFunc' SexpBPosBase SexpBPosBase
+SexpBF' = (SexpBPos ** SexpBDir')
 
 public export
 SexpBF : SlicePolyFunc SexpBPosBase SexpBPosBase
-SexpBF = (SexpBPos ** SexpBDir ** sexpBAssign)
+SexpBF = SPFFromPrime SexpBF'
 
 -- An algebra for a mutual recursion which returns potentially-different
 -- types for an S-expression and a pair of S-expressions.
@@ -199,10 +192,6 @@ SexpBAlg = SPFAlg SexpBF
 public export
 SexpBMuSlice : SexpBPosBase -> Type
 SexpBMuSlice = SPFMu SexpBF
-
-public export
-SexpBMuDP : Type
-SexpBMuDP = DPair SexpBPosBase SexpBMuSlice
 
 public export
 SexpBMuB : Type
@@ -227,7 +216,7 @@ sexpBCata = spfCata {spf=SexpBF}
 public export
 SexpBShowAlg : SexpBAlg (const String)
 SexpBShowAlg SEXPB (i ** d) = BoolShowAlg i d
-SexpBShowAlg SEXPBP (i ** d) = PairShowAlg i d
+SexpBShowAlg SEXPBP (() ** d) = PairShowAlg () d
 SexpBShowAlg SEXPBX (False ** d) = d ()
 SexpBShowAlg SEXPBX (True ** d) = d ()
 
