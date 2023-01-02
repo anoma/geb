@@ -162,6 +162,11 @@ public export
 SEXPCX : SexpCompoundPosBase
 SEXPCX = True
 
+public export
+SexpCompoundPos : SexpCompoundPosBase -> Type
+SexpCompoundPos False = PairPos
+SexpCompoundPos True = SexpXPos
+
 -- `Left ()` is an atom; `Right` is compound (a pair or an expression).
 public export
 SexpPosBase : Type
@@ -174,8 +179,7 @@ SexpPSlice = SliceObj SexpPosBase
 public export
 SexpPos : PolyFunc -> SexpPosBase -> Type
 SexpPos a (Left ()) = pfPos a
-SexpPos a (Right False) = PairPos
-SexpPos a (Right True) = SexpXPos
+SexpPos a (Right i) = SexpCompoundPos i
 
 public export
 SexpDir : {a : PolyFunc} ->
