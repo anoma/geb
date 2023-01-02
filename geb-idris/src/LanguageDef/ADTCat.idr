@@ -157,6 +157,18 @@ public export
 binTreeShow : {a : PolyFunc} -> PFAlg a String -> BinTreeMu a -> String
 binTreeShow = binTreeCata . BinTreeShowAlg
 
+-- Construct a leaf of a binary tree.
+public export
+InBTL : {a : PolyFunc} -> PolyFuncMu a -> BinTreeMu a
+InBTL {a=a@(pos ** dir)} = pfCata {p=a} $ \i, d => InPFM (Left i) d
+
+-- Construct an internal node of a binary tree.
+public export
+InBTN : {a : PolyFunc} -> BinTreeMu a -> BinTreeMu a -> BinTreeMu a
+InBTN {a=(pos ** dir)} x y = InPFM (Right ()) $ \i => case i of
+  False => x
+  True => y
+
 ---------------------------
 ---------------------------
 ----- SExp as PolyFunc ----
