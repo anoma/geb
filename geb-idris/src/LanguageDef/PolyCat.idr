@@ -2584,6 +2584,25 @@ SlicePolyFunc parambase posbase =
    dirdep : SliceObj (Sigma posdep) **
    Sigma dirdep -> parambase)
 
+-- An equivalent way of specifying a `SlicePolyFunc`.
+public export
+SlicePolyFunc' : Type -> Type -> Type
+SlicePolyFunc' parambase posbase =
+  (posdep : SliceObj posbase **
+   Sigma posdep -> (dirdep : Type ** dirdep -> parambase))
+
+public export
+SPFFromPrime : {parambase, posbase : Type} ->
+  SlicePolyFunc' parambase posbase -> SlicePolyFunc parambase posbase
+SPFFromPrime (posdep ** dirdep) =
+  (posdep ** fst . dirdep ** \(i ** d) => snd (dirdep i) d)
+
+public export
+SPFToPrime : {parambase, posbase : Type} ->
+  SlicePolyFunc parambase posbase -> SlicePolyFunc' parambase posbase
+SPFToPrime (posdep ** dirdep ** assign) =
+  (posdep ** \i => (dirdep i ** \d => assign (i ** d)))
+
 public export
 SlicePolyEndoFunc : Type -> Type
 SlicePolyEndoFunc base = SlicePolyFunc base base
