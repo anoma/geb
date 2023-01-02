@@ -348,11 +348,15 @@ soProductHomCata : {a : Type} -> SOProductHomAlg a -> SOMu -> SOMu -> a
 soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
 
 public export
-record SOHomAlg (0 a : Type) where
+record SOProdCompAlg (0 a : Type) where
   constructor MkSOHomAlg
-  soHomVoid : a -> a
-  soHomUnit : a -> a
-  soHomCoproduct : (a -> a) -> (a -> a) -> a -> a
+  soHomVoid : a
+  soHomUnit : a
+  soHomCoproduct : a -> a -> a
+
+public export
+SOHomAlg : (0 _ : Type) -> Type
+SOHomAlg a = SOProdCompAlg (a -> a)
 
 public export
 SOHomAlgToFAlg : {0 a : Type} -> SOHomAlg a -> SOAlg (a -> a)
