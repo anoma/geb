@@ -125,6 +125,29 @@ public export
 PairShowAlg : PairAlg String
 PairShowAlg () d = "(" ++ d PAIRFST ++ "," ++ d PAIRSND ++ ")"
 
+----------------------------------
+----------------------------------
+---- Binary trees as PolyFunc ----
+----------------------------------
+----------------------------------
+
+public export
+BinTreeF : PolyFunc -> PolyFunc
+BinTreeF a = pfCoproductArena a PairF
+
+public export
+BinTreeAlg : PolyFunc -> Type -> Type
+BinTreeAlg a = PFAlg (BinTreeF a)
+
+public export
+BinTreeMu : PolyFunc -> Type
+BinTreeMu a = PolyFuncMu (BinTreeF a)
+
+public export
+binTreeCata : {0 a : PolyFunc} -> {0 b : Type} ->
+  BinTreeAlg a b -> BinTreeMu a -> b
+binTreeCata {a} {b} = pfCata {p=(BinTreeF a)} {a=b}
+
 ---------------------------
 ---------------------------
 ----- SExp as PolyFunc ----
@@ -231,6 +254,28 @@ public export
 sexpBCata : {a : PolyFunc} -> {sa : SexpPSlice} ->
   SexpAlg a sa -> SexpSliceM a sa
 sexpBCata {a} = spfCata {spf=(SexpF a)}
+
+-- One special case of an S-expression algebra is when the atom and pair
+-- components of the algebra both return the same type, and the expression
+-- component of that algebra just passes the type through unchanged.  In
+-- that case, we can perform an S-expression catamorphism by providing only
+-- a binary-tree algebra (which is simpler).  This captures the sense in which
+-- S-expressions are more expressive than binary trees:  their algebras in
+-- general allow different return types for atoms and pairs, with the expression
+-- component handling both cases to produce the return type for the overall
+-- expressions.
+public export
+BinTreeAlgToSexpAlg : {0 a : PolyFunc} -> {0 b : Type} ->
+  BinTreeAlg a b -> SexpAlg a (const b)
+BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Left ()) (i ** d) = alg (Left i) d
+BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right False) (() ** d) = alg (Right ()) d
+BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right True) ((False ** d)) = d ()
+BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right True) ((True ** d)) = d ()
+
+public export
+sexpBTCata : {a : PolyFunc} -> {b : Type} ->
+  BinTreeAlg a b -> SexpSliceM a (const b)
+sexpBTCata {a} {b} = sexpBCata {a} {sa=(const b)} . BinTreeAlgToSexpAlg
 
 public export
 SexpShowAlg : {a : PolyFunc} -> PFAlg a String -> SexpAlg a (const String)
