@@ -148,6 +148,15 @@ binTreeCata : {0 a : PolyFunc} -> {0 b : Type} ->
   BinTreeAlg a b -> BinTreeMu a -> b
 binTreeCata {a} {b} = pfCata {p=(BinTreeF a)} {a=b}
 
+public export
+BinTreeShowAlg : {a : PolyFunc} -> PFAlg a String -> BinTreeAlg a String
+BinTreeShowAlg {a=(pos ** dir)} alg (Left i) d = alg i d
+BinTreeShowAlg {a=(pos ** dir)} alg (Right ()) d = PairShowAlg () d
+
+public export
+binTreeShow : {a : PolyFunc} -> PFAlg a String -> BinTreeMu a -> String
+binTreeShow = binTreeCata . BinTreeShowAlg
+
 ---------------------------
 ---------------------------
 ----- SExp as PolyFunc ----
@@ -279,10 +288,7 @@ sexpBTCata {a} {b} = sexpBCata {a} {sa=(const b)} . BinTreeAlgToSexpAlg
 
 public export
 SexpShowAlg : {a : PolyFunc} -> PFAlg a String -> SexpAlg a (const String)
-SexpShowAlg alg (Left ()) (i ** d) = alg i d
-SexpShowAlg alg (Right False) (() ** d) = PairShowAlg () d
-SexpShowAlg alg (Right True) (False ** d) = d ()
-SexpShowAlg alg (Right True) (True ** d) = d ()
+SexpShowAlg alg = BinTreeAlgToSexpAlg (BinTreeShowAlg alg)
 
 public export
 sexpBShow : {a : PolyFunc} ->
