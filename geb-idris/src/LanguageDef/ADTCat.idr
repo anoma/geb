@@ -419,22 +419,20 @@ soProductHomCata : {a : Type} -> SOProductHomAlg a -> SOMu -> SOMu -> a
 soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
 
 public export
-record SOProdCompAlg (0 a : Type) where
-  constructor MkSOHomAlg
-  soHomVoid : a
-  soHomUnit : a
-  soHomCoproduct : a -> a -> a
+SOProdCompAlg : Type -> Type
+SOProdCompAlg = BinTreeAlg BoolF
 
 public export
-SOHomAlg : (0 _ : Type) -> Type
+SOHomAlg : Type -> Type
 SOHomAlg a = SOProdCompAlg (a -> a)
 
 public export
 SOHomAlgToFAlg : {0 a : Type} -> SOHomAlg a -> SOAlg (a -> a)
-SOHomAlgToFAlg alg SOPos0 d = soHomVoid alg
-SOHomAlgToFAlg alg SOPos1 d = soHomUnit alg
-SOHomAlgToFAlg alg SOPosC d = soHomCoproduct alg (d SODirL) (d SODirR)
--- (x * y) -> z === x -> (y -> z)
+SOHomAlgToFAlg alg SOPos0 d = alg (Left False) $ \i => case i of _ impossible
+SOHomAlgToFAlg alg SOPos1 d = alg (Left True) $ \i => case i of _ impossible
+SOHomAlgToFAlg alg SOPosC d = alg (Right ()) $ \i => case i of
+  False => d SODirL
+  True => d SODirR
 SOHomAlgToFAlg alg SOPosP d = d SODir1 . d SODir2
 
 public export
@@ -620,13 +618,12 @@ SORefinement alg = Refinement {a=SOMu} $ soCata alg
 
 public export
 SOHomObjAlg : SOHomAlg SOMu
-SOHomObjAlg = MkSOHomAlg
-  -- 0 -> x === 1
-  (const InSO1)
-  -- 1 -> x === x
-  id
-  -- (x + y) -> z === (x -> z) * (y -> z)
-  (biapp InSOP)
+-- 0 -> x === 1
+SOHomObjAlg (Left False) d = (const InSO1)
+-- 1 -> x === x
+SOHomObjAlg (Left True) d = id
+-- (x + y) -> z === (x -> z) * (y -> z)
+SOHomObjAlg (Right ()) d = biapp InSOP (d False) (d True)
 
 public export
 soHomObj : SOMu -> SOMu -> SOMu
