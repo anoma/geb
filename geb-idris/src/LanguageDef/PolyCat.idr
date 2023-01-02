@@ -2757,15 +2757,15 @@ InterpSPFMap {a} {b} spf {sa} {sa'} =
 public export
 PolySliceFunctor : PolyFunc -> PolyFunc -> Type
 PolySliceFunctor parambase posbase =
-  (depObj : SliceObj (PolyFuncMu posbase) **
-   Sigma depObj -> PFAlg parambase PolyFunc)
+  (depObjAlg : PFAlg posbase Type **
+   Sigma (pfCata {p=posbase} depObjAlg) -> PFAlg parambase PolyFunc)
 
 public export
 PolySliceToPrimes : {parambase, posbase : PolyFunc} ->
   PolySliceFunctor parambase posbase ->
   SlicePolyFunc'' (PolyFuncMu parambase) (PolyFuncMu posbase)
-PolySliceToPrimes {parambase} {posbase} (depObj ** depDirAlg) =
-  (depObj **
+PolySliceToPrimes {parambase} {posbase} (depObjAlg ** depDirAlg) =
+  (pfCata {p=posbase} depObjAlg **
    \pos, param => PolyFuncMu $ pfCata {p=parambase} (depDirAlg pos) param)
 
 public export
