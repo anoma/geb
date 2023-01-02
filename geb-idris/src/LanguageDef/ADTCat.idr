@@ -151,21 +151,21 @@ SexpXDir True = Unit
 
 -- We shall use 'False` for `pair` and `True` for `expression`.
 public export
-SexpPolyPos : Type
-SexpPolyPos = Bool
+SexpCompoundPos : Type
+SexpCompoundPos = Bool
 
 public export
-SEXPPP : SexpPolyPos
-SEXPPP = False
+SEXPCP : SexpCompoundPos
+SEXPCP = False
 
 public export
-SEXPPX : SexpPolyPos
-SEXPPX = True
+SEXPCX : SexpCompoundPos
+SEXPCX = True
 
+-- `Left ()` is an atom; `Right` is compound (a pair or an expression).
 public export
-data SexpPosBase : Type where
-  SEXPA : SexpPosBase -- an atom
-  SEXPP : SexpPolyPos -> SexpPosBase
+SexpPosBase : Type
+SexpPosBase = Either () SexpCompoundPos
 
 public export
 SexpPSlice : Type
@@ -173,21 +173,21 @@ SexpPSlice = SliceObj SexpPosBase
 
 public export
 SexpPos : PolyFunc -> SexpPosBase -> Type
-SexpPos a SEXPA = pfPos a
-SexpPos a (SEXPP False) = PairPos
-SexpPos a (SEXPP True) = SexpXPos
+SexpPos a (Left ()) = pfPos a
+SexpPos a (Right False) = PairPos
+SexpPos a (Right True) = SexpXPos
 
 public export
 SexpDir : {a : PolyFunc} ->
   Sigma (SexpPos a) -> (dirdep : Type ** dirdep -> SexpPosBase)
 -- An atom's sub-expressions are those of the atom's ADT, and do not
 -- contain any further S-expressions.
-SexpDir {a} (SEXPA ** i) = (pfDir {p=a} i ** const SEXPA)
+SexpDir {a} ((Left ()) ** i) = (pfDir {p=a} i ** const $ Left ())
 -- Both parts of a pair are exps.
-SexpDir {a} ((SEXPP False) ** ()) = (PairDir () ** const $ SEXPP True)
+SexpDir {a} ((Right False) ** ()) = (PairDir () ** const $ Right True)
 -- An expression's dependent position indicates whether it's a pair or an atom.
-SexpDir {a} ((SEXPP True) ** i) =
-  (SexpXDir i ** if i then const (SEXPP False) else const SEXPA)
+SexpDir {a} ((Right True) ** i) =
+  (SexpXDir i ** if i then const (Right False) else const (Left ()))
 
 public export
 SexpF' : PolyFunc -> SlicePolyFunc' SexpPosBase SexpPosBase
@@ -209,15 +209,15 @@ SexpMuSlice = SPFMu . SexpF
 
 public export
 SexpMuA : PolyFunc -> Type
-SexpMuA a = SexpMuSlice a SEXPA
+SexpMuA a = SexpMuSlice a (Left ())
 
 public export
 SexpMuP : PolyFunc -> Type
-SexpMuP a = SexpMuSlice a (SEXPP False)
+SexpMuP a = SexpMuSlice a (Right False)
 
 public export
 SexpMuX : PolyFunc -> Type
-SexpMuX a = SexpMuSlice a (SEXPP True)
+SexpMuX a = SexpMuSlice a (Right True)
 
 public export
 SexpSliceM : PolyFunc -> SexpPSlice -> Type
@@ -230,10 +230,10 @@ sexpBCata {a} = spfCata {spf=(SexpF a)}
 
 public export
 SexpShowAlg : {a : PolyFunc} -> PFAlg a String -> SexpAlg a (const String)
-SexpShowAlg alg SEXPA (i ** d) = alg i d
-SexpShowAlg alg (SEXPP False) (() ** d) = PairShowAlg () d
-SexpShowAlg alg (SEXPP True) (False ** d) = d ()
-SexpShowAlg alg (SEXPP True) (True ** d) = d ()
+SexpShowAlg alg (Left ()) (i ** d) = alg i d
+SexpShowAlg alg (Right False) (() ** d) = PairShowAlg () d
+SexpShowAlg alg (Right True) (False ** d) = d ()
+SexpShowAlg alg (Right True) (True ** d) = d ()
 
 public export
 sexpBShow : {a : PolyFunc} ->
@@ -242,25 +242,33 @@ sexpBShow = sexpBCata . SexpShowAlg
 
 public export
 InSA : {a : PolyFunc} -> PolyFuncMu a -> SexpMuA a
-InSA {a} = pfCata {p=a} $ \i, d => InSPFM (SEXPA ** i) d
+InSA {a} = pfCata {p=a} $ \i, d => InSPFM ((Left ()) ** i) d
 
 public export
 InSAX : {a : PolyFunc} -> PolyFuncMu a -> SexpMuX a
-InSAX x = InSPFM (SEXPP True ** SEXPXA) $ \() => InSA x
+InSAX x = InSPFM (Right True ** SEXPXA) $ \() => InSA x
 
 public export
 InSP : {a : PolyFunc} -> SexpMuX a -> SexpMuX a -> SexpMuP a
-InSP x y = InSPFM (SEXPP False ** ()) $ \d => case d of
+InSP x y = InSPFM (Right False ** ()) $ \d => case d of
   False => x
   True => y
 
 public export
 InSPX : {a : PolyFunc} -> SexpMuP a -> SexpMuX a
-InSPX p = InSPFM (SEXPP True ** SEXPXP) $ \() => p
+InSPX p = InSPFM (Right True ** SEXPXP) $ \() => p
 
 public export
 InSPair : {a : PolyFunc} -> SexpMuX a -> SexpMuX a -> SexpMuX a
 InSPair = InSPX .* InSP
+
+public export
+SexpB : Type
+SexpB = SexpMuX BoolF
+
+public export
+SexpBP : Type
+SexpBP = SexpMuP BoolF
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
