@@ -435,6 +435,10 @@ public export
 soHomObjCata : {0 a : Type} -> SOHomAlg a -> SOMu -> a -> a
 soHomObjCata alg = soCata (SOHomAlgToFAlg alg)
 
+public export
+SOHomSOAlg : Type
+SOHomSOAlg = SOHomAlg SOMu
+
 -------------------
 ---- Utilities ----
 -------------------
@@ -548,8 +552,8 @@ SOInterpAlg SOPosC dir = Either (dir SODirL) (dir SODirR)
 SOInterpAlg SOPosP dir = Pair (dir SODir1) (dir SODir2)
 
 public export
-soInterp : SOMu -> Type
-soInterp = soCata SOInterpAlg
+SOInterp : SOMu -> Type
+SOInterp = soCata SOInterpAlg
 
 ---------------------------------------------------------
 ---- Embedding into PolyFunc as constant endofunctor ----
@@ -613,7 +617,7 @@ SORefinement alg = Refinement {a=SOMu} $ soCata alg
 ---------------------------
 
 public export
-SOHomObjAlg : SOHomAlg SOMu
+SOHomObjAlg : SOHomSOAlg
 -- 0 -> x === 1
 SOHomObjAlg (Left False) d = (const InSO1)
 -- 1 -> x === x
@@ -630,19 +634,16 @@ soExpObj : SOMu -> SOMu -> SOMu
 soExpObj = flip soHomObj
 
 public export
-SOCovarHomFuncAlg : SOAlg PolyFunc
-SOCovarHomFuncAlg SOPos0 d = PFTerminalArena
-SOCovarHomFuncAlg SOPos1 d = PFIdentityArena
-SOCovarHomFuncAlg SOPosC d = pfProductArena (d SODirL) (d SODirR)
-SOCovarHomFuncAlg SOPosP d = pfCompositionArena (d SODir1) (d SODir2)
-
-public export
 soCovarHomPF : SOMu -> PolyFunc
-soCovarHomPF = PFHomArena . soInterp
+soCovarHomPF = PFHomArena . SOInterp
 
 public export
-SOMuMorph : SOMu -> SOMu -> Type
-SOMuMorph x y = soInterp (soHomObj x y)
+SOMuMorphTerm : SOMu -> SOMu -> Type
+SOMuMorphTerm x y = SOInterp (soHomObj x y)
+
+public export
+SOMuMorphMeta : SOMu -> SOMu -> Type
+SOMuMorphMeta x y = SOInterp x -> SOInterp y
 
 --------------------------------------------------------------------------
 ---- Dependent-set definition of substitutive polynomial endofunctors ----
@@ -652,7 +653,7 @@ SOMuMorph x y = soInterp (soHomObj x y)
 -- types are terms of `SOMu` and whose morphisms are terms of `SOMuMorph`) --
 -- that -- is, a function from objects of `PFS` to objects of `PFS`.
 PFSDepObj : SOMu -> Type
-PFSDepObj x = soInterp x -> SOMu
+PFSDepObj x = SOInterp x -> SOMu
 
 -- An arena with positions and directions drawn from "Programmer's FinSet"
 -- (AKA the category whose types are terms of `SOMu` and whose morphisms
@@ -667,7 +668,7 @@ pfsPos = DPair.fst
 
 public export
 PFSPosTerm : PFSEndoArena -> Type
-PFSPosTerm = soInterp . pfsPos
+PFSPosTerm = SOInterp . pfsPos
 
 public export
 pfsDir : (ar : PFSEndoArena) -> PFSPosTerm ar -> SOMu
