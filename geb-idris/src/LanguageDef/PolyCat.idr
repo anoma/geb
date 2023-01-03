@@ -2644,6 +2644,18 @@ SlicePolyEndoFuncId : Type -> Type
 SlicePolyEndoFuncId base = DPair (SliceObj base) (SliceObj . Sigma)
 
 public export
+SlicePolyIdAlternates : {base : Type} ->
+  SlicePolyEndoFuncId base -> SlicePolyEndoFunc'' base
+SlicePolyIdAlternates {base} (posdep ** dirdep) =
+  (posdep ** \d, _ => dirdep d)
+
+public export
+SlicePolyIdAlternates' : {base : Type} ->
+  SlicePolyEndoFunc'' base -> SlicePolyEndoFuncId base
+SlicePolyIdAlternates' {base} (posdep ** dirdep) =
+  (posdep ** \(i ** d) => dirdep (i ** d) i)
+
+public export
 SlicePolyEndoFuncFromId : {base : Type} ->
   SlicePolyEndoFuncId base -> SlicePolyEndoFunc base
 SlicePolyEndoFuncFromId {base} (posdep ** dirdep) =
@@ -3154,6 +3166,53 @@ SPFCofreeCMFromNu : {x : Type} -> SlicePolyEndoF x -> SliceObj x -> SliceObj x
 SPFCofreeCMFromNu spf sx =
   SPFNu {a=-x} (SPFScale {x} {y=x} spf (Sigma sx) (const id))
   -}
+
+--------------------------------------------
+--------------------------------------------
+---- `PolyFunc` dependent on `PolyFunc` ----
+--------------------------------------------
+--------------------------------------------
+
+public export
+PFPolyAlgToSlicePosDep : {p : PolyFunc} ->
+  PFAlg p PolyFunc -> PolyFuncMu p -> Type
+PFPolyAlgToSlicePosDep {p=(pos ** dir)} alg = PolyFuncMu . pfCata alg
+
+public export
+PFPolyAlgToSliceDirDepAlg : {p : PolyFunc} ->
+  (alg : PFAlg p PolyFunc) ->
+  (i : pfPos p) ->
+  (d : pfDir {p} i -> PolyFuncMu p) ->
+  (i' : pfPos (alg i (pfCata alg . d))) ->
+  (d' : pfDir {p=(alg i (pfCata alg . d))} i' -> Type) ->
+  Type
+PFPolyAlgToSliceDirDepAlg {p=(pos ** dir)} alg i d i' d' =
+  Sigma {a=(pfDir i')} d'
+
+public export
+PFPolyAlgToSliceDirDepCurried : {p : PolyFunc} ->
+  (alg : PFAlg p PolyFunc) ->
+  (i : PolyFuncMu p) -> PFPolyAlgToSlicePosDep alg i -> Type
+PFPolyAlgToSliceDirDepCurried {p=p@(pos ** dir)} alg (InPFM i d) =
+  pfCata $ PFPolyAlgToSliceDirDepAlg {p} alg i d
+
+public export
+PFPolyAlgToSliceDirDep : {p : PolyFunc} ->
+  (alg : PFAlg p PolyFunc) ->
+  Sigma {a=(PolyFuncMu p)} (PFPolyAlgToSlicePosDep alg) -> Type
+PFPolyAlgToSliceDirDep {p=(pos ** dir)} alg (i ** d) =
+  PFPolyAlgToSliceDirDepCurried alg i d
+
+public export
+PFPolyAlgToSliceId : {p : PolyFunc} ->
+  PFAlg p PolyFunc -> SlicePolyEndoFuncId (PolyFuncMu p)
+PFPolyAlgToSliceId {p=(pos ** dir)} alg =
+  (PFPolyAlgToSlicePosDep alg ** PFPolyAlgToSliceDirDep alg)
+
+public export
+PFPolyAlgToSliceFunc : {p : PolyFunc} ->
+  PFAlg p PolyFunc -> SlicePolyEndoFunc (PolyFuncMu p)
+PFPolyAlgToSliceFunc = SlicePolyEndoFuncFromId . PFPolyAlgToSliceId
 
 ------------------------------------------------
 ------------------------------------------------
