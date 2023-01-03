@@ -642,7 +642,7 @@ soCovarHomPF = PFHomArena . soInterp
 
 public export
 SOMuMorph : SOMu -> SOMu -> Type
-SOMuMorph x y = soInterp x -> soInterp y
+SOMuMorph x y = soInterp (soHomObj x y)
 
 --------------------------------------------------------------------------
 ---- Dependent-set definition of substitutive polynomial endofunctors ----
