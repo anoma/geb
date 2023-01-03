@@ -650,13 +650,12 @@ SOHomReflectAlg : (v, u, f : SOMu) -> SOMu
 SOHomReflectAlg v u f = InSOP v (InSOP u f)
 
 public export
-SOHomReflect : (v, u, f : SOMu) -> (a : Type) ->
+SOHomReflect : {v, u, f : SOMu} -> {a : Type} ->
   (SOInterp v -> a) -> (SOInterp u -> a) -> (SOInterp f -> a -> a -> a) ->
   SOInterp (SOHomReflectAlg v u f) -> BinTreeAlg BoolF a
-SOHomReflect v u f a vi ui fi alg (Left False) d = vi $ fst alg
-SOHomReflect v u f a vi ui fi alg (Left True) d = ui $ fst $ snd alg
-SOHomReflect v u f a vi ui fi alg (Right ()) d =
-  fi (snd $ snd alg) (d False) (d True)
+SOHomReflect vi ui fi alg (Left False) d = vi $ fst alg
+SOHomReflect vi ui fi alg (Left True) d = ui $ fst $ snd alg
+SOHomReflect vi ui fi alg (Right ()) d = fi (snd $ snd alg) (d False) (d True)
 
 --------------------------------------------------------------------------
 ---- Dependent-set definition of substitutive polynomial endofunctors ----
