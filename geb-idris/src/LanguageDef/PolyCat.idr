@@ -1071,6 +1071,15 @@ InPFMN : {0 p : PolyFuncN} ->
   (i : pfnPos p) -> Vect (pfnDir p i) (PolyFuncNMu p) -> PolyFuncNMu p
 InPFMN {p=(pos ** dir)} i = InPFM i . flip index
 
+public export
+pfmPos : {p : PolyFunc} -> PolyFuncMu p -> pfPos p
+pfmPos (InPFM i d) = i
+
+public export
+pfmDir : {p : PolyFunc} ->
+  (e : PolyFuncMu p) -> pfDir {p} (pfmPos e) -> PolyFuncMu p
+pfmDir (InPFM i d) = d
+
 ----------------------------------------------
 ---- Catamorphisms of polynomial functors ----
 ----------------------------------------------
@@ -2608,6 +2617,10 @@ public export
 SlicePolyFunc'' : Type -> Type -> Type
 SlicePolyFunc'' parambase posbase =
   (posdep : SliceObj posbase ** Sigma posdep -> SliceObj parambase)
+
+public export
+SlicePolyEndoFunc'' : Type -> Type
+SlicePolyEndoFunc'' base = SlicePolyFunc'' base base
 
 public export
 SPFFromPrimes : {parambase, posbase : Type} ->
