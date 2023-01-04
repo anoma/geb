@@ -812,6 +812,151 @@ encodingDecEq encode decode encodingIsCorrect bDecEq x x' with
     encodingDecEq encode decode encodingIsCorrect bDecEq x x' | No neq =
       No $ \xeq => neq $ cong encode xeq
 
+public export
+finEncodingDecEq : {a : Type} -> {size : Nat} ->
+  (encode : a -> Fin size) -> (decode : Fin size -> a) ->
+  (encodingIsCorrect : (x : a) -> decode (encode x) = x) ->
+  DecEqPred a
+finEncodingDecEq {a} {size} encode decode encodingIsCorrect =
+  encodingDecEq {a} {b=(Fin size)}
+    encode (Just . decode) (\x => rewrite encodingIsCorrect x in Refl) decEq
+
+public export
+finDecPred : {n : Nat} -> (p : Fin n -> Type) -> ((x : Fin n) -> Dec (p x)) ->
+  Dec ((x : Fin n) -> p x)
+finDecPred {n=Z} p d = Yes $ \x => case x of _ impossible
+finDecPred {n=(S n)} p d =
+  case d FZ of
+    Yes yes => case finDecPred {n} (p . FS) (\x => d $ FS x) of
+      Yes yes' => Yes $ \x => case x of
+        FZ => yes
+        FS x' => yes' x'
+      No no' => No $ \yes' => no' $ \x => yes' $ FS x
+    No no => No $ \yes => no $ yes FZ
+
+public export
+FinDecoder : Type -> Nat -> Type
+FinDecoder a size = Fin size -> a
+
+public export
+FinEncoder : {a : Type} -> {size : Nat} -> FinDecoder a size -> Type
+FinEncoder {a} {size} decoder = (e : a) -> (x : Fin size ** decoder x = e)
+
+public export
+FinDecEncoding : (a : Type) -> (size : Nat) -> Type
+FinDecEncoding a size = DPair (FinDecoder a size) FinEncoder
+
+public export
+fdeEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool
+fdeEq enc x x' = fst (snd enc x) == fst (snd enc x')
+
+public export
+(a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => Eq a where
+  (==) = fdeEq {a} {n} enc
+
+public export
+fdeLt : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool
+fdeLt enc x x' = fst (snd enc x) < fst (snd enc x')
+
+public export
+(a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => Ord a where
+  (<) = fdeLt {a} {n} enc
+
+public export
+fdeDecEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> DecEqPred a
+fdeDecEq (decode ** encode) e e' =
+  case (decEq (fst $ encode e) (fst $ encode e')) of
+    Yes eq => Yes $
+      trans (sym (snd $ encode e)) (trans (cong decode eq) (snd $ encode e'))
+    No neq => No $ \yes => neq $ case yes of Refl => Refl
+
+public export
+(a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => DecEq a where
+  decEq = fdeDecEq {a} {n} enc
+
+public export
+ListContains : {a : Type} -> List a -> a -> Type
+ListContains [] x = Void
+ListContains (x :: xs) x' = Either (x = x') (ListContains xs x')
+
+public export
+listContainsDec : {a : Type} -> DecEqPred a -> (l : List a) -> (x : a) ->
+  Dec (ListContains l x)
+listContainsDec deq [] x = No $ \v => void v
+listContainsDec deq (x :: xs) x' =
+  case deq x x' of
+    Yes Refl => Yes $ Left Refl
+    No neqx => case listContainsDec deq xs x' of
+      Yes c => Yes $ Right c
+      No nc => No $ \yes => case yes of
+        Left eqx => neqx eqx
+        Right c => nc c
+
+public export
+ListContainsTrue : {a : Type} -> DecEqPred a -> (l : List a) -> (x : a) -> Type
+ListContainsTrue deq l x = IsYesTrue $ listContainsDec deq l x
+
+public export
+ListContainsTrueUIP : {a : Type} ->
+  (deq : DecEqPred a) -> (l : List a) -> (x : a) ->
+  (c, c' : ListContainsTrue deq l x) ->
+  c = c'
+ListContainsTrueUIP deq l x c c' = uip
+
+public export
+ListMember : {a : Type} -> List a -> Type
+ListMember {a} l = Subset0 a (ListContains l)
+
+public export
+ListMemberDec : {a : Type} -> DecEqPred a -> List a -> Type
+ListMemberDec {a} deq l = Subset0 a (ListContainsTrue deq l)
+
+public export
+ListMemberDecInj : {a : Type} ->
+  (deq : DecEqPred a) -> (l : List a) -> (m, m' : ListMemberDec deq l) ->
+  fst0 m = fst0 m' -> m = m'
+ListMemberDecInj {a} deq l (Element0 x c) (Element0 x' c') eq =
+  case eq of
+    Refl => rewrite ListContainsTrueUIP deq l x c c' in Refl
+
+public export
+FinSubEncoding : Type -> Nat -> Type
+FinSubEncoding a size = (FinDecEncoding a size, List a)
+
+public export
+fseEnc : {a : Type} -> {n : Nat} -> FinSubEncoding a n -> FinDecEncoding a n
+fseEnc = fst
+
+public export
+fseList : {a : Type} -> {n : Nat} -> FinSubEncoding a n -> List a
+fseList = snd
+
+public export
+FSEMember : {a : Type} -> {n : Nat} -> FinSubEncoding a n -> Type
+FSEMember enc = ListMemberDec decEq (fseList enc)
+
+public export
+FSEMemberInj : {a : Type} -> {n : Nat} -> (fse : FinSubEncoding a n) ->
+  (x, x' : FSEMember fse) -> fst0 x = fst0 x' -> x = x'
+FSEMemberInj enc = ListMemberDecInj decEq (fseList enc)
+
+public export
+fseEq : {a : Type} -> {n : Nat} -> (enc : FinSubEncoding a n) ->
+  FSEMember enc -> FSEMember enc -> Bool
+fseEq enc x x' = fdeEq (fseEnc enc) (fst0 x) (fst0 x')
+
+public export
+fseLt : {a : Type} -> {n : Nat} ->
+  (enc : FinSubEncoding a n) -> FSEMember enc -> FSEMember enc -> Bool
+fseLt enc x x' = fdeLt (fseEnc enc) (fst0 x) (fst0 x')
+
+public export
+fseDecEq : {a : Type} -> {  n : Nat} -> (enc : FinSubEncoding a n) ->
+  DecEqPred (FSEMember enc)
+fseDecEq enc x x' = case fdeDecEq (fseEnc enc) (fst0 x) (fst0 x') of
+  Yes eq => Yes $ FSEMemberInj enc x x' eq
+  No neq => No $ \eq => case eq of Refl => neq Refl
+
 -- A list with a length stored together with it at run time.
 public export
 record LList (a : Type) (len : Nat) where

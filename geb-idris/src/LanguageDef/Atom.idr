@@ -22,23 +22,28 @@ data GebAtom : Type where
   COPRODUCT : GebAtom
 
 public export
-gaEncode : GebAtom -> Nat
-gaEncode NAT = 0
-gaEncode PRODUCT = 1
-gaEncode COPRODUCT = 2
+GASize : Nat
+GASize = 3
 
 public export
-gaDecode : Nat -> Maybe GebAtom
-gaDecode 0 = Just NAT
-gaDecode 1 = Just PRODUCT
-gaDecode 2 = Just COPRODUCT
-gaDecode _ = Nothing
+GAFin : Type
+GAFin = Fin GASize
 
 public export
-gaEncodeDecodeIsJust : (a : GebAtom) -> gaDecode (gaEncode a) = Just a
-gaEncodeDecodeIsJust NAT = Refl
-gaEncodeDecodeIsJust PRODUCT = Refl
-gaEncodeDecodeIsJust COPRODUCT = Refl
+GADecoder : FinDecoder GebAtom GASize
+GADecoder FZ = NAT
+GADecoder (FS FZ) = PRODUCT
+GADecoder (FS $ FS FZ) = COPRODUCT
+
+public export
+GAEncoder : FinEncoder GADecoder
+GAEncoder NAT = (natToFinLT 0 ** Refl)
+GAEncoder PRODUCT = (natToFinLT 1 ** Refl)
+GAEncoder COPRODUCT = (natToFinLT 2 ** Refl)
+
+public export
+GebAtomEncoding : FinDecEncoding GebAtom GASize
+GebAtomEncoding = (GADecoder ** GAEncoder)
 
 public export
 gaToString : GebAtom -> String
@@ -51,21 +56,21 @@ Show GebAtom where
   show a = gaToString a
 
 public export
-gaEq : GebAtom -> GebAtom -> Bool
-gaEq a a' = gaEncode a == gaEncode a'
-
-public export
 Eq GebAtom where
-  (==) = gaEq
+  (==) = fdeEq GebAtomEncoding
 
 public export
 Ord GebAtom where
-  a < a' = gaEncode a < gaEncode a'
-
-public export
-gaDecEq : (a, a' : GebAtom) -> Dec (a = a')
-gaDecEq = encodingDecEq gaEncode gaDecode gaEncodeDecodeIsJust decEq
+  (<) = fdeLt GebAtomEncoding
 
 public export
 DecEq GebAtom where
-  decEq = gaDecEq
+  decEq = fdeDecEq GebAtomEncoding
+
+public export
+GAList : Type
+GAList = List GebAtom
+
+public export
+GASubEncoding : (l : GAList) -> FinSubEncoding GebAtom GASize
+GASubEncoding l = (GebAtomEncoding, l)

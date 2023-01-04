@@ -34,6 +34,17 @@ record IsEquivalence {a : Type} (r : RelationOn a) where
   EquivTrans : IsTransitive r
 
 public export
+data EquivClosure : {a : Type} -> RelationOn a -> RelationOn a where
+  EqClGen : {a : Type} -> {r : RelationOn a} -> {x, x' : a} ->
+    r x x' -> EquivClosure {a} r x x'
+  EqClRefl : {a : Type} -> {r : RelationOn a} -> {x : a} ->
+    EquivClosure {a} r x x
+  EqClSym : {a : Type} -> {r : RelationOn a} -> {x, y : a} ->
+    EquivClosure {a} r x y -> EquivClosure {a} r y x
+  EqClTrans : {a : Type} -> {r : RelationOn a} -> {x, y, z : a} ->
+    EquivClosure {a} r x y -> EquivClosure {a} r y z -> EquivClosure {a} r x z
+
+public export
 IsDecidable : {a : Type} -> (r : RelationOn a) -> Type
 IsDecidable {a} r = (x, y : a) -> Dec (r x y)
 
@@ -91,6 +102,54 @@ ExtInverse f g = (ExtEq (f . g) id, ExtEq (g . f) id)
 public export
 ExtInversePair : {a, b : Type} -> (a -> b, b -> a) -> Type
 ExtInversePair (f, g) = ExtInverse f g
+
+-----------------------------------------------
+-----------------------------------------------
+---- Categories internal to Idris's `Type` ----
+-----------------------------------------------
+-----------------------------------------------
+
+public export
+record CatSig where
+  constructor MkCatSig
+  catObj : Type
+  catMorph : catObj -> catObj -> Type
+  catMorphEq : (a, b  : catObj) -> RelationOn (catMorph a b)
+  catId : (a : catObj) -> catMorph a a
+  catComp : {a, b, c : catObj} -> catMorph b c -> catMorph a b -> catMorph a c
+
+public export
+record CatSigCorrect (cat : CatSig) where
+  constructor MkCatSigCorrect
+  catMorphEqEquiv : (a, b : catObj cat) -> IsEquivalence (catMorphEq cat a b)
+  catLeftId : {a, b : catObj cat} ->
+    (m : catMorph cat a b) ->
+    catMorphEq cat a b (catComp cat {a} {b} {c=b} (catId cat b) m) m
+  catRightId : {a, b : catObj cat} ->
+    (m : catMorph cat a b) ->
+    catMorphEq cat a b (catComp cat {a} {b=a} {c=b} m (catId cat a)) m
+  catAssoc : {a, b, c, d : catObj cat} ->
+    (h : catMorph cat c d) ->
+    (g : catMorph cat b c) ->
+    (f : catMorph cat a b) ->
+    catMorphEq cat a d
+      (catComp cat {a} {b=c} {c=d} h (catComp cat {a} {b} {c} g f))
+      (catComp cat {a} {b} {c=d} (catComp cat {a=b} {b=c} {c=d} h g) f)
+
+public export
+CorrectCatSig : Type
+CorrectCatSig = Subset0 CatSig CatSigCorrect
+
+-- Idris's `Type` itself.
+public export
+TypeCat : CatSig
+TypeCat =
+  MkCatSig
+    Type
+    (\x, y => x -> y)
+    (\x, y => ExtEq)
+    (\x => Prelude.id)
+    (\g, f => g . f)
 
 ---------------------------------------
 ---------------------------------------
@@ -456,6 +515,14 @@ InitialNaturality _ v = void v
 ------------------
 ---- Products ----
 ------------------
+
+public export
+biapp : {0 a, b, c, d : Type} -> (b -> c -> d) -> (a -> b) -> (a -> c) -> a -> d
+biapp h f g x = h (f x) (g x)
+
+public export
+MkPairF : {0 a, b, c : Type} -> (a -> b) -> (a -> c) -> a -> (b, c)
+MkPairF = biapp MkPair
 
 -- `ProductF` is an operator on endofunctors which takes two endofunctors
 -- to their product.  `ProductF` is therefore not itself an endofunctor; it
@@ -7277,19 +7344,19 @@ subst0NewConstraintFunctorAlg = CoproductAlgL {l=Subst0TypeFCases}
 --------------------
 
 PredicateOn : Type -> Type
-PredicateOn type = type -> Type
+PredicateOn = SliceObj
 
-EmptyPred : (t : Type) -> PredicateOn t
-EmptyPred t el = Void
+InitialSliceObj : (t : Type) -> PredicateOn t
+InitialSliceObj t el = Void
 
 VoidPred : PredicateOn Void
 VoidPred v = void v
 
-FullPred : (t : Type) -> PredicateOn t
-FullPred t el = ()
+TerminalSliceObj : (t : Type) -> PredicateOn t
+TerminalSliceObj t el = ()
 
 UnitPred : PredicateOn Unit
-UnitPred = FullPred ()
+UnitPred = TerminalSliceObj ()
 
 ProductPred : PredicateOn a -> PredicateOn b -> PredicateOn (a, b)
 ProductPred p p' (el, el') = (p el, p' el')
@@ -7333,7 +7400,7 @@ data FreeMPredicate :
     FreeMPredicate f rel el
 
 PredicateMu : {t: Type} -> PredFunctor t -> PredicateOn t
-PredicateMu {t} f = FreeMPredicate f $ EmptyPred t
+PredicateMu {t} f = FreeMPredicate f $ InitialSliceObj t
 
 data PredicateTreeF : {t: Type} ->
     (f : PredFunctor t) -> (v : PredicateOn t) -> PredFunctor t where
@@ -7350,7 +7417,7 @@ data CofreeCMPredicate :
     CofreeCMPredicate f rel el
 
 PredicateNu : {t: Type} -> PredFunctor t -> PredicateOn t
-PredicateNu {t} f = CofreeCMPredicate f $ FullPred t
+PredicateNu {t} f = CofreeCMPredicate f $ TerminalSliceObj t
 
 -------------------
 ---- Relations ----
@@ -7393,7 +7460,7 @@ PreservesRelations : {a, b : Type} ->
 PreservesRelations rel rel' f = EqualOverRelations rel rel' f f
 
 RelMorphism : {a, b : Type} -> RelationOn a -> RelationOn b -> Type
-RelMorphism rel rel' = DPair (a -> b) (PreservesRelations rel rel')
+RelMorphism rel rel' = Subset0 (a -> b) (PreservesRelations rel rel')
 
 RelFunctor : Type -> Type
 RelFunctor t = RelationOn t -> RelationOn t

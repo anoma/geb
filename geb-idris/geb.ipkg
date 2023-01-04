@@ -6,6 +6,7 @@ modules =
     , Library.IdrisCategories
     , Library.CategoryTheory
     , LanguageDef.NatPrefixCat
+    , LanguageDef.PolyProfunctor
     , LanguageDef.ADTCat
     , LanguageDef.PolyCat
     , LanguageDef.Atom
@@ -20,6 +21,7 @@ modules =
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
     , LanguageDef.Test.NatPrefixCatTest
+    , LanguageDef.Test.PolyProfunctorTest
     , LanguageDef.Test.ADTCatTest
     , LanguageDef.Test.PolyCatTest
     , LanguageDef.Test.AtomTest

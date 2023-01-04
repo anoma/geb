@@ -4,266 +4,350 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import public LanguageDef.Atom
 import public LanguageDef.PolyCat
+import public LanguageDef.PolyProfunctor
 
 %default total
 
-----------------------------------------------------------------
-----------------------------------------------------------------
----- Explicitly-recursive Idris ADT definition of term type ----
-----------------------------------------------------------------
-----------------------------------------------------------------
+---------------------------
+---------------------------
+----- Bool as PolyFunc ----
+---------------------------
+---------------------------
 
 public export
-data SubstTermRec : Type where
-  STRLeaf : SubstTermRec
-  STRLeft : SubstTermRec -> SubstTermRec
-  STRRight : SubstTermRec -> SubstTermRec
-  STRPair : SubstTermRec -> SubstTermRec -> SubstTermRec
+BoolPos : Type
+BoolPos = Bool
 
-------------------------------------------
-------------------------------------------
----- PolyFunc definition of term type ----
-------------------------------------------
-------------------------------------------
+public export
+BoolDir : BoolPos -> Type
+BoolDir = const Void
+
+public export
+BoolF : PolyFunc
+BoolF = (BoolPos ** BoolDir)
+
+public export
+BoolAlg : Type -> Type
+BoolAlg = PFAlg BoolF
+
+public export
+BoolMu : Type
+BoolMu = PolyFuncMu BoolF
+
+public export
+boolCata : {0 a : Type} -> BoolAlg a -> BoolMu -> a
+boolCata = pfCata {p=BoolF}
+
+public export
+FreeBoolF : PolyFunc
+FreeBoolF = PolyFuncFreeM BoolF
+
+public export
+FreeBool : Type -> Type
+FreeBool = InterpPolyFuncFreeM BoolF
+
+public export
+FreeBoolAlg : Type -> Type -> Type
+FreeBoolAlg = PFTranslateAlg BoolF
+
+public export
+freeBoolCata : {a, b : Type} -> FreeBoolAlg a b -> FreeBool a -> b
+freeBoolCata = pfFreeCata {p=BoolF}
+
+public export
+InFalse : BoolMu
+InFalse = InPFM False $ voidF _
+
+public export
+InTrue : BoolMu
+InTrue = InPFM True $ voidF _
+
+public export
+BoolShowAlg : BoolAlg String
+BoolShowAlg i _ = if i then "1" else "0"
+
+public export
+Show BoolMu where
+  show = boolCata BoolShowAlg
+
+public export
+BoolSlice : Type
+BoolSlice = SliceObj Bool
+
+---------------------------
+---------------------------
+----- Pair as PolyFunc ----
+---------------------------
+---------------------------
+
+public export
+PairPos : Type
+PairPos = Unit
+
+-- We shall somewhat arbitrarily use `False` for `fst` and `True` for `snd`.
+public export
+PairDir : PairPos -> Type
+PairDir () = Bool
+
+public export
+PAIRFST : PairDir ()
+PAIRFST = False
+
+public export
+PAIRSND : PairDir ()
+PAIRSND = True
+
+public export
+PairF : PolyFunc
+PairF = (PairPos ** PairDir)
+
+public export
+PairAlg : Type -> Type
+PairAlg = PFAlg PairF
+
+public export
+FreePairF : PolyFunc
+FreePairF = PolyFuncFreeM PairF
+
+public export
+FreePair : Type -> Type
+FreePair = InterpPolyFuncFreeM PairF
+
+public export
+FreePairAlg : Type -> Type -> Type
+FreePairAlg = PFTranslateAlg PairF
+
+public export
+freePairCata : {a, b : Type} -> FreePairAlg a b -> FreePair a -> b
+freePairCata = pfFreeCata {p=PairF}
+
+public export
+PairShowAlg : PairAlg String
+PairShowAlg () d = "(" ++ d PAIRFST ++ "," ++ d PAIRSND ++ ")"
 
 ----------------------------------
----- Positions and directions ----
+----------------------------------
+---- Binary trees as PolyFunc ----
+----------------------------------
 ----------------------------------
 
 public export
-data SubstTermPos : Type where
-  STPosLeaf : SubstTermPos
-  STPosLeft : SubstTermPos
-  STPosRight : SubstTermPos
-  STPosPair : SubstTermPos
+BinTreeF : PolyFunc -> PolyFunc
+BinTreeF a = pfCoproductArena a PairF
 
 public export
-data SubstTermDir : SubstTermPos -> Type where
-  STDirL : SubstTermDir STPosLeft
-  STDirR : SubstTermDir STPosRight
-  STDirFst : SubstTermDir STPosPair
-  STDirSnd : SubstTermDir STPosPair
+BinTreeAlg : PolyFunc -> Type -> Type
+BinTreeAlg a = PFAlg (BinTreeF a)
 
 public export
-SubstTermPF : PolyFunc
-SubstTermPF = (SubstTermPos ** SubstTermDir)
-
----------------------------------------------
----- Least fixed point (initial algebra) ----
----------------------------------------------
+BinTreeMu : PolyFunc -> Type
+BinTreeMu a = PolyFuncMu (BinTreeF a)
 
 public export
-STMu : Type
-STMu = PolyFuncMu SubstTermPF
+binTreeCata : {0 a : PolyFunc} -> {0 b : Type} ->
+  BinTreeAlg a b -> BinTreeMu a -> b
+binTreeCata {a} {b} = pfCata {p=(BinTreeF a)} {a=b}
 
 public export
-STFreeM : PolyFunc
-STFreeM = PolyFuncFreeM SubstTermPF
-
----------------------------------
----- Algebras, catamorphisms ----
----------------------------------
+BinTreeShowAlg : {a : PolyFunc} -> PFAlg a String -> BinTreeAlg a String
+BinTreeShowAlg {a=(pos ** dir)} alg (Left i) d = alg i d
+BinTreeShowAlg {a=(pos ** dir)} alg (Right ()) d = PairShowAlg () d
 
 public export
-STAlg : Type -> Type
-STAlg = PFAlg SubstTermPF
+binTreeShow : {a : PolyFunc} -> PFAlg a String -> BinTreeMu a -> String
+binTreeShow = binTreeCata . BinTreeShowAlg
+
+-- Construct a leaf of a binary tree.
+public export
+InBTL : {a : PolyFunc} -> PolyFuncMu a -> BinTreeMu a
+InBTL {a=a@(pos ** dir)} = pfCata {p=a} $ \i, d => InPFM (Left i) d
+
+-- Construct an internal node of a binary tree.
+public export
+InBTN : {a : PolyFunc} -> BinTreeMu a -> BinTreeMu a -> BinTreeMu a
+InBTN {a=(pos ** dir)} x y = InPFM (Right ()) $ \i => case i of
+  False => x
+  True => y
+
+-----------------------------------------
+---- Some specific binary tree types ----
+-----------------------------------------
 
 public export
-stCata : {0 a : Type} -> STAlg a -> STMu -> a
-stCata = pfCata {p=SubstTermPF}
+BinTreeB : Type
+BinTreeB = BinTreeMu BoolF
+
+---------------------------
+---------------------------
+----- SExp as PolyFunc ----
+---------------------------
+---------------------------
+
+-- We shall use `False` for `atom` and `True` for `pair`.
+public export
+SexpXPos : Type
+SexpXPos = Bool
 
 public export
-STProdAlg : Type -> Type
-STProdAlg = PFProductAlg SubstTermPF SubstTermPF
+SEXPXA : SexpXPos
+SEXPXA = False
 
 public export
-stProdCata : {0 a : Type} -> STProdAlg a -> STMu -> STMu -> a
-stProdCata {a} = pfProductCata {a} {p=SubstTermPF} {q=SubstTermPF}
+SEXPXP : SexpXPos
+SEXPXP = True
 
 public export
-STNatTrans : Type
-STNatTrans = PolyNatTrans SubstTermPF SubstTermPF
+SexpXDir : SexpXPos -> Type
+SexpXDir False = Unit
+SexpXDir True = Unit
+
+-- We shall use 'False` for `pair` and `True` for `expression`.
+public export
+SexpCompoundPosBase : Type
+SexpCompoundPosBase = Bool
 
 public export
-STFreeNatTrans : Type
-STFreeNatTrans = PolyNatTrans STFreeM STFreeM
+SEXPCP : SexpCompoundPosBase
+SEXPCP = False
 
 public export
-STNatTransMN : Nat -> Nat -> Type
-STNatTransMN = pfNatTransMN SubstTermPF SubstTermPF
+SEXPCX : SexpCompoundPosBase
+SEXPCX = True
 
 public export
-stPolyCata : STNatTrans -> STMu -> STMu
-stPolyCata = pfPolyCata {p=SubstTermPF} {q=SubstTermPF}
+SexpCompoundPos : SexpCompoundPosBase -> Type
+SexpCompoundPos False = PairPos
+SexpCompoundPos True = SexpXPos
+
+-- `Left ()` is an atom; `Right` is compound (a pair or an expression).
+public export
+SexpPosBase : Type
+SexpPosBase = Either () SexpCompoundPosBase
 
 public export
-stFreePolyCata : STNatTrans -> STFreeNatTrans
-stFreePolyCata = pfFreePolyCata {p=SubstTermPF} {q=SubstTermPF}
+SexpPSlice : Type
+SexpPSlice = SliceObj SexpPosBase
 
 public export
-STProductHomAlgNT : Type
-STProductHomAlgNT = PFProductHomAlgNT SubstTermPF SubstTermPF SubstTermPF
+SexpPos : PolyFunc -> SexpPosBase -> Type
+SexpPos a (Left ()) = pfPos a
+SexpPos a (Right i) = SexpCompoundPos i
 
 public export
-stProductHomCataNT : STProductHomAlgNT -> STMu -> STMu -> STMu
-stProductHomCataNT =
-  pfProductHomCataNT {p=SubstTermPF} {q=SubstTermPF} {r=SubstTermPF}
+SexpDir : {a : PolyFunc} ->
+  Sigma (SexpPos a) -> (dirdep : Type ** dirdep -> SexpPosBase)
+-- An atom's sub-expressions are those of the atom's ADT, and do not
+-- contain any further S-expressions.
+SexpDir {a} ((Left ()) ** i) = (pfDir {p=a} i ** const $ Left ())
+-- Both parts of a pair are exps.
+SexpDir {a} ((Right False) ** ()) = (PairDir () ** const $ Right True)
+-- An expression's dependent position indicates whether it's a pair or an atom.
+SexpDir {a} ((Right True) ** i) =
+  (SexpXDir i ** if i then const (Right False) else const (Left ()))
 
 public export
-STProductHomAlg : Type -> Type
-STProductHomAlg = PFProductHomAlg SubstTermPF SubstTermPF
+SexpF' : PolyFunc -> SlicePolyFunc' SexpPosBase SexpPosBase
+SexpF' a = (SexpPos a ** SexpDir {a})
 
 public export
-stProductHomCata : {a : Type} -> STProductHomAlg a -> STMu -> STMu -> a
-stProductHomCata = pfProductHomCata {p=SubstTermPF} {q=SubstTermPF}
+SexpF : PolyFunc -> SlicePolyFunc SexpPosBase SexpPosBase
+SexpF = SPFFromPrime . SexpF'
 
--------------------
----- Utilities ----
--------------------
+-- An algebra for a mutual recursion which returns potentially-different
+-- types for an S-expression and a pair of S-expressions.
+public export
+SexpAlg : PolyFunc -> SexpPSlice -> Type
+SexpAlg = SPFAlg . SexpF
 
 public export
-InSTUnit : STMu
-InSTUnit = InPFM STPosLeaf $ \d => case d of _ impossible
+SexpMuSlice : PolyFunc -> SexpPosBase -> Type
+SexpMuSlice = SPFMu . SexpF
 
 public export
-InSTLeft : STMu -> STMu
-InSTLeft x = InPFM STPosLeft $ \d => case d of STDirL => x
+SexpMuA : PolyFunc -> Type
+SexpMuA a = SexpMuSlice a (Left ())
 
 public export
-InSTRight : STMu -> STMu
-InSTRight y = InPFM STPosRight $ \d => case d of STDirR => y
+SexpMuP : PolyFunc -> Type
+SexpMuP a = SexpMuSlice a (Right False)
 
 public export
-InSTPair : STMu -> STMu -> STMu
-InSTPair x y = InPFM STPosPair $ \d => case d of
-  STDirFst => x
-  STDirSnd => y
+SexpMuX : PolyFunc -> Type
+SexpMuX a = SexpMuSlice a (Right True)
 
 public export
-STNumLeavesAlg : STAlg Nat
-STNumLeavesAlg STPosLeaf dir = 1
-STNumLeavesAlg STPosLeft dir = dir STDirL
-STNumLeavesAlg STPosRight dir = dir STDirR
-STNumLeavesAlg STPosPair dir = dir STDirFst + dir STDirSnd
+SexpSliceM : PolyFunc -> SexpPSlice -> Type
+SexpSliceM = SliceMorphism {a=SexpPosBase} . SexpMuSlice
 
 public export
-stNumLeaves : STMu -> Nat
-stNumLeaves = stCata STNumLeavesAlg
+sexpBCata : {a : PolyFunc} -> {sa : SexpPSlice} ->
+  SexpAlg a sa -> SexpSliceM a sa
+sexpBCata {a} = spfCata {spf=(SexpF a)}
+
+-- One special case of an S-expression algebra is when the atom and pair
+-- components of the algebra both return the same type, and the expression
+-- component of that algebra just passes the type through unchanged.  In
+-- that case, we can perform an S-expression catamorphism by providing only
+-- a binary-tree algebra (which is simpler).  This captures the sense in which
+-- S-expressions are more expressive than binary trees:  their algebras in
+-- general allow different return types for atoms and pairs, with the expression
+-- component handling both cases to produce the return type for the overall
+-- expressions.
+public export
+BinTreeAlgToSexpAlg : {0 a : PolyFunc} -> {0 b : Type} ->
+  BinTreeAlg a b -> SexpAlg a (const b)
+BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Left ()) (i ** d) = alg (Left i) d
+BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right False) (() ** d) = alg (Right ()) d
+BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right True) ((False ** d)) = d ()
+BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right True) ((True ** d)) = d ()
 
 public export
-STNumInternalNodesAlg : STAlg Nat
-STNumInternalNodesAlg STPosLeaf dir = 0
-STNumInternalNodesAlg STPosLeft dir = 1 + dir STDirL
-STNumInternalNodesAlg STPosRight dir = 1 + dir STDirR
-STNumInternalNodesAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
+sexpBTCata : {a : PolyFunc} -> {b : Type} ->
+  BinTreeAlg a b -> SexpSliceM a (const b)
+sexpBTCata {a} {b} = sexpBCata {a} {sa=(const b)} . BinTreeAlgToSexpAlg
 
 public export
-stNumInternalNodes : STMu -> Nat
-stNumInternalNodes = stCata STNumInternalNodesAlg
+SexpShowAlg : {a : PolyFunc} -> PFAlg a String -> SexpAlg a (const String)
+SexpShowAlg alg = BinTreeAlgToSexpAlg (BinTreeShowAlg alg)
 
 public export
-STSizeAlg : STAlg Nat
-STSizeAlg STPosLeaf dir = 1
-STSizeAlg STPosLeft dir = 1 + dir STDirL
-STSizeAlg STPosRight dir = 1 + dir STDirR
-STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
+sexpBShow : {a : PolyFunc} ->
+  PFAlg a String -> (i : SexpPosBase) -> SexpMuSlice a i -> String
+sexpBShow = sexpBCata . SexpShowAlg
 
 public export
-stSize : STMu -> Nat
-stSize = stCata STSizeAlg
+InSA : {a : PolyFunc} -> PolyFuncMu a -> SexpMuA a
+InSA {a} = pfCata {p=a} $ \i, d => InSPFM ((Left ()) ** i) d
 
 public export
-STDepthAlg : STAlg Nat
-STDepthAlg STPosLeaf dir = 0
-STDepthAlg STPosLeft dir = 1 + dir STDirL
-STDepthAlg STPosRight dir = 1 + dir STDirR
-STDepthAlg STPosPair dir = smax (dir STDirFst) (dir STDirSnd)
+InSAX : {a : PolyFunc} -> PolyFuncMu a -> SexpMuX a
+InSAX x = InSPFM (Right True ** SEXPXA) $ \() => InSA x
 
 public export
-stDepth : STMu -> Nat
-stDepth = stCata STDepthAlg
+InSP : {a : PolyFunc} -> SexpMuX a -> SexpMuX a -> SexpMuP a
+InSP x y = InSPFM (Right False ** ()) $ \d => case d of
+  False => x
+  True => y
 
 public export
-STShowAlg : STAlg String
-STShowAlg STPosLeaf dir = "_"
-STShowAlg STPosLeft dir = "l[" ++ dir STDirL ++ "]"
-STShowAlg STPosRight dir = "r[" ++ dir STDirR ++ "]"
-STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
+InSPX : {a : PolyFunc} -> SexpMuP a -> SexpMuX a
+InSPX p = InSPFM (Right True ** SEXPXP) $ \() => p
 
 public export
-Show STMu where
-  show = stCata STShowAlg
+InSPair : {a : PolyFunc} -> SexpMuX a -> SexpMuX a -> SexpMuX a
+InSPair = InSPX .* InSP
+
+----------------------------------
+---- Some specific Sexp types ----
+----------------------------------
 
 public export
-STEqAlg : STProdAlg Bool
-STEqAlg (STPosLeaf, STPosLeaf) d = True
-STEqAlg (STPosLeaf, STPosLeft) d = False
-STEqAlg (STPosLeaf, STPosRight) d = False
-STEqAlg (STPosLeaf, STPosPair) d = False
-STEqAlg (STPosLeft, STPosLeaf) d = False
-STEqAlg (STPosLeft, STPosLeft) d = d (STDirL, STDirL)
-STEqAlg (STPosLeft, STPosRight) d = False
-STEqAlg (STPosLeft, STPosPair) d = False
-STEqAlg (STPosRight, STPosLeaf) d = False
-STEqAlg (STPosRight, STPosLeft) d = False
-STEqAlg (STPosRight, STPosRight) d = d (STDirR, STDirR)
-STEqAlg (STPosRight, STPosPair) d = False
-STEqAlg (STPosPair, STPosLeaf) d = False
-STEqAlg (STPosPair, STPosLeft) d = False
-STEqAlg (STPosPair, STPosRight) d = False
-STEqAlg (STPosPair, STPosPair) d =
-  d (STDirFst, STDirFst) && d (STDirSnd, STDirSnd)
+SexpB : Type
+SexpB = SexpMuX BoolF
 
 public export
-stEq : STMu -> STMu -> Bool
-stEq = stProdCata STEqAlg
-
-public export
-Eq STMu where
-  (==) = stEq
-
-------------------------------------
----- Translation with Idris ADT ----
-------------------------------------
-
-public export
-STMuToRecAlg : STAlg SubstTermRec
-STMuToRecAlg STPosLeaf d = STRLeaf
-STMuToRecAlg STPosLeft d = STRLeft $ d STDirL
-STMuToRecAlg STPosRight d = STRRight $ d STDirR
-STMuToRecAlg STPosPair d = STRPair (d STDirFst) (d STDirSnd)
-
-public export
-stMuToRec : STMu -> SubstTermRec
-stMuToRec = stCata STMuToRecAlg
-
-public export
-stMuFromRec : SubstTermRec -> STMu
-stMuFromRec STRLeaf = InSTUnit
-stMuFromRec (STRLeft t) = InSTLeft $ stMuFromRec t
-stMuFromRec (STRRight t) = InSTRight $ stMuFromRec t
-stMuFromRec (STRPair t t') = InSTPair (stMuFromRec t) (stMuFromRec t')
-
----------------------
----- Refinements ----
----------------------
-
-public export
-STEqualizerPred : {0 a : Type} -> DecEqPred a -> STAlg a -> a -> STMu -> Bool
-STEqualizerPred {a} eq alg elema obj = isYes $ eq elema $ stCata alg obj
-
-public export
-STEqualizer : {0 a : Type} -> DecEqPred a -> STAlg a -> SliceObj a
-STEqualizer {a} eq alg elema =
-  Refinement {a=STMu} $ STEqualizerPred eq alg elema
-
-public export
-STRefineAlg : Type
-STRefineAlg = STAlg Bool
-
-public export
-STRefinement : SliceObj STRefineAlg
-STRefinement alg = Refinement {a=STMu} $ stCata alg
+SexpBP : Type
+SexpBP = SexpMuP BoolF
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -333,6 +417,27 @@ SOProductHomAlg = PFProductHomAlg SubstObjPF SubstObjPF
 public export
 soProductHomCata : {a : Type} -> SOProductHomAlg a -> SOMu -> SOMu -> a
 soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
+
+public export
+SOHomAlg : Type -> Type
+SOHomAlg a = BinTreeAlg BoolF (a -> a)
+
+public export
+SOHomAlgToFAlg : {0 a : Type} -> SOHomAlg a -> SOAlg (a -> a)
+SOHomAlgToFAlg alg SOPos0 d = alg (Left False) $ \i => case i of _ impossible
+SOHomAlgToFAlg alg SOPos1 d = alg (Left True) $ \i => case i of _ impossible
+SOHomAlgToFAlg alg SOPosC d = alg (Right ()) $ \i => case i of
+  False => d SODirL
+  True => d SODirR
+SOHomAlgToFAlg alg SOPosP d = d SODir1 . d SODir2
+
+public export
+soHomObjCata : {0 a : Type} -> SOHomAlg a -> SOMu -> a -> a
+soHomObjCata alg = soCata (SOHomAlgToFAlg alg)
+
+public export
+SOHomSOAlg : Type
+SOHomSOAlg = SOHomAlg SOMu
 
 -------------------
 ---- Utilities ----
@@ -447,8 +552,8 @@ SOInterpAlg SOPosC dir = Either (dir SODirL) (dir SODirR)
 SOInterpAlg SOPosP dir = Pair (dir SODir1) (dir SODir2)
 
 public export
-soInterp : SOMu -> Type
-soInterp = soCata SOInterpAlg
+SOInterp : SOMu -> Type
+SOInterp = soCata SOInterpAlg
 
 ---------------------------------------------------------
 ---- Embedding into PolyFunc as constant endofunctor ----
@@ -505,96 +610,6 @@ public export
 SORefinement : SliceObj SORefineAlg
 SORefinement alg = Refinement {a=SOMu} $ soCata alg
 
------------------------------------------------
------------------------------------------------
----- Relationships between terms and types ----
------------------------------------------------
------------------------------------------------
-
--- Test whether the given term is a valid term of the given type.
-public export
-SOTermCheckAlg : PFProductAlg SubstObjPF SubstTermPF Bool
--- No term has type `InSO0`.
-SOTermCheckAlg (SOPos0, STPosLeaf) d = False
-SOTermCheckAlg (SOPos0, STPosLeft) d = False
-SOTermCheckAlg (SOPos0, STPosRight) d = False
-SOTermCheckAlg (SOPos0, STPosPair) d = False
--- Only `InSTLeaf` has type `InSO1`.
-SOTermCheckAlg (SOPos1, STPosLeaf) d = True
-SOTermCheckAlg (SOPos1, STPosLeft) d = False
-SOTermCheckAlg (SOPos1, STPosRight) d = False
-SOTermCheckAlg (SOPos1, STPosPair) d = False
--- A coproduct term must be either a left injection or a right injection,
--- and its sub-term must match the corresponding sub-type.  The other
--- sub-type could be anything.
-SOTermCheckAlg (SOPosC, STPosLeaf) d = False
-SOTermCheckAlg (SOPosC, STPosLeft) d = d (SODirL, STDirL)
-SOTermCheckAlg (SOPosC, STPosRight) d = d (SODirR, STDirR)
-SOTermCheckAlg (SOPosC, STPosPair) d = False
--- A product term must be a pair, and each of its sub-terms must
--- match the corresponding sub-type.
-SOTermCheckAlg (SOPosP, STPosLeaf) d = False
-SOTermCheckAlg (SOPosP, STPosLeft) d = False
-SOTermCheckAlg (SOPosP, STPosRight) d = False
-SOTermCheckAlg (SOPosP, STPosPair) d =
-  d (SODir1, STDirFst) && d (SODir2, STDirSnd)
-
-public export
-soTermCheck : SOMu -> DecPred STMu
-soTermCheck = pfProductCata SOTermCheckAlg
-
-public export
-STTyped : SOMu -> Type
-STTyped so = Refinement {a=STMu} $ soTermCheck so
-
-public export
-MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
-  {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
-MkSTTyped {so} t {ok} = MkRefinement t
-
-data SOTermValidationAlg : PFProductAlg SubstObjPF SubstTermPF Type where
-  SOTermValidationAlg1L :
-    {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
-    SOTermValidationAlg (SOPos1, STPosLeaf) d
-  SOTermValidationAlgCL :
-    {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Type} ->
-    d (SODirL, STDirL) ->
-    SOTermValidationAlg (SOPosC, STPosLeft) d
-  SOTermValidationAlgCR :
-    {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Type} ->
-    d (SODirR, STDirR) ->
-    SOTermValidationAlg (SOPosC, STPosRight) d
-  SOTermValidationAlgPP :
-    {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
-    d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
-    SOTermValidationAlg (SOPosP, STPosPair) d
-
-public export
-SOTermValidation : SOMu -> STMu -> Type
-SOTermValidation = pfProductCata SOTermValidationAlg
-
-public export
-SOCheckedTermAlg : SOAlg Type
-SOCheckedTermAlg SOPos0 d = Void
-SOCheckedTermAlg SOPos1 d = Unit
-SOCheckedTermAlg SOPosC d = Either (d SODirL) (d SODirR)
-SOCheckedTermAlg SOPosP d = Pair (d SODir1) (d SODir2)
-
-public export
-soCheckedTerm : SOMu -> Type
-soCheckedTerm = pfCata SOCheckedTermAlg
-
-public export
-SOCheckedTermPFAlg : SOAlg PolyFunc
-SOCheckedTermPFAlg SOPos0 d = PFInitialArena
-SOCheckedTermPFAlg SOPos1 d = PFTerminalArena
-SOCheckedTermPFAlg SOPosC d = pfCoproductArena (d SODirL) (d SODirR)
-SOCheckedTermPFAlg SOPosP d = pfProductArena (d SODir1) (d SODir2)
-
-public export
-soCheckedTermPF : SOMu -> PolyFunc
-soCheckedTermPF = pfCata SOCheckedTermPFAlg
-
 ---------------------------
 ---------------------------
 ---- Morphisms in SOMu ----
@@ -602,42 +617,79 @@ soCheckedTermPF = pfCata SOCheckedTermPFAlg
 ---------------------------
 
 public export
-SOHomObjAlg : SOAlg (SOMu -> SOMu)
+SOHomObjAlg : SOHomSOAlg
 -- 0 -> x === 1
-SOHomObjAlg SOPos0 d obj = InSO1
+SOHomObjAlg (Left False) d = (const InSO1)
 -- 1 -> x === x
-SOHomObjAlg SOPos1 d obj = obj
+SOHomObjAlg (Left True) d = id
 -- (x + y) -> z === (x -> z) * (y -> z)
-SOHomObjAlg SOPosC d obj = InSOP (d SODirL obj) (d SODirR obj)
--- (x * y) -> z === x -> (y -> z)
-SOHomObjAlg SOPosP d obj = d SODir1 $ d SODir2 obj
+SOHomObjAlg (Right ()) d = biapp InSOP (d False) (d True)
 
 public export
 soHomObj : SOMu -> SOMu -> SOMu
-soHomObj = soCata SOHomObjAlg
+soHomObj = soHomObjCata SOHomObjAlg
 
 public export
 soExpObj : SOMu -> SOMu -> SOMu
 soExpObj = flip soHomObj
 
 public export
-SOHomTerm : SOMu -> SOMu -> Type
-SOHomTerm = STTyped .* soHomObj
+soCovarHomPF : SOMu -> PolyFunc
+soCovarHomPF = PFHomArena . SOInterp
 
 public export
-SOHomTermFunc : SOMu -> SOMu -> PolyFunc
-SOHomTermFunc = soCheckedTermPF .* soHomObj
+SOMuMorphTerm : SOMu -> SOMu -> Type
+SOMuMorphTerm x y = SOInterp (soHomObj x y)
 
 public export
-SOHomFuncAlg : SOAlg PolyFunc
-SOHomFuncAlg SOPos0 d = PFTerminalArena
-SOHomFuncAlg SOPos1 d = PFIdentityArena
-SOHomFuncAlg SOPosC d = pfProductArena (d SODirL) (d SODirR)
-SOHomFuncAlg SOPosP d = pfCompositionArena (d SODir1) (d SODir2)
+SOMuMorphMeta : SOMu -> SOMu -> Type
+SOMuMorphMeta x y = SOInterp x -> SOInterp y
 
 public export
-soHomPF : SOMu -> PolyFunc
-soHomPF = pfCata SOHomFuncAlg
+SOHomReflectAlg : (v, u, f : SOMu) -> SOMu
+SOHomReflectAlg v u f = InSOP v (InSOP u f)
+
+public export
+SOHomReflect : {v, u, f : SOMu} -> {a : Type} ->
+  (SOInterp v -> a) -> (SOInterp u -> a) -> (SOInterp f -> a -> a -> a) ->
+  SOInterp (SOHomReflectAlg v u f) -> BinTreeAlg BoolF a
+SOHomReflect vi ui fi alg (Left False) d = vi $ fst alg
+SOHomReflect vi ui fi alg (Left True) d = ui $ fst $ snd alg
+SOHomReflect vi ui fi alg (Right ()) d = fi (snd $ snd alg) (d False) (d True)
+
+--------------------------------------------------------------------------
+---- Dependent-set definition of substitutive polynomial endofunctors ----
+--------------------------------------------------------------------------
+
+-- A dependent object in "Programmer's FinSet" (AKA `PFS`, the category whose
+-- types are terms of `SOMu` and whose morphisms are terms of `SOMuMorph`) --
+-- that -- is, a function from objects of `PFS` to objects of `PFS`.
+PFSDepObj : SOMu -> Type
+PFSDepObj x = SOInterp x -> SOMu
+
+-- An arena with positions and directions drawn from "Programmer's FinSet"
+-- (AKA the category whose types are terms of `SOMu` and whose morphisms
+-- are terms of `SOMuMorph`).
+public export
+PFSEndoArena : Type
+PFSEndoArena = DPair SOMu PFSDepObj
+
+public export
+pfsPos : PFSEndoArena -> SOMu
+pfsPos = DPair.fst
+
+public export
+PFSPosTerm : PFSEndoArena -> Type
+PFSPosTerm = SOInterp . pfsPos
+
+public export
+pfsDir : (ar : PFSEndoArena) -> PFSPosTerm ar -> SOMu
+pfsDir = DPair.snd
+
+-- Interpret an arena as a polynomial endofunctor on `PFS`.
+public export
+PFSEndoInterp : PFSEndoArena -> SOMu -> SOMu
+PFSEndoInterp ar = ?PFSEndoInterp_hole
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -985,6 +1037,362 @@ ISEFPosAlg SOPosP d = InSOP (d SODir1) (d SODir2)
 public export
 ISEFPos : SOMu -> SOMu
 ISEFPos = soCata ISEFPosAlg
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+---- Explicitly-recursive Idris ADT definition of term type ----
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+public export
+data SubstTermRec : Type where
+  STRLeaf : SubstTermRec
+  STRLeft : SubstTermRec -> SubstTermRec
+  STRRight : SubstTermRec -> SubstTermRec
+  STRPair : SubstTermRec -> SubstTermRec -> SubstTermRec
+
+------------------------------------------
+------------------------------------------
+---- PolyFunc definition of term type ----
+------------------------------------------
+------------------------------------------
+
+----------------------------------
+---- Positions and directions ----
+----------------------------------
+
+public export
+data SubstTermPos : Type where
+  STPosLeaf : SubstTermPos
+  STPosLeft : SubstTermPos
+  STPosRight : SubstTermPos
+  STPosPair : SubstTermPos
+
+public export
+data SubstTermDir : SubstTermPos -> Type where
+  STDirL : SubstTermDir STPosLeft
+  STDirR : SubstTermDir STPosRight
+  STDirFst : SubstTermDir STPosPair
+  STDirSnd : SubstTermDir STPosPair
+
+public export
+SubstTermPF : PolyFunc
+SubstTermPF = (SubstTermPos ** SubstTermDir)
+
+---------------------------------------------
+---- Least fixed point (initial algebra) ----
+---------------------------------------------
+
+public export
+STMu : Type
+STMu = PolyFuncMu SubstTermPF
+
+public export
+STFreeM : PolyFunc
+STFreeM = PolyFuncFreeM SubstTermPF
+
+---------------------------------
+---- Algebras, catamorphisms ----
+---------------------------------
+
+public export
+STAlg : Type -> Type
+STAlg = PFAlg SubstTermPF
+
+public export
+stCata : {0 a : Type} -> STAlg a -> STMu -> a
+stCata = pfCata {p=SubstTermPF}
+
+public export
+STProdAlg : Type -> Type
+STProdAlg = PFProductAlg SubstTermPF SubstTermPF
+
+public export
+stProdCata : {0 a : Type} -> STProdAlg a -> STMu -> STMu -> a
+stProdCata {a} = pfProductCata {a} {p=SubstTermPF} {q=SubstTermPF}
+
+public export
+STNatTrans : Type
+STNatTrans = PolyNatTrans SubstTermPF SubstTermPF
+
+public export
+STFreeNatTrans : Type
+STFreeNatTrans = PolyNatTrans STFreeM STFreeM
+
+public export
+STNatTransMN : Nat -> Nat -> Type
+STNatTransMN = pfNatTransMN SubstTermPF SubstTermPF
+
+public export
+stPolyCata : STNatTrans -> STMu -> STMu
+stPolyCata = pfPolyCata {p=SubstTermPF} {q=SubstTermPF}
+
+public export
+stFreePolyCata : STNatTrans -> STFreeNatTrans
+stFreePolyCata = pfFreePolyCata {p=SubstTermPF} {q=SubstTermPF}
+
+public export
+STProductHomAlgNT : Type
+STProductHomAlgNT = PFProductHomAlgNT SubstTermPF SubstTermPF SubstTermPF
+
+public export
+stProductHomCataNT : STProductHomAlgNT -> STMu -> STMu -> STMu
+stProductHomCataNT =
+  pfProductHomCataNT {p=SubstTermPF} {q=SubstTermPF} {r=SubstTermPF}
+
+public export
+STProductHomAlg : Type -> Type
+STProductHomAlg = PFProductHomAlg SubstTermPF SubstTermPF
+
+public export
+stProductHomCata : {a : Type} -> STProductHomAlg a -> STMu -> STMu -> a
+stProductHomCata = pfProductHomCata {p=SubstTermPF} {q=SubstTermPF}
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+InSTUnit : STMu
+InSTUnit = InPFM STPosLeaf $ \d => case d of _ impossible
+
+public export
+InSTLeft : STMu -> STMu
+InSTLeft x = InPFM STPosLeft $ \d => case d of STDirL => x
+
+public export
+InSTRight : STMu -> STMu
+InSTRight y = InPFM STPosRight $ \d => case d of STDirR => y
+
+public export
+InSTPair : STMu -> STMu -> STMu
+InSTPair x y = InPFM STPosPair $ \d => case d of
+  STDirFst => x
+  STDirSnd => y
+
+public export
+STNumLeavesAlg : STAlg Nat
+STNumLeavesAlg STPosLeaf dir = 1
+STNumLeavesAlg STPosLeft dir = dir STDirL
+STNumLeavesAlg STPosRight dir = dir STDirR
+STNumLeavesAlg STPosPair dir = dir STDirFst + dir STDirSnd
+
+public export
+stNumLeaves : STMu -> Nat
+stNumLeaves = stCata STNumLeavesAlg
+
+public export
+STNumInternalNodesAlg : STAlg Nat
+STNumInternalNodesAlg STPosLeaf dir = 0
+STNumInternalNodesAlg STPosLeft dir = 1 + dir STDirL
+STNumInternalNodesAlg STPosRight dir = 1 + dir STDirR
+STNumInternalNodesAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
+
+public export
+stNumInternalNodes : STMu -> Nat
+stNumInternalNodes = stCata STNumInternalNodesAlg
+
+public export
+STSizeAlg : STAlg Nat
+STSizeAlg STPosLeaf dir = 1
+STSizeAlg STPosLeft dir = 1 + dir STDirL
+STSizeAlg STPosRight dir = 1 + dir STDirR
+STSizeAlg STPosPair dir = 1 + dir STDirFst + dir STDirSnd
+
+public export
+stSize : STMu -> Nat
+stSize = stCata STSizeAlg
+
+public export
+STDepthAlg : STAlg Nat
+STDepthAlg STPosLeaf dir = 0
+STDepthAlg STPosLeft dir = 1 + dir STDirL
+STDepthAlg STPosRight dir = 1 + dir STDirR
+STDepthAlg STPosPair dir = smax (dir STDirFst) (dir STDirSnd)
+
+public export
+stDepth : STMu -> Nat
+stDepth = stCata STDepthAlg
+
+public export
+STShowAlg : STAlg String
+STShowAlg STPosLeaf dir = "_"
+STShowAlg STPosLeft dir = "l[" ++ dir STDirL ++ "]"
+STShowAlg STPosRight dir = "r[" ++ dir STDirR ++ "]"
+STShowAlg STPosPair dir = "(" ++ dir STDirFst ++ ", " ++ dir STDirSnd ++ ")"
+
+public export
+Show STMu where
+  show = stCata STShowAlg
+
+public export
+STEqAlg : STProdAlg Bool
+STEqAlg (STPosLeaf, STPosLeaf) d = True
+STEqAlg (STPosLeaf, STPosLeft) d = False
+STEqAlg (STPosLeaf, STPosRight) d = False
+STEqAlg (STPosLeaf, STPosPair) d = False
+STEqAlg (STPosLeft, STPosLeaf) d = False
+STEqAlg (STPosLeft, STPosLeft) d = d (STDirL, STDirL)
+STEqAlg (STPosLeft, STPosRight) d = False
+STEqAlg (STPosLeft, STPosPair) d = False
+STEqAlg (STPosRight, STPosLeaf) d = False
+STEqAlg (STPosRight, STPosLeft) d = False
+STEqAlg (STPosRight, STPosRight) d = d (STDirR, STDirR)
+STEqAlg (STPosRight, STPosPair) d = False
+STEqAlg (STPosPair, STPosLeaf) d = False
+STEqAlg (STPosPair, STPosLeft) d = False
+STEqAlg (STPosPair, STPosRight) d = False
+STEqAlg (STPosPair, STPosPair) d =
+  d (STDirFst, STDirFst) && d (STDirSnd, STDirSnd)
+
+public export
+stEq : STMu -> STMu -> Bool
+stEq = stProdCata STEqAlg
+
+public export
+Eq STMu where
+  (==) = stEq
+
+------------------------------------
+---- Translation with Idris ADT ----
+------------------------------------
+
+public export
+STMuToRecAlg : STAlg SubstTermRec
+STMuToRecAlg STPosLeaf d = STRLeaf
+STMuToRecAlg STPosLeft d = STRLeft $ d STDirL
+STMuToRecAlg STPosRight d = STRRight $ d STDirR
+STMuToRecAlg STPosPair d = STRPair (d STDirFst) (d STDirSnd)
+
+public export
+stMuToRec : STMu -> SubstTermRec
+stMuToRec = stCata STMuToRecAlg
+
+public export
+stMuFromRec : SubstTermRec -> STMu
+stMuFromRec STRLeaf = InSTUnit
+stMuFromRec (STRLeft t) = InSTLeft $ stMuFromRec t
+stMuFromRec (STRRight t) = InSTRight $ stMuFromRec t
+stMuFromRec (STRPair t t') = InSTPair (stMuFromRec t) (stMuFromRec t')
+
+---------------------
+---- Refinements ----
+---------------------
+
+public export
+STEqualizerPred : {0 a : Type} -> DecEqPred a -> STAlg a -> a -> STMu -> Bool
+STEqualizerPred {a} eq alg elema obj = isYes $ eq elema $ stCata alg obj
+
+public export
+STEqualizer : {0 a : Type} -> DecEqPred a -> STAlg a -> SliceObj a
+STEqualizer {a} eq alg elema =
+  Refinement {a=STMu} $ STEqualizerPred eq alg elema
+
+public export
+STRefineAlg : Type
+STRefineAlg = STAlg Bool
+
+public export
+STRefinement : SliceObj STRefineAlg
+STRefinement alg = Refinement {a=STMu} $ stCata alg
+
+-----------------------------------------------
+-----------------------------------------------
+---- Relationships between terms and types ----
+-----------------------------------------------
+-----------------------------------------------
+
+-- Test whether the given term is a valid term of the given type.
+public export
+SOTermCheckAlg : PFProductAlg SubstObjPF SubstTermPF Bool
+-- No term has type `InSO0`.
+SOTermCheckAlg (SOPos0, STPosLeaf) d = False
+SOTermCheckAlg (SOPos0, STPosLeft) d = False
+SOTermCheckAlg (SOPos0, STPosRight) d = False
+SOTermCheckAlg (SOPos0, STPosPair) d = False
+-- Only `InSTLeaf` has type `InSO1`.
+SOTermCheckAlg (SOPos1, STPosLeaf) d = True
+SOTermCheckAlg (SOPos1, STPosLeft) d = False
+SOTermCheckAlg (SOPos1, STPosRight) d = False
+SOTermCheckAlg (SOPos1, STPosPair) d = False
+-- A coproduct term must be either a left injection or a right injection,
+-- and its sub-term must match the corresponding sub-type.  The other
+-- sub-type could be anything.
+SOTermCheckAlg (SOPosC, STPosLeaf) d = False
+SOTermCheckAlg (SOPosC, STPosLeft) d = d (SODirL, STDirL)
+SOTermCheckAlg (SOPosC, STPosRight) d = d (SODirR, STDirR)
+SOTermCheckAlg (SOPosC, STPosPair) d = False
+-- A product term must be a pair, and each of its sub-terms must
+-- match the corresponding sub-type.
+SOTermCheckAlg (SOPosP, STPosLeaf) d = False
+SOTermCheckAlg (SOPosP, STPosLeft) d = False
+SOTermCheckAlg (SOPosP, STPosRight) d = False
+SOTermCheckAlg (SOPosP, STPosPair) d =
+  d (SODir1, STDirFst) && d (SODir2, STDirSnd)
+
+public export
+soTermCheck : SOMu -> DecPred STMu
+soTermCheck = pfProductCata SOTermCheckAlg
+
+public export
+STTyped : SOMu -> Type
+STTyped so = Refinement {a=STMu} $ soTermCheck so
+
+public export
+MkSTTyped : {0 so : SOMu} -> (t : STMu) ->
+  {auto 0 ok : Satisfies (soTermCheck so) t} -> STTyped so
+MkSTTyped {so} t {ok} = MkRefinement t
+
+data SOTermValidationAlg : PFProductAlg SubstObjPF SubstTermPF Type where
+  SOTermValidationAlg1L :
+    {d : (SubstObjDir SOPos1, SubstTermDir STPosLeaf) -> Type} ->
+    SOTermValidationAlg (SOPos1, STPosLeaf) d
+  SOTermValidationAlgCL :
+    {d : (SubstObjDir SOPosC, SubstTermDir STPosLeft) -> Type} ->
+    d (SODirL, STDirL) ->
+    SOTermValidationAlg (SOPosC, STPosLeft) d
+  SOTermValidationAlgCR :
+    {d : (SubstObjDir SOPosC, SubstTermDir STPosRight) -> Type} ->
+    d (SODirR, STDirR) ->
+    SOTermValidationAlg (SOPosC, STPosRight) d
+  SOTermValidationAlgPP :
+    {d : (SubstObjDir SOPosP, SubstTermDir STPosPair) -> Type} ->
+    d (SODir1, STDirFst) -> d (SODir2, STDirSnd) ->
+    SOTermValidationAlg (SOPosP, STPosPair) d
+
+public export
+SOTermValidation : SOMu -> STMu -> Type
+SOTermValidation = pfProductCata SOTermValidationAlg
+
+public export
+SOCheckedTermAlg : SOAlg Type
+SOCheckedTermAlg SOPos0 d = Void
+SOCheckedTermAlg SOPos1 d = Unit
+SOCheckedTermAlg SOPosC d = Either (d SODirL) (d SODirR)
+SOCheckedTermAlg SOPosP d = Pair (d SODir1) (d SODir2)
+
+public export
+SOCheckedTerm : SOMu -> Type
+SOCheckedTerm = pfCata SOCheckedTermAlg
+
+public export
+SOCheckedTermPFAlg : SOAlg PolyFunc
+SOCheckedTermPFAlg SOPos0 d = PFInitialArena
+SOCheckedTermPFAlg SOPos1 d = PFTerminalArena
+SOCheckedTermPFAlg SOPosC d = pfCoproductArena (d SODirL) (d SODirR)
+SOCheckedTermPFAlg SOPosP d = pfProductArena (d SODir1) (d SODir2)
+
+public export
+soCheckedTermPF : SOMu -> PolyFunc
+soCheckedTermPF = pfCata SOCheckedTermPFAlg
+
+public export
+SOHomTerm : SOMu -> SOMu -> Type
+SOHomTerm = STTyped .* soHomObj
+
+public export
+SOHomTermFunc : SOMu -> SOMu -> PolyFunc
+SOHomTermFunc = soCheckedTermPF .* soHomObj
 
 -----------------------------------
 -----------------------------------
