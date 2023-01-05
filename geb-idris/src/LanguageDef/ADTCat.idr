@@ -229,7 +229,7 @@ SexpPSlice : Type
 SexpPSlice = SliceObj SexpPosBase
 
 public export
-SexpPos : PolyFunc -> SexpPosBase -> Type
+SexpPos : PolyFunc -> SliceObj SexpPosBase
 SexpPos a (Left ()) = pfPos a
 SexpPos a (Right i) = SexpCompoundPos i
 
@@ -252,6 +252,26 @@ SexpF' a = (SexpPos a ** SexpDir {a})
 public export
 SexpF : PolyFunc -> SlicePolyFunc SexpPosBase SexpPosBase
 SexpF = SPFFromPrime . SexpF'
+
+public export
+SexpDPPFDir : (a : PolyFunc) -> Sigma (SexpPos a) -> (SexpPosBase, Type)
+-- The atom part of an s-expression is just an atom; it does not recursively
+-- contain any other s-expression components.
+SexpDPPFDir a (Left () ** i) = (Left (), pfDir {p=a} i)
+-- Both sides of a pair are sexps (`Right True`).
+SexpDPPFDir a (Right False ** ()) = (Right True, PairDir ())
+-- An expression's dependent position indicates whether it's an atom (`False`)
+-- or a pair (`True`).  Both cases have one direction from the s-expression-
+-- position perspective (one atom or one pair).
+SexpDPPFDir a (Right True ** i) = (if i then Right False else Left (), ())
+
+public export
+SexpDPPF : PolyFunc -> DepParamPolyFunc SexpPosBase SexpPosBase
+SexpDPPF a = (SexpPos a ** SexpDPPFDir a)
+
+public export
+SexpFAlt : PolyFunc -> SlicePolyFunc SexpPosBase SexpPosBase
+SexpFAlt = SPFFromDPPF . SexpDPPF
 
 -- An algebra for a mutual recursion which returns potentially-different
 -- types for an S-expression and a pair of S-expressions.

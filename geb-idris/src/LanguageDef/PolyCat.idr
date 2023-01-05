@@ -2635,6 +2635,25 @@ SPFToPrimes : {parambase, posbase : Type} ->
 SPFToPrimes (posdep ** dirdep ** assign) =
   (dirdep ** \ipos, paramslice => paramslice $ assign ipos)
 
+-- Yet another equivalent way of specifying a SlicePolyFunc.
+public export
+DepParamPolyFunc : Type -> Type -> Type
+DepParamPolyFunc parambase posbase =
+  (posslice : SliceObj posbase ** Sigma posslice -> (parambase, Type))
+
+public export
+SPFFromDPPF : {parambase, posbase : Type} ->
+  DepParamPolyFunc parambase posbase -> SlicePolyFunc parambase posbase
+SPFFromDPPF {parambase} {posbase} (posslice ** assign) =
+  (posslice ** snd . assign ** fst . assign . fst)
+
+public export
+DPPFFromSPF : {0 parambase, posbase : Type} ->
+  SlicePolyFunc parambase posbase -> DepParamPolyFunc parambase posbase
+DPPFFromSPF {parambase} {posbase} (posdep ** dirdep ** assign) =
+  (\pos => (i : posdep pos ** dirdep (pos ** i)) **
+   \(pos ** (i ** d)) => (assign ((pos ** i) ** d), dirdep (pos ** i)))
+
 public export
 SlicePolyEndoFunc : Type -> Type
 SlicePolyEndoFunc base = SlicePolyFunc base base

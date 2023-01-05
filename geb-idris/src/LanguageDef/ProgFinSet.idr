@@ -2,6 +2,7 @@ module LanguageDef.ProgFinSet
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import LanguageDef.PolyCat
 import public LanguageDef.Atom
 
 %default total
@@ -55,3 +56,11 @@ bcoCompAlg (MkBCOCompAlg a0 a1 ac) =
 public export
 bcoCompCata : BCOCompAlg (a -> a) -> BicartObj -> a -> a
 bcoCompCata = bcoCata . bcoCompAlg
+
+public export
+BCOTermAlg : BCOAlg Type
+BCOTermAlg = MkBCOAlg Void Unit Either Pair
+
+public export
+BCOTerm : BicartObj -> Type
+BCOTerm = bcoCata BCOTermAlg
