@@ -2793,6 +2793,26 @@ InterpSPFMap {a} {b} spf {sa} {sa'} =
   PredDepPolyFMap
     {parambase=a} {posbase=b} (spfPos spf) (spfDir spf) (spfAssign spf) sa sa'
 
+------------------------------------------------------------------------
+---- Direct interpretation of DepParamPolyFunc form of SliceFunctor ----
+------------------------------------------------------------------------
+
+public export
+InterpDPPF : {a, b : Type} ->
+  DepParamPolyFunc a b -> SliceFunctor a b
+InterpDPPF {a} {b} dppf paramslice posfst =
+  (possnd : fst dppf posfst **
+   snd (snd dppf (posfst ** possnd)) ->
+    paramslice (fst (snd dppf (posfst ** possnd))))
+
+public export
+InterpDPPFMap : {a, b : Type} -> (dppf : DepParamPolyFunc a b) ->
+  {sa, sa' : SliceObj a} ->
+  SliceMorphism sa sa' ->
+  SliceMorphism (InterpDPPF dppf sa) (InterpDPPF dppf sa')
+InterpDPPFMap {a} {b} dppf {sa} {sa'} m eb (pos ** dir) =
+  (pos ** \di => m (fst (snd dppf (eb ** pos))) (dir di))
+
 ------------------------------
 ---- Slices over PolyFunc ----
 ------------------------------
