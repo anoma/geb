@@ -64,3 +64,9 @@ BCOTermAlg = MkBCOAlg Void Unit Either Pair
 public export
 BCOTerm : BicartObj -> Type
 BCOTerm = bcoCata BCOTermAlg
+
+-- Endofunctors on the initial bicartesian distributive category (equivalently,
+-- the initial bicartesian closed category).
+public export
+PFSEndoFunc : Type
+PFSEndoFunc = ?PFSEndoFunc_hole
