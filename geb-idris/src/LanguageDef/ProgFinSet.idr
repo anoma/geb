@@ -25,6 +25,22 @@ data BicartObj : Type where
   InBCO : BicartObjF BicartObj -> BicartObj
 
 public export
+BCO0 : BicartObj
+BCO0 = InBCO BCOInitial
+
+public export
+BCO1 : BicartObj
+BCO1 = InBCO BCOInitial
+
+public export
+BCOC : BicartObj -> BicartObj -> BicartObj
+BCOC = InBCO .* BCOCoproduct
+
+public export
+BCOP : BicartObj -> BicartObj -> BicartObj
+BCOP = InBCO .* BCOProduct
+
+public export
 record BCOAlg (a : Type) where
   constructor MkBCOAlg
   bcoAlg0 : a
@@ -64,6 +80,14 @@ BCOTermAlg = MkBCOAlg Void Unit Either Pair
 public export
 BCOTerm : BicartObj -> Type
 BCOTerm = bcoCata BCOTermAlg
+
+public export
+BCOHomAlg : BCOCompAlg (BicartObj -> BicartObj)
+BCOHomAlg = MkBCOCompAlg (const BCO1) id (biapp BCOP)
+
+public export
+bcoHomObj : BicartObj -> BicartObj -> BicartObj
+bcoHomObj = bcoCompCata BCOHomAlg
 
 -- Endofunctors on the initial bicartesian distributive category (equivalently,
 -- the initial bicartesian closed category).
