@@ -121,5 +121,16 @@ PFSP = InPFSBC .* BCOProduct
 -- Endofunctors on the initial bicartesian distributive category (equivalently,
 -- the initial bicartesian closed category).
 public export
+data PFSEFPosBase : Type where
+  PPBObj : PFSEFPosBase
+  PPBFunc : PFSEFPosBase
+
+public export
+data PFSEFF : (PFSEFPosBase -> Type) -> PFSEFPosBase -> Type where
+  PPFObj : PFSObjF (a PPBObj) -> PFSEFF a PPBObj
+  PPFCovarRep : a PPBObj -> PFSEFF a PPBFunc
+  PPFFunc : PFSObjF (a PPBFunc) -> PFSEFF a PPBFunc
+
+public export
 PFSEndoFunc : Type
 PFSEndoFunc = ?PFSEndoFunc_hole
