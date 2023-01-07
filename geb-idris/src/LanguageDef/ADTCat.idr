@@ -652,6 +652,55 @@ SOHomReflect vi ui fi alg (Left False) d = vi $ fst alg
 SOHomReflect vi ui fi alg (Left True) d = ui $ fst $ snd alg
 SOHomReflect vi ui fi alg (Right ()) d = fi (snd $ snd alg) (d False) (d True)
 
+---------------------------------------------------------------------------
+---- "Programmer's FinSet" ("PFS") with hom-objects, compiling to SOMu ----
+---------------------------------------------------------------------------
+
+public export
+data PFSObjPosExt : Type where
+  PFSHomObjPos : PFSObjPosExt
+
+public export
+data PFSObjDirExt : PFSObjPosExt -> Type where
+  PFSHomObjDirDom : PFSObjDirExt PFSHomObjPos -- domain
+  PFSHomObjDirCod : PFSObjDirExt PFSHomObjPos -- codomain
+
+public export
+PFSObjExtF : PolyFunc
+PFSObjExtF = (PFSObjPosExt ** PFSObjDirExt)
+
+public export
+PFSObjF : PolyFunc
+PFSObjF = pfCoproductArena SubstObjPF PFSObjExtF
+
+public export
+PFSObjPos : Type
+PFSObjPos = pfPos PFSObjF
+
+public export
+PfsObjDir : PFSObjPos -> Type
+PfsObjDir = pfDir {p=PFSObjF}
+
+public export
+PFSPos0 : PFSObjPos
+PFSPos0 = Left SOPos0
+
+public export
+PFSPos1 : PFSObjPos
+PFSPos1 = Left SOPos1
+
+public export
+PFSPosC : PFSObjPos
+PFSPosC = Left SOPosC
+
+public export
+PFSPosP : PFSObjPos
+PFSPosP = Left SOPosP
+
+public export
+PFSPosHom : PFSObjPos
+PFSPosHom = Right PFSHomObjPos
+
 --------------------------------------------------------------------------
 ---- Dependent-set definition of substitutive polynomial endofunctors ----
 --------------------------------------------------------------------------
