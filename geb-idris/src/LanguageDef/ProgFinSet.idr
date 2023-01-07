@@ -89,6 +89,35 @@ public export
 bcoHomObj : BicartObj -> BicartObj -> BicartObj
 bcoHomObj = bcoCompCata BCOHomAlg
 
+public export
+data PFSObjF : Type -> Type where
+  PFSObjBC : BicartObjF a -> PFSObjF a
+  PFSHomObj : a -> a -> PFSObjF a
+
+public export
+data PFSObj : Type where
+  InPFSO : PFSObjF PFSObj -> PFSObj
+
+public export
+InPFSBC : BicartObjF PFSObj -> PFSObj
+InPFSBC = InPFSO . PFSObjBC
+
+public export
+PSF0 : PFSObj
+PSF0 = InPFSBC BCOInitial
+
+public export
+PSF1 : PFSObj
+PSF1 = InPFSBC BCOTerminal
+
+public export
+PFSC : PFSObj -> PFSObj -> PFSObj
+PFSC = InPFSBC .* BCOCoproduct
+
+public export
+PFSP : PFSObj -> PFSObj -> PFSObj
+PFSP = InPFSBC .* BCOProduct
+
 -- Endofunctors on the initial bicartesian distributive category (equivalently,
 -- the initial bicartesian closed category).
 public export
