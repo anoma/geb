@@ -132,5 +132,9 @@ data PFSEFF : (PFSEFPosBase -> Type) -> PFSEFPosBase -> Type where
   PPFFunc : PFSObjF (a PPBFunc) -> PFSEFF a PPBFunc
 
 public export
+data PFSEndoFuncMut : PFSEFPosBase -> Type where
+  InPEFM : {0 i : PFSEFPosBase} -> PFSEFF PFSEndoFuncMut i -> PFSEndoFuncMut i
+
+public export
 PFSEndoFunc : Type
-PFSEndoFunc = ?PFSEndoFunc_hole
+PFSEndoFunc = PFSEndoFuncMut PPBFunc
