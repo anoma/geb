@@ -740,16 +740,16 @@ pfsObjCata = pfCata {p=PFSObjF}
 -------------------------------------------------------------
 
 public export
-PFSInterpAlgExt : PFSObjAlgExt Type
-PFSInterpAlgExt PFSHomObjPos dir = dir PFSHomObjDirDom -> dir PFSHomObjDirCod
+PFSObjInterpAlgExt : PFSObjAlgExt Type
+PFSObjInterpAlgExt PFSHomObjPos dir = dir PFSHomObjDirDom -> dir PFSHomObjDirCod
 
 public export
-PFSInterpAlg : PFSObjAlg Type
-PFSInterpAlg = PFSBuildAlg SOInterpAlg PFSInterpAlgExt
+PFSObjInterpAlg : PFSObjAlg Type
+PFSObjInterpAlg = PFSBuildAlg SOInterpAlg PFSObjInterpAlgExt
 
 public export
-PFSInterp : PFSObj -> Type
-PFSInterp = pfsObjCata PFSInterpAlg
+PFSObjInterp : PFSObj -> Type
+PFSObjInterp = pfsObjCata PFSObjInterpAlg
 
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
@@ -760,31 +760,31 @@ PFSInterp = pfsObjCata PFSInterpAlg
 -- A dependent object in "Programmer's FinSet" (AKA `PFS`, the category whose
 -- types are terms of `SOMu` and whose morphisms are terms of `SOMuMorph`) --
 -- that -- is, a function from objects of `PFS` to objects of `PFS`.
-PFSDepObj : SOMu -> Type
-PFSDepObj x = SOInterp x -> SOMu
+PFSDepObj : PFSObj -> Type
+PFSDepObj x = PFSObjInterp x -> PFSObj
 
 -- An arena with positions and directions drawn from "Programmer's FinSet"
 -- (AKA the category whose types are terms of `SOMu` and whose morphisms
 -- are terms of `SOMuMorph`).
 public export
 PFSEndoArena : Type
-PFSEndoArena = DPair SOMu PFSDepObj
+PFSEndoArena = DPair PFSObj PFSDepObj
 
 public export
-pfsPos : PFSEndoArena -> SOMu
+pfsPos : PFSEndoArena -> PFSObj
 pfsPos = DPair.fst
 
 public export
 PFSPosTerm : PFSEndoArena -> Type
-PFSPosTerm = SOInterp . pfsPos
+PFSPosTerm = PFSObjInterp . pfsPos
 
 public export
-pfsDir : (ar : PFSEndoArena) -> PFSPosTerm ar -> SOMu
+pfsDir : (ar : PFSEndoArena) -> PFSPosTerm ar -> PFSObj
 pfsDir = DPair.snd
 
 -- Interpret an arena as a polynomial endofunctor on `PFS`.
 public export
-PFSEndoInterp : PFSEndoArena -> SOMu -> SOMu
+PFSEndoInterp : PFSEndoArena -> PFSObj -> PFSObj
 PFSEndoInterp ar = ?PFSEndoInterp_hole
 
 ----------------------------------------------------------------------
