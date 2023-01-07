@@ -653,8 +653,14 @@ SOHomReflect vi ui fi alg (Left True) d = ui $ fst $ snd alg
 SOHomReflect vi ui fi alg (Right ()) d = fi (snd $ snd alg) (d False) (d True)
 
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
 ---- "Programmer's FinSet" ("PFS") with hom-objects, compiling to SOMu ----
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+-----------------------------------
+---- Object-generating functor ----
+-----------------------------------
 
 public export
 data PFSObjPosExt : Type where
@@ -701,8 +707,30 @@ public export
 PFSPosHom : PFSObjPos
 PFSPosHom = Right PFSHomObjPos
 
+----------------------------------------------------
+---- Least fixed point, algebras, catamorphisms ----
+----------------------------------------------------
+
+public export
+PFSObjExt : Type
+PFSObjExt = PolyFuncMu PFSObjExtF
+
+public export
+PFSObj : Type
+PFSObj = PolyFuncMu PFSObjF
+
+public export
+PFSObjAlg : Type -> Type
+PFSObjAlg = PFAlg PFSObjF
+
+public export
+PFSObjAlgExt : Type -> Type
+PFSObjAlgExt = PFAlg PFSObjExtF
+
+--------------------------------------------------------------------------
 --------------------------------------------------------------------------
 ---- Dependent-set definition of substitutive polynomial endofunctors ----
+--------------------------------------------------------------------------
 --------------------------------------------------------------------------
 
 -- A dependent object in "Programmer's FinSet" (AKA `PFS`, the category whose
