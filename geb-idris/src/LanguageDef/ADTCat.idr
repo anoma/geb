@@ -684,8 +684,8 @@ PFSObjPos : Type
 PFSObjPos = pfPos PFSObjF
 
 public export
-PfsObjDir : PFSObjPos -> Type
-PfsObjDir = pfDir {p=PFSObjF}
+PFSObjDir : PFSObjPos -> Type
+PFSObjDir = pfDir {p=PFSObjF}
 
 public export
 PFSPos0 : PFSObjPos
@@ -735,6 +735,23 @@ public export
 pfsObjCata : {0 a : Type} -> PFSObjAlg a -> PFSObj -> a
 pfsObjCata = pfCata {p=PFSObjF}
 
+-------------------------------------------------
+---- Interpretation of PFS objects into SOMu ----
+-------------------------------------------------
+
+public export
+PFSObjToSOAlgExt : PFSObjAlgExt SOMu
+PFSObjToSOAlgExt PFSHomObjPos d =
+  soHomObj (d PFSHomObjDirDom) (d PFSHomObjDirCod)
+
+public export
+PFSObjToSOAlg : PFSObjAlg SOMu
+PFSObjToSOAlg = PFSBuildAlg PolyMuIdAlg PFSObjToSOAlgExt
+
+public export
+PFSObjToSO : PFSObj -> SOMu
+PFSObjToSO = pfsObjCata PFSObjToSOAlg
+
 -------------------------------------------------------------
 ---- Interpretation of PFS objects into the metalanguage ----
 -------------------------------------------------------------
@@ -760,6 +777,7 @@ PFSObjInterp = pfsObjCata PFSObjInterpAlg
 -- A dependent object in "Programmer's FinSet" (AKA `PFS`, the category whose
 -- types are terms of `SOMu` and whose morphisms are terms of `SOMuMorph`) --
 -- that -- is, a function from objects of `PFS` to objects of `PFS`.
+public export
 PFSDepObj : PFSObj -> Type
 PFSDepObj x = PFSObjInterp x -> PFSObj
 

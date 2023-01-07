@@ -1080,6 +1080,10 @@ pfmDir : {p : PolyFunc} ->
   (e : PolyFuncMu p) -> pfDir {p} (pfmPos e) -> PolyFuncMu p
 pfmDir (InPFM i d) = d
 
+public export
+PolyMuIdAlg : {p : PolyFunc} -> PFAlg p (PolyFuncMu p)
+PolyMuIdAlg = InPFM
+
 ----------------------------------------------
 ---- Catamorphisms of polynomial functors ----
 ----------------------------------------------
