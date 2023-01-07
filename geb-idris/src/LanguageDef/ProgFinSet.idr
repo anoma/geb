@@ -103,12 +103,12 @@ InPFSBC : BicartObjF PFSObj -> PFSObj
 InPFSBC = InPFSO . PFSObjBC
 
 public export
-PSF0 : PFSObj
-PSF0 = InPFSBC BCOInitial
+PFS0 : PFSObj
+PFS0 = InPFSBC BCOInitial
 
 public export
-PSF1 : PFSObj
-PSF1 = InPFSBC BCOTerminal
+PFS1 : PFSObj
+PFS1 = InPFSBC BCOTerminal
 
 public export
 PFSC : PFSObj -> PFSObj -> PFSObj
@@ -138,3 +138,12 @@ data PFSEndoFuncMut : PFSEFPosBase -> Type where
 public export
 PFSEndoFunc : Type
 PFSEndoFunc = PFSEndoFuncMut PPBFunc
+
+-- Endofunctors in the initial bicartesian category, indexed by the
+-- type of their positions.
+public export
+data PFSDepObj : PFSObj -> Type where
+  PFSDO0 : PFSDepObj PFS0
+  PFSDOy : PFSObj -> PFSDepObj PFS1
+  PFSDOC : PFSDepObj a -> PFSDepObj b -> PFSDepObj (PFSC a b)
+  PFSDOP : PFSDepObj a -> PFSDepObj b -> PFSDepObj (PFSP a b)
