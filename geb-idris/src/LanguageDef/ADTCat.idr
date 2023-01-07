@@ -727,6 +727,30 @@ public export
 PFSObjAlgExt : Type -> Type
 PFSObjAlgExt = PFAlg PFSObjExtF
 
+public export
+PFSBuildAlg : {a : Type} -> SOAlg a -> PFSObjAlgExt a -> PFSObjAlg a
+PFSBuildAlg = PFCoprodAlg {p=SubstObjPF} {q=PFSObjExtF}
+
+public export
+pfsObjCata : {0 a : Type} -> PFSObjAlg a -> PFSObj -> a
+pfsObjCata = pfCata {p=PFSObjF}
+
+-------------------------------------------------------------
+---- Interpretation of PFS objects into the metalanguage ----
+-------------------------------------------------------------
+
+public export
+PFSInterpAlgExt : PFSObjAlgExt Type
+PFSInterpAlgExt PFSHomObjPos dir = dir PFSHomObjDirDom -> dir PFSHomObjDirCod
+
+public export
+PFSInterpAlg : PFSObjAlg Type
+PFSInterpAlg = PFSBuildAlg SOInterpAlg PFSInterpAlgExt
+
+public export
+PFSInterp : PFSObj -> Type
+PFSInterp = pfsObjCata PFSInterpAlg
+
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
 ---- Dependent-set definition of substitutive polynomial endofunctors ----
