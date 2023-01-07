@@ -782,11 +782,6 @@ public export
 pfsDir : (ar : PFSEndoArena) -> PFSPosTerm ar -> PFSObj
 pfsDir = DPair.snd
 
--- Interpret an arena as a polynomial endofunctor on `PFS`.
-public export
-PFSEndoInterp : PFSEndoArena -> PFSObj -> PFSObj
-PFSEndoInterp ar = ?PFSEndoInterp_hole
-
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Inductive definition of substitutive polynomial endofunctors ----
