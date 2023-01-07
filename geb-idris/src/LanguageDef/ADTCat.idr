@@ -752,6 +752,10 @@ public export
 PFSObjToSO : PFSObj -> SOMu
 PFSObjToSO = pfsObjCata PFSObjToSOAlg
 
+public export
+PFSObjInterp : PFSObj -> Type
+PFSObjInterp = SOInterp . PFSObjToSO
+
 -------------------------------------------------------------
 ---- Interpretation of PFS objects into the metalanguage ----
 -------------------------------------------------------------
@@ -765,8 +769,8 @@ PFSObjInterpAlg : PFSObjAlg Type
 PFSObjInterpAlg = PFSBuildAlg SOInterpAlg PFSObjInterpAlgExt
 
 public export
-PFSObjInterp : PFSObj -> Type
-PFSObjInterp = pfsObjCata PFSObjInterpAlg
+PFSObjInterpMeta : PFSObj -> Type
+PFSObjInterpMeta = pfsObjCata PFSObjInterpAlg
 
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
