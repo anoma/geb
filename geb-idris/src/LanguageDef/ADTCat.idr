@@ -791,6 +791,10 @@ public export
 soHomType : SOMu -> Type -> Type
 soHomType = soHomObjCata SOHomTypeAlg
 
+public export
+SODepObj : SOMu -> Type
+SODepObj = flip soHomType SOMu
+
 -- Reflective definition of PFS endofunctors as PFS objects which depend
 -- upon PFS objects.
 
