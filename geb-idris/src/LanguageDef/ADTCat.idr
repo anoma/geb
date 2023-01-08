@@ -778,6 +778,34 @@ PFSObjInterpMeta = pfsObjCata PFSObjInterpAlg
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
 
+public export
+SOHomTypeAlg : SOHomAlg Type
+-- 0 -> x === 1
+SOHomTypeAlg (Left False) d = (const Unit)
+-- 1 -> x === x
+SOHomTypeAlg (Left True) d = id
+-- (x + y) -> z === (x -> z) * (y -> z)
+SOHomTypeAlg (Right ()) d = biapp Pair (d False) (d True)
+
+public export
+soHomType : SOMu -> Type -> Type
+soHomType = soHomObjCata SOHomTypeAlg
+
+-- Reflective definition of PFS endofunctors as PFS objects which depend
+-- upon PFS objects.
+
+public export
+pfsHomType : PFSObj -> Type -> Type
+pfsHomType = soHomType . PFSObjToSO
+
+public export
+PFSDepPFSObj : PFSObj -> Type
+PFSDepPFSObj = flip pfsHomType PFSObj
+
+public export
+PFSEndoF : Type
+PFSEndoF = DPair PFSObj PFSDepPFSObj
+
 -- A dependent object in "Programmer's FinSet" (AKA `PFS`, the category whose
 -- types are terms of `SOMu` and whose morphisms are terms of `SOMuMorph`) --
 -- that -- is, a function from objects of `PFS` to objects of `PFS`.
