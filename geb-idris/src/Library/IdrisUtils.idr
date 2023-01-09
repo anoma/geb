@@ -48,6 +48,19 @@ public export
 (.**) = (.) . (.) . (.)
 
 public export
+[IdFunctor] Functor Prelude.id where
+  map = id
+
+public export
+[IdApplicative] Applicative Prelude.id using IdFunctor where
+  pure = id
+  (<*>) = apply
+
+public export
+[IdMonad] Monad Prelude.id using IdApplicative where
+  (>>=) = flip apply
+
+public export
 fcong : {0 a, b : Type} -> {0 f, g : a -> b} -> (f = g) -> {x : a} -> f x = g x
 fcong Refl = Refl
 

@@ -414,25 +414,27 @@ soProductHomCata : {a : Type} -> SOProductHomAlg a -> SOMu -> SOMu -> a
 soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
 
 public export
-SOHomAlg : Type -> Type
-SOHomAlg a = BinTreeAlg BoolF (a -> a)
+SOHomAlg : {m : Type -> Type} -> {isMonad : Monad m} -> Type -> Type
+SOHomAlg a = BinTreeAlg BoolF (a -> m a)
 
 public export
-SOHomAlgToFAlg : {0 a : Type} -> SOHomAlg a -> SOAlg (a -> a)
+SOHomAlgToFAlg : {m : Type -> Type} -> {isMonad : Monad m} -> {0 a : Type} ->
+  SOHomAlg {m} {isMonad} a -> SOAlg (a -> m a)
 SOHomAlgToFAlg alg SOPos0 d = alg (Left False) $ \i => case i of _ impossible
 SOHomAlgToFAlg alg SOPos1 d = alg (Left True) $ \i => case i of _ impossible
 SOHomAlgToFAlg alg SOPosC d = alg (Right ()) $ \i => case i of
   False => d SODirL
   True => d SODirR
-SOHomAlgToFAlg alg SOPosP d = d SODir1 . d SODir2
+SOHomAlgToFAlg alg SOPosP d = d SODir1 <=< d SODir2
 
 public export
-soHomObjCata : {0 a : Type} -> SOHomAlg a -> SOMu -> a -> a
-soHomObjCata alg = soCata (SOHomAlgToFAlg alg)
+soHomObjCata : {m : Type -> Type} -> {isMonad : Monad m} -> {0 a : Type} ->
+  SOHomAlg {m} {isMonad} a -> SOMu -> a -> m a
+soHomObjCata alg = soCata (SOHomAlgToFAlg {m} {isMonad} alg)
 
 public export
 SOHomSOAlg : Type
-SOHomSOAlg = SOHomAlg SOMu
+SOHomSOAlg = SOHomAlg {m=Prelude.id} {isMonad=IdMonad} SOMu
 
 -------------------
 ---- Utilities ----
@@ -622,7 +624,7 @@ SOHomObjAlg (Right ()) d = biapp InSOP (d False) (d True)
 
 public export
 soHomObj : SOMu -> SOMu -> SOMu
-soHomObj = soHomObjCata SOHomObjAlg
+soHomObj = soHomObjCata {m=id} {isMonad=IdMonad} SOHomObjAlg
 
 public export
 soExpObj : SOMu -> SOMu -> SOMu
@@ -779,7 +781,7 @@ PFSObjInterpMeta = pfsObjCata PFSObjInterpAlg
 --------------------------------------------------------------------------
 
 public export
-SOHomTypeAlg : SOHomAlg Type
+SOHomTypeAlg : SOHomAlg {m=Prelude.id} {isMonad=IdMonad} Type
 -- 0 -> x === 1
 SOHomTypeAlg (Left False) d = (const Unit)
 -- 1 -> x === x
@@ -789,7 +791,7 @@ SOHomTypeAlg (Right ()) d = biapp Pair (d False) (d True)
 
 public export
 soHomType : SOMu -> Type -> Type
-soHomType = soHomObjCata SOHomTypeAlg
+soHomType = soHomObjCata {m=id} {isMonad=IdMonad} SOHomTypeAlg
 
 public export
 SODepObj : SOMu -> Type
