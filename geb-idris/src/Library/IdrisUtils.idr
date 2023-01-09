@@ -82,7 +82,8 @@ public export
   map f (Right x) = Right (f x)
 
 public export
-[EitherApplicative] Monoid x => Applicative (Either x) using EitherFunctor where
+[EitherApplicative] Semigroup x =>
+    Applicative (Either x) using EitherFunctor where
   pure = Right
   Left f  <*> Left i = Left (f <+> i)
   Left f  <*> Right i = Left f
@@ -90,7 +91,7 @@ public export
   Right f <*> Right i = Right (f i)
 
 public export
-[EitherMonad] Monoid x => Monad (Either x) using MaybeApplicative where
+[EitherMonad] Semigroup x => Monad (Either x) using MaybeApplicative where
   (Left x)  >>= k = Left x
   (Right x) >>= k = k x
 

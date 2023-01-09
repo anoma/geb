@@ -453,13 +453,13 @@ soHomMaybeCata : {0 a : Type} -> SOHomMaybeAlg a -> SOMu -> a -> Maybe a
 soHomMaybeCata = soHomObjCata {m=Maybe} {isMonad=MaybeMonad}
 
 public export
-SOHomEitherAlg : {x : Type} -> {isMonoid : Monoid x} -> Type -> Type
-SOHomEitherAlg {x} {isMonoid} = SOHomAlg {m=(Either x)} {isMonad=EitherMonad}
+SOHomEitherAlg : {x : Type} -> {isSemigroup : Semigroup x} -> Type -> Type
+SOHomEitherAlg {x} {isSemigroup} = SOHomAlg {m=(Either x)} {isMonad=EitherMonad}
 
 public export
-soHomEitherCata : {x : Type} -> {isMonoid : Monoid x} -> {0 a : Type} ->
-  SOHomEitherAlg {x} {isMonoid} a -> SOMu -> a -> Either x a
-soHomEitherCata {x} {isMonoid} =
+soHomEitherCata : {x : Type} -> {isSemigroup : Semigroup x} -> {0 a : Type} ->
+  SOHomEitherAlg {x} {isSemigroup} a -> SOMu -> a -> Either x a
+soHomEitherCata {x} {isSemigroup} =
   soHomObjCata {m=(Either x)} {isMonad=EitherMonad}
 
 -------------------
