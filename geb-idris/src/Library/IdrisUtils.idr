@@ -77,6 +77,24 @@ public export
   (Just x) >>= k = k x
 
 public export
+[EitherFunctor] Functor (Either a) where
+  map f (Left x) = Left x
+  map f (Right x) = Right (f x)
+
+public export
+[EitherApplicative] Monoid x => Applicative (Either x) using EitherFunctor where
+  pure = Right
+  Left f  <*> Left i = Left (f <+> i)
+  Left f  <*> Right i = Left f
+  Right f <*> Left i = Left i
+  Right f <*> Right i = Right (f i)
+
+public export
+[EitherMonad] Monoid x => Monad (Either x) using MaybeApplicative where
+  (Left x)  >>= k = Left x
+  (Right x) >>= k = k x
+
+public export
 fcong : {0 a, b : Type} -> {0 f, g : a -> b} -> (f = g) -> {x : a} -> f x = g x
 fcong Refl = Refl
 

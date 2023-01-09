@@ -452,6 +452,16 @@ public export
 soHomMaybeCata : {0 a : Type} -> SOHomMaybeAlg a -> SOMu -> a -> Maybe a
 soHomMaybeCata = soHomObjCata {m=Maybe} {isMonad=MaybeMonad}
 
+public export
+SOHomEitherAlg : {x : Type} -> {isMonoid : Monoid x} -> Type -> Type
+SOHomEitherAlg {x} {isMonoid} = SOHomAlg {m=(Either x)} {isMonad=EitherMonad}
+
+public export
+soHomEitherCata : {x : Type} -> {isMonoid : Monoid x} -> {0 a : Type} ->
+  SOHomEitherAlg {x} {isMonoid} a -> SOMu -> a -> Either x a
+soHomEitherCata {x} {isMonoid} =
+  soHomObjCata {m=(Either x)} {isMonad=EitherMonad}
+
 -------------------
 ---- Utilities ----
 -------------------
