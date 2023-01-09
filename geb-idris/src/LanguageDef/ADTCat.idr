@@ -444,6 +444,14 @@ public export
 SOHomSOAlg : Type
 SOHomSOAlg = SOHomIdAlg SOMu
 
+public export
+SOHomMaybeAlg : Type -> Type
+SOHomMaybeAlg = SOHomAlg {m=Maybe} {isMonad=MaybeMonad}
+
+public export
+soHomMaybeCata : {0 a : Type} -> SOHomMaybeAlg a -> SOMu -> a -> Maybe a
+soHomMaybeCata = soHomObjCata {m=Maybe} {isMonad=MaybeMonad}
+
 -------------------
 ---- Utilities ----
 -------------------

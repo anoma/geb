@@ -61,6 +61,22 @@ public export
   (>>=) = flip apply
 
 public export
+[MaybeFunctor] Functor Maybe where
+  map f (Just x) = Just (f x)
+  map f Nothing  = Nothing
+
+public export
+[MaybeApplicative] Applicative Maybe using MaybeFunctor where
+  pure = Just
+  Just f <*> Just a = Just (f a)
+  _      <*> _      = Nothing
+
+public export
+[MaybeMonad] Monad Maybe using MaybeApplicative where
+  Nothing  >>= k = Nothing
+  (Just x) >>= k = k x
+
+public export
 fcong : {0 a, b : Type} -> {0 f, g : a -> b} -> (f = g) -> {x : a} -> f x = g x
 fcong Refl = Refl
 
