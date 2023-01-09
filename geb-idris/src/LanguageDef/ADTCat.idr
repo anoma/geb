@@ -433,8 +433,16 @@ soHomObjCata : {m : Type -> Type} -> {isMonad : Monad m} -> {0 a : Type} ->
 soHomObjCata alg = soCata (SOHomAlgToFAlg {m} {isMonad} alg)
 
 public export
+SOHomIdAlg : Type -> Type
+SOHomIdAlg = SOHomAlg {m=Prelude.id} {isMonad=IdMonad}
+
+public export
+soHomIdCata : {0 a : Type} -> SOHomIdAlg a -> SOMu -> a -> a
+soHomIdCata = soHomObjCata {m=id} {isMonad=IdMonad}
+
+public export
 SOHomSOAlg : Type
-SOHomSOAlg = SOHomAlg {m=Prelude.id} {isMonad=IdMonad} SOMu
+SOHomSOAlg = SOHomIdAlg SOMu
 
 -------------------
 ---- Utilities ----
@@ -624,7 +632,7 @@ SOHomObjAlg (Right ()) d = biapp InSOP (d False) (d True)
 
 public export
 soHomObj : SOMu -> SOMu -> SOMu
-soHomObj = soHomObjCata {m=id} {isMonad=IdMonad} SOHomObjAlg
+soHomObj = soHomIdCata SOHomObjAlg
 
 public export
 soExpObj : SOMu -> SOMu -> SOMu
@@ -781,7 +789,7 @@ PFSObjInterpMeta = pfsObjCata PFSObjInterpAlg
 --------------------------------------------------------------------------
 
 public export
-SOHomTypeAlg : SOHomAlg {m=Prelude.id} {isMonad=IdMonad} Type
+SOHomTypeAlg : SOHomIdAlg Type
 -- 0 -> x === 1
 SOHomTypeAlg (Left False) d = (const Unit)
 -- 1 -> x === x
@@ -791,7 +799,7 @@ SOHomTypeAlg (Right ()) d = biapp Pair (d False) (d True)
 
 public export
 soHomType : SOMu -> Type -> Type
-soHomType = soHomObjCata {m=id} {isMonad=IdMonad} SOHomTypeAlg
+soHomType = soHomIdCata SOHomTypeAlg
 
 public export
 SODepObj : SOMu -> Type
