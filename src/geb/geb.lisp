@@ -163,3 +163,51 @@ Example:
      (coprod (mcar x) (mcadr x)))
     (otherwise
      (subclass-responsibility x))))
+
+(defun gather (x y z)
+  (pair (mcase (<-left x y) (<-left x z))
+        (mcase (comp (->left y z) (<-right x y))
+               (comp (->right y z) (<-right x z)))))
+
+(defun prod-left-assoc (f)
+  (trivia:match (dom f)
+    ((prod w (prod x y))
+     (comp f (pair (comp (<-left w x) (<-left (prod w x) y))
+                   (pair (comp (<-right w x) (<-left (prod w x) y))
+                         (<-right (prod w x) y)))))
+    (_ (error "object ~A need to be of a double product type, however it is of ~A" f (dom f)))))
+
+(defun right (f)
+  (trivia:match (dom f)
+    ((coprod x y)
+     (comp f (->right x y)))
+    (_ (error "object ~A need to be of a coproduct type, however it is of ~A"
+              f (dom f)))))
+
+(defun left (f)
+  (trivia:match (dom f)
+    ((coprod x y)
+     (comp f (->left x y)))
+    (_ (error "object ~A need to be of a coproduct type, however it is of ~A"
+              f (dom f)))))
+
+(defgeneric curry (f)
+  (:documentation "Curries the given object"))
+
+(defmethod curry ((f <substmorph>))
+  (cond ((not (typep f 'substmorph))
+         (subclass-responsibility f))
+        ((not (typep (dom f) 'prod))
+         (error "object ~A need to be of a product type, however it is of ~A" f (dom f)))
+        (t
+         (let ((dom (dom f)))
+           (labels ((rec (fun fst snd)
+                      (match-of substobj snd
+                        (alias        (rec fun fst (obj snd)))
+                        (so0          (terminal snd))
+                        (so1          (comp fun (pair snd
+                                                      (terminal fst))))
+                        ((coprod x y) (pair (curry (left (comp fun (gather fst x y))))
+                                            (curry (right (comp fun (gather fst x y))))))
+                        (prod         (curry (curry (prod-left-assoc fun)))))))
+             (rec f (mcar dom) (mcadr dom)))))))
