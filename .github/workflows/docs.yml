@@ -61,17 +61,14 @@ jobs:
         with:
           asdf-system: geb/documentation
 
-      - name: 'build docs'
-        uses: 40ants/run-tests@v2
-        with:
-          asdf-system: geb/documentation
-          run-tests: |
-            (ql:quickload :mgl-pax/navigate)
-            (ql:quickload :geb/documentation)
-            (uiop:symbol-call 'geb-docs/docs 'build-docs)
-            (ql:quickload :geb/test)
-            (uiop:symbol-call 'geb-test 'code-coverage "./docs/tests/")
-            (uiop:symbol-call 'geb-test 'code-coverage)
+      # - name: 'build docs'
+      #   uses: 40ants/run-tests@v2
+      #   with:
+      #     asdf-system: geb/documentation
+      #     run-tests: |
+      #       (ql:quickload :geb/test)
+      #       (uiop:symbol-call 'geb-test 'code-coverage "./docs/tests/")
+      #       (uiop:symbol-call 'geb-test 'code-coverage)
 
 
   build:
@@ -81,7 +78,7 @@ jobs:
     strategy:
       matrix:
         lisp:
-          # - sbcl-bin
+          - sbcl-bin
           - ccl-bin
 
     env:
@@ -131,6 +128,12 @@ jobs:
         with:
           asdf-system: geb/documentation
           run-tests: |
+            #+sbcl
+            (ql:quickload :mgl-pax/navigate)
+            #+sbcl
+            (ql:quickload :geb/documentation)
+            #+sbcl
+            (uiop:symbol-call 'geb-docs/docs 'build-docs)
             (ql:quickload :geb/test)
             (uiop:symbol-call 'geb-test 'code-coverage "./docs/tests/")
       # - name: Tar files
