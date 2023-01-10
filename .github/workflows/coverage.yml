@@ -1,0 +1,27 @@
+name: 'coverage'
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+  pull_request:
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    env:
+      LISP: sbcl-bin
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: 40ants/setup-lisp@v2
+        with:
+          asdf-system: geb/documentation
+      - name: 'build docs'
+        uses: 40ants/run-tests@v2
+        with:
+          run-tests: |
+            (ql:quickload :geb/test)
+            (code-coverage)

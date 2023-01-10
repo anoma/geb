@@ -1,0 +1,33 @@
+name: 'docs'
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+  pull_request:
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        lisp:
+          - sbcl-bin
+          - ccl-bin
+
+    env:
+      LISP: ${{ matrix.lisp }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: 40ants/setup-lisp@v2
+        with:
+          asdf-system: geb/documentation
+      - name: 'build docs'
+        uses: 40ants/run-tests@v2
+        with:
+          run-tests: |
+            (ql:quickload :geb/documentation)
+            (uiop:symbol-call 'geb-test 'code-coverage)
