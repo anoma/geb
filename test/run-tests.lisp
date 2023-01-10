@@ -65,3 +65,28 @@ tests ought to work
 #+slynk
 (defun profiler-reset ()
   (slynk-backend:profile-reset))
+
+#+ccl
+(defun code-coverage ()
+  (ccl:reset-incremental-coverage)
+  (ccl:reset-coverage)
+
+  (setq ccl:*compile-code-coverage* t)
+  (asdf:compile-system :geb :force t)
+  (asdf:compile-system :geb/test :force t)
+
+  (let ((coverage (make-hash-table)))
+    ;; we want to note that some code loads before we can even test
+    ;; it, so mark these under their own section
+    (setf (gethash 'alucard.startup coverage)
+          (ccl:get-incremental-coverage))
+    (mapc (lambda (test)
+            (run-tests :summary? t :designators test)
+            (setf (gethash test coverage)
+                  (ccl:get-incremental-coverage)))
+          (children (find-test 'geb-test-suite)))
+    (ccl:report-coverage #P"../docs/tests/report.html" :tags coverage))
+
+  (setq ccl:*compile-code-coverage* nil)
+  (asdf:compile-system :geb :force t)
+  (asdf:compile-system :geb/test :force t))
