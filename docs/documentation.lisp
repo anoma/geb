@@ -28,13 +28,22 @@ and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
   """
 For test coverage it can be found at the following links:
 
-[CCL test coverage](./tests/report.html)
 
 [SBCL test coverage](./tests/cover-index.html)
 
+
+[CCL test coverage: current under maintenance](./tests/report.html)
+
+-----------------------------------------
+
+Note that due to [#34](https://github.com/anoma/geb/issues/34)
+CCL tests are not currently displaying
+
+------------------------------------------
+
 I recommend reading the CCL code coverage version, as it has proper tags.
 
-Currently they are manually generated, and thus for a more accurate assessment see @
+Currently they are manually generated, and thus for a more accurate assessment see [GEB-TEST:CODE-COVERAGE][function]
 """)
 
 (pax:defsection @math-playground (:title "math-playground")
