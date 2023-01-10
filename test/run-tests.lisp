@@ -90,3 +90,20 @@ tests ought to work
   (setq ccl:*compile-code-coverage* nil)
   (asdf:compile-system :geb :force t)
   (asdf:compile-system :geb/test :force t))
+
+#+sbcl
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (require :sb-cover))
+
+#+sbcl
+(defun code-coverage ()
+  nil
+  (declaim (optimize (sb-cover:store-coverage-data 3)))
+  (asdf:oos 'asdf:load-op :geb :force t)
+  (asdf:oos 'asdf:load-op :geb/test :force t)
+  (run-tests :summary? t)
+  (sb-cover:report "../docs/tests/")
+
+  (declaim (optimize (sb-cover:store-coverage-data 3)))
+  (asdf:oos 'asdf:load-op :geb :force t)
+  (asdf:oos 'asdf:load-op :geb/test :force t))
