@@ -4,6 +4,7 @@
 ## Table of Contents
 
 - [1 Links][9bc5]
+    - [1.1 code coverage][4044]
 - [2 Getting Started][3d47]
     - [2.1 installation][8fa5]
     - [2.2 loading][a7d5]
@@ -50,7 +51,27 @@ Welcome to the GEB project.
 
 Here is the [official repository](https://github.com/anoma/geb/)
 
-and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
+and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
+
+<a id="x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29"></a>
+### 1.1 code coverage
+
+For test coverage it can be found at the following links:
+
+[SBCL test coverage](./tests/cover-index.html)
+
+[CCL test coverage: current under maintenance](./tests/report.html)
+
+---
+
+Note that due to [#34](https://github.com/anoma/geb/issues/34)
+CCL tests are not currently displaying
+
+---
+
+I recommend reading the CCL code coverage version, as it has proper tags.
+
+Currently they are manually generated, and thus for a more accurate assessment see [`GEB-TEST:CODE-COVERAGE`][417f]
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -1818,6 +1839,17 @@ features and how to better lay out future tests
     ```
 
 
+<a id="x-28GEB-TEST-3ACODE-COVERAGE-20FUNCTION-29"></a>
+- [function] **CODE-COVERAGE** *&OPTIONAL (PATH NIL)*
+
+    generates code coverage, for CCL the coverage can be found at
+    
+    [CCL test coverage](../docs/tests/report.html)
+    
+    [SBCL test coverage](../docs/tests/cover-index.html)
+    
+    simply run this function to generate a fresh one
+
   [0ad4]: #x-28GEB-BOOL-3ABOOL-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:BOOL MGL-PAX:SYMBOL-MACRO"
   [0ae3]: #x-28GEB-2EPOLY-2ESPEC-3A-2A-20TYPE-29 "GEB.POLY.SPEC:* TYPE"
   [0caf]: #x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29 "Translation Functions"
@@ -1840,6 +1872,8 @@ features and how to better lay out future tests
   [399c]: #x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29 "Booleans"
   [3bc6]: #x-28GEB-2ESPEC-3APAIR-20TYPE-29 "GEB.SPEC:PAIR TYPE"
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
+  [4044]: #x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29 "code coverage"
+  [417f]: #x-28GEB-TEST-3ACODE-COVERAGE-20FUNCTION-29 "GEB-TEST:CODE-COVERAGE FUNCTION"
   [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
   [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
   [4850]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD TYPE"

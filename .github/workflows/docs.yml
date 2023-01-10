@@ -1,0 +1,173 @@
+name: 'pages-build-deployment'
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+      - 'mariari/github-actions'
+
+jobs:
+  build-sbcl:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        lisp:
+          - sbcl-bin
+          # - ccl-bin
+
+    env:
+      LISP: ${{ matrix.lisp }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # checkout the package
+      - uses: actions/checkout@v2
+
+      - name: Grant All Perms to Make Cache Restoring Possible
+        run: |
+          sudo mkdir -p /usr/local/etc/roswell
+          sudo chown "${USER}" /usr/local/etc/roswell
+          # Here the ros binary will be restored:
+          sudo chown "${USER}" /usr/local/bin
+      - name: Get Current Month
+        id: current-month
+        run: |
+          echo "::set-output name=value::$(date -u "+%Y-%m")"
+      - name: Cache Roswell Setup
+        id: cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-roswell
+        with:
+          path: |
+            qlfile
+            qlfile.lock
+            /usr/local/bin/ros
+            ~/.cache/common-lisp/
+            ~/.roswell
+            /usr/local/etc/roswell
+            .qlot
+          key: "${{ steps.current-month.outputs.value }}-${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('qlfile.lock') }}"
+      - name: Restore Path To Cached Files
+        run: |
+          echo $HOME/.roswell/bin >> $GITHUB_PATH
+          echo .qlot/bin >> $GITHUB_PATH
+        if: steps.cache.outputs.cache-hit == 'true'
+      - uses: 40ants/setup-lisp@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          asdf-system: geb/documentation
+
+      # - name: 'build docs'
+      #   uses: 40ants/run-tests@v2
+      #   with:
+      #     asdf-system: geb/documentation
+      #     run-tests: |
+      #       (ql:quickload :geb/test)
+      #       (uiop:symbol-call 'geb-test 'code-coverage "./docs/tests/")
+      #       (uiop:symbol-call 'geb-test 'code-coverage)
+
+
+  build:
+    needs: build-sbcl
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        lisp:
+          - sbcl-bin
+          # - ccl-bin
+
+    env:
+      LISP: ${{ matrix.lisp }}
+
+    steps:
+      # checkout the package
+      - uses: actions/checkout@v2
+
+      - name: Grant All Perms to Make Cache Restoring Possible
+        run: |
+          sudo mkdir -p /usr/local/etc/roswell
+          sudo chown "${USER}" /usr/local/etc/roswell
+          # Here the ros binary will be restored:
+          sudo chown "${USER}" /usr/local/bin
+      - name: Get Current Month
+        id: current-month
+        run: |
+          echo "::set-output name=value::$(date -u "+%Y-%m")"
+      - name: Cache Roswell Setup
+        id: cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-roswell
+        with:
+          path: |
+            qlfile
+            qlfile.lock
+            /usr/local/bin/ros
+            ~/.cache/common-lisp/
+            ~/.roswell
+            /usr/local/etc/roswell
+            .qlot
+          key: "${{ steps.current-month.outputs.value }}-${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('qlfile.lock') }}"
+      - name: Restore Path To Cached Files
+        run: |
+          echo $HOME/.roswell/bin >> $GITHUB_PATH
+          echo .qlot/bin >> $GITHUB_PATH
+        if: steps.cache.outputs.cache-hit == 'true'
+      - uses: 40ants/setup-lisp@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          asdf-system: geb/documentation
+
+      - name: 'build docs'
+        uses: 40ants/run-tests@v2
+        with:
+          asdf-system: geb/documentation
+          run-tests: |
+            #+sbcl
+            (ql:quickload :mgl-pax/navigate)
+            #+sbcl
+            (ql:quickload :geb/documentation)
+            #+sbcl
+            (uiop:symbol-call 'geb-docs/docs 'build-docs)
+            (ql:quickload :geb/test)
+            (uiop:symbol-call 'geb-test 'code-coverage "./docs/tests/")
+      # - name: Tar files
+      #   run: cd ./docs && tar -cvf my_files.tar * && mv my_files.tar ../my_files.tar
+      # - name: Upload Artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: github-pages
+      #     path: my_files.tar
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ./docs/
+
+  deploy:
+    # Add a dependency to the build job
+    needs: build
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # Specify runner + deployment step
+    runs-on: ubuntu-latest
+    steps:
+      # checkout the package
+      - uses: actions/checkout@v2
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
