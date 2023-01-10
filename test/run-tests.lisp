@@ -35,3 +35,102 @@ tests ought to work
                   ((and plain? interactive?)   'noisy-interactive)
                   (interactive?                'interactive)
                   (t                           'plain))))
+
+#+slynk
+(defun profile-all ()
+  (let* ((packages
+           (list-all-packages))
+         (alu-packages
+           (remove-if-not (lambda (p)
+                            (let ((search (search "GEB" (package-name p))))
+                              (and search (= 0 search))))
+                          packages))
+         (without-aluser
+             (remove-if (lambda (p)
+                          (member (package-name p) '("geb-test")
+                                  :test #'equalp))
+                        alu-packages)))
+    (mapc (lambda (alu)
+            (slynk-backend:profile-package alu t t))
+          without-aluser)))
+
+#+slynk
+(defun unprofile-all ()
+  (slynk-backend:unprofile-all))
+
+#+slynk
+(defun profiler-report ()
+  (slynk-backend:profile-report))
+
+#+slynk
+(defun profiler-reset ()
+  (slynk-backend:profile-reset))
+
+#+ccl
+(defun code-coverage ()
+  "generates code coverage, for CCL the coverage can be found at
+
+[CCL test coverage](../docs/tests/report.html)
+
+[SBCL test coverage](../docs/tests/cover-index.html)
+
+simply run this function to generate a fresh one
+"
+  (ccl:reset-incremental-coverage)
+  (ccl:reset-coverage)
+
+  (setq ccl:*compile-code-coverage* t)
+  (asdf:compile-system :geb :force t)
+  (asdf:compile-system :geb/test :force t)
+
+  (let ((coverage (make-hash-table)))
+    ;; we want to note that some code loads before we can even test
+    ;; it, so mark these under their own section
+    (setf (gethash 'alucard.startup coverage)
+          (ccl:get-incremental-coverage))
+    (mapc (lambda (test)
+            (run-tests :summary? t :designators test)
+            (setf (gethash test coverage)
+                  (ccl:get-incremental-coverage)))
+          (children (find-test 'geb-test-suite)))
+    (ccl:report-coverage #P"../docs/tests/report.html" :tags coverage))
+
+  (setq ccl:*compile-code-coverage* nil)
+  (asdf:compile-system :geb :force t)
+  (asdf:compile-system :geb/test :force t))
+
+#+sbcl
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (require :sb-cover))
+
+#+sbcl
+(defun code-coverage ()
+  "generates code coverage, for CCL the coverage can be found at
+
+[CCL test coverage](../docs/tests/report.html)
+
+[SBCL test coverage](../docs/tests/cover-index.html)
+
+simply run this function to generate a fresh one
+"
+  nil
+  (declaim (optimize (sb-cover:store-coverage-data 3)))
+  (asdf:oos 'asdf:load-op :geb :force t)
+  (asdf:oos 'asdf:load-op :geb/test :force t)
+  (run-tests :summary? t)
+  (sb-cover:report "../docs/tests/")
+
+  (declaim (optimize (sb-cover:store-coverage-data 3)))
+  (asdf:oos 'asdf:load-op :geb :force t)
+  (asdf:oos 'asdf:load-op :geb/test :force t))
+
+#-(or sbcl ccl)
+(defun code-coverage ()
+  "generates code coverage, for CCL the coverage can be found at
+
+[CCL test coverage](../docs/tests/report.html)
+
+[SBCL test coverage](../docs/tests/cover-index.html)
+
+simply run this function to generate a fresh one
+")
