@@ -192,7 +192,30 @@ Example:
               f (dom f)))))
 
 (defgeneric curry (f)
-  (:documentation "Curries the given object"))
+  (:documentation
+   "Curries the given object, returns a [\\<SUBSTMORPH\\>]
+
+The [\\<SUBSTMORPH\\>] given must have its DOM be of a PROD type, as [CURRY][generic-function]
+invokes the idea of
+
+if f : ([PROD][TYPE] a b) → c
+
+for all `a`, `b`, and `c` being an element of [\\<SUBSTMORPH\\>]
+
+then: (curry f): a → c^b
+
+where c^b means c to the exponent of b (EXPT c b)
+
+
+```
+Γ, f : a × b → c,
+--------------------
+(curry f) : a → c^b
+```
+
+In category terms, `a → c^b` is isomorphic to `a → b → c`
+
+"))
 
 (defmethod curry ((f <substmorph>))
   (cond ((not (typep f 'substmorph))

@@ -50,7 +50,8 @@ into other categorical data structures."
   (so-card-alg       pax:generic-function)
   (so-card-alg       (pax:method () (<substobj>)))
   (dom               pax:generic-function)
-  (codom             pax:generic-function))
+  (codom             pax:generic-function)
+  (curry             pax:generic-function))
 
 (pax:defsection @geb-examples (:title "Examples")
   "PLACEHOLDER: TO SHOW OTHERS HOW EXAMPLES WORK"

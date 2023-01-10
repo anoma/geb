@@ -84,3 +84,10 @@
       (coprod (prod geb-bool:bool so1)
               (prod geb-bool:bool so1))
       "checking codom of distribution"))
+
+
+(define-test curry
+  :parent geb
+  (of-type substmorph (curry (<-left geb-bool:bool geb-bool:bool)))
+  ;; may be typing this a bit too strictly
+  (of-type comp (curry (<-left geb-bool:bool so1))))
