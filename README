@@ -5,9 +5,13 @@ Welcome to the GEB project.
 
 ## Links
 
+
+
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
+
+
 
 ## Getting Started
 
@@ -190,6 +194,8 @@ conjectures about GEB
 
 ## Categorical Model
 
+
+
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -257,31 +263,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} \cong C^{(A × B)}$,
+   $C^{(B^A)} cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $\varnothing$.
+   the empty sum is $varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
-$ \mathsf{1} = \lbrace 1 \rbrace$,
-$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
+where $ mathsf{2} = lbrace 1, 2 rbrace$,
+$ mathsf{1} = lbrace 1 rbrace$,
+$ mathsf{0} = lbrace  rbrace = varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -303,6 +309,8 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
+
+
 
 ### Morphisms
 
@@ -1240,6 +1248,30 @@ Various utility functions ontop of @GEB-CATEGORIES
 - [generic-function] CODOM SUBSTMORPH
 
     Grabs the codomain of the morphism
+
+- [generic-function] CURRY F
+
+    Curries the given object, returns a <SUBSTMORPH>
+    
+    The <SUBSTMORPH> given must have its DOM be of a PROD type, as CURRY
+    invokes the idea of
+    
+    if f : (PROD a b) → c
+    
+    for all `a`, `b`, and `c` being an element of <SUBSTMORPH>
+    
+    then: (curry f): a → c^b
+    
+    where c^b means c to the exponent of b (EXPT c b)
+    
+    ```
+    Γ, f : a × b → c,
+    --------------------
+    (curry f) : a → c^b
+    ```
+    
+    In category terms, `a → c^b` is isomorphic to `a → b → c`
+
 
 ### Examples
 
