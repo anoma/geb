@@ -67,7 +67,7 @@ tests ought to work
   (slynk-backend:profile-reset))
 
 #+ccl
-(defun code-coverage ()
+(defun code-coverage (&optional path)
   "generates code coverage, for CCL the coverage can be found at
 
 [CCL test coverage](../docs/tests/report.html)
@@ -93,7 +93,11 @@ simply run this function to generate a fresh one
             (setf (gethash test coverage)
                   (ccl:get-incremental-coverage)))
           (children (find-test 'geb-test-suite)))
-    (ccl:report-coverage #P"../docs/tests/report.html" :tags coverage))
+    (ccl:report-coverage (if path
+                             ;; this is bad by god fix
+                             (format nil "~Areport.html" path)
+                             #p"../docs/tests/report.html")
+                         :tags coverage))
 
   (setq ccl:*compile-code-coverage* nil)
   (asdf:compile-system :geb :force t)
@@ -104,7 +108,7 @@ simply run this function to generate a fresh one
   (require :sb-cover))
 
 #+sbcl
-(defun code-coverage ()
+(defun code-coverage (&optional (path nil))
   "generates code coverage, for CCL the coverage can be found at
 
 [CCL test coverage](../docs/tests/report.html)
@@ -118,14 +122,14 @@ simply run this function to generate a fresh one
   (asdf:oos 'asdf:load-op :geb :force t)
   (asdf:oos 'asdf:load-op :geb/test :force t)
   (run-tests :summary? t)
-  (sb-cover:report "../docs/tests/")
+  (sb-cover:report (if path path "../docs/tests/"))
 
   (declaim (optimize (sb-cover:store-coverage-data 3)))
   (asdf:oos 'asdf:load-op :geb :force t)
   (asdf:oos 'asdf:load-op :geb/test :force t))
 
 #-(or sbcl ccl)
-(defun code-coverage ()
+(defun code-coverage (&optional path)
   "generates code coverage, for CCL the coverage can be found at
 
 [CCL test coverage](../docs/tests/report.html)
@@ -133,4 +137,5 @@ simply run this function to generate a fresh one
 [SBCL test coverage](../docs/tests/cover-index.html)
 
 simply run this function to generate a fresh one
-")
+"
+  path)

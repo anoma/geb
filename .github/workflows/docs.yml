@@ -70,6 +70,7 @@ jobs:
             (ql:quickload :geb/documentation)
             (uiop:symbol-call 'geb-docs/docs 'build-docs)
             (ql:quickload :geb/test)
+            (uiop:symbol-call 'geb-test 'code-coverage "./docs/tests/")
             (uiop:symbol-call 'geb-test 'code-coverage)
 
 
@@ -133,7 +134,7 @@ jobs:
           asdf-system: geb/documentation
           run-tests: |
             (ql:quickload :geb/test)
-            (uiop:symbol-call 'geb-test 'code-coverage)
+            (uiop:symbol-call 'geb-test 'code-coverage "./docs/tests/")
       - name: Tar files
         run: tar -cvf my_files.tar ./docs
       - name: Upload Artifact
