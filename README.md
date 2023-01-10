@@ -4,6 +4,7 @@
 ## Table of Contents
 
 - [1 Links][9bc5]
+    - [1.1 code coverage][4044]
 - [2 Getting Started][3d47]
     - [2.1 installation][8fa5]
     - [2.2 loading][a7d5]
@@ -50,7 +51,20 @@ Welcome to the GEB project.
 
 Here is the [official repository](https://github.com/anoma/geb/)
 
-and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
+and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
+
+<a id="x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29"></a>
+### 1.1 code coverage
+
+For test coverage it can be found at the following links:
+
+[CCL test coverage](./tests/report.html)
+
+[SBCL test coverage](./tests/cover-index.html)
+
+I recommend reading the CCL code coverage version, as it has proper tags.
+
+Currently they are manually generated, and thus for a more accurate assessment see @
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -1840,6 +1854,7 @@ features and how to better lay out future tests
   [399c]: #x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29 "Booleans"
   [3bc6]: #x-28GEB-2ESPEC-3APAIR-20TYPE-29 "GEB.SPEC:PAIR TYPE"
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
+  [4044]: #x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29 "code coverage"
   [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
   [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
   [4850]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD TYPE"

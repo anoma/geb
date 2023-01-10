@@ -20,7 +20,7 @@
   """
 Here is the [official repository](https://github.com/anoma/geb/)
 
-and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
+and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 """
   (@coverage pax:section))
 
