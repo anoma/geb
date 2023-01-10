@@ -88,8 +88,6 @@ jobs:
       LISP: ${{ matrix.lisp }}
 
     steps:
-      - uses: actions/checkout@v2
-
       # checkout the package
       - uses: actions/checkout@v2
 
@@ -135,13 +133,17 @@ jobs:
           run-tests: |
             (ql:quickload :geb/test)
             (uiop:symbol-call 'geb-test 'code-coverage "./docs/tests/")
-      - name: Tar files
-        run: cd ./docs && tar -cvf my_files.tar * && mv my_files.tar ../my_files.tar
+      # - name: Tar files
+      #   run: cd ./docs && tar -cvf my_files.tar * && mv my_files.tar ../my_files.tar
+      # - name: Upload Artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: github-pages
+      #     path: my_files.tar
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          name: github-pages
-          path: my_files.tar
+          path: ./docs/
 
   deploy:
     # Add a dependency to the build job
@@ -160,6 +162,9 @@ jobs:
     # Specify runner + deployment step
     runs-on: ubuntu-latest
     steps:
+      # checkout the package
+      - uses: actions/checkout@v2
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
