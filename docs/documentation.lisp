@@ -21,6 +21,20 @@
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and the [HTML documentation](https://anoma.github.io/geb/) for the latest version
+"""
+  (@coverage pax:section))
+
+(pax:defsection @coverage (:title "code coverage")
+  """
+For test coverage it can be found at the following links:
+
+[CCL test coverage](./tests/report.html)
+
+[SBCL test coverage](./tests/cover-index.html)
+
+I recommend reading the CCL code coverage version, as it has proper tags.
+
+Currently they are manually generated, and thus for a more accurate assessment see @
 """)
 
 (pax:defsection @math-playground (:title "math-playground")

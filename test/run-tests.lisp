@@ -68,6 +68,14 @@ tests ought to work
 
 #+ccl
 (defun code-coverage ()
+  "generates code coverage, for CCL the coverage can be found at
+
+[CCL test coverage](../docs/tests/report.html)
+
+[SBCL test coverage](../docs/tests/cover-index.html)
+
+simply run this function to generate a fresh one
+"
   (ccl:reset-incremental-coverage)
   (ccl:reset-coverage)
 
@@ -97,6 +105,14 @@ tests ought to work
 
 #+sbcl
 (defun code-coverage ()
+  "generates code coverage, for CCL the coverage can be found at
+
+[CCL test coverage](../docs/tests/report.html)
+
+[SBCL test coverage](../docs/tests/cover-index.html)
+
+simply run this function to generate a fresh one
+"
   nil
   (declaim (optimize (sb-cover:store-coverage-data 3)))
   (asdf:oos 'asdf:load-op :geb :force t)
@@ -107,3 +123,14 @@ tests ought to work
   (declaim (optimize (sb-cover:store-coverage-data 3)))
   (asdf:oos 'asdf:load-op :geb :force t)
   (asdf:oos 'asdf:load-op :geb/test :force t))
+
+#-(or sbcl ccl)
+(defun code-coverage ()
+  "generates code coverage, for CCL the coverage can be found at
+
+[CCL test coverage](../docs/tests/report.html)
+
+[SBCL test coverage](../docs/tests/cover-index.html)
+
+simply run this function to generate a fresh one
+")
