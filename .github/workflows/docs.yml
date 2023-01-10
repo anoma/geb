@@ -136,9 +136,9 @@ jobs:
             (ql:quickload :geb/test)
             (uiop:symbol-call 'geb-test 'code-coverage "./docs/tests/")
       - name: Tar files
-        run: tar -cvf my_files.tar ./docs
+        run: cd ./docs && tar -cvf my_files.tar * && mv my_files.tar ../my_files.tar
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-pages-artifact@v1
         with:
           name: github-pages
           path: my_files.tar
