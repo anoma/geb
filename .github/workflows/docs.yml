@@ -1,15 +1,14 @@
-name: 'Upload and Generate Github documentation page artifacts'
-
-description: 'generate out the html pages for the doc website'
+name: 'pages-build-deployment'
 
 on:
   push:
     branches:
       - 'main'
       - 'master'
+      - 'mariari/github-actions'
 
 jobs:
-  build:
+  build-sbcl:
     runs-on: ubuntu-latest
 
     strategy:
@@ -44,6 +43,8 @@ jobs:
           cache-name: cache-roswell
         with:
           path: |
+            qlfile
+            qlfile.lock
             /usr/local/bin/ros
             ~/.cache/common-lisp/
             ~/.roswell
@@ -63,9 +64,74 @@ jobs:
       - name: 'build docs'
         uses: 40ants/run-tests@v2
         with:
+          asdf-system: geb/documentation
           run-tests: |
+            (ql:quickload :mgl-pax/navigate)
             (ql:quickload :geb/documentation)
             (uiop:symbol-call 'geb-docs/docs 'build-docs)
+            (ql:quickload :geb/test)
+            (uiop:symbol-call 'geb-test 'code-coverage)
+
+
+  build:
+    needs: build-sbcl
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        lisp:
+          # - sbcl-bin
+          - ccl-bin
+
+    env:
+      LISP: ${{ matrix.lisp }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # checkout the package
+      - uses: actions/checkout@v2
+
+      - name: Grant All Perms to Make Cache Restoring Possible
+        run: |
+          sudo mkdir -p /usr/local/etc/roswell
+          sudo chown "${USER}" /usr/local/etc/roswell
+          # Here the ros binary will be restored:
+          sudo chown "${USER}" /usr/local/bin
+      - name: Get Current Month
+        id: current-month
+        run: |
+          echo "::set-output name=value::$(date -u "+%Y-%m")"
+      - name: Cache Roswell Setup
+        id: cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-roswell
+        with:
+          path: |
+            qlfile
+            qlfile.lock
+            /usr/local/bin/ros
+            ~/.cache/common-lisp/
+            ~/.roswell
+            /usr/local/etc/roswell
+            .qlot
+          key: "${{ steps.current-month.outputs.value }}-${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('qlfile.lock') }}"
+      - name: Restore Path To Cached Files
+        run: |
+          echo $HOME/.roswell/bin >> $GITHUB_PATH
+          echo .qlot/bin >> $GITHUB_PATH
+        if: steps.cache.outputs.cache-hit == 'true'
+      - uses: 40ants/setup-lisp@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          asdf-system: geb/documentation
+
+      - name: 'build docs'
+        uses: 40ants/run-tests@v2
+        with:
+          asdf-system: geb/documentation
+          run-tests: |
             (ql:quickload :geb/test)
             (uiop:symbol-call 'geb-test 'code-coverage)
       - name: Tar files
@@ -73,7 +139,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: my-artifact
+          name: github-pages
           path: my_files.tar
 
   deploy:
