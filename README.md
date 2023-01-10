@@ -1418,6 +1418,31 @@ Various utility functions ontop of [Core Category][cb9e]
 
     Grabs the codomain of the morphism
 
+<a id="x-28GEB-3ACURRY-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **CURRY** *F*
+
+    Curries the given object, returns a [`<SUBSTMORPH>`][97fb]
+    
+    The [`<SUBSTMORPH>`][97fb] given must have its [`DOM`][3e8b] be of a [`PROD`][77c2] type, as [`CURRY`][6f3c]
+    invokes the idea of
+    
+    if f : ([`PROD`][77c2] a b) → c
+    
+    for all `a`, `b`, and `c` being an element of [`<SUBSTMORPH>`][97fb]
+    
+    then: (curry f): a → c^b
+    
+    where c^b means c to the exponent of b ([`EXPT`][9bcb2] c b)
+    
+    ```
+    Γ, f : a × b → c,
+    --------------------
+    (curry f) : a → c^b
+    ```
+    
+    In category terms, `a → c^b` is isomorphic to `a → b → c`
+
+
 <a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
 ### 7.5 Examples
 
@@ -1872,6 +1897,7 @@ features and how to better lay out future tests
   [399c]: #x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29 "Booleans"
   [3bc6]: #x-28GEB-2ESPEC-3APAIR-20TYPE-29 "GEB.SPEC:PAIR TYPE"
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
+  [3e8b]: #x-28GEB-3ADOM-20GENERIC-FUNCTION-29 "GEB:DOM GENERIC-FUNCTION"
   [4044]: #x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29 "code coverage"
   [417f]: #x-28GEB-TEST-3ACODE-COVERAGE-20FUNCTION-29 "GEB-TEST:CODE-COVERAGE FUNCTION"
   [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
@@ -1888,6 +1914,7 @@ features and how to better lay out future tests
   [5e72]: #x-28GEB-2ESPEC-3AALIAS-20TYPE-29 "GEB.SPEC:ALIAS TYPE"
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
   [684b]: http://www.lispworks.com/documentation/HyperSpec/Body/s_if.htm "IF MGL-PAX:MACRO"
+  [6f3c]: #x-28GEB-3ACURRY-20GENERIC-FUNCTION-29 "GEB:CURRY GENERIC-FUNCTION"
   [7088]: #x-28GEB-2ESPEC-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO0 MGL-PAX:SYMBOL-MACRO"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
   [74ab]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADR FUNCTION"
@@ -1909,6 +1936,7 @@ features and how to better lay out future tests
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"
   [9bcb]: #x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29 "Testing"
+  [9bcb2]: http://www.lispworks.com/documentation/HyperSpec/Body/f_exp_e.htm "EXPT FUNCTION"
   [9f9c]: #x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29 "Spec Files and Project Layout"
   [a17b]: #x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29 "Examples"
   [a300]: #x-28GEB-DOCS-2FDOCS-3A-40-3CTYPES-3E-20MGL-PAX-3ASECTION-29 "≺Types≻"

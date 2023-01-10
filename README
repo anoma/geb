@@ -1260,6 +1260,30 @@ Various utility functions ontop of @GEB-CATEGORIES
 
     Grabs the codomain of the morphism
 
+- [generic-function] CURRY F
+
+    Curries the given object, returns a <SUBSTMORPH>
+    
+    The <SUBSTMORPH> given must have its DOM be of a PROD type, as CURRY
+    invokes the idea of
+    
+    if f : (PROD a b) → c
+    
+    for all `a`, `b`, and `c` being an element of <SUBSTMORPH>
+    
+    then: (curry f): a → c^b
+    
+    where c^b means c to the exponent of b (EXPT c b)
+    
+    ```
+    Γ, f : a × b → c,
+    --------------------
+    (curry f) : a → c^b
+    ```
+    
+    In category terms, `a → c^b` is isomorphic to `a → b → c`
+
+
 ### Examples
 
 PLACEHOLDER: TO SHOW OTHERS HOW EXAMPLES WORK
