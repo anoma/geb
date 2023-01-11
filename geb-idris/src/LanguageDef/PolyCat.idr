@@ -2643,7 +2643,8 @@ SPFToPrimes (posdep ** dirdep ** assign) =
 public export
 DepParamPolyFunc : Type -> Type -> Type
 DepParamPolyFunc parambase posbase =
-  (posslice : SliceObj posbase ** Sigma posslice -> (parambase, Type))
+  Sigma {a=(SliceObj posbase)}
+    (\posslice => Sigma posslice -> (parambase, Type))
 
 public export
 SPFFromDPPF : {parambase, posbase : Type} ->
