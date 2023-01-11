@@ -162,10 +162,10 @@ values."))
 (defclass comp (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type substmorph
+         :type <substmorph>
          :documentation "The first composed morphism")
    (mcadr :initarg :mcadr
-          :type substmorph
+          :type <substmorph>
           :accessor mcadr
           :documentation "the second morphism"))
   (:documentation
@@ -215,7 +215,7 @@ theory, this expression just reduces to
 (defclass init (<substmorph>)
   ((obj :initarg :obj
         :accessor obj
-        :type substobj
+        :type <substobj>
         :documentation ""))
   (:documentation
    "The [INITIAL][INIT type] Morphism, takes any [\\<SUBSTOBJ\\>] and
@@ -242,7 +242,7 @@ In this example we are creating a unit value out of void."))
 (defclass terminal (<substmorph>)
   ((obj :initarg :obj
         :accessor obj
-        :type substobj
+        :type <substobj>
         :documentation ""))
   (:documentation
    "The [TERMINAL][type] morphism, Takes any [\\<SUBSTOBJ\\>] and creates a
@@ -324,11 +324,11 @@ otherwise flip the value of the boolean coming in."))
 (defclass inject-right (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type substobj
+         :type <substobj>
          :documentation "")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type substobj
+          :type <substobj>
           :documentation ""))
   (:documentation
    "The right injection morphism. Takes two \\<SUBSTOBJ\\> values. It is
@@ -477,11 +477,11 @@ product with the shape
 (defclass project-right (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type substobj
+         :type <substobj>
          :documentation "")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type substobj
+          :type <substobj>
           :documentation "Right projection (product elimination)"))
   (:documentation "The [RIGHT PROJECTION][PROJECT-RIGHT type]. Takes two
 [\\<SUBSTMORPH\\>] values. When the [RIGHT PROJECTION][PROJECT-RIGHT
@@ -515,15 +515,15 @@ product with the shape
 (defclass distribute (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type substobj
+         :type <substobj>
          :documentation "")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type substobj
+          :type <substobj>
           :documentation "")
    (mcaddr :initarg :mcaddr
            :accessor mcaddr
-           :type substobj
+           :type <substobj>
            :documentation ""))
   (:documentation "The distributive law"))
 
@@ -574,51 +574,51 @@ product with the shape
              (butlast list)
              (car (last list)))))
 
-(-> init (substobj) init)
+(-> init (<substobj>) init)
 (defun init (obj)
   (values
    (make-instance 'init :obj obj)))
 
-(-> terminal (substobj) terminal)
+(-> terminal (<substobj>) terminal)
 (defun terminal (obj)
   (values
    (make-instance 'terminal :obj obj)))
 
-(-> ->left (substobj substobj) inject-left)
+(-> ->left (<substobj> <substobj>) inject-left)
 (defun ->left (mcar mcadr)
   "injects left constructor"
   (values
    (make-instance 'inject-left :mcar mcar :mcadr mcadr)))
 
-(-> ->right (substobj substobj) inject-right)
+(-> ->right (<substobj> <substobj>) inject-right)
 (defun ->right (mcar mcadr)
   "injects right constructor"
   (values
    (make-instance 'inject-right :mcar mcar :mcadr mcadr)))
 
-(-> <-left (substobj substobj) project-left)
+(-> <-left (<substobj> <substobj>) project-left)
 (defun <-left (mcar mcadr)
   "projects left constructor"
   (values
    (make-instance 'project-left :mcar mcar :mcadr mcadr)))
 
-(-> <-right (substobj substobj) project-right)
+(-> <-right (<substobj> <substobj>) project-right)
 (defun <-right (mcar mcadr)
   "projects right constructor"
   (values
    (make-instance 'project-right :mcar mcar :mcadr mcadr)))
 
-(-> mcase (substmorph substmorph) case)
+(-> mcase (<substmorph> <substmorph>) case)
 (defun mcase (mcar mcadr)
   (values
    (make-instance 'case :mcar mcar :mcadr mcadr)))
 
-(-> pair (substmorph substmorph) pair)
+(-> pair (<substmorph> <substmorph>) pair)
 (defun pair (mcar mcdr)
   (values
    (make-instance 'pair :mcar mcar :mcdr mcdr)))
 
-(-> distribute (substobj substobj substobj) distribute)
+(-> distribute (<substobj> <substobj> <substobj>) distribute)
 (defun distribute (mcar mcadr mcaddr)
   (values
    (make-instance 'distribute :mcar mcar :mcadr mcadr :mcaddr mcaddr)))

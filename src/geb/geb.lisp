@@ -37,7 +37,7 @@ Example:
                     :obj obj)
         obj)))
 
-(-> cleave (substmorph &rest substmorph) pair)
+(-> cleave (<substmorph> &rest <substmorph>) pair)
 (defun cleave (v1 &rest values)
   "Applies each morphism to the object in turn."
   (if (null values)
@@ -47,9 +47,11 @@ Example:
 ;; Should this be in a geb.utils: package or does it deserve to be in
 ;; the main geb package?
 
+(-> commutes (<substobj> <substobj>) pair)
 (defun commutes (x y)
   (pair (<-right x y) (<-left x y)))
 
+(-> !-> (substobj substobj) substobj)
 (defun !-> (a b)
   (etypecase-of substobj a
     (so0    so1)
@@ -61,8 +63,9 @@ Example:
                  (!-> (mcadr a) b)))))
 
 (defgeneric so-card-alg (obj)
-  (:documentation "Gets the cardinality of the given object"))
+  (:documentation "Gets the cardinality of the given object, returns a FIXNUM"))
 
+;; (-> so-card-alg (<substobj>) fixnum)
 (defmethod so-card-alg ((obj <substobj>))
   ;; we don't use the cata morphism so here we are. Doesn't give me
   ;; much extra
