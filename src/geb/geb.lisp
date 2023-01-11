@@ -124,48 +124,50 @@ Example:
         (<-right (prod x y) z)))
 
 (defgeneric dom (substmorph)
-  (:documentation "Grabs the domain of the morphism"))
+  (:documentation "Grabs the domain of the morphism. Returns a [\\<SUBSTOBJ\\>]"))
 
 (defgeneric codom (substmorph)
-  (:documentation "Grabs the codomain of the morphism"))
+  (:documentation "Grabs the codomain of the morphism. Returns a [\\<SUBSTOBJ\\>]"))
 
 (defmethod dom ((x <substmorph>))
-  (typecase-of substmorph x
-    (init         so0)
-    (terminal     (obj x))
-    (alias        (dom (obj x)))
-    (substobj     x)
-    (inject-left  (mcar x))
-    (inject-right (mcadr x))
-    (comp         (dom (mcadr x)))
-    (pair         (dom (mcar x)))
-    (distribute   (prod (mcar x) (coprod (mcadr x) (mcaddr x))))
-    (case         (coprod (dom (mcar x)) (dom (mcadr x))))
-    ((or project-right
-         project-left)
-     (prod (mcar x) (mcadr x)))
-    (otherwise
-     (subclass-responsibility x))))
+  (assure substobj
+    (typecase-of substmorph x
+      (init         so0)
+      (terminal     (obj x))
+      (alias        (dom (obj x)))
+      (substobj     x)
+      (inject-left  (mcar x))
+      (inject-right (mcadr x))
+      (comp         (dom (mcadr x)))
+      (pair         (dom (mcar x)))
+      (distribute   (prod (mcar x) (coprod (mcadr x) (mcaddr x))))
+      (case         (coprod (dom (mcar x)) (dom (mcadr x))))
+      ((or project-right
+           project-left)
+       (prod (mcar x) (mcadr x)))
+      (otherwise
+       (subclass-responsibility x)))))
 
 (defmethod codom ((x <substmorph>))
-  (typecase-of substmorph x
-    (alias         (codom (obj x)))
-    (terminal      so1)
-    (init          (obj x))
-    (substobj      x)
-    (project-left  (mcar x))
-    (project-right (mcadr x))
-    (comp          (codom (mcar x)))
-    (case          (codom (mcar x)))
-    (pair          (prod (codom (mcar x))
-                         (codom (mcdr x))))
-    (distribute    (coprod (prod (mcar x) (mcadr x))
-                           (prod (mcar x) (mcaddr x))))
-    ((or inject-left
-         inject-right)
-     (coprod (mcar x) (mcadr x)))
-    (otherwise
-     (subclass-responsibility x))))
+  (assure substobj
+    (typecase-of substmorph x
+      (alias         (codom (obj x)))
+      (terminal      so1)
+      (init          (obj x))
+      (substobj      x)
+      (project-left  (mcar x))
+      (project-right (mcadr x))
+      (comp          (codom (mcar x)))
+      (case          (codom (mcar x)))
+      (pair          (prod (codom (mcar x))
+                           (codom (mcdr x))))
+      (distribute    (coprod (prod (mcar x) (mcadr x))
+                             (prod (mcar x) (mcaddr x))))
+      ((or inject-left
+           inject-right)
+       (coprod (mcar x) (mcadr x)))
+      (otherwise
+       (subclass-responsibility x)))))
 
 (defun gather (x y z)
   (pair (mcase (<-left x y) (<-left x z))
