@@ -11,47 +11,49 @@
 (defmethod empty ((class (eql (find-class 'list)))) nil)
 
 (defmethod compile-checked-term (context type (term <stlc>))
-  (match-of stlc term
-    ((absurd v)
-     (comp (init type)
-           (compile-checked-term context so0 v)))
-    (unit
-     (terminal (stlc-ctx-to-mu context)))
-    ((left term)
-     (assert (typep type 'coprod) nil "invalid lambda type to left ~A" type)
-     (comp (->left (mcar type) (mcadr type))
-           (compile-checked-term context (mcar type) term)))
-    ((right term)
-     (assert (typep type 'coprod) nil "invalid lambda type to right ~A" type)
-     (comp (->right (mcar type) (mcadr type))
-           (compile-checked-term context (mcar type) term)))
-    ((case-on lty rty cod on l r)
-     (comp (mcase (so-curry (compile-checked-term (cons lty context) cod l))
-                  (so-curry (compile-checked-term (cons rty context) cod r)))
-           (compile-checked-term context (coprod lty rty) on)))
-    ;; I would make an alias, but people would need a newer version of sbcl
-    ((geb.lambda.spec:pair lty rty l r)
-     (pair (compile-checked-term context lty l)
-           (compile-checked-term context rty r)))
-    ((fst lty rty value)
-     (assert (eql (class-of lty) (class-of type)) nil "Types should match on fst: ~A ~A"
-             term type)
-     (comp (<-left lty rty) (compile-checked-term context (prod lty rty) value)))
-    ((snd lty rty value)
-     (assert (eql (class-of rty) (class-of type)) nil "Types should match on fst: ~A ~A"
-             term type)
-     (comp (<-right lty rty) (compile-checked-term context (prod lty rty) value)))
-    ((lamb vty tty term)
-     (compile-checked-term (cons vty context) tty term)
-     (error "not implemented"))
-    ((app dom com f x)
-     (assert (eql dom type) nil "Types should match for application: ~A ~A" dom type)
-     (comp
-      (so-eval dom com)
-      (pair (compile-checked-term context dom f)
-            (compile-checked-term context com x))))
-    ((index i)
-     (stlc-ctx-proj context i))))
+  (assure <substmorph>
+    (match-of stlc term
+      ((absurd v)
+       (comp (init type)
+             (compile-checked-term context so0 v)))
+      (unit
+       (terminal (stlc-ctx-to-mu context)))
+      ((left term)
+       (assert (typep type 'coprod) nil "invalid lambda type to left ~A" type)
+       (comp (->left (mcar type) (mcadr type))
+             (compile-checked-term context (mcar type) term)))
+      ((right term)
+       (assert (typep type 'coprod) nil "invalid lambda type to right ~A" type)
+       (comp (->right (mcar type) (mcadr type))
+             (compile-checked-term context (mcar type) term)))
+      ((case-on lty rty cod on l r)
+       (comp (mcase (curry (compile-checked-term (cons lty context) cod l))
+                    (curry (compile-checked-term (cons rty context) cod r)))
+             (compile-checked-term context (coprod lty rty) on)))
+      ;; I would make an alias, but people would need a newer version of sbcl
+      ((geb.lambda.spec:pair lty rty l r)
+       (pair (compile-checked-term context lty l)
+             (compile-checked-term context rty r)))
+      ((fst lty rty value)
+       (assert (eql (class-of lty) (class-of type)) nil "Types should match on fst: ~A ~A"
+               term type)
+       (comp (<-left lty rty) (compile-checked-term context (prod lty rty) value)))
+      ((snd lty rty value)
+       (assert (eql (class-of rty) (class-of type)) nil "Types should match on fst: ~A ~A"
+               term type)
+       (comp (<-right lty rty) (compile-checked-term context (prod lty rty) value)))
+      ((lamb vty tty term)
+       (curry (commutes-left
+               ;; is this correct?
+               (compile-checked-term (cons vty context) tty term))))
+      ((app dom com f x)
+       (assert (eql dom type) nil "Types should match for application: ~A ~A" dom type)
+       (comp
+        (so-eval dom com)
+        (pair (compile-checked-term context dom f)
+              (compile-checked-term context com x))))
+      ((index i)
+       (stlc-ctx-proj context i)))))
 
 (-> stlc-to-ccc (stlc-context t) t)
 (defun stlc-to-ccc (context term)
@@ -125,9 +127,6 @@
         xcod fdom
         (list xdom fcod (comp fm xm)))
        (_ nil)))))
-
-(defun so-curry (x)
-  (error "don't know how to fill in hole ~A" x))
 
 (-> stlc-ctx-to-mu (stlc-context) substobj)
 (defun stlc-ctx-to-mu (context)

@@ -45,6 +45,7 @@ into other categorical data structures."
   (cleave            pax:function)
   (const             pax:function)
   (commutes          pax:function)
+  (commutes-left     pax:function)
   (!->               pax:function)
   (so-eval           pax:function)
   (so-card-alg       pax:generic-function)

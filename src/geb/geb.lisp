@@ -51,6 +51,31 @@ Example:
 (defun commutes (x y)
   (pair (<-right x y) (<-left x y)))
 
+
+;; TODO easy tests to make for it, just do it!
+(-> commutes-left (<substmorph>) comp)
+(defun commutes-left (morph)
+  "swap the input [domain][DOM] of the given [\\<SUBSTMORPH\\>]
+
+In order to swap the [domain][DOM] we expect the [\\<SUBSTMORPH\\>] to
+be a [PROD][type]
+
+Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` [\\<SUBSTOBJ\\>]
+
+then: `(commutes-left (dom morph)) ≡ (prod y x)`
+
+```
+Γ, f : x × y → a
+------------------------------
+(commutes-left f) : y × x → a
+```
+"
+  (let ((dom (dom morph)))
+    (if (not (typep dom 'prod))
+        (error "object ~A need to be of a product type, however it is of ~A"
+               morph dom)
+        (comp morph (commutes (mcadr dom) (mcar dom))))))
+
 (-> !-> (substobj substobj) substobj)
 (defun !-> (a b)
   (etypecase-of substobj a
