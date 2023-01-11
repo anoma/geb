@@ -50,8 +50,20 @@
                                        (poly:+ (poly:* cz xin)
                                                (poly:- yzin cy)
                                                (poly:* cx cy)))))))
-    (pair          (error "not implemented"))
-    (case          (let ((obj-to-nat ))))
+    (pair          (let* ((z  (codom (mcdr obj)))
+                          (cz (obj-to-nat z)))
+                     (poly:* cz (poly:+ (to-poly (mcar obj))
+                                        (to-poly (mcdr obj))))))
+    (case          (let* ((f      (mcar obj))
+                          (x      (dom f))
+                          (cx     (obj-to-nat x))
+                          (poly-g (to-poly (mcadr obj))))
+                     (if (zerop cx)
+                         poly-g
+                         (poly:if-lt poly:ident cx
+                                     (to-poly f)
+                                     (poly:compose poly-g
+                                                   (poly:- poly:ident cx))))))
     (otherwise (subclass-responsibility obj))))
 
 ;; put here just to avoid confusion
