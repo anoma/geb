@@ -8,6 +8,8 @@ modules =
     , LanguageDef.NatPrefixCat
     , LanguageDef.PolyProfunctor
     , LanguageDef.ADTCat
+    , LanguageDef.ProgFinSet
+    , LanguageDef.GebTopos
     , LanguageDef.PolyCat
     , LanguageDef.Atom
     , LanguageDef.RefinedADT
@@ -23,6 +25,8 @@ modules =
     , LanguageDef.Test.NatPrefixCatTest
     , LanguageDef.Test.PolyProfunctorTest
     , LanguageDef.Test.ADTCatTest
+    , LanguageDef.Test.ProgFinSetTest
+    , LanguageDef.Test.GebToposTest
     , LanguageDef.Test.PolyCatTest
     , LanguageDef.Test.AtomTest
     , LanguageDef.Test.RefinedADTTest

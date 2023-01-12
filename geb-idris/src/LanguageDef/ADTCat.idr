@@ -196,11 +196,6 @@ public export
 SEXPXP : SexpXPos
 SEXPXP = True
 
-public export
-SexpXDir : SexpXPos -> Type
-SexpXDir False = Unit
-SexpXDir True = Unit
-
 -- We shall use 'False` for `pair` and `True` for `expression`.
 public export
 SexpCompoundPosBase : Type
@@ -229,29 +224,29 @@ SexpPSlice : Type
 SexpPSlice = SliceObj SexpPosBase
 
 public export
-SexpPos : PolyFunc -> SexpPosBase -> Type
+SexpPos : PolyFunc -> SexpPSlice
 SexpPos a (Left ()) = pfPos a
 SexpPos a (Right i) = SexpCompoundPos i
 
 public export
-SexpDir : {a : PolyFunc} ->
-  Sigma (SexpPos a) -> (dirdep : Type ** dirdep -> SexpPosBase)
--- An atom's sub-expressions are those of the atom's ADT, and do not
--- contain any further S-expressions.
-SexpDir {a} ((Left ()) ** i) = (pfDir {p=a} i ** const $ Left ())
--- Both parts of a pair are exps.
-SexpDir {a} ((Right False) ** ()) = (PairDir () ** const $ Right True)
--- An expression's dependent position indicates whether it's a pair or an atom.
-SexpDir {a} ((Right True) ** i) =
-  (SexpXDir i ** if i then const (Right False) else const (Left ()))
+SexpDir : (a : PolyFunc) -> Sigma (SexpPos a) -> (SexpPosBase, Type)
+-- The atom part of an s-expression is just an atom; it does not recursively
+-- contain any other s-expression components.
+SexpDir a (Left () ** i) = (Left (), pfDir {p=a} i)
+-- Both sides of a pair are sexps (`Right True`).
+SexpDir a (Right False ** ()) = (Right True, PairDir ())
+-- An expression's dependent position indicates whether it's an atom (`False`)
+-- or a pair (`True`).  Both cases have one direction from the s-expression-
+-- position perspective (one atom or one pair).
+SexpDir a (Right True ** i) = (if i then Right False else Left (), ())
 
 public export
-SexpF' : PolyFunc -> SlicePolyFunc' SexpPosBase SexpPosBase
-SexpF' a = (SexpPos a ** SexpDir {a})
+SexpDPPF : PolyFunc -> DepParamPolyFunc SexpPosBase SexpPosBase
+SexpDPPF a = (SexpPos a ** SexpDir a)
 
 public export
 SexpF : PolyFunc -> SlicePolyFunc SexpPosBase SexpPosBase
-SexpF = SPFFromPrime . SexpF'
+SexpF = SPFFromDPPF . SexpDPPF
 
 -- An algebra for a mutual recursion which returns potentially-different
 -- types for an S-expression and a pair of S-expressions.
@@ -419,25 +414,53 @@ soProductHomCata : {a : Type} -> SOProductHomAlg a -> SOMu -> SOMu -> a
 soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
 
 public export
-SOHomAlg : Type -> Type
-SOHomAlg a = BinTreeAlg BoolF (a -> a)
+SOHomAlg : {m : Type -> Type} -> {isMonad : Monad m} -> Type -> Type
+SOHomAlg a = BinTreeAlg BoolF (a -> m a)
 
 public export
-SOHomAlgToFAlg : {0 a : Type} -> SOHomAlg a -> SOAlg (a -> a)
+SOHomAlgToFAlg : {m : Type -> Type} -> {isMonad : Monad m} -> {0 a : Type} ->
+  SOHomAlg {m} {isMonad} a -> SOAlg (a -> m a)
 SOHomAlgToFAlg alg SOPos0 d = alg (Left False) $ \i => case i of _ impossible
 SOHomAlgToFAlg alg SOPos1 d = alg (Left True) $ \i => case i of _ impossible
 SOHomAlgToFAlg alg SOPosC d = alg (Right ()) $ \i => case i of
   False => d SODirL
   True => d SODirR
-SOHomAlgToFAlg alg SOPosP d = d SODir1 . d SODir2
+SOHomAlgToFAlg alg SOPosP d = d SODir1 <=< d SODir2
 
 public export
-soHomObjCata : {0 a : Type} -> SOHomAlg a -> SOMu -> a -> a
-soHomObjCata alg = soCata (SOHomAlgToFAlg alg)
+soHomObjCata : {m : Type -> Type} -> {isMonad : Monad m} -> {0 a : Type} ->
+  SOHomAlg {m} {isMonad} a -> SOMu -> a -> m a
+soHomObjCata alg = soCata (SOHomAlgToFAlg {m} {isMonad} alg)
+
+public export
+SOHomIdAlg : Type -> Type
+SOHomIdAlg = SOHomAlg {m=Prelude.id} {isMonad=IdMonad}
+
+public export
+soHomIdCata : {0 a : Type} -> SOHomIdAlg a -> SOMu -> a -> a
+soHomIdCata = soHomObjCata {m=id} {isMonad=IdMonad}
 
 public export
 SOHomSOAlg : Type
-SOHomSOAlg = SOHomAlg SOMu
+SOHomSOAlg = SOHomIdAlg SOMu
+
+public export
+SOHomMaybeAlg : Type -> Type
+SOHomMaybeAlg = SOHomAlg {m=Maybe} {isMonad=MaybeMonad}
+
+public export
+soHomMaybeCata : {0 a : Type} -> SOHomMaybeAlg a -> SOMu -> a -> Maybe a
+soHomMaybeCata = soHomObjCata {m=Maybe} {isMonad=MaybeMonad}
+
+public export
+SOHomEitherAlg : {x : Type} -> {isSemigroup : Semigroup x} -> Type -> Type
+SOHomEitherAlg {x} {isSemigroup} = SOHomAlg {m=(Either x)} {isMonad=EitherMonad}
+
+public export
+soHomEitherCata : {x : Type} -> {isSemigroup : Semigroup x} -> {0 a : Type} ->
+  SOHomEitherAlg {x} {isSemigroup} a -> SOMu -> a -> Either x a
+soHomEitherCata {x} {isSemigroup} =
+  soHomObjCata {m=(Either x)} {isMonad=EitherMonad}
 
 -------------------
 ---- Utilities ----
@@ -627,7 +650,7 @@ SOHomObjAlg (Right ()) d = biapp InSOP (d False) (d True)
 
 public export
 soHomObj : SOMu -> SOMu -> SOMu
-soHomObj = soHomObjCata SOHomObjAlg
+soHomObj = soHomIdCata SOHomObjAlg
 
 public export
 soExpObj : SOMu -> SOMu -> SOMu
@@ -657,39 +680,189 @@ SOHomReflect vi ui fi alg (Left False) d = vi $ fst alg
 SOHomReflect vi ui fi alg (Left True) d = ui $ fst $ snd alg
 SOHomReflect vi ui fi alg (Right ()) d = fi (snd $ snd alg) (d False) (d True)
 
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---- "Programmer's FinSet" ("PFS") with hom-objects, compiling to SOMu ----
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+-----------------------------------
+---- Object-generating functor ----
+-----------------------------------
+
+public export
+data PFSObjPosExt : Type where
+  PFSHomObjPos : PFSObjPosExt
+
+public export
+data PFSObjDirExt : PFSObjPosExt -> Type where
+  PFSHomObjDirDom : PFSObjDirExt PFSHomObjPos -- domain
+  PFSHomObjDirCod : PFSObjDirExt PFSHomObjPos -- codomain
+
+public export
+PFSObjExtF : PolyFunc
+PFSObjExtF = (PFSObjPosExt ** PFSObjDirExt)
+
+public export
+PFSObjF : PolyFunc
+PFSObjF = pfCoproductArena SubstObjPF PFSObjExtF
+
+public export
+PFSObjPos : Type
+PFSObjPos = pfPos PFSObjF
+
+public export
+PFSObjDir : PFSObjPos -> Type
+PFSObjDir = pfDir {p=PFSObjF}
+
+public export
+PFSPos0 : PFSObjPos
+PFSPos0 = Left SOPos0
+
+public export
+PFSPos1 : PFSObjPos
+PFSPos1 = Left SOPos1
+
+public export
+PFSPosC : PFSObjPos
+PFSPosC = Left SOPosC
+
+public export
+PFSPosP : PFSObjPos
+PFSPosP = Left SOPosP
+
+public export
+PFSPosHom : PFSObjPos
+PFSPosHom = Right PFSHomObjPos
+
+----------------------------------------------------
+---- Least fixed point, algebras, catamorphisms ----
+----------------------------------------------------
+
+public export
+PFSObjExt : Type
+PFSObjExt = PolyFuncMu PFSObjExtF
+
+public export
+PFSObj : Type
+PFSObj = PolyFuncMu PFSObjF
+
+public export
+PFSObjAlg : Type -> Type
+PFSObjAlg = PFAlg PFSObjF
+
+public export
+PFSObjAlgExt : Type -> Type
+PFSObjAlgExt = PFAlg PFSObjExtF
+
+public export
+PFSBuildAlg : {a : Type} -> SOAlg a -> PFSObjAlgExt a -> PFSObjAlg a
+PFSBuildAlg = PFCoprodAlg {p=SubstObjPF} {q=PFSObjExtF}
+
+public export
+pfsObjCata : {0 a : Type} -> PFSObjAlg a -> PFSObj -> a
+pfsObjCata = pfCata {p=PFSObjF}
+
+-------------------------------------------------
+---- Interpretation of PFS objects into SOMu ----
+-------------------------------------------------
+
+public export
+PFSObjToSOAlgExt : PFSObjAlgExt SOMu
+PFSObjToSOAlgExt PFSHomObjPos d =
+  soHomObj (d PFSHomObjDirDom) (d PFSHomObjDirCod)
+
+public export
+PFSObjToSOAlg : PFSObjAlg SOMu
+PFSObjToSOAlg = PFSBuildAlg PolyMuIdAlg PFSObjToSOAlgExt
+
+public export
+PFSObjToSO : PFSObj -> SOMu
+PFSObjToSO = pfsObjCata PFSObjToSOAlg
+
+public export
+PFSObjInterp : PFSObj -> Type
+PFSObjInterp = SOInterp . PFSObjToSO
+
+-------------------------------------------------------------
+---- Interpretation of PFS objects into the metalanguage ----
+-------------------------------------------------------------
+
+public export
+PFSObjInterpAlgExt : PFSObjAlgExt Type
+PFSObjInterpAlgExt PFSHomObjPos dir = dir PFSHomObjDirDom -> dir PFSHomObjDirCod
+
+public export
+PFSObjInterpAlg : PFSObjAlg Type
+PFSObjInterpAlg = PFSBuildAlg SOInterpAlg PFSObjInterpAlgExt
+
+public export
+PFSObjInterpMeta : PFSObj -> Type
+PFSObjInterpMeta = pfsObjCata PFSObjInterpAlg
+
+--------------------------------------------------------------------------
 --------------------------------------------------------------------------
 ---- Dependent-set definition of substitutive polynomial endofunctors ----
 --------------------------------------------------------------------------
+--------------------------------------------------------------------------
+
+public export
+SOHomTypeAlg : SOHomIdAlg Type
+-- 0 -> x === 1
+SOHomTypeAlg (Left False) d = (const Unit)
+-- 1 -> x === x
+SOHomTypeAlg (Left True) d = id
+-- (x + y) -> z === (x -> z) * (y -> z)
+SOHomTypeAlg (Right ()) d = biapp Pair (d False) (d True)
+
+public export
+soHomType : SOMu -> Type -> Type
+soHomType = soHomIdCata SOHomTypeAlg
+
+public export
+SODepObj : SOMu -> Type
+SODepObj = flip soHomType SOMu
+
+-- Reflective definition of PFS endofunctors as PFS objects which depend
+-- upon PFS objects.
+
+public export
+pfsHomType : PFSObj -> Type -> Type
+pfsHomType = soHomType . PFSObjToSO
+
+public export
+PFSDepPFSObj : PFSObj -> Type
+PFSDepPFSObj = flip pfsHomType PFSObj
+
+public export
+PFSEndoF : Type
+PFSEndoF = DPair PFSObj PFSDepPFSObj
 
 -- A dependent object in "Programmer's FinSet" (AKA `PFS`, the category whose
 -- types are terms of `SOMu` and whose morphisms are terms of `SOMuMorph`) --
 -- that -- is, a function from objects of `PFS` to objects of `PFS`.
-PFSDepObj : SOMu -> Type
-PFSDepObj x = SOInterp x -> SOMu
+public export
+PFSDepObj : PFSObj -> Type
+PFSDepObj x = PFSObjInterp x -> PFSObj
 
 -- An arena with positions and directions drawn from "Programmer's FinSet"
 -- (AKA the category whose types are terms of `SOMu` and whose morphisms
 -- are terms of `SOMuMorph`).
 public export
 PFSEndoArena : Type
-PFSEndoArena = DPair SOMu PFSDepObj
+PFSEndoArena = DPair PFSObj PFSDepObj
 
 public export
-pfsPos : PFSEndoArena -> SOMu
+pfsPos : PFSEndoArena -> PFSObj
 pfsPos = DPair.fst
 
 public export
 PFSPosTerm : PFSEndoArena -> Type
-PFSPosTerm = SOInterp . pfsPos
+PFSPosTerm = PFSObjInterp . pfsPos
 
 public export
-pfsDir : (ar : PFSEndoArena) -> PFSPosTerm ar -> SOMu
+pfsDir : (ar : PFSEndoArena) -> PFSPosTerm ar -> PFSObj
 pfsDir = DPair.snd
-
--- Interpret an arena as a polynomial endofunctor on `PFS`.
-public export
-PFSEndoInterp : PFSEndoArena -> SOMu -> SOMu
-PFSEndoInterp ar = ?PFSEndoInterp_hole
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------

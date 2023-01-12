@@ -48,6 +48,54 @@ public export
 (.**) = (.) . (.) . (.)
 
 public export
+[IdFunctor] Functor Prelude.id where
+  map = id
+
+public export
+[IdApplicative] Applicative Prelude.id using IdFunctor where
+  pure = id
+  (<*>) = apply
+
+public export
+[IdMonad] Monad Prelude.id using IdApplicative where
+  (>>=) = flip apply
+
+public export
+[MaybeFunctor] Functor Maybe where
+  map f (Just x) = Just (f x)
+  map f Nothing  = Nothing
+
+public export
+[MaybeApplicative] Applicative Maybe using MaybeFunctor where
+  pure = Just
+  Just f <*> Just a = Just (f a)
+  _      <*> _      = Nothing
+
+public export
+[MaybeMonad] Monad Maybe using MaybeApplicative where
+  Nothing  >>= k = Nothing
+  (Just x) >>= k = k x
+
+public export
+[EitherFunctor] Functor (Either a) where
+  map f (Left x) = Left x
+  map f (Right x) = Right (f x)
+
+public export
+[EitherApplicative] Semigroup x =>
+    Applicative (Either x) using EitherFunctor where
+  pure = Right
+  Left f  <*> Left i = Left (f <+> i)
+  Left f  <*> Right i = Left f
+  Right f <*> Left i = Left i
+  Right f <*> Right i = Right (f i)
+
+public export
+[EitherMonad] Semigroup x => Monad (Either x) using MaybeApplicative where
+  (Left x)  >>= k = Left x
+  (Right x) >>= k = k x
+
+public export
 fcong : {0 a, b : Type} -> {0 f, g : a -> b} -> (f = g) -> {x : a} -> f x = g x
 fcong Refl = Refl
 
