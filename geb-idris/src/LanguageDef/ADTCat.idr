@@ -281,7 +281,7 @@ sexpBCata {a} = spfCata {spf=(SexpF a)}
 
 -- One special case of an S-expression algebra is when the atom and pair
 -- components of the algebra both return the same type, and the expression
--- component of that algebra just passes the type through unchanged.  In
+-- component of that algebra just passes the return value through unchanged.  In
 -- that case, we can perform an S-expression catamorphism by providing only
 -- a binary-tree algebra (which is simpler).  This captures the sense in which
 -- S-expressions are more expressive than binary trees:  their algebras in

@@ -7,6 +7,58 @@ import public LanguageDef.PolyCat
 
 %default total
 
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Trying to work out polynomial profunctor definition by example ----
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+public export
+data SubstObjMuPosPos : Type where
+  SOMId : SubstObjMuPosPos
+  SOMComp : SubstObjMuPosPos
+  SOMFromInit : SubstObjMuPosPos
+  SOMDistrib : SubstObjMuPosPos
+
+public export
+data SubstObjMuPosDir : SubstObjMuPosPos -> Type where
+  SOMDIdObj : SubstObjMuPosDir SOMId
+  SOMDCompDom : SubstObjMuPosDir SOMComp
+  SOMDCompMid : SubstObjMuPosDir SOMComp
+  SOMDCompCod : SubstObjMuPosDir SOMComp
+  SOMDFromInitDom : SubstObjMuPosDir SOMFromInit
+  SOMDDistribLeft : SubstObjMuPosDir SOMDistrib
+  SOMDDistribMid : SubstObjMuPosDir SOMDistrib
+  SOMDDistribRight : SubstObjMuPosDir SOMDistrib
+
+public export
+SubstObjMuPosPF : PolyFunc
+SubstObjMuPosPF = (SubstObjMuPosPos ** SubstObjMuPosDir)
+
+public export
+SubstObjMuAssignDom :
+  InterpPolyFunc SubstObjMuPosPF SubstObjMu -> SubstObjMu
+SubstObjMuAssignDom (SOMId ** d) = d SOMDIdObj
+SubstObjMuAssignDom (SOMComp ** d) = d SOMDCompDom
+SubstObjMuAssignDom (SOMFromInit ** d) = d SOMDFromInitDom
+SubstObjMuAssignDom (SOMDistrib ** d) =
+   d SOMDDistribLeft !* (d SOMDDistribMid !+ d SOMDDistribRight)
+
+public export
+SubstObjMuAssignCod :
+  InterpPolyFunc SubstObjMuPosPF SubstObjMu -> SubstObjMu
+SubstObjMuAssignCod (SOMId ** d) = d SOMDIdObj
+SubstObjMuAssignCod (SOMComp ** d) = d SOMDCompCod
+SubstObjMuAssignCod (SOMFromInit ** d) = Subst0
+SubstObjMuAssignCod (SOMDistrib ** d) =
+   (d SOMDDistribLeft !* d SOMDDistribMid) !+
+   (d SOMDDistribLeft !* d SOMDDistribRight)
+
+public export
+SubstObjMuAssignSig :
+  InterpPolyFunc SubstObjMuPosPF SubstObjMu -> (SubstObjMu, SubstObjMu)
+SubstObjMuAssignSig = MkPairF SubstObjMuAssignDom SubstObjMuAssignCod
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Polynomial functors from arbitrary categories to `Type` ----
