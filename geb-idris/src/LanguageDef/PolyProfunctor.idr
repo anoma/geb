@@ -36,21 +36,29 @@ SubstObjMuPosPF : PolyFunc
 SubstObjMuPosPF = (SubstObjMuPosPos ** SubstObjMuPosDir)
 
 public export
-SubstObjMuAssignDom : Algebra (InterpPolyFunc SubstObjMuPosPF) SubstObjMu
-SubstObjMuAssignDom (SOMId ** d) = d SOMDIdObj
-SubstObjMuAssignDom (SOMComp ** d) = d SOMDCompDom
-SubstObjMuAssignDom (SOMFromInit ** d) = d SOMDFromInitDom
-SubstObjMuAssignDom (SOMDistrib ** d) =
+SubstObjMuAssignDomAlg : PFAlg SubstObjMuPosPF SubstObjMu
+SubstObjMuAssignDomAlg SOMId d = d SOMDIdObj
+SubstObjMuAssignDomAlg SOMComp d = d SOMDCompDom
+SubstObjMuAssignDomAlg SOMFromInit d = d SOMDFromInitDom
+SubstObjMuAssignDomAlg SOMDistrib d =
    d SOMDDistribLeft !* (d SOMDDistribMid !+ d SOMDDistribRight)
 
 public export
-SubstObjMuAssignCod : Algebra (InterpPolyFunc SubstObjMuPosPF) SubstObjMu
-SubstObjMuAssignCod (SOMId ** d) = d SOMDIdObj
-SubstObjMuAssignCod (SOMComp ** d) = d SOMDCompCod
-SubstObjMuAssignCod (SOMFromInit ** d) = Subst0
-SubstObjMuAssignCod (SOMDistrib ** d) =
+SubstObjMuAssignCodAlg : PFAlg SubstObjMuPosPF SubstObjMu
+SubstObjMuAssignCodAlg SOMId d = d SOMDIdObj
+SubstObjMuAssignCodAlg SOMComp d = d SOMDCompCod
+SubstObjMuAssignCodAlg SOMFromInit d = Subst0
+SubstObjMuAssignCodAlg SOMDistrib d =
    (d SOMDDistribLeft !* d SOMDDistribMid) !+
    (d SOMDDistribLeft !* d SOMDDistribRight)
+
+public export
+SubstObjMuAssignDom : Algebra (InterpPolyFunc SubstObjMuPosPF) SubstObjMu
+SubstObjMuAssignDom = InterpPFAlg {p=SubstObjMuPosPF} SubstObjMuAssignDomAlg
+
+public export
+SubstObjMuAssignCod : Algebra (InterpPolyFunc SubstObjMuPosPF) SubstObjMu
+SubstObjMuAssignCod = InterpPFAlg {p=SubstObjMuPosPF} SubstObjMuAssignCodAlg
 
 public export
 SubstObjMuAssignSig :
