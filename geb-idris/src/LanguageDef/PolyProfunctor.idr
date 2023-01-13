@@ -36,8 +36,7 @@ SubstObjMuPosPF : PolyFunc
 SubstObjMuPosPF = (SubstObjMuPosPos ** SubstObjMuPosDir)
 
 public export
-SubstObjMuAssignDom :
-  InterpPolyFunc SubstObjMuPosPF SubstObjMu -> SubstObjMu
+SubstObjMuAssignDom : Algebra (InterpPolyFunc SubstObjMuPosPF) SubstObjMu
 SubstObjMuAssignDom (SOMId ** d) = d SOMDIdObj
 SubstObjMuAssignDom (SOMComp ** d) = d SOMDCompDom
 SubstObjMuAssignDom (SOMFromInit ** d) = d SOMDFromInitDom
@@ -45,8 +44,7 @@ SubstObjMuAssignDom (SOMDistrib ** d) =
    d SOMDDistribLeft !* (d SOMDDistribMid !+ d SOMDDistribRight)
 
 public export
-SubstObjMuAssignCod :
-  InterpPolyFunc SubstObjMuPosPF SubstObjMu -> SubstObjMu
+SubstObjMuAssignCod : Algebra (InterpPolyFunc SubstObjMuPosPF) SubstObjMu
 SubstObjMuAssignCod (SOMId ** d) = d SOMDIdObj
 SubstObjMuAssignCod (SOMComp ** d) = d SOMDCompCod
 SubstObjMuAssignCod (SOMFromInit ** d) = Subst0
