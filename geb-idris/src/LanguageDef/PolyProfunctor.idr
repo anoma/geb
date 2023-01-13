@@ -18,6 +18,13 @@ data SubstObjMuPosPos : Type where
   SOMId : SubstObjMuPosPos
   SOMComp : SubstObjMuPosPos
   SOMFromInit : SubstObjMuPosPos
+  SOMToTerminal : SubstObjMuPosPos
+  SOMInjLeft : SubstObjMuPosPos
+  SOMInjRight : SubstObjMuPosPos
+  SOMCase : SubstObjMuPosPos
+  SOMPair : SubstObjMuPosPos
+  SOMProjLeft : SubstObjMuPosPos
+  SOMProjRight : SubstObjMuPosPos
   SOMDistrib : SubstObjMuPosPos
 
 public export
@@ -26,7 +33,22 @@ data SubstObjMuPosDir : SubstObjMuPosPos -> Type where
   SOMDCompDom : SubstObjMuPosDir SOMComp
   SOMDCompMid : SubstObjMuPosDir SOMComp
   SOMDCompCod : SubstObjMuPosDir SOMComp
-  SOMDFromInitDom : SubstObjMuPosDir SOMFromInit
+  SOMDFromInitCod : SubstObjMuPosDir SOMFromInit
+  SOMDToTerminalDom : SubstObjMuPosDir SOMToTerminal
+  SOMDInjLeftDom : SubstObjMuPosDir SOMInjLeft
+  SOMDInjLeftCodR : SubstObjMuPosDir SOMInjLeft
+  SOMDInjRightDom : SubstObjMuPosDir SOMInjRight
+  SOMDInjRightCodL : SubstObjMuPosDir SOMInjRight
+  SOMDCaseDomL : SubstObjMuPosDir SOMCase
+  SOMDCaseDomR : SubstObjMuPosDir SOMCase
+  SOMDCaseCod : SubstObjMuPosDir SOMCase
+  SOMDPairDom : SubstObjMuPosDir SOMPair
+  SOMDPairCodL : SubstObjMuPosDir SOMPair
+  SOMDPairCodR : SubstObjMuPosDir SOMPair
+  SOMDProjLeftDomR : SubstObjMuPosDir SOMProjLeft
+  SOMDProjLeftCod : SubstObjMuPosDir SOMProjLeft
+  SOMDProjRightDomL : SubstObjMuPosDir SOMProjRight
+  SOMDProjRightCod : SubstObjMuPosDir SOMProjRight
   SOMDDistribLeft : SubstObjMuPosDir SOMDistrib
   SOMDDistribMid : SubstObjMuPosDir SOMDistrib
   SOMDDistribRight : SubstObjMuPosDir SOMDistrib
@@ -39,7 +61,16 @@ public export
 SubstObjMuAssignDomAlg : PFAlg SubstObjMuPosPF SubstObjMu
 SubstObjMuAssignDomAlg SOMId d = d SOMDIdObj
 SubstObjMuAssignDomAlg SOMComp d = d SOMDCompDom
-SubstObjMuAssignDomAlg SOMFromInit d = d SOMDFromInitDom
+SubstObjMuAssignDomAlg SOMFromInit d = Subst0
+SubstObjMuAssignDomAlg SOMToTerminal d = d SOMDToTerminalDom
+SubstObjMuAssignDomAlg SOMInjLeft d = d SOMDInjLeftDom
+SubstObjMuAssignDomAlg SOMInjRight d = d SOMDInjRightDom
+SubstObjMuAssignDomAlg SOMCase d = d SOMDCaseDomL !+ d SOMDCaseDomR
+SubstObjMuAssignDomAlg SOMPair d = d SOMDPairDom
+SubstObjMuAssignDomAlg SOMProjLeft d =
+  d SOMDProjLeftCod !* d SOMDProjLeftDomR
+SubstObjMuAssignDomAlg SOMProjRight d =
+  d SOMDProjRightDomL !* d SOMDProjRightCod
 SubstObjMuAssignDomAlg SOMDistrib d =
    d SOMDDistribLeft !* (d SOMDDistribMid !+ d SOMDDistribRight)
 
@@ -47,7 +78,14 @@ public export
 SubstObjMuAssignCodAlg : PFAlg SubstObjMuPosPF SubstObjMu
 SubstObjMuAssignCodAlg SOMId d = d SOMDIdObj
 SubstObjMuAssignCodAlg SOMComp d = d SOMDCompCod
-SubstObjMuAssignCodAlg SOMFromInit d = Subst0
+SubstObjMuAssignCodAlg SOMFromInit d = d SOMDFromInitCod
+SubstObjMuAssignCodAlg SOMToTerminal d = Subst1
+SubstObjMuAssignCodAlg SOMInjLeft d = d SOMDInjLeftDom !+ d SOMDInjLeftCodR
+SubstObjMuAssignCodAlg SOMInjRight d = d SOMDInjRightCodL !+ d SOMDInjRightDom
+SubstObjMuAssignCodAlg SOMCase d = d SOMDCaseCod
+SubstObjMuAssignCodAlg SOMPair d = d SOMDPairCodL !* d SOMDPairCodR
+SubstObjMuAssignCodAlg SOMProjLeft d = d SOMDProjLeftCod
+SubstObjMuAssignCodAlg SOMProjRight d = d SOMDProjRightCod
 SubstObjMuAssignCodAlg SOMDistrib d =
    (d SOMDDistribLeft !* d SOMDDistribMid) !+
    (d SOMDDistribLeft !* d SOMDDistribRight)
