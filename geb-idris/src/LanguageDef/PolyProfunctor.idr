@@ -121,6 +121,14 @@ SubstMorphShape : Type
 SubstMorphShape = PolyFuncMu SubstMorphShapeF
 
 public export
+SubstMorphAnnotatedDir : SliceObj SubstObjMuPosPos
+SubstMorphAnnotatedDir = SliceProduct SubstObjMuDir SubstObjMuPosDir
+
+public export
+SubstMorphAnnotated : PolyFunc
+SubstMorphAnnotated = (SubstObjMuPosPos ** SubstMorphAnnotatedDir)
+
+public export
 SubstMorphFromShape : (SubstObjMu, SubstObjMu) -> Type
 SubstMorphFromShape = ?SubstMorphFromShape_hole
 
