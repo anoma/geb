@@ -109,8 +109,8 @@ data SubstObjMuDir : SubstObjMuPosPos -> Type where
   SOMDCompDirPrec : SubstObjMuDir SOMComp
   SOMDCaseL : SubstObjMuDir SOMCase
   SOMDCaseR : SubstObjMuDir SOMCase
-  SOMDPairL : SubstObjMuDir SOMCase
-  SOMDPairR : SubstObjMuDir SOMCase
+  SOMDPairL : SubstObjMuDir SOMPair
+  SOMDPairR : SubstObjMuDir SOMPair
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
