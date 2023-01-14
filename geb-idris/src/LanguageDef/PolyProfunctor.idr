@@ -25,33 +25,33 @@ data SubstObjMuPosPos : Type where
   SOMPair : SubstObjMuPosPos
   SOMProjLeft : SubstObjMuPosPos
   SOMProjRight : SubstObjMuPosPos
-  SOMDistrib : SubstObjMuPosPos
+  SOMPDistrib : SubstObjMuPosPos
 
 public export
 data SubstObjMuPosDir : SubstObjMuPosPos -> Type where
-  SOMDIdObj : SubstObjMuPosDir SOMId
-  SOMDCompDom : SubstObjMuPosDir SOMComp
-  SOMDCompMid : SubstObjMuPosDir SOMComp
-  SOMDCompCod : SubstObjMuPosDir SOMComp
-  SOMDFromInitCod : SubstObjMuPosDir SOMFromInit
-  SOMDToTerminalDom : SubstObjMuPosDir SOMToTerminal
-  SOMDInjLeftDom : SubstObjMuPosDir SOMInjLeft
-  SOMDInjLeftCodR : SubstObjMuPosDir SOMInjLeft
-  SOMDInjRightDom : SubstObjMuPosDir SOMInjRight
-  SOMDInjRightCodL : SubstObjMuPosDir SOMInjRight
-  SOMDCaseDomL : SubstObjMuPosDir SOMCase
-  SOMDCaseDomR : SubstObjMuPosDir SOMCase
-  SOMDCaseCod : SubstObjMuPosDir SOMCase
-  SOMDPairDom : SubstObjMuPosDir SOMPair
-  SOMDPairCodL : SubstObjMuPosDir SOMPair
-  SOMDPairCodR : SubstObjMuPosDir SOMPair
-  SOMDProjLeftDomR : SubstObjMuPosDir SOMProjLeft
-  SOMDProjLeftCod : SubstObjMuPosDir SOMProjLeft
-  SOMDProjRightDomL : SubstObjMuPosDir SOMProjRight
-  SOMDProjRightCod : SubstObjMuPosDir SOMProjRight
-  SOMDDistribLeft : SubstObjMuPosDir SOMDistrib
-  SOMDDistribMid : SubstObjMuPosDir SOMDistrib
-  SOMDDistribRight : SubstObjMuPosDir SOMDistrib
+  SOMPDIdObj : SubstObjMuPosDir SOMId
+  SOMPDCompDom : SubstObjMuPosDir SOMComp
+  SOMPDCompMid : SubstObjMuPosDir SOMComp
+  SOMPDCompCod : SubstObjMuPosDir SOMComp
+  SOMPDFromInitCod : SubstObjMuPosDir SOMFromInit
+  SOMPDToTerminalDom : SubstObjMuPosDir SOMToTerminal
+  SOMPDInjLeftDom : SubstObjMuPosDir SOMInjLeft
+  SOMPDInjLeftCodR : SubstObjMuPosDir SOMInjLeft
+  SOMPDInjRightDom : SubstObjMuPosDir SOMInjRight
+  SOMPDInjRightCodL : SubstObjMuPosDir SOMInjRight
+  SOMPDCaseDomL : SubstObjMuPosDir SOMCase
+  SOMPDCaseDomR : SubstObjMuPosDir SOMCase
+  SOMPDCaseCod : SubstObjMuPosDir SOMCase
+  SOMPDPairDom : SubstObjMuPosDir SOMPair
+  SOMPDPairCodL : SubstObjMuPosDir SOMPair
+  SOMPDPairCodR : SubstObjMuPosDir SOMPair
+  SOMPDProjLeftDomR : SubstObjMuPosDir SOMProjLeft
+  SOMPDProjLeftCod : SubstObjMuPosDir SOMProjLeft
+  SOMPDProjRightDomL : SubstObjMuPosDir SOMProjRight
+  SOMPDProjRightCod : SubstObjMuPosDir SOMProjRight
+  SOMPDDistribLeft : SubstObjMuPosDir SOMPDistrib
+  SOMPDDistribMid : SubstObjMuPosDir SOMPDistrib
+  SOMPDDistribRight : SubstObjMuPosDir SOMPDistrib
 
 public export
 SubstObjMuPosPF : PolyFunc
@@ -59,36 +59,36 @@ SubstObjMuPosPF = (SubstObjMuPosPos ** SubstObjMuPosDir)
 
 public export
 SubstObjMuAssignDomAlg : PFAlg SubstObjMuPosPF SubstObjMu
-SubstObjMuAssignDomAlg SOMId d = d SOMDIdObj
-SubstObjMuAssignDomAlg SOMComp d = d SOMDCompDom
+SubstObjMuAssignDomAlg SOMId d = d SOMPDIdObj
+SubstObjMuAssignDomAlg SOMComp d = d SOMPDCompDom
 SubstObjMuAssignDomAlg SOMFromInit d = Subst0
-SubstObjMuAssignDomAlg SOMToTerminal d = d SOMDToTerminalDom
-SubstObjMuAssignDomAlg SOMInjLeft d = d SOMDInjLeftDom
-SubstObjMuAssignDomAlg SOMInjRight d = d SOMDInjRightDom
-SubstObjMuAssignDomAlg SOMCase d = d SOMDCaseDomL !+ d SOMDCaseDomR
-SubstObjMuAssignDomAlg SOMPair d = d SOMDPairDom
+SubstObjMuAssignDomAlg SOMToTerminal d = d SOMPDToTerminalDom
+SubstObjMuAssignDomAlg SOMInjLeft d = d SOMPDInjLeftDom
+SubstObjMuAssignDomAlg SOMInjRight d = d SOMPDInjRightDom
+SubstObjMuAssignDomAlg SOMCase d = d SOMPDCaseDomL !+ d SOMPDCaseDomR
+SubstObjMuAssignDomAlg SOMPair d = d SOMPDPairDom
 SubstObjMuAssignDomAlg SOMProjLeft d =
-  d SOMDProjLeftCod !* d SOMDProjLeftDomR
+  d SOMPDProjLeftCod !* d SOMPDProjLeftDomR
 SubstObjMuAssignDomAlg SOMProjRight d =
-  d SOMDProjRightDomL !* d SOMDProjRightCod
-SubstObjMuAssignDomAlg SOMDistrib d =
-   d SOMDDistribLeft !* (d SOMDDistribMid !+ d SOMDDistribRight)
+  d SOMPDProjRightDomL !* d SOMPDProjRightCod
+SubstObjMuAssignDomAlg SOMPDistrib d =
+   d SOMPDDistribLeft !* (d SOMPDDistribMid !+ d SOMPDDistribRight)
 
 public export
 SubstObjMuAssignCodAlg : PFAlg SubstObjMuPosPF SubstObjMu
-SubstObjMuAssignCodAlg SOMId d = d SOMDIdObj
-SubstObjMuAssignCodAlg SOMComp d = d SOMDCompCod
-SubstObjMuAssignCodAlg SOMFromInit d = d SOMDFromInitCod
+SubstObjMuAssignCodAlg SOMId d = d SOMPDIdObj
+SubstObjMuAssignCodAlg SOMComp d = d SOMPDCompCod
+SubstObjMuAssignCodAlg SOMFromInit d = d SOMPDFromInitCod
 SubstObjMuAssignCodAlg SOMToTerminal d = Subst1
-SubstObjMuAssignCodAlg SOMInjLeft d = d SOMDInjLeftDom !+ d SOMDInjLeftCodR
-SubstObjMuAssignCodAlg SOMInjRight d = d SOMDInjRightCodL !+ d SOMDInjRightDom
-SubstObjMuAssignCodAlg SOMCase d = d SOMDCaseCod
-SubstObjMuAssignCodAlg SOMPair d = d SOMDPairCodL !* d SOMDPairCodR
-SubstObjMuAssignCodAlg SOMProjLeft d = d SOMDProjLeftCod
-SubstObjMuAssignCodAlg SOMProjRight d = d SOMDProjRightCod
-SubstObjMuAssignCodAlg SOMDistrib d =
-   (d SOMDDistribLeft !* d SOMDDistribMid) !+
-   (d SOMDDistribLeft !* d SOMDDistribRight)
+SubstObjMuAssignCodAlg SOMInjLeft d = d SOMPDInjLeftDom !+ d SOMPDInjLeftCodR
+SubstObjMuAssignCodAlg SOMInjRight d = d SOMPDInjRightCodL !+ d SOMPDInjRightDom
+SubstObjMuAssignCodAlg SOMCase d = d SOMPDCaseCod
+SubstObjMuAssignCodAlg SOMPair d = d SOMPDPairCodL !* d SOMPDPairCodR
+SubstObjMuAssignCodAlg SOMProjLeft d = d SOMPDProjLeftCod
+SubstObjMuAssignCodAlg SOMProjRight d = d SOMPDProjRightCod
+SubstObjMuAssignCodAlg SOMPDistrib d =
+   (d SOMPDDistribLeft !* d SOMPDDistribMid) !+
+   (d SOMPDDistribLeft !* d SOMPDDistribRight)
 
 public export
 SubstObjMuAssignDom : Algebra (InterpPolyFunc SubstObjMuPosPF) SubstObjMu
@@ -102,6 +102,15 @@ public export
 SubstObjMuAssignSig :
   InterpPolyFunc SubstObjMuPosPF SubstObjMu -> (SubstObjMu, SubstObjMu)
 SubstObjMuAssignSig = MkPairF SubstObjMuAssignDom SubstObjMuAssignCod
+
+public export
+data SubstObjMuDir : SubstObjMuPosPos -> Type where
+  SOMDCompDirAnt : SubstObjMuDir SOMComp
+  SOMDCompDirPrec : SubstObjMuDir SOMComp
+  SOMDCaseL : SubstObjMuDir SOMCase
+  SOMDCaseR : SubstObjMuDir SOMCase
+  SOMDPairL : SubstObjMuDir SOMCase
+  SOMDPairR : SubstObjMuDir SOMCase
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
