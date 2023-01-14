@@ -249,8 +249,16 @@ SliceNatTrans : {x, y : Type} -> (f, g : SliceFunctor x y) -> Type
 SliceNatTrans {x} {y} f g = (s : SliceObj x) -> SliceMorphism (f s) (g s)
 
 public export
-SliceEither : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
-SliceEither s s' x = Either (s x) (s' x)
+biapp : {0 a, b, c, d : Type} -> (b -> c -> d) -> (a -> b) -> (a -> c) -> a -> d
+biapp h f g x = h (f x) (g x)
+
+public export
+SliceProduct : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
+SliceProduct = biapp Pair
+
+public export
+SliceCoproduct : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
+SliceCoproduct = biapp Either
 
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
@@ -515,10 +523,6 @@ InitialNaturality _ v = void v
 ------------------
 ---- Products ----
 ------------------
-
-public export
-biapp : {0 a, b, c, d : Type} -> (b -> c -> d) -> (a -> b) -> (a -> c) -> a -> d
-biapp h f g x = h (f x) (g x)
 
 public export
 MkPairF : {0 a, b, c : Type} -> (a -> b) -> (a -> c) -> a -> (b, c)

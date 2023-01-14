@@ -112,6 +112,18 @@ data SubstObjMuDir : SubstObjMuPosPos -> Type where
   SOMDPairL : SubstObjMuDir SOMPair
   SOMDPairR : SubstObjMuDir SOMPair
 
+public export
+SubstMorphShapeF : PolyFunc
+SubstMorphShapeF = (SubstObjMuPosPos ** SubstObjMuDir)
+
+public export
+SubstMorphShape : Type
+SubstMorphShape = PolyFuncMu SubstMorphShapeF
+
+public export
+SubstMorphFromShape : (SubstObjMu, SubstObjMu) -> Type
+SubstMorphFromShape = ?SubstMorphFromShape_hole
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Polynomial functors from arbitrary categories to `Type` ----
