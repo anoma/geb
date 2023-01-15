@@ -7,6 +7,36 @@ import public LanguageDef.Atom
 
 %default total
 
+-------------------------------
+-------------------------------
+---- Types with predicates ----
+-------------------------------
+-------------------------------
+
+public export
+PType : Type
+PType = Subset0 Type SliceObj
+
+public export
+PBase : PType -> Type
+PBase = fst0
+
+public export
+0 PPred : (x : PType) -> SliceObj (PBase x)
+PPred = snd0
+
+public export
+PFunc : PType -> PType -> Type
+PFunc x y = PBase x -> PBase y
+
+public export
+0 PPres : (x, y : PType) -> SliceObj (PFunc x y)
+PPres x y f = (b : PBase x) -> PPred x b -> PPred y (f b)
+
+public export
+PMorph : PType -> PType -> Type
+PMorph x y = Subset0 (PFunc x y) (PPres x y)
+
 ------------------------
 ------------------------
 ---- Quotient types ----
