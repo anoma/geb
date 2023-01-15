@@ -7,6 +7,36 @@ import public LanguageDef.Atom
 
 %default total
 
+------------------------
+------------------------
+---- Quotient types ----
+------------------------
+------------------------
+
+public export
+QType : Type
+QType = Subset0 Type RelationOn
+
+public export
+QTBase : QType -> Type
+QTBase = fst0
+
+public export
+0 QTRel : (x : QType) -> RelationOn (QTBase x)
+QTRel = snd0
+
+public export
+QTFunc : QType -> QType -> Type
+QTFunc x y = QTBase x -> QTBase y
+
+public export
+0 QTPres : (x, y : QType) -> SliceObj (QTFunc x y)
+QTPres x y f = (b, b' : QTBase x) -> QTRel x b b' -> QTRel y (f b) (f b')
+
+public export
+QMorph : QType -> QType -> Type
+QMorph x y = Subset0 (QTFunc x y) (QTPres x y)
+
 --------------------------------
 --------------------------------
 ---- Bicartesian categories ----
