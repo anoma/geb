@@ -37,6 +37,10 @@ public export
 PMorph : PType -> PType -> Type
 PMorph x y = Subset0 (PFunc x y) (PPres x y)
 
+public export
+PSigma : PType -> Type
+PSigma x = Subset0 (PBase x) (PPred x)
+
 ------------------------
 ------------------------
 ---- Quotient types ----
