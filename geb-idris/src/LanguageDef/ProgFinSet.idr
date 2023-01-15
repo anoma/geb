@@ -14,28 +14,28 @@ import public LanguageDef.Atom
 ------------------------
 
 public export
-QType : Type
-QType = Subset0 Type RelationOn
+Qype : Type
+Qype = Subset0 Type RelationOn
 
 public export
-QTBase : QType -> Type
-QTBase = fst0
+QBase : Qype -> Type
+QBase = fst0
 
 public export
-0 QTRel : (x : QType) -> RelationOn (QTBase x)
-QTRel = snd0
+0 QRel : (x : Qype) -> RelationOn (QBase x)
+QRel = snd0
 
 public export
-QTFunc : QType -> QType -> Type
-QTFunc x y = QTBase x -> QTBase y
+QFunc : Qype -> Qype -> Type
+QFunc x y = QBase x -> QBase y
 
 public export
-0 QTPres : (x, y : QType) -> SliceObj (QTFunc x y)
-QTPres x y f = (b, b' : QTBase x) -> QTRel x b b' -> QTRel y (f b) (f b')
+0 QPres : (x, y : Qype) -> SliceObj (QFunc x y)
+QPres x y f = (b, b' : QBase x) -> QRel x b b' -> QRel y (f b) (f b')
 
 public export
-QMorph : QType -> QType -> Type
-QMorph x y = Subset0 (QTFunc x y) (QTPres x y)
+QMorph : Qype -> Qype -> Type
+QMorph x y = Subset0 (QFunc x y) (QPres x y)
 
 --------------------------------
 --------------------------------
