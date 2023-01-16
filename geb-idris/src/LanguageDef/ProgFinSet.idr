@@ -7,6 +7,63 @@ import public LanguageDef.Atom
 
 %default total
 
+----------------------------------------
+----------------------------------------
+---- Categories as initial algebras ----
+----------------------------------------
+----------------------------------------
+
+public export
+data CatObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
+  CatObjSelf : obj -> CatObj obj morph
+
+public export
+data CatMorph : (obj : Type) -> (morph : obj -> obj -> Type) ->
+    CatObj obj morph -> CatObj obj morph -> Type where
+  CatMorphId :
+    (x : obj) -> CatMorph obj morph (CatObjSelf x) (CatObjSelf x)
+  CatMorphComp :
+    {x, y, z : obj} ->
+    CatMorph obj morph (CatObjSelf y) (CatObjSelf z) ->
+    CatMorph obj morph (CatObjSelf x) (CatObjSelf y) ->
+    CatMorph obj morph (CatObjSelf x) (CatObjSelf z)
+
+public export
+data InitialObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
+  InitialObjSelf : InitialObj obj morph
+
+public export
+InitialCatObj : (obj : Type) -> (obj -> obj -> Type) -> Type
+InitialCatObj obj morph = Either (CatObj obj morph) (InitialObj obj morph)
+
+public export
+data InitialMorph : (obj : Type) -> (morph : obj -> obj -> Type) ->
+    InitialCatObj obj morph -> InitialCatObj obj morph -> Type where
+  InitialMorphExFalso :
+    (x : obj) ->
+    InitialMorph obj morph (Right InitialObjSelf) (Left (CatObjSelf x))
+
+public export
+data TerminalObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
+  TerminalObjSelf : TerminalObj obj morph
+
+public export
+TerminalCatObj : (obj : Type) -> (obj -> obj -> Type) -> Type
+TerminalCatObj obj morph = Either (CatObj obj morph) (TerminalObj obj morph)
+
+public export
+data TerminalMorph : (obj : Type) -> (morph : obj -> obj -> Type) ->
+    TerminalCatObj obj morph -> TerminalCatObj obj morph -> Type where
+  TerminalMorphExFalso :
+    (x : obj) ->
+    TerminalMorph obj morph (Right TerminalObjSelf) (Left (CatObjSelf x))
+
+public export
+data InitTermCatObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
+  ITCObjSelf : CatObj obj morph -> InitTermCatObj obj morph
+  ITCObjInit : InitialObj obj morph -> InitTermCatObj obj morph
+  ITCObjTerm : TerminalObj obj morph -> InitTermCatObj obj morph
+
 -------------------------------
 -------------------------------
 ---- Types with predicates ----
