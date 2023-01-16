@@ -68,6 +68,20 @@ data InitTermCatObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
   ITCObjInit : InitialObj obj morph -> InitTermCatObj obj morph
   ITCObjTerm : TerminalObj obj morph -> InitTermCatObj obj morph
 
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+---- Interpretation of morphisms as metalanguage natural transformations ----
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+public export
+MorphCovarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
+MorphCovarNT {obj} morph a b = (x : obj) -> morph b x -> morph a x
+
+public export
+MorphContravarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
+MorphContravarNT {obj} morph a b = (x : obj) -> morph x a -> morph x b
+
 -------------------------------
 -------------------------------
 ---- Types with predicates ----
