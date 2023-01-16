@@ -15,18 +15,19 @@ import public LanguageDef.Atom
 
 public export
 data CatObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
-  CatObjSelf : obj -> CatObj obj morph
 
 public export
 data CatMorph : (obj : Type) -> (morph : obj -> obj -> Type) ->
-    CatObj obj morph -> CatObj obj morph -> Type where
+    Either obj (CatObj obj morph) ->
+    Either obj (CatObj obj morph) ->
+    Type where
   CatMorphId :
-    (x : obj) -> CatMorph obj morph (CatObjSelf x) (CatObjSelf x)
+    (x : obj) -> CatMorph obj morph (Left x) (Left x)
   CatMorphComp :
     {x, y, z : obj} ->
-    CatMorph obj morph (CatObjSelf y) (CatObjSelf z) ->
-    CatMorph obj morph (CatObjSelf x) (CatObjSelf y) ->
-    CatMorph obj morph (CatObjSelf x) (CatObjSelf z)
+    CatMorph obj morph (Left y) (Left z) ->
+    CatMorph obj morph (Left x) (Left y) ->
+    CatMorph obj morph (Left x) (Left z)
 
 public export
 data InitialObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
@@ -34,14 +35,15 @@ data InitialObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
 
 public export
 InitialCatObj : (obj : Type) -> (obj -> obj -> Type) -> Type
-InitialCatObj obj morph = Either (CatObj obj morph) (InitialObj obj morph)
+InitialCatObj obj morph =
+  Either obj (Either (CatObj obj morph) (InitialObj obj morph))
 
 public export
 data InitialMorph : (obj : Type) -> (morph : obj -> obj -> Type) ->
     InitialCatObj obj morph -> InitialCatObj obj morph -> Type where
   InitialMorphExFalso :
     (x : obj) ->
-    InitialMorph obj morph (Right InitialObjSelf) (Left (CatObjSelf x))
+    InitialMorph obj morph (Right (Right InitialObjSelf)) (Left x)
 
 public export
 data TerminalObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
@@ -49,18 +51,20 @@ data TerminalObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
 
 public export
 TerminalCatObj : (obj : Type) -> (obj -> obj -> Type) -> Type
-TerminalCatObj obj morph = Either (CatObj obj morph) (TerminalObj obj morph)
+TerminalCatObj obj morph =
+  Either obj (Either (CatObj obj morph) (TerminalObj obj morph))
 
 public export
 data TerminalMorph : (obj : Type) -> (morph : obj -> obj -> Type) ->
     TerminalCatObj obj morph -> TerminalCatObj obj morph -> Type where
-  TerminalMorphExFalso :
+  TerminalMorphUnique :
     (x : obj) ->
-    TerminalMorph obj morph (Right TerminalObjSelf) (Left (CatObjSelf x))
+    TerminalMorph obj morph (Left x) (Right (Right TerminalObjSelf))
 
 public export
 data InitTermCatObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
-  ITCObjSelf : CatObj obj morph -> InitTermCatObj obj morph
+  ITCObjSelf : obj -> InitTermCatObj obj morph
+  ITCObjCat : CatObj obj morph -> InitTermCatObj obj morph
   ITCObjInit : InitialObj obj morph -> InitTermCatObj obj morph
   ITCObjTerm : TerminalObj obj morph -> InitTermCatObj obj morph
 
