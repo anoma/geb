@@ -7,6 +7,20 @@ import public LanguageDef.PolyCat
 
 %default total
 
+--------------------------------------------------------------
+--------------------------------------------------------------
+---- Polynomial functors in categories of dependent pairs ----
+--------------------------------------------------------------
+--------------------------------------------------------------
+
+public export
+DProdSlice : {a : Type} -> (b : a -> Type) -> Type
+DProdSlice {a} b = SliceObj (Sigma {a} b)
+
+public export
+DProdSPF : {a : Type} -> (b : a -> Type) -> Type
+DProdSPF {a} b = SlicePolyEndoFunc (Sigma {a} b)
+
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 ---- Trying to work out polynomial profunctor definition by example ----
