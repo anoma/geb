@@ -94,6 +94,12 @@ morphComposeNT :
 morphComposeNT {obj} {morph} {a} {b} {c} (g, g') (f, f') =
   (\x => g x . f x, \x => f' x . g' x)
 
+public export
+morphNTId :
+  {obj : Type} -> {morph : obj -> obj -> Type} ->
+  (a : obj) -> MorphNT {obj} morph a a
+morphNTId {obj} {morph} a = (\_ => id, \_ => id)
+
 -------------------------------
 -------------------------------
 ---- Types with predicates ----
