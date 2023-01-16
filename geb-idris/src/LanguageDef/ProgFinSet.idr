@@ -82,6 +82,18 @@ public export
 MorphContravarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
 MorphContravarNT {obj} morph a b = (x : obj) -> morph x a -> morph x b
 
+public export
+MorphNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
+MorphNT {obj} morph a b =
+  Pair (MorphContravarNT {obj} morph a b) (MorphCovarNT {obj} morph a b)
+
+public export
+morphComposeNT :
+  {obj : Type} -> {morph : obj -> obj -> Type} -> {a, b, c : obj} ->
+  MorphNT {obj} morph b c -> MorphNT {obj} morph a b -> MorphNT {obj} morph a c
+morphComposeNT {obj} {morph} {a} {b} {c} (g, g') (f, f') =
+  (\x => g x . f x, \x => f' x . g' x)
+
 -------------------------------
 -------------------------------
 ---- Types with predicates ----
