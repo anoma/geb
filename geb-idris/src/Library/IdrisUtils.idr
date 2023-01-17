@@ -923,6 +923,10 @@ public export
   decEq = fdeDecEq {a} {n} enc
 
 public export
+FDEnc : Type -> Type
+FDEnc = DPair Nat . FinDecEncoding
+
+public export
 ListContains : {a : Type} -> List a -> a -> Type
 ListContains [] x = Void
 ListContains (x :: xs) x' = Either (x = x') (ListContains xs x')

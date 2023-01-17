@@ -7,6 +7,24 @@ import public LanguageDef.PolyCat
 
 %default total
 
+--------------------------------------------------
+--------------------------------------------------
+---- Slices over signatures (symmetric pairs) ----
+--------------------------------------------------
+--------------------------------------------------
+
+public export
+SigSliceObj : Type -> Type
+SigSliceObj a = a -> a -> Type
+
+public export
+SigSliceMorph : {a : Type} -> SigSliceObj a -> SigSliceObj a -> Type
+SigSliceMorph {a} s s' = (x, y : a) -> s x y -> s' x y
+
+public export
+SigSliceFunctor : Type -> Type -> Type
+SigSliceFunctor a b = SigSliceObj a -> SigSliceObj b
+
 --------------------------------------------------------------
 --------------------------------------------------------------
 ---- Polynomial functors in categories of dependent pairs ----
