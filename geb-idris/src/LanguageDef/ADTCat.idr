@@ -824,7 +824,7 @@ PFSObjInterpMeta = pfsObjCata PFSObjInterpAlg
 public export
 PFSObjShowAlgExt : PFSObjAlgExt String
 PFSObjShowAlgExt PFSHomObjPos dir =
-  "{" ++ dir PFSHomObjDirDom ++ " ->" ++ dir PFSHomObjDirCod ++ "}"
+  "{" ++ dir PFSHomObjDirDom ++ " -> " ++ dir PFSHomObjDirCod ++ "}"
 
 public export
 PFSObjShowAlg : PFSObjAlg String
