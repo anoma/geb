@@ -406,13 +406,13 @@ soProductCata : {0 a : Type} -> SOProductAlg a -> SOMu -> SOMu -> a
 soProductCata {a} = pfProductCata {a} {p=SubstObjPF} {q=SubstObjPF}
 
 public export
-SOProductHomAlgNT : Type
-SOProductHomAlgNT = PFProductHomAlgNT SubstObjPF SubstObjPF SubstObjPF
+SOProductHomAlgNT : PolyFunc -> PolyFunc -> Type
+SOProductHomAlgNT = PFProductHomAlgNT SubstObjPF
 
 public export
-soProductHomCataNT : SOProductHomAlgNT -> SOMu -> SOMu -> SOMu
-soProductHomCataNT =
-  pfProductHomCataNT {p=SubstObjPF} {q=SubstObjPF} {r=SubstObjPF}
+soProductHomCataNT : {q, r : PolyFunc} ->
+  SOProductHomAlgNT q r -> SOMu -> PolyFuncMu q -> PolyFuncMu r
+soProductHomCataNT {q} {r} = pfProductHomCataNT {p=SubstObjPF} {q} {r}
 
 public export
 SOProductHomAlg : Type -> Type
