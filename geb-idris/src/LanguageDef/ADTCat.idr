@@ -8,6 +8,15 @@ import public LanguageDef.PolyProfunctor
 
 %default total
 
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- Refined ADTs in terms of polynomial slice objects ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+public export
+data RADTFamPos : Type where
+
 ---------------------------
 ---------------------------
 ----- Bool as PolyFunc ----
@@ -281,7 +290,7 @@ sexpBCata {a} = spfCata {spf=(SexpF a)}
 
 -- One special case of an S-expression algebra is when the atom and pair
 -- components of the algebra both return the same type, and the expression
--- component of that algebra just passes the type through unchanged.  In
+-- component of that algebra just passes the return value through unchanged.  In
 -- that case, we can perform an S-expression catamorphism by providing only
 -- a binary-tree algebra (which is simpler).  This captures the sense in which
 -- S-expressions are more expressive than binary trees:  their algebras in
@@ -397,13 +406,13 @@ soProductCata : {0 a : Type} -> SOProductAlg a -> SOMu -> SOMu -> a
 soProductCata {a} = pfProductCata {a} {p=SubstObjPF} {q=SubstObjPF}
 
 public export
-SOProductHomAlgNT : Type
-SOProductHomAlgNT = PFProductHomAlgNT SubstObjPF SubstObjPF SubstObjPF
+SOProductHomAlgNT : PolyFunc -> PolyFunc -> Type
+SOProductHomAlgNT = PFProductHomAlgNT SubstObjPF
 
 public export
-soProductHomCataNT : SOProductHomAlgNT -> SOMu -> SOMu -> SOMu
-soProductHomCataNT =
-  pfProductHomCataNT {p=SubstObjPF} {q=SubstObjPF} {r=SubstObjPF}
+soProductHomCataNT : {q, r : PolyFunc} ->
+  SOProductHomAlgNT q r -> SOMu -> PolyFuncMu q -> PolyFuncMu r
+soProductHomCataNT {q} {r} = pfProductHomCataNT {p=SubstObjPF} {q} {r}
 
 public export
 SOProductHomAlg : Type -> Type
@@ -763,6 +772,14 @@ public export
 pfsObjCata : {0 a : Type} -> PFSObjAlg a -> PFSObj -> a
 pfsObjCata = pfCata {p=PFSObjF}
 
+public export
+PFSToSONT : Type
+PFSToSONT = PolyNatTrans PFSObjF SubstObjPF
+
+public export
+pfsToSOCata : PFSToSONT -> PFSObj -> SOMu
+pfsToSOCata = pfPolyCata
+
 -------------------------------------------------
 ---- Interpretation of PFS objects into SOMu ----
 -------------------------------------------------
@@ -799,6 +816,36 @@ PFSObjInterpAlg = PFSBuildAlg SOInterpAlg PFSObjInterpAlgExt
 public export
 PFSObjInterpMeta : PFSObj -> Type
 PFSObjInterpMeta = pfsObjCata PFSObjInterpAlg
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+PFSObjShowAlgExt : PFSObjAlgExt String
+PFSObjShowAlgExt PFSHomObjPos dir =
+  "{" ++ dir PFSHomObjDirDom ++ " -> " ++ dir PFSHomObjDirCod ++ "}"
+
+public export
+PFSObjShowAlg : PFSObjAlg String
+PFSObjShowAlg = PFSBuildAlg SOShowAlg PFSObjShowAlgExt
+
+public export
+Show PFSObj where
+  show = pfsObjCata PFSObjShowAlg
+
+public export
+PFSObjCardAlgExt : PFSObjAlgExt Nat
+PFSObjCardAlgExt PFSHomObjPos dir =
+  power (dir PFSHomObjDirCod) (dir PFSHomObjDirDom)
+
+public export
+PFSObjCardAlg : PFSObjAlg Nat
+PFSObjCardAlg = PFSBuildAlg SOCardAlg PFSObjCardAlgExt
+
+public export
+pfsObjCard : PFSObj -> Nat
+pfsObjCard = pfsObjCata PFSObjCardAlg
 
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------

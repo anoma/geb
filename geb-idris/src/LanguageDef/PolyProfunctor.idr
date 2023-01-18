@@ -7,6 +7,163 @@ import public LanguageDef.PolyCat
 
 %default total
 
+--------------------------------------------------
+--------------------------------------------------
+---- Slices over signatures (symmetric pairs) ----
+--------------------------------------------------
+--------------------------------------------------
+
+public export
+SigSliceObj : Type -> Type
+SigSliceObj a = a -> a -> Type
+
+public export
+SigSliceMorph : {a : Type} -> SigSliceObj a -> SigSliceObj a -> Type
+SigSliceMorph {a} s s' = (x, y : a) -> s x y -> s' x y
+
+public export
+SigSliceFunctor : Type -> Type -> Type
+SigSliceFunctor a b = SigSliceObj a -> SigSliceObj b
+
+--------------------------------------------------------------
+--------------------------------------------------------------
+---- Polynomial functors in categories of dependent pairs ----
+--------------------------------------------------------------
+--------------------------------------------------------------
+
+public export
+DProdSlice : {a : Type} -> (b : a -> Type) -> Type
+DProdSlice {a} b = SliceObj (Sigma {a} b)
+
+public export
+DProdSPF : {a : Type} -> (b : a -> Type) -> Type
+DProdSPF {a} b = SlicePolyEndoFunc (Sigma {a} b)
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Trying to work out polynomial profunctor definition by example ----
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+public export
+data SubstObjMuPosPos : Type where
+  SOMId : SubstObjMuPosPos
+  SOMComp : SubstObjMuPosPos
+  SOMFromInit : SubstObjMuPosPos
+  SOMToTerminal : SubstObjMuPosPos
+  SOMInjLeft : SubstObjMuPosPos
+  SOMInjRight : SubstObjMuPosPos
+  SOMCase : SubstObjMuPosPos
+  SOMPair : SubstObjMuPosPos
+  SOMProjLeft : SubstObjMuPosPos
+  SOMProjRight : SubstObjMuPosPos
+  SOMPDistrib : SubstObjMuPosPos
+
+public export
+data SubstObjMuPosDir : SubstObjMuPosPos -> Type where
+  SOMPDIdObj : SubstObjMuPosDir SOMId
+  SOMPDCompDom : SubstObjMuPosDir SOMComp
+  SOMPDCompMid : SubstObjMuPosDir SOMComp
+  SOMPDCompCod : SubstObjMuPosDir SOMComp
+  SOMPDFromInitCod : SubstObjMuPosDir SOMFromInit
+  SOMPDToTerminalDom : SubstObjMuPosDir SOMToTerminal
+  SOMPDInjLeftDom : SubstObjMuPosDir SOMInjLeft
+  SOMPDInjLeftCodR : SubstObjMuPosDir SOMInjLeft
+  SOMPDInjRightDom : SubstObjMuPosDir SOMInjRight
+  SOMPDInjRightCodL : SubstObjMuPosDir SOMInjRight
+  SOMPDCaseDomL : SubstObjMuPosDir SOMCase
+  SOMPDCaseDomR : SubstObjMuPosDir SOMCase
+  SOMPDCaseCod : SubstObjMuPosDir SOMCase
+  SOMPDPairDom : SubstObjMuPosDir SOMPair
+  SOMPDPairCodL : SubstObjMuPosDir SOMPair
+  SOMPDPairCodR : SubstObjMuPosDir SOMPair
+  SOMPDProjLeftDomR : SubstObjMuPosDir SOMProjLeft
+  SOMPDProjLeftCod : SubstObjMuPosDir SOMProjLeft
+  SOMPDProjRightDomL : SubstObjMuPosDir SOMProjRight
+  SOMPDProjRightCod : SubstObjMuPosDir SOMProjRight
+  SOMPDDistribLeft : SubstObjMuPosDir SOMPDistrib
+  SOMPDDistribMid : SubstObjMuPosDir SOMPDistrib
+  SOMPDDistribRight : SubstObjMuPosDir SOMPDistrib
+
+public export
+SubstObjMuPosPF : PolyFunc
+SubstObjMuPosPF = (SubstObjMuPosPos ** SubstObjMuPosDir)
+
+public export
+SubstObjMuAssignDomAlg : PFAlg SubstObjMuPosPF SubstObjMu
+SubstObjMuAssignDomAlg SOMId d = d SOMPDIdObj
+SubstObjMuAssignDomAlg SOMComp d = d SOMPDCompDom
+SubstObjMuAssignDomAlg SOMFromInit d = Subst0
+SubstObjMuAssignDomAlg SOMToTerminal d = d SOMPDToTerminalDom
+SubstObjMuAssignDomAlg SOMInjLeft d = d SOMPDInjLeftDom
+SubstObjMuAssignDomAlg SOMInjRight d = d SOMPDInjRightDom
+SubstObjMuAssignDomAlg SOMCase d = d SOMPDCaseDomL !+ d SOMPDCaseDomR
+SubstObjMuAssignDomAlg SOMPair d = d SOMPDPairDom
+SubstObjMuAssignDomAlg SOMProjLeft d =
+  d SOMPDProjLeftCod !* d SOMPDProjLeftDomR
+SubstObjMuAssignDomAlg SOMProjRight d =
+  d SOMPDProjRightDomL !* d SOMPDProjRightCod
+SubstObjMuAssignDomAlg SOMPDistrib d =
+   d SOMPDDistribLeft !* (d SOMPDDistribMid !+ d SOMPDDistribRight)
+
+public export
+SubstObjMuAssignCodAlg : PFAlg SubstObjMuPosPF SubstObjMu
+SubstObjMuAssignCodAlg SOMId d = d SOMPDIdObj
+SubstObjMuAssignCodAlg SOMComp d = d SOMPDCompCod
+SubstObjMuAssignCodAlg SOMFromInit d = d SOMPDFromInitCod
+SubstObjMuAssignCodAlg SOMToTerminal d = Subst1
+SubstObjMuAssignCodAlg SOMInjLeft d = d SOMPDInjLeftDom !+ d SOMPDInjLeftCodR
+SubstObjMuAssignCodAlg SOMInjRight d = d SOMPDInjRightCodL !+ d SOMPDInjRightDom
+SubstObjMuAssignCodAlg SOMCase d = d SOMPDCaseCod
+SubstObjMuAssignCodAlg SOMPair d = d SOMPDPairCodL !* d SOMPDPairCodR
+SubstObjMuAssignCodAlg SOMProjLeft d = d SOMPDProjLeftCod
+SubstObjMuAssignCodAlg SOMProjRight d = d SOMPDProjRightCod
+SubstObjMuAssignCodAlg SOMPDistrib d =
+   (d SOMPDDistribLeft !* d SOMPDDistribMid) !+
+   (d SOMPDDistribLeft !* d SOMPDDistribRight)
+
+public export
+SubstObjMuAssignDom : Algebra (InterpPolyFunc SubstObjMuPosPF) SubstObjMu
+SubstObjMuAssignDom = InterpPFAlg {p=SubstObjMuPosPF} SubstObjMuAssignDomAlg
+
+public export
+SubstObjMuAssignCod : Algebra (InterpPolyFunc SubstObjMuPosPF) SubstObjMu
+SubstObjMuAssignCod = InterpPFAlg {p=SubstObjMuPosPF} SubstObjMuAssignCodAlg
+
+public export
+SubstObjMuAssignSig :
+  InterpPolyFunc SubstObjMuPosPF SubstObjMu -> (SubstObjMu, SubstObjMu)
+SubstObjMuAssignSig = MkPairF SubstObjMuAssignDom SubstObjMuAssignCod
+
+public export
+data SubstObjMuDir : SubstObjMuPosPos -> Type where
+  SOMDCompDirAnt : SubstObjMuDir SOMComp
+  SOMDCompDirPrec : SubstObjMuDir SOMComp
+  SOMDCaseL : SubstObjMuDir SOMCase
+  SOMDCaseR : SubstObjMuDir SOMCase
+  SOMDPairL : SubstObjMuDir SOMPair
+  SOMDPairR : SubstObjMuDir SOMPair
+
+public export
+SubstMorphShapeF : PolyFunc
+SubstMorphShapeF = (SubstObjMuPosPos ** SubstObjMuDir)
+
+public export
+SubstMorphShape : Type
+SubstMorphShape = PolyFuncMu SubstMorphShapeF
+
+public export
+SubstMorphAnnotatedDir : SliceObj SubstObjMuPosPos
+SubstMorphAnnotatedDir = SliceProduct SubstObjMuDir SubstObjMuPosDir
+
+public export
+SubstMorphAnnotated : PolyFunc
+SubstMorphAnnotated = (SubstObjMuPosPos ** SubstMorphAnnotatedDir)
+
+public export
+SubstMorphFromShape : (SubstObjMu, SubstObjMu) -> Type
+SubstMorphFromShape = ?SubstMorphFromShape_hole
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Polynomial functors from arbitrary categories to `Type` ----
@@ -160,59 +317,70 @@ ParamContravarToNT {cat} p a b = TADirichNT {cat} (p a) (p b)
 -- treated as morphisms from `dOp` to `c`.  The latter is sometimes called a
 -- "correspondence" (according to Wikipedia).
 public export
-DirMapPair : CatSig -> CatSig -> Type -> Type
-DirMapPair dOp c pos = (DirMap dOp pos, DirMap c pos)
+DirMapPair : CatSig -> CatSig -> Type -> Type -> Type
+DirMapPair dOp c contravarpos covarpos =
+  (DirMap dOp contravarpos, DirMap c covarpos)
 
 public export
-dmpCovar : {dOp, c : CatSig} -> {pos : Type} ->
-  DirMapPair dOp c pos -> DirMap c pos
-dmpCovar {dOp} {c} {pos} = snd
+dmpCovar : {dOp, c : CatSig} -> {contravarpos, covarpos : Type} ->
+  DirMapPair dOp c contravarpos covarpos -> DirMap c covarpos
+dmpCovar {dOp} {c} {contravarpos} {covarpos} = snd
 
 public export
-dmpContravar : {dOp, c : CatSig} -> {pos : Type} ->
-  DirMapPair dOp c pos -> DirMap dOp pos
-dmpContravar {dOp} {c} {pos} = fst
+dmpContravar : {dOp, c : CatSig} -> {contravarpos, covarpos : Type} ->
+  DirMapPair dOp c contravarpos covarpos -> DirMap dOp contravarpos
+dmpContravar {dOp} {c} {contravarpos} {covarpos} = fst
 
 public export
 ProfArena : CatSig -> CatSig -> Type
-ProfArena dOp c = DPair Type (DirMapPair dOp c)
+ProfArena dOp c = (pos : (Type, Type) ** DirMapPair dOp c (fst pos) (snd pos))
 
 public export
-paPos : {dOp, c : CatSig} -> ProfArena dOp c -> Type
+paPos : {dOp, c : CatSig} -> ProfArena dOp c -> (Type, Type)
 paPos = DPair.fst
 
 public export
+paCovarPos : {dOp, c : CatSig} -> ProfArena dOp c -> Type
+paCovarPos = snd . paPos
+
+public export
+paContravarPos : {dOp, c : CatSig} -> ProfArena dOp c -> Type
+paContravarPos = fst . paPos
+
+public export
 paDir : {dOp, c : CatSig} ->
-  (ar : ProfArena dOp c) -> DirMapPair dOp c (paPos {dOp} {c} ar)
+  (ar : ProfArena dOp c) ->
+  DirMapPair dOp c (paContravarPos {dOp} {c} ar) (paCovarPos {dOp} {c} ar)
 paDir = DPair.snd
 
 public export
 paCovarDir : {dOp, c : CatSig} -> (ar : ProfArena dOp c) ->
-  paPos {dOp} {c} ar -> c.catObj
+  paCovarPos {dOp} {c} ar -> c.catObj
 paCovarDir ar = dmpCovar (paDir ar)
 
 public export
 paContravarDir : {dOp, c : CatSig} -> (ar : ProfArena dOp c) ->
-  paPos {dOp} {c} ar -> dOp.catObj
+  paContravarPos {dOp} {c} ar -> dOp.catObj
 paContravarDir ar = dmpContravar (paDir ar)
 
 -- Interpret a dependent object as a (polynomial) profunctor.
 public export
-ProfMap : (dOp, c : CatSig) -> {pos : Type} ->
-  DirMapPair dOp c pos -> dOp.catObj -> c.catObj -> Type
-ProfMap dOp c {pos} dir objdOp objc =
-  (i : pos **
-   (dOp.catMorph objdOp (dmpContravar dir i), c.catMorph (dmpCovar dir i) objc))
+ProfMap : (dOp, c : CatSig) -> {contravarpos : Type} -> {covarpos : Type} ->
+  DirMapPair dOp c contravarpos covarpos -> dOp.catObj -> c.catObj -> Type
+ProfMap dOp c {contravarpos} {covarpos} dir objdOp objc =
+  ((i : contravarpos ** dOp.catMorph objdOp (dmpContravar dir i)),
+   (j : covarpos ** c.catMorph (dmpCovar dir j) objc))
 
 public export
-ProfFDimap : {dOp, c : CatSig} -> {pos : Type} ->
-  (dir : DirMapPair dOp c pos) ->
+ProfFDimap : {dOp, c : CatSig} -> {contravarpos : Type} -> {covarpos : Type} ->
+  (dir : DirMapPair dOp c contravarpos covarpos) ->
   {da, db : dOp.catObj} -> {ca, cb : c.catObj} ->
   dOp.catMorph db da -> c.catMorph ca cb ->
   ProfMap dOp c dir da ca -> ProfMap dOp c dir db cb
-ProfFDimap {dOp} {c} {pos} dir {da} {db} {ca} {cb} f g (i ** (ddir, cdir)) =
-  (i ** (dOp.catComp ddir f, c.catComp g cdir))
+ProfFDimap {dOp} {c} dir {da} {db} {ca} {cb} f g ((i ** ddir), (j ** cdir)) =
+  ((i ** dOp.catComp ddir f), (j ** c.catComp g cdir))
 
+{-
 -------------------------------------------------------
 ---- Polynomial-profunctor natural transformations ----
 -------------------------------------------------------
@@ -342,3 +510,5 @@ ProfCompose {c} {d} {e} (dcPos ** (dOpDir, cDir)) (edPos ** (eOpDir, dDir)) =
   ((i : (edPos, dcPos) ** d.catMorph (dDir (fst i)) (dOpDir (snd i))) **
    (\((edi, dci) ** dm) => eOpDir edi,
     \((edi, dci) ** dm) => cDir dci))
+
+-}

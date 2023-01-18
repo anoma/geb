@@ -992,6 +992,11 @@ PFAlg : PolyFunc -> Type -> Type
 PFAlg p a = (i : pfPos p) -> (pfDir {p} i -> a) -> a
 
 public export
+InterpPFAlg : {0 p : PolyFunc} -> {0 a : Type} ->
+  PFAlg p a -> Algebra (InterpPolyFunc p) a
+InterpPFAlg {p} {a} alg (i ** d) = alg i d
+
+public export
 PFAlgCPS : PolyFunc -> Type -> Type
 PFAlgCPS p = PFAlg p . Continuation
 

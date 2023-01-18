@@ -7,6 +7,169 @@ import public LanguageDef.Atom
 
 %default total
 
+---------------------------------
+---------------------------------
+---- Programmer's finite set ----
+---------------------------------
+---------------------------------
+
+----------------------------------------
+----------------------------------------
+---- Categories as initial algebras ----
+----------------------------------------
+----------------------------------------
+
+public export
+data CatObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
+
+public export
+data CatMorph : (obj : Type) -> (morph : obj -> obj -> Type) ->
+    Either obj (CatObj obj morph) ->
+    Either obj (CatObj obj morph) ->
+    Type where
+  CatMorphId :
+    (x : obj) -> CatMorph obj morph (Left x) (Left x)
+  CatMorphComp :
+    {x, y, z : obj} ->
+    CatMorph obj morph (Left y) (Left z) ->
+    CatMorph obj morph (Left x) (Left y) ->
+    CatMorph obj morph (Left x) (Left z)
+
+public export
+data InitialObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
+  InitialObjSelf : InitialObj obj morph
+
+public export
+InitialCatObj : (obj : Type) -> (obj -> obj -> Type) -> Type
+InitialCatObj obj morph =
+  Either obj (Either (CatObj obj morph) (InitialObj obj morph))
+
+public export
+data InitialMorph : (obj : Type) -> (morph : obj -> obj -> Type) ->
+    InitialCatObj obj morph -> InitialCatObj obj morph -> Type where
+  InitialMorphExFalso :
+    (x : obj) ->
+    InitialMorph obj morph (Right (Right InitialObjSelf)) (Left x)
+
+public export
+data TerminalObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
+  TerminalObjSelf : TerminalObj obj morph
+
+public export
+TerminalCatObj : (obj : Type) -> (obj -> obj -> Type) -> Type
+TerminalCatObj obj morph =
+  Either obj (Either (CatObj obj morph) (TerminalObj obj morph))
+
+public export
+data TerminalMorph : (obj : Type) -> (morph : obj -> obj -> Type) ->
+    TerminalCatObj obj morph -> TerminalCatObj obj morph -> Type where
+  TerminalMorphUnique :
+    (x : obj) ->
+    TerminalMorph obj morph (Left x) (Right (Right TerminalObjSelf))
+
+public export
+data InitTermCatObj : (obj : Type) -> (obj -> obj -> Type) -> Type where
+  ITCObjSelf : obj -> InitTermCatObj obj morph
+  ITCObjCat : CatObj obj morph -> InitTermCatObj obj morph
+  ITCObjInit : InitialObj obj morph -> InitTermCatObj obj morph
+  ITCObjTerm : TerminalObj obj morph -> InitTermCatObj obj morph
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+---- Interpretation of morphisms as metalanguage natural transformations ----
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+public export
+MorphCovarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
+MorphCovarNT {obj} morph a b = (x : obj) -> morph b x -> morph a x
+
+public export
+MorphContravarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
+MorphContravarNT {obj} morph a b = (x : obj) -> morph x a -> morph x b
+
+public export
+MorphNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
+MorphNT {obj} morph a b =
+  Pair (MorphContravarNT {obj} morph a b) (MorphCovarNT {obj} morph a b)
+
+public export
+morphComposeNT :
+  {obj : Type} -> {morph : obj -> obj -> Type} -> {a, b, c : obj} ->
+  MorphNT {obj} morph b c -> MorphNT {obj} morph a b -> MorphNT {obj} morph a c
+morphComposeNT {obj} {morph} {a} {b} {c} (g, g') (f, f') =
+  (\x => g x . f x, \x => f' x . g' x)
+
+public export
+morphNTId :
+  {obj : Type} -> {morph : obj -> obj -> Type} ->
+  (a : obj) -> MorphNT {obj} morph a a
+morphNTId {obj} {morph} a = (\_ => id, \_ => id)
+
+-------------------------------
+-------------------------------
+---- Types with predicates ----
+-------------------------------
+-------------------------------
+
+public export
+PType : Type
+PType = Subset0 Type SliceObj
+
+public export
+PBase : PType -> Type
+PBase = fst0
+
+public export
+0 PPred : (x : PType) -> SliceObj (PBase x)
+PPred = snd0
+
+public export
+PFunc : PType -> PType -> Type
+PFunc x y = PBase x -> PBase y
+
+public export
+0 PPres : (x, y : PType) -> SliceObj (PFunc x y)
+PPres x y f = (b : PBase x) -> PPred x b -> PPred y (f b)
+
+public export
+PMorph : PType -> PType -> Type
+PMorph x y = Subset0 (PFunc x y) (PPres x y)
+
+public export
+PSigma : PType -> Type
+PSigma x = Subset0 (PBase x) (PPred x)
+
+------------------------
+------------------------
+---- Quotient types ----
+------------------------
+------------------------
+
+public export
+QType : Type
+QType = Subset0 Type RelationOn
+
+public export
+QBase : QType -> Type
+QBase = fst0
+
+public export
+0 QRel : (x : QType) -> RelationOn (QBase x)
+QRel = snd0
+
+public export
+QFunc : QType -> QType -> Type
+QFunc x y = QBase x -> QBase y
+
+public export
+0 QPres : (x, y : QType) -> SliceObj (QFunc x y)
+QPres x y f = (b, b' : QBase x) -> QRel x b b' -> QRel y (f b) (f b')
+
+public export
+QMorph : QType -> QType -> Type
+QMorph x y = Subset0 (QFunc x y) (QPres x y)
+
 --------------------------------
 --------------------------------
 ---- Bicartesian categories ----
