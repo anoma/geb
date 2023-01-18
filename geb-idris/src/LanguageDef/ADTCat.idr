@@ -772,6 +772,14 @@ public export
 pfsObjCata : {0 a : Type} -> PFSObjAlg a -> PFSObj -> a
 pfsObjCata = pfCata {p=PFSObjF}
 
+public export
+PFSToSONT : Type
+PFSToSONT = PolyNatTrans PFSObjF SubstObjPF
+
+public export
+pfsToSOCata : PFSToSONT -> PFSObj -> SOMu
+pfsToSOCata = pfPolyCata
+
 -------------------------------------------------
 ---- Interpretation of PFS objects into SOMu ----
 -------------------------------------------------
