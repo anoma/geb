@@ -817,6 +817,36 @@ public export
 PFSObjInterpMeta : PFSObj -> Type
 PFSObjInterpMeta = pfsObjCata PFSObjInterpAlg
 
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+PFSObjShowAlgExt : PFSObjAlgExt String
+PFSObjShowAlgExt PFSHomObjPos dir =
+  "{" ++ dir PFSHomObjDirDom ++ " ->" ++ dir PFSHomObjDirCod ++ "}"
+
+public export
+PFSObjShowAlg : PFSObjAlg String
+PFSObjShowAlg = PFSBuildAlg SOShowAlg PFSObjShowAlgExt
+
+public export
+Show PFSObj where
+  show = pfsObjCata PFSObjShowAlg
+
+public export
+PFSObjCardAlgExt : PFSObjAlgExt Nat
+PFSObjCardAlgExt PFSHomObjPos dir =
+  power (dir PFSHomObjDirCod) (dir PFSHomObjDirDom)
+
+public export
+PFSObjCardAlg : PFSObjAlg Nat
+PFSObjCardAlg = PFSBuildAlg SOCardAlg PFSObjCardAlgExt
+
+public export
+pfsObjCard : PFSObj -> Nat
+pfsObjCard = pfsObjCata PFSObjCardAlg
+
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
 ---- Dependent-set definition of substitutive polynomial endofunctors ----
