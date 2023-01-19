@@ -284,33 +284,31 @@ public export
 Eq BicartDistTerm where
   (==) = bcdtEq
 
+public export
+BCDObjTermAlg : SliceObj Type
+BCDObjTermAlg = PFProductAlg BicartDistTermF BicartDistObjF
+
+public export
+bcdObjTermCata : {0 a : Type} ->
+  BCDObjTermAlg a -> BicartDistTerm -> BicartDistObj -> a
+bcdObjTermCata = pfProductCata {p=BicartDistTermF} {q=BicartDistObjF}
+
 -- Type-checking for terms against objects (determing whether a given general
 -- term is a term of a given object).
 public export
-BicartDistTermCheckAlg : BicartDistTermAlg (BicartDistObj -> Bool)
-BicartDistTermCheckAlg BCDTermUnit td (InPFM BCDObjInitial od) = False
-BicartDistTermCheckAlg BCDTermUnit td (InPFM BCDObjTerminal od) = True
-BicartDistTermCheckAlg BCDTermUnit td (InPFM BCDObjCoproduct od) = False
-BicartDistTermCheckAlg BCDTermUnit td (InPFM BCDObjProduct od) = False
-BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjInitial od) = False
-BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjTerminal od) = False
-BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjCoproduct od) =
-  td BCDTermL $ od BCDCopL
-BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjProduct od) = False
-BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjInitial od) = False
-BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjTerminal od) = False
-BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjCoproduct od) =
-  td BCDTermR $ od BCDCopR
-BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjProduct od) = False
-BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjInitial od) = False
-BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjTerminal od) = False
-BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjCoproduct od) = False
-BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjProduct od) =
-  td BCDTerm1 (od BCDProd1) && td BCDTerm2 (od BCDProd2)
+BicartDistTermCheckAlg : BCDObjTermAlg Bool
+BicartDistTermCheckAlg (BCDTermUnit, BCDObjTerminal) d = True
+BicartDistTermCheckAlg (BCDTermLeft, BCDObjCoproduct) d =
+  d (BCDTermL, BCDCopL)
+BicartDistTermCheckAlg (BCDTermRight, BCDObjCoproduct) d =
+  d (BCDTermR, BCDCopR)
+BicartDistTermCheckAlg (BCDTermPair, BCDObjProduct) d =
+  d (BCDTerm1, BCDProd1) && d (BCDTerm2, BCDProd2)
+BicartDistTermCheckAlg (_, _) d = False
 
 public export
 bicartDistTermCheck : BicartDistTerm -> BicartDistObj -> Bool
-bicartDistTermCheck = bicartDistTermCata BicartDistTermCheckAlg
+bicartDistTermCheck = bcdObjTermCata BicartDistTermCheckAlg
 
 -- The type-checking allows us to view a checked term as a slice object.
 public export
