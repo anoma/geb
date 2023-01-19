@@ -144,18 +144,23 @@ bcdoProductCata : {0 a : Type} ->
 bcdoProductCata = pfProductCata {p=BicartDistObjF}
 
 public export
-BCDOEqAlg : BCDOProductAlg Bool
-BCDOEqAlg (BCDObjInitial, BCDObjInitial) d = True
-BCDOEqAlg (BCDObjTerminal, BCDObjTerminal) d = True
-BCDOEqAlg (BCDObjCoproduct, BCDObjCoproduct) d =
-  d (BCDCopL, BCDCopL) && d (BCDCopR, BCDCopR)
-BCDOEqAlg (BCDObjProduct, BCDObjProduct) d =
-  d (BCDProd1, BCDProd1) && d (BCDProd2, BCDProd2)
-BCDOEqAlg (_, _) d = False
+BCDOEqAlg : PFProductBoolAlg BicartDistObjF BicartDistObjF
+BCDOEqAlg =
+  [
+    ((BCDObjInitial, BCDObjInitial) **
+     [])
+  , ((BCDObjTerminal, BCDObjTerminal) **
+     [])
+  , ((BCDObjCoproduct, BCDObjCoproduct) **
+     [ (BCDCopL, BCDCopL), (BCDCopR, BCDCopR) ])
+  , ((BCDObjProduct, BCDObjProduct) **
+     [ (BCDProd1, BCDProd1), (BCDProd2, BCDProd2) ]
+    )
+  ]
 
 public export
 bcdoEq : BicartDistObj -> BicartDistObj -> Bool
-bcdoEq = bcdoProductCata BCDOEqAlg
+bcdoEq = pfProductBoolCata decEq decEq BCDOEqAlg
 
 public export
 Eq BicartDistObj where
