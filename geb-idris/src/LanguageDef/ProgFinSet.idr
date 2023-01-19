@@ -80,7 +80,7 @@ Eq BicartDistProductDir where
   _ == _ = False
 
 public export
-BicartDistObjDir : BicartDistObjPos -> Type
+BicartDistObjDir : SliceObj BicartDistObjPos
 BicartDistObjDir BCDObjInitial = BicartDistInitialDir
 BicartDistObjDir BCDObjTerminal = BicartDistTerminalDir
 BicartDistObjDir BCDObjCoproduct = BicartDistCoproductDir
@@ -95,7 +95,7 @@ BicartDistObj : Type
 BicartDistObj = PolyFuncMu BicartDistObjF
 
 public export
-BCDOAlg : Type -> Type
+BCDOAlg : SliceObj Type
 BCDOAlg = PFAlg BicartDistObjF
 
 public export
@@ -120,7 +120,7 @@ Show BicartDistObj where
   show = bcdoShow
 
 public export
-BCDOProductAlg : Type -> Type
+BCDOProductAlg : SliceObj Type
 BCDOProductAlg = PFProductAlg BicartDistObjF BicartDistObjF
 
 public export
