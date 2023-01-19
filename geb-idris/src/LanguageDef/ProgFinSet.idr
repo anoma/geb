@@ -48,6 +48,23 @@ bcdoCata : {0 a : Type} -> BCDOAlg a -> BicartDistObj -> a
 bcdoCata = pfCata {p=BicartDistObjF}
 
 public export
+BCDOShowAlg : BCDOAlg String
+BCDOShowAlg BCDObjInitial dir = "0"
+BCDOShowAlg BCDObjTerminal dir = "1"
+BCDOShowAlg BCDObjCoproduct dir =
+  "[" ++ dir BCDObjL ++ "|" ++ dir BCDObjR ++ "]"
+BCDOShowAlg BCDObjProduct dir =
+  "(" ++ dir BCDObj1 ++ "," ++ dir BCDObj2 ++ ")"
+
+public export
+bcdoShow : BicartDistObj -> String
+bcdoShow = bcdoCata BCDOShowAlg
+
+public export
+Show BicartDistObj where
+  show = bcdoShow
+
+public export
 BCDOProductAlg : Type -> Type
 BCDOProductAlg = PFProductAlg BicartDistObjF BicartDistObjF
 
