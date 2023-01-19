@@ -117,13 +117,13 @@ BicartDistReducedMorphDir : BicartDistReducedMorphPosTot -> Type
 BicartDistReducedMorphDir = BicartDistReducedMorphDirMorph . bcdrMPBase
 
 public export
-BicartDistReducedMorphF : PolyFunc
-BicartDistReducedMorphF =
+BicartDistUnrefinedReducedMorphF : PolyFunc
+BicartDistUnrefinedReducedMorphF =
   (BicartDistReducedMorphPosTot ** BicartDistReducedMorphDir)
 
 public export
-BicartDistReducedMorph : Type
-BicartDistReducedMorph = PolyFuncMu BicartDistReducedMorphF
+BicartDistUnrefinedReducedMorph : Type
+BicartDistUnrefinedReducedMorph = PolyFuncMu BicartDistUnrefinedReducedMorphF
 
 ---------------------------------
 ---------------------------------
