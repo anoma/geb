@@ -303,17 +303,23 @@ bcdtProductCata : {0 a : Type} ->
 bcdtProductCata = pfProductCata {p=BicartDistTermF}
 
 public export
-BCDTEqAlg : BCDTProductAlg Bool
-BCDTEqAlg (BCDTermUnit, BCDTermUnit) d = True
-BCDTEqAlg (BCDTermLeft, BCDTermLeft) d = d (BCDTermL, BCDTermL)
-BCDTEqAlg (BCDTermRight, BCDTermRight) d = d (BCDTermR, BCDTermR)
-BCDTEqAlg (BCDTermPair, BCDTermPair) d =
-  d (BCDTerm1, BCDTerm1) && d (BCDTerm2, BCDTerm2)
-BCDTEqAlg (_, _) d = False
+BCDTEqAlg : PFProductBoolAlg BicartDistTermF BicartDistTermF
+BCDTEqAlg =
+  [
+    ((BCDTermUnit, BCDTermUnit) **
+     [])
+  , ((BCDTermLeft, BCDTermLeft) **
+     [ (BCDTermL, BCDTermL) ])
+  , ((BCDTermRight, BCDTermRight) **
+     [ (BCDTermR, BCDTermR) ])
+  , ((BCDTermPair, BCDTermPair) **
+     [ (BCDTerm1, BCDTerm1), (BCDTerm2, BCDTerm2) ]
+    )
+  ]
 
 public export
 bcdtEq : BicartDistTerm -> BicartDistTerm -> Bool
-bcdtEq = bcdtProductCata BCDTEqAlg
+bcdtEq = pfProductBoolCata decEq decEq BCDTEqAlg
 
 public export
 Eq BicartDistTerm where
