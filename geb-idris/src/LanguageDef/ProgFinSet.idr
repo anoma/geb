@@ -39,6 +39,41 @@ public export
 BicartDistObj : Type
 BicartDistObj = PolyFuncMu BicartDistObjF
 
+public export
+BCDOAlg : Type -> Type
+BCDOAlg = PFAlg BicartDistObjF
+
+public export
+bcdoCata : {0 a : Type} -> BCDOAlg a -> BicartDistObj -> a
+bcdoCata = pfCata {p=BicartDistObjF}
+
+public export
+BCDOProductAlg : Type -> Type
+BCDOProductAlg = PFProductAlg BicartDistObjF BicartDistObjF
+
+public export
+bcdoProductCata : {0 a : Type} ->
+  BCDOProductAlg a -> BicartDistObj -> BicartDistObj -> a
+bcdoProductCata = pfProductCata {p=BicartDistObjF}
+
+public export
+BCDOEqAlg : BCDOProductAlg Bool
+BCDOEqAlg (BCDObjInitial, BCDObjInitial) d = True
+BCDOEqAlg (BCDObjTerminal, BCDObjTerminal) d = True
+BCDOEqAlg (BCDObjCoproduct, BCDObjCoproduct) d =
+  d (BCDObjL, BCDObjL) && d (BCDObjR, BCDObjR)
+BCDOEqAlg (BCDObjProduct, BCDObjProduct) d =
+  d (BCDObj1, BCDObj1) && d (BCDObj2, BCDObj2)
+BCDOEqAlg (_, _) d = False
+
+public export
+bcdoEq : BicartDistObj -> BicartDistObj -> Bool
+bcdoEq = bcdoProductCata BCDOEqAlg
+
+public export
+Eq BicartDistObj where
+  (==) = bcdoEq
+
 ----------------------------------------------------------------------
 ---- Terms (global elements) of objects of bicartesian categories ----
 ----------------------------------------------------------------------
@@ -73,8 +108,8 @@ public export
 bicartDistTermCata : {0 a : Type} -> BicartDistTermAlg a -> BicartDistTerm -> a
 bicartDistTermCata = pfCata {p=BicartDistTermF}
 
--- Type-checking for terms against objects (is a given term a term of a
--- given object)?
+-- Type-checking for terms against objects (determing whether a given general
+-- term is a term of a given object).
 public export
 BicartDistTermCheckAlg : BicartDistTermAlg (BicartDistObj -> Bool)
 BicartDistTermCheckAlg BCDTermUnit td (InPFM oi od) =
