@@ -217,11 +217,11 @@ Eq BicartDistTermPairDir where
   _ == _ = False
 
 public export
-data BicartDistTermDir : SliceObj BicartDistTermPos where
-  BCDTermInLeft : BicartDistTermDir BCDTermLeft
-  BCDTermInRight : BicartDistTermDir BCDTermRight
-  BCDTermInFirst : BicartDistTermDir BCDTermPair
-  BCDTermInSecond : BicartDistTermDir BCDTermPair
+BicartDistTermDir : SliceObj BicartDistTermPos
+BicartDistTermDir BCDTermUnit = BicartDistTermUnitDir
+BicartDistTermDir BCDTermLeft = BicartDistTermLeftDir
+BicartDistTermDir BCDTermRight = BicartDistTermRightDir
+BicartDistTermDir BCDTermPair = BicartDistTermPairDir
 
 public export
 BicartDistTermF : PolyFunc
@@ -244,12 +244,11 @@ BCDTShowAlg : BicartDistTermAlg String
 BCDTShowAlg BCDTermUnit dir =
   show BCDTermUnit
 BCDTShowAlg BCDTermLeft dir =
-  show BCDTermLeft ++ "[" ++ dir BCDTermInLeft ++ "]"
+  show BCDTermLeft ++ "[" ++ dir BCDTermL ++ "]"
 BCDTShowAlg BCDTermRight dir =
-  show BCDTermRight ++ "[" ++ dir BCDTermInRight ++ "]"
+  show BCDTermRight ++ "[" ++ dir BCDTermR ++ "]"
 BCDTShowAlg BCDTermPair dir =
-  "(" ++ dir BCDTermInFirst ++ " " ++ show BCDTermPair ++
-  " " ++ dir BCDTermInSecond ++ ")"
+  "(" ++ dir BCDTerm1 ++ " " ++ show BCDTermPair ++ " " ++ dir BCDTerm2 ++ ")"
 
 public export
 bcdtShow : BicartDistTerm -> String
@@ -271,10 +270,10 @@ bcdtProductCata = pfProductCata {p=BicartDistTermF}
 public export
 BCDTEqAlg : BCDTProductAlg Bool
 BCDTEqAlg (BCDTermUnit, BCDTermUnit) d = True
-BCDTEqAlg (BCDTermLeft, BCDTermLeft) d = d (BCDTermInLeft, BCDTermInLeft)
-BCDTEqAlg (BCDTermRight, BCDTermRight) d = d (BCDTermInRight, BCDTermInRight)
+BCDTEqAlg (BCDTermLeft, BCDTermLeft) d = d (BCDTermL, BCDTermL)
+BCDTEqAlg (BCDTermRight, BCDTermRight) d = d (BCDTermR, BCDTermR)
 BCDTEqAlg (BCDTermPair, BCDTermPair) d =
-  d (BCDTermInFirst, BCDTermInFirst) && d (BCDTermInSecond, BCDTermInSecond)
+  d (BCDTerm1, BCDTerm1) && d (BCDTerm2, BCDTerm2)
 BCDTEqAlg (_, _) d = False
 
 public export
@@ -296,18 +295,18 @@ BicartDistTermCheckAlg BCDTermUnit td (InPFM BCDObjProduct od) = False
 BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjInitial od) = False
 BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjTerminal od) = False
 BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjCoproduct od) =
-  td BCDTermInLeft $ od BCDCopL
+  td BCDTermL $ od BCDCopL
 BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjProduct od) = False
 BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjInitial od) = False
 BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjTerminal od) = False
 BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjCoproduct od) =
-  td BCDTermInRight $ od BCDCopR
+  td BCDTermR $ od BCDCopR
 BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjProduct od) = False
 BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjInitial od) = False
 BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjTerminal od) = False
 BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjCoproduct od) = False
 BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjProduct od) =
-  td BCDTermInFirst (od BCDProd1) && td BCDTermInSecond (od BCDProd2)
+  td BCDTerm1 (od BCDProd1) && td BCDTerm2 (od BCDProd2)
 
 public export
 bicartDistTermCheck : BicartDistTerm -> BicartDistObj -> Bool
