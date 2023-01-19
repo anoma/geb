@@ -13,6 +13,10 @@ import public LanguageDef.Atom
 ------------------------------------------------------
 ------------------------------------------------------
 
+------------------------------------------------------
+---- Objects included in any bicartesian category ----
+------------------------------------------------------
+
 public export
 data BicartDistObjPos : Type where
   BCDObjInitial : BicartDistObjPos
@@ -34,6 +38,10 @@ BicartDistObjF = (BicartDistObjPos ** BicartDistObjDir)
 public export
 BicartDistObj : Type
 BicartDistObj = PolyFuncMu BicartDistObjF
+
+----------------------------------------------------------------------
+---- Terms (global elements) of objects of bicartesian categories ----
+----------------------------------------------------------------------
 
 public export
 data BicartDistTermPos : Type where
@@ -65,6 +73,8 @@ public export
 bicartDistTermCata : {0 a : Type} -> BicartDistTermAlg a -> BicartDistTerm -> a
 bicartDistTermCata = pfCata {p=BicartDistTermF}
 
+-- Type-checking for terms against objects (is a given term a term of a
+-- given object)?
 public export
 BicartDistTermCheckAlg : BicartDistTermAlg (BicartDistObj -> Bool)
 BicartDistTermCheckAlg BCDTermUnit td (InPFM oi od) =
@@ -89,8 +99,9 @@ public export
 bicartDistTermCheck : BicartDistTerm -> BicartDistObj -> Bool
 bicartDistTermCheck = bicartDistTermCata BicartDistTermCheckAlg
 
+-- The type-checking allows us to view a checked term as a slice object.
 public export
-BicartDistTypedTerm : BicartDistObj -> Type
+BicartDistTypedTerm : SliceObj BicartDistObj
 BicartDistTypedTerm a =
   Refinement {a=BicartDistTerm} (flip bicartDistTermCheck a)
 
@@ -98,6 +109,10 @@ public export
 MkBicartDistTypedTerm : {0 o : BicartDistObj} -> (t : BicartDistTerm) ->
   {auto 0 checks : IsTrue (bicartDistTermCheck t o)} -> BicartDistTypedTerm o
 MkBicartDistTypedTerm t {checks} = MkRefinement {a=BicartDistTerm} t
+
+---------------------------------------------------------------------
+---- Morphisms included in any bicartesian distributive category ----
+---------------------------------------------------------------------
 
 public export
 data BicartDistReducedMorphPos : Type where
