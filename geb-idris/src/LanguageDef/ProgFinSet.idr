@@ -125,6 +125,48 @@ public export
 bicartDistTermCata : {0 a : Type} -> BicartDistTermAlg a -> BicartDistTerm -> a
 bicartDistTermCata = pfCata {p=BicartDistTermF}
 
+public export
+BCDTShowAlg : BicartDistTermAlg String
+BCDTShowAlg BCDTermUnit dir = "_"
+BCDTShowAlg BCDTermLeft dir = "l[" ++ dir BCDTermInLeft ++ "]"
+BCDTShowAlg BCDTermRight dir = "r[" ++ dir BCDTermInRight ++ "]"
+BCDTShowAlg BCDTermPair dir =
+  "(" ++ dir BCDTermInFirst ++ ", " ++ dir BCDTermInSecond ++ ")"
+
+public export
+bcdtShow : BicartDistTerm -> String
+bcdtShow = bicartDistTermCata BCDTShowAlg
+
+public export
+Show BicartDistTerm where
+  show = bcdtShow
+
+public export
+BCDTProductAlg : Type -> Type
+BCDTProductAlg = PFProductAlg BicartDistTermF BicartDistTermF
+
+public export
+bcdtProductCata : {0 a : Type} ->
+  BCDTProductAlg a -> BicartDistTerm -> BicartDistTerm -> a
+bcdtProductCata = pfProductCata {p=BicartDistTermF}
+
+public export
+BCDTEqAlg : BCDTProductAlg Bool
+BCDTEqAlg (BCDTermUnit, BCDTermUnit) d = True
+BCDTEqAlg (BCDTermLeft, BCDTermLeft) d = d (BCDTermInLeft, BCDTermInLeft)
+BCDTEqAlg (BCDTermRight, BCDTermRight) d = d (BCDTermInRight, BCDTermInRight)
+BCDTEqAlg (BCDTermPair, BCDTermPair) d =
+  d (BCDTermInFirst, BCDTermInFirst) && d (BCDTermInSecond, BCDTermInSecond)
+BCDTEqAlg (_, _) d = False
+
+public export
+bcdtEq : BicartDistTerm -> BicartDistTerm -> Bool
+bcdtEq = bcdtProductCata BCDTEqAlg
+
+public export
+Eq BicartDistTerm where
+  (==) = bcdtEq
+
 -- Type-checking for terms against objects (determing whether a given general
 -- term is a term of a given object).
 public export
