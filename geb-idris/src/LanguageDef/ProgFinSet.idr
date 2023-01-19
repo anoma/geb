@@ -25,6 +25,14 @@ data BicartDistObjPos : Type where
   BCDObjProduct : BicartDistObjPos
 
 public export
+Eq BicartDistObjPos where
+  BCDObjInitial == BCDObjInitial = True
+  BCDObjTerminal == BCDObjTerminal = True
+  BCDObjCoproduct == BCDObjCoproduct = True
+  BCDObjProduct == BCDObjProduct = True
+  _ == _ = False
+
+public export
 data BicartDistObjDir : BicartDistObjPos -> Type where
   BCDObjL : BicartDistObjDir BCDObjCoproduct
   BCDObjR : BicartDistObjDir BCDObjCoproduct
@@ -103,6 +111,14 @@ data BicartDistTermPos : Type where
   BCDTermPair : BicartDistTermPos
 
 public export
+Eq BicartDistTermPos where
+  BCDTermUnit == BCDTermUnit = True
+  BCDTermLeft == BCDTermLeft = True
+  BCDTermRight == BCDTermRight = True
+  BCDTermPair == BCDTermPair = True
+  _ == _ = False
+
+public export
 data BicartDistTermDir : BicartDistTermPos -> Type where
   BCDTermInLeft : BicartDistTermDir BCDTermLeft
   BCDTermInRight : BicartDistTermDir BCDTermRight
@@ -172,9 +188,7 @@ Eq BicartDistTerm where
 public export
 BicartDistTermCheckAlg : BicartDistTermAlg (BicartDistObj -> Bool)
 BicartDistTermCheckAlg BCDTermUnit td (InPFM oi od) =
-  case oi of
-    BCDObjTerminal => True
-    _ => False
+  if oi == BCDObjTerminal then True else False
 BicartDistTermCheckAlg BCDTermLeft td (InPFM oi od) =
   case oi of
     BCDObjCoproduct => td BCDTermInLeft $ od BCDObjL
@@ -220,6 +234,20 @@ data BicartDistReducedMorphPos : Type where
   BCDRMorphProj1 : BicartDistReducedMorphPos
   BCDRMorphProj2 : BicartDistReducedMorphPos
   BCDRMorphDist : BicartDistReducedMorphPos
+
+public export
+Eq BicartDistReducedMorphPos where
+  BCDRMorphId == BCDRMorphId = True
+  BCDRMorphAbsurd == BCDRMorphAbsurd = True
+  BCDRMorphConst == BCDRMorphConst = True
+  BCDRMorphInjL == BCDRMorphInjL = True
+  BCDRMorphInjR == BCDRMorphInjR = True
+  BCDRMorphCase == BCDRMorphCase = True
+  BCDRMorphBi == BCDRMorphBi = True
+  BCDRMorphProj1 == BCDRMorphProj1 = True
+  BCDRMorphProj2 == BCDRMorphProj2 = True
+  BCDRMorphDist == BCDRMorphDist = True
+  _ == _ = False
 
 public export
 data BicartDistReducedMorphDirObj : BicartDistReducedMorphPos -> Type where
