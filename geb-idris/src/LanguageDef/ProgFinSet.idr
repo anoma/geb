@@ -7,11 +7,11 @@ import public LanguageDef.Atom
 
 %default total
 
-------------------------------------------------------
-------------------------------------------------------
----- Minimal bicartestian distributive categories ----
-------------------------------------------------------
-------------------------------------------------------
+-----------------------------------------------------
+-----------------------------------------------------
+---- Minimal bicartesian distributive categories ----
+-----------------------------------------------------
+-----------------------------------------------------
 
 ------------------------------------------------------
 ---- Objects included in any bicartesian category ----
@@ -40,11 +40,51 @@ Eq BicartDistObjPos where
   _ == _ = False
 
 public export
-data BicartDistObjDir : BicartDistObjPos -> Type where
-  BCDObjL : BicartDistObjDir BCDObjCoproduct
-  BCDObjR : BicartDistObjDir BCDObjCoproduct
-  BCDObj1 : BicartDistObjDir BCDObjProduct
-  BCDObj2 : BicartDistObjDir BCDObjProduct
+BicartDistInitialDir : Type
+BicartDistInitialDir = Void
+
+public export
+BicartDistTerminalDir : Type
+BicartDistTerminalDir = Void
+
+public export
+data BicartDistCoproductDir : Type where
+  BCDCopL : BicartDistCoproductDir
+  BCDCopR : BicartDistCoproductDir
+
+public export
+Show BicartDistCoproductDir where
+  show BCDCopL = "l"
+  show BCDCopR = "r"
+
+public export
+Eq BicartDistCoproductDir where
+  BCDCopL == BCDCopL = True
+  BCDCopR == BCDCopR = True
+  _ == _ = False
+
+public export
+data BicartDistProductDir : Type where
+  BCDProd1 : BicartDistProductDir
+  BCDProd2 : BicartDistProductDir
+
+public export
+Show BicartDistProductDir where
+  show BCDProd1 = "fst"
+  show BCDProd2 = "snd"
+
+public export
+Eq BicartDistProductDir where
+  BCDProd1 == BCDProd1 = True
+  BCDProd2 == BCDProd2 = True
+  _ == _ = False
+
+public export
+BicartDistObjDir : BicartDistObjPos -> Type
+BicartDistObjDir BCDObjInitial = BicartDistInitialDir
+BicartDistObjDir BCDObjTerminal = BicartDistTerminalDir
+BicartDistObjDir BCDObjCoproduct = BicartDistCoproductDir
+BicartDistObjDir BCDObjProduct = BicartDistProductDir
 
 public export
 BicartDistObjF : PolyFunc
@@ -67,9 +107,9 @@ BCDOShowAlg : BCDOAlg String
 BCDOShowAlg BCDObjInitial dir = show BCDObjInitial
 BCDOShowAlg BCDObjTerminal dir = show BCDObjTerminal
 BCDOShowAlg BCDObjCoproduct dir =
-  "[" ++ dir BCDObjL ++ " " ++ show BCDObjCoproduct ++ " " ++ dir BCDObjR ++ "]"
+  "[" ++ dir BCDCopL ++ " " ++ show BCDObjCoproduct ++ " " ++ dir BCDCopR ++ "]"
 BCDOShowAlg BCDObjProduct dir =
-  "(" ++ dir BCDObj1 ++ " " ++ show BCDObjProduct ++ " " ++ dir BCDObj2 ++ ")"
+  "(" ++ dir BCDProd1 ++ " " ++ show BCDObjProduct ++ " " ++ dir BCDProd2 ++ ")"
 
 public export
 bcdoShow : BicartDistObj -> String
@@ -93,9 +133,9 @@ BCDOEqAlg : BCDOProductAlg Bool
 BCDOEqAlg (BCDObjInitial, BCDObjInitial) d = True
 BCDOEqAlg (BCDObjTerminal, BCDObjTerminal) d = True
 BCDOEqAlg (BCDObjCoproduct, BCDObjCoproduct) d =
-  d (BCDObjL, BCDObjL) && d (BCDObjR, BCDObjR)
+  d (BCDCopL, BCDCopL) && d (BCDCopR, BCDCopR)
 BCDOEqAlg (BCDObjProduct, BCDObjProduct) d =
-  d (BCDObj1, BCDObj1) && d (BCDObj2, BCDObj2)
+  d (BCDProd1, BCDProd1) && d (BCDProd2, BCDProd2)
 BCDOEqAlg (_, _) d = False
 
 public export
@@ -205,21 +245,25 @@ Eq BicartDistTerm where
 -- term is a term of a given object).
 public export
 BicartDistTermCheckAlg : BicartDistTermAlg (BicartDistObj -> Bool)
-BicartDistTermCheckAlg BCDTermUnit td (InPFM oi od) =
-  if oi == BCDObjTerminal then True else False
-BicartDistTermCheckAlg BCDTermLeft td (InPFM oi od) =
-  case oi of
-    BCDObjCoproduct => td BCDTermInLeft $ od BCDObjL
-    _ => False
-BicartDistTermCheckAlg BCDTermRight td (InPFM oi od) =
-  case oi of
-    BCDObjCoproduct => td BCDTermInRight $ od BCDObjR
-    _ => False
-BicartDistTermCheckAlg BCDTermPair td (InPFM oi od) =
-  case oi of
-    BCDObjProduct =>
-      td BCDTermInFirst (od BCDObj1) && td BCDTermInSecond (od BCDObj2)
-    _ => False
+BicartDistTermCheckAlg BCDTermUnit td (InPFM BCDObjInitial od) = False
+BicartDistTermCheckAlg BCDTermUnit td (InPFM BCDObjTerminal od) = True
+BicartDistTermCheckAlg BCDTermUnit td (InPFM BCDObjCoproduct od) = False
+BicartDistTermCheckAlg BCDTermUnit td (InPFM BCDObjProduct od) = False
+BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjInitial od) = False
+BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjTerminal od) = False
+BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjCoproduct od) =
+  td BCDTermInLeft $ od BCDCopL
+BicartDistTermCheckAlg BCDTermLeft td (InPFM BCDObjProduct od) = False
+BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjInitial od) = False
+BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjTerminal od) = False
+BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjCoproduct od) =
+  td BCDTermInRight $ od BCDCopR
+BicartDistTermCheckAlg BCDTermRight td (InPFM BCDObjProduct od) = False
+BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjInitial od) = False
+BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjTerminal od) = False
+BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjCoproduct od) = False
+BicartDistTermCheckAlg BCDTermPair td (InPFM BCDObjProduct od) =
+  td BCDTermInFirst (od BCDProd1) && td BCDTermInSecond (od BCDProd2)
 
 public export
 bicartDistTermCheck : BicartDistTerm -> BicartDistObj -> Bool
