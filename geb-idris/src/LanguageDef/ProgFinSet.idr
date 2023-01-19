@@ -7,6 +7,95 @@ import public LanguageDef.Atom
 
 %default total
 
+------------------------------------------------------
+------------------------------------------------------
+---- Minimal bicartestian distributive categories ----
+------------------------------------------------------
+------------------------------------------------------
+
+public export
+data BicartDistObjPos : Type where
+  BCDObjInitial : BicartDistObjPos
+  BCDObjTerminal : BicartDistObjPos
+  BCDObjCoproduct : BicartDistObjPos
+  BCDObjProduct : BicartDistObjPos
+
+public export
+data BicartDistObjDir : BicartDistObjPos -> Type where
+  BCDObjL : BicartDistObjDir BCDObjCoproduct
+  BCDObjR : BicartDistObjDir BCDObjCoproduct
+  BCDObj1 : BicartDistObjDir BCDObjProduct
+  BCDObj2 : BicartDistObjDir BCDObjProduct
+
+public export
+data BicartDistTermPos : Type where
+  BCDTermUnit : BicartDistTermPos
+  BCDTermLeft : BicartDistTermPos
+  BCDTermRight : BicartDistTermPos
+  BCDTermPair : BicartDistTermPos
+
+public export
+data BicartDistTermDir : BicartDistTermPos -> Type where
+  BCDTermInLeft : BicartDistTermDir BCDTermLeft
+  BCDTermInRight : BicartDistTermDir BCDTermRight
+  BCDTermInFirst : BicartDistTermDir BCDTermPair
+  BCDTermInSecond : BicartDistTermDir BCDTermPair
+
+public export
+data BicartDistReducedMorphPos : Type where
+  BCDRMorphId : BicartDistReducedMorphPos
+  BCDRMorphAbsurd : BicartDistReducedMorphPos
+  BCDRMorphConst : BicartDistReducedMorphPos
+  BCDRMorphInjL : BicartDistReducedMorphPos
+  BCDRMorphInjR : BicartDistReducedMorphPos
+  BCDRMorphCase : BicartDistReducedMorphPos
+  BCDRMorphBi : BicartDistReducedMorphPos
+  BCDRMorphProj1 : BicartDistReducedMorphPos
+  BCDRMorphProj2 : BicartDistReducedMorphPos
+  BCDRMorphDist : BicartDistReducedMorphPos
+
+public export
+data BicartDistReducedMorphDirObj : BicartDistReducedMorphPos -> Type where
+  BCDRMorphIdDir : BicartDistReducedMorphDirObj BCDRMorphId
+  BCDRMorphAbsurdDom : BicartDistReducedMorphDirObj BCDRMorphAbsurd
+  BCDRMorphAbsurdCod : BicartDistReducedMorphDirObj BCDRMorphAbsurd
+  BCDRMorphConstDom : BicartDistReducedMorphDirObj BCDRMorphConst
+  BCDRMorphConstCod : BicartDistReducedMorphDirObj BCDRMorphConst
+  BCDRMorphInjLDom : BicartDistReducedMorphDirObj BCDRMorphInjL
+  BCDRMorphInjLCodR : BicartDistReducedMorphDirObj BCDRMorphInjL
+  BCDRMorphInjRDom : BicartDistReducedMorphDirObj BCDRMorphInjR
+  BCDRMorphInjRCodL : BicartDistReducedMorphDirObj BCDRMorphInjR
+  BCDRMorphCaseDomL : BicartDistReducedMorphDirObj BCDRMorphCase
+  BCDRMorphCaseDomR : BicartDistReducedMorphDirObj BCDRMorphCase
+  BCDRMorphCaseCod : BicartDistReducedMorphDirObj BCDRMorphCase
+  BCDRMorphBiDom : BicartDistReducedMorphDirObj BCDRMorphBi
+  BCDRMorphBiCodL : BicartDistReducedMorphDirObj BCDRMorphBi
+  BCDRMorphBiCodR : BicartDistReducedMorphDirObj BCDRMorphBi
+  BCDRMorphProj1DomR : BicartDistReducedMorphDirObj BCDRMorphProj1
+  BCDRMorphProj1Cod : BicartDistReducedMorphDirObj BCDRMorphProj1
+  BCDRMorphProj2DomL : BicartDistReducedMorphDirObj BCDRMorphProj2
+  BCDRMorphProj2Cod : BicartDistReducedMorphDirObj BCDRMorphProj2
+  BCDRMorphDistDom1 : BicartDistReducedMorphDirObj BCDRMorphDist
+  BCDRMorphDistDom2L : BicartDistReducedMorphDirObj BCDRMorphDist
+  BCDRMorphDistDom2R : BicartDistReducedMorphDirObj BCDRMorphDist
+
+public export
+data BicartDistReducedMorphDirTerm : BicartDistReducedMorphPos -> Type where
+  BCDRMorphTerm : BicartDistReducedMorphDirTerm BCDRMorphConst
+
+public export
+data BicartDistReducedMorphDirMorph : BicartDistReducedMorphPos -> Type where
+  BCDRMorphContra : BicartDistReducedMorphDirMorph BCDRMorphAbsurd
+  BCDRMorphCases : BicartDistReducedMorphDirMorph BCDRMorphCase
+  BCDRMorphComponents : BicartDistReducedMorphDirMorph BCDRMorphBi
+
+public export
+BicartDistReducedMorphDir : BicartDistReducedMorphPos -> (Type, Type, Type)
+BicartDistReducedMorphDir i =
+  (BicartDistReducedMorphDirObj i,
+   BicartDistReducedMorphDirTerm i,
+   BicartDistReducedMorphDirMorph i)
+
 ---------------------------------
 ---------------------------------
 ---- Programmer's finite set ----
