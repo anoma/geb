@@ -25,6 +25,13 @@ data BicartDistObjPos : Type where
   BCDObjProduct : BicartDistObjPos
 
 public export
+Show BicartDistObjPos where
+  show BCDObjInitial = "0"
+  show BCDObjTerminal = "1"
+  show BCDObjCoproduct = "+"
+  show BCDObjProduct = "*"
+
+public export
 Eq BicartDistObjPos where
   BCDObjInitial == BCDObjInitial = True
   BCDObjTerminal == BCDObjTerminal = True
@@ -57,12 +64,12 @@ bcdoCata = pfCata {p=BicartDistObjF}
 
 public export
 BCDOShowAlg : BCDOAlg String
-BCDOShowAlg BCDObjInitial dir = "0"
-BCDOShowAlg BCDObjTerminal dir = "1"
+BCDOShowAlg BCDObjInitial dir = show BCDObjInitial
+BCDOShowAlg BCDObjTerminal dir = show BCDObjTerminal
 BCDOShowAlg BCDObjCoproduct dir =
-  "[" ++ dir BCDObjL ++ "|" ++ dir BCDObjR ++ "]"
+  "[" ++ dir BCDObjL ++ " " ++ show BCDObjCoproduct ++ " " ++ dir BCDObjR ++ "]"
 BCDOShowAlg BCDObjProduct dir =
-  "(" ++ dir BCDObj1 ++ "," ++ dir BCDObj2 ++ ")"
+  "(" ++ dir BCDObj1 ++ " " ++ show BCDObjProduct ++ " " ++ dir BCDObj2 ++ ")"
 
 public export
 bcdoShow : BicartDistObj -> String
@@ -111,6 +118,13 @@ data BicartDistTermPos : Type where
   BCDTermPair : BicartDistTermPos
 
 public export
+Show BicartDistTermPos where
+  show BCDTermUnit = "_"
+  show BCDTermLeft = "l"
+  show BCDTermRight = "r"
+  show BCDTermPair = ","
+
+public export
 Eq BicartDistTermPos where
   BCDTermUnit == BCDTermUnit = True
   BCDTermLeft == BCDTermLeft = True
@@ -143,11 +157,15 @@ bicartDistTermCata = pfCata {p=BicartDistTermF}
 
 public export
 BCDTShowAlg : BicartDistTermAlg String
-BCDTShowAlg BCDTermUnit dir = "_"
-BCDTShowAlg BCDTermLeft dir = "l[" ++ dir BCDTermInLeft ++ "]"
-BCDTShowAlg BCDTermRight dir = "r[" ++ dir BCDTermInRight ++ "]"
+BCDTShowAlg BCDTermUnit dir =
+  show BCDTermUnit
+BCDTShowAlg BCDTermLeft dir =
+  show BCDTermLeft ++ "[" ++ dir BCDTermInLeft ++ "]"
+BCDTShowAlg BCDTermRight dir =
+  show BCDTermRight ++ "[" ++ dir BCDTermInRight ++ "]"
 BCDTShowAlg BCDTermPair dir =
-  "(" ++ dir BCDTermInFirst ++ ", " ++ dir BCDTermInSecond ++ ")"
+  "(" ++ dir BCDTermInFirst ++ " " ++ show BCDTermPair ++
+  " " ++ dir BCDTermInSecond ++ ")"
 
 public export
 bcdtShow : BicartDistTerm -> String
@@ -285,24 +303,46 @@ data BicartDistReducedMorphDirMorph : BicartDistReducedMorphPos -> Type where
   BCDRMorphComponents : BicartDistReducedMorphDirMorph BCDRMorphBi
 
 public export
-record BicartDistReducedMorphPosTot where
-  constructor MkBCDRMorphPosTot
-  bcdrMPBase : BicartDistReducedMorphPos
-  bcdrMPObj : BicartDistReducedMorphDirObj bcdrMPBase -> BicartDistObj
-  bcdrMPTerm : BicartDistReducedMorphDirTerm bcdrMPBase -> BicartDistTerm
+data BicartDistReducedMorphPosBase : Type where
+  BCDRMorphPosMorph : BicartDistReducedMorphPosBase
+  BCDRMorphPosObj : BicartDistReducedMorphPosBase
+  BCDRMorphPosTerm : BicartDistReducedMorphPosBase
 
 public export
-BicartDistReducedMorphDir : BicartDistReducedMorphPosTot -> Type
-BicartDistReducedMorphDir = BicartDistReducedMorphDirMorph . bcdrMPBase
+BicartDistReducedMorphPosDep : BicartDistReducedMorphPosBase -> Type
+BicartDistReducedMorphPosDep BCDRMorphPosMorph = BicartDistReducedMorphPos
+BicartDistReducedMorphPosDep BCDRMorphPosObj = BicartDistObjPos
+BicartDistReducedMorphPosDep BCDRMorphPosTerm = BicartDistTermPos
 
 public export
-BicartDistUnrefinedReducedMorphF : PolyFunc
-BicartDistUnrefinedReducedMorphF =
-  (BicartDistReducedMorphPosTot ** BicartDistReducedMorphDir)
+BicartDistReducedMorphDirDep : SliceObj (Sigma BicartDistReducedMorphPosDep)
+BicartDistReducedMorphDirDep (BCDRMorphPosMorph ** i) =
+  BicartDistReducedMorphDirMorph i
+BicartDistReducedMorphDirDep (BCDRMorphPosObj ** i) =
+  BicartDistObjDir i
+BicartDistReducedMorphDirDep (BCDRMorphPosTerm ** i) =
+  BicartDistTermDir i
+
+public export
+BicartDistReducedMorphIdSlice :
+  SlicePolyEndoFuncId BicartDistReducedMorphPosBase
+BicartDistReducedMorphIdSlice =
+  (BicartDistReducedMorphPosDep ** BicartDistReducedMorphDirDep)
+
+public export
+BicartDistUnrefinedReducedMorphSPF :
+  SlicePolyEndoFunc BicartDistReducedMorphPosBase
+BicartDistUnrefinedReducedMorphSPF =
+  SlicePolyEndoFuncFromId BicartDistReducedMorphIdSlice
+
+public export
+BicartDistUnrefinedReducedMorphSlice : SliceObj BicartDistReducedMorphPosBase
+BicartDistUnrefinedReducedMorphSlice = SPFMu BicartDistUnrefinedReducedMorphSPF
 
 public export
 BicartDistUnrefinedReducedMorph : Type
-BicartDistUnrefinedReducedMorph = PolyFuncMu BicartDistUnrefinedReducedMorphF
+BicartDistUnrefinedReducedMorph =
+  BicartDistUnrefinedReducedMorphSlice BCDRMorphPosMorph
 
 ---------------------------------
 ---------------------------------
