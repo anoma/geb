@@ -173,7 +173,51 @@ Eq BicartDistTermPos where
   _ == _ = False
 
 public export
-data BicartDistTermDir : BicartDistTermPos -> Type where
+BicartDistTermUnitDir : Type
+BicartDistTermUnitDir = Void
+
+public export
+data BicartDistTermLeftDir : Type where
+  BCDTermL : BicartDistTermLeftDir
+
+public export
+Show BicartDistTermLeftDir where
+  show BCDTermL = show BCDTermLeft
+
+public export
+Eq BicartDistTermLeftDir where
+  BCDTermL == BCDTermL = True
+
+public export
+data BicartDistTermRightDir : Type where
+  BCDTermR : BicartDistTermRightDir
+
+public export
+Show BicartDistTermRightDir where
+  show BCDTermR = show BCDTermRight
+
+public export
+Eq BicartDistTermRightDir where
+  BCDTermR == BCDTermR = True
+
+public export
+data BicartDistTermPairDir : Type where
+  BCDTerm1 : BicartDistTermPairDir
+  BCDTerm2 : BicartDistTermPairDir
+
+public export
+Show BicartDistTermPairDir where
+  show BCDTerm1 = show BCDProd1
+  show BCDTerm2 = show BCDProd2
+
+public export
+Eq BicartDistTermPairDir where
+  BCDTerm1 == BCDTerm1 = True
+  BCDTerm2 == BCDTerm2 = True
+  _ == _ = False
+
+public export
+data BicartDistTermDir : SliceObj BicartDistTermPos where
   BCDTermInLeft : BicartDistTermDir BCDTermLeft
   BCDTermInRight : BicartDistTermDir BCDTermRight
   BCDTermInFirst : BicartDistTermDir BCDTermPair
@@ -188,7 +232,7 @@ BicartDistTerm : Type
 BicartDistTerm = PolyFuncMu BicartDistTermF
 
 public export
-BicartDistTermAlg : Type -> Type
+BicartDistTermAlg : SliceObj Type
 BicartDistTermAlg = PFAlg BicartDistTermF
 
 public export
@@ -216,7 +260,7 @@ Show BicartDistTerm where
   show = bcdtShow
 
 public export
-BCDTProductAlg : Type -> Type
+BCDTProductAlg : SliceObj Type
 BCDTProductAlg = PFProductAlg BicartDistTermF BicartDistTermF
 
 public export
