@@ -28,6 +28,14 @@ data BicartDistObjDir : BicartDistObjPos -> Type where
   BCDObj2 : BicartDistObjDir BCDObjProduct
 
 public export
+BicartDistObjF : PolyFunc
+BicartDistObjF = (BicartDistObjPos ** BicartDistObjDir)
+
+public export
+BicartDistObj : Type
+BicartDistObj = PolyFuncMu BicartDistObjF
+
+public export
 data BicartDistTermPos : Type where
   BCDTermUnit : BicartDistTermPos
   BCDTermLeft : BicartDistTermPos
@@ -40,6 +48,14 @@ data BicartDistTermDir : BicartDistTermPos -> Type where
   BCDTermInRight : BicartDistTermDir BCDTermRight
   BCDTermInFirst : BicartDistTermDir BCDTermPair
   BCDTermInSecond : BicartDistTermDir BCDTermPair
+
+public export
+BicartDistTermDirF : PolyFunc
+BicartDistTermDirF = (BicartDistTermPos ** BicartDistTermDir)
+
+public export
+BicartDistTerm : Type
+BicartDistTerm = PolyFuncMu BicartDistTermDirF
 
 public export
 data BicartDistReducedMorphPos : Type where
@@ -90,11 +106,24 @@ data BicartDistReducedMorphDirMorph : BicartDistReducedMorphPos -> Type where
   BCDRMorphComponents : BicartDistReducedMorphDirMorph BCDRMorphBi
 
 public export
-BicartDistReducedMorphDir : BicartDistReducedMorphPos -> (Type, Type, Type)
-BicartDistReducedMorphDir i =
-  (BicartDistReducedMorphDirObj i,
-   BicartDistReducedMorphDirTerm i,
-   BicartDistReducedMorphDirMorph i)
+record BicartDistReducedMorphPosTot where
+  constructor MkBCDRMorphPosTot
+  bcdrMPBase : BicartDistReducedMorphPos
+  bcdrMPObj : BicartDistReducedMorphDirObj bcdrMPBase -> BicartDistObj
+  bcdrMPTerm : BicartDistReducedMorphDirTerm bcdrMPBase -> BicartDistTerm
+
+public export
+BicartDistReducedMorphDir : BicartDistReducedMorphPosTot -> Type
+BicartDistReducedMorphDir = BicartDistReducedMorphDirMorph . bcdrMPBase
+
+public export
+BicartDistReducedMorphF : PolyFunc
+BicartDistReducedMorphF =
+  (BicartDistReducedMorphPosTot ** BicartDistReducedMorphDir)
+
+public export
+BicartDistReducedMorph : Type
+BicartDistReducedMorph = PolyFuncMu BicartDistReducedMorphF
 
 ---------------------------------
 ---------------------------------
