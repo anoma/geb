@@ -10,6 +10,7 @@ The overall framework used is MLTT + fun-ext + UIP
 - `uip-cat` contains formalization of category theory using UIP
 - `geb` contains all the relevant code of the formal verification process, as well as properties of finite sets
 - `Lambek` contains a compact proof of the equivalence of the category of simply typed $\lambda$-calculi and the category of Cartesian Closed Categories lifted from *Introduction to Higher Order Categorical Logic* while using some results from the study of essentially algebraic theories
+- `exp` presents all the computations needed for the verification of Geb's cartesian closedness as instantiated in the Idris code
 
 ## Core constructions
 
