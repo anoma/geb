@@ -1181,6 +1181,29 @@ pfProductHomCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} =
   pfCata {p=(qpos ** qdir)} {a} .*
     pfCata {p=(ppos ** pdir)} {a=(PFAlg (qpos ** qdir) a)}
 
+-- Boolean-valued algebra derived from lists of valid combinations.
+public export
+PFProductBoolAlg : PolyFunc -> PolyFunc -> Type
+PFProductBoolAlg p q =
+  List (i : (pfPos p, pfPos q) ** List (pfDir {p} (fst i), pfDir {p=q} (snd i)))
+
+public export
+PFProductAlgFromBool : {p, q : PolyFunc} ->
+  DecEqPred (pfPos p) -> DecEqPred (pfPos q) ->
+  PFProductBoolAlg p q -> PFProductAlg p q Bool
+PFProductAlgFromBool {p=(_ ** _)} {q=(_ ** _)} peq qeq l (pi, qi) d =
+  any
+    (\((pi', qi') ** l') => case (peq pi pi', qeq qi qi') of
+      (Yes Refl, Yes Refl) => all d l'
+      _ => False)
+    l
+
+public export
+pfProductBoolCata : {p, q : PolyFunc} ->
+  DecEqPred (pfPos p) -> DecEqPred (pfPos q) ->
+  PFProductBoolAlg p q -> PolyFuncMu p -> PolyFuncMu q -> Bool
+pfProductBoolCata peq qeq = pfProductCata . PFProductAlgFromBool peq qeq
+
 ----------------------------------
 ---- Polynomial (free) monads ----
 ----------------------------------
