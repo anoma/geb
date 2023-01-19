@@ -32,12 +32,27 @@ Show BicartDistObjPos where
   show BCDObjProduct = "*"
 
 public export
+DecEq BicartDistObjPos where
+  decEq BCDObjInitial BCDObjInitial = Yes Refl
+  decEq BCDObjInitial BCDObjTerminal = No $ \eq => case eq of Refl impossible
+  decEq BCDObjInitial BCDObjCoproduct = No $ \eq => case eq of Refl impossible
+  decEq BCDObjInitial BCDObjProduct = No $ \eq => case eq of Refl impossible
+  decEq BCDObjTerminal BCDObjInitial = No $ \eq => case eq of Refl impossible
+  decEq BCDObjTerminal BCDObjTerminal = Yes Refl
+  decEq BCDObjTerminal BCDObjCoproduct = No $ \eq => case eq of Refl impossible
+  decEq BCDObjTerminal BCDObjProduct = No $ \eq => case eq of Refl impossible
+  decEq BCDObjCoproduct BCDObjInitial = No $ \eq => case eq of Refl impossible
+  decEq BCDObjCoproduct BCDObjTerminal = No $ \eq => case eq of Refl impossible
+  decEq BCDObjCoproduct BCDObjCoproduct = Yes Refl
+  decEq BCDObjCoproduct BCDObjProduct = No $ \eq => case eq of Refl impossible
+  decEq BCDObjProduct BCDObjInitial = No $ \eq => case eq of Refl impossible
+  decEq BCDObjProduct BCDObjTerminal = No $ \eq => case eq of Refl impossible
+  decEq BCDObjProduct BCDObjCoproduct = No $ \eq => case eq of Refl impossible
+  decEq BCDObjProduct BCDObjProduct = Yes Refl
+
+public export
 Eq BicartDistObjPos where
-  BCDObjInitial == BCDObjInitial = True
-  BCDObjTerminal == BCDObjTerminal = True
-  BCDObjCoproduct == BCDObjCoproduct = True
-  BCDObjProduct == BCDObjProduct = True
-  _ == _ = False
+  i == j = isYes $ decEq i j
 
 public export
 BicartDistInitialDir : Type
@@ -165,12 +180,27 @@ Show BicartDistTermPos where
   show BCDTermPair = ","
 
 public export
+DecEq BicartDistTermPos where
+  decEq BCDTermUnit BCDTermUnit = Yes Refl
+  decEq BCDTermUnit BCDTermLeft = No $ \eq => case eq of Refl impossible
+  decEq BCDTermUnit BCDTermRight = No $ \eq => case eq of Refl impossible
+  decEq BCDTermUnit BCDTermPair = No $ \eq => case eq of Refl impossible
+  decEq BCDTermLeft BCDTermUnit = No $ \eq => case eq of Refl impossible
+  decEq BCDTermLeft BCDTermLeft = Yes Refl
+  decEq BCDTermLeft BCDTermRight = No $ \eq => case eq of Refl impossible
+  decEq BCDTermLeft BCDTermPair = No $ \eq => case eq of Refl impossible
+  decEq BCDTermRight BCDTermUnit = No $ \eq => case eq of Refl impossible
+  decEq BCDTermRight BCDTermLeft = No $ \eq => case eq of Refl impossible
+  decEq BCDTermRight BCDTermRight = Yes Refl
+  decEq BCDTermRight BCDTermPair = No $ \eq => case eq of Refl impossible
+  decEq BCDTermPair BCDTermUnit = No $ \eq => case eq of Refl impossible
+  decEq BCDTermPair BCDTermLeft = No $ \eq => case eq of Refl impossible
+  decEq BCDTermPair BCDTermRight = No $ \eq => case eq of Refl impossible
+  decEq BCDTermPair BCDTermPair = Yes Refl
+
+public export
 Eq BicartDistTermPos where
-  BCDTermUnit == BCDTermUnit = True
-  BCDTermLeft == BCDTermLeft = True
-  BCDTermRight == BCDTermRight = True
-  BCDTermPair == BCDTermPair = True
-  _ == _ = False
+  i == j = isYes $ decEq i j
 
 public export
 BicartDistTermUnitDir : Type
@@ -268,6 +298,28 @@ bcdtProductCata : {0 a : Type} ->
 bcdtProductCata = pfProductCata {p=BicartDistTermF}
 
 public export
+PFProductBoolAlg : PolyFunc -> PolyFunc -> Type
+PFProductBoolAlg p q =
+  List (i : (pfPos p, pfPos q) ** List (pfDir {p} (fst i), pfDir {p=q} (snd i)))
+
+public export
+PFProductAlgFromBool : {p, q : PolyFunc} ->
+  DecEqPred (pfPos p) -> DecEqPred (pfPos q) ->
+  PFProductBoolAlg p q -> PFProductAlg p q Bool
+PFProductAlgFromBool {p=(_ ** _)} {q=(_ ** _)} peq qeq l (pi, qi) d =
+  any
+    (\((pi', qi') ** l') => case (peq pi pi', qeq qi qi') of
+      (Yes Refl, Yes Refl) => all d l'
+      _ => False)
+    l
+
+public export
+pfProductBoolCata : {p, q : PolyFunc} ->
+  DecEqPred (pfPos p) -> DecEqPred (pfPos q) ->
+  PFProductBoolAlg p q -> PolyFuncMu p -> PolyFuncMu q -> Bool
+pfProductBoolCata peq qeq = pfProductCata . PFProductAlgFromBool peq qeq
+
+public export
 BCDTEqAlg : BCDTProductAlg Bool
 BCDTEqAlg (BCDTermUnit, BCDTermUnit) d = True
 BCDTEqAlg (BCDTermLeft, BCDTermLeft) d = d (BCDTermL, BCDTermL)
@@ -296,19 +348,23 @@ bcdObjTermCata = pfProductCata {p=BicartDistTermF} {q=BicartDistObjF}
 -- Type-checking for terms against objects (determing whether a given general
 -- term is a term of a given object).
 public export
-BicartDistTermCheckAlg : BCDObjTermAlg Bool
-BicartDistTermCheckAlg (BCDTermUnit, BCDObjTerminal) d = True
-BicartDistTermCheckAlg (BCDTermLeft, BCDObjCoproduct) d =
-  d (BCDTermL, BCDCopL)
-BicartDistTermCheckAlg (BCDTermRight, BCDObjCoproduct) d =
-  d (BCDTermR, BCDCopR)
-BicartDistTermCheckAlg (BCDTermPair, BCDObjProduct) d =
-  d (BCDTerm1, BCDProd1) && d (BCDTerm2, BCDProd2)
-BicartDistTermCheckAlg (_, _) d = False
+BicartDistTermCheckAlg : PFProductBoolAlg BicartDistTermF BicartDistObjF
+BicartDistTermCheckAlg =
+  [
+    ((BCDTermUnit, BCDObjTerminal) **
+     [])
+  , ((BCDTermLeft, BCDObjCoproduct) **
+     [(BCDTermL, BCDCopL)])
+  , ((BCDTermRight, BCDObjCoproduct) **
+     [(BCDTermR, BCDCopR)])
+  , ((BCDTermPair, BCDObjProduct) **
+     [ (BCDTerm1, BCDProd1), (BCDTerm2, BCDProd2) ]
+    )
+  ]
 
 public export
 bicartDistTermCheck : BicartDistTerm -> BicartDistObj -> Bool
-bicartDistTermCheck = bcdObjTermCata BicartDistTermCheckAlg
+bicartDistTermCheck = pfProductBoolCata decEq decEq BicartDistTermCheckAlg
 
 -- The type-checking allows us to view a checked term as a slice object.
 public export
