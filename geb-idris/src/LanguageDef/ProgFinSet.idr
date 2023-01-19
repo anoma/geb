@@ -50,12 +50,54 @@ data BicartDistTermDir : BicartDistTermPos -> Type where
   BCDTermInSecond : BicartDistTermDir BCDTermPair
 
 public export
-BicartDistTermDirF : PolyFunc
-BicartDistTermDirF = (BicartDistTermPos ** BicartDistTermDir)
+BicartDistTermF : PolyFunc
+BicartDistTermF = (BicartDistTermPos ** BicartDistTermDir)
 
 public export
 BicartDistTerm : Type
-BicartDistTerm = PolyFuncMu BicartDistTermDirF
+BicartDistTerm = PolyFuncMu BicartDistTermF
+
+public export
+BicartDistTermAlg : Type -> Type
+BicartDistTermAlg = PFAlg BicartDistTermF
+
+public export
+bicartDistTermCata : {0 a : Type} -> BicartDistTermAlg a -> BicartDistTerm -> a
+bicartDistTermCata = pfCata {p=BicartDistTermF}
+
+public export
+BicartDistTermCheckAlg : BicartDistTermAlg (BicartDistObj -> Bool)
+BicartDistTermCheckAlg BCDTermUnit td (InPFM oi od) =
+  case oi of
+    BCDObjTerminal => True
+    _ => False
+BicartDistTermCheckAlg BCDTermLeft td (InPFM oi od) =
+  case oi of
+    BCDObjCoproduct => td BCDTermInLeft $ od BCDObjL
+    _ => False
+BicartDistTermCheckAlg BCDTermRight td (InPFM oi od) =
+  case oi of
+    BCDObjCoproduct => td BCDTermInRight $ od BCDObjR
+    _ => False
+BicartDistTermCheckAlg BCDTermPair td (InPFM oi od) =
+  case oi of
+    BCDObjProduct =>
+      td BCDTermInFirst (od BCDObj1) && td BCDTermInSecond (od BCDObj2)
+    _ => False
+
+public export
+bicartDistTermCheck : BicartDistTerm -> BicartDistObj -> Bool
+bicartDistTermCheck = bicartDistTermCata BicartDistTermCheckAlg
+
+public export
+BicartDistTypedTerm : BicartDistObj -> Type
+BicartDistTypedTerm a =
+  Refinement {a=BicartDistTerm} (flip bicartDistTermCheck a)
+
+public export
+MkBicartDistTypedTerm : {0 o : BicartDistObj} -> (t : BicartDistTerm) ->
+  {auto 0 checks : IsTrue (bicartDistTermCheck t o)} -> BicartDistTypedTerm o
+MkBicartDistTypedTerm t {checks} = MkRefinement {a=BicartDistTerm} t
 
 public export
 data BicartDistReducedMorphPos : Type where
