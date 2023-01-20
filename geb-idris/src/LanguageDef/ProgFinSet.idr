@@ -366,12 +366,6 @@ MkBicartDistTypedTerm : {0 o : BicartDistObj} -> (t : BicartDistTerm) ->
   {auto 0 checks : IsTrue (bicartDistTermCheck t o)} -> BicartDistTypedTerm o
 MkBicartDistTypedTerm t {checks} = MkRefinement {a=BicartDistTerm} t
 
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------
----- Polynomial functors in locally bicartesian distributive categories ----
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------
-
 ---------------------------------------------------------------------
 ---------------------------------------------------------------------
 ---- Morphisms included in any bicartesian distributive category ----
@@ -481,6 +475,31 @@ public export
 BicartDistUnrefinedReducedMorph : Type
 BicartDistUnrefinedReducedMorph =
   BicartDistUnrefinedReducedMorphSlice BCDRMorphPosMorph
+
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+---- Polynomial functors in locally bicartesian distributive categories ----
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+public export
+data PolyBCDPosPoly : Type where
+  PolyBCDPosPF : BicartDistObjPos -> PolyBCDPosPoly
+  PolyBCDPosSlice : BicartDistObjPos -> PolyBCDPosPoly
+
+public export
+data PolyBCDPosBase : Type where
+  PolyBCDSourceObj : PolyBCDPosBase
+  PolyBCDPoly : PolyBCDPosBase
+
+public export
+PolyBCDPosDep : SliceObj PolyBCDPosBase
+PolyBCDPosDep PolyBCDSourceObj = BicartDistObjPos
+PolyBCDPosDep PolyBCDPoly = PolyBCDPosPoly
+
+public export
+PolyBCDPos : Type
+PolyBCDPos = DPair PolyBCDPosBase PolyBCDPosDep
 
 ---------------------------------
 ---------------------------------
