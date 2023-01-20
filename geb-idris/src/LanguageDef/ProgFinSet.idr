@@ -366,6 +366,54 @@ MkBicartDistTypedTerm : {0 o : BicartDistObj} -> (t : BicartDistTerm) ->
   {auto 0 checks : IsTrue (bicartDistTermCheck t o)} -> BicartDistTypedTerm o
 MkBicartDistTypedTerm t {checks} = MkRefinement {a=BicartDistTerm} t
 
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+BCDTNumLeavesAlg : BicartDistTermAlg Nat
+BCDTNumLeavesAlg BCDTermUnit d = 1
+BCDTNumLeavesAlg BCDTermLeft d = d BCDTermL
+BCDTNumLeavesAlg BCDTermRight d = d BCDTermR
+BCDTNumLeavesAlg BCDTermPair d = d BCDTerm1 + d BCDTerm2
+
+public export
+bcdtNumLeaves : BicartDistTerm -> Nat
+bcdtNumLeaves = bicartDistTermCata BCDTNumLeavesAlg
+
+public export
+BCDTNumInternalNodesAlg : BicartDistTermAlg Nat
+BCDTNumInternalNodesAlg BCDTermUnit d = 0
+BCDTNumInternalNodesAlg BCDTermLeft d = 1 + d BCDTermL
+BCDTNumInternalNodesAlg BCDTermRight d = 1 + d BCDTermR
+BCDTNumInternalNodesAlg BCDTermPair d = 1 + d BCDTerm1 + d BCDTerm2
+
+public export
+bcdtNumInternalNodes : BicartDistTerm -> Nat
+bcdtNumInternalNodes = bicartDistTermCata BCDTNumInternalNodesAlg
+
+public export
+BCDTSizeAlg : BicartDistTermAlg Nat
+BCDTSizeAlg BCDTermUnit d = 1
+BCDTSizeAlg BCDTermLeft d = 1 + d BCDTermL
+BCDTSizeAlg BCDTermRight d = 1 + d BCDTermR
+BCDTSizeAlg BCDTermPair d = 1 + d BCDTerm1 + d BCDTerm2
+
+public export
+bcdtSize : BicartDistTerm -> Nat
+bcdtSize = bicartDistTermCata BCDTSizeAlg
+
+public export
+BCDTDepthAlg : BicartDistTermAlg Nat
+BCDTDepthAlg BCDTermUnit d = 0
+BCDTDepthAlg BCDTermLeft d = 1 + d BCDTermL
+BCDTDepthAlg BCDTermRight d = 1 + d BCDTermR
+BCDTDepthAlg BCDTermPair d = 1 + maximum (d BCDTerm1) (d BCDTerm2)
+
+public export
+bcdtDepth : BicartDistTerm -> Nat
+bcdtDepth = bicartDistTermCata BCDTDepthAlg
+
 ---------------------------------------------------------------------
 ---------------------------------------------------------------------
 ---- Morphisms included in any bicartesian distributive category ----
