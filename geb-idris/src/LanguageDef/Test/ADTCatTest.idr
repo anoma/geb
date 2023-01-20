@@ -312,25 +312,6 @@ partial
 sn0_0 : StreamRet
 sn0_0 = getSN sn0 ()
 
-------------------------
-------------------------
----- Test utilities ----
-------------------------
-------------------------
-
-showTerminated :
-  {0 a : Type} -> (String -> a -> IO ()) -> (String, a) -> IO ()
-showTerminated showFull (name, t) = do
-  showFull name t
-  putStrLn "----"
-
-showList :
-  {0 a : Type} -> (String -> a -> IO ()) -> List (String, a) -> IO ()
-showList showFull [] = pure ()
-showList showFull ts@(_ :: _) = do
-  putStrLn "----"
-  foldlM (const $ showTerminated showFull) () ts
-
 -------------------------------
 -------------------------------
 ---- Generalized ADT terms ----
