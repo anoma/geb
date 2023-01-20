@@ -1183,9 +1183,22 @@ pfProductHomCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} =
 
 -- Boolean-valued algebra derived from lists of valid combinations.
 public export
+PFPosList : List PolyFunc -> Type
+PFPosList [] = Unit
+PFPosList [p] = pfPos p
+PFPosList (p :: ps@(_ :: _)) = (pfPos p, PFPosList ps)
+
+public export
+PFDirList : {ps : List PolyFunc} -> PFPosList ps -> Type
+PFDirList {ps=[]} () = Unit
+PFDirList {ps=[p]} i = pfDir {p} i
+PFDirList {ps=(p :: ps@(_ :: _))} (i, is) = (pfDir {p} i, PFDirList {ps} is)
+
+-- Boolean-valued algebra derived from lists of valid combinations.
+public export
 PFProductBoolAlg : PolyFunc -> PolyFunc -> Type
 PFProductBoolAlg p q =
-  List (i : (pfPos p, pfPos q) ** List (pfDir {p} (fst i), pfDir {p=q} (snd i)))
+  List (i : PFPosList [p, q] ** List (PFDirList {ps=([p, q])} i))
 
 public export
 PFProductAlgFromBool : {p, q : PolyFunc} ->

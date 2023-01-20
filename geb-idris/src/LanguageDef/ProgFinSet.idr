@@ -366,8 +366,16 @@ MkBicartDistTypedTerm : {0 o : BicartDistObj} -> (t : BicartDistTerm) ->
   {auto 0 checks : IsTrue (bicartDistTermCheck t o)} -> BicartDistTypedTerm o
 MkBicartDistTypedTerm t {checks} = MkRefinement {a=BicartDistTerm} t
 
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+---- Polynomial functors in locally bicartesian distributive categories ----
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+---------------------------------------------------------------------
 ---------------------------------------------------------------------
 ---- Morphisms included in any bicartesian distributive category ----
+---------------------------------------------------------------------
 ---------------------------------------------------------------------
 
 public export
