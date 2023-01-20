@@ -1198,7 +1198,7 @@ PFDirList {ps=(p :: ps@(_ :: _))} (i, is) = (pfDir {p} i, PFDirList {ps} is)
 public export
 PFProductBoolAlg : PolyFunc -> PolyFunc -> Type
 PFProductBoolAlg p q =
-  List (i : PFPosList [p, q] ** List (PFDirList {ps=([p, q])} i))
+  List (DPair (PFPosList [p, q]) (List . PFDirList {ps=([p, q])}))
 
 public export
 PFProductAlgFromBool : {p, q : PolyFunc} ->
