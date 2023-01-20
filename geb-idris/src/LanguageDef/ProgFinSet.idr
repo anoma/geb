@@ -406,7 +406,7 @@ Eq BicartDistReducedMorphPos where
   _ == _ = False
 
 public export
-data BicartDistReducedMorphDirObj : BicartDistReducedMorphPos -> Type where
+data BicartDistReducedMorphDirObj : SliceObj BicartDistReducedMorphPos where
   BCDRMorphIdDir : BicartDistReducedMorphDirObj BCDRMorphId
   BCDRMorphAbsurdDom : BicartDistReducedMorphDirObj BCDRMorphAbsurd
   BCDRMorphAbsurdCod : BicartDistReducedMorphDirObj BCDRMorphAbsurd
@@ -431,11 +431,11 @@ data BicartDistReducedMorphDirObj : BicartDistReducedMorphPos -> Type where
   BCDRMorphDistDom2R : BicartDistReducedMorphDirObj BCDRMorphDist
 
 public export
-data BicartDistReducedMorphDirTerm : BicartDistReducedMorphPos -> Type where
+data BicartDistReducedMorphDirTerm : SliceObj BicartDistReducedMorphPos where
   BCDRMorphTerm : BicartDistReducedMorphDirTerm BCDRMorphConst
 
 public export
-data BicartDistReducedMorphDirMorph : BicartDistReducedMorphPos -> Type where
+data BicartDistReducedMorphDirMorph : SliceObj BicartDistReducedMorphPos where
   BCDRMorphContra : BicartDistReducedMorphDirMorph BCDRMorphAbsurd
   BCDRMorphCases : BicartDistReducedMorphDirMorph BCDRMorphCase
   BCDRMorphComponents : BicartDistReducedMorphDirMorph BCDRMorphBi
@@ -447,7 +447,7 @@ data BicartDistReducedMorphPosBase : Type where
   BCDRMorphPosTerm : BicartDistReducedMorphPosBase
 
 public export
-BicartDistReducedMorphPosDep : BicartDistReducedMorphPosBase -> Type
+BicartDistReducedMorphPosDep : SliceObj BicartDistReducedMorphPosBase
 BicartDistReducedMorphPosDep BCDRMorphPosMorph = BicartDistReducedMorphPos
 BicartDistReducedMorphPosDep BCDRMorphPosObj = BicartDistObjPos
 BicartDistReducedMorphPosDep BCDRMorphPosTerm = BicartDistTermPos
