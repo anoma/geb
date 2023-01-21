@@ -4,16 +4,18 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import public LanguageDef.Atom
 import public LanguageDef.ProgFinSet
+import public LanguageDef.PolyCat
 
 %default total
 
--------------------------------------
--------------------------------------
----- First-order recursive types ----
--------------------------------------
--------------------------------------
+public export
+MorphSig : SliceObj Type
+MorphSig x = SliceObj (x, x)
 
 public export
-data PS1Obj : Type where
-  PS1Fin : PFSObj -> PS1Obj
-  PS1Fix : PFSEndoFunc -> PS1Obj
+MorphSPF : Type -> Type
+MorphSPF x = DepParamPolyFunc (x, x) (x, x)
+
+public export
+MorphMu : {x : Type} -> MorphSPF x -> MorphSig x
+MorphMu {x} = SPFMu . SPFFromDPPF
