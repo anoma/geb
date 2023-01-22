@@ -17,6 +17,10 @@ Show SymSet where
   show (SS ty sz enc sh) = let _ = MkShow sh in show (finFToVect (fst enc))
 
 public export
+VoidSS : SymSet
+VoidSS = SS Void 0 FinVoidDecEncoding (voidF String)
+
+public export
 record Namespace where
   constructor NS
   nsLocalSym : SymSet
@@ -35,11 +39,15 @@ mutual
 
 public export
 Show Namespace where
-  show = unlines . nsLines
+  show = trim . unlines . nsLines
 
 public export
 numSub : Namespace -> Nat
 numSub = slSize . nsSubSym
+
+public export
+LeafNS : SymSet -> Namespace
+LeafNS ss = NS ss VoidSS []
 
 public export
 data Subspace : Namespace -> Type where

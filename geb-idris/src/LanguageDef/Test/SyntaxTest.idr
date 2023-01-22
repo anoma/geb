@@ -21,6 +21,10 @@ showSS str ss = putStrLn $ str ++ " = " ++ show ss
 showSSList : List (String, SymSet) -> IO ()
 showSSList = showList showSS
 
+--------------------
+---- Test cases ----
+--------------------
+
 finSS : SymSet
 finSS = SS (Fin 10) _ (FinIdDecEncoding _) show
 
@@ -82,6 +86,37 @@ FDE2 = (FD2 ** FE2)
 eSS2 : SymSet
 eSS2 = SS Enum2 Enum2sz FDE2 show
 
+----------------
+----------------
+---- SymSet ----
+----------------
+----------------
+
+-------------------
+---- Utilities ----
+-------------------
+
+showNS : String -> Namespace -> IO ()
+showNS str ns = do
+  putStrLn $ str ++ ":"
+  putStrLn $ show ns
+
+showNSList : List (String, Namespace) -> IO ()
+showNSList = showList showNS
+
+--------------------
+---- Test cases ----
+--------------------
+
+finNS : Namespace
+finNS = LeafNS finSS
+
+eNS1 : Namespace
+eNS1 = LeafNS eSS1
+
+eNS2 : Namespace
+eNS2 = LeafNS eSS2
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -96,10 +131,22 @@ languageDefSyntaxTest = do
   putStrLn "Begin SyntaxTest:"
   putStrLn "-----------------"
   putStrLn ""
+  putStrLn "-------"
+  putStrLn "SymSet:"
+  putStrLn "-------"
   showSSList [
       ("finSS", finSS)
     , ("eSS1", eSS1)
     , ("eSS2", eSS2)
+  ]
+  putStrLn ""
+  putStrLn "----------"
+  putStrLn "Namespace:"
+  putStrLn "----------"
+  showNSList [
+      ("finNS", finNS)
+    , ("eNS1", eNS1)
+    , ("eNS2", eNS2)
   ]
   putStrLn ""
   putStrLn "---------------"
