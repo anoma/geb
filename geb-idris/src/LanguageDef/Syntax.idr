@@ -10,11 +10,11 @@ record SymSet where
   slType : Type
   slSize : Nat
   slEnc : FinDecEncoding slType slSize
-  slShow : Show slType
+  slShow : slType -> String
 
 public export
 Show SymSet where
-  show (SS ty sz enc sh) = show (finFToVect (fst enc))
+  show (SS ty sz enc sh) = let _ = MkShow sh in show (finFToVect (fst enc))
 
 public export
 record Namespace where

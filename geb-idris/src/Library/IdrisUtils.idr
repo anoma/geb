@@ -940,6 +940,10 @@ FinIdEncoder : (size : Nat) -> FinEncoder (FinIdDecoder size)
 FinIdEncoder size i = (i ** Refl)
 
 public export
+FinIdDecEncoding : (size : Nat) -> FinDecEncoding (Fin size) size
+FinIdDecEncoding size = (FinIdDecoder size ** FinIdEncoder size)
+
+public export
 FDEnc : Type -> Type
 FDEnc = DPair Nat . FinDecEncoding
 
