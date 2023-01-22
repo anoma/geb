@@ -123,6 +123,19 @@ ssfv2 = FinSS 3
 ns1fv2 : Namespace
 ns1fv2 = NS eSS1 ssfv2 [finNS10, VoidNS, eNS2]
 
+nstree : Namespace
+nstree =
+  FinNS 5 [
+    ns1fv2,
+    FinNS 3 [],
+    ns1fv2,
+    FinNS 7
+      [FinNS 1
+        [FinNS 1 []],
+        FinNS 3 []
+      ]
+    ]
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -156,6 +169,7 @@ languageDefSyntaxTest = do
     , ("eNS1", eNS1)
     , ("eNS2", eNS2)
     , ("ns1fv2", ns1fv2)
+    , ("nstree", nstree)
   ]
   putStrLn ""
   putStrLn "---------------"
