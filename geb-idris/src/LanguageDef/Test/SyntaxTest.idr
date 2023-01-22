@@ -26,7 +26,7 @@ showSSList = showList showSS
 --------------------
 
 finSS : SymSet
-finSS = SS (Fin 10) _ (FinIdDecEncoding _) show
+finSS = FinSS 10
 
 data Enum1 : Type where
   E1a : Enum1
@@ -117,6 +117,12 @@ eNS1 = LeafNS eSS1
 eNS2 : Namespace
 eNS2 = LeafNS eSS2
 
+ssf2 : SymSet
+ssf2 = FinSS 2
+
+ns1f2 : Namespace
+ns1f2 = NS eSS1 ssf2 [finNS, eNS2]
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -147,6 +153,7 @@ languageDefSyntaxTest = do
       ("finNS", finNS)
     , ("eNS1", eNS1)
     , ("eNS2", eNS2)
+    , ("ns1f2", ns1f2)
   ]
   putStrLn ""
   putStrLn "---------------"

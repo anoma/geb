@@ -21,6 +21,10 @@ VoidSS : SymSet
 VoidSS = SS Void 0 FinVoidDecEncoding (voidF String)
 
 public export
+FinSS : Nat -> SymSet
+FinSS n = SS (Fin n) n (FinIdDecEncoding n) show
+
+public export
 record Namespace where
   constructor NS
   nsLocalSym : SymSet
