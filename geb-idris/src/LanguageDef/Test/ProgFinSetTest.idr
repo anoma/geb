@@ -24,8 +24,8 @@ bcdtShowFull name x = do
 bcdtShowFullSTerminated : (String, BicartDistTerm) -> IO ()
 bcdtShowFullSTerminated = showTerminated bcdtShowFull
 
-bcdtShowFullLibcdt : List (String, BicartDistTerm) -> IO ()
-bcdtShowFullLibcdt = showList bcdtShowFull
+bcdtShowFullList : List (String, BicartDistTerm) -> IO ()
+bcdtShowFullList = showList bcdtShowFull
 
 ----------------------------------
 ----------------------------------
