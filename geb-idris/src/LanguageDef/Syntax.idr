@@ -17,12 +17,12 @@ Show SymSet where
   show (SS ty sz enc sh) = let _ = MkShow sh in show (finFToVect (fst enc))
 
 public export
-VoidSS : SymSet
-VoidSS = SS Void 0 FinVoidDecEncoding (voidF String)
-
-public export
 FinSS : Nat -> SymSet
 FinSS n = SS (Fin n) n (FinIdDecEncoding n) show
+
+public export
+VoidSS : SymSet
+VoidSS = FinSS 0
 
 public export
 record Namespace where
@@ -30,6 +30,14 @@ record Namespace where
   nsLocalSym : SymSet
   nsSubSym : SymSet
   nsSub : Vect nsSubSym.slSize Namespace
+
+public export
+FinNS : (nloc : Nat) -> {nsub : Nat} -> Vect nsub Namespace -> Namespace
+FinNS nloc {nsub} = NS (FinSS nloc) (FinSS nsub)
+
+public export
+VoidNS : Namespace
+VoidNS = FinNS 0 []
 
 mutual
   public export

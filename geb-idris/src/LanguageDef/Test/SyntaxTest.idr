@@ -25,8 +25,8 @@ showSSList = showList showSS
 ---- Test cases ----
 --------------------
 
-finSS : SymSet
-finSS = FinSS 10
+finSS10 : SymSet
+finSS10 = FinSS 10
 
 data Enum1 : Type where
   E1a : Enum1
@@ -108,8 +108,8 @@ showNSList = showList showNS
 ---- Test cases ----
 --------------------
 
-finNS : Namespace
-finNS = LeafNS finSS
+finNS10 : Namespace
+finNS10 = LeafNS finSS10
 
 eNS1 : Namespace
 eNS1 = LeafNS eSS1
@@ -117,11 +117,11 @@ eNS1 = LeafNS eSS1
 eNS2 : Namespace
 eNS2 = LeafNS eSS2
 
-ssf2 : SymSet
-ssf2 = FinSS 2
+ssfv2 : SymSet
+ssfv2 = FinSS 3
 
-ns1f2 : Namespace
-ns1f2 = NS eSS1 ssf2 [finNS, eNS2]
+ns1fv2 : Namespace
+ns1fv2 = NS eSS1 ssfv2 [finNS10, VoidNS, eNS2]
 
 ----------------------------------
 ----------------------------------
@@ -141,7 +141,8 @@ languageDefSyntaxTest = do
   putStrLn "SymSet:"
   putStrLn "-------"
   showSSList [
-      ("finSS", finSS)
+      ("VoidSS", VoidSS)
+    , ("finSS10", finSS10)
     , ("eSS1", eSS1)
     , ("eSS2", eSS2)
   ]
@@ -150,10 +151,11 @@ languageDefSyntaxTest = do
   putStrLn "Namespace:"
   putStrLn "----------"
   showNSList [
-      ("finNS", finNS)
+      ("VoidNS", VoidNS)
+    , ("finNS10", finNS10)
     , ("eNS1", eNS1)
     , ("eNS2", eNS2)
-    , ("ns1f2", ns1f2)
+    , ("ns1fv2", ns1fv2)
   ]
   putStrLn ""
   putStrLn "---------------"
