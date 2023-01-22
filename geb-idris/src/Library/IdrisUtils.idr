@@ -27,6 +27,7 @@ import public Data.Binary
 import public Data.Nat.Properties
 import public Data.Nat.Exponentiation
 import public Data.Binary.Digit
+import public Data.String
 import public Syntax.PreorderReasoning
 
 %default total
@@ -919,6 +920,14 @@ fdeDecEq (decode ** encode) e e' =
     No neq => No $ \yes => neq $ case yes of Refl => Refl
 
 public export
+(a : Type) => (n : Nat) => Show a => Show (FinDecoder a n) where
+  show = show . finFToVect
+
+public export
+(a : Type) => (n : Nat) => Show a => Show (FinDecEncoding a n) where
+  show = show . fst
+
+public export
 (a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => DecEq a where
   decEq = fdeDecEq {a} {n} enc
 
@@ -933,6 +942,10 @@ FinIdEncoder size i = (i ** Refl)
 public export
 FDEnc : Type -> Type
 FDEnc = DPair Nat . FinDecEncoding
+
+public export
+fdeSize : {0 a : Type} -> FDEnc a -> Nat
+fdeSize = fst
 
 public export
 ListContains : {a : Type} -> List a -> a -> Type
@@ -1052,3 +1065,7 @@ llCata {len} (MkLLAlg z s) (MkLList l valid) = llCataInternal z s len l valid
 public export
 InitLList : {a : Type} -> (l : List a) -> LList a (length l)
 InitLList l = MkLList l Refl
+
+public export
+blockIndent : Nat -> String -> String
+blockIndent n = unlines . map (indent n) . lines

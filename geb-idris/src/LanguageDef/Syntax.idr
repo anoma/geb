@@ -1,3 +1,54 @@
 module LanguageDef.Syntax
 
+import Library.IdrisUtils
+
 %default total
+
+public export
+record SymSet where
+  constructor SS
+  slType : Type
+  slSize : Nat
+  slEnc : FinDecEncoding slType slSize
+  slShow : Show slType
+
+public export
+Show SymSet where
+  show (SS ty sz enc sh) = show (finFToVect (fst enc))
+
+public export
+record Namespace where
+  constructor NS
+  nsLocalSym : SymSet
+  nsSubSym : SymSet
+  nsSub : Vect nsSubSym.slSize Namespace
+
+mutual
+  public export
+  nsLines : Namespace -> List String
+  nsLines (NS ls ss sub) = show ls :: map (indent 2) (nsVectLines sub)
+
+  public export
+  nsVectLines : {n : Nat} -> Vect n Namespace -> List String
+  nsVectLines [] = []
+  nsVectLines (ns :: v) = nsLines ns ++ nsVectLines v
+
+public export
+Show Namespace where
+  show = unlines . nsLines
+
+public export
+numSub : Namespace -> Nat
+numSub = slSize . nsSubSym
+
+public export
+data Subspace : Namespace -> Type where
+  This : {ns : Namespace} -> Subspace ns
+  Child : {ns : Namespace} -> Fin (numSub ns) -> Subspace ns
+
+public export
+(ns : Namespace) => Show (Subspace ns) where
+  show {ns} sub = "/" ++ showSub sub where
+    showSub : {ns : Namespace} -> Subspace ns -> String
+    showSub {ns} This = ""
+    showSub {ns} (Child i) = show (index i ns.nsSub) ++ "/"

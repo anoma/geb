@@ -33,7 +33,6 @@ main = do
   LanguageDef.Test.RefinedADTTest.languageDefRefinedADTTest
   LanguageDef.Test.UniversalCategoryTest.languageDefUniversalCategoryTest
   LanguageDef.Test.InterpretationTest.languageDefInterpretationTest
-  LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
   LanguageDef.Test.ExpressionTest.languageDefExpressionTest
   LanguageDef.Test.MetaprogrammingTest.languageDefMetaprogrammingTest
   LanguageDef.Test.LogicTest.languageDefLogicTest
@@ -46,3 +45,4 @@ main = do
   LanguageDef.Test.PolyProfunctorTest.polyProfunctorTest
   LanguageDef.Test.ProgFinSetTest.progFinSetTest
   LanguageDef.Test.GebToposTest.gebToposTest
+  LanguageDef.Test.SyntaxTest.languageDefSyntaxTest

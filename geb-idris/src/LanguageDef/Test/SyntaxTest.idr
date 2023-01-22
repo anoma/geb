@@ -5,9 +5,21 @@ import LanguageDef.Syntax
 
 %default total
 
+----------------------------------
+----------------------------------
+----- Exported test function -----
+----------------------------------
+----------------------------------
+
 export
 languageDefSyntaxTest : IO ()
 languageDefSyntaxTest = do
-  -- putStrLn "Begin languageDefSyntaxTest:"
-  -- putStrLn "End languageDefSyntaxTest."
+  putStrLn ""
+  putStrLn "================="
+  putStrLn "Begin SyntaxTest:"
+  putStrLn "-----------------"
+  putStrLn ""
+  putStrLn "---------------"
+  putStrLn "End SyntaxTest."
+  putStrLn "==============="
   pure ()
