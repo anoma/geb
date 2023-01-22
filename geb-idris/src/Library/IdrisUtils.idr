@@ -923,6 +923,14 @@ public export
   decEq = fdeDecEq {a} {n} enc
 
 public export
+FinIdDecoder : (size : Nat) -> FinDecoder (Fin size) size
+FinIdDecoder size = id
+
+public export
+FinIdEncoder : (size : Nat) -> FinEncoder (FinIdDecoder size)
+FinIdEncoder size i = (i ** Refl)
+
+public export
 FDEnc : Type -> Type
 FDEnc = DPair Nat . FinDecEncoding
 
