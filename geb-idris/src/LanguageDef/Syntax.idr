@@ -42,7 +42,9 @@ VoidNS = FinNS 0 []
 mutual
   public export
   nsLines : Namespace -> List String
-  nsLines (NS ls ss sub) = show ls :: map (indent 2) (nsVectLines sub)
+  nsLines (NS ls ss sub) =
+    ("loc: " ++ show ls ++ "; sub: " ++ show ss) ::
+    map (indent 2) (nsVectLines sub)
 
   public export
   nsVectLines : {n : Nat} -> Vect n Namespace -> List String
@@ -64,11 +66,14 @@ LeafNS ss = NS ss VoidSS []
 public export
 data Subspace : Namespace -> Type where
   This : {ns : Namespace} -> Subspace ns
-  Child : {ns : Namespace} -> Fin (numSub ns) -> Subspace ns
+  Child : {ns : Namespace} ->
+    (i : ns.nsSubSym.slType) ->
+    Subspace (index (fst (snd ns.nsSubSym.slEnc i)) ns.nsSub) ->
+    Subspace ns
 
 public export
 (ns : Namespace) => Show (Subspace ns) where
   show {ns} sub = "/" ++ showSub sub where
     showSub : {ns : Namespace} -> Subspace ns -> String
     showSub {ns} This = ""
-    showSub {ns} (Child i) = show (index i ns.nsSub) ++ "/"
+    showSub {ns} (Child i sub) = slShow ns.nsSubSym i ++ "/" ++ showSub sub

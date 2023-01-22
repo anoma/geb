@@ -86,11 +86,11 @@ FDE2 = (FD2 ** FE2)
 eSS2 : SymSet
 eSS2 = SS Enum2 Enum2sz FDE2 show
 
-----------------
-----------------
----- SymSet ----
-----------------
-----------------
+-------------------
+-------------------
+---- Namespace ----
+-------------------
+-------------------
 
 -------------------
 ---- Utilities ----
@@ -123,8 +123,8 @@ ssfv2 = FinSS 3
 ns1fv2 : Namespace
 ns1fv2 = NS eSS1 ssfv2 [finNS10, VoidNS, eNS2]
 
-nstree : Namespace
-nstree =
+NStree : Namespace
+NStree =
   FinNS 5 [
     ns1fv2,
     FinNS 3 [],
@@ -135,6 +135,35 @@ nstree =
         FinNS 3 []
       ]
     ]
+
+------------------
+------------------
+---- Subspace ----
+------------------
+------------------
+
+-------------------
+---- Utilities ----
+-------------------
+
+showSubS : {ns : Namespace} -> String -> Subspace ns -> IO ()
+showSubS str sub = putStrLn $ str ++ " = " ++ show sub
+
+showSubSList : {ns : Namespace} -> List (String, Subspace ns) -> IO ()
+showSubSList = showList showSubS
+
+--------------------
+---- Test cases ----
+--------------------
+
+sub1 : Subspace NStree
+sub1 = This
+
+sub2 : Subspace NStree
+sub2 = Child (natToFinLT 3) This
+
+sub3 : Subspace NStree
+sub3 = Child (natToFinLT 3) $ Child (natToFinLT 0) $ Child (natToFinLT 0) This
 
 ----------------------------------
 ----------------------------------
@@ -169,7 +198,16 @@ languageDefSyntaxTest = do
     , ("eNS1", eNS1)
     , ("eNS2", eNS2)
     , ("ns1fv2", ns1fv2)
-    , ("nstree", nstree)
+    , ("NStree", NStree)
+  ]
+  putStrLn ""
+  putStrLn "---------"
+  putStrLn "Subspace:"
+  putStrLn "---------"
+  showSubSList [
+      ("sub1", sub1)
+    , ("sub2", sub2)
+    , ("sub3", sub3)
   ]
   putStrLn ""
   putStrLn "---------------"
