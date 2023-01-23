@@ -41,33 +41,19 @@ module exp where
   exp-fun-eq {Term} {y} = (((λ f → f pt) ,, λ f → funext _ _ λ x → fun-ap f (is-Contr-then-is-Prop 𝟙 𝟙-is-Contr _ _))
                                        ,
                           ( (λ f → f pt) ,, λ f → refl _))
-  exp-fun-eq {x ⊕G y} {z} = ((λ f → ((proj₁ (pr₁ (exp-fun-eq {x} {z}))) (λ x → f (inl x)))
-                                     , (proj₁ (pr₁ (exp-fun-eq {y} {z}))) (λ y → f (inr y)))
-                                                             ,, λ f → funext _ _ λ { (inl x) → transp (λ f' → (exp-fun (proj₁ (pr₁ exp-fun-eq) (λ x₂ → f (inl x₂)))) x ≡ (f' x))
-                                                                                                      ((proj₂ (pr₁ (exp-fun-eq))) (λ x₂ → f (inl x₂))) (refl _) 
-                                                                                   ; (inr y) → transp (λ f' → (exp-fun (proj₁ (pr₁ exp-fun-eq) (λ y₁ → f (inr y₁)))) y ≡ (f' y))
-                                                                                                      ((proj₂ (pr₁ (exp-fun-eq))) (λ y₂ → f (inr y₂))) (refl _) })
+  exp-fun-eq (x ⊕G y) z = ((λ f → ((proj₁ (pr₁ (exp-fun-eq x z))) (λ x → f (inl x)))
+                                     , (proj₁ (pr₁ (exp-fun-eq y z))) (λ y → f (inr y)))
+                                                             ,, λ f → funext _ _ λ { (inl x) → transp (λ f' → (exp-fun _ _ (proj₁ (pr₁ (exp-fun-eq _ _ )) (λ x₂ → f (inl x₂)))) x ≡ (f' x))
+                                                                                                      ((proj₂ (pr₁ (exp-fun-eq _ _))) (λ x₂ → f (inl x₂))) (refl _) 
+                                                                                   ; (inr y) → transp (λ f' → (exp-fun _ _ (proj₁ (pr₁ (exp-fun-eq _ _ )) (λ y₁ → f (inr y₁)))) y ≡ (f' y))
+                                                                                                      ((proj₂ (pr₁ (exp-fun-eq _ _))) (λ y₂ → f (inr y₂))) (refl _) })
                              ,
-                             ((λ f → ((proj₁ (pr₁ (exp-fun-eq {x} {z}))) (λ x → f (inl x))) -- simplify this by pr₁ -> pr₂ hence avoiding transport
-                                     , (proj₁ (pr₁ (exp-fun-eq {y} {z}))) (λ y → f (inr y)))
-                                                            ,, λ { (f' , g') → prod-id-to-×-id _ _ 
-                                                                                               (transp (λ (k : ((GF-obj x → GF-obj z) → (GF-obj (InHom x z)))) →
-                                                                                                         k (λ x' → exp-fun f' x') ≡ f')
-                                                                                                  ((qinverses-are-equal-with-funext (exp-fun {x} {z}) (exp-fun-eq {x} {z})) ⁻¹)
-                                                                                                  ((proj₂ (pr₂ (exp-fun-eq {x} {z}))) f'))
-                                                                                               ( (transp (λ (k : ((GF-obj y → GF-obj z) → (GF-obj (InHom y z)))) →
-                                                                                                         k (λ y' → exp-fun g' y') ≡ g')
-                                                                                                  ((qinverses-are-equal-with-funext (exp-fun {y} {z}) (exp-fun-eq {y} {z})) ⁻¹)
-                                                                                                  ((proj₂ (pr₂ (exp-fun-eq {y} {z}))) g')))})
-  exp-fun-eq {x ⊗G y} {z} = ((λ (f : (GF-obj x × GF-obj y → GF-obj z)) → (proj₁ (pr₁ (exp-fun-eq {x} {(InHom y z)})))
-                                                                                                      ((proj₁ (pr₁ (exp-fun-eq {y} {z})))  ∘ (curry {lzero} {lzero} {lzero} f)))
-                                        ,,  λ (f : (GF-obj x × GF-obj y → GF-obj z)) → funext _ _ λ {  (xx , yy) →
-                                                                                                         {!!}})
-                            ,
-                            (((λ (f : (GF-obj x × GF-obj y → GF-obj z)) → (proj₁ (pr₂ (exp-fun-eq {x} {(InHom y z)})))
-                                                                                                      ((proj₁ (pr₂ (exp-fun-eq {y} {z})))  ∘ (curry {lzero} {lzero} {lzero} f))))
-                                                                                                      ,, (λ x₁ → {!!}))
+                             ((λ f → ((proj₁ (pr₂ (exp-fun-eq x z))) (λ x → f (inl x))) 
+                                     , (proj₁ (pr₂ (exp-fun-eq y z))) (λ y → f (inr y)))
+                                                            ,, λ {(f' , g') → prod-id-to-×-id _ _
+                                                                             ((proj₂ (pr₂ (exp-fun-eq x z))) f')
+                                                                             ((proj₂ (pr₂ (exp-fun-eq y z))) g')})
+  exp-fun-eq {x ⊗G y} {z} = ?
 
   
-{- exp-fun (exp-fun (proj₁ (pr₁ exp-fun-eq) (λ x₁ → proj₁ (pr₁ exp-fun-eq) (λ b → f (x₁ , b))))  xx)  yy
-   ≡ f (xx , yy) -}
+
