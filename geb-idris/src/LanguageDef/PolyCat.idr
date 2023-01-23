@@ -1196,9 +1196,14 @@ PFDirList {ps=(p :: ps@(_ :: _))} (i, is) = (pfDir {p} i, PFDirList {ps} is)
 
 -- Boolean-valued algebra derived from lists of valid combinations.
 public export
+PFListProductBoolAlg : List PolyFunc -> Type
+PFListProductBoolAlg ps =
+  List (DPair (PFPosList ps) (List . PFDirList {ps}))
+
+-- Boolean-valued algebra derived from lists of valid combinations.
+public export
 PFProductBoolAlg : PolyFunc -> PolyFunc -> Type
-PFProductBoolAlg p q =
-  List (DPair (PFPosList [p, q]) (List . PFDirList {ps=([p, q])}))
+PFProductBoolAlg p q = PFListProductBoolAlg [p, q]
 
 public export
 PFProductAlgFromBool : {p, q : PolyFunc} ->
