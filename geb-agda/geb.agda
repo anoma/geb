@@ -383,13 +383,20 @@ module geb where
 
 -- We now check whether the universal property is satisfied
 
-  λG : {x y z : ObjGEBCat} → (f : (z ⊗G x) ↦ y) → (z ↦ InHom x y) 
-  λG {Init} f = TermMor _
-  λG {Term} f = f ● < (IdMor _) , TermMor _ >G
-  λG {x ⊕G x'} {y} {z} f = < λG {x} {y} {z} (pr₁ (proj₁ (⊕G-mor-fib (f ● (proj₁ (DistribAx {z} {x} {x'}))) )))
-                           ,
-                              λG {x'} {y} {z} (pr₂ (proj₁ (⊕G-mor-fib (f ● (proj₁ (DistribAx {z} {x} {x'}))) ))) >G    
-  λG {x ⊗G x'} {y} {z} f = λG {x} {InHom x' y} (λG {x'} (f ● prod-1-assoc-lr))
+  distribinv : {a b c : ObjGEBCat} → (((a ⊗G b) ⊕G (a ⊗G c)) ↦ (a ⊗G ((b ⊕G c))))
+  distribinv = [ < p1G , (inlG ● p2G) >G , < p1G , (inrG ● p2G) >G ]G
+
+  left : {x y z : ObjGEBCat} → ((x ⊕G y) ↦ z) → (x ↦ z)
+  left f = f ● inlG
+
+  right : {x y z : ObjGEBCat} → ((x ⊕G y) ↦ z) → (y ↦ z)
+  right f = f ● inrG
+
+  λG : (x y z : ObjGEBCat) → (f : (x ⊗G y) ↦ z) → (x ↦ InHom y z) 
+  λG x Init z f = TermMor _
+  λG x Term z f = f ● < (IdMor _) , TermMor _ >G
+  λG x (y1 ⊕G y2) z f = < λG _ _ _ (left (f ● (distribinv))) , λG _ _ _ (right (f ● distribinv)) >G    
+  λG x (y1 ⊗G y2) z f = λG _ _ _ (λG _ _ _ (f ● (prod-1-assoc-lr)))
 
 -- We also need to prove the identity preservaton and composition preservation of the above function to use in the functoriality proof
 
