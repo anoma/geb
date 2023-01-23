@@ -73,6 +73,17 @@ module exp where
                                               (funext _ _ (proj₂ (pr₂ (exp-fun-eq y z)))) (refl _)
                                             · (proj₂ (pr₂ (exp-fun-eq x (InHom y z)))) f)
 
+  eval-iso : (x y : ObjGEBCat) → (GF-mor (evalG x y)) ∼ (((λ (fx : (((GF-obj x) → (GF-obj y)) × (GF-obj x))) → (pr₁ fx) (pr₂ fx) )) ∘ ( (exp-fun x y) ×fun (id (GF-obj x))))
+  eval-iso Init y = λ { (x , ())}
+  eval-iso Term y (f , x) {- GF-obj y × 𝟙 -} = refl _
+  eval-iso (x ⊕G y) z ((f , g) , inl xx) = eval-iso _ _ ((f , xx))
+  eval-iso (x ⊕G y) z ((f , g) , inr yy) = eval-iso _ _ (g , yy)
+  eval-iso (x ⊗G y) z (f , (xx , yy)) = transp
+                                          (λ k →
+                                             GF-mor (evalG y z) (GF-mor (evalG x (InHom y z)) (f , xx) , yy) ≡
+                                             GF-mor (evalG y z) (k , yy))
+                                          (eval-iso x (InHom y z) ((f , xx))) (refl _)
+                                          · eval-iso y z (exp-fun x (InHom y z) f xx , yy)
 
   
 
