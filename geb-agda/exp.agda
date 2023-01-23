@@ -41,19 +41,38 @@ module exp where
   exp-fun-eq {Term} {y} = (((λ f → f pt) ,, λ f → funext _ _ λ x → fun-ap f (is-Contr-then-is-Prop 𝟙 𝟙-is-Contr _ _))
                                        ,
                           ( (λ f → f pt) ,, λ f → refl _))
-  exp-fun-eq (x ⊕G y) z = ((λ f → ((proj₁ (pr₁ (exp-fun-eq x z))) (λ x → f (inl x)))
-                                     , (proj₁ (pr₁ (exp-fun-eq y z))) (λ y → f (inr y)))
-                                                             ,, λ f → funext _ _ λ { (inl x) → transp (λ f' → (exp-fun _ _ (proj₁ (pr₁ (exp-fun-eq _ _ )) (λ x₂ → f (inl x₂)))) x ≡ (f' x))
-                                                                                                      ((proj₂ (pr₁ (exp-fun-eq _ _))) (λ x₂ → f (inl x₂))) (refl _) 
-                                                                                   ; (inr y) → transp (λ f' → (exp-fun _ _ (proj₁ (pr₁ (exp-fun-eq _ _ )) (λ y₁ → f (inr y₁)))) y ≡ (f' y))
-                                                                                                      ((proj₂ (pr₁ (exp-fun-eq _ _))) (λ y₂ → f (inr y₂))) (refl _) })
+  exp-fun-eq (x ⊗G y) z = ((λ (f : (GF-obj x × GF-obj y → GF-obj z)) → (proj₁ (pr₁ (exp-fun-eq x (InHom y z))))
+                                  ((proj₁ (pr₁ (exp-fun-eq y z)))  ∘ (curry {lzero} {lzero} {lzero} f)))
+                                  ,, λ (f : (GF-obj x × GF-obj y → GF-obj z) )
+                                           → funext _ _
+                                                   λ {(xx , yy) → transp
+                                                                    (λ k →
+                                                                       exp-fun y z
+                                                                       (exp-fun x (InHom y z)
+                                                                        (proj₁ (pr₁ (exp-fun-eq x (InHom y z)))
+                                                                         (λ x₁ → proj₁ (pr₁ (exp-fun-eq y z)) (λ b → f (x₁ , b))))
+                                                                        xx)
+                                                                       yy
+                                                                       ≡
+                                                                       exp-fun y z
+                                                                       (k (λ x₁ → proj₁ (pr₁ (exp-fun-eq y z)) (λ b → f (x₁ , b))) xx) yy)
+                                                                    (funext _ _ (proj₂ (pr₁ (exp-fun-eq x (InHom y z))))) (refl _)
+                                                                  · transp (λ k → (k (λ b → f (xx , b)) yy) ≡ f (xx , yy))
+                                                                    (funext _ _ (hom-sym _ _ (proj₂ (pr₁ (exp-fun-eq y z))))) (refl _)})
                              ,
-                             ((λ f → ((proj₁ (pr₂ (exp-fun-eq x z))) (λ x → f (inl x))) 
-                                     , (proj₁ (pr₂ (exp-fun-eq y z))) (λ y → f (inr y)))
-                                                            ,, λ {(f' , g') → prod-id-to-×-id _ _
-                                                                             ((proj₂ (pr₂ (exp-fun-eq x z))) f')
-                                                                             ((proj₂ (pr₂ (exp-fun-eq y z))) g')})
-  exp-fun-eq {x ⊗G y} {z} = ?
+                             ((λ f →  (proj₁ (pr₂ (exp-fun-eq x (InHom y z))))
+                                  ((proj₁ (pr₂ (exp-fun-eq y z)))  ∘ (curry {lzero} {lzero} {lzero} f)))
+                                 ,, λ (f : (GF-obj (InHom x (InHom y z)))) →
+                                            transp
+                                              (λ k →
+                                                 proj₁ (pr₂ (exp-fun-eq x (InHom y z)))
+                                                 (λ x₁ →
+                                                    proj₁ (pr₂ (exp-fun-eq y z))
+                                                    (λ b → exp-fun y z (exp-fun x (InHom y z) f x₁) b))
+                                                 ≡ proj₁ (pr₂ (exp-fun-eq x (InHom y z))) (λ x₁ →  k (exp-fun x (InHom y z) f x₁)))
+                                              (funext _ _ (proj₂ (pr₂ (exp-fun-eq y z)))) (refl _)
+                                            · (proj₂ (pr₂ (exp-fun-eq x (InHom y z)))) f)
+
 
   
 
