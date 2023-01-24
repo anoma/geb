@@ -134,25 +134,6 @@ DecEq (TypeFamily nty) where
   decEq = typeFamEq
 
 public export
-InterpTF : {0 nty : Nat} -> TypeFamily nty -> FinSliceEndofunctor nty
-InterpTF {nty} tf sl ity =
-  let ty = index ity tf.rtype in
-  (i : Fin ty.numCtor **
-   let ct = index i ty.ctor in
-   (FinV {len=ct.numConst} ct.cconst,
-    HVect {k=ct.numDir} $ map sl ct.cdir))
-
-public export
-showITF : {0 nty : Nat} ->
-  (tf : TypeFamily nty) -> (sl : FinSliceObj nty) ->
-  (sh : (i' : Fin nty) -> sl i' -> String) ->
-  (i : Fin nty) ->
-  InterpTF {nty} tf sl i -> String
-showITF {nty} tf sl sh i (j ** (fv, hv)) =
-  "(" ++ show j ++ " ** " ++ "(" ++ showFinV fv ++ "," ++
-    showHV sl sh (index j (index i tf.rtype).ctor).cdir hv ++ "))"
-
-public export
 tfRtype : {0 nty : Nat} -> TypeFamily nty -> Fin nty -> RecType nty
 tfRtype tf i = index i tf.rtype
 
@@ -189,6 +170,25 @@ public export
 tfConstV : {0 nty : Nat} -> (tf : TypeFamily nty) -> (i : Fin nty) ->
   (j : Fin (tfnumCtor tf i)) -> Vect (tfnumConst tf i j) Nat
 tfConstV tf i j = (tfCtor tf i j).cconst
+
+public export
+InterpTF : {0 nty : Nat} -> TypeFamily nty -> FinSliceEndofunctor nty
+InterpTF {nty} tf sl ity =
+  let ty = index ity tf.rtype in
+  (i : Fin ty.numCtor **
+   let ct = index i ty.ctor in
+   (FinV {len=ct.numConst} ct.cconst,
+    HVect {k=ct.numDir} $ map sl ct.cdir))
+
+public export
+showITF : {0 nty : Nat} ->
+  (tf : TypeFamily nty) -> (sl : FinSliceObj nty) ->
+  (sh : (i' : Fin nty) -> sl i' -> String) ->
+  (i : Fin nty) ->
+  InterpTF {nty} tf sl i -> String
+showITF {nty} tf sl sh i (j ** (fv, hv)) =
+  "(" ++ show j ++ " ** " ++ "(" ++ showFinV fv ++ "," ++
+    showHV sl sh (index j (index i tf.rtype).ctor).cdir hv ++ "))"
 
 public export
 itfEq : {0 nty : Nat} ->
