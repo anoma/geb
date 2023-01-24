@@ -490,6 +490,19 @@ hvDecEq {n=(S n)} {a} sl deq (x :: xs) (y :: hv) (y' :: hv') =
     No neq => No (\Refl => neq Refl)
 
 public export
+hvMap : {n : Nat} -> (ts, ts' : Vect n Type) ->
+  (f : (i : Fin n) -> index i ts -> index i ts') ->
+   HVect ts -> HVect ts'
+hvMap {n=Z} [] [] f [] = []
+hvMap {n=(S n)} (t :: ts) (t' :: ts') f (x :: hv) =
+  f FZ x :: hvMap {n} ts ts' (\i, u => f (FS i) u) hv
+
+public export
+mapIndex : {0 n : Nat} -> {0 a, b : Type} -> {0 f : a -> b} ->
+  (v : Vect n a) -> (i : Fin n) -> index i (map f v) = f (index i v)
+mapIndex {n} {a} {b} {f} v i = ?mapIndex_hole
+
+public export
 vectRepeat : (a : Nat) -> {b, c : Nat} ->
   Vect b (Fin c) -> Vect (mult a b) (Fin c)
 vectRepeat Z {b} {c} v = []

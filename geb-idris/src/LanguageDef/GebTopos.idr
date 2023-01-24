@@ -225,6 +225,27 @@ public export
 TFAlg : {nty : Nat} -> TypeFamily nty -> FinSliceObj nty -> Type
 TFAlg {nty} tf sl = SliceMorphism (InterpTF {nty} tf sl) sl
 
+mutual
+  public export
+  tfCata : {0 nty : Nat} -> {tf : TypeFamily nty} -> {sl : FinSliceObj nty} ->
+    TFAlg tf sl -> SliceMorphism {a=(Fin nty)} (MuTF tf) sl
+  tfCata {nty} {tf} {sl} alg i (InTF i (j ** (fv, hv))) =
+    alg i
+      (j **
+       (fv, tfCataV {nty} {tf} {sl} alg (tfnumDir tf i j) (tfDirV tf i j) hv))
+
+  public export
+  tfCataV : {0 nty : Nat} -> {tf : TypeFamily nty} -> {sl : FinSliceObj nty} ->
+    TFAlg tf sl -> (n : Nat) -> (v : Vect n (Fin nty)) ->
+    HVect (map (MuTF tf) v) -> HVect (map sl v)
+  tfCataV {nty} {tf} {sl} alg n v hv =
+    hvMap {n} (map (MuTF tf) v) (map sl v)
+      (\i, j =>
+        replace {p=id} (sym (mapIndex {f=sl} v i))
+          (tfCata {nty} {tf} {sl} alg (index i v) $
+            replace {p=id} (mapIndex {f=(MuTF tf)} v i) j))
+      hv
+
 public export
 showMuTF : {0 nty : Nat} ->
   (tf : TypeFamily nty) -> (i : Fin nty) ->
