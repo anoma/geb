@@ -9,7 +9,7 @@ import public LanguageDef.PolyCat
 %default total
 
 public export
-FinV : {0 len : Nat} -> Vect len Nat -> Type
+FinV : {0 len : Nat} -> SliceObj (Vect len Nat)
 FinV [] = ()
 FinV [n] = BoundedNat n
 FinV (n :: ns@(_ :: _)) = (BoundedNat n, FinV ns)
@@ -134,8 +134,7 @@ DecEq (TypeFamily nty) where
   decEq = typeFamEq
 
 public export
-InterpTF : {0 nty : Nat} ->
-  TypeFamily nty -> (Fin nty -> Type) -> Fin nty -> Type
+InterpTF : {0 nty : Nat} -> TypeFamily nty -> FinSliceEndofunctor nty
 InterpTF {nty} tf sl ity =
   let ty = index ity tf.rtype in
   (i : Fin ty.numCtor **
@@ -145,7 +144,7 @@ InterpTF {nty} tf sl ity =
 
 public export
 showITF : {0 nty : Nat} ->
-  (tf : TypeFamily nty) -> (sl : Fin nty -> Type) ->
+  (tf : TypeFamily nty) -> (sl : FinSliceObj nty) ->
   (sh : (i' : Fin nty) -> sl i' -> String) ->
   (i : Fin nty) ->
   InterpTF {nty} tf sl i -> String
@@ -155,7 +154,7 @@ showITF {nty} tf sl sh i (j ** (fv, hv)) =
 
 public export
 itfEq : {0 nty : Nat} ->
-  (tf : TypeFamily nty) -> (sl : Fin nty -> Type) ->
+  (tf : TypeFamily nty) -> (sl : FinSliceObj nty) ->
   (deq : (i' : Fin nty) -> DecEqPred (sl i')) ->
   (i : Fin nty) ->
   (x, x' : InterpTF {nty} tf sl i) -> Dec (x = x')
@@ -180,12 +179,12 @@ itfEq {nty} tf sl deq i (j ** (fv, hv)) (j' ** (fv', hv')) =
     No neq => No $ \eq => case eq of Refl => neq Refl
 
 public export
-data MuTF : {0 nty : Nat} -> TypeFamily nty -> Fin nty -> Type where
+data MuTF : {0 nty : Nat} -> TypeFamily nty -> FinSliceObj nty where
   InTF : {0 nty : Nat} -> {tf : TypeFamily nty} ->
     (i : Fin nty) -> InterpTF {nty} tf (MuTF tf) i -> MuTF tf i
 
 public export
-TFAlg : {nty : Nat} -> TypeFamily nty -> (Fin nty -> Type) -> Type
+TFAlg : {nty : Nat} -> TypeFamily nty -> FinSliceObj nty -> Type
 TFAlg {nty} tf sl = SliceMorphism (InterpTF {nty} tf sl) sl
 
 public export

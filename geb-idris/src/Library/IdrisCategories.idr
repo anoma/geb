@@ -164,6 +164,10 @@ public export
 SliceObj : Type -> Type
 SliceObj a = a -> Type
 
+public export
+FinSliceObj : Nat -> Type
+FinSliceObj = SliceObj . Fin
+
 -- An object of some slice category of `Type`.
 public export
 Slice : Type
@@ -172,6 +176,18 @@ Slice = DPair Type SliceObj
 public export
 SliceFunctor : Type -> Type -> Type
 SliceFunctor a b = SliceObj a -> SliceObj b
+
+public export
+FinSliceFunctor : Nat -> Nat -> Type
+FinSliceFunctor m n = FinSliceObj m -> FinSliceObj n
+
+public export
+SliceEndofunctor : Type -> Type
+SliceEndofunctor a = SliceFunctor a a
+
+public export
+FinSliceEndofunctor : Nat -> Type
+FinSliceEndofunctor n = FinSliceFunctor n n
 
 -- The base change functor induced by the given morphism.
 -- Also sometimes called the pullback functor.
