@@ -199,39 +199,3 @@ muTFEq : {0 nty : Nat} ->
   (tf : TypeFamily nty) -> (i : Fin nty) ->
   (x, x' : MuTF {nty} tf i) -> Dec (x = x')
 muTFEq {nty} tf i x = ?muTFeq_hole
-
------------------------------------------
------------------------------------------
----- Binary-sexp term representation ----
------------------------------------------
------------------------------------------
-
--------------------------------------
--------------------------------------
----- Initial term representation ----
--------------------------------------
--------------------------------------
-
--------------------------------------
--------------------------------------
----- Initial type representation ----
--------------------------------------
--------------------------------------
-
-----------------------------------------
-----------------------------------------
----- Initial functor representation ----
-----------------------------------------
-----------------------------------------
-
-public export
-MorphSig : SliceObj Type
-MorphSig x = SliceObj (x, x)
-
-public export
-MorphSPF : Type -> Type
-MorphSPF x = DepParamPolyFunc (x, x) (x, x)
-
-public export
-MorphMu : {x : Type} -> MorphSPF x -> MorphSig x
-MorphMu {x} = SPFMu . SPFFromDPPF
