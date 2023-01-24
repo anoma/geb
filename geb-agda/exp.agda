@@ -87,3 +87,15 @@ module exp where
 
   
 
+  curry-iso : (x y z : ObjGEBCat) (f : (x ⊗G y) ↦ z) → (exp-fun y z ∘ (GF-mor (λG x y z f))) ∼ (curry (GF-mor f))
+  curry-iso x Init z f xx = 𝟘-fun-Prop _ _
+  curry-iso x Term z f xx = funext _ _ λ {pt → refl _}
+  curry-iso x (y1 ⊕G y2) z f xx = funext _ _ λ { (inl yy1) → transp (λ k → k yy1 ≡ GF-mor f (xx , inl yy1))
+                                                                    ((curry-iso x y1 z _ xx) ⁻¹) (refl _)
+                                                 ;
+                                                  (inr yy2) → transp (λ k → k yy2 ≡ GF-mor f (xx , inr yy2))
+                                                                     ((curry-iso x y2 z _ xx) ⁻¹) (refl _) } 
+  curry-iso x (y1 ⊗G y2) z f xx = funext _ _ λ {(yy1 , yy2) → transp (λ k1 → exp-fun y2 z k1 yy2 ≡ GF-mor f (xx , (yy1 , yy2)))
+                                                                (fun-ap (λ k → k yy1) (curry-iso x y1 (InHom y2 z) _ xx) ⁻¹)
+                                                                (transp (λ k2 → k2 yy2 ≡ GF-mor f (xx , (yy1 , yy2)))
+                                                                        ((curry-iso (x ⊗G y1) y2 z _ ((xx , yy1))) ⁻¹) (refl _)) }
