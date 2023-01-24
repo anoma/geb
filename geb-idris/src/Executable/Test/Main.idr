@@ -44,5 +44,5 @@ main = do
   LanguageDef.Test.ADTCatTest.adtCatTest
   LanguageDef.Test.PolyProfunctorTest.polyProfunctorTest
   LanguageDef.Test.ProgFinSetTest.progFinSetTest
-  LanguageDef.Test.GebToposTest.gebToposTest
   LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
+  LanguageDef.Test.GebToposTest.gebToposTest
