@@ -238,13 +238,9 @@ mutual
   tfCataV : {0 nty : Nat} -> {tf : TypeFamily nty} -> {sl : FinSliceObj nty} ->
     TFAlg tf sl -> (n : Nat) -> (v : Vect n (Fin nty)) ->
     HVect (map (MuTF tf) v) -> HVect (map sl v)
-  tfCataV {nty} {tf} {sl} alg n v hv =
-    hvMap {n} (map (MuTF tf) v) (map sl v)
-      (\i, j =>
-        replace {p=id} (sym (mapIndex {f=sl} v i))
-          (tfCata {nty} {tf} {sl} alg (index i v) $
-            replace {p=id} (mapIndex {f=(MuTF tf)} v i) j))
-      hv
+  tfCataV {nty} {tf} {sl} alg Z [] [] = []
+  tfCataV {nty} {tf} {sl} alg (S n) (i :: v) (x :: hv) =
+    tfCata {nty} {tf} {sl} alg i x :: tfCataV {nty} {tf} {sl} alg n v hv
 
 public export
 showMuTF : {0 nty : Nat} ->

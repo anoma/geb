@@ -500,7 +500,8 @@ hvMap {n=(S n)} (t :: ts) (t' :: ts') f (x :: hv) =
 public export
 mapIndex : {0 n : Nat} -> {0 a, b : Type} -> {0 f : a -> b} ->
   (v : Vect n a) -> (i : Fin n) -> index i (map f v) = f (index i v)
-mapIndex {n} {a} {b} {f} v i = ?mapIndex_hole
+mapIndex {n=(S n)} {a} {b} {f} (x :: v) FZ = Refl
+mapIndex {n=(S n)} {a} {b} {f} (x :: v) (FS i) = mapIndex v i
 
 public export
 vectRepeat : (a : Nat) -> {b, c : Nat} ->
