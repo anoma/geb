@@ -141,7 +141,7 @@ PairShowAlg () d = "(" ++ d PAIRFST ++ "," ++ d PAIRSND ++ ")"
 ----------------------------------
 
 public export
-BinTreeF : PolyFunc -> PolyFunc
+BinTreeF : ParamPolyFunc PolyFunc
 BinTreeF a = pfCoproductArena a PairF
 
 public export

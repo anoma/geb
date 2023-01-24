@@ -2733,7 +2733,7 @@ SlicePolyEndoFuncFromId {base} (posdep ** dirdep) =
 
 -- Another way of looking at the `EndoFuncId` special case of `SlicePolyFunc`
 -- is that it represents a parameterized polynomial functor.  The type of
--- the parameter becomes the object on whose slice category the dependent
+-- the parameter becomes the object whose slice category the dependent
 -- polynomial functor is an endofunctor on.
 public export
 ParamPolyFunc : Type -> Type
