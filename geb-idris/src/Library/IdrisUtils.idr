@@ -478,6 +478,18 @@ showHV {n} {a} sl sh v =
       shows = showHVv {n} {a} sl sh v
 
 public export
+hvDecEq : {0 n : Nat} -> {0 a : Type} ->
+  (sl : a -> Type) -> (deq : (x : a) -> (y, y' : sl x) -> Dec (y = y')) ->
+  (v : Vect n a) -> (hv, hv' : HVect (map sl v)) -> Dec (hv = hv')
+hvDecEq {n=Z} {a} sl deq [] [] [] = Yes Refl
+hvDecEq {n=(S n)} {a} sl deq (x :: xs) (y :: hv) (y' :: hv') =
+  case deq x y y' of
+    Yes Refl => case hvDecEq {n} sl deq xs hv hv' of
+      Yes Refl => Yes Refl
+      No neq => No (\Refl => neq Refl)
+    No neq => No (\Refl => neq Refl)
+
+public export
 vectRepeat : (a : Nat) -> {b, c : Nat} ->
   Vect b (Fin c) -> Vect (mult a b) (Fin c)
 vectRepeat Z {b} {c} v = []

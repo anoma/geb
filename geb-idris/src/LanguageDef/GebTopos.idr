@@ -156,10 +156,28 @@ showITF {nty} tf sl sh i (j ** (fv, hv)) =
 public export
 itfEq : {0 nty : Nat} ->
   (tf : TypeFamily nty) -> (sl : Fin nty -> Type) ->
-  (deq : (i' : Fin nty) -> DecPred (sl i')) ->
+  (deq : (i' : Fin nty) -> DecEqPred (sl i')) ->
   (i : Fin nty) ->
   (x, x' : InterpTF {nty} tf sl i) -> Dec (x = x')
-itfEq {nty} tf sl deq i x x' = ?itfEq_hole
+itfEq {nty} tf sl deq i (j ** (fv, hv)) (j' ** (fv', hv')) =
+  case decEq j j' of
+    Yes Refl => case finVEq fv fv' of
+      Yes eq =>
+        case hvDecEq sl deq (index j' (index i tf.rtype).ctor).cdir hv hv' of
+          Yes Refl => Yes $
+            replace
+              {p=(\fv'' =>
+                (MkDPair j' (fv, hv')) =
+                (MkDPair j'
+                  {p=(\j'' =>
+                    (FinV ((index j'' ((index i (tf.rtype)).ctor)).cconst),
+                     HVect
+                      (map sl ((index j'' ((index i (tf.rtype)).ctor)).cdir))))}
+                      (fv'', hv')))}
+              eq Refl
+          No neq => No $ \eq => case eq of Refl => neq Refl
+      No neq => No $ \eq => case eq of Refl => neq Refl
+    No neq => No $ \eq => case eq of Refl => neq Refl
 
 public export
 data MuTF : {0 nty : Nat} -> TypeFamily nty -> Fin nty -> Type where
