@@ -185,6 +185,10 @@ data MuTF : {0 nty : Nat} -> TypeFamily nty -> Fin nty -> Type where
     (i : Fin nty) -> InterpTF {nty} tf (MuTF tf) i -> MuTF tf i
 
 public export
+TFAlg : {nty : Nat} -> TypeFamily nty -> (Fin nty -> Type) -> Type
+TFAlg {nty} tf sl = SliceMorphism (InterpTF {nty} tf sl) sl
+
+public export
 showMuTF : {0 nty : Nat} ->
   (tf : TypeFamily nty) -> (i : Fin nty) ->
   MuTF {nty} tf i -> String
