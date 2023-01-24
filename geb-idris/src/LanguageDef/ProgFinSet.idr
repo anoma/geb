@@ -55,26 +55,7 @@ BCDOFinDecEncoding = NatDecEncoding BCDOFinDecoder BCDONatEncoder
 
 public export
 DecEq BicartDistObjPos where
-  decEq BCDObjInitial BCDObjInitial = Yes Refl
-  decEq BCDObjInitial BCDObjTerminal = No $ \eq => case eq of Refl impossible
-  decEq BCDObjInitial BCDObjCoproduct = No $ \eq => case eq of Refl impossible
-  decEq BCDObjInitial BCDObjProduct = No $ \eq => case eq of Refl impossible
-  decEq BCDObjTerminal BCDObjInitial = No $ \eq => case eq of Refl impossible
-  decEq BCDObjTerminal BCDObjTerminal = Yes Refl
-  decEq BCDObjTerminal BCDObjCoproduct = No $ \eq => case eq of Refl impossible
-  decEq BCDObjTerminal BCDObjProduct = No $ \eq => case eq of Refl impossible
-  decEq BCDObjCoproduct BCDObjInitial = No $ \eq => case eq of Refl impossible
-  decEq BCDObjCoproduct BCDObjTerminal = No $ \eq => case eq of Refl impossible
-  decEq BCDObjCoproduct BCDObjCoproduct = Yes Refl
-  decEq BCDObjCoproduct BCDObjProduct = No $ \eq => case eq of Refl impossible
-  decEq BCDObjProduct BCDObjInitial = No $ \eq => case eq of Refl impossible
-  decEq BCDObjProduct BCDObjTerminal = No $ \eq => case eq of Refl impossible
-  decEq BCDObjProduct BCDObjCoproduct = No $ \eq => case eq of Refl impossible
-  decEq BCDObjProduct BCDObjProduct = Yes Refl
-
-public export
-Eq BicartDistObjPos where
-  i == j = isYes $ decEq i j
+  decEq = fdeDecEq BCDOFinDecEncoding
 
 public export
 BicartDistInitialDir : Type
@@ -207,27 +188,30 @@ Show BicartDistTermPos where
   show BCDTermPair = ","
 
 public export
-DecEq BicartDistTermPos where
-  decEq BCDTermUnit BCDTermUnit = Yes Refl
-  decEq BCDTermUnit BCDTermLeft = No $ \eq => case eq of Refl impossible
-  decEq BCDTermUnit BCDTermRight = No $ \eq => case eq of Refl impossible
-  decEq BCDTermUnit BCDTermPair = No $ \eq => case eq of Refl impossible
-  decEq BCDTermLeft BCDTermUnit = No $ \eq => case eq of Refl impossible
-  decEq BCDTermLeft BCDTermLeft = Yes Refl
-  decEq BCDTermLeft BCDTermRight = No $ \eq => case eq of Refl impossible
-  decEq BCDTermLeft BCDTermPair = No $ \eq => case eq of Refl impossible
-  decEq BCDTermRight BCDTermUnit = No $ \eq => case eq of Refl impossible
-  decEq BCDTermRight BCDTermLeft = No $ \eq => case eq of Refl impossible
-  decEq BCDTermRight BCDTermRight = Yes Refl
-  decEq BCDTermRight BCDTermPair = No $ \eq => case eq of Refl impossible
-  decEq BCDTermPair BCDTermUnit = No $ \eq => case eq of Refl impossible
-  decEq BCDTermPair BCDTermLeft = No $ \eq => case eq of Refl impossible
-  decEq BCDTermPair BCDTermRight = No $ \eq => case eq of Refl impossible
-  decEq BCDTermPair BCDTermPair = Yes Refl
+BCDTPosSz : Nat
+BCDTPosSz = 4
 
 public export
-Eq BicartDistTermPos where
-  i == j = isYes $ decEq i j
+BCDTFinDecoder : FinDecoder BicartDistTermPos BCDTPosSz
+BCDTFinDecoder FZ = BCDTermUnit
+BCDTFinDecoder (FS FZ) = BCDTermLeft
+BCDTFinDecoder (FS (FS FZ)) = BCDTermRight
+BCDTFinDecoder (FS (FS (FS FZ))) = BCDTermPair
+
+public export
+BCDTNatEncoder : NatEncoder BCDTFinDecoder
+BCDTNatEncoder BCDTermUnit = (0 ** Refl ** Refl)
+BCDTNatEncoder BCDTermLeft = (1 ** Refl ** Refl)
+BCDTNatEncoder BCDTermRight = (2 ** Refl ** Refl)
+BCDTNatEncoder BCDTermPair = (3 ** Refl ** Refl)
+
+public export
+BCDTFinDecEncoding : FinDecEncoding BicartDistTermPos BCDTPosSz
+BCDTFinDecEncoding = NatDecEncoding BCDTFinDecoder BCDTNatEncoder
+
+public export
+DecEq BicartDistTermPos where
+  decEq = fdeDecEq BCDTFinDecEncoding
 
 public export
 BicartDistTermUnitDir : Type
