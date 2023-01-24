@@ -153,6 +153,44 @@ showITF {nty} tf sl sh i (j ** (fv, hv)) =
     showHV sl sh (index j (index i tf.rtype).ctor).cdir hv ++ "))"
 
 public export
+tfRtype : {0 nty : Nat} -> TypeFamily nty -> Fin nty -> RecType nty
+tfRtype tf i = index i tf.rtype
+
+public export
+tfnumCtor : {0 nty : Nat} -> TypeFamily nty -> Fin nty -> Nat
+tfnumCtor tf i = (tfRtype tf i).numCtor
+
+public export
+tfCtorV : {0 nty : Nat} -> (tf : TypeFamily nty) -> (i : Fin nty) ->
+  Vect (tfnumCtor tf i) (Constructor nty)
+tfCtorV tf i = (tfRtype tf i).ctor
+
+public export
+tfCtor : {0 nty : Nat} -> (tf : TypeFamily nty) -> (i : Fin nty) ->
+  Fin (tfnumCtor tf i) -> Constructor nty
+tfCtor tf i j = index j (tfCtorV tf i)
+
+public export
+tfnumDir : {0 nty : Nat} -> (tf : TypeFamily nty) -> (i : Fin nty) ->
+  Fin (tfnumCtor tf i) -> Nat
+tfnumDir tf i j = (tfCtor tf i j).numDir
+
+public export
+tfDirV : {0 nty : Nat} -> (tf : TypeFamily nty) -> (i : Fin nty) ->
+  (j : Fin (tfnumCtor tf i)) -> Vect (tfnumDir tf i j) (Fin nty)
+tfDirV tf i j = (tfCtor tf i j).cdir
+
+public export
+tfnumConst : {0 nty : Nat} -> (tf : TypeFamily nty) -> (i : Fin nty) ->
+  Fin (tfnumCtor tf i) -> Nat
+tfnumConst tf i j = (tfCtor tf i j).numConst
+
+public export
+tfConstV : {0 nty : Nat} -> (tf : TypeFamily nty) -> (i : Fin nty) ->
+  (j : Fin (tfnumCtor tf i)) -> Vect (tfnumConst tf i j) Nat
+tfConstV tf i j = (tfCtor tf i j).cconst
+
+public export
 itfEq : {0 nty : Nat} ->
   (tf : TypeFamily nty) -> (sl : FinSliceObj nty) ->
   (deq : (i' : Fin nty) -> DecEqPred (sl i')) ->
@@ -162,16 +200,16 @@ itfEq {nty} tf sl deq i (j ** (fv, hv)) (j' ** (fv', hv')) =
   case decEq j j' of
     Yes Refl => case finVEq fv fv' of
       Yes eq =>
-        case hvDecEq sl deq (index j' (index i tf.rtype).ctor).cdir hv hv' of
+        case hvDecEq sl deq (tfDirV tf i j') hv hv' of
           Yes Refl => Yes $
             replace
               {p=(\fv'' =>
                 (MkDPair j' (fv, hv')) =
                 (MkDPair j'
                   {p=(\j'' =>
-                    (FinV ((index j'' ((index i (tf.rtype)).ctor)).cconst),
+                    (FinV (tfConstV tf i j''),
                      HVect
-                      (map sl ((index j'' ((index i (tf.rtype)).ctor)).cdir))))}
+                      (map sl ((tfDirV tf i j'')))))}
                       (fv'', hv')))}
               eq Refl
           No neq => No $ \eq => case eq of Refl => neq Refl
