@@ -892,8 +892,25 @@ FinEncoder : {a : Type} -> {size : Nat} -> FinDecoder a size -> Type
 FinEncoder {a} {size} decoder = (e : a) -> (x : Fin size ** decoder x = e)
 
 public export
+NatEncoder : {a : Type} -> {size : Nat} -> FinDecoder a size -> Type
+NatEncoder {a} {size} decoder =
+  (e : a) ->
+    (n : Nat ** x : IsJustTrue (natToFin n size) ** decoder (fromIsJust x) = e)
+
+public export
+NatToFinEncoder : {a : Type} -> {size : Nat} -> {d : FinDecoder a size} ->
+  NatEncoder {a} {size} d -> FinEncoder {a} {size} d
+NatToFinEncoder {a} {size} {d} enc e with (enc e)
+  NatToFinEncoder {a} {size} {d} enc e | (n ** x ** eq) = (fromIsJust x ** eq)
+
+public export
 FinDecEncoding : (a : Type) -> (size : Nat) -> Type
 FinDecEncoding a size = DPair (FinDecoder a size) FinEncoder
+
+public export
+NatDecEncoding : {a : Type} -> {size : Nat} ->
+  (d : FinDecoder a size) -> NatEncoder {a} {size} d -> FinDecEncoding a size
+NatDecEncoding {a} {size} d enc = (d ** NatToFinEncoder enc)
 
 public export
 fdeEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool

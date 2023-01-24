@@ -32,6 +32,28 @@ Show BicartDistObjPos where
   show BCDObjProduct = "*"
 
 public export
+BCDOPosSz : Nat
+BCDOPosSz = 4
+
+public export
+BCDOFinDecoder : FinDecoder BicartDistObjPos BCDOPosSz
+BCDOFinDecoder FZ = BCDObjInitial
+BCDOFinDecoder (FS FZ) = BCDObjTerminal
+BCDOFinDecoder (FS (FS FZ)) = BCDObjCoproduct
+BCDOFinDecoder (FS (FS (FS FZ))) = BCDObjProduct
+
+public export
+BCDONatEncoder : NatEncoder BCDOFinDecoder
+BCDONatEncoder BCDObjInitial = (0 ** Refl ** Refl)
+BCDONatEncoder BCDObjTerminal = (1 ** Refl ** Refl)
+BCDONatEncoder BCDObjCoproduct = (2 ** Refl ** Refl)
+BCDONatEncoder BCDObjProduct = (3 ** Refl ** Refl)
+
+public export
+BCDOFinDecEncoding : FinDecEncoding BicartDistObjPos BCDOPosSz
+BCDOFinDecEncoding = NatDecEncoding BCDOFinDecoder BCDONatEncoder
+
+public export
 DecEq BicartDistObjPos where
   decEq BCDObjInitial BCDObjInitial = Yes Refl
   decEq BCDObjInitial BCDObjTerminal = No $ \eq => case eq of Refl impossible
