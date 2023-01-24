@@ -5601,12 +5601,12 @@ gteTrue m n = (m >= n) = True
 -- All natural numbers less than or equal to `n`.
 public export
 BoundedNat : Nat -> Type
-BoundedNat n = Refinement {a=Nat} ((>=) n)
+BoundedNat n = Refinement {a=Nat} ((>) n)
 
 public export
 MkBoundedNat : {0 n : Nat} ->
-  (m : Nat) -> {auto 0 gte : gteTrue n m} -> BoundedNat n
-MkBoundedNat m {gte} = MkRefinement m {satisfies=gte}
+  (m : Nat) -> {auto 0 gt : gtTrue n m} -> BoundedNat n
+MkBoundedNat m {gt} = MkRefinement m {satisfies=gt}
 
 ----------------------------------------
 ---- Tuples (fixed-length products) ----
