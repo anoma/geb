@@ -462,6 +462,22 @@ finFGet {n=(S n)} FZ {f} (ty :: hv) = ty
 finFGet {n=(S n)} (FS i) {f} (ty :: hv) = finFGet {n} i {f=(f . FS)} hv
 
 public export
+showHVv : {0 n : Nat} -> {0 a : Type} ->
+  (sl : a -> Type) -> (sh : (x : a) -> sl x -> String) ->
+  (v : Vect n a) -> (hv : HVect (map sl v)) -> Vect n String
+showHVv {n=Z} {a} sl sh [] Nil = []
+showHVv {n=(S n)} {a} sl sh (k :: ks) (x :: xs) = sh k x :: showHVv sl sh ks xs
+
+public export
+showHV : {0 n : Nat} -> {0 a : Type} ->
+  (sl : a -> Type) -> (sh : (x : a) -> sl x -> String) ->
+  (v : Vect n a) -> (hv : HVect (map sl v)) -> String
+showHV {n} {a} sl sh v =
+  show where
+    Shows n (map sl v) where
+      shows = showHVv {n} {a} sl sh v
+
+public export
 vectRepeat : (a : Nat) -> {b, c : Nat} ->
   Vect b (Fin c) -> Vect (mult a b) (Fin c)
 vectRepeat Z {b} {c} v = []

@@ -57,15 +57,81 @@ record Constructor (0 nty : Nat) where
   cdir : Vect numDir (Fin nty)
 
 public export
+showConstr : {0 nty : Nat} -> Constructor nty -> String
+showConstr {nty} (Ctor nc cc nd cd) =
+  "(" ++ show (map finToNat cd) ++ "," ++ show cc ++ ")"
+
+public export
+Show (Constructor nty) where
+  show = showConstr
+
+public export
+constrEq : {0 nty : Nat} -> (c, c' : Constructor nty) -> Dec (c = c')
+constrEq {nty} (Ctor nc cc nd cd) (Ctor nc' cc' nd' cd') =
+  case decEq nc nc' of
+    Yes Refl => case decEq cc cc' of
+      Yes Refl => case decEq nd nd' of
+        Yes Refl => case decEq cd cd' of
+          Yes Refl => Yes Refl
+          No neq => No $ \eq => case eq of Refl => neq Refl
+        No neq => No $ \eq => case eq of Refl => neq Refl
+      No neq => No $ \eq => case eq of Refl => neq Refl
+    No neq => No $ \eq => case eq of Refl => neq Refl
+
+public export
+DecEq (Constructor nty) where
+  decEq = constrEq
+
+public export
 record RecType (0 nty : Nat) where
   constructor RType
   numCtor : Nat
   ctor : Vect numCtor (Constructor nty)
 
 public export
+showRecType : {0 nty : Nat} -> RecType nty -> String
+showRecType {nty} (RType nc cs) = show cs
+
+public export
+Show (RecType nty) where
+  show = showRecType
+
+public export
+recTypeEq : {0 nty : Nat} -> (ty, ty' : RecType nty) -> Dec (ty = ty')
+recTypeEq {nty} (RType nc cs) (RType nc' cs') =
+  case decEq nc nc' of
+    Yes Refl => case decEq cs cs' of
+      Yes Refl => Yes Refl
+      No neq => No $ \eq => case eq of Refl => neq Refl
+    No neq => No $ \eq => case eq of Refl => neq Refl
+
+public export
+DecEq (RecType nty) where
+  decEq = recTypeEq
+
+public export
 record TypeFamily (0 nty : Nat) where
   constructor TFamily
   rtype : Vect nty (RecType nty)
+
+public export
+showTypeFam : {0 nty : Nat} -> TypeFamily nty -> String
+showTypeFam {nty} (TFamily rtype) = show rtype
+
+public export
+Show (TypeFamily nty) where
+  show = showTypeFam
+
+public export
+typeFamEq : {0 nty : Nat} -> (tf, tf' : TypeFamily nty) -> Dec (tf = tf')
+typeFamEq {nty} (TFamily rt) (TFamily rt') =
+  case decEq rt rt' of
+    Yes Refl => Yes Refl
+    No neq => No $ \eq => case eq of Refl => neq Refl
+
+public export
+DecEq (TypeFamily nty) where
+  decEq = typeFamEq
 
 public export
 InterpTF : {0 nty : Nat} ->
@@ -78,9 +144,39 @@ InterpTF {nty} tf sl ity =
     HVect {k=ct.numDir} $ map sl ct.cdir))
 
 public export
+showITF : {0 nty : Nat} ->
+  (tf : TypeFamily nty) -> (sl : Fin nty -> Type) ->
+  (sh : (i' : Fin nty) -> sl i' -> String) ->
+  (i : Fin nty) ->
+  InterpTF {nty} tf sl i -> String
+showITF {nty} tf sl sh i (j ** (fv, hv)) =
+  "(" ++ show j ++ " ** " ++ "(" ++ showFinV fv ++ "," ++
+    showHV sl sh (index j (index i tf.rtype).ctor).cdir hv ++ "))"
+
+public export
+itfEq : {0 nty : Nat} ->
+  (tf : TypeFamily nty) -> (sl : Fin nty -> Type) ->
+  (deq : (i' : Fin nty) -> DecPred (sl i')) ->
+  (i : Fin nty) ->
+  (x, x' : InterpTF {nty} tf sl i) -> Dec (x = x')
+itfEq {nty} tf sl deq i x x' = ?itfEq_hole
+
+public export
 data MuTF : {0 nty : Nat} -> TypeFamily nty -> Fin nty -> Type where
   InTF : {0 nty : Nat} -> {tf : TypeFamily nty} ->
     (i : Fin nty) -> InterpTF {nty} tf (MuTF tf) i -> MuTF tf i
+
+public export
+showMuTF : {0 nty : Nat} ->
+  (tf : TypeFamily nty) -> (i : Fin nty) ->
+  MuTF {nty} tf i -> String
+showMuTF {nty} tf i x = ?showMuTF_hole
+
+public export
+muTFEq : {0 nty : Nat} ->
+  (tf : TypeFamily nty) -> (i : Fin nty) ->
+  (x, x' : MuTF {nty} tf i) -> Dec (x = x')
+muTFEq {nty} tf i x = ?muTFeq_hole
 
 -----------------------------------------
 -----------------------------------------
