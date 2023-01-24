@@ -75,7 +75,7 @@ module exp where
 
   eval-iso : (x y : ObjGEBCat) → (GF-mor (evalG x y)) ∼ (((λ (fx : (((GF-obj x) → (GF-obj y)) × (GF-obj x))) → (pr₁ fx) (pr₂ fx) )) ∘ ( (exp-fun x y) ×fun (id (GF-obj x))))
   eval-iso Init y = λ { (x , ())}
-  eval-iso Term y (f , x) {- GF-obj y × 𝟙 -} = refl _
+  eval-iso Term y (f , x) = refl _
   eval-iso (x ⊕G y) z ((f , g) , inl xx) = eval-iso _ _ ((f , xx))
   eval-iso (x ⊕G y) z ((f , g) , inr yy) = eval-iso _ _ (g , yy)
   eval-iso (x ⊗G y) z (f , (xx , yy)) = transp
