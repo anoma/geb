@@ -243,10 +243,13 @@ mutual
     tfCata {nty} {tf} {sl} alg i x :: tfCataV {nty} {tf} {sl} alg n v hv
 
 public export
-showMuTF : {0 nty : Nat} ->
-  (tf : TypeFamily nty) -> (i : Fin nty) ->
-  MuTF {nty} tf i -> String
-showMuTF {nty} tf i x = ?showMuTF_hole
+ShowMuTFAlg : {nty : Nat} -> (tf : TypeFamily nty) -> TFAlg tf (const String)
+ShowMuTFAlg {nty} tf = showITF {nty} tf (const String) (const id)
+
+public export
+showMuTF : {nty : Nat} ->
+  (tf : TypeFamily nty) -> (i : Fin nty) -> MuTF {nty} tf i -> String
+showMuTF {nty} tf = tfCata {nty} {tf} (ShowMuTFAlg {nty} tf)
 
 public export
 muTFEq : {0 nty : Nat} ->
