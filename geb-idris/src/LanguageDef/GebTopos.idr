@@ -174,9 +174,8 @@ tfConstV tf i j = (tfCtor tf i j).cconst
 public export
 InterpTF : {0 nty : Nat} -> TypeFamily nty -> FinSliceEndofunctor nty
 InterpTF {nty} tf sl ity =
-  let ty = index ity tf.rtype in
-  (i : Fin ty.numCtor **
-   let ct = index i ty.ctor in
+  (i : Fin (tfnumCtor tf ity) **
+   let ct = tfCtor tf ity i in
    (FinV {len=ct.numConst} ct.cconst,
     HVect {k=ct.numDir} $ map sl ct.cdir))
 
