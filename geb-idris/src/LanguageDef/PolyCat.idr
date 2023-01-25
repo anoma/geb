@@ -463,6 +463,18 @@ pfEitherDir : (a : Type) -> pfEitherPos a -> Type
 pfEitherDir a = pfDir {p=(pfEitherArena a)}
 
 public export
+pfPairArena : Type -> PolyFunc
+pfPairArena a = pfProductArena PFIdentityArena (PFConstArena a)
+
+public export
+pfPairPos : Type -> Type
+pfPairPos = pfPos . pfPairArena
+
+public export
+pfPairDir : (a : Type) -> pfPairPos a -> Type
+pfPairDir a = pfDir {p=(pfPairArena a)}
+
+public export
 pfMaybeArena : PolyFunc
 pfMaybeArena = pfEitherArena Unit
 
@@ -500,11 +512,18 @@ pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
 pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
 
 public export
-pfComposeInterp : {p : PolyFunc} -> {x : Type} ->
-  InterpPolyFunc p (InterpPolyFunc p x) ->
-  InterpPolyFunc (pfCompositionArena p p) x
-pfComposeInterp {p=(pos ** dir)} {x} (i ** d) =
+pfComposeInterp : {q, p : PolyFunc} -> {x : Type} ->
+  InterpPolyFunc q (InterpPolyFunc p x) ->
+  InterpPolyFunc (pfCompositionArena q p) x
+pfComposeInterp {q=(qpos ** qdir)} {p=(ppos ** pdir)} {x} (i ** d) =
   ((i ** fst . d) ** \(i' ** d') => snd (d i') d')
+
+public export
+pfComposeInterpInv : {q, p : PolyFunc} -> {x : Type} ->
+  InterpPolyFunc (pfCompositionArena q p) x ->
+  InterpPolyFunc q (InterpPolyFunc p x)
+pfComposeInterpInv {q=(qpos ** qdir)} {p=(ppos ** pdir)} {x} ((qi ** qd) ** d) =
+  (qi ** \qdi => (qd qdi ** \pdi => d (qdi ** pdi)))
 
 public export
 pfDuplicateArena : PolyFunc -> PolyFunc
@@ -2269,7 +2288,7 @@ interpFreeMJoin {p} x =
     {p=(pfFreeComposeArena p p)} {q=(PolyFuncFreeM p)}
     (PFFreeJoin p)
     x .
-  pfComposeInterp {p=(PolyFuncFreeM p)} {x}
+  pfComposeInterp {q=(PolyFuncFreeM p)} {p=(PolyFuncFreeM p)} {x}
 
 public export
 pfFreeToComposeN : (p : PolyFunc) -> (n : Nat) ->
