@@ -1,6 +1,7 @@
 module LanguageDef.Syntax
 
 import Library.IdrisUtils
+import Library.IdrisCategories
 
 %default total
 
@@ -77,3 +78,50 @@ public export
     showSub : {ns : Namespace} -> Subspace ns -> String
     showSub {ns} This = ""
     showSub {ns} (Child i sub) = slShow ns.nsSubSym i ++ "/" ++ showSub sub
+
+public export
+data SAtom :
+    (0 numRes, maxNat : Nat) -> (0 res : Type) ->
+    (0 decoder : FinDecoder res numRes) ->
+    (0 encoder : NatEncoder {a=res} {size=numRes} decoder) ->
+    Type where
+  SRes :
+    (i : res) -> SAtom numRes maxNat res decoder encoder
+  SNat :
+    (n : Nat) -> {auto 0 ok : IsTrue (n < maxNat)} ->
+    SAtom numRes maxNat res decoder encoder
+
+public export
+0 saArity :
+  {0 numRes, maxNat : Nat} -> {0 res : Type} ->
+  {0 decoder : FinDecoder res numRes} ->
+  {0 encoder : NatEncoder {a=res} {size=numRes} decoder} ->
+  (0 arity : res -> Nat) ->
+  SAtom numRes maxNat res decoder encoder -> Nat
+saArity arity (SRes i) = arity i
+saArity arity (SNat n) = 0
+
+public export
+data SExpF :
+    (0 numRes, maxNat : Nat) -> (0 res : Type) ->
+    (0 decoder : FinDecoder res numRes) ->
+    (0 encoder : NatEncoder {a=res} {size=numRes} decoder) ->
+    (0 arity : res -> Nat) ->
+    Type -> Type where
+  SX :
+    (a : SAtom numRes maxNat res decoder encoder) ->
+    (l : List ty) ->
+    {auto 0 ok : IsTrue (length l == saArity arity a)} ->
+    SExpF numRes maxNat res decoder encoder arity ty
+
+public export
+data SExp :
+    (0 numRes, maxNat : Nat) -> (0 res : Type) ->
+    (0 decoder : FinDecoder res numRes) ->
+    (0 encoder : NatEncoder {a=res} {size=numRes} decoder) ->
+    (0 arity : res -> Nat) ->
+    Type where
+  InSX :
+    SExpF numRes maxNat res decoder encoder arity
+      (SExp numRes maxNat res decoder encoder arity) ->
+    SExp numRes maxNat res decoder encoder arity
