@@ -108,10 +108,9 @@ data SExpF :
     (0 encoder : NatEncoder {a=res} {size=numRes} decoder) ->
     (0 arity : res -> Nat) ->
     Type -> Type where
-  SX :
+  InSF :
     (a : SAtom numRes maxNat res decoder encoder) ->
-    (l : List ty) ->
-    {auto 0 ok : IsTrue (length l == saArity arity a)} ->
+    (v : Vect (saArity arity a) ty) ->
     SExpF numRes maxNat res decoder encoder arity ty
 
 public export
@@ -121,7 +120,44 @@ data SExp :
     (0 encoder : NatEncoder {a=res} {size=numRes} decoder) ->
     (0 arity : res -> Nat) ->
     Type where
-  InSX :
+  InS :
     SExpF numRes maxNat res decoder encoder arity
       (SExp numRes maxNat res decoder encoder arity) ->
     SExp numRes maxNat res decoder encoder arity
+
+public export
+SAlg :
+  (0 numRes, maxNat : Nat) -> (0 res : Type) ->
+  (0 decoder : FinDecoder res numRes) ->
+  (0 encoder : NatEncoder {a=res} {size=numRes} decoder) ->
+  (0 arity : res -> Nat) ->
+  Type -> Type
+SAlg numRes maxNat res decoder encoder arity ty =
+  (a : SAtom numRes maxNat res decoder encoder) ->
+  (0 _ : Vect (saArity arity a) ty) -> ty
+
+mutual
+  public export
+  sCata :
+    {0 numRes, maxNat : Nat} -> {0 res : Type} ->
+    {0 decoder : FinDecoder res numRes} ->
+    {0 encoder : NatEncoder {a=res} {size=numRes} decoder} ->
+    {0 arity : res -> Nat} ->
+    {0 ty : Type} ->
+    (alg : SAlg numRes maxNat res decoder encoder arity ty) ->
+    SExp numRes maxNat res decoder encoder arity -> ty
+  sCata alg (InS (InSF a v)) = alg a $ sCataV alg (saArity arity a) v
+
+  public export
+  sCataV :
+    {0 numRes, maxNat : Nat} -> {0 res : Type} ->
+    {0 decoder : FinDecoder res numRes} ->
+    {0 encoder : NatEncoder {a=res} {size=numRes} decoder} ->
+    {0 arity : res -> Nat} ->
+    {0 ty : Type} ->
+    (alg : SAlg numRes maxNat res decoder encoder arity ty) ->
+    (0 n : Nat) ->
+    Vect n (SExp numRes maxNat res decoder encoder arity) ->
+    Vect n ty
+  sCataV alg Z [] = []
+  sCataV alg (S n) (x :: v) = sCata alg x :: sCataV alg n v
