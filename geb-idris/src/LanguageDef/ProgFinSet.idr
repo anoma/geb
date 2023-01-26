@@ -908,7 +908,10 @@ OmPos OmObj = OmObjPos
 OmPos OmObjPair = OmObjPairPos
 OmPos OmMorph = OmMorphPos
 
-OmDir : (ty : OmType) -> OmPos ty -> SliceObj OmType
-OmDir OmObj = OmObjDir
-OmDir OmObjPair = OmObjPairDir
-OmDir OmMorph = OmMorphDir
+OmDirDep : (ty : OmType) -> OmPos ty -> SliceObj OmType
+OmDirDep OmObj = OmObjDir
+OmDirDep OmObjPair = OmObjPairDir
+OmDirDep OmMorph = OmMorphDir
+
+OmDir : DPair OmType OmPos -> SliceObj OmType
+OmDir (ty ** i) = OmDirDep ty i
