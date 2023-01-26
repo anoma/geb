@@ -8,7 +8,7 @@
 - [2 Getting Started][3d47]
     - [2.1 installation][8fa5]
     - [2.2 loading][a7d5]
-- [3 Glossery][bc7a]
+- [3 Glossary][bc7a]
 - [4 Original Efforts][3686]
     - [4.1 Geb's Idris Code][8311]
     - [4.2 Geb's Agda Code][29b7]
@@ -127,7 +127,7 @@ writing:
 ;; if you want to load it in the future
 (asdf:load-system :geb/documentation)
 
-;; if you want to load the codbase and run tests at the same time
+;; if you want to load the codebase and run tests at the same time
 (asdf:test-system :geb/documentation)
 
 ;; if you want to run the tests once the system is loaded!
@@ -136,7 +136,7 @@ writing:
 
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GLOSSERY-20MGL-PAX-3ASECTION-29"></a>
-## 3 Glossery
+## 3 Glossary
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40CLOSED-TYPE-20MGL-PAX-3AGLOSSARY-TERM-29"></a>
 - [glossary-term] **closed type**
@@ -215,7 +215,7 @@ writing:
     
     ---
     
-    The main disadvantaged of these is that exhaustion can not be checked,
+    The main disadvantage of these is that exhaustion can not be checked,
     and thus the user has to know what methods to fill out. In a system
     with a bit more checks this is not a problem in practice. To find out
     more about the trade offs and usage in the code-base read the section
@@ -247,7 +247,7 @@ provided in the codebase
 At the time of this document, there is over 16k lines of Idris code
 written. This serves as the bulk of the POC that is GEB and is a
 treasure trove of interesting information surrounding category
-theorey.
+theory.
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29"></a>
 ### 4.2 Geb's Agda Code
@@ -398,7 +398,7 @@ covers the background we need in 60 short pages.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40IDIOMS-20MGL-PAX-3ASECTION-29"></a>
 ## 6 Project Idioms and Conventions
 
-The Geb Project in written in [Common
+The Geb Project is written in [Common
 Lisp](https://common-lisp.net/), which means the authors have a great
 choice in freedom in how the project is laid out and operates. In
 particular the style of [Common Lisp](https://common-lisp.net/) here
@@ -470,7 +470,7 @@ idiom.
 
 The [closed type][8932] is [`GEB:SUBSTOBJ`][3173], filling and defining every structure
 it knows about. This is a fixed idea that a programmer may statically
-update and get exhaustive warnings about. Where as [`GEB:<SUBSTOBJ>`][8214] is
+update and get exhaustive warnings about. Whereas [`GEB:<SUBSTOBJ>`][8214] is
 the open interface for the type. Thus we can view [`GEB:<SUBSTOBJ>`][8214] as
 the general idea of a [`GEB:SUBSTOBJ`][3173]. Before delving into how we combine
 these methods, let us look at two other benefits given by [`GEB:<SUBSTOBJ>`][8214]
@@ -486,7 +486,7 @@ these methods, let us look at two other benefits given by [`GEB:<SUBSTOBJ>`][821
 #### Methods for closed and open types
 
 With these pieces in play let us explore how we write a method in a
-way that is condusive to open and closed code.
+way that is conducive to open and closed code.
 
 ```lisp
 (in-package :geb)
@@ -574,7 +574,7 @@ From this category, most abstractions will be made, with
 [`SUBSTOBJ`][3173] types. This category is equivalent to
 [finset](https://ncatlab.org/nlab/show/FinSet).
 
-A good example of this category at work can found within the [Booleans][399c] section.
+A good example of this category at work can be found within the [Booleans][399c] section.
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
 #### 7.1.1 Subst Obj
@@ -839,7 +839,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     
     In the second example, we inject a term with the shape [`GEB-BOOL:BOOL`][0ad4]
     into a pair with the shape ([`SO1`][ebf5] × [`GEB-BOOL:BOOL`][0ad4]), then we use
-    [`MCASE`][cd11] to denote a morophism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]),
+    [`MCASE`][cd11] to denote a morphism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]),
     then give us True, otherwise flip the value of the boolean coming in.
 
 <a id="x-28GEB-2ESPEC-3AINIT-20TYPE-29"></a>
@@ -968,7 +968,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     
     In the second example, we inject a term with the shape `SO1`([`0`][f4ba] [`1`][ebf5]) into a pair
     with the shape ([`SO1`][ebf5] × [`GEB-BOOL:BOOL`][0ad4]), then we use [`MCASE`][cd11] to denote a
-    morophism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]), then give us True,
+    morphism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]), then give us True,
     otherwise flip the value of the boolean coming in.
 
 <a id="x-28GEB-2ESPEC-3AINJECT-RIGHT-20TYPE-29"></a>
@@ -1001,7 +1001,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
     
     In the second example, we inject a term with the shape [`GEB-BOOL:BOOL`][0ad4]
     into a pair with the shape ([`SO1`][ebf5] × [`GEB-BOOL:BOOL`][0ad4]), then we use
-    [`MCASE`][cd11] to denote a morophism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]),
+    [`MCASE`][cd11] to denote a morphism saying. [`IF`][684b] the input is of the shape `SO1`([`0`][f4ba] [`1`][ebf5]),
     then give us True, otherwise flip the value of the boolean coming in.
 
 <a id="x-28GEB-2ESPEC-3APROJECT-LEFT-20TYPE-29"></a>
@@ -1653,7 +1653,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 ## 10 Geb Utilities
 
 ###### \[in package GEB.UTILS\]
-The Utilities package provide general utility functionality that is
+The Utilities package provides general utility functionality that is
 used throughout the GEB codebase
 
 <a id="x-28GEB-2EUTILS-3ALIST-OF-20TYPE-29"></a>
@@ -1840,7 +1840,7 @@ likely to be used. They may even augment existing classes.
 ## 11 Testing
 
 ###### \[in package GEB-TEST\]
-We use [parachtue](https://quickref.common-lisp.net/parachute.html)
+We use [parachute](https://quickref.common-lisp.net/parachute.html)
 as our testing framework.
 
 Please read the
