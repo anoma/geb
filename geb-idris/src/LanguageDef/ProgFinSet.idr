@@ -915,3 +915,6 @@ OmDirDep OmMorph = OmMorphDir
 
 OmDir : DPair OmType OmPos -> SliceObj OmType
 OmDir (ty ** i) = OmDirDep ty i
+
+OmDirSO : SliceObj (DPair OmType OmPos, OmType)
+OmDirSO = uncurry OmDir
