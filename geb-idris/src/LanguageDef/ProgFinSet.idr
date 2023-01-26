@@ -878,7 +878,7 @@ data OmObjPos : Type where
   OmP : OmObjPos
   OmC : OmObjPos
 
-data OmObjDir : OmObjPos -> OmType -> Type where
+data OmObjDir : OmObjPos -> SliceObj OmType where
   OmObj1 : OmObjDir OmP OmObj
   OmObj2 : OmObjDir OmP OmObj
   OmObjL : OmObjDir OmC OmObj
@@ -887,7 +887,7 @@ data OmObjDir : OmObjPos -> OmType -> Type where
 data OmObjPairPos : Type where
   OmOPP : OmObjPairPos
 
-data OmObjPairDir : OmObjPairPos -> OmType -> Type where
+data OmObjPairDir : OmObjPairPos -> SliceObj OmType where
   OmOPP1 : OmObjPairDir OmOPP OmObj
   OmOPP2 : OmObjPairDir OmOPP OmObj
 
@@ -896,7 +896,7 @@ data OmMorphPos : Type where
   OmComp : OmMorphPos
   OmCase : OmMorphPos
 
-data OmMorphDir : OmMorphPos -> OmType -> Type where
+data OmMorphDir : OmMorphPos -> SliceObj OmType where
   OmIdObj : OmMorphDir OmId OmObj
   OmMorphPrec : OmMorphDir OmComp OmMorph
   OmMorphAnt : OmMorphDir OmComp OmMorph
@@ -908,7 +908,7 @@ OmPos OmObj = OmObjPos
 OmPos OmObjPair = OmObjPairPos
 OmPos OmMorph = OmMorphPos
 
-OmDir : (ty : OmType) -> OmPos ty -> OmType -> Type
+OmDir : (ty : OmType) -> OmPos ty -> SliceObj OmType
 OmDir OmObj = OmObjDir
 OmDir OmObjPair = OmObjPairDir
 OmDir OmMorph = OmMorphDir
