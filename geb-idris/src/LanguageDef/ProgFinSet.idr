@@ -860,3 +860,55 @@ data PFSDepObj : PFSObj -> Type where
   PFSDOy : PFSObj -> PFSDepObj PFS1
   PFSDOC : PFSDepObj a -> PFSDepObj b -> PFSDepObj (PFSC a b)
   PFSDOP : PFSDepObj a -> PFSDepObj b -> PFSDepObj (PFSP a b)
+
+---------------------
+---------------------
+---- Experiments ----
+---------------------
+---------------------
+
+data OmType : Type where
+  OmObj : OmType
+  OmObjPair : OmType
+  OmMorph : OmType
+
+data OmObjPos : Type where
+  Om0 : OmObjPos
+  Om1 : OmObjPos
+  OmP : OmObjPos
+  OmC : OmObjPos
+
+data OmObjDir : OmObjPos -> OmType -> Type where
+  OmObj1 : OmObjDir OmP OmObj
+  OmObj2 : OmObjDir OmP OmObj
+  OmObjL : OmObjDir OmC OmObj
+  OmObjR : OmObjDir OmC OmObj
+
+data OmObjPairPos : Type where
+  OmOPP : OmObjPairPos
+
+data OmObjPairDir : OmObjPairPos -> OmType -> Type where
+  OmOPP1 : OmObjPairDir OmOPP OmObj
+  OmOPP2 : OmObjPairDir OmOPP OmObj
+
+data OmMorphPos : Type where
+  OmId : OmMorphPos
+  OmComp : OmMorphPos
+  OmCase : OmMorphPos
+
+data OmMorphDir : OmMorphPos -> OmType -> Type where
+  OmIdObj : OmMorphDir OmId OmObj
+  OmMorphPrec : OmMorphDir OmComp OmMorph
+  OmMorphAnt : OmMorphDir OmComp OmMorph
+  OmMorphL : OmMorphDir OmCase OmMorph
+  OmMorphR : OmMorphDir OmCase OmMorph
+
+OmPos : OmType -> Type
+OmPos OmObj = OmObjPos
+OmPos OmObjPair = OmObjPairPos
+OmPos OmMorph = OmMorphPos
+
+OmDir : (ty : OmType) -> OmPos ty -> OmType -> Type
+OmDir OmObj = OmObjDir
+OmDir OmObjPair = OmObjPairDir
+OmDir OmMorph = OmMorphDir
