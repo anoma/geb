@@ -867,35 +867,42 @@ data PFSDepObj : PFSObj -> Type where
 ---------------------
 ---------------------
 
+public export
 data OmType : Type where
   OmObj : OmType
   OmObjPair : OmType
   OmMorph : OmType
 
+public export
 data OmObjPos : Type where
   Om0 : OmObjPos
   Om1 : OmObjPos
   OmP : OmObjPos
   OmC : OmObjPos
 
+public export
 data OmObjDir : OmObjPos -> SliceObj OmType where
   OmObj1 : OmObjDir OmP OmObj
   OmObj2 : OmObjDir OmP OmObj
   OmObjL : OmObjDir OmC OmObj
   OmObjR : OmObjDir OmC OmObj
 
+public export
 data OmObjPairPos : Type where
   OmOPP : OmObjPairPos
 
+public export
 data OmObjPairDir : OmObjPairPos -> SliceObj OmType where
   OmOPP1 : OmObjPairDir OmOPP OmObj
   OmOPP2 : OmObjPairDir OmOPP OmObj
 
+public export
 data OmMorphPos : Type where
   OmId : OmMorphPos
   OmComp : OmMorphPos
   OmCase : OmMorphPos
 
+public export
 data OmMorphDir : OmMorphPos -> SliceObj OmType where
   OmIdObj : OmMorphDir OmId OmObj
   OmMorphPrec : OmMorphDir OmComp OmMorph
@@ -903,18 +910,34 @@ data OmMorphDir : OmMorphPos -> SliceObj OmType where
   OmMorphL : OmMorphDir OmCase OmMorph
   OmMorphR : OmMorphDir OmCase OmMorph
 
+public export
 OmPos : OmType -> Type
 OmPos OmObj = OmObjPos
 OmPos OmObjPair = OmObjPairPos
 OmPos OmMorph = OmMorphPos
 
+public export
 OmDirDep : (ty : OmType) -> OmPos ty -> SliceObj OmType
 OmDirDep OmObj = OmObjDir
 OmDirDep OmObjPair = OmObjPairDir
 OmDirDep OmMorph = OmMorphDir
 
+public export
 OmDir : DPair OmType OmPos -> SliceObj OmType
 OmDir (ty ** i) = OmDirDep ty i
 
+public export
 OmDirSO : SliceObj (DPair OmType OmPos, OmType)
 OmDirSO = uncurry OmDir
+
+public export
+OmSPF'' : SlicePolyEndoFunc'' OmType
+OmSPF'' = (OmPos ** OmDir)
+
+public export
+OmSPF : SlicePolyEndoFunc OmType
+OmSPF = SPFFromPrimes OmSPF''
+
+public export
+OmMu : SliceObj OmType
+OmMu = SPFMu OmSPF

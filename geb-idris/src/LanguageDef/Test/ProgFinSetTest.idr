@@ -2,6 +2,7 @@ module LanguageDef.Test.ProgFinSetTest
 
 import Test.TestLibrary
 import LanguageDef.ProgFinSet
+import LanguageDef.PolyCat
 
 %default total
 
@@ -26,6 +27,15 @@ bcdtShowFullSTerminated = showTerminated bcdtShowFull
 
 bcdtShowFullList : List (String, BicartDistTerm) -> IO ()
 bcdtShowFullList = showList bcdtShowFull
+
+--------------
+--------------
+---- OmMu ----
+--------------
+--------------
+
+omobj1 : OmMu OmObj
+omobj1 = InSPFM (OmObj ** OmC) $ \(i ** d) => ?omobj1_hole
 
 ----------------------------------
 ----------------------------------
