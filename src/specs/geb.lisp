@@ -318,7 +318,7 @@ Example:
 
 In the second example, we inject a term with the shape SO1 into a pair
 with the shape ([SO1][type] × [GEB-BOOL:BOOL]), then we use MCASE to denote a
-morophism saying. `IF` the input is of the shape [SO1], then give us True,
+morphism saying. `IF` the input is of the shape [SO1], then give us True,
 otherwise flip the value of the boolean coming in."))
 
 (defclass inject-right (<substmorph>)
@@ -358,7 +358,7 @@ Example:
 
 In the second example, we inject a term with the shape [GEB-BOOL:BOOL]
 into a pair with the shape ([SO1][type] × [GEB-BOOL:BOOL]), then we use
-[MCASE] to denote a morophism saying. IF the input is of the shape [SO1],
+[MCASE] to denote a morphism saying. IF the input is of the shape [SO1],
 then give us True, otherwise flip the value of the boolean coming in."))
 
 (defclass case (<substmorph>)
@@ -397,7 +397,7 @@ Example:
 
 In the second example, we inject a term with the shape [GEB-BOOL:BOOL]
 into a pair with the shape ([SO1][type] × [GEB-BOOL:BOOL]), then we use
-[MCASE] to denote a morophism saying. IF the input is of the shape [SO1],
+[MCASE] to denote a morphism saying. IF the input is of the shape [SO1],
 then give us True, otherwise flip the value of the boolean coming in."))
 
 (defclass pair (<substmorph>)

@@ -120,7 +120,8 @@ From this category, most abstractions will be made, with
 [SUBSTOBJ][type] types. This category is equivalent to
 [finset](https://ncatlab.org/nlab/show/FinSet).
 
-A good example of this category at work can found within the GEB-BOOL::@GEB-BOOL section."
+A good example of this category at work can be found within the
+GEB-BOOL::@GEB-BOOL section."
   (@geb-substmu    pax:section)
   (@geb-substmorph pax:section))
 

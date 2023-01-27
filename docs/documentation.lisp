@@ -6,7 +6,7 @@
   "Welcome to the GEB project."
   (@links            pax:section)
   (@getting-started  pax:section)
-  (@glossery         pax:section)
+  (@glossary         pax:section)
   (@original-efforts pax:section)
   (@model            pax:section)
   (@idioms           pax:section)
@@ -93,7 +93,7 @@ provided in the codebase"
   "At the time of this document, there is over 16k lines of Idris code
 written. This serves as the bulk of the POC that is GEB and is a
 treasure trove of interesting information surrounding category
-theorey.")
+theory.")
 
 (pax:defsection @agda (:title "Geb's Agda Code")
   "The Agda folder can be found in the
@@ -288,7 +288,7 @@ writing:
 
 
 (pax:defsection @idioms (:title "Project Idioms and Conventions")
-  "The Geb Project in written in [Common
+  "The Geb Project is written in [Common
 Lisp](https://common-lisp.net/), which means the authors have a great
 choice in freedom in how the project is laid out and operates. In
 particular the style of [Common Lisp](https://common-lisp.net/) here
@@ -332,7 +332,7 @@ idiom.
 
 The @CLOSED-TYPE is GEB:SUBSTOBJ, filling and defining every structure
 it knows about. This is a fixed idea that a programmer may statically
-update and get exhaustive warnings about. Where as GEB:\\<SUBSTOBJ\\> is
+update and get exhaustive warnings about. Whereas GEB:\\<SUBSTOBJ\\> is
 the open interface for the type. Thus we can view [GEB:\\<SUBSTOBJ\\>] as
 the general idea of a [GEB:SUBSTOBJ]. Before delving into how we combine
 these methods, let us look at two other benefits given by [GEB:\\<SUBSTOBJ\\>]
@@ -348,7 +348,7 @@ these methods, let us look at two other benefits given by [GEB:\\<SUBSTOBJ\\>]
 #### Methods for closed and open types
 
 With these pieces in play let us explore how we write a method in a
-way that is condusive to open and closed code.
+way that is conducive to open and closed code.
 
 ```lisp
 (in-package :geb)

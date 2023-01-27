@@ -12,7 +12,7 @@
   :serial nil)
 
 (pax:defsection @geb-test-manual (:title "Testing")
-  "We use [parachtue](https://quickref.common-lisp.net/parachute.html)
+  "We use [parachute](https://quickref.common-lisp.net/parachute.html)
 as our testing framework.
 
 Please read the

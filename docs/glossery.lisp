@@ -1,6 +1,6 @@
 (in-package geb-docs/docs)
 
-(pax:defsection @glossery (:title "Glossery")
+(pax:defsection @glossary (:title "Glossary")
   (@closed-type pax:glossary-term)
   (@open-type pax:glossary-term)
   (@clos pax:glossary-term))
@@ -80,7 +80,7 @@ Now any methods on GEB:\\<SUBSTOBJ\\> will cover GEB:SO0.
 
 -------
 
-The main disadvantaged of these is that exhaustion can not be checked,
+The main disadvantage of these is that exhaustion can not be checked,
 and thus the user has to know what methods to fill out. In a system
 with a bit more checks this is not a problem in practice. To find out
 more about the trade offs and usage in the code-base read the section

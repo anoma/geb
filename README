@@ -5,11 +5,17 @@ Welcome to the GEB project.
 
 ## Links
 
+
+
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
+
+
 ### code coverage
+
+
 
 For test coverage it can be found at the following links:
 
@@ -27,6 +33,8 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see GEB-TEST:CODE-COVERAGE
+
+
 
 ## Getting Started
 
@@ -87,7 +95,7 @@ writing:
 ```
 
 
-## Glossery
+## Glossary
 
 - [glossary-term] closed type
 
@@ -164,7 +172,7 @@ writing:
     
     ---
     
-    The main disadvantaged of these is that exhaustion can not be checked,
+    The main disadvantage of these is that exhaustion can not be checked,
     and thus the user has to know what methods to fill out. In a system
     with a bit more checks this is not a problem in practice. To find out
     more about the trade offs and usage in the code-base read the section
@@ -193,7 +201,7 @@ provided in the codebase
 At the time of this document, there is over 16k lines of Idris code
 written. This serves as the bulk of the POC that is GEB and is a
 treasure trove of interesting information surrounding category
-theorey.
+theory.
 
 ### Geb's Agda Code
 
@@ -208,6 +216,8 @@ while @AGDA serves as the mathematical formalism proving various
 conjectures about GEB
 
 ## Categorical Model
+
+
 
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
@@ -276,31 +286,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} \cong C^{(A × B)}$,
+   $C^{(B^A)} cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $\varnothing$.
+   the empty sum is $varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
-$ \mathsf{1} = \lbrace 1 \rbrace$,
-$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
+where $ mathsf{2} = lbrace 1, 2 rbrace$,
+$ mathsf{1} = lbrace 1 rbrace$,
+$ mathsf{0} = lbrace  rbrace = varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -323,6 +333,8 @@ Benjamin Pierce's
 as it is very amenable *and*
 covers the background we need in 60 short pages.
 
+
+
 ### Morphisms
 
 
@@ -337,7 +349,7 @@ covers the background we need in 60 short pages.
 
 ## Project Idioms and Conventions
 
-The Geb Project in written in [Common
+The Geb Project is written in [Common
 Lisp](https://common-lisp.net/), which means the authors have a great
 choice in freedom in how the project is laid out and operates. In
 particular the style of [Common Lisp](https://common-lisp.net/) here
@@ -407,7 +419,7 @@ idiom.
 
 The @CLOSED-TYPE is GEB:SUBSTOBJ, filling and defining every structure
 it knows about. This is a fixed idea that a programmer may statically
-update and get exhaustive warnings about. Where as GEB:<SUBSTOBJ> is
+update and get exhaustive warnings about. Whereas GEB:<SUBSTOBJ> is
 the open interface for the type. Thus we can view GEB:<SUBSTOBJ> as
 the general idea of a GEB:SUBSTOBJ. Before delving into how we combine
 these methods, let us look at two other benefits given by GEB:<SUBSTOBJ>
@@ -423,7 +435,7 @@ these methods, let us look at two other benefits given by GEB:<SUBSTOBJ>
 #### Methods for closed and open types
 
 With these pieces in play let us explore how we write a method in a
-way that is condusive to open and closed code.
+way that is conducive to open and closed code.
 
 ```lisp
 (in-package :geb)
@@ -508,7 +520,8 @@ SUBSTMORPH serving as the morphisms between different
 SUBSTOBJ types. This category is equivalent to
 [finset](https://ncatlab.org/nlab/show/FinSet).
 
-A good example of this category at work can found within the GEB-BOOL::@GEB-BOOL section.
+A good example of this category at work can be found within the
+GEB-BOOL::@GEB-BOOL section.
 
 #### Subst Obj
 
@@ -756,7 +769,7 @@ SUBSTMORPH
     
     In the second example, we inject a term with the shape GEB-BOOL:BOOL
     into a pair with the shape (SO1 × GEB-BOOL:BOOL), then we use
-    MCASE to denote a morophism saying. IF the input is of the shape SO1,
+    MCASE to denote a morphism saying. IF the input is of the shape SO1,
     then give us True, otherwise flip the value of the boolean coming in.
 
 - [type] INIT
@@ -880,7 +893,7 @@ SUBSTMORPH
     
     In the second example, we inject a term with the shape SO1 into a pair
     with the shape (SO1 × GEB-BOOL:BOOL), then we use MCASE to denote a
-    morophism saying. `IF` the input is of the shape SO1, then give us True,
+    morphism saying. `IF` the input is of the shape SO1, then give us True,
     otherwise flip the value of the boolean coming in.
 
 - [type] INJECT-RIGHT
@@ -912,7 +925,7 @@ SUBSTMORPH
     
     In the second example, we inject a term with the shape GEB-BOOL:BOOL
     into a pair with the shape (SO1 × GEB-BOOL:BOOL), then we use
-    MCASE to denote a morophism saying. IF the input is of the shape SO1,
+    MCASE to denote a morphism saying. IF the input is of the shape SO1,
     then give us True, otherwise flip the value of the boolean coming in.
 
 - [type] PROJECT-LEFT
@@ -1460,7 +1473,7 @@ Let's see some example uses of POINTWISE-MIXIN:
 ## Geb Utilities
 
 ###### \[in package GEB.UTILS\]
-The Utilities package provide general utility functionality that is
+The Utilities package provides general utility functionality that is
 used throughout the GEB codebase
 
 - [type] LIST-OF TY
@@ -1629,7 +1642,7 @@ likely to be used. They may even augment existing classes.
 ## Testing
 
 ###### \[in package GEB-TEST\]
-We use [parachtue](https://quickref.common-lisp.net/parachute.html)
+We use [parachute](https://quickref.common-lisp.net/parachute.html)
 as our testing framework.
 
 Please read the
