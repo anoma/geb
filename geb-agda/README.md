@@ -12,7 +12,7 @@ The overall framework used is MLTT + fun-ext + UIP
 - `Lambek` contains a compact proof of the equivalence of the category of simply typed $\lambda$-calculi and the category of Cartesian Closed Categories lifted from *Introduction to Higher Order Categorical Logic* while using some results from the study of essentially algebraic theories
 - `exp` presents all the computations needed for the verification of Geb's cartesian closedness as instantiated in the Idris code
 - `Geb Hom` contains the mathematical proof of cartesian closedness of Geb, piggybacking on the computations in `exp` 
-- `Geb Spec` contain the description of the Geb category in usual mathematical style
+- `Geb Spec` contains the description of the Geb category in usual mathematical style
 
 ## Core constructions
 
