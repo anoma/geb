@@ -897,18 +897,34 @@ data OmObjPairDir : OmObjPairPos -> SliceObj OmType where
   OmOPP2 : OmObjPairDir OmOPP OmObj
 
 public export
-data OmMorphPos : Type where
-  OmId : OmMorphPos
-  OmComp : OmMorphPos
-  OmCase : OmMorphPos
+data OmMorphPosMorph : Type where
+  OmId : OmMorphPosMorph
+  OmComp : OmMorphPosMorph
+  OmCase : OmMorphPosMorph
 
 public export
-data OmMorphDir : OmMorphPos -> SliceObj OmType where
-  OmIdObj : OmMorphDir OmId OmObj
-  OmMorphPrec : OmMorphDir OmComp OmMorph
-  OmMorphAnt : OmMorphDir OmComp OmMorph
-  OmMorphL : OmMorphDir OmCase OmMorph
-  OmMorphR : OmMorphDir OmCase OmMorph
+record OmMorphPos where
+  constructor MkOmMorphPos
+  OMPParam : OmObjPairPos
+  OMPMorph : OmMorphPosMorph
+
+public export
+OmMorphDirParam : OmObjPairPos -> SliceObj OmType
+OmMorphDirParam = OmObjPairDir
+
+public export
+data OmMorphDirMorph : OmMorphPosMorph -> SliceObj OmType where
+  OmIdObj : OmMorphDirMorph OmId OmObj
+  OmMorphPrec : OmMorphDirMorph OmComp OmMorph
+  OmMorphMid : OmMorphDirMorph OmComp OmObj
+  OmMorphAnt : OmMorphDirMorph OmComp OmMorph
+  OmMorphL : OmMorphDirMorph OmCase OmMorph
+  OmMorphR : OmMorphDirMorph OmCase OmMorph
+
+public export
+OmMorphDir : OmMorphPos -> SliceObj OmType
+OmMorphDir i ty =
+  (OmMorphDirParam (OMPParam i) ty, OmMorphDirMorph (OMPMorph i) ty)
 
 public export
 OmPos : OmType -> Type
@@ -941,3 +957,54 @@ OmSPF = SPFFromPrimes OmSPF''
 public export
 OmMu : SliceObj OmType
 OmMu = SPFMu OmSPF
+
+public export
+OmObjMu : Type
+OmObjMu = OmMu OmObj
+
+public export
+OmObjPairMu : Type
+OmObjPairMu = OmMu OmObjPair
+
+public export
+OmMorphMu : Type
+OmMorphMu = OmMu OmMorph
+
+public export
+OmCheckAlgCtx : SliceObj OmType
+OmCheckAlgCtx OmObj = Bool
+OmCheckAlgCtx OmObjPair = Bool
+OmCheckAlgCtx OmMorph = Bool
+
+public export
+OmCheckAlg : SPFAlg OmSPF OmCheckAlgCtx
+OmCheckAlg OmObj (Om0 ** d) = True
+OmCheckAlg OmObj (Om1 ** d) = True
+OmCheckAlg OmObj (OmP ** d) = d (OmObj ** OmObj1) && d (OmObj ** OmObj2)
+OmCheckAlg OmObj (OmC ** d) = d (OmObj ** OmObjL) && d (OmObj ** OmObjR)
+OmCheckAlg OmObjPair (OmOPP ** d) = d (OmObj ** OmOPP1) && d (OmObj ** OmOPP2)
+OmCheckAlg OmMorph (MkOmMorphPos OmOPP OmId ** d) =
+  -- d (OmObj ** OmIdObj) &&
+  -- dom/cod equals params
+  ?OmCheckAlg_hole_id
+OmCheckAlg OmMorph (MkOmMorphPos OmOPP OmComp ** d) =
+  -- d (OmMorph ** OmMorphPrec) &&
+{-
+  d (OmMorph ** OmMorphAnt) &&
+  d (OmObj ** OmMorphMid) &&
+  -- XXX dom/cod match mid; cod/dom match params
+  -}
+  ?OmCheckAlg_hole_comp
+OmCheckAlg OmMorph (MkOmMorphPos OmOPP OmCase ** d) =
+{-
+  d (OmMorph ** OmMorphL) &&
+  d (OmMorph ** OmMorphR) &&
+  -- XXX doms match param; cods match each other and param
+  -}
+  ?OmCheckAlg_hole_case
+
+public export
+omCheck : (i : OmType) -> OmMu i -> Bool
+omCheck OmObj = spfCata OmCheckAlg OmObj
+omCheck OmObjPair = spfCata OmCheckAlg OmObjPair
+omCheck OmMorph = spfCata OmCheckAlg OmMorph

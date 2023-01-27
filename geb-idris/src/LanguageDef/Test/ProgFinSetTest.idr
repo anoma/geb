@@ -35,7 +35,10 @@ bcdtShowFullList = showList bcdtShowFull
 --------------
 
 omobj1 : OmMu OmObj
-omobj1 = InSPFM (OmObj ** OmC) $ \(i ** d) => ?omobj1_hole
+omobj1 = InSPFM (OmObj ** OmC) $ \(i ** d) => case i of
+  OmObj => case d of
+    OmObjL => InSPFM (OmObj ** Om0) $ \(i ** d) => case d of _ impossible
+    OmObjR => InSPFM (OmObj ** Om1) $ \(i ** d) => case d of _ impossible
 
 ----------------------------------
 ----------------------------------
