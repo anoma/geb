@@ -881,20 +881,20 @@ data OmObjPos : Type where
   OmC : OmObjPos
 
 public export
-data OmObjDir : OmObjPos -> SliceObj OmType where
-  OmObj1 : OmObjDir OmP OmObj
-  OmObj2 : OmObjDir OmP OmObj
-  OmObjL : OmObjDir OmC OmObj
-  OmObjR : OmObjDir OmC OmObj
+data OmObjDir : SliceObj (OmType, OmObjPos) where
+  OmObj1 : OmObjDir (OmObj, OmP)
+  OmObj2 : OmObjDir (OmObj, OmP)
+  OmObjL : OmObjDir (OmObj, OmC)
+  OmObjR : OmObjDir (OmObj, OmC)
 
 public export
 data OmObjPairPos : Type where
   OmOPP : OmObjPairPos
 
 public export
-data OmObjPairDir : OmObjPairPos -> SliceObj OmType where
-  OmOPP1 : OmObjPairDir OmOPP OmObj
-  OmOPP2 : OmObjPairDir OmOPP OmObj
+data OmObjPairDir : SliceObj (OmType, OmObjPairPos) where
+  OmOPP1 : OmObjPairDir (OmObj, OmOPP)
+  OmOPP2 : OmObjPairDir (OmObj, OmOPP)
 
 public export
 data OmMorphPosMorph : Type where
@@ -909,22 +909,22 @@ record OmMorphPos where
   OMPMorph : OmMorphPosMorph
 
 public export
-OmMorphDirParam : OmObjPairPos -> SliceObj OmType
+OmMorphDirParam : SliceObj (OmType, OmObjPairPos)
 OmMorphDirParam = OmObjPairDir
 
 public export
-data OmMorphDirMorph : OmMorphPosMorph -> SliceObj OmType where
-  OmIdObj : OmMorphDirMorph OmId OmObj
-  OmMorphPrec : OmMorphDirMorph OmComp OmMorph
-  OmMorphMid : OmMorphDirMorph OmComp OmObj
-  OmMorphAnt : OmMorphDirMorph OmComp OmMorph
-  OmMorphL : OmMorphDirMorph OmCase OmMorph
-  OmMorphR : OmMorphDirMorph OmCase OmMorph
+data OmMorphDirMorph : SliceObj (OmType, OmMorphPosMorph) where
+  OmIdObj : OmMorphDirMorph (OmObj, OmId)
+  OmMorphPrec : OmMorphDirMorph (OmMorph, OmComp)
+  OmMorphMid : OmMorphDirMorph (OmObj, OmComp)
+  OmMorphAnt : OmMorphDirMorph (OmMorph, OmComp)
+  OmMorphL : OmMorphDirMorph (OmMorph, OmCase)
+  OmMorphR : OmMorphDirMorph (OmMorph, OmCase)
 
 public export
-OmMorphDir : OmMorphPos -> SliceObj OmType
-OmMorphDir i ty =
-  (OmMorphDirParam (OMPParam i) ty, OmMorphDirMorph (OMPMorph i) ty)
+OmMorphDir : SliceObj (OmType, OmMorphPos)
+OmMorphDir (ty, i) =
+  (OmMorphDirParam (ty, OMPParam i), OmMorphDirMorph (ty, OMPMorph i))
 
 public export
 OmPos : OmType -> Type
@@ -933,22 +933,18 @@ OmPos OmObjPair = OmObjPairPos
 OmPos OmMorph = OmMorphPos
 
 public export
-OmDirDep : (ty : OmType) -> OmPos ty -> SliceObj OmType
+OmDirDep : (ty : OmType) -> SliceObj (OmType, OmPos ty)
 OmDirDep OmObj = OmObjDir
 OmDirDep OmObjPair = OmObjPairDir
 OmDirDep OmMorph = OmMorphDir
 
 public export
-OmDir : DPair OmType OmPos -> SliceObj OmType
-OmDir (ty ** i) = OmDirDep ty i
-
-public export
-OmDirSO : SliceObj (DPair OmType OmPos, OmType)
-OmDirSO = uncurry OmDir
+OmDir : SliceObj (DPair OmType OmPos, OmType)
+OmDir ((posty ** i), dirty) = OmDirDep posty (dirty, i)
 
 public export
 OmSPF'' : SlicePolyEndoFunc'' OmType
-OmSPF'' = (OmPos ** OmDir)
+OmSPF'' = (OmPos ** OmDir .* MkPair)
 
 public export
 OmSPF : SlicePolyEndoFunc OmType

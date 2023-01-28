@@ -679,7 +679,6 @@ public export
 pfEval : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena (pfHomObj p q) p) q
 pfEval p q = (pfEvalOnPos p q ** pfEvalOnDir p q)
 
-
 -- Formula 3.78 from "Polynomial Functors: A General Theory of Interaction".
 -- See also the section on formula 3.82 below.
 public export
