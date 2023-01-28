@@ -80,6 +80,34 @@ public export
     showSub {ns} (Child i sub) = slShow ns.nsSubSym i ++ "/" ++ showSub sub
 
 public export
+data BTExpF : Type -> Type -> Type where
+  BTA : atom -> BTExpF atom btx
+  BTP : btx -> btx -> BTExpF atom btx
+
+public export
+data BTExp : Type -> Type where
+  InBT : BTExpF atom (BTExp atom) -> BTExp atom
+
+public export
+BTAlg : Type -> Type -> Type
+BTAlg atom a = BTExpF atom a -> a
+
+public export
+btCata : BTAlg atom a -> BTExp atom -> a
+btCata alg (InBT e) = alg $ case e of
+  BTA a => BTA a
+  BTP x y => BTP (btCata alg x) (btCata alg y)
+
+public export
+BTShowAlg : Show atom => BTAlg atom String
+BTShowAlg (BTA a) = show a
+BTShowAlg (BTP x y) = "(" ++ x ++ "," ++ y ++ ")"
+
+public export
+Show atom => Show (BTExp atom) where
+  show = btCata BTShowAlg
+
+public export
 data SAtom :
     (0 numRes, maxNat : Nat) -> (0 res : Type) ->
     (0 decoder : FinDecoder res numRes) ->
