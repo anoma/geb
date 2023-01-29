@@ -162,6 +162,12 @@ slistCata : SExpAlg atom a -> SList atom -> List a
 slistCata alg = slCata (SXA (\x, ns, l => alg $ SXF x ns l) [] (::))
 
 public export
+slcPreservesLen : (alg : SExpAlg atom a) -> (l : SList atom) ->
+  length (slistCata alg l) = length l
+slcPreservesLen alg [] = Refl
+slcPreservesLen alg (x :: l) = cong S (slcPreservesLen alg l)
+
+public export
 SExpShowAlg : Show atom => SExpAlg atom String
 SExpShowAlg (SXF a ns xs) =
   "(" ++ show a ++ ":" ++ show ns ++ ",[" ++ joinBy "," xs ++ "])"
@@ -253,9 +259,49 @@ record SArity (atom : Type) where
 
 public export
 CheckSExpArAlg: SArity atom -> SExpAlg atom Bool
-CheckSExpArAlg (SAr nar xar) (SXF a ns xs) =
-  all id xs && length ns == nar a && length xs == xar a
+CheckSExpArAlg ar (SXF a ns xs) =
+  all id xs && length ns == ar.natAr a && length xs == ar.expAr a
 
 public export
 checkSExpAr : SArity atom -> SExp atom -> Bool
 checkSExpAr ar = sexpCata (CheckSExpArAlg ar)
+
+public export
+ValidSExpArAlg: SArity atom -> SExpAlg atom Type
+ValidSExpArAlg ar (SXF a ns xs) =
+  (HList xs, length ns = ar.natAr a, length xs = ar.expAr a)
+
+public export
+ValidSExpAr : SArity atom -> SExp atom -> Type
+ValidSExpAr ar = sexpCata (ValidSExpArAlg ar)
+
+public export
+ValidSListArL : SArity atom -> SList atom -> List Type
+ValidSListArL ar = slistCata (ValidSExpArAlg ar)
+
+public export
+ValidSListAr : SArity atom -> SList atom -> Type
+ValidSListAr ar l = HList (ValidSListArL ar l)
+
+mutual
+  public export
+  validSExpAr :
+    (ar : SArity atom) -> (x : SExp atom) -> Maybe (ValidSExpAr ar x)
+  validSExpAr ar (InSX (SXF a ns xs)) =
+    case
+      (validSListAr ar xs,
+       decEq (length ns) (ar.natAr a),
+       decEq (length xs) (ar.expAr a))
+        of
+      (Just vxs, Yes vnl, Yes vxl) =>
+        Just (vxs, vnl, trans (slcPreservesLen (ValidSExpArAlg ar) xs) vxl)
+      _ => Nothing
+
+  public export
+  validSListAr :
+    (ar : SArity atom) -> (l : SList atom) -> Maybe (ValidSListAr ar l)
+  validSListAr ar [] = Just HNil
+  validSListAr ar (x :: xs) =
+    case (validSExpAr ar x, validSListAr ar xs) of
+      (Just v, Just vs) => Just (HCons v vs)
+      _ => Nothing

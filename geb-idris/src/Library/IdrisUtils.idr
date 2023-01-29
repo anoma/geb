@@ -1145,3 +1145,8 @@ InitLList l = MkLList l Refl
 public export
 blockIndent : Nat -> String -> String
 blockIndent n = unlines . map (indent n) . lines
+
+public export
+data HList : List Type -> Type where
+  HNil : HList []
+  HCons : ty -> HList tys -> HList (ty :: tys)
