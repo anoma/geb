@@ -165,6 +165,56 @@ sub2 = Child (natToFinLT 3) This
 sub3 : Subspace NStree
 sub3 = Child (natToFinLT 3) $ Child (natToFinLT 0) $ Child (natToFinLT 0) This
 
+-----------------
+-----------------
+---- BT/SExp ----
+-----------------
+-----------------
+
+------------
+---- BT ----
+------------
+
+bt1 : BTExp Nat
+bt1 = InBTA 1
+
+bt2 : BTExp Nat
+bt2 = InBTA 2
+
+bt3 : BTExp Nat
+bt3 = InBTA 3
+
+bt4 : BTExp Nat
+bt4 = InBTA 4
+
+bt12 : BTExp Nat
+bt12 = InBTP bt1 bt2
+
+bt34 : BTExp Nat
+bt34 = InBTP bt3 bt4
+
+bt1234 : BTExp Nat
+bt1234 = InBTP bt12 bt34
+
+bt12341 : BTExp Nat
+bt12341 = InBTP bt1234 bt1
+
+bt3412341 : BTExp Nat
+bt3412341 = InBTP bt34 bt12341
+
+--------------
+---- SExp ----
+--------------
+
+sn1 : SExp Nat
+sn1 = InS 1 [1] []
+
+sx2 : SExp Nat
+sx2 = InS 1 [1, 2, 3] [InS 2 [2] [], InS 3 [] []]
+
+sx3 : SExp Nat
+sx3 = InS 4 [4, 8, 12] [sx2, sn1, InS 0 [] []]
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -209,6 +259,19 @@ languageDefSyntaxTest = do
     , ("sub2", sub2)
     , ("sub3", sub3)
   ]
+  putStrLn ""
+  putStrLn "--------"
+  putStrLn "BT/SExp:"
+  putStrLn "--------"
+  putStrLn ""
+  putStrLn $ "bt3412341 = " ++ show bt3412341
+  putStrLn $ "sn1 = " ++ show sn1
+  putStrLn $ "sn1 -> bt = " ++ (show $ sexpToBt sn1)
+  putStrLn $ "sx2 = " ++ show sx2
+  putStrLn $ "sx2 -> bt = " ++ (show $ sexpToBt sx2)
+  putStrLn $ "sx3 = " ++ show sx3
+  putStrLn $ "sx3 -> bt = " ++ (show $ sexpToBt sx3)
+  putStrLn $ "sx3 -> bt -> sexp = " ++ (show $ btToSexp $ sexpToBt sx3)
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End SyntaxTest."

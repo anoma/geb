@@ -81,12 +81,20 @@ public export
 
 public export
 data BTExpF : Type -> Type -> Type where
-  BTA : atom -> BTExpF atom btx
-  BTP : btx -> btx -> BTExpF atom btx
+  BTA : atom -> BTExpF atom btty
+  BTP : btty -> btty -> BTExpF atom btty
 
 public export
 data BTExp : Type -> Type where
   InBT : BTExpF atom (BTExp atom) -> BTExp atom
+
+public export
+InBTA : atom -> BTExp atom
+InBTA = InBT . BTA
+
+public export
+InBTP : BTExp atom -> BTExp atom -> BTExp atom
+InBTP = InBT .* BTP
 
 public export
 BTAlg : Type -> Type -> Type
@@ -108,84 +116,113 @@ Show atom => Show (BTExp atom) where
   show = btCata BTShowAlg
 
 public export
-data SAtom :
-    (0 numRes, maxNat : Nat) -> (0 res : Type) ->
-    (0 decoder : FinDecoder res numRes) ->
-    (0 encoder : NatEncoder {a=res} {size=numRes} decoder) ->
-    Type where
-  SRes :
-    (i : res) -> SAtom numRes maxNat res decoder encoder
-  SNat :
-    (n : Nat) -> {auto 0 ok : IsTrue (n < maxNat)} ->
-    SAtom numRes maxNat res decoder encoder
+data SExpF : Type -> Type -> Type where
+  SXF : atom -> List Nat -> List xty -> SExpF atom xty
 
 public export
-0 saArity :
-  {0 numRes, maxNat : Nat} -> {0 res : Type} ->
-  {0 decoder : FinDecoder res numRes} ->
-  {0 encoder : NatEncoder {a=res} {size=numRes} decoder} ->
-  (0 arity : res -> Nat) ->
-  SAtom numRes maxNat res decoder encoder -> Nat
-saArity arity (SRes i) = arity i
-saArity arity (SNat n) = 0
+data SExp : Type -> Type where
+  InSX : SExpF atom (SExp atom) -> SExp atom
 
 public export
-data SExpF :
-    (0 numRes, maxNat : Nat) -> (0 res : Type) ->
-    (0 decoder : FinDecoder res numRes) ->
-    (0 encoder : NatEncoder {a=res} {size=numRes} decoder) ->
-    (0 arity : res -> Nat) ->
-    Type -> Type where
-  InSF :
-    (a : SAtom numRes maxNat res decoder encoder) ->
-    (v : Vect (saArity arity a) ty) ->
-    SExpF numRes maxNat res decoder encoder arity ty
+InS : atom -> List Nat -> List (SExp atom) -> SExp atom
+InS a ns xs = InSX $ SXF a ns xs
 
 public export
-data SExp :
-    (0 numRes, maxNat : Nat) -> (0 res : Type) ->
-    (0 decoder : FinDecoder res numRes) ->
-    (0 encoder : NatEncoder {a=res} {size=numRes} decoder) ->
-    (0 arity : res -> Nat) ->
-    Type where
-  InS :
-    SExpF numRes maxNat res decoder encoder arity
-      (SExp numRes maxNat res decoder encoder arity) ->
-    SExp numRes maxNat res decoder encoder arity
+SList : Type -> Type
+SList = List . SExp
 
 public export
-SAlg :
-  (0 numRes, maxNat : Nat) -> (0 res : Type) ->
-  (0 decoder : FinDecoder res numRes) ->
-  (0 encoder : NatEncoder {a=res} {size=numRes} decoder) ->
-  (0 arity : res -> Nat) ->
-  Type -> Type
-SAlg numRes maxNat res decoder encoder arity ty =
-  (a : SAtom numRes maxNat res decoder encoder) ->
-  (0 _ : Vect (saArity arity a) ty) -> ty
+SExpAlg : Type -> Type -> Type
+SExpAlg atom a = SExpF atom a -> a
 
 mutual
   public export
-  sCata :
-    {0 numRes, maxNat : Nat} -> {0 res : Type} ->
-    {0 decoder : FinDecoder res numRes} ->
-    {0 encoder : NatEncoder {a=res} {size=numRes} decoder} ->
-    {0 arity : res -> Nat} ->
-    {0 ty : Type} ->
-    (alg : SAlg numRes maxNat res decoder encoder arity ty) ->
-    SExp numRes maxNat res decoder encoder arity -> ty
-  sCata alg (InS (InSF a v)) = alg a $ sCataV alg (saArity arity a) v
+  sexpCata : SExpAlg atom a -> SExp atom -> a
+  sexpCata alg (InSX x) = alg $ case x of
+    SXF a ns xs => SXF a ns $ slistCata alg xs
 
   public export
-  sCataV :
-    {0 numRes, maxNat : Nat} -> {0 res : Type} ->
-    {0 decoder : FinDecoder res numRes} ->
-    {0 encoder : NatEncoder {a=res} {size=numRes} decoder} ->
-    {0 arity : res -> Nat} ->
-    {0 ty : Type} ->
-    (alg : SAlg numRes maxNat res decoder encoder arity ty) ->
-    (0 n : Nat) ->
-    Vect n (SExp numRes maxNat res decoder encoder arity) ->
-    Vect n ty
-  sCataV alg Z [] = []
-  sCataV alg (S n) (x :: v) = sCata alg x :: sCataV alg n v
+  slistCata : SExpAlg atom a -> SList atom -> List a
+  slistCata alg [] = []
+  slistCata alg (x :: xs) = sexpCata alg x :: slistCata alg xs
+
+public export
+SExpShowAlg : Show atom => SExpAlg atom String
+SExpShowAlg (SXF a ns xs) =
+  "(" ++ show a ++ ":" ++ show ns ++ ",[" ++ joinBy "," xs ++ "])"
+
+public export
+Show atom => Show (SExp atom) where
+  show = sexpCata SExpShowAlg
+
+public export
+data SExpToBtAtom : Type -> Type where
+  SBAtom : atom -> SExpToBtAtom atom
+  SBNil : SExpToBtAtom atom
+  SBNat : Nat -> SExpToBtAtom atom
+
+public export
+Show atom => Show (SExpToBtAtom atom) where
+  show (SBAtom a) = show a
+  show SBNil = "[]"
+  show (SBNat n) = show n
+
+mutual
+  public export
+  SExpToBtAlg : SExpAlg atom (BTExp $ SExpToBtAtom atom)
+  SExpToBtAlg (SXF a ns xs) =
+    InBTP (InBTA $ SBAtom a) $ InBTP (NatListToBtAlg ns) (SListToBtAlg xs)
+
+  public export
+  NatListToBtAlg : List Nat -> BTExp (SExpToBtAtom atom)
+  NatListToBtAlg [] = InBTA SBNil
+  NatListToBtAlg (n :: ns) = InBTP (InBTA $ SBNat n) (NatListToBtAlg ns)
+
+  public export
+  SListToBtAlg : List (BTExp $ SExpToBtAtom atom) -> BTExp (SExpToBtAtom atom)
+  SListToBtAlg [] = InBTA SBNil
+  SListToBtAlg (x :: xs) = InBTP x (SListToBtAlg xs)
+
+public export
+sexpToBt : SExp atom -> BTExp $ SExpToBtAtom atom
+sexpToBt = sexpCata SExpToBtAlg
+
+mutual
+  public export
+  btToSexp : BTExp (SExpToBtAtom atom) -> Maybe (SExp atom)
+  btToSexp (InBT x) = case x of
+    BTA a => case a of
+      SBAtom a' => Just $ InS a' [] []
+      SBNil => Nothing
+      SBNat n => Nothing
+    BTP (InBT y) (InBT z) => case y of
+      BTA a => case a of
+        SBAtom a' => case z of
+          BTP y' z' => case (btToNatList y', btToSexpList z') of
+            (Just ns, Just xs) => Just $ InS a' ns xs
+            _ => Nothing
+          _ => Nothing
+        _ => Nothing
+      BTP y z => Nothing
+
+  public export
+  btToNatList : BTExp (SExpToBtAtom atom) -> Maybe (List Nat)
+  btToNatList (InBT x) = case x of
+    BTA a => case a of
+      SBNil => Just []
+      _ => Nothing
+    BTP y z => case y of
+      InBT (BTA (SBNat n)) => case btToNatList z of
+        Just ns => Just $ n :: ns
+        Nothing => Nothing
+      _ => Nothing
+
+  public export
+  btToSexpList : BTExp (SExpToBtAtom atom) -> Maybe (List $ SExp atom)
+  btToSexpList (InBT x) = case x of
+    BTA a => case a of
+      SBNil => Just []
+      _ => Nothing
+    BTP y z => case (btToSexp y, btToSexpList z) of
+      (Just x, Just xs) => Just $ x :: xs
+      _ => Nothing
