@@ -132,19 +132,34 @@ SList : Type -> Type
 SList = List . SExp
 
 public export
-SExpAlg : Type -> Type -> Type
-SExpAlg atom a = SExpF atom a -> a
+record SXLAlg (atom, a, b : Type) where
+  constructor SXA
+  xalg : atom -> List Nat -> b -> a
+  sxnil : b
+  sxcons : a -> b -> b
 
 mutual
   public export
-  sexpCata : SExpAlg atom a -> SExp atom -> a
-  sexpCata alg (InSX x) = alg $ case x of
-    SXF a ns xs => SXF a ns $ slistCata alg xs
+  sxCata : SXLAlg atom a b -> SExp atom -> a
+  sxCata alg (InSX x) = case x of
+    SXF a ns xs => alg.xalg a ns $ slCata alg xs
 
   public export
-  slistCata : SExpAlg atom a -> SList atom -> List a
-  slistCata alg [] = []
-  slistCata alg (x :: xs) = sexpCata alg x :: slistCata alg xs
+  slCata : SXLAlg atom a b -> SList atom -> b
+  slCata alg [] = alg.sxnil
+  slCata alg (x :: xs) = alg.sxcons (sxCata alg x) (slCata alg xs)
+
+public export
+SExpAlg : Type -> Type -> Type
+SExpAlg atom a = SExpF atom a -> a
+
+public export
+sexpCata : SExpAlg atom a -> SExp atom -> a
+sexpCata alg = sxCata (SXA (\x, ns, l => alg $ SXF x ns l) [] (::))
+
+public export
+slistCata : SExpAlg atom a -> SList atom -> List a
+slistCata alg = slCata (SXA (\x, ns, l => alg $ SXF x ns l) [] (::))
 
 public export
 SExpShowAlg : Show atom => SExpAlg atom String
@@ -226,3 +241,21 @@ mutual
     BTP y z => case (btToSexp y, btToSexpList z) of
       (Just x, Just xs) => Just $ x :: xs
       _ => Nothing
+
+-- S-expressions whose lists of constants and sub-expressions are of
+-- lengths determined by their atoms.  (Each atom can be said to have
+-- an arity.)
+public export
+record SArity (atom : Type) where
+  constructor SAr
+  natAr : atom -> Nat
+  expAr : atom -> Nat
+
+public export
+CheckSExpArAlg: SArity atom -> SExpAlg atom Bool
+CheckSExpArAlg (SAr nar xar) (SXF a ns xs) =
+  all id xs && length ns == nar a && length xs == xar a
+
+public export
+checkSExpAr : SArity atom -> SExp atom -> Bool
+checkSExpAr ar = sexpCata (CheckSExpArAlg ar)
