@@ -943,12 +943,16 @@ OmDir : SliceObj (DPair OmType OmPos, OmType)
 OmDir ((posty ** i), dirty) = OmDirDep posty (dirty, i)
 
 public export
+OmSPFId : SlicePolyEndoFuncId OmType
+OmSPFId = (OmPos ** \i => (dirty : OmType ** OmDir (i, dirty)))
+
+public export
 OmSPF'' : SlicePolyEndoFunc'' OmType
 OmSPF'' = (OmPos ** OmDir .* MkPair)
 
 public export
 OmSPF : SlicePolyEndoFunc OmType
-OmSPF = SPFFromPrimes OmSPF''
+OmSPF = SlicePolyEndoFuncFromId OmSPFId
 
 public export
 OmMu : SliceObj OmType

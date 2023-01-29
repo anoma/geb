@@ -286,7 +286,7 @@ ValidSListAr ar l = HList (ValidSListArL ar l)
 mutual
   public export
   validSExpAr :
-    (ar : SArity atom) -> (x : SExp atom) -> Maybe (ValidSExpAr ar x)
+    (ar : SArity atom) -> (x : SExp atom) -> (Maybe . ValidSExpAr ar) x
   validSExpAr ar (InSX (SXF a ns xs)) =
     case
       (validSListAr ar xs,
@@ -299,7 +299,7 @@ mutual
 
   public export
   validSListAr :
-    (ar : SArity atom) -> (l : SList atom) -> Maybe (ValidSListAr ar l)
+    (ar : SArity atom) -> (l : SList atom) -> (Maybe . ValidSListAr ar) l
   validSListAr ar [] = Just HNil
   validSListAr ar (x :: xs) =
     case (validSExpAr ar x, validSListAr ar xs) of
