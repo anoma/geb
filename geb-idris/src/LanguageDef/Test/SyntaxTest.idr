@@ -265,13 +265,17 @@ languageDefSyntaxTest = do
   putStrLn "--------"
   putStrLn ""
   putStrLn $ "bt3412341 = " ++ show bt3412341
-  putStrLn $ "sn1 = " ++ show sn1
+  putStrLn $ "sn1 = "
+  putStrLn $ show sn1
   putStrLn $ "sn1 -> bt = " ++ (show $ sexpToBt sn1)
-  putStrLn $ "sx2 = " ++ show sx2
+  putStrLn $ "sx2 = "
+  putStrLn $ show sx2
   putStrLn $ "sx2 -> bt = " ++ (show $ sexpToBt sx2)
-  putStrLn $ "sx3 = " ++ show sx3
+  putStrLn $ "sx3 = "
+  putStrLn $ show sx3
   putStrLn $ "sx3 -> bt = " ++ (show $ sexpToBt sx3)
-  putStrLn $ "sx3 -> bt -> sexp = " ++ (show $ btToSexp $ sexpToBt sx3)
+  putStrLn $ "sx3 -> bt -> sexp = "
+  putStrLn $ show $ btToSexp $ sexpToBt sx3
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End SyntaxTest."

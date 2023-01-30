@@ -6,6 +6,18 @@ import Library.IdrisCategories
 %default total
 
 public export
+INDENT_DEPTH : Nat
+INDENT_DEPTH = 2
+
+public export
+indentLines : List String -> List String
+indentLines = map (indent INDENT_DEPTH)
+
+public export
+showLines : (a -> List String) -> a -> String
+showLines sh = trim . unlines . sh
+
+public export
 record SymSet where
   constructor SS
   slType : Type
@@ -45,7 +57,7 @@ mutual
   nsLines : Namespace -> List String
   nsLines (NS ls ss sub) =
     ("loc: " ++ show ls ++ "; sub: " ++ show ss) ::
-    map (indent 2) (nsVectLines sub)
+     indentLines (nsVectLines sub)
 
   public export
   nsVectLines : {n : Nat} -> Vect n Namespace -> List String
@@ -54,7 +66,7 @@ mutual
 
 public export
 Show Namespace where
-  show = trim . unlines . nsLines
+  show = showLines nsLines
 
 public export
 numSub : Namespace -> Nat
@@ -168,13 +180,21 @@ slcPreservesLen alg [] = Refl
 slcPreservesLen alg (x :: l) = cong S (slcPreservesLen alg l)
 
 public export
-SExpShowAlg : Show atom => SExpAlg atom String
-SExpShowAlg (SXF a ns xs) =
-  "(" ++ show a ++ ":" ++ show ns ++ ",[" ++ joinBy "," xs ++ "])"
+SExpLinesAlg : Show atom => SXLAlg atom (List String) (List String)
+SExpLinesAlg =
+  SXA
+    (\a, ns, xs =>
+      ("(" ++ show a ++ " : " ++ show ns) :: indentLines xs ++ [")"])
+    []
+    (++)
+
+public export
+sexpLines : Show atom => SExp atom -> List String
+sexpLines = sxCata SExpLinesAlg
 
 public export
 Show atom => Show (SExp atom) where
-  show = sexpCata SExpShowAlg
+  show = showLines sexpLines
 
 public export
 data SExpToBtAtom : Type -> Type where
