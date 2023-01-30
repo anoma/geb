@@ -127,6 +127,10 @@ slcPreservesLen : (alg : SExpAlg atom a) -> (l : SList atom) ->
 slcPreservesLen alg [] = Refl
 slcPreservesLen alg (x :: l) = cong S (slcPreservesLen alg l)
 
+-------------------
+---- Utilities ----
+-------------------
+
 public export
 SExpLinesAlg : Show atom => SXLAlg atom (List String) (List String)
 SExpLinesAlg =
