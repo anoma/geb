@@ -23,92 +23,6 @@ public export
 showLines : (a -> List String) -> a -> String
 showLines sh = trim . unlines . sh
 
------------------
------------------
----- Symbols ----
------------------
------------------
-
-public export
-record SymSet where
-  constructor SS
-  slType : Type
-  slSize : Nat
-  slEnc : FinDecEncoding slType slSize
-  slShow : slType -> String
-
-public export
-Show SymSet where
-  show (SS ty sz enc sh) = let _ = MkShow sh in show (finFToVect (fst enc))
-
-public export
-FinSS : Nat -> SymSet
-FinSS n = SS (Fin n) n (FinIdDecEncoding n) show
-
-public export
-VoidSS : SymSet
-VoidSS = FinSS 0
-
---------------------
---------------------
----- Namespaces ----
---------------------
---------------------
-
-public export
-record Namespace where
-  constructor NS
-  nsLocalSym : SymSet
-  nsSubSym : SymSet
-  nsSub : Vect nsSubSym.slSize Namespace
-
-public export
-FinNS : (nloc : Nat) -> {nsub : Nat} -> Vect nsub Namespace -> Namespace
-FinNS nloc {nsub} = NS (FinSS nloc) (FinSS nsub)
-
-public export
-VoidNS : Namespace
-VoidNS = FinNS 0 []
-
-mutual
-  public export
-  nsLines : Namespace -> List String
-  nsLines (NS ls ss sub) =
-    ("loc: " ++ show ls ++ "; sub: " ++ show ss) ::
-     indentLines (nsVectLines sub)
-
-  public export
-  nsVectLines : {n : Nat} -> Vect n Namespace -> List String
-  nsVectLines [] = []
-  nsVectLines (ns :: v) = nsLines ns ++ nsVectLines v
-
-public export
-Show Namespace where
-  show = showLines nsLines
-
-public export
-numSub : Namespace -> Nat
-numSub = slSize . nsSubSym
-
-public export
-LeafNS : SymSet -> Namespace
-LeafNS ss = NS ss VoidSS []
-
-public export
-data Subspace : Namespace -> Type where
-  This : {ns : Namespace} -> Subspace ns
-  Child : {ns : Namespace} ->
-    (i : ns.nsSubSym.slType) ->
-    Subspace (index (fst (snd ns.nsSubSym.slEnc i)) ns.nsSub) ->
-    Subspace ns
-
-public export
-(ns : Namespace) => Show (Subspace ns) where
-  show {ns} sub = "/" ++ showSub sub where
-    showSub : {ns : Namespace} -> Subspace ns -> String
-    showSub {ns} This = ""
-    showSub {ns} (Child i sub) = slShow ns.nsSubSym i ++ "/" ++ showSub sub
-
 ----------------------
 ----------------------
 ---- Binary trees ----
@@ -368,3 +282,89 @@ mutual
     case (validSExpAr ar x, validSListAr ar xs) of
       (Just v, Just vs) => Just (HCons v vs)
       _ => Nothing
+
+-----------------
+-----------------
+---- Symbols ----
+-----------------
+-----------------
+
+public export
+record SymSet where
+  constructor SS
+  slType : Type
+  slSize : Nat
+  slEnc : FinDecEncoding slType slSize
+  slShow : slType -> String
+
+public export
+Show SymSet where
+  show (SS ty sz enc sh) = let _ = MkShow sh in show (finFToVect (fst enc))
+
+public export
+FinSS : Nat -> SymSet
+FinSS n = SS (Fin n) n (FinIdDecEncoding n) show
+
+public export
+VoidSS : SymSet
+VoidSS = FinSS 0
+
+--------------------
+--------------------
+---- Namespaces ----
+--------------------
+--------------------
+
+public export
+record Namespace where
+  constructor NS
+  nsLocalSym : SymSet
+  nsSubSym : SymSet
+  nsSub : Vect nsSubSym.slSize Namespace
+
+public export
+FinNS : (nloc : Nat) -> {nsub : Nat} -> Vect nsub Namespace -> Namespace
+FinNS nloc {nsub} = NS (FinSS nloc) (FinSS nsub)
+
+public export
+VoidNS : Namespace
+VoidNS = FinNS 0 []
+
+mutual
+  public export
+  nsLines : Namespace -> List String
+  nsLines (NS ls ss sub) =
+    ("loc: " ++ show ls ++ "; sub: " ++ show ss) ::
+     indentLines (nsVectLines sub)
+
+  public export
+  nsVectLines : {n : Nat} -> Vect n Namespace -> List String
+  nsVectLines [] = []
+  nsVectLines (ns :: v) = nsLines ns ++ nsVectLines v
+
+public export
+Show Namespace where
+  show = showLines nsLines
+
+public export
+numSub : Namespace -> Nat
+numSub = slSize . nsSubSym
+
+public export
+LeafNS : SymSet -> Namespace
+LeafNS ss = NS ss VoidSS []
+
+public export
+data Subspace : Namespace -> Type where
+  This : {ns : Namespace} -> Subspace ns
+  Child : {ns : Namespace} ->
+    (i : ns.nsSubSym.slType) ->
+    Subspace (index (fst (snd ns.nsSubSym.slEnc i)) ns.nsSub) ->
+    Subspace ns
+
+public export
+(ns : Namespace) => Show (Subspace ns) where
+  show {ns} sub = "/" ++ showSub sub where
+    showSub : {ns : Namespace} -> Subspace ns -> String
+    showSub {ns} This = ""
+    showSub {ns} (Child i sub) = slShow ns.nsSubSym i ++ "/" ++ showSub sub
