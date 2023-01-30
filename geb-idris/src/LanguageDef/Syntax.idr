@@ -119,13 +119,17 @@ btCata alg (InBT e) = alg $ case e of
   BTP x y => BTP (btCata alg x) (btCata alg y)
 
 public export
-BTShowAlg : Show atom => BTAlg atom String
-BTShowAlg (BTA a) = show a
-BTShowAlg (BTP x y) = "(" ++ x ++ "," ++ y ++ ")"
+BTShowLinesAlg : Show atom => BTAlg atom (List String)
+BTShowLinesAlg (BTA a) = [show a]
+BTShowLinesAlg (BTP x y) = ["::"] ++ indentLines x ++ indentLines y
+
+public export
+btLines : Show atom => BTExp atom -> List String
+btLines = btCata BTShowLinesAlg
 
 public export
 Show atom => Show (BTExp atom) where
-  show = btCata BTShowAlg
+  show = showLines btLines
 
 public export
 data SExpF : Type -> Type -> Type where
