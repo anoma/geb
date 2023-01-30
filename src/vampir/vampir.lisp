@@ -125,3 +125,23 @@ of ()'s for any non normal form"
 
 (defmethod print-object ((const spc:constant) stream)
   (format stream "~A" (spc:const const)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Boolean
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defparameter *bool*
+  (let ((x-wire (make-wire :var :x))
+        (one    (make-constant :const 1)))
+    (make-alias
+     :name   :bool
+     :inputs (list :x)
+     :body   (list (make-equality
+                    :lhs (make-infix :op :*
+                                     :lhs x-wire
+                                     :rhs (make-infix :lhs x-wire :rhs one :op :-))
+                    :rhs (make-constant :const 0))
+                   x-wire))))
+
+(defun bool (x)
+  (make-application :func :bool :arguments (list x)))

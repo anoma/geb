@@ -32,7 +32,8 @@
 
 (defpackage #:geb.vampir
   (:documentation "Provides a vampir representation")
-  (:use #:common-lisp #:serapeum)
+  (:use #:common-lisp #:serapeum #:geb.vampir.spec)
+  (:shadowing-import-from #:geb.vampir.spec #:op #:tuple)
   (:shadow :=)
   (:local-nicknames (#:spc #:geb.vampir.spec))
   (:export :extract))
