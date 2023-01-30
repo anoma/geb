@@ -165,15 +165,30 @@ sub2 = Child (natToFinLT 3) This
 sub3 : Subspace NStree
 sub3 = Child (natToFinLT 3) $ Child (natToFinLT 0) $ Child (natToFinLT 0) This
 
------------------
------------------
----- BT/SExp ----
------------------
------------------
+----------------------
+----------------------
+---- Binary trees ----
+----------------------
+----------------------
 
-------------
----- BT ----
-------------
+-------------------
+---- Utilities ----
+-------------------
+
+btShowFull : Show atom => String -> BTExp atom -> IO ()
+btShowFull name x = do
+  putStrLn $ name
+  putStrLn $ show x
+
+btShowFullSTerminated : Show atom => (String, BTExp atom) -> IO ()
+btShowFullSTerminated = showTerminated btShowFull
+
+btShowFullList : Show atom => List (String, BTExp atom) -> IO ()
+btShowFullList = showList btShowFull
+
+--------------------
+---- Test cases ----
+--------------------
 
 bt1 : BTExp Nat
 bt1 = InBTA 1
@@ -203,8 +218,29 @@ bt3412341 : BTExp Nat
 bt3412341 = InBTP bt34 bt12341
 
 --------------
+--------------
 ---- SExp ----
 --------------
+--------------
+
+-------------------
+---- Utilities ----
+-------------------
+
+sexpShowFull : Show atom => String -> SExp atom -> IO ()
+sexpShowFull name x = do
+  putStrLn $ name
+  putStrLn $ show x
+
+sexpShowFullSTerminated : Show atom => (String, SExp atom) -> IO ()
+sexpShowFullSTerminated = showTerminated sexpShowFull
+
+sexpShowFullList : Show atom => List (String, SExp atom) -> IO ()
+sexpShowFullList = showList sexpShowFull
+
+--------------------
+---- Test cases ----
+--------------------
 
 sn1 : SExp Nat
 sn1 = InS 1 [1] []
@@ -214,6 +250,9 @@ sx2 = InS 1 [1, 2, 3] [InS 2 [2] [], InS 3 [] []]
 
 sx3 : SExp Nat
 sx3 = InS 4 [4, 8, 12] [sx2, sn1, InS 0 [] []]
+
+sx3' : SExp Nat
+sx3' = fromIsJust {x=(btToSexp $ sexpToBt sx3)} Refl
 
 ----------------------------------
 ----------------------------------
@@ -264,18 +303,23 @@ languageDefSyntaxTest = do
   putStrLn "BT/SExp:"
   putStrLn "--------"
   putStrLn ""
-  putStrLn $ "bt3412341 = " ++ show bt3412341
-  putStrLn $ "sn1 = "
-  putStrLn $ show sn1
-  putStrLn $ "sn1 -> bt = " ++ (show $ sexpToBt sn1)
-  putStrLn $ "sx2 = "
-  putStrLn $ show sx2
-  putStrLn $ "sx2 -> bt = " ++ (show $ sexpToBt sx2)
-  putStrLn $ "sx3 = "
-  putStrLn $ show sx3
-  putStrLn $ "sx3 -> bt = " ++ (show $ sexpToBt sx3)
-  putStrLn $ "sx3 -> bt -> sexp = "
-  putStrLn $ show $ btToSexp $ sexpToBt sx3
+  btShowFullList
+    [
+        ("bt3412341", bt3412341)
+    ]
+  btShowFullList
+    [
+        ("sn1 -> bt", sexpToBt sn1)
+      , ("sx2 -> bt", sexpToBt sx2)
+      , ("sx3 -> bt", sexpToBt sx3)
+    ]
+  sexpShowFullList
+    [
+        ("sn1", sn1)
+      , ("sx2", sx2)
+      , ("sx3", sx3)
+      , ("sx3 -> bt -> sexp", sx3')
+    ]
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End SyntaxTest."
