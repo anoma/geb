@@ -37,7 +37,7 @@ Example:
                     :obj obj)
         obj)))
 
-(-> cleave (substmorph &rest substmorph) pair)
+(-> cleave (<substmorph> &rest <substmorph>) pair)
 (defun cleave (v1 &rest values)
   "Applies each morphism to the object in turn."
   (if (null values)
@@ -47,9 +47,36 @@ Example:
 ;; Should this be in a geb.utils: package or does it deserve to be in
 ;; the main geb package?
 
+(-> commutes (<substobj> <substobj>) pair)
 (defun commutes (x y)
   (pair (<-right x y) (<-left x y)))
 
+
+;; TODO easy tests to make for it, just do it!
+(-> commutes-left (<substmorph>) comp)
+(defun commutes-left (morph)
+  "swap the input [domain][DOM] of the given [\\<SUBSTMORPH\\>]
+
+In order to swap the [domain][DOM] we expect the [\\<SUBSTMORPH\\>] to
+be a [PROD][type]
+
+Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` [\\<SUBSTOBJ\\>]
+
+then: `(commutes-left (dom morph)) ≡ (prod y x)`
+
+```
+Γ, f : x × y → a
+------------------------------
+(commutes-left f) : y × x → a
+```
+"
+  (let ((dom (dom morph)))
+    (if (not (typep dom 'prod))
+        (error "object ~A need to be of a product type, however it is of ~A"
+               morph dom)
+        (comp morph (commutes (mcadr dom) (mcar dom))))))
+
+(-> !-> (substobj substobj) substobj)
 (defun !-> (a b)
   (etypecase-of substobj a
     (so0    so1)
@@ -61,8 +88,9 @@ Example:
                  (!-> (mcadr a) b)))))
 
 (defgeneric so-card-alg (obj)
-  (:documentation "Gets the cardinality of the given object"))
+  (:documentation "Gets the cardinality of the given object, returns a FIXNUM"))
 
+;; (-> so-card-alg (<substobj>) fixnum)
 (defmethod so-card-alg ((obj <substobj>))
   ;; we don't use the cata morphism so here we are. Doesn't give me
   ;; much extra
@@ -121,48 +149,50 @@ Example:
         (<-right (prod x y) z)))
 
 (defgeneric dom (substmorph)
-  (:documentation "Grabs the domain of the morphism"))
+  (:documentation "Grabs the domain of the morphism. Returns a [\\<SUBSTOBJ\\>]"))
 
 (defgeneric codom (substmorph)
-  (:documentation "Grabs the codomain of the morphism"))
+  (:documentation "Grabs the codomain of the morphism. Returns a [\\<SUBSTOBJ\\>]"))
 
 (defmethod dom ((x <substmorph>))
-  (typecase-of substmorph x
-    (init         so0)
-    (terminal     (obj x))
-    (alias        (dom (obj x)))
-    (substobj     x)
-    (inject-left  (mcar x))
-    (inject-right (mcadr x))
-    (comp         (dom (mcadr x)))
-    (pair         (dom (mcar x)))
-    (distribute   (prod (mcar x) (coprod (mcadr x) (mcaddr x))))
-    (case         (coprod (dom (mcar x)) (dom (mcadr x))))
-    ((or project-right
-         project-left)
-     (prod (mcar x) (mcadr x)))
-    (otherwise
-     (subclass-responsibility x))))
+  (assure substobj
+    (typecase-of substmorph x
+      (init         so0)
+      (terminal     (obj x))
+      (alias        (dom (obj x)))
+      (substobj     x)
+      (inject-left  (mcar x))
+      (inject-right (mcadr x))
+      (comp         (dom (mcadr x)))
+      (pair         (dom (mcar x)))
+      (distribute   (prod (mcar x) (coprod (mcadr x) (mcaddr x))))
+      (case         (coprod (dom (mcar x)) (dom (mcadr x))))
+      ((or project-right
+           project-left)
+       (prod (mcar x) (mcadr x)))
+      (otherwise
+       (subclass-responsibility x)))))
 
 (defmethod codom ((x <substmorph>))
-  (typecase-of substmorph x
-    (alias         (codom (obj x)))
-    (terminal      so1)
-    (init          (obj x))
-    (substobj      x)
-    (project-left  (mcar x))
-    (project-right (mcadr x))
-    (comp          (codom (mcar x)))
-    (case          (codom (mcar x)))
-    (pair          (prod (codom (mcar x))
-                         (codom (mcdr x))))
-    (distribute    (coprod (prod (mcar x) (mcadr x))
-                           (prod (mcar x) (mcaddr x))))
-    ((or inject-left
-         inject-right)
-     (coprod (mcar x) (mcadr x)))
-    (otherwise
-     (subclass-responsibility x))))
+  (assure substobj
+    (typecase-of substmorph x
+      (alias         (codom (obj x)))
+      (terminal      so1)
+      (init          (obj x))
+      (substobj      x)
+      (project-left  (mcar x))
+      (project-right (mcadr x))
+      (comp          (codom (mcar x)))
+      (case          (codom (mcar x)))
+      (pair          (prod (codom (mcar x))
+                           (codom (mcdr x))))
+      (distribute    (coprod (prod (mcar x) (mcadr x))
+                             (prod (mcar x) (mcaddr x))))
+      ((or inject-left
+           inject-right)
+       (coprod (mcar x) (mcadr x)))
+      (otherwise
+       (subclass-responsibility x)))))
 
 (defun gather (x y z)
   (pair (mcase (<-left x y) (<-left x z))
