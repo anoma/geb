@@ -22,6 +22,7 @@
 ;;
 ;; to see what that style of code is like as apposed to this.
 (defmethod to-vampir ((obj <poly>) value)
+  (declare (ignore value))
   (subclass-responsibility obj))
 
 (-> direct-fields-to-list-vampir (geb.mixins:direct-pointwise-mixin) list)
@@ -67,10 +68,25 @@
              (to-vampir (mcadr obj) value)))
 
 (defmethod to-vampir ((obj mod) value)
+  (declare (ignore obj value))
   (error "mod logic not in yet"))
+
+(defun infix (op lhs rhs)
+  (vamp:make-infix :op op :lhs lhs :rhs rhs))
 
 (defmethod to-vampir ((obj if-zero) value)
-  (error "mod logic not in yet"))
+  "The PREDICATE that comes in must be 1 or 0 for the formula to work out."
+  ;; need to optimize this, we are computing predicate twice which is
+  ;; very bad
+  (multiple-value-bind (predicate then else) obj
+    (let ((pred (to-vampir predicate value)))
+      ;; bool × then + (1 - bool) × else
+      (infix :+
+             (infix :* pred (to-vampir then value))
+             (infix :*
+                    (infix :- (vamp:make-constant :const 1) pred)
+                    (to-vampir else value))))))
 
 (defmethod to-vampir ((obj if-lt) value)
+  (declare (ignore obj value))
   (error "mod logic not in yet"))
