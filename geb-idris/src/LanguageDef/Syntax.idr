@@ -275,15 +275,6 @@ record SArity (atom : Type) where
   expAr : atom -> Nat
 
 public export
-CheckSExpArAlg: SArity atom -> SExpAlg atom Bool
-CheckSExpArAlg ar (SXF a ns xs) =
-  all id xs && length ns == ar.natAr a && length xs == ar.expAr a
-
-public export
-checkSExpAr : SArity atom -> SExp atom -> Bool
-checkSExpAr ar = sexpCata (CheckSExpArAlg ar)
-
-public export
 ValidSExpLenAlg : SArity atom -> SExpAlg atom Type
 ValidSExpLenAlg ar (SXF a ns xs) =
   (length ns = ar.natAr a, length xs = ar.expAr a)
