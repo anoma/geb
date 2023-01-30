@@ -183,8 +183,7 @@ public export
 SExpLinesAlg : Show atom => SXLAlg atom (List String) (List String)
 SExpLinesAlg =
   SXA
-    (\a, ns, xs =>
-      ("(" ++ show a ++ " : " ++ show ns) :: indentLines xs ++ [")"])
+    (\a, ns, xs => (show a ++ " : " ++ show ns) :: indentLines xs)
     []
     (++)
 
