@@ -80,6 +80,18 @@ data SExpF : Type -> Type -> Type where
   SXF : atom -> List Nat -> List xty -> SExpF atom xty
 
 public export
+sxfAtom : SExpF atom xty -> atom
+sxfAtom (SXF a _ _) = a
+
+public export
+sxfConsts : SExpF atom xty -> List Nat
+sxfConsts (SXF _ ns _) = ns
+
+public export
+sxfSubexprs : SExpF atom xty -> List xty
+sxfSubexprs (SXF _ _ xs) = xs
+
+public export
 data SExp : Type -> Type where
   InSX : SExpF atom (SExp atom) -> SExp atom
 
@@ -229,6 +241,30 @@ mutual
 -------------------------------
 -------------------------------
 
+---------------------------------------------
+---- General induction for s-expressions ----
+---------------------------------------------
+
+public export
+SExpGenTypeAlg : SExpAlg atom Type -> SExpAlg atom Type
+SExpGenTypeAlg alg x = (HList $ sxfSubexprs x, alg x)
+
+public export
+sexpGenTypeCata : SExpAlg atom Type -> SExp atom -> Type
+sexpGenTypeCata = sexpCata . SExpGenTypeAlg
+
+public export
+slistGenTypeCataL : SExpAlg atom Type -> SList atom -> List Type
+slistGenTypeCataL = slistCata . SExpGenTypeAlg
+
+public export
+slistGenTypeCata : SExpAlg atom Type -> SList atom -> Type
+slistGenTypeCata alg l = HList (slistGenTypeCataL alg l)
+
+-----------------
+---- Arities ----
+-----------------
+
 -- S-expressions whose lists of constants and sub-expressions are of
 -- lengths determined by their atoms.  (Each atom can be said to have
 -- an arity.)
@@ -248,21 +284,25 @@ checkSExpAr : SArity atom -> SExp atom -> Bool
 checkSExpAr ar = sexpCata (CheckSExpArAlg ar)
 
 public export
+ValidSExpLenAlg : SArity atom -> SExpAlg atom Type
+ValidSExpLenAlg ar (SXF a ns xs) =
+  (length ns = ar.natAr a, length xs = ar.expAr a)
+
+public export
 ValidSExpArAlg: SArity atom -> SExpAlg atom Type
-ValidSExpArAlg ar (SXF a ns xs) =
-  (HList xs, length ns = ar.natAr a, length xs = ar.expAr a)
+ValidSExpArAlg = SExpGenTypeAlg . ValidSExpLenAlg
 
 public export
 ValidSExpAr : SArity atom -> SExp atom -> Type
-ValidSExpAr ar = sexpCata (ValidSExpArAlg ar)
+ValidSExpAr = sexpGenTypeCata . ValidSExpLenAlg
 
 public export
 ValidSListArL : SArity atom -> SList atom -> List Type
-ValidSListArL ar = slistCata (ValidSExpArAlg ar)
+ValidSListArL = slistGenTypeCataL . ValidSExpLenAlg
 
 public export
 ValidSListAr : SArity atom -> SList atom -> Type
-ValidSListAr ar l = HList (ValidSListArL ar l)
+ValidSListAr = slistGenTypeCata . ValidSExpLenAlg
 
 mutual
   public export
