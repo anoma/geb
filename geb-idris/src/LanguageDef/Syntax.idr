@@ -5,6 +5,12 @@ import Library.IdrisCategories
 
 %default total
 
+----------------------------------
+----------------------------------
+---- General syntax utilities ----
+----------------------------------
+----------------------------------
+
 public export
 INDENT_DEPTH : Nat
 INDENT_DEPTH = 2
@@ -16,6 +22,12 @@ indentLines = map (indent INDENT_DEPTH)
 public export
 showLines : (a -> List String) -> a -> String
 showLines sh = trim . unlines . sh
+
+-----------------
+-----------------
+---- Symbols ----
+-----------------
+-----------------
 
 public export
 record SymSet where
@@ -36,6 +48,12 @@ FinSS n = SS (Fin n) n (FinIdDecEncoding n) show
 public export
 VoidSS : SymSet
 VoidSS = FinSS 0
+
+--------------------
+--------------------
+---- Namespaces ----
+--------------------
+--------------------
 
 public export
 record Namespace where
@@ -91,6 +109,12 @@ public export
     showSub {ns} This = ""
     showSub {ns} (Child i sub) = slShow ns.nsSubSym i ++ "/" ++ showSub sub
 
+----------------------
+----------------------
+---- Binary trees ----
+----------------------
+----------------------
+
 public export
 data BTExpF : Type -> Type -> Type where
   BTA : atom -> BTExpF atom btty
@@ -130,6 +154,12 @@ btLines = btCata BTShowLinesAlg
 public export
 Show atom => Show (BTExp atom) where
   show = showLines btLines
+
+-----------------------
+-----------------------
+---- S-expressions ----
+-----------------------
+-----------------------
 
 public export
 data SExpF : Type -> Type -> Type where
@@ -211,6 +241,10 @@ Show atom => Show (SExpToBtAtom atom) where
   show SBNil = "[]"
   show (SBNat n) = show n
 
+-------------------------------------------------
+---- S-expression <-> binary-tree conversion ----
+-------------------------------------------------
+
 mutual
   public export
   SExpToBtAlg : SExpAlg atom (BTExp $ SExpToBtAtom atom)
@@ -270,6 +304,12 @@ mutual
     BTP y z => case (btToSexp y, btToSexpList z) of
       (Just x, Just xs) => Just $ x :: xs
       _ => Nothing
+
+-------------------------------
+-------------------------------
+---- Refined s-expressions ----
+-------------------------------
+-------------------------------
 
 -- S-expressions whose lists of constants and sub-expressions are of
 -- lengths determined by their atoms.  (Each atom can be said to have
