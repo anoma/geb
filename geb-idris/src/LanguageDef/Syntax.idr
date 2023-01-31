@@ -126,6 +126,10 @@ SExpAlg : Type -> Type -> Type
 SExpAlg atom a = SExpF atom a -> a
 
 public export
+SExpTypeAlg : Type -> Type
+SExpTypeAlg atom = SExpAlg atom Type
+
+public export
 SExpConsAlg : SExpAlg atom a -> SXLAlg atom a (List a)
 SExpConsAlg alg = SXA (\x, ns, l => alg $ SXF x ns l) [] (::)
 
@@ -275,24 +279,24 @@ mutual
 ---------------------------------------------
 
 public export
-SExpGenTypeAlg : SExpAlg atom Type -> SExpAlg atom Type
+SExpGenTypeAlg : SExpTypeAlg atom -> SExpTypeAlg atom
 SExpGenTypeAlg alg x = (HList $ sxfSubexprs x, alg x)
 
 public export
-sexpGenTypeCata : SExpAlg atom Type -> SExp atom -> Type
+sexpGenTypeCata : SExpTypeAlg atom -> SExp atom -> Type
 sexpGenTypeCata = sexpCata . SExpGenTypeAlg
 
 public export
-slistGenTypeCataL : SExpAlg atom Type -> SList atom -> List Type
+slistGenTypeCataL : SExpTypeAlg atom -> SList atom -> List Type
 slistGenTypeCataL = slistCata . SExpGenTypeAlg
 
 public export
-slistGenTypeCata : SExpAlg atom Type -> SList atom -> Type
+slistGenTypeCata : SExpTypeAlg atom -> SList atom -> Type
 slistGenTypeCata alg l = HList (slistGenTypeCataL alg l)
 
 public export
 SExpDepAlg : {atom : Type} ->
-  SExpAlg atom Type -> SExpMaybeAlg atom (SExp atom) -> Type
+  SExpTypeAlg atom -> SExpMaybeAlg atom (SExp atom) -> Type
 SExpDepAlg alg paramAlg =
   (a : atom) -> (ns : List Nat) -> (xs : SList atom) ->
   (0 _ : slistGenTypeCata alg xs) ->
@@ -303,7 +307,7 @@ SExpDepAlg alg paramAlg =
 mutual
   public export
   sexpGenTypeDec : {atom : Type} ->
-    (alg : SExpAlg atom Type) ->
+    (alg : SExpTypeAlg atom) ->
     (paramAlg : SExpMaybeAlg atom (SExp atom)) ->
     (step : SExpDepAlg alg paramAlg) ->
     (x : SExp atom) ->
@@ -320,7 +324,7 @@ mutual
 
   public export
   slistGenTypeDec : {atom : Type} ->
-    (alg : SExpAlg atom Type) ->
+    (alg : SExpTypeAlg atom) ->
     (paramAlg : SExpMaybeAlg atom (SExp atom)) ->
     (step : SExpDepAlg alg paramAlg) ->
     (l : SList atom) ->
@@ -332,6 +336,18 @@ mutual
        slistGenTypeDec alg paramAlg step xs) of
         (Just v, Just vs) => Just (HCons v vs)
         _ => Nothing
+
+---------------------------
+---- Per-atom algebras ----
+---------------------------
+
+public export
+SExpAtomAlg : Type -> Type -> Type
+SExpAtomAlg atom a = List Nat -> List a -> a
+
+public export
+SExpAlgFromAtoms : (atom -> SExpAtomAlg atom a) -> SExpAlg atom a
+SExpAlgFromAtoms alg (SXF a ns xs) = alg a ns xs
 
 -----------------
 ---- Arities ----
@@ -347,12 +363,12 @@ record SArity (atom : Type) where
   expAr : atom -> Nat
 
 public export
-ValidSExpLenAlg : SArity atom -> SExpAlg atom Type
+ValidSExpLenAlg : SArity atom -> SExpTypeAlg atom
 ValidSExpLenAlg ar (SXF a ns xs) =
   (length ns = ar.natAr a, length xs = ar.expAr a)
 
 public export
-ValidSExpArAlg: SArity atom -> SExpAlg atom Type
+ValidSExpArAlg: SArity atom -> SExpTypeAlg atom
 ValidSExpArAlg = SExpGenTypeAlg . ValidSExpLenAlg
 
 public export
