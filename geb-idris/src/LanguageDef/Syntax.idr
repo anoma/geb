@@ -295,7 +295,7 @@ SExpDepAlg : {atom : Type} ->
   SExpAlg atom Type -> SExpMaybeAlg atom (SExp atom) -> Type
 SExpDepAlg alg paramAlg =
   (a : atom) -> (ns : List Nat) -> (xs : SList atom) ->
-  slistGenTypeCata alg xs ->
+  (0 _ : slistGenTypeCata alg xs) ->
   (params : SList atom) ->
   slistMaybeCata paramAlg xs = Just params ->
   Maybe (alg (SXF a ns (slistGenTypeCataL alg xs)))
