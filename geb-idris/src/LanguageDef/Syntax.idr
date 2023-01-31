@@ -299,14 +299,16 @@ mutual
      slistGenTypeCata alg xs ->
      (params : SList atom) ->
      slistMaybeCata paramAlg xs = Just params ->
-     alg (SXF a ns (slistGenTypeCataL alg xs))) ->
+     Maybe (alg (SXF a ns (slistGenTypeCataL alg xs)))) ->
     (x : SExp atom) ->
     Maybe (sexpGenTypeCata alg x)
   sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs)) with
     (slistGenTypeDec alg paramAlg step xs, slistMaybeCata paramAlg xs) proof prf
       sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs))
         | (Just vxs, Just params) =
-          Just (vxs, step a ns xs vxs params $ sndEq prf)
+          case step a ns xs vxs params (sndEq prf) of
+            Just ty => Just (vxs, ty)
+            _ => Nothing
       sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs))
         | _ = Nothing
 
@@ -318,7 +320,7 @@ mutual
      slistGenTypeCata alg xs ->
      (params : SList atom) ->
      slistMaybeCata paramAlg xs = Just params ->
-     alg (SXF a ns (slistGenTypeCataL alg xs))) ->
+     Maybe (alg (SXF a ns (slistGenTypeCataL alg xs)))) ->
     (l : SList atom) ->
     Maybe (slistGenTypeCata alg l)
   slistGenTypeDec alg paramAlg step [] = Just HNil
@@ -363,28 +365,21 @@ public export
 ValidSListAr : SArity atom -> SList atom -> Type
 ValidSListAr = slistGenTypeCata . ValidSExpLenAlg
 
-mutual
-  public export
-  validSExpAr :
-    (ar : SArity atom) -> (x : SExp atom) -> (Maybe . ValidSExpAr ar) x
-  validSExpAr ar (InSX (SXF a ns xs)) =
-    case
-      (validSListAr ar xs,
-       decEq (length ns) (ar.natAr a),
-       decEq (length xs) (ar.expAr a))
-        of
-      (Just vxs, Yes vnl, Yes vxl) =>
-        Just (vxs, vnl, trans (slcPreservesLen (ValidSExpArAlg ar) xs) vxl)
-      _ => Nothing
-
-  public export
-  validSListAr :
-    (ar : SArity atom) -> (l : SList atom) -> (Maybe . ValidSListAr ar) l
-  validSListAr ar [] = Just HNil
-  validSListAr ar (x :: xs) =
-    case (validSExpAr ar x, validSListAr ar xs) of
-      (Just v, Just vs) => Just (HCons v vs)
-      _ => Nothing
+public export
+validSExpAr : {atom : Type} ->
+  (ar : SArity atom) -> (x : SExp atom) -> (Maybe . ValidSExpAr ar) x
+validSExpAr ar =
+  sexpGenTypeDec
+    (ValidSExpLenAlg ar)
+    (Just . InSX)
+    (\a, ns, xs, tys, params, paramseq =>
+      case
+       (decEq (length ns) (ar.natAr a),
+        decEq (length xs) (ar.expAr a)) of
+        (Yes nseq, Yes xseq) =>
+          Just (nseq, trans (slcPreservesLen (ValidSExpArAlg ar) xs) xseq)
+        _ =>
+         Nothing)
 
 -----------------
 -----------------
