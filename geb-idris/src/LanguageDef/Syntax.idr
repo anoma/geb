@@ -126,18 +126,47 @@ SExpAlg : Type -> Type -> Type
 SExpAlg atom a = SExpF atom a -> a
 
 public export
+SExpConsAlg : SExpAlg atom a -> SXLAlg atom a (List a)
+SExpConsAlg alg = SXA (\x, ns, l => alg $ SXF x ns l) [] (::)
+
+public export
 sexpCata : SExpAlg atom a -> SExp atom -> a
-sexpCata alg = sxCata (SXA (\x, ns, l => alg $ SXF x ns l) [] (::))
+sexpCata = sxCata . SExpConsAlg
 
 public export
 slistCata : SExpAlg atom a -> SList atom -> List a
-slistCata alg = slCata (SXA (\x, ns, l => alg $ SXF x ns l) [] (::))
+slistCata = slCata . SExpConsAlg
 
 public export
 slcPreservesLen : (alg : SExpAlg atom a) -> (l : SList atom) ->
   length (slistCata alg l) = length l
 slcPreservesLen alg [] = Refl
 slcPreservesLen alg (x :: l) = cong S (slcPreservesLen alg l)
+
+public export
+SExpMaybeAlg : Type -> Type -> Type
+SExpMaybeAlg atom a = SExpF atom a -> Maybe a
+
+public export
+SExpAlgFromMaybe :
+  (SExpF atom a -> Maybe a) -> SXLAlg atom (Maybe a) (Maybe (List a))
+SExpAlgFromMaybe alg =
+  SXA
+    (\x, ns, ml => case ml of
+      Just l => alg $ SXF x ns l
+      _ => Nothing)
+    (Just [])
+    (\mx, ml => case (mx, ml) of
+      (Just x, Just l) => Just (x :: l)
+      _ => Nothing)
+
+public export
+sexpMaybeCata : SExpMaybeAlg atom a -> SExp atom -> Maybe a
+sexpMaybeCata = sxCata . SExpAlgFromMaybe
+
+public export
+slistMaybeCata : SExpMaybeAlg atom a -> SList atom -> Maybe (List a)
+slistMaybeCata = slCata . SExpAlgFromMaybe
 
 -------------------
 ---- Utilities ----
@@ -260,6 +289,45 @@ slistGenTypeCataL = slistCata . SExpGenTypeAlg
 public export
 slistGenTypeCata : SExpAlg atom Type -> SList atom -> Type
 slistGenTypeCata alg l = HList (slistGenTypeCataL alg l)
+
+mutual
+  public export
+  sexpGenTypeDec : {atom : Type} ->
+    (alg : SExpAlg atom Type) ->
+    (paramAlg : SExpMaybeAlg atom (SExp atom)) ->
+    (step : (a : atom) -> (ns : List Nat) -> (xs : SList atom) ->
+     slistGenTypeCata alg xs ->
+     (params : SList atom) ->
+     slistMaybeCata paramAlg xs = Just params ->
+     alg (SXF a ns (slistGenTypeCataL alg xs))) ->
+    (x : SExp atom) ->
+    Maybe (sexpGenTypeCata alg x)
+  sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs)) with
+    (slistGenTypeDec alg paramAlg step xs, slistMaybeCata paramAlg xs) proof prf
+      sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs))
+        | (Just vxs, Just params) =
+          Just (vxs, step a ns xs vxs params $ sndEq prf)
+      sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs))
+        | _ = Nothing
+
+  public export
+  slistGenTypeDec : {atom : Type} ->
+    (alg : SExpAlg atom Type) ->
+    (paramAlg : SExpMaybeAlg atom (SExp atom)) ->
+    (step : (a : atom) -> (ns : List Nat) -> (xs : SList atom) ->
+     slistGenTypeCata alg xs ->
+     (params : SList atom) ->
+     slistMaybeCata paramAlg xs = Just params ->
+     alg (SXF a ns (slistGenTypeCataL alg xs))) ->
+    (l : SList atom) ->
+    Maybe (slistGenTypeCata alg l)
+  slistGenTypeDec alg paramAlg step [] = Just HNil
+  slistGenTypeDec alg paramAlg step (x :: xs) =
+    case
+      (sexpGenTypeDec alg paramAlg step x,
+       slistGenTypeDec alg paramAlg step xs) of
+        (Just v, Just vs) => Just (HCons v vs)
+        _ => Nothing
 
 -----------------
 ---- Arities ----
