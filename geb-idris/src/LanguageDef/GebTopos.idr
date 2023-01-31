@@ -256,9 +256,3 @@ muTFEq : {0 nty : Nat} ->
   (tf : TypeFamily nty) -> (i : Fin nty) ->
   (x, x' : MuTF {nty} tf i) -> Dec (x = x')
 muTFEq {nty} tf i x = ?muTFeq_hole
-
-public export
-record ADT0Constructor where
-  constructor ADT0Con
-  constBounds : List Nat
-  numDir : Nat

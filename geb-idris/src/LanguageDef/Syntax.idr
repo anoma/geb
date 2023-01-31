@@ -268,6 +268,56 @@ mutual
       (Just x, Just xs) => Just $ x :: xs
       _ => Nothing
 
+--------------------------------
+---- Pairs of s-expressions ----
+--------------------------------
+
+public export
+SExpDecEqNTAlg : Type -> Type
+SExpDecEqNTAlg atom = NaturalTransformation DecEqPred (DecEqPred . SExpF atom)
+
+public export
+sexpDecEqNTAlg : DecEqPred atom -> SExpDecEqNTAlg atom
+sexpDecEqNTAlg deqatom a deqa (SXF e ns xs) (SXF e' ns' xs') =
+  case deqatom e e' of
+    Yes Refl => case decEq ns ns' of
+      Yes Refl => case decEq xs xs' of
+        Yes Refl => Yes Refl
+        No neq => No $ \eq => case eq of Refl => neq Refl
+      No neq => No $ \eq => case eq of Refl => neq Refl
+    No neq => No $ \eq => case eq of Refl => neq Refl
+  where
+    DecEq a where
+      decEq = deqa
+
+mutual
+  public export
+  sexpDecEq : {atom : Type} -> DecEqPred atom -> DecEqPred (SExp atom)
+  sexpDecEq deq (InSX (SXF a ns xs)) (InSX (SXF a' ns' xs')) =
+    case deq a a' of
+      Yes Refl => case decEq ns ns' of
+        Yes Refl => case slistDecEq deq xs xs' of
+          Yes Refl => Yes Refl
+          No neq => No $ \eq => case eq of Refl => neq Refl
+        No neq => No $ \eq => case eq of Refl => neq Refl
+      No neq => No $ \eq => case eq of Refl => neq Refl
+
+  public export
+  slistDecEq : {atom : Type} -> DecEqPred atom -> DecEqPred (SList atom)
+  slistDecEq deq [] [] = Yes Refl
+  slistDecEq deq [] (x :: xs) = No $ \eq => case eq of Refl impossible
+  slistDecEq deq (x :: xs) [] = No $ \eq => case eq of Refl impossible
+  slistDecEq deq (x :: xs) (x' :: xs') =
+    case sexpDecEq deq x x' of
+      Yes Refl => case slistDecEq deq xs xs' of
+        Yes Refl => Yes Refl
+        No neq => No $ \eq => case eq of Refl => neq Refl
+      No neq => No $ \eq => case eq of Refl => neq Refl
+
+public export
+(atom : Type) => DecEq atom => DecEq (SExp atom) where
+  decEq = sexpDecEq decEq
+
 -------------------------------
 -------------------------------
 ---- Refined s-expressions ----
