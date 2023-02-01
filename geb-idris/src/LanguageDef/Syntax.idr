@@ -449,6 +449,29 @@ validSExpAr : {atom : Type} ->
 validSExpAr ar =
   sexpGenTypeDec (ValidSExpLenAlg ar) (Just . InSX) (ValidSExpDepAlg ar)
 
+-------------------------------------------------
+---- S-expressions as terms of type families ----
+-------------------------------------------------
+
+public export
+record SExpFamSig (tys : Type) where
+  constructor SFamSig
+  sfNumTy : Nat
+  sfParam : tys -> Maybe tys
+  sfDec : FinDecoder tys sfNumTy
+  sfEnc : NatEncoder sfDec
+  0 sfParamOrdered :
+    (ty : tys) -> (j : IsJustTrue (sfParam ty)) ->
+    LT (fst $ sfEnc $ fromIsJust {x=(sfParam ty)} j) (fst $ sfEnc ty)
+
+public export
+record SExpFam (atom, tys : Type) where
+  constructor SFam
+  sfSig : SExpFamSig tys
+  sfArity : SArity atom
+  sfReturn : atom -> tys
+  sfArg : (a : atom) -> Vect (sfArity.expAr a) tys
+
 -----------------
 -----------------
 ---- Symbols ----
