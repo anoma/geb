@@ -318,6 +318,22 @@ public export
 (atom : Type) => DecEq atom => DecEq (SExp atom) where
   decEq = sexpDecEq decEq
 
+--------------------------
+---- Monad operations ----
+--------------------------
+
+public export
+sexpReturn : atom -> SExp atom
+sexpReturn a = InS a [] []
+
+public export
+SExpJoinAlg : SExpAlg (SExp atom) (SExp atom)
+SExpJoinAlg (SXF (InSX (SXF a ns xs)) ns' xs') = InS a (ns ++ ns') (xs ++ xs')
+
+public export
+sexpJoin : SExp (SExp atom) -> SExp atom
+sexpJoin = sexpCata SExpJoinAlg
+
 -------------------------------
 -------------------------------
 ---- Refined s-expressions ----
