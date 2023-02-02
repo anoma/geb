@@ -532,6 +532,10 @@ CheckMRSFAlg (MRSFam bounds assign dirTy) (SXF a ns xs) =
   else
     Nothing
 
+public export
+checkMRSF : Eq tys => MutRecSExpFam atom tys -> SExp atom -> Bool
+checkMRSF fam = isJust . sexpCata (CheckMRSFAlg fam)
+
 -------------------------------------------------
 ---- S-expressions as terms of type families ----
 -------------------------------------------------
