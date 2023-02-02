@@ -463,6 +463,18 @@ pfEitherDir : (a : Type) -> pfEitherPos a -> Type
 pfEitherDir a = pfDir {p=(pfEitherArena a)}
 
 public export
+pfPairArena : Type -> PolyFunc
+pfPairArena a = pfProductArena PFIdentityArena (PFConstArena a)
+
+public export
+pfPairPos : Type -> Type
+pfPairPos = pfPos . pfPairArena
+
+public export
+pfPairDir : (a : Type) -> pfPairPos a -> Type
+pfPairDir a = pfDir {p=(pfPairArena a)}
+
+public export
 pfMaybeArena : PolyFunc
 pfMaybeArena = pfEitherArena Unit
 
@@ -500,11 +512,18 @@ pfCompositionArena : PolyFunc -> PolyFunc -> PolyFunc
 pfCompositionArena p q = (pfCompositionPos p q ** pfCompositionDir p q)
 
 public export
-pfComposeInterp : {p : PolyFunc} -> {x : Type} ->
-  InterpPolyFunc p (InterpPolyFunc p x) ->
-  InterpPolyFunc (pfCompositionArena p p) x
-pfComposeInterp {p=(pos ** dir)} {x} (i ** d) =
+pfComposeInterp : {q, p : PolyFunc} -> {x : Type} ->
+  InterpPolyFunc q (InterpPolyFunc p x) ->
+  InterpPolyFunc (pfCompositionArena q p) x
+pfComposeInterp {q=(qpos ** qdir)} {p=(ppos ** pdir)} {x} (i ** d) =
   ((i ** fst . d) ** \(i' ** d') => snd (d i') d')
+
+public export
+pfComposeInterpInv : {q, p : PolyFunc} -> {x : Type} ->
+  InterpPolyFunc (pfCompositionArena q p) x ->
+  InterpPolyFunc q (InterpPolyFunc p x)
+pfComposeInterpInv {q=(qpos ** qdir)} {p=(ppos ** pdir)} {x} ((qi ** qd) ** d) =
+  (qi ** \qdi => (qd qdi ** \pdi => d (qdi ** pdi)))
 
 public export
 pfDuplicateArena : PolyFunc -> PolyFunc
@@ -640,6 +659,25 @@ pfExpObjPos = pfPos .* pfExpObj
 public export
 pfExpObjDir : (p, q : PolyFunc) -> pfExpObjPos p q -> Type
 pfExpObjDir p q = pfDir {p=(pfExpObj p q)}
+
+public export
+pfEvalOnPos :
+  (p, q : PolyFunc) ->
+  pfPos (pfProductArena (pfHomObj p q) p) -> pfPos q
+pfEvalOnPos (ppos ** pdir) (qpos ** qdir) (qpi, pi) = fst $ qpi pi
+
+public export
+pfEvalOnDir : (p, q : PolyFunc) ->
+  (i : pfPos (pfProductArena (pfHomObj p q) p)) ->
+  pfDir {p=q} (pfEvalOnPos p q i) ->
+  pfDir {p=(pfProductArena (pfHomObj p q) p)} i
+pfEvalOnDir (ppos ** pdir) (qpos ** qdir) qpi qd with
+    (pfEvalOnPos (ppos ** pdir) (qpos ** qdir) qpi)
+  pfEvalOnDir (ppos ** pdir) (qpos ** qdir) qpi qd | qi = ?pfEvalOnDir_hole
+
+public export
+pfEval : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena (pfHomObj p q) p) q
+pfEval p q = (pfEvalOnPos p q ** pfEvalOnDir p q)
 
 -- Formula 3.78 from "Polynomial Functors: A General Theory of Interaction".
 -- See also the section on formula 3.82 below.
@@ -1180,6 +1218,47 @@ pfProductHomCata : {0 p, q : PolyFunc} -> {0 a : Type} ->
 pfProductHomCata {p=(ppos ** pdir)} {q=(qpos ** qdir)} =
   pfCata {p=(qpos ** qdir)} {a} .*
     pfCata {p=(ppos ** pdir)} {a=(PFAlg (qpos ** qdir) a)}
+
+-- Boolean-valued algebra derived from lists of valid combinations.
+public export
+PFPosList : List PolyFunc -> Type
+PFPosList [] = Unit
+PFPosList [p] = pfPos p
+PFPosList (p :: ps@(_ :: _)) = (pfPos p, PFPosList ps)
+
+public export
+PFDirList : {ps : List PolyFunc} -> PFPosList ps -> Type
+PFDirList {ps=[]} () = Unit
+PFDirList {ps=[p]} i = pfDir {p} i
+PFDirList {ps=(p :: ps@(_ :: _))} (i, is) = (pfDir {p} i, PFDirList {ps} is)
+
+-- Boolean-valued algebra derived from lists of valid combinations.
+public export
+PFListProductBoolAlg : List PolyFunc -> Type
+PFListProductBoolAlg ps =
+  List (DPair (PFPosList ps) (List . PFDirList {ps}))
+
+-- Boolean-valued algebra derived from lists of valid combinations.
+public export
+PFProductBoolAlg : PolyFunc -> PolyFunc -> Type
+PFProductBoolAlg p q = PFListProductBoolAlg [p, q]
+
+public export
+PFProductAlgFromBool : {p, q : PolyFunc} ->
+  DecEqPred (pfPos p) -> DecEqPred (pfPos q) ->
+  PFProductBoolAlg p q -> PFProductAlg p q Bool
+PFProductAlgFromBool {p=(_ ** _)} {q=(_ ** _)} peq qeq l (pi, qi) d =
+  any
+    (\((pi', qi') ** l') => case (peq pi pi', qeq qi qi') of
+      (Yes Refl, Yes Refl) => all d l'
+      _ => False)
+    l
+
+public export
+pfProductBoolCata : {p, q : PolyFunc} ->
+  DecEqPred (pfPos p) -> DecEqPred (pfPos q) ->
+  PFProductBoolAlg p q -> PolyFuncMu p -> PolyFuncMu q -> Bool
+pfProductBoolCata peq qeq = pfProductCata . PFProductAlgFromBool peq qeq
 
 ----------------------------------
 ---- Polynomial (free) monads ----
@@ -2228,7 +2307,7 @@ interpFreeMJoin {p} x =
     {p=(pfFreeComposeArena p p)} {q=(PolyFuncFreeM p)}
     (PFFreeJoin p)
     x .
-  pfComposeInterp {p=(PolyFuncFreeM p)} {x}
+  pfComposeInterp {q=(PolyFuncFreeM p)} {p=(PolyFuncFreeM p)} {x}
 
 public export
 pfFreeToComposeN : (p : PolyFunc) -> (n : Nat) ->
@@ -2692,7 +2771,7 @@ SlicePolyEndoFuncFromId {base} (posdep ** dirdep) =
 
 -- Another way of looking at the `EndoFuncId` special case of `SlicePolyFunc`
 -- is that it represents a parameterized polynomial functor.  The type of
--- the parameter becomes the object on whose slice category the dependent
+-- the parameter becomes the object whose slice category the dependent
 -- polynomial functor is an endofunctor on.
 public export
 ParamPolyFunc : Type -> Type
@@ -2822,6 +2901,22 @@ InterpDPPFMap : {a, b : Type} -> (dppf : DepParamPolyFunc a b) ->
   SliceMorphism (InterpDPPF dppf sa) (InterpDPPF dppf sa')
 InterpDPPFMap {a} {b} dppf {sa} {sa'} m eb (pos ** dir) =
   (pos ** \di => m (fst (snd dppf (eb ** pos))) (dir di))
+
+public export
+InterpDPPFDirich : {a, b : Type} ->
+  DepParamPolyFunc a b -> SliceFunctor a b
+InterpDPPFDirich {a} {b} dppf paramslice posfst =
+  (possnd : fst dppf posfst **
+   paramslice (fst (snd dppf (posfst ** possnd))) ->
+    snd (snd dppf (posfst ** possnd)))
+
+public export
+InterpDPPFDirichMap : {a, b : Type} -> (dppf : DepParamPolyFunc a b) ->
+  {sa, sa' : SliceObj a} ->
+  SliceMorphism sa sa' ->
+  SliceMorphism (InterpDPPFDirich dppf sa') (InterpDPPFDirich dppf sa)
+InterpDPPFDirichMap {a} {b} dppf {sa} {sa'} m eb (pos ** dir) =
+  (pos ** \di => dir $ m (fst (snd dppf (eb ** pos))) di)
 
 ------------------------------
 ---- Slices over PolyFunc ----
@@ -5560,12 +5655,12 @@ gteTrue m n = (m >= n) = True
 -- All natural numbers less than or equal to `n`.
 public export
 BoundedNat : Nat -> Type
-BoundedNat n = Refinement {a=Nat} ((>=) n)
+BoundedNat n = Refinement {a=Nat} ((>) n)
 
 public export
 MkBoundedNat : {0 n : Nat} ->
-  (m : Nat) -> {auto 0 gte : gteTrue n m} -> BoundedNat n
-MkBoundedNat m {gte} = MkRefinement m {satisfies=gte}
+  (m : Nat) -> {auto 0 gt : gtTrue n m} -> BoundedNat n
+MkBoundedNat m {gt} = MkRefinement m {satisfies=gt}
 
 ----------------------------------------
 ---- Tuples (fixed-length products) ----

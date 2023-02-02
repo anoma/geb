@@ -141,7 +141,7 @@ PairShowAlg () d = "(" ++ d PAIRFST ++ "," ++ d PAIRSND ++ ")"
 ----------------------------------
 
 public export
-BinTreeF : PolyFunc -> PolyFunc
+BinTreeF : ParamPolyFunc PolyFunc
 BinTreeF a = pfCoproductArena a PairF
 
 public export
@@ -352,6 +352,12 @@ SexpB = SexpMuX BoolF
 public export
 SexpBP : Type
 SexpBP = SexpMuP BoolF
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+---- ADTs with finite numbers of constructors and arguments ----
+----------------------------------------------------------------
+----------------------------------------------------------------
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -3099,3 +3105,43 @@ termToGebTermAlg = MkTermAlg GebRecordTerm GebSumTerm
 public export
 termToGebTerm : TermMu -> GebTerm
 termToGebTerm = termCataRec termToGebTermAlg
+
+-----------------------------------------------------
+-----------------------------------------------------
+---- Experiments with category-specification API ----
+-----------------------------------------------------
+-----------------------------------------------------
+
+public export
+DiagFunc : DepParamPolyFunc () Bool
+DiagFunc = (const Unit ** const ((), Unit))
+
+public export
+DiagApp : (x : Type) -> (b : Bool) -> x -> InterpDPPF DiagFunc (const x) b
+DiagApp x b e = (() ** const e)
+
+public export
+diagTest : Nat -> (Nat, Nat)
+diagTest n = (snd (DiagApp Nat False n) (), snd (DiagApp Nat True n) ())
+
+public export
+diagTestCorrect : (n : Nat) -> diagTest n = (n, n)
+diagTestCorrect n = Refl
+
+public export
+ProductFunc : SliceFunctor Bool ()
+ProductFunc p () = Pi p
+
+public export
+ProductApp :
+  (x, y : Type) -> x -> y -> ProductFunc (\b => if b then y else x) ()
+ProductApp x y ex ey b = if b then ey else ex
+
+public export
+productTest : String -> Nat -> (String, Nat)
+productTest s n =
+  (ProductApp String Nat s n False, ProductApp String Nat s n True)
+
+public export
+productTestCorrect : (s : String) -> (n : Nat) -> productTest s n = (s, n)
+productTestCorrect s n = Refl
