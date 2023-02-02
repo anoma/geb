@@ -355,5 +355,5 @@ saInterpDirichMap {domSlice} {codSlice} sa {ds} {ds'} m ci (pi ** piDir ** eq) =
 public export
 data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
   InSAM :
-    {0 base : Type} -> {sa : SliceEndoArena base} ->
+    {0 base : Type} -> {0 sa : SliceEndoArena base} ->
     (bi : base) -> SAInterpPoly sa (SAInterpMu sa) bi -> SAInterpMu sa bi
