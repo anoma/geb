@@ -510,14 +510,24 @@ validSExpAr : {atom : Type} ->
 validSExpAr ar =
   sexpGenTypeDec (ValidSExpLenAlg ar) (Just . InSX) (ValidSExpDepAlg ar)
 
+--------------------------
+---- Mutual recursion ----
+--------------------------
+
+public export
+record MutRecSExpFam (atom : Type) (tys : Type) where
+  constructor MRSFam
+  mrfArity : SArity atom
+  mrfAssign : atom -> tys
+  mrfDirTy : (a : atom) -> Vect (mrfArity.expAr a) tys
+
 -------------------------------------------------
 ---- S-expressions as terms of type families ----
 -------------------------------------------------
 
 public export
-record SExpFamSig (tys : Type) where
-  constructor SFamSig
-  sfNumTy : Nat
+record SExpParamSig (tys : Type) where
+  constructor SExpParams
   sfParam : tys -> Maybe tys
   sfOrder : tys -> Nat
   0 sfParamOrdered :
@@ -527,10 +537,8 @@ record SExpFamSig (tys : Type) where
 public export
 record SExpFam (atom, tys : Type) where
   constructor SFam
-  sfSig : SExpFamSig tys
-  sfArity : SArity atom
-  sfReturn : atom -> tys
-  sfArg : (a : atom) -> Vect (sfArity.expAr a) tys
+  sfSig : SExpParamSig tys
+  sfMRF : MutRecSExpFam atom tys
 
 -----------------
 -----------------
