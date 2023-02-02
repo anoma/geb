@@ -126,6 +126,10 @@ SExpAlg : Type -> Type -> Type
 SExpAlg atom a = SExpF atom a -> a
 
 public export
+SExpBoolAlg : Type -> Type
+SExpBoolAlg atom = SExpAlg atom Bool
+
+public export
 SExpTypeAlg : Type -> Type
 SExpTypeAlg atom = SExpAlg atom Type
 
@@ -345,6 +349,22 @@ sexpJoin = sexpCata SExpJoinAlg
 ---------------------------------------------
 
 public export
+SExpGenBoolAlg : SExpBoolAlg atom -> SExpBoolAlg atom
+SExpGenBoolAlg alg x = all id (sxfSubexprs x) && alg x
+
+public export
+sexpGenBoolCata : SExpBoolAlg atom -> SExp atom -> Bool
+sexpGenBoolCata = sexpCata . SExpGenBoolAlg
+
+public export
+slistGenBoolCataL : SExpBoolAlg atom -> SList atom -> List Bool
+slistGenBoolCataL = slistCata . SExpGenBoolAlg
+
+public export
+slistGenBoolCata : SExpBoolAlg atom -> SList atom -> Bool
+slistGenBoolCata alg l = all id (slistGenBoolCataL alg l)
+
+public export
 SExpGenTypeAlg : SExpTypeAlg atom -> SExpTypeAlg atom
 SExpGenTypeAlg alg x = (HList $ sxfSubexprs x, alg x)
 
@@ -429,13 +449,17 @@ record SArity (atom : Type) where
   expAr : atom -> Nat
 
 public export
-CheckSExpArAlg: SArity atom -> SExpAlg atom Bool
-CheckSExpArAlg ar (SXF a ns xs) =
-  all id xs && length ns == ar.natAr a && length xs == ar.expAr a
+CheckSExpLenAlg : SArity atom -> SExpBoolAlg atom
+CheckSExpLenAlg ar (SXF a ns xs) =
+  length ns == ar.natAr a && length xs == ar.expAr a
+
+public export
+CheckSExpArAlg: SArity atom -> SExpBoolAlg atom
+CheckSExpArAlg = SExpGenBoolAlg . CheckSExpLenAlg
 
 public export
 checkSExpAr : SArity atom -> SExp atom -> Bool
-checkSExpAr ar = sexpCata (CheckSExpArAlg ar)
+checkSExpAr = sexpGenBoolCata . CheckSExpLenAlg
 
 public export
 ValidSExpLenAlg : SArity atom -> SExpTypeAlg atom
