@@ -292,44 +292,44 @@ aAssign : (ar : Arena) -> (i : ar.aPosTy) -> APType ar i -> AType ar
 aAssign ar i = map (ar.aExtAssign i)
 
 public export
-record ProdArena (domSlice, codSlice : Type) where
+record SliceArena (domSlice, codSlice : Type) where
   constructor ProdAr
-  paTy : codSlice -> Arena
-  paAssign : (i : codSlice) -> AType (paTy i) -> domSlice
+  saTy : codSlice -> Arena
+  saAssign : (i : codSlice) -> AType (saTy i) -> domSlice
 
 public export
-paAr : ProdArena domSlice codSlice -> codSlice -> Arena
-paAr pa ci = pa.paTy ci
+saAr : SliceArena domSlice codSlice -> codSlice -> Arena
+saAr sa ci = sa.saTy ci
 
 public export
-paPosTy : ProdArena domSlice codSlice -> codSlice -> Type
-paPosTy pa ci = (paAr pa ci).aPosTy
+saPosTy : SliceArena domSlice codSlice -> codSlice -> Type
+saPosTy sa ci = (saAr sa ci).aPosTy
 
 public export
-paPos : (pa : ProdArena domSlice codSlice) ->
-  (ci : codSlice) -> paPosTy pa ci -> Position
-paPos pa ci ai = (paAr pa ci).aPos ai
+saPos : (sa : SliceArena domSlice codSlice) ->
+  (ci : codSlice) -> saPosTy sa ci -> Position
+saPos sa ci ai = (saAr sa ci).aPos ai
 
 public export
-paPExtTy :
-  (pa : ProdArena domSlice codSlice) -> (ci : codSlice) -> paPosTy pa ci -> Type
-paPExtTy pa ci ai = (paPos pa ci ai).pExtTy
+saPExtTy :
+  (sa : SliceArena domSlice codSlice) -> (ci : codSlice) -> saPosTy sa ci -> Type
+saPExtTy sa ci ai = (saPos sa ci ai).pExtTy
 
 public export
-paDirTy :
-  (pa : ProdArena domSlice codSlice) -> (ci : codSlice) -> paPosTy pa ci -> Type
-paDirTy pa ci ai = PType (paPos pa ci ai)
+saDirTy :
+  (sa : SliceArena domSlice codSlice) -> (ci : codSlice) -> saPosTy sa ci -> Type
+saDirTy sa ci ai = PType (saPos sa ci ai)
 
 public export
-paDir :
-  (pa : ProdArena domSlice codSlice) -> (ci : codSlice) ->
-  (ai : paPosTy pa ci) -> List (paDirTy pa ci ai)
-paDir pa ci ai = (paPos pa ci ai).pDir
+saDir :
+  (sa : SliceArena domSlice codSlice) -> (ci : codSlice) ->
+  (ai : saPosTy sa ci) -> List (saDirTy sa ci ai)
+saDir sa ci ai = (saPos sa ci ai).pDir
 
 public export
-ArInterpPoly : {domSlice : Type} -> {0 codSlice : Type} ->
-  ProdArena domSlice codSlice -> SliceFunctor domSlice codSlice
-ArInterpPoly pa ds ci =
-  (ai : paPosTy pa ci ** piDir : List (Sigma {a=domSlice} ds) **
+SAInterpPoly : {domSlice : Type} -> {0 codSlice : Type} ->
+  SliceArena domSlice codSlice -> SliceFunctor domSlice codSlice
+SAInterpPoly sa ds ci =
+  (ai : saPosTy sa ci ** piDir : List (Sigma {a=domSlice} ds) **
    map fst piDir =
-    map (paAssign pa ci . aAssign (pa.paTy ci) ai) (paDir pa ci ai))
+    map (saAssign sa ci . aAssign (sa.saTy ci) ai) (saDir sa ci ai))
