@@ -522,11 +522,9 @@ record MutRecSExpFam (atom : Type) (tys : Type) where
   mrfDirTy : (a : atom) -> List tys
 
 public export
-CheckMRSFAlg : Eq tys => MutRecSExpFam atom tys -> SExpAlg atom (Maybe atom)
+CheckMRSFAlg : Eq tys => MutRecSExpFam atom tys -> SExpMaybeAlg atom atom
 CheckMRSFAlg (MRSFam bounds assign dirTy) (SXF a ns xs) =
-  if
-    listBounded ns (bounds a) &&
-    map (map assign) (sequence xs) == Just (dirTy a)
+  if listBounded ns (bounds a) && map assign xs == dirTy a
   then
     Just a
   else
@@ -534,7 +532,7 @@ CheckMRSFAlg (MRSFam bounds assign dirTy) (SXF a ns xs) =
 
 public export
 checkMRSF : Eq tys => MutRecSExpFam atom tys -> SExp atom -> Bool
-checkMRSF fam = isJust . sexpCata (CheckMRSFAlg fam)
+checkMRSF fam = isJust . sexpMaybeCata (CheckMRSFAlg fam)
 
 -------------------------------------------------
 ---- S-expressions as terms of type families ----
