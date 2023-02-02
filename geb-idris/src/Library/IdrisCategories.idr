@@ -253,6 +253,23 @@ SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
 SliceMorphism {a} s s' = (e : a) -> s e -> s' e
 
 public export
+smApp : {0 a : Type} -> {0 s, s' : SliceObj a} ->
+  SliceMorphism s s' -> Sigma s -> Sigma s'
+smApp m (i ** d) = (i ** m i d)
+
+public export
+smMap : {0 a : Type} -> {0 s, s' : SliceObj a} ->
+  SliceMorphism s s' -> List (Sigma s) -> List (Sigma s')
+smMap m = map (smApp m)
+
+public export
+smMapFstEq : {0 a : Type} -> {0 s, s' : SliceObj a} ->
+  (m : SliceMorphism s s') -> (l : List (Sigma s)) ->
+  map DPair.fst (smMap m l) = map DPair.fst l
+smMapFstEq m [] = Refl
+smMapFstEq m ((i ** d) :: l') = cong ((::) i) $ smMapFstEq m l'
+
+public export
 SliceFMorphism : {a : Type} -> SliceObj a -> (a -> a) -> Type
 SliceFMorphism s f = SliceMorphism s (s . f)
 

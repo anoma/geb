@@ -327,9 +327,22 @@ saDir :
 saDir sa ci ai = (saPos sa ci ai).pDir
 
 public export
+sapAssign : (sa : SliceArena domSlice codSlice) -> (ci : codSlice) ->
+  (ai : saPosTy sa ci) -> APType (sa.saTy ci) ai -> domSlice
+sapAssign sa ci ai = saAssign sa ci . aAssign (sa.saTy ci) ai
+
+public export
 SAInterpPoly : {domSlice : Type} -> {0 codSlice : Type} ->
   SliceArena domSlice codSlice -> SliceFunctor domSlice codSlice
 SAInterpPoly sa ds ci =
   (ai : saPosTy sa ci ** piDir : List (Sigma {a=domSlice} ds) **
-   map fst piDir =
-    map (saAssign sa ci . aAssign (sa.saTy ci) ai) (saDir sa ci ai))
+   map fst piDir = map (sapAssign sa ci ai) (saDir sa ci ai))
+
+public export
+saInterpPolyMap : {domSlice : Type} -> {0 codSlice : Type} ->
+  (sa : SliceArena domSlice codSlice) ->
+  {ds, ds' : SliceObj domSlice} ->
+  SliceMorphism ds ds' ->
+  SliceMorphism (SAInterpPoly sa ds) (SAInterpPoly sa ds')
+saInterpPolyMap {domSlice} {codSlice} sa {ds} {ds'} m ci (ai ** piDir ** eq) =
+  (ai ** smMap m piDir ** trans (smMapFstEq m piDir) eq)
