@@ -277,6 +277,10 @@ record SliceArena (domSlice, codSlice : Type) where
   saAssign : (i : codSlice) -> (saTy i).aTy -> domSlice
 
 public export
+SliceEndoArena : Type -> Type
+SliceEndoArena base = SliceArena base base
+
+public export
 saAr : SliceArena domSlice codSlice -> codSlice -> Arena
 saAr sa ci = sa.saTy ci
 
@@ -347,3 +351,9 @@ saInterpDirichMap : {domSlice : Type} -> {0 codSlice : Type} ->
   SliceMorphism (SAInterpDirich sa ds') (SAInterpDirich sa ds)
 saInterpDirichMap {domSlice} {codSlice} sa {ds} {ds'} m ci (pi ** piDir ** eq) =
   (pi ** piDir . smApp m ** \di, dd => eq di (m di dd))
+
+public export
+data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
+  InSAM :
+    {0 base : Type} -> {sa : SliceEndoArena base} ->
+    (bi : base) -> SAInterpPoly sa (SAInterpMu sa) bi -> SAInterpMu sa bi
