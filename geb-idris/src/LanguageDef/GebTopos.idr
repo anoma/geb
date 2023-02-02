@@ -252,15 +252,14 @@ showMuTF : {nty : Nat} ->
 showMuTF {nty} tf = tfCata {nty} {tf} (ShowMuTFAlg {nty} tf)
 
 public export
-muTFEq : {0 nty : Nat} ->
-  (tf : TypeFamily nty) -> (i : Fin nty) ->
-  (x, x' : MuTF {nty} tf i) -> Dec (x = x')
-muTFEq {nty} tf i x = ?muTFeq_hole
-
-public export
 data DirType : Type -> Type where
   DTSelf : DirType extTy
   DTExt : extTy -> DirType extTy
+
+public export
+Functor DirType where
+  map f DTSelf = DTSelf
+  map f (DTExt x) = DTExt (f x)
 
 public export
 record Position where
@@ -269,15 +268,68 @@ record Position where
   pDir : List (DirType pExtTy)
 
 public export
+PType : Position -> Type
+PType pos = DirType pos.pExtTy
+
+public export
 record Arena where
   constructor Ar
   aExtTy : Type
   aPosTy : Type
   aPos : aPosTy -> Position
-  aAssign : (i : aPosTy) -> (aPos i).pExtTy -> aExtTy
+  aExtAssign : (i : aPosTy) -> (aPos i).pExtTy -> aExtTy
 
 public export
-record ProdArena (paIdx : Type) where
+AType : Arena -> Type
+AType ar = DirType ar.aExtTy
+
+public export
+APType : (ar : Arena) -> ar.aPosTy -> Type
+APType ar i = PType (ar.aPos i)
+
+public export
+aAssign : (ar : Arena) -> (i : ar.aPosTy) -> APType ar i -> AType ar
+aAssign ar i = map (ar.aExtAssign i)
+
+public export
+record ProdArena (domSlice, codSlice : Type) where
   constructor ProdAr
-  paTy : paIdx -> Arena
-  paAssign : (i : paIdx) -> (paTy i).aExtTy -> paIdx
+  paTy : codSlice -> Arena
+  paAssign : (i : codSlice) -> AType (paTy i) -> domSlice
+
+public export
+paAr : ProdArena domSlice codSlice -> codSlice -> Arena
+paAr pa ci = pa.paTy ci
+
+public export
+paPosTy : ProdArena domSlice codSlice -> codSlice -> Type
+paPosTy pa ci = (paAr pa ci).aPosTy
+
+public export
+paPos : (pa : ProdArena domSlice codSlice) ->
+  (ci : codSlice) -> paPosTy pa ci -> Position
+paPos pa ci ai = (paAr pa ci).aPos ai
+
+public export
+paPExtTy :
+  (pa : ProdArena domSlice codSlice) -> (ci : codSlice) -> paPosTy pa ci -> Type
+paPExtTy pa ci ai = (paPos pa ci ai).pExtTy
+
+public export
+paDirTy :
+  (pa : ProdArena domSlice codSlice) -> (ci : codSlice) -> paPosTy pa ci -> Type
+paDirTy pa ci ai = PType (paPos pa ci ai)
+
+public export
+paDir :
+  (pa : ProdArena domSlice codSlice) -> (ci : codSlice) ->
+  (ai : paPosTy pa ci) -> List (paDirTy pa ci ai)
+paDir pa ci ai = (paPos pa ci ai).pDir
+
+public export
+ArInterpPoly : {domSlice : Type} -> {0 codSlice : Type} ->
+  ProdArena domSlice codSlice -> SliceFunctor domSlice codSlice
+ArInterpPoly pa ds ci =
+  (ai : paPosTy pa ci ** piDir : List (Sigma {a=domSlice} ds) **
+   map fst piDir =
+    map (paAssign pa ci . aAssign (pa.paTy ci) ai) (paDir pa ci ai))
