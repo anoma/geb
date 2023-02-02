@@ -346,4 +346,4 @@ saInterpDirichMap : {domSlice : Type} -> {0 codSlice : Type} ->
   SliceMorphism ds ds' ->
   SliceMorphism (SAInterpDirich sa ds') (SAInterpDirich sa ds)
 saInterpDirichMap {domSlice} {codSlice} sa {ds} {ds'} m ci (pi ** piDir ** eq) =
-  (pi ** piDir . smApp m ** ?saInterpDirichMap_eq_hole)
+  (pi ** piDir . smApp m ** \di, dd => eq di (m di dd))
