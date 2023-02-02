@@ -3105,3 +3105,43 @@ termToGebTermAlg = MkTermAlg GebRecordTerm GebSumTerm
 public export
 termToGebTerm : TermMu -> GebTerm
 termToGebTerm = termCataRec termToGebTermAlg
+
+-----------------------------------------------------
+-----------------------------------------------------
+---- Experiments with category-specification API ----
+-----------------------------------------------------
+-----------------------------------------------------
+
+public export
+DiagFunc : SlicePolyFunc () Bool
+DiagFunc = SPFFromDPPF (const Unit ** const ((), Unit))
+
+public export
+DiagApp : (x : Type) -> (b : Bool) -> x -> InterpSPFunc DiagFunc (const x) b
+DiagApp x b e = (() ** const e)
+
+public export
+diagTest : Nat -> (Nat, Nat)
+diagTest n = (snd (DiagApp Nat False n) (), snd (DiagApp Nat True n) ())
+
+public export
+diagTestCorrect : (n : Nat) -> diagTest n = (n, n)
+diagTestCorrect n = Refl
+
+public export
+ProductFunc : SliceFunctor Bool ()
+ProductFunc p () = (b : Bool) -> p b
+
+public export
+ProductApp :
+  (x, y : Type) -> x -> y -> ProductFunc (\b => if b then y else x) ()
+ProductApp x y ex ey b = if b then ey else ex
+
+public export
+productTest : String -> Nat -> (String, Nat)
+productTest s n =
+  (ProductApp String Nat s n False, ProductApp String Nat s n True)
+
+public export
+productTestCorrect : (s : String) -> (n : Nat) -> productTest s n = (s, n)
+productTestCorrect s n = Refl
