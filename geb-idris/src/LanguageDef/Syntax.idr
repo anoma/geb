@@ -517,9 +517,20 @@ validSExpAr ar =
 public export
 record MutRecSExpFam (atom : Type) (tys : Type) where
   constructor MRSFam
-  mrfArity : SArity atom
+  mrfBounds : atom -> List Nat
   mrfAssign : atom -> tys
-  mrfDirTy : (a : atom) -> Vect (mrfArity.expAr a) tys
+  mrfDirTy : (a : atom) -> List tys
+
+public export
+CheckMRSFAlg : Eq tys => MutRecSExpFam atom tys -> SExpAlg atom (Maybe atom)
+CheckMRSFAlg (MRSFam bounds assign dirTy) (SXF a ns xs) =
+  if
+    listBounded ns (bounds a) &&
+    map (map assign) (sequence xs) == Just (dirTy a)
+  then
+    Just a
+  else
+    Nothing
 
 -------------------------------------------------
 ---- S-expressions as terms of type families ----
