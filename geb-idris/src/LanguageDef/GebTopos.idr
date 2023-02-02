@@ -311,13 +311,13 @@ saPos : (sa : SliceArena domSlice codSlice) ->
 saPos sa ci ai = (saAr sa ci).aPos ai
 
 public export
-saPExtTy :
-  (sa : SliceArena domSlice codSlice) -> (ci : codSlice) -> saPosTy sa ci -> Type
+saPExtTy : (sa : SliceArena domSlice codSlice) ->
+  (ci : codSlice) -> saPosTy sa ci -> Type
 saPExtTy sa ci ai = (saPos sa ci ai).pExtTy
 
 public export
-saDirTy :
-  (sa : SliceArena domSlice codSlice) -> (ci : codSlice) -> saPosTy sa ci -> Type
+saDirTy : (sa : SliceArena domSlice codSlice) ->
+  (ci : codSlice) -> saPosTy sa ci -> Type
 saDirTy sa ci ai = PType (saPos sa ci ai)
 
 public export
