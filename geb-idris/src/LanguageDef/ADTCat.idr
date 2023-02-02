@@ -3113,11 +3113,11 @@ termToGebTerm = termCataRec termToGebTermAlg
 -----------------------------------------------------
 
 public export
-DiagFunc : SlicePolyFunc () Bool
-DiagFunc = SPFFromDPPF (const Unit ** const ((), Unit))
+DiagFunc : DepParamPolyFunc () Bool
+DiagFunc = (const Unit ** const ((), Unit))
 
 public export
-DiagApp : (x : Type) -> (b : Bool) -> x -> InterpSPFunc DiagFunc (const x) b
+DiagApp : (x : Type) -> (b : Bool) -> x -> InterpDPPF DiagFunc (const x) b
 DiagApp x b e = (() ** const e)
 
 public export
