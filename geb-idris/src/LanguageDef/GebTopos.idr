@@ -256,3 +256,28 @@ muTFEq : {0 nty : Nat} ->
   (tf : TypeFamily nty) -> (i : Fin nty) ->
   (x, x' : MuTF {nty} tf i) -> Dec (x = x')
 muTFEq {nty} tf i x = ?muTFeq_hole
+
+public export
+data DirType : Type -> Type where
+  DTSelf : DirType extTy
+  DTExt : extTy -> DirType extTy
+
+public export
+record Position where
+  constructor Pos
+  pExtTy : Type
+  pDir : List (DirType pExtTy)
+
+public export
+record Arena where
+  constructor Ar
+  aExtTy : Type
+  aPosTy : Type
+  aPos : aPosTy -> Position
+  aAssign : (i : aPosTy) -> (aPos i).pExtTy -> aExtTy
+
+public export
+record ProdArena (paIdx : Type) where
+  constructor ProdAr
+  paTy : paIdx -> Arena
+  paAssign : (i : paIdx) -> (paTy i).aExtTy -> paIdx

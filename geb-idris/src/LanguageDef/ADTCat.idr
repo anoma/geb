@@ -3130,7 +3130,7 @@ diagTestCorrect n = Refl
 
 public export
 ProductFunc : SliceFunctor Bool ()
-ProductFunc p () = (b : Bool) -> p b
+ProductFunc p () = Pi p
 
 public export
 ProductApp :
