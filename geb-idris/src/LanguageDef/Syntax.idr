@@ -439,19 +439,29 @@ SExpAlgFromAtoms alg (SXF a ns xs) = alg a ns xs
 ---- Arities ----
 -----------------
 
+-- Test whether the first list is bounded by the second list:  that is,
+-- whether the lists have the same lengths, and each element of the first
+-- list is strictly less than the corresponding element of the second list.
+public export
+listBounded : List Nat -> List Nat -> Bool
+listBounded [] [] = True
+listBounded [] (_ :: _) = False
+listBounded (_ :: _) [] = False
+listBounded (x :: xs) (y :: ys) = x < y && listBounded xs ys
+
 -- S-expressions whose lists of constants and sub-expressions are of
 -- lengths determined by their atoms.  (Each atom can be said to have
 -- an arity.)
 public export
 record SArity (atom : Type) where
   constructor SAr
-  natAr : atom -> Nat
+  natBounds : atom -> List Nat
   expAr : atom -> Nat
 
 public export
 CheckSExpLenAlg : SArity atom -> SExpBoolAlg atom
 CheckSExpLenAlg ar (SXF a ns xs) =
-  length ns == ar.natAr a && length xs == ar.expAr a
+  listBounded ns (ar.natBounds a) && length xs == ar.expAr a
 
 public export
 CheckSExpArAlg: SArity atom -> SExpBoolAlg atom
@@ -464,7 +474,7 @@ checkSExpAr = sexpGenBoolCata . CheckSExpLenAlg
 public export
 ValidSExpLenAlg : SArity atom -> SExpTypeAlg atom
 ValidSExpLenAlg ar (SXF a ns xs) =
-  (length ns = ar.natAr a, length xs = ar.expAr a)
+  (IsTrue (listBounded ns (ar.natBounds a)), length xs = ar.expAr a)
 
 public export
 ValidSExpArAlg: SArity atom -> SExpTypeAlg atom
@@ -486,11 +496,13 @@ public export
 ValidSExpDepAlg :
   (ar : SArity atom) -> SExpDepAlg (ValidSExpLenAlg ar) (Just . InSX)
 ValidSExpDepAlg ar a ns xs tys params paramseq =
-  case (decEq (length ns) (ar.natAr a), decEq (length xs) (ar.expAr a)) of
-    (Yes nseq, Yes xseq) =>
-      Just (nseq, trans (slcPreservesLen (ValidSExpArAlg ar) xs) xseq)
-    _ =>
-      Nothing
+  case
+    (decEq (listBounded ns (ar.natBounds a)) True,
+     decEq (length xs) (ar.expAr a)) of
+      (Yes nseq, Yes xseq) =>
+        Just (nseq, trans (slcPreservesLen (ValidSExpArAlg ar) xs) xseq)
+      _ =>
+        Nothing
 
 public export
 validSExpAr : {atom : Type} ->
@@ -507,11 +519,10 @@ record SExpFamSig (tys : Type) where
   constructor SFamSig
   sfNumTy : Nat
   sfParam : tys -> Maybe tys
-  sfDec : FinDecoder tys sfNumTy
-  sfEnc : NatEncoder sfDec
+  sfOrder : tys -> Nat
   0 sfParamOrdered :
     (ty : tys) -> (j : IsJustTrue (sfParam ty)) ->
-    LT (fst $ sfEnc $ fromIsJust {x=(sfParam ty)} j) (fst $ sfEnc ty)
+    LT (sfOrder $ fromIsJust {x=(sfParam ty)} j) (sfOrder ty)
 
 public export
 record SExpFam (atom, tys : Type) where
