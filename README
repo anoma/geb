@@ -5,17 +5,11 @@ Welcome to the GEB project.
 
 ## Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
-
-
 ### code coverage
-
-
 
 For test coverage it can be found at the following links:
 
@@ -33,8 +27,6 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see GEB-TEST:CODE-COVERAGE
-
-
 
 ## Getting Started
 
@@ -94,6 +86,73 @@ writing:
 (geb-test:run-tests)
 ```
 
+
+### Geb as a binary
+
+###### \[in package GEB.ENTRY\]
+The standard way to use geb currently is by loading the code into
+one's lisp environment
+
+```lisp
+(ql:quickload :geb)
+```
+
+However, one may be interested in running geb in some sort of
+compilation process, that is why we also give out a binary for people
+to use
+
+An example use of this binary is as follows
+
+```bash
+mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.spec::*entry*" -l -v -o "foo.pir"
+
+mariari@Gensokyo % cat foo.pir
+def *entry* x {
+  0
+}%
+mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.spec::*entry*" -l -v
+def *entry* x {
+  0
+}
+
+./geb.image -h
+  -i --input                      string   Input geb file location
+  -e --entry-point                string   The function to run, should be fully qualified I.E.
+                                           geb::my-main
+  -l --stlc                       boolean  Use the simply typed lambda calculus frontend
+  -o --output                     string   Save the output to a file rather than printing
+  -v --vampir                     string   Return a vamp-ir expression
+  -h -? --help                    boolean  The current help message
+
+```
+
+starting from a file *foo.lisp* that has
+
+```lisp
+(in-package :geb.lambda.spec)
+
+(defparameter *entry*
+  (typed unit geb:so1))
+```
+
+inside of it.
+
+The command needs an entry-point (-e or --entry-point), as we are
+simply call LOAD on the given file, and need to know what to
+translate.
+
+from STLC, we expect the form to be wrapped in the
+GEB.LAMBDA.SPEC.TYPED which takes both the type and the value to
+properly have enough context to evaluate.
+
+It is advised to bind this to a parameter like in our example as -e
+expects a symbol.
+
+the -l flag means that we are not expecting a geb term, but rather a
+lambda frontend term, this is to simply notify us to compile it as a
+lambda term rather than a geb term. In time this will go away
+
+- [function] COMPILE-DOWN &KEY VAMPIR STLC ENTRY (STREAM \*STANDARD-OUTPUT\*)
 
 ## Glossary
 
@@ -217,8 +276,6 @@ conjectures about GEB
 
 ## Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -332,8 +389,6 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
-
-
 
 ### Morphisms
 
@@ -1255,23 +1310,41 @@ Various utility functions ontop of @GEB-CATEGORIES
 
 - [function] COMMUTES X Y
 
+- [function] COMMUTES-LEFT MORPH
+
+    swap the input domain of the given <SUBSTMORPH>
+    
+    In order to swap the domain we expect the <SUBSTMORPH> to
+    be a PROD
+    
+    Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` <SUBSTOBJ>
+    
+    then: `(commutes-left (dom morph)) ≡ (prod y x)`
+    
+    ```
+    Γ, f : x × y → a
+    ------------------------------
+    (commutes-left f) : y × x → a
+    ```
+
+
 - [function] !-> A B
 
 - [function] SO-EVAL X Y
 
 - [generic-function] SO-CARD-ALG OBJ
 
-    Gets the cardinality of the given object
+    Gets the cardinality of the given object, returns a FIXNUM
 
 - [method] SO-CARD-ALG (OBJ \<SUBSTOBJ\>)
 
 - [generic-function] DOM SUBSTMORPH
 
-    Grabs the domain of the morphism
+    Grabs the domain of the morphism. Returns a <SUBSTOBJ>
 
 - [generic-function] CODOM SUBSTMORPH
 
-    Grabs the codomain of the morphism
+    Grabs the codomain of the morphism. Returns a <SUBSTOBJ>
 
 - [generic-function] CURRY F
 
