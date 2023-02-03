@@ -1284,17 +1284,21 @@ PFTranslate : PolyFunc -> Type -> PolyFunc
 PFTranslate p a = (PFTranslatePos p a ** PFTranslateDir p a)
 
 public export
-PolyFuncFreeMPos : PolyFunc -> Type
-PolyFuncFreeMPos p = PolyFuncMu $ PFTranslate p ()
+PFTranslate1 : PolyFunc -> PolyFunc
+PFTranslate1 p = PFTranslate p ()
 
 public export
-PolyFuncFreeMDirAlg : (p : PolyFunc) -> PFAlg (PFTranslate p ()) Type
+PolyFuncFreeMPos : PolyFunc -> Type
+PolyFuncFreeMPos p = PolyFuncMu $ PFTranslate1 p
+
+public export
+PolyFuncFreeMDirAlg : (p : PolyFunc) -> PFAlg (PFTranslate1 p) Type
 PolyFuncFreeMDirAlg (pos ** dir) (PFVar ()) d = Unit
 PolyFuncFreeMDirAlg (pos ** dir) (PFCom i) d = DPair (dir i) d
 
 public export
 PolyFuncFreeMDir : (p : PolyFunc) -> PolyFuncFreeMPos p -> Type
-PolyFuncFreeMDir p = pfCata {p=(PFTranslate p ())} $ PolyFuncFreeMDirAlg p
+PolyFuncFreeMDir p = pfCata {p=(PFTranslate1 p)} $ PolyFuncFreeMDirAlg p
 
 public export
 PolyFuncFreeM : PolyFunc -> PolyFunc

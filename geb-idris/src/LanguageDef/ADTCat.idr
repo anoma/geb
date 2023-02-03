@@ -3113,6 +3113,26 @@ termToGebTerm = termCataRec termToGebTermAlg
 -----------------------------------------------------
 
 public export
+ProdObjFunc : PolyFunc
+ProdObjFunc = (Unit ** const Bool)
+
+public export
+IncProdObjFunc : PolyFunc
+IncProdObjFunc = PFTranslate1 ProdObjFunc
+
+public export
+InterpIncProdObjFunc : Type -> Type
+InterpIncProdObjFunc = InterpPolyFunc IncProdObjFunc
+
+public export
+ProdHomFunc : (obj : Type) -> (morph : obj -> obj -> Type) ->
+  InterpIncProdObjFunc obj -> InterpIncProdObjFunc obj -> Type
+ProdHomFunc obj morph ((PFVar ()) ** _) ((PFVar ()) ** _) = Void
+ProdHomFunc obj morph ((PFVar ()) ** _) ((PFCom ()) ** p) = ?ProdHomFuncbar_3
+ProdHomFunc obj morph ((PFCom ()) ** p) ((PFVar ()) ** _) = ?ProdHomFuncbar_4
+ProdHomFunc obj morph ((PFCom ()) ** p) ((PFCom ()) ** p') = ?ProdHomFuncbar_5
+
+public export
 DiagFunc : DepParamPolyFunc () Bool
 DiagFunc = (const Unit ** const ((), Unit))
 
@@ -3130,17 +3150,17 @@ diagTestCorrect n = Refl
 
 public export
 ProductFunc : SliceFunctor Bool ()
-ProductFunc p () = Pi p
+ProductFunc = InterpSPFunc (const Unit ** const Bool ** DPair.snd)
 
 public export
 ProductApp :
   (x, y : Type) -> x -> y -> ProductFunc (\b => if b then y else x) ()
-ProductApp x y ex ey b = if b then ey else ex
+ProductApp x y ex ey = (() ** \b => if b then ey else ex)
 
 public export
 productTest : String -> Nat -> (String, Nat)
 productTest s n =
-  (ProductApp String Nat s n False, ProductApp String Nat s n True)
+  (snd (ProductApp String Nat s n) False, snd (ProductApp String Nat s n) True)
 
 public export
 productTestCorrect : (s : String) -> (n : Nat) -> productTest s n = (s, n)
