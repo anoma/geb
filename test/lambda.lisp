@@ -29,3 +29,9 @@
 (define-test nameless-works-properly
   :parent geb.lambda
   (is equalp (geb.lambda:nameless curried-term) nameless-term))
+
+(define-test mixin-works-well
+  :parent geb.lambda
+  (is obj-equalp
+      (geb.lambda.spec:pair so1 so1 so1 so1)
+      (geb.lambda.spec:pair so1 so1 so1 so1)))

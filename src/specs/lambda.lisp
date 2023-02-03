@@ -19,6 +19,15 @@
   (app  (dom geb.spec:substmorph) (cod geb.spec:substmorph) (func t) (obj t))
   (index (index fixnum)))
 
+;; because we are doing this with a struct and not a class, however
+;; since serapeum defines out `make-load-form' to the
+;; read-only-structs we can derive it like such
+
+(defmethod geb.mixins:obj-equalp ((obj1 <stlc>) (obj2 <stlc>))
+  (when (equalp (type-of obj1) (type-of obj2))
+    (every (lambda (x y) (geb.mixins:obj-equalp x y))
+           (make-load-form obj1)
+           (make-load-form obj2))))
 
 (defstruct-read-only typed-stlc
   (value unit :type <stlc>)
