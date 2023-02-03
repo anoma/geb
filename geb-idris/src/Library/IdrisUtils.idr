@@ -27,6 +27,7 @@ import public Data.Binary
 import public Data.Nat.Properties
 import public Data.Nat.Exponentiation
 import public Data.Binary.Digit
+import public Data.String
 import public Syntax.PreorderReasoning
 
 %default total
@@ -461,6 +462,48 @@ finFGet {n=(S n)} FZ {f} (ty :: hv) = ty
 finFGet {n=(S n)} (FS i) {f} (ty :: hv) = finFGet {n} i {f=(f . FS)} hv
 
 public export
+showHVv : {0 n : Nat} -> {0 a : Type} ->
+  (sl : a -> Type) -> (sh : (x : a) -> sl x -> String) ->
+  (v : Vect n a) -> (hv : HVect (map sl v)) -> Vect n String
+showHVv {n=Z} {a} sl sh [] Nil = []
+showHVv {n=(S n)} {a} sl sh (k :: ks) (x :: xs) = sh k x :: showHVv sl sh ks xs
+
+public export
+showHV : {0 n : Nat} -> {0 a : Type} ->
+  (sl : a -> Type) -> (sh : (x : a) -> sl x -> String) ->
+  (v : Vect n a) -> (hv : HVect (map sl v)) -> String
+showHV {n} {a} sl sh v =
+  show where
+    Shows n (map sl v) where
+      shows = showHVv {n} {a} sl sh v
+
+public export
+hvDecEq : {0 n : Nat} -> {0 a : Type} ->
+  (sl : a -> Type) -> (deq : (x : a) -> (y, y' : sl x) -> Dec (y = y')) ->
+  (v : Vect n a) -> (hv, hv' : HVect (map sl v)) -> Dec (hv = hv')
+hvDecEq {n=Z} {a} sl deq [] [] [] = Yes Refl
+hvDecEq {n=(S n)} {a} sl deq (x :: xs) (y :: hv) (y' :: hv') =
+  case deq x y y' of
+    Yes Refl => case hvDecEq {n} sl deq xs hv hv' of
+      Yes Refl => Yes Refl
+      No neq => No (\Refl => neq Refl)
+    No neq => No (\Refl => neq Refl)
+
+public export
+hvMap : {n : Nat} -> (ts, ts' : Vect n Type) ->
+  (f : (i : Fin n) -> index i ts -> index i ts') ->
+   HVect ts -> HVect ts'
+hvMap {n=Z} [] [] f [] = []
+hvMap {n=(S n)} (t :: ts) (t' :: ts') f (x :: hv) =
+  f FZ x :: hvMap {n} ts ts' (\i, u => f (FS i) u) hv
+
+public export
+mapIndex : {0 n : Nat} -> {0 a, b : Type} -> {0 f : a -> b} ->
+  (v : Vect n a) -> (i : Fin n) -> index i (map f v) = f (index i v)
+mapIndex {n=(S n)} {a} {b} {f} (x :: v) FZ = Refl
+mapIndex {n=(S n)} {a} {b} {f} (x :: v) (FS i) = mapIndex v i
+
+public export
 vectRepeat : (a : Nat) -> {b, c : Nat} ->
   Vect b (Fin c) -> Vect (mult a b) (Fin c)
 vectRepeat Z {b} {c} v = []
@@ -891,8 +934,25 @@ FinEncoder : {a : Type} -> {size : Nat} -> FinDecoder a size -> Type
 FinEncoder {a} {size} decoder = (e : a) -> (x : Fin size ** decoder x = e)
 
 public export
+NatEncoder : {a : Type} -> {size : Nat} -> FinDecoder a size -> Type
+NatEncoder {a} {size} decoder =
+  (e : a) ->
+    (n : Nat ** x : IsJustTrue (natToFin n size) ** decoder (fromIsJust x) = e)
+
+public export
+NatToFinEncoder : {a : Type} -> {size : Nat} -> {d : FinDecoder a size} ->
+  NatEncoder {a} {size} d -> FinEncoder {a} {size} d
+NatToFinEncoder {a} {size} {d} enc e with (enc e)
+  NatToFinEncoder {a} {size} {d} enc e | (n ** x ** eq) = (fromIsJust x ** eq)
+
+public export
 FinDecEncoding : (a : Type) -> (size : Nat) -> Type
 FinDecEncoding a size = DPair (FinDecoder a size) FinEncoder
+
+public export
+NatDecEncoding : {a : Type} -> {size : Nat} ->
+  (d : FinDecoder a size) -> NatEncoder {a} {size} d -> FinDecEncoding a size
+NatDecEncoding {a} {size} d enc = (d ** NatToFinEncoder enc)
 
 public export
 fdeEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool
@@ -919,12 +979,49 @@ fdeDecEq (decode ** encode) e e' =
     No neq => No $ \yes => neq $ case yes of Refl => Refl
 
 public export
+(a : Type) => (n : Nat) => Show a => Show (FinDecoder a n) where
+  show = show . finFToVect
+
+public export
+(a : Type) => (n : Nat) => Show a => Show (FinDecEncoding a n) where
+  show = show . fst
+
+public export
 (a : Type) => (n : Nat) => (enc : FinDecEncoding a n) => DecEq a where
   decEq = fdeDecEq {a} {n} enc
 
 public export
+FinVoidDecoder : FinDecoder Void 0
+FinVoidDecoder FZ impossible
+FinVoidDecoder (FS _) impossible
+
+public export
+FinIdDecoder : (size : Nat) -> FinDecoder (Fin size) size
+FinIdDecoder size = id
+
+public export
+FinIdEncoder : (size : Nat) -> FinEncoder (FinIdDecoder size)
+FinIdEncoder size i = (i ** Refl)
+
+public export
+FinVoidEncoder : FinEncoder FinVoidDecoder
+FinVoidEncoder i = void i
+
+public export
+FinIdDecEncoding : (size : Nat) -> FinDecEncoding (Fin size) size
+FinIdDecEncoding size = (FinIdDecoder size ** FinIdEncoder size)
+
+public export
+FinVoidDecEncoding : FinDecEncoding Void 0
+FinVoidDecEncoding = (FinVoidDecoder ** FinVoidEncoder)
+
+public export
 FDEnc : Type -> Type
 FDEnc = DPair Nat . FinDecEncoding
+
+public export
+fdeSize : {0 a : Type} -> FDEnc a -> Nat
+fdeSize = fst
 
 public export
 ListContains : {a : Type} -> List a -> a -> Type
@@ -1044,3 +1141,18 @@ llCata {len} (MkLLAlg z s) (MkLList l valid) = llCataInternal z s len l valid
 public export
 InitLList : {a : Type} -> (l : List a) -> LList a (length l)
 InitLList l = MkLList l Refl
+
+public export
+blockIndent : Nat -> String -> String
+blockIndent n = unlines . map (indent n) . lines
+
+public export
+data HList : List Type -> Type where
+  HNil : HList []
+  HCons : ty -> HList tys -> HList (ty :: tys)
+
+public export
+mapExtEq : {0 a, b : Type} -> (f, g : a -> b) -> (l : List a) ->
+  ((x : a) -> f x = g x) -> map f l = map g l
+mapExtEq f g [] eq = Refl
+mapExtEq f g (x :: xs) eq = rewrite eq x in cong ((::) _) $ mapExtEq f g xs eq

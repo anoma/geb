@@ -60,9 +60,9 @@
     ;; (when (spc:outputs alias)
     ;;   (format stream "~@_->~{ ~@_~(~a~)~} " (spc:outputs alias)))
 
-    (format stream "~0I~@_{~2I")
+    (format stream "~0I= ~@_{~2I")
     (extract-constraint-list (spc:body alias) stream)
-    (format stream "~0I~:@_}")))
+    (format stream "~0I~:@_};")))
 
 (-> extract-constraint-list (spc:constraint-list &optional stream) stream)
 (defun extract-constraint-list (cs &optional (stream *standard-output*))

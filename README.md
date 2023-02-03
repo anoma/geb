@@ -8,6 +8,7 @@
 - [2 Getting Started][3d47]
     - [2.1 installation][8fa5]
     - [2.2 loading][a7d5]
+    - [2.3 Geb as a binary][8eb0]
 - [3 Glossary][25f0]
 - [4 Original Efforts][3686]
     - [4.1 Geb's Idris Code][8311]
@@ -49,18 +50,12 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
-
-
 <a id="x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29"></a>
 ### 1.1 code coverage
-
-
 
 For test coverage it can be found at the following links:
 
@@ -78,8 +73,6 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see [`GEB-TEST:CODE-COVERAGE`][417f]
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -142,6 +135,75 @@ writing:
 (geb-test:run-tests)
 ```
 
+
+<a id="x-28GEB-2EENTRY-3A-40GEB-ENTRY-20MGL-PAX-3ASECTION-29"></a>
+### 2.3 Geb as a binary
+
+###### \[in package GEB.ENTRY\]
+The standard way to use geb currently is by loading the code into
+one's lisp environment
+
+```lisp
+(ql:quickload :geb)
+```
+
+However, one may be interested in running geb in some sort of
+compilation process, that is why we also give out a binary for people
+to use
+
+An example use of this binary is as follows
+
+```bash
+mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.spec::*entry*" -l -v -o "foo.pir"
+
+mariari@Gensokyo % cat foo.pir
+def *entry* x {
+  0
+}%
+mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.spec::*entry*" -l -v
+def *entry* x {
+  0
+}
+
+./geb.image -h
+  -i --input                      string   Input geb file location
+  -e --entry-point                string   The function to run, should be fully qualified I.E.
+                                           geb::my-main
+  -l --stlc                       boolean  Use the simply typed lambda calculus frontend
+  -o --output                     string   Save the output to a file rather than printing
+  -v --vampir                     string   Return a vamp-ir expression
+  -h -? --help                    boolean  The current help message
+
+```
+
+starting from a file *foo.lisp* that has
+
+```lisp
+(in-package :geb.lambda.spec)
+
+(defparameter *entry*
+  (typed unit geb:so1))
+```
+
+inside of it.
+
+The command needs an entry-point (-e or --entry-point), as we are
+simply call [`LOAD`][f766] on the given file, and need to know what to
+translate.
+
+from `STLC`, we expect the form to be wrapped in the
+GEB.LAMBDA.SPEC.TYPED which takes both the type and the value to
+properly have enough context to evaluate.
+
+It is advised to bind this to a parameter like in our example as -e
+expects a symbol.
+
+the -l flag means that we are not expecting a geb term, but rather a
+lambda frontend term, this is to simply notify us to compile it as a
+lambda term rather than a geb term. In time this will go away
+
+<a id="x-28GEB-2EENTRY-3ACOMPILE-DOWN-20FUNCTION-29"></a>
+- [function] **COMPILE-DOWN** *&KEY VAMPIR STLC ENTRY (STREAM \*STANDARD-OUTPUT\*)*
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GLOSSARY-20MGL-PAX-3ASECTION-29"></a>
 ## 3 Glossary
@@ -273,8 +335,6 @@ conjectures about GEB
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 5 Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -388,8 +448,6 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 5.1 Morphisms
@@ -1407,6 +1465,25 @@ Various utility functions ontop of [Core Category][cb9e]
 <a id="x-28GEB-3ACOMMUTES-20FUNCTION-29"></a>
 - [function] **COMMUTES** *X Y*
 
+<a id="x-28GEB-3ACOMMUTES-LEFT-20FUNCTION-29"></a>
+- [function] **COMMUTES-LEFT** *MORPH*
+
+    swap the input [domain][3e8b] of the given [`<SUBSTMORPH>`][97fb]
+    
+    In order to swap the [domain][3e8b] we expect the [`<SUBSTMORPH>`][97fb] to
+    be a [`PROD`][77c2]
+    
+    Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` [`<SUBSTOBJ>`][8214]
+    
+    then: `(commutes-left (dom morph)) ≡ (prod y x)`
+    
+    ```
+    Γ, f : x × y → a
+    ------------------------------
+    (commutes-left f) : y × x → a
+    ```
+
+
 <a id="x-28GEB-3A-21--3E-20FUNCTION-29"></a>
 - [function] **!-\>** *A B*
 
@@ -1416,7 +1493,7 @@ Various utility functions ontop of [Core Category][cb9e]
 <a id="x-28GEB-3ASO-CARD-ALG-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **SO-CARD-ALG** *OBJ*
 
-    Gets the cardinality of the given object
+    Gets the cardinality of the given object, returns a [`FIXNUM`][ceb9]
 
 <a id="x-28GEB-3ASO-CARD-ALG-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
 - [method] **SO-CARD-ALG** *(OBJ \<SUBSTOBJ\>)*
@@ -1424,12 +1501,12 @@ Various utility functions ontop of [Core Category][cb9e]
 <a id="x-28GEB-3ADOM-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **DOM** *SUBSTMORPH*
 
-    Grabs the domain of the morphism
+    Grabs the domain of the morphism. Returns a [`<SUBSTOBJ>`][8214]
 
 <a id="x-28GEB-3ACODOM-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **CODOM** *SUBSTMORPH*
 
-    Grabs the codomain of the morphism
+    Grabs the codomain of the morphism. Returns a [`<SUBSTOBJ>`][8214]
 
 <a id="x-28GEB-3ACURRY-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **CURRY** *F*
@@ -1942,6 +2019,7 @@ features and how to better lay out future tests
   [8bf3]: #x-28GEB-2EPOLY-2ESPEC-3APOLY-20TYPE-29 "GEB.POLY.SPEC:POLY TYPE"
   [8c99]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CAR FUNCTION"
   [8da6]: #x-28GEB-2EUTILS-3APREDICATE-20GENERIC-FUNCTION-29 "GEB.UTILS:PREDICATE GENERIC-FUNCTION"
+  [8eb0]: #x-28GEB-2EENTRY-3A-40GEB-ENTRY-20MGL-PAX-3ASECTION-29 "Geb as a binary"
   [8fa5]: #x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29 "installation"
   [9162]: #x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20TYPE-29 "GEB.POLY.SPEC:COMPOSE TYPE"
   [925b]: #x-28GEB-DOCS-2FDOCS-3A-40POLY-SETS-20MGL-PAX-3ASECTION-29 "Poly in Sets"
@@ -1983,6 +2061,7 @@ features and how to better lay out future tests
   [cc51]: #x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29 "Accessors"
   [cc87]: #x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCADR GENERIC-FUNCTION"
   [cd11]: #x-28GEB-2ESPEC-3AMCASE-20FUNCTION-29 "GEB.SPEC:MCASE FUNCTION"
+  [ceb9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_fixnum.htm "FIXNUM TYPE"
   [d2d1]: #x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29 "Subst Morph"
   [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
   [d908]: http://www.lispworks.com/documentation/HyperSpec/Body/f_typep.htm "TYPEP FUNCTION"
@@ -1998,6 +2077,7 @@ features and how to better lay out future tests
   [f1e6]: #x-28GEB-2EUTILS-3AOBJ-20GENERIC-FUNCTION-29 "GEB.UTILS:OBJ GENERIC-FUNCTION"
   [f4ba]: #x-28GEB-2ESPEC-3ASO1-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO1 MGL-PAX:SYMBOL-MACRO"
   [f5ac]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29 "Polynomial Specification"
+  [f766]: http://www.lispworks.com/documentation/HyperSpec/Body/f_load.htm "LOAD FUNCTION"
   [f899]: #x-28GEB-2ESPEC-3AINIT-20TYPE-29 "GEB.SPEC:INIT TYPE"
   [f914]: #x-28GEB-2ESPEC-3ACOMP-20TYPE-29 "GEB.SPEC:COMP TYPE"
   [fae9]: #x-28GEB-2ESPEC-3AINJECT-RIGHT-20TYPE-29 "GEB.SPEC:INJECT-RIGHT TYPE"

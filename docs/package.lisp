@@ -6,4 +6,5 @@
   (:import-from #:geb-test   #:@geb-test-manual)
   (:import-from #:geb.poly   #:@poly-manual)
   (:import-from #:geb.specs  #:@geb-specs)
+  (:import-from #:geb.entry  #:@geb-entry)
   (:export build-docs))

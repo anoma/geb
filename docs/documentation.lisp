@@ -75,7 +75,8 @@ hello [foo](1-foo)
 (pax:defsection @getting-started (:title "Getting Started")
   "Welcome to the GEB Project!"
   (@installation pax:section)
-  (@loading pax:section))
+  (@loading pax:section)
+  (@geb-entry pax:section))
 
 (pax:defsection @original-efforts (:title "Original Efforts")
   "Originally GEB started off as an Idris codebase written by the

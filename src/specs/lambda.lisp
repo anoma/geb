@@ -28,3 +28,10 @@
     (every (lambda (x y) (geb.mixins:obj-equalp x y))
            (make-load-form obj1)
            (make-load-form obj2))))
+
+(defstruct-read-only typed-stlc
+  (value unit :type <stlc>)
+  (type t :type t))
+
+(defun typed (v typ)
+  (make-typed-stlc :value v :type typ))

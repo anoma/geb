@@ -164,6 +164,10 @@ public export
 SliceObj : Type -> Type
 SliceObj a = a -> Type
 
+public export
+FinSliceObj : Nat -> Type
+FinSliceObj = SliceObj . Fin
+
 -- An object of some slice category of `Type`.
 public export
 Slice : Type
@@ -172,6 +176,18 @@ Slice = DPair Type SliceObj
 public export
 SliceFunctor : Type -> Type -> Type
 SliceFunctor a b = SliceObj a -> SliceObj b
+
+public export
+FinSliceFunctor : Nat -> Nat -> Type
+FinSliceFunctor m n = FinSliceObj m -> FinSliceObj n
+
+public export
+SliceEndofunctor : Type -> Type
+SliceEndofunctor a = SliceFunctor a a
+
+public export
+FinSliceEndofunctor : Nat -> Type
+FinSliceEndofunctor n = FinSliceFunctor n n
 
 -- The base change functor induced by the given morphism.
 -- Also sometimes called the pullback functor.
@@ -235,6 +251,23 @@ PairToSigma (x, y) = (x ** y)
 public export
 SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
 SliceMorphism {a} s s' = (e : a) -> s e -> s' e
+
+public export
+smApp : {0 a : Type} -> {0 s, s' : SliceObj a} ->
+  SliceMorphism s s' -> Sigma s -> Sigma s'
+smApp m (i ** d) = (i ** m i d)
+
+public export
+smMap : {0 a : Type} -> {0 s, s' : SliceObj a} ->
+  SliceMorphism s s' -> List (Sigma s) -> List (Sigma s')
+smMap m = map (smApp m)
+
+public export
+smMapFstEq : {0 a : Type} -> {0 s, s' : SliceObj a} ->
+  (m : SliceMorphism s s') -> (l : List (Sigma s)) ->
+  map DPair.fst (smMap m l) = map DPair.fst l
+smMapFstEq m [] = Refl
+smMapFstEq m ((i ** d) :: l') = cong ((::) i) $ smMapFstEq m l'
 
 public export
 SliceFMorphism : {a : Type} -> SliceObj a -> (a -> a) -> Type
