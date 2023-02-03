@@ -18,3 +18,11 @@
   (lamb (vty geb.spec:substmorph) (tty geb.spec:substmorph) (value t))
   (app  (dom geb.spec:substmorph) (cod geb.spec:substmorph) (func t) (obj t))
   (index (index fixnum)))
+
+
+(defstruct-read-only typed-stlc
+  (value unit :type <stlc>)
+  (type t :type t))
+
+(defun typed (v typ)
+  (make-typed-stlc :value v :type typ))

@@ -26,7 +26,9 @@
     :snd  :snd-lty  :snd-rty  :snd-value
     :lamb :lamb-vty :lamb-tty :lamb-value
     :app  :app-dom  :app-cod  :app-func :app-bj
-    :index :index-index)))
+    :index :index-index
+
+    :typed :typed-stlc-type :typed-stlc-value)))
 
 (pax:define-package #:geb.spec
   (:documentation "Gödel, Escher, Bach categorical model")
