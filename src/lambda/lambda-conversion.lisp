@@ -7,7 +7,6 @@
 (defgeneric compile-checked-term (context type term)
   (:documentation "Compiles a checked term into SubstMorph category"))
 
-
 (defmethod empty ((class (eql (find-class 'list)))) nil)
 
 (defmethod compile-checked-term (context type (term <stlc>))

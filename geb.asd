@@ -3,9 +3,13 @@
                        ;; wed are only importing this for now until I
                        ;; give good instructions to update the asdf of sbcl
                        :cl-reexport
-                       :mgl-pax)
+                       :mgl-pax
+                       :command-line-arguments)
   :version "0.0.1"
   :description "Gödel, Escher, Bach, a categorical view of computation"
+  :build-pathname "../build/geb.image"
+  :entry-point "geb.entry::entry"
+  :build-operation "program-op"
   :author "Mariari"
   :license "MIT"
   :pathname "src/"
@@ -60,7 +64,13 @@
     :description "A simple Lambda calculus model"
     :components ((:file package)
                  (:file lambda)
-                 (:file lambda-conversion))))
+                 (:file lambda-conversion)))
+   (:module entry
+    :serial t
+    :description "Entry point for the geb codebase"
+    :depends-on (util geb vampir specs poly lambda)
+    :components ((:file package)
+                 (:file entry))))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 
 (asdf:defsystem :geb/gui
@@ -83,6 +93,7 @@
    (:file lambda)
    (:file lambda-conversion)
    (:file poly)
+   (:file pipeline)
    (:file run-tests))
   :perform (asdf:test-op (o s)
                          (uiop:symbol-call :geb-test :run-tests)))
@@ -105,3 +116,10 @@
              (ql:quickload :geb/documentation))
       (progn (asdf:load-system :mgl-pax/navigate)
              (asdf:load-system :geb/documentation))))
+
+(defun make-system ()
+  (handler-case (asdf:load-system :geb)
+    (error (c)
+      (declare (ignorable c))
+      (ql:quickload :geb)))
+  (asdf:make :geb))
