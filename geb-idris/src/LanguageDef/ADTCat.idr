@@ -3125,14 +3125,6 @@ InterpIncProdObjFunc : Type -> Type
 InterpIncProdObjFunc = InterpPolyFunc IncProdObjFunc
 
 public export
-ProdHomFunc : (obj : Type) -> (morph : obj -> obj -> Type) ->
-  InterpIncProdObjFunc obj -> InterpIncProdObjFunc obj -> Type
-ProdHomFunc obj morph ((PFVar ()) ** _) ((PFVar ()) ** _) = Void
-ProdHomFunc obj morph ((PFVar ()) ** _) ((PFCom ()) ** p) = ?ProdHomFuncbar_3
-ProdHomFunc obj morph ((PFCom ()) ** p) ((PFVar ()) ** _) = ?ProdHomFuncbar_4
-ProdHomFunc obj morph ((PFCom ()) ** p) ((PFCom ()) ** p') = ?ProdHomFuncbar_5
-
-public export
 DiagFunc : DepParamPolyFunc () Bool
 DiagFunc = (const Unit ** const ((), Unit))
 
