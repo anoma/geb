@@ -353,7 +353,11 @@ saInterpDirichMap {domSlice} {codSlice} sa {ds} {ds'} m ci (pi ** piDir ** eq) =
   (pi ** piDir . smApp m ** \di, dd => eq di (m di dd))
 
 public export
+SAAlg : {base : Type} -> SliceEndoArena base -> SliceObj base -> Type
+SAAlg {base} sa s = SliceMorphism {a=base} (SAInterpPoly sa s) s
+
+public export
 data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
   InSAM :
     {0 base : Type} -> {0 sa : SliceEndoArena base} ->
-    (bi : base) -> SAInterpPoly sa (SAInterpMu sa) bi -> SAInterpMu sa bi
+    SAAlg {base} sa (SAInterpMu sa)
