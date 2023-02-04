@@ -2361,8 +2361,26 @@ PolyMuMuAlg : Type
 PolyMuMuAlg = MetaPolyAlg PolyMu
 
 public export
+PolyMuPFEndoNTPF : Type
+PolyMuPFEndoNTPF =
+  (x : Type) -> (i : PolyFPos) -> (PolyFDir i -> x) -> PolyF x
+
+public export
 PolyMuPFEndoNT : Type
-PolyMuPFEndoNT = (x : Type) -> (i : PolyFPos) -> (PolyFDir i -> x) -> PolyF x
+PolyMuPFEndoNT =
+  (onPos : PolyFPos -> PolyFPos **
+   (i : PolyFPos) -> PolyFDir (onPos i) -> PolyFDir i)
+
+public export
+InterpPolyMuPFEndoNT : PolyMuPFEndoNT -> PolyMuPFEndoNTPF
+InterpPolyMuPFEndoNT (onPos ** onDir) x i d with (onPos i) proof prf
+  InterpPolyMuPFEndoNT (onPos ** onDir) x i d | PFI = PFI
+  InterpPolyMuPFEndoNT (onPos ** onDir) x i d | PF0 = PF0
+  InterpPolyMuPFEndoNT (onPos ** onDir) x i d | PF1 = PF1
+  InterpPolyMuPFEndoNT (onPos ** onDir) x i d | (() $$+ ()) =
+    d (onDir i $ rewrite prf in False) $$+ d (onDir i $ rewrite prf in True)
+  InterpPolyMuPFEndoNT (onPos ** onDir) x i d | (() $$* ()) =
+    d (onDir i $ rewrite prf in False) $$* d (onDir i $ rewrite prf in True)
 
 public export
 PolyMuEndoNT : Type
@@ -2370,15 +2388,11 @@ PolyMuEndoNT = NaturalTransformation PolyF PolyF
 
 public export
 InPFNT : PolyMuPFEndoNT
-InPFNT x PFI d = PFI
-InPFNT x PF0 d = PF0
-InPFNT x PF1 d = PF1
-InPFNT x (() $$+ ()) d = d False $$+ d True
-InPFNT x (() $$* ()) d = d False $$* d True
+InPFNT = (id ** \_ => id)
 
 public export
 InPF : PolyMuPFMuAlg
-InPF i = InPCom . InPFNT PolyMu i
+InPF i = InPCom . InterpPolyMuPFEndoNT InPFNT PolyMu i
 
 public export
 InPNT : PolyMuEndoNT
