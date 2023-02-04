@@ -2428,6 +2428,28 @@ metaPolyDepCata dalg (InPCom (p $$* q)) =
   dalg.pdaP p q (metaPolyDepCata dalg p) (metaPolyDepCata dalg q)
 
 public export
+MetaPolyPiAlg : SliceObj (SliceObj PolyMu)
+MetaPolyPiAlg sl =
+  (i : PolyFPos) ->
+  (ps : PolyFDir i -> PolyMu) ->
+  Pi (sl . ps) ->
+  sl (InPF i ps)
+
+public export
+metaPolyPiCata : MetaPolyPiAlg sl -> Pi sl
+metaPolyPiCata alg (InPCom PFI) = alg PFI (voidF PolyMu) (\v => void v)
+metaPolyPiCata alg (InPCom PF0) = alg PF0 (voidF PolyMu) (\v => void v)
+metaPolyPiCata alg (InPCom PF1) = alg PF1 (voidF PolyMu) (\v => void v)
+metaPolyPiCata {sl} alg (InPCom (p $$+ q)) =
+  alg (() $$+ ())
+    (\b => if b then q else p)
+    (\b => if b then metaPolyPiCata {sl} alg q else metaPolyPiCata {sl} alg p)
+metaPolyPiCata alg (InPCom (p $$* q)) =
+  alg (() $$* ())
+    (\b => if b then q else p)
+    (\b => if b then metaPolyPiCata {sl} alg q else metaPolyPiCata {sl} alg p)
+
+public export
 MetaPolyDepAlgPF : MetaPolyAlg x -> MetaPolyPred x -> Type
 MetaPolyDepAlgPF alg pred =
   (i : PolyFPos) ->
@@ -2439,21 +2461,8 @@ public export
 metaPolyDepCataPF : {alg : MetaPolyAlg x} -> {pred : MetaPolyPred x} ->
   (dalg : MetaPolyDepAlgPF alg pred) ->
   (p : PolyMu) -> pred p (metaPolyCata alg p)
-metaPolyDepCataPF dalg (InPCom PFI) = dalg PFI (voidF PolyMu) (\v => void v)
-metaPolyDepCataPF dalg (InPCom PF0) = dalg PF0 (voidF PolyMu) (\v => void v)
-metaPolyDepCataPF dalg (InPCom PF1) = dalg PF1 (voidF PolyMu) (\v => void v)
-metaPolyDepCataPF {alg} dalg (InPCom (p $$+ q)) =
-  dalg (() $$+ ())
-    (\b => if b then q else p)
-    (\b =>
-      if b then metaPolyDepCataPF {pred} dalg q
-      else metaPolyDepCataPF {pred} dalg p)
-metaPolyDepCataPF dalg (InPCom (p $$* q)) =
-  dalg (() $$* ())
-    (\b => if b then q else p)
-    (\b =>
-      if b then metaPolyDepCataPF {pred} dalg q
-      else metaPolyDepCataPF {pred} dalg p)
+metaPolyDepCataPF {alg} {pred} =
+  metaPolyPiCata {sl=(\p => pred p (metaPolyCata alg p))}
 
 -----------------------------------
 ---- Coalgebra and anamorphism ----
