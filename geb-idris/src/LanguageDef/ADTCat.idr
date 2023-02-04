@@ -2258,6 +2258,22 @@ Functor PolyF where
   map m (p $$+ q) = m p $$+ m q
   map m (p $$* q) = m p $$* m q
 
+----------------------------------
+---- PolyF viewed as an arena ----
+----------------------------------
+
+public export
+PolyFPos : Type
+PolyFPos = PolyF ()
+
+public export
+PolyFDir : PolyFPos -> Type
+PolyFDir PFI = Void
+PolyFDir PF0 = Void
+PolyFDir PF1 = Void
+PolyFDir (() $$+ ()) = Bool
+PolyFDir (() $$* ()) = Bool
+
 -----------------------------------------------------------------------
 ---- Polynomial functors as least fixed point of generator functor ----
 -----------------------------------------------------------------------
@@ -2331,6 +2347,22 @@ metaPolyCataCPS alg = metaPolyFold id where
 --------------------------------------------
 ---- Dependent algebra and catamorphism ----
 --------------------------------------------
+
+public export
+PolyMuPFAlg : Type -> Type
+PolyMuPFAlg x = (i : PolyFPos) -> (PolyFDir i -> x) -> x
+
+public export
+PolyMuFreeAlg : Type
+PolyMuFreeAlg = PolyMuPFAlg PolyMu
+
+public export
+InPF : PolyMuFreeAlg
+InPF PFI d = PolyI
+InPF PF0 d = Poly0
+InPF PF1 d = Poly1
+InPF (() $$+ ()) d = d False $+ d True
+InPF (() $$* ()) d = d False $* d True
 
 public export
 MetaPolyPred : Type -> Type
