@@ -2353,24 +2353,36 @@ PolyMuPFAlg : Type -> Type
 PolyMuPFAlg x = (i : PolyFPos) -> (PolyFDir i -> x) -> x
 
 public export
-PolyMuPFFreeAlg : Type
-PolyMuPFFreeAlg = PolyMuPFAlg PolyMu
+PolyMuPFMuAlg : Type
+PolyMuPFMuAlg = PolyMuPFAlg PolyMu
+
+public export
+PolyMuMuAlg : Type
+PolyMuMuAlg = MetaPolyAlg PolyMu
 
 public export
 PolyMuPFEndoNT : Type
 PolyMuPFEndoNT = (x : Type) -> (i : PolyFPos) -> (PolyFDir i -> x) -> PolyF x
 
 public export
-InPFP : PolyMuPFEndoNT
-InPFP x PFI d = PFI
-InPFP x PF0 d = PF0
-InPFP x PF1 d = PF1
-InPFP x (() $$+ ()) d = d False $$+ d True
-InPFP x (() $$* ()) d = d False $$* d True
+PolyMuEndoNT : Type
+PolyMuEndoNT = NaturalTransformation PolyF PolyF
 
 public export
-InPF : PolyMuPFFreeAlg
-InPF i = InPCom . InPFP PolyMu i
+InPFNT : PolyMuPFEndoNT
+InPFNT x PFI d = PFI
+InPFNT x PF0 d = PF0
+InPFNT x PF1 d = PF1
+InPFNT x (() $$+ ()) d = d False $$+ d True
+InPFNT x (() $$* ()) d = d False $$* d True
+
+public export
+InPF : PolyMuPFMuAlg
+InPF i = InPCom . InPFNT PolyMu i
+
+public export
+InPNT : PolyMuEndoNT
+InPNT x = Prelude.id
 
 public export
 MetaPolyPred : Type -> Type
