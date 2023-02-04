@@ -2680,6 +2680,10 @@ public export
 MetaPolyFNat : PolyMu -> Nat -> Nat
 MetaPolyFNat = metaPolyCata MetaPolyFNatAlg
 
+-------------------------------------------------------
+---- Natural transformations from PolyMu to itself ----
+-------------------------------------------------------
+
 ----------------------------------------------------------
 ---- Exponentiation (hom-objects) of polynomial types ----
 ----------------------------------------------------------
@@ -2813,8 +2817,45 @@ polyMuEval (InPCom PF1) q = PolyNTId q
 polyMuEval (InPCom (x $$+ y)) q = ?polyMuEval_hole_4
 polyMuEval (InPCom (x $$* y)) q = ?polyMuEval_hole_5
 
+---------------------------------------------
+---------------------------------------------
+---- Self-describing polynomial functors ----
+---------------------------------------------
+---------------------------------------------
+
+-- Interpret a PolyMu as a functor on `Type`.
+public export
+InterpPolyFAlg : MetaPolyAlg (Type -> Type)
+InterpPolyFAlg PFI = Prelude.id {a=Type}
+InterpPolyFAlg PF0 = const Void
+InterpPolyFAlg PF1 = const Unit
+InterpPolyFAlg (p $$+ q) = CoproductF p q
+InterpPolyFAlg (p $$* q) = ProductF p q
+
+public export
+InterpPolyF : PolyMu -> Type -> Type
+InterpPolyF = metaPolyCata InterpPolyFAlg
+
+-- Objects of (unrefined) FinSet (without built-in bounded natural numbers)
+-- in terms of PolyMu.
+public export
+PolyFS : PolyMu
+PolyFS =
+  Poly1 $+ -- Initial object
+  Poly1 $+ -- Terminal object
+  PolyI $* PolyI $+ -- Coproduct
+  PolyI $* PolyI -- Product
+
+public export
+PolyPF : PolyMu
+PolyPF =
+  Poly1 $+ -- Identity
+  PolyFS
+
+----------------------------------------
 ----------------------------------------
 ---- Polynomial monads and comonads ----
+----------------------------------------
 ----------------------------------------
 
 public export
