@@ -2464,6 +2464,30 @@ metaPolyDepCataPF : {alg : MetaPolyAlg x} -> {pred : MetaPolyPred x} ->
 metaPolyDepCataPF {alg} {pred} =
   metaPolyPiCata {sl=(\p => pred p (metaPolyCata alg p))}
 
+public export
+MetaPolyTypeAlg : Type
+MetaPolyTypeAlg = MetaPolyAlg Type
+
+public export
+MPAlgSlice : MetaPolyTypeAlg -> SliceObj PolyMu
+MPAlgSlice = metaPolyCata
+
+public export
+MPAlgSigma : MetaPolyTypeAlg -> Type
+MPAlgSigma = Sigma {a=PolyMu} . MPAlgSlice
+
+public export
+MPAlgPi : MetaPolyTypeAlg -> Type
+MPAlgPi = Pi {a=PolyMu} . MPAlgSlice
+
+-- If, for example, `tyalg` generates a constraint, then this shows
+-- that every PolyMu satisfies the constraint.
+public export
+metaPolyDepTypePi : {tyalg : MetaPolyTypeAlg} ->
+  MetaPolyPiAlg (MPAlgSlice tyalg) ->
+  MPAlgPi tyalg
+metaPolyDepTypePi {tyalg} = metaPolyPiCata {sl=(MPAlgSlice tyalg)}
+
 -----------------------------------
 ---- Coalgebra and anamorphism ----
 -----------------------------------
