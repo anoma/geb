@@ -597,6 +597,62 @@ adtCatTest = do
   putStrLn "Begin ADTCatTest:"
   putStrLn "-----------------"
   putStrLn ""
+  putStrLn "-------------------------"
+  putStrLn "---- Monads/comonads ----"
+  putStrLn "-------------------------"
+  putStrLn ""
+  putStrLn $ "wns3 = " ++ wns3s
+  -- putStrLn $ "sn0_0 = " ++ show (fst sn0_0)
+  putStrLn ""
+  putStrLn "-------------------------------"
+  putStrLn "-------------------------------"
+  putStrLn "---- Generalized ADT terms ----"
+  putStrLn "-------------------------------"
+  putStrLn "-------------------------------"
+  putStrLn ""
+  termShowFullList [
+      ("adtT1", adtT1)
+    , ("adtT2", adtT2)
+    , ("adtT3", adtT3)
+    , ("adtT4", adtT4)
+    , ("adtT5", adtT5)
+    , ("adtT6", adtT6)
+    ]
+  putStrLn ""
+  putStrLn "--------------"
+  putStrLn "---- STMu ----"
+  putStrLn "--------------"
+  putStrLn ""
+  stShowFullList [
+      ("stMu1", stMu1)
+    , ("stMu2", stMu2)
+    , ("stMu3", stMu3)
+    ]
+  putStrLn ""
+  putStrLn "---------------"
+  putStrLn ""
+  putStrLn "--------------"
+  putStrLn "---- SOMu ----"
+  putStrLn "--------------"
+  putStrLn ""
+  soShowFullList [
+      ("soMu1", soMu1)
+    , ("soMu2", soMu2)
+    , ("soMu3", soMu3)
+    , ("soMu4", soMu4)
+    , ("soMu5", soMu5)
+    , ("soMuBool", soMuBool)
+    , ("soMuThree", soMuThree)
+    , ("soMuBinFour", soMuBinFour)
+    , ("soMuBinFive", soMuBinFive)
+    , ("soHomBoolBool", soHomBoolBool)
+    , ("soHomThreeThree", soHomThreeThree)
+    , ("soHomFourFive", soHomFourFive)
+    , ("soHomFiveFour", soHomFiveFour)
+    ]
+  putStrLn $ "stt3 = " ++ show stt3
+  putStrLn "---------------"
+  putStrLn ""
   putStrLn "---------------"
   putStrLn "---- PolyF ----"
   putStrLn "---------------"
@@ -678,62 +734,6 @@ adtCatTest = do
   showPMRaise 6
   showPMRaise 7
   showPMRaise 8
-  putStrLn ""
-  putStrLn "-------------------------"
-  putStrLn "---- Monads/comonads ----"
-  putStrLn "-------------------------"
-  putStrLn ""
-  putStrLn $ "wns3 = " ++ wns3s
-  -- putStrLn $ "sn0_0 = " ++ show (fst sn0_0)
-  putStrLn ""
-  putStrLn "-------------------------------"
-  putStrLn "-------------------------------"
-  putStrLn "---- Generalized ADT terms ----"
-  putStrLn "-------------------------------"
-  putStrLn "-------------------------------"
-  putStrLn ""
-  termShowFullList [
-      ("adtT1", adtT1)
-    , ("adtT2", adtT2)
-    , ("adtT3", adtT3)
-    , ("adtT4", adtT4)
-    , ("adtT5", adtT5)
-    , ("adtT6", adtT6)
-    ]
-  putStrLn ""
-  putStrLn "--------------"
-  putStrLn "---- STMu ----"
-  putStrLn "--------------"
-  putStrLn ""
-  stShowFullList [
-      ("stMu1", stMu1)
-    , ("stMu2", stMu2)
-    , ("stMu3", stMu3)
-    ]
-  putStrLn ""
-  putStrLn "---------------"
-  putStrLn ""
-  putStrLn "--------------"
-  putStrLn "---- SOMu ----"
-  putStrLn "--------------"
-  putStrLn ""
-  soShowFullList [
-      ("soMu1", soMu1)
-    , ("soMu2", soMu2)
-    , ("soMu3", soMu3)
-    , ("soMu4", soMu4)
-    , ("soMu5", soMu5)
-    , ("soMuBool", soMuBool)
-    , ("soMuThree", soMuThree)
-    , ("soMuBinFour", soMuBinFour)
-    , ("soMuBinFive", soMuBinFive)
-    , ("soHomBoolBool", soHomBoolBool)
-    , ("soHomThreeThree", soHomThreeThree)
-    , ("soHomFourFive", soHomFourFive)
-    , ("soHomFiveFour", soHomFiveFour)
-    ]
-  putStrLn $ "stt3 = " ++ show stt3
-  putStrLn "---------------"
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."
