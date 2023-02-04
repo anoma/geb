@@ -5,214 +5,6 @@ import LanguageDef.ADTCat
 
 %default total
 
----------------
----------------
----- PolyF ----
----------------
----------------
-
-polybool : PolyMu
-polybool = Poly1 $+ Poly1
-
-polyfnat : PolyMu
-polyfnat = Poly1 $+ PolyI
-
-polyf0 : PolyMu
-polyf0 = (polyfnat $. Poly1) $*^ 5
-
-polyf1 : PolyMu
-polyf1 = (Poly1 $+ PolyI $*^ 2) $.^ 3
-
-polyf2 : PolyMu
-polyf2 = polyf0 $.^ 0
-
-Polyf0f : Type -> Type
-Polyf0f = MetaPolyFMetaF polyf0
-
-Polyf1f : Type -> Type
-Polyf1f = MetaPolyFMetaF polyf1
-
-Polyf2f : Type -> Type
-Polyf2f = MetaPolyFMetaF polyf2
-
-Polyf0t : Type
-Polyf0t = ConstComponent polyf0
-
-Polyf1t : Type
-Polyf1t = ConstComponent polyf1
-
-Polyf2t : Type
-Polyf2t = ConstComponent polyf2
-
-polyf0i : Polyf0t
-polyf0i = (Left (), Left (), Right (), Left (), Right ())
-
-polyf2i : Not Polyf2t
-polyf2i = id
-
-PolyFreeNat : (0 _ : Type) -> Type
-PolyFreeNat = MetaPolyFreeM polyfnat
-
-PolyNat : Type
-PolyNat = MetaPolyMu polyfnat
-
-polyFNatT0 : PolyFreeNat Nat
-polyFNatT0 = InFVar 7
-
-polyFNatT1 : PolyFreeNat Nat
-polyFNatT1 = InFCom $ Left ()
-
-polyFNatT2 : PolyFreeNat Nat
-polyFNatT2 = InFCom $ Right $ InFVar 5
-
-polyFNatT3 : PolyFreeNat Nat
-polyFNatT3 = InFCom $ Right $ InFCom $ Left ()
-
-polyFNatT4 : PolyFreeNat Nat
-polyFNatT4 = InFCom $ Right $ InFCom $ Right $ InFVar 3
-
-polyFNatT5 : PolyFreeNat Nat
-polyFNatT5 = InFCom $ Right $ InFCom $ Right $ InFCom $ Left ()
-
-polyFNatT6 : PolyFreeNat Nat
-polyFNatT6 = InFCom $ Right $ InFCom $ Right $ InFCom $ Right $ InFCom $ Left ()
-
-polynatT0 : PolyNat
-polynatT0 = InFCom $ Left ()
-
-polynatT1 : PolyNat
-polynatT1 = InFCom $ Right $ InFCom $ Left ()
-
-polynatT2 : PolyNat
-polynatT2 = InFCom $ Right $ InFCom $ Right $ InFCom $ Left ()
-
-polyNatIter : Nat -> PolyMu
-polyNatIter = ($.^) polyfnat
-
-polyNatIterFixed : Nat -> PolyMu
-polyNatIterFixed n = polyNatIter n $. Poly0
-
-PolyNatIter : Nat -> Type
-PolyNatIter = ConstComponent . polyNatIter
-
-pniterT0 : Not $ PolyNatIter 0
-pniterT0 = id
-
-pniterT1 : PolyNatIter 1
-pniterT1 = ()
-
-pniterT2 : PolyNatIter 2
-pniterT2 = Left ()
-
-pniterT3 : PolyNatIter 2
-pniterT3 = Right ()
-
-pniterT4 : PolyNatIter 3
-pniterT4 = Left ()
-
-pniterT5 : PolyNatIter 3
-pniterT5 = Right $ Left ()
-
-pniterT6 : PolyNatIter 3
-pniterT6 = Right $ Right ()
-
-pniterT7 : PolyNatIter 4
-pniterT7 = Left ()
-
-pniterT8 : PolyNatIter 4
-pniterT8 = Right $ Left ()
-
-pniterT9 : PolyNatIter 4
-pniterT9 = Right $ Right $ Left ()
-
-pniterT10 : PolyNatIter 4
-pniterT10 = Right $ Right $ Right ()
-
-polyfeqT0 : Assertion
-polyfeqT0 = Assert $ polyfnat /= polyNatIter 0
-
-polyfeqT1 : Assertion
-polyfeqT1 = Assert $ polyfnat == polyNatIter 1
-
-polyfeqT2 : Assertion
-polyfeqT2 = Assert $ polyfnat /= polyNatIter 2
-
-polyHomBoolF0 : PolyMu
-polyHomBoolF0 = PolyHomObj polybool polyf0
-
-polyCardT0 : Assertion
-polyCardT0 = Assert $
-  polyTCard polyHomBoolF0 == power (polyTCard polyf0) (polyTCard polybool)
-
-polyHomId4Id : PolyMu
-polyHomId4Id = PolyHomObj PolyI (4 $:* PolyI)
-
-twoBits : PolyMu
-twoBits = polybool $* polybool
-
-polyHomId4Id' : PolyMu
-polyHomId4Id' = PolyHomObj PolyI (twoBits $* PolyI)
-
-polyHom4IdId : PolyMu
-polyHom4IdId = PolyHomObj (4 $:* PolyI) PolyI
-
-polyHom4IdId' : PolyMu
-polyHom4IdId' = PolyHomObj (twoBits $* PolyI) PolyI
-
-polyDepth3BinTree : PolyMu
-polyDepth3BinTree = polyf1
-
-polyDepth3BinTreeFixed : PolyMu
-polyDepth3BinTreeFixed = polyDepth3BinTree $. Poly0
-
-pmMaybe : PolyMu
-pmMaybe = Poly1 $+ PolyI
-
-pmMaybeSq : PolyMu
-pmMaybeSq = pmMaybe $*^ 2
-
-pmMaybeSqFactored : PolyMu
-pmMaybeSqFactored = Poly1 $+ PolyI $+ PolyI $+ PolyI $*^ 2
-
-pmMaybeSqAppBool : PolyMu
-pmMaybeSqAppBool = pmMaybeSq $. polybool
-
-pmMaybeSqBoolAlg : PolyMu
-pmMaybeSqBoolAlg = PolyHomObj pmMaybeSqAppBool polybool
-
-pmFinObj : PolyMu
-pmFinObj = 2 $:* Poly1 $+ 2 $:* PolyI
-
-pmFinObjTermPair : PolyMu
-pmFinObjTermPair = pmFinObj $* pmMaybeSq
-
-pmFinObjTermPairToBool : PolyMu
-pmFinObjTermPairToBool = PolyHomObj pmFinObjTermPair polybool
-
-pmMaybeSqIter : Nat -> PolyMu
-pmMaybeSqIter = ($.^) pmMaybeSq
-
-showPMIter : Nat -> IO ()
-showPMIter n = do
-  putStrLn $ "pmMaybeSqIter " ++ show n ++ " = " ++
-    show (pmMaybeSqIter n)
-  putStrLn $ "shape(pmMaybeSqIter " ++ show n ++ ") = " ++
-    showPolyShape (pmMaybeSqIter n)
-  putStrLn $ "npos(pmMaybeSqIter " ++ show n ++ ") = " ++
-    show (polyNPos $ pmMaybeSqIter n)
-
-pmMaybeSqRaise : Nat -> PolyMu
-pmMaybeSqRaise = ($*^) pmMaybeSq
-
-showPMRaise : Nat -> IO ()
-showPMRaise n = do
-  putStrLn $ "pmMaybeSqRaise " ++ show n ++ " = " ++
-    show (pmMaybeSqRaise n)
-  putStrLn $ "shape(pmMaybeSqRaise " ++ show n ++ ") = " ++
-    showPolyShape (pmMaybeSqRaise n)
-  putStrLn $ "npos(pmMaybeSqRaise " ++ show n ++ ") = " ++
-    show (polyNPos $ pmMaybeSqRaise n)
-
 ---------------------------
 ---------------------------
 ---- Monads / comonads ----
@@ -582,6 +374,214 @@ soHomFourFiveCardCorrect = Assert $ soCard soHomFourFive == 625
 public export
 soHomFiveFourCardCorrect : Assertion
 soHomFiveFourCardCorrect = Assert $ soCard soHomFiveFour == 1024
+
+---------------
+---------------
+---- PolyF ----
+---------------
+---------------
+
+polybool : PolyMu
+polybool = Poly1 $+ Poly1
+
+polyfnat : PolyMu
+polyfnat = Poly1 $+ PolyI
+
+polyf0 : PolyMu
+polyf0 = (polyfnat $. Poly1) $*^ 5
+
+polyf1 : PolyMu
+polyf1 = (Poly1 $+ PolyI $*^ 2) $.^ 3
+
+polyf2 : PolyMu
+polyf2 = polyf0 $.^ 0
+
+Polyf0f : Type -> Type
+Polyf0f = MetaPolyFMetaF polyf0
+
+Polyf1f : Type -> Type
+Polyf1f = MetaPolyFMetaF polyf1
+
+Polyf2f : Type -> Type
+Polyf2f = MetaPolyFMetaF polyf2
+
+Polyf0t : Type
+Polyf0t = ConstComponent polyf0
+
+Polyf1t : Type
+Polyf1t = ConstComponent polyf1
+
+Polyf2t : Type
+Polyf2t = ConstComponent polyf2
+
+polyf0i : Polyf0t
+polyf0i = (Left (), Left (), Right (), Left (), Right ())
+
+polyf2i : Not Polyf2t
+polyf2i = id
+
+PolyFreeNat : (0 _ : Type) -> Type
+PolyFreeNat = MetaPolyFreeM polyfnat
+
+PolyNat : Type
+PolyNat = MetaPolyMu polyfnat
+
+polyFNatT0 : PolyFreeNat Nat
+polyFNatT0 = InFVar 7
+
+polyFNatT1 : PolyFreeNat Nat
+polyFNatT1 = InFCom $ Left ()
+
+polyFNatT2 : PolyFreeNat Nat
+polyFNatT2 = InFCom $ Right $ InFVar 5
+
+polyFNatT3 : PolyFreeNat Nat
+polyFNatT3 = InFCom $ Right $ InFCom $ Left ()
+
+polyFNatT4 : PolyFreeNat Nat
+polyFNatT4 = InFCom $ Right $ InFCom $ Right $ InFVar 3
+
+polyFNatT5 : PolyFreeNat Nat
+polyFNatT5 = InFCom $ Right $ InFCom $ Right $ InFCom $ Left ()
+
+polyFNatT6 : PolyFreeNat Nat
+polyFNatT6 = InFCom $ Right $ InFCom $ Right $ InFCom $ Right $ InFCom $ Left ()
+
+polynatT0 : PolyNat
+polynatT0 = InFCom $ Left ()
+
+polynatT1 : PolyNat
+polynatT1 = InFCom $ Right $ InFCom $ Left ()
+
+polynatT2 : PolyNat
+polynatT2 = InFCom $ Right $ InFCom $ Right $ InFCom $ Left ()
+
+polyNatIter : Nat -> PolyMu
+polyNatIter = ($.^) polyfnat
+
+polyNatIterFixed : Nat -> PolyMu
+polyNatIterFixed n = polyNatIter n $. Poly0
+
+PolyNatIter : Nat -> Type
+PolyNatIter = ConstComponent . polyNatIter
+
+pniterT0 : Not $ PolyNatIter 0
+pniterT0 = id
+
+pniterT1 : PolyNatIter 1
+pniterT1 = ()
+
+pniterT2 : PolyNatIter 2
+pniterT2 = Left ()
+
+pniterT3 : PolyNatIter 2
+pniterT3 = Right ()
+
+pniterT4 : PolyNatIter 3
+pniterT4 = Left ()
+
+pniterT5 : PolyNatIter 3
+pniterT5 = Right $ Left ()
+
+pniterT6 : PolyNatIter 3
+pniterT6 = Right $ Right ()
+
+pniterT7 : PolyNatIter 4
+pniterT7 = Left ()
+
+pniterT8 : PolyNatIter 4
+pniterT8 = Right $ Left ()
+
+pniterT9 : PolyNatIter 4
+pniterT9 = Right $ Right $ Left ()
+
+pniterT10 : PolyNatIter 4
+pniterT10 = Right $ Right $ Right ()
+
+polyfeqT0 : Assertion
+polyfeqT0 = Assert $ polyfnat /= polyNatIter 0
+
+polyfeqT1 : Assertion
+polyfeqT1 = Assert $ polyfnat == polyNatIter 1
+
+polyfeqT2 : Assertion
+polyfeqT2 = Assert $ polyfnat /= polyNatIter 2
+
+polyHomBoolF0 : PolyMu
+polyHomBoolF0 = PolyHomObj polybool polyf0
+
+polyCardT0 : Assertion
+polyCardT0 = Assert $
+  polyTCard polyHomBoolF0 == power (polyTCard polyf0) (polyTCard polybool)
+
+polyHomId4Id : PolyMu
+polyHomId4Id = PolyHomObj PolyI (4 $:* PolyI)
+
+twoBits : PolyMu
+twoBits = polybool $* polybool
+
+polyHomId4Id' : PolyMu
+polyHomId4Id' = PolyHomObj PolyI (twoBits $* PolyI)
+
+polyHom4IdId : PolyMu
+polyHom4IdId = PolyHomObj (4 $:* PolyI) PolyI
+
+polyHom4IdId' : PolyMu
+polyHom4IdId' = PolyHomObj (twoBits $* PolyI) PolyI
+
+polyDepth3BinTree : PolyMu
+polyDepth3BinTree = polyf1
+
+polyDepth3BinTreeFixed : PolyMu
+polyDepth3BinTreeFixed = polyDepth3BinTree $. Poly0
+
+pmMaybe : PolyMu
+pmMaybe = Poly1 $+ PolyI
+
+pmMaybeSq : PolyMu
+pmMaybeSq = pmMaybe $*^ 2
+
+pmMaybeSqFactored : PolyMu
+pmMaybeSqFactored = Poly1 $+ PolyI $+ PolyI $+ PolyI $*^ 2
+
+pmMaybeSqAppBool : PolyMu
+pmMaybeSqAppBool = pmMaybeSq $. polybool
+
+pmMaybeSqBoolAlg : PolyMu
+pmMaybeSqBoolAlg = PolyHomObj pmMaybeSqAppBool polybool
+
+pmFinObj : PolyMu
+pmFinObj = 2 $:* Poly1 $+ 2 $:* PolyI
+
+pmFinObjTermPair : PolyMu
+pmFinObjTermPair = pmFinObj $* pmMaybeSq
+
+pmFinObjTermPairToBool : PolyMu
+pmFinObjTermPairToBool = PolyHomObj pmFinObjTermPair polybool
+
+pmMaybeSqIter : Nat -> PolyMu
+pmMaybeSqIter = ($.^) pmMaybeSq
+
+showPMIter : Nat -> IO ()
+showPMIter n = do
+  putStrLn $ "pmMaybeSqIter " ++ show n ++ " = " ++
+    show (pmMaybeSqIter n)
+  putStrLn $ "shape(pmMaybeSqIter " ++ show n ++ ") = " ++
+    showPolyShape (pmMaybeSqIter n)
+  putStrLn $ "npos(pmMaybeSqIter " ++ show n ++ ") = " ++
+    show (polyNPos $ pmMaybeSqIter n)
+
+pmMaybeSqRaise : Nat -> PolyMu
+pmMaybeSqRaise = ($*^) pmMaybeSq
+
+showPMRaise : Nat -> IO ()
+showPMRaise n = do
+  putStrLn $ "pmMaybeSqRaise " ++ show n ++ " = " ++
+    show (pmMaybeSqRaise n)
+  putStrLn $ "shape(pmMaybeSqRaise " ++ show n ++ ") = " ++
+    showPolyShape (pmMaybeSqRaise n)
+  putStrLn $ "npos(pmMaybeSqRaise " ++ show n ++ ") = " ++
+    show (polyNPos $ pmMaybeSqRaise n)
 
 ----------------------------------
 ----------------------------------
