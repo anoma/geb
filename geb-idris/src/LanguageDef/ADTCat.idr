@@ -2698,9 +2698,19 @@ PolyHomObjAlg (p $$+ q) r = p r $* q r
 -- (p * q) -> r == p -> q -> r
 PolyHomObjAlg (p $$* q) r = p $ q r
 
+-- id -> r == r . (id + 1) (see formula 4.27 in _Polynomial Functors: A General
+-- Theory of Interaction_)
+public export
+PolyIdHom : PolyMu -> PolyMu
+PolyIdHom r = r $. (PolyI $+ Poly1)
+
 public export
 PolyHomObj : PolyMu -> PolyMu -> PolyMu
-PolyHomObj = metaPolyPairAdjCata PolyHomObjAlg
+PolyHomObj (InPCom PFI) r = PolyIdHom r
+PolyHomObj (InPCom PF0) _ = Poly1
+PolyHomObj (InPCom PF1) q = q
+PolyHomObj (InPCom (p $$+ q)) r = PolyHomObj p r $* PolyHomObj q r
+PolyHomObj (InPCom (p $$* q)) r = PolyHomObj p $ PolyHomObj q r
 
 public export
 PolyExp : PolyMu -> PolyMu -> PolyMu
@@ -2731,12 +2741,22 @@ PolyArena = metaPolyCata PolyArenaAlg
 -- The "positions" of an endofunctor, in the arena viewpoint.
 public export
 PolyPos : PolyMu -> Type
-PolyPos = pfPos . PolyArena
+PolyPos (InPCom PFI) = Unit
+PolyPos (InPCom PF0) = Void
+PolyPos (InPCom PF1) = Unit
+PolyPos (InPCom (p $$+ q)) = Either (PolyPos p) (PolyPos q)
+PolyPos (InPCom (p $$* q)) = Pair (PolyPos p) (PolyPos q)
 
 -- The "directions" of a given position, in the arena viewpoint.
 public export
 PolyPosDir : (p : PolyMu) -> PolyPos p -> Type
-PolyPosDir p = pfDir {p=(PolyArena p)}
+PolyPosDir (InPCom PFI) () = Unit
+PolyPosDir (InPCom PF0) v = void v
+PolyPosDir (InPCom PF1) () = Void
+PolyPosDir (InPCom (p $$+ q)) (Left i) = PolyPosDir p i
+PolyPosDir (InPCom (p $$+ q)) (Right i) = PolyPosDir q i
+PolyPosDir (InPCom (p $$* q)) (pi, qi) =
+  Either (PolyPosDir p pi) (PolyPosDir q qi)
 
 -- Any direction of an endofunctor.
 public export
@@ -2766,11 +2786,32 @@ PolyMuNTAlg PFI q = PolyPos q
 PolyMuNTAlg PF0 _ = ()
 PolyMuNTAlg PF1 q = PolyZeroPos q
 PolyMuNTAlg ((_, p) $$+ (_, q)) r = Pair (p r) (q r)
-PolyMuNTAlg ((_, p) $$* (q, _)) r = ?PolyMuNTAlg_product_domain_hole
+PolyMuNTAlg ((_, p) $$* (q, _)) r = p $ PolyHomObj q r
 
 public export
 PolyMuNT : PolyMu -> PolyMu -> Type
-PolyMuNT = metaPolyPairAdjArgCata PolyMuNTAlg
+PolyMuNT (InPCom PFI) q = PolyPos q
+PolyMuNT (InPCom PF0) q = ()
+PolyMuNT (InPCom PF1) q = PolyZeroPos q
+PolyMuNT (InPCom (p $$+ q)) r = Pair (PolyMuNT p r) (PolyMuNT q r)
+PolyMuNT (InPCom (p $$* q)) r = PolyMuNT p $ PolyHomObj q r
+
+mutual
+  public export
+  PolyNTId : (p : PolyMu) -> PolyMuNT p p
+  PolyNTId (InPCom PFI) = ()
+  PolyNTId (InPCom PF0) = ()
+  PolyNTId (InPCom PF1) = ()
+  PolyNTId (InPCom (p $$+ q)) = ?PolyNTId_hole_4
+  PolyNTId (InPCom (p $$* q)) = ?PolyNTId_hole_5
+
+public export
+polyMuEval : (p, q : PolyMu) -> PolyMuNT (PolyHomObj p q $* p) q
+polyMuEval (InPCom PFI) q = ?polyMuEval_hole_1
+polyMuEval (InPCom PF0) q = ?polyMuEval_hole_2
+polyMuEval (InPCom PF1) q = PolyNTId q
+polyMuEval (InPCom (x $$+ y)) q = ?polyMuEval_hole_4
+polyMuEval (InPCom (x $$* y)) q = ?polyMuEval_hole_5
 
 ----------------------------------------
 ---- Polynomial monads and comonads ----
