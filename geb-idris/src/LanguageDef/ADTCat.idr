@@ -2328,6 +2328,39 @@ metaPolyCataCPS alg = metaPolyFold id where
       p $$+ q => metaPolyCataCont ($$+) cont p q
       p $$* q => metaPolyCataCont ($$*) cont p q
 
+--------------------------------------------
+---- Dependent algebra and catamorphism ----
+--------------------------------------------
+
+public export
+MetaPolyPred : Type -> Type
+MetaPolyPred x = PolyMu -> x -> Type
+
+public export
+record MetaPolyDepAlg (alg : MetaPolyAlg x) (pred : MetaPolyPred x) where
+  constructor PDepAlg
+  pdaId : pred PolyI (alg PFI)
+  pda0 : pred Poly0 (alg PF0)
+  pda1 : pred Poly1 (alg PF1)
+  pdaC : (p, q : PolyMu) ->
+    pred p (metaPolyCata alg p) -> pred q (metaPolyCata alg q) ->
+    pred (p $+ q) (metaPolyCata alg (p $+ q))
+  pdaP : (p, q : PolyMu) ->
+    pred p (metaPolyCata alg p) -> pred q (metaPolyCata alg q) ->
+    pred (p $* q) (metaPolyCata alg (p $* q))
+
+public export
+metaPolyDepCata : {alg : MetaPolyAlg x} -> {pred : MetaPolyPred x} ->
+  (dalg : MetaPolyDepAlg alg pred) ->
+  (p : PolyMu) -> pred p (metaPolyCata alg p)
+metaPolyDepCata dalg (InPCom PFI) = dalg.pdaId
+metaPolyDepCata dalg (InPCom PF0) = dalg.pda0
+metaPolyDepCata dalg (InPCom PF1) = dalg.pda1
+metaPolyDepCata dalg (InPCom (p $$+ q)) =
+  dalg.pdaC p q (metaPolyDepCata dalg p) (metaPolyDepCata dalg q)
+metaPolyDepCata dalg (InPCom (p $$* q)) =
+  dalg.pdaP p q (metaPolyDepCata dalg p) (metaPolyDepCata dalg q)
+
 -----------------------------------
 ---- Coalgebra and anamorphism ----
 -----------------------------------
