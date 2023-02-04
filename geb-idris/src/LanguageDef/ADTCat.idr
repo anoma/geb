@@ -5,6 +5,7 @@ import Library.IdrisCategories
 import public LanguageDef.Atom
 import public LanguageDef.PolyCat
 import public LanguageDef.PolyProfunctor
+import public LanguageDef.Syntax
 
 %default total
 
@@ -2836,21 +2837,39 @@ public export
 InterpPolyF : PolyMu -> Type -> Type
 InterpPolyF = metaPolyCata InterpPolyFAlg
 
+public export
+PolyMuSq : PolyMu -> PolyMu
+PolyMuSq p = p $*^ 2
+
+public export
+PolyMuDiag : PolyMu
+PolyMuDiag = PolyMuSq PolyI
+
+-- Binary trees of units in terms of PolyMu (the global elements of the initial
+-- algebra of PolyBT correspond to binary trees of units).
+public export
+PolyBT : PolyMu
+PolyBT =
+  Poly1 $+ -- unit
+  PolyMuDiag -- pair
+
 -- Objects of (unrefined) FinSet (without built-in bounded natural numbers)
--- in terms of PolyMu.
+-- in terms of PolyMu (the global elements of the initial algebra of PolyFS
+-- correspond to objects of FinSet).
 public export
 PolyFS : PolyMu
 PolyFS =
-  Poly1 $+ -- Initial object
-  Poly1 $+ -- Terminal object
-  PolyI $* PolyI $+ -- Coproduct
-  PolyI $* PolyI -- Product
+  PolyBT $+ -- Finite products (terminal object and pairwise products)
+  PolyBT -- Finite coproducts (initial object and pairwise coproducts)
 
+-- Endofunctors on (unrefined) FinSet (without built-in bounded natural
+-- numbers) in terms of PolyMu (the global elements of the initial algebra
+-- of PolyPF correspond to endofunctors on FinSet).
 public export
 PolyPF : PolyMu
 PolyPF =
-  Poly1 $+ -- Identity
-  PolyFS
+  PolyFS $+ -- Endofunctor category also has finite products and coproducts
+  Poly1 -- Identity endofunctor
 
 ----------------------------------------
 ----------------------------------------

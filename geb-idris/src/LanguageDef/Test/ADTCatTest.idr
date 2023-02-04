@@ -734,6 +734,11 @@ adtCatTest = do
   showPMRaise 6
   showPMRaise 7
   showPMRaise 8
+  putStrLn "---------------"
+  putStrLn $ "PolyMu of FinSet: " ++ show PolyFS
+  putStrLn $ "Shape of FinSet: " ++ showPolyShape PolyFS
+  putStrLn $ "Self-representation of PolyMu: " ++ show PolyPF
+  putStrLn $ "Shape of PolyMu: " ++ showPolyShape PolyPF
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End ADTCatTest."
