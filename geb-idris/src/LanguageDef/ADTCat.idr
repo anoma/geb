@@ -2274,6 +2274,14 @@ PolyFDir PF1 = Void
 PolyFDir (() $$+ ()) = Bool
 PolyFDir (() $$* ()) = Bool
 
+public export
+InPolyF : (i : PolyFPos) -> (PolyFDir i -> x) -> PolyF x
+InPolyF PFI d = PFI
+InPolyF PF0 d = PF0
+InPolyF PF1 d = PF1
+InPolyF (() $$+ ()) d = d False $$+ d True
+InPolyF (() $$* ()) d = d False $$* d True
+
 -----------------------------------------------------------------------
 ---- Polynomial functors as least fixed point of generator functor ----
 -----------------------------------------------------------------------
