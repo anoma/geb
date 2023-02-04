@@ -2428,32 +2428,32 @@ metaPolyDepCata dalg (InPCom (p $$* q)) =
   dalg.pdaP p q (metaPolyDepCata dalg p) (metaPolyDepCata dalg q)
 
 public export
-MetaPolyDepAlg' : MetaPolyAlg x -> MetaPolyPred x -> Type
-MetaPolyDepAlg' alg pred =
+MetaPolyDepAlgPF : MetaPolyAlg x -> MetaPolyPred x -> Type
+MetaPolyDepAlgPF alg pred =
   (i : PolyFPos) ->
   (ps : PolyFDir i -> PolyMu) ->
   (dd : (d : PolyFDir i) -> pred (ps d) (metaPolyCata alg (ps d))) ->
   pred (InPF i ps) (metaPolyCata alg (InPF i ps))
 
 public export
-metaPolyDepCata' : {alg : MetaPolyAlg x} -> {pred : MetaPolyPred x} ->
-  (dalg : MetaPolyDepAlg' alg pred) ->
+metaPolyDepCataPF : {alg : MetaPolyAlg x} -> {pred : MetaPolyPred x} ->
+  (dalg : MetaPolyDepAlgPF alg pred) ->
   (p : PolyMu) -> pred p (metaPolyCata alg p)
-metaPolyDepCata' dalg (InPCom PFI) = dalg PFI (voidF PolyMu) (\v => void v)
-metaPolyDepCata' dalg (InPCom PF0) = dalg PF0 (voidF PolyMu) (\v => void v)
-metaPolyDepCata' dalg (InPCom PF1) = dalg PF1 (voidF PolyMu) (\v => void v)
-metaPolyDepCata' {alg} dalg (InPCom (p $$+ q)) =
+metaPolyDepCataPF dalg (InPCom PFI) = dalg PFI (voidF PolyMu) (\v => void v)
+metaPolyDepCataPF dalg (InPCom PF0) = dalg PF0 (voidF PolyMu) (\v => void v)
+metaPolyDepCataPF dalg (InPCom PF1) = dalg PF1 (voidF PolyMu) (\v => void v)
+metaPolyDepCataPF {alg} dalg (InPCom (p $$+ q)) =
   dalg (() $$+ ())
     (\b => if b then q else p)
     (\b =>
-      if b then metaPolyDepCata' {pred} dalg q
-      else metaPolyDepCata' {pred} dalg p)
-metaPolyDepCata' dalg (InPCom (p $$* q)) =
+      if b then metaPolyDepCataPF {pred} dalg q
+      else metaPolyDepCataPF {pred} dalg p)
+metaPolyDepCataPF dalg (InPCom (p $$* q)) =
   dalg (() $$* ())
     (\b => if b then q else p)
     (\b =>
-      if b then metaPolyDepCata' {pred} dalg q
-      else metaPolyDepCata' {pred} dalg p)
+      if b then metaPolyDepCataPF {pred} dalg q
+      else metaPolyDepCataPF {pred} dalg p)
 
 -----------------------------------
 ---- Coalgebra and anamorphism ----
