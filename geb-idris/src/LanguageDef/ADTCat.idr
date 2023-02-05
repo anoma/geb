@@ -2480,20 +2480,42 @@ public export
 MPAlgSlice : MetaPolyTypeAlg -> SliceObj PolyMu
 MPAlgSlice = metaPolyCata
 
+-- Given a `MetaPolyTypeAlg`, this algebra generates a `PolyMu` annotated
+-- with instances of the type at every node.
+public export
+MetaPolyGenAlg : MetaPolyTypeAlg -> MetaPolyTypeAlg
+MetaPolyGenAlg alg PFI = alg PFI
+MetaPolyGenAlg alg PF0 = alg PF0
+MetaPolyGenAlg alg PF1 = alg PF1
+MetaPolyGenAlg alg (p $$+ q) = (p, q, alg (p $$+ q))
+MetaPolyGenAlg alg (p $$* q) = (p, q, alg (p $$* q))
+
+public export
+MPGenSlice : MetaPolyTypeAlg -> SliceObj PolyMu
+MPGenSlice = MPAlgSlice . MetaPolyGenAlg
+
 public export
 MPAlgSigma : MetaPolyTypeAlg -> Type
 MPAlgSigma = Sigma {a=PolyMu} . MPAlgSlice
 
 public export
+MPGenSigma : MetaPolyTypeAlg -> Type
+MPGenSigma = Sigma {a=PolyMu} . MPGenSlice
+
+public export
 MPAlgPi : MetaPolyTypeAlg -> Type
 MPAlgPi = Pi {a=PolyMu} . MPAlgSlice
+
+public export
+MPGenPi : MetaPolyTypeAlg -> Type
+MPGenPi = Pi {a=PolyMu} . MPGenSlice
 
 -- Given an algebra which generates a predicate on a `PolyMu`, this algebra
 -- generates an algebra on dependent pairs of `PolyMu` with the generated
 -- predicate.
 public export
 MetaPolyDepTypeAlg : MetaPolyTypeAlg -> Type -> Type
-MetaPolyDepTypeAlg alg x = Sigma {a=(PolyF Type)} alg -> x
+MetaPolyDepTypeAlg alg x = Sigma {a=(PolyF Type)} alg -> PolyF x -> x
 
 -- Given an algebra which generates a predicate on a `PolyMu`, and an
 -- algebra dependent on it, this is a catamorphism on dependent pairs
@@ -2501,19 +2523,25 @@ MetaPolyDepTypeAlg alg x = Sigma {a=(PolyF Type)} alg -> x
 public export
 metaPolyDepTypePiCurried : {tyalg : MetaPolyTypeAlg} -> {0 x : Type} ->
   MetaPolyDepTypeAlg tyalg x ->
-  (p : PolyMu) -> MPAlgSlice tyalg p -> x
-metaPolyDepTypePiCurried depalg (InPCom PFI) dp = depalg (PFI ** dp)
-metaPolyDepTypePiCurried depalg (InPCom PF0) dp = depalg (PF0 ** dp)
-metaPolyDepTypePiCurried depalg (InPCom PF1) dp = depalg (PF1 ** dp)
-metaPolyDepTypePiCurried depalg (InPCom (p $$+ q)) dp =
-  depalg ((MPAlgSlice tyalg p $$+ MPAlgSlice tyalg q) ** dp)
-metaPolyDepTypePiCurried depalg (InPCom (p $$* q)) dp =
-  depalg ((MPAlgSlice tyalg p $$* MPAlgSlice tyalg q) ** dp)
+  (p : PolyMu) -> MPGenSlice tyalg p -> x
+metaPolyDepTypePiCurried depalg (InPCom PFI) dp = depalg (PFI ** dp) PFI
+metaPolyDepTypePiCurried depalg (InPCom PF0) dp = depalg (PF0 ** dp) PF0
+metaPolyDepTypePiCurried depalg (InPCom PF1) dp = depalg (PF1 ** dp) PF1
+metaPolyDepTypePiCurried depalg (InPCom (p $$+ q)) (dp, dq, dpq) =
+  depalg
+    ((MPGenSlice tyalg p $$+ MPGenSlice tyalg q) ** dpq)
+    (metaPolyDepTypePiCurried depalg p dp $$+
+     metaPolyDepTypePiCurried depalg q dq)
+metaPolyDepTypePiCurried depalg (InPCom (p $$* q)) (dp, dq, dpq) =
+  depalg
+    ((MPGenSlice tyalg p $$* MPGenSlice tyalg q) ** dpq)
+    (metaPolyDepTypePiCurried depalg p dp $$*
+     metaPolyDepTypePiCurried depalg q dq)
 
 public export
 metaPolyDepTypePi : {tyalg : MetaPolyTypeAlg} -> {0 x : Type} ->
   MetaPolyDepTypeAlg tyalg x ->
-  MPAlgSigma tyalg -> x
+  MPGenSigma tyalg -> x
 metaPolyDepTypePi {tyalg} {x} depalg (p ** dp) =
   metaPolyDepTypePiCurried {tyalg} {x} depalg p dp
 
