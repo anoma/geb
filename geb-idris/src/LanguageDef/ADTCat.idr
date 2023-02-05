@@ -2545,6 +2545,13 @@ metaPolyDepTypeCata : {tyalg : MetaPolyTypeAlg} -> {0 x : Type} ->
 metaPolyDepTypeCata {tyalg} {x} depalg (p ** dp) =
   metaPolyDepTypeCataCurried {tyalg} {x} depalg p dp
 
+public export
+metaPolySliceCata : {dom, cod : MetaPolyTypeAlg} ->
+  MetaPolyDepTypeAlg dom (MPGenSigma cod) ->
+  ?metaPolySliceCata_arg_hole ->
+  (p : PolyMu) -> MPGenSlice dom p -> MPGenSlice cod p
+metaPolySliceCata = ?metaPolySliceCata_hole
+
 -----------------------------------
 ---- Coalgebra and anamorphism ----
 -----------------------------------
