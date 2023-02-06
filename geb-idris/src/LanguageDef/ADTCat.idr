@@ -3508,3 +3508,40 @@ public export
 prodAdjUnit : SPNatTrans (spfId ()) ProdAdjRL
 prodAdjUnit =
   (\(), () => (() ** const ()) ** \(() ** ()), (i ** ()) => (() ** Refl))
+
+public export
+interpProdCounit : (x : SliceObj Bool) ->
+  SliceMorphism (InterpSPFunc ProdAdjLR x) (InterpSPFunc (spfId Bool) x)
+interpProdCounit = InterpSPNT {f=ProdAdjLR} {g=(spfId Bool)} prodAdjCounit
+
+public export
+testProdCounitObj : SliceObj Bool
+testProdCounitObj b = if b then Nat else String
+
+public export
+testProdCounit :
+  SliceMorphism
+    (InterpSPFunc ProdAdjLR ADTCat.testProdCounitObj)
+    (InterpSPFunc (spfId Bool) ADTCat.testProdCounitObj)
+testProdCounit = interpProdCounit testProdCounitObj
+
+public export
+testProdCounitApp1 :
+  snd
+    (ADTCat.testProdCounit False
+      ((() ** const ()) ** \(() ** i) => if i then 5 else "five")) () =
+  "five"
+testProdCounitApp1 = Refl
+
+public export
+testProdCounitApp2 :
+  snd
+    (ADTCat.testProdCounit True
+      ((() ** const ()) ** \(() ** i) => if i then 5 else "five")) () =
+  5
+testProdCounitApp2 = Refl
+
+public export
+interpProdUnit : (x : SliceObj ()) ->
+  SliceMorphism (InterpSPFunc (spfId ()) x) (InterpSPFunc ProdAdjRL x)
+interpProdUnit = InterpSPNT {f=(spfId ())} {g=ProdAdjRL} prodAdjUnit

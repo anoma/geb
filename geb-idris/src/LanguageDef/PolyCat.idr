@@ -2984,13 +2984,24 @@ spntOnDir : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
 spntOnDir = snd
 
 public export
+InterpSPNTDir : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
+  (alpha : SPNatTrans f g) -> (slw : SliceObj w) ->
+  (posfi : z) -> (posf : spfPos f posfi) ->
+  (dirsf :
+    (d : spfDir f (posfi ** posf)) ->
+    slw $ spfAssign f ((posfi ** posf) ** d)) ->
+  (dirsg : spfDir g (posfi ** spntOnPos {f} {g} alpha posfi posf)) ->
+  slw (spfAssign g ((posfi ** spntOnPos {f} {g} alpha posfi posf) ** dirsg))
+InterpSPNTDir {w} {z} alpha slw posfi posf dirsf dirsg
+  with (spntOnDir alpha (posfi ** posf) dirsg)
+    InterpSPNTDir {w} {z} alpha slw posfi posf dirsf dirsg | (dirf ** eq) =
+      rewrite sym eq in dirsf dirf
+
+public export
 InterpSPNT : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
   SPNatTrans f g -> SliceNatTrans {x=w} {y=z} (InterpSPFunc f) (InterpSPFunc g)
 InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
-  (spntOnPos alpha posfi posf **
-   \dirsg =>
-    let (dirf ** eq) = spntOnDir alpha (posfi ** posf) dirsg in
-    replace {p=slw} eq $ dirsf dirf)
+  (spntOnPos alpha posfi posf ** InterpSPNTDir alpha slw posfi posf dirsf)
 
 ------------------------------------------------------
 ------------------------------------------------------
