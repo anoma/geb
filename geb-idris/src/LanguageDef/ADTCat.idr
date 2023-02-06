@@ -3526,19 +3526,19 @@ testProdCounit :
 testProdCounit = interpProdCounit testProdCounitObj
 
 public export
-testProdCounitApp1 :
+prodCounitApp : (String, Nat) -> (i : Bool) -> if i then Nat else String
+prodCounitApp (s, n) i =
   snd
-    (ADTCat.testProdCounit False
-      ((() ** const ()) ** \(() ** i) => if i then 5 else "five")) () =
-  "five"
+    (ADTCat.testProdCounit i
+      ((() ** const ()) ** \(() ** i') => if i' then n else s))
+  ()
+
+public export
+testProdCounitApp1 : prodCounitApp ("five", 5) False = "five"
 testProdCounitApp1 = Refl
 
 public export
-testProdCounitApp2 :
-  snd
-    (ADTCat.testProdCounit True
-      ((() ** const ()) ** \(() ** i) => if i then 5 else "five")) () =
-  5
+testProdCounitApp2 : prodCounitApp ("five", 5) True = 5
 testProdCounitApp2 = Refl
 
 public export
