@@ -5,11 +5,17 @@ Welcome to the GEB project.
 
 ## Links
 
+
+
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
+
+
 ### code coverage
+
+
 
 For test coverage it can be found at the following links:
 
@@ -27,6 +33,8 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see GEB-TEST:CODE-COVERAGE
+
+
 
 ## Getting Started
 
@@ -276,6 +284,8 @@ conjectures about GEB
 
 ## Categorical Model
 
+
+
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -389,6 +399,8 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
+
+
 
 ### Morphisms
 
@@ -1255,6 +1267,7 @@ The functions given work on this.
 
 #### Translation Functions
 
+###### \[in package GEB.TRANS\]
 These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
 into other categorical data structures.
 
@@ -1466,6 +1479,144 @@ Every accessor for each of the CLASS's found here are from @GEB-ACCESSORS
 - [function] IF-LT MCAR MCADR THEN ELSE
 
     Checks if the MCAR is less than the MCADR and chooses the appropriate branch
+
+## The Simply Typed Lambda Calculus model
+
+###### \[in package GEB.LAMBDA\]
+This covers GEB's view on simply typed lambda calculus
+
+### Lambda Specification
+
+###### \[in package GEB.LAMBDA.SPEC\]
+This covers the various the abstract data type that is the simply
+  typed lambda calculus within GEB.
+
+The specification follows from the sum type declaration
+
+```lisp
+(defunion stlc
+  (absurd (value t))
+  unit
+  (left (value t))
+  (right (value t))
+  (case-on (lty geb.spec:substmorph)
+           (rty geb.spec:substmorph)
+           (cod geb.spec:substmorph)
+           (on t) (left t) (right t))
+  (pair (lty geb.spec:substmorph) (rty geb.spec:substmorph) (left t) (right t))
+  (fst  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
+  (snd  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
+  (lamb (vty geb.spec:substmorph) (tty geb.spec:substmorph) (value t))
+  (app  (dom geb.spec:substmorph) (cod geb.spec:substmorph) (func t) (obj t))
+  (index (index fixnum)))
+```
+
+
+- [type] <STLC>
+
+- [type] STLC
+
+- [type] ABSURD
+
+- [function] ABSURD-VALUE INSTANCE
+
+- [type] UNIT
+
+- [type] PAIR
+
+- [function] PAIR-LTY INSTANCE
+
+- [function] PAIR-RTY INSTANCE
+
+- [function] PAIR-LEFT INSTANCE
+
+- [function] PAIR-RIGHT INSTANCE
+
+- [type] LEFT
+
+- [function] LEFT-VALUE INSTANCE
+
+- [type] RIGHT
+
+- [function] RIGHT-VALUE INSTANCE
+
+- [type] CASE-ON
+
+- [function] CASE-ON-LTY INSTANCE
+
+- [function] CASE-ON-RTY INSTANCE
+
+- [function] CASE-ON-COD INSTANCE
+
+- [function] CASE-ON-ON INSTANCE
+
+- [function] CASE-ON-LEFT INSTANCE
+
+- [function] CASE-ON-RIGHT INSTANCE
+
+- [type] FST
+
+- [function] FST-LTY INSTANCE
+
+- [function] FST-RTY INSTANCE
+
+- [function] FST-VALUE INSTANCE
+
+- [type] SND
+
+- [function] SND-LTY INSTANCE
+
+- [function] SND-RTY INSTANCE
+
+- [function] SND-VALUE INSTANCE
+
+- [type] LAMB
+
+- [function] LAMB-VTY INSTANCE
+
+- [function] LAMB-TTY INSTANCE
+
+- [function] LAMB-VALUE INSTANCE
+
+- [type] APP
+
+- [function] APP-DOM INSTANCE
+
+- [function] APP-COD INSTANCE
+
+- [function] APP-FUNC INSTANCE
+
+- [function] APP-OBJ INSTANCE
+
+- [type] INDEX
+
+- [function] INDEX-INDEX INSTANCE
+
+- [function] TYPED V TYP
+
+    Puts together the type declaration with the value itself for lambda terms
+
+- [function] TYPED-STLC-TYPE INSTANCE
+
+- [function] TYPED-STLC-VALUE INSTANCE
+
+### Transition Functions
+
+###### \[in package GEB.LAMBDA.TRANS\]
+These functions deal with transforming the data structure to other
+data types
+
+- [generic-function] COMPILE-CHECKED-TERM CONTEXT TYPE TERM
+
+    Compiles a checked term into SubstMorph category
+
+#### Utility Functionality
+
+These are utility functions relating to translating lambda terms to other types
+
+- [function] STLC-CTX-TO-MU CONTEXT
+
+    Converts a generic <STLC> context into a SUBSTMORPH
 
 ## Mixins
 

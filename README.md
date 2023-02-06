@@ -30,19 +30,23 @@
     - [7.3 Constructors][2ad4]
     - [7.4 API][6228]
         - [7.4.1 Booleans][399c]
-        - [7.4.2 Translation Functions][0caf]
+        - [7.4.2 Translation Functions][b79a]
         - [7.4.3 Utility][c721]
     - [7.5 Examples][a17b]
 - [8 Polynomial Specification][f5ac]
     - [8.1 Polynomial Types][bd81]
     - [8.2 Polynomial Constructors][b76d]
-- [9 Mixins][723a]
-    - [9.1 Pointwise Mixins][d5d3]
-    - [9.2 Pointwise API][2fcf]
-    - [9.3 Mixins Examples][4938]
-- [10 Geb Utilities][4ffa]
-    - [10.1 Accessors][cc51]
-- [11 Testing][9bcb]
+- [9 The Simply Typed Lambda Calculus model][db8f]
+    - [9.1 Lambda Specification][34d0]
+    - [9.2 Transition Functions][e3e4]
+        - [9.2.1 Utility Functionality][0609]
+- [10 Mixins][723a]
+    - [10.1 Pointwise Mixins][d5d3]
+    - [10.2 Pointwise API][2fcf]
+    - [10.3 Mixins Examples][4938]
+- [11 Geb Utilities][4ffa]
+    - [11.1 Accessors][cc51]
+- [12 Testing][9bcb]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -50,12 +54,18 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
+
+
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
+
+
 <a id="x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29"></a>
 ### 1.1 code coverage
+
+
 
 For test coverage it can be found at the following links:
 
@@ -73,6 +83,8 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see [`GEB-TEST:CODE-COVERAGE`][417f]
+
+
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -335,6 +347,8 @@ conjectures about GEB
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 5 Categorical Model
 
+
+
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -448,6 +462,8 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
+
+
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 5.1 Morphisms
@@ -594,7 +610,7 @@ In this piece of code we can notice a few things:
 
 4. We can write further methods extending the function to other subtypes.
 
-Thus the [`GEB:TO-POLY`][50e0] function is written in such a way that it
+Thus the [`GEB:TO-POLY`][642a] function is written in such a way that it
 supports a closed definition and open extensions, with
 [`GEB.UTILS:SUBCLASS-RESPONSIBILITY`][2276] serving to be called if an
 extension a user wrote has no handling of this method.
@@ -1400,13 +1416,14 @@ The functions given work on this.
 <a id="x-28GEB-BOOL-3AOR-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
 - [symbol-macro] **OR**
 
-<a id="x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29"></a>
+<a id="x-28GEB-2ETRANS-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29"></a>
 #### 7.4.2 Translation Functions
 
+###### \[in package GEB.TRANS\]
 These cover various conversions from [Subst Morph][d2d1] and [Subst Obj][c1b3]
 into other categorical data structures.
 
-<a id="x-28GEB-3ATO-POLY-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2ETRANS-3ATO-POLY-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **TO-POLY** *MORPHISM*
 
     Turns a [Subst Morph][d2d1] into a [`POLY:POLY`][8bf3]
@@ -1654,8 +1671,195 @@ Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors]
 
     Checks if the [`MCAR`][f1ce] is less than the [`MCADR`][cc87] and chooses the appropriate branch
 
+<a id="x-28GEB-2ELAMBDA-3A-40STLC-20MGL-PAX-3ASECTION-29"></a>
+## 9 The Simply Typed Lambda Calculus model
+
+###### \[in package GEB.LAMBDA\]
+This covers GEB's view on simply typed lambda calculus
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3A-40LAMBDA-SPECS-20MGL-PAX-3ASECTION-29"></a>
+### 9.1 Lambda Specification
+
+###### \[in package GEB.LAMBDA.SPEC\]
+This covers the various the abstract data type that is the simply
+  typed lambda calculus within GEB.
+
+The specification follows from the sum type declaration
+
+```lisp
+(defunion stlc
+  (absurd (value t))
+  unit
+  (left (value t))
+  (right (value t))
+  (case-on (lty geb.spec:substmorph)
+           (rty geb.spec:substmorph)
+           (cod geb.spec:substmorph)
+           (on t) (left t) (right t))
+  (pair (lty geb.spec:substmorph) (rty geb.spec:substmorph) (left t) (right t))
+  (fst  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
+  (snd  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
+  (lamb (vty geb.spec:substmorph) (tty geb.spec:substmorph) (value t))
+  (app  (dom geb.spec:substmorph) (cod geb.spec:substmorph) (func t) (obj t))
+  (index (index fixnum)))
+```
+
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-20TYPE-29"></a>
+- [type] **\<STLC\>**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ASTLC-20TYPE-29"></a>
+- [type] **STLC**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AABSURD-20TYPE-29"></a>
+- [type] **ABSURD**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AABSURD-VALUE-20FUNCTION-29"></a>
+- [function] **ABSURD-VALUE** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AUNIT-20TYPE-29"></a>
+- [type] **UNIT**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3APAIR-20TYPE-29"></a>
+- [type] **PAIR**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3APAIR-LTY-20FUNCTION-29"></a>
+- [function] **PAIR-LTY** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3APAIR-RTY-20FUNCTION-29"></a>
+- [function] **PAIR-RTY** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3APAIR-LEFT-20FUNCTION-29"></a>
+- [function] **PAIR-LEFT** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3APAIR-RIGHT-20FUNCTION-29"></a>
+- [function] **PAIR-RIGHT** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ALEFT-20TYPE-29"></a>
+- [type] **LEFT**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ALEFT-VALUE-20FUNCTION-29"></a>
+- [function] **LEFT-VALUE** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ARIGHT-20TYPE-29"></a>
+- [type] **RIGHT**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ARIGHT-VALUE-20FUNCTION-29"></a>
+- [function] **RIGHT-VALUE** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-20TYPE-29"></a>
+- [type] **CASE-ON**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-LTY-20FUNCTION-29"></a>
+- [function] **CASE-ON-LTY** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-RTY-20FUNCTION-29"></a>
+- [function] **CASE-ON-RTY** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-COD-20FUNCTION-29"></a>
+- [function] **CASE-ON-COD** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-ON-20FUNCTION-29"></a>
+- [function] **CASE-ON-ON** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-LEFT-20FUNCTION-29"></a>
+- [function] **CASE-ON-LEFT** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-RIGHT-20FUNCTION-29"></a>
+- [function] **CASE-ON-RIGHT** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AFST-20TYPE-29"></a>
+- [type] **FST**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AFST-LTY-20FUNCTION-29"></a>
+- [function] **FST-LTY** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AFST-RTY-20FUNCTION-29"></a>
+- [function] **FST-RTY** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AFST-VALUE-20FUNCTION-29"></a>
+- [function] **FST-VALUE** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ASND-20TYPE-29"></a>
+- [type] **SND**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ASND-LTY-20FUNCTION-29"></a>
+- [function] **SND-LTY** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ASND-RTY-20FUNCTION-29"></a>
+- [function] **SND-RTY** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ASND-VALUE-20FUNCTION-29"></a>
+- [function] **SND-VALUE** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-20TYPE-29"></a>
+- [type] **LAMB**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-VTY-20FUNCTION-29"></a>
+- [function] **LAMB-VTY** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-TTY-20FUNCTION-29"></a>
+- [function] **LAMB-TTY** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-VALUE-20FUNCTION-29"></a>
+- [function] **LAMB-VALUE** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AAPP-20TYPE-29"></a>
+- [type] **APP**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AAPP-DOM-20FUNCTION-29"></a>
+- [function] **APP-DOM** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AAPP-COD-20FUNCTION-29"></a>
+- [function] **APP-COD** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AAPP-FUNC-20FUNCTION-29"></a>
+- [function] **APP-FUNC** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AAPP-OBJ-20FUNCTION-29"></a>
+- [function] **APP-OBJ** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AINDEX-20TYPE-29"></a>
+- [type] **INDEX**
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AINDEX-INDEX-20FUNCTION-29"></a>
+- [function] **INDEX-INDEX** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ATYPED-20FUNCTION-29"></a>
+- [function] **TYPED** *V TYP*
+
+    Puts together the type declaration with the value itself for lambda terms
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ATYPED-STLC-TYPE-20FUNCTION-29"></a>
+- [function] **TYPED-STLC-TYPE** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ATYPED-STLC-VALUE-20FUNCTION-29"></a>
+- [function] **TYPED-STLC-VALUE** *INSTANCE*
+
+<a id="x-28GEB-2ELAMBDA-2ETRANS-3A-40STLC-CONVERSION-20MGL-PAX-3ASECTION-29"></a>
+### 9.2 Transition Functions
+
+###### \[in package GEB.LAMBDA.TRANS\]
+These functions deal with transforming the data structure to other
+data types
+
+<a id="x-28GEB-2ELAMBDA-2ETRANS-3ACOMPILE-CHECKED-TERM-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **COMPILE-CHECKED-TERM** *CONTEXT TYPE TERM*
+
+    Compiles a checked term into SubstMorph category
+
+<a id="x-28GEB-2ELAMBDA-2ETRANS-3A-40UTILITY-20MGL-PAX-3ASECTION-29"></a>
+#### 9.2.1 Utility Functionality
+
+These are utility functions relating to translating lambda terms to other types
+
+<a id="x-28GEB-2ELAMBDA-2ETRANS-3ASTLC-CTX-TO-MU-20FUNCTION-29"></a>
+- [function] **STLC-CTX-TO-MU** *CONTEXT*
+
+    Converts a generic [(CODE <STLC>)][78ef] context into a [`SUBSTMORPH`][57dc]
+
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
-## 9 Mixins
+## 10 Mixins
 
 ###### \[in package GEB.MIXINS\]
 Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
@@ -1663,7 +1867,7 @@ project. Overall all these offer various services to the rest of the
 project
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
-### 9.1 Pointwise Mixins
+### 10.1 Pointwise Mixins
 
 Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -1692,7 +1896,7 @@ in our class
     Further all `DIRECT-POINTWISE-MIXIN`'s are [`POINTWISE-MIXIN`][445d]'s
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
-### 9.2 Pointwise API
+### 10.2 Pointwise API
 
 These are the general API functions on any class that have the
 [`POINTWISE-MIXIN`][445d] service.
@@ -1725,7 +1929,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
     rather than the class
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 9.3 Mixins Examples
+### 10.3 Mixins Examples
 
 Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
@@ -1740,7 +1944,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 10 Geb Utilities
+## 11 Geb Utilities
 
 ###### \[in package GEB.UTILS\]
 The Utilities package provides general utility functionality that is
@@ -1857,7 +2061,7 @@ used throughout the GEB codebase
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
-### 10.1 Accessors
+### 11.1 Accessors
 
 These functions are generic lenses of the GEB codebase. If a class is
 defined, where the names are not known, then these accessors are
@@ -1927,7 +2131,7 @@ likely to be used. They may even augment existing classes.
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 11 Testing
+## 12 Testing
 
 ###### \[in package GEB-TEST\]
 We use [parachute](https://quickref.common-lisp.net/parachute.html)
@@ -1965,9 +2169,9 @@ features and how to better lay out future tests
     
     simply run this function to generate a fresh one
 
+  [0609]: #x-28GEB-2ELAMBDA-2ETRANS-3A-40UTILITY-20MGL-PAX-3ASECTION-29 "Utility Functionality"
   [0ad4]: #x-28GEB-BOOL-3ABOOL-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:BOOL MGL-PAX:SYMBOL-MACRO"
   [0ae3]: #x-28GEB-2EPOLY-2ESPEC-3A-2A-20TYPE-29 "GEB.POLY.SPEC:* TYPE"
-  [0caf]: #x-28GEB-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29 "Translation Functions"
   [0dcc]: #x-28GEB-2ESPEC-3APROJECT-LEFT-20TYPE-29 "GEB.SPEC:PROJECT-LEFT TYPE"
   [0dfe]: #x-28GEB-2ESPEC-3A-3C-RIGHT-20FUNCTION-29 "GEB.SPEC:<-RIGHT FUNCTION"
   [0e00]: #x-28GEB-DOCS-2FDOCS-3A-40YONEDA-LEMMA-20MGL-PAX-3ASECTION-29 "The Yoneda Lemma"
@@ -1983,6 +2187,7 @@ features and how to better lay out future tests
   [2fcf]: #x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29 "Pointwise API"
   [3173]: #x-28GEB-2ESPEC-3ASUBSTOBJ-20TYPE-29 "GEB.SPEC:SUBSTOBJ TYPE"
   [31c5]: #x-28GEB-BOOL-3AFALSE-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:FALSE MGL-PAX:SYMBOL-MACRO"
+  [34d0]: #x-28GEB-2ELAMBDA-2ESPEC-3A-40LAMBDA-SPECS-20MGL-PAX-3ASECTION-29 "Lambda Specification"
   [365a]: #x-28GEB-2EUTILS-3AELSE-20GENERIC-FUNCTION-29 "GEB.UTILS:ELSE GENERIC-FUNCTION"
   [3686]: #x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29 "Original Efforts"
   [399c]: #x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29 "Booleans"
@@ -1997,19 +2202,20 @@ features and how to better lay out future tests
   [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
   [4a87]: #x-28GEB-DOCS-2FDOCS-3A-40OPEN-TYPE-20MGL-PAX-3AGLOSSARY-TERM-29 "GEB-DOCS/DOCS:@OPEN-TYPE MGL-PAX:GLOSSARY-TERM"
   [4ffa]: #x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29 "Geb Utilities"
-  [50e0]: #x-28GEB-3ATO-POLY-20GENERIC-FUNCTION-29 "GEB:TO-POLY GENERIC-FUNCTION"
   [57dc]: #x-28GEB-2ESPEC-3ASUBSTMORPH-20TYPE-29 "GEB.SPEC:SUBSTMORPH TYPE"
   [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
   [59dd]: #x-28GEB-2ESPEC-3ACASE-20TYPE-29 "GEB.SPEC:CASE TYPE"
   [5e72]: #x-28GEB-2ESPEC-3AALIAS-20TYPE-29 "GEB.SPEC:ALIAS TYPE"
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
+  [642a]: #x-28GEB-2ETRANS-3ATO-POLY-20GENERIC-FUNCTION-29 "GEB.TRANS:TO-POLY GENERIC-FUNCTION"
   [684b]: http://www.lispworks.com/documentation/HyperSpec/Body/s_if.htm "IF MGL-PAX:MACRO"
   [6f3c]: #x-28GEB-3ACURRY-20GENERIC-FUNCTION-29 "GEB:CURRY GENERIC-FUNCTION"
   [7088]: #x-28GEB-2ESPEC-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO0 MGL-PAX:SYMBOL-MACRO"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
   [74ab]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADR FUNCTION"
   [77c2]: #x-28GEB-2ESPEC-3APROD-20TYPE-29 "GEB.SPEC:PROD TYPE"
+  [78ef]: http://www.lispworks.com/documentation/HyperSpec/Body/t_nil.htm "NIL TYPE"
   [7e58]: http://www.lispworks.com/documentation/HyperSpec/Body/t_class.htm "CLASS CLASS"
   [7f9f]: http://www.lispworks.com/documentation/HyperSpec/Body/t_symbol.htm "SYMBOL TYPE"
   [8214]: #x-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-20TYPE-29 "GEB.SPEC:<SUBSTOBJ> TYPE"
@@ -2040,6 +2246,7 @@ features and how to better lay out future tests
   [ae41]: #x-28GEB-2ESPEC-3ATERMINAL-20TYPE-29 "GEB.SPEC:TERMINAL TYPE"
   [af14]: #x-28GEB-2EUTILS-3AMCDR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCDR GENERIC-FUNCTION"
   [b76d]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Polynomial Constructors"
+  [b79a]: #x-28GEB-2ETRANS-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29 "Translation Functions"
   [b960]: #x-28GEB-2ESPEC-3A-2ASO1-2A-20VARIABLE-29 "GEB.SPEC:*SO1* VARIABLE"
   [b9c1]: http://www.lispworks.com/documentation/HyperSpec/Body/t_seq.htm "SEQUENCE TYPE"
   [b9f3]: #x-28GEB-DOCS-2FDOCS-3A-40IDIOMS-20MGL-PAX-3ASECTION-29 "Project Idioms and Conventions"
@@ -2065,8 +2272,10 @@ features and how to better lay out future tests
   [d2d1]: #x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29 "Subst Morph"
   [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
   [d908]: http://www.lispworks.com/documentation/HyperSpec/Body/f_typep.htm "TYPEP FUNCTION"
+  [db8f]: #x-28GEB-2ELAMBDA-3A-40STLC-20MGL-PAX-3ASECTION-29 "The Simply Typed Lambda Calculus model"
   [dbe7]: #x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29 "Objects"
   [e2af]: #x-28GEB-2ESPEC-3A--3ELEFT-20FUNCTION-29 "GEB.SPEC:->LEFT FUNCTION"
+  [e3e4]: #x-28GEB-2ELAMBDA-2ETRANS-3A-40STLC-CONVERSION-20MGL-PAX-3ASECTION-29 "Transition Functions"
   [e65d]: #x-28GEB-2ESPEC-3APROJECT-RIGHT-20TYPE-29 "GEB.SPEC:PROJECT-RIGHT TYPE"
   [e755]: http://www.lispworks.com/documentation/HyperSpec/Body/d_type.htm "TYPE DECLARATION"
   [e982]: #x-28GEB-2ESPEC-3A-2ASO0-2A-20VARIABLE-29 "GEB.SPEC:*SO0* VARIABLE"
