@@ -56,6 +56,7 @@
             stream))
           (stlc
            (format stream
+                   "~A"
                    (stlc-to-morph nil
                                   (lambda:typed-stlc-type eval)
                                   (lambda:typed-stlc-value eval))))
