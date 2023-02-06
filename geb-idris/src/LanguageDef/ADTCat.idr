@@ -3559,3 +3559,65 @@ interpProdUnit x ex =
           prodAdjUnit x (() ** const ex))
   in
   (ipnt (False ** ()), ipnt (True ** ()))
+
+public export
+SubCFromType : Type
+SubCFromType = Subset0 Type id -- a type together with a term of that type
+
+public export
+PowerObjFromType : Type -> Type
+PowerObjFromType a = Subset0 (SliceObj a) Pi
+
+public export
+CharToPowerFromType : {0 a : Type} -> (a -> SubCFromType) -> PowerObjFromType a
+CharToPowerFromType chi = Element0 (fst0 . chi) (\x => snd0 (chi x))
+
+public export
+PowerToCharFromType : {0 a : Type} -> PowerObjFromType a -> (a -> SubCFromType)
+PowerToCharFromType po e = Element0 (fst0 po e) (snd0 po e)
+
+public export
+TrueFromType : () -> SubCFromType
+TrueFromType () = Element0 Bool True
+
+public export
+ChiForType : {0 a, b : Type} -> (a -> b) -> (b -> SubCFromType)
+ChiForType {a} {b} f eb = Element0 Type (Subset0 a (Equal eb . f))
+
+public export
+SubCFromBoolPred : Type
+SubCFromBoolPred = Subset0 Type (\ty => ty -> Bool)
+
+public export
+PowerObjFromBoolPred : Type -> Type
+PowerObjFromBoolPred a = Subset0 (SliceObj a) (\ty => Subset0 a ty -> Bool)
+
+public export
+CharToPowerFromBoolPred : {0 a : Type} ->
+  (a -> SubCFromBoolPred) -> PowerObjFromBoolPred a
+CharToPowerFromBoolPred chi =
+  Element0 (fst0 . chi) (\x => snd0 (chi (fst0 x)) (snd0 x))
+
+public export
+PowerToCharFromBoolPred : {0 a : Type} -> PowerObjFromBoolPred a ->
+  (a -> SubCFromBoolPred)
+PowerToCharFromBoolPred po e =
+  Element0 (fst0 po e) (\edp => snd0 po $ Element0 e edp)
+
+public export
+TrueFromBoolPred : () -> SubCFromBoolPred
+TrueFromBoolPred () = Element0 () (const True)
+
+public export
+ImageDecForBoolPred : {a, b : Type} -> (a -> b) -> (b -> Type)
+ImageDecForBoolPred {a} {b} f eb = Dec (Subset0 a (Equal eb . f))
+
+public export
+inImageForBoolPred : {0 a, b : Type} -> (f : a -> b) -> (eb : b) ->
+  ImageDecForBoolPred f eb -> Bool
+inImageForBoolPred {a} {b} f eb = isYes
+
+public export
+ChiForBoolPred : {a, b : Type} -> (a -> b) -> (b -> SubCFromBoolPred)
+ChiForBoolPred {a} {b} f eb =
+  Element0 (ImageDecForBoolPred f eb) (inImageForBoolPred f eb)
