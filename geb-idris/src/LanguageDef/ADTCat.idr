@@ -3456,6 +3456,25 @@ SPFToDepPolyF {w} {z} (posdep ** dirdep ** assign) =
   ((w, Sigma {a=(Sigma {a=z} posdep)} dirdep, Sigma {a=z} posdep, z) **
    (assign, DPair.fst, DPair.fst))
 
+------------------------------------------------------
+------------------------------------------------------
+---- Composition of dependent polynomial functors ----
+------------------------------------------------------
+------------------------------------------------------
+
+public export
+spfCompose : {x, y, z : Type} ->
+  SlicePolyFunc y z -> SlicePolyFunc x y -> SlicePolyFunc x z
+spfCompose {x} {y} {z} (qpd ** qdd ** qa) (ppd ** pdd ** pa) =
+  (\qi =>
+    (qdi : qpd qi **
+     (qddi : qdd (qi ** qdi)) -> ppd $ qa ((qi ** qdi) ** qddi)) **
+   \(qi ** qpm) =>
+     (qddi : qdd (qi ** fst qpm) **
+     pdd (qa ((qi ** fst qpm) ** qddi) ** snd qpm qddi)) **
+   \((qi ** (qdi ** qpm)) ** (qddi ** ppdd)) =>
+     pa ((qa ((qi ** qdi) ** qddi) ** qpm qddi) ** ppdd))
+
 -----------------------------------------------------
 -----------------------------------------------------
 ---- Experiments with category-specification API ----
@@ -3479,6 +3498,10 @@ DiagFunc : DepParamPolyFunc () Bool
 DiagFunc = (const Unit ** const ((), Unit))
 
 public export
+DiagSPF : SlicePolyFunc () Bool
+DiagSPF = SPFFromDPPF DiagFunc
+
+public export
 DiagApp : (x : Type) -> (b : Bool) -> x -> InterpDPPF DiagFunc (const x) b
 DiagApp x b e = (() ** const e)
 
@@ -3491,12 +3514,16 @@ diagTestCorrect : (n : Nat) -> diagTest n = (n, n)
 diagTestCorrect n = Refl
 
 public export
-ProductFunc : SliceFunctor Bool ()
-ProductFunc = InterpSPFunc (const Unit ** const Bool ** DPair.snd)
+ProductFunc : SlicePolyFunc Bool ()
+ProductFunc = (const Unit ** const Bool ** DPair.snd)
+
+public export
+IProductFunc : SliceFunctor Bool ()
+IProductFunc = InterpSPFunc ProductFunc
 
 public export
 ProductApp :
-  (x, y : Type) -> x -> y -> ProductFunc (\b => if b then y else x) ()
+  (x, y : Type) -> x -> y -> IProductFunc (\b => if b then y else x) ()
 ProductApp x y ex ey = (() ** \b => if b then ey else ex)
 
 public export
@@ -3507,3 +3534,11 @@ productTest s n =
 public export
 productTestCorrect : (s : String) -> (n : Nat) -> productTest s n = (s, n)
 productTestCorrect s n = Refl
+
+public export
+prodAdjRL : SlicePolyFunc () ()
+prodAdjRL = spfCompose ProductFunc DiagSPF
+
+public export
+prodAdjLR : SlicePolyFunc () ()
+prodAdjLR = spfCompose ProductFunc DiagSPF
