@@ -1,6 +1,6 @@
 ;; Transition or Translation functions about geb
 
-(in-package :geb)
+(in-package :geb.trans)
 
 (defgeneric to-poly (morphism)
   (:documentation "Turns a @GEB-SUBSTMORPH into a POLY:POLY"))

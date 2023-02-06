@@ -7,6 +7,14 @@
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
 
 (geb.utils:muffle-package-variance
+ (defpackage #:geb.trans
+   (:documentation "Gödel, Escher, Bach categorical model")
+   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec #:geb)
+   (:local-nicknames (#:poly #:geb.poly.spec))
+   (:shadowing-import-from #:geb.spec :left :right :prod :case)
+   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
+
+(geb.utils:muffle-package-variance
  (uiop:define-package #:geb-bool
    (:documentation "Defines out booleans for the geb language")
    (:mix #:geb #:serapeum #:common-lisp)
@@ -14,9 +22,14 @@
    (:export
     :bool :fasle :true :not :and :or)))
 
-(in-package #:geb)
+(in-package #:geb.trans)
 
-(cl-reexport:reexport-from :geb.spec)
+(pax:defsection @geb-translation (:title "Translation Functions")
+  "These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
+into other categorical data structures."
+  (to-poly pax:generic-function))
+
+(in-package #:geb)
 
 (pax:defsection @geb (:title "The Geb Model")
   "Everything here relates directly to the underlying machinery of
@@ -29,14 +42,9 @@
 
 (pax:defsection @geb-api (:title "API")
   "Various forms and structures built on-top of @GEB-CATEGORIES"
-  (geb-bool::@geb-bool pax:section)
-  (@geb-translation    pax:section)
-  (@geb-utility        pax:section))
-
-(pax:defsection @geb-translation (:title "Translation Functions")
-  "These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
-into other categorical data structures."
-  (to-poly pax:generic-function))
+  (geb-bool::@geb-bool        pax:section)
+  (geb.trans:@geb-translation pax:section)
+  (@geb-utility               pax:section))
 
 (pax:defsection @geb-utility (:title "Utility")
   "Various utility functions ontop of @GEB-CATEGORIES"
@@ -95,3 +103,9 @@ The functions given work on this."
   (not   pax:symbol-macro)
   (and   pax:symbol-macro)
   (or    pax:symbol-macro))
+
+
+(in-package #:geb)
+
+(cl-reexport:reexport-from :geb.spec)
+(cl-reexport:reexport-from :geb.trans)

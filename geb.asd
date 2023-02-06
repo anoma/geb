@@ -63,8 +63,14 @@
     :depends-on (geb specs)
     :description "A simple Lambda calculus model"
     :components ((:file package)
+                 (:module experimental
+                  :serial t
+                  :description "Experimental lambda code"
+                  :components
+                  ((:file package)
+                   (:file lambda)))
                  (:file lambda)
-                 (:file lambda-conversion)))
+                 (:file trans)))
    (:module entry
     :serial t
     :description "Entry point for the geb codebase"

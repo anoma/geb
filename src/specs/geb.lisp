@@ -635,6 +635,12 @@ product with the shape
 
 (defmethod mcar ((obj init))
   (obj obj))
+
+(defmethod mcar ((alias alias))
+  (mcar (obj alias)))
+
+(defmethod mcadr ((alias alias))
+  (mcadr (obj alias)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Matching conveniences
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

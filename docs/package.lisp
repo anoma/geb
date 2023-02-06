@@ -7,4 +7,5 @@
   (:import-from #:geb.poly   #:@poly-manual)
   (:import-from #:geb.specs  #:@geb-specs)
   (:import-from #:geb.entry  #:@geb-entry)
+  (:import-from #:geb.lambda #:@stlc)
   (:export build-docs))
