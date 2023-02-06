@@ -3456,25 +3456,6 @@ SPFToDepPolyF {w} {z} (posdep ** dirdep ** assign) =
   ((w, Sigma {a=(Sigma {a=z} posdep)} dirdep, Sigma {a=z} posdep, z) **
    (assign, DPair.fst, DPair.fst))
 
-------------------------------------------------------
-------------------------------------------------------
----- Composition of dependent polynomial functors ----
-------------------------------------------------------
-------------------------------------------------------
-
-public export
-spfCompose : {x, y, z : Type} ->
-  SlicePolyFunc y z -> SlicePolyFunc x y -> SlicePolyFunc x z
-spfCompose {x} {y} {z} (qpd ** qdd ** qa) (ppd ** pdd ** pa) =
-  (\qi =>
-    (qdi : qpd qi **
-     (qddi : qdd (qi ** qdi)) -> ppd $ qa ((qi ** qdi) ** qddi)) **
-   \(qi ** qpm) =>
-     (qddi : qdd (qi ** fst qpm) **
-     pdd (qa ((qi ** fst qpm) ** qddi) ** snd qpm qddi)) **
-   \((qi ** (qdi ** qpm)) ** (qddi ** ppdd)) =>
-     pa ((qa ((qi ** qdi) ** qddi) ** qpm qddi) ** ppdd))
-
 -----------------------------------------------------
 -----------------------------------------------------
 ---- Experiments with category-specification API ----
