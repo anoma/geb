@@ -3,7 +3,7 @@
    (:documentation "A basic lambda calculus model")
    (:mix #:trivia #:serapeum #:geb.lambda.spec #:common-lisp)
    ;; we also reexport lambda.trans see the documentation below
-   ))
+   (:reexport #:geb.lambda.spec)))
 
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb.lambda.trans
@@ -26,6 +26,7 @@ data types"
 
 (pax:defsection @stlc (:title "The Simply Typed Lambda Calculus model")
   "This covers GEB's view on simply typed lambda calculus"
+  (@lambda-specs pax:section)
   (geb.lambda.trans:@stlc-conversion pax:section))
 
 (cl-reexport:reexport-from :geb.lambda.trans)
