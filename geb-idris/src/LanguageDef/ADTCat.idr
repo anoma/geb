@@ -3492,8 +3492,17 @@ productTestCorrect : (s : String) -> (n : Nat) -> productTest s n = (s, n)
 productTestCorrect s n = Refl
 
 public export
-ProdAdjRL : SlicePolyFunc () ()
-ProdAdjRL = spfCompose ProductFunc DiagSPF
+PolyFuncFromUnitUnitSPF : SlicePolyFunc () () -> PolyFunc
+PolyFuncFromUnitUnitSPF (posdep ** dirdep ** assign) =
+  (posdep () ** dirdep . MkDPair ())
+
+public export
+ProdAdjRLSPF : SlicePolyFunc () ()
+ProdAdjRLSPF = spfCompose ProductFunc DiagSPF
+
+public export
+ProdAdjRL : PolyFunc
+ProdAdjRL = PolyFuncFromUnitUnitSPF ProdAdjRLSPF
 
 public export
 ProdAdjLR : SlicePolyFunc Bool Bool
@@ -3505,9 +3514,8 @@ prodAdjCounit =
   (\_, _ => () ** \(i ** (() ** _)), () => ((() ** i) ** Refl))
 
 public export
-prodAdjUnit : SPNatTrans (spfId ()) ProdAdjRL
-prodAdjUnit =
-  (\(), () => (() ** const ()) ** \(() ** ()), (i ** ()) => (() ** Refl))
+prodAdjUnit : PolyNatTrans PFIdentityArena ProdAdjRL
+prodAdjUnit = ?foooo
 
 public export
 interpProdCounit : (x : SliceObj Bool) ->
@@ -3542,6 +3550,12 @@ testProdCounitProj2 : prodCounitProj ("five", 5) True = 5
 testProdCounitProj2 = Refl
 
 public export
-interpProdUnit : (x : SliceObj ()) ->
-  SliceMorphism (InterpSPFunc (spfId ()) x) (InterpSPFunc ProdAdjRL x)
-interpProdUnit = InterpSPNT {f=(spfId ())} {g=ProdAdjRL} prodAdjUnit
+interpProdUnit : (x : Type) -> x -> (x, x)
+interpProdUnit x ex =
+  let
+    ipnt =
+      snd
+        (InterpPolyNT {p=PFIdentityArena} {q=ProdAdjRL}
+          prodAdjUnit x (() ** const ex))
+  in
+  (ipnt (False ** ()), ipnt (True ** ()))
