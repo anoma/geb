@@ -3515,7 +3515,7 @@ prodAdjCounit =
 
 public export
 prodAdjUnit : PolyNatTrans PFIdentityArena ProdAdjRL
-prodAdjUnit = ?foooo
+prodAdjUnit = (const (() ** const ()) ** const (const ()))
 
 public export
 interpProdCounit : (x : SliceObj Bool) ->
