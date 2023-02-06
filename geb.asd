@@ -30,6 +30,7 @@
     :description "The Vampir Extraction Module"
     :components ((:file package)
                  (:file spec)
+                 (:file print)
                  (:file vampir)))
    (:module specs
     :serial t
