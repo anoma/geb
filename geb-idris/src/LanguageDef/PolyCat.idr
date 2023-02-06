@@ -3011,6 +3011,31 @@ spfCompose {x} {y} {z} (qpd ** qdd ** qa) (ppd ** pdd ** pa) =
    \((qi ** (qdi ** qpm)) ** (qddi ** ppdd)) =>
      pa ((qa ((qi ** qdi) ** qddi) ** qpm qddi) ** ppdd))
 
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---- Conversion between morphism and dependent-set polynomial functors ----
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+public export
+DepPolyFToSPF : {w, x, y, z : Type} ->
+  (x -> w) -> (x -> y) -> (y -> z) ->
+  SlicePolyFunc w z
+DepPolyFToSPF {w} {x} {y} {z} f g h =
+  (PreImage h **
+   \ey => Subset0 x (Equal (fst0 (snd ey)) . g) **
+   \ex => f (fst0 (snd ex)))
+
+public export
+SPFToDepPolyF : {w, z : Type} -> SlicePolyFunc w z ->
+  (wxyz : (Type, Type, Type, Type) **
+   (fst (snd wxyz) -> fst wxyz,
+    fst (snd wxyz) -> fst (snd (snd wxyz)),
+    fst (snd (snd wxyz)) -> snd (snd (snd wxyz))))
+SPFToDepPolyF {w} {z} (posdep ** dirdep ** assign) =
+  ((w, Sigma {a=(Sigma {a=z} posdep)} dirdep, Sigma {a=z} posdep, z) **
+   (assign, DPair.fst, DPair.fst))
+
 ------------------------------------------------
 ------------------------------------------------
 ----- Polynomial bifunctors and profunctors ----
