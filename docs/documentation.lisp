@@ -12,6 +12,7 @@
   (@idioms           pax:section)
   (@geb              pax:section)
   (@poly-manual      pax:section)
+  (@stlc             pax:section)
   (@mixins           pax:section)
   (@geb-utils-manual pax:section)
   (@geb-test-manual  pax:section))

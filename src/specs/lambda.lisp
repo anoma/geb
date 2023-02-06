@@ -34,4 +34,5 @@
   (type t :type t))
 
 (defun typed (v typ)
+  "Puts together the type declaration with the value itself for lambda terms"
   (make-typed-stlc :value v :type typ))

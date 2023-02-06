@@ -13,22 +13,7 @@
 (muffle-package-variance
  (uiop:define-package #:geb.lambda.spec
    (:documentation "Basic spec for creating lambda terms")
-   (:mix #:trivia #:serapeum #:common-lisp)
-   (:export
-    :<stlc> :stlc
-    :absurd :absurd-value
-    :unit
-    :pair :pair-lty :pair-rty :pair-left :pair-right
-    :left :left-value
-    :right :right-value
-    :case-on :case-on-lty :case-on-rty :case-on-cod :case-on-on :case-on-left :case-on-right
-    :fst  :fst-lty  :fst-rty  :fst-value
-    :snd  :snd-lty  :snd-rty  :snd-value
-    :lamb :lamb-vty :lamb-tty :lamb-value
-    :app  :app-dom  :app-cod  :app-func :app-bj
-    :index :index-index
-
-    :typed :typed-stlc-type :typed-stlc-value)))
+   (:mix #:trivia #:serapeum #:common-lisp)))
 
 (pax:define-package #:geb.spec
   (:documentation "Gödel, Escher, Bach categorical model")
@@ -38,9 +23,8 @@
    :same-type-to-list :pair-to-list))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Geb Poly Package Documentation
+;; Geb Package Documentation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (in-package :geb.specs)
 
@@ -69,6 +53,10 @@ For example, the `geb.poly.spec` defines out the types and data
 structures of the GEB.POLY.SPEC:@POLY-MANUAL, this is then rexported
 in `geb.poly`, giving the module `geb.poly` a convenient interface for
 all functions that operate on `geb.poly`.")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Geb Poly Package Documentation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (in-package :geb.poly.spec)
 
@@ -104,6 +92,90 @@ constructors"
   (compose pax:function)
   (if-zero pax:function)
   (if-lt   pax:function))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Geb lambda Package Documentation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(in-package :geb.lambda.spec)
+
+(pax:defsection @lambda-specs (:title "Lambda Specification")
+  "This covers the various the abstract data type that is the simply
+  typed lambda calculus within GEB.
+
+The specification follows from the sum type declaration
+
+```lisp
+(defunion stlc
+  (absurd (value t))
+  unit
+  (left (value t))
+  (right (value t))
+  (case-on (lty geb.spec:substmorph)
+           (rty geb.spec:substmorph)
+           (cod geb.spec:substmorph)
+           (on t) (left t) (right t))
+  (pair (lty geb.spec:substmorph) (rty geb.spec:substmorph) (left t) (right t))
+  (fst  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
+  (snd  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
+  (lamb (vty geb.spec:substmorph) (tty geb.spec:substmorph) (value t))
+  (app  (dom geb.spec:substmorph) (cod geb.spec:substmorph) (func t) (obj t))
+  (index (index fixnum)))
+```
+"
+  (<stlc> pax:type)
+  (stlc pax:type)
+  (absurd pax:type)
+  (absurd-value pax:function)
+
+  (unit pax:type)
+
+  (pair pax:type)
+  (pair-lty pax:function)
+  (pair-rty pax:function)
+  (pair-left pax:function)
+  (pair-right pax:function)
+
+  (left pax:type)
+  (left-value pax:function)
+
+  (right pax:type)
+  (right-value pax:function)
+
+  (case-on pax:type)
+  (case-on-lty pax:function)
+  (case-on-rty pax:function)
+  (case-on-cod pax:function)
+  (case-on-on pax:function)
+  (case-on-left pax:function)
+  (case-on-right pax:function)
+
+  (fst pax:type)
+  (fst-lty pax:function)
+  (fst-rty pax:function)
+  (fst-value pax:function)
+
+  (snd pax:type)
+  (snd-lty pax:function)
+  (snd-rty pax:function)
+  (snd-value pax:function)
+
+  (lamb pax:type)
+  (lamb-vty pax:function)
+  (lamb-tty pax:function)
+  (lamb-value pax:function)
+
+  (app pax:type)
+  (app-dom pax:function)
+  (app-cod pax:function)
+  (app-func pax:function)
+  (app-obj pax:function)
+
+  (index pax:type)
+  (index-index pax:function)
+
+  (typed pax:function)
+  (typed-stlc-type pax:function) (typed-stlc-value pax:function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb Package Documentation
