@@ -3496,5 +3496,5 @@ prodAdjRL : SlicePolyFunc () ()
 prodAdjRL = spfCompose ProductFunc DiagSPF
 
 public export
-prodAdjLR : SlicePolyFunc () ()
-prodAdjLR = spfCompose ProductFunc DiagSPF
+prodAdjLR : SlicePolyFunc Bool Bool
+prodAdjLR = spfCompose DiagSPF ProductFunc
