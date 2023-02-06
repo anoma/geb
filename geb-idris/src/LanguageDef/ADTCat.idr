@@ -3492,9 +3492,19 @@ productTestCorrect : (s : String) -> (n : Nat) -> productTest s n = (s, n)
 productTestCorrect s n = Refl
 
 public export
-prodAdjRL : SlicePolyFunc () ()
-prodAdjRL = spfCompose ProductFunc DiagSPF
+ProdAdjRL : SlicePolyFunc () ()
+ProdAdjRL = spfCompose ProductFunc DiagSPF
 
 public export
-prodAdjLR : SlicePolyFunc Bool Bool
-prodAdjLR = spfCompose DiagSPF ProductFunc
+ProdAdjLR : SlicePolyFunc Bool Bool
+ProdAdjLR = spfCompose DiagSPF ProductFunc
+
+public export
+prodAdjCounit : SPNatTrans ProdAdjLR (spfId Bool)
+prodAdjCounit =
+  (\_, _ => () ** \(i ** (() ** _)), () => ((() ** i) ** Refl))
+
+public export
+prodAdjUnit : SPNatTrans (spfId ()) ProdAdjRL
+prodAdjUnit =
+  (\(), () => (() ** const ()) ** \(() ** ()), (i ** ()) => (() ** Refl))

@@ -2999,6 +2999,10 @@ InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
 ------------------------------------------------------
 
 public export
+spfId : (base : Type) -> SlicePolyFunc base base
+spfId base = (const Unit ** const Unit ** fst . fst)
+
+public export
 spfCompose : {x, y, z : Type} ->
   SlicePolyFunc y z -> SlicePolyFunc x y -> SlicePolyFunc x z
 spfCompose {x} {y} {z} (qpd ** qdd ** qa) (ppd ** pdd ** pa) =
