@@ -23,7 +23,7 @@ Here is an example usage:
 
 ```lisp
      (geb.utils:muffle-package-variance
-       (uiop:define-package #:geb.lambda-conversion
+       (uiop:define-package #:geb.lambda.trans
          (:mix #:trivia #:geb #:serapeum #:common-lisp)
          (:export
           :compile-checked-term :stlc-ctx-to-mu)))
