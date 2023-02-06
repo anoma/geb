@@ -3526,20 +3526,20 @@ testProdCounit :
 testProdCounit = interpProdCounit testProdCounitObj
 
 public export
-prodCounitApp : (String, Nat) -> (i : Bool) -> if i then Nat else String
-prodCounitApp (s, n) i =
+prodCounitProj : (String, Nat) -> (i : Bool) -> if i then Nat else String
+prodCounitProj (s, n) i =
   snd
     (ADTCat.testProdCounit i
       ((() ** const ()) ** \(() ** i') => if i' then n else s))
   ()
 
 public export
-testProdCounitApp1 : prodCounitApp ("five", 5) False = "five"
-testProdCounitApp1 = Refl
+testProdCounitProj1 : prodCounitProj ("five", 5) False = "five"
+testProdCounitProj1 = Refl
 
 public export
-testProdCounitApp2 : prodCounitApp ("five", 5) True = 5
-testProdCounitApp2 = Refl
+testProdCounitProj2 : prodCounitProj ("five", 5) True = 5
+testProdCounitProj2 = Refl
 
 public export
 interpProdUnit : (x : SliceObj ()) ->
