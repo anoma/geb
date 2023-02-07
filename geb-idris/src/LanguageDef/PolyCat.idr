@@ -2741,13 +2741,6 @@ SPFFromDPPF {parambase} {posbase} (posslice ** assign) =
   (posslice ** snd . assign ** fst . assign . fst)
 
 public export
-DPPFFromSPF : {0 parambase, posbase : Type} ->
-  SlicePolyFunc parambase posbase -> DepParamPolyFunc parambase posbase
-DPPFFromSPF {parambase} {posbase} (posdep ** dirdep ** assign) =
-  (\pos => (i : posdep pos ** dirdep (pos ** i)) **
-   \(pos ** (i ** d)) => (assign ((pos ** i) ** d), dirdep (pos ** i)))
-
-public export
 SlicePolyEndoFunc : Type -> Type
 SlicePolyEndoFunc base = SlicePolyFunc base base
 
