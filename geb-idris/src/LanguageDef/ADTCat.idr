@@ -3437,6 +3437,10 @@ termToGebTerm = termCataRec termToGebTermAlg
 -----------------------------------------------------
 -----------------------------------------------------
 
+-----------------
+---- Product ----
+-----------------
+
 public export
 DiagFunc : DepParamPolyFunc () Bool
 DiagFunc = (const Unit ** const ((), Unit))
@@ -3554,3 +3558,32 @@ prodLeftAdjunct a b b' (f, f') ea = (f ea, f' ea)
 public export
 prodRightAdjunct : (a, b, b' : Type) -> (a -> (b, b')) -> (a -> b, a -> b')
 prodRightAdjunct a b b' g = (fst . g, snd . g)
+
+-------------------
+---- Coproduct ----
+-------------------
+
+public export
+CoproductFunc : SlicePolyFunc Bool ()
+CoproductFunc = (const Bool ** const Unit ** DPair.snd . DPair.fst)
+
+public export
+CoprodAdjRL : SlicePolyFunc Bool Bool
+CoprodAdjRL = spfCompose DiagSPF CoproductFunc
+
+public export
+CoprodAdjLRSPF : SlicePolyFunc () ()
+CoprodAdjLRSPF = spfCompose CoproductFunc DiagSPF
+
+public export
+CoprodAdjLR : PolyFunc
+CoprodAdjLR = PolyFuncFromUnitUnitSPF CoprodAdjLRSPF
+
+public export
+coprodAdjUnit : SPNatTrans (spfId Bool) CoprodAdjRL
+coprodAdjUnit =
+  (\b, () => (() ** const b) ** \(b ** ()), (() ** ()) => (() ** Refl))
+
+public export
+coprodAdjCounit : PolyNatTrans CoprodAdjLR PFIdentityArena
+coprodAdjCounit = (const () ** const (const (() ** ())))
