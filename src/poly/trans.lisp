@@ -1,4 +1,4 @@
-(in-package :geb.poly)
+(in-package :geb.poly.trans)
 
 (defgeneric to-vampir (morphism value)
   (:documentation "Turns a POLY term into a Vamp-IR term with a given value"))
