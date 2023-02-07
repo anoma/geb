@@ -4,8 +4,25 @@
 
 (deftype stlc-context () `list)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Main Transformers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defgeneric compile-checked-term (context type term)
   (:documentation "Compiles a checked term into SubstMorph category"))
+
+(-> to-poly (list t <stlc>) (or geb.poly:<poly> geb.poly:poly))
+(defun to-poly (context type obj)
+  (assure (or geb.poly:<poly> geb.poly:poly)
+    (~>> obj
+         (compile-checked-term context type)
+         geb:to-poly)))
+
+(-> to-circuit (list t <stlc> keyword) geb.vampir.spec:statement)
+(defun to-circuit (context type obj name)
+  (assure geb.vampir.spec:statement
+    (~> (to-poly context type obj)
+        (geb.poly:to-circuit name))))
 
 (defmethod empty ((class (eql (find-class 'list)))) nil)
 
@@ -58,6 +75,10 @@
 (defun stlc-ctx-to-mu (context)
   "Converts a generic [<STLC>][type] context into a [SUBSTMORPH][type]"
   (mvfoldr #'prod context so1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Utility Functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun stlc-ctx-proj (context depth)
   (if (zerop depth)

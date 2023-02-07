@@ -31,6 +31,30 @@
     :components ((:file package)
                  (:file spec)
                  (:file vampir)))
+   (:module geb
+    :serial t
+    :description "The Main Geb Module"
+    :depends-on (util specs)
+    :components ((:file package)
+                 (:file geb)
+                 (:file bool)))
+   (:module poly
+    :serial t
+    :description "Polynomial"
+    :depends-on (util geb vampir specs)
+    :components ((:file package)))
+   (:module lambda
+    :serial t
+    :depends-on (geb specs)
+    :description "A simple Lambda calculus model"
+    :components ((:file package)
+                 (:module experimental
+                  :serial t
+                  :description "Experimental lambda code"
+                  :components
+                  ((:file package)
+                   (:file lambda)))
+                 (:file lambda)))
    (:module specs
     :serial t
     :depends-on (util mixins)
@@ -44,33 +68,17 @@
                  ;; HACK: to make the package properly refer to the
                  ;; right symbols
                  (:file ../util/package)))
-   (:module geb
-    :serial t
-    :description "The Main Geb Module"
-    :depends-on (util specs)
-    :components ((:file package)
-                 (:file geb)
-                 (:file bool)
-                 (:file trans)))
-   (:module poly
-    :serial t
-    :description "Polynomial"
-    :depends-on (util geb vampir specs)
-    :components ((:file package)
-                 (:file trans)))
-   (:module lambda
-    :serial t
-    :depends-on (geb specs)
-    :description "A simple Lambda calculus model"
-    :components ((:file package)
-                 (:module experimental
-                  :serial t
-                  :description "Experimental lambda code"
-                  :components
-                  ((:file package)
-                   (:file lambda)))
-                 (:file lambda)
-                 (:file trans)))
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ;; !IMPORTANT!
+   ;; All trans files go here, as they rely on other trans files
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   (:module trans
+    :description "All the trans modules so they can all know about the
+    other transformation functions before we compile them!"
+    :pathname "../src/"
+    :components ((:file lambda/trans)
+                 (:file geb/trans)
+                 (:file poly/trans)))
    (:module entry
     :serial t
     :description "Entry point for the geb codebase"
