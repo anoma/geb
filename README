@@ -5,17 +5,11 @@ Welcome to the GEB project.
 
 ## Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
-
-
 ### code coverage
-
-
 
 For test coverage it can be found at the following links:
 
@@ -33,8 +27,6 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see GEB-TEST:CODE-COVERAGE
-
-
 
 ## Getting Started
 
@@ -284,8 +276,6 @@ conjectures about GEB
 
 ## Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -400,8 +390,6 @@ Benjamin Pierce's
 as it is very amenable *and*
 covers the background we need in 60 short pages.
 
-
-
 ### Morphisms
 
 
@@ -429,7 +417,7 @@ in the style of [Smalltalk](https://en.wikipedia.org/wiki/Smalltalk).
 The subsections will outline many idioms that can be found throughout
 the codebase.
 
-### Spec Files and Project Layout
+### Spec Files, Main Files and Project Layout
 
 ###### \[in package GEB.SPECS\]
 The codebase is split between many files. Each folder can be seen as
@@ -444,16 +432,19 @@ any category we wish to model, and these reside in the `specs` folder
 not in the folder that talks about the packages of those types. This
 is due to loading order issues, we thus load the `specs` packages
 before each of their surrounding packages, so that each package can
-build off the last.
+built off the last. Further, packages like `geb.package.main` define
+out most of the functionality of the package to be used by other
+packages in `geb.package`, then all of these are reexported out in the
+`geb.package` package
 
-Further to make working with each package of an
-idea easy, we have the main package of the folder (typically named the
-same as the folder name) rexport their specifications so if one wants
-to work with the fully fledged versions of the package they can simply
-without having to import too many packages at once.
+Further to make working with each package of an idea is easy, we have
+the main package of the folder (typically named the same as the folder
+name) reexport most important components so if one wants to work with
+the fully fledged versions of the package they can simply without
+having to import too many packages at once.
 
 For example, the `geb.poly.spec` defines out the types and data
-structures of the GEB.POLY.SPEC:@POLY-MANUAL, this is then rexported
+structures of the GEB.POLY.SPEC:@POLY, this is then rexported
 in `geb.poly`, giving the module `geb.poly` a convenient interface for
 all functions that operate on `geb.poly`.
 
@@ -1277,6 +1268,7 @@ into other categorical data structures.
 
 #### Utility
 
+###### \[in package GEB.MAIN\]
 Various utility functions ontop of @GEB-CATEGORIES
 
 - [function] PAIR-TO-LIST PAIR &OPTIONAL ACC
@@ -1403,12 +1395,13 @@ with GEB:
 
 ## Polynomial Specification
 
-###### \[in package GEB.POLY.SPEC\]
+###### \[in package GEB.POLY\]
 This covers a GEB view of Polynomials. In particular this type will
 be used in translating GEB's view of Polynomials into Vampir
 
 ### Polynomial Types
 
+###### \[in package GEB.POLY.SPEC\]
 This section covers the types of things one can find in the POLY
 constructors
 
@@ -1444,6 +1437,7 @@ constructors
 
 ### Polynomial Constructors
 
+###### \[in package GEB.POLY.SPEC\]
 Every accessor for each of the CLASS's found here are from @GEB-ACCESSORS
 
 - [symbol-macro] IDENT
@@ -1599,6 +1593,11 @@ The specification follows from the sum type declaration
 - [function] TYPED-STLC-TYPE INSTANCE
 
 - [function] TYPED-STLC-VALUE INSTANCE
+
+### Main functionality
+
+###### \[in package GEB.LAMBDA.MAIN\]
+This covers the main API for the STLC module
 
 ### Transition Functions
 

@@ -28,7 +28,7 @@
 
 (in-package :geb.specs)
 
-(pax:defsection @geb-specs (:title "Spec Files and Project Layout")
+(pax:defsection @geb-specs (:title "Spec Files, Main Files and Project Layout")
   "The codebase is split between many files. Each folder can be seen as
 a different idea within geb itself! Thus the `poly` has packages
 revolving around polynomials, the `geb` folder has packages regarding
@@ -41,16 +41,19 @@ any category we wish to model, and these reside in the `specs` folder
 not in the folder that talks about the packages of those types. This
 is due to loading order issues, we thus load the `specs` packages
 before each of their surrounding packages, so that each package can
-build off the last.
+built off the last. Further, packages like `geb.package.main` define
+out most of the functionality of the package to be used by other
+packages in `geb.package`, then all of these are reexported out in the
+`geb.package` package
 
-Further to make working with each package of an
-idea easy, we have the main package of the folder (typically named the
-same as the folder name) rexport their specifications so if one wants
-to work with the fully fledged versions of the package they can simply
-without having to import too many packages at once.
+Further to make working with each package of an idea is easy, we have
+the main package of the folder (typically named the same as the folder
+name) reexport most important components so if one wants to work with
+the fully fledged versions of the package they can simply without
+having to import too many packages at once.
 
 For example, the `geb.poly.spec` defines out the types and data
-structures of the GEB.POLY.SPEC:@POLY-MANUAL, this is then rexported
+structures of the GEB.POLY.SPEC:@POLY, this is then rexported
 in `geb.poly`, giving the module `geb.poly` a convenient interface for
 all functions that operate on `geb.poly`.")
 
@@ -59,12 +62,6 @@ all functions that operate on `geb.poly`.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (in-package :geb.poly.spec)
-
-(pax:defsection @poly-manual (:title "Polynomial Specification")
-  "This covers a GEB view of Polynomials. In particular this type will
-be used in translating GEB's view of Polynomials into Vampir"
-  (@poly              pax:section)
-  (@poly-constructors pax:section))
 
 (pax:defsection @poly (:title "Polynomial Types")
   "This section covers the types of things one can find in the [POLY]

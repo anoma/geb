@@ -8,3 +8,9 @@
 
 (in-package :geb.poly)
 (cl-reexport:reexport-from :geb.poly.spec)
+
+(pax:defsection @poly-manual (:title "Polynomial Specification")
+  "This covers a GEB view of Polynomials. In particular this type will
+be used in translating GEB's view of Polynomials into Vampir"
+  (@poly              pax:section)
+  (@poly-constructors pax:section))
