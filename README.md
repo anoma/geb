@@ -19,7 +19,7 @@
     - [5.3 The Yoneda Lemma][0e00]
     - [5.4 Poly in Sets][925b]
 - [6 Project Idioms and Conventions][b9f3]
-    - [6.1 Spec Files and Project Layout][9f9c]
+    - [6.1 Spec Files, Main Files and Project Layout][9f9c]
     - [6.2 Open Types versus Closed Types][a920]
     - [6.3 ≺Types≻][a300]
 - [7 The Geb Model][c1fb]
@@ -31,15 +31,16 @@
     - [7.4 API][6228]
         - [7.4.1 Booleans][399c]
         - [7.4.2 Translation Functions][b79a]
-        - [7.4.3 Utility][c721]
+        - [7.4.3 Utility][49d4]
     - [7.5 Examples][a17b]
-- [8 Polynomial Specification][f5ac]
+- [8 Polynomial Specification][94a8]
     - [8.1 Polynomial Types][bd81]
     - [8.2 Polynomial Constructors][b76d]
 - [9 The Simply Typed Lambda Calculus model][db8f]
     - [9.1 Lambda Specification][34d0]
-    - [9.2 Transition Functions][e3e4]
-        - [9.2.1 Utility Functionality][0609]
+    - [9.2 Main functionality][d2d5]
+    - [9.3 Transition Functions][e3e4]
+        - [9.3.1 Utility Functionality][0609]
 - [10 Mixins][723a]
     - [10.1 Pointwise Mixins][d5d3]
     - [10.2 Pointwise API][2fcf]
@@ -54,18 +55,12 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
-
-
 <a id="x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29"></a>
 ### 1.1 code coverage
-
-
 
 For test coverage it can be found at the following links:
 
@@ -83,8 +78,6 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see [`GEB-TEST:CODE-COVERAGE`][417f]
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -347,8 +340,6 @@ conjectures about GEB
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 5 Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -463,8 +454,6 @@ Benjamin Pierce's
 as it is very amenable *and*
 covers the background we need in 60 short pages.
 
-
-
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 5.1 Morphisms
 
@@ -498,7 +487,7 @@ The subsections will outline many idioms that can be found throughout
 the codebase.
 
 <a id="x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29"></a>
-### 6.1 Spec Files and Project Layout
+### 6.1 Spec Files, Main Files and Project Layout
 
 ###### \[in package GEB.SPECS\]
 The codebase is split between many files. Each folder can be seen as
@@ -513,16 +502,19 @@ any category we wish to model, and these reside in the `specs` folder
 not in the folder that talks about the packages of those types. This
 is due to loading order issues, we thus load the `specs` packages
 before each of their surrounding packages, so that each package can
-build off the last.
+built off the last. Further, packages like `geb.package.main` define
+out most of the functionality of the package to be used by other
+packages in `geb.package`, then all of these are reexported out in the
+`geb.package` package
 
-Further to make working with each package of an
-idea easy, we have the main package of the folder (typically named the
-same as the folder name) rexport their specifications so if one wants
-to work with the fully fledged versions of the package they can simply
-without having to import too many packages at once.
+Further to make working with each package of an idea is easy, we have
+the main package of the folder (typically named the same as the folder
+name) reexport most important components so if one wants to work with
+the fully fledged versions of the package they can simply without
+having to import too many packages at once.
 
 For example, the `geb.poly.spec` defines out the types and data
-structures of the [Polynomial Specification][f5ac], this is then rexported
+structures of the [Polynomial Types][bd81], this is then rexported
 in `geb.poly`, giving the module `geb.poly` a convenient interface for
 all functions that operate on `geb.poly`.
 
@@ -1428,9 +1420,10 @@ into other categorical data structures.
 
     Turns a [Subst Morph][d2d1] into a [`POLY:POLY`][8bf3]
 
-<a id="x-28GEB-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29"></a>
+<a id="x-28GEB-2EMAIN-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29"></a>
 #### 7.4.3 Utility
 
+###### \[in package GEB.MAIN\]
 Various utility functions ontop of [Core Category][cb9e]
 
 <a id="x-28GEB-2ESPEC-3APAIR-TO-LIST-20FUNCTION-29"></a>
@@ -1443,12 +1436,12 @@ Various utility functions ontop of [Core Category][cb9e]
 
     converts the given type to a list format
 
-<a id="x-28GEB-3ACLEAVE-20FUNCTION-29"></a>
+<a id="x-28GEB-2EMAIN-3ACLEAVE-20FUNCTION-29"></a>
 - [function] **CLEAVE** *V1 &REST VALUES*
 
     Applies each morphism to the object in turn.
 
-<a id="x-28GEB-3ACONST-20FUNCTION-29"></a>
+<a id="x-28GEB-2EMAIN-3ACONST-20FUNCTION-29"></a>
 - [function] **CONST** *F X*
 
     The constant morphism.
@@ -1479,15 +1472,15 @@ Various utility functions ontop of [Core Category][cb9e]
     ```
 
 
-<a id="x-28GEB-3ACOMMUTES-20FUNCTION-29"></a>
+<a id="x-28GEB-2EMAIN-3ACOMMUTES-20FUNCTION-29"></a>
 - [function] **COMMUTES** *X Y*
 
-<a id="x-28GEB-3ACOMMUTES-LEFT-20FUNCTION-29"></a>
+<a id="x-28GEB-2EMAIN-3ACOMMUTES-LEFT-20FUNCTION-29"></a>
 - [function] **COMMUTES-LEFT** *MORPH*
 
-    swap the input [domain][3e8b] of the given [`<SUBSTMORPH>`][97fb]
+    swap the input [domain][dbad] of the given [`<SUBSTMORPH>`][97fb]
     
-    In order to swap the [domain][3e8b] we expect the [`<SUBSTMORPH>`][97fb] to
+    In order to swap the [domain][dbad] we expect the [`<SUBSTMORPH>`][97fb] to
     be a [`PROD`][77c2]
     
     Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` [`<SUBSTOBJ>`][8214]
@@ -1501,36 +1494,36 @@ Various utility functions ontop of [Core Category][cb9e]
     ```
 
 
-<a id="x-28GEB-3A-21--3E-20FUNCTION-29"></a>
+<a id="x-28GEB-2EMAIN-3A-21--3E-20FUNCTION-29"></a>
 - [function] **!-\>** *A B*
 
-<a id="x-28GEB-3ASO-EVAL-20FUNCTION-29"></a>
+<a id="x-28GEB-2EMAIN-3ASO-EVAL-20FUNCTION-29"></a>
 - [function] **SO-EVAL** *X Y*
 
-<a id="x-28GEB-3ASO-CARD-ALG-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2EMAIN-3ASO-CARD-ALG-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **SO-CARD-ALG** *OBJ*
 
     Gets the cardinality of the given object, returns a [`FIXNUM`][ceb9]
 
-<a id="x-28GEB-3ASO-CARD-ALG-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
+<a id="x-28GEB-2EMAIN-3ASO-CARD-ALG-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
 - [method] **SO-CARD-ALG** *(OBJ \<SUBSTOBJ\>)*
 
-<a id="x-28GEB-3ADOM-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2EMAIN-3ADOM-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **DOM** *SUBSTMORPH*
 
     Grabs the domain of the morphism. Returns a [`<SUBSTOBJ>`][8214]
 
-<a id="x-28GEB-3ACODOM-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2EMAIN-3ACODOM-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **CODOM** *SUBSTMORPH*
 
     Grabs the codomain of the morphism. Returns a [`<SUBSTOBJ>`][8214]
 
-<a id="x-28GEB-3ACURRY-20GENERIC-FUNCTION-29"></a>
+<a id="x-28GEB-2EMAIN-3ACURRY-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **CURRY** *F*
 
     Curries the given object, returns a [`<SUBSTMORPH>`][97fb]
     
-    The [`<SUBSTMORPH>`][97fb] given must have its [`DOM`][3e8b] be of a [`PROD`][77c2] type, as [`CURRY`][6f3c]
+    The [`<SUBSTMORPH>`][97fb] given must have its [`DOM`][dbad] be of a [`PROD`][77c2] type, as [`CURRY`][43d2]
     invokes the idea of
     
     if f : ([`PROD`][77c2] a b) → c
@@ -1569,16 +1562,17 @@ with GEB:
 ```
 
 
-<a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+<a id="x-28GEB-2EPOLY-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29"></a>
 ## 8 Polynomial Specification
 
-###### \[in package GEB.POLY.SPEC\]
+###### \[in package GEB.POLY\]
 This covers a GEB view of Polynomials. In particular this type will
 be used in translating GEB's view of Polynomials into Vampir
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-20MGL-PAX-3ASECTION-29"></a>
 ### 8.1 Polynomial Types
 
+###### \[in package GEB.POLY.SPEC\]
 This section covers the types of things one can find in the [`POLY`][8bf3]
 constructors
 
@@ -1626,6 +1620,7 @@ constructors
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
 ### 8.2 Polynomial Constructors
 
+###### \[in package GEB.POLY.SPEC\]
 Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors][cc51]
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3AIDENT-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
@@ -1836,8 +1831,14 @@ The specification follows from the sum type declaration
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATYPED-STLC-VALUE-20FUNCTION-29"></a>
 - [function] **TYPED-STLC-VALUE** *INSTANCE*
 
+<a id="x-28GEB-2ELAMBDA-2EMAIN-3A-40LAMBDA-API-20MGL-PAX-3ASECTION-29"></a>
+### 9.2 Main functionality
+
+###### \[in package GEB.LAMBDA.MAIN\]
+This covers the main API for the [`STLC`][e373] module
+
 <a id="x-28GEB-2ELAMBDA-2ETRANS-3A-40STLC-CONVERSION-20MGL-PAX-3ASECTION-29"></a>
-### 9.2 Transition Functions
+### 9.3 Transition Functions
 
 ###### \[in package GEB.LAMBDA.TRANS\]
 These functions deal with transforming the data structure to other
@@ -1849,7 +1850,7 @@ data types
     Compiles a checked term into SubstMorph category
 
 <a id="x-28GEB-2ELAMBDA-2ETRANS-3A-40UTILITY-20MGL-PAX-3ASECTION-29"></a>
-#### 9.2.1 Utility Functionality
+#### 9.3.1 Utility Functionality
 
 These are utility functions relating to translating lambda terms to other types
 
@@ -1919,7 +1920,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
 
     Compares objects with pointwise equality. This is a
     much weaker form of equality comparison than
-    [`STANDARD-OBJECT`][a802] [`EQUALP`][c7213], which does the much
+    [`STANDARD-OBJECT`][a802] [`EQUALP`][c721], which does the much
     stronger pointer quality
 
 <a id="x-28GEB-2EMIXINS-3APOINTWISE-SLOTS-20GENERIC-FUNCTION-29"></a>
@@ -2193,13 +2194,14 @@ features and how to better lay out future tests
   [399c]: #x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29 "Booleans"
   [3bc6]: #x-28GEB-2ESPEC-3APAIR-20TYPE-29 "GEB.SPEC:PAIR TYPE"
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
-  [3e8b]: #x-28GEB-3ADOM-20GENERIC-FUNCTION-29 "GEB:DOM GENERIC-FUNCTION"
   [4044]: #x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29 "code coverage"
   [417f]: #x-28GEB-TEST-3ACODE-COVERAGE-20FUNCTION-29 "GEB-TEST:CODE-COVERAGE FUNCTION"
   [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
+  [43d2]: #x-28GEB-2EMAIN-3ACURRY-20GENERIC-FUNCTION-29 "GEB.MAIN:CURRY GENERIC-FUNCTION"
   [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
   [4850]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD TYPE"
   [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
+  [49d4]: #x-28GEB-2EMAIN-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29 "Utility"
   [4a87]: #x-28GEB-DOCS-2FDOCS-3A-40OPEN-TYPE-20MGL-PAX-3AGLOSSARY-TERM-29 "GEB-DOCS/DOCS:@OPEN-TYPE MGL-PAX:GLOSSARY-TERM"
   [4ffa]: #x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29 "Geb Utilities"
   [57dc]: #x-28GEB-2ESPEC-3ASUBSTMORPH-20TYPE-29 "GEB.SPEC:SUBSTMORPH TYPE"
@@ -2210,7 +2212,6 @@ features and how to better lay out future tests
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
   [642a]: #x-28GEB-2ETRANS-3ATO-POLY-20GENERIC-FUNCTION-29 "GEB.TRANS:TO-POLY GENERIC-FUNCTION"
   [684b]: http://www.lispworks.com/documentation/HyperSpec/Body/s_if.htm "IF MGL-PAX:MACRO"
-  [6f3c]: #x-28GEB-3ACURRY-20GENERIC-FUNCTION-29 "GEB:CURRY GENERIC-FUNCTION"
   [7088]: #x-28GEB-2ESPEC-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO0 MGL-PAX:SYMBOL-MACRO"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
   [74ab]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADR FUNCTION"
@@ -2229,13 +2230,14 @@ features and how to better lay out future tests
   [8fa5]: #x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29 "installation"
   [9162]: #x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20TYPE-29 "GEB.POLY.SPEC:COMPOSE TYPE"
   [925b]: #x-28GEB-DOCS-2FDOCS-3A-40POLY-SETS-20MGL-PAX-3ASECTION-29 "Poly in Sets"
+  [94a8]: #x-28GEB-2EPOLY-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29 "Polynomial Specification"
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
   [97fb]: #x-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-20TYPE-29 "GEB.SPEC:<SUBSTMORPH> TYPE"
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"
   [9bcb]: #x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29 "Testing"
   [9bcb2]: http://www.lispworks.com/documentation/HyperSpec/Body/f_exp_e.htm "EXPT FUNCTION"
-  [9f9c]: #x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29 "Spec Files and Project Layout"
+  [9f9c]: #x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29 "Spec Files, Main Files and Project Layout"
   [a17b]: #x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29 "Examples"
   [a300]: #x-28GEB-DOCS-2FDOCS-3A-40-3CTYPES-3E-20MGL-PAX-3ASECTION-29 "≺Types≻"
   [a7d5]: #x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29 "loading"
@@ -2260,8 +2262,7 @@ features and how to better lay out future tests
   [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "The Geb Model"
   [c2e9]: #x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29 "Categorical Model"
   [c2f9]: #x-28GEB-2EPOLY-2ESPEC-3A-2F-20TYPE-29 "GEB.POLY.SPEC:/ TYPE"
-  [c721]: #x-28GEB-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29 "Utility"
-  [c7213]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP FUNCTION"
+  [c721]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP FUNCTION"
   [c767]: http://www.lispworks.com/documentation/HyperSpec/Body/s_the.htm "THE MGL-PAX:MACRO"
   [cab9]: #x-28GEB-2ESPEC-3AINJECT-LEFT-20TYPE-29 "GEB.SPEC:INJECT-LEFT TYPE"
   [cb9e]: #x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29 "Core Category"
@@ -2270,11 +2271,14 @@ features and how to better lay out future tests
   [cd11]: #x-28GEB-2ESPEC-3AMCASE-20FUNCTION-29 "GEB.SPEC:MCASE FUNCTION"
   [ceb9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_fixnum.htm "FIXNUM TYPE"
   [d2d1]: #x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29 "Subst Morph"
+  [d2d5]: #x-28GEB-2ELAMBDA-2EMAIN-3A-40LAMBDA-API-20MGL-PAX-3ASECTION-29 "Main functionality"
   [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
   [d908]: http://www.lispworks.com/documentation/HyperSpec/Body/f_typep.htm "TYPEP FUNCTION"
   [db8f]: #x-28GEB-2ELAMBDA-3A-40STLC-20MGL-PAX-3ASECTION-29 "The Simply Typed Lambda Calculus model"
+  [dbad]: #x-28GEB-2EMAIN-3ADOM-20GENERIC-FUNCTION-29 "GEB.MAIN:DOM GENERIC-FUNCTION"
   [dbe7]: #x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29 "Objects"
   [e2af]: #x-28GEB-2ESPEC-3A--3ELEFT-20FUNCTION-29 "GEB.SPEC:->LEFT FUNCTION"
+  [e373]: #x-28GEB-2ELAMBDA-2ESPEC-3ASTLC-20TYPE-29 "GEB.LAMBDA.SPEC:STLC TYPE"
   [e3e4]: #x-28GEB-2ELAMBDA-2ETRANS-3A-40STLC-CONVERSION-20MGL-PAX-3ASECTION-29 "Transition Functions"
   [e65d]: #x-28GEB-2ESPEC-3APROJECT-RIGHT-20TYPE-29 "GEB.SPEC:PROJECT-RIGHT TYPE"
   [e755]: http://www.lispworks.com/documentation/HyperSpec/Body/d_type.htm "TYPE DECLARATION"
@@ -2285,7 +2289,6 @@ features and how to better lay out future tests
   [f1ce]: #x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCAR GENERIC-FUNCTION"
   [f1e6]: #x-28GEB-2EUTILS-3AOBJ-20GENERIC-FUNCTION-29 "GEB.UTILS:OBJ GENERIC-FUNCTION"
   [f4ba]: #x-28GEB-2ESPEC-3ASO1-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO1 MGL-PAX:SYMBOL-MACRO"
-  [f5ac]: #x-28GEB-2EPOLY-2ESPEC-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29 "Polynomial Specification"
   [f766]: http://www.lispworks.com/documentation/HyperSpec/Body/f_load.htm "LOAD FUNCTION"
   [f899]: #x-28GEB-2ESPEC-3AINIT-20TYPE-29 "GEB.SPEC:INIT TYPE"
   [f914]: #x-28GEB-2ESPEC-3ACOMP-20TYPE-29 "GEB.SPEC:COMP TYPE"
