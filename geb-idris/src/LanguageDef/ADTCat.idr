@@ -3470,15 +3470,15 @@ IProductFunc : SliceFunctor Bool ()
 IProductFunc = InterpSPFunc ProductFunc
 
 public export
-ProductApp :
+ProductInterp :
   (x, y : Type) -> (x, y) -> IProductFunc (\b => if b then y else x) ()
-ProductApp x y (ex, ey) = (() ** \b => if b then ey else ex)
+ProductInterp x y (ex, ey) = (() ** \b => if b then ey else ex)
 
 public export
 productTest : (String, Nat) -> (String, Nat)
 productTest (s, n) =
-  (snd (ProductApp String Nat (s, n)) False,
-   snd (ProductApp String Nat (s, n)) True)
+  (snd (ProductInterp String Nat (s, n)) False,
+   snd (ProductInterp String Nat (s, n)) True)
 
 public export
 productTestCorrect : (s : String) -> (n : Nat) -> productTest (s, n) = (s, n)
@@ -3594,14 +3594,14 @@ ICoproductFunc : SliceFunctor Bool ()
 ICoproductFunc = InterpSPFunc CoproductFunc
 
 public export
-CoproductApp :
+CoproductInterp :
   (x, y : Type) -> Either x y -> ICoproductFunc (\b => if b then y else x) ()
-CoproductApp x y (Left ex) = (False ** const ex)
-CoproductApp x y (Right ey) = (True ** const ey)
+CoproductInterp x y (Left ex) = (False ** const ex)
+CoproductInterp x y (Right ey) = (True ** const ey)
 
 public export
 coproductTest : Either String Nat -> Either String Nat
-coproductTest sn with (CoproductApp String Nat sn)
+coproductTest sn with (CoproductInterp String Nat sn)
   coproductTest sn | (False ** f) = Left $ f ()
   coproductTest sn | (True ** f) = Right $ f ()
 
