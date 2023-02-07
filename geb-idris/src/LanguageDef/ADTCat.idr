@@ -3492,11 +3492,6 @@ productTestCorrect : (s : String) -> (n : Nat) -> productTest s n = (s, n)
 productTestCorrect s n = Refl
 
 public export
-PolyFuncFromUnitUnitSPF : SlicePolyFunc () () -> PolyFunc
-PolyFuncFromUnitUnitSPF (posdep ** dirdep ** assign) =
-  (posdep () ** dirdep . MkDPair ())
-
-public export
 ProdAdjRLSPF : SlicePolyFunc () ()
 ProdAdjRLSPF = spfCompose ProductFunc DiagSPF
 

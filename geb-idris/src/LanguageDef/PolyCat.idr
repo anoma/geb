@@ -3026,6 +3026,11 @@ spfCompose {x} {y} {z} (qpd ** qdd ** qa) (ppd ** pdd ** pa) =
    \((qi ** (qdi ** qpm)) ** (qddi ** ppdd)) =>
      pa ((qa ((qi ** qdi) ** qddi) ** qpm qddi) ** ppdd))
 
+public export
+PolyFuncFromUnitUnitSPF : SlicePolyFunc () () -> PolyFunc
+PolyFuncFromUnitUnitSPF (posdep ** dirdep ** assign) =
+  (posdep () ** dirdep . MkDPair ())
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Conversion between morphism and dependent-set polynomial functors ----
