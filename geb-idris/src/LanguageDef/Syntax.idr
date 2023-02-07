@@ -517,13 +517,13 @@ validSExpAr ar =
 public export
 record MutRecSExpFam (atom : Type) (tys : Type) where
   constructor MRSFam
-  mrfBounds : atom -> List Nat
   mrfAssign : atom -> tys
-  mrfDirTy : (a : atom) -> List tys
+  mrfBounds : atom -> List Nat
+  mrfDirTy : atom -> List tys
 
 public export
 CheckMRSFAlg : Eq tys => MutRecSExpFam atom tys -> SExpMaybeAlg atom atom
-CheckMRSFAlg (MRSFam bounds assign dirTy) (SXF a ns xs) =
+CheckMRSFAlg (MRSFam assign bounds dirTy) (SXF a ns xs) =
   if listBounded ns (bounds a) && map assign xs == dirTy a
   then
     Just a

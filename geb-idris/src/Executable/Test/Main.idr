@@ -41,8 +41,8 @@ main = do
   Library.Test.CategoryTheoryTest.libraryCategoryTheoryTest
   LanguageDef.Test.PolyCatTest.polyCatTest
   LanguageDef.Test.NatPrefixCatTest.natPrefixCatTest
-  LanguageDef.Test.ADTCatTest.adtCatTest
   LanguageDef.Test.PolyProfunctorTest.polyProfunctorTest
   LanguageDef.Test.ProgFinSetTest.progFinSetTest
   LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
   LanguageDef.Test.GebToposTest.gebToposTest
+  LanguageDef.Test.ADTCatTest.adtCatTest

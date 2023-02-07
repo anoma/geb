@@ -5,6 +5,7 @@ import Library.IdrisCategories
 import public LanguageDef.Atom
 import public LanguageDef.PolyCat
 import public LanguageDef.PolyProfunctor
+import public LanguageDef.Syntax
 
 %default total
 
@@ -2257,6 +2258,30 @@ Functor PolyF where
   map m (p $$+ q) = m p $$+ m q
   map m (p $$* q) = m p $$* m q
 
+----------------------------------
+---- PolyF viewed as an arena ----
+----------------------------------
+
+public export
+PolyFPos : Type
+PolyFPos = PolyF ()
+
+public export
+PolyFDir : PolyFPos -> Type
+PolyFDir PFI = Void
+PolyFDir PF0 = Void
+PolyFDir PF1 = Void
+PolyFDir (() $$+ ()) = Bool
+PolyFDir (() $$* ()) = Bool
+
+public export
+InPolyF : (i : PolyFPos) -> (PolyFDir i -> x) -> PolyF x
+InPolyF PFI d = PFI
+InPolyF PF0 d = PF0
+InPolyF PF1 d = PF1
+InPolyF (() $$+ ()) d = d False $$+ d True
+InPolyF (() $$* ()) d = d False $$* d True
+
 -----------------------------------------------------------------------
 ---- Polynomial functors as least fixed point of generator functor ----
 -----------------------------------------------------------------------
@@ -2326,6 +2351,206 @@ metaPolyCataCPS alg = metaPolyFold id where
       PF1 => cont (alg PF1)
       p $$+ q => metaPolyCataCont ($$+) cont p q
       p $$* q => metaPolyCataCont ($$*) cont p q
+
+--------------------------------------------
+---- Dependent algebra and catamorphism ----
+--------------------------------------------
+
+public export
+PolyMuPFAlg : Type -> Type
+PolyMuPFAlg x = (i : PolyFPos) -> (PolyFDir i -> x) -> x
+
+public export
+PolyMuPFMuAlg : Type
+PolyMuPFMuAlg = PolyMuPFAlg PolyMu
+
+public export
+PolyMuMuAlg : Type
+PolyMuMuAlg = MetaPolyAlg PolyMu
+
+public export
+PolyMuPFEndoNTPF : Type
+PolyMuPFEndoNTPF =
+  (x : Type) -> (i : PolyFPos) -> (PolyFDir i -> x) -> PolyF x
+
+public export
+PolyMuPFEndoNT : Type
+PolyMuPFEndoNT =
+  (onPos : PolyFPos -> PolyFPos **
+   (i : PolyFPos) -> PolyFDir (onPos i) -> PolyFDir i)
+
+public export
+InterpPolyMuPFEndoNT : PolyMuPFEndoNT -> PolyMuPFEndoNTPF
+InterpPolyMuPFEndoNT (onPos ** onDir) x i d with (onPos i) proof prf
+  InterpPolyMuPFEndoNT (onPos ** onDir) x i d | PFI = PFI
+  InterpPolyMuPFEndoNT (onPos ** onDir) x i d | PF0 = PF0
+  InterpPolyMuPFEndoNT (onPos ** onDir) x i d | PF1 = PF1
+  InterpPolyMuPFEndoNT (onPos ** onDir) x i d | (() $$+ ()) =
+    d (onDir i $ rewrite prf in False) $$+ d (onDir i $ rewrite prf in True)
+  InterpPolyMuPFEndoNT (onPos ** onDir) x i d | (() $$* ()) =
+    d (onDir i $ rewrite prf in False) $$* d (onDir i $ rewrite prf in True)
+
+public export
+PolyMuEndoNT : Type
+PolyMuEndoNT = NaturalTransformation PolyF PolyF
+
+public export
+InPFNT : PolyMuPFEndoNT
+InPFNT = (id ** \_ => id)
+
+public export
+InPF : PolyMuPFMuAlg
+InPF i = InPCom . InterpPolyMuPFEndoNT InPFNT PolyMu i
+
+public export
+InPNT : PolyMuEndoNT
+InPNT x = Prelude.id
+
+public export
+MetaPolyPred : Type -> Type
+MetaPolyPred x = PolyMu -> x -> Type
+
+public export
+record MetaPolyDepAlg (alg : MetaPolyAlg x) (pred : MetaPolyPred x) where
+  constructor PDepAlg
+  pdaId : pred PolyI (alg PFI)
+  pda0 : pred Poly0 (alg PF0)
+  pda1 : pred Poly1 (alg PF1)
+  pdaC : (p, q : PolyMu) ->
+    pred p (metaPolyCata alg p) -> pred q (metaPolyCata alg q) ->
+    pred (p $+ q) (metaPolyCata alg (p $+ q))
+  pdaP : (p, q : PolyMu) ->
+    pred p (metaPolyCata alg p) -> pred q (metaPolyCata alg q) ->
+    pred (p $* q) (metaPolyCata alg (p $* q))
+
+public export
+metaPolyDepCata : {alg : MetaPolyAlg x} -> {pred : MetaPolyPred x} ->
+  (dalg : MetaPolyDepAlg alg pred) ->
+  (p : PolyMu) -> pred p (metaPolyCata alg p)
+metaPolyDepCata dalg (InPCom PFI) = dalg.pdaId
+metaPolyDepCata dalg (InPCom PF0) = dalg.pda0
+metaPolyDepCata dalg (InPCom PF1) = dalg.pda1
+metaPolyDepCata dalg (InPCom (p $$+ q)) =
+  dalg.pdaC p q (metaPolyDepCata dalg p) (metaPolyDepCata dalg q)
+metaPolyDepCata dalg (InPCom (p $$* q)) =
+  dalg.pdaP p q (metaPolyDepCata dalg p) (metaPolyDepCata dalg q)
+
+public export
+MetaPolyPiAlg : SliceObj (SliceObj PolyMu)
+MetaPolyPiAlg sl =
+  (i : PolyFPos) ->
+  (ps : PolyFDir i -> PolyMu) ->
+  Pi (sl . ps) ->
+  sl (InPF i ps)
+
+public export
+metaPolyPiCata : MetaPolyPiAlg sl -> Pi sl
+metaPolyPiCata alg (InPCom PFI) = alg PFI (voidF PolyMu) (\v => void v)
+metaPolyPiCata alg (InPCom PF0) = alg PF0 (voidF PolyMu) (\v => void v)
+metaPolyPiCata alg (InPCom PF1) = alg PF1 (voidF PolyMu) (\v => void v)
+metaPolyPiCata {sl} alg (InPCom (p $$+ q)) =
+  alg (() $$+ ())
+    (\b => if b then q else p)
+    (\b => if b then metaPolyPiCata {sl} alg q else metaPolyPiCata {sl} alg p)
+metaPolyPiCata alg (InPCom (p $$* q)) =
+  alg (() $$* ())
+    (\b => if b then q else p)
+    (\b => if b then metaPolyPiCata {sl} alg q else metaPolyPiCata {sl} alg p)
+
+public export
+MetaPolyDepAlgPF : MetaPolyAlg x -> MetaPolyPred x -> Type
+MetaPolyDepAlgPF alg pred =
+  (i : PolyFPos) ->
+  (ps : PolyFDir i -> PolyMu) ->
+  (dd : (d : PolyFDir i) -> pred (ps d) (metaPolyCata alg (ps d))) ->
+  pred (InPF i ps) (metaPolyCata alg (InPF i ps))
+
+public export
+metaPolyDepCataPF : {alg : MetaPolyAlg x} -> {pred : MetaPolyPred x} ->
+  (dalg : MetaPolyDepAlgPF alg pred) ->
+  (p : PolyMu) -> pred p (metaPolyCata alg p)
+metaPolyDepCataPF {alg} {pred} =
+  metaPolyPiCata {sl=(\p => pred p (metaPolyCata alg p))}
+
+public export
+MetaPolyTypeAlg : Type
+MetaPolyTypeAlg = MetaPolyAlg Type
+
+public export
+MPAlgSlice : MetaPolyTypeAlg -> SliceObj PolyMu
+MPAlgSlice = metaPolyCata
+
+-- Given a `MetaPolyTypeAlg`, this algebra generates a `PolyMu` annotated
+-- with instances of the type at every node.
+public export
+MetaPolyGenAlg : MetaPolyTypeAlg -> MetaPolyTypeAlg
+MetaPolyGenAlg alg PFI = alg PFI
+MetaPolyGenAlg alg PF0 = alg PF0
+MetaPolyGenAlg alg PF1 = alg PF1
+MetaPolyGenAlg alg (p $$+ q) = (p, q, alg (p $$+ q))
+MetaPolyGenAlg alg (p $$* q) = (p, q, alg (p $$* q))
+
+public export
+MPGenSlice : MetaPolyTypeAlg -> SliceObj PolyMu
+MPGenSlice = MPAlgSlice . MetaPolyGenAlg
+
+public export
+MPAlgSigma : MetaPolyTypeAlg -> Type
+MPAlgSigma = Sigma {a=PolyMu} . MPAlgSlice
+
+public export
+MPGenSigma : MetaPolyTypeAlg -> Type
+MPGenSigma = Sigma {a=PolyMu} . MPGenSlice
+
+public export
+MPAlgPi : MetaPolyTypeAlg -> Type
+MPAlgPi = Pi {a=PolyMu} . MPAlgSlice
+
+public export
+MPGenPi : MetaPolyTypeAlg -> Type
+MPGenPi = Pi {a=PolyMu} . MPGenSlice
+
+-- Given an algebra which generates a predicate on a `PolyMu`, this algebra
+-- generates an algebra on dependent pairs of `PolyMu` with the generated
+-- predicate.
+public export
+MetaPolyDepTypeAlg : MetaPolyTypeAlg -> Type -> Type
+MetaPolyDepTypeAlg alg x = Sigma {a=(PolyF Type)} alg -> PolyF x -> x
+
+-- Given an algebra which generates a predicate on a `PolyMu`, and an
+-- algebra dependent on it, this is a catamorphism on dependent pairs
+-- of `PolyMu` with the predicate generated by the first algebra.
+public export
+metaPolyDepTypeCataCurried : {tyalg : MetaPolyTypeAlg} -> {0 x : Type} ->
+  MetaPolyDepTypeAlg tyalg x ->
+  (p : PolyMu) -> MPGenSlice tyalg p -> x
+metaPolyDepTypeCataCurried depalg (InPCom PFI) dp = depalg (PFI ** dp) PFI
+metaPolyDepTypeCataCurried depalg (InPCom PF0) dp = depalg (PF0 ** dp) PF0
+metaPolyDepTypeCataCurried depalg (InPCom PF1) dp = depalg (PF1 ** dp) PF1
+metaPolyDepTypeCataCurried depalg (InPCom (p $$+ q)) (dp, dq, dpq) =
+  depalg
+    ((MPGenSlice tyalg p $$+ MPGenSlice tyalg q) ** dpq)
+    (metaPolyDepTypeCataCurried depalg p dp $$+
+     metaPolyDepTypeCataCurried depalg q dq)
+metaPolyDepTypeCataCurried depalg (InPCom (p $$* q)) (dp, dq, dpq) =
+  depalg
+    ((MPGenSlice tyalg p $$* MPGenSlice tyalg q) ** dpq)
+    (metaPolyDepTypeCataCurried depalg p dp $$*
+     metaPolyDepTypeCataCurried depalg q dq)
+
+public export
+metaPolyDepTypeCata : {tyalg : MetaPolyTypeAlg} -> {0 x : Type} ->
+  MetaPolyDepTypeAlg tyalg x ->
+  MPGenSigma tyalg -> x
+metaPolyDepTypeCata {tyalg} {x} depalg (p ** dp) =
+  metaPolyDepTypeCataCurried {tyalg} {x} depalg p dp
+
+public export
+metaPolySliceCata : {dom, cod : MetaPolyTypeAlg} ->
+  MetaPolyDepTypeAlg dom (MPGenSigma cod) ->
+  ?metaPolySliceCata_arg_hole ->
+  (p : PolyMu) -> MPGenSlice dom p -> MPGenSlice cod p
+metaPolySliceCata = ?metaPolySliceCata_hole
 
 -----------------------------------
 ---- Coalgebra and anamorphism ----
@@ -2680,6 +2905,10 @@ public export
 MetaPolyFNat : PolyMu -> Nat -> Nat
 MetaPolyFNat = metaPolyCata MetaPolyFNatAlg
 
+-------------------------------------------------------
+---- Natural transformations from PolyMu to itself ----
+-------------------------------------------------------
+
 ----------------------------------------------------------
 ---- Exponentiation (hom-objects) of polynomial types ----
 ----------------------------------------------------------
@@ -2698,9 +2927,19 @@ PolyHomObjAlg (p $$+ q) r = p r $* q r
 -- (p * q) -> r == p -> q -> r
 PolyHomObjAlg (p $$* q) r = p $ q r
 
+-- id -> r == r . (id + 1) (see formula 4.27 in _Polynomial Functors: A General
+-- Theory of Interaction_)
+public export
+PolyIdHom : PolyMu -> PolyMu
+PolyIdHom r = r $. (PolyI $+ Poly1)
+
 public export
 PolyHomObj : PolyMu -> PolyMu -> PolyMu
-PolyHomObj = metaPolyPairAdjCata PolyHomObjAlg
+PolyHomObj (InPCom PFI) r = PolyIdHom r
+PolyHomObj (InPCom PF0) _ = Poly1
+PolyHomObj (InPCom PF1) q = q
+PolyHomObj (InPCom (p $$+ q)) r = PolyHomObj p r $* PolyHomObj q r
+PolyHomObj (InPCom (p $$* q)) r = PolyHomObj p $ PolyHomObj q r
 
 public export
 PolyExp : PolyMu -> PolyMu -> PolyMu
@@ -2731,12 +2970,22 @@ PolyArena = metaPolyCata PolyArenaAlg
 -- The "positions" of an endofunctor, in the arena viewpoint.
 public export
 PolyPos : PolyMu -> Type
-PolyPos = pfPos . PolyArena
+PolyPos (InPCom PFI) = Unit
+PolyPos (InPCom PF0) = Void
+PolyPos (InPCom PF1) = Unit
+PolyPos (InPCom (p $$+ q)) = Either (PolyPos p) (PolyPos q)
+PolyPos (InPCom (p $$* q)) = Pair (PolyPos p) (PolyPos q)
 
 -- The "directions" of a given position, in the arena viewpoint.
 public export
 PolyPosDir : (p : PolyMu) -> PolyPos p -> Type
-PolyPosDir p = pfDir {p=(PolyArena p)}
+PolyPosDir (InPCom PFI) () = Unit
+PolyPosDir (InPCom PF0) v = void v
+PolyPosDir (InPCom PF1) () = Void
+PolyPosDir (InPCom (p $$+ q)) (Left i) = PolyPosDir p i
+PolyPosDir (InPCom (p $$+ q)) (Right i) = PolyPosDir q i
+PolyPosDir (InPCom (p $$* q)) (pi, qi) =
+  Either (PolyPosDir p pi) (PolyPosDir q qi)
 
 -- Any direction of an endofunctor.
 public export
@@ -2766,14 +3015,90 @@ PolyMuNTAlg PFI q = PolyPos q
 PolyMuNTAlg PF0 _ = ()
 PolyMuNTAlg PF1 q = PolyZeroPos q
 PolyMuNTAlg ((_, p) $$+ (_, q)) r = Pair (p r) (q r)
-PolyMuNTAlg ((_, p) $$* (q, _)) r = ?PolyMuNTAlg_product_domain_hole
+PolyMuNTAlg ((_, p) $$* (q, _)) r = p $ PolyHomObj q r
 
 public export
 PolyMuNT : PolyMu -> PolyMu -> Type
-PolyMuNT = metaPolyPairAdjArgCata PolyMuNTAlg
+PolyMuNT (InPCom PFI) q = PolyPos q
+PolyMuNT (InPCom PF0) q = ()
+PolyMuNT (InPCom PF1) q = PolyZeroPos q
+PolyMuNT (InPCom (p $$+ q)) r = Pair (PolyMuNT p r) (PolyMuNT q r)
+PolyMuNT (InPCom (p $$* q)) r = PolyMuNT p $ PolyHomObj q r
+
+mutual
+  public export
+  PolyNTId : (p : PolyMu) -> PolyMuNT p p
+  PolyNTId (InPCom PFI) = ()
+  PolyNTId (InPCom PF0) = ()
+  PolyNTId (InPCom PF1) = ()
+  PolyNTId (InPCom (p $$+ q)) = ?PolyNTId_hole_4
+  PolyNTId (InPCom (p $$* q)) = ?PolyNTId_hole_5
+
+public export
+polyMuEval : (p, q : PolyMu) -> PolyMuNT (PolyHomObj p q $* p) q
+polyMuEval (InPCom PFI) q = ?polyMuEval_hole_1
+polyMuEval (InPCom PF0) q = ?polyMuEval_hole_2
+polyMuEval (InPCom PF1) q = PolyNTId q
+polyMuEval (InPCom (x $$+ y)) q = ?polyMuEval_hole_4
+polyMuEval (InPCom (x $$* y)) q = ?polyMuEval_hole_5
+
+---------------------------------------------
+---------------------------------------------
+---- Self-describing polynomial functors ----
+---------------------------------------------
+---------------------------------------------
+
+-- Interpret a PolyMu as a functor on `Type`.
+public export
+InterpPolyFAlg : MetaPolyAlg (Type -> Type)
+InterpPolyFAlg PFI = Prelude.id {a=Type}
+InterpPolyFAlg PF0 = const Void
+InterpPolyFAlg PF1 = const Unit
+InterpPolyFAlg (p $$+ q) = CoproductF p q
+InterpPolyFAlg (p $$* q) = ProductF p q
+
+public export
+InterpPolyF : PolyMu -> Type -> Type
+InterpPolyF = metaPolyCata InterpPolyFAlg
+
+public export
+PolyMuSq : PolyMu -> PolyMu
+PolyMuSq p = p $*^ 2
+
+public export
+PolyMuDiag : PolyMu
+PolyMuDiag = PolyMuSq PolyI
+
+-- Binary trees of units in terms of PolyMu (the global elements of the initial
+-- algebra of PolyBT correspond to binary trees of units).
+public export
+PolyBT : PolyMu
+PolyBT =
+  Poly1 $+ -- unit
+  PolyMuDiag -- pair
+
+-- Objects of (unrefined) FinSet (without built-in bounded natural numbers)
+-- in terms of PolyMu (the global elements of the initial algebra of PolyFS
+-- correspond to objects of FinSet).
+public export
+PolyFS : PolyMu
+PolyFS =
+  PolyBT $+ -- Finite products (terminal object and pairwise products)
+  PolyBT -- Finite coproducts (initial object and pairwise coproducts)
+
+-- Endofunctors on (unrefined) FinSet (without built-in bounded natural
+-- numbers) in terms of PolyMu (the global elements of the initial algebra
+-- of PolyPF correspond to endofunctors on FinSet).
+public export
+PolyPF : PolyMu
+PolyPF =
+  PolyFS $+ -- Endofunctor category also has finite products and coproducts
+  Poly1 -- Identity endofunctor
 
 ----------------------------------------
+----------------------------------------
 ---- Polynomial monads and comonads ----
+----------------------------------------
 ----------------------------------------
 
 public export
@@ -3112,9 +3437,17 @@ termToGebTerm = termCataRec termToGebTermAlg
 -----------------------------------------------------
 -----------------------------------------------------
 
+-----------------
+---- Product ----
+-----------------
+
 public export
 DiagFunc : DepParamPolyFunc () Bool
 DiagFunc = (const Unit ** const ((), Unit))
+
+public export
+DiagSPF : SlicePolyFunc () Bool
+DiagSPF = SPFFromDPPF DiagFunc
 
 public export
 DiagApp : (x : Type) -> (b : Bool) -> x -> InterpDPPF DiagFunc (const x) b
@@ -3129,19 +3462,150 @@ diagTestCorrect : (n : Nat) -> diagTest n = (n, n)
 diagTestCorrect n = Refl
 
 public export
-ProductFunc : SliceFunctor Bool ()
-ProductFunc p () = Pi p
+ProductFunc : SlicePolyFunc Bool ()
+ProductFunc = (const Unit ** const Bool ** DPair.snd)
 
 public export
-ProductApp :
-  (x, y : Type) -> x -> y -> ProductFunc (\b => if b then y else x) ()
-ProductApp x y ex ey b = if b then ey else ex
+IProductFunc : SliceFunctor Bool ()
+IProductFunc = InterpSPFunc ProductFunc
 
 public export
-productTest : String -> Nat -> (String, Nat)
-productTest s n =
-  (ProductApp String Nat s n False, ProductApp String Nat s n True)
+ProductInterp :
+  (x, y : Type) -> (x, y) -> IProductFunc (\b => if b then y else x) ()
+ProductInterp x y (ex, ey) = (() ** \b => if b then ey else ex)
 
 public export
-productTestCorrect : (s : String) -> (n : Nat) -> productTest s n = (s, n)
+productTest : (String, Nat) -> (String, Nat)
+productTest (s, n) =
+  (snd (ProductInterp String Nat (s, n)) False,
+   snd (ProductInterp String Nat (s, n)) True)
+
+public export
+productTestCorrect : (s : String) -> (n : Nat) -> productTest (s, n) = (s, n)
 productTestCorrect s n = Refl
+
+public export
+ProdAdjRLSPF : SlicePolyFunc () ()
+ProdAdjRLSPF = spfCompose ProductFunc DiagSPF
+
+public export
+ProdAdjRL : PolyFunc
+ProdAdjRL = PolyFuncFromUnitUnitSPF ProdAdjRLSPF
+
+public export
+ProdAdjLR : SlicePolyFunc Bool Bool
+ProdAdjLR = spfCompose DiagSPF ProductFunc
+
+public export
+prodAdjCounit : SPNatTrans ProdAdjLR (spfId Bool)
+prodAdjCounit =
+  (\_, _ => () ** \(i ** (() ** _)), () => ((() ** i) ** Refl))
+
+public export
+prodAdjUnit : PolyNatTrans PFIdentityArena ProdAdjRL
+prodAdjUnit = (const (() ** const ()) ** const (const ()))
+
+public export
+interpProdCounit : (x : SliceObj Bool) ->
+  SliceMorphism (InterpSPFunc ProdAdjLR x) (InterpSPFunc (spfId Bool) x)
+interpProdCounit = InterpSPNT {f=ProdAdjLR} {g=(spfId Bool)} prodAdjCounit
+
+public export
+testProdCounitObj : SliceObj Bool
+testProdCounitObj b = if b then Nat else String
+
+public export
+testProdCounit :
+  SliceMorphism
+    (InterpSPFunc ProdAdjLR ADTCat.testProdCounitObj)
+    (InterpSPFunc (spfId Bool) ADTCat.testProdCounitObj)
+testProdCounit = interpProdCounit testProdCounitObj
+
+public export
+prodCounitProj : (String, Nat) -> (i : Bool) -> if i then Nat else String
+prodCounitProj (s, n) i =
+  snd
+    (ADTCat.testProdCounit i
+      ((() ** const ()) ** \(() ** i') => if i' then n else s))
+  ()
+
+public export
+testProdCounitProj1 : prodCounitProj ("five", 5) False = "five"
+testProdCounitProj1 = Refl
+
+public export
+testProdCounitProj2 : prodCounitProj ("five", 5) True = 5
+testProdCounitProj2 = Refl
+
+public export
+interpProdUnit : (x : Type) -> x -> (x, x)
+interpProdUnit x ex =
+  let
+    ipnt =
+      snd
+        (InterpPolyNT {p=PFIdentityArena} {q=ProdAdjRL}
+          prodAdjUnit x (() ** const ex))
+  in
+  (ipnt (False ** ()), ipnt (True ** ()))
+
+-- L a -> b => a -> R b (`L a` and `b` are in the product category)
+-- R f . nu a
+public export
+prodLeftAdjunct : (a, b, b' : Type) -> (a -> b, a -> b') -> (a -> (b, b'))
+prodLeftAdjunct a b b' (f, f') ea = (f ea, f' ea)
+
+-- a -> R b => L a -> b
+-- ep b . L g
+public export
+prodRightAdjunct : (a, b, b' : Type) -> (a -> (b, b')) -> (a -> b, a -> b')
+prodRightAdjunct a b b' g = (fst . g, snd . g)
+
+-------------------
+---- Coproduct ----
+-------------------
+
+public export
+CoproductFunc : SlicePolyFunc Bool ()
+CoproductFunc = (const Bool ** const Unit ** DPair.snd . DPair.fst)
+
+public export
+CoprodAdjRL : SlicePolyFunc Bool Bool
+CoprodAdjRL = spfCompose DiagSPF CoproductFunc
+
+public export
+CoprodAdjLRSPF : SlicePolyFunc () ()
+CoprodAdjLRSPF = spfCompose CoproductFunc DiagSPF
+
+public export
+CoprodAdjLR : PolyFunc
+CoprodAdjLR = PolyFuncFromUnitUnitSPF CoprodAdjLRSPF
+
+public export
+coprodAdjUnit : SPNatTrans (spfId Bool) CoprodAdjRL
+coprodAdjUnit =
+  (\b, () => (() ** const b) ** \(b ** ()), (() ** ()) => (() ** Refl))
+
+public export
+coprodAdjCounit : PolyNatTrans CoprodAdjLR PFIdentityArena
+coprodAdjCounit = (const () ** const (const (() ** ())))
+
+public export
+ICoproductFunc : SliceFunctor Bool ()
+ICoproductFunc = InterpSPFunc CoproductFunc
+
+public export
+CoproductInterp :
+  (x, y : Type) -> Either x y -> ICoproductFunc (\b => if b then y else x) ()
+CoproductInterp x y (Left ex) = (False ** const ex)
+CoproductInterp x y (Right ey) = (True ** const ey)
+
+public export
+coproductTest : Either String Nat -> Either String Nat
+coproductTest sn with (CoproductInterp String Nat sn)
+  coproductTest sn | (False ** f) = Left $ f ()
+  coproductTest sn | (True ** f) = Right $ f ()
+
+public export
+coproductTestCorrect : (sn : Either String Nat) -> coproductTest sn = sn
+coproductTestCorrect (Left s) = Refl
+coproductTestCorrect (Right n) = Refl

@@ -1284,17 +1284,21 @@ PFTranslate : PolyFunc -> Type -> PolyFunc
 PFTranslate p a = (PFTranslatePos p a ** PFTranslateDir p a)
 
 public export
-PolyFuncFreeMPos : PolyFunc -> Type
-PolyFuncFreeMPos p = PolyFuncMu $ PFTranslate p ()
+PFTranslate1 : PolyFunc -> PolyFunc
+PFTranslate1 p = PFTranslate p ()
 
 public export
-PolyFuncFreeMDirAlg : (p : PolyFunc) -> PFAlg (PFTranslate p ()) Type
+PolyFuncFreeMPos : PolyFunc -> Type
+PolyFuncFreeMPos p = PolyFuncMu $ PFTranslate1 p
+
+public export
+PolyFuncFreeMDirAlg : (p : PolyFunc) -> PFAlg (PFTranslate1 p) Type
 PolyFuncFreeMDirAlg (pos ** dir) (PFVar ()) d = Unit
 PolyFuncFreeMDirAlg (pos ** dir) (PFCom i) d = DPair (dir i) d
 
 public export
 PolyFuncFreeMDir : (p : PolyFunc) -> PolyFuncFreeMPos p -> Type
-PolyFuncFreeMDir p = pfCata {p=(PFTranslate p ())} $ PolyFuncFreeMDirAlg p
+PolyFuncFreeMDir p = pfCata {p=(PFTranslate1 p)} $ PolyFuncFreeMDirAlg p
 
 public export
 PolyFuncFreeM : PolyFunc -> PolyFunc
@@ -2737,13 +2741,6 @@ SPFFromDPPF {parambase} {posbase} (posslice ** assign) =
   (posslice ** snd . assign ** fst . assign . fst)
 
 public export
-DPPFFromSPF : {0 parambase, posbase : Type} ->
-  SlicePolyFunc parambase posbase -> DepParamPolyFunc parambase posbase
-DPPFFromSPF {parambase} {posbase} (posdep ** dirdep ** assign) =
-  (\pos => (i : posdep pos ** dirdep (pos ** i)) **
-   \(pos ** (i ** d)) => (assign ((pos ** i) ** d), dirdep (pos ** i)))
-
-public export
 SlicePolyEndoFunc : Type -> Type
 SlicePolyEndoFunc base = SlicePolyFunc base base
 
@@ -2980,13 +2977,77 @@ spntOnDir : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
 spntOnDir = snd
 
 public export
+InterpSPNTDir : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
+  (alpha : SPNatTrans f g) -> (slw : SliceObj w) ->
+  (posfi : z) -> (posf : spfPos f posfi) ->
+  (dirsf :
+    (d : spfDir f (posfi ** posf)) ->
+    slw $ spfAssign f ((posfi ** posf) ** d)) ->
+  (dirsg : spfDir g (posfi ** spntOnPos {f} {g} alpha posfi posf)) ->
+  slw (spfAssign g ((posfi ** spntOnPos {f} {g} alpha posfi posf) ** dirsg))
+InterpSPNTDir {w} {z} alpha slw posfi posf dirsf dirsg
+  with (spntOnDir alpha (posfi ** posf) dirsg)
+    InterpSPNTDir {w} {z} alpha slw posfi posf dirsf dirsg | (dirf ** eq) =
+      rewrite sym eq in dirsf dirf
+
+public export
 InterpSPNT : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
   SPNatTrans f g -> SliceNatTrans {x=w} {y=z} (InterpSPFunc f) (InterpSPFunc g)
 InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
-  (spntOnPos alpha posfi posf **
-   \dirsg =>
-    let (dirf ** eq) = spntOnDir alpha (posfi ** posf) dirsg in
-    replace {p=slw} eq $ dirsf dirf)
+  (spntOnPos alpha posfi posf ** InterpSPNTDir alpha slw posfi posf dirsf)
+
+------------------------------------------------------
+------------------------------------------------------
+---- Composition of dependent polynomial functors ----
+------------------------------------------------------
+------------------------------------------------------
+
+public export
+spfId : (base : Type) -> SlicePolyFunc base base
+spfId base = (const Unit ** const Unit ** fst . fst)
+
+public export
+spfCompose : {x, y, z : Type} ->
+  SlicePolyFunc y z -> SlicePolyFunc x y -> SlicePolyFunc x z
+spfCompose {x} {y} {z} (qpd ** qdd ** qa) (ppd ** pdd ** pa) =
+  (\qi =>
+    (qdi : qpd qi **
+     (qddi : qdd (qi ** qdi)) -> ppd $ qa ((qi ** qdi) ** qddi)) **
+   \(qi ** qpm) =>
+     (qddi : qdd (qi ** fst qpm) **
+     pdd (qa ((qi ** fst qpm) ** qddi) ** snd qpm qddi)) **
+   \((qi ** (qdi ** qpm)) ** (qddi ** ppdd)) =>
+     pa ((qa ((qi ** qdi) ** qddi) ** qpm qddi) ** ppdd))
+
+public export
+PolyFuncFromUnitUnitSPF : SlicePolyFunc () () -> PolyFunc
+PolyFuncFromUnitUnitSPF (posdep ** dirdep ** assign) =
+  (posdep () ** dirdep . MkDPair ())
+
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---- Conversion between morphism and dependent-set polynomial functors ----
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+public export
+DepPolyFToSPF : {w, x, y, z : Type} ->
+  (x -> w) -> (x -> y) -> (y -> z) ->
+  SlicePolyFunc w z
+DepPolyFToSPF {w} {x} {y} {z} f g h =
+  (PreImage h **
+   \ey => Subset0 x (Equal (fst0 (snd ey)) . g) **
+   \ex => f (fst0 (snd ex)))
+
+public export
+SPFToDepPolyF : {w, z : Type} -> SlicePolyFunc w z ->
+  (wxyz : (Type, Type, Type, Type) **
+   (fst (snd wxyz) -> fst wxyz,
+    fst (snd wxyz) -> fst (snd (snd wxyz)),
+    fst (snd (snd wxyz)) -> snd (snd (snd wxyz))))
+SPFToDepPolyF {w} {z} (posdep ** dirdep ** assign) =
+  ((w, Sigma {a=(Sigma {a=z} posdep)} dirdep, Sigma {a=z} posdep, z) **
+   (assign, DPair.fst, DPair.fst))
 
 ------------------------------------------------
 ------------------------------------------------
