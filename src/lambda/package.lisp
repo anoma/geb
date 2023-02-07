@@ -30,6 +30,7 @@
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb.lambda.trans
    (:documentation "A basic lambda translator into other parts of geb")
+   (:shadow #:to-poly #:to-circuit)
    #.(mix :geb.lambda.main)))
 
 (in-package #:geb.lambda.trans)
@@ -42,6 +43,8 @@
   "These functions deal with transforming the data structure to other
 data types"
   (compile-checked-term pax:generic-function)
+  (to-poly              pax:function)
+  (to-circuit           pax:function)
   (@utility             pax:section))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -54,6 +57,7 @@ data types"
    (:documentation "A basic lambda calculus model")
    #.(mix)
    ;; we also reexport lambda.trans see the documentation below
+   (:shadowing-import-from #:geb.lambda.trans :to-poly :to-circuit)
    (:use-reexport #:geb.lambda.spec #:geb.lambda.main #:geb.lambda.trans))
 
 (in-package #:geb.lambda)

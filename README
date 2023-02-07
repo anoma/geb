@@ -1266,6 +1266,10 @@ into other categorical data structures.
 
     Turns a @GEB-SUBSTMORPH into a POLY:POLY
 
+- [function] TO-CIRCUIT OBJ NAME
+
+    Turns a @GEB-SUBSTMORPH to a Vamp-IR Term
+
 #### Utility
 
 ###### \[in package GEB.MAIN\]
@@ -1474,6 +1478,19 @@ Every accessor for each of the CLASS's found here are from @GEB-ACCESSORS
 
     Checks if the MCAR is less than the MCADR and chooses the appropriate branch
 
+### Polynomial Transformations
+
+###### \[in package GEB.POLY.TRANS\]
+This covers transformation functions from
+
+- [generic-function] TO-VAMPIR MORPHISM VALUE
+
+    Turns a POLY term into a Vamp-IR term with a given value
+
+- [function] TO-CIRCUIT MORPHISM NAME
+
+    Turns a POLY term into a Vamp-IR Gate with the given name
+
 ## The Simply Typed Lambda Calculus model
 
 ###### \[in package GEB.LAMBDA\]
@@ -1608,6 +1625,10 @@ data types
 - [generic-function] COMPILE-CHECKED-TERM CONTEXT TYPE TERM
 
     Compiles a checked term into SubstMorph category
+
+- [function] TO-POLY CONTEXT TYPE OBJ
+
+- [function] TO-CIRCUIT CONTEXT TYPE OBJ NAME
 
 #### Utility Functionality
 

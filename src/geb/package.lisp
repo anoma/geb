@@ -45,7 +45,8 @@
 (pax:defsection @geb-translation (:title "Translation Functions")
   "These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
 into other categorical data structures."
-  (to-poly pax:generic-function))
+  (to-poly    pax:generic-function)
+  (to-circuit pax:function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; bool module

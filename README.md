@@ -36,6 +36,7 @@
 - [8 Polynomial Specification][94a8]
     - [8.1 Polynomial Types][bd81]
     - [8.2 Polynomial Constructors][b76d]
+    - [8.3 Polynomial Transformations][0f3e]
 - [9 The Simply Typed Lambda Calculus model][db8f]
     - [9.1 Lambda Specification][34d0]
     - [9.2 Main functionality][d2d5]
@@ -1420,6 +1421,11 @@ into other categorical data structures.
 
     Turns a [Subst Morph][d2d1] into a [`POLY:POLY`][8bf3]
 
+<a id="x-28GEB-2ETRANS-3ATO-CIRCUIT-20FUNCTION-29"></a>
+- [function] **TO-CIRCUIT** *OBJ NAME*
+
+    Turns a [Subst Morph][d2d1] to a Vamp-IR Term
+
 <a id="x-28GEB-2EMAIN-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29"></a>
 #### 7.4.3 Utility
 
@@ -1666,6 +1672,22 @@ Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors]
 
     Checks if the [`MCAR`][f1ce] is less than the [`MCADR`][cc87] and chooses the appropriate branch
 
+<a id="x-28GEB-2EPOLY-2ETRANS-3A-40POLY-TRANS-20MGL-PAX-3ASECTION-29"></a>
+### 8.3 Polynomial Transformations
+
+###### \[in package GEB.POLY.TRANS\]
+This covers transformation functions from
+
+<a id="x-28GEB-2EPOLY-2ETRANS-3ATO-VAMPIR-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **TO-VAMPIR** *MORPHISM VALUE*
+
+    Turns a [`POLY`][8bf3] term into a Vamp-IR term with a given value
+
+<a id="x-28GEB-2EPOLY-2ETRANS-3ATO-CIRCUIT-20FUNCTION-29"></a>
+- [function] **TO-CIRCUIT** *MORPHISM NAME*
+
+    Turns a [`POLY`][8bf3] term into a Vamp-IR Gate with the given name
+
 <a id="x-28GEB-2ELAMBDA-3A-40STLC-20MGL-PAX-3ASECTION-29"></a>
 ## 9 The Simply Typed Lambda Calculus model
 
@@ -1848,6 +1870,12 @@ data types
 - [generic-function] **COMPILE-CHECKED-TERM** *CONTEXT TYPE TERM*
 
     Compiles a checked term into SubstMorph category
+
+<a id="x-28GEB-2ELAMBDA-2ETRANS-3ATO-POLY-20FUNCTION-29"></a>
+- [function] **TO-POLY** *CONTEXT TYPE OBJ*
+
+<a id="x-28GEB-2ELAMBDA-2ETRANS-3ATO-CIRCUIT-20FUNCTION-29"></a>
+- [function] **TO-CIRCUIT** *CONTEXT TYPE OBJ NAME*
 
 <a id="x-28GEB-2ELAMBDA-2ETRANS-3A-40UTILITY-20MGL-PAX-3ASECTION-29"></a>
 #### 9.3.1 Utility Functionality
@@ -2176,6 +2204,7 @@ features and how to better lay out future tests
   [0dcc]: #x-28GEB-2ESPEC-3APROJECT-LEFT-20TYPE-29 "GEB.SPEC:PROJECT-LEFT TYPE"
   [0dfe]: #x-28GEB-2ESPEC-3A-3C-RIGHT-20FUNCTION-29 "GEB.SPEC:<-RIGHT FUNCTION"
   [0e00]: #x-28GEB-DOCS-2FDOCS-3A-40YONEDA-LEMMA-20MGL-PAX-3ASECTION-29 "The Yoneda Lemma"
+  [0f3e]: #x-28GEB-2EPOLY-2ETRANS-3A-40POLY-TRANS-20MGL-PAX-3ASECTION-29 "Polynomial Transformations"
   [1791]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDDR FUNCTION"
   [1f3a]: #x-28GEB-2ESPEC-3ASO0-20TYPE-29 "GEB.SPEC:SO0 TYPE"
   [2276]: #x-28GEB-2EUTILS-3ASUBCLASS-RESPONSIBILITY-20FUNCTION-29 "GEB.UTILS:SUBCLASS-RESPONSIBILITY FUNCTION"

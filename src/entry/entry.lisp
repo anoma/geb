@@ -39,8 +39,6 @@
           (run file))
         (run *standard-output*))))
 
-
-
 ;; this code is very bad please abstract out many of the components
 (defun compile-down (&key vampir stlc entry (stream *standard-output*))
   (let* ((name        (read-from-string entry))
@@ -49,19 +47,19 @@
     (cond ((and vampir stlc)
            (geb.vampir:extract
             (list
-             (stlc-to-vampir nil
-                             (lambda:typed-stlc-type eval)
-                             (lambda:typed-stlc-value eval)
-                             vampir-name))
+             (lambda:to-circuit nil
+                                (lambda:typed-stlc-type eval)
+                                (lambda:typed-stlc-value eval)
+                                vampir-name))
             stream))
           (stlc
            (format stream
                    "~A"
-                   (stlc-to-morph nil
-                                  (lambda:typed-stlc-type eval)
-                                  (lambda:typed-stlc-value eval))))
+                   (lambda:compile-checked-term nil
+                                                (lambda:typed-stlc-type eval)
+                                                (lambda:typed-stlc-value eval))))
           (vampir
-           (geb.vampir:extract (list (morph-to-vampir eval vampir-name))))
+           (geb.vampir:extract (list (geb:to-circuit eval vampir-name))))
           (t
            (format stream eval)))))
 
@@ -79,15 +77,3 @@
         (nsubstitute #\V #\&)
         (nsubstitute #\V #\%))
    :keyword))
-
-;; Very bad of me, please move this to a proper pipeline and properly
-;; set it up
-
-(defun morph-to-vampir (morph name)
-  (poly::to-circuit (geb:to-poly morph) name))
-
-(defun stlc-to-morph (ctx ty term)
-  (conversion:compile-checked-term ctx ty term))
-
-(defun stlc-to-vampir (ctx ty term name)
-  (morph-to-vampir (stlc-to-morph ctx ty term) name))
