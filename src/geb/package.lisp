@@ -1,50 +1,16 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; API module
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (geb.utils:muffle-package-variance
- (defpackage #:geb
+ (defpackage #:geb.main
    (:documentation "Gödel, Escher, Bach categorical model")
    (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
    (:local-nicknames (#:poly #:geb.poly.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
 
-(geb.utils:muffle-package-variance
- (defpackage #:geb.trans
-   (:documentation "Gödel, Escher, Bach categorical model")
-   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec #:geb)
-   (:local-nicknames (#:poly #:geb.poly.spec))
-   (:shadowing-import-from #:geb.spec :left :right :prod :case)
-   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
-
-(geb.utils:muffle-package-variance
- (uiop:define-package #:geb-bool
-   (:documentation "Defines out booleans for the geb language")
-   (:mix #:geb #:serapeum #:common-lisp)
-   (:shadow :false :true :not :and :or)
-   (:export
-    :bool :fasle :true :not :and :or)))
-
-(in-package #:geb.trans)
-
-(pax:defsection @geb-translation (:title "Translation Functions")
-  "These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
-into other categorical data structures."
-  (to-poly pax:generic-function))
-
-(in-package #:geb)
-
-(pax:defsection @geb (:title "The Geb Model")
-  "Everything here relates directly to the underlying machinery of
-   GEB, or to abstractions that help extend it."
-  (@geb-categories   pax:section)
-  (@geb-accessors    pax:section)
-  (@geb-constructors pax:section)
-  (@geb-api          pax:section)
-  (@geb-examples     pax:section))
-
-(pax:defsection @geb-api (:title "API")
-  "Various forms and structures built on-top of @GEB-CATEGORIES"
-  (geb-bool::@geb-bool        pax:section)
-  (geb.trans:@geb-translation pax:section)
-  (@geb-utility               pax:section))
+(in-package #:geb.main)
 
 (pax:defsection @geb-utility (:title "Utility")
   "Various utility functions ontop of @GEB-CATEGORIES"
@@ -62,20 +28,36 @@ into other categorical data structures."
   (codom             pax:generic-function)
   (curry             pax:generic-function))
 
-(pax:defsection @geb-examples (:title "Examples")
-  "PLACEHOLDER: TO SHOW OTHERS HOW EXAMPLES WORK"
-  "Let's see the transcript of a real session of someone working
-  with GEB:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; trans module
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  ```cl-transcript
-  (values (princ :hello) (list 1 2))
-  .. HELLO
-  => :HELLO
-  => (1 2)
+(geb.utils:muffle-package-variance
+ (defpackage #:geb.trans
+   (:documentation "Gödel, Escher, Bach categorical model")
+   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec #:geb.main)
+   (:local-nicknames (#:poly #:geb.poly.spec))
+   (:shadowing-import-from #:geb.spec :left :right :prod :case)
+   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
 
-  (+ 1 2 3 4)
-  => 10
-  ```")
+(in-package #:geb.trans)
+
+(pax:defsection @geb-translation (:title "Translation Functions")
+  "These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
+into other categorical data structures."
+  (to-poly pax:generic-function))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; bool module
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(geb.utils:muffle-package-variance
+ (uiop:define-package #:geb-bool
+   (:documentation "Defines out booleans for the geb language")
+   (:mix #:geb.main #:geb.spec #:serapeum #:common-lisp)
+   (:shadow :false :true :not :and :or)
+   (:export
+    :bool :fasle :true :not :and :or)))
 
 (in-package #:geb-bool)
 
@@ -105,7 +87,42 @@ The functions given work on this."
   (or    pax:symbol-macro))
 
 
+(geb.utils:muffle-package-variance
+ (uiop:define-package #:geb
+   (:documentation "Gödel, Escher, Bach categorical model")
+   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils)
+   (:shadowing-import-from #:geb.spec :left :right :prod :case)
+   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)
+   (:use-reexport #:geb.spec #:geb.trans #:geb.main)))
+
 (in-package #:geb)
 
-(cl-reexport:reexport-from :geb.spec)
-(cl-reexport:reexport-from :geb.trans)
+(pax:defsection @geb (:title "The Geb Model")
+  "Everything here relates directly to the underlying machinery of
+   GEB, or to abstractions that help extend it."
+  (@geb-categories   pax:section)
+  (@geb-accessors    pax:section)
+  (@geb-constructors pax:section)
+  (@geb-api          pax:section)
+  (@geb-examples     pax:section))
+
+(pax:defsection @geb-api (:title "API")
+  "Various forms and structures built on-top of @GEB-CATEGORIES"
+  (geb-bool::@geb-bool        pax:section)
+  (geb.trans:@geb-translation pax:section)
+  (@geb-utility               pax:section))
+
+(pax:defsection @geb-examples (:title "Examples")
+  "PLACEHOLDER: TO SHOW OTHERS HOW EXAMPLES WORK"
+  "Let's see the transcript of a real session of someone working
+  with GEB:
+
+  ```cl-transcript
+  (values (princ :hello) (list 1 2))
+  .. HELLO
+  => :HELLO
+  => (1 2)
+
+  (+ 1 2 3 4)
+  => 10
+  ```")

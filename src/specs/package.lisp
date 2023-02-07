@@ -60,12 +60,6 @@ all functions that operate on `geb.poly`.")
 
 (in-package :geb.poly.spec)
 
-(pax:defsection @poly-manual (:title "Polynomial Specification")
-  "This covers a GEB view of Polynomials. In particular this type will
-be used in translating GEB's view of Polynomials into Vampir"
-  (@poly              pax:section)
-  (@poly-constructors pax:section))
-
 (pax:defsection @poly (:title "Polynomial Types")
   "This section covers the types of things one can find in the [POLY]
 constructors"

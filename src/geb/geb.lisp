@@ -1,6 +1,6 @@
 ;; General Functions about geb
 
-(in-package :geb)
+(in-package :geb.main)
 
 (-> const (<substmorph> <substobj>) (or alias comp))
 (defun const (f x)
