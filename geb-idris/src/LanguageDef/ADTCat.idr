@@ -3438,18 +3438,6 @@ termToGebTerm = termCataRec termToGebTermAlg
 -----------------------------------------------------
 
 public export
-ProdObjFunc : PolyFunc
-ProdObjFunc = (Unit ** const Bool)
-
-public export
-IncProdObjFunc : PolyFunc
-IncProdObjFunc = PFTranslate1 ProdObjFunc
-
-public export
-InterpIncProdObjFunc : Type -> Type
-InterpIncProdObjFunc = InterpPolyFunc IncProdObjFunc
-
-public export
 DiagFunc : DepParamPolyFunc () Bool
 DiagFunc = (const Unit ** const ((), Unit))
 
