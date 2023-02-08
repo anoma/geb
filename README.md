@@ -33,22 +33,25 @@
         - [7.4.2 Translation Functions][b79a]
         - [7.4.3 Utility][49d4]
     - [7.5 Examples][a17b]
-- [8 Polynomial Specification][94a8]
-    - [8.1 Polynomial Types][bd81]
-    - [8.2 Polynomial Constructors][b76d]
-    - [8.3 Polynomial Transformations][0f3e]
-- [9 The Simply Typed Lambda Calculus model][db8f]
-    - [9.1 Lambda Specification][34d0]
-    - [9.2 Main functionality][d2d5]
-    - [9.3 Transition Functions][e3e4]
-        - [9.3.1 Utility Functionality][0609]
-- [10 Mixins][723a]
-    - [10.1 Pointwise Mixins][d5d3]
-    - [10.2 Pointwise API][2fcf]
-    - [10.3 Mixins Examples][4938]
-- [11 Geb Utilities][4ffa]
-    - [11.1 Accessors][cc51]
-- [12 Testing][9bcb]
+- [8 The GEB GUI][6f67]
+    - [8.1 Visualizer][c6cf]
+        - [8.1.1 Aiding the Visualizer][603e]
+- [9 Polynomial Specification][94a8]
+    - [9.1 Polynomial Types][bd81]
+    - [9.2 Polynomial Constructors][b76d]
+    - [9.3 Polynomial Transformations][0f3e]
+- [10 The Simply Typed Lambda Calculus model][db8f]
+    - [10.1 Lambda Specification][34d0]
+    - [10.2 Main functionality][d2d5]
+    - [10.3 Transition Functions][e3e4]
+        - [10.3.1 Utility Functionality][0609]
+- [11 Mixins][723a]
+    - [11.1 Pointwise Mixins][d5d3]
+    - [11.2 Pointwise API][2fcf]
+    - [11.3 Mixins Examples][4938]
+- [12 Geb Utilities][4ffa]
+    - [12.1 Accessors][cc51]
+- [13 Testing][9bcb]
 
 ###### \[in package GEB-DOCS/DOCS\]
 Welcome to the GEB project.
@@ -1568,15 +1571,50 @@ with GEB:
 ```
 
 
+<a id="x-28GEB-GUI-3A-40GEB-GUI-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+## 8 The GEB GUI
+
+###### \[in package GEB-GUI\]
+This section covers the suite of tools that help visualize geb
+objects and make the system nice to work with
+
+<a id="x-28GEB-GUI-3A-40GEB-VISUALIZER-20MGL-PAX-3ASECTION-29"></a>
+### 8.1 Visualizer
+
+The GEB visualizer deals with visualizing any objects found in the [Core Category][cb9e]
+
+if the visualizer gets a [Subst Morph][d2d1], then it will show how
+the [`GEB:SUBSTMORPH`][57dc] changes any incoming term.
+
+if the visualizer gets a [Subst Obj][c1b3], then it shows the data
+layout of the term, showing what kind of data 
+
+<a id="x-28GEB-GUI-3AVISUALIZE-20FUNCTION-29"></a>
+- [function] **VISUALIZE** *OBJECT &OPTIONAL (ASYNC T)*
+
+    Visualizes both [Subst Obj][c1b3] and [Subst Morph][d2d1] objects
+
+<a id="x-28GEB-GUI-3AKILL-RUNNING-20FUNCTION-29"></a>
+- [function] **KILL-RUNNING**
+
+    Kills all threads and open gui objects created by [`VISUALIZE`][ada5]
+
+<a id="x-28GEB-GUI-3A-40VISAULIZER-AID-20MGL-PAX-3ASECTION-29"></a>
+#### 8.1.1 Aiding the Visualizer
+
+One can aid the visualization process a bit, this can be done by
+simply playing [`GEB:ALIAS`][5e72] around the object, this will place it
+in a box with a name to better identify it in the graphing procedure.
+
 <a id="x-28GEB-2EPOLY-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 8 Polynomial Specification
+## 9 Polynomial Specification
 
 ###### \[in package GEB.POLY\]
 This covers a GEB view of Polynomials. In particular this type will
 be used in translating GEB's view of Polynomials into Vampir
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-20MGL-PAX-3ASECTION-29"></a>
-### 8.1 Polynomial Types
+### 9.1 Polynomial Types
 
 ###### \[in package GEB.POLY.SPEC\]
 This section covers the types of things one can find in the [`POLY`][8bf3]
@@ -1624,7 +1662,7 @@ constructors
     [`THEN`][bfa9] branch is taken, otherwise the [`ELSE`][365a] branch is taken.
 
 <a id="x-28GEB-2EPOLY-2ESPEC-3A-40POLY-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
-### 8.2 Polynomial Constructors
+### 9.2 Polynomial Constructors
 
 ###### \[in package GEB.POLY.SPEC\]
 Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors][cc51]
@@ -1673,7 +1711,7 @@ Every accessor for each of the [`CLASS`][7e58]'s found here are from [Accessors]
     Checks if the [`MCAR`][f1ce] is less than the [`MCADR`][cc87] and chooses the appropriate branch
 
 <a id="x-28GEB-2EPOLY-2ETRANS-3A-40POLY-TRANS-20MGL-PAX-3ASECTION-29"></a>
-### 8.3 Polynomial Transformations
+### 9.3 Polynomial Transformations
 
 ###### \[in package GEB.POLY.TRANS\]
 This covers transformation functions from
@@ -1689,13 +1727,13 @@ This covers transformation functions from
     Turns a [`POLY`][8bf3] term into a Vamp-IR Gate with the given name
 
 <a id="x-28GEB-2ELAMBDA-3A-40STLC-20MGL-PAX-3ASECTION-29"></a>
-## 9 The Simply Typed Lambda Calculus model
+## 10 The Simply Typed Lambda Calculus model
 
 ###### \[in package GEB.LAMBDA\]
 This covers GEB's view on simply typed lambda calculus
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3A-40LAMBDA-SPECS-20MGL-PAX-3ASECTION-29"></a>
-### 9.1 Lambda Specification
+### 10.1 Lambda Specification
 
 ###### \[in package GEB.LAMBDA.SPEC\]
 This covers the various the abstract data type that is the simply
@@ -1854,13 +1892,13 @@ The specification follows from the sum type declaration
 - [function] **TYPED-STLC-VALUE** *INSTANCE*
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3A-40LAMBDA-API-20MGL-PAX-3ASECTION-29"></a>
-### 9.2 Main functionality
+### 10.2 Main functionality
 
 ###### \[in package GEB.LAMBDA.MAIN\]
 This covers the main API for the [`STLC`][e373] module
 
 <a id="x-28GEB-2ELAMBDA-2ETRANS-3A-40STLC-CONVERSION-20MGL-PAX-3ASECTION-29"></a>
-### 9.3 Transition Functions
+### 10.3 Transition Functions
 
 ###### \[in package GEB.LAMBDA.TRANS\]
 These functions deal with transforming the data structure to other
@@ -1878,7 +1916,7 @@ data types
 - [function] **TO-CIRCUIT** *CONTEXT TYPE OBJ NAME*
 
 <a id="x-28GEB-2ELAMBDA-2ETRANS-3A-40UTILITY-20MGL-PAX-3ASECTION-29"></a>
-#### 9.3.1 Utility Functionality
+#### 10.3.1 Utility Functionality
 
 These are utility functions relating to translating lambda terms to other types
 
@@ -1888,7 +1926,7 @@ These are utility functions relating to translating lambda terms to other types
     Converts a generic [(CODE <STLC>)][78ef] context into a [`SUBSTMORPH`][57dc]
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
-## 10 Mixins
+## 11 Mixins
 
 ###### \[in package GEB.MIXINS\]
 Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
@@ -1896,7 +1934,7 @@ project. Overall all these offer various services to the rest of the
 project
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29"></a>
-### 10.1 Pointwise Mixins
+### 11.1 Pointwise Mixins
 
 Here we provide various mixins that deal with classes in a pointwise
 manner. Normally, objects can not be compared in a pointwise manner,
@@ -1925,7 +1963,7 @@ in our class
     Further all `DIRECT-POINTWISE-MIXIN`'s are [`POINTWISE-MIXIN`][445d]'s
 
 <a id="x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29"></a>
-### 10.2 Pointwise API
+### 11.2 Pointwise API
 
 These are the general API functions on any class that have the
 [`POINTWISE-MIXIN`][445d] service.
@@ -1958,7 +1996,7 @@ traversal as `LIST`([`0`][592c] [`1`][98f9])'s are
     rather than the class
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 10.3 Mixins Examples
+### 11.3 Mixins Examples
 
 Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
@@ -1973,7 +2011,7 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 11 Geb Utilities
+## 12 Geb Utilities
 
 ###### \[in package GEB.UTILS\]
 The Utilities package provides general utility functionality that is
@@ -2090,7 +2128,7 @@ used throughout the GEB codebase
 
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
-### 11.1 Accessors
+### 12.1 Accessors
 
 These functions are generic lenses of the GEB codebase. If a class is
 defined, where the names are not known, then these accessors are
@@ -2160,7 +2198,7 @@ likely to be used. They may even augment existing classes.
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-TEST-3A-40GEB-TEST-MANUAL-20MGL-PAX-3ASECTION-29"></a>
-## 12 Testing
+## 13 Testing
 
 ###### \[in package GEB-TEST\]
 We use [parachute](https://quickref.common-lisp.net/parachute.html)
@@ -2238,9 +2276,11 @@ features and how to better lay out future tests
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
   [59dd]: #x-28GEB-2ESPEC-3ACASE-20TYPE-29 "GEB.SPEC:CASE TYPE"
   [5e72]: #x-28GEB-2ESPEC-3AALIAS-20TYPE-29 "GEB.SPEC:ALIAS TYPE"
+  [603e]: #x-28GEB-GUI-3A-40VISAULIZER-AID-20MGL-PAX-3ASECTION-29 "Aiding the Visualizer"
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
   [642a]: #x-28GEB-2ETRANS-3ATO-POLY-20GENERIC-FUNCTION-29 "GEB.TRANS:TO-POLY GENERIC-FUNCTION"
   [684b]: http://www.lispworks.com/documentation/HyperSpec/Body/s_if.htm "IF MGL-PAX:MACRO"
+  [6f67]: #x-28GEB-GUI-3A-40GEB-GUI-MANUAL-20MGL-PAX-3ASECTION-29 "The GEB GUI"
   [7088]: #x-28GEB-2ESPEC-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO0 MGL-PAX:SYMBOL-MACRO"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
   [74ab]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADR FUNCTION"
@@ -2273,6 +2313,7 @@ features and how to better lay out future tests
   [a802]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT TYPE"
   [a920]: #x-28GEB-DOCS-2FDOCS-3A-40OPEN-CLOSED-20MGL-PAX-3ASECTION-29 "Open Types versus Closed Types"
   [a981]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defmet.htm "DEFMETHOD MGL-PAX:MACRO"
+  [ada5]: #x-28GEB-GUI-3AVISUALIZE-20FUNCTION-29 "GEB-GUI:VISUALIZE FUNCTION"
   [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
   [ae41]: #x-28GEB-2ESPEC-3ATERMINAL-20TYPE-29 "GEB.SPEC:TERMINAL TYPE"
   [af14]: #x-28GEB-2EUTILS-3AMCDR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCDR GENERIC-FUNCTION"
@@ -2291,6 +2332,7 @@ features and how to better lay out future tests
   [c1fb]: #x-28GEB-3A-40GEB-20MGL-PAX-3ASECTION-29 "The Geb Model"
   [c2e9]: #x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29 "Categorical Model"
   [c2f9]: #x-28GEB-2EPOLY-2ESPEC-3A-2F-20TYPE-29 "GEB.POLY.SPEC:/ TYPE"
+  [c6cf]: #x-28GEB-GUI-3A-40GEB-VISUALIZER-20MGL-PAX-3ASECTION-29 "Visualizer"
   [c721]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equalp.htm "EQUALP FUNCTION"
   [c767]: http://www.lispworks.com/documentation/HyperSpec/Body/s_the.htm "THE MGL-PAX:MACRO"
   [cab9]: #x-28GEB-2ESPEC-3AINJECT-LEFT-20TYPE-29 "GEB.SPEC:INJECT-LEFT TYPE"

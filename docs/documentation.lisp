@@ -11,6 +11,7 @@
   (@model            pax:section)
   (@idioms           pax:section)
   (@geb              pax:section)
+  (@geb-gui-manual   pax:section)
   (@poly-manual      pax:section)
   (@stlc             pax:section)
   (@mixins           pax:section)

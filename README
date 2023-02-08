@@ -1397,6 +1397,36 @@ with GEB:
 ```
 
 
+## The GEB GUI
+
+###### \[in package GEB-GUI\]
+This section covers the suite of tools that help visualize geb
+objects and make the system nice to work with
+
+### Visualizer
+
+The GEB visualizer deals with visualizing any objects found in the GEB:@GEB-CATEGORIES
+
+if the visualizer gets a GEB:@GEB-SUBSTMORPH, then it will show how
+the GEB:SUBSTMORPH changes any incoming term.
+
+if the visualizer gets a GEB:@GEB-SUBSTMU, then it shows the data
+layout of the term, showing what kind of data 
+
+- [function] VISUALIZE OBJECT &OPTIONAL (ASYNC T)
+
+    Visualizes both GEB:@GEB-SUBSTMU and GEB:@GEB-SUBSTMORPH objects
+
+- [function] KILL-RUNNING
+
+    Kills all threads and open gui objects created by VISUALIZE
+
+#### Aiding the Visualizer
+
+One can aid the visualization process a bit, this can be done by
+simply playing GEB:ALIAS around the object, this will place it
+in a box with a name to better identify it in the graphing procedure.
+
 ## Polynomial Specification
 
 ###### \[in package GEB.POLY\]

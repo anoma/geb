@@ -114,7 +114,8 @@
 
 (asdf:defsystem :geb/documentation
   :depends-on (:geb :mgl-pax/navigate :MGL-PAX/FULL :cl-environments
-                    :geb/test :pythonic-string-reader)
+               :geb/test :pythonic-string-reader
+               :geb/gui)
   :description "geb full documentation exploration"
   :pathname "docs/"
   :serial t
