@@ -8,4 +8,5 @@
   (:import-from #:geb.specs  #:@geb-specs)
   (:import-from #:geb.entry  #:@geb-entry)
   (:import-from #:geb.lambda #:@stlc)
+  (:import-from #:geb-gui    #:@geb-gui-manual)
   (:export build-docs))

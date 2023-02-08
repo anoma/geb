@@ -91,3 +91,16 @@
   (of-type substmorph (curry (<-left geb-bool:bool geb-bool:bool)))
   ;; may be typing this a bit too strictly
   (of-type comp (curry (<-left geb-bool:bool so1))))
+
+
+(define-test geb-trans :parent geb)
+
+(def test-morph-2 (<-left so1 geb-bool:bool))
+
+(def test-poly-2 (geb:to-poly test-morph-2))
+
+(def test-circuit-2 (geb:to-circuit test-morph-2 :tc_2))
+
+(define-test vampir-test-2
+  :parent geb-trans
+  (of-type geb.vampir.spec:alias test-circuit-2))

@@ -24,6 +24,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun visualize (object &optional (async t))
+  "Visualizes both GEB:@GEB-SUBSTMU and GEB:@GEB-SUBSTMORPH objects"
   (flet ((run ()
            (let ((*the-data* object))
              (run-frame-top-level (make-application-frame 'display-clim)))))
@@ -32,6 +33,7 @@
         (funcall #'run))))
 
 (defun kill-running ()
+  "Kills all threads and open gui objects created by VISUALIZE"
   (flet ((destroy-alive (x)
            (when (bt:thread-alive-p x)
              (bt:destroy-thread x))))

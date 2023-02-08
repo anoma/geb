@@ -58,6 +58,7 @@ data types"
    #.(mix)
    ;; we also reexport lambda.trans see the documentation below
    (:shadowing-import-from #:geb.lambda.trans :to-poly :to-circuit)
+   (:shadowing-import-from #:geb.lambda.spec :pair)
    (:use-reexport #:geb.lambda.spec #:geb.lambda.main #:geb.lambda.trans))
 
 (in-package #:geb.lambda)

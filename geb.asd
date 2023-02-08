@@ -30,6 +30,7 @@
     :description "The Vampir Extraction Module"
     :components ((:file package)
                  (:file spec)
+                 (:file print)
                  (:file vampir)))
    (:module geb
     :serial t
@@ -114,7 +115,8 @@
 
 (asdf:defsystem :geb/documentation
   :depends-on (:geb :mgl-pax/navigate :MGL-PAX/FULL :cl-environments
-                    :geb/test :pythonic-string-reader)
+               :geb/test :pythonic-string-reader
+               :geb/gui)
   :description "geb full documentation exploration"
   :pathname "docs/"
   :serial t
