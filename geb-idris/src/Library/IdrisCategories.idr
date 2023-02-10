@@ -2013,6 +2013,7 @@ finCovarBigStepCataN n n' v a subst alg =
 
 mutual
   public export
+  partial
   finCovarApply : {n : Nat} -> {a, b : Type} ->
     FreeFinCovar n (a -> b) ->
     FreeFinCovar n a ->
@@ -2028,6 +2029,7 @@ mutual
       TermComposite $ finCovarApplyNN fc xc
 
   public export
+  partial
   finCovarApply11 : {n : Nat} -> {0 a, b : Type} ->
     FreeFinCovar n (a -> b) ->
     a ->
@@ -2039,6 +2041,7 @@ mutual
       (finCovarApply11 f x, finCovarApplyN1 fp x)
 
   public export
+  partial
   finCovarApplyN1 : {n, n' : Nat} -> {0 a, b : Type} ->
     ProductN n (FreeFinCovar n' (a -> b)) ->
     a ->
@@ -2048,6 +2051,7 @@ mutual
     (finCovarApply11 f x, finCovarApplyN1 fp x)
 
   public export
+  partial
   finCovarApplyNN : {n, n' : Nat} -> {a, b : Type} ->
     ProductN n (FreeFinCovar n' (a -> b)) ->
     ProductN n (FreeFinCovar n' a) ->

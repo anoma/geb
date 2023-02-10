@@ -8410,6 +8410,7 @@ data TSTLC_Term : STLC_Context -> STLC_Type -> Type where
 ---------------------------------------------------
 
 public export
+partial
 MetaSOMorph : SubstObjMu -> SubstObjMu -> Type
 -- The unique morphism from the initial object to a given object
 MetaSOMorph (InSO SO0) _ = ()
