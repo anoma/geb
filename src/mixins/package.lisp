@@ -11,7 +11,8 @@
    project"
   (@pointwise      pax:section)
   (@pointwise-api  pax:section)
-  (@mixin-examples pax:section))
+  (@mixin-examples pax:section)
+  (@metadata       pax:section))
 
 (pax:defsection @metadata (:title "Metadata Mixin")
   "Metadata is a form of meta information about a particular
@@ -20,7 +21,7 @@
    information, or even various levels of compiler information. The
    possibilities are endless and are a standard technique."
 
-  "For this task we offer the [META-MIXIN][type] which will allow
+  "For this task we offer the [META-MIXIN][class] which will allow
    metadata to be stored for any type that uses its service."
   (meta-mixin pax:class)
 
@@ -33,7 +34,46 @@
   (@mixin-performance pax:section))
 
 (pax:defsection @mixin-performance (:title "Performance")
-  "")
+  "The data stored is at the CLASS level. So having your type take the
+[META-MIXIN][class] does interfere with the cache.
+
+Due to concerns about meta information being populated over time, the
+table which it is stored with is in a
+[weak](http://www.lispworks.com/documentation/lcl50/aug/aug-141.html)
+hashtable, so if the object that the metadata is about gets
+deallocated, so does the metadata table.
+
+The full layout can be observed from this interaction
+
+```lisp
+;; any class that uses the service
+(defparameter *x* (make-instance 'meta-mixin))
+
+(meta-insert *x* :a 3)
+
+(defparameter *y* (make-instance 'meta-mixin))
+
+(meta-insert *y* :b 3)
+
+(defparameter *z* (make-instance 'meta-mixin))
+
+;; where {} is a hashtable
+{*x* {:a 3}
+ *y* {:b 3}}
+```
+
+Since `*z*` does not interact with storage no overhead of storage is
+had. Further if `*x* goes out of scope, gc would reclaim the table leaving
+
+```lisp
+{*y* {:b 3}}
+```
+
+for the hashtable.
+
+Even the tables inside each object's map are weak, thus we can make
+storage inside metadata be separated into volatile and stable
+storage.")
 
 (pax:defsection @pointwise (:title "Pointwise Mixins")
   "Here we provide various mixins that deal with classes in a pointwise

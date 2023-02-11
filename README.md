@@ -49,6 +49,8 @@
     - [11.1 Pointwise Mixins][d5d3]
     - [11.2 Pointwise API][2fcf]
     - [11.3 Mixins Examples][4938]
+    - [11.4 Metadata Mixin][9300]
+        - [11.4.1 Performance][455b]
 - [12 Geb Utilities][4ffa]
     - [12.1 Accessors][cc51]
 - [13 Testing][9bcb]
@@ -59,12 +61,18 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
+
+
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
+
+
 <a id="x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29"></a>
 ### 1.1 code coverage
+
+
 
 For test coverage it can be found at the following links:
 
@@ -82,6 +90,8 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see [`GEB-TEST:CODE-COVERAGE`][417f]
+
+
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -344,6 +354,8 @@ conjectures about GEB
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 5 Categorical Model
 
+
+
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -411,31 +423,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} \cong C^{(A × B)}$,
+   $C^{(B^A)} cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $\varnothing$.
+   the empty sum is $varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
-$ \mathsf{1} = \lbrace 1 \rbrace$,
-$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
+where $ mathsf{2} = lbrace 1, 2 rbrace$,
+$ mathsf{1} = lbrace 1 rbrace$,
+$ mathsf{0} = lbrace  rbrace = varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -457,6 +469,8 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
+
+
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 5.1 Morphisms
@@ -2010,6 +2024,90 @@ Let's see some example uses of [`POINTWISE-MIXIN`][445d]:
 ```
 
 
+<a id="x-28GEB-2EMIXINS-3A-40METADATA-20MGL-PAX-3ASECTION-29"></a>
+### 11.4 Metadata Mixin
+
+Metadata is a form of meta information about a particular
+object. Having metadata about an object may be useful if the goal
+requires annotating some data with type information, identification
+information, or even various levels of compiler information. The
+possibilities are endless and are a standard technique.
+
+For this task we offer the [`META-MIXIN`][4529] which will allow
+metadata to be stored for any type that uses its service.
+
+<a id="x-28GEB-2EMIXINS-3AMETA-MIXIN-20CLASS-29"></a>
+- [class] **META-MIXIN**
+
+    Use my service if you want to have metadata capabilities associated
+    with the given object. [Performance][455b] covers my performance
+    characteristics
+
+For working with the structure it is best to have operations to treat
+it like an ordinary hashtable
+
+<a id="x-28GEB-2EMIXINS-3AMETA-INSERT-20FUNCTION-29"></a>
+- [function] **META-INSERT** *OBJECT KEY VALUE &KEY WEAK*
+
+    Inserts a value into storage. If the key is a one time object, then
+    the insertion is considered to be volatile, which can be reclaimed
+    when no more references to the data exists.
+    
+    If the data is however a constant like a string, then the insertion is
+    considered to be long lived and will always be accessible
+    
+    The :weak keyword specifies if the pointer stored in the value is weak
+
+<a id="x-28GEB-2EMIXINS-3AMETA-LOOKUP-20FUNCTION-29"></a>
+- [function] **META-LOOKUP** *OBJECT KEY*
+
+    Lookups the requested key in the metadata table of the object. We
+    look past weak pointers if they exist
+
+<a id="x-28GEB-2EMIXINS-3A-40MIXIN-PERFORMANCE-20MGL-PAX-3ASECTION-29"></a>
+#### 11.4.1 Performance
+
+The data stored is at the [`CLASS`][7e58] level. So having your type take the
+[`META-MIXIN`][4529] does interfere with the cache.
+
+Due to concerns about meta information being populated over time, the
+table which it is stored with is in a
+[weak](http://www.lispworks.com/documentation/lcl50/aug/aug-141.html)
+hashtable, so if the object that the metadata is about gets
+deallocated, so does the metadata table.
+
+The full layout can be observed from this interaction
+
+```lisp
+;; any class that uses the service
+(defparameter *x* (make-instance 'meta-mixin))
+
+(meta-insert *x* :a 3)
+
+(defparameter *y* (make-instance 'meta-mixin))
+
+(meta-insert *y* :b 3)
+
+(defparameter *z* (make-instance 'meta-mixin))
+
+;; where {} is a hashtable
+{*x* {:a 3}
+ *y* {:b 3}}
+```
+
+Since `*z*` does not interact with storage no overhead of storage is
+had. Further if \`*x* goes out of scope, gc would reclaim the table leaving
+
+```lisp
+{*y* {:b 3}}
+```
+
+for the hashtable.
+
+Even the tables inside each object's map are weak, thus we can make
+storage inside metadata be separated into volatile and stable
+storage.
+
 <a id="x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
 ## 12 Geb Utilities
 
@@ -2266,6 +2364,8 @@ features and how to better lay out future tests
   [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
   [43d2]: #x-28GEB-2EMAIN-3ACURRY-20GENERIC-FUNCTION-29 "GEB.MAIN:CURRY GENERIC-FUNCTION"
   [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
+  [4529]: #x-28GEB-2EMIXINS-3AMETA-MIXIN-20CLASS-29 "GEB.MIXINS:META-MIXIN CLASS"
+  [455b]: #x-28GEB-2EMIXINS-3A-40MIXIN-PERFORMANCE-20MGL-PAX-3ASECTION-29 "Performance"
   [4850]: http://www.lispworks.com/documentation/HyperSpec/Body/t_kwd.htm "KEYWORD TYPE"
   [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
   [49d4]: #x-28GEB-2EMAIN-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29 "Utility"
@@ -2299,6 +2399,7 @@ features and how to better lay out future tests
   [8fa5]: #x-28GEB-DOCS-2FDOCS-3A-40INSTALLATION-20MGL-PAX-3ASECTION-29 "installation"
   [9162]: #x-28GEB-2EPOLY-2ESPEC-3ACOMPOSE-20TYPE-29 "GEB.POLY.SPEC:COMPOSE TYPE"
   [925b]: #x-28GEB-DOCS-2FDOCS-3A-40POLY-SETS-20MGL-PAX-3ASECTION-29 "Poly in Sets"
+  [9300]: #x-28GEB-2EMIXINS-3A-40METADATA-20MGL-PAX-3ASECTION-29 "Metadata Mixin"
   [94a8]: #x-28GEB-2EPOLY-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29 "Polynomial Specification"
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
   [97fb]: #x-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-20TYPE-29 "GEB.SPEC:<SUBSTMORPH> TYPE"
