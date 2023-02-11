@@ -293,6 +293,10 @@ public export
 SliceCoproduct : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
 SliceCoproduct = biapp Either
 
+public export
+SliceHom : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
+SliceHom = biapp $ \x, y => x -> y
+
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
 -------------------------------------------

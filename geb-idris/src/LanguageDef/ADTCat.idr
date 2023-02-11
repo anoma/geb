@@ -3437,6 +3437,15 @@ termToGebTerm = termCataRec termToGebTermAlg
 -----------------------------------------------------
 -----------------------------------------------------
 
+public export
+SliceFuncProd : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (w, y) (x, z)
+SliceFuncProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+  (\(ix, iz) => (wxp ix, yzp iz) **
+   \((ix, iz) ** (wxi, yzi)) => (wxd (ix ** wxi), (yzd (iz ** yzi))) **
+   \(((ix, iz) ** (wxi, yzi)) ** (wxdi, yzdi)) =>
+      (wxa ((ix ** wxi) ** wxdi), yza ((iz ** yzi) ** yzdi)))
+
 --------------------
 ---- Definition ----
 --------------------
