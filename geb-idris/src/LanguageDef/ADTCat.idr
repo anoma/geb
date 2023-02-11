@@ -3481,6 +3481,14 @@ SliceFuncParProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
    \(((ix, iz) ** (wxi, yzi)) ** (wxdi, yzdi)) =>
       (wxa ((ix ** wxi) ** wxdi), yza ((iz ** yzi) ** yzdi)))
 
+public export
+SliceFuncDimap : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> (w -> y) -> (z -> x) -> SlicePolyFunc y z
+SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
+  (wxp . fzx **
+   \(iz ** wxi) => wxd (fzx iz ** wxi) **
+   \((iz ** wxi) ** wxdi) => fwy (wxa ((fzx iz ** wxi) ** wxdi)))
+
 --------------------
 ---- Definition ----
 --------------------
