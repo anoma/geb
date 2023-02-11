@@ -3438,6 +3438,31 @@ termToGebTerm = termCataRec termToGebTermAlg
 -----------------------------------------------------
 
 public export
+SliceFuncInitial : (z : Type) -> SlicePolyFunc Void z
+SliceFuncInitial z = (const Void ** const Void ** \(iz ** d) => void d)
+
+public export
+SliceFuncTerminal : (y : Type) -> SlicePolyFunc y ()
+SliceFuncTerminal y = (const Unit ** const Void ** \((() ** ()) ** d) => void d)
+
+public export
+SliceFuncId : (y : Type) -> SlicePolyFunc y y
+SliceFuncId y = (const Unit ** const Unit ** \((i ** ()) ** ()) => i)
+
+public export
+SliceFuncCoprod : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> SlicePolyFunc y z ->
+  SlicePolyFunc (Either w y) (Either x z)
+SliceFuncCoprod {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+  (\ixz => (case ixz of Left ix => wxp ix ; Right iz => yzp iz) **
+   \(ixz ** wxyzi) => (case ixz of
+      Left ix => wxd (ix ** wxyzi)
+      Right iz => yzd (iz ** wxyzi)) **
+   \((ixz ** wxyzi) ** wxyzdi) => (case ixz of
+      Left ix => Left $ wxa ((ix ** wxyzi) ** wxyzdi)
+      Right iz => Right $ yza ((iz ** wxyzi) ** wxyzdi)))
+
+public export
 SliceFuncProd : {0 w, x, y, z : Type} ->
   SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (w, y) (x, z)
 SliceFuncProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
