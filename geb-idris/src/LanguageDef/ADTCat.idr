@@ -3448,18 +3448,42 @@ record OpFunctorPair (x, y : Type) where
   ofpIn : SlicePolyFunc y x
 
 public export
+ofpInAfterOut : {x, y : Type} -> OpFunctorPair x y -> SlicePolyFunc x x
+ofpInAfterOut ofp = spfCompose (ofpIn ofp) (ofpOut ofp)
+
+public export
+ofpOutAfterIn : {x, y : Type} -> OpFunctorPair x y -> SlicePolyFunc y y
+ofpOutAfterIn ofp = spfCompose (ofpOut ofp) (ofpIn ofp)
+
+public export
+OFPunit : {x, y : Type} -> OpFunctorPair x y -> Type
+OFPunit {x} {y} ofp = SPNatTrans (spfId y) (ofpOutAfterIn ofp)
+
+public export
+OFPcounit : {x, y : Type} -> OpFunctorPair x y -> Type
+OFPcounit {x} {y} ofp = SPNatTrans (ofpOutAfterIn ofp) (spfId y)
+
+public export
 record AdjFromUnit (x : Type) where
   constructor AdjU
   adjUsl : Type
   adjUfp : OpFunctorPair x adjUsl
-  adjUnt : SPNatTrans (spfId adjUsl) (spfCompose (ofpOut adjUfp) (ofpIn adjUfp))
+  adjUnt : OFPunit adjUfp
 
 public export
 record AdjFromCounit (x : Type) where
   constructor AdjC
   adjCsl : Type
   adjCfp : OpFunctorPair x adjCsl
-  adjCnt : SPNatTrans (spfCompose (ofpOut adjCfp) (ofpIn adjCfp)) (spfId adjCsl)
+  adjCnt : OFPcounit adjCfp
+
+public export
+record CatFromAdj (x : Type) where
+  constructor CfA
+  cfaLeftAdj : Type
+  cfaLeftUnit : cfaLeftAdj -> AdjFromUnit x
+  cfaRightAdj : Type
+  cfaRightUnit : cfaRightAdj -> AdjFromCounit x
 
 -----------------
 ---- Product ----
