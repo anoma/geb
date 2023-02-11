@@ -3437,6 +3437,30 @@ termToGebTerm = termCataRec termToGebTermAlg
 -----------------------------------------------------
 -----------------------------------------------------
 
+--------------------
+---- Definition ----
+--------------------
+
+public export
+record OpFunctorPair (x, y : Type) where
+  constructor OFP
+  ofpOut : SlicePolyFunc x y
+  ofpIn : SlicePolyFunc y x
+
+public export
+record AdjFromUnit (x : Type) where
+  constructor AdjU
+  adjUsl : Type
+  adjUfp : OpFunctorPair x adjUsl
+  adjUnt : SPNatTrans (spfId adjUsl) (spfCompose (ofpOut adjUfp) (ofpIn adjUfp))
+
+public export
+record AdjFromCounit (x : Type) where
+  constructor AdjC
+  adjCsl : Type
+  adjCfp : OpFunctorPair x adjCsl
+  adjCnt : SPNatTrans (spfCompose (ofpOut adjCfp) (ofpIn adjCfp)) (spfId adjCsl)
+
 -----------------
 ---- Product ----
 -----------------
