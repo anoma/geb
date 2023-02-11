@@ -9,12 +9,6 @@
 with the given object. @MIXIN-PERFORMANCE covers my performance
 characteristics"))
 
-(defmethod initialize-instance :after ((obj meta-mixin) &key)
-  (let ((hash  (sxhash obj))
-        (table (meta obj)))
-    (tg:finalize obj (lambda () (remhash hash table)))))
-
-
 (-> meta-insert (meta-mixin t t) t)
 (defun meta-insert (object key value)
   "Inserts a value into storage. If the key is a one time object, then
@@ -24,7 +18,7 @@ when no more references to the data exists.
 If the data is however a constant like a string, then the insertion is
 considered to be long lived and will always be accessible"
   (let ((hash (or (gethash object (meta object))
-                  (setf (gethash (sxhash object) (meta object))
+                  (setf (gethash object (meta object))
                         (tg:make-weak-hash-table :test 'equalp
                                                  :weakness :key)))))
     (setf (gethash key hash)
@@ -33,4 +27,6 @@ considered to be long lived and will always be accessible"
 (-> meta-lookup (meta-mixin t) t)
 (defun meta-lookup (object key)
   "Lookups the requested key in the metadata table of the object"
-  object key)
+  (let ((table (gethash object (meta object))))
+    (when table
+      (gethash key table))))
