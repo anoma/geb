@@ -13,6 +13,28 @@
   (@pointwise-api  pax:section)
   (@mixin-examples pax:section))
 
+(pax:defsection @metadata (:title "Metadata Mixin")
+  "Metadata is a form of meta information about a particular
+   object. Having metadata about an object may be useful if the goal
+   requires annotating some data with type information, identification
+   information, or even various levels of compiler information. The
+   possibilities are endless and are a standard technique."
+
+  "For this task we offer the [META-MIXIN][type] which will allow
+   metadata to be stored for any type that uses its service."
+  (meta-mixin pax:class)
+
+  "For working with the structure it is best to have operations to treat
+   it like an ordinary hashtable"
+
+  (meta-insert pax:function)
+  (meta-lookup pax:function)
+
+  (@mixin-performance pax:section))
+
+(pax:defsection @mixin-performance (:title "Performance")
+  "")
+
 (pax:defsection @pointwise (:title "Pointwise Mixins")
   "Here we provide various mixins that deal with classes in a pointwise
    manner. Normally, objects can not be compared in a pointwise manner,
