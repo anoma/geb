@@ -3464,8 +3464,18 @@ SliceFuncCoprod {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
 
 public export
 SliceFuncProd : {0 w, x, y, z : Type} ->
-  SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (w, y) (x, z)
+  SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (Either w y) (x, z)
 SliceFuncProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+  (\(ix, iz) => (wxp ix, yzp iz) **
+   \((ix, iz) ** (wxi, yzi)) => Either (wxd (ix ** wxi)) (yzd (iz ** yzi)) **
+   \(((ix, iz) ** (wxi, yzi)) ** wxyzdi) => (case wxyzdi of
+      Left wxdi => Left $ wxa ((ix ** wxi) ** wxdi)
+      Right yzdi => Right $ yza ((iz ** yzi) ** yzdi)))
+
+public export
+SliceFuncParProd : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (w, y) (x, z)
+SliceFuncParProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
   (\(ix, iz) => (wxp ix, yzp iz) **
    \((ix, iz) ** (wxi, yzi)) => (wxd (ix ** wxi), (yzd (iz ** yzi))) **
    \(((ix, iz) ** (wxi, yzi)) ** (wxdi, yzdi)) =>
