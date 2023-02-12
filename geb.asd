@@ -105,6 +105,7 @@
   :serial t
   :components
   ((:file package)
+   (:file meta)
    (:file geb)
    (:file lambda)
    (:file lambda-conversion)
