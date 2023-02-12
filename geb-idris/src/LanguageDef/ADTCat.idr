@@ -3483,11 +3483,11 @@ public export
 record CatFromAdj (a : Type) where
   constructor CfA
   cfaLeftAdjPos : Type
-  cfaLeftAdjSlice : a -> SliceObj a
-  cfaLeftUnit : Pi (AdjFromUnit {a} . cfaLeftAdjSlice)
+  cfaLeftAdjSlice : cfaLeftAdjPos -> SliceObj a
+  cfaLeftUnit : Pi {a=cfaLeftAdjPos} (AdjFromUnit {a} . cfaLeftAdjSlice)
   cfaRightAdjPos : Type
-  cfaRightAdjSlice : a -> SliceObj a
-  cfaRightCounit : Pi (AdjFromCounit {a} . cfaRightAdjSlice)
+  cfaRightAdjSlice : cfaRightAdjPos -> SliceObj a
+  cfaRightCounit : Pi {a=cfaRightAdjPos} (AdjFromCounit {a} . cfaRightAdjSlice)
 
 -----------------
 ---- Product ----
