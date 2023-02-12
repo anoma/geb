@@ -253,6 +253,14 @@ SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
 SliceMorphism {a} s s' = (e : a) -> s e -> s' e
 
 public export
+SliceToPi : {a : Type} -> {p : SliceObj a} -> SliceMorphism (const ()) p -> Pi p
+SliceToPi m x = m x ()
+
+public export
+PiToSlice : {a : Type} -> {p : SliceObj a} -> Pi p -> SliceMorphism (const ()) p
+PiToSlice pi x () = pi x
+
+public export
 smApp : {0 a : Type} -> {0 s, s' : SliceObj a} ->
   SliceMorphism s s' -> Sigma s -> Sigma s'
 smApp m (i ** d) = (i ** m i d)
