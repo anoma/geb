@@ -2879,6 +2879,62 @@ InterpSPFMap {a} {b} spf {sa} {sa'} =
   PredDepPolyFMap
     {parambase=a} {posbase=b} (spfPos spf) (spfDir spf) (spfAssign spf) sa sa'
 
+------------------------------------------------------
+---- Dependent polynomial endofunctor combinators ----
+------------------------------------------------------
+
+public export
+SliceFuncInitial : (z : Type) -> SlicePolyFunc Void z
+SliceFuncInitial z = (const Void ** const Void ** \(iz ** d) => void d)
+
+public export
+SliceFuncTerminal : (y : Type) -> SlicePolyFunc y ()
+SliceFuncTerminal y = (const Unit ** const Void ** \((() ** ()) ** d) => void d)
+
+public export
+SliceFuncId : (y : Type) -> SlicePolyFunc y y
+SliceFuncId y = (const Unit ** const Unit ** \((i ** ()) ** ()) => i)
+
+public export
+SliceFuncCoprod : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> SlicePolyFunc y z ->
+  SlicePolyFunc (Either w y) (Either x z)
+SliceFuncCoprod {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+  (\ixz => (case ixz of Left ix => wxp ix ; Right iz => yzp iz) **
+   \(ixz ** wxyzi) => (case ixz of
+      Left ix => wxd (ix ** wxyzi)
+      Right iz => yzd (iz ** wxyzi)) **
+   \((ixz ** wxyzi) ** wxyzdi) => (case ixz of
+      Left ix => Left $ wxa ((ix ** wxyzi) ** wxyzdi)
+      Right iz => Right $ yza ((iz ** wxyzi) ** wxyzdi)))
+
+public export
+SliceFuncProd : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (Either w y) (x, z)
+SliceFuncProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+  (\(ix, iz) => (wxp ix, yzp iz) **
+   \((ix, iz) ** (wxi, yzi)) => Either (wxd (ix ** wxi)) (yzd (iz ** yzi)) **
+   \(((ix, iz) ** (wxi, yzi)) ** wxyzdi) => (case wxyzdi of
+      Left wxdi => Left $ wxa ((ix ** wxi) ** wxdi)
+      Right yzdi => Right $ yza ((iz ** yzi) ** yzdi)))
+
+public export
+SliceFuncParProd : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (w, y) (x, z)
+SliceFuncParProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+  (\(ix, iz) => (wxp ix, yzp iz) **
+   \((ix, iz) ** (wxi, yzi)) => (wxd (ix ** wxi), (yzd (iz ** yzi))) **
+   \(((ix, iz) ** (wxi, yzi)) ** (wxdi, yzdi)) =>
+      (wxa ((ix ** wxi) ** wxdi), yza ((iz ** yzi) ** yzdi)))
+
+public export
+SliceFuncDimap : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> (w -> y) -> (z -> x) -> SlicePolyFunc y z
+SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
+  (wxp . fzx **
+   \(iz ** wxi) => wxd (fzx iz ** wxi) **
+   \((iz ** wxi) ** wxdi) => fwy (wxa ((fzx iz ** wxi) ** wxdi)))
+
 ------------------------------------------------------------------------
 ---- Direct interpretation of DepParamPolyFunc form of SliceFunctor ----
 ------------------------------------------------------------------------
