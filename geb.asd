@@ -95,6 +95,7 @@
   :pathname "src/gui/"
   :serial t
   :components ((:file package)
+               (:file graphing)
                (:file gui))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 

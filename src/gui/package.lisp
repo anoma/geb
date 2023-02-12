@@ -1,4 +1,11 @@
 (geb.utils:muffle-package-variance
+ (uiop:define-package #:geb-gui.graphing
+   (:mix #:geb #:serapeum #:common-lisp
+         #:geb.mixins #:geb.utils)))
+
+(in-package :geb-gui.graphing)
+
+(geb.utils:muffle-package-variance
  (defpackage #:geb-gui
    (:use :clim :clim-lisp)))
 
