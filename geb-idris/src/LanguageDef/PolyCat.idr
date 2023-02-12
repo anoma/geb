@@ -3180,6 +3180,29 @@ PolyFuncFromUnitUnitSPF : SlicePolyFunc () () -> PolyFunc
 PolyFuncFromUnitUnitSPF (posdep ** dirdep ** assign) =
   (posdep () ** dirdep . MkDPair ())
 
+--------------------------------------------------------------------
+---- Composition of parameterized dependent polynomial functors ----
+--------------------------------------------------------------------
+
+public export
+spfParamId : {a : Type} -> (x : SliceObj a) -> ParamSPF {a} x x
+spfParamId {a} x ea = spfId (x ea)
+
+public export
+spfParamCompose : {a : Type} -> {x, y, z : SliceObj a} ->
+  ParamSPF {a} y z -> ParamSPF {a} x y -> ParamSPF {a} x z
+spfParamCompose pspf' pspf ea = spfCompose (pspf' ea) (pspf ea)
+
+--------------------------------------------------------------------
+---- Parameterized dependent polynomial natural transformations ----
+--------------------------------------------------------------------
+
+public export
+ParamSPNatTrans : {a : Type} -> {w, z : SliceObj a} ->
+  ParamSPF {a} w z -> ParamSPF {a} w z -> Type
+ParamSPNatTrans {a} {w} {z} pspf pspf' =
+  (ea : a) -> SPNatTrans (pspf ea) (pspf' ea)
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Conversion between morphism and dependent-set polynomial functors ----

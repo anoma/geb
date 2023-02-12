@@ -3442,48 +3442,52 @@ termToGebTerm = termCataRec termToGebTermAlg
 --------------------
 
 public export
-record OpFunctorPair (x, y : Type) where
+record OpFunctorPair {a : Type} (x, y : SliceObj a) where
   constructor OFP
-  ofpOut : SlicePolyFunc x y
-  ofpIn : SlicePolyFunc y x
+  ofpOut : ParamSPF {a} x y
+  ofpIn : ParamSPF {a} y x
 
 public export
-ofpInAfterOut : {x, y : Type} -> OpFunctorPair x y -> SlicePolyFunc x x
-ofpInAfterOut ofp = spfCompose (ofpIn ofp) (ofpOut ofp)
+ofpInAfterOut : {a : Type} -> {x, y : SliceObj a} ->
+  OpFunctorPair {a} x y -> ParamSPF {a} x x
+ofpInAfterOut ofp = spfParamCompose (ofpIn ofp) (ofpOut ofp)
 
 public export
-ofpOutAfterIn : {x, y : Type} -> OpFunctorPair x y -> SlicePolyFunc y y
-ofpOutAfterIn ofp = spfCompose (ofpOut ofp) (ofpIn ofp)
+ofpOutAfterIn : {a : Type} -> {x, y : SliceObj a} ->
+  OpFunctorPair {a} x y -> ParamSPF {a} y y
+ofpOutAfterIn ofp = spfParamCompose (ofpOut ofp) (ofpIn ofp)
 
 public export
-OFPunit : {x, y : Type} -> OpFunctorPair x y -> Type
-OFPunit {x} {y} ofp = SPNatTrans (spfId y) (ofpOutAfterIn ofp)
+OFPunit : {a : Type} -> {x, y : SliceObj a} -> OpFunctorPair {a} x y -> Type
+OFPunit {a} {x} {y} ofp = ParamSPNatTrans (spfParamId y) (ofpOutAfterIn ofp)
 
 public export
-OFPcounit : {x, y : Type} -> OpFunctorPair x y -> Type
-OFPcounit {x} {y} ofp = SPNatTrans (ofpOutAfterIn ofp) (spfId y)
+OFPcounit : {a : Type} -> {x, y : SliceObj a} -> OpFunctorPair {a} x y -> Type
+OFPcounit {a} {x} {y} ofp = ParamSPNatTrans (ofpOutAfterIn ofp) (spfParamId y)
 
 public export
-record AdjFromUnit (x : Type) where
+record AdjFromUnit {a : Type} (x : SliceObj a) where
   constructor AdjU
-  adjUsl : Type
-  adjUfp : OpFunctorPair x adjUsl
-  adjUnt : OFPunit adjUfp
+  adjUsl : SliceObj a
+  adjUfp : OpFunctorPair {a} x adjUsl
+  adjUnt : OFPunit {a} adjUfp
 
 public export
-record AdjFromCounit (x : Type) where
+record AdjFromCounit {a : Type} (x : SliceObj a) where
   constructor AdjC
-  adjCsl : Type
-  adjCfp : OpFunctorPair x adjCsl
-  adjCnt : OFPcounit adjCfp
+  adjCsl : SliceObj a
+  adjCfp : OpFunctorPair {a} x adjCsl
+  adjCnt : OFPcounit {a} adjCfp
 
 public export
-record CatFromAdj (x : Type) where
+record CatFromAdj (a : Type) where
   constructor CfA
-  cfaLeftAdj : Type
-  cfaLeftUnit : cfaLeftAdj -> AdjFromUnit x
-  cfaRightAdj : Type
-  cfaRightUnit : cfaRightAdj -> AdjFromCounit x
+  cfaLeftAdjPos : Type
+  cfaLeftAdjSlice : a -> SliceObj a
+  cfaLeftUnit : Pi (AdjFromUnit {a} . cfaLeftAdjSlice)
+  cfaRightAdjPos : Type
+  cfaRightAdjSlice : a -> SliceObj a
+  cfaRightCounit : Pi (AdjFromCounit {a} . cfaRightAdjSlice)
 
 -----------------
 ---- Product ----
