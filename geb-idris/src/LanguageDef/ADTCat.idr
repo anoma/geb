@@ -3458,6 +3458,18 @@ SPFFromParam {a} {x} {y} pspf =
       ((snd (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
 
 public export
+SPFToParam : {0 a : Type} -> {0 x, y : SliceObj a} ->
+  SlicePolyFunc (Sigma {a} x) (Sigma {a} y) ->
+  ParamSPF {a} x y
+SPFToParam {a} {x} {y} (posdep ** dirdep ** assign) ea =
+  (posdep . MkDPair ea **
+   \pd =>
+    (dd : dirdep ((ea ** fst pd) ** snd pd) **
+     fst (assign (((ea ** fst pd) ** snd pd) ** dd)) = ea) **
+   \((yea ** pd) ** (dd ** eq)) =>
+    replace {p=x} eq $ snd $ assign (((ea ** yea) ** pd) ** dd))
+
+public export
 record OpFunctorPair (x, y : Type) where
   constructor OFP
   ofpOut : SlicePolyFunc x y
