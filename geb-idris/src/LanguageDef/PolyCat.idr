@@ -2943,6 +2943,38 @@ InterpSPFtoWTF {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
         ((ib ** rewrite sym eq in i) ** d)
         (rewrite sym eq in Refl))
 
+-----------------------------------------------------
+---- Parameterized dependent polynomial functors ----
+-----------------------------------------------------
+
+public export
+ParamSPF : {a : Type} -> (x, y : SliceObj a) -> Type
+ParamSPF {a} x y = (ea : a) -> SlicePolyFunc (x ea) (y ea)
+
+public export
+SPFFromParam : {0 a : Type} -> {0 x, y : SliceObj a} ->
+  ParamSPF {a} x y -> SlicePolyFunc (Sigma {a} x) (Sigma {a} y)
+SPFFromParam {a} {x} {y} pspf =
+  (\iy => fst (pspf (fst iy)) (snd iy) **
+   \dp => fst (snd (pspf (fst (fst dp)))) (snd (fst dp) ** (snd dp)) **
+   \dd =>
+    (fst (fst (fst dd)) **
+     snd
+      (snd (pspf (DPair.fst (fst (fst dd)))))
+      ((snd (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
+
+public export
+SPFToParam : {0 a : Type} -> {0 x, y : SliceObj a} ->
+  SlicePolyFunc (Sigma {a} x) (Sigma {a} y) ->
+  ParamSPF {a} x y
+SPFToParam {a} {x} {y} (posdep ** dirdep ** assign) ea =
+  (posdep . MkDPair ea **
+   \pd =>
+    (dd : dirdep ((ea ** fst pd) ** snd pd) **
+     fst (assign (((ea ** fst pd) ** snd pd) ** dd)) = ea) **
+   \((yea ** pd) ** (dd ** eq)) =>
+    replace {p=x} eq $ snd $ assign (((ea ** yea) ** pd) ** dd))
+
 ------------------------------------------------------
 ---- Dependent polynomial endofunctor combinators ----
 ------------------------------------------------------
