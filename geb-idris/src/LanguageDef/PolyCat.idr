@@ -2880,6 +2880,70 @@ InterpSPFMap {a} {b} spf {sa} {sa'} =
     {parambase=a} {posbase=b} (spfPos spf) (spfDir spf) (spfAssign spf) sa sa'
 
 ------------------------------------------------------
+---- Dependent polynomial endofunctors as W-types ----
+------------------------------------------------------
+
+public export
+record WTypeFunc (parambase, posbase : Type) where
+  constructor MkWTF
+  wtPos : Type
+  wtDir : Type
+  wtAssign : wtDir -> parambase
+  wtDirSlice : wtDir -> wtPos
+  wtPosSlice : wtPos -> posbase
+
+public export
+InterpWTF : {parambase, posbase : Type} ->
+  WTypeFunc parambase posbase -> SliceFunctor parambase posbase
+InterpWTF {parambase} {posbase} (MkWTF pos dir assign dsl psl) sl ib =
+  (i : PreImage {a=pos} {b=posbase} psl ib **
+   (d : PreImage {a=dir} {b=pos} dsl (fst0 i)) ->
+   sl $ assign $ fst0 d)
+
+public export
+WTFtoSPF : {parambase, posbase : Type} ->
+  WTypeFunc parambase posbase -> SlicePolyFunc parambase posbase
+WTFtoSPF {parambase} {posbase} (MkWTF pos dir assign dsl psl) =
+  (PreImage {a=pos} {b=posbase} psl **
+   PreImage {a=dir} {b=posbase} (psl . dsl) . fst **
+   \d => assign $ fst0 $ snd d)
+
+public export
+SPFtoWTF : {parambase, posbase : Type} ->
+  SlicePolyFunc parambase posbase -> WTypeFunc parambase posbase
+SPFtoWTF (posdep ** dirdep ** assign) =
+  MkWTF
+    (Sigma {a=posbase} posdep)
+    (Sigma {a=(Sigma {a=posbase} posdep)} dirdep)
+    assign
+    fst
+    fst
+
+public export
+InterpWTFtoSPF : {parambase, posbase : Type} ->
+  (wtf : WTypeFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (i : posbase) ->
+  InterpSPFunc {a=parambase} {b=posbase}
+    (WTFtoSPF {parambase} {posbase} wtf) sl i ->
+  InterpWTF {parambase} {posbase} wtf sl i
+InterpWTFtoSPF (MkWTF pos dir assign dsl psl) sl ib ((Element0 i eqi) ** p) =
+  ((Element0 i eqi) ** \(Element0 d eqd) => p (Element0 d $ rewrite eqd in eqi))
+
+public export
+InterpSPFtoWTF : {parambase, posbase : Type} ->
+  (spf : SlicePolyFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (i : posbase) ->
+  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl i ->
+  InterpSPFunc {a=parambase} {b=posbase} spf sl i
+InterpSPFtoWTF {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
+  (Element0 {type=(Sigma {a=posbase} posdep)} (ib' ** i) eq ** p) =
+    (rewrite sym eq in i **
+     \d => p $
+      Element0
+        ((ib ** rewrite sym eq in i) ** d)
+        (rewrite sym eq in Refl))
+
+------------------------------------------------------
 ---- Dependent polynomial endofunctor combinators ----
 ------------------------------------------------------
 
