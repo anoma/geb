@@ -2928,6 +2928,10 @@ SliceFuncParProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
       (wxa ((ix ** wxi) ** wxdi), yza ((iz ** yzi) ** yzdi)))
 
 public export
+SPFBaseChange : {x, y : Type} -> (x -> y) -> SlicePolyFunc y x
+SPFBaseChange {x} {y} f = (const () ** const () ** \((ix ** ()) ** ()) => f ix)
+
+public export
 SliceFuncDimap : {0 w, x, y, z : Type} ->
   SlicePolyFunc w x -> (w -> y) -> (z -> x) -> SlicePolyFunc y z
 SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
