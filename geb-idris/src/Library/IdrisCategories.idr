@@ -200,6 +200,11 @@ Equalizer : {a : Type} -> {0 b : Type} -> (0 f, g : a -> b) -> Type
 Equalizer {a} {b} f g = Subset0 a (\x : a => f x = g x)
 
 public export
+equalizerInj : {a : Type} -> {0 b : Type} -> (0 f, g : a -> b) ->
+  Equalizer f g -> a
+equalizerInj f g = fst0
+
+public export
 PreImage : {a : Type} -> {0 b : Type} -> (0 _ : a -> b) -> (0 _ : b) -> Type
 PreImage {a} {b} f elemb = Equalizer f (const elemb)
 

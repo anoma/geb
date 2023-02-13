@@ -430,6 +430,52 @@ ChiForBoolPred : {a, b : Type} -> (a -> b) -> (b -> SubCFromBoolPred)
 ChiForBoolPred {a} {b} f eb =
   Element0 (ImageDecForBoolPred f eb) (inImageForBoolPred f eb)
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+---- Subobject classifiers for monics only (and those from equalizers only) ----
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+public export
+0 SubCFromEq : Type
+SubCFromEq = Exists0 Type (\ty => (ty, ty))
+
+public export
+0 PowerObjFromEq : Type -> Type
+PowerObjFromEq a = Exists0 (SliceObj a) (\sl => (Pi sl, Pi sl))
+
+public export
+CharToPowerFromEq : {0 a : Type} -> (a -> SubCFromEq) -> PowerObjFromEq a
+CharToPowerFromEq chi =
+  Evidence0 (fst0 . chi) (\x => fst (snd0 (chi x)), \x => snd (snd0 (chi x)))
+
+public export
+PowerToCharFromEq : {0 a : Type} -> PowerObjFromEq a -> (a -> SubCFromEq)
+PowerToCharFromEq {a} po ea =
+  Evidence0 (fst0 po ea) (fst (snd0 po) ea, snd (snd0 po) ea)
+
+public export
+TrueFromEq : () -> SubCFromEq
+TrueFromEq () = Evidence0 Unit ((), ())
+
+public export
+ChiForEq : {0 a, b : Type} -> (f, g : a -> b) -> (a -> SubCFromEq)
+ChiForEq {a} {b} f g ea = Evidence0 b (f ea, g ea)
+
+public export
+ChiForEqToPb : {0 a, b : Type} -> (f, g : a -> b) ->
+  Equalizer f g ->
+  Pullback {a} {b=Unit} {c=SubCFromEq} (ChiForEq f g) TrueFromEq
+ChiForEqToPb {a} {b} f g (Element0 eeq eq) =
+  Element0 (eeq, ()) ?ChiForEqToPb_hole
+
+public export
+ChiForEqFromPb : {0 a, b : Type} -> (f, g : a -> b) ->
+  Pullback {a} {b=Unit} {c=SubCFromEq} (ChiForEq f g) TrueFromEq ->
+  Equalizer f g
+ChiForEqFromPb {a} {b} f g (Element0 (ea, ()) eq) =
+  Element0 ea ?ChiForEqFromPb_hole
+
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 ---- Categories internal to 'Type' as a well-pointed topos ----
