@@ -370,27 +370,27 @@ data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
 
 public export
 SubCFromType : Type
-SubCFromType = Subset0 Type id -- a type together with a term of that type
+SubCFromType = Exists0 Type (\x => x) -- a type together with a term of that type
 
 public export
 PowerObjFromType : Type -> Type
-PowerObjFromType a = Subset0 (SliceObj a) Pi
+PowerObjFromType a = Exists0 (SliceObj a) (\sl => (x : a) -> sl x)
 
 public export
 CharToPowerFromType : {0 a : Type} -> (a -> SubCFromType) -> PowerObjFromType a
-CharToPowerFromType chi = Element0 (fst0 . chi) (\x => snd0 (chi x))
+CharToPowerFromType chi = Evidence0 (fst0 . chi) (\x => snd0 (chi x))
 
 public export
 PowerToCharFromType : {0 a : Type} -> PowerObjFromType a -> (a -> SubCFromType)
-PowerToCharFromType po e = Element0 (fst0 po e) (snd0 po e)
+PowerToCharFromType po e = Evidence0 (fst0 po e) (snd0 po e)
 
 public export
 TrueFromType : () -> SubCFromType
-TrueFromType () = Element0 Bool True
+TrueFromType () = Evidence0 Bool True
 
 public export
 ChiForType : {0 a, b : Type} -> (a -> b) -> (b -> SubCFromType)
-ChiForType {a} {b} f eb = Element0 Type (Subset0 a (Equal eb . f))
+ChiForType {a} {b} f eb = Evidence0 Type (Subset0 a (Equal eb . f))
 
 public export
 SubCFromBoolPred : Type
