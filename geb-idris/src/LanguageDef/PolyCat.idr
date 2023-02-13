@@ -2904,8 +2904,8 @@ public export
 WTFtoSPF : {parambase, posbase : Type} ->
   WTypeFunc parambase posbase -> SlicePolyFunc parambase posbase
 WTFtoSPF {parambase} {posbase} (MkWTF pos dir assign dsl psl) =
-  (PreImage {a=pos} {b=posbase} psl **
-   PreImage {a=dir} {b=posbase} (psl . dsl) . fst **
+  (\i => PreImage {a=pos} {b=posbase} psl i **
+   \x => PreImage {a=dir} {b=posbase} (\x' => psl $ dsl x') $ fst x **
    \d => assign $ fst0 $ snd d)
 
 public export
@@ -3225,8 +3225,8 @@ DepPolyFToSPF : {w, x, y, z : Type} ->
   (x -> w) -> (x -> y) -> (y -> z) ->
   SlicePolyFunc w z
 DepPolyFToSPF {w} {x} {y} {z} f g h =
-  (PreImage h **
-   \ey => Subset0 x (Equal (fst0 (snd ey)) . g) **
+  (\i => PreImage h i **
+   \ey => Subset0 x (\x' => Equal (fst0 (snd ey)) $ g x') **
    \ex => f (fst0 (snd ex)))
 
 public export
