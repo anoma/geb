@@ -368,9 +368,10 @@ data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
 ------------------------------------------------------------------
 ------------------------------------------------------------------
 
+-- A type together with a term of that type.
 public export
 SubCFromType : Type
-SubCFromType = Exists0 Type (\x => x) -- a type together with a term of that type
+SubCFromType = Exists0 Type (\ty => ty)
 
 public export
 PowerObjFromType : Type -> Type
@@ -386,7 +387,7 @@ PowerToCharFromType po e = Evidence0 (fst0 po e) (snd0 po e)
 
 public export
 TrueFromType : () -> SubCFromType
-TrueFromType () = Evidence0 Bool True
+TrueFromType () = Evidence0 Unit ()
 
 public export
 ChiForType : {0 a, b : Type} -> (a -> b) -> (b -> SubCFromType)
