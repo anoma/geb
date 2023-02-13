@@ -2975,6 +2975,17 @@ SPFToParam {a} {x} {y} (posdep ** dirdep ** assign) ea =
    \((yea ** pd) ** (dd ** eq)) =>
     replace {p=x} eq $ snd $ assign (((ea ** yea) ** pd) ** dd))
 
+-- Given a parameterized dependent polynomial functor, we can extend its
+-- domain and codomain slices by pairing them with a third slice.
+public export
+ParamSPFProd : {a : Type} -> {x, y, z : SliceObj a} ->
+  ParamSPF {a} x y -> ParamSPF {a} (SliceProduct x z) (SliceProduct y z)
+ParamSPFProd {a} {x} {y} {z} pspf ea =
+  (fst (pspf ea) . fst **
+   \((yea, zea) ** pyea) => fst (snd (pspf ea)) (yea ** pyea) **
+   \(((yea, zea) ** pyea) ** ppyea) =>
+    (snd (snd (pspf ea)) ((yea ** pyea) ** ppyea), zea))
+
 ------------------------------------------------------
 ---- Dependent polynomial endofunctor combinators ----
 ------------------------------------------------------

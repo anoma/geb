@@ -305,6 +305,11 @@ public export
 SliceHom : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
 SliceHom = biapp $ \x, y => x -> y
 
+public export
+SliceDepPair : {0 a : Type} -> (x : SliceObj a) -> SliceObj (Sigma {a} x) ->
+  SliceObj a
+SliceDepPair {a} x sl ea = Sigma {a=(x ea)} (sl . MkDPair ea)
+
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
 -------------------------------------------

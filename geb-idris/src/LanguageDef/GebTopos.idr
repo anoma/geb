@@ -414,7 +414,7 @@ PowerToCharFromBoolPred po e =
 
 public export
 TrueFromBoolPred : () -> SubCFromBoolPred
-TrueFromBoolPred () = Element0 () (const True)
+TrueFromBoolPred () = Element0 () (\() => True)
 
 public export
 ImageDecForBoolPred : {a, b : Type} -> (a -> b) -> (b -> Type)
