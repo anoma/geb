@@ -3480,14 +3480,20 @@ record AdjFromCounit {a : Type} (x : SliceObj a) where
   adjCnt : OFPcounit {a} adjCfp
 
 public export
+LeftAdjSet : Type -> Type -> Type
+LeftAdjSet param pos =
+  pos -> Sigma {a=(SliceObj param)} (AdjFromUnit {a=param})
+
+public export
+RightAdjSet : Type -> Type -> Type
+RightAdjSet param pos =
+  pos -> Sigma {a=(SliceObj param)} (AdjFromCounit {a=param})
+
+public export
 record CatFromAdj (a : Type) where
   constructor CfA
-  cfaLeftAdjPos : Type
-  cfaLeftAdjSlice : cfaLeftAdjPos -> SliceObj a
-  cfaLeftUnit : Pi {a=cfaLeftAdjPos} (AdjFromUnit {a} . cfaLeftAdjSlice)
-  cfaRightAdjPos : Type
-  cfaRightAdjSlice : cfaRightAdjPos -> SliceObj a
-  cfaRightCounit : Pi {a=cfaRightAdjPos} (AdjFromCounit {a} . cfaRightAdjSlice)
+  cfaLeftAdjSet : Sigma {a=Type} (LeftAdjSet a)
+  cfaRightAdjSet : Sigma {a=Type} (RightAdjSet a)
 
 -----------------
 ---- Product ----
