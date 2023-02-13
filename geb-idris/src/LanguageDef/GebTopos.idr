@@ -474,14 +474,14 @@ record TCatSig where
     tcMorph b' c -> tcMorph a b -> tcMorph a c
   0 tcIdLeft : {0 a, b, b' : tcObj} ->
     {0 domeq : tcObjEq a a} -> {0 codeq : tcObjEq b b'} ->
-    {0 codeq' : tcObjEq b' b} ->
     (0 m : tcMorph a b) ->
-    tcMorphEq domeq codeq' (tcCompose {a} {b} {b'} {c=b'} codeq (tcId b') m) m
+    tcMorphEq {dom=a} {cod=b} {dom'=a} {cod'=b'}
+      domeq codeq m (tcCompose {a} {b} {b'} {c=b'} codeq (tcId b') m)
   0 tcIdRight : {0 a, a', b : tcObj} ->
-    {0 domeq : tcObjEq a a'} -> {0 domeq' : tcObjEq a' a} ->
-    {0 codeq : tcObjEq b b} ->
+    {0 domeq : tcObjEq a a'} -> {0 codeq : tcObjEq b b} ->
     (0 m : tcMorph a' b) ->
-    tcMorphEq domeq codeq (tcCompose domeq' (tcId a) m) m
+    tcMorphEq {dom=a} {cod=b} {dom'=a'} {cod'=b}
+      domeq codeq (tcCompose {a} {b=a} {b'=a'} {c=b} domeq m (tcId a)) m
 
 -------------------------
 -------------------------
