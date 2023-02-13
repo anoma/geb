@@ -463,18 +463,29 @@ ChiForEq : {0 a, b : Type} -> (f, g : a -> b) -> (a -> SubCFromEq)
 ChiForEq {a} {b} f g ea = Evidence0 b (f ea, g ea)
 
 public export
-ChiForEqToPb : {0 a, b : Type} -> (f, g : a -> b) ->
+ChiForEqToPb :
+  (subCmereProp :
+    {p, p' : SubCFromEq} ->
+    fst (snd0 p) = snd (snd0 p) ->
+    fst (snd0 p') = snd (snd0 p') ->
+    p = p') ->
+  {0 a, b : Type} -> (f, g : a -> b) ->
   Equalizer f g ->
   Pullback {a} {b=Unit} {c=SubCFromEq} (ChiForEq f g) TrueFromEq
-ChiForEqToPb {a} {b} f g (Element0 eeq eq) =
-  Element0 (eeq, ()) ?ChiForEqToPb_hole
+ChiForEqToPb subCmereProp {a} {b} f g (Element0 eeq eq) =
+  Element0 (eeq, ()) (subCmereProp eq Refl)
 
 public export
 ChiForEqFromPb : {0 a, b : Type} -> (f, g : a -> b) ->
   Pullback {a} {b=Unit} {c=SubCFromEq} (ChiForEq f g) TrueFromEq ->
   Equalizer f g
 ChiForEqFromPb {a} {b} f g (Element0 (ea, ()) eq) =
-  Element0 ea ?ChiForEqFromPb_hole
+  Element0 ea $ case exists0inj1 eq of
+    Refl =>
+      let eq2 = exists0inj2 eq in
+      rewrite fstEq eq2 in
+      rewrite sndEq eq2 in
+      Refl
 
 ---------------------------------------------------------------
 ---------------------------------------------------------------

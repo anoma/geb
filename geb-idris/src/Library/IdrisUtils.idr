@@ -179,6 +179,28 @@ record Exists0 (0 type : Type) (this : (0 _ : type) -> Type) where
   snd0 : this fst0
 
 public export
+exists0inj1 :
+  {0 type, type' : Type} ->
+  {0 this : (0 _ : type) -> Type} ->
+  {0 this' : (0 _ : type') -> Type} ->
+  {e0 : Exists0 type this} ->
+  {e0' : Exists0 type' this'} ->
+  e0 = e0' ->
+  fst0 e0 = fst0 e0'
+exists0inj1 {e0} {e0'=e0} Refl = Refl
+
+public export
+exists0inj2 :
+  {0 type, type' : Type} ->
+  {0 this : (0 _ : type) -> Type} ->
+  {0 this' : (0 _ : type') -> Type} ->
+  {e0 : Exists0 type this} ->
+  {e0' : Exists0 type' this'} ->
+  e0 = e0' ->
+  snd0 e0 ~=~ snd0 e0'
+exists0inj2 {e0} {e0'=e0} Refl = Refl
+
+public export
 const0 : {0 a, b : Type} -> b -> (0 _ : a) -> b
 const0 x _ = x
 
