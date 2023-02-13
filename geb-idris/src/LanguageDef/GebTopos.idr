@@ -458,6 +458,7 @@ public export
 TrueFromEq : () -> SubCFromEq
 TrueFromEq () = Evidence0 Unit ((), ())
 
+-- Produce the characteristic function of `Equalizer f g`.
 public export
 ChiForEq : {0 a, b : Type} -> (f, g : a -> b) -> (a -> SubCFromEq)
 ChiForEq {a} {b} f g ea = Evidence0 b (f ea, g ea)
