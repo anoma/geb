@@ -176,7 +176,7 @@ public export
 record Exists0 (0 type : Type) (0 this : (0 _ : type) -> Type) where
   constructor Evidence0
   0 fst0 : type
-  snd0 : this fst0
+  0 snd0 : this fst0
 
 public export
 exists0inj1 :

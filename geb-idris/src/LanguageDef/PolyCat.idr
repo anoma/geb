@@ -8817,40 +8817,40 @@ finSubstHomObjCard {cx} {cy} _ _ = power cy cx
 public export
 EvalMorphType : {0 cx, dx, cy, dy, dh : Nat} ->
   (x : FinSubstT cx dx) -> (y : FinSubstT cy dy) ->
-  FinSubstT (finSubstHomObjCard x y) dh -> (0 df : Nat) -> Type
+  FinSubstT (finSubstHomObjCard x y) dh -> (df : Nat) -> Type
 EvalMorphType x y hxy df = FinSubstMorph df (FinProduct hxy x) y
 
 public export
 HomObjWithEvalMorphType : {0 cx, dx, cy, dy : Nat} ->
-  FinSubstT cx dx -> FinSubstT cy dy -> (0 dh : Nat) -> Type
+  FinSubstT cx dx -> FinSubstT cy dy -> (dh : Nat) -> Type
 HomObjWithEvalMorphType x y dh =
   (hxy : FinSubstT (finSubstHomObjCard x y) dh **
-   Exists0 Nat (EvalMorphType x y hxy))
+   Exists {type=Nat} (EvalMorphType x y hxy))
 
 -- Compute the exponential object and evaluation morphism of the given finite
 -- substitutive types.
 public export
 FinSubstHomDepthObjEval : {0 cx, dx, cy, dy : Nat} ->
   (x : FinSubstT cx dx) -> (y : FinSubstT cy dy) ->
-  Exists0 Nat (HomObjWithEvalMorphType x y)
+  Exists {type=Nat} (HomObjWithEvalMorphType x y)
 -- 0 -> x == 1
 FinSubstHomDepthObjEval FinInitial x =
-  (Evidence0 0 (FinTerminal **
-    Evidence0 1 $
+  (Evidence 0 (FinTerminal **
+    Evidence 1 $
       FinCompose (FinFromInit x) $ FinProjRight FinTerminal FinInitial))
 -- 1 -> x == x
 FinSubstHomDepthObjEval {cy} {dy} FinTerminal x =
   let eq = mulPowerZeroRightNeutral {m=cy} {n=cy} in
-  (Evidence0 dy $ rewrite eq in (x **
-   Evidence0 0 $ rewrite eq in FinProjLeft x FinTerminal))
+  (Evidence dy $ rewrite eq in (x **
+   Evidence 0 $ rewrite eq in FinProjLeft x FinTerminal))
 -- (x + y) -> z == (x -> z) * (y -> z)
 FinSubstHomDepthObjEval {cx=(cx + cy)} {cy=cz} (FinCoproduct x y) z with
  (FinSubstHomDepthObjEval x z, FinSubstHomDepthObjEval y z)
   FinSubstHomDepthObjEval {cx=(cx + cy)} {cy=cz} (FinCoproduct x y) z |
-   ((Evidence0 dxz (hxz ** (Evidence0 hdxz evalxz))),
-    (Evidence0 dyz (hyz ** (Evidence0 hdyz evalyz)))) =
-    (Evidence0 (smax dxz dyz) $ rewrite powerOfSum cz cx cy in
-     (FinProduct hxz hyz ** Evidence0
+   ((Evidence dxz (hxz ** (Evidence hdxz evalxz))),
+    (Evidence dyz (hyz ** (Evidence hdyz evalyz)))) =
+    (Evidence (smax dxz dyz) $ rewrite powerOfSum cz cx cy in
+     (FinProduct hxz hyz ** Evidence
       (S (maximum (smax hdxz hdyz) 5))
       $
       rewrite powerOfSum cz cx cy in
@@ -8868,13 +8868,13 @@ FinSubstHomDepthObjEval {cx=(cx * cy)} {dx=(smax dx dy)} {cy=cz} {dy=dz}
   (FinProduct x y) z with
   (FinSubstHomDepthObjEval y z)
     FinSubstHomDepthObjEval {cx=(cx * cy)} {dx=(smax dx dy)} {cy=cz} {dy=dz}
-      (FinProduct x y) z | (Evidence0 dyz (hyz ** Evidence0 hdyz evalyz)) =
+      (FinProduct x y) z | (Evidence dyz (hyz ** Evidence hdyz evalyz)) =
         let
-          Evidence0 dxyz hexyz = FinSubstHomDepthObjEval {dx} {dy=dyz} x hyz
-          (hxyz ** Evidence0 dexyz evalxyz) = hexyz
+          Evidence dxyz hexyz = FinSubstHomDepthObjEval {dx} {dy=dyz} x hyz
+          (hxyz ** Evidence dexyz evalxyz) = hexyz
         in
-        Evidence0 dxyz $ rewrite powerOfMulSym cz cx cy in
-          (hxyz ** Evidence0 (smax hdyz (smax (smax dexyz 2) 1)) $
+        Evidence dxyz $ rewrite powerOfMulSym cz cx cy in
+          (hxyz ** Evidence (smax hdyz (smax (smax dexyz 2) 1)) $
             rewrite powerOfMulSym cz cx cy in
             FinCompose evalyz $ FinProd
               (FinCompose evalxyz
@@ -8888,25 +8888,25 @@ FinSubstHomDepthObjEval {cx=(cx * cy)} {dx=(smax dx dy)} {cy=cz} {dy=dz}
 public export
 0 finSubstHomObjDepth : {0 cx, dx, cy, dy : Nat} ->
   FinSubstT cx dx -> FinSubstT cy dy -> Nat
-finSubstHomObjDepth x y = fst0 $ FinSubstHomDepthObjEval x y
+finSubstHomObjDepth x y = fst $ FinSubstHomDepthObjEval x y
 
 public export
 finSubstHomObj : {0 cx, dx, cy, dy : Nat} ->
   (x : FinSubstT cx dx) -> (y : FinSubstT cy dy) ->
   FinSubstT (finSubstHomObjCard x y) (finSubstHomObjDepth x y)
-finSubstHomObj x y = fst $ snd0 $ FinSubstHomDepthObjEval x y
+finSubstHomObj x y = fst $ snd $ FinSubstHomDepthObjEval x y
 
 public export
 0 finSubstEvalMorphDepth : {0 cx, dx, cy, dy : Nat} ->
   (x : FinSubstT cx dx) -> (y : FinSubstT cy dy) ->
   Nat
-finSubstEvalMorphDepth x y = fst0 (snd (snd0 (FinSubstHomDepthObjEval x y)))
+finSubstEvalMorphDepth x y = fst (snd (snd (FinSubstHomDepthObjEval x y)))
 
 public export
 finSubstEvalMorph : {0 cx, dx, cy, dy : Nat} ->
   (x : FinSubstT cx dx) -> (y : FinSubstT cy dy) ->
   EvalMorphType x y (finSubstHomObj x y) (finSubstEvalMorphDepth x y)
-finSubstEvalMorph x y = snd0 $ snd $ snd0 $ FinSubstHomDepthObjEval x y
+finSubstEvalMorph x y = snd $ snd $ snd $ FinSubstHomDepthObjEval x y
 
 ------------------------------------
 ---- Compilation to polynomials ----
