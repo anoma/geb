@@ -387,11 +387,33 @@ PowerToCharFromType po e = Evidence0 (fst0 po e) (snd0 po e)
 
 public export
 TrueFromType : () -> SubCFromType
-TrueFromType () = Evidence0 Unit ()
+TrueFromType () = Evidence0 (Unit, Unit) ((), ())
+
+-- Produce the characteristic function of `Equalizer f g`.
+public export
+ChiForType : {0 a, b : Type} -> (f, g : a -> b) -> (a -> SubCFromType)
+ChiForType {a} {b} f g ea = Evidence0 (b, b) (f ea, g ea)
 
 public export
-ChiForType : {0 a, b : Type} -> (a -> b) -> (b -> SubCFromType)
-ChiForType {a} {b} f eb = Evidence0 Type (Subset0 a (Equal eb . f))
+ChiForTypeToPb :
+  (subCmereProp : {p, p' : SubCFromType} -> p = p') ->
+  {0 a, b : Type} -> (f, g : a -> b) ->
+  Equalizer f g ->
+  Pullback {a} {b=Unit} {c=SubCFromType} (ChiForType f g) TrueFromType
+ChiForTypeToPb subCmereProp {a} {b} f g (Element0 eeq eq) =
+  Element0 (eeq, ()) subCmereProp
+
+public export
+ChiForTypeFromPb : {0 a, b : Type} -> (f, g : a -> b) ->
+  Pullback {a} {b=Unit} {c=SubCFromType} (ChiForType f g) TrueFromType ->
+  Equalizer f g
+ChiForTypeFromPb {a} {b} f g (Element0 (ea, ()) eq) =
+  Element0 ea $ case exists0inj1 eq of
+    Refl =>
+      let eq2 = exists0inj2 eq in
+      rewrite fstEq eq2 in
+      rewrite sndEq eq2 in
+      Refl
 
 public export
 SubCFromBoolPred : Type
