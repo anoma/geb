@@ -530,24 +530,23 @@ record TCatSig where
     (0 _ : tcObjEq b b') ->
     tcMorph b' c -> tcMorph a b -> tcMorph a c
   0 tcIdLeft : {0 a, b, b' : tcObj} ->
-    {0 domeq : tcObjEq a a} -> {0 codeq : tcObjEq b b'} ->
+    {0 domeq : tcObjEq a a} -> {0 codeq, codeq' : tcObjEq b b'} ->
     (0 m : tcMorph a b) ->
     tcMorphEq {dom=a} {cod=b} {dom'=a} {cod'=b'}
-      domeq codeq m (tcCompose {a} {b} {b'} {c=b'} codeq (tcId b') m)
+      domeq codeq m (tcCompose {a} {b} {b'} {c=b'} codeq' (tcId b') m)
   0 tcIdRight : {0 a, a', b : tcObj} ->
-    {0 domeq : tcObjEq a a'} -> {0 codeq : tcObjEq b b} ->
+    {0 domeq, domeq' : tcObjEq a a'} -> {0 codeq : tcObjEq b b} ->
     (0 m : tcMorph a' b) ->
     tcMorphEq {dom=a} {cod=b} {dom'=a'} {cod'=b}
-      domeq codeq (tcCompose {a} {b=a} {b'=a'} {c=b} domeq m (tcId a)) m
+      domeq codeq (tcCompose {a} {b=a} {b'=a'} {c=b} domeq' m (tcId a)) m
   0 tcComposeAssoc : {0 a, b, b', c, c', d : tcObj} ->
     {0 domeq : tcObjEq a a} -> {0 codeq : tcObjEq d d} ->
-    {0 beq : tcObjEq b b'} ->
-    {0 ceq : tcObjEq c c'} ->
+    {0 beq, beq' : tcObjEq b b'} -> {0 ceq, ceq' : tcObjEq c c'} ->
     (0 h : tcMorph c' d) -> (0 g : tcMorph b' c) -> (0 f : tcMorph a b) ->
     tcMorphEq {dom=a} {cod=d}
       domeq codeq
-      (tcCompose ceq h (tcCompose beq g f))
-      (tcCompose beq (tcCompose ceq h g) f)
+      (tcCompose ceq h (tcCompose beq' g f))
+      (tcCompose beq (tcCompose ceq' h g) f)
 
 -------------------------
 -------------------------
