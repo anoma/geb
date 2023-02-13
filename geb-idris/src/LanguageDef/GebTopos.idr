@@ -429,3 +429,64 @@ public export
 ChiForBoolPred : {a, b : Type} -> (a -> b) -> (b -> SubCFromBoolPred)
 ChiForBoolPred {a} {b} f eb =
   Element0 (ImageDecForBoolPred f eb) (inImageForBoolPred f eb)
+
+---------------------------------------------------------------
+---------------------------------------------------------------
+---- Categories internal to 'Type' as a well-pointed topos ----
+---------------------------------------------------------------
+---------------------------------------------------------------
+
+public export
+record TCatSig where
+  constructor TCat
+  tcObj : Type
+  0 tcObjEq : tcObj -> tcObj -> Type
+  0 tcObjEqRefl : (0 a : tcObj) -> tcObjEq a a
+  0 tcObjEqSym : {0 a, b : tcObj} ->
+    (0 _ : tcObjEq a b) -> tcObjEq b a
+  0 tcObjEqTrans : {0 a, b, c : tcObj} ->
+    (0 _ : tcObjEq b c) -> (0 _ : tcObjEq a b) -> tcObjEq a c
+  tcMorph : tcObj -> tcObj -> Type
+  0 tcMorphEq : {0 dom, cod, dom', cod' : tcObj} ->
+    (0 _ : tcObjEq dom dom') -> (0 _ : tcObjEq cod cod') ->
+    (0 _ : tcMorph dom cod) -> (0 _ : tcMorph dom' cod') -> Type
+  0 tcMorphEqRefl : {0 dom, cod : tcObj} ->
+    (0 domeq : tcObjEq dom dom) -> (0 codeq : tcObjEq cod cod) ->
+    (0 m : tcMorph dom cod) -> tcMorphEq domeq codeq m m
+  0 tcMorphEqSym : {0 dom, cod, dom', cod' : tcObj} ->
+    {0 domeq : tcObjEq dom dom'} -> {0 codeq : tcObjEq cod cod'} ->
+    {0 domeqsym : tcObjEq dom' dom} -> {0 codeqsym : tcObjEq cod' cod} ->
+    (0 m : tcMorph dom cod) -> (0 m' : tcMorph dom' cod') ->
+    (0 _ : tcMorphEq domeq codeq m m') -> tcMorphEq domeqsym codeqsym m' m
+  0 tcMorphEqTrans : {0 dom, cod, dom', cod', dom'', cod'' : tcObj} ->
+    {0 domeq : tcObjEq dom dom'} -> {0 codeq : tcObjEq cod cod'} ->
+    {0 domeq' : tcObjEq dom' dom''} -> {0 codeq' : tcObjEq cod' cod''} ->
+    {0 domeq'' : tcObjEq dom dom''} -> {0 codeq'' : tcObjEq cod cod''} ->
+    (0 m : tcMorph dom cod) -> (0 m' : tcMorph dom' cod') ->
+    (0 m'' : tcMorph dom'' cod'') ->
+    (0 m''' : tcMorph dom'' cod'') ->
+    (0 _ : tcMorphEq domeq' codeq' m' m'') ->
+    (0 _ : tcMorphEq domeq codeq m m') ->
+    tcMorphEq domeq'' codeq'' m m''
+  tcId : (obj : tcObj) -> tcMorph obj obj
+  tcCompose : {0 a, b, b', c : tcObj} ->
+    (0 _ : tcObjEq b b') ->
+    tcMorph b' c -> tcMorph a b -> tcMorph a c
+
+-------------------------
+-------------------------
+---- Terminal object ----
+-------------------------
+-------------------------
+
+-------------------------
+-------------------------
+---- Finite products ----
+-------------------------
+-------------------------
+
+--------------------------------
+--------------------------------
+---- Natural-numbers object ----
+--------------------------------
+--------------------------------
