@@ -173,7 +173,7 @@ Show type => Show (Subset0 type dep) where
 -- Like Idris's standard `Exists`, but with the `this` dependent type
 -- taking a zero-usage type parameter.
 public export
-record Exists0 (0 type : Type) (this : (0 _ : type) -> Type) where
+record Exists0 (0 type : Type) (0 this : (0 _ : type) -> Type) where
   constructor Evidence0
   0 fst0 : type
   snd0 : this fst0
