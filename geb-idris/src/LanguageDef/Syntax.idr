@@ -2,6 +2,7 @@ module LanguageDef.Syntax
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import LanguageDef.Atom
 
 %default total
 
@@ -638,3 +639,31 @@ public export
     showSub : {ns : Namespace} -> Subspace ns -> String
     showSub {ns} This = ""
     showSub {ns} (Child i sub) = slShow ns.nsSubSym i ++ "/" ++ showSub sub
+
+------------------------------------
+---- Geb-specific s-expressions ----
+------------------------------------
+
+public export
+NExp : Type
+NExp = SExp Nat
+
+public export
+NList : Type
+NList = SList Nat
+
+public export
+GExp : Type
+GExp = SExp GebAtom
+
+public export
+GList : Type
+GList = SList GebAtom
+
+public export
+GBtAtom : Type
+GBtAtom = SExpToBtAtom GebAtom
+
+public export
+GBTExp : Type
+GBTExp = BTExp GBtAtom
