@@ -3495,6 +3495,10 @@ record CatFromAdj (a : Type) where
   cfaLeftAdjSet : Sigma {a=Type} (LeftAdjSet a)
   cfaRightAdjSet : Sigma {a=Type} (RightAdjSet a)
 
+public export
+TwoCatFromAdj : Type -> Type
+TwoCatFromAdj a = a -> Sigma {a=Type} CatFromAdj
+
 -----------------
 ---- Product ----
 -----------------
