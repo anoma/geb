@@ -269,10 +269,6 @@ frsexpLines : Show atom => Show ty => FrSExpM atom ty -> List String
 frsexpLines = sxSubstCata (\x => [show x]) SExpLinesAlg
 
 public export
-Show atom => Show (SExp atom) where
-  show = showLines sexpLines
-
-public export
 Show atom => Show ty => Show (FrSExpM atom ty) where
   show = showLines frsexpLines
 
