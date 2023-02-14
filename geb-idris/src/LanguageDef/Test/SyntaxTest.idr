@@ -254,6 +254,9 @@ sx3 = InS 4 [4, 8, 12] [sx2, sn1, InS 0 [] []]
 sx3' : SExp Nat
 sx3' = fromIsJust {x=(btToSexp $ sexpToBt sx3)} Refl
 
+gx1 : GExp
+gx1 = InS PRODUCT [1, 2, 3] [InS NAT [2] [], InS COPRODUCT [] []]
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -319,6 +322,10 @@ languageDefSyntaxTest = do
       , ("sx2", sx2)
       , ("sx3", sx3)
       , ("sx3 -> bt -> sexp", sx3')
+    ]
+  sexpShowFullList
+    [
+        ("gx1", gx1)
     ]
   putStrLn ""
   putStrLn "---------------"
