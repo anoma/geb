@@ -110,8 +110,12 @@ InS : atom -> List Nat -> List (SExp atom) -> SExp atom
 InS a ns xs = InSX $ SXF a ns xs
 
 public export
+FrSListM : Type -> Type -> Type
+FrSListM atom ty = List (FrSExpM atom ty)
+
+public export
 SList : Type -> Type
-SList = List . SExp
+SList atom = FrSListM atom Void
 
 public export
 record SXLAlg (atom, a, b : Type) where
