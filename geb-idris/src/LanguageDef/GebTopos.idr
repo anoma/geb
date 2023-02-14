@@ -806,10 +806,25 @@ DecEq GExpPos where
 
 public export
 data GExpDir : Type where
+  GDS : GExpDir
+  GDXA : GExpDir
+  GDXNL : GExpDir
+  GDXXL : GExpDir
+  GDNCHD : GExpDir
+  GDNCTL : GExpDir
+  GDXCHD : GExpDir
+  GDXCTL : GExpDir
 
 public export
 gDirAtom : GExpDir -> GebAtom
-gDirAtom _ impossible
+gDirAtom GDS = ?gDirAtom_hole_0
+gDirAtom GDXA = ?gDirAtom_hole_1
+gDirAtom GDXNL = ?gDirAtom_hole_2
+gDirAtom GDXXL = ?gDirAtom_hole_3
+gDirAtom GDNCHD = ?gDirAtom_hole_4
+gDirAtom GDNCTL = ?gDirAtom_hole_5
+gDirAtom GDXCHD = ?gDirAtom_hole_6
+gDirAtom GDXCTL = ?gDirAtom_hole_7
 
 public export
 Show GExpDir where
@@ -817,15 +832,29 @@ Show GExpDir where
 
 public export
 GDirSz : Nat
-GDirSz = 0
+GDirSz = 8
 
 public export
 GDirFinDecoder : FinDecoder GExpDir GDirSz
-GDirFinDecoder _ impossible
+GDirFinDecoder FZ = GDS
+GDirFinDecoder (FS FZ) = GDXA
+GDirFinDecoder (FS (FS FZ)) = GDXNL
+GDirFinDecoder (FS (FS (FS FZ))) = GDXXL
+GDirFinDecoder (FS (FS (FS (FS FZ)))) = GDNCHD
+GDirFinDecoder (FS (FS (FS (FS (FS FZ))))) = GDNCTL
+GDirFinDecoder (FS (FS (FS (FS (FS (FS FZ)))))) = GDXCHD
+GDirFinDecoder (FS (FS (FS (FS (FS (FS (FS FZ))))))) = GDXCTL
 
 public export
 GDirNatEncoder : NatEncoder GDirFinDecoder
-GDirNatEncoder _ impossible
+GDirNatEncoder GDS = (0 ** Refl ** Refl)
+GDirNatEncoder GDXA = (1 ** Refl ** Refl)
+GDirNatEncoder GDXNL = (2 ** Refl ** Refl)
+GDirNatEncoder GDXXL = (3 ** Refl ** Refl)
+GDirNatEncoder GDNCHD = (4 ** Refl ** Refl)
+GDirNatEncoder GDNCTL = (5 ** Refl ** Refl)
+GDirNatEncoder GDXCHD = (6 ** Refl ** Refl)
+GDirNatEncoder GDXCTL = (7 ** Refl ** Refl)
 
 public export
 GDirFinDecEncoding : FinDecEncoding GExpDir GDirSz
@@ -837,11 +866,25 @@ DecEq GExpDir where
 
 public export
 gAssign : GExpDir -> GExpSlice
-gAssign _ impossible
+gAssign GDS = ?gAssign_hole_0
+gAssign GDXA = ?gAssign_hole_1
+gAssign GDXNL = ?gAssign_hole_2
+gAssign GDXXL = ?gAssign_hole_3
+gAssign GDNCHD = ?gAssign_hole_4
+gAssign GDNCTL = ?gAssign_hole_5
+gAssign GDXCHD = ?gAssign_hole_6
+gAssign GDXCTL = ?gAssign_hole_7
 
 public export
 gDirSlice : GExpDir -> GExpPos
-gDirSlice _ impossible
+gDirSlice GDS = ?gDirSlice_hole_0
+gDirSlice GDXA = ?gDirSlice_hole_1
+gDirSlice GDXNL = ?gDirSlice_hole_2
+gDirSlice GDXXL = ?gDirSlice_hole_3
+gDirSlice GDNCHD = ?gDirSlice_hole_4
+gDirSlice GDNCTL = ?gDirSlice_hole_5
+gDirSlice GDXCHD = ?gDirSlice_hole_6
+gDirSlice GDXCTL = ?gDirSlice_hole_7
 
 public export
 gNonAtomPosSlice : GExpNonAtomPos -> GExpSlice
@@ -896,7 +939,16 @@ GExpXL = GExpWT GSEXPL
 
 public export
 GExpWTtoGExpAlg : SPFAlg GExpSPF (const GExp)
-GExpWTtoGExpAlg sl (i ** d) = ?GExpWTtoGExpAlg_hole
+GExpWTtoGExpAlg GSATOM (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole1_0
+GExpWTtoGExpAlg GSATOM (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole1_1
+GExpWTtoGExpAlg GSNAT (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole2_0
+GExpWTtoGExpAlg GSNAT (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole2_1
+GExpWTtoGExpAlg GSNATL (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole3_0
+GExpWTtoGExpAlg GSNATL (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole3_1
+GExpWTtoGExpAlg GSEXP (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole4_0
+GExpWTtoGExpAlg GSEXP (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole4_1
+GExpWTtoGExpAlg GSEXPL (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole5_0
+GExpWTtoGExpAlg GSEXPL (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole5_1
 
 public export
 gexpWTtoGExp : (sl : GExpSlice) -> GExpWT sl -> GExp
