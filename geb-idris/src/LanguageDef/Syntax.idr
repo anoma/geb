@@ -235,8 +235,18 @@ sexpMaybeCata : SExpMaybeAlg atom a -> SExp atom -> Maybe a
 sexpMaybeCata = sxCata . SExpAlgFromMaybe
 
 public export
+frsexpMaybeCata :
+  (ty -> Maybe a) -> SExpMaybeAlg atom a -> FrSExpM atom ty -> Maybe a
+frsexpMaybeCata subst = sxSubstCata subst . SExpAlgFromMaybe
+
+public export
 slistMaybeCata : SExpMaybeAlg atom a -> SList atom -> Maybe (List a)
 slistMaybeCata = slCata . SExpAlgFromMaybe
+
+public export
+frslistMaybeCata :
+  (ty -> Maybe a) -> SExpMaybeAlg atom a -> FrSListM atom ty -> Maybe (List a)
+frslistMaybeCata subst = slSubstCata subst . SExpAlgFromMaybe
 
 -------------------
 ---- Utilities ----
@@ -255,8 +265,16 @@ sexpLines : Show atom => SExp atom -> List String
 sexpLines = sxCata SExpLinesAlg
 
 public export
+frsexpLines : Show atom => Show ty => FrSExpM atom ty -> List String
+frsexpLines = sxSubstCata (\x => [show x]) SExpLinesAlg
+
+public export
 Show atom => Show (SExp atom) where
   show = showLines sexpLines
+
+public export
+Show atom => Show ty => Show (FrSExpM atom ty) where
+  show = showLines frsexpLines
 
 public export
 data SExpToBtAtom : Type -> Type where
