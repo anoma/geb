@@ -138,9 +138,14 @@ record SXLAlg (atom, a, b : Type) where
   sxcons : a -> b -> b
 
 public export
+SXLSubstAlgToFr : {0 atom, ty, a, b : Type} ->
+  (ty -> a) -> SXLAlg atom a b -> FrSXLAlg atom ty a b
+SXLSubstAlgToFr {atom} {ty} {a} {b} subst (SXA xalg sxnil sxcons) =
+  FrSXA subst xalg sxnil sxcons
+
+public export
 SXLAlgToFr : {0 atom, a, b : Type} -> SXLAlg atom a b -> FrSXLAlg atom Void a b
-SXLAlgToFr {atom} {a} {b} (SXA xalg sxnil sxcons) =
-  FrSXA (voidF a) xalg sxnil sxcons
+SXLAlgToFr {atom} {a} {b} = SXLSubstAlgToFr (voidF a)
 
 mutual
   public export
