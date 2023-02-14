@@ -160,6 +160,14 @@ mutual
   frslCata alg (x :: xs) = alg.frsxcons (frsxCata alg x) (frslCata alg xs)
 
 public export
+sxSubstCata : (ty -> a) -> SXLAlg atom a b -> FrSExpM atom ty -> a
+sxSubstCata subst alg = frsxCata (SXLSubstAlgToFr subst alg)
+
+public export
+slSubstCata : (ty -> a) -> SXLAlg atom a b -> FrSListM atom ty -> b
+slSubstCata subst alg = frslCata (SXLSubstAlgToFr subst alg)
+
+public export
 sxCata : SXLAlg atom a b -> SExp atom -> a
 sxCata = frsxCata . SXLAlgToFr
 
@@ -188,8 +196,16 @@ sexpCata : SExpAlg atom a -> SExp atom -> a
 sexpCata = sxCata . SExpConsAlg
 
 public export
+frsexpCata : (ty -> a) -> SExpAlg atom a -> FrSExpM atom ty -> a
+frsexpCata subst alg = sxSubstCata subst (SExpConsAlg alg)
+
+public export
 slistCata : SExpAlg atom a -> SList atom -> List a
 slistCata = slCata . SExpConsAlg
+
+public export
+frslistCata : (ty -> a) -> SExpAlg atom a -> FrSListM atom ty -> List a
+frslistCata subst alg = slSubstCata subst (SExpConsAlg alg)
 
 public export
 slcPreservesLen : (alg : SExpAlg atom a) -> (l : SList atom) ->
