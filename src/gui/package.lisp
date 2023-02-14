@@ -5,6 +5,18 @@
 
 (in-package :geb-gui.graphing)
 
+(pax:defsection @graphing-manual (:title "The GEB Graphizer")
+  "This section covers the graphing procedure in order to turn a GEB
+object into a format for a graphing backend."
+  ;; please write more, me.  Put this is the API section, not
+  ;; here... we should talk about the backends here!!!!!!!
+  "The core types that facilittate the functionality"
+  (note pax:class)
+  (node pax:class)
+  (make-note pax:function)
+  (graphize pax:generic-function))
+
+
 (geb.utils:muffle-package-variance
  (defpackage #:geb-gui
    (:use :clim :clim-lisp)))
@@ -14,7 +26,8 @@
 (pax:defsection @geb-gui-manual (:title "The GEB GUI")
   "This section covers the suite of tools that help visualize geb
 objects and make the system nice to work with"
-  (@geb-visualizer pax:section))
+  (@geb-visualizer pax:section)
+  (geb-gui.graphing:@graphing-manual pax:section))
 
 (pax:defsection @geb-visualizer (:title "Visualizer")
   "The GEB visualizer deals with visualizing any objects found in the GEB:@GEB-CATEGORIES

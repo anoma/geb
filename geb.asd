@@ -100,7 +100,7 @@
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 
 (asdf:defsystem :geb/test
-  :depends-on (:geb :parachute)
+  :depends-on (:geb :parachute :geb/gui)
   :description "Testing geb"
   :pathname "test/"
   :serial t
@@ -112,9 +112,14 @@
    (:file lambda-conversion)
    (:file poly)
    (:file pipeline)
+   (:module gui
+    :serial t
+    :components ((:file test)
+                 (:file graphing)))
    (:file run-tests))
   :perform (asdf:test-op (o s)
                          (uiop:symbol-call :geb-test :run-tests)))
+
 
 (asdf:defsystem :geb/documentation
   :depends-on (:geb :mgl-pax/navigate :MGL-PAX/FULL :cl-environments
