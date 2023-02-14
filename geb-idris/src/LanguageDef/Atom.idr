@@ -17,13 +17,23 @@ import Library.IdrisUtils
 
 public export
 data GebAtom : Type where
-  NAT : GebAtom
-  PRODUCT : GebAtom
-  COPRODUCT : GebAtom
+  SL_ATOM : GebAtom
+  SL_NAT : GebAtom
+  SL_NATL : GebAtom
+  SL_EXP : GebAtom
+  SL_EXPL : GebAtom
+  POS_A : GebAtom
+  POS_Z : GebAtom
+  POS_S : GebAtom
+  POS_X : GebAtom
+  POS_NN : GebAtom
+  POS_NC : GebAtom
+  POS_XN : GebAtom
+  POS_XC : GebAtom
 
 public export
 GASize : Nat
-GASize = 3
+GASize = 13
 
 public export
 GAFin : Type
@@ -31,25 +41,56 @@ GAFin = Fin GASize
 
 public export
 GADecoder : FinDecoder GebAtom GASize
-GADecoder FZ = NAT
-GADecoder (FS FZ) = PRODUCT
-GADecoder (FS $ FS FZ) = COPRODUCT
+GADecoder FZ = SL_ATOM
+GADecoder (FS FZ) = SL_NAT
+GADecoder (FS (FS FZ)) = SL_NATL
+GADecoder (FS (FS (FS FZ))) = SL_EXP
+GADecoder (FS (FS (FS (FS FZ)))) = SL_EXPL
+GADecoder (FS (FS (FS (FS (FS FZ))))) = POS_A
+GADecoder (FS (FS (FS (FS (FS (FS FZ)))))) = POS_Z
+GADecoder (FS (FS (FS (FS (FS (FS (FS FZ))))))) = POS_S
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))) = POS_X
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))) = POS_NN
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))) = POS_NC
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))) = POS_XN
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))) =
+  POS_XC
 
 public export
-GAEncoder : FinEncoder GADecoder
-GAEncoder NAT = (natToFinLT 0 ** Refl)
-GAEncoder PRODUCT = (natToFinLT 1 ** Refl)
-GAEncoder COPRODUCT = (natToFinLT 2 ** Refl)
+GAEncoder : NatEncoder GADecoder
+GAEncoder SL_ATOM = (0 ** Refl ** Refl)
+GAEncoder SL_NAT = (1 ** Refl ** Refl)
+GAEncoder SL_NATL = (2 ** Refl ** Refl)
+GAEncoder SL_EXP = (3 ** Refl ** Refl)
+GAEncoder SL_EXPL = (4 ** Refl ** Refl)
+GAEncoder POS_A = (5 ** Refl ** Refl)
+GAEncoder POS_Z = (6 ** Refl ** Refl)
+GAEncoder POS_S = (7 ** Refl ** Refl)
+GAEncoder POS_X = (8 ** Refl ** Refl)
+GAEncoder POS_NN = (9 ** Refl ** Refl)
+GAEncoder POS_NC = (10 ** Refl ** Refl)
+GAEncoder POS_XN = (11 ** Refl ** Refl)
+GAEncoder POS_XC = (12 ** Refl ** Refl)
 
 public export
 GebAtomEncoding : FinDecEncoding GebAtom GASize
-GebAtomEncoding = (GADecoder ** GAEncoder)
+GebAtomEncoding = NatDecEncoding GADecoder GAEncoder
 
 public export
 gaToString : GebAtom -> String
-gaToString NAT = "#"
-gaToString PRODUCT = "*"
-gaToString COPRODUCT = "+"
+gaToString SL_ATOM = "SL_ATOM"
+gaToString SL_NAT = "SL_NAT"
+gaToString SL_NATL = "SL_NATL"
+gaToString SL_EXP = "SL_EXP"
+gaToString SL_EXPL = "SL_EXPL"
+gaToString POS_A = "POS_A"
+gaToString POS_Z = "POS_Z"
+gaToString POS_S = "POS_S"
+gaToString POS_X = "POS_X"
+gaToString POS_NN = "POS_NN"
+gaToString POS_NC = "POS_NC"
+gaToString POS_XN = "POS_XN"
+gaToString POS_XC = "POS_XC"
 
 public export
 Show GebAtom where

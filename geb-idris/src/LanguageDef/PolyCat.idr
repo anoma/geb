@@ -2893,6 +2893,10 @@ record WTypeFunc (parambase, posbase : Type) where
   wtPosSlice : wtPos -> posbase
 
 public export
+WTypeEndoFunc : Type -> Type
+WTypeEndoFunc base = WTypeFunc base base
+
+public export
 InterpWTF : {parambase, posbase : Type} ->
   WTypeFunc parambase posbase -> SliceFunctor parambase posbase
 InterpWTF {parambase} {posbase} (MkWTF pos dir assign dsl psl) sl ib =

@@ -644,3 +644,224 @@ record TFunctorSig (c, d : TCatSig) where
 ---- Natural-numbers object ----
 --------------------------------
 --------------------------------
+
+-------------------------------------------------
+-------------------------------------------------
+---- Geb s-expressions as polynomial functor ----
+-------------------------------------------------
+-------------------------------------------------
+
+public export
+data GExpSlice : Type where
+  GSATOM : GExpSlice
+  GSNAT : GExpSlice
+  GSNATL : GExpSlice
+  GSEXP : GExpSlice
+  GSEXPL : GExpSlice
+
+public export
+gSliceAtom : GExpSlice -> GebAtom
+gSliceAtom GSATOM = SL_ATOM
+gSliceAtom GSNAT = SL_NAT
+gSliceAtom GSNATL = SL_NATL
+gSliceAtom GSEXP = SL_EXP
+gSliceAtom GSEXPL = SL_EXPL
+
+public export
+Show GExpSlice where
+  show = show . gSliceAtom
+
+public export
+GSliceSz : Nat
+GSliceSz = 5
+
+public export
+GSliceFinDecoder : FinDecoder GExpSlice GSliceSz
+GSliceFinDecoder FZ = GSATOM
+GSliceFinDecoder (FS FZ) = GSNAT
+GSliceFinDecoder (FS (FS FZ)) = GSNATL
+GSliceFinDecoder (FS (FS (FS FZ))) = GSEXP
+GSliceFinDecoder (FS (FS (FS (FS FZ)))) = GSEXPL
+
+public export
+GSliceNatEncoder : NatEncoder GSliceFinDecoder
+GSliceNatEncoder GSATOM = (0 ** Refl ** Refl)
+GSliceNatEncoder GSNAT =  (1 ** Refl ** Refl)
+GSliceNatEncoder GSNATL = (2 ** Refl ** Refl)
+GSliceNatEncoder GSEXP = (3 ** Refl ** Refl)
+GSliceNatEncoder GSEXPL = (4 ** Refl ** Refl)
+
+public export
+GSliceFinDecEncoding : FinDecEncoding GExpSlice GSliceSz
+GSliceFinDecEncoding = NatDecEncoding GSliceFinDecoder GSliceNatEncoder
+
+public export
+DecEq GExpSlice where
+  decEq = fdeDecEq GSliceFinDecEncoding
+
+public export
+data GExpNonAtomPos : Type where
+  GPNAZ : GExpNonAtomPos -- zero
+  GPNAS : GExpNonAtomPos -- successor
+  GPNAX : GExpNonAtomPos -- SExp
+  GPNANN : GExpNonAtomPos -- empty list of Nat
+  GPNANC : GExpNonAtomPos -- cons list of Nat
+  GPNAXN : GExpNonAtomPos -- empty list of SExp
+  GPNAXC : GExpNonAtomPos -- cons list of SExp
+
+public export
+data GExpPos : Type where
+  GPA : GebAtom -> GExpPos
+  GPNAP : GExpNonAtomPos -> GExpPos
+
+public export
+GPZ : GExpPos
+GPZ = GPNAP GPNAZ
+
+public export
+GPS : GExpPos
+GPS = GPNAP GPNAS
+
+public export
+GPX : GExpPos
+GPX = GPNAP GPNAX
+
+public export
+GPNN : GExpPos
+GPNN = GPNAP GPNANN
+
+public export
+GPNC : GExpPos
+GPNC = GPNAP GPNANC
+
+public export
+GPXN : GExpPos
+GPXN = GPNAP GPNAXN
+
+public export
+GPXC : GExpPos
+GPXC = GPNAP GPNAXC
+
+public export
+gNonAtomPosAtom : GExpNonAtomPos -> GebAtom
+gNonAtomPosAtom GPNAZ = POS_Z
+gNonAtomPosAtom GPNAS = POS_S
+gNonAtomPosAtom GPNAX = POS_X
+gNonAtomPosAtom GPNANN = POS_NN
+gNonAtomPosAtom GPNANC = POS_NC
+gNonAtomPosAtom GPNAXN = POS_XN
+gNonAtomPosAtom GPNAXC = POS_XC
+
+public export
+gPosAtom : GExpPos -> GebAtom
+gPosAtom (GPA a) = a
+gPosAtom (GPNAP i) = gNonAtomPosAtom i
+
+public export
+Show GExpPos where
+  show = show . gPosAtom
+
+public export
+GPosSz : Nat
+GPosSz = 7
+
+public export
+GPosFinDecoder : FinDecoder GExpNonAtomPos GPosSz
+GPosFinDecoder FZ = GPNAZ
+GPosFinDecoder (FS FZ) = GPNAS
+GPosFinDecoder (FS (FS FZ)) = GPNAX
+GPosFinDecoder (FS (FS (FS FZ))) = GPNANN
+GPosFinDecoder (FS (FS (FS (FS FZ)))) = GPNANC
+GPosFinDecoder (FS (FS (FS (FS (FS FZ))))) = GPNAXN
+GPosFinDecoder (FS (FS (FS (FS (FS (FS FZ)))))) = GPNAXC
+
+public export
+GPosNatEncoder : NatEncoder GPosFinDecoder
+GPosNatEncoder GPNAZ = (0 ** Refl ** Refl)
+GPosNatEncoder GPNAS = (1 ** Refl ** Refl)
+GPosNatEncoder GPNAX = (2 ** Refl ** Refl)
+GPosNatEncoder GPNANN = (3 ** Refl ** Refl)
+GPosNatEncoder GPNANC = (4 ** Refl ** Refl)
+GPosNatEncoder GPNAXN = (5 ** Refl ** Refl)
+GPosNatEncoder GPNAXC = (6 ** Refl ** Refl)
+
+public export
+GPosFinDecEncoding : FinDecEncoding GExpNonAtomPos GPosSz
+GPosFinDecEncoding = NatDecEncoding GPosFinDecoder GPosNatEncoder
+
+public export
+DecEq GExpNonAtomPos where
+  decEq = fdeDecEq GPosFinDecEncoding
+
+public export
+DecEq GExpPos where
+  decEq (GPA a) (GPA a') = case decEq a a' of
+    Yes Refl => Yes Refl
+    No neq => No $ \Refl => neq Refl
+  decEq (GPA _) (GPNAP _) = No $ \eq => case eq of Refl impossible
+  decEq (GPNAP _) (GPA _) = No $ \eq => case eq of Refl impossible
+  decEq (GPNAP i) (GPNAP i') = case decEq i i' of
+    Yes Refl => Yes Refl
+    No neq => No $ \Refl => neq Refl
+
+public export
+data GExpDir : Type where
+
+public export
+gDirAtom : GExpDir -> GebAtom
+gDirAtom _ impossible
+
+public export
+Show GExpDir where
+  show = show . gDirAtom
+
+public export
+GDirSz : Nat
+GDirSz = 0
+
+public export
+GDirFinDecoder : FinDecoder GExpDir GDirSz
+GDirFinDecoder _ impossible
+
+public export
+GDirNatEncoder : NatEncoder GDirFinDecoder
+GDirNatEncoder _ impossible
+
+public export
+GDirFinDecEncoding : FinDecEncoding GExpDir GDirSz
+GDirFinDecEncoding = NatDecEncoding GDirFinDecoder GDirNatEncoder
+
+public export
+DecEq GExpDir where
+  decEq = fdeDecEq GDirFinDecEncoding
+
+public export
+gAssign : GExpDir -> GExpSlice
+gAssign _ impossible
+
+public export
+gDirSlice : GExpDir -> GExpPos
+gDirSlice _ impossible
+
+public export
+gNonAtomPosSlice : GExpNonAtomPos -> GExpSlice
+gNonAtomPosSlice GPNAZ = GSNAT
+gNonAtomPosSlice GPNAS = GSNAT
+gNonAtomPosSlice GPNAX = GSEXP
+gNonAtomPosSlice GPNANN = GSNATL
+gNonAtomPosSlice GPNANC = GSNATL
+gNonAtomPosSlice GPNAXN = GSEXPL
+gNonAtomPosSlice GPNAXC = GSEXPL
+
+public export
+gPosSlice : GExpPos -> GExpSlice
+gPosSlice (GPA _) = GSATOM
+gPosSlice (GPNAP i) = gNonAtomPosSlice i
+
+public export
+GExpWT : WTypeEndoFunc GExpSlice
+GExpWT = MkWTF GExpPos GExpDir gAssign gDirSlice gPosSlice
+
+public export
+GExpSPF : SlicePolyEndoFunc GExpSlice
+GExpSPF = WTFtoSPF GExpWT

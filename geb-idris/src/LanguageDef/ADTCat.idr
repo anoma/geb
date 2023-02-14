@@ -2002,7 +2002,7 @@ InAtom = InTermAtom .* TAtom
 
 public export
 InNat : Nat -> TermMu -> TermMu
-InNat = InAtom NAT
+InNat = InAtom SL_NAT
 
 -------------------
 ---- Utilities ----
@@ -2108,8 +2108,8 @@ public export
 FBCObjRepAlg : FinBCObjAlgRec TermMu
 FBCObjRepAlg =
   MkFinBCObjAlg
-    (InAtom PRODUCT 0 . InProd)
-    (InAtom COPRODUCT 0 . InProd)
+    (InAtom SL_EXP 0 . InProd) -- random replacement for PRODUCT; obsolete
+    (InAtom SL_EXPL 0 . InProd) -- random replacement for COPRODUCT; obsolete
 
 public export
 fbcObjRep : FinBCObjMu -> TermMu

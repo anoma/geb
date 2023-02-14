@@ -257,10 +257,10 @@ sx3' : SExp Nat
 sx3' = fromIsJust {x=(btToSexp $ sexpToBt sx3)} Refl
 
 gx1 : GExp
-gx1 = InS PRODUCT [1, 2, 3] [InS NAT [2] [], InS COPRODUCT [] []]
+gx1 = InS SL_EXP [1, 2, 3] [InS SL_NAT [2] [], InS SL_EXPL [] []]
 
 frgx1 : FrGExp String
-frgx1 = InSF PRODUCT [1, 2, 3] [InSF NAT [2] [], InSXV "coproduct"]
+frgx1 = InSF SL_EXP [1, 2, 3] [InSF SL_NAT [2] [], InSXV "coproduct"]
 
 
 ----------------------------------
