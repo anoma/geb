@@ -511,6 +511,19 @@ ChiForEqFromPb {a} {b} f g (Element0 (ea, ()) eq) =
       rewrite sndEq eq2 in
       Refl
 
+public export
+ChiForEqFalseCorrect :
+  {a, b : Type} -> (f, g : a -> b) ->
+  (x : a) -> Not (f x = g x) ->
+  Not (ChiForEq f g x = TrueFromEq ())
+ChiForEqFalseCorrect f g x neq eq with (exists0inj1 eq)
+  ChiForEqFalseCorrect f g x neq eq | Refl =
+      neq $
+        let eq2 = exists0inj2 eq in
+        rewrite fstEq eq2 in
+        rewrite sndEq eq2 in
+        Refl
+
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 ---- Categories internal to 'Type' as a well-pointed topos ----
