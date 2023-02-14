@@ -866,18 +866,18 @@ DecEq GExpDir where
 
 public export
 gAssign : GExpDir -> GExpSlice
-gAssign GDS = ?gAssign_hole_0
-gAssign GDXA = ?gAssign_hole_1
-gAssign GDXNL = ?gAssign_hole_2
-gAssign GDXXL = ?gAssign_hole_3
-gAssign GDNCHD = ?gAssign_hole_4
-gAssign GDNCTL = ?gAssign_hole_5
-gAssign GDXCHD = ?gAssign_hole_6
-gAssign GDXCTL = ?gAssign_hole_7
+gAssign GDS = GSNAT
+gAssign GDXA = GSATOM
+gAssign GDXNL = GSNATL
+gAssign GDXXL = GSEXPL
+gAssign GDNCHD = GSNAT
+gAssign GDNCTL = GSNATL
+gAssign GDXCHD = GSEXP
+gAssign GDXCTL = GSEXPL
 
 public export
 gDirSlice : GExpDir -> GExpPos
-gDirSlice GDS = ?gDirSlice_hole_0
+gDirSlice GDS = GPS
 gDirSlice GDXA = ?gDirSlice_hole_1
 gDirSlice GDXNL = ?gDirSlice_hole_2
 gDirSlice GDXXL = ?gDirSlice_hole_3
