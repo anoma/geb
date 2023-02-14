@@ -437,13 +437,31 @@ PowerToCharFromBoolPred po e =
 
 public export
 TrueFromBoolPred : () -> SubCFromBoolPred
-TrueFromBoolPred () = Evidence0 () (\() => True)
+TrueFromBoolPred () =
+  Evidence0 ((Bool, Bool) -> Bool) (\decrel => decrel (True, True))
 
 -- Produce the characteristic function of `Equalizer f g`.
 public export
 ChiForBoolPred : {0 a, b : Type} -> (f, g : a -> b) -> (a -> SubCFromBoolPred)
 ChiForBoolPred {a} {b} f g ea =
   Evidence0 ((b, b) -> Bool) (\decrel => decrel (f ea, g ea))
+
+public export
+ChiForBoolPredToPb :
+  (subCmereProp : (ty, ty' : Type) -> (x : ty) -> (x' : ty') ->
+    Evidence0 {type=Type} {this=(\ty'' => ty'' -> Bool)}
+      ((ty, ty) -> Bool)
+      (\decrel : ((ty, ty) -> Bool) => decrel (x, x))
+    ~=~
+    Evidence0 {type=Type} {this=(\ty'' => ty'' -> Bool)}
+      ((ty', ty') -> Bool)
+      (\decrel : ((ty', ty') -> Bool) => decrel (x', x'))) ->
+  {0 a, b : Type} -> (f, g : a -> b) ->
+  Equalizer f g ->
+  Pullback
+    {a} {b=Unit} {c=SubCFromBoolPred} (ChiForBoolPred f g) TrueFromBoolPred
+ChiForBoolPredToPb subCmereProp {a} {b} f g (Element0 ea eq) =
+  Element0 (ea, ()) $ rewrite eq in subCmereProp b Bool _ True
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
