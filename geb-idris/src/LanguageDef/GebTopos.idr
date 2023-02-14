@@ -859,9 +859,49 @@ gPosSlice (GPA _) = GSATOM
 gPosSlice (GPNAP i) = gNonAtomPosSlice i
 
 public export
-GExpWT : WTypeEndoFunc GExpSlice
-GExpWT = MkWTF GExpPos GExpDir gAssign gDirSlice gPosSlice
+GExpWTF : WTypeEndoFunc GExpSlice
+GExpWTF = MkWTF GExpPos GExpDir gAssign gDirSlice gPosSlice
 
 public export
 GExpSPF : SlicePolyEndoFunc GExpSlice
-GExpSPF = WTFtoSPF GExpWT
+GExpSPF = WTFtoSPF GExpWTF
+
+public export
+GExpWT : SliceObj GExpSlice
+GExpWT = SPFMu GExpSPF
+
+public export
+GExpSigma : Type
+GExpSigma = Sigma {a=GExpSlice} GExpWT
+
+public export
+GExpA : Type
+GExpA = GExpWT GSATOM
+
+public export
+GExpN : Type
+GExpN = GExpWT GSNAT
+
+public export
+GExpNL : Type
+GExpNL = GExpWT GSNATL
+
+public export
+GExpX : Type
+GExpX = GExpWT GSEXP
+
+public export
+GExpXL : Type
+GExpXL = GExpWT GSEXPL
+
+public export
+GExpWTtoGExpAlg : SPFAlg GExpSPF (const GExp)
+GExpWTtoGExpAlg sl (i ** d) = ?GExpWTtoGExpAlg_hole
+
+public export
+gexpWTtoGExp : (sl : GExpSlice) -> GExpWT sl -> GExp
+gexpWTtoGExp = spfCata {spf=GExpSPF} {sa=(const GExp)} GExpWTtoGExpAlg
+
+public export
+gexpsWTtoGExp : GExpSigma -> GExp
+gexpsWTtoGExp (sl ** x) = gexpWTtoGExp sl x
