@@ -878,13 +878,13 @@ gAssign GDXCTL = GSEXPL
 public export
 gDirSlice : GExpDir -> GExpPos
 gDirSlice GDS = GPS
-gDirSlice GDXA = ?gDirSlice_hole_1
-gDirSlice GDXNL = ?gDirSlice_hole_2
-gDirSlice GDXXL = ?gDirSlice_hole_3
-gDirSlice GDNCHD = ?gDirSlice_hole_4
-gDirSlice GDNCTL = ?gDirSlice_hole_5
-gDirSlice GDXCHD = ?gDirSlice_hole_6
-gDirSlice GDXCTL = ?gDirSlice_hole_7
+gDirSlice GDXA = GPX
+gDirSlice GDXNL = GPX
+gDirSlice GDXXL = GPX
+gDirSlice GDNCHD = GPNC
+gDirSlice GDNCTL = GPNC
+gDirSlice GDXCHD = GPXC
+gDirSlice GDXCTL = GPXC
 
 public export
 gNonAtomPosSlice : GExpNonAtomPos -> GExpSlice
