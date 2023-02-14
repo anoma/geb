@@ -11,11 +11,12 @@ object into a format for a graphing backend."
   ;; please write more, me.  Put this is the API section, not
   ;; here... we should talk about the backends here!!!!!!!
   "The core types that facilittate the functionality"
-  (note pax:class)
+  (note pax:type)
   (node pax:class)
   (make-note pax:function)
-  (graphize pax:generic-function))
-
+  (make-squash pax:function)
+  (graphize pax:generic-function)
+  (cons-note pax:function))
 
 (geb.utils:muffle-package-variance
  (defpackage #:geb-gui

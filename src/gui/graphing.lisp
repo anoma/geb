@@ -1,6 +1,48 @@
 (in-package #:geb-gui.graphing)
 
-(defclass note ()
+(deftype note ()
+  "A note is a note about a new node in the graph or a note about a
+NODE which should be merged into an upcoming NODE.
+
+An example of a [NODE-NOTE][class] would be in the case of pair
+
+```lisp
+(pair g f)
+```
+
+```
+               Π₁
+     --f--> Y------
+X----|            |-----> [Y × Z]
+     --g--> Z-----
+               Π₂
+```
+
+
+
+An example of a [MERGE-NOTE][class]
+
+```lisp
+(Case f g)
+(COMP g f)
+```
+
+```
+           χ₁
+         -------> X --f---\
+[X + Y]--|                ---> A
+         -------> Y --g---/
+           χ₂
+
+X -f-> Y --> Y -g-> Z
+```
+
+Notice that in the pair case, we have a note and a shared node to
+place down, where as in both of the [MERGE-NOTE][class] examples, the
+Note at the end is not pre-pended by any special information"
+  `(or node-note squash-note))
+
+(defclass node-note ()
   ((value :initarg :value
           :accessor value
           :type node
@@ -11,80 +53,14 @@
    (from :initarg :from
          :accessor from
          :type (or <substobj> <substmorph>)
-         :documentation "The representation value that made the note")
-   (merge-p :initarg :merge-p
-            :accessor merge-p
-            :initform nil
-            :documentation "Merging the node"))
-  (:documentation
-   "
-### As Used by the Goal
+         :documentation "The representation value that made the note")))
 
-A note is only made in the event a node is shared, further, since the
-node is shared, we should label the edge. That is what the note slot is for
-
-a NOTE can look like π₁ or π₂ for [PROJECT-LEFT][class] and
-[PROJECT-RIGHT][class] respectively
-
-Further the FROM slot serves as a way of documenting what original
-expression the arrow is coming from, as the VALUE is just the node to
-share., and not information on what the arrow represents.
-
-### As used by the Stack
-
-The NOTE and FROM serves as the same function, however the VALUE is
-now the continuation where to continue the computation rather than a [NODE][class]
-
-### General Information
-
-The NOTE and FROM information should be stored on the object in which
-the arrow is coming from thus.
-
-```
-x --> y
-```
-
-where x and y are elements of [NODE][class]
-
-The information should be stored on the x [NODE][class]. If no notes
-exist, then the x [NODE][class]'s REPRESENTATION is taken instead to
-uniquely identify what the arrow should be labeled as and represents
-
-
-The MERGE-P value notes if we should merge the note to the node left
-to it. This makes it possible to remove redundant nodes such as:
-
-```lisp
-(COMP g f)
-```
-
-```
-X -f-> Y --> Y -g-> Z
-```
-
-where the Y --> Y arrow is useless
-
-This happens in the case of a STACK, however the same behavior can be
-seen in the presence of case.
-
-```lisp
-(Case f g)
-```
-
-
-
-```
-           χ₁
-         -------> X -f-> A --\
-[X + Y]--|                   ---> A
-         -------> Y -g-> A --/
-           χ₂
-```
-
-One may suggest that this can be handled in a pass like
-MERGE-BORING-NODES with removing them if the displayed values are the
-same, however it would potentially break alias functions in the future
-when they will be displayed like GEB-BOOL:NOT that are A -> A"))
+(defclass squash-note ()
+  ((value :initarg :value
+          :accessor value
+          :type node
+          :documentation "The value"))
+  (:documentation "This note should be squashed into another note and or node."))
 
 (defclass node (meta-mixin)
   ;; this is the data we end up showing
@@ -109,51 +85,41 @@ particular node. This information is tracked, by storing the object
 that goes to it in the meta table and recovering the note."))
 
 
-(defgeneric graphize (morph goals stack)
+(defgeneric graphize (morph notes)
   (:documentation
    "Turns a morphism into a node graph.
 
-Goals is a list of [NOTE][class] of a [NODE][class] without children, and a
-note saying which morphism it came from. To be stored in the object
-pointing to the goal node.
+The NOTES serve as a way of sharing and continuing computation.
 
-Once the morphism is done drawing and goals are done, then the stack
-of morphisms are continued at, and are the children of the last goal,
-or if none exist, the last drawn node."))
+If the NOTE is a :SHARED NOTE then it represents a [NODE][class]
+without children, along with saying where it came from. This is to be
+stored in parent of the NOTE
 
-(-> continue-graphizing (node list list) node)
-(defun continue-graphizing (node goals stack)
-  "Continues the computation, applying the goals and stack as appropriate"
-  (cond (goals
-         (multiple-value-bind (node continue-node) (add-goals node goals)
-           (continue-graphizing continue-node nil stack)
-           node))
-        (stack
-         (with-slots (from note merge-p value) (car stack)
-           (let ((note-rest (make-note :from from
-                                       :note note
-                                       :value (graphize value goals (cdr stack))
-                                       :merge-p merge-p)))
-             (apply-note node note-rest))))
-        (t
-         node)))
+If the NOTE is a :CONTINUE NOTE, then the computation is continued at
+the spot.
 
-(defmethod graphize ((morph <substmorph>) goals stack)
+The parent field is to set the note on the parent if the NOTE is going
+to be merged"))
+
+(-> continue-graphizing (node list) node)
+(defun continue-graphizing (node notes)
+  "Continues the computation, applying the NOTES as appropriate"
+  (apply-notes node notes))
+
+(defmethod graphize ((morph <substmorph>) notes)
   (assure node
     (typecase-of substmorph morph
       ((or terminal init distribute inject-left inject-right project-left project-right)
-       (make-instance 'node
-                      ;; Since there is no note in this case, this
-                      ;; representation will serve as the note as to
-                      ;; how we should annotate the arrow.
-                      :representation morph
-                      ;; we display our object
-                      :value (dom morph)
-                      :children (list (graphize (codom morph) goals stack))))
+       ;; Since there is no note in this case, this
+       ;; representation will serve as the note as to
+       ;; how we should annotate the arrow.
+       (make-instance 'node :representation morph
+                            :value (dom morph)
+                            :children (list (graphize (codom morph) notes))))
       (alias
        ;; we should stop the graph here, graph it internally then
        ;; present it better.
-       (let ((node (graphize (obj morph) goals stack))
+       (let ((node (graphize (obj morph) notes))
              (name (name morph)))
          (with-slots (value representation) node
            (setf value          (make-alias :name name :obj value))
@@ -161,17 +127,52 @@ or if none exist, the last drawn node."))
            node)))
       (substobj
        (continue-graphizing (make-instance 'node :representation morph :value morph)
-                            goals
-                            stack))
-      ;; the `fun' cases
-      ;; g 。f ⟹ dom f --> recurse stack g
+                            notes))
+      ;; (comp g f)
+      ;; X --f--> Y --g--> Z
       (comp
        (graphize (mcadr morph)
-                 goals
-                 (cons (make-note :from morph :note "。" :value (mcar morph) :merge-p t)
-                       stack)))
-      (case (error "implement me"))
-      (pair (error "implement me"))
+                 (list (make-squash :value (graphize (mcar morph) notes)))))
+      ;; (case g f)
+      ;;             χ₁
+      ;;           ------> X ----g----
+      ;; [X × Y]--|                  |---> A
+      ;;           ------> Y ----f----
+      ;;             χ₂
+      (case
+        (let ((goal (make-squash :value (graphize (codom morph) nil))))
+          (flet ((make-child (node note)
+                   (make-note :from morph
+                              :note note
+                              :value (graphize node (cons-note goal notes)))))
+            (let* ((first-child  (make-child (mcar morph) "χ₁"))
+                   (second-child (make-child (mcadr morph) "χ₂"))
+                   (our-node     (make-instance 'node
+                                                :representation morph
+                                                :value (dom morph))))
+              (apply-note our-node second-child)
+              (apply-note our-node first-child)))))
+      ;; (pair g f)
+      ;;                Π₁
+      ;;      ---g--> Y ------
+      ;;     /                \
+      ;; X---                  ---> [Y × Z]
+      ;;     \                /
+      ;;      ---f--> Z ------
+      ;;                Π₂
+      (pair
+       (let ((goal (graphize (dom morph) nil)))
+         (flet ((make-child (node note)
+                  ;; we ignore the node made as it's just the node we made
+                  (children
+                   (graphize node
+                             (cons (make-note :from morph :note note :value goal)
+                                   notes)))))
+           (make-instance 'node
+                          :value (dom morph)
+                          :representation morph
+                          :children (append (make-child (mcar morph)  "Π₁")
+                                            (make-child (mcdr morph) "Π₂"))))))
       (otherwise
        (geb.utils:subclass-responsibility morph)))))
 
@@ -180,83 +181,73 @@ or if none exist, the last drawn node."))
 ;; Note Helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun make-note (&rest initargs &key from note value merge-p &allow-other-keys)
-  (declare (ignore from note value merge-p))
-  (apply #'make-instance 'note initargs))
+(defun make-note (&rest initargs &key from note value &allow-other-keys)
+  (declare (ignore from note value))
+  (apply #'make-instance 'node-note initargs))
 
-(defmethod print-object ((note note) stream)
+(defun make-squash (&rest initargs &key value &allow-other-keys)
+  (declare (ignore value))
+  (apply #'make-instance 'squash-note initargs))
+
+(defmethod print-object ((note node-note) stream)
   (print-unreadable-object (note stream :type nil)
-    (with-slots (value note from merge-p) note
-      from
-      (format stream "NOTE: ~A ~@_VALUE: ~A ~@_MERGE-P: ~A"
-              note value merge-p))))
+    (with-slots (value note) note
+      (format stream "NOTE: ~A ~@_VALUE: ~A" note value))))
 
-(-> toggle-merge (note) note)
-(defun toggle-merge (note)
-  (with-slots (value note from merge-p) note
-    (assure note
-      (make-note :from from :note note :value value :merge-p (not merge-p)))))
+(defmethod print-object ((note squash-note) stream)
+  (print-unreadable-object (note stream :type nil)
+    (with-slots (value) note
+      (format stream "VALUE: ~A" value))))
 
-(-> update-meta-data-with-note (node note) t)
+(-> update-meta-data-with-note (node node-note) t)
 (defun update-meta-data-with-note (node note)
   "Inserts the NOTE into the NODE"
   (with-slots (value note from) note
     (meta-insert node value (list note from))))
 
-(defun simplify (goals)
-  "We remove the number of MERGE-P's such that only one can exist, and
-if it does exist, it would be the very first node only
-
-
-THUS:
-
-```lisp
-(list (x :merge-p nil) (y :merge-p t) (z :merge-p t))
-```
-
-would end up with
-
-```lisp
-(list (z :merge-p nil)
-```
-"
-  (cond ((null (cdr goals))
-         goals)
-        ((and (merge-p (car goals)) (merge-p (cadr goals)))
-         (simplify (cdr goals)))
-        ((merge-p (cadr goals))
-         (simplify (cons (toggle-merge (cadr goals)) (cddr goals))))
-        (t
-         (cons (car goals) (simplify (cdr goals))))))
-
+(-> cons-note (note list) list)
+(defun cons-note (note notes)
+  "Adds a note to the notes list."
+  (if (null notes)
+      (list note)
+      (etypecase-of note (car notes)
+        (node-note
+         (cons note notes))
+        (squash-note
+         (etypecase-of note note
+           (node-note   (cons (make-note :from (from note)
+                                         :note (note note)
+                                         :value (value (car notes)))
+                              (cdr notes)))
+           (squash-note notes))))))
 
 (-> apply-note (node note) node)
 (defun apply-note (node note)
-  "Here we apply the note to the node. Updating the child and of the
-node and setting any meta data as needed. The node is then returned
+  "Here we apply the NOTE to the NODE.
 
-If the MERGE-P flag is on, then the note is considered to be the
-canonical node, and no values are set, but the note itself is returned"
+In the case of a new node, we record down the information in the note,
+and set the note as the child of the current NODE. The NODE is
+returned.
+
+In the case of a squash-note, we instead just return the squash-note
+as that is the proper NODE to continue from"
   (assure node
-    (if (merge-p note)
-        (value note)
-        (progn
-          (update-meta-data-with-note node note)
-          (push (value note) (children node))
-          node))))
+    (etypecase-of note note
+      (node-note (update-meta-data-with-note node note)
+                 (push (value note) (children node))
+                 node)
+      (squash-note (value note)))))
 
-(-> add-goals (node list) (values node node))
-(defun add-goals (node notes)
-  "Adds the goals onto the current node.
-
-Due to the merge-p part of a note, we return two values
-
-1. the node to be returned
-2. the child node to continue the computation from
-"
-  (let* ((goals       (simplify notes))
-         (return-node (apply-note node (car goals))))
-    (values return-node
-            (mvfold (lambda (node note) (apply-note node note) (value note))
-                    (cdr goals)
-                    (value (car goals))))))
+(-> apply-notes (node list) node)
+(defun apply-notes (node notes)
+  "apply the NOTES onto the current NODE."
+  (let* ((notes-with-node (cons-note (make-squash :value node) notes)))
+    ;; collapse the nodes, these should all be nodes, due to how we
+    ;; constructed it
+    (mvfold (lambda (note child-note)
+              (apply-note (value note) child-note)
+              child-note)
+            (cdr notes-with-node)
+            (car notes-with-node))
+    (assure node
+      (value (car notes-with-node)))))
