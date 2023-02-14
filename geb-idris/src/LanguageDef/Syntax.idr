@@ -372,7 +372,14 @@ sexpDecEqNTAlg deqatom a deqa (SXF e ns xs) (SXF e' ns' xs') =
 
 mutual
   public export
-  sexpDecEq : {atom : Type} -> DecEqPred atom -> DecEqPred (SExp atom)
+  sexpDecEq : {atom : Type} -> DecEq ty =>
+    DecEqPred atom -> DecEqPred (FrSExpM atom ty)
+  sexpDecEq deq (InSXV v) (InSXV v') =
+    case decEq v v' of
+      Yes Refl => Yes Refl
+      No neq => No $ \Refl => neq Refl
+  sexpDecEq deq (InSXV _) (InSXC _) = No $ \eq => case eq of Refl impossible
+  sexpDecEq deq (InSXC _) (InSXV _) = No $ \eq => case eq of Refl impossible
   sexpDecEq deq (InSXC (SXF a ns xs)) (InSXC (SXF a' ns' xs')) =
     case deq a a' of
       Yes Refl => case decEq ns ns' of
@@ -383,7 +390,8 @@ mutual
       No neq => No $ \eq => case eq of Refl => neq Refl
 
   public export
-  slistDecEq : {atom : Type} -> DecEqPred atom -> DecEqPred (SList atom)
+  slistDecEq : {atom : Type} -> DecEq ty =>
+    DecEqPred atom -> DecEqPred (FrSListM atom ty)
   slistDecEq deq [] [] = Yes Refl
   slistDecEq deq [] (x :: xs) = No $ \eq => case eq of Refl impossible
   slistDecEq deq (x :: xs) [] = No $ \eq => case eq of Refl impossible
@@ -395,7 +403,7 @@ mutual
       No neq => No $ \eq => case eq of Refl => neq Refl
 
 public export
-(atom : Type) => DecEq atom => DecEq (SExp atom) where
+(atom : Type) => DecEq atom => DecEq ty => DecEq (FrSExpM atom ty) where
   decEq = sexpDecEq decEq
 
 --------------------------
