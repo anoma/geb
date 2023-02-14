@@ -445,20 +445,6 @@ ChiForBoolPred : {0 a, b : Type} -> (f, g : a -> b) -> (a -> SubCFromBoolPred)
 ChiForBoolPred {a} {b} f g ea =
   Evidence0 ((b, b) -> Bool) (\decrel => decrel (f ea, g ea))
 
-public export
-ImageDecForBoolPred : {a, b : Type} -> (a -> b) -> (b -> Type)
-ImageDecForBoolPred {a} {b} f eb = Dec (Subset0 a (Equal eb . f))
-
-public export
-inImageForBoolPred : {0 a, b : Type} -> (f : a -> b) -> (eb : b) ->
-  ImageDecForBoolPred f eb -> Bool
-inImageForBoolPred {a} {b} f eb = isYes
-
-public export
-ChiForBoolPred' : {a, b : Type} -> (a -> b) -> (b -> SubCFromBoolPred)
-ChiForBoolPred' {a} {b} f eb =
-  Evidence0 (ImageDecForBoolPred f eb) (inImageForBoolPred f eb)
-
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Subobject classifiers for monics only (and those from equalizers only) ----
