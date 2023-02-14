@@ -30,10 +30,18 @@ data GebAtom : Type where
   POS_NC : GebAtom
   POS_XN : GebAtom
   POS_XC : GebAtom
+  DIR_S : GebAtom
+  DIR_XA : GebAtom
+  DIR_XNL : GebAtom
+  DIR_XXL : GebAtom
+  DIR_NCHD : GebAtom
+  DIR_NCTL : GebAtom
+  DIR_XCHD : GebAtom
+  DIR_XCTL : GebAtom
 
 public export
 GASize : Nat
-GASize = 13
+GASize = 21
 
 public export
 GAFin : Type
@@ -55,6 +63,29 @@ GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))) = POS_NC
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))) = POS_XN
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))) =
   POS_XC
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))) =
+  DIR_S
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  FZ)))))))))))))) =
+    DIR_XA
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS FZ))))))))))))))) =
+    DIR_XNL
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS FZ)))))))))))))))) =
+    DIR_XXL
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS FZ))))))))))))))))) =
+    DIR_NCHD
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS FZ)))))))))))))))))) =
+    DIR_NCTL
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS FZ))))))))))))))))))) =
+    DIR_XCHD
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS FZ)))))))))))))))))))) =
+    DIR_XCTL
 
 public export
 GAEncoder : NatEncoder GADecoder
@@ -71,6 +102,14 @@ GAEncoder POS_NN = (9 ** Refl ** Refl)
 GAEncoder POS_NC = (10 ** Refl ** Refl)
 GAEncoder POS_XN = (11 ** Refl ** Refl)
 GAEncoder POS_XC = (12 ** Refl ** Refl)
+GAEncoder DIR_S = (13 ** Refl ** Refl)
+GAEncoder DIR_XA = (14 ** Refl ** Refl)
+GAEncoder DIR_XNL = (15 ** Refl ** Refl)
+GAEncoder DIR_XXL = (16 ** Refl ** Refl)
+GAEncoder DIR_NCHD = (17 ** Refl ** Refl)
+GAEncoder DIR_NCTL = (18 ** Refl ** Refl)
+GAEncoder DIR_XCHD = (19 ** Refl ** Refl)
+GAEncoder DIR_XCTL = (20 ** Refl ** Refl)
 
 public export
 GebAtomEncoding : FinDecEncoding GebAtom GASize
@@ -91,6 +130,14 @@ gaToString POS_NN = "POS_NN"
 gaToString POS_NC = "POS_NC"
 gaToString POS_XN = "POS_XN"
 gaToString POS_XC = "POS_XC"
+gaToString DIR_S = "DIR_S"
+gaToString DIR_XA = "DIR_XA"
+gaToString DIR_XNL = "DIR_XNL"
+gaToString DIR_XXL = "DIR_XXL"
+gaToString DIR_NCHD = "DIR_NCHD"
+gaToString DIR_NCTL = "DIR_NCTL"
+gaToString DIR_XCHD = "DIR_XCHD"
+gaToString DIR_XCTL = "DIR_XCTL"
 
 public export
 Show GebAtom where
