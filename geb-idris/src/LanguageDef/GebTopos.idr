@@ -522,6 +522,18 @@ ChiForEqFromPb {a} {b} f g (Element0 (ea, ()) eq) =
       Refl
 
 public export
+ChiForEqTrueCorrect :
+  (subCmereProp :
+    {p, p' : SubCFromEq} ->
+    fst (snd0 p) = snd (snd0 p) ->
+    fst (snd0 p') = snd (snd0 p') ->
+    p = p') ->
+  {0 a, b : Type} -> (f, g : a -> b) ->
+  (x : a) -> (eq : f x = g x) ->
+  ChiForEq f g x = TrueFromEq ()
+ChiForEqTrueCorrect subCmereProp f g x eq = subCmereProp eq Refl
+
+public export
 ChiForEqFalseCorrect :
   {a, b : Type} -> (f, g : a -> b) ->
   (x : a) -> Not (f x = g x) ->
