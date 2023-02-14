@@ -938,6 +938,102 @@ GExpXL : Type
 GExpXL = GExpWT GSEXPL
 
 public export
+record GExpAlg (ty : GExpSlice -> Type) where
+  constructor GAlg
+  galgA : GebAtom -> ty GSATOM
+  galgZ : ty GSNAT
+  galgS : ty GSNAT -> ty GSNAT
+  galgNN : ty GSNATL
+  galgNC : ty GSNAT -> ty GSNATL -> ty GSNATL
+  galgEXP : ty GSATOM -> ty GSNATL -> ty GSEXPL -> ty GSEXP
+  galgXN : ty GSEXPL
+  galgXC : ty GSEXP -> ty GSEXPL -> ty GSEXPL
+
+public export
+GAlgToSPF : (ty : GExpSlice -> Type) -> GExpAlg ty -> SPFAlg GExpSPF ty
+GAlgToSPF ty alg GSATOM (Element0 (GPA a) isl ** d) =
+  alg.galgA a
+GAlgToSPF ty alg GSATOM (Element0 (GPNAP GPNAZ) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSATOM (Element0 (GPNAP GPNAS) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSATOM (Element0 (GPNAP GPNAX) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSATOM (Element0 (GPNAP GPNANN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSATOM (Element0 (GPNAP GPNANC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSATOM (Element0 (GPNAP GPNAXN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSATOM (Element0 (GPNAP GPNAXC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNAT (Element0 (GPA a) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNAT (Element0 (GPNAP GPNAZ) isl ** d) =
+  alg.galgZ
+GAlgToSPF ty alg GSNAT (Element0 (GPNAP GPNAS) isl ** d) =
+  alg.galgS $ d (Element0 GDS Refl)
+GAlgToSPF ty alg GSNAT (Element0 (GPNAP GPNAX) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNAT (Element0 (GPNAP GPNANN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNAT (Element0 (GPNAP GPNANC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNAT (Element0 (GPNAP GPNAXN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNAT (Element0 (GPNAP GPNAXC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNATL (Element0 (GPA a) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNATL (Element0 (GPNAP GPNAZ) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNATL (Element0 (GPNAP GPNAS) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNATL (Element0 (GPNAP GPNAX) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNATL (Element0 (GPNAP GPNANN) isl ** d) =
+  alg.galgNN
+GAlgToSPF ty alg GSNATL (Element0 (GPNAP GPNANC) isl ** d) =
+  alg.galgNC (d $ Element0 GDNCHD Refl) (d $ Element0 GDNCTL Refl)
+GAlgToSPF ty alg GSNATL (Element0 (GPNAP GPNAXN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSNATL (Element0 (GPNAP GPNAXC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXP (Element0 (GPA a) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXP (Element0 (GPNAP GPNAZ) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXP (Element0 (GPNAP GPNAS) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXP (Element0 (GPNAP GPNAX) isl ** d) =
+  alg.galgEXP
+    (d $ Element0 GDXA Refl) (d $ Element0 GDXNL Refl) (d $ Element0 GDXXL Refl)
+GAlgToSPF ty alg GSEXP (Element0 (GPNAP GPNANN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXP (Element0 (GPNAP GPNANC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXP (Element0 (GPNAP GPNAXN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXP (Element0 (GPNAP GPNAXC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXPL (Element0 (GPA a) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXPL (Element0 (GPNAP GPNAZ) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXPL (Element0 (GPNAP GPNAS) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXPL (Element0 (GPNAP GPNAX) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXPL (Element0 (GPNAP GPNANN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXPL (Element0 (GPNAP GPNANC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF ty alg GSEXPL (Element0 (GPNAP GPNAXN) isl ** d) =
+  alg.galgXN
+GAlgToSPF ty alg GSEXPL (Element0 (GPNAP GPNAXC) isl ** d) =
+  alg.galgXC (d $ Element0 GDXCHD Refl) (d $ Element0 GDXCTL Refl)
+
+public export
 GExpWTtoGExpAlg : SPFAlg GExpSPF (const GExp)
 GExpWTtoGExpAlg GSATOM (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole1_0
 GExpWTtoGExpAlg GSATOM (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole1_1
