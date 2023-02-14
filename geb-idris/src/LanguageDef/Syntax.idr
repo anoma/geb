@@ -123,22 +123,44 @@ data CoSExpCM : Type -> Type -> Type where
   InSXL : ty -> SExpF atom (CoSExpCM atom ty) -> CoSExpCM atom ty
 
 public export
+record FrSXLAlg (atom, ty, a, b : Type) where
+  constructor FrSXA
+  frsubst : ty -> a
+  frxalg : atom -> List Nat -> b -> a
+  frsxnil : b
+  frsxcons : a -> b -> b
+
+public export
 record SXLAlg (atom, a, b : Type) where
   constructor SXA
   xalg : atom -> List Nat -> b -> a
   sxnil : b
   sxcons : a -> b -> b
 
+public export
+SXLAlgToFr : {0 atom, a, b : Type} -> SXLAlg atom a b -> FrSXLAlg atom Void a b
+SXLAlgToFr {atom} {a} {b} (SXA xalg sxnil sxcons) =
+  FrSXA (voidF a) xalg sxnil sxcons
+
 mutual
   public export
-  sxCata : SXLAlg atom a b -> SExp atom -> a
-  sxCata alg (InSXC x) = case x of
-    SXF a ns xs => alg.xalg a ns $ slCata alg xs
+  frsxCata : FrSXLAlg atom ty a b -> FrSExpM atom ty -> a
+  frsxCata alg (InSXV v) = alg.frsubst v
+  frsxCata alg (InSXC x) = case x of
+    SXF a ns xs => alg.frxalg a ns $ frslCata alg xs
 
   public export
-  slCata : SXLAlg atom a b -> SList atom -> b
-  slCata alg [] = alg.sxnil
-  slCata alg (x :: xs) = alg.sxcons (sxCata alg x) (slCata alg xs)
+  frslCata : FrSXLAlg atom ty a b -> FrSListM atom ty -> b
+  frslCata alg [] = alg.frsxnil
+  frslCata alg (x :: xs) = alg.frsxcons (frsxCata alg x) (frslCata alg xs)
+
+public export
+sxCata : SXLAlg atom a b -> SExp atom -> a
+sxCata = frsxCata . SXLAlgToFr
+
+public export
+slCata : SXLAlg atom a b -> SList atom -> b
+slCata = frslCata . SXLAlgToFr
 
 public export
 SExpAlg : Type -> Type -> Type
