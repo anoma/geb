@@ -93,8 +93,17 @@ sxfSubexprs : SExpF atom xty -> List xty
 sxfSubexprs (SXF _ _ xs) = xs
 
 public export
-data SExp : Type -> Type where
-  InSX : SExpF atom (SExp atom) -> SExp atom
+data FrSExpM : Type -> Type -> Type where
+  InSXV : ty -> FrSExpM atom ty -- variable
+  InSXC : SExpF atom (FrSExpM atom ty) -> FrSExpM atom ty -- compound term
+
+public export
+SExp : Type -> Type
+SExp atom = FrSExpM atom Void
+
+public export
+InSX : SExpF atom (SExp atom) -> SExp atom
+InSX = InSXC
 
 public export
 InS : atom -> List Nat -> List (SExp atom) -> SExp atom
@@ -114,7 +123,7 @@ record SXLAlg (atom, a, b : Type) where
 mutual
   public export
   sxCata : SXLAlg atom a b -> SExp atom -> a
-  sxCata alg (InSX x) = case x of
+  sxCata alg (InSXC x) = case x of
     SXF a ns xs => alg.xalg a ns $ slCata alg xs
 
   public export
@@ -298,7 +307,7 @@ sexpDecEqNTAlg deqatom a deqa (SXF e ns xs) (SXF e' ns' xs') =
 mutual
   public export
   sexpDecEq : {atom : Type} -> DecEqPred atom -> DecEqPred (SExp atom)
-  sexpDecEq deq (InSX (SXF a ns xs)) (InSX (SXF a' ns' xs')) =
+  sexpDecEq deq (InSXC (SXF a ns xs)) (InSXC (SXF a' ns' xs')) =
     case deq a a' of
       Yes Refl => case decEq ns ns' of
         Yes Refl => case slistDecEq deq xs xs' of
@@ -333,7 +342,7 @@ sexpReturn a = InS a [] []
 
 public export
 SExpJoinAlg : SExpAlg (SExp atom) (SExp atom)
-SExpJoinAlg (SXF (InSX (SXF a ns xs)) ns' xs') = InS a (ns ++ ns') (xs ++ xs')
+SExpJoinAlg (SXF (InSXC (SXF a ns xs)) ns' xs') = InS a (ns ++ ns') (xs ++ xs')
 
 public export
 sexpJoin : SExp (SExp atom) -> SExp atom
@@ -399,14 +408,14 @@ mutual
     (step : SExpDepAlg alg paramAlg) ->
     (x : SExp atom) ->
     Maybe (sexpGenTypeCata alg x)
-  sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs)) with
+  sexpGenTypeDec alg paramAlg step (InSXC (SXF a ns xs)) with
     (slistGenTypeDec alg paramAlg step xs, slistMaybeCata paramAlg xs) proof prf
-      sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs))
+      sexpGenTypeDec alg paramAlg step (InSXC (SXF a ns xs))
         | (Just vxs, Just params) =
           case step a ns xs vxs params (sndEq prf) of
             Just ty => Just (vxs, ty)
             _ => Nothing
-      sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs))
+      sexpGenTypeDec alg paramAlg step (InSXC (SXF a ns xs))
         | _ = Nothing
 
   public export
