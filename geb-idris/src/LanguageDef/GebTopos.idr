@@ -817,14 +817,14 @@ data GExpDir : Type where
 
 public export
 gDirAtom : GExpDir -> GebAtom
-gDirAtom GDS = ?gDirAtom_hole_0
-gDirAtom GDXA = ?gDirAtom_hole_1
-gDirAtom GDXNL = ?gDirAtom_hole_2
-gDirAtom GDXXL = ?gDirAtom_hole_3
-gDirAtom GDNCHD = ?gDirAtom_hole_4
-gDirAtom GDNCTL = ?gDirAtom_hole_5
-gDirAtom GDXCHD = ?gDirAtom_hole_6
-gDirAtom GDXCTL = ?gDirAtom_hole_7
+gDirAtom GDS = DIR_S
+gDirAtom GDXA = DIR_XA
+gDirAtom GDXNL = DIR_XNL
+gDirAtom GDXXL = DIR_XXL
+gDirAtom GDNCHD = DIR_NCHD
+gDirAtom GDNCTL = DIR_NCTL
+gDirAtom GDXCHD = DIR_XCHD
+gDirAtom GDXCTL = DIR_XCTL
 
 public export
 Show GExpDir where
