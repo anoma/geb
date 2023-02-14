@@ -607,6 +607,26 @@ record TCatSig where
       (tcCompose ceq h (tcCompose beq' g f))
       (tcCompose beq (tcCompose ceq' h g) f)
 
+public export
+record TFunctorSig (c, d : TCatSig) where
+  constructor TFunctor
+  tfObjMap : c.tcObj -> d.tcObj
+  0 tfObjMapCorrect : {0 a, b : c.tcObj} ->
+    (0 _ : c.tcObjEq a b) -> d.tcObjEq (tfObjMap a) (tfObjMap b)
+  tfMorphMap : {0 a, b : c.tcObj} ->
+    c.tcMorph a b -> d.tcMorph (tfObjMap a) (tfObjMap b)
+  0 tfMorphMapCorrect : {0 a, b, a', b' : c.tcObj} ->
+    {0 m : c.tcMorph a b} -> {0 m' : c.tcMorph a' b'} ->
+    (0 domeq : c.tcObjEq a a') -> (0 codeq : c.tcObjEq b b') ->
+    (0 domMapEq : d.tcObjEq (tfObjMap a) (tfObjMap a')) ->
+    (0 codMapEq : d.tcObjEq (tfObjMap b) (tfObjMap b')) ->
+    (0 _ : c.tcMorphEq {dom=a} {dom'=a'} {cod=b} {cod'=b'} domeq codeq m m') ->
+    d.tcMorphEq
+      {dom=(tfObjMap a)} {cod=(tfObjMap b)}
+      {dom'=(tfObjMap a')} {cod'=(tfObjMap b')}
+      domMapEq codMapEq
+      (tfMorphMap {a} {b} m) (tfMorphMap {a=a'} {b=b'} m')
+
 -------------------------
 -------------------------
 ---- Terminal object ----
