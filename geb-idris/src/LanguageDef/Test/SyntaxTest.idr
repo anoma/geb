@@ -227,15 +227,17 @@ bt3412341 = InBTP bt34 bt12341
 ---- Utilities ----
 -------------------
 
-sexpShowFull : Show atom => String -> SExp atom -> IO ()
+sexpShowFull : Show atom => Show ty => String -> FrSExpM atom ty -> IO ()
 sexpShowFull name x = do
   putStrLn $ name
   putStrLn $ show x
 
-sexpShowFullSTerminated : Show atom => (String, SExp atom) -> IO ()
+sexpShowFullSTerminated :
+  Show atom => Show ty => (String, FrSExpM atom ty) -> IO ()
 sexpShowFullSTerminated = showTerminated sexpShowFull
 
-sexpShowFullList : Show atom => List (String, SExp atom) -> IO ()
+sexpShowFullList :
+  Show atom => Show ty => List (String, FrSExpM atom ty) -> IO ()
 sexpShowFullList = showList sexpShowFull
 
 --------------------
@@ -256,6 +258,10 @@ sx3' = fromIsJust {x=(btToSexp $ sexpToBt sx3)} Refl
 
 gx1 : GExp
 gx1 = InS PRODUCT [1, 2, 3] [InS NAT [2] [], InS COPRODUCT [] []]
+
+frgx1 : FrGExp String
+frgx1 = InSF PRODUCT [1, 2, 3] [InSF NAT [2] [], InSXV "coproduct"]
+
 
 ----------------------------------
 ----------------------------------
@@ -326,6 +332,10 @@ languageDefSyntaxTest = do
   sexpShowFullList
     [
         ("gx1", gx1)
+    ]
+  sexpShowFullList
+    [
+        ("frgx1", frgx1)
     ]
   putStrLn ""
   putStrLn "---------------"

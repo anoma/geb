@@ -118,6 +118,10 @@ SList : Type -> Type
 SList atom = FrSListM atom Void
 
 public export
+InSF : atom -> List Nat -> FrSListM atom ty -> FrSExpM atom ty
+InSF a ns xs = InSXC $ SXF a ns xs
+
+public export
 data CoSExpCM : Type -> Type -> Type where
   -- Labeled term
   InSXL : ty -> SExpF atom (CoSExpCM atom ty) -> CoSExpCM atom ty
@@ -740,8 +744,16 @@ GExp : Type
 GExp = SExp GebAtom
 
 public export
+FrGExp : Type -> Type
+FrGExp = FrSExpM GebAtom
+
+public export
 GList : Type
 GList = SList GebAtom
+
+public export
+FrGList : Type -> Type
+FrGList = FrSListM GebAtom
 
 public export
 GBtAtom : Type
