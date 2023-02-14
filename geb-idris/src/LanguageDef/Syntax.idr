@@ -118,6 +118,11 @@ SList : Type -> Type
 SList atom = FrSListM atom Void
 
 public export
+data CoSExpCM : Type -> Type -> Type where
+  -- Labeled term
+  InSXL : ty -> SExpF atom (CoSExpCM atom ty) -> CoSExpCM atom ty
+
+public export
 record SXLAlg (atom, a, b : Type) where
   constructor SXA
   xalg : atom -> List Nat -> b -> a
