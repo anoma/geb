@@ -3213,6 +3213,33 @@ PolyFuncFromUnitUnitSPF : SlicePolyFunc () () -> PolyFunc
 PolyFuncFromUnitUnitSPF (posdep ** dirdep ** assign) =
   (posdep () ** dirdep . MkDPair ())
 
+public export
+spfDimapFromBaseChange : {0 w, x, y, z : Type} ->
+  (spf : SlicePolyFunc w x) -> (f : w -> y) -> (g : z -> x) ->
+  (sy : SliceObj y) -> (ez : z) ->
+  InterpSPFunc
+    (spfCompose (SPFBaseChange g) (spfCompose spf (SPFBaseChange f))) sy ez ->
+  InterpSPFunc
+    (SliceFuncDimap spf f g) sy ez
+spfDimapFromBaseChange (posdep ** dirdep ** assign) f g sy ez
+  ((() ** d) ** di) with (d ()) proof prf
+    spfDimapFromBaseChange (posdep ** dirdep ** assign) f g sy ez
+      ((() ** d) ** di) | qdi =
+        (fst qdi ** \qdd => case di (() ** (rewrite prf in qdd ** ())) of
+          syf => rewrite sym prf in syf)
+
+public export
+spfDimapToBaseChange : {0 w, x, y, z : Type} ->
+  (spf : SlicePolyFunc w x) -> (f : w -> y) -> (g : z -> x) ->
+  (sy : SliceObj y) -> (ez : z) ->
+  InterpSPFunc
+    (SliceFuncDimap spf f g) sy ez ->
+  InterpSPFunc
+    (spfCompose (SPFBaseChange g) (spfCompose spf (SPFBaseChange f))) sy ez
+spfDimapToBaseChange {w} {x} {y} {z} (posdep ** dirdep ** assign) f g sy ez
+  (i ** d) =
+    ((() ** const (i ** const ())) ** \(() ** (qddi ** ())) => d qddi)
+
 --------------------------------------------------------------------
 ---- Composition of parameterized dependent polynomial functors ----
 --------------------------------------------------------------------
