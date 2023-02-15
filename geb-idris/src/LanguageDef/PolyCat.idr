@@ -2926,27 +2926,43 @@ SPFtoWTF (posdep ** dirdep ** assign) =
 public export
 InterpWTFtoSPF : {parambase, posbase : Type} ->
   (wtf : WTypeFunc parambase posbase) ->
-  (sl : SliceObj parambase) -> (i : posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
   InterpSPFunc {a=parambase} {b=posbase}
-    (WTFtoSPF {parambase} {posbase} wtf) sl i ->
-  InterpWTF {parambase} {posbase} wtf sl i
-InterpWTFtoSPF (MkWTF pos dir assign dsl psl) sl ib ((Element0 i eqi) ** p) =
-  ((Element0 i eqi) **
-   \(Element0 d eqd) => p (Element0 d $ rewrite eqd in Refl))
+    (WTFtoSPF {parambase} {posbase} wtf) sl ib ->
+  InterpWTF {parambase} {posbase} wtf sl ib
+InterpWTFtoSPF (MkWTF pos dir assign dsl psl) sl ib = id
+
+public export
+InterpWTFtoSPFInv : {parambase, posbase : Type} ->
+  (wtf : WTypeFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpWTF {parambase} {posbase} wtf sl ib ->
+  InterpSPFunc {a=parambase} {b=posbase}
+    (WTFtoSPF {parambase} {posbase} wtf) sl ib
+InterpWTFtoSPFInv (MkWTF pos dir assign dsl psl) sl ib = id
 
 public export
 InterpSPFtoWTF : {parambase, posbase : Type} ->
   (spf : SlicePolyFunc parambase posbase) ->
-  (sl : SliceObj parambase) -> (i : posbase) ->
-  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl i ->
-  InterpSPFunc {a=parambase} {b=posbase} spf sl i
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib ->
+  InterpSPFunc {a=parambase} {b=posbase} spf sl ib
 InterpSPFtoWTF {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
   (Element0 {type=(Sigma {a=posbase} posdep)} (ib' ** i) eq ** p) =
     (rewrite sym eq in i **
      \d => p $
-      Element0
-        ((ib ** rewrite sym eq in i) ** d)
-        (rewrite sym eq in Refl))
+      Element0 ((ib ** rewrite sym eq in i) ** d) (rewrite sym eq in Refl))
+
+public export
+InterpSPFtoWTFInv : {parambase, posbase : Type} ->
+  (spf : SlicePolyFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpSPFunc {a=parambase} {b=posbase} spf sl ib ->
+  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib
+InterpSPFtoWTFInv {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
+  (i ** d) =
+    (Element0 (ib ** i) Refl **
+     \(Element0 (i' ** di) deq) => rewrite deq in d $ rewrite sym deq in di)
 
 -----------------------------------------------------
 ---- Parameterized dependent polynomial functors ----
