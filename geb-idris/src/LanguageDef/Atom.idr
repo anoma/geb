@@ -17,11 +17,15 @@ import Library.IdrisUtils
 
 public export
 data GebAtom : Type where
+  -- Slices of the Geb S-expression type itself.
   SL_ATOM : GebAtom
   SL_NAT : GebAtom
   SL_NATL : GebAtom
   SL_EXP : GebAtom
   SL_EXPL : GebAtom
+
+  -- Positions of the (dependent) polynomial endofunctor whose fixed point
+  -- is the Geb S-expression.
   POS_A : GebAtom
   POS_Z : GebAtom
   POS_S : GebAtom
@@ -30,6 +34,8 @@ data GebAtom : Type where
   POS_NC : GebAtom
   POS_XN : GebAtom
   POS_XC : GebAtom
+
+  -- Directions of the Geb S-expression endofunctor.
   DIR_S : GebAtom
   DIR_XA : GebAtom
   DIR_XNL : GebAtom

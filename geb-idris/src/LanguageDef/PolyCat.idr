@@ -3007,22 +3007,42 @@ ParamSPFProd {a} {x} {y} {z} pspf ea =
    \(((yea, zea) ** pyea) ** ppyea) =>
     (snd (snd (pspf ea)) ((yea ** pyea) ** ppyea), zea))
 
-------------------------------------------------------
----- Dependent polynomial endofunctor combinators ----
-------------------------------------------------------
+---------------------------------------------------------------
+---------------------------------------------------------------
+---- Various categories of (dependent) polynomial functors ----
+---------------------------------------------------------------
+---------------------------------------------------------------
 
+-------------------
+---- As `Poly` ----
+-------------------
+
+-- We may view dependent polynomial functors as non-dependent endofunctors
+-- in the category `Poly` on `(Fin)ADT`.  In this view, the domain slice
+-- is the object of positions of the corresponding non-dependent functor,
+-- and the codomain slice is erased.
+
+-- The initial object of `Poly`, viewed as a dependent endofunctor.
+-- Equivalently, this is the unique morphism out of the initial object
+-- in the category of slice categories (i.e., the two-category whose objects
+-- are slice categories of `(Fin)ADT` and whose morphisms are dependent
+-- polynomial endofunctors).
 public export
-SliceFuncInitial : (z : Type) -> SlicePolyFunc Void z
-SliceFuncInitial z = (const Void ** const Void ** \(iz ** d) => void d)
+SPFPolyInitial : (z : Type) -> SlicePolyFunc Void z
+SPFPolyInitial z = (const Void ** const Void ** \x => void $ snd x)
 
+-- The terminal object of `Poly`, viewed as a dependent endofunctor.
+-- Equivalently, this is the unique morphism into the terminal object
+-- in the category of slice categories (i.e., the two-category whose objects
+-- are slice categories of `(Fin)ADT` and whose morphisms are dependent
+-- polynomial endofunctors).
 public export
-SliceFuncTerminal : (y : Type) -> SlicePolyFunc y ()
-SliceFuncTerminal y = (const Unit ** const Void ** \((() ** ()) ** d) => void d)
+SPFPolyTerminal : (y : Type) -> SlicePolyFunc y ()
+SPFPolyTerminal y = (const Unit ** const Void ** \x => void $ snd x)
 
-public export
-SliceFuncId : (y : Type) -> SlicePolyFunc y y
-SliceFuncId y = (const Unit ** const Unit ** \((i ** ()) ** ()) => i)
-
+-- A coproduct in `Poly`, which produces, given two dependent functors,
+-- a functor whose domain and codomain are the coproducts of the domains
+-- and codomains of the given functors.
 public export
 SliceFuncCoprod : {0 w, x, y, z : Type} ->
   SlicePolyFunc w x -> SlicePolyFunc y z ->
@@ -3054,6 +3074,18 @@ SliceFuncParProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
    \((ix, iz) ** (wxi, yzi)) => (wxd (ix ** wxi), (yzd (iz ** yzi))) **
    \(((ix, iz) ** (wxi, yzi)) ** (wxdi, yzdi)) =>
       (wxa ((ix ** wxi) ** wxdi), yza ((iz ** yzi) ** yzdi)))
+
+-- The identity endofunctor in `Poly` may also be viewed as the identity
+-- endofunctor in any slice category (`spfId y` for any `y`).
+public export
+SPFPolyId : (y : Type) -> SlicePolyFunc y y
+SPFPolyId y = (const Unit ** const Unit ** fst . fst)
+
+-- A (covariant) hom-functor in `Poly` may also be viewed as the same
+-- hom-functor in any slice category (by precomposition).
+public export
+SPFPolyHom : (x, y : Type) -> SlicePolyFunc y y
+SPFPolyHom x y = (const Unit ** const x ** fst . fst)
 
 public export
 SPFBaseChange : {x, y : Type} -> (x -> y) -> SlicePolyFunc y x
