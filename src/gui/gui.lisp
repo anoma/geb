@@ -46,6 +46,7 @@
 
 (define-application-frame display-clim ()
   ((%top-task :initform *the-data* :accessor root)
+   (%graph-p  :initform t :accessor graph-p)
    (counter :initform 0 :initarg :counter :accessor counter))
   (:panes
    (make-pane :application
@@ -61,7 +62,35 @@
               (1/10 interactor)))))
 
 (defun display-app (frame pane)
-  (present-object (root frame) pane))
+  (if (graph-p frame)
+      (display-graph frame pane)
+      (present-object (root frame) pane)))
+
+(defun display-graph (frame pane)
+  ;; cache this later
+  (graph-node (graph:graphize (root frame) nil) pane))
+
+(defun graph-node (object pane)
+  (format-graph-from-roots
+   (list object)
+   #'present-object
+   (lambda (node)
+     (graph::children node))
+   :stream pane
+   :maximize-generations t
+   :center-nodes t
+   :merge-duplicates t
+   ;; :orientation :vertical
+   :generation-separation 50
+   :within-generation-separation 20
+   :arc-drawer #'my-arc-drawer
+   :arc-drawing-options (list :line-thickness 1.4 :head-width 5)))
+
+(defun my-arc-drawer (stream from-node to-node x1 y1 x2 y2
+                            &rest drawing-options
+                            &key &allow-other-keys)
+  (declare (ignore from-node to-node))
+  (apply #'draw-arrow* stream x1 y1 x2 y2 drawing-options))
 
 (defun present-object (object stream)
   (present object (presentation-type-of object) :stream stream))
@@ -160,6 +189,18 @@
   `(formatting-column (,stream ,@args)
      (formatting-cell (,stream :align-x :center :align-y :center)
        ,@x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Graph Presenter
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-presentation-method present ((object graph:node)
+                                     (type graph:node)
+                                     (pane extended-output-stream)
+                                     (view show-view)
+                                     &key)
+  ;; update this to be better later
+  (present-object (graph::value object) pane))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Presentation
@@ -404,3 +445,18 @@
 
 (define-display-clim-command (com-redisplay :name t) ()
   (redisplay-frame-panes *application-frame* :force-p t))
+
+(define-display-clim-command (com-swap :name t) ()
+  (setf (graph-p *application-frame*)
+        (not (graph-p *application-frame*)))
+  (redisplay-frame-panes *application-frame* :force-p t))
+
+(define-presentation-method present ((object geb:init)
+                                     (type   geb:init)
+                                     (pane   extended-output-stream)
+                                     (view   show-view)
+                                     &key)
+  (formatting-table (pane)
+    (center-column-cell (pane) (present-object geb:so0 pane))
+    (center-column-cell (pane) (draw-text-arrow* pane "" 0 0 50 0))
+    (center-column-cell (pane) (present-object (geb:mcar object) pane))))

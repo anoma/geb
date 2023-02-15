@@ -20,6 +20,7 @@ object into a format for a graphing backend."
 
 (geb.utils:muffle-package-variance
  (defpackage #:geb-gui
+   (:local-nicknames (#:graph #:geb-gui.graphing))
    (:use :clim :clim-lisp)))
 
 (in-package :geb-gui)
