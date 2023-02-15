@@ -3158,6 +3158,88 @@ SPFSliceProduct {a} (pd ** dd ** asn) (pd' ** dd' ** asn') =
    \(i ** (d, d')) => (dd (i ** d), dd' (i ** d')) **
    \((i ** d) ** dd) => i)
 
+-------------------------------------------------------------
+-------------------------------------------------------------
+---- Universal objects and morphisms in slice categories ----
+-------------------------------------------------------------
+-------------------------------------------------------------
+
+public export
+SliceObjInitial : (a : Type) -> SliceObj a
+SliceObjInitial a = const Void
+
+public export
+sliceFromInitial : (sl : SliceObj a) -> SliceMorphism {a} (SliceObjInitial a) sl
+sliceFromInitial {a} sl = \_, v => void v
+
+public export
+SliceObjTerminal : (a : Type) -> SliceObj a
+SliceObjTerminal a = const Unit
+
+public export
+sliceToTerminal : (sl : SliceObj a) -> SliceMorphism {a} sl (SliceObjTerminal a)
+sliceToTerminal {a} sl = \_, _ => ()
+
+public export
+SliceObjCoproduct : SliceObj a -> SliceObj a -> SliceObj a
+SliceObjCoproduct sa sa' ea = Either (sa ea) (sa' ea)
+
+public export
+sliceObjInjL : (sa, sa' : SliceObj a) ->
+  SliceMorphism {a} sa (SliceObjCoproduct sa sa')
+sliceObjInjL sa sa' ea sea = Left sea
+
+public export
+sliceObjInjR : (sa, sa' : SliceObj a) ->
+  SliceMorphism {a} sa' (SliceObjCoproduct sa sa')
+sliceObjInjR sa sa' ea sea = Right sea
+
+public export
+sliceObjCase : {sa, sa', sa'' : SliceObj a} ->
+  SliceMorphism {a} sa sa'' -> SliceMorphism {a} sa' sa'' ->
+  SliceMorphism {a} (SliceObjCoproduct sa sa') sa''
+sliceObjCase m m' ea (Left sea) = m ea sea
+sliceObjCase m m' ea (Right sea') = m' ea sea'
+
+public export
+SliceObjProduct : SliceObj a -> SliceObj a -> SliceObj a
+SliceObjProduct sa sa' ea = (sa ea, sa' ea)
+
+public export
+sliceObjProjL : (sa, sa' : SliceObj a) ->
+  SliceMorphism {a} (SliceObjProduct sa sa') sa
+sliceObjProjL sa sa' ea = fst
+
+public export
+sliceObjProjR : (sa, sa' : SliceObj a) ->
+  SliceMorphism {a} (SliceObjProduct sa sa') sa'
+sliceObjProjR sa sa' ea = snd
+
+public export
+sliceObjPair : {sa, sa', sa'' : SliceObj a} ->
+  SliceMorphism {a} sa sa' -> SliceMorphism {a} sa sa'' ->
+  SliceMorphism {a} sa (SliceObjProduct sa' sa'')
+sliceObjPair m m' ea sea = (m ea sea, m' ea sea)
+
+public export
+SliceObjHom : SliceObj a -> SliceObj a -> SliceObj a
+SliceObjHom sa sa' ea = sa ea -> sa' ea
+
+public export
+sliceObjEval : (sa, sa' : SliceObj a) ->
+  SliceMorphism {a} (SliceProduct (SliceObjHom sa sa') sa) sa'
+sliceObjEval sa sa' ea (f, sea) = f sea
+
+public export
+sliceObjCurry : {sa, sa', sa'' : SliceObj a} ->
+  SliceMorphism {a} (SliceObjProduct sa sa') sa'' ->
+  SliceMorphism {a} sa (SliceObjHom sa' sa'')
+sliceObjCurry f ea sea sea' = f ea (sea, sea')
+
+public export
+sliceObjId : (sl : SliceObj a) -> SliceMorphism {a} sl sl
+sliceObjId sl ea = id
+
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 ---- Direct interpretation of DepParamPolyFunc form of SliceFunctor ----
@@ -3378,6 +3460,26 @@ ParamSPNatTrans : {a : Type} -> {w, z : SliceObj a} ->
   ParamSPF {a} w z -> ParamSPF {a} w z -> Type
 ParamSPNatTrans {a} {w} {z} pspf pspf' =
   (ea : a) -> SPNatTrans (pspf ea) (pspf' ea)
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Dependent polynomial endofunctors as cells of a double category ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+-- There is a double category whose vertical arrows are morphisms of `Type`
+-- (i.e. functions `x -> y`) and whose horizontal arrows are dependent
+-- polynomial functors (i.e. terms of `SlicePolyFunc x y`).  In that double
+-- category, if we have vertical morphisms (functions) `w -> w'` and `z -> z'`,
+-- and horizontal morphisms (dependent polynomial endofunctors)
+-- `SlicePolyFunc w z` and `SlicePolyFunc w' z'`, then this is the type
+-- of a cell.  See
+-- https://ncatlab.org/nlab/show/polynomial+functor#the_2category_of_polynomial_functors
+public export
+SPFCell : {w, w', z, z' : Type} ->
+  (w -> w') -> (z -> z') -> SlicePolyFunc w z -> SlicePolyFunc w' z' -> Type
+SPFCell {w} {w'} {z} {z'} f g spf spf' =
+  SPNatTrans (SliceFuncDimap spf f id) (SliceFuncDimap spf' id g)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
