@@ -110,6 +110,10 @@ InS : atom -> List Nat -> List (SExp atom) -> SExp atom
 InS a ns xs = InSX $ SXF a ns xs
 
 public export
+InSA : atom -> SExp atom
+InSA a = InS a [] []
+
+public export
 FrSListM : Type -> Type -> Type
 FrSListM atom ty = List (FrSExpM atom ty)
 
@@ -120,6 +124,10 @@ SList atom = FrSListM atom Void
 public export
 InSF : atom -> List Nat -> FrSListM atom ty -> FrSExpM atom ty
 InSF a ns xs = InSXC $ SXF a ns xs
+
+public export
+InSFA : atom -> FrSExpM atom ty
+InSFA a = InSF a [] []
 
 public export
 data CoSExpCM : Type -> Type -> Type where

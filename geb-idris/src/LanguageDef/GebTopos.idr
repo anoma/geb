@@ -1040,7 +1040,16 @@ gexpCata {sa} alg = spfCata {spf=GExpSPF} {sa} (GAlgToSPF {sa} alg)
 
 public export
 GExpWTtoGExpAlg : GExpAlg (const GExp)
-GExpWTtoGExpAlg = ?GExpWTtoGExpAlg_hole
+GExpWTtoGExpAlg =
+  GAlg
+    (InSA)
+    (InSA ?GExpWTtoGExpAlg_hole_zero)
+    (\n => ?GExpWTtoGExpAlg_hole_succ)
+    (?GExpWTtoGExpAlg_hole_natnil)
+    (\n, ns => ?GExpWTtoGExpAlg_hole_natcons)
+    (\a, ns, xs => ?GExpWTtoGExpAlg_hole_exp)
+    (?GExpWTtoGExpAlg_hole_succ_expnil)
+    (\x, xs => ?GExpWTtoGExpAlg_hole_succ_expcons)
 
 public export
 gexpWTtoGExp : (sl : GExpSlice) -> GExpWT sl -> GExp
