@@ -3044,10 +3044,10 @@ SPFPolyTerminal y = (const Unit ** const Void ** \x => void $ snd x)
 -- a functor whose domain and codomain are the coproducts of the domains
 -- and codomains of the given functors.
 public export
-SliceFuncCoprod : {0 w, x, y, z : Type} ->
+SPFPolyCoprod : {0 w, x, y, z : Type} ->
   SlicePolyFunc w x -> SlicePolyFunc y z ->
   SlicePolyFunc (Either w y) (Either x z)
-SliceFuncCoprod {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+SPFPolyCoprod {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
   (\ixz => (case ixz of Left ix => wxp ix ; Right iz => yzp iz) **
    \(ixz ** wxyzi) => (case ixz of
       Left ix => wxd (ix ** wxyzi)
@@ -3056,41 +3056,55 @@ SliceFuncCoprod {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
       Left ix => Left $ wxa ((ix ** wxyzi) ** wxyzdi)
       Right iz => Right $ yza ((iz ** wxyzi) ** wxyzdi)))
 
+-- A product in `Poly`, which produces, given two dependent functors,
+-- a functor whose domain is the coproduct of the domains of the given functors,
+-- and whose codomain is the product of the codomains of the given functors.
 public export
-SliceFuncProd : {0 w, x, y, z : Type} ->
+SPFPolyProd : {0 w, x, y, z : Type} ->
   SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (Either w y) (x, z)
-SliceFuncProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+SPFPolyProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
   (\(ix, iz) => (wxp ix, yzp iz) **
    \((ix, iz) ** (wxi, yzi)) => Either (wxd (ix ** wxi)) (yzd (iz ** yzi)) **
    \(((ix, iz) ** (wxi, yzi)) ** wxyzdi) => (case wxyzdi of
       Left wxdi => Left $ wxa ((ix ** wxi) ** wxdi)
       Right yzdi => Right $ yza ((iz ** yzi) ** yzdi)))
 
+-- A parallel product in `Poly`, which produces, given two dependent functors,
+-- a functor whose domain and codomain are the products of the domains
+-- and codomains of the given functors.
 public export
-SliceFuncParProd : {0 w, x, y, z : Type} ->
+SPFPolyParProd : {0 w, x, y, z : Type} ->
   SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (w, y) (x, z)
-SliceFuncParProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+SPFPolyParProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
   (\(ix, iz) => (wxp ix, yzp iz) **
    \((ix, iz) ** (wxi, yzi)) => (wxd (ix ** wxi), (yzd (iz ** yzi))) **
    \(((ix, iz) ** (wxi, yzi)) ** (wxdi, yzdi)) =>
       (wxa ((ix ** wxi) ** wxdi), yza ((iz ** yzi) ** yzdi)))
 
--- The identity endofunctor in `Poly` may also be viewed as the identity
+-- The identity endofunctor in `Poly`, which may also be viewed as the identity
 -- endofunctor in any slice category (`spfId y` for any `y`).
 public export
 SPFPolyId : (y : Type) -> SlicePolyFunc y y
 SPFPolyId y = (const Unit ** const Unit ** fst . fst)
 
--- A (covariant) hom-functor in `Poly` may also be viewed as the same
+-- A (covariant) hom-functor in `Poly`, which may also be viewed as the same
 -- hom-functor in any slice category (by precomposition).
 public export
 SPFPolyHom : (x, y : Type) -> SlicePolyFunc y y
 SPFPolyHom x y = (const Unit ** const x ** fst . fst)
 
+-----------------------------------------------
+---- Base changes and profunctor structure ----
+-----------------------------------------------
+
 public export
 SPFBaseChange : {x, y : Type} -> (x -> y) -> SlicePolyFunc y x
 SPFBaseChange {x} {y} f = (const () ** const () ** \ix => f (fst (fst ix)))
 
+-- Precomposition and postcomposition by base change give `SlicePolyFunc`
+-- itself a profunctor structure (`dimap`).  (Note that, written as it is
+-- here, it is covariant in its first argument and contravariant in the
+-- second -- the reverse of the standard definition of profunctor.)
 public export
 SliceFuncDimap : {0 w, x, y, z : Type} ->
   SlicePolyFunc w x -> (w -> y) -> (z -> x) -> SlicePolyFunc y z
@@ -3099,8 +3113,55 @@ SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
    \izwxi => wxd (fzx (fst izwxi) ** snd izwxi) **
    \dd => fwy (wxa ((fzx (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
 
+---------------------------------------------
+---- As endofunctors on slice categories ----
+---------------------------------------------
+
+-- For a given `x`, the endofunctor category `SlicePolyEndoFunc x` is
+-- a topos, so in particular it has the same structure of finite products
+-- and coproducts as `Poly`.
+
+-- The initial object in the category of polynomial endofunctors on
+-- the slice category `Type/x`.
+public export
+SPFSliceInitial : (x : Type) -> SlicePolyEndoFunc x
+SPFSliceInitial x =
+  (const Void ** \x => void (snd x) ** \x => void $ snd $ fst x)
+
+-- The terminal object in the category of polynomial endofunctors on
+-- the slice category `Type/x`.
+public export
+SPFSliceTerminal : (x : Type) -> SlicePolyEndoFunc x
+SPFSliceTerminal x = (const Unit ** const Void ** \x => void $ snd x)
+
+-- The coproduct in the category of polynomial endofunctors on
+-- the slice category `Type/x`.
+public export
+SPFSliceCoproduct : {a : Type} ->
+  SlicePolyEndoFunc x -> SlicePolyEndoFunc x -> SlicePolyEndoFunc x
+SPFSliceCoproduct {a} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+  (\i => Either (pd i) (pd' i) **
+   \(i ** d) => (case d of
+    Left d' => dd (i ** d')
+    Right d' => dd' (i ** d')) **
+   \((i ** d) ** dd) => (case d of
+    Left d' => i
+    Right d' => i))
+
+-- The product in the category of polynomial endofunctors on
+-- the slice category `Type/x`.
+public export
+SPFSliceProduct : {a : Type} ->
+  SlicePolyEndoFunc x -> SlicePolyEndoFunc x -> SlicePolyEndoFunc x
+SPFSliceProduct {a} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+  (\i => (pd i, pd' i) **
+   \(i ** (d, d')) => (dd (i ** d), dd' (i ** d')) **
+   \((i ** d) ** dd) => i)
+
+------------------------------------------------------------------------
 ------------------------------------------------------------------------
 ---- Direct interpretation of DepParamPolyFunc form of SliceFunctor ----
+------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
 public export
