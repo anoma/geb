@@ -1039,21 +1039,12 @@ gexpCata : {sa : GExpSlice -> Type} ->
 gexpCata {sa} alg = spfCata {spf=GExpSPF} {sa} (GAlgToSPF {sa} alg)
 
 public export
-GExpWTtoGExpAlg : SPFAlg GExpSPF (const GExp)
-GExpWTtoGExpAlg GSATOM (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole1_0
-GExpWTtoGExpAlg GSATOM (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole1_1
-GExpWTtoGExpAlg GSNAT (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole2_0
-GExpWTtoGExpAlg GSNAT (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole2_1
-GExpWTtoGExpAlg GSNATL (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole3_0
-GExpWTtoGExpAlg GSNATL (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole3_1
-GExpWTtoGExpAlg GSEXP (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole4_0
-GExpWTtoGExpAlg GSEXP (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole4_1
-GExpWTtoGExpAlg GSEXPL (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole5_0
-GExpWTtoGExpAlg GSEXPL (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole5_1
+GExpWTtoGExpAlg : GExpAlg (const GExp)
+GExpWTtoGExpAlg = ?GExpWTtoGExpAlg_hole
 
 public export
 gexpWTtoGExp : (sl : GExpSlice) -> GExpWT sl -> GExp
-gexpWTtoGExp = spfCata {spf=GExpSPF} {sa=(const GExp)} GExpWTtoGExpAlg
+gexpWTtoGExp = gexpCata {sa=(const GExp)} GExpWTtoGExpAlg
 
 public export
 gexpsWTtoGExp : GExpSigma -> GExp
