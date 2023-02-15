@@ -418,6 +418,10 @@ public export
 (atom : Type) => DecEq atom => DecEq ty => DecEq (FrSExpM atom ty) where
   decEq = sexpDecEq decEq
 
+public export
+(atom : Type) => DecEq atom => DecEq ty => Eq (FrSExpM atom ty) where
+  x == x' = isYes $ decEq x x'
+
 --------------------------
 ---- Monad operations ----
 --------------------------
