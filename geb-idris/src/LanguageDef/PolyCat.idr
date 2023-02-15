@@ -3206,7 +3206,10 @@ spfCompose {x} {y} {z} (qpd ** qdd ** qa) (ppd ** pdd ** pa) =
      pdd
       (qa ((fst qiqpm ** fst (snd qiqpm)) ** qddi) ** snd (snd qiqpm) qddi)) **
    \dd =>
-     pa ((qa ((fst (fst dd) ** fst (snd (fst dd))) ** fst (snd dd)) ** snd (snd (fst dd)) (fst (snd dd))) ** snd (snd dd)))
+     pa
+      ((qa ((fst (fst dd) ** fst (snd (fst dd))) ** fst (snd dd)) **
+        snd (snd (fst dd)) (fst (snd dd))) **
+       snd (snd dd)))
 
 public export
 PolyFuncFromUnitUnitSPF : SlicePolyFunc () () -> PolyFunc
@@ -3239,6 +3242,26 @@ spfDimapToBaseChange : {0 w, x, y, z : Type} ->
 spfDimapToBaseChange {w} {x} {y} {z} (posdep ** dirdep ** assign) f g sy ez
   (i ** d) =
     ((() ** const (i ** const ())) ** \(() ** (qddi ** ())) => d qddi)
+
+public export
+UnitUnitSPFFromPolyFunc : PolyFunc -> SlicePolyFunc () ()
+UnitUnitSPFFromPolyFunc (pos ** dir) = (const pos ** dir . snd ** const ())
+
+public export
+spfForgetParam : SlicePolyFunc x y -> SlicePolyFunc () y
+spfForgetParam (posdep ** dirdep ** assign) = (posdep ** dirdep ** const ())
+
+public export
+spfApplyPos : SlicePolyFunc x y -> y -> SlicePolyFunc x ()
+spfApplyPos (posdep ** dirdep ** assign) ey =
+  -- Equivalent to `SliceFuncDimap spf id (const ey)`.
+  (const (posdep ey) **
+   \pd => dirdep (ey ** snd pd) **
+   \dd => assign ((ey ** snd (fst dd)) ** snd dd))
+
+public export
+spfTopf : SlicePolyFunc x y -> y -> PolyFunc
+spfTopf spf ey = PolyFuncFromUnitUnitSPF (spfForgetParam (spfApplyPos spf ey))
 
 --------------------------------------------------------------------
 ---- Composition of parameterized dependent polynomial functors ----
