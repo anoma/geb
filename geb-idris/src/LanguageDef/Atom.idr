@@ -39,6 +39,9 @@ data GebAtom : Type where
   DIR_XCHD : GebAtom
   DIR_XCTL : GebAtom
 
+-- The rest of this file implements enumerated-type interfaces for `GebAtom`,
+-- since Idris-2 doesn't have built-in enums.
+
 public export
 GASize : Nat
 GASize = 21
