@@ -1178,3 +1178,11 @@ mapExtEq : {0 a, b : Type} -> (f, g : a -> b) -> (l : List a) ->
   ((x : a) -> f x = g x) -> map f l = map g l
 mapExtEq f g [] eq = Refl
 mapExtEq f g (x :: xs) eq = rewrite eq x in cong ((::) _) $ mapExtEq f g xs eq
+
+public export
+DecEq Void where
+  decEq _ _ impossible
+
+public export
+Eq Void where
+  _ == _ impossible
