@@ -3057,15 +3057,15 @@ SliceFuncParProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
 
 public export
 SPFBaseChange : {x, y : Type} -> (x -> y) -> SlicePolyFunc y x
-SPFBaseChange {x} {y} f = (const () ** const () ** \((ix ** ()) ** ()) => f ix)
+SPFBaseChange {x} {y} f = (const () ** const () ** \ix => f (fst (fst ix)))
 
 public export
 SliceFuncDimap : {0 w, x, y, z : Type} ->
   SlicePolyFunc w x -> (w -> y) -> (z -> x) -> SlicePolyFunc y z
 SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
   (wxp . fzx **
-   \(iz ** wxi) => wxd (fzx iz ** wxi) **
-   \((iz ** wxi) ** wxdi) => fwy (wxa ((fzx iz ** wxi) ** wxdi)))
+   \izwxi => wxd (fzx (fst izwxi) ** snd izwxi) **
+   \dd => fwy (wxa ((fzx (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
 
 ------------------------------------------------------------------------
 ---- Direct interpretation of DepParamPolyFunc form of SliceFunctor ----
@@ -3201,11 +3201,12 @@ spfCompose {x} {y} {z} (qpd ** qdd ** qa) (ppd ** pdd ** pa) =
   (\qi =>
     (qdi : qpd qi **
      (qddi : qdd (qi ** qdi)) -> ppd $ qa ((qi ** qdi) ** qddi)) **
-   \(qi ** qpm) =>
-     (qddi : qdd (qi ** fst qpm) **
-     pdd (qa ((qi ** fst qpm) ** qddi) ** snd qpm qddi)) **
-   \((qi ** (qdi ** qpm)) ** (qddi ** ppdd)) =>
-     pa ((qa ((qi ** qdi) ** qddi) ** qpm qddi) ** ppdd))
+   \qiqpm =>
+     (qddi : qdd (fst qiqpm ** fst (snd qiqpm)) **
+     pdd
+      (qa ((fst qiqpm ** fst (snd qiqpm)) ** qddi) ** snd (snd qiqpm) qddi)) **
+   \dd =>
+     pa ((qa ((fst (fst dd) ** fst (snd (fst dd))) ** fst (snd dd)) ** snd (snd (fst dd)) (fst (snd dd))) ** snd (snd dd)))
 
 public export
 PolyFuncFromUnitUnitSPF : SlicePolyFunc () () -> PolyFunc
