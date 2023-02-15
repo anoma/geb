@@ -2909,7 +2909,7 @@ WTFtoSPF : {parambase, posbase : Type} ->
   WTypeFunc parambase posbase -> SlicePolyFunc parambase posbase
 WTFtoSPF {parambase} {posbase} (MkWTF pos dir assign dsl psl) =
   (\i => PreImage {a=pos} {b=posbase} psl i **
-   \x => PreImage {a=dir} {b=posbase} (\x' => psl $ dsl x') $ fst x **
+   \x => PreImage {a=dir} {b=pos} dsl $ fst0 $ snd x **
    \d => assign $ fst0 $ snd d)
 
 public export
@@ -2931,7 +2931,8 @@ InterpWTFtoSPF : {parambase, posbase : Type} ->
     (WTFtoSPF {parambase} {posbase} wtf) sl i ->
   InterpWTF {parambase} {posbase} wtf sl i
 InterpWTFtoSPF (MkWTF pos dir assign dsl psl) sl ib ((Element0 i eqi) ** p) =
-  ((Element0 i eqi) ** \(Element0 d eqd) => p (Element0 d $ rewrite eqd in eqi))
+  ((Element0 i eqi) **
+   \(Element0 d eqd) => p (Element0 d $ rewrite eqd in Refl))
 
 public export
 InterpSPFtoWTF : {parambase, posbase : Type} ->
