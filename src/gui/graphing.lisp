@@ -64,10 +64,10 @@ Note at the end is not pre-pended by any special information"
 
 (defclass node (meta-mixin)
   ;; this is the data we end up showing
-  ((value :initarg :value
+  (;; this is the real data this is representing
+   (value :initarg :value
           :accessor value
           :documentation "The value to display")
-   ;; this is the real data this is representing
    (representation :initarg :representation
                    :accessor representation
                    :documentation "The real data backing the presentation")
@@ -147,9 +147,10 @@ to be merged"))
                               :value (graphize node (cons-note goal notes)))))
             (let* ((first-child  (make-child (mcar morph) "χ₁"))
                    (second-child (make-child (mcadr morph) "χ₂"))
-                   (our-node     (make-instance 'node
-                                                :representation morph
-                                                :value (dom morph))))
+                   (our-node     (make-squash :value
+                                              (make-instance 'node
+                                                             :representation morph
+                                                             :value (dom morph)))))
               (apply-note our-node second-child)
               (apply-note our-node first-child)))))
       ;; (pair g f)
@@ -161,13 +162,13 @@ to be merged"))
       ;;      ---f--> Z ------
       ;;                Π₂
       (pair
-       (let ((goal (graphize (dom morph) nil)))
+       (let ((goal (graphize (codom morph) nil)))
          (flet ((make-child (node note)
                   ;; we ignore the node made as it's just the node we made
                   (children
                    (graphize node
-                             (cons (make-note :from morph :note note :value goal)
-                                   notes)))))
+                             (cons-note (make-note :from morph :note note :value goal)
+                                        notes)))))
            (make-instance 'node
                           :value (dom morph)
                           :representation morph
@@ -221,8 +222,10 @@ to be merged"))
                               (cdr notes)))
            (squash-note notes))))))
 
-(-> apply-note (node note) node)
-(defun apply-note (node note)
+;; node, squash
+
+(-> apply-note (note note) node)
+(defun apply-note (note-to-be-on note)
   "Here we apply the NOTE to the NODE.
 
 In the case of a new node, we record down the information in the note,
@@ -233,10 +236,18 @@ In the case of a squash-note, we instead just return the squash-note
 as that is the proper NODE to continue from"
   (assure node
     (etypecase-of note note
-      (node-note (update-meta-data-with-note node note)
-                 (push (value note) (children node))
-                 node)
-      (squash-note (value note)))))
+      (node-note (let ((node (value note-to-be-on)))
+                   (update-meta-data-with-note node note)
+                   (push (value note) (children node))
+                   node))
+      (squash-note
+       (etypecase-of note note-to-be-on
+         (node-note
+          (push (value note)
+                (children (value note-to-be-on)))
+          (value note-to-be-on))
+         (squash-note
+          (value note)))))))
 
 (-> apply-notes (node list) node)
 (defun apply-notes (node notes)
@@ -245,7 +256,7 @@ as that is the proper NODE to continue from"
     ;; collapse the nodes, these should all be nodes, due to how we
     ;; constructed it
     (mvfold (lambda (note child-note)
-              (apply-note (value note) child-note)
+              (apply-note note child-note)
               child-note)
             (cdr notes-with-node)
             (car notes-with-node))

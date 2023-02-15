@@ -62,9 +62,12 @@
               (1/10 interactor)))))
 
 (defun display-app (frame pane)
-  (if (graph-p frame)
-      (display-graph frame pane)
-      (present-object (root frame) pane)))
+  (cond ((typep (root frame) 'graph:node)
+         (graph-node (root frame) pane))
+        ((graph-p frame)
+         (display-graph frame pane))
+        (t
+         (present-object (root frame) pane))))
 
 (defun display-graph (frame pane)
   ;; cache this later
