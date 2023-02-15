@@ -938,19 +938,19 @@ GExpXL : Type
 GExpXL = GExpWT GSEXPL
 
 public export
-record GExpAlg (ty : GExpSlice -> Type) where
+record GExpAlg (sa : GExpSlice -> Type) where
   constructor GAlg
-  galgA : GebAtom -> ty GSATOM
-  galgZ : ty GSNAT
-  galgS : ty GSNAT -> ty GSNAT
-  galgNN : ty GSNATL
-  galgNC : ty GSNAT -> ty GSNATL -> ty GSNATL
-  galgEXP : ty GSATOM -> ty GSNATL -> ty GSEXPL -> ty GSEXP
-  galgXN : ty GSEXPL
-  galgXC : ty GSEXP -> ty GSEXPL -> ty GSEXPL
+  galgA : GebAtom -> sa GSATOM
+  galgZ : sa GSNAT
+  galgS : sa GSNAT -> sa GSNAT
+  galgNN : sa GSNATL
+  galgNC : sa GSNAT -> sa GSNATL -> sa GSNATL
+  galgEXP : sa GSATOM -> sa GSNATL -> sa GSEXPL -> sa GSEXP
+  galgXN : sa GSEXPL
+  galgXC : sa GSEXP -> sa GSEXPL -> sa GSEXPL
 
 public export
-GAlgToSPF : {ty : GExpSlice -> Type} -> GExpAlg ty -> SPFAlg GExpSPF ty
+GAlgToSPF : {sa : GExpSlice -> Type} -> GExpAlg sa -> SPFAlg GExpSPF sa
 GAlgToSPF alg GSATOM (Element0 (GPA a) isl ** d) =
   alg.galgA a
 GAlgToSPF alg GSATOM (Element0 (GPNAP GPNAZ) isl ** d) =
@@ -1036,7 +1036,7 @@ GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNAXC) isl ** d) =
 public export
 gexpCata : {sa : GExpSlice -> Type} ->
   GExpAlg sa -> SliceMorphism {a=GExpSlice} GExpWT sa
-gexpCata {sa} alg = spfCata {spf=GExpSPF} {sa} (GAlgToSPF {ty=sa} alg)
+gexpCata {sa} alg = spfCata {spf=GExpSPF} {sa} (GAlgToSPF {sa} alg)
 
 public export
 GExpWTtoGExpAlg : SPFAlg GExpSPF (const GExp)
