@@ -261,7 +261,7 @@ gx1 : GExp
 gx1 = InS SL_EXP [1, 2, 3] [InS SL_NAT [2] [], InS SL_EXPL [] []]
 
 frgx1 : FrGExp String
-frgx1 = InSF SL_EXP [1, 2, 3] [InSF SL_NAT [2] [], InSXV "coproduct"]
+frgx1 = InSF SL_EXP [1, 2, 3] [InSF SL_NAT [2] [], InSXV "sl_expl"]
 
 ---------------------------------------
 ---------------------------------------
@@ -349,6 +349,8 @@ languageDefSyntaxTest = do
     [
         ("frgx1", frgx1)
     ]
+  putStrLn ""
+  putStrLn $ "wt1 = " ++ show wt1
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End SyntaxTest."
