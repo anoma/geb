@@ -1034,6 +1034,11 @@ GAlgToSPF ty alg GSEXPL (Element0 (GPNAP GPNAXC) isl ** d) =
   alg.galgXC (d $ Element0 GDXCHD Refl) (d $ Element0 GDXCTL Refl)
 
 public export
+gexpCata : {sa : GExpSlice -> Type} ->
+  GExpAlg sa -> SliceMorphism {a=GExpSlice} GExpWT sa
+gexpCata {sa} alg = spfCata {spf=GExpSPF} {sa} (GAlgToSPF sa alg)
+
+public export
 GExpWTtoGExpAlg : SPFAlg GExpSPF (const GExp)
 GExpWTtoGExpAlg GSATOM (Element0 (GPA a) isl ** d) = ?GExpWTtoGExpAlg_hole1_0
 GExpWTtoGExpAlg GSATOM (Element0 (GPNAP i) isl ** d) = ?GExpWTtoGExpAlg_hole1_1
