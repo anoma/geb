@@ -3164,6 +3164,10 @@ SPFSliceProduct {a} (pd ** dd ** asn) (pd' ** dd' ** asn') =
 -------------------------------------------------------------
 -------------------------------------------------------------
 
+---------------------------------
+---- Within a slice category ----
+---------------------------------
+
 public export
 SliceObjInitial : (a : Type) -> SliceObj a
 SliceObjInitial a = const Void
@@ -3239,6 +3243,34 @@ sliceObjCurry f ea sea sea' = f ea (sea, sea')
 public export
 sliceObjId : (sl : SliceObj a) -> SliceMorphism {a} sl sl
 sliceObjId sl ea = id
+
+-------------------------------------------------
+---- In the two-category of slice categories ----
+-------------------------------------------------
+
+public export
+SlicePolyCoprod : SliceObj a -> SliceObj b -> SliceObj (Either a b)
+SlicePolyCoprod sa sb (Left ea) = sa ea
+SlicePolyCoprod sa sb (Right eb) = sb eb
+
+public export
+SlicePolyProd : SliceObj a -> SliceObj b -> SliceObj (a, b)
+SlicePolyProd sa sb (ea, eb) = (sa ea, sb eb)
+
+public export
+sliceMorphCoproduct : {sa, sa' : SliceObj a} -> {sb, sb' : SliceObj b} ->
+  SliceMorphism {a} sa sa' -> SliceMorphism {a=b} sb sb' ->
+  SliceMorphism {a=(Either a b)}
+    (SlicePolyCoprod sa sb) (SlicePolyCoprod sa' sb')
+sliceMorphCoproduct ma mb (Left ea) sea = ma ea sea
+sliceMorphCoproduct ma mb (Right eb) seb = mb eb seb
+
+public export
+sliceMorphProduct : {sa, sa' : SliceObj a} -> {sb, sb' : SliceObj b} ->
+  SliceMorphism {a} sa sa' -> SliceMorphism {a=b} sb sb' ->
+  SliceMorphism {a=(a, b)}
+    (SlicePolyProd sa sb) (SlicePolyProd sa' sb')
+sliceMorphProduct ma mb (ea, eb) (sea, seb) = (ma ea sea, mb eb seb)
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
