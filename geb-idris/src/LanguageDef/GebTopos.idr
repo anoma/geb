@@ -1051,9 +1051,146 @@ GExpWTtoGExpAlg : GExpAlg GExpWTtoGExpAlgSl
 GExpWTtoGExpAlg = GAlg id 0 S [] (::) InS [] (::)
 
 public export
-gexpWTtoGExp : SliceMorphism {a=GExpSlice} GExpWT GExpWTtoGExpAlgSl
-gexpWTtoGExp = gexpCata GExpWTtoGExpAlg
+gexpWTtoGExpSl : SliceMorphism {a=GExpSlice} GExpWT GExpWTtoGExpAlgSl
+gexpWTtoGExpSl = gexpCata GExpWTtoGExpAlg
 
 public export
-gexpsWTtoGExp : GExpX -> GExp
-gexpsWTtoGExp = gexpWTtoGExp GSEXP
+gexpWTtoGExp : GExpX -> GExp
+gexpWTtoGExp = gexpWTtoGExpSl GSEXP
+
+public export
+Show GExpX where
+  show = show . gexpWTtoGExp
+
+public export
+InGA : GebAtom -> GExpA
+InGA a = InSPFM (GSATOM ** Element0 (GPA a) Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGZ : GExpN
+InGZ = InSPFM (GSNAT ** Element0 GPZ Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGS : GExpN -> GExpN
+InGS n = InSPFM (GSNAT ** Element0 GPS Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => n
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGNat : Nat -> GExpN
+InGNat Z = InGZ
+InGNat (S n) = InGS (InGNat n)
+
+public export
+InGNN : GExpNL
+InGNN = InSPFM (GSNATL ** Element0 GPNN Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGNC : GExpN -> GExpNL -> GExpNL
+InGNC n ns = InSPFM (GSNATL ** Element0 GPNC Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => n
+    GDNCTL => ns
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGNatC : Nat -> GExpNL -> GExpNL
+InGNatC n ns = InGNC (InGNat n) ns
+
+public export
+InGNatList : List Nat -> GExpNL
+InGNatList = foldr InGNatC InGNN
+
+public export
+InGXN : GExpXL
+InGXN = InSPFM (GSEXPL ** Element0 GPXN Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGXC : GExpX -> GExpXL -> GExpXL
+InGXC x xs = InSPFM (GSEXPL ** Element0 GPXC Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => x
+    GDXCTL => xs
+
+public export
+InGX : GebAtom -> GExpNL -> GExpXL -> GExpX
+InGX a ns xs = InSPFM (GSEXP ** Element0 GPX Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => InGA a
+    GDXNL => ns
+    GDXXL => xs
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGNatX : GebAtom -> List Nat -> GExpXL -> GExpX
+InGNatX a ns = InGX a (InGNatList ns)
+
+public export
+InGExpList : List GExpX -> GExpXL
+InGExpList = foldr InGXC InGXN
+
+public export
+GExpToWTAlg : SXLAlg GebAtom GExpX GExpXL
+GExpToWTAlg = SXA InGNatX InGXN InGXC
+
+public export
+gexpToWT : GExp -> GExpX
+gexpToWT = sxCata GExpToWTAlg

@@ -2,6 +2,7 @@ module LanguageDef.Test.SyntaxTest
 
 import Test.TestLibrary
 import LanguageDef.Syntax
+import LanguageDef.GebTopos
 
 %default total
 
@@ -262,6 +263,17 @@ gx1 = InS SL_EXP [1, 2, 3] [InS SL_NAT [2] [], InS SL_EXPL [] []]
 frgx1 : FrGExp String
 frgx1 = InSF SL_EXP [1, 2, 3] [InSF SL_NAT [2] [], InSXV "coproduct"]
 
+---------------------------------------
+---------------------------------------
+---- W-type representation of SExp ----
+---------------------------------------
+---------------------------------------
+
+wt1 : GExpX
+wt1 = gexpToWT gx1
+
+wt1_correct : Assertion
+wt1_correct = Assert $ gexpWTtoGExp wt1 == gx1
 
 ----------------------------------
 ----------------------------------
