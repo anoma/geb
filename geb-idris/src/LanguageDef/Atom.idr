@@ -38,10 +38,12 @@ data GebAtom : Type where
   DIR_NCTL : GebAtom
   DIR_XCHD : GebAtom
   DIR_XCTL : GebAtom
+  ATOM_Z : GebAtom
+  ATOM_S : GebAtom
 
 public export
 GASize : Nat
-GASize = 21
+GASize = 23
 
 public export
 GAFin : Type
@@ -86,6 +88,12 @@ GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS FZ)))))))))))))))))))) =
     DIR_XCTL
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))) =
+    ATOM_Z
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))) =
+    ATOM_S
 
 public export
 GAEncoder : NatEncoder GADecoder
@@ -110,6 +118,8 @@ GAEncoder DIR_NCHD = (17 ** Refl ** Refl)
 GAEncoder DIR_NCTL = (18 ** Refl ** Refl)
 GAEncoder DIR_XCHD = (19 ** Refl ** Refl)
 GAEncoder DIR_XCTL = (20 ** Refl ** Refl)
+GAEncoder ATOM_Z = (21 ** Refl ** Refl)
+GAEncoder ATOM_S = (22 ** Refl ** Refl)
 
 public export
 GebAtomEncoding : FinDecEncoding GebAtom GASize
@@ -138,6 +148,8 @@ gaToString DIR_NCHD = "DIR_NCHD"
 gaToString DIR_NCTL = "DIR_NCTL"
 gaToString DIR_XCHD = "DIR_XCHD"
 gaToString DIR_XCTL = "DIR_XCTL"
+gaToString ATOM_Z = "ATOM_Z"
+gaToString ATOM_S = "ATOM_S"
 
 public export
 Show GebAtom where
