@@ -3093,6 +3093,12 @@ public export
 SPFPolyHom : (x, y : Type) -> SlicePolyFunc y y
 SPFPolyHom x y = (const Unit ** const x ** fst . fst)
 
+-- The diagonal functor which makes `y` copies of its input (and assigns
+-- them all the parameter `ex`).
+public export
+SPFPolyDiag : (x, y : Type) -> x -> SlicePolyFunc x y
+SPFPolyDiag x y ex = (const Unit ** const Unit ** const ex)
+
 -----------------------------------------------
 ---- Base changes and profunctor structure ----
 -----------------------------------------------
