@@ -1206,28 +1206,44 @@ gwexpToWT = sxCata GWExpToWTAlg
 -- representation.  This is largely for comparison of the resulting
 -- code.
 
+------------------------------------------
+---- List (parameterized) endofunctor ----
+------------------------------------------
+
+public export
+GListF : PolyFunc -> PolyFunc
+GListF = pfCompositionArena pfMaybeArena
+
+public export
+GListPos : PolyFunc -> Type
+GListPos = pfPos . GListF
+
+public export
+GListDir : (p : PolyFunc) -> GListPos p -> Type
+GListDir p = pfDir {p=(GListF p)}
+
 ------------------------------------
 ---- Natural number endofunctor ----
 ------------------------------------
 
 public export
 GNatF : PolyFunc
-GNatF = pfMaybeArena
+GNatF = GListF PFIdentityArena
 
 public export
 GNatPos : Type
-GNatPos = pfPos GNatF
+GNatPos = GListPos GNatF
 
 public export
 GNatDir : GNatPos -> Type
-GNatDir = pfDir {p=GNatF}
+GNatDir = GListDir GNatF
 
 public export
 gNatPosAtom : GNatPos -> GebAtom
-gNatPosAtom (Left ()) = POS_S
-gNatPosAtom (Right ()) = POS_Z
+gNatPosAtom (Left () ** d) = POS_S
+gNatPosAtom (Right () ** d) = POS_Z
 
 public export
 gNatDirAtom : (i : GNatPos) -> GNatDir i -> GebAtom
-gNatDirAtom (Left ()) () = DIR_S
-gNatDirAtom (Right ()) d = void d
+gNatDirAtom (Left () ** d) (() ** (di ** ())) = DIR_S
+gNatDirAtom (Right () ** d) (v ** di) = void v
