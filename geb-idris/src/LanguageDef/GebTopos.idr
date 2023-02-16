@@ -1275,13 +1275,13 @@ gNatPosAtom (Left ()) = POS_S
 gNatPosAtom (Right ()) = POS_Z
 
 public export
-gNatDirAtom : SliceMorphism {a=GNatPos} GNatDir (const GebAtom)
-gNatDirAtom (Left ()) () = DIR_S
-gNatDirAtom (Right ()) v = void v
+gNatDirAtom : Sigma {a=GNatPos} GNatDir -> GebAtom
+gNatDirAtom ((Left ()) ** ()) = DIR_S
+gNatDirAtom ((Right ()) ** v) = void v
 
---------------------------------
----- Expression endofunctor ----
---------------------------------
+------------------------------------------
+---- Expression-component endofunctor ----
+------------------------------------------
 
 public export
 data GExpXDir : Type where
@@ -1308,10 +1308,10 @@ GExpPosAtom : GExpPos -> GebAtom
 GExpPosAtom () = POS_X
 
 public export
-GExpDirAtom : SliceMorphism {a=GExpPos} GExpDir (const GebAtom)
-GExpDirAtom () GDA = DIR_XA
-GExpDirAtom () GDNL = DIR_XNL
-GExpDirAtom () GDXL = DIR_XXL
+GExpDirAtom : Sigma {a=GExpPos} GExpDir -> GebAtom
+GExpDirAtom (() ** GDA) = DIR_XA
+GExpDirAtom (() ** GDNL) = DIR_XNL
+GExpDirAtom (() ** GDXL) = DIR_XXL
 
 -----------------------------------------
 ---- Natural number list endofunctor ----
@@ -1339,7 +1339,7 @@ GNatLFPosAtom False = POS_NN
 GNatLFPosAtom True = POS_NC
 
 public export
-GNatLFDirAtom : SliceMorphism {a=GNatLFPos} GNatLFDir (const GebAtom)
-GNatLFDirAtom False d = void d
-GNatLFDirAtom True False = DIR_NCHD
-GNatLFDirAtom True True = DIR_NCTL
+GNatLFDirAtom : Sigma {a=GNatLFPos} GNatLFDir -> GebAtom
+GNatLFDirAtom (False ** d) = void d
+GNatLFDirAtom (True ** False) = DIR_NCHD
+GNatLFDirAtom (True ** True) = DIR_NCTL
