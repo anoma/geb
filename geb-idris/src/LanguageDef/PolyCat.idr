@@ -3099,9 +3099,13 @@ public export
 SPFPolyDiag : (x, y : Type) -> x -> SlicePolyFunc x y
 SPFPolyDiag x y ex = (const Unit ** const Unit ** const ex)
 
------------------------------------------------
----- Base changes and profunctor structure ----
------------------------------------------------
+----------------------------------------------
+---- As functors between slice categories ----
+----------------------------------------------
+
+-- Special dependent polynomial functors include base change, dependent
+-- product, and dependent coproduct.  Also, pre- and post-composition of
+-- base changes induce a profunctor structure (`dimap`).
 
 public export
 SPFBaseChange : {x, y : Type} -> (x -> y) -> SlicePolyFunc y x
