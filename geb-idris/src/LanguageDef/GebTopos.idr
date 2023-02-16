@@ -1227,19 +1227,27 @@ GAtomDir = pfDir {p=GAtomF}
 ------------------------------------------
 
 public export
-GListPos : PolyFunc -> SliceObj Bool
+GListSlice : Type
+GListSlice = Bool  -- False = input PolyFunc; True = list of input PolyFunc
+
+public export
+GListPosL : Type
+GListPosL = Bool  -- False = nil; True = cons
+
+public export
+GListPos : PolyFunc -> SliceObj GListSlice
 GListPos p False = pfPos p
-GListPos p True = Bool
+GListPos p True = GListPosL
 
 public export
-GListDirL : SliceObj Bool
-GListDirL False = Void -- nil
-GListDirL True = Bool -- cons
+GListDirL : SliceObj GListPosL
+GListDirL False = Void -- nil has no directions
+GListDirL True = Bool -- cons has two directions
 
 public export
-GListDir : Pi {a=PolyFunc} (Slice2Obj {a=Bool} . GListPos)
-GListDir p False i = pfDir {p} i
-GListDir p True i = GListDirL i
+GListDir : Pi {a=PolyFunc} (Slice2Obj {a=GListSlice} . GListPos)
+GListDir p False = pfDir {p}
+GListDir p True = GListDirL
 
 public export
 GListF : PolyFunc -> SlicePolyEndoFunc Bool
