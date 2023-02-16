@@ -42,7 +42,7 @@ main = do
   LanguageDef.Test.PolyCatTest.polyCatTest
   LanguageDef.Test.NatPrefixCatTest.natPrefixCatTest
   LanguageDef.Test.PolyProfunctorTest.polyProfunctorTest
+  LanguageDef.Test.ADTCatTest.adtCatTest
   LanguageDef.Test.ProgFinSetTest.progFinSetTest
   LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
   LanguageDef.Test.GebToposTest.gebToposTest
-  LanguageDef.Test.ADTCatTest.adtCatTest

@@ -2879,8 +2879,437 @@ InterpSPFMap {a} {b} spf {sa} {sa'} =
   PredDepPolyFMap
     {parambase=a} {posbase=b} (spfPos spf) (spfDir spf) (spfAssign spf) sa sa'
 
+------------------------------------------------------
+---- Dependent polynomial endofunctors as W-types ----
+------------------------------------------------------
+
+public export
+record WTypeFunc (parambase, posbase : Type) where
+  constructor MkWTF
+  wtPos : Type
+  wtDir : Type
+  wtAssign : wtDir -> parambase
+  wtDirSlice : wtDir -> wtPos
+  wtPosSlice : wtPos -> posbase
+
+public export
+WTypeEndoFunc : Type -> Type
+WTypeEndoFunc base = WTypeFunc base base
+
+public export
+InterpWTF : {parambase, posbase : Type} ->
+  WTypeFunc parambase posbase -> SliceFunctor parambase posbase
+InterpWTF {parambase} {posbase} (MkWTF pos dir assign dsl psl) sl ib =
+  (i : PreImage {a=pos} {b=posbase} psl ib **
+   (d : PreImage {a=dir} {b=pos} dsl (fst0 i)) ->
+   sl $ assign $ fst0 d)
+
+public export
+WTFtoSPF : {parambase, posbase : Type} ->
+  WTypeFunc parambase posbase -> SlicePolyFunc parambase posbase
+WTFtoSPF {parambase} {posbase} (MkWTF pos dir assign dsl psl) =
+  (\i => PreImage {a=pos} {b=posbase} psl i **
+   \x => PreImage {a=dir} {b=pos} dsl $ fst0 $ snd x **
+   \d => assign $ fst0 $ snd d)
+
+public export
+SPFtoWTF : {parambase, posbase : Type} ->
+  SlicePolyFunc parambase posbase -> WTypeFunc parambase posbase
+SPFtoWTF (posdep ** dirdep ** assign) =
+  MkWTF
+    (Sigma {a=posbase} posdep)
+    (Sigma {a=(Sigma {a=posbase} posdep)} dirdep)
+    assign
+    fst
+    fst
+
+public export
+InterpWTFtoSPF : {parambase, posbase : Type} ->
+  (wtf : WTypeFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpSPFunc {a=parambase} {b=posbase}
+    (WTFtoSPF {parambase} {posbase} wtf) sl ib ->
+  InterpWTF {parambase} {posbase} wtf sl ib
+InterpWTFtoSPF (MkWTF pos dir assign dsl psl) sl ib = id
+
+public export
+InterpWTFtoSPFInv : {parambase, posbase : Type} ->
+  (wtf : WTypeFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpWTF {parambase} {posbase} wtf sl ib ->
+  InterpSPFunc {a=parambase} {b=posbase}
+    (WTFtoSPF {parambase} {posbase} wtf) sl ib
+InterpWTFtoSPFInv (MkWTF pos dir assign dsl psl) sl ib = id
+
+public export
+InterpSPFtoWTF : {parambase, posbase : Type} ->
+  (spf : SlicePolyFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib ->
+  InterpSPFunc {a=parambase} {b=posbase} spf sl ib
+InterpSPFtoWTF {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
+  (Element0 {type=(Sigma {a=posbase} posdep)} (ib' ** i) eq ** p) =
+    (rewrite sym eq in i **
+     \d => p $
+      Element0 ((ib ** rewrite sym eq in i) ** d) (rewrite sym eq in Refl))
+
+public export
+InterpSPFtoWTFInv : {parambase, posbase : Type} ->
+  (spf : SlicePolyFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpSPFunc {a=parambase} {b=posbase} spf sl ib ->
+  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib
+InterpSPFtoWTFInv {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
+  (i ** d) =
+    (Element0 (ib ** i) Refl **
+     \(Element0 (i' ** di) deq) => rewrite deq in d $ rewrite sym deq in di)
+
+-----------------------------------------------------
+---- Parameterized dependent polynomial functors ----
+-----------------------------------------------------
+
+public export
+ParamSPF : {a : Type} -> (x, y : SliceObj a) -> Type
+ParamSPF {a} x y = (ea : a) -> SlicePolyFunc (x ea) (y ea)
+
+public export
+SPFFromParam : {0 a : Type} -> {0 x, y : SliceObj a} ->
+  ParamSPF {a} x y -> SlicePolyFunc (Sigma {a} x) (Sigma {a} y)
+SPFFromParam {a} {x} {y} pspf =
+  (\iy => fst (pspf (fst iy)) (snd iy) **
+   \dp => fst (snd (pspf (fst (fst dp)))) (snd (fst dp) ** (snd dp)) **
+   \dd =>
+    (fst (fst (fst dd)) **
+     snd
+      (snd (pspf (DPair.fst (fst (fst dd)))))
+      ((snd (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
+
+public export
+SPFToParam : {0 a : Type} -> {0 x, y : SliceObj a} ->
+  SlicePolyFunc (Sigma {a} x) (Sigma {a} y) ->
+  ParamSPF {a} x y
+SPFToParam {a} {x} {y} (posdep ** dirdep ** assign) ea =
+  (posdep . MkDPair ea **
+   \pd =>
+    (dd : dirdep ((ea ** fst pd) ** snd pd) **
+     fst (assign (((ea ** fst pd) ** snd pd) ** dd)) = ea) **
+   \((yea ** pd) ** (dd ** eq)) =>
+    replace {p=x} eq $ snd $ assign (((ea ** yea) ** pd) ** dd))
+
+-- Given a parameterized dependent polynomial functor, we can extend its
+-- domain and codomain slices by pairing them with a third slice.
+public export
+ParamSPFProd : {a : Type} -> {x, y, z : SliceObj a} ->
+  ParamSPF {a} x y -> ParamSPF {a} (SliceProduct x z) (SliceProduct y z)
+ParamSPFProd {a} {x} {y} {z} pspf ea =
+  (fst (pspf ea) . fst **
+   \((yea, zea) ** pyea) => fst (snd (pspf ea)) (yea ** pyea) **
+   \(((yea, zea) ** pyea) ** ppyea) =>
+    (snd (snd (pspf ea)) ((yea ** pyea) ** ppyea), zea))
+
+---------------------------------------------------------------
+---------------------------------------------------------------
+---- Various categories of (dependent) polynomial functors ----
+---------------------------------------------------------------
+---------------------------------------------------------------
+
+-------------------
+---- As `Poly` ----
+-------------------
+
+-- We may view dependent polynomial functors as non-dependent endofunctors
+-- in the category `Poly` on `(Fin)ADT`.  In this view, the domain slice
+-- is the object of positions of the corresponding non-dependent functor,
+-- and the codomain slice is erased.
+
+-- The initial object of `Poly`, viewed as a dependent endofunctor.
+-- Equivalently, this is the unique morphism out of the initial object
+-- in the category of slice categories (i.e., the two-category whose objects
+-- are slice categories of `(Fin)ADT` and whose morphisms are dependent
+-- polynomial endofunctors).
+public export
+SPFPolyInitial : (z : Type) -> SlicePolyFunc Void z
+SPFPolyInitial z = (const Void ** const Void ** \x => void $ snd x)
+
+-- The terminal object of `Poly`, viewed as a dependent endofunctor.
+-- Equivalently, this is the unique morphism into the terminal object
+-- in the category of slice categories (i.e., the two-category whose objects
+-- are slice categories of `(Fin)ADT` and whose morphisms are dependent
+-- polynomial endofunctors).
+public export
+SPFPolyTerminal : (y : Type) -> SlicePolyFunc y ()
+SPFPolyTerminal y = (const Unit ** const Void ** \x => void $ snd x)
+
+-- A coproduct in `Poly`, which produces, given two dependent functors,
+-- a functor whose domain and codomain are the coproducts of the domains
+-- and codomains of the given functors.
+public export
+SPFPolyCoprod : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> SlicePolyFunc y z ->
+  SlicePolyFunc (Either w y) (Either x z)
+SPFPolyCoprod {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+  (\ixz => (case ixz of Left ix => wxp ix ; Right iz => yzp iz) **
+   \(ixz ** wxyzi) => (case ixz of
+      Left ix => wxd (ix ** wxyzi)
+      Right iz => yzd (iz ** wxyzi)) **
+   \((ixz ** wxyzi) ** wxyzdi) => (case ixz of
+      Left ix => Left $ wxa ((ix ** wxyzi) ** wxyzdi)
+      Right iz => Right $ yza ((iz ** wxyzi) ** wxyzdi)))
+
+-- A product in `Poly`, which produces, given two dependent functors,
+-- a functor whose domain is the coproduct of the domains of the given functors,
+-- and whose codomain is the product of the codomains of the given functors.
+public export
+SPFPolyProd : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (Either w y) (x, z)
+SPFPolyProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+  (\(ix, iz) => (wxp ix, yzp iz) **
+   \((ix, iz) ** (wxi, yzi)) => Either (wxd (ix ** wxi)) (yzd (iz ** yzi)) **
+   \(((ix, iz) ** (wxi, yzi)) ** wxyzdi) => (case wxyzdi of
+      Left wxdi => Left $ wxa ((ix ** wxi) ** wxdi)
+      Right yzdi => Right $ yza ((iz ** yzi) ** yzdi)))
+
+-- A parallel product in `Poly`, which produces, given two dependent functors,
+-- a functor whose domain and codomain are the products of the domains
+-- and codomains of the given functors.
+public export
+SPFPolyParProd : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> SlicePolyFunc y z -> SlicePolyFunc (w, y) (x, z)
+SPFPolyParProd {w} {x} {y} {z} (wxp ** wxd ** wxa) (yzp ** yzd ** yza) =
+  (\(ix, iz) => (wxp ix, yzp iz) **
+   \((ix, iz) ** (wxi, yzi)) => (wxd (ix ** wxi), (yzd (iz ** yzi))) **
+   \(((ix, iz) ** (wxi, yzi)) ** (wxdi, yzdi)) =>
+      (wxa ((ix ** wxi) ** wxdi), yza ((iz ** yzi) ** yzdi)))
+
+-- The identity endofunctor in `Poly`, which may also be viewed as the identity
+-- endofunctor in any slice category (`spfId y` for any `y`).
+public export
+SPFPolyId : (y : Type) -> SlicePolyFunc y y
+SPFPolyId y = (const Unit ** const Unit ** fst . fst)
+
+-- A (covariant) hom-functor in `Poly`, which may also be viewed as the same
+-- hom-functor in any slice category (by precomposition).
+public export
+SPFPolyHom : (x, y : Type) -> SlicePolyFunc y y
+SPFPolyHom x y = (const Unit ** const x ** fst . fst)
+
+-- The diagonal functor which makes `y` copies of its input (and assigns
+-- them all the parameter `ex`).
+public export
+SPFPolyDiag : (x, y : Type) -> x -> SlicePolyFunc x y
+SPFPolyDiag x y ex = (const Unit ** const Unit ** const ex)
+
+----------------------------------------------
+---- As functors between slice categories ----
+----------------------------------------------
+
+-- Special dependent polynomial functors include base change, dependent
+-- product, and dependent coproduct.  Also, pre- and post-composition of
+-- base changes induce a profunctor structure (`dimap`).
+
+public export
+SPFBaseChange : {x, y : Type} -> (x -> y) -> SlicePolyFunc y x
+SPFBaseChange {x} {y} f = (const () ** const () ** \ix => f (fst (fst ix)))
+
+-- Right adjoint to `SPFBaseChange`.
+public export
+SPFDepProd : {a, b : Type} -> (0 _ : a -> b) -> SlicePolyFunc a b
+SPFDepProd {a} {b} f =
+  (const Unit ** \eb => PreImage f (fst eb) ** \dp => fst0 $ snd dp)
+
+-- Left adjoint to `SPFBaseChange`.
+public export
+SPFDepCoprod : {a, b : Type} -> (0 _ : a -> b) -> SlicePolyFunc a b
+SPFDepCoprod {a} {b} f =
+  (\eb => PreImage f eb ** const Unit ** \dp => fst0 (snd (fst dp)))
+
+-- A special case of `SPFDepProd` where `b` is `Unit` -- so that the
+-- codomain of the functor is (isomorphic to) `Type`.
+public export
+SPFPi : (a : Type) -> SlicePolyFunc a ()
+SPFPi a = (const Unit ** const a ** DPair.snd)
+
+-- A special case of `SPFDepCoprod` where `b` is `Unit` -- so that the
+-- codomain of the functor is (isomorphic to) `Type`.
+public export
+SPFSigma : (a : Type) -> SlicePolyFunc a ()
+SPFSigma a = (const a ** const Unit ** DPair.snd . DPair.fst)
+
+-- Precomposition and postcomposition by base change give `SlicePolyFunc`
+-- itself a profunctor structure (`dimap`).  (Note that, written as it is
+-- here, it is covariant in its first argument and contravariant in the
+-- second -- the reverse of the standard definition of profunctor.)
+public export
+SliceFuncDimap : {0 w, x, y, z : Type} ->
+  SlicePolyFunc w x -> (w -> y) -> (z -> x) -> SlicePolyFunc y z
+SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
+  (wxp . fzx **
+   \izwxi => wxd (fzx (fst izwxi) ** snd izwxi) **
+   \dd => fwy (wxa ((fzx (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
+
+---------------------------------------------
+---- As endofunctors on slice categories ----
+---------------------------------------------
+
+-- For a given `x`, the endofunctor category `SlicePolyEndoFunc x` is
+-- a topos, so in particular it has the same structure of finite products
+-- and coproducts as `Poly`.
+
+-- The initial object in the category of polynomial endofunctors on
+-- the slice category `Type/x`.
+public export
+SPFSliceInitial : (x : Type) -> SlicePolyEndoFunc x
+SPFSliceInitial x =
+  (const Void ** \x => void (snd x) ** \x => void $ snd $ fst x)
+
+-- The terminal object in the category of polynomial endofunctors on
+-- the slice category `Type/x`.
+public export
+SPFSliceTerminal : (x : Type) -> SlicePolyEndoFunc x
+SPFSliceTerminal x = (const Unit ** const Void ** \x => void $ snd x)
+
+-- The coproduct in the category of polynomial endofunctors on
+-- the slice category `Type/x`.
+public export
+SPFSliceCoproduct : {a : Type} ->
+  SlicePolyEndoFunc x -> SlicePolyEndoFunc x -> SlicePolyEndoFunc x
+SPFSliceCoproduct {a} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+  (\i => Either (pd i) (pd' i) **
+   \(i ** d) => (case d of
+    Left d' => dd (i ** d')
+    Right d' => dd' (i ** d')) **
+   \((i ** d) ** dd) => (case d of
+    Left d' => i
+    Right d' => i))
+
+-- The product in the category of polynomial endofunctors on
+-- the slice category `Type/x`.
+public export
+SPFSliceProduct : {a : Type} ->
+  SlicePolyEndoFunc x -> SlicePolyEndoFunc x -> SlicePolyEndoFunc x
+SPFSliceProduct {a} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+  (\i => (pd i, pd' i) **
+   \(i ** (d, d')) => (dd (i ** d), dd' (i ** d')) **
+   \((i ** d) ** dd) => i)
+
+-------------------------------------------------------------
+-------------------------------------------------------------
+---- Universal objects and morphisms in slice categories ----
+-------------------------------------------------------------
+-------------------------------------------------------------
+
+---------------------------------
+---- Within a slice category ----
+---------------------------------
+
+public export
+SliceObjInitial : (a : Type) -> SliceObj a
+SliceObjInitial a = const Void
+
+public export
+sliceFromInitial : (sl : SliceObj a) -> SliceMorphism {a} (SliceObjInitial a) sl
+sliceFromInitial {a} sl = \_, v => void v
+
+public export
+SliceObjTerminal : (a : Type) -> SliceObj a
+SliceObjTerminal a = const Unit
+
+public export
+sliceToTerminal : (sl : SliceObj a) -> SliceMorphism {a} sl (SliceObjTerminal a)
+sliceToTerminal {a} sl = \_, _ => ()
+
+public export
+SliceObjCoproduct : SliceObj a -> SliceObj a -> SliceObj a
+SliceObjCoproduct sa sa' ea = Either (sa ea) (sa' ea)
+
+public export
+sliceObjInjL : (sa, sa' : SliceObj a) ->
+  SliceMorphism {a} sa (SliceObjCoproduct sa sa')
+sliceObjInjL sa sa' ea sea = Left sea
+
+public export
+sliceObjInjR : (sa, sa' : SliceObj a) ->
+  SliceMorphism {a} sa' (SliceObjCoproduct sa sa')
+sliceObjInjR sa sa' ea sea = Right sea
+
+public export
+sliceObjCase : {sa, sa', sa'' : SliceObj a} ->
+  SliceMorphism {a} sa sa'' -> SliceMorphism {a} sa' sa'' ->
+  SliceMorphism {a} (SliceObjCoproduct sa sa') sa''
+sliceObjCase m m' ea (Left sea) = m ea sea
+sliceObjCase m m' ea (Right sea') = m' ea sea'
+
+public export
+SliceObjProduct : SliceObj a -> SliceObj a -> SliceObj a
+SliceObjProduct sa sa' ea = (sa ea, sa' ea)
+
+public export
+sliceObjProjL : (sa, sa' : SliceObj a) ->
+  SliceMorphism {a} (SliceObjProduct sa sa') sa
+sliceObjProjL sa sa' ea = fst
+
+public export
+sliceObjProjR : (sa, sa' : SliceObj a) ->
+  SliceMorphism {a} (SliceObjProduct sa sa') sa'
+sliceObjProjR sa sa' ea = snd
+
+public export
+sliceObjPair : {sa, sa', sa'' : SliceObj a} ->
+  SliceMorphism {a} sa sa' -> SliceMorphism {a} sa sa'' ->
+  SliceMorphism {a} sa (SliceObjProduct sa' sa'')
+sliceObjPair m m' ea sea = (m ea sea, m' ea sea)
+
+public export
+SliceObjHom : SliceObj a -> SliceObj a -> SliceObj a
+SliceObjHom sa sa' ea = sa ea -> sa' ea
+
+public export
+sliceObjEval : (sa, sa' : SliceObj a) ->
+  SliceMorphism {a} (SliceProduct (SliceObjHom sa sa') sa) sa'
+sliceObjEval sa sa' ea (f, sea) = f sea
+
+public export
+sliceObjCurry : {sa, sa', sa'' : SliceObj a} ->
+  SliceMorphism {a} (SliceObjProduct sa sa') sa'' ->
+  SliceMorphism {a} sa (SliceObjHom sa' sa'')
+sliceObjCurry f ea sea sea' = f ea (sea, sea')
+
+public export
+sliceObjId : (sl : SliceObj a) -> SliceMorphism {a} sl sl
+sliceObjId sl ea = id
+
+-------------------------------------------------
+---- In the two-category of slice categories ----
+-------------------------------------------------
+
+public export
+SlicePolyCoprod : SliceObj a -> SliceObj b -> SliceObj (Either a b)
+SlicePolyCoprod sa sb (Left ea) = sa ea
+SlicePolyCoprod sa sb (Right eb) = sb eb
+
+public export
+SlicePolyProd : SliceObj a -> SliceObj b -> SliceObj (a, b)
+SlicePolyProd sa sb (ea, eb) = (sa ea, sb eb)
+
+public export
+sliceMorphCoproduct : {sa, sa' : SliceObj a} -> {sb, sb' : SliceObj b} ->
+  SliceMorphism {a} sa sa' -> SliceMorphism {a=b} sb sb' ->
+  SliceMorphism {a=(Either a b)}
+    (SlicePolyCoprod sa sb) (SlicePolyCoprod sa' sb')
+sliceMorphCoproduct ma mb (Left ea) sea = ma ea sea
+sliceMorphCoproduct ma mb (Right eb) seb = mb eb seb
+
+public export
+sliceMorphProduct : {sa, sa' : SliceObj a} -> {sb, sb' : SliceObj b} ->
+  SliceMorphism {a} sa sa' -> SliceMorphism {a=b} sb sb' ->
+  SliceMorphism {a=(a, b)}
+    (SlicePolyProd sa sb) (SlicePolyProd sa' sb')
+sliceMorphProduct ma mb (ea, eb) (sea, seb) = (ma ea sea, mb eb seb)
+
+------------------------------------------------------------------------
 ------------------------------------------------------------------------
 ---- Direct interpretation of DepParamPolyFunc form of SliceFunctor ----
+------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
 public export
@@ -3013,16 +3442,110 @@ spfCompose {x} {y} {z} (qpd ** qdd ** qa) (ppd ** pdd ** pa) =
   (\qi =>
     (qdi : qpd qi **
      (qddi : qdd (qi ** qdi)) -> ppd $ qa ((qi ** qdi) ** qddi)) **
-   \(qi ** qpm) =>
-     (qddi : qdd (qi ** fst qpm) **
-     pdd (qa ((qi ** fst qpm) ** qddi) ** snd qpm qddi)) **
-   \((qi ** (qdi ** qpm)) ** (qddi ** ppdd)) =>
-     pa ((qa ((qi ** qdi) ** qddi) ** qpm qddi) ** ppdd))
+   \qiqpm =>
+     (qddi : qdd (fst qiqpm ** fst (snd qiqpm)) **
+     pdd
+      (qa ((fst qiqpm ** fst (snd qiqpm)) ** qddi) ** snd (snd qiqpm) qddi)) **
+   \dd =>
+     pa
+      ((qa ((fst (fst dd) ** fst (snd (fst dd))) ** fst (snd dd)) **
+        snd (snd (fst dd)) (fst (snd dd))) **
+       snd (snd dd)))
 
 public export
 PolyFuncFromUnitUnitSPF : SlicePolyFunc () () -> PolyFunc
 PolyFuncFromUnitUnitSPF (posdep ** dirdep ** assign) =
   (posdep () ** dirdep . MkDPair ())
+
+public export
+spfDimapFromBaseChange : {0 w, x, y, z : Type} ->
+  (spf : SlicePolyFunc w x) -> (f : w -> y) -> (g : z -> x) ->
+  (sy : SliceObj y) -> (ez : z) ->
+  InterpSPFunc
+    (spfCompose (SPFBaseChange g) (spfCompose spf (SPFBaseChange f))) sy ez ->
+  InterpSPFunc
+    (SliceFuncDimap spf f g) sy ez
+spfDimapFromBaseChange (posdep ** dirdep ** assign) f g sy ez
+  ((() ** d) ** di) with (d ()) proof prf
+    spfDimapFromBaseChange (posdep ** dirdep ** assign) f g sy ez
+      ((() ** d) ** di) | qdi =
+        (fst qdi ** \qdd => case di (() ** (rewrite prf in qdd ** ())) of
+          syf => rewrite sym prf in syf)
+
+public export
+spfDimapToBaseChange : {0 w, x, y, z : Type} ->
+  (spf : SlicePolyFunc w x) -> (f : w -> y) -> (g : z -> x) ->
+  (sy : SliceObj y) -> (ez : z) ->
+  InterpSPFunc
+    (SliceFuncDimap spf f g) sy ez ->
+  InterpSPFunc
+    (spfCompose (SPFBaseChange g) (spfCompose spf (SPFBaseChange f))) sy ez
+spfDimapToBaseChange {w} {x} {y} {z} (posdep ** dirdep ** assign) f g sy ez
+  (i ** d) =
+    ((() ** const (i ** const ())) ** \(() ** (qddi ** ())) => d qddi)
+
+public export
+UnitUnitSPFFromPolyFunc : PolyFunc -> SlicePolyFunc () ()
+UnitUnitSPFFromPolyFunc (pos ** dir) = (const pos ** dir . snd ** const ())
+
+public export
+spfForgetParam : SlicePolyFunc x y -> SlicePolyFunc () y
+spfForgetParam (posdep ** dirdep ** assign) = (posdep ** dirdep ** const ())
+
+public export
+spfApplyPos : SlicePolyFunc x y -> y -> SlicePolyFunc x ()
+spfApplyPos (posdep ** dirdep ** assign) ey =
+  -- Equivalent to `SliceFuncDimap spf id (const ey)`.
+  (const (posdep ey) **
+   \pd => dirdep (ey ** snd pd) **
+   \dd => assign ((ey ** snd (fst dd)) ** snd dd))
+
+public export
+spfTopf : SlicePolyFunc x y -> y -> PolyFunc
+spfTopf spf ey = PolyFuncFromUnitUnitSPF (spfForgetParam (spfApplyPos spf ey))
+
+--------------------------------------------------------------------
+---- Composition of parameterized dependent polynomial functors ----
+--------------------------------------------------------------------
+
+public export
+spfParamId : {a : Type} -> (x : SliceObj a) -> ParamSPF {a} x x
+spfParamId {a} x ea = spfId (x ea)
+
+public export
+spfParamCompose : {a : Type} -> {x, y, z : SliceObj a} ->
+  ParamSPF {a} y z -> ParamSPF {a} x y -> ParamSPF {a} x z
+spfParamCompose pspf' pspf ea = spfCompose (pspf' ea) (pspf ea)
+
+--------------------------------------------------------------------
+---- Parameterized dependent polynomial natural transformations ----
+--------------------------------------------------------------------
+
+public export
+ParamSPNatTrans : {a : Type} -> {w, z : SliceObj a} ->
+  ParamSPF {a} w z -> ParamSPF {a} w z -> Type
+ParamSPNatTrans {a} {w} {z} pspf pspf' =
+  (ea : a) -> SPNatTrans (pspf ea) (pspf' ea)
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Dependent polynomial endofunctors as cells of a double category ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+-- There is a double category whose vertical arrows are morphisms of `Type`
+-- (i.e. functions `x -> y`) and whose horizontal arrows are dependent
+-- polynomial functors (i.e. terms of `SlicePolyFunc x y`).  In that double
+-- category, if we have vertical morphisms (functions) `w -> w'` and `z -> z'`,
+-- and horizontal morphisms (dependent polynomial endofunctors)
+-- `SlicePolyFunc w z` and `SlicePolyFunc w' z'`, then this is the type
+-- of a cell.  See
+-- https://ncatlab.org/nlab/show/polynomial+functor#the_2category_of_polynomial_functors
+public export
+SPFCell : {w, w', z, z' : Type} ->
+  (w -> w') -> (z -> z') -> SlicePolyFunc w z -> SlicePolyFunc w' z' -> Type
+SPFCell {w} {w'} {z} {z'} f g spf spf' =
+  SPNatTrans (SliceFuncDimap spf f id) (SliceFuncDimap spf' id g)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
@@ -3035,8 +3558,8 @@ DepPolyFToSPF : {w, x, y, z : Type} ->
   (x -> w) -> (x -> y) -> (y -> z) ->
   SlicePolyFunc w z
 DepPolyFToSPF {w} {x} {y} {z} f g h =
-  (PreImage h **
-   \ey => Subset0 x (Equal (fst0 (snd ey)) . g) **
+  (\i => PreImage h i **
+   \ey => Subset0 x (\x' => Equal (fst0 (snd ey)) $ g x') **
    \ex => f (fst0 (snd ex)))
 
 public export
@@ -8410,6 +8933,7 @@ data TSTLC_Term : STLC_Context -> STLC_Type -> Type where
 ---------------------------------------------------
 
 public export
+partial
 MetaSOMorph : SubstObjMu -> SubstObjMu -> Type
 -- The unique morphism from the initial object to a given object
 MetaSOMorph (InSO SO0) _ = ()
@@ -8626,40 +9150,40 @@ finSubstHomObjCard {cx} {cy} _ _ = power cy cx
 public export
 EvalMorphType : {0 cx, dx, cy, dy, dh : Nat} ->
   (x : FinSubstT cx dx) -> (y : FinSubstT cy dy) ->
-  FinSubstT (finSubstHomObjCard x y) dh -> (0 df : Nat) -> Type
+  FinSubstT (finSubstHomObjCard x y) dh -> (df : Nat) -> Type
 EvalMorphType x y hxy df = FinSubstMorph df (FinProduct hxy x) y
 
 public export
 HomObjWithEvalMorphType : {0 cx, dx, cy, dy : Nat} ->
-  FinSubstT cx dx -> FinSubstT cy dy -> (0 dh : Nat) -> Type
+  FinSubstT cx dx -> FinSubstT cy dy -> (dh : Nat) -> Type
 HomObjWithEvalMorphType x y dh =
   (hxy : FinSubstT (finSubstHomObjCard x y) dh **
-   Exists0 Nat (EvalMorphType x y hxy))
+   Exists {type=Nat} (EvalMorphType x y hxy))
 
 -- Compute the exponential object and evaluation morphism of the given finite
 -- substitutive types.
 public export
 FinSubstHomDepthObjEval : {0 cx, dx, cy, dy : Nat} ->
   (x : FinSubstT cx dx) -> (y : FinSubstT cy dy) ->
-  Exists0 Nat (HomObjWithEvalMorphType x y)
+  Exists {type=Nat} (HomObjWithEvalMorphType x y)
 -- 0 -> x == 1
 FinSubstHomDepthObjEval FinInitial x =
-  (Evidence0 0 (FinTerminal **
-    Evidence0 1 $
+  (Evidence 0 (FinTerminal **
+    Evidence 1 $
       FinCompose (FinFromInit x) $ FinProjRight FinTerminal FinInitial))
 -- 1 -> x == x
 FinSubstHomDepthObjEval {cy} {dy} FinTerminal x =
   let eq = mulPowerZeroRightNeutral {m=cy} {n=cy} in
-  (Evidence0 dy $ rewrite eq in (x **
-   Evidence0 0 $ rewrite eq in FinProjLeft x FinTerminal))
+  (Evidence dy $ rewrite eq in (x **
+   Evidence 0 $ rewrite eq in FinProjLeft x FinTerminal))
 -- (x + y) -> z == (x -> z) * (y -> z)
 FinSubstHomDepthObjEval {cx=(cx + cy)} {cy=cz} (FinCoproduct x y) z with
  (FinSubstHomDepthObjEval x z, FinSubstHomDepthObjEval y z)
   FinSubstHomDepthObjEval {cx=(cx + cy)} {cy=cz} (FinCoproduct x y) z |
-   ((Evidence0 dxz (hxz ** (Evidence0 hdxz evalxz))),
-    (Evidence0 dyz (hyz ** (Evidence0 hdyz evalyz)))) =
-    (Evidence0 (smax dxz dyz) $ rewrite powerOfSum cz cx cy in
-     (FinProduct hxz hyz ** Evidence0
+   ((Evidence dxz (hxz ** (Evidence hdxz evalxz))),
+    (Evidence dyz (hyz ** (Evidence hdyz evalyz)))) =
+    (Evidence (smax dxz dyz) $ rewrite powerOfSum cz cx cy in
+     (FinProduct hxz hyz ** Evidence
       (S (maximum (smax hdxz hdyz) 5))
       $
       rewrite powerOfSum cz cx cy in
@@ -8677,13 +9201,13 @@ FinSubstHomDepthObjEval {cx=(cx * cy)} {dx=(smax dx dy)} {cy=cz} {dy=dz}
   (FinProduct x y) z with
   (FinSubstHomDepthObjEval y z)
     FinSubstHomDepthObjEval {cx=(cx * cy)} {dx=(smax dx dy)} {cy=cz} {dy=dz}
-      (FinProduct x y) z | (Evidence0 dyz (hyz ** Evidence0 hdyz evalyz)) =
+      (FinProduct x y) z | (Evidence dyz (hyz ** Evidence hdyz evalyz)) =
         let
-          Evidence0 dxyz hexyz = FinSubstHomDepthObjEval {dx} {dy=dyz} x hyz
-          (hxyz ** Evidence0 dexyz evalxyz) = hexyz
+          Evidence dxyz hexyz = FinSubstHomDepthObjEval {dx} {dy=dyz} x hyz
+          (hxyz ** Evidence dexyz evalxyz) = hexyz
         in
-        Evidence0 dxyz $ rewrite powerOfMulSym cz cx cy in
-          (hxyz ** Evidence0 (smax hdyz (smax (smax dexyz 2) 1)) $
+        Evidence dxyz $ rewrite powerOfMulSym cz cx cy in
+          (hxyz ** Evidence (smax hdyz (smax (smax dexyz 2) 1)) $
             rewrite powerOfMulSym cz cx cy in
             FinCompose evalyz $ FinProd
               (FinCompose evalxyz
@@ -8697,25 +9221,25 @@ FinSubstHomDepthObjEval {cx=(cx * cy)} {dx=(smax dx dy)} {cy=cz} {dy=dz}
 public export
 0 finSubstHomObjDepth : {0 cx, dx, cy, dy : Nat} ->
   FinSubstT cx dx -> FinSubstT cy dy -> Nat
-finSubstHomObjDepth x y = fst0 $ FinSubstHomDepthObjEval x y
+finSubstHomObjDepth x y = fst $ FinSubstHomDepthObjEval x y
 
 public export
 finSubstHomObj : {0 cx, dx, cy, dy : Nat} ->
   (x : FinSubstT cx dx) -> (y : FinSubstT cy dy) ->
   FinSubstT (finSubstHomObjCard x y) (finSubstHomObjDepth x y)
-finSubstHomObj x y = fst $ snd0 $ FinSubstHomDepthObjEval x y
+finSubstHomObj x y = fst $ snd $ FinSubstHomDepthObjEval x y
 
 public export
 0 finSubstEvalMorphDepth : {0 cx, dx, cy, dy : Nat} ->
   (x : FinSubstT cx dx) -> (y : FinSubstT cy dy) ->
   Nat
-finSubstEvalMorphDepth x y = fst0 (snd (snd0 (FinSubstHomDepthObjEval x y)))
+finSubstEvalMorphDepth x y = fst (snd (snd (FinSubstHomDepthObjEval x y)))
 
 public export
 finSubstEvalMorph : {0 cx, dx, cy, dy : Nat} ->
   (x : FinSubstT cx dx) -> (y : FinSubstT cy dy) ->
   EvalMorphType x y (finSubstHomObj x y) (finSubstEvalMorphDepth x y)
-finSubstEvalMorph x y = snd0 $ snd $ snd0 $ FinSubstHomDepthObjEval x y
+finSubstEvalMorph x y = snd $ snd $ snd $ FinSubstHomDepthObjEval x y
 
 ------------------------------------
 ---- Compilation to polynomials ----

@@ -132,7 +132,7 @@ adtT3 : TermMu
 adtT3 = InProd [adtT1, adtT2]
 
 adtT4 : TermMu
-adtT4 = InAtom PRODUCT 1 adtT3
+adtT4 = InAtom SL_EXP 1 adtT3
 
 adtT5 : TermMu
 adtT5 = InNat 2 adtT3

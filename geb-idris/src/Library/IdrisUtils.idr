@@ -173,10 +173,32 @@ Show type => Show (Subset0 type dep) where
 -- Like Idris's standard `Exists`, but with the `this` dependent type
 -- taking a zero-usage type parameter.
 public export
-record Exists0 (0 type : Type) (this : (0 _ : type) -> Type) where
+record Exists0 (0 type : Type) (0 this : (0 _ : type) -> Type) where
   constructor Evidence0
   0 fst0 : type
-  snd0 : this fst0
+  0 snd0 : this fst0
+
+public export
+exists0inj1 :
+  {0 type, type' : Type} ->
+  {0 this : (0 _ : type) -> Type} ->
+  {0 this' : (0 _ : type') -> Type} ->
+  {e0 : Exists0 type this} ->
+  {e0' : Exists0 type' this'} ->
+  e0 = e0' ->
+  fst0 e0 = fst0 e0'
+exists0inj1 {e0} {e0'=e0} Refl = Refl
+
+public export
+exists0inj2 :
+  {0 type, type' : Type} ->
+  {0 this : (0 _ : type) -> Type} ->
+  {0 this' : (0 _ : type') -> Type} ->
+  {e0 : Exists0 type this} ->
+  {e0' : Exists0 type' this'} ->
+  e0 = e0' ->
+  snd0 e0 ~=~ snd0 e0'
+exists0inj2 {e0} {e0'=e0} Refl = Refl
 
 public export
 const0 : {0 a, b : Type} -> b -> (0 _ : a) -> b
@@ -1156,3 +1178,11 @@ mapExtEq : {0 a, b : Type} -> (f, g : a -> b) -> (l : List a) ->
   ((x : a) -> f x = g x) -> map f l = map g l
 mapExtEq f g [] eq = Refl
 mapExtEq f g (x :: xs) eq = rewrite eq x in cong ((::) _) $ mapExtEq f g xs eq
+
+public export
+DecEq Void where
+  decEq _ _ impossible
+
+public export
+Eq Void where
+  _ == _ impossible

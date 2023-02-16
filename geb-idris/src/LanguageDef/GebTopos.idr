@@ -368,64 +368,829 @@ data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
 ------------------------------------------------------------------
 ------------------------------------------------------------------
 
+-- A type together with a term of that type.
 public export
 SubCFromType : Type
-SubCFromType = Subset0 Type id -- a type together with a term of that type
+SubCFromType = Exists0 Type (\ty => ty)
 
 public export
 PowerObjFromType : Type -> Type
-PowerObjFromType a = Subset0 (SliceObj a) Pi
+PowerObjFromType a = Exists0 (SliceObj a) (\sl => (x : a) -> sl x)
 
 public export
 CharToPowerFromType : {0 a : Type} -> (a -> SubCFromType) -> PowerObjFromType a
-CharToPowerFromType chi = Element0 (fst0 . chi) (\x => snd0 (chi x))
+CharToPowerFromType chi = Evidence0 (fst0 . chi) (\x => snd0 (chi x))
 
 public export
 PowerToCharFromType : {0 a : Type} -> PowerObjFromType a -> (a -> SubCFromType)
-PowerToCharFromType po e = Element0 (fst0 po e) (snd0 po e)
+PowerToCharFromType po e = Evidence0 (fst0 po e) (snd0 po e)
 
 public export
 TrueFromType : () -> SubCFromType
-TrueFromType () = Element0 Bool True
+TrueFromType () = Evidence0 (Unit, Unit) ((), ())
+
+-- Produce the characteristic function of `Equalizer f g`.
+public export
+ChiForType : {0 a, b : Type} -> (f, g : a -> b) -> (a -> SubCFromType)
+ChiForType {a} {b} f g ea = Evidence0 (b, b) (f ea, g ea)
 
 public export
-ChiForType : {0 a, b : Type} -> (a -> b) -> (b -> SubCFromType)
-ChiForType {a} {b} f eb = Element0 Type (Subset0 a (Equal eb . f))
+ChiForTypeToPb :
+  (subCmereProp : {p, p' : SubCFromType} -> p = p') ->
+  {0 a, b : Type} -> (f, g : a -> b) ->
+  Equalizer f g ->
+  Pullback {a} {b=Unit} {c=SubCFromType} (ChiForType f g) TrueFromType
+ChiForTypeToPb subCmereProp {a} {b} f g (Element0 eeq eq) =
+  Element0 (eeq, ()) subCmereProp
+
+public export
+ChiForTypeFromPb : {0 a, b : Type} -> (f, g : a -> b) ->
+  Pullback {a} {b=Unit} {c=SubCFromType} (ChiForType f g) TrueFromType ->
+  Equalizer f g
+ChiForTypeFromPb {a} {b} f g (Element0 (ea, ()) eq) =
+  Element0 ea $ case exists0inj1 eq of
+    Refl =>
+      let eq2 = exists0inj2 eq in
+      rewrite fstEq eq2 in
+      rewrite sndEq eq2 in
+      Refl
 
 public export
 SubCFromBoolPred : Type
-SubCFromBoolPred = Subset0 Type (\ty => ty -> Bool)
+SubCFromBoolPred = Exists0 Type (\ty => ty -> Bool)
 
 public export
 PowerObjFromBoolPred : Type -> Type
-PowerObjFromBoolPred a = Subset0 (SliceObj a) (\ty => Subset0 a ty -> Bool)
+PowerObjFromBoolPred a = Exists0 (SliceObj a) (\ty => Sigma {a} ty -> Bool)
 
 public export
 CharToPowerFromBoolPred : {0 a : Type} ->
   (a -> SubCFromBoolPred) -> PowerObjFromBoolPred a
 CharToPowerFromBoolPred chi =
-  Element0 (fst0 . chi) (\x => snd0 (chi (fst0 x)) (snd0 x))
+  Evidence0 (fst0 . chi) (\x => snd0 (chi (fst x)) (snd x))
 
 public export
 PowerToCharFromBoolPred : {0 a : Type} -> PowerObjFromBoolPred a ->
   (a -> SubCFromBoolPred)
 PowerToCharFromBoolPred po e =
-  Element0 (fst0 po e) (\edp => snd0 po $ Element0 e edp)
+  Evidence0 (fst0 po e) (\edp => snd0 po (e ** edp))
 
 public export
 TrueFromBoolPred : () -> SubCFromBoolPred
-TrueFromBoolPred () = Element0 () (const True)
+TrueFromBoolPred () =
+  Evidence0 ((Bool, Bool) -> Bool) (\decrel => decrel (True, True))
+
+-- Produce the characteristic function of `Equalizer f g`.
+public export
+ChiForBoolPred : {0 a, b : Type} -> (f, g : a -> b) -> (a -> SubCFromBoolPred)
+ChiForBoolPred {a} {b} f g ea =
+  Evidence0 ((b, b) -> Bool) (\decrel => decrel (f ea, g ea))
 
 public export
-ImageDecForBoolPred : {a, b : Type} -> (a -> b) -> (b -> Type)
-ImageDecForBoolPred {a} {b} f eb = Dec (Subset0 a (Equal eb . f))
+ChiForBoolPredToPb :
+  (subCmereProp : (ty, ty' : Type) -> (x : ty) -> (x' : ty') ->
+    Evidence0 {type=Type} {this=(\ty'' => ty'' -> Bool)}
+      ((ty, ty) -> Bool)
+      (\decrel : ((ty, ty) -> Bool) => decrel (x, x))
+    ~=~
+    Evidence0 {type=Type} {this=(\ty'' => ty'' -> Bool)}
+      ((ty', ty') -> Bool)
+      (\decrel : ((ty', ty') -> Bool) => decrel (x', x'))) ->
+  {0 a, b : Type} -> (f, g : a -> b) ->
+  Equalizer f g ->
+  Pullback
+    {a} {b=Unit} {c=SubCFromBoolPred} (ChiForBoolPred f g) TrueFromBoolPred
+ChiForBoolPredToPb subCmereProp {a} {b} f g (Element0 ea eq) =
+  Element0 (ea, ()) $ rewrite eq in subCmereProp b Bool _ True
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+---- Subobject classifiers for monics only (and those from equalizers only) ----
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 public export
-inImageForBoolPred : {0 a, b : Type} -> (f : a -> b) -> (eb : b) ->
-  ImageDecForBoolPred f eb -> Bool
-inImageForBoolPred {a} {b} f eb = isYes
+0 SubCFromEq : Type
+SubCFromEq = Exists0 Type (\ty => (ty, ty))
 
 public export
-ChiForBoolPred : {a, b : Type} -> (a -> b) -> (b -> SubCFromBoolPred)
-ChiForBoolPred {a} {b} f eb =
-  Element0 (ImageDecForBoolPred f eb) (inImageForBoolPred f eb)
+0 PowerObjFromEq : Type -> Type
+PowerObjFromEq a = Exists0 (SliceObj a) (\sl => (Pi sl, Pi sl))
+
+public export
+CharToPowerFromEq : {0 a : Type} -> (a -> SubCFromEq) -> PowerObjFromEq a
+CharToPowerFromEq chi =
+  Evidence0 (fst0 . chi) (\x => fst (snd0 (chi x)), \x => snd (snd0 (chi x)))
+
+public export
+PowerToCharFromEq : {0 a : Type} -> PowerObjFromEq a -> (a -> SubCFromEq)
+PowerToCharFromEq {a} po ea =
+  Evidence0 (fst0 po ea) (fst (snd0 po) ea, snd (snd0 po) ea)
+
+public export
+TrueFromEq : () -> SubCFromEq
+TrueFromEq () = Evidence0 Unit ((), ())
+
+-- Produce the characteristic function of `Equalizer f g`.
+public export
+ChiForEq : {0 a, b : Type} -> (f, g : a -> b) -> (a -> SubCFromEq)
+ChiForEq {a} {b} f g ea = Evidence0 b (f ea, g ea)
+
+public export
+ChiForEqToPb :
+  (subCmereProp :
+    {p, p' : SubCFromEq} ->
+    fst (snd0 p) = snd (snd0 p) ->
+    fst (snd0 p') = snd (snd0 p') ->
+    p = p') ->
+  {0 a, b : Type} -> (f, g : a -> b) ->
+  Equalizer f g ->
+  Pullback {a} {b=Unit} {c=SubCFromEq} (ChiForEq f g) TrueFromEq
+ChiForEqToPb subCmereProp {a} {b} f g (Element0 eeq eq) =
+  Element0 (eeq, ()) (subCmereProp eq Refl)
+
+public export
+ChiForEqFromPb : {0 a, b : Type} -> (f, g : a -> b) ->
+  Pullback {a} {b=Unit} {c=SubCFromEq} (ChiForEq f g) TrueFromEq ->
+  Equalizer f g
+ChiForEqFromPb {a} {b} f g (Element0 (ea, ()) eq) =
+  Element0 ea $ case exists0inj1 eq of
+    Refl =>
+      let eq2 = exists0inj2 eq in
+      rewrite fstEq eq2 in
+      rewrite sndEq eq2 in
+      Refl
+
+public export
+ChiForEqTrueCorrect :
+  (subCmereProp :
+    {p, p' : SubCFromEq} ->
+    fst (snd0 p) = snd (snd0 p) ->
+    fst (snd0 p') = snd (snd0 p') ->
+    p = p') ->
+  {0 a, b : Type} -> (f, g : a -> b) ->
+  (x : a) -> (eq : f x = g x) ->
+  ChiForEq f g x = TrueFromEq ()
+ChiForEqTrueCorrect subCmereProp f g x eq = subCmereProp eq Refl
+
+public export
+ChiForEqFalseCorrect :
+  {a, b : Type} -> (f, g : a -> b) ->
+  (x : a) -> Not (f x = g x) ->
+  Not (ChiForEq f g x = TrueFromEq ())
+ChiForEqFalseCorrect f g x neq eq with (exists0inj1 eq)
+  ChiForEqFalseCorrect f g x neq eq | Refl =
+      neq $
+        let eq2 = exists0inj2 eq in
+        rewrite fstEq eq2 in
+        rewrite sndEq eq2 in
+        Refl
+
+---------------------------------------------------------------
+---------------------------------------------------------------
+---- Categories internal to 'Type' as a well-pointed topos ----
+---------------------------------------------------------------
+---------------------------------------------------------------
+
+public export
+record TCatSig where
+  constructor TCat
+  tcObj : Type
+  0 tcObjEq : tcObj -> tcObj -> Type
+  0 tcObjEqRefl : (0 a : tcObj) -> tcObjEq a a
+  0 tcObjEqSym : {0 a, b : tcObj} ->
+    (0 _ : tcObjEq a b) -> tcObjEq b a
+  0 tcObjEqTrans : {0 a, b, c : tcObj} ->
+    (0 _ : tcObjEq b c) -> (0 _ : tcObjEq a b) -> tcObjEq a c
+  tcMorph : tcObj -> tcObj -> Type
+  0 tcMorphEq : {0 dom, cod, dom', cod' : tcObj} ->
+    (0 _ : tcObjEq dom dom') -> (0 _ : tcObjEq cod cod') ->
+    (0 _ : tcMorph dom cod) -> (0 _ : tcMorph dom' cod') -> Type
+  0 tcMorphEqRefl : {0 dom, cod : tcObj} ->
+    (0 domeq : tcObjEq dom dom) -> (0 codeq : tcObjEq cod cod) ->
+    (0 m : tcMorph dom cod) -> tcMorphEq domeq codeq m m
+  0 tcMorphEqSym : {0 dom, cod, dom', cod' : tcObj} ->
+    {0 domeq : tcObjEq dom dom'} -> {0 codeq : tcObjEq cod cod'} ->
+    {0 domeqsym : tcObjEq dom' dom} -> {0 codeqsym : tcObjEq cod' cod} ->
+    (0 m : tcMorph dom cod) -> (0 m' : tcMorph dom' cod') ->
+    (0 _ : tcMorphEq domeq codeq m m') -> tcMorphEq domeqsym codeqsym m' m
+  0 tcMorphEqTrans : {0 dom, cod, dom', cod', dom'', cod'' : tcObj} ->
+    {0 domeq : tcObjEq dom dom'} -> {0 codeq : tcObjEq cod cod'} ->
+    {0 domeq' : tcObjEq dom' dom''} -> {0 codeq' : tcObjEq cod' cod''} ->
+    {0 domeq'' : tcObjEq dom dom''} -> {0 codeq'' : tcObjEq cod cod''} ->
+    (0 m : tcMorph dom cod) -> (0 m' : tcMorph dom' cod') ->
+    (0 m'' : tcMorph dom'' cod'') ->
+    (0 m''' : tcMorph dom'' cod'') ->
+    (0 _ : tcMorphEq domeq' codeq' m' m'') ->
+    (0 _ : tcMorphEq domeq codeq m m') ->
+    tcMorphEq domeq'' codeq'' m m''
+  tcId : (obj : tcObj) -> tcMorph obj obj
+  tcCompose : {0 a, b, b', c : tcObj} ->
+    (0 _ : tcObjEq b b') ->
+    tcMorph b' c -> tcMorph a b -> tcMorph a c
+  0 tcIdLeft : {0 a, b, b' : tcObj} ->
+    {0 domeq : tcObjEq a a} -> {0 codeq, codeq' : tcObjEq b b'} ->
+    (0 m : tcMorph a b) ->
+    tcMorphEq {dom=a} {cod=b} {dom'=a} {cod'=b'}
+      domeq codeq m (tcCompose {a} {b} {b'} {c=b'} codeq' (tcId b') m)
+  0 tcIdRight : {0 a, a', b : tcObj} ->
+    {0 domeq, domeq' : tcObjEq a a'} -> {0 codeq : tcObjEq b b} ->
+    (0 m : tcMorph a' b) ->
+    tcMorphEq {dom=a} {cod=b} {dom'=a'} {cod'=b}
+      domeq codeq (tcCompose {a} {b=a} {b'=a'} {c=b} domeq' m (tcId a)) m
+  0 tcComposeAssoc : {0 a, b, b', c, c', d : tcObj} ->
+    {0 domeq : tcObjEq a a} -> {0 codeq : tcObjEq d d} ->
+    {0 beq, beq' : tcObjEq b b'} -> {0 ceq, ceq' : tcObjEq c c'} ->
+    (0 h : tcMorph c' d) -> (0 g : tcMorph b' c) -> (0 f : tcMorph a b) ->
+    tcMorphEq {dom=a} {cod=d}
+      domeq codeq
+      (tcCompose ceq h (tcCompose beq' g f))
+      (tcCompose beq (tcCompose ceq' h g) f)
+
+public export
+record TFunctorSig (c, d : TCatSig) where
+  constructor TFunctor
+  tfObjMap : c.tcObj -> d.tcObj
+  0 tfObjMapCorrect : {0 a, b : c.tcObj} ->
+    (0 _ : c.tcObjEq a b) -> d.tcObjEq (tfObjMap a) (tfObjMap b)
+  tfMorphMap : {0 a, b : c.tcObj} ->
+    c.tcMorph a b -> d.tcMorph (tfObjMap a) (tfObjMap b)
+  0 tfMorphMapCorrect : {0 a, b, a', b' : c.tcObj} ->
+    {0 m : c.tcMorph a b} -> {0 m' : c.tcMorph a' b'} ->
+    (0 domeq : c.tcObjEq a a') -> (0 codeq : c.tcObjEq b b') ->
+    (0 domMapEq : d.tcObjEq (tfObjMap a) (tfObjMap a')) ->
+    (0 codMapEq : d.tcObjEq (tfObjMap b) (tfObjMap b')) ->
+    (0 _ : c.tcMorphEq {dom=a} {dom'=a'} {cod=b} {cod'=b'} domeq codeq m m') ->
+    d.tcMorphEq
+      {dom=(tfObjMap a)} {cod=(tfObjMap b)}
+      {dom'=(tfObjMap a')} {cod'=(tfObjMap b')}
+      domMapEq codMapEq
+      (tfMorphMap {a} {b} m) (tfMorphMap {a=a'} {b=b'} m')
+
+-------------------------
+-------------------------
+---- Terminal object ----
+-------------------------
+-------------------------
+
+-------------------------
+-------------------------
+---- Finite products ----
+-------------------------
+-------------------------
+
+--------------------------------
+--------------------------------
+---- Natural-numbers object ----
+--------------------------------
+--------------------------------
+
+-------------------------------------------------
+-------------------------------------------------
+---- Geb s-expressions as polynomial functor ----
+-------------------------------------------------
+-------------------------------------------------
+
+public export
+data GExpSlice : Type where
+  GSATOM : GExpSlice
+  GSNAT : GExpSlice
+  GSNATL : GExpSlice
+  GSEXP : GExpSlice
+  GSEXPL : GExpSlice
+
+public export
+gSliceAtom : GExpSlice -> GebAtom
+gSliceAtom GSATOM = SL_ATOM
+gSliceAtom GSNAT = SL_NAT
+gSliceAtom GSNATL = SL_NATL
+gSliceAtom GSEXP = SL_EXP
+gSliceAtom GSEXPL = SL_EXPL
+
+public export
+Show GExpSlice where
+  show = show . gSliceAtom
+
+public export
+GSliceSz : Nat
+GSliceSz = 5
+
+public export
+GSliceFinDecoder : FinDecoder GExpSlice GSliceSz
+GSliceFinDecoder FZ = GSATOM
+GSliceFinDecoder (FS FZ) = GSNAT
+GSliceFinDecoder (FS (FS FZ)) = GSNATL
+GSliceFinDecoder (FS (FS (FS FZ))) = GSEXP
+GSliceFinDecoder (FS (FS (FS (FS FZ)))) = GSEXPL
+
+public export
+GSliceNatEncoder : NatEncoder GSliceFinDecoder
+GSliceNatEncoder GSATOM = (0 ** Refl ** Refl)
+GSliceNatEncoder GSNAT =  (1 ** Refl ** Refl)
+GSliceNatEncoder GSNATL = (2 ** Refl ** Refl)
+GSliceNatEncoder GSEXP = (3 ** Refl ** Refl)
+GSliceNatEncoder GSEXPL = (4 ** Refl ** Refl)
+
+public export
+GSliceFinDecEncoding : FinDecEncoding GExpSlice GSliceSz
+GSliceFinDecEncoding = NatDecEncoding GSliceFinDecoder GSliceNatEncoder
+
+public export
+DecEq GExpSlice where
+  decEq = fdeDecEq GSliceFinDecEncoding
+
+public export
+data GExpNonAtomPos : Type where
+  GPNAZ : GExpNonAtomPos -- zero
+  GPNAS : GExpNonAtomPos -- successor
+  GPNAX : GExpNonAtomPos -- SExp
+  GPNANN : GExpNonAtomPos -- empty list of Nat
+  GPNANC : GExpNonAtomPos -- cons list of Nat
+  GPNAXN : GExpNonAtomPos -- empty list of SExp
+  GPNAXC : GExpNonAtomPos -- cons list of SExp
+
+public export
+data GExpPos : Type where
+  GPA : GebAtom -> GExpPos
+  GPNAP : GExpNonAtomPos -> GExpPos
+
+public export
+GPZ : GExpPos
+GPZ = GPNAP GPNAZ
+
+public export
+GPS : GExpPos
+GPS = GPNAP GPNAS
+
+public export
+GPX : GExpPos
+GPX = GPNAP GPNAX
+
+public export
+GPNN : GExpPos
+GPNN = GPNAP GPNANN
+
+public export
+GPNC : GExpPos
+GPNC = GPNAP GPNANC
+
+public export
+GPXN : GExpPos
+GPXN = GPNAP GPNAXN
+
+public export
+GPXC : GExpPos
+GPXC = GPNAP GPNAXC
+
+public export
+gNonAtomPosAtom : GExpNonAtomPos -> GebAtom
+gNonAtomPosAtom GPNAZ = POS_Z
+gNonAtomPosAtom GPNAS = POS_S
+gNonAtomPosAtom GPNAX = POS_X
+gNonAtomPosAtom GPNANN = POS_NN
+gNonAtomPosAtom GPNANC = POS_NC
+gNonAtomPosAtom GPNAXN = POS_XN
+gNonAtomPosAtom GPNAXC = POS_XC
+
+public export
+gPosAtom : GExpPos -> GebAtom
+gPosAtom (GPA a) = a
+gPosAtom (GPNAP i) = gNonAtomPosAtom i
+
+public export
+Show GExpPos where
+  show = show . gPosAtom
+
+public export
+GPosSz : Nat
+GPosSz = 7
+
+public export
+GPosFinDecoder : FinDecoder GExpNonAtomPos GPosSz
+GPosFinDecoder FZ = GPNAZ
+GPosFinDecoder (FS FZ) = GPNAS
+GPosFinDecoder (FS (FS FZ)) = GPNAX
+GPosFinDecoder (FS (FS (FS FZ))) = GPNANN
+GPosFinDecoder (FS (FS (FS (FS FZ)))) = GPNANC
+GPosFinDecoder (FS (FS (FS (FS (FS FZ))))) = GPNAXN
+GPosFinDecoder (FS (FS (FS (FS (FS (FS FZ)))))) = GPNAXC
+
+public export
+GPosNatEncoder : NatEncoder GPosFinDecoder
+GPosNatEncoder GPNAZ = (0 ** Refl ** Refl)
+GPosNatEncoder GPNAS = (1 ** Refl ** Refl)
+GPosNatEncoder GPNAX = (2 ** Refl ** Refl)
+GPosNatEncoder GPNANN = (3 ** Refl ** Refl)
+GPosNatEncoder GPNANC = (4 ** Refl ** Refl)
+GPosNatEncoder GPNAXN = (5 ** Refl ** Refl)
+GPosNatEncoder GPNAXC = (6 ** Refl ** Refl)
+
+public export
+GPosFinDecEncoding : FinDecEncoding GExpNonAtomPos GPosSz
+GPosFinDecEncoding = NatDecEncoding GPosFinDecoder GPosNatEncoder
+
+public export
+DecEq GExpNonAtomPos where
+  decEq = fdeDecEq GPosFinDecEncoding
+
+public export
+DecEq GExpPos where
+  decEq (GPA a) (GPA a') = case decEq a a' of
+    Yes Refl => Yes Refl
+    No neq => No $ \Refl => neq Refl
+  decEq (GPA _) (GPNAP _) = No $ \eq => case eq of Refl impossible
+  decEq (GPNAP _) (GPA _) = No $ \eq => case eq of Refl impossible
+  decEq (GPNAP i) (GPNAP i') = case decEq i i' of
+    Yes Refl => Yes Refl
+    No neq => No $ \Refl => neq Refl
+
+public export
+data GExpDir : Type where
+  GDS : GExpDir
+  GDXA : GExpDir
+  GDXNL : GExpDir
+  GDXXL : GExpDir
+  GDNCHD : GExpDir
+  GDNCTL : GExpDir
+  GDXCHD : GExpDir
+  GDXCTL : GExpDir
+
+public export
+gDirAtom : GExpDir -> GebAtom
+gDirAtom GDS = DIR_S
+gDirAtom GDXA = DIR_XA
+gDirAtom GDXNL = DIR_XNL
+gDirAtom GDXXL = DIR_XXL
+gDirAtom GDNCHD = DIR_NCHD
+gDirAtom GDNCTL = DIR_NCTL
+gDirAtom GDXCHD = DIR_XCHD
+gDirAtom GDXCTL = DIR_XCTL
+
+public export
+Show GExpDir where
+  show = show . gDirAtom
+
+public export
+GDirSz : Nat
+GDirSz = 8
+
+public export
+GDirFinDecoder : FinDecoder GExpDir GDirSz
+GDirFinDecoder FZ = GDS
+GDirFinDecoder (FS FZ) = GDXA
+GDirFinDecoder (FS (FS FZ)) = GDXNL
+GDirFinDecoder (FS (FS (FS FZ))) = GDXXL
+GDirFinDecoder (FS (FS (FS (FS FZ)))) = GDNCHD
+GDirFinDecoder (FS (FS (FS (FS (FS FZ))))) = GDNCTL
+GDirFinDecoder (FS (FS (FS (FS (FS (FS FZ)))))) = GDXCHD
+GDirFinDecoder (FS (FS (FS (FS (FS (FS (FS FZ))))))) = GDXCTL
+
+public export
+GDirNatEncoder : NatEncoder GDirFinDecoder
+GDirNatEncoder GDS = (0 ** Refl ** Refl)
+GDirNatEncoder GDXA = (1 ** Refl ** Refl)
+GDirNatEncoder GDXNL = (2 ** Refl ** Refl)
+GDirNatEncoder GDXXL = (3 ** Refl ** Refl)
+GDirNatEncoder GDNCHD = (4 ** Refl ** Refl)
+GDirNatEncoder GDNCTL = (5 ** Refl ** Refl)
+GDirNatEncoder GDXCHD = (6 ** Refl ** Refl)
+GDirNatEncoder GDXCTL = (7 ** Refl ** Refl)
+
+public export
+GDirFinDecEncoding : FinDecEncoding GExpDir GDirSz
+GDirFinDecEncoding = NatDecEncoding GDirFinDecoder GDirNatEncoder
+
+public export
+DecEq GExpDir where
+  decEq = fdeDecEq GDirFinDecEncoding
+
+public export
+gAssign : GExpDir -> GExpSlice
+gAssign GDS = GSNAT
+gAssign GDXA = GSATOM
+gAssign GDXNL = GSNATL
+gAssign GDXXL = GSEXPL
+gAssign GDNCHD = GSNAT
+gAssign GDNCTL = GSNATL
+gAssign GDXCHD = GSEXP
+gAssign GDXCTL = GSEXPL
+
+public export
+gDirSlice : GExpDir -> GExpPos
+gDirSlice GDS = GPS
+gDirSlice GDXA = GPX
+gDirSlice GDXNL = GPX
+gDirSlice GDXXL = GPX
+gDirSlice GDNCHD = GPNC
+gDirSlice GDNCTL = GPNC
+gDirSlice GDXCHD = GPXC
+gDirSlice GDXCTL = GPXC
+
+public export
+gNonAtomPosSlice : GExpNonAtomPos -> GExpSlice
+gNonAtomPosSlice GPNAZ = GSNAT
+gNonAtomPosSlice GPNAS = GSNAT
+gNonAtomPosSlice GPNAX = GSEXP
+gNonAtomPosSlice GPNANN = GSNATL
+gNonAtomPosSlice GPNANC = GSNATL
+gNonAtomPosSlice GPNAXN = GSEXPL
+gNonAtomPosSlice GPNAXC = GSEXPL
+
+public export
+gPosSlice : GExpPos -> GExpSlice
+gPosSlice (GPA _) = GSATOM
+gPosSlice (GPNAP i) = gNonAtomPosSlice i
+
+public export
+GExpWTF : WTypeEndoFunc GExpSlice
+GExpWTF = MkWTF GExpPos GExpDir gAssign gDirSlice gPosSlice
+
+public export
+GExpSPF : SlicePolyEndoFunc GExpSlice
+GExpSPF = WTFtoSPF GExpWTF
+
+public export
+GExpWT : SliceObj GExpSlice
+GExpWT = SPFMu GExpSPF
+
+public export
+GExpSigma : Type
+GExpSigma = Sigma {a=GExpSlice} GExpWT
+
+public export
+GExpA : Type
+GExpA = GExpWT GSATOM
+
+public export
+GExpN : Type
+GExpN = GExpWT GSNAT
+
+public export
+GExpNL : Type
+GExpNL = GExpWT GSNATL
+
+public export
+GExpX : Type
+GExpX = GExpWT GSEXP
+
+public export
+GExpXL : Type
+GExpXL = GExpWT GSEXPL
+
+public export
+record GExpAlg (sa : GExpSlice -> Type) where
+  constructor GAlg
+  galgA : GebAtom -> sa GSATOM
+  galgZ : sa GSNAT
+  galgS : sa GSNAT -> sa GSNAT
+  galgNN : sa GSNATL
+  galgNC : sa GSNAT -> sa GSNATL -> sa GSNATL
+  galgEXP : sa GSATOM -> sa GSNATL -> sa GSEXPL -> sa GSEXP
+  galgXN : sa GSEXPL
+  galgXC : sa GSEXP -> sa GSEXPL -> sa GSEXPL
+
+public export
+GAlgToSPF : {sa : GExpSlice -> Type} -> GExpAlg sa -> SPFAlg GExpSPF sa
+GAlgToSPF alg GSATOM (Element0 (GPA a) isl ** d) =
+  alg.galgA a
+GAlgToSPF alg GSATOM (Element0 (GPNAP GPNAZ) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSATOM (Element0 (GPNAP GPNAS) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSATOM (Element0 (GPNAP GPNAX) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSATOM (Element0 (GPNAP GPNANN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSATOM (Element0 (GPNAP GPNANC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSATOM (Element0 (GPNAP GPNAXN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSATOM (Element0 (GPNAP GPNAXC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNAT (Element0 (GPA a) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNAT (Element0 (GPNAP GPNAZ) isl ** d) =
+  alg.galgZ
+GAlgToSPF alg GSNAT (Element0 (GPNAP GPNAS) isl ** d) =
+  alg.galgS $ d (Element0 GDS Refl)
+GAlgToSPF alg GSNAT (Element0 (GPNAP GPNAX) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNAT (Element0 (GPNAP GPNANN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNAT (Element0 (GPNAP GPNANC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNAT (Element0 (GPNAP GPNAXN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNAT (Element0 (GPNAP GPNAXC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNATL (Element0 (GPA a) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNATL (Element0 (GPNAP GPNAZ) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNATL (Element0 (GPNAP GPNAS) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNATL (Element0 (GPNAP GPNAX) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNATL (Element0 (GPNAP GPNANN) isl ** d) =
+  alg.galgNN
+GAlgToSPF alg GSNATL (Element0 (GPNAP GPNANC) isl ** d) =
+  alg.galgNC (d $ Element0 GDNCHD Refl) (d $ Element0 GDNCTL Refl)
+GAlgToSPF alg GSNATL (Element0 (GPNAP GPNAXN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSNATL (Element0 (GPNAP GPNAXC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXP (Element0 (GPA a) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXP (Element0 (GPNAP GPNAZ) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXP (Element0 (GPNAP GPNAS) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXP (Element0 (GPNAP GPNAX) isl ** d) =
+  alg.galgEXP
+    (d $ Element0 GDXA Refl) (d $ Element0 GDXNL Refl) (d $ Element0 GDXXL Refl)
+GAlgToSPF alg GSEXP (Element0 (GPNAP GPNANN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXP (Element0 (GPNAP GPNANC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXP (Element0 (GPNAP GPNAXN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXP (Element0 (GPNAP GPNAXC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXPL (Element0 (GPA a) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNAZ) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNAS) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNAX) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNANN) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNANC) isl ** d) =
+  void $ case isl of Refl impossible
+GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNAXN) isl ** d) =
+  alg.galgXN
+GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNAXC) isl ** d) =
+  alg.galgXC (d $ Element0 GDXCHD Refl) (d $ Element0 GDXCTL Refl)
+
+public export
+gexpCata : {sa : GExpSlice -> Type} ->
+  GExpAlg sa -> SliceMorphism {a=GExpSlice} GExpWT sa
+gexpCata {sa} alg = spfCata {spf=GExpSPF} {sa} (GAlgToSPF {sa} alg)
+
+public export
+GExpWTtoGExpAlgSl : SliceObj GExpSlice
+GExpWTtoGExpAlgSl GSATOM = GebAtom
+GExpWTtoGExpAlgSl GSNAT = Nat
+GExpWTtoGExpAlgSl GSNATL = List Nat
+GExpWTtoGExpAlgSl GSEXP = GExp
+GExpWTtoGExpAlgSl GSEXPL = GList
+
+public export
+GExpWTtoGExpAlg : GExpAlg GExpWTtoGExpAlgSl
+GExpWTtoGExpAlg = GAlg id 0 S [] (::) InS [] (::)
+
+public export
+gexpWTtoGExpSl : SliceMorphism {a=GExpSlice} GExpWT GExpWTtoGExpAlgSl
+gexpWTtoGExpSl = gexpCata GExpWTtoGExpAlg
+
+public export
+gexpWTtoGExp : GExpX -> GExp
+gexpWTtoGExp = gexpWTtoGExpSl GSEXP
+
+public export
+Show GExpX where
+  show = show . gexpWTtoGExp
+
+public export
+InGA : GebAtom -> GExpA
+InGA a = InSPFM (GSATOM ** Element0 (GPA a) Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGZ : GExpN
+InGZ = InSPFM (GSNAT ** Element0 GPZ Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGS : GExpN -> GExpN
+InGS n = InSPFM (GSNAT ** Element0 GPS Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => n
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGNat : Nat -> GExpN
+InGNat Z = InGZ
+InGNat (S n) = InGS (InGNat n)
+
+public export
+InGNN : GExpNL
+InGNN = InSPFM (GSNATL ** Element0 GPNN Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGNC : GExpN -> GExpNL -> GExpNL
+InGNC n ns = InSPFM (GSNATL ** Element0 GPNC Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => n
+    GDNCTL => ns
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGNatC : Nat -> GExpNL -> GExpNL
+InGNatC n ns = InGNC (InGNat n) ns
+
+public export
+InGNatList : List Nat -> GExpNL
+InGNatList = foldr InGNatC InGNN
+
+public export
+InGXN : GExpXL
+InGXN = InSPFM (GSEXPL ** Element0 GPXN Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGXC : GExpX -> GExpXL -> GExpXL
+InGXC x xs = InSPFM (GSEXPL ** Element0 GPXC Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => void $ case dsl of Refl impossible
+    GDXNL => void $ case dsl of Refl impossible
+    GDXXL => void $ case dsl of Refl impossible
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => x
+    GDXCTL => xs
+
+public export
+InGX : GebAtom -> GExpNL -> GExpXL -> GExpX
+InGX a ns xs = InSPFM (GSEXP ** Element0 GPX Refl) $ \(Element0 d dsl) =>
+  case d of
+    GDS => void $ case dsl of Refl impossible
+    GDXA => InGA a
+    GDXNL => ns
+    GDXXL => xs
+    GDNCHD => void $ case dsl of Refl impossible
+    GDNCTL => void $ case dsl of Refl impossible
+    GDXCHD => void $ case dsl of Refl impossible
+    GDXCTL => void $ case dsl of Refl impossible
+
+public export
+InGNatX : GebAtom -> List Nat -> GExpXL -> GExpX
+InGNatX a ns = InGX a (InGNatList ns)
+
+public export
+InGExpList : List GExpX -> GExpXL
+InGExpList = foldr InGXC InGXN
+
+public export
+GExpToWTAlg : SXLAlg GebAtom GExpX GExpXL
+GExpToWTAlg = SXA InGNatX InGXN InGXC
+
+public export
+gexpToWT : GExp -> GExpX
+gexpToWT = sxCata GExpToWTAlg

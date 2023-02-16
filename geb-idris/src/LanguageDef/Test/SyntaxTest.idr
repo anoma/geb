@@ -2,6 +2,7 @@ module LanguageDef.Test.SyntaxTest
 
 import Test.TestLibrary
 import LanguageDef.Syntax
+import LanguageDef.GebTopos
 
 %default total
 
@@ -227,15 +228,17 @@ bt3412341 = InBTP bt34 bt12341
 ---- Utilities ----
 -------------------
 
-sexpShowFull : Show atom => String -> SExp atom -> IO ()
+sexpShowFull : Show atom => Show ty => String -> FrSExpM atom ty -> IO ()
 sexpShowFull name x = do
   putStrLn $ name
   putStrLn $ show x
 
-sexpShowFullSTerminated : Show atom => (String, SExp atom) -> IO ()
+sexpShowFullSTerminated :
+  Show atom => Show ty => (String, FrSExpM atom ty) -> IO ()
 sexpShowFullSTerminated = showTerminated sexpShowFull
 
-sexpShowFullList : Show atom => List (String, SExp atom) -> IO ()
+sexpShowFullList :
+  Show atom => Show ty => List (String, FrSExpM atom ty) -> IO ()
 sexpShowFullList = showList sexpShowFull
 
 --------------------
@@ -253,6 +256,24 @@ sx3 = InS 4 [4, 8, 12] [sx2, sn1, InS 0 [] []]
 
 sx3' : SExp Nat
 sx3' = fromIsJust {x=(btToSexp $ sexpToBt sx3)} Refl
+
+gx1 : GExp
+gx1 = InS SL_EXP [1, 2, 3] [InS SL_NAT [2] [], InS SL_EXPL [] []]
+
+frgx1 : FrGExp String
+frgx1 = InSF SL_EXP [1, 2, 3] [InSF SL_NAT [2] [], InSXV "sl_expl"]
+
+---------------------------------------
+---------------------------------------
+---- W-type representation of SExp ----
+---------------------------------------
+---------------------------------------
+
+wt1 : GExpX
+wt1 = gexpToWT gx1
+
+wt1_correct : Assertion
+wt1_correct = Assert $ gexpWTtoGExp wt1 == gx1
 
 ----------------------------------
 ----------------------------------
@@ -320,6 +341,16 @@ languageDefSyntaxTest = do
       , ("sx3", sx3)
       , ("sx3 -> bt -> sexp", sx3')
     ]
+  sexpShowFullList
+    [
+        ("gx1", gx1)
+    ]
+  sexpShowFullList
+    [
+        ("frgx1", frgx1)
+    ]
+  putStrLn ""
+  putStrLn $ "wt1 = " ++ show wt1
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End SyntaxTest."

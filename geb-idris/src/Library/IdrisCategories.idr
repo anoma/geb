@@ -196,24 +196,30 @@ BaseChangeF : {a, b : Type} -> (b -> a) -> SliceFunctor a b
 BaseChangeF f sla = sla . f
 
 public export
-Equalizer : {a, b : Type} -> (f, g : a -> b) -> Type
+Equalizer : {a : Type} -> {0 b : Type} -> (0 f, g : a -> b) -> Type
 Equalizer {a} {b} f g = Subset0 a (\x : a => f x = g x)
 
 public export
-PreImage : {a, b : Type} -> (a -> b) -> b -> Type
+equalizerInj : {a : Type} -> {0 b : Type} -> (0 f, g : a -> b) ->
+  Equalizer f g -> a
+equalizerInj f g = fst0
+
+public export
+PreImage : {a : Type} -> {0 b : Type} -> (0 _ : a -> b) -> (0 _ : b) -> Type
 PreImage {a} {b} f elemb = Equalizer f (const elemb)
 
 public export
-Pullback : {a, b, c : Type} -> (a -> c) -> (b -> c) -> Type
+Pullback : {a, b : Type} -> {0 c : Type} ->
+  (0 _ : a -> c) -> (0 _ : b -> c) -> Type
 Pullback {a} {b} {c} f g = Subset0 (a, b) (\(x, y) => f x = g y)
 
 public export
-pbProj1 : {a, b, c : Type} -> {f : a -> c} -> {g : b -> c} ->
+pbProj1 : {a, b : Type} -> {0 c : Type} -> {0 f : a -> c} -> {0 g : b -> c} ->
   Pullback f g -> a
 pbProj1 {a} {b} {c} {f} {g} (Element0 (x, y) eq) = x
 
 public export
-pbProj2 : {a, b, c : Type} -> {f : a -> c} -> {g : b -> c} ->
+pbProj2 : {a, b : Type} -> {0 c : Type} -> {0 f : a -> c} -> {0 g : b -> c} ->
   Pullback f g -> b
 pbProj2 {a} {b} {c} {f} {g} (Element0 (x, y) eq) = y
 
@@ -251,6 +257,14 @@ PairToSigma (x, y) = (x ** y)
 public export
 SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
 SliceMorphism {a} s s' = (e : a) -> s e -> s' e
+
+public export
+SliceToPi : {a : Type} -> {p : SliceObj a} -> SliceMorphism (const ()) p -> Pi p
+SliceToPi m x = m x ()
+
+public export
+PiToSlice : {a : Type} -> {p : SliceObj a} -> Pi p -> SliceMorphism (const ()) p
+PiToSlice pi x () = pi x
 
 public export
 smApp : {0 a : Type} -> {0 s, s' : SliceObj a} ->
@@ -292,6 +306,15 @@ SliceProduct = biapp Pair
 public export
 SliceCoproduct : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
 SliceCoproduct = biapp Either
+
+public export
+SliceHom : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
+SliceHom = biapp $ \x, y => x -> y
+
+public export
+SliceDepPair : {0 a : Type} -> (x : SliceObj a) -> SliceObj (Sigma {a} x) ->
+  SliceObj a
+SliceDepPair {a} x sl ea = Sigma {a=(x ea)} (sl . MkDPair ea)
 
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
@@ -2013,6 +2036,7 @@ finCovarBigStepCataN n n' v a subst alg =
 
 mutual
   public export
+  partial
   finCovarApply : {n : Nat} -> {a, b : Type} ->
     FreeFinCovar n (a -> b) ->
     FreeFinCovar n a ->
@@ -2028,6 +2052,7 @@ mutual
       TermComposite $ finCovarApplyNN fc xc
 
   public export
+  partial
   finCovarApply11 : {n : Nat} -> {0 a, b : Type} ->
     FreeFinCovar n (a -> b) ->
     a ->
@@ -2039,6 +2064,7 @@ mutual
       (finCovarApply11 f x, finCovarApplyN1 fp x)
 
   public export
+  partial
   finCovarApplyN1 : {n, n' : Nat} -> {0 a, b : Type} ->
     ProductN n (FreeFinCovar n' (a -> b)) ->
     a ->
@@ -2048,6 +2074,7 @@ mutual
     (finCovarApply11 f x, finCovarApplyN1 fp x)
 
   public export
+  partial
   finCovarApplyNN : {n, n' : Nat} -> {a, b : Type} ->
     ProductN n (FreeFinCovar n' (a -> b)) ->
     ProductN n (FreeFinCovar n' a) ->

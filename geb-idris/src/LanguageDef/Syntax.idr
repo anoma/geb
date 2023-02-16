@@ -2,6 +2,7 @@ module LanguageDef.Syntax
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import public LanguageDef.Atom
 
 %default total
 
@@ -92,16 +93,54 @@ sxfSubexprs : SExpF atom xty -> List xty
 sxfSubexprs (SXF _ _ xs) = xs
 
 public export
-data SExp : Type -> Type where
-  InSX : SExpF atom (SExp atom) -> SExp atom
+data FrSExpM : Type -> Type -> Type where
+  InSXV : ty -> FrSExpM atom ty -- variable
+  InSXC : SExpF atom (FrSExpM atom ty) -> FrSExpM atom ty -- compound term
+
+public export
+SExp : Type -> Type
+SExp atom = FrSExpM atom Void
+
+public export
+InSX : SExpF atom (SExp atom) -> SExp atom
+InSX = InSXC
 
 public export
 InS : atom -> List Nat -> List (SExp atom) -> SExp atom
 InS a ns xs = InSX $ SXF a ns xs
 
 public export
+InSA : atom -> SExp atom
+InSA a = InS a [] []
+
+public export
+FrSListM : Type -> Type -> Type
+FrSListM atom ty = List (FrSExpM atom ty)
+
+public export
 SList : Type -> Type
-SList = List . SExp
+SList atom = FrSListM atom Void
+
+public export
+InSF : atom -> List Nat -> FrSListM atom ty -> FrSExpM atom ty
+InSF a ns xs = InSXC $ SXF a ns xs
+
+public export
+InSFA : atom -> FrSExpM atom ty
+InSFA a = InSF a [] []
+
+public export
+data CoSExpCM : Type -> Type -> Type where
+  -- Labeled term
+  InSXL : ty -> SExpF atom (CoSExpCM atom ty) -> CoSExpCM atom ty
+
+public export
+record FrSXLAlg (atom, ty, a, b : Type) where
+  constructor FrSXA
+  frsubst : ty -> a
+  frxalg : atom -> List Nat -> b -> a
+  frsxnil : b
+  frsxcons : a -> b -> b
 
 public export
 record SXLAlg (atom, a, b : Type) where
@@ -110,16 +149,43 @@ record SXLAlg (atom, a, b : Type) where
   sxnil : b
   sxcons : a -> b -> b
 
+public export
+SXLSubstAlgToFr : {0 atom, ty, a, b : Type} ->
+  (ty -> a) -> SXLAlg atom a b -> FrSXLAlg atom ty a b
+SXLSubstAlgToFr {atom} {ty} {a} {b} subst (SXA xalg sxnil sxcons) =
+  FrSXA subst xalg sxnil sxcons
+
+public export
+SXLAlgToFr : {0 atom, a, b : Type} -> SXLAlg atom a b -> FrSXLAlg atom Void a b
+SXLAlgToFr {atom} {a} {b} = SXLSubstAlgToFr (voidF a)
+
 mutual
   public export
-  sxCata : SXLAlg atom a b -> SExp atom -> a
-  sxCata alg (InSX x) = case x of
-    SXF a ns xs => alg.xalg a ns $ slCata alg xs
+  frsxCata : FrSXLAlg atom ty a b -> FrSExpM atom ty -> a
+  frsxCata alg (InSXV v) = alg.frsubst v
+  frsxCata alg (InSXC x) = case x of
+    SXF a ns xs => alg.frxalg a ns $ frslCata alg xs
 
   public export
-  slCata : SXLAlg atom a b -> SList atom -> b
-  slCata alg [] = alg.sxnil
-  slCata alg (x :: xs) = alg.sxcons (sxCata alg x) (slCata alg xs)
+  frslCata : FrSXLAlg atom ty a b -> FrSListM atom ty -> b
+  frslCata alg [] = alg.frsxnil
+  frslCata alg (x :: xs) = alg.frsxcons (frsxCata alg x) (frslCata alg xs)
+
+public export
+sxSubstCata : (ty -> a) -> SXLAlg atom a b -> FrSExpM atom ty -> a
+sxSubstCata subst alg = frsxCata (SXLSubstAlgToFr subst alg)
+
+public export
+slSubstCata : (ty -> a) -> SXLAlg atom a b -> FrSListM atom ty -> b
+slSubstCata subst alg = frslCata (SXLSubstAlgToFr subst alg)
+
+public export
+sxCata : SXLAlg atom a b -> SExp atom -> a
+sxCata = frsxCata . SXLAlgToFr
+
+public export
+slCata : SXLAlg atom a b -> SList atom -> b
+slCata = frslCata . SXLAlgToFr
 
 public export
 SExpAlg : Type -> Type -> Type
@@ -142,8 +208,16 @@ sexpCata : SExpAlg atom a -> SExp atom -> a
 sexpCata = sxCata . SExpConsAlg
 
 public export
+frsexpCata : (ty -> a) -> SExpAlg atom a -> FrSExpM atom ty -> a
+frsexpCata subst alg = sxSubstCata subst (SExpConsAlg alg)
+
+public export
 slistCata : SExpAlg atom a -> SList atom -> List a
 slistCata = slCata . SExpConsAlg
+
+public export
+frslistCata : (ty -> a) -> SExpAlg atom a -> FrSListM atom ty -> List a
+frslistCata subst alg = slSubstCata subst (SExpConsAlg alg)
 
 public export
 slcPreservesLen : (alg : SExpAlg atom a) -> (l : SList atom) ->
@@ -173,8 +247,18 @@ sexpMaybeCata : SExpMaybeAlg atom a -> SExp atom -> Maybe a
 sexpMaybeCata = sxCata . SExpAlgFromMaybe
 
 public export
+frsexpMaybeCata :
+  (ty -> Maybe a) -> SExpMaybeAlg atom a -> FrSExpM atom ty -> Maybe a
+frsexpMaybeCata subst = sxSubstCata subst . SExpAlgFromMaybe
+
+public export
 slistMaybeCata : SExpMaybeAlg atom a -> SList atom -> Maybe (List a)
 slistMaybeCata = slCata . SExpAlgFromMaybe
+
+public export
+frslistMaybeCata :
+  (ty -> Maybe a) -> SExpMaybeAlg atom a -> FrSListM atom ty -> Maybe (List a)
+frslistMaybeCata subst = slSubstCata subst . SExpAlgFromMaybe
 
 -------------------
 ---- Utilities ----
@@ -193,8 +277,12 @@ sexpLines : Show atom => SExp atom -> List String
 sexpLines = sxCata SExpLinesAlg
 
 public export
-Show atom => Show (SExp atom) where
-  show = showLines sexpLines
+frsexpLines : Show atom => Show ty => FrSExpM atom ty -> List String
+frsexpLines = sxSubstCata (\x => [show x]) SExpLinesAlg
+
+public export
+Show atom => Show ty => Show (FrSExpM atom ty) where
+  show = showLines frsexpLines
 
 public export
 data SExpToBtAtom : Type -> Type where
@@ -296,8 +384,15 @@ sexpDecEqNTAlg deqatom a deqa (SXF e ns xs) (SXF e' ns' xs') =
 
 mutual
   public export
-  sexpDecEq : {atom : Type} -> DecEqPred atom -> DecEqPred (SExp atom)
-  sexpDecEq deq (InSX (SXF a ns xs)) (InSX (SXF a' ns' xs')) =
+  sexpDecEq : {atom : Type} -> DecEq ty =>
+    DecEqPred atom -> DecEqPred (FrSExpM atom ty)
+  sexpDecEq deq (InSXV v) (InSXV v') =
+    case decEq v v' of
+      Yes Refl => Yes Refl
+      No neq => No $ \Refl => neq Refl
+  sexpDecEq deq (InSXV _) (InSXC _) = No $ \eq => case eq of Refl impossible
+  sexpDecEq deq (InSXC _) (InSXV _) = No $ \eq => case eq of Refl impossible
+  sexpDecEq deq (InSXC (SXF a ns xs)) (InSXC (SXF a' ns' xs')) =
     case deq a a' of
       Yes Refl => case decEq ns ns' of
         Yes Refl => case slistDecEq deq xs xs' of
@@ -307,7 +402,8 @@ mutual
       No neq => No $ \eq => case eq of Refl => neq Refl
 
   public export
-  slistDecEq : {atom : Type} -> DecEqPred atom -> DecEqPred (SList atom)
+  slistDecEq : {atom : Type} -> DecEq ty =>
+    DecEqPred atom -> DecEqPred (FrSListM atom ty)
   slistDecEq deq [] [] = Yes Refl
   slistDecEq deq [] (x :: xs) = No $ \eq => case eq of Refl impossible
   slistDecEq deq (x :: xs) [] = No $ \eq => case eq of Refl impossible
@@ -319,8 +415,12 @@ mutual
       No neq => No $ \eq => case eq of Refl => neq Refl
 
 public export
-(atom : Type) => DecEq atom => DecEq (SExp atom) where
+(atom : Type) => DecEq atom => DecEq ty => DecEq (FrSExpM atom ty) where
   decEq = sexpDecEq decEq
+
+public export
+(atom : Type) => DecEq atom => DecEq ty => Eq (FrSExpM atom ty) where
+  x == x' = isYes $ decEq x x'
 
 --------------------------
 ---- Monad operations ----
@@ -332,7 +432,7 @@ sexpReturn a = InS a [] []
 
 public export
 SExpJoinAlg : SExpAlg (SExp atom) (SExp atom)
-SExpJoinAlg (SXF (InSX (SXF a ns xs)) ns' xs') = InS a (ns ++ ns') (xs ++ xs')
+SExpJoinAlg (SXF (InSXC (SXF a ns xs)) ns' xs') = InS a (ns ++ ns') (xs ++ xs')
 
 public export
 sexpJoin : SExp (SExp atom) -> SExp atom
@@ -398,14 +498,14 @@ mutual
     (step : SExpDepAlg alg paramAlg) ->
     (x : SExp atom) ->
     Maybe (sexpGenTypeCata alg x)
-  sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs)) with
+  sexpGenTypeDec alg paramAlg step (InSXC (SXF a ns xs)) with
     (slistGenTypeDec alg paramAlg step xs, slistMaybeCata paramAlg xs) proof prf
-      sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs))
+      sexpGenTypeDec alg paramAlg step (InSXC (SXF a ns xs))
         | (Just vxs, Just params) =
           case step a ns xs vxs params (sndEq prf) of
             Just ty => Just (vxs, ty)
             _ => Nothing
-      sexpGenTypeDec alg paramAlg step (InSX (SXF a ns xs))
+      sexpGenTypeDec alg paramAlg step (InSXC (SXF a ns xs))
         | _ = Nothing
 
   public export
@@ -638,3 +738,39 @@ public export
     showSub : {ns : Namespace} -> Subspace ns -> String
     showSub {ns} This = ""
     showSub {ns} (Child i sub) = slShow ns.nsSubSym i ++ "/" ++ showSub sub
+
+------------------------------------
+---- Geb-specific s-expressions ----
+------------------------------------
+
+public export
+NExp : Type
+NExp = SExp Nat
+
+public export
+NList : Type
+NList = SList Nat
+
+public export
+GExp : Type
+GExp = SExp GebAtom
+
+public export
+FrGExp : Type -> Type
+FrGExp = FrSExpM GebAtom
+
+public export
+GList : Type
+GList = SList GebAtom
+
+public export
+FrGList : Type -> Type
+FrGList = FrSListM GebAtom
+
+public export
+GBtAtom : Type
+GBtAtom = SExpToBtAtom GebAtom
+
+public export
+GBTExp : Type
+GBTExp = BTExp GBtAtom
