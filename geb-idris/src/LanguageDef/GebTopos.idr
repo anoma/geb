@@ -1425,20 +1425,40 @@ GSExpDir GSEXP = GExpDir
 GSExpDir GSEXPL = GExpLFDir
 
 public export
+GSExpAssignAtom : (i : GAtomPos) -> GAtomDir i -> GExpSlice
+GSExpAssignAtom i d = void d
+
+public export
+GSExpAssignNat : (i : GNatPos) -> GNatDir i -> GExpSlice
+GSExpAssignNat (Left ()) () = GSNAT
+GSExpAssignNat (Right ()) d = void d
+
+public export
+GSExpAssignNatL : (i : GNatLFPos) -> GNatLFDir i -> GExpSlice
+GSExpAssignNatL (Left ()) d = void d
+GSExpAssignNatL (Right ()) (Left ()) = GSNAT
+GSExpAssignNatL (Right ()) (Right ()) = GSNATL
+
+public export
+GSExpAssignExp : (i : GExpPos) -> GExpDir i -> GExpSlice
+GSExpAssignExp () FZ = GSATOM
+GSExpAssignExp () (FS FZ) = GSNATL
+GSExpAssignExp () (FS (FS FZ)) = GSEXPL
+
+public export
+GSExpAssignExpL : (i : GExpLFPos) -> GExpLFDir i -> GExpSlice
+GSExpAssignExpL (Left ()) d = void d
+GSExpAssignExpL (Right ()) (Left ()) = GSEXP
+GSExpAssignExpL (Right ()) (Right ()) = GSEXPL
+
+public export
 GSExpAssign :
   (sl : GExpSlice) -> (i : GSExpPos sl) -> GSExpDir sl i -> GExpSlice
-GSExpAssign GSATOM i d = void d
-GSExpAssign GSNAT (Left ()) () = GSNAT
-GSExpAssign GSNAT (Right ()) d = void d
-GSExpAssign GSNATL (Left ()) d = void d
-GSExpAssign GSNATL (Right ()) (Left d) = case d of () => GSNAT
-GSExpAssign GSNATL (Right ()) (Right d) = case d of () => GSNATL
-GSExpAssign GSEXP () FZ = GSATOM
-GSExpAssign GSEXP () (FS FZ) = GSNAT
-GSExpAssign GSEXP () (FS (FS FZ)) = GSEXPL
-GSExpAssign GSEXPL (Left ()) d = void d
-GSExpAssign GSEXPL (Right ()) (Left d) = case d of () => GSEXP
-GSExpAssign GSEXPL (Right ()) (Right d) = case d of () => GSEXPL
+GSExpAssign GSATOM = GSExpAssignAtom
+GSExpAssign GSNAT = GSExpAssignNat
+GSExpAssign GSNATL = GSExpAssignNatL
+GSExpAssign GSEXP = GSExpAssignExp
+GSExpAssign GSEXPL = GSExpAssignExpL
 
 public export
 GSExpSPF : SlicePolyEndoFunc GExpSlice
