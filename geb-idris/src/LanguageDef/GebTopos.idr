@@ -1194,3 +1194,40 @@ GExpToWTAlg = SXA InGNatX InGXN InGXC
 public export
 gexpToWT : GExp -> GExpX
 gexpToWT = sxCata GExpToWTAlg
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Geb S-expression as inductive dependent polynomial endofunctor ----
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+-- Equivalent to GExp, but using the inductive representation of
+-- dependent polynomial endofunctors, rather than the W-type
+-- representation.  This is largely for comparison of the resulting
+-- code.
+
+------------------------------------
+---- Natural number endofunctor ----
+------------------------------------
+
+public export
+GNatF : PolyFunc
+GNatF = pfMaybeArena
+
+public export
+GNatPos : Type
+GNatPos = pfPos GNatF
+
+public export
+GNatDir : GNatPos -> Type
+GNatDir = pfDir {p=GNatF}
+
+public export
+gNatPosAtom : GNatPos -> GebAtom
+gNatPosAtom (Left ()) = POS_S
+gNatPosAtom (Right ()) = POS_Z
+
+public export
+gNatDirAtom : (i : GNatPos) -> GNatDir i -> GebAtom
+gNatDirAtom (Left ()) () = DIR_S
+gNatDirAtom (Right ()) d = void d
