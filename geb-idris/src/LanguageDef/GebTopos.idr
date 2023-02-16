@@ -1251,10 +1251,7 @@ GListLAssign (True ** True) = True -- tail is a list
 
 public export
 GListLSPF : SlicePolyFunc GListSlice ()
-GListLSPF =
-  (\() => GListPosL **
-   \(() ** i) => GListDirL i **
-   \((() ** i) ** d) => GListLAssign (i ** d))
+GListLSPF = pfAssign GListF GListLAssign
 
 public export
 GListPos : PolyFunc -> SliceObj GListSlice
