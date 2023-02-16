@@ -3152,6 +3152,23 @@ SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
    \izwxi => wxd (fzx (fst izwxi) ** snd izwxi) **
    \dd => fwy (wxa ((fzx (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
 
+--------------------------------------------------------------
+---- As morphisms in the two-category of slice categories ----
+--------------------------------------------------------------
+
+public export
+spfCase : {0 x, y, z : Type} ->
+  SlicePolyFunc x z -> SlicePolyFunc y z ->
+  SlicePolyFunc (Either x y) z
+spfCase {x} {y} {z} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+  (\ez => Either (pd ez) (pd' ez) **
+   \(ez ** pz) => (case pz of
+    Left pz' => dd (ez ** pz')
+    Right pz' => dd' (ez ** pz')) **
+   \((ez ** pz) ** dz) => (case pz of
+    Left pz' => Left (asn ((ez ** pz') ** dz))
+    Right pz' => Right (asn' ((ez ** pz') ** dz))))
+
 ---------------------------------------------
 ---- As endofunctors on slice categories ----
 ---------------------------------------------
