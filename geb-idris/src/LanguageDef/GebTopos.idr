@@ -1250,6 +1250,13 @@ GListLAssign (True ** False) = False -- head is a PolyFunc
 GListLAssign (True ** True) = True -- tail is a list
 
 public export
+GListLSPF : SlicePolyFunc GListSlice ()
+GListLSPF =
+  (const GListPosL **
+   GListDirL . snd **
+   \((() ** i) ** d) => GListLAssign (i ** d))
+
+public export
 GListPos : PolyFunc -> SliceObj GListSlice
 GListPos p False = pfPos p
 GListPos p True = GListPosL
@@ -1266,7 +1273,7 @@ GListAssign p False i d = False -- 'p' directions are all in PolyFunc slice
 GListAssign p True i d = GListLAssign (i ** d)
 
 public export
-GListSPF : PolyFunc -> SlicePolyEndoFunc Bool
+GListSPF : PolyFunc -> SlicePolyEndoFunc GListSlice
 GListSPF p =
   (GListPos p **
    \(sl ** i) => GListDir p sl i **
