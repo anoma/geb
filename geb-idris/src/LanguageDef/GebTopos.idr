@@ -1266,7 +1266,7 @@ GListDir p (Right ()) = GListDirL
 public export
 GListAssign : (p : PolyFunc) -> (sl : GListSlice) -> (i : GListPos p sl) ->
   GListDir p sl i -> GListSlice
-GListAssign p (Left ()) i d = (Left ()) -- 'p' directions are all in PolyFunc slice
+GListAssign p (Left ()) i d = (Left ()) -- 'p' dirs are all in PolyFunc slice
 GListAssign p (Right ()) i d = GListLAssign (i ** d)
 
 public export
@@ -1306,17 +1306,15 @@ gNatDirAtom ((Right ()) ** v) = void v
 ---- Expression-component endofunctor ----
 ------------------------------------------
 
-public export
-data GExpXDir : Type where
-  GDA : GExpXDir
-  GDNL : GExpXDir
-  GDXL : GExpXDir
-
 -- An expression has only one position, with three directions:  an atom,
 -- a natural number list, and an expression list.
 public export
+GExpXNumDir : Nat
+GExpXNumDir = 3
+
+public export
 GExpF : PolyFunc
-GExpF = PFHomArena GExpXDir
+GExpF = PFHomArena (Fin GExpXNumDir)
 
 public export
 GExpPos : Type
@@ -1332,9 +1330,9 @@ GExpPosAtom () = POS_X
 
 public export
 GExpDirAtom : Sigma {a=GExpPos} GExpDir -> GebAtom
-GExpDirAtom (() ** GDA) = DIR_XA
-GExpDirAtom (() ** GDNL) = DIR_XNL
-GExpDirAtom (() ** GDXL) = DIR_XXL
+GExpDirAtom (() ** FZ) = DIR_XA
+GExpDirAtom (() ** FS FZ) = DIR_XNL
+GExpDirAtom (() ** FS (FS FZ)) = DIR_XXL
 
 -----------------------------------------
 ---- Natural number list endofunctor ----
