@@ -3512,6 +3512,12 @@ pfSlice : {0 x : Type} ->
 pfSlice {x} (pos ** dir) assign =
   (const pos ** dir . snd ** \dd => assign (snd (fst dd) ** snd dd))
 
+-- Turn a polynomial functor into a dependent polynomial functor by
+-- slicing its directions completely.
+public export
+pfSliceAll : (p : PolyFunc) -> SlicePolyFunc (pfPDir p) ()
+pfSliceAll p = pfSlice p id
+
 -- Produce a dependent polynomial functor from a non-dependent polynomial
 -- functor by assigning the output's codomain to the input's positions
 -- and the input's directions to the output's domain.
@@ -3523,6 +3529,17 @@ pfAssign : {0 x, y : Type} ->
   SlicePolyFunc x y
 pfAssign p ap ad =
   (const Unit ** pfDir {p} . ap . fst ** \dd => ad (fst (fst dd)) (snd dd))
+
+-- Give a polynomial functor the most flexible possible dependent type
+-- by distinguishing all of its directions in its domain and all of its
+-- positions in its codomain.
+public export
+pfAssignAll :
+  (p : PolyFunc) ->
+  (ap : y -> pfPos p) ->
+  (ad : (i : y) -> pfDir {p} (ap i) -> x) ->
+  SlicePolyFunc (pfPDir p) (pfPos p)
+pfAssignAll p ap ad = pfAssign p id MkDPair
 
 --------------------------------------------------------------------
 ---- Composition of parameterized dependent polynomial functors ----
