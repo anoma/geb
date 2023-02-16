@@ -54,6 +54,20 @@
                 (present-object x stream)
                 (cross-circle stream 7.5))))))))
 
+(define-presentation-method present ((object geb:coprod)
+                                     (type   geb:coprod)
+                                     (stream extended-output-stream)
+                                     (view   show-view)
+                                     &key)
+  (surrounding-output-with-border (stream)
+    (formatting-table (stream :x-spacing "  ")
+      ;; dumb hack
+      (dolist (x (serapeum:intersperse nil (geb:same-type-to-list object 'geb:coprod)))
+        (center-column-cell (stream)
+          (if x
+              (present-object x stream)
+              (plus-circle stream 10.5)))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Graph Presenter
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -70,20 +84,6 @@
 ;; Presentation: Box View
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-(define-presentation-method present ((object geb:coprod)
-                                     (type   geb:coprod)
-                                     (stream extended-output-stream)
-                                     (view   show-view)
-                                     &key)
-  (surrounding-output-with-border (stream)
-    (formatting-table (stream :x-spacing "  ")
-      ;; dumb hack
-      (dolist (x (serapeum:intersperse nil (geb:same-type-to-list object 'geb:coprod)))
-        (center-column-cell (stream)
-          (if x
-              (present-object x stream)
-              (plus-circle stream 10.5)))))))
 
 (define-presentation-method present ((object geb:project-left)
                                      (type   geb:project-left)

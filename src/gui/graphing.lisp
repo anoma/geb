@@ -119,12 +119,20 @@ to be merged"))
       (alias
        ;; we should stop the graph here, graph it internally then
        ;; present it better.
-       (let ((node (graphize (obj morph) notes))
-             (name (name morph)))
-         (with-slots (value representation) node
-           (setf value          (make-alias :name name :obj value))
-           (setf representation (make-alias :name name :obj representation))
-           node)))
+       (if (typep (obj morph) '<substobj>)
+           (let ((node (graphize (obj morph) notes))
+                 (name (name morph)))
+             (with-slots (value) node
+               (setf value (make-alias :name name :obj value))
+               node))
+
+           (let ((node-codom (make-note :from morph
+                                        :note (symbol-name (name morph))
+                                        :value (graphize (codom morph) notes)))
+                 ;; TODO :: Replace me with the full (obj morph) instead.
+                 (node (make-squash :value (graphize (dom morph) nil))))
+             (apply-note node node-codom)
+             (value node))))
       (substobj
        (continue-graphizing (make-instance 'node :representation morph :value morph)
                             notes))
