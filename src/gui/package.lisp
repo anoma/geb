@@ -16,7 +16,8 @@ object into a format for a graphing backend."
   (make-note pax:function)
   (make-squash pax:function)
   (graphize pax:generic-function)
-  (cons-note pax:function))
+  (cons-note pax:function)
+  (determine-text-and-object-from-node pax:function))
 
 (geb.utils:muffle-package-variance
  (defpackage #:geb-gui

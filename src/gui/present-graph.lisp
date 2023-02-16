@@ -50,30 +50,36 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun dot-arc-drawer ()
-  (make-instance 'mcclim-dot:dot-arc-drawer
-                 :edge-label-printer
-                 (lambda (drawer stream from to)
-                   (declare (ignore drawer to from))
-                   (format stream "π₂"))))
+  (make-instance
+   'mcclim-dot:dot-arc-drawer
+   :edge-label-printer
+   (lambda (drawer stream from to)
+     (declare (ignore drawer))
+     (let ((obj (graph:determine-text-and-object-from-node from to)))
+       (with-output-as-presentation (stream (cadr obj) (type-of (cadr obj)))
+         (format stream (car obj)))))))
 
 (defun digraph-arc-drawer (pane from-node to-node x1 y1 x2 y2
                            &rest drawing-options
                            &key &allow-other-keys)
-  (declare (ignore from-node to-node))
   (with-drawing-options (pane
                          :transform (clim:make-rotation-transformation
                                      (atan (- y2 y1) (- x2 x1)))
-                         :text-style (make-text-style nil nil 18))
+                         :text-style (make-text-style nil nil 12))
     (apply #'draw-arrow* pane x1 y1 x2 y2 drawing-options)
-    (draw-text* pane "π₂"
-                (/ (+ x1 x2) 2)
-                (/ (+ y1 y2) 2)
-                :toward-y (* 2 y2)
-                :toward-x (* 2 x2)
-                :align-y :top
-                :align-y :bottom
-                :align-x :center
-                :transform-glyphs t)))
+    (let ((obj (graph:determine-text-and-object-from-node
+                (clim:graph-node-object from-node)
+                (clim:graph-node-object to-node))))
+      (with-output-as-presentation (pane (cadr obj) (type-of (cadr obj)))
+        (draw-text* pane (car obj)
+                    (/ (+ x1 x2) 2)
+                    (/ (+ y1 y2) 2)
+                    :toward-y (* 2 y2)
+                    :toward-x (* 2 x2)
+                    :align-y :top
+                    :align-y :bottom
+                    :align-x :center
+                    :transform-glyphs t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Children API

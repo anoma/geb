@@ -221,6 +221,25 @@ then: `(commutes-left (dom morph)) ≡ (prod y x)`
     (_ (error "object ~A need to be of a coproduct type, however it is of ~A"
               f (dom f)))))
 
+(defgeneric text-name (morph)
+  (:documentation
+   "Gets the name of the moprhism"))
+
+(defmethod text-name ((morph <substmorph>))
+  (typecase-of substmorph morph
+    (alias        (symbol-name (name morph)))
+    (project-left  "π₁")
+    (project-right "π₂")
+    (inject-left   "ι₁")
+    (inject-right  "ι₂")
+    (terminal       "τ")
+    (init           "Init")
+    (distribute     "Dist")
+    ((or case pair) "")
+    (comp           "")
+    (substobj       "Id")
+    (otherwise (subclass-responsibility morph))))
+
 (defgeneric curry (f)
   (:documentation
    "Curries the given object, returns a [\\<SUBSTMORPH\\>]

@@ -162,18 +162,31 @@ to be merged"))
       ;;      ---f--> Z ------
       ;;                Π₂
       (pair
-       (let ((goal (graphize (codom morph) nil)))
+       (let ((goal         (graphize (codom morph) nil))
+             (current-node (make-squash :value
+                                        (make-instance 'node
+                                                       :value (dom morph)
+                                                       :representation morph))))
          (flet ((make-child (node note)
-                  ;; we ignore the node made as it's just the node we made
-                  (children
-                   (graphize node
-                             (cons-note (make-note :from morph :note note :value goal)
-                                        notes)))))
-           (make-instance 'node
-                          :value (dom morph)
-                          :representation morph
-                          :children (append (make-child (mcar morph)  "Π₁")
-                                            (make-child (mcdr morph) "Π₂"))))))
+                  (let ((node
+                          (graphize node
+                                    (cons-note (make-note :from morph
+                                                          :note note
+                                                          :value goal)
+                                               notes))))
+                    (mapcar (lambda (x)
+                              (let ((note
+                                      (determine-text-and-object-from-node
+                                       node x)))
+                                (make-note :from (cadr note)
+                                           :note (car note)
+                                           :value x)))
+                            (children node)))))
+           (mapc (lambda (c) (apply-note current-node c))
+                 (reverse
+                  (append (make-child (mcar morph) "Π₁")
+                          (make-child (mcdr morph) "Π₂"))))
+           (value current-node))))
       (otherwise
        (geb.utils:subclass-responsibility morph)))))
 
@@ -262,3 +275,9 @@ as that is the proper NODE to continue from"
             (car notes-with-node))
     (assure node
       (value (car notes-with-node)))))
+
+(defun determine-text-and-object-from-node (from to)
+  "Helps lookup the text from the node"
+  (or (meta-lookup from to)
+      (list (geb:text-name (representation from))
+            (representation from))))

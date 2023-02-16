@@ -25,6 +25,7 @@
   (so-card-alg       pax:generic-function)
   (so-card-alg       (pax:method () (<substobj>)))
   (dom               pax:generic-function)
+  (text-name         pax:generic-function)
   (codom             pax:generic-function)
   (curry             pax:generic-function))
 
