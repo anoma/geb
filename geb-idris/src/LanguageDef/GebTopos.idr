@@ -1244,6 +1244,12 @@ GListSlice : Type
 GListSlice = Bool  -- False = input PolyFunc; True = list of input PolyFunc
 
 public export
+GListLAssign : Sigma {a=GListPosL} GListDirL -> GListSlice
+GListLAssign (False ** d) = void d
+GListLAssign (True ** False) = False -- head is a PolyFunc
+GListLAssign (True ** True) = True -- tail is a list
+
+public export
 GListPos : PolyFunc -> SliceObj GListSlice
 GListPos p False = pfPos p
 GListPos p True = GListPosL
@@ -1254,23 +1260,17 @@ GListDir p False = pfDir {p}
 GListDir p True = GListDirL
 
 public export
-GListDirLAssign : Sigma {a=GListPosL} GListDirL -> GListSlice
-GListDirLAssign (False ** d) = void d
-GListDirLAssign (True ** False) = False -- head is a PolyFunc
-GListDirLAssign (True ** True) = True -- tail is a list
-
-public export
-GListDirAssign : (p : PolyFunc) -> (sl : GListSlice) -> (i : GListPos p sl) ->
+GListAssign : (p : PolyFunc) -> (sl : GListSlice) -> (i : GListPos p sl) ->
   GListDir p sl i -> GListSlice
-GListDirAssign p False i d = False -- 'p' directions are all in PolyFunc slice
-GListDirAssign p True i d = GListDirLAssign (i ** d)
+GListAssign p False i d = False -- 'p' directions are all in PolyFunc slice
+GListAssign p True i d = GListLAssign (i ** d)
 
 public export
 GListSPF : PolyFunc -> SlicePolyEndoFunc Bool
 GListSPF p =
   (GListPos p **
    \(sl ** i) => GListDir p sl i **
-   \((sl ** i) ** d) => GListDirAssign p sl i d)
+   \((sl ** i) ** d) => GListAssign p sl i d)
 
 ------------------------------------
 ---- Natural number endofunctor ----
@@ -1354,7 +1354,7 @@ GNatLFDir = pfDir {p=GNatLF}
 
 public export
 GNatLFAssign : (i : GNatLFPos) -> GNatLFDir i -> GListSlice
-GNatLFAssign = GListDirAssign GNatF True
+GNatLFAssign = GListAssign GNatF True
 
 public export
 GNatLFPosAtom : GNatLFPos -> GebAtom
@@ -1389,7 +1389,7 @@ GExpLFDir = pfDir {p=GExpLF}
 
 public export
 GExpLFAssign : (i : GExpLFPos) -> GExpLFDir i -> GListSlice
-GExpLFAssign = GListDirAssign GExpF True
+GExpLFAssign = GListAssign GExpF True
 
 public export
 GExpLFPosAtom : GExpLFPos -> GebAtom
