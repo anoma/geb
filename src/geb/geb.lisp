@@ -265,3 +265,51 @@ In category terms, `a → c^b` is isomorphic to `a → b → c`
       (error "object ~A need to be of a product type, however it is of ~A" f (dom f))
       (let ((dom (dom f)))
         (curry-prod f (mcar dom) (mcadr dom)))))
+
+;; Please rewrite this code, it's horrible
+(defmethod reducer ((morph <substmorph>) &optional (seen-set (fset:empty-set)))
+  ;; handle the easy cases, do the hard tracking later
+  (typecase-of substmorph morph
+    (project-left   morph)
+    (project-right  morph)
+    (inject-left    morph)
+    (inject-right   morph)
+    (terminal       morph)
+    (init           morph)
+    (distribute     morph)
+    (pair           (pair (reducer (mcar morph))
+                          (reducer (mcdr morph))))
+    (case           (mcase (reducer (mcar morph))
+                           (reducer (mcadr morph))))
+    (comp
+     (let* ((linearized (linearize-comp morph))
+            ;; this code is absolutely horrible
+            (left (mvfoldr (lambda (g flist)
+                             (let ((new-g (reducer g)))
+                               (typecase (car flist)
+                                 (pair
+                                  (typecase new-g
+                                    (project-left  (cons (mcar (car flist))
+                                                         (cdr flist)))
+                                    (project-right (cons (mcdr (car flist))
+                                                         (cdr flist)))
+                                    (otherwise     (cons new-g flist))))
+                                 (otherwise
+                                  (cons new-g flist)))))
+                           (butlast linearized)
+                           (list (reducer (car (last linearized))))))
+            (constructed (if (cdr left)
+                             (apply #'comp left)
+                             (car left))))
+       ;; g 。f
+       (if (fset:member? constructed seen-set)
+           (comp (reducer (mcar constructed)) (reducer (mcadr constructed)))
+           (reducer constructed (fset:with seen-set constructed)))))
+    (substobj       morph)
+    (otherwise (subclass-responsibility morph))))
+
+(defun linearize-comp (morph)
+  (if (typep morph 'comp)
+      (append (linearize-comp (mcar morph))
+              (linearize-comp (mcadr morph)))
+      (list morph)))
