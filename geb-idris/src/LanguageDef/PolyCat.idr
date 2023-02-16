@@ -3507,10 +3507,22 @@ spfTopf spf ey = PolyFuncFromUnitUnitSPF (spfForgetParam (spfApplyPos spf ey))
 -- Turn a polynomial functor into a dependent polynomial functor by
 -- slicing its directions.
 public export
-pfAssign : {0 x : Type} ->
+pfSlice : {0 x : Type} ->
   (p : PolyFunc) -> (pfPDir p -> x) -> SlicePolyFunc x ()
-pfAssign {x} (pos ** dir) assign =
+pfSlice {x} (pos ** dir) assign =
   (const pos ** dir . snd ** \dd => assign (snd (fst dd) ** snd dd))
+
+-- Produce a dependent polynomial functor from a non-dependent polynomial
+-- functor by assigning the output's codomain to the input's positions
+-- and the input's directions to the output's domain.
+public export
+pfAssign : {0 x, y : Type} ->
+  (p : PolyFunc) ->
+  (ap : y -> pfPos p) ->
+  (ad : (i : y) -> pfDir {p} (ap i) -> x) ->
+  SlicePolyFunc x y
+pfAssign p ap ad =
+  (const Unit ** pfDir {p} . ap . fst ** \dd => ad (fst (fst dd)) (snd dd))
 
 --------------------------------------------------------------------
 ---- Composition of parameterized dependent polynomial functors ----

@@ -1222,6 +1222,10 @@ public export
 GAtomDir : SliceObj GAtomPos
 GAtomDir = pfDir {p=GAtomF}
 
+public export
+GAtomSPF : SlicePolyFunc Void ()
+GAtomSPF = pfSlice GAtomF $ \(i ** d) => void d
+
 ------------------------------------------
 ---- List (parameterized) endofunctor ----
 ------------------------------------------
@@ -1251,7 +1255,7 @@ GListLAssign (Right () ** Right ()) = Right () -- tail is a list
 
 public export
 GListLSPF : SlicePolyFunc GListSlice ()
-GListLSPF = pfAssign GListF GListLAssign
+GListLSPF = pfSlice GListF GListLAssign
 
 public export
 GListPos : PolyFunc -> SliceObj GListSlice
