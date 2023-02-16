@@ -3504,43 +3504,50 @@ TwoCatFromAdj a = a -> Sigma {a=Type} CatFromAdj
 -----------------
 
 public export
-DiagFunc : DepParamPolyFunc () Bool
-DiagFunc = (const Unit ** const ((), Unit))
+BoolCP : Type
+BoolCP = Either Unit Unit
 
 public export
-DiagSPF : SlicePolyFunc () Bool
-DiagSPF = SPFFromDPPF DiagFunc
+DiagFunc : SlicePolyFunc () BoolCP
+DiagFunc = SPFPolyDiag () BoolCP ()
 
 public export
-DiagApp : (x : Type) -> (b : Bool) -> x -> InterpDPPF DiagFunc (const x) b
+DiagSPF : SlicePolyFunc () BoolCP
+DiagSPF = DiagFunc
+
+public export
+DiagApp : (x : Type) -> (b : BoolCP) -> x -> InterpSPFunc DiagFunc (const x) b
 DiagApp x b e = (() ** const e)
 
 public export
 diagTest : Nat -> (Nat, Nat)
-diagTest n = (snd (DiagApp Nat False n) (), snd (DiagApp Nat True n) ())
+diagTest n =
+  (snd (DiagApp Nat (Left ()) n) (), snd (DiagApp Nat (Right ()) n) ())
 
 public export
 diagTestCorrect : (n : Nat) -> diagTest n = (n, n)
 diagTestCorrect n = Refl
 
 public export
-ProductFunc : SlicePolyFunc Bool ()
-ProductFunc = (const Unit ** const Bool ** DPair.snd)
+ProductFunc : SlicePolyFunc BoolCP ()
+ProductFunc = SPFPi BoolCP
 
 public export
-IProductFunc : SliceFunctor Bool ()
+IProductFunc : SliceFunctor BoolCP ()
 IProductFunc = InterpSPFunc ProductFunc
 
 public export
 ProductInterp :
-  (x, y : Type) -> (x, y) -> IProductFunc (\b => if b then y else x) ()
-ProductInterp x y (ex, ey) = (() ** \b => if b then ey else ex)
+  (x, y : Type) -> (x, y) ->
+  IProductFunc (\b => case b of Right () => y ; Left () => x) ()
+ProductInterp x y (ex, ey) =
+  (() ** \b => case b of Right () => ey ; Left () => ex)
 
 public export
 productTest : (String, Nat) -> (String, Nat)
 productTest (s, n) =
-  (snd (ProductInterp String Nat (s, n)) False,
-   snd (ProductInterp String Nat (s, n)) True)
+  (snd (ProductInterp String Nat (s, n)) (Left ()),
+   snd (ProductInterp String Nat (s, n)) (Right ()))
 
 public export
 productTestCorrect : (s : String) -> (n : Nat) -> productTest (s, n) = (s, n)
@@ -3555,11 +3562,11 @@ ProdAdjRL : PolyFunc
 ProdAdjRL = PolyFuncFromUnitUnitSPF ProdAdjRLSPF
 
 public export
-ProdAdjLR : SlicePolyFunc Bool Bool
+ProdAdjLR : SlicePolyFunc BoolCP BoolCP
 ProdAdjLR = spfCompose DiagSPF ProductFunc
 
 public export
-prodAdjCounit : SPNatTrans ProdAdjLR (spfId Bool)
+prodAdjCounit : SPNatTrans ProdAdjLR (spfId BoolCP)
 prodAdjCounit =
   (\_, _ => () ** \(i ** (() ** _)), () => ((() ** i) ** Refl))
 
@@ -3568,35 +3575,37 @@ prodAdjUnit : PolyNatTrans PFIdentityArena ProdAdjRL
 prodAdjUnit = (const (() ** const ()) ** const (const ()))
 
 public export
-interpProdCounit : (x : SliceObj Bool) ->
-  SliceMorphism (InterpSPFunc ProdAdjLR x) (InterpSPFunc (spfId Bool) x)
-interpProdCounit = InterpSPNT {f=ProdAdjLR} {g=(spfId Bool)} prodAdjCounit
+interpProdCounit : (x : SliceObj BoolCP) ->
+  SliceMorphism (InterpSPFunc ProdAdjLR x) (InterpSPFunc (spfId BoolCP) x)
+interpProdCounit = InterpSPNT {f=ProdAdjLR} {g=(spfId BoolCP)} prodAdjCounit
 
 public export
-testProdCounitObj : SliceObj Bool
-testProdCounitObj b = if b then Nat else String
+testProdCounitObj : SliceObj BoolCP
+testProdCounitObj b = case b of Right () => Nat ; Left () => String
 
 public export
 testProdCounit :
   SliceMorphism
     (InterpSPFunc ProdAdjLR ADTCat.testProdCounitObj)
-    (InterpSPFunc (spfId Bool) ADTCat.testProdCounitObj)
+    (InterpSPFunc (spfId BoolCP) ADTCat.testProdCounitObj)
 testProdCounit = interpProdCounit testProdCounitObj
 
 public export
-prodCounitProj : (String, Nat) -> (i : Bool) -> if i then Nat else String
+prodCounitProj : (String, Nat) -> (i : BoolCP) ->
+  case i of Right () => Nat ; Left () => String
 prodCounitProj (s, n) i =
   snd
     (ADTCat.testProdCounit i
-      ((() ** const ()) ** \(() ** i') => if i' then n else s))
+      ((() ** const ()) ** \(() ** i') =>
+        case i' of Right () => n ; Left () => s))
   ()
 
 public export
-testProdCounitProj1 : prodCounitProj ("five", 5) False = "five"
+testProdCounitProj1 : prodCounitProj ("five", 5) (Left ()) = "five"
 testProdCounitProj1 = Refl
 
 public export
-testProdCounitProj2 : prodCounitProj ("five", 5) True = 5
+testProdCounitProj2 : prodCounitProj ("five", 5) (Right ()) = 5
 testProdCounitProj2 = Refl
 
 public export
@@ -3608,7 +3617,7 @@ interpProdUnit x ex =
         (InterpPolyNT {p=PFIdentityArena} {q=ProdAdjRL}
           prodAdjUnit x (() ** const ex))
   in
-  (ipnt (False ** ()), ipnt (True ** ()))
+  (ipnt (Left () ** ()), ipnt (Right () ** ()))
 
 -- L a -> b => a -> R b (`L a` and `b` are in the product category)
 -- R f . nu a
@@ -3627,11 +3636,11 @@ prodRightAdjunct a b b' g = (fst . g, snd . g)
 -------------------
 
 public export
-CoproductFunc : SlicePolyFunc Bool ()
-CoproductFunc = (const Bool ** const Unit ** DPair.snd . DPair.fst)
+CoproductFunc : SlicePolyFunc BoolCP ()
+CoproductFunc = (const BoolCP ** const Unit ** DPair.snd . DPair.fst)
 
 public export
-CoprodAdjRL : SlicePolyFunc Bool Bool
+CoprodAdjRL : SlicePolyFunc BoolCP BoolCP
 CoprodAdjRL = spfCompose DiagSPF CoproductFunc
 
 public export
@@ -3643,7 +3652,7 @@ CoprodAdjLR : PolyFunc
 CoprodAdjLR = PolyFuncFromUnitUnitSPF CoprodAdjLRSPF
 
 public export
-coprodAdjUnit : SPNatTrans (spfId Bool) CoprodAdjRL
+coprodAdjUnit : SPNatTrans (spfId BoolCP) CoprodAdjRL
 coprodAdjUnit =
   (\b, () => (() ** const b) ** \(b ** ()), (() ** ()) => (() ** Refl))
 
@@ -3652,20 +3661,21 @@ coprodAdjCounit : PolyNatTrans CoprodAdjLR PFIdentityArena
 coprodAdjCounit = (const () ** const (const (() ** ())))
 
 public export
-ICoproductFunc : SliceFunctor Bool ()
+ICoproductFunc : SliceFunctor BoolCP ()
 ICoproductFunc = InterpSPFunc CoproductFunc
 
 public export
 CoproductInterp :
-  (x, y : Type) -> Either x y -> ICoproductFunc (\b => if b then y else x) ()
-CoproductInterp x y (Left ex) = (False ** const ex)
-CoproductInterp x y (Right ey) = (True ** const ey)
+  (x, y : Type) -> Either x y ->
+  ICoproductFunc (\b => case b of Right () => y ; Left () => x) ()
+CoproductInterp x y (Left ex) = (Left () ** const ex)
+CoproductInterp x y (Right ey) = (Right () ** const ey)
 
 public export
 coproductTest : Either String Nat -> Either String Nat
 coproductTest sn with (CoproductInterp String Nat sn)
-  coproductTest sn | (False ** f) = Left $ f ()
-  coproductTest sn | (True ** f) = Right $ f ()
+  coproductTest sn | (Left () ** f) = Left $ f ()
+  coproductTest sn | (Right () ** f) = Right $ f ()
 
 public export
 coproductTestCorrect : (sn : Either String Nat) -> coproductTest sn = sn
