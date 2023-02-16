@@ -24,6 +24,7 @@
     :description "Mixin Utility Functions"
     :depends-on (util)
     :components ((:file package)
+                 (:file meta)
                  (:file mixins)))
    (:module vampir
     :serial t
@@ -104,6 +105,7 @@
   :serial t
   :components
   ((:file package)
+   (:file meta)
    (:file geb)
    (:file lambda)
    (:file lambda-conversion)
