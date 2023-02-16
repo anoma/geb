@@ -3637,7 +3637,7 @@ prodRightAdjunct a b b' g = (fst . g, snd . g)
 
 public export
 CoproductFunc : SlicePolyFunc BoolCP ()
-CoproductFunc = (const BoolCP ** const Unit ** DPair.snd . DPair.fst)
+CoproductFunc = SPFSigma BoolCP
 
 public export
 CoprodAdjRL : SlicePolyFunc BoolCP BoolCP
