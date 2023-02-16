@@ -1254,7 +1254,7 @@ GListLSPF : SlicePolyFunc GListSlice ()
 GListLSPF =
   (const GListPosL **
    GListDirL . snd **
-   \dd => GListLAssign (snd (fst dd) ** snd dd))
+   \((() ** i) ** d) => GListLAssign (i ** d))
 
 public export
 GListPos : PolyFunc -> SliceObj GListSlice
