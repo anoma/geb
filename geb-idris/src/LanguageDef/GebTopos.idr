@@ -1227,22 +1227,26 @@ GAtomDir = pfDir {p=GAtomF}
 ------------------------------------------
 
 public export
-GListSlice : Type
-GListSlice = Bool  -- False = input PolyFunc; True = list of input PolyFunc
-
-public export
 GListPosL : Type
 GListPosL = Bool  -- False = nil; True = cons
-
-public export
-GListPos : PolyFunc -> SliceObj GListSlice
-GListPos p False = pfPos p
-GListPos p True = GListPosL
 
 public export
 GListDirL : SliceObj GListPosL
 GListDirL False = Void -- nil has no directions
 GListDirL True = Bool -- cons has two directions (False = head; True = tail)
+
+public export
+GListF : PolyFunc
+GListF = (GListPosL ** GListDirL)
+
+public export
+GListSlice : Type
+GListSlice = Bool  -- False = input PolyFunc; True = list of input PolyFunc
+
+public export
+GListPos : PolyFunc -> SliceObj GListSlice
+GListPos p False = pfPos p
+GListPos p True = GListPosL
 
 public export
 GListDir : Pi {a=PolyFunc} (Slice2Obj {a=GListSlice} . GListPos)
@@ -1262,8 +1266,8 @@ GListDirAssign p False i d = False -- 'p' directions are all in PolyFunc slice
 GListDirAssign p True i d = GListDirLAssign (i ** d)
 
 public export
-GListF : PolyFunc -> SlicePolyEndoFunc Bool
-GListF p =
+GListSPF : PolyFunc -> SlicePolyEndoFunc Bool
+GListSPF p =
   (GListPos p **
    \(sl ** i) => GListDir p sl i **
    \((sl ** i) ** d) => GListDirAssign p sl i d)
@@ -1334,7 +1338,7 @@ GExpDirAtom (() ** GDXL) = DIR_XXL
 
 public export
 GNatLSPF : SlicePolyEndoFunc Bool
-GNatLSPF = GListF GNatF
+GNatLSPF = GListSPF GNatF
 
 public export
 GNatLF : PolyFunc
@@ -1369,7 +1373,7 @@ GNatLFDirAtom (True ** True) = DIR_NCTL
 
 public export
 GExpLSPF : SlicePolyEndoFunc Bool
-GExpLSPF = GListF GExpF
+GExpLSPF = GListSPF GExpF
 
 public export
 GExpLF : PolyFunc
