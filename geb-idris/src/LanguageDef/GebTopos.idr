@@ -652,15 +652,15 @@ record TFunctorSig (c, d : TCatSig) where
 -------------------------------------------------
 
 public export
-data GWExpSlice : Type where
-  GSATOM : GWExpSlice
-  GSNAT : GWExpSlice
-  GSNATL : GWExpSlice
-  GSEXP : GWExpSlice
-  GSEXPL : GWExpSlice
+data GExpSlice : Type where
+  GSATOM : GExpSlice
+  GSNAT : GExpSlice
+  GSNATL : GExpSlice
+  GSEXP : GExpSlice
+  GSEXPL : GExpSlice
 
 public export
-gSliceAtom : GWExpSlice -> GebAtom
+gSliceAtom : GExpSlice -> GebAtom
 gSliceAtom GSATOM = SL_ATOM
 gSliceAtom GSNAT = SL_NAT
 gSliceAtom GSNATL = SL_NATL
@@ -668,7 +668,7 @@ gSliceAtom GSEXP = SL_EXP
 gSliceAtom GSEXPL = SL_EXPL
 
 public export
-Show GWExpSlice where
+Show GExpSlice where
   show = show . gSliceAtom
 
 public export
@@ -676,7 +676,7 @@ GSliceSz : Nat
 GSliceSz = 5
 
 public export
-GSliceFinDecoder : FinDecoder GWExpSlice GSliceSz
+GSliceFinDecoder : FinDecoder GExpSlice GSliceSz
 GSliceFinDecoder FZ = GSATOM
 GSliceFinDecoder (FS FZ) = GSNAT
 GSliceFinDecoder (FS (FS FZ)) = GSNATL
@@ -692,11 +692,11 @@ GSliceNatEncoder GSEXP = (3 ** Refl ** Refl)
 GSliceNatEncoder GSEXPL = (4 ** Refl ** Refl)
 
 public export
-GSliceFinDecEncoding : FinDecEncoding GWExpSlice GSliceSz
+GSliceFinDecEncoding : FinDecEncoding GExpSlice GSliceSz
 GSliceFinDecEncoding = NatDecEncoding GSliceFinDecoder GSliceNatEncoder
 
 public export
-DecEq GWExpSlice where
+DecEq GExpSlice where
   decEq = fdeDecEq GSliceFinDecEncoding
 
 public export
@@ -865,7 +865,7 @@ DecEq GWExpDir where
   decEq = fdeDecEq GDirFinDecEncoding
 
 public export
-gAssign : GWExpDir -> GWExpSlice
+gAssign : GWExpDir -> GExpSlice
 gAssign GDS = GSNAT
 gAssign GDXA = GSATOM
 gAssign GDXNL = GSNATL
@@ -887,7 +887,7 @@ gDirSlice GDXCHD = GPXC
 gDirSlice GDXCTL = GPXC
 
 public export
-gNonAtomPosSlice : GWExpNonAtomPos -> GWExpSlice
+gNonAtomPosSlice : GWExpNonAtomPos -> GExpSlice
 gNonAtomPosSlice GPNAZ = GSNAT
 gNonAtomPosSlice GPNAS = GSNAT
 gNonAtomPosSlice GPNAX = GSEXP
@@ -897,25 +897,25 @@ gNonAtomPosSlice GPNAXN = GSEXPL
 gNonAtomPosSlice GPNAXC = GSEXPL
 
 public export
-gPosSlice : GWExpPos -> GWExpSlice
+gPosSlice : GWExpPos -> GExpSlice
 gPosSlice (GPA _) = GSATOM
 gPosSlice (GPNAP i) = gNonAtomPosSlice i
 
 public export
-GWExpWTF : WTypeEndoFunc GWExpSlice
+GWExpWTF : WTypeEndoFunc GExpSlice
 GWExpWTF = MkWTF GWExpPos GWExpDir gAssign gDirSlice gPosSlice
 
 public export
-GWExpSPF : SlicePolyEndoFunc GWExpSlice
+GWExpSPF : SlicePolyEndoFunc GExpSlice
 GWExpSPF = WTFtoSPF GWExpWTF
 
 public export
-GWExpWT : SliceObj GWExpSlice
+GWExpWT : SliceObj GExpSlice
 GWExpWT = SPFMu GWExpSPF
 
 public export
 GWExpSigma : Type
-GWExpSigma = Sigma {a=GWExpSlice} GWExpWT
+GWExpSigma = Sigma {a=GExpSlice} GWExpWT
 
 public export
 GWExpA : Type
@@ -938,7 +938,7 @@ GWExpXL : Type
 GWExpXL = GWExpWT GSEXPL
 
 public export
-record GWExpAlg (sa : GWExpSlice -> Type) where
+record GWExpAlg (sa : GExpSlice -> Type) where
   constructor GAlg
   galgA : GebAtom -> sa GSATOM
   galgZ : sa GSNAT
@@ -950,7 +950,7 @@ record GWExpAlg (sa : GWExpSlice -> Type) where
   galgXC : sa GSEXP -> sa GSEXPL -> sa GSEXPL
 
 public export
-GAlgToSPF : {sa : GWExpSlice -> Type} -> GWExpAlg sa -> SPFAlg GWExpSPF sa
+GAlgToSPF : {sa : GExpSlice -> Type} -> GWExpAlg sa -> SPFAlg GWExpSPF sa
 GAlgToSPF alg GSATOM (Element0 (GPA a) isl ** d) =
   alg.galgA a
 GAlgToSPF alg GSATOM (Element0 (GPNAP GPNAZ) isl ** d) =
@@ -1034,12 +1034,12 @@ GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNAXC) isl ** d) =
   alg.galgXC (d $ Element0 GDXCHD Refl) (d $ Element0 GDXCTL Refl)
 
 public export
-gwexpCata : {sa : GWExpSlice -> Type} ->
-  GWExpAlg sa -> SliceMorphism {a=GWExpSlice} GWExpWT sa
+gwexpCata : {sa : GExpSlice -> Type} ->
+  GWExpAlg sa -> SliceMorphism {a=GExpSlice} GWExpWT sa
 gwexpCata {sa} alg = spfCata {spf=GWExpSPF} {sa} (GAlgToSPF {sa} alg)
 
 public export
-GWExpWTtoGExpAlgSl : SliceObj GWExpSlice
+GWExpWTtoGExpAlgSl : SliceObj GExpSlice
 GWExpWTtoGExpAlgSl GSATOM = GebAtom
 GWExpWTtoGExpAlgSl GSNAT = Nat
 GWExpWTtoGExpAlgSl GSNATL = List Nat
@@ -1051,7 +1051,7 @@ GWExpWTtoGExpAlg : GWExpAlg GWExpWTtoGExpAlgSl
 GWExpWTtoGExpAlg = GAlg id 0 S [] (::) InS [] (::)
 
 public export
-gwexpWTtoGExpSl : SliceMorphism {a=GWExpSlice} GWExpWT GWExpWTtoGExpAlgSl
+gwexpWTtoGExpSl : SliceMorphism {a=GExpSlice} GWExpWT GWExpWTtoGExpAlgSl
 gwexpWTtoGExpSl = gwexpCata GWExpWTtoGExpAlg
 
 public export
@@ -1403,3 +1403,46 @@ GExpLFDirAtom : Sigma {a=GExpLFPos} GExpLFDir -> GebAtom
 GExpLFDirAtom ((Left ()) ** d) = void d
 GExpLFDirAtom (Right () ** (Left ())) = DIR_XCHD
 GExpLFDirAtom (Right () ** Right ()) = DIR_XCTL
+
+----------------------------------------
+---- Overall expression endofunctor ----
+----------------------------------------
+
+public export
+GSExpPos : SliceObj GExpSlice
+GSExpPos GSATOM = GAtomPos
+GSExpPos GSNAT = GNatPos
+GSExpPos GSNATL = GNatLFPos
+GSExpPos GSEXP = GExpPos
+GSExpPos GSEXPL = GExpLFPos
+
+public export
+GSExpDir : Pi (SliceObj . GSExpPos)
+GSExpDir GSATOM = GAtomDir
+GSExpDir GSNAT = GNatDir
+GSExpDir GSNATL = GNatLFDir
+GSExpDir GSEXP = GExpDir
+GSExpDir GSEXPL = GExpLFDir
+
+public export
+GSExpAssign :
+  (sl : GExpSlice) -> (i : GSExpPos sl) -> GSExpDir sl i -> GExpSlice
+GSExpAssign GSATOM i d = void d
+GSExpAssign GSNAT (Left ()) () = GSNAT
+GSExpAssign GSNAT (Right ()) d = void d
+GSExpAssign GSNATL (Left ()) d = void d
+GSExpAssign GSNATL (Right ()) (Left d) = case d of () => GSNAT
+GSExpAssign GSNATL (Right ()) (Right d) = case d of () => GSNATL
+GSExpAssign GSEXP () FZ = GSATOM
+GSExpAssign GSEXP () (FS FZ) = GSNAT
+GSExpAssign GSEXP () (FS (FS FZ)) = GSEXPL
+GSExpAssign GSEXPL (Left ()) d = void d
+GSExpAssign GSEXPL (Right ()) (Left d) = case d of () => GSEXP
+GSExpAssign GSEXPL (Right ()) (Right d) = case d of () => GSEXPL
+
+public export
+GSExpSPF : SlicePolyEndoFunc GExpSlice
+GSExpSPF =
+  (GSExpPos **
+   \(sl ** i) => GSExpDir sl i **
+   \((sl ** i) ** d) => GSExpAssign sl i d)
