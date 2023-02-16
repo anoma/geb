@@ -1263,7 +1263,7 @@ GListPos p (Left ()) = pfPos p
 GListPos p (Right ()) = GListPosL
 
 public export
-GListDir : Pi {a=PolyFunc} (Slice2Obj {a=GListSlice} . GListPos)
+GListDir : (p : PolyFunc) -> Pi (SliceObj . GListPos p)
 GListDir p (Left ()) = pfDir {p}
 GListDir p (Right ()) = GListDirL
 
