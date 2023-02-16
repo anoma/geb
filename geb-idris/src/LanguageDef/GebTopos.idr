@@ -700,50 +700,50 @@ DecEq GExpSlice where
   decEq = fdeDecEq GSliceFinDecEncoding
 
 public export
-data GExpNonAtomPos : Type where
-  GPNAZ : GExpNonAtomPos -- zero
-  GPNAS : GExpNonAtomPos -- successor
-  GPNAX : GExpNonAtomPos -- SExp
-  GPNANN : GExpNonAtomPos -- empty list of Nat
-  GPNANC : GExpNonAtomPos -- cons list of Nat
-  GPNAXN : GExpNonAtomPos -- empty list of SExp
-  GPNAXC : GExpNonAtomPos -- cons list of SExp
+data GWExpNonAtomPos : Type where
+  GPNAZ : GWExpNonAtomPos -- zero
+  GPNAS : GWExpNonAtomPos -- successor
+  GPNAX : GWExpNonAtomPos -- SExp
+  GPNANN : GWExpNonAtomPos -- empty list of Nat
+  GPNANC : GWExpNonAtomPos -- cons list of Nat
+  GPNAXN : GWExpNonAtomPos -- empty list of SExp
+  GPNAXC : GWExpNonAtomPos -- cons list of SExp
 
 public export
-data GExpPos : Type where
-  GPA : GebAtom -> GExpPos
-  GPNAP : GExpNonAtomPos -> GExpPos
+data GWExpPos : Type where
+  GPA : GebAtom -> GWExpPos
+  GPNAP : GWExpNonAtomPos -> GWExpPos
 
 public export
-GPZ : GExpPos
+GPZ : GWExpPos
 GPZ = GPNAP GPNAZ
 
 public export
-GPS : GExpPos
+GPS : GWExpPos
 GPS = GPNAP GPNAS
 
 public export
-GPX : GExpPos
+GPX : GWExpPos
 GPX = GPNAP GPNAX
 
 public export
-GPNN : GExpPos
+GPNN : GWExpPos
 GPNN = GPNAP GPNANN
 
 public export
-GPNC : GExpPos
+GPNC : GWExpPos
 GPNC = GPNAP GPNANC
 
 public export
-GPXN : GExpPos
+GPXN : GWExpPos
 GPXN = GPNAP GPNAXN
 
 public export
-GPXC : GExpPos
+GPXC : GWExpPos
 GPXC = GPNAP GPNAXC
 
 public export
-gNonAtomPosAtom : GExpNonAtomPos -> GebAtom
+gNonAtomPosAtom : GWExpNonAtomPos -> GebAtom
 gNonAtomPosAtom GPNAZ = POS_Z
 gNonAtomPosAtom GPNAS = POS_S
 gNonAtomPosAtom GPNAX = POS_X
@@ -753,12 +753,12 @@ gNonAtomPosAtom GPNAXN = POS_XN
 gNonAtomPosAtom GPNAXC = POS_XC
 
 public export
-gPosAtom : GExpPos -> GebAtom
+gPosAtom : GWExpPos -> GebAtom
 gPosAtom (GPA a) = a
 gPosAtom (GPNAP i) = gNonAtomPosAtom i
 
 public export
-Show GExpPos where
+Show GWExpPos where
   show = show . gPosAtom
 
 public export
@@ -766,7 +766,7 @@ GPosSz : Nat
 GPosSz = 7
 
 public export
-GPosFinDecoder : FinDecoder GExpNonAtomPos GPosSz
+GPosFinDecoder : FinDecoder GWExpNonAtomPos GPosSz
 GPosFinDecoder FZ = GPNAZ
 GPosFinDecoder (FS FZ) = GPNAS
 GPosFinDecoder (FS (FS FZ)) = GPNAX
@@ -786,15 +786,15 @@ GPosNatEncoder GPNAXN = (5 ** Refl ** Refl)
 GPosNatEncoder GPNAXC = (6 ** Refl ** Refl)
 
 public export
-GPosFinDecEncoding : FinDecEncoding GExpNonAtomPos GPosSz
+GPosFinDecEncoding : FinDecEncoding GWExpNonAtomPos GPosSz
 GPosFinDecEncoding = NatDecEncoding GPosFinDecoder GPosNatEncoder
 
 public export
-DecEq GExpNonAtomPos where
+DecEq GWExpNonAtomPos where
   decEq = fdeDecEq GPosFinDecEncoding
 
 public export
-DecEq GExpPos where
+DecEq GWExpPos where
   decEq (GPA a) (GPA a') = case decEq a a' of
     Yes Refl => Yes Refl
     No neq => No $ \Refl => neq Refl
@@ -805,18 +805,18 @@ DecEq GExpPos where
     No neq => No $ \Refl => neq Refl
 
 public export
-data GExpDir : Type where
-  GDS : GExpDir
-  GDXA : GExpDir
-  GDXNL : GExpDir
-  GDXXL : GExpDir
-  GDNCHD : GExpDir
-  GDNCTL : GExpDir
-  GDXCHD : GExpDir
-  GDXCTL : GExpDir
+data GWExpDir : Type where
+  GDS : GWExpDir
+  GDXA : GWExpDir
+  GDXNL : GWExpDir
+  GDXXL : GWExpDir
+  GDNCHD : GWExpDir
+  GDNCTL : GWExpDir
+  GDXCHD : GWExpDir
+  GDXCTL : GWExpDir
 
 public export
-gDirAtom : GExpDir -> GebAtom
+gDirAtom : GWExpDir -> GebAtom
 gDirAtom GDS = DIR_S
 gDirAtom GDXA = DIR_XA
 gDirAtom GDXNL = DIR_XNL
@@ -827,7 +827,7 @@ gDirAtom GDXCHD = DIR_XCHD
 gDirAtom GDXCTL = DIR_XCTL
 
 public export
-Show GExpDir where
+Show GWExpDir where
   show = show . gDirAtom
 
 public export
@@ -835,7 +835,7 @@ GDirSz : Nat
 GDirSz = 8
 
 public export
-GDirFinDecoder : FinDecoder GExpDir GDirSz
+GDirFinDecoder : FinDecoder GWExpDir GDirSz
 GDirFinDecoder FZ = GDS
 GDirFinDecoder (FS FZ) = GDXA
 GDirFinDecoder (FS (FS FZ)) = GDXNL
@@ -857,15 +857,15 @@ GDirNatEncoder GDXCHD = (6 ** Refl ** Refl)
 GDirNatEncoder GDXCTL = (7 ** Refl ** Refl)
 
 public export
-GDirFinDecEncoding : FinDecEncoding GExpDir GDirSz
+GDirFinDecEncoding : FinDecEncoding GWExpDir GDirSz
 GDirFinDecEncoding = NatDecEncoding GDirFinDecoder GDirNatEncoder
 
 public export
-DecEq GExpDir where
+DecEq GWExpDir where
   decEq = fdeDecEq GDirFinDecEncoding
 
 public export
-gAssign : GExpDir -> GExpSlice
+gAssign : GWExpDir -> GExpSlice
 gAssign GDS = GSNAT
 gAssign GDXA = GSATOM
 gAssign GDXNL = GSNATL
@@ -876,7 +876,7 @@ gAssign GDXCHD = GSEXP
 gAssign GDXCTL = GSEXPL
 
 public export
-gDirSlice : GExpDir -> GExpPos
+gDirSlice : GWExpDir -> GWExpPos
 gDirSlice GDS = GPS
 gDirSlice GDXA = GPX
 gDirSlice GDXNL = GPX
@@ -887,7 +887,7 @@ gDirSlice GDXCHD = GPXC
 gDirSlice GDXCTL = GPXC
 
 public export
-gNonAtomPosSlice : GExpNonAtomPos -> GExpSlice
+gNonAtomPosSlice : GWExpNonAtomPos -> GExpSlice
 gNonAtomPosSlice GPNAZ = GSNAT
 gNonAtomPosSlice GPNAS = GSNAT
 gNonAtomPosSlice GPNAX = GSEXP
@@ -897,48 +897,48 @@ gNonAtomPosSlice GPNAXN = GSEXPL
 gNonAtomPosSlice GPNAXC = GSEXPL
 
 public export
-gPosSlice : GExpPos -> GExpSlice
+gPosSlice : GWExpPos -> GExpSlice
 gPosSlice (GPA _) = GSATOM
 gPosSlice (GPNAP i) = gNonAtomPosSlice i
 
 public export
-GExpWTF : WTypeEndoFunc GExpSlice
-GExpWTF = MkWTF GExpPos GExpDir gAssign gDirSlice gPosSlice
+GWExpWTF : WTypeEndoFunc GExpSlice
+GWExpWTF = MkWTF GWExpPos GWExpDir gAssign gDirSlice gPosSlice
 
 public export
-GExpSPF : SlicePolyEndoFunc GExpSlice
-GExpSPF = WTFtoSPF GExpWTF
+GWExpSPF : SlicePolyEndoFunc GExpSlice
+GWExpSPF = WTFtoSPF GWExpWTF
 
 public export
-GExpWT : SliceObj GExpSlice
-GExpWT = SPFMu GExpSPF
+GWExpWT : SliceObj GExpSlice
+GWExpWT = SPFMu GWExpSPF
 
 public export
-GExpSigma : Type
-GExpSigma = Sigma {a=GExpSlice} GExpWT
+GWExpSigma : Type
+GWExpSigma = Sigma {a=GExpSlice} GWExpWT
 
 public export
-GExpA : Type
-GExpA = GExpWT GSATOM
+GWExpA : Type
+GWExpA = GWExpWT GSATOM
 
 public export
-GExpN : Type
-GExpN = GExpWT GSNAT
+GWExpN : Type
+GWExpN = GWExpWT GSNAT
 
 public export
-GExpNL : Type
-GExpNL = GExpWT GSNATL
+GWExpNL : Type
+GWExpNL = GWExpWT GSNATL
 
 public export
-GExpX : Type
-GExpX = GExpWT GSEXP
+GWExpX : Type
+GWExpX = GWExpWT GSEXP
 
 public export
-GExpXL : Type
-GExpXL = GExpWT GSEXPL
+GWExpXL : Type
+GWExpXL = GWExpWT GSEXPL
 
 public export
-record GExpAlg (sa : GExpSlice -> Type) where
+record GWExpAlg (sa : GExpSlice -> Type) where
   constructor GAlg
   galgA : GebAtom -> sa GSATOM
   galgZ : sa GSNAT
@@ -950,7 +950,7 @@ record GExpAlg (sa : GExpSlice -> Type) where
   galgXC : sa GSEXP -> sa GSEXPL -> sa GSEXPL
 
 public export
-GAlgToSPF : {sa : GExpSlice -> Type} -> GExpAlg sa -> SPFAlg GExpSPF sa
+GAlgToSPF : {sa : GExpSlice -> Type} -> GWExpAlg sa -> SPFAlg GWExpSPF sa
 GAlgToSPF alg GSATOM (Element0 (GPA a) isl ** d) =
   alg.galgA a
 GAlgToSPF alg GSATOM (Element0 (GPNAP GPNAZ) isl ** d) =
@@ -1034,36 +1034,36 @@ GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNAXC) isl ** d) =
   alg.galgXC (d $ Element0 GDXCHD Refl) (d $ Element0 GDXCTL Refl)
 
 public export
-gexpCata : {sa : GExpSlice -> Type} ->
-  GExpAlg sa -> SliceMorphism {a=GExpSlice} GExpWT sa
-gexpCata {sa} alg = spfCata {spf=GExpSPF} {sa} (GAlgToSPF {sa} alg)
+gwexpCata : {sa : GExpSlice -> Type} ->
+  GWExpAlg sa -> SliceMorphism {a=GExpSlice} GWExpWT sa
+gwexpCata {sa} alg = spfCata {spf=GWExpSPF} {sa} (GAlgToSPF {sa} alg)
 
 public export
-GExpWTtoGExpAlgSl : SliceObj GExpSlice
-GExpWTtoGExpAlgSl GSATOM = GebAtom
-GExpWTtoGExpAlgSl GSNAT = Nat
-GExpWTtoGExpAlgSl GSNATL = List Nat
-GExpWTtoGExpAlgSl GSEXP = GExp
-GExpWTtoGExpAlgSl GSEXPL = GList
+GWExpWTtoGExpAlgSl : SliceObj GExpSlice
+GWExpWTtoGExpAlgSl GSATOM = GebAtom
+GWExpWTtoGExpAlgSl GSNAT = Nat
+GWExpWTtoGExpAlgSl GSNATL = List Nat
+GWExpWTtoGExpAlgSl GSEXP = GExp
+GWExpWTtoGExpAlgSl GSEXPL = GList
 
 public export
-GExpWTtoGExpAlg : GExpAlg GExpWTtoGExpAlgSl
-GExpWTtoGExpAlg = GAlg id 0 S [] (::) InS [] (::)
+GWExpWTtoGExpAlg : GWExpAlg GWExpWTtoGExpAlgSl
+GWExpWTtoGExpAlg = GAlg id 0 S [] (::) InS [] (::)
 
 public export
-gexpWTtoGExpSl : SliceMorphism {a=GExpSlice} GExpWT GExpWTtoGExpAlgSl
-gexpWTtoGExpSl = gexpCata GExpWTtoGExpAlg
+gwexpWTtoGExpSl : SliceMorphism {a=GExpSlice} GWExpWT GWExpWTtoGExpAlgSl
+gwexpWTtoGExpSl = gwexpCata GWExpWTtoGExpAlg
 
 public export
-gexpWTtoGExp : GExpX -> GExp
-gexpWTtoGExp = gexpWTtoGExpSl GSEXP
+gwexpWTtoGExp : GWExpX -> GExp
+gwexpWTtoGExp = gwexpWTtoGExpSl GSEXP
 
 public export
-Show GExpX where
-  show = show . gexpWTtoGExp
+Show GWExpX where
+  show = show . gwexpWTtoGExp
 
 public export
-InGA : GebAtom -> GExpA
+InGA : GebAtom -> GWExpA
 InGA a = InSPFM (GSATOM ** Element0 (GPA a) Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -1076,7 +1076,7 @@ InGA a = InSPFM (GSATOM ** Element0 (GPA a) Refl) $ \(Element0 d dsl) =>
     GDXCTL => void $ case dsl of Refl impossible
 
 public export
-InGZ : GExpN
+InGZ : GWExpN
 InGZ = InSPFM (GSNAT ** Element0 GPZ Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -1089,7 +1089,7 @@ InGZ = InSPFM (GSNAT ** Element0 GPZ Refl) $ \(Element0 d dsl) =>
     GDXCTL => void $ case dsl of Refl impossible
 
 public export
-InGS : GExpN -> GExpN
+InGS : GWExpN -> GWExpN
 InGS n = InSPFM (GSNAT ** Element0 GPS Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => n
@@ -1102,12 +1102,12 @@ InGS n = InSPFM (GSNAT ** Element0 GPS Refl) $ \(Element0 d dsl) =>
     GDXCTL => void $ case dsl of Refl impossible
 
 public export
-InGNat : Nat -> GExpN
+InGNat : Nat -> GWExpN
 InGNat Z = InGZ
 InGNat (S n) = InGS (InGNat n)
 
 public export
-InGNN : GExpNL
+InGNN : GWExpNL
 InGNN = InSPFM (GSNATL ** Element0 GPNN Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -1120,7 +1120,7 @@ InGNN = InSPFM (GSNATL ** Element0 GPNN Refl) $ \(Element0 d dsl) =>
     GDXCTL => void $ case dsl of Refl impossible
 
 public export
-InGNC : GExpN -> GExpNL -> GExpNL
+InGNC : GWExpN -> GWExpNL -> GWExpNL
 InGNC n ns = InSPFM (GSNATL ** Element0 GPNC Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -1133,15 +1133,15 @@ InGNC n ns = InSPFM (GSNATL ** Element0 GPNC Refl) $ \(Element0 d dsl) =>
     GDXCTL => void $ case dsl of Refl impossible
 
 public export
-InGNatC : Nat -> GExpNL -> GExpNL
+InGNatC : Nat -> GWExpNL -> GWExpNL
 InGNatC n ns = InGNC (InGNat n) ns
 
 public export
-InGNatList : List Nat -> GExpNL
+InGNatList : List Nat -> GWExpNL
 InGNatList = foldr InGNatC InGNN
 
 public export
-InGXN : GExpXL
+InGXN : GWExpXL
 InGXN = InSPFM (GSEXPL ** Element0 GPXN Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -1154,7 +1154,7 @@ InGXN = InSPFM (GSEXPL ** Element0 GPXN Refl) $ \(Element0 d dsl) =>
     GDXCTL => void $ case dsl of Refl impossible
 
 public export
-InGXC : GExpX -> GExpXL -> GExpXL
+InGXC : GWExpX -> GWExpXL -> GWExpXL
 InGXC x xs = InSPFM (GSEXPL ** Element0 GPXC Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -1167,7 +1167,7 @@ InGXC x xs = InSPFM (GSEXPL ** Element0 GPXC Refl) $ \(Element0 d dsl) =>
     GDXCTL => xs
 
 public export
-InGX : GebAtom -> GExpNL -> GExpXL -> GExpX
+InGX : GebAtom -> GWExpNL -> GWExpXL -> GWExpX
 InGX a ns xs = InSPFM (GSEXP ** Element0 GPX Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -1180,20 +1180,20 @@ InGX a ns xs = InSPFM (GSEXP ** Element0 GPX Refl) $ \(Element0 d dsl) =>
     GDXCTL => void $ case dsl of Refl impossible
 
 public export
-InGNatX : GebAtom -> List Nat -> GExpXL -> GExpX
+InGNatX : GebAtom -> List Nat -> GWExpXL -> GWExpX
 InGNatX a ns = InGX a (InGNatList ns)
 
 public export
-InGExpList : List GExpX -> GExpXL
-InGExpList = foldr InGXC InGXN
+InGWExpList : List GWExpX -> GWExpXL
+InGWExpList = foldr InGXC InGXN
 
 public export
-GExpToWTAlg : SXLAlg GebAtom GExpX GExpXL
-GExpToWTAlg = SXA InGNatX InGXN InGXC
+GWExpToWTAlg : SXLAlg GebAtom GWExpX GWExpXL
+GWExpToWTAlg = SXA InGNatX InGXN InGXC
 
 public export
-gexpToWT : GExp -> GExpX
-gexpToWT = sxCata GExpToWTAlg
+gwexpToWT : GExp -> GWExpX
+gwexpToWT = sxCata GWExpToWTAlg
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------

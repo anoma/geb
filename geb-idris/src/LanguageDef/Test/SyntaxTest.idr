@@ -269,11 +269,11 @@ frgx1 = InSF SL_EXP [1, 2, 3] [InSF SL_NAT [2] [], InSXV "sl_expl"]
 ---------------------------------------
 ---------------------------------------
 
-wt1 : GExpX
-wt1 = gexpToWT gx1
+wt1 : GWExpX
+wt1 = gwexpToWT gx1
 
 wt1_correct : Assertion
-wt1_correct = Assert $ gexpWTtoGExp wt1 == gx1
+wt1_correct = Assert $ gwexpWTtoGExp wt1 == gx1
 
 ----------------------------------
 ----------------------------------
