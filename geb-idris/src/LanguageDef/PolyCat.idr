@@ -3111,6 +3111,30 @@ public export
 SPFBaseChange : {x, y : Type} -> (x -> y) -> SlicePolyFunc y x
 SPFBaseChange {x} {y} f = (const () ** const () ** \ix => f (fst (fst ix)))
 
+-- Right adjoint to `SPFBaseChange`.
+public export
+SPFDepProd : {a, b : Type} -> (0 _ : a -> b) -> SlicePolyFunc a b
+SPFDepProd {a} {b} f =
+  (const Unit ** \eb => PreImage f (fst eb) ** \dp => fst0 $ snd dp)
+
+-- Left adjoint to `SPFBaseChange`.
+public export
+SPFDepCoprod : {a, b : Type} -> (0 _ : a -> b) -> SlicePolyFunc a b
+SPFDepCoprod {a} {b} f =
+  (\eb => PreImage f eb ** const Unit ** \dp => fst0 (snd (fst dp)))
+
+-- A special case of `SPFDepProd` where `b` is `Unit` -- so that the
+-- codomain of the functor is (isomorphic to) `Type`.
+public export
+SPFPi : (a : Type) -> SlicePolyFunc a ()
+SPFPi a = (const Unit ** const a ** DPair.snd)
+
+-- A special case of `SPFDepCoprod` where `b` is `Unit` -- so that the
+-- codomain of the functor is (isomorphic to) `Type`.
+public export
+SPFSigma : (a : Type) -> SlicePolyFunc a ()
+SPFSigma a = (const a ** const Unit ** DPair.snd . DPair.fst)
+
 -- Precomposition and postcomposition by base change give `SlicePolyFunc`
 -- itself a profunctor structure (`dimap`).  (Note that, written as it is
 -- here, it is covariant in its first argument and contravariant in the
