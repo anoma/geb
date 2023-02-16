@@ -1245,7 +1245,7 @@ GListSlice = Bool  -- False = input PolyFunc; True = list of input PolyFunc
 
 public export
 GListLAssign : Sigma {a=GListPosL} GListDirL -> GListSlice
-GListLAssign (False ** d) = void d
+GListLAssign (False ** d) = void d -- nil has no directions
 GListLAssign (True ** False) = False -- head is a PolyFunc
 GListLAssign (True ** True) = True -- tail is a list
 
@@ -1254,7 +1254,7 @@ GListLSPF : SlicePolyFunc GListSlice ()
 GListLSPF =
   (const GListPosL **
    GListDirL . snd **
-   \((() ** i) ** d) => GListLAssign (i ** d))
+   \dd => GListLAssign (snd (fst dd) ** snd dd))
 
 public export
 GListPos : PolyFunc -> SliceObj GListSlice
