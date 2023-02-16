@@ -1235,7 +1235,7 @@ GListPos : SliceObj PolyFunc
 GListPos = pfPos . GListF
 
 public export
-GListDir : (p : PolyFunc) -> SliceObj (GListPos p)
+GListDir : Pi {a=PolyFunc} (SliceObj . GListPos)
 GListDir p = pfDir {p=(GListF p)}
 
 ------------------------------------
@@ -1260,7 +1260,7 @@ gNatPosAtom (Left () ** d) = POS_S
 gNatPosAtom (Right () ** d) = POS_Z
 
 public export
-gNatDirAtom : (i : GNatPos) -> GNatDir i -> GebAtom
+gNatDirAtom : SliceMorphism {a=GNatPos} GNatDir (const GebAtom)
 gNatDirAtom (Left () ** d) (() ** (di ** ())) = DIR_S
 gNatDirAtom (Right () ** d) (v ** di) = void v
 
@@ -1293,7 +1293,7 @@ GExpPosAtom : GExpPos -> GebAtom
 GExpPosAtom () = POS_X
 
 public export
-GExpDirAtom : (i : GExpPos) -> GExpDir i -> GebAtom
+GExpDirAtom : SliceMorphism {a=GExpPos} GExpDir (const GebAtom)
 GExpDirAtom () GDA = DIR_XA
 GExpDirAtom () GDNL = DIR_XNL
 GExpDirAtom () GDXL = DIR_XXL
