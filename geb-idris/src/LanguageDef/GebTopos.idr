@@ -1219,7 +1219,7 @@ GAtomPos : Type
 GAtomPos = pfPos GAtomF
 
 public export
-GAtomDir : GAtomPos -> Type
+GAtomDir : SliceObj GAtomPos
 GAtomDir = pfDir {p=GAtomF}
 
 ------------------------------------------
@@ -1231,11 +1231,11 @@ GListF : PolyFunc -> PolyFunc
 GListF = pfCompositionArena pfMaybeArena
 
 public export
-GListPos : PolyFunc -> Type
+GListPos : SliceObj PolyFunc
 GListPos = pfPos . GListF
 
 public export
-GListDir : (p : PolyFunc) -> GListPos p -> Type
+GListDir : (p : PolyFunc) -> SliceObj (GListPos p)
 GListDir p = pfDir {p=(GListF p)}
 
 ------------------------------------
@@ -1251,7 +1251,7 @@ GNatPos : Type
 GNatPos = GListPos GNatF
 
 public export
-GNatDir : GNatPos -> Type
+GNatDir : SliceObj GNatPos
 GNatDir = GListDir GNatF
 
 public export
@@ -1269,5 +1269,39 @@ gNatDirAtom (Right () ** d) (v ** di) = void v
 --------------------------------
 
 public export
-GExpF : PolyFunc -> PolyFunc -> PolyFunc -> PolyFunc
-GExpF atomF natLF expLF = ?GExpF_hole
+data GExpXDir : Type where
+  GDA : GExpXDir
+  GDNL : GExpXDir
+  GDXL : GExpXDir
+
+-- An expression has only one position, with three directions:  an atom,
+-- a natural number list, and an expression list.
+public export
+GExpF : PolyFunc
+GExpF = PFHomArena GExpXDir
+
+public export
+GExpPos : Type
+GExpPos = pfPos GExpF
+
+public export
+GExpDir : SliceObj GExpPos
+GExpDir = pfDir {p=GExpF}
+
+public export
+GExpPosAtom : GExpPos -> GebAtom
+GExpPosAtom () = POS_X
+
+public export
+GExpDirAtom : (i : GExpPos) -> GExpDir i -> GebAtom
+GExpDirAtom () GDA = DIR_XA
+GExpDirAtom () GDNL = DIR_XNL
+GExpDirAtom () GDXL = DIR_XXL
+
+-----------------------------------------
+---- Natural number list endofunctor ----
+-----------------------------------------
+
+public export
+GNatLF : PolyFunc
+GNatLF = GListF GNatF
