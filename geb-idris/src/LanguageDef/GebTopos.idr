@@ -1306,6 +1306,10 @@ gNatDirAtom : Sigma {a=GNatPos} GNatDir -> GebAtom
 gNatDirAtom ((Left ()) ** ()) = DIR_S
 gNatDirAtom ((Right ()) ** v) = void v
 
+public export
+GNatSPF : SlicePolyFunc () ()
+GNatSPF = UnitUnitSPFFromPolyFunc GNatF
+
 ------------------------------------------
 ---- Expression-component endofunctor ----
 ------------------------------------------
@@ -1317,8 +1321,12 @@ GExpXNumDir : Nat
 GExpXNumDir = 3
 
 public export
+GExpXSlice : Type
+GExpXSlice = Fin GExpXNumDir
+
+public export
 GExpF : PolyFunc
-GExpF = PFHomArena (Fin GExpXNumDir)
+GExpF = PFHomArena GExpXSlice
 
 public export
 GExpPos : Type
@@ -1338,29 +1346,29 @@ GExpDirAtom (() ** FZ) = DIR_XA
 GExpDirAtom (() ** FS FZ) = DIR_XNL
 GExpDirAtom (() ** FS (FS FZ)) = DIR_XXL
 
+public export
+GExpXSPF : SlicePolyFunc GExpXSlice ()
+GExpXSPF = SliceFuncDimap (pfSliceAll GExpF) (\(() ** d) => d) id
+
 -----------------------------------------
 ---- Natural number list endofunctor ----
 -----------------------------------------
 
 public export
-GNatLSPF : SlicePolyEndoFunc BoolCP
+GNatLSPF : SlicePolyEndoFunc GListSlice
 GNatLSPF = GListSPF GNatF
 
 public export
-GNatLF : PolyFunc
-GNatLF = spfTopf GNatLSPF (Right ())
+GNatIdx : GListSlice
+GNatIdx = Right ()
 
 public export
 GNatLFPos : Type
-GNatLFPos = pfPos GNatLF
+GNatLFPos = spfPos GNatLSPF GNatIdx
 
 public export
 GNatLFDir : SliceObj GNatLFPos
-GNatLFDir = pfDir {p=GNatLF}
-
-public export
-GNatLFAssign : (i : GNatLFPos) -> GNatLFDir i -> GListSlice
-GNatLFAssign = GListAssign GNatF (Right ())
+GNatLFDir = spfSliceDir GNatLSPF GNatIdx
 
 public export
 GNatLFPosAtom : GNatLFPos -> GebAtom
@@ -1378,24 +1386,20 @@ GNatLFDirAtom (Right () ** Right ()) = DIR_NCTL
 -------------------------------------
 
 public export
-GExpLSPF : SlicePolyEndoFunc BoolCP
+GExpLSPF : SlicePolyEndoFunc GListSlice
 GExpLSPF = GListSPF GExpF
 
 public export
-GExpLF : PolyFunc
-GExpLF = spfTopf GExpLSPF (Right ())
+GExpIdx : GListSlice
+GExpIdx = Right ()
 
 public export
 GExpLFPos : Type
-GExpLFPos = pfPos GExpLF
+GExpLFPos = spfPos GExpLSPF GExpIdx
 
 public export
 GExpLFDir : SliceObj GExpLFPos
-GExpLFDir = pfDir {p=GExpLF}
-
-public export
-GExpLFAssign : (i : GExpLFPos) -> GExpLFDir i -> GListSlice
-GExpLFAssign = GListAssign GExpF (Right ())
+GExpLFDir = spfSliceDir GExpLSPF GExpIdx
 
 public export
 GExpLFPosAtom : GExpLFPos -> GebAtom

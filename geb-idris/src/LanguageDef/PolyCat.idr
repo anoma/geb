@@ -2837,6 +2837,11 @@ spfDir : {0 a, b : Type} ->
 spfDir spf = fst (snd spf)
 
 public export
+spfSliceDir : {0 a, b : Type} ->
+  (spf : SlicePolyFunc a b) -> (eb : b) -> spfPos spf eb -> Type
+spfSliceDir spf eb i = spfDir spf (eb ** i)
+
+public export
 spfAssign : {0 a, b : Type} ->
   (spf : SlicePolyFunc a b) -> Sigma (spfDir spf) -> a
 spfAssign spf = snd (snd spf)
