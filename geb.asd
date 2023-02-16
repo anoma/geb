@@ -90,13 +90,20 @@
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 
 (asdf:defsystem :geb/gui
-  :depends-on (:geb :mcclim :clim :bordeaux-threads)
+  :depends-on (:geb :mcclim :clim :bordeaux-threads :mcclim-dot)
   :description "geb gui presenter"
   :pathname "src/gui/"
   :serial t
   :components ((:file package)
                (:file graphing)
-               (:file gui))
+               (:file common-abstractions)
+               (:file shapes)
+               (:file present-graph)
+               (:file show-view)
+               (:file stick-view)
+               (:file list-view)
+               (:file gui)
+               (:file commands))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 
 (asdf:defsystem :geb/test
