@@ -3504,10 +3504,6 @@ TwoCatFromAdj a = a -> Sigma {a=Type} CatFromAdj
 -----------------
 
 public export
-BoolCP : Type
-BoolCP = Either Unit Unit
-
-public export
 DiagFunc : SlicePolyFunc () BoolCP
 DiagFunc = SPFPolyDiag () BoolCP ()
 

@@ -1228,12 +1228,12 @@ GAtomDir = pfDir {p=GAtomF}
 
 public export
 GListPosL : Type
-GListPosL = Bool  -- False = nil; True = cons
+GListPosL = BoolCP  -- Left = nil; Right = cons
 
 public export
 GListDirL : SliceObj GListPosL
-GListDirL False = Void -- nil has no directions
-GListDirL True = Bool -- cons has two directions (False = head; True = tail)
+GListDirL (Left ()) = Void -- nil has no directions
+GListDirL (Right ()) = BoolCP -- cons has two (Left = head; Right = tail)
 
 public export
 GListF : PolyFunc
@@ -1241,13 +1241,13 @@ GListF = (GListPosL ** GListDirL)
 
 public export
 GListSlice : Type
-GListSlice = Bool  -- False = input PolyFunc; True = list of input PolyFunc
+GListSlice = BoolCP  -- Left = input PolyFunc; Right = list of input PolyFunc
 
 public export
 GListLAssign : Sigma {a=GListPosL} GListDirL -> GListSlice
-GListLAssign (False ** d) = void d -- nil has no directions
-GListLAssign (True ** False) = False -- head is a PolyFunc
-GListLAssign (True ** True) = True -- tail is a list
+GListLAssign (Left () ** d) = void d -- nil has no directions
+GListLAssign (Right () ** Left ()) = Left () -- head is a PolyFunc
+GListLAssign (Right () ** Right ()) = Right () -- tail is a list
 
 public export
 GListLSPF : SlicePolyFunc GListSlice ()
@@ -1255,19 +1255,19 @@ GListLSPF = pfAssign GListF GListLAssign
 
 public export
 GListPos : PolyFunc -> SliceObj GListSlice
-GListPos p False = pfPos p
-GListPos p True = GListPosL
+GListPos p (Left ()) = pfPos p
+GListPos p (Right ()) = GListPosL
 
 public export
 GListDir : Pi {a=PolyFunc} (Slice2Obj {a=GListSlice} . GListPos)
-GListDir p False = pfDir {p}
-GListDir p True = GListDirL
+GListDir p (Left ()) = pfDir {p}
+GListDir p (Right ()) = GListDirL
 
 public export
 GListAssign : (p : PolyFunc) -> (sl : GListSlice) -> (i : GListPos p sl) ->
   GListDir p sl i -> GListSlice
-GListAssign p False i d = False -- 'p' directions are all in PolyFunc slice
-GListAssign p True i d = GListLAssign (i ** d)
+GListAssign p (Left ()) i d = (Left ()) -- 'p' directions are all in PolyFunc slice
+GListAssign p (Right ()) i d = GListLAssign (i ** d)
 
 public export
 GListSPF : PolyFunc -> SlicePolyEndoFunc GListSlice
@@ -1341,12 +1341,12 @@ GExpDirAtom (() ** GDXL) = DIR_XXL
 -----------------------------------------
 
 public export
-GNatLSPF : SlicePolyEndoFunc Bool
+GNatLSPF : SlicePolyEndoFunc BoolCP
 GNatLSPF = GListSPF GNatF
 
 public export
 GNatLF : PolyFunc
-GNatLF = spfTopf GNatLSPF True
+GNatLF = spfTopf GNatLSPF (Right ())
 
 public export
 GNatLFPos : Type
@@ -1358,30 +1358,30 @@ GNatLFDir = pfDir {p=GNatLF}
 
 public export
 GNatLFAssign : (i : GNatLFPos) -> GNatLFDir i -> GListSlice
-GNatLFAssign = GListAssign GNatF True
+GNatLFAssign = GListAssign GNatF (Right ())
 
 public export
 GNatLFPosAtom : GNatLFPos -> GebAtom
-GNatLFPosAtom False = POS_NN
-GNatLFPosAtom True = POS_NC
+GNatLFPosAtom (Left ()) = POS_NN
+GNatLFPosAtom (Right ()) = POS_NC
 
 public export
 GNatLFDirAtom : Sigma {a=GNatLFPos} GNatLFDir -> GebAtom
-GNatLFDirAtom (False ** d) = void d
-GNatLFDirAtom (True ** False) = DIR_NCHD
-GNatLFDirAtom (True ** True) = DIR_NCTL
+GNatLFDirAtom ((Left ()) ** d) = void d
+GNatLFDirAtom (Right () ** (Left ())) = DIR_NCHD
+GNatLFDirAtom (Right () ** Right ()) = DIR_NCTL
 
 -------------------------------------
 ---- Expression list endofunctor ----
 -------------------------------------
 
 public export
-GExpLSPF : SlicePolyEndoFunc Bool
+GExpLSPF : SlicePolyEndoFunc BoolCP
 GExpLSPF = GListSPF GExpF
 
 public export
 GExpLF : PolyFunc
-GExpLF = spfTopf GExpLSPF True
+GExpLF = spfTopf GExpLSPF (Right ())
 
 public export
 GExpLFPos : Type
@@ -1393,15 +1393,15 @@ GExpLFDir = pfDir {p=GExpLF}
 
 public export
 GExpLFAssign : (i : GExpLFPos) -> GExpLFDir i -> GListSlice
-GExpLFAssign = GListAssign GExpF True
+GExpLFAssign = GListAssign GExpF (Right ())
 
 public export
 GExpLFPosAtom : GExpLFPos -> GebAtom
-GExpLFPosAtom False = POS_XN
-GExpLFPosAtom True = POS_XC
+GExpLFPosAtom (Left ()) = POS_XN
+GExpLFPosAtom (Right ()) = POS_XC
 
 public export
 GExpLFDirAtom : Sigma {a=GExpLFPos} GExpLFDir -> GebAtom
-GExpLFDirAtom (False ** d) = void d
-GExpLFDirAtom (True ** False) = DIR_XCHD
-GExpLFDirAtom (True ** True) = DIR_XCTL
+GExpLFDirAtom ((Left ()) ** d) = void d
+GExpLFDirAtom (Right () ** (Left ())) = DIR_XCHD
+GExpLFDirAtom (Right () ** Right ()) = DIR_XCTL
