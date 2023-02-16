@@ -1227,16 +1227,23 @@ GAtomDir = pfDir {p=GAtomF}
 ------------------------------------------
 
 public export
-GListF : PolyFunc -> PolyFunc
-GListF = pfCompositionArena pfMaybeArena
+GListPos : PolyFunc -> SliceObj Bool
+GListPos p False = pfPos p
+GListPos p True = Bool
 
 public export
-GListPos : SliceObj PolyFunc
-GListPos = pfPos . GListF
+GListDirL : SliceObj Bool
+GListDirL False = Void -- nil
+GListDirL True = Bool -- cons
 
 public export
-GListDir : Pi {a=PolyFunc} (SliceObj . GListPos)
-GListDir p = pfDir {p=(GListF p)}
+GListDir : Pi {a=PolyFunc} (Slice2Obj {a=Bool} . GListPos)
+GListDir p False i = pfDir {p} i
+GListDir p True i = GListDirL i
+
+public export
+GListF : PolyFunc -> SlicePolyEndoFunc Bool
+GListF p = (GListPos p ** sl2App (GListDir p) ** fst . fst)
 
 ------------------------------------
 ---- Natural number endofunctor ----
@@ -1244,25 +1251,25 @@ GListDir p = pfDir {p=(GListF p)}
 
 public export
 GNatF : PolyFunc
-GNatF = GListF PFIdentityArena
+GNatF = pfMaybeArena
 
 public export
 GNatPos : Type
-GNatPos = GListPos GNatF
+GNatPos = pfPos GNatF
 
 public export
 GNatDir : SliceObj GNatPos
-GNatDir = GListDir GNatF
+GNatDir = pfDir {p=GNatF}
 
 public export
 gNatPosAtom : GNatPos -> GebAtom
-gNatPosAtom (Left () ** d) = POS_S
-gNatPosAtom (Right () ** d) = POS_Z
+gNatPosAtom (Left ()) = POS_S
+gNatPosAtom (Right ()) = POS_Z
 
 public export
 gNatDirAtom : SliceMorphism {a=GNatPos} GNatDir (const GebAtom)
-gNatDirAtom (Left () ** d) (() ** (di ** ())) = DIR_S
-gNatDirAtom (Right () ** d) (v ** di) = void v
+gNatDirAtom (Left ()) () = DIR_S
+gNatDirAtom (Right ()) v = void v
 
 --------------------------------
 ---- Expression endofunctor ----
@@ -1303,5 +1310,28 @@ GExpDirAtom () GDXL = DIR_XXL
 -----------------------------------------
 
 public export
+GNatLSPF : SlicePolyEndoFunc Bool
+GNatLSPF = GListF GNatF
+
+public export
 GNatLF : PolyFunc
-GNatLF = GListF GNatF
+GNatLF = spfTopf GNatLSPF True
+
+public export
+GNatLFPos : Type
+GNatLFPos = pfPos GNatLF
+
+public export
+GNatLFDir : SliceObj GNatLFPos
+GNatLFDir = pfDir {p=GNatLF}
+
+public export
+GNatLFPosAtom : GNatLFPos -> GebAtom
+GNatLFPosAtom False = POS_NN
+GNatLFPosAtom True = POS_NC
+
+public export
+GNatLFDirAtom : SliceMorphism {a=GNatLFPos} GNatLFDir (const GebAtom)
+GNatLFDirAtom False d = void d
+GNatLFDirAtom True False = DIR_NCHD
+GNatLFDirAtom True True = DIR_NCTL
