@@ -257,8 +257,8 @@ In category terms, `a → c^b` is isomorphic to `a → b → c`
            (labels ((rec (fun fst snd)
                       (match-of substobj snd
                         (alias        (rec fun fst (obj snd)))
-                        (so0          (terminal snd))
-                        (so1          (comp fun (pair snd
+                        (so0          (terminal fst))
+                        (so1          (comp fun (pair fst
                                                       (terminal fst))))
                         ((coprod x y) (pair (curry (left (comp fun (gather fst x y))))
                                             (curry (right (comp fun (gather fst x y))))))
