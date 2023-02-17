@@ -89,4 +89,4 @@
 
 (defmethod to-vampir ((obj if-lt) value)
   (declare (ignore obj value))
-  (error "mod logic not in yet"))
+  (error "less-than logic not in yet"))
