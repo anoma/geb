@@ -1478,3 +1478,77 @@ GSExpSPFAssign GSEXPL = Right (Right (Right ()))
 public export
 GSExpSPF : SlicePolyEndoFunc GExpSlice
 GSExpSPF = SliceFuncRmap GSExpCombined GSExpSPFAssign
+
+public export
+GSExp : SliceObj GExpSlice
+GSExp = SPFMu GSExpSPF
+
+public export
+GSExpSigma : Type
+GSExpSigma = Sigma {a=GExpSlice} GSExp
+
+public export
+GSExpA : Type
+GSExpA = GSExp GSATOM
+
+public export
+GSExpN : Type
+GSExpN = GSExp GSNAT
+
+public export
+GSExpNL : Type
+GSExpNL = GSExp GSNATL
+
+public export
+GSExpX : Type
+GSExpX = GSExp GSEXP
+
+public export
+GSExpXL : Type
+GSExpXL = GSExp GSEXPL
+
+public export
+GSExpAlg : SliceObj GExpSlice -> Type
+GSExpAlg = SPFAlg GSExpSPF
+
+public export
+gsexpCata : {sa : GExpSlice -> Type} ->
+  GSExpAlg sa -> SliceMorphism {a=GExpSlice} GSExp sa
+gsexpCata {sa} = spfCata {spf=GSExpSPF} {sa}
+
+public export
+GSExptoGExpAlgSl : SliceObj GExpSlice
+GSExptoGExpAlgSl GSATOM = GebAtom
+GSExptoGExpAlgSl GSNAT = Nat
+GSExptoGExpAlgSl GSNATL = List Nat
+GSExptoGExpAlgSl GSEXP = GExp
+GSExptoGExpAlgSl GSEXPL = GList
+
+public export
+GSExptoGExpAlg : GSExpAlg GSExptoGExpAlgSl
+GSExptoGExpAlg GSATOM (i ** d) = i
+GSExptoGExpAlg GSNAT ((Left ()) ** d) = d ()
+GSExptoGExpAlg GSNAT ((Right ()) ** d) = Z
+GSExptoGExpAlg GSNATL ((Left ()) ** d) = []
+GSExptoGExpAlg GSNATL ((Right ()) ** d) = d BCPFalse :: d BCPTrue
+GSExptoGExpAlg GSEXP (() ** d) =
+  let
+    d0 = d FZ
+    d1 = d (FS FZ)
+    d2 = d (FS (FS FZ))
+  in
+  InS ?gsexpToGexpAlg_hole_1 ?gsexpToGexpAlg_hole_2 ?gsexpToGexpAlg_hole_3
+GSExptoGExpAlg GSEXPL ((Left ()) ** d) = []
+GSExptoGExpAlg GSEXPL ((Right ()) ** d) = d BCPFalse :: d BCPTrue
+
+public export
+gsexptoGExpSl : SliceMorphism {a=GExpSlice} GSExp GSExptoGExpAlgSl
+gsexptoGExpSl = gsexpCata GSExptoGExpAlg
+
+public export
+gsexptoGExp : GSExpX -> GExp
+gsexptoGExp = gsexptoGExpSl GSEXP
+
+public export
+Show GSExpX where
+  show = show . gsexptoGExp
