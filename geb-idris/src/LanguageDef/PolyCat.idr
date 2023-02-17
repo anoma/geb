@@ -3152,15 +3152,29 @@ SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
    \izwxi => wxd (fzx (fst izwxi) ** snd izwxi) **
    \dd => fwy (wxa ((fzx (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
 
+public export
+SliceFuncLmap : {0 w, x, y : Type} ->
+  SlicePolyFunc w x -> (w -> y) -> SlicePolyFunc y x
+SliceFuncLmap spf = flip (SliceFuncDimap spf) id
+
+public export
+SliceFuncRmap : {0 w, x, z : Type} ->
+  SlicePolyFunc w x -> (z -> x) -> SlicePolyFunc w z
+SliceFuncRmap spf = SliceFuncDimap spf id
+
+public export
+spfWeaken : {0 x, y : Type} -> SlicePolyFunc x Unit -> SlicePolyFunc x y
+spfWeaken {x} {y} spf = SliceFuncRmap spf (const ())
+
 --------------------------------------------------------------
 ---- As morphisms in the two-category of slice categories ----
 --------------------------------------------------------------
 
 public export
-spfCase : {0 x, y, z : Type} ->
+spfCoprodDom : {0 x, y, z : Type} ->
   SlicePolyFunc x z -> SlicePolyFunc y z ->
   SlicePolyFunc (Either x y) z
-spfCase {x} {y} {z} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+spfCoprodDom {x} {y} {z} (pd ** dd ** asn) (pd' ** dd' ** asn') =
   (\ez => Either (pd ez) (pd' ez) **
    \(ez ** pz) => (case pz of
     Left pz' => dd (ez ** pz')
@@ -3168,6 +3182,17 @@ spfCase {x} {y} {z} (pd ** dd ** asn) (pd' ** dd' ** asn') =
    \((ez ** pz) ** dz) => (case pz of
     Left pz' => Left (asn ((ez ** pz') ** dz))
     Right pz' => Right (asn' ((ez ** pz') ** dz))))
+
+public export
+spfCoprodCod : {0 x, y, z : Type} ->
+  SlicePolyFunc x y -> SlicePolyFunc x z ->
+  SlicePolyFunc x (Either y z)
+spfCoprodCod {x} {y} {z} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+  (\e => case e of Left ey => pd ey ; Right ez => pd' ez **
+   \(e ** i) => case e of Left ey => dd (ey ** i); Right ez => dd' (ez ** i) **
+   \((e ** i) ** d) => case e of
+    Left ey => asn ((ey ** i) ** d)
+    Right ez => asn' ((ez ** i) ** d))
 
 ---------------------------------------------
 ---- As endofunctors on slice categories ----

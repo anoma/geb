@@ -1223,8 +1223,8 @@ GAtomDir : SliceObj GAtomPos
 GAtomDir = pfDir {p=GAtomF}
 
 public export
-GAtomSPF : SlicePolyFunc Void ()
-GAtomSPF = pfSlice GAtomF $ \(i ** d) => void d
+GAtomSPF : (0 x : Type) -> SlicePolyFunc x ()
+GAtomSPF _ = pfSlice GAtomF $ \(a ** v) => void v
 
 ------------------------------------------
 ---- List (parameterized) endofunctor ----
@@ -1240,22 +1240,15 @@ GListDirL (Left ()) = Void -- nil has no directions
 GListDirL (Right ()) = BoolCP -- cons has two (Left = head; Right = tail)
 
 public export
-GListF : PolyFunc
-GListF = (GListPosL ** GListDirL)
-
-public export
 GListSlice : Type
 GListSlice = BoolCP  -- Left = input PolyFunc; Right = list of input PolyFunc
 
 public export
 GListLAssign : Sigma {a=GListPosL} GListDirL -> GListSlice
 GListLAssign (Left () ** d) = void d -- nil has no directions
-GListLAssign (Right () ** Left ()) = Left () -- head is a PolyFunc
-GListLAssign (Right () ** Right ()) = Right () -- tail is a list
-
-public export
-GListLSPF : SlicePolyFunc GListSlice ()
-GListLSPF = pfSlice GListF GListLAssign
+GListLAssign (Right () ** Left ()) = Left () -- head is one input type
+GListLAssign (Right () ** Right ()) = Right () -- tail is the other input type
+  -- (which can be list itself, if we take a fixed point of the functor)
 
 public export
 GListPos : PolyFunc -> SliceObj GListSlice
@@ -1273,9 +1266,23 @@ GListAssign : (p : PolyFunc) -> (sl : GListSlice) -> (i : GListPos p sl) ->
 GListAssign p (Left ()) i d = (Left ()) -- 'p' dirs are all in PolyFunc slice
 GListAssign p (Right ()) i d = GListLAssign (i ** d)
 
+-- Given two types, returns one:  a type with two positions, one of which
+-- is the empty list and one of which is a cons cell of the two types.
+-- (Thus, if one input type is some fixed type `a` and the output type is
+-- recursively fed back into the other input type, this becomes `List a`.)
 public export
-GListSPF : PolyFunc -> SlicePolyEndoFunc GListSlice
-GListSPF p =
+GListSPF : SlicePolyFunc GListSlice ()
+GListSPF =
+  (\() => GListPosL **
+   \(() ** i) => GListDirL i **
+   \((() ** i) ** d) => GListLAssign (i ** d))
+
+-- An endofunctor on `Type x Type`.  If we take a fixed point, then we
+-- obtain a type which produces pairs of the fixed point of `PolyFunc` and
+-- lists of the fixed point of `PolyFunc`.
+public export
+GListESPF : PolyFunc -> SlicePolyEndoFunc GListSlice
+GListESPF p =
   (GListPos p **
    \(sl ** i) => GListDir p sl i **
    \((sl ** i) ** d) => GListAssign p sl i d)
@@ -1356,7 +1363,7 @@ GExpXSPF = SliceFuncDimap (pfSliceAll GExpF) (\(() ** d) => d) id
 
 public export
 GNatLSPF : SlicePolyEndoFunc GListSlice
-GNatLSPF = GListSPF GNatF
+GNatLSPF = GListESPF GNatF
 
 public export
 GNatIdx : GListSlice
@@ -1387,7 +1394,7 @@ GNatLFDirAtom (Right () ** Right ()) = DIR_NCTL
 
 public export
 GExpLSPF : SlicePolyEndoFunc GListSlice
-GExpLSPF = GListSPF GExpF
+GExpLSPF = GListESPF GExpF
 
 public export
 GExpIdx : GListSlice
@@ -1417,60 +1424,57 @@ GExpLFDirAtom (Right () ** Right ()) = DIR_XCTL
 ----------------------------------------
 
 public export
-GSExpPos : SliceObj GExpSlice
-GSExpPos GSATOM = GAtomPos
-GSExpPos GSNAT = GNatPos
-GSExpPos GSNATL = GNatLFPos
-GSExpPos GSEXP = GExpPos
-GSExpPos GSEXPL = GExpLFPos
+GAtomExpAssign : Unit -> GExpSlice
+GAtomExpAssign () = GSATOM
 
 public export
-GSExpDir : Pi (SliceObj . GSExpPos)
-GSExpDir GSATOM = GAtomDir
-GSExpDir GSNAT = GNatDir
-GSExpDir GSNATL = GNatLFDir
-GSExpDir GSEXP = GExpDir
-GSExpDir GSEXPL = GExpLFDir
+GAtomExpSPF : SlicePolyFunc GExpSlice Unit
+GAtomExpSPF = SliceFuncLmap (GAtomSPF Unit) GAtomExpAssign
 
 public export
-GSExpAssignAtom : (i : GAtomPos) -> GAtomDir i -> GExpSlice
-GSExpAssignAtom i d = void d
+GNatExpLAssign : GListSlice -> GExpSlice
+GNatExpLAssign (Left ()) = GSNAT
+GNatExpLAssign (Right ()) = GSNATL
 
 public export
-GSExpAssignNat : (i : GNatPos) -> GNatDir i -> GExpSlice
-GSExpAssignNat (Left ()) () = GSNAT
-GSExpAssignNat (Right ()) d = void d
+GNatLExpSPF : SlicePolyFunc GExpSlice GListSlice
+GNatLExpSPF = SliceFuncLmap GNatLSPF GNatExpLAssign
 
 public export
-GSExpAssignNatL : (i : GNatLFPos) -> GNatLFDir i -> GExpSlice
-GSExpAssignNatL (Left ()) d = void d
-GSExpAssignNatL (Right ()) (Left ()) = GSNAT
-GSExpAssignNatL (Right ()) (Right ()) = GSNATL
+GXExpAssign : GExpXSlice -> GExpSlice
+GXExpAssign FZ = GSATOM
+GXExpAssign (FS FZ) = GSNATL
+GXExpAssign (FS (FS FZ)) = GSEXPL
 
 public export
-GSExpAssignExp : (i : GExpPos) -> GExpDir i -> GExpSlice
-GSExpAssignExp () FZ = GSATOM
-GSExpAssignExp () (FS FZ) = GSNATL
-GSExpAssignExp () (FS (FS FZ)) = GSEXPL
+GXExpSPF : SlicePolyFunc GExpSlice Unit
+GXExpSPF = SliceFuncLmap GExpXSPF GXExpAssign
 
 public export
-GSExpAssignExpL : (i : GExpLFPos) -> GExpLFDir i -> GExpSlice
-GSExpAssignExpL (Left ()) d = void d
-GSExpAssignExpL (Right ()) (Left ()) = GSEXP
-GSExpAssignExpL (Right ()) (Right ()) = GSEXPL
+GXExpLAssign : GListSlice -> GExpSlice
+GXExpLAssign (Left ()) = GSEXP
+GXExpLAssign (Right ()) = GSEXPL
 
 public export
-GSExpAssign :
-  (sl : GExpSlice) -> (i : GSExpPos sl) -> GSExpDir sl i -> GExpSlice
-GSExpAssign GSATOM = GSExpAssignAtom
-GSExpAssign GSNAT = GSExpAssignNat
-GSExpAssign GSNATL = GSExpAssignNatL
-GSExpAssign GSEXP = GSExpAssignExp
-GSExpAssign GSEXPL = GSExpAssignExpL
+GExpLExpSPF : SlicePolyFunc GExpSlice GListSlice
+GExpLExpSPF = SliceFuncLmap GExpLSPF GXExpLAssign
+
+public export
+GSExpCombinedSlice : Type
+GSExpCombinedSlice = Either Unit (Either BoolCP BoolCP)
+
+public export
+GSExpCombined : SlicePolyFunc GExpSlice GSExpCombinedSlice
+GSExpCombined = spfCoprodCod GAtomExpSPF (spfCoprodCod GNatLExpSPF GExpLExpSPF)
+
+public export
+GSExpSPFAssign : GExpSlice -> GSExpCombinedSlice
+GSExpSPFAssign GSATOM = Left ()
+GSExpSPFAssign GSNAT = Right (Left (Left ()))
+GSExpSPFAssign GSNATL = Right (Left (Right ()))
+GSExpSPFAssign GSEXP = Right (Right (Left ()))
+GSExpSPFAssign GSEXPL = Right (Right (Right ()))
 
 public export
 GSExpSPF : SlicePolyEndoFunc GExpSlice
-GSExpSPF =
-  (GSExpPos **
-   \(sl ** i) => GSExpDir sl i **
-   \((sl ** i) ** d) => GSExpAssign sl i d)
+GSExpSPF = SliceFuncRmap GSExpCombined GSExpSPFAssign
