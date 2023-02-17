@@ -1759,8 +1759,8 @@ The specification follows from the sum type declaration
 (defunion stlc
   (absurd (cod geb.spec:substmorph) (value t))
   unit
-  (left (value t))
-  (right (value t))
+  (left (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
+  (right (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
   (case-on (lty geb.spec:substmorph)
            (rty geb.spec:substmorph)
            (cod geb.spec:substmorph)
