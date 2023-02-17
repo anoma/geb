@@ -29,7 +29,7 @@
 (defmethod compile-checked-term (context type (term <stlc>))
   (assure <substmorph>
     (match-of stlc term
-      ((absurd v)
+      ((absurd type v)
        (comp (init type)
              (compile-checked-term context so0 v)))
       (unit

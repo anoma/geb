@@ -4,7 +4,7 @@
 ;; class declaration. We avoid typing it as we don't actually want to
 ;; be exhaustive, but rather open.
 (defunion stlc
-  (absurd (value t))
+  (absurd (cod geb.spec:substmorph) (value t))
   unit
   (left (value t))
   (right (value t))
