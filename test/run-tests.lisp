@@ -10,6 +10,12 @@
 (defclass noisy-summary (interactive summary)
   ())
 
+(defun run-tests-error ()
+  (let ((tests (parachute:status (geb-test:run-tests))))
+    (if (eq :failed tests)
+        (error "tests failed")
+        tests)))
+
 ;; we have summary
 (defun run-tests (&key
                     (interactive? nil)
