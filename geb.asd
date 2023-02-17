@@ -113,7 +113,7 @@
    (:file pipeline)
    (:file run-tests))
   :perform (asdf:test-op (o s)
-                         (uiop:symbol-call :geb-test :run-tests)))
+                         (uiop:symbol-call :geb-test :run-tests-error)))
 
 (asdf:defsystem :geb/documentation
   :depends-on (:geb :mgl-pax/navigate :MGL-PAX/FULL :cl-environments
