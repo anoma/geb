@@ -350,7 +350,7 @@ languageDefSyntaxTest = do
         ("frgx1", frgx1)
     ]
   putStrLn ""
-  putStrLn $ "wt1 = " ++ show wt1
+  putStrLn $ "wt1 = " ++ show (gwexpWTtoGExp wt1)
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End SyntaxTest."

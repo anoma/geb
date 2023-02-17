@@ -1059,10 +1059,6 @@ gwexpWTtoGExp : GWExpX -> GExp
 gwexpWTtoGExp = gwexpWTtoGExpSl GSEXP
 
 public export
-Show GWExpX where
-  show = show . gwexpWTtoGExp
-
-public export
 InGA : GebAtom -> GWExpA
 InGA a = InSPFM (GSATOM ** Element0 (GPA a) Refl) $ \(Element0 d dsl) =>
   case d of
@@ -1362,20 +1358,25 @@ GExpXSPF = SliceFuncDimap (pfSliceAll GExpF) (\(() ** d) => d) id
 -----------------------------------------
 
 public export
-GNatLSPF : SlicePolyEndoFunc GListSlice
-GNatLSPF = GListESPF GNatF
+GNatLSPF : SlicePolyFunc GListSlice Unit
+GNatLSPF = GListSPF
 
 public export
-GNatIdx : GListSlice
-GNatIdx = Right ()
+GNatExpLAssign : GListSlice -> GExpSlice
+GNatExpLAssign (Left ()) = GSNAT
+GNatExpLAssign (Right ()) = GSNATL
+
+public export
+GNatLExpSPF : SlicePolyFunc GExpSlice Unit
+GNatLExpSPF = SliceFuncLmap GListSPF GNatExpLAssign
 
 public export
 GNatLFPos : Type
-GNatLFPos = spfPos GNatLSPF GNatIdx
+GNatLFPos = spfPos GNatLSPF ()
 
 public export
 GNatLFDir : SliceObj GNatLFPos
-GNatLFDir = spfSliceDir GNatLSPF GNatIdx
+GNatLFDir = spfSliceDir GNatLSPF ()
 
 public export
 GNatLFPosAtom : GNatLFPos -> GebAtom
@@ -1393,20 +1394,25 @@ GNatLFDirAtom (Right () ** Right ()) = DIR_NCTL
 -------------------------------------
 
 public export
-GExpLSPF : SlicePolyEndoFunc GListSlice
-GExpLSPF = GListESPF GExpF
+GExpLSPF : SlicePolyFunc GListSlice Unit
+GExpLSPF = GListSPF
 
 public export
-GExpIdx : GListSlice
-GExpIdx = Right ()
+GXExpLAssign : GListSlice -> GExpSlice
+GXExpLAssign (Left ()) = GSEXP
+GXExpLAssign (Right ()) = GSEXPL
+
+public export
+GExpLExpSPF : SlicePolyFunc GExpSlice Unit
+GExpLExpSPF = SliceFuncLmap GListSPF GXExpLAssign
 
 public export
 GExpLFPos : Type
-GExpLFPos = spfPos GExpLSPF GExpIdx
+GExpLFPos = spfPos GExpLSPF ()
 
 public export
 GExpLFDir : SliceObj GExpLFPos
-GExpLFDir = spfSliceDir GExpLSPF GExpIdx
+GExpLFDir = spfSliceDir GExpLSPF ()
 
 public export
 GExpLFPosAtom : GExpLFPos -> GebAtom
@@ -1424,21 +1430,16 @@ GExpLFDirAtom (Right () ** Right ()) = DIR_XCTL
 ----------------------------------------
 
 public export
-GAtomExpAssign : Unit -> GExpSlice
-GAtomExpAssign () = GSATOM
-
-public export
 GAtomExpSPF : SlicePolyFunc GExpSlice Unit
-GAtomExpSPF = SliceFuncLmap (GAtomSPF Unit) GAtomExpAssign
+GAtomExpSPF = GAtomSPF GExpSlice
 
 public export
-GNatExpLAssign : GListSlice -> GExpSlice
-GNatExpLAssign (Left ()) = GSNAT
-GNatExpLAssign (Right ()) = GSNATL
+GNatExpAssign : Unit -> GExpSlice
+GNatExpAssign () = GSNAT
 
 public export
-GNatLExpSPF : SlicePolyFunc GExpSlice GListSlice
-GNatLExpSPF = SliceFuncLmap GNatLSPF GNatExpLAssign
+GNatExpSPF : SlicePolyFunc GExpSlice Unit
+GNatExpSPF = SliceFuncLmap GNatSPF GNatExpAssign
 
 public export
 GXExpAssign : GExpXSlice -> GExpSlice
@@ -1451,29 +1452,22 @@ GXExpSPF : SlicePolyFunc GExpSlice Unit
 GXExpSPF = SliceFuncLmap GExpXSPF GXExpAssign
 
 public export
-GXExpLAssign : GListSlice -> GExpSlice
-GXExpLAssign (Left ()) = GSEXP
-GXExpLAssign (Right ()) = GSEXPL
-
-public export
-GExpLExpSPF : SlicePolyFunc GExpSlice GListSlice
-GExpLExpSPF = SliceFuncLmap GExpLSPF GXExpLAssign
-
-public export
 GSExpCombinedSlice : Type
-GSExpCombinedSlice = Either Unit (Either BoolCP BoolCP)
+GSExpCombinedSlice = Either Unit (Either Unit (Either Unit (Either Unit Unit)))
 
 public export
 GSExpCombined : SlicePolyFunc GExpSlice GSExpCombinedSlice
-GSExpCombined = spfCoprodCod GAtomExpSPF (spfCoprodCod GNatLExpSPF GExpLExpSPF)
+GSExpCombined =
+  spfCoprodCod GAtomExpSPF (spfCoprodCod GNatExpSPF
+    (spfCoprodCod GNatLExpSPF (spfCoprodCod GXExpSPF GExpLExpSPF)))
 
 public export
 GSExpSPFAssign : GExpSlice -> GSExpCombinedSlice
 GSExpSPFAssign GSATOM = Left ()
-GSExpSPFAssign GSNAT = Right (Left (Left ()))
-GSExpSPFAssign GSNATL = Right (Left (Right ()))
-GSExpSPFAssign GSEXP = Right (Right (Left ()))
-GSExpSPFAssign GSEXPL = Right (Right (Right ()))
+GSExpSPFAssign GSNAT = Right (Left ())
+GSExpSPFAssign GSNATL = Right (Right (Left ()))
+GSExpSPFAssign GSEXP = Right (Right (Right (Left ())))
+GSExpSPFAssign GSEXPL = Right (Right (Right (Right ())))
 
 public export
 GSExpSPF : SlicePolyEndoFunc GExpSlice
@@ -1526,20 +1520,15 @@ GSExptoGExpAlgSl GSEXPL = GList
 
 public export
 GSExptoGExpAlg : GSExpAlg GSExptoGExpAlgSl
-GSExptoGExpAlg GSATOM (i ** d) = i
-GSExptoGExpAlg GSNAT ((Left ()) ** d) = d ()
-GSExptoGExpAlg GSNAT ((Right ()) ** d) = Z
-GSExptoGExpAlg GSNATL ((Left ()) ** d) = []
-GSExptoGExpAlg GSNATL ((Right ()) ** d) = d BCPFalse :: d BCPTrue
-GSExptoGExpAlg GSEXP (() ** d) =
-  let
-    d0 = d FZ
-    d1 = d (FS FZ)
-    d2 = d (FS (FS FZ))
-  in
-  InS ?gsexpToGexpAlg_hole_1 ?gsexpToGexpAlg_hole_2 ?gsexpToGexpAlg_hole_3
-GSExptoGExpAlg GSEXPL ((Left ()) ** d) = []
-GSExptoGExpAlg GSEXPL ((Right ()) ** d) = d BCPFalse :: d BCPTrue
+GSExptoGExpAlg GSATOM = \(i ** d) => i
+GSExptoGExpAlg GSNAT = \(i ** d) =>
+  case i of (Left ()) => d () ; (Right ()) => Z
+GSExptoGExpAlg GSNATL = \(i ** d) =>
+  case i of (Left ()) => [] ; (Right ()) => d BCPFalse :: d BCPTrue
+GSExptoGExpAlg GSEXP = \(i ** d) => case i of
+  () => InS (d FZ) (d (FS FZ)) (d (FS (FS FZ)))
+GSExptoGExpAlg GSEXPL = \(i ** d) =>
+  case i of (Left ()) => [] ; (Right ()) => d BCPFalse :: d BCPTrue
 
 public export
 gsexptoGExpSl : SliceMorphism {a=GExpSlice} GSExp GSExptoGExpAlgSl
