@@ -20,26 +20,26 @@
 (def unit-to-bool-left-circuit
   (lambda:to-circuit
     nil bool
-    (lambda:left stlc-unit-term)
+    (lambda:left so-unit-type so-unit-type stlc-unit-term)
     :tc_unit_to_bool_left))
 
 (def unit-to-bool-right-circuit
   (lambda:to-circuit
     nil bool
-    (lambda:right stlc-unit-term)
+    (lambda:right so-unit-type so-unit-type stlc-unit-term)
     :tc_unit_to_bool_right))
 
 (def pair-bool-stlc
   (lambda:pair bool bool
-               (lambda:right stlc-unit-term)
-               (lambda:left stlc-unit-term)))
+               (lambda:right so-unit-type so-unit-type stlc-unit-term)
+               (lambda:left so-unit-type so-unit-type stlc-unit-term)))
 
 (def pair-bool-circuit
   (lambda:to-circuit
    nil (geb:prod bool bool)
    (lambda:pair bool bool
-                (lambda:right stlc-unit-term)
-                (lambda:left stlc-unit-term))
+                (lambda:right so-unit-type so-unit-type stlc-unit-term)
+                (lambda:left so-unit-type so-unit-type stlc-unit-term))
    :tc_pair_bool))
 
 (def fst-bool-circuit
@@ -63,13 +63,13 @@
     (lambda:case-on
       so-unit-type so-unit-type
       (coprod so-unit-type so-unit-type)
-      (lambda:left stlc-unit-term)
+      (lambda:left so-unit-type so-unit-type stlc-unit-term)
       (lambda:lamb
         so-unit-type (coprod so-unit-type so-unit-type)
-        (lambda:right stlc-unit-term))
+        (lambda:right so-unit-type so-unit-type stlc-unit-term))
       (lambda:lamb
         so-unit-type (coprod so-unit-type so-unit-type)
-        (lambda:left stlc-unit-term))
+        (lambda:left so-unit-type so-unit-type stlc-unit-term))
       )
     :tc_issue_58))
 

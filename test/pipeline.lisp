@@ -11,7 +11,7 @@
    (lambda:app (coprod so1 so1)
                (coprod so1 so1)
                (lambda:lamb (coprod so1 so1) (coprod so1 so1) (lambda:index 0))
-               (lambda:left lambda:unit))
+               (lambda:left (coprod so1 so1) (coprod so1 so1) lambda:unit))
    (coprod so1 so1)))
 
 (define-test pipeline-works-for-stlc-to-vampir
