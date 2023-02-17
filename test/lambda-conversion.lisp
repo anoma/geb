@@ -48,6 +48,23 @@
 (def unit-to-unit-circuit
   (lambda:to-circuit nil so-unit-type stlc-unit-term :tc_unit_to_unit))
 
+(def issue-58-circuit
+  (lambda:to-circuit
+    nil
+    (coprod so-unit-type so-unit-type)
+    (lambda:case-on
+      so-unit-type so-unit-type
+      (coprod so-unit-type so-unit-type)
+      (lambda:left stlc-unit-term)
+      (lambda:lamb
+        so-unit-type (coprod so-unit-type so-unit-type)
+        (lambda:right stlc-unit-term))
+      (lambda:lamb
+        so-unit-type (coprod so-unit-type so-unit-type)
+        (lambda:left stlc-unit-term))
+      )
+    :tc_issue_58))
+
 (define-test compile-checked-term :parent geb.lambda.trans
   (is obj-equalp
       (lambda:compile-checked-term nil so-unit-type stlc-unit-term)
@@ -93,3 +110,7 @@
 (define-test vampir-test-pair-bool
   :parent geb.lambda.trans
   (of-type geb.vampir.spec:alias pair-bool-circuit))
+
+(define-test vampir-test-issue-58
+  :parent geb.lambda.trans
+  (of-type geb.vampir.spec:alias issue-58-circuit))
