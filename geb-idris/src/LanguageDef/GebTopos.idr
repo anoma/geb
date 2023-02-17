@@ -1184,12 +1184,12 @@ InGWExpList : List GWExpX -> GWExpXL
 InGWExpList = foldr InGXC InGXN
 
 public export
-GWExpToWTAlg : SXLAlg GebAtom GWExpX GWExpXL
-GWExpToWTAlg = SXA InGNatX InGXN InGXC
+GExpToWTAlg : SXLAlg GebAtom GWExpX GWExpXL
+GExpToWTAlg = SXA InGNatX InGXN InGXC
 
 public export
-gwexpToWT : GExp -> GWExpX
-gwexpToWT = sxCata GWExpToWTAlg
+gexpToWT : GExp -> GWExpX
+gexpToWT = sxCata GExpToWTAlg
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
