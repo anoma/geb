@@ -34,12 +34,18 @@
              (compile-checked-term context so0 v)))
       (unit
        (terminal (stlc-ctx-to-mu context)))
-      ((left term)
+      ((left lty rty term)
        (assert (typep type '(or alias coprod)) nil "invalid lambda type to left ~A" type)
+       ;; (assert
+           ;; (geb.mixins:obj-equalp (coprod lty rty) (class-of type))
+           ;; nil "Types should match for left ~A ~A ~A" lty rty type)
        (comp (->left (mcar type) (mcadr type))
              (compile-checked-term context (mcar type) term)))
-      ((right term)
+      ((right lty rty term)
        (assert (typep type '(or alias coprod)) nil "invalid lambda type to right ~A" type)
+       ;; (assert
+           ;; (geb.mixins:obj-equalp (coprod lty rty) (class-of type))
+           ;; nil "Types should match for right ~A ~A ~A" lty rty type)
        (comp (->right (mcar type) (mcadr type))
              (compile-checked-term context (mcar type) term)))
       ((case-on lty rty cod on l r)
