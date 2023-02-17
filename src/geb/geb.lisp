@@ -159,7 +159,9 @@ then: `(commutes-left (dom morph)) ≡ (prod y x)`
     (typecase-of substmorph x
       (init         so0)
       (terminal     (obj x))
-      (alias        (dom (obj x)))
+      (alias        (if (typep (obj x) '<substobj>)
+                        (make-alias :name (name x) :obj (dom (obj x)))
+                        (dom (obj x))))
       (substobj     x)
       (inject-left  (mcar x))
       (inject-right (mcadr x))

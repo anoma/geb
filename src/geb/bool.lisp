@@ -5,11 +5,13 @@
 ;; Also I want a variable to control so Ι can expand these names
 ;; only, as Ι pretty print.
 
-(def true (alias true (->right so1 so1)))
+(def false-obj (alias false so1))
+(def true-obj (alias true so1))
 
-(def false (alias false (->left so1 so1)))
+(def true (alias true (->right false-obj true-obj)))
+(def false (alias false (->left false-obj true-obj)))
 
-(def bool (alias bool (coprod so1 so1)))
+(def bool (alias bool (coprod false-obj true-obj)))
 
 ;; TODO make my own custom def macro so they are with the defn!
 
@@ -46,19 +48,23 @@ the left unit")
         bool))
 
 (def iso1
-  (let ((bool-from-so1 (<-left bool so1)))
-    (mcase (comp (->left bool bool)  bool-from-so1)
-           (comp (->right bool bool) bool-from-so1))))
+  (flet ((bool-from (x)
+           (<-left bool x)))
+    (mcase (comp (->left bool bool)
+                 (bool-from false-obj))
+           (comp (->right bool bool)
+                 (bool-from true-obj)))))
 
 (def and-on-sum
   (mcase (const false bool) bool))
 
 (def and-more-verbose
-  (comp and-on-sum iso1 (distribute bool so1 so1)))
+  (comp and-on-sum iso1 (distribute bool false-obj true-obj)))
 
 (def and
-  (comp (mcase (const false (prod bool so1)) (<-left bool so1))
-        (distribute bool so1 so1)))
+  (comp (mcase (const false (prod bool (alias false so1)))
+               (<-left bool (alias true so1)))
+        (distribute bool (alias false so1) (alias true so1))))
 
 (def or
   (pair bool
