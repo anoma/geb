@@ -1186,3 +1186,15 @@ DecEq Void where
 public export
 Eq Void where
   _ == _ impossible
+
+public export
+BoolCP : Type
+BoolCP = Either Unit Unit
+
+public export
+BCPFalse : BoolCP
+BCPFalse = Left ()
+
+public export
+BCPTrue : BoolCP
+BCPTrue = Right ()

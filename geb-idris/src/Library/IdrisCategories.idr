@@ -244,6 +244,10 @@ Sigma : {a : Type} -> SliceObj a -> Type
 Sigma {a} p = (x : a ** p x)
 
 public export
+Slice2Obj : {a : Type} -> SliceObj a -> Type
+Slice2Obj {a} sl = Pi {a} (SliceObj . sl)
+
+public export
 SigmaToPair : {0 a, b : Type} -> (Sigma {a} (const b)) -> (a, b)
 SigmaToPair (x ** y) = (x, y)
 

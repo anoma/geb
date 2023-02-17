@@ -269,11 +269,11 @@ frgx1 = InSF SL_EXP [1, 2, 3] [InSF SL_NAT [2] [], InSXV "sl_expl"]
 ---------------------------------------
 ---------------------------------------
 
-wt1 : GExpX
+wt1 : GWExpX
 wt1 = gexpToWT gx1
 
 wt1_correct : Assertion
-wt1_correct = Assert $ gexpWTtoGExp wt1 == gx1
+wt1_correct = Assert $ gwexpWTtoGExp wt1 == gx1
 
 ----------------------------------
 ----------------------------------
@@ -350,7 +350,7 @@ languageDefSyntaxTest = do
         ("frgx1", frgx1)
     ]
   putStrLn ""
-  putStrLn $ "wt1 = " ++ show wt1
+  putStrLn $ "wt1 = " ++ show (gwexpWTtoGExp wt1)
   putStrLn ""
   putStrLn "---------------"
   putStrLn "End SyntaxTest."

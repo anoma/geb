@@ -2837,6 +2837,11 @@ spfDir : {0 a, b : Type} ->
 spfDir spf = fst (snd spf)
 
 public export
+spfSliceDir : {0 a, b : Type} ->
+  (spf : SlicePolyFunc a b) -> (eb : b) -> spfPos spf eb -> Type
+spfSliceDir spf eb i = spfDir spf (eb ** i)
+
+public export
 spfAssign : {0 a, b : Type} ->
   (spf : SlicePolyFunc a b) -> Sigma (spfDir spf) -> a
 spfAssign spf = snd (snd spf)
@@ -3146,6 +3151,48 @@ SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
   (wxp . fzx **
    \izwxi => wxd (fzx (fst izwxi) ** snd izwxi) **
    \dd => fwy (wxa ((fzx (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
+
+public export
+SliceFuncLmap : {0 w, x, y : Type} ->
+  SlicePolyFunc w x -> (w -> y) -> SlicePolyFunc y x
+SliceFuncLmap spf = flip (SliceFuncDimap spf) id
+
+public export
+SliceFuncRmap : {0 w, x, z : Type} ->
+  SlicePolyFunc w x -> (z -> x) -> SlicePolyFunc w z
+SliceFuncRmap spf = SliceFuncDimap spf id
+
+public export
+spfWeaken : {0 x, y : Type} -> SlicePolyFunc x Unit -> SlicePolyFunc x y
+spfWeaken {x} {y} spf = SliceFuncRmap spf (const ())
+
+--------------------------------------------------------------
+---- As morphisms in the two-category of slice categories ----
+--------------------------------------------------------------
+
+public export
+spfCoprodDom : {0 x, y, z : Type} ->
+  SlicePolyFunc x z -> SlicePolyFunc y z ->
+  SlicePolyFunc (Either x y) z
+spfCoprodDom {x} {y} {z} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+  (\ez => Either (pd ez) (pd' ez) **
+   \(ez ** pz) => (case pz of
+    Left pz' => dd (ez ** pz')
+    Right pz' => dd' (ez ** pz')) **
+   \((ez ** pz) ** dz) => (case pz of
+    Left pz' => Left (asn ((ez ** pz') ** dz))
+    Right pz' => Right (asn' ((ez ** pz') ** dz))))
+
+public export
+spfCoprodCod : {0 x, y, z : Type} ->
+  SlicePolyFunc x y -> SlicePolyFunc x z ->
+  SlicePolyFunc x (Either y z)
+spfCoprodCod {x} {y} {z} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+  (\e => case e of Left ey => pd ey ; Right ez => pd' ez **
+   \(e ** i) => case e of Left ey => dd (ey ** i); Right ez => dd' (ez ** i) **
+   \((e ** i) ** d) => case e of
+    Left ey => asn ((ey ** i) ** d)
+    Right ez => asn' ((ez ** i) ** d))
 
 ---------------------------------------------
 ---- As endofunctors on slice categories ----
@@ -3503,6 +3550,43 @@ spfApplyPos (posdep ** dirdep ** assign) ey =
 public export
 spfTopf : SlicePolyFunc x y -> y -> PolyFunc
 spfTopf spf ey = PolyFuncFromUnitUnitSPF (spfForgetParam (spfApplyPos spf ey))
+
+-- Turn a polynomial functor into a dependent polynomial functor by
+-- slicing its directions.
+public export
+pfSlice : {0 x : Type} ->
+  (p : PolyFunc) -> (pfPDir p -> x) -> SlicePolyFunc x ()
+pfSlice {x} (pos ** dir) assign =
+  (const pos ** dir . snd ** \dd => assign (snd (fst dd) ** snd dd))
+
+-- Turn a polynomial functor into a dependent polynomial functor by
+-- slicing its directions completely.
+public export
+pfSliceAll : (p : PolyFunc) -> SlicePolyFunc (pfPDir p) ()
+pfSliceAll p = pfSlice p id
+
+-- Produce a dependent polynomial functor from a non-dependent polynomial
+-- functor by assigning the output's codomain to the input's positions
+-- and the input's directions to the output's domain.
+public export
+pfAssign : {0 x, y : Type} ->
+  (p : PolyFunc) ->
+  (ap : y -> pfPos p) ->
+  (ad : (i : y) -> pfDir {p} (ap i) -> x) ->
+  SlicePolyFunc x y
+pfAssign p ap ad =
+  (const Unit ** pfDir {p} . ap . fst ** \dd => ad (fst (fst dd)) (snd dd))
+
+-- Give a polynomial functor the most flexible possible dependent type
+-- by distinguishing all of its directions in its domain and all of its
+-- positions in its codomain.
+public export
+pfAssignAll :
+  (p : PolyFunc) ->
+  (ap : y -> pfPos p) ->
+  (ad : (i : y) -> pfDir {p} (ap i) -> x) ->
+  SlicePolyFunc (pfPDir p) (pfPos p)
+pfAssignAll p ap ad = pfAssign p id MkDPair
 
 --------------------------------------------------------------------
 ---- Composition of parameterized dependent polynomial functors ----

@@ -26,7 +26,6 @@ data GebAtom : Type where
 
   -- Positions of the (dependent) polynomial endofunctor whose fixed point
   -- is the Geb S-expression.
-  POS_A : GebAtom
   POS_Z : GebAtom
   POS_S : GebAtom
   POS_X : GebAtom
@@ -50,7 +49,7 @@ data GebAtom : Type where
 
 public export
 GASize : Nat
-GASize = 21
+GASize = 20
 
 public export
 GAFin : Type
@@ -63,37 +62,36 @@ GADecoder (FS FZ) = SL_NAT
 GADecoder (FS (FS FZ)) = SL_NATL
 GADecoder (FS (FS (FS FZ))) = SL_EXP
 GADecoder (FS (FS (FS (FS FZ)))) = SL_EXPL
-GADecoder (FS (FS (FS (FS (FS FZ))))) = POS_A
-GADecoder (FS (FS (FS (FS (FS (FS FZ)))))) = POS_Z
-GADecoder (FS (FS (FS (FS (FS (FS (FS FZ))))))) = POS_S
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))) = POS_X
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))) = POS_NN
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))) = POS_NC
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))) = POS_XN
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))) =
+GADecoder (FS (FS (FS (FS (FS FZ))))) = POS_Z
+GADecoder (FS (FS (FS (FS (FS (FS FZ)))))) = POS_S
+GADecoder (FS (FS (FS (FS (FS (FS (FS FZ))))))) = POS_X
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))) = POS_NN
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))) = POS_NC
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))) = POS_XN
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))) =
   POS_XC
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))) =
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))) =
   DIR_S
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  FZ)))))))))))))) =
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  FZ))))))))))))) =
     DIR_XA
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS FZ))))))))))))))) =
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS FZ)))))))))))))) =
     DIR_XNL
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS FZ)))))))))))))))) =
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS FZ))))))))))))))) =
     DIR_XXL
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS FZ))))))))))))))))) =
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS FZ)))))))))))))))) =
     DIR_NCHD
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS FZ)))))))))))))))))) =
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS FZ))))))))))))))))) =
     DIR_NCTL
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS FZ)))))))))))))))))) =
+    DIR_XCHD
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS FZ))))))))))))))))))) =
-    DIR_XCHD
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS FZ)))))))))))))))))))) =
     DIR_XCTL
 
 public export
@@ -103,22 +101,21 @@ GAEncoder SL_NAT = (1 ** Refl ** Refl)
 GAEncoder SL_NATL = (2 ** Refl ** Refl)
 GAEncoder SL_EXP = (3 ** Refl ** Refl)
 GAEncoder SL_EXPL = (4 ** Refl ** Refl)
-GAEncoder POS_A = (5 ** Refl ** Refl)
-GAEncoder POS_Z = (6 ** Refl ** Refl)
-GAEncoder POS_S = (7 ** Refl ** Refl)
-GAEncoder POS_X = (8 ** Refl ** Refl)
-GAEncoder POS_NN = (9 ** Refl ** Refl)
-GAEncoder POS_NC = (10 ** Refl ** Refl)
-GAEncoder POS_XN = (11 ** Refl ** Refl)
-GAEncoder POS_XC = (12 ** Refl ** Refl)
-GAEncoder DIR_S = (13 ** Refl ** Refl)
-GAEncoder DIR_XA = (14 ** Refl ** Refl)
-GAEncoder DIR_XNL = (15 ** Refl ** Refl)
-GAEncoder DIR_XXL = (16 ** Refl ** Refl)
-GAEncoder DIR_NCHD = (17 ** Refl ** Refl)
-GAEncoder DIR_NCTL = (18 ** Refl ** Refl)
-GAEncoder DIR_XCHD = (19 ** Refl ** Refl)
-GAEncoder DIR_XCTL = (20 ** Refl ** Refl)
+GAEncoder POS_Z = (5 ** Refl ** Refl)
+GAEncoder POS_S = (6 ** Refl ** Refl)
+GAEncoder POS_X = (7 ** Refl ** Refl)
+GAEncoder POS_NN = (8 ** Refl ** Refl)
+GAEncoder POS_NC = (9 ** Refl ** Refl)
+GAEncoder POS_XN = (10 ** Refl ** Refl)
+GAEncoder POS_XC = (11 ** Refl ** Refl)
+GAEncoder DIR_S = (12 ** Refl ** Refl)
+GAEncoder DIR_XA = (13 ** Refl ** Refl)
+GAEncoder DIR_XNL = (14 ** Refl ** Refl)
+GAEncoder DIR_XXL = (15 ** Refl ** Refl)
+GAEncoder DIR_NCHD = (16 ** Refl ** Refl)
+GAEncoder DIR_NCTL = (17 ** Refl ** Refl)
+GAEncoder DIR_XCHD = (18 ** Refl ** Refl)
+GAEncoder DIR_XCTL = (19 ** Refl ** Refl)
 
 public export
 GebAtomEncoding : FinDecEncoding GebAtom GASize
@@ -131,7 +128,6 @@ gaToString SL_NAT = "SL_NAT"
 gaToString SL_NATL = "SL_NATL"
 gaToString SL_EXP = "SL_EXP"
 gaToString SL_EXPL = "SL_EXPL"
-gaToString POS_A = "POS_A"
 gaToString POS_Z = "POS_Z"
 gaToString POS_S = "POS_S"
 gaToString POS_X = "POS_X"
