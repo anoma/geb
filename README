@@ -1690,6 +1690,10 @@ These are utility functions relating to translating lambda terms to other types
 
     Converts a generic <STLC> context into a SUBSTMORPH
 
+- [function] SO-HOM DOM COD
+
+    Computes the hom-object `DOM -> COD`
+
 ## Mixins
 
 ###### \[in package GEB.MIXINS\]
