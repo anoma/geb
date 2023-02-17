@@ -80,12 +80,14 @@ We likewise define it with coproducts
 ```
 
 The functions given work on this."
-  (true  pax:symbol-macro)
-  (false pax:symbol-macro)
-  (bool  pax:symbol-macro)
-  (not   pax:symbol-macro)
-  (and   pax:symbol-macro)
-  (or    pax:symbol-macro))
+  (true      pax:symbol-macro)
+  (false     pax:symbol-macro)
+  (false-obj pax:symbol-macro)
+  (true-obj  pax:symbol-macro)
+  (bool      pax:symbol-macro)
+  (not       pax:symbol-macro)
+  (and       pax:symbol-macro)
+  (or        pax:symbol-macro))
 
 
 (geb.utils:muffle-package-variance

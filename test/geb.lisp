@@ -68,8 +68,8 @@
   (is obj-equalp
       (prod (obj geb-bool:bool)
             (obj geb-bool:bool))
-      (codom (pair (->left so1 so1)
-                   (->left so1 so1)))
+      (codom (pair (->left geb-bool:false-obj geb-bool:true-obj)
+                   (->left geb-bool:false-obj geb-bool:true-obj)))
       "Checking the codom of pair")
   (is obj-equalp
       (dom (<-left so1 geb-bool:bool))
