@@ -21,7 +21,9 @@ object into a format for a graphing backend."
   (apply-note pax:function)
   (representation pax:generic-function)
   (children       pax:generic-function)
-  (determine-text-and-object-from-node pax:function))
+  (determine-text-and-object-from-node pax:function)
+  (noterize-children                   pax:function)
+  (notorize-children-with-index-schema pax:function))
 
 
 (geb.utils:muffle-package-variance

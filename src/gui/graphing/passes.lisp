@@ -1,48 +1,59 @@
 (in-package :geb-gui.graphing.passes)
 
-(-> fold-right-cases (node) node)
+(defun passes (node)
+  (~> node
+      fold-right-case-dists
+      fold-right-cases))
+
+(-> fold-right-cases (node) (values node &optional))
 (defun fold-right-cases (node)
   (when (typep (representation node) 'case)
-    ;; abstract out this dumb logic
-    ;; all of this is to add the labels
-    (let* ((linearized (linearize-right-case node))
-           (note-node  (make-squash :value node))
-           (len        (length linearized)))
-      (setf (children node)
-            nil)
-      (mapcar (lambda (x index)
-                (apply-note note-node
-                            (make-note :from (value x)
-                                       :note (format nil "χ~A"
-                                                     (number-to-under index))
-                                       :value x)))
-              (reverse linearized)
-              (alexandria:iota len :step -1 :start len)))
-    (setf (children node)
-          (linearize-right-case node)))
+    (setf (children node) (linearize-right-case node))
+    (notorize-children-with-index-schema "χ" node))
+  (recurse node #'fold-right-cases))
+
+(-> fold-right-case-dists (node) (values node &optional))
+(defun fold-right-case-dists (node)
+  (when (linear-distp node)
+    (setf (children node) (linearize-right-dist-case node))
+    (notorize-children-with-index-schema "δχ" node))
+  (recurse node #'fold-right-case-dists))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Pass helpers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(-> recruse (node (-> (node) t)) node)
+(defun recurse (node func)
+  "Recuses on the child of the node given the pass function"
   (setf (children node)
-        (mapcar #'fold-right-cases (children node)))
+        (mapcar func (children node)))
   node)
 
-(defun number-to-digits (number &optional rem)
-  (multiple-value-bind (cont flored) (floor number 10)
-      (if (and (zerop cont) (zerop flored))
-          rem
-          (number-to-digits cont (cons flored rem)))))
-
-(defun digit-to-under (digit)
-  (cl:case digit
-    (0 "₀") (1 "₁") (2 "₂") (3 "₃") (4 "₄")
-    (5 "₅") (6 "₆") (7 "₇") (8 "₈") (9 "₉")
-    (t "?")))
-
-(defun number-to-under (index)
-  (format nil "~{~A~}" (mapcar #'digit-to-under (number-to-digits index))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Linearize Helpers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (-> linearize-right-case (node) list)
 (defun linearize-right-case (node)
+  "Lineraizes out all the right cases into a proper node list"
   (if (typep (representation node) 'case)
       (let ((children (children node)))
         (append (butlast children)
                 (linearize-right-case (car (last children)))))
       (list node)))
+
+(-> linear-distp (node) boolean)
+(defun linear-distp (node)
+  (let ((child (car (children node))))
+    (and (typep (representation node)  'distribute)
+         (typep (representation child) 'case)
+         (= 1 (length (children node))))))
+
+(-> linearize-right-dist-case (node) list)
+(defun linearize-right-dist-case (node)
+  (let ((grand-kids (children (car (children node)))))
+    (if (linear-distp node)
+        (append (butlast grand-kids)
+                (linearize-right-dist-case (car (last grand-kids))))
+        (list node))))

@@ -149,18 +149,15 @@ to be merged"))
       ;;             χ₂
       (case
         (let ((goal (make-squash :value (graphize (codom morph) nil))))
-          (flet ((make-child (node note)
-                   (make-note :from morph
-                              :note note
-                              :value (graphize node (cons-note goal notes)))))
-            (let* ((first-child  (make-child (mcar morph) "χ₁"))
-                   (second-child (make-child (mcadr morph) "χ₂"))
-                   (our-node     (make-squash :value
-                                              (make-instance 'node
-                                                             :representation morph
-                                                             :value (dom morph)))))
-              (apply-note our-node second-child)
-              (apply-note our-node first-child)))))
+          (flet ((make-child (node)
+                   (graphize node (cons-note goal notes))))
+            (notorize-children-with-index-schema
+             "χ"
+             (make-instance 'node
+                            :representation morph
+                            :value (dom morph)
+                            :children (list (make-child (mcar morph))
+                                            (make-child (mcadr morph))))))))
       ;; (pair g f)
       ;;                Π₁
       ;;      ---g--> Y ------
@@ -170,34 +167,81 @@ to be merged"))
       ;;      ---f--> Z ------
       ;;                Π₂
       (pair
-       (let ((goal         (graphize (codom morph) nil))
-             (current-node (make-squash :value
-                                        (make-instance 'node
-                                                       :value (dom morph)
-                                                       :representation morph))))
+       (let ((goal (graphize (codom morph) nil)))
          (flet ((make-child (node note)
-                  (let ((node
-                          (graphize node
-                                    (cons-note (make-note :from morph
-                                                          :note note
-                                                          :value goal)
-                                               notes))))
-                    (mapcar (lambda (x)
-                              (let ((note
-                                      (determine-text-and-object-from-node
-                                       node x)))
-                                (make-note :from (cadr note)
-                                           :note (car note)
-                                           :value x)))
-                            (children node)))))
-           (mapc (lambda (c) (apply-note current-node c))
-                 (reverse
-                  (append (make-child (mcar morph) "Π₁")
-                          (make-child (mcdr morph) "Π₂"))))
-           (value current-node))))
+                  (graphize node
+                            (cons-note (make-note :from morph
+                                                  :note note
+                                                  :value goal)
+                                       notes))))
+           (cut-children
+            (make-instance 'node
+                           :value (dom morph)
+                           :representation morph
+                           :children (list (make-child (mcar morph) "Π₁")
+                                           (make-child (mcdr morph) "Π₂")))))))
       (otherwise
        (geb.utils:subclass-responsibility morph)))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; cutting a node
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(-> cut-node (node) list)
+(defun cut-node (node)
+  "removes a node from the graph preserving the NOTEs between the node
+and it's children.
+
+Creates a list of notes that preserve the original intent of the link"
+  (mapcar (lambda (x)
+            (let ((note (determine-text-and-object-from-node node x)))
+              (make-note :from (cadr note)
+                         :note (car note)
+                         :value x)))
+          (children node)))
+
+(-> cut-children (node) node)
+(defun cut-children (node)
+  "Removes the direct CHILDREN from the graph, connecting the grand
+CHILDREN to the current node, preserving any notes that may have exited"
+  (let* ((noted-node (make-squash :value node))
+         (grand-kids (mapcan #'cut-node (children node))))
+    (setf (children node) nil)
+    (dolist (c (reverse grand-kids) node)
+      (apply-note noted-node c))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Noterizing Children
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(-> notorize-children-with-index-schema (string node) node)
+(defun notorize-children-with-index-schema (prefix node)
+  "Notorizes the node with a prefix appended with the subscripted number"
+  (noterize-children
+   node
+   (lambda (x index)
+     (declare (ignore x))
+     (format nil "~A~A" prefix (number-to-under index)))))
+
+(-> noterize-children (node (-> (node fixnum) string)) node)
+(defun noterize-children (node func)
+  "Applies a specified note to the CHILDREN of the NODE.
+
+It does this by applying FUNC on all the CHILDREN and the index of the
+child in the list"
+  (let* ((note-node (make-squash :value node))
+         (children  (children node))
+         (len       (length children)))
+    (setf (children node) nil)
+    (mapc (lambda (x index)
+            (apply-note note-node
+                        (make-note :from (value x)
+                                   :note (funcall func x index)
+                                   :value x)))
+     (reverse children)
+     (alexandria:iota len :step -1 :start len))
+    node))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Note Helpers
