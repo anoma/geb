@@ -128,3 +128,14 @@ The functions given work on this."
   (+ 1 2 3 4)
   => 10
   ```")
+
+
+(geb.utils:muffle-package-variance
+ (uiop:define-package #:geb-tri
+   (:documentation "Defines out booleans for the geb language")
+   (:mix #:geb.main #:geb.spec #:serapeum #:common-lisp)
+   (:shadow :false :true :not :and :or :no)
+   (:export
+    :bool :fasle :true :not :and :or)))
+
+(in-package #:geb-tri)
