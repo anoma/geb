@@ -1198,3 +1198,19 @@ BCPFalse = Left ()
 public export
 BCPTrue : BoolCP
 BCPTrue = Right ()
+
+public export
+FS3CP : Type
+FS3CP = Either Unit BoolCP
+
+public export
+FS3CP0 : FS3CP
+FS3CP0 = Left ()
+
+public export
+FS3CP1 : FS3CP
+FS3CP1 = Right BCPTrue
+
+public export
+FS3CP2 : FS3CP
+FS3CP2 = Right BCPTrue

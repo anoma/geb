@@ -1597,7 +1597,20 @@ RADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))) =
 
 public export
 RAEncoder : NatEncoder RADecoder
-RAEncoder i = ?RAEncoder_hoke
+RAEncoder RA_OBJ_0 = (0 ** Refl ** Refl)
+RAEncoder RA_OBJ_1 = (1 ** Refl ** Refl)
+RAEncoder RA_OBJ_C = (2 ** Refl ** Refl)
+RAEncoder RA_OBJ_P = (3 ** Refl ** Refl)
+RAEncoder RA_OBJ_EQ = (4 ** Refl ** Refl)
+RAEncoder RA_FROM_0 = (5 ** Refl ** Refl)
+RAEncoder RA_TO_1 = (6 ** Refl ** Refl)
+RAEncoder RA_INJ_L = (7 ** Refl ** Refl)
+RAEncoder RA_INJ_R = (8 ** Refl ** Refl)
+RAEncoder RA_CASE = (9 ** Refl ** Refl)
+RAEncoder RA_PROJ_L = (10 ** Refl ** Refl)
+RAEncoder RA_PROJ_R = (11 ** Refl ** Refl)
+RAEncoder RA_PAIR = (12 ** Refl ** Refl)
+RAEncoder RA_DISTRIB = (13 ** Refl ** Refl)
 
 public export
 RAtomEncoding : FinDecEncoding RAtom RASize
@@ -1605,7 +1618,20 @@ RAtomEncoding = NatDecEncoding RADecoder RAEncoder
 
 public export
 raToString : RAtom -> String
-raToString i = ?foo
+raToString RA_OBJ_0 = "RA_OBJ_0"
+raToString RA_OBJ_1 = "RA_OBJ_1"
+raToString RA_OBJ_C = "RA_OBJ_C"
+raToString RA_OBJ_P = "RA_OBJ_P"
+raToString RA_OBJ_EQ = "RA_OBJ_EQ"
+raToString RA_FROM_0 = "RA_FROM_0"
+raToString RA_TO_1 = "RA_TO_1"
+raToString RA_INJ_L = "RA_INJ_L"
+raToString RA_INJ_R = "RA_INJ_R"
+raToString RA_CASE = "RA_CASE"
+raToString RA_PROJ_L = "RA_PROJ_L"
+raToString RA_PROJ_R = "RA_PROJ_R"
+raToString RA_PAIR = "RA_PAIR"
+raToString RA_DISTRIB = "RA_DISTRIB"
 
 public export
 Show RAtom where
@@ -1638,3 +1664,84 @@ RExp = SExp RAtom
 public export
 RList : Type
 RList = SList RAtom
+
+------------------------------------
+------------------------------------
+---- Quiver-functor experiments ----
+------------------------------------
+------------------------------------
+
+----------------------------
+---- Generic generators ----
+----------------------------
+
+-- Given two types (for example, one of objects and one of morphisms),
+-- generate a (new) type of objects.
+public export
+ObjGenSigDom : Type
+ObjGenSigDom = BoolCP
+
+public export
+ObjGenSigCod : Type
+ObjGenSigCod = Unit
+
+public export
+ObjGenSig : Type
+ObjGenSig = SlicePolyFunc ObjGenSigDom ObjGenSigCod
+
+-- Given a type of objects, return a type of pairs of objects.
+public export
+ObjPairF : PolyFunc
+ObjPairF = pfSquareArena PFIdentityArena
+
+-- Given a type (of objects) and a type (of morphisms), generate a type
+-- (of morphisms).
+public export
+MorphGenSigDom : Type
+MorphGenSigDom = BoolCP
+
+public export
+MorphGenSigCod : Type
+MorphGenSigCod = Unit
+
+public export
+MorphGenSig : Type
+MorphGenSig = SlicePolyFunc MorphGenSigDom MorphGenSigCod
+
+---------------------------------
+---- Example : finite limits ----
+---------------------------------
+
+-- An example object generator with a terminal object, pairwise products,
+-- and equalizers.
+public export
+FinLimObjPos : ObjGenSigCod -> Type
+FinLimObjPos () = Either Unit BoolCP
+
+public export
+FinLimObjDir : Sigma FinLimObjPos -> Type
+-- The terminal object has no directions
+FinLimObjDir (() ** (Left ())) = Void
+-- A pairwise product has two directions
+FinLimObjDir (() ** (Right (Left ()))) = BoolCP
+-- An equalizer has two directions, two objects and two morphisms:  we'll
+-- use pairs, where the left pair is the pair of objects and the right pair
+-- is the pair of morphisms.
+FinLimObjDir (() ** (Right (Right ()))) = ProductMonad BoolCP
+
+public export
+FinLimObjAssign : Sigma FinLimObjDir -> ObjGenSigDom
+FinLimObjAssign ((() ** (Left ())) ** v) = void v
+FinLimObjAssign ((() ** (Right (Left ()))) ** od) =
+  -- Both directions of a pairwise product are objects.
+  BCPFalse
+FinLimObjAssign ((() ** (Right (Right ()))) ** ((Left u), md)) =
+  -- The left two directions of an equalizer are objects.
+  case u of () => BCPFalse
+FinLimObjAssign ((() ** (Right (Right ()))) ** ((Right u), md)) =
+  -- The right two directions of an equalizer are morphisms.
+  case u of () => BCPTrue
+
+public export
+FinLimObjF : ObjGenSig
+FinLimObjF = (FinLimObjPos ** FinLimObjDir ** FinLimObjAssign)
