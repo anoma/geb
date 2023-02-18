@@ -1793,12 +1793,17 @@ FinLimMorphDir (() ** FLMEqInjCod) = Unit
 
 public export
 FinLimMorphAssign : Sigma FinLimMorphDir -> MorphGenSigDom
-FinLimMorphAssign ((() ** FLMTo1) ** d) = ?FinLimMorphAssign_hole_to1
-FinLimMorphAssign ((() ** FLMPairing) ** d) = ?FinLimMorphAssign_hole_pair
-FinLimMorphAssign ((() ** FLMProjL) ** d) = ?FinLimMorphAssign_hole_projl
-FinLimMorphAssign ((() ** FLMProjR) ** d) = ?FinLimMorphAssign_hole_projr
-FinLimMorphAssign ((() ** FLMEqInjDom) ** d) = ?FinLimMorphAssign_hole_injdom
-FinLimMorphAssign ((() ** FLMEqInjCod) ** d) = ?FinLimMorphAssign_hole_injcod
+-- The unique morphism to the terminal object's one direction is an object
+FinLimMorphAssign ((() ** FLMTo1) ** ()) = Left ()
+-- Both of the pairing morphism's directions are morphisms
+FinLimMorphAssign ((() ** FLMPairing) ** d) = Right ()
+-- Both of the projection morphisms' directions are objects
+FinLimMorphAssign ((() ** FLMProjL) ** d) = Left ()
+FinLimMorphAssign ((() ** FLMProjR) ** d) = Left ()
+-- The one direction of each morphism from an equalizer is an object
+-- (the equalizer itself)
+FinLimMorphAssign ((() ** FLMEqInjDom) ** ()) = Left ()
+FinLimMorphAssign ((() ** FLMEqInjCod) ** ()) = Left ()
 
 public export
 FinLimMorphF : MorphGenSig
