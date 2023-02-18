@@ -94,8 +94,13 @@
   :description "geb gui presenter"
   :pathname "src/gui/"
   :serial t
-  :components ((:file package)
-               (:file graphing)
+  :components ((:module graphing
+                :serial t
+                :description "The graphing algorithm"
+                :components ((:file package)
+                             (:file core)
+                             (:file passes)))
+               (:file package)
                (:file common-abstractions)
                (:file shapes)
                (:file present-graph)

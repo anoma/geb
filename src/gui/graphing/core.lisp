@@ -1,4 +1,4 @@
-(in-package #:geb-gui.graphing)
+(in-package #:geb-gui.core)
 
 (deftype note ()
   "A note is a note about a new node in the graph or a note about a
