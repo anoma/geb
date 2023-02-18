@@ -1772,12 +1772,24 @@ FinLimMorphPos () = FinLimMorph
 
 public export
 FinLimMorphDir : Sigma FinLimMorphPos -> Type
-FinLimMorphDir (() ** FLMTo1) = ?FinLimMorphDir_hole_to1
-FinLimMorphDir (() ** FLMPairing) = ?FinLimMorphDir_hole_pairing
-FinLimMorphDir (() ** FLMProjL) = ?FinLimMorphDir_hole_projl
-FinLimMorphDir (() ** FLMProjR) = ?FinLimMorphDir_hole_projr
-FinLimMorphDir (() ** FLMEqInjDom) = ?FinLimMorphDir_hole_eqdom
-FinLimMorphDir (() ** FLMEqInjCod) = ?FinLimMorphDir_hole_eqcod
+-- The unique morphism to the terminal object has one direction:
+-- an object, which is its domain
+FinLimMorphDir (() ** FLMTo1) = Unit
+-- The pairing morphism has two directions:  the two morphisms
+-- which generate each side of the codomain
+FinLimMorphDir (() ** FLMPairing) = BoolCP
+-- The left projection has two directions:  both objects, which
+-- are the left and right sides of the domain
+FinLimMorphDir (() ** FLMProjL) = BoolCP
+-- The right projection has two directions:  both objects, which
+-- are the left and right sides of the domain
+FinLimMorphDir (() ** FLMProjR) = BoolCP
+-- The injection to the domain of an equalizer has one direction:
+-- the object which is the equalizer itself
+FinLimMorphDir (() ** FLMEqInjDom) = Unit
+-- The injection to the domain of an equalizer has one direction:
+-- the object which is the equalizer itself
+FinLimMorphDir (() ** FLMEqInjCod) = Unit
 
 public export
 FinLimMorphAssign : Sigma FinLimMorphDir -> MorphGenSigDom
