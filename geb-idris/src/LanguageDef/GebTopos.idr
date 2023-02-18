@@ -1793,7 +1793,12 @@ FinLimMorphDir (() ** FLMEqInjCod) = Unit
 
 public export
 FinLimMorphAssign : Sigma FinLimMorphDir -> MorphGenSigDom
-FinLimMorphAssign ((() ** i) ** d) = ?FinLimMorphAssign_hole
+FinLimMorphAssign ((() ** FLMTo1) ** d) = ?FinLimMorphAssign_hole_to1
+FinLimMorphAssign ((() ** FLMPairing) ** d) = ?FinLimMorphAssign_hole_pair
+FinLimMorphAssign ((() ** FLMProjL) ** d) = ?FinLimMorphAssign_hole_projl
+FinLimMorphAssign ((() ** FLMProjR) ** d) = ?FinLimMorphAssign_hole_projr
+FinLimMorphAssign ((() ** FLMEqInjDom) ** d) = ?FinLimMorphAssign_hole_injdom
+FinLimMorphAssign ((() ** FLMEqInjCod) ** d) = ?FinLimMorphAssign_hole_injcod
 
 public export
 FinLimMorphF : MorphGenSig
