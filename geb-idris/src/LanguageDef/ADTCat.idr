@@ -2916,7 +2916,8 @@ MetaPolyFNat = metaPolyCata MetaPolyFNatAlg
 public export
 PolyHomObjAlg : MetaPolyPairAdjAlg PolyMu
 -- id -> r == r . (id + 1) (see formula 4.27 in _Polynomial Functors: A General
--- Theory of Interaction_)
+-- Theory of Interaction_; a more general form for any covariant representable
+-- `id^A` is `id^A -> r == r . (id + A)`)
 PolyHomObjAlg PFI r = r $. (PolyI $+ Poly1)
 -- 0 -> x == 1
 PolyHomObjAlg PF0 _ = Poly1
@@ -3276,12 +3277,10 @@ public export
 ($!) : ADTTerm
 ($!) = InADTT ADTUnit
 
-prefix 10 $<
 public export
 ($<) : ADTTerm -> ADTTerm
 ($<) t = InADTT (ADTLeft t)
 
-prefix 10 $>
 public export
 ($>) : ADTTerm -> ADTTerm
 ($>) t = InADTT (ADTRight t)

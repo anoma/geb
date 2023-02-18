@@ -44,12 +44,28 @@ data GebAtom : Type where
   DIR_XCHD : GebAtom
   DIR_XCTL : GebAtom
 
+  -- Finite unrefined types
+  FBT_ATOM : GebAtom
+  FBT_BNAT : GebAtom
+  FBT_INITIAL : GebAtom
+  FBT_COPRODUCT : GebAtom
+  FBT_COPRODUCT_L : GebAtom
+  FBT_TERMINAL : GebAtom
+  FBT_PRODUCT : GebAtom
+  FBT_PRODUCT_L : GebAtom
+
+  -- Terms of finite product/coproduct types
+  TERM_U : GebAtom
+  TERM_L : GebAtom
+  TERM_R : GebAtom
+  TERM_P : GebAtom
+
 -- The rest of this file implements enumerated-type interfaces for `GebAtom`,
 -- since Idris-2 doesn't have built-in enums.
 
 public export
 GASize : Nat
-GASize = 20
+GASize = 32
 
 public export
 GAFin : Type
@@ -93,6 +109,49 @@ GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS FZ))))))))))))))))))) =
     DIR_XCTL
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))) =
+    FBT_ATOM
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))) =
+    FBT_BNAT
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))) =
+    FBT_INITIAL
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))) =
+    FBT_COPRODUCT
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))))) =
+    FBT_COPRODUCT_L
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  FZ))))))))))))))))))))))))) =
+    FBT_TERMINAL
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS FZ)))))))))))))))))))))))))) =
+    FBT_PRODUCT
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS FZ))))))))))))))))))))))))))) =
+    FBT_PRODUCT_L
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS FZ)))))))))))))))))))))))))))) =
+    TERM_U
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS FZ))))))))))))))))))))))))))))) =
+    TERM_L
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS FZ)))))))))))))))))))))))))))))) =
+    TERM_R
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))))))))))) =
+    TERM_P
 
 public export
 GAEncoder : NatEncoder GADecoder
@@ -116,6 +175,18 @@ GAEncoder DIR_NCHD = (16 ** Refl ** Refl)
 GAEncoder DIR_NCTL = (17 ** Refl ** Refl)
 GAEncoder DIR_XCHD = (18 ** Refl ** Refl)
 GAEncoder DIR_XCTL = (19 ** Refl ** Refl)
+GAEncoder FBT_ATOM = (20 ** Refl ** Refl)
+GAEncoder FBT_BNAT = (21 ** Refl ** Refl)
+GAEncoder FBT_INITIAL = (22 ** Refl ** Refl)
+GAEncoder FBT_COPRODUCT = (23 ** Refl ** Refl)
+GAEncoder FBT_COPRODUCT_L = (24 ** Refl ** Refl)
+GAEncoder FBT_TERMINAL = (25 ** Refl ** Refl)
+GAEncoder FBT_PRODUCT = (26 ** Refl ** Refl)
+GAEncoder FBT_PRODUCT_L = (27 ** Refl ** Refl)
+GAEncoder TERM_U = (28 ** Refl ** Refl)
+GAEncoder TERM_L = (29 ** Refl ** Refl)
+GAEncoder TERM_R = (30 ** Refl ** Refl)
+GAEncoder TERM_P = (31 ** Refl ** Refl)
 
 public export
 GebAtomEncoding : FinDecEncoding GebAtom GASize
@@ -143,6 +214,18 @@ gaToString DIR_NCHD = "DIR_NCHD"
 gaToString DIR_NCTL = "DIR_NCTL"
 gaToString DIR_XCHD = "DIR_XCHD"
 gaToString DIR_XCTL = "DIR_XCTL"
+gaToString FBT_ATOM = "FBT_ATOM"
+gaToString FBT_BNAT = "FBT_BNAT"
+gaToString FBT_INITIAL = "FBT_INITIAL"
+gaToString FBT_COPRODUCT = "FBT_COPRODUCT"
+gaToString FBT_COPRODUCT_L = "FBT_COPRODUCT_L"
+gaToString FBT_TERMINAL = "FBT_TERMINAL"
+gaToString FBT_PRODUCT = "FBT_PRODUCT"
+gaToString FBT_PRODUCT_L = "FBT_PRODUCT_L"
+gaToString TERM_U = "TERM_U"
+gaToString TERM_L = "TERM_L"
+gaToString TERM_R = "TERM_R"
+gaToString TERM_P = "TERM_P"
 
 public export
 Show GebAtom where

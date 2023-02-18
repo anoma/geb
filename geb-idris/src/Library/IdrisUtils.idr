@@ -13,6 +13,7 @@ import public Data.Vect
 import public Data.Vect.Properties.Foldr
 import public Data.HVect
 import public Data.Fin
+import public Data.Fin.Order
 import public Data.DPair
 import public Data.Bool
 import public Decidable.Decidable
@@ -97,7 +98,8 @@ public export
   (Right x) >>= k = k x
 
 public export
-fcong : {0 a, b : Type} -> {0 f, g : a -> b} -> (f = g) -> {x : a} -> f x = g x
+fcong : {0 a, b : Type} -> {0 f, g : a -> b} ->
+  (f ~=~ g) -> {x : a} -> f x = g x
 fcong Refl = Refl
 
 export
@@ -341,6 +343,20 @@ IsNothingTrue : {a : Type} -> Maybe a -> Type
 IsNothingTrue x = isJust x = False
 
 public export
+fromIsTrueNat : (m, n : Nat) -> m == n = True -> m = n
+fromIsTrueNat 0 0 Refl = Refl
+fromIsTrueNat 0 (S n) Refl impossible
+fromIsTrueNat (S m) 0 Refl impossible
+fromIsTrueNat (S m) (S n) eq = cong S $ fromIsTrueNat m n eq
+
+public export
+fromIsTrueMaybeNat : (m, n : Maybe Nat) -> m == n = True -> m = n
+fromIsTrueMaybeNat Nothing Nothing Refl = Refl
+fromIsTrueMaybeNat Nothing (Just n) Refl impossible
+fromIsTrueMaybeNat (Just m) Nothing Refl impossible
+fromIsTrueMaybeNat (Just m) (Just n) eq = cong Just $ fromIsTrueNat m n eq
+
+public export
 andLeft : {p, q : Bool} -> IsTrue (p && q) -> IsTrue p
 andLeft {p=True} {q=True} Refl = Refl
 andLeft {p=True} {q=False} Refl impossible
@@ -353,6 +369,40 @@ andRight {p=True} {q=True} Refl = Refl
 andRight {p=True} {q=False} Refl impossible
 andRight {p=False} {q=True} Refl impossible
 andRight {p=False} {q=False} Refl impossible
+
+public export
+andBoth : {p, q : Bool} -> IsTrue p -> IsTrue q -> IsTrue (p && q)
+andBoth {p=True} {q=True} Refl Refl = Refl
+andBoth {p=True} {q=False} Refl Refl impossible
+andBoth {p=False} {q=True} Refl Refl impossible
+andBoth {p=False} {q=False} Refl Refl impossible
+
+public export
+foldTrueInit : (b : Bool) -> (bs : List Bool) ->
+  foldl (\x, y => x && Delay y) b bs = True -> b = True
+foldTrueInit b [] eq = eq
+foldTrueInit b (b' :: bs) eq = andLeft $ foldTrueInit (b && b') bs eq
+
+public export
+foldTrueList : (b : Bool) -> (bs : List Bool) ->
+  foldl (\x, y => x && Delay y) b bs = True -> all Prelude.id bs = True
+foldTrueList b [] eq = Refl
+foldTrueList b (b' :: bs) eq with (andRight (foldTrueInit (b && b') bs eq))
+  foldTrueList b (True :: bs) eq | Refl =
+    let al = andLeft (foldTrueInit (b && True) bs eq) in
+    replace {p=(\b'' => foldl (\x, y => x && Delay y) b'' (True :: bs) = True)}
+      (andLeft (foldTrueInit (b && True) bs eq)) eq
+
+public export
+foldTrueBoth : (b : Bool) -> (bs : List Bool) ->
+  b = True -> all Prelude.id bs = True ->
+  foldl (\x, y => x && Delay y) b bs = True
+foldTrueBoth b [] beq bseq = beq
+foldTrueBoth b (b' :: bs) beq bseq =
+  let fti = foldTrueInit b' bs bseq in
+  foldTrueBoth (b && b') bs
+    (rewrite beq in fti)
+    (replace {p=(\b'' => all id (b'' :: bs) = True)} fti bseq)
 
 public export
 repeatIdx : {0 x : Type} -> (Nat -> x -> x) -> Nat -> Nat -> x -> x
@@ -691,6 +741,15 @@ equalNatCorrect {m=Z} = Refl
 equalNatCorrect {m=(S m')} = equalNatCorrect {m=m'}
 
 public export
+toIsTrueNat : (m, n : Nat) -> m = n -> m == n = True
+toIsTrueNat m m Refl = equalNatCorrect {m}
+
+public export
+toIsTrueMaybeNat : (m, n : Maybe Nat) -> m = n -> m == n = True
+toIsTrueMaybeNat Nothing Nothing Refl = Refl
+toIsTrueMaybeNat (Just m) (Just m) Refl = equalNatCorrect {m}
+
+public export
 foldAppendExtensional : {0 a : Type} -> {n : Nat} ->
   (l : List a) -> (v : Vect n a) ->
   foldrImpl (::) [] ((++) l) v = l ++ foldrImpl (::) [] (id {a=(List a)}) v
@@ -1018,6 +1077,70 @@ FinVoidDecoder FZ impossible
 FinVoidDecoder (FS _) impossible
 
 public export
+FinVoidEncoder : FinEncoder FinVoidDecoder
+FinVoidEncoder i = void i
+
+public export
+FinVoidDecEncoding : FinDecEncoding Void 0
+FinVoidDecEncoding = (FinVoidDecoder ** FinVoidEncoder)
+
+public export
+FinUnitDecoder : FinDecoder Unit 1
+FinUnitDecoder FZ = ()
+
+public export
+FinUnitEncoder : FinEncoder FinUnitDecoder
+FinUnitEncoder () = (FZ ** Refl)
+
+public export
+FinUnitDecEncoding : FinDecEncoding Unit 1
+FinUnitDecEncoding = (FinUnitDecoder ** FinUnitEncoder)
+
+public export
+FinSumDecoder : {m, n : Nat} -> {ty, ty' : Type} ->
+  FinDecoder ty m -> FinDecoder ty' n -> FinDecoder (Either ty ty') (m + n)
+FinSumDecoder {m} {n} {ty} {ty'} fde fde' i with (finToNat i) proof prf
+  FinSumDecoder {m} {n} {ty} {ty'} fde fde' i | idx with (isLT idx m)
+    FinSumDecoder {m} {n} {ty} {ty'} fde fde' i | idx | Yes islt =
+      Left $ fde $ natToFinLT {n=m} idx
+    FinSumDecoder {m} {n} {ty} {ty'} fde fde' i | idx | No isgte =
+      Right $ fde' $
+      let islte : LTE (S (minus idx m)) n = ?FinSumDecoder_islte_hole in
+      natToFinLT {n} (minus idx m)
+
+public export
+FinSumEncoder : {m, n : Nat} -> {ty, ty' : Type} ->
+  {dec : FinDecoder ty m} -> {dec' : FinDecoder ty' n} ->
+  (enc : FinEncoder {a=ty} {size=m} dec) ->
+  (enc' : FinEncoder {a=ty'} {size=n} dec') ->
+  NatEncoder (FinSumDecoder {m} {n} {ty} {ty'} dec dec')
+FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Left e) with (enc e) proof eqe
+  FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Left _) | (ence ** Refl)
+    with (finToNat ence) proof eqf
+      FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Left _) | (ence ** Refl) |
+        idx =
+          (finToNat ence **
+           ?finSumEncoder_hole_left_islte **
+           ?finSumEncoder_hole_left_isinv)
+FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Right e') with (enc' e') proof eqe
+  FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Right _) | (ence' ** Refl)
+    with (finToNat ence') proof eqf
+      FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Right _) | (ence' ** Refl) |
+        idx =
+          (m + finToNat ence' **
+           ?finSumEncoder_hole_right_islte **
+           ?finSumEncoder_hole_right_isinv)
+
+public export
+FinSumDecEncoding : {m, n : Nat} -> {ty, ty' : Type} ->
+  {dec : FinDecoder ty m} -> {dec' : FinDecoder ty' n} ->
+  (enc : FinEncoder {a=ty} {size=m} dec) ->
+  (enc' : FinEncoder {a=ty'} {size=n} dec') ->
+  FinDecEncoding (Either ty ty') (m + n)
+FinSumDecEncoding {dec} {dec'} enc enc' =
+  NatDecEncoding (FinSumDecoder dec dec') (FinSumEncoder enc enc')
+
+public export
 FinIdDecoder : (size : Nat) -> FinDecoder (Fin size) size
 FinIdDecoder size = id
 
@@ -1026,16 +1149,8 @@ FinIdEncoder : (size : Nat) -> FinEncoder (FinIdDecoder size)
 FinIdEncoder size i = (i ** Refl)
 
 public export
-FinVoidEncoder : FinEncoder FinVoidDecoder
-FinVoidEncoder i = void i
-
-public export
 FinIdDecEncoding : (size : Nat) -> FinDecEncoding (Fin size) size
 FinIdDecEncoding size = (FinIdDecoder size ** FinIdEncoder size)
-
-public export
-FinVoidDecEncoding : FinDecEncoding Void 0
-FinVoidDecEncoding = (FinVoidDecoder ** FinVoidEncoder)
 
 public export
 FDEnc : Type -> Type
@@ -1044,6 +1159,60 @@ FDEnc = DPair Nat . FinDecEncoding
 public export
 fdeSize : {0 a : Type} -> FDEnc a -> Nat
 fdeSize = fst
+
+public export
+FinType : Type
+FinType = DPair Type FDEnc
+
+public export
+ftType : FinType -> Type
+ftType = DPair.fst
+
+public export
+ftEnc : (ft : FinType) -> FDEnc (ftType ft)
+ftEnc = DPair.snd
+
+public export
+ftSize : FinType -> Nat
+ftSize ft = fdeSize (ftEnc ft)
+
+-- A pair of terms of a finite type.
+public export
+FTPair : FinType -> FinType -> Type
+FTPair ft ft' = Pair (ftType ft) (ftType ft')
+
+-- A list of terms of a finite type.
+public export
+FTList : FinType -> Type
+FTList ft = List (ftType ft)
+
+-- A vector of terms of a finite type.
+public export
+FTVect : Nat -> FinType -> Type
+FTVect k ft = Vect k (ftType ft)
+
+-- A vector _indexed_ by a finite type -- that is, a tuple of elements
+-- of some (other) type whose length is the size of the finite type.
+-- The "I" is for "indexed".
+public export
+FTIVect : FinType -> Type -> Type
+FTIVect ft t = Vect (ftSize ft) t
+
+-- A vector of types indexed by some finite type.
+FTITyVect : FinType -> Type
+FTITyVect ft = FTIVect ft Type
+
+-- An object of the slice category of `Type` over some `FinType`'s
+-- underlying type (i.e. a finite type, or more explicitly, a type
+-- with a finite number of terms).
+public export
+FSlice : FinType -> Type
+FSlice ft = ftType ft -> Type
+
+-- A dependent list indexed by terms of a finite type.
+public export
+FHList : (ft : FinType) -> FTITyVect ft -> Type
+FHList ft tys = HVect {k=(ftSize ft)} tys
 
 public export
 ListContains : {a : Type} -> List a -> a -> Type
@@ -1198,3 +1367,27 @@ BCPFalse = Left ()
 public export
 BCPTrue : BoolCP
 BCPTrue = Right ()
+
+public export
+FS3CP : Type
+FS3CP = Either Unit BoolCP
+
+public export
+FS3CP0 : FS3CP
+FS3CP0 = Left ()
+
+public export
+FS3CP1 : FS3CP
+FS3CP1 = Right BCPFalse
+
+public export
+FS3CP2 : FS3CP
+FS3CP2 = Right BCPTrue
+
+public export
+zipLen : {0 a, b, c : Type} -> (a -> b -> c) -> (l : List a) -> (l' : List b) ->
+  length l = length l' -> List c
+zipLen f [] [] Refl = []
+zipLen f [] (x :: xs) Refl impossible
+zipLen f (x :: xs) [] Refl impossible
+zipLen f (x :: xs) (y :: ys) eq = f x y :: zipLen f xs ys (injective eq)

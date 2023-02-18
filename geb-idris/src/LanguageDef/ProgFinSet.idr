@@ -18,43 +18,43 @@ import public LanguageDef.Atom
 ------------------------------------------------------
 
 public export
-data BicartDistObjPos : Type where
-  BCDObjInitial : BicartDistObjPos
-  BCDObjTerminal : BicartDistObjPos
-  BCDObjCoproduct : BicartDistObjPos
-  BCDObjProduct : BicartDistObjPos
+data BCDOPos : Type where
+  BCDO_0 : BCDOPos
+  BCDO_1 : BCDOPos
+  BCDO_C : BCDOPos
+  BCDO_P : BCDOPos
 
 public export
-Show BicartDistObjPos where
-  show BCDObjInitial = "0"
-  show BCDObjTerminal = "1"
-  show BCDObjCoproduct = "+"
-  show BCDObjProduct = "*"
+Show BCDOPos where
+  show BCDO_0 = "0"
+  show BCDO_1 = "1"
+  show BCDO_C = "+"
+  show BCDO_P = "*"
 
 public export
 BCDOPosSz : Nat
 BCDOPosSz = 4
 
 public export
-BCDOFinDecoder : FinDecoder BicartDistObjPos BCDOPosSz
-BCDOFinDecoder FZ = BCDObjInitial
-BCDOFinDecoder (FS FZ) = BCDObjTerminal
-BCDOFinDecoder (FS (FS FZ)) = BCDObjCoproduct
-BCDOFinDecoder (FS (FS (FS FZ))) = BCDObjProduct
+BCDOFinDecoder : FinDecoder BCDOPos BCDOPosSz
+BCDOFinDecoder FZ = BCDO_0
+BCDOFinDecoder (FS FZ) = BCDO_1
+BCDOFinDecoder (FS (FS FZ)) = BCDO_C
+BCDOFinDecoder (FS (FS (FS FZ))) = BCDO_P
 
 public export
 BCDONatEncoder : NatEncoder BCDOFinDecoder
-BCDONatEncoder BCDObjInitial = (0 ** Refl ** Refl)
-BCDONatEncoder BCDObjTerminal = (1 ** Refl ** Refl)
-BCDONatEncoder BCDObjCoproduct = (2 ** Refl ** Refl)
-BCDONatEncoder BCDObjProduct = (3 ** Refl ** Refl)
+BCDONatEncoder BCDO_0 = (0 ** Refl ** Refl)
+BCDONatEncoder BCDO_1 = (1 ** Refl ** Refl)
+BCDONatEncoder BCDO_C = (2 ** Refl ** Refl)
+BCDONatEncoder BCDO_P = (3 ** Refl ** Refl)
 
 public export
-BCDOFinDecEncoding : FinDecEncoding BicartDistObjPos BCDOPosSz
+BCDOFinDecEncoding : FinDecEncoding BCDOPos BCDOPosSz
 BCDOFinDecEncoding = NatDecEncoding BCDOFinDecoder BCDONatEncoder
 
 public export
-DecEq BicartDistObjPos where
+DecEq BCDOPos where
   decEq = fdeDecEq BCDOFinDecEncoding
 
 public export
@@ -98,15 +98,15 @@ Eq BicartDistProductDir where
   _ == _ = False
 
 public export
-BicartDistObjDir : SliceObj BicartDistObjPos
-BicartDistObjDir BCDObjInitial = BicartDistInitialDir
-BicartDistObjDir BCDObjTerminal = BicartDistTerminalDir
-BicartDistObjDir BCDObjCoproduct = BicartDistCoproductDir
-BicartDistObjDir BCDObjProduct = BicartDistProductDir
+BicartDistObjDir : SliceObj BCDOPos
+BicartDistObjDir BCDO_0 = BicartDistInitialDir
+BicartDistObjDir BCDO_1 = BicartDistTerminalDir
+BicartDistObjDir BCDO_C = BicartDistCoproductDir
+BicartDistObjDir BCDO_P = BicartDistProductDir
 
 public export
 BicartDistObjF : PolyFunc
-BicartDistObjF = (BicartDistObjPos ** BicartDistObjDir)
+BicartDistObjF = (BCDOPos ** BicartDistObjDir)
 
 public export
 BicartDistObj : Type
@@ -122,12 +122,12 @@ bcdoCata = pfCata {p=BicartDistObjF}
 
 public export
 BCDOShowAlg : BCDOAlg String
-BCDOShowAlg BCDObjInitial dir = show BCDObjInitial
-BCDOShowAlg BCDObjTerminal dir = show BCDObjTerminal
-BCDOShowAlg BCDObjCoproduct dir =
-  "[" ++ dir BCDCopL ++ " " ++ show BCDObjCoproduct ++ " " ++ dir BCDCopR ++ "]"
-BCDOShowAlg BCDObjProduct dir =
-  "(" ++ dir BCDProd1 ++ " " ++ show BCDObjProduct ++ " " ++ dir BCDProd2 ++ ")"
+BCDOShowAlg BCDO_0 dir = show BCDO_0
+BCDOShowAlg BCDO_1 dir = show BCDO_1
+BCDOShowAlg BCDO_C dir =
+  "[" ++ dir BCDCopL ++ " " ++ show BCDO_C ++ " " ++ dir BCDCopR ++ "]"
+BCDOShowAlg BCDO_P dir =
+  "(" ++ dir BCDProd1 ++ " " ++ show BCDO_P ++ " " ++ dir BCDProd2 ++ ")"
 
 public export
 bcdoShow : BicartDistObj -> String
@@ -150,13 +150,13 @@ public export
 BCDOEqAlg : PFProductBoolAlg BicartDistObjF BicartDistObjF
 BCDOEqAlg =
   [
-    ((BCDObjInitial, BCDObjInitial) **
+    ((BCDO_0, BCDO_0) **
      [])
-  , ((BCDObjTerminal, BCDObjTerminal) **
+  , ((BCDO_1, BCDO_1) **
      [])
-  , ((BCDObjCoproduct, BCDObjCoproduct) **
+  , ((BCDO_C, BCDO_C) **
      [ (BCDCopL, BCDCopL), (BCDCopR, BCDCopR) ])
-  , ((BCDObjProduct, BCDObjProduct) **
+  , ((BCDO_P, BCDO_P) **
      [ (BCDProd1, BCDProd1), (BCDProd2, BCDProd2) ]
     )
   ]
@@ -176,43 +176,43 @@ Eq BicartDistObj where
 ----------------------------------------------------------------------
 
 public export
-data BicartDistTermPos : Type where
-  BCDTermUnit : BicartDistTermPos
-  BCDTermLeft : BicartDistTermPos
-  BCDTermRight : BicartDistTermPos
-  BCDTermPair : BicartDistTermPos
+data BCDTPos : Type where
+  BCDT_U : BCDTPos
+  BCDT_L : BCDTPos
+  BCDT_R : BCDTPos
+  BCDT_P : BCDTPos
 
 public export
-Show BicartDistTermPos where
-  show BCDTermUnit = "_"
-  show BCDTermLeft = "l"
-  show BCDTermRight = "r"
-  show BCDTermPair = ","
+Show BCDTPos where
+  show BCDT_U = "_"
+  show BCDT_L = "l"
+  show BCDT_R = "r"
+  show BCDT_P = ","
 
 public export
 BCDTPosSz : Nat
 BCDTPosSz = 4
 
 public export
-BCDTFinDecoder : FinDecoder BicartDistTermPos BCDTPosSz
-BCDTFinDecoder FZ = BCDTermUnit
-BCDTFinDecoder (FS FZ) = BCDTermLeft
-BCDTFinDecoder (FS (FS FZ)) = BCDTermRight
-BCDTFinDecoder (FS (FS (FS FZ))) = BCDTermPair
+BCDTFinDecoder : FinDecoder BCDTPos BCDTPosSz
+BCDTFinDecoder FZ = BCDT_U
+BCDTFinDecoder (FS FZ) = BCDT_L
+BCDTFinDecoder (FS (FS FZ)) = BCDT_R
+BCDTFinDecoder (FS (FS (FS FZ))) = BCDT_P
 
 public export
 BCDTNatEncoder : NatEncoder BCDTFinDecoder
-BCDTNatEncoder BCDTermUnit = (0 ** Refl ** Refl)
-BCDTNatEncoder BCDTermLeft = (1 ** Refl ** Refl)
-BCDTNatEncoder BCDTermRight = (2 ** Refl ** Refl)
-BCDTNatEncoder BCDTermPair = (3 ** Refl ** Refl)
+BCDTNatEncoder BCDT_U = (0 ** Refl ** Refl)
+BCDTNatEncoder BCDT_L = (1 ** Refl ** Refl)
+BCDTNatEncoder BCDT_R = (2 ** Refl ** Refl)
+BCDTNatEncoder BCDT_P = (3 ** Refl ** Refl)
 
 public export
-BCDTFinDecEncoding : FinDecEncoding BicartDistTermPos BCDTPosSz
+BCDTFinDecEncoding : FinDecEncoding BCDTPos BCDTPosSz
 BCDTFinDecEncoding = NatDecEncoding BCDTFinDecoder BCDTNatEncoder
 
 public export
-DecEq BicartDistTermPos where
+DecEq BCDTPos where
   decEq = fdeDecEq BCDTFinDecEncoding
 
 public export
@@ -225,7 +225,7 @@ data BicartDistTermLeftDir : Type where
 
 public export
 Show BicartDistTermLeftDir where
-  show BCDTermL = show BCDTermLeft
+  show BCDTermL = show BCDT_L
 
 public export
 Eq BicartDistTermLeftDir where
@@ -237,7 +237,7 @@ data BicartDistTermRightDir : Type where
 
 public export
 Show BicartDistTermRightDir where
-  show BCDTermR = show BCDTermRight
+  show BCDTermR = show BCDT_R
 
 public export
 Eq BicartDistTermRightDir where
@@ -260,15 +260,15 @@ Eq BicartDistTermPairDir where
   _ == _ = False
 
 public export
-BicartDistTermDir : SliceObj BicartDistTermPos
-BicartDistTermDir BCDTermUnit = BicartDistTermUnitDir
-BicartDistTermDir BCDTermLeft = BicartDistTermLeftDir
-BicartDistTermDir BCDTermRight = BicartDistTermRightDir
-BicartDistTermDir BCDTermPair = BicartDistTermPairDir
+BicartDistTermDir : SliceObj BCDTPos
+BicartDistTermDir BCDT_U = BicartDistTermUnitDir
+BicartDistTermDir BCDT_L = BicartDistTermLeftDir
+BicartDistTermDir BCDT_R = BicartDistTermRightDir
+BicartDistTermDir BCDT_P = BicartDistTermPairDir
 
 public export
 BicartDistTermF : PolyFunc
-BicartDistTermF = (BicartDistTermPos ** BicartDistTermDir)
+BicartDistTermF = (BCDTPos ** BicartDistTermDir)
 
 public export
 BicartDistTerm : Type
@@ -284,14 +284,14 @@ bicartDistTermCata = pfCata {p=BicartDistTermF}
 
 public export
 BCDTShowAlg : BicartDistTermAlg String
-BCDTShowAlg BCDTermUnit dir =
-  show BCDTermUnit
-BCDTShowAlg BCDTermLeft dir =
-  show BCDTermLeft ++ "[" ++ dir BCDTermL ++ "]"
-BCDTShowAlg BCDTermRight dir =
-  show BCDTermRight ++ "[" ++ dir BCDTermR ++ "]"
-BCDTShowAlg BCDTermPair dir =
-  "(" ++ dir BCDTerm1 ++ " " ++ show BCDTermPair ++ " " ++ dir BCDTerm2 ++ ")"
+BCDTShowAlg BCDT_U dir =
+  show BCDT_U
+BCDTShowAlg BCDT_L dir =
+  show BCDT_L ++ "[" ++ dir BCDTermL ++ "]"
+BCDTShowAlg BCDT_R dir =
+  show BCDT_R ++ "[" ++ dir BCDTermR ++ "]"
+BCDTShowAlg BCDT_P dir =
+  "(" ++ dir BCDTerm1 ++ " " ++ show BCDT_P ++ " " ++ dir BCDTerm2 ++ ")"
 
 public export
 bcdtShow : BicartDistTerm -> String
@@ -314,13 +314,13 @@ public export
 BCDTEqAlg : PFProductBoolAlg BicartDistTermF BicartDistTermF
 BCDTEqAlg =
   [
-    ((BCDTermUnit, BCDTermUnit) **
+    ((BCDT_U, BCDT_U) **
      [])
-  , ((BCDTermLeft, BCDTermLeft) **
+  , ((BCDT_L, BCDT_L) **
      [ (BCDTermL, BCDTermL) ])
-  , ((BCDTermRight, BCDTermRight) **
+  , ((BCDT_R, BCDT_R) **
      [ (BCDTermR, BCDTermR) ])
-  , ((BCDTermPair, BCDTermPair) **
+  , ((BCDT_P, BCDT_P) **
      [ (BCDTerm1, BCDTerm1), (BCDTerm2, BCDTerm2) ]
     )
   ]
@@ -348,13 +348,13 @@ public export
 BicartDistTermCheckAlg : PFProductBoolAlg BicartDistTermF BicartDistObjF
 BicartDistTermCheckAlg =
   [
-    ((BCDTermUnit, BCDObjTerminal) **
+    ((BCDT_U, BCDO_1) **
      [])
-  , ((BCDTermLeft, BCDObjCoproduct) **
+  , ((BCDT_L, BCDO_C) **
      [(BCDTermL, BCDCopL)])
-  , ((BCDTermRight, BCDObjCoproduct) **
+  , ((BCDT_R, BCDO_C) **
      [(BCDTermR, BCDCopR)])
-  , ((BCDTermPair, BCDObjProduct) **
+  , ((BCDT_P, BCDO_P) **
      [ (BCDTerm1, BCDProd1), (BCDTerm2, BCDProd2) ]
     )
   ]
@@ -380,10 +380,10 @@ MkBicartDistTypedTerm t {checks} = MkRefinement {a=BicartDistTerm} t
 
 public export
 BCDTNumLeavesAlg : BicartDistTermAlg Nat
-BCDTNumLeavesAlg BCDTermUnit d = 1
-BCDTNumLeavesAlg BCDTermLeft d = d BCDTermL
-BCDTNumLeavesAlg BCDTermRight d = d BCDTermR
-BCDTNumLeavesAlg BCDTermPair d = d BCDTerm1 + d BCDTerm2
+BCDTNumLeavesAlg BCDT_U d = 1
+BCDTNumLeavesAlg BCDT_L d = d BCDTermL
+BCDTNumLeavesAlg BCDT_R d = d BCDTermR
+BCDTNumLeavesAlg BCDT_P d = d BCDTerm1 + d BCDTerm2
 
 public export
 bcdtNumLeaves : BicartDistTerm -> Nat
@@ -391,10 +391,10 @@ bcdtNumLeaves = bicartDistTermCata BCDTNumLeavesAlg
 
 public export
 BCDTNumInternalNodesAlg : BicartDistTermAlg Nat
-BCDTNumInternalNodesAlg BCDTermUnit d = 0
-BCDTNumInternalNodesAlg BCDTermLeft d = 1 + d BCDTermL
-BCDTNumInternalNodesAlg BCDTermRight d = 1 + d BCDTermR
-BCDTNumInternalNodesAlg BCDTermPair d = 1 + d BCDTerm1 + d BCDTerm2
+BCDTNumInternalNodesAlg BCDT_U d = 0
+BCDTNumInternalNodesAlg BCDT_L d = 1 + d BCDTermL
+BCDTNumInternalNodesAlg BCDT_R d = 1 + d BCDTermR
+BCDTNumInternalNodesAlg BCDT_P d = 1 + d BCDTerm1 + d BCDTerm2
 
 public export
 bcdtNumInternalNodes : BicartDistTerm -> Nat
@@ -402,10 +402,10 @@ bcdtNumInternalNodes = bicartDistTermCata BCDTNumInternalNodesAlg
 
 public export
 BCDTSizeAlg : BicartDistTermAlg Nat
-BCDTSizeAlg BCDTermUnit d = 1
-BCDTSizeAlg BCDTermLeft d = 1 + d BCDTermL
-BCDTSizeAlg BCDTermRight d = 1 + d BCDTermR
-BCDTSizeAlg BCDTermPair d = 1 + d BCDTerm1 + d BCDTerm2
+BCDTSizeAlg BCDT_U d = 1
+BCDTSizeAlg BCDT_L d = 1 + d BCDTermL
+BCDTSizeAlg BCDT_R d = 1 + d BCDTermR
+BCDTSizeAlg BCDT_P d = 1 + d BCDTerm1 + d BCDTerm2
 
 public export
 bcdtSize : BicartDistTerm -> Nat
@@ -413,10 +413,10 @@ bcdtSize = bicartDistTermCata BCDTSizeAlg
 
 public export
 BCDTDepthAlg : BicartDistTermAlg Nat
-BCDTDepthAlg BCDTermUnit d = 0
-BCDTDepthAlg BCDTermLeft d = 1 + d BCDTermL
-BCDTDepthAlg BCDTermRight d = 1 + d BCDTermR
-BCDTDepthAlg BCDTermPair d = 1 + maximum (d BCDTerm1) (d BCDTerm2)
+BCDTDepthAlg BCDT_U d = 0
+BCDTDepthAlg BCDT_L d = 1 + d BCDTermL
+BCDTDepthAlg BCDT_R d = 1 + d BCDTermR
+BCDTDepthAlg BCDT_P d = 1 + maximum (d BCDTerm1) (d BCDTerm2)
 
 public export
 bcdtDepth : BicartDistTerm -> Nat
@@ -499,8 +499,8 @@ data BicartDistReducedMorphPosBase : Type where
 public export
 BicartDistReducedMorphPosDep : SliceObj BicartDistReducedMorphPosBase
 BicartDistReducedMorphPosDep BCDRMorphPosMorph = BicartDistReducedMorphPos
-BicartDistReducedMorphPosDep BCDRMorphPosObj = BicartDistObjPos
-BicartDistReducedMorphPosDep BCDRMorphPosTerm = BicartDistTermPos
+BicartDistReducedMorphPosDep BCDRMorphPosObj = BCDOPos
+BicartDistReducedMorphPosDep BCDRMorphPosTerm = BCDTPos
 
 public export
 BicartDistReducedMorphDirDep : SliceObj (Sigma BicartDistReducedMorphPosDep)
@@ -540,8 +540,8 @@ BicartDistUnrefinedReducedMorph =
 
 public export
 data PolyBCDPosPoly : Type where
-  PolyBCDPosPF : BicartDistObjPos -> PolyBCDPosPoly
-  PolyBCDPosSlice : BicartDistObjPos -> PolyBCDPosPoly
+  PolyBCDPosPF : BCDOPos -> PolyBCDPosPoly
+  PolyBCDPosSlice : BCDOPos -> PolyBCDPosPoly
 
 public export
 data PolyBCDPosBase : Type where
@@ -550,7 +550,7 @@ data PolyBCDPosBase : Type where
 
 public export
 PolyBCDPosDep : SliceObj PolyBCDPosBase
-PolyBCDPosDep PolyBCDSourceObj = BicartDistObjPos
+PolyBCDPosDep PolyBCDSourceObj = BCDOPos
 PolyBCDPosDep PolyBCDPoly = PolyBCDPosPoly
 
 public export
