@@ -1541,3 +1541,100 @@ gsexptoGExp = gsexptoGExpSl GSEXP
 public export
 Show GSExpX where
   show = show . gsexptoGExp
+
+--------------------------------------------------
+--------------------------------------------------
+---- Concepts as refinements of S-expressions ----
+--------------------------------------------------
+--------------------------------------------------
+
+public export
+data RAtom : Type where
+  -- Objects representing ADTs
+  RA_OBJ_0 : RAtom
+  RA_OBJ_1 : RAtom
+  RA_OBJ_C : RAtom
+  RA_OBJ_P : RAtom
+  RA_OBJ_EQ : RAtom
+
+  -- Morphisms among ADTs
+  RA_FROM_0 : RAtom
+  RA_TO_1 : RAtom
+  RA_INJ_L : RAtom
+  RA_INJ_R : RAtom
+  RA_CASE : RAtom
+  RA_PROJ_L : RAtom
+  RA_PROJ_R : RAtom
+  RA_PAIR : RAtom
+  RA_DISTRIB : RAtom
+
+public export
+RASize : Nat
+RASize = 14
+
+public export
+RAFin : Type
+RAFin = Fin RASize
+
+public export
+RADecoder : FinDecoder RAtom RASize
+RADecoder FZ = RA_OBJ_0
+RADecoder (FS FZ) = RA_OBJ_1
+RADecoder (FS (FS FZ)) = RA_OBJ_C
+RADecoder (FS (FS (FS FZ))) = RA_OBJ_P
+RADecoder (FS (FS (FS (FS FZ)))) = RA_OBJ_EQ
+RADecoder (FS (FS (FS (FS (FS FZ))))) = RA_FROM_0
+RADecoder (FS (FS (FS (FS (FS (FS FZ)))))) = RA_TO_1
+RADecoder (FS (FS (FS (FS (FS (FS (FS FZ))))))) = RA_INJ_L
+RADecoder (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))) = RA_INJ_R
+RADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))) = RA_CASE
+RADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))) = RA_PROJ_L
+RADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))) = RA_PROJ_R
+RADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))) =
+  RA_PAIR
+RADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))) =
+  RA_DISTRIB
+
+public export
+RAEncoder : NatEncoder RADecoder
+RAEncoder i = ?RAEncoder_hoke
+
+public export
+RAtomEncoding : FinDecEncoding RAtom RASize
+RAtomEncoding = NatDecEncoding RADecoder RAEncoder
+
+public export
+raToString : RAtom -> String
+raToString i = ?foo
+
+public export
+Show RAtom where
+  show a = raToString a
+
+public export
+Eq RAtom where
+  (==) = fdeEq RAtomEncoding
+
+public export
+Ord RAtom where
+  (<) = fdeLt RAtomEncoding
+
+public export
+DecEq RAtom where
+  decEq = fdeDecEq RAtomEncoding
+
+public export
+FRExp : Type -> Type
+FRExp = FrSExpM RAtom
+
+public export
+FRList : Type -> Type
+FRList = FrSListM RAtom
+
+public export
+RExp : Type
+RExp = SExp RAtom
+
+public export
+RList : Type
+RList = SList RAtom
