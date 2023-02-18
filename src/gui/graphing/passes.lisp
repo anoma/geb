@@ -1,6 +1,10 @@
 (in-package :geb-gui.graphing.passes)
 
+(-> passes (node) node)
 (defun passes (node)
+  "Runs all the passes that simplify viewing the graph.
+These simplifications should not change the semantics of the graph,
+only display it in a more bearable way"
   (~> node
       fold-right-case-dists
       fold-right-cases))

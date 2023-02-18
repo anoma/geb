@@ -67,4 +67,4 @@
   (apply (if (dot-p frame)
              #'graph-dot
              #'graph-node)
-         (list (graph:graphize (root frame) nil) pane)))
+         (list (graph:passes (graph:graphize (root frame) nil)) pane)))
