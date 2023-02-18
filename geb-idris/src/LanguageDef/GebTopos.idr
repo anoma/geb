@@ -1745,3 +1745,44 @@ FinLimObjAssign ((() ** (Right (Right ()))) ** ((Right u), md)) =
 public export
 FinLimObjF : ObjGenSig
 FinLimObjF = (FinLimObjPos ** FinLimObjDir ** FinLimObjAssign)
+
+-- The morphisms of this category have the following positions:
+--  - The unique morphism to the terminal object
+--  - One product introduction rule (pairing)
+--  - Two product elimination rule (projections)
+--  - Two equalizer elimination rules (the injection to the domain,
+--    which forgets the equalization, and the injection to the codomain,
+--    which equalization guarantees is equal to the composition of
+--    either of the equalized morphisms after the injection to the
+--    domain -- note that this means that the injection to the codomain
+--    includes a guarantee of a particular equalization, which means that
+--    it is _also_ an equalizer introduction rule)
+public export
+data FinLimMorph : Type where
+  FLMTo1 : FinLimMorph
+  FLMPairing : FinLimMorph
+  FLMProjL : FinLimMorph
+  FLMProjR : FinLimMorph
+  FLMEqInjDom : FinLimMorph -- equalizer elimination (forgetful)
+  FLMEqInjCod : FinLimMorph -- equalizer elimination _and_ introduction
+
+public export
+FinLimMorphPos : MorphGenSigCod -> Type
+FinLimMorphPos () = FinLimMorph
+
+public export
+FinLimMorphDir : Sigma FinLimMorphPos -> Type
+FinLimMorphDir (() ** FLMTo1) = ?FinLimMorphDir_hole_to1
+FinLimMorphDir (() ** FLMPairing) = ?FinLimMorphDir_hole_pairing
+FinLimMorphDir (() ** FLMProjL) = ?FinLimMorphDir_hole_projl
+FinLimMorphDir (() ** FLMProjR) = ?FinLimMorphDir_hole_projr
+FinLimMorphDir (() ** FLMEqInjDom) = ?FinLimMorphDir_hole_eqdom
+FinLimMorphDir (() ** FLMEqInjCod) = ?FinLimMorphDir_hole_eqcod
+
+public export
+FinLimMorphAssign : Sigma FinLimMorphDir -> MorphGenSigDom
+FinLimMorphAssign ((() ** i) ** d) = ?FinLimMorphAssign_hole
+
+public export
+FinLimMorphF : MorphGenSig
+FinLimMorphF = (FinLimMorphPos ** FinLimMorphDir ** FinLimMorphAssign)
