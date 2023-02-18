@@ -41,17 +41,23 @@
 (def merge-opinion
   (alias merge-opinion
          (comp
-          (mcase (comp
-                  (mcase inj-yes
-                         (mcase (const inj-maybe no)
-                                       (const inj-yes maybe)))
-                  (<-left decision yes))
+          (mcase (comp promote
+                       (<-left decision yes))
                  ;; no + maybe
                  (comp
-                  (mcase (comp
-                          (mcase (const inj-maybe yes)
-                                 (const inj-no    (coprod no maybe)))
-                          (<-left decision no))
+                  (mcase (comp demote
+                               (<-left decision no))
                          (<-left decision maybe))
                   (distribute decision no maybe)))
           (distrib decision decision))))
+
+(def demote
+  (alias demote
+         (mcase (const inj-maybe yes)
+                (const inj-no    (coprod no maybe)))))
+
+(def promote
+  (alias promote
+         (mcase inj-yes
+                (mcase (const inj-maybe no)
+                       (const inj-yes maybe)))))
