@@ -90,7 +90,10 @@
   :parent geb
   (of-type substmorph (curry (<-left geb-bool:bool geb-bool:bool)))
   ;; may be typing this a bit too strictly
-  (of-type comp (curry (<-left geb-bool:bool so1))))
+  (of-type comp (curry (<-left geb-bool:bool so1)))
+  (is obj-equalp
+      (dom (geb:curry geb-bool:and))
+      geb-bool:bool))
 
 
 (define-test geb-trans :parent geb)
