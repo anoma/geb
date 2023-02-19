@@ -1678,8 +1678,13 @@ RList = SList RAtom
 -- Given two types (for example, one of objects and one of morphisms),
 -- generate a (new) type of objects.
 public export
+data FinLimSl : Type where
+  FLSObj : FinLimSl
+  FLSMorph : FinLimSl
+
+public export
 ObjGenSigDom : Type
-ObjGenSigDom = BoolCP
+ObjGenSigDom = FinLimSl
 
 public export
 ObjGenSigCod : Type
@@ -1689,16 +1694,11 @@ public export
 ObjGenSig : Type
 ObjGenSig = SlicePolyFunc ObjGenSigDom ObjGenSigCod
 
--- Given a type of objects, return a type of pairs of objects.
-public export
-ObjPairF : PolyFunc
-ObjPairF = pfSquareArena PFIdentityArena
-
 -- Given a type (of objects) and a type (of morphisms), generate a type
 -- (of morphisms).
 public export
 MorphGenSigDom : Type
-MorphGenSigDom = BoolCP
+MorphGenSigDom = FinLimSl
 
 public export
 MorphGenSigCod : Type
@@ -1715,32 +1715,35 @@ MorphGenSig = SlicePolyFunc MorphGenSigDom MorphGenSigCod
 -- An example object generator with a terminal object, pairwise products,
 -- and equalizers.
 public export
-FinLimObjPos : ObjGenSigCod -> Type
-FinLimObjPos () = Either Unit BoolCP
+data FinLimObjPos : ObjGenSigCod -> Type where
+  FLOP1 : FinLimObjPos ()
+  FLOPProd : FinLimObjPos ()
+  FLOPEq : FinLimObjPos ()
 
 public export
 FinLimObjDir : Sigma FinLimObjPos -> Type
 -- The terminal object has no directions
-FinLimObjDir (() ** (Left ())) = Void
--- A pairwise product has two directions
-FinLimObjDir (() ** (Right (Left ()))) = BoolCP
+FinLimObjDir (() ** FLOP1) = Void
+-- A pairwise product has two directions (false is the left object;
+-- true is the right object)
+FinLimObjDir (() ** FLOPProd) = BoolCP
 -- An equalizer has two directions, two objects and two morphisms:  we'll
 -- use pairs, where the left pair is the pair of objects and the right pair
 -- is the pair of morphisms.
-FinLimObjDir (() ** (Right (Right ()))) = ProductMonad BoolCP
+FinLimObjDir (() ** FLOPEq) = ProductMonad BoolCP
 
 public export
 FinLimObjAssign : Sigma FinLimObjDir -> ObjGenSigDom
-FinLimObjAssign ((() ** (Left ())) ** v) = void v
-FinLimObjAssign ((() ** (Right (Left ()))) ** od) =
+FinLimObjAssign ((() ** FLOP1) ** v) = void v
+FinLimObjAssign ((() ** FLOPProd) ** od) =
   -- Both directions of a pairwise product are objects.
-  BCPFalse
-FinLimObjAssign ((() ** (Right (Right ()))) ** ((Left u), md)) =
+  FLSObj
+FinLimObjAssign ((() ** FLOPEq) ** ((Left u), md)) =
   -- The left two directions of an equalizer are objects.
-  case u of () => BCPFalse
-FinLimObjAssign ((() ** (Right (Right ()))) ** ((Right u), md)) =
+  case u of () => FLSObj
+FinLimObjAssign ((() ** FLOPEq) ** ((Right u), md)) =
   -- The right two directions of an equalizer are morphisms.
-  case u of () => BCPTrue
+  case u of () => FLSMorph
 
 public export
 FinLimObjF : ObjGenSig
@@ -1778,7 +1781,8 @@ FinLimMorphDir : Sigma FinLimMorphPos -> Type
 -- an object, which is both its domain and its codomain
 FinLimMorphDir (() ** FLMId) = Unit
 -- The compose morphism has two directions:  the two morphisms
--- being composed
+-- being composed (false is the left side, which is the following
+-- morphism; true is the right side, which is the preceding morphism)
 FinLimMorphDir (() ** FLMCompose) = BoolCP
 -- The unique morphism to the terminal object has one direction:
 -- an object, which is its domain
@@ -1801,62 +1805,79 @@ FinLimMorphDir (() ** FLMEqInjCod) = Unit
 
 public export
 FinLimMorphAssign : Sigma FinLimMorphDir -> MorphGenSigDom
-FinLimMorphAssign ((() ** FLMId) ** d) = ?FinLimMorphAssign_hole_id
-FinLimMorphAssign ((() ** FLMCompose) ** d) = ?FinLimMorphAssign_hole_compose
+-- The id morphism's one direction is an object
+FinLimMorphAssign ((() ** FLMId) ** d) = FLSObj
+-- The compose morphism's two directions are both morphisms
+FinLimMorphAssign ((() ** FLMCompose) ** d) = FLSMorph
 -- The unique morphism to the terminal object's one direction is an object
-FinLimMorphAssign ((() ** FLMTo1) ** ()) = Left ()
+FinLimMorphAssign ((() ** FLMTo1) ** ()) = FLSObj
 -- Both of the pairing morphism's directions are morphisms
-FinLimMorphAssign ((() ** FLMPairing) ** d) = Right ()
+FinLimMorphAssign ((() ** FLMPairing) ** d) = FLSMorph
 -- Both of the projection morphisms' directions are objects
-FinLimMorphAssign ((() ** FLMProjL) ** d) = Left ()
-FinLimMorphAssign ((() ** FLMProjR) ** d) = Left ()
+FinLimMorphAssign ((() ** FLMProjL) ** d) = FLSObj
+FinLimMorphAssign ((() ** FLMProjR) ** d) = FLSObj
 -- The one direction of each morphism from an equalizer is an object
 -- (the equalizer itself)
-FinLimMorphAssign ((() ** FLMEqInjDom) ** ()) = Left ()
-FinLimMorphAssign ((() ** FLMEqInjCod) ** ()) = Left ()
+FinLimMorphAssign ((() ** FLMEqInjDom) ** ()) = FLSObj
+FinLimMorphAssign ((() ** FLMEqInjCod) ** ()) = FLSObj
 
 public export
 FinLimMorphF : MorphGenSig
 FinLimMorphF = (FinLimMorphPos ** FinLimMorphDir ** FinLimMorphAssign)
 
 public export
-FinCatSigGenF : SlicePolyEndoFunc BoolCP
-FinCatSigGenF = spfCoprodCod FinLimObjF FinLimMorphF
+FinCatSigGenPos : FinLimSl -> Type
+FinCatSigGenPos FLSObj = FinLimObjPos ()
+FinCatSigGenPos FLSMorph = FinLimMorphPos ()
 
 public export
-FinCatSig : SliceObj BoolCP
+FinCatSigGenDir : Sigma {a=FinLimSl} FinCatSigGenPos -> Type
+FinCatSigGenDir (FLSObj ** d) = FinLimObjDir (() ** d)
+FinCatSigGenDir (FLSMorph ** d) = FinLimMorphDir (() ** d)
+
+public export
+FinCatSigGenAssign : Sigma FinCatSigGenDir -> FinLimSl
+FinCatSigGenAssign ((FLSObj ** i) ** d) = FinLimObjAssign ((() ** i) ** d)
+FinCatSigGenAssign ((FLSMorph ** i) ** d) = FinLimMorphAssign ((() ** i) ** d)
+
+public export
+FinCatSigGenF : SlicePolyEndoFunc FinLimSl
+FinCatSigGenF = (FinCatSigGenPos ** FinCatSigGenDir ** FinCatSigGenAssign)
+
+public export
+FinCatSig : SliceObj FinLimSl
 FinCatSig = SPFMu FinCatSigGenF
 
 public export
-FinCatSigAlg : SliceObj BoolCP -> Type
+FinCatSigAlg : SliceObj FinLimSl -> Type
 FinCatSigAlg = SPFAlg FinCatSigGenF
 
 public export
 FinCatObjSig : Type
-FinCatObjSig = FinCatSig BCPFalse
+FinCatObjSig = FinCatSig FLSObj
 
 public export
 FinCatMorphSig : Type
-FinCatMorphSig = FinCatSig BCPTrue
+FinCatMorphSig = FinCatSig FLSMorph
 
 public export
-FinCatSigCheckSlice : SliceObj BoolCP
-FinCatSigCheckSlice (Left ()) = Bool
-FinCatSigCheckSlice (Right ()) = FinCatObjSig -> Bool
+FinCatSigCheckSlice : SliceObj FinLimSl
+FinCatSigCheckSlice FLSObj = Bool
+FinCatSigCheckSlice FLSMorph = FinCatObjSig -> Bool
 
 public export
 FinCatSigCheckAlg : FinCatSigAlg FinCatSigCheckSlice
-FinCatSigCheckAlg (Left ()) ((Left ()) ** d) = ?FinCatSigCheckAlg_hole_obj1
-FinCatSigCheckAlg (Left ()) ((Right (Left ())) ** d) = ?FinCatSigCheckAlg_hole_prodl
-FinCatSigCheckAlg (Left ()) ((Right (Right ())) ** d) = ?FinCatSigCheckAlg_hole_prodr
-FinCatSigCheckAlg (Right ()) (FLMId ** d) = ?FinCatSigCheckAlg_hole_id
-FinCatSigCheckAlg (Right ()) (FLMCompose ** d) = ?FinCatSigCheckAlg_hole_compose
-FinCatSigCheckAlg (Right ()) (FLMTo1 ** d) = ?FinCatSigCheckAlg_hole_to1
-FinCatSigCheckAlg (Right ()) (FLMPairing ** d) = ?FinCatSigCheckAlg_hole_mkpair
-FinCatSigCheckAlg (Right ()) (FLMProjL ** d) = ?FinCatSigCheckAlg_hole_projl
-FinCatSigCheckAlg (Right ()) (FLMProjR ** d) = ?FinCatSigCheckAlg_hole_projr
-FinCatSigCheckAlg (Right ()) (FLMEqInjDom ** d) = ?FinCatSigCheckAlg_hole_injd
-FinCatSigCheckAlg (Right ()) (FLMEqInjCod ** d) = ?FinCatSigCheckAlg_hole_injc
+FinCatSigCheckAlg FLSObj (FLOP1 ** d) = ?FinCatSigCheckAlg_hole_obj1
+FinCatSigCheckAlg FLSObj (FLOPProd ** d) = ?FinCatSigCheckAlg_hole_prodl
+FinCatSigCheckAlg FLSObj (FLOPEq ** d) = ?FinCatSigCheckAlg_hole_prodr
+FinCatSigCheckAlg FLSMorph (FLMId ** d) = ?FinCatSigCheckAlg_hole_id
+FinCatSigCheckAlg FLSMorph (FLMCompose ** d) = ?FinCatSigCheckAlg_hole_compose
+FinCatSigCheckAlg FLSMorph (FLMTo1 ** d) = ?FinCatSigCheckAlg_hole_to1
+FinCatSigCheckAlg FLSMorph (FLMPairing ** d) = ?FinCatSigCheckAlg_hole_mkpair
+FinCatSigCheckAlg FLSMorph (FLMProjL ** d) = ?FinCatSigCheckAlg_hole_projl
+FinCatSigCheckAlg FLSMorph (FLMProjR ** d) = ?FinCatSigCheckAlg_hole_projr
+FinCatSigCheckAlg FLSMorph (FLMEqInjDom ** d) = ?FinCatSigCheckAlg_hole_injd
+FinCatSigCheckAlg FLSMorph (FLMEqInjCod ** d) = ?FinCatSigCheckAlg_hole_injc
 
 public export
 finCatSigCheck : SliceMorphism FinCatSig FinCatSigCheckSlice
@@ -1864,8 +1885,8 @@ finCatSigCheck = spfCata FinCatSigCheckAlg
 
 public export
 finCatSigCheckObj : FinCatObjSig -> Bool
-finCatSigCheckObj = finCatSigCheck BCPFalse
+finCatSigCheckObj = finCatSigCheck FLSObj
 
 public export
 finCatSigCheckMorph : FinCatObjSig -> FinCatMorphSig -> Bool
-finCatSigCheckMorph = flip $ finCatSigCheck BCPTrue
+finCatSigCheckMorph = flip $ finCatSigCheck FLSMorph
