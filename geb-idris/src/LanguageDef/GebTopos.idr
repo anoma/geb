@@ -1849,16 +1849,24 @@ FinCatSig : SliceObj FinLimSl
 FinCatSig = SPFMu FinCatSigGenF
 
 public export
-FinCatSigAlg : SliceObj FinLimSl -> Type
-FinCatSigAlg = SPFAlg FinCatSigGenF
-
-public export
 FinCatObjSig : Type
 FinCatObjSig = FinCatSig FLSObj
 
 public export
 FinCatMorphSig : Type
 FinCatMorphSig = FinCatSig FLSMorph
+
+public export
+FinLimMorphParamDir : Type
+FinLimMorphParamDir = (FinCatObjSig, FinCatObjSig)
+
+public export
+FinLimCheckableMorphDir : Sigma FinLimMorphPos -> Type
+FinLimCheckableMorphDir i = Either FinLimMorphParamDir (FinLimMorphDir i)
+
+public export
+FinCatSigAlg : SliceObj FinLimSl -> Type
+FinCatSigAlg = SPFAlg FinCatSigGenF
 
 public export
 FinCatSigCheckSlice : SliceObj FinLimSl
