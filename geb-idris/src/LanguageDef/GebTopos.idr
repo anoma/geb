@@ -1774,8 +1774,12 @@ FinLimMorphPos () = FinLimMorph
 
 public export
 FinLimMorphDir : Sigma FinLimMorphPos -> Type
-FinLimMorphDir (() ** FLMId) = ?FinLimMorphDir_id_hole
-FinLimMorphDir (() ** FLMCompose) = ?FinLimMorphDir_compose_hole
+-- The id morphism to the terminal object has one direction:
+-- an object, which is both its domain and its codomain
+FinLimMorphDir (() ** FLMId) = Unit
+-- The compose morphism has two directions:  the two morphisms
+-- being composed
+FinLimMorphDir (() ** FLMCompose) = BoolCP
 -- The unique morphism to the terminal object has one direction:
 -- an object, which is its domain
 FinLimMorphDir (() ** FLMTo1) = Unit
@@ -1842,17 +1846,17 @@ FinCatSigCheckSlice (Right ()) = FinCatObjSig -> Bool
 
 public export
 FinCatSigCheckAlg : FinCatSigAlg FinCatSigCheckSlice
+FinCatSigCheckAlg (Left ()) ((Left ()) ** d) = ?FinCatSigCheckAlg_hole_obj1
+FinCatSigCheckAlg (Left ()) ((Right (Left ())) ** d) = ?FinCatSigCheckAlg_hole_prodl
+FinCatSigCheckAlg (Left ()) ((Right (Right ())) ** d) = ?FinCatSigCheckAlg_hole_prodr
 FinCatSigCheckAlg (Right ()) (FLMId ** d) = ?FinCatSigCheckAlg_hole_id
 FinCatSigCheckAlg (Right ()) (FLMCompose ** d) = ?FinCatSigCheckAlg_hole_compose
-FinCatSigCheckAlg (Left ()) ((Left ()) ** d) = ?FinCatSigCheckAlg_hole_11
-FinCatSigCheckAlg (Left ()) ((Right (Left ())) ** d) = ?FinCatSigCheckAlg_hole_14
-FinCatSigCheckAlg (Left ()) ((Right (Right ())) ** d) = ?FinCatSigCheckAlg_hole_15
-FinCatSigCheckAlg (Right ()) (FLMTo1 ** d) = ?FinCatSigCheckAlg_hole_4
-FinCatSigCheckAlg (Right ()) (FLMPairing ** d) = ?FinCatSigCheckAlg_hole_5
-FinCatSigCheckAlg (Right ()) (FLMProjL ** d) = ?FinCatSigCheckAlg_hole_6
-FinCatSigCheckAlg (Right ()) (FLMProjR ** d) = ?FinCatSigCheckAlg_hole_7
-FinCatSigCheckAlg (Right ()) (FLMEqInjDom ** d) = ?FinCatSigCheckAlg_hole_8
-FinCatSigCheckAlg (Right ()) (FLMEqInjCod ** d) = ?FinCatSigCheckAlg_hole_9
+FinCatSigCheckAlg (Right ()) (FLMTo1 ** d) = ?FinCatSigCheckAlg_hole_to1
+FinCatSigCheckAlg (Right ()) (FLMPairing ** d) = ?FinCatSigCheckAlg_hole_mkpair
+FinCatSigCheckAlg (Right ()) (FLMProjL ** d) = ?FinCatSigCheckAlg_hole_projl
+FinCatSigCheckAlg (Right ()) (FLMProjR ** d) = ?FinCatSigCheckAlg_hole_projr
+FinCatSigCheckAlg (Right ()) (FLMEqInjDom ** d) = ?FinCatSigCheckAlg_hole_injd
+FinCatSigCheckAlg (Right ()) (FLMEqInjCod ** d) = ?FinCatSigCheckAlg_hole_injc
 
 public export
 finCatSigCheck : SliceMorphism FinCatSig FinCatSigCheckSlice
