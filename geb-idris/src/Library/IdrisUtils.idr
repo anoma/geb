@@ -1046,6 +1046,60 @@ fdeSize : {0 a : Type} -> FDEnc a -> Nat
 fdeSize = fst
 
 public export
+FinType : Type
+FinType = DPair Type FDEnc
+
+public export
+ftType : FinType -> Type
+ftType = DPair.fst
+
+public export
+ftEnc : (ft : FinType) -> FDEnc (ftType ft)
+ftEnc = DPair.snd
+
+public export
+ftSize : FinType -> Nat
+ftSize ft = fdeSize (ftEnc ft)
+
+-- A pair of terms of a finite type.
+public export
+FTPair : FinType -> FinType -> Type
+FTPair ft ft' = Pair (ftType ft) (ftType ft')
+
+-- A list of terms of a finite type.
+public export
+FTList : FinType -> Type
+FTList ft = List (ftType ft)
+
+-- A vector of terms of a finite type.
+public export
+FTVect : Nat -> FinType -> Type
+FTVect k ft = Vect k (ftType ft)
+
+-- A vector _indexed_ by a finite type -- that is, a tuple of elements
+-- of some (other) type whose length is the size of the finite type.
+-- The "I" is for "indexed".
+public export
+FTIVect : FinType -> Type -> Type
+FTIVect ft t = Vect (ftSize ft) t
+
+-- A vector of types indexed by some finite type.
+FTITyVect : FinType -> Type
+FTITyVect ft = FTIVect ft Type
+
+-- An object of the slice category of `Type` over some `FinType`'s
+-- underlying type (i.e. a finite type, or more explicitly, a type
+-- with a finite number of terms).
+public export
+FSlice : FinType -> Type
+FSlice ft = ftType ft -> Type
+
+-- A dependent list indexed by terms of a finite type.
+public export
+FHList : (ft : FinType) -> FTITyVect ft -> Type
+FHList ft tys = HVect {k=(ftSize ft)} tys
+
+public export
 ListContains : {a : Type} -> List a -> a -> Type
 ListContains [] x = Void
 ListContains (x :: xs) x' = Either (x = x') (ListContains xs x')
