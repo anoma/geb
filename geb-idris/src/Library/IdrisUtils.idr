@@ -1038,6 +1038,31 @@ FinUnitDecEncoding : FinDecEncoding Unit 1
 FinUnitDecEncoding = (FinUnitDecoder ** FinUnitEncoder)
 
 public export
+FinSumDecoder : {m, n : Nat} ->
+  FinDecoder ty m -> FinDecoder ty' n -> FinDecoder (Either ty ty') (m + n)
+FinSumDecoder {m} {n} fde fde' i with (finToNat i) proof prf
+  FinSumDecoder {m} {n} fde fde' i | idx with (isLT idx m)
+    FinSumDecoder {m} {n} fde fde' i | idx | Yes islt =
+      Left $ fde $ natToFinLT {n=m} idx
+    FinSumDecoder {m} {n} fde fde' i | idx | No isgte =
+      Right $ fde' $
+      let islte : LTE (S (minus idx m)) n = ?FinSumDecoder_islte_hole in
+      natToFinLT {n} (minus idx m)
+
+public export
+FinSumEncoder : {m, n : Nat} ->
+  (fde : FinDecoder ty m) -> (fde' : FinDecoder ty' n) ->
+  NatEncoder (FinSumDecoder fde fde')
+FinSumEncoder {m} {n} {ty} {ty'} fde fde' = ?FinSumEncoder_hole
+
+public export
+FinSumDecEncoding : {m, n : Nat} -> {ty, ty' : Type} ->
+  (fde : FinDecoder ty m) -> (fde' : FinDecoder ty' n) ->
+  FinDecEncoding (Either ty ty') (m + n)
+FinSumDecEncoding fde fde' =
+  NatDecEncoding (FinSumDecoder fde fde') (FinSumEncoder fde fde')
+
+public export
 FinIdDecoder : (size : Nat) -> FinDecoder (Fin size) size
 FinIdDecoder size = id
 
