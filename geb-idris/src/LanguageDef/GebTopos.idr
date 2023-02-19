@@ -1759,6 +1759,8 @@ FinLimObjF = (FinLimObjPos ** FinLimObjDir ** FinLimObjAssign)
 --    it is _also_ an equalizer introduction rule)
 public export
 data FinLimMorph : Type where
+  FLMId : FinLimMorph
+  FLMCompose : FinLimMorph
   FLMTo1 : FinLimMorph
   FLMPairing : FinLimMorph
   FLMProjL : FinLimMorph
@@ -1772,6 +1774,8 @@ FinLimMorphPos () = FinLimMorph
 
 public export
 FinLimMorphDir : Sigma FinLimMorphPos -> Type
+FinLimMorphDir (() ** FLMId) = ?FinLimMorphDir_id_hole
+FinLimMorphDir (() ** FLMCompose) = ?FinLimMorphDir_compose_hole
 -- The unique morphism to the terminal object has one direction:
 -- an object, which is its domain
 FinLimMorphDir (() ** FLMTo1) = Unit
@@ -1793,6 +1797,8 @@ FinLimMorphDir (() ** FLMEqInjCod) = Unit
 
 public export
 FinLimMorphAssign : Sigma FinLimMorphDir -> MorphGenSigDom
+FinLimMorphAssign ((() ** FLMId) ** d) = ?FinLimMorphAssign_hole_id
+FinLimMorphAssign ((() ** FLMCompose) ** d) = ?FinLimMorphAssign_hole_compose
 -- The unique morphism to the terminal object's one direction is an object
 FinLimMorphAssign ((() ** FLMTo1) ** ()) = Left ()
 -- Both of the pairing morphism's directions are morphisms
@@ -1836,8 +1842,11 @@ FinCatSigCheckSlice (Right ()) = FinCatObjSig -> Bool
 
 public export
 FinCatSigCheckAlg : FinCatSigAlg FinCatSigCheckSlice
-FinCatSigCheckAlg (Left ()) ((Left x) ** d) = ?FinCatSigCheckAlg_hole_3
-FinCatSigCheckAlg (Left ()) ((Right x) ** d) = ?FinCatSigCheckAlg_hole_10
+FinCatSigCheckAlg (Right ()) (FLMId ** d) = ?FinCatSigCheckAlg_hole_id
+FinCatSigCheckAlg (Right ()) (FLMCompose ** d) = ?FinCatSigCheckAlg_hole_compose
+FinCatSigCheckAlg (Left ()) ((Left ()) ** d) = ?FinCatSigCheckAlg_hole_11
+FinCatSigCheckAlg (Left ()) ((Right (Left ())) ** d) = ?FinCatSigCheckAlg_hole_14
+FinCatSigCheckAlg (Left ()) ((Right (Right ())) ** d) = ?FinCatSigCheckAlg_hole_15
 FinCatSigCheckAlg (Right ()) (FLMTo1 ** d) = ?FinCatSigCheckAlg_hole_4
 FinCatSigCheckAlg (Right ()) (FLMPairing ** d) = ?FinCatSigCheckAlg_hole_5
 FinCatSigCheckAlg (Right ()) (FLMProjL ** d) = ?FinCatSigCheckAlg_hole_6
