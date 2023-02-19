@@ -1856,6 +1856,21 @@ public export
 FinCatMorphSig : Type
 FinCatMorphSig = FinCatSig FLSMorph
 
+-------------------------------
+---- Second-order versions ----
+-------------------------------
+
+-- Slices of second-order finite-limit-category expressions.
+public export
+data FinLimSl2 : Type where
+  FLS2f : FinLimSl -> FinLimSl2 -- first-order (unchecked) slices
+  FLS2u : FinLimSl -> FinLimSl2 -- second-order (unchecked) slices
+
+public export
+FinLimCat2Pos : FinLimSl2 -> Type
+FinLimCat2Pos (FLS2f sl) = FinCatSigGenPos sl
+FinLimCat2Pos (FLS2u x) = ?FinLimCat2Pos_hole_1
+
 public export
 FinLimMorphParamDir : Type
 FinLimMorphParamDir = (FinCatObjSig, FinCatObjSig)
@@ -1863,6 +1878,16 @@ FinLimMorphParamDir = (FinCatObjSig, FinCatObjSig)
 public export
 FinLimCheckableMorphDir : Sigma FinLimMorphPos -> Type
 FinLimCheckableMorphDir i = Either FinLimMorphParamDir (FinLimMorphDir i)
+
+public export
+FinLimCheckableMorphAssign : Sigma FinLimCheckableMorphDir -> MorphGenSigDom
+FinLimCheckableMorphAssign ((() ** i) ** (Left x)) = ?FinLimCheckableMorphAssign_hole_0
+FinLimCheckableMorphAssign ((() ** i) ** (Right x)) = ?FinLimCheckableMorphAssign_hole_1
+
+public export
+FinLimCheckableMorphF : MorphGenSig
+FinLimCheckableMorphF =
+  (FinLimMorphPos ** FinLimCheckableMorphDir ** FinLimCheckableMorphAssign)
 
 public export
 FinCatSigAlg : SliceObj FinLimSl -> Type
