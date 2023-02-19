@@ -1018,6 +1018,26 @@ FinVoidDecoder FZ impossible
 FinVoidDecoder (FS _) impossible
 
 public export
+FinVoidEncoder : FinEncoder FinVoidDecoder
+FinVoidEncoder i = void i
+
+public export
+FinVoidDecEncoding : FinDecEncoding Void 0
+FinVoidDecEncoding = (FinVoidDecoder ** FinVoidEncoder)
+
+public export
+FinUnitDecoder : FinDecoder Unit 1
+FinUnitDecoder FZ = ()
+
+public export
+FinUnitEncoder : FinEncoder FinUnitDecoder
+FinUnitEncoder () = (FZ ** Refl)
+
+public export
+FinUnitDecEncoding : FinDecEncoding Unit 1
+FinUnitDecEncoding = (FinUnitDecoder ** FinUnitEncoder)
+
+public export
 FinIdDecoder : (size : Nat) -> FinDecoder (Fin size) size
 FinIdDecoder size = id
 
@@ -1026,16 +1046,8 @@ FinIdEncoder : (size : Nat) -> FinEncoder (FinIdDecoder size)
 FinIdEncoder size i = (i ** Refl)
 
 public export
-FinVoidEncoder : FinEncoder FinVoidDecoder
-FinVoidEncoder i = void i
-
-public export
 FinIdDecEncoding : (size : Nat) -> FinDecEncoding (Fin size) size
 FinIdDecEncoding size = (FinIdDecoder size ** FinIdEncoder size)
-
-public export
-FinVoidDecEncoding : FinDecEncoding Void 0
-FinVoidDecEncoding = (FinVoidDecoder ** FinVoidEncoder)
 
 public export
 FDEnc : Type -> Type
