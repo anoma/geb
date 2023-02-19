@@ -1038,29 +1038,40 @@ FinUnitDecEncoding : FinDecEncoding Unit 1
 FinUnitDecEncoding = (FinUnitDecoder ** FinUnitEncoder)
 
 public export
-FinSumDecoder : {m, n : Nat} ->
+FinSumDecoder : {m, n : Nat} -> {ty, ty' : Type} ->
   FinDecoder ty m -> FinDecoder ty' n -> FinDecoder (Either ty ty') (m + n)
-FinSumDecoder {m} {n} fde fde' i with (finToNat i) proof prf
-  FinSumDecoder {m} {n} fde fde' i | idx with (isLT idx m)
-    FinSumDecoder {m} {n} fde fde' i | idx | Yes islt =
+FinSumDecoder {m} {n} {ty} {ty'} fde fde' i with (finToNat i) proof prf
+  FinSumDecoder {m} {n} {ty} {ty'} fde fde' i | idx with (isLT idx m)
+    FinSumDecoder {m} {n} {ty} {ty'} fde fde' i | idx | Yes islt =
       Left $ fde $ natToFinLT {n=m} idx
-    FinSumDecoder {m} {n} fde fde' i | idx | No isgte =
+    FinSumDecoder {m} {n} {ty} {ty'} fde fde' i | idx | No isgte =
       Right $ fde' $
       let islte : LTE (S (minus idx m)) n = ?FinSumDecoder_islte_hole in
       natToFinLT {n} (minus idx m)
 
 public export
-FinSumEncoder : {m, n : Nat} ->
-  (fde : FinDecoder ty m) -> (fde' : FinDecoder ty' n) ->
-  NatEncoder (FinSumDecoder fde fde')
-FinSumEncoder {m} {n} {ty} {ty'} fde fde' = ?FinSumEncoder_hole
+FinSumEncoder : {m, n : Nat} -> {ty, ty' : Type} ->
+  {dec : FinDecoder ty m} -> {dec' : FinDecoder ty' n} ->
+  (enc : FinEncoder {a=ty} {size=m} dec) ->
+  (enc' : FinEncoder {a=ty'} {size=n} dec') ->
+  NatEncoder (FinSumDecoder {m} {n} {ty} {ty'} dec dec')
+FinSumEncoder {m} {n} {ty} {ty'} {dec} {dec'} enc enc' (Left e) =
+  (finToNat (fst (enc e)) **
+   ?finSumEncoder_hole_left_islte **
+   ?finSumEncoder_hole_left_isinv)
+FinSumEncoder {m} {n} {ty} {ty'} {dec} {dec'} enc enc' (Right e') =
+  (m + finToNat (fst (enc' e')) **
+  ?finSumEncoder_hole_right_islte **
+  ?finSumEncoder_hole_right_isinv)
 
 public export
 FinSumDecEncoding : {m, n : Nat} -> {ty, ty' : Type} ->
-  (fde : FinDecoder ty m) -> (fde' : FinDecoder ty' n) ->
+  {dec : FinDecoder ty m} -> {dec' : FinDecoder ty' n} ->
+  (enc : FinEncoder {a=ty} {size=m} dec) ->
+  (enc' : FinEncoder {a=ty'} {size=n} dec') ->
   FinDecEncoding (Either ty ty') (m + n)
-FinSumDecEncoding fde fde' =
-  NatDecEncoding (FinSumDecoder fde fde') (FinSumEncoder fde fde')
+FinSumDecEncoding {dec} {dec'} enc enc' =
+  NatDecEncoding (FinSumDecoder dec dec') (FinSumEncoder enc enc')
 
 public export
 FinIdDecoder : (size : Nat) -> FinDecoder (Fin size) size
