@@ -1808,3 +1808,51 @@ FinLimMorphAssign ((() ** FLMEqInjCod) ** ()) = Left ()
 public export
 FinLimMorphF : MorphGenSig
 FinLimMorphF = (FinLimMorphPos ** FinLimMorphDir ** FinLimMorphAssign)
+
+public export
+FinCatSigGenF : SlicePolyEndoFunc BoolCP
+FinCatSigGenF = spfCoprodCod FinLimObjF FinLimMorphF
+
+public export
+FinCatSig : SliceObj BoolCP
+FinCatSig = SPFMu FinCatSigGenF
+
+public export
+FinCatSigAlg : SliceObj BoolCP -> Type
+FinCatSigAlg = SPFAlg FinCatSigGenF
+
+public export
+FinCatObjSig : Type
+FinCatObjSig = FinCatSig BCPFalse
+
+public export
+FinCatMorphSig : Type
+FinCatMorphSig = FinCatSig BCPTrue
+
+public export
+FinCatSigCheckSlice : SliceObj BoolCP
+FinCatSigCheckSlice (Left ()) = Bool
+FinCatSigCheckSlice (Right ()) = FinCatObjSig -> Bool
+
+public export
+FinCatSigCheckAlg : FinCatSigAlg FinCatSigCheckSlice
+FinCatSigCheckAlg (Left ()) ((Left x) ** d) = ?FinCatSigCheckAlg_hole_3
+FinCatSigCheckAlg (Left ()) ((Right x) ** d) = ?FinCatSigCheckAlg_hole_10
+FinCatSigCheckAlg (Right ()) (FLMTo1 ** d) = ?FinCatSigCheckAlg_hole_4
+FinCatSigCheckAlg (Right ()) (FLMPairing ** d) = ?FinCatSigCheckAlg_hole_5
+FinCatSigCheckAlg (Right ()) (FLMProjL ** d) = ?FinCatSigCheckAlg_hole_6
+FinCatSigCheckAlg (Right ()) (FLMProjR ** d) = ?FinCatSigCheckAlg_hole_7
+FinCatSigCheckAlg (Right ()) (FLMEqInjDom ** d) = ?FinCatSigCheckAlg_hole_8
+FinCatSigCheckAlg (Right ()) (FLMEqInjCod ** d) = ?FinCatSigCheckAlg_hole_9
+
+public export
+finCatSigCheck : SliceMorphism FinCatSig FinCatSigCheckSlice
+finCatSigCheck = spfCata FinCatSigCheckAlg
+
+public export
+finCatSigCheckObj : FinCatObjSig -> Bool
+finCatSigCheckObj = finCatSigCheck BCPFalse
+
+public export
+finCatSigCheckMorph : FinCatObjSig -> FinCatMorphSig -> Bool
+finCatSigCheckMorph = flip $ finCatSigCheck BCPTrue
