@@ -1867,9 +1867,21 @@ FinCatSigCheckSlice FLSMorph = FinCatObjSig -> Bool
 
 public export
 FinCatSigCheckAlg : FinCatSigAlg FinCatSigCheckSlice
-FinCatSigCheckAlg FLSObj (FLOP1 ** d) = ?FinCatSigCheckAlg_hole_obj1
-FinCatSigCheckAlg FLSObj (FLOPProd ** d) = ?FinCatSigCheckAlg_hole_prodl
+-- The expression consisting just of the representation of the terminal
+-- object is always valid (and always represents the terminal object).
+FinCatSigCheckAlg FLSObj (FLOP1 ** d) = True
+-- An expression representing the product of two objects is valid if and
+-- only if both of the expressions representing the subobjects are valid.
+FinCatSigCheckAlg FLSObj (FLOPProd ** d) = d (Left ()) && d (Right ())
+-- An expression representing an equalizer is valid if and only if:
+--  - The expressions representing the two subobjects are valid
+--  - The expressions representing the two morphisms are valid
+--  - The two morphisms both have the first subobject as their domain
+--    and the second subobject as their codomain
 FinCatSigCheckAlg FLSObj (FLOPEq ** d) = ?FinCatSigCheckAlg_hole_prodr
+-- An expression representing an identity morphism is valid if and
+-- only if the object which represents both its domain and its codomain
+-- is valid.
 FinCatSigCheckAlg FLSMorph (FLMId ** d) = ?FinCatSigCheckAlg_hole_id
 FinCatSigCheckAlg FLSMorph (FLMCompose ** d) = ?FinCatSigCheckAlg_hole_compose
 FinCatSigCheckAlg FLSMorph (FLMTo1 ** d) = ?FinCatSigCheckAlg_hole_to1
