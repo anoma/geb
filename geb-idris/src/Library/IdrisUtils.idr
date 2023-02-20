@@ -13,6 +13,7 @@ import public Data.Vect
 import public Data.Vect.Properties.Foldr
 import public Data.HVect
 import public Data.Fin
+import public Data.Fin.Order
 import public Data.DPair
 import public Data.Bool
 import public Decidable.Decidable
@@ -1055,14 +1056,22 @@ FinSumEncoder : {m, n : Nat} -> {ty, ty' : Type} ->
   (enc : FinEncoder {a=ty} {size=m} dec) ->
   (enc' : FinEncoder {a=ty'} {size=n} dec') ->
   NatEncoder (FinSumDecoder {m} {n} {ty} {ty'} dec dec')
-FinSumEncoder {m} {n} {ty} {ty'} {dec} {dec'} enc enc' (Left e) =
-  (finToNat (fst (enc e)) **
-   ?finSumEncoder_hole_left_islte **
-   ?finSumEncoder_hole_left_isinv)
-FinSumEncoder {m} {n} {ty} {ty'} {dec} {dec'} enc enc' (Right e') =
-  (m + finToNat (fst (enc' e')) **
-  ?finSumEncoder_hole_right_islte **
-  ?finSumEncoder_hole_right_isinv)
+FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Left e) with (enc e) proof eqe
+  FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Left _) | (ence ** Refl)
+    with (finToNat ence) proof eqf
+      FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Left _) | (ence ** Refl) |
+        idx =
+          (finToNat ence **
+           ?finSumEncoder_hole_left_islte **
+           ?finSumEncoder_hole_left_isinv)
+FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Right e') with (enc' e') proof eqe
+  FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Right _) | (ence' ** Refl)
+    with (finToNat ence') proof eqf
+      FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Right _) | (ence' ** Refl) |
+        idx =
+          (m + finToNat ence' **
+           ?finSumEncoder_hole_right_islte **
+           ?finSumEncoder_hole_right_isinv)
 
 public export
 FinSumDecEncoding : {m, n : Nat} -> {ty, ty' : Type} ->
