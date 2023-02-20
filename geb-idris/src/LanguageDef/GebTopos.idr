@@ -102,9 +102,23 @@ FinRF = ConstSPF . FinR
 ----------------------------------------
 
 public export
+FinBCTF : (Type, Type) -> Type
+FinBCTF = SplitF . snd
+
+public export
+FinBCTLF : (Type, Type) -> Type
+FinBCTLF = ListSPF
+
+public export
+FinBCSlF : (Type, Type) -> (Type, Type)
+FinBCSlF (a, b) = (FinBCTF (a, b), FinBCTLF (a, b))
+
+public export
 data FinBCSl : BoolCP -> Type where
-  InFBT : SplitF (FinBCSl (Right ())) -> FinBCSl (Left ())
-  InFBTL : ListSPF (FinBCSl (Left ()), FinBCSl (Right ())) -> FinBCSl (Right ())
+  InFBT :
+    FinBCTF (FinBCSl (Left ()), FinBCSl (Right ())) -> FinBCSl (Left ())
+  InFBTL :
+    FinBCTLF (FinBCSl (Left ()), FinBCSl (Right ())) -> FinBCSl (Right ())
 
 --------------------------------------------
 --------------------------------------------
