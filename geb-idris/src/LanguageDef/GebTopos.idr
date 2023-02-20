@@ -101,25 +101,6 @@ FinRF = ConstSPF . FinR
 ----------------------------------------
 ----------------------------------------
 
--- Generate either a list of types (which we will later interpret as a
--- coproduct) or a list of types (which we will later interpret as a product).
-public export
-FinBCF : (Type, Type) -> Type
-FinBCF = SplitF . ListSPF
-
-public export
-FinBCEF : (Type, Type) -> (Type, Type)
-FinBCEF (a, b) = (FinBCF (a, b), ListSPF (a, b))
-
-public export
-FinSPF : (Either () () -> Type) -> (Type, Type)
-FinSPF spf = FinBCEF (spf (Left ()), spf (Right ()))
-
-public export
-FinBCSPEF : SliceEndofunctor BoolCP
-FinBCSPEF spf (Left ()) = fst $ FinSPF spf
-FinBCSPEF spf (Right ()) = snd $ FinSPF spf
-
 public export
 data FinBCSl : BoolCP -> Type where
   InFBT : SplitF (FinBCSl (Right ())) -> FinBCSl (Left ())
