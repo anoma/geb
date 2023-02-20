@@ -153,7 +153,37 @@ ListTermF : (a -> Type, b -> Type) -> ListSPF (a, b) -> Type
 ListTermF f x = case x of Nothing => Unit ; Just p => ProdTermF f p -- nil/cons
 
 public export
-data FinTermSl : (sl : BoolCP) -> FinBCSl sl -> Type where
+data FTSlice : Type where
+  -- A term of the given type
+  FTTerm : FinBCSl BCPFalse -> FTSlice
+  -- A list of terms, one of each of the given types
+  FTProd : FinBCSl BCPTrue -> FTSlice
+  -- A term from one of the given types
+  FTCop : FinBCSl BCPTrue -> FTSlice
+
+public export
+data FinTermSl : FTSlice -> Type where
+  -- A term of a coproduct type is a term from one of the component types.
+  InFTC : {0 tys : FinBCTL} -> FinTermSl (FTCop tys) ->
+    FinTermSl $ FTTerm $ InFBT $ Left tys
+  -- A term of a product type is a term from each of the component types.
+  InFTP : {0 tys : FinBCTL} -> FinTermSl (FTProd tys) ->
+    FinTermSl $ FTTerm $ InFBT $ Right tys
+  -- There are no terms whose type is the coproduct of an empty list
+  -- (that type is `Void`, the initial object).  A term of a coproduct
+  -- of a non-empty list is either a term of the head type or a term
+  -- from one of the tail types.
+  InFTH : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
+    FinTermSl (FTTerm ty) -> FinTermSl $ FTCop $ InFBTL $ Just (ty, tys)
+  InFTTL : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
+    FinTermSl (FTCop tys) -> FinTermSl $ FTCop $ InFBTL $ Just (ty, tys)
+  -- A term of the product of an empty list is unit.
+  InFTU : FinTermSl $ FTProd $ InFBTL Nothing
+  -- A term of the product of a non-empty list is a term of the head type
+  -- together with a list of terms from each of the tail types.
+  InFTL : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
+    FinTermSl (FTTerm ty) -> FinTermSl (FTProd tys) ->
+    FinTermSl $ FTProd $ InFBTL $ Just (ty, tys)
 
 --------------------------------------------
 --------------------------------------------
