@@ -67,10 +67,6 @@
   (to-vampir (mcar obj)
              (to-vampir (mcadr obj) value)))
 
-(defmethod to-vampir ((obj mod) value)
-  (declare (ignore obj value))
-  (error "mod logic not in yet"))
-
 (defun infix (op lhs rhs)
   (vamp:make-infix :op op :lhs lhs :rhs rhs))
 
@@ -87,6 +83,12 @@
                     (infix :- (vamp:make-constant :const 1) pred)
                     (to-vampir else value))))))
 
+(defmethod to-vampir ((obj mod) value)
+  (geb.vampir:mod32 (to-vampir (mcar obj) value)
+                    (to-vampir (mcadr obj) value)))
+
 (defmethod to-vampir ((obj if-lt) value)
-  (declare (ignore obj value))
-  (error "mod logic not in yet"))
+  (geb.vampir:pwless32 (to-vampir (mcar obj) value)
+                       (to-vampir (mcadr obj) value)
+                       (to-vampir (then obj) value)
+                       (to-vampir (else obj) value)))
