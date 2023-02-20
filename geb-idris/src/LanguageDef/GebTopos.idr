@@ -32,6 +32,30 @@ PairSPF : (Type, Type) -> Type
 PairSPF = uncurry Pair
 
 --------------
+---- Diag ----
+--------------
+
+public export
+DiagF : Type -> Type
+DiagF a = PairSPF (a, a)
+
+----------------
+---- Either ----
+----------------
+
+public export
+EitherSPF: (Type, Type) -> Type
+EitherSPF = uncurry Either
+
+---------------
+---- Split ----
+---------------
+
+public export
+SplitF : Type -> Type
+SplitF a = EitherSPF (a, a)
+
+--------------
 ---- List ----
 --------------
 
@@ -68,8 +92,38 @@ FinR n = Subset0 Nat (flip LT n)
 ---------------------------------
 
 public export
-FinSPF : Nat -> Type -> Type
-FinSPF = ConstSPF . FinR
+FinRF : Nat -> Type -> Type
+FinRF = ConstSPF . FinR
+
+----------------------------------------
+----------------------------------------
+---- Finite product/coproduct types ----
+----------------------------------------
+----------------------------------------
+
+-- Generate either a list of types (which we will later interpret as a
+-- coproduct) or a list of types (which we will later interpret as a product).
+public export
+FinBCF : (Type, Type) -> Type
+FinBCF = SplitF . ListSPF
+
+public export
+FinBCEF : (Type, Type) -> (Type, Type)
+FinBCEF (a, b) = (FinBCF (a, b), ListSPF (a, b))
+
+public export
+FinSPF : (Either () () -> Type) -> (Type, Type)
+FinSPF spf = FinBCEF (spf (Left ()), spf (Right ()))
+
+public export
+FinBCSPEF : SliceEndofunctor BoolCP
+FinBCSPEF spf (Left ()) = fst $ FinSPF spf
+FinBCSPEF spf (Right ()) = snd $ FinSPF spf
+
+public export
+data FinBCSl : BoolCP -> Type where
+  InFBT : SplitF (FinBCSl (Right ())) -> FinBCSl (Left ())
+  InFBTL : ListSPF (FinBCSl (Left ()), FinBCSl (Right ())) -> FinBCSl (Right ())
 
 --------------------------------------------
 --------------------------------------------
