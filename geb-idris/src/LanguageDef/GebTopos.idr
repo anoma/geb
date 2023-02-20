@@ -114,7 +114,15 @@ FinBCSlF : (Type, Type) -> (Type, Type)
 FinBCSlF (a, b) = (FinBCTF (a, b), FinBCTLF (a, b))
 
 public export
+FinBCSPF : (BoolCP -> Type) -> BoolCP -> Type
+FinBCSPF f (Left ()) = FinBCTF (f BCPFalse, f BCPTrue)
+FinBCSPF f (Right ()) = FinBCTLF (f BCPFalse, f BCPTrue)
+
+public export
 data FinBCSl : BoolCP -> Type where
+  -- This is the equivalent of the following:
+  --    InFBC : (sl : BoolCP) -> FinBCSPF FinBCSl sl -> FinBCSl sl
+  -- But Idris doesn't realize that that's total.
   InFBT : FinBCTF (FinBCSl BCPFalse, FinBCSl BCPTrue) -> FinBCSl BCPFalse
   InFBTL : FinBCTLF (FinBCSl BCPFalse, FinBCSl BCPTrue) -> FinBCSl BCPTrue
 
