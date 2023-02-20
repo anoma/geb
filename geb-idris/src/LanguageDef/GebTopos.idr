@@ -134,6 +134,27 @@ public export
 FinBCTL : Type
 FinBCTL = FinBCSl BCPTrue
 
+-------------------------------------------------
+-------------------------------------------------
+---- Terms of finite product/coproduct types ----
+-------------------------------------------------
+-------------------------------------------------
+
+public export
+ProdTermF : (a -> Type, b -> Type) -> PairSPF (a, b) -> Type
+ProdTermF f x = ((fst f) (fst x), (snd f) (snd x))
+
+public export
+CoprodTermF : (a -> Type, b -> Type) -> EitherSPF (a, b) -> Type
+CoprodTermF f x = case x of Left ea => fst f ea ; Right eb => snd f eb
+
+public export
+ListTermF : (a -> Type, b -> Type) -> ListSPF (a, b) -> Type
+ListTermF f x = case x of Nothing => Unit ; Just p => ProdTermF f p -- nil/cons
+
+public export
+data FinTermSl : (sl : BoolCP) -> FinBCSl sl -> Type where
+
 --------------------------------------------
 --------------------------------------------
 ---- Vectors of bounded natural numbers ----
