@@ -115,10 +115,16 @@ FinBCSlF (a, b) = (FinBCTF (a, b), FinBCTLF (a, b))
 
 public export
 data FinBCSl : BoolCP -> Type where
-  InFBT :
-    FinBCTF (FinBCSl (Left ()), FinBCSl (Right ())) -> FinBCSl (Left ())
-  InFBTL :
-    FinBCTLF (FinBCSl (Left ()), FinBCSl (Right ())) -> FinBCSl (Right ())
+  InFBT : FinBCTF (FinBCSl BCPFalse, FinBCSl BCPTrue) -> FinBCSl BCPFalse
+  InFBTL : FinBCTLF (FinBCSl BCPFalse, FinBCSl BCPTrue) -> FinBCSl BCPTrue
+
+public export
+FinBCT : Type
+FinBCT = FinBCSl BCPFalse
+
+public export
+FinBCTL : Type
+FinBCTL = FinBCSl BCPTrue
 
 --------------------------------------------
 --------------------------------------------
