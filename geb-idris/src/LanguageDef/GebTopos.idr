@@ -9,6 +9,74 @@ import public LanguageDef.Syntax
 
 %default total
 
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+---- Dependent polynomial functors generating compound types ----
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+---------------
+---- Maybe ----
+---------------
+
+public export
+MaybeSPF : Type -> Type
+MaybeSPF = Maybe
+
+--------------
+---- Pair ----
+--------------
+
+public export
+PairSPF : (Type, Type) -> Type
+PairSPF = uncurry Pair
+
+--------------
+---- List ----
+--------------
+
+public export
+ListSPF : (Type, Type) -> Type
+ListSPF = MaybeSPF . PairSPF
+
+-------------
+---- Nat ----
+-------------
+
+public export
+NatSPF : Type -> Type
+NatSPF = MaybeSPF
+
+---------------
+---- Const ----
+---------------
+
+public export
+ConstSPF : Type -> Type -> Type
+ConstSPF = const
+
+--------------------------------
+---- Fin as refinement type ----
+--------------------------------
+
+public export
+FinR : Nat -> Type
+FinR n = Subset0 Nat (flip LT n)
+
+---------------------------------
+---- Fin as constant functor ----
+---------------------------------
+
+public export
+FinSPF : Nat -> Type -> Type
+FinSPF = ConstSPF . FinR
+
+--------------------------------------------
+--------------------------------------------
+---- Vectors of bounded natural numbers ----
+--------------------------------------------
+--------------------------------------------
+
 public export
 FinV : {0 len : Nat} -> SliceObj (Vect len Nat)
 FinV [] = ()
