@@ -95,6 +95,14 @@ public export
 FinRF : Nat -> Type -> Type
 FinRF = ConstSPF . FinR
 
+-------------------------------------
+---- GebAtom as constant functor ----
+-------------------------------------
+
+public export
+GebAtomF : Type -> Type
+GebAtomF = const GebAtom
+
 ----------------------------------------
 ----------------------------------------
 ---- Finite product/coproduct types ----
@@ -106,14 +114,14 @@ FinRF = ConstSPF . FinR
 -- second type is a type of pairs of types, and the third type is a type of
 -- lists of types.
 
--- A type is either a `FinR` or a product or a coproduct of either
--- a pair or a list of types.
+-- A type is either an atom (reserved opcode), `FinR`, or a product or a
+-- coproduct of either a pair or a list of types.
 -- (The coproduct of an empty list of types is an initial
 -- object; the product of an empty list of types is a
 -- terminal object.)
 public export
 FinBCTF : (Type, Type, Type) -> Type
-FinBCTF (a, b, c) = EitherSPF (Nat, SplitF (EitherSPF (b, c)))
+FinBCTF (a, b, c) = MaybeSPF (EitherSPF (Nat, SplitF (EitherSPF (b, c))))
 
 -- The first type in the product is the type of types,  so `DiagF` of that
 -- first type is the type of pairs of types.
@@ -173,29 +181,35 @@ public export
 FTp : FinBCT -> FinBCT -> FinBCTP
 FTp = InFBTP .* MkPair
 
+-- Make an atom type.
+public export
+FTA : FinBCT
+FTA = InFBT Nothing
+
 -- Make a `FinR` type.
+public export
 FTN : Nat -> FinBCT
-FTN = InFBT . Left
+FTN = InFBT . Just . Left
 
 -- Form a coproduct type from a pair of types.
 public export
 FTCP : FinBCTP -> FinBCT
-FTCP = InFBT . Right . Left . Left
+FTCP = InFBT . Just . Right . Left . Left
 
 -- Form a coproduct type from a list of types.
 public export
 FTCL : FinBCTL -> FinBCT
-FTCL = InFBT . Right . Left . Right
+FTCL = InFBT . Just . Right . Left . Right
 
 -- Form a product type from a pair of types.
 public export
 FTPP : FinBCTP -> FinBCT
-FTPP = InFBT . Right . Right . Left
+FTPP = InFBT . Just . Right . Right . Left
 
 -- Form a product type from a list of types.
 public export
 FTPL : FinBCTL -> FinBCT
-FTPL = InFBT . Right . Right . Right
+FTPL = InFBT . Just . Right . Right . Right
 
 -- An empty list of types.
 public export
@@ -255,7 +269,15 @@ data FTSlice : Type where
   -- A term from one of the given types
   FTCopL : FinBCTL -> FTSlice
 
+-- The slice representing terms of an atom type
+-- The slice representing terms of a coproduct of a pair of types
+public export
+FTSlA : FTSlice
+FTSlA = FTTerm FTA
+
 -- The slice representing terms of a bounded-natural-number type
+-- The slice representing terms of a coproduct of a pair of types
+public export
 FTSlN : Nat -> FTSlice
 FTSlN = FTTerm . FTN
 
@@ -307,6 +329,8 @@ FTSlProdL = FTProdL .* FTc
 
 public export
 data FinTermSl : FTSlice -> Type where
+  -- A term of an atom type is an atom
+  InFTA : GebAtom -> FinTermSl FTSlA
   -- A term of a bounded-natural-number type is a number which obeys the bounds.
   InFTN : {0 n : Nat} -> FinR n -> FinTermSl $ FTSlN n
   -- A term of a coproduct type is a term from one of the component types.
@@ -345,8 +369,16 @@ data FinTermSl : FTSlice -> Type where
     FinTermSl $ FTSlProdL ty tys
 
 public export
+FinTermA : Type
+FinTermA = FinTermSl FTSlA
+
+public export
 FinTermN : Nat -> Type
 FinTermN = FinTermSl . FTSlN
+
+public export
+TA : GebAtom -> FinTermA
+TA = InFTA
 
 public export
 TN : {0 n : Nat} -> (k : Nat) -> {auto 0 bound : LT k n} -> FinTermN n
