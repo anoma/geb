@@ -275,10 +275,17 @@ FTypeToGExpSl (Right (Right ())) = List GExp
 
 public export
 FTypeToGExpAlg : FTypeAlg FTypeToGExpSl
-FTypeToGExpAlg (Left ()) x = ?FTypeToGExpAlg_hole_ty
+FTypeToGExpAlg (Left ()) Nothing = InSA FBT_ATOM
+FTypeToGExpAlg (Left ()) (Just (Left k)) = InS FBT_BNAT [k] []
+FTypeToGExpAlg (Left ()) (Just (Right (Left (Left (MkPair x y))))) = ?FTypeToGExpAlg_hole_ty_9
+FTypeToGExpAlg (Left ()) (Just (Right (Left (Right Prelude.Nil)))) = ?FTypeToGExpAlg_hole_ty_10
+FTypeToGExpAlg (Left ()) (Just (Right (Left (Right (Prelude.(::) x xs))))) = ?FTypeToGExpAlg_hole_ty_11
+FTypeToGExpAlg (Left ()) (Just (Right (Right (Left (MkPair x y))))) = ?FTypeToGExpAlg_hole_ty_12
+FTypeToGExpAlg (Left ()) (Just (Right (Right (Right Prelude.Nil)))) = ?FTypeToGExpAlg_hole_ty_13
+FTypeToGExpAlg (Left ()) (Just (Right (Right (Right (Prelude.(::) x xs))))) = ?FTypeToGExpAlg_hole_ty_14
 FTypeToGExpAlg (Right (Left ())) (x, y) = (x, y)
 FTypeToGExpAlg (Right (Right ())) Nothing = []
-FTypeToGExpAlg (Right (Right ())) (Just (x, y)) = x :: y
+FTypeToGExpAlg (Right (Right ())) (Just (x, xs)) = x :: xs
 
 public export
 ftypeToGExp : SliceMorphism {a=FS3CP} FinBCSl FTypeToGExpSl

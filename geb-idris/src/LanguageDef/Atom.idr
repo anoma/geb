@@ -44,12 +44,16 @@ data GebAtom : Type where
   DIR_XCHD : GebAtom
   DIR_XCTL : GebAtom
 
+  -- Finite unrefined types
+  FBT_ATOM : GebAtom
+  FBT_BNAT : GebAtom
+
 -- The rest of this file implements enumerated-type interfaces for `GebAtom`,
 -- since Idris-2 doesn't have built-in enums.
 
 public export
 GASize : Nat
-GASize = 20
+GASize = 22
 
 public export
 GAFin : Type
@@ -93,6 +97,12 @@ GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS FZ))))))))))))))))))) =
     DIR_XCTL
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))) =
+    FBT_ATOM
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))) =
+    FBT_BNAT
 
 public export
 GAEncoder : NatEncoder GADecoder
@@ -116,6 +126,8 @@ GAEncoder DIR_NCHD = (16 ** Refl ** Refl)
 GAEncoder DIR_NCTL = (17 ** Refl ** Refl)
 GAEncoder DIR_XCHD = (18 ** Refl ** Refl)
 GAEncoder DIR_XCTL = (19 ** Refl ** Refl)
+GAEncoder FBT_ATOM = (20 ** Refl ** Refl)
+GAEncoder FBT_BNAT = (21 ** Refl ** Refl)
 
 public export
 GebAtomEncoding : FinDecEncoding GebAtom GASize
@@ -143,6 +155,8 @@ gaToString DIR_NCHD = "DIR_NCHD"
 gaToString DIR_NCTL = "DIR_NCTL"
 gaToString DIR_XCHD = "DIR_XCHD"
 gaToString DIR_XCTL = "DIR_XCTL"
+gaToString FBT_ATOM = "FBT_ATOM"
+gaToString FBT_BNAT = "FBT_BNAT"
 
 public export
 Show GebAtom where
