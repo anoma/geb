@@ -269,14 +269,16 @@ ftypeCata alg (Right (Right ())) (InFBTL (Just (ty, tys))) =
 
 public export
 FTypeToGExpSl : FS3CP -> Type
-FTypeToGExpSl i = ?FTypeToGExpSl_hole
+FTypeToGExpSl (Left ()) = GExp
+FTypeToGExpSl (Right (Left ())) = (GExp, GExp)
+FTypeToGExpSl (Right (Right ())) = List GExp
 
 public export
 FTypeToGExpAlg : FTypeAlg FTypeToGExpSl
-FTypeToGExpAlg = ?FTypeToGExpAlg_hole
+FTypeToGExpAlg sl x = ?FTypeToGExpAlg_hole
 
 public export
-ftypeToGExp : (sl : FS3CP) -> FinBCSl sl -> GExp
+ftypeToGExp : SliceMorphism {a=FS3CP} FinBCSl FTypeToGExpSl
 ftypeToGExp = ftypeCata FTypeToGExpAlg
 
 -------------------------------------------------
