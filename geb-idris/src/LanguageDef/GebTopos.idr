@@ -248,41 +248,36 @@ public export
 FTypeAlg : (FS3CP -> Type) -> Type
 FTypeAlg sa = SliceMorphism {a=FS3CP} (FinBCSPF sa) sa
 
-{-
 public export
 ftypeCata : FTypeAlg sa -> SliceMorphism FinBCSl sa
-ftypeCata alg sl x = alg sl $ case sl of
-  Left () => case x of
-    InFBT ty => case ty of
-      Nothing => Nothing
-      Just ty' => Just $ case ty' of
-        Left n => Left n
-        Right ty'' => Right $ case ty'' of
-          Left ty''' => Left $ case ty''' of
-            Left ty'''' => Left $ ftypeCata alg FS3CP1 ty''''
-            Right ty'''' => Right $ ftypeCata alg FS3CP2 ty''''
-          Right ty''' => Right $ case ty''' of
-            Left ty'''' => Left $ ftypeCata alg FS3CP1 ty''''
-            Right ty'''' => Right $ typeCata alg FS3CP2 ty''''
-  Right (Left ()) => case x of
-    InFBTP (tyl, tyr) => (ftypeCata alg FS3CP0 tyl, ftypeCata alg FS3CP0 tyr)
-  Right (Right ()) => case x of
-    InFBTL typl => case typl of
-      Nothing => Nothing
-      Just (hd, tl) => Just (ftypeCata alg FS3CP0 hd, ftypeCata alg FS3CP2 tl)
+ftypeCata alg (Left ()) (InFBT Nothing) = alg FS3CP0 Nothing
+ftypeCata alg (Left ()) (InFBT (Just (Left k))) = alg FS3CP0 $ Just $ Left k
+ftypeCata alg (Left ()) (InFBT (Just (Right (Left (Left typ))))) =
+  alg FS3CP0 $ Just $ Right $ Left $ Left $ ftypeCata alg FS3CP1 typ
+ftypeCata alg (Left ()) (InFBT (Just (Right (Left (Right tyl))))) =
+  alg FS3CP0 $ Just $ Right $ Left $ Right $ ftypeCata alg FS3CP2 tyl
+ftypeCata alg (Left ()) (InFBT (Just (Right (Right (Left typ))))) =
+  alg FS3CP0 $ Just $ Right $ Right $ Left $ ftypeCata alg FS3CP1 typ
+ftypeCata alg (Left ()) (InFBT (Just (Right (Right (Right tyl))))) =
+  alg FS3CP0 $ Just $ Right $ Right $ Right $ ftypeCata alg FS3CP2 tyl
+ftypeCata alg (Right (Left ())) (InFBTP (ty, ty')) =
+  alg FS3CP1 (ftypeCata alg FS3CP0 ty, ftypeCata alg FS3CP0 ty')
+ftypeCata alg (Right (Right ())) (InFBTL Nothing) =
+  alg FS3CP2 Nothing
+ftypeCata alg (Right (Right ())) (InFBTL (Just (ty, tys))) =
+  alg FS3CP2 $ Just (ftypeCata alg FS3CP0 ty, ftypeCata alg FS3CP2 tys)
 
 public export
 FTypeToGExpSl : FS3CP -> Type
-FTypeToGExpSl i = FTypeToGExpSl_hole
+FTypeToGExpSl i = ?FTypeToGExpSl_hole
 
 public export
 FTypeToGExpAlg : FTypeAlg FTypeToGExpSl
-FTypeToGExpAlg = FTypeToGExpAlg_hole
+FTypeToGExpAlg = ?FTypeToGExpAlg_hole
 
 public export
 ftypeToGExp : (sl : FS3CP) -> FinBCSl sl -> GExp
 ftypeToGExp = ftypeCata FTypeToGExpAlg
--}
 
 -------------------------------------------------
 -------------------------------------------------
