@@ -251,42 +251,88 @@ data FTSlice : Type where
   -- A term from one of the given types
   FTCopL : FinBCTL -> FTSlice
 
+-- The slice representing terms of a coproduct of a pair of types
+public export
+FTSlCP : FinBCTP -> FTSlice
+FTSlCP = FTTerm . FTCP
+
+-- The slice representing terms of a coproduct of a list of types
+public export
+FTSlCL : FinBCTP -> FTSlice
+FTSlCL = FTTerm . FTCL
+
+-- The slice representing terms of a product of a pair of types
+public export
+FTSlPP : FinBCTP -> FTSlice
+FTSlPP = FTTerm . FTPP
+
+-- The slice representing terms of a product of a list of types
+public export
+FTSlPL : FinBCTP -> FTSlice
+FTSlPL = FTTerm . FTPL
+
+-- The slice representing terms of either of a pair of types
+public export
+FTSlCopP : FinBCT -> FinBCT -> FTSlice
+FTSlCopP = FTCopP .* FTp
+
+-- The slice representing terms of either a type or a list of types
+public export
+FTSlCopL : FinBCT -> FinBCTL -> FTSlice
+FTSlCopL = FTCopL .* FTc
+
+-- The slice representing terms of unit type
+public export
+FTSlUnit : FTSlice
+FTSlUnit = FTProdL FTn
+
+-- The slice representing terms of each of a pair of types
+public export
+FTSlProdP : FinBCT -> FinBCT -> FTSlice
+FTSlProdP = FTProdP .* FTp
+
+-- The slice representing terms of a type together with terms of
+-- each of a list of types
+public export
+FTSlProdL : FinBCT -> FinBCTL -> FTSlice
+FTSlProdL = FTProdL .* FTc
+
 public export
 data FinTermSl : FTSlice -> Type where
   -- A term of a coproduct type is a term from one of the component types.
   InFTCP : {0 typ : FinBCTP} ->
-    FinTermSl (FTCopP typ) -> FinTermSl $ FTTerm (FTCP typ)
+    FinTermSl (FTCopP typ) -> FinTermSl $ FTSlCP typ
   InFTCL : {0 tys : FinBCTL} ->
-    FinTermSl (FTCopL tys) -> FinTermSl $ FTTerm (FTCL tys)
+    FinTermSl (FTCopL tys) -> FinTermSl $ FTSlCL tys
   -- A term of a product type is a term from each of the component types.
   InFTPP : {0 tys : FinBCTP} ->
-    FinTermSl (FTProdP tys) -> FinTermSl $ FTTerm (FTPP tys)
+    FinTermSl (FTProdP tys) -> FinTermSl $ FTSlPP tys
   InFTPL : {0 tys : FinBCTL} ->
-    FinTermSl (FTProdL tys) -> FinTermSl $ FTTerm (FTPL tys)
+    FinTermSl (FTProdL tys) -> FinTermSl $ FTSlPL tys
   -- There are no terms whose type is the coproduct of an empty list
   -- (that type is `Void`, the initial object).  A term of a coproduct
   -- of a non-empty list is either a term of the head type or a term
   -- from one of the tail types.
   InFTL : {0 tyl, tyr : FinBCT} ->
-    FinTermSl (FTTerm tyl) -> FinTermSl $ FTCopP $ FTp tyl tyr
+    FinTermSl (FTTerm tyl) -> FinTermSl $ FTSlCopP tyl tyr
   InFTR : {0 tyl, tyr : FinBCT} ->
-    FinTermSl (FTTerm tyr) -> FinTermSl $ FTCopP $ FTp tyl tyr
+    FinTermSl (FTTerm tyr) -> FinTermSl $ FTSlCopP tyl tyr
   InFTH : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
-    FinTermSl (FTTerm ty) -> FinTermSl $ FTCopL $ FTc ty tys
+    FinTermSl (FTTerm ty) -> FinTermSl $ FTSlCopL ty tys
   InFTTL : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
-    FinTermSl (FTCopL tys) -> FinTermSl $ FTCopL $ FTc ty tys
+    FinTermSl (FTCopL tys) -> FinTermSl $ FTSlCopL ty tys
   -- A term of the product of an empty list is unit.
-  InFTU : FinTermSl $ FTProdL $ InFBTL Nothing
+  InFTU : FinTermSl $ FTSlUnit
   -- A term of a type of pairs of types is a term of the first type
   -- together with a term of the second type.
   InFPair : {0 tyl, tyr : FinBCT} ->
     FinTermSl (FTTerm tyl) -> FinTermSl (FTTerm tyr) ->
-    FinTermSl $ FTProdP $ FTp tyl tyr
+    FinTermSl $ FTSlProdP tyl tyr
   -- A term of the product of a non-empty list is a term of the head type
   -- together with a list of terms from each of the tail types.
   InFList : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
     FinTermSl (FTTerm ty) -> FinTermSl (FTProdL tys) ->
-    FinTermSl $ FTProdL $ FTc ty tys
+    FinTermSl $ FTSlProdL ty tys
 
 --------------------------------------------
 --------------------------------------------
