@@ -270,13 +270,11 @@ data FTSlice : Type where
   FTCopL : FinBCTL -> FTSlice
 
 -- The slice representing terms of an atom type
--- The slice representing terms of a coproduct of a pair of types
 public export
 FTSlA : FTSlice
 FTSlA = FTTerm FTA
 
 -- The slice representing terms of a bounded-natural-number type
--- The slice representing terms of a coproduct of a pair of types
 public export
 FTSlN : Nat -> FTSlice
 FTSlN = FTTerm . FTN
