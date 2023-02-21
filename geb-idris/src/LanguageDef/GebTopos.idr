@@ -106,14 +106,14 @@ FinRF = ConstSPF . FinR
 -- second type is a type of pairs of types, and the third type is a type of
 -- lists of types.
 
--- A type is either a product or a coproduct, of either
+-- A type is either a `FinR` or a product or a coproduct of either
 -- a pair or a list of types.
 -- (The coproduct of an empty list of types is an initial
 -- object; the product of an empty list of types is a
 -- terminal object.)
 public export
 FinBCTF : (Type, Type, Type) -> Type
-FinBCTF (a, b, c) = SplitF (EitherSPF (b, c))
+FinBCTF (a, b, c) = EitherSPF (Nat, SplitF (EitherSPF (b, c)))
 
 -- The first type in the product is the type of types,  so `DiagF` of that
 -- first type is the type of pairs of types.
@@ -173,25 +173,29 @@ public export
 FTp : FinBCT -> FinBCT -> FinBCTP
 FTp = InFBTP .* MkPair
 
+-- Make a `FinR` type.
+FTN : Nat -> FinBCT
+FTN = InFBT . Left
+
 -- Form a coproduct type from a pair of types.
 public export
 FTCP : FinBCTP -> FinBCT
-FTCP = InFBT . Left . Left
+FTCP = InFBT . Right . Left . Left
 
 -- Form a coproduct type from a list of types.
 public export
 FTCL : FinBCTL -> FinBCT
-FTCL = InFBT . Left . Right
+FTCL = InFBT . Right . Left . Right
 
 -- Form a product type from a pair of types.
 public export
 FTPP : FinBCTP -> FinBCT
-FTPP = InFBT . Right . Left
+FTPP = InFBT . Right . Right . Left
 
 -- Form a product type from a list of types.
 public export
 FTPL : FinBCTL -> FinBCT
-FTPL = InFBT . Right . Right
+FTPL = InFBT . Right . Right . Right
 
 -- An empty list of types.
 public export
@@ -251,6 +255,10 @@ data FTSlice : Type where
   -- A term from one of the given types
   FTCopL : FinBCTL -> FTSlice
 
+-- The slice representing terms of a bounded-natural-number type
+FTSlN : Nat -> FTSlice
+FTSlN = FTTerm . FTN
+
 -- The slice representing terms of a coproduct of a pair of types
 public export
 FTSlCP : FinBCTP -> FTSlice
@@ -299,6 +307,8 @@ FTSlProdL = FTProdL .* FTc
 
 public export
 data FinTermSl : FTSlice -> Type where
+  -- A term of a bounded-natural-number type is a number which obeys the bounds.
+  InFTN : {0 n : Nat} -> FinR n -> FinTermSl $ FTSlN n
   -- A term of a coproduct type is a term from one of the component types.
   InFTCP : {0 typ : FinBCTP} ->
     FinTermSl (FTCopP typ) -> FinTermSl $ FTSlCP typ
@@ -333,6 +343,14 @@ data FinTermSl : FTSlice -> Type where
   InFList : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
     FinTermSl (FTTerm ty) -> FinTermSl (FTProdL tys) ->
     FinTermSl $ FTSlProdL ty tys
+
+public export
+FinTermN : Nat -> Type
+FinTermN = FinTermSl . FTSlN
+
+public export
+TN : {0 n : Nat} -> (k : Nat) -> {auto 0 bound : LT k n} -> FinTermN n
+TN {n} k {bound} = InFTN $ Element0 k bound
 
 --------------------------------------------
 --------------------------------------------
