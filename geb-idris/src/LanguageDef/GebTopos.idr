@@ -102,47 +102,73 @@ FinRF = ConstSPF . FinR
 ----------------------------------------
 
 public export
-FinBCTF : (Type, Type) -> Type
-FinBCTF = SplitF . snd
+FinBCTF : (Type, Type, Type) -> Type
+FinBCTF (a, b, c) = SplitF (EitherSPF (b, c))
 
 public export
-FinBCTLF : (Type, Type) -> Type
-FinBCTLF = ListSPF
+FinBCTPF : (Type, Type, Type) -> Type
+FinBCTPF (a, b, c) = DiagF a
 
 public export
-FinBCSlF : (Type, Type) -> (Type, Type)
-FinBCSlF (a, b) = (FinBCTF (a, b), FinBCTLF (a, b))
+FinBCTLF : (Type, Type, Type) -> Type
+FinBCTLF (a, b, c) = ListSPF (a, c)
 
 public export
-FinBCSPF : (BoolCP -> Type) -> BoolCP -> Type
-FinBCSPF f (Left ()) = FinBCTF (f BCPFalse, f BCPTrue)
-FinBCSPF f (Right ()) = FinBCTLF (f BCPFalse, f BCPTrue)
+FinBCSlF : (Type, Type, Type) -> (Type, Type, Type)
+FinBCSlF (a, b, c) = (FinBCTF (a, b, c), FinBCTPF (a, b, c), FinBCTLF (a, b, c))
 
 public export
-data FinBCSl : BoolCP -> Type where
+FinBCSPF : (FS3CP -> Type) -> FS3CP -> Type
+FinBCSPF f (Left ()) = FinBCTF (f FS3CP0, f FS3CP1, f FS3CP2)
+FinBCSPF f (Right (Left ())) = FinBCTPF (f FS3CP0, f FS3CP1, f FS3CP2)
+FinBCSPF f (Right (Right ())) = FinBCTLF (f FS3CP0, f FS3CP1, f FS3CP2)
+
+public export
+data FinBCSl : FS3CP -> Type where
   -- This is the equivalent of the following:
-  --    InFBC : (sl : BoolCP) -> FinBCSPF FinBCSl sl -> FinBCSl sl
+  --    InFBC : (sl : FS3CP) -> FinBCSPF FinBCSl sl -> FinBCSl sl
   -- But Idris doesn't realize that that's total.
-  InFBT : FinBCTF (FinBCSl BCPFalse, FinBCSl BCPTrue) -> FinBCSl BCPFalse
-  InFBTL : FinBCTLF (FinBCSl BCPFalse, FinBCSl BCPTrue) -> FinBCSl BCPTrue
+  InFBT :
+    FinBCTF (FinBCSl FS3CP0, FinBCSl FS3CP1, FinBCSl FS3CP2) -> FinBCSl FS3CP0
+  InFBTP :
+    FinBCTPF (FinBCSl FS3CP0, FinBCSl FS3CP1, FinBCSl FS3CP2) -> FinBCSl FS3CP1
+  InFBTL :
+    FinBCTLF (FinBCSl FS3CP0, FinBCSl FS3CP1, FinBCSl FS3CP2) -> FinBCSl FS3CP2
 
+-- Finite product/coproduct types.
 public export
 FinBCT : Type
-FinBCT = FinBCSl BCPFalse
+FinBCT = FinBCSl FS3CP0
 
+-- Pairs of product/coproduct types.
+public export
+FinBCTP : Type
+FinBCTP = FinBCSl FS3CP1
+
+-- Lists of product/coproduct types.
 public export
 FinBCTL : Type
-FinBCTL = FinBCSl BCPTrue
+FinBCTL = FinBCSl FS3CP2
+
+-- Form a coproduct type from a pair of types.
+public export
+FTCP : FinBCTP -> FinBCT
+FTCP = InFBT . Left . Left
 
 -- Form a coproduct type from a list of types.
 public export
-FTC : FinBCTL -> FinBCT
-FTC = InFBT . Left
+FTCL : FinBCTL -> FinBCT
+FTCL = InFBT . Left . Right
+
+-- Form a product type from a pair of types.
+public export
+FTPP : FinBCTP -> FinBCT
+FTPP = InFBT . Right . Left
 
 -- Form a product type from a list of types.
 public export
-FTP : FinBCTL -> FinBCT
-FTP = InFBT . Right
+FTPL : FinBCTL -> FinBCT
+FTPL = InFBT . Right . Right
 
 -- An empty list of types.
 public export
@@ -158,13 +184,22 @@ FTc = InFBTL . Just .* MkPair
 -- resulting list of types.
 public export
 FTcp : FinBCT -> FinBCTL -> FinBCT
-FTcp = FTP .* FTc
+FTcp = FTPL .* FTc
 
 -- Cons a type and a list of types, then take the coproduct of the
 -- resulting list of types.
 public export
 FTcc : FinBCT -> FinBCTL -> FinBCT
-FTcc = FTC .* FTc
+FTcc = FTCL .* FTc
+
+-- Make a term of type "pair of types" from a metalanguage pair of types.
+FTp : FinBCT -> FinBCT -> FinBCTP
+FTp = InFBTP .* MkPair
+
+-- Make a term of type "list of types" from a metalanguage list of types.
+public export
+FTl : List FinBCT -> FinBCTL
+FTl = foldr FTc FTn
 
 -------------------------------------------------
 -------------------------------------------------
@@ -187,35 +222,52 @@ ListTermF f x = case x of Nothing => Unit ; Just p => ProdTermF f p -- nil/cons
 public export
 data FTSlice : Type where
   -- A term of the given type
-  FTTerm : FinBCSl BCPFalse -> FTSlice
+  FTTerm : FinBCSl FS3CP0 -> FTSlice
+  -- A pair of terms, one of each of the two given types
+  FTProdP : FinBCSl FS3CP1 -> FTSlice
+  -- A term from one or the other of the two given types
+  FTCopP : FinBCSl FS3CP1 -> FTSlice
   -- A list of terms, one of each of the given types
-  FTProd : FinBCSl BCPTrue -> FTSlice
+  FTProdL : FinBCSl FS3CP2 -> FTSlice
   -- A term from one of the given types
-  FTCop : FinBCSl BCPTrue -> FTSlice
+  FTCopL : FinBCSl FS3CP2 -> FTSlice
 
 public export
 data FinTermSl : FTSlice -> Type where
   -- A term of a coproduct type is a term from one of the component types.
-  InFTC : {0 tys : FinBCTL} ->
-    FinTermSl (FTCop tys) -> FinTermSl $ FTTerm (FTC tys)
+  InFTCP : {0 typ : FinBCTP} ->
+    FinTermSl (FTCopP typ) -> FinTermSl $ FTTerm (FTCP typ)
+  InFTCL : {0 tys : FinBCTL} ->
+    FinTermSl (FTCopL tys) -> FinTermSl $ FTTerm (FTCL tys)
   -- A term of a product type is a term from each of the component types.
-  InFTP : {0 tys : FinBCTL} ->
-    FinTermSl (FTProd tys) -> FinTermSl $ FTTerm (FTP tys)
+  InFTPP : {0 tys : FinBCTP} ->
+    FinTermSl (FTProdP tys) -> FinTermSl $ FTTerm (FTPP tys)
+  InFTPL : {0 tys : FinBCTL} ->
+    FinTermSl (FTProdL tys) -> FinTermSl $ FTTerm (FTPL tys)
   -- There are no terms whose type is the coproduct of an empty list
   -- (that type is `Void`, the initial object).  A term of a coproduct
   -- of a non-empty list is either a term of the head type or a term
   -- from one of the tail types.
+  InFTL : {0 tyl, tyr : FinBCT} ->
+    FinTermSl (FTTerm tyl) -> FinTermSl $ FTCopP $ FTp tyl tyr
+  InFTR : {0 tyl, tyr : FinBCT} ->
+    FinTermSl (FTTerm tyr) -> FinTermSl $ FTCopP $ FTp tyl tyr
   InFTH : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
-    FinTermSl (FTTerm ty) -> FinTermSl $ FTCop $ FTc ty tys
+    FinTermSl (FTTerm ty) -> FinTermSl $ FTCopL $ FTc ty tys
   InFTTL : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
-    FinTermSl (FTCop tys) -> FinTermSl $ FTCop $ FTc ty tys
+    FinTermSl (FTCopL tys) -> FinTermSl $ FTCopL $ FTc ty tys
   -- A term of the product of an empty list is unit.
-  InFTU : FinTermSl $ FTProd $ InFBTL Nothing
+  InFTU : FinTermSl $ FTProdL $ InFBTL Nothing
+  -- A term of a type of pairs of types is a term of the first type
+  -- together with a term of the second type.
+  InFPair : {0 tyl, tyr : FinBCT} ->
+    FinTermSl (FTTerm tyl) -> FinTermSl (FTTerm tyr) ->
+    FinTermSl $ FTProdP $ FTp tyl tyr
   -- A term of the product of a non-empty list is a term of the head type
   -- together with a list of terms from each of the tail types.
-  InFTL : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
-    FinTermSl (FTTerm ty) -> FinTermSl (FTProd tys) ->
-    FinTermSl $ FTProd $ FTc ty tys
+  InFList : {0 ty : FinBCT} -> {0 tys : FinBCTL} ->
+    FinTermSl (FTTerm ty) -> FinTermSl (FTProdL tys) ->
+    FinTermSl $ FTProdL $ FTc ty tys
 
 --------------------------------------------
 --------------------------------------------
