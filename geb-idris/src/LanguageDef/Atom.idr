@@ -47,13 +47,17 @@ data GebAtom : Type where
   -- Finite unrefined types
   FBT_ATOM : GebAtom
   FBT_BNAT : GebAtom
+  FBT_COPRODUCT : GebAtom
+  FBT_COPRODUCT_L : GebAtom
+  FBT_PRODUCT : GebAtom
+  FBT_PRODUCT_L : GebAtom
 
 -- The rest of this file implements enumerated-type interfaces for `GebAtom`,
 -- since Idris-2 doesn't have built-in enums.
 
 public export
 GASize : Nat
-GASize = 22
+GASize = 26
 
 public export
 GAFin : Type
@@ -103,6 +107,18 @@ GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))) =
     FBT_BNAT
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))) =
+    FBT_COPRODUCT
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))) =
+    FBT_COPRODUCT_L
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))))) =
+    FBT_PRODUCT
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))))) =
+    FBT_PRODUCT_L
 
 public export
 GAEncoder : NatEncoder GADecoder
@@ -128,6 +144,10 @@ GAEncoder DIR_XCHD = (18 ** Refl ** Refl)
 GAEncoder DIR_XCTL = (19 ** Refl ** Refl)
 GAEncoder FBT_ATOM = (20 ** Refl ** Refl)
 GAEncoder FBT_BNAT = (21 ** Refl ** Refl)
+GAEncoder FBT_COPRODUCT = (22 ** Refl ** Refl)
+GAEncoder FBT_COPRODUCT_L = (23 ** Refl ** Refl)
+GAEncoder FBT_PRODUCT = (24 ** Refl ** Refl)
+GAEncoder FBT_PRODUCT_L = (25 ** Refl ** Refl)
 
 public export
 GebAtomEncoding : FinDecEncoding GebAtom GASize
@@ -157,6 +177,10 @@ gaToString DIR_XCHD = "DIR_XCHD"
 gaToString DIR_XCTL = "DIR_XCTL"
 gaToString FBT_ATOM = "FBT_ATOM"
 gaToString FBT_BNAT = "FBT_BNAT"
+gaToString FBT_COPRODUCT = "FBT_COPRODUCT"
+gaToString FBT_COPRODUCT_L = "FBT_COPRODUCT_L"
+gaToString FBT_PRODUCT = "FBT_PRODUCT"
+gaToString FBT_PRODUCT_L = "FBT_PRODUCT_L"
 
 public export
 Show GebAtom where
