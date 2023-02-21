@@ -116,6 +116,11 @@
   (make-application :func :pwmod32
                     :arguments (list f g x)))
 
+(defun negative31 (a)
+  (make-application
+   :func :negative32
+   :arguments (list a)))
+
 (defparameter *next-range*
   (let ((a-wire (make-wire :var :a)))
     (make-alias
@@ -209,6 +214,19 @@
                                        :rhs (make-constant :const (expt 2 30)))))))
 
 
+(defparameter *negative31*
+  (flet ((wires (num)
+           (make-wire :var (intern (format nil "A~a" num) :keyword))))
+    (make-alias
+     :name   :negative31
+     :inputs (list :a)
+     :body
+     (list (make-bind
+            :names (append (mapcar #'wires (alexandria:iota 31))
+                           (list (make-wire :var :|()|)))
+            :value (int-range31 (make-wire :var :a)))
+           (make-wire :var :a30)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; "Less than"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -274,12 +292,13 @@
                  (make-infix :op :*
                              :lhs (make-infix
                                    :op :+
-                                   :lhs (make-infix :op :*
-                                                    :lhs (make-infix
-                                                          :op :-
-                                                          :lhs (make-constant :const 1)
-                                                          :rhs t-wire)
-                                                    :rhs p-wire)
+                                   :lhs (make-infix
+                                         :op :*
+                                         :lhs (make-infix
+                                               :op :-
+                                               :lhs (make-constant :const 1)
+                                               :rhs t-wire)
+                                         :rhs p-wire)
                                    :rhs t-wire)
                              :rhs q-wire)))))
 
@@ -338,3 +357,20 @@
                                                      :arguments (list x-wire))
                                    (make-application :func :g
                                                      :arguments (list x-wire))))))))
+
+
+(defparameter *standard-library*
+  (list
+   *non-negative32*
+   *int-range32*
+   *int-range31*
+   *negative32*
+   *less32*
+   *mod32*))
+
+(-> extract (list &optional stream) stream)
+(defun extract (stmts &optional (stream *standard-output*))
+  (let ((*print-pretty*      t)
+        (*print-miser-width* 40))
+    (format stream "~{~A~^~%~}" stmts))
+  stream)
