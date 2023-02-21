@@ -286,7 +286,7 @@ FTSlCP = FTTerm . FTCP
 
 -- The slice representing terms of a coproduct of a list of types
 public export
-FTSlCL : FinBCTP -> FTSlice
+FTSlCL : FinBCTL -> FTSlice
 FTSlCL = FTTerm . FTCL
 
 -- The slice representing terms of a product of a pair of types
@@ -296,7 +296,7 @@ FTSlPP = FTTerm . FTPP
 
 -- The slice representing terms of a product of a list of types
 public export
-FTSlPL : FinBCTP -> FTSlice
+FTSlPL : FinBCTL -> FTSlice
 FTSlPL = FTTerm . FTPL
 
 -- The slice representing terms of either of a pair of types
