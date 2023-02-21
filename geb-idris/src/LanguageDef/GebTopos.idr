@@ -275,7 +275,10 @@ FTypeToGExpSl (Right (Right ())) = List GExp
 
 public export
 FTypeToGExpAlg : FTypeAlg FTypeToGExpSl
-FTypeToGExpAlg sl x = ?FTypeToGExpAlg_hole
+FTypeToGExpAlg (Left ()) x = ?FTypeToGExpAlg_hole_ty
+FTypeToGExpAlg (Right (Left ())) (x, y) = (x, y)
+FTypeToGExpAlg (Right (Right ())) Nothing = []
+FTypeToGExpAlg (Right (Right ())) (Just (x, y)) = x :: y
 
 public export
 ftypeToGExp : SliceMorphism {a=FS3CP} FinBCSl FTypeToGExpSl
