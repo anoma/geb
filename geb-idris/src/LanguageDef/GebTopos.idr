@@ -101,17 +101,34 @@ FinRF = ConstSPF . FinR
 ----------------------------------------
 ----------------------------------------
 
+-- The following functors operate on the product category `Type x Type x Type`;
+-- they assume that the first type in the product is a type of types, the
+-- second type is a type of pairs of types, and the third type is a type of
+-- lists of types.
+
+-- A type is either a product or a coproduct, of either
+-- a pair or a list of types.
+-- (The coproduct of an empty list of types is an initial
+-- object; the product of an empty list of types is a
+-- terminal object.)
 public export
 FinBCTF : (Type, Type, Type) -> Type
 FinBCTF (a, b, c) = SplitF (EitherSPF (b, c))
 
+-- The first type in the product is the type of types,  so `DiagF` of that
+-- first type is the type of pairs of types.
 public export
 FinBCTPF : (Type, Type, Type) -> Type
 FinBCTPF (a, b, c) = DiagF a
 
+-- The type of lists of types is the type of either nothing or pairs of
+-- types and lists of types.
 public export
 FinBCTLF : (Type, Type, Type) -> Type
 FinBCTLF (a, b, c) = ListSPF (a, c)
+
+-- Here we put together the three `Type x Type x Type -> Type` functors into
+-- a single `Type x Type x Type -> Type x Type x Type` endofunctor.
 
 public export
 FinBCSlF : (Type, Type, Type) -> (Type, Type, Type)
@@ -128,6 +145,7 @@ data FinBCSl : FS3CP -> Type where
   -- This is the equivalent of the following:
   --    InFBC : (sl : FS3CP) -> FinBCSPF FinBCSl sl -> FinBCSl sl
   -- But Idris doesn't realize that that's total.
+  --    InFBC : (sl : FS3CP) -> FinBCSPF FinBCSl sl -> FinBCSl sl
   InFBT :
     FinBCTF (FinBCSl FS3CP0, FinBCSl FS3CP1, FinBCSl FS3CP2) -> FinBCSl FS3CP0
   InFBTP :
@@ -149,6 +167,11 @@ FinBCTP = FinBCSl FS3CP1
 public export
 FinBCTL : Type
 FinBCTL = FinBCSl FS3CP2
+
+-- Make a term of type "pair of types" from a metalanguage pair of types.
+public export
+FTp : FinBCT -> FinBCT -> FinBCTP
+FTp = InFBTP .* MkPair
 
 -- Form a coproduct type from a pair of types.
 public export
@@ -192,10 +215,6 @@ public export
 FTcc : FinBCT -> FinBCTL -> FinBCT
 FTcc = FTCL .* FTc
 
--- Make a term of type "pair of types" from a metalanguage pair of types.
-FTp : FinBCT -> FinBCT -> FinBCTP
-FTp = InFBTP .* MkPair
-
 -- Make a term of type "list of types" from a metalanguage list of types.
 public export
 FTl : List FinBCT -> FinBCTL
@@ -222,15 +241,15 @@ ListTermF f x = case x of Nothing => Unit ; Just p => ProdTermF f p -- nil/cons
 public export
 data FTSlice : Type where
   -- A term of the given type
-  FTTerm : FinBCSl FS3CP0 -> FTSlice
+  FTTerm : FinBCT -> FTSlice
   -- A pair of terms, one of each of the two given types
-  FTProdP : FinBCSl FS3CP1 -> FTSlice
+  FTProdP : FinBCTP -> FTSlice
   -- A term from one or the other of the two given types
-  FTCopP : FinBCSl FS3CP1 -> FTSlice
+  FTCopP : FinBCTP -> FTSlice
   -- A list of terms, one of each of the given types
-  FTProdL : FinBCSl FS3CP2 -> FTSlice
+  FTProdL : FinBCTL -> FTSlice
   -- A term from one of the given types
-  FTCopL : FinBCSl FS3CP2 -> FTSlice
+  FTCopL : FinBCTL -> FTSlice
 
 public export
 data FinTermSl : FTSlice -> Type where
