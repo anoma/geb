@@ -3276,12 +3276,10 @@ public export
 ($!) : ADTTerm
 ($!) = InADTT ADTUnit
 
-prefix 10 $<
 public export
 ($<) : ADTTerm -> ADTTerm
 ($<) t = InADTT (ADTLeft t)
 
-prefix 10 $>
 public export
 ($>) : ADTTerm -> ADTTerm
 ($>) t = InADTT (ADTRight t)
