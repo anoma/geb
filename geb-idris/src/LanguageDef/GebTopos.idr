@@ -238,6 +238,52 @@ public export
 FTl : List FinBCT -> FinBCTL
 FTl = foldr FTc FTn
 
+------------------------------------------
+------------------------------------------
+---- S-expressions representing types ----
+------------------------------------------
+------------------------------------------
+
+public export
+FTypeAlg : (FS3CP -> Type) -> Type
+FTypeAlg sa = SliceMorphism {a=FS3CP} (FinBCSPF sa) sa
+
+{-
+public export
+ftypeCata : FTypeAlg sa -> SliceMorphism FinBCSl sa
+ftypeCata alg sl x = alg sl $ case sl of
+  Left () => case x of
+    InFBT ty => case ty of
+      Nothing => Nothing
+      Just ty' => Just $ case ty' of
+        Left n => Left n
+        Right ty'' => Right $ case ty'' of
+          Left ty''' => Left $ case ty''' of
+            Left ty'''' => Left $ ftypeCata alg FS3CP1 ty''''
+            Right ty'''' => Right $ ftypeCata alg FS3CP2 ty''''
+          Right ty''' => Right $ case ty''' of
+            Left ty'''' => Left $ ftypeCata alg FS3CP1 ty''''
+            Right ty'''' => Right $ typeCata alg FS3CP2 ty''''
+  Right (Left ()) => case x of
+    InFBTP (tyl, tyr) => (ftypeCata alg FS3CP0 tyl, ftypeCata alg FS3CP0 tyr)
+  Right (Right ()) => case x of
+    InFBTL typl => case typl of
+      Nothing => Nothing
+      Just (hd, tl) => Just (ftypeCata alg FS3CP0 hd, ftypeCata alg FS3CP2 tl)
+
+public export
+FTypeToGExpSl : FS3CP -> Type
+FTypeToGExpSl i = FTypeToGExpSl_hole
+
+public export
+FTypeToGExpAlg : FTypeAlg FTypeToGExpSl
+FTypeToGExpAlg = FTypeToGExpAlg_hole
+
+public export
+ftypeToGExp : (sl : FS3CP) -> FinBCSl sl -> GExp
+ftypeToGExp = ftypeCata FTypeToGExpAlg
+-}
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Terms of finite product/coproduct types ----
