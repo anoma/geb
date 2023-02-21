@@ -1320,7 +1320,7 @@ FS3CP0 = Left ()
 
 public export
 FS3CP1 : FS3CP
-FS3CP1 = Right BCPTrue
+FS3CP1 = Right BCPFalse
 
 public export
 FS3CP2 : FS3CP
