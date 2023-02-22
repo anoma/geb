@@ -8732,8 +8732,10 @@ compileCheckedTerm {ctx} {ty=lty} (Checked_STLC_Fst {lty} {rty} p) =
 compileCheckedTerm {ctx} {ty=rty} (Checked_STLC_Snd {lty} {rty} p) =
   SMProjRight lty rty <! compileCheckedTerm {ctx} {ty=(lty !* rty)} p
 compileCheckedTerm
-  {ctx} {ty=(vty !-> tty)} (Checked_STLC_Lambda {vty} {tty} t) =
-    soCurry $ soProdCommutesLeft $ compileCheckedTerm t
+  {ctx} {ty=(vty !-> tty)} (Checked_STLC_Lambda {ctx} {vty} {tty} t) =
+    soCurry {x=(stlcCtxToSOMu ctx)} {y=vty} {z=tty} $
+    soProdCommutesLeft {x=vty} {y=(stlcCtxToSOMu ctx)} {z=tty} $
+    compileCheckedTerm {ctx=(vty :: ctx)} {ty=tty} t
 compileCheckedTerm {ctx} {ty=cod} (Checked_STLC_App {dom} {cod} f x) =
   soEval dom cod <! SMPair (compileCheckedTerm f) (compileCheckedTerm x)
 compileCheckedTerm
