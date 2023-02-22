@@ -5,3 +5,4 @@
 *.*fsl
 *.*fas
 .vscode
+build/
