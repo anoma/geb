@@ -103,6 +103,12 @@
       (geb:prod geb-bool:bool (geb:prod geb:so0 (geb:prod geb:so1 geb:so1)))
       "fold multi-object context"))
 
+(define-test so-hom-so1-so1 :parent compile-checked-term
+  (is equalp
+      (lambda:so-hom geb:so1 geb:so1)
+      geb:so1
+      "compute hom(so1,so1)"))
+
 (define-test vampir-test-unit-to-unit
   :parent geb.lambda.trans
   (of-type geb.vampir.spec:alias unit-to-unit-circuit))

@@ -81,6 +81,11 @@
   "Converts a generic [<STLC>][type] context into a [SUBSTMORPH][type]"
   (mvfoldr #'prod context so1))
 
+(-> so-hom (substobj substobj) substobj)
+(defun so-hom (dom cod)
+  "Computes the hom-object of two [SUBSTMORPH]s"
+  (geb:so-hom-obj dom cod))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utility Functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

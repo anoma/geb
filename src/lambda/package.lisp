@@ -37,7 +37,8 @@
 
 (pax:defsection @utility (:title "Utility Functionality")
   "These are utility functions relating to translating lambda terms to other types"
-  (stlc-ctx-to-mu  pax:function))
+  (stlc-ctx-to-mu  pax:function)
+  (so-hom  pax:function))
 
 (pax:defsection @stlc-conversion (:title "Transition Functions")
   "These functions deal with transforming the data structure to other
