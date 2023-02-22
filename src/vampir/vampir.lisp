@@ -246,37 +246,7 @@
                                                      (make-infix :op :-
                                                                  :lhs a-wire
                                                                  :rhs b-wire)))))))
-(defparameter *pwless32*
-  (let ((x-wire (make-wire :var :x))
-        (t-wire (make-wire :var :t)))
-    (make-alias :name :pwless32
-                :inputs (list :f :g :p :q :x)
-                :body
-                (list
-                 (make-bind :names (list t-wire)
-                            :value (make-application
-                                    :func :less32
-                                    :arguments
-                                    (list
-                                     (make-application :func :f
-                                                       :arguments (list x-wire))
-                                     (make-application :func :g
-                                                       :arguments (list x-wire)))))
-                 (make-infix :op :*
-                             :lhs (make-infix
-                                   :op :+
-                                   :lhs (make-infix :op :*
-                                                    :lhs (make-infix
-                                                          :op :-
-                                                          :lhs (make-constant :const 1)
-                                                          :rhs t-wire)
-                                                    :rhs (make-application
-                                                          :func :p
-                                                          :arguments (list x-wire)))
-                                   :rhs t-wire)
-                             :rhs (make-application
-                                   :func :q
-                                   :arguments (list x-wire)))))))
+
 (defparameter *pwless32*
   (let ((t-wire (make-wire :var :t))
         (p-wire (make-wire :var :p))
@@ -289,18 +259,15 @@
                 (list
                  (make-bind :names (list t-wire)
                             :value (less32 f-wire g-wire))
-                 (make-infix :op :*
-                             :lhs (make-infix
-                                   :op :+
-                                   :lhs (make-infix
-                                         :op :*
-                                         :lhs (make-infix
-                                               :op :-
-                                               :lhs (make-constant :const 1)
-                                               :rhs t-wire)
-                                         :rhs p-wire)
-                                   :rhs t-wire)
-                             :rhs q-wire)))))
+                 (make-infix :op :+
+                             :lhs (make-infix :op :*
+                                              :lhs (make-infix :op :-
+                                                               :lhs (make-constant :const 1)
+                                                               :rhs t-wire)
+                                              :rhs p-wire)
+                             :rhs (make-infix :op :*
+                                              :lhs t-wire
+                                              :rhs q-wire))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pointwise modulus
