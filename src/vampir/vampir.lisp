@@ -264,10 +264,10 @@
                                               :lhs (make-infix :op :-
                                                                :lhs (make-constant :const 1)
                                                                :rhs t-wire)
-                                              :rhs q-wire)
+                                              :rhs p-wire)
                              :rhs (make-infix :op :*
                                               :lhs t-wire
-                                              :rhs p-wire))))))
+                                              :rhs q-wire))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pointwise modulus
