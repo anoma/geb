@@ -60,7 +60,6 @@
        (comp (<-right lty rty) (compile-checked-term context (prod lty rty) value)))
       ((lamb vty tty term)
        (curry (commutes-left
-               ;; is this correct?
                (compile-checked-term (cons vty context) tty term))))
       ((app dom com f x)
        (assert (geb.mixins:obj-equalp dom type) nil "Types should match for application: ~A ~A" dom type)
