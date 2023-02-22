@@ -30,11 +30,46 @@
    :make-alias :make-pub :make-infix :make-application :make-tuples
    :make-bind  :make-equality :make-wire :make-constant))
 
-(defpackage #:geb.vampir
-  (:documentation "Provides a vampir representation")
-  (:use #:common-lisp #:serapeum #:geb.vampir.spec)
-  (:shadowing-import-from #:geb.vampir.spec #:op #:tuple)
-  (:shadow :=)
-  (:local-nicknames (#:spc #:geb.vampir.spec))
-  (:export :extract))
+(geb.utils:muffle-package-variance
+ (defpackage #:geb.vampir
+   (:documentation "Provides a vampir representation")
+   (:use #:common-lisp #:serapeum #:geb.vampir.spec)
+   (:shadowing-import-from #:geb.vampir.spec #:op #:tuple)
+   (:shadowing-import-from #:common-lisp  #:=)
+   (:local-nicknames (#:spc #:geb.vampir.spec))
+   (:export :extract
+
+            ;; vampir api functions
+            *bool* bool
+            *next-range*
+            next-range
+            *range32*
+            range32
+
+            *int-range32*
+            int-range32
+
+            *negative32*
+            negative32
+
+            *non-negative32*
+            non-negative32
+
+            *range31*
+            range31
+
+            *int-range31*
+            int-range31
+
+            *less32*
+            less32
+
+            *pwless32*
+            pwless32
+
+            *mod32*
+            mod32
+
+            *pwmod32*
+            pwmod32)))
 

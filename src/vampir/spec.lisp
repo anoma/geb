@@ -144,8 +144,12 @@
 ;; Alias
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(serapeum:-> make-alias
+             (&key (:name keyword) (:inputs list) (:body constraint-list))
+             alias)
 (defun make-alias (&key name inputs body)
-  (make-instance 'alias :name name :inputs inputs :body body))
+  (values
+   (make-instance 'alias :name name :inputs inputs :body body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pub
