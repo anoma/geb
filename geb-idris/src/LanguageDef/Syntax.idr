@@ -774,3 +774,7 @@ GBtAtom = SExpToBtAtom GebAtom
 public export
 GBTExp : Type
 GBTExp = BTExp GBtAtom
+
+public export
+GExpMaybeAlg : Type -> Type
+GExpMaybeAlg = SExpMaybeAlg GebAtom

@@ -289,6 +289,39 @@ public export
 ftypeToGExp : SliceMorphism {a=FS3CP} FinBCSl FTypeToGExpSl
 ftypeToGExp = ftypeCata FTypeToGExpAlg
 
+public export
+BNatFromSExpAlg : GebAtom -> Pi {a=Nat} (GExpMaybeAlg . FinR)
+BNatFromSExpAlg ea n (SXF a ns xs) = case decEq ea a of
+  Yes Refl => case (ns, xs) of
+    ([n'], []) => case isLT n' n of
+      Yes nlt => Just $ Element0 n' nlt
+      No _ => Nothing
+    _ => Nothing
+  No _ => Nothing
+
+public export
+bnatFromSExp : SliceMorphism {a=Nat} (const GExp) (Maybe . FinR)
+bnatFromSExp n = sexpMaybeCata $ BNatFromSExpAlg FBT_BNAT n
+
+public export
+fs3FromFinR3 : FinR 3 -> FS3CP
+fs3FromFinR3 (Element0 0 lt3) = FS3CP0
+fs3FromFinR3 (Element0 1 lt3) = FS3CP1
+fs3FromFinR3 (Element0 2 lt3) = FS3CP2
+fs3FromFinR3 (Element0 (S (S (S k))) lt3) = void $ case lt3 of
+  LTEZero impossible
+  LTESucc lt2 => case lt2 of
+    LTEZero impossible
+    LTESucc lt1 => case lt1 of
+      LTEZero impossible
+      LTESucc lt0 => case lt0 of
+        LTEZero impossible
+        LTESucc _ impossible
+
+public export
+ftSliceFromGExp : GExp -> Maybe FS3CP
+ftSliceFromGExp = map fs3FromFinR3 . bnatFromSExp 3
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Terms of finite product/coproduct types ----
