@@ -5,6 +5,9 @@
 
 (def bool geb-bool:bool)
 
+(def so-void-type
+  geb:so0)
+
 (def so-unit-type
   geb:so1)
 
@@ -17,26 +20,26 @@
 (def unit-to-bool-left-circuit
   (lambda:to-circuit
     nil bool
-    (lambda:left stlc-unit-term)
+    (lambda:left so-unit-type so-unit-type stlc-unit-term)
     :tc_unit_to_bool_left))
 
 (def unit-to-bool-right-circuit
   (lambda:to-circuit
     nil bool
-    (lambda:right stlc-unit-term)
+    (lambda:right so-unit-type so-unit-type stlc-unit-term)
     :tc_unit_to_bool_right))
 
 (def pair-bool-stlc
   (lambda:pair bool bool
-               (lambda:right stlc-unit-term)
-               (lambda:left stlc-unit-term)))
+               (lambda:right so-unit-type so-unit-type stlc-unit-term)
+               (lambda:left so-unit-type so-unit-type stlc-unit-term)))
 
 (def pair-bool-circuit
   (lambda:to-circuit
    nil (geb:prod bool bool)
    (lambda:pair bool bool
-                (lambda:right stlc-unit-term)
-                (lambda:left stlc-unit-term))
+                (lambda:right so-unit-type so-unit-type stlc-unit-term)
+                (lambda:left so-unit-type so-unit-type stlc-unit-term))
    :tc_pair_bool))
 
 (def fst-bool-circuit
@@ -48,6 +51,11 @@
 (def unit-to-unit-circuit
   (lambda:to-circuit nil so-unit-type stlc-unit-term :tc_unit_to_unit))
 
+(def void-to-unit-circuit
+  (lambda:to-circuit
+    (list so-void-type) so-unit-type
+    (lambda:absurd so-unit-type (lambda:index 0)) :tc_void_to_unit))
+
 (def issue-58-circuit
   (lambda:to-circuit
     nil
@@ -55,13 +63,13 @@
     (lambda:case-on
       so-unit-type so-unit-type
       (coprod so-unit-type so-unit-type)
-      (lambda:left stlc-unit-term)
+      (lambda:left so-unit-type so-unit-type stlc-unit-term)
       (lambda:lamb
         so-unit-type (coprod so-unit-type so-unit-type)
-        (lambda:right stlc-unit-term))
+        (lambda:right so-unit-type so-unit-type stlc-unit-term))
       (lambda:lamb
         so-unit-type (coprod so-unit-type so-unit-type)
-        (lambda:left stlc-unit-term))
+        (lambda:left so-unit-type so-unit-type stlc-unit-term))
       )
     :tc_issue_58))
 
@@ -98,6 +106,10 @@
 (define-test vampir-test-unit-to-unit
   :parent geb.lambda.trans
   (of-type geb.vampir.spec:alias unit-to-unit-circuit))
+
+(define-test vampir-test-void-to-unit
+  :parent geb.lambda.trans
+  (of-type geb.vampir.spec:alias void-to-unit-circuit))
 
 (define-test vampir-test-unit-to-bool-left
   :parent geb.lambda.trans
