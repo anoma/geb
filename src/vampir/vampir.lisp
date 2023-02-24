@@ -55,7 +55,7 @@
    :arguments (list a)))
 
 (defun non-negative32 (a)
-  (make-application :func :negative32
+  (make-application :func :nonnegative32
                     :arguments (list a)))
 
 (defun vamp-range (of)
@@ -81,16 +81,17 @@
                 (spc:make-bind
                  :names (list (make-wire :var y))
                  :value
-                 (make-application
-                  :func :fresh
-                  :arguments
-                  (list
-                   (make-infix :op :%
-                               :lhs
-                               (make-infix :op :\\
-                                           :rhs (make-constant :const i)
-                                           :lhs (make-wire :var :A))
-                               :rhs (make-constant :const 2))))))
+                 (bool
+                  (make-application
+                   :func :fresh
+                   :arguments
+                   (list
+                    (make-infix :op :%
+                                :lhs
+                                (make-infix :op :\\
+                                            :rhs (make-constant :const i)
+                                            :lhs (make-wire :var :A))
+                                :rhs (make-constant :const 2)))))))
               (mapcar (lambda (x) (expt 2 x))
                       (alexandria:iota of))
               (mapcar (lambda (x) (intern (format nil "A~a" x) :keyword))
@@ -99,17 +100,17 @@
               (make-equality :lhs (make-wire :var :a)
                              :rhs (in-plus (1- of )))
               (make-tuples :wires
-                           (append (mapcar #'in-tuple (alexandria:iota 31))
+                           (append (mapcar #'in-tuple (alexandria:iota of))
                                    (list (make-wire :var :|()|)))))))))
 
 (defun range31 (a)
   (make-application
-   :func :negative31
+   :func :range31
    :arguments (list a)))
 
 (defun range32 (a)
   (make-application
-   :func :negative32
+   :func :range32
    :arguments (list a)))
 
 (defun pwmod32 (f g x)
@@ -118,7 +119,7 @@
 
 (defun negative31 (a)
   (make-application
-   :func :negative32
+   :func :negative31
    :arguments (list a)))
 
 (defparameter *next-range*
@@ -166,7 +167,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defparameter *int-range32*
-  (make-alias :name :intRange32
+  (make-alias :name :intrange32
               :inputs (list :a)
               :body
               (list
@@ -206,7 +207,7 @@
   (vamp-range 32))
 
 (defparameter *int-range31*
-  (make-alias :name :intRange31
+  (make-alias :name :intrange31
               :inputs (list :a)
               :body (list (range31
                            (make-infix :op :+
@@ -328,12 +329,18 @@
 
 (defparameter *standard-library*
   (list
-   *non-negative32*
-   *int-range32*
+   *bool*
+   *range31*
+   *range32*
    *int-range31*
+   *int-range32*
+   *negative31*
    *negative32*
+   *non-negative32*
    *less32*
-   *mod32*))
+   *mod32*
+   *pwmod32*
+   *next-range*))
 
 (-> extract (list &optional stream) stream)
 (defun extract (stmts &optional (stream *standard-output*))
