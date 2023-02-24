@@ -2398,3 +2398,53 @@ finCatSigCheckObj = finCatSigCheck FLSObj
 public export
 finCatSigCheckMorph : FinCatObjSig -> FinCatMorphSig -> Bool
 finCatSigCheckMorph = flip $ finCatSigCheck FLSMorph
+
+-------------------------------------------
+-------------------------------------------
+---- Geb as double category (or more?) ----
+-------------------------------------------
+-------------------------------------------
+
+public export
+BoolF : Type -> Type
+BoolF = const Bool
+
+----------------------------
+----------------------------
+---- Product categories ----
+----------------------------
+----------------------------
+
+-- Given an object of objects of a category, produce the object of
+-- objects of its product category (with itself).
+public export
+PCatObj : PolyFunc
+PCatObj = PFHomArena BoolCP
+
+public export
+PCatMorphFPos : Type
+PCatMorphFPos = Unit
+
+public export
+PCatMorph : PolyFunc
+PCatMorph = PFHomArena BoolCP
+
+public export
+PCatDom : (obj : Type) -> (morph : Type) ->
+  (dom : morph -> obj) -> (cod : morph -> obj) ->
+  InterpPolyFunc PCatMorph morph -> InterpPolyFunc PCatObj obj
+PCatDom obj morph dom cod (() ** x) = (() ** dom . x)
+
+public export
+PCatCod : (obj : Type) -> (morph : Type) ->
+  (dom : morph -> obj) -> (cod : morph -> obj) ->
+  InterpPolyFunc PCatMorph morph -> InterpPolyFunc PCatObj obj
+PCatCod obj morph dom cod (() ** x) = (() ** cod . x)
+
+public export
+PCatSig : (obj : Type) -> (morph : Type) ->
+  (dom : morph -> obj) -> (cod : morph -> obj) ->
+  InterpPolyFunc PCatMorph morph ->
+  (InterpPolyFunc PCatObj obj, InterpPolyFunc PCatObj obj)
+PCatSig obj morph dom cod x =
+  (PCatDom obj morph dom cod x, PCatCod obj morph dom cod x)
