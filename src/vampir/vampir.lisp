@@ -340,6 +340,7 @@
    *less32*
    *mod32*
    *pwmod32*
+   *pwless32*
    *next-range*))
 
 (-> extract (list &optional stream) stream)
