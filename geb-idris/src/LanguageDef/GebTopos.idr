@@ -2179,6 +2179,7 @@ data RHasDomF :
     RMorphF obj morph hasDom hasCod ->
     RObjTrF obj morph hasDom hasCod obj ->
     Type where
+  RHDId : (a : obj) -> RHasDomF obj morph hasDom hasCod (RMorphId a) (ROVar a)
 
 public export
 data RHasCodF :
@@ -2186,6 +2187,7 @@ data RHasCodF :
     RMorphF obj morph hasDom hasCod ->
     RObjTrF obj morph hasDom hasCod obj ->
     Type where
+  RHCId : (a : obj) -> RHasCodF obj morph hasDom hasCod (RMorphId a) (ROVar a)
 
 {-
 public export
