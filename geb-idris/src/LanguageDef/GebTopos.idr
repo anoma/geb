@@ -2135,61 +2135,44 @@ RList = SList RAtom
 ------------------------------------
 
 public export
-data RObjF :
-    (obj, morph : Type) -> (hasDom, hasCod : morph -> obj -> Type) -> Type where
+data RObjF : (obj, morph, hasDom, hasCod : Type) -> Type where
   RObj1 : RObjF obj morph dom cod
   RObjPr : obj -> obj -> RObjF obj morph dom cod
-  RObjEq : {0 hasDom, hasCod : morph -> obj -> Type} ->
-    (a, b : obj) -> (f, g : morph) ->
-    hasDom f a -> hasCod f b -> hasDom g a -> hasCod g b ->
+  RObjEq :
+    (a, b : obj) -> (f, g : morph) -> (fa, ga : hasDom) -> (fb, gb : hasCod) ->
     RObjF obj morph dom cod
 
 public export
-data RObjTrF :
-    (obj, morph : Type) -> (hasDom, hasCod : morph -> obj -> Type) ->
-    Type -> Type where
+data RObjTrF : (obj, morph, hasDom, hasCod : Type) -> Type -> Type where
   ROVar : var -> RObjTrF obj morph hasDom hasCod var
   ROCom : RObjF obj morph hasDom hasCod -> RObjTrF obj morph hasDom hasCod var
 
 public export
-data RMorphF :
-    (obj, morph : Type) -> (hasDom, hasCod : morph -> obj -> Type) -> Type where
+data RMorphF : (obj, morph, hasDom, hasCod : Type) -> Type where
   RMorphId : obj -> RMorphF obj morph hasDom hasCod
   RMorphComp :
-    (g, f : morph) -> (a : obj) -> hasDom g a -> hasCod f a ->
+    (g, f : morph) -> (a : obj) -> (ga : hasDom) -> (fa : hasCod) ->
     RMorphF obj morph hasDom hasCod
   RMorphTo1 : obj -> RMorphF obj morph hasDom hasCod
   RMorphPairing :
-    (f, g : morph) -> (a :obj) -> hasDom f a -> hasDom g a ->
+    (f, g : morph) -> (a :obj) -> (fa, ga : hasDom) ->
     RMorphF obj morph hasDom hasCod
   RMorphProjL : obj -> obj -> RMorphF obj morph hasDom hasCod
   RMorphProjR : obj -> obj -> RMorphF obj morph hasDom hasCod
   RMorphEqInjDom :
-    (a, b : obj) -> (f, g : morph) ->
-    hasDom f a -> hasCod f b -> hasDom g a -> hasCod g b ->
+    (a, b : obj) -> (f, g : morph) -> (fa, ga : hasDom) -> (fb, gb : hasCod) ->
     RMorphF obj morph hasDom hasCod
   RMorphEqInjCod :
-    (a, b : obj) -> (f, g : morph) ->
-    hasDom f a -> hasCod f b -> hasDom g a -> hasCod g b ->
+    (a, b : obj) -> (f, g : morph) -> (fa, ga : hasDom) -> (fb, gb : hasCod) ->
     RMorphF obj morph hasDom hasCod
 
 public export
-data RHasDomF :
-    (obj, morph : Type) -> (hasDom, hasCod : morph -> obj -> Type) ->
-    RMorphF obj morph hasDom hasCod ->
-    RObjTrF obj morph hasDom hasCod obj ->
-    Type where
-  RHDId : (a : obj) -> RHasDomF obj morph hasDom hasCod (RMorphId a) (ROVar a)
+data RHasDomF : (obj, morph, hasDom, hasCod : Type) -> Type where
+  RHDId : (a : obj) -> RHasDomF obj morph hasDom hasCod
+  RHDComp : (g, f : morph) -> (a : obj) -> (ga : hasDom) -> (fa : hasCod) ->
+    RHasDomF obj morph hasDom hasCod
 
-public export
-data RHasCodF :
-    (obj, morph : Type) -> (hasDom, hasCod : morph -> obj -> Type) ->
-    RMorphF obj morph hasDom hasCod ->
-    RObjTrF obj morph hasDom hasCod obj ->
-    Type where
-  RHCId : (a : obj) -> RHasCodF obj morph hasDom hasCod (RMorphId a) (ROVar a)
-
-{-
+  {-
 public export
 rdomF :
   (obj : Type) -> (morph : Type) ->
@@ -2205,7 +2188,27 @@ rdomF obj morph dom cod (RMorphEqInjDom a b f g prf prf1 prf2 prf3) =
   ROCom $ RObjEq a b f g prf prf1 prf2 prf3
 rdomF obj morph dom cod (RMorphEqInjCod a b f g prf prf1 prf2 prf3) =
   ROCom $ RObjEq a b f g prf prf1 prf2 prf3
+  -}
 
+public export
+rhdomObjAlg : (obj, morph, hasDom, hasCod : Type) ->
+  RHasDomF obj morph hasDom hasCod ->
+  RObjTrF obj morph dom cod obj
+rhdomObjAlg obj morph hasDom hasCod (RHDId a) = ROVar a
+rhdomObjAlg obj morph hasDom hasCod (RHDComp g f a ga fa) = ?rhdomObjAlg_hole
+
+public export
+rhdomMorphAlg : (obj, morph, hasDom, hasCod : Type) ->
+  RHasDomF obj morph hasDom hasCod ->
+  RMorphF obj morph dom cod
+rhdomMorphAlg obj morph hasDom hasCod (RHDId a) = RMorphId a
+rhdomMorphAlg obj morph hasDom hasCod (RHDComp g f a ga fa) = ?rhdomMorphAlg_hole
+
+public export
+data RHasCodF : (obj, morph, hasDom, hasCod : Type) -> Type where
+  RHCId : (a : obj) -> RHasCodF obj morph hasDom hasCod
+
+{-
 public export
 rcodF :
   (obj : Type) -> (morph : Type) ->
@@ -2221,6 +2224,18 @@ rcodF obj morph dom cod (RMorphEqInjDom a b f g prf prf1 prf2 prf3) = ROVar a
 rcodF obj morph dom cod (RMorphEqInjCod a b f g prf prf1 prf2 prf3) = ROVar b
 -}
 
+public export
+rhcodObjAlg : (obj, morph, hasDom, hasCod : Type) ->
+  RHasCodF obj morph hasDom hasCod ->
+  RObjTrF obj morph dom cod obj
+rhcodObjAlg obj morph hasDom hasCod (RHCId a) = ROVar a
+
+public export
+rhcodMorphAlg : (obj, morph, hasDom, hasCod : Type) ->
+  RHasCodF obj morph hasDom hasCod ->
+  RMorphF obj morph dom cod
+rhcodMorphAlg obj morph hasDom hasCod (RHCId a) = RMorphId a
+
 mutual
   public export
   data RObj : Type where
@@ -2231,28 +2246,28 @@ mutual
     InRM : RMorphF RObj RMorph RHasDom RHasCod -> RMorph
 
   public export
-  data RHasDom : RMorph -> RObj -> Type where
+  data RHasDom : Type where
     InRDV :
       (f : RMorphF RObj RMorph RHasDom RHasCod) -> (a : RObj) ->
-      RHasDomF RObj RMorph RHasDom RHasCod f (ROVar a) ->
-      RHasDom (InRM f) a
+      RHasDomF RObj RMorph RHasDom RHasCod ->
+      RHasDom
     InRDC :
       (f : RMorphF RObj RMorph RHasDom RHasCod) ->
       (a : RObjF RObj RMorph RHasDom RHasCod) ->
-      RHasDomF RObj RMorph RHasDom RHasCod f (ROCom a) ->
-      RHasDom (InRM f) (InRO a)
+      RHasDomF RObj RMorph RHasDom RHasCod ->
+      RHasDom
 
   public export
-  data RHasCod : RMorph -> RObj -> Type where
+  data RHasCod : Type where
     InRCV :
       (f : RMorphF RObj RMorph RHasDom RHasCod) -> (a : RObj) ->
-      RHasCodF RObj RMorph RHasDom RHasCod f (ROVar a) ->
-      RHasCod (InRM f) a
+      RHasCodF RObj RMorph RHasDom RHasCod ->
+      RHasCod
     InRCC :
       (f : RMorphF RObj RMorph RHasDom RHasCod) ->
       (a : RObjF RObj RMorph RHasDom RHasCod) ->
-      RHasCodF RObj RMorph RHasDom RHasCod f (ROCom a) ->
-      RHasCod (InRM f) (InRO a)
+      RHasCodF RObj RMorph RHasDom RHasCod ->
+      RHasCod
 
 {-
   public export
