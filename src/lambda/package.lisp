@@ -1,10 +1,5 @@
 (in-package :geb.utils)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  ;; they all share the same mix list
-  (defmacro mix (&rest symbols)
-    `'(:mix #:trivia #:geb #:serapeum #:geb.lambda.spec #:common-lisp ,@symbols)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; API module
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -12,8 +7,7 @@
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb.lambda.main
    (:documentation "A basic lambda calculus model")
-   #.(mix)
-   ;; we also reexport lambda.trans see the documentation below
+   (:mix #:geb.lambda.spec #:geb.common #:common-lisp)
    (:reexport #:geb.lambda.spec)))
 
 (in-package #:geb.lambda.main)
@@ -31,7 +25,8 @@
  (uiop:define-package #:geb.lambda.trans
    (:documentation "A basic lambda translator into other parts of geb")
    (:shadow #:to-poly #:to-circuit)
-   #.(mix :geb.lambda.main)))
+   (:local-nicknames (#:lambda #:geb.lambda.main))
+   (:mix #:geb.lambda.spec #:geb.common #:common-lisp :geb.lambda.main)))
 
 (in-package #:geb.lambda.trans)
 
@@ -54,13 +49,11 @@ data types"
 
 (in-package :geb.utils)
 
-(uiop:define-package #:geb.lambda
+(geb.utils:muffle-package-variance
+ (uiop:define-package #:geb.lambda
    (:documentation "A basic lambda calculus model")
-   #.(mix)
-   ;; we also reexport lambda.trans see the documentation below
-   (:shadowing-import-from #:geb.lambda.trans :to-poly :to-circuit)
-   (:shadowing-import-from #:geb.lambda.spec :pair)
-   (:use-reexport #:geb.lambda.spec #:geb.lambda.main #:geb.lambda.trans))
+   (:mix #:geb.lambda.spec #:geb.lambda.trans #:geb.common #:common-lisp)
+   (:use-reexport #:geb.lambda.spec #:geb.lambda.main #:geb.lambda.trans)))
 
 (in-package #:geb.lambda)
 
