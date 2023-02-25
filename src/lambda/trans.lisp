@@ -53,9 +53,9 @@
                     (curry (compile-checked-term (cons rty context) cod r)))
              (compile-checked-term context (coprod lty rty) on)))
       ;; I would make an alias, but people would need a newer version of sbcl
-      ((geb.lambda.spec:pair lty rty l r)
-       (pair (compile-checked-term context lty l)
-             (compile-checked-term context rty r)))
+      ((pair lty rty l r)
+       (geb:pair (compile-checked-term context lty l)
+                 (compile-checked-term context rty r)))
       ((fst lty rty value)
        (assert (geb.mixins:obj-equalp (class-of lty) (class-of type)) nil "Types should match on fst: ~A ~A"
                term type)
@@ -71,8 +71,8 @@
        (assert (geb.mixins:obj-equalp dom type) nil "Types should match for application: ~A ~A" dom type)
        (comp
         (so-eval dom com)
-        (pair (compile-checked-term context dom f)
-              (compile-checked-term context com x))))
+        (geb:pair (compile-checked-term context dom f)
+                  (compile-checked-term context com x))))
       ((index i)
        (stlc-ctx-proj context i)))))
 

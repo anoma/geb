@@ -4,7 +4,7 @@
   (:shadowing-import-from :serapeum  :true)
   (:local-nicknames  (#:poly #:geb.poly)
                      (#:lambda #:geb.lambda))
-  (:use #:serapeum #:cl #:geb #:parachute #:geb.mixins))
+  (:use #:geb.common #:parachute))
 
 (in-package :geb-test)
 

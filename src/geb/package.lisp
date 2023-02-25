@@ -30,6 +30,18 @@
   (curry             pax:generic-function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Standard Library throughout the codebase
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(geb.utils:muffle-package-variance
+ (uiop:define-package #:geb.common
+   (:documentation "Provides the standard library for any GEB code")
+   (:shadowing-import-from #:geb.spec :left :right :prod :case)
+   (:import-from #:trivia #:match)
+   (:use-reexport #:geb.mixins #:geb.spec #:geb.main #:geb.utils
+                  #:serapeum #:common-lisp)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; trans module
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -94,9 +106,7 @@ The functions given work on this."
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb
    (:documentation "Gödel, Escher, Bach categorical model")
-   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils)
-   (:shadowing-import-from #:geb.spec :left :right :prod :case)
-   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)
+   (:use #:geb.common)
    (:use-reexport #:geb.spec #:geb.trans #:geb.main)))
 
 (in-package #:geb)

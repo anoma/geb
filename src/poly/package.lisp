@@ -7,7 +7,7 @@
 (muffle-package-variance
  (defpackage #:geb.poly.trans
    (:local-nicknames (:vamp :geb.vampir.spec))
-   (:use #:geb.utils #:geb.poly.spec #:cl #:serapeum)
+   (:use #:geb.common #:geb.poly.spec)
    (:shadowing-import-from #:geb.poly.spec :+ :* :/ :- :mod)))
 
 (in-package :geb.poly.trans)
@@ -23,7 +23,7 @@
 
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb.poly
-   (:use #:geb.utils #:cl #:serapeum)
+   (:use #:geb.common)
    (:shadowing-import-from #:geb.poly.spec :+ :* :/ :- :mod)
    (:use-reexport #:geb.poly.trans #:geb.poly.spec)))
 
