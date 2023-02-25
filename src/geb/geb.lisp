@@ -285,3 +285,58 @@ In category terms, `a → c^b` is isomorphic to `a → b → c`
                                             (curry (right (comp fun (gather fst x y))))))
                         (prod         (curry (curry (prod-left-assoc fun)))))))
              (rec f (mcar dom) (mcadr dom)))))))
+
+(defun reducer (morph &optional (seen-set (fset:empty-set)))
+  ;; handle the piss easy cases, do the hard tracking later
+  (typecase-of substmorph morph
+    (alias         (reducer morph))
+    (project-left   morph)
+    (project-right  morph)
+    (inject-left    morph)
+    (inject-right   morph)
+    (terminal       morph)
+    (init           morph)
+    (distribute     morph)
+    (pair           (pair (reducer (mcar morph))
+                          (reducer (mcdr morph))))
+    (case           (mcase (reducer (mcar morph))
+                           (reducer (mcadr morph))))
+    (comp
+     (let* ((linearized (linearize-comp morph))
+            ;; this code is absolutely horrible
+            (left (mvfoldr (lambda (g flist)
+                             (let ((new-g (reducer g)))
+                               (typecase (car flist)
+                                 (pair
+                                  (typecase new-g
+                                    (project-left  (cons (mcar (car flist))
+                                                         (cdr flist)))
+                                    (project-right (cons (mcdr (car flist))
+                                                         (cdr flist)))
+                                    (otherwise     (cons new-g flist))))
+                                 (otherwise
+                                  (cons new-g flist)))))
+                           (butlast linearized)
+                           (list (reducer (car (last linearized))))))
+            (constructed (if (cdr left)
+                             (apply #'comp left)
+                             (car left))))
+       ;; g 。f
+       (if (fset:member? constructed seen-set)
+           (comp (reducer (mcar constructed)) (reducer (mcadr constructed)))
+           (reducer constructed (fset:with seen-set constructed)))))
+    (substobj       morph)
+    (otherwise (subclass-responsibility morph))))
+
+(defmethod fset:compare ((a <substmorph>) (b <substmorph>))
+  (if (and (eq (type-of a)
+               (type-of b))
+           (obj-equalp a b))
+      :equal
+      :unequal))
+
+(defun linearize-comp (morph)
+  (if (typep morph 'comp)
+      (append (linearize-comp (mcar morph))
+              (linearize-comp (mcadr morph)))
+      (list morph)))
