@@ -13,6 +13,9 @@ used throughout the GEB codebase"
   (subclass-responsibility pax:function)
   (shallow-copy-object     pax:function)
   (make-pattern            pax:macro)
+  (number-to-digits        pax:function)
+  (digit-to-under          pax:function)
+  (number-to-under         pax:function)
   (@geb-accessors          pax:section))
 
 (pax:defsection @geb-accessors (:title "Accessors")

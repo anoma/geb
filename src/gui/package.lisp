@@ -1,25 +1,4 @@
 (geb.utils:muffle-package-variance
- (uiop:define-package #:geb-gui.graphing
-   (:mix #:geb #:serapeum #:common-lisp
-         #:geb.mixins #:geb.utils)))
-
-(in-package :geb-gui.graphing)
-
-(pax:defsection @graphing-manual (:title "The GEB Graphizer")
-  "This section covers the graphing procedure in order to turn a GEB
-object into a format for a graphing backend."
-  ;; please write more, me.  Put this is the API section, not
-  ;; here... we should talk about the backends here!!!!!!!
-  "The core types that facilittate the functionality"
-  (note pax:type)
-  (node pax:class)
-  (make-note pax:function)
-  (make-squash pax:function)
-  (graphize pax:generic-function)
-  (cons-note pax:function)
-  (determine-text-and-object-from-node pax:function))
-
-(geb.utils:muffle-package-variance
  (defpackage #:geb-gui
    (:local-nicknames (#:graph #:geb-gui.graphing))
    (:use :clim :clim-lisp)))

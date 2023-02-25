@@ -38,6 +38,7 @@
 (define-application-frame display-clim ()
   ;; please me refactor this out, Ι hate it
   ((%top-task :initform *the-data* :accessor root)
+   (%original :initform *the-data* :accessor orig)
    (%graph-p  :initform t :accessor graph-p)
    (%dot-p    :initform t :accessor dot-p)
    (counter :initform 0 :initarg :counter :accessor counter))
@@ -56,7 +57,7 @@
 
 (defun display-app (frame pane)
   (cond ((typep (root frame) 'graph:node)
-         (graph-node (root frame) pane))
+         (graph-dot (root frame) pane))
         ((graph-p frame)
          (display-graph frame pane))
         (t
@@ -66,4 +67,4 @@
   (apply (if (dot-p frame)
              #'graph-dot
              #'graph-node)
-         (list (graph:graphize (root frame) nil) pane)))
+         (list (graph:passes (graph:graphize (root frame) nil)) pane)))
