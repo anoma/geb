@@ -25,7 +25,8 @@
     :depends-on (util)
     :components ((:file package)
                  (:file meta)
-                 (:file mixins)))
+                 (:file mixins)
+                 (:file cat)))
    (:module vampir
     :serial t
     :description "The Vampir Extraction Module"

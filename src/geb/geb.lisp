@@ -2,7 +2,59 @@
 
 (in-package :geb.main)
 
-(-> const (<substmorph> <substobj>) (or alias comp))
+(defmethod curry-prod (fun fst (snd <substobj>))
+  (match-of substobj snd
+    (alias        (curry-prod fun fst (obj snd)))
+    (so0          (terminal fst))
+    (so1          (comp fun (pair fst
+                                  (terminal fst))))
+    ((coprod x y) (pair (curry (left (comp fun (gather fst x y))))
+                        (curry (right (comp fun (gather fst x y))))))
+    (prod         (curry (curry (prod-left-assoc fun))))))
+
+(defmethod dom ((x <substmorph>))
+  (assure substobj
+    (typecase-of substmorph x
+      (init         so0)
+      (terminal     (obj x))
+      (alias        (if (typep (obj x) '<substobj>)
+                        (make-alias :name (name x) :obj (dom (obj x)))
+                        (dom (obj x))))
+      (substobj     x)
+      (inject-left  (mcar x))
+      (inject-right (mcadr x))
+      (comp         (dom (mcadr x)))
+      (pair         (dom (mcar x)))
+      (distribute   (prod (mcar x) (coprod (mcadr x) (mcaddr x))))
+      (case         (coprod (dom (mcar x)) (dom (mcadr x))))
+      ((or project-right
+           project-left)
+       (prod (mcar x) (mcadr x)))
+      (otherwise
+       (subclass-responsibility x)))))
+
+(defmethod codom ((x <substmorph>))
+  (assure substobj
+    (typecase-of substmorph x
+      (alias         (codom (obj x)))
+      (terminal      so1)
+      (init          (obj x))
+      (substobj      x)
+      (project-left  (mcar x))
+      (project-right (mcadr x))
+      (comp          (codom (mcar x)))
+      (case          (codom (mcar x)))
+      (pair          (prod (codom (mcar x))
+                           (codom (mcdr x))))
+      (distribute    (coprod (prod (mcar x) (mcadr x))
+                             (prod (mcar x) (mcaddr x))))
+      ((or inject-left
+           inject-right)
+       (coprod (mcar x) (mcadr x)))
+      (otherwise
+       (subclass-responsibility x)))))
+
+(-> const (cat-morph cat-obj) (or alias comp))
 (defun const (f x)
   "The constant morphism.
 
@@ -37,7 +89,7 @@ Example:
                     :obj obj)
         obj)))
 
-(-> cleave (<substmorph> &rest <substmorph>) pair)
+(-> cleave (cat-morph &rest cat-morph) pair)
 (defun cleave (v1 &rest values)
   "Applies each morphism to the object in turn."
   (if (null values)
@@ -47,23 +99,23 @@ Example:
 ;; Should this be in a geb.utils: package or does it deserve to be in
 ;; the main geb package?
 
-(-> commutes (<substobj> <substobj>) pair)
+(-> commutes (cat-obj cat-obj) pair)
 (defun commutes (x y)
   (pair (<-right x y) (<-left x y)))
 
 
 ;; TODO easy tests to make for it, just do it!
-(-> commutes-left (<substmorph>) comp)
+(-> commutes-left (cat-morph) comp)
 (defun commutes-left (morph)
-  "swap the input [domain][DOM] of the given [\\<SUBSTMORPH\\>]
+  "swap the input [domain][DOM] of the given [cat-morph]
 
-In order to swap the [domain][DOM] we expect the [\\<SUBSTMORPH\\>] to
+In order to swap the [domain][DOM] we expect the [cat-morph] to
 be a [PROD][type]
 
-Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` [\\<SUBSTOBJ\\>]
+Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` [CAT-OBJ]
 
 then: `(commutes-left (dom morph)) ≡ (prod y x)`
-
+u
 ```
 Γ, f : x × y → a
 ------------------------------
@@ -132,69 +184,21 @@ then: `(commutes-left (dom morph)) ≡ (prod y x)`
                         (so-hom-obj y z)))
     ((prod x y)   (so-hom-obj x (so-hom-obj y z)))))
 
-(-> so-forget-right (substobj substobj substobj) substmorph)
+(-> so-forget-right (cat-obj cat-obj cat-obj) substmorph)
 (defun so-forget-right (x y z)
   (pair (<-left x (prod y z))
         (comp (<-left y z)
               (<-right x (prod y z)))))
 
-(-> so-forget-middle (substobj substobj substobj) substmorph)
+(-> so-forget-middle (cat-obj cat-obj cat-obj) substmorph)
 (defun so-forget-middle (x y z)
   (pair (comp (<-left x y) (<-left (prod x y) z))
         (<-right (prod x y) z)))
 
-(-> so-forget-first (substobj substobj substobj) substmorph)
+(-> so-forget-first (cat-obj cat-obj cat-obj) substmorph)
 (defun so-forget-first (x y z)
   (pair (comp (<-right x y) (<-left (prod x y) z))
         (<-right (prod x y) z)))
-
-(defgeneric dom (substmorph)
-  (:documentation "Grabs the domain of the morphism. Returns a [\\<SUBSTOBJ\\>]"))
-
-(defgeneric codom (substmorph)
-  (:documentation "Grabs the codomain of the morphism. Returns a [\\<SUBSTOBJ\\>]"))
-
-(defmethod dom ((x <substmorph>))
-  (assure substobj
-    (typecase-of substmorph x
-      (init         so0)
-      (terminal     (obj x))
-      (alias        (if (typep (obj x) '<substobj>)
-                        (make-alias :name (name x) :obj (dom (obj x)))
-                        (dom (obj x))))
-      (substobj     x)
-      (inject-left  (mcar x))
-      (inject-right (mcadr x))
-      (comp         (dom (mcadr x)))
-      (pair         (dom (mcar x)))
-      (distribute   (prod (mcar x) (coprod (mcadr x) (mcaddr x))))
-      (case         (coprod (dom (mcar x)) (dom (mcadr x))))
-      ((or project-right
-           project-left)
-       (prod (mcar x) (mcadr x)))
-      (otherwise
-       (subclass-responsibility x)))))
-
-(defmethod codom ((x <substmorph>))
-  (assure substobj
-    (typecase-of substmorph x
-      (alias         (codom (obj x)))
-      (terminal      so1)
-      (init          (obj x))
-      (substobj      x)
-      (project-left  (mcar x))
-      (project-right (mcadr x))
-      (comp          (codom (mcar x)))
-      (case          (codom (mcar x)))
-      (pair          (prod (codom (mcar x))
-                           (codom (mcdr x))))
-      (distribute    (coprod (prod (mcar x) (mcadr x))
-                             (prod (mcar x) (mcaddr x))))
-      ((or inject-left
-           inject-right)
-       (coprod (mcar x) (mcadr x)))
-      (otherwise
-       (subclass-responsibility x)))))
 
 (defun gather (x y z)
   (pair (mcase (<-left x y) (<-left x z))
@@ -223,16 +227,15 @@ then: `(commutes-left (dom morph)) ≡ (prod y x)`
     (_ (error "object ~A need to be of a coproduct type, however it is of ~A"
               f (dom f)))))
 
-(defgeneric curry (f)
-  (:documentation
-   "Curries the given object, returns a [\\<SUBSTMORPH\\>]
+(defun curry (f)
+"Curries the given object, returns a [cat-morph]
 
-The [\\<SUBSTMORPH\\>] given must have its DOM be of a PROD type, as [CURRY][generic-function]
+The [cat-morph] given must have its DOM be of a PROD type, as [CURRY][generic-function]
 invokes the idea of
 
 if f : ([PROD][TYPE] a b) → c
 
-for all `a`, `b`, and `c` being an element of [\\<SUBSTMORPH\\>]
+for all `a`, `b`, and `c` being an element of [cat-morph]
 
 then: (curry f): a → c^b
 
@@ -247,22 +250,8 @@ where c^b means c to the exponent of b (EXPT c b)
 
 In category terms, `a → c^b` is isomorphic to `a → b → c`
 
-"))
-
-(defmethod curry ((f <substmorph>))
-  (cond ((not (typep f 'substmorph))
-         (subclass-responsibility f))
-        ((not (typep (dom f) 'prod))
-         (error "object ~A need to be of a product type, however it is of ~A" f (dom f)))
-        (t
-         (let ((dom (dom f)))
-           (labels ((rec (fun fst snd)
-                      (match-of substobj snd
-                        (alias        (rec fun fst (obj snd)))
-                        (so0          (terminal fst))
-                        (so1          (comp fun (pair fst
-                                                      (terminal fst))))
-                        ((coprod x y) (pair (curry (left (comp fun (gather fst x y))))
-                                            (curry (right (comp fun (gather fst x y))))))
-                        (prod         (curry (curry (prod-left-assoc fun)))))))
-             (rec f (mcar dom) (mcadr dom)))))))
+"
+  (if (not (typep (dom f) 'prod))
+      (error "object ~A need to be of a product type, however it is of ~A" f (dom f))
+      (let ((dom (dom f)))
+        (curry-prod f (mcar dom) (mcadr dom)))))

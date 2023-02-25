@@ -31,6 +31,7 @@
  (uiop:define-package #:geb.lambda.trans
    (:documentation "A basic lambda translator into other parts of geb")
    (:shadow #:to-poly #:to-circuit)
+   (:local-nicknames (#:lambda #:geb.lambda.main))
    #.(mix :geb.lambda.main)))
 
 (in-package #:geb.lambda.trans)

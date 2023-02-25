@@ -8,7 +8,7 @@
    (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
    (:local-nicknames (#:poly #:geb.poly.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
-   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
+   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj :dom :codom)))
 
 (in-package #:geb.main)
 
@@ -25,9 +25,7 @@
   (so-hom-obj        pax:function)
   (so-card-alg       pax:generic-function)
   (so-card-alg       (pax:method () (<substobj>)))
-  (dom               pax:generic-function)
-  (codom             pax:generic-function)
-  (curry             pax:generic-function))
+  (curry             pax:function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; trans module
@@ -104,6 +102,7 @@ The functions given work on this."
 (pax:defsection @geb (:title "The Geb Model")
   "Everything here relates directly to the underlying machinery of
    GEB, or to abstractions that help extend it."
+  (@mixins-cat       pax:section)
   (@geb-categories   pax:section)
   (@geb-accessors    pax:section)
   (@geb-constructors pax:section)
