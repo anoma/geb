@@ -2134,6 +2134,99 @@ RList = SList RAtom
 ------------------------------------
 ------------------------------------
 
+public export
+data RObjF :
+    (obj : Type) -> (morph : Type) ->
+    (dom : morph -> obj) -> (cod : morph -> obj) ->
+    Type where
+  RObj1 : RObjF obj morph dom cod
+  RObjPr : obj -> obj -> RObjF obj morph dom cod
+  RObjEq :
+    (a, b : obj) -> (f, g : morph) ->
+    dom f = a -> cod f = b -> dom g = a -> cod g = b ->
+    RObjF obj morph dom cod
+
+public export
+data RObjTrF :
+    (obj : Type) -> (morph : Type) ->
+    (dom : morph -> obj) -> (cod : morph -> obj) ->
+    Type -> Type where
+  ROVar : var -> RObjTrF obj morph dom cod var
+  ROCom : RObjF obj morph dom cod -> RObjTrF obj morph dom cod var
+
+public export
+data RMorphF :
+    (obj : Type) -> (morph : Type) ->
+    (dom : morph -> obj) -> (cod : morph -> obj) ->
+    Type where
+  RMorphId : obj -> RMorphF obj morph dom cod
+  RMorphComp : (g, f : morph) -> dom g = cod f -> RMorphF obj morph dom cod
+  RMorphTo1 : obj -> RMorphF obj morph dom cod
+  RMorphPairing : (f, g : morph) -> dom f = dom g -> RMorphF obj morph dom cod
+  RMorphProjL : obj -> obj -> RMorphF obj morph dom cod
+  RMorphProjR : obj -> obj -> RMorphF obj morph dom cod
+  RMorphEqInjDom :
+    (a, b : obj) -> (f, g : morph) ->
+    dom f = a -> cod f = b -> dom g = a -> cod g = b ->
+    RMorphF obj morph dom cod
+  RMorphEqInjCod :
+    (a, b : obj) -> (f, g : morph) ->
+    dom f = a -> cod f = b -> dom g = a -> cod g = b ->
+    RMorphF obj morph dom cod
+
+public export
+rdomF :
+  (obj : Type) -> (morph : Type) ->
+  (dom : morph -> obj) -> (cod : morph -> obj) ->
+  RMorphF obj morph dom cod -> RObjTrF obj morph dom cod obj
+rdomF obj morph dom cod (RMorphId a) = ROVar a
+rdomF obj morph dom cod (RMorphComp g f prf) = ROVar $ dom f
+rdomF obj morph dom cod (RMorphTo1 a) = ROVar a
+rdomF obj morph dom cod (RMorphPairing f g prf) = ROVar $ dom f
+rdomF obj morph dom cod (RMorphProjL a b) = ROCom $ RObjPr a b
+rdomF obj morph dom cod (RMorphProjR a b) = ROCom $ RObjPr a b
+rdomF obj morph dom cod (RMorphEqInjDom a b f g prf prf1 prf2 prf3) =
+  ROCom $ RObjEq a b f g prf prf1 prf2 prf3
+rdomF obj morph dom cod (RMorphEqInjCod a b f g prf prf1 prf2 prf3) =
+  ROCom $ RObjEq a b f g prf prf1 prf2 prf3
+
+public export
+rcodF :
+  (obj : Type) -> (morph : Type) ->
+  (dom : morph -> obj) -> (cod : morph -> obj) ->
+  RMorphF obj morph dom cod -> RObjTrF obj morph dom cod obj
+rcodF obj morph dom cod (RMorphId a) = ROVar a
+rcodF obj morph dom cod (RMorphComp g f prf) = ROVar $ cod g
+rcodF obj morph dom cod (RMorphTo1 a) = ROCom RObj1
+rcodF obj morph dom cod (RMorphPairing f g prf) = ROCom $ RObjPr (cod f) (cod g)
+rcodF obj morph dom cod (RMorphProjL a b) = ROVar a
+rcodF obj morph dom cod (RMorphProjR a b) = ROVar b
+rcodF obj morph dom cod (RMorphEqInjDom a b f g prf prf1 prf2 prf3) = ROVar a
+rcodF obj morph dom cod (RMorphEqInjCod a b f g prf prf1 prf2 prf3) = ROVar b
+
+mutual
+  public export
+  data RObj : Type where
+    InRO : RObjF RObj RMorph GebTopos.rdom GebTopos.rcod -> RObj
+
+  public export
+  data RMorph : Type where
+    InRM : RMorphF RObj RMorph GebTopos.rdom GebTopos.rcod -> RMorph
+
+  public export
+  partial
+  rdom : RMorph -> RObj
+  rdom (InRM f) with (rdomF RObj RMorph rdom rcod f)
+    rdom (InRM f) | ROCom dom = InRO dom
+    rdom (InRM f) | ROVar dom = dom
+
+  public export
+  partial
+  rcod : RMorph -> RObj
+  rcod (InRM f) with (rcodF RObj RMorph rdom rcod f)
+    rcod (InRM f) | ROCom cod = InRO cod
+    rcod (InRM f) | ROVar cod = cod
+
 ----------------------------
 ---- Generic generators ----
 ----------------------------
