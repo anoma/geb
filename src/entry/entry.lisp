@@ -75,5 +75,6 @@
    (~>> symb symbol-name
         (substitute #\_ #\-)
         (nsubstitute #\V #\&)
+        (string-trim "*")
         (nsubstitute #\V #\%))
    :keyword))
