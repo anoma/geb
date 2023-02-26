@@ -108,80 +108,82 @@ to be merged"))
 
 (defmethod graphize ((morph <substmorph>) notes)
   (assure node
-    (typecase-of substmorph morph
-      ((or terminal init distribute inject-left inject-right project-left project-right)
-       ;; Since there is no note in this case, this
-       ;; representation will serve as the note as to
-       ;; how we should annotate the arrow.
-       (make-instance 'node :representation morph
-                            :value (dom morph)
-                            :children (list (graphize (codom morph) notes))))
-      (alias
-       ;; we should stop the graph here, graph it internally then
-       ;; present it better.
-       (if (typep (obj morph) '<substobj>)
-           (let ((node (graphize (obj morph) notes))
-                 (name (name morph)))
-             (with-slots (value) node
-               (setf value (make-alias :name name :obj value))
-               node))
-
-           (let ((node-codom (make-note :from morph
-                                        :note (symbol-name (name morph))
-                                        :value (graphize (codom morph) notes)))
-                 ;; TODO :: Replace me with the full (obj morph) instead.
-                 (node (make-squash :value (graphize (dom morph) nil))))
-             (apply-note node node-codom)
-             (value node))))
-      (substobj
-       (continue-graphizing (make-instance 'node :representation morph :value morph)
-                            notes))
-      ;; (comp g f)
-      ;; X --f--> Y --g--> Z
-      (comp
-       (graphize (mcadr morph)
-                 (list (make-squash :value (graphize (mcar morph) notes)))))
-      ;; (case g f)
-      ;;             χ₁
-      ;;           ------> X ----g----
-      ;; [X × Y]--|                  |---> A
-      ;;           ------> Y ----f----
-      ;;             χ₂
-      (case
-        (let ((goal (make-squash :value (graphize (codom morph) nil))))
-          (flet ((make-child (node)
-                   (graphize node (cons-note goal notes))))
-            (notorize-children-with-index-schema
-             "χ"
-             (make-instance 'node
-                            :representation morph
-                            :value (dom morph)
-                            :children (list (make-child (mcar morph))
-                                            (make-child (mcadr morph))))))))
-      ;; (pair g f)
-      ;;                Π₁
-      ;;      ---g--> Y ------
-      ;;     /                \
-      ;; X---                  ---> [Y × Z]
-      ;;     \                /
-      ;;      ---f--> Z ------
-      ;;                Π₂
-      (pair
-       (let ((goal (graphize (codom morph) nil)))
-         (flet ((make-child (node note)
-                  (graphize node
-                            (cons-note (make-note :from morph
-                                                  :note note
-                                                  :value goal)
-                                       notes))))
-           (cut-children
-            (make-instance 'node
-                           :value (dom morph)
-                           :representation morph
-                           :children (list (make-child (mcar morph) "Π₁")
-                                           (make-child (mcdr morph) "Π₂")))))))
-      (otherwise
-       (geb.utils:subclass-responsibility morph)))))
+    (cond
+      ((and (has-aliasp morph)
+            (typep morph '<substobj>))
+       (let ((node (continue-graphizing
+                    (make-instance 'node :representation morph :value morph)
+                    notes))
+             (name (meta-lookup morph :alias)))
+         (with-slots (value) node
+           (setf value (make-alias :name name :obj value))
+           node)))
+      ((has-aliasp morph)
+       (let ((node-codom (make-note :from morph
+                                    :note (symbol-name (meta-lookup morph :alias))
+                                    :value (graphize (codom morph) notes)))
+             ;; TODO :: Replace me with the full (obj morph) instead.
+             (node (make-squash :value (graphize (dom morph) nil))))
+         (apply-note node node-codom)
+         (value node)))
+      (t
+       (typecase-of substmorph morph
+         ((or terminal init distribute inject-left inject-right project-left project-right)
+          ;; Since there is no note in this case, this
+          ;; representation will serve as the note as to
+          ;; how we should annotate the arrow.
+          (make-instance 'node :representation morph
+                               :value (dom morph)
+                               :children (list (graphize (codom morph) notes))))
+         (substobj
+          (continue-graphizing (make-instance 'node :representation morph :value morph)
+                               notes))
+         ;; (comp g f)
+         ;; X --f--> Y --g--> Z
+         (comp
+          (graphize (mcadr morph)
+                    (list (make-squash :value (graphize (mcar morph) notes)))))
+         ;; (case g f)
+         ;;             χ₁
+         ;;           ------> X ----g----
+         ;; [X × Y]--|                  |---> A
+         ;;           ------> Y ----f----
+         ;;             χ₂
+         (case
+             (let ((goal (make-squash :value (graphize (codom morph) nil))))
+               (flet ((make-child (node)
+                        (graphize node (cons-note goal notes))))
+                 (notorize-children-with-index-schema
+                  "χ"
+                  (make-instance 'node
+                                 :representation morph
+                                 :value (dom morph)
+                                 :children (list (make-child (mcar morph))
+                                                 (make-child (mcadr morph))))))))
+         ;; (pair g f)
+         ;;                Π₁
+         ;;      ---g--> Y ------
+         ;;     /                \
+         ;; X---                  ---> [Y × Z]
+         ;;     \                /
+         ;;      ---f--> Z ------
+         ;;                Π₂
+         (pair
+          (let ((goal (graphize (codom morph) nil)))
+            (flet ((make-child (node note)
+                     (graphize node
+                               (cons-note (make-note :from morph
+                                                     :note note
+                                                     :value goal)
+                                          notes))))
+              (cut-children
+               (make-instance 'node
+                              :value (dom morph)
+                              :representation morph
+                              :children (list (make-child (mcar morph) "Π₁")
+                                              (make-child (mcdr morph) "Π₂")))))))
+         (otherwise
+          (geb.utils:subclass-responsibility morph)))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

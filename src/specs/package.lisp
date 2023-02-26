@@ -217,7 +217,6 @@ type substobj = so0
   (coprod pax:type)
   (so0 pax:type)
   (so1 pax:type)
-  (alias pax:type)
   "The @GEB-ACCESSORS specific to @GEB-SUBSTMU"
   (mcar (pax:method () (prod)))
   (mcadr (pax:method () (prod)))
@@ -265,7 +264,6 @@ we can view this as automatically lifting a [SUBSTOBJ][type] into a
   (project-left  pax:type)
   (project-right pax:type)
   (functor       pax:type)
-  (alias         pax:type)
   "The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH"
   (mcar  (pax:method () (comp)))
   (mcadr (pax:method () (comp)))
@@ -304,7 +302,9 @@ we can view this as automatically lifting a [SUBSTOBJ][type] into a
   "More Ergonomic API variants for *SO0* and *SO1*"
   (so0 pax:symbol-macro)
   (so1 pax:symbol-macro)
+  (alias pax:macro)
   (make-alias pax:function)
+  (has-aliasp pax:function)
   (<-left pax:function)
   (<-right pax:function)
   (->left pax:function)

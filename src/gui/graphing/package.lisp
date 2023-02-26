@@ -1,7 +1,6 @@
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb-gui.core
-   (:mix #:geb #:serapeum #:common-lisp
-         #:geb.mixins #:geb.utils)))
+   (:use #:geb.common)))
 
 (in-package :geb-gui.core)
 
@@ -28,12 +27,9 @@ object into a format for a graphing backend."
 
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb-gui.graphing.passes
-   (:mix #:geb
-         #:geb-gui.core
-         #:serapeum
-         #:common-lisp
-         #:geb.mixins
-         #:geb.utils)))
+   (:mix #:geb-gui.core
+         #:geb.common
+         #:common-lisp)))
 
 (in-package :geb-gui.graphing.passes)
 
@@ -47,8 +43,8 @@ ways that are intuitive to the user"
  (uiop:define-package #:geb-gui.graphing
    (:mix #:geb-gui.core
          #:geb-gui.graphing.passes
-         #:geb #:serapeum #:common-lisp
-         #:geb.mixins #:geb.utils)
+         #:geb.common
+         #:common-lisp)
    (:reexport #:geb-gui.core #:geb-gui.graphing.passes)))
 
 (in-package :geb-gui.graphing)

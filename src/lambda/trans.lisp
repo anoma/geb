@@ -36,12 +36,12 @@
        (terminal (stlc-ctx-to-mu context)))
       ((left lty rty term)
        lty rty
-       (assert (typep type '(or alias coprod)) nil "invalid lambda type to left ~A" type)
+       (assert (typep type 'coprod) nil "invalid lambda type to left ~A" type)
        (comp (->left (mcar type) (mcadr type))
              (compile-checked-term context (mcar type) term)))
       ((right lty rty term)
        lty rty
-       (assert (typep type '(or alias coprod)) nil "invalid lambda type to right ~A" type)
+       (assert (typep type 'coprod) nil "invalid lambda type to right ~A" type)
        (comp (->right (mcar type) (mcadr type))
              (compile-checked-term context (mcar type) term)))
       ((case-on lty rty cod on l r)

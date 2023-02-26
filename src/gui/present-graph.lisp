@@ -92,8 +92,6 @@
   (mapcar #'cdr (geb.mixins:to-pointwise-list obj)))
 
 ;; we want to visualize it in the presentation not in the graph
-(defmethod visual-children ((obj geb:alias))
-  nil)
 (defmethod visual-children ((obj geb:prod))
   (geb:same-type-to-list obj 'geb:prod))
 
