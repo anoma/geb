@@ -98,7 +98,8 @@ public export
   (Right x) >>= k = k x
 
 public export
-fcong : {0 a, b : Type} -> {0 f, g : a -> b} -> (f = g) -> {x : a} -> f x = g x
+fcong : {0 a, b : Type} -> {0 f, g : a -> b} ->
+  (f ~=~ g) -> {x : a} -> f x = g x
 fcong Refl = Refl
 
 export
