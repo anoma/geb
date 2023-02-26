@@ -1,6 +1,6 @@
 (in-package :geb.spec)
 
-(defclass <substobj> (<substmorph> direct-pointwise-mixin) ()
+(defclass <substobj> (<substmorph> direct-pointwise-mixin cat-obj) ()
   (:documentation
    "the class corresponding to SUBSTOBJ. See GEB-DOCS/DOCS:@OPEN-CLOSED"))
 (deftype substobj ()
@@ -10,7 +10,7 @@
 ;; that to ill typed (substobj is a substmorph as far as type checking
 ;; is concerned without an explicit id constrcutor), then we can
 ;; include it and remove it from the or type here.
-(defclass <substmorph> (direct-pointwise-mixin) ()
+(defclass <substmorph> (direct-pointwise-mixin cat-morph) ()
   (:documentation
    "the class type corresponding to SUBSTMORPH. See GEB-DOCS/DOCS:@OPEN-CLOSED"))
 (deftype substmorph ()
@@ -100,7 +100,7 @@ us the right unit."))
           :accessor mcadr
           :documentation ""))
   (:documentation
-   "The [PRODUCT][PROD type] object. Takes two \\<SUBSTOBJ\\> values that
+   "The [PRODUCT][PROD type] object. Takes two CAT-OBJ values that
 get put into a pair.
 
 The formal grammar of [PRODUCT][PROD type] is
@@ -128,7 +128,7 @@ Here we create a product of two [GEB-BOOL:BOOL] types."))
           :accessor mcadr
           :documentation ""))
   (:documentation
-   "the [CO-PRODUCT][COPROD type] object. Takes \\<SUBSTOBJ\\> values that
+   "the [CO-PRODUCT][COPROD type] object. Takes CAT-OBJ values that
 get put into a choice of either value.
 
 The formal grammar of [PRODUCT][PROD type] is
@@ -162,14 +162,14 @@ values."))
 (defclass comp (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type <substmorph>
+         :type cat-morph
          :documentation "The first composed morphism")
    (mcadr :initarg :mcadr
-          :type <substmorph>
+          :type cat-morph
           :accessor mcadr
           :documentation "the second morphism"))
   (:documentation
-   "The composition morphism. Takes two \\<SUBSTMORPH\\> values that get
+   "The composition morphism. Takes two CAT-MORPH values that get
 applied in standard composition order.
 
 The formal grammar of [COMP][type] is
@@ -215,10 +215,10 @@ theory, this expression just reduces to
 (defclass init (<substmorph>)
   ((obj :initarg :obj
         :accessor obj
-        :type <substobj>
+        :type cat-obj
         :documentation ""))
   (:documentation
-   "The [INITIAL][INIT type] Morphism, takes any [\\<SUBSTOBJ\\>] and
+   "The [INITIAL][INIT type] Morphism, takes any [CAT-OBJ] and
 creates a moprhism from [SO0][type] (also known as void) to the object given.
 
 The formal grammar of [INITIAL][INIT type] is
@@ -242,10 +242,10 @@ In this example we are creating a unit value out of void."))
 (defclass terminal (<substmorph>)
   ((obj :initarg :obj
         :accessor obj
-        :type <substobj>
+        :type cat-obj
         :documentation ""))
   (:documentation
-   "The [TERMINAL][type] morphism, Takes any [\\<SUBSTOBJ\\>] and creates a
+   "The [TERMINAL][type] morphism, Takes any [CAT-OBJ] and creates a
 morphism from that object to [SO1][type] (also known as unit).
 
 The formal grammar of [TERMINAL][type] is
@@ -284,14 +284,14 @@ The fourth example is taking a [GEB-BOOL:BOOL] and returning [GEB-BOOL:TRUE]."))
 (defclass inject-left (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type <substobj>
+         :type cat-obj
          :documentation "")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type <substobj>
+          :type cat-obj
           :documentation ""))
   (:documentation
-   "The left injection morphism. Takes two \\<SUBSTOBJ\\> values. It is
+   "The left injection morphism. Takes two CAT-OBJ values. It is
 the dual of INJECT-RIGHT
 
 The formal grammar is
@@ -324,14 +324,14 @@ otherwise flip the value of the boolean coming in."))
 (defclass inject-right (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type <substobj>
+         :type cat-obj
          :documentation "")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type <substobj>
+          :type cat-obj
           :documentation ""))
   (:documentation
-   "The right injection morphism. Takes two \\<SUBSTOBJ\\> values. It is
+   "The right injection morphism. Takes two CAT-OBJ values. It is
 the dual of INJECT-LEFT
 
 The formal grammar is
@@ -364,16 +364,16 @@ then give us True, otherwise flip the value of the boolean coming in."))
 (defclass case (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type <substmorph>
+         :type cat-morph
          :documentation "The morphism that gets applied on the left coproduct")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type <substmorph>
+          :type cat-morph
           :documentation "The morphism that gets applied on the right coproduct"))
   (:documentation
-   "Eliminates coproducts. Namely Takes two \\<SUBSTMORPH\\> values, one
+   "Eliminates coproducts. Namely Takes two CAT-MORPH values, one
 gets applied on the left coproduct while the other gets applied on the
-right coproduct. The result of each \\<SUBSTMORPH\\> values must be
+right coproduct. The result of each CAT-MORPH values must be
 the same.
 
 The formal grammar of [CASE][type] is:
@@ -403,15 +403,15 @@ then give us True, otherwise flip the value of the boolean coming in."))
 (defclass pair (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type <substmorph>
+         :type cat-morph
          :documentation "The left morphism")
    (mcdr :initarg :mcdr
          :accessor mcdr
-         :type <substmorph>
+         :type cat-morph
          :documentation "The right morphism"))
   (:documentation
-   "Introduces products. Namely Takes two \\<SUBSTMORPH\\> values. When
-the PAIR morphism is applied on data, these two [\\<SUBSTMORPH\\>]'s are
+   "Introduces products. Namely Takes two CAT-MORPH values. When
+the PAIR morphism is applied on data, these two [CAT-MORPH]'s are
 applied to the object, returning a pair of the results
 
 The formal grammar of constructing an instance of pair is:
@@ -440,18 +440,18 @@ projects back the GEB-BOOL:BOOL field as the second values."))
 (defclass project-left (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type <substobj>
+         :type cat-obj
          :documentation "")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type <substobj>
+          :type cat-obj
           :documentation ""))
   (:documentation
    "The [LEFT PROJECTION][PROJECT-LEFT type]. Takes two
-[\\<SUBSTMORPH\\>] values. When the [LEFT PROJECTION][PROJECT-LEFT
+[CAT-MORPH] values. When the [LEFT PROJECTION][PROJECT-LEFT
 type] morphism is then applied, it grabs the left value of a product,
 with the type of the product being determined by the two
-[\\<SUBSTMORPH\\>] values given.
+[CAT-MORPH] values given.
 
 the formal grammar of a [PROJECT-LEFT][type] is:
 
@@ -477,17 +477,17 @@ product with the shape
 (defclass project-right (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type <substobj>
+         :type cat-obj
          :documentation "")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type <substobj>
+          :type cat-obj
           :documentation "Right projection (product elimination)"))
   (:documentation "The [RIGHT PROJECTION][PROJECT-RIGHT type]. Takes two
-[\\<SUBSTMORPH\\>] values. When the [RIGHT PROJECTION][PROJECT-RIGHT
+[CAT-MORPH] values. When the [RIGHT PROJECTION][PROJECT-RIGHT
 type] morphism is then applied, it grabs the right value of a product,
 with the type of the product being determined by the two
-[\\<SUBSTMORPH\\>] values given.
+[CAT-MORPH] values given.
 
 
 the formal grammar of a [PROJECT-RIGHT][type] is:
@@ -515,15 +515,15 @@ product with the shape
 (defclass distribute (<substmorph>)
   ((mcar :initarg :mcar
          :accessor mcar
-         :type <substobj>
+         :type cat-obj
          :documentation "")
    (mcadr :initarg :mcadr
           :accessor mcadr
-          :type <substobj>
+          :type cat-obj
           :documentation "")
    (mcaddr :initarg :mcaddr
            :accessor mcaddr
-           :type <substobj>
+           :type cat-obj
            :documentation ""))
   (:documentation "The distributive law"))
 
@@ -566,7 +566,7 @@ product with the shape
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; we could type the objects more if wanted
 
-(-> comp (<substmorph> <substmorph> &rest <substmorph>) comp)
+(-> comp (cat-morph cat-morph &rest cat-morph) comp)
 (defun comp (car cadr &rest comps)
   (let ((list (list* car cadr comps)))
     (mvfoldr (lambda (x acc)
@@ -574,51 +574,51 @@ product with the shape
              (butlast list)
              (car (last list)))))
 
-(-> init (<substobj>) init)
+(-> init (cat-obj) init)
 (defun init (obj)
   (values
    (make-instance 'init :obj obj)))
 
-(-> terminal (<substobj>) terminal)
+(-> terminal (cat-obj) terminal)
 (defun terminal (obj)
   (values
    (make-instance 'terminal :obj obj)))
 
-(-> ->left (<substobj> <substobj>) inject-left)
+(-> ->left (cat-obj cat-obj) inject-left)
 (defun ->left (mcar mcadr)
   "injects left constructor"
   (values
    (make-instance 'inject-left :mcar mcar :mcadr mcadr)))
 
-(-> ->right (<substobj> <substobj>) inject-right)
+(-> ->right (cat-obj cat-obj) inject-right)
 (defun ->right (mcar mcadr)
   "injects right constructor"
   (values
    (make-instance 'inject-right :mcar mcar :mcadr mcadr)))
 
-(-> <-left (<substobj> <substobj>) project-left)
+(-> <-left (cat-obj cat-obj) project-left)
 (defun <-left (mcar mcadr)
   "projects left constructor"
   (values
    (make-instance 'project-left :mcar mcar :mcadr mcadr)))
 
-(-> <-right (<substobj> <substobj>) project-right)
+(-> <-right (cat-obj cat-obj) project-right)
 (defun <-right (mcar mcadr)
   "projects right constructor"
   (values
    (make-instance 'project-right :mcar mcar :mcadr mcadr)))
 
-(-> mcase (<substmorph> <substmorph>) case)
+(-> mcase (cat-morph cat-morph) case)
 (defun mcase (mcar mcadr)
   (values
    (make-instance 'case :mcar mcar :mcadr mcadr)))
 
-(-> pair (<substmorph> <substmorph>) pair)
+(-> pair (cat-morph cat-morph) pair)
 (defun pair (mcar mcdr)
   (values
    (make-instance 'pair :mcar mcar :mcdr mcdr)))
 
-(-> distribute (<substobj> <substobj> <substobj>) distribute)
+(-> distribute (cat-obj cat-obj cat-obj) distribute)
 (defun distribute (mcar mcadr mcaddr)
   (values
    (make-instance 'distribute :mcar mcar :mcadr mcadr :mcaddr mcaddr)))

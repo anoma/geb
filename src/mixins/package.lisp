@@ -14,6 +14,15 @@
   (@mixin-examples pax:section)
   (@metadata       pax:section))
 
+(pax:defsection @mixins-cat (:title "The Categorical Interface")
+  "This covers the main Categorical interface required to be used and
+contained in various data structures"
+  (cat-obj    pax:class)
+  (cat-morph  pax:class)
+  (dom        pax:generic-function)
+  (codom      pax:generic-function)
+  (curry-prod pax:generic-function))
+
 (pax:defsection @metadata (:title "Metadata Mixin")
   "Metadata is a form of meta information about a particular
    object. Having metadata about an object may be useful if the goal
