@@ -2,7 +2,7 @@
 
 (in-package :geb.main)
 
-(-> const (<substmorph> <substobj>) (or alias comp))
+(-> const (<substmorph> <substobj>) (or t comp))
 (defun const (f x)
   "The constant morphism.
 
@@ -81,7 +81,6 @@ then: `(commutes-left (dom morph)) ≡ (prod y x)`
   (etypecase-of substobj a
     (so0    so1)
     (so1    b)
-    (alias  (!-> (obj a) b))
     (coprod (prod (!-> (mcar a)  b)
                   (!-> (mcadr a) b)))
     (prod   (!-> (mcar a)
@@ -95,7 +94,6 @@ then: `(commutes-left (dom morph)) ≡ (prod y x)`
   ;; we don't use the cata morphism so here we are. Doesn't give me
   ;; much extra
   (match-of geb:substobj obj
-    (geb:alias        (so-card-alg (obj obj)))
     ((geb:prod a b)   (* (so-card-alg a)
                          (so-card-alg b)))
     ((geb:coprod a b) (+ (so-card-alg a)
@@ -107,7 +105,6 @@ then: `(commutes-left (dom morph)) ≡ (prod y x)`
 (-> so-eval (substobj substobj) substmorph)
 (defun so-eval (x y)
   (match-of substobj x
-    (alias        (so-eval (obj x) y))
     (so0          (comp (init y) (<-right so1 so0)))
     (so1          (<-left y so1))
     ((coprod a b) (comp (mcase (comp (so-eval a y)
@@ -127,7 +124,6 @@ then: `(commutes-left (dom morph)) ≡ (prod y x)`
   (match-of substobj x
     (so0          so1)
     (so1          z)
-    (alias        (so-hom-obj (obj x) z))
     ((coprod x y) (prod (so-hom-obj x z)
                         (so-hom-obj y z)))
     ((prod x y)   (so-hom-obj x (so-hom-obj y z)))))
@@ -159,9 +155,6 @@ then: `(commutes-left (dom morph)) ≡ (prod y x)`
     (typecase-of substmorph x
       (init         so0)
       (terminal     (obj x))
-      (alias        (if (typep (obj x) '<substobj>)
-                        (make-alias :name (name x) :obj (dom (obj x)))
-                        (dom (obj x))))
       (substobj     x)
       (inject-left  (mcar x))
       (inject-right (mcadr x))
@@ -178,7 +171,6 @@ then: `(commutes-left (dom morph)) ≡ (prod y x)`
 (defmethod codom ((x <substmorph>))
   (assure substobj
     (typecase-of substmorph x
-      (alias         (codom (obj x)))
       (terminal      so1)
       (init          (obj x))
       (substobj      x)
@@ -258,7 +250,6 @@ In category terms, `a → c^b` is isomorphic to `a → b → c`
          (let ((dom (dom f)))
            (labels ((rec (fun fst snd)
                       (match-of substobj snd
-                        (alias        (rec fun fst (obj snd)))
                         (so0          (terminal fst))
                         (so1          (comp fun (pair fst
                                                       (terminal fst))))

@@ -1,22 +1,21 @@
 (in-package :geb.spec)
 
-(defclass <substobj> (<substmorph> direct-pointwise-mixin) ()
+(defclass <substobj> (<substmorph> direct-pointwise-mixin meta-mixin) ()
   (:documentation
    "the class corresponding to SUBSTOBJ. See GEB-DOCS/DOCS:@OPEN-CLOSED"))
 (deftype substobj ()
-  `(or alias prod coprod so0 so1))
+  `(or prod coprod so0 so1))
 
 ;; we say that id doesn't exist, as we don't need the tag. If we find
 ;; that to ill typed (substobj is a substmorph as far as type checking
 ;; is concerned without an explicit id constrcutor), then we can
 ;; include it and remove it from the or type here.
-(defclass <substmorph> (direct-pointwise-mixin) ()
+(defclass <substmorph> (direct-pointwise-mixin meta-mixin) ()
   (:documentation
    "the class type corresponding to SUBSTMORPH. See GEB-DOCS/DOCS:@OPEN-CLOSED"))
 (deftype substmorph ()
   "The morphisms of the [SUBSTMORPH][type] category"
   `(or substobj
-       alias
        comp init terminal case pair distribute
        inject-left inject-right
        project-left project-right))
@@ -24,16 +23,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subst Constructor Objects
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defclass alias (<substobj>)
-  ((name :initarg :name
-         :accessor name
-         :type     symbol
-         :documentation "The name of the GEB object")
-   (obj :initarg :obj
-        :accessor obj
-        :documentation "The underlying geb object"))
-  (:documentation "an alias for a geb object"))
 
 ;; these could be keywords, but maybe in the future not?
 (defclass so0 (<substobj>)
@@ -534,6 +523,14 @@ product with the shape
 ;; this is considered bad style, one should call their constructors
 ;; make, but it does not matter
 
+(defun so1 ()
+  "Creates a fresh so1. Useful for aliases"
+  (make-instance 'so1))
+
+(defun so0 ()
+  "Creates a fresh so0. Useful for aliases"
+  (make-instance 'so0))
+
 (defparameter *so0* (make-instance 'so0)
   "The Initial Object")
 (def so0 *so0*
@@ -556,10 +553,10 @@ product with the shape
 (defmacro alias (name obj)
   `(make-alias :name ',name :obj ,obj))
 
-(-> make-alias (&key (:name symbol) (:obj t)) alias)
+(-> make-alias (&key (:name symbol) (:obj t)) t)
 (defun make-alias (&key name obj)
-  (values
-   (make-instance 'alias :name name :obj obj)))
+  (geb.mixins:meta-insert obj :alias name)
+  obj)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constructors for the morphism constructors
@@ -636,18 +633,12 @@ product with the shape
 (defmethod mcar ((obj init))
   (obj obj))
 
-(defmethod mcar ((alias alias))
-  (mcar (obj alias)))
-
-(defmethod mcadr ((alias alias))
-  (mcadr (obj alias)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Matching conveniences
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; less safe than I wanted due to the names can be out of sync, but
 ;; w/e I can fix it with a better defclass macro
-(make-pattern alias  name obj)
 (make-pattern prod   mcar mcadr)
 (make-pattern so1    mcar mcadr)
 (make-pattern so0    mcar mcadr)

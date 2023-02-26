@@ -5,8 +5,8 @@
 ;; Also I want a variable to control so Ι can expand these names
 ;; only, as Ι pretty print.
 
-(def false-obj (alias false so1))
-(def true-obj (alias true so1))
+(def false-obj (alias false (so1)))
+(def true-obj (alias true (so1)))
 
 (def true (alias true (->right false-obj true-obj)))
 (def false (alias false (->left false-obj true-obj)))
@@ -62,9 +62,9 @@ the left unit")
   (comp and-on-sum iso1 (distribute bool false-obj true-obj)))
 
 (def and
-  (comp (mcase (const false (prod bool (alias false so1)))
-               (<-left bool (alias true so1)))
-        (distribute bool (alias false so1) (alias true so1))))
+  (comp (mcase (const false (prod bool false-obj))
+               (<-left bool true-obj))
+        (distribute bool false-obj true-obj)))
 
 (def or
   (pair bool
