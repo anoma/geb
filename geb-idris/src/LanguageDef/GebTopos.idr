@@ -9,6 +9,59 @@ import public LanguageDef.Syntax
 
 %default total
 
+------------------------------------------------------------------
+------------------------------------------------------------------
+---- "Interpretation" of morphisms as natural transformations ----
+------------------------------------------------------------------
+------------------------------------------------------------------
+
+public export
+record DiagSig (obj, morph : Type) where
+  constructor DSig
+  dsigDom : morph -> obj
+  dsigCod : morph -> obj
+
+-- Data which determine a polynomial functor which takes (dependent) diagrams
+-- to (dependent) objects.
+public export
+record DPDiagramObjF (0 paramdom, paramcod : Type) where
+  constructor DPDF
+  dpdfObjPos : paramcod -> Type
+  dpdfObjDirObj : Sigma {a=paramcod} dpdfObjPos -> Type
+  dpdfObjDirMorph : Sigma {a=paramcod} dpdfObjPos -> Type
+  0 dpdfObjConstraint :
+    (dp : paramdom) -> (dc : paramcod) -> (i : dpdfObjPos dc) ->
+    (obj : Type) ->
+    (dpdfObjDirObj (dc ** i) -> obj) ->
+    (dom : dpdfObjDirMorph (dc ** i) -> obj) ->
+    (cod : dpdfObjDirMorph (dc ** i) -> obj) ->
+    Type
+
+-- Interpret the data of a `DPDiagramObjF` to produce a dependent polynomial
+-- functor which, given types of (dependent) objects and (dependent) morphisms,
+-- returns a type of (dependent) objects.
+public export
+record InterpDPDF {0 paramdom, paramcod : Type}
+    (0 dpdf : DPDiagramObjF paramdom paramcod)
+    (0 obj : paramdom -> Type) (0 morph : paramdom -> Type)
+    (0 dom : (dp : paramdom) -> morph dp -> obj dp)
+    (0 cod : (dp : paramdom) -> morph dp -> obj dp)
+    (0 dc : paramcod) where
+  constructor IDPDF
+  idpdfParam : paramdom
+  idpdfPos : dpdf.dpdfObjPos dc
+  idpdfObj : dpdf.dpdfObjDirObj (dc ** idpdfPos) -> obj idpdfParam
+  idpdfMorph : dpdf.dpdfObjDirMorph (dc ** idpdfPos) -> morph idpdfParam
+  0 idpdfObjConstraint :
+    dpdf.dpdfObjConstraint
+      idpdfParam
+      dc
+      idpdfPos
+      (obj idpdfParam)
+      idpdfObj
+      (dom idpdfParam . idpdfMorph)
+      (cod idpdfParam . idpdfMorph)
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Dependent polynomial functors generating compound types ----
