@@ -115,15 +115,17 @@ WTFAlg {a} wtf sa = SliceMorphism {a} (InterpWTF wtf sa) sa
 public export
 data WTFMu : {a : Type} -> WTypeEndoFunc a -> SliceObj a where
   InWTFM : {a : Type} -> {wtf : WTypeEndoFunc a} ->
-    (dc : a) -> (i : PreImage {a=(wtPos wtf)} {b=a} (wtPosSlice wtf) dc) ->
-    ((d : PreImage {a=(wtDir wtf)} {b=(wtPos wtf)} (wtDirSlice wtf) (fst0 i)) ->
+    (i : (dc : a ** PreImage {a=(wtPos wtf)} {b=a} (wtPosSlice wtf) dc)) ->
+    ((d :
+        PreImage {a=(wtDir wtf)} {b=(wtPos wtf)}
+          (wtDirSlice wtf) (fst0 (snd i))) ->
       WTFMu {a} wtf (wtAssign wtf (fst0 d))) ->
-    WTFMu {a} wtf dc
+    WTFMu {a} wtf (fst i)
 
 public export
 wtfCata : {0 a : Type} -> {wtf : WTypeEndoFunc a} -> {sa : SliceObj a} ->
   WTFAlg wtf sa -> SliceMorphism {a} (WTFMu wtf) sa
-wtfCata {a} {wtf} {sa} alg dc (InWTFM dc i dm) =
+wtfCata {a} {wtf} {sa} alg _ (InWTFM (dc ** i) dm) =
   alg dc (i ** \d => wtfCata {a} {wtf} {sa} alg (wtAssign wtf (fst0 d)) $ dm d)
 
 ------------------------------------------------------------------
@@ -1539,12 +1541,8 @@ GWExpWTF : WTypeEndoFunc GExpSlice
 GWExpWTF = MkWTF GWExpPos GWExpDir gAssign gDirSlice gPosSlice
 
 public export
-GWExpSPF : SlicePolyEndoFunc GExpSlice
-GWExpSPF = WTFtoSPF GWExpWTF
-
-public export
 GWExpWT : SliceObj GExpSlice
-GWExpWT = SPFMu GWExpSPF
+GWExpWT = WTFMu GWExpWTF
 
 public export
 GWExpSigma : Type
@@ -1583,7 +1581,7 @@ record GWExpAlg (sa : GExpSlice -> Type) where
   galgXC : sa GSEXP -> sa GSEXPL -> sa GSEXPL
 
 public export
-GAlgToSPF : {sa : GExpSlice -> Type} -> GWExpAlg sa -> SPFAlg GWExpSPF sa
+GAlgToSPF : {sa : GExpSlice -> Type} -> GWExpAlg sa -> WTFAlg GWExpWTF sa
 GAlgToSPF alg GSATOM (Element0 (GPA a) isl ** d) =
   alg.galgA a
 GAlgToSPF alg GSATOM (Element0 (GPNAP GPNAZ) isl ** d) =
@@ -1669,7 +1667,7 @@ GAlgToSPF alg GSEXPL (Element0 (GPNAP GPNAXC) isl ** d) =
 public export
 gwexpCata : {sa : GExpSlice -> Type} ->
   GWExpAlg sa -> SliceMorphism {a=GExpSlice} GWExpWT sa
-gwexpCata {sa} alg = spfCata {spf=GWExpSPF} {sa} (GAlgToSPF {sa} alg)
+gwexpCata {sa} alg = wtfCata {wtf=GWExpWTF} {sa} (GAlgToSPF {sa} alg)
 
 public export
 GWExpWTtoGExpAlgSl : SliceObj GExpSlice
@@ -1693,7 +1691,7 @@ gwexpWTtoGExp = gwexpWTtoGExpSl GSEXP
 
 public export
 InGA : GebAtom -> GWExpA
-InGA a = InSPFM (GSATOM ** Element0 (GPA a) Refl) $ \(Element0 d dsl) =>
+InGA a = InWTFM (GSATOM ** Element0 (GPA a) Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
     GDXA => void $ case dsl of Refl impossible
@@ -1706,7 +1704,7 @@ InGA a = InSPFM (GSATOM ** Element0 (GPA a) Refl) $ \(Element0 d dsl) =>
 
 public export
 InGZ : GWExpN
-InGZ = InSPFM (GSNAT ** Element0 GPZ Refl) $ \(Element0 d dsl) =>
+InGZ = InWTFM (GSNAT ** Element0 GPZ Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
     GDXA => void $ case dsl of Refl impossible
@@ -1719,7 +1717,7 @@ InGZ = InSPFM (GSNAT ** Element0 GPZ Refl) $ \(Element0 d dsl) =>
 
 public export
 InGS : GWExpN -> GWExpN
-InGS n = InSPFM (GSNAT ** Element0 GPS Refl) $ \(Element0 d dsl) =>
+InGS n = InWTFM (GSNAT ** Element0 GPS Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => n
     GDXA => void $ case dsl of Refl impossible
@@ -1737,7 +1735,7 @@ InGNat (S n) = InGS (InGNat n)
 
 public export
 InGNN : GWExpNL
-InGNN = InSPFM (GSNATL ** Element0 GPNN Refl) $ \(Element0 d dsl) =>
+InGNN = InWTFM (GSNATL ** Element0 GPNN Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
     GDXA => void $ case dsl of Refl impossible
@@ -1750,7 +1748,7 @@ InGNN = InSPFM (GSNATL ** Element0 GPNN Refl) $ \(Element0 d dsl) =>
 
 public export
 InGNC : GWExpN -> GWExpNL -> GWExpNL
-InGNC n ns = InSPFM (GSNATL ** Element0 GPNC Refl) $ \(Element0 d dsl) =>
+InGNC n ns = InWTFM (GSNATL ** Element0 GPNC Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
     GDXA => void $ case dsl of Refl impossible
@@ -1771,7 +1769,7 @@ InGNatList = foldr InGNatC InGNN
 
 public export
 InGXN : GWExpXL
-InGXN = InSPFM (GSEXPL ** Element0 GPXN Refl) $ \(Element0 d dsl) =>
+InGXN = InWTFM (GSEXPL ** Element0 GPXN Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
     GDXA => void $ case dsl of Refl impossible
@@ -1784,7 +1782,7 @@ InGXN = InSPFM (GSEXPL ** Element0 GPXN Refl) $ \(Element0 d dsl) =>
 
 public export
 InGXC : GWExpX -> GWExpXL -> GWExpXL
-InGXC x xs = InSPFM (GSEXPL ** Element0 GPXC Refl) $ \(Element0 d dsl) =>
+InGXC x xs = InWTFM (GSEXPL ** Element0 GPXC Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
     GDXA => void $ case dsl of Refl impossible
@@ -1797,7 +1795,7 @@ InGXC x xs = InSPFM (GSEXPL ** Element0 GPXC Refl) $ \(Element0 d dsl) =>
 
 public export
 InGX : GebAtom -> GWExpNL -> GWExpXL -> GWExpX
-InGX a ns xs = InSPFM (GSEXP ** Element0 GPX Refl) $ \(Element0 d dsl) =>
+InGX a ns xs = InWTFM (GSEXP ** Element0 GPX Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
     GDXA => InGA a
