@@ -15,6 +15,10 @@ import public LanguageDef.Syntax
 ------------------------------------------------------
 ------------------------------------------------------
 
+--------------------------------------------------
+---- Definition and interpretation of W-types ----
+--------------------------------------------------
+
 public export
 record WTypeFunc (parambase, posbase : Type) where
   constructor MkWTF
@@ -31,10 +35,10 @@ WTypeEndoFunc base = WTypeFunc base base
 public export
 InterpWTF : {parambase, posbase : Type} ->
   WTypeFunc parambase posbase -> SliceFunctor parambase posbase
-InterpWTF {parambase} {posbase} (MkWTF pos dir assign dsl psl) sl ib =
-  (i : PreImage {a=pos} {b=posbase} psl ib **
-   (d : PreImage {a=dir} {b=pos} dsl (fst0 i)) ->
-   sl $ assign $ fst0 d)
+InterpWTF {parambase} {posbase} wtf sl ib =
+  (i : PreImage {a=(wtPos wtf)} {b=posbase} (wtPosSlice wtf) ib **
+   (d : PreImage {a=(wtDir wtf)} {b=(wtPos wtf)} (wtDirSlice wtf) (fst0 i)) ->
+   sl $ wtAssign wtf $ fst0 d)
 
 public export
 WTFtoSPF : {parambase, posbase : Type} ->
@@ -95,6 +99,32 @@ InterpSPFtoWTFInv {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
   (i ** d) =
     (Element0 (ib ** i) Refl **
      \(Element0 (i' ** di) deq) => rewrite deq in d $ rewrite sym deq in di)
+
+-----------------------------
+---- Algebras of W-types ----
+-----------------------------
+
+public export
+WTFAlg : {a : Type} -> WTypeEndoFunc a -> SliceObj a -> Type
+WTFAlg {a} wtf sa = SliceMorphism {a} (InterpWTF wtf sa) sa
+
+-------------------------------------
+---- Initial algebras of W-types ----
+-------------------------------------
+
+public export
+data WTFMu : {a : Type} -> WTypeEndoFunc a -> SliceObj a where
+  InWTFM : {a : Type} -> {wtf : WTypeEndoFunc a} ->
+    (dc : a) -> (i : PreImage {a=(wtPos wtf)} {b=a} (wtPosSlice wtf) dc) ->
+    ((d : PreImage {a=(wtDir wtf)} {b=(wtPos wtf)} (wtDirSlice wtf) (fst0 i)) ->
+      WTFMu {a} wtf (wtAssign wtf (fst0 d))) ->
+    WTFMu {a} wtf dc
+
+public export
+wtfCata : {0 a : Type} -> {wtf : WTypeEndoFunc a} -> {sa : SliceObj a} ->
+  WTFAlg wtf sa -> SliceMorphism {a} (WTFMu wtf) sa
+wtfCata {a} {wtf} {sa} alg dc (InWTFM dc i dm) =
+  alg dc (i ** \d => wtfCata {a} {wtf} {sa} alg (wtAssign wtf (fst0 d)) $ dm d)
 
 ------------------------------------------------------------------
 ------------------------------------------------------------------
