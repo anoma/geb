@@ -15,6 +15,41 @@ import public LanguageDef.Syntax
 --------------------------------------------
 --------------------------------------------
 
+------------------------------
+---- Category of diagrams ----
+------------------------------
+
+-- The (free-forgetful) adjunction which can be used to define a category
+-- has the following data:
+--
+--  - Left category C: two-category of categories
+--  - Right category D: category of diagrams
+--  - Left functor L: free functor which adds identities (loop edges) for
+--    each vertex and paths to represent compositions, and equalities for
+--    left identity, right identity, and associativity
+--  - Right functor R: forgetful functor which drops identity, composition,
+--    and equalities, leaving just vertices and edges
+--  - R . L (D -> D): Functor which closes a diagram with loops labeled
+--    as identities and paths labeled as compositions
+--  - L . R (C -> C): Identity functor
+--  - Unit (id -> R . L): injection of diagram into its closure
+--  - Counit (L . R -> id): identity natural transformation
+--  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
+--    functors from a free category generated from a diagram A to an arbitrary
+--    category B are in bijection with graph homomorphisms from A to the
+--    diagram underlying B (i.e. the diagram whose vertices are objects of B
+--    and whose edges are morphisms of B)
+--  - Left triangle identity: (counit . L) . (L . unit) = id(L):
+--    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
+--    (which goes from L(A) to L(A) in C via L(R(L(A)))):
+--      id(L(A)) . L(inj(A)) = id(L(A))
+--    -- this reflects preservation of identities by functors
+--  - Right triangle identity: (R . counit) . (unit . R) = id(R):
+--    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
+--    (which goes from R(B) to R(B) in D via R(L(R(B)))):
+--      id(forget(B)) . inj(forget(B)) = id(forget(B))
+--    -- this reflects the definition of the injection
+
 -- The adjunction which can be used to define the initial object has the
 -- following data:
 --
@@ -37,16 +72,16 @@ import public LanguageDef.Syntax
 --  - Left triangle identity: (counit . L) . (L . unit) = id(L):
 --    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
 --    (which goes from L(A) to L(A) in C via L(R(L(A)))):
---    fromVoid(Void, L(A)) . L(id(A)) = id(L(A)) -- this reduces to
---    fromVoid(Void, Void) . id(Void) = id(Void), and from there to
---    fromVoid(Void, Void) = id(Void)
+--      fromVoid(Void, L(A)) . L(id(A)) = id(L(A))
+--    -- this reduces to fromVoid(Void, Void) . id(Void) = id(Void),
+--    and from there to fromVoid(Void, Void) = id(Void)
 --  - Right triangle identity: (R . counit) . (unit . R) = id(R):
 --    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
 --    (which goes from R(B) to R(B) in D via R(L(R(B)))):
---    id(1) . id(1) = id(1) -- this reduces to id(1) = id(1), so it's
---    not telling us anything new (we could have concluded that from
---    the category laws alone, or indeed by reflexivity on the unique
---    morphism in the terminal category)
+--      id(1) . id(1) = id(1)
+--    -- this reduces to id(1) = id(1), so it's not telling us anything new
+--    (we could have concluded that from the category laws alone, or indeed by
+--    reflexivity on the unique morphism in the terminal category)
 
 -- The functor which freely generates an initial object simply
 -- generates one new object.
