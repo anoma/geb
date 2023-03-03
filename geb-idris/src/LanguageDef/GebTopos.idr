@@ -15,10 +15,6 @@ import public LanguageDef.Syntax
 --------------------------------------------
 --------------------------------------------
 
-public export
-TranslateF : (Type -> Type) -> Type -> Type
-TranslateF f x = Either x (f x)
-
 -- The adjunction which can be used to define the initial object has the
 -- following data:
 --
@@ -55,8 +51,9 @@ TranslateF f x = Either x (f x)
 -- The functor which freely generates an initial object simply
 -- generates one new object.
 public export
-InitialObjF : Type -> Type
-InitialObjF _ = Unit
+InitialObjF : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
+  Type
+InitialObjF _ _ _ _ = Unit
 
 -- The functor which freely generates an initial morphism generates one
 -- from any object (existing or new) to the newly-generated object.
@@ -64,20 +61,20 @@ InitialObjF _ = Unit
 public export
 InitialMorphF : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
   Type
-InitialMorphF obj morph dom cod = TranslateF InitialObjF obj
+InitialMorphF obj morph dom cod = Either (InitialObjF obj morph dom cod) obj
 
 -- The domain of the new initial morphism corresponding to a given object
 -- is the initial object.
 public export
 InitialMorphDom : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
-  InitialMorphF obj morph dom cod -> TranslateF InitialObjF obj
+  InitialMorphF obj morph dom cod -> Either obj (InitialObjF obj morph dom cod)
 InitialMorphDom obj morph dom cod m = Right ()
 
 -- The codomain of the new initial morphism corresponding to a given object
 -- is the given object.
 public export
 InitialMorphCod : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
-  InitialMorphF obj morph dom cod -> TranslateF InitialObjF obj
+  InitialMorphF obj morph dom cod -> Either (InitialObjF obj morph dom cod) obj
 InitialMorphCod obj morph dom cod m = m
 
 ------------------------------------------------------
