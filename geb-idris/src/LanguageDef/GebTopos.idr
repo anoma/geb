@@ -9,6 +9,90 @@ import public LanguageDef.Syntax
 
 %default total
 
+-------------------
+-------------------
+---- Relations ----
+-------------------
+-------------------
+
+public export
+data CatSymPos : Type where
+  CSId : CatSymPos
+  CSComp : CatSymPos
+
+public export
+data CatSymDir : CatSymPos -> Type where
+  CSLeft : CatSymDir CSComp
+  CSRight : CatSymDir CSComp
+
+public export
+CatSymF : PolyFunc
+CatSymF = (CatSymPos ** CatSymDir)
+
+-- Given a type, this functor extends the terms of that type with
+-- 'id' and 'compose' terms (the latter to arbitrary depths).
+public export
+CatSymFM : PolyFunc
+CatSymFM = PolyFuncFreeM CatSymF
+
+public export
+data SymRelPos : Type where
+  SRPSym : SymRelPos
+
+public export
+data SymRelDir : SymRelPos -> Type where
+  SRDSym : SymRelDir SRPSym
+
+public export
+SymRelF : PolyFunc
+SymRelF = (SymRelPos ** SymRelDir)
+
+public export
+SymRelFM : PolyFunc
+SymRelFM = PolyFuncFreeM SymRelF
+
+public export
+EqRelF : PolyFunc
+EqRelF = pfCoproductArena CatSymF SymRelF
+
+public export
+EqRelPos : Type
+EqRelPos = pfPos EqRelF
+
+public export
+EqRelDir : EqRelPos -> Type
+EqRelDir = pfDir {p=EqRelF}
+
+public export
+EqRelFM : PolyFunc
+EqRelFM = PolyFuncFreeM EqRelF
+
+public export
+data DeqRelPosExt : Type where
+  DRPDec : DeqRelPosExt
+
+public export
+data DeqRelDirExt : {0 a : Type} -> DecPred a -> DeqRelPosExt -> Type where
+  DRDDec :
+    {0 a : Type} -> {0 pred : DecPred a} -> (x : a) ->
+    {auto 0 checks : IsTrue (pred x)} -> DeqRelDirExt {a} pred DRPDec
+
+public export
+DeqRelExtF : {0 a : Type} -> DecPred a -> PolyFunc
+DeqRelExtF {a} pred = (DeqRelPosExt ** DeqRelDirExt {a} pred)
+
+public export
+DeqRelF : {0 a : Type} -> DecPred a -> PolyFunc
+DeqRelF {a} pred = pfCoproductArena EqRelF (DeqRelExtF {a} pred)
+
+public export
+DeqRelPos : {0 a : Type} -> DecPred a -> Type
+DeqRelPos {a} pred = pfPos (DeqRelF {a} pred)
+
+public export
+DeqRelDir : {0 a : Type} -> (pred : DecPred a) -> DeqRelPos {a} pred -> Type
+DeqRelDir {a} pred = pfDir {p=(DeqRelF {a} pred)}
+
 --------------------------------------------
 --------------------------------------------
 ---- Category-spec-style Geb definition ----
