@@ -19,6 +19,39 @@ public export
 TranslateF : (Type -> Type) -> Type -> Type
 TranslateF f x = Either x (f x)
 
+-- The adjunction which can be used to define the initial object has the
+-- following data:
+--
+--  - Left category C: category being freely generated
+--  - Right category D: terminal category
+--  - Left functor L: constant functor to initial object (and identity
+--    morphism on initial object)
+--  - Right functor R: unique functor to terminal category
+--  - R . L (D -> D): identity functor (on terminal category -- this is the
+--    _only_ endofunctor on the terminal category)
+--  - L . R (C -> C): constant functor which takes any object to initial object,
+--    and any morphism to identity on initial object
+--  - Unit (id -> R . L): identity natural transformation (the only
+--    natural transformation on the only endofunctor on the terminal category)
+--  - Counit (L . R -> id): component at B is unique morphism from initial
+--    object to B
+--  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
+--    for all B : C, fromVoid(Void, B) is in bijection with Hom(1 : D, 1 : D),
+--    which is (isomorphic to) Unit
+--  - Left triangle identity: (counit . L) . (L . unit) = id(L):
+--    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
+--    (which goes from L(A) to L(A) in C via L(R(L(A)))):
+--    fromVoid(Void, L(A)) . L(id(A)) = id(L(A)) -- this reduces to
+--    fromVoid(Void, Void) . id(Void) = id(Void), and from there to
+--    fromVoid(Void, Void) = id(Void)
+--  - Right triangle identity: (R . counit) . (unit . R) = id(R):
+--    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
+--    (which goes from R(B) to R(B) in D via R(L(R(B)))):
+--    id(1) . id(1) = id(1) -- this reduces to id(1) = id(1), so it's
+--    not telling us anything new (we could have concluded that from
+--    the category laws alone, or indeed by reflexivity on the unique
+--    morphism in the terminal category)
+
 -- The functor which freely generates an initial object simply
 -- generates one new object.
 public export
@@ -46,38 +79,6 @@ public export
 InitialMorphCod : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
   InitialMorphF obj morph dom cod -> TranslateF InitialObjF obj
 InitialMorphCod obj morph dom cod m = m
-
--- The adjunction which can be used to define the initial object has the
--- following data:
---
---  - Left category C: category being freely generated
---  - Right category D: terminal category
---  - Left functor L: constant functor to initial object (and identity
---    morphism on initial object)
---  - Right functor R: unique functor to terminal category
---  - R . L (D -> D): identity functor (on terminal category -- this is the
---    _only_ endofunctor on the terminal category)
---  - L . R (C -> C): constant functor which takes any object to initial object,
---    and any morphism to identity on initial object
---  - Unit (id -> R . L): identity natural transformation (the only
---    natural transformation on the only endofunctor on the terminal category)
---  - Counit (L . R -> id): component at B is unique morphism from initial
---    object to B
---  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
---    for all B : C, fromVoid(Void, B) is in bijection with Hom(1 : D, 1 : D),
---    which is (isomorphic to) Unit
---  - Left triangle identity: (counit . L) . (L . unit) = id(L):
---    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
---    (which goes from L(A) to L(A) via L(R(L(A)))):
---    fromVoid(Void, L(A)) . L(id(A)) = id(L(A)) -- this reduces to
---    fromVoid(Void, Void) . id(Void) = id(Void), and from there to
---    fromVoid(Void, Void) = id(Void)
---  - Right triangle identity: (R . counit) . (unit . R) = id(R):
---    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
---    (which goes from R(B) to R(B) via R(L(R(B)))):
---    id(1) . id(1) = id(1) -- this reduces to id(1) = id(1), so it's
---    not telling us anything new (we could have concluded that from
---    the category laws alone)
 
 ------------------------------------------------------
 ------------------------------------------------------
