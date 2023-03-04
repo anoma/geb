@@ -16,42 +16,42 @@ import public LanguageDef.Syntax
 -------------------
 
 public export
-data CatSymPos : Type where
-  CSId : CatSymPos
-  CSComp : CatSymPos
+data CatMorphPos : Type where
+  CSId : CatMorphPos
+  CSComp : CatMorphPos
 
 public export
-data CatSymDir : CatSymPos -> Type where
-  CSObj : CatSymDir CSId
-  CSLeft : CatSymDir CSComp
-  CSRight : CatSymDir CSComp
+data CatMorphDir : CatMorphPos -> Type where
+  CSObj : CatMorphDir CSId
+  CSLeft : CatMorphDir CSComp
+  CSRight : CatMorphDir CSComp
 
 public export
-CatSymF : PolyFunc
-CatSymF = (CatSymPos ** CatSymDir)
+CatMorphF : PolyFunc
+CatMorphF = (CatMorphPos ** CatMorphDir)
 
 public export
-data CatSymDom : Type where
-  CSDObj : CatSymDom
-  CSDMorph : CatSymDom
+data CatMorphDom : Type where
+  CSDObj : CatMorphDom
+  CSDMorph : CatMorphDom
 
 public export
-CatSymAssign : Sigma CatSymDir -> CatSymDom
-CatSymAssign (CSId ** CSObj) = CSDObj
-CatSymAssign (CSComp ** d) = CSDMorph
+CatMorphAssign : Sigma CatMorphDir -> CatMorphDom
+CatMorphAssign (CSId ** CSObj) = CSDObj
+CatMorphAssign (CSComp ** d) = CSDMorph
 
 public export
-CatSymSPF : SlicePolyFunc CatSymDom Unit
-CatSymSPF =
-  (const CatSymPos **
-   CatSymDir . snd **
-   \((() ** i) ** d) => CatSymAssign (i ** d))
+CatMorphSPF : SlicePolyFunc CatMorphDom Unit
+CatMorphSPF =
+  (const CatMorphPos **
+   CatMorphDir . snd **
+   \((() ** i) ** d) => CatMorphAssign (i ** d))
 
 -- Given a type, this functor extends the terms of that type with
 -- 'id' and 'compose' terms (the latter to arbitrary depths).
 public export
-CatSymFM : PolyFunc
-CatSymFM = PolyFuncFreeM CatSymF
+CatMorphFM : PolyFunc
+CatMorphFM = PolyFuncFreeM CatMorphF
 
 public export
 data SymRelPos : Type where
@@ -71,7 +71,7 @@ SymRelFM = PolyFuncFreeM SymRelF
 
 public export
 EqRelF : PolyFunc
-EqRelF = pfCoproductArena CatSymF SymRelF
+EqRelF = pfCoproductArena CatMorphF SymRelF
 
 public export
 EqRelPos : Type
