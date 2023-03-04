@@ -3132,29 +3132,26 @@ public export
 SPFSliceTerminal : (x : Type) -> SlicePolyEndoFunc x
 SPFSliceTerminal x = (const Unit ** const Void ** \x => void $ snd x)
 
--- The coproduct in the category of polynomial endofunctors on
--- the slice category `Type/x`.
 public export
-SPFSliceCoproduct : {a : Type} ->
-  SlicePolyEndoFunc x -> SlicePolyEndoFunc x -> SlicePolyEndoFunc x
-SPFSliceCoproduct {a} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+SPFSliceCoproduct : {x, y : Type} ->
+  SlicePolyFunc x y -> SlicePolyFunc x y -> SlicePolyFunc x y
+SPFSliceCoproduct {x} {y} (pd ** dd ** asn) (pd' ** dd' ** asn') =
   (\i => Either (pd i) (pd' i) **
    \(i ** d) => (case d of
     Left d' => dd (i ** d')
     Right d' => dd' (i ** d')) **
    \((i ** d) ** dd) => (case d of
-    Left d' => i
-    Right d' => i))
+    Left d' => asn ((i ** d') ** dd)
+    Right d' => asn' ((i ** d') ** dd)))
 
--- The product in the category of polynomial endofunctors on
--- the slice category `Type/x`.
 public export
-SPFSliceProduct : {a : Type} ->
-  SlicePolyEndoFunc x -> SlicePolyEndoFunc x -> SlicePolyEndoFunc x
-SPFSliceProduct {a} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+SPFSliceProduct : {x, y, z : Type} ->
+  SlicePolyFunc x z -> SlicePolyFunc y z -> SlicePolyFunc (x, y) z
+SPFSliceProduct {x} (pd ** dd ** asn) (pd' ** dd' ** asn') =
   (\i => (pd i, pd' i) **
    \(i ** (d, d')) => (dd (i ** d), dd' (i ** d')) **
-   \((i ** d) ** dd) => i)
+   \((i ** (d, d')) ** (dd, dd')) =>
+    (asn ((i ** d) ** dd), asn' ((i ** d') ** dd')))
 
 -------------------------------------------------------------
 -------------------------------------------------------------
