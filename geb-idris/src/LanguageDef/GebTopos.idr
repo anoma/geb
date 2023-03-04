@@ -22,12 +22,30 @@ data CatSymPos : Type where
 
 public export
 data CatSymDir : CatSymPos -> Type where
+  CSObj : CatSymDir CSId
   CSLeft : CatSymDir CSComp
   CSRight : CatSymDir CSComp
 
 public export
 CatSymF : PolyFunc
 CatSymF = (CatSymPos ** CatSymDir)
+
+public export
+data CatSymDom : Type where
+  CSDObj : CatSymDom
+  CSDMorph : CatSymDom
+
+public export
+CatSymAssign : Sigma CatSymDir -> CatSymDom
+CatSymAssign (CSId ** CSObj) = CSDObj
+CatSymAssign (CSComp ** d) = CSDMorph
+
+public export
+CatSymSPF : SlicePolyFunc CatSymDom Unit
+CatSymSPF =
+  (const CatSymPos **
+   CatSymDir . snd **
+   \((() ** i) ** d) => CatSymAssign (i ** d))
 
 -- Given a type, this functor extends the terms of that type with
 -- 'id' and 'compose' terms (the latter to arbitrary depths).
