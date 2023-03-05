@@ -9,6 +9,140 @@ import public LanguageDef.Syntax
 
 %default total
 
+--------------------------------------------
+--------------------------------------------
+---- Sigma types in programmer's FinSet ----
+--------------------------------------------
+--------------------------------------------
+
+public export
+data PFSTermF : Type -> Type where
+  -- Orders
+  PTO0 : PFSTermF a
+  PTO1 : PFSTermF a
+  PTO2 : PFSTermF a
+
+  -- Classes
+  PTCterm : PFSTermF a
+  PTCtyped : PFSTermF a -- pair of type and term
+
+  -- Non-dependent-type-forming terms
+  PT0 : PFSTermF a -- Initial/Void
+  PT1 : PFSTermF a -- Terminal/Unit
+  PTC : a -> a -> PFSTermF a  -- Coproduct/Either
+  PTP : a -> a -> PFSTermF a -- Product/Pair
+
+  -- Term-forming terms
+  PTu : PFSTermF a -- !/()
+  PTl : a -> PFSTermF a -- inl/Left
+  PTr : a -> PFSTermF a -- inr/Right
+  PTp : a -> a -> PFSTermF a -- inp/MkPair
+
+  -- Dependent-type-forming terms
+
+  -- An nth-order predicate:  meaning, an order-n type which depends upon on
+  -- order-n type.  This predicate is itself a term of an order-(n+1) type.
+  --
+  -- Another way of viewing this is as an order-(n+1) morphism
+  -- from some order-n type (as injected into order n+1) to the order-(n+1)
+  -- representation of the type of order-n types.  The first parameter is the
+  -- order, and the second parameter is the order-n type (as injected into
+  -- order (n+1)) constituting the domain.
+  PTpr : a -> a -> PFSTermF a
+
+  -- An nth-order sigma type; the parameter is an nth-order predicate.
+  -- (Note that the nth-order predicate may be viewed as a term of an
+  -- order-(n+1) type, or a morphism between order-(n+1) types.)
+  PTsig : a -> PFSTermF a
+
+  -- An nth-order pi type; the parameter is an nth-order predicate.
+  PTpi : a -> PFSTermF a
+
+public export
+data PFSTermFM : Type -> Type where
+  PTVar : a -> PFSTermFM a
+  PTCom : PFSTermF (PFSTermFM a) -> PFSTermFM a
+
+public export
+PFSTAlg : Type -> Type
+PFSTAlg a = PFSTermF a -> a
+
+public export
+pfstFreeCata : {0 a, b : Type} -> (a -> b) -> PFSTAlg b -> PFSTermFM a -> b
+pfstFreeCata subst alg (PTVar v) = subst v
+pfstFreeCata subst alg (PTCom t) = alg $ case t of
+  PTO0 => PTO0
+  PTO1 => PTO1
+  PTO2 => PTO2
+  PTCterm => PTCterm
+  PTCtyped => PTCtyped
+  PT0 => PT0
+  PT1 => PT1
+  PTC x y => PTC (pfstFreeCata subst alg x) (pfstFreeCata subst alg y)
+  PTP x y => PTP (pfstFreeCata subst alg x) (pfstFreeCata subst alg y)
+  PTu => PTu
+  PTl x => PTl (pfstFreeCata subst alg x)
+  PTr x => PTr (pfstFreeCata subst alg x)
+  PTp x y => PTp (pfstFreeCata subst alg x) (pfstFreeCata subst alg y)
+  PTpr x y => PTpr (pfstFreeCata subst alg x) (pfstFreeCata subst alg y)
+  PTsig x => PTsig (pfstFreeCata subst alg x)
+  PTpi x => PTpi (pfstFreeCata subst alg x)
+
+public export
+PFSTShowAlg : PFSTAlg String
+PFSTShowAlg PTO0 = "O(0)"
+PFSTShowAlg PTO1 = "O(1)"
+PFSTShowAlg PTO2 = "O(2)"
+PFSTShowAlg PTCterm = "term"
+PFSTShowAlg PTCtyped = "typed"
+PFSTShowAlg PT0 = "Void"
+PFSTShowAlg PT1 = "Unit"
+PFSTShowAlg (PTC x y) = "(" ++ x ++ " + " ++ y ++ ")"
+PFSTShowAlg (PTP x y) = "(" ++ x ++ " * " ++ y ++ ")"
+PFSTShowAlg PTu = "!"
+PFSTShowAlg (PTl x) = "<(" ++ x ++ ")"
+PFSTShowAlg (PTr x) = ">(" ++ x ++ ")"
+PFSTShowAlg (PTp x y) = "(" ++ x ++ "," ++ y ++ ")"
+PFSTShowAlg (PTpr x y) = "(" ++ x ++ ":" ++ y ++ ")"
+PFSTShowAlg (PTsig x) = "Sig(" ++ x ++ ")"
+PFSTShowAlg (PTpi x) = "Pi(" ++ x ++ ")"
+
+public export
+pfstShow : {0 a : Type} -> (a -> String) -> PFSTermFM a -> String
+pfstShow sh = pfstFreeCata sh PFSTShowAlg
+
+public export
+Show a => Show (PFSTermFM a) where
+  show = pfstShow show
+
+public export
+PFSTerm : Type
+PFSTerm = PFSTermFM Void
+
+public export
+pfstCata : {0 a : Type} -> PFSTAlg a -> PFSTerm -> a
+pfstCata {a} = pfstFreeCata {a=Void} {b=a} (voidF a)
+
+public export
+data PFSClass : Type where
+  PCTerm : PFSClass
+  PCTyped : PFSClass
+
+public export
+data PFSOrder : Type where
+  PO0 : PFSOrder
+  PO1 : PFSOrder
+  PO2 : PFSOrder
+
+mutual
+  public export
+  checkPFSTermSl : PFSClass -> PFSOrder -> DecPred PFSTerm
+  checkPFSTermSl c o t = ?checkPFSTerm_hole
+
+public export
+checkPFSTerm : DecPred PFSTerm
+checkPFSTerm = checkPFSTermSl PCTerm PO2
+
 -------------------
 -------------------
 ---- Relations ----
@@ -27,6 +161,10 @@ data CatMorphDir : CatMorphPos -> Type where
   CSRight : CatMorphDir CSComp
 
 public export
+CatMorphF : PolyFunc
+CatMorphF = (CatMorphPos ** CatMorphDir)
+
+public export
 data CatMorphDom : Type where
   CSDObj : CatMorphDom
   CSDMorph : CatMorphDom
@@ -38,10 +176,7 @@ CatMorphAssign (CSComp ** d) = CSDMorph
 
 public export
 CatMorphSPF : SlicePolyFunc CatMorphDom Unit
-CatMorphSPF =
-  (const CatMorphPos **
-   CatMorphDir . snd **
-   \((() ** i) ** d) => CatMorphAssign (i ** d))
+CatMorphSPF = pfSlice CatMorphF CatMorphAssign
 
 public export
 data SymRelPos : Type where
