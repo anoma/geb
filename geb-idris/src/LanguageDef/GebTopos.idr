@@ -26,6 +26,9 @@ data PFSTermF : Type -> Type where
   PTCterm : PFSTermF a
   PTCtyped : PFSTermF a -- pair of type and term
 
+  -- A typed term -- a pair of type and term
+  PTT : a -> a -> PFSTermF a
+
   -- Non-dependent-type-forming terms
   PT0 : PFSTermF a -- Initial/Void
   PT1 : PFSTermF a -- Terminal/Unit
@@ -76,6 +79,7 @@ pfstFreeCata subst alg (PTCom t) = alg $ case t of
   PTO2 => PTO2
   PTCterm => PTCterm
   PTCtyped => PTCtyped
+  PTT x y => PTT (pfstFreeCata subst alg x) (pfstFreeCata subst alg y)
   PT0 => PT0
   PT1 => PT1
   PTC x y => PTC (pfstFreeCata subst alg x) (pfstFreeCata subst alg y)
@@ -95,6 +99,7 @@ PFSTShowAlg PTO1 = "O(1)"
 PFSTShowAlg PTO2 = "O(2)"
 PFSTShowAlg PTCterm = "term"
 PFSTShowAlg PTCtyped = "typed"
+PFSTShowAlg (PTT type term) = "(" ++ term ++ ": " ++ type ++ ")"
 PFSTShowAlg PT0 = "Void"
 PFSTShowAlg PT1 = "Unit"
 PFSTShowAlg (PTC x y) = "(" ++ x ++ " + " ++ y ++ ")"
@@ -126,6 +131,7 @@ pfstCata {a} = pfstFreeCata {a=Void} {b=a} (voidF a)
 public export
 data PFSClass : Type where
   PCTerm : PFSClass
+  PCTtype : PFSClass
   PCTyped : PFSClass
 
 public export
@@ -134,14 +140,37 @@ data PFSOrder : Type where
   PO1 : PFSOrder
   PO2 : PFSOrder
 
-mutual
-  public export
-  checkPFSTermSl : PFSClass -> PFSOrder -> DecPred PFSTerm
-  checkPFSTermSl c o t = ?checkPFSTerm_hole
+public export
+PFSSlice : Type
+PFSSlice = (PFSClass, PFSOrder)
 
 public export
-checkPFSTerm : DecPred PFSTerm
-checkPFSTerm = checkPFSTermSl PCTerm PO2
+PFSDepMorph : Type -> Type -> Type
+PFSDepMorph a b = PFSSlice -> a -> b
+
+public export
+PFSDepPred : Type -> Type
+PFSDepPred a = PFSDepMorph a Bool
+
+mutual
+  public export
+  checkPFSTermSl : {0 a : Type} -> PFSDepPred a ->
+    PFSClass -> PFSOrder -> DecPred (PFSTermFM a)
+  checkPFSTermSl pred c o (PTVar v) = pred (c, o) v
+  checkPFSTermSl pred PCTyped o (PTCom t) = case t of
+    PTT type term => checkPFSTypedTerm pred o type term
+    _ => False
+  checkPFSTermSl pred c o t = ?checkPFSTermSl_hole
+
+  public export
+  checkPFSTypedTerm : {0 a : Type} -> PFSDepPred a -> PFSOrder ->
+    PFSTermFM a -> PFSTermFM a -> Bool
+  checkPFSTypedTerm {a} pred o type (PTVar v) = pred (PCTyped, o) v
+  checkPFSTypedTerm {a} pred o type term = ?checkPFSTypedTerm_hole
+
+public export
+checkPFSTerm : {0 a : Type} -> PFSDepPred a -> DecPred (PFSTermFM a)
+checkPFSTerm pred = checkPFSTermSl pred PCTyped PO2
 
 -------------------
 -------------------
