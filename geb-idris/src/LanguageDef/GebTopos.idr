@@ -27,10 +27,6 @@ data CatMorphDir : CatMorphPos -> Type where
   CSRight : CatMorphDir CSComp
 
 public export
-CatMorphF : PolyFunc
-CatMorphF = (CatMorphPos ** CatMorphDir)
-
-public export
 data CatMorphDom : Type where
   CSDObj : CatMorphDom
   CSDMorph : CatMorphDom
@@ -47,12 +43,6 @@ CatMorphSPF =
    CatMorphDir . snd **
    \((() ** i) ** d) => CatMorphAssign (i ** d))
 
--- Given a type, this functor extends the terms of that type with
--- 'id' and 'compose' terms (the latter to arbitrary depths).
-public export
-CatMorphFM : PolyFunc
-CatMorphFM = PolyFuncFreeM CatMorphF
-
 public export
 data SymRelPos : Type where
   SRPSym : SymRelPos
@@ -62,54 +52,47 @@ data SymRelDir : SymRelPos -> Type where
   SRDSym : SymRelDir SRPSym
 
 public export
-SymRelF : PolyFunc
-SymRelF = (SymRelPos ** SymRelDir)
+SymRelAssign : Sigma SymRelDir -> CatMorphDom
+SymRelAssign (SRPSym ** SRDSym) = CSDMorph
 
 public export
-SymRelFM : PolyFunc
-SymRelFM = PolyFuncFreeM SymRelF
+SymRelSPF : SlicePolyFunc CatMorphDom Unit
+SymRelSPF =
+  (const SymRelPos **
+   SymRelDir . snd **
+   \((() ** i) ** d) => SymRelAssign (i ** d))
 
 public export
-EqRelF : PolyFunc
-EqRelF = pfCoproductArena CatMorphF SymRelF
+EqRelSPF : SlicePolyFunc CatMorphDom Unit
+EqRelSPF = SPFSliceCoproduct CatMorphSPF SymRelSPF
 
 public export
 EqRelPos : Type
-EqRelPos = pfPos EqRelF
+EqRelPos = spfPos EqRelSPF ()
 
 public export
 EqRelDir : EqRelPos -> Type
-EqRelDir = pfDir {p=EqRelF}
-
-public export
-EqRelFM : PolyFunc
-EqRelFM = PolyFuncFreeM EqRelF
+EqRelDir i = spfDir EqRelSPF (() ** i)
 
 public export
 data DeqRelPosExt : Type where
   DRPDec : DeqRelPosExt
 
 public export
-data DeqRelDirExt : {0 a : Type} -> DecPred a -> DeqRelPosExt -> Type where
-  DRDDec :
-    {0 a : Type} -> {0 pred : DecPred a} -> (x : a) ->
-    {auto 0 checks : IsTrue (pred x)} -> DeqRelDirExt {a} pred DRPDec
+data DeqRelDirExt : DeqRelPosExt -> Type where
+  DRDLeft : DeqRelDirExt DRPDec
+  DRDRight : DeqRelDirExt DRPDec
 
 public export
-DeqRelExtF : {0 a : Type} -> DecPred a -> PolyFunc
-DeqRelExtF {a} pred = (DeqRelPosExt ** DeqRelDirExt {a} pred)
+DeqRelAssignExt : Sigma DeqRelDirExt -> CatMorphDom
+DeqRelAssignExt (DRPDec ** d) = CSDObj
 
 public export
-DeqRelF : {0 a : Type} -> DecPred a -> PolyFunc
-DeqRelF {a} pred = pfCoproductArena EqRelF (DeqRelExtF {a} pred)
-
-public export
-DeqRelPos : {0 a : Type} -> DecPred a -> Type
-DeqRelPos {a} pred = pfPos (DeqRelF {a} pred)
-
-public export
-DeqRelDir : {0 a : Type} -> (pred : DecPred a) -> DeqRelPos {a} pred -> Type
-DeqRelDir {a} pred = pfDir {p=(DeqRelF {a} pred)}
+DeqRelExtF : SlicePolyFunc CatMorphDom Unit
+DeqRelExtF =
+  (const DeqRelPosExt **
+   DeqRelDirExt . snd **
+   \((() ** i) ** d) => DeqRelAssignExt (i ** d))
 
 --------------------------------------------
 --------------------------------------------
