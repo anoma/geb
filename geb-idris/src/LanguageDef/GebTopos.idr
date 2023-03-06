@@ -19,6 +19,14 @@ import public LanguageDef.Syntax
 -- and coproducts (which are spanned by an initial object, a terminal
 -- object, binary coproducts, and binary products).
 
+public export
+checkAsFinPCAlg : GExpAlg Bool
+checkAsFinPCAlg = ?checkAsFinPCAlg_hole
+
+public export
+checkAsFinPC : GExp -> Bool
+checkAsFinPC = sexpCata checkAsFinPCAlg
+
 --------------------------------------------
 --------------------------------------------
 ---- Sigma types in programmer's FinSet ----

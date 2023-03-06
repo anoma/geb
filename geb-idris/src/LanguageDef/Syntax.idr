@@ -250,8 +250,7 @@ SExpMaybeAlg : Type -> Type -> Type
 SExpMaybeAlg atom a = SExpF atom a -> Maybe a
 
 public export
-SExpAlgFromMaybe :
-  (SExpF atom a -> Maybe a) -> SXLAlg atom (Maybe a) (Maybe (List a))
+SExpAlgFromMaybe : SExpMaybeAlg atom a -> SXLAlg atom (Maybe a) (Maybe (List a))
 SExpAlgFromMaybe alg =
   SXA
     (\x, ns, ml => case ml of
@@ -279,6 +278,42 @@ public export
 frslistMaybeCata :
   (ty -> Maybe a) -> SExpMaybeAlg atom a -> FrSListM atom ty -> Maybe (List a)
 frslistMaybeCata subst = slSubstCata subst . SExpAlgFromMaybe
+
+public export
+SExpMaybeCtxAlg : Type -> Type -> Type -> Type
+SExpMaybeCtxAlg atom ctx a = SExpF atom a -> ctx -> Maybe a
+
+public export
+SExpCtxAlgFromMaybe : SExpMaybeCtxAlg atom ctx a ->
+  SXLAlg atom (ctx -> Maybe a) (ctx -> Maybe (List a))
+SExpCtxAlgFromMaybe alg =
+  SXA
+    (\x, ns, ml, ctx => case ml ctx of
+      Just l => alg (SXF x ns l) ctx
+      Nothing => Nothing)
+    (const $ Just [])
+    (\mx, ml, ctx => case (mx ctx, ml ctx) of
+      (Just x, Just l) => Just (x :: l)
+      _ => Nothing)
+
+public export
+sexpMaybeCtxCata : SExpMaybeCtxAlg atom ctx a -> SExp atom -> ctx -> Maybe a
+sexpMaybeCtxCata = sxCata . SExpCtxAlgFromMaybe
+
+public export
+frsexpMaybeCtxCata : (ty -> ctx -> Maybe a) -> SExpMaybeCtxAlg atom ctx a ->
+  FrSExpM atom ty -> ctx -> Maybe a
+frsexpMaybeCtxCata subst = sxSubstCata subst . SExpCtxAlgFromMaybe
+
+public export
+slistMaybeCtxCata : SExpMaybeCtxAlg atom ctx a ->
+  SList atom -> ctx -> Maybe (List a)
+slistMaybeCtxCata = slCata . SExpCtxAlgFromMaybe
+
+public export
+frslistMaybeCtxCata : (ty -> ctx -> Maybe a) -> SExpMaybeCtxAlg atom ctx a ->
+  FrSListM atom ty -> ctx -> Maybe (List a)
+frslistMaybeCtxCata subst = slSubstCata subst . SExpCtxAlgFromMaybe
 
 -------------------
 ---- Utilities ----
@@ -863,6 +898,10 @@ GBtAtom = SExpToBtAtom GebAtom
 public export
 GBTExp : Type
 GBTExp = BTExp GBtAtom
+
+public export
+GExpAlg : Type -> Type
+GExpAlg = SExpAlg GebAtom
 
 public export
 GExpMaybeAlg : Type -> Type
