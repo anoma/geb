@@ -440,9 +440,9 @@ public export
 (atom : Type) => DecEq atom => DecEq ty => Eq (FrSExpM atom ty) where
   x == x' = isYes $ decEq x x'
 
---------------------------
----- Monad operations ----
---------------------------
+---------------------------------------------------------------------
+---- SExp monad operations (where the domain is a type of atoms) ----
+---------------------------------------------------------------------
 
 public export
 sexpReturn : atom -> SExp atom
@@ -457,6 +457,22 @@ SExpJoinAlg (SXF (InFS (TrV v)) ns' xs') = void v
 public export
 sexpJoin : SExp (SExp atom) -> SExp atom
 sexpJoin = sexpCata SExpJoinAlg
+
+----------------------------------------------------------------------------
+---- FrSExpM monad operations (where the domain is a type of variables) ----
+----------------------------------------------------------------------------
+
+public export
+frsexpReturn : ty -> FrSExpM atom ty
+frsexpReturn = InSV
+
+public export
+frsexpJoinAlg : SExpAlg atom (FrSExpM atom ty)
+frsexpJoinAlg = InSX
+
+public export
+frsexpJoin : FrSExpM atom (FrSExpM atom ty) -> FrSExpM atom ty
+frsexpJoin = frsexpCata id frsexpJoinAlg
 
 -------------------------------
 -------------------------------
