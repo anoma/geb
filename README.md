@@ -23,19 +23,23 @@
     - [6.2 Open Types versus Closed Types][a920]
     - [6.3 ≺Types≻][a300]
 - [7 The Geb Model][c1fb]
-    - [7.1 Core Category][cb9e]
-        - [7.1.1 Subst Obj][c1b3]
-        - [7.1.2 Subst Morph][d2d1]
-    - [7.2 Accessors][cc51]
-    - [7.3 Constructors][2ad4]
-    - [7.4 API][6228]
-        - [7.4.1 Booleans][399c]
-        - [7.4.2 Translation Functions][b79a]
-        - [7.4.3 Utility][49d4]
-    - [7.5 Examples][a17b]
+    - [7.1 The Categorical Interface][e91b]
+    - [7.2 Core Category][cb9e]
+        - [7.2.1 Subst Obj][c1b3]
+        - [7.2.2 Subst Morph][d2d1]
+    - [7.3 Accessors][cc51]
+    - [7.4 Constructors][2ad4]
+    - [7.5 API][6228]
+        - [7.5.1 Booleans][399c]
+        - [7.5.2 Translation Functions][b79a]
+        - [7.5.3 Utility][49d4]
+    - [7.6 Examples][a17b]
 - [8 The GEB GUI][6f67]
     - [8.1 Visualizer][c6cf]
         - [8.1.1 Aiding the Visualizer][603e]
+    - [8.2 The GEB Graphizer][1b98]
+        - [8.2.1 The GEB Graphizer Core][71e9]
+        - [8.2.2 The GEB Graphizer Passes][e429]
 - [9 Polynomial Specification][94a8]
     - [9.1 Polynomial Types][bd81]
     - [9.2 Polynomial Constructors][b76d]
@@ -61,18 +65,12 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
-
-
 <a id="x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29"></a>
 ### 1.1 code coverage
-
-
 
 For test coverage it can be found at the following links:
 
@@ -90,8 +88,6 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see [`GEB-TEST:CODE-COVERAGE`][417f]
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -354,8 +350,6 @@ conjectures about GEB
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 5 Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -423,31 +417,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} cong C^{(A × B)}$,
+   $C^{(B^A)} \cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $varnothing$.
+   the empty sum is $\varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
+$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ mathsf{2} = lbrace 1, 2 rbrace$,
-$ mathsf{1} = lbrace 1 rbrace$,
-$ mathsf{0} = lbrace  rbrace = varnothing$,
+where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
+$ \mathsf{1} = \lbrace 1 \rbrace$,
+$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -469,8 +463,6 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 5.1 Morphisms
@@ -656,8 +648,48 @@ one sees a type like GEB:<SUBSTOBJ> it is the open version of
 Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 
+<a id="x-28GEB-2EMIXINS-3A-40MIXINS-CAT-20MGL-PAX-3ASECTION-29"></a>
+### 7.1 The Categorical Interface
+
+###### \[in package GEB.MIXINS\]
+This covers the main Categorical interface required to be used and
+contained in various data structures
+
+<a id="x-28GEB-2EMIXINS-3ACAT-OBJ-20CLASS-29"></a>
+- [class] **CAT-OBJ**
+
+    I offer the service of being a base category objects with no
+    extesnions
+
+<a id="x-28GEB-2EMIXINS-3ACAT-MORPH-20CLASS-29"></a>
+- [class] **CAT-MORPH**
+
+    I offer the service of being a base categorical morphism with no
+    extesnions
+
+<a id="x-28GEB-2EMIXINS-3ADOM-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **DOM** *CAT-MORPH*
+
+    Grabs the domain of the morphism. Returns a [`CAT-OBJ`][74bd]
+
+<a id="x-28GEB-2EMIXINS-3ACODOM-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **CODOM** *CAT-MORPH*
+
+    Grabs the codomain of the morphism. Returns a [`CAT-OBJ`][74bd]
+
+<a id="x-28GEB-2EMIXINS-3ACURRY-PROD-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **CURRY-PROD** *CAT-MORPH CAT-LEFT CAT-RIGHT*
+
+    Curries the given product type given the
+    product. This returns a [`CAT-MORPH`][a7af].
+    
+    This interface version takes the left and right product type to
+    properly dispatch on. Instances should specalize on the `CAT-RIGHT` argument
+    
+    Use [`GEB.MAIN:CURRY`][2cbc] instead.
+
 <a id="x-28GEB-2ESPEC-3A-40GEB-CATEGORIES-20MGL-PAX-3ASECTION-29"></a>
-### 7.1 Core Category
+### 7.2 Core Category
 
 ###### \[in package GEB.SPEC\]
 The underlying category of GEB. With [Subst Obj][c1b3] covering the
@@ -674,7 +706,7 @@ A good example of this category at work can be found within the
 [Booleans][399c] section.
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMU-20MGL-PAX-3ASECTION-29"></a>
-#### 7.1.1 Subst Obj
+#### 7.2.1 Subst Obj
 
 This section covers the objects of the [`SUBSTMORPH`][57dc]
 category. Note that [`SUBSTOBJ`][3173] refers to the
@@ -704,7 +736,7 @@ type substobj = so0
 <a id="x-28GEB-2ESPEC-3APROD-20TYPE-29"></a>
 - [type] **PROD**
 
-    The [PRODUCT][77c2] object. Takes two [`<SUBSTOBJ>`][8214] values that
+    The [PRODUCT][77c2] object. Takes two [`CAT-OBJ`][74bd] values that
     get put into a pair.
     
     The formal grammar of [PRODUCT][77c2] is
@@ -727,7 +759,7 @@ type substobj = so0
 <a id="x-28GEB-2ESPEC-3ACOPROD-20TYPE-29"></a>
 - [type] **COPROD**
 
-    the [CO-PRODUCT][fb12] object. Takes [`<SUBSTOBJ>`][8214] values that
+    the [CO-PRODUCT][fb12] object. Takes [`CAT-OBJ`][74bd] values that
     get put into a choice of either value.
     
     The formal grammar of [PRODUCT][77c2] is
@@ -800,11 +832,6 @@ type substobj = so0
     where applying [`->LEFT`][e2af] gives us the left unit, while [`->RIGHT`][ba44] gives
     us the right unit.
 
-<a id="x-28GEB-2ESPEC-3AALIAS-20TYPE-29"></a>
-- [type] **ALIAS**
-
-    an alias for a geb object
-
 The [Accessors][cc51] specific to [Subst Obj][c1b3]
 
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ESPEC-3APROD-29-29-29"></a>
@@ -820,7 +847,7 @@ The [Accessors][cc51] specific to [Subst Obj][c1b3]
 - [method] **MCADR** *(COPROD COPROD)*
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-SUBSTMORPH-20MGL-PAX-3ASECTION-29"></a>
-#### 7.1.2 Subst Morph
+#### 7.2.2 Subst Morph
 
 The overarching types that categorizes the [`SUBSTMORPH`][57dc]
 category. Note that [`SUBSTMORPH`][57dc] refers to the
@@ -863,7 +890,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 <a id="x-28GEB-2ESPEC-3ACOMP-20TYPE-29"></a>
 - [type] **COMP**
 
-    The composition morphism. Takes two [`<SUBSTMORPH>`][97fb] values that get
+    The composition morphism. Takes two [`CAT-MORPH`][a7af] values that get
     applied in standard composition order.
     
     The formal grammar of [`COMP`][f914] is
@@ -910,9 +937,9 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 <a id="x-28GEB-2ESPEC-3ACASE-20TYPE-29"></a>
 - [type] **CASE**
 
-    Eliminates coproducts. Namely Takes two [`<SUBSTMORPH>`][97fb] values, one
+    Eliminates coproducts. Namely Takes two [`CAT-MORPH`][a7af] values, one
     gets applied on the left coproduct while the other gets applied on the
-    right coproduct. The result of each `<SUBSTMORPH>` values must be
+    right coproduct. The result of each `CAT-MORPH` values must be
     the same.
     
     The formal grammar of [`CASE`][59dd] is:
@@ -942,7 +969,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 <a id="x-28GEB-2ESPEC-3AINIT-20TYPE-29"></a>
 - [type] **INIT**
 
-    The [INITIAL][f899] Morphism, takes any [`<SUBSTOBJ>`][8214] and
+    The [INITIAL][f899] Morphism, takes any [`CAT-OBJ`][74bd] and
     creates a moprhism from [`SO0`][1f3a] (also known as void) to the object given.
     
     The formal grammar of [INITIAL][f899] is
@@ -966,7 +993,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 <a id="x-28GEB-2ESPEC-3ATERMINAL-20TYPE-29"></a>
 - [type] **TERMINAL**
 
-    The [`TERMINAL`][ae41] morphism, Takes any [`<SUBSTOBJ>`][8214] and creates a
+    The [`TERMINAL`][ae41] morphism, Takes any [`CAT-OBJ`][74bd] and creates a
     morphism from that object to [`SO1`][ebf5] (also known as unit).
     
     The formal grammar of [`TERMINAL`][ae41] is
@@ -1003,8 +1030,8 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 <a id="x-28GEB-2ESPEC-3APAIR-20TYPE-29"></a>
 - [type] **PAIR**
 
-    Introduces products. Namely Takes two [`<SUBSTMORPH>`][97fb] values. When
-    the `PAIR` morphism is applied on data, these two [`<SUBSTMORPH>`][97fb]'s are
+    Introduces products. Namely Takes two [`CAT-MORPH`][a7af] values. When
+    the `PAIR` morphism is applied on data, these two [`CAT-MORPH`][a7af]'s are
     applied to the object, returning a pair of the results
     
     The formal grammar of constructing an instance of pair is:
@@ -1038,7 +1065,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 <a id="x-28GEB-2ESPEC-3AINJECT-LEFT-20TYPE-29"></a>
 - [type] **INJECT-LEFT**
 
-    The left injection morphism. Takes two [`<SUBSTOBJ>`][8214] values. It is
+    The left injection morphism. Takes two [`CAT-OBJ`][74bd] values. It is
     the dual of [`INJECT-RIGHT`][fae9]
     
     The formal grammar is
@@ -1071,7 +1098,7 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 <a id="x-28GEB-2ESPEC-3AINJECT-RIGHT-20TYPE-29"></a>
 - [type] **INJECT-RIGHT**
 
-    The right injection morphism. Takes two [`<SUBSTOBJ>`][8214] values. It is
+    The right injection morphism. Takes two [`CAT-OBJ`][74bd] values. It is
     the dual of [`INJECT-LEFT`][cab9]
     
     The formal grammar is
@@ -1105,9 +1132,9 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 - [type] **PROJECT-LEFT**
 
     The [`LEFT` PROJECTION][0dcc]. Takes two
-    [`<SUBSTMORPH>`][97fb] values. When the [`LEFT` PROJECTION][0dcc] morphism is then applied, it grabs the left value of a product,
+    [`CAT-MORPH`][a7af] values. When the [`LEFT` PROJECTION][0dcc] morphism is then applied, it grabs the left value of a product,
     with the type of the product being determined by the two
-    [`<SUBSTMORPH>`][97fb] values given.
+    [`CAT-MORPH`][a7af] values given.
     
     the formal grammar of a [`PROJECT-LEFT`][0dcc] is:
     
@@ -1134,9 +1161,9 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 - [type] **PROJECT-RIGHT**
 
     The [`RIGHT` PROJECTION][e65d]. Takes two
-    [`<SUBSTMORPH>`][97fb] values. When the [`RIGHT` PROJECTION][e65d] morphism is then applied, it grabs the right value of a product,
+    [`CAT-MORPH`][a7af] values. When the [`RIGHT` PROJECTION][e65d] morphism is then applied, it grabs the right value of a product,
     with the type of the product being determined by the two
-    [`<SUBSTMORPH>`][97fb] values given.
+    [`CAT-MORPH`][a7af] values given.
     
     the formal grammar of a [`PROJECT-RIGHT`][e65d] is:
     
@@ -1162,11 +1189,6 @@ we can view this as automatically lifting a [`SUBSTOBJ`][3173] into a
 
 <a id="x-28GEB-2ESPEC-3AFUNCTOR-20TYPE-29"></a>
 - [type] **FUNCTOR**
-
-<a id="x-28GEB-2ESPEC-3AALIAS-20TYPE-29"></a>
-- [type] **ALIAS**
-
-    an alias for a geb object
 
 The [Accessors][cc51] specific to [Subst Morph][d2d1]
 
@@ -1242,7 +1264,7 @@ The [Accessors][cc51] specific to [Subst Morph][d2d1]
     Right projection (product elimination)
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
-### 7.2 Accessors
+### 7.3 Accessors
 
 ###### \[in package GEB.UTILS\]
 These functions are generic lenses of the GEB codebase. If a class is
@@ -1313,7 +1335,7 @@ likely to be used. They may even augment existing classes.
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 <a id="x-28GEB-2ESPEC-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29"></a>
-### 7.3 Constructors
+### 7.4 Constructors
 
 ###### \[in package GEB.SPEC\]
 The API for creating GEB terms. All the functions and variables
@@ -1337,8 +1359,14 @@ More Ergonomic API variants for [`*SO0*`][e982] and [`*SO1*`][b960]
 <a id="x-28GEB-2ESPEC-3ASO1-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
 - [symbol-macro] **SO1**
 
+<a id="x-28GEB-2ESPEC-3AALIAS-20MGL-PAX-3AMACRO-29"></a>
+- [macro] **ALIAS** *NAME OBJ*
+
 <a id="x-28GEB-2ESPEC-3AMAKE-ALIAS-20FUNCTION-29"></a>
 - [function] **MAKE-ALIAS** *&KEY NAME OBJ*
+
+<a id="x-28GEB-2ESPEC-3AHAS-ALIASP-20FUNCTION-29"></a>
+- [function] **HAS-ALIASP** *OBJ*
 
 <a id="x-28GEB-2ESPEC-3A-3C-LEFT-20FUNCTION-29"></a>
 - [function] **\<-LEFT** *MCAR MCADR*
@@ -1367,12 +1395,12 @@ More Ergonomic API variants for [`*SO0*`][e982] and [`*SO1*`][b960]
 - [function] **MAKE-FUNCTOR** *&KEY OBJ FUNC*
 
 <a id="x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29"></a>
-### 7.4 API
+### 7.5 API
 
 Various forms and structures built on-top of [Core Category][cb9e]
 
 <a id="x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29"></a>
-#### 7.4.1 Booleans
+#### 7.5.1 Booleans
 
 ###### \[in package GEB-BOOL\]
 Here we define out the idea of a boolean. It comes naturally from the
@@ -1405,6 +1433,12 @@ The functions given work on this.
     The false value of a boolean type. In this case we've defined true as
     the left unit
 
+<a id="x-28GEB-BOOL-3AFALSE-OBJ-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+- [symbol-macro] **FALSE-OBJ**
+
+<a id="x-28GEB-BOOL-3ATRUE-OBJ-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
+- [symbol-macro] **TRUE-OBJ**
+
 <a id="x-28GEB-BOOL-3ABOOL-20MGL-PAX-3ASYMBOL-MACRO-29"></a>
 - [symbol-macro] **BOOL**
 
@@ -1427,7 +1461,7 @@ The functions given work on this.
 - [symbol-macro] **OR**
 
 <a id="x-28GEB-2ETRANS-3A-40GEB-TRANSLATION-20MGL-PAX-3ASECTION-29"></a>
-#### 7.4.2 Translation Functions
+#### 7.5.2 Translation Functions
 
 ###### \[in package GEB.TRANS\]
 These cover various conversions from [Subst Morph][d2d1] and [Subst Obj][c1b3]
@@ -1444,7 +1478,7 @@ into other categorical data structures.
     Turns a [Subst Morph][d2d1] to a Vamp-IR Term
 
 <a id="x-28GEB-2EMAIN-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29"></a>
-#### 7.4.3 Utility
+#### 7.5.3 Utility
 
 ###### \[in package GEB.MAIN\]
 Various utility functions ontop of [Core Category][cb9e]
@@ -1485,7 +1519,7 @@ Various utility functions ontop of [Core Category][cb9e]
     (const f x) : a → b
     ```
     
-    Further, If the input `F` is an [`ALIAS`][5e72], then we wrap the output
+    Further, If the input `F` is an `ALIAS`, then we wrap the output
     in a new alias to denote it's a constant version of that value.
     
     Example:
@@ -1501,27 +1535,29 @@ Various utility functions ontop of [Core Category][cb9e]
 <a id="x-28GEB-2EMAIN-3ACOMMUTES-LEFT-20FUNCTION-29"></a>
 - [function] **COMMUTES-LEFT** *MORPH*
 
-    swap the input [domain][dbad] of the given [`<SUBSTMORPH>`][97fb]
+    swap the input [domain][9728] of the given [cat-morph][a7af]
     
-    In order to swap the [domain][dbad] we expect the [`<SUBSTMORPH>`][97fb] to
+    In order to swap the [domain][9728] we expect the [cat-morph][a7af] to
     be a [`PROD`][77c2]
     
-    Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` [`<SUBSTOBJ>`][8214]
+    Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` [`CAT-OBJ`][74bd]
     
     then: `(commutes-left (dom morph)) ≡ (prod y x)`
-    
-    ```
+    u
+    `
     Γ, f : x × y → a
     ------------------------------
     (commutes-left f) : y × x → a
-    ```
-
+    `
 
 <a id="x-28GEB-2EMAIN-3A-21--3E-20FUNCTION-29"></a>
 - [function] **!-\>** *A B*
 
 <a id="x-28GEB-2EMAIN-3ASO-EVAL-20FUNCTION-29"></a>
 - [function] **SO-EVAL** *X Y*
+
+<a id="x-28GEB-2EMAIN-3ASO-HOM-OBJ-20FUNCTION-29"></a>
+- [function] **SO-HOM-OBJ** *X Z*
 
 <a id="x-28GEB-2EMAIN-3ASO-CARD-ALG-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **SO-CARD-ALG** *OBJ*
@@ -1531,27 +1567,17 @@ Various utility functions ontop of [Core Category][cb9e]
 <a id="x-28GEB-2EMAIN-3ASO-CARD-ALG-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
 - [method] **SO-CARD-ALG** *(OBJ \<SUBSTOBJ\>)*
 
-<a id="x-28GEB-2EMAIN-3ADOM-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **DOM** *SUBSTMORPH*
+<a id="x-28GEB-2EMAIN-3ACURRY-20FUNCTION-29"></a>
+- [function] **CURRY** *F*
 
-    Grabs the domain of the morphism. Returns a [`<SUBSTOBJ>`][8214]
-
-<a id="x-28GEB-2EMAIN-3ACODOM-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **CODOM** *SUBSTMORPH*
-
-    Grabs the codomain of the morphism. Returns a [`<SUBSTOBJ>`][8214]
-
-<a id="x-28GEB-2EMAIN-3ACURRY-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **CURRY** *F*
-
-    Curries the given object, returns a [`<SUBSTMORPH>`][97fb]
+    Curries the given object, returns a [cat-morph][a7af]
     
-    The [`<SUBSTMORPH>`][97fb] given must have its [`DOM`][dbad] be of a [`PROD`][77c2] type, as [`CURRY`][43d2]
+    The [cat-morph][a7af] given must have its [`DOM`][9728] be of a [`PROD`][77c2] type, as `CURRY`
     invokes the idea of
     
     if f : ([`PROD`][77c2] a b) → c
     
-    for all `a`, `b`, and `c` being an element of [`<SUBSTMORPH>`][97fb]
+    for all `a`, `b`, and `c` being an element of [cat-morph][a7af]
     
     then: (curry f): a → c^b
     
@@ -1566,8 +1592,13 @@ Various utility functions ontop of [Core Category][cb9e]
     In category terms, `a → c^b` is isomorphic to `a → b → c`
 
 
+<a id="x-28GEB-2EMAIN-3ATEXT-NAME-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **TEXT-NAME** *MORPH*
+
+    Gets the name of the moprhism
+
 <a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
-### 7.5 Examples
+### 7.6 Examples
 
 PLACEHOLDER: TO SHOW OTHERS HOW `EXAMPLE`s WORK
 
@@ -1617,8 +1648,156 @@ layout of the term, showing what kind of data
 #### 8.1.1 Aiding the Visualizer
 
 One can aid the visualization process a bit, this can be done by
-simply playing [`GEB:ALIAS`][5e72] around the object, this will place it
+simply playing `GEB:ALIAS` around the object, this will place it
 in a box with a name to better identify it in the graphing procedure.
+
+<a id="x-28GEB-GUI-2EGRAPHING-3A-40GRAPHING-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+### 8.2 The GEB Graphizer
+
+###### \[in package GEB-GUI.GRAPHING\]
+This section covers the GEB Graph representation
+
+<a id="x-28GEB-GUI-2ECORE-3A-40GRAPHING-CORE-20MGL-PAX-3ASECTION-29"></a>
+#### 8.2.1 The GEB Graphizer Core
+
+###### \[in package GEB-GUI.CORE\]
+This section covers the graphing procedure in order to turn a GEB
+object into a format for a graphing backend.
+
+The core types that facilittate the functionality
+
+<a id="x-28GEB-GUI-2ECORE-3ANOTE-20TYPE-29"></a>
+- [type] **NOTE**
+
+    A note is a note about a new node in the graph or a note about a
+    [`NODE`][ff98] which should be merged into an upcoming `NODE`.
+    
+    An example of a `NODE-NOTE` would be in the case of pair
+    
+    ```lisp
+    (pair g f)
+    ```
+    
+    ```
+                   Π₁
+         --f--> Y------
+    X----|            |-----> [Y × Z]
+         --g--> Z-----
+                   Π₂
+    ```
+    
+    An example of a [MERGE-NOTE][7e58]
+    
+    ```lisp
+    (Case f g)
+    (COMP g f)
+    ```
+    
+    ```
+               χ₁
+             -------> X --f---
+    [X + Y]--|                ---> A
+             -------> Y --g---/
+               χ₂
+    
+    X -f-> Y --> Y -g-> Z
+    ```
+    
+    Notice that in the pair case, we have a note and a shared node to
+    place down, where as in both of the [MERGE-NOTE][7e58] examples, the
+    Note at the end is not pre-pended by any special information
+
+<a id="x-28GEB-GUI-2ECORE-3ANODE-20CLASS-29"></a>
+- [class] **NODE** *[META-MIXIN][4529]*
+
+    I represent a graphical node structure. I contain my children and a
+    value to display, along with the representation for which the node really stands for.
+    
+    Further, we derive the meta-mixin, as it's important for arrow drawing
+    to know if we are the left or the right or the nth child of a
+    particular node. This information is tracked, by storing the object
+    that goes to it in the meta table and recovering the note.
+
+<a id="x-28GEB-GUI-2ECORE-3AMAKE-NOTE-20FUNCTION-29"></a>
+- [function] **MAKE-NOTE** *&REST INITARGS &KEY FROM NOTE VALUE &ALLOW-OTHER-KEYS*
+
+<a id="x-28GEB-GUI-2ECORE-3AMAKE-SQUASH-20FUNCTION-29"></a>
+- [function] **MAKE-SQUASH** *&REST INITARGS &KEY VALUE &ALLOW-OTHER-KEYS*
+
+<a id="x-28GEB-GUI-2ECORE-3AGRAPHIZE-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **GRAPHIZE** *MORPH NOTES*
+
+    Turns a morphism into a node graph.
+    
+    The `NOTES` serve as a way of sharing and continuing computation.
+    
+    If the [`NOTE`][ef6e] is a `:SHARED` `NOTE` then it represents a [`NODE`][ff98]
+    without children, along with saying where it came from. This is to be
+    stored in parent of the `NOTE`
+    
+    If the `NOTE` is a `:CONTINUE` `NOTE`, then the computation is continued at
+    the spot.
+    
+    The parent field is to set the note on the parent if the `NOTE` is going
+    to be merged
+
+<a id="x-28GEB-GUI-2ECORE-3AVALUE-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **VALUE** *OBJECT*
+
+<a id="x-28GEB-GUI-2ECORE-3ACONS-NOTE-20FUNCTION-29"></a>
+- [function] **CONS-NOTE** *NOTE NOTES*
+
+    Adds a note to the notes list.
+
+<a id="x-28GEB-GUI-2ECORE-3AAPPLY-NOTE-20FUNCTION-29"></a>
+- [function] **APPLY-NOTE** *NOTE-TO-BE-ON NOTE*
+
+    Here we apply the `NOTE` to the [`NODE`][ff98].
+    
+    In the case of a new node, we record down the information in the note,
+    and set the note as the child of the current `NODE`. The `NODE` is
+    returned.
+    
+    In the case of a squash-note, we instead just return the squash-note
+    as that is the proper `NODE` to continue from
+
+<a id="x-28GEB-GUI-2ECORE-3AREPRESENTATION-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **REPRESENTATION** *OBJECT*
+
+<a id="x-28GEB-GUI-2ECORE-3ACHILDREN-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **CHILDREN** *OBJECT*
+
+<a id="x-28GEB-GUI-2ECORE-3ADETERMINE-TEXT-AND-OBJECT-FROM-NODE-20FUNCTION-29"></a>
+- [function] **DETERMINE-TEXT-AND-OBJECT-FROM-NODE** *FROM TO*
+
+    Helps lookup the text from the node
+
+<a id="x-28GEB-GUI-2ECORE-3ANOTERIZE-CHILDREN-20FUNCTION-29"></a>
+- [function] **NOTERIZE-CHILDREN** *NODE FUNC*
+
+    Applies a specified note to the [`CHILDREN`][1fbc] of the `NODE`.
+    
+    It does this by applying `FUNC` on all the `CHILDREN` and the index of the
+    child in the list
+
+<a id="x-28GEB-GUI-2ECORE-3ANOTORIZE-CHILDREN-WITH-INDEX-SCHEMA-20FUNCTION-29"></a>
+- [function] **NOTORIZE-CHILDREN-WITH-INDEX-SCHEMA** *PREFIX NODE*
+
+    Notorizes the node with a prefix appended with the subscripted number
+
+<a id="x-28GEB-GUI-2EGRAPHING-2EPASSES-3A-40PASS-MANUAL-20MGL-PAX-3ASECTION-29"></a>
+#### 8.2.2 The GEB Graphizer Passes
+
+###### \[in package GEB-GUI.GRAPHING.PASSES\]
+This changes how the graph is visualized, simplifying the graph in
+ways that are intuitive to the user
+
+<a id="x-28GEB-GUI-2EGRAPHING-2EPASSES-3APASSES-20FUNCTION-29"></a>
+- [function] **PASSES** *NODE*
+
+    Runs all the passes that simplify viewing the graph.
+    These simplifications should not change the semantics of the graph,
+    only display it in a more bearable way
 
 <a id="x-28GEB-2EPOLY-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29"></a>
 ## 9 Polynomial Specification
@@ -1757,10 +1936,10 @@ The specification follows from the sum type declaration
 
 ```lisp
 (defunion stlc
-  (absurd (cod geb.spec:substmorph) (value t))
+  (absurd (value t))
   unit
-  (left (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (right (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
+  (left (value t))
+  (right (value t))
   (case-on (lty geb.spec:substmorph)
            (rty geb.spec:substmorph)
            (cod geb.spec:substmorph)
@@ -1938,6 +2117,11 @@ These are utility functions relating to translating lambda terms to other types
 - [function] **STLC-CTX-TO-MU** *CONTEXT*
 
     Converts a generic [(CODE <STLC>)][78ef] context into a [`SUBSTMORPH`][57dc]
+
+<a id="x-28GEB-2ELAMBDA-2ETRANS-3ASO-HOM-20FUNCTION-29"></a>
+- [function] **SO-HOM** *DOM COD*
+
+    Computes the hom-object of two [`SUBSTMORPH`][57dc]s
 
 <a id="x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29"></a>
 ## 11 Mixins
@@ -2203,6 +2387,9 @@ used throughout the GEB codebase
     Denotes that the given method is the subclasses
     responsibility. Inspired from Smalltalk
 
+<a id="x-28GEB-2EUTILS-3ASHALLOW-COPY-OBJECT-20FUNCTION-29"></a>
+- [function] **SHALLOW-COPY-OBJECT** *ORIGINAL*
+
 <a id="x-28GEB-2EUTILS-3AMAKE-PATTERN-20MGL-PAX-3AMACRO-29"></a>
 - [macro] **MAKE-PATTERN** *OBJECT-NAME &REST CONSTRUCTOR-NAMES*
 
@@ -2224,6 +2411,21 @@ used throughout the GEB codebase
     (make-pattern alias name obj)
     ```
 
+
+<a id="x-28GEB-2EUTILS-3ANUMBER-TO-DIGITS-20FUNCTION-29"></a>
+- [function] **NUMBER-TO-DIGITS** *NUMBER &OPTIONAL REM*
+
+    turns an [`INTEGER`][ac8a] into a list of its digits
+
+<a id="x-28GEB-2EUTILS-3ADIGIT-TO-UNDER-20FUNCTION-29"></a>
+- [function] **DIGIT-TO-UNDER** *DIGIT*
+
+    Turns a digit into a subscript string version of the number
+
+<a id="x-28GEB-2EUTILS-3ANUMBER-TO-UNDER-20FUNCTION-29"></a>
+- [function] **NUMBER-TO-UNDER** *INDEX*
+
+    Turns an [`INTEGER`][ac8a] into a subscripted [`STRING`][4267]
 
 <a id="x-28GEB-2EUTILS-3A-40GEB-ACCESSORS-20MGL-PAX-3ASECTION-29"></a>
 ### 12.1 Accessors
@@ -2323,6 +2525,9 @@ features and how to better lay out future tests
     ```
 
 
+<a id="x-28GEB-TEST-3ARUN-TESTS-ERROR-20FUNCTION-29"></a>
+- [function] **RUN-TESTS-ERROR**
+
 <a id="x-28GEB-TEST-3ACODE-COVERAGE-20FUNCTION-29"></a>
 - [function] **CODE-COVERAGE** *&OPTIONAL (PATH NIL)*
 
@@ -2342,7 +2547,9 @@ features and how to better lay out future tests
   [0e00]: #x-28GEB-DOCS-2FDOCS-3A-40YONEDA-LEMMA-20MGL-PAX-3ASECTION-29 "The Yoneda Lemma"
   [0f3e]: #x-28GEB-2EPOLY-2ETRANS-3A-40POLY-TRANS-20MGL-PAX-3ASECTION-29 "Polynomial Transformations"
   [1791]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADDDR FUNCTION"
+  [1b98]: #x-28GEB-GUI-2EGRAPHING-3A-40GRAPHING-MANUAL-20MGL-PAX-3ASECTION-29 "The GEB Graphizer"
   [1f3a]: #x-28GEB-2ESPEC-3ASO0-20TYPE-29 "GEB.SPEC:SO0 TYPE"
+  [1fbc]: #x-28GEB-GUI-2ECORE-3ACHILDREN-20GENERIC-FUNCTION-29 "GEB-GUI.CORE:CHILDREN GENERIC-FUNCTION"
   [2276]: #x-28GEB-2EUTILS-3ASUBCLASS-RESPONSIBILITY-20FUNCTION-29 "GEB.UTILS:SUBCLASS-RESPONSIBILITY FUNCTION"
   [2570]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CDR FUNCTION"
   [25f0]: #x-28GEB-DOCS-2FDOCS-3A-40GLOSSARY-20MGL-PAX-3ASECTION-29 "Glossary"
@@ -2350,6 +2557,7 @@ features and how to better lay out future tests
   [29b7]: #x-28GEB-DOCS-2FDOCS-3A-40AGDA-20MGL-PAX-3ASECTION-29 "Geb's Agda Code"
   [2ad4]: #x-28GEB-2ESPEC-3A-40GEB-CONSTRUCTORS-20MGL-PAX-3ASECTION-29 "Constructors"
   [2c5e]: #x-28GEB-2EPOLY-2ESPEC-3A--20TYPE-29 "GEB.POLY.SPEC:- TYPE"
+  [2cbc]: #x-28GEB-2EMAIN-3ACURRY-20FUNCTION-29 "GEB.MAIN:CURRY FUNCTION"
   [2fcf]: #x-28GEB-2EMIXINS-3A-40POINTWISE-API-20MGL-PAX-3ASECTION-29 "Pointwise API"
   [3173]: #x-28GEB-2ESPEC-3ASUBSTOBJ-20TYPE-29 "GEB.SPEC:SUBSTOBJ TYPE"
   [31c5]: #x-28GEB-BOOL-3AFALSE-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:FALSE MGL-PAX:SYMBOL-MACRO"
@@ -2361,8 +2569,8 @@ features and how to better lay out future tests
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
   [4044]: #x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29 "code coverage"
   [417f]: #x-28GEB-TEST-3ACODE-COVERAGE-20FUNCTION-29 "GEB-TEST:CODE-COVERAGE FUNCTION"
+  [4267]: http://www.lispworks.com/documentation/HyperSpec/Body/t_string.htm "STRING TYPE"
   [42d7]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE MGL-PAX:MACRO"
-  [43d2]: #x-28GEB-2EMAIN-3ACURRY-20GENERIC-FUNCTION-29 "GEB.MAIN:CURRY GENERIC-FUNCTION"
   [445d]: #x-28GEB-2EMIXINS-3APOINTWISE-MIXIN-20CLASS-29 "GEB.MIXINS:POINTWISE-MIXIN CLASS"
   [4529]: #x-28GEB-2EMIXINS-3AMETA-MIXIN-20CLASS-29 "GEB.MIXINS:META-MIXIN CLASS"
   [455b]: #x-28GEB-2EMIXINS-3A-40MIXIN-PERFORMANCE-20MGL-PAX-3ASECTION-29 "Performance"
@@ -2375,15 +2583,16 @@ features and how to better lay out future tests
   [58a9]: #x-28GEB-2EMIXINS-3ATO-POINTWISE-LIST-20GENERIC-FUNCTION-29 "GEB.MIXINS:TO-POINTWISE-LIST GENERIC-FUNCTION"
   [592c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST FUNCTION"
   [59dd]: #x-28GEB-2ESPEC-3ACASE-20TYPE-29 "GEB.SPEC:CASE TYPE"
-  [5e72]: #x-28GEB-2ESPEC-3AALIAS-20TYPE-29 "GEB.SPEC:ALIAS TYPE"
   [603e]: #x-28GEB-GUI-3A-40VISAULIZER-AID-20MGL-PAX-3ASECTION-29 "Aiding the Visualizer"
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
   [642a]: #x-28GEB-2ETRANS-3ATO-POLY-20GENERIC-FUNCTION-29 "GEB.TRANS:TO-POLY GENERIC-FUNCTION"
   [684b]: http://www.lispworks.com/documentation/HyperSpec/Body/s_if.htm "IF MGL-PAX:MACRO"
   [6f67]: #x-28GEB-GUI-3A-40GEB-GUI-MANUAL-20MGL-PAX-3ASECTION-29 "The GEB GUI"
   [7088]: #x-28GEB-2ESPEC-3ASO0-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB.SPEC:SO0 MGL-PAX:SYMBOL-MACRO"
+  [71e9]: #x-28GEB-GUI-2ECORE-3A-40GRAPHING-CORE-20MGL-PAX-3ASECTION-29 "The GEB Graphizer Core"
   [723a]: #x-28GEB-2EMIXINS-3A-40MIXINS-20MGL-PAX-3ASECTION-29 "Mixins"
   [74ab]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CADR FUNCTION"
+  [74bd]: #x-28GEB-2EMIXINS-3ACAT-OBJ-20CLASS-29 "GEB.MIXINS:CAT-OBJ CLASS"
   [77c2]: #x-28GEB-2ESPEC-3APROD-20TYPE-29 "GEB.SPEC:PROD TYPE"
   [78ef]: http://www.lispworks.com/documentation/HyperSpec/Body/t_nil.htm "NIL TYPE"
   [7e58]: http://www.lispworks.com/documentation/HyperSpec/Body/t_class.htm "CLASS CLASS"
@@ -2402,6 +2611,7 @@ features and how to better lay out future tests
   [9300]: #x-28GEB-2EMIXINS-3A-40METADATA-20MGL-PAX-3ASECTION-29 "Metadata Mixin"
   [94a8]: #x-28GEB-2EPOLY-3A-40POLY-MANUAL-20MGL-PAX-3ASECTION-29 "Polynomial Specification"
   [96d0]: http://www.lispworks.com/documentation/HyperSpec/Body/f_equal.htm "EQUAL FUNCTION"
+  [9728]: #x-28GEB-2EMIXINS-3ADOM-20GENERIC-FUNCTION-29 "GEB.MIXINS:DOM GENERIC-FUNCTION"
   [97fb]: #x-28GEB-2ESPEC-3A-3CSUBSTMORPH-3E-20TYPE-29 "GEB.SPEC:<SUBSTMORPH> TYPE"
   [98f9]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST TYPE"
   [9bc5]: #x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29 "Links"
@@ -2410,10 +2620,12 @@ features and how to better lay out future tests
   [9f9c]: #x-28GEB-2ESPECS-3A-40GEB-SPECS-20MGL-PAX-3ASECTION-29 "Spec Files, Main Files and Project Layout"
   [a17b]: #x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29 "Examples"
   [a300]: #x-28GEB-DOCS-2FDOCS-3A-40-3CTYPES-3E-20MGL-PAX-3ASECTION-29 "≺Types≻"
+  [a7af]: #x-28GEB-2EMIXINS-3ACAT-MORPH-20CLASS-29 "GEB.MIXINS:CAT-MORPH CLASS"
   [a7d5]: #x-28GEB-DOCS-2FDOCS-3A-40LOADING-20MGL-PAX-3ASECTION-29 "loading"
   [a802]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT TYPE"
   [a920]: #x-28GEB-DOCS-2FDOCS-3A-40OPEN-CLOSED-20MGL-PAX-3ASECTION-29 "Open Types versus Closed Types"
   [a981]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defmet.htm "DEFMETHOD MGL-PAX:MACRO"
+  [ac8a]: http://www.lispworks.com/documentation/HyperSpec/Body/t_intege.htm "INTEGER TYPE"
   [ada5]: #x-28GEB-GUI-3AVISUALIZE-20FUNCTION-29 "GEB-GUI:VISUALIZE FUNCTION"
   [ada9]: #x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29 "Morphisms"
   [ae41]: #x-28GEB-2ESPEC-3ATERMINAL-20TYPE-29 "GEB.SPEC:TERMINAL TYPE"
@@ -2447,16 +2659,18 @@ features and how to better lay out future tests
   [d5d3]: #x-28GEB-2EMIXINS-3A-40POINTWISE-20MGL-PAX-3ASECTION-29 "Pointwise Mixins"
   [d908]: http://www.lispworks.com/documentation/HyperSpec/Body/f_typep.htm "TYPEP FUNCTION"
   [db8f]: #x-28GEB-2ELAMBDA-3A-40STLC-20MGL-PAX-3ASECTION-29 "The Simply Typed Lambda Calculus model"
-  [dbad]: #x-28GEB-2EMAIN-3ADOM-20GENERIC-FUNCTION-29 "GEB.MAIN:DOM GENERIC-FUNCTION"
   [dbe7]: #x-28GEB-DOCS-2FDOCS-3A-40OBJECTS-20MGL-PAX-3ASECTION-29 "Objects"
   [e2af]: #x-28GEB-2ESPEC-3A--3ELEFT-20FUNCTION-29 "GEB.SPEC:->LEFT FUNCTION"
   [e373]: #x-28GEB-2ELAMBDA-2ESPEC-3ASTLC-20TYPE-29 "GEB.LAMBDA.SPEC:STLC TYPE"
   [e3e4]: #x-28GEB-2ELAMBDA-2ETRANS-3A-40STLC-CONVERSION-20MGL-PAX-3ASECTION-29 "Transition Functions"
+  [e429]: #x-28GEB-GUI-2EGRAPHING-2EPASSES-3A-40PASS-MANUAL-20MGL-PAX-3ASECTION-29 "The GEB Graphizer Passes"
   [e65d]: #x-28GEB-2ESPEC-3APROJECT-RIGHT-20TYPE-29 "GEB.SPEC:PROJECT-RIGHT TYPE"
   [e755]: http://www.lispworks.com/documentation/HyperSpec/Body/d_type.htm "TYPE DECLARATION"
+  [e91b]: #x-28GEB-2EMIXINS-3A-40MIXINS-CAT-20MGL-PAX-3ASECTION-29 "The Categorical Interface"
   [e982]: #x-28GEB-2ESPEC-3A-2ASO0-2A-20VARIABLE-29 "GEB.SPEC:*SO0* VARIABLE"
   [ebf5]: #x-28GEB-2ESPEC-3ASO1-20TYPE-29 "GEB.SPEC:SO1 TYPE"
   [ecc6]: #x-28GEB-DOCS-2FDOCS-3A-40CLOS-20MGL-PAX-3AGLOSSARY-TERM-29 "GEB-DOCS/DOCS:@CLOS MGL-PAX:GLOSSARY-TERM"
+  [ef6e]: #x-28GEB-GUI-2ECORE-3ANOTE-20TYPE-29 "GEB-GUI.CORE:NOTE TYPE"
   [f022]: #x-28GEB-BOOL-3ATRUE-20MGL-PAX-3ASYMBOL-MACRO-29 "GEB-BOOL:TRUE MGL-PAX:SYMBOL-MACRO"
   [f1ce]: #x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29 "GEB.UTILS:MCAR GENERIC-FUNCTION"
   [f1e6]: #x-28GEB-2EUTILS-3AOBJ-20GENERIC-FUNCTION-29 "GEB.UTILS:OBJ GENERIC-FUNCTION"
@@ -2466,6 +2680,7 @@ features and how to better lay out future tests
   [f914]: #x-28GEB-2ESPEC-3ACOMP-20TYPE-29 "GEB.SPEC:COMP TYPE"
   [fae9]: #x-28GEB-2ESPEC-3AINJECT-RIGHT-20TYPE-29 "GEB.SPEC:INJECT-RIGHT TYPE"
   [fb12]: #x-28GEB-2ESPEC-3ACOPROD-20TYPE-29 "GEB.SPEC:COPROD TYPE"
+  [ff98]: #x-28GEB-GUI-2ECORE-3ANODE-20CLASS-29 "GEB-GUI.CORE:NODE CLASS"
 
 * * *
 ###### \[generated by [MGL-PAX](https://github.com/melisgl/mgl-pax)\]

@@ -5,17 +5,11 @@ Welcome to the GEB project.
 
 ## Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
-
-
 ### code coverage
-
-
 
 For test coverage it can be found at the following links:
 
@@ -33,8 +27,6 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see GEB-TEST:CODE-COVERAGE
-
-
 
 ## Getting Started
 
@@ -284,8 +276,6 @@ conjectures about GEB
 
 ## Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -353,31 +343,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} cong C^{(A × B)}$,
+   $C^{(B^A)} \cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $varnothing$.
+   the empty sum is $\varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
+$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ mathsf{2} = lbrace 1, 2 rbrace$,
-$ mathsf{1} = lbrace 1 rbrace$,
-$ mathsf{0} = lbrace  rbrace = varnothing$,
+where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
+$ \mathsf{1} = \lbrace 1 \rbrace$,
+$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -399,8 +389,6 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
-
-
 
 ### Morphisms
 
@@ -577,6 +565,40 @@ GEB:SUBSTOBJ. Read @OPEN-CLOSED for information on how to use them.
 Everything here relates directly to the underlying machinery of
 GEB, or to abstractions that help extend it.
 
+### The Categorical Interface
+
+###### \[in package GEB.MIXINS\]
+This covers the main Categorical interface required to be used and
+contained in various data structures
+
+- [class] CAT-OBJ
+
+    I offer the service of being a base category objects with no
+    extesnions
+
+- [class] CAT-MORPH
+
+    I offer the service of being a base categorical morphism with no
+    extesnions
+
+- [generic-function] DOM CAT-MORPH
+
+    Grabs the domain of the morphism. Returns a CAT-OBJ
+
+- [generic-function] CODOM CAT-MORPH
+
+    Grabs the codomain of the morphism. Returns a CAT-OBJ
+
+- [generic-function] CURRY-PROD CAT-MORPH CAT-LEFT CAT-RIGHT
+
+    Curries the given product type given the
+    product. This returns a CAT-MORPH.
+    
+    This interface version takes the left and right product type to
+    properly dispatch on. Instances should specalize on the CAT-RIGHT argument
+    
+    Use GEB.MAIN:CURRY instead.
+
 ### Core Category
 
 ###### \[in package GEB.SPEC\]
@@ -620,7 +642,7 @@ type substobj = so0
 
 - [type] PROD
 
-    The PRODUCT object. Takes two <SUBSTOBJ> values that
+    The PRODUCT object. Takes two CAT-OBJ values that
     get put into a pair.
     
     The formal grammar of PRODUCT is
@@ -642,7 +664,7 @@ type substobj = so0
 
 - [type] COPROD
 
-    the CO-PRODUCT object. Takes <SUBSTOBJ> values that
+    the CO-PRODUCT object. Takes CAT-OBJ values that
     get put into a choice of either value.
     
     The formal grammar of PRODUCT is
@@ -713,10 +735,6 @@ type substobj = so0
     where applying ->LEFT gives us the left unit, while ->RIGHT gives
     us the right unit.
 
-- [type] ALIAS
-
-    an alias for a geb object
-
 The @GEB-ACCESSORS specific to @GEB-SUBSTMU
 
 - [method] MCAR (PROD PROD)
@@ -767,7 +785,7 @@ SUBSTMORPH
 
 - [type] COMP
 
-    The composition morphism. Takes two <SUBSTMORPH> values that get
+    The composition morphism. Takes two CAT-MORPH values that get
     applied in standard composition order.
     
     The formal grammar of COMP is
@@ -813,9 +831,9 @@ SUBSTMORPH
 
 - [type] CASE
 
-    Eliminates coproducts. Namely Takes two <SUBSTMORPH> values, one
+    Eliminates coproducts. Namely Takes two CAT-MORPH values, one
     gets applied on the left coproduct while the other gets applied on the
-    right coproduct. The result of each <SUBSTMORPH> values must be
+    right coproduct. The result of each CAT-MORPH values must be
     the same.
     
     The formal grammar of CASE is:
@@ -844,7 +862,7 @@ SUBSTMORPH
 
 - [type] INIT
 
-    The INITIAL Morphism, takes any <SUBSTOBJ> and
+    The INITIAL Morphism, takes any CAT-OBJ and
     creates a moprhism from SO0 (also known as void) to the object given.
     
     The formal grammar of INITIAL is
@@ -867,7 +885,7 @@ SUBSTMORPH
 
 - [type] TERMINAL
 
-    The TERMINAL morphism, Takes any <SUBSTOBJ> and creates a
+    The TERMINAL morphism, Takes any CAT-OBJ and creates a
     morphism from that object to SO1 (also known as unit).
     
     The formal grammar of TERMINAL is
@@ -903,8 +921,8 @@ SUBSTMORPH
 
 - [type] PAIR
 
-    Introduces products. Namely Takes two <SUBSTMORPH> values. When
-    the PAIR morphism is applied on data, these two <SUBSTMORPH>'s are
+    Introduces products. Namely Takes two CAT-MORPH values. When
+    the PAIR morphism is applied on data, these two CAT-MORPH's are
     applied to the object, returning a pair of the results
     
     The formal grammar of constructing an instance of pair is:
@@ -936,7 +954,7 @@ SUBSTMORPH
 
 - [type] INJECT-LEFT
 
-    The left injection morphism. Takes two <SUBSTOBJ> values. It is
+    The left injection morphism. Takes two CAT-OBJ values. It is
     the dual of INJECT-RIGHT
     
     The formal grammar is
@@ -968,7 +986,7 @@ SUBSTMORPH
 
 - [type] INJECT-RIGHT
 
-    The right injection morphism. Takes two <SUBSTOBJ> values. It is
+    The right injection morphism. Takes two CAT-OBJ values. It is
     the dual of INJECT-LEFT
     
     The formal grammar is
@@ -1001,9 +1019,9 @@ SUBSTMORPH
 - [type] PROJECT-LEFT
 
     The LEFT PROJECTION. Takes two
-    <SUBSTMORPH> values. When the LEFT PROJECTION morphism is then applied, it grabs the left value of a product,
+    CAT-MORPH values. When the LEFT PROJECTION morphism is then applied, it grabs the left value of a product,
     with the type of the product being determined by the two
-    <SUBSTMORPH> values given.
+    CAT-MORPH values given.
     
     the formal grammar of a PROJECT-LEFT is:
     
@@ -1029,9 +1047,9 @@ SUBSTMORPH
 - [type] PROJECT-RIGHT
 
     The RIGHT PROJECTION. Takes two
-    <SUBSTMORPH> values. When the RIGHT PROJECTION morphism is then applied, it grabs the right value of a product,
+    CAT-MORPH values. When the RIGHT PROJECTION morphism is then applied, it grabs the right value of a product,
     with the type of the product being determined by the two
-    <SUBSTMORPH> values given.
+    CAT-MORPH values given.
     
     the formal grammar of a PROJECT-RIGHT is:
     
@@ -1056,10 +1074,6 @@ SUBSTMORPH
     (GEB-BOOL:BOOL × SO1 × GEB-BOOL:BOOL)
 
 - [type] FUNCTOR
-
-- [type] ALIAS
-
-    an alias for a geb object
 
 The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH
 
@@ -1194,7 +1208,11 @@ More Ergonomic API variants for *SO0* and *SO1*
 
 - [symbol-macro] SO1
 
+- [macro] ALIAS NAME OBJ
+
 - [function] MAKE-ALIAS &KEY NAME OBJ
+
+- [function] HAS-ALIASP OBJ
 
 - [function] <-LEFT MCAR MCADR
 
@@ -1250,6 +1268,10 @@ The functions given work on this.
 
     The false value of a boolean type. In this case we've defined true as
     the left unit
+
+- [symbol-macro] FALSE-OBJ
+
+- [symbol-macro] TRUE-OBJ
 
 - [symbol-macro] BOOL
 
@@ -1333,25 +1355,26 @@ Various utility functions ontop of @GEB-CATEGORIES
 
 - [function] COMMUTES-LEFT MORPH
 
-    swap the input domain of the given <SUBSTMORPH>
+    swap the input domain of the given cat-morph
     
-    In order to swap the domain we expect the <SUBSTMORPH> to
+    In order to swap the domain we expect the cat-morph to
     be a PROD
     
-    Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` <SUBSTOBJ>
+    Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` CAT-OBJ
     
     then: `(commutes-left (dom morph)) ≡ (prod y x)`
-    
-    ```
+    u
+    `
     Γ, f : x × y → a
     ------------------------------
     (commutes-left f) : y × x → a
-    ```
-
+    `
 
 - [function] !-> A B
 
 - [function] SO-EVAL X Y
+
+- [function] SO-HOM-OBJ X Z
 
 - [generic-function] SO-CARD-ALG OBJ
 
@@ -1359,24 +1382,16 @@ Various utility functions ontop of @GEB-CATEGORIES
 
 - [method] SO-CARD-ALG (OBJ \<SUBSTOBJ\>)
 
-- [generic-function] DOM SUBSTMORPH
+- [function] CURRY F
 
-    Grabs the domain of the morphism. Returns a <SUBSTOBJ>
-
-- [generic-function] CODOM SUBSTMORPH
-
-    Grabs the codomain of the morphism. Returns a <SUBSTOBJ>
-
-- [generic-function] CURRY F
-
-    Curries the given object, returns a <SUBSTMORPH>
+    Curries the given object, returns a cat-morph
     
-    The <SUBSTMORPH> given must have its DOM be of a PROD type, as CURRY
+    The cat-morph given must have its DOM be of a PROD type, as CURRY
     invokes the idea of
     
     if f : (PROD a b) → c
     
-    for all `a`, `b`, and `c` being an element of <SUBSTMORPH>
+    for all `a`, `b`, and `c` being an element of cat-morph
     
     then: (curry f): a → c^b
     
@@ -1390,6 +1405,10 @@ Various utility functions ontop of @GEB-CATEGORIES
     
     In category terms, `a → c^b` is isomorphic to `a → b → c`
 
+
+- [generic-function] TEXT-NAME MORPH
+
+    Gets the name of the moprhism
 
 ### Examples
 
@@ -1438,6 +1457,137 @@ layout of the term, showing what kind of data
 One can aid the visualization process a bit, this can be done by
 simply playing GEB:ALIAS around the object, this will place it
 in a box with a name to better identify it in the graphing procedure.
+
+### The GEB Graphizer
+
+###### \[in package GEB-GUI.GRAPHING\]
+This section covers the GEB Graph representation
+
+#### The GEB Graphizer Core
+
+###### \[in package GEB-GUI.CORE\]
+This section covers the graphing procedure in order to turn a GEB
+object into a format for a graphing backend.
+
+The core types that facilittate the functionality
+
+- [type] NOTE
+
+    A note is a note about a new node in the graph or a note about a
+    NODE which should be merged into an upcoming NODE.
+    
+    An example of a NODE-NOTE would be in the case of pair
+    
+    ```lisp
+    (pair g f)
+    ```
+    
+    ```
+                   Π₁
+         --f--> Y------
+    X----|            |-----> [Y × Z]
+         --g--> Z-----
+                   Π₂
+    ```
+    
+    An example of a MERGE-NOTE
+    
+    ```lisp
+    (Case f g)
+    (COMP g f)
+    ```
+    
+    ```
+               χ₁
+             -------> X --f---
+    [X + Y]--|                ---> A
+             -------> Y --g---/
+               χ₂
+    
+    X -f-> Y --> Y -g-> Z
+    ```
+    
+    Notice that in the pair case, we have a note and a shared node to
+    place down, where as in both of the MERGE-NOTE examples, the
+    Note at the end is not pre-pended by any special information
+
+- [class] NODE META-MIXIN
+
+    I represent a graphical node structure. I contain my children and a
+    value to display, along with the representation for which the node really stands for.
+    
+    Further, we derive the meta-mixin, as it's important for arrow drawing
+    to know if we are the left or the right or the nth child of a
+    particular node. This information is tracked, by storing the object
+    that goes to it in the meta table and recovering the note.
+
+- [function] MAKE-NOTE &REST INITARGS &KEY FROM NOTE VALUE &ALLOW-OTHER-KEYS
+
+- [function] MAKE-SQUASH &REST INITARGS &KEY VALUE &ALLOW-OTHER-KEYS
+
+- [generic-function] GRAPHIZE MORPH NOTES
+
+    Turns a morphism into a node graph.
+    
+    The NOTES serve as a way of sharing and continuing computation.
+    
+    If the NOTE is a :SHARED NOTE then it represents a NODE
+    without children, along with saying where it came from. This is to be
+    stored in parent of the NOTE
+    
+    If the NOTE is a :CONTINUE NOTE, then the computation is continued at
+    the spot.
+    
+    The parent field is to set the note on the parent if the NOTE is going
+    to be merged
+
+- [generic-function] VALUE OBJECT
+
+- [function] CONS-NOTE NOTE NOTES
+
+    Adds a note to the notes list.
+
+- [function] APPLY-NOTE NOTE-TO-BE-ON NOTE
+
+    Here we apply the NOTE to the NODE.
+    
+    In the case of a new node, we record down the information in the note,
+    and set the note as the child of the current NODE. The NODE is
+    returned.
+    
+    In the case of a squash-note, we instead just return the squash-note
+    as that is the proper NODE to continue from
+
+- [generic-function] REPRESENTATION OBJECT
+
+- [generic-function] CHILDREN OBJECT
+
+- [function] DETERMINE-TEXT-AND-OBJECT-FROM-NODE FROM TO
+
+    Helps lookup the text from the node
+
+- [function] NOTERIZE-CHILDREN NODE FUNC
+
+    Applies a specified note to the CHILDREN of the NODE.
+    
+    It does this by applying FUNC on all the CHILDREN and the index of the
+    child in the list
+
+- [function] NOTORIZE-CHILDREN-WITH-INDEX-SCHEMA PREFIX NODE
+
+    Notorizes the node with a prefix appended with the subscripted number
+
+#### The GEB Graphizer Passes
+
+###### \[in package GEB-GUI.GRAPHING.PASSES\]
+This changes how the graph is visualized, simplifying the graph in
+ways that are intuitive to the user
+
+- [function] PASSES NODE
+
+    Runs all the passes that simplify viewing the graph.
+    These simplifications should not change the semantics of the graph,
+    only display it in a more bearable way
 
 ## Polynomial Specification
 
@@ -1548,10 +1698,10 @@ The specification follows from the sum type declaration
 
 ```lisp
 (defunion stlc
-  (absurd (cod geb.spec:substmorph) (value t))
+  (absurd (value t))
   unit
-  (left (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (right (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
+  (left (value t))
+  (right (value t))
   (case-on (lty geb.spec:substmorph)
            (rty geb.spec:substmorph)
            (cod geb.spec:substmorph)
@@ -1571,8 +1721,6 @@ The specification follows from the sum type declaration
 
 - [type] ABSURD
 
-- [function] ABSURD-COD INSTANCE
-
 - [function] ABSURD-VALUE INSTANCE
 
 - [type] UNIT
@@ -1589,17 +1737,9 @@ The specification follows from the sum type declaration
 
 - [type] LEFT
 
-- [function] LEFT-LTY INSTANCE
-
-- [function] LEFT-RTY INSTANCE
-
 - [function] LEFT-VALUE INSTANCE
 
 - [type] RIGHT
-
-- [function] RIGHT-LTY INSTANCE
-
-- [function] RIGHT-RTY INSTANCE
 
 - [function] RIGHT-VALUE INSTANCE
 
@@ -1692,7 +1832,7 @@ These are utility functions relating to translating lambda terms to other types
 
 - [function] SO-HOM DOM COD
 
-    Computes the hom-object `DOM -> COD`
+    Computes the hom-object of two SUBSTMORPHs
 
 ## Mixins
 
@@ -1939,6 +2079,8 @@ used throughout the GEB codebase
     Denotes that the given method is the subclasses
     responsibility. Inspired from Smalltalk
 
+- [function] SHALLOW-COPY-OBJECT ORIGINAL
+
 - [macro] MAKE-PATTERN OBJECT-NAME &REST CONSTRUCTOR-NAMES
 
     make pattern matching position style instead of record style. This
@@ -1959,6 +2101,18 @@ used throughout the GEB codebase
     (make-pattern alias name obj)
     ```
 
+
+- [function] NUMBER-TO-DIGITS NUMBER &OPTIONAL REM
+
+    turns an INTEGER into a list of its digits
+
+- [function] DIGIT-TO-UNDER DIGIT
+
+    Turns a digit into a subscript string version of the number
+
+- [function] NUMBER-TO-UNDER INDEX
+
+    Turns an INTEGER into a subscripted STRING
 
 ### Accessors
 
@@ -2043,6 +2197,8 @@ features and how to better lay out future tests
     (run-tests :designators '(geb geb.lambda)) ==> run only those packages
     ```
 
+
+- [function] RUN-TESTS-ERROR
 
 - [function] CODE-COVERAGE &OPTIONAL (PATH NIL)
 

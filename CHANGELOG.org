@@ -1,0 +1,20 @@
+
+* 0.2.0
+- Change the graphing from a box and line diagram, to a proper graph diagram.
+  + We now utilize clim-dot to draw the graph.
+- The drawing algorithm improved, new algorithms to optimize the
+  graphing diagram.
+- Change design of the codebase to use mixin based extension to the
+  core category instead of extending substmorph/substobj.
+- Removed the alias tag, instead it's now stored on each separate
+  allocation!
+- _Fixups_
+  + Vamp-IR name dumping when using CL variable name convention
+    ignores *'s.
+  + Minor issue with the docs on unresolved references and unneeded
+    aliases preventing stock SBCL from loading the codebase.
+* 0.1.1-alpha
+- Fixup Vamp-IR library dump, by having range generate proper code.
+* 0.1.0-alpha
+- First release
+* Next
