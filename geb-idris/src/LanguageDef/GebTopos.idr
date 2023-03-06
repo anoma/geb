@@ -9,6 +9,16 @@ import public LanguageDef.Syntax
 
 %default total
 
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- Type-checking of S-expression as minimal Geb term ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+-- Check whether a term represents a type comprised of finite products
+-- and coproducts (which are spanned by an initial object, a terminal
+-- object, binary coproducts, and binary products).
+
 --------------------------------------------
 --------------------------------------------
 ---- Sigma types in programmer's FinSet ----

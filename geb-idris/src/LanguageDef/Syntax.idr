@@ -92,18 +92,28 @@ public export
 sxfSubexprs : SExpF atom xty -> List xty
 sxfSubexprs (SXF _ _ xs) = xs
 
+-- "Translate" the SExp functor, meaning, take its coproduct with a constant
+-- type.
+public export
+data TrSExpF : Type -> Type -> Type -> Type where
+  TrV : v -> TrSExpF atom v a -- variable
+  TrC : SExpF atom a -> TrSExpF atom v a -- compound term
+
 public export
 data FrSExpM : Type -> Type -> Type where
-  InSXV : ty -> FrSExpM atom ty -- variable
-  InSXC : SExpF atom (FrSExpM atom ty) -> FrSExpM atom ty -- compound term
+  InFS : TrSExpF atom ty (FrSExpM atom ty) -> FrSExpM atom ty
 
 public export
 SExp : Type -> Type
 SExp atom = FrSExpM atom Void
 
 public export
-InSX : SExpF atom (SExp atom) -> SExp atom
-InSX = InSXC
+InSX : SExpF atom (FrSExpM atom ty) -> FrSExpM atom ty
+InSX = InFS . TrC
+
+public export
+InSV : ty -> FrSExpM atom ty
+InSV = InFS . TrV
 
 public export
 InS : atom -> List Nat -> List (SExp atom) -> SExp atom
@@ -123,16 +133,21 @@ SList atom = FrSListM atom Void
 
 public export
 InSF : atom -> List Nat -> FrSListM atom ty -> FrSExpM atom ty
-InSF a ns xs = InSXC $ SXF a ns xs
+InSF a ns xs = InSX $ SXF a ns xs
 
 public export
 InSFA : atom -> FrSExpM atom ty
 InSFA a = InSF a [] []
 
+-- "Scale" the SExp functor, meaning, take its product with a constant
+-- type.
+public export
+data ScSExpF : Type -> Type -> Type -> Type where
+  ScL : v -> SExpF atom a -> ScSExpF atom v a -- labeled term
+
 public export
 data CoSExpCM : Type -> Type -> Type where
-  -- Labeled term
-  InSXL : ty -> SExpF atom (CoSExpCM atom ty) -> CoSExpCM atom ty
+  InSXL : ScSExpF atom ty (CoSExpCM atom ty) -> CoSExpCM atom ty
 
 public export
 record FrSXLAlg (atom, ty, a, b : Type) where
@@ -162,8 +177,8 @@ SXLAlgToFr {atom} {a} {b} = SXLSubstAlgToFr (voidF a)
 mutual
   public export
   frsxCata : FrSXLAlg atom ty a b -> FrSExpM atom ty -> a
-  frsxCata alg (InSXV v) = alg.frsubst v
-  frsxCata alg (InSXC x) = case x of
+  frsxCata alg (InFS (TrV v)) = alg.frsubst v
+  frsxCata alg (InFS (TrC x)) = case x of
     SXF a ns xs => alg.frxalg a ns $ frslCata alg xs
 
   public export
@@ -386,20 +401,23 @@ mutual
   public export
   sexpDecEq : {atom : Type} -> DecEq ty =>
     DecEqPred atom -> DecEqPred (FrSExpM atom ty)
-  sexpDecEq deq (InSXV v) (InSXV v') =
+  sexpDecEq deq (InFS (TrV v)) (InFS (TrV v')) =
     case decEq v v' of
       Yes Refl => Yes Refl
       No neq => No $ \Refl => neq Refl
-  sexpDecEq deq (InSXV _) (InSXC _) = No $ \eq => case eq of Refl impossible
-  sexpDecEq deq (InSXC _) (InSXV _) = No $ \eq => case eq of Refl impossible
-  sexpDecEq deq (InSXC (SXF a ns xs)) (InSXC (SXF a' ns' xs')) =
-    case deq a a' of
-      Yes Refl => case decEq ns ns' of
-        Yes Refl => case slistDecEq deq xs xs' of
-          Yes Refl => Yes Refl
+  sexpDecEq deq (InFS (TrV _)) (InFS (TrC _)) =
+    No $ \eq => case eq of Refl impossible
+  sexpDecEq deq (InFS (TrC _)) (InFS (TrV _)) =
+    No $ \eq => case eq of Refl impossible
+  sexpDecEq deq (InFS (TrC (SXF a ns xs))) (InFS (TrC c')) =
+    case c' of
+      SXF a' ns' xs' => case deq a a' of
+        Yes Refl => case decEq ns ns' of
+          Yes Refl => case slistDecEq deq xs xs' of
+            Yes Refl => Yes Refl
+            No neq => No $ \eq => case eq of Refl => neq Refl
           No neq => No $ \eq => case eq of Refl => neq Refl
         No neq => No $ \eq => case eq of Refl => neq Refl
-      No neq => No $ \eq => case eq of Refl => neq Refl
 
   public export
   slistDecEq : {atom : Type} -> DecEq ty =>
@@ -432,7 +450,9 @@ sexpReturn a = InS a [] []
 
 public export
 SExpJoinAlg : SExpAlg (SExp atom) (SExp atom)
-SExpJoinAlg (SXF (InSXC (SXF a ns xs)) ns' xs') = InS a (ns ++ ns') (xs ++ xs')
+SExpJoinAlg (SXF (InFS (TrC (SXF a ns xs))) ns' xs') =
+  InS a (ns ++ ns') (xs ++ xs')
+SExpJoinAlg (SXF (InFS (TrV v)) ns' xs') = void v
 
 public export
 sexpJoin : SExp (SExp atom) -> SExp atom
@@ -498,14 +518,14 @@ mutual
     (step : SExpDepAlg alg paramAlg) ->
     (x : SExp atom) ->
     Maybe (sexpGenTypeCata alg x)
-  sexpGenTypeDec alg paramAlg step (InSXC (SXF a ns xs)) with
+  sexpGenTypeDec alg paramAlg step (InFS (TrC (SXF a ns xs))) with
     (slistGenTypeDec alg paramAlg step xs, slistMaybeCata paramAlg xs) proof prf
-      sexpGenTypeDec alg paramAlg step (InSXC (SXF a ns xs))
+      sexpGenTypeDec alg paramAlg step (InFS (TrC (SXF a ns xs)))
         | (Just vxs, Just params) =
           case step a ns xs vxs params (sndEq prf) of
             Just ty => Just (vxs, ty)
             _ => Nothing
-      sexpGenTypeDec alg paramAlg step (InSXC (SXF a ns xs))
+      sexpGenTypeDec alg paramAlg step (InFS (TrC (SXF a ns xs)))
         | _ = Nothing
 
   public export
