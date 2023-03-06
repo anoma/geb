@@ -131,46 +131,57 @@ pfstCata {a} = pfstFreeCata {a=Void} {b=a} (voidF a)
 public export
 data PFSClass : Type where
   PCTerm : PFSClass
-  PCTtype : PFSClass
+  PCType : PFSClass
   PCTyped : PFSClass
 
 public export
-data PFSOrder : Type where
-  PO0 : PFSOrder
-  PO1 : PFSOrder
-  PO2 : PFSOrder
+data PFSDepClassType : Type where
+  PDCTTyped : PFSDepClassType
 
 public export
-PFSSlice : Type
-PFSSlice = (PFSClass, PFSOrder)
+PFSDepClass : PFSClass -> Type
+PFSDepClass PCTerm = Void
+PFSDepClass PCType = PFSDepClassType
+PFSDepClass PCTyped = Void
 
 public export
 PFSDepMorph : Type -> Type -> Type
-PFSDepMorph a b = PFSSlice -> a -> b
+PFSDepMorph a b = PFSClass -> a -> b
 
 public export
-PFSDepPred : Type -> Type
-PFSDepPred a = PFSDepMorph a Bool
+PFSDepMorphCtx : Type -> Type -> Type -> Type
+PFSDepMorphCtx ctx a b = Sigma {a=PFSClass} PFSDepClass -> a -> ctx -> b
+
+public export
+PFSSlicePred : Type -> Type
+PFSSlicePred a =
+  (PFSDepMorph a (Maybe (PFSTermFM a)),
+   PFSDepMorphCtx (PFSTermFM a) a (Maybe (PFSTermFM a)))
 
 mutual
   public export
-  checkPFSTermSl : {0 a : Type} -> PFSDepPred a ->
-    PFSClass -> PFSOrder -> DecPred (PFSTermFM a)
-  checkPFSTermSl pred c o (PTVar v) = pred (c, o) v
-  checkPFSTermSl pred PCTyped o (PTCom t) = case t of
-    PTT type term => checkPFSTypedTerm pred o type term
+  checkPFSTermSl : {0 a : Type} -> PFSSlicePred a ->
+    PFSClass -> DecPred (PFSTermFM a)
+  checkPFSTermSl pred c (PTVar v) = isJust $ fst pred c v
+  checkPFSTermSl pred PCTyped (PTCom t) = case t of
+    PTT type term => checkPFSTypedTerm pred type term
     _ => False
-  checkPFSTermSl pred c o t = ?checkPFSTermSl_hole
+  checkPFSTermSl pred c t = ?checkPFSTermSl_hole
 
   public export
-  checkPFSTypedTerm : {0 a : Type} -> PFSDepPred a -> PFSOrder ->
+  checkPFSTypedTerm : {0 a : Type} -> PFSSlicePred a ->
     PFSTermFM a -> PFSTermFM a -> Bool
-  checkPFSTypedTerm {a} pred o type (PTVar v) = pred (PCTyped, o) v
-  checkPFSTypedTerm {a} pred o type term = ?checkPFSTypedTerm_hole
+  checkPFSTypedTerm {a} pred (PTVar ty) (PTVar v) =
+    isJust $ fst pred PCType ty >>= snd pred (PCType ** PDCTTyped) v
+  checkPFSTypedTerm {a} pred (PTVar ty) (PTCom term) =
+    let ty' = fst pred PCType ty in
+    ?checkPFSTypedTerm_hole_1
+  checkPFSTypedTerm {a} pred (PTCom ty) (PTVar v) = ?checkPFSTypedTerm_hole_2
+  checkPFSTypedTerm {a} pred (PTCom ty) (PTCom term) = ?checkPFSTypedTerm_hole_3
 
 public export
-checkPFSTerm : {0 a : Type} -> PFSDepPred a -> DecPred (PFSTermFM a)
-checkPFSTerm pred = checkPFSTermSl pred PCTyped PO2
+checkPFSTerm : {0 a : Type} -> PFSSlicePred a -> DecPred (PFSTermFM a)
+checkPFSTerm pred = checkPFSTermSl pred PCTyped
 
 -------------------
 -------------------
