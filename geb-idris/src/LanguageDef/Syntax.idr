@@ -81,6 +81,10 @@ data SExpF : Type -> Type -> Type where
   SXF : atom -> List Nat -> List xty -> SExpF atom xty
 
 public export
+Bifunctor SExpF where
+  bimap f g (SXF a ns xs) = SXF (f a) ns (map g xs)
+
+public export
 sxfAtom : SExpF atom xty -> atom
 sxfAtom (SXF a _ _) = a
 
@@ -98,6 +102,11 @@ public export
 data TrSExpF : Type -> Type -> Type -> Type where
   TrV : v -> TrSExpF atom v a -- variable
   TrC : SExpF atom a -> TrSExpF atom v a -- compound term
+
+public export
+Bifunctor (TrSExpF atom) where
+  bimap f g (TrV v) = TrV (f v)
+  bimap f g (TrC c) = TrC (bimap id g c)
 
 public export
 data FrSExpM : Type -> Type -> Type where
@@ -144,6 +153,10 @@ InSFA a = InSF a [] []
 public export
 data ScSExpF : Type -> Type -> Type -> Type where
   ScL : v -> SExpF atom a -> ScSExpF atom v a -- labeled term
+
+public export
+Bifunctor (ScSExpF atom) where
+  bimap f g (ScL v c) = ScL (f v) (bimap id g c)
 
 public export
 data CoSExpCM : Type -> Type -> Type where
