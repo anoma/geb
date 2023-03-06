@@ -463,13 +463,31 @@ sexpReturn a = InS a [] []
 
 public export
 SExpJoinAlg : SExpAlg (SExp atom) (SExp atom)
+SExpJoinAlg (SXF (InFS (TrV v)) ns' xs') = void v
 SExpJoinAlg (SXF (InFS (TrC (SXF a ns xs))) ns' xs') =
   InS a (ns ++ ns') (xs ++ xs')
-SExpJoinAlg (SXF (InFS (TrV v)) ns' xs') = void v
 
 public export
 sexpJoin : SExp (SExp atom) -> SExp atom
 sexpJoin = sexpCata SExpJoinAlg
+
+public export
+sexpBind : SExp atom -> (atom -> SExp atom') -> SExp atom'
+sexpBind x f = sexpJoin (map {f=SExp} f x)
+
+public export
+sexpApp : SExp (a -> b) -> SExp a -> SExp b
+sexpApp xf = sexpBind xf . flip (map {f=SExp})
+
+public export
+Applicative SExp where
+  pure = sexpReturn
+  (<*>) = sexpApp
+
+public export
+Monad SExp where
+  (>>=) = sexpBind
+  join = sexpJoin
 
 ----------------------------------------------------------------------------
 ---- FrSExpM monad operations (where the domain is a type of variables) ----
