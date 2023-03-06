@@ -261,7 +261,7 @@ gx1 : GExp
 gx1 = InS SL_EXP [1, 2, 3] [InS SL_NAT [2] [], InS SL_EXPL [] []]
 
 frgx1 : FrGExp String
-frgx1 = InSF SL_EXP [1, 2, 3] [InSF SL_NAT [2] [], InSV "sl_expl"]
+frgx1 = InS SL_EXP [1, 2, 3] [InS SL_NAT [2] [], InSV "sl_expl"]
 
 ---------------------------------------
 ---------------------------------------
