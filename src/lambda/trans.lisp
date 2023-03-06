@@ -52,18 +52,28 @@
        (geb:pair (compile-checked-term context lty l)
                  (compile-checked-term context rty r)))
       ((fst lty rty value)
-       (assert (geb.mixins:obj-equalp (class-of lty) (class-of type)) nil "Types should match on fst: ~A ~A"
-               term type)
+       (assert (geb.mixins:obj-equalp (class-of lty) (class-of type))
+               nil
+               "Types should match on fst: ~A ~A"
+               term
+               type)
        (comp (<-left lty rty) (compile-checked-term context (prod lty rty) value)))
       ((snd lty rty value)
-       (assert (geb.mixins:obj-equalp (class-of rty) (class-of type)) nil "Types should match on fst: ~A ~A"
-               term type)
+       (assert (geb.mixins:obj-equalp (class-of rty) (class-of type))
+               nil
+               "Types should match on fst: ~A ~A"
+               term
+               type)
        (comp (<-right lty rty) (compile-checked-term context (prod lty rty) value)))
       ((lamb vty tty term)
        (curry (commutes-left
                (compile-checked-term (cons vty context) tty term))))
       ((app dom com f x)
-       (assert (geb.mixins:obj-equalp dom type) nil "Types should match for application: ~A ~A" dom type)
+       (assert (geb.mixins:obj-equalp dom type)
+               nil
+               "Types should match for application: ~A ~A"
+               dom
+               type)
        (comp
         (so-eval dom com)
         (geb:pair (compile-checked-term context dom f)
