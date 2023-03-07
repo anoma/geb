@@ -333,17 +333,28 @@ ProdT : List Type -> Type
 ProdT = foldr Pair Unit
 
 public export
+SExpForallAlg : SExpTypeAlg atom -> SExpTypeAlg atom
+SExpForallAlg alg x = (alg x, ProdT (sxfSubexprs x))
+
+public export
+sexpForallCata : SExpTypeAlg atom -> SExp atom -> Type
+sexpForallCata = sexpCata . SExpForallAlg
+
+public export
+slistForallCata : SExpTypeAlg atom -> SList atom -> Type
+slistForallCata = ProdT .* slistCata . SExpForallAlg
+
+public export
 SExpTypeAlgFromBool : SExpBoolAlg atom -> SExpTypeAlg atom
-SExpTypeAlgFromBool alg (SXF a ns tys) =
-  (alg a ns (length tys) = True, ProdT tys)
+SExpTypeAlgFromBool alg (SXF a ns tys) = alg a ns (length tys) = True
 
 public export
 sexpBoolTypeCata : SExpBoolAlg atom -> SExp atom -> Type
-sexpBoolTypeCata alg = sexpCata (SExpTypeAlgFromBool alg)
+sexpBoolTypeCata = sexpForallCata . SExpTypeAlgFromBool
 
 public export
 slistBoolTypeCata : SExpBoolAlg atom -> SList atom -> Type
-slistBoolTypeCata alg = ProdT . slistCata (SExpTypeAlgFromBool alg)
+slistBoolTypeCata = slistForallCata . SExpTypeAlgFromBool
 
 public export
 record SExpSliceAlg {ty : Type}
