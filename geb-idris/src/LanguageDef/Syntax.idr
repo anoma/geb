@@ -281,11 +281,11 @@ frslistMaybeCata subst = slSubstCata subst . SExpAlgFromMaybe
 
 public export
 SExpMaybeCtxAlg : Type -> Type -> Type -> Type
-SExpMaybeCtxAlg atom ctx a = SExpF atom a -> ctx -> Maybe a
+SExpMaybeCtxAlg atom ctx a = SExpF atom (ctx -> a) -> ctx -> Maybe a
 
 public export
 SExpCtxAlgFromMaybe : SExpMaybeCtxAlg atom ctx a ->
-  SXLAlg atom (ctx -> Maybe a) (ctx -> Maybe (List a))
+  SXLAlg atom (ctx -> Maybe a) (ctx -> Maybe (List (ctx -> a)))
 SExpCtxAlgFromMaybe alg =
   SXA
     (\x, ns, ml, ctx => case ml ctx of
@@ -293,7 +293,7 @@ SExpCtxAlgFromMaybe alg =
       Nothing => Nothing)
     (const $ Just [])
     (\mx, ml, ctx => case (mx ctx, ml ctx) of
-      (Just x, Just l) => Just (x :: l)
+      (Just x, Just l) => Just (const x :: l)
       _ => Nothing)
 
 public export
@@ -308,12 +308,18 @@ frsexpMaybeCtxCata subst = sxSubstCata subst . SExpCtxAlgFromMaybe
 public export
 slistMaybeCtxCata : SExpMaybeCtxAlg atom ctx a ->
   SList atom -> ctx -> Maybe (List a)
-slistMaybeCtxCata = slCata . SExpCtxAlgFromMaybe
+slistMaybeCtxCata alg l ctx =
+  map {f=Maybe}
+    (map {f=List} $ \f => f ctx)
+      (slCata (SExpCtxAlgFromMaybe alg) l ctx)
 
 public export
 frslistMaybeCtxCata : (ty -> ctx -> Maybe a) -> SExpMaybeCtxAlg atom ctx a ->
   FrSListM atom ty -> ctx -> Maybe (List a)
-frslistMaybeCtxCata subst = slSubstCata subst . SExpCtxAlgFromMaybe
+frslistMaybeCtxCata subst alg l ctx =
+  map {f=Maybe}
+    (map {f=List} $ \f => f ctx)
+      (slSubstCata subst (SExpCtxAlgFromMaybe alg) l ctx)
 
 -------------------
 ---- Utilities ----
