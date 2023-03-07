@@ -20,12 +20,16 @@ import public LanguageDef.Syntax
 -- object, binary coproducts, and binary products).
 
 public export
-checkAsFinPCAlg : GExpAlg Bool
-checkAsFinPCAlg = ?checkAsFinPCAlg_hole
+checkAsFinPCAlg : GExpBoolAlg
+checkAsFinPCAlg FBT_INITIAL [] 0 = True
+checkAsFinPCAlg FBT_TERMINAL [] 0 = True
+checkAsFinPCAlg FBT_COPRODUCT [] 2 = True
+checkAsFinPCAlg FBT_PRODUCT [] 2 = True
+checkAsFinPCAlg _ _ _ = False
 
 public export
 checkAsFinPC : GExp -> Bool
-checkAsFinPC = sexpCata checkAsFinPCAlg
+checkAsFinPC = sexpBoolCata checkAsFinPCAlg
 
 --------------------------------------------
 --------------------------------------------

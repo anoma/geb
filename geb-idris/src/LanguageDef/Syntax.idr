@@ -899,3 +899,7 @@ GExpAlg = SExpAlg GebAtom
 public export
 GExpMaybeAlg : Type -> Type
 GExpMaybeAlg = SExpMaybeAlg GebAtom
+
+public export
+GExpBoolAlg : Type
+GExpBoolAlg = SExpBoolAlg GebAtom

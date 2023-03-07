@@ -47,8 +47,10 @@ data GebAtom : Type where
   -- Finite unrefined types
   FBT_ATOM : GebAtom
   FBT_BNAT : GebAtom
+  FBT_INITIAL : GebAtom
   FBT_COPRODUCT : GebAtom
   FBT_COPRODUCT_L : GebAtom
+  FBT_TERMINAL : GebAtom
   FBT_PRODUCT : GebAtom
   FBT_PRODUCT_L : GebAtom
 
@@ -57,7 +59,7 @@ data GebAtom : Type where
 
 public export
 GASize : Nat
-GASize = 26
+GASize = 28
 
 public export
 GAFin : Type
@@ -109,15 +111,24 @@ GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
     FBT_BNAT
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))) =
-    FBT_COPRODUCT
+    FBT_INITIAL
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))) =
-    FBT_COPRODUCT_L
+    FBT_COPRODUCT
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))))) =
+    FBT_COPRODUCT_L
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  FZ))))))))))))))))))))))))) =
+    FBT_TERMINAL
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS FZ)))))))))))))))))))))))))) =
     FBT_PRODUCT
 GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))))) =
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS FZ))))))))))))))))))))))))))) =
     FBT_PRODUCT_L
 
 public export
@@ -144,10 +155,12 @@ GAEncoder DIR_XCHD = (18 ** Refl ** Refl)
 GAEncoder DIR_XCTL = (19 ** Refl ** Refl)
 GAEncoder FBT_ATOM = (20 ** Refl ** Refl)
 GAEncoder FBT_BNAT = (21 ** Refl ** Refl)
-GAEncoder FBT_COPRODUCT = (22 ** Refl ** Refl)
-GAEncoder FBT_COPRODUCT_L = (23 ** Refl ** Refl)
-GAEncoder FBT_PRODUCT = (24 ** Refl ** Refl)
-GAEncoder FBT_PRODUCT_L = (25 ** Refl ** Refl)
+GAEncoder FBT_INITIAL = (22 ** Refl ** Refl)
+GAEncoder FBT_COPRODUCT = (23 ** Refl ** Refl)
+GAEncoder FBT_COPRODUCT_L = (24 ** Refl ** Refl)
+GAEncoder FBT_TERMINAL = (25 ** Refl ** Refl)
+GAEncoder FBT_PRODUCT = (26 ** Refl ** Refl)
+GAEncoder FBT_PRODUCT_L = (27 ** Refl ** Refl)
 
 public export
 GebAtomEncoding : FinDecEncoding GebAtom GASize
@@ -177,8 +190,10 @@ gaToString DIR_XCHD = "DIR_XCHD"
 gaToString DIR_XCTL = "DIR_XCTL"
 gaToString FBT_ATOM = "FBT_ATOM"
 gaToString FBT_BNAT = "FBT_BNAT"
+gaToString FBT_INITIAL = "FBT_INITIAL"
 gaToString FBT_COPRODUCT = "FBT_COPRODUCT"
 gaToString FBT_COPRODUCT_L = "FBT_COPRODUCT_L"
+gaToString FBT_TERMINAL = "FBT_TERMINAL"
 gaToString FBT_PRODUCT = "FBT_PRODUCT"
 gaToString FBT_PRODUCT_L = "FBT_PRODUCT_L"
 
