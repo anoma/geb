@@ -316,17 +316,40 @@ SExpBoolAlg : Type -> Type
 SExpBoolAlg atom = atom -> List Nat -> Nat -> Bool
 
 public export
+SExpAlgFromBool : SExpBoolAlg atom -> SExpAlg atom Bool
+SExpAlgFromBool alg (SXF a ns xs) = all id xs && alg a ns (length xs)
+
+public export
 SExpBoolToMaybeAlg : SExpBoolAlg atom -> SExpMaybeAlg atom Unit
 SExpBoolToMaybeAlg alg (SXF a ns xs) =
   if (alg a ns (length xs)) then Just () else Nothing
 
 public export
 sexpBoolCata : SExpBoolAlg atom -> SExp atom -> Bool
-sexpBoolCata alg = isJust . sexpMaybeCata (SExpBoolToMaybeAlg alg)
+sexpBoolCata = sexpCata . SExpAlgFromBool
+
+public export
+frsexpBoolCata :
+  (ty -> Bool) -> SExpBoolAlg atom -> FrSExpM atom ty -> Bool
+frsexpBoolCata subst = frsexpCata subst . SExpAlgFromBool
+
+public export
+slistBoolCataL : SExpBoolAlg atom -> SList atom -> List Bool
+slistBoolCataL = slistCata . SExpAlgFromBool
 
 public export
 slistBoolCata : SExpBoolAlg atom -> SList atom -> Bool
-slistBoolCata alg = isJust . slistMaybeCata (SExpBoolToMaybeAlg alg)
+slistBoolCata alg l = all id (slistBoolCataL alg l)
+
+public export
+frslistBoolCataL :
+  (ty -> Bool) -> SExpBoolAlg atom -> FrSListM atom ty -> List Bool
+frslistBoolCataL subst = frslistCata subst . SExpAlgFromBool
+
+public export
+frslistBoolCata :
+  (ty -> Bool) -> SExpBoolAlg atom -> FrSListM atom ty -> Bool
+frslistBoolCata subst alg l = all id (frslistBoolCataL subst alg l)
 
 public export
 ProdT : List Type -> Type
