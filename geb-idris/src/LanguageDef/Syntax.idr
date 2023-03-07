@@ -409,6 +409,44 @@ mutual
       (sexpDepCata alg x (alg.ssaHeadTy x xs al))
       (slistDepCata alg xs (alg.ssaTailTy x xs al))
 
+public export
+SExpSliceMorphAlg : {atom : Type} ->
+  SExpTypeAlg atom -> SExpTypeAlg atom -> Type
+SExpSliceMorphAlg {atom} sa sb =
+  (a : atom) -> (ns : List Nat) -> (xs : SList atom) ->
+  sa (SXF a ns $ slistForallCataL sa xs) ->
+  slistForallCata sa xs ->
+  slistForallCata sb xs ->
+  sb (SXF a ns $ slistForallCataL sb xs)
+
+public export
+SExpSliceAlgFromMorph : {sa, sb : SExpTypeAlg atom} ->
+  SExpSliceMorphAlg sa sb ->
+  SExpSliceAlg
+    (sexpForallCata sa) (sexpForallCata sb)
+    (slistForallCata sa) (slistForallCata sb)
+SExpSliceAlgFromMorph alg =
+  SSA
+    (\a, ns, xs, (sxa, subs) => subs)
+    (\x, xs, (sx, sxs) => sx)
+    (\x, xs, (sx, sxs) => sxs)
+    (\v, _ => void v)
+    (\a, ns, xs, (sx, sxas), sxbs => (alg a ns xs sx sxas sxbs, sxbs))
+    id
+    (\x, xs, sx, sxs => (sx, sxs))
+
+public export
+sexpSliceCata : {sa, sb : SExpTypeAlg atom} ->
+  SExpSliceMorphAlg sa sb ->
+  SliceMorphism {a=(SExp atom)} (sexpForallCata sa) (sexpForallCata sb)
+sexpSliceCata {sa} {sb} = sexpDepCata . (SExpSliceAlgFromMorph {sa} {sb})
+
+public export
+slistSliceCata : {sa, sb : SExpTypeAlg atom} ->
+  SExpSliceMorphAlg sa sb ->
+  SliceMorphism {a=(SList atom)} (slistForallCata sa) (slistForallCata sb)
+slistSliceCata {sa} {sb} = slistDepCata . (SExpSliceAlgFromMorph {sa} {sb})
+
 -------------------
 ---- Utilities ----
 -------------------
