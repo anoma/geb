@@ -357,6 +357,22 @@ andRight {p=False} {q=True} Refl impossible
 andRight {p=False} {q=False} Refl impossible
 
 public export
+foldTrueInit : (b : Bool) -> (bs : List Bool) ->
+  foldl (\x, y => x && Delay y) b bs = True -> b = True
+foldTrueInit b [] eq = eq
+foldTrueInit b (b' :: bs) eq = andLeft $ foldTrueInit (b && b') bs eq
+
+public export
+foldTrueList : (b : Bool) -> (bs : List Bool) ->
+  foldl (\x, y => x && Delay y) b bs = True -> all Prelude.id bs = True
+foldTrueList b [] eq = Refl
+foldTrueList b (b' :: bs) eq with (andRight (foldTrueInit (b && b') bs eq))
+  foldTrueList b (True :: bs) eq | Refl =
+    let al = andLeft (foldTrueInit (b && True) bs eq) in
+    replace {p=(\b'' => foldl (\x, y => x && Delay y) b'' (True :: bs) = True)}
+      (andLeft (foldTrueInit (b && True) bs eq)) eq
+
+public export
 repeatIdx : {0 x : Type} -> (Nat -> x -> x) -> Nat -> Nat -> x -> x
 repeatIdx f Z i e = e
 repeatIdx f (S n) i e = repeatIdx f n (S i) (f i e)

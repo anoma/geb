@@ -242,6 +242,12 @@ slcPreservesLen alg [] = Refl
 slcPreservesLen alg (x :: l) = cong S (slcPreservesLen alg l)
 
 public export
+frslcPreservesLen : (subst : ty -> a) -> (alg : SExpAlg atom a) ->
+  (l : FrSListM atom ty) -> length (frslistCata subst alg l) = length l
+frslcPreservesLen subst alg [] = Refl
+frslcPreservesLen subst alg (x :: l) = cong S (frslcPreservesLen subst alg l)
+
+public export
 SExpMaybeAlg : Type -> Type -> Type
 SExpMaybeAlg atom a = SExpF atom a -> Maybe a
 
@@ -469,6 +475,36 @@ slistSliceCata : {sa, sb : SExpTypeAlg atom} ->
   SExpSliceMorphAlg sa sb ->
   SliceMorphism {a=(SList atom)} (slistForallCata sa) (slistForallCata sb)
 slistSliceCata {sa} {sb} = slistDepCata . (SExpSliceAlgFromMorph {sa} {sb})
+
+mutual
+  public export
+  sexpBoolComputeToConstraint : (alg : SExpBoolAlg atom) -> (x : SExp atom) ->
+    sexpBoolCata alg x = True -> sexpBoolTypeCata alg x
+  sexpBoolComputeToConstraint alg (InFS (TrV v)) eq = void v
+  sexpBoolComputeToConstraint alg (InFS (TrC (SXF a ns xs))) eq =
+    (rewrite slcPreservesLen (SExpForallAlg (SExpTypeAlgFromBool alg)) xs in
+     rewrite sym (slcPreservesLen (SExpAlgFromBool alg) xs) in
+     andRight eq,
+     slistBoolComputeToConstraint alg xs $ andLeft eq)
+
+  public export
+  slistBoolComputeToConstraint : (alg : SExpBoolAlg atom) -> (l : SList atom) ->
+    slistBoolCata alg l = True -> slistBoolTypeCata alg l
+  slistBoolComputeToConstraint alg [] eq = ()
+  slistBoolComputeToConstraint alg (x :: xs) eq =
+    (sexpBoolComputeToConstraint alg x $ foldTrueInit _ _ eq,
+     slistBoolComputeToConstraint alg xs $ foldTrueList _ _ eq)
+
+mutual
+  public export
+  sexpBoolConstraintToCompute : (alg : SExpBoolAlg atom) -> (x : SExp atom) ->
+    sexpBoolTypeCata alg x -> sexpBoolCata alg x = True
+  sexpBoolConstraintToCompute alg x w = ?sexpBoolConstraintToCompute_hole
+
+  public export
+  slistBoolConstraintToCompute : (alg : SExpBoolAlg atom) -> (l : SList atom) ->
+    slistBoolTypeCata alg l -> slistBoolCata alg l = True
+  slistBoolConstraintToCompute alg l w = ?slistBoolConstraintToCompute_hole
 
 -------------------
 ---- Utilities ----
