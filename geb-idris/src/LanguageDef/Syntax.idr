@@ -333,7 +333,7 @@ ProdT : List Type -> Type
 ProdT = foldr Pair Unit
 
 public export
-SExpTypeAlgFromBool : SExpBoolAlg atom -> SExpAlg atom Type
+SExpTypeAlgFromBool : SExpBoolAlg atom -> SExpTypeAlg atom
 SExpTypeAlgFromBool alg (SXF a ns tys) =
   (alg a ns (length tys) = True, ProdT tys)
 
