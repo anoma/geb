@@ -328,6 +328,26 @@ public export
 slistBoolCata : SExpBoolAlg atom -> SList atom -> Bool
 slistBoolCata alg = isJust . slistMaybeCata (SExpBoolToMaybeAlg alg)
 
+public export
+ProdT : List Type -> Type
+ProdT = foldr Pair Unit
+
+public export
+SExpTypeAlgFromBool : SExpBoolAlg atom -> SXLAlg atom Type (List Type)
+SExpTypeAlgFromBool alg =
+  SXA
+    (\a, ns, tys => (alg a ns (length tys) = True, ProdT tys))
+    []
+    (::)
+
+public export
+sexpBoolTypeCata : SExpBoolAlg atom -> SExp atom -> Type
+sexpBoolTypeCata alg = sxCata (SExpTypeAlgFromBool alg)
+
+public export
+slistBoolTypeCata : SExpBoolAlg atom -> SList atom -> Type
+slistBoolTypeCata alg = ProdT . slCata (SExpTypeAlgFromBool alg)
+
 -------------------
 ---- Utilities ----
 -------------------
@@ -903,3 +923,7 @@ GExpMaybeAlg = SExpMaybeAlg GebAtom
 public export
 GExpBoolAlg : Type
 GExpBoolAlg = SExpBoolAlg GebAtom
+
+public export
+GExpMaybeCtxAlg : Type -> Type -> Type
+GExpMaybeCtxAlg = SExpMaybeCtxAlg GebAtom

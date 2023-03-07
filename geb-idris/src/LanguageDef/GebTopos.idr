@@ -52,6 +52,11 @@ public export
 FinTGExp : Type
 FinTGExp = Refinement {a=GExp} checkAsFinT
 
+-- Check whether a term represents a term of a _given_ type.
+public export
+checkAsFinTypedAlg : GExpMaybeCtxAlg FinTGExp Unit
+checkAsFinTypedAlg = ?checkAsFinTypedAlg_hole
+
 --------------------------------------------
 --------------------------------------------
 ---- Sigma types in programmer's FinSet ----
