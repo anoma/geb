@@ -114,6 +114,36 @@ gx5'' = InS FBT_PRODUCT [] [gx3', gx4]
 gx5''_fbt : Assertion
 gx5''_fbt = Assert $ not $ checkAsFinPC gx5''
 
+gx6 : GExp
+gx6 = InS TERM_U [] []
+
+gx6_ft : Assertion
+gx6_ft = Assert $ checkAsFinT gx6
+
+gx7 : GExp
+gx7 = InS TERM_L [] [gx6]
+
+gx7_ft : Assertion
+gx7_ft = Assert $ checkAsFinT gx7
+
+gx8 : GExp
+gx8 = InS TERM_R [] [gx6]
+
+gx8_ft : Assertion
+gx8_ft = Assert $ checkAsFinT gx8
+
+gx9 : GExp
+gx9 = InS TERM_P [] [gx7, gx8]
+
+gx9_ft : Assertion
+gx9_ft = Assert $ checkAsFinT gx9
+
+gx10 : GExp
+gx10 = InS TERM_L [] [gx9]
+
+gx10_ft : Assertion
+gx10_ft = Assert $ checkAsFinT gx10
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----

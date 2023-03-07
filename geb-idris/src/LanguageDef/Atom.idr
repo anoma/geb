@@ -54,12 +54,18 @@ data GebAtom : Type where
   FBT_PRODUCT : GebAtom
   FBT_PRODUCT_L : GebAtom
 
+  -- Terms of finite product/coproduct types
+  TERM_U : GebAtom
+  TERM_L : GebAtom
+  TERM_R : GebAtom
+  TERM_P : GebAtom
+
 -- The rest of this file implements enumerated-type interfaces for `GebAtom`,
 -- since Idris-2 doesn't have built-in enums.
 
 public export
 GASize : Nat
-GASize = 28
+GASize = 32
 
 public export
 GAFin : Type
@@ -130,6 +136,22 @@ GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS FZ))))))))))))))))))))))))))) =
     FBT_PRODUCT_L
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS FZ)))))))))))))))))))))))))))) =
+    TERM_U
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS FZ))))))))))))))))))))))))))))) =
+    TERM_L
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS FZ)))))))))))))))))))))))))))))) =
+    TERM_R
+GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+  (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))))))))))) =
+    TERM_P
 
 public export
 GAEncoder : NatEncoder GADecoder
@@ -161,6 +183,10 @@ GAEncoder FBT_COPRODUCT_L = (24 ** Refl ** Refl)
 GAEncoder FBT_TERMINAL = (25 ** Refl ** Refl)
 GAEncoder FBT_PRODUCT = (26 ** Refl ** Refl)
 GAEncoder FBT_PRODUCT_L = (27 ** Refl ** Refl)
+GAEncoder TERM_U = (28 ** Refl ** Refl)
+GAEncoder TERM_L = (29 ** Refl ** Refl)
+GAEncoder TERM_R = (30 ** Refl ** Refl)
+GAEncoder TERM_P = (31 ** Refl ** Refl)
 
 public export
 GebAtomEncoding : FinDecEncoding GebAtom GASize
@@ -196,6 +222,10 @@ gaToString FBT_COPRODUCT_L = "FBT_COPRODUCT_L"
 gaToString FBT_TERMINAL = "FBT_TERMINAL"
 gaToString FBT_PRODUCT = "FBT_PRODUCT"
 gaToString FBT_PRODUCT_L = "FBT_PRODUCT_L"
+gaToString TERM_U = "TERM_U"
+gaToString TERM_L = "TERM_L"
+gaToString TERM_R = "TERM_R"
+gaToString TERM_P = "TERM_P"
 
 public export
 Show GebAtom where

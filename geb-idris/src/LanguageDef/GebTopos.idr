@@ -18,7 +18,6 @@ import public LanguageDef.Syntax
 -- Check whether a term represents a type comprised of finite products
 -- and coproducts (which are spanned by an initial object, a terminal
 -- object, binary coproducts, and binary products).
-
 public export
 checkAsFinPCAlg : GExpBoolAlg
 checkAsFinPCAlg FBT_INITIAL [] 0 = True
@@ -34,6 +33,24 @@ checkAsFinPC = sexpBoolCata checkAsFinPCAlg
 public export
 FinPCGExp : Type
 FinPCGExp = Refinement {a=GExp} checkAsFinPC
+
+-- Check whether a term represents a term of a type comprised of finite products
+-- and coproducts.
+public export
+checkAsFinTAlg : GExpBoolAlg
+checkAsFinTAlg TERM_U [] 0 = True
+checkAsFinTAlg TERM_L [] 1 = True
+checkAsFinTAlg TERM_R [] 1 = True
+checkAsFinTAlg TERM_P [] 2 = True
+checkAsFinTAlg _ _ _ = False
+
+public export
+checkAsFinT : GExp -> Bool
+checkAsFinT = sexpBoolCata checkAsFinTAlg
+
+public export
+FinTGExp : Type
+FinTGExp = Refinement {a=GExp} checkAsFinT
 
 --------------------------------------------
 --------------------------------------------
