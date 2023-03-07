@@ -212,10 +212,6 @@ SExpAlg : Type -> Type -> Type
 SExpAlg atom a = SExpF atom a -> a
 
 public export
-SExpBoolAlg : Type -> Type
-SExpBoolAlg atom = SExpAlg atom Bool
-
-public export
 SExpTypeAlg : Type -> Type
 SExpTypeAlg atom = SExpAlg atom Type
 
@@ -314,6 +310,23 @@ public export
 frslistMaybeCtxCata : (ty -> ctx -> Maybe a) -> SExpMaybeCtxAlg atom ctx a ->
   FrSListM atom ty -> ctx -> Maybe (List a)
 frslistMaybeCtxCata subst = slSubstCata subst . SExpCtxAlgFromMaybe
+
+public export
+SExpBoolAlg : Type -> Type
+SExpBoolAlg atom = atom -> List Nat -> Nat -> Bool
+
+public export
+SExpBoolToMaybeAlg : SExpBoolAlg atom -> SExpMaybeAlg atom Unit
+SExpBoolToMaybeAlg alg (SXF a ns xs) =
+  if (alg a ns (length xs)) then Just () else Nothing
+
+public export
+sexpBoolCata : SExpBoolAlg atom -> SExp atom -> Bool
+sexpBoolCata alg = isJust . sexpMaybeCata (SExpBoolToMaybeAlg alg)
+
+public export
+slistBoolCata : SExpBoolAlg atom -> SList atom -> Bool
+slistBoolCata alg = isJust . slistMaybeCata (SExpBoolToMaybeAlg alg)
 
 -------------------
 ---- Utilities ----
@@ -573,22 +586,6 @@ Monad (FrSExpM atom) where
 ---------------------------------------------
 
 public export
-SExpGenBoolAlg : SExpBoolAlg atom -> SExpBoolAlg atom
-SExpGenBoolAlg alg x = all id (sxfSubexprs x) && alg x
-
-public export
-sexpGenBoolCata : SExpBoolAlg atom -> SExp atom -> Bool
-sexpGenBoolCata = sexpCata . SExpGenBoolAlg
-
-public export
-slistGenBoolCataL : SExpBoolAlg atom -> SList atom -> List Bool
-slistGenBoolCataL = slistCata . SExpGenBoolAlg
-
-public export
-slistGenBoolCata : SExpBoolAlg atom -> SList atom -> Bool
-slistGenBoolCata alg l = all id (slistGenBoolCataL alg l)
-
-public export
 SExpGenTypeAlg : SExpTypeAlg atom -> SExpTypeAlg atom
 SExpGenTypeAlg alg x = (HList $ sxfSubexprs x, alg x)
 
@@ -684,16 +681,12 @@ record SArity (atom : Type) where
 
 public export
 CheckSExpLenAlg : SArity atom -> SExpBoolAlg atom
-CheckSExpLenAlg ar (SXF a ns xs) =
-  listBounded ns (ar.natBounds a) && length xs == ar.expAr a
-
-public export
-CheckSExpArAlg: SArity atom -> SExpBoolAlg atom
-CheckSExpArAlg = SExpGenBoolAlg . CheckSExpLenAlg
+CheckSExpLenAlg ar a ns len =
+  listBounded ns (ar.natBounds a) && len == ar.expAr a
 
 public export
 checkSExpAr : SArity atom -> SExp atom -> Bool
-checkSExpAr = sexpGenBoolCata . CheckSExpLenAlg
+checkSExpAr = sexpBoolCata . CheckSExpLenAlg
 
 public export
 ValidSExpLenAlg : SArity atom -> SExpTypeAlg atom
