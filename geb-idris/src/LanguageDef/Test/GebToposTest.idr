@@ -42,6 +42,78 @@ objcL = Ctor 0 [] 0 []
 objcP : Constructor TFsz
 objcP = Ctor 0 [] 0 []
 
+--------------------------
+--------------------------
+---- Geb s-expression ----
+--------------------------
+--------------------------
+
+gx1 : GExp
+gx1 = InS FBT_INITIAL [] []
+
+gx1_fbt : Assertion
+gx1_fbt = Assert $ checkAsFinPC gx1
+
+gx1' : GExp
+gx1' = InS FBT_INITIAL [0] []
+
+gx1'_nfbt : Assertion
+gx1'_nfbt = Assert $ not $ checkAsFinPC gx1'
+
+gx1'' : GExp
+gx1'' = InS FBT_INITIAL [] [InS FBT_INITIAL [] []]
+
+gx1''_nfbt : Assertion
+gx1''_nfbt = Assert $ not $ checkAsFinPC gx1''
+
+gx2 : GExp
+gx2 = InS FBT_TERMINAL [] []
+
+gx2_fbt : Assertion
+gx2_fbt = Assert $ checkAsFinPC gx2
+
+gx3 : GExp
+gx3 = InS FBT_COPRODUCT [] [gx1, gx2]
+
+gx3_fbt : Assertion
+gx3_fbt = Assert $ checkAsFinPC gx3
+
+gx3' : GExp
+gx3' = InS FBT_COPRODUCT [] [gx1]
+
+gx3'_nfbt : Assertion
+gx3'_nfbt = Assert $ not $ checkAsFinPC gx3'
+
+gx3'' : GExp
+gx3'' = InS FBT_COPRODUCT [0, 1] [gx1, gx2]
+
+gx3''_nfbt : Assertion
+gx3''_nfbt = Assert $ not $ checkAsFinPC gx3''
+
+gx4 : GExp
+gx4 = InS FBT_PRODUCT [] [gx1, gx2]
+
+gx4_fbt : Assertion
+gx4_fbt = Assert $ checkAsFinPC gx4
+
+gx5 : GExp
+gx5 = InS FBT_PRODUCT [] [gx3, gx4]
+
+gx5_fbt : Assertion
+gx5_fbt = Assert $ checkAsFinPC gx5
+
+gx5' : GExp
+gx5' = InS FBT_PRODUCT [] []
+
+gx5'_fbt : Assertion
+gx5'_fbt = Assert $ not $ checkAsFinPC gx5'
+
+gx5'' : GExp
+gx5'' = InS FBT_PRODUCT [] [gx3', gx4]
+
+gx5''_fbt : Assertion
+gx5''_fbt = Assert $ not $ checkAsFinPC gx5''
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----

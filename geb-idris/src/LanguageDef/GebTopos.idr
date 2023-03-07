@@ -31,6 +31,10 @@ public export
 checkAsFinPC : GExp -> Bool
 checkAsFinPC = sexpBoolCata checkAsFinPCAlg
 
+public export
+FinPCGExp : Type
+FinPCGExp = Refinement {a=GExp} checkAsFinPC
+
 --------------------------------------------
 --------------------------------------------
 ---- Sigma types in programmer's FinSet ----
