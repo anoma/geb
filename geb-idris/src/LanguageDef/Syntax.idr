@@ -357,7 +357,7 @@ sexpBoolTypeCata : SExpBoolAlg atom -> SExp atom -> Type
 sexpBoolTypeCata = sexpForallCata . SExpTypeAlgFromBool
 
 public export
-slistBoolTypeCataL : SExpBoolAlg atom -> SList atom -> ListType
+slistBoolTypeCataL : SExpBoolAlg atom -> SList atom -> List Type
 slistBoolTypeCataL = slistForallCataL . SExpTypeAlgFromBool
 
 public export
