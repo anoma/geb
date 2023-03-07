@@ -333,20 +333,17 @@ ProdT : List Type -> Type
 ProdT = foldr Pair Unit
 
 public export
-SExpTypeAlgFromBool : SExpBoolAlg atom -> SXLAlg atom Type (List Type)
-SExpTypeAlgFromBool alg =
-  SXA
-    (\a, ns, tys => (alg a ns (length tys) = True, ProdT tys))
-    []
-    (::)
+SExpTypeAlgFromBool : SExpBoolAlg atom -> SExpAlg atom Type
+SExpTypeAlgFromBool alg (SXF a ns tys) =
+  (alg a ns (length tys) = True, ProdT tys)
 
 public export
 sexpBoolTypeCata : SExpBoolAlg atom -> SExp atom -> Type
-sexpBoolTypeCata alg = sxCata (SExpTypeAlgFromBool alg)
+sexpBoolTypeCata alg = sexpCata (SExpTypeAlgFromBool alg)
 
 public export
 slistBoolTypeCata : SExpBoolAlg atom -> SList atom -> Type
-slistBoolTypeCata alg = ProdT . slCata (SExpTypeAlgFromBool alg)
+slistBoolTypeCata alg = ProdT . slistCata (SExpTypeAlgFromBool alg)
 
 public export
 record SExpSliceAlg {ty : Type}
