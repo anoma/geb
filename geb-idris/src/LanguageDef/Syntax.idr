@@ -341,8 +341,12 @@ sexpForallCata : SExpTypeAlg atom -> SExp atom -> Type
 sexpForallCata = sexpCata . SExpForallAlg
 
 public export
+slistForallCataL : SExpTypeAlg atom -> SList atom -> List Type
+slistForallCataL = slistCata . SExpForallAlg
+
+public export
 slistForallCata : SExpTypeAlg atom -> SList atom -> Type
-slistForallCata = ProdT .* slistCata . SExpForallAlg
+slistForallCata = ProdT .* slistForallCataL
 
 public export
 SExpTypeAlgFromBool : SExpBoolAlg atom -> SExpTypeAlg atom
@@ -351,6 +355,10 @@ SExpTypeAlgFromBool alg (SXF a ns tys) = alg a ns (length tys) = True
 public export
 sexpBoolTypeCata : SExpBoolAlg atom -> SExp atom -> Type
 sexpBoolTypeCata = sexpForallCata . SExpTypeAlgFromBool
+
+public export
+slistBoolTypeCataL : SExpBoolAlg atom -> SList atom -> ListType
+slistBoolTypeCataL = slistForallCataL . SExpTypeAlgFromBool
 
 public export
 slistBoolTypeCata : SExpBoolAlg atom -> SList atom -> Type
