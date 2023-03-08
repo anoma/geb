@@ -563,6 +563,26 @@ mutual
       (sexpBoolConstraintToCompute alg x xeq)
       (slistBoolConstraintToCompute alg xs xseq)
 
+public export
+sexpCtoR : {atom : Type} -> {alg : SExpBoolAlg atom} ->
+  SExpConstrained alg -> SExpRefined alg
+sexpCtoR (Element0 x p) = (Element0 x $ sexpBoolConstraintToCompute alg x p)
+
+public export
+sexpRtoC : {atom : Type} -> {alg : SExpBoolAlg atom} ->
+  SExpRefined alg -> SExpConstrained alg
+sexpRtoC (Element0 x p) = (Element0 x $ sexpBoolComputeToConstraint alg x p)
+
+public export
+sexpCtoRtoCid : {atom : Type} -> {alg : SExpBoolAlg atom} ->
+  (x : SExpConstrained alg) -> sexpRtoC {alg} (sexpCtoR {alg} x) = x
+sexpCtoRtoCid {alg} (Element0 x p) = SExpConstrainedUnicity {alg} Refl
+
+public export
+sexpRtoCtoRid : {atom : Type} -> {alg : SExpBoolAlg atom} ->
+  (x : SExpRefined alg) -> sexpCtoR {alg} (sexpRtoC {alg} x) = x
+sexpRtoCtoRid {alg} (Element0 x p) = SExpRefinedUnicity {alg} Refl
+
 -------------------
 ---- Utilities ----
 -------------------
