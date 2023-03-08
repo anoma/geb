@@ -503,7 +503,11 @@ mutual
   sexpBoolConstraintToCompute alg (InFS (TrC (SXF a ns xs))) (algeq, subeq) =
     andBoth
       (slistBoolConstraintToCompute alg xs subeq)
-      (?algeq_length_rewritten_hole)
+      (replace {p=(\len => alg a ns len = True)}
+        (sym (slcPreservesLen (SExpAlgFromBool alg) xs))
+        (replace {p=(\len => alg a ns len = True)}
+          (slcPreservesLen (SExpForallAlg (SExpTypeAlgFromBool alg)) xs)
+          algeq))
 
   public export
   slistBoolConstraintToCompute : (alg : SExpBoolAlg atom) -> (l : SList atom) ->
