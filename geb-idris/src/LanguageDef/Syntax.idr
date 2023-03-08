@@ -358,6 +358,17 @@ frslistBoolCata :
 frslistBoolCata subst alg l = all id (frslistBoolCataL subst alg l)
 
 public export
+SExpRefined : {atom : Type} -> SExpBoolAlg atom -> Type
+SExpRefined alg = Refinement {a=(SExp atom)} (sexpBoolCata alg)
+
+public export
+SExpRefinedUnicity : {atom : Type} -> {alg : SExpBoolAlg atom} ->
+  {x, x' : SExpRefined alg} ->
+  shape {p=(sexpBoolCata alg)} x = shape {p=(sexpBoolCata alg)} x' -> x = x'
+SExpRefinedUnicity {atom} {alg} =
+  refinementFstEq {a=(SExp atom)} {pred=(sexpBoolCata alg)}
+
+public export
 ProdT : List Type -> Type
 ProdT = foldr Pair Unit
 
@@ -411,6 +422,20 @@ mutual
   slistBoolTypeCata_unique {alg} {l=(x :: xs)} (wx, wxs) (wx', wxs') =
     rewrite sexpBoolTypeCata_unique {alg} {x} wx wx' in
     rewrite slistBoolTypeCata_unique {alg} {l=xs} wxs wxs' in
+    Refl
+
+public export
+SExpConstrained : {atom : Type} -> SExpBoolAlg atom -> Type
+SExpConstrained alg = Subset0 (SExp atom) (sexpBoolTypeCata alg)
+
+public export
+SExpConstrainedUnicity : {atom : Type} -> {alg : SExpBoolAlg atom} ->
+  {x, x' : SExpConstrained alg} ->
+  fst0 x = fst0 x' -> x = x'
+SExpConstrainedUnicity {alg} {x=(Element0 x p)} {x'=(Element0 _ p')} Refl =
+  replace
+    {p=(\p'' => Element0 x p = Element0 {dep=(sexpBoolTypeCata alg)} x p'')}
+    (sexpBoolTypeCata_unique {alg} p p')
     Refl
 
 public export
