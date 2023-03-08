@@ -49,97 +49,97 @@ objcP = Ctor 0 [] 0 []
 -----------------------------
 
 ox1 : OExp
-ox1 = InS BCDObjInitial [] []
+ox1 = InS BCDO_0 [] []
 
 ox1_fbt : Assertion
 ox1_fbt = Assert $ checkAsBCDO ox1
 
 ox1' : OExp
-ox1' = InS BCDObjInitial [0] []
+ox1' = InS BCDO_0 [0] []
 
 ox1'_nfbt : Assertion
 ox1'_nfbt = Assert $ not $ checkAsBCDO ox1'
 
 ox1'' : OExp
-ox1'' = InS BCDObjInitial [] [InS BCDObjInitial [] []]
+ox1'' = InS BCDO_0 [] [InS BCDO_0 [] []]
 
 ox1''_nfbt : Assertion
 ox1''_nfbt = Assert $ not $ checkAsBCDO ox1''
 
 ox2 : OExp
-ox2 = InS BCDObjTerminal [] []
+ox2 = InS BCDO_1 [] []
 
 ox2_fbt : Assertion
 ox2_fbt = Assert $ checkAsBCDO ox2
 
 ox3 : OExp
-ox3 = InS BCDObjCoproduct [] [ox1, ox2]
+ox3 = InS BCDO_C [] [ox1, ox2]
 
 ox3_fbt : Assertion
 ox3_fbt = Assert $ checkAsBCDO ox3
 
 ox3' : OExp
-ox3' = InS BCDObjCoproduct [] [ox1]
+ox3' = InS BCDO_C [] [ox1]
 
 ox3'_nfbt : Assertion
 ox3'_nfbt = Assert $ not $ checkAsBCDO ox3'
 
 ox3'' : OExp
-ox3'' = InS BCDObjCoproduct [0, 1] [ox1, ox2]
+ox3'' = InS BCDO_C [0, 1] [ox1, ox2]
 
 ox3''_nfbt : Assertion
 ox3''_nfbt = Assert $ not $ checkAsBCDO ox3''
 
 ox4 : OExp
-ox4 = InS BCDObjProduct [] [ox1, ox2]
+ox4 = InS BCDO_P [] [ox1, ox2]
 
 ox4_fbt : Assertion
 ox4_fbt = Assert $ checkAsBCDO ox4
 
 ox5 : OExp
-ox5 = InS BCDObjProduct [] [ox3, ox4]
+ox5 = InS BCDO_P [] [ox3, ox4]
 
 ox5_fbt : Assertion
 ox5_fbt = Assert $ checkAsBCDO ox5
 
 ox5' : OExp
-ox5' = InS BCDObjProduct [] []
+ox5' = InS BCDO_P [] []
 
 ox5'_fbt : Assertion
 ox5'_fbt = Assert $ not $ checkAsBCDO ox5'
 
 ox5'' : OExp
-ox5'' = InS BCDObjProduct [] [ox3', ox4]
+ox5'' = InS BCDO_P [] [ox3', ox4]
 
 ox5''_fbt : Assertion
 ox5''_fbt = Assert $ not $ checkAsBCDO ox5''
 
 tx6 : TExp
-tx6 = InS BCDTermUnit [] []
+tx6 = InS BCDT_U [] []
 
 tx6_ft : Assertion
 tx6_ft = Assert $ checkAsBCDT tx6
 
 tx7 : TExp
-tx7 = InS BCDTermLeft [] [tx6]
+tx7 = InS BCDT_L [] [tx6]
 
 tx7_ft : Assertion
 tx7_ft = Assert $ checkAsBCDT tx7
 
 tx8 : TExp
-tx8 = InS BCDTermRight [] [tx6]
+tx8 = InS BCDT_R [] [tx6]
 
 tx8_ft : Assertion
 tx8_ft = Assert $ checkAsBCDT tx8
 
 tx9 : TExp
-tx9 = InS BCDTermPair [] [tx7, tx8]
+tx9 = InS BCDT_P [] [tx7, tx8]
 
 tx9_ft : Assertion
 tx9_ft = Assert $ checkAsBCDT tx9
 
 tx10 : TExp
-tx10 = InS BCDTermLeft [] [tx9]
+tx10 = InS BCDT_L [] [tx9]
 
 tx10_ft : Assertion
 tx10_ft = Assert $ checkAsBCDT tx10

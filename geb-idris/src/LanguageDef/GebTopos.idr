@@ -18,18 +18,18 @@ import public LanguageDef.Syntax
 
 public export
 OExp : Type
-OExp = SExp BicartDistObjPos
+OExp = SExp BCDOPos
 
 public export
 OExpBoolAlg : Type
-OExpBoolAlg = SExpBoolAlg BicartDistObjPos
+OExpBoolAlg = SExpBoolAlg BCDOPos
 
 public export
 checkAsBCDOAlg : OExpBoolAlg
-checkAsBCDOAlg BCDObjInitial ns len = ns == [] && len == 0
-checkAsBCDOAlg BCDObjTerminal ns len = ns == [] && len == 0
-checkAsBCDOAlg BCDObjCoproduct ns len = ns == [] && len == 2
-checkAsBCDOAlg BCDObjProduct ns len = ns == [] && len == 2
+checkAsBCDOAlg BCDO_0 ns len = ns == [] && len == 0
+checkAsBCDOAlg BCDO_1 ns len = ns == [] && len == 0
+checkAsBCDOAlg BCDO_C ns len = ns == [] && len == 2
+checkAsBCDOAlg BCDO_P ns len = ns == [] && len == 2
 
 public export
 checkAsBCDO : OExp -> Bool
@@ -37,18 +37,18 @@ checkAsBCDO = sexpBoolCata checkAsBCDOAlg
 
 public export
 TExp : Type
-TExp = SExp BicartDistTermPos
+TExp = SExp BCDTPos
 
 public export
 TExpBoolAlg : Type
-TExpBoolAlg = SExpBoolAlg BicartDistTermPos
+TExpBoolAlg = SExpBoolAlg BCDTPos
 
 public export
 checkAsBCDTAlg : TExpBoolAlg
-checkAsBCDTAlg BCDTermUnit ns len = ns == [] && len == 0
-checkAsBCDTAlg BCDTermLeft ns len = ns == [] && len == 1
-checkAsBCDTAlg BCDTermRight ns len = ns == [] && len == 1
-checkAsBCDTAlg BCDTermPair ns len = ns == [] && len == 2
+checkAsBCDTAlg BCDT_U ns len = ns == [] && len == 0
+checkAsBCDTAlg BCDT_L ns len = ns == [] && len == 1
+checkAsBCDTAlg BCDT_R ns len = ns == [] && len == 1
+checkAsBCDTAlg BCDT_P ns len = ns == [] && len == 2
 
 public export
 checkAsBCDT : TExp -> Bool
