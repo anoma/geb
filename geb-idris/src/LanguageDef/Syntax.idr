@@ -499,12 +499,20 @@ mutual
   public export
   sexpBoolConstraintToCompute : (alg : SExpBoolAlg atom) -> (x : SExp atom) ->
     sexpBoolTypeCata alg x -> sexpBoolCata alg x = True
-  sexpBoolConstraintToCompute alg x w = ?sexpBoolConstraintToCompute_hole
+  sexpBoolConstraintToCompute alg (InFS (TrV v)) w = void v
+  sexpBoolConstraintToCompute alg (InFS (TrC (SXF a ns xs))) (algeq, subeq) =
+    andBoth
+      (slistBoolConstraintToCompute alg xs subeq)
+      (?algeq_length_rewritten_hole)
 
   public export
   slistBoolConstraintToCompute : (alg : SExpBoolAlg atom) -> (l : SList atom) ->
     slistBoolTypeCata alg l -> slistBoolCata alg l = True
-  slistBoolConstraintToCompute alg l w = ?slistBoolConstraintToCompute_hole
+  slistBoolConstraintToCompute alg [] () = Refl
+  slistBoolConstraintToCompute alg (x :: xs) (xeq, xseq) =
+    foldTrueBoth (sexpBoolCata alg x) (slistBoolCataL alg xs)
+      (sexpBoolConstraintToCompute alg x xeq)
+      (slistBoolConstraintToCompute alg xs xseq)
 
 -------------------
 ---- Utilities ----

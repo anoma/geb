@@ -357,6 +357,13 @@ andRight {p=False} {q=True} Refl impossible
 andRight {p=False} {q=False} Refl impossible
 
 public export
+andBoth : {p, q : Bool} -> IsTrue p -> IsTrue q -> IsTrue (p && q)
+andBoth {p=True} {q=True} Refl Refl = Refl
+andBoth {p=True} {q=False} Refl Refl impossible
+andBoth {p=False} {q=True} Refl Refl impossible
+andBoth {p=False} {q=False} Refl Refl impossible
+
+public export
 foldTrueInit : (b : Bool) -> (bs : List Bool) ->
   foldl (\x, y => x && Delay y) b bs = True -> b = True
 foldTrueInit b [] eq = eq
@@ -371,6 +378,17 @@ foldTrueList b (b' :: bs) eq with (andRight (foldTrueInit (b && b') bs eq))
     let al = andLeft (foldTrueInit (b && True) bs eq) in
     replace {p=(\b'' => foldl (\x, y => x && Delay y) b'' (True :: bs) = True)}
       (andLeft (foldTrueInit (b && True) bs eq)) eq
+
+public export
+foldTrueBoth : (b : Bool) -> (bs : List Bool) ->
+  b = True -> all Prelude.id bs = True ->
+  foldl (\x, y => x && Delay y) b bs = True
+foldTrueBoth b [] beq bseq = beq
+foldTrueBoth b (b' :: bs) beq bseq =
+  let fti = foldTrueInit b' bs bseq in
+  foldTrueBoth (b && b') bs
+    (rewrite beq in fti)
+    (replace {p=(\b'' => all id (b'' :: bs) = True)} fti bseq)
 
 public export
 repeatIdx : {0 x : Type} -> (Nat -> x -> x) -> Nat -> Nat -> x -> x
