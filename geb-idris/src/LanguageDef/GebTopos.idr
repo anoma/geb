@@ -36,6 +36,14 @@ checkAsBCDO : OExp -> Bool
 checkAsBCDO = sexpBoolCata checkAsBCDOAlg
 
 public export
+ORExp : Type
+ORExp = SExpRefined checkAsBCDOAlg
+
+public export
+OCExp : Type
+OCExp = SExpConstrained checkAsBCDOAlg
+
+public export
 TExp : Type
 TExp = SExp BCDTPos
 
@@ -53,6 +61,14 @@ checkAsBCDTAlg BCDT_P ns len = ns == [] && len == 2
 public export
 checkAsBCDT : TExp -> Bool
 checkAsBCDT = sexpBoolCata checkAsBCDTAlg
+
+public export
+TRExp : Type
+TRExp = SExpRefined checkAsBCDTAlg
+
+public export
+TCExp : Type
+TCExp = SExpConstrained checkAsBCDTAlg
 
 -----------------------------------------------------------
 -----------------------------------------------------------
