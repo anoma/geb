@@ -30,10 +30,11 @@ OExpBoolAlg = SExpBoolAlg BCDOPos
 
 public export
 checkAsBCDOAlg : OExpBoolAlg
-checkAsBCDOAlg BCDO_0 ns len = ns == [] && len == 0
-checkAsBCDOAlg BCDO_1 ns len = ns == [] && len == 0
-checkAsBCDOAlg BCDO_C ns len = ns == [] && len == 2
-checkAsBCDOAlg BCDO_P ns len = ns == [] && len == 2
+checkAsBCDOAlg _ (_ :: _) = Nothing
+checkAsBCDOAlg BCDO_0 [] = Just 0
+checkAsBCDOAlg BCDO_1 [] = Just 0
+checkAsBCDOAlg BCDO_C [] = Just 2
+checkAsBCDOAlg BCDO_P [] = Just 2
 
 public export
 checkAsBCDO : OExp -> Bool
@@ -61,10 +62,11 @@ TExpBoolAlg = SExpBoolAlg BCDTPos
 
 public export
 checkAsBCDTAlg : TExpBoolAlg
-checkAsBCDTAlg BCDT_U ns len = ns == [] && len == 0
-checkAsBCDTAlg BCDT_L ns len = ns == [] && len == 1
-checkAsBCDTAlg BCDT_R ns len = ns == [] && len == 1
-checkAsBCDTAlg BCDT_P ns len = ns == [] && len == 2
+checkAsBCDTAlg _ (_ :: _) = Nothing
+checkAsBCDTAlg BCDT_U [] = Just 0
+checkAsBCDTAlg BCDT_L [] = Just 1
+checkAsBCDTAlg BCDT_R [] = Just 1
+checkAsBCDTAlg BCDT_P [] = Just 2
 
 public export
 checkAsBCDT : TExp -> Bool
@@ -93,11 +95,11 @@ TCExp = SExpConstrained checkAsBCDTAlg
 -- object, binary coproducts, and binary products).
 public export
 checkAsFinPCAlg : GExpBoolAlg
-checkAsFinPCAlg FBT_INITIAL [] 0 = True
-checkAsFinPCAlg FBT_TERMINAL [] 0 = True
-checkAsFinPCAlg FBT_COPRODUCT [] 2 = True
-checkAsFinPCAlg FBT_PRODUCT [] 2 = True
-checkAsFinPCAlg _ _ _ = False
+checkAsFinPCAlg FBT_INITIAL [] = Just 0
+checkAsFinPCAlg FBT_TERMINAL [] = Just 0
+checkAsFinPCAlg FBT_COPRODUCT [] = Just 2
+checkAsFinPCAlg FBT_PRODUCT [] = Just 2
+checkAsFinPCAlg _ _ = Nothing
 
 public export
 checkAsFinPC : GExp -> Bool
@@ -111,11 +113,11 @@ FinPCGExp = Refinement {a=GExp} checkAsFinPC
 -- and coproducts.
 public export
 checkAsFinTAlg : GExpBoolAlg
-checkAsFinTAlg TERM_U [] 0 = True
-checkAsFinTAlg TERM_L [] 1 = True
-checkAsFinTAlg TERM_R [] 1 = True
-checkAsFinTAlg TERM_P [] 2 = True
-checkAsFinTAlg _ _ _ = False
+checkAsFinTAlg TERM_U [] = Just 0
+checkAsFinTAlg TERM_L [] = Just 1
+checkAsFinTAlg TERM_R [] = Just 1
+checkAsFinTAlg TERM_P [] = Just 2
+checkAsFinTAlg _ _ = Nothing
 
 public export
 checkAsFinT : GExp -> Bool

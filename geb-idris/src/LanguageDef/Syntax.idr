@@ -319,16 +319,16 @@ frslistMaybeCtxCata subst = slSubstCata subst . SExpCtxAlgFromMaybe
 
 public export
 SExpBoolAlg : Type -> Type
-SExpBoolAlg atom = atom -> List Nat -> Nat -> Bool
+SExpBoolAlg atom = atom -> List Nat -> Maybe Nat
 
 public export
 SExpAlgFromBool : SExpBoolAlg atom -> SExpAlg atom Bool
-SExpAlgFromBool alg (SXF a ns xs) = all id xs && alg a ns (length xs)
+SExpAlgFromBool alg (SXF a ns xs) = all id xs && alg a ns == Just (length xs)
 
 public export
 SExpBoolToMaybeAlg : SExpBoolAlg atom -> SExpMaybeAlg atom Unit
 SExpBoolToMaybeAlg alg (SXF a ns xs) =
-  if (alg a ns (length xs)) then Just () else Nothing
+  if (alg a ns == Just (length xs)) then Just () else Nothing
 
 public export
 sexpBoolCata : SExpBoolAlg atom -> SExp atom -> Bool
@@ -390,7 +390,7 @@ slistForallCata = ProdT .* slistForallCataL
 
 public export
 SExpTypeAlgFromBool : SExpBoolAlg atom -> SExpTypeAlg atom
-SExpTypeAlgFromBool alg (SXF a ns tys) = alg a ns (length tys) = True
+SExpTypeAlgFromBool alg (SXF a ns tys) = alg a ns = Just (length tys)
 
 public export
 sexpBoolTypeCata : SExpBoolAlg atom -> SExp atom -> Type
@@ -529,7 +529,7 @@ mutual
   sexpBoolComputeToConstraint alg (InFS (TrC (SXF a ns xs))) eq =
     (rewrite slcPreservesLen (SExpForallAlg (SExpTypeAlgFromBool alg)) xs in
      rewrite sym (slcPreservesLen (SExpAlgFromBool alg) xs) in
-     andRight eq,
+     fromIsTrueMaybeNat _ _ (andRight eq),
      slistBoolComputeToConstraint alg xs $ andLeft eq)
 
   public export
@@ -548,11 +548,12 @@ mutual
   sexpBoolConstraintToCompute alg (InFS (TrC (SXF a ns xs))) (algeq, subeq) =
     andBoth
       (slistBoolConstraintToCompute alg xs subeq)
-      (replace {p=(\len => alg a ns len = True)}
-        (sym (slcPreservesLen (SExpAlgFromBool alg) xs))
-        (replace {p=(\len => alg a ns len = True)}
-          (slcPreservesLen (SExpForallAlg (SExpTypeAlgFromBool alg)) xs)
-          algeq))
+      (toIsTrueMaybeNat _ _ $
+        replace {p=(\len => alg a ns = Just len)}
+          (sym (slcPreservesLen (SExpAlgFromBool alg) xs))
+          (replace {p=(\len => alg a ns = Just len)}
+            (slcPreservesLen (SExpForallAlg (SExpTypeAlgFromBool alg)) xs)
+            algeq))
 
   public export
   slistBoolConstraintToCompute : (alg : SExpBoolAlg atom) -> (l : SList atom) ->
@@ -950,8 +951,8 @@ record SArity (atom : Type) where
 
 public export
 CheckSExpLenAlg : SArity atom -> SExpBoolAlg atom
-CheckSExpLenAlg ar a ns len =
-  listBounded ns (ar.natBounds a) && len == ar.expAr a
+CheckSExpLenAlg ar a ns =
+  if listBounded ns (ar.natBounds a) then Just (ar.expAr a) else Nothing
 
 public export
 checkSExpAr : SArity atom -> SExp atom -> Bool

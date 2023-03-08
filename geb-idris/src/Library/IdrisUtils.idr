@@ -343,6 +343,20 @@ IsNothingTrue : {a : Type} -> Maybe a -> Type
 IsNothingTrue x = isJust x = False
 
 public export
+fromIsTrueNat : (m, n : Nat) -> m == n = True -> m = n
+fromIsTrueNat 0 0 Refl = Refl
+fromIsTrueNat 0 (S n) Refl impossible
+fromIsTrueNat (S m) 0 Refl impossible
+fromIsTrueNat (S m) (S n) eq = cong S $ fromIsTrueNat m n eq
+
+public export
+fromIsTrueMaybeNat : (m, n : Maybe Nat) -> m == n = True -> m = n
+fromIsTrueMaybeNat Nothing Nothing Refl = Refl
+fromIsTrueMaybeNat Nothing (Just n) Refl impossible
+fromIsTrueMaybeNat (Just m) Nothing Refl impossible
+fromIsTrueMaybeNat (Just m) (Just n) eq = cong Just $ fromIsTrueNat m n eq
+
+public export
 andLeft : {p, q : Bool} -> IsTrue (p && q) -> IsTrue p
 andLeft {p=True} {q=True} Refl = Refl
 andLeft {p=True} {q=False} Refl impossible
@@ -725,6 +739,15 @@ public export
 equalNatCorrect : {m : Nat} -> equalNat m m = True
 equalNatCorrect {m=Z} = Refl
 equalNatCorrect {m=(S m')} = equalNatCorrect {m=m'}
+
+public export
+toIsTrueNat : (m, n : Nat) -> m = n -> m == n = True
+toIsTrueNat m m Refl = equalNatCorrect {m}
+
+public export
+toIsTrueMaybeNat : (m, n : Maybe Nat) -> m = n -> m == n = True
+toIsTrueMaybeNat Nothing Nothing Refl = Refl
+toIsTrueMaybeNat (Just m) (Just m) Refl = equalNatCorrect {m}
 
 public export
 foldAppendExtensional : {0 a : Type} -> {n : Nat} ->
