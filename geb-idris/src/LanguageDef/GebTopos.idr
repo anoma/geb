@@ -9,6 +9,51 @@ import public LanguageDef.Syntax
 
 %default total
 
+---------------------------------------------------------------------
+---------------------------------------------------------------------
+---- Simple S-expression type that can itself be used as an atom ----
+---------------------------------------------------------------------
+---------------------------------------------------------------------
+---------------------------------------------------------------------
+
+public export
+OExp : Type
+OExp = SExp BicartDistObjPos
+
+public export
+OExpBoolAlg : Type
+OExpBoolAlg = SExpBoolAlg BicartDistObjPos
+
+public export
+checkAsBCDOAlg : OExpBoolAlg
+checkAsBCDOAlg BCDObjInitial ns len = ns == [] && len == 0
+checkAsBCDOAlg BCDObjTerminal ns len = ns == [] && len == 0
+checkAsBCDOAlg BCDObjCoproduct ns len = ns == [] && len == 2
+checkAsBCDOAlg BCDObjProduct ns len = ns == [] && len == 2
+
+public export
+checkAsBCDO : OExp -> Bool
+checkAsBCDO = sexpBoolCata checkAsBCDOAlg
+
+public export
+TExp : Type
+TExp = SExp BicartDistTermPos
+
+public export
+TExpBoolAlg : Type
+TExpBoolAlg = SExpBoolAlg BicartDistTermPos
+
+public export
+checkAsBCDTAlg : TExpBoolAlg
+checkAsBCDTAlg BCDTermUnit ns len = ns == [] && len == 0
+checkAsBCDTAlg BCDTermLeft ns len = ns == [] && len == 1
+checkAsBCDTAlg BCDTermRight ns len = ns == [] && len == 1
+checkAsBCDTAlg BCDTermPair ns len = ns == [] && len == 2
+
+public export
+checkAsBCDT : TExp -> Bool
+checkAsBCDT = sexpBoolCata checkAsBCDTAlg
+
 -----------------------------------------------------------
 -----------------------------------------------------------
 ---- Type-checking of S-expression as minimal Geb term ----
