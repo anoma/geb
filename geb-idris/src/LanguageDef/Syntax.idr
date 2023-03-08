@@ -728,6 +728,20 @@ public export
 (atom : Type) => DecEq atom => DecEq ty => Eq (FrSExpM atom ty) where
   x == x' = isYes $ decEq x x'
 
+public export
+(atom : Type) => DecEq atom => (alg : SExpBoolAlg atom) =>
+    DecEq (SExpRefined alg) where
+  decEq (Element0 x p) (Element0 x' p') = case decEq x x' of
+    Yes eq => Yes $ SExpRefinedUnicity {alg} eq
+    No neq => No $ \Refl => neq Refl
+
+public export
+(atom : Type) => DecEq atom => (alg : SExpBoolAlg atom) =>
+    DecEq (SExpConstrained alg) where
+  decEq (Element0 x p) (Element0 x' p') = case decEq x x' of
+    Yes eq => Yes $ SExpConstrainedUnicity {alg} eq
+    No neq => No $ \Refl => neq Refl
+
 ---------------------------------------------------------------------
 ---- SExp monad operations (where the domain is a type of atoms) ----
 ---------------------------------------------------------------------
