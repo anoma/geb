@@ -393,6 +393,26 @@ public export
 slistBoolTypeCata : SExpBoolAlg atom -> SList atom -> Type
 slistBoolTypeCata = slistForallCata . SExpTypeAlgFromBool
 
+mutual
+  public export
+  sexpBoolTypeCata_unique : {alg : SExpBoolAlg atom} -> {x : SExp atom} ->
+    (w, w' : sexpBoolTypeCata alg x) -> w = w'
+  sexpBoolTypeCata_unique {x=(InFS (TrV v))} w w' = void v
+  sexpBoolTypeCata_unique {alg} {x=(InFS (TrC (SXF a ns xs)))}
+    (algeq, subeq) (algeq', subeq') =
+      rewrite uip {eq=algeq} {eq'=algeq'} in
+      rewrite slistBoolTypeCata_unique {alg} {l=xs} subeq subeq' in
+      Refl
+
+  public export
+  slistBoolTypeCata_unique : {alg : SExpBoolAlg atom} -> {l : SList atom} ->
+    (w, w' : slistBoolTypeCata alg l) -> w = w'
+  slistBoolTypeCata_unique {l=[]} () () = Refl
+  slistBoolTypeCata_unique {alg} {l=(x :: xs)} (wx, wxs) (wx', wxs') =
+    rewrite sexpBoolTypeCata_unique {alg} {x} wx wx' in
+    rewrite slistBoolTypeCata_unique {alg} {l=xs} wxs wxs' in
+    Refl
+
 public export
 record SExpSliceAlg {ty : Type}
     (sxa : SliceObj (FrSExpM atom ty)) (sxb : SliceObj (FrSExpM atom ty))
