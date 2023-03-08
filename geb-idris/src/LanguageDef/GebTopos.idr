@@ -16,6 +16,10 @@ import public LanguageDef.Syntax
 ---------------------------------------------------------------------
 ---------------------------------------------------------------------
 
+----------------------
+---- Simple types ----
+----------------------
+
 public export
 OExp : Type
 OExp = SExp BCDOPos
@@ -43,6 +47,10 @@ public export
 OCExp : Type
 OCExp = SExpConstrained checkAsBCDOAlg
 
+------------------------------
+---- Simple untyped terms ----
+------------------------------
+
 public export
 TExp : Type
 TExp = SExp BCDTPos
@@ -69,6 +77,10 @@ TRExp = SExpRefined checkAsBCDTAlg
 public export
 TCExp : Type
 TCExp = SExpConstrained checkAsBCDTAlg
+
+----------------------------
+---- Simple typed terms ----
+----------------------------
 
 -----------------------------------------------------------
 -----------------------------------------------------------
