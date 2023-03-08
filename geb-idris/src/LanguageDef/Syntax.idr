@@ -584,6 +584,52 @@ sexpRtoCtoRid : {atom : Type} -> {alg : SExpBoolAlg atom} ->
   (x : SExpRefined alg) -> sexpCtoR {alg} (sexpRtoC {alg} x) = x
 sexpRtoCtoRid {alg} (Element0 x p) = SExpRefinedUnicity {alg} Refl
 
+---------------------------------------
+---- Context-dependent refinements ----
+---------------------------------------
+
+public export
+SExpBoolCtxAlg : Type -> Type -> Type
+SExpBoolCtxAlg atom ctx = atom -> List Nat -> ctx -> Maybe (List ctx)
+
+public export
+SExpAlgFromBoolCtx : SExpBoolCtxAlg atom ctx -> SExpAlg atom (ctx -> Bool)
+SExpAlgFromBoolCtx alg (SXF a ns xs) c with (alg a ns c)
+  SExpAlgFromBoolCtx alg (SXF a ns xs) c | Just cs =
+    case decEq (length xs) (length cs) of
+      Yes eq => all id $ zipLen id xs cs eq
+      No neq => False
+  SExpAlgFromBoolCtx alg (SXF a ns xs) c | Nothing = False
+
+public export
+sexpBoolCtxCata : SExpBoolCtxAlg atom ctx -> SExp atom -> ctx -> Bool
+sexpBoolCtxCata = sexpCata . SExpAlgFromBoolCtx
+
+public export
+frsexpBoolCtxCata : (ty -> ctx -> Bool) ->
+  SExpBoolCtxAlg atom ctx -> FrSExpM atom ty -> ctx -> Bool
+frsexpBoolCtxCata subst = frsexpCata subst . SExpAlgFromBoolCtx
+
+public export
+slistBoolCtxCataL : SExpBoolCtxAlg atom ctx -> SList atom -> ctx -> List Bool
+slistBoolCtxCataL alg l ctx =
+  map (\f => f ctx) $ slistCata (SExpAlgFromBoolCtx alg) l
+
+public export
+slistBoolCtxCata : SExpBoolCtxAlg atom ctx -> SList atom -> ctx -> Bool
+slistBoolCtxCata alg = all id .* slistBoolCtxCataL alg
+
+public export
+frslistBoolCtxCataL : (ty -> ctx -> Bool) -> SExpBoolCtxAlg atom ctx ->
+  FrSListM atom ty -> ctx -> List Bool
+frslistBoolCtxCataL subst alg l ctx =
+  map (\f => f ctx) $ frslistCata subst (SExpAlgFromBoolCtx alg) l
+
+public export
+frslistBoolCtxCata : (ty -> ctx -> Bool) -> SExpBoolCtxAlg atom ctx ->
+  FrSListM atom ty -> ctx -> Bool
+frslistBoolCtxCata subst alg = all id .* frslistBoolCtxCataL subst alg
+
 -------------------
 ---- Utilities ----
 -------------------

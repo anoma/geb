@@ -1383,3 +1383,11 @@ FS3CP1 = Right BCPFalse
 public export
 FS3CP2 : FS3CP
 FS3CP2 = Right BCPTrue
+
+public export
+zipLen : {0 a, b, c : Type} -> (a -> b -> c) -> (l : List a) -> (l' : List b) ->
+  length l = length l' -> List c
+zipLen f [] [] Refl = []
+zipLen f [] (x :: xs) Refl impossible
+zipLen f (x :: xs) [] Refl impossible
+zipLen f (x :: xs) (y :: ys) eq = f x y :: zipLen f xs ys (injective eq)
