@@ -2911,6 +2911,13 @@ extendDensity : (0 f : Type -> Type) -> {isF : Functor f} -> {0 a, b : Type} ->
   (Density f a -> b) -> Density f a -> Density f b
 extendDensity f {isF} {a} m = map {f=(Density f)} m . duplicateDensity f
 
+public export
+joinDensity : (0 f : Type -> Type) -> {0 isF : Functor f} -> {0 a : Type} ->
+  Density f (Density f a) -> Density f a
+joinDensity f {isF} {a} =
+  let _ = DensityFunctor f {isF} in
+  map {f=(Density f)} (eraseDensity f {a})
+
 ----------------------------
 ----------------------------
 ---- Closure conversion ----
