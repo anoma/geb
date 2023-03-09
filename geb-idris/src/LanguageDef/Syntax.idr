@@ -536,24 +536,23 @@ frsexpBoolCtxCata : (ty -> ctx -> Bool) ->
 frsexpBoolCtxCata subst = frsexpCata subst . SExpAlgFromBoolCtx
 
 public export
-slistBoolCtxCataL : SExpBoolCtxAlg atom ctx -> SList atom -> ctx -> List Bool
-slistBoolCtxCataL alg l ctx =
-  map (\f => f ctx) $ slistCata (SExpAlgFromBoolCtx alg) l
+slistBoolCtxCataL : SExpBoolCtxAlg atom ctx -> SList atom -> List (ctx -> Bool)
+slistBoolCtxCataL = slistCata . SExpAlgFromBoolCtx
 
 public export
 slistBoolCtxCata : SExpBoolCtxAlg atom ctx -> SList atom -> ctx -> Bool
-slistBoolCtxCata alg = all id .* slistBoolCtxCataL alg
+slistBoolCtxCata alg l c = all id $ map (\f => f c) $ slistBoolCtxCataL alg l
 
 public export
 frslistBoolCtxCataL : (ty -> ctx -> Bool) -> SExpBoolCtxAlg atom ctx ->
-  FrSListM atom ty -> ctx -> List Bool
-frslistBoolCtxCataL subst alg l ctx =
-  map (\f => f ctx) $ frslistCata subst (SExpAlgFromBoolCtx alg) l
+  FrSListM atom ty -> List (ctx -> Bool)
+frslistBoolCtxCataL subst = frslistCata subst . SExpAlgFromBoolCtx
 
 public export
 frslistBoolCtxCata : (ty -> ctx -> Bool) -> SExpBoolCtxAlg atom ctx ->
   FrSListM atom ty -> ctx -> Bool
-frslistBoolCtxCata subst alg = all id .* frslistBoolCtxCataL subst alg
+frslistBoolCtxCata subst alg l c =
+  all id $ map (\f => f c) $ frslistBoolCtxCataL subst alg l
 
 public export
 SExpCtxRefined : {atom, ctx : Type} -> SExpBoolCtxAlg atom ctx -> SliceObj ctx
@@ -595,6 +594,22 @@ SExpTypeForallCtxAlgFromBool {ctx} alg (SXF a ns tys) c =
   (j : IsJustTrue (alg a ns c) **
    eq : Prelude.List.length tys = Prelude.List.length (fromIsJust j) **
    ProdT $ zipLen id tys (fromIsJust j) eq)
+
+public export
+sexpBoolTypeCtxCata : {ctx : Type} -> SExpBoolCtxAlg atom ctx ->
+  SExp atom -> ctx -> Type
+sexpBoolTypeCtxCata = sexpCata . SExpTypeForallCtxAlgFromBool
+
+public export
+slistBoolTypeCtxCataL : {ctx : Type} -> SExpBoolCtxAlg atom ctx ->
+  SList atom -> List (ctx -> Type)
+slistBoolTypeCtxCataL = slistCata . SExpTypeForallCtxAlgFromBool
+
+public export
+slistBoolTypeCtxCata : {ctx : Type} -> SExpBoolCtxAlg atom ctx ->
+  SList atom -> ctx -> Type
+slistBoolTypeCtxCata alg l c =
+  ProdT $ map (\f => f c) $ slistBoolTypeCtxCataL alg l
 
 -------------------------------
 ---- Slice (cata)morphisms ----
