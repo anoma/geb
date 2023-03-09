@@ -570,26 +570,28 @@ SExpCtxRefinedUnicity {atom} {ctx} {alg} {c} {x} {x'} =
   refinementFstEq {a=(SExp atom)} {pred=(sexpBoolCtxCataFlip alg c)}
 
 public export
-SExpForallCtxAlg : SExpTypeCtxAlg atom ctx -> SExpTypeCtxAlg atom ctx
-SExpForallCtxAlg alg x c = (alg x c, ProdT $ map (\f => f c) $ sxfSubexprs x)
+SExpForallConstCtxAlg : SExpTypeCtxAlg atom ctx -> SExpTypeCtxAlg atom ctx
+SExpForallConstCtxAlg alg x c =
+  (alg x c, ProdT $ map (\f => f c) $ sxfSubexprs x)
 
 public export
-sexpForallCtxCata : SExpTypeCtxAlg atom ctx -> SExp atom -> ctx -> Type
-sexpForallCtxCata = sexpCata . SExpForallCtxAlg
+sexpForallConstCtxCata : SExpTypeCtxAlg atom ctx -> SExp atom -> ctx -> Type
+sexpForallConstCtxCata = sexpCata . SExpForallConstCtxAlg
 
 public export
-slistForallCtxCataL : SExpTypeCtxAlg atom ctx -> SList atom -> ctx -> List Type
-slistForallCtxCataL alg l c =
-  map (\f => f c) $ slistCata (SExpForallCtxAlg alg) l
+slistForallConstCtxCataL :
+  SExpTypeCtxAlg atom ctx -> SList atom -> ctx -> List Type
+slistForallConstCtxCataL alg l c =
+  map (\f => f c) $ slistCata (SExpForallConstCtxAlg alg) l
 
 public export
-slistForallCtxCata : SExpTypeCtxAlg atom ctx -> SList atom -> ctx -> Type
-slistForallCtxCata alg = ProdT .* slistForallCtxCataL alg
+slistForallConstCtxCata : SExpTypeCtxAlg atom ctx -> SList atom -> ctx -> Type
+slistForallConstCtxCata alg = ProdT .* slistForallConstCtxCataL alg
 
 public export
-SExpTypeCtxAlgFromBool : {ctx : Type} ->
+SExpTypeForallCtxAlgFromBool : {ctx : Type} ->
   SExpBoolCtxAlg atom ctx -> SExpTypeCtxAlg atom ctx
-SExpTypeCtxAlgFromBool {ctx} alg (SXF a ns tys) c =
+SExpTypeForallCtxAlgFromBool {ctx} alg (SXF a ns tys) c =
   (j : IsJustTrue (alg a ns c) **
    eq : Prelude.List.length tys = Prelude.List.length (fromIsJust j) **
    ProdT $ zipLen id tys (fromIsJust j) eq)
