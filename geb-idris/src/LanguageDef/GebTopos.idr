@@ -22,7 +22,7 @@ data IdxObj : Type where
   IC : IdxObj -> IdxObj -> IdxObj
   IP : IdxObj -> IdxObj -> IdxObj
   IH : IdxObj -> IdxObj -> IdxObj
-  IN : Nat -> IdxObj -- natural numbers modulo parameter
+  IN : (n : Nat) -> {auto 0 ok : Not (n = 0)} -> IdxObj -- arithmetic modulo n
 
 mutual
   public export
@@ -32,7 +32,10 @@ mutual
     TR : (a : IdxObj) -> IdxTerm b -> IdxTerm (IC a b)
     TP : IdxTerm a -> IdxTerm b -> IdxTerm (IP a b)
     TQ : IdxMorph a b -> IdxTerm (IH a b) -- quote
-    TN : (m, n : Nat) -> IdxTerm (IN m)
+    TN : (m, n : Nat) ->
+      {auto 0 m_ok : Not (m = 0)} ->
+      {auto 0 n_ok : LT n m} ->
+      IdxTerm (IN {ok=m_ok} m)
 
   public export
   data IdxMorph : IdxObj -> IdxObj -> Type where
@@ -51,19 +54,22 @@ mutual
     Mcu : IdxMorph (IP a b) c -> IdxMorph a (IH b c) -- left adjunct
 
     -- Polynomial modular arithemetic
-    Mninj : (m, n : Nat) -> IdxMorph (IN m) (IN n)
-    Mconst : (m, n : Nat) -> IdxMorph I1 (IN m)
-    Madd :
+    Mninj : (m, n : Nat) ->
+      {auto 0 m_ok : Not (m = 0)} -> {auto 0 n_ok : Not (n = 0)} ->
+      IdxMorph (IN m) (IN n)
+    Mconst : (m, n : Nat) -> {auto 0 ok : Not (m = 0)} -> IdxMorph I1 (IN m)
+    Madd : {n : Nat} -> {auto 0 ok : Not (n = 0)} ->
       IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
-    Msub :
+    Msub : {n : Nat} -> {auto 0 ok : Not (n = 0)} ->
       IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
-    Mmult :
+    Mmult : {n : Nat} -> {auto 0 ok : Not (n = 0)} ->
       IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
-    Mdiv :
+    Mdiv : {n : Nat} -> {auto 0 ok : Not (n = 0)} ->
       IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
-    Mmod :
+    Mmod : {n : Nat} -> {auto 0 ok : Not (n = 0)} ->
       IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
-    Mlt :
+    Mlt : {m, n : Nat} ->
+      {auto 0 m_ok : Not (m = 0)} -> {auto 0 n_ok : Not (n = 0)} ->
       IdxMorph (IN m) (IN m) -> IdxMorph (IN m) (IN m) ->
       IdxMorph (IN m) (IC I1 I1)
 
