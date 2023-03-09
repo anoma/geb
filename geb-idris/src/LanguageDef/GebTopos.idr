@@ -63,6 +63,9 @@ mutual
       IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
     Mmod :
       IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
+    Mlt :
+      IdxMorph (IN m) (IN m) -> IdxMorph (IN m) (IN m) ->
+      IdxMorph (IN m) (IC I1 I1)
 
 ---------------------------------------------------------------------
 ---------------------------------------------------------------------
