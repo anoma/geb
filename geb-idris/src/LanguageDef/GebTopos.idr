@@ -38,8 +38,8 @@ mutual
   data IdxMorph : IdxObj -> IdxObj -> Type where
     MId : (a : IdxObj) -> IdxMorph a a
     MComp : IdxMorph b c -> IdxMorph a b -> IdxMorph a c
-    M0 : (a : IdxObj) -> IdxMorph I0 a
-    M1 : IdxMorph a I1
+    M0 : (a : IdxObj) -> IdxMorph I0 a -- right adjunct (and counit in idx cat)
+    M1 : (a : IdxObj) -> IdxMorph a I1 -- left adjunct (and unit in idx cat)
     MCil : (a, b : IdxObj) -> IdxMorph a (IC a b) -- from unit in product cat
     MCir : (a, b : IdxObj) -> IdxMorph b (IC a b) -- from unit in product cat
     MCe : IdxMorph a c -> IdxMorph b c -> IdxMorph (IC a b) c -- right adjunct
