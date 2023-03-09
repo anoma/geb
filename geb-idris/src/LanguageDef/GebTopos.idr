@@ -9,10 +9,64 @@ import public LanguageDef.Syntax
 
 %default total
 
+--------------------------------------------------------
+--------------------------------------------------------
+---- Index type (used for positions and directions) ----
+--------------------------------------------------------
+--------------------------------------------------------
+
+public export
+data IdxObj : Type where
+  I0 : IdxObj
+  I1 : IdxObj
+  IC : IdxObj -> IdxObj -> IdxObj
+  IP : IdxObj -> IdxObj -> IdxObj
+  IH : IdxObj -> IdxObj -> IdxObj
+  IN : Nat -> IdxObj -- natural numbers modulo parameter
+
+mutual
+  public export
+  data IdxTerm : IdxObj -> Type where
+    TU : IdxTerm I1
+    TL : IdxTerm a -> (b : IdxObj) -> IdxTerm (IC a b)
+    TR : (a : IdxObj) -> IdxTerm b -> IdxTerm (IC a b)
+    TP : IdxTerm a -> IdxTerm b -> IdxTerm (IP a b)
+    TQ : IdxMorph a b -> IdxTerm (IH a b) -- quote
+    TN : (m, n : Nat) -> IdxTerm (IN m)
+
+  public export
+  data IdxMorph : IdxObj -> IdxObj -> Type where
+    MId : (a : IdxObj) -> IdxMorph a a
+    MComp : IdxMorph b c -> IdxMorph a b -> IdxMorph a c
+    M0 : (a : IdxObj) -> IdxMorph I0 a
+    M1 : IdxMorph a I1
+    MCil : (a, b : IdxObj) -> IdxMorph a (IC a b) -- from unit in product cat
+    MCir : (a, b : IdxObj) -> IdxMorph b (IC a b) -- from unit in product cat
+    MCe : IdxMorph a c -> IdxMorph b c -> IdxMorph (IC a b) c -- right adjunct
+    MPi : IdxMorph a b -> IdxMorph a c -> IdxMorph a (IP b c) -- left adjunct
+    MPel : (a, b : IdxObj) -> IdxMorph (IP a b) a -- from counit in product cat
+    MPer : (a, b : IdxObj) -> IdxMorph (IP a b) b -- from counit in product cat
+    MU : IdxTerm (IH a b) -> IdxMorph a b -- unquote
+    Mev : (a, b : IdxObj) -> IdxMorph (IP (IH a b) a) b -- counit
+    Mcu : IdxMorph (IP a b) c -> IdxMorph a (IH b c) -- left adjunct
+
+    -- Polynomial modular arithemetic
+    Mninj : (m, n : Nat) -> IdxMorph (IN m) (IN n)
+    Mconst : (m, n : Nat) -> IdxMorph I1 (IN m)
+    Madd :
+      IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
+    Msub :
+      IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
+    Mmult :
+      IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
+    Mdiv :
+      IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
+    Mmod :
+      IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n) -> IdxMorph (IN n) (IN n)
+
 ---------------------------------------------------------------------
 ---------------------------------------------------------------------
 ---- Simple S-expression type that can itself be used as an atom ----
----------------------------------------------------------------------
 ---------------------------------------------------------------------
 ---------------------------------------------------------------------
 
@@ -1119,10 +1173,6 @@ FinTermN = FinTermSl . FTSlN
 public export
 TA : GebAtom -> FinTermA
 TA = InFTA
-
-public export
-TN : {0 n : Nat} -> (k : Nat) -> {auto 0 bound : LT k n} -> FinTermN n
-TN {n} k {bound} = InFTN $ Element0 k bound
 
 --------------------------------------------
 --------------------------------------------
