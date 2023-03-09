@@ -408,6 +408,10 @@ public export
 slistBoolTypeCata : SExpBoolAlg atom -> SList atom -> Type
 slistBoolTypeCata = slistForallCata . SExpTypeAlgFromBool
 
+public export
+SExpConstrained : {atom : Type} -> SExpBoolAlg atom -> Type
+SExpConstrained alg = Subset0 (SExp atom) (sexpBoolTypeCata alg)
+
 mutual
   public export
   sexpBoolTypeCata_unique : {alg : SExpBoolAlg atom} -> {x : SExp atom} ->
@@ -427,10 +431,6 @@ mutual
     rewrite sexpBoolTypeCata_unique {alg} {x} wx wx' in
     rewrite slistBoolTypeCata_unique {alg} {l=xs} wxs wxs' in
     Refl
-
-public export
-SExpConstrained : {atom : Type} -> SExpBoolAlg atom -> Type
-SExpConstrained alg = Subset0 (SExp atom) (sexpBoolTypeCata alg)
 
 public export
 SExpConstrainedUnicity : {atom : Type} -> {alg : SExpBoolAlg atom} ->
