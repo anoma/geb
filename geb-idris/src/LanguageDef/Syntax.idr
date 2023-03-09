@@ -606,6 +606,10 @@ sexpBoolCtxCata : SExpBoolCtxAlg atom ctx -> SExp atom -> ctx -> Bool
 sexpBoolCtxCata = sexpCata . SExpAlgFromBoolCtx
 
 public export
+sexpBoolCtxCataFlip : SExpBoolCtxAlg atom ctx -> ctx -> SExp atom -> Bool
+sexpBoolCtxCataFlip = flip . sexpBoolCtxCata
+
+public export
 frsexpBoolCtxCata : (ty -> ctx -> Bool) ->
   SExpBoolCtxAlg atom ctx -> FrSExpM atom ty -> ctx -> Bool
 frsexpBoolCtxCata subst = frsexpCata subst . SExpAlgFromBoolCtx
@@ -629,6 +633,20 @@ public export
 frslistBoolCtxCata : (ty -> ctx -> Bool) -> SExpBoolCtxAlg atom ctx ->
   FrSListM atom ty -> ctx -> Bool
 frslistBoolCtxCata subst alg = all id .* frslistBoolCtxCataL subst alg
+
+public export
+SExpCtxRefined : {atom, ctx : Type} -> SExpBoolCtxAlg atom ctx -> SliceObj ctx
+SExpCtxRefined {atom} {ctx} alg c =
+  Refinement {a=(SExp atom)} (sexpBoolCtxCataFlip alg c)
+
+public export
+SExpCtxRefinedUnicity : {atom, ctx : Type} -> {alg : SExpBoolCtxAlg atom ctx} ->
+  {c : ctx} -> {x, x' : SExpCtxRefined alg c} ->
+  shape {p=(sexpBoolCtxCataFlip alg c)} x =
+    shape {p=(sexpBoolCtxCataFlip alg c)} x' ->
+  x = x'
+SExpCtxRefinedUnicity {atom} {ctx} {alg} {c} {x} {x'} =
+  refinementFstEq {a=(SExp atom)} {pred=(sexpBoolCtxCataFlip alg c)}
 
 -------------------
 ---- Utilities ----
