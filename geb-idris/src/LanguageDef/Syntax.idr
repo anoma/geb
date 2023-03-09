@@ -442,89 +442,6 @@ SExpConstrainedUnicity {alg} {x=(Element0 x p)} {x'=(Element0 _ p')} Refl =
     (sexpBoolTypeCata_unique {alg} p p')
     Refl
 
-public export
-record SExpSliceAlg {ty : Type}
-    (sxa : SliceObj (FrSExpM atom ty)) (sxb : SliceObj (FrSExpM atom ty))
-    (sla : SliceObj (FrSListM atom ty)) (slb : SliceObj (FrSListM atom ty))
-    where
-  constructor SSA
-  ssaSubTy :
-    (a : atom) -> (ns : List Nat) -> (xs : FrSListM atom ty) ->
-    sxa (InFS (TrC (SXF a ns xs))) -> sla xs
-  ssaHeadTy :
-    (x : FrSExpM atom ty) -> (xs : FrSListM atom ty) -> sla (x :: xs) -> sxa x
-  ssaTailTy :
-    (x : FrSExpM atom ty) -> (xs : FrSListM atom ty) -> sla (x :: xs) -> sla xs
-  ssaSubst : SliceMorphism {a=ty} (sxa . InSV) (sxb . InSV)
-  ssaInd :
-    (a : atom) -> (ns : List Nat) -> (xs : FrSListM atom ty) ->
-    sxa (InFS (TrC (SXF a ns xs))) -> slb xs -> sxb (InFS (TrC (SXF a ns xs)))
-  ssaNil : sla [] -> slb []
-  ssaCons :
-    (x : FrSExpM atom ty) -> (xs : FrSListM atom ty) ->
-    sxb x -> slb xs -> slb (x :: xs)
-
-mutual
-  public export
-  sexpDepCata :
-    {sxa, sxb : SliceObj (FrSExpM atom ty)} ->
-    {sla, slb : SliceObj (FrSListM atom ty)} ->
-    (alg : SExpSliceAlg sxa sxb sla slb) ->
-    SliceMorphism {a=(FrSExpM atom ty)} sxa sxb
-  sexpDepCata alg (InFS (TrV v)) av = alg.ssaSubst v av
-  sexpDepCata alg (InFS (TrC (SXF a ns xs))) ax =
-    alg.ssaInd a ns xs ax (slistDepCata alg xs (alg.ssaSubTy a ns xs ax))
-
-  public export
-  slistDepCata :
-    {sxa, sxb : SliceObj (FrSExpM atom ty)} ->
-    {sla, slb : SliceObj (FrSListM atom ty)} ->
-    (alg : SExpSliceAlg sxa sxb sla slb) ->
-    SliceMorphism {a=(FrSListM atom ty)} sla slb
-  slistDepCata alg [] al = alg.ssaNil al
-  slistDepCata alg (x :: xs) al =
-    alg.ssaCons x xs
-      (sexpDepCata alg x (alg.ssaHeadTy x xs al))
-      (slistDepCata alg xs (alg.ssaTailTy x xs al))
-
-public export
-SExpSliceMorphAlg : {atom : Type} ->
-  SExpTypeAlg atom -> SExpTypeAlg atom -> Type
-SExpSliceMorphAlg {atom} sa sb =
-  (a : atom) -> (ns : List Nat) -> (xs : SList atom) ->
-  sa (SXF a ns $ slistForallCataL sa xs) ->
-  slistForallCata sa xs ->
-  slistForallCata sb xs ->
-  sb (SXF a ns $ slistForallCataL sb xs)
-
-public export
-SExpSliceAlgFromMorph : {sa, sb : SExpTypeAlg atom} ->
-  SExpSliceMorphAlg sa sb ->
-  SExpSliceAlg
-    (sexpForallCata sa) (sexpForallCata sb)
-    (slistForallCata sa) (slistForallCata sb)
-SExpSliceAlgFromMorph alg =
-  SSA
-    (\a, ns, xs, (sxa, subs) => subs)
-    (\x, xs, (sx, sxs) => sx)
-    (\x, xs, (sx, sxs) => sxs)
-    (\v, _ => void v)
-    (\a, ns, xs, (sx, sxas), sxbs => (alg a ns xs sx sxas sxbs, sxbs))
-    id
-    (\x, xs, sx, sxs => (sx, sxs))
-
-public export
-sexpSliceCata : {sa, sb : SExpTypeAlg atom} ->
-  SExpSliceMorphAlg sa sb ->
-  SliceMorphism {a=(SExp atom)} (sexpForallCata sa) (sexpForallCata sb)
-sexpSliceCata {sa} {sb} = sexpDepCata . (SExpSliceAlgFromMorph {sa} {sb})
-
-public export
-slistSliceCata : {sa, sb : SExpTypeAlg atom} ->
-  SExpSliceMorphAlg sa sb ->
-  SliceMorphism {a=(SList atom)} (slistForallCata sa) (slistForallCata sb)
-slistSliceCata {sa} {sb} = slistDepCata . (SExpSliceAlgFromMorph {sa} {sb})
-
 mutual
   public export
   sexpBoolComputeToConstraint : (alg : SExpBoolAlg atom) -> (x : SExp atom) ->
@@ -651,6 +568,93 @@ SExpCtxRefinedUnicity : {atom, ctx : Type} -> {alg : SExpBoolCtxAlg atom ctx} ->
   x = x'
 SExpCtxRefinedUnicity {atom} {ctx} {alg} {c} {x} {x'} =
   refinementFstEq {a=(SExp atom)} {pred=(sexpBoolCtxCataFlip alg c)}
+
+-------------------------------
+---- Slice (cata)morphisms ----
+-------------------------------
+
+public export
+record SExpSliceAlg {ty : Type}
+    (sxa : SliceObj (FrSExpM atom ty)) (sxb : SliceObj (FrSExpM atom ty))
+    (sla : SliceObj (FrSListM atom ty)) (slb : SliceObj (FrSListM atom ty))
+    where
+  constructor SSA
+  ssaSubTy :
+    (a : atom) -> (ns : List Nat) -> (xs : FrSListM atom ty) ->
+    sxa (InFS (TrC (SXF a ns xs))) -> sla xs
+  ssaHeadTy :
+    (x : FrSExpM atom ty) -> (xs : FrSListM atom ty) -> sla (x :: xs) -> sxa x
+  ssaTailTy :
+    (x : FrSExpM atom ty) -> (xs : FrSListM atom ty) -> sla (x :: xs) -> sla xs
+  ssaSubst : SliceMorphism {a=ty} (sxa . InSV) (sxb . InSV)
+  ssaInd :
+    (a : atom) -> (ns : List Nat) -> (xs : FrSListM atom ty) ->
+    sxa (InFS (TrC (SXF a ns xs))) -> slb xs -> sxb (InFS (TrC (SXF a ns xs)))
+  ssaNil : sla [] -> slb []
+  ssaCons :
+    (x : FrSExpM atom ty) -> (xs : FrSListM atom ty) ->
+    sxb x -> slb xs -> slb (x :: xs)
+
+mutual
+  public export
+  sexpDepCata :
+    {sxa, sxb : SliceObj (FrSExpM atom ty)} ->
+    {sla, slb : SliceObj (FrSListM atom ty)} ->
+    (alg : SExpSliceAlg sxa sxb sla slb) ->
+    SliceMorphism {a=(FrSExpM atom ty)} sxa sxb
+  sexpDepCata alg (InFS (TrV v)) av = alg.ssaSubst v av
+  sexpDepCata alg (InFS (TrC (SXF a ns xs))) ax =
+    alg.ssaInd a ns xs ax (slistDepCata alg xs (alg.ssaSubTy a ns xs ax))
+
+  public export
+  slistDepCata :
+    {sxa, sxb : SliceObj (FrSExpM atom ty)} ->
+    {sla, slb : SliceObj (FrSListM atom ty)} ->
+    (alg : SExpSliceAlg sxa sxb sla slb) ->
+    SliceMorphism {a=(FrSListM atom ty)} sla slb
+  slistDepCata alg [] al = alg.ssaNil al
+  slistDepCata alg (x :: xs) al =
+    alg.ssaCons x xs
+      (sexpDepCata alg x (alg.ssaHeadTy x xs al))
+      (slistDepCata alg xs (alg.ssaTailTy x xs al))
+
+public export
+SExpSliceMorphAlg : {atom : Type} ->
+  SExpTypeAlg atom -> SExpTypeAlg atom -> Type
+SExpSliceMorphAlg {atom} sa sb =
+  (a : atom) -> (ns : List Nat) -> (xs : SList atom) ->
+  sa (SXF a ns $ slistForallCataL sa xs) ->
+  slistForallCata sa xs ->
+  slistForallCata sb xs ->
+  sb (SXF a ns $ slistForallCataL sb xs)
+
+public export
+SExpSliceAlgFromMorph : {sa, sb : SExpTypeAlg atom} ->
+  SExpSliceMorphAlg sa sb ->
+  SExpSliceAlg
+    (sexpForallCata sa) (sexpForallCata sb)
+    (slistForallCata sa) (slistForallCata sb)
+SExpSliceAlgFromMorph alg =
+  SSA
+    (\a, ns, xs, (sxa, subs) => subs)
+    (\x, xs, (sx, sxs) => sx)
+    (\x, xs, (sx, sxs) => sxs)
+    (\v, _ => void v)
+    (\a, ns, xs, (sx, sxas), sxbs => (alg a ns xs sx sxas sxbs, sxbs))
+    id
+    (\x, xs, sx, sxs => (sx, sxs))
+
+public export
+sexpSliceCata : {sa, sb : SExpTypeAlg atom} ->
+  SExpSliceMorphAlg sa sb ->
+  SliceMorphism {a=(SExp atom)} (sexpForallCata sa) (sexpForallCata sb)
+sexpSliceCata {sa} {sb} = sexpDepCata . (SExpSliceAlgFromMorph {sa} {sb})
+
+public export
+slistSliceCata : {sa, sb : SExpTypeAlg atom} ->
+  SExpSliceMorphAlg sa sb ->
+  SliceMorphism {a=(SList atom)} (slistForallCata sa) (slistForallCata sb)
+slistSliceCata {sa} {sb} = slistDepCata . (SExpSliceAlgFromMorph {sa} {sb})
 
 -------------------
 ---- Utilities ----
