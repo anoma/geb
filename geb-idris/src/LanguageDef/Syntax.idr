@@ -601,6 +601,11 @@ sexpBoolTypeCtxCata : {ctx : Type} -> SExpBoolCtxAlg atom ctx ->
 sexpBoolTypeCtxCata = sexpCata . SExpTypeForallCtxAlgFromBool
 
 public export
+sexpBoolTypeCtxCataFlip : {ctx : Type} -> SExpBoolCtxAlg atom ctx ->
+  ctx -> SExp atom -> Type
+sexpBoolTypeCtxCataFlip = flip . sexpBoolTypeCtxCata
+
+public export
 slistBoolTypeCtxCataL : {ctx : Type} -> SExpBoolCtxAlg atom ctx ->
   SList atom -> List (ctx -> Type)
 slistBoolTypeCtxCataL = slistCata . SExpTypeForallCtxAlgFromBool
@@ -610,6 +615,12 @@ slistBoolTypeCtxCata : {ctx : Type} -> SExpBoolCtxAlg atom ctx ->
   SList atom -> ctx -> Type
 slistBoolTypeCtxCata alg l c =
   ProdT $ map (\f => f c) $ slistBoolTypeCtxCataL alg l
+
+public export
+SExpCtxConstrained : {atom, ctx : Type} ->
+  SExpBoolCtxAlg atom ctx -> SliceObj ctx
+SExpCtxConstrained {atom} {ctx} alg c =
+  Subset0 (SExp atom) (sexpBoolTypeCtxCataFlip alg c)
 
 -------------------------------
 ---- Slice (cata)morphisms ----
