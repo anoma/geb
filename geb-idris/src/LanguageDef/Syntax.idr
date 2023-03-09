@@ -216,6 +216,10 @@ SExpTypeAlg : Type -> Type
 SExpTypeAlg atom = SExpAlg atom Type
 
 public export
+SExpTypeAlgCtx : Type -> Type -> Type
+SExpTypeAlgCtx atom ctx = SExpAlg atom (ctx -> Type)
+
+public export
 SExpConsAlg : SExpAlg atom a -> SXLAlg atom a (List a)
 SExpConsAlg alg = SXA (\x, ns, l => alg $ SXF x ns l) [] (::)
 
