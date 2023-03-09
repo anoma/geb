@@ -49,6 +49,8 @@ mutual
     MPi : IdxMorph a b -> IdxMorph a c -> IdxMorph a (IP b c) -- left adjunct
     MPel : (a, b : IdxObj) -> IdxMorph (IP a b) a -- from counit in product cat
     MPer : (a, b : IdxObj) -> IdxMorph (IP a b) b -- from counit in product cat
+    MDist : (a, b, c : IdxObj) ->
+      IdxMorph (IP a (IC b c)) (IC (IP a b) (IP a c))
     MU : IdxTerm (IH a b) -> IdxMorph a b -- unquote
     Mev : (a, b : IdxObj) -> IdxMorph (IP (IH a b) a) b -- counit
     Mcu : IdxMorph (IP a b) c -> IdxMorph a (IH b c) -- left adjunct
