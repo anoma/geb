@@ -9,6 +9,35 @@ import public LanguageDef.Syntax
 
 %default total
 
+---------------------
+---------------------
+---- Experiments ----
+---------------------
+---------------------
+
+mutual
+  public export
+  data XObj : Type where
+    XO1 : XObj
+    XOB : XObj
+    XOP : XObj -> XObj -> XObj
+    XOEq : {a, b : XObj} -> XMorph a b -> XMorph a b -> XObj
+
+  public export
+  data XMorph : XObj -> XObj -> Type where
+    XMid : (a : XObj) -> XMorph a a
+    XMcomp : {a, b, c : XObj} -> XMorph b c -> XMorph a b
+    XM1 : (a : XObj) -> XMorph a XO1
+    XMt : XMorph XO1 XOB
+    XMf : XMorph XO1 XOB
+    XMb : {a : XObj} -> XMorph XO1 a -> XMorph XO1 a -> XMorph XOB a
+    XOPp : (a, b, c : XObj) -> XMorph a b -> XMorph a c -> XMorph a (XOP b c)
+    XOPl : (a, b : XObj) -> XMorph (XOP a b) a
+    XOPr : (a, b : XObj) -> XMorph (XOP a b) b
+    XOEi1 : {a, b : XObj} -> (f, g : XMorph a b) -> XMorph (XOEq {a} {b} f g) a
+    XOEi2 : {a, b : XObj} -> (f, g : XMorph a b) -> XMorph (XOEq {a} {b} f g) b
+    XMchi : {a, b : XObj} -> XMorph a b -> XMorph a b -> XMorph a XOB
+
 --------------------------------------------------------
 --------------------------------------------------------
 ---- Index type (used for positions and directions) ----
