@@ -47,17 +47,12 @@
     (cond ((and vampir stlc)
            (geb.vampir:extract
             (list
-             (lambda:to-circuit nil
-                                (lambda:typed-stlc-type eval)
-                                (lambda:typed-stlc-value eval)
-                                vampir-name))
+             (lambda:to-circuit nil eval vampir-name))
             stream))
           (stlc
            (format stream
                    "~A"
-                   (lambda:compile-checked-term nil
-                                                (lambda:typed-stlc-type eval)
-                                                (lambda:typed-stlc-value eval))))
+                   (lambda:compile-checked-term nil eval)))
           (vampir
            (geb.vampir:extract (list (geb:to-circuit eval vampir-name))))
           (t

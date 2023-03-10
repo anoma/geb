@@ -1,38 +1,165 @@
 (in-package #:geb.lambda.spec)
 
-;; maybe expand this macro and change each defconstant into a proper
-;; class declaration. We avoid typing it as we don't actually want to
-;; be exhaustive, but rather open.
-(defunion stlc
-  (absurd (cod geb.spec:substmorph) (value t))
-  unit
-  (left (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (right (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (case-on (lty geb.spec:substmorph)
-           (rty geb.spec:substmorph)
-           (cod geb.spec:substmorph)
-           (on t) (left t) (right t))
-  (pair (lty geb.spec:substmorph) (rty geb.spec:substmorph) (left t) (right t))
-  (fst  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (snd  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (lamb (vty geb.spec:substmorph) (tty geb.spec:substmorph) (value t))
-  (app  (dom geb.spec:substmorph) (cod geb.spec:substmorph) (func t) (obj t))
-  (index (index fixnum)))
+(defclass <stlc> (geb.mixins:direct-pointwise-mixin geb.mixins:meta-mixin geb.mixins:cat-obj) ()
+  (:documentation
+   "untyped class of terms of STLC"))
 
-;; because we are doing this with a struct and not a class, however
-;; since serapeum defines out `make-load-form' to the
-;; read-only-structs we can derive it like such
+(deftype stlc ()
+  '(or absurd unit left right case-on pair fst snd lamb app index))
 
-(defmethod geb.mixins:obj-equalp ((obj1 <stlc>) (obj2 <stlc>))
-  (when (equalp (type-of obj1) (type-of obj2))
-    (every (lambda (x y) (geb.mixins:obj-equalp x y))
-           (make-load-form obj1)
-           (make-load-form obj2))))
+(defclass absurd (<stlc>)
+  ((tcod :initarg :tcod
+        :accessor tcod
+        :documentation "arbitrary type")
+   (term :initarg :term
+         :accessor term
+         :documentation "term of the empty type")
+   (ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation ""))
+  (:documentation
+   "The absurd type provides an element of an arbitrary type given a term of the empty type"))
 
-(defstruct-read-only typed-stlc
-  (value unit :type <stlc>)
-  (type t :type t))
+(defun absurd (tcod term &key (ttype nil))
+  (make-instance 'absurd :tcod tcod :term term :ttype ttype))
 
-(defun typed (v typ)
-  "Puts together the type declaration with the value itself for lambda terms"
-  (make-typed-stlc :value v :type typ))
+(defclass unit (<stlc>)
+  ((ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation "")))
+
+(defun unit (&key (ttype nil))
+  (make-instance 'unit :ttype ttype))
+
+(defclass left (<stlc>)
+  ((rty :initarg :rty
+        :accessor rty
+        :documentation "right argument of coproduct type")
+   (term :initarg :term
+         :accessor term
+         :documentation "term of the left argument of coproduct type")
+   (ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation "")))
+
+(defun left (rty term &key (ttype nil))
+  (make-instance 'left :rty rty :term term :ttype ttype))
+
+(defclass right (<stlc>)
+  ((lty :initarg :lty
+        :accessor lty
+        :documentation "left argument of coproduct type")
+   (term :initarg :term
+         :accessor term
+         :documentation "term of the right argument of coproduct type")
+   (ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation "")))
+
+(defun right (lty term &key (ttype nil))
+  (make-instance 'right :lty lty :term term :ttype ttype))
+
+(defclass case-on (<stlc>)
+  ((on :initarg :on
+       :accessor on
+       :documentation "term of coproduct type")
+   (ltm :initarg :ltm
+         :accessor ltm
+         :documentation "term in context of left argument of coproduct type")
+   (rtm :initarg :rtm
+          :accessor rtm
+          :documentation "term in context of right argument of coproduct type")
+   (ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation "")))
+
+(defun case-on (on ltm rtm &key (ttype nil))
+  (make-instance 'case-on :on on :ltm ltm :rtm rtm :ttype ttype))
+
+(defclass pair (<stlc>)
+  ((ltm :initarg :ltm
+         :accessor ltm
+         :documentation "term of left argument of the product type")
+   (rtm :initarg :rtm
+          :accessor rtm
+          :documentation "term of right argument of the product type")
+   (ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation "")))
+
+(defun pair (ltm rtm &key (ttype nil))
+  (make-instance 'pair :ltm ltm :rtm rtm :ttype ttype))
+
+(defclass fst (<stlc>)
+  ((term :initarg :term
+         :accessor term
+         :documentation "term of product type")
+   (ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation "")))
+
+(defun fst (term &key (ttype nil))
+  (make-instance 'fst :term term :ttype ttype))
+
+(defclass snd (<stlc>)
+  ((term :initarg :term
+         :accessor term
+         :documentation "term of product type")
+   (ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation "")))
+
+(defun snd (term &key (ttype nil))
+  (make-instance 'snd :term term :ttype ttype))
+
+(defclass lamb (<stlc>)
+  ((tdom :initarg :tdom
+        :accessor tdom
+        :documentation "domain of the lambda term")
+   (term :initarg :term
+         :accessor term
+         :documentation "term of the codomain mapped to given a variable of tdom")
+   (ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation "")))
+
+(defun lamb (tdom term &key (ttype nil))
+  (make-instance 'lamb :tdom tdom :term term :ttype ttype))
+
+(defclass app (<stlc>)
+  ((fun :initarg :fun
+        :accessor fun
+        :documentation "term of exponential type")
+   (term :initarg :term
+         :accessor term
+         :documentation "term of the domain")
+   (ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation "")))
+
+(defun app (fun term &key (ttype nil))
+  (make-instance 'app :fun fun :term term :ttype ttype))
+
+(defclass index (<stlc>)
+  ((pos :initarg :pos
+        :accessor pos
+        :documentation "position of type")
+   (ttype :initarg :ttype
+         :initform nil
+         :accessor ttype
+         :documentation "")))
+
+(defun index (pos &key (ttype nil))
+  (make-instance 'index :pos pos :ttype ttype))
+
+

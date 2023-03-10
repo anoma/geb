@@ -13,7 +13,13 @@
 (in-package #:geb.lambda.main)
 
 (pax:defsection @lambda-api (:title "Main functionality")
-  "This covers the main API for the STLC module")
+  "This covers the main API for the STLC module"
+  (hom-cod     pax:function)
+  (index-check      pax:function)
+  (type-of1    pax:generic-function)
+  (type-of2    pax:function)
+  (well-defp        pax:generic-function)
+  (inf-pass         pax:function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; trans module

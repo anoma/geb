@@ -12,70 +12,67 @@
   geb:so1)
 
 (def stlc-unit-term
-  geb.lambda.spec:unit)
+  (geb.lambda.spec:unit))
 
 (def so-unit-term
   (geb:terminal so-unit-type))
 
 (def unit-to-bool-left-circuit
   (lambda:to-circuit
-    nil bool
-    (lambda:left so-unit-type so-unit-type stlc-unit-term)
-    :tc_unit_to_bool_left))
+   nil
+   (lambda:left so-unit-type (lambda:unit))
+   :tc_unit_to_bool_left))
 
 (def unit-to-bool-right-circuit
   (lambda:to-circuit
-    nil bool
-    (lambda:right so-unit-type so-unit-type stlc-unit-term)
-    :tc_unit_to_bool_right))
+   nil
+   (lambda:right so-unit-type stlc-unit-term)
+   :tc_unit_to_bool_right))
 
 (def pair-bool-stlc
-  (lambda:pair bool bool
-               (lambda:right so-unit-type so-unit-type stlc-unit-term)
-               (lambda:left so-unit-type so-unit-type stlc-unit-term)))
+  (lambda:pair
+   (lambda:right so-unit-type stlc-unit-term)
+   (lambda:left so-unit-type stlc-unit-term)))
 
 (def pair-bool-circuit
   (lambda:to-circuit
-   nil (geb:prod bool bool)
-   (lambda:pair bool bool
-                (lambda:right so-unit-type so-unit-type stlc-unit-term)
-                (lambda:left so-unit-type so-unit-type stlc-unit-term))
+   nil
+   (lambda:pair
+    (lambda:right so-unit-type stlc-unit-term)
+    (lambda:left so-unit-type stlc-unit-term))
    :tc_pair_bool))
 
 (def fst-bool-circuit
   (lambda:to-circuit
-   nil bool
-   (lambda:fst bool bool pair-bool-stlc)
+   nil
+   (lambda:fst pair-bool-stlc)
    :tc_fst_bool))
 
 (def unit-to-unit-circuit
-  (lambda:to-circuit nil so-unit-type stlc-unit-term :tc_unit_to_unit))
+  (lambda:to-circuit nil stlc-unit-term :tc_unit_to_unit))
 
 (def void-to-unit-circuit
   (lambda:to-circuit
-    (list so-void-type) so-unit-type
-    (lambda:absurd so-unit-type (lambda:index 0)) :tc_void_to_unit))
+   (list so-void-type)
+   (lambda:absurd so-unit-type (lambda:index 0)) :tc_void_to_unit))
 
 (def issue-58-circuit
   (lambda:to-circuit
     nil
-    (coprod so-unit-type so-unit-type)
     (lambda:case-on
-      so-unit-type so-unit-type
-      (coprod so-unit-type so-unit-type)
-      (lambda:left so-unit-type so-unit-type stlc-unit-term)
+      (lambda:left so-unit-type stlc-unit-term)
       (lambda:lamb
-        so-unit-type (coprod so-unit-type so-unit-type)
-        (lambda:right so-unit-type so-unit-type stlc-unit-term))
+        so-unit-type
+        (lambda:right so-unit-type stlc-unit-term))
       (lambda:lamb
-        so-unit-type (coprod so-unit-type so-unit-type)
-        (lambda:left so-unit-type so-unit-type stlc-unit-term))
+        so-unit-type
+        (lambda:left so-unit-type stlc-unit-term))
       )
     :tc_issue_58))
 
 (define-test compile-checked-term :parent geb.lambda.trans
   (is obj-equalp
-      (lambda:compile-checked-term nil so-unit-type stlc-unit-term)
+      (lambda:compile-checked-term nil stlc-unit-term)
       so-unit-term
       "compile unit"))
 

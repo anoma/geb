@@ -8,78 +8,68 @@
 ;; Main Transformers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defgeneric compile-checked-term (context type term)
+(defgeneric compile-checked-term (context term)
   (:documentation "Compiles a checked term into SubstMorph category"))
 
-(-> to-poly (list t <stlc>) (or geb.poly:<poly> geb.poly:poly))
-(defun to-poly (context type obj)
+(-> to-poly (list <stlc>) (or geb.poly:<poly> geb.poly:poly))
+(defun to-poly (context obj)
   (assure (or geb.poly:<poly> geb.poly:poly)
     (~>> obj
-         (compile-checked-term context type)
+         (compile-checked-term context)
          geb:to-poly)))
 
-(-> to-circuit (list t <stlc> keyword) geb.vampir.spec:statement)
-(defun to-circuit (context type obj name)
+(-> to-circuit (list <stlc> keyword) geb.vampir.spec:statement)
+(defun to-circuit (context obj name)
   (assure geb.vampir.spec:statement
-    (~> (to-poly context type obj)
+    (~> (to-poly context obj)
         (geb.poly:to-circuit name))))
 
 (defmethod empty ((class (eql (find-class 'list)))) nil)
 
-(defmethod compile-checked-term (context type (term <stlc>))
-  (assure <substmorph>
-    (match-of stlc term
-      ((absurd type v)
-       (comp (init type)
-             (compile-checked-term context so0 v)))
-      (unit
-       (terminal (stlc-ctx-to-mu context)))
-      ((left lty rty term)
-       lty rty
-       (assert (typep type 'coprod) nil "invalid lambda type to left ~A" type)
-       (comp (->left (mcar type) (mcadr type))
-             (compile-checked-term context (mcar type) term)))
-      ((right lty rty term)
-       lty rty
-       (assert (typep type 'coprod) nil "invalid lambda type to right ~A" type)
-       (comp (->right (mcar type) (mcadr type))
-             (compile-checked-term context (mcar type) term)))
-      ((case-on lty rty cod on l r)
-       (comp (mcase (curry (compile-checked-term (cons lty context) cod l))
-                    (curry (compile-checked-term (cons rty context) cod r)))
-             (compile-checked-term context (coprod lty rty) on)))
-      ((pair lty rty l r)
-       (geb:pair (compile-checked-term context lty l)
-                 (compile-checked-term context rty r)))
-      ((fst lty rty value)
-       (assert (geb.mixins:obj-equalp (class-of lty) (class-of type))
-               nil
-               "Types should match on fst: ~A ~A"
-               term
-               type)
-       (comp (<-left lty rty) (compile-checked-term context (prod lty rty) value)))
-      ((snd lty rty value)
-       (assert (geb.mixins:obj-equalp (class-of rty) (class-of type))
-               nil
-               "Types should match on fst: ~A ~A"
-               term
-               type)
-       (comp (<-right lty rty) (compile-checked-term context (prod lty rty) value)))
-      ((lamb vty tty term)
-       (curry (commutes-left
-               (compile-checked-term (cons vty context) tty term))))
-      ((app dom com f x)
-       (assert (geb.mixins:obj-equalp dom type)
-               nil
-               "Types should match for application: ~A ~A"
-               dom
-               type)
-       (comp
-        (so-eval dom com)
-        (geb:pair (compile-checked-term context dom f)
-                  (compile-checked-term context com x))))
-      ((index i)
-       (stlc-ctx-proj context i)))))
+(defmethod compile-checked-term (context (tterm <stlc>))
+  (if (well-defp context tterm)
+      (assure <substmorph>
+        (match-of stlc tterm
+          ((absurd tcod term)
+           (comp (init tcod)
+                 (compile-checked-term context term)))
+          (unit
+           (terminal (stlc-ctx-to-mu context)))
+          ((left term)
+           (comp (->left (mcar (inf-pass context tterm)) (mcadr (inf-pass context tterm)))
+                 (compile-checked-term context term)))
+          ((right term)
+           (comp (->right (mcar (inf-pass context tterm)) (mcadr (inf-pass context tterm)))
+                 (compile-checked-term context term)))
+          ((case-on on ltm rtm)
+           (comp (mcase (curry (compile-checked-term (cons (mcar (inf-pass context on)) context)
+                                                     ltm))
+                        (curry (compile-checked-term (cons (mcadr (inf-pass context on)) context)
+                                                     rtm)))
+                 (compile-checked-term context on)))
+          ((pair ltm rtm)
+           (geb:pair (compile-checked-term context ltm)
+                     (compile-checked-term context rtm)))
+          ((fst term)
+           (comp (<-left (mcar (inf-pass context term)) (mcadr (inf-pass context term)))
+                 (compile-checked-term context term)))
+          ((snd term)
+           (comp (<-right (mcar (inf-pass context term)) (mcadr (inf-pass context term)))
+                 (compile-checked-term context term)))
+          ((lamb tdom term)
+           (curry (commutes-left
+                   (compile-checked-term (cons tdom context) term))))
+          ((app fun term)
+           (comp
+            (so-eval (type-of2 (mcar (type-of1 context fun)))
+                     (type-of2 (mcadr (type-of1 context fun))))
+            (geb:pair (compile-checked-term context
+                                            fun)
+                      (compile-checked-term context
+                                            term))))
+          ((index pos)
+           (stlc-ctx-proj context pos))))
+      (error "not a well-defined term in said context")))
 
 (-> stlc-ctx-to-mu (stlc-context) substobj)
 (defun stlc-ctx-to-mu (context)

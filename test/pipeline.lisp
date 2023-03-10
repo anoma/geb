@@ -3,16 +3,13 @@
 (define-test geb-pipeline :parent geb-test-suite)
 
 (def test-compilation-eval-2
-  (lambda:typed geb.lambda.spec:unit geb:so1))
+  (geb.lambda.spec:unit))
 
 
 (defparameter *entry*
-  (lambda:typed
-   (lambda:app (coprod so1 so1)
-               (coprod so1 so1)
-               (lambda:lamb (coprod so1 so1) (coprod so1 so1) (lambda:index 0))
-               (lambda:left (coprod so1 so1) (coprod so1 so1) lambda:unit))
-   (coprod so1 so1)))
+   (lambda:app
+    (lambda:lamb (coprod so1 so1) (lambda:index 0))
+    (lambda:left so1 (lambda:unit))))
 
 (define-test pipeline-works-for-stlc-to-vampir
   :parent geb-pipeline

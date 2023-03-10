@@ -33,5 +33,5 @@
 (define-test mixin-works-well
   :parent geb.lambda.experimental
   (is obj-equalp
-      (geb.lambda.spec:pair so1 so1 so1 so1)
-      (geb.lambda.spec:pair so1 so1 so1 so1)))
+      (geb.lambda.spec:pair (geb.lambda.spec:unit) (geb.lambda.spec:unit))
+      (geb.lambda.spec:pair (geb.lambda.spec:unit) (geb.lambda.spec:unit))))

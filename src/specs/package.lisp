@@ -98,81 +98,98 @@ constructors"
 
 (pax:defsection @lambda-specs (:title "Lambda Specification")
   "This covers the various the abstract data type that is the simply
-  typed lambda calculus within GEB.
-
-The specification follows from the sum type declaration
-
-```lisp
-(defunion stlc
-  (absurd (value t))
-  unit
-  (left (value t))
-  (right (value t))
-  (case-on (lty geb.spec:substmorph)
-           (rty geb.spec:substmorph)
-           (cod geb.spec:substmorph)
-           (on t) (left t) (right t))
-  (pair (lty geb.spec:substmorph) (rty geb.spec:substmorph) (left t) (right t))
-  (fst  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (snd  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (lamb (vty geb.spec:substmorph) (tty geb.spec:substmorph) (value t))
-  (app  (dom geb.spec:substmorph) (cod geb.spec:substmorph) (func t) (obj t))
-  (index (index fixnum)))
-```
+  typed lambda calculus within GEB. The class presents untyped STLC terms.
 "
-  (<stlc> pax:type)
-  (stlc pax:type)
-  (absurd pax:type)
-  (absurd-value pax:function)
+  (stlc pax:class)
+  (<stlc> pax:class)
 
-  (unit pax:type)
+  (absurd pax:class)
+  (unit pax:class)
+  (left pax:class)
+  (right pax:class)
+  (case-on pax:class)
+  (pair pax:class)
+  (fst pax:class)
+  (snd pax:class)
+  (lamb pax:class)
+  (app pax:class)
+  (index pax:class)
 
-  (pair pax:type)
-  (pair-lty pax:function)
-  (pair-rty pax:function)
-  (pair-left pax:function)
-  (pair-right pax:function)
+  (absurd pax:function)
+  (unit pax:function)
+  (left pax:function)
+  (right pax:function)
+  (case-on pax:function)
+  (pair pax:function)
+  (fst pax:function)
+  (snd pax:function)
+  (lamb pax:function)
+  (app pax:function)
+  (index pax:function)
 
-  (left pax:type)
-  (left-value pax:function)
+  "Given (term : so0) we get ((absurd term) : tcod)"
 
-  (right pax:type)
-  (right-value pax:function)
+  (tcod (pax:method () (absurd)))
+  (term (pax:method () (absurd)))
+  (ttype (pax:method () (absurd)))
 
-  (case-on pax:type)
-  (case-on-lty pax:function)
-  (case-on-rty pax:function)
-  (case-on-cod pax:function)
-  (case-on-on pax:function)
-  (case-on-left pax:function)
-  (case-on-right pax:function)
+  "We have (unit : so1)"
+  (ttype (pax:method () (unit)))
 
-  (fst pax:type)
-  (fst-lty pax:function)
-  (fst-rty pax:function)
-  (fst-value pax:function)
+  "Given (rty : Type) and (term : lty) we have  ((left rty term) : lty + rty)"
+  (rty (pax:method () (left)))
+  (term (pax:method () (left)))
+  (ttype (pax:method () (left)))
 
-  (snd pax:type)
-  (snd-lty pax:function)
-  (snd-rty pax:function)
-  (snd-value pax:function)
+  "Given (lty : Type) and (term : rty) we have ((right lty term) : lty + rty)"
+  (lty (pax:method () (right)))
+  (term (pax:method () (right)))
+  (ttype (pax:method () (right)))
 
-  (lamb pax:type)
-  (lamb-vty pax:function)
-  (lamb-tty pax:function)
-  (lamb-value pax:function)
+  "Given (on : lty + rty), (ltm : cod), (rtm : cod) produced in the context of lty and rty respectively, we get ((case-on on ltm rtm) : cod ) "
+  (on (pax:method () (case-on)))
+  (ltm (pax:method () (case-on)))
+  (rtm (pax:method () (case-on)))
+  (ttype (pax:method () (case-on)))
 
-  (app pax:type)
-  (app-dom pax:function)
-  (app-cod pax:function)
-  (app-func pax:function)
-  (app-obj pax:function)
+  "Given (ltm : lty) and (rtm : rty) we have ((pair ltm rtm) : lty x rty)"
+  (ltm (pax:method () (pair)))
+  (rtm (pax:method () (pair)))
+  (ttype (pax:method () (pair)))
 
-  (index pax:type)
-  (index-index pax:function)
+  "Given (term : lty x rty) we get ((fst term) : lty)"
+  (term (pax:method () (fst)))
+  (ttype (pax:method () (fst)))
 
-  (typed pax:function)
-  (typed-stlc-type pax:function) (typed-stlc-value pax:function))
+  "Given (term : lty x rty) we get ((snd term) : rty)"
+  (term (pax:method () (snd)))
+  (ttype (pax:method () (snd)))
+
+  "Given (tdom : Type) and (term : tcod) we have ((lambda tdom term) : tdom -> tcod)"
+  (tdom (pax:method () (lamb)))
+  (term (pax:method () (lamb)))
+  (ttype (pax:method () (lamb)))
+
+  "Given (fun : tdom -> tcod) and (term : tdom) we get ((app fun term) : tcod)"
+  (fun (pax:method () (app)))
+  (term (pax:method () (app)))
+  (ttype (pax:method () (lamb)))
+
+  "Relative to a context. Given context G1,.,G(pos),..,Gn, we have ((index pos) : G(pos))"
+  (pos (pax:method () (index)))
+  (ttype (pax:method () (index)))
+
+  (tcod pax:generic-function)
+  (tdom pax:generic-function)
+  (term pax:generic-function)
+  (rty pax:generic-function)
+  (lty pax:generic-function)
+  (ltm pax:generic-function)
+  (rtm pax:generic-function)
+  (on pax:generic-function)
+  (fun pax:generic-function)
+  (pos pax:generic-function)
+  (ttype pax:generic-function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb Package Documentation

@@ -265,3 +265,4 @@ In category terms, `a → c^b` is isomorphic to `a → b → c`
       (error "object ~A need to be of a product type, however it is of ~A" f (dom f))
       (let ((dom (dom f)))
         (curry-prod f (mcar dom) (mcadr dom)))))
+
