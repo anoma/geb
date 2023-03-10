@@ -15,6 +15,33 @@ import public LanguageDef.Syntax
 ---------------------
 ---------------------
 
+public export
+data XTypeF : (a : Type) -> (term : a -> Type) -> Type where
+  XT0 : XTypeF a term
+  XT1 : XTypeF a term
+  XTC : a -> a -> XTypeF a term
+  XTP : a -> a -> XTypeF a term
+  XTSig : (ty : a) -> (term ty -> a) -> XTypeF a term
+
+public export
+XTermF : {a : Type} -> (term : a -> Type) -> XTypeF a term -> Type
+XTermF term XT0 = Void
+XTermF term XT1 = Unit
+XTermF term (XTC ty ty') = Either (term ty) (term ty')
+XTermF term (XTP ty ty') = Pair (term ty) (term ty')
+XTermF term (XTSig ty pred) = DPair (term ty) (term . pred)
+
+mutual
+  public export
+  partial
+  data XType : Type where
+    InXT : XTypeF XType XTerm -> XType
+
+  public export
+  partial
+  data XTerm : XType -> Type where
+    InXt : XTermF {a=XType} XTerm ty -> XTerm (InXT ty)
+
 mutual
   public export
   data XObj : Type where
