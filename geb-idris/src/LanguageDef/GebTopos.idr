@@ -9,6 +9,109 @@ import public LanguageDef.Syntax
 
 %default total
 
+--------------------------------------------
+--------------------------------------------
+---- Category-spec-style Geb definition ----
+--------------------------------------------
+--------------------------------------------
+
+------------------------------
+---- Category of diagrams ----
+------------------------------
+
+-- The (free-forgetful) adjunction which can be used to define a category
+-- has the following data:
+--
+--  - Left category C: two-category of categories
+--  - Right category D: category of diagrams
+--  - Left functor L: free functor which adds identities (loop edges) for
+--    each vertex and paths to represent compositions, and equalities for
+--    left identity, right identity, and associativity
+--  - Right functor R: forgetful functor which drops identity, composition,
+--    and equalities, leaving just vertices and edges
+--  - R . L (D -> D): Functor which closes a diagram with loops labeled
+--    as identities and paths labeled as compositions
+--  - L . R (C -> C): Identity functor
+--  - Unit (id -> R . L): injection of diagram into its closure
+--  - Counit (L . R -> id): identity natural transformation
+--  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
+--    functors from a free category generated from a diagram A to an arbitrary
+--    category B are in bijection with graph homomorphisms from A to the
+--    diagram underlying B (i.e. the diagram whose vertices are objects of B
+--    and whose edges are morphisms of B)
+--  - Left triangle identity: (counit . L) . (L . unit) = id(L):
+--    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
+--    (which goes from L(A) to L(A) in C via L(R(L(A)))):
+--      id(L(A)) . L(inj(A)) = id(L(A))
+--    -- this reflects preservation of identities by functors
+--  - Right triangle identity: (R . counit) . (unit . R) = id(R):
+--    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
+--    (which goes from R(B) to R(B) in D via R(L(R(B)))):
+--      id(forget(B)) . inj(forget(B)) = id(forget(B))
+--    -- this reflects the definition of the injection
+
+-- The adjunction which can be used to define the initial object has the
+-- following data:
+--
+--  - Left category C: category being freely generated
+--  - Right category D: terminal category
+--  - Left functor L: constant functor to initial object (and identity
+--    morphism on initial object)
+--  - Right functor R: unique functor to terminal category
+--  - R . L (D -> D): identity functor (on terminal category -- this is the
+--    _only_ endofunctor on the terminal category)
+--  - L . R (C -> C): constant functor which takes any object to initial object,
+--    and any morphism to identity on initial object
+--  - Unit (id -> R . L): identity natural transformation (the only
+--    natural transformation on the only endofunctor on the terminal category)
+--  - Counit (L . R -> id): component at B is unique morphism from initial
+--    object to B
+--  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
+--    for all B : C, fromVoid(Void, B) is in bijection with Hom(1 : D, 1 : D),
+--    which is (isomorphic to) Unit
+--  - Left triangle identity: (counit . L) . (L . unit) = id(L):
+--    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
+--    (which goes from L(A) to L(A) in C via L(R(L(A)))):
+--      fromVoid(Void, L(A)) . L(id(A)) = id(L(A))
+--    -- this reduces to fromVoid(Void, Void) . id(Void) = id(Void),
+--    and from there to fromVoid(Void, Void) = id(Void)
+--  - Right triangle identity: (R . counit) . (unit . R) = id(R):
+--    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
+--    (which goes from R(B) to R(B) in D via R(L(R(B)))):
+--      id(1) . id(1) = id(1)
+--    -- this reduces to id(1) = id(1), so it's not telling us anything new
+--    (we could have concluded that from the category laws alone, or indeed by
+--    reflexivity on the unique morphism in the terminal category)
+
+-- The functor which freely generates an initial object simply
+-- generates one new object.
+public export
+InitialObjF : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
+  Type
+InitialObjF _ _ _ _ = Unit
+
+-- The functor which freely generates an initial morphism generates one
+-- from any object (existing or new) to the newly-generated object.
+-- Thus, the type of new morphisms is the updated type of objects.
+public export
+InitialMorphF : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
+  Type
+InitialMorphF obj morph dom cod = Either (InitialObjF obj morph dom cod) obj
+
+-- The domain of the new initial morphism corresponding to a given object
+-- is the initial object.
+public export
+InitialMorphDom : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
+  InitialMorphF obj morph dom cod -> Either obj (InitialObjF obj morph dom cod)
+InitialMorphDom obj morph dom cod m = Right ()
+
+-- The codomain of the new initial morphism corresponding to a given object
+-- is the given object.
+public export
+InitialMorphCod : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
+  InitialMorphF obj morph dom cod -> Either (InitialObjF obj morph dom cod) obj
+InitialMorphCod obj morph dom cod m = m
+
 ---------------------
 ---------------------
 ---- Experiments ----
@@ -512,109 +615,6 @@ DeqRelExtF =
   (const DeqRelPosExt **
    DeqRelDirExt . snd **
    \((() ** i) ** d) => DeqRelAssignExt (i ** d))
-
---------------------------------------------
---------------------------------------------
----- Category-spec-style Geb definition ----
---------------------------------------------
---------------------------------------------
-
-------------------------------
----- Category of diagrams ----
-------------------------------
-
--- The (free-forgetful) adjunction which can be used to define a category
--- has the following data:
---
---  - Left category C: two-category of categories
---  - Right category D: category of diagrams
---  - Left functor L: free functor which adds identities (loop edges) for
---    each vertex and paths to represent compositions, and equalities for
---    left identity, right identity, and associativity
---  - Right functor R: forgetful functor which drops identity, composition,
---    and equalities, leaving just vertices and edges
---  - R . L (D -> D): Functor which closes a diagram with loops labeled
---    as identities and paths labeled as compositions
---  - L . R (C -> C): Identity functor
---  - Unit (id -> R . L): injection of diagram into its closure
---  - Counit (L . R -> id): identity natural transformation
---  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
---    functors from a free category generated from a diagram A to an arbitrary
---    category B are in bijection with graph homomorphisms from A to the
---    diagram underlying B (i.e. the diagram whose vertices are objects of B
---    and whose edges are morphisms of B)
---  - Left triangle identity: (counit . L) . (L . unit) = id(L):
---    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
---    (which goes from L(A) to L(A) in C via L(R(L(A)))):
---      id(L(A)) . L(inj(A)) = id(L(A))
---    -- this reflects preservation of identities by functors
---  - Right triangle identity: (R . counit) . (unit . R) = id(R):
---    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
---    (which goes from R(B) to R(B) in D via R(L(R(B)))):
---      id(forget(B)) . inj(forget(B)) = id(forget(B))
---    -- this reflects the definition of the injection
-
--- The adjunction which can be used to define the initial object has the
--- following data:
---
---  - Left category C: category being freely generated
---  - Right category D: terminal category
---  - Left functor L: constant functor to initial object (and identity
---    morphism on initial object)
---  - Right functor R: unique functor to terminal category
---  - R . L (D -> D): identity functor (on terminal category -- this is the
---    _only_ endofunctor on the terminal category)
---  - L . R (C -> C): constant functor which takes any object to initial object,
---    and any morphism to identity on initial object
---  - Unit (id -> R . L): identity natural transformation (the only
---    natural transformation on the only endofunctor on the terminal category)
---  - Counit (L . R -> id): component at B is unique morphism from initial
---    object to B
---  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
---    for all B : C, fromVoid(Void, B) is in bijection with Hom(1 : D, 1 : D),
---    which is (isomorphic to) Unit
---  - Left triangle identity: (counit . L) . (L . unit) = id(L):
---    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
---    (which goes from L(A) to L(A) in C via L(R(L(A)))):
---      fromVoid(Void, L(A)) . L(id(A)) = id(L(A))
---    -- this reduces to fromVoid(Void, Void) . id(Void) = id(Void),
---    and from there to fromVoid(Void, Void) = id(Void)
---  - Right triangle identity: (R . counit) . (unit . R) = id(R):
---    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
---    (which goes from R(B) to R(B) in D via R(L(R(B)))):
---      id(1) . id(1) = id(1)
---    -- this reduces to id(1) = id(1), so it's not telling us anything new
---    (we could have concluded that from the category laws alone, or indeed by
---    reflexivity on the unique morphism in the terminal category)
-
--- The functor which freely generates an initial object simply
--- generates one new object.
-public export
-InitialObjF : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
-  Type
-InitialObjF _ _ _ _ = Unit
-
--- The functor which freely generates an initial morphism generates one
--- from any object (existing or new) to the newly-generated object.
--- Thus, the type of new morphisms is the updated type of objects.
-public export
-InitialMorphF : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
-  Type
-InitialMorphF obj morph dom cod = Either (InitialObjF obj morph dom cod) obj
-
--- The domain of the new initial morphism corresponding to a given object
--- is the initial object.
-public export
-InitialMorphDom : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
-  InitialMorphF obj morph dom cod -> Either obj (InitialObjF obj morph dom cod)
-InitialMorphDom obj morph dom cod m = Right ()
-
--- The codomain of the new initial morphism corresponding to a given object
--- is the given object.
-public export
-InitialMorphCod : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
-  InitialMorphF obj morph dom cod -> Either (InitialObjF obj morph dom cod) obj
-InitialMorphCod obj morph dom cod m = m
 
 ------------------------------------------------------
 ------------------------------------------------------
