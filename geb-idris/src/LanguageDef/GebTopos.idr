@@ -50,6 +50,12 @@ import public LanguageDef.Syntax
 --      id(forget(B)) . inj(forget(B)) = id(forget(B))
 --    -- this reflects the definition of the injection
 
+{-
+public export
+data CatMorphF : (obj : Type) -> obj -> obj -> Type where
+  Cid : (a : obj) -> CatMorphF obj a a
+  -}
+
 -- The adjunction which can be used to define the initial object has the
 -- following data:
 --
@@ -1605,6 +1611,43 @@ data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
 ---- Experiments with subobject classifiers and power objects ----
 ------------------------------------------------------------------
 ------------------------------------------------------------------
+
+-- `Type` itself as a subobject classifier -- treating it like `Prop`.
+public export
+SubCFromTypeAsSubC : Type
+SubCFromTypeAsSubC = Type
+
+public export
+PowerObjFromTypeAsSubC : Type -> Type
+PowerObjFromTypeAsSubC = SliceObj
+
+public export
+CharToPowerFromTypeAsSubC : {0 a : Type} ->
+  (a -> SubCFromTypeAsSubC) -> PowerObjFromTypeAsSubC a
+CharToPowerFromTypeAsSubC {a} chi = chi
+
+public export
+PowerToCharFromTypeAsSubC : {0 a : Type} ->
+  PowerObjFromTypeAsSubC a -> (a -> SubCFromTypeAsSubC)
+PowerToCharFromTypeAsSubC {a} po e = po e
+
+public export
+TrueFromTypeAsSubC : () -> SubCFromTypeAsSubC
+TrueFromTypeAsSubC () = ()
+
+public export
+ChiForTypeAsSubC : {0 a, b : Type} -> (a -> b) -> b -> SubCFromTypeAsSubC
+ChiForTypeAsSubC {a} {b} m eb = Exists0 a $ \ea => m ea = eb
+
+public export
+ChiForTypeAsSubCToPb :
+  (subCmereProp : {p, p' : SubCFromTypeAsSubC} -> p = p') ->
+  {0 a, b : Type} -> (f, g : a -> b) ->
+  (ee : Equalizer f g) ->
+  Pullback {a} {b=Unit} {c=SubCFromTypeAsSubC}
+    (ChiForTypeAsSubC (equalizerInj f g)) TrueFromTypeAsSubC
+ChiForTypeAsSubCToPb subCmereProp {a} {b} f g (Element0 eeq eq) =
+  Element0 (eeq, ()) subCmereProp
 
 -- A type together with a term of that type.
 public export
