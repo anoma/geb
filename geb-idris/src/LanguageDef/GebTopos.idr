@@ -50,11 +50,19 @@ import public LanguageDef.Syntax
 --      id(forget(B)) . inj(forget(B)) = id(forget(B))
 --    -- this reflects the definition of the injection
 
-{-
 public export
-data CatMorphF : (obj : Type) -> obj -> obj -> Type where
-  Cid : (a : obj) -> CatMorphF obj a a
-  -}
+SignatureT : Type -> Type
+SignatureT o = (o, o)
+
+public export
+MorphismT : Type -> Type
+MorphismT o = SignatureT o -> Type
+
+public export
+record Diagram where
+  constructor MkDiagram
+  dVert : Type
+  dEdge : MorphismT dVert
 
 -- The adjunction which can be used to define the initial object has the
 -- following data:
@@ -1611,6 +1619,46 @@ data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
 ---- Experiments with subobject classifiers and power objects ----
 ------------------------------------------------------------------
 ------------------------------------------------------------------
+
+-- Subobject classifier in what I think is the style of the HoTT book with
+-- an `isProp` as in https://ncatlab.org/nlab/show/mere+proposition.
+
+public export
+IsHProp : Type -> Type
+IsHProp a = (x, y : a) -> x = y
+
+public export
+SubCFromHProp : Type
+SubCFromHProp = Subset0 Type IsHProp
+
+public export
+PowerObjFromProp : Type -> Type
+PowerObjFromProp a = a -> SubCFromHProp
+
+public export
+TrueForHProp : () -> SubCFromHProp
+TrueForHProp () = Element0 Unit $ \(), () => Refl
+
+public export
+ChiForHProp : {0 a, b : Type} ->
+  (f : a -> b) -> ((x, y : a) -> f x = f y -> x = y) ->
+  b -> SubCFromHProp
+ChiForHProp {a} {b} f isMonic eb =
+  Element0
+    (Exists0 a $ \x => f x = eb)
+    $ \(Evidence0 x eqx), (Evidence0 y eqy) =>
+      case isMonic x y (trans eqx (sym eqy)) of
+        Refl => case uip {eq=eqx} {eq'=eqy} of
+          Refl => Refl
+
+public export
+0 ChiForHPropPbToDom : {0 a, b : Type} ->
+  (f : a -> b) -> (isMonic : (x, y : a) -> f x = f y -> x = y) ->
+  Pullback {a=b} {b=Unit} {c=SubCFromHProp}
+    (ChiForHProp f isMonic) TrueForHProp ->
+  a
+ChiForHPropPbToDom {a} {b} f isMonic (Element0 (eb, ()) eq) =
+  fst0 $ replace {p=id} (sym $ elementInjectiveFst eq) ()
 
 -- `Type` itself as a subobject classifier -- treating it like `Prop`.
 public export
