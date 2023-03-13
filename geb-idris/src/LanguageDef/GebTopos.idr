@@ -112,8 +112,8 @@ data InitialObjF : (obj : Type) -> Type where
 -- the new freely-generated (initial) object.
 public export
 data InitialMorphF : (obj : Type) -> (contrahom : obj -> obj -> Type) ->
-    InitialObjF obj -> InitialObjF obj -> Type where
-  -- Morph0 : InitialMorphF obj contrahom Obj0 x
+    FreeMonad InitialObjF obj -> FreeMonad InitialObjF obj -> Type where
+  Morph0 : InitialMorphF obj contrahom (inFC Obj0) x
 
 --------------------
 ---- Coproducts ----
