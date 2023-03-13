@@ -263,6 +263,11 @@ SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
 SliceMorphism {a} s s' = (e : a) -> s e -> s' e
 
 public export
+SliceFunctorMap : {x, y : Type} -> (f : SliceFunctor x y) -> Type
+SliceFunctorMap {x} {y} f =
+  {sa, sb : SliceObj x} -> SliceMorphism sa sb -> SliceMorphism (f sa) (f sb)
+
+public export
 SliceToPi : {a : Type} -> {p : SliceObj a} -> SliceMorphism (const ()) p -> Pi p
 SliceToPi m x = m x ()
 
@@ -427,6 +432,50 @@ PredDepPolyEndoF : {base : Type} ->
   (assign : Sigma dirdep -> base) ->
   SliceFunctor base base
 PredDepPolyEndoF {base} = PredDepPolyF {parambase=base} {posbase=base}
+
+-------------------------------
+---- Dependent (co)algebra ----
+-------------------------------
+
+public export
+SliceAlg : {a : Type} -> SliceEndofunctor a -> SliceObj a -> Type
+SliceAlg sf sa = SliceMorphism (sf sa) sa
+
+public export
+SliceCoalg : {a : Type} -> SliceEndofunctor a -> SliceObj a -> Type
+SliceCoalg sf sa = SliceMorphism (sf sa) sa
+
+-- The slice-category version of `TranslateFunctor`.
+public export
+data SliceTranslateF : {a : Type} ->
+    SliceEndofunctor a -> SliceObj a -> SliceEndofunctor a where
+  InSlV : {a : Type} -> {f : SliceEndofunctor a} -> {0 sv, sa : SliceObj a} ->
+    {ea : a} -> sv ea -> SliceTranslateF {a} f sv sa ea
+  InSlC : {a : Type} -> {f : SliceEndofunctor a} -> {0 sv, sa : SliceObj a} ->
+    {ea : a} -> f sa ea -> SliceTranslateF {a} f sv sa ea
+
+-- The slice-category version of `ScaleFunctor`.
+public export
+data SliceScaleF : {a : Type} ->
+    SliceEndofunctor a -> SliceObj a -> SliceEndofunctor a where
+  InSlS : {a : Type} -> {f : SliceEndofunctor a} -> {0 sv, sa : SliceObj a} ->
+    {ea : a} -> sv ea -> f sa ea -> SliceScaleF {a} f sv sa ea
+
+-- The free monad in a slice category.
+public export
+data SliceFreeM : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a where
+  InSlF : {a : Type} -> {f : SliceEndofunctor a} -> {sa : SliceObj a} ->
+    SliceAlg {a} (SliceTranslateF {a} f sa) (SliceFreeM {a} f sa)
+
+-- The cofree comonad in a slice category.
+public export
+data SliceCofreeCM : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a
+    where
+  InSlCF : {a : Type} -> {f : SliceEndofunctor a} -> {sa : SliceObj a} ->
+    -- "Inf (SliceAlg {a} (SliceScaleF {a} f sa) (SliceCofreeCM {a} f sa))"
+    (ea : a) ->
+    Inf (SliceScaleF {a} f sa (SliceCofreeCM {a} f sa) ea) ->
+    SliceCofreeCM {a} f sa ea
 
 ----------------------------------------------------
 ----------------------------------------------------
@@ -5935,7 +5984,7 @@ sigmaCompose {f} m' m x y = m' (f x) $ m x y
 -- by specializing the index to `Type`).
 public export
 ProductCatObject : Type -> Type
-ProductCatObject idx = idx -> Type
+ProductCatObject = SliceObj
 
 public export
 FunctorCatObject : Type
@@ -5944,7 +5993,7 @@ FunctorCatObject = ProductCatObject Type
 public export
 ProductCatMorphism : {idx : Type} ->
   ProductCatObject idx -> ProductCatObject idx -> Type
-ProductCatMorphism {idx} dom cod = (i : idx) -> dom i -> cod i
+ProductCatMorphism {idx} = SliceMorphism {a=idx}
 
 public export
 FunctorCatMorphism : FunctorCatObject -> FunctorCatObject -> Type
@@ -5952,7 +6001,7 @@ FunctorCatMorphism = ProductCatMorphism {idx=Type}
 
 public export
 ProductCatObjectMap : Type -> Type -> Type
-ProductCatObjectMap idx idx' = ProductCatObject idx -> ProductCatObject idx'
+ProductCatObjectMap = SliceFunctor
 
 public export
 FunctorCatObjectMap : Type
@@ -5969,10 +6018,7 @@ FunctorCatObjectEndoMap = ProductCatObjectEndoMap Type
 public export
 ProductCatMorphismMap :
   {idx, idx' : Type} -> ProductCatObjectMap idx idx' -> Type
-ProductCatMorphismMap {idx} {idx'} objmap =
-  (dom, cod : ProductCatObject idx) ->
-  (m : ProductCatMorphism dom cod) ->
-  ProductCatMorphism (objmap dom) (objmap cod)
+ProductCatMorphismMap {idx} {idx'} = SliceFunctorMap {x=idx} {y=idx'}
 
 public export
 FunctorCatMorphismMap : FunctorCatObjectMap -> Type

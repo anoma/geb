@@ -108,12 +108,12 @@ data InitialObjF : (obj : Type) -> Type where
   Obj0 : InitialObjF obj
 
 -- The functor which freely generates an initial morphism extends
--- the contravariant hom-functor with a mapping from each object to
+-- the internal hom-profunctor with a mapping from each object to
 -- the new freely-generated (initial) object.
 public export
-data InitialMorphF : (obj : Type) -> (contrahom : obj -> Type -> Type) ->
-    InitialObjF obj -> Type -> Type where
-  Morph0 : (x : Type) -> InitialMorphF obj contrahom Obj0 x
+data InitialMorphF : (obj : Type) -> (contrahom : obj -> obj -> Type) ->
+    InitialObjF obj -> InitialObjF obj -> Type where
+  -- Morph0 : InitialMorphF obj contrahom Obj0 x
 
 --------------------
 ---- Coproducts ----
