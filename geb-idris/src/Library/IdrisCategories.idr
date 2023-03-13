@@ -1582,13 +1582,19 @@ data TranslateFunctor : (Type -> Type) -> Type -> (Type -> Type) where
     f a -> TranslateFunctor f v a
 
 public export
+trElim : {0 f : Type -> Type} -> {0 v, a, x : Type} ->
+  (v -> x) -> (f a -> x) -> TranslateFunctor f v a -> x
+trElim {f} {v} {a} {x} fv ff (TFV ev) = fv ev
+trElim {f} {v} {a} {x} fv ff (TFC efa) = ff efa
+
+public export
 Functor f => Bifunctor (TranslateFunctor f) where
   bimap f' g' (TFV x) = TFV $ f' x
   bimap f' g' (TFC x) = TFC $ map g' x
 
 public export
-LimitIterF : (Type -> Type) -> (Type -> Type)
-LimitIterF f a = TranslateFunctor f a a
+TrEitherF : (Type -> Type) -> (Type -> Type)
+TrEitherF f a = TranslateFunctor f a a
 
 -- For a given functor `F`, form the functor `Fa` defined by
 -- `Fa[x] = a * F[x]`.  We call it `ScaleFunctor` because it multiplies
@@ -7309,7 +7315,7 @@ Subst0TypeF = CoproductFL Subst0TypeFCases
 
 public export
 Subst0TypeLimitIter : Type -> Type
-Subst0TypeLimitIter = LimitIterF Subst0TypeF
+Subst0TypeLimitIter = TrEitherF Subst0TypeF
 
 public export
 Subst0TypeColimitIter : Type -> Type

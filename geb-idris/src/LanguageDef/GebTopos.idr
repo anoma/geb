@@ -111,9 +111,31 @@ data InitialObjF : (obj : Type) -> Type where
 -- the internal hom-profunctor with a mapping from each object to
 -- the new freely-generated (initial) object.
 public export
-data InitialMorphF : (obj : Type) -> (contrahom : obj -> obj -> Type) ->
-    FreeMonad InitialObjF obj -> FreeMonad InitialObjF obj -> Type where
-  Morph0 : InitialMorphF obj contrahom (inFC Obj0) x
+data InitialMorphF : (obj : Type) -> (hom : obj -> obj -> Type) ->
+    TrEitherF InitialObjF obj -> TrEitherF InitialObjF obj -> Type where
+  Morph0 : (x : TrEitherF InitialObjF obj) -> InitialMorphF obj hom (TFC Obj0) x
+
+public export
+InitialMorphInterpObj : (obj : Type) -> (obj -> Type) -> InitialObjF obj -> Type
+InitialMorphInterpObj obj interp Obj0 = Void
+
+public export
+ExtendInitialMorphInterpObj : (obj : Type) -> (obj -> Type) ->
+  TrEitherF InitialObjF obj -> Type
+ExtendInitialMorphInterpObj obj interp =
+  trElim interp (InitialMorphInterpObj obj interp)
+
+public export
+InitialMorphInterpMorph : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  (ointerp : obj -> Type) ->
+  (minterp : (a, b : obj) -> hom a b -> ointerp a -> ointerp b) ->
+  (a, b : TrEitherF InitialObjF obj) ->
+  InitialMorphF obj hom a b ->
+  ExtendInitialMorphInterpObj obj ointerp a ->
+  ExtendInitialMorphInterpObj obj ointerp b
+InitialMorphInterpMorph obj hom ointerp minterp (TFV a) b m impossible
+InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) b (Morph0 b) =
+  voidF _
 
 --------------------
 ---- Coproducts ----

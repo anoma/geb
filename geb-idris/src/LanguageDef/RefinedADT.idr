@@ -1276,7 +1276,7 @@ TreeRNat = ScaleFunctor RNatF
 
 public export
 LimitRNat : Type -> Type
-LimitRNat = LimitIterF RNatF
+LimitRNat = TrEitherF RNatF
 
 public export
 ColimitRNat : Type -> Type
