@@ -15,9 +15,9 @@ import public LanguageDef.Syntax
 --------------------------------------------
 --------------------------------------------
 
-------------------------------
----- Category of diagrams ----
-------------------------------
+--------------------
+---- Categories ----
+--------------------
 
 -- The (free-forgetful) adjunction which can be used to define a category
 -- has the following data:
@@ -63,6 +63,10 @@ record Diagram where
   constructor MkDiagram
   dVert : Type
   dEdge : MorphismT dVert
+
+------------------------
+---- Initial object ----
+------------------------
 
 -- The adjunction which can be used to define the initial object has the
 -- following data:
@@ -125,6 +129,74 @@ public export
 InitialMorphCod : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
   InitialMorphF obj morph dom cod -> Either (InitialObjF obj morph dom cod) obj
 InitialMorphCod obj morph dom cod m = m
+
+--------------------
+---- Coproducts ----
+--------------------
+
+-- The adjunction which can be used to define the coproduct has the
+-- following data:
+--
+--  - Left category C: category being freely generated
+--  - Right category D: product category of category being freely generated
+--  - Left functor L: functor from (A, A') to A + A'
+--  - Right functor R: diagonal functor (A to (A, A))
+--  - R . L (D -> D): (A, A') -> (A + A', A + A')
+--  - L . R (C -> C): A -> A + A
+--  - Unit (id -> R . L): (A, A') -> (A + A', A + A'): injections
+--    (A -> A + A' and A' -> A + A'), which are the introduction rules
+--  - Counit (L . R -> id): A + A -> A:  codiagonal
+--    (`Left x` and `Right x` both go to `x`)
+--  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
+--    for all (A, A', B) : C, Hom(A + A', B) == Hom((A, A'), (B, B)):
+--    that is, a morphism A + A' -> B is equivalent to a pair of morphisms
+--    A -> B and A' -> B (the right adjunct is therefore the elimination rule,
+--    AKA a case statement)
+--  - Left triangle identity: (counit . L) . (L . unit) = id(L):
+--    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
+--    (which goes from L(A) to L(A) in C via L(R(L(A)))):
+--    this becomes:
+--      forall A, A' : C,
+--        ((A + A') + (A + A') -> (A + A')) . (A + A' -> (A + A') + (A + A')) ==
+--        id(A + A') -- so if we start at A + A', inject to each side of the
+--        coproduct with itself, and then take the codiagonal, we get the
+--        same thing back that we started with
+--  - Right triangle identity: (R . counit) . (unit . R) = id(R):
+--    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
+--    (which goes from R(B) to R(B) in D via R(L(R(B)))):
+--    this becomes:
+--      forall B : C,
+--        ((B + B) -> B, (B + B) -> B) . (B -> B + B, B -> B + B) == id(B, B)
+--    this ends up implying two identities:
+--      codiag . linj(B -> B + B) = id
+--      codiag . rinj(B -> B + B) = id
+--    The left triangle identity appears to me to be just a more convoluted
+--    version of this, so this right identity is the "useful" one for this
+--    adjunction.
+--      Is it the case that we can conclude from this by using bimap in
+--      the diagonal category that:
+--        elim(f : A -> C, g : B -> C) . linj(A, B) = f
+--        elim(f : A -> C, g : B -> C) . rinj(A, B) = g
+--
+--    -- Laws from _Generic Programming With Adjunctions_ (see Table 1):
+--
+--  - Adjuncts viewed from the left :
+--      Hom (A + A', B) <-> Hom((A, A'), (B, B))
+--    gives an elimination rule for coproducts
+--  - Universal property:
+--      for all (A, A') : D (equivalently, all A, A' : D), B : C,
+--      f : C((A + A') -> B), g : D((A, A') -> (B, B)) (equivalently,
+--      all g1 : A -> B, g2 : A' -> B):
+--    f = radj(g) <=> ladj(f) = g
+--      With signatures spelled out, that's:
+--    f : (A + A') -> B = radj(g) <=>
+--    ladj(f) : (A, A') -> (B, B) = g <=>
+--    ((morph1(ladj(f)) : A -> B == g1) && (morph2(ladj(f)) : A' -> B == g2))
+--  - (co)unit/adjunct correspondence:
+--      counit = radj(id) : spelled out, for all A : C,
+--        codiag(A) : A + A -> A = radj(id(A), id(A))
+--      unit = ladj(id) : spelled out, for all A, A' : C,
+--        inj : (A, A') -> (A + A', A + A') = ladj(id(A + A'))
 
 ---------------------
 ---------------------
