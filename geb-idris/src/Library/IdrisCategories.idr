@@ -467,6 +467,10 @@ data SliceFreeM : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a where
   InSlF : {a : Type} -> {f : SliceEndofunctor a} -> {sa : SliceObj a} ->
     SliceAlg {a} (SliceTranslateF {a} f sa) (SliceFreeM {a} f sa)
 
+public export
+SliceMu : {a : Type} -> SliceEndofunctor a -> SliceObj a
+SliceMu {a} f = SliceFreeM {a} f (const Void)
+
 -- The cofree comonad in a slice category.
 public export
 data SliceCofreeCM : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a
@@ -476,6 +480,10 @@ data SliceCofreeCM : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a
     (ea : a) ->
     Inf (SliceScaleF {a} f sa (SliceCofreeCM {a} f sa) ea) ->
     SliceCofreeCM {a} f sa ea
+
+public export
+SliceNu : {a : Type} -> SliceEndofunctor a -> SliceObj a
+SliceNu {a} f = SliceCofreeCM {a} f (const Unit)
 
 ----------------------------------------------------
 ----------------------------------------------------
