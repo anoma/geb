@@ -1568,80 +1568,82 @@ Coalgebra : (Type -> Type) -> Type -> Type
 Coalgebra f a = a -> f a
 
 -- For a given functor `F` and object `v`, form the functor `Fv` defined by
--- `Fv[x] = v + F[x]`.  We call it `TermFunctor` because it turns
--- an endofunctor which we can interpret as representing a datatype
--- into one which we can interpret as representing open terms of
--- that datatype with variables drawn from type `v`.
+-- `Fv[x] = v + F[x]`.  We call it `TranslateFunctor` because it adds
+-- a constant functor (in effect, a type) to a given functor.
+-- This functor can be used to turn an endofunctor which we can interpret as
+-- representing a datatype into one which we can interpret as representing
+-- open terms of that datatype with variables drawn from type `v`.
+-- It is the dual of `ScaleFunctor`.
 public export
-data TermFunctor : (Type -> Type) -> Type -> (Type -> Type) where
-  TermVar : {f : Type -> Type} -> {0 v, a : Type} ->
-    v -> TermFunctor f v a
-  TermComposite : {f : Type -> Type} -> {0 v, a : Type} ->
-    f a -> TermFunctor f v a
+data TranslateFunctor : (Type -> Type) -> Type -> (Type -> Type) where
+  TFV : {f : Type -> Type} -> {0 v, a : Type} ->
+    v -> TranslateFunctor f v a
+  TFC : {f : Type -> Type} -> {0 v, a : Type} ->
+    f a -> TranslateFunctor f v a
 
 public export
-Functor f => Bifunctor (TermFunctor f) where
-  bimap f' g' (TermVar x) = TermVar $ f' x
-  bimap f' g' (TermComposite x) = TermComposite $ map g' x
+Functor f => Bifunctor (TranslateFunctor f) where
+  bimap f' g' (TFV x) = TFV $ f' x
+  bimap f' g' (TFC x) = TFC $ map g' x
 
 public export
 LimitIterF : (Type -> Type) -> (Type -> Type)
-LimitIterF f a = TermFunctor f a a
+LimitIterF f a = TranslateFunctor f a a
 
 -- For a given functor `F`, form the functor `Fa` defined by
--- `Fa[x] = a * F[x]`.  We call it `TreeFunctor` because it turns
--- an endofunctor which we can interpret as representing a datatype
--- into one which we can interpret as representing potentially infinite
--- trees of that datatype with labels drawn from type `v`.
--- This is the dual of `TermFunctor`.
+-- `Fa[x] = a * F[x]`.  We call it `ScaleFunctor` because it multiplies
+-- This functor can be used to turn an endofunctor which we can interpret as
+-- representing a datatype into one which we can interpret as representing
+-- potentially infinite trees of that datatype with labels drawn from type `v`.
+-- It is the dual of `TranslateFunctor`.
 public export
-data TreeFunctor : (Type -> Type) -> Type -> (Type -> Type) where
+data ScaleFunctor : (Type -> Type) -> Type -> (Type -> Type) where
   TreeNode : {f : Type -> Type} -> {0 l, a : Type} ->
-    l -> f a -> TreeFunctor f l a
+    l -> f a -> ScaleFunctor f l a
 
 export
-Functor f => Bifunctor (TreeFunctor f) where
+Functor f => Bifunctor (ScaleFunctor f) where
   bimap f' g' (TreeNode x fx) = TreeNode (f' x) (map g' fx)
 
 public export
 ColimitIterF : (Type -> Type) -> (Type -> Type)
-ColimitIterF f a = TreeFunctor f a a
+ColimitIterF f a = ScaleFunctor f a a
 
 export
-treeLabel : {f : Type -> Type} -> {l, a : Type} -> TreeFunctor f l a -> l
+treeLabel : {f : Type -> Type} -> {l, a : Type} -> ScaleFunctor f l a -> l
 treeLabel (TreeNode a' _) = a'
 
 export
-treeSubtree : {f : Type -> Type} -> {l, a : Type} -> TreeFunctor f l a -> f a
+treeSubtree : {f : Type -> Type} -> {l, a : Type} -> ScaleFunctor f l a -> f a
 treeSubtree (TreeNode _ fx) = fx
 
 -- An algebra on a functor representing a type of open terms (as generated
--- by `TermFunctor` above) may be viewed as a polymorphic algebra, because
+-- by `TranslateFunctor` above) may be viewed as a polymorphic algebra, because
 -- for each object `v` it generates an `F[v]`-algebra on an any given carrier
 -- object.  When `v` is the initial object (`Void`), it specializes to
 -- generating `F`-algebras.
 public export
 TermAlgebra : (Type -> Type) -> Type -> Type -> Type
-TermAlgebra f v a = Algebra (TermFunctor f v) a
+TermAlgebra f v a = Algebra (TranslateFunctor f v) a
 
 public export
 voidAlg : {f : Type -> Type} -> {a : Type} ->
   Algebra f a -> TermAlgebra f Void a
-voidAlg alg (TermVar {v=Void} _) impossible
-voidAlg alg (TermComposite x) = alg x
+voidAlg alg (TFV {v=Void} _) impossible
+voidAlg alg (TFC x) = alg x
 
 public export
 TermCoalgebra : (Type -> Type) -> Type -> Type -> Type
-TermCoalgebra f v a = Coalgebra (TermFunctor f v) a
+TermCoalgebra f v a = Coalgebra (TranslateFunctor f v) a
 
 -- A coalgebra on a functor representing a type of labeled trees (as generated
--- by `TreeFunctor` above) may be viewed as a polymorphic coalgebra, because
+-- by `ScaleFunctor` above) may be viewed as a polymorphic coalgebra, because
 -- for each object `v` it generates an `F[v]`-coalgebra on an any given carrier
 -- object.  When `v` is the terminal object (`Unit`), it specializes to
 -- generating `F`-coalgebras.
 public export
 TreeCoalgebra : (Type -> Type) -> Type -> Type -> Type
-TreeCoalgebra f v a = Coalgebra (TreeFunctor f v) a
+TreeCoalgebra f v a = Coalgebra (ScaleFunctor f v) a
 
 public export
 unitCoalg : {f : Type -> Type} -> {a : Type} ->
@@ -1650,7 +1652,7 @@ unitCoalg alg x = TreeNode {l=()} () $ alg x
 
 public export
 TreeAlgebra : (Type -> Type) -> Type -> Type -> Type
-TreeAlgebra f v a = Algebra (TreeFunctor f v) a
+TreeAlgebra f v a = Algebra (ScaleFunctor f v) a
 
 --------------------------------------------------
 ---- Initial algebras and terminal coalgebras ----
@@ -1695,7 +1697,7 @@ public export
 data CofreeComonad : (Type -> Type) -> (Type -> Type) where
   InCofree :
     {f : Type -> Type} -> {a : Type} ->
-    Inf (TreeFunctor f a (CofreeComonad f a)) -> CofreeComonad f a
+    Inf (ScaleFunctor f a (CofreeComonad f a)) -> CofreeComonad f a
 
 public export
 CofreeCoalgebra : (Type -> Type) -> Type -> Type
@@ -1721,11 +1723,11 @@ TerminalCoalgebra f = CofreeCoalgebra f Unit
 
 public export
 inFreeVar : {f : Type -> Type} -> Coalgebra (FreeMonad f) a
-inFreeVar = InFree . TermVar
+inFreeVar = InFree . TFV
 
 public export
 inFreeComposite : {f : Type -> Type} -> Algebra f (FreeMonad f a)
-inFreeComposite = InFree . TermComposite
+inFreeComposite = InFree . TFC
 
 public export
 outFree : TermCoalgebra f a (FreeMonad f a)
@@ -1846,7 +1848,7 @@ CofreeAdjCounit m f = CofreeNaturalTransformation m f id
 public export
 natTransFreeAlg : {f, g : Type -> Type} ->
   NaturalTransformation f g -> FreeAdjCounit g f
-natTransFreeAlg {f} {g} nt a = InFree . TermComposite . nt (FreeMonad g a)
+natTransFreeAlg {f} {g} nt a = InFree . TFC . nt (FreeMonad g a)
 
 public export
 natTransMapFree :
@@ -1856,7 +1858,7 @@ natTransMapFree :
   FreeMonadNatTrans f g
 natTransMapFree {f} {g} cataF nt carrier =
   cataF carrier
-    (FreeMonad g carrier) (InFree . TermVar) (natTransFreeAlg nt carrier)
+    (FreeMonad g carrier) (InFree . TFV) (natTransFreeAlg nt carrier)
 
 -----------------------------
 ---- Polynomial algebras ----
@@ -1904,13 +1906,13 @@ public export
 partial
 muFree : Functor f => TermAlgebra f v a -> FreeMonad f v -> a
 muFree alg (InFree x) = alg $ case x of
-  TermVar x => TermVar x
-  TermComposite x => TermComposite $ map (muFree alg) x
+  TFV x => TFV x
+  TFC x => TFC $ map (muFree alg) x
 
 public export
-voidalg : Algebra f a -> Algebra (TermFunctor f Void) a
-voidalg alg (TermVar _) impossible
-voidalg alg (TermComposite x) = alg x
+voidalg : Algebra f a -> Algebra (TranslateFunctor f Void) a
+voidalg alg (TFV _) impossible
+voidalg alg (TFC x) = alg x
 
 public export
 partial
@@ -1922,7 +1924,7 @@ partial
 adjointFoldFree : {f : Type -> Type} -> (Functor f, Functor l, Functor r) =>
   (counit : (a : Type) -> l (r a) -> a) ->
   {v, a : Type} ->
-  Algebra (TermFunctor f v) (r a) -> l (FreeMonad f v) -> a
+  Algebra (TranslateFunctor f v) (r a) -> l (FreeMonad f v) -> a
 adjointFoldFree counit {a} alg = counit a . map {f=l} (muFree alg)
 
 export
@@ -1935,7 +1937,7 @@ adjointFold counit {a} alg = counit a . map {f=l} (mu alg)
 public export
 partial
 nuFree : {f : Type -> Type} -> Functor f => {v, a : Type} ->
-  Coalgebra (TreeFunctor f v) a -> a -> CofreeComonad f v
+  Coalgebra (ScaleFunctor f v) a -> a -> CofreeComonad f v
 nuFree coalg x with (coalg x)
   nuFree coalg x | TreeNode x' v' =
     InCofree $ TreeNode x' $ map (nuFree coalg) v'
@@ -1946,12 +1948,12 @@ adjointUnfoldFree : {f, l, r : Type -> Type} ->
   (Functor f, Functor l, Functor r) =>
   (unit : (a : Type) -> a -> r (l a)) ->
   {v, a : Type} ->
-  Coalgebra (TreeFunctor f v) (l a) -> a -> r (CofreeComonad f v)
+  Coalgebra (ScaleFunctor f v) (l a) -> a -> r (CofreeComonad f v)
 adjointUnfoldFree unit {a} coalg = map {f=r} (nuFree coalg) . unit a
 
 public export
 unitcoalg : {f : Type -> Type} -> {a : Type} ->
-  Coalgebra f a -> Coalgebra (TreeFunctor f ()) a
+  Coalgebra f a -> Coalgebra (ScaleFunctor f ()) a
 unitcoalg coalg = TreeNode () . coalg
 
 export
@@ -1976,15 +1978,15 @@ partial
 hyloFree : {v, c, a : Type} ->
   {d, l, r : Type -> Type} -> (Functor d, Functor l, Functor r) =>
   (unit : (ty : Type) -> ty -> r (l ty)) ->
-  (coalg : c -> (TreeFunctor d v) c) ->
-  (alg : (l c, (l . (TreeFunctor d v) . r) a) -> a) ->
+  (coalg : c -> (ScaleFunctor d v) c) ->
+  (alg : (l c, (l . (ScaleFunctor d v) . r) a) -> a) ->
   l c -> a
 hyloFree unit coalg alg x =
   let
-    transport = map {f=l} . map {f=(TreeFunctor d v)} . map {f=r}
+    transport = map {f=l} . map {f=(ScaleFunctor d v)} . map {f=r}
     hylo_trans = transport $ hyloFree unit coalg alg
     unfolded = map {f=l} coalg x
-    unfolded_trans = map (map {f=(TreeFunctor d v)} (unit c)) unfolded
+    unfolded_trans = map (map {f=(ScaleFunctor d v)} (unit c)) unfolded
   in
   alg (x, hylo_trans unfolded_trans)
 
@@ -1999,7 +2001,7 @@ hylomorphism : {c, a : Type} ->
 hylomorphism {d} {l} {r} unit coalg alg =
   hyloFree {v=()} {d} {l} {r} unit (unitcoalg coalg) unitalg
     where
-    unitalg : (l c, (l . TreeFunctor d () . r) a) -> a
+    unitalg : (l c, (l . ScaleFunctor d () . r) a) -> a
     unitalg (x, x') = alg (x, map treeSubtree x')
 
 ----------------------------------------
@@ -2111,8 +2113,8 @@ FinCovarHomAlgToAlg {n=(S n)} alg (x, p) = FinCovarHomAlgToAlg (alg x) p
 public export
 finCovarFreeAlgebra : (n : Nat) -> (0 a : Type) ->
   FreeAlgebra (FinCovarHomFunc n) a
-finCovarFreeAlgebra Z a x = InFree $ TermComposite ()
-finCovarFreeAlgebra (S n) a (x, p) = InFree $ TermComposite (x, p)
+finCovarFreeAlgebra Z a x = InFree $ TFC ()
+finCovarFreeAlgebra (S n) a (x, p) = InFree $ TFC (x, p)
 
 public export
 FinCovarInitialAlgebra : (n : Nat) -> InitialAlgebra (FinCovarHomFunc n)
@@ -2122,8 +2124,8 @@ mutual
   public export
   cataFinCovar : (n : Nat) -> ParamCata (FinCovarHomFunc n)
   cataFinCovar n v a subst alg (InFree x) = case x of
-    TermVar var => subst var
-    TermComposite com => alg $ case n of
+    TFV var => subst var
+    TFC com => alg $ case n of
       Z => com
       S n' => case com of
         (x', com') =>
@@ -2144,26 +2146,26 @@ finCovarMap : {n : Nat} -> {a, b : Type} ->
   (a -> b) -> FreeFinCovar n a -> FreeFinCovar n b
 finCovarMap {n} {a} {b} f =
   cataFinCovar n a (FreeFinCovar n b)
-    (InFree . TermVar . f)
-    (InFree . TermComposite)
+    (InFree . TFV . f)
+    (InFree . TFC)
 
 public export
 finCovarMapN : {n, n' : Nat} -> {a, b : Type} ->
     (a -> b) -> ProductN n (FreeFinCovar n' a) -> ProductN n (FreeFinCovar n' b)
 finCovarMapN {n} {n'} f =
   cataFinCovarN n n' a (FreeFinCovar n' b)
-    (InFree . TermVar . f)
-    (InFree . TermComposite)
+    (InFree . TFV . f)
+    (InFree . TFC)
 
 public export
 finCovarReturn : {n : Nat} -> {0 a : Type} -> a -> FreeFinCovar n a
-finCovarReturn x = InFree $ TermVar x
+finCovarReturn x = InFree $ TFV x
 
 public export
 finCovarBigStepCata : {n : Nat} -> ParamBigStepCata (FinCovarHomFunc n)
 finCovarBigStepCata {n} v a subst alg (InFree x) = case x of
-  TermVar var => subst var
-  TermComposite com => alg $ InFree $ TermComposite $
+  TFV var => subst var
+  TFC com => alg $ InFree $ TFC $
     mapProductN n (finCovarMap subst) com
 
 public export
@@ -2182,14 +2184,14 @@ mutual
     FreeFinCovar n a ->
     FreeFinCovar n b
   finCovarApply (InFree f) (InFree x) = InFree $ case (f, x) of
-    (TermVar fv, TermVar xv) =>
-      TermVar $ fv xv
-    (TermVar fv, TermComposite xc) =>
-      TermComposite $ finCovarMapN fv xc
-    (TermComposite fc, TermVar xv) =>
-      TermComposite $ finCovarApplyN1 fc xv
-    (TermComposite fc, TermComposite xc) =>
-      TermComposite $ finCovarApplyNN fc xc
+    (TFV fv, TFV xv) =>
+      TFV $ fv xv
+    (TFV fv, TFC xc) =>
+      TFC $ finCovarMapN fv xc
+    (TFC fc, TFV xv) =>
+      TFC $ finCovarApplyN1 fc xv
+    (TFC fc, TFC xc) =>
+      TFC $ finCovarApplyNN fc xc
 
   public export
   partial
@@ -2197,10 +2199,10 @@ mutual
     FreeFinCovar n (a -> b) ->
     a ->
     FreeFinCovar n b
-  finCovarApply11 {n=Z} (InFree f) x = InFree $ TermComposite ()
+  finCovarApply11 {n=Z} (InFree f) x = InFree $ TFC ()
   finCovarApply11 {n=(S n)} (InFree f) x = InFree $ case f of
-    TermVar fv => TermVar $ fv x
-    TermComposite (f, fp) => TermComposite $
+    TFV fv => TFV $ fv x
+    TFC (f, fp) => TFC $
       (finCovarApply11 f x, finCovarApplyN1 fp x)
 
   public export
@@ -2224,14 +2226,14 @@ mutual
     let
       recnn = finCovarApplyNN fp xp
       recapply = InFree $ case (f, x) of
-        (TermVar fv, TermVar xv) =>
-          TermVar $ fv xv
-        (TermVar fv, TermComposite xc) =>
-          TermComposite $ finCovarMapN fv xc
-        (TermComposite fc, TermVar xv) =>
-          TermComposite $ finCovarApplyN1 fc xv
-        (TermComposite fc, TermComposite xc) =>
-          TermComposite $ finCovarApplyNN fc xc
+        (TFV fv, TFV xv) =>
+          TFV $ fv xv
+        (TFV fv, TFC xc) =>
+          TFC $ finCovarMapN fv xc
+        (TFC fc, TFV xv) =>
+          TFC $ finCovarApplyN1 fc xv
+        (TFC fc, TFC xc) =>
+          TFC $ finCovarApplyNN fc xc
     in
     (recapply, recnn)
 
@@ -2240,8 +2242,8 @@ mutual
   finCovarJoin : {n : Nat} -> {0 a : Type} ->
     FreeFinCovar n (FreeFinCovar n a) -> FreeFinCovar n a
   finCovarJoin (InFree x) = case x of
-    TermVar var => var
-    TermComposite com => finCovarFreeAlgebra n a $ finCovarJoinN com
+    TFV var => var
+    TFC com => finCovarFreeAlgebra n a $ finCovarJoinN com
 
   public export
   finCovarJoinN : {n, n' : Nat} -> {0 a : Type} ->
@@ -2309,7 +2311,7 @@ public export
 finPolyFreeAlgebra : (fpd : FinPolyData) -> (0 a : Type) ->
   FreeAlgebra (FinPolyFunc fpd) a
 finPolyFreeAlgebra [] a v = void v
-finPolyFreeAlgebra fpd a x = InFree $ TermComposite x
+finPolyFreeAlgebra fpd a x = InFree $ TFC x
 
 public export
 FinPolyInitialAlgebra : (fpd : FinPolyData) -> InitialAlgebra (FinPolyFunc fpd)
@@ -2319,8 +2321,8 @@ mutual
   public export
   cataFinPoly : (fpd : FinPolyData) -> ParamCata (FinPolyFunc fpd)
   cataFinPoly fpd v a subst alg (InFree poly) = case poly of
-    TermVar var => subst var
-    TermComposite com => alg $ case fpd of
+    TFV var => subst var
+    TFC com => alg $ case fpd of
       [] => void com
       ((coeff, pow) :: terms) => case com of
         Left fields => Left $ cataFinPolyFuncN subst alg . fields -- (c, cataFinPolyFuncN subst alg p)
@@ -2360,7 +2362,7 @@ freeFinPolyMap : {fpd : FinPolyData} -> {a, b : Type} ->
   (a -> b) -> FreeFinPoly fpd a -> FreeFinPoly fpd b
 freeFinPolyMap {fpd} {a} {b} f =
   cataFinPoly fpd
-    a (FreeFinPoly fpd b) (InFree . TermVar . f) (InFree . TermComposite)
+    a (FreeFinPoly fpd b) (InFree . TFV . f) (InFree . TFC)
 
 public export
 finPolyFuncMap : {fpd, fpd' : FinPolyData} -> {a, b : Type} ->
@@ -2369,7 +2371,7 @@ finPolyFuncMap : {fpd, fpd' : FinPolyData} -> {a, b : Type} ->
 finPolyFuncMap {a} {b} f =
   cataFinPolyFunc
     {v=a} {a=(FreeFinPoly fpd' b)}
-    (InFree . TermVar . f) (InFree . TermComposite)
+    (InFree . TFV . f) (InFree . TFC)
 
 public export
 freeFinPolyMapN : {pow : Nat} -> {fpd : FinPolyData} -> {a, b : Type} ->
@@ -2377,18 +2379,18 @@ freeFinPolyMapN : {pow : Nat} -> {fpd : FinPolyData} -> {a, b : Type} ->
   ProductN pow (FreeFinPoly fpd a) -> ProductN pow (FreeFinPoly fpd b)
 freeFinPolyMapN {pow} {fpd} {a} {b} f =
   cataFinPolyFuncN {fpd} {v=a} {a=(FreeFinPoly fpd b)}
-    (InFree . TermVar . f) (InFree . TermComposite)
+    (InFree . TFV . f) (InFree . TFC)
 
 public export
 finPolyReturn : {fpd : FinPolyData} -> {0 a : Type} -> a -> FreeFinPoly fpd a
-finPolyReturn x = InFree $ TermVar x
+finPolyReturn x = InFree $ TFV x
 
 public export
 finPolyBigStepCata : {fpd : FinPolyData} ->
   ParamBigStepCata (FinPolyFunc fpd)
 finPolyBigStepCata {fpd} v a subst alg (InFree x) = case x of
-  TermVar var => subst var
-  TermComposite com => alg $ InFree $ TermComposite $ finPolyFuncMap subst com
+  TFV var => subst var
+  TFC com => alg $ InFree $ TFC $ finPolyFuncMap subst com
 
 public export
 finPolyBigStepCataFunc : (fpd, fpd' : FinPolyData) -> (v, a : Type) ->
@@ -2418,19 +2420,19 @@ mutual
     FreeFinPoly fpd b
   finPolyApply {fpd} (InFree f) (InFree x) = InFree $ case fpd of
     [] => case f of
-      TermVar fvar => TermVar $ case x of
-        TermVar xvar => fvar xvar
-        TermComposite xcom => void xcom
-      TermComposite fcom => void fcom
+      TFV fvar => TFV $ case x of
+        TFV xvar => fvar xvar
+        TFC xcom => void xcom
+      TFC fcom => void fcom
     ((coeff, pow) :: terms) => case (f, x) of
-      (TermVar fv, TermVar xv) => TermVar $ fv xv
-      (TermVar fv, TermComposite xc) => TermComposite $ case xc of
+      (TFV fv, TFV xv) => TFV $ fv xv
+      (TFV fv, TFC xc) => TFC $ case xc of
         Left fields => Left $ freeFinPolyMapN fv . fields
         Right xcr => Right $ finPolyFuncMap fv xcr
-      (TermComposite fc, TermVar xv) => TermComposite $ case fc of
+      (TFC fc, TFV xv) => TFC $ case fc of
         Left fields => Left $ mapProductN pow (finPolyApply11 xv) . fields
         Right terms => Right $ finPolyApplyF1 xv terms
-      (TermComposite fc, TermComposite xc) => TermComposite $ case (fc, xc) of
+      (TFC fc, TFC xc) => TFC $ case (fc, xc) of
         (Left ffields, Left xfields) =>
           Left $ \c => finPolyApplyNN (ffields c) (xfields c)
         (Left ffields, Right xterms) =>
@@ -2444,8 +2446,8 @@ mutual
   finPolyApply11 : {fpd : FinPolyData} -> {a, b : Type} ->
     a -> FreeFinPoly fpd (a -> b) -> FreeFinPoly fpd b
   finPolyApply11 ax (InFree fx) = InFree $ case fx of
-    TermVar fv => TermVar $ fv ax
-    TermComposite fcom => TermComposite $ finPolyApplyF1 ax fcom
+    TFV fv => TFV $ fv ax
+    TFC fcom => TFC $ finPolyApplyF1 ax fcom
 
   public export
   finPolyApplyNF : {pow : Nat} -> {fpd, fpd' : FinPolyData} -> {a, b : Type} ->
@@ -2463,13 +2465,13 @@ mutual
     FreeFinPoly fpd' b
   finPolyApplyFP {fpd=[]} (InFree fx) v = void v
   finPolyApplyFP {fpd=((coeff, pow) :: terms)} (InFree fx) xp = case (fx, xp) of
-    (TermVar fv, Left xfields) =>
-      InFree $ TermComposite $ finPolyApplyFP_hole_fvxf
-    (TermComposite fc, Left xfields) =>
+    (TFV fv, Left xfields) =>
+      InFree $ TFC $ finPolyApplyFP_hole_fvxf
+    (TFC fc, Left xfields) =>
       finPolyApplyFP_hole_fcxf
-    (TermVar fv, Right xterms) =>
+    (TFV fv, Right xterms) =>
       finPolyApplyFP_hole_fvxt
-    (TermComposite fc, Right xterms) =>
+    (TFC fc, Right xterms) =>
       finPolyApplyFP_hole_fcxt
 
   public export
@@ -2513,8 +2515,8 @@ mutual
   finPolyJoin : {fpd : FinPolyData} -> {0 a : Type} ->
     FreeFinPoly fpd (FreeFinPoly fpd a) -> FreeFinPoly fpd a
   finPolyJoin {fpd} {a} (InFree x) = case x of
-    TermVar var => var
-    TermComposite com => finPolyFreeAlgebra fpd a $ finPolyJoinFunc com
+    TFV var => var
+    TFC com => finPolyFreeAlgebra fpd a $ finPolyJoinFunc com
 
   public export
   finPolyJoinN : {pow : Nat} -> {fpd : FinPolyData} -> {0 a : Type} ->
@@ -2987,7 +2989,7 @@ interface (Functor f, Monad m) => FreeLike f m where
 public export
 FreeMonadFreeLike : {f : Type -> Type} -> Functor f ->
   {auto isM : Monad (FreeMonad f)} -> FreeLike f (FreeMonad f)
-FreeMonadFreeLike isF {isM} = MkFreeLike $ \a, x => InFree $ TermComposite x
+FreeMonadFreeLike isF {isM} = MkFreeLike $ \a, x => InFree $ TFC x
 
 public export
 CodensityFreeLike : {f, m : Type -> Type} ->
@@ -3114,8 +3116,8 @@ mutual
   public export
   cataNatCovar : ParamCata NatCovarHomFunc
   cataNatCovar v a subst alg (InFree x) = case x of
-    TermVar var => subst var
-    TermComposite com => alg $ (cataNatCovar v a subst alg) . com
+    TFV var => subst var
+    TFC com => alg $ (cataNatCovar v a subst alg) . com
     -}
 
 public export
@@ -3168,8 +3170,8 @@ NuNat = Nu NatF
 public export
 cataNatF : ParamCata NatF
 cataNatF v a subst alg (InFree x) = case x of
-  TermVar var => subst var
-  TermComposite n => alg $ case n of
+  TFV var => subst var
+  TFC n => alg $ case n of
     ZeroF => ZeroF
     SuccF n' => SuccF $ cataNatF v a subst alg n'
 
@@ -3192,11 +3194,11 @@ interpMuNatF = interpFreeNatF {v=Void} (voidF Nat)
 
 public export
 NatFZ : FreeMonad NatF a
-NatFZ = InFree $ TermComposite ZeroF
+NatFZ = InFree $ TFC ZeroF
 
 public export
 NatFS : FreeMonad NatF a -> FreeMonad NatF a
-NatFS = InFree . TermComposite . SuccF
+NatFS = InFree . TFC . SuccF
 
 ---------------------------------------
 ---- Natural numbers as a category ----
@@ -5836,8 +5838,8 @@ NuList = Nu . ListF
 public export
 cataListF : {atom : Type} -> ParamCata $ ListF atom
 cataListF v a subst alg (InFree x) = case x of
-  TermVar var => subst var
-  TermComposite l => alg $ case l of
+  TFV var => subst var
+  TFC l => alg $ case l of
     NilF => NilF
     ConsF x l' => ConsF x $ cataListF v a subst alg l'
 
@@ -6075,7 +6077,7 @@ ProductCatCoalgebra : {idx : Type} ->
   ProductCatObjectEndoMap idx -> ProductCatObject idx -> Type
 ProductCatCoalgebra f a = ProductCatMorphism a (f a)
 
--- The product-category version of `TermFunctor`.  In the case of just two
+-- The product-category version of `TranslateFunctor`.  In the case of just two
 -- categories, for example, if `F` and `G` are the components of the input
 -- functor, each going from the product category to one of the components,
 -- and `v` and `w` are the components of the variable type, then this
@@ -6099,7 +6101,7 @@ data ProductCatTermFunctor : {idx : Type} ->
     f a i -> ProductCatTermFunctor f v a i
 
 -- The dual of `ProductCatTermFunctor`, also known as the product-category
--- version of `TreeFunctor`.
+-- version of `ScaleFunctor`.
 public export
 data ProductCatTreeFunctor : {idx : Type} ->
     ProductCatObjectEndoMap idx ->
@@ -6953,31 +6955,31 @@ CFunctorIterInterpPred {cat} f a =
 --------------------------------------
 
 -- For a given functor `F` and object `v`, form the functor `Fv` defined by
--- `Fv[x] = v + F[x]`.  We call it `TermFunctor` because it turns
+-- `Fv[x] = v + F[x]`.  We call it `TranslateFunctor` because it turns
 -- an endofunctor which we can interpret as representing a datatype
 -- into one which we can interpret as representing open terms of
 -- that datatype with variables drawn from type `v`.
 public export
-TermFunctor' : (Type -> Type) -> Type -> (Type -> Type)
-TermFunctor' f a = CoproductF (ConstF a) f
+TranslateFunctor' : (Type -> Type) -> Type -> (Type -> Type)
+TranslateFunctor' f a = CoproductF (ConstF a) f
 
 public export
-Functor f => Bifunctor (TermFunctor' f) where
+Functor f => Bifunctor (TranslateFunctor' f) where
   bimap f' g' (Left x) = Left $ f' x
   bimap f' g' (Right x) = Right $ map g' x
 
 -- For a given functor `F`, form the functor `Fa` defined by
--- `Fa[x] = a * F[x]`.  We call it `TreeFunctor` because it turns
+-- `Fa[x] = a * F[x]`.  We call it `ScaleFunctor` because it turns
 -- an endofunctor which we can interpret as representing a datatype
 -- into one which we can interpret as representing potentially infinite
 -- trees of that datatype with labels drawn from type `v`.
--- This is the dual of `TermFunctor`.
+-- This is the dual of `TranslateFunctor`.
 public export
-TreeFunctor' : (Type -> Type) -> Type -> (Type -> Type)
-TreeFunctor' f a = ProductF (ConstF a) f
+ScaleFunctor' : (Type -> Type) -> Type -> (Type -> Type)
+ScaleFunctor' f a = ProductF (ConstF a) f
 
 export
-Functor f => Bifunctor (TreeFunctor' f) where
+Functor f => Bifunctor (ScaleFunctor' f) where
   bimap f' g' (x, fx) = (f' x, map g' fx)
 
 -- The free monad of the identity functor.
@@ -7341,8 +7343,8 @@ CofreeSubst0Type = CofreeComonad Subst0TypeF
 public export
 subst0TypeCata : ParamCata Subst0TypeF
 subst0TypeCata v a subst alg (InFree x) = case x of
-  TermVar var => subst var
-  TermComposite com => alg $ case com of
+  TFV var => subst var
+  TFC com => alg $ case com of
     -- Unit
     Left () => Left ()
     Right com' => Right $ case com' of
