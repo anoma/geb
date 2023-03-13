@@ -104,31 +104,16 @@ record Diagram where
 -- The functor which freely generates an initial object simply
 -- generates one new object.
 public export
-InitialObjF : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
-  Type
-InitialObjF _ _ _ _ = Unit
+data InitialObjF : (obj : Type) -> Type where
+  Obj0 : InitialObjF obj
 
--- The functor which freely generates an initial morphism generates one
--- from any object (existing or new) to the newly-generated object.
--- Thus, the type of new morphisms is the updated type of objects.
+-- The functor which freely generates an initial morphism extends
+-- the contravariant hom-functor with a mapping from each object to
+-- the new freely-generated (initial) object.
 public export
-InitialMorphF : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
-  Type
-InitialMorphF obj morph dom cod = Either (InitialObjF obj morph dom cod) obj
-
--- The domain of the new initial morphism corresponding to a given object
--- is the initial object.
-public export
-InitialMorphDom : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
-  InitialMorphF obj morph dom cod -> Either obj (InitialObjF obj morph dom cod)
-InitialMorphDom obj morph dom cod m = Right ()
-
--- The codomain of the new initial morphism corresponding to a given object
--- is the given object.
-public export
-InitialMorphCod : (obj : Type) -> (morph : Type) -> (dom, cod : morph -> obj) ->
-  InitialMorphF obj morph dom cod -> Either (InitialObjF obj morph dom cod) obj
-InitialMorphCod obj morph dom cod m = m
+data InitialMorphF : (obj : Type) -> (contrahom : obj -> Type -> Type) ->
+    InitialObjF obj -> Type -> Type where
+  Morph0 : (x : Type) -> InitialMorphF obj contrahom Obj0 x
 
 --------------------
 ---- Coproducts ----
