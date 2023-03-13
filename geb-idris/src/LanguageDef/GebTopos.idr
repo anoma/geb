@@ -192,11 +192,31 @@ InitialMorphCod obj morph dom cod m = m
 --    f : (A + A') -> B = radj(g) <=>
 --    ladj(f) : (A, A') -> (B, B) = g <=>
 --    ((morph1(ladj(f)) : A -> B == g1) && (morph2(ladj(f)) : A' -> B == g2))
---  - (co)unit/adjunct correspondence:
+--  - reflection law / simple computation law (eta/beta reductions, or
+--    (co)unit/adjunct correspondence):
 --      counit = radj(id) : spelled out, for all A : C,
 --        codiag(A) : A + A -> A = radj(id(A), id(A))
 --      unit = ladj(id) : spelled out, for all A, A' : C,
 --        inj : (A, A') -> (A + A', A + A') = ladj(id(A + A'))
+--  - Computation (from left, eta reduction rule):
+--      f = radj(ladj(f)) : spelled out, for all A, A', B : C,
+--      f : A + A' -> B == radj(morph1(ladj(f)), morph2(ladj(f)))
+--  - Computation (from right, beta reduction rule):
+--      g = ladj(radj(g)) : spelled out, for all A, A', B : C,
+--      (g : A -> B, g' : A' -> B) == ladj(radj(g, g')) <=>
+--        (g = morph1(ladj(radj(g, g')))) && (g' = morph2(ladj(radj(g, g'))))
+--  - Functor fusion law from left:
+--    radj(g) . L h == radj(g . h)
+--  - Fusion law from right:
+--    ladj(f) . h == ladj(f . L h)
+--  - Fusion law from left:
+--    k . radj(g) == radj(R k . g)
+--  - Functor fusion law from right:
+--    R k . ladj(f) == ladj(k . f)
+--  - Counit naturality:
+--    k . counit == counit . (L(R(k)))
+--  - Unit naturality:
+--    R(L(h)) . unit == unit . h
 
 ---------------------
 ---------------------
