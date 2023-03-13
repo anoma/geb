@@ -926,7 +926,7 @@ Show MuS0EF where
 -- The void-valued constant endofunctor -- the sum of no endofunctors.
 public export
 (!+) : FreeS0EF v
-(!+) = inFreeComposite Subst0EndoEmpty
+(!+) = inFC Subst0EndoEmpty
 
 -- The representable endofunctor represented by a given object -- in the
 -- endofunctor category, that is, by some endofunctor, which implicitly
@@ -934,7 +934,7 @@ public export
 prefix 11 :>:
 public export
 (:>:) : FreeS0EF v -> FreeS0EF v
-(:>:) a = inFreeComposite $ Subst0EndoCovarRep a
+(:>:) a = inFC $ Subst0EndoCovarRep a
 
 -- The unit-valued constant endofunctor -- represented by the initial object
 -- (Void), and hence in the endofunctor category by the void-valued constant
@@ -948,7 +948,7 @@ public export
 infixl 7 :+:
 public export
 (:+:) : FreeS0EF v -> FreeS0EF v -> FreeS0EF v
-a :+: b = inFreeComposite $ Subst0EndoSum a b
+a :+: b = inFC $ Subst0EndoSum a b
 
 -----------------------------------------------------------------------
 ---- Interpretation of MuS0EF as monoid of polynomial endofunctors ----

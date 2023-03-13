@@ -1598,12 +1598,12 @@ LimitIterF f a = TranslateFunctor f a a
 -- It is the dual of `TranslateFunctor`.
 public export
 data ScaleFunctor : (Type -> Type) -> Type -> (Type -> Type) where
-  TreeNode : {f : Type -> Type} -> {0 l, a : Type} ->
+  SFN : {f : Type -> Type} -> {0 l, a : Type} ->
     l -> f a -> ScaleFunctor f l a
 
 export
 Functor f => Bifunctor (ScaleFunctor f) where
-  bimap f' g' (TreeNode x fx) = TreeNode (f' x) (map g' fx)
+  bimap f' g' (SFN x fx) = SFN (f' x) (map g' fx)
 
 public export
 ColimitIterF : (Type -> Type) -> (Type -> Type)
@@ -1611,11 +1611,11 @@ ColimitIterF f a = ScaleFunctor f a a
 
 export
 treeLabel : {f : Type -> Type} -> {l, a : Type} -> ScaleFunctor f l a -> l
-treeLabel (TreeNode a' _) = a'
+treeLabel (SFN a' _) = a'
 
 export
 treeSubtree : {f : Type -> Type} -> {l, a : Type} -> ScaleFunctor f l a -> f a
-treeSubtree (TreeNode _ fx) = fx
+treeSubtree (SFN _ fx) = fx
 
 -- An algebra on a functor representing a type of open terms (as generated
 -- by `TranslateFunctor` above) may be viewed as a polymorphic algebra, because
@@ -1648,7 +1648,7 @@ TreeCoalgebra f v a = Coalgebra (ScaleFunctor f v) a
 public export
 unitCoalg : {f : Type -> Type} -> {a : Type} ->
   Coalgebra f a -> TreeCoalgebra f Unit a
-unitCoalg alg x = TreeNode {l=()} () $ alg x
+unitCoalg alg x = SFN {l=()} () $ alg x
 
 public export
 TreeAlgebra : (Type -> Type) -> Type -> Type -> Type
@@ -1722,21 +1722,21 @@ TerminalCoalgebra : (Type -> Type) -> Type
 TerminalCoalgebra f = CofreeCoalgebra f Unit
 
 public export
-inFreeVar : {f : Type -> Type} -> Coalgebra (FreeMonad f) a
-inFreeVar = InFree . TFV
+inFV : {f : Type -> Type} -> Coalgebra (FreeMonad f) a
+inFV = InFree . TFV
 
 public export
-inFreeComposite : {f : Type -> Type} -> Algebra f (FreeMonad f a)
-inFreeComposite = InFree . TFC
+inFC : {f : Type -> Type} -> Algebra f (FreeMonad f a)
+inFC = InFree . TFC
 
 public export
 outFree : TermCoalgebra f a (FreeMonad f a)
 outFree (InFree x) = x
 
 public export
-inCofreeTree : {a : Type} -> {f : Type -> Type} ->
+inCN : {a : Type} -> {f : Type -> Type} ->
   a -> Algebra f (CofreeComonad f a)
-inCofreeTree x fx = InCofree $ TreeNode x fx
+inCN x fx = InCofree $ SFN x fx
 
 public export
 outCofree : {f : Type -> Type} -> {a : Type} ->
@@ -1939,8 +1939,8 @@ partial
 nuFree : {f : Type -> Type} -> Functor f => {v, a : Type} ->
   Coalgebra (ScaleFunctor f v) a -> a -> CofreeComonad f v
 nuFree coalg x with (coalg x)
-  nuFree coalg x | TreeNode x' v' =
-    InCofree $ TreeNode x' $ map (nuFree coalg) v'
+  nuFree coalg x | SFN x' v' =
+    InCofree $ SFN x' $ map (nuFree coalg) v'
 
 export
 partial
@@ -1954,7 +1954,7 @@ adjointUnfoldFree unit {a} coalg = map {f=r} (nuFree coalg) . unit a
 public export
 unitcoalg : {f : Type -> Type} -> {a : Type} ->
   Coalgebra f a -> Coalgebra (ScaleFunctor f ()) a
-unitcoalg coalg = TreeNode () . coalg
+unitcoalg coalg = SFN () . coalg
 
 export
 partial
@@ -7376,21 +7376,21 @@ interpretSubst0Alg = CoproductAlgL {l=Subst0TypeFCases}
 
 public export
 Subst0Unit : FreeSubst0Type carrier
-Subst0Unit = inFreeComposite $ Left ()
+Subst0Unit = inFC $ Left ()
 
 public export
 Subst0Void : FreeSubst0Type carrier
-Subst0Void = inFreeComposite $ Right $ Left ()
+Subst0Void = inFC $ Right $ Left ()
 
 public export
 Subst0Product :
   FreeSubst0Type carrier -> FreeSubst0Type carrier -> FreeSubst0Type carrier
-Subst0Product a b = inFreeComposite $ Right $ Right $ Left (a, b)
+Subst0Product a b = inFC $ Right $ Right $ Left (a, b)
 
 public export
 Subst0Coproduct :
   FreeSubst0Type carrier -> FreeSubst0Type carrier -> FreeSubst0Type carrier
-Subst0Coproduct a b = inFreeComposite $ Right $ Right $ Right (a, b)
+Subst0Coproduct a b = inFC $ Right $ Right $ Right (a, b)
 
 public export
 data Subst0MorphismF :
