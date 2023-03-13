@@ -64,6 +64,16 @@ record Diagram where
   dVert : Type
   dEdge : MorphismT dVert
 
+public export
+MorphDenotationCovar : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
+MorphDenotationCovar obj hom =
+  (a, b : obj) -> hom a b -> ((c : obj) -> hom b c -> hom a c)
+
+public export
+MorphDenotationContravar : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
+MorphDenotationContravar obj hom =
+  (a, b : obj) -> hom a b -> ((c : obj) -> hom c a -> hom c b)
+
 ------------------------
 ---- Initial object ----
 ------------------------
@@ -135,7 +145,23 @@ InitialMorphInterpMorph : (obj : Type) -> (hom : obj -> obj -> Type) ->
   ExtendInitialMorphInterpObj obj ointerp b
 InitialMorphInterpMorph obj hom ointerp minterp (TFV a) b m impossible
 InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) b (Morph0 b) =
-  voidF _
+  voidF (ExtendInitialMorphInterpObj obj ointerp b)
+
+public export
+InitialMorphDenoteMorphCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  MorphDenotationCovar obj hom ->
+  MorphDenotationCovar (TrEitherF InitialObjF obj) (InitialMorphF obj hom)
+InitialMorphDenoteMorphCovar obj hom denote
+  (TFC Obj0) (TFC Obj0) (Morph0 (TFC Obj0)) c (Morph0 c) = Morph0 c
+
+public export
+InitialMorphDenoteMorphContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  MorphDenotationContravar obj hom ->
+  MorphDenotationContravar (TrEitherF InitialObjF obj) (InitialMorphF obj hom)
+InitialMorphDenoteMorphContravar obj hom denote
+  (TFC Obj0) _ (Morph0 _) (TFV _) (Morph0 c) impossible
+InitialMorphDenoteMorphContravar obj hom denote
+  (TFC Obj0) b (Morph0 b) (TFC Obj0) (Morph0 (TFC Obj0)) = Morph0 b
 
 --------------------
 ---- Coproducts ----
