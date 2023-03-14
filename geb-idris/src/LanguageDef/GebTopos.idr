@@ -111,9 +111,25 @@ MorphIdCovarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
 MorphIdCovarDenotation {obj} {hom} a c = id {a=(hom a c)}
 
 public export
+MorphComposeCovarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
+  {a, b, c : obj} ->
+  InternalCovarNT {obj} hom b c ->
+  InternalCovarNT {obj} hom a b ->
+  InternalCovarNT {obj} hom a c
+MorphComposeCovarDenotation {obj} {hom} {a} {b} {c} g f d = f d . g d
+
+public export
 MorphIdContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
   (a : obj) -> InternalContravarNT {obj} hom a a
 MorphIdContravarDenotation {obj} {hom} a c = id {a=(hom c a)}
+
+public export
+MorphComposeContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
+  {a, b, c : obj} ->
+  InternalContravarNT {obj} hom b c ->
+  InternalContravarNT {obj} hom a b ->
+  InternalContravarNT {obj} hom a c
+MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
 
 public export
 MorphDenoteExtendCovar :
