@@ -72,7 +72,7 @@ data MorphTranslateF :
     (TrEitherF f obj -> TrEitherF f obj -> Type) where
   MeV : {x, y : obj} ->
     homv x y -> MorphTranslateF {obj} {f} homv hom (TFV x) (TFV y)
-  MeC : {x, y : TrEitherF f obj} ->
+  MeU : {x, y : TrEitherF f obj} ->
     hom x y -> MorphTranslateF {obj} {f} homv hom x y
 
 public export
@@ -236,9 +236,9 @@ InitialMorphExtendDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
   MorphDenoteExtendCovar obj InitialObjF hom (InitialMorphF obj hom)
 InitialMorphExtendDenoteCovar
   obj hom denote (TFC Obj0) (TFV b) (Morph0 b) (TFV c) (MeV mbc) =
-    MeC $ Morph0 c
+    MeU $ Morph0 c
 InitialMorphExtendDenoteCovar
-  _ _ _ (TFC Obj0) (TFV _) (Morph0 _) _ (MeC (Morph0 _)) impossible
+  _ _ _ (TFC Obj0) (TFV _) (Morph0 _) _ (MeU (Morph0 _)) impossible
 
 public export
 InitialMorphDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
@@ -248,20 +248,20 @@ InitialMorphDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
 InitialMorphDenoteCovar obj hom denote
   (TFV a) (TFV b) (MeV mab) (TFV c) (MeV mbc) = MeV $ denote a b mab c mbc
 InitialMorphDenoteCovar obj hom denote
-  (TFV _) (TFV _) (MeV _) _ (MeC (Morph0 _)) impossible
+  (TFV _) (TFV _) (MeV _) _ (MeU (Morph0 _)) impossible
 InitialMorphDenoteCovar obj hom denote
-  (TFC Obj0) (TFV b) (MeC (Morph0 b)) (TFV c) (MeV mbc) = MeC $ Morph0 c
+  (TFC Obj0) (TFV b) (MeU (Morph0 b)) (TFV c) (MeV mbc) = MeU $ Morph0 c
 InitialMorphDenoteCovar obj hom denote
-  _ _ (MeC _) (TFC _) (MeC (Morph0 _)) impossible
+  _ _ (MeU _) (TFC _) (MeU (Morph0 _)) impossible
 InitialMorphDenoteCovar obj hom denote
-  _ (TFC Obj0) (MeC (Morph0 _)) (TFV _) (MeC (Morph0 _)) impossible
+  _ (TFC Obj0) (MeU (Morph0 _)) (TFV _) (MeU (Morph0 _)) impossible
 
 public export
 InitialMorphExtendDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
   MorphDenotationContravarNT obj hom ->
   MorphDenoteExtendContravar obj InitialObjF hom (InitialMorphF obj hom)
 InitialMorphExtendDenoteContravar _ _ _
-  (TFC Obj0) (TFV _) (Morph0 _) _ (MeC (Morph0 c)) impossible
+  (TFC Obj0) (TFV _) (Morph0 _) _ (MeU (Morph0 c)) impossible
 
 public export
 InitialMorphDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
@@ -271,13 +271,13 @@ InitialMorphDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
 InitialMorphDenoteContravar obj hom denote
   (TFV a) (TFV b) (MeV mab) (TFV c) (MeV mca) = MeV $ denote a b mab c mca
 InitialMorphDenoteContravar obj hom denote
-  (TFV a) (TFV b) (MeV mab) (TFC Obj0) (MeC (Morph0 a)) = MeC $ Morph0 b
+  (TFV a) (TFV b) (MeV mab) (TFC Obj0) (MeU (Morph0 a)) = MeU $ Morph0 b
 InitialMorphDenoteContravar obj hom denote
-  (TFV _) (TFC _) (MeC (Morph0 _)) _ _ impossible
+  (TFV _) (TFC _) (MeU (Morph0 _)) _ _ impossible
 InitialMorphDenoteContravar obj hom denote
-  (TFC Obj0) (TFC _) (MeC (Morph0 _)) _ _ impossible
+  (TFC Obj0) (TFC _) (MeU (Morph0 _)) _ _ impossible
 InitialMorphDenoteContravar obj hom denote
-  (TFC Obj0) (TFV _) (MeC (Morph0 _)) _ (MeC (Morph0 _)) impossible
+  (TFC Obj0) (TFV _) (MeU (Morph0 _)) _ (MeU (Morph0 _)) impossible
 
 --------------------
 ---- Coproducts ----
@@ -410,30 +410,41 @@ CoprodMorphDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
   MorphDenotationCovarNT
     (TrEitherF CoprodObjF obj) (MorphTranslateF hom (CoprodMorphF obj hom))
 CoprodMorphDenoteCovar obj hom denote
-  (TFV a) (TFV b) (MeV mab) (TFV c) (MeV mbc) = ?CoprodMorphDenoteCovar_hole_1
+  (TFV a) (TFV b) (MeV mab) (TFV c) (MeV mbc) = MeV $ denote a b mab c mbc
 CoprodMorphDenoteCovar obj hom denote
-  (TFV a) (TFV b) (MeV mab) (TFC (ObjCp b y)) (MeC (CpInjL b y)) =
+  (TFV a) (TFV b) (MeV mab) (TFC (ObjCp b y)) (MeU (CpInjL b y)) =
     ?CoprodMorphDenoteCovar_hole_2
 CoprodMorphDenoteCovar obj hom denote
-  (TFV a) (TFV b) (MeV mab) (TFC (ObjCp x b)) (MeC (CpInjR x b)) =
-    ?CoprodMorphDenoteCovar_hole_3
+  (TFV a) (TFV b) (MeV mab) (TFC (ObjCp x b)) (MeU (CpInjR x b)) =
+    MeU $ ?CoprodMorphDenoteCovar_hole_3
 CoprodMorphDenoteCovar obj hom denote
-  (TFC (ObjCp x y)) (TFV b) (MeC (CpCase x y b w v)) (TFV c) (MeV mbc) =
-    ?CoprodMorphDenoteCovar_hole_4
+  (TFC (ObjCp x y)) (TFV b) (MeU (CpCase x y b w v)) (TFV c) (MeV mbc) =
+    MeU $ ?CoprodMorphDenoteCovar_hole_4
 CoprodMorphDenoteCovar obj hom denote
-  (TFV x) (TFC (ObjCp x y)) (MeC (CpInjL x y)) c (MeC mbc) =
-    ?CoprodMorphDenoteCovar_hole_5
+  (TFV x) (TFC (ObjCp x y)) (MeU (CpInjL x y)) (TFV v)
+  (MeU (CpCase x y v s t)) =
+    ?CoprodMorphDenoteCovar_hole_9
+CoprodMorphDenoteCovar obj hom denote (TFV x) (TFC (ObjCp x y))
+  (MeU (CpInjL x y)) (TFC (ObjCp z w)) (MeU v) = case v of
+    CpInjL x' y' impossible
+    CpInjR x' y' impossible
+    CpCase x' y' z' mxz' myz' impossible
+CoprodMorphDenoteCovar obj hom denote (TFV y) (TFC (ObjCp x y))
+  (MeU (CpInjR x y)) (TFV v) (MeU (CpCase x y v s t)) =
+    ?CoprodMorphDenoteCovar_hole_10
+CoprodMorphDenoteCovar obj hom denote (TFV y) (TFC (ObjCp x y))
+  (MeU (CpInjR x y)) (TFC c) (MeU m) = case m of
+    CpInjL x' y' impossible
+    CpInjR x' y' impossible
+    CpCase x' y' z' mxz' myz' impossible
 CoprodMorphDenoteCovar obj hom denote
-  (TFV y) (TFC (ObjCp x y)) (MeC (CpInjR x y)) c (MeC mbc) =
-    ?CoprodMorphDenoteCovar_hole_6
+  (TFC (ObjCp x y)) (TFV z) (MeU (CpCase x y z w v)) (TFC (ObjCp z t))
+    (MeU (CpInjL z t)) = ?CoprodMorphDenoteCovar_hole_7
 CoprodMorphDenoteCovar obj hom denote
-  (TFC (ObjCp x y)) (TFV z) (MeC (CpCase x y z w v)) (TFC (ObjCp z t))
-    (MeC (CpInjL z t)) = ?CoprodMorphDenoteCovar_hole_7
+  (TFC (ObjCp x y)) (TFV z) (MeU (CpCase x y z w v)) (TFC (ObjCp s z))
+    (MeU (CpInjR s z)) = ?CoprodMorphDenoteCovar_hole_8
 CoprodMorphDenoteCovar obj hom denote
-  (TFC (ObjCp x y)) (TFV z) (MeC (CpCase x y z w v)) (TFC (ObjCp s z))
-    (MeC (CpInjR s z)) = ?CoprodMorphDenoteCovar_hole_8
-CoprodMorphDenoteCovar obj hom denote
-  (TFC (ObjCp x y)) (TFC z) (MeC mxyz) c mzc = case mxyz of
+  (TFC (ObjCp x y)) (TFC z) (MeU mxyz) c mzc = case mxyz of
     CpInjL x' y' impossible
     CpInjR x' y' impossible
     CpCase x' y' z' mxz' myz' impossible
