@@ -231,6 +231,16 @@ InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) (TFV b) (Morph0 b) =
   voidF (ExtendInitialMorphInterpObj obj ointerp (TFV b))
 
 public export
+InitialMorphExtendDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  MorphDenotationCovarNT obj hom ->
+  MorphDenoteExtendCovar obj InitialObjF hom (InitialMorphF obj hom)
+InitialMorphExtendDenoteCovar
+  obj hom denote (TFC Obj0) (TFV b) (Morph0 b) (TFV c) (MeV mbc) =
+    MeC $ Morph0 c
+InitialMorphExtendDenoteCovar
+  _ _ _ (TFC Obj0) (TFV _) (Morph0 _) _ (MeC (Morph0 _)) impossible
+
+public export
 InitialMorphDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
   MorphDenotationCovarNT obj hom ->
   MorphDenotationCovarNT
@@ -245,6 +255,13 @@ InitialMorphDenoteCovar obj hom denote
   _ _ (MeC _) (TFC _) (MeC (Morph0 _)) impossible
 InitialMorphDenoteCovar obj hom denote
   _ (TFC Obj0) (MeC (Morph0 _)) (TFV _) (MeC (Morph0 _)) impossible
+
+public export
+InitialMorphExtendDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  MorphDenotationContravarNT obj hom ->
+  MorphDenoteExtendContravar obj InitialObjF hom (InitialMorphF obj hom)
+InitialMorphExtendDenoteContravar _ _ _
+  (TFC Obj0) (TFV _) (Morph0 _) _ (MeC (Morph0 c)) impossible
 
 public export
 InitialMorphDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
