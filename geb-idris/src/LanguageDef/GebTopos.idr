@@ -76,14 +76,68 @@ data MorphTranslateF :
     hom x y -> MorphTranslateF {obj} {f} homv hom x y
 
 public export
-MorphDenotationCovar : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
-MorphDenotationCovar obj hom =
-  (a, b : obj) -> hom a b -> ((c : obj) -> hom b c -> hom a c)
+InternalCovarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
+InternalCovarNT {obj} hom a b = (c : obj) -> hom b c -> hom a c
 
 public export
-MorphDenotationContravar : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
-MorphDenotationContravar obj hom =
-  (a, b : obj) -> hom a b -> ((c : obj) -> hom c a -> hom c b)
+InternalContravarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
+InternalContravarNT {obj} hom a b = (c : obj) -> hom c a -> hom c b
+
+public export
+MorphDenotationCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  obj -> obj -> Type
+MorphDenotationCovar obj hom a b = hom a b -> InternalCovarNT hom a b
+
+public export
+MorphDenotationCovarNT : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
+MorphDenotationCovarNT obj hom =
+  (a, b : obj) -> MorphDenotationCovar obj hom a b
+
+public export
+MorphDenotationContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  obj -> obj -> Type
+MorphDenotationContravar obj hom a b = hom a b -> InternalContravarNT hom a b
+
+public export
+MorphDenotationContravarNT : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
+MorphDenotationContravarNT obj hom =
+  (a, b : obj) -> MorphDenotationContravar obj hom a b
+
+public export
+MorphIdCovarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
+  (a : obj) -> InternalCovarNT {obj} hom a a
+MorphIdCovarDenotation {obj} {hom} a c = id {a=(hom a c)}
+
+public export
+MorphIdContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
+  (a : obj) -> InternalContravarNT {obj} hom a a
+MorphIdContravarDenotation {obj} {hom} a c = id {a=(hom c a)}
+
+public export
+MorphDenoteExtendCovar :
+  (obj : Type) ->
+  (f : Type -> Type) ->
+  (homv : obj -> obj -> Type) ->
+  (hom : TrEitherF f obj -> TrEitherF f obj -> Type) ->
+  Type
+MorphDenoteExtendCovar obj f homv hom =
+  (a, b : TrEitherF f obj) -> hom a b ->
+  ((c : TrEitherF f obj) ->
+   MorphTranslateF {obj} {f} homv hom b c ->
+   MorphTranslateF {obj} {f} homv hom a c)
+
+public export
+MorphDenoteExtendContravar :
+  (obj : Type) ->
+  (f : Type -> Type) ->
+  (homv : obj -> obj -> Type) ->
+  (hom : TrEitherF f obj -> TrEitherF f obj -> Type) ->
+  Type
+MorphDenoteExtendContravar obj f homv hom =
+  (a, b : TrEitherF f obj) -> hom a b ->
+  ((c : TrEitherF f obj) ->
+   MorphTranslateF {obj} {f} homv hom c a ->
+   MorphTranslateF {obj} {f} homv hom c b)
 
 ------------------------
 ---- Initial object ----
@@ -160,8 +214,8 @@ InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) (TFV b) (Morph0 b) =
 
 public export
 InitialMorphDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  MorphDenotationCovar obj hom ->
-  MorphDenotationCovar
+  MorphDenotationCovarNT obj hom ->
+  MorphDenotationCovarNT
     (TrEitherF InitialObjF obj) (MorphTranslateF hom (InitialMorphF obj hom))
 InitialMorphDenoteCovar obj hom denote
   (TFV a) (TFV b) (MeV mab) (TFV c) (MeV mbc) = MeV $ denote a b mab c mbc
@@ -176,8 +230,8 @@ InitialMorphDenoteCovar obj hom denote
 
 public export
 InitialMorphDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  MorphDenotationContravar obj hom ->
-  MorphDenotationContravar
+  MorphDenotationContravarNT obj hom ->
+  MorphDenotationContravarNT
     (TrEitherF InitialObjF obj) (MorphTranslateF hom (InitialMorphF obj hom))
 InitialMorphDenoteContravar obj hom denote
   (TFV a) (TFV b) (MeV mab) (TFV c) (MeV mca) = MeV $ denote a b mab c mca
@@ -317,8 +371,8 @@ CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpCase x y z mxz myz) exy =
 
 public export
 CoprodMorphDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  MorphDenotationCovar obj hom ->
-  MorphDenotationCovar
+  MorphDenotationCovarNT obj hom ->
+  MorphDenotationCovarNT
     (TrEitherF CoprodObjF obj) (MorphTranslateF hom (CoprodMorphF obj hom))
 CoprodMorphDenoteCovar obj hom denote
   (TFV a) (TFV b) (MeV mab) (TFV c) (MeV mbc) = ?CoprodMorphDenoteCovar_hole_1
@@ -351,8 +405,8 @@ CoprodMorphDenoteCovar obj hom denote
 
 public export
 CoprodMorphDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  MorphDenotationContravar obj hom ->
-  MorphDenotationContravar
+  MorphDenotationContravarNT obj hom ->
+  MorphDenotationContravarNT
     (TrEitherF CoprodObjF obj) (MorphTranslateF hom (CoprodMorphF obj hom))
 CoprodMorphDenoteContravar obj hom denote a b mab c mca =
   ?CoprodMorphDenoteContravar_hole
