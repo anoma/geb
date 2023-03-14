@@ -77,11 +77,13 @@ data MorphTranslateF :
 
 public export
 InternalCovarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
-InternalCovarNT {obj} hom a b = (c : obj) -> hom b c -> hom a c
+InternalCovarNT {obj} hom a b =
+  SliceMorphism {a=obj} (hom b) (hom a)
 
 public export
 InternalContravarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
-InternalContravarNT {obj} hom a b = (c : obj) -> hom c a -> hom c b
+InternalContravarNT {obj} hom a b =
+  SliceMorphism {a=obj} (flip hom a) (flip hom b)
 
 public export
 MorphDenotationCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
