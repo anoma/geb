@@ -65,6 +65,17 @@ record Diagram where
   dEdge : MorphismT dVert
 
 public export
+data MorphTranslateF :
+    {obj : Type} -> {f : Type -> Type} ->
+    (obj -> obj -> Type) ->
+    (TrEitherF f obj -> TrEitherF f obj -> Type) ->
+    (TrEitherF f obj -> TrEitherF f obj -> Type) where
+  MeV : {x, y : obj} ->
+    homv x y -> MorphTranslateF {obj} {f} homv hom (TFV x) (TFV y)
+  MeC : {x, y : TrEitherF f obj} ->
+    hom x y -> MorphTranslateF {obj} {f} homv hom x y
+
+public export
 MorphDenotationCovar : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
 MorphDenotationCovar obj hom =
   (a, b : obj) -> hom a b -> ((c : obj) -> hom b c -> hom a c)
@@ -123,7 +134,7 @@ data InitialObjF : (obj : Type) -> Type where
 public export
 data InitialMorphF : (obj : Type) -> (hom : obj -> obj -> Type) ->
     TrEitherF InitialObjF obj -> TrEitherF InitialObjF obj -> Type where
-  Morph0 : (x : TrEitherF InitialObjF obj) -> InitialMorphF obj hom (TFC Obj0) x
+  Morph0 : (x : obj) -> InitialMorphF obj hom (TFC Obj0) (TFV x)
 
 public export
 InitialMorphInterpObj : (obj : Type) -> (obj -> Type) -> InitialObjF obj -> Type
@@ -144,24 +155,40 @@ InitialMorphInterpMorph : (obj : Type) -> (hom : obj -> obj -> Type) ->
   ExtendInitialMorphInterpObj obj ointerp a ->
   ExtendInitialMorphInterpObj obj ointerp b
 InitialMorphInterpMorph obj hom ointerp minterp (TFV a) b m impossible
-InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) b (Morph0 b) =
-  voidF (ExtendInitialMorphInterpObj obj ointerp b)
+InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) (TFV b) (Morph0 b) =
+  voidF (ExtendInitialMorphInterpObj obj ointerp (TFV b))
 
 public export
-InitialMorphDenoteMorphCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+InitialMorphDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
   MorphDenotationCovar obj hom ->
-  MorphDenotationCovar (TrEitherF InitialObjF obj) (InitialMorphF obj hom)
-InitialMorphDenoteMorphCovar obj hom denote
-  (TFC Obj0) (TFC Obj0) (Morph0 (TFC Obj0)) c (Morph0 c) = Morph0 c
+  MorphDenotationCovar
+    (TrEitherF InitialObjF obj) (MorphTranslateF hom (InitialMorphF obj hom))
+InitialMorphDenoteCovar obj hom denote
+  (TFV a) (TFV b) (MeV mab) (TFV c) (MeV mbc) = MeV $ denote a b mab c mbc
+InitialMorphDenoteCovar obj hom denote
+  (TFV _) (TFV _) (MeV _) _ (MeC (Morph0 _)) impossible
+InitialMorphDenoteCovar obj hom denote
+  (TFC Obj0) (TFV b) (MeC (Morph0 b)) (TFV c) (MeV mbc) = MeC $ Morph0 c
+InitialMorphDenoteCovar obj hom denote
+  _ _ (MeC _) (TFC _) (MeC (Morph0 _)) impossible
+InitialMorphDenoteCovar obj hom denote
+  _ (TFC Obj0) (MeC (Morph0 _)) (TFV _) (MeC (Morph0 _)) impossible
 
 public export
-InitialMorphDenoteMorphContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+InitialMorphDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
   MorphDenotationContravar obj hom ->
-  MorphDenotationContravar (TrEitherF InitialObjF obj) (InitialMorphF obj hom)
-InitialMorphDenoteMorphContravar obj hom denote
-  (TFC Obj0) _ (Morph0 _) (TFV _) (Morph0 c) impossible
-InitialMorphDenoteMorphContravar obj hom denote
-  (TFC Obj0) b (Morph0 b) (TFC Obj0) (Morph0 (TFC Obj0)) = Morph0 b
+  MorphDenotationContravar
+    (TrEitherF InitialObjF obj) (MorphTranslateF hom (InitialMorphF obj hom))
+InitialMorphDenoteContravar obj hom denote
+  (TFV a) (TFV b) (MeV mab) (TFV c) (MeV mca) = MeV $ denote a b mab c mca
+InitialMorphDenoteContravar obj hom denote
+  (TFV a) (TFV b) (MeV mab) (TFC Obj0) (MeC (Morph0 a)) = MeC $ Morph0 b
+InitialMorphDenoteContravar obj hom denote
+  (TFV _) (TFC _) (MeC (Morph0 _)) _ _ impossible
+InitialMorphDenoteContravar obj hom denote
+  (TFC Obj0) (TFC _) (MeC (Morph0 _)) _ _ impossible
+InitialMorphDenoteContravar obj hom denote
+  (TFC Obj0) (TFV _) (MeC (Morph0 _)) _ (MeC (Morph0 _)) impossible
 
 --------------------
 ---- Coproducts ----
@@ -250,6 +277,20 @@ InitialMorphDenoteMorphContravar obj hom denote
 --    k . counit == counit . (L(R(k)))
 --  - Unit naturality:
 --    R(L(h)) . unit == unit . h
+
+public export
+data CoprodObjF : (obj : Type) -> Type where
+  ObjCp : obj -> obj -> CoprodObjF obj
+
+public export
+data CoprodMorphF : (obj : Type) -> (hom : obj -> obj -> Type) ->
+    TrEitherF CoprodObjF obj -> TrEitherF CoprodObjF obj -> Type where
+  CpInjL : (x, y : obj) ->
+    CoprodMorphF obj hom (TFV x) (TFC (ObjCp x y))
+  CpInjR : (x, y : obj) ->
+    CoprodMorphF obj hom (TFV y) (TFC (ObjCp x y))
+  CpCase : (x, y, z : obj) ->
+    hom x z -> hom y z -> CoprodMorphF obj hom (TFC (ObjCp x y)) (TFV z)
 
 ---------------------
 ---------------------
