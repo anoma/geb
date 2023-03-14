@@ -428,6 +428,40 @@ data CoprodMorphF : (obj : Type) -> (hom : obj -> obj -> Type) ->
     hom x z -> hom y z -> CoprodMorphF obj hom (TFC (ObjCp x y)) (TFV z)
 
 public export
+CoprodMorphExtendDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  MorphDenoteExtendCovar obj CoprodObjF hom (CoprodMorphF obj hom)
+CoprodMorphExtendDenoteCovar obj hom denote (TFV a) (TFC (ObjCp a b))
+  (CpInjL a b) (TFV c) (MEU (CpCase a b c f g)) =
+    FMV f
+CoprodMorphExtendDenoteCovar obj hom denote (TFV a) (TFC (ObjCp a b))
+  (CpInjL a b) (TFC c) (MEU mabc) = case mabc of
+    CpInjL _ _ impossible
+    CpInjR _ _ impossible
+    CpCase _ _ _ _ _ impossible
+CoprodMorphExtendDenoteCovar obj hom denote (TFV b) (TFC (ObjCp a b))
+  (CpInjR a b) (TFV c) (MEU (CpCase a b c f g)) =
+    FMV g
+CoprodMorphExtendDenoteCovar obj hom denote (TFV b) (TFC (ObjCp a b))
+  (CpInjR a b) (TFC c) (MEU mabc) = case mabc of
+    CpInjL _ _ impossible
+    CpInjR _ _ impossible
+    CpCase _ _ _ _ _ impossible
+CoprodMorphExtendDenoteCovar obj hom denote (TFC (ObjCp a a')) (TFV b)
+  (CpCase a a' b f g) (TFV c) (MEV h) =
+    FMU $ CpCase a a' c (denote a b f c h) (denote a' b g c h)
+CoprodMorphExtendDenoteCovar obj hom denote (TFC (ObjCp a a')) (TFV b)
+  (CpCase a a' b f g) (TFC (ObjCp b c)) (MEU (CpInjL b c)) =
+    FMC (FMU $ CpInjL b c) (FMU $ CpCase a a' b f g)
+CoprodMorphExtendDenoteCovar obj hom denote (TFC (ObjCp a a')) (TFV c)
+  (CpCase a a' c f g) (TFC (ObjCp b c)) (MEU (CpInjR b c)) =
+    FMC (FMU $ CpInjR b c) (FMU $ CpCase a a' c f g)
+
+public export
+CoprodMorphExtendDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  MorphDenoteExtendContravar obj CoprodObjF hom (CoprodMorphF obj hom)
+CoprodMorphExtendDenoteContravar obj hom denote a b mab c mca = ?CoprodMorphExtendDenoteContravar_hole
+
+public export
 CoprodMorphInterpObj : (obj : Type) -> (obj -> Type) -> CoprodObjF obj -> Type
 CoprodMorphInterpObj obj interp (ObjCp x y) = Either (interp x) (interp y)
 
