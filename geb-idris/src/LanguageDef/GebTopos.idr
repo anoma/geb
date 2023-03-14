@@ -211,28 +211,6 @@ data InitialMorphF : (obj : Type) -> (hom : obj -> obj -> Type) ->
   Morph0 : (x : obj) -> InitialMorphF obj hom (TFC Obj0) (TFV x)
 
 public export
-InitialMorphInterpObj : (obj : Type) -> (obj -> Type) -> InitialObjF obj -> Type
-InitialMorphInterpObj obj interp Obj0 = Void
-
-public export
-ExtendInitialMorphInterpObj : (obj : Type) -> (obj -> Type) ->
-  TrEitherF InitialObjF obj -> Type
-ExtendInitialMorphInterpObj obj interp =
-  trElim interp (InitialMorphInterpObj obj interp)
-
-public export
-InitialMorphInterpMorph : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  (ointerp : obj -> Type) ->
-  (minterp : (a, b : obj) -> hom a b -> ointerp a -> ointerp b) ->
-  (a, b : TrEitherF InitialObjF obj) ->
-  InitialMorphF obj hom a b ->
-  ExtendInitialMorphInterpObj obj ointerp a ->
-  ExtendInitialMorphInterpObj obj ointerp b
-InitialMorphInterpMorph obj hom ointerp minterp (TFV a) b m impossible
-InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) (TFV b) (Morph0 b) =
-  voidF (ExtendInitialMorphInterpObj obj ointerp (TFV b))
-
-public export
 InitialMorphExtendDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
   MorphDenoteExtendCovar obj InitialObjF hom (InitialMorphF obj hom)
 InitialMorphExtendDenoteCovar
@@ -278,6 +256,28 @@ InitialMorphDenoteContravar obj hom denote
   (TFC Obj0) (TFC _) (MeU (Morph0 _)) _ _ impossible
 InitialMorphDenoteContravar obj hom denote
   (TFC Obj0) (TFV _) (MeU (Morph0 _)) _ (MeU (Morph0 _)) impossible
+
+public export
+InitialMorphInterpObj : (obj : Type) -> (obj -> Type) -> InitialObjF obj -> Type
+InitialMorphInterpObj obj interp Obj0 = Void
+
+public export
+ExtendInitialMorphInterpObj : (obj : Type) -> (obj -> Type) ->
+  TrEitherF InitialObjF obj -> Type
+ExtendInitialMorphInterpObj obj interp =
+  trElim interp (InitialMorphInterpObj obj interp)
+
+public export
+InitialMorphInterpMorph : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  (ointerp : obj -> Type) ->
+  (minterp : (a, b : obj) -> hom a b -> ointerp a -> ointerp b) ->
+  (a, b : TrEitherF InitialObjF obj) ->
+  InitialMorphF obj hom a b ->
+  ExtendInitialMorphInterpObj obj ointerp a ->
+  ExtendInitialMorphInterpObj obj ointerp b
+InitialMorphInterpMorph obj hom ointerp minterp (TFV a) b m impossible
+InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) (TFV b) (Morph0 b) =
+  voidF (ExtendInitialMorphInterpObj obj ointerp (TFV b))
 
 --------------------
 ---- Coproducts ----
@@ -382,29 +382,6 @@ data CoprodMorphF : (obj : Type) -> (hom : obj -> obj -> Type) ->
     hom x z -> hom y z -> CoprodMorphF obj hom (TFC (ObjCp x y)) (TFV z)
 
 public export
-CoprodMorphInterpObj : (obj : Type) -> (obj -> Type) -> CoprodObjF obj -> Type
-CoprodMorphInterpObj obj interp (ObjCp x y) = Either (interp x) (interp y)
-
-public export
-ExtendCoprodMorphInterpObj : (obj : Type) -> (obj -> Type) ->
-  TrEitherF CoprodObjF obj -> Type
-ExtendCoprodMorphInterpObj obj interp =
-  trElim interp (CoprodMorphInterpObj obj interp)
-
-public export
-CoprodMorphInterpMorph : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  (ointerp : obj -> Type) ->
-  (minterp : (a, b : obj) -> hom a b -> ointerp a -> ointerp b) ->
-  (a, b : TrEitherF CoprodObjF obj) ->
-  CoprodMorphF obj hom a b ->
-  ExtendCoprodMorphInterpObj obj ointerp a ->
-  ExtendCoprodMorphInterpObj obj ointerp b
-CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjL x y) ex = Left ex
-CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjR x y) ey = Right ey
-CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpCase x y z mxz myz) exy =
-  eitherElim (minterp x z mxz) (minterp y z myz) exy
-
-public export
 CoprodMorphDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
   MorphDenotationCovarNT obj hom ->
   MorphDenotationCovarNT
@@ -456,6 +433,29 @@ CoprodMorphDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
     (TrEitherF CoprodObjF obj) (MorphTranslateF hom (CoprodMorphF obj hom))
 CoprodMorphDenoteContravar obj hom denote a b mab c mca =
   ?CoprodMorphDenoteContravar_hole
+
+public export
+CoprodMorphInterpObj : (obj : Type) -> (obj -> Type) -> CoprodObjF obj -> Type
+CoprodMorphInterpObj obj interp (ObjCp x y) = Either (interp x) (interp y)
+
+public export
+ExtendCoprodMorphInterpObj : (obj : Type) -> (obj -> Type) ->
+  TrEitherF CoprodObjF obj -> Type
+ExtendCoprodMorphInterpObj obj interp =
+  trElim interp (CoprodMorphInterpObj obj interp)
+
+public export
+CoprodMorphInterpMorph : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  (ointerp : obj -> Type) ->
+  (minterp : (a, b : obj) -> hom a b -> ointerp a -> ointerp b) ->
+  (a, b : TrEitherF CoprodObjF obj) ->
+  CoprodMorphF obj hom a b ->
+  ExtendCoprodMorphInterpObj obj ointerp a ->
+  ExtendCoprodMorphInterpObj obj ointerp b
+CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjL x y) ex = Left ex
+CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjR x y) ey = Right ey
+CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpCase x y z mxz myz) exy =
+  eitherElim (minterp x z mxz) (minterp y z myz) exy
 
 ---------------------
 ---------------------
