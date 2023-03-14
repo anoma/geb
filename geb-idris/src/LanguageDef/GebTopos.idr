@@ -292,6 +292,71 @@ data CoprodMorphF : (obj : Type) -> (hom : obj -> obj -> Type) ->
   CpCase : (x, y, z : obj) ->
     hom x z -> hom y z -> CoprodMorphF obj hom (TFC (ObjCp x y)) (TFV z)
 
+public export
+CoprodMorphInterpObj : (obj : Type) -> (obj -> Type) -> CoprodObjF obj -> Type
+CoprodMorphInterpObj obj interp (ObjCp x y) = Either (interp x) (interp y)
+
+public export
+ExtendCoprodMorphInterpObj : (obj : Type) -> (obj -> Type) ->
+  TrEitherF CoprodObjF obj -> Type
+ExtendCoprodMorphInterpObj obj interp =
+  trElim interp (CoprodMorphInterpObj obj interp)
+
+public export
+CoprodMorphInterpMorph : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  (ointerp : obj -> Type) ->
+  (minterp : (a, b : obj) -> hom a b -> ointerp a -> ointerp b) ->
+  (a, b : TrEitherF CoprodObjF obj) ->
+  CoprodMorphF obj hom a b ->
+  ExtendCoprodMorphInterpObj obj ointerp a ->
+  ExtendCoprodMorphInterpObj obj ointerp b
+CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjL x y) ex = Left ex
+CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjR x y) ey = Right ey
+CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpCase x y z mxz myz) exy =
+  eitherElim (minterp x z mxz) (minterp y z myz) exy
+
+public export
+CoprodMorphDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  MorphDenotationCovar obj hom ->
+  MorphDenotationCovar
+    (TrEitherF CoprodObjF obj) (MorphTranslateF hom (CoprodMorphF obj hom))
+CoprodMorphDenoteCovar obj hom denote
+  (TFV a) (TFV b) (MeV mab) (TFV c) (MeV mbc) = ?CoprodMorphDenoteCovar_hole_1
+CoprodMorphDenoteCovar obj hom denote
+  (TFV a) (TFV b) (MeV mab) (TFC (ObjCp b y)) (MeC (CpInjL b y)) =
+    ?CoprodMorphDenoteCovar_hole_2
+CoprodMorphDenoteCovar obj hom denote
+  (TFV a) (TFV b) (MeV mab) (TFC (ObjCp x b)) (MeC (CpInjR x b)) =
+    ?CoprodMorphDenoteCovar_hole_3
+CoprodMorphDenoteCovar obj hom denote
+  (TFC (ObjCp x y)) (TFV b) (MeC (CpCase x y b w v)) (TFV c) (MeV mbc) =
+    ?CoprodMorphDenoteCovar_hole_4
+CoprodMorphDenoteCovar obj hom denote
+  (TFV x) (TFC (ObjCp x y)) (MeC (CpInjL x y)) c (MeC mbc) =
+    ?CoprodMorphDenoteCovar_hole_5
+CoprodMorphDenoteCovar obj hom denote
+  (TFV y) (TFC (ObjCp x y)) (MeC (CpInjR x y)) c (MeC mbc) =
+    ?CoprodMorphDenoteCovar_hole_6
+CoprodMorphDenoteCovar obj hom denote
+  (TFC (ObjCp x y)) (TFV z) (MeC (CpCase x y z w v)) (TFC (ObjCp z t))
+    (MeC (CpInjL z t)) = ?CoprodMorphDenoteCovar_hole_7
+CoprodMorphDenoteCovar obj hom denote
+  (TFC (ObjCp x y)) (TFV z) (MeC (CpCase x y z w v)) (TFC (ObjCp s z))
+    (MeC (CpInjR s z)) = ?CoprodMorphDenoteCovar_hole_8
+CoprodMorphDenoteCovar obj hom denote
+  (TFC (ObjCp x y)) (TFC z) (MeC mxyz) c mzc = case mxyz of
+    CpInjL x' y' impossible
+    CpInjR x' y' impossible
+    CpCase x' y' z' mxz' myz' impossible
+
+public export
+CoprodMorphDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  MorphDenotationContravar obj hom ->
+  MorphDenotationContravar
+    (TrEitherF CoprodObjF obj) (MorphTranslateF hom (CoprodMorphF obj hom))
+CoprodMorphDenoteContravar obj hom denote a b mab c mca =
+  ?CoprodMorphDenoteContravar_hole
+
 ---------------------
 ---------------------
 ---- Experiments ----
