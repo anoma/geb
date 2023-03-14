@@ -139,6 +139,7 @@ MorphDenoteExtendCovar :
   (hom : TrEitherF f obj -> TrEitherF f obj -> Type) ->
   Type
 MorphDenoteExtendCovar obj f homv hom =
+  MorphDenotationCovarNT obj homv ->
   (a, b : TrEitherF f obj) -> hom a b ->
   ((c : TrEitherF f obj) ->
    MorphTranslateF {obj} {f} homv hom b c ->
@@ -152,6 +153,7 @@ MorphDenoteExtendContravar :
   (hom : TrEitherF f obj -> TrEitherF f obj -> Type) ->
   Type
 MorphDenoteExtendContravar obj f homv hom =
+  MorphDenotationContravarNT obj homv ->
   (a, b : TrEitherF f obj) -> hom a b ->
   ((c : TrEitherF f obj) ->
    MorphTranslateF {obj} {f} homv hom c a ->
@@ -232,7 +234,6 @@ InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) (TFV b) (Morph0 b) =
 
 public export
 InitialMorphExtendDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  MorphDenotationCovarNT obj hom ->
   MorphDenoteExtendCovar obj InitialObjF hom (InitialMorphF obj hom)
 InitialMorphExtendDenoteCovar
   obj hom denote (TFC Obj0) (TFV b) (Morph0 b) (TFV c) (MeV mbc) =
@@ -258,7 +259,6 @@ InitialMorphDenoteCovar obj hom denote
 
 public export
 InitialMorphExtendDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  MorphDenotationContravarNT obj hom ->
   MorphDenoteExtendContravar obj InitialObjF hom (InitialMorphF obj hom)
 InitialMorphExtendDenoteContravar _ _ _
   (TFC Obj0) (TFV _) (Morph0 _) _ (MeU (Morph0 c)) impossible
