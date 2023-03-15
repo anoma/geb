@@ -61,6 +61,16 @@ InternalContravarNT {obj} hom a b =
   SliceMorphism {a=obj} (flip hom a) (flip hom b)
 
 public export
+CovarNTExtEq : {obj : Type} -> {hom : obj -> obj -> Type} -> {a, b : obj} ->
+  (alpha, beta : InternalCovarNT hom a b) -> Type
+CovarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
+
+public export
+ContravarNTExtEq : {obj : Type} -> {hom : obj -> obj -> Type} -> {a, b : obj} ->
+  (alpha, beta : InternalContravarNT hom a b) -> Type
+ContravarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
+
+public export
 MorphDenotationCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
   obj -> obj -> Type
 MorphDenotationCovar obj hom a b = hom a b -> InternalCovarNT hom a b
@@ -105,6 +115,106 @@ MorphComposeContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
   InternalContravarNT {obj} hom a b ->
   InternalContravarNT {obj} hom a c
 MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
+
+public export
+record YCat where
+  constructor YC
+  ycObj : Type
+  ycHom : ycObj -> ycObj -> Type
+  0 ycDenotationCovar : MorphDenotationCovarNT ycObj ycHom
+  0 ycDenotationContravar : MorphDenotationContravarNT ycObj ycHom
+  0 ycCovarEqImpliesContravar : {a, b : ycObj} -> (f, g : ycHom a b) ->
+    CovarNTExtEq {a} {b} {hom=ycHom}
+      (ycDenotationCovar a b f) (ycDenotationCovar a b g) ->
+    ContravarNTExtEq {a} {b} {hom=ycHom}
+      (ycDenotationContravar a b f) (ycDenotationContravar a b g)
+  0 ycContravarEqImpliesCovar : {a, b : ycObj} -> (f, g : ycHom a b) ->
+    ContravarNTExtEq {a} {b} {hom=ycHom}
+      (ycDenotationContravar a b f) (ycDenotationContravar a b g) ->
+    CovarNTExtEq {a} {b} {hom=ycHom}
+      (ycDenotationCovar a b f) (ycDenotationCovar a b g)
+
+public export
+YCovarNT : (yc : YCat) -> ycObj yc -> ycObj yc -> Type
+YCovarNT yc = InternalCovarNT {obj=(ycObj yc)} (ycHom yc)
+
+public export
+YContravarNT : (yc : YCat) -> ycObj yc -> ycObj yc -> Type
+YContravarNT yc = InternalContravarNT {obj=(ycObj yc)} (ycHom yc)
+
+public export
+yIdCovar : (yc : YCat) -> (x : ycObj yc) -> YCovarNT yc x x
+yIdCovar yc = MorphIdCovarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+
+public export
+yIdContravar : (yc : YCat) -> (x : ycObj yc) -> YContravarNT yc x x
+yIdContravar yc = MorphIdContravarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+
+public export
+yComposeCovar : {yc : YCat} -> {a, b, c: ycObj yc} ->
+  YCovarNT yc b c -> YCovarNT yc a b -> YCovarNT yc a c
+yComposeCovar {yc} =
+  MorphComposeCovarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+
+public export
+yComposeContravar : {yc : YCat} -> {a, b, c: ycObj yc} ->
+  YContravarNT yc b c -> YContravarNT yc a b -> YContravarNT yc a c
+yComposeContravar {yc} =
+  MorphComposeContravarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+
+public export
+YExtendObjF : Type
+YExtendObjF = YCat -> Type
+
+-- Just an explicit name for `Coprod(ycObj, oext)`.
+public export
+data YExtendedObj : YCat -> YExtendObjF -> Type where
+  EOV : ycObj yc -> YExtendedObj yc oext
+  EOU : oext yc -> YExtendedObj yc oext
+
+public export
+YExtendMorphF : YExtendObjF -> Type
+YExtendMorphF oext =
+  (yc : YCat) -> YExtendedObj yc oext -> YExtendedObj yc oext -> Type
+
+public export
+YExtendMorphCovarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
+YExtendMorphCovarDenote {oext} mext =
+  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc x y ->
+  MorphDenotationCovar (YExtendedObj yc oext) (mext yc) x y
+
+public export
+YExtendMorphContravarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
+YExtendMorphContravarDenote {oext} mext =
+  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc x y ->
+  MorphDenotationContravar (YExtendedObj yc oext) (mext yc) x y
+
+public export
+data YExtendedMorph :
+    YCat -> (oext : YExtendObjF) -> YExtendMorphF oext ->
+    YExtendedObj yc oext -> YExtendedObj yc oext -> Type where
+  EMV : {0 oext : YExtendObjF} -> {0 mext : YExtendMorphF oext} ->
+    {0 x, y : ycObj yc} ->
+    ycHom yc x y -> YExtendedMorph yc oext mext (EOV {yc} x) (EOV {yc} y)
+  EMU : {0 oext : YExtendObjF} -> {0 mext : YExtendMorphF oext} ->
+    {0 x, y : YExtendedObj yc oext} ->
+    mext yc x y -> YExtendedMorph yc oext mext x y
+
+public export
+YExtendCovarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
+YExtendCovarDenotation {oext} mext =
+  (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
+  YExtendedMorph yc oext mext x y ->
+  MorphDenotationCovar
+    (YExtendedObj yc oext) (YExtendedMorph yc oext mext) x y
+
+public export
+YExtendContravarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
+YExtendContravarDenotation {oext} mext =
+  (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
+  YExtendedMorph yc oext mext x y ->
+  MorphDenotationContravar
+    (YExtendedObj yc oext) (YExtendedMorph yc oext mext) x y
 
 public export
 SignatureT : Type -> Type
@@ -2313,6 +2423,8 @@ record TFunctorSig (c, d : TCatSig) where
       {dom'=(tfObjMap a')} {cod'=(tfObjMap b')}
       domMapEq codMapEq
       (tfMorphMap {a} {b} m) (tfMorphMap {a=a'} {b=b'} m')
+  -- The laws for the application of functors to identities and
+  -- compositions must still be written.
 
 -------------------------
 -------------------------
