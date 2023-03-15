@@ -51,6 +51,62 @@ import public LanguageDef.Syntax
 --    -- this reflects the definition of the injection
 
 public export
+InternalCovarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
+InternalCovarNT {obj} hom a b =
+  SliceMorphism {a=obj} (hom b) (hom a)
+
+public export
+InternalContravarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
+InternalContravarNT {obj} hom a b =
+  SliceMorphism {a=obj} (flip hom a) (flip hom b)
+
+public export
+MorphDenotationCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  obj -> obj -> Type
+MorphDenotationCovar obj hom a b = hom a b -> InternalCovarNT hom a b
+
+public export
+MorphDenotationCovarNT : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
+MorphDenotationCovarNT obj hom =
+  (a, b : obj) -> MorphDenotationCovar obj hom a b
+
+public export
+MorphDenotationContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+  obj -> obj -> Type
+MorphDenotationContravar obj hom a b = hom a b -> InternalContravarNT hom a b
+
+public export
+MorphDenotationContravarNT : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
+MorphDenotationContravarNT obj hom =
+  (a, b : obj) -> MorphDenotationContravar obj hom a b
+
+public export
+MorphIdCovarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
+  (a : obj) -> InternalCovarNT {obj} hom a a
+MorphIdCovarDenotation {obj} {hom} a c = id {a=(hom a c)}
+
+public export
+MorphComposeCovarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
+  {a, b, c : obj} ->
+  InternalCovarNT {obj} hom b c ->
+  InternalCovarNT {obj} hom a b ->
+  InternalCovarNT {obj} hom a c
+MorphComposeCovarDenotation {obj} {hom} {a} {b} {c} g f d = f d . g d
+
+public export
+MorphIdContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
+  (a : obj) -> InternalContravarNT {obj} hom a a
+MorphIdContravarDenotation {obj} {hom} a c = id {a=(hom c a)}
+
+public export
+MorphComposeContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
+  {a, b, c : obj} ->
+  InternalContravarNT {obj} hom b c ->
+  InternalContravarNT {obj} hom a b ->
+  InternalContravarNT {obj} hom a c
+MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
+
+public export
 SignatureT : Type -> Type
 SignatureT o = (o, o)
 
@@ -152,62 +208,6 @@ FMU :
   hom x y ->
   FreeMorphF homv hom x y
 FMU m = FME (MEU m)
-
-public export
-InternalCovarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
-InternalCovarNT {obj} hom a b =
-  SliceMorphism {a=obj} (hom b) (hom a)
-
-public export
-InternalContravarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
-InternalContravarNT {obj} hom a b =
-  SliceMorphism {a=obj} (flip hom a) (flip hom b)
-
-public export
-MorphDenotationCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  obj -> obj -> Type
-MorphDenotationCovar obj hom a b = hom a b -> InternalCovarNT hom a b
-
-public export
-MorphDenotationCovarNT : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
-MorphDenotationCovarNT obj hom =
-  (a, b : obj) -> MorphDenotationCovar obj hom a b
-
-public export
-MorphDenotationContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  obj -> obj -> Type
-MorphDenotationContravar obj hom a b = hom a b -> InternalContravarNT hom a b
-
-public export
-MorphDenotationContravarNT : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
-MorphDenotationContravarNT obj hom =
-  (a, b : obj) -> MorphDenotationContravar obj hom a b
-
-public export
-MorphIdCovarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
-  (a : obj) -> InternalCovarNT {obj} hom a a
-MorphIdCovarDenotation {obj} {hom} a c = id {a=(hom a c)}
-
-public export
-MorphComposeCovarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
-  {a, b, c : obj} ->
-  InternalCovarNT {obj} hom b c ->
-  InternalCovarNT {obj} hom a b ->
-  InternalCovarNT {obj} hom a c
-MorphComposeCovarDenotation {obj} {hom} {a} {b} {c} g f d = f d . g d
-
-public export
-MorphIdContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
-  (a : obj) -> InternalContravarNT {obj} hom a a
-MorphIdContravarDenotation {obj} {hom} a c = id {a=(hom c a)}
-
-public export
-MorphComposeContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
-  {a, b, c : obj} ->
-  InternalContravarNT {obj} hom b c ->
-  InternalContravarNT {obj} hom a b ->
-  InternalContravarNT {obj} hom a c
-MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
 
 public export
 MorphDenoteExtendCovar :
