@@ -15,40 +15,31 @@ import public LanguageDef.Syntax
 ---------------------------
 ---------------------------
 
----------------------------------------------------
----- Yoneda categories with explicit coherence ----
----------------------------------------------------
+---------------------------------------------------------------
+---- Standard ("Mac Lane - Eilenberg") internal categories ----
+---------------------------------------------------------------
 
--- The (free-forgetful) adjunction which can be used to define a category
--- has the following data:
---
---  - Left category C: two-category of categories
---  - Right category D: category of diagrams
---  - Left functor L: free functor which adds identities (loop edges) for
---    each vertex and paths to represent compositions, and equalities for
---    left identity, right identity, and associativity
---  - Right functor R: forgetful functor which drops identity, composition,
---    and equalities, leaving just vertices and edges
---  - R . L (D -> D): Functor which closes a diagram with loops labeled
---    as identities and paths labeled as compositions
---  - L . R (C -> C): Identity functor
---  - Unit (id -> R . L): injection of diagram into its closure
---  - Counit (L . R -> id): identity natural transformation
---  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
---    functors from a free category generated from a diagram A to an arbitrary
---    category B are in bijection with graph homomorphisms from A to the
---    diagram underlying B (i.e. the diagram whose vertices are objects of B
---    and whose edges are morphisms of B)
---  - Left triangle identity: (counit . L) . (L . unit) = id(L):
---    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
---    (which goes from L(A) to L(A) in C via L(R(L(A)))):
---      id(L(A)) . L(inj(A)) = id(L(A))
---    -- this reflects preservation of identities by functors
---  - Right triangle identity: (R . counit) . (unit . R) = id(R):
---    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
---    (which goes from R(B) to R(B) in D via R(L(R(B)))):
---      id(forget(B)) . inj(forget(B)) = id(forget(B))
---    -- this reflects the definition of the injection
+public export
+record SCat where
+  constructor SC
+  scObj : Type
+  scHom : scObj -> scObj -> Type
+  scId : (a : scObj) -> scHom a a
+  scComp : {a, b, c : scObj} -> scHom b c -> scHom a b -> scHom a c
+  0 scEq : (0 a, b : scObj) -> EqRel (scHom a b)
+  0 scIdL : {0 a, b : scObj} -> (0 f : scHom a b) ->
+    (scEq a b).eqRel f (scComp {a} {b} {c=b} (scId b) f)
+  0 scIdR : {0 a, b : scObj} -> (0 f : scHom a b) ->
+    (scEq a b).eqRel f (scComp {a} {b=a} {c=b} f (scId a))
+  0 scIdAssoc : {0 a, b, c, d : scObj} ->
+    (0 f : scHom a b) -> (0 g : scHom b c) -> (0 h : scHom c d) ->
+    (scEq a d).eqRel
+      (scComp {a} {b=c} {c=d} h (scComp {a} {b} {c} g f))
+      (scComp {a} {b} {c=d} (scComp {a=b} {b=c} {c=d} h g) f)
+
+------------------------------------------
+---- Internal natural transformations ----
+------------------------------------------
 
 public export
 InternalCovarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
@@ -115,6 +106,45 @@ MorphComposeContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
   InternalContravarNT {obj} hom a b ->
   InternalContravarNT {obj} hom a c
 MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
+
+------------------------------------
+---- Yoneda internal categories ----
+------------------------------------
+
+---------------------------------------------------
+---- Yoneda categories with explicit coherence ----
+---------------------------------------------------
+
+-- The (free-forgetful) adjunction which can be used to define a category
+-- has the following data:
+--
+--  - Left category C: two-category of categories
+--  - Right category D: category of diagrams
+--  - Left functor L: free functor which adds identities (loop edges) for
+--    each vertex and paths to represent compositions, and equalities for
+--    left identity, right identity, and associativity
+--  - Right functor R: forgetful functor which drops identity, composition,
+--    and equalities, leaving just vertices and edges
+--  - R . L (D -> D): Functor which closes a diagram with loops labeled
+--    as identities and paths labeled as compositions
+--  - L . R (C -> C): Identity functor
+--  - Unit (id -> R . L): injection of diagram into its closure
+--  - Counit (L . R -> id): identity natural transformation
+--  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
+--    functors from a free category generated from a diagram A to an arbitrary
+--    category B are in bijection with graph homomorphisms from A to the
+--    diagram underlying B (i.e. the diagram whose vertices are objects of B
+--    and whose edges are morphisms of B)
+--  - Left triangle identity: (counit . L) . (L . unit) = id(L):
+--    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
+--    (which goes from L(A) to L(A) in C via L(R(L(A)))):
+--      id(L(A)) . L(inj(A)) = id(L(A))
+--    -- this reflects preservation of identities by functors
+--  - Right triangle identity: (R . counit) . (unit . R) = id(R):
+--    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
+--    (which goes from R(B) to R(B) in D via R(L(R(B)))):
+--      id(forget(B)) . inj(forget(B)) = id(forget(B))
+--    -- this reflects the definition of the injection
 
 public export
 record YCat where

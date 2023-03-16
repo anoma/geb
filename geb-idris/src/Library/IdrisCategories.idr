@@ -34,6 +34,12 @@ record IsEquivalence {a : Type} (r : RelationOn a) where
   EquivTrans : IsTransitive r
 
 public export
+record EqRel (a : Type) where
+  constructor MkEq
+  eqRel : RelationOn a
+  eqCorrect : IsEquivalence eqRel
+
+public export
 data EquivClosure : {a : Type} -> RelationOn a -> RelationOn a where
   EqClGen : {a : Type} -> {r : RelationOn a} -> {x, x' : a} ->
     r x x' -> EquivClosure {a} r x x'
