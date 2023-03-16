@@ -147,50 +147,50 @@ MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
 --    -- this reflects the definition of the injection
 
 public export
-record YCat where
-  constructor YC
-  ycObj : Type
-  ycHom : ycObj -> ycObj -> Type
-  0 ycDenotationCovar : MorphDenotationCovarNT ycObj ycHom
-  0 ycDenotationContravar : MorphDenotationContravarNT ycObj ycHom
-  0 ycCovarEqImpliesContravar : {a, b : ycObj} -> (f, g : ycHom a b) ->
-    CovarNTExtEq {a} {b} {hom=ycHom}
+record YCatE where
+  constructor YCE
+  yceObj : Type
+  yceHom : yceObj -> yceObj -> Type
+  0 ycDenotationCovar : MorphDenotationCovarNT yceObj yceHom
+  0 ycDenotationContravar : MorphDenotationContravarNT yceObj yceHom
+  0 ycCovarEqImpliesContravar : {a, b : yceObj} -> (f, g : yceHom a b) ->
+    CovarNTExtEq {a} {b} {hom=yceHom}
       (ycDenotationCovar a b f) (ycDenotationCovar a b g) ->
-    ContravarNTExtEq {a} {b} {hom=ycHom}
+    ContravarNTExtEq {a} {b} {hom=yceHom}
       (ycDenotationContravar a b f) (ycDenotationContravar a b g)
-  0 ycContravarEqImpliesCovar : {a, b : ycObj} -> (f, g : ycHom a b) ->
-    ContravarNTExtEq {a} {b} {hom=ycHom}
+  0 ycContravarEqImpliesCovar : {a, b : yceObj} -> (f, g : yceHom a b) ->
+    ContravarNTExtEq {a} {b} {hom=yceHom}
       (ycDenotationContravar a b f) (ycDenotationContravar a b g) ->
-    CovarNTExtEq {a} {b} {hom=ycHom}
+    CovarNTExtEq {a} {b} {hom=yceHom}
       (ycDenotationCovar a b f) (ycDenotationCovar a b g)
 
 public export
-YCovarNT : (yc : YCat) -> ycObj yc -> ycObj yc -> Type
-YCovarNT yc = InternalCovarNT {obj=(ycObj yc)} (ycHom yc)
+YCovarNT : (yc : YCatE) -> yceObj yc -> yceObj yc -> Type
+YCovarNT yc = InternalCovarNT {obj=(yceObj yc)} (yceHom yc)
 
 public export
-YContravarNT : (yc : YCat) -> ycObj yc -> ycObj yc -> Type
-YContravarNT yc = InternalContravarNT {obj=(ycObj yc)} (ycHom yc)
+YContravarNT : (yc : YCatE) -> yceObj yc -> yceObj yc -> Type
+YContravarNT yc = InternalContravarNT {obj=(yceObj yc)} (yceHom yc)
 
 public export
-yIdCovar : (yc : YCat) -> (x : ycObj yc) -> YCovarNT yc x x
-yIdCovar yc = MorphIdCovarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+yIdCovar : (yc : YCatE) -> (x : yceObj yc) -> YCovarNT yc x x
+yIdCovar yc = MorphIdCovarDenotation {obj=(yceObj yc)} {hom=(yceHom yc)}
 
 public export
-yIdContravar : (yc : YCat) -> (x : ycObj yc) -> YContravarNT yc x x
-yIdContravar yc = MorphIdContravarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+yIdContravar : (yc : YCatE) -> (x : yceObj yc) -> YContravarNT yc x x
+yIdContravar yc = MorphIdContravarDenotation {obj=(yceObj yc)} {hom=(yceHom yc)}
 
 public export
-yComposeCovar : {yc : YCat} -> {a, b, c: ycObj yc} ->
+yComposeCovar : {yc : YCatE} -> {a, b, c: yceObj yc} ->
   YCovarNT yc b c -> YCovarNT yc a b -> YCovarNT yc a c
 yComposeCovar {yc} =
-  MorphComposeCovarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+  MorphComposeCovarDenotation {obj=(yceObj yc)} {hom=(yceHom yc)}
 
 public export
-yComposeContravar : {yc : YCat} -> {a, b, c: ycObj yc} ->
+yComposeContravar : {yc : YCatE} -> {a, b, c: yceObj yc} ->
   YContravarNT yc b c -> YContravarNT yc a b -> YContravarNT yc a c
 yComposeContravar {yc} =
-  MorphComposeContravarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+  MorphComposeContravarDenotation {obj=(yceObj yc)} {hom=(yceHom yc)}
 
 --------------------------------------------
 --------------------------------------------
@@ -200,38 +200,38 @@ yComposeContravar {yc} =
 
 public export
 YExtendObjF : Type
-YExtendObjF = YCat -> Type
+YExtendObjF = YCatE -> Type
 
--- Just an explicit name for `Coprod(ycObj, oext)`.
+-- Just an explicit name for `Coprod(yceObj, oext)`.
 public export
-data YExtendedObj : YCat -> YExtendObjF -> Type where
-  EOV : ycObj yc -> YExtendedObj yc oext
+data YExtendedObj : YCatE -> YExtendObjF -> Type where
+  EOV : yceObj yc -> YExtendedObj yc oext
   EOU : oext yc -> YExtendedObj yc oext
 
 public export
 YExtendMorphF : YExtendObjF -> Type
 YExtendMorphF oext =
-  (yc : YCat) -> YExtendedObj yc oext -> YExtendedObj yc oext -> Type
+  (yc : YCatE) -> YExtendedObj yc oext -> YExtendedObj yc oext -> Type
 
 public export
 YExtendMorphCovarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendMorphCovarDenote {oext} mext =
-  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc x y ->
+  (yc : YCatE) -> (x, y : YExtendedObj yc oext) -> mext yc x y ->
   MorphDenotationCovar (YExtendedObj yc oext) (mext yc) x y
 
 public export
 YExtendMorphContravarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendMorphContravarDenote {oext} mext =
-  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc x y ->
+  (yc : YCatE) -> (x, y : YExtendedObj yc oext) -> mext yc x y ->
   MorphDenotationContravar (YExtendedObj yc oext) (mext yc) x y
 
 public export
 data YExtendedMorph :
-    YCat -> (oext : YExtendObjF) -> YExtendMorphF oext ->
+    YCatE -> (oext : YExtendObjF) -> YExtendMorphF oext ->
     YExtendedObj yc oext -> YExtendedObj yc oext -> Type where
   EMV : {0 oext : YExtendObjF} -> {0 mext : YExtendMorphF oext} ->
-    {0 x, y : ycObj yc} ->
-    ycHom yc x y -> YExtendedMorph yc oext mext (EOV {yc} x) (EOV {yc} y)
+    {0 x, y : yceObj yc} ->
+    yceHom yc x y -> YExtendedMorph yc oext mext (EOV {yc} x) (EOV {yc} y)
   EMU : {0 oext : YExtendObjF} -> {0 mext : YExtendMorphF oext} ->
     {0 x, y : YExtendedObj yc oext} ->
     mext yc x y -> YExtendedMorph yc oext mext x y
@@ -239,7 +239,7 @@ data YExtendedMorph :
 public export
 YExtendCovarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendCovarDenotation {oext} mext =
-  (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
+  (yc : YCatE) -> (x, y : YExtendedObj yc oext) ->
   YExtendedMorph yc oext mext x y ->
   MorphDenotationCovar
     (YExtendedObj yc oext) (YExtendedMorph yc oext mext) x y
@@ -247,7 +247,7 @@ YExtendCovarDenotation {oext} mext =
 public export
 YExtendContravarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendContravarDenotation {oext} mext =
-  (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
+  (yc : YCatE) -> (x, y : YExtendedObj yc oext) ->
   YExtendedMorph yc oext mext x y ->
   MorphDenotationContravar
     (YExtendedObj yc oext) (YExtendedMorph yc oext mext) x y
