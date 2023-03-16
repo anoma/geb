@@ -52,6 +52,11 @@ InternalContravarNT {obj} hom a b =
   SliceMorphism {a=obj} (flip hom a) (flip hom b)
 
 public export
+data InternalNT : (obj -> obj -> Type) -> obj -> obj -> Type where
+  INTCovar : InternalCovarNT hom a b -> InternalNT hom a b
+  INTContravar : InternalContravarNT hom a b -> InternalNT hom a b
+
+public export
 CovarNTExtEq : {obj : Type} -> {hom : obj -> obj -> Type} -> {a, b : obj} ->
   (alpha, beta : InternalCovarNT hom a b) -> Type
 CovarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
@@ -82,6 +87,14 @@ MorphDenotationContravarNT obj hom =
   (a, b : obj) -> MorphDenotationContravar obj hom a b
 
 public export
+data MorphDenotation : (obj : Type) -> (hom : obj -> obj -> Type) ->
+    obj -> obj -> Type where
+  MDCovar :
+    MorphDenotationCovar obj hom a b -> MorphDenotation obj hom a b
+  MDContravar :
+    MorphDenotationContravar obj hom a b -> MorphDenotation obj hom a b
+
+public export
 MorphIdCovarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
   (a : obj) -> InternalCovarNT {obj} hom a a
 MorphIdCovarDenotation {obj} {hom} a c = id {a=(hom a c)}
@@ -106,10 +119,6 @@ MorphComposeContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
   InternalContravarNT {obj} hom a b ->
   InternalContravarNT {obj} hom a c
 MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
-
-------------------------------------
----- Yoneda internal categories ----
-------------------------------------
 
 ---------------------------------------------------
 ---- Yoneda categories with explicit coherence ----
