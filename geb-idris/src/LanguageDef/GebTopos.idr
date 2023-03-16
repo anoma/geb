@@ -9,15 +9,15 @@ import public LanguageDef.Syntax
 
 %default total
 
---------------------------------------------
---------------------------------------------
----- Category-spec-style Geb definition ----
---------------------------------------------
---------------------------------------------
+---------------------------
+---------------------------
+---- Yoneda categories ----
+---------------------------
+---------------------------
 
---------------------
----- Categories ----
---------------------
+---------------------------------------------------
+---- Yoneda categories with explicit coherence ----
+---------------------------------------------------
 
 -- The (free-forgetful) adjunction which can be used to define a category
 -- has the following data:
@@ -161,6 +161,12 @@ yComposeContravar : {yc : YCat} -> {a, b, c: ycObj yc} ->
   YContravarNT yc b c -> YContravarNT yc a b -> YContravarNT yc a c
 yComposeContravar {yc} =
   MorphComposeContravarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+
+--------------------------------------------
+--------------------------------------------
+---- Category-spec-style Geb definition ----
+--------------------------------------------
+--------------------------------------------
 
 public export
 YExtendObjF : Type
