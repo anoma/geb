@@ -231,43 +231,43 @@ record Diagram where
   dEdge : MorphismT dVert
 
 public export
-data MorphEitherF :
+data EMorphEitherF :
     {obj : Type} -> {f : Type -> Type} ->
     (obj -> obj -> Type) ->
     (TrEitherF f obj -> TrEitherF f obj -> Type) ->
     (TrEitherF f obj -> TrEitherF f obj -> Type) where
   MEV : {x, y : obj} ->
-    homv x y -> MorphEitherF {obj} {f} homv hom (TFV x) (TFV y)
+    homv x y -> EMorphEitherF {obj} {f} homv hom (TFV x) (TFV y)
   MEU : {x, y : TrEitherF f obj} ->
-    hom x y -> MorphEitherF {obj} {f} homv hom x y
+    hom x y -> EMorphEitherF {obj} {f} homv hom x y
 
 public export
-data MorphTranslateF :
+data EMorphTranslateF :
     {obj : Type} -> {f : Type -> Type} ->
     (obj -> obj -> Type) ->
     (TrEitherF f obj -> TrEitherF f obj -> Type) ->
     (TrEitherF f obj -> TrEitherF f obj -> Type) ->
     (TrEitherF f obj -> TrEitherF f obj -> Type) where
   MTE :
-    MorphEitherF {obj} {f} homv hom x y ->
-    MorphTranslateF {obj} {f} homv hom carrier x y
+    EMorphEitherF {obj} {f} homv hom x y ->
+    EMorphTranslateF {obj} {f} homv hom carrier x y
   MTI :
     (x : TrEitherF f obj) ->
-    MorphTranslateF {obj} {f} homv hom carrier x x
+    EMorphTranslateF {obj} {f} homv hom carrier x x
   MTC : {x, y, z : TrEitherF f obj} ->
     carrier y z -> carrier x y ->
-    MorphTranslateF {obj} {f} homv hom carrier x z
+    EMorphTranslateF {obj} {f} homv hom carrier x z
 
 public export
-data FreeMorphF :
+data EFreeMorphF :
     {obj : Type} -> {f : Type -> Type} ->
     (obj -> obj -> Type) ->
     (TrEitherF f obj -> TrEitherF f obj -> Type) ->
     (TrEitherF f obj -> TrEitherF f obj -> Type) where
   InM :
     {x, y : TrEitherF f obj} ->
-    MorphTranslateF {obj} {f} homv hom (FreeMorphF {obj} {f} homv hom) x y ->
-    FreeMorphF {obj} {f} homv hom x y
+    EMorphTranslateF {obj} {f} homv hom (EFreeMorphF {obj} {f} homv hom) x y ->
+    EFreeMorphF {obj} {f} homv hom x y
 
 public export
 FMI :
@@ -275,7 +275,7 @@ FMI :
   {homv : obj -> obj -> Type} ->
   {hom : TrEitherF f obj -> TrEitherF f obj -> Type} ->
   (x : TrEitherF f obj) ->
-  FreeMorphF homv hom x x
+  EFreeMorphF homv hom x x
 FMI x = InM (MTI x)
 
 public export
@@ -284,9 +284,9 @@ FMC :
   {homv : obj -> obj -> Type} ->
   {hom : TrEitherF f obj -> TrEitherF f obj -> Type} ->
   {x, y, z : TrEitherF f obj} ->
-  FreeMorphF homv hom y z ->
-  FreeMorphF homv hom x y ->
-  FreeMorphF homv hom x z
+  EFreeMorphF homv hom y z ->
+  EFreeMorphF homv hom x y ->
+  EFreeMorphF homv hom x z
 FMC g f = InM (MTC g f)
 
 public export
@@ -295,8 +295,8 @@ FME :
   {homv : obj -> obj -> Type} ->
   {hom : TrEitherF f obj -> TrEitherF f obj -> Type} ->
   {x, y : TrEitherF f obj} ->
-  MorphEitherF homv hom x y ->
-  FreeMorphF homv hom x y
+  EMorphEitherF homv hom x y ->
+  EFreeMorphF homv hom x y
 FME m = InM (MTE m)
 
 public export
@@ -306,7 +306,7 @@ FMV :
   {hom : TrEitherF f obj -> TrEitherF f obj -> Type} ->
   {x, y : obj} ->
   homv x y ->
-  FreeMorphF homv hom (TFV x) (TFV y)
+  EFreeMorphF homv hom (TFV x) (TFV y)
 FMV m = FME (MEV m)
 
 public export
@@ -316,7 +316,7 @@ FMU :
   {hom : TrEitherF f obj -> TrEitherF f obj -> Type} ->
   {x, y : TrEitherF f obj} ->
   hom x y ->
-  FreeMorphF homv hom x y
+  EFreeMorphF homv hom x y
 FMU m = FME (MEU m)
 
 public export
@@ -330,8 +330,8 @@ MorphDenoteExtendCovar obj f homv hom =
   MorphDenotationCovarNT obj homv ->
   (a, b : TrEitherF f obj) -> hom a b ->
   ((c : TrEitherF f obj) ->
-   MorphEitherF {obj} {f} homv hom b c ->
-   FreeMorphF {obj} {f} homv hom a c)
+   EMorphEitherF {obj} {f} homv hom b c ->
+   EFreeMorphF {obj} {f} homv hom a c)
 
 public export
 MorphDenoteExtendContravar :
@@ -344,8 +344,8 @@ MorphDenoteExtendContravar obj f homv hom =
   MorphDenotationContravarNT obj homv ->
   (a, b : TrEitherF f obj) -> hom a b ->
   ((c : TrEitherF f obj) ->
-   MorphEitherF {obj} {f} homv hom c a ->
-   FreeMorphF {obj} {f} homv hom c b)
+   EMorphEitherF {obj} {f} homv hom c a ->
+   EFreeMorphF {obj} {f} homv hom c b)
 
 ------------------------
 ---- Initial object ----
@@ -408,7 +408,8 @@ InitialMorphExtendDenoteCovar
   _ _ _ (TFC Obj0) (TFV _) (Morph0 _) _ (FMU (Morph0 _)) impossible
 
 public export
-InitialMorphExtendDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+InitialMorphExtendDenoteContravar :
+  (obj : Type) -> (hom : obj -> obj -> Type) ->
   MorphDenoteExtendContravar obj InitialObjF hom (InitialMorphF obj hom)
 InitialMorphExtendDenoteContravar _ _ _
   (TFC Obj0) (TFV _) (Morph0 _) _ (FMU (Morph0 c)) impossible
@@ -569,7 +570,8 @@ CoprodMorphExtendDenoteCovar obj hom denote (TFC (ObjCp a a')) (TFV c)
 public export
 CoprodMorphExtendDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
   MorphDenoteExtendContravar obj CoprodObjF hom (CoprodMorphF obj hom)
-CoprodMorphExtendDenoteContravar obj hom denote a b mab c mca = ?CoprodMorphExtendDenoteContravar_hole
+CoprodMorphExtendDenoteContravar obj hom denote a b mab c mca =
+  ?CoprodMorphExtendDenoteContravar_hole
 
 public export
 CoprodMorphInterpObj : (obj : Type) -> (obj -> Type) -> CoprodObjF obj -> Type
