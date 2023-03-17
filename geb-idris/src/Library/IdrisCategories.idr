@@ -473,6 +473,20 @@ data SliceFreeM : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a where
   InSlF : {a : Type} -> {f : SliceEndofunctor a} -> {sa : SliceObj a} ->
     SliceAlg {a} (SliceTranslateF {a} f sa) (SliceFreeM {a} f sa)
 
+public export
+InSlFv : {a : Type} -> {f : SliceEndofunctor a} -> {sa : SliceObj a} ->
+  {ea : a} -> sa ea -> SliceFreeM {a} f sa ea
+InSlFv {a} {f} {sa} {ea} sea =
+  InSlF {a} {f} {sa} ea
+    (InSlV {a} {f} {sv=sa} {sa=(SliceFreeM {a} f sa)} {ea} sea)
+
+public export
+InSlFc : {a : Type} -> {f : SliceEndofunctor a} -> {sa : SliceObj a} ->
+  {ea : a} -> f (SliceFreeM {a} f sa) ea -> SliceFreeM {a} f sa ea
+InSlFc {a} {f} {sa} {ea} fsea =
+  InSlF {a} {f} {sa} ea
+    (InSlC {a} {f} {sv=sa} {sa=(SliceFreeM {a} f sa)} {ea} fsea)
+
 -- The type of free catamorphisms in slice categories.
 public export
 SliceFreeCata : {a : Type} -> SliceEndofunctor a -> Type
