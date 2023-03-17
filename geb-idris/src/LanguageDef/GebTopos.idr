@@ -20,12 +20,8 @@ SignatureT : Type -> Type
 SignatureT = ProductMonad
 
 public export
-MorphismT : Type -> Type
-MorphismT = SliceObj . SignatureT
-
-public export
 HomSlice : Type -> Type
-HomSlice = MorphismT
+HomSlice = SliceObj . SignatureT
 
 public export
 HomEndofunctor : Type -> Type
@@ -258,7 +254,7 @@ data CatHomF : {obj : Type} -> HomEndofunctor obj where
     hom (y, z) -> hom (x, y) -> CatHomF {obj} hom (x, z)
 
 public export
-HomTranslateF : (obj : Type) -> MorphismT obj -> HomEndofunctor obj
+HomTranslateF : (obj : Type) -> HomSlice obj -> HomEndofunctor obj
 HomTranslateF obj = SliceTranslateF {a=(SignatureT obj)} (CatHomF {obj})
 
 public export
@@ -336,7 +332,7 @@ public export
 record Diagram where
   constructor MkDiagram
   dVert : Type
-  dEdge : MorphismT dVert
+  dEdge : HomSlice dVert
 
 public export
 data EMorphEitherF :
