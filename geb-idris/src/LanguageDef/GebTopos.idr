@@ -156,22 +156,32 @@ MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
 --    -- this reflects the definition of the injection
 
 public export
+CovarEqImpliesContravar : {obj : Type} -> {hom : obj -> obj -> Type} ->
+  MorphDenotationCovarNT obj hom -> MorphDenotationContravarNT obj hom -> Type
+CovarEqImpliesContravar {obj} {hom} covar contravar =
+  {a, b : obj} -> (f, g : hom a b) ->
+  CovarNTExtEq {a} {b} {hom} (covar a b f) (covar a b g) ->
+  ContravarNTExtEq {a} {b} {hom} (contravar a b f) (contravar a b g)
+
+public export
+ContravarEqImpliesCovar : {obj : Type} -> {hom : obj -> obj -> Type} ->
+  MorphDenotationCovarNT obj hom -> MorphDenotationContravarNT obj hom -> Type
+ContravarEqImpliesCovar {obj} {hom} covar contravar =
+  {a, b : obj} -> (f, g : hom a b) ->
+  ContravarNTExtEq {a} {b} {hom} (contravar a b f) (contravar a b g) ->
+  CovarNTExtEq {a} {b} {hom} (covar a b f) (covar a b g)
+
+public export
 record YCat where
   constructor YC
   ycObj : Type
   ycHom : ycObj -> ycObj -> Type
   0 ycDenotationCovar : MorphDenotationCovarNT ycObj ycHom
   0 ycDenotationContravar : MorphDenotationContravarNT ycObj ycHom
-  0 ycCovarEqImpliesContravar : {a, b : ycObj} -> (f, g : ycHom a b) ->
-    CovarNTExtEq {a} {b} {hom=ycHom}
-      (ycDenotationCovar a b f) (ycDenotationCovar a b g) ->
-    ContravarNTExtEq {a} {b} {hom=ycHom}
-      (ycDenotationContravar a b f) (ycDenotationContravar a b g)
-  0 ycContravarEqImpliesCovar : {a, b : ycObj} -> (f, g : ycHom a b) ->
-    ContravarNTExtEq {a} {b} {hom=ycHom}
-      (ycDenotationContravar a b f) (ycDenotationContravar a b g) ->
-    CovarNTExtEq {a} {b} {hom=ycHom}
-      (ycDenotationCovar a b f) (ycDenotationCovar a b g)
+  0 ycCovarEqImpliesContravar :
+    CovarEqImpliesContravar ycDenotationCovar ycDenotationContravar
+  0 ycContravarEqImpliesCovar :
+    ContravarEqImpliesCovar ycDenotationCovar ycDenotationContravar
 
 public export
 YCovarNT : (yc : YCat) -> ycObj yc -> ycObj yc -> Type
@@ -200,6 +210,55 @@ yComposeContravar : {yc : YCat} -> {a, b, c: ycObj yc} ->
   YContravarNT yc b c -> YContravarNT yc a b -> YContravarNT yc a c
 yComposeContravar {yc} =
   MorphComposeContravarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+
+---------------------------------------------------
+---- Yoneda categories are standard categories ----
+---------------------------------------------------
+
+public export
+SignatureT : Type -> Type
+SignatureT = ProductMonad
+
+public export
+MorphismT : Type -> Type
+MorphismT = SliceObj . SignatureT
+
+public export
+HomSlice : Type -> Type
+HomSlice = MorphismT
+
+public export
+HomEndofunctor : Type -> Type
+HomEndofunctor = SliceEndofunctor . SignatureT
+
+public export
+data CatHomF : {obj : Type} -> HomEndofunctor obj where
+  CHId :
+    {0 obj : Type} -> {0 hom : HomSlice obj} ->
+    (x : obj) -> CatHomF {obj} hom (x, x)
+  CHComp :
+    {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 x, y, z : obj} ->
+    hom (y, z) -> hom (x, y) -> CatHomF {obj} hom (x, z)
+
+public export
+HomTranslateF : (obj : Type) -> MorphismT obj -> HomEndofunctor obj
+HomTranslateF obj = SliceTranslateF {a=(SignatureT obj)} (CatHomF {obj})
+
+public export
+FreeHomM : (obj : Type) -> HomEndofunctor obj
+FreeHomM obj = SliceFreeM {a=(SignatureT obj)} (CatHomF {obj})
+
+public export
+YCatHomSlice : (yc : YCat) -> HomSlice (yc.ycObj)
+YCatHomSlice yc (x, y) = yc.ycHom x y
+
+public export
+YCatFreeHomSlice : (yc : YCat) -> (yc.ycObj, yc.ycObj) -> Type
+YCatFreeHomSlice yc = FreeHomM (yc.ycObj) (YCatHomSlice yc)
+
+public export
+YCatFreeHom : (yc : YCat) -> yc.ycObj -> yc.ycObj -> Type
+YCatFreeHom yc x y = YCatFreeHomSlice yc (x, y)
 
 --------------------------------------------
 --------------------------------------------
@@ -260,14 +319,6 @@ YExtendContravarDenotation {oext} mext =
   YExtendedMorph yc oext mext x y ->
   MorphDenotationContravar
     (YExtendedObj yc oext) (YExtendedMorph yc oext mext) x y
-
-public export
-SignatureT : Type -> Type
-SignatureT o = (o, o)
-
-public export
-MorphismT : Type -> Type
-MorphismT o = SignatureT o -> Type
 
 public export
 record Diagram where
@@ -640,6 +691,47 @@ CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjL x y) ex = Left ex
 CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjR x y) ey = Right ey
 CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpCase x y z mxz myz) exy =
   eitherElim (minterp x z mxz) (minterp y z myz) exy
+
+public export
+YCoprodObj : YCat -> Type
+YCoprodObj yc = ?YCoprodObj_hole
+
+public export
+YCoprodHom : (yc : YCat) -> YCoprodObj yc -> YCoprodObj yc -> Type
+YCoprodHom yc = ?YCoprodHom_hole
+
+public export
+YCoprodCovarDenotation : (yc : YCat) ->
+  MorphDenotationCovarNT (YCoprodObj yc) (YCoprodHom yc)
+YCoprodCovarDenotation yc = ?YCoprodCovarDenotation_hole
+
+public export
+YCoprodContravarDenotation : (yc : YCat) ->
+  MorphDenotationContravarNT (YCoprodObj yc) (YCoprodHom yc)
+YCoprodContravarDenotation yc = ?YCoprodContravarDenotation_hole
+
+public export
+YCoprodCovarEqImpliesContravar : (yc : YCat) ->
+  CovarEqImpliesContravar {obj=(YCoprodObj yc)} {hom=(YCoprodHom yc)}
+    (YCoprodCovarDenotation yc) (YCoprodContravarDenotation yc)
+YCoprodCovarEqImpliesContravar yc = ?YCoprodCovarEqImpliesContravar_hole
+
+public export
+YCoprodContravarEqImpliesCovar : (yc : YCat) ->
+  ContravarEqImpliesCovar {obj=(YCoprodObj yc)} {hom=(YCoprodHom yc)}
+    (YCoprodCovarDenotation yc) (YCoprodContravarDenotation yc)
+YCoprodContravarEqImpliesCovar yc = ?YCoprodContravarEqImpliesCovar_hole
+
+public export
+YCoprod : YCat -> YCat
+YCoprod yc =
+  YC
+    (YCoprodObj yc)
+    (YCoprodHom yc)
+    (YCoprodCovarDenotation yc)
+    (YCoprodContravarDenotation yc)
+    ?YCoprod_hole_covareqimpliescontravar -- (YCoprodCovarEqImpliesContravar yc)
+    ?YCoprod_hole_contravareqimpliescoar -- (YCoprodContravarEqImpliesCovar yc)
 
 ---------------------
 ---------------------
