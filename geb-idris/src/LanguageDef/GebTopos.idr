@@ -271,13 +271,13 @@ YCatFreeHomSlice yc = FreeHomM yc.ycObj yc.ycHom
 
 public export
 ycId : (yc : YCat) -> (a : yc.ycObj) -> YCatFreeHomSlice yc (a, a)
-ycId yc a = ?ycId_hole
+ycId yc a = InSlFc $ CHId a
 
 public export
 ycComp : (yc : YCat) -> {a, b, c : yc.ycObj} ->
   YCatFreeHomSlice yc (b, c) -> YCatFreeHomSlice yc (a, b) ->
   YCatFreeHomSlice yc (a, c)
-ycComp yc {a} {b} {c} g f = ?ycComp_hole
+ycComp yc {a} {b} {c} g f = InSlFc $ CHComp g f
 
 public export
 0 ycEqRel : (yc : YCat) -> (0 a, b : yc.ycObj) ->
@@ -354,12 +354,12 @@ YCatToSCat yc =
 public export
 SCatCovarDenotation : (sc : SCat) -> MorphDenotationCovarNT
   sc.scObj sc.scHom
-SCatCovarDenotation sc = ?SCatCovarDenotation_hole
+SCatCovarDenotation sc a b mab c mbc = sc.scComp mbc mab
 
 public export
 SCatContravarDenotation : (sc : SCat) ->
   MorphDenotationContravarNT sc.scObj sc.scHom
-SCatContravarDenotation sc = ?SCatContravarDenotation_hole
+SCatContravarDenotation sc a b mab c mca = sc.scComp mab mca
 
 public export
 SCatCovarEqImpliesContravar : (sc : SCat) ->
