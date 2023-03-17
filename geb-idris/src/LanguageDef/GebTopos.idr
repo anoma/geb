@@ -269,6 +269,84 @@ public export
 YCatFreeHomSlice : (yc : YCat) -> YObjHomSlice yc
 YCatFreeHomSlice yc = FreeHomM yc.ycObj yc.ycHom
 
+public export
+ycId : (yc : YCat) -> (a : yc.ycObj) -> YCatFreeHomSlice yc (a, a)
+ycId yc a = ?ycId_hole
+
+public export
+ycComp : (yc : YCat) -> {a, b, c : yc.ycObj} ->
+  YCatFreeHomSlice yc (b, c) -> YCatFreeHomSlice yc (a, b) ->
+  YCatFreeHomSlice yc (a, c)
+ycComp yc {a} {b} {c} g f = ?ycComp_hole
+
+public export
+0 ycEqRel : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  RelationOn (YCatFreeHomSlice yc (a, b))
+ycEqRel yc a b = ?ycEqRel_hole
+
+public export
+0 ycEqRelRefl : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  IsReflexive (ycEqRel yc a b)
+ycEqRelRefl yc a b = ?ycEqRelRefl_hole
+
+public export
+0 ycEqRelSym : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  IsSymmetric (ycEqRel yc a b)
+ycEqRelSym yc a b = ?ycEqRelSym_hole
+
+public export
+0 ycEqRelTrans : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  IsTransitive (ycEqRel yc a b)
+ycEqRelTrans yc a b = ?ycEqRelTrans_hole
+
+public export
+0 ycEqRelEquiv : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  IsEquivalence (ycEqRel yc a b)
+ycEqRelEquiv yc a b =
+  MkEquivalence
+    ?ycEqRelRefl_equiv_hole
+    ?ycEqRelSym_equiv_hole
+    ?ycEqRelTrans_equiv_hole
+
+public export
+0 ycEq : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  EqRel (YCatFreeHomSlice yc (a, b))
+ycEq yc a b = MkEq (ycEqRel yc a b) (ycEqRelEquiv yc a b)
+
+public export
+0 ycIdL : (yc : YCat) -> {0 a, b : yc.ycObj} ->
+  (0 f : YCatFreeHomSlice yc (a, b)) ->
+  (ycEq yc a b).eqRel f (ycComp yc {a} {b} {c=b} (ycId yc b) f)
+ycIdL yc {a} {b} f = ?ycIdL_hole
+
+public export
+0 ycIdR : (yc : YCat) -> {0 a, b : yc.ycObj} ->
+  (0 f : YCatFreeHomSlice yc (a, b)) ->
+  (ycEq yc a b).eqRel f (ycComp yc {a} {b=a} {c=b} f (ycId yc a))
+ycIdR yc {a} {b} f = ?ycIdR_hole
+
+public export
+0 ycAssoc : (yc : YCat) -> {0 a, b, c, d : yc.ycObj} ->
+  (0 f : YCatFreeHomSlice yc (a, b)) -> (0 g : YCatFreeHomSlice yc (b, c)) ->
+  (0 h : YCatFreeHomSlice yc (c, d)) ->
+  (ycEq yc a d).eqRel
+    (ycComp yc {a} {b=c} {c=d} h (ycComp yc {a} {b} {c} g f))
+    (ycComp yc {a} {b} {c=d} (ycComp yc {a=b} {b=c} {c=d} h g) f)
+ycAssoc yc {a} {b} {c} {d} f g h = ?ycAssoc_hole
+
+public export
+YCatToSCat : YCat -> SCat
+YCatToSCat yc =
+  SC
+    yc.ycObj
+    (YCatFreeHomSlice yc)
+    (ycId yc)
+    (ycComp yc)
+    (ycEq yc)
+    (ycIdL yc)
+    (ycIdR yc)
+    (ycAssoc yc)
+
 --------------------------------------------
 --------------------------------------------
 ---- Category-spec-style Geb definition ----
