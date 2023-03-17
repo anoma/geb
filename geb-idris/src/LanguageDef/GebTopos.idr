@@ -9,6 +9,36 @@ import public LanguageDef.Syntax
 
 %default total
 
+----------------------------------------
+----------------------------------------
+---- Category-signature definitions ----
+----------------------------------------
+----------------------------------------
+
+public export
+SignatureT : Type -> Type
+SignatureT = ProductMonad
+
+public export
+MorphismT : Type -> Type
+MorphismT = SliceObj . SignatureT
+
+public export
+HomSlice : Type -> Type
+HomSlice = MorphismT
+
+public export
+HomEndofunctor : Type -> Type
+HomEndofunctor = SliceEndofunctor . SignatureT
+
+public export
+HomCurry : HomSlice obj -> (obj -> obj -> Type)
+HomCurry hom x y = hom (x, y)
+
+public export
+HomUncurry : (obj -> obj -> Type) -> HomSlice obj
+HomUncurry hom (x, y) = hom x y
+
 ---------------------------
 ---------------------------
 ---- Yoneda categories ----
@@ -23,16 +53,16 @@ public export
 record SCat where
   constructor SC
   scObj : Type
-  scHom : scObj -> scObj -> Type
-  scId : (a : scObj) -> scHom a a
-  scComp : {a, b, c : scObj} -> scHom b c -> scHom a b -> scHom a c
-  0 scEq : (0 a, b : scObj) -> EqRel (scHom a b)
-  0 scIdL : {0 a, b : scObj} -> (0 f : scHom a b) ->
+  scHom : HomSlice scObj
+  scId : (a : scObj) -> scHom (a, a)
+  scComp : {a, b, c : scObj} -> scHom (b, c) -> scHom (a, b) -> scHom (a, c)
+  0 scEq : (0 a, b : scObj) -> EqRel (scHom (a, b))
+  0 scIdL : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
     (scEq a b).eqRel f (scComp {a} {b} {c=b} (scId b) f)
-  0 scIdR : {0 a, b : scObj} -> (0 f : scHom a b) ->
+  0 scIdR : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
     (scEq a b).eqRel f (scComp {a} {b=a} {c=b} f (scId a))
   0 scIdAssoc : {0 a, b, c, d : scObj} ->
-    (0 f : scHom a b) -> (0 g : scHom b c) -> (0 h : scHom c d) ->
+    (0 f : scHom (a, b)) -> (0 g : scHom (b, c)) -> (0 h : scHom (c, d)) ->
     (scEq a d).eqRel
       (scComp {a} {b=c} {c=d} h (scComp {a} {b} {c} g f))
       (scComp {a} {b} {c=d} (scComp {a=b} {b=c} {c=d} h g) f)
@@ -42,82 +72,81 @@ record SCat where
 ------------------------------------------
 
 public export
-InternalCovarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
-InternalCovarNT {obj} hom a b =
-  SliceMorphism {a=obj} (hom b) (hom a)
+InternalCovarNT : {obj : Type} -> HomEndofunctor obj
+InternalCovarNT {obj} hom (a, b) =
+  SliceMorphism {a=obj} (HomCurry hom b) (HomCurry hom a)
 
 public export
-InternalContravarNT : {obj : Type} -> (obj -> obj -> Type) -> obj -> obj -> Type
-InternalContravarNT {obj} hom a b =
-  SliceMorphism {a=obj} (flip hom a) (flip hom b)
+InternalContravarNT : {obj : Type} -> HomEndofunctor obj
+InternalContravarNT {obj} hom (a, b) =
+  SliceMorphism {a=obj} (flip (HomCurry hom) a) (flip (HomCurry hom) b)
 
 public export
-data InternalNT : (obj -> obj -> Type) -> obj -> obj -> Type where
-  INTCovar : InternalCovarNT hom a b -> InternalNT hom a b
-  INTContravar : InternalContravarNT hom a b -> InternalNT hom a b
+data InternalNT : {0 obj : Type} -> HomEndofunctor obj where
+  INTCovar : InternalCovarNT hom (a, b) -> InternalNT hom (a, b)
+  INTContravar : InternalContravarNT hom (a, b) -> InternalNT hom (a, b)
 
 public export
-CovarNTExtEq : {obj : Type} -> {hom : obj -> obj -> Type} -> {a, b : obj} ->
-  (alpha, beta : InternalCovarNT hom a b) -> Type
+CovarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
+  (alpha, beta : InternalCovarNT hom (a, b)) -> Type
 CovarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
 
 public export
-ContravarNTExtEq : {obj : Type} -> {hom : obj -> obj -> Type} -> {a, b : obj} ->
-  (alpha, beta : InternalContravarNT hom a b) -> Type
+ContravarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
+  (alpha, beta : InternalContravarNT hom (a, b)) -> Type
 ContravarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
 
 public export
-MorphDenotationCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  obj -> obj -> Type
-MorphDenotationCovar obj hom a b = hom a b -> InternalCovarNT hom a b
+MorphDenotationCovar : (obj : Type) -> HomEndofunctor obj
+MorphDenotationCovar obj hom (a, b) =
+  hom (a, b) -> InternalCovarNT hom (a, b)
 
 public export
-MorphDenotationCovarNT : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
+MorphDenotationCovarNT : (obj : Type) -> (hom : HomSlice obj) -> Type
 MorphDenotationCovarNT obj hom =
-  (a, b : obj) -> MorphDenotationCovar obj hom a b
+  (a, b : obj) -> MorphDenotationCovar obj hom (a, b)
 
 public export
-MorphDenotationContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
-  obj -> obj -> Type
-MorphDenotationContravar obj hom a b = hom a b -> InternalContravarNT hom a b
+MorphDenotationContravar : (obj : Type) -> HomEndofunctor obj
+MorphDenotationContravar obj hom (a, b) =
+  hom (a, b) -> InternalContravarNT hom (a, b)
 
 public export
-MorphDenotationContravarNT : (obj : Type) -> (hom : obj -> obj -> Type) -> Type
+MorphDenotationContravarNT : (obj : Type) -> HomSlice obj -> Type
 MorphDenotationContravarNT obj hom =
-  (a, b : obj) -> MorphDenotationContravar obj hom a b
+  (a, b : obj) -> MorphDenotationContravar obj hom (a, b)
 
 public export
-data MorphDenotation : (obj : Type) -> (hom : obj -> obj -> Type) ->
-    obj -> obj -> Type where
+data MorphDenotation : (obj : Type) -> HomEndofunctor obj where
   MDCovar :
-    MorphDenotationCovar obj hom a b -> MorphDenotation obj hom a b
+    MorphDenotationCovar obj hom (a, b) -> MorphDenotation obj hom (a, b)
   MDContravar :
-    MorphDenotationContravar obj hom a b -> MorphDenotation obj hom a b
+    MorphDenotationContravar obj hom (a, b) -> MorphDenotation obj hom (a, b)
 
 public export
-MorphIdCovarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
-  (a : obj) -> InternalCovarNT {obj} hom a a
-MorphIdCovarDenotation {obj} {hom} a c = id {a=(hom a c)}
+MorphIdCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
+  (a : obj) -> InternalCovarNT {obj} hom (a, a)
+MorphIdCovarDenotation {obj} {hom} a c = id {a=(hom (a, c))}
 
 public export
-MorphComposeCovarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
+MorphComposeCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
   {a, b, c : obj} ->
-  InternalCovarNT {obj} hom b c ->
-  InternalCovarNT {obj} hom a b ->
-  InternalCovarNT {obj} hom a c
+  InternalCovarNT {obj} hom (b, c) ->
+  InternalCovarNT {obj} hom (a, b) ->
+  InternalCovarNT {obj} hom (a, c)
 MorphComposeCovarDenotation {obj} {hom} {a} {b} {c} g f d = f d . g d
 
 public export
-MorphIdContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
-  (a : obj) -> InternalContravarNT {obj} hom a a
-MorphIdContravarDenotation {obj} {hom} a c = id {a=(hom c a)}
+MorphIdContravarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
+  (a : obj) -> InternalContravarNT {obj} hom (a, a)
+MorphIdContravarDenotation {obj} {hom} a c = id {a=(hom (c, a))}
 
 public export
-MorphComposeContravarDenotation : {obj : Type} -> {hom : obj -> obj -> Type} ->
+MorphComposeContravarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
   {a, b, c : obj} ->
-  InternalContravarNT {obj} hom b c ->
-  InternalContravarNT {obj} hom a b ->
-  InternalContravarNT {obj} hom a c
+  InternalContravarNT {obj} hom (b, c) ->
+  InternalContravarNT {obj} hom (a, b) ->
+  InternalContravarNT {obj} hom (a, c)
 MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
 
 ---------------------------------------------------
@@ -156,18 +185,18 @@ MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
 --    -- this reflects the definition of the injection
 
 public export
-CovarEqImpliesContravar : {obj : Type} -> {hom : obj -> obj -> Type} ->
+CovarEqImpliesContravar : {obj : Type} -> {hom : HomSlice obj} ->
   MorphDenotationCovarNT obj hom -> MorphDenotationContravarNT obj hom -> Type
 CovarEqImpliesContravar {obj} {hom} covar contravar =
-  {a, b : obj} -> (f, g : hom a b) ->
+  {a, b : obj} -> (f, g : hom (a, b)) ->
   CovarNTExtEq {a} {b} {hom} (covar a b f) (covar a b g) ->
   ContravarNTExtEq {a} {b} {hom} (contravar a b f) (contravar a b g)
 
 public export
-ContravarEqImpliesCovar : {obj : Type} -> {hom : obj -> obj -> Type} ->
+ContravarEqImpliesCovar : {obj : Type} -> {hom : HomSlice obj} ->
   MorphDenotationCovarNT obj hom -> MorphDenotationContravarNT obj hom -> Type
 ContravarEqImpliesCovar {obj} {hom} covar contravar =
-  {a, b : obj} -> (f, g : hom a b) ->
+  {a, b : obj} -> (f, g : hom (a, b)) ->
   ContravarNTExtEq {a} {b} {hom} (contravar a b f) (contravar a b g) ->
   CovarNTExtEq {a} {b} {hom} (covar a b f) (covar a b g)
 
@@ -175,61 +204,49 @@ public export
 record YCat where
   constructor YC
   ycObj : Type
-  ycHom : ycObj -> ycObj -> Type
+  ycHom : HomSlice ycObj
   0 ycDenotationCovar : MorphDenotationCovarNT ycObj ycHom
   0 ycDenotationContravar : MorphDenotationContravarNT ycObj ycHom
   0 ycCovarEqImpliesContravar :
-    CovarEqImpliesContravar ycDenotationCovar ycDenotationContravar
+    CovarEqImpliesContravar {hom=ycHom} ycDenotationCovar ycDenotationContravar
   0 ycContravarEqImpliesCovar :
-    ContravarEqImpliesCovar ycDenotationCovar ycDenotationContravar
+    ContravarEqImpliesCovar {hom=ycHom} ycDenotationCovar ycDenotationContravar
 
 public export
-YCovarNT : (yc : YCat) -> ycObj yc -> ycObj yc -> Type
+YCHomSlice : YCat -> Type
+YCHomSlice yc = HomSlice (ycObj yc)
+
+public export
+YCovarNT : (yc : YCat) -> YCHomSlice yc
 YCovarNT yc = InternalCovarNT {obj=(ycObj yc)} (ycHom yc)
 
 public export
-YContravarNT : (yc : YCat) -> ycObj yc -> ycObj yc -> Type
+YContravarNT : (yc : YCat) -> YCHomSlice yc
 YContravarNT yc = InternalContravarNT {obj=(ycObj yc)} (ycHom yc)
 
 public export
-yIdCovar : (yc : YCat) -> (x : ycObj yc) -> YCovarNT yc x x
+yIdCovar : (yc : YCat) -> (x : ycObj yc) -> YCovarNT yc (x, x)
 yIdCovar yc = MorphIdCovarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
 
 public export
-yIdContravar : (yc : YCat) -> (x : ycObj yc) -> YContravarNT yc x x
+yIdContravar : (yc : YCat) -> (x : ycObj yc) -> YContravarNT yc (x, x)
 yIdContravar yc = MorphIdContravarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
 
 public export
 yComposeCovar : {yc : YCat} -> {a, b, c: ycObj yc} ->
-  YCovarNT yc b c -> YCovarNT yc a b -> YCovarNT yc a c
+  YCovarNT yc (b, c) -> YCovarNT yc (a, b) -> YCovarNT yc (a, c)
 yComposeCovar {yc} =
   MorphComposeCovarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
 
 public export
 yComposeContravar : {yc : YCat} -> {a, b, c: ycObj yc} ->
-  YContravarNT yc b c -> YContravarNT yc a b -> YContravarNT yc a c
+  YContravarNT yc (b, c) -> YContravarNT yc (a, b) -> YContravarNT yc (a, c)
 yComposeContravar {yc} =
   MorphComposeContravarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
 
 ---------------------------------------------------
 ---- Yoneda categories are standard categories ----
 ---------------------------------------------------
-
-public export
-SignatureT : Type -> Type
-SignatureT = ProductMonad
-
-public export
-MorphismT : Type -> Type
-MorphismT = SliceObj . SignatureT
-
-public export
-HomSlice : Type -> Type
-HomSlice = MorphismT
-
-public export
-HomEndofunctor : Type -> Type
-HomEndofunctor = SliceEndofunctor . SignatureT
 
 public export
 data CatHomF : {obj : Type} -> HomEndofunctor obj where
@@ -249,16 +266,12 @@ FreeHomM : (obj : Type) -> HomEndofunctor obj
 FreeHomM obj = SliceFreeM {a=(SignatureT obj)} (CatHomF {obj})
 
 public export
-YCatHomSlice : (yc : YCat) -> HomSlice (yc.ycObj)
-YCatHomSlice yc (x, y) = yc.ycHom x y
+YObjHomSlice : (yc : YCat) -> Type
+YObjHomSlice yc = HomSlice yc.ycObj
 
 public export
-YCatFreeHomSlice : (yc : YCat) -> (yc.ycObj, yc.ycObj) -> Type
-YCatFreeHomSlice yc = FreeHomM (yc.ycObj) (YCatHomSlice yc)
-
-public export
-YCatFreeHom : (yc : YCat) -> yc.ycObj -> yc.ycObj -> Type
-YCatFreeHom yc x y = YCatFreeHomSlice yc (x, y)
+YCatFreeHomSlice : (yc : YCat) -> YObjHomSlice yc
+YCatFreeHomSlice yc = FreeHomM yc.ycObj yc.ycHom
 
 --------------------------------------------
 --------------------------------------------
@@ -278,47 +291,46 @@ data YExtendedObj : YCat -> YExtendObjF -> Type where
 
 public export
 YExtendMorphF : YExtendObjF -> Type
-YExtendMorphF oext =
-  (yc : YCat) -> YExtendedObj yc oext -> YExtendedObj yc oext -> Type
+YExtendMorphF oext = (yc : YCat) -> HomSlice (YExtendedObj yc oext)
 
 public export
 YExtendMorphCovarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendMorphCovarDenote {oext} mext =
-  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc x y ->
-  MorphDenotationCovar (YExtendedObj yc oext) (mext yc) x y
+  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc (x, y) ->
+  MorphDenotationCovar (YExtendedObj yc oext) (mext yc) (x, y)
 
 public export
 YExtendMorphContravarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendMorphContravarDenote {oext} mext =
-  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc x y ->
-  MorphDenotationContravar (YExtendedObj yc oext) (mext yc) x y
+  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc (x, y) ->
+  MorphDenotationContravar (YExtendedObj yc oext) (mext yc) (x, y)
 
 public export
 data YExtendedMorph :
     YCat -> (oext : YExtendObjF) -> YExtendMorphF oext ->
-    YExtendedObj yc oext -> YExtendedObj yc oext -> Type where
+    HomSlice (YExtendedObj yc oext) where
   EMV : {0 oext : YExtendObjF} -> {0 mext : YExtendMorphF oext} ->
     {0 x, y : ycObj yc} ->
-    ycHom yc x y -> YExtendedMorph yc oext mext (EOV {yc} x) (EOV {yc} y)
+    ycHom yc (x, y) -> YExtendedMorph yc oext mext (EOV {yc} x, EOV {yc} y)
   EMU : {0 oext : YExtendObjF} -> {0 mext : YExtendMorphF oext} ->
     {0 x, y : YExtendedObj yc oext} ->
-    mext yc x y -> YExtendedMorph yc oext mext x y
+    mext yc (x, y) -> YExtendedMorph yc oext mext (x, y)
 
 public export
 YExtendCovarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendCovarDenotation {oext} mext =
   (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
-  YExtendedMorph yc oext mext x y ->
+  YExtendedMorph yc oext mext (x, y) ->
   MorphDenotationCovar
-    (YExtendedObj yc oext) (YExtendedMorph yc oext mext) x y
+    (YExtendedObj yc oext) (YExtendedMorph yc oext mext) (x, y)
 
 public export
 YExtendContravarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendContravarDenotation {oext} mext =
   (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
-  YExtendedMorph yc oext mext x y ->
+  YExtendedMorph yc oext mext (x, y) ->
   MorphDenotationContravar
-    (YExtendedObj yc oext) (YExtendedMorph yc oext mext) x y
+    (YExtendedObj yc oext) (YExtendedMorph yc oext mext) (x, y)
 
 public export
 record Diagram where
@@ -329,119 +341,116 @@ record Diagram where
 public export
 data EMorphEitherF :
     {obj : Type} -> {f : Type -> Type} ->
-    (obj -> obj -> Type) ->
-    (TrEitherF f obj -> TrEitherF f obj -> Type) ->
-    (TrEitherF f obj -> TrEitherF f obj -> Type) where
+    HomSlice obj ->
+    HomEndofunctor (TrEitherF f obj) where
   MEV : {x, y : obj} ->
-    homv x y -> EMorphEitherF {obj} {f} homv hom (TFV x) (TFV y)
+    homv (x, y) -> EMorphEitherF {obj} {f} homv hom (TFV x, TFV y)
   MEU : {x, y : TrEitherF f obj} ->
-    hom x y -> EMorphEitherF {obj} {f} homv hom x y
+    hom (x, y) -> EMorphEitherF {obj} {f} homv hom (x, y)
 
 public export
 data EMorphTranslateF :
     {obj : Type} -> {f : Type -> Type} ->
-    (obj -> obj -> Type) ->
-    (TrEitherF f obj -> TrEitherF f obj -> Type) ->
-    (TrEitherF f obj -> TrEitherF f obj -> Type) ->
-    (TrEitherF f obj -> TrEitherF f obj -> Type) where
+    HomSlice obj -> HomSlice (TrEitherF f obj) ->
+    HomEndofunctor (TrEitherF f obj) where
   MTE :
-    EMorphEitherF {obj} {f} homv hom x y ->
-    EMorphTranslateF {obj} {f} homv hom carrier x y
+    EMorphEitherF {obj} {f} homv hom (x, y) ->
+    EMorphTranslateF {obj} {f} homv hom carrier (x, y)
   MTI :
     (x : TrEitherF f obj) ->
-    EMorphTranslateF {obj} {f} homv hom carrier x x
+    EMorphTranslateF {obj} {f} homv hom carrier (x, x)
   MTC : {x, y, z : TrEitherF f obj} ->
-    carrier y z -> carrier x y ->
-    EMorphTranslateF {obj} {f} homv hom carrier x z
+    carrier (y, z) -> carrier (x, y) ->
+    EMorphTranslateF {obj} {f} homv hom carrier (x, z)
 
 public export
 data EFreeMorphF :
     {obj : Type} -> {f : Type -> Type} ->
-    (obj -> obj -> Type) ->
-    (TrEitherF f obj -> TrEitherF f obj -> Type) ->
-    (TrEitherF f obj -> TrEitherF f obj -> Type) where
+    HomSlice obj ->
+    HomEndofunctor (TrEitherF f obj) where
   InM :
     {x, y : TrEitherF f obj} ->
-    EMorphTranslateF {obj} {f} homv hom (EFreeMorphF {obj} {f} homv hom) x y ->
-    EFreeMorphF {obj} {f} homv hom x y
+    EMorphTranslateF {obj} {f} homv hom
+      (EFreeMorphF {obj} {f} homv hom) (x, y) ->
+    EFreeMorphF {obj} {f} homv hom (x, y)
 
 public export
 FMI :
   {obj : Type} -> {f : Type -> Type} ->
-  {homv : obj -> obj -> Type} ->
-  {hom : TrEitherF f obj -> TrEitherF f obj -> Type} ->
+  {homv : HomSlice obj} ->
+  {hom : HomSlice (TrEitherF f obj)} ->
   (x : TrEitherF f obj) ->
-  EFreeMorphF homv hom x x
+  EFreeMorphF homv hom (x, x)
 FMI x = InM (MTI x)
 
 public export
 FMC :
   {obj : Type} -> {f : Type -> Type} ->
-  {homv : obj -> obj -> Type} ->
-  {hom : TrEitherF f obj -> TrEitherF f obj -> Type} ->
+  {homv : HomSlice obj} ->
+  {hom : HomSlice (TrEitherF f obj)} ->
   {x, y, z : TrEitherF f obj} ->
-  EFreeMorphF homv hom y z ->
-  EFreeMorphF homv hom x y ->
-  EFreeMorphF homv hom x z
+  EFreeMorphF homv hom (y, z) ->
+  EFreeMorphF homv hom (x, y) ->
+  EFreeMorphF homv hom (x, z)
 FMC g f = InM (MTC g f)
 
 public export
 FME :
   {obj : Type} -> {f : Type -> Type} ->
-  {homv : obj -> obj -> Type} ->
-  {hom : TrEitherF f obj -> TrEitherF f obj -> Type} ->
+  {homv : HomSlice obj} ->
+  {hom : HomSlice (TrEitherF f obj)} ->
   {x, y : TrEitherF f obj} ->
-  EMorphEitherF homv hom x y ->
-  EFreeMorphF homv hom x y
+  EMorphEitherF homv hom (x, y) ->
+  EFreeMorphF homv hom (x, y)
 FME m = InM (MTE m)
 
 public export
 FMV :
   {obj : Type} -> {f : Type -> Type} ->
-  {homv : obj -> obj -> Type} ->
-  {hom : TrEitherF f obj -> TrEitherF f obj -> Type} ->
+  {homv : HomSlice obj} ->
+  {hom : HomSlice (TrEitherF f obj)} ->
   {x, y : obj} ->
-  homv x y ->
-  EFreeMorphF homv hom (TFV x) (TFV y)
+  homv (x, y) ->
+  EFreeMorphF homv hom (TFV x, TFV y)
 FMV m = FME (MEV m)
 
 public export
 FMU :
   {obj : Type} -> {f : Type -> Type} ->
-  {homv : obj -> obj -> Type} ->
-  {hom : TrEitherF f obj -> TrEitherF f obj -> Type} ->
+  {homv : HomSlice obj} ->
+  {hom : HomSlice (TrEitherF f obj)} ->
   {x, y : TrEitherF f obj} ->
-  hom x y ->
-  EFreeMorphF homv hom x y
+  hom (x, y) ->
+  EFreeMorphF homv hom (x, y)
 FMU m = FME (MEU m)
 
 public export
 MorphDenoteExtendCovar :
   (obj : Type) ->
   (f : Type -> Type) ->
-  (homv : obj -> obj -> Type) ->
-  (hom : TrEitherF f obj -> TrEitherF f obj -> Type) ->
+  (homv : HomSlice obj) ->
+  (hom : HomSlice (TrEitherF f obj)) ->
   Type
 MorphDenoteExtendCovar obj f homv hom =
   MorphDenotationCovarNT obj homv ->
-  (a, b : TrEitherF f obj) -> hom a b ->
+  (a, b : TrEitherF f obj) -> hom (a, b) ->
   ((c : TrEitherF f obj) ->
-   EMorphEitherF {obj} {f} homv hom b c ->
-   EFreeMorphF {obj} {f} homv hom a c)
+   EMorphEitherF {obj} {f} homv hom (b, c) ->
+   EFreeMorphF {obj} {f} homv hom (a, c))
 
 public export
 MorphDenoteExtendContravar :
   (obj : Type) ->
   (f : Type -> Type) ->
-  (homv : obj -> obj -> Type) ->
-  (hom : TrEitherF f obj -> TrEitherF f obj -> Type) ->
+  (homv : HomSlice obj) ->
+  (hom : HomSlice (TrEitherF f obj)) ->
   Type
 MorphDenoteExtendContravar obj f homv hom =
   MorphDenotationContravarNT obj homv ->
-  (a, b : TrEitherF f obj) -> hom a b ->
+  (a, b : TrEitherF f obj) -> hom (a, b) ->
   ((c : TrEitherF f obj) ->
-   EMorphEitherF {obj} {f} homv hom c a ->
-   EFreeMorphF {obj} {f} homv hom c b)
+   EMorphEitherF {obj} {f} homv hom (c, a) ->
+   EFreeMorphF {obj} {f} homv hom (c, b))
 
 ------------------------
 ---- Initial object ----
@@ -490,12 +499,12 @@ data InitialObjF : (obj : Type) -> Type where
 -- the internal hom-profunctor with a mapping from each object to
 -- the new freely-generated (initial) object.
 public export
-data InitialMorphF : (obj : Type) -> (hom : obj -> obj -> Type) ->
-    TrEitherF InitialObjF obj -> TrEitherF InitialObjF obj -> Type where
-  Morph0 : (x : obj) -> InitialMorphF obj hom (TFC Obj0) (TFV x)
+data InitialMorphF : (obj : Type) -> (hom : HomSlice obj) ->
+    HomSlice (TrEitherF InitialObjF obj) where
+  Morph0 : (x : obj) -> InitialMorphF obj hom (TFC Obj0, TFV x)
 
 public export
-InitialMorphExtendDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+InitialMorphExtendDenoteCovar : (obj : Type) -> (hom : HomSlice obj) ->
   MorphDenoteExtendCovar obj InitialObjF hom (InitialMorphF obj hom)
 InitialMorphExtendDenoteCovar
   obj hom denote (TFC Obj0) (TFV b) (Morph0 b) (TFV c) (MEV mbc) =
@@ -505,7 +514,7 @@ InitialMorphExtendDenoteCovar
 
 public export
 InitialMorphExtendDenoteContravar :
-  (obj : Type) -> (hom : obj -> obj -> Type) ->
+  (obj : Type) -> (hom :  HomSlice obj) ->
   MorphDenoteExtendContravar obj InitialObjF hom (InitialMorphF obj hom)
 InitialMorphExtendDenoteContravar _ _ _
   (TFC Obj0) (TFV _) (Morph0 _) _ (FMU (Morph0 c)) impossible
@@ -521,11 +530,11 @@ ExtendInitialMorphInterpObj obj interp =
   trElim interp (InitialMorphInterpObj obj interp)
 
 public export
-InitialMorphInterpMorph : (obj : Type) -> (hom : obj -> obj -> Type) ->
+InitialMorphInterpMorph : (obj : Type) -> (hom : HomSlice obj) ->
   (ointerp : obj -> Type) ->
-  (minterp : (a, b : obj) -> hom a b -> ointerp a -> ointerp b) ->
+  (minterp : (a, b : obj) -> hom (a, b) -> ointerp a -> ointerp b) ->
   (a, b : TrEitherF InitialObjF obj) ->
-  InitialMorphF obj hom a b ->
+  InitialMorphF obj hom (a, b) ->
   ExtendInitialMorphInterpObj obj ointerp a ->
   ExtendInitialMorphInterpObj obj ointerp b
 InitialMorphInterpMorph obj hom ointerp minterp (TFV a) b m impossible
@@ -625,17 +634,17 @@ data CoprodObjF : (obj : Type) -> Type where
   ObjCp : obj -> obj -> CoprodObjF obj
 
 public export
-data CoprodMorphF : (obj : Type) -> (hom : obj -> obj -> Type) ->
-    TrEitherF CoprodObjF obj -> TrEitherF CoprodObjF obj -> Type where
+data CoprodMorphF : (obj : Type) -> (hom : HomSlice obj) ->
+    HomSlice (TrEitherF CoprodObjF obj) where
   CpInjL : (x, y : obj) ->
-    CoprodMorphF obj hom (TFV x) (TFC (ObjCp x y))
+    CoprodMorphF obj hom (TFV x, TFC (ObjCp x y))
   CpInjR : (x, y : obj) ->
-    CoprodMorphF obj hom (TFV y) (TFC (ObjCp x y))
+    CoprodMorphF obj hom (TFV y, TFC (ObjCp x y))
   CpCase : (x, y, z : obj) ->
-    hom x z -> hom y z -> CoprodMorphF obj hom (TFC (ObjCp x y)) (TFV z)
+    hom (x, z) -> hom (y, z) -> CoprodMorphF obj hom (TFC (ObjCp x y), TFV z)
 
 public export
-CoprodMorphExtendDenoteCovar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+CoprodMorphExtendDenoteCovar : (obj : Type) -> (hom : HomSlice obj) ->
   MorphDenoteExtendCovar obj CoprodObjF hom (CoprodMorphF obj hom)
 CoprodMorphExtendDenoteCovar obj hom denote (TFV a) (TFC (ObjCp a b))
   (CpInjL a b) (TFV c) (MEU (CpCase a b c f g)) =
@@ -664,7 +673,7 @@ CoprodMorphExtendDenoteCovar obj hom denote (TFC (ObjCp a a')) (TFV c)
     FMC (FMU $ CpInjR b c) (FMU $ CpCase a a' c f g)
 
 public export
-CoprodMorphExtendDenoteContravar : (obj : Type) -> (hom : obj -> obj -> Type) ->
+CoprodMorphExtendDenoteContravar : (obj : Type) -> (hom : HomSlice obj) ->
   MorphDenoteExtendContravar obj CoprodObjF hom (CoprodMorphF obj hom)
 CoprodMorphExtendDenoteContravar obj hom denote a b mab c mca =
   ?CoprodMorphExtendDenoteContravar_hole
@@ -680,11 +689,11 @@ ExtendCoprodMorphInterpObj obj interp =
   trElim interp (CoprodMorphInterpObj obj interp)
 
 public export
-CoprodMorphInterpMorph : (obj : Type) -> (hom : obj -> obj -> Type) ->
+CoprodMorphInterpMorph : (obj : Type) -> (hom : HomSlice obj) ->
   (ointerp : obj -> Type) ->
-  (minterp : (a, b : obj) -> hom a b -> ointerp a -> ointerp b) ->
+  (minterp : (a, b : obj) -> hom (a, b) -> ointerp a -> ointerp b) ->
   (a, b : TrEitherF CoprodObjF obj) ->
-  CoprodMorphF obj hom a b ->
+  CoprodMorphF obj hom (a, b) ->
   ExtendCoprodMorphInterpObj obj ointerp a ->
   ExtendCoprodMorphInterpObj obj ointerp b
 CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjL x y) ex = Left ex
@@ -697,7 +706,7 @@ YCoprodObj : YCat -> Type
 YCoprodObj yc = ?YCoprodObj_hole
 
 public export
-YCoprodHom : (yc : YCat) -> YCoprodObj yc -> YCoprodObj yc -> Type
+YCoprodHom : (yc : YCat) -> HomSlice (YCoprodObj yc)
 YCoprodHom yc = ?YCoprodHom_hole
 
 public export
