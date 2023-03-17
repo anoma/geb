@@ -473,9 +473,22 @@ data SliceFreeM : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a where
   InSlF : {a : Type} -> {f : SliceEndofunctor a} -> {sa : SliceObj a} ->
     SliceAlg {a} (SliceTranslateF {a} f sa) (SliceFreeM {a} f sa)
 
+-- The type of free catamorphisms in slice categories.
+public export
+SliceFreeCata : {a : Type} -> SliceEndofunctor a -> Type
+SliceFreeCata {a} f =
+  (sv, sa : SliceObj a) -> SliceMorphism {a} sv sa -> SliceAlg f sa ->
+  SliceMorphism {a} (SliceFreeM f sv) sa
+
 public export
 SliceMu : {a : Type} -> SliceEndofunctor a -> SliceObj a
 SliceMu {a} f = SliceFreeM {a} f (const Void)
+
+-- The type of catamorphisms in slice categories.
+public export
+SliceCata : {a : Type} -> SliceEndofunctor a -> Type
+SliceCata {a} f =
+  (sa : SliceObj a) -> SliceAlg f sa -> SliceMorphism {a} (SliceMu f) sa
 
 -- The cofree comonad in a slice category.
 public export
@@ -487,9 +500,22 @@ data SliceCofreeCM : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a
     Inf (SliceScaleF {a} f sa (SliceCofreeCM {a} f sa) ea) ->
     SliceCofreeCM {a} f sa ea
 
+-- The type of cofree anamorphisms in slice categories.
+public export
+SliceCofreeAna : {a : Type} -> SliceEndofunctor a -> Type
+SliceCofreeAna {a} f =
+  (sl, sa : SliceObj a) -> SliceMorphism {a} sa sl -> SliceCoalg f sa ->
+  SliceMorphism {a} sa (SliceCofreeCM f sl)
+
 public export
 SliceNu : {a : Type} -> SliceEndofunctor a -> SliceObj a
 SliceNu {a} f = SliceCofreeCM {a} f (const Unit)
+
+-- The type of anamorphisms in slice categories.
+public export
+SliceAna : {a : Type} -> SliceEndofunctor a -> Type
+SliceAna {a} f =
+  (sa : SliceObj a) -> SliceCoalg f sa -> SliceMorphism {a} sa (SliceNu f)
 
 ----------------------------------------------------
 ----------------------------------------------------
