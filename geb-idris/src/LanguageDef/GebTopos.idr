@@ -347,6 +347,50 @@ YCatToSCat yc =
     (ycIdR yc)
     (ycAssoc yc)
 
+---------------------------------------------------
+---- Standard categories are Yoneda categories ----
+---------------------------------------------------
+
+public export
+SCatCovarDenotation : (sc : SCat) -> MorphDenotationCovarNT
+  sc.scObj sc.scHom
+SCatCovarDenotation sc = ?SCatCovarDenotation_hole
+
+public export
+SCatContravarDenotation : (sc : SCat) ->
+  MorphDenotationContravarNT sc.scObj sc.scHom
+SCatContravarDenotation sc = ?SCatContravarDenotation_hole
+
+public export
+SCatCovarEqImpliesContravar : (sc : SCat) ->
+  CovarEqImpliesContravar {obj=sc.scObj} {hom=sc.scHom}
+    (SCatCovarDenotation sc) (SCatContravarDenotation sc)
+SCatCovarEqImpliesContravar sc = ?SCatCovarEqImpliesContravar_hole
+
+public export
+SCatContravarEqImpliesCovar : (sc : SCat) ->
+  ContravarEqImpliesCovar {obj=sc.scObj} {hom=sc.scHom}
+    (SCatCovarDenotation sc) (SCatContravarDenotation sc)
+SCatContravarEqImpliesCovar sc = ?SCatContravarEqImpliesCovar_hole
+
+public export
+SCatToYCat : SCat -> YCat
+SCatToYCat sc =
+  YC
+    sc.scObj
+    sc.scHom
+    (SCatCovarDenotation sc)
+    (SCatContravarDenotation sc)
+    (SCatCovarEqImpliesContravar sc)
+    (SCatContravarEqImpliesCovar sc)
+
+------------------------------------------------------------------------
+---- Yoneda <-> standard conversions are inverses up to equivalence ----
+------------------------------------------------------------------------
+
+-- This still needs to be proven.  It will depend upon the slice-category
+-- free monad's properties, such as its being Cartesian and idempotent.
+
 --------------------------------------------
 --------------------------------------------
 ---- Category-spec-style Geb definition ----
