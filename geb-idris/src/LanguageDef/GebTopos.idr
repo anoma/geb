@@ -68,14 +68,26 @@ record SCat where
 ------------------------------------------
 
 public export
+InternalCovarHomGenNT : {obj : Type} ->
+  (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
+InternalCovarHomGenNT {obj} hom a f =
+  SliceMorphism {a=obj} (HomCurry hom a) f
+
+public export
 InternalCovarNT : {obj : Type} -> HomEndofunctor obj
 InternalCovarNT {obj} hom (a, b) =
-  SliceMorphism {a=obj} (HomCurry hom b) (HomCurry hom a)
+  InternalCovarHomGenNT {obj} hom b (HomCurry hom a)
+
+public export
+InternalContravarHomGenNT : {obj : Type} ->
+  (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
+InternalContravarHomGenNT {obj} hom a f =
+  SliceMorphism {a=obj} (flip (HomCurry hom) a) f
 
 public export
 InternalContravarNT : {obj : Type} -> HomEndofunctor obj
 InternalContravarNT {obj} hom (a, b) =
-  SliceMorphism {a=obj} (flip (HomCurry hom) a) (flip (HomCurry hom) b)
+  InternalContravarHomGenNT {obj} hom a (flip (HomCurry hom) b)
 
 public export
 data InternalNT : {0 obj : Type} -> HomEndofunctor obj where
