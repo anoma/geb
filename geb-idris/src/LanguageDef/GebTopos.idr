@@ -75,50 +75,62 @@ InternalNTFromContravarHom {obj} hom =
   SliceMorphism {a=obj} . InternalContravarHom hom
 
 public export
-CovarToCovarHomSetRep : {obj : Type} -> HomEndofunctor obj
-CovarToCovarHomSetRep {obj} hom (a, b) =
+CovarToCovarHomRep : {obj : Type} -> HomEndofunctor obj
+CovarToCovarHomRep {obj} hom (a, b) =
   InternalNTFromCovarHom {obj} hom b (InternalCovarHom hom a)
 
 public export
-CovarToContravarHomSetRep : {obj : Type} -> HomEndofunctor obj
-CovarToContravarHomSetRep {obj} hom (a, b) =
+CovarToContravarHomRep : {obj : Type} -> HomEndofunctor obj
+CovarToContravarHomRep {obj} hom (a, b) =
   InternalNTFromCovarHom {obj} hom a (InternalContravarHom hom b)
 
 public export
-ContravarToContravarHomSetRep : {obj : Type} -> HomEndofunctor obj
-ContravarToContravarHomSetRep {obj} hom (a, b) =
+ContravarToContravarHomRep : {obj : Type} -> HomEndofunctor obj
+ContravarToContravarHomRep {obj} hom (a, b) =
   InternalNTFromContravarHom {obj} hom a (InternalContravarHom hom b)
 
 public export
-ContravarToCovarHomSetRep : {obj : Type} -> HomEndofunctor obj
-ContravarToCovarHomSetRep {obj} hom (a, b) =
+ContravarToCovarHomRep : {obj : Type} -> HomEndofunctor obj
+ContravarToCovarHomRep {obj} hom (a, b) =
   InternalNTFromContravarHom {obj} hom b (InternalCovarHom hom a)
 
 public export
-data HomSetRep : {0 obj : Type} -> HomEndofunctor obj where
+data HomRep : {0 obj : Type} -> HomEndofunctor obj where
   HSRCovarToCovar :
-    CovarToCovarHomSetRep hom (a, b) -> HomSetRep hom (a, b)
+    CovarToCovarHomRep hom (a, b) -> HomRep hom (a, b)
   HSRCovarToContravar :
-    CovarToContravarHomSetRep hom (a, b) -> HomSetRep hom (a, b)
+    CovarToContravarHomRep hom (a, b) -> HomRep hom (a, b)
   HSRContravarToContravar :
-    ContravarToContravarHomSetRep hom (a, b) -> HomSetRep hom (a, b)
+    ContravarToContravarHomRep hom (a, b) -> HomRep hom (a, b)
   HSRContravarToCovar :
-    ContravarToCovarHomSetRep hom (a, b) -> HomSetRep hom (a, b)
+    ContravarToCovarHomRep hom (a, b) -> HomRep hom (a, b)
+
+public export
+HomRepExtEq : {0 obj : Type} -> {hom : HomSlice obj} ->
+  {a, b : obj} -> HomRep hom (a, b) -> (f, g : hom (a, b)) -> Type
+HomRepExtEq {obj} {hom} {a} {b} (HSRCovarToCovar hsr) f g =
+  ?HomRepExtEq_hole_0
+HomRepExtEq {obj} {hom} {a} {b} (HSRCovarToContravar hsr) f g =
+  ?HomRepExtEq_hole_1
+HomRepExtEq {obj} {hom} {a} {b} (HSRContravarToContravar hsr) f g =
+  ?HomRepExtEq_hole_2
+HomRepExtEq {obj} {hom} {a} {b} (HSRContravarToCovar hsr) f g =
+  ?HomRepExtEq_hole_3
 
 public export
 CovarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
-  (alpha, beta : CovarToCovarHomSetRep hom (a, b)) -> Type
+  (alpha, beta : CovarToCovarHomRep hom (a, b)) -> Type
 CovarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
 
 public export
 ContravarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
-  (alpha, beta : ContravarToContravarHomSetRep hom (a, b)) -> Type
+  (alpha, beta : ContravarToContravarHomRep hom (a, b)) -> Type
 ContravarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
 
 public export
 MorphDenotationCovar : (obj : Type) -> HomEndofunctor obj
 MorphDenotationCovar obj hom (a, b) =
-  hom (a, b) -> CovarToCovarHomSetRep hom (a, b)
+  hom (a, b) -> CovarToCovarHomRep hom (a, b)
 
 public export
 MorphDenotationCovarNT : (obj : Type) -> (hom : HomSlice obj) -> Type
@@ -128,7 +140,7 @@ MorphDenotationCovarNT obj hom =
 public export
 MorphDenotationContravar : (obj : Type) -> HomEndofunctor obj
 MorphDenotationContravar obj hom (a, b) =
-  hom (a, b) -> ContravarToContravarHomSetRep hom (a, b)
+  hom (a, b) -> ContravarToContravarHomRep hom (a, b)
 
 public export
 MorphDenotationContravarNT : (obj : Type) -> HomSlice obj -> Type
@@ -144,28 +156,28 @@ data MorphDenotation : (obj : Type) -> HomEndofunctor obj where
 
 public export
 MorphIdCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
-  (a : obj) -> CovarToCovarHomSetRep {obj} hom (a, a)
+  (a : obj) -> CovarToCovarHomRep {obj} hom (a, a)
 MorphIdCovarDenotation {obj} {hom} a c = id {a=(hom (a, c))}
 
 public export
 MorphComposeCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
   {a, b, c : obj} ->
-  CovarToCovarHomSetRep {obj} hom (b, c) ->
-  CovarToCovarHomSetRep {obj} hom (a, b) ->
-  CovarToCovarHomSetRep {obj} hom (a, c)
+  CovarToCovarHomRep {obj} hom (b, c) ->
+  CovarToCovarHomRep {obj} hom (a, b) ->
+  CovarToCovarHomRep {obj} hom (a, c)
 MorphComposeCovarDenotation {obj} {hom} {a} {b} {c} g f d = f d . g d
 
 public export
 MorphIdContravarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
-  (a : obj) -> ContravarToContravarHomSetRep {obj} hom (a, a)
+  (a : obj) -> ContravarToContravarHomRep {obj} hom (a, a)
 MorphIdContravarDenotation {obj} {hom} a c = id {a=(hom (c, a))}
 
 public export
 MorphComposeContravarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
   {a, b, c : obj} ->
-  ContravarToContravarHomSetRep {obj} hom (b, c) ->
-  ContravarToContravarHomSetRep {obj} hom (a, b) ->
-  ContravarToContravarHomSetRep {obj} hom (a, c)
+  ContravarToContravarHomRep {obj} hom (b, c) ->
+  ContravarToContravarHomRep {obj} hom (a, b) ->
+  ContravarToContravarHomRep {obj} hom (a, c)
 MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
 
 ---------------------------------------------------------------
@@ -289,11 +301,11 @@ YCHomSlice yc = HomSlice (ycObj yc)
 
 public export
 YCovarNT : (yc : YCat) -> YCHomSlice yc
-YCovarNT yc = CovarToCovarHomSetRep {obj=(ycObj yc)} (ycHom yc)
+YCovarNT yc = CovarToCovarHomRep {obj=(ycObj yc)} (ycHom yc)
 
 public export
 YContravarNT : (yc : YCat) -> YCHomSlice yc
-YContravarNT yc = ContravarToContravarHomSetRep {obj=(ycObj yc)} (ycHom yc)
+YContravarNT yc = ContravarToContravarHomRep {obj=(ycObj yc)} (ycHom yc)
 
 public export
 yIdCovar : (yc : YCat) -> (x : ycObj yc) -> YCovarNT yc (x, x)
