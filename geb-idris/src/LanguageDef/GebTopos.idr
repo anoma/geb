@@ -106,18 +106,6 @@ data HomRep : {0 obj : Type} -> HomEndofunctor obj where
     ContravarToCovarHomRep hom (a, b) -> HomRep hom (a, b)
 
 public export
-HomRepExtEq : {0 obj : Type} -> {hom : HomSlice obj} ->
-  {a, b : obj} -> HomRep hom (a, b) -> (f, g : hom (a, b)) -> Type
-HomRepExtEq {obj} {hom} {a} {b} (HSRCovarToCovar hsr) f g =
-  ?HomRepExtEq_hole_0
-HomRepExtEq {obj} {hom} {a} {b} (HSRCovarToContravar hsr) f g =
-  ?HomRepExtEq_hole_1
-HomRepExtEq {obj} {hom} {a} {b} (HSRContravarToContravar hsr) f g =
-  ?HomRepExtEq_hole_2
-HomRepExtEq {obj} {hom} {a} {b} (HSRContravarToCovar hsr) f g =
-  ?HomRepExtEq_hole_3
-
-public export
 CovarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
   (alpha, beta : CovarToCovarHomRep hom (a, b)) -> Type
 CovarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
