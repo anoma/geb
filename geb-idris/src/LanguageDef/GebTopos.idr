@@ -157,6 +157,36 @@ MorphComposeContravarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
   InternalContravarNT {obj} hom (a, c)
 MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
 
+-------------------------------
+---- Internal Yoneda lemma ----
+-------------------------------
+
+public export
+CovarHomYonedaR :
+  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  InternalCovarHomGenNT {obj=sc.scObj} sc.scHom a f -> f a
+CovarHomYonedaR sc a f alpha = alpha a $ sc.scId a
+
+public export
+CovarHomYonedaL : (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f a -> f b) ->
+  f a -> InternalCovarHomGenNT {obj=sc.scObj} sc.scHom a f
+CovarHomYonedaL sc a f fmap fa b mab = fmap a b mab fa
+
+public export
+ContravarHomYonedaR :
+  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  InternalContravarHomGenNT {obj=sc.scObj} sc.scHom a f -> f a
+ContravarHomYonedaR sc a f alpha = alpha a $ sc.scId a
+
+public export
+ContravarHomYonedaL :
+  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  -- f is contravariant
+  (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f b -> f a) ->
+  f a -> InternalContravarHomGenNT {obj=sc.scObj} sc.scHom a f
+ContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
+
 ---------------------------------------------------
 ---- Yoneda categories with explicit coherence ----
 ---------------------------------------------------
