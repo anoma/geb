@@ -169,9 +169,20 @@ data HomSetRep : (obj : Type) -> HomEndofunctor obj where
     ContravarToCovarHomSetRep obj hom (a, b) -> HomSetRep obj hom (a, b)
 
 public export
-CovarToCovarCatRep : (obj : Type) -> (hom : HomSlice obj) -> Type
-CovarToCovarCatRep obj hom =
-  (a, b : obj) -> CovarToCovarHomSetRep obj hom (a, b)
+CovarHomHomRep :
+  (obj : Type) -> (hom : HomSlice obj) -> obj -> SliceObj obj
+CovarHomHomRep obj hom =
+  InternalCovarHom (CovarToCovarHomSetRep obj hom)
+
+public export
+CovarHomHomSetRep : (obj : Type) -> (hom : HomSlice obj) -> obj -> Type
+CovarHomHomSetRep obj hom a =
+  Pi {a=obj} $ CovarHomHomRep obj hom a
+
+public export
+CovarHomCatRep : (obj : Type) -> (hom : HomSlice obj) -> Type
+CovarHomCatRep obj hom =
+  Pi {a=obj} $ CovarHomHomSetRep obj hom
 
 public export
 CovarToContravarCatRep : (obj : Type) -> (hom : HomSlice obj) -> Type
@@ -179,8 +190,19 @@ CovarToContravarCatRep obj hom =
   (a, b : obj) -> CovarToContravarHomSetRep obj hom (a, b)
 
 public export
-ContravarToContravarCatRep : (obj : Type) -> HomSlice obj -> Type
-ContravarToContravarCatRep obj hom =
+ContravarHomHomRep :
+  (obj : Type) -> (hom : HomSlice obj) -> obj -> SliceObj obj
+ContravarHomHomRep obj hom =
+  InternalContravarHom (ContravarToContravarHomSetRep obj hom)
+
+public export
+ContravarHomHomSetRep : (obj : Type) -> (hom : HomSlice obj) -> obj -> Type
+ContravarHomHomSetRep obj hom a =
+  Pi {a=obj} $ ContravarHomHomRep obj hom a
+
+public export
+ContravarHomCatRep : (obj : Type) -> HomSlice obj -> Type
+ContravarHomCatRep obj hom =
   (a, b : obj) -> ContravarToContravarHomSetRep obj hom (a, b)
 
 public export
@@ -236,35 +258,35 @@ record SCat where
       (scComp {a} {b=c} {c=d} h (scComp {a} {b} {c} g f))
       (scComp {a} {b} {c=d} (scComp {a=b} {b=c} {c=d} h g) f)
 
--------------------------------
----- Internal Yoneda lemma ----
--------------------------------
+----------------------------------------
+---- Standard-category Yoneda lemma ----
+----------------------------------------
 
 public export
-CovarHomYonedaR :
+SCCovarHomYonedaR :
   (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
   InternalNTFromCovarHom {obj=sc.scObj} sc.scHom a f -> f a
-CovarHomYonedaR sc a f alpha = alpha a $ sc.scId a
+SCCovarHomYonedaR sc a f alpha = alpha a $ sc.scId a
 
 public export
-CovarHomYonedaL : (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+SCCovarHomYonedaL : (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
   (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f a -> f b) ->
   f a -> InternalNTFromCovarHom {obj=sc.scObj} sc.scHom a f
-CovarHomYonedaL sc a f fmap fa b mab = fmap a b mab fa
+SCCovarHomYonedaL sc a f fmap fa b mab = fmap a b mab fa
 
 public export
-ContravarHomYonedaR :
+SCContravarHomYonedaR :
   (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
   InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f -> f a
-ContravarHomYonedaR sc a f alpha = alpha a $ sc.scId a
+SCContravarHomYonedaR sc a f alpha = alpha a $ sc.scId a
 
 public export
-ContravarHomYonedaL :
+SCContravarHomYonedaL :
   (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
   -- f is contravariant
   (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f b -> f a) ->
   f a -> InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f
-ContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
+SCContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
 
 ---------------------------------------------------
 ---- Yoneda categories with explicit coherence ----
@@ -303,7 +325,7 @@ ContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
 
 public export
 CovarEqImpliesContravar : {obj : Type} -> {hom : HomSlice obj} ->
-  CovarToCovarCatRep obj hom -> ContravarToContravarCatRep obj hom -> Type
+  CovarHomCatRep obj hom -> ContravarHomCatRep obj hom -> Type
 CovarEqImpliesContravar {obj} {hom} covar contravar =
   {a, b : obj} -> (f, g : hom (a, b)) ->
   CovarToCovarHomRepExtEq
@@ -313,7 +335,7 @@ CovarEqImpliesContravar {obj} {hom} covar contravar =
 
 public export
 ContravarEqImpliesCovar : {obj : Type} -> {hom : HomSlice obj} ->
-  CovarToCovarCatRep obj hom -> ContravarToContravarCatRep obj hom -> Type
+  CovarHomCatRep obj hom -> ContravarHomCatRep obj hom -> Type
 ContravarEqImpliesCovar {obj} {hom} covar contravar =
   {a, b : obj} -> (f, g : hom (a, b)) ->
   ContravarToContravarHomRepExtEq
@@ -326,8 +348,8 @@ record YCat where
   constructor YC
   ycObj : Type
   ycHom : HomSlice ycObj
-  0 ycDenotationCovar : CovarToCovarCatRep ycObj ycHom
-  0 ycDenotationContravar : ContravarToContravarCatRep ycObj ycHom
+  0 ycDenotationCovar : CovarHomCatRep ycObj ycHom
+  0 ycDenotationContravar : ContravarHomCatRep ycObj ycHom
   0 ycCovarEqImpliesContravar :
     CovarEqImpliesContravar {hom=ycHom} ycDenotationCovar ycDenotationContravar
   0 ycContravarEqImpliesCovar :
@@ -477,13 +499,13 @@ YCatToSCat yc =
 ---------------------------------------------------
 
 public export
-SCatCovarDenotation : (sc : SCat) -> CovarToCovarCatRep
+SCatCovarDenotation : (sc : SCat) -> CovarHomCatRep
   sc.scObj sc.scHom
 SCatCovarDenotation sc a b mab c mbc = sc.scComp mbc mab
 
 public export
 SCatContravarDenotation : (sc : SCat) ->
-  ContravarToContravarCatRep sc.scObj sc.scHom
+  ContravarHomCatRep sc.scObj sc.scHom
 SCatContravarDenotation sc a b mab c mca = sc.scComp mab mca
 
 public export
@@ -675,7 +697,7 @@ MorphDenoteExtendCovar :
   (hom : HomSlice (TrEitherF f obj)) ->
   Type
 MorphDenoteExtendCovar obj f homv hom =
-  CovarToCovarCatRep obj homv ->
+  CovarHomCatRep obj homv ->
   (a, b : TrEitherF f obj) -> hom (a, b) ->
   ((c : TrEitherF f obj) ->
    EMorphEitherF {obj} {f} homv hom (b, c) ->
@@ -689,7 +711,7 @@ MorphDenoteExtendContravar :
   (hom : HomSlice (TrEitherF f obj)) ->
   Type
 MorphDenoteExtendContravar obj f homv hom =
-  ContravarToContravarCatRep obj homv ->
+  ContravarHomCatRep obj homv ->
   (a, b : TrEitherF f obj) -> hom (a, b) ->
   ((c : TrEitherF f obj) ->
    EMorphEitherF {obj} {f} homv hom (c, a) ->
@@ -954,12 +976,12 @@ YCoprodHom yc = ?YCoprodHom_hole
 
 public export
 YCoprodCovarDenotation : (yc : YCat) ->
-  CovarToCovarCatRep (YCoprodObj yc) (YCoprodHom yc)
+  CovarHomCatRep (YCoprodObj yc) (YCoprodHom yc)
 YCoprodCovarDenotation yc = ?YCoprodCovarDenotation_hole
 
 public export
 YCoprodContravarDenotation : (yc : YCat) ->
-  ContravarToContravarCatRep (YCoprodObj yc) (YCoprodHom yc)
+  ContravarHomCatRep (YCoprodObj yc) (YCoprodHom yc)
 YCoprodContravarDenotation yc = ?YCoprodContravarDenotation_hole
 
 public export
