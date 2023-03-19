@@ -57,7 +57,7 @@ InternalCovarHom {obj} hom =
 public export
 InternalContravarHom : {obj : Type} -> (hom : HomSlice obj) -> SliceObj obj
 InternalContravarHom {obj} hom =
-  Pi {a=obj} . flip (HomCurry hom)
+  Pi {a=obj} . HomCurryFlip hom
 
 public export
 InternalNTFromCovarHom : {obj : Type} ->
@@ -74,12 +74,12 @@ public export
 InternalNTFromContravarHom : {obj : Type} ->
   (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
 InternalNTFromContravarHom {obj} hom =
-  SliceMorphism {a=obj} . flip (HomCurry hom)
+  SliceMorphism {a=obj} . HomCurryFlip hom
 
 public export
 InternalContravarNT : {obj : Type} -> HomEndofunctor obj
 InternalContravarNT {obj} hom (a, b) =
-  InternalNTFromContravarHom {obj} hom a (flip (HomCurry hom) b)
+  InternalNTFromContravarHom {obj} hom a (HomCurryFlip hom b)
 
 public export
 data InternalNT : {0 obj : Type} -> HomEndofunctor obj where
