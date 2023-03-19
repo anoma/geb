@@ -387,9 +387,9 @@ yComposeContravar : {yc : YCat} -> {a, b, c: ycObj yc} ->
 yComposeContravar {yc} =
   ContravarToContravarComposeRep {obj=(ycObj yc)} {hom=(ycHom yc)}
 
----------------------------------------------------
----- Yoneda categories are standard categories ----
----------------------------------------------------
+------------------------------------------------
+---- Free categories from Yoneda categories ----
+------------------------------------------------
 
 public export
 data CatHomF : {obj : Type} -> HomEndofunctor obj where
@@ -397,7 +397,7 @@ data CatHomF : {obj : Type} -> HomEndofunctor obj where
     {0 obj : Type} -> {0 hom : HomSlice obj} ->
     (x : obj) -> CatHomF {obj} hom (x, x)
   CHComp :
-    {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 x, y, z : obj} ->
+    {0 obj : Type} -> {0 hom : HomSlice obj} -> {x, y, z : obj} ->
     hom (y, z) -> hom (x, y) -> CatHomF {obj} hom (x, z)
 
 public export
@@ -425,6 +425,77 @@ ycComp : (yc : YCat) -> {a, b, c : yc.ycObj} ->
   YCatFreeHomSlice yc (b, c) -> YCatFreeHomSlice yc (a, b) ->
   YCatFreeHomSlice yc (a, c)
 ycComp yc {a} {b} {c} g f = InSlFc $ CHComp g f
+
+public export
+YCHomSliceCata : YCat -> Type
+YCHomSliceCata yc =
+  SliceFreeCata {a=(SignatureT yc.ycObj)} (CatHomF {obj=yc.ycObj})
+
+public export
+ycHomSliceCata : (yc : YCat) -> YCHomSliceCata yc
+ycHomSliceCata yc sv sa subst alg (a, b) (InSlF (a, b) (InSlV v)) =
+  subst (a, b) v
+ycHomSliceCata yc sv sa subst alg (a, b) (InSlF (a, b) (InSlC m)) =
+  alg (a, b) $ case m of
+    CHId c => CHId c
+    CHComp {x} {y} {z} g f =>
+      CHComp {x} {y} {z}
+        (ycHomSliceCata yc sv sa subst alg (y, z) g)
+        (ycHomSliceCata yc sv sa subst alg (x, y) f)
+
+--------------------------------------
+---- Yoneda-category Yoneda lemma ----
+--------------------------------------
+
+public export
+ycFreeFMap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
+  ((a, b : yc.ycObj) -> yc.ycHom (a, b) -> f a -> f b) ->
+  ((a, b : yc.ycObj) -> YCatFreeHomSlice yc (a, b) -> f a -> f b)
+ycFreeFMap {yc} {f} fmap a b =
+  ycHomSliceCata yc yc.ycHom (\(x, y) => f x -> f y)
+    (\(x, y) => fmap x y)
+    (\(x, z), m => case m of CHId z => id ; CHComp g f => g . f)
+    (a, b)
+
+public export
+ycFreeFContramap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
+  ((a, b : yc.ycObj) -> yc.ycHom (a, b) -> f b -> f a) ->
+  ((a, b : yc.ycObj) -> YCatFreeHomSlice yc (a, b) -> f b -> f a)
+ycFreeFContramap {yc} {f} fmap a b =
+  ycHomSliceCata yc yc.ycHom (\(x, y) => f y -> f x)
+    (\(x, y) => fmap x y)
+    (\(x, z), m => case m of CHId z => id ; CHComp g f => f . g)
+    (a, b)
+
+public export
+YCCovarHomYonedaR :
+  (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
+  InternalNTFromCovarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f -> f a
+YCCovarHomYonedaR yc a f alpha = alpha a $ (ycId yc) a
+
+public export
+YCCovarHomYonedaL : (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
+  (fmap : (a, b : yc.ycObj) -> yc.ycHom (a, b) -> f a -> f b) ->
+  f a -> InternalNTFromCovarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f
+YCCovarHomYonedaL yc a f fmap fa b mab = ycFreeFMap fmap a b mab fa
+
+public export
+YCContravarHomYonedaR :
+  (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
+  InternalNTFromContravarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f -> f a
+YCContravarHomYonedaR yc a f alpha = alpha a $ (ycId yc) a
+
+public export
+YCContravarHomYonedaL :
+  (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
+  -- f is contravariant
+  (fmap : (a, b : yc.ycObj) -> yc.ycHom (a, b) -> f b -> f a) ->
+  f a -> InternalNTFromContravarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f
+YCContravarHomYonedaL yc a f fmap fa b mba = ycFreeFContramap fmap b a mba fa
+
+--------------------------------------------------------
+---- Free Yoneda categories are standard categories ----
+--------------------------------------------------------
 
 public export
 0 ycEqRel : (yc : YCat) -> (0 a, b : yc.ycObj) ->
