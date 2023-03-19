@@ -28,12 +28,12 @@ HomEndofunctor : Type -> Type
 HomEndofunctor = SliceEndofunctor . SignatureT
 
 public export
-HomCurry : HomSlice obj -> (obj -> obj -> Type)
-HomCurry hom = hom .* MkPair
+InternalCovarHom : HomSlice obj -> obj -> SliceObj obj
+InternalCovarHom hom = hom .* MkPair
 
 public export
-HomCurryFlip : HomSlice obj -> (obj -> obj -> Type)
-HomCurryFlip = flip . HomCurry
+InternalContravarHom : HomSlice obj -> obj -> SliceObj obj
+InternalContravarHom = flip . InternalCovarHom
 
 public export
 HomUncurry : (obj -> obj -> Type) -> HomSlice obj
@@ -50,36 +50,26 @@ HomUncurry hom (x, y) = hom x y
 ------------------------------------------
 
 public export
-InternalCovarHom : {obj : Type} -> (hom : HomSlice obj) -> SliceObj obj
-InternalCovarHom {obj} hom =
-  Pi {a=obj} . HomCurry hom
-
-public export
-InternalContravarHom : {obj : Type} -> (hom : HomSlice obj) -> SliceObj obj
-InternalContravarHom {obj} hom =
-  Pi {a=obj} . HomCurryFlip hom
-
-public export
 InternalNTFromCovarHom : {obj : Type} ->
   (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
 InternalNTFromCovarHom {obj} hom =
-  SliceMorphism {a=obj} . HomCurry hom
+  SliceMorphism {a=obj} . InternalCovarHom hom
 
 public export
 CovarToCovarHomSetRep : {obj : Type} -> HomEndofunctor obj
 CovarToCovarHomSetRep {obj} hom (a, b) =
-  InternalNTFromCovarHom {obj} hom b (HomCurry hom a)
+  InternalNTFromCovarHom {obj} hom b (InternalCovarHom hom a)
 
 public export
 InternalNTFromContravarHom : {obj : Type} ->
   (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
 InternalNTFromContravarHom {obj} hom =
-  SliceMorphism {a=obj} . HomCurryFlip hom
+  SliceMorphism {a=obj} . InternalContravarHom hom
 
 public export
 ContravarToContravarHomSetRep : {obj : Type} -> HomEndofunctor obj
 ContravarToContravarHomSetRep {obj} hom (a, b) =
-  InternalNTFromContravarHom {obj} hom a (HomCurryFlip hom b)
+  InternalNTFromContravarHom {obj} hom a (InternalContravarHom hom b)
 
 public export
 data InternalNT : {0 obj : Type} -> HomEndofunctor obj where
