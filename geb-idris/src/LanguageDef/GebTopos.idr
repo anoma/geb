@@ -127,19 +127,9 @@ CovarToCovarHomSetRep obj hom (a, b) =
   hom (a, b) -> CovarToCovarHomRep hom (a, b)
 
 public export
-CovarToCovarCatRep : (obj : Type) -> (hom : HomSlice obj) -> Type
-CovarToCovarCatRep obj hom =
-  (a, b : obj) -> CovarToCovarHomSetRep obj hom (a, b)
-
-public export
 ContravarToContravarHomSetRep : (obj : Type) -> HomEndofunctor obj
 ContravarToContravarHomSetRep obj hom (a, b) =
   hom (a, b) -> ContravarToContravarHomRep hom (a, b)
-
-public export
-ContravarToContravarCatRep : (obj : Type) -> HomSlice obj -> Type
-ContravarToContravarCatRep obj hom =
-  (a, b : obj) -> ContravarToContravarHomSetRep obj hom (a, b)
 
 public export
 data HomSetRep : (obj : Type) -> HomEndofunctor obj where
@@ -147,6 +137,16 @@ data HomSetRep : (obj : Type) -> HomEndofunctor obj where
     CovarToCovarHomSetRep obj hom (a, b) -> HomSetRep obj hom (a, b)
   HSRContravarToContravar :
     ContravarToContravarHomSetRep obj hom (a, b) -> HomSetRep obj hom (a, b)
+
+public export
+CovarToCovarCatRep : (obj : Type) -> (hom : HomSlice obj) -> Type
+CovarToCovarCatRep obj hom =
+  (a, b : obj) -> CovarToCovarHomSetRep obj hom (a, b)
+
+public export
+ContravarToContravarCatRep : (obj : Type) -> HomSlice obj -> Type
+ContravarToContravarCatRep obj hom =
+  (a, b : obj) -> ContravarToContravarHomSetRep obj hom (a, b)
 
 public export
 MorphIdCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
