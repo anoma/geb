@@ -171,13 +171,12 @@ data HomSetRep : (obj : Type) -> HomEndofunctor obj where
 public export
 CovarHomHomRep :
   (obj : Type) -> (hom : HomSlice obj) -> obj -> SliceObj obj
-CovarHomHomRep obj hom =
-  InternalCovarHom (CovarToCovarHomSetRep obj hom)
+CovarHomHomRep obj hom = CovarToCovarHomSetRep obj hom .* MkPair
 
 public export
 CovarHomHomSetRep : (obj : Type) -> (hom : HomSlice obj) -> obj -> Type
-CovarHomHomSetRep obj hom a =
-  Pi {a=obj} $ CovarHomHomRep obj hom a
+CovarHomHomSetRep obj hom =
+  Pi {a=obj} . CovarHomHomRep obj hom
 
 public export
 CovarHomCatRep : (obj : Type) -> (hom : HomSlice obj) -> Type
@@ -192,23 +191,31 @@ CovarToContravarCatRep obj hom =
 public export
 ContravarHomHomRep :
   (obj : Type) -> (hom : HomSlice obj) -> obj -> SliceObj obj
-ContravarHomHomRep obj hom =
-  InternalContravarHom (ContravarToContravarHomSetRep obj hom)
+ContravarHomHomRep obj hom = ContravarToContravarHomSetRep obj hom .* MkPair
 
 public export
 ContravarHomHomSetRep : (obj : Type) -> (hom : HomSlice obj) -> obj -> Type
-ContravarHomHomSetRep obj hom a =
-  Pi {a=obj} $ ContravarHomHomRep obj hom a
+ContravarHomHomSetRep obj hom =
+  Pi {a=obj} . ContravarHomHomRep obj hom
 
 public export
 ContravarHomCatRep : (obj : Type) -> HomSlice obj -> Type
 ContravarHomCatRep obj hom =
-  (a, b : obj) -> ContravarToContravarHomSetRep obj hom (a, b)
+  Pi {a=obj} $ ContravarHomHomSetRep obj hom
 
 public export
 ContravarToCovarCatRep : (obj : Type) -> HomSlice obj -> Type
 ContravarToCovarCatRep obj hom =
   (a, b : obj) -> ContravarToCovarHomSetRep obj hom (a, b)
+
+public export
+data YonedaHomSetRep : {obj : Type} -> HomSlice obj -> SliceObj obj where
+  YHSRCovar : CovarHomHomSetRep obj hom a -> YonedaHomSetRep {obj} hom a
+  YHSRContravar : ContravarHomHomSetRep obj hom a -> YonedaHomSetRep {obj} hom a
+
+public export
+YonedaCatRep : {obj : Type} -> HomSlice obj -> Type
+YonedaCatRep {obj} hom = Pi {a=obj} (YonedaHomSetRep {obj} hom)
 
 public export
 CovarToCovarIdRep : {obj : Type} -> {hom : HomSlice obj} ->
@@ -348,12 +355,7 @@ record YCat where
   constructor YC
   ycObj : Type
   ycHom : HomSlice ycObj
-  0 ycDenotationCovar : CovarHomCatRep ycObj ycHom
-  0 ycDenotationContravar : ContravarHomCatRep ycObj ycHom
-  0 ycCovarEqImpliesContravar :
-    CovarEqImpliesContravar {hom=ycHom} ycDenotationCovar ycDenotationContravar
-  0 ycContravarEqImpliesCovar :
-    ContravarEqImpliesCovar {hom=ycHom} ycDenotationCovar ycDenotationContravar
+  ycDenote : YonedaCatRep {obj=ycObj} ycHom
 
 public export
 YCHomSlice : YCat -> Type
@@ -592,15 +594,20 @@ SCatContravarEqImpliesCovar : (sc : SCat) ->
 SCatContravarEqImpliesCovar sc = ?SCatContravarEqImpliesCovar_hole
 
 public export
-SCatToYCat : SCat -> YCat
-SCatToYCat sc =
-  YC
-    sc.scObj
-    sc.scHom
-    (SCatCovarDenotation sc)
-    (SCatContravarDenotation sc)
-    (SCatCovarEqImpliesContravar sc)
-    (SCatContravarEqImpliesCovar sc)
+SCatDenotationCovar : (sc : SCat) -> YonedaCatRep {obj=sc.scObj} sc.scHom
+SCatDenotationCovar sc a = YHSRCovar $ SCatCovarDenotation sc a
+
+public export
+SCatToYCatCovar : SCat -> YCat
+SCatToYCatCovar sc = YC sc.scObj sc.scHom (SCatDenotationCovar sc)
+
+public export
+SCatDenotationContravar : (sc : SCat) -> YonedaCatRep {obj=sc.scObj} sc.scHom
+SCatDenotationContravar sc a = YHSRContravar $ SCatContravarDenotation sc a
+
+public export
+SCatToYCatContravar : SCat -> YCat
+SCatToYCatContravar sc = YC sc.scObj sc.scHom (SCatDenotationContravar sc)
 
 ------------------------------------------------------------------------
 ---- Yoneda <-> standard conversions are inverses up to equivalence ----
@@ -1073,10 +1080,7 @@ YCoprod yc =
   YC
     (YCoprodObj yc)
     (YCoprodHom yc)
-    (YCoprodCovarDenotation yc)
-    (YCoprodContravarDenotation yc)
-    ?YCoprod_hole_covareqimpliescontravar -- (YCoprodCovarEqImpliesContravar yc)
-    ?YCoprod_hole_contravareqimpliescoar -- (YCoprodContravarEqImpliesCovar yc)
+    (?YCoprodDenotation_hole)
 
 ---------------------
 ---------------------
