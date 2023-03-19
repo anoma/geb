@@ -29,7 +29,11 @@ HomEndofunctor = SliceEndofunctor . SignatureT
 
 public export
 HomCurry : HomSlice obj -> (obj -> obj -> Type)
-HomCurry hom x y = hom (x, y)
+HomCurry hom = hom .* MkPair
+
+public export
+HomCurryFlip : HomSlice obj -> (obj -> obj -> Type)
+HomCurryFlip = flip . HomCurry
 
 public export
 HomUncurry : (obj -> obj -> Type) -> HomSlice obj
@@ -68,10 +72,20 @@ record SCat where
 ------------------------------------------
 
 public export
+InternalCovarHom : {obj : Type} -> (hom : HomSlice obj) -> SliceObj obj
+InternalCovarHom {obj} hom =
+  Pi {a=obj} . HomCurry hom
+
+public export
+InternalContravarHom : {obj : Type} -> (hom : HomSlice obj) -> SliceObj obj
+InternalContravarHom {obj} hom =
+  Pi {a=obj} . flip (HomCurry hom)
+
+public export
 InternalCovarHomGenNT : {obj : Type} ->
   (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
-InternalCovarHomGenNT {obj} hom a f =
-  SliceMorphism {a=obj} (HomCurry hom a) f
+InternalCovarHomGenNT {obj} hom =
+  SliceMorphism {a=obj} . HomCurry hom
 
 public export
 InternalCovarNT : {obj : Type} -> HomEndofunctor obj
@@ -81,8 +95,8 @@ InternalCovarNT {obj} hom (a, b) =
 public export
 InternalContravarHomGenNT : {obj : Type} ->
   (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
-InternalContravarHomGenNT {obj} hom a f =
-  SliceMorphism {a=obj} (flip (HomCurry hom) a) f
+InternalContravarHomGenNT {obj} hom =
+  SliceMorphism {a=obj} . flip (HomCurry hom)
 
 public export
 InternalContravarNT : {obj : Type} -> HomEndofunctor obj
