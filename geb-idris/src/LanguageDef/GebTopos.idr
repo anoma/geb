@@ -56,15 +56,15 @@ InternalNTFromCovarHom {obj} hom =
   SliceMorphism {a=obj} . InternalCovarHom hom
 
 public export
-CovarToCovarHomSetRep : {obj : Type} -> HomEndofunctor obj
-CovarToCovarHomSetRep {obj} hom (a, b) =
-  InternalNTFromCovarHom {obj} hom b (InternalCovarHom hom a)
-
-public export
 InternalNTFromContravarHom : {obj : Type} ->
   (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
 InternalNTFromContravarHom {obj} hom =
   SliceMorphism {a=obj} . InternalContravarHom hom
+
+public export
+CovarToCovarHomSetRep : {obj : Type} -> HomEndofunctor obj
+CovarToCovarHomSetRep {obj} hom (a, b) =
+  InternalNTFromCovarHom {obj} hom b (InternalCovarHom hom a)
 
 public export
 ContravarToContravarHomSetRep : {obj : Type} -> HomEndofunctor obj
