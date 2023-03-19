@@ -85,8 +85,12 @@ public export
 data HomSetRep : {0 obj : Type} -> HomEndofunctor obj where
   HSRCovarToCovar :
     CovarToCovarHomSetRep hom (a, b) -> HomSetRep hom (a, b)
+  HSRCovarToContravar :
+    CovarToContravarHomSetRep hom (a, b) -> HomSetRep hom (a, b)
   HSRContravarToContravar :
     ContravarToContravarHomSetRep hom (a, b) -> HomSetRep hom (a, b)
+  HSRContravarToCovar :
+    ContravarToCovarHomSetRep hom (a, b) -> HomSetRep hom (a, b)
 
 public export
 CovarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
