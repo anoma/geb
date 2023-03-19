@@ -96,13 +96,13 @@ ContravarToCovarHomRep {obj} hom (a, b) =
 
 public export
 data HomRep : {0 obj : Type} -> HomEndofunctor obj where
-  HSRCovarToCovar :
+  HRCovarToCovar :
     CovarToCovarHomRep hom (a, b) -> HomRep hom (a, b)
-  HSRCovarToContravar :
+  HRCovarToContravar :
     CovarToContravarHomRep hom (a, b) -> HomRep hom (a, b)
-  HSRContravarToContravar :
+  HRContravarToContravar :
     ContravarToContravarHomRep hom (a, b) -> HomRep hom (a, b)
-  HSRContravarToCovar :
+  HRContravarToCovar :
     ContravarToCovarHomRep hom (a, b) -> HomRep hom (a, b)
 
 public export
