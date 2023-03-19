@@ -127,8 +127,8 @@ CovarToCovarHomSetRep obj hom (a, b) =
   hom (a, b) -> CovarToCovarHomRep hom (a, b)
 
 public export
-MorphDenotationCovarNT : (obj : Type) -> (hom : HomSlice obj) -> Type
-MorphDenotationCovarNT obj hom =
+CovarToCovarCatRep : (obj : Type) -> (hom : HomSlice obj) -> Type
+CovarToCovarCatRep obj hom =
   (a, b : obj) -> CovarToCovarHomSetRep obj hom (a, b)
 
 public export
@@ -137,8 +137,8 @@ ContravarToContravarHomSetRep obj hom (a, b) =
   hom (a, b) -> ContravarToContravarHomRep hom (a, b)
 
 public export
-MorphDenotationContravarNT : (obj : Type) -> HomSlice obj -> Type
-MorphDenotationContravarNT obj hom =
+ContravarToContravarCatRep : (obj : Type) -> HomSlice obj -> Type
+ContravarToContravarCatRep obj hom =
   (a, b : obj) -> ContravarToContravarHomSetRep obj hom (a, b)
 
 public export
@@ -265,7 +265,7 @@ ContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
 
 public export
 CovarEqImpliesContravar : {obj : Type} -> {hom : HomSlice obj} ->
-  MorphDenotationCovarNT obj hom -> MorphDenotationContravarNT obj hom -> Type
+  CovarToCovarCatRep obj hom -> ContravarToContravarCatRep obj hom -> Type
 CovarEqImpliesContravar {obj} {hom} covar contravar =
   {a, b : obj} -> (f, g : hom (a, b)) ->
   CovarToCovarHomRepExtEq
@@ -275,7 +275,7 @@ CovarEqImpliesContravar {obj} {hom} covar contravar =
 
 public export
 ContravarEqImpliesCovar : {obj : Type} -> {hom : HomSlice obj} ->
-  MorphDenotationCovarNT obj hom -> MorphDenotationContravarNT obj hom -> Type
+  CovarToCovarCatRep obj hom -> ContravarToContravarCatRep obj hom -> Type
 ContravarEqImpliesCovar {obj} {hom} covar contravar =
   {a, b : obj} -> (f, g : hom (a, b)) ->
   ContravarToContravarHomRepExtEq
@@ -288,8 +288,8 @@ record YCat where
   constructor YC
   ycObj : Type
   ycHom : HomSlice ycObj
-  0 ycDenotationCovar : MorphDenotationCovarNT ycObj ycHom
-  0 ycDenotationContravar : MorphDenotationContravarNT ycObj ycHom
+  0 ycDenotationCovar : CovarToCovarCatRep ycObj ycHom
+  0 ycDenotationContravar : ContravarToContravarCatRep ycObj ycHom
   0 ycCovarEqImpliesContravar :
     CovarEqImpliesContravar {hom=ycHom} ycDenotationCovar ycDenotationContravar
   0 ycContravarEqImpliesCovar :
@@ -439,13 +439,13 @@ YCatToSCat yc =
 ---------------------------------------------------
 
 public export
-SCatCovarDenotation : (sc : SCat) -> MorphDenotationCovarNT
+SCatCovarDenotation : (sc : SCat) -> CovarToCovarCatRep
   sc.scObj sc.scHom
 SCatCovarDenotation sc a b mab c mbc = sc.scComp mbc mab
 
 public export
 SCatContravarDenotation : (sc : SCat) ->
-  MorphDenotationContravarNT sc.scObj sc.scHom
+  ContravarToContravarCatRep sc.scObj sc.scHom
 SCatContravarDenotation sc a b mab c mca = sc.scComp mab mca
 
 public export
@@ -637,7 +637,7 @@ MorphDenoteExtendCovar :
   (hom : HomSlice (TrEitherF f obj)) ->
   Type
 MorphDenoteExtendCovar obj f homv hom =
-  MorphDenotationCovarNT obj homv ->
+  CovarToCovarCatRep obj homv ->
   (a, b : TrEitherF f obj) -> hom (a, b) ->
   ((c : TrEitherF f obj) ->
    EMorphEitherF {obj} {f} homv hom (b, c) ->
@@ -651,7 +651,7 @@ MorphDenoteExtendContravar :
   (hom : HomSlice (TrEitherF f obj)) ->
   Type
 MorphDenoteExtendContravar obj f homv hom =
-  MorphDenotationContravarNT obj homv ->
+  ContravarToContravarCatRep obj homv ->
   (a, b : TrEitherF f obj) -> hom (a, b) ->
   ((c : TrEitherF f obj) ->
    EMorphEitherF {obj} {f} homv hom (c, a) ->
@@ -916,12 +916,12 @@ YCoprodHom yc = ?YCoprodHom_hole
 
 public export
 YCoprodCovarDenotation : (yc : YCat) ->
-  MorphDenotationCovarNT (YCoprodObj yc) (YCoprodHom yc)
+  CovarToCovarCatRep (YCoprodObj yc) (YCoprodHom yc)
 YCoprodCovarDenotation yc = ?YCoprodCovarDenotation_hole
 
 public export
 YCoprodContravarDenotation : (yc : YCat) ->
-  MorphDenotationContravarNT (YCoprodObj yc) (YCoprodHom yc)
+  ContravarToContravarCatRep (YCoprodObj yc) (YCoprodHom yc)
 YCoprodContravarDenotation yc = ?YCoprodContravarDenotation_hole
 
 public export
