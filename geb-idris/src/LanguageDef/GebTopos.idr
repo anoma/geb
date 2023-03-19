@@ -106,14 +106,20 @@ data HomRep : {0 obj : Type} -> HomEndofunctor obj where
     ContravarToCovarHomRep hom (a, b) -> HomRep hom (a, b)
 
 public export
-CovarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
+CovarToCovarHomRepExtEq :
+  {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
   (alpha, beta : CovarToCovarHomRep hom (a, b)) -> Type
-CovarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
+CovarToCovarHomRepExtEq {obj} {hom} {a} {b} =
+  CopresheafNTExtEq {obj}
+    {f=(InternalCovarHom hom b)} {g=(InternalCovarHom hom a)}
 
 public export
-ContravarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
+ContravarToContravarHomRepExtEq :
+  {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
   (alpha, beta : ContravarToContravarHomRep hom (a, b)) -> Type
-ContravarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
+ContravarToContravarHomRepExtEq {obj} {hom} {a} {b} =
+  CopresheafNTExtEq {obj}
+    {f=(InternalContravarHom hom a)} {g=(InternalContravarHom hom b)}
 
 public export
 MorphDenotationCovar : (obj : Type) -> HomEndofunctor obj
@@ -260,16 +266,20 @@ CovarEqImpliesContravar : {obj : Type} -> {hom : HomSlice obj} ->
   MorphDenotationCovarNT obj hom -> MorphDenotationContravarNT obj hom -> Type
 CovarEqImpliesContravar {obj} {hom} covar contravar =
   {a, b : obj} -> (f, g : hom (a, b)) ->
-  CovarNTExtEq {a} {b} {hom} (covar a b f) (covar a b g) ->
-  ContravarNTExtEq {a} {b} {hom} (contravar a b f) (contravar a b g)
+  CovarToCovarHomRepExtEq
+    {a} {b} {hom} (covar a b f) (covar a b g) ->
+  ContravarToContravarHomRepExtEq
+    {a} {b} {hom} (contravar a b f) (contravar a b g)
 
 public export
 ContravarEqImpliesCovar : {obj : Type} -> {hom : HomSlice obj} ->
   MorphDenotationCovarNT obj hom -> MorphDenotationContravarNT obj hom -> Type
 ContravarEqImpliesCovar {obj} {hom} covar contravar =
   {a, b : obj} -> (f, g : hom (a, b)) ->
-  ContravarNTExtEq {a} {b} {hom} (contravar a b f) (contravar a b g) ->
-  CovarNTExtEq {a} {b} {hom} (covar a b f) (covar a b g)
+  ContravarToContravarHomRepExtEq
+    {a} {b} {hom} (contravar a b f) (contravar a b g) ->
+  CovarToCovarHomRepExtEq
+    {a} {b} {hom} (covar a b f) (covar a b g)
 
 public export
 record YCat where
