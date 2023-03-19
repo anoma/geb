@@ -60,26 +60,26 @@ InternalContravarHom {obj} hom =
   Pi {a=obj} . flip (HomCurry hom)
 
 public export
-InternalCovarHomGenNT : {obj : Type} ->
+InternalNTFromCovarHom : {obj : Type} ->
   (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
-InternalCovarHomGenNT {obj} hom =
+InternalNTFromCovarHom {obj} hom =
   SliceMorphism {a=obj} . HomCurry hom
 
 public export
 InternalCovarNT : {obj : Type} -> HomEndofunctor obj
 InternalCovarNT {obj} hom (a, b) =
-  InternalCovarHomGenNT {obj} hom b (HomCurry hom a)
+  InternalNTFromCovarHom {obj} hom b (HomCurry hom a)
 
 public export
-InternalContravarHomGenNT : {obj : Type} ->
+InternalNTFromContravarHom : {obj : Type} ->
   (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
-InternalContravarHomGenNT {obj} hom =
+InternalNTFromContravarHom {obj} hom =
   SliceMorphism {a=obj} . flip (HomCurry hom)
 
 public export
 InternalContravarNT : {obj : Type} -> HomEndofunctor obj
 InternalContravarNT {obj} hom (a, b) =
-  InternalContravarHomGenNT {obj} hom a (flip (HomCurry hom) b)
+  InternalNTFromContravarHom {obj} hom a (flip (HomCurry hom) b)
 
 public export
 data InternalNT : {0 obj : Type} -> HomEndofunctor obj where
@@ -178,19 +178,19 @@ record SCat where
 public export
 CovarHomYonedaR :
   (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
-  InternalCovarHomGenNT {obj=sc.scObj} sc.scHom a f -> f a
+  InternalNTFromCovarHom {obj=sc.scObj} sc.scHom a f -> f a
 CovarHomYonedaR sc a f alpha = alpha a $ sc.scId a
 
 public export
 CovarHomYonedaL : (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
   (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f a -> f b) ->
-  f a -> InternalCovarHomGenNT {obj=sc.scObj} sc.scHom a f
+  f a -> InternalNTFromCovarHom {obj=sc.scObj} sc.scHom a f
 CovarHomYonedaL sc a f fmap fa b mab = fmap a b mab fa
 
 public export
 ContravarHomYonedaR :
   (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
-  InternalContravarHomGenNT {obj=sc.scObj} sc.scHom a f -> f a
+  InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f -> f a
 ContravarHomYonedaR sc a f alpha = alpha a $ sc.scId a
 
 public export
@@ -198,7 +198,7 @@ ContravarHomYonedaL :
   (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
   -- f is contravariant
   (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f b -> f a) ->
-  f a -> InternalContravarHomGenNT {obj=sc.scObj} sc.scHom a f
+  f a -> InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f
 ContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
 
 ---------------------------------------------------
