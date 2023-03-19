@@ -142,13 +142,13 @@ ContravarToContravarCatRep obj hom =
   (a, b : obj) -> ContravarToContravarHomSetRep obj hom (a, b)
 
 public export
-data MorphDenotation : (obj : Type) -> HomEndofunctor obj where
-  MDCovar :
+data HomSetRep : (obj : Type) -> HomEndofunctor obj where
+  HSRCovar :
     CovarToCovarHomSetRep obj hom (a, b) ->
-    MorphDenotation obj hom (a, b)
-  MDContravar :
+    HomSetRep obj hom (a, b)
+  HSRContravar :
     ContravarToContravarHomSetRep obj hom (a, b) ->
-    MorphDenotation obj hom (a, b)
+    HomSetRep obj hom (a, b)
 
 public export
 MorphIdCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
