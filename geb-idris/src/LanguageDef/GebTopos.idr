@@ -174,9 +174,19 @@ CovarToCovarCatRep obj hom =
   (a, b : obj) -> CovarToCovarHomSetRep obj hom (a, b)
 
 public export
+CovarToContravarCatRep : (obj : Type) -> (hom : HomSlice obj) -> Type
+CovarToContravarCatRep obj hom =
+  (a, b : obj) -> CovarToContravarHomSetRep obj hom (a, b)
+
+public export
 ContravarToContravarCatRep : (obj : Type) -> HomSlice obj -> Type
 ContravarToContravarCatRep obj hom =
   (a, b : obj) -> ContravarToContravarHomSetRep obj hom (a, b)
+
+public export
+ContravarToCovarCatRep : (obj : Type) -> HomSlice obj -> Type
+ContravarToCovarCatRep obj hom =
+  (a, b : obj) -> ContravarToCovarHomSetRep obj hom (a, b)
 
 public export
 MorphIdCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
