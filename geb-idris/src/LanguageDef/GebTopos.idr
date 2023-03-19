@@ -66,8 +66,8 @@ InternalNTFromCovarHom {obj} hom =
   SliceMorphism {a=obj} . HomCurry hom
 
 public export
-InternalCovarNT : {obj : Type} -> HomEndofunctor obj
-InternalCovarNT {obj} hom (a, b) =
+CovarToCovarHomSetRep : {obj : Type} -> HomEndofunctor obj
+CovarToCovarHomSetRep {obj} hom (a, b) =
   InternalNTFromCovarHom {obj} hom b (HomCurry hom a)
 
 public export
@@ -77,29 +77,31 @@ InternalNTFromContravarHom {obj} hom =
   SliceMorphism {a=obj} . HomCurryFlip hom
 
 public export
-InternalContravarNT : {obj : Type} -> HomEndofunctor obj
-InternalContravarNT {obj} hom (a, b) =
+ContravarToContravarHomSetRep : {obj : Type} -> HomEndofunctor obj
+ContravarToContravarHomSetRep {obj} hom (a, b) =
   InternalNTFromContravarHom {obj} hom a (HomCurryFlip hom b)
 
 public export
 data InternalNT : {0 obj : Type} -> HomEndofunctor obj where
-  INTCovar : InternalCovarNT hom (a, b) -> InternalNT hom (a, b)
-  INTContravar : InternalContravarNT hom (a, b) -> InternalNT hom (a, b)
+  INTCovar :
+    CovarToCovarHomSetRep hom (a, b) -> InternalNT hom (a, b)
+  INTContravar :
+    ContravarToContravarHomSetRep hom (a, b) -> InternalNT hom (a, b)
 
 public export
 CovarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
-  (alpha, beta : InternalCovarNT hom (a, b)) -> Type
+  (alpha, beta : CovarToCovarHomSetRep hom (a, b)) -> Type
 CovarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
 
 public export
 ContravarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
-  (alpha, beta : InternalContravarNT hom (a, b)) -> Type
+  (alpha, beta : ContravarToContravarHomSetRep hom (a, b)) -> Type
 ContravarNTExtEq {obj} {hom} {a} {b} f g = (c : obj) -> ExtEq (f c) (g c)
 
 public export
 MorphDenotationCovar : (obj : Type) -> HomEndofunctor obj
 MorphDenotationCovar obj hom (a, b) =
-  hom (a, b) -> InternalCovarNT hom (a, b)
+  hom (a, b) -> CovarToCovarHomSetRep hom (a, b)
 
 public export
 MorphDenotationCovarNT : (obj : Type) -> (hom : HomSlice obj) -> Type
@@ -109,7 +111,7 @@ MorphDenotationCovarNT obj hom =
 public export
 MorphDenotationContravar : (obj : Type) -> HomEndofunctor obj
 MorphDenotationContravar obj hom (a, b) =
-  hom (a, b) -> InternalContravarNT hom (a, b)
+  hom (a, b) -> ContravarToContravarHomSetRep hom (a, b)
 
 public export
 MorphDenotationContravarNT : (obj : Type) -> HomSlice obj -> Type
@@ -125,28 +127,28 @@ data MorphDenotation : (obj : Type) -> HomEndofunctor obj where
 
 public export
 MorphIdCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
-  (a : obj) -> InternalCovarNT {obj} hom (a, a)
+  (a : obj) -> CovarToCovarHomSetRep {obj} hom (a, a)
 MorphIdCovarDenotation {obj} {hom} a c = id {a=(hom (a, c))}
 
 public export
 MorphComposeCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
   {a, b, c : obj} ->
-  InternalCovarNT {obj} hom (b, c) ->
-  InternalCovarNT {obj} hom (a, b) ->
-  InternalCovarNT {obj} hom (a, c)
+  CovarToCovarHomSetRep {obj} hom (b, c) ->
+  CovarToCovarHomSetRep {obj} hom (a, b) ->
+  CovarToCovarHomSetRep {obj} hom (a, c)
 MorphComposeCovarDenotation {obj} {hom} {a} {b} {c} g f d = f d . g d
 
 public export
 MorphIdContravarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
-  (a : obj) -> InternalContravarNT {obj} hom (a, a)
+  (a : obj) -> ContravarToContravarHomSetRep {obj} hom (a, a)
 MorphIdContravarDenotation {obj} {hom} a c = id {a=(hom (c, a))}
 
 public export
 MorphComposeContravarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
   {a, b, c : obj} ->
-  InternalContravarNT {obj} hom (b, c) ->
-  InternalContravarNT {obj} hom (a, b) ->
-  InternalContravarNT {obj} hom (a, c)
+  ContravarToContravarHomSetRep {obj} hom (b, c) ->
+  ContravarToContravarHomSetRep {obj} hom (a, b) ->
+  ContravarToContravarHomSetRep {obj} hom (a, c)
 MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
 
 ---------------------------------------------------------------
@@ -270,11 +272,11 @@ YCHomSlice yc = HomSlice (ycObj yc)
 
 public export
 YCovarNT : (yc : YCat) -> YCHomSlice yc
-YCovarNT yc = InternalCovarNT {obj=(ycObj yc)} (ycHom yc)
+YCovarNT yc = CovarToCovarHomSetRep {obj=(ycObj yc)} (ycHom yc)
 
 public export
 YContravarNT : (yc : YCat) -> YCHomSlice yc
-YContravarNT yc = InternalContravarNT {obj=(ycObj yc)} (ycHom yc)
+YContravarNT yc = ContravarToContravarHomSetRep {obj=(ycObj yc)} (ycHom yc)
 
 public export
 yIdCovar : (yc : YCat) -> (x : ycObj yc) -> YCovarNT yc (x, x)
