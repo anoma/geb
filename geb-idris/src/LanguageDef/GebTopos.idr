@@ -582,18 +582,6 @@ SCatContravarDenotation : (sc : SCat) ->
 SCatContravarDenotation sc a b mab c mca = sc.scComp mab mca
 
 public export
-SCatCovarEqImpliesContravar : (sc : SCat) ->
-  CovarEqImpliesContravar {obj=sc.scObj} {hom=sc.scHom}
-    (SCatCovarDenotation sc) (SCatContravarDenotation sc)
-SCatCovarEqImpliesContravar sc = ?SCatCovarEqImpliesContravar_hole
-
-public export
-SCatContravarEqImpliesCovar : (sc : SCat) ->
-  ContravarEqImpliesCovar {obj=sc.scObj} {hom=sc.scHom}
-    (SCatCovarDenotation sc) (SCatContravarDenotation sc)
-SCatContravarEqImpliesCovar sc = ?SCatContravarEqImpliesCovar_hole
-
-public export
 SCatDenotationCovar : (sc : SCat) -> YonedaCatRep {obj=sc.scObj} sc.scHom
 SCatDenotationCovar sc a = YHSRCovar $ SCatCovarDenotation sc a
 
