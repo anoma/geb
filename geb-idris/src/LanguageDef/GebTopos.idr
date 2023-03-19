@@ -189,30 +189,30 @@ ContravarToCovarCatRep obj hom =
   (a, b : obj) -> ContravarToCovarHomSetRep obj hom (a, b)
 
 public export
-MorphIdCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
+CovarToCovarIdRep : {obj : Type} -> {hom : HomSlice obj} ->
   (a : obj) -> CovarToCovarHomRep {obj} hom (a, a)
-MorphIdCovarDenotation {obj} {hom} a c = id {a=(hom (a, c))}
+CovarToCovarIdRep {obj} {hom} a c = id {a=(hom (a, c))}
 
 public export
-MorphComposeCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
+CovarToCovarComposeRep : {obj : Type} -> {hom : HomSlice obj} ->
   {a, b, c : obj} ->
   CovarToCovarHomRep {obj} hom (b, c) ->
   CovarToCovarHomRep {obj} hom (a, b) ->
   CovarToCovarHomRep {obj} hom (a, c)
-MorphComposeCovarDenotation {obj} {hom} {a} {b} {c} g f d = f d . g d
+CovarToCovarComposeRep {obj} {hom} {a} {b} {c} g f d = f d . g d
 
 public export
-MorphIdContravarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
+ContravarToContravarIdRep : {obj : Type} -> {hom : HomSlice obj} ->
   (a : obj) -> ContravarToContravarHomRep {obj} hom (a, a)
-MorphIdContravarDenotation {obj} {hom} a c = id {a=(hom (c, a))}
+ContravarToContravarIdRep {obj} {hom} a c = id {a=(hom (c, a))}
 
 public export
-MorphComposeContravarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
+ContravarToContravarComposeRep : {obj : Type} -> {hom : HomSlice obj} ->
   {a, b, c : obj} ->
   ContravarToContravarHomRep {obj} hom (b, c) ->
   ContravarToContravarHomRep {obj} hom (a, b) ->
   ContravarToContravarHomRep {obj} hom (a, c)
-MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
+ContravarToContravarComposeRep {obj} {hom} {a} {b} {c} g f d = g d . f d
 
 ---------------------------------------------------------------
 ---- Standard ("Mac Lane - Eilenberg") internal categories ----
@@ -347,23 +347,23 @@ YContravarNT yc = ContravarToContravarHomRep {obj=(ycObj yc)} (ycHom yc)
 
 public export
 yIdCovar : (yc : YCat) -> (x : ycObj yc) -> YCovarNT yc (x, x)
-yIdCovar yc = MorphIdCovarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+yIdCovar yc = CovarToCovarIdRep {obj=(ycObj yc)} {hom=(ycHom yc)}
 
 public export
 yIdContravar : (yc : YCat) -> (x : ycObj yc) -> YContravarNT yc (x, x)
-yIdContravar yc = MorphIdContravarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+yIdContravar yc = ContravarToContravarIdRep {obj=(ycObj yc)} {hom=(ycHom yc)}
 
 public export
 yComposeCovar : {yc : YCat} -> {a, b, c: ycObj yc} ->
   YCovarNT yc (b, c) -> YCovarNT yc (a, b) -> YCovarNT yc (a, c)
 yComposeCovar {yc} =
-  MorphComposeCovarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+  CovarToCovarComposeRep {obj=(ycObj yc)} {hom=(ycHom yc)}
 
 public export
 yComposeContravar : {yc : YCat} -> {a, b, c: ycObj yc} ->
   YContravarNT yc (b, c) -> YContravarNT yc (a, b) -> YContravarNT yc (a, c)
 yComposeContravar {yc} =
-  MorphComposeContravarDenotation {obj=(ycObj yc)} {hom=(ycHom yc)}
+  ContravarToContravarComposeRep {obj=(ycObj yc)} {hom=(ycHom yc)}
 
 ---------------------------------------------------
 ---- Yoneda categories are standard categories ----
