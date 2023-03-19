@@ -82,11 +82,11 @@ ContravarToCovarHomSetRep {obj} hom (a, b) =
   InternalNTFromContravarHom {obj} hom b (InternalCovarHom hom a)
 
 public export
-data InternalNT : {0 obj : Type} -> HomEndofunctor obj where
-  INTCovar :
-    CovarToCovarHomSetRep hom (a, b) -> InternalNT hom (a, b)
-  INTContravar :
-    ContravarToContravarHomSetRep hom (a, b) -> InternalNT hom (a, b)
+data HomSetRep : {0 obj : Type} -> HomEndofunctor obj where
+  HSRCovarToCovar :
+    CovarToCovarHomSetRep hom (a, b) -> HomSetRep hom (a, b)
+  HSRContravarToContravar :
+    ContravarToContravarHomSetRep hom (a, b) -> HomSetRep hom (a, b)
 
 public export
 CovarNTExtEq : {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
