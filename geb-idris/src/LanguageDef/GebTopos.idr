@@ -114,12 +114,28 @@ CovarToCovarHomRepExtEq {obj} {hom} {a} {b} =
     {f=(InternalCovarHom hom b)} {g=(InternalCovarHom hom a)}
 
 public export
+CovarToContravarHomRepExtEq :
+  {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
+  (alpha, beta : CovarToContravarHomRep hom (a, b)) -> Type
+CovarToContravarHomRepExtEq {obj} {hom} {a} {b} =
+  CopresheafNTExtEq {obj}
+    {f=(InternalCovarHom hom a)} {g=(InternalContravarHom hom b)}
+
+public export
 ContravarToContravarHomRepExtEq :
   {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
   (alpha, beta : ContravarToContravarHomRep hom (a, b)) -> Type
 ContravarToContravarHomRepExtEq {obj} {hom} {a} {b} =
   CopresheafNTExtEq {obj}
     {f=(InternalContravarHom hom a)} {g=(InternalContravarHom hom b)}
+
+public export
+ContravarToCovarHomRepExtEq :
+  {obj : Type} -> {hom : HomSlice obj} -> {a, b : obj} ->
+  (alpha, beta : ContravarToCovarHomRep hom (a, b)) -> Type
+ContravarToCovarHomRepExtEq {obj} {hom} {a} {b} =
+  CopresheafNTExtEq {obj}
+    {f=(InternalContravarHom hom b)} {g=(InternalCovarHom hom a)}
 
 public export
 CovarToCovarHomSetRep : (obj : Type) -> HomEndofunctor obj
