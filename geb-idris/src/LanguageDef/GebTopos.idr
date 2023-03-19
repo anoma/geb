@@ -45,28 +45,6 @@ HomUncurry hom (x, y) = hom x y
 ---------------------------
 ---------------------------
 
----------------------------------------------------------------
----- Standard ("Mac Lane - Eilenberg") internal categories ----
----------------------------------------------------------------
-
-public export
-record SCat where
-  constructor SC
-  scObj : Type
-  scHom : HomSlice scObj
-  scId : (a : scObj) -> scHom (a, a)
-  scComp : {a, b, c : scObj} -> scHom (b, c) -> scHom (a, b) -> scHom (a, c)
-  0 scEq : (0 a, b : scObj) -> EqRel (scHom (a, b))
-  0 scIdL : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
-    (scEq a b).eqRel f (scComp {a} {b} {c=b} (scId b) f)
-  0 scIdR : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
-    (scEq a b).eqRel f (scComp {a} {b=a} {c=b} f (scId a))
-  0 scIdAssoc : {0 a, b, c, d : scObj} ->
-    (0 f : scHom (a, b)) -> (0 g : scHom (b, c)) -> (0 h : scHom (c, d)) ->
-    (scEq a d).eqRel
-      (scComp {a} {b=c} {c=d} h (scComp {a} {b} {c} g f))
-      (scComp {a} {b} {c=d} (scComp {a=b} {b=c} {c=d} h g) f)
-
 ------------------------------------------
 ---- Internal natural transformations ----
 ------------------------------------------
@@ -170,6 +148,28 @@ MorphComposeContravarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
   InternalContravarNT {obj} hom (a, b) ->
   InternalContravarNT {obj} hom (a, c)
 MorphComposeContravarDenotation {obj} {hom} {a} {b} {c} g f d = g d . f d
+
+---------------------------------------------------------------
+---- Standard ("Mac Lane - Eilenberg") internal categories ----
+---------------------------------------------------------------
+
+public export
+record SCat where
+  constructor SC
+  scObj : Type
+  scHom : HomSlice scObj
+  scId : (a : scObj) -> scHom (a, a)
+  scComp : {a, b, c : scObj} -> scHom (b, c) -> scHom (a, b) -> scHom (a, c)
+  0 scEq : (0 a, b : scObj) -> EqRel (scHom (a, b))
+  0 scIdL : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
+    (scEq a b).eqRel f (scComp {a} {b} {c=b} (scId b) f)
+  0 scIdR : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
+    (scEq a b).eqRel f (scComp {a} {b=a} {c=b} f (scId a))
+  0 scIdAssoc : {0 a, b, c, d : scObj} ->
+    (0 f : scHom (a, b)) -> (0 g : scHom (b, c)) -> (0 h : scHom (c, d)) ->
+    (scEq a d).eqRel
+      (scComp {a} {b=c} {c=d} h (scComp {a} {b} {c} g f))
+      (scComp {a} {b} {c=d} (scComp {a=b} {b=c} {c=d} h g) f)
 
 -------------------------------
 ---- Internal Yoneda lemma ----
