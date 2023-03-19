@@ -269,6 +269,11 @@ SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
 SliceMorphism {a} s s' = (e : a) -> s e -> s' e
 
 public export
+SliceExtEq : {a : Type} -> {s, s' : SliceObj a} ->
+  (f, g : SliceMorphism {a} s s') -> Type
+SliceExtEq {a} {s} {s'} f g = (e : a) -> ExtEq (f e) (g e)
+
+public export
 SliceFunctorMap : {x, y : Type} -> (f : SliceFunctor x y) -> Type
 SliceFunctorMap {x} {y} f =
   {sa, sb : SliceObj x} -> SliceMorphism sa sb -> SliceMorphism (f sa) (f sb)

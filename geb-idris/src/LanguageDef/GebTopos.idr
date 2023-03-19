@@ -28,6 +28,19 @@ HomEndofunctor : Type -> Type
 HomEndofunctor = SliceEndofunctor . SignatureT
 
 public export
+InternalCopresheaf : Type -> Type
+InternalCopresheaf = SliceObj
+
+public export
+InternalCopresheafNT : {obj : Type} -> SliceObj obj -> SliceObj obj -> Type
+InternalCopresheafNT {obj} = SliceMorphism {a=obj}
+
+public export
+CopresheafNTExtEq : {obj : Type} -> {f, g : InternalCopresheaf obj} ->
+  (alpha, beta : InternalCopresheafNT f g) -> Type
+CopresheafNTExtEq {obj} {f} {g} = SliceExtEq {a=obj} {s=f} {s'=g}
+
+public export
 InternalCovarHom : HomSlice obj -> obj -> SliceObj obj
 InternalCovarHom hom = hom .* MkPair
 
