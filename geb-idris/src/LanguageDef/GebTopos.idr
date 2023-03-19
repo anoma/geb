@@ -122,31 +122,33 @@ ContravarToContravarHomRepExtEq {obj} {hom} {a} {b} =
     {f=(InternalContravarHom hom a)} {g=(InternalContravarHom hom b)}
 
 public export
-MorphDenotationCovar : (obj : Type) -> HomEndofunctor obj
-MorphDenotationCovar obj hom (a, b) =
+CovarToCovarHomSetRep : (obj : Type) -> HomEndofunctor obj
+CovarToCovarHomSetRep obj hom (a, b) =
   hom (a, b) -> CovarToCovarHomRep hom (a, b)
 
 public export
 MorphDenotationCovarNT : (obj : Type) -> (hom : HomSlice obj) -> Type
 MorphDenotationCovarNT obj hom =
-  (a, b : obj) -> MorphDenotationCovar obj hom (a, b)
+  (a, b : obj) -> CovarToCovarHomSetRep obj hom (a, b)
 
 public export
-MorphDenotationContravar : (obj : Type) -> HomEndofunctor obj
-MorphDenotationContravar obj hom (a, b) =
+ContravarToContravarHomSetRep : (obj : Type) -> HomEndofunctor obj
+ContravarToContravarHomSetRep obj hom (a, b) =
   hom (a, b) -> ContravarToContravarHomRep hom (a, b)
 
 public export
 MorphDenotationContravarNT : (obj : Type) -> HomSlice obj -> Type
 MorphDenotationContravarNT obj hom =
-  (a, b : obj) -> MorphDenotationContravar obj hom (a, b)
+  (a, b : obj) -> ContravarToContravarHomSetRep obj hom (a, b)
 
 public export
 data MorphDenotation : (obj : Type) -> HomEndofunctor obj where
   MDCovar :
-    MorphDenotationCovar obj hom (a, b) -> MorphDenotation obj hom (a, b)
+    CovarToCovarHomSetRep obj hom (a, b) ->
+    MorphDenotation obj hom (a, b)
   MDContravar :
-    MorphDenotationContravar obj hom (a, b) -> MorphDenotation obj hom (a, b)
+    ContravarToContravarHomSetRep obj hom (a, b) ->
+    MorphDenotation obj hom (a, b)
 
 public export
 MorphIdCovarDenotation : {obj : Type} -> {hom : HomSlice obj} ->
@@ -500,13 +502,13 @@ public export
 YExtendMorphCovarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendMorphCovarDenote {oext} mext =
   (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc (x, y) ->
-  MorphDenotationCovar (YExtendedObj yc oext) (mext yc) (x, y)
+  CovarToCovarHomSetRep (YExtendedObj yc oext) (mext yc) (x, y)
 
 public export
 YExtendMorphContravarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendMorphContravarDenote {oext} mext =
   (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc (x, y) ->
-  MorphDenotationContravar (YExtendedObj yc oext) (mext yc) (x, y)
+  ContravarToContravarHomSetRep (YExtendedObj yc oext) (mext yc) (x, y)
 
 public export
 data YExtendedMorph :
@@ -524,7 +526,7 @@ YExtendCovarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendCovarDenotation {oext} mext =
   (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
   YExtendedMorph yc oext mext (x, y) ->
-  MorphDenotationCovar
+  CovarToCovarHomSetRep
     (YExtendedObj yc oext) (YExtendedMorph yc oext mext) (x, y)
 
 public export
@@ -532,7 +534,7 @@ YExtendContravarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
 YExtendContravarDenotation {oext} mext =
   (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
   YExtendedMorph yc oext mext (x, y) ->
-  MorphDenotationContravar
+  ContravarToContravarHomSetRep
     (YExtendedObj yc oext) (YExtendedMorph yc oext mext) (x, y)
 
 public export
