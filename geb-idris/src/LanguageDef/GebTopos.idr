@@ -355,7 +355,7 @@ record YCat where
   constructor YC
   ycObj : Type
   ycHom : HomSlice ycObj
-  ycDenote : YonedaCatRep {obj=ycObj} ycHom
+  0 ycDenote : YonedaCatRep {obj=ycObj} ycHom
 
 public export
 YCHomSlice : YCat -> Type
