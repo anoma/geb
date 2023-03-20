@@ -14,21 +14,24 @@
 
 (pax:defsection @lambda-api (:title "Main functionality")
   "This covers the main API for the STLC module"
-  (hom-cod         pax:function)
-  (index-check     pax:function)
-  (ann-term1       pax:generic-function)
-  (exp-to-hom      pax:function)
-  (ann-term2       pax:function)
-  (annotated-term  pax:function)
-  (type-of-exp-aux pax:function)
-  (type-of-term    pax:function)
-  (well-defp       pax:generic-function)
-  (exp-aux pax:class)
-  (exp-aux pax:function)
-  (mcar (pax:method () (exp-aux)))
-  (mcadr (pax:method () (exp-aux)))
-  (mcar pax:generic-function)
-  (mcadr pax:generic-function))
+
+  (ann-term1          pax:generic-function)
+  (hom-cod            pax:function)
+  (index-check        pax:function)
+  (fun-to-hom         pax:function)
+  (ann-term2          pax:function)
+  (annotated-term     pax:function)
+  (type-of-term-w-fun pax:function)
+  (type-of-term       pax:function)
+  (well-defp          pax:generic-function)
+  (fun-type           pax:class)
+  (fun-type           pax:function)
+
+  (mcar              (pax:method () (fun-type)))
+  (mcadr             (pax:method () (fun-type)))
+
+  (mcar               pax:generic-function)
+  (mcadr              pax:generic-function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; trans module

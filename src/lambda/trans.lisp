@@ -9,7 +9,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defgeneric compile-checked-term (context term)
-  (:documentation "Compiles a checked term into SubstMorph category"))
+  (:documentation "Compiles a checked term in an appropriate context into the morphism
+of the GEB category. In detail, it takes a context and a term with following restrictions:
+Terms come from [STLC][class]  with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced
+by [FUN-TYPE][class] and should
+come without the slow of [TTYPE][generic-function] accessor filled for any of the subterms.
+Context should be a list of
+[SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with the caveat that instead of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ]
+we ought to use [FUN-TYPE][class], a stand-in
+for the internal hom object with explicit accessors to the domain and the codomain.
+Once again, note  that it is important for the context and term to be giving as per above description.
+While not always, not doing so result in an error upon evaluation.
+As an example of a valid entry we have
+
+```lisp
+ (compile-checked-term (list so1 (fun-type so1 so1)) (app (index 0) (index 1)))
+```
+
+while
+
+```lisp
+(compile-checked-term (list so1 (so-hom-obj so1 so1)) (app (index 0) (index 1)))
+```
+
+produces an error. Error of such kind mind pop up both on the level of evaluating
+[WELL-DEFP][generic-function] and [ANN-TERM1][generic-function]."))
 
 (-> to-poly (list <stlc>) (or geb.poly:<poly> geb.poly:poly))
 (defun to-poly (context obj)
@@ -65,10 +89,10 @@
            (curry (commutes-left
                    (compile-checked-term (cons tdom context) term))))
           ((app fun term)
-           (let ((tofun   (type-of-exp-aux context fun)))
+           (let ((tofun   (type-of-term-w-fun context fun)))
              (comp
-              (so-eval (exp-to-hom (mcar tofun))
-                       (exp-to-hom (mcadr tofun)))
+              (so-eval (fun-to-hom (mcar tofun))
+                       (fun-to-hom (mcadr tofun)))
               (geb:pair (compile-checked-term context
                                               fun)
                         (compile-checked-term context
@@ -79,7 +103,8 @@
 
 (-> stlc-ctx-to-mu (stlc-context) substobj)
 (defun stlc-ctx-to-mu (context)
-  "Converts a generic [<STLC>][type] context into a [SUBSTMORPH][type]"
+  "Converts a generic [<STLC>][type] context into a [SUBSTMORPH][GEB.SPEC:SUBSTMORPH]. Note that usually contexts can be
+interpreted in a category as a $\Sigma$-type$, which in a non-dependent setting gives us a usual [PROD][type]"
   (mvfoldr #'prod context so1))
 
 (-> so-hom (substobj substobj) (or t substobj))
@@ -92,6 +117,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun stlc-ctx-proj (context depth)
+  "Given a context, we interpret it as a [PROD][type] object of appropriate length with fibrations
+given by [PROD][type] projections."
   (if (zerop depth)
       (<-left (car context)
               (stlc-ctx-to-mu (cdr context)))

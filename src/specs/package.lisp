@@ -100,7 +100,7 @@ constructors"
   "This covers the various the abstract data type that is the simply
   typed lambda calculus within GEB. The class presents untyped STLC terms.
 "
-  (stlc pax:class)
+  (stlc pax:type)
   (<stlc> pax:class)
 
   (absurd pax:class)
@@ -127,55 +127,55 @@ constructors"
   (app pax:function)
   (index pax:function)
 
-  "Given (term : so0) we get ((absurd term) : tcod)"
+  "Accessors of [ABSURD][class]"
 
   (tcod (pax:method () (absurd)))
   (term (pax:method () (absurd)))
   (ttype (pax:method () (absurd)))
 
-  "We have (unit : so1)"
+  "Accessors of [UNIT][class]"
   (ttype (pax:method () (unit)))
 
-  "Given (rty : Type) and (term : lty) we have  ((left rty term) : lty + rty)"
+  "Accessors of [LEFT][class]"
   (rty (pax:method () (left)))
   (term (pax:method () (left)))
   (ttype (pax:method () (left)))
 
-  "Given (lty : Type) and (term : rty) we have ((right lty term) : lty + rty)"
+  "Accessors of [RIGHT][class]"
   (lty (pax:method () (right)))
   (term (pax:method () (right)))
   (ttype (pax:method () (right)))
 
-  "Given (on : lty + rty), (ltm : cod), (rtm : cod) produced in the context of lty and rty respectively, we get ((case-on on ltm rtm) : cod ) "
+  "Accessors of [CASE-ON][class]"
   (on (pax:method () (case-on)))
   (ltm (pax:method () (case-on)))
   (rtm (pax:method () (case-on)))
   (ttype (pax:method () (case-on)))
 
-  "Given (ltm : lty) and (rtm : rty) we have ((pair ltm rtm) : lty x rty)"
+  "Accessors of [PAIR][class]"
   (ltm (pax:method () (pair)))
   (rtm (pax:method () (pair)))
   (ttype (pax:method () (pair)))
 
-  "Given (term : lty x rty) we get ((fst term) : lty)"
+  "Accessors of [FST][class]"
   (term (pax:method () (fst)))
   (ttype (pax:method () (fst)))
 
-  "Given (term : lty x rty) we get ((snd term) : rty)"
+  "Accessors of [SND][class]"
   (term (pax:method () (snd)))
   (ttype (pax:method () (snd)))
 
-  "Given (tdom : Type) and (term : tcod) we have ((lambda tdom term) : tdom -> tcod)"
+  "Accessors of [LAMB][class]"
   (tdom (pax:method () (lamb)))
   (term (pax:method () (lamb)))
   (ttype (pax:method () (lamb)))
 
-  "Given (fun : tdom -> tcod) and (term : tdom) we get ((app fun term) : tcod)"
+  "Accessors of [APP][class]"
   (fun (pax:method () (app)))
   (term (pax:method () (app)))
-  (ttype (pax:method () (lamb)))
+  (ttype (pax:method () (app)))
 
-  "Relative to a context. Given context G1,.,G(pos),..,Gn, we have ((index pos) : G(pos))"
+  "Accessors of [INDEX][class]"
   (pos (pax:method () (index)))
   (ttype (pax:method () (index)))
 
