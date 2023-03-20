@@ -630,6 +630,10 @@ SCatToYCatContravar sc = YC sc.scObj sc.scHom (SCatDenotationContravar sc)
 --------------------------------------------
 --------------------------------------------
 
+---------------------------
+---- General utilities ----
+---------------------------
+
 public export
 YExtendObjF : Type
 YExtendObjF = YCat -> Type
@@ -1089,6 +1093,70 @@ YCoprod yc =
     (YCoprodObj yc)
     (YCoprodHom yc)
     (?YCoprodDenotation_hole)
+
+---------------------------------------------------------
+---- Example: free finite product/coproduct category ----
+---------------------------------------------------------
+
+public export
+data InitialUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
+    HomSlice (TrEitherF InitialObjF obj) where
+
+public export
+data InitialRightAdjF : (obj : Type) -> (hom : HomSlice obj) ->
+    HomSlice (TrEitherF InitialObjF obj) where
+  InFrom0 : (x : TrEitherF InitialObjF obj) ->
+    InitialRightAdjF obj hom (TFC Obj0, x)
+
+public export
+data TerminalObjF : (obj : Type) -> Type where
+  Obj1 : TerminalObjF obj
+
+public export
+data TerminalUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
+    HomSlice (TrEitherF TerminalObjF obj) where
+
+public export
+data TerminalLeftAdjF : (obj : Type) -> (hom : HomSlice obj) ->
+    HomSlice (TrEitherF TerminalObjF obj) where
+  InTo1 : (x : TrEitherF TerminalObjF obj) ->
+    TerminalLeftAdjF obj hom (x, TFC Obj1)
+
+public export
+data CoprodUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
+    HomSlice (TrEitherF CoprodObjF obj) where
+  CpUInjL : (x, y : obj) ->
+    CoprodUMorphF obj hom (TFV x, TFC (ObjCp x y))
+  CpUInjR : (x, y : obj) ->
+    CoprodUMorphF obj hom (TFV y, TFC (ObjCp x y))
+
+public export
+data CoprodRightAdjF : {obj : Type} ->
+    HomSlice (TrEitherF CoprodObjF obj) ->
+    HomSlice (TrEitherF CoprodObjF obj) where
+  CpACase : {0 x, y : obj} -> {0 z : TrEitherF CoprodObjF obj} ->
+    hom (TFV x, z) -> hom (TFV y, z) ->
+    CoprodRightAdjF {obj} hom (TFC (ObjCp x y), z)
+
+public export
+data ProdObjF : (obj : Type) -> Type where
+  ObjPr : obj -> obj -> ProdObjF obj
+
+public export
+data ProdUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
+    HomSlice (TrEitherF ProdObjF obj) where
+  PrUProjL : (x, y : obj) ->
+    ProdUMorphF obj hom (TFC (ObjPr x y), TFV x)
+  PrUProjR : (x, y : obj) ->
+    ProdUMorphF obj hom (TFC (ObjPr x y), TFV y)
+
+public export
+data ProdLeftAdjF : {obj : Type} ->
+    HomSlice (TrEitherF ProdObjF obj) ->
+    HomSlice (TrEitherF ProdObjF obj) where
+  PrABi : {0 x : TrEitherF ProdObjF obj} -> {0 y, z : obj} ->
+    hom (x, TFV y) -> hom (x, TFV z) ->
+    ProdLeftAdjF {obj} hom (x, TFC (ObjPr y z))
 
 ---------------------
 ---------------------
