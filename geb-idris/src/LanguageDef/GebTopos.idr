@@ -1102,11 +1102,13 @@ public export
 data InitialUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
     HomSlice (TrEitherF InitialObjF obj) where
 
+-- Equivalent to:
+-- InitialCovarHom hom Obj0 c = Unit
 public export
-data InitialRightAdjF : (obj : Type) -> (hom : HomSlice obj) ->
-    HomSlice (TrEitherF InitialObjF obj) where
-  InFrom0 : (x : TrEitherF InitialObjF obj) ->
-    InitialRightAdjF obj hom (TFC Obj0, x)
+data InitialCovarHom : {0 obj : Type} ->
+    HomSlice obj -> InitialObjF obj -> SliceObj obj where
+  InRAFrom0 : (0 c : obj) ->
+    InitialCovarHom {obj} hom Obj0 c
 
 public export
 data TerminalObjF : (obj : Type) -> Type where
@@ -1116,47 +1118,55 @@ public export
 data TerminalUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
     HomSlice (TrEitherF TerminalObjF obj) where
 
+-- Equivalent to:
+-- TerminalContravarHom hom Obj1 c = Unit
 public export
-data TerminalLeftAdjF : (obj : Type) -> (hom : HomSlice obj) ->
-    HomSlice (TrEitherF TerminalObjF obj) where
-  InTo1 : (x : TrEitherF TerminalObjF obj) ->
-    TerminalLeftAdjF obj hom (x, TFC Obj1)
+data TerminalContravarHom : {0 obj : Type} ->
+    HomSlice obj -> TerminalObjF obj -> SliceObj obj where
+  InLATo1 : (0 c : obj) ->
+    TerminalContravarHom {obj} hom Obj1 c
 
+-- The coproduct's universal morphisms come from the unit in the product
+-- category.
 public export
 data CoprodUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
     HomSlice (TrEitherF CoprodObjF obj) where
-  CpUInjL : (x, y : obj) ->
+  CpUnInjL : (x, y : obj) ->
     CoprodUMorphF obj hom (TFV x, TFC (ObjCp x y))
-  CpUInjR : (x, y : obj) ->
+  CpUnInjR : (x, y : obj) ->
     CoprodUMorphF obj hom (TFV y, TFC (ObjCp x y))
 
+-- Equivalent to:
+-- CoprodCovarHom hom (ObjCp a b) c = Pair (hom (a, c)) (hom (b, c))
 public export
-data CoprodRightAdjF : {obj : Type} ->
-    HomSlice (TrEitherF CoprodObjF obj) ->
-    HomSlice (TrEitherF CoprodObjF obj) where
-  CpACase : {0 x, y : obj} -> {0 z : TrEitherF CoprodObjF obj} ->
-    hom (TFV x, z) -> hom (TFV y, z) ->
-    CoprodRightAdjF {obj} hom (TFC (ObjCp x y), z)
+data CoprodCovarHom : {0 obj : Type} ->
+    HomSlice obj -> CoprodObjF obj -> SliceObj obj where
+  CpRACase : {0 a, b, c : obj} ->
+    hom (a, c) -> hom (b, c) ->
+    CoprodCovarHom {obj} hom (ObjCp a b) c
 
 public export
 data ProdObjF : (obj : Type) -> Type where
   ObjPr : obj -> obj -> ProdObjF obj
 
+-- The product's universal morphisms come from the counit in the product
+-- category.
 public export
 data ProdUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
     HomSlice (TrEitherF ProdObjF obj) where
-  PrUProjL : (x, y : obj) ->
+  PrCoProjL : (x, y : obj) ->
     ProdUMorphF obj hom (TFC (ObjPr x y), TFV x)
-  PrUProjR : (x, y : obj) ->
+  PrCoProjR : (x, y : obj) ->
     ProdUMorphF obj hom (TFC (ObjPr x y), TFV y)
 
+-- Equivalent to:
+-- ProdContravarHom hom (ObjPr a b) c = Pair (hom (c, a)) (hom (c, b))
 public export
-data ProdLeftAdjF : {obj : Type} ->
-    HomSlice (TrEitherF ProdObjF obj) ->
-    HomSlice (TrEitherF ProdObjF obj) where
-  PrABi : {0 x : TrEitherF ProdObjF obj} -> {0 y, z : obj} ->
-    hom (x, TFV y) -> hom (x, TFV z) ->
-    ProdLeftAdjF {obj} hom (x, TFC (ObjPr y z))
+data ProdContravarHom : {0 obj : Type} ->
+    HomSlice obj -> ProdObjF obj -> SliceObj obj where
+  PrLABi : {0 a, b, c : obj} ->
+    hom (c, a) -> hom (c, b) ->
+    ProdContravarHom {obj} hom (ObjPr a b) c
 
 ---------------------
 ---------------------
