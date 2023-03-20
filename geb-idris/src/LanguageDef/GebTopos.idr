@@ -502,7 +502,14 @@ YCContravarHomYonedaL yc a f fmap fa b mba = ycFreeFContramap fmap b a mba fa
 public export
 0 ycEqRel : (yc : YCat) -> (0 a, b : yc.ycObj) ->
   RelationOn (YCatFreeHomSlice yc (a, b))
-ycEqRel yc a b = ?ycEqRel_hole
+ycEqRel yc a b (InSlF (a, b) (InSlV v)) (InSlF (a, b) (InSlV v')) =
+  ?ycEqRel_hole_vv
+ycEqRel yc a b (InSlF (a, b) (InSlV v)) (InSlF (a, b) (InSlC m')) =
+  ?ycEqRel_hole_vc
+ycEqRel yc a b (InSlF (a, b) (InSlC m)) (InSlF (a, b) (InSlV v')) =
+  ?ycEqRel_hole_cv
+ycEqRel yc a b (InSlF (a, b) (InSlC m)) (InSlF (a, b) (InSlC m')) =
+  ?ycEqRel_hole_cc
 
 public export
 0 ycEqRelRefl : (yc : YCat) -> (0 a, b : yc.ycObj) ->
@@ -597,12 +604,25 @@ public export
 SCatToYCatContravar : SCat -> YCat
 SCatToYCatContravar sc = YC sc.scObj sc.scHom (SCatDenotationContravar sc)
 
-------------------------------------------------------------------------
----- Yoneda <-> standard conversions are inverses up to equivalence ----
-------------------------------------------------------------------------
+----------------------------------------------------------------------------
+---- Yoneda <-> standard formulations of category theory are equivalent ----
+----------------------------------------------------------------------------
 
 -- This still needs to be proven.  It will depend upon the slice-category
 -- free monad's properties, such as its being Cartesian and idempotent.
+-- The claim of the equivalence is that YCatToSCat |- SCatToYCatCovar
+-- and YCatToSCat |- SCatToYCatContravar are both adjunctions (so in particular
+-- SCatToYCatCovar and SCatToYCatContravar are naturally isomorphic) between
+-- the category of Yoneda categories and the category of standard categories,
+-- and the counit (in the category of standard categories) is a natural
+-- isomorphism (up to categorical equivalence).
+--
+-- Note that this is an enhancement of the free-forgetful adjunction between
+-- the category of diagrams and the category of (standard) categories.
+-- The "Yoneda category" extends the notion of a diagram with an embedding
+-- of the edges into internal natural transformations of the metalanguage,
+-- which amount to a way of assigning free equalities to paths in the diagram
+-- without having explicitly to introduce identity or composition.
 
 --------------------------------------------
 --------------------------------------------
