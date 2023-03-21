@@ -101,6 +101,26 @@ homSliceCata {obj} sv sa subst alg (a, b) (InSlF (a, b) (InSlC m)) =
         (homSliceCata {obj} sv sa subst alg (y, z) g)
         (homSliceCata {obj} sv sa subst alg (x, y) f)
 
+public export
+chFreeFMap : {obj : Type} -> {hom : HomSlice obj} -> {f : SliceObj obj} ->
+  ((a, b : obj) -> hom (a, b) -> f a -> f b) ->
+  ((a, b : obj) -> FreeHomM obj hom (a, b) -> f a -> f b)
+chFreeFMap {obj} {hom} {f} fmap a b =
+  homSliceCata hom (\(x, y) => f x -> f y)
+    (\(x, y) => fmap x y)
+    (\(x, z), m => case m of CHId z => id ; CHComp g f => g . f)
+    (a, b)
+
+public export
+chFreeFContramap : {obj : Type} -> {hom : HomSlice obj} -> {f : SliceObj obj} ->
+  ((a, b : obj) -> hom (a, b) -> f b -> f a) ->
+  ((a, b : obj) -> FreeHomM obj hom (a, b) -> f b -> f a)
+chFreeFContramap {obj} {hom} {f} fmap a b =
+  homSliceCata hom (\(x, y) => f y -> f x)
+    (\(x, y) => fmap x y)
+    (\(x, z), m => case m of CHId z => id ; CHComp g f => f . g)
+    (a, b)
+
 ---------------------------
 ---------------------------
 ---- Yoneda categories ----
@@ -488,21 +508,13 @@ public export
 ycFreeFMap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
   ((a, b : yc.ycObj) -> yc.ycHom (a, b) -> f a -> f b) ->
   ((a, b : yc.ycObj) -> YCatFreeHomSlice yc (a, b) -> f a -> f b)
-ycFreeFMap {yc} {f} fmap a b =
-  ycHomSliceCata yc (\(x, y) => f x -> f y)
-    (\(x, y) => fmap x y)
-    (\(x, z), m => case m of CHId z => id ; CHComp g f => g . f)
-    (a, b)
+ycFreeFMap {yc} {f} = chFreeFMap {obj=yc.ycObj} {hom=yc.ycHom} {f}
 
 public export
 ycFreeFContramap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
   ((a, b : yc.ycObj) -> yc.ycHom (a, b) -> f b -> f a) ->
   ((a, b : yc.ycObj) -> YCatFreeHomSlice yc (a, b) -> f b -> f a)
-ycFreeFContramap {yc} {f} fmap a b =
-  ycHomSliceCata yc (\(x, y) => f y -> f x)
-    (\(x, y) => fmap x y)
-    (\(x, z), m => case m of CHId z => id ; CHComp g f => f . g)
-    (a, b)
+ycFreeFContramap {yc} {f} = chFreeFContramap {obj=yc.ycObj} {hom=yc.ycHom} {f}
 
 public export
 YCCovarHomYonedaR :
