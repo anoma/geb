@@ -76,6 +76,16 @@ CatEitherF : {obj : Type} -> HomEndofunctor obj
 CatEitherF {obj} = SliceTrEitherF {a=(SignatureT obj)} (CatHomF {obj})
 
 public export
+CEid : {obj : Type} -> {0 hom : HomSlice obj} ->
+  (x : obj) -> CatEitherF {obj} hom (x, x)
+CEid x = InSlC $ CHId x
+
+public export
+CEcomp : {obj : Type} -> {0 hom : HomSlice obj} ->
+  {x, y, z: obj} -> hom (y, z) -> hom (x, y) -> CatEitherF {obj} hom (x, z)
+CEcomp f g = InSlC $ CHComp f g
+
+public export
 FreeHomM : (obj : Type) -> HomEndofunctor obj
 FreeHomM obj = SliceFreeM {a=(SignatureT obj)} (CatHomF {obj})
 
@@ -1256,25 +1266,38 @@ coprodPostCompUnit {obj} hom a a' b b' c mab ma'b mbc =
     comp {a''} {b''} {b'''} {c''} adj unit =
       coprodRAAfterUnit a'' (ObjCp b'' b''') c'' adj unit
 
--- Extend reduction.  Returns CHComp if irreducible.
+-- Extend reduction.  Returns Nothing if irreducible.
 public export
 coprodExtendReduce : {obj : Type} -> {hom : HomSlice obj} ->
   (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
   (a, b, c : TrEitherF CoprodObjF obj) ->
   CoprodExtendHom hom (b, c) ->
   CoprodExtendHom hom (a, b) ->
-  CatEitherF (CoprodExtendHom hom) (a, c)
+  Maybe (CoprodExtendHom hom (a, c))
 coprodExtendReduce comp (TFV a) (TFV b) (TFV c) mbc mab =
-  InSlV $ comp mbc mab
+  Just $ comp mbc mab
 coprodExtendReduce comp a b (TFC c) mbc mab =
-  InSlC $ CHComp mbc mab
+  Nothing
 coprodExtendReduce comp (TFV a) (TFC b) (TFV c) mbc mab =
-  InSlV $ coprodRAAfterUnit {hom} a b c mbc mab
+  Just $ coprodRAAfterUnit {hom} a b c mbc mab
 coprodExtendReduce comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
   mbb'c (CpRACase {a} {b=a'} {c=(ObjCp b b')} mabb' ma'bb') =
-    InSlV $ coprodPostCompUnit hom a a' b b' c mabb' ma'bb' mbb'c
+    Just $ coprodPostCompUnit hom a a' b b' c mabb' ma'bb' mbb'c
 coprodExtendReduce {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
-  InSlV $ coprodPreCompRAA hom comp a a' b c mbc mab
+  Just $ coprodPreCompRAA hom comp a a' b c mbc mab
+
+-- Extend composition.  Returns CHComp if irreducible.
+public export
+coprodExtendCompose : {obj : Type} -> {hom : HomSlice obj} ->
+  (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
+  (a, b, c : TrEitherF CoprodObjF obj) ->
+  CoprodExtendHom hom (b, c) ->
+  CoprodExtendHom hom (a, b) ->
+  CatEitherF (CoprodExtendHom hom) (a, c)
+coprodExtendCompose comp a b c mbc mab with
+  (coprodExtendReduce comp a b c mbc mab)
+    coprodExtendCompose comp a b c mbc mab | Just mac = InSlV mac
+    coprodExtendCompose comp a b c mbc mab | Nothing = CEcomp mbc mab
 
 -- Extend object interpretation.
 public export
