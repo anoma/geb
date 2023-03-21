@@ -52,6 +52,29 @@ public export
 HomUncurry : (obj -> obj -> Type) -> HomSlice obj
 HomUncurry hom (x, y) = hom x y
 
+-------------------------
+-------------------------
+---- Free categories ----
+-------------------------
+-------------------------
+
+public export
+data CatHomF : {obj : Type} -> HomEndofunctor obj where
+  CHId :
+    {0 obj : Type} -> {0 hom : HomSlice obj} ->
+    (x : obj) -> CatHomF {obj} hom (x, x)
+  CHComp :
+    {0 obj : Type} -> {0 hom : HomSlice obj} -> {x, y, z : obj} ->
+    hom (y, z) -> hom (x, y) -> CatHomF {obj} hom (x, z)
+
+public export
+HomTranslateF : (obj : Type) -> HomSlice obj -> HomEndofunctor obj
+HomTranslateF obj = SliceTranslateF {a=(SignatureT obj)} (CatHomF {obj})
+
+public export
+FreeHomM : (obj : Type) -> HomEndofunctor obj
+FreeHomM obj = SliceFreeM {a=(SignatureT obj)} (CatHomF {obj})
+
 ---------------------------
 ---------------------------
 ---- Yoneda categories ----
@@ -402,23 +425,6 @@ yComposeContravar {yc} =
 ------------------------------------------------
 ---- Free categories from Yoneda categories ----
 ------------------------------------------------
-
-public export
-data CatHomF : {obj : Type} -> HomEndofunctor obj where
-  CHId :
-    {0 obj : Type} -> {0 hom : HomSlice obj} ->
-    (x : obj) -> CatHomF {obj} hom (x, x)
-  CHComp :
-    {0 obj : Type} -> {0 hom : HomSlice obj} -> {x, y, z : obj} ->
-    hom (y, z) -> hom (x, y) -> CatHomF {obj} hom (x, z)
-
-public export
-HomTranslateF : (obj : Type) -> HomSlice obj -> HomEndofunctor obj
-HomTranslateF obj = SliceTranslateF {a=(SignatureT obj)} (CatHomF {obj})
-
-public export
-FreeHomM : (obj : Type) -> HomEndofunctor obj
-FreeHomM obj = SliceFreeM {a=(SignatureT obj)} (CatHomF {obj})
 
 public export
 YObjHomSlice : (yc : YCat) -> Type
