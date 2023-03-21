@@ -1329,11 +1329,14 @@ ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp a b)) (TFV c)
     eitherElim
       (minterp a c f)
       (minterp b c g)
-ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp a b)) (TFC c)
-  (CpRACase f g) =
-    eitherElim
-      ?ExtendCoprodInterpMorph_hole_3
-      ?ExtendCoprodInterpMorph_hole_4
+ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp a a)) (TFC (ObjCp a b))
+  (CpRACase (CpUnInjL a b) (CpUnInjL a b)) = eitherElim Left Left
+ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp a b)) (TFC (ObjCp a b))
+  (CpRACase (CpUnInjL a b) (CpUnInjR a b)) = eitherElim Left Right
+ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp b a)) (TFC (ObjCp a b))
+  (CpRACase (CpUnInjR a b) (CpUnInjL a b)) = eitherElim Right Left
+ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp b b)) (TFC (ObjCp a b))
+  (CpRACase (CpUnInjR a b) (CpUnInjR a b)) = eitherElim Right Right
 
 public export
 data ProdObjF : (obj : Type) -> Type where
