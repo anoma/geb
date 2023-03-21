@@ -1222,21 +1222,13 @@ data CoprodRightAdj : {0 obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
     CoprodRightAdj {obj} {obj'} hom (ObjCp a b, c)
 
 public export
-coprodElim : {obj : Type} -> {hom : HomSlice obj} ->
-  (a, b, b', c : obj) ->
-  hom (b, c) -> hom (b', c) ->
-  CoprodUnitF {obj} hom (a, ObjCp b b') ->
-  hom (a, c)
-coprodElim a a b c f g (CpUnInjL a b) = f
-coprodElim b a b c f g (CpUnInjR a b) = g
-
-public export
 coprodRAAfterUnit : {obj : Type} -> {hom : HomSlice obj} ->
   (a : obj) -> (b : CoprodObjF obj) -> (c : obj) ->
   (mbc : CoprodRightAdj {obj} {obj'=obj} hom (b, c)) ->
   CoprodUnitF {obj} hom (a, b) ->
   hom (a, c)
-coprodRAAfterUnit a (ObjCp b b') c (CpRACase f g) u = coprodElim a b b' c f g u
+coprodRAAfterUnit a (ObjCp a b) c (CpRACase f g) (CpUnInjL a b) = f
+coprodRAAfterUnit b (ObjCp a b) c (CpRACase f g) (CpUnInjR a b) = g
 
 public export
 coprodPreCompRAA : {0 obj : Type} -> (hom : HomSlice obj) ->
