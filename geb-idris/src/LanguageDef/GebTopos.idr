@@ -1251,8 +1251,8 @@ coprodCompThrough : {obj : Type} -> (hom : HomSlice obj) ->
   CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', c)
 coprodCompThrough {obj} hom a a' b b' mab ma'b c mbc =
   CpRACase {obj} {obj'=obj} {a} {b=a'} {c}
-    (comp {a''=a} {b''=b} {b'''=b'} mbc mab)
-    (comp {a''=a'} {b''=b} {b'''=b'} mbc ma'b)
+    (comp {a''=a} {b''=b} {b'''=b'} {c''=c} mbc mab)
+    (comp {a''=a'} {b''=b} {b'''=b'} {c''=c} mbc ma'b)
   where
     comp :
       {a'', b'', b''', c'' : obj} ->
