@@ -536,9 +536,9 @@ ycHomSliceCata : (yc : YCat) -> (sa : HomSlice yc.ycObj) ->
   SliceMorphism (SliceFreeM CatHomF yc.ycHom) sa
 ycHomSliceCata yc = homSliceCata {obj=yc.ycObj} yc.ycHom
 
---------------------------------------
----- Yoneda-category Yoneda lemma ----
---------------------------------------
+-------------------------------------------
+---- Free-Yoneda-category Yoneda lemma ----
+-------------------------------------------
 
 public export
 ycFreeFMap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
