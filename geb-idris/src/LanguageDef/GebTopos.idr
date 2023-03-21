@@ -143,6 +143,11 @@ CovarToCovarHomSetRep obj hom (a, b) =
   hom (a, b) -> CovarToCovarHomRep hom (a, b)
 
 public export
+CovarToCovarCatRep : {obj : Type} -> HomSlice obj -> Type
+CovarToCovarCatRep {obj} hom =
+  (a, b : obj) -> CovarToCovarHomSetRep obj hom (a, b)
+
+public export
 CovarToContravarHomSetRep : (obj : Type) -> HomEndofunctor obj
 CovarToContravarHomSetRep obj hom (a, b) =
   hom (a, b) -> CovarToContravarHomRep hom (a, b)
@@ -151,6 +156,11 @@ public export
 ContravarToContravarHomSetRep : (obj : Type) -> HomEndofunctor obj
 ContravarToContravarHomSetRep obj hom (a, b) =
   hom (a, b) -> ContravarToContravarHomRep hom (a, b)
+
+public export
+ContravarToContravarCatRep : {obj : Type} -> HomSlice obj -> Type
+ContravarToContravarCatRep {obj} hom =
+  (a, b : obj) -> ContravarToContravarHomSetRep obj hom (a, b)
 
 public export
 ContravarToCovarHomSetRep : (obj : Type) -> HomEndofunctor obj
@@ -1144,6 +1154,38 @@ data CoprodCovarHom : {0 obj : Type} ->
   CpRACase : {0 a, b, c : obj} ->
     hom (a, c) -> hom (b, c) ->
     CoprodCovarHom {obj} hom (ObjCp a b) c
+
+public export
+ExtendCoprodCovarDenoteU : {obj : Type} -> (hom : HomSlice obj) ->
+  MorphDenoteExtendCovar obj CoprodObjF hom (CoprodUMorphF obj hom)
+ExtendCoprodCovarDenoteU hom denote (TFV a) (TFC (ObjCp a b))
+  (CpUnInjL a b) c (MEU f) =
+    case f of
+      CpUnInjL _ _ impossible
+      CpUnInjR _ _ impossible
+ExtendCoprodCovarDenoteU hom denote (TFV b) (TFC (ObjCp a b))
+  (CpUnInjR a b) c (MEU f) =
+    case f of
+      CpUnInjL _ _ impossible
+      CpUnInjR _ _ impossible
+
+public export
+ExtendCoprodContravarDenoteU : {obj : Type} -> (hom : HomSlice obj) ->
+  MorphDenoteExtendContravar obj CoprodObjF hom (CoprodUMorphF obj hom)
+ExtendCoprodContravarDenoteU hom denote (TFV a) (TFC (ObjCp a b))
+  (CpUnInjL a b) (TFV c) (MEV f) = FMC (FMU $ CpUnInjL a b) (FMV f)
+ExtendCoprodContravarDenoteU hom denote (TFV a) (TFC (ObjCp a b))
+  (CpUnInjL a b) c (MEU f) =
+    case f of
+      CpUnInjL _ _ impossible
+      CpUnInjR _ _ impossible
+ExtendCoprodContravarDenoteU hom denote (TFV b) (TFC (ObjCp a b))
+  (CpUnInjR a b) (TFV c) (MEV f) = FMC (FMU $ CpUnInjR a b) (FMV f)
+ExtendCoprodContravarDenoteU hom denote (TFV b) (TFC (ObjCp a b))
+  (CpUnInjR a b) c (MEU f) =
+    case f of
+      CpUnInjL _ _ impossible
+      CpUnInjR _ _ impossible
 
 public export
 data ProdObjF : (obj : Type) -> Type where
