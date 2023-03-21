@@ -1175,13 +1175,13 @@ YCoprod yc =
 
 public export
 data InitialUnitF : {obj : Type} -> (hom : HomSlice obj) ->
-    (obj, InitialObjF obj) -> Type where
+    SliceObj (obj, InitialObjF obj) where
 
 -- Equivalent to:
 -- InitialCovarHom hom Obj0 c = Unit
 public export
 data InitialCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
-    (InitialObjF obj, obj) -> Type where
+    SliceObj (InitialObjF obj, obj) where
   InRAFrom0 : (0 c : obj) ->
     InitialCovarHom {obj} hom (Obj0, c)
 
@@ -1191,13 +1191,13 @@ data TerminalObjF : (obj : Type) -> Type where
 
 public export
 data TerminalCounitF : {obj : Type} -> (hom : HomSlice obj) ->
-    (TerminalObjF obj, obj) -> Type where
+    SliceObj (TerminalObjF obj, obj) where
 
 -- Equivalent to:
 -- TerminalContravarHom hom Obj1 c = Unit
 public export
 data TerminalContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
-    (obj, TerminalObjF obj) -> Type where
+    SliceObj (obj, TerminalObjF obj) where
   InLATo1 : (0 c : obj) ->
     TerminalContravarHom {obj} hom (c, Obj1)
 
@@ -1215,7 +1215,7 @@ data CoprodUnitF : {obj : Type} -> (hom : HomSlice obj) ->
 -- the product category -- and produces one in the base category.
 public export
 data CoprodRightAdj : {0 obj, obj' : Type} -> (hom : (obj, obj') -> Type) ->
-    (CoprodObjF obj, obj') -> Type where
+    SliceObj (CoprodObjF obj, obj') where
   CpRACase : {0 obj, obj' : Type} -> {0 a, b : obj} -> {0 c : obj'} ->
     {hom : (obj, obj') -> Type} ->
     hom (a, c) -> hom (b, c) ->
@@ -1251,20 +1251,21 @@ data ProdObjF : (obj : Type) -> Type where
 -- category.
 public export
 data ProdCounitF : {obj : Type} -> (hom : HomSlice obj) ->
-    (ProdObjF obj, obj) -> Type where
+    SliceObj (ProdObjF obj, obj) where
   PrCoProjL : (x, y : obj) ->
     ProdCounitF {obj} hom (ObjPr x y, x)
   PrCoProjR : (x, y : obj) ->
     ProdCounitF {obj} hom (ObjPr x y, y)
 
--- Equivalent to:
--- ProdContravarHom hom (ObjPr a b) c = Pair (hom (c, a)) (hom (c, b))
+-- The left adjunct, which takes two morphisms -- i.e., a morphism in
+-- the product category -- and produces one in the base category.
 public export
-data ProdContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
-    (obj, ProdObjF obj) -> Type where
-  PrLABi : {0 a, b, c : obj} ->
+data ProdLeftAdj : {0 obj, obj' : Type} -> (hom : (obj, obj') -> Type) ->
+    SliceObj (obj, ProdObjF obj') where
+  PrLABi : {0 obj, obj' : Type} -> {0 a, b : obj'} -> {0 c : obj} ->
+    {hom : (obj, obj') -> Type} ->
     hom (c, a) -> hom (c, b) ->
-    ProdContravarHom {obj} hom (c, ObjPr a b)
+    ProdLeftAdj {obj} {obj'} hom (c, ObjPr a b)
 
 ---------------------
 ---------------------
