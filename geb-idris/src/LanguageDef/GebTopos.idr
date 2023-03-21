@@ -1253,6 +1253,28 @@ CoprodExtendHom {obj} hom (TFC xy, TFV z) =
 CoprodExtendHom {obj} hom (TFC xy, TFC xy') =
   CoprodRightAdj {obj} {obj'=(CoprodObjF obj)} (CoprodUnitF {obj} hom) (xy, xy')
 
+-- Extend composition.
+public export
+coprodExtendComp : {obj : Type} -> {hom : HomSlice obj} ->
+  (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
+  (a, b, c : TrEitherF CoprodObjF obj) ->
+  CoprodExtendHom hom (b, c) ->
+  CoprodExtendHom hom (a, b) ->
+  CoprodExtendHom hom (a, c)
+coprodExtendComp comp (TFV a) (TFV b) (TFV c) mbc mab =
+  comp mbc mab
+coprodExtendComp {obj} {hom} comp a b (TFC (ObjCp c c')) mbc mab =
+  ?coprodExtendComp_hole_trailing_inj
+coprodExtendComp comp (TFV a) (TFC b) (TFV c) mbc mab =
+  coprodRAAfterUnit a b mab c mbc
+coprodExtendComp comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
+  mbb'c (CpRACase {a} {b=a'} {c=(ObjCp b b')} mabb' ma'bb') =
+    CpRACase {a} {b=a'} {c}
+      (coprodRAAfterUnit a (ObjCp b b') mabb' c mbb'c)
+      (coprodRAAfterUnit a' (ObjCp b b') ma'bb' c mbb'c)
+coprodExtendComp {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
+  coprodPreCompRAA hom comp a a' b mab c mbc
+
 public export
 data ProdObjF : (obj : Type) -> Type where
   ObjPr : obj -> obj -> ProdObjF obj
