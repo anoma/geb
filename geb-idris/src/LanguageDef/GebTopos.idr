@@ -1243,13 +1243,13 @@ coprodPreCompRAA {obj} hom comp a a' b c mbc (CpRACase mab ma'b) =
     (comp {a=a'} {b} {c} mbc ma'b)
 
 public export
-coprodCompThrough : {obj : Type} -> (hom : HomSlice obj) ->
+coprodPostCompUnit : {obj : Type} -> (hom : HomSlice obj) ->
   (a, a', b, b', c : obj) ->
   CoprodUnitF {obj} hom (a, ObjCp b b') ->
   CoprodUnitF {obj} hom (a', ObjCp b b') ->
   CoprodRightAdj hom (ObjCp b b', c) ->
   CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', c)
-coprodCompThrough {obj} hom a a' b b' c mab ma'b mbc =
+coprodPostCompUnit {obj} hom a a' b b' c mab ma'b mbc =
   CpRACase {obj} {obj'=obj} {a} {b=a'} {c}
     (comp {a''=a} {b''=b} {b'''=b'} {c''=c} mbc mab)
     (comp {a''=a'} {b''=b} {b'''=b'} {c''=c} mbc ma'b)
@@ -1291,7 +1291,7 @@ coprodExtendComp comp (TFV a) (TFC b) (TFV c) mbc mab =
   coprodRAAfterUnit {hom} a b c mbc mab
 coprodExtendComp comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
   mbb'c (CpRACase {a} {b=a'} {c=(ObjCp b b')} mabb' ma'bb') =
-    coprodCompThrough hom a a' b b' c mabb' ma'bb' mbb'c
+    coprodPostCompUnit hom a a' b b' c mabb' ma'bb' mbb'c
 coprodExtendComp {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
   coprodPreCompRAA hom comp a a' b c mbc mab
 
