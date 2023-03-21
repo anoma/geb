@@ -1221,6 +1221,19 @@ data CoprodRightAdj : {0 obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
     hom (a, c) -> hom (b, c) ->
     CoprodRightAdj {obj} {obj'} hom (ObjCp a b, c)
 
+-- Extend a profunctor H : (Cop, C) -> Type.
+public export
+CoprodExtendHom : {obj : Type} -> (hom : HomSlice obj) ->
+  HomSlice (TrEitherF CoprodObjF obj)
+CoprodExtendHom {obj} hom (TFV x, TFV y) =
+  hom (x, y)
+CoprodExtendHom {obj} hom (TFV x, TFC yz) =
+  CoprodUnitF {obj} hom (x, yz)
+CoprodExtendHom {obj} hom (TFC xy, TFV z) =
+  CoprodRightAdj {obj} {obj'=obj} hom (xy, z)
+CoprodExtendHom {obj} hom (TFC xy, TFC xy') =
+  CoprodRightAdj {obj} {obj'=(CoprodObjF obj)} (CoprodUnitF {obj} hom) (xy, xy')
+
 public export
 coprodRAAfterUnit : {obj : Type} -> {hom : HomSlice obj} ->
   (a : obj) -> (b : CoprodObjF obj) -> (c : obj) ->
@@ -1261,19 +1274,6 @@ coprodPostCompUnit {obj} hom a a' b b' c mab ma'b mbc =
       hom (a'', c'')
     comp {a''} {b''} {b'''} {c''} adj unit =
       coprodRAAfterUnit a'' (ObjCp b'' b''') c'' adj unit
-
--- Extend a profunctor H : (Cop, C) -> Type.
-public export
-CoprodExtendHom : {obj : Type} -> (hom : HomSlice obj) ->
-  HomSlice (TrEitherF CoprodObjF obj)
-CoprodExtendHom {obj} hom (TFV x, TFV y) =
-  hom (x, y)
-CoprodExtendHom {obj} hom (TFV x, TFC yz) =
-  CoprodUnitF {obj} hom (x, yz)
-CoprodExtendHom {obj} hom (TFC xy, TFV z) =
-  CoprodRightAdj {obj} {obj'=obj} hom (xy, z)
-CoprodExtendHom {obj} hom (TFC xy, TFC xy') =
-  CoprodRightAdj {obj} {obj'=(CoprodObjF obj)} (CoprodUnitF {obj} hom) (xy, xy')
 
 -- Extend reduction.  Returns Nothing if irreducible.
 public export
