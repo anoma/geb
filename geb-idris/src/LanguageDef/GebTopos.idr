@@ -1174,7 +1174,7 @@ YCoprod yc =
 ---------------------------------------------------------
 
 public export
-data InitialUnitF : (obj : Type) -> (hom : HomSlice obj) ->
+data InitialUnitF : {obj : Type} -> (hom : HomSlice obj) ->
     (obj, InitialObjF obj) -> Type where
 
 -- Equivalent to:
@@ -1190,7 +1190,7 @@ data TerminalObjF : (obj : Type) -> Type where
   Obj1 : TerminalObjF obj
 
 public export
-data TerminalCounitF : (obj : Type) -> (hom : HomSlice obj) ->
+data TerminalCounitF : {obj : Type} -> (hom : HomSlice obj) ->
     (TerminalObjF obj, obj) -> Type where
 
 -- Equivalent to:
@@ -1204,30 +1204,44 @@ data TerminalContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
 -- The coproduct's universal morphisms come from the unit in the product
 -- category.
 public export
-data CoprodUnitF : (obj : Type) -> (hom : HomSlice obj) ->
-    (obj, CoprodObjF obj) -> Type where
+data CoprodUnitF : {obj : Type} -> (hom : HomSlice obj) ->
+    SliceObj (obj, CoprodObjF obj) where
   CpUnInjL : (x, y : obj) ->
-    CoprodUnitF obj hom (x, ObjCp x y)
+    CoprodUnitF {obj} hom (x, ObjCp x y)
   CpUnInjR : (x, y : obj) ->
-    CoprodUnitF obj hom (y, ObjCp x y)
+    CoprodUnitF {obj} hom (y, ObjCp x y)
 
--- Equivalent to:
--- CoprodCovarHom hom (ObjCp a b) c = Pair (hom (a, c)) (hom (b, c))
+-- The right adjunct, which takes two morphisms -- i.e., a morphism in
+-- the product category -- and produces one in the base category.
 public export
-data CoprodCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
-    (CoprodObjF obj, obj) -> Type where
-  CpRACase : {0 a, b, c : obj} ->
+data CoprodRightAdj : {0 obj, obj' : Type} -> (hom : (obj, obj') -> Type) ->
+    (CoprodObjF obj, obj') -> Type where
+  CpRACase : {0 obj, obj' : Type} -> {0 a, b : obj} -> {0 c : obj'} ->
+    {hom : (obj, obj') -> Type} ->
     hom (a, c) -> hom (b, c) ->
-    CoprodCovarHom {obj} hom (ObjCp a b, c)
+    CoprodRightAdj {obj} {obj'} hom (ObjCp a b, c)
 
 public export
 coprodRAAfterUnit : {obj : Type} -> {hom : HomSlice obj} ->
   (a : obj) -> (b : CoprodObjF obj) ->
-  CoprodUnitF obj hom (a, b) ->
-  (c : obj) -> (mbc : CoprodCovarHom {obj} hom (b, c)) ->
+  CoprodUnitF {obj} hom (a, b) ->
+  (c : obj) -> (mbc : CoprodRightAdj {obj} {obj'=obj} hom (b, c)) ->
   hom (a, c)
 coprodRAAfterUnit a (ObjCp a b) (CpUnInjL a b) c (CpRACase f g) = f
 coprodRAAfterUnit b (ObjCp a b) (CpUnInjR a b) c (CpRACase f g) = g
+
+-- Extend a profunctor H : (Cop, C) -> Type.
+public export
+CoprodExtendHom : {obj : Type} -> (hom : HomSlice obj) ->
+  HomSlice (TrEitherF CoprodObjF obj)
+CoprodExtendHom {obj} hom (TFV x, TFV y) =
+  hom (x, y)
+CoprodExtendHom {obj} hom (TFV x, TFC yz) =
+  CoprodUnitF {obj} hom (x, yz)
+CoprodExtendHom {obj} hom (TFC xy, TFV z) =
+  CoprodRightAdj {obj} {obj'=obj} hom (xy, z)
+CoprodExtendHom {obj} hom (TFC xy, TFC xy') =
+  CoprodRightAdj {obj} {obj'=(CoprodObjF obj)} (CoprodUnitF {obj} hom) (xy, xy')
 
 public export
 data ProdObjF : (obj : Type) -> Type where
@@ -1236,12 +1250,12 @@ data ProdObjF : (obj : Type) -> Type where
 -- The product's universal morphisms come from the counit in the product
 -- category.
 public export
-data ProdCounitF : (obj : Type) -> (hom : HomSlice obj) ->
+data ProdCounitF : {obj : Type} -> (hom : HomSlice obj) ->
     (ProdObjF obj, obj) -> Type where
   PrCoProjL : (x, y : obj) ->
-    ProdCounitF obj hom (ObjPr x y, x)
+    ProdCounitF {obj} hom (ObjPr x y, x)
   PrCoProjR : (x, y : obj) ->
-    ProdCounitF obj hom (ObjPr x y, y)
+    ProdCounitF {obj} hom (ObjPr x y, y)
 
 -- Equivalent to:
 -- ProdContravarHom hom (ObjPr a b) c = Pair (hom (c, a)) (hom (c, b))
