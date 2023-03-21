@@ -1282,18 +1282,18 @@ coprodExtendReduce : {obj : Type} -> {hom : HomSlice obj} ->
   (a, b, c : TrEitherF CoprodObjF obj) ->
   CoprodExtendHom hom (b, c) ->
   CoprodExtendHom hom (a, b) ->
-  CoprodExtendHom hom (a, c)
+  Maybe (CoprodExtendHom hom (a, c))
 coprodExtendReduce comp (TFV a) (TFV b) (TFV c) mbc mab =
-  comp mbc mab
+  Just $ comp mbc mab
 coprodExtendReduce comp a b (TFC c) mbc mab =
-  ?coprodExtendReduce_irreducible_hole
+  Nothing
 coprodExtendReduce comp (TFV a) (TFC b) (TFV c) mbc mab =
-  coprodRAAfterUnit {hom} a b c mbc mab
+  Just $ coprodRAAfterUnit {hom} a b c mbc mab
 coprodExtendReduce comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
   mbb'c (CpRACase {a} {b=a'} {c=(ObjCp b b')} mabb' ma'bb') =
-    coprodPostCompUnit hom a a' b b' c mabb' ma'bb' mbb'c
+    Just $ coprodPostCompUnit hom a a' b b' c mabb' ma'bb' mbb'c
 coprodExtendReduce {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
-  coprodPreCompRAA hom comp a a' b c mbc mab
+  Just $ coprodPreCompRAA hom comp a a' b c mbc mab
 
 public export
 data ProdObjF : (obj : Type) -> Type where
