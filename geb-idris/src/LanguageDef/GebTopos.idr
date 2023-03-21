@@ -322,6 +322,41 @@ ContravarToContravarComposeRep : {obj : Type} -> {hom : HomSlice obj} ->
   ContravarToContravarHomRep {obj} hom (a, c)
 ContravarToContravarComposeRep {obj} {hom} {a} {b} {c} g f d = g d . f d
 
+------------------------------------
+---- Free-category Yoneda lemma ----
+------------------------------------
+
+public export
+FreeCovarHomYonedaR : {obj : Type} -> {hom : HomSlice obj} ->
+  (a : obj) -> (f : SliceObj obj) ->
+  InternalNTFromCovarHom {obj} (FreeHomM obj hom) a f -> f a
+FreeCovarHomYonedaR {obj} {hom} a f alpha =
+  alpha a $ chId {obj} hom a
+
+public export
+FreeCovarHomYonedaL : {obj : Type} -> {hom : HomSlice obj} ->
+  (a : obj) -> (f : SliceObj obj) ->
+  (fmap : (a, b : obj) -> hom (a, b) -> f a -> f b) ->
+  f a -> InternalNTFromCovarHom {obj} (FreeHomM obj hom) a f
+FreeCovarHomYonedaL {obj} {hom} a f fmap fa b mab =
+  chFreeFMap fmap a b mab fa
+
+public export
+FreeContravarHomYonedaR : {obj : Type} -> {hom : HomSlice obj} ->
+  (a : obj) -> (f : SliceObj obj) ->
+  InternalNTFromContravarHom {obj} (FreeHomM obj hom) a f -> f a
+FreeContravarHomYonedaR {obj} {hom} a f alpha =
+  alpha a $ chId {obj} hom a
+
+public export
+FreeContravarHomYonedaL : {obj : Type} -> {hom : HomSlice obj} ->
+  (a : obj) -> (f : SliceObj obj) ->
+  -- f is contravariant
+  (fmap : (a, b : obj) -> hom (a, b) -> f b -> f a) ->
+  f a -> InternalNTFromContravarHom {obj} (FreeHomM obj hom) a f
+FreeContravarHomYonedaL {obj} {hom} a f fmap fa b mba =
+  chFreeFContramap fmap b a mba fa
+
 ---------------------------------------------------------------
 ---- Standard ("Mac Lane - Eilenberg") internal categories ----
 ---------------------------------------------------------------
@@ -520,19 +555,19 @@ public export
 YCCovarHomYonedaR :
   (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
   InternalNTFromCovarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f -> f a
-YCCovarHomYonedaR yc a f alpha = alpha a $ (ycId yc) a
+YCCovarHomYonedaR yc = FreeCovarHomYonedaR {obj=yc.ycObj} {hom=yc.ycHom}
 
 public export
 YCCovarHomYonedaL : (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
   (fmap : (a, b : yc.ycObj) -> yc.ycHom (a, b) -> f a -> f b) ->
   f a -> InternalNTFromCovarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f
-YCCovarHomYonedaL yc a f fmap fa b mab = ycFreeFMap fmap a b mab fa
+YCCovarHomYonedaL yc = FreeCovarHomYonedaL {obj=yc.ycObj} {hom=yc.ycHom}
 
 public export
 YCContravarHomYonedaR :
   (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
   InternalNTFromContravarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f -> f a
-YCContravarHomYonedaR yc a f alpha = alpha a $ (ycId yc) a
+YCContravarHomYonedaR yc = FreeContravarHomYonedaR {obj=yc.ycObj} {hom=yc.ycHom}
 
 public export
 YCContravarHomYonedaL :
@@ -540,7 +575,7 @@ YCContravarHomYonedaL :
   -- f is contravariant
   (fmap : (a, b : yc.ycObj) -> yc.ycHom (a, b) -> f b -> f a) ->
   f a -> InternalNTFromContravarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f
-YCContravarHomYonedaL yc a f fmap fa b mba = ycFreeFContramap fmap b a mba fa
+YCContravarHomYonedaL yc = FreeContravarHomYonedaL {obj=yc.ycObj} {hom=yc.ycHom}
 
 --------------------------------------------------------
 ---- Free Yoneda categories are standard categories ----
