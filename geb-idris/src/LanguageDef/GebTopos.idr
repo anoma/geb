@@ -1233,11 +1233,11 @@ coprodRAAfterUnit b (ObjCp a b) c (CpRACase f g) (CpUnInjR a b) = g
 public export
 coprodPreCompRAA : {0 obj : Type} -> (hom : HomSlice obj) ->
   (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
-  (a, a', b : obj) ->
+  (a, a', b, c : obj) ->
   CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', b) ->
-  (c : obj) -> hom (b, c) ->
+  hom (b, c) ->
   CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', c)
-coprodPreCompRAA {obj} hom comp a a' b (CpRACase mab ma'b) c mbc =
+coprodPreCompRAA {obj} hom comp a a' b c (CpRACase mab ma'b) mbc =
   CpRACase {obj} {obj'=obj} {a} {b=a'} {c}
     (comp {a} {b} {c} mbc mab)
     (comp {a=a'} {b} {c} mbc ma'b)
@@ -1293,7 +1293,7 @@ coprodExtendComp comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
   mbb'c (CpRACase {a} {b=a'} {c=(ObjCp b b')} mabb' ma'bb') =
     coprodCompThrough hom a a' b b' mabb' ma'bb' c mbb'c
 coprodExtendComp {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
-  coprodPreCompRAA hom comp a a' b mab c mbc
+  coprodPreCompRAA hom comp a a' b c mab mbc
 
 public export
 data ProdObjF : (obj : Type) -> Type where
