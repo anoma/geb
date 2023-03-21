@@ -1239,7 +1239,8 @@ coprodPreCompRAA : {0 obj : Type} -> (hom : HomSlice obj) ->
   CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', c)
 coprodPreCompRAA {obj} hom comp a a' b (CpRACase mab ma'b) c mbc =
   CpRACase {obj} {obj'=obj} {a} {b=a'} {c}
-    (comp {a} mbc mab) (comp {a=a'} mbc ma'b)
+    (comp {a} {b} {c} mbc mab)
+    (comp {a=a'} {b} {c} mbc ma'b)
 
 public export
 coprodCompThrough : {obj : Type} -> (hom : HomSlice obj) ->
@@ -1250,14 +1251,16 @@ coprodCompThrough : {obj : Type} -> (hom : HomSlice obj) ->
   CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', c)
 coprodCompThrough {obj} hom a a' b b' mab ma'b c mbc =
   CpRACase {obj} {obj'=obj} {a} {b=a'} {c}
-    (comp {a''=a} mbc mab) (comp {a''=a'} mbc ma'b)
+    (comp {a''=a} {b''=b} {b'''=b'} mbc mab)
+    (comp {a''=a'} {b''=b} {b'''=b'} mbc ma'b)
   where
     comp :
-      {a'' : obj} ->
-      (adj : CoprodRightAdj hom (ObjCp b b', c)) ->
-      (unit : CoprodUnitF hom (a'', ObjCp b b')) ->
-      hom (a'', c)
-    comp {a''} adj unit = coprodRAAfterUnit a'' (ObjCp b b') c adj unit
+      {a'', b'', b''', c'' : obj} ->
+      (adj : CoprodRightAdj hom (ObjCp b'' b''', c'')) ->
+      (unit : CoprodUnitF hom (a'', ObjCp b'' b''')) ->
+      hom (a'', c'')
+    comp {a''} {b''} {b'''} {c''} adj unit =
+      coprodRAAfterUnit a'' (ObjCp b'' b''') c'' adj unit
 
 -- Extend a profunctor H : (Cop, C) -> Type.
 public export
