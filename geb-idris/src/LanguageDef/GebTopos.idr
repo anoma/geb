@@ -1221,6 +1221,15 @@ data CoprodCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
     CoprodCovarHom {obj} hom (ObjCp a b, c)
 
 public export
+coprodRAAfterUnit : {obj : Type} -> {hom : HomSlice obj} ->
+  (a : obj) -> (b : CoprodObjF obj) ->
+  CoprodUMorphF obj hom (a, b) ->
+  (c : obj) -> (mbc : CoprodCovarHom {obj} hom (b, c)) ->
+  hom (a, c)
+coprodRAAfterUnit a (ObjCp a b) (CpUnInjL a b) c (CpRACase f g) = f
+coprodRAAfterUnit b (ObjCp a b) (CpUnInjR a b) c (CpRACase f g) = g
+
+public export
 data ProdObjF : (obj : Type) -> Type where
   ObjPr : obj -> obj -> ProdObjF obj
 
