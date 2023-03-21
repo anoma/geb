@@ -1108,29 +1108,6 @@ CoprodMorphExtendDenoteContravar obj hom denote a b mab c mca =
   ?CoprodMorphExtendDenoteContravar_hole
 
 public export
-CoprodMorphInterpObj : (obj : Type) -> (obj -> Type) -> CoprodObjF obj -> Type
-CoprodMorphInterpObj obj interp (ObjCp x y) = Either (interp x) (interp y)
-
-public export
-ExtendCoprodMorphInterpObj : (obj : Type) -> (obj -> Type) ->
-  TrEitherF CoprodObjF obj -> Type
-ExtendCoprodMorphInterpObj obj interp =
-  trElim interp (CoprodMorphInterpObj obj interp)
-
-public export
-CoprodMorphInterpMorph : (obj : Type) -> (hom : HomSlice obj) ->
-  (ointerp : obj -> Type) ->
-  (minterp : (a, b : obj) -> hom (a, b) -> ointerp a -> ointerp b) ->
-  (a, b : TrEitherF CoprodObjF obj) ->
-  CoprodMorphF obj hom (a, b) ->
-  ExtendCoprodMorphInterpObj obj ointerp a ->
-  ExtendCoprodMorphInterpObj obj ointerp b
-CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjL x y) ex = Left ex
-CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpInjR x y) ey = Right ey
-CoprodMorphInterpMorph obj hom ointerp minterp _ _ (CpCase x y z mxz myz) exy =
-  eitherElim (minterp x z mxz) (minterp y z myz) exy
-
-public export
 YCoprodObj : YCat -> Type
 YCoprodObj yc = ?YCoprodObj_hole
 
@@ -1294,6 +1271,42 @@ coprodExtendReduce comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
     Just $ coprodPostCompUnit hom a a' b b' c mabb' ma'bb' mbb'c
 coprodExtendReduce {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
   Just $ coprodPreCompRAA hom comp a a' b c mbc mab
+
+-- Extend object interpretation.
+public export
+CoprodInterpObj : {obj : Type} -> SliceObj obj -> SliceObj (CoprodObjF obj)
+CoprodInterpObj interp (ObjCp x y) = Either (interp x) (interp y)
+
+public export
+ExtendCoprodInterpObj : {obj : Type} ->
+  SliceObj obj -> SliceObj (TrEitherF CoprodObjF obj)
+ExtendCoprodInterpObj {obj} interp =
+  trElim interp (CoprodInterpObj {obj} interp)
+
+public export
+ExtendCoprodInterpMorph : {obj : Type} -> (hom : HomSlice obj) ->
+  (ointerp : SliceObj obj) ->
+  (minterp : (a, b : obj) -> hom (a, b) -> ointerp a -> ointerp b) ->
+  (a, b : TrEitherF CoprodObjF obj) ->
+  CoprodExtendHom {obj} hom (a, b) ->
+  ExtendCoprodInterpObj {obj} ointerp a ->
+  ExtendCoprodInterpObj {obj} ointerp b
+ExtendCoprodInterpMorph hom ointerp minterp (TFV a) (TFV b)
+  f = minterp a b f
+ExtendCoprodInterpMorph hom ointerp minterp (TFV a) (TFC (ObjCp a b))
+  (CpUnInjL a b) = Left
+ExtendCoprodInterpMorph hom ointerp minterp (TFV b) (TFC (ObjCp a b))
+  (CpUnInjR a b) = Right
+ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp a b)) (TFV c)
+  (CpRACase f g) =
+    eitherElim
+      (minterp a c f)
+      (minterp b c g)
+ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp a b)) (TFC c)
+  (CpRACase f g) =
+    eitherElim
+      ?ExtendCoprodInterpMorph_hole_3
+      ?ExtendCoprodInterpMorph_hole_4
 
 public export
 data ProdObjF : (obj : Type) -> Type where
