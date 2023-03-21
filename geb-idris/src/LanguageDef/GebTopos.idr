@@ -1214,7 +1214,7 @@ data CoprodUnitF : {obj : Type} -> (hom : HomSlice obj) ->
 -- The right adjunct, which takes two morphisms -- i.e., a morphism in
 -- the product category -- and produces one in the base category.
 public export
-data CoprodRightAdj : {0 obj, obj' : Type} -> (hom : (obj, obj') -> Type) ->
+data CoprodRightAdj : {0 obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
     SliceObj (CoprodObjF obj, obj') where
   CpRACase : {0 obj, obj' : Type} -> {0 a, b : obj} -> {0 c : obj'} ->
     {hom : (obj, obj') -> Type} ->
@@ -1229,6 +1229,16 @@ coprodRAAfterUnit : {obj : Type} -> {hom : HomSlice obj} ->
   hom (a, c)
 coprodRAAfterUnit a (ObjCp a b) (CpUnInjL a b) c (CpRACase f g) = f
 coprodRAAfterUnit b (ObjCp a b) (CpUnInjR a b) c (CpRACase f g) = g
+
+public export
+coprodPreCompRAA : {0 obj : Type} -> (hom : HomSlice obj) ->
+  (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
+  (a, a', b : obj) ->
+  CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', b) ->
+  (c : obj) -> hom (b, c) ->
+  CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', c)
+coprodPreCompRAA {obj} hom comp a a' b (CpRACase mab ma'b) c mbc =
+  CpRACase {obj} {obj'=obj} {a} {b=a'} {c} (comp mbc mab) (comp mbc ma'b)
 
 -- Extend a profunctor H : (Cop, C) -> Type.
 public export
@@ -1260,7 +1270,7 @@ data ProdCounitF : {obj : Type} -> (hom : HomSlice obj) ->
 -- The left adjunct, which takes two morphisms -- i.e., a morphism in
 -- the product category -- and produces one in the base category.
 public export
-data ProdLeftAdj : {0 obj, obj' : Type} -> (hom : (obj, obj') -> Type) ->
+data ProdLeftAdj : {0 obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
     SliceObj (obj, ProdObjF obj') where
   PrLABi : {0 obj, obj' : Type} -> {0 a, b : obj'} -> {0 c : obj} ->
     {hom : (obj, obj') -> Type} ->
