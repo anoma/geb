@@ -465,6 +465,10 @@ data SliceTranslateF : {a : Type} ->
   InSlC : {a : Type} -> {f : SliceEndofunctor a} -> {0 sv, sa : SliceObj a} ->
     {ea : a} -> f sa ea -> SliceTranslateF {a} f sv sa ea
 
+public export
+SliceTrEitherF : {a : Type} -> SliceEndofunctor a -> SliceObj a -> SliceObj a
+SliceTrEitherF {a} f sa = SliceTranslateF {a} f sa sa
+
 -- The slice-category version of `ScaleFunctor`.
 public export
 data SliceScaleF : {a : Type} ->

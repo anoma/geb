@@ -72,6 +72,10 @@ HomTranslateF : (obj : Type) -> HomSlice obj -> HomEndofunctor obj
 HomTranslateF obj = SliceTranslateF {a=(SignatureT obj)} (CatHomF {obj})
 
 public export
+CatEitherF : {obj : Type} -> HomEndofunctor obj
+CatEitherF {obj} = SliceTrEitherF {a=(SignatureT obj)} (CatHomF {obj})
+
+public export
 FreeHomM : (obj : Type) -> HomEndofunctor obj
 FreeHomM obj = SliceFreeM {a=(SignatureT obj)} (CatHomF {obj})
 
@@ -1252,25 +1256,25 @@ coprodPostCompUnit {obj} hom a a' b b' c mab ma'b mbc =
     comp {a''} {b''} {b'''} {c''} adj unit =
       coprodRAAfterUnit a'' (ObjCp b'' b''') c'' adj unit
 
--- Extend reduction.  Returns Nothing if irreducible.
+-- Extend reduction.  Returns CHComp if irreducible.
 public export
 coprodExtendReduce : {obj : Type} -> {hom : HomSlice obj} ->
   (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
   (a, b, c : TrEitherF CoprodObjF obj) ->
   CoprodExtendHom hom (b, c) ->
   CoprodExtendHom hom (a, b) ->
-  Maybe (CoprodExtendHom hom (a, c))
+  CatEitherF (CoprodExtendHom hom) (a, c)
 coprodExtendReduce comp (TFV a) (TFV b) (TFV c) mbc mab =
-  Just $ comp mbc mab
+  InSlV $ comp mbc mab
 coprodExtendReduce comp a b (TFC c) mbc mab =
-  Nothing
+  InSlC $ CHComp mbc mab
 coprodExtendReduce comp (TFV a) (TFC b) (TFV c) mbc mab =
-  Just $ coprodRAAfterUnit {hom} a b c mbc mab
+  InSlV $ coprodRAAfterUnit {hom} a b c mbc mab
 coprodExtendReduce comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
   mbb'c (CpRACase {a} {b=a'} {c=(ObjCp b b')} mabb' ma'bb') =
-    Just $ coprodPostCompUnit hom a a' b b' c mabb' ma'bb' mbb'c
+    InSlV $ coprodPostCompUnit hom a a' b b' c mabb' ma'bb' mbb'c
 coprodExtendReduce {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
-  Just $ coprodPreCompRAA hom comp a a' b c mbc mab
+  InSlV $ coprodPreCompRAA hom comp a a' b c mbc mab
 
 -- Extend object interpretation.
 public export
