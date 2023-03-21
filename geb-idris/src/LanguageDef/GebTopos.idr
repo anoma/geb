@@ -1140,52 +1140,20 @@ data TerminalContravarHom : {0 obj : Type} ->
 -- category.
 public export
 data CoprodUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
-    HomSlice (TrEitherF CoprodObjF obj) where
+    (obj, CoprodObjF obj) -> Type where
   CpUnInjL : (x, y : obj) ->
-    CoprodUMorphF obj hom (TFV x, TFC (ObjCp x y))
+    CoprodUMorphF obj hom (x, ObjCp x y)
   CpUnInjR : (x, y : obj) ->
-    CoprodUMorphF obj hom (TFV y, TFC (ObjCp x y))
+    CoprodUMorphF obj hom (y, ObjCp x y)
 
 -- Equivalent to:
 -- CoprodCovarHom hom (ObjCp a b) c = Pair (hom (a, c)) (hom (b, c))
 public export
-data CoprodCovarHom : {0 obj : Type} ->
-    HomSlice obj -> CoprodObjF obj -> SliceObj obj where
+data CoprodCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
+    (CoprodObjF obj, obj) -> Type where
   CpRACase : {0 a, b, c : obj} ->
     hom (a, c) -> hom (b, c) ->
-    CoprodCovarHom {obj} hom (ObjCp a b) c
-
-public export
-ExtendCoprodCovarDenoteU : {obj : Type} -> (hom : HomSlice obj) ->
-  MorphDenoteExtendCovar obj CoprodObjF hom (CoprodUMorphF obj hom)
-ExtendCoprodCovarDenoteU hom denote (TFV a) (TFC (ObjCp a b))
-  (CpUnInjL a b) c (MEU f) =
-    case f of
-      CpUnInjL _ _ impossible
-      CpUnInjR _ _ impossible
-ExtendCoprodCovarDenoteU hom denote (TFV b) (TFC (ObjCp a b))
-  (CpUnInjR a b) c (MEU f) =
-    case f of
-      CpUnInjL _ _ impossible
-      CpUnInjR _ _ impossible
-
-public export
-ExtendCoprodContravarDenoteU : {obj : Type} -> (hom : HomSlice obj) ->
-  MorphDenoteExtendContravar obj CoprodObjF hom (CoprodUMorphF obj hom)
-ExtendCoprodContravarDenoteU hom denote (TFV a) (TFC (ObjCp a b))
-  (CpUnInjL a b) (TFV c) (MEV f) = FMC (FMU $ CpUnInjL a b) (FMV f)
-ExtendCoprodContravarDenoteU hom denote (TFV a) (TFC (ObjCp a b))
-  (CpUnInjL a b) c (MEU f) =
-    case f of
-      CpUnInjL _ _ impossible
-      CpUnInjR _ _ impossible
-ExtendCoprodContravarDenoteU hom denote (TFV b) (TFC (ObjCp a b))
-  (CpUnInjR a b) (TFV c) (MEV f) = FMC (FMU $ CpUnInjR a b) (FMV f)
-ExtendCoprodContravarDenoteU hom denote (TFV b) (TFC (ObjCp a b))
-  (CpUnInjR a b) c (MEU f) =
-    case f of
-      CpUnInjL _ _ impossible
-      CpUnInjR _ _ impossible
+    CoprodCovarHom {obj} hom (ObjCp a b, c)
 
 public export
 data ProdObjF : (obj : Type) -> Type where
@@ -1195,20 +1163,20 @@ data ProdObjF : (obj : Type) -> Type where
 -- category.
 public export
 data ProdUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
-    HomSlice (TrEitherF ProdObjF obj) where
+    (ProdObjF obj, obj) -> Type where
   PrCoProjL : (x, y : obj) ->
-    ProdUMorphF obj hom (TFC (ObjPr x y), TFV x)
+    ProdUMorphF obj hom (ObjPr x y, x)
   PrCoProjR : (x, y : obj) ->
-    ProdUMorphF obj hom (TFC (ObjPr x y), TFV y)
+    ProdUMorphF obj hom (ObjPr x y, y)
 
 -- Equivalent to:
 -- ProdContravarHom hom (ObjPr a b) c = Pair (hom (c, a)) (hom (c, b))
 public export
-data ProdContravarHom : {0 obj : Type} ->
-    HomSlice obj -> ProdObjF obj -> SliceObj obj where
+data ProdContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
+    (obj, ProdObjF obj) -> Type where
   PrLABi : {0 a, b, c : obj} ->
     hom (c, a) -> hom (c, b) ->
-    ProdContravarHom {obj} hom (ObjPr a b) c
+    ProdContravarHom {obj} hom (c, ObjPr a b)
 
 ---------------------
 ---------------------
