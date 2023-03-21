@@ -1174,7 +1174,7 @@ YCoprod yc =
 ---------------------------------------------------------
 
 public export
-data InitialUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
+data InitialUnitF : (obj : Type) -> (hom : HomSlice obj) ->
     (obj, InitialObjF obj) -> Type where
 
 -- Equivalent to:
@@ -1190,7 +1190,7 @@ data TerminalObjF : (obj : Type) -> Type where
   Obj1 : TerminalObjF obj
 
 public export
-data TerminalUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
+data TerminalCounitF : (obj : Type) -> (hom : HomSlice obj) ->
     (TerminalObjF obj, obj) -> Type where
 
 -- Equivalent to:
@@ -1204,12 +1204,12 @@ data TerminalContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
 -- The coproduct's universal morphisms come from the unit in the product
 -- category.
 public export
-data CoprodUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
+data CoprodUnitF : (obj : Type) -> (hom : HomSlice obj) ->
     (obj, CoprodObjF obj) -> Type where
   CpUnInjL : (x, y : obj) ->
-    CoprodUMorphF obj hom (x, ObjCp x y)
+    CoprodUnitF obj hom (x, ObjCp x y)
   CpUnInjR : (x, y : obj) ->
-    CoprodUMorphF obj hom (y, ObjCp x y)
+    CoprodUnitF obj hom (y, ObjCp x y)
 
 -- Equivalent to:
 -- CoprodCovarHom hom (ObjCp a b) c = Pair (hom (a, c)) (hom (b, c))
@@ -1223,7 +1223,7 @@ data CoprodCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
 public export
 coprodRAAfterUnit : {obj : Type} -> {hom : HomSlice obj} ->
   (a : obj) -> (b : CoprodObjF obj) ->
-  CoprodUMorphF obj hom (a, b) ->
+  CoprodUnitF obj hom (a, b) ->
   (c : obj) -> (mbc : CoprodCovarHom {obj} hom (b, c)) ->
   hom (a, c)
 coprodRAAfterUnit a (ObjCp a b) (CpUnInjL a b) c (CpRACase f g) = f
@@ -1236,12 +1236,12 @@ data ProdObjF : (obj : Type) -> Type where
 -- The product's universal morphisms come from the counit in the product
 -- category.
 public export
-data ProdUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
+data ProdCounitF : (obj : Type) -> (hom : HomSlice obj) ->
     (ProdObjF obj, obj) -> Type where
   PrCoProjL : (x, y : obj) ->
-    ProdUMorphF obj hom (ObjPr x y, x)
+    ProdCounitF obj hom (ObjPr x y, x)
   PrCoProjR : (x, y : obj) ->
-    ProdUMorphF obj hom (ObjPr x y, y)
+    ProdCounitF obj hom (ObjPr x y, y)
 
 -- Equivalent to:
 -- ProdContravarHom hom (ObjPr a b) c = Pair (hom (c, a)) (hom (c, b))
