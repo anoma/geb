@@ -1651,6 +1651,12 @@ public export
 TrEitherF : (Type -> Type) -> (Type -> Type)
 TrEitherF f a = TranslateFunctor f a a
 
+public export
+sliceTrMap : {a : Type} -> {f : Type -> Type} ->
+  (SliceObj a -> SliceObj (f a)) ->
+  SliceObj a -> SliceObj (TrEitherF f a)
+sliceTrMap {a} {f} m sa = trElim {f} {v=a} {a} {x=Type} sa (m sa)
+
 -- For a given functor `F`, form the functor `Fa` defined by
 -- `Fa[x] = a * F[x]`.  We call it `ScaleFunctor` because it multiplies
 -- This functor can be used to turn an endofunctor which we can interpret as

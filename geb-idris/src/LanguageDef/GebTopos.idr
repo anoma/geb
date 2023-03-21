@@ -1307,8 +1307,7 @@ CoprodInterpObj interp (ObjCp x y) = Either (interp x) (interp y)
 public export
 ExtendCoprodInterpObj : {obj : Type} ->
   SliceObj obj -> SliceObj (TrEitherF CoprodObjF obj)
-ExtendCoprodInterpObj {obj} interp =
-  trElim interp (CoprodInterpObj {obj} interp)
+ExtendCoprodInterpObj = sliceTrMap CoprodInterpObj
 
 public export
 ExtendCoprodInterpMorph : {obj : Type} -> (hom : HomSlice obj) ->
