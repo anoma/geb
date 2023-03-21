@@ -469,7 +469,8 @@ record YCat where
   constructor YC
   ycObj : Type
   ycHom : HomSlice ycObj
-  0 ycDenote : YonedaCatRep {obj=ycObj} ycHom
+  0 ycDenoteCovar : CovarHomCatRep ycObj ycHom
+  0 ycDenoteContravar : ContravarHomCatRep ycObj ycHom
 
 public export
 YCHomSlice : YCat -> Type
@@ -661,30 +662,21 @@ YCatToSCat yc =
 ---------------------------------------------------
 
 public export
-SCatCovarDenotation : (sc : SCat) -> CovarHomCatRep
-  sc.scObj sc.scHom
+SCatCovarDenotation : (sc : SCat) -> CovarHomCatRep sc.scObj sc.scHom
 SCatCovarDenotation sc a b mab c mbc = sc.scComp mbc mab
 
 public export
-SCatContravarDenotation : (sc : SCat) ->
-  ContravarHomCatRep sc.scObj sc.scHom
+SCatContravarDenotation : (sc : SCat) -> ContravarHomCatRep sc.scObj sc.scHom
 SCatContravarDenotation sc a b mab c mca = sc.scComp mab mca
 
 public export
-SCatDenotationCovar : (sc : SCat) -> YonedaCatRep {obj=sc.scObj} sc.scHom
-SCatDenotationCovar sc a = YHSRCovar $ SCatCovarDenotation sc a
-
-public export
-SCatToYCatCovar : SCat -> YCat
-SCatToYCatCovar sc = YC sc.scObj sc.scHom (SCatDenotationCovar sc)
-
-public export
-SCatDenotationContravar : (sc : SCat) -> YonedaCatRep {obj=sc.scObj} sc.scHom
-SCatDenotationContravar sc a = YHSRContravar $ SCatContravarDenotation sc a
-
-public export
-SCatToYCatContravar : SCat -> YCat
-SCatToYCatContravar sc = YC sc.scObj sc.scHom (SCatDenotationContravar sc)
+SCatToYCat : SCat -> YCat
+SCatToYCat sc =
+  YC
+    sc.scObj
+    sc.scHom
+    (SCatCovarDenotation sc)
+    (SCatContravarDenotation sc)
 
 ----------------------------------------------------------------------------
 ---- Yoneda <-> standard formulations of category theory are equivalent ----
@@ -1174,7 +1166,8 @@ YCoprod yc =
   YC
     (YCoprodObj yc)
     (YCoprodHom yc)
-    (?YCoprodDenotation_hole)
+    (YCoprodCovarDenotation yc)
+    (YCoprodContravarDenotation yc)
 
 ---------------------------------------------------------
 ---- Example: free finite product/coproduct category ----
