@@ -1223,12 +1223,12 @@ data CoprodRightAdj : {0 obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
 
 public export
 coprodRAAfterUnit : {obj : Type} -> {hom : HomSlice obj} ->
-  (a : obj) -> (b : CoprodObjF obj) ->
+  (a : obj) -> (b : CoprodObjF obj) -> (c : obj) ->
+  (mbc : CoprodRightAdj {obj} {obj'=obj} hom (b, c)) ->
   CoprodUnitF {obj} hom (a, b) ->
-  (c : obj) -> (mbc : CoprodRightAdj {obj} {obj'=obj} hom (b, c)) ->
   hom (a, c)
-coprodRAAfterUnit a (ObjCp a b) (CpUnInjL a b) c (CpRACase f g) = f
-coprodRAAfterUnit b (ObjCp a b) (CpUnInjR a b) c (CpRACase f g) = g
+coprodRAAfterUnit a (ObjCp a b) c (CpRACase f g) (CpUnInjL a b) = f
+coprodRAAfterUnit b (ObjCp a b) c (CpRACase f g) (CpUnInjR a b) = g
 
 public export
 coprodPreCompRAA : {0 obj : Type} -> (hom : HomSlice obj) ->
@@ -1238,7 +1238,26 @@ coprodPreCompRAA : {0 obj : Type} -> (hom : HomSlice obj) ->
   (c : obj) -> hom (b, c) ->
   CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', c)
 coprodPreCompRAA {obj} hom comp a a' b (CpRACase mab ma'b) c mbc =
-  CpRACase {obj} {obj'=obj} {a} {b=a'} {c} (comp mbc mab) (comp mbc ma'b)
+  CpRACase {obj} {obj'=obj} {a} {b=a'} {c}
+    (comp {a} mbc mab) (comp {a=a'} mbc ma'b)
+
+public export
+coprodCompThrough : {obj : Type} -> (hom : HomSlice obj) ->
+  (a, a', b, b' : obj) ->
+  CoprodUnitF {obj} hom (a, ObjCp b b') ->
+  CoprodUnitF {obj} hom (a', ObjCp b b') ->
+  (c : obj) -> CoprodRightAdj hom (ObjCp b b', c) ->
+  CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', c)
+coprodCompThrough {obj} hom a a' b b' mab ma'b c mbc =
+  CpRACase {obj} {obj'=obj} {a} {b=a'} {c}
+    (comp {a''=a} mbc mab) (comp {a''=a'} mbc ma'b)
+  where
+    comp :
+      {a'' : obj} ->
+      (adj : CoprodRightAdj hom (ObjCp b b', c)) ->
+      (unit : CoprodUnitF hom (a'', ObjCp b b')) ->
+      hom (a'', c)
+    comp {a''} adj unit = coprodRAAfterUnit a'' (ObjCp b b') c adj unit
 
 -- Extend a profunctor H : (Cop, C) -> Type.
 public export
@@ -1266,12 +1285,10 @@ coprodExtendComp comp (TFV a) (TFV b) (TFV c) mbc mab =
 coprodExtendComp {obj} {hom} comp a b (TFC (ObjCp c c')) mbc mab =
   ?coprodExtendComp_hole_trailing_inj
 coprodExtendComp comp (TFV a) (TFC b) (TFV c) mbc mab =
-  coprodRAAfterUnit a b mab c mbc
+  coprodRAAfterUnit {hom} a b c mbc mab
 coprodExtendComp comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
   mbb'c (CpRACase {a} {b=a'} {c=(ObjCp b b')} mabb' ma'bb') =
-    CpRACase {a} {b=a'} {c}
-      (coprodRAAfterUnit a (ObjCp b b') mabb' c mbb'c)
-      (coprodRAAfterUnit a' (ObjCp b b') ma'bb' c mbb'c)
+    coprodCompThrough hom a a' b b' mabb' ma'bb' c mbb'c
 coprodExtendComp {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
   coprodPreCompRAA hom comp a a' b mab c mbc
 
