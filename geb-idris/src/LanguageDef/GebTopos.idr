@@ -1275,24 +1275,38 @@ CoprodExtendHom {obj} hom (TFC xy, TFV z) =
 CoprodExtendHom {obj} hom (TFC xy, TFC xy') =
   CoprodRightAdj {obj} {obj'=(CoprodObjF obj)} (CoprodUnitF {obj} hom) (xy, xy')
 
--- Extend composition.
+-- Extend reduction.  Returns Nothing if irreducible.
 public export
-coprodExtendComp : {obj : Type} -> {hom : HomSlice obj} ->
+coprodExtendReduce : {obj : Type} -> {hom : HomSlice obj} ->
   (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
   (a, b, c : TrEitherF CoprodObjF obj) ->
   CoprodExtendHom hom (b, c) ->
   CoprodExtendHom hom (a, b) ->
   CoprodExtendHom hom (a, c)
-coprodExtendComp comp (TFV a) (TFV b) (TFV c) mbc mab =
+coprodExtendReduce comp (TFV a) (TFV b) (TFV c) mbc mab =
   comp mbc mab
-coprodExtendComp {obj} {hom} comp a b (TFC (ObjCp c c')) mbc mab =
-  ?coprodExtendComp_hole_trailing_inj
-coprodExtendComp comp (TFV a) (TFC b) (TFV c) mbc mab =
+coprodExtendReduce {obj} {hom} comp (TFV a) (TFV b) (TFC (ObjCp b c)) (CpUnInjL b c) mab = ?coprodExtendReduce_hole_trailing_inj_6 -- impossible to fulfill
+coprodExtendReduce {obj} {hom} comp (TFC (ObjCp a a')) (TFV b) (TFC (ObjCp b c)) (CpUnInjL b c) (CpRACase f g) = CpRACase ?redhole_1 ?redhole_1' -- impossible to fulfill
+coprodExtendReduce {obj} {hom} comp (TFV a) (TFV c) (TFC (ObjCp b c)) (CpUnInjR b c) mab = ?coprodExtendReduce_hole_trailing_inj_3 -- impossible to fulfill
+coprodExtendReduce {obj} {hom} comp (TFC (ObjCp a a')) (TFV c) (TFC (ObjCp b c)) (CpUnInjR b c) (CpRACase f g) = CpRACase ?redhole_2 ?redhole_2' -- impossible to fulfill
+coprodExtendReduce {obj} {hom} comp (TFV a) (TFC (ObjCp b b)) (TFC (ObjCp b c')) (CpRACase (CpUnInjL b c') (CpUnInjL b c')) mab = case mab of
+  CpInjL _ _ impossible
+  CpInjR _ _ impossible
+coprodExtendReduce {obj} {hom} comp (TFV a) (TFC (ObjCp b b')) (TFC (ObjCp b b')) (CpRACase (CpUnInjL b b') (CpUnInjR b b')) mab = case mab of
+  CpInjL _ _ impossible
+  CpInjR _ _ impossible
+coprodExtendReduce {obj} {hom} comp (TFV a) (TFC (ObjCp b b')) (TFC (ObjCp c b)) (CpRACase (CpUnInjR c b) g) mab = case mab of
+  CpInjL _ _ impossible
+  CpInjR _ _ impossible
+coprodExtendReduce {obj} {hom} comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFC (ObjCp c c')) (CpRACase f g) (CpRACase f' g') = case f of
+  CpInjL _ _ impossible
+  CpInjR _ _ impossible
+coprodExtendReduce comp (TFV a) (TFC b) (TFV c) mbc mab =
   coprodRAAfterUnit {hom} a b c mbc mab
-coprodExtendComp comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
+coprodExtendReduce comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
   mbb'c (CpRACase {a} {b=a'} {c=(ObjCp b b')} mabb' ma'bb') =
     coprodPostCompUnit hom a a' b b' c mabb' ma'bb' mbb'c
-coprodExtendComp {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
+coprodExtendReduce {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
   coprodPreCompRAA hom comp a a' b c mbc mab
 
 public export
