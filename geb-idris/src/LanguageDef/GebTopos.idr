@@ -59,7 +59,7 @@ HomUncurry hom (x, y) = hom x y
 -------------------------
 
 public export
-data CatHomF : {obj : Type} -> HomEndofunctor obj where
+data CatHomF : {0 obj : Type} -> HomEndofunctor obj where
   CHId :
     {0 obj : Type} -> {0 hom : HomSlice obj} ->
     (x : obj) -> CatHomF {obj} hom (x, x)
@@ -74,6 +74,32 @@ HomTranslateF obj = SliceTranslateF {a=(SignatureT obj)} (CatHomF {obj})
 public export
 FreeHomM : (obj : Type) -> HomEndofunctor obj
 FreeHomM obj = SliceFreeM {a=(SignatureT obj)} (CatHomF {obj})
+
+public export
+chId : {obj : Type} ->
+  (hom : HomSlice obj) -> (a : obj) -> FreeHomM obj hom (a, a)
+chId {obj} hom a = InSlFc $ CHId a
+
+public export
+chComp : {obj : Type} -> {a, b, c : obj} -> {hom : HomSlice obj} ->
+  FreeHomM obj hom (b, c) -> FreeHomM obj hom (a, b) -> FreeHomM obj hom (a, c)
+chComp {obj} {a} {b} {c} {hom} g f = InSlFc $ CHComp g f
+
+public export
+HomSliceCata : Type -> Type
+HomSliceCata obj = SliceFreeCata {a=(SignatureT obj)} (CatHomF {obj})
+
+public export
+homSliceCata : {obj : Type} -> HomSliceCata obj
+homSliceCata {obj} sv sa subst alg (a, b) (InSlF (a, b) (InSlV v)) =
+  subst (a, b) v
+homSliceCata {obj} sv sa subst alg (a, b) (InSlF (a, b) (InSlC m)) =
+  alg (a, b) $ case m of
+    CHId c => CHId c
+    CHComp {x} {y} {z} g f =>
+      CHComp {x} {y} {z}
+        (homSliceCata {obj} sv sa subst alg (y, z) g)
+        (homSliceCata {obj} sv sa subst alg (x, y) f)
 
 ---------------------------
 ---------------------------
@@ -436,30 +462,23 @@ YCatFreeHomSlice yc = FreeHomM yc.ycObj yc.ycHom
 
 public export
 ycId : (yc : YCat) -> (a : yc.ycObj) -> YCatFreeHomSlice yc (a, a)
-ycId yc a = InSlFc $ CHId a
+ycId yc a = chId (yc.ycHom) a
 
 public export
 ycComp : (yc : YCat) -> {a, b, c : yc.ycObj} ->
   YCatFreeHomSlice yc (b, c) -> YCatFreeHomSlice yc (a, b) ->
   YCatFreeHomSlice yc (a, c)
-ycComp yc {a} {b} {c} g f = InSlFc $ CHComp g f
+ycComp yc {a} {b} {c} g f = chComp g f
 
 public export
 YCHomSliceCata : YCat -> Type
-YCHomSliceCata yc =
-  SliceFreeCata {a=(SignatureT yc.ycObj)} (CatHomF {obj=yc.ycObj})
+YCHomSliceCata yc = HomSliceCata yc.ycObj
 
 public export
-ycHomSliceCata : (yc : YCat) -> YCHomSliceCata yc
-ycHomSliceCata yc sv sa subst alg (a, b) (InSlF (a, b) (InSlV v)) =
-  subst (a, b) v
-ycHomSliceCata yc sv sa subst alg (a, b) (InSlF (a, b) (InSlC m)) =
-  alg (a, b) $ case m of
-    CHId c => CHId c
-    CHComp {x} {y} {z} g f =>
-      CHComp {x} {y} {z}
-        (ycHomSliceCata yc sv sa subst alg (y, z) g)
-        (ycHomSliceCata yc sv sa subst alg (x, y) f)
+ycHomSliceCata : (yc : YCat) -> (sa : HomSlice yc.ycObj) ->
+  SliceMorphism yc.ycHom sa -> SliceAlg CatHomF sa ->
+  SliceMorphism (SliceFreeM CatHomF yc.ycHom) sa
+ycHomSliceCata yc = homSliceCata {obj=yc.ycObj} yc.ycHom
 
 --------------------------------------
 ---- Yoneda-category Yoneda lemma ----
@@ -470,7 +489,7 @@ ycFreeFMap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
   ((a, b : yc.ycObj) -> yc.ycHom (a, b) -> f a -> f b) ->
   ((a, b : yc.ycObj) -> YCatFreeHomSlice yc (a, b) -> f a -> f b)
 ycFreeFMap {yc} {f} fmap a b =
-  ycHomSliceCata yc yc.ycHom (\(x, y) => f x -> f y)
+  ycHomSliceCata yc (\(x, y) => f x -> f y)
     (\(x, y) => fmap x y)
     (\(x, z), m => case m of CHId z => id ; CHComp g f => g . f)
     (a, b)
@@ -480,7 +499,7 @@ ycFreeFContramap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
   ((a, b : yc.ycObj) -> yc.ycHom (a, b) -> f b -> f a) ->
   ((a, b : yc.ycObj) -> YCatFreeHomSlice yc (a, b) -> f b -> f a)
 ycFreeFContramap {yc} {f} fmap a b =
-  ycHomSliceCata yc yc.ycHom (\(x, y) => f y -> f x)
+  ycHomSliceCata yc (\(x, y) => f y -> f x)
     (\(x, y) => fmap x y)
     (\(x, z), m => case m of CHId z => id ; CHComp g f => f . g)
     (a, b)
