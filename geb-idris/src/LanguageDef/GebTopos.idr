@@ -1175,15 +1175,15 @@ YCoprod yc =
 
 public export
 data InitialUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
-    HomSlice (TrEitherF InitialObjF obj) where
+    (obj, InitialObjF obj) -> Type where
 
 -- Equivalent to:
 -- InitialCovarHom hom Obj0 c = Unit
 public export
-data InitialCovarHom : {0 obj : Type} ->
-    HomSlice obj -> InitialObjF obj -> SliceObj obj where
+data InitialCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
+    (InitialObjF obj, obj) -> Type where
   InRAFrom0 : (0 c : obj) ->
-    InitialCovarHom {obj} hom Obj0 c
+    InitialCovarHom {obj} hom (Obj0, c)
 
 public export
 data TerminalObjF : (obj : Type) -> Type where
@@ -1191,15 +1191,15 @@ data TerminalObjF : (obj : Type) -> Type where
 
 public export
 data TerminalUMorphF : (obj : Type) -> (hom : HomSlice obj) ->
-    HomSlice (TrEitherF TerminalObjF obj) where
+    (TerminalObjF obj, obj) -> Type where
 
 -- Equivalent to:
 -- TerminalContravarHom hom Obj1 c = Unit
 public export
-data TerminalContravarHom : {0 obj : Type} ->
-    HomSlice obj -> TerminalObjF obj -> SliceObj obj where
+data TerminalContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
+    (obj, TerminalObjF obj) -> Type where
   InLATo1 : (0 c : obj) ->
-    TerminalContravarHom {obj} hom Obj1 c
+    TerminalContravarHom {obj} hom (c, Obj1)
 
 -- The coproduct's universal morphisms come from the unit in the product
 -- category.
