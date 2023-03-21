@@ -1320,6 +1320,17 @@ coprodInterpUnit hom ointerp minterp a (ObjCp a b) (CpUnInjL a b) = Left
 coprodInterpUnit hom ointerp minterp b (ObjCp a b) (CpUnInjR a b) = Right
 
 public export
+coprodInterpRightAdj : {obj : Type} -> (hom : HomSlice obj) ->
+  (ointerp : SliceObj obj) ->
+  (minterp : (a, b : obj) -> hom (a, b) -> ointerp a -> ointerp b) ->
+  (a : CoprodObjF obj) -> (b : obj) ->
+  CoprodRightAdj {obj} {obj'=obj} hom (a, b) ->
+  CoprodInterpObj {obj} ointerp a ->
+  ointerp b
+coprodInterpRightAdj hom ointerp minterp (ObjCp a a') b (CpRACase f g) =
+  eitherElim (minterp a b f) (minterp a' b g)
+
+public export
 ExtendCoprodInterpMorph : {obj : Type} -> (hom : HomSlice obj) ->
   (ointerp : SliceObj obj) ->
   (minterp : (a, b : obj) -> hom (a, b) -> ointerp a -> ointerp b) ->
@@ -1331,11 +1342,8 @@ ExtendCoprodInterpMorph hom ointerp minterp (TFV a) (TFV b)
   f = minterp a b f
 ExtendCoprodInterpMorph hom ointerp minterp (TFV a) (TFC b) mab =
   coprodInterpUnit hom ointerp minterp a b mab
-ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp a b)) (TFV c)
-  (CpRACase f g) =
-    eitherElim
-      (minterp a c f)
-      (minterp b c g)
+ExtendCoprodInterpMorph hom ointerp minterp (TFC a) (TFV b) adj =
+  coprodInterpRightAdj hom ointerp minterp a b adj
 ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp a a)) (TFC (ObjCp a b))
   (CpRACase (CpUnInjL a b) (CpUnInjL a b)) = eitherElim Left Left
 ExtendCoprodInterpMorph hom ointerp minterp (TFC (ObjCp a b)) (TFC (ObjCp a b))
