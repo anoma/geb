@@ -242,7 +242,7 @@ data FreeEqF : {0 a : Type} -> RelationOn a -> RelationOn a where
     (0 x, y, z : a) -> rel y z -> rel x y -> FreeEqF {a} rel x z
 
 public export
-CatRelT : {obj : Type} -> HomSlice obj -> Type
+CatRelT : {obj : Type} -> SliceObj (HomSlice obj)
 CatRelT {obj} hom = Pi {a=(SignatureT obj)} (RelationOn . FreeHomM obj hom)
 
 public export
