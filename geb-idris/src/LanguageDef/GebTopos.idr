@@ -24,6 +24,10 @@ HomSlice : Type -> Type
 HomSlice = SliceObj . SignatureT
 
 public export
+SigRelT : {obj : Type} -> SliceObj (HomSlice obj)
+SigRelT {obj} hom = DepRelOn {a=(SignatureT obj)} (hom, hom)
+
+public export
 HomEndofunctor : Type -> Type
 HomEndofunctor = SliceEndofunctor . SignatureT
 
@@ -233,17 +237,14 @@ chFreeFContramap {obj} {hom} {f} fmap a b =
     (a, b)
 
 public export
-data FreeEqF : {0 a : Type} -> RelationOn a -> RelationOn a where
-  FErefl : {0 a : Type} -> {0 rel : RelationOn a} ->
-    (0 x : a) -> FreeEqF {a} rel x x
-  FEsym : {0 a : Type} -> {0 rel : RelationOn a} ->
-    (0 x, y : a) -> rel x y -> FreeEqF {a} rel y x
-  FEtrans : {0 a : Type} -> {0 rel : RelationOn a} ->
-    (0 x, y, z : a) -> rel y z -> rel x y -> FreeEqF {a} rel x z
+FreeHomRel : {obj : Type} -> SliceObj (HomSlice obj)
+FreeHomRel {obj} hom =
+  DepRelOn {a=(SignatureT obj)} (FreeHomM obj hom, FreeHomM obj hom)
 
 public export
-SigRelT : {obj : Type} -> SliceObj (HomSlice obj)
-SigRelT {obj} hom = Pi {a=(SignatureT obj)} (RelationOn . hom)
+FreeHomEqF : {obj : Type} -> (hom : HomSlice obj) ->
+  FreeHomRel {obj} hom -> FreeHomRel {obj} hom
+FreeHomEqF {obj} hom = DepFreeEqF {a=(SignatureT obj)} {sl=(FreeHomM obj hom)}
 
 public export
 CatRelT : {obj : Type} -> SliceObj (HomSlice obj)
@@ -254,18 +255,19 @@ data CatEqAx : {obj : Type} -> {hom : HomSlice obj} -> CatRelT hom where
   CEidL :
     {0 obj : Type} -> {0 hom : HomSlice obj} ->
     {0 a, b : obj} -> (0 f : FreeHomM obj hom (a, b)) ->
-    CatEqAx {obj} {hom} (a, b) f (chComp (chId hom b) f)
+    CatEqAx {obj} {hom} ((a, b) ** (f, chComp (chId hom b) f))
   CEidR :
     {0 obj : Type} -> {0 hom : HomSlice obj} ->
     {0 a, b : obj} -> (0 f : FreeHomM obj hom (a, b)) ->
-    CatEqAx {obj} {hom} (a, b) f (chComp f (chId hom a))
+    CatEqAx {obj} {hom} ((a, b) ** (f, chComp f (chId hom a)))
   CEassoc :
     {0 obj : Type} -> {0 hom : HomSlice obj} ->
     {0 a, b, c, d : obj} ->
     (0 f : FreeHomM obj hom (a, b)) ->
     (0 g : FreeHomM obj hom (b, c)) ->
     (0 h : FreeHomM obj hom (c, d)) ->
-    CatEqAx {obj} {hom} (a, d) (chComp h (chComp g f)) (chComp (chComp h g) f)
+    CatEqAx {obj} {hom}
+      ((a, d) ** (chComp h (chComp g f), chComp (chComp h g) f))
 
 public export
 data CatFreeEqF : {obj : Type} -> {hom : HomSlice obj} ->
@@ -273,26 +275,26 @@ data CatFreeEqF : {obj : Type} -> {hom : HomSlice obj} ->
   CEv : {0 obj : Type} -> {0 hom : HomSlice obj} ->
     {0 rv : SigRelT hom} -> {0 ra : CatRelT hom} ->
     {0 a, b : obj} -> {0 f, g : hom (a, b)} ->
-    rv (a, b) f g ->
-    CatFreeEqF {obj} {hom} rv ra (a, b) (InSlFv f) (InSlFv g)
+    rv ((a, b) ** (f, g)) ->
+    CatFreeEqF {obj} {hom} rv ra ((a, b) ** (InSlFv f, InSlFv g))
   CEax : {0 obj : Type} -> {0 hom : HomSlice obj} ->
     {0 rv : SigRelT hom} -> {0 ra : CatRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
-    CatEqAx {obj} {hom} (a, b) f g ->
-    CatFreeEqF {obj} {hom} rv ra (a, b) f g
+    CatEqAx {obj} {hom} ((a, b) ** (f, g)) ->
+    CatFreeEqF {obj} {hom} rv ra ((a, b) ** (f, g))
   CEeq : {0 obj : Type} -> {0 hom : HomSlice obj} ->
     {0 rv : SigRelT hom} -> {0 ra : CatRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
-    FreeEqF {a=(FreeHomM obj hom (a, b))} (ra (a, b)) f g ->
-    CatFreeEqF {obj} {hom} rv ra (a, b) f g
+    FreeHomEqF {obj} hom ra ((a, b) ** (f, g)) ->
+    CatFreeEqF {obj} {hom} rv ra ((a, b) ** (f, g))
 
 public export
 data CatFreeEq : {obj : Type} -> {hom : HomSlice obj} ->
     (0 rel : SigRelT hom) -> CatRelT hom where
   InCFE : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rel : SigRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
-    CatFreeEqF {obj} {hom} rel (CatFreeEq {obj} {hom} rel) (a, b) f g ->
-    CatFreeEq {obj} {hom} rel (a, b) f g
+    CatFreeEqF {obj} {hom} rel (CatFreeEq {obj} {hom} rel) ((a, b) ** (f, g)) ->
+    CatFreeEq {obj} {hom} rel ((a, b) ** (f, g))
 
 public export
 record Diagram where
@@ -302,11 +304,12 @@ record Diagram where
   -- `dRel` is a relation which, when we freely generate a category from
   -- the diagram, will freely generate an equivalence relation, but `dRel`
   -- itself does not promise to be an equivalence relation.
-  0 dRel : (vs : ProductMonad dVert) -> RelationOn (dEdge vs)
+  0 dRel : SigRelT dEdge
 
 public export
 diagToCatForget : SCat -> Diagram
-diagToCatForget sc = MkDiagram sc.scObj sc.scHom (\sig => eqRel $ sc.scEq sig)
+diagToCatForget sc =
+  MkDiagram sc.scObj sc.scHom (\(sig ** (f, g)) => eqRel (sc.scEq sig) f g)
 
 public export
 DiagFreeObj : Diagram -> Type
@@ -331,9 +334,13 @@ diagFreeComp : {diag : Diagram} -> {a, b, c : DiagFreeObj diag} ->
 diagFreeComp {diag} g f = chComp {hom=diag.dEdge} g f
 
 public export
+DiagFreeSigRel : (diag : Diagram) -> SigRelT (DiagFreeHom diag)
+DiagFreeSigRel diag = CatFreeEq {obj=diag.dVert} {hom=diag.dEdge} diag.dRel
+
+public export
 DiagFreeRel : (diag : Diagram) -> (sig : DiagFreeSig diag) ->
   RelationOn (DiagFreeHom diag sig)
-DiagFreeRel diag = CatFreeEq {obj=diag.dVert} {hom=diag.dEdge} diag.dRel
+DiagFreeRel diag sig f g = DiagFreeSigRel diag (sig ** (f, g))
 
 public export
 DiagFreeRelIsRefl : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->

@@ -540,6 +540,47 @@ SliceAna : {a : Type} -> SliceEndofunctor a -> Type
 SliceAna {a} f =
   (sa : SliceObj a) -> SliceCoalg f sa -> SliceMorphism {a} sa (SliceNu f)
 
+-----------------------------
+-----------------------------
+---- Dependent relations ----
+-----------------------------
+-----------------------------
+
+public export
+DepRelObj : {a : Type} -> SliceObj (SliceObj a, SliceObj a)
+DepRelObj {a} (sl, sl') = (x : a ** (sl x, sl' x))
+
+public export
+DepRelOn : {a : Type} -> SliceObj (SliceObj a, SliceObj a)
+DepRelOn {a} sls = SliceObj (DepRelObj {a} sls)
+
+public export
+data FreeEqF : {0 a : Type} -> RelationOn a -> RelationOn a where
+  FErefl : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x : a) -> FreeEqF {a} rel x x
+  FEsym : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x, y : a) -> rel x y -> FreeEqF {a} rel y x
+  FEtrans : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x, y, z : a) -> rel y z -> rel x y -> FreeEqF {a} rel x z
+
+public export
+data DepFreeEqF : {0 a : Type} -> {sl : SliceObj a} ->
+    SliceEndofunctor (DepRelObj {a} (sl, sl)) where
+  DFErefl :
+    {0 a : Type} -> {0 sl : SliceObj a} -> {0 rel : DepRelOn {a} (sl, sl)} ->
+    {0 x : a} -> (0 sx : sl x) -> DepFreeEqF {a} {sl} rel (x ** (sx, sx))
+  DFEsym :
+    {0 a : Type} -> {0 sl : SliceObj a} -> {0 rel : DepRelOn {a} (sl, sl)} ->
+    {0 x : a} -> {0 sx, sx' : sl x} ->
+    rel (x ** (sx, sx')) ->
+    DepFreeEqF {a} {sl} rel (x ** (sx', sx))
+  DFEtrans :
+    {0 a : Type} -> {0 sl : SliceObj a} -> {0 rel : DepRelOn {a} (sl, sl)} ->
+    {0 x : a} -> {0 sx, sx', sx'' : sl x} ->
+    rel (x ** (sx', sx'')) ->
+    rel (x ** (sx, sx')) ->
+    DepFreeEqF {a} {sl} rel (x ** (sx, sx''))
+
 ----------------------------------------------------
 ----------------------------------------------------
 ---- Natural transformations and their algebras ----
