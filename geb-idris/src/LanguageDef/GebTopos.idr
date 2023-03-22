@@ -1160,6 +1160,17 @@ coprodRightAdjExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
 coprodRightAdjExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
   Pair (eq a b f f') (eq a' b g g')
 
+public export
+coprodRightAdjUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+  (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
+  (a, b : CoprodObjF obj) ->
+  RelationOn (CoprodRightAdj {obj} {obj'=(CoprodObjF obj)}
+    (CoprodUnitF hom) (a, b))
+coprodRightAdjUnitExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
+  Pair
+    (coprodUnitExtendEq {hom} eq a b f f')
+    (coprodUnitExtendEq {hom} eq a' b g g')
+
 -- Extend equality.
 public export
 coprodExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
@@ -1172,25 +1183,8 @@ coprodExtendEq eq (TFV a) (TFC b) f g =
   coprodUnitExtendEq eq a b f g
 coprodExtendEq {hom} eq (TFC a) (TFV b) f g =
   coprodRightAdjExtendEq {hom} eq a b f g
-coprodExtendEq eq (TFC (ObjCp a a')) (TFC (ObjCp b b'))
-  (CpRACase f g) (CpRACase f' g') =
-    case (f, g, f', g') of
-      (CpUnInjL c d, CpUnInjL c d, CpUnInjL c d, CpUnInjL c d) => Unit
-      (CpUnInjL c c, CpUnInjL c c, CpUnInjL c c, CpUnInjR c c) => Void
-      (CpUnInjL c c, CpUnInjL c c, CpUnInjR c c, CpUnInjL c c) => Void
-      (CpUnInjL c c, CpUnInjL c c, CpUnInjR c c, CpUnInjR c c) => Void
-      (CpUnInjL c c, CpUnInjR c c, CpUnInjL c c, CpUnInjL c c) => Void
-      (CpUnInjL c d, CpUnInjR c d, CpUnInjL c d, CpUnInjR c d) => Unit
-      (CpUnInjL c c, CpUnInjR c c, CpUnInjR c c, CpUnInjL c c) => Void
-      (CpUnInjL c c, CpUnInjR c c, CpUnInjR c c, CpUnInjR c c) => Void
-      (CpUnInjR c c, CpUnInjL c c, CpUnInjL c c, CpUnInjL c c) => Void
-      (CpUnInjR c c, CpUnInjL c c, CpUnInjL c c, CpUnInjR c c) => Void
-      (CpUnInjR c d, CpUnInjL c d, CpUnInjR c d, CpUnInjL c d) => Unit
-      (CpUnInjR c c, CpUnInjL c c, CpUnInjR c c, CpUnInjR c c) => Void
-      (CpUnInjR c c, CpUnInjR c c, CpUnInjL c c, CpUnInjL c c) => Void
-      (CpUnInjR c c, CpUnInjR c c, CpUnInjL c c, CpUnInjR c c) => Void
-      (CpUnInjR c c, CpUnInjR c c, CpUnInjR c c, CpUnInjL c c) => Void
-      (CpUnInjR c d, CpUnInjR c d, CpUnInjR c d, CpUnInjR c d) => Unit
+coprodExtendEq eq (TFC a) (TFC b) f g =
+  coprodRightAdjUnitExtendEq {obj} {hom} eq a b f g
 
 -- Extend reduction.  Returns Nothing if irreducible.
 public export
