@@ -1329,8 +1329,9 @@ coprodInterpRightAdj : {obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
   CoprodRightAdj {obj} {obj'} hom (a, b) ->
   CoprodInterpObj {obj} ointerp a ->
   ointerp' b
-coprodInterpRightAdj hom ointerp ointerp' minterp (ObjCp a a') b (CpRACase f g) =
-  eitherElim (minterp a b f) (minterp a' b g)
+coprodInterpRightAdj hom ointerp ointerp' minterp
+  (ObjCp a a') b (CpRACase f g) =
+    eitherElim (minterp a b f) (minterp a' b g)
 
 public export
 ExtendCoprodInterpMorph : {obj : Type} -> (hom : HomSlice obj) ->
