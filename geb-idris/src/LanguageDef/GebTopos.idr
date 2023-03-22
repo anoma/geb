@@ -265,22 +265,24 @@ diagFreeComp : {diag : Diagram} -> {a, b, c : DiagFreeObj diag} ->
 diagFreeComp {diag} g f = chComp {hom=diag.dEdge} g f
 
 public export
+data FreeEqF : {0 a : Type} -> RelationOn a -> RelationOn a where
+  FErefl : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x : a) -> FreeEqF {a} rel x x
+  FEsym : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x, y : a) -> rel x y -> FreeEqF {a} rel y x
+  FEtrans : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x, y, z : a) -> rel y z -> rel x y -> FreeEqF {a} rel x z
+
+public export
 data DiagFreeRel : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
     RelationOn (DiagFreeHom diag (a, b)) where
   DFRfree : {0 diag : Diagram} ->
     {0 a, b : diag.dVert} -> {0 f, g : diag.dEdge (a, b)} ->
     diag.dRel a b f g -> DiagFreeRel diag a b (InSlFv f) (InSlFv g)
-  DFRrefl : {0 diag : Diagram} ->
-    {0 a, b : DiagFreeObj diag} -> (0 f : DiagFreeHom diag (a, b)) ->
-    DiagFreeRel diag a b f f
-  DFRsym : {0 diag : Diagram} ->
-    {0 a, b : DiagFreeObj diag} -> {0 f, g : DiagFreeHom diag (a, b)} ->
-    DiagFreeRel diag a b f g -> DiagFreeRel diag a b g f
-  DFRtrans : {0 diag : Diagram} ->
-    {0 a, b : DiagFreeObj diag} -> {0 f, g, h : DiagFreeHom diag (a, b)} ->
-    DiagFreeRel diag a b g h ->
-    DiagFreeRel diag a b f g ->
-    DiagFreeRel diag a b f h
+  DFReq : {0 diag : Diagram} -> {0 a, b : DiagFreeObj diag} ->
+    {0 f, g : DiagFreeHom diag (a, b)} ->
+    FreeEqF {a=(DiagFreeHom diag (a, b))} (DiagFreeRel diag a b) f g ->
+    DiagFreeRel diag a b f g
   DFRidL : {0 diag : Diagram} ->
     {0 a, b : DiagFreeObj diag} -> (0 f : DiagFreeHom diag (a, b)) ->
     DiagFreeRel diag a b f (diagFreeComp {diag} (diagFreeId diag b) f)
