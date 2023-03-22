@@ -268,15 +268,24 @@ data CatFreeEqF : {obj : Type} -> {hom : HomSlice obj} ->
     CatRelT hom -> CatRelT hom -> CatRelT hom where
   CEv : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rv, ra : CatRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
-    FreeEqF {a=(FreeHomM obj hom (a, b))} (rv (a, b)) f g ->
+    rv (a, b) f g ->
     CatFreeEqF {obj} {hom} rv ra (a, b) f g
   CEax : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rv, ra : CatRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
-    CatEqAx {obj} {hom} (a, b) f g -> CatFreeEqF {obj} {hom} rv ra (a, b) f g
+    CatEqAx {obj} {hom} (a, b) f g ->
+    CatFreeEqF {obj} {hom} rv ra (a, b) f g
   CEeq : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rv, ra : CatRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
     FreeEqF {a=(FreeHomM obj hom (a, b))} (ra (a, b)) f g ->
     CatFreeEqF {obj} {hom} rv ra (a, b) f g
+
+public export
+data CatFreeEq : {obj : Type} -> {hom : HomSlice obj} ->
+    CatRelT hom -> CatRelT hom where
+  InCFE : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rel : CatRelT hom} ->
+    {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
+    CatFreeEqF {obj} {hom} rel (CatFreeEq {obj} {hom} rel) (a, b) f g ->
+    CatFreeEq {obj} {hom} rel (a, b) f g
 
 public export
 record Diagram where
