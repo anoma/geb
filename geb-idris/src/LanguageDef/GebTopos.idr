@@ -58,6 +58,37 @@ HomUncurry hom (x, y) = hom x y
 -------------------------
 -------------------------
 
+-- The (free-forgetful) adjunction which can be used to define a category
+-- has the following data:
+--
+--  - Left category C: two-category of categories
+--  - Right category D: category of diagrams
+--  - Left functor L: free functor which adds identities (loop edges) for
+--    each vertex and paths to represent compositions, and equalities for
+--    left identity, right identity, and associativity
+--  - Right functor R: forgetful functor which drops identity, composition,
+--    and equalities, leaving just vertices and edges
+--  - R . L (D -> D): Functor which closes a diagram with loops labeled
+--    as identities and paths labeled as compositions
+--  - L . R (C -> C): Identity functor
+--  - Unit (id -> R . L): injection of diagram into its closure
+--  - Counit (L . R -> id): identity natural transformation
+--  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
+--    functors from a free category generated from a diagram A to an arbitrary
+--    category B are in bijection with graph homomorphisms from A to the
+--    diagram underlying B (i.e. the diagram whose vertices are objects of B
+--    and whose edges are morphisms of B)
+--  - Left triangle identity: (counit . L) . (L . unit) = id(L):
+--    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
+--    (which goes from L(A) to L(A) in C via L(R(L(A)))):
+--      id(L(A)) . L(inj(A)) = id(L(A))
+--    -- this reflects preservation of identities by functors
+--  - Right triangle identity: (R . counit) . (unit . R) = id(R):
+--    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
+--    (which goes from R(B) to R(B) in D via R(L(R(B)))):
+--      id(forget(B)) . inj(forget(B)) = id(forget(B))
+--    -- this reflects the definition of the injection
+
 public export
 data CatHomF : {0 obj : Type} -> HomEndofunctor obj where
   CHId :
@@ -135,11 +166,11 @@ chFreeFContramap {obj} {hom} {f} fmap a b =
     (\(x, z), m => case m of CHId z => id ; CHComp g f => f . g)
     (a, b)
 
----------------------------
----------------------------
----- Yoneda categories ----
----------------------------
----------------------------
+--------------------------------
+--------------------------------
+---- Yoneda lemma utilities ----
+--------------------------------
+--------------------------------
 
 ------------------------------------------
 ---- Internal natural transformations ----
@@ -426,37 +457,6 @@ SCContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
 ---------------------------------------------------
 ---- Yoneda categories with explicit coherence ----
 ---------------------------------------------------
-
--- The (free-forgetful) adjunction which can be used to define a category
--- has the following data:
---
---  - Left category C: two-category of categories
---  - Right category D: category of diagrams
---  - Left functor L: free functor which adds identities (loop edges) for
---    each vertex and paths to represent compositions, and equalities for
---    left identity, right identity, and associativity
---  - Right functor R: forgetful functor which drops identity, composition,
---    and equalities, leaving just vertices and edges
---  - R . L (D -> D): Functor which closes a diagram with loops labeled
---    as identities and paths labeled as compositions
---  - L . R (C -> C): Identity functor
---  - Unit (id -> R . L): injection of diagram into its closure
---  - Counit (L . R -> id): identity natural transformation
---  - Adjuncts: (Hom(L A, B) == Hom(A, R B), for A : D and B : C):
---    functors from a free category generated from a diagram A to an arbitrary
---    category B are in bijection with graph homomorphisms from A to the
---    diagram underlying B (i.e. the diagram whose vertices are objects of B
---    and whose edges are morphisms of B)
---  - Left triangle identity: (counit . L) . (L . unit) = id(L):
---    expanded, for all A : D, counit(L(A)) . L(unit(A)) = id(L(A))
---    (which goes from L(A) to L(A) in C via L(R(L(A)))):
---      id(L(A)) . L(inj(A)) = id(L(A))
---    -- this reflects preservation of identities by functors
---  - Right triangle identity: (R . counit) . (unit . R) = id(R):
---    expanded, for all B : C, R(counit(B)) . unit(R(B)) = id(R(B))
---    (which goes from R(B) to R(B) in D via R(L(R(B)))):
---      id(forget(B)) . inj(forget(B)) = id(forget(B))
---    -- this reflects the definition of the injection
 
 public export
 CovarEqImpliesContravar : {obj : Type} -> {hom : HomSlice obj} ->
