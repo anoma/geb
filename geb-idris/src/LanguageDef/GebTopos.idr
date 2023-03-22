@@ -1076,122 +1076,6 @@ public export
 data CoprodObjF : (obj : Type) -> Type where
   ObjCp : obj -> obj -> CoprodObjF obj
 
-public export
-data CoprodMorphF : (obj : Type) -> (hom : HomSlice obj) ->
-    HomSlice (TrEitherF CoprodObjF obj) where
-  CpInjL : (x, y : obj) ->
-    CoprodMorphF obj hom (TFV x, TFC (ObjCp x y))
-  CpInjR : (x, y : obj) ->
-    CoprodMorphF obj hom (TFV y, TFC (ObjCp x y))
-  CpCase : (x, y, z : obj) ->
-    hom (x, z) -> hom (y, z) -> CoprodMorphF obj hom (TFC (ObjCp x y), TFV z)
-
-public export
-CoprodMorphExtendDenoteCovar : (obj : Type) -> (hom : HomSlice obj) ->
-  MorphDenoteExtendCovar obj CoprodObjF hom (CoprodMorphF obj hom)
-CoprodMorphExtendDenoteCovar obj hom denote (TFV a) (TFC (ObjCp a b))
-  (CpInjL a b) (TFV c) (MEU (CpCase a b c f g)) =
-    FMV f
-CoprodMorphExtendDenoteCovar obj hom denote (TFV a) (TFC (ObjCp a b))
-  (CpInjL a b) (TFC c) (MEU mabc) = case mabc of
-    CpInjL _ _ impossible
-    CpInjR _ _ impossible
-    CpCase _ _ _ _ _ impossible
-CoprodMorphExtendDenoteCovar obj hom denote (TFV b) (TFC (ObjCp a b))
-  (CpInjR a b) (TFV c) (MEU (CpCase a b c f g)) =
-    FMV g
-CoprodMorphExtendDenoteCovar obj hom denote (TFV b) (TFC (ObjCp a b))
-  (CpInjR a b) (TFC c) (MEU mabc) = case mabc of
-    CpInjL _ _ impossible
-    CpInjR _ _ impossible
-    CpCase _ _ _ _ _ impossible
-CoprodMorphExtendDenoteCovar obj hom denote (TFC (ObjCp a a')) (TFV b)
-  (CpCase a a' b f g) (TFV c) (MEV h) =
-    FMU $ CpCase a a' c (denote a b f c h) (denote a' b g c h)
-CoprodMorphExtendDenoteCovar obj hom denote (TFC (ObjCp a a')) (TFV b)
-  (CpCase a a' b f g) (TFC (ObjCp b c)) (MEU (CpInjL b c)) =
-    FMC (FMU $ CpInjL b c) (FMU $ CpCase a a' b f g)
-CoprodMorphExtendDenoteCovar obj hom denote (TFC (ObjCp a a')) (TFV c)
-  (CpCase a a' c f g) (TFC (ObjCp b c)) (MEU (CpInjR b c)) =
-    FMC (FMU $ CpInjR b c) (FMU $ CpCase a a' c f g)
-
-public export
-CoprodMorphExtendDenoteContravar : (obj : Type) -> (hom : HomSlice obj) ->
-  MorphDenoteExtendContravar obj CoprodObjF hom (CoprodMorphF obj hom)
-CoprodMorphExtendDenoteContravar obj hom denote a b mab c mca =
-  ?CoprodMorphExtendDenoteContravar_hole
-
-public export
-YCoprodObj : YCat -> Type
-YCoprodObj yc = ?YCoprodObj_hole
-
-public export
-YCoprodHom : (yc : YCat) -> HomSlice (YCoprodObj yc)
-YCoprodHom yc = ?YCoprodHom_hole
-
-public export
-YCoprodCovarDenotation : (yc : YCat) ->
-  CovarHomCatRep (YCoprodObj yc) (YCoprodHom yc)
-YCoprodCovarDenotation yc = ?YCoprodCovarDenotation_hole
-
-public export
-YCoprodContravarDenotation : (yc : YCat) ->
-  ContravarHomCatRep (YCoprodObj yc) (YCoprodHom yc)
-YCoprodContravarDenotation yc = ?YCoprodContravarDenotation_hole
-
-public export
-YCoprodCovarEqImpliesContravar : (yc : YCat) ->
-  CovarEqImpliesContravar {obj=(YCoprodObj yc)} {hom=(YCoprodHom yc)}
-    (YCoprodCovarDenotation yc) (YCoprodContravarDenotation yc)
-YCoprodCovarEqImpliesContravar yc = ?YCoprodCovarEqImpliesContravar_hole
-
-public export
-YCoprodContravarEqImpliesCovar : (yc : YCat) ->
-  ContravarEqImpliesCovar {obj=(YCoprodObj yc)} {hom=(YCoprodHom yc)}
-    (YCoprodCovarDenotation yc) (YCoprodContravarDenotation yc)
-YCoprodContravarEqImpliesCovar yc = ?YCoprodContravarEqImpliesCovar_hole
-
-public export
-YCoprod : YCat -> YCat
-YCoprod yc =
-  YC
-    (YCoprodObj yc)
-    (YCoprodHom yc)
-    (YCoprodCovarDenotation yc)
-    (YCoprodContravarDenotation yc)
-
----------------------------------------------------------
----- Example: free finite product/coproduct category ----
----------------------------------------------------------
-
-public export
-data InitialUnitF : {obj : Type} -> (hom : HomSlice obj) ->
-    SliceObj (obj, InitialObjF obj) where
-
--- Equivalent to:
--- InitialCovarHom hom Obj0 c = Unit
-public export
-data InitialCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
-    SliceObj (InitialObjF obj, obj) where
-  InRAFrom0 : (0 c : obj) ->
-    InitialCovarHom {obj} hom (Obj0, c)
-
-public export
-data TerminalObjF : (obj : Type) -> Type where
-  Obj1 : TerminalObjF obj
-
-public export
-data TerminalCounitF : {obj : Type} -> (hom : HomSlice obj) ->
-    SliceObj (TerminalObjF obj, obj) where
-
--- Equivalent to:
--- TerminalContravarHom hom Obj1 c = Unit
-public export
-data TerminalContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
-    SliceObj (obj, TerminalObjF obj) where
-  InLATo1 : (0 c : obj) ->
-    TerminalContravarHom {obj} hom (c, Obj1)
-
 -- The coproduct's universal morphisms come from the unit in the product
 -- category.
 public export
@@ -1271,10 +1155,8 @@ coprodExtendEq eq (TFV a) (TFC (ObjCp a a)) (CpUnInjR a a) (CpUnInjL a a) = Void
 coprodExtendEq eq (TFV b) (TFC (ObjCp a b)) (CpUnInjR a b) (CpUnInjR a b) = Unit
 coprodExtendEq eq (TFC (ObjCp a a')) (TFV b) (CpRACase f g) (CpRACase f' g') =
   Pair (eq a b f f') (eq a' b g g')
-coprodExtendEq eq (TFC (ObjCp a a')) (TFC (ObjCp b b')) (CpRACase f _) _ =
-  case f of
-    CpInjL _ _ impossible
-    CpInjR _ _ impossible
+coprodExtendEq eq (TFC (ObjCp a a')) (TFC (ObjCp b b')) (CpRACase f g) h =
+  ?coprodExtendEq_hole
 
 -- Extend reduction.  Returns Nothing if irreducible.
 public export
@@ -1373,6 +1255,77 @@ ExtendCoprodInterpMorph {obj} hom ointerp minterp (TFC a) (TFC b) adj =
     a
     b
     adj
+
+public export
+YCoprodObj : YCat -> Type
+YCoprodObj yc = ?YCoprodObj_hole
+
+public export
+YCoprodHom : (yc : YCat) -> HomSlice (YCoprodObj yc)
+YCoprodHom yc = ?YCoprodHom_hole
+
+public export
+YCoprodCovarDenotation : (yc : YCat) ->
+  CovarHomCatRep (YCoprodObj yc) (YCoprodHom yc)
+YCoprodCovarDenotation yc = ?YCoprodCovarDenotation_hole
+
+public export
+YCoprodContravarDenotation : (yc : YCat) ->
+  ContravarHomCatRep (YCoprodObj yc) (YCoprodHom yc)
+YCoprodContravarDenotation yc = ?YCoprodContravarDenotation_hole
+
+public export
+YCoprodCovarEqImpliesContravar : (yc : YCat) ->
+  CovarEqImpliesContravar {obj=(YCoprodObj yc)} {hom=(YCoprodHom yc)}
+    (YCoprodCovarDenotation yc) (YCoprodContravarDenotation yc)
+YCoprodCovarEqImpliesContravar yc = ?YCoprodCovarEqImpliesContravar_hole
+
+public export
+YCoprodContravarEqImpliesCovar : (yc : YCat) ->
+  ContravarEqImpliesCovar {obj=(YCoprodObj yc)} {hom=(YCoprodHom yc)}
+    (YCoprodCovarDenotation yc) (YCoprodContravarDenotation yc)
+YCoprodContravarEqImpliesCovar yc = ?YCoprodContravarEqImpliesCovar_hole
+
+public export
+YCoprod : YCat -> YCat
+YCoprod yc =
+  YC
+    (YCoprodObj yc)
+    (YCoprodHom yc)
+    (YCoprodCovarDenotation yc)
+    (YCoprodContravarDenotation yc)
+
+---------------------------------------------------------
+---- Example: free finite product/coproduct category ----
+---------------------------------------------------------
+
+public export
+data InitialUnitF : {obj : Type} -> (hom : HomSlice obj) ->
+    SliceObj (obj, InitialObjF obj) where
+
+-- Equivalent to:
+-- InitialCovarHom hom Obj0 c = Unit
+public export
+data InitialCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
+    SliceObj (InitialObjF obj, obj) where
+  InRAFrom0 : (0 c : obj) ->
+    InitialCovarHom {obj} hom (Obj0, c)
+
+public export
+data TerminalObjF : (obj : Type) -> Type where
+  Obj1 : TerminalObjF obj
+
+public export
+data TerminalCounitF : {obj : Type} -> (hom : HomSlice obj) ->
+    SliceObj (TerminalObjF obj, obj) where
+
+-- Equivalent to:
+-- TerminalContravarHom hom Obj1 c = Unit
+public export
+data TerminalContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
+    SliceObj (obj, TerminalObjF obj) where
+  InLATo1 : (0 c : obj) ->
+    TerminalContravarHom {obj} hom (c, Obj1)
 
 public export
 data ProdObjF : (obj : Type) -> Type where
