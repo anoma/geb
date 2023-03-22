@@ -1152,6 +1152,14 @@ coprodUnitExtendEq eq a (ObjCp a a) (CpUnInjL a a) (CpUnInjR a a) = Void
 coprodUnitExtendEq eq a (ObjCp a a) (CpUnInjR a a) (CpUnInjL a a) = Void
 coprodUnitExtendEq eq b (ObjCp a b) (CpUnInjR a b) (CpUnInjR a b) = Unit
 
+public export
+coprodRightAdjExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+  (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
+  (a : CoprodObjF obj) -> (b : obj) ->
+  RelationOn (CoprodRightAdj hom (a, b))
+coprodRightAdjExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
+  Pair (eq a b f f') (eq a' b g g')
+
 -- Extend equality.
 public export
 coprodExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
@@ -1162,8 +1170,8 @@ coprodExtendEq eq (TFV a) (TFV b) f g =
   eq a b f g
 coprodExtendEq eq (TFV a) (TFC b) f g =
   coprodUnitExtendEq eq a b f g
-coprodExtendEq eq (TFC (ObjCp a a')) (TFV b) (CpRACase f g) (CpRACase f' g') =
-  Pair (eq a b f f') (eq a' b g g')
+coprodExtendEq {hom} eq (TFC a) (TFV b) f g =
+  coprodRightAdjExtendEq {hom} eq a b f g
 coprodExtendEq eq (TFC (ObjCp a a')) (TFC (ObjCp b b'))
   (CpRACase f g) (CpRACase f' g') =
     case (f, g, f', g') of
