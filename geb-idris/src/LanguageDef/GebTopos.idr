@@ -77,7 +77,7 @@ record SCat where
   scHom : HomSlice scObj
   scId : (a : scObj) -> scHom (a, a)
   scComp : {a, b, c : scObj} -> scHom (b, c) -> scHom (a, b) -> scHom (a, c)
-  0 scEq : (0 a, b : scObj) -> EqRel (scHom (a, b))
+  0 scEq : (a, b : scObj) -> EqRel (scHom (a, b))
   0 scIdL : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
     (scEq a b).eqRel f (scComp {a} {b} {c=b} (scId b) f)
   0 scIdR : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
@@ -242,8 +242,12 @@ data FreeEqF : {0 a : Type} -> RelationOn a -> RelationOn a where
     (0 x, y, z : a) -> rel y z -> rel x y -> FreeEqF {a} rel x z
 
 public export
+SigRelT : {obj : Type} -> SliceObj (HomSlice obj)
+SigRelT {obj} hom = Pi {a=(SignatureT obj)} (RelationOn . hom)
+
+public export
 CatRelT : {obj : Type} -> SliceObj (HomSlice obj)
-CatRelT {obj} hom = Pi {a=(SignatureT obj)} (RelationOn . FreeHomM obj hom)
+CatRelT {obj} hom = SigRelT {obj} (FreeHomM obj hom)
 
 public export
 data CatEqAx : {obj : Type} -> {hom : HomSlice obj} -> CatRelT hom where
@@ -265,24 +269,27 @@ data CatEqAx : {obj : Type} -> {hom : HomSlice obj} -> CatRelT hom where
 
 public export
 data CatFreeEqF : {obj : Type} -> {hom : HomSlice obj} ->
-    CatRelT hom -> CatRelT hom -> CatRelT hom where
-  CEv : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rv, ra : CatRelT hom} ->
-    {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
+    SigRelT hom -> CatRelT hom -> CatRelT hom where
+  CEv : {0 obj : Type} -> {0 hom : HomSlice obj} ->
+    {0 rv : SigRelT hom} -> {0 ra : CatRelT hom} ->
+    {0 a, b : obj} -> {0 f, g : hom (a, b)} ->
     rv (a, b) f g ->
-    CatFreeEqF {obj} {hom} rv ra (a, b) f g
-  CEax : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rv, ra : CatRelT hom} ->
+    CatFreeEqF {obj} {hom} rv ra (a, b) (InSlFv f) (InSlFv g)
+  CEax : {0 obj : Type} -> {0 hom : HomSlice obj} ->
+    {0 rv : SigRelT hom} -> {0 ra : CatRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
     CatEqAx {obj} {hom} (a, b) f g ->
     CatFreeEqF {obj} {hom} rv ra (a, b) f g
-  CEeq : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rv, ra : CatRelT hom} ->
+  CEeq : {0 obj : Type} -> {0 hom : HomSlice obj} ->
+    {0 rv : SigRelT hom} -> {0 ra : CatRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
     FreeEqF {a=(FreeHomM obj hom (a, b))} (ra (a, b)) f g ->
     CatFreeEqF {obj} {hom} rv ra (a, b) f g
 
 public export
 data CatFreeEq : {obj : Type} -> {hom : HomSlice obj} ->
-    CatRelT hom -> CatRelT hom where
-  InCFE : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rel : CatRelT hom} ->
+    (0 rel : SigRelT hom) -> CatRelT hom where
+  InCFE : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rel : SigRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
     CatFreeEqF {obj} {hom} rel (CatFreeEq {obj} {hom} rel) (a, b) f g ->
     CatFreeEq {obj} {hom} rel (a, b) f g
@@ -295,15 +302,20 @@ record Diagram where
   -- `dRel` is a relation which, when we freely generate a category from
   -- the diagram, will freely generate an equivalence relation, but `dRel`
   -- itself does not promise to be an equivalence relation.
-  0 dRel : (a, b : dVert) -> RelationOn (dEdge (a, b))
+  0 dRel : (vs : ProductMonad dVert) -> RelationOn (dEdge vs)
 
 public export
 diagToCatForget : SCat -> Diagram
-diagToCatForget sc = MkDiagram sc.scObj sc.scHom (\a, b => eqRel $ sc.scEq a b)
+diagToCatForget sc =
+  MkDiagram sc.scObj sc.scHom (\(a, b) => eqRel $ sc.scEq a b)
 
 public export
 DiagFreeObj : Diagram -> Type
 DiagFreeObj diag = diag.dVert
+
+public export
+DiagFreeSig : Diagram -> Type
+DiagFreeSig = SignatureT . DiagFreeObj
 
 public export
 DiagFreeHom : (diag : Diagram) -> HomSlice (DiagFreeObj diag)
@@ -320,38 +332,28 @@ diagFreeComp : {diag : Diagram} -> {a, b, c : DiagFreeObj diag} ->
 diagFreeComp {diag} g f = chComp {hom=diag.dEdge} g f
 
 public export
-data DiagFreeRel : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
-    RelationOn (DiagFreeHom diag (a, b)) where
-  DFRfree : {0 diag : Diagram} ->
-    {0 a, b : diag.dVert} -> {0 f, g : diag.dEdge (a, b)} ->
-    diag.dRel a b f g -> DiagFreeRel diag a b (InSlFv f) (InSlFv g)
-  DFReq : {0 diag : Diagram} -> {0 a, b : DiagFreeObj diag} ->
-    {0 f, g : DiagFreeHom diag (a, b)} ->
-    FreeEqF {a=(DiagFreeHom diag (a, b))} (DiagFreeRel diag a b) f g ->
-    DiagFreeRel diag a b f g
-  DFRcat : {0 diag : Diagram} -> {0 a, b : DiagFreeObj diag} ->
-    {0 f, g : DiagFreeHom diag (a, b)} ->
-    CatEqAx {obj=diag.dVert} {hom=diag.dEdge} (a, b) f g ->
-    DiagFreeRel diag a b f g
+DiagFreeRel : (diag : Diagram) -> (sig : DiagFreeSig diag) ->
+  RelationOn (DiagFreeHom diag sig)
+DiagFreeRel diag = CatFreeEq {obj=diag.dVert} {hom=diag.dEdge} diag.dRel
 
 public export
 DiagFreeRelIsRefl : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
-  IsReflexive (DiagFreeRel diag a b)
+  IsReflexive (DiagFreeRel diag (a, b))
 DiagFreeRelIsRefl diag a b = ?DiagFreeRelIsRefl_hole
 
 public export
 DiagFreeRelIsSym : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
-  IsSymmetric (DiagFreeRel diag a b)
+  IsSymmetric (DiagFreeRel diag (a, b))
 DiagFreeRelIsSym diag a b = ?DiagFreeRelIsSym_hole
 
 public export
 DiagFreeRelIsTrans : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
-  IsTransitive (DiagFreeRel diag a b)
+  IsTransitive (DiagFreeRel diag (a, b))
 DiagFreeRelIsTrans diag a b = ?DiagFreeRelIsTrans_hole
 
 public export
-DiagFreeRelIsEquiv : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
-  IsEquivalence (DiagFreeRel diag a b)
+DiagFreeRelIsEquiv : (diag : Diagram) -> (a, b : DiagFreeObj diag) ->
+  IsEquivalence (DiagFreeRel diag (a, b))
 DiagFreeRelIsEquiv diag a b =
   MkEquivalence
     (DiagFreeRelIsRefl diag a b)
@@ -359,21 +361,21 @@ DiagFreeRelIsEquiv diag a b =
     (DiagFreeRelIsTrans diag a b)
 
 public export
-DiagFreeEqRel : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+DiagFreeEqRel : (diag : Diagram) -> (a, b : DiagFreeObj diag) ->
   EqRel (DiagFreeHom diag (a, b))
 DiagFreeEqRel diag a b =
-  MkEq (DiagFreeRel diag a b) (DiagFreeRelIsEquiv diag a b)
+  MkEq (DiagFreeRel diag (a, b)) (DiagFreeRelIsEquiv diag a b)
 
 public export
-DiagFreeIdL : (diag : Diagram) -> {0 a, b : DiagFreeObj diag} ->
+DiagFreeIdL : (diag : Diagram) -> {a, b : DiagFreeObj diag} ->
   (0 f : DiagFreeHom diag (a, b)) ->
-  DiagFreeRel diag a b f (diagFreeComp {diag} (diagFreeId diag b) f)
+  DiagFreeRel diag (a, b) f (diagFreeComp {diag} (diagFreeId diag b) f)
 DiagFreeIdL diag {a} {b} f = ?DiagFreeIdL_hole
 
 public export
 DiagFreeIdR : (diag : Diagram) -> {0 a, b : DiagFreeObj diag} ->
   (0 f : DiagFreeHom diag (a, b)) ->
-  DiagFreeRel diag a b f (diagFreeComp {diag} f (diagFreeId diag a))
+  DiagFreeRel diag (a, b) f (diagFreeComp {diag} f (diagFreeId diag a))
 DiagFreeIdR diag {a} {b} f = ?DiagFreeIdR_hole
 
 public export
@@ -381,7 +383,7 @@ DiagFreeAssoc : (diag : Diagram) -> {0 a, b, c, d : DiagFreeObj diag} ->
   (0 f : DiagFreeHom diag (a, b)) ->
   (0 g : DiagFreeHom diag (b, c)) ->
   (0 h : DiagFreeHom diag (c, d)) ->
-  DiagFreeRel diag a d
+  DiagFreeRel diag (a, d)
     (diagFreeComp {diag} h (diagFreeComp {diag} g f))
     (diagFreeComp {diag} (diagFreeComp {diag} h g) f)
 DiagFreeAssoc diag {a} {b} f = ?DiagFreeAssoc_hole
@@ -1563,7 +1565,7 @@ ycEqRelEquiv yc a b =
     ?ycEqRelTrans_equiv_hole
 
 public export
-0 ycEq : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+0 ycEq : (yc : YCat) -> (a, b : yc.ycObj) ->
   EqRel (YCatFreeHomSlice yc (a, b))
 ycEq yc a b = MkEq (ycEqRel yc a b) (ycEqRelEquiv yc a b)
 
