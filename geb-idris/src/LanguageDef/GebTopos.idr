@@ -233,6 +233,37 @@ chFreeFContramap {obj} {hom} {f} fmap a b =
     (a, b)
 
 public export
+data FreeEqF : {0 a : Type} -> RelationOn a -> RelationOn a where
+  FErefl : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x : a) -> FreeEqF {a} rel x x
+  FEsym : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x, y : a) -> rel x y -> FreeEqF {a} rel y x
+  FEtrans : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x, y, z : a) -> rel y z -> rel x y -> FreeEqF {a} rel x z
+
+public export
+CatRelT : {obj : Type} -> HomSlice obj -> Type
+CatRelT {obj} hom = Pi {a=(SignatureT obj)} (RelationOn . FreeHomM obj hom)
+
+public export
+data CatEqAx : {obj : Type} -> {hom : HomSlice obj} -> CatRelT hom where
+  CEidL :
+    {0 obj : Type} -> {0 hom : HomSlice obj} ->
+    {0 a, b : obj} -> (0 f : FreeHomM obj hom (a, b)) ->
+    CatEqAx {obj} {hom} (a, b) f (chComp (chId hom b) f)
+  CEidR :
+    {0 obj : Type} -> {0 hom : HomSlice obj} ->
+    {0 a, b : obj} -> (0 f : FreeHomM obj hom (a, b)) ->
+    CatEqAx {obj} {hom} (a, b) f (chComp f (chId hom a))
+  CEassoc :
+    {0 obj : Type} -> {0 hom : HomSlice obj} ->
+    {0 a, b, c, d : obj} ->
+    (0 f : FreeHomM obj hom (a, b)) ->
+    (0 g : FreeHomM obj hom (b, c)) ->
+    (0 h : FreeHomM obj hom (c, d)) ->
+    CatEqAx {obj} {hom} (a, d) (chComp h (chComp g f)) (chComp (chComp h g) f)
+
+public export
 record Diagram where
   constructor MkDiagram
   dVert : Type
@@ -265,15 +296,6 @@ diagFreeComp : {diag : Diagram} -> {a, b, c : DiagFreeObj diag} ->
 diagFreeComp {diag} g f = chComp {hom=diag.dEdge} g f
 
 public export
-data FreeEqF : {0 a : Type} -> RelationOn a -> RelationOn a where
-  FErefl : {0 a : Type} -> {0 rel : RelationOn a} ->
-    (0 x : a) -> FreeEqF {a} rel x x
-  FEsym : {0 a : Type} -> {0 rel : RelationOn a} ->
-    (0 x, y : a) -> rel x y -> FreeEqF {a} rel y x
-  FEtrans : {0 a : Type} -> {0 rel : RelationOn a} ->
-    (0 x, y, z : a) -> rel y z -> rel x y -> FreeEqF {a} rel x z
-
-public export
 data DiagFreeRel : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
     RelationOn (DiagFreeHom diag (a, b)) where
   DFRfree : {0 diag : Diagram} ->
@@ -283,20 +305,10 @@ data DiagFreeRel : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
     {0 f, g : DiagFreeHom diag (a, b)} ->
     FreeEqF {a=(DiagFreeHom diag (a, b))} (DiagFreeRel diag a b) f g ->
     DiagFreeRel diag a b f g
-  DFRidL : {0 diag : Diagram} ->
-    {0 a, b : DiagFreeObj diag} -> (0 f : DiagFreeHom diag (a, b)) ->
-    DiagFreeRel diag a b f (diagFreeComp {diag} (diagFreeId diag b) f)
-  DFRidR : {0 diag : Diagram} ->
-    {0 a, b : DiagFreeObj diag} -> (0 f : DiagFreeHom diag (a, b)) ->
-    DiagFreeRel diag a b f (diagFreeComp {diag} f (diagFreeId diag a))
-  DFRassoc : {0 diag : Diagram} ->
-    {0 a, b, c, d : DiagFreeObj diag} ->
-    (0 f : DiagFreeHom diag (a, b)) ->
-    (0 g : DiagFreeHom diag (b, c)) ->
-    (0 h : DiagFreeHom diag (c, d)) ->
-    DiagFreeRel diag a d
-      (diagFreeComp {diag} h (diagFreeComp {diag} g f))
-      (diagFreeComp {diag} (diagFreeComp {diag} h g) f)
+  DFRcat : {0 diag : Diagram} -> {0 a, b : DiagFreeObj diag} ->
+    {0 f, g : DiagFreeHom diag (a, b)} ->
+    CatEqAx {obj=diag.dVert} {hom=diag.dEdge} (a, b) f g ->
+    DiagFreeRel diag a b f g
 
 public export
 DiagFreeRelIsRefl : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
