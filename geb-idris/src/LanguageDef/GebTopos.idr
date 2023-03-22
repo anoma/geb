@@ -1255,16 +1255,8 @@ coprodPostCompUnit : {obj : Type} -> (hom : HomSlice obj) ->
   CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', c)
 coprodPostCompUnit {obj} hom a a' b b' c mab ma'b mbc =
   CpRACase {obj} {obj'=obj} {a} {b=a'} {c}
-    (comp {a''=a} {b''=b} {b'''=b'} {c''=c} mbc mab)
-    (comp {a''=a'} {b''=b} {b'''=b'} {c''=c} mbc ma'b)
-  where
-    comp :
-      {a'', b'', b''', c'' : obj} ->
-      (adj : CoprodRightAdj hom (ObjCp b'' b''', c'')) ->
-      (unit : CoprodUnitF hom (a'', ObjCp b'' b''')) ->
-      hom (a'', c'')
-    comp {a''} {b''} {b'''} {c''} adj unit =
-      coprodRAAfterUnit a'' (ObjCp b'' b''') c'' adj unit
+    (coprodRAAfterUnit a (ObjCp b b') c mbc mab)
+    (coprodRAAfterUnit a' (ObjCp b b') c mbc ma'b)
 
 -- Extend reduction.  Returns Nothing if irreducible.
 public export
