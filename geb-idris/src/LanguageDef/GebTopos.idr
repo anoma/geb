@@ -367,6 +367,26 @@ ContravarToContravarComposeRep : {obj : Type} -> {hom : HomSlice obj} ->
   ContravarToContravarHomRep {obj} hom (a, c)
 ContravarToContravarComposeRep {obj} {hom} {a} {b} {c} g f d = g d . f d
 
+public export
+CovarEqImpliesContravar : {obj : Type} -> {hom : HomSlice obj} ->
+  CovarHomCatRep obj hom -> ContravarHomCatRep obj hom -> Type
+CovarEqImpliesContravar {obj} {hom} covar contravar =
+  {a, b : obj} -> (f, g : hom (a, b)) ->
+  CovarToCovarHomRepExtEq
+    {a} {b} {hom} (covar a b f) (covar a b g) ->
+  ContravarToContravarHomRepExtEq
+    {a} {b} {hom} (contravar a b f) (contravar a b g)
+
+public export
+ContravarEqImpliesCovar : {obj : Type} -> {hom : HomSlice obj} ->
+  CovarHomCatRep obj hom -> ContravarHomCatRep obj hom -> Type
+ContravarEqImpliesCovar {obj} {hom} covar contravar =
+  {a, b : obj} -> (f, g : hom (a, b)) ->
+  ContravarToContravarHomRepExtEq
+    {a} {b} {hom} (contravar a b f) (contravar a b g) ->
+  CovarToCovarHomRepExtEq
+    {a} {b} {hom} (covar a b f) (covar a b g)
+
 ------------------------------------
 ---- Free-category Yoneda lemma ----
 ------------------------------------
@@ -454,264 +474,6 @@ SCContravarHomYonedaL :
   f a -> InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f
 SCContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
 
----------------------------------------------------
----- Yoneda categories with explicit coherence ----
----------------------------------------------------
-
-public export
-CovarEqImpliesContravar : {obj : Type} -> {hom : HomSlice obj} ->
-  CovarHomCatRep obj hom -> ContravarHomCatRep obj hom -> Type
-CovarEqImpliesContravar {obj} {hom} covar contravar =
-  {a, b : obj} -> (f, g : hom (a, b)) ->
-  CovarToCovarHomRepExtEq
-    {a} {b} {hom} (covar a b f) (covar a b g) ->
-  ContravarToContravarHomRepExtEq
-    {a} {b} {hom} (contravar a b f) (contravar a b g)
-
-public export
-ContravarEqImpliesCovar : {obj : Type} -> {hom : HomSlice obj} ->
-  CovarHomCatRep obj hom -> ContravarHomCatRep obj hom -> Type
-ContravarEqImpliesCovar {obj} {hom} covar contravar =
-  {a, b : obj} -> (f, g : hom (a, b)) ->
-  ContravarToContravarHomRepExtEq
-    {a} {b} {hom} (contravar a b f) (contravar a b g) ->
-  CovarToCovarHomRepExtEq
-    {a} {b} {hom} (covar a b f) (covar a b g)
-
-public export
-record YCat where
-  constructor YC
-  ycObj : Type
-  ycHom : HomSlice ycObj
-  0 ycDenoteCovar : CovarHomCatRep ycObj ycHom
-  0 ycDenoteContravar : ContravarHomCatRep ycObj ycHom
-
-public export
-YCHomSlice : YCat -> Type
-YCHomSlice yc = HomSlice (ycObj yc)
-
-public export
-YCovarNT : (yc : YCat) -> YCHomSlice yc
-YCovarNT yc = CovarToCovarHomRep {obj=(ycObj yc)} (ycHom yc)
-
-public export
-YContravarNT : (yc : YCat) -> YCHomSlice yc
-YContravarNT yc = ContravarToContravarHomRep {obj=(ycObj yc)} (ycHom yc)
-
-public export
-yIdCovar : (yc : YCat) -> (x : ycObj yc) -> YCovarNT yc (x, x)
-yIdCovar yc = CovarToCovarIdRep {obj=(ycObj yc)} {hom=(ycHom yc)}
-
-public export
-yIdContravar : (yc : YCat) -> (x : ycObj yc) -> YContravarNT yc (x, x)
-yIdContravar yc = ContravarToContravarIdRep {obj=(ycObj yc)} {hom=(ycHom yc)}
-
-public export
-yComposeCovar : {yc : YCat} -> {a, b, c: ycObj yc} ->
-  YCovarNT yc (b, c) -> YCovarNT yc (a, b) -> YCovarNT yc (a, c)
-yComposeCovar {yc} =
-  CovarToCovarComposeRep {obj=(ycObj yc)} {hom=(ycHom yc)}
-
-public export
-yComposeContravar : {yc : YCat} -> {a, b, c: ycObj yc} ->
-  YContravarNT yc (b, c) -> YContravarNT yc (a, b) -> YContravarNT yc (a, c)
-yComposeContravar {yc} =
-  ContravarToContravarComposeRep {obj=(ycObj yc)} {hom=(ycHom yc)}
-
-------------------------------------------------
----- Free categories from Yoneda categories ----
-------------------------------------------------
-
-public export
-YObjHomSlice : (yc : YCat) -> Type
-YObjHomSlice yc = HomSlice yc.ycObj
-
-public export
-YCatFreeHomSlice : (yc : YCat) -> YObjHomSlice yc
-YCatFreeHomSlice yc = FreeHomM yc.ycObj yc.ycHom
-
-public export
-ycId : (yc : YCat) -> (a : yc.ycObj) -> YCatFreeHomSlice yc (a, a)
-ycId yc a = chId (yc.ycHom) a
-
-public export
-ycComp : (yc : YCat) -> {a, b, c : yc.ycObj} ->
-  YCatFreeHomSlice yc (b, c) -> YCatFreeHomSlice yc (a, b) ->
-  YCatFreeHomSlice yc (a, c)
-ycComp yc {a} {b} {c} g f = chComp g f
-
-public export
-YCHomSliceCata : YCat -> Type
-YCHomSliceCata yc = HomSliceCata yc.ycObj
-
-public export
-ycHomSliceCata : (yc : YCat) -> (sa : HomSlice yc.ycObj) ->
-  SliceMorphism yc.ycHom sa -> SliceAlg CatHomF sa ->
-  SliceMorphism (SliceFreeM CatHomF yc.ycHom) sa
-ycHomSliceCata yc = homSliceCata {obj=yc.ycObj} yc.ycHom
-
--------------------------------------------
----- Free-Yoneda-category Yoneda lemma ----
--------------------------------------------
-
-public export
-ycFreeFMap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
-  ((a, b : yc.ycObj) -> yc.ycHom (a, b) -> f a -> f b) ->
-  ((a, b : yc.ycObj) -> YCatFreeHomSlice yc (a, b) -> f a -> f b)
-ycFreeFMap {yc} {f} = chFreeFMap {obj=yc.ycObj} {hom=yc.ycHom} {f}
-
-public export
-ycFreeFContramap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
-  ((a, b : yc.ycObj) -> yc.ycHom (a, b) -> f b -> f a) ->
-  ((a, b : yc.ycObj) -> YCatFreeHomSlice yc (a, b) -> f b -> f a)
-ycFreeFContramap {yc} {f} = chFreeFContramap {obj=yc.ycObj} {hom=yc.ycHom} {f}
-
-public export
-YCCovarHomYonedaR :
-  (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
-  InternalNTFromCovarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f -> f a
-YCCovarHomYonedaR yc = FreeCovarHomYonedaR {obj=yc.ycObj} {hom=yc.ycHom}
-
-public export
-YCCovarHomYonedaL : (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
-  (fmap : (a, b : yc.ycObj) -> yc.ycHom (a, b) -> f a -> f b) ->
-  f a -> InternalNTFromCovarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f
-YCCovarHomYonedaL yc = FreeCovarHomYonedaL {obj=yc.ycObj} {hom=yc.ycHom}
-
-public export
-YCContravarHomYonedaR :
-  (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
-  InternalNTFromContravarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f -> f a
-YCContravarHomYonedaR yc = FreeContravarHomYonedaR {obj=yc.ycObj} {hom=yc.ycHom}
-
-public export
-YCContravarHomYonedaL :
-  (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
-  -- f is contravariant
-  (fmap : (a, b : yc.ycObj) -> yc.ycHom (a, b) -> f b -> f a) ->
-  f a -> InternalNTFromContravarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f
-YCContravarHomYonedaL yc = FreeContravarHomYonedaL {obj=yc.ycObj} {hom=yc.ycHom}
-
---------------------------------------------------------
----- Free Yoneda categories are standard categories ----
---------------------------------------------------------
-
-public export
-0 ycEqRel : (yc : YCat) -> (0 a, b : yc.ycObj) ->
-  RelationOn (YCatFreeHomSlice yc (a, b))
-ycEqRel yc a b (InSlF (a, b) (InSlV v)) (InSlF (a, b) (InSlV v')) =
-  ?ycEqRel_hole_vv
-ycEqRel yc a b (InSlF (a, b) (InSlV v)) (InSlF (a, b) (InSlC m')) =
-  ?ycEqRel_hole_vc
-ycEqRel yc a b (InSlF (a, b) (InSlC m)) (InSlF (a, b) (InSlV v')) =
-  ?ycEqRel_hole_cv
-ycEqRel yc a b (InSlF (a, b) (InSlC m)) (InSlF (a, b) (InSlC m')) =
-  ?ycEqRel_hole_cc
-
-public export
-0 ycEqRelRefl : (yc : YCat) -> (0 a, b : yc.ycObj) ->
-  IsReflexive (ycEqRel yc a b)
-ycEqRelRefl yc a b = ?ycEqRelRefl_hole
-
-public export
-0 ycEqRelSym : (yc : YCat) -> (0 a, b : yc.ycObj) ->
-  IsSymmetric (ycEqRel yc a b)
-ycEqRelSym yc a b = ?ycEqRelSym_hole
-
-public export
-0 ycEqRelTrans : (yc : YCat) -> (0 a, b : yc.ycObj) ->
-  IsTransitive (ycEqRel yc a b)
-ycEqRelTrans yc a b = ?ycEqRelTrans_hole
-
-public export
-0 ycEqRelEquiv : (yc : YCat) -> (0 a, b : yc.ycObj) ->
-  IsEquivalence (ycEqRel yc a b)
-ycEqRelEquiv yc a b =
-  MkEquivalence
-    ?ycEqRelRefl_equiv_hole
-    ?ycEqRelSym_equiv_hole
-    ?ycEqRelTrans_equiv_hole
-
-public export
-0 ycEq : (yc : YCat) -> (0 a, b : yc.ycObj) ->
-  EqRel (YCatFreeHomSlice yc (a, b))
-ycEq yc a b = MkEq (ycEqRel yc a b) (ycEqRelEquiv yc a b)
-
-public export
-0 ycIdL : (yc : YCat) -> {0 a, b : yc.ycObj} ->
-  (0 f : YCatFreeHomSlice yc (a, b)) ->
-  (ycEq yc a b).eqRel f (ycComp yc {a} {b} {c=b} (ycId yc b) f)
-ycIdL yc {a} {b} f = ?ycIdL_hole
-
-public export
-0 ycIdR : (yc : YCat) -> {0 a, b : yc.ycObj} ->
-  (0 f : YCatFreeHomSlice yc (a, b)) ->
-  (ycEq yc a b).eqRel f (ycComp yc {a} {b=a} {c=b} f (ycId yc a))
-ycIdR yc {a} {b} f = ?ycIdR_hole
-
-public export
-0 ycAssoc : (yc : YCat) -> {0 a, b, c, d : yc.ycObj} ->
-  (0 f : YCatFreeHomSlice yc (a, b)) -> (0 g : YCatFreeHomSlice yc (b, c)) ->
-  (0 h : YCatFreeHomSlice yc (c, d)) ->
-  (ycEq yc a d).eqRel
-    (ycComp yc {a} {b=c} {c=d} h (ycComp yc {a} {b} {c} g f))
-    (ycComp yc {a} {b} {c=d} (ycComp yc {a=b} {b=c} {c=d} h g) f)
-ycAssoc yc {a} {b} {c} {d} f g h = ?ycAssoc_hole
-
-public export
-YCatToSCat : YCat -> SCat
-YCatToSCat yc =
-  SC
-    yc.ycObj
-    (YCatFreeHomSlice yc)
-    (ycId yc)
-    (ycComp yc)
-    (ycEq yc)
-    (ycIdL yc)
-    (ycIdR yc)
-    (ycAssoc yc)
-
----------------------------------------------------
----- Standard categories are Yoneda categories ----
----------------------------------------------------
-
-public export
-SCatCovarDenotation : (sc : SCat) -> CovarHomCatRep sc.scObj sc.scHom
-SCatCovarDenotation sc a b mab c mbc = sc.scComp mbc mab
-
-public export
-SCatContravarDenotation : (sc : SCat) -> ContravarHomCatRep sc.scObj sc.scHom
-SCatContravarDenotation sc a b mab c mca = sc.scComp mab mca
-
-public export
-SCatToYCat : SCat -> YCat
-SCatToYCat sc =
-  YC
-    sc.scObj
-    sc.scHom
-    (SCatCovarDenotation sc)
-    (SCatContravarDenotation sc)
-
-----------------------------------------------------------------------------
----- Yoneda <-> standard formulations of category theory are equivalent ----
-----------------------------------------------------------------------------
-
--- This still needs to be proven.  It will depend upon the slice-category
--- free monad's properties, such as its being Cartesian and idempotent.
--- The claim of the equivalence is that YCatToSCat |- SCatToYCatCovar
--- and YCatToSCat |- SCatToYCatContravar are both adjunctions (so in particular
--- SCatToYCatCovar and SCatToYCatContravar are naturally isomorphic) between
--- the category of Yoneda categories and the category of standard categories,
--- and the counit (in the category of standard categories) is a natural
--- isomorphism (up to categorical equivalence).
---
--- Note that this is an enhancement of the free-forgetful adjunction between
--- the category of diagrams and the category of (standard) categories.
--- The "Yoneda category" extends the notion of a diagram with an embedding
--- of the edges into internal natural transformations of the metalanguage,
--- which amount to a way of assigning free equalities to paths in the diagram
--- without having explicitly to introduce identity or composition.
-
 --------------------------------------------
 --------------------------------------------
 ---- Category-spec-style Geb definition ----
@@ -721,59 +483,6 @@ SCatToYCat sc =
 ---------------------------
 ---- General utilities ----
 ---------------------------
-
-public export
-YExtendObjF : Type
-YExtendObjF = YCat -> Type
-
--- Just an explicit name for `Coprod(ycObj, oext)`.
-public export
-data YExtendedObj : YCat -> YExtendObjF -> Type where
-  EOV : ycObj yc -> YExtendedObj yc oext
-  EOU : oext yc -> YExtendedObj yc oext
-
-public export
-YExtendMorphF : YExtendObjF -> Type
-YExtendMorphF oext = (yc : YCat) -> HomSlice (YExtendedObj yc oext)
-
-public export
-YExtendMorphCovarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
-YExtendMorphCovarDenote {oext} mext =
-  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc (x, y) ->
-  CovarToCovarHomSetRep (YExtendedObj yc oext) (mext yc) (x, y)
-
-public export
-YExtendMorphContravarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
-YExtendMorphContravarDenote {oext} mext =
-  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc (x, y) ->
-  ContravarToContravarHomSetRep (YExtendedObj yc oext) (mext yc) (x, y)
-
-public export
-data YExtendedMorph :
-    YCat -> (oext : YExtendObjF) -> YExtendMorphF oext ->
-    HomSlice (YExtendedObj yc oext) where
-  EMV : {0 oext : YExtendObjF} -> {0 mext : YExtendMorphF oext} ->
-    {0 x, y : ycObj yc} ->
-    ycHom yc (x, y) -> YExtendedMorph yc oext mext (EOV {yc} x, EOV {yc} y)
-  EMU : {0 oext : YExtendObjF} -> {0 mext : YExtendMorphF oext} ->
-    {0 x, y : YExtendedObj yc oext} ->
-    mext yc (x, y) -> YExtendedMorph yc oext mext (x, y)
-
-public export
-YExtendCovarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
-YExtendCovarDenotation {oext} mext =
-  (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
-  YExtendedMorph yc oext mext (x, y) ->
-  CovarToCovarHomSetRep
-    (YExtendedObj yc oext) (YExtendedMorph yc oext mext) (x, y)
-
-public export
-YExtendContravarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
-YExtendContravarDenotation {oext} mext =
-  (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
-  YExtendedMorph yc oext mext (x, y) ->
-  ContravarToContravarHomSetRep
-    (YExtendedObj yc oext) (YExtendedMorph yc oext mext) (x, y)
 
 public export
 record Diagram where
@@ -1284,45 +993,6 @@ ExtendCoprodInterpMorph {obj} hom ointerp minterp (TFC a) (TFC b) adj =
     b
     adj
 
-public export
-YCoprodObj : YCat -> Type
-YCoprodObj yc = ?YCoprodObj_hole
-
-public export
-YCoprodHom : (yc : YCat) -> HomSlice (YCoprodObj yc)
-YCoprodHom yc = ?YCoprodHom_hole
-
-public export
-YCoprodCovarDenotation : (yc : YCat) ->
-  CovarHomCatRep (YCoprodObj yc) (YCoprodHom yc)
-YCoprodCovarDenotation yc = ?YCoprodCovarDenotation_hole
-
-public export
-YCoprodContravarDenotation : (yc : YCat) ->
-  ContravarHomCatRep (YCoprodObj yc) (YCoprodHom yc)
-YCoprodContravarDenotation yc = ?YCoprodContravarDenotation_hole
-
-public export
-YCoprodCovarEqImpliesContravar : (yc : YCat) ->
-  CovarEqImpliesContravar {obj=(YCoprodObj yc)} {hom=(YCoprodHom yc)}
-    (YCoprodCovarDenotation yc) (YCoprodContravarDenotation yc)
-YCoprodCovarEqImpliesContravar yc = ?YCoprodCovarEqImpliesContravar_hole
-
-public export
-YCoprodContravarEqImpliesCovar : (yc : YCat) ->
-  ContravarEqImpliesCovar {obj=(YCoprodObj yc)} {hom=(YCoprodHom yc)}
-    (YCoprodCovarDenotation yc) (YCoprodContravarDenotation yc)
-YCoprodContravarEqImpliesCovar yc = ?YCoprodContravarEqImpliesCovar_hole
-
-public export
-YCoprod : YCat -> YCat
-YCoprod yc =
-  YC
-    (YCoprodObj yc)
-    (YCoprodHom yc)
-    (YCoprodCovarDenotation yc)
-    (YCoprodContravarDenotation yc)
-
 ---------------------------------------------------------
 ---- Example: free finite product/coproduct category ----
 ---------------------------------------------------------
@@ -1378,6 +1048,342 @@ data ProdLeftAdj : {0 obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
     {hom : (obj, obj') -> Type} ->
     hom (c, a) -> hom (c, b) ->
     ProdLeftAdj {obj} {obj'} hom (c, ObjPr a b)
+
+---------------------------------------------------
+---------------------------------------------------
+---- Yoneda categories with explicit coherence ----
+---------------------------------------------------
+---------------------------------------------------
+
+public export
+record YCat where
+  constructor YC
+  ycObj : Type
+  ycHom : HomSlice ycObj
+  0 ycDenoteCovar : CovarHomCatRep ycObj ycHom
+  0 ycDenoteContravar : ContravarHomCatRep ycObj ycHom
+
+public export
+YCHomSlice : YCat -> Type
+YCHomSlice yc = HomSlice (ycObj yc)
+
+public export
+YCovarNT : (yc : YCat) -> YCHomSlice yc
+YCovarNT yc = CovarToCovarHomRep {obj=(ycObj yc)} (ycHom yc)
+
+public export
+YContravarNT : (yc : YCat) -> YCHomSlice yc
+YContravarNT yc = ContravarToContravarHomRep {obj=(ycObj yc)} (ycHom yc)
+
+public export
+yIdCovar : (yc : YCat) -> (x : ycObj yc) -> YCovarNT yc (x, x)
+yIdCovar yc = CovarToCovarIdRep {obj=(ycObj yc)} {hom=(ycHom yc)}
+
+public export
+yIdContravar : (yc : YCat) -> (x : ycObj yc) -> YContravarNT yc (x, x)
+yIdContravar yc = ContravarToContravarIdRep {obj=(ycObj yc)} {hom=(ycHom yc)}
+
+public export
+yComposeCovar : {yc : YCat} -> {a, b, c: ycObj yc} ->
+  YCovarNT yc (b, c) -> YCovarNT yc (a, b) -> YCovarNT yc (a, c)
+yComposeCovar {yc} =
+  CovarToCovarComposeRep {obj=(ycObj yc)} {hom=(ycHom yc)}
+
+public export
+yComposeContravar : {yc : YCat} -> {a, b, c: ycObj yc} ->
+  YContravarNT yc (b, c) -> YContravarNT yc (a, b) -> YContravarNT yc (a, c)
+yComposeContravar {yc} =
+  ContravarToContravarComposeRep {obj=(ycObj yc)} {hom=(ycHom yc)}
+
+public export
+YExtendObjF : Type
+YExtendObjF = YCat -> Type
+
+-- Just an explicit name for `Coprod(ycObj, oext)`.
+public export
+data YExtendedObj : YCat -> YExtendObjF -> Type where
+  EOV : ycObj yc -> YExtendedObj yc oext
+  EOU : oext yc -> YExtendedObj yc oext
+
+public export
+YExtendMorphF : YExtendObjF -> Type
+YExtendMorphF oext = (yc : YCat) -> HomSlice (YExtendedObj yc oext)
+
+public export
+YExtendMorphCovarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
+YExtendMorphCovarDenote {oext} mext =
+  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc (x, y) ->
+  CovarToCovarHomSetRep (YExtendedObj yc oext) (mext yc) (x, y)
+
+public export
+YExtendMorphContravarDenote : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
+YExtendMorphContravarDenote {oext} mext =
+  (yc : YCat) -> (x, y : YExtendedObj yc oext) -> mext yc (x, y) ->
+  ContravarToContravarHomSetRep (YExtendedObj yc oext) (mext yc) (x, y)
+
+public export
+data YExtendedMorph :
+    YCat -> (oext : YExtendObjF) -> YExtendMorphF oext ->
+    HomSlice (YExtendedObj yc oext) where
+  EMV : {0 oext : YExtendObjF} -> {0 mext : YExtendMorphF oext} ->
+    {0 x, y : ycObj yc} ->
+    ycHom yc (x, y) -> YExtendedMorph yc oext mext (EOV {yc} x, EOV {yc} y)
+  EMU : {0 oext : YExtendObjF} -> {0 mext : YExtendMorphF oext} ->
+    {0 x, y : YExtendedObj yc oext} ->
+    mext yc (x, y) -> YExtendedMorph yc oext mext (x, y)
+
+public export
+YExtendCovarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
+YExtendCovarDenotation {oext} mext =
+  (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
+  YExtendedMorph yc oext mext (x, y) ->
+  CovarToCovarHomSetRep
+    (YExtendedObj yc oext) (YExtendedMorph yc oext mext) (x, y)
+
+public export
+YExtendContravarDenotation : {oext : YExtendObjF} -> YExtendMorphF oext -> Type
+YExtendContravarDenotation {oext} mext =
+  (yc : YCat) -> (x, y : YExtendedObj yc oext) ->
+  YExtendedMorph yc oext mext (x, y) ->
+  ContravarToContravarHomSetRep
+    (YExtendedObj yc oext) (YExtendedMorph yc oext mext) (x, y)
+
+------------------------------------------------
+---- Free categories from Yoneda categories ----
+------------------------------------------------
+
+public export
+YObjHomSlice : (yc : YCat) -> Type
+YObjHomSlice yc = HomSlice yc.ycObj
+
+public export
+YCatFreeHomSlice : (yc : YCat) -> YObjHomSlice yc
+YCatFreeHomSlice yc = FreeHomM yc.ycObj yc.ycHom
+
+public export
+ycId : (yc : YCat) -> (a : yc.ycObj) -> YCatFreeHomSlice yc (a, a)
+ycId yc a = chId (yc.ycHom) a
+
+public export
+ycComp : (yc : YCat) -> {a, b, c : yc.ycObj} ->
+  YCatFreeHomSlice yc (b, c) -> YCatFreeHomSlice yc (a, b) ->
+  YCatFreeHomSlice yc (a, c)
+ycComp yc {a} {b} {c} g f = chComp g f
+
+public export
+YCHomSliceCata : YCat -> Type
+YCHomSliceCata yc = HomSliceCata yc.ycObj
+
+public export
+ycHomSliceCata : (yc : YCat) -> (sa : HomSlice yc.ycObj) ->
+  SliceMorphism yc.ycHom sa -> SliceAlg CatHomF sa ->
+  SliceMorphism (SliceFreeM CatHomF yc.ycHom) sa
+ycHomSliceCata yc = homSliceCata {obj=yc.ycObj} yc.ycHom
+
+-------------------------------------------
+---- Free-Yoneda-category Yoneda lemma ----
+-------------------------------------------
+
+public export
+ycFreeFMap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
+  ((a, b : yc.ycObj) -> yc.ycHom (a, b) -> f a -> f b) ->
+  ((a, b : yc.ycObj) -> YCatFreeHomSlice yc (a, b) -> f a -> f b)
+ycFreeFMap {yc} {f} = chFreeFMap {obj=yc.ycObj} {hom=yc.ycHom} {f}
+
+public export
+ycFreeFContramap : {yc : YCat} -> {f : SliceObj yc.ycObj} ->
+  ((a, b : yc.ycObj) -> yc.ycHom (a, b) -> f b -> f a) ->
+  ((a, b : yc.ycObj) -> YCatFreeHomSlice yc (a, b) -> f b -> f a)
+ycFreeFContramap {yc} {f} = chFreeFContramap {obj=yc.ycObj} {hom=yc.ycHom} {f}
+
+public export
+YCCovarHomYonedaR :
+  (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
+  InternalNTFromCovarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f -> f a
+YCCovarHomYonedaR yc = FreeCovarHomYonedaR {obj=yc.ycObj} {hom=yc.ycHom}
+
+public export
+YCCovarHomYonedaL : (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
+  (fmap : (a, b : yc.ycObj) -> yc.ycHom (a, b) -> f a -> f b) ->
+  f a -> InternalNTFromCovarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f
+YCCovarHomYonedaL yc = FreeCovarHomYonedaL {obj=yc.ycObj} {hom=yc.ycHom}
+
+public export
+YCContravarHomYonedaR :
+  (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
+  InternalNTFromContravarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f -> f a
+YCContravarHomYonedaR yc = FreeContravarHomYonedaR {obj=yc.ycObj} {hom=yc.ycHom}
+
+public export
+YCContravarHomYonedaL :
+  (yc : YCat) -> (a : yc.ycObj) -> (f : SliceObj yc.ycObj) ->
+  -- f is contravariant
+  (fmap : (a, b : yc.ycObj) -> yc.ycHom (a, b) -> f b -> f a) ->
+  f a -> InternalNTFromContravarHom {obj=yc.ycObj} (YCatFreeHomSlice yc) a f
+YCContravarHomYonedaL yc = FreeContravarHomYonedaL {obj=yc.ycObj} {hom=yc.ycHom}
+
+--------------------------------------------------------
+---- Free Yoneda categories are standard categories ----
+--------------------------------------------------------
+
+public export
+0 ycEqRel : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  RelationOn (YCatFreeHomSlice yc (a, b))
+ycEqRel yc a b (InSlF (a, b) (InSlV v)) (InSlF (a, b) (InSlV v')) =
+  ?ycEqRel_hole_vv
+ycEqRel yc a b (InSlF (a, b) (InSlV v)) (InSlF (a, b) (InSlC m')) =
+  ?ycEqRel_hole_vc
+ycEqRel yc a b (InSlF (a, b) (InSlC m)) (InSlF (a, b) (InSlV v')) =
+  ?ycEqRel_hole_cv
+ycEqRel yc a b (InSlF (a, b) (InSlC m)) (InSlF (a, b) (InSlC m')) =
+  ?ycEqRel_hole_cc
+
+public export
+0 ycEqRelRefl : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  IsReflexive (ycEqRel yc a b)
+ycEqRelRefl yc a b = ?ycEqRelRefl_hole
+
+public export
+0 ycEqRelSym : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  IsSymmetric (ycEqRel yc a b)
+ycEqRelSym yc a b = ?ycEqRelSym_hole
+
+public export
+0 ycEqRelTrans : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  IsTransitive (ycEqRel yc a b)
+ycEqRelTrans yc a b = ?ycEqRelTrans_hole
+
+public export
+0 ycEqRelEquiv : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  IsEquivalence (ycEqRel yc a b)
+ycEqRelEquiv yc a b =
+  MkEquivalence
+    ?ycEqRelRefl_equiv_hole
+    ?ycEqRelSym_equiv_hole
+    ?ycEqRelTrans_equiv_hole
+
+public export
+0 ycEq : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+  EqRel (YCatFreeHomSlice yc (a, b))
+ycEq yc a b = MkEq (ycEqRel yc a b) (ycEqRelEquiv yc a b)
+
+public export
+0 ycIdL : (yc : YCat) -> {0 a, b : yc.ycObj} ->
+  (0 f : YCatFreeHomSlice yc (a, b)) ->
+  (ycEq yc a b).eqRel f (ycComp yc {a} {b} {c=b} (ycId yc b) f)
+ycIdL yc {a} {b} f = ?ycIdL_hole
+
+public export
+0 ycIdR : (yc : YCat) -> {0 a, b : yc.ycObj} ->
+  (0 f : YCatFreeHomSlice yc (a, b)) ->
+  (ycEq yc a b).eqRel f (ycComp yc {a} {b=a} {c=b} f (ycId yc a))
+ycIdR yc {a} {b} f = ?ycIdR_hole
+
+public export
+0 ycAssoc : (yc : YCat) -> {0 a, b, c, d : yc.ycObj} ->
+  (0 f : YCatFreeHomSlice yc (a, b)) -> (0 g : YCatFreeHomSlice yc (b, c)) ->
+  (0 h : YCatFreeHomSlice yc (c, d)) ->
+  (ycEq yc a d).eqRel
+    (ycComp yc {a} {b=c} {c=d} h (ycComp yc {a} {b} {c} g f))
+    (ycComp yc {a} {b} {c=d} (ycComp yc {a=b} {b=c} {c=d} h g) f)
+ycAssoc yc {a} {b} {c} {d} f g h = ?ycAssoc_hole
+
+public export
+YCatToSCat : YCat -> SCat
+YCatToSCat yc =
+  SC
+    yc.ycObj
+    (YCatFreeHomSlice yc)
+    (ycId yc)
+    (ycComp yc)
+    (ycEq yc)
+    (ycIdL yc)
+    (ycIdR yc)
+    (ycAssoc yc)
+
+---------------------------------------------------
+---- Standard categories are Yoneda categories ----
+---------------------------------------------------
+
+public export
+SCatCovarDenotation : (sc : SCat) -> CovarHomCatRep sc.scObj sc.scHom
+SCatCovarDenotation sc a b mab c mbc = sc.scComp mbc mab
+
+public export
+SCatContravarDenotation : (sc : SCat) -> ContravarHomCatRep sc.scObj sc.scHom
+SCatContravarDenotation sc a b mab c mca = sc.scComp mab mca
+
+public export
+SCatToYCat : SCat -> YCat
+SCatToYCat sc =
+  YC
+    sc.scObj
+    sc.scHom
+    (SCatCovarDenotation sc)
+    (SCatContravarDenotation sc)
+
+----------------------------------------------------------------------------
+---- Yoneda <-> standard formulations of category theory are equivalent ----
+----------------------------------------------------------------------------
+
+-- This still needs to be proven.  It will depend upon the slice-category
+-- free monad's properties, such as its being Cartesian and idempotent.
+-- The claim of the equivalence is that YCatToSCat |- SCatToYCatCovar
+-- and YCatToSCat |- SCatToYCatContravar are both adjunctions (so in particular
+-- SCatToYCatCovar and SCatToYCatContravar are naturally isomorphic) between
+-- the category of Yoneda categories and the category of standard categories,
+-- and the counit (in the category of standard categories) is a natural
+-- isomorphism (up to categorical equivalence).
+--
+-- Note that this is an enhancement of the free-forgetful adjunction between
+-- the category of diagrams and the category of (standard) categories.
+-- The "Yoneda category" extends the notion of a diagram with an embedding
+-- of the edges into internal natural transformations of the metalanguage,
+-- which amount to a way of assigning free equalities to paths in the diagram
+-- without having explicitly to introduce identity or composition.
+
+---------------------------------------
+---- Coproducts as Yoneda category ----
+---------------------------------------
+
+public export
+YCoprodObj : YCat -> Type
+YCoprodObj yc = ?YCoprodObj_hole
+
+public export
+YCoprodHom : (yc : YCat) -> HomSlice (YCoprodObj yc)
+YCoprodHom yc = ?YCoprodHom_hole
+
+public export
+YCoprodCovarDenotation : (yc : YCat) ->
+  CovarHomCatRep (YCoprodObj yc) (YCoprodHom yc)
+YCoprodCovarDenotation yc = ?YCoprodCovarDenotation_hole
+
+public export
+YCoprodContravarDenotation : (yc : YCat) ->
+  ContravarHomCatRep (YCoprodObj yc) (YCoprodHom yc)
+YCoprodContravarDenotation yc = ?YCoprodContravarDenotation_hole
+
+public export
+YCoprodCovarEqImpliesContravar : (yc : YCat) ->
+  CovarEqImpliesContravar {obj=(YCoprodObj yc)} {hom=(YCoprodHom yc)}
+    (YCoprodCovarDenotation yc) (YCoprodContravarDenotation yc)
+YCoprodCovarEqImpliesContravar yc = ?YCoprodCovarEqImpliesContravar_hole
+
+public export
+YCoprodContravarEqImpliesCovar : (yc : YCat) ->
+  ContravarEqImpliesCovar {obj=(YCoprodObj yc)} {hom=(YCoprodHom yc)}
+    (YCoprodCovarDenotation yc) (YCoprodContravarDenotation yc)
+YCoprodContravarEqImpliesCovar yc = ?YCoprodContravarEqImpliesCovar_hole
+
+public export
+YCoprod : YCat -> YCat
+YCoprod yc =
+  YC
+    (YCoprodObj yc)
+    (YCoprodHom yc)
+    (YCoprodCovarDenotation yc)
+    (YCoprodContravarDenotation yc)
 
 ---------------------
 ---------------------
