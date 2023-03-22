@@ -52,6 +52,72 @@ public export
 HomUncurry : (obj -> obj -> Type) -> HomSlice obj
 HomUncurry hom (x, y) = hom x y
 
+public export
+InternalNTFromCovarHom : {obj : Type} ->
+  (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
+InternalNTFromCovarHom {obj} hom =
+  SliceMorphism {a=obj} . InternalCovarHom hom
+
+public export
+InternalNTFromContravarHom : {obj : Type} ->
+  (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
+InternalNTFromContravarHom {obj} hom =
+  SliceMorphism {a=obj} . InternalContravarHom hom
+
+---------------------------------------------------------------
+---------------------------------------------------------------
+---- Standard (Mac Lane / Eilenberg) internal categories ----
+---------------------------------------------------------------
+---------------------------------------------------------------
+
+public export
+record SCat where
+  constructor SC
+  scObj : Type
+  scHom : HomSlice scObj
+  scId : (a : scObj) -> scHom (a, a)
+  scComp : {a, b, c : scObj} -> scHom (b, c) -> scHom (a, b) -> scHom (a, c)
+  0 scEq : (0 a, b : scObj) -> EqRel (scHom (a, b))
+  0 scIdL : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
+    (scEq a b).eqRel f (scComp {a} {b} {c=b} (scId b) f)
+  0 scIdR : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
+    (scEq a b).eqRel f (scComp {a} {b=a} {c=b} f (scId a))
+  0 scIdAssoc : {0 a, b, c, d : scObj} ->
+    (0 f : scHom (a, b)) -> (0 g : scHom (b, c)) -> (0 h : scHom (c, d)) ->
+    (scEq a d).eqRel
+      (scComp {a} {b=c} {c=d} h (scComp {a} {b} {c} g f))
+      (scComp {a} {b} {c=d} (scComp {a=b} {b=c} {c=d} h g) f)
+
+----------------------------------------
+---- Standard-category Yoneda lemma ----
+----------------------------------------
+
+public export
+SCCovarHomYonedaR :
+  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  InternalNTFromCovarHom {obj=sc.scObj} sc.scHom a f -> f a
+SCCovarHomYonedaR sc a f alpha = alpha a $ sc.scId a
+
+public export
+SCCovarHomYonedaL : (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f a -> f b) ->
+  f a -> InternalNTFromCovarHom {obj=sc.scObj} sc.scHom a f
+SCCovarHomYonedaL sc a f fmap fa b mab = fmap a b mab fa
+
+public export
+SCContravarHomYonedaR :
+  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f -> f a
+SCContravarHomYonedaR sc a f alpha = alpha a $ sc.scId a
+
+public export
+SCContravarHomYonedaL :
+  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  -- f is contravariant
+  (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f b -> f a) ->
+  f a -> InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f
+SCContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
+
 -------------------------
 -------------------------
 ---- Free categories ----
@@ -175,18 +241,6 @@ chFreeFContramap {obj} {hom} {f} fmap a b =
 ------------------------------------------
 ---- Internal natural transformations ----
 ------------------------------------------
-
-public export
-InternalNTFromCovarHom : {obj : Type} ->
-  (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
-InternalNTFromCovarHom {obj} hom =
-  SliceMorphism {a=obj} . InternalCovarHom hom
-
-public export
-InternalNTFromContravarHom : {obj : Type} ->
-  (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
-InternalNTFromContravarHom {obj} hom =
-  SliceMorphism {a=obj} . InternalContravarHom hom
 
 public export
 CovarToCovarHomRep : {obj : Type} -> HomEndofunctor obj
@@ -421,58 +475,6 @@ FreeContravarHomYonedaL : {obj : Type} -> {hom : HomSlice obj} ->
   f a -> InternalNTFromContravarHom {obj} (FreeHomM obj hom) a f
 FreeContravarHomYonedaL {obj} {hom} a f fmap fa b mba =
   chFreeFContramap fmap b a mba fa
-
----------------------------------------------------------------
----- Standard ("Mac Lane - Eilenberg") internal categories ----
----------------------------------------------------------------
-
-public export
-record SCat where
-  constructor SC
-  scObj : Type
-  scHom : HomSlice scObj
-  scId : (a : scObj) -> scHom (a, a)
-  scComp : {a, b, c : scObj} -> scHom (b, c) -> scHom (a, b) -> scHom (a, c)
-  0 scEq : (0 a, b : scObj) -> EqRel (scHom (a, b))
-  0 scIdL : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
-    (scEq a b).eqRel f (scComp {a} {b} {c=b} (scId b) f)
-  0 scIdR : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
-    (scEq a b).eqRel f (scComp {a} {b=a} {c=b} f (scId a))
-  0 scIdAssoc : {0 a, b, c, d : scObj} ->
-    (0 f : scHom (a, b)) -> (0 g : scHom (b, c)) -> (0 h : scHom (c, d)) ->
-    (scEq a d).eqRel
-      (scComp {a} {b=c} {c=d} h (scComp {a} {b} {c} g f))
-      (scComp {a} {b} {c=d} (scComp {a=b} {b=c} {c=d} h g) f)
-
-----------------------------------------
----- Standard-category Yoneda lemma ----
-----------------------------------------
-
-public export
-SCCovarHomYonedaR :
-  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
-  InternalNTFromCovarHom {obj=sc.scObj} sc.scHom a f -> f a
-SCCovarHomYonedaR sc a f alpha = alpha a $ sc.scId a
-
-public export
-SCCovarHomYonedaL : (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
-  (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f a -> f b) ->
-  f a -> InternalNTFromCovarHom {obj=sc.scObj} sc.scHom a f
-SCCovarHomYonedaL sc a f fmap fa b mab = fmap a b mab fa
-
-public export
-SCContravarHomYonedaR :
-  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
-  InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f -> f a
-SCContravarHomYonedaR sc a f alpha = alpha a $ sc.scId a
-
-public export
-SCContravarHomYonedaL :
-  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
-  -- f is contravariant
-  (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f b -> f a) ->
-  f a -> InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f
-SCContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
 
 --------------------------------------------
 --------------------------------------------
