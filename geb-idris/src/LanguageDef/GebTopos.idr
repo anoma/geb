@@ -232,6 +232,108 @@ chFreeFContramap {obj} {hom} {f} fmap a b =
     (\(x, z), m => case m of CHId z => id ; CHComp g f => f . g)
     (a, b)
 
+public export
+record Diagram where
+  constructor MkDiagram
+  dVert : Type
+  dEdge : HomSlice dVert
+  -- `dRel` is a relation which, when we freely generate a category from
+  -- the diagram, will freely generate an equivalence relation, but `dRel`
+  -- itself does not promise to be an equivalence relation.
+  0 dRel : (a, b : dVert) -> RelationOn (dEdge (a, b))
+
+public export
+diagToCatForget : SCat -> Diagram
+diagToCatForget sc = MkDiagram sc.scObj sc.scHom (\a, b => eqRel $ sc.scEq a b)
+
+public export
+DiagFreeObj : Diagram -> Type
+DiagFreeObj diag = diag.dVert
+
+public export
+DiagFreeHom : (diag : Diagram) -> HomSlice (DiagFreeObj diag)
+DiagFreeHom diag = FreeHomM diag.dVert diag.dEdge
+
+public export
+diagFreeId :
+  (diag : Diagram) -> (a : DiagFreeObj diag) -> DiagFreeHom diag (a, a)
+diagFreeId diag a = chId diag.dEdge a
+
+public export
+diagFreeComp : {diag : Diagram} -> {a, b, c : DiagFreeObj diag} ->
+  DiagFreeHom diag (b, c) -> DiagFreeHom diag (a, b) -> DiagFreeHom diag (a, c)
+diagFreeComp {diag} g f = chComp {hom=diag.dEdge} g f
+
+public export
+DiagFreeRel : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+  RelationOn (DiagFreeHom diag (a, b))
+DiagFreeRel diag a b = ?DiagFreeRel_hole
+
+public export
+DiagFreeRelIsRefl : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+  IsReflexive (DiagFreeRel diag a b)
+DiagFreeRelIsRefl diag a b = ?DiagFreeRelIsRefl_hole
+
+public export
+DiagFreeRelIsSym : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+  IsSymmetric (DiagFreeRel diag a b)
+DiagFreeRelIsSym diag a b = ?DiagFreeRelIsSym_hole
+
+public export
+DiagFreeRelIsTrans : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+  IsTransitive (DiagFreeRel diag a b)
+DiagFreeRelIsTrans diag a b = ?DiagFreeRelIsTrans_hole
+
+public export
+DiagFreeRelIsEquiv : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+  IsEquivalence (DiagFreeRel diag a b)
+DiagFreeRelIsEquiv diag a b =
+  MkEquivalence
+    (DiagFreeRelIsRefl diag a b)
+    ?DiagFreeRelIsEquiv_hole_sym   -- (DiagFreeRelIsSym diag a b)
+    ?DiagFreeRelIsEquiv_hole_trans -- (DiagFreeRelIsTrans diag a b)
+
+public export
+DiagFreeEqRel : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+  EqRel (DiagFreeHom diag (a, b))
+DiagFreeEqRel diag a b =
+  MkEq (DiagFreeRel diag a b) (DiagFreeRelIsEquiv diag a b)
+
+public export
+DiagFreeIdL : (diag : Diagram) -> {0 a, b : DiagFreeObj diag} ->
+  (0 f : DiagFreeHom diag (a, b)) ->
+  DiagFreeRel diag a b f (diagFreeComp {diag} (diagFreeId diag b) f)
+DiagFreeIdL diag {a} {b} f = ?DiagFreeIdL_hole
+
+public export
+DiagFreeIdR : (diag : Diagram) -> {0 a, b : DiagFreeObj diag} ->
+  (0 f : DiagFreeHom diag (a, b)) ->
+  DiagFreeRel diag a b f (diagFreeComp {diag} f (diagFreeId diag a))
+DiagFreeIdR diag {a} {b} f = ?DiagFreeIdR_hole
+
+public export
+DiagFreeAssoc : (diag : Diagram) -> {0 a, b, c, d : DiagFreeObj diag} ->
+  (0 f : DiagFreeHom diag (a, b)) ->
+  (0 g : DiagFreeHom diag (b, c)) ->
+  (0 h : DiagFreeHom diag (c, d)) ->
+  DiagFreeRel diag a d
+    (diagFreeComp {diag} h (diagFreeComp {diag} g f))
+    (diagFreeComp {diag} (diagFreeComp {diag} h g) f)
+DiagFreeAssoc diag {a} {b} f = ?DiagFreeAssoc_hole
+
+public export
+DiagToFreeCat : Diagram -> SCat
+DiagToFreeCat diag =
+  SC
+    (DiagFreeObj diag)
+    (DiagFreeHom diag)
+    (diagFreeId diag)
+    (diagFreeComp {diag})
+    (DiagFreeEqRel diag)
+    (DiagFreeIdL diag)
+    (DiagFreeIdR diag)
+    (DiagFreeAssoc diag)
+
 --------------------------------
 --------------------------------
 ---- Yoneda lemma utilities ----
@@ -485,12 +587,6 @@ FreeContravarHomYonedaL {obj} {hom} a f fmap fa b mba =
 ---------------------------
 ---- General utilities ----
 ---------------------------
-
-public export
-record Diagram where
-  constructor MkDiagram
-  dVert : Type
-  dEdge : HomSlice dVert
 
 public export
 data EMorphEitherF :
