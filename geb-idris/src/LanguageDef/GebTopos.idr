@@ -265,9 +265,36 @@ diagFreeComp : {diag : Diagram} -> {a, b, c : DiagFreeObj diag} ->
 diagFreeComp {diag} g f = chComp {hom=diag.dEdge} g f
 
 public export
-DiagFreeRel : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
-  RelationOn (DiagFreeHom diag (a, b))
-DiagFreeRel diag a b = ?DiagFreeRel_hole
+data DiagFreeRel : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+    RelationOn (DiagFreeHom diag (a, b)) where
+  DFRfree : {0 diag : Diagram} ->
+    {0 a, b : diag.dVert} -> {0 f, g : diag.dEdge (a, b)} ->
+    diag.dRel a b f g -> DiagFreeRel diag a b (InSlFv f) (InSlFv g)
+  DFRrefl : {0 diag : Diagram} ->
+    {0 a, b : DiagFreeObj diag} -> (0 f : DiagFreeHom diag (a, b)) ->
+    DiagFreeRel diag a b f f
+  DFRsym : {0 diag : Diagram} ->
+    {0 a, b : DiagFreeObj diag} -> {0 f, g : DiagFreeHom diag (a, b)} ->
+    DiagFreeRel diag a b f g -> DiagFreeRel diag a b g f
+  DFRtrans : {0 diag : Diagram} ->
+    {0 a, b : DiagFreeObj diag} -> {0 f, g, h : DiagFreeHom diag (a, b)} ->
+    DiagFreeRel diag a b g h ->
+    DiagFreeRel diag a b f g ->
+    DiagFreeRel diag a b f h
+  DFRidL : {0 diag : Diagram} ->
+    {0 a, b : DiagFreeObj diag} -> (0 f : DiagFreeHom diag (a, b)) ->
+    DiagFreeRel diag a b f (diagFreeComp {diag} (diagFreeId diag b) f)
+  DFRidR : {0 diag : Diagram} ->
+    {0 a, b : DiagFreeObj diag} -> (0 f : DiagFreeHom diag (a, b)) ->
+    DiagFreeRel diag a b f (diagFreeComp {diag} f (diagFreeId diag a))
+  DFRassoc : {0 diag : Diagram} ->
+    {0 a, b, c, d : DiagFreeObj diag} ->
+    (0 f : DiagFreeHom diag (a, b)) ->
+    (0 g : DiagFreeHom diag (b, c)) ->
+    (0 h : DiagFreeHom diag (c, d)) ->
+    DiagFreeRel diag a d
+      (diagFreeComp {diag} h (diagFreeComp {diag} g f))
+      (diagFreeComp {diag} (diagFreeComp {diag} h g) f)
 
 public export
 DiagFreeRelIsRefl : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
@@ -290,8 +317,8 @@ DiagFreeRelIsEquiv : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
 DiagFreeRelIsEquiv diag a b =
   MkEquivalence
     (DiagFreeRelIsRefl diag a b)
-    ?DiagFreeRelIsEquiv_hole_sym   -- (DiagFreeRelIsSym diag a b)
-    ?DiagFreeRelIsEquiv_hole_trans -- (DiagFreeRelIsTrans diag a b)
+    (DiagFreeRelIsSym diag a b)
+    (DiagFreeRelIsTrans diag a b)
 
 public export
 DiagFreeEqRel : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
