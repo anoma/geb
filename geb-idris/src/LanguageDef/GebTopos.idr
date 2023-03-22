@@ -702,15 +702,6 @@ initialPreCompRAA : {0 obj : Type} -> (hom : HomSlice obj) ->
 initialPreCompRAA hom comp b c mbc (InRAFrom0 b) = InRAFrom0 c
 
 public export
-initialPostCompUnit : {obj : Type} -> (hom : HomSlice obj) ->
-  (a, a', c : obj) ->
-  InitialRightAdj hom (Obj0, c) ->
-  InitialUnitF {obj} hom (a, Obj0) ->
-  InitialUnitF {obj} hom (a', Obj0) ->
-  InitialRightAdj {obj} {obj'=obj} hom (Obj0, c)
-initialPostCompUnit hom a a' c (InRAFrom0 c) ma0 ma'0 = case ma0 of _ impossible
-
-public export
 initialUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
   (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
   (a : obj) -> (b : InitialObjF obj) ->
@@ -763,7 +754,7 @@ initialExtendReduce comp a b (TFC c) mbc mab =
 initialExtendReduce comp (TFV a) (TFC b) (TFV c) mbc mab =
   Just $ initialRAAfterUnit {hom} a b c mbc mab
 initialExtendReduce comp (TFC Obj0) (TFC Obj0) (TFV c)
-  m0c (InRAFrom0 Obj0) = Just $ InRAFrom0 c
+  (InRAFrom0 c) (InRAFrom0 Obj0) = Just $ InRAFrom0 c
 initialExtendReduce {hom} comp (TFC Obj0) (TFV b) (TFV c) mbc mab =
   Just $ initialPreCompRAA hom comp b c mbc mab
 
