@@ -653,26 +653,24 @@ public export
 data InitialObjF : (obj : Type) -> Type where
   Obj0 : InitialObjF obj
 
--- The functor which freely generates an initial morphism extends
--- the internal hom-profunctor with a mapping from each object to
--- the new freely-generated (initial) object.
-public export
-data InitialMorphF : (obj : Type) -> (hom : HomSlice obj) ->
-    HomSlice (TrEitherF InitialObjF obj) where
-  Morph0 : (x : obj) -> InitialMorphF obj hom (TFC Obj0, TFV x)
-
+-- The initial object's universal morphisms come from the unit in the terminal
+-- category -- which is to say, there aren't any!
 public export
 data InitialUnitF : {obj : Type} -> (hom : HomSlice obj) ->
     SliceObj (obj, InitialObjF obj) where
 
--- Equivalent to:
--- InitialCovarHom hom Obj0 c = Unit
+-- The right adjunct, which takes an object from the base category
+-- (the only morphism in the other category, which is the terminal
+-- category, is the identity morphism on its only object, so it is
+-- an ignored parameter) and produces a unique morphism to it from
+-- the initial object.
 public export
-data InitialCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
-    SliceObj (InitialObjF obj, obj) where
-  InRAFrom0 : (0 c : obj) ->
-    InitialCovarHom {obj} hom (Obj0, c)
+data InitialRightAdj : {0 obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
+    SliceObj (InitialObjF obj, obj') where
+  InRAFrom0 : {obj, obj' : Type} -> {hom : SliceObj (obj, obj')} ->
+    (a : obj') -> InitialRightAdj {obj} {obj'} hom (Obj0, a)
 
+{-
 public export
 InitialMorphExtendDenoteCovar : (obj : Type) -> (hom : HomSlice obj) ->
   MorphDenoteExtendCovar obj InitialObjF hom (InitialMorphF obj hom)
@@ -710,6 +708,7 @@ InitialMorphInterpMorph : (obj : Type) -> (hom : HomSlice obj) ->
 InitialMorphInterpMorph obj hom ointerp minterp (TFV a) b m impossible
 InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) (TFV b) (Morph0 b) =
   voidF (ExtendInitialMorphInterpObj obj ointerp (TFV b))
+  -}
 
 -------------------------
 ---- Terminal object ----
@@ -719,17 +718,22 @@ public export
 data TerminalObjF : (obj : Type) -> Type where
   Obj1 : TerminalObjF obj
 
+-- The terminal object's universal morphisms come from the counit in the
+-- terminal category -- which is to say, there aren't any!
 public export
 data TerminalCounitF : {obj : Type} -> (hom : HomSlice obj) ->
-    SliceObj (TerminalObjF obj, obj) where
-
--- Equivalent to:
--- TerminalContravarHom hom Obj1 c = Unit
-public export
-data TerminalContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
     SliceObj (obj, TerminalObjF obj) where
-  InLATo1 : (0 c : obj) ->
-    TerminalContravarHom {obj} hom (c, Obj1)
+
+-- The left adjunct, which takes an object from the base category
+-- (the only morphism in the other category, which is the terminal
+-- category, is the identity morphism on its only object, so it is
+-- an ignored parameter) and produces a unique morphism from it from
+-- the terminal object.
+public export
+data TerminalLeftAdj : {0 obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
+    SliceObj (obj, TerminalObjF obj') where
+  InLATo1 : {obj, obj' : Type} -> {hom : SliceObj (obj, obj')} ->
+    (a : obj) -> TerminalLeftAdj {obj} {obj'} hom (a, Obj1)
 
 --------------------
 ---- Coproducts ----
