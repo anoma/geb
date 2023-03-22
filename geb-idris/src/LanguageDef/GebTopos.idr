@@ -758,45 +758,80 @@ initialExtendReduce comp (TFC Obj0) (TFC Obj0) (TFV c)
 initialExtendReduce {hom} comp (TFC Obj0) (TFV b) (TFV c) mbc mab =
   Just $ initialPreCompRAA hom comp b c mbc mab
 
-{-
+-- Extend composition.  Returns CHComp if irreducible.
 public export
-InitialMorphExtendDenoteCovar : (obj : Type) -> (hom : HomSlice obj) ->
-  MorphDenoteExtendCovar obj InitialObjF hom (InitialMorphF obj hom)
-InitialMorphExtendDenoteCovar
-  obj hom denote (TFC Obj0) (TFV b) (Morph0 b) (TFV c) (MEV mbc) =
-    FMU $ Morph0 c
-InitialMorphExtendDenoteCovar
-  _ _ _ (TFC Obj0) (TFV _) (Morph0 _) _ (FMU (Morph0 _)) impossible
+initialExtendCompose : {obj : Type} -> {hom : HomSlice obj} ->
+  (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
+  (a, b, c : TrEitherF InitialObjF obj) ->
+  InitialExtendHom hom (b, c) ->
+  InitialExtendHom hom (a, b) ->
+  CatEitherF (InitialExtendHom hom) (a, c)
+initialExtendCompose comp a b c mbc mab with
+  (initialExtendReduce comp a b c mbc mab)
+    initialExtendCompose comp a b c mbc mab | Just mac = InSlV mac
+    initialExtendCompose comp a b c mbc mab | Nothing = CEcomp mbc mab
+
+-- Extend object interpretation.
+public export
+InitialInterpObj : {obj : Type} -> SliceObj obj -> SliceObj (InitialObjF obj)
+InitialInterpObj interp Obj0 = Void
 
 public export
-InitialMorphExtendDenoteContravar :
-  (obj : Type) -> (hom :  HomSlice obj) ->
-  MorphDenoteExtendContravar obj InitialObjF hom (InitialMorphF obj hom)
-InitialMorphExtendDenoteContravar _ _ _
-  (TFC Obj0) (TFV _) (Morph0 _) _ (FMU (Morph0 c)) impossible
+ExtendInitialInterpObj : {obj : Type} ->
+  SliceObj obj -> SliceObj (TrEitherF InitialObjF obj)
+ExtendInitialInterpObj = sliceTrMap InitialInterpObj
 
 public export
-InitialMorphInterpObj : (obj : Type) -> (obj -> Type) -> InitialObjF obj -> Type
-InitialMorphInterpObj obj interp Obj0 = Void
+initialInterpUnit : {obj : Type} -> (hom : HomSlice obj) ->
+  (ointerp : SliceObj obj) ->
+  (minterp : (a, b : obj) -> hom (a, b) -> ointerp a -> ointerp b) ->
+  (a : obj) -> (b : InitialObjF obj) ->
+  InitialUnitF hom (a, b) ->
+  ointerp a -> InitialInterpObj {obj} ointerp b
+initialInterpUnit hom ointerp minterp a Obj0 f = case f of _ impossible
 
 public export
-ExtendInitialMorphInterpObj : (obj : Type) -> (obj -> Type) ->
-  TrEitherF InitialObjF obj -> Type
-ExtendInitialMorphInterpObj obj interp =
-  trElim interp (InitialMorphInterpObj obj interp)
+initialInterpRightAdj : {obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
+  (ointerp : SliceObj obj) ->
+  (ointerp' : SliceObj obj') ->
+  (minterp :
+    (a : obj) -> (b : obj') -> hom (a, b) -> ointerp a -> ointerp' b) ->
+  (a : InitialObjF obj) -> (b : obj') ->
+  InitialRightAdj {obj} {obj'} hom (a, b) ->
+  InitialInterpObj {obj} ointerp a ->
+  ointerp' b
+initialInterpRightAdj hom ointerp ointerp' minterp Obj0 b f = voidF (ointerp' b)
 
 public export
-InitialMorphInterpMorph : (obj : Type) -> (hom : HomSlice obj) ->
-  (ointerp : obj -> Type) ->
+ExtendInitialInterpMorph : {obj : Type} -> (hom : HomSlice obj) ->
+  (ointerp : SliceObj obj) ->
   (minterp : (a, b : obj) -> hom (a, b) -> ointerp a -> ointerp b) ->
   (a, b : TrEitherF InitialObjF obj) ->
-  InitialMorphF obj hom (a, b) ->
-  ExtendInitialMorphInterpObj obj ointerp a ->
-  ExtendInitialMorphInterpObj obj ointerp b
-InitialMorphInterpMorph obj hom ointerp minterp (TFV a) b m impossible
-InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) (TFV b) (Morph0 b) =
-  voidF (ExtendInitialMorphInterpObj obj ointerp (TFV b))
-  -}
+  InitialExtendHom {obj} hom (a, b) ->
+  ExtendInitialInterpObj {obj} ointerp a ->
+  ExtendInitialInterpObj {obj} ointerp b
+ExtendInitialInterpMorph hom ointerp minterp (TFV a) (TFV b)
+  f = minterp a b f
+ExtendInitialInterpMorph hom ointerp minterp (TFV a) (TFC b) mab =
+  initialInterpUnit hom ointerp minterp a b mab
+ExtendInitialInterpMorph {obj} hom ointerp minterp (TFC a) (TFV b) adj =
+  initialInterpRightAdj {obj} {obj'=obj}
+    hom
+    ointerp
+    ointerp
+    minterp
+    a
+    b
+    adj
+ExtendInitialInterpMorph {obj} hom ointerp minterp (TFC a) (TFC b) adj =
+  initialInterpRightAdj {obj} {obj'=(InitialObjF obj)}
+    (InitialUnitF hom)
+    ointerp
+    (InitialInterpObj ointerp)
+    (initialInterpUnit hom ointerp minterp)
+    a
+    b
+    adj
 
 -------------------------
 ---- Terminal object ----
