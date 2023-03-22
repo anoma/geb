@@ -1260,6 +1260,24 @@ coprodPostCompUnit {obj} hom a a' b b' c mab ma'b mbc =
 
 -- Extend reduction.  Returns Nothing if irreducible.
 public export
+coprodExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+  (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
+  (a, b : TrEitherF CoprodObjF obj) ->
+  RelationOn (CoprodExtendHom hom (a, b))
+coprodExtendEq eq (TFV a) (TFV b) f g = eq a b f g
+coprodExtendEq eq (TFV a) (TFC (ObjCp a b)) (CpUnInjL a b) (CpUnInjL a b) = Unit
+coprodExtendEq eq (TFV a) (TFC (ObjCp a a)) (CpUnInjL a a) (CpUnInjR a a) = Void
+coprodExtendEq eq (TFV a) (TFC (ObjCp a a)) (CpUnInjR a a) (CpUnInjL a a) = Void
+coprodExtendEq eq (TFV b) (TFC (ObjCp a b)) (CpUnInjR a b) (CpUnInjR a b) = Unit
+coprodExtendEq eq (TFC (ObjCp a a')) (TFV b) (CpRACase f g) (CpRACase f' g') =
+  Pair (eq a b f f') (eq a' b g g')
+coprodExtendEq eq (TFC (ObjCp a a')) (TFC (ObjCp b b')) (CpRACase f _) _ =
+  case f of
+    CpInjL _ _ impossible
+    CpInjR _ _ impossible
+
+-- Extend reduction.  Returns Nothing if irreducible.
+public export
 coprodExtendReduce : {obj : Type} -> {hom : HomSlice obj} ->
   (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
   (a, b, c : TrEitherF CoprodObjF obj) ->
