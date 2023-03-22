@@ -1155,8 +1155,25 @@ coprodExtendEq eq (TFV a) (TFC (ObjCp a a)) (CpUnInjR a a) (CpUnInjL a a) = Void
 coprodExtendEq eq (TFV b) (TFC (ObjCp a b)) (CpUnInjR a b) (CpUnInjR a b) = Unit
 coprodExtendEq eq (TFC (ObjCp a a')) (TFV b) (CpRACase f g) (CpRACase f' g') =
   Pair (eq a b f f') (eq a' b g g')
-coprodExtendEq eq (TFC (ObjCp a a')) (TFC (ObjCp b b')) (CpRACase f g) h =
-  ?coprodExtendEq_hole
+coprodExtendEq eq (TFC (ObjCp a a')) (TFC (ObjCp b b'))
+  (CpRACase f g) (CpRACase f' g') =
+    case (f, g, f', g') of
+      (CpUnInjL c d, CpUnInjL c d, CpUnInjL c d, CpUnInjL c d) => Unit
+      (CpUnInjL c c, CpUnInjL c c, CpUnInjL c c, CpUnInjR c c) => Void
+      (CpUnInjL c c, CpUnInjL c c, CpUnInjR c c, CpUnInjL c c) => Void
+      (CpUnInjL c c, CpUnInjL c c, CpUnInjR c c, CpUnInjR c c) => Void
+      (CpUnInjL c c, CpUnInjR c c, CpUnInjL c c, CpUnInjL c c) => Void
+      (CpUnInjL c d, CpUnInjR c d, CpUnInjL c d, CpUnInjR c d) => Unit
+      (CpUnInjL c c, CpUnInjR c c, CpUnInjR c c, CpUnInjL c c) => Void
+      (CpUnInjL c c, CpUnInjR c c, CpUnInjR c c, CpUnInjR c c) => Void
+      (CpUnInjR c c, CpUnInjL c c, CpUnInjL c c, CpUnInjL c c) => Void
+      (CpUnInjR c c, CpUnInjL c c, CpUnInjL c c, CpUnInjR c c) => Void
+      (CpUnInjR c d, CpUnInjL c d, CpUnInjR c d, CpUnInjL c d) => Unit
+      (CpUnInjR c c, CpUnInjL c c, CpUnInjR c c, CpUnInjR c c) => Void
+      (CpUnInjR c c, CpUnInjR c c, CpUnInjL c c, CpUnInjL c c) => Void
+      (CpUnInjR c c, CpUnInjR c c, CpUnInjL c c, CpUnInjR c c) => Void
+      (CpUnInjR c c, CpUnInjR c c, CpUnInjR c c, CpUnInjL c c) => Void
+      (CpUnInjR c d, CpUnInjR c d, CpUnInjR c d, CpUnInjR c d) => Unit
 
 -- Extend reduction.  Returns Nothing if irreducible.
 public export
