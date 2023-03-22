@@ -670,6 +670,103 @@ data InitialRightAdj : {0 obj, obj' : Type} -> (hom : SliceObj (obj, obj')) ->
   InRAFrom0 : {obj, obj' : Type} -> {hom : SliceObj (obj, obj')} ->
     (a : obj') -> InitialRightAdj {obj} {obj'} hom (Obj0, a)
 
+-- Extend a profunctor H : (Cop, C) -> Type.
+public export
+InitialExtendHom : {obj : Type} -> (hom : HomSlice obj) ->
+  HomSlice (TrEitherF InitialObjF obj)
+InitialExtendHom {obj} hom (TFV x, TFV y) =
+  hom (x, y)
+InitialExtendHom {obj} hom (TFV x, TFC yz) =
+  InitialUnitF {obj} hom (x, yz)
+InitialExtendHom {obj} hom (TFC xy, TFV z) =
+  InitialRightAdj {obj} {obj'=obj} hom (xy, z)
+InitialExtendHom {obj} hom (TFC xy, TFC xy') =
+  InitialRightAdj {obj} {obj'=(InitialObjF obj)}
+    (InitialUnitF {obj} hom) (xy, xy')
+
+public export
+initialRAAfterUnit : {obj : Type} -> {hom : HomSlice obj} ->
+  (a : obj) -> (b : InitialObjF obj) -> (c : obj) ->
+  (mbc : InitialRightAdj {obj} {obj'=obj} hom (b, c)) ->
+  InitialUnitF {obj} hom (a, b) ->
+  hom (a, c)
+initialRAAfterUnit a Obj0 b (InRAFrom0 b) ma0 = case ma0 of _ impossible
+
+public export
+initialPreCompRAA : {0 obj : Type} -> (hom : HomSlice obj) ->
+  (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
+  (b, c : obj) ->
+  hom (b, c) ->
+  InitialRightAdj {obj} {obj'=obj} hom (Obj0, b) ->
+  InitialRightAdj {obj} {obj'=obj} hom (Obj0, c)
+initialPreCompRAA hom comp b c mbc (InRAFrom0 b) = InRAFrom0 c
+
+public export
+initialPostCompUnit : {obj : Type} -> (hom : HomSlice obj) ->
+  (a, a', c : obj) ->
+  InitialUnitF {obj} hom (a, Obj0) ->
+  InitialUnitF {obj} hom (a', Obj0) ->
+  InitialRightAdj hom (Obj0, c) ->
+  InitialRightAdj {obj} {obj'=obj} hom (Obj0, c)
+initialPostCompUnit hom a a' c ma0 ma'0 (InRAFrom0 c) = case ma0 of _ impossible
+
+public export
+initialUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+  (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
+  (a : obj) -> (b : InitialObjF obj) ->
+  RelationOn (InitialUnitF hom (a, b))
+initialUnitExtendEq eq a b mab mab' = case mab of _ impossible
+
+public export
+initialRightAdjExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+  (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
+  (a : InitialObjF obj) -> (b : obj) ->
+  RelationOn (InitialRightAdj hom (a, b))
+initialRightAdjExtendEq eq Obj0 b (InRAFrom0 b) (InRAFrom0 b) = Unit
+
+public export
+initialRightAdjUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+  (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
+  (a, b : InitialObjF obj) ->
+  RelationOn (InitialRightAdj {obj} {obj'=(InitialObjF obj)}
+    (InitialUnitF hom) (a, b))
+initialRightAdjUnitExtendEq eq Obj0 Obj0 (InRAFrom0 Obj0) g =
+  case g of InRAFrom0 Obj0 => Unit
+
+-- Extend equality.
+public export
+initialExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+  (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
+  (a, b : TrEitherF InitialObjF obj) ->
+  RelationOn (InitialExtendHom hom (a, b))
+initialExtendEq eq (TFV a) (TFV b) f g =
+  eq a b f g
+initialExtendEq eq (TFV a) (TFC b) f g =
+  initialUnitExtendEq eq a b f g
+initialExtendEq {hom} eq (TFC a) (TFV b) f g =
+  initialRightAdjExtendEq {hom} eq a b f g
+initialExtendEq eq (TFC a) (TFC b) f g =
+  initialRightAdjUnitExtendEq {obj} {hom} eq a b f g
+
+-- Extend reduction.  Returns Nothing if irreducible.
+public export
+initialExtendReduce : {obj : Type} -> {hom : HomSlice obj} ->
+  (comp : {0 a, b, c : obj} -> hom (b, c) -> hom (a, b) -> hom (a, c)) ->
+  (a, b, c : TrEitherF InitialObjF obj) ->
+  InitialExtendHom hom (b, c) ->
+  InitialExtendHom hom (a, b) ->
+  Maybe (InitialExtendHom hom (a, c))
+initialExtendReduce comp (TFV a) (TFV b) (TFV c) mbc mab =
+  Just $ comp mbc mab
+initialExtendReduce comp a b (TFC c) mbc mab =
+  Nothing
+initialExtendReduce comp (TFV a) (TFC b) (TFV c) mbc mab =
+  Just $ initialRAAfterUnit {hom} a b c mbc mab
+initialExtendReduce comp (TFC Obj0) (TFC Obj0) (TFV c)
+  m0c (InRAFrom0 Obj0) = Just $ InRAFrom0 c
+initialExtendReduce {hom} comp (TFC Obj0) (TFV b) (TFV c) mbc mab =
+  Just $ initialPreCompRAA hom comp b c mbc mab
+
 {-
 public export
 InitialMorphExtendDenoteCovar : (obj : Type) -> (hom : HomSlice obj) ->
