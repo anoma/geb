@@ -704,11 +704,11 @@ initialPreCompRAA hom comp b c mbc (InRAFrom0 b) = InRAFrom0 c
 public export
 initialPostCompUnit : {obj : Type} -> (hom : HomSlice obj) ->
   (a, a', c : obj) ->
+  InitialRightAdj hom (Obj0, c) ->
   InitialUnitF {obj} hom (a, Obj0) ->
   InitialUnitF {obj} hom (a', Obj0) ->
-  InitialRightAdj hom (Obj0, c) ->
   InitialRightAdj {obj} {obj'=obj} hom (Obj0, c)
-initialPostCompUnit hom a a' c ma0 ma'0 (InRAFrom0 c) = case ma0 of _ impossible
+initialPostCompUnit hom a a' c (InRAFrom0 c) ma0 ma'0 = case ma0 of _ impossible
 
 public export
 initialUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
@@ -981,11 +981,11 @@ coprodPreCompRAA {obj} hom comp a a' b c mbc (CpRACase mab ma'b) =
 public export
 coprodPostCompUnit : {obj : Type} -> (hom : HomSlice obj) ->
   (a, a', b, b', c : obj) ->
+  CoprodRightAdj hom (ObjCp b b', c) ->
   CoprodUnitF {obj} hom (a, ObjCp b b') ->
   CoprodUnitF {obj} hom (a', ObjCp b b') ->
-  CoprodRightAdj hom (ObjCp b b', c) ->
   CoprodRightAdj {obj} {obj'=obj} hom (ObjCp a a', c)
-coprodPostCompUnit {obj} hom a a' b b' c mab ma'b mbc =
+coprodPostCompUnit {obj} hom a a' b b' c mbc mab ma'b =
   CpRACase {obj} {obj'=obj} {a} {b=a'} {c}
     (coprodRAAfterUnit a (ObjCp b b') c mbc mab)
     (coprodRAAfterUnit a' (ObjCp b b') c mbc ma'b)
@@ -1050,7 +1050,7 @@ coprodExtendReduce comp (TFV a) (TFC b) (TFV c) mbc mab =
   Just $ coprodRAAfterUnit {hom} a b c mbc mab
 coprodExtendReduce comp (TFC (ObjCp a a')) (TFC (ObjCp b b')) (TFV c)
   mbb'c (CpRACase {a} {b=a'} {c=(ObjCp b b')} mabb' ma'bb') =
-    Just $ coprodPostCompUnit hom a a' b b' c mabb' ma'bb' mbb'c
+    Just $ coprodPostCompUnit hom a a' b b' c mbb'c mabb' ma'bb'
 coprodExtendReduce {hom} comp (TFC (ObjCp a a')) (TFV b) (TFV c) mbc mab =
   Just $ coprodPreCompRAA hom comp a a' b c mbc mab
 
