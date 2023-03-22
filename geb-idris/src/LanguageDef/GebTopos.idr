@@ -604,6 +604,12 @@ MorphDenoteExtendContravar obj f homv hom =
    EMorphEitherF {obj} {f} homv hom (c, a) ->
    EFreeMorphF {obj} {f} homv hom (c, b))
 
+-----------------------------------------------
+-----------------------------------------------
+---- Specific free universal constructions ----
+-----------------------------------------------
+-----------------------------------------------
+
 ------------------------
 ---- Initial object ----
 ------------------------
@@ -656,6 +662,18 @@ data InitialMorphF : (obj : Type) -> (hom : HomSlice obj) ->
   Morph0 : (x : obj) -> InitialMorphF obj hom (TFC Obj0, TFV x)
 
 public export
+data InitialUnitF : {obj : Type} -> (hom : HomSlice obj) ->
+    SliceObj (obj, InitialObjF obj) where
+
+-- Equivalent to:
+-- InitialCovarHom hom Obj0 c = Unit
+public export
+data InitialCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
+    SliceObj (InitialObjF obj, obj) where
+  InRAFrom0 : (0 c : obj) ->
+    InitialCovarHom {obj} hom (Obj0, c)
+
+public export
 InitialMorphExtendDenoteCovar : (obj : Type) -> (hom : HomSlice obj) ->
   MorphDenoteExtendCovar obj InitialObjF hom (InitialMorphF obj hom)
 InitialMorphExtendDenoteCovar
@@ -692,6 +710,26 @@ InitialMorphInterpMorph : (obj : Type) -> (hom : HomSlice obj) ->
 InitialMorphInterpMorph obj hom ointerp minterp (TFV a) b m impossible
 InitialMorphInterpMorph obj hom ointerp minterp (TFC Obj0) (TFV b) (Morph0 b) =
   voidF (ExtendInitialMorphInterpObj obj ointerp (TFV b))
+
+-------------------------
+---- Terminal object ----
+-------------------------
+
+public export
+data TerminalObjF : (obj : Type) -> Type where
+  Obj1 : TerminalObjF obj
+
+public export
+data TerminalCounitF : {obj : Type} -> (hom : HomSlice obj) ->
+    SliceObj (TerminalObjF obj, obj) where
+
+-- Equivalent to:
+-- TerminalContravarHom hom Obj1 c = Unit
+public export
+data TerminalContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
+    SliceObj (obj, TerminalObjF obj) where
+  InLATo1 : (0 c : obj) ->
+    TerminalContravarHom {obj} hom (c, Obj1)
 
 --------------------
 ---- Coproducts ----
@@ -993,37 +1031,9 @@ ExtendCoprodInterpMorph {obj} hom ointerp minterp (TFC a) (TFC b) adj =
     b
     adj
 
----------------------------------------------------------
----- Example: free finite product/coproduct category ----
----------------------------------------------------------
-
-public export
-data InitialUnitF : {obj : Type} -> (hom : HomSlice obj) ->
-    SliceObj (obj, InitialObjF obj) where
-
--- Equivalent to:
--- InitialCovarHom hom Obj0 c = Unit
-public export
-data InitialCovarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
-    SliceObj (InitialObjF obj, obj) where
-  InRAFrom0 : (0 c : obj) ->
-    InitialCovarHom {obj} hom (Obj0, c)
-
-public export
-data TerminalObjF : (obj : Type) -> Type where
-  Obj1 : TerminalObjF obj
-
-public export
-data TerminalCounitF : {obj : Type} -> (hom : HomSlice obj) ->
-    SliceObj (TerminalObjF obj, obj) where
-
--- Equivalent to:
--- TerminalContravarHom hom Obj1 c = Unit
-public export
-data TerminalContravarHom : {0 obj : Type} -> (hom : HomSlice obj) ->
-    SliceObj (obj, TerminalObjF obj) where
-  InLATo1 : (0 c : obj) ->
-    TerminalContravarHom {obj} hom (c, Obj1)
+------------------
+---- Products ----
+------------------
 
 public export
 data ProdObjF : (obj : Type) -> Type where
