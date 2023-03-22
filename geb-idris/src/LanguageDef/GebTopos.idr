@@ -1258,7 +1258,7 @@ coprodPostCompUnit {obj} hom a a' b b' c mab ma'b mbc =
     (coprodRAAfterUnit a (ObjCp b b') c mbc mab)
     (coprodRAAfterUnit a' (ObjCp b b') c mbc ma'b)
 
--- Extend reduction.  Returns Nothing if irreducible.
+-- Extend equality.
 public export
 coprodExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
   (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
