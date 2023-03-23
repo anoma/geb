@@ -24,6 +24,10 @@ HomSlice : Type -> Type
 HomSlice = SliceObj . SignatureT
 
 public export
+SigRelObj : {obj : Type} -> SliceObj (HomSlice obj)
+SigRelObj {obj} hom = DepRelObj {a=(SignatureT obj)} (hom, hom)
+
+public export
 SigRelT : {obj : Type} -> SliceObj (HomSlice obj)
 SigRelT {obj} hom = DepRelOn {a=(SignatureT obj)} (hom, hom)
 
@@ -81,7 +85,7 @@ record SCat where
   scHom : HomSlice scObj
   scId : (a : scObj) -> scHom (a, a)
   scComp : {a, b, c : scObj} -> scHom (b, c) -> scHom (a, b) -> scHom (a, c)
-  0 scEq : (sig : SignatureT scObj) -> EqRel (scHom sig)
+  scEq : (sig : SignatureT scObj) -> EqRel (scHom sig)
   0 scIdL : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
     (scEq (a, b)).eqRel f (scComp {a} {b} {c=b} (scId b) f)
   0 scIdR : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
@@ -247,8 +251,21 @@ FreeHomEqF : {obj : Type} -> (hom : HomSlice obj) ->
 FreeHomEqF {obj} hom = DepFreeEqF {a=(SignatureT obj)} {sl=(FreeHomM obj hom)}
 
 public export
+CatRelObj : {obj : Type} -> SliceObj (HomSlice obj)
+CatRelObj {obj} hom = SigRelObj {obj} (FreeHomM obj hom)
+
+public export
 CatRelT : {obj : Type} -> SliceObj (HomSlice obj)
 CatRelT {obj} hom = SigRelT {obj} (FreeHomM obj hom)
+
+public export
+data SigToCatRel : {obj : Type} -> {hom : HomSlice obj} ->
+    SigRelT {obj} hom -> CatRelT {obj} hom where
+  StoCR : {0 obj : Type} -> {0 hom : HomSlice obj} ->
+    {0 rv : SigRelT hom} ->
+    {0 a, b : obj} -> {0 f, g : hom (a, b)} ->
+    rv ((a, b) ** (f, g)) ->
+    SigToCatRel {obj} {hom} rv ((a, b) ** (InSlFv f, InSlFv g))
 
 public export
 data CatEqAx : {obj : Type} -> {hom : HomSlice obj} -> CatRelT hom where
@@ -271,30 +288,26 @@ data CatEqAx : {obj : Type} -> {hom : HomSlice obj} -> CatRelT hom where
 
 public export
 data CatFreeEqF : {obj : Type} -> {hom : HomSlice obj} ->
-    SigRelT hom -> CatRelT hom -> CatRelT hom where
-  CEv : {0 obj : Type} -> {0 hom : HomSlice obj} ->
-    {0 rv : SigRelT hom} -> {0 ra : CatRelT hom} ->
-    {0 a, b : obj} -> {0 f, g : hom (a, b)} ->
-    rv ((a, b) ** (f, g)) ->
-    CatFreeEqF {obj} {hom} rv ra ((a, b) ** (InSlFv f, InSlFv g))
+    CatRelT hom -> CatRelT hom where
   CEax : {0 obj : Type} -> {0 hom : HomSlice obj} ->
-    {0 rv : SigRelT hom} -> {0 ra : CatRelT hom} ->
+    {0 ra : CatRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
     CatEqAx {obj} {hom} ((a, b) ** (f, g)) ->
-    CatFreeEqF {obj} {hom} rv ra ((a, b) ** (f, g))
+    CatFreeEqF {obj} {hom} ra ((a, b) ** (f, g))
   CEeq : {0 obj : Type} -> {0 hom : HomSlice obj} ->
-    {0 rv : SigRelT hom} -> {0 ra : CatRelT hom} ->
+    {0 ra : CatRelT hom} ->
     {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
     FreeHomEqF {obj} hom ra ((a, b) ** (f, g)) ->
-    CatFreeEqF {obj} {hom} rv ra ((a, b) ** (f, g))
+    CatFreeEqF {obj} {hom} ra ((a, b) ** (f, g))
 
 public export
-data CatFreeEq : {obj : Type} -> {hom : HomSlice obj} ->
-    (0 rel : SigRelT hom) -> CatRelT hom where
-  InCFE : {0 obj : Type} -> {0 hom : HomSlice obj} -> {0 rel : SigRelT hom} ->
-    {0 a, b : obj} -> {0 f, g : FreeHomM obj hom (a, b)} ->
-    CatFreeEqF {obj} {hom} rel (CatFreeEq {obj} {hom} rel) ((a, b) ** (f, g)) ->
-    CatFreeEq {obj} {hom} rel ((a, b) ** (f, g))
+CatFreeEq : {obj : Type} -> {hom : HomSlice obj} -> (rel : SigRelT hom) ->
+  CatRelT hom
+CatFreeEq {obj} {hom} rel =
+  SliceFreeM
+    {a=(CatRelObj {obj} hom)}
+    (CatFreeEqF {obj} {hom})
+    (SigToCatRel rel)
 
 public export
 record Diagram where
@@ -304,7 +317,7 @@ record Diagram where
   -- `dRel` is a relation which, when we freely generate a category from
   -- the diagram, will freely generate an equivalence relation, but `dRel`
   -- itself does not promise to be an equivalence relation.
-  0 dRel : SigRelT dEdge
+  dRel : SigRelT dEdge
 
 public export
 diagToCatForget : SCat -> Diagram
@@ -1535,7 +1548,7 @@ YCContravarHomYonedaL yc = FreeContravarHomYonedaL {obj=yc.ycObj} {hom=yc.ycHom}
 --------------------------------------------------------
 
 public export
-0 ycEqRel : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+ycEqRel : (yc : YCat) -> (0 a, b : yc.ycObj) ->
   RelationOn (YCatFreeHomSlice yc (a, b))
 ycEqRel yc a b (InSlF (a, b) (InSlV v)) (InSlF (a, b) (InSlV v')) =
   ?ycEqRel_hole_vv
@@ -1547,22 +1560,22 @@ ycEqRel yc a b (InSlF (a, b) (InSlC m)) (InSlF (a, b) (InSlC m')) =
   ?ycEqRel_hole_cc
 
 public export
-0 ycEqRelRefl : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+ycEqRelRefl : (yc : YCat) -> (0 a, b : yc.ycObj) ->
   IsReflexive (ycEqRel yc a b)
 ycEqRelRefl yc a b = ?ycEqRelRefl_hole
 
 public export
-0 ycEqRelSym : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+ycEqRelSym : (yc : YCat) -> (0 a, b : yc.ycObj) ->
   IsSymmetric (ycEqRel yc a b)
 ycEqRelSym yc a b = ?ycEqRelSym_hole
 
 public export
-0 ycEqRelTrans : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+ycEqRelTrans : (yc : YCat) -> (0 a, b : yc.ycObj) ->
   IsTransitive (ycEqRel yc a b)
 ycEqRelTrans yc a b = ?ycEqRelTrans_hole
 
 public export
-0 ycEqRelEquiv : (yc : YCat) -> (0 a, b : yc.ycObj) ->
+ycEqRelEquiv : (yc : YCat) -> (0 a, b : yc.ycObj) ->
   IsEquivalence (ycEqRel yc a b)
 ycEqRelEquiv yc a b =
   MkEquivalence
@@ -1571,7 +1584,7 @@ ycEqRelEquiv yc a b =
     ?ycEqRelTrans_equiv_hole
 
 public export
-0 ycEq : (yc : YCat) -> (sig : SignatureT yc.ycObj) ->
+ycEq : (yc : YCat) -> (sig : SignatureT yc.ycObj) ->
   EqRel (YCatFreeHomSlice yc sig)
 ycEq yc (a, b) = MkEq (ycEqRel yc a b) (ycEqRelEquiv yc a b)
 
