@@ -86,12 +86,12 @@ record SCat where
   scId : (a : scObj) -> scHom (a, a)
   scComp : {a, b, c : scObj} -> scHom (b, c) -> scHom (a, b) -> scHom (a, c)
   scEq : (sig : SignatureT scObj) -> EqRel (scHom sig)
-  0 scIdL : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
+  0 scIdL : {0 a, b : scObj} -> (f : scHom (a, b)) ->
     (scEq (a, b)).eqRel f (scComp {a} {b} {c=b} (scId b) f)
-  0 scIdR : {0 a, b : scObj} -> (0 f : scHom (a, b)) ->
+  0 scIdR : {0 a, b : scObj} -> (f : scHom (a, b)) ->
     (scEq (a, b)).eqRel f (scComp {a} {b=a} {c=b} f (scId a))
   0 scIdAssoc : {0 a, b, c, d : scObj} ->
-    (0 f : scHom (a, b)) -> (0 g : scHom (b, c)) -> (0 h : scHom (c, d)) ->
+    (f : scHom (a, b)) -> (g : scHom (b, c)) -> (h : scHom (c, d)) ->
     (scEq (a, d)).eqRel
       (scComp {a} {b=c} {c=d} h (scComp {a} {b} {c} g f))
       (scComp {a} {b} {c=d} (scComp {a=b} {b=c} {c=d} h g) f)
@@ -390,21 +390,25 @@ DiagFreeEqRel diag (a, b) =
 
 public export
 DiagFreeIdL : (diag : Diagram) -> {a, b : DiagFreeObj diag} ->
-  (0 f : DiagFreeHom diag (a, b)) ->
+  (f : DiagFreeHom diag (a, b)) ->
   DiagFreeRel diag (a, b) f (diagFreeComp {diag} (diagFreeId diag b) f)
-DiagFreeIdL diag {a} {b} f = ?DiagFreeIdL_hole
+DiagFreeIdL diag {a} {b} f =
+  InSlF
+    ((a, b) **
+     (f, InSlF (a, b) (InSlC (CHComp (InSlF (b, b) (InSlC (CHId b))) f)))) $
+    InSlC $ CEax $ CEidL f
 
 public export
 DiagFreeIdR : (diag : Diagram) -> {0 a, b : DiagFreeObj diag} ->
-  (0 f : DiagFreeHom diag (a, b)) ->
+  (f : DiagFreeHom diag (a, b)) ->
   DiagFreeRel diag (a, b) f (diagFreeComp {diag} f (diagFreeId diag a))
 DiagFreeIdR diag {a} {b} f = ?DiagFreeIdR_hole
 
 public export
 DiagFreeAssoc : (diag : Diagram) -> {0 a, b, c, d : DiagFreeObj diag} ->
-  (0 f : DiagFreeHom diag (a, b)) ->
-  (0 g : DiagFreeHom diag (b, c)) ->
-  (0 h : DiagFreeHom diag (c, d)) ->
+  (f : DiagFreeHom diag (a, b)) ->
+  (g : DiagFreeHom diag (b, c)) ->
+  (h : DiagFreeHom diag (c, d)) ->
   DiagFreeRel diag (a, d)
     (diagFreeComp {diag} h (diagFreeComp {diag} g f))
     (diagFreeComp {diag} (diagFreeComp {diag} h g) f)
@@ -1593,20 +1597,20 @@ ycEq yc (a, b) = MkEq (ycEqRel yc a b) (ycEqRelEquiv yc a b)
 
 public export
 0 ycIdL : (yc : YCat) -> {0 a, b : yc.ycObj} ->
-  (0 f : YCatFreeHomSlice yc (a, b)) ->
+  (f : YCatFreeHomSlice yc (a, b)) ->
   (ycEq yc (a, b)).eqRel f (ycComp yc {a} {b} {c=b} (ycId yc b) f)
 ycIdL yc {a} {b} f = ?ycIdL_hole
 
 public export
 0 ycIdR : (yc : YCat) -> {0 a, b : yc.ycObj} ->
-  (0 f : YCatFreeHomSlice yc (a, b)) ->
+  (f : YCatFreeHomSlice yc (a, b)) ->
   (ycEq yc (a, b)).eqRel f (ycComp yc {a} {b=a} {c=b} f (ycId yc a))
 ycIdR yc {a} {b} f = ?ycIdR_hole
 
 public export
 0 ycAssoc : (yc : YCat) -> {0 a, b, c, d : yc.ycObj} ->
-  (0 f : YCatFreeHomSlice yc (a, b)) -> (0 g : YCatFreeHomSlice yc (b, c)) ->
-  (0 h : YCatFreeHomSlice yc (c, d)) ->
+  (f : YCatFreeHomSlice yc (a, b)) -> (g : YCatFreeHomSlice yc (b, c)) ->
+  (h : YCatFreeHomSlice yc (c, d)) ->
   (ycEq yc (a, d)).eqRel
     (ycComp yc {a} {b=c} {c=d} h (ycComp yc {a} {b} {c} g f))
     (ycComp yc {a} {b} {c=d} (ycComp yc {a=b} {b=c} {c=d} h g) f)
