@@ -21,6 +21,15 @@ AdjObjF : Type
 AdjObjF = Diagram -> Type
 
 public export
+DgmObjP : Type
+DgmObjP = (Diagram, AdjObjF)
+
+public export
+data ObjApplyObj : SliceObj DgmObjP where
+  OAppV : dgm.dVert -> ObjApplyObj (dgm, objf)
+  OAppC : objf dgm -> ObjApplyObj (dgm, objf)
+
+public export
 LeftAdjUnitF : AdjObjF -> Type
 LeftAdjUnitF objf = (dgm : Diagram) -> SliceObj (dgm.dVert, objf dgm)
 
@@ -37,6 +46,17 @@ public export
 RALeftAdjunctF : {objf : AdjObjF} -> RightAdjCounitF objf -> Type
 RALeftAdjunctF {objf} unit =
   (dgm, dgm' : Diagram) -> SliceObj (dgm.dVert, objf dgm')
+
+public export
+ObjApplyHom : (dop : DgmObjP) -> HomSlice (ObjApplyObj dop)
+ObjApplyHom (dgm, objf) ((OAppV x), (OAppV y)) = ?objApplyHom_hole_1
+ObjApplyHom (dgm, objf) ((OAppV x), (OAppC y)) = ?objApplyHom_hole_2
+ObjApplyHom (dgm, objf) ((OAppC x), (OAppV y)) = ?objApplyHom_hole_3
+ObjApplyHom (dgm, objf) ((OAppC x), (OAppC y)) = ?objApplyHom_hole_4
+
+public export
+objApply : DgmObjP -> Diagram
+objApply dop = MkDiagram (ObjApplyObj dop) (ObjApplyHom dop) ?objApply_hole
 
 ------------------
 ------------------
