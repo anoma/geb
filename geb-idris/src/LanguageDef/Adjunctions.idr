@@ -46,12 +46,12 @@ objApply : DgmObjP -> Diagram
 objApply dop = MkDiagram (ObjApplyObj dop) (ObjApplyHom dop) (ObjApplyRel dop)
 
 public export
-LeftAdjUnitF : AdjObjF -> Type
-LeftAdjUnitF objf = (dgm : Diagram) -> SliceObj (dgm.dVert, objf dgm)
+LeftAdjUnitHomF : AdjObjF -> Type
+LeftAdjUnitHomF objf = (dgm : Diagram) -> SliceObj (dgm.dVert, objf dgm)
 
 public export
 LAUnitP : Type
-LAUnitP = (dop : DgmObjP ** LeftAdjUnitF (snd dop))
+LAUnitP = (dop : DgmObjP ** LeftAdjUnitHomF (snd dop))
 
 -- The unit extends only the morphisms, not the objects.
 public export
@@ -65,10 +65,12 @@ LAUApplyObj dop = ObjApplyObj (fst dop)
 -- into the new objects, not out of them.
 public export
 data LAUApplyHom : (lup : LAUnitP) -> HomSlice (LAUApplyObj lup) where
-  LAUHv : {0 dgm : Diagram} -> {objf : AdjObjF} -> {lau : LeftAdjUnitF objf} ->
+  LAUHv :
+    {0 dgm : Diagram} -> {objf : AdjObjF} -> {lau : LeftAdjUnitHomF objf} ->
     {x, y : dgm.dVert} ->
     dgm.dEdge (x, y) -> LAUApplyHom ((dgm, objf) ** lau) (OAppV x, OAppV y)
-  LAUHc : {0 dgm : Diagram} -> {objf : AdjObjF} -> {lau : LeftAdjUnitF objf} ->
+  LAUHc :
+    {0 dgm : Diagram} -> {objf : AdjObjF} -> {lau : LeftAdjUnitHomF objf} ->
     {x : dgm.dVert} -> {y : objf dgm} ->
     lau dgm (x, y) -> LAUApplyHom ((dgm, objf) ** lau) (OAppV x, OAppC y)
 
@@ -77,9 +79,9 @@ data LAUApplyHom : (lup : LAUnitP) -> HomSlice (LAUApplyObj lup) where
 -- the unit introduces no equalities, only new morphisms.
 public export
 data LAUApplyRel : (lup : LAUnitP) -> SigRelT (LAUApplyHom dop) where
-  LAURv : {0 dgm : Diagram} -> {objf : AdjObjF} -> {lau : LeftAdjUnitF objf} ->
+  LAURv :
+    {0 dgm : Diagram} -> {objf : AdjObjF} -> {lau : LeftAdjUnitHomF objf} ->
     {x, y : dgm.dVert} -> {f, g : dgm.dEdge (x, y)} ->
-    -- dgm.dRel ((x, y) ** (f, g)) ->
     ObjApplyRel (dgm, objf) ((OAppV x, OAppV y) ** (OAppH f, OAppH g)) ->
     LAUApplyRel
       ((dgm, objf) ** lau) ((OAppV x, OAppV y) **
@@ -90,12 +92,12 @@ lauApply : LAUnitP -> Diagram
 lauApply lup = MkDiagram (LAUApplyObj lup) (LAUApplyHom lup) (LAUApplyRel lup)
 
 public export
-RightAdjCounitF : AdjObjF -> Type
-RightAdjCounitF objf = (dgm : Diagram) -> SliceObj (objf dgm, dgm.dVert)
+RightAdjCounitHomF : AdjObjF -> Type
+RightAdjCounitHomF objf = (dgm : Diagram) -> SliceObj (objf dgm, dgm.dVert)
 
 public export
 RACounitP : Type
-RACounitP = (dop : DgmObjP ** RightAdjCounitF (snd dop))
+RACounitP = (dop : DgmObjP ** RightAdjCounitHomF (snd dop))
 
 -- The counit extends only the morphisms, not the objects.
 public export
@@ -110,11 +112,11 @@ RACApplyObj dop = ObjApplyObj (fst dop)
 public export
 data RACApplyHom : (rcp : RACounitP) -> HomSlice (RACApplyObj rcp) where
   RACHv : {0 dgm : Diagram} -> {objf : AdjObjF} ->
-    {rac : RightAdjCounitF objf} ->
+    {rac : RightAdjCounitHomF objf} ->
     {x, y : dgm.dVert} ->
     dgm.dEdge (x, y) -> RACApplyHom ((dgm, objf) ** rac) (OAppV x, OAppV y)
   RACHc : {0 dgm : Diagram} -> {objf : AdjObjF} ->
-    {rac : RightAdjCounitF objf} ->
+    {rac : RightAdjCounitHomF objf} ->
     {x : objf dgm} -> {y : dgm.dVert} ->
     rac dgm (x, y) -> RACApplyHom ((dgm, objf) ** rac) (OAppC x, OAppV y)
 
@@ -124,9 +126,8 @@ data RACApplyHom : (rcp : RACounitP) -> HomSlice (RACApplyObj rcp) where
 public export
 data RACApplyRel : (rcp : RACounitP) -> SigRelT (RACApplyHom dop) where
   RACRv : {0 dgm : Diagram} -> {objf : AdjObjF} ->
-    {rac : RightAdjCounitF objf} ->
+    {rac : RightAdjCounitHomF objf} ->
     {x, y : dgm.dVert} -> {f, g : dgm.dEdge (x, y)} ->
-    -- dgm.dRel ((x, y) ** (f, g)) ->
     ObjApplyRel (dgm, objf) ((OAppV x, OAppV y) ** (OAppH f, OAppH g)) ->
     RACApplyRel
       ((dgm, objf) ** rac) ((OAppV x, OAppV y) **
@@ -137,12 +138,12 @@ racApply : RACounitP -> Diagram
 racApply rcp = MkDiagram (RACApplyObj rcp) (RACApplyHom rcp) (RACApplyRel rcp)
 
 public export
-LARightAdjunctHomF : {objf : AdjObjF} -> LeftAdjUnitF objf -> Type
+LARightAdjunctHomF : {objf : AdjObjF} -> LeftAdjUnitHomF objf -> Type
 LARightAdjunctHomF {objf} unit =
   (dgm : Diagram) -> HomSlice (LAUApplyObj ((dgm, objf) ** unit))
 
 public export
-RALeftAdjunctHomF : {objf : AdjObjF} -> RightAdjCounitF objf -> Type
+RALeftAdjunctHomF : {objf : AdjObjF} -> RightAdjCounitHomF objf -> Type
 RALeftAdjunctHomF {objf} counit =
   (dgm : Diagram) -> HomSlice (RACApplyObj ((dgm, objf) ** counit))
 
@@ -157,7 +158,7 @@ data InitObjF : AdjObjF where
   InitObj : InitObjF dgm
 
 public export
-data InitUnitF : LeftAdjUnitF InitObjF where
+data InitUnitF : LeftAdjUnitHomF InitObjF where
 
 public export
 data InitRightAdjunctHomF : LARightAdjunctHomF InitUnitF where
@@ -169,7 +170,7 @@ data TermObjF : AdjObjF where
   TermObj : TermObjF dgm
 
 public export
-data TermCounitF : RightAdjCounitF TermObjF where
+data TermCounitF : RightAdjCounitHomF TermObjF where
 
 public export
 data TermLeftAdjunctHomF : RALeftAdjunctHomF TermCounitF where
@@ -181,7 +182,7 @@ data CoprodObjF : AdjObjF where
   CopObj : dgm.dVert -> dgm.dVert -> CoprodObjF dgm
 
 public export
-data CoprodUnitF : LeftAdjUnitF CoprodObjF where
+data CoprodUnitF : LeftAdjUnitHomF CoprodObjF where
   CopInjL : (x, y : dgm.dVert) -> CoprodUnitF dgm (x, CopObj x y)
   CopInjR : (x, y : dgm.dVert) -> CoprodUnitF dgm (y, CopObj x y)
 
@@ -198,7 +199,7 @@ data ProdObjF : AdjObjF where
   PrObj : dgm.dVert -> dgm.dVert -> ProdObjF dgm
 
 public export
-data ProdCounitF : RightAdjCounitF ProdObjF where
+data ProdCounitF : RightAdjCounitHomF ProdObjF where
   PrProjL : (x, y : dgm.dVert) -> ProdCounitF dgm (PrObj x y, x)
   PrProjR : (x, y : dgm.dVert) -> ProdCounitF dgm (PrObj x y, y)
 
@@ -216,7 +217,7 @@ data CoeqObjF : AdjObjF where
     dgm.dEdge (x, y) -> dgm.dEdge (x, y) -> CoeqObjF dgm
 
 public export
-data CoeqUnitF : LeftAdjUnitF CoeqObjF where
+data CoeqUnitF : LeftAdjUnitHomF CoeqObjF where
   CoeqInj : {x, y : dgm.dVert} ->
     (f, g : dgm.dEdge (x, y)) -> CoeqUnitF dgm (y, CoeqObj {x} {y} f g)
 
@@ -229,7 +230,7 @@ data EqObjF : AdjObjF where
     dgm.dEdge (x, y) -> dgm.dEdge (x, y) -> EqObjF dgm
 
 public export
-data EqCounitF : RightAdjCounitF EqObjF where
+data EqCounitF : RightAdjCounitHomF EqObjF where
   EqInj : {x, y : dgm.dVert} ->
     (f, g : dgm.dEdge (x, y)) -> EqCounitF dgm (EqObj {x} {y} f g, x)
 
