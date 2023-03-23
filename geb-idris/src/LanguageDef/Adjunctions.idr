@@ -36,7 +36,7 @@ data ObjApplyHom : (dop : DgmObjP) -> HomSlice (ObjApplyObj dop) where
 
 public export
 data ObjApplyRel : (dop : DgmObjP) -> SigRelT (ObjApplyHom dop) where
-  OAppR : {x, y : dgm.dVert} -> {f, g : dgm.dEdge (x, y)} ->
+  OAppRv : {x, y : dgm.dVert} -> {f, g : dgm.dEdge (x, y)} ->
     dgm.dRel ((x, y) ** (f, g)) ->
     ObjApplyRel (dgm, objf) ((OAppV x, OAppV y) ** (OAppH f, OAppH g))
 
@@ -57,6 +57,37 @@ LAUnitP = (dop : DgmObjP ** LeftAdjUnitF (snd dop))
 public export
 LAUApplyObj : SliceObj LAUnitP
 LAUApplyObj dop = ObjApplyObj (fst dop)
+
+-- For a left adjoint, the unit provides the constructors.  These we
+-- treat as injective, like any typical datatype constructor -- hence
+-- the unit introduces no equalities, only new morphisms.  Furthermore,
+-- because these are only constructors, they only introduce new morphisms
+-- into the new objects, not out of them.
+public export
+data LAUApplyHom : (lup : LAUnitP) -> HomSlice (LAUApplyObj lup) where
+  LAUHv : {0 dgm : Diagram} -> {objf : AdjObjF} -> {lau : LeftAdjUnitF objf} ->
+    {x, y : dgm.dVert} ->
+    dgm.dEdge (x, y) -> LAUApplyHom ((dgm, objf) ** lau) (OAppV x, OAppV y)
+  LAUHc : {0 dgm : Diagram} -> {objf : AdjObjF} -> {lau : LeftAdjUnitF objf} ->
+    {x : dgm.dVert} -> {y : objf dgm} ->
+    lau dgm (x, y) -> LAUApplyHom ((dgm, objf) ** lau) (OAppV x, OAppC y)
+
+-- We treat the constructors (which, for a left adjoint, come from the unit)
+-- treat as injective, like any typical datatype constructor -- hence
+-- the unit introduces no equalities, only new morphisms.
+public export
+data LAUApplyRel : (lup : LAUnitP) -> SigRelT (LAUApplyHom dop) where
+  LAURv : {0 dgm : Diagram} -> {objf : AdjObjF} -> {lau : LeftAdjUnitF objf} ->
+    {x, y : dgm.dVert} -> {f, g : dgm.dEdge (x, y)} ->
+    -- dgm.dRel ((x, y) ** (f, g)) ->
+    ObjApplyRel (dgm, objf) ((OAppV x, OAppV y) ** (OAppH f, OAppH g)) ->
+    LAUApplyRel
+      ((dgm, objf) ** lau) ((OAppV x, OAppV y) **
+       (LAUHv {dgm} {lau} {x} {y} f, LAUHv {dgm} {lau} {x} {y} g))
+
+public export
+lauApply : LAUnitP -> Diagram
+lauApply lup = MkDiagram (LAUApplyObj lup) (LAUApplyHom lup) (LAUApplyRel lup)
 
 public export
 RightAdjCounitF : AdjObjF -> Type
