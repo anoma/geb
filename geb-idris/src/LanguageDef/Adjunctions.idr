@@ -18,25 +18,25 @@ import public LanguageDef.DiagramCat
 
 public export
 AdjObjF : Type
-AdjObjF = SCat -> Type
+AdjObjF = Diagram -> Type
 
 public export
 LeftAdjUnitF : AdjObjF -> Type
-LeftAdjUnitF objf = (sc : SCat) -> SliceObj (sc.scObj, objf sc)
+LeftAdjUnitF objf = (dgm : Diagram) -> SliceObj (dgm.dVert, objf dgm)
 
 public export
 RightAdjCounitF : AdjObjF -> Type
-RightAdjCounitF objf = (sc : SCat) -> SliceObj (objf sc, sc.scObj)
+RightAdjCounitF objf = (dgm : Diagram) -> SliceObj (objf dgm, dgm.dVert)
 
 public export
 LARightAdjunctF : {objf : AdjObjF} -> LeftAdjUnitF objf -> Type
 LARightAdjunctF {objf} counit =
-  (sc, sc' : SCat) -> SliceObj (objf sc, sc'.scObj)
+  (dgm, dgm' : Diagram) -> SliceObj (objf dgm, dgm'.dVert)
 
 public export
 RALeftAdjunctF : {objf : AdjObjF} -> RightAdjCounitF objf -> Type
 RALeftAdjunctF {objf} unit =
-  (sc, sc' : SCat) -> SliceObj (sc.scObj, objf sc')
+  (dgm, dgm' : Diagram) -> SliceObj (dgm.dVert, objf dgm')
 
 ------------------
 ------------------
@@ -46,72 +46,72 @@ RALeftAdjunctF {objf} unit =
 
 public export
 data InitObjF : AdjObjF where
-  InitObj : InitObjF sc
+  InitObj : InitObjF dgm
 
 public export
 data InitUnitF : LeftAdjUnitF InitObjF where
 
 public export
 data InitRightAdjunctF : LARightAdjunctF InitUnitF where
-  InitMorph : (a : sc'.scObj) -> InitRightAdjunctF sc sc' (InitObj, a)
+  InitMorph : (a : dgm'.dVert) -> InitRightAdjunctF dgm dgm' (InitObj, a)
 
 public export
 data TermObjF : AdjObjF where
-  TermObj : TermObjF sc
+  TermObj : TermObjF dgm
 
 public export
 data TermCounitF : RightAdjCounitF TermObjF where
 
 public export
 data TermLeftAdjunctF : RALeftAdjunctF TermCounitF where
-  TermMorph : (a : sc.scObj) -> TermLeftAdjunctF sc sc' (a, TermObj)
+  TermMorph : (a : dgm.dVert) -> TermLeftAdjunctF dgm dgm' (a, TermObj)
 
 public export
 data CoprodObjF : AdjObjF where
-  CopObj : sc.scObj -> sc.scObj -> CoprodObjF sc
+  CopObj : dgm.dVert -> dgm.dVert -> CoprodObjF dgm
 
 public export
 data CoprodUnitF : LeftAdjUnitF CoprodObjF where
-  CopInjL : (x, y : sc.scObj) -> CoprodUnitF sc (x, CopObj x y)
-  CopInjR : (x, y : sc.scObj) -> CoprodUnitF sc (y, CopObj x y)
+  CopInjL : (x, y : dgm.dVert) -> CoprodUnitF dgm (x, CopObj x y)
+  CopInjR : (x, y : dgm.dVert) -> CoprodUnitF dgm (y, CopObj x y)
 
 public export
 data CoprodRightAdjunctF : LARightAdjunctF CoprodUnitF where
 
 public export
 data ProdObjF : AdjObjF where
-  PrObj : sc.scObj -> sc.scObj -> ProdObjF sc
+  PrObj : dgm.dVert -> dgm.dVert -> ProdObjF dgm
 
 public export
 data ProdCounitF : RightAdjCounitF ProdObjF where
-  PrProjL : (x, y : sc.scObj) -> ProdCounitF sc (PrObj x y, x)
-  PrProjR : (x, y : sc.scObj) -> ProdCounitF sc (PrObj x y, y)
+  PrProjL : (x, y : dgm.dVert) -> ProdCounitF dgm (PrObj x y, x)
+  PrProjR : (x, y : dgm.dVert) -> ProdCounitF dgm (PrObj x y, y)
 
 public export
 data ProdLeftAdjunctF : RALeftAdjunctF ProdCounitF where
 
 public export
 data CoeqObjF : AdjObjF where
-  CoeqObj :
-    {x, y : sc.scObj} -> sc.scHom (x, y) -> sc.scHom (x, y) -> CoeqObjF sc
+  CoeqObj : {x, y : dgm.dVert} ->
+    dgm.dEdge (x, y) -> dgm.dEdge (x, y) -> CoeqObjF dgm
 
 public export
 data CoeqUnitF : LeftAdjUnitF CoeqObjF where
-  CoeqInj : {x, y : sc.scObj} ->
-    (f, g : sc.scHom (x, y)) -> CoeqUnitF sc (y, CoeqObj {x} {y} f g)
+  CoeqInj : {x, y : dgm.dVert} ->
+    (f, g : dgm.dEdge (x, y)) -> CoeqUnitF dgm (y, CoeqObj {x} {y} f g)
 
 public export
 data CoeqRightAdjunctF : LARightAdjunctF CoeqUnitF where
 
 public export
 data EqObjF : AdjObjF where
-  EqObj :
-    {x, y : sc.scObj} -> sc.scHom (x, y) -> sc.scHom (x, y) -> EqObjF sc
+  EqObj : {x, y : dgm.dVert} ->
+    dgm.dEdge (x, y) -> dgm.dEdge (x, y) -> EqObjF dgm
 
 public export
 data EqCounitF : RightAdjCounitF EqObjF where
-  EqInj : {x, y : sc.scObj} ->
-    (f, g : sc.scHom (x, y)) -> EqCounitF sc (EqObj {x} {y} f g, x)
+  EqInj : {x, y : dgm.dVert} ->
+    (f, g : dgm.dEdge (x, y)) -> EqCounitF dgm (EqObj {x} {y} f g, x)
 
 public export
 data EqLeftAdjunctF : RALeftAdjunctF EqCounitF where
