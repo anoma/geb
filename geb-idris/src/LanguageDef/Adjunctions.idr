@@ -30,6 +30,21 @@ data ObjApplyObj : SliceObj DgmObjP where
   OAppC : objf dgm -> ObjApplyObj (dgm, objf)
 
 public export
+data ObjApplyHom : (dop : DgmObjP) -> HomSlice (ObjApplyObj dop) where
+  OAppH : {x, y : dgm.dVert} ->
+    dgm.dEdge (x, y) -> ObjApplyHom (dgm, objf) (OAppV x, OAppV y)
+
+public export
+data ObjApplyRel : (dop : DgmObjP) -> SigRelT (ObjApplyHom dop) where
+  OAppR : {x, y : dgm.dVert} -> {f, g : dgm.dEdge (x, y)} ->
+    dgm.dRel ((x, y) ** (f, g)) ->
+    ObjApplyRel (dgm, objf) ((OAppV x, OAppV y) ** (OAppH f, OAppH g))
+
+public export
+objApply : DgmObjP -> Diagram
+objApply dop = MkDiagram (ObjApplyObj dop) (ObjApplyHom dop) (ObjApplyRel dop)
+
+public export
 LeftAdjUnitF : AdjObjF -> Type
 LeftAdjUnitF objf = (dgm : Diagram) -> SliceObj (dgm.dVert, objf dgm)
 
@@ -46,17 +61,6 @@ public export
 RALeftAdjunctF : {objf : AdjObjF} -> RightAdjCounitF objf -> Type
 RALeftAdjunctF {objf} unit =
   (dgm, dgm' : Diagram) -> SliceObj (dgm.dVert, objf dgm')
-
-public export
-ObjApplyHom : (dop : DgmObjP) -> HomSlice (ObjApplyObj dop)
-ObjApplyHom (dgm, objf) ((OAppV x), (OAppV y)) = ?objApplyHom_hole_1
-ObjApplyHom (dgm, objf) ((OAppV x), (OAppC y)) = ?objApplyHom_hole_2
-ObjApplyHom (dgm, objf) ((OAppC x), (OAppV y)) = ?objApplyHom_hole_3
-ObjApplyHom (dgm, objf) ((OAppC x), (OAppC y)) = ?objApplyHom_hole_4
-
-public export
-objApply : DgmObjP -> Diagram
-objApply dop = MkDiagram (ObjApplyObj dop) (ObjApplyHom dop) ?objApply_hole
 
 ------------------
 ------------------
