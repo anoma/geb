@@ -471,6 +471,17 @@ record DiagFunctor (dom, cod : Diagram) where
   dfEmap : HomMap {obj=dom.dVert} dfVmap dom.dEdge cod.dEdge
   0 dfRmap : HomRelMap {m=dfVmap} dfEmap dom.dRel cod.dRel
 
+public export
+record PolyDOF where
+  constructor PDOF
+  pdfPos : Type
+  pdfDir : pdfPos -> Diagram
+
+public export
+pdofInterp : PolyDOF -> Diagram -> Type
+pdofInterp pdof diag =
+  (i : pdof.pdfPos ** DiagFunctor (pdof.pdfDir i) diag)
+
 --------------------------------
 --------------------------------
 ---- Yoneda lemma utilities ----
