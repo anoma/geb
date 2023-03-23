@@ -432,6 +432,45 @@ DiagToFreeCat diag =
     (DiagFreeIdR diag)
     (DiagFreeAssoc diag)
 
+-----------------------------------------
+-----------------------------------------
+---- Polynomial functors on diagrams ----
+-----------------------------------------
+-----------------------------------------
+
+public export
+sigMap : (obj -> obj') -> SignatureT obj -> SignatureT obj'
+sigMap m (a, b) = (m a, m b)
+
+public export
+HomMap : {obj, obj' : Type} ->
+  (m : obj -> obj') -> HomSlice obj -> HomSlice obj' -> Type
+HomMap {obj} m sl sl' = SliceMorphism {a=(SignatureT obj)} sl (sl' . sigMap m)
+
+public export
+sigObjMap : {obj, obj' : Type} ->
+  {m : obj -> obj'} -> {sl : HomSlice obj} -> {sl' : HomSlice obj'} ->
+  HomMap {obj} {obj'} m sl sl' ->
+  SigRelObj sl -> SigRelObj sl'
+sigObjMap {obj} {obj'} {m} {sl} {sl'} hm ((a, b) ** (f, g)) =
+  ((m a, m b) ** (hm (a, b) f, hm (a, b) g))
+
+public export
+HomRelMap : {obj, obj' : Type} ->
+  {m : obj -> obj'} -> {sl : HomSlice obj} -> {sl' : HomSlice obj'} ->
+  HomMap {obj} {obj'} m sl sl' ->
+  SigRelT sl -> SigRelT sl' ->
+  Type
+HomRelMap {obj} {obj'} {m} {sl} {sl'} hm rel rel' =
+  SliceMorphism {a=(SigRelObj sl)} rel (rel' . sigObjMap hm)
+
+public export
+record DiagFunctor (dom, cod : Diagram) where
+  constructor MkDiagF
+  dfVmap : dom.dVert -> cod.dVert
+  dfEmap : HomMap {obj=dom.dVert} dfVmap dom.dEdge cod.dEdge
+  0 dfRmap : HomRelMap {m=dfVmap} dfEmap dom.dRel cod.dRel
+
 --------------------------------
 --------------------------------
 ---- Yoneda lemma utilities ----
