@@ -898,8 +898,8 @@ MuS0EF = Mu Subst0EndoF
 public export
 pCataS0EF : ParamCata Subst0EndoF
 pCataS0EF v a subst alg (InFree x) = case x of
-  TermVar var => subst var
-  TermComposite com => alg $ case com of
+  TFV var => subst var
+  TFC com => alg $ case com of
     Subst0EndoCovarRep f => Subst0EndoCovarRep $ pCataS0EF v a subst alg f
     Subst0EndoEmpty => Subst0EndoEmpty
     Subst0EndoSum f g =>
@@ -926,7 +926,7 @@ Show MuS0EF where
 -- The void-valued constant endofunctor -- the sum of no endofunctors.
 public export
 (!+) : FreeS0EF v
-(!+) = inFreeComposite Subst0EndoEmpty
+(!+) = inFC Subst0EndoEmpty
 
 -- The representable endofunctor represented by a given object -- in the
 -- endofunctor category, that is, by some endofunctor, which implicitly
@@ -934,7 +934,7 @@ public export
 prefix 11 :>:
 public export
 (:>:) : FreeS0EF v -> FreeS0EF v
-(:>:) a = inFreeComposite $ Subst0EndoCovarRep a
+(:>:) a = inFC $ Subst0EndoCovarRep a
 
 -- The unit-valued constant endofunctor -- represented by the initial object
 -- (Void), and hence in the endofunctor category by the void-valued constant
@@ -948,7 +948,7 @@ public export
 infixl 7 :+:
 public export
 (:+:) : FreeS0EF v -> FreeS0EF v -> FreeS0EF v
-a :+: b = inFreeComposite $ Subst0EndoSum a b
+a :+: b = inFC $ Subst0EndoSum a b
 
 -----------------------------------------------------------------------
 ---- Interpretation of MuS0EF as monoid of polynomial endofunctors ----
@@ -1268,15 +1268,15 @@ RNatCoalg = Coalgebra RNatF
 
 public export
 TermRNat : Type -> Type -> Type
-TermRNat = TermFunctor RNatF
+TermRNat = TranslateFunctor RNatF
 
 public export
 TreeRNat : Type -> Type -> Type
-TreeRNat = TreeFunctor RNatF
+TreeRNat = ScaleFunctor RNatF
 
 public export
 LimitRNat : Type -> Type
-LimitRNat = LimitIterF RNatF
+LimitRNat = TrEitherF RNatF
 
 public export
 ColimitRNat : Type -> Type
@@ -1284,19 +1284,19 @@ ColimitRNat = ColimitIterF RNatF
 
 public export
 TRNat0 : TermRNat v a
-TRNat0 = TermComposite RNat0
+TRNat0 = TFC RNat0
 
 public export
 TRNat1 : TermRNat v a
-TRNat1 = TermComposite RNat1
+TRNat1 = TFC RNat1
 
 public export
 TRNatSum : a -> a -> TermRNat v a
-TRNatSum m n = TermComposite (RNatSum m n)
+TRNatSum m n = TFC (RNatSum m n)
 
 public export
 TRNatProduct : a -> a -> TermRNat v a
-TRNatProduct m n = TermComposite (RNatProduct m n)
+TRNatProduct m n = TFC (RNatProduct m n)
 
 public export
 FreeRNatF : Type -> Type
@@ -1317,8 +1317,8 @@ NuRNatF = Nu RNatF
 public export
 cataRNatF : ParamCata RNatF
 cataRNatF v a subst alg (InFree x) = case x of
-  TermVar var => subst var
-  TermComposite n => alg $ case n of
+  TFV var => subst var
+  TFC n => alg $ case n of
     RNat0 => RNat0
     RNat1 => RNat1
     RNatSum m n =>
@@ -1373,8 +1373,8 @@ NuENatF = Nu ENatF
 public export
 cataENatF : ParamCata ENatF
 cataENatF v a subst alg (InFree x) = case x of
-  TermVar var => subst var
-  TermComposite n => alg $ case n of
+  TFV var => subst var
+  TFC n => alg $ case n of
     ENatR n => ENatR $ case n of
       RNat0 => RNat0
       RNat1 => RNat1
@@ -1977,11 +1977,11 @@ SExpCoalg = Coalgebra SExpBaseF
 
 public export
 SExpTermF : Type -> Type -> Type
-SExpTermF = TermFunctor SExpBaseF
+SExpTermF = TranslateFunctor SExpBaseF
 
 public export
 SExpTreeF : Type -> Type -> Type
-SExpTreeF = TreeFunctor SExpBaseF
+SExpTreeF = ScaleFunctor SExpBaseF
 
 public export
 SExpTermAlg : Type -> Type -> Type
@@ -2005,11 +2005,11 @@ SPairF var carrier = ProductMonad (SExpTermF var carrier)
 
 public export
 SPairTermF : Type -> Type -> Type
-SPairTermF var = TermFunctor (ProductMonad . SExpTermF var) var
+SPairTermF var = TranslateFunctor (ProductMonad . SExpTermF var) var
 
 public export
 SPairTreeF : Type -> Type -> Type
-SPairTreeF var = TreeFunctor (ProductMonad . SExpTermF var) var
+SPairTreeF var = ScaleFunctor (ProductMonad . SExpTermF var) var
 
 ---------------------
 ---------------------

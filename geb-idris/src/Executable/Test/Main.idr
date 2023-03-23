@@ -6,7 +6,10 @@ import Library.Test.IdrisCategoriesTest
 import LanguageDef.Test.NatPrefixCatTest
 import LanguageDef.Test.ADTCatTest
 import LanguageDef.Test.ProgFinSetTest
+import LanguageDef.Test.DiagramCatTest
+import LanguageDef.Test.AdjunctionsTest
 import LanguageDef.Test.GebToposTest
+import LanguageDef.Test.GenPolyFuncTest
 import LanguageDef.Test.PolyCatTest
 import LanguageDef.Test.PolyProfunctorTest
 import LanguageDef.Test.AtomTest
@@ -45,4 +48,7 @@ main = do
   LanguageDef.Test.ADTCatTest.adtCatTest
   LanguageDef.Test.ProgFinSetTest.progFinSetTest
   LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
+  LanguageDef.Test.DiagramCatTest.diagramCatTest
+  LanguageDef.Test.AdjunctionsTest.adjunctionsTest
+  LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
   LanguageDef.Test.GebToposTest.gebToposTest
