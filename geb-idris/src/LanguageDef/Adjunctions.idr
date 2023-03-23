@@ -104,12 +104,12 @@ RACApplyObj dop = ObjApplyObj (fst dop)
 
 public export
 LARightAdjunctF : {objf : AdjObjF} -> LeftAdjUnitF objf -> Type
-LARightAdjunctF {objf} counit =
+LARightAdjunctF {objf} unit =
   (dgm, dgm' : Diagram) -> SliceObj (objf dgm, dgm'.dVert)
 
 public export
 RALeftAdjunctF : {objf : AdjObjF} -> RightAdjCounitF objf -> Type
-RALeftAdjunctF {objf} unit =
+RALeftAdjunctF {objf} counit =
   (dgm, dgm' : Diagram) -> SliceObj (dgm.dVert, objf dgm')
 
 ------------------
