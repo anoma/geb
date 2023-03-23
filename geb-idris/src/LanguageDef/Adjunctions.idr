@@ -124,7 +124,7 @@ data RACApplyHom : (rcp : RACounitP) -> HomSlice (RACApplyObj rcp) where
 -- treat as injective, like any typical datatype constructor -- hence
 -- the counit introduces no equalities, only new morphisms.
 public export
-data RACApplyRel : (rcp : RACounitP) -> SigRelT (RACApplyHom dop) where
+data RACApplyRel : (rcp : RACounitP) -> SigRelT (RACApplyHom rcp) where
   RACRv : {0 dgm : Diagram} -> {objf : AdjObjF} ->
     {rac : RightAdjCounitHomF objf} ->
     {x, y : dgm.dVert} -> {f, g : dgm.dEdge (x, y)} ->
