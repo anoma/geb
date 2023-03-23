@@ -393,26 +393,31 @@ DiagFreeIdL : (diag : Diagram) -> {a, b : DiagFreeObj diag} ->
   (f : DiagFreeHom diag (a, b)) ->
   DiagFreeRel diag (a, b) f (diagFreeComp {diag} (diagFreeId diag b) f)
 DiagFreeIdL diag {a} {b} f =
-  InSlF
-    ((a, b) **
-     (f, InSlF (a, b) (InSlC (CHComp (InSlF (b, b) (InSlC (CHId b))) f)))) $
+  InSlF ((a, b) ** (f, diagFreeComp (diagFreeId diag b) f)) $
     InSlC $ CEax $ CEidL f
 
 public export
-DiagFreeIdR : (diag : Diagram) -> {0 a, b : DiagFreeObj diag} ->
+DiagFreeIdR : (diag : Diagram) -> {a, b : DiagFreeObj diag} ->
   (f : DiagFreeHom diag (a, b)) ->
   DiagFreeRel diag (a, b) f (diagFreeComp {diag} f (diagFreeId diag a))
-DiagFreeIdR diag {a} {b} f = ?DiagFreeIdR_hole
+DiagFreeIdR diag {a} {b} f =
+  InSlF ((a, b) ** (f, diagFreeComp f (diagFreeId diag a))) $
+    InSlC $ CEax $ CEidR f
 
 public export
-DiagFreeAssoc : (diag : Diagram) -> {0 a, b, c, d : DiagFreeObj diag} ->
+DiagFreeAssoc : (diag : Diagram) -> {a, b, c, d : DiagFreeObj diag} ->
   (f : DiagFreeHom diag (a, b)) ->
   (g : DiagFreeHom diag (b, c)) ->
   (h : DiagFreeHom diag (c, d)) ->
   DiagFreeRel diag (a, d)
     (diagFreeComp {diag} h (diagFreeComp {diag} g f))
     (diagFreeComp {diag} (diagFreeComp {diag} h g) f)
-DiagFreeAssoc diag {a} {b} f = ?DiagFreeAssoc_hole
+DiagFreeAssoc diag {a} {b} {c} {d} f g h =
+  InSlF
+    ((a, d) **
+     (diagFreeComp {diag} h (diagFreeComp {diag} g f),
+      diagFreeComp {diag} (diagFreeComp {diag} h g) f)) $
+    InSlC $ CEax $ CEassoc f g h
 
 public export
 DiagToFreeCat : Diagram -> SCat
