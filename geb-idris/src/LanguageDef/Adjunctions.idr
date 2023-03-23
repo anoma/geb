@@ -187,6 +187,11 @@ data CoprodUnitF : LeftAdjUnitF CoprodObjF where
 
 public export
 data CoprodRightAdjunctHomF : LARightAdjunctHomF CoprodUnitF where
+  CopCase :
+    {a, b : dgm.dVert} -> {c : ObjApplyObj (dgm, CoprodObjF)} ->
+    LAUApplyHom ((dgm, CoprodObjF) ** CoprodUnitF) (OAppV a, c) ->
+    LAUApplyHom ((dgm, CoprodObjF) ** CoprodUnitF) (OAppV b, c) ->
+    CoprodRightAdjunctHomF dgm (OAppC (CopObj a b), c)
 
 public export
 data ProdObjF : AdjObjF where
@@ -199,6 +204,11 @@ data ProdCounitF : RightAdjCounitF ProdObjF where
 
 public export
 data ProdLeftAdjunctHomF : RALeftAdjunctHomF ProdCounitF where
+  ProdBi :
+    {a : ObjApplyObj (dgm, ProdObjF)} -> {b, c : dgm.dVert} ->
+    RACApplyHom ((dgm, ProdObjF) ** ProdCounitF) (a, OAppV b) ->
+    RACApplyHom ((dgm, ProdObjF) ** ProdCounitF) (a, OAppV c) ->
+    ProdLeftAdjunctHomF dgm (a, OAppC (PrObj b c))
 
 public export
 data CoeqObjF : AdjObjF where
