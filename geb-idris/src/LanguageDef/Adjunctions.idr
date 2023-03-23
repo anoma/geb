@@ -78,7 +78,7 @@ data LAUApplyHom : (lup : LAUnitP) -> HomSlice (LAUApplyObj lup) where
 -- treat as injective, like any typical datatype constructor -- hence
 -- the unit introduces no equalities, only new morphisms.
 public export
-data LAUApplyRel : (lup : LAUnitP) -> SigRelT (LAUApplyHom dop) where
+data LAUApplyRel : (lup : LAUnitP) -> SigRelT (LAUApplyHom lup) where
   LAURv :
     {0 dgm : Diagram} -> {objf : AdjObjF} -> {lau : LeftAdjUnitHomF objf} ->
     {x, y : dgm.dVert} -> {f, g : dgm.dEdge (x, y)} ->
@@ -223,11 +223,15 @@ data CoeqUnitF : LeftAdjUnitHomF CoeqObjF where
 
 public export
 data CoeqRightAdjunctHomF : LARightAdjunctHomF CoeqUnitF where
-  CoeqElim :
+  CoeqElim : {dgm : Diagram} ->
     {x, y : dgm.dVert} -> {z : ObjApplyObj (dgm, CoeqObjF)} ->
     {f, g : dgm.dEdge (x, y)} ->
     (h : LAUApplyHom ((dgm, CoeqObjF) ** CoeqUnitF) (OAppV y, z)) ->
-    -- This still needs proof content: h . f = h . g
+    -- Eliminating a coequalizer requires proof content: h . f = h . g
+    CatFreeEq (LAUApplyRel ((dgm, CoeqObjF) ** CoeqUnitF))
+      ((OAppV {dgm} x, z) **
+       (InSlFc $ CHComp (InSlFv h) (InSlFv $ LAUHv f),
+        InSlFc $ CHComp (InSlFv h) (InSlFv $ LAUHv g))) ->
     CoeqRightAdjunctHomF dgm (OAppC (CoeqObj {x} {y} f g), z)
 
 public export
@@ -246,5 +250,9 @@ data EqLeftAdjunctHomF : RALeftAdjunctHomF EqCounitF where
     {a : ObjApplyObj (dgm, EqObjF)} -> {x, y : dgm.dVert} ->
     {f, g : dgm.dEdge (x, y)} ->
     (h : RACApplyHom ((dgm, EqObjF) ** EqCounitF) (a, OAppV x)) ->
-    -- This still needs proof content: f . h = g . h
+    -- Introducing an equalizer requires proof content: f . h = g . h
+    CatFreeEq (RACApplyRel ((dgm, EqObjF) ** EqCounitF))
+      ((a, OAppV {dgm} y) **
+       (InSlFc $ CHComp (InSlFv $ RACHv f) (InSlFv h),
+        InSlFc $ CHComp (InSlFv $ RACHv g) (InSlFv h))) ->
     EqLeftAdjunctHomF dgm (a, OAppC (EqObj {x} {y} f g))
