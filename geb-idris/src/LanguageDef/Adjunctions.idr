@@ -218,11 +218,17 @@ data CoeqObjF : AdjObjF where
 
 public export
 data CoeqUnitF : LeftAdjUnitHomF CoeqObjF where
-  CoeqInj : {x, y : dgm.dVert} ->
+  CoeqIntroInj : {x, y : dgm.dVert} ->
     (f, g : dgm.dEdge (x, y)) -> CoeqUnitF dgm (y, CoeqObj {x} {y} f g)
 
 public export
 data CoeqRightAdjunctHomF : LARightAdjunctHomF CoeqUnitF where
+  CoeqElim :
+    {x, y : dgm.dVert} -> {z : ObjApplyObj (dgm, CoeqObjF)} ->
+    {f, g : dgm.dEdge (x, y)} ->
+    (h : LAUApplyHom ((dgm, CoeqObjF) ** CoeqUnitF) (OAppV y, z)) ->
+    -- This still needs proof content: h . f = h . g
+    CoeqRightAdjunctHomF dgm (OAppC (CoeqObj {x} {y} f g), z)
 
 public export
 data EqObjF : AdjObjF where
@@ -231,8 +237,14 @@ data EqObjF : AdjObjF where
 
 public export
 data EqCounitF : RightAdjCounitHomF EqObjF where
-  EqInj : {x, y : dgm.dVert} ->
+  EqElimInj : {x, y : dgm.dVert} ->
     (f, g : dgm.dEdge (x, y)) -> EqCounitF dgm (EqObj {x} {y} f g, x)
 
 public export
 data EqLeftAdjunctHomF : RALeftAdjunctHomF EqCounitF where
+  EqIntro :
+    {a : ObjApplyObj (dgm, EqObjF)} -> {x, y : dgm.dVert} ->
+    {f, g : dgm.dEdge (x, y)} ->
+    (h : RACApplyHom ((dgm, EqObjF) ** EqCounitF) (a, OAppV x)) ->
+    -- This still needs proof content: f . h = g . h
+    EqLeftAdjunctHomF dgm (a, OAppC (EqObj {x} {y} f g))
