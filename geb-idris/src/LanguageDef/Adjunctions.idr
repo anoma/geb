@@ -137,14 +137,14 @@ racApply : RACounitP -> Diagram
 racApply rcp = MkDiagram (RACApplyObj rcp) (RACApplyHom rcp) (RACApplyRel rcp)
 
 public export
-LARightAdjunctF : {objf : AdjObjF} -> LeftAdjUnitF objf -> Type
-LARightAdjunctF {objf} unit =
-  (dgm, dgm' : Diagram) -> SliceObj (objf dgm, dgm'.dVert)
+LARightAdjunctHomF : {objf : AdjObjF} -> LeftAdjUnitF objf -> Type
+LARightAdjunctHomF {objf} unit =
+  (dgm : Diagram) -> HomSlice (LAUApplyObj ((dgm, objf) ** unit))
 
 public export
-RALeftAdjunctF : {objf : AdjObjF} -> RightAdjCounitF objf -> Type
-RALeftAdjunctF {objf} counit =
-  (dgm, dgm' : Diagram) -> SliceObj (dgm.dVert, objf dgm')
+RALeftAdjunctHomF : {objf : AdjObjF} -> RightAdjCounitF objf -> Type
+RALeftAdjunctHomF {objf} counit =
+  (dgm : Diagram) -> HomSlice (RACApplyObj ((dgm, objf) ** counit))
 
 ------------------
 ------------------
@@ -160,8 +160,9 @@ public export
 data InitUnitF : LeftAdjUnitF InitObjF where
 
 public export
-data InitRightAdjunctF : LARightAdjunctF InitUnitF where
-  InitMorph : (a : dgm'.dVert) -> InitRightAdjunctF dgm dgm' (InitObj, a)
+data InitRightAdjunctHomF : LARightAdjunctHomF InitUnitF where
+  InitMorph : (a : dgm.dVert) ->
+    InitRightAdjunctHomF dgm (OAppC InitObj, OAppV a)
 
 public export
 data TermObjF : AdjObjF where
@@ -171,8 +172,9 @@ public export
 data TermCounitF : RightAdjCounitF TermObjF where
 
 public export
-data TermLeftAdjunctF : RALeftAdjunctF TermCounitF where
-  TermMorph : (a : dgm.dVert) -> TermLeftAdjunctF dgm dgm' (a, TermObj)
+data TermLeftAdjunctHomF : RALeftAdjunctHomF TermCounitF where
+  TermMorph : (a : dgm.dVert) ->
+    TermLeftAdjunctHomF dgm (OAppV a, OAppC TermObj)
 
 public export
 data CoprodObjF : AdjObjF where
@@ -184,7 +186,7 @@ data CoprodUnitF : LeftAdjUnitF CoprodObjF where
   CopInjR : (x, y : dgm.dVert) -> CoprodUnitF dgm (y, CopObj x y)
 
 public export
-data CoprodRightAdjunctF : LARightAdjunctF CoprodUnitF where
+data CoprodRightAdjunctHomF : LARightAdjunctHomF CoprodUnitF where
 
 public export
 data ProdObjF : AdjObjF where
@@ -196,7 +198,7 @@ data ProdCounitF : RightAdjCounitF ProdObjF where
   PrProjR : (x, y : dgm.dVert) -> ProdCounitF dgm (PrObj x y, y)
 
 public export
-data ProdLeftAdjunctF : RALeftAdjunctF ProdCounitF where
+data ProdLeftAdjunctHomF : RALeftAdjunctHomF ProdCounitF where
 
 public export
 data CoeqObjF : AdjObjF where
@@ -209,7 +211,7 @@ data CoeqUnitF : LeftAdjUnitF CoeqObjF where
     (f, g : dgm.dEdge (x, y)) -> CoeqUnitF dgm (y, CoeqObj {x} {y} f g)
 
 public export
-data CoeqRightAdjunctF : LARightAdjunctF CoeqUnitF where
+data CoeqRightAdjunctHomF : LARightAdjunctHomF CoeqUnitF where
 
 public export
 data EqObjF : AdjObjF where
@@ -222,4 +224,4 @@ data EqCounitF : RightAdjCounitF EqObjF where
     (f, g : dgm.dEdge (x, y)) -> EqCounitF dgm (EqObj {x} {y} f g, x)
 
 public export
-data EqLeftAdjunctF : RALeftAdjunctF EqCounitF where
+data EqLeftAdjunctHomF : RALeftAdjunctHomF EqCounitF where
