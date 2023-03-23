@@ -356,19 +356,22 @@ DiagFreeRel : (diag : Diagram) -> (sig : DiagFreeSig diag) ->
 DiagFreeRel diag sig f g = DiagFreeSigRel diag (sig ** (f, g))
 
 public export
-DiagFreeRelIsRefl : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+DiagFreeRelIsRefl : (diag : Diagram) -> (a, b : DiagFreeObj diag) ->
   IsReflexive (DiagFreeRel diag (a, b))
-DiagFreeRelIsRefl diag a b = ?DiagFreeRelIsRefl_hole
+DiagFreeRelIsRefl diag a b f =
+  InSlF ((a, b) ** (f, f)) $ InSlC $ CEeq $ DFErefl f
 
 public export
-DiagFreeRelIsSym : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+DiagFreeRelIsSym : (diag : Diagram) -> (a, b : DiagFreeObj diag) ->
   IsSymmetric (DiagFreeRel diag (a, b))
-DiagFreeRelIsSym diag a b = ?DiagFreeRelIsSym_hole
+DiagFreeRelIsSym diag a b {x=f} {y=g} eq =
+  InSlF ((a, b) ** (g, f)) $ InSlC $ CEeq $ DFEsym eq
 
 public export
-DiagFreeRelIsTrans : (diag : Diagram) -> (0 a, b : DiagFreeObj diag) ->
+DiagFreeRelIsTrans : (diag : Diagram) -> (a, b : DiagFreeObj diag) ->
   IsTransitive (DiagFreeRel diag (a, b))
-DiagFreeRelIsTrans diag a b = ?DiagFreeRelIsTrans_hole
+DiagFreeRelIsTrans diag a b {x=f} {y=g} {z=h} eqfg eqgh =
+  InSlF ((a, b) ** (f, h)) $ InSlC $ CEeq $ DFEtrans eqgh eqfg
 
 public export
 DiagFreeRelIsEquiv : (diag : Diagram) -> (a, b : DiagFreeObj diag) ->
