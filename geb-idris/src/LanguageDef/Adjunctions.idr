@@ -69,15 +69,19 @@ data ProdCounitF : RightAdjCounitF ProdObjF where
 public export
 data CoeqObjF : AdjObjF where
   CoeqObj :
-    (x, y : sc.scObj) -> sc.scHom (x, y) -> sc.scHom (x, y) -> CoeqObjF sc
+    {x, y : sc.scObj} -> sc.scHom (x, y) -> sc.scHom (x, y) -> CoeqObjF sc
 
 public export
 data CoeqUnitF : LeftAdjUnitF CoeqObjF where
+  CoeqInj : {x, y : sc.scObj} ->
+    (f, g : sc.scHom (x, y)) -> CoeqUnitF sc (y, CoeqObj {x} {y} f g)
 
 public export
 data EqObjF : AdjObjF where
   EqObj :
-    (x, y : sc.scObj) -> sc.scHom (x, y) -> sc.scHom (x, y) -> EqObjF sc
+    {x, y : sc.scObj} -> sc.scHom (x, y) -> sc.scHom (x, y) -> EqObjF sc
 
 public export
-data EqUnitF : RightAdjCounitF EqObjF where
+data EqCounitF : RightAdjCounitF EqObjF where
+  EqInj : {x, y : sc.scObj} ->
+    (f, g : sc.scHom (x, y)) -> EqCounitF sc (EqObj {x} {y} f g, x)
