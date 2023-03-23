@@ -102,6 +102,40 @@ public export
 RACApplyObj : SliceObj RACounitP
 RACApplyObj dop = ObjApplyObj (fst dop)
 
+-- For a right adjoint, the counit provides the constructors.  These we
+-- treat as injective, like any typical datatype constructor -- hence
+-- the counit introduces no equalities, only new morphisms.  Furthermore,
+-- because these are only constructors, they only introduce new morphisms
+-- into the new objects, not out of them.
+public export
+data RACApplyHom : (rcp : RACounitP) -> HomSlice (RACApplyObj rcp) where
+  RACHv : {0 dgm : Diagram} -> {objf : AdjObjF} ->
+    {rac : RightAdjCounitF objf} ->
+    {x, y : dgm.dVert} ->
+    dgm.dEdge (x, y) -> RACApplyHom ((dgm, objf) ** rac) (OAppV x, OAppV y)
+  RACHc : {0 dgm : Diagram} -> {objf : AdjObjF} ->
+    {rac : RightAdjCounitF objf} ->
+    {x : objf dgm} -> {y : dgm.dVert} ->
+    rac dgm (x, y) -> RACApplyHom ((dgm, objf) ** rac) (OAppC x, OAppV y)
+
+-- We treat the constructors (which, for a right adjoint, come from the counit)
+-- treat as injective, like any typical datatype constructor -- hence
+-- the counit introduces no equalities, only new morphisms.
+public export
+data RACApplyRel : (rcp : RACounitP) -> SigRelT (RACApplyHom dop) where
+  RACRv : {0 dgm : Diagram} -> {objf : AdjObjF} ->
+    {rac : RightAdjCounitF objf} ->
+    {x, y : dgm.dVert} -> {f, g : dgm.dEdge (x, y)} ->
+    -- dgm.dRel ((x, y) ** (f, g)) ->
+    ObjApplyRel (dgm, objf) ((OAppV x, OAppV y) ** (OAppH f, OAppH g)) ->
+    RACApplyRel
+      ((dgm, objf) ** rac) ((OAppV x, OAppV y) **
+       (RACHv {dgm} {rac} {x} {y} f, RACHv {dgm} {rac} {x} {y} g))
+
+public export
+racApply : RACounitP -> Diagram
+racApply rcp = MkDiagram (RACApplyObj rcp) (RACApplyHom rcp) (RACApplyRel rcp)
+
 public export
 LARightAdjunctF : {objf : AdjObjF} -> LeftAdjUnitF objf -> Type
 LARightAdjunctF {objf} unit =
