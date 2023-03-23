@@ -40,6 +40,7 @@ data ObjApplyRel : (dop : DgmObjP) -> SigRelT (ObjApplyHom dop) where
     dgm.dRel ((x, y) ** (f, g)) ->
     ObjApplyRel (dgm, objf) ((OAppV x, OAppV y) ** (OAppH f, OAppH g))
 
+-- This extends only the object part of the diagram.
 public export
 objApply : DgmObjP -> Diagram
 objApply dop = MkDiagram (ObjApplyObj dop) (ObjApplyHom dop) (ObjApplyRel dop)
@@ -49,8 +50,26 @@ LeftAdjUnitF : AdjObjF -> Type
 LeftAdjUnitF objf = (dgm : Diagram) -> SliceObj (dgm.dVert, objf dgm)
 
 public export
+LAUnitP : Type
+LAUnitP = (dop : DgmObjP ** LeftAdjUnitF (snd dop))
+
+-- The unit extends only the morphisms, not the objects.
+public export
+LAUApplyObj : SliceObj LAUnitP
+LAUApplyObj dop = ObjApplyObj (fst dop)
+
+public export
 RightAdjCounitF : AdjObjF -> Type
 RightAdjCounitF objf = (dgm : Diagram) -> SliceObj (objf dgm, dgm.dVert)
+
+public export
+RACounitP : Type
+RACounitP = (dop : DgmObjP ** RightAdjCounitF (snd dop))
+
+-- The counit extends only the morphisms, not the objects.
+public export
+RACApplyObj : SliceObj RACounitP
+RACApplyObj dop = ObjApplyObj (fst dop)
 
 public export
 LARightAdjunctF : {objf : AdjObjF} -> LeftAdjUnitF objf -> Type
