@@ -122,6 +122,7 @@
    (:file meta)
    (:file geb)
    (:file lambda)
+   (:file lambda-experimental)
    (:file lambda-conversion)
    (:file poly)
    (:file pipeline)
