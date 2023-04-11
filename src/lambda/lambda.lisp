@@ -8,10 +8,12 @@
           :accessor mcadr
           :documentation ""))
   (:documentation
-   "Stand-in for the [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] object. It does not have any computational properties
-and can be seen as just a function of two arguments with accessors [MCAR][generic-function] to the
-first argument and [MCADR][generic-function] to the second argument. There is an evident canonical way
-to associate [FUN-TYPE][class] and [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] pointwise."))
+   "Stand-in for the [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] object. It does not have
+any computational properties and can be seen as just a function of two arguments
+with accessors [MCAR][generic-function] to the first argument and
+[MCADR][generic-function] to the second argument. There is an evident canonical
+way to associate [FUN-TYPE][class] and [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ]
+pointwise."))
 
 (defun fun-type (mcar mcadr)
   (make-instance 'fun-type :mcar mcar :mcadr mcadr))
@@ -23,9 +25,10 @@ to associate [FUN-TYPE][class] and [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] pointwise."
 ;; further extend the definition
 
 (defun hom-cod (ctx f)
-  "Given a context of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by
-[FUN-TYPE][class], and similarly an [STLC][class] term of the stand-in for the hom object,
-produces the stand-in to the codomain."
+  "Given a context of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with occurences of
+[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class], and similarly
+an [STLC][class] term of the stand-in for the hom object, produces the stand-in
+to the codomain."
   (let ((rec  (ann-term1 ctx f)))
     (cond ((typep f 'fst)     (let ((tt (term f)))
                                 (if (typep tt 'pair)
@@ -47,8 +50,9 @@ produces the stand-in to the codomain."
 
 (-> index-check (fixnum list) cat-obj)
 (defun index-check (i ctx)
-  "Given an natural number [i] and a context, checks that the context is of length at least [i]
-and then produces the [i]'th entry of the context where contexts are read right to left."
+  "Given an natural number [i] and a context, checks that the context is of
+length at least [i] and then produces the [i]'th entry of the context where
+contexts are read right to left."
   (let ((l (length ctx)))
     (if (< i l)
         (nth (- l (+ i 1)) ctx)
@@ -63,13 +67,14 @@ and then produces the [i]'th entry of the context where contexts are read right 
 
 (defgeneric ann-term1 (ctx tterm)
   (:documentation
-   "Given a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] objects with [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] occurences
-replaced by [FUN-TYPE][class] and an [STLC][class] similarly replacing type occurences of the hom object
-to [FUN-TYPE][class], provides the [TTYPE][generic-function] accessor to all subterms as well as the term itself,
-using [FUN-TYPE][class].
-Once again, note  that it is important for the context and term to be giving as per above description.
-While not always, not doing so result in an error upon evaluation.
-As an example of a valid entry we have
+   "Given a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] objects with
+[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] occurences replaced by [FUN-TYPE][class]
+and an [STLC][class] similarly replacing type occurences of the hom object
+to [FUN-TYPE][class], provides the [TTYPE][generic-function] accessor to all
+subterms as well as the term itself, using [FUN-TYPE][class]. Once again,
+note  that it is important for the context and term to be giving as
+per above description. While not always, not doing so result in an error upon
+evaluation. As an example of a valid entry we have
 
 ```lisp
  (ann-term1 (list so1 (fun-type so1 so1)) (app (index 0) (index 1)))
@@ -81,7 +86,8 @@ while
 (ann-term1 (list so1 (so-hom-obj so1 so1)) (app (index 0) (index 1)))
 ```
 
-produces an error trying to use [HOM-COD]. This warning applies to other functions taking in context and terms below as well."))
+produces an error trying to use [HOM-COD]. This warning applies to other
+functions taking in context and terms below as well."))
 
 
 (defmethod ann-term1 (ctx (tterm <stlc>))
@@ -137,9 +143,10 @@ produces an error trying to use [HOM-COD]. This warning applies to other functio
 ;; to one containing actual hom-objects
 
 (defun fun-to-hom (t1)
-  "Given a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] whose subobjects might have a [FUN-TYPE][class] occurence
-replaces all occurences of [FUN-TYPE][class] with a suitable [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], hence giving
-a pure [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]"
+  "Given a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] whose subobjects might have a
+[FUN-TYPE][class] occurence replaces all occurences of [FUN-TYPE][class] with a
+suitable [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], hence giving a pure
+[SUBSTOBJ][GEB.SPEC:SUBSTOBJ]"
   (cond ((typep t1 'prod)     (prod (fun-to-hom (mcar t1))
                                     (fun-to-hom (mcadr t1))))
         ((typep t1 'coprod)   (coprod (fun-to-hom (mcar t1))
@@ -151,9 +158,10 @@ a pure [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]"
 ;; Changes all annotated terms' types to actual Geb objects
 
 (defun ann-term2 (tterm)
-  "Given an [STLC][class] term with a [TTYPE][generic-function] accessor from [ANN-TERM1][generic-function]
-- i.e. including possible [FUN-TYPE][class] occurences - re-annotates the term and its subterms with
-actual [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] objects."
+  "Given an [STLC][class] term with a [TTYPE][generic-function] accessor from
+[ANN-TERM1][generic-function] - i.e. including possible [FUN-TYPE][class]
+occurences - re-annotates the term and its subterms with actual
+[SUBSTOBJ][GEB.SPEC:SUBSTOBJ] objects."
   (match-of stlc tterm
     ((absurd tcod term)    (absurd (fun-to-hom tcod)
                                    (ann-term2 term)
@@ -186,10 +194,12 @@ actual [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] objects."
                                   :ttype (fun-to-hom (ttype tterm))))))
 
 (defun annotated-term (ctx term)
-  "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with occurences of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and an [STLC][class] term with similarly replaced
-occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], provides an [STLC][class] with all subterms typed,
-i.e. providing the [TTYPE][generic-function] accessor, which is a pure [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]"
+  "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
+with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by
+[FUN-TYPE][class] and an [STLC][class] term with similarly replaced occurences
+of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], provides an [STLC][class] with all
+subterms typed, i.e. providing the [TTYPE][generic-function] accessor,
+which is a pure [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]"
   (ann-term2 (ann-term1 ctx term)))
 
 
@@ -197,19 +207,20 @@ i.e. providing the [TTYPE][generic-function] accessor, which is a pure [SUBSTOBJ
 ;; with a stand-in for the exponential object
 
 (defun type-of-term-w-fun (ctx tterm)
-  "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with occurences of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and an [STLC][class]
-term with similarly replaced occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ],
-gives out a type of the whole term with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ]
-replaced by [FUN-TYPE][class]."
+  "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
+occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class]
+and an [STLC][class] term with similarly replaced occurences of
+[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], gives out a type of the whole term with
+occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class]."
   (ttype (ann-term1 ctx tterm)))
 
 ;; Actual type info
 
 (defun type-of-term (ctx tterm)
-  "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with occurences of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and an [STLC][class] term with similarly
-replaced occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], provides the type of the whole term,
+  "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
+occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class]
+and an [STLC][class] term with similarly replaced occurences of
+[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], provides the type of the whole term,
 which is a pure [SUBSTOBJ][type]."
   (fun-to-hom (type-of-term-w-fun ctx tterm)))
 
@@ -217,58 +228,53 @@ which is a pure [SUBSTOBJ][type]."
 
 (defgeneric well-defp (ctx tterm)
   (:documentation
-   "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with occurences of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and an [STLC][class] term with
-similarly replaced occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], checks that the term
-is well-defined in the context based on structural rules of simply typed lambda calculus.
-Note that the code might error, rather than give out a boolean due to the definition
-of [ANN-TERM1][generic-function]."))
+   "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
+with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by
+[FUN-TYPE][class] and an [STLC][class] term with similarly replaced
+occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], checks that the term
+is well-defined in the context based on structural rules of simply
+typed lambda calculus. returns the t if it is, otherwise returning
+nil"))
 
 (defmethod well-defp (ctx (tterm <stlc>))
-  (match-of stlc tterm
-    ((absurd)                 (and (well-defp       ctx (term tterm))
-                                   (geb.mixins:obj-equalp (type-of-term-w-fun ctx (term tterm))
-                                                          so0)))
-    (unit                     t)
-    ((left)                   (and (well-defp       ctx (term tterm))
-                                   (geb.mixins:obj-equalp (mcar (type-of-term-w-fun ctx tterm))
-                                                          (type-of-term-w-fun ctx (term tterm)))))
-    ((right)                  (and (well-defp       ctx (term tterm))
-                                   (geb.mixins:obj-equalp (mcadr (type-of-term-w-fun ctx tterm))
-                                                          (type-of-term-w-fun ctx (term tterm)))))
-    ((case-on on ltm rtm)     (let ((mcartoon (cons  (mcar (type-of-term-w-fun ctx on)) ctx))
-                                    (mcadrtoon (cons  (mcadr (type-of-term-w-fun ctx on)) ctx)))
-                                (and (well-defp mcartoon
-                                                ltm)
-                                     (well-defp mcadrtoon
-                                                rtm)
-                                     (well-defp ctx on)
-                                     (geb.mixins:obj-equalp (type-of-term-w-fun mcartoon ltm)
-                                                            (type-of-term-w-fun mcadrtoon rtm)))))
-    ((pair ltm rtm)           (let ((ttot (type-of-term-w-fun ctx tterm)))
-                                (and (well-defp ctx ltm)
-                                     (well-defp ctx rtm)
-                                     (geb.mixins:obj-equalp (mcar ttot)
-                                                            (type-of-term-w-fun ctx ltm))
-                                     (geb.mixins:obj-equalp (mcadr ttot)
-                                                            (type-of-term-w-fun ctx rtm)))))
-    ((fst)                    (and (well-defp       ctx (term tterm))
-                                   (geb.mixins:obj-equalp (type-of-term-w-fun ctx tterm)
-                                                          (mcar (type-of-term-w-fun ctx (term tterm))))))
-    ((snd)                    (and (well-defp       ctx (term tterm))
-                                   (geb.mixins:obj-equalp (type-of-term-w-fun ctx tterm)
-                                                          (mcadr (type-of-term-w-fun ctx (term tterm))))))
-    ((lamb tdom term)         (let ((ttot (type-of-term-w-fun ctx tterm)))
-                                (and (well-defp (cons tdom ctx) term)
-                                     (geb.mixins:obj-equalp (mcar ttot)
-                                                            tdom)
-                                     (geb.mixins:obj-equalp (mcadr ttot)
-                                                            (type-of-term-w-fun (cons tdom ctx) term)))))
-    ((app fun)                (let ((tofun  (type-of-term-w-fun ctx fun)))
-                                (and (well-defp ctx fun)
-                                     (well-defp       ctx (term tterm))
-                                     (geb.mixins:obj-equalp (type-of-term-w-fun ctx (term tterm))
-                                                            (mcar tofun))
-                                     (geb.mixins:obj-equalp (type-of-term-w-fun ctx tterm)
-                                                            (mcadr tofun)))))
-    ((index pos)              (< pos (length ctx)))))
+  (labels ((check (tterm)
+             (match-of stlc tterm
+               ((absurd)
+                (and (check (term tterm))
+                     (obj-equalp (ttype (term tterm)) so0)))
+               ((left term)
+                (and (check term)
+                     (obj-equalp (mcar (ttype tterm)) (ttype term))))
+               ((right term)
+                (and (check term)
+                     (obj-equalp (mcadr (ttype tterm)) (ttype term))))
+               ((pair ltm rtm)
+                (and (check ltm)
+                     (check rtm)))
+               ((fst term)
+                (and (check term)
+                     (obj-equalp (ttype tterm) (mcar (ttype term)))))
+               ((snd term)
+                (and (check term)
+                     (obj-equalp (ttype tterm) (mcadr (ttype term)))))
+               ((case-on on ltm rtm)
+                (and (check ltm)
+                     (check rtm)
+                     (check on)
+                     (obj-equalp (ttype ltm) (ttype rtm))))
+               ((lamb tdom term)
+                (let ((lambda-type (ttype tterm)))
+                  (and (check term)
+                       (obj-equalp (mcar lambda-type) tdom)
+                       (obj-equalp (mcadr lambda-type) (ttype term)))))
+               ((app fun term)
+                (let ((function-type (ttype fun)))
+                  (and (check fun)
+                       (check term)
+                       (obj-equalp (ttype term) (mcar function-type))
+                       (obj-equalp (ttype tterm) (mcadr function-type)))))
+               (index t)
+               (unit t))))
+    (let ((term (ignore-errors
+                 (ann-term1 ctx tterm))))
+      (and term (check term)))))
