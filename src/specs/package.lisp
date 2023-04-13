@@ -98,81 +98,98 @@ constructors"
 
 (pax:defsection @lambda-specs (:title "Lambda Specification")
   "This covers the various the abstract data type that is the simply
-  typed lambda calculus within GEB.
-
-The specification follows from the sum type declaration
-
-```lisp
-(defunion stlc
-  (absurd (value t))
-  unit
-  (left (value t))
-  (right (value t))
-  (case-on (lty geb.spec:substmorph)
-           (rty geb.spec:substmorph)
-           (cod geb.spec:substmorph)
-           (on t) (left t) (right t))
-  (pair (lty geb.spec:substmorph) (rty geb.spec:substmorph) (left t) (right t))
-  (fst  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (snd  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (lamb (vty geb.spec:substmorph) (tty geb.spec:substmorph) (value t))
-  (app  (dom geb.spec:substmorph) (cod geb.spec:substmorph) (func t) (obj t))
-  (index (index fixnum)))
-```
+  typed lambda calculus within GEB. The class presents untyped STLC terms.
 "
-  (<stlc> pax:type)
   (stlc pax:type)
-  (absurd pax:type)
-  (absurd-value pax:function)
+  (<stlc> pax:class)
 
-  (unit pax:type)
+  (absurd pax:class)
+  (unit pax:class)
+  (left pax:class)
+  (right pax:class)
+  (case-on pax:class)
+  (pair pax:class)
+  (fst pax:class)
+  (snd pax:class)
+  (lamb pax:class)
+  (app pax:class)
+  (index pax:class)
 
-  (pair pax:type)
-  (pair-lty pax:function)
-  (pair-rty pax:function)
-  (pair-left pax:function)
-  (pair-right pax:function)
+  (absurd pax:function)
+  (unit pax:function)
+  (left pax:function)
+  (right pax:function)
+  (case-on pax:function)
+  (pair pax:function)
+  (fst pax:function)
+  (snd pax:function)
+  (lamb pax:function)
+  (app pax:function)
+  (index pax:function)
 
-  (left pax:type)
-  (left-value pax:function)
+  "Accessors of [ABSURD][class]"
 
-  (right pax:type)
-  (right-value pax:function)
+  (tcod (pax:method () (absurd)))
+  (term (pax:method () (absurd)))
+  (ttype (pax:method () (absurd)))
 
-  (case-on pax:type)
-  (case-on-lty pax:function)
-  (case-on-rty pax:function)
-  (case-on-cod pax:function)
-  (case-on-on pax:function)
-  (case-on-left pax:function)
-  (case-on-right pax:function)
+  "Accessors of [UNIT][class]"
+  (ttype (pax:method () (unit)))
 
-  (fst pax:type)
-  (fst-lty pax:function)
-  (fst-rty pax:function)
-  (fst-value pax:function)
+  "Accessors of [LEFT][class]"
+  (rty (pax:method () (left)))
+  (term (pax:method () (left)))
+  (ttype (pax:method () (left)))
 
-  (snd pax:type)
-  (snd-lty pax:function)
-  (snd-rty pax:function)
-  (snd-value pax:function)
+  "Accessors of [RIGHT][class]"
+  (lty (pax:method () (right)))
+  (term (pax:method () (right)))
+  (ttype (pax:method () (right)))
 
-  (lamb pax:type)
-  (lamb-vty pax:function)
-  (lamb-tty pax:function)
-  (lamb-value pax:function)
+  "Accessors of [CASE-ON][class]"
+  (on (pax:method () (case-on)))
+  (ltm (pax:method () (case-on)))
+  (rtm (pax:method () (case-on)))
+  (ttype (pax:method () (case-on)))
 
-  (app pax:type)
-  (app-dom pax:function)
-  (app-cod pax:function)
-  (app-func pax:function)
-  (app-obj pax:function)
+  "Accessors of [PAIR][class]"
+  (ltm (pax:method () (pair)))
+  (rtm (pax:method () (pair)))
+  (ttype (pax:method () (pair)))
 
-  (index pax:type)
-  (index-index pax:function)
+  "Accessors of [FST][class]"
+  (term (pax:method () (fst)))
+  (ttype (pax:method () (fst)))
 
-  (typed pax:function)
-  (typed-stlc-type pax:function) (typed-stlc-value pax:function))
+  "Accessors of [SND][class]"
+  (term (pax:method () (snd)))
+  (ttype (pax:method () (snd)))
+
+  "Accessors of [LAMB][class]"
+  (tdom (pax:method () (lamb)))
+  (term (pax:method () (lamb)))
+  (ttype (pax:method () (lamb)))
+
+  "Accessors of [APP][class]"
+  (fun (pax:method () (app)))
+  (term (pax:method () (app)))
+  (ttype (pax:method () (app)))
+
+  "Accessors of [INDEX][class]"
+  (pos (pax:method () (index)))
+  (ttype (pax:method () (index)))
+
+  (tcod pax:generic-function)
+  (tdom pax:generic-function)
+  (term pax:generic-function)
+  (rty pax:generic-function)
+  (lty pax:generic-function)
+  (ltm pax:generic-function)
+  (rtm pax:generic-function)
+  (on pax:generic-function)
+  (fun pax:generic-function)
+  (pos pax:generic-function)
+  (ttype pax:generic-function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb Package Documentation
