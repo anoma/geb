@@ -74,3 +74,20 @@
 (defmethod fset:compare ((x direct-pointwise-mixin) (y direct-pointwise-mixin))
   (fset:compare (to-pointwise-list x)
                 (to-pointwise-list y)))
+
+(-> map-pointwise (function pointwise-mixin) pointwise-mixin)
+(defun map-pointwise (function obj)
+  (values
+   (apply #'util:copy-instance obj
+          (alexandria:alist-plist
+           (mapcar (lambda (x)
+                     (cons (car x)
+                           (funcall function (cdr x))))
+                   (to-pointwise-list obj))))))
+
+(-> reduce-pointwise (function pointwise-mixin t) t)
+(defun reduce-pointwise (function obj initial)
+  (reduce (lambda (x y)
+            (funcall function x (cdr y)))
+          (to-pointwise-list obj)
+          :initial-value initial))

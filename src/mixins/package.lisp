@@ -109,7 +109,9 @@ storage.")
   (to-pointwise-list pax:generic-function)
   (obj-equalp        pax:generic-function)
 
-  (pointwise-slots   pax:generic-function))
+  (pointwise-slots   pax:generic-function)
+  (map-pointwise     pax:function)
+  (reduce-pointwise  pax:function))
 
 (defun my-transcript (fn)
   (let ((pax:*transcribe-check-consistency*
