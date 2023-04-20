@@ -66,3 +66,11 @@
 ;; I should implement it for arrays as well!
 (defmethod obj-equalp ((obj1 t) (obj2 t))
   (equalp obj1 obj2))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Fset comparisons
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmethod fset:compare ((x direct-pointwise-mixin) (y direct-pointwise-mixin))
+  (fset:compare (to-pointwise-list x)
+                (to-pointwise-list y)))
