@@ -22,6 +22,11 @@
   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj
    :same-type-to-list :pair-to-list))
 
+(muffle-package-variance
+ (uiop:define-package #:geb.extension.spec
+   (:documentation "Extensions of the various categories")
+   (:mix #:trivia #:serapeum #:common-lisp #:geb.mixins #:geb.utils)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb Package Documentation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -323,3 +328,14 @@ we can view this as automatically lifting a [SUBSTOBJ][type] into a
   (obj    pax:generic-function)
   (name   pax:generic-function)
   (func   pax:generic-function))
+
+(in-package :geb.extension.spec)
+
+(pax:defsection @geb-extensions (:title "Extension Sets")
+  "This package contains many extensions one may see over the codebase.
+
+Each extension adds an unique feature to the categories they are
+extending. To learn more, read about the individual extension you are
+interested in."
+  (common-sub-expression      pax:class)
+  (make-common-sub-expression pax:function))

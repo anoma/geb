@@ -41,6 +41,12 @@
     :components ((:file package)
                  (:file geb)
                  (:file bool)))
+   (:module extensions
+    :serial t
+    :depends-on (specs util)
+    :description "The Extensions module"
+    :components ((:file package)
+                 (:file sub-expressions)))
    (:module poly
     :serial t
     :description "Polynomial"
@@ -68,6 +74,8 @@
                  (:file lambda)
                  (:file poly)
                  (:file poly-printer)
+                 (:file extension)
+                 (:file extension-printer)
                  ;; HACK: to make the package properly refer to the
                  ;; right symbols
                  (:file ../util/package)))
