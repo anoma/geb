@@ -111,24 +111,24 @@
 
 (define-test vampir-test-unit-to-unit
   :parent geb.lambda.trans
-  (of-type geb.vampir.spec:alias unit-to-unit-circuit))
+  (of-type list unit-to-unit-circuit))
 
 (define-test vampir-test-void-to-unit
   :parent geb.lambda.trans
-  (of-type geb.vampir.spec:alias void-to-unit-circuit))
+  (of-type list void-to-unit-circuit))
 
 (define-test vampir-test-unit-to-bool-left
   :parent geb.lambda.trans
-  (of-type geb.vampir.spec:alias unit-to-bool-left-circuit))
+  (of-type list unit-to-bool-left-circuit))
 
 (define-test vampir-test-unit-to-bool-right
   :parent geb.lambda.trans
-  (of-type geb.vampir.spec:alias unit-to-bool-right-circuit))
+  (of-type list unit-to-bool-right-circuit))
 
 (define-test vampir-test-pair-bool
   :parent geb.lambda.trans
-  (of-type geb.vampir.spec:alias pair-bool-circuit))
+  (of-type list pair-bool-circuit))
 
 (define-test vampir-test-issue-58
   :parent geb.lambda.trans
-  (of-type geb.vampir.spec:alias issue-58-circuit))
+  (of-type list issue-58-circuit))

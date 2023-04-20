@@ -9,16 +9,20 @@
 ;; Sum Type Declarations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; please remove these geb types later
+
 (deftype statement ()
   `(or alias pub constraint))
 
 (deftype constraint ()
-  `(or application bind equality expression))
+  `(or application bind equality expression
+       geb.extension.spec:common-sub-expression))
 
 ;; called base in the file
 ;; Values are called over a normal form!?!?!?
 (deftype expression ()
-  `(or infix application normal-form tuple))
+  `(or infix application normal-form tuple
+       geb.extension.spec:common-sub-expression))
 
 (deftype normal-form ()
   `(or wire constant))
@@ -49,7 +53,7 @@
 
 (defclass alias (mixins)
   ((name :initarg :name
-         :type    keyword
+         :type    (or symbol keyword)
          :accessor name
          :documentation "Name of the alias gate")
    (inputs :initarg :inputs
@@ -92,9 +96,9 @@
         :documentation "the argument to the right of the op")))
 
 (defclass application (mixins)
-  ((func :initarg :function
+  ((func :initarg :func
          :accessor func
-         :type     keyword
+         :type     (or symbol keyword)
          :documentation "the alias we are calling")
    (arguments :initarg :arguments
               ;; I assume list of expressions?
@@ -133,7 +137,7 @@
 (defclass wire (mixins)
   ((var :initarg :var
         :accessor var
-        :type     keyword))
+        :type     (or symbol keyword)))
   (:documentation "A reference in vamp-ir"))
 
 (defclass constant (mixins)
@@ -145,7 +149,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (serapeum:-> make-alias
-             (&key (:name keyword) (:inputs list) (:body constraint-list))
+             (&key (:name (or symbol keyword)) (:inputs list) (:body constraint-list))
              alias)
 (defun make-alias (&key name inputs body)
   (values
@@ -170,7 +174,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun make-application (&key func arguments)
-  (make-instance 'application :function func :arguments arguments))
+  (make-instance 'application :func func :arguments arguments))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bind

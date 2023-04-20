@@ -18,9 +18,9 @@
          (compile-checked-term context type)
          geb:to-poly)))
 
-(-> to-circuit (list t <stlc> keyword) geb.vampir.spec:statement)
+(-> to-circuit (list t <stlc> keyword) list)
 (defun to-circuit (context type obj name)
-  (assure geb.vampir.spec:statement
+  (assure list
     (~> (to-poly context type obj)
         (geb.poly:to-circuit name))))
 
