@@ -50,12 +50,90 @@ produces an error. Error of such kind mind pop up both on the level of evaluatin
 
 (defmethod empty ((class (eql (find-class 'list)))) nil)
 
+(defun maybe (f)
+  "Takes a morphism f : a -> b in Geb and produces
+Maybe(f) : (1 + a) -> (1 + b)"
+  (mcase (->left so1 (codom f)) (comp (->right so1 (codom f)) f)))
+
+(defmethod compile-err (context (tterm <stlc>))
+  (labels ((rec (context tterm)
+             (match-of stlc tterm
+               ((absurd tcod term)
+                (comp (maybe (init tcod))
+                      (rec context term)))     
+               (unit
+                (comp (->right so1 so1) (terminal (stlc-ctx-to-mu context))))
+               ((left rty term)
+                (let ((tott (ttype tterm)))
+                  (comp (maybe (->left (mcar tott) rty))
+                        (rec context term))))    
+               ((right term)
+                (let ((tott (ttype tterm)))
+                  (comp (maybe (->right (mcar tott) (mcadr tott)))
+                        (rec context term))))
+               ((case-on on ltm rtm)
+                (let ((toon (ttype on)))
+                  (comp (maybe (mcase (curry (rec
+                                              (cons (mcar toon) context) ltm))
+                                      (curry (rec
+                                              (cons (mcadr toon) context) rtm))))
+                        (rec context on))))
+               ((pair ltm rtm)
+                (let ((lty  (ttype ltm))
+                      (rty  (ttype rtm))
+                      (pty  (prod (ttype ltm) (ttype rtm)))
+                      (1lty (coprod so1 (ttype ltm))))
+                  ;; correctness was checked in Agda
+                  ;; may need further optimization
+                  (comp (mcase (->left so1 pty)
+                               (mcase (comp (->left so1 pty)
+                                            (terminal rty))
+                                      (->right so1 pty))) 
+                        (comp (geb.main:coprod-mor (terminal (prod 1lty
+                                                                   so1))
+                                          (comp (geb.main:coprod-mor
+                                                 (<-left rty so1)
+                                                 (commutes rty lty))
+                                                (comp (distribute rty so1 lty)
+                                                      (commutes 1lty
+                                                                rty))))
+                              (distribute 1lty
+                                          so1 rty)))))
+               ((fst term)
+                (let ((tottt (ttype term)))
+                  (comp (maybe (<-left (mcar tottt) (mcadr tottt)))
+                        (rec context term))))
+               ((snd term)
+                (let ((tottt (ttype term)))
+                  (comp (maybe (<-right (mcar tottt) (mcadr tottt)))
+                        (compile-checked-term context term))))
+               ((lamb tdom term)
+                
+                t)  
+               ((app fun term)
+                (let ((tofun (ttype fun)))
+                  (comp
+                   (so-eval (fun-to-hom (mcar tofun))
+                            (fun-to-hom (mcadr tofun)))
+                   (geb:pair (rec context
+                                  fun)
+                             (rec context
+                                  term)))))
+               ((index pos)
+                (comp (->right so1 (nth pos context)) (stlc-ctx-proj context pos)))
+               ((err ttype)
+                (comp (->left so1 ttype) (terminal (stlc-ctx-to-mu context)))))))
+    (let ((ann-term (ann-term1 context tterm)))
+      (if (well-defp context ann-term)
+          (rec context ann-term)
+          (error "not a well-defined ~A in said ~A" tterm context)))))
+
 (defmethod compile-checked-term (context (tterm <stlc>))
   (labels ((rec (context tterm)
              (match-of stlc tterm
                ((absurd tcod term)
                 (comp (init tcod)
-                      (rec context term)))
+                      (rec context term))) 
                (unit
                 (terminal (stlc-ctx-to-mu context)))
                ((left term)
@@ -97,20 +175,36 @@ produces an error. Error of such kind mind pop up both on the level of evaluatin
                              (rec context
                                   term)))))
                ((index pos)
-                (stlc-ctx-proj context pos)))))
+                (stlc-ctx-proj context pos))
+               ((err ttype)
+                (comp (->left so1 ttype) (terminal (stlc-ctx-to-mu context)))))))
     (let ((ann-term (ann-term1 context tterm)))
       (if (well-defp context ann-term)
           (rec context ann-term)
           (error "not a well-defined ~A in said ~A" tterm context)))))
 
-
 (-> stlc-ctx-to-mu (stlc-context) substobj)
 (defun stlc-ctx-to-mu (context)
   "Converts a generic [<STLC>][type] context into a
 [SUBSTMORPH][GEB.SPEC:SUBSTMORPH]. Note that usually contexts can be interpreted
-in a category as a $\Sigma$-type$, which in a non-dependent setting gives us a
+in a category as a $\Sigma$-type, which in a non-dependent setting gives us a
 usual [PROD][type]"
   (mvfoldr #'prod (mapcar #'fun-to-hom context) so1))
+
+(app (lamb
+      (fun-type
+       (fun-type
+        (coprod so1 so1)
+        (coprod so1 so1))
+       (coprod so1 so1))
+      (app
+       (index 0)
+       (lamb (coprod so1 so1)
+             (index 1))))
+      (lamb
+       (fun-type (coprod so1 so1)
+                 (coprod so1 so1))
+        (left so1 (unit))))
 
 (-> so-hom (substobj substobj) (or t substobj))
 (defun so-hom (dom cod)

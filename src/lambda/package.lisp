@@ -26,6 +26,7 @@
   (well-defp          pax:generic-function)
   (fun-type           pax:class)
   (fun-type           pax:function)
+  (errorp             pax:function)
 
   (mcar              (pax:method () (fun-type)))
   (mcadr             (pax:method () (fun-type)))

@@ -219,6 +219,18 @@ u
     (_ (error "object ~A need to be of a coproduct type, however it is of ~A"
               f (dom f)))))
 
+(defun coprod-mor (f g)
+  (mcase (comp (->left (codom f) (codom g))
+               f)
+         (comp (->right (codom f) (codom g))
+               g)))
+
+(defun prod-mor (f g)
+  (pair (comp f
+              (<-left (dom f) (dom g)))
+        (comp g
+              (<-right (dom f) (dom g)))))
+
 (defgeneric text-name (morph)
   (:documentation
    "Gets the name of the moprhism"))

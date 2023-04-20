@@ -9,7 +9,7 @@ type theory spanned by empty, unit types as well as coproduct, product, and func
   "Type of untyped terms of [STLC][type]. Each class of a term has a slot for a type,
 which can be filled by auxillary functions or by user. Types are represented
 as [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]."
-  '(or absurd unit left right case-on pair fst snd lamb app index))
+  '(or absurd unit left right case-on pair fst snd lamb app index err))
 
 (defclass absurd (<stlc>)
   ((tcod :initarg :tcod
@@ -421,4 +421,23 @@ $$\\Gamma_1 , \\ldots , \\Gamma_k \\vdash \\text{(index pos) :} \\Gamma_{pos}$$
 (defun index (pos &key (ttype nil))
   (make-instance 'index :pos pos :ttype ttype))
 
+(defclass err (<stlc>)
+  ((ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation
+   "An error term of a type supplied by the user. The formal grammar of
+[ERR][class] is
 
+```lisp
+(err ttype)
+```
+
+The intended semantics are as follows: [ERR][class] represents an error node
+currently having no particular feedback but with functionality to be of an
+arbitrary type. Note that this is the only STLC term class which does not
+have [TTYPE][generic-function] a possibly empty accessor."))
+
+(defun err (ttype)
+  (make-instance 'err :ttype ttype))
