@@ -792,48 +792,48 @@ coprodPostCompUnit {obj} hom a a' b b' c mbc mab ma'b =
     (coprodRAAfterUnit a' (ObjCp b b') c mbc ma'b)
 
 public export
-coprodUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
-  (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
-  (a : obj) -> (b : CoprodObjF obj) ->
-  RelationOn (CoprodUnitF hom (a, b))
-coprodUnitExtendEq eq a (ObjCp a b) (CpUnInjL a b) (CpUnInjL a b) = Unit
-coprodUnitExtendEq eq a (ObjCp a a) (CpUnInjL a a) (CpUnInjR a a) = Void
-coprodUnitExtendEq eq a (ObjCp a a) (CpUnInjR a a) (CpUnInjL a a) = Void
-coprodUnitExtendEq eq b (ObjCp a b) (CpUnInjR a b) (CpUnInjR a b) = Unit
+data CoprodUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+    (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
+    (a : obj) -> (b : CoprodObjF obj) ->
+    RelationOn (CoprodUnitF hom (a, b)) where
+  CpInjLRefl : (0 a, b : obj) ->
+    CoprodUnitExtendEq eq a (ObjCp a b) (CpUnInjL a b) (CpUnInjL a b)
+  CpInjRRefl : (0 a, b : obj) ->
+    CoprodUnitExtendEq eq b (ObjCp a b) (CpUnInjR a b) (CpUnInjR a b)
 
 public export
-coprodRightAdjExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+CoprodRightAdjExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
   (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
   (a : CoprodObjF obj) -> (b : obj) ->
   RelationOn (CoprodRightAdj hom (a, b))
-coprodRightAdjExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
+CoprodRightAdjExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
   Pair (eq a b f f') (eq a' b g g')
 
 public export
-coprodRightAdjUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+CoprodRightAdjUnitExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
   (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
   (a, b : CoprodObjF obj) ->
   RelationOn (CoprodRightAdj {obj} {obj'=(CoprodObjF obj)}
     (CoprodUnitF hom) (a, b))
-coprodRightAdjUnitExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
+CoprodRightAdjUnitExtendEq eq (ObjCp a a') b (CpRACase f g) (CpRACase f' g') =
   Pair
-    (coprodUnitExtendEq {hom} eq a b f f')
-    (coprodUnitExtendEq {hom} eq a' b g g')
+    (CoprodUnitExtendEq {hom} eq a b f f')
+    (CoprodUnitExtendEq {hom} eq a' b g g')
 
 -- Extend equality.
 public export
-coprodExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
+CoprodExtendEq : {obj : Type} -> {hom : HomSlice obj} ->
   (eq : (0 a, b : obj) -> RelationOn (hom (a, b))) ->
   (a, b : TrEitherF CoprodObjF obj) ->
   RelationOn (CoprodExtendHom hom (a, b))
-coprodExtendEq eq (TFV a) (TFV b) f g =
+CoprodExtendEq eq (TFV a) (TFV b) f g =
   eq a b f g
-coprodExtendEq eq (TFV a) (TFC b) f g =
-  coprodUnitExtendEq eq a b f g
-coprodExtendEq {hom} eq (TFC a) (TFV b) f g =
-  coprodRightAdjExtendEq {hom} eq a b f g
-coprodExtendEq eq (TFC a) (TFC b) f g =
-  coprodRightAdjUnitExtendEq {obj} {hom} eq a b f g
+CoprodExtendEq eq (TFV a) (TFC b) f g =
+  CoprodUnitExtendEq eq a b f g
+CoprodExtendEq {hom} eq (TFC a) (TFV b) f g =
+  CoprodRightAdjExtendEq {hom} eq a b f g
+CoprodExtendEq eq (TFC a) (TFC b) f g =
+  CoprodRightAdjUnitExtendEq {obj} {hom} eq a b f g
 
 -- Extend reduction.  Returns Nothing if irreducible.
 public export
@@ -3046,11 +3046,11 @@ ChiForEqFalseCorrect f g x neq eq with (exists0inj1 eq)
         rewrite sndEq eq2 in
         Refl
 
----------------------------------------------------------------
----------------------------------------------------------------
----- Categories internal to 'Type' as a well-pointed topos ----
----------------------------------------------------------------
----------------------------------------------------------------
+---------------------------------------
+---------------------------------------
+---- Categories internal to 'Type' ----
+---------------------------------------
+---------------------------------------
 
 public export
 record TCatSig where
@@ -3084,28 +3084,31 @@ record TCatSig where
     (0 _ : tcMorphEq domeq' codeq' m' m'') ->
     (0 _ : tcMorphEq domeq codeq m m') ->
     tcMorphEq domeq'' codeq'' m m''
+  tcMorphRew : {0 dom, dom', cod, cod' : tcObj} ->
+    (0 _ : tcObjEq dom dom') -> (0 _ : tcObjEq cod cod') ->
+    tcMorph dom cod -> tcMorph dom' cod'
+  0 tcMorphRewEq : {0 dom, dom', cod, cod' : tcObj} ->
+    (0 domeq : tcObjEq dom dom') -> (0 codeq : tcObjEq cod cod') ->
+    (m : tcMorph dom cod) -> tcMorphEq domeq codeq m (tcMorphRew domeq codeq m)
   tcId : (obj : tcObj) -> tcMorph obj obj
-  tcCompose : {0 a, b, b', c : tcObj} ->
-    (0 _ : tcObjEq b b') ->
-    tcMorph b' c -> tcMorph a b -> tcMorph a c
-  0 tcIdLeft : {0 a, b, b' : tcObj} ->
-    {0 domeq : tcObjEq a a} -> {0 codeq, codeq' : tcObjEq b b'} ->
+  tcCompose : {0 a, b, c : tcObj} -> tcMorph b c -> tcMorph a b -> tcMorph a c
+  0 tcComposeEq : {0 a, b, c : tcObj} ->
+    (0 g, g' : tcMorph b c) -> (0 f, f' : tcMorph a b) ->
+    tcMorphEq (tcObjEqRefl a) (tcObjEqRefl c)
+      (tcCompose g f) (tcCompose g' f')
+  0 tcIdLeft : {0 a, b : tcObj} ->
     (0 m : tcMorph a b) ->
-    tcMorphEq {dom=a} {cod=b} {dom'=a} {cod'=b'}
-      domeq codeq m (tcCompose {a} {b} {b'} {c=b'} codeq' (tcId b') m)
-  0 tcIdRight : {0 a, a', b : tcObj} ->
-    {0 domeq, domeq' : tcObjEq a a'} -> {0 codeq : tcObjEq b b} ->
-    (0 m : tcMorph a' b) ->
-    tcMorphEq {dom=a} {cod=b} {dom'=a'} {cod'=b}
-      domeq codeq (tcCompose {a} {b=a} {b'=a'} {c=b} domeq' m (tcId a)) m
-  0 tcComposeAssoc : {0 a, b, b', c, c', d : tcObj} ->
-    {0 domeq : tcObjEq a a} -> {0 codeq : tcObjEq d d} ->
-    {0 beq, beq' : tcObjEq b b'} -> {0 ceq, ceq' : tcObjEq c c'} ->
-    (0 h : tcMorph c' d) -> (0 g : tcMorph b' c) -> (0 f : tcMorph a b) ->
-    tcMorphEq {dom=a} {cod=d}
-      domeq codeq
-      (tcCompose ceq h (tcCompose beq' g f))
-      (tcCompose beq (tcCompose ceq' h g) f)
+    tcMorphEq {dom=a} {cod=b} {dom'=a} {cod'=b} (tcObjEqRefl a) (tcObjEqRefl b)
+      m (tcCompose {a} {b} {c=b} (tcId b) m)
+  0 tcIdRight : {0 a, b : tcObj} ->
+    (0 m : tcMorph a b) ->
+    tcMorphEq {dom=a} {cod=b} {dom'=a} {cod'=b} (tcObjEqRefl a) (tcObjEqRefl b)
+      (tcCompose {a} {b=a} {c=b} m (tcId a)) m
+  0 tcComposeAssoc : {0 a, b, c, d : tcObj} ->
+    (0 h : tcMorph c d) -> (0 g : tcMorph b c) -> (0 f : tcMorph a b) ->
+    tcMorphEq {dom=a} {cod=d} (tcObjEqRefl a) (tcObjEqRefl d)
+      (tcCompose h (tcCompose g f))
+      (tcCompose (tcCompose h g) f)
 
 public export
 record TFunctorSig (c, d : TCatSig) where

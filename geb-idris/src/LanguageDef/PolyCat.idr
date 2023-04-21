@@ -1035,6 +1035,11 @@ InterpPFAlg : {0 p : PolyFunc} -> {0 a : Type} ->
 InterpPFAlg {p} {a} alg (i ** d) = alg i d
 
 public export
+PFAlgFromAlg : {0 p : PolyFunc} -> {0 a : Type} ->
+  Algebra (InterpPolyFunc p) a -> PFAlg p a
+PFAlgFromAlg {p} {a} alg i d = alg (i ** d)
+
+public export
 PFAlgCPS : PolyFunc -> Type -> Type
 PFAlgCPS p = PFAlg p . Continuation
 
@@ -1135,6 +1140,18 @@ public export
 pfCata : {0 p : PolyFunc} -> {0 a : Type} -> PFAlg p a -> PolyFuncMu p -> a
 pfCata {p=p@(pos ** dir)} {a} alg (InPFM i da) =
   alg i $ \d : dir i => pfCata {p} alg $ da d
+
+public export
+PolyInFree : (p : PolyFunc) -> InterpPolyFunc p (PolyFuncMu p) -> PolyFuncMu p
+PolyInFree p (i ** d) = InPFM i d
+
+public export
+PolyFuncCataIsAlgHomomorphism :
+  (p : PolyFunc) -> (b : Type) -> (alg : PFAlg p b) ->
+  (x : InterpPolyFunc p (PolyFuncMu p)) ->
+  pfCata alg (PolyInFree p x) =
+    InterpPFAlg {p} alg (InterpPFMap p (pfCata alg) x)
+PolyFuncCataIsAlgHomomorphism (pos ** dir) b alg (i ** d) = Refl
 
 public export
 pfnCata : {p : PolyFuncN} -> {0 a : Type} -> PFNAlg p a -> PolyFuncNMu p -> a
@@ -1400,10 +1417,21 @@ pfFreeMVoidToMu : {p : PolyFunc} -> InterpPolyFuncFreeM p Void -> PolyFuncMu p
 pfFreeMVoidToMu {p} =
   pfFreeCata {p} {a=Void} {b=(PolyFuncMu p)} $ PFFreeVoidToMuAlg p
 
+-- Another name for an algebra just to emphasize when we think of it
+-- as the implementation of an interface represented by a polynomial.
+public export
+PolyIFace : PolyFunc -> Type -> Type
+PolyIFace = Algebra . InterpPolyFunc
+
+public export
+PolyFreeAlgF : (p : PolyFunc) -> (a : Type) ->
+  PolyIFace p (InterpPolyFuncFreeM p a)
+PolyFreeAlgF (pos ** dir) a (i ** d) =
+  (InPFM (PFCom {p=(pos ** dir)} i) (fst . d) ** \(di ** dd) => snd (d di) dd)
+
 public export
 PFMuToFreeMVoidAlg : (p : PolyFunc) -> PFAlg p (InterpPolyFuncFreeM p Void)
-PFMuToFreeMVoidAlg (pos ** dir) i d =
-  (InPFM (PFCom i) (fst . d) ** \(d' ** v) => snd (d d') v)
+PFMuToFreeMVoidAlg p = PFAlgFromAlg $ PolyFreeAlgF p Void
 
 public export
 pfMuToFreeMVoid : {p : PolyFunc} -> PolyFuncMu p -> InterpPolyFuncFreeM p Void
@@ -1845,6 +1873,27 @@ PolyFuncCofreeCMDirPTreeToNuScale : {p : PolyFunc} ->
   PolyFuncCofreeCMDirFromNuScale p (PolyFuncCofreeCMPosPTreeToNuScale i)
 PolyFuncCofreeCMDirPTreeToNuScale {p=(pos ** dir)} i di =
   ?PolyFuncCofreeCMDPTreeToNuScale_hole
+
+-------------------------------
+-------------------------------
+---- Polynomial interfaces ----
+-------------------------------
+-------------------------------
+
+-- The free monad of a coproduct of polynomial functors implements each of the
+-- interfaces induced by the two functors.
+
+public export
+PolyCoprodFreeAlgFl : (p, q : PolyFunc) -> (a : Type) ->
+  PolyIFace p (InterpPolyFuncFreeM (pfCoproductArena p q) a)
+PolyCoprodFreeAlgFl (ppos ** pdir) (qpos ** qdir) a (i ** d) =
+  (InPFM (PFCom $ Left i) (fst . d) ** \(di ** dd) => snd (d di) dd)
+
+public export
+PolyCoprodFreeAlgFr : (p, q : PolyFunc) -> (a : Type) ->
+  PolyIFace q (InterpPolyFuncFreeM (pfCoproductArena p q) a)
+PolyCoprodFreeAlgFr (ppos ** pdir) (qpos ** qdir) a (i ** d) =
+  (InPFM (PFCom $ Right i) (fst . d) ** \(di ** dd) => snd (d di) dd)
 
 ----------------------------------------------
 ----------------------------------------------
@@ -3715,6 +3764,18 @@ spfCata {spf} alg _ (InSPFM (posi ** pos) dir) =
 ---- Dependent polynomial (free) monads ----
 --------------------------------------------
 
+-- Another name for an algebra just to emphasize when we think of it
+-- as the implementation of an interface represented by a polynomial.
+public export
+SliceIFace : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a -> Type
+SliceIFace = SPFAlg
+
+public export
+SPFFreeAlg : {a : Type} -> (sf : SlicePolyEndoFunc a) -> (sl : SliceObj a) ->
+  SPFAlg sf (SliceFreeM (InterpSPFunc sf) sl)
+SPFFreeAlg {a} (posdep ** dirdep ** assign) sl ea (i ** d) =
+  InSlFc {f=(InterpSPFunc (posdep ** dirdep ** assign))} {sa=sl} {ea} (i ** d)
+
 {-
 public export
 SPFTranslatePos : {0 x, y : Type} -> SlicePolyFunc x y -> Type -> Type
@@ -3820,6 +3881,31 @@ SPFCofreeCMFromNu : {x : Type} -> SlicePolyEndoF x -> SliceObj x -> SliceObj x
 SPFCofreeCMFromNu spf sx =
   SPFNu {a=-x} (SPFScale {x} {y=x} spf (Sigma sx) (const id))
   -}
+
+-----------------------------------------
+-----------------------------------------
+---- Dependent polynomial interfaces ----
+-----------------------------------------
+-----------------------------------------
+
+-- The free monad of a coproduct of dependent polynomial functors implements
+-- each of the interfaces induced by the two functors.
+
+public export
+SPFCoprodFreeAlgFl : {a : Type} -> (sf, sf' : SlicePolyEndoFunc a) ->
+  (sl : SliceObj a) ->
+  SPFAlg sf (SliceFreeM (InterpSPFunc (SPFSliceCoproduct sf sf')) sl)
+SPFCoprodFreeAlgFl {a}
+  (posdep ** dirdep ** assign) (posdep' ** dirdep' ** assign') sl ea (i ** d) =
+    InSlFc (Left i ** d)
+
+public export
+SPFCoprodFreeAlgFr : {a : Type} -> (sf, sf' : SlicePolyEndoFunc a) ->
+  (sl : SliceObj a) ->
+  SPFAlg sf' (SliceFreeM (InterpSPFunc (SPFSliceCoproduct sf sf')) sl)
+SPFCoprodFreeAlgFr {a}
+  (posdep ** dirdep ** assign) (posdep' ** dirdep' ** assign') sl ea (i ** d) =
+    InSlFc (Right i ** d)
 
 --------------------------------------------
 --------------------------------------------

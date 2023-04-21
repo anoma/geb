@@ -64,6 +64,15 @@ public export
 InverseUpTo : {a, b : Type} -> RelationOn a -> (a -> b) -> (b -> a) -> Type
 InverseUpTo r f g = (x : a) -> r (g (f x)) x
 
+public export
+data FreeEqF : {0 a : Type} -> RelationOn a -> RelationOn a where
+  FErefl : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x : a) -> FreeEqF {a} rel x x
+  FEsym : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x, y : a) -> rel x y -> FreeEqF {a} rel y x
+  FEtrans : {0 a : Type} -> {0 rel : RelationOn a} ->
+    (0 x, y, z : a) -> rel y z -> rel x y -> FreeEqF {a} rel x z
+
 -----------------------------------
 -----------------------------------
 ---- Functional extensionality ----
@@ -190,6 +199,10 @@ FinSliceFunctor m n = FinSliceObj m -> FinSliceObj n
 public export
 SliceEndofunctor : Type -> Type
 SliceEndofunctor a = SliceFunctor a a
+
+public export
+SliceIdF : (a : Type) -> SliceEndofunctor a
+SliceIdF a = Prelude.id
 
 public export
 FinSliceEndofunctor : Nat -> Type
@@ -453,8 +466,16 @@ SliceAlg : {a : Type} -> SliceEndofunctor a -> SliceObj a -> Type
 SliceAlg sf sa = SliceMorphism (sf sa) sa
 
 public export
+SliceInitFromUniv : {a : Type} -> (sf : SliceEndofunctor a) -> SliceObj a
+SliceInitFromUniv {a} sf x = (sa : SliceObj a) -> SliceAlg sf sa -> sa x
+
+public export
 SliceCoalg : {a : Type} -> SliceEndofunctor a -> SliceObj a -> Type
 SliceCoalg sf sa = SliceMorphism (sf sa) sa
+
+public export
+SliceTermFromUniv : {a : Type} -> (sf : SliceEndofunctor a) -> SliceObj a
+SliceTermFromUniv {a} sf x = (sa : SliceObj a ** (SliceCoalg sf sa, sa x))
 
 -- The slice-category version of `TranslateFunctor`.
 public export
@@ -466,7 +487,7 @@ data SliceTranslateF : {a : Type} ->
     {ea : a} -> f sa ea -> SliceTranslateF {a} f sv sa ea
 
 public export
-SliceTrEitherF : {a : Type} -> SliceEndofunctor a -> SliceObj a -> SliceObj a
+SliceTrEitherF : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a
 SliceTrEitherF {a} f sa = SliceTranslateF {a} f sa sa
 
 -- The slice-category version of `ScaleFunctor`.
@@ -504,6 +525,39 @@ SliceFreeCata {a} f =
   SliceMorphism {a} (SliceFreeM f sv) sa
 
 public export
+SliceFreeCataF : {a : Type} -> SliceEndofunctor a -> Type
+SliceFreeCataF {a} f =
+  (sv, sa : SliceObj a) -> SliceMorphism {a} sv sa -> SliceAlg f sa ->
+  SliceMorphism {a} (f $ SliceFreeM f sv) sa
+
+-- The type of the slice-category free monad's return.
+public export
+SliceFreeReturn : {a : Type} -> SliceEndofunctor a -> Type
+SliceFreeReturn {a} f =
+  SliceNatTrans {x=a} {y=a}
+    (SliceIdF a)
+    (SliceFreeM f)
+
+-- The type of the slice-category free monad's join.
+public export
+SliceFreeJoin : {a : Type} -> SliceEndofunctor a -> Type
+SliceFreeJoin {a} f =
+  SliceNatTrans {x=a} {y=a}
+    (SliceFreeM f . SliceFreeM f)
+    (SliceFreeM f)
+
+public export
+sliceFreeReturn : {a : Type} -> {f : SliceEndofunctor a} -> SliceFreeReturn f
+sliceFreeReturn {a} {f} sl ea = InSlFv {ea}
+
+-- If we can define a catamorphism, then we can define join.
+public export
+sliceFreeJoin : {a : Type} -> {f : SliceEndofunctor a} ->
+  SliceFreeCata f -> SliceFreeJoin f
+sliceFreeJoin {a} {f} cata sl =
+  cata (SliceFreeM f sl) (SliceFreeM f sl) (\_ => id) (\_ => InSlFc)
+
+public export
 SliceMu : {a : Type} -> SliceEndofunctor a -> SliceObj a
 SliceMu {a} f = SliceFreeM {a} f (const Void)
 
@@ -530,9 +584,36 @@ SliceCofreeAna {a} f =
   (sl, sa : SliceObj a) -> SliceMorphism {a} sa sl -> SliceCoalg f sa ->
   SliceMorphism {a} sa (SliceCofreeCM f sl)
 
+-- The type of the slice-category cofree comonad's erase.
+public export
+SliceCofreeErase : {a : Type} -> SliceEndofunctor a -> Type
+SliceCofreeErase {a} f =
+  SliceNatTrans {x=a} {y=a}
+    (SliceCofreeCM f)
+    (SliceIdF a)
+
+-- The type of the slice-category cofree comonad's duplicate.
+public export
+SliceCofreeDuplicate : {a : Type} -> SliceEndofunctor a -> Type
+SliceCofreeDuplicate {a} f =
+  SliceNatTrans {x=a} {y=a}
+    (SliceCofreeCM f)
+    (SliceCofreeCM f . SliceCofreeCM f)
+
+public export
+sliceCofreeErase : {a : Type} -> {f : SliceEndofunctor a} -> SliceCofreeErase f
+sliceCofreeErase {a} {f} sl ea (InSlCF ea (InSlS sea fea)) = sea
+
 public export
 SliceNu : {a : Type} -> SliceEndofunctor a -> SliceObj a
 SliceNu {a} f = SliceCofreeCM {a} f (const Unit)
+
+public export
+InSliceNu : {a : Type} -> (sf : SliceEndofunctor a) ->
+  SliceMorphism {a} (sf (SliceNu {a} sf)) (SliceNu {a} sf)
+InSliceNu {a} sf ea sfn =
+  InSlCF {a} {f=sf} {sa=(const Unit)} ea $
+    InSlS {a} {f=sf} {sv=(const Unit)} {sa=(SliceNu {a} sf)} () sfn
 
 -- The type of anamorphisms in slice categories.
 public export
@@ -540,46 +621,91 @@ SliceAna : {a : Type} -> SliceEndofunctor a -> Type
 SliceAna {a} f =
   (sa : SliceObj a) -> SliceCoalg f sa -> SliceMorphism {a} sa (SliceNu f)
 
+-----------------------------------------------------------
+-----------------------------------------------------------
+---- Fixed points in arbitrary subcategories of `Type` ----
+-----------------------------------------------------------
+-----------------------------------------------------------
+
 -----------------------------
 -----------------------------
 ---- Dependent relations ----
 -----------------------------
 -----------------------------
 
+-- The domain of the type of dependent relations between two slice objects
+-- in the same (slice) category.
 public export
 DepRelObj : {a : Type} -> SliceObj (SliceObj a, SliceObj a)
 DepRelObj {a} (sl, sl') = (x : a ** (sl x, sl' x))
 
+-- The type of dependent relations between two slice objects over
+-- the same object (i.e. two slice objects in the same (slice) category),
+-- where the dependent relation respects the slicing (only terms with the
+-- same signature can be related).
 public export
 DepRelOn : {a : Type} -> SliceObj (SliceObj a, SliceObj a)
 DepRelOn {a} sls = SliceObj (DepRelObj {a} sls)
-
-public export
-data FreeEqF : {0 a : Type} -> RelationOn a -> RelationOn a where
-  FErefl : {0 a : Type} -> {0 rel : RelationOn a} ->
-    (0 x : a) -> FreeEqF {a} rel x x
-  FEsym : {0 a : Type} -> {0 rel : RelationOn a} ->
-    (0 x, y : a) -> rel x y -> FreeEqF {a} rel y x
-  FEtrans : {0 a : Type} -> {0 rel : RelationOn a} ->
-    (0 x, y, z : a) -> rel y z -> rel x y -> FreeEqF {a} rel x z
 
 public export
 data DepFreeEqF : {0 a : Type} -> {sl : SliceObj a} ->
     SliceEndofunctor (DepRelObj {a} (sl, sl)) where
   DFErefl :
     {0 a : Type} -> {0 sl : SliceObj a} -> {0 rel : DepRelOn {a} (sl, sl)} ->
-    {0 x : a} -> (0 sx : sl x) -> DepFreeEqF {a} {sl} rel (x ** (sx, sx))
+    {0 x : a} -> (sx : sl x) -> DepFreeEqF {a} {sl} rel (x ** (sx, sx))
   DFEsym :
     {0 a : Type} -> {0 sl : SliceObj a} -> {0 rel : DepRelOn {a} (sl, sl)} ->
-    {0 x : a} -> {0 sx, sx' : sl x} ->
+    {0 x : a} -> {sx, sx' : sl x} ->
     rel (x ** (sx, sx')) ->
     DepFreeEqF {a} {sl} rel (x ** (sx', sx))
   DFEtrans :
     {0 a : Type} -> {0 sl : SliceObj a} -> {0 rel : DepRelOn {a} (sl, sl)} ->
-    {0 x : a} -> {0 sx, sx', sx'' : sl x} ->
+    {0 x : a} -> {sx, sx', sx'' : sl x} ->
     rel (x ** (sx', sx'')) ->
     rel (x ** (sx, sx')) ->
     DepFreeEqF {a} {sl} rel (x ** (sx, sx''))
+
+public export
+depFreeEqMap : {a : Type} -> {sl : SliceObj a} ->
+  {rs, rs' : SliceObj (DepRelObj {a} (sl, sl))} ->
+  SliceMorphism {a=(DepRelObj (sl, sl))} rs rs' ->
+  SliceMorphism {a=(DepRelObj {a} (sl, sl))} (DepFreeEqF rs) (DepFreeEqF rs')
+depFreeEqMap {a} {sl} {rs} {rs'} m _ feq =
+  case feq of
+    DFErefl sx => DFErefl sx
+    DFEsym {x} {sx} {sx'} eq => DFEsym $ m (x ** (sx, sx')) eq
+    DFEtrans {x} {sx} {sx'} {sx''} eq eq' =>
+      DFEtrans (m (x ** (sx', sx'')) eq) (m (x ** (sx, sx')) eq')
+
+public export
+DepFreeEqCata : {a : Type} -> SliceObj a -> Type
+DepFreeEqCata {a} sl =
+  SliceFreeCata {a=(DepRelObj {a} (sl, sl))} (DepFreeEqF {a} {sl})
+
+public export
+DepFreeEqCataF : {a : Type} -> SliceObj a -> Type
+DepFreeEqCataF {a} sl =
+  SliceFreeCataF {a=(DepRelObj {a} (sl, sl))} (DepFreeEqF {a} {sl})
+
+mutual
+  public export
+  depFreeEqCataF : {a : Type} -> {sl : SliceObj a} -> DepFreeEqCataF {a} sl
+  depFreeEqCataF {a} {sl} sv sa subst alg m eq =
+    alg m $ case eq of
+      DFErefl f => DFErefl f
+      DFEsym {x} {sx} {sx'} eq =>
+        DFEsym $ depFreeEqCata {a} {sl} sv sa subst alg (x ** (sx, sx')) eq
+      DFEtrans {x} {sx} {sx'} {sx''} eq eq' =>
+        DFEtrans
+          (depFreeEqCata {a} {sl} sv sa subst alg (x ** (sx', sx'')) eq)
+          (depFreeEqCata {a} {sl} sv sa subst alg (x ** (sx, sx')) eq')
+
+  public export
+  depFreeEqCata : {a : Type} -> {sl : SliceObj a} -> DepFreeEqCata {a} sl
+  depFreeEqCata {a} {sl} sv sa subst alg m (InSlF m (InSlV v)) =
+    subst m v
+  depFreeEqCata {a} {sl} sv sa subst alg m (InSlF m (InSlC eq)) =
+    depFreeEqCataF {a} {sl} sv sa subst alg m eq
 
 ----------------------------------------------------
 ----------------------------------------------------
@@ -1190,6 +1316,22 @@ public export
 RefinedPi : {a : Refined} -> RefinedSlice a -> Type
 RefinedPi {a} p = Pi {a=(RefinedType a)} (RefinedType . p)
 
+public export
+DecEq a => (pr : DecPred a) => DecEq (Refinement {a} pr) where
+  decEq (Element0 x p) (Element0 x' p') = case decEq x x' of
+    Yes Refl => Yes $ rewrite uip {eq=p} {eq'=p'} in Refl
+    No neq => No $ \eq => case eq of Refl => neq Refl
+
+public export
+Eq a => (pr : DecPred a) => Eq (Refinement {a} pr) where
+  Element0 x p == Element0 x' p' = x == x'
+  Element0 x p /= Element0 x' p' = x /= x'
+
+public export
+Show a => (pr : DecPred a) => Show (Refinement {a} pr) where
+  show (Element0 x _) = show x
+  showPrec d (Element0 x _) = showPrec d x
+
 --------------------------
 ---- Refined functors ----
 --------------------------
@@ -1795,6 +1937,10 @@ public export
 InitialAlgebra : (Type -> Type) -> Type
 InitialAlgebra f = FreeAlgebra f Void
 
+public export
+InitAlgFromUniv : (Type -> Type) -> Type
+InitAlgFromUniv f = NaturalTransformation (Algebra f) Prelude.id
+
 -- If `F` has a terminal coalgebra, then for every object `a`, the functor
 -- `Fa` defined above also has a terminal coalgebra, which is isomorphic
 -- to `CofreeComonad[F, a]`.  Thus `CofreeComonad` allows us to create terminal
@@ -1830,6 +1976,10 @@ TerminalCoalgebra : (Type -> Type) -> Type
 TerminalCoalgebra f = CofreeCoalgebra f Unit
 
 public export
+TermCoalgFromUniv : (Type -> Type) -> Type
+TermCoalgFromUniv f = (a : Type ** (Coalgebra f a, a))
+
+public export
 inFV : {f : Type -> Type} -> Coalgebra (FreeMonad f) a
 inFV = InFree . TFV
 
@@ -1851,6 +2001,10 @@ outCofree : {f : Type -> Type} -> {a : Type} ->
   TreeCoalgebra f a (CofreeComonad f a)
 outCofree (InCofree x) = x
 
+public export
+outCFC : {f : Type -> Type} -> {a : Type} -> Coalgebra f (CofreeComonad f a)
+outCFC {f} (InCofree x) = case x of SFN _ fa => fa
+
 -- Special case of `FreeMonad` where `v` is `Void`.
 -- This is the fixpoint of an endofunctor (if it exists).
 public export
@@ -1862,6 +2016,10 @@ Mu f = FreeMonad f Void
 public export
 Nu : (Type -> Type) -> Type
 Nu f = CofreeComonad f ()
+
+public export
+outNu : {f : Type -> Type} -> Coalgebra f (Nu f)
+outNu {f} (InCofree x) = case x of SFN () fn => fn
 
 -- Parameterized special induction.
 public export

@@ -291,10 +291,21 @@ natObjPowTest11 : Assertion
 natObjPowTest11 = Assert $
   natObjPow (MetaToNatObj 4) (MetaToNatObj 3) == MetaToNatObj 64
 
+----------------------------------
+----------------------------------
+----- Exported test function -----
+----------------------------------
+----------------------------------
+
 export
 languageDefRefinedADTTest : IO ()
 languageDefRefinedADTTest = do
-  putStrLn "Begin languageDefRefinedADTTest:"
+  putStrLn ""
+  putStrLn "===================="
+  putStrLn "Begin RefinedADTTest:"
+  putStrLn "--------------------"
+  putStrLn ""
+  {-
   putStrLn $ show exampleFinNatPoly
   putStrLn "Begin pzPoly"
   putStrLn $ show examplePzPoly
@@ -326,7 +337,6 @@ languageDefRefinedADTTest = do
     showDepPrefixContraMap
       (pzNumDir ex256p1a) (pzNumDir ex256p2a) ex256onPos ex256onDir
   putStrLn $ "Ex 2.56 lens: " ++ showPZLens ex256lens
-  {-
   putStrLn $ show finOrdMorphTest1
   putStrLn $ show finOrdMorphTest5
   putStrLn $ show finOrdMorphTest6
@@ -347,5 +357,7 @@ languageDefRefinedADTTest = do
   putStrLn $ show fsObjTest2
   putStrLn $ show adt0ShowTest
   -}
-  putStrLn "End languageDefRefinedADTTest."
+  putStrLn "-------------------"
+  putStrLn "End RefinedADTTest."
+  putStrLn "==================="
   pure ()
