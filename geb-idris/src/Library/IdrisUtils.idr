@@ -1395,3 +1395,32 @@ zipLen f (x :: xs) (y :: ys) eq = f x y :: zipLen f xs ys (injective eq)
 public export
 nzUnique : {n : Nat} -> (nz, nz' : NonZero n) -> nz = nz'
 nzUnique {n=(S n)} SIsNonZero SIsNonZero = Refl
+
+-- The number of bits required to store a natural number less than or equal to
+-- the input.  (Note that we don't need any bits to store a number less than
+-- or equal to 0, because it can only be zero, so we know what it is from the
+-- type alone.)
+public export
+bitsNeededFuel : (bits, target, fuel : Nat) -> Nat
+bitsNeededFuel bits target Z = bits
+bitsNeededFuel bits target (S n) =
+  if power 2 bits > target then bits else bitsNeededFuel (S bits) target n
+
+public export
+bitsNeeded : Nat -> Nat
+bitsNeeded n = bitsNeededFuel 0 n n
+
+public export
+succNonZero : {n : Nat} -> Not (S n = 0)
+succNonZero {n=Z} Refl impossible
+succNonZero {n=(S n)} Refl impossible
+
+public export
+plusZeroLeftZero : {m, n : Nat} -> m + n = 0 -> m = 0
+plusZeroLeftZero {m=Z} {n} _ = Refl
+plusZeroLeftZero {m=(S m)} {n} Refl impossible
+
+public export
+plusZeroRightZero : {m, n : Nat} -> m + n = 0 -> n = 0
+plusZeroRightZero {m} {n} eq =
+  plusZeroLeftZero {m=n} {n=m} $ trans (sym $ plusCommutative m n) eq

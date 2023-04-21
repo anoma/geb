@@ -98,10 +98,6 @@ public export
 pzIdentity : PZPoly
 pzIdentity = MkPZPoly NatO1 $ sliceArrayFromList NatOZ [NatOZ]
 
-public export
-pzIdentityCorrect : (n : NatObj) -> pzApply RefinedADT.pzIdentity n = n
-pzIdentityCorrect n = ?pzIdentityCorrect_hole
-
 ---------------------------
 ---- Arena formulation ----
 ---------------------------
@@ -610,10 +606,6 @@ FInitAlgS0EF Subst0EndoEmpty = colimitConst Subst0EndoEmpty
 FInitAlgS0EF (Subst0EndoCovarRep f) = colimitOne Subst0EndoCovarRep f
 FInitAlgS0EF (Subst0EndoSum f g) = colimitPair Subst0EndoSum f g
 FInitAlgS0EF (Subst0EndoCompose g f) = colimitPair Subst0EndoCompose g f
-
-public export
-InitAlgS0EF_Correct : InitAlgCorrect {f=Subst0EndoF} FInitAlgS0EF
-InitAlgS0EF_Correct = ?InitAlgS0EF_Correct_hole
 
 public export
 interpS0EChain : ChainMapAlgF Subst0EndoF (Type -> Type)

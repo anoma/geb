@@ -3,6 +3,9 @@ module Executable.Test.Main
 import Test.TestLibrary
 import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
+import LanguageDef.Test.RefinedADTTest
+import LanguageDef.Test.FiguresTest
+import LanguageDef.Test.TheoriesTest
 import LanguageDef.Test.NatPrefixCatTest
 import LanguageDef.Test.ADTCatTest
 import LanguageDef.Test.ProgFinSetTest
@@ -13,7 +16,6 @@ import LanguageDef.Test.GenPolyFuncTest
 import LanguageDef.Test.PolyCatTest
 import LanguageDef.Test.PolyProfunctorTest
 import LanguageDef.Test.AtomTest
-import LanguageDef.Test.RefinedADTTest
 import LanguageDef.Test.UniversalCategoryTest
 import LanguageDef.Test.InterpretationTest
 import LanguageDef.Test.SyntaxTest
@@ -33,7 +35,6 @@ main = do
   Library.Test.IdrisUtilsTest.idrisUtilsTest
   Library.Test.IdrisCategoriesTest.libraryIdrisCategoriesTest
   LanguageDef.Test.AtomTest.languageDefAtomTest
-  LanguageDef.Test.RefinedADTTest.languageDefRefinedADTTest
   LanguageDef.Test.UniversalCategoryTest.languageDefUniversalCategoryTest
   LanguageDef.Test.InterpretationTest.languageDefInterpretationTest
   LanguageDef.Test.ExpressionTest.languageDefExpressionTest
@@ -52,3 +53,6 @@ main = do
   LanguageDef.Test.AdjunctionsTest.adjunctionsTest
   LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
   LanguageDef.Test.GebToposTest.gebToposTest
+  LanguageDef.Test.RefinedADTTest.languageDefRefinedADTTest
+  LanguageDef.Test.TheoriesTest.theoriesTest
+  LanguageDef.Test.FiguresTest.figuresTest

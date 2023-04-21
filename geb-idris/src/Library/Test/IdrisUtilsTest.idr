@@ -35,9 +35,48 @@ minmodt7 = Assert $ minusModulo 9 55 77 == 5
 minmodt8 : Assertion
 minmodt8 = Assert $ minusModulo 201 64 139 == 126
 
+-- Log-base-2 tests
+
+bitsNeededTest0 : Assertion
+bitsNeededTest0 = Assert $ bitsNeeded 0 == 0
+
+bitsNeededTest1 : Assertion
+bitsNeededTest1 = Assert $ bitsNeeded 1 == 1
+
+bitsNeededTest2 : Assertion
+bitsNeededTest2 = Assert $ bitsNeeded 2 == 2
+
+bitsNeededTest3 : Assertion
+bitsNeededTest3 = Assert $ bitsNeeded 3 == 2
+
+bitsNeededTest4 : Assertion
+bitsNeededTest4 = Assert $ bitsNeeded 4 == 3
+
+bitsNeededTest5 : Assertion
+bitsNeededTest5 = Assert $ bitsNeeded 5 == 3
+
+bitsNeededTest6 : Assertion
+bitsNeededTest6 = Assert $ bitsNeeded 6 == 3
+
+bitsNeededTest7 : Assertion
+bitsNeededTest7 = Assert $ bitsNeeded 7 == 3
+
+bitsNeededTest8 : Assertion
+bitsNeededTest8 = Assert $ bitsNeeded 8 == 4
+
+bitsNeededTest15 : Assertion
+bitsNeededTest15 = Assert $ bitsNeeded 15 == 4
+
+bitsNeededTest16 : Assertion
+bitsNeededTest16 = Assert $ bitsNeeded 16 == 5
+
 export
 idrisUtilsTest : IO ()
 idrisUtilsTest = do
-  -- putStrLn "Begin idrisUtilsTest:"
-  -- putStrLn "End idrisUtilsTest."
+  putStrLn "Begin idrisUtilsTest:"
+  putStrLn $ "expect 17 bits needed: " ++
+    (show $ bitsNeeded (minus (power 2 17) 1))
+  putStrLn $ "expect 18 bits needed: " ++
+    (show $ bitsNeeded (power 2 17))
+  putStrLn "End idrisUtilsTest."
   pure ()
