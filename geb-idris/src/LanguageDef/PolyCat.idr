@@ -2561,78 +2561,6 @@ InterpPolyRKan p q a rk b qf =
 ---------------------------------------
 ---------------------------------------
 
----------------------------------------------------------
----- Dependent polynomial functors in Idris's `Type` ----
----------------------------------------------------------
-
--- Dependent product in terms of a predicate instead of a morphism.
-public export
-PredDepProdF : {a : Type} -> (p : SliceObj a) -> SliceFunctor (Sigma {a} p) a
-PredDepProdF {a} p slp elema =
-  Pi {a=(p elema)} (BaseChangeF (MkDPair elema) slp)
-
--- Dependent coproduct in terms of a predicate instead of a morphism.
-public export
-PredDepCoprodF : {a : Type} -> (p : SliceObj a) -> SliceFunctor (Sigma {a} p) a
-PredDepCoprodF {a} p slp elema =
-  Sigma {a=(p elema)} (BaseChangeF (MkDPair elema) slp)
-
--- A dependent polynomial functor in terms of predicates instead of morphisms.
-public export
-PredDepPolyF : {parambase, posbase : Type} ->
-  (posdep : SliceObj posbase) ->
-  (dirdep : SliceObj (Sigma posdep)) ->
-  (assign : Sigma dirdep -> parambase) ->
-  SliceFunctor parambase posbase
-PredDepPolyF {parambase} {posbase} posdep dirdep assign =
-  PredDepCoprodF {a=posbase} posdep
-  . PredDepProdF {a=(Sigma posdep)} dirdep
-  . BaseChangeF assign
-
--- The same function as `PredDepPolyF`, but compressed into a single computation
--- purely as documentation for cases in which this might be more clear.
-public export
-PredDepPolyF' : {parambase, posbase : Type} ->
-  (posdep : SliceObj posbase) ->
-  (dirdep : SliceObj (Sigma posdep)) ->
-  (assign : Sigma dirdep -> parambase) ->
-  SliceFunctor parambase posbase
-PredDepPolyF' posdep dirdep assign parampred posi =
-  (pos : posdep posi **
-   ((dir : dirdep (posi ** pos)) -> parampred (assign ((posi ** pos) ** dir))))
-
-public export
-PredDepPolyF'_correct : {parambase, posbase : Type} ->
-  (posdep : SliceObj posbase) ->
-  (dirdep : SliceObj (Sigma posdep)) ->
-  (assign : Sigma dirdep -> parambase) ->
-  (parampred : SliceObj parambase) ->
-  (posi : posbase) ->
-  PredDepPolyF posdep dirdep assign parampred posi =
-    PredDepPolyF' posdep dirdep assign parampred posi
-PredDepPolyF'_correct posdep dirdep assign parampred posi = Refl
-
--- The morphism-map component of the functor induced by a `PredDepPolyF`.
-PredDepPolyFMap : {parambase, posbase : Type} ->
-  (posdep : SliceObj posbase) ->
-  (dirdep : SliceObj (Sigma posdep)) ->
-  (assign : Sigma dirdep -> parambase) ->
-  (p, p' : SliceObj parambase) ->
-  SliceMorphism p p' ->
-  SliceMorphism
-    (PredDepPolyF posdep dirdep assign p)
-    (PredDepPolyF posdep dirdep assign p')
-PredDepPolyFMap posdep dirdep assign p p' m posi (pos ** dir) =
-  (pos ** \di => m (assign ((posi ** pos) ** di)) (dir di))
-
-public export
-PredDepPolyEndoF : {base : Type} ->
-  (posdep : SliceObj base) ->
-  (dirdep : SliceObj (Sigma posdep)) ->
-  (assign : Sigma dirdep -> base) ->
-  SliceFunctor base base
-PredDepPolyEndoF {base} = PredDepPolyF {parambase=base} {posbase=base}
-
 -----------------------------------------------------------
 ---- Refined versions of dependent polynomial functors ----
 -----------------------------------------------------------
@@ -2884,93 +2812,10 @@ InterpSPFMap {a} {b} spf {sa} {sa'} =
   PredDepPolyFMap
     {parambase=a} {posbase=b} (spfPos spf) (spfDir spf) (spfAssign spf) sa sa'
 
-------------------------------------------------------
----- Dependent polynomial endofunctors as W-types ----
-------------------------------------------------------
-
-public export
-record WTypeFunc (parambase, posbase : Type) where
-  constructor MkWTF
-  wtPos : Type
-  wtDir : Type
-  wtAssign : wtDir -> parambase
-  wtDirSlice : wtDir -> wtPos
-  wtPosSlice : wtPos -> posbase
-
-public export
-WTypeEndoFunc : Type -> Type
-WTypeEndoFunc base = WTypeFunc base base
-
-public export
-InterpWTF : {parambase, posbase : Type} ->
-  WTypeFunc parambase posbase -> SliceFunctor parambase posbase
-InterpWTF {parambase} {posbase} (MkWTF pos dir assign dsl psl) sl ib =
-  (i : PreImage {a=pos} {b=posbase} psl ib **
-   (d : PreImage {a=dir} {b=pos} dsl (fst0 i)) ->
-   sl $ assign $ fst0 d)
-
-public export
-WTFtoSPF : {parambase, posbase : Type} ->
-  WTypeFunc parambase posbase -> SlicePolyFunc parambase posbase
-WTFtoSPF {parambase} {posbase} (MkWTF pos dir assign dsl psl) =
-  (\i => PreImage {a=pos} {b=posbase} psl i **
-   \x => PreImage {a=dir} {b=pos} dsl $ fst0 $ snd x **
-   \d => assign $ fst0 $ snd d)
-
-public export
-SPFtoWTF : {parambase, posbase : Type} ->
-  SlicePolyFunc parambase posbase -> WTypeFunc parambase posbase
-SPFtoWTF (posdep ** dirdep ** assign) =
-  MkWTF
-    (Sigma {a=posbase} posdep)
-    (Sigma {a=(Sigma {a=posbase} posdep)} dirdep)
-    assign
-    fst
-    fst
-
-public export
-InterpWTFtoSPF : {parambase, posbase : Type} ->
-  (wtf : WTypeFunc parambase posbase) ->
-  (sl : SliceObj parambase) -> (ib : posbase) ->
-  InterpSPFunc {a=parambase} {b=posbase}
-    (WTFtoSPF {parambase} {posbase} wtf) sl ib ->
-  InterpWTF {parambase} {posbase} wtf sl ib
-InterpWTFtoSPF (MkWTF pos dir assign dsl psl) sl ib = id
-
-public export
-InterpWTFtoSPFInv : {parambase, posbase : Type} ->
-  (wtf : WTypeFunc parambase posbase) ->
-  (sl : SliceObj parambase) -> (ib : posbase) ->
-  InterpWTF {parambase} {posbase} wtf sl ib ->
-  InterpSPFunc {a=parambase} {b=posbase}
-    (WTFtoSPF {parambase} {posbase} wtf) sl ib
-InterpWTFtoSPFInv (MkWTF pos dir assign dsl psl) sl ib = id
-
-public export
-InterpSPFtoWTF : {parambase, posbase : Type} ->
-  (spf : SlicePolyFunc parambase posbase) ->
-  (sl : SliceObj parambase) -> (ib : posbase) ->
-  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib ->
-  InterpSPFunc {a=parambase} {b=posbase} spf sl ib
-InterpSPFtoWTF {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
-  (Element0 {type=(Sigma {a=posbase} posdep)} (ib' ** i) eq ** p) =
-    (rewrite sym eq in i **
-     \d => p $
-      Element0 ((ib ** rewrite sym eq in i) ** d) (rewrite sym eq in Refl))
-
-public export
-InterpSPFtoWTFInv : {parambase, posbase : Type} ->
-  (spf : SlicePolyFunc parambase posbase) ->
-  (sl : SliceObj parambase) -> (ib : posbase) ->
-  InterpSPFunc {a=parambase} {b=posbase} spf sl ib ->
-  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib
-InterpSPFtoWTFInv {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
-  (i ** d) =
-    (Element0 (ib ** i) Refl **
-     \(Element0 (i' ** di) deq) => rewrite deq in d $ rewrite sym deq in di)
-
+-----------------------------------------------------
 -----------------------------------------------------
 ---- Parameterized dependent polynomial functors ----
+-----------------------------------------------------
 -----------------------------------------------------
 
 public export
@@ -3215,29 +3060,26 @@ public export
 SPFSliceTerminal : (x : Type) -> SlicePolyEndoFunc x
 SPFSliceTerminal x = (const Unit ** const Void ** \x => void $ snd x)
 
--- The coproduct in the category of polynomial endofunctors on
--- the slice category `Type/x`.
 public export
-SPFSliceCoproduct : {a : Type} ->
-  SlicePolyEndoFunc x -> SlicePolyEndoFunc x -> SlicePolyEndoFunc x
-SPFSliceCoproduct {a} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+SPFSliceCoproduct : {x, y : Type} ->
+  SlicePolyFunc x y -> SlicePolyFunc x y -> SlicePolyFunc x y
+SPFSliceCoproduct {x} {y} (pd ** dd ** asn) (pd' ** dd' ** asn') =
   (\i => Either (pd i) (pd' i) **
    \(i ** d) => (case d of
     Left d' => dd (i ** d')
     Right d' => dd' (i ** d')) **
    \((i ** d) ** dd) => (case d of
-    Left d' => i
-    Right d' => i))
+    Left d' => asn ((i ** d') ** dd)
+    Right d' => asn' ((i ** d') ** dd)))
 
--- The product in the category of polynomial endofunctors on
--- the slice category `Type/x`.
 public export
-SPFSliceProduct : {a : Type} ->
-  SlicePolyEndoFunc x -> SlicePolyEndoFunc x -> SlicePolyEndoFunc x
-SPFSliceProduct {a} (pd ** dd ** asn) (pd' ** dd' ** asn') =
+SPFSliceProduct : {x, y, z : Type} ->
+  SlicePolyFunc x z -> SlicePolyFunc y z -> SlicePolyFunc (x, y) z
+SPFSliceProduct {x} (pd ** dd ** asn) (pd' ** dd' ** asn') =
   (\i => (pd i, pd' i) **
    \(i ** (d, d')) => (dd (i ** d), dd' (i ** d')) **
-   \((i ** d) ** dd) => i)
+   \((i ** (d, d')) ** (dd, dd')) =>
+    (asn ((i ** d) ** dd), asn' ((i ** d') ** dd')))
 
 -------------------------------------------------------------
 -------------------------------------------------------------
