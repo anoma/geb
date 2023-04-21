@@ -1,7 +1,7 @@
 (in-package :geb-test)
 
 (defparameter *all-tests*
-  (list 'geb 'geb.lambda 'geb.lambda-conversion))
+  (list 'geb 'geb.lambda 'geb.lambda-experimental 'geb.lambda-conversion))
 
 ;; This just dumps the interactive information doesn't prompt you
 (defclass noisy-interactive (plain interactive)

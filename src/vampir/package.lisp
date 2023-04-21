@@ -37,39 +37,41 @@
    (:shadowing-import-from #:geb.vampir.spec #:op #:tuple)
    (:shadowing-import-from #:common-lisp  #:=)
    (:local-nicknames (#:spc #:geb.vampir.spec))
-   (:export :extract
+   (:export
+    :extract
 
-            ;; vampir api functions
-            *bool* bool
-            *next-range*
-            next-range
-            *range32*
-            range32
+    ;; vampir api functions
+    :*bool*
+    :bool
+    :*next-range*
+    :next-range
+    :*range32*
+    :range32
 
-            *int-range32*
-            int-range32
+    :*int-range32*
+    :int-range32
 
-            *negative32*
-            negative32
+    :*negative32*
+    :negative32
 
-            *non-negative32*
-            non-negative32
+    :*non-negative32*
+    :non-negative32
 
-            *range31*
-            range31
+    :*range31*
+    :range31
 
-            *int-range31*
-            int-range31
+    :*int-range31*
+    :int-range31
 
-            *less32*
-            less32
+    :*less32*
+    :less32
 
-            *pwless32*
-            pwless32
+    :*pwless32*
+    :pwless32
 
-            *mod32*
-            mod32
+    :*mod32*
+    :mod32
 
-            *pwmod32*
-            pwmod32)))
+    :*pwmod32*
+    :pwmod32)))
 

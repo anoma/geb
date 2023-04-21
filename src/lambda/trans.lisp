@@ -8,83 +8,109 @@
 ;; Main Transformers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defgeneric compile-checked-term (context type term)
-  (:documentation "Compiles a checked term into SubstMorph category"))
+(defgeneric compile-checked-term (context term)
+  (:documentation "Compiles a checked term in an appropriate context into the
+morphism of the GEB category. In detail, it takes a context and a term with
+following restrictions: Terms come from [STLC][class]  with occurences of
+[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and should
+come without the slow of [TTYPE][generic-function] accessor filled for any of
+the subterms. Context should be a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
+the caveat that instead of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] we ought to use
+[FUN-TYPE][class], a stand-in for the internal hom object with explicit
+accessors to the domain and the codomain. Once again, note that it is important
+for the context and term to be giving as per above description. While not
+always, not doing so result in an error upon evaluation. As an example of a
+valid entry we have
 
-(-> to-poly (list t <stlc>) (or geb.poly:<poly> geb.poly:poly))
-(defun to-poly (context type obj)
+```lisp
+ (compile-checked-term (list so1 (fun-type so1 so1)) (app (index 0) (index 1)))
+```
+
+while
+
+```lisp
+(compile-checked-term (list so1 (so-hom-obj so1 so1)) (app (index 0) (index 1)))
+```
+
+produces an error. Error of such kind mind pop up both on the level of evaluating
+[WELL-DEFP][generic-function] and [ANN-TERM1][generic-function]."))
+
+(-> to-poly (list <stlc>) (or geb.poly:<poly> geb.poly:poly))
+(defun to-poly (context obj)
   (assure (or geb.poly:<poly> geb.poly:poly)
     (~>> obj
-         (compile-checked-term context type)
+         (compile-checked-term context)
          geb:to-poly)))
 
-(-> to-circuit (list t <stlc> keyword) geb.vampir.spec:statement)
-(defun to-circuit (context type obj name)
+(-> to-circuit (list <stlc> keyword) geb.vampir.spec:statement)
+(defun to-circuit (context obj name)
   (assure geb.vampir.spec:statement
-    (~> (to-poly context type obj)
+    (~> (to-poly context obj)
         (geb.poly:to-circuit name))))
 
 (defmethod empty ((class (eql (find-class 'list)))) nil)
 
-(defmethod compile-checked-term (context type (term <stlc>))
-  (assure <substmorph>
-    (match-of stlc term
-      ((absurd type v)
-       (comp (init type)
-             (compile-checked-term context so0 v)))
-      (unit
-       (terminal (stlc-ctx-to-mu context)))
-      ((left lty rty term)
-       lty rty
-       (assert (typep type 'coprod) nil "invalid lambda type to left ~A" type)
-       (comp (->left (mcar type) (mcadr type))
-             (compile-checked-term context (mcar type) term)))
-      ((right lty rty term)
-       lty rty
-       (assert (typep type 'coprod) nil "invalid lambda type to right ~A" type)
-       (comp (->right (mcar type) (mcadr type))
-             (compile-checked-term context (mcar type) term)))
-      ((case-on lty rty cod on l r)
-       (comp (mcase (curry (compile-checked-term (cons lty context) cod l))
-                    (curry (compile-checked-term (cons rty context) cod r)))
-             (compile-checked-term context (coprod lty rty) on)))
-      ((pair lty rty l r)
-       (geb:pair (compile-checked-term context lty l)
-                 (compile-checked-term context rty r)))
-      ((fst lty rty value)
-       (assert (geb.mixins:obj-equalp (class-of lty) (class-of type))
-               nil
-               "Types should match on fst: ~A ~A"
-               term
-               type)
-       (comp (<-left lty rty) (compile-checked-term context (prod lty rty) value)))
-      ((snd lty rty value)
-       (assert (geb.mixins:obj-equalp (class-of rty) (class-of type))
-               nil
-               "Types should match on fst: ~A ~A"
-               term
-               type)
-       (comp (<-right lty rty) (compile-checked-term context (prod lty rty) value)))
-      ((lamb vty tty term)
-       (curry (commutes-left
-               (compile-checked-term (cons vty context) tty term))))
-      ((app dom com f x)
-       (assert (geb.mixins:obj-equalp dom type)
-               nil
-               "Types should match for application: ~A ~A"
-               dom
-               type)
-       (comp
-        (so-eval dom com)
-        (geb:pair (compile-checked-term context dom f)
-                  (compile-checked-term context com x))))
-      ((index i)
-       (stlc-ctx-proj context i)))))
+(defmethod compile-checked-term (context (tterm <stlc>))
+  (labels ((rec (context tterm)
+             (match-of stlc tterm
+               ((absurd tcod term)
+                (comp (init tcod)
+                      (rec context term)))
+               (unit
+                (terminal (stlc-ctx-to-mu context)))
+               ((left term)
+                (let ((tott (ttype tterm)))
+                  (comp (->left (mcar tott) (mcadr tott))
+                        (rec context term))))
+               ((right term)
+                (let ((tott (ttype tterm)))
+                  (comp (->right (mcar tott) (mcadr tott))
+                        (rec context term))))
+               ((case-on on ltm rtm)
+                (let ((toon (ttype on)))
+                  (comp (mcase (curry (rec
+                                       (cons (mcar toon) context) ltm))
+                               (curry (rec
+                                       (cons (mcadr toon) context) rtm)))
+                        (rec context on))))
+               ((pair ltm rtm)
+                (geb:pair (rec context ltm)
+                          (rec context rtm)))
+               ((fst term)
+                (let ((tottt (ttype term)))
+                  (comp (<-left (mcar tottt) (mcadr tottt))
+                        (rec context term))))
+               ((snd term)
+                (let ((tottt (ttype term)))
+                  (comp (<-right (mcar tottt) (mcadr tottt))
+                        (compile-checked-term context term))))
+               ((lamb tdom term)
+                (curry (commutes-left
+                        (rec (cons tdom context) term))))
+               ((app fun term)
+                (let ((tofun (ttype fun)))
+                  (comp
+                   (so-eval (fun-to-hom (mcar tofun))
+                            (fun-to-hom (mcadr tofun)))
+                   (geb:pair (rec context
+                                  fun)
+                             (rec context
+                                  term)))))
+               ((index pos)
+                (stlc-ctx-proj context pos)))))
+    (let ((ann-term (ann-term1 context tterm)))
+      (if (well-defp context ann-term)
+          (rec context ann-term)
+          (error "not a well-defined ~A in said ~A" tterm context)))))
+
 
 (-> stlc-ctx-to-mu (stlc-context) substobj)
 (defun stlc-ctx-to-mu (context)
-  "Converts a generic [<STLC>][type] context into a [SUBSTMORPH][type]"
-  (mvfoldr #'prod context so1))
+  "Converts a generic [<STLC>][type] context into a
+[SUBSTMORPH][GEB.SPEC:SUBSTMORPH]. Note that usually contexts can be interpreted
+in a category as a $\Sigma$-type$, which in a non-dependent setting gives us a
+usual [PROD][type]"
+  (mvfoldr #'prod (mapcar #'fun-to-hom context) so1))
 
 (-> so-hom (substobj substobj) (or t substobj))
 (defun so-hom (dom cod)
@@ -96,11 +122,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun stlc-ctx-proj (context depth)
+  "Given a context, we interpret it as a [PROD][type] object of appropriate
+length with fibrations given by [PROD][type] projections."
   (if (zerop depth)
-      (<-left (car context)
+      (<-left (fun-to-hom (car context))
               (stlc-ctx-to-mu (cdr context)))
       (comp (stlc-ctx-proj (cdr context) (1- depth))
-            (<-right (car context)
+            (<-right (fun-to-hom (car context))
                      (stlc-ctx-to-mu (cdr context))))))
 
 (defun index-to-projection (depth typ-a typ-b prod)
