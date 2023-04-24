@@ -6,6 +6,14 @@
 (deftype substobj ()
   `(or prod coprod so0 so1))
 
+(deftype realized-object ()
+  "A realized object that can be sent into "
+  `(or list                             ; product
+       left
+       right
+       so1
+       so0))
+
 ;; we say that id doesn't exist, as we don't need the tag. If we find
 ;; that to ill typed (substobj is a substmorph as far as type checking
 ;; is concerned without an explicit id constrcutor), then we can
@@ -518,6 +526,20 @@ product with the shape
   (:documentation "The distributive law"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; realized object
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defclass left (direct-pointwise-mixin)
+  ((obj :initarg :obj
+        :accessor obj
+        :documentation "The object that is being injected left")))
+
+(defclass right (direct-pointwise-mixin)
+  ((obj :initarg :obj
+        :accessor obj
+        :documentation "The object that is being injected left")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constructors for the base types
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -540,6 +562,17 @@ product with the shape
   "The Terminal Object")
 (def so1 *so1*
   "The Terminal Object")
+
+(-> left (t) left)
+(defun left (obj)
+  (assure left
+    (make-instance 'left :obj obj)))
+
+(-> right (t) right)
+(defun right (obj)
+  (assure right
+    (make-instance 'right :obj obj)))
+
 
 (-> prod (t t) prod)
 (defun prod (car cadr)

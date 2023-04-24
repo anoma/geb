@@ -123,6 +123,7 @@ The functions given work on this."
 
 (pax:defsection @geb-api (:title "API")
   "Various forms and structures built on-top of @GEB-CATEGORIES"
+  (gapply                     (pax:method () (<substmorph> t)))
   (geb-bool::@geb-bool        pax:section)
   (geb.trans:@geb-translation pax:section)
   (@geb-utility               pax:section))

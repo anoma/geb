@@ -7,8 +7,8 @@
     (so0          (terminal fst))
     (so1          (comp fun (pair fst
                                   (terminal fst))))
-    ((coprod x y) (pair (curry (left (comp fun (gather fst x y))))
-                        (curry (right (comp fun (gather fst x y))))))
+    ((coprod x y) (pair (curry (left-morph  (comp fun (gather fst x y))))
+                        (curry (right-morph (comp fun (gather fst x y))))))
     (prod         (curry (curry (prod-left-assoc fun))))))
 
 (defmethod dom ((x <substmorph>))
@@ -205,14 +205,14 @@ u
                          (<-right (prod w x) y)))))
     (_ (error "object ~A need to be of a double product type, however it is of ~A" f (dom f)))))
 
-(defun right (f)
+(defun right-morph (f)
   (trivia:match (dom f)
     ((coprod x y)
      (comp f (->right x y)))
     (_ (error "object ~A need to be of a coproduct type, however it is of ~A"
               f (dom f)))))
 
-(defun left (f)
+(defun left-morph (f)
   (trivia:match (dom f)
     ((coprod x y)
      (comp f (->left x y)))
@@ -265,3 +265,83 @@ In category terms, `a → c^b` is isomorphic to `a → b → c`
       (error "object ~A need to be of a product type, however it is of ~A" f (dom f))
       (let ((dom (dom f)))
         (curry-prod f (mcar dom) (mcadr dom)))))
+
+(defmethod gapply ((morph <substmorph>) object)
+  "My main documentation can be found on [GAPPLY][generic-function]
+
+I am the [GAPPLY][generic-function] for [\\<SBUSTMORPH\\>][class], the
+OBJECT that I expect is of type [REALIZED-OBJECT][type]. See the
+documentation for [REALIZED-OBJECT][type] for the forms it can take.
+
+Some examples of me are
+
+```lisp
+GEB> (gapply (comp
+              (mcase geb-bool:true
+                     geb-bool:not)
+              (->right so1 geb-bool:bool))
+             (left so1))
+(right s-1)
+GEB> (gapply (comp
+              (mcase geb-bool:true
+                     geb-bool:not)
+              (->right so1 geb-bool:bool))
+             (right so1))
+(left s-1)
+GEB> (gapply geb-bool:and
+             (list (right so1)
+                   (right so1)))
+(right s-1)
+GEB> (gapply geb-bool:and
+             (list (left so1)
+                   (right so1)))
+(left s-1)
+GEB> (gapply geb-bool:and
+             (list (right so1)
+                   (left so1)))
+(left s-1)
+GEB> (gapply geb-bool:and
+             (list (left so1)
+                   (left so1)))
+(left s-1)
+```
+"
+  (typecase-of substmorph morph
+    ;; object should be a list here
+    (project-left (car object))
+    ;; object should be a list here
+    (project-right (cadr object))
+    ;; inject the left and rights
+    (inject-left   (left object))
+    (inject-right  (right object))
+    (terminal      so1)
+    ;; we could generate an arbitrary type for some subest of types,
+    ;; and use this as a fuzzer, but alas
+    (init          (error "Can't generate a type from void"))
+    (case (etypecase-of realized-object object
+            (left
+             (gapply (mcar morph) (obj object)))
+            (right
+             (gapply (mcadr morph) (obj object)))
+            ((or so0 so1 list)
+             (error "invalid type application, trying to apply a
+             function with a dom of type ~A to an object with value ~A"
+                    (dom morph)
+                    object))))
+    (pair (list (gapply (mcar morph) object)
+                (gapply (mcdr morph) object)))
+    (comp (gapply (mcar morph)
+                  (gapply (mcadr morph) object)))
+    (distribute
+     (etypecase-of realized-object (cadr object)
+       (left
+        (left (list (car object) (obj (cadr object)))))
+       (right
+        (right (list (car object) (obj (cadr object)))))
+       ((or so1 so0 list)
+        (error "invalid type application, trying to apply a
+             function with a dom of type ~A to an object with value ~A"
+               (dom morph)
+               (cadr object)))))
+    (substobj object)
+    (otherwise (subclass-responsibility morph))))

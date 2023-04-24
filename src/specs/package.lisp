@@ -194,7 +194,8 @@ From this category, most abstractions will be made, with
 A good example of this category at work can be found within the
 GEB-BOOL::@GEB-BOOL section."
   (@geb-substmu    pax:section)
-  (@geb-substmorph pax:section))
+  (@geb-substmorph pax:section)
+  (@geb-realized   pax:section))
 
 (pax:defsection @geb-substmu (:title "Subst Obj")
   "This section covers the objects of the [SUBSTMORPH][type]
@@ -223,6 +224,32 @@ type substobj = so0
 
   (mcar  (pax:method () (coprod)))
   (mcadr (pax:method () (coprod))))
+
+(pax:defsection @geb-realized (:title "Realized Subst Objs")
+  "This section covers the [REALIZED-OBJECT][TYPE] type. This
+represents a realized [SUBSTOBJ][type] term.
+
+The [REALIZED-OBJECT][TYPE] is not a real constructor but rather a sum
+type for the following type
+
+```lisp
+(deftype realized-object () `(or left right list so1 so0))
+```
+
+In ML we would have written something like
+
+```haskell
+type realized-object = so0
+                     | so1
+                     | list
+                     | left
+                     | right
+```"
+  (realized-object pax:type)
+  (left  pax:class)
+  (right pax:class)
+  (left  pax:function)
+  (right pax:function))
 
 (pax:defsection @geb-substmorph (:title "Subst Morph")
   "The overarching types that categorizes the [SUBSTMORPH][type]
