@@ -129,7 +129,7 @@
 
 (defun if-zero (pred then else)
   "checks if [PREDICATE] is zero then take the [THEN] branch otherwise the [ELSE] branch"
-  (make-instance 'if- :predicate pred :then then :else else))
+  (make-instance 'if-zero :predicate pred :then then :else else))
 
 (defun if-lt (mcar mcadr then else)
   "Checks if the [MCAR] is less than the [MCADR] and chooses the appropriate branch"

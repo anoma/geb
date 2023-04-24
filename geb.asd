@@ -51,7 +51,8 @@
     :serial t
     :description "Polynomial"
     :depends-on (util geb vampir specs)
-    :components ((:file package)))
+    :components ((:file package)
+                 (:file poly)))
    (:module lambda
     :serial t
     :depends-on (geb specs)
