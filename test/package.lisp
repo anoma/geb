@@ -4,6 +4,7 @@
   (:shadowing-import-from :serapeum  :true)
   (:shadow :value :children)
   (:local-nicknames  (#:poly #:geb.poly)
+                     (#:bitc #:geb.bitc)
                      (#:lambda #:geb.lambda))
   (:use #:geb.common #:parachute))
 

@@ -4,6 +4,7 @@
  (defpackage #:geb.entry
    (:documentation "Entry point for the geb codebase")
    (:local-nicknames  (#:poly #:geb.poly)
+                      (#:bitc #:geb.bitc)
                       (:lambda     :geb.lambda))
    (:use #:serapeum #:common-lisp)))
 
