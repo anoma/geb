@@ -78,3 +78,55 @@
   "Turns a @GEB-SUBSTMORPH to a Vamp-IR Term"
   (assure geb.vampir.spec:statement
     (geb.poly:to-circuit (to-poly obj) name)))
+
+
+
+
+
+
+(defmethod to-bits ((obj <substobj>))
+  (typecase-of substobj obj
+    (so0     0)
+    (so1     0)
+    (coprod  (+ 1 (max (to-bits (mcar obj)) (to-bits (mcadr obj)))))
+    (prod    (+ (to-bits (mcar obj)) (to-bits (mcadr obj))))
+    (otherwise (subclass-responsibility obj))))
+
+(defmethod to-bits ((obj <substmorph>))
+  (typecase-of substmorph obj
+    (substobj     (error "impossible"))
+    ;toBits[comp[f__]] := toBits /@ comp[f]
+    (comp          (bits:compose (to-bits (mcar obj))
+                                 (to-bits (mcadr obj))))
+    ; toBits[init[x_]] := par @@ Table[False, bitWidth@x]
+    (init          (apply #'bits:parallel (make-list (to-bits (mcar obj)) :initial-element bits:false)))
+    ; toBits[terminal[x_]] := drop[bitWidth@x]
+    (terminal      (bits:drop (to-bits (mcar obj))))
+    ;toBits[injectLeft[mcar_, mcadr_]] :=
+    ; par @@ Join[{False, id[bitWidth@mcar]}, Table[False, Max[bitWidth@mcar, bitWidth@mcadr] - bitWidth@mcar]]
+    (inject-left   (apply #'bits:parallel (append (list bits:false (bits:identity (to-bits (mcar obj))))
+                                                  (make-list (- (max (to-bits (mcar obj)) (to-bits (mcadr obj))) (to-bits (mcar obj))) :initial-element bits:false)
+                                          )))
+    ;toBits[injectRight[mcar_,mcadr_]]:=
+    ;  par@@Join[{True,id[bitWidth@mcadr]},Table[False, Max[bitWidth@mcar, bitWidth@mcadr] - bitWidth@mcadr]]
+    (inject-right  (apply #'bits:parallel (append (list bits:true (bits:identity (to-bits (mcadr obj)))) 
+                                                  (make-list (- (max (to-bits (mcar obj)) (to-bits (mcadr obj))) (to-bits (mcadr obj))) :initial-element bits:false)
+                                          )))
+    ;toBits[case[mcar_,mcadr_]]:=
+    ;  branch[
+    ;    par[toBits@mcar,id[Max[dom@mcar,dom@mcadr]-dom@mcar]],
+    ;    par[toBits@mcadr,id[Max[dom@mcar,dom@mcadr]-dom@mcadr]]
+    ;  ]
+    (case          (bits:branch (bits:parallel (to-bits (mcar obj))  (bits:identity (- (max (dom (mcar obj)) (dom (mcadr obj))) (dom (mcar obj)))))
+                                (bits:parallel (to-bits (mcadr obj)) (bits:identity (- (max (dom (mcar obj)) (dom (mcadr obj))) (dom (mcadr obj)))))))
+    ; toBits[projectRight[mcar_, mcadr_]] := par[drop[bitWidth@mcar], id[bitWidth@mcadr]]
+    (project-left  (bits:parallel (bits:identity (to-bits (mcar obj))) (bits:drop (to-bits (mcadr obj)))))
+    ; toBits[projectLeft[mcar_, mcadr_]] := par[id[bitWidth@mcar], drop[bitWidth@mcadr]]
+    (project-right (bits:parallel (bits:drop (to-bits (mcar obj))) (bits:identity (to-bits (mcadr obj)))))
+    ; toBits[pair[mcar_, mcdr_]] := comp[par[toBits[mcar], toBits[mcdr]], fork[dom[mcar]]]
+    (pair          (bits:compose (bits:parallel (to-bits (mcar obj)) (to-bits (mcdr obj))) (bits:fork (dom (mcar obj)))))
+    ;toBits[distribute[mcar_, mcadr_, mcaddr_]] :=
+    ;  par[swap[bitWidth[mcar], 1], id[Max[bitWidth@mcadr, bitWidth@mcaddr]]]
+    (distribute    (bits:parallel (bits:swap (to-bits (mcar obj)) 1) (bits:identity (max (to-bits (mcadr obj)) (to-bits (mcaddr obj))))))
+    (otherwise (subclass-responsibility obj))))
+
