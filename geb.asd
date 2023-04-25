@@ -27,6 +27,12 @@
                  (:file meta)
                  (:file mixins)
                  (:file cat)))
+   (:module generics
+    :serial t
+    :description "Mixin Utility Functions"
+    :depends-on (util)
+    :components ((:file package)
+                 (:file generics)))
    (:module vampir
     :serial t
     :description "The Vampir Extraction Module"
