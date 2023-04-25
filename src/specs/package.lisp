@@ -67,7 +67,7 @@ all functions that operate on `geb.poly`.")
   "This section covers the types of things one can find in the [POLY]
 constructors"
   (poly    pax:type)
-  (<poly>  pax:type)
+  (<poly>  pax:class)
   (ident   pax:type)
   (+       pax:type)
   (*       pax:type)
@@ -200,10 +200,10 @@ GEB-BOOL::@GEB-BOOL section."
 (pax:defsection @geb-substmu (:title "Subst Obj")
   "This section covers the objects of the [SUBSTMORPH][type]
 category. Note that [SUBSTOBJ][type] refers to the
-[GEB-DOCS/DOCS:@CLOSED-TYPE], whereas [\\<SUBSTOBJ\\>][type] refers
+[GEB-DOCS/DOCS:@CLOSED-TYPE], whereas [\\<SUBSTOBJ\\>][class] refers
 to the [GEB-DOCS/DOCS:@OPEN-TYPE] that allows for user extension."
   (substobj   pax:type)
-  (<substobj> pax:type)
+  (<substobj> pax:class)
   "[SUBSTOBJ][type] type is not a constructor itself, instead it's
 best viewed as the sum type, with the types below forming the
 constructors for the term. In ML we would write it similarly to:
@@ -215,9 +215,9 @@ type substobj = so0
               | coprod
 ```"
   (prod pax:type)
-  (coprod pax:type)
-  (so0 pax:type)
-  (so1 pax:type)
+  (coprod pax:class)
+  (so0 pax:class)
+  (so1 pax:class)
   "The @GEB-ACCESSORS specific to @GEB-SUBSTMU"
   (mcar (pax:method () (prod)))
   (mcadr (pax:method () (prod)))

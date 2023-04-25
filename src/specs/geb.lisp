@@ -7,7 +7,13 @@
   `(or prod coprod so0 so1))
 
 (deftype realized-object ()
-  "A realized object that can be sent into "
+  "A realized object that can be sent into.
+
+Lists represent [PROD][class] in the [\\<SUBSTOBJ\\>][class] category
+
+[LEFT][class] and [RIGHT][class] represents realized values for [COPROD][class]
+
+Lastly [SO1][class] and [SO0][class] represent the proper class"
   `(or list                             ; product
        left
        right
@@ -40,13 +46,13 @@
    "The Initial Object. This is sometimes known as the
 [VOID](https://en.wikipedia.org/wiki/Void_type) type.
 
-the formal grammar of [SO0][type] is
+the formal grammar of [SO0][class] is
 
 ```lisp
 so0
 ```
 
-where [SO0][type] is `THE` initial object.
+where [SO0][class] is `THE` initial object.
 
 Example
 
@@ -61,13 +67,13 @@ Example
    "The Terminal Object. This is sometimes referred to as the
 [Unit](https://en.wikipedia.org/wiki/Unit_type) type.
 
-the formal grammar or [SO1][type] is
+the formal grammar or [SO1][class] is
 
 ```lisp
 so1
 ```
 
-where [SO1][type] is `THE` terminal object
+where [SO1][class] is `THE` terminal object
 
 Example
 
@@ -126,7 +132,7 @@ Here we create a product of two [GEB-BOOL:BOOL] types."))
           :accessor mcadr
           :documentation ""))
   (:documentation
-   "the [CO-PRODUCT][COPROD type] object. Takes CAT-OBJ values that
+   "the [CO-PRODUCT][COPROD class] object. Takes CAT-OBJ values that
 get put into a choice of either value.
 
 The formal grammar of [PRODUCT][PROD type] is
@@ -135,7 +141,7 @@ The formal grammar of [PRODUCT][PROD type] is
 (coprod mcar mcadr)
 ```
 
-Where [CORPOD][TYPE] is the constructor, [MCAR] is the left choice of
+Where [CORPOD][class] is the constructor, [MCAR] is the left choice of
 the sum, and [MCADR] is the right choice of the sum.
 
 Example:
@@ -198,7 +204,7 @@ Example:
 
 In this example we are composing two morphisms. the first morphism
 that gets applied ([PAIR] ...) is the identity function on the
-type ([PROD][type] [SO1][type] [GEB-BOOL:BOOL]), where we pair the
+type ([PROD][type] [SO1][class] [GEB-BOOL:BOOL]), where we pair the
 [left projection](PROJECT-LEFT) and the [right
 projection](PROJECT-RIGHT), followed by taking the [right
 projection](PROJECT-RIGHT) of the type.
@@ -217,7 +223,7 @@ theory, this expression just reduces to
         :documentation ""))
   (:documentation
    "The [INITIAL][INIT type] Morphism, takes any [CAT-OBJ] and
-creates a moprhism from [SO0][type] (also known as void) to the object given.
+creates a moprhism from [SO0][class] (also known as void) to the object given.
 
 The formal grammar of [INITIAL][INIT type] is
 
@@ -226,7 +232,7 @@ The formal grammar of [INITIAL][INIT type] is
 ```
 
 where [INIT][type] is the constructor. [OBJ] is the type of object
-that will be conjured up from [SO0][type], when the morphism is
+that will be conjured up from [SO0][class], when the morphism is
 applied onto an object.
 
 Example:
@@ -244,7 +250,7 @@ In this example we are creating a unit value out of void."))
         :documentation ""))
   (:documentation
    "The [TERMINAL][type] morphism, Takes any [CAT-OBJ] and creates a
-morphism from that object to [SO1][type] (also known as unit).
+morphism from that object to [SO1][class] (also known as unit).
 
 The formal grammar of [TERMINAL][type] is
 
@@ -253,7 +259,7 @@ The formal grammar of [TERMINAL][type] is
 ```
 
 where [TERMINAL][type] is the constructor. [OBJ] is the type of object that
-will be mapped to [SO1][type], when the morphism is applied onto an
+will be mapped to [SO1][class], when the morphism is applied onto an
 object.
 
 Example:
@@ -269,8 +275,8 @@ Example:
 ```
 
 In the first example, we make a morphism from the corpoduct of
-[SO1][type] and [SO1][type] (essentially [GEB-BOOL:BOOL]) to
-[SO1][type].
+[SO1][class] and [SO1][class] (essentially [GEB-BOOL:BOOL]) to
+[SO1][class].
 
 In the third example we can proclaim a constant function by ignoring
 the input value and returning a morphism from unit to the desired type.
@@ -315,7 +321,7 @@ Example:
 ```
 
 In the second example, we inject a term with the shape SO1 into a pair
-with the shape ([SO1][type] × [GEB-BOOL:BOOL]), then we use MCASE to denote a
+with the shape ([SO1][class] × [GEB-BOOL:BOOL]), then we use MCASE to denote a
 morphism saying. `IF` the input is of the shape [SO1], then give us True,
 otherwise flip the value of the boolean coming in."))
 
@@ -355,7 +361,7 @@ Example:
 ```
 
 In the second example, we inject a term with the shape [GEB-BOOL:BOOL]
-into a pair with the shape ([SO1][type] × [GEB-BOOL:BOOL]), then we use
+into a pair with the shape ([SO1][class] × [GEB-BOOL:BOOL]), then we use
 [MCASE] to denote a morphism saying. IF the input is of the shape [SO1],
 then give us True, otherwise flip the value of the boolean coming in."))
 
@@ -394,7 +400,7 @@ Example:
 ```
 
 In the second example, we inject a term with the shape [GEB-BOOL:BOOL]
-into a pair with the shape ([SO1][type] × [GEB-BOOL:BOOL]), then we use
+into a pair with the shape ([SO1][class] × [GEB-BOOL:BOOL]), then we use
 [MCASE] to denote a morphism saying. IF the input is of the shape [SO1],
 then give us True, otherwise flip the value of the boolean coming in."))
 
@@ -432,7 +438,7 @@ Example:
 ```
 
 Here this pair morphism takes the pair SO1 × GEB-BOOL:BOOL, and
-projects back the left field SO1 as the first value of the pair and
+projects back the left field [SO1][class] as the first value of the pair and
 projects back the GEB-BOOL:BOOL field as the second values."))
 
 (defclass project-left (<substmorph>)
@@ -470,7 +476,7 @@ Example:
 In this example, we are getting the left [GEB-BOOL:BOOL] from a
 product with the shape
 
-([GEB-BOOL:BOOL][] [×][PROD type] [SO1][type] [×][PROD type] [GEB-BOOL:BOOL])"))
+([GEB-BOOL:BOOL][] [×][PROD type] [SO1][class] [×][PROD type] [GEB-BOOL:BOOL])"))
 
 (defclass project-right (<substmorph>)
   ((mcar :initarg :mcar
@@ -508,7 +514,7 @@ Example:
 In this example, we are getting the right [GEB-BOOL:BOOL] from a
 product with the shape
 
-([GEB-BOOL:BOOL][] [×][PROD type] [SO1][type] [×][PROD type] [GEB-BOOL:BOOL])"))
+([GEB-BOOL:BOOL][] [×][PROD type] [SO1][class] [×][PROD type] [GEB-BOOL:BOOL])"))
 
 (defclass distribute (<substmorph>)
   ((mcar :initarg :mcar

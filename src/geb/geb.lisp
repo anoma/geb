@@ -53,12 +53,12 @@
 (defun const (f x)
   "The constant morphism.
 
-Takes a morphism from [SO1][type] to a desired value of type $B$,
+Takes a morphism from [SO1][class] to a desired value of type $B$,
 along with a [\\<SUBSTOBJ\\>] that represents the input type say of
 type $A$, giving us a morphism from $A$ to $B$.
 
 Thus if:
-F : [SO1][type] → a,
+F : [SO1][class] → a,
 X : b
 
 then: (const f x) : a → b
