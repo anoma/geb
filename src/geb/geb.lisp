@@ -12,7 +12,7 @@
     (prod         (curry (curry (prod-left-assoc fun))))))
 
 (defmethod dom ((x <substmorph>))
-  (assure substobj
+  (assure cat-obj
     (typecase-of substmorph x
       (init         so0)
       (terminal     (obj x))
@@ -29,8 +29,14 @@
       (otherwise
        (subclass-responsibility x)))))
 
+(defmethod dom ((ref reference))
+  ref)
+
+(defmethod codom ((ref reference))
+  ref)
+
 (defmethod codom ((x <substmorph>))
-  (assure substobj
+  (assure cat-obj
     (typecase-of substmorph x
       (terminal      so1)
       (init          (obj x))
@@ -237,8 +243,13 @@ u
     (substobj       "Id")
     (otherwise (subclass-responsibility morph))))
 
+(defmethod text-name ((morph opaque-morph))
+  "")
+(defmethod text-name ((morph cat-obj))
+  "Id")
+
 (defun curry (f)
-"Curries the given object, returns a [cat-morph]
+  "Curries the given object, returns a [cat-morph]
 
 The [cat-morph] given must have its DOM be of a PROD type, as [CURRY][generic-function]
 invokes the idea of

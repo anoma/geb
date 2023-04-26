@@ -12,7 +12,6 @@
 
 (pax:defsection @sub-expressions (:title "Sub Expression API")
   "Here we cover functions regarding common sub-expressions"
-
   (keep-unique            pax:function)
   (compute-common-usages  pax:function)
   (common-sub-expressions pax:function))

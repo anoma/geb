@@ -337,5 +337,22 @@ we can view this as automatically lifting a [SUBSTOBJ][type] into a
 Each extension adds an unique feature to the categories they are
 extending. To learn more, read about the individual extension you are
 interested in."
+  "Common Sub expressions represent repeat logic that can be found
+throughout any piece of code"
   (common-sub-expression      pax:class)
-  (make-common-sub-expression pax:function))
+  (make-common-sub-expression pax:function)
+  "The Opaque extension lets users write categorical objects and
+  morphisms where their implementation hide the specifics of what
+  types they are operating over"
+  (opaque       pax:class)
+  (reference    pax:class)
+  (opaque-morph pax:class)
+  (code  (pax:method () (opaque-morph)))
+  (dom   (pax:method () (opaque-morph)))
+  (codom (pax:method () (opaque-morph)))
+  (code  (pax:method () (opaque)))
+  (name  (pax:method () (opaque)))
+  (name  (pax:method () (reference)))
+  (reference    pax:function)
+  (opaque-morph pax:function)
+  (opaque       pax:function))

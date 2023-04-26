@@ -229,3 +229,9 @@ Further this can be used in type signatures
   (:documentation
    "the then branch of the
 [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
+
+
+(defgeneric code (obj)
+  (:documentation
+   "the code of the
+[object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))

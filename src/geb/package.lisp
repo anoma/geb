@@ -5,7 +5,7 @@
 (geb.utils:muffle-package-variance
  (defpackage #:geb.main
    (:documentation "Gödel, Escher, Bach categorical model")
-   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
+   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.extension.spec #:geb.utils #:geb.spec)
    (:local-nicknames (#:poly #:geb.poly.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj :dom :codom)))
@@ -37,7 +37,7 @@
    (:documentation "Provides the standard library for any GEB code")
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:import-from #:trivia #:match)
-   (:use-reexport #:geb.mixins #:geb.spec #:geb.main #:geb.utils
+   (:use-reexport #:geb.mixins #:geb.spec #:geb.main #:geb.utils #:geb.extension.spec
                   #:serapeum #:common-lisp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

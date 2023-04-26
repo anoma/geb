@@ -560,7 +560,9 @@ product with the shape
   obj)
 
 (defun has-aliasp (obj)
-  (geb.mixins:meta-lookup obj :alias))
+  (multiple-value-bind (val in-there) (geb.mixins:meta-lookup obj :alias)
+    (declare (ignore val))
+    in-there))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constructors for the morphism constructors

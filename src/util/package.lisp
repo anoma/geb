@@ -33,4 +33,5 @@ used throughout the GEB codebase"
   (func      pax:generic-function)
   (predicate pax:generic-function)
   (then      pax:generic-function)
-  (else      pax:generic-function))
+  (else      pax:generic-function)
+  (code      pax:generic-function))
