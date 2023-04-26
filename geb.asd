@@ -41,7 +41,8 @@
     :depends-on (util specs)
     :components ((:file package)
                  (:file geb)
-                 (:file bool)))
+                 (:file bool)
+                 (:file list)))
    (:module extensions
     :serial t
     :depends-on (specs util)
