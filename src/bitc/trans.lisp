@@ -35,7 +35,7 @@
              (to-vampir (mcadr obj) values)))
 
 (defmethod to-vampir ((obj fork) values)
-  ; toElem[fork[n_]] := Function[{inp}, Flatten[{inp, inp}, 1]]
+  ; Copy input n intput bits into 2*n output bits
   (append values values))
 
 (defmethod to-vampir ((obj parallel) values)
@@ -47,6 +47,10 @@
   ;       inp2 = inp[[cx + 1 ;; All]];
   ;       Flatten[{toElem[car][inp1], toElem[cadr][inp2]}, 1]
   ;   ]]
+
+
+  ; Take n + m bits, execute car the n bits and cadr on the m bits and 
+  ; concat the results from car and cadr
   (let* ((car (mcar obj))
          (cadr (mcadr obj))
          (cx (dom car))
@@ -56,25 +60,30 @@
 
 (defmethod to-vampir ((obj swap) values)
   ; toElem[swap[n_, m_]] := Flatten[{#[[n + 1 ;; All]], #[[1 ;; n]]}, 1] &
+  ; Turn n + m bits into m + n bits by swapping
   (let ((n (mcar obj)))
        (append (subseq values (+ 1 n)) (subseq values 0 (+ 1 n)))))
 
 (defmethod to-vampir ((obj one) values)
   ; toElem[True] := {1} &
+  ; Produce a bitvector of length 1 containing 1
   (declare (ignore values))
   (list (vamp:make-constant :const 1)))
 
 (defmethod to-vampir ((obj zero) values)
   ; toElem[False] := {0} &
+  ; Produce a bitvector of length 1 containing 0
   (declare (ignore values))
   (list (vamp:make-constant :const 0)))
 
 (defmethod to-vampir ((obj ident) values)
   ; toElem[id[_]] := # &
+  ; turn n bits into n bits by doing nothing
   values)
 
 (defmethod to-vampir ((obj drop) values)
   ; toElem[drop[_]] := {} &
+  ; turn n bits into an empty bitvector
   (declare (ignore values))
   nil)
 
@@ -84,6 +93,10 @@
   ;     Times[1 - x, #] & /@ toElem[f][{values}],
   ;     Times[x, #] & /@ toElem[g][{values}]
   ;   ]
+
+  ; Look at the first bit.
+  ; If its 1, run f on the remaining bits.
+  ; If its 0, run g on the remaining bits.
   (let* ((x (car values))
          (xs (cdr values))
          (f (mcar obj))
