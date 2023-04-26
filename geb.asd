@@ -1,4 +1,3 @@
-
 (asdf:defsystem :geb
   :depends-on (:trivia :alexandria :serapeum :fset :fare-quasiquote-extras
                        ;; wed are only importing this for now until I
@@ -65,12 +64,12 @@
     :depends-on (util geb vampir specs)
     :components ((:file package)
                  (:file poly)))
-    :components ((:file package)))
    (:module bitc
     :serial t
     :description "bitc (Boolean Circuits)"
-    :depends-on (util geb vampir specs)
-    :components ((:file package)))
+    :depends-on (util vampir mixins specs)
+    :components ((:file package)
+                 (:file bits)))
    (:module lambda
     :serial t
     :depends-on (geb specs)

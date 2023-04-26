@@ -24,9 +24,17 @@
 
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb.bitc
-   (:use #:geb.common)
+   (:use #:geb.common #:geb.mixins)
    (:shadowing-import-from #:geb.bitc.spec #:drop #:fork)
-   (:use-reexport #:geb.bitc.trans #:geb.bitc.spec)))
+   (:use-reexport #:geb.bitc.trans #:geb.bitc.spec #:geb.bitc.main)))
+
+(in-package :geb.bitc.main)
+
+(geb.utils:muffle-package-variance
+ (uiop:define-package #:geb.bitc
+   (:use #:geb.common)
+   (:shadowing-import-from #:geb.bitc.spec :fork :drop)
+   (:use-reexport #:geb.bitc.trans #:geb.bitc.spec #:geb.bitc.main)))
 
 (in-package :geb.bitc)
 
