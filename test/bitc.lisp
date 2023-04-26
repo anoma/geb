@@ -4,11 +4,11 @@
 
 (def test-circuit-1
   (bitc:to-circuit 
-    (bitc:comp 
+    (bitc:compose 
       (bitc:branch
-        (bitc:parallel (bitc:comp (bitc:parallel bitc:zero (bitc:identity 0))  (bitc:drop 1)) (bitc:identity 0))
-        (bitc:parallel (bitc:parallel (bitc:identity 1) (bitc:drop 0)) (bitc:identity 0))) 
-      (bitc:parallel (bitc:swap 1 1) (bitc:identity 0)))
+        (bitc:parallel (bitc:compose (bitc:parallel bitc:zero (bitc:ident 0))  (bitc:drop 1)) (bitc:ident 0))
+        (bitc:parallel (bitc:parallel (bitc:ident 1) (bitc:drop 0)) (bitc:ident 0))) 
+      (bitc:parallel (bitc:swap 1 1) (bitc:ident 0)))
     :tc_1))
 
 (define-test vampir-converter

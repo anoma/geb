@@ -51,9 +51,9 @@
     :description "Polynomial"
     :depends-on (util geb vampir specs)
     :components ((:file package)))
-   (:module bits
+   (:module bitc
     :serial t
-    :description "Bits (Boolean Circuits)"
+    :description "bitc (Boolean Circuits)"
     :depends-on (util geb vampir specs)
     :components ((:file package)))
    (:module lambda
@@ -78,8 +78,8 @@
                  (:file lambda)
                  (:file poly)
                  (:file poly-printer)
-                 (:file bits)
-                 (:file bits-printer)
+                 (:file bitc)
+                 (:file bitc-printer)
                  ;; HACK: to make the package properly refer to the
                  ;; right symbols
                  (:file ../util/package)))
@@ -94,11 +94,11 @@
     :components ((:file lambda/trans)
                  (:file geb/trans)
                  (:file poly/trans)
-                 (:file bits/trans)))
+                 (:file bitc/trans)))
    (:module entry
     :serial t
     :description "Entry point for the geb codebase"
-    :depends-on (util geb vampir specs poly bits lambda)
+    :depends-on (util geb vampir specs poly bitc lambda)
     :components ((:file package)
                  (:file entry))))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
@@ -138,7 +138,7 @@
    (:file lambda-experimental)
    (:file lambda-conversion)
    (:file poly)
-   (:file bits)
+   (:file bitc)
    (:file pipeline)
    (:module gui
     :serial t
