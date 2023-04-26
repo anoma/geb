@@ -42,9 +42,9 @@ produces an error. Error of such kind mind pop up both on the level of evaluatin
          (compile-checked-term context)
          geb:to-poly)))
 
-(-> to-circuit (list <stlc> keyword) geb.vampir.spec:statement)
+(-> to-circuit (list <stlc> keyword) list)
 (defun to-circuit (context obj name)
-  (assure geb.vampir.spec:statement
+  (assure list
     (~> (to-poly context obj)
         (geb.poly:to-circuit name))))
 

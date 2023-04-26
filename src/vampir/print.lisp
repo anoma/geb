@@ -94,7 +94,9 @@ of ()'s for any non normal form"
      (pprint-logical-block (stream nil :prefix "(" :suffix ")")
        (print-object expr stream)))
     ((or spc:tuple spc:normal-form)
-     (print-object expr stream)))
+     (print-object expr stream))
+    (geb.extension.spec:common-sub-expression
+     (extract-expression (geb.spec:obj expr) stream)))
   stream)
 
 (defmethod print-object ((infix spc:infix) stream)

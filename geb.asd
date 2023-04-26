@@ -32,9 +32,16 @@
                  (:file meta)
                  (:file mixins)
                  (:file cat)))
+   (:module generics
+    :serial t
+    :description "Mixin Utility Functions"
+    :depends-on (util)
+    :components ((:file package)
+                 (:file generics)))
    (:module vampir
     :serial t
     :description "The Vampir Extraction Module"
+    :depends-on (specs)
     :components ((:file package)
                  (:file spec)
                  (:file print)
@@ -46,10 +53,18 @@
     :components ((:file package)
                  (:file geb)
                  (:file bool)))
+   (:module extensions
+    :serial t
+    :depends-on (specs util)
+    :description "The Extensions module"
+    :components ((:file package)
+                 (:file sub-expressions)))
    (:module poly
     :serial t
     :description "Polynomial"
     :depends-on (util geb vampir specs)
+    :components ((:file package)
+                 (:file poly)))
     :components ((:file package)))
    (:module bitc
     :serial t
@@ -78,6 +93,8 @@
                  (:file lambda)
                  (:file poly)
                  (:file poly-printer)
+                 (:file extension)
+                 (:file extension-printer)
                  (:file bitc)
                  (:file bitc-printer)
                  ;; HACK: to make the package properly refer to the

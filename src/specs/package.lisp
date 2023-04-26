@@ -28,6 +28,11 @@
   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj
    :same-type-to-list :pair-to-list))
 
+(muffle-package-variance
+ (uiop:define-package #:geb.extension.spec
+   (:documentation "Extensions of the various categories")
+   (:mix #:trivia #:serapeum #:common-lisp #:geb.mixins #:geb.utils)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb Package Documentation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -73,7 +78,7 @@ all functions that operate on `geb.poly`.")
   "This section covers the types of things one can find in the [POLY]
 constructors"
   (poly    pax:type)
-  (<poly>  pax:type)
+  (<poly>  pax:class)
   (ident   pax:type)
   (+       pax:type)
   (*       pax:type)
@@ -250,15 +255,16 @@ From this category, most abstractions will be made, with
 A good example of this category at work can be found within the
 GEB-BOOL::@GEB-BOOL section."
   (@geb-substmu    pax:section)
-  (@geb-substmorph pax:section))
+  (@geb-substmorph pax:section)
+  (@geb-realized   pax:section))
 
 (pax:defsection @geb-substmu (:title "Subst Obj")
   "This section covers the objects of the [SUBSTMORPH][type]
 category. Note that [SUBSTOBJ][type] refers to the
-[GEB-DOCS/DOCS:@CLOSED-TYPE], whereas [\\<SUBSTOBJ\\>][type] refers
+[GEB-DOCS/DOCS:@CLOSED-TYPE], whereas [\\<SUBSTOBJ\\>][class] refers
 to the [GEB-DOCS/DOCS:@OPEN-TYPE] that allows for user extension."
   (substobj   pax:type)
-  (<substobj> pax:type)
+  (<substobj> pax:class)
   "[SUBSTOBJ][type] type is not a constructor itself, instead it's
 best viewed as the sum type, with the types below forming the
 constructors for the term. In ML we would write it similarly to:
@@ -270,15 +276,41 @@ type substobj = so0
               | coprod
 ```"
   (prod pax:type)
-  (coprod pax:type)
-  (so0 pax:type)
-  (so1 pax:type)
+  (coprod pax:class)
+  (so0 pax:class)
+  (so1 pax:class)
   "The @GEB-ACCESSORS specific to @GEB-SUBSTMU"
   (mcar (pax:method () (prod)))
   (mcadr (pax:method () (prod)))
 
   (mcar  (pax:method () (coprod)))
   (mcadr (pax:method () (coprod))))
+
+(pax:defsection @geb-realized (:title "Realized Subst Objs")
+  "This section covers the [REALIZED-OBJECT][TYPE] type. This
+represents a realized [SUBSTOBJ][type] term.
+
+The [REALIZED-OBJECT][TYPE] is not a real constructor but rather a sum
+type for the following type
+
+```lisp
+(deftype realized-object () `(or left right list so1 so0))
+```
+
+In ML we would have written something like
+
+```haskell
+type realized-object = so0
+                     | so1
+                     | list
+                     | left
+                     | right
+```"
+  (realized-object pax:type)
+  (left  pax:class)
+  (right pax:class)
+  (left  pax:function)
+  (right pax:function))
 
 (pax:defsection @geb-substmorph (:title "Subst Morph")
   "The overarching types that categorizes the [SUBSTMORPH][type]
@@ -379,3 +411,14 @@ we can view this as automatically lifting a [SUBSTOBJ][type] into a
   (obj    pax:generic-function)
   (name   pax:generic-function)
   (func   pax:generic-function))
+
+(in-package :geb.extension.spec)
+
+(pax:defsection @geb-extensions (:title "Extension Sets")
+  "This package contains many extensions one may see over the codebase.
+
+Each extension adds an unique feature to the categories they are
+extending. To learn more, read about the individual extension you are
+interested in."
+  (common-sub-expression      pax:class)
+  (make-common-sub-expression pax:function))

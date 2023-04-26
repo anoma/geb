@@ -76,10 +76,10 @@
 (defun obj-to-nat (obj)
   (so-card-alg obj))
 
-(-> to-circuit (<substmorph> keyword) geb.vampir.spec:statement)
+(-> to-circuit (<substmorph> keyword) list)
 (defun to-circuit (obj name)
   "Turns a @GEB-SUBSTMORPH to a Vamp-IR Term"
-  (assure geb.vampir.spec:statement
+  (assure list
     (geb.poly:to-circuit (to-poly obj) name)))
 
 
