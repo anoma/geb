@@ -1,3 +1,4 @@
+
 (asdf:defsystem :geb
   :depends-on (:trivia :alexandria :serapeum :fset :fare-quasiquote-extras
                        ;; wed are only importing this for now until I
@@ -9,11 +10,15 @@
   :description "Gödel, Escher, Bach, a categorical view of computation"
   :build-pathname "../build/geb.image"
   :entry-point "geb.entry::entry"
+
   :build-operation "program-op"
   :author "Mariari"
+
   :license "MIT"
+
   :pathname "src/"
   :components
+
   ((:module util
     :serial t
     :description "Internal utility functions"
@@ -46,6 +51,11 @@
     :description "Polynomial"
     :depends-on (util geb vampir specs)
     :components ((:file package)))
+   (:module bits
+    :serial t
+    :description "Bits (Boolean Circuits)"
+    :depends-on (util geb vampir specs)
+    :components ((:file package)))
    (:module lambda
     :serial t
     :depends-on (geb specs)
@@ -68,6 +78,8 @@
                  (:file lambda)
                  (:file poly)
                  (:file poly-printer)
+                 (:file bits)
+                 (:file bits-printer)
                  ;; HACK: to make the package properly refer to the
                  ;; right symbols
                  (:file ../util/package)))
@@ -81,11 +93,12 @@
     :pathname "../src/"
     :components ((:file lambda/trans)
                  (:file geb/trans)
-                 (:file poly/trans)))
+                 (:file poly/trans)
+                 (:file bits/trans)))
    (:module entry
     :serial t
     :description "Entry point for the geb codebase"
-    :depends-on (util geb vampir specs poly lambda)
+    :depends-on (util geb vampir specs poly bits lambda)
     :components ((:file package)
                  (:file entry))))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
@@ -125,6 +138,7 @@
    (:file lambda-experimental)
    (:file lambda-conversion)
    (:file poly)
+   (:file bits)
    (:file pipeline)
    (:module gui
     :serial t

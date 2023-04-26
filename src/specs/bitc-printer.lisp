@@ -1,7 +1,7 @@
 ;; TO DO: 
 
 
-(in-package #:geb.bits.spec)
+(in-package #:geb.bitc.spec)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subst Constructor Printer
@@ -17,12 +17,10 @@
 (easy-printer compose)
 (easy-printer fork)
 (easy-printer parallel)
-(easy-printer negation)
-(easy-printer conjunction)
 (easy-printer swap)
-(easy-printer true)
-(easy-printer false)
-(easy-printer identity)
+(easy-printer one)
+(easy-printer zero)
+(easy-printer ident)
 (easy-printer drop)
 (easy-printer branch)
 

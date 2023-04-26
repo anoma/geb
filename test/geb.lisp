@@ -102,6 +102,8 @@
 
 (def test-poly-2 (geb:to-poly test-morph-2))
 
+(def test-bits-2 (geb:to-bits test-morph-2))
+
 (def test-circuit-2 (geb:to-circuit test-morph-2 :tc_2))
 
 (define-test vampir-test-2

@@ -1,15 +1,15 @@
-(in-package #:geb.bits.spec)
+(in-package #:geb.bitc.spec)
 
-(deftype bits ()
-  `(or compose fork parallel negation conjunction swap true false identity drop branch))
+(deftype bitc ()
+  `(or compose fork parallel swap one zero ident drop branch))
 
-(defclass <bits> (geb.mixins:direct-pointwise-mixin) ())
+(defclass <bitc> (geb.mixins:direct-pointwise-mixin) ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constructor Morphisms for Bits (Objects are just natural numbers)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defclass compose (<bits>)
+(defclass compose (<bitc>)
   ((mcar :initarg :mcar
          :accessor mcar
          :documentation "")
@@ -17,12 +17,12 @@
           :accessor mcadr
           :documentation "")))
 
-(defclass fork (<bits>)
+(defclass fork (<bitc>)
   ((mcar :initarg :mcar
          :accessor mcar
          :documentation "")))
 
-(defclass parallel (<bits>)
+(defclass parallel (<bitc>)
   ((mcar :initarg :mcar
          :accessor mcar
          :documentation "")
@@ -30,12 +30,7 @@
           :accessor mcadr
           :documentation "")))
 
-(defclass negation (<bits>)
-  ((mcar :initarg :mcar
-         :accessor mcar
-         :documentation "")))
-
-(defclass conjunction (<bits>)
+(defclass swap (<bitc>)
   ((mcar :initarg :mcar
          :accessor mcar
          :documentation "")
@@ -43,31 +38,23 @@
           :accessor mcadr
           :documentation "")))
 
-(defclass swap (<bits>)
-  ((mcar :initarg :mcar
-         :accessor mcar
-         :documentation "")
-   (mcadr :initarg :mcadr
-          :accessor mcadr
-          :documentation "")))
-
-(defclass true (<bits>)
+(defclass one (<bitc>)
   ())
 
-(defclass false (<bits>)
+(defclass zero (<bitc>)
   ())
 
-(defclass identity (<bits>)
+(defclass ident (<bitc>)
   ((mcar :initarg :mcar
          :accessor mcar
          :documentation "")))
 
-(defclass drop (<bits>)
+(defclass drop (<bitc>)
   ((mcar :initarg :mcar
          :accessor mcar
          :documentation "")))
 
-(defclass branch (<bits>)
+(defclass branch (<bitc>)
   ((mcar :initarg :mcar
          :accessor mcar
          :documentation "")
@@ -98,11 +85,9 @@
 (make-pattern compose     mcar mcadr)
 (make-pattern fork        mcar)
 (make-pattern parallel    mcar mcadr)
-(make-pattern negation      mcar)
-(make-pattern conjunction mcar mcadr)
 (make-pattern swap        mcar mcadr)
-(make-pattern true        )
-(make-pattern false       )
-(make-pattern identity    mcar)
+(make-pattern one         )
+(make-pattern zero        )
+(make-pattern ident       mcar)
 (make-pattern drop        mcar)
 (make-pattern branch      mcar mcadr)

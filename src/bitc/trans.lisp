@@ -1,10 +1,10 @@
-(in-package :geb.bits.trans)
+(in-package :geb.bitc.trans)
 
 (defgeneric to-vampir (morphism values)
-  (:documentation "Turns a BITS term into a Vamp-IR term with a given value"))
+  (:documentation "Turns a BITC term into a Vamp-IR term with a given value"))
 
 (defun to-circuit (morphism name)
-  "Turns a BITS term into a Vamp-IR Gate with the given name"
+  "Turns a BITC term into a Vamp-IR Gate with the given name"
   (let ((wire (vamp:make-wire :var :x)))
     (vamp:make-alias :name name
                      :inputs (list wire)
@@ -14,7 +14,7 @@
 ;; Bits to Vampir Implementation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmethod to-vampir ((obj <bits>) values)
+(defmethod to-vampir ((obj <bitc>) values)
   (declare (ignore values))
   (subclass-responsibility obj))
 
@@ -22,7 +22,7 @@
 (defun direct-fields-to-list (obj)
   (mapcar #'cdr (geb.mixins:to-pointwise-list obj)))
 
-(defun infix-creation (symbol obj value1 value2)
+(defun infix-creation (symbol value1 value2)
   (vamp:make-infix :op symbol
                    :lhs value
                    :rhs value2))
@@ -40,10 +40,10 @@
   ; toElem[par[car_, cadr_]] :=
   ;   Function[{inp},
   ;     Module[{cx, inp1, inp2},
-  ;     cx = dom[car];
-  ;     inp1 = inp[[1 ;; cx]];
-  ;     inp2 = inp[[cx + 1 ;; All]];
-  ;     Flatten[{toElem[car][inp1], toElem[cadr][inp2]}, 1]
+  ;       cx = dom[car];
+  ;       inp1 = inp[[1 ;; cx]];
+  ;       inp2 = inp[[cx + 1 ;; All]];
+  ;       Flatten[{toElem[car][inp1], toElem[cadr][inp2]}, 1]
   ;   ]]
   (let* ((car (mcar obj))
          (cadr (mcadr obj))
@@ -52,30 +52,22 @@
          (inp2 (subseq values cx)))
     (concatenate 'list (to-vampir car inp1) (to-vampir cadr inp2))))
 
-(defmethod to-vampir ((obj negation) values)
-  ; toElem[neg] := {1 - #[[1]]} &
-  (list (infix-creation :- (make-constant :const 1) (car values))))
-
-(defmethod to-vampir ((obj conjunction) values)
-  ; toElem[conj] := {#[[1]] * #[[2]]} &
-  (list (infix-creation :* (car values) (car (cdr values)))))
-
 (defmethod to-vampir ((obj swap) values)
   ; toElem[swap[n_, m_]] := Flatten[{#[[n + 1 ;; All]], #[[1 ;; n]]}, 1] &
   (let ((n (mcar obj)))
        (append (subseq values (1 + n)) (subseq values 0 (1 + n)))))
 
-(defmethod to-vampir ((obj true) values)
+(defmethod to-vampir ((obj one) values)
   ; toElem[True] := {1} &
   (declare (ignore values))
   (list (vamp:make-constant :const 1)))
 
-(defmethod to-vampir ((obj false) values)
+(defmethod to-vampir ((obj zero) values)
   ; toElem[False] := {0} &
   (declare (ignore values))
   (list (vamp:make-constant :const 0)))
 
-(defmethod to-vampir ((obj identity) values)
+(defmethod to-vampir ((obj ident) values)
   ; toElem[id[_]] := # &
   values)
 

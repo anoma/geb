@@ -5,33 +5,34 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (muffle-package-variance
- (defpackage #:geb.bits.trans
+ (defpackage #:geb.bitc.trans
    (:local-nicknames (:vamp :geb.vampir.spec))
-   (:use #:geb.common #:geb.bits.spec)
-   (:shadowing-import-from #:geb.bits.spec :+ :* :/ :- :mod)))
+   (:use #:geb.common #:geb.bitc.spec)
+   (:shadowing-import-from #:geb.bitc.spec #:drop #:fork)
+   ))
 
-(in-package :geb.bits.trans)
+(in-package :geb.bitc.trans)
 
-(pax:defsection @bits-trans (:title "Bits (Boolean Circuit) Transformations")
+(pax:defsection @bitc-trans (:title "Bits (Boolean Circuit) Transformations")
   "This covers transformation functions from"
   (to-vampir  pax:generic-function)
   (to-circuit pax:function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; bits module
+;;; bitc module
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (geb.utils:muffle-package-variance
- (uiop:define-package #:geb.bits
+ (uiop:define-package #:geb.bitc
    (:use #:geb.common)
-   ;(:shadowing-import-from #:geb.bits.spec )
-   (:use-reexport #:geb.bits.trans #:geb.bits.spec)))
+   (:shadowing-import-from #:geb.bitc.spec #:drop #:fork)
+   (:use-reexport #:geb.bitc.trans #:geb.bitc.spec)))
 
-(in-package :geb.bits)
+(in-package :geb.bitc)
 
-(pax:defsection @bits-manual (:title "Bits (Boolean Circuit) Specification")
+(pax:defsection @bitc-manual (:title "Bits (Boolean Circuit) Specification")
   "This covers a GEB view of Boolean Circuits. In particular this type will
 be used in translating GEB's view of Boolean Circuits into Vampir"
-  (@bits              pax:section)
-  (@bits-constructors pax:section)
-  (@bits-trans        pax:section))
+  (@bitc              pax:section)
+  (@bitc-constructors pax:section)
+  (@bitc-trans        pax:section))
