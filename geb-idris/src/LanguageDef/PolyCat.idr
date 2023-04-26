@@ -6876,6 +6876,10 @@ public export
 SOTerm : SubstObjMu -> Type
 SOTerm = SubstMorph Subst1
 
+public export
+soConst : {x, y : SubstObjMu} -> SOTerm y -> SubstMorph x y
+soConst {x} {y} f = f <! SMToTerminal _
+
 --------------------------------------------------------------
 ---- Exponentiation (hom-objects) of substitutive objects ----
 --------------------------------------------------------------
@@ -7036,10 +7040,6 @@ MorphAsTerm {x} {y} f = soCurry {x=Subst1} {y=x} {z=y} $ soProdLeftIntro f
 ----------------------------------------------------------------------------
 ---- Homoiconicity: SubstMorph reflected into the substitutive category ----
 ----------------------------------------------------------------------------
-
-public export
-soConst : {x, y : SubstObjMu} -> SOTerm y -> SubstMorph x y
-soConst {x} {y} f = f <! SMToTerminal _
 
 public export
 soReflectedConst : (x, y : SubstObjMu) -> SubstMorph y (x !-> y)
