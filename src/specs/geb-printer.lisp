@@ -44,9 +44,10 @@
   "Prints out an alias instead of the body if it can detect an alias.
 
 Effectively this overrides any printing that would naturally occur"
-  (let ((alias (gensym)))
-    `(let ((,alias (geb.mixins:meta-lookup ,obj :alias)))
-       (if ,alias
+  (let ((alias    (gensym))
+        (in-there (gensym)))
+    `(multiple-value-bind (,alias ,in-there) (geb.mixins:meta-lookup ,obj :alias)
+       (if ,in-there
            (format ,stream "~W" ,alias)
            (progn ,@otherwise)))))
 
