@@ -1,4 +1,4 @@
-(in-package :geb.bits.main)
+(in-package :geb.bitc.main)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Domain and codomain definitions

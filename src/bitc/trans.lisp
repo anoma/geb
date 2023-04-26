@@ -5,10 +5,12 @@
 
 (defun to-circuit (morphism name)
   "Turns a BITC term into a Vamp-IR Gate with the given name"
-  (let ((wire (vamp:make-wire :var :x)))
+  (let* ((wire-count (dom morphism))
+         (wires (loop for i from 1 to wire-count
+                      collect (vamp:make-wire :var (intern (format nil "x~a" i))))))
     (vamp:make-alias :name name
-                     :inputs (list wire)
-                     :body (list (to-vampir morphism wire)))))
+                     :inputs wires
+                     :body (to-vampir morphism wires))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Bits to Vampir Implementation
@@ -24,7 +26,7 @@
 
 (defun infix-creation (symbol value1 value2)
   (vamp:make-infix :op symbol
-                   :lhs value
+                   :lhs value1
                    :rhs value2))
 
 
@@ -83,11 +85,11 @@
   ;     Times[x, #] & /@ toElem[g][{values}]
   ;   ]
   (let* ((x (car values))
-         (rest-values (cdr values))
+         (xs (cdr values))
          (f (mcar obj))
          (g (mcadr obj))
-         (f-elems (to-vampir f rest-values))
-         (g-elems (to-vampir g rest-values)))
+         (f-elems (to-vampir f xs))
+         (g-elems (to-vampir g xs)))
     (mapcar #'(lambda (f-elem g-elem)
                 (infix-creation :+
                   (infix-creation :* (infix-creation :- 1 x) f-elem)
