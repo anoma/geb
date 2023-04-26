@@ -7442,7 +7442,7 @@ public export
 SHigherIfElse : {x, y : SubstObjMu} ->
   SubstMorph x SubstBool -> SubstMorph x y -> SubstMorph x y -> SubstMorph x y
 SHigherIfElse {x} {y} b t f =
-  soEval x y <! SMPair (SMCase (MorphAsTerm t) (MorphAsTerm f) <! b) (SMId x)
+  soEval x y <! SMPair (SMCase (MorphAsTerm f) (MorphAsTerm t) <! b) (SMId x)
 
 public export
 SEqual : (x : SubstObjMu) -> SubstMorph (x !* x) SubstBool
