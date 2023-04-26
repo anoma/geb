@@ -107,3 +107,41 @@
 (define-test vampir-test-2
   :parent geb-trans
   (of-type geb.vampir.spec:alias test-circuit-2))
+
+
+(define-test geb-interpreter :parent geb)
+
+;; PLEASE FUZZ THIS!
+(define-test interpret-bool :parent geb-interpreter
+  (is
+   obj-equalp
+   (gapply geb-bool:and
+           (list (left so1)
+                 (left so1)))
+   (left so1))
+
+  (is
+   obj-equalp
+   (gapply geb-bool:and
+           (list (left so1)
+                 (right so1)))
+   (left so1))
+
+  (is
+   obj-equalp
+   (gapply geb-bool:and
+           (list (right so1)
+                 (right so1)))
+   (right so1))
+
+  (is
+   obj-equalp
+   (gapply geb-bool:not
+           (left so1))
+   (right so1))
+
+  (is
+   obj-equalp
+   (gapply geb-bool:not
+           (right so1))
+   (left so1)))
