@@ -69,6 +69,34 @@ if wanted
     copy))
 
 
+;; from
+;; https://stackoverflow.com/questions/11067899/is-there-a-generic-method-for-cloning-clos-objects
+
+;; Don't need it to be an object on non standard-classes for this
+;; project, if so, we can promote it to the old form of being a
+;; defgeneric.
+
+(defmethod copy-instance ((object standard-object) &rest initargs &key &allow-other-keys)
+  "Makes and returns a shallow copy of OBJECT.
+
+  An uninitialized object of the same class as OBJECT is allocated by
+  calling ALLOCATE-INSTANCE.  For all slots returned by
+  CLASS-SLOTS, the returned object has the
+  same slot values and slot-unbound status as OBJECT.
+
+  REINITIALIZE-INSTANCE is called to update the copy with INITARGS."
+  (let* ((class (class-of object))
+         (copy (allocate-instance class)))
+    (dolist (slot (c2mop:class-slots class))
+      ;; moved the mapcar into a let, as allocation wise, CCL
+      ;; preformed better this way.
+      (let ((slot-name (c2mop:slot-definition-name slot)))
+        (when (slot-boundp object slot-name)
+          (setf (slot-value copy slot-name)
+                (slot-value object slot-name)))))
+    (values
+     (apply #'reinitialize-instance copy initargs))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Numeric Utilities
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -106,7 +106,7 @@
 
 (define-test vampir-test-2
   :parent geb-trans
-  (of-type geb.vampir.spec:alias test-circuit-2))
+  (of-type list test-circuit-2))
 
 
 (define-test geb-interpreter :parent geb)

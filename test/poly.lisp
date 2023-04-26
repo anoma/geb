@@ -15,8 +15,8 @@
 
 (define-test vampir-converter
   :parent geb-poly
-  (of-type geb.vampir.spec:alias test-circuit-1)
-  (of-type geb.vampir.spec:alias test-circuit-2))
+  (of-type list test-circuit-1)
+  (of-type list test-circuit-2))
 
 (define-test poly-interpreter :parent geb-poly)
 

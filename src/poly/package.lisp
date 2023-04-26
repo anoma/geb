@@ -6,7 +6,8 @@
 
 (muffle-package-variance
  (defpackage #:geb.poly.trans
-   (:local-nicknames (:vamp :geb.vampir.spec))
+   (:local-nicknames (:vamp :geb.vampir.spec)
+                     (:ext  :geb.extensions))
    (:use #:geb.common #:geb.poly.spec)
    (:shadowing-import-from #:geb.poly.spec :+ :* :/ :- :mod)))
 

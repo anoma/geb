@@ -12,6 +12,7 @@ used throughout the GEB codebase"
   (muffle-package-variance pax:macro)
   (subclass-responsibility pax:function)
   (shallow-copy-object     pax:function)
+  (copy-instance           pax:generic-function)
   (make-pattern            pax:macro)
   (number-to-digits        pax:function)
   (digit-to-under          pax:function)

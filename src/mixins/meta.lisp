@@ -34,3 +34,15 @@ look past weak pointers if they exist"
     (when table
       (let ((value (gethash key table)))
         (if (tg:weak-pointer-p value) (tg:weak-pointer-value value) value)))))
+
+;; We need a custom copy for the meta-object
+
+(defmethod geb.utils:copy-instance ((object meta-mixin) &rest initargs
+                                    &key &allow-other-keys)
+  (declare (ignorable initargs))
+  (let ((new-object (call-next-method))
+        (table      (gethash object (meta object))))
+    (when table
+      (setf (gethash new-object (meta object)) ; should point to the same table
+            table))
+    new-object))

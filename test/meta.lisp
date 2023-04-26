@@ -9,6 +9,11 @@
     (meta-insert obj :a 2)
     (is = (meta-lookup obj :a) 2)))
 
+(define-test copying-meta-data-works :parent geb-meta
+  (let ((obj (make-instance 'mixin-test)))
+    (meta-insert obj :a 2)
+    (is = (meta-lookup (geb.utils:copy-instance obj) :a) 2)))
+
 #+nil
 (define-test weak-pointers-work :parent geb-meta
   (tg:gc :full t)
