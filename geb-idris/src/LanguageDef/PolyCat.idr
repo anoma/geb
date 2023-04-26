@@ -6403,6 +6403,10 @@ public export
 (!*) = InSO .* (!!*)
 
 public export
+SubstBool : SubstObjMu
+SubstBool = Subst1 !+ Subst1
+
+public export
 substObjCata : MetaSOAlg x -> SubstObjMu -> x
 substObjCata alg = substObjFold id where
   mutual
@@ -7399,10 +7403,6 @@ soTuple {n=(S (S n))} {x} {v=(y :: (y' :: ys))} (m :: (m' :: ms)) =
 ------------------
 ---- Booleans ----
 ------------------
-
-public export
-SubstBool : SubstObjMu
-SubstBool = Subst1 !+ Subst1
 
 public export
 SFalse : SOTerm SubstBool
