@@ -9,6 +9,12 @@
    (:shadow :+ :* :/ :- :mod)
    (:use #:geb.utils #:cl)))
 
+(muffle-package-variance
+ (defpackage #:geb.bitc.spec
+   (:export :dom :codom)
+   (:shadow :drop :fork)
+   (:use #:geb.utils #:cl #:geb.mixins)))
+
 ;; please document this later.
 (muffle-package-variance
  (uiop:define-package #:geb.lambda.spec
@@ -94,6 +100,39 @@ constructors"
   (compose pax:function)
   (if-zero pax:function)
   (if-lt   pax:function))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Geb Bits Package Documentation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(in-package :geb.bitc.spec)
+
+(pax:defsection @bitc (:title "Bits Types")
+  "This section covers the types of things one can find in the [BITS]
+constructors"
+  (bitc     pax:type)
+  (<bitc>   pax:type)
+  (compose  pax:type)
+  (fork     pax:type)
+  (parallel pax:type)
+  (swap     pax:type)
+  (one      pax:type)
+  (zero     pax:type)
+  (ident    pax:type)
+  (drop     pax:type)
+  (branch   pax:type))
+
+(pax:defsection @bitc-constructors (:title "Bits (Boolean Circuit) Constructors")
+  "Every accessor for each of the CLASS's found here are from @GEB-ACCESSORS"
+  (compose  pax:type)
+  (fork     pax:type)
+  (parallel pax:type)
+  (swap     pax:type)
+  (one      pax:type)
+  (zero     pax:type)
+  (ident    pax:type)
+  (drop     pax:type)
+  (branch   pax:type))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb lambda Package Documentation

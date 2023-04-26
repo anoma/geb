@@ -6,7 +6,7 @@
  (defpackage #:geb.main
    (:documentation "Gödel, Escher, Bach categorical model")
    (:use #:common-lisp #:geb.generics #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
-   (:local-nicknames (#:poly #:geb.poly.spec))
+   (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj :dom :codom)))
 
@@ -48,7 +48,7 @@
  (defpackage #:geb.trans
    (:documentation "Gödel, Escher, Bach categorical model")
    (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec #:geb.main)
-   (:local-nicknames (#:poly #:geb.poly.spec))
+   (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
 
@@ -58,7 +58,8 @@
   "These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
 into other categorical data structures."
   (to-poly    pax:generic-function)
-  (to-circuit pax:function))
+  (to-circuit pax:function)
+  (to-bitc    pax:generic-function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; bool module
