@@ -11,7 +11,9 @@
 
 (muffle-package-variance
  (defpackage #:geb.bitc.spec
-   (:use #:geb.utils #:cl)))
+   (:export :dom :codom)
+   (:shadow :drop :fork)
+   (:use #:geb.utils #:cl #:geb.mixins)))
 
 ;; please document this later.
 (muffle-package-variance

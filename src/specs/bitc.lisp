@@ -3,7 +3,7 @@
 (deftype bitc ()
   `(or compose fork parallel swap one zero ident drop branch))
 
-(defclass <bitc> (geb.mixins:direct-pointwise-mixin) ())
+(defclass <bitc> (geb.mixins:direct-pointwise-mixin cat-morph) ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constructor Morphisms for Bits (Objects are just natural numbers)
@@ -77,6 +77,32 @@
 (make-multi parallel)
 (make-multi compose)
 
+(defun fork (mcar)
+  "FORK ARG1"
+  (make-instance 'fork :mcar mcar))
+
+(defun swap (mcar mcadr)
+  "swap ARG1 and ARG2"
+  (make-instance 'swap :mcar mcar :mcadr mcadr))
+
+(defvar one
+  (make-instance 'one))
+
+(defvar zero
+  (make-instance 'zero))
+
+(defun ident (mcar)
+  "ident ARG1"
+  (make-instance 'ident :mcar mcar))
+
+(defun drop (mcar)
+  "drop ARG1"
+  (make-instance 'drop :mcar mcar))
+
+(defun branch (mcar mcadr)
+  "branch with ARG1 or ARG2"
+  (make-instance 'branch :mcar mcar :mcadr mcadr))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Matching
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -91,3 +117,35 @@
 (make-pattern ident       mcar)
 (make-pattern drop        mcar)
 (make-pattern branch      mcar mcadr)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Domain and codomain definitions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmethod dom ((x <bitc>))
+  (typecase-of bitc x
+    (compose          (dom (mcadr x)))
+    (fork             (dom (mcar x)))
+    (parallel         (+ (dom (mcar x)) (dom (mcadr x))))
+    (swap             (+ (mcar x) (mcadr x)))
+    (one              0)
+    (zero             0)
+    (ident            (mcar x))
+    (drop             (mcar x))
+    (branch           (+ 1 (dom (mcar x))))
+    (otherwise
+      (subclass-responsibility x))))
+
+(defmethod codom ((x <bitc>))
+  (typecase-of bitc x
+    (compose          (codom (mcar x)))
+    (fork             (* 2 (codom (mcar x))))
+    (parallel         (+ (codom (mcar x)) (codom (mcadr x))))
+    (swap             (+ (mcar x) (mcadr x)))
+    (one              1)
+    (zero             1)
+    (ident            (mcar x))
+    (drop             0)
+    (branch           (codom (mcar x)))
+    (otherwise
+      (subclass-responsibility x))))
