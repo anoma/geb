@@ -5,7 +5,7 @@
 (geb.utils:muffle-package-variance
  (defpackage #:geb.main
    (:documentation "Gödel, Escher, Bach categorical model")
-   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.extension.spec #:geb.utils #:geb.spec)
+   (:use #:common-lisp #:geb.generics #:geb.extension.spec #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
    (:local-nicknames (#:poly #:geb.poly.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj :dom :codom)))
@@ -37,7 +37,7 @@
    (:documentation "Provides the standard library for any GEB code")
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:import-from #:trivia #:match)
-   (:use-reexport #:geb.mixins #:geb.spec #:geb.main #:geb.utils #:geb.extension.spec
+   (:use-reexport #:geb.mixins #:geb.generics #:geb.extension.spec #:geb.spec #:geb.main #:geb.utils
                   #:serapeum #:common-lisp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -157,6 +157,7 @@ The functions given work on this."
   "Everything here relates directly to the underlying machinery of
    GEB, or to abstractions that help extend it."
   (@mixins-cat       pax:section)
+  (@generics         pax:section)
   (@geb-categories   pax:section)
   (@geb-accessors    pax:section)
   (@geb-constructors pax:section)
@@ -165,6 +166,7 @@ The functions given work on this."
 
 (pax:defsection @geb-api (:title "API")
   "Various forms and structures built on-top of @GEB-CATEGORIES"
+  (gapply                     (pax:method () (<substmorph> t)))
   (geb-bool::@geb-bool        pax:section)
   (geb-list::@geb-list        pax:section)
   (geb.trans:@geb-translation pax:section)

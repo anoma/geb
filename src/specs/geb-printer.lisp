@@ -89,6 +89,14 @@ Effectively this overrides any printing that would naturally occur"
   (with-alias-overide (obj stream)
     (format stream "s-0")))
 
+(defmethod print-object ((obj left) stream)
+  (pprint-logical-block (stream nil :prefix "(" :suffix ")")
+    (format stream "left~1:I ~W" (obj obj))))
+
+(defmethod print-object ((obj right) stream)
+  (pprint-logical-block (stream nil :prefix "(" :suffix ")")
+    (format stream "right~1:I ~W" (obj obj))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subst Morphism Printer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
