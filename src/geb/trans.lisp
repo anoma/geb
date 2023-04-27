@@ -120,14 +120,14 @@
     ;    par[toBits@mcar,id[Max[dom@mcar,dom@mcadr]-dom@mcar]],
     ;    par[toBits@mcadr,id[Max[dom@mcar,dom@mcadr]-dom@mcadr]]
     ;  ]
-    (case          (bitc:branch (bitc:parallel (to-bitc (mcar obj))  (bitc:ident (- (max (dom (to-bitc (mcar obj))) (dom (to-bitc (mcadr obj)))) (dom (to-bitc (mcar obj))))))
-                                (bitc:parallel (to-bitc (mcadr obj)) (bitc:ident (- (max (dom (to-bitc (mcar obj))) (dom (to-bitc (mcadr obj)))) (dom (to-bitc (mcadr obj))))))))
+    (case          (bitc:branch (bitc:parallel (to-bitc (mcar obj))  (bitc:ident (- (max (to-bitc (dom (mcar obj))) (to-bitc (dom (mcadr obj)))) (to-bitc (dom (mcar obj))))))
+                                (bitc:parallel (to-bitc (mcadr obj)) (bitc:ident (- (max (to-bitc (dom (mcar obj))) (to-bitc (dom (mcadr obj)))) (to-bitc (dom (mcadr obj))))))))
     ; toBits[projectRight[mcar_, mcadr_]] := par[drop[bitWidth@mcar], id[bitWidth@mcadr]]
     (project-left  (bitc:parallel (bitc:ident (to-bitc (mcar obj))) (bitc:drop (to-bitc (mcadr obj)))))
     ; toBits[projectLeft[mcar_, mcadr_]] := par[id[bitWidth@mcar], drop[bitWidth@mcadr]]
     (project-right (bitc:parallel (bitc:drop (to-bitc (mcar obj))) (bitc:ident (to-bitc (mcadr obj)))))
     ; toBits[pair[mcar_, mcdr_]] := comp[par[toBits[mcar], toBits[mcdr]], fork[dom[mcar]]]
-    (pair          (bitc:compose (bitc:parallel (to-bitc (mcar obj)) (to-bitc (mcdr obj))) (bitc:fork (dom (to-bitc (mcar obj))))))
+    (pair          (bitc:compose (bitc:parallel (to-bitc (mcar obj)) (to-bitc (mcdr obj))) (bitc:fork (to-bitc (dom (mcar obj))))))
     ;toBits[distribute[mcar_, mcadr_, mcaddr_]] :=
     ;  par[swap[bitWidth[mcar], 1], id[Max[bitWidth@mcadr, bitWidth@mcaddr]]]
     (distribute    (bitc:parallel (bitc:swap (to-bitc (mcar obj)) 1) (bitc:ident (max (to-bitc (mcadr obj)) (to-bitc (mcaddr obj))))))
