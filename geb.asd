@@ -142,6 +142,7 @@
    (:file lambda-conversion)
    (:file poly)
    (:file pipeline)
+   (:file list)
    (:module gui
     :serial t
     :components ((:file test)
