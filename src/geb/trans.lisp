@@ -87,43 +87,43 @@
 
 
 
-(defmethod to-bitc ((obj <substobj>))
+(defmethod bitwidth ((obj <substobj>))
   (typecase-of substobj obj
     (so0     0)
     (so1     0)
-    (coprod  (+ 1 (max (to-bitc (mcar obj)) (to-bitc (mcadr obj)))))
-    (prod    (+ (to-bitc (mcar obj)) (to-bitc (mcadr obj))))
+    (coprod  (+ 1 (max (bitwidth (mcar obj)) (bitwidth (mcadr obj)))))
+    (prod    (+ (bitwidth (mcar obj)) (bitwidth (mcadr obj))))
     (otherwise (subclass-responsibility obj))))
 
 (defmethod to-bitc ((obj <substmorph>))
   (typecase-of substmorph obj
-    (substobj     (error "impossible"))
+    (substobj      (bitc:ident (bitwidth obj)))
     ;toBits[comp[f__]] := toBits /@ comp[f]
     (comp          (bitc:compose (to-bitc (mcar obj))
                                  (to-bitc (mcadr obj))))
     ; toBits[init[x_]] := par @@ Table[False, bitWidth@x]
 
     ; This should never occure, but if it does, it produces a constant morphism onto an all 0s vector
-    (init          (apply #'bitc:parallel (make-list (to-bitc (mcar obj)) :initial-element bitc:zero)))
+    (init          (apply #'bitc:parallel (make-list (bitwidth (mcar obj)) :initial-element bitc:zero)))
     ; toBits[terminal[x_]] := drop[bitWidth@x]
 
     ; Terminal maps any bitvector onto the empty bitvector
-    (terminal      (bitc:drop (to-bitc (mcar obj))))
+    (terminal      (bitc:drop (bitwidth (mcar obj))))
     ;toBits[injectLeft[mcar_, mcadr_]] :=
     ; par @@ Join[{False, id[bitWidth@mcar]}, Table[False, Max[bitWidth@mcar, bitWidth@mcadr] - bitWidth@mcar]]
 
     ; Inject-left x -> x + y tags the x with a 0, indicating left, and pads the encoded x with as many zeros
     ;   as would be needed to store either an x or a y.
-    (inject-left   (apply #'bitc:parallel (append (list bitc:zero (bitc:ident (to-bitc (mcar obj))))
-                                                  (make-list (- (max (to-bitc (mcar obj)) (to-bitc (mcadr obj))) (to-bitc (mcar obj))) :initial-element bitc:zero)
+    (inject-left   (apply #'bitc:parallel (append (list bitc:zero (bitc:ident (bitwidth (mcar obj))))
+                                                  (make-list (- (max (bitwidth (mcar obj)) (bitwidth (mcadr obj))) (bitwidth (mcar obj))) :initial-element bitc:zero)
                                           )))
     ;toBits[injectRight[mcar_,mcadr_]]:=
     ;  par@@Join[{True,id[bitWidth@mcadr]},Table[False, Max[bitWidth@mcar, bitWidth@mcadr] - bitWidth@mcadr]]
 
     ; Inject-right y -> x + y tags the y with a 1, indicating right, and pads the encoded y with as many zeros
     ;   as would be needed to store either an x or a y.
-    (inject-right  (apply #'bitc:parallel (append (list bitc:one (bitc:ident (to-bitc (mcadr obj)))) 
-                                                  (make-list (- (max (to-bitc (mcar obj)) (to-bitc (mcadr obj))) (to-bitc (mcadr obj))) :initial-element bitc:zero)
+    (inject-right  (apply #'bitc:parallel (append (list bitc:one (bitc:ident (bitwidth (mcadr obj)))) 
+                                                  (make-list (- (max (bitwidth (mcar obj)) (bitwidth (mcadr obj))) (bitwidth (mcadr obj))) :initial-element bitc:zero)
                                           )))
     ;toBits[case[mcar_,mcadr_]]:=
     ;  branch[
@@ -133,25 +133,25 @@
 
     ; Case translates directly into a branch.
     ; The sub-morphisms of case are padded with drop so they have the same input lengths.
-    (case          (bitc:branch (bitc:parallel (to-bitc (mcar obj))  (bitc:drop (- (max (to-bitc (dom (mcar obj))) (to-bitc (dom (mcadr obj)))) (to-bitc (dom (mcar obj))))))
-                                (bitc:parallel (to-bitc (mcadr obj)) (bitc:drop (- (max (to-bitc (dom (mcar obj))) (to-bitc (dom (mcadr obj)))) (to-bitc (dom (mcadr obj))))))))
+    (case          (bitc:branch (bitc:parallel (to-bitc (mcar obj))  (bitc:drop (- (max (bitwidth (dom (mcar obj))) (bitwidth (dom (mcadr obj)))) (bitwidth (dom (mcar obj))))))
+                                (bitc:parallel (to-bitc (mcadr obj)) (bitc:drop (- (max (bitwidth (dom (mcar obj))) (bitwidth (dom (mcadr obj)))) (bitwidth (dom (mcadr obj))))))))
     ; toBits[projectRight[mcar_, mcadr_]] := par[drop[bitWidth@mcar], id[bitWidth@mcadr]]
 
     ; project-left just drops any bits not being used to encode the first component. 
-    (project-left  (bitc:parallel (bitc:ident (to-bitc (mcar obj))) (bitc:drop (to-bitc (mcadr obj)))))
+    (project-left  (bitc:parallel (bitc:ident (bitwidth (mcar obj))) (bitc:drop (bitwidth (mcadr obj)))))
     ; toBits[projectLeft[mcar_, mcadr_]] := par[id[bitWidth@mcar], drop[bitWidth@mcadr]]
 
     ; project-right just drops any bits not being used to encode the second component.
-    (project-right (bitc:parallel (bitc:drop (to-bitc (mcar obj))) (bitc:ident (to-bitc (mcadr obj)))))
+    (project-right (bitc:parallel (bitc:drop (bitwidth (mcar obj))) (bitc:ident (bitwidth (mcadr obj)))))
     ; toBits[pair[mcar_, mcdr_]] := comp[par[toBits[mcar], toBits[mcdr]], fork[dom[mcar]]]
 
     ; Pair will copy the input and run the encoded morphisms in pair on the two copied subvetors.
-    (pair          (bitc:compose (bitc:parallel (to-bitc (mcar obj)) (to-bitc (mcdr obj))) (bitc:fork (to-bitc (dom (mcar obj))))))
+    (pair          (bitc:compose (bitc:parallel (to-bitc (mcar obj)) (to-bitc (mcdr obj))) (bitc:fork (bitwidth (dom (mcar obj))))))
     ;toBits[distribute[mcar_, mcadr_, mcaddr_]] :=
     ;  par[swap[bitWidth[mcar], 1], id[Max[bitWidth@mcadr, bitWidth@mcaddr]]]
 
     ; a * (b + c) will be encoded as [a] [0 or 1] [b or c]. By swapping the [0 or 1] with [a], we get an encoding for
     ; (a * b) + (a * c).
-    (distribute    (bitc:parallel (bitc:swap (to-bitc (mcar obj)) 1) (bitc:ident (max (to-bitc (mcadr obj)) (to-bitc (mcaddr obj))))))
+    (distribute    (bitc:parallel (bitc:swap (bitwidth (mcar obj)) 1) (bitc:ident (max (bitwidth (mcadr obj)) (bitwidth (mcaddr obj))))))
     (otherwise (subclass-responsibility obj))))
 
