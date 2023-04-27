@@ -219,6 +219,24 @@ u
     (_ (error "object ~A need to be of a coproduct type, however it is of ~A"
               f (dom f)))))
 
+(defun coprod-mor (f g)
+  "Given f : A  → B and g : C  → D gives appropriate morphism between
+[COPROD][TYPE] objects f x g : A + B  → C + D via the unversal property.
+That is, the morphism part of the coproduct functor Geb x Geb → Geb"
+  (mcase (comp (->left (codom f) (codom g))
+               f)
+         (comp (->right (codom f) (codom g))
+               g)))
+
+(defun prod-mor (f g)
+   "Given f : A  → B and g : C  → D gives appropriate morphism between
+[PROD][TYPE] objects f x g : A x B  → C x D via the unversal property.
+This is the morphism part of the product functor Geb x Geb → Geb"
+  (pair (comp f
+              (<-left (dom f) (dom g)))
+        (comp g
+              (<-right (dom f) (dom g)))))
+
 (defgeneric text-name (morph)
   (:documentation
    "Gets the name of the moprhism"))
@@ -265,6 +283,17 @@ In category terms, `a → c^b` is isomorphic to `a → b → c`
       (error "object ~A need to be of a product type, however it is of ~A" f (dom f))
       (let ((dom (dom f)))
         (curry-prod f (mcar dom) (mcadr dom)))))
+
+(defun uncurry (y z f)
+  "Given a morphism f : x → z^y and explicitly given y and z variables
+produces an uncurried version f' : x × y → z of said morphism"
+  (comp (so-eval y z)
+        (pair (comp f (<-left (dom f) y)) (<-right (dom f) y))))
+
+(defun morph-type (f)
+  "Given a moprhism f : a → b gives a list (a, b) of the domain and
+codomain respectively"
+  (list (dom f) (codom f)))
 
 (defmethod gapply ((morph <substmorph>) object)
   "My main documentation can be found on [GAPPLY][generic-function]

@@ -26,6 +26,9 @@
   (so-card-alg       pax:generic-function)
   (so-card-alg       (pax:method () (<substobj>)))
   (curry             pax:function)
+  (coprod-mor        pax:function)
+  (prod-mor          pax:function)
+  (uncurry           pax:function)
   (text-name         pax:generic-function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
