@@ -69,7 +69,7 @@
     :description "bitc (Boolean Circuits)"
     :depends-on (util vampir mixins specs)
     :components ((:file package)
-                 (:file bits)))
+                 (:file bitc)))
    (:module lambda
     :serial t
     :depends-on (geb specs)
