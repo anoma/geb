@@ -356,3 +356,31 @@ GEB> (gapply geb-bool:and
                (cadr object)))))
     (substobj object)
     (otherwise (subclass-responsibility morph))))
+
+;; I believe this is the correct way to use gapply for cat-obj
+(defmethod gapply ((morph cat-obj) object)
+  "My main documentation can be found on [GAPPLY][generic-function]
+
+I am the [GAPPLY][generic-function] for a generic [CAT-OBJ][class]. I
+simply return the object given to me"
+  object)
+
+(defmethod gapply ((morph opaque-morph) object)
+  "My main documentation can be found on [GAPPLY][generic-function]
+
+I am the [GAPPLY][generic-function] for a generic [OPAQUE-MOPRH][class]
+I simply dispatch [GAPPLY][generic-function] on my interior code
+```lisp
+GEB> (gapply (comp geb-list:*car* geb-list:*cons*)
+             (list (right geb-bool:true-obj) (left geb-list:*nil*)))
+(right GEB-BOOL:TRUE)
+```"
+  (gapply (code morph) object))
+
+(defmethod gapply ((morph opaque) object)
+  "My main documentation can be found on [GAPPLY][generic-function]
+
+I am the [GAPPLY][generic-function] for a generic [OPAQUE][class] I
+simply dispatch [GAPPLY][generic-function] on my interior code, which
+is likely just an object"
+  (gapply (code morph) object))
