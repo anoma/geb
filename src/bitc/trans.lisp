@@ -105,6 +105,6 @@
          (g-elems (to-vampir g xs)))
     (mapcar #'(lambda (f-elem g-elem)
                 (infix-creation :+
-                  (infix-creation :* (infix-creation :- 1 x) f-elem)
+                  (infix-creation :* (infix-creation :- (vamp:make-constant :const 1) x) f-elem)
                   (infix-creation :* x g-elem)))
             f-elems g-elems)))
