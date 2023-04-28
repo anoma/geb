@@ -36,8 +36,8 @@ POLY> (gapply (- (* 2 ident ident) (* ident ident)) 5)
      (* (gapply (mcar morphism) object)
         (gapply (mcadr morphism) object)))
     (poly:/
-     (/ (gapply (mcar morphism) object)
-        (gapply (mcadr morphism) object)))
+     (floor (gapply (mcar morphism) object)
+            (gapply (mcadr morphism) object)))
     (poly:-
      (- (gapply (mcar morphism) object)
         (gapply (mcadr morphism) object)))
