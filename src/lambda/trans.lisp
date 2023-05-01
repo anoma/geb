@@ -85,17 +85,14 @@ produces an error. Error of such kind mind pop up both on the level of evaluatin
                   (comp (<-right (mcar tottt) (mcadr tottt))
                         (compile-checked-term context term))))
                ((lamb tdom term)
-                (curry (commutes-left
-                        (rec (cons tdom context) term))))
+                (rec (append tdom context) term))
                ((app fun term)
-                (let ((tofun (ttype fun)))
-                  (comp
-                   (so-eval (fun-to-hom (mcar tofun))
-                            (fun-to-hom (mcadr tofun)))
-                   (geb:pair (rec context
-                                  fun)
-                             (rec context
-                                  term)))))
+                (comp (rec context fun)
+                      (reduce #'geb:pair
+                              (mapcar (lambda (x) (rec context x))
+                                      term)
+                              :initial-value (stlc-ctx-to-mu context)
+                              :from-end t)))
                ((index pos)
                 (stlc-ctx-proj context pos)))))
     (let ((ann-term (ann-term1 context tterm)))

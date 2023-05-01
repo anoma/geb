@@ -8,8 +8,8 @@
 
 (defparameter *entry*
    (lambda:app
-    (lambda:lamb (coprod so1 so1) (lambda:index 0))
-    (lambda:left so1 (lambda:unit))))
+    (lambda:lamb (list (coprod so1 so1)) (lambda:index 0))
+    (list (lambda:left so1 (lambda:unit)))))
 
 (define-test pipeline-works-for-stlc-to-vampir
   :parent geb-pipeline

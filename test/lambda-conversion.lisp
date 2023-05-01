@@ -62,11 +62,11 @@
     (lambda:case-on
       (lambda:left so-unit-type stlc-unit-term)
       (lambda:lamb
-        so-unit-type
-        (lambda:right so-unit-type stlc-unit-term))
+       (list so-unit-type)
+       (lambda:right so-unit-type stlc-unit-term))
       (lambda:lamb
-        so-unit-type
-        (lambda:left so-unit-type stlc-unit-term))
+       (list so-unit-type)
+       (lambda:left so-unit-type stlc-unit-term))
       )
     :tc_issue_58))
 

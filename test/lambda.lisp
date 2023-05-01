@@ -38,10 +38,10 @@
   (prod so1 so1))
 
 (def lambterm
-  (lambda:lamb so1-prod unit-term))
+  (lambda:lamb (list so1-prod) unit-term))
 
 (def appterm
-  (lambda:app lambterm pair-of-units-term))
+  (lambda:app lambterm (list pair-of-units-term)))
 
 (def context-list
   (list so1 so0 so01-coprod (geb.lambda.main:fun-type so0 so1)))
@@ -186,7 +186,7 @@
   :parent geb.lambda
   (is obj-equalp
       so1
-      (lambda:type-of-term nil (lambda:app lambterm pair-of-units-term))
+      (lambda:type-of-term nil (lambda:app lambterm (list pair-of-units-term)))
       "type of function application term")
   (is obj-equalp
       (so-hom-obj so1-prod so1)
@@ -198,23 +198,23 @@
   (is obj-equalp
       so1-prod
       (lambda:type-of-term nil
-                           (lambda:term
-                            (lambda:annotated-term nil
-                                                   appterm)))))
+                           (car (lambda:term
+                                 (lambda:annotated-term nil
+                                                        appterm))))))
 
 (define-test index-tests
   :parent geb.lambda
   (is obj-equalp
-      (so-hom-obj so0 so1)
+      so1
       (lambda:type-of-term context-list (lambda:index 0)))
   (is obj-equalp
-      so01-coprod
+      so0
       (lambda:type-of-term context-list (lambda:index 1)))
   (is obj-equalp
-      so0
+      so01-coprod
       (lambda:type-of-term context-list (lambda:index 2)))
   (is obj-equalp
-      so1
+      (so-hom-obj so0 so1)
       (lambda:type-of-term context-list (lambda:index 3))))
 
 
@@ -225,7 +225,7 @@
       (lambda:type-of-term
        context-list
        (lambda:term (lambda:annotated-term context-list
-                                           (lambda:absurd so1 (lambda:index 2)))))))
+                                           (lambda:absurd so1 (lambda:index 1)))))))
 
 (define-test exp-hom-test
   :parent geb.lambda
@@ -233,15 +233,15 @@
       (so-hom-obj (coprod so0 (so-hom-obj so1 so1))
                   (prod so1 (so-hom-obj so0 so1)))
       (lambda:type-of-term
-       (list so0 so1)
+       nil
        (lambda:fun
         (lambda:app (lambda:lamb
-                     (coprod so0 (geb.lambda.main:fun-type so0 so1))
+                     (list (coprod so0 (geb.lambda.main:fun-type so0 so1)))
                      (lambda:pair
                       unit-term
-                      (lambda:lamb so1
-                                   (lambda:lamb so0
+                      (lambda:lamb (list so1)
+                                   (lambda:lamb (list so0)
                                                 (lambda:index 0)))))
-                    (lambda:right so0
-                                  (lambda:lamb so1 unit-term)))))))
+                    (list (lambda:right so0
+                                        (lambda:lamb (list so1) unit-term))))))))
 

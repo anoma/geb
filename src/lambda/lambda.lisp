@@ -55,8 +55,8 @@ length at least [i] and then produces the [i]'th entry of the context where
 contexts are read right to left."
   (let ((l (length ctx)))
     (if (< i l)
-        (nth (- l (+ i 1)) ctx)
-        (error "argument exceeds length of context"))))
+        (nth i ctx)
+        (error "Argument exceeds length of context"))))
 
 ;; Types all terms inside a given lambda term with respect to a context
 ;; with the caveat of producing a stand-in of the exponential object
@@ -77,13 +77,13 @@ per above description. While not always, not doing so result in an error upon
 evaluation. As an example of a valid entry we have
 
 ```lisp
- (ann-term1 (list so1 (fun-type so1 so1)) (app (index 0) (index 1)))
+ (ann-term1 (list so1 (fun-type so1 so1)) (app (index 1) (index 0)))
 ```
 
 while
 
 ```lisp
-(ann-term1 (list so1 (so-hom-obj so1 so1)) (app (index 0) (index 1)))
+(ann-term1 (list so1 (so-hom-obj so1 so1)) (app (index 1) (index 0)))
 ```
 
 produces an error trying to use [HOM-COD]. This warning applies to other
@@ -121,19 +121,19 @@ functions taking in context and terms below as well."))
                                (if (typep type-of-term 'prod)
                                    (snd ann-term :ttype (mcadr type-of-term))
                                    (error "type of term not of product type"))))
-        ((lamb tdom term)   (let ((ant (ann-term1 (cons tdom ctx) term)))
+        ((lamb tdom term)   (let ((ant (ann-term1 (append tdom ctx) term)))
                               (lamb tdom
                                     ant
-                                    :ttype (fun-type tdom (ttype ant)))))
+                                    :ttype (fun-type (reduce #'prod tdom) (ttype ant)))))
         ((app fun term)     (app (ann-term1 ctx fun)
-                                 (ann-term1 ctx term)
+                                 (mapcar (lambda (trm) (ann-term1 ctx trm)) term)
                                  :ttype (hom-cod ctx fun)))
         ((index pos)        (index pos
                                    :ttype (index-check pos ctx)))
         ((case-on on ltm rtm)
          (let* ((ann-on     (ann-term1 ctx on))
                 (type-of-on (ttype ann-on))
-                (ann-left   (ann-term1 (cons (mcar type-of-on) ctx) ltm))
+                (ann-left   (ann-term1 (cons  (mcar type-of-on) ctx) ltm))
                 (ann-right  (ann-term1 (cons (mcadr type-of-on) ctx) rtm)))
            (if (typep type-of-on 'coprod)
                (case-on ann-on ann-left ann-right :ttype (ttype ann-left))
@@ -141,7 +141,6 @@ functions taking in context and terms below as well."))
 
 ;; Changes the stand in Geb term with exponential stand-ins
 ;; to one containing actual hom-objects
-
 (defun fun-to-hom (t1)
   "Given a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] whose subobjects might have a
 [FUN-TYPE][class] occurence replaces all occurences of [FUN-TYPE][class] with a
@@ -184,11 +183,11 @@ occurences - re-annotates the term and its subterms with actual
                                 :ttype (fun-to-hom (ttype tterm))))
     ((snd term)            (snd (ann-term2 term)
                                 :ttype (fun-to-hom (ttype tterm))))
-    ((lamb tdom term)      (lamb (fun-to-hom tdom)
+    ((lamb tdom term)      (lamb (mapcar #'fun-to-hom tdom)
                                  (ann-term2 term)
                                  :ttype (fun-to-hom (ttype tterm))))
     ((app fun term)        (app (ann-term2 fun)
-                                (ann-term2 term)
+                                (mapcar #'ann-term2 term)
                                 :ttype (fun-to-hom (ttype tterm))))
     ((index pos)           (index pos
                                   :ttype (fun-to-hom (ttype tterm))))))
@@ -265,14 +264,11 @@ nil"))
                ((lamb tdom term)
                 (let ((lambda-type (ttype tterm)))
                   (and (check term)
-                       (obj-equalp (mcar lambda-type) tdom)
+                       (obj-equalp (mcar lambda-type) (reduce #'prod tdom))
                        (obj-equalp (mcadr lambda-type) (ttype term)))))
                ((app fun term)
-                (let ((function-type (ttype fun)))
-                  (and (check fun)
-                       (check term)
-                       (obj-equalp (ttype term) (mcar function-type))
-                       (obj-equalp (ttype tterm) (mcadr function-type)))))
+                (and (check fun)
+                     (check (reduce #'pair term))))
                (index t)
                (unit t))))
     (let ((term (ignore-errors

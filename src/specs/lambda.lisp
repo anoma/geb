@@ -320,8 +320,8 @@ on a term of a product type."))
           :documentation ""))
   (:documentation
    "A term of a function type gotten by providing a term in the codomain
-of the function type by assuming one is given a variable in the
-domain. The formal grammar of [LAMB][class] is:
+of the function type by assuming one is given variables in the
+specified list of types. The formal grammar of [LAMB][class] is:
 
 ```lisp
 (lamb tdom term)
@@ -333,16 +333,37 @@ where we can possibly include type information by
 (lamb tdom term :ttype ttype)
 ```
 
-THe intended semnatics are: [TDOM][generic-function] is the type (and
-hence a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]) which is the domain of the
-function type. [TERM][generic-function] is a term (and hence an
-[STLC][type]) of the codomain of the function type gotten in the
-context of the domain.
+The intended semnatics are: [TDOM][generic-function] is a list of types (and
+hence a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]) whose iterative product of
+components form the domain of the function type. [TERM][generic-function]
+is a term (and hence an [STLC][type]) of the codomain of the function type
+gotten in the context to whom we append the list of the domains.
 
-This corresponds to the introduction rule of the function type. Namely, given
+For a list of length 1, corresponds to the introduction rule of the function
+type. Namely, given
 $$\\Gamma \\vdash \\text{tdom : Type}$$ and
 $$\\Gamma, \\text{tdom} \\vdash \\text{term : (ttype term)}$$ we have
-$$\\Gamma \\vdash \\text{(lamb tdom term) : (so-hom-obj tdom (ttype term))}$$"))
+$$\\Gamma \\vdash \\text{(lamb tdom term) : (so-hom-obj tdom (ttype term))}$$
+
+For a list of length n, this coreesponds to the iterated lambda type, e.g.
+
+```lisp
+(lamb (list so1 so0) (index 0))
+```
+
+is a term of
+
+```lisp
+(so-hom-obj (prod so1 so0) so0) 
+```
+
+or equivalently
+
+```lisp
+(so-hom-obj so1 (so-hom-obj so0 so0))
+```
+
+due to Geb's computational definition of the function type."))
 
 (defun lamb (tdom term &key (ttype nil))
   (make-instance 'lamb :tdom tdom :term term :ttype ttype))
@@ -359,9 +380,9 @@ $$\\Gamma \\vdash \\text{(lamb tdom term) : (so-hom-obj tdom (ttype term))}$$"))
           :accessor ttype
           :documentation ""))
   (:documentation
-   "A term of an arbitrary type gotten by applying a function of a
-function type with a corresponding codomain to a term in the
-domain. The formal grammar of [APP][class] is
+   "A term of an arbitrary type gotten by applying a function of an iterated
+function type with a corresponding codomain iteratively to terms in the
+domains. The formal grammar of [APP][class] is
 
 ```lisp
 (app fun term)
@@ -373,16 +394,27 @@ where we can possibly include type information by
 (app fun term :ttype ttype)
 ```
 
-The intended semantics are as follows: [FUN][generic-function] is a
-term (and hence an [STLC][type]) of a coproduct type - say of
-(so-hom-obj (ttype term) y) - and [TERM][generic-function] is a
-term (hence also [STLC][type]) of the domain.
+The intended semantics are as follows:
+[FUN][generic-function] is a term (and hence an [STLC][type]) of a coproduct
+ type - say of (so-hom-obj (ttype term) y) - and [TERM][generic-function] is a
+list of terms (hence also of [STLC][type]) with nth term in the list having the
+n-th part of the function type.
 
-This corresponds to the elimination rule of the function type. Given
+For a one-argument term list, this corresponds to the elimination rule of the
+function type. Given
 $$\\Gamma \\vdash \\text{fun : (so-hom-obj (ttype term) y)}$$ and
 $$\\Gamma \\vdash \\text{term : (ttype term)}$$ we get
 $$\\Gamma \\vdash \\text{(app fun term) : y}$$
-"))
+
+For several arguments, this corresponds to successive function application.
+Using currying, this corresponds to, given
+$$\\Gamma \\vdash (so-hom-obj (A_1 , \\ldots , A_{n-1}))$$
+$$\\Gamma \\vdash A_n $$
+$$\\Gamma \\vdash f : (so-hom-obj (A_1 , \\ldots , A_{n-1}))$$
+and
+$$\Gamma  \\vdash t_i : A_i
+for each i less than n gets us
+$$\Gamma \\vdash app(f , t_1 , .... t_{n-1}) : A_n$$"))
 
 (defun app (fun term &key (ttype nil))
   (make-instance 'app :fun fun :term term :ttype ttype))
@@ -416,7 +448,9 @@ This corresponds to the variable rule. Namely given a context
 $$\\Gamma_1 , \\ldots , \\Gamma_{pos} , \\ldots , \\Gamma_k $$ we have
 
 $$\\Gamma_1 , \\ldots , \\Gamma_k \\vdash \\text{(index pos) :} \\Gamma_{pos}$$
-"))
+
+Note that we add contexts on the left rather than on the right as per classical
+type-theoretic notation."))
 
 (defun index (pos &key (ttype nil))
   (make-instance 'index :pos pos :ttype ttype))
