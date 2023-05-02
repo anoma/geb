@@ -31,6 +31,12 @@
                  (:file meta)
                  (:file mixins)
                  (:file cat)))
+   (:module generics
+    :serial t
+    :description "Mixin Utility Functions"
+    :depends-on (util)
+    :components ((:file package)
+                 (:file generics)))
    (:module vampir
     :serial t
     :description "The Vampir Extraction Module"
@@ -49,7 +55,8 @@
     :serial t
     :description "Polynomial"
     :depends-on (util geb vampir specs)
-    :components ((:file package)))
+    :components ((:file package)
+                 (:file poly)))
    (:module bitc
     :serial t
     :description "bitc (Boolean Circuits)"
