@@ -43,6 +43,13 @@
 
 (in-package :geb.bitc.main)
 
+(pax:defsection @bitc-api (:title "Bits (Boolean Circuit) API")
+  "This covers the Bits (Boolean Circuit) API"
+  (gapply (pax:method () (<bitc> bit-vector)))
+  (gapply (pax:method () (<bitc> list)))
+  (dom    (pax:method () (<bitc>)))
+  (codom  (pax:method () (<bitc>))))
+
 (in-package :geb.bitc)
 
 (pax:defsection @bitc-manual (:title "Bits (Boolean Circuit) Specification")
@@ -50,4 +57,5 @@
 be used in translating GEB's view of Boolean Circuits into Vampir"
   (@bitc              pax:section)
   (@bitc-constructors pax:section)
+  (@bitc-api          pax:section)
   (@bitc-trans        pax:section))

@@ -13,7 +13,7 @@
                           8)
               :foo))
 
-(define-test vampir-converter
+(define-test poly-vampir-converter
   :parent geb-poly
   (of-type geb.vampir.spec:alias test-circuit-1)
   (of-type geb.vampir.spec:alias test-circuit-2))

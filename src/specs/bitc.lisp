@@ -124,8 +124,8 @@ x : a → b,          y : a → b
 ```
 
 then the [BRANCH] will return a function on the type `1 + a`, where the
-1 represents a bit to branch on. If the first bit is `1`, then the
-[MCAR] is ran, however if the bit is `0`, then the [MCADR] is ran."))
+1 represents a bit to branch on. If the first bit is `0`, then the
+[MCAR] is ran, however if the bit is `1`, then the [MCADR] is ran."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constructors

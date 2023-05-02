@@ -70,9 +70,9 @@
 (defmethod to-vampir ((obj branch) values)
   "Look at the first bit.
 
-  If its 1, run f on the remaining bits.
+  If its 0, run f on the remaining bits.
 
-  If its 0, run g on the remaining bits."
+  If its 1, run g on the remaining bits."
   (let ((x (car values))
         (xs (cdr values))
         (f (mcar obj))
