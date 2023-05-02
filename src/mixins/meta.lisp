@@ -26,14 +26,15 @@ The :weak keyword specifies if the pointer stored in the value is weak"
     (setf (gethash key hash)
           (if weak (tg:make-weak-pointer value) value))))
 
-(-> meta-lookup (meta-mixin t) t)
+(-> meta-lookup (meta-mixin t) (values t boolean))
 (defun meta-lookup (object key)
   "Lookups the requested key in the metadata table of the object. We
 look past weak pointers if they exist"
   (let ((table (gethash object (meta object))))
     (when table
-      (let ((value (gethash key table)))
-        (if (tg:weak-pointer-p value) (tg:weak-pointer-value value) value)))))
+      (multiple-value-bind (value in-there) (gethash key table)
+        (values (if (tg:weak-pointer-p value) (tg:weak-pointer-value value) value)
+                in-there)))))
 
 ;; We need a custom copy for the meta-object
 

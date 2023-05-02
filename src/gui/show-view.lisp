@@ -16,9 +16,10 @@
 
 (defmacro with-presenting-alias ((obj pane) &body otherwise)
   "Presents an alias if it exists, otherwise"
-  (let ((alias (gensym)))
-    `(let ((,alias (geb.mixins:meta-lookup ,obj :alias)))
-       (if ,alias
+  (let ((alias    (gensym))
+        (in-there (gensym)))
+    `(multiple-value-bind (,alias ,in-there) (geb.mixins:meta-lookup ,obj :alias)
+       (if ,in-there
            (surrounding-output-with-border (,pane :shape :rectangle :background +alice-blue+)
              (formatting-table (,pane)
                (formatting-row (,pane)
@@ -270,3 +271,14 @@
                                      (view   show-view)
                                      &key)
   (format stream object))
+
+(define-presentation-method present ((object geb.common:reference)
+                                     (type   geb.common:reference)
+                                     (pane   extended-output-stream)
+                                     (view   show-view)
+                                     &key)
+  (surrounding-output-with-border (pane :shape :rectangle :background +alice-blue+)
+    (formatting-table (pane)
+      (formatting-row (pane)
+        (formatting-cell (pane)
+          (format pane "~W" (intern (symbol-name (geb.utils:name object)))))))))

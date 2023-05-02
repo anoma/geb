@@ -12,7 +12,7 @@
     (prod         (curry (curry (prod-left-assoc fun))))))
 
 (defmethod dom ((x <substmorph>))
-  (assure substobj
+  (assure cat-obj
     (typecase-of substmorph x
       (init         so0)
       (terminal     (obj x))
@@ -29,8 +29,14 @@
       (otherwise
        (subclass-responsibility x)))))
 
+(defmethod dom ((ref reference))
+  ref)
+
+(defmethod codom ((ref reference))
+  ref)
+
 (defmethod codom ((x <substmorph>))
-  (assure substobj
+  (assure cat-obj
     (typecase-of substmorph x
       (terminal      so1)
       (init          (obj x))
@@ -219,6 +225,24 @@ u
     (_ (error "object ~A need to be of a coproduct type, however it is of ~A"
               f (dom f)))))
 
+(defun coprod-mor (f g)
+  "Given f : A  → B and g : C  → D gives appropriate morphism between
+[COPROD][TYPE] objects f x g : A + B  → C + D via the unversal property.
+That is, the morphism part of the coproduct functor Geb x Geb → Geb"
+  (mcase (comp (->left (codom f) (codom g))
+               f)
+         (comp (->right (codom f) (codom g))
+               g)))
+
+(defun prod-mor (f g)
+   "Given f : A  → B and g : C  → D gives appropriate morphism between
+[PROD][TYPE] objects f x g : A x B  → C x D via the unversal property.
+This is the morphism part of the product functor Geb x Geb → Geb"
+  (pair (comp f
+              (<-left (dom f) (dom g)))
+        (comp g
+              (<-right (dom f) (dom g)))))
+
 (defgeneric text-name (morph)
   (:documentation
    "Gets the name of the moprhism"))
@@ -237,8 +261,13 @@ u
     (substobj       "Id")
     (otherwise (subclass-responsibility morph))))
 
+(defmethod text-name ((morph opaque-morph))
+  "")
+(defmethod text-name ((morph cat-obj))
+  "Id")
+
 (defun curry (f)
-"Curries the given object, returns a [cat-morph]
+  "Curries the given object, returns a [cat-morph]
 
 The [cat-morph] given must have its DOM be of a PROD type, as [CURRY][generic-function]
 invokes the idea of
@@ -265,6 +294,17 @@ In category terms, `a → c^b` is isomorphic to `a → b → c`
       (error "object ~A need to be of a product type, however it is of ~A" f (dom f))
       (let ((dom (dom f)))
         (curry-prod f (mcar dom) (mcadr dom)))))
+
+(defun uncurry (y z f)
+  "Given a morphism f : x → z^y and explicitly given y and z variables
+produces an uncurried version f' : x × y → z of said morphism"
+  (comp (so-eval y z)
+        (pair (comp f (<-left (dom f) y)) (<-right (dom f) y))))
+
+(defun morph-type (f)
+  "Given a moprhism f : a → b gives a list (a, b) of the domain and
+codomain respectively"
+  (list (dom f) (codom f)))
 
 (defmethod gapply ((morph <substmorph>) object)
   "My main documentation can be found on [GAPPLY][generic-function]
@@ -345,3 +385,31 @@ GEB> (gapply geb-bool:and
                (cadr object)))))
     (substobj object)
     (otherwise (subclass-responsibility morph))))
+
+;; I believe this is the correct way to use gapply for cat-obj
+(defmethod gapply ((morph cat-obj) object)
+  "My main documentation can be found on [GAPPLY][generic-function]
+
+I am the [GAPPLY][generic-function] for a generic [CAT-OBJ][class]. I
+simply return the object given to me"
+  object)
+
+(defmethod gapply ((morph opaque-morph) object)
+  "My main documentation can be found on [GAPPLY][generic-function]
+
+I am the [GAPPLY][generic-function] for a generic [OPAQUE-MOPRH][class]
+I simply dispatch [GAPPLY][generic-function] on my interior code
+```lisp
+GEB> (gapply (comp geb-list:*car* geb-list:*cons*)
+             (list (right geb-bool:true-obj) (left geb-list:*nil*)))
+(right GEB-BOOL:TRUE)
+```"
+  (gapply (code morph) object))
+
+(defmethod gapply ((morph opaque) object)
+  "My main documentation can be found on [GAPPLY][generic-function]
+
+I am the [GAPPLY][generic-function] for a generic [OPAQUE][class] I
+simply dispatch [GAPPLY][generic-function] on my interior code, which
+is likely just an object"
+  (gapply (code morph) object))

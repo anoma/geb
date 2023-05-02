@@ -5,7 +5,7 @@
 (geb.utils:muffle-package-variance
  (defpackage #:geb.main
    (:documentation "Gödel, Escher, Bach categorical model")
-   (:use #:common-lisp #:geb.generics #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
+   (:use #:common-lisp #:geb.generics #:geb.extension.spec #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
    (:local-nicknames (#:poly #:geb.poly.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj :dom :codom)))
@@ -26,6 +26,9 @@
   (so-card-alg       pax:generic-function)
   (so-card-alg       (pax:method () (<substobj>)))
   (curry             pax:function)
+  (coprod-mor        pax:function)
+  (prod-mor          pax:function)
+  (uncurry           pax:function)
   (text-name         pax:generic-function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -37,7 +40,7 @@
    (:documentation "Provides the standard library for any GEB code")
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:import-from #:trivia #:match)
-   (:use-reexport #:geb.mixins #:geb.generics #:geb.spec #:geb.main #:geb.utils
+   (:use-reexport #:geb.mixins #:geb.generics #:geb.extension.spec #:geb.spec #:geb.main #:geb.utils
                   #:serapeum #:common-lisp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -103,6 +106,49 @@ The functions given work on this."
 
 
 (geb.utils:muffle-package-variance
+ (uiop:define-package #:geb-list
+   (:documentation "Defines out booleans for the geb language")
+   (:use #:geb.common)))
+
+(in-package #:geb-list)
+
+(pax:defsection @geb-list (:title "Lists")
+  "Here we define out the idea of a List. It comes naturally from the
+concept of coproducts. Since we lack polymorphism this list is
+concrete over [GEB-BOOL:@GEB-BOOL][section] In ML syntax it looks like
+
+```haskell
+data List = Nil | Cons Bool List
+```
+
+We likewise define it with coproducts, with the recursive type being opaque
+
+```lisp
+(defparameter *nil* (so1))
+
+(defparameter *cons-type* (reference 'cons))
+
+(defparameter *canonical-cons-type*
+  (opaque 'cons
+          (prod geb-bool:bool *cons-type*)))
+
+(defparameter *list*
+  (coprod *nil* *cons-type*))
+```
+
+The functions given work on this."
+  (*nil*       pax:variable)
+  (*cons-type* pax:variable)
+  (*list*      pax:variable)
+  (*car*       pax:variable)
+  (*cons*      pax:variable)
+  (*cdr*       pax:variable)
+  (cons->list  pax:symbol-macro)
+  (nil->list   pax:symbol-macro)
+  (*canonical-cons-type* pax:variable))
+
+
+(geb.utils:muffle-package-variance
  (uiop:define-package #:geb
    (:documentation "Gödel, Escher, Bach categorical model")
    (:use #:geb.common)
@@ -124,7 +170,10 @@ The functions given work on this."
 (pax:defsection @geb-api (:title "API")
   "Various forms and structures built on-top of @GEB-CATEGORIES"
   (gapply                     (pax:method () (<substmorph> t)))
+  (gapply                     (pax:method () (opaque-morph t)))
+  (gapply                     (pax:method () (opaque t)))
   (geb-bool::@geb-bool        pax:section)
+  (geb-list::@geb-list        pax:section)
   (geb.trans:@geb-translation pax:section)
   (@geb-utility               pax:section))
 

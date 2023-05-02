@@ -47,7 +47,8 @@
     :depends-on (util specs)
     :components ((:file package)
                  (:file geb)
-                 (:file bool)))
+                 (:file bool)
+                 (:file list)))
    (:module extensions
     :serial t
     :depends-on (specs util)
@@ -142,6 +143,7 @@
    (:file lambda-conversion)
    (:file poly)
    (:file pipeline)
+   (:file list)
    (:module gui
     :serial t
     :components ((:file test)

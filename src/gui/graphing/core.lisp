@@ -115,26 +115,13 @@ to be merged"))
                     (make-instance 'node :representation morph :value morph)
                     notes))
              (name (meta-lookup morph :alias)))
-         (with-slots (value) node
-           (setf value (make-alias :name name :obj value))
-           node)))
+         (name-node node name)))
       ((has-aliasp morph)
-       (let ((node-codom (make-note :from morph
-                                    :note (symbol-name (meta-lookup morph :alias))
-                                    :value (graphize (codom morph) notes)))
-             ;; TODO :: Replace me with the full (obj morph) instead.
-             (node (make-squash :value (graphize (dom morph) nil))))
-         (apply-note node node-codom)
-         (value node)))
+       (alias-moprh morph notes))
       (t
        (typecase-of substmorph morph
          ((or terminal init distribute inject-left inject-right project-left project-right)
-          ;; Since there is no note in this case, this
-          ;; representation will serve as the note as to
-          ;; how we should annotate the arrow.
-          (make-instance 'node :representation morph
-                               :value (dom morph)
-                               :children (list (graphize (codom morph) notes))))
+          (dom-codom-graph morph notes))
          (substobj
           (continue-graphizing (make-instance 'node :representation morph :value morph)
                                notes))
@@ -185,6 +172,38 @@ to be merged"))
          (otherwise
           (geb.utils:subclass-responsibility morph)))))))
 
+(defmethod graphize ((ref geb.common:reference) notes)
+  (name-node (continue-graphizing
+              (make-instance 'node :representation ref :value ref)
+              notes)
+             (name ref)))
+
+(defmethod graphize ((opaque geb.common:opaque-morph) notes)
+  (if (has-aliasp opaque)
+      (alias-moprh opaque notes)
+      (dom-codom-graph opaque notes)))
+
+(defmethod graphize ((opaque geb.common:opaque) notes)
+  (continue-graphizing (make-instance 'node :representation opaque :value opaque)
+                       notes))
+
+(defun alias-moprh (morph notes)
+  (let ((node-codom (make-note :from morph
+                               :note (symbol-name (meta-lookup morph :alias))
+                               :value (graphize (codom morph) notes)))
+        ;; TODO :: Replace me with the full (obj morph) instead.
+        (node (make-squash :value (graphize (dom morph) nil))))
+    (apply-note node node-codom)
+    (value node)))
+
+(defun dom-codom-graph (morph notes)
+  "We simply take the dom and codom and graph it"
+  ;; Since there is no note in this case, this
+  ;; representation will serve as the note as to
+  ;; how we should annotate the arrow.
+  (make-instance 'node :representation morph
+                       :value (dom morph)
+                       :children (list (graphize (codom morph) notes))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; cutting a node
@@ -335,3 +354,12 @@ as that is the proper NODE to continue from"
   (or (meta-lookup from to)
       (list (geb:text-name (representation from))
             (representation from))))
+
+(defun name-node (node name)
+  (with-slots (value) node
+    (if (eql nil name)
+        ;; hack
+        (setf value (make-alias :name (intern (symbol-name name) 'keyword)
+                                :obj (shallow-copy-object value)))
+        (setf value (make-alias :name name :obj (shallow-copy-object value))))
+    node))

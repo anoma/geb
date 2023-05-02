@@ -61,7 +61,11 @@
         ((graph-p frame)
          (display-graph frame pane))
         (t
-         (present-object (root frame) pane))))
+         (handler-case (present-object (root frame) pane)
+           (error (c)
+             (declare (ignore c))
+             (format pane "issue displaying, please call swap to get it back into a graph~%")
+             (display-graph frame pane))))))
 
 (defun display-graph (frame pane)
   (apply (if (dot-p frame)
