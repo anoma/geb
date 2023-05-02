@@ -35,7 +35,13 @@
     (project-left  (let ((nat (obj-to-nat (mcar obj))))
                      (if (zerop nat)
                          nat
-                         (poly:/ poly:ident nat))))
+                         ;; we want to bitshift it by the size
+                         (poly:/
+                          (poly:- poly:ident
+                                  ;; we need to remove the right value
+                                  ;; we are doing project-right
+                                  (to-poly (<-right (mcar obj) (mcadr obj))))
+                          nat))))
     (distribute    (let ((cx (obj-to-nat (mcar obj)))
                          (cy (obj-to-nat (mcadr obj)))
                          (cz (obj-to-nat (mcaddr obj))))
