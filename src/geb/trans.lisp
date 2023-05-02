@@ -73,7 +73,7 @@
 (defmethod to-circuit ((obj <substmorph>) name)
   "Turns a @GEB-SUBSTMORPH to a Vamp-IR Term"
   (assure geb.vampir.spec:statement
-    (to-circuit (to-poly obj) name)))
+    (to-circuit (to-bitc obj) name)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Morph to Bitc Implementation
@@ -97,7 +97,11 @@
     ;; This should never occure, but if it does, it produces a
     ;; constant morphism onto an all 0s list
     (init
-     (apply #'bitc:parallel (zero-list (bitwidth (mcar obj)))))
+     (let* ((list (zero-list (bitwidth (mcar obj))))
+            (len  (length list)))
+       (cond ((= 0 len) (bitc:drop 0))
+             ((= 1 len) bitc:zero)
+             (t         (apply #'bitc:parallel list)))))
     ;; Terminal maps any bit-list onto the empty bit-list
     (terminal
      (bitc:drop (bitwidth (mcar obj))))

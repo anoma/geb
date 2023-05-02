@@ -11,17 +11,21 @@
 (defgeneric compile-checked-term (context type term)
   (:documentation "Compiles a checked term into SubstMorph category"))
 
-(-> to-poly (list t <stlc>) (or geb.poly:<poly> geb.poly:poly))
+(-> to-poly (list t <stlc>) t)
+(defun to-bitc (context type obj)
+  (~>> obj
+       (compile-checked-term context type)
+       geb.common:to-bitc))
+
 (defun to-poly (context type obj)
-  (assure (or geb.poly:<poly> geb.poly:poly)
-    (~>> obj
-         (compile-checked-term context type)
-         geb.common:to-poly)))
+  (~>> obj
+       (compile-checked-term context type)
+       geb.common:to-poly))
 
 (-> to-circuit (list t <stlc> keyword) geb.vampir.spec:statement)
 (defun to-circuit (context type obj name)
   (assure geb.vampir.spec:statement
-    (~> (to-poly context type obj)
+    (~> (to-bitc context type obj)
         (geb.common:to-circuit name))))
 
 (defmethod empty ((class (eql (find-class 'list)))) nil)
