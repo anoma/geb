@@ -16,13 +16,13 @@
   (assure (or geb.poly:<poly> geb.poly:poly)
     (~>> obj
          (compile-checked-term context type)
-         geb:to-poly)))
+         geb.common:to-poly)))
 
 (-> to-circuit (list t <stlc> keyword) geb.vampir.spec:statement)
 (defun to-circuit (context type obj name)
   (assure geb.vampir.spec:statement
     (~> (to-poly context type obj)
-        (geb.poly:to-circuit name))))
+        (geb.common:to-circuit name))))
 
 (defmethod empty ((class (eql (find-class 'list)))) nil)
 

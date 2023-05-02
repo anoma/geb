@@ -3,7 +3,7 @@
 (define-test geb-bitc :parent geb-test-suite)
 
 (def test-circuit-1
-  (bitc:to-circuit
+  (to-circuit
    (bitc:compose (bitc:branch
                   (bitc:parallel (bitc:compose (bitc:parallel bitc:zero
                                                               (bitc:ident 0))

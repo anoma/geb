@@ -14,8 +14,7 @@
 
 (pax:defsection @bitc-trans (:title "Bits (Boolean Circuit) Transformations")
   "This covers transformation functions from"
-  (to-circuit pax:function)
-  (to-vampir  pax:generic-function)
+  (to-circuit (pax:method () (<bitc> t)))
   (to-vampir  (pax:method () (compose t)))
   (to-vampir  (pax:method () (fork t)))
   (to-vampir  (pax:method () (parallel t)))

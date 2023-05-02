@@ -59,7 +59,7 @@
                                                 (lambda:typed-stlc-type eval)
                                                 (lambda:typed-stlc-value eval))))
           (vampir
-           (geb.vampir:extract (list (geb:to-circuit eval vampir-name))))
+           (geb.vampir:extract (list (to-circuit eval vampir-name))))
           (t
            (format stream eval)))))
 

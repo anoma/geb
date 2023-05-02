@@ -1,9 +1,6 @@
 (in-package :geb.bitc.trans)
 
-(defgeneric to-vampir (morphism values)
-  (:documentation "Turns a BITC term into a Vamp-IR term with a given value"))
-
-(defun to-circuit (morphism name)
+(defmethod to-circuit ((morphism <bitc>) name)
   "Turns a BITC term into a Vamp-IR Gate with the given name"
   (let* ((wire-count (dom morphism))
          (wires (loop for i from 1 to wire-count

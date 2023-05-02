@@ -1,10 +1,15 @@
 (in-package :geb.poly.trans)
 
-(defgeneric to-vampir (morphism value)
-  (:documentation "Turns a POLY term into a Vamp-IR term with a given value"))
-
-(defun to-circuit (morphism name)
+(defmethod to-circuit ((morphism <poly>) name)
   "Turns a POLY term into a Vamp-IR Gate with the given name"
+  (circuit-gen morphism name))
+
+(defmethod to-circuit ((morphism integer) name)
+  "Turns a POLY term into a Vamp-IR Gate with the given name, by just
+returning the value"
+  (circuit-gen morphism name))
+
+(defun circuit-gen (morphism name)
   (let ((wire (vamp:make-wire :var :x)))
     (vamp:make-alias :name name
                      :inputs (list wire)

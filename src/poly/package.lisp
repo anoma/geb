@@ -14,8 +14,17 @@
 
 (pax:defsection @poly-trans (:title "Polynomial Transformations")
   "This covers transformation functions from"
-  (to-vampir  pax:generic-function)
-  (to-circuit pax:function))
+  (to-circuit (pax:method () (<poly> t)))
+  (to-vampir  (pax:method () (integer t)))
+  (to-vampir  (pax:method () (ident t)))
+  (to-vampir  (pax:method () (+ t)))
+  (to-vampir  (pax:method () (* t)))
+  (to-vampir  (pax:method () (- t)))
+  (to-vampir  (pax:method () (/ t)))
+  (to-vampir  (pax:method () (compose t)))
+  (to-vampir  (pax:method () (if-zero t)))
+  (to-vampir  (pax:method () (if-lt t)))
+  (to-vampir  (pax:method () (mod t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; poly module

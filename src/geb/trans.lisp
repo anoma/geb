@@ -2,12 +2,6 @@
 
 (in-package :geb.trans)
 
-(defgeneric to-poly (morphism)
-  (:documentation "Turns a @GEB-SUBSTMORPH into a POLY:POLY"))
-
-(defgeneric to-bitc (morphism)
-  (:documentation "Turns a @GEB-SUBSTMORPH into a bitc:BITC"))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Morph to Poly Implementation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -76,12 +70,10 @@
 (defun obj-to-nat (obj)
   (so-card-alg obj))
 
-(-> to-circuit (<substmorph> keyword) geb.vampir.spec:statement)
-(defun to-circuit (obj name)
+(defmethod to-circuit ((obj <substmorph>) name)
   "Turns a @GEB-SUBSTMORPH to a Vamp-IR Term"
   (assure geb.vampir.spec:statement
-    (geb.poly:to-circuit (to-poly obj) name)))
-
+    (to-circuit (to-poly obj) name)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Morph to Bitc Implementation

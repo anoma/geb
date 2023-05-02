@@ -6,7 +6,7 @@
    (:local-nicknames  (#:poly #:geb.poly)
                       (#:bitc #:geb.bitc)
                       (:lambda     :geb.lambda))
-   (:use #:serapeum #:common-lisp)))
+   (:use #:geb.common)))
 
 
 (in-package :geb.entry)
