@@ -50,19 +50,22 @@
     :depends-on (util specs)
     :components ((:file package)
                  (:file geb)
-                 (:file bool)))
+                 (:file bool)
+                 (:file trans)))
    (:module poly
     :serial t
     :description "Polynomial"
     :depends-on (util geb vampir specs)
     :components ((:file package)
-                 (:file poly)))
+                 (:file poly)
+                 (:file trans)))
    (:module bitc
     :serial t
     :description "bitc (Boolean Circuits)"
     :depends-on (util vampir mixins specs)
     :components ((:file package)
-                 (:file bitc)))
+                 (:file bitc)
+                 (:file trans)))
    (:module lambda
     :serial t
     :depends-on (geb specs)
@@ -74,7 +77,8 @@
                   :components
                   ((:file package)
                    (:file lambda)))
-                 (:file lambda)))
+                 (:file lambda)
+                 (:file trans)))
    (:module specs
     :serial t
     :depends-on (util mixins)
@@ -94,14 +98,6 @@
    ;; !IMPORTANT!
    ;; All trans files go here, as they rely on other trans files
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   (:module trans
-    :description "All the trans modules so they can all know about the
-    other transformation functions before we compile them!"
-    :pathname "../src/"
-    :components ((:file lambda/trans)
-                 (:file geb/trans)
-                 (:file poly/trans)
-                 (:file bitc/trans)))
    (:module entry
     :serial t
     :description "Entry point for the geb codebase"

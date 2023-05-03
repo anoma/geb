@@ -45,14 +45,9 @@
          (eval        (eval name))
          (vampir-name (renaming-scheme (intern (symbol-name name) 'keyword))))
     (cond ((and vampir stlc)
-           (geb.vampir:extract
-            (list
-             (lambda:to-circuit nil eval vampir-name))
-            stream))
+           (geb.vampir:extract (list (to-circuit eval vampir-name)) stream))
           (stlc
-           (format stream
-                   "~A"
-                   (lambda:compile-checked-term nil eval)))
+           (format stream "~A" (to-cat nil eval)))
           (vampir
            (geb.vampir:extract (list (to-circuit eval vampir-name))))
           (t

@@ -16,4 +16,5 @@ examples often given in the specific methods"
   (to-circuit pax:generic-function)
   (to-bitc    pax:generic-function)
   (to-poly    pax:generic-function)
+  (to-cat     pax:generic-function)
   (to-vampir  pax:generic-function))

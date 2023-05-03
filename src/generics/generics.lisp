@@ -49,3 +49,7 @@ level interface into what the polynomial categories actually
 implement, and thus can be extended or changed.
 
 The VALUES are likely vampir values in a list."))
+
+(defgeneric to-cat (context term)
+  (:documentation
+   "Turns a MORPHISM with a context into Geb's Core category"))

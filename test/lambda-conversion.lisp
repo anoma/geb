@@ -18,14 +18,12 @@
   (geb:terminal so-unit-type))
 
 (def unit-to-bool-left-circuit
-  (lambda:to-circuit
-   nil
+  (to-circuit
    (lambda:left so-unit-type (lambda:unit))
    :tc_unit_to_bool_left))
 
 (def unit-to-bool-right-circuit
-  (lambda:to-circuit
-   nil
+  (to-circuit
    (lambda:right so-unit-type stlc-unit-term)
    :tc_unit_to_bool_right))
 
@@ -35,30 +33,28 @@
    (lambda:left so-unit-type stlc-unit-term)))
 
 (def pair-bool-circuit
-  (lambda:to-circuit
-   nil
+  (to-circuit
    (lambda:pair
     (lambda:right so-unit-type stlc-unit-term)
     (lambda:left so-unit-type stlc-unit-term))
    :tc_pair_bool))
 
 (def fst-bool-circuit
-  (lambda:to-circuit
-   nil
+  (to-circuit
    (lambda:fst pair-bool-stlc)
    :tc_fst_bool))
 
 (def unit-to-unit-circuit
-  (lambda:to-circuit nil stlc-unit-term :tc_unit_to_unit))
+  (to-circuit stlc-unit-term :tc_unit_to_unit))
 
 (def void-to-unit-circuit
-  (lambda:to-circuit
-   (list so-void-type)
-   (lambda:absurd so-unit-type (lambda:index 0)) :tc_void_to_unit))
+  (to-circuit
+   (to-cat (list so-void-type)
+                                (lambda:absurd so-unit-type (lambda:index 0)))
+   :tc_void_to_unit))
 
 (def issue-58-circuit
-  (lambda:to-circuit
-    nil
+  (to-circuit
     (lambda:case-on
       (lambda:left so-unit-type stlc-unit-term)
       (lambda:lamb
@@ -72,7 +68,7 @@
 
 (define-test compile-checked-term :parent geb.lambda.trans
   (is obj-equalp
-      (lambda:compile-checked-term nil stlc-unit-term)
+      (to-cat nil stlc-unit-term)
       so-unit-term
       "compile unit"))
 
