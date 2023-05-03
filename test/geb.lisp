@@ -100,9 +100,11 @@
 
 (def test-morph-2 (<-left so1 geb-bool:bool))
 
-(def test-poly-2 (geb:to-poly test-morph-2))
+(def test-poly-2 (to-poly test-morph-2))
 
-(def test-circuit-2 (geb:to-circuit test-morph-2 :tc_2))
+(def test-bitc-2 (to-bitc test-morph-2))
+
+(def test-circuit-2 (to-circuit test-morph-2 :tc_2))
 
 (define-test vampir-test-2
   :parent geb-trans

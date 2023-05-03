@@ -12,4 +12,8 @@ You can view their documentation in their respective API sections.
 
 The main documentation for the functionality is given here, with
 examples often given in the specific methods"
-  (gapply pax:generic-function))
+  (gapply     pax:generic-function)
+  (to-circuit pax:generic-function)
+  (to-bitc    pax:generic-function)
+  (to-poly    pax:generic-function)
+  (to-vampir  pax:generic-function))

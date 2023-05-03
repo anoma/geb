@@ -6,6 +6,7 @@
   (:local-nicknames  (#:poly #:geb.poly)
                      (#:list #:geb-list)
                      (#:bool #:geb-bool)
+                     (#:bitc #:geb.bitc)
                      (#:lambda #:geb.lambda))
   (:use #:geb.common #:parachute))
 

@@ -1,6 +1,5 @@
 (in-package :geb.generics)
 
-
 (defgeneric gapply (morphism object)
   (:documentation "Applies a given Moprhism to a given object.
 
@@ -23,3 +22,32 @@ GEB> (gapply (comp
              (right so1))
 (left s-1)
 ```"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Conversion functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defgeneric to-bitc (morphism)
+  (:documentation
+   "Turns a given MORPHISM into a [GEB.BITC.SPEC:BITC]"))
+
+(defgeneric to-poly (morphism)
+  (:documentation
+   "Turns a given MORPHISM into a [GEB.POLY.SPEC:POLY]"))
+
+(defgeneric to-circuit (morphism name)
+  (:documentation
+   "Turns a MORPHISM into a Vampir circuit. the NAME is the given name of
+the output circuit."))
+
+(defgeneric to-vampir (morphism values constraints)
+  (:documentation
+   "Turns a MORPHISM into a Vampir circuit, with concrete values.
+
+The more natural interface is [TO-CIRCUIT], however this is a more low
+level interface into what the polynomial categories actually
+implement, and thus can be extended or changed.
+
+The VALUES are likely vampir values in a list.
+
+The CONSTRAINTS represent constraints that get creating"))

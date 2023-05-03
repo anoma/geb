@@ -35,18 +35,22 @@ while
 produces an error. Error of such kind mind pop up both on the level of evaluating
 [WELL-DEFP][generic-function] and [ANN-TERM1][generic-function]."))
 
-(-> to-poly (list <stlc>) (or geb.poly:<poly> geb.poly:poly))
+(defun to-bitc (context obj)
+  (~>> obj
+       (compile-checked-term context)
+       geb.common:to-bitc))
+
+(-> to-poly (list t <stlc>) t)
 (defun to-poly (context obj)
-  (assure (or geb.poly:<poly> geb.poly:poly)
-    (~>> obj
-         (compile-checked-term context)
-         geb:to-poly)))
+  (~>> obj
+       (compile-checked-term context)
+       geb.common:to-poly))
 
 (-> to-circuit (list <stlc> keyword) list)
 (defun to-circuit (context obj name)
   (assure list
-    (~> (to-poly context obj)
-        (geb.poly:to-circuit name))))
+    (~> (to-bitc context obj)
+        (geb.common:to-circuit name))))
 
 (defmethod empty ((class (eql (find-class 'list)))) nil)
 

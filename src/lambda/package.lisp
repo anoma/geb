@@ -42,7 +42,7 @@
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb.lambda.trans
    (:documentation "A basic lambda translator into other parts of geb")
-   (:shadow #:to-poly #:to-circuit)
+   (:shadow #:to-poly #:to-circuit #:to-bitc)
    (:mix #:geb.lambda.spec #:geb.common #:common-lisp :geb.lambda.main)))
 
 (in-package #:geb.lambda.trans)
@@ -57,6 +57,7 @@
 data types"
   (compile-checked-term pax:generic-function)
   (to-poly              pax:function)
+  (to-bitc              pax:function)
   (to-circuit           pax:function)
   (@utility             pax:section))
 

@@ -6,7 +6,7 @@
  (defpackage #:geb.main
    (:documentation "Gödel, Escher, Bach categorical model")
    (:use #:common-lisp #:geb.generics #:geb.extension.spec #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
-   (:local-nicknames (#:poly #:geb.poly.spec))
+   (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj :dom :codom)))
 
@@ -50,8 +50,9 @@
 (geb.utils:muffle-package-variance
  (defpackage #:geb.trans
    (:documentation "Gödel, Escher, Bach categorical model")
-   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec #:geb.main)
-   (:local-nicknames (#:poly #:geb.poly.spec))
+   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec #:geb.main
+         #:geb.generics)
+   (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
 
@@ -60,8 +61,10 @@
 (pax:defsection @geb-translation (:title "Translation Functions")
   "These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
 into other categorical data structures."
-  (to-poly    pax:generic-function)
-  (to-circuit pax:function))
+  (to-poly    (pax:method () (<substobj>)))
+  (to-poly    (pax:method () (<substmorph>)))
+  (to-circuit (pax:method () (<substmorph> t)))
+  (to-bitc    (pax:method () (<substmorph>))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; bool module
