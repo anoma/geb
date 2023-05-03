@@ -40,9 +40,9 @@
 ;; we are going to be super lazy about this, just make a format
 (defmacro easy-printer (class-name)
   `(defmethod print-object ((obj ,class-name) stream)
-     (print-object (cons ',class-name
-                         (mapcar #'cdr (geb.mixins:to-pointwise-list obj)))
-                   stream)))
+     (format stream "~A"
+             (cons ',class-name
+                   (mapcar #'cdr (geb.mixins:to-pointwise-list obj))))))
 
 (easy-printer +)
 (easy-printer -)

@@ -5,8 +5,8 @@
 (geb.utils:muffle-package-variance
  (defpackage #:geb.main
    (:documentation "Gödel, Escher, Bach categorical model")
-   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
-   (:local-nicknames (#:poly #:geb.poly.spec))
+   (:use #:common-lisp #:geb.generics #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
+   (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj :dom :codom)))
 
@@ -37,7 +37,7 @@
    (:documentation "Provides the standard library for any GEB code")
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:import-from #:trivia #:match)
-   (:use-reexport #:geb.mixins #:geb.spec #:geb.main #:geb.utils
+   (:use-reexport #:geb.mixins #:geb.generics #:geb.spec #:geb.main #:geb.utils
                   #:serapeum #:common-lisp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -47,8 +47,9 @@
 (geb.utils:muffle-package-variance
  (defpackage #:geb.trans
    (:documentation "Gödel, Escher, Bach categorical model")
-   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec #:geb.main)
-   (:local-nicknames (#:poly #:geb.poly.spec))
+   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec #:geb.main
+         #:geb.generics)
+   (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
 
@@ -57,8 +58,10 @@
 (pax:defsection @geb-translation (:title "Translation Functions")
   "These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
 into other categorical data structures."
-  (to-poly    pax:generic-function)
-  (to-circuit pax:function))
+  (to-poly    (pax:method () (<substobj>)))
+  (to-poly    (pax:method () (<substmorph>)))
+  (to-circuit (pax:method () (<substmorph> t)))
+  (to-bitc    (pax:method () (<substmorph>))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; bool module
@@ -114,6 +117,7 @@ The functions given work on this."
   "Everything here relates directly to the underlying machinery of
    GEB, or to abstractions that help extend it."
   (@mixins-cat       pax:section)
+  (@generics         pax:section)
   (@geb-categories   pax:section)
   (@geb-accessors    pax:section)
   (@geb-constructors pax:section)
@@ -122,6 +126,7 @@ The functions given work on this."
 
 (pax:defsection @geb-api (:title "API")
   "Various forms and structures built on-top of @GEB-CATEGORIES"
+  (gapply                     (pax:method () (<substmorph> t)))
   (geb-bool::@geb-bool        pax:section)
   (geb.trans:@geb-translation pax:section)
   (@geb-utility               pax:section))

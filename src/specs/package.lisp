@@ -9,6 +9,12 @@
    (:shadow :+ :* :/ :- :mod)
    (:use #:geb.utils #:cl)))
 
+(muffle-package-variance
+ (defpackage #:geb.bitc.spec
+   (:export :dom :codom)
+   (:shadow :drop :fork)
+   (:use #:geb.utils #:cl #:geb.mixins)))
+
 ;; please document this later.
 (muffle-package-variance
  (uiop:define-package #:geb.lambda.spec
@@ -67,7 +73,7 @@ all functions that operate on `geb.poly`.")
   "This section covers the types of things one can find in the [POLY]
 constructors"
   (poly    pax:type)
-  (<poly>  pax:type)
+  (<poly>  pax:class)
   (ident   pax:type)
   (+       pax:type)
   (*       pax:type)
@@ -89,6 +95,39 @@ constructors"
   (compose pax:function)
   (if-zero pax:function)
   (if-lt   pax:function))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Geb Bits Package Documentation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(in-package :geb.bitc.spec)
+
+(pax:defsection @bitc (:title "Bits Types")
+  "This section covers the types of things one can find in the [BITS]
+constructors"
+  (bitc     pax:type)
+  (<bitc>   pax:class)
+  (compose  pax:class)
+  (fork     pax:class)
+  (parallel pax:class)
+  (swap     pax:class)
+  (one      pax:class)
+  (zero     pax:class)
+  (ident    pax:class)
+  (drop     pax:class)
+  (branch   pax:class))
+
+(pax:defsection @bitc-constructors (:title "Bits (Boolean Circuit) Constructors")
+  "Every accessor for each of the CLASS's found here are from @GEB-ACCESSORS"
+  (compose  pax:function)
+  (fork     pax:function)
+  (parallel pax:function)
+  (swap     pax:function)
+  (one      pax:symbol-macro)
+  (zero     pax:symbol-macro)
+  (ident    pax:function)
+  (drop     pax:function)
+  (branch   pax:function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb lambda Package Documentation
@@ -211,15 +250,16 @@ From this category, most abstractions will be made, with
 A good example of this category at work can be found within the
 GEB-BOOL::@GEB-BOOL section."
   (@geb-substmu    pax:section)
-  (@geb-substmorph pax:section))
+  (@geb-substmorph pax:section)
+  (@geb-realized   pax:section))
 
 (pax:defsection @geb-substmu (:title "Subst Obj")
   "This section covers the objects of the [SUBSTMORPH][type]
 category. Note that [SUBSTOBJ][type] refers to the
-[GEB-DOCS/DOCS:@CLOSED-TYPE], whereas [\\<SUBSTOBJ\\>][type] refers
+[GEB-DOCS/DOCS:@CLOSED-TYPE], whereas [\\<SUBSTOBJ\\>][class] refers
 to the [GEB-DOCS/DOCS:@OPEN-TYPE] that allows for user extension."
   (substobj   pax:type)
-  (<substobj> pax:type)
+  (<substobj> pax:class)
   "[SUBSTOBJ][type] type is not a constructor itself, instead it's
 best viewed as the sum type, with the types below forming the
 constructors for the term. In ML we would write it similarly to:
@@ -231,15 +271,41 @@ type substobj = so0
               | coprod
 ```"
   (prod pax:type)
-  (coprod pax:type)
-  (so0 pax:type)
-  (so1 pax:type)
+  (coprod pax:class)
+  (so0 pax:class)
+  (so1 pax:class)
   "The @GEB-ACCESSORS specific to @GEB-SUBSTMU"
   (mcar (pax:method () (prod)))
   (mcadr (pax:method () (prod)))
 
   (mcar  (pax:method () (coprod)))
   (mcadr (pax:method () (coprod))))
+
+(pax:defsection @geb-realized (:title "Realized Subst Objs")
+  "This section covers the [REALIZED-OBJECT][TYPE] type. This
+represents a realized [SUBSTOBJ][type] term.
+
+The [REALIZED-OBJECT][TYPE] is not a real constructor but rather a sum
+type for the following type
+
+```lisp
+(deftype realized-object () `(or left right list so1 so0))
+```
+
+In ML we would have written something like
+
+```haskell
+type realized-object = so0
+                     | so1
+                     | list
+                     | left
+                     | right
+```"
+  (realized-object pax:type)
+  (left  pax:class)
+  (right pax:class)
+  (left  pax:function)
+  (right pax:function))
 
 (pax:defsection @geb-substmorph (:title "Subst Morph")
   "The overarching types that categorizes the [SUBSTMORPH][type]
