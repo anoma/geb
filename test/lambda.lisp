@@ -40,8 +40,17 @@
 (def lambterm
   (lambda:lamb (list so1-prod) unit-term))
 
+(def multilambterm
+  (lambda:lamb (list so1 so0) (lambda:index 0)))
+
+(def multilambterm-type
+  (lambda:type-of-term-w-fun nil multilambterm))
+
 (def appterm
   (lambda:app lambterm (list pair-of-units-term)))
+
+(def multiappterm
+  (lambda:app multilambterm (list (lambda:index 0) (lambda:index 1))))
 
 (def context-list
   (list so1 so0 so01-coprod (geb.lambda.main:fun-type so0 so1)))
@@ -244,4 +253,22 @@
                                                 (lambda:index 0)))))
                     (list (lambda:right so0
                                         (lambda:lamb (list so1) unit-term))))))))
+
+(define-test multi-lambda-test
+  :parent geb.lambda
+  (is obj-equalp
+      so1
+      (mcadr multilambterm-type))
+  (is obj-equalp
+      (prod so1 so0)
+      (mcar multilambterm-type)))
+
+(define-test multi-app-term
+  (is obj-equalp
+      so1
+      (lambda:type-of-term (list so1 so0) multiappterm))
+  (is obj-equalp
+      (prod so1 so0)
+      (mcar (lambda:fun (lambda:ann-term1 (list so1 so0) multiappterm)))))
+
 
