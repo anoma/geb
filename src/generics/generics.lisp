@@ -51,3 +51,7 @@ implement, and thus can be extended or changed.
 The VALUES are likely vampir values in a list.
 
 The CONSTRAINTS represent constraints that get creating"))
+
+(defgeneric to-cat (context term)
+  (:documentation
+   "Turns a MORPHISM with a context into Geb's Core category"))

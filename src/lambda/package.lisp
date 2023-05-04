@@ -42,7 +42,6 @@
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb.lambda.trans
    (:documentation "A basic lambda translator into other parts of geb")
-   (:shadow #:to-poly #:to-circuit #:to-bitc)
    (:mix #:geb.lambda.spec #:geb.common #:common-lisp :geb.lambda.main)))
 
 (in-package #:geb.lambda.trans)
@@ -55,11 +54,18 @@
 (pax:defsection @stlc-conversion (:title "Transition Functions")
   "These functions deal with transforming the data structure to other
 data types"
-  (compile-checked-term pax:generic-function)
-  (to-poly              pax:function)
-  (to-bitc              pax:function)
-  (to-circuit           pax:function)
-  (@utility             pax:section))
+
+  "One important note about the lambda conversions is that all
+transition functions except [TO-CAT] do not take a context.
+
+Thus if the [\\<STLC\\>] term contains free variables, then call
+[TO-CAT] and give it the desired context before calling
+any other transition functions"
+  (to-cat     (pax:method () (t <stlc>)))
+  (to-poly    (pax:method () (<stlc>)))
+  (to-bitc    (pax:method () (<stlc>)))
+  (to-circuit (pax:method () (<stlc> t)))
+  (@utility   pax:section))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; lambda module

@@ -8,8 +8,46 @@
 ;; Main Transformers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defgeneric compile-checked-term (context term)
-  (:documentation "Compiles a checked term in an appropriate context into the
+(defmethod to-bitc ((obj <stlc>))
+  "I convert a lambda term into a [GEB.BITC.SPEC:BITC] term
+
+Note that [\\<STLC\\>] terms with free variables require a context,
+and we do not supply them here to conform to the standard interface
+
+If you want to give a context, please call [to-cat] before
+calling me"
+  (~>> obj
+       (to-cat nil)
+       geb.common:to-bitc))
+
+(defmethod to-poly ((obj <stlc>))
+  "I convert a lambda term into a [GEB.POLY.SPEC:POLY] term
+
+Note that [\\<STLC\\>] terms with free variables require a context,
+and we do not supply them here to conform to the standard interface
+
+If you want to give a context, please call [to-cat] before
+calling me"
+  (~>> obj
+       (to-cat nil)
+       geb.common:to-poly))
+
+(defmethod to-circuit ((obj <stlc>) name)
+  "I convert a lambda term into a vampir term
+
+Note that [\\<STLC\\>] terms with free variables require a context,
+and we do not supply them here to conform to the standard interface
+
+If you want to give a context, please call [to-cat] before
+calling me"
+  (assure list
+    (~> (to-bitc obj)
+        (geb.common:to-circuit name))))
+
+(defmethod empty ((class (eql (find-class 'list)))) nil)
+
+(defmethod to-cat (context (tterm <stlc>))
+  "Compiles a checked term in an appropriate context into the
 morphism of the GEB category. In detail, it takes a context and a term with
 following restrictions: Terms come from [STLC][class]  with occurences of
 [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and should
@@ -23,38 +61,17 @@ always, not doing so result in an error upon evaluation. As an example of a
 valid entry we have
 
 ```lisp
- (compile-checked-term (list so1 (fun-type so1 so1)) (app (index 0) (index 1)))
+ (to-cat (list so1 (fun-type so1 so1)) (app (index 0) (index 1)))
 ```
 
 while
 
 ```lisp
-(compile-checked-term (list so1 (so-hom-obj so1 so1)) (app (index 0) (index 1)))
+(to-cat (list so1 (so-hom-obj so1 so1)) (app (index 0) (index 1)))
 ```
 
 produces an error. Error of such kind mind pop up both on the level of evaluating
-[WELL-DEFP][generic-function] and [ANN-TERM1][generic-function]."))
-
-(defun to-bitc (context obj)
-  (~>> obj
-       (compile-checked-term context)
-       geb.common:to-bitc))
-
-(-> to-poly (list t <stlc>) t)
-(defun to-poly (context obj)
-  (~>> obj
-       (compile-checked-term context)
-       geb.common:to-poly))
-
-(-> to-circuit (list <stlc> keyword) list)
-(defun to-circuit (context obj name)
-  (assure list
-    (~> (to-bitc context obj)
-        (geb.common:to-circuit name))))
-
-(defmethod empty ((class (eql (find-class 'list)))) nil)
-
-(defmethod compile-checked-term (context (tterm <stlc>))
+[WELL-DEFP][generic-function] and [ANN-TERM1][generic-function]."
   (labels ((rec (context tterm)
              (match-of stlc tterm
                ((absurd tcod term)
@@ -87,7 +104,7 @@ produces an error. Error of such kind mind pop up both on the level of evaluatin
                ((snd term)
                 (let ((tottt (ttype term)))
                   (comp (<-right (mcar tottt) (mcadr tottt))
-                        (compile-checked-term context term))))
+                        (to-cat context term))))
                ((lamb tdom term)
                 (curry (commutes-left
                         (rec (cons tdom context) term))))
