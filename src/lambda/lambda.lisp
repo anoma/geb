@@ -51,8 +51,8 @@ to the codomain."
 (-> index-check (fixnum list) cat-obj)
 (defun index-check (i ctx)
   "Given an natural number [i] and a context, checks that the context is of
-length at least [i] and then produces the [i]'th entry of the context where
-contexts are read right to left."
+length at least [i] and then produces the [i]'th entry of the context counted
+from the left starting with 0."
   (let ((l (length ctx)))
     (if (< i l)
         (nth i ctx)
@@ -77,17 +77,30 @@ per above description. While not always, not doing so result in an error upon
 evaluation. As an example of a valid entry we have
 
 ```lisp
- (ann-term1 (list so1 (fun-type so1 so1)) (app (index 1) (index 0)))
+ (ann-term1 (list so1 (fun-type so1 so1)) (app (index 1) (list (index 0))))
 ```
 
 while
 
 ```lisp
-(ann-term1 (list so1 (so-hom-obj so1 so1)) (app (index 1) (index 0)))
+(ann-term1 (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (index 0))))
 ```
 
 produces an error trying to use [HOM-COD]. This warning applies to other
-functions taking in context and terms below as well."))
+functions taking in context and terms below as well.
+
+Moreover, note that for terms whose typing needs addition of new context
+we append contexts on the left rather than on the right contra usual type
+theoretic notation for the convenience of computation. That means, e.g. that
+asking for a type of a lambda term as below produces:
+
+```lisp
+LAMBDA> (ttype (term (ann-term1 (lambda (list so1 so0) (index 0)))))
+s-1
+```
+
+as we count indeces from the left of the context while appending new types to
+the context on the left as well. For more info check [LAMB][class]"))
 
 
 (defmethod ann-term1 (ctx (tterm <stlc>))
@@ -145,7 +158,12 @@ functions taking in context and terms below as well."))
   "Given a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] whose subobjects might have a
 [FUN-TYPE][class] occurence replaces all occurences of [FUN-TYPE][class] with a
 suitable [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], hence giving a pure
-[SUBSTOBJ][GEB.SPEC:SUBSTOBJ]"
+[SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
+
+```lisp
+LAMBDA> (fun-to-hom (fun-type geb-bool:bool geb-bool:bool))
+(× (+ GEB-BOOL:FALSE GEB-BOOL:TRUE) (+ GEB-BOOL:FALSE GEB-BOOL:TRUE))
+```"
   (cond ((typep t1 'prod)     (prod (fun-to-hom (mcar t1))
                                     (fun-to-hom (mcadr t1))))
         ((typep t1 'coprod)   (coprod (fun-to-hom (mcar t1))
