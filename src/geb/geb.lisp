@@ -75,7 +75,7 @@ then: (const f x) : a → b
 (const f x) : a → b
 ```
 
-Further, If the input `F` is an [ALIAS][type], then we wrap the output
+Further, If the input `F` has an ALIAS, then we wrap the output
 in a new alias to denote it's a constant version of that value.
 
 
@@ -112,7 +112,7 @@ Example:
   "swap the input [domain][DOM] of the given [cat-morph]
 
 In order to swap the [domain][DOM] we expect the [cat-morph] to
-be a [PROD][type]
+be a [PROD][class]
 
 Thus if: `(dom morph) ≡ (prod x y)`, for any `x`, `y` [CAT-OBJ]
 
@@ -227,7 +227,7 @@ u
 
 (defun coprod-mor (f g)
   "Given f : A  → B and g : C  → D gives appropriate morphism between
-[COPROD][TYPE] objects f x g : A + B  → C + D via the unversal property.
+[COPROD][class] objects f x g : A + B  → C + D via the unversal property.
 That is, the morphism part of the coproduct functor Geb x Geb → Geb"
   (mcase (comp (->left (codom f) (codom g))
                f)
@@ -236,7 +236,7 @@ That is, the morphism part of the coproduct functor Geb x Geb → Geb"
 
 (defun prod-mor (f g)
    "Given f : A  → B and g : C  → D gives appropriate morphism between
-[PROD][TYPE] objects f x g : A x B  → C x D via the unversal property.
+[PROD][class] objects f x g : A x B  → C x D via the unversal property.
 This is the morphism part of the product functor Geb x Geb → Geb"
   (pair (comp f
               (<-left (dom f) (dom g)))
@@ -269,10 +269,10 @@ This is the morphism part of the product functor Geb x Geb → Geb"
 (defun curry (f)
   "Curries the given object, returns a [cat-morph]
 
-The [cat-morph] given must have its DOM be of a PROD type, as [CURRY][generic-function]
+The [cat-morph] given must have its DOM be of a PROD type, as [CURRY][function]
 invokes the idea of
 
-if f : ([PROD][TYPE] a b) → c
+if f : ([PROD][class] a b) → c
 
 for all `a`, `b`, and `c` being an element of [cat-morph]
 

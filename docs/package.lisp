@@ -10,4 +10,6 @@
   (:import-from #:geb.entry  #:@geb-entry)
   (:import-from #:geb.lambda #:@stlc)
   (:import-from #:geb-gui    #:@geb-gui-manual)
+  (:import-from #:geb.extension.spec
+                #:@geb-extensions)
   (:export build-docs))

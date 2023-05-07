@@ -12,6 +12,8 @@ object into a format for a graphing backend."
   "The core types that facilittate the functionality"
   (note pax:type)
   (node pax:class)
+  (node-note pax:class)
+  (squash-note pax:class)
   (make-note pax:function)
   (make-squash pax:function)
   (graphize pax:generic-function)

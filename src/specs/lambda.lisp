@@ -2,14 +2,31 @@
 
 (defclass <stlc> (geb.mixins:direct-pointwise-mixin geb.mixins:meta-mixin geb.mixins:cat-obj) ()
   (:documentation
-   "Class of untyped terms of simply typed lambda claculus. Given our presentation, we look at the latter as a
-type theory spanned by empty, unit types as well as coproduct, product, and function types."))
+   "Class of untyped terms of simply typed lambda claculus. Given our
+presentation, we look at the latter as a type theory spanned by empty,
+unit types as well as coproduct, product, and function types."))
 
 (deftype stlc ()
   "Type of untyped terms of [STLC][type]. Each class of a term has a slot for a type,
-which can be filled by auxillary functions or by user. Types are represented
-as [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]."
+which can be filled by auxillary functions or by user. Types are
+represented as [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]."
   '(or absurd unit left right case-on pair fst snd lamb app index))
+
+
+;; New defgenerics
+
+(defgeneric term (obj))
+(defgeneric tdom (obj))
+(defgeneric tcod (obj))
+(defgeneric ttype (obj))
+(defgeneric rty (obj))
+(defgeneric lty (obj))
+(defgeneric ltm (obj))
+(defgeneric rtm (obj))
+(defgeneric on (obj))
+(defgeneric fun (obj))
+(defgeneric pos (obj))
+
 
 (defclass absurd (<stlc>)
   ((tcod :initarg :tcod
@@ -24,7 +41,7 @@ as [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]."
          :documentation ""))
   (:documentation
    "The [ABSURD][class] term provides an element of an arbitrary type
-given a term of the empty type, denoted by [SO0][GEB.SPEC:SO0 type].
+given a term of the empty type, denoted by [SO0][GEB.SPEC:SO0 class].
 The formal grammar of [ABSURD][class] is
 
 ```lisp
@@ -59,7 +76,7 @@ $$\\Gamma \\vdash \\text{(absurd tcod term) : tcod}$$"))
           :documentation ""))
   (:documentation
    "The unique term of the unit type, the latter represented by
-[SO1][GEB.SPEC:SO1 type]. The formal grammar of [UNIT][class] is
+[SO1][GEB.SPEC:SO1 class]. The formal grammar of [UNIT][class] is
 
 ```lisp
 (unit)
@@ -71,7 +88,7 @@ where we can optionally include type information by
 (unit :ttype ttype)
 ```
 
-Clearly the type of [UNIT][class] is [SO1][GEB.SPEC:SO1 type] but here
+Clearly the type of [UNIT][class] is [SO1][GEB.SPEC:SO1 class] but here
 we provide all terms untyped.
 
 This grammar corresponds to the introduction rule of the unit type. Namely
@@ -344,7 +361,7 @@ on a term of a product type."))
 of the function type by assuming one is given variables in the
 specified list of types. [LAMB][class] takes in the [TDOM][generic-function]
 accessor a list of types - and hence of [SUBSTOBJ][class] - and in the
-[TERM][generic-function] a term - and hence an [STLC][class]. The formal grammar
+[TERM][generic-function] a term - and hence an [STLC][type]. The formal grammar
 of [LAMB][class] is:
 
 ```lisp
@@ -432,9 +449,9 @@ usual type theory if context was read from right to left."))
    "A term of an arbitrary type gotten by applying a function of an iterated
 function type with a corresponding codomain iteratively to terms in the
 domains. [APP][class] takes as argument for the [FUN][generic-function] accessor
-a function - and hence an [STLC][class] - whose function type has domain an
-iterated [PROD][class] of [SUBSTOBJ][clas] and for the [TERM][generic-function]
-a list of terms - and hence of [STLC][class] - matching the types of the
+a function - and hence an [STLC][type] - whose function type has domain an
+iterated [GEB:PROD][class] of [SUBSTOBJ][clas] and for the [TERM][generic-function]
+a list of terms - and hence of [STLC][type] - matching the types of the
 product. The formal grammar of [APP][class] is
 
 ```lisp
@@ -461,12 +478,18 @@ $$\\Gamma \\vdash \\text{(app fun term) : y}$$
 
 For several arguments, this corresponds to successive function application.
 Using currying, this corresponds to, given
-$$\\Gamma \\vdash (so-hom-obj (A_1 x \\ldots , A_{n-1}) A_n)$$
-$$\\Gamma \\vdash f : (so-hom-obj (A1 , \\ldots , A_{n-1}))$$
-and
-$$\Gamma  \\vdash t_i : A_i$$
-for each i less than n gets us
-$$\Gamma \\vdash app(f , t_1 , .... t_{n-1}) : A_n$$
+
+```
+G ⊢ (so-hom-obj (A₁ × ··· × Aₙ₋₁) Aₙ)
+G ⊢ f : (so-hom-obj (A₁ × ··· × Aₙ₋₁)
+G ⊢ tᵢ : Aᵢ
+```
+
+then for each `i` less than `n` gets us
+
+```lisp
+G ⊢ (app f t₁ ··· tₙ₋₁) : Aₙ
+```
 
 Note again that i'th term should correspond to the ith element of the product
 in the codomain counted from the left."))

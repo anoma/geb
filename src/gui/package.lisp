@@ -25,5 +25,5 @@ layout of the term, showing what kind of data "
 
 (pax:defsection @visaulizer-aid (:title "Aiding the Visualizer")
   "One can aid the visualization process a bit, this can be done by
-simply playing [GEB:ALIAS][type] around the object, this will place it
+simply placing ALIAS around the object, this will place it
 in a box with a name to better identify it in the graphing procedure.")

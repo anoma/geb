@@ -26,13 +26,13 @@ to use
 An example use of this binary is as follows
 
 ```bash
-mariari@Gensokyo % ./geb.image -i \"foo.lisp\" -e \"geb.lambda.spec::*entry*\" -l -v -o \"foo.pir\"
+mariari@Gensokyo % ./geb.image -i \"foo.lisp\" -e \"geb.lambda.main::*entry*\" -l -v -o \"foo.pir\"
 
 mariari@Gensokyo % cat foo.pir
-def *entry* x {
-  0
-}%
-mariari@Gensokyo % ./geb.image -i \"foo.lisp\" -e \"geb.lambda.spec::*entry*\" -l -v
+def entry x1 = {
+  (x1)
+};%
+mariari@Gensokyo % ./geb.image -i \"foo.lisp\" -e \"geb.lambda.main::*entry*\" -l -v
 def *entry* x {
   0
 }
@@ -50,11 +50,18 @@ def *entry* x {
 
 starting from a file *foo.lisp* that has
 
+any valid lambda form. Good examples can be found at the following section:
+
+[GEB.LAMBDA:@STLC][pax:section]
+
+with the term bound to some global variable
+
 ```lisp
-(in-package :geb.lambda.spec)
+(in-package :geb.lambda.main)
 
 (defparameter *entry*
-  (typed unit geb:so1))
+  (lamb (list (coprod so1 so1))
+        (index 0)))
 ```
 
 inside of it.

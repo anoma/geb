@@ -1,5 +1,9 @@
 (in-package #:geb-gui.core)
 
+(defgeneric representation (object))
+(defgeneric children (object))
+(defgeneric value (object))
+
 (deftype note ()
   "A note is a note about a new node in the graph or a note about a
 NODE which should be merged into an upcoming NODE.

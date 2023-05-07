@@ -173,8 +173,8 @@ constructors"
 
   "Accessors of [ABSURD][class]"
 
-  (tcod (pax:method () (absurd)))
-  (term (pax:method () (absurd)))
+  (tcod  (pax:method () (absurd)))
+  (term  (pax:method () (absurd)))
   (ttype (pax:method () (absurd)))
 
   "Accessors of [UNIT][class]"
@@ -275,7 +275,7 @@ type substobj = so0
               | prod
               | coprod
 ```"
-  (prod pax:type)
+  (prod pax:class)
   (coprod pax:class)
   (so0 pax:class)
   (so1 pax:class)
@@ -315,10 +315,10 @@ type realized-object = so0
 (pax:defsection @geb-substmorph (:title "Subst Morph")
   "The overarching types that categorizes the [SUBSTMORPH][type]
 category. Note that [SUBSTMORPH][type] refers to the
-[GEB-DOCS/DOCS:@CLOSED-TYPE], whereas [\\<SUBSTMORPH\\>][type] refers
+[GEB-DOCS/DOCS:@CLOSED-TYPE], whereas [\\<SUBSTMORPH\\>][class] refers
 to the [GEB-DOCS/DOCS:@OPEN-TYPE] that allows for user extension."
   (substmorph   pax:type)
-  (<substmorph> pax:type)
+  (<substmorph> pax:class)
   "[SUBSTMORPH][type] type is not a constructor itself, instead it's
 best viewed as the sum type, with the types below forming the
 constructors for the term. In ML we would write it similarly to:
@@ -341,17 +341,17 @@ Note that an instance of [SUBSTOBJ][type], acts like the identity
 morphism to the layout specified by the given [SUBSTOBJ][type]. Thus
 we can view this as automatically lifting a [SUBSTOBJ][type] into a
 [SUBSTMORPH][type]"
-  (comp          pax:type)
-  (case          pax:type)
-  (init          pax:type)
-  (terminal      pax:type)
-  (pair          pax:type)
-  (distribute    pax:type)
-  (inject-left   pax:type)
-  (inject-right  pax:type)
-  (project-left  pax:type)
-  (project-right pax:type)
-  (functor       pax:type)
+  (comp          pax:class)
+  (case          pax:class)
+  (init          pax:class)
+  (terminal      pax:class)
+  (pair          pax:class)
+  (distribute    pax:class)
+  (inject-left   pax:class)
+  (inject-right  pax:class)
+  (project-left  pax:class)
+  (project-right pax:class)
+  (functor       pax:class)
   "The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH"
   (mcar  (pax:method () (comp)))
   (mcadr (pax:method () (comp)))
@@ -400,21 +400,9 @@ we can view this as automatically lifting a [SUBSTOBJ][type] into a
   (mcase pax:function)
   (make-functor pax:function))
 
-(pax:defsection @geb-accessors (:title "Accessors")
-  "These functions relate to grabbing slots out of the various
-   @GEB-SUBSTMORPH and @GEB-SUBSTMU types. See those sections for
-   specific instance documentation"
-  (mcar   pax:generic-function)
-  (mcadr  pax:generic-function)
-  (mcdr   pax:generic-function)
-  (mcaddr pax:generic-function)
-  (obj    pax:generic-function)
-  (name   pax:generic-function)
-  (func   pax:generic-function))
-
 (in-package :geb.extension.spec)
 
-(pax:defsection @geb-extensions (:title "Extension Sets")
+(pax:defsection @geb-extensions (:title "Extension Sets for Categories")
   "This package contains many extensions one may see over the codebase.
 
 Each extension adds an unique feature to the categories they are

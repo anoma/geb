@@ -10,8 +10,8 @@
    "I represent common sub-expressions found throughout the code.
 
 I implement a few categorical extensions. I am a valid
-[CAT-MORPH][TYPE] along with fulling the interface for the
-GEB.POLY.SPEC:<POLY> category.
+[CAT-MORPH][class] along with fulling the interface for the
+[GEB.POLY.SPEC:<POLY>] category.
 
 The name should come from an algorithm that automatically fines common
 sub-expressions and places the appropriate names."))
@@ -22,7 +22,7 @@ sub-expressions and places the appropriate names."))
    (code :initarg :code :accessor code))
   (:documentation
    "I represent an object where we want to hide the implementation
-details of what kind of [GEB:SUBSTOBJ][class] I am."))
+details of what kind of [GEB:SUBSTOBJ][type] I am."))
 
 (defclass reference (cat-obj cat-morph direct-pointwise-mixin meta-mixin)
   ((name :initarg :name :accessor name))
@@ -41,7 +41,7 @@ details of what kind of [GEB:SUBSTOBJ][class] I am."))
           :documentation "The codom of the opaque morph"))
   (:documentation
    "This represents a morphsim where we want to deal with an
-[OPAQUE][type] that we know intimate details of"))
+[OPAQUE][class] that we know intimate details of"))
 
 (defun make-common-sub-expression (&key obj name)
   (make-instance 'common-sub-expression :obj obj :name name))

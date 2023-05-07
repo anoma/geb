@@ -104,16 +104,16 @@ us the right unit."))
           :accessor mcadr
           :documentation ""))
   (:documentation
-   "The [PRODUCT][PROD type] object. Takes two CAT-OBJ values that
+   "The [PRODUCT][PROD class] object. Takes two CAT-OBJ values that
 get put into a pair.
 
-The formal grammar of [PRODUCT][PROD type] is
+The formal grammar of [PRODUCT][PROD class] is
 
 ```lisp
 (prod mcar mcadr)
 ```
 
-where [PROD][type] is the constructor, [MCAR] is the left value of the
+where [PROD][class] is the constructor, [MCAR] is the left value of the
 product, and [MCADR] is the right value of the product.
 
 Example:
@@ -135,7 +135,7 @@ Here we create a product of two [GEB-BOOL:BOOL] types."))
    "the [CO-PRODUCT][COPROD class] object. Takes CAT-OBJ values that
 get put into a choice of either value.
 
-The formal grammar of [PRODUCT][PROD type] is
+The formal grammar of [PRODUCT][PROD class] is
 
 ```lisp
 (coprod mcar mcadr)
@@ -176,7 +176,7 @@ values."))
    "The composition morphism. Takes two CAT-MORPH values that get
 applied in standard composition order.
 
-The formal grammar of [COMP][type] is
+The formal grammar of [COMP][class] is
 
 ```lisp
 (comp mcar mcadr)
@@ -188,7 +188,7 @@ which may be more familiar as
 g 。f
 ```
 
-Where [COMP][type]\\( 。\\) is the constructor, [MCAR]\\(g\\) is the second morphism
+Where [COMP][class]\\( 。\\) is the constructor, [MCAR]\\(g\\) is the second morphism
 that gets applied, and [MCADR]\\(f\\) is the first morphism that gets
 applied.
 
@@ -204,12 +204,12 @@ Example:
 
 In this example we are composing two morphisms. the first morphism
 that gets applied ([PAIR] ...) is the identity function on the
-type ([PROD][type] [SO1][class] [GEB-BOOL:BOOL]), where we pair the
+type ([PROD][class] [SO1][class] [GEB-BOOL:BOOL]), where we pair the
 [left projection](PROJECT-LEFT) and the [right
 projection](PROJECT-RIGHT), followed by taking the [right
 projection](PROJECT-RIGHT) of the type.
 
-Since we know ([COMP][type] f id) is just f per the laws of category
+Since we know ([COMP][class] f id) is just f per the laws of category
 theory, this expression just reduces to
 
 ```lisp
@@ -222,16 +222,16 @@ theory, this expression just reduces to
         :type cat-obj
         :documentation ""))
   (:documentation
-   "The [INITIAL][INIT type] Morphism, takes any [CAT-OBJ] and
+   "The [INITIAL][INIT class] Morphism, takes any [CAT-OBJ] and
 creates a moprhism from [SO0][class] (also known as void) to the object given.
 
-The formal grammar of [INITIAL][INIT type] is
+The formal grammar of [INITIAL][INIT class] is
 
 ```lisp
 (init obj)
 ```
 
-where [INIT][type] is the constructor. [OBJ] is the type of object
+where [INIT][class] is the constructor. [OBJ] is the type of object
 that will be conjured up from [SO0][class], when the morphism is
 applied onto an object.
 
@@ -249,16 +249,16 @@ In this example we are creating a unit value out of void."))
         :type cat-obj
         :documentation ""))
   (:documentation
-   "The [TERMINAL][type] morphism, Takes any [CAT-OBJ] and creates a
+   "The [TERMINAL][class] morphism, Takes any [CAT-OBJ] and creates a
 morphism from that object to [SO1][class] (also known as unit).
 
-The formal grammar of [TERMINAL][type] is
+The formal grammar of [TERMINAL][class] is
 
 ```lisp
 (terminal obj)
 ```
 
-where [TERMINAL][type] is the constructor. [OBJ] is the type of object that
+where [TERMINAL][class] is the constructor. [OBJ] is the type of object that
 will be mapped to [SO1][class], when the morphism is applied onto an
 object.
 
@@ -380,7 +380,7 @@ gets applied on the left coproduct while the other gets applied on the
 right coproduct. The result of each CAT-MORPH values must be
 the same.
 
-The formal grammar of [CASE][type] is:
+The formal grammar of [CASE][class] is:
 
 ```lisp
 (mcase mcar mcadr)
@@ -451,20 +451,20 @@ projects back the GEB-BOOL:BOOL field as the second values."))
           :type cat-obj
           :documentation ""))
   (:documentation
-   "The [LEFT PROJECTION][PROJECT-LEFT type]. Takes two
+   "The [LEFT PROJECTION][PROJECT-LEFT class]. Takes two
 [CAT-MORPH] values. When the [LEFT PROJECTION][PROJECT-LEFT
-type] morphism is then applied, it grabs the left value of a product,
+class] morphism is then applied, it grabs the left value of a product,
 with the type of the product being determined by the two
 [CAT-MORPH] values given.
 
-the formal grammar of a [PROJECT-LEFT][type] is:
+the formal grammar of a [PROJECT-LEFT][class] is:
 
 ```lisp
 (<-left mcar mcadr)
 ```
 
 Where [<-LEFT] is the constructor, [MCAR] is the left type of the
-[PRODUCT][type] and [MCADR] is the right type of the [PRODUCT][type].
+[PRODUCT][class] and [MCADR] is the right type of the [PRODUCT][class].
 
 Example:
 
@@ -476,7 +476,7 @@ Example:
 In this example, we are getting the left [GEB-BOOL:BOOL] from a
 product with the shape
 
-([GEB-BOOL:BOOL][] [×][PROD type] [SO1][class] [×][PROD type] [GEB-BOOL:BOOL])"))
+([GEB-BOOL:BOOL][] [×][PROD class] [SO1][class] [×][PROD class] [GEB-BOOL:BOOL])"))
 
 (defclass project-right (<substmorph>)
   ((mcar :initarg :mcar
@@ -487,21 +487,21 @@ product with the shape
           :accessor mcadr
           :type cat-obj
           :documentation "Right projection (product elimination)"))
-  (:documentation "The [RIGHT PROJECTION][PROJECT-RIGHT type]. Takes two
+  (:documentation "The [RIGHT PROJECTION][PROJECT-RIGHT class]. Takes two
 [CAT-MORPH] values. When the [RIGHT PROJECTION][PROJECT-RIGHT
-type] morphism is then applied, it grabs the right value of a product,
+class] morphism is then applied, it grabs the right value of a product,
 with the type of the product being determined by the two
 [CAT-MORPH] values given.
 
 
-the formal grammar of a [PROJECT-RIGHT][type] is:
+the formal grammar of a [PROJECT-RIGHT][class] is:
 
 ```lisp
 (<-right mcar mcadr)
 ```
 
 Where [<-RIGHT] is the constructor, [MCAR] is the right type of the
-[PRODUCT][type] and [MCADR] is the right type of the [PRODUCT][type].
+[PRODUCT][class] and [MCADR] is the right type of the [PRODUCT][class].
 
 Example:
 
@@ -514,7 +514,7 @@ Example:
 In this example, we are getting the right [GEB-BOOL:BOOL] from a
 product with the shape
 
-([GEB-BOOL:BOOL][] [×][PROD type] [SO1][class] [×][PROD type] [GEB-BOOL:BOOL])"))
+([GEB-BOOL:BOOL][] [×][PROD class] [SO1][class] [×][PROD class] [GEB-BOOL:BOOL])"))
 
 (defclass distribute (<substmorph>)
   ((mcar :initarg :mcar

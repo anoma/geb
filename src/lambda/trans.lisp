@@ -49,7 +49,7 @@ calling me"
 (defmethod to-cat (context (tterm <stlc>))
   "Compiles a checked term in an appropriate context into the
 morphism of the GEB category. In detail, it takes a context and a term with
-following restrictions: Terms come from [STLC][class]  with occurences of
+following restrictions: Terms come from [STLC][type]  with occurences of
 [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and should
 come without the slow of [TTYPE][generic-function] accessor filled for any of
 the subterms. Context should be a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
@@ -140,7 +140,7 @@ the context on the left as well. For more info check [LAMB][class]"
   "Converts a generic [<STLC>][type] context into a
 [SUBSTMORPH][GEB.SPEC:SUBSTMORPH]. Note that usually contexts can be interpreted
 in a category as a $\Sigma$-type$, which in a non-dependent setting gives us a
-usual [PROD][type]
+usual [PROD][class]
 
 ```lisp
 LAMBDA> (stlc-ctx-to-mu (list so1 (fun-to-hom (fun-type geb-bool:bool geb-bool:bool))))
@@ -160,8 +160,8 @@ LAMBDA> (stlc-ctx-to-mu (list so1 (fun-to-hom (fun-type geb-bool:bool geb-bool:b
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun stlc-ctx-proj (context depth)
-  "Given a context, we interpret it as a [PROD][type] object of appropriate
-length with fibrations given by [PROD][type] projections."
+  "Given a context, we interpret it as a [PROD][class] object of appropriate
+length with fibrations given by [PROD][class] projections."
   (if (zerop depth)
       (<-left (fun-to-hom (car context))
               (stlc-ctx-to-mu (cdr context)))

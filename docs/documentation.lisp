@@ -11,6 +11,7 @@
   (@model            pax:section)
   (@idioms           pax:section)
   (@geb              pax:section)
+  (@geb-extensions   pax:section)
   (@geb-gui-manual   pax:section)
   (@bitc-manual      pax:section)
   (@poly-manual      pax:section)
@@ -390,7 +391,7 @@ In this piece of code we can notice a few things:
 
 4. We can write further methods extending the function to other subtypes.
 
-Thus the [GEB:TO-POLY] function is written in such a way that it
+Thus the [GEB.COMMON:TO-POLY] function is written in such a way that it
 supports a closed definition and open extensions, with
 [GEB.UTILS:SUBCLASS-RESPONSIBILITY] serving to be called if an
 extension a user wrote has no handling of this method.

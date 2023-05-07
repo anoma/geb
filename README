@@ -5,11 +5,17 @@ Welcome to the GEB project.
 
 ## Links
 
+
+
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
+
+
 ### code coverage
+
+
 
 For test coverage it can be found at the following links:
 
@@ -27,6 +33,8 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see GEB-TEST:CODE-COVERAGE
+
+
 
 ## Getting Started
 
@@ -104,13 +112,13 @@ to use
 An example use of this binary is as follows
 
 ```bash
-mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.spec::*entry*" -l -v -o "foo.pir"
+mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.main::*entry*" -l -v -o "foo.pir"
 
 mariari@Gensokyo % cat foo.pir
-def *entry* x {
-  0
-}%
-mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.spec::*entry*" -l -v
+def entry x1 = {
+  (x1)
+};%
+mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.main::*entry*" -l -v
 def *entry* x {
   0
 }
@@ -128,11 +136,18 @@ def *entry* x {
 
 starting from a file *foo.lisp* that has
 
+any valid lambda form. Good examples can be found at the following section:
+
+GEB.LAMBDA:@STLC
+
+with the term bound to some global variable
+
 ```lisp
-(in-package :geb.lambda.spec)
+(in-package :geb.lambda.main)
 
 (defparameter *entry*
-  (typed unit geb:so1))
+  (lamb (list (coprod so1 so1))
+        (index 0)))
 ```
 
 inside of it.
@@ -276,6 +291,8 @@ conjectures about GEB
 
 ## Categorical Model
 
+
+
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -343,31 +360,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} \cong C^{(A × B)}$,
+   $C^{(B^A)} cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $\varnothing$.
+   the empty sum is $varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
-$ \mathsf{1} = \lbrace 1 \rbrace$,
-$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
+where $ mathsf{2} = lbrace 1, 2 rbrace$,
+$ mathsf{1} = lbrace 1 rbrace$,
+$ mathsf{0} = lbrace  rbrace = varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -389,6 +406,8 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
+
+
 
 ### Morphisms
 
@@ -531,7 +550,7 @@ In this piece of code we can notice a few things:
 
 4. We can write further methods extending the function to other subtypes.
 
-Thus the GEB:TO-POLY function is written in such a way that it
+Thus the GEB.COMMON:TO-POLY function is written in such a way that it
 supports a closed definition and open extensions, with
 GEB.UTILS:SUBCLASS-RESPONSIBILITY serving to be called if an
 extension a user wrote has no handling of this method.
@@ -599,6 +618,72 @@ contained in various data structures
     
     Use GEB.MAIN:CURRY instead.
 
+### Geneircs
+
+###### \[in package GEB.GENERICS\]
+These functions represent the generic functions that can be run on
+many parts of the compiler, they are typically rexported on any
+package that implements the given generic function.
+
+You can view their documentation in their respective API sections.
+
+The main documentation for the functionality is given here, with
+examples often given in the specific methods
+
+- [generic-function] GAPPLY MORPHISM OBJECT
+
+    Applies a given Moprhism to a given object.
+    
+    This is practically a naive interpreter for any category found
+    throughout the codebase.
+    
+    Some example usages of GAPPLY are.
+    
+    ```lisp
+    GEB> (gapply (comp
+                  (mcase geb-bool:true
+                         geb-bool:not)
+                  (->right so1 geb-bool:bool))
+                 (left so1))
+    (right s-1)
+    GEB> (gapply (comp
+                  (mcase geb-bool:true
+                         geb-bool:not)
+                  (->right so1 geb-bool:bool))
+                 (right so1))
+    (left s-1)
+    ```
+
+
+- [generic-function] TO-CIRCUIT MORPHISM NAME
+
+    Turns a MORPHISM into a Vampir circuit. the NAME is the given name of
+    the output circuit.
+
+- [generic-function] TO-BITC MORPHISM
+
+    Turns a given MORPHISM into a GEB.BITC.SPEC:BITC
+
+- [generic-function] TO-POLY MORPHISM
+
+    Turns a given MORPHISM into a GEB.POLY.SPEC:POLY
+
+- [generic-function] TO-CAT CONTEXT TERM
+
+    Turns a MORPHISM with a context into Geb's Core category
+
+- [generic-function] TO-VAMPIR MORPHISM VALUES CONSTRAINTS
+
+    Turns a MORPHISM into a Vampir circuit, with concrete values.
+    
+    The more natural interface is TO-CIRCUIT, however this is a more low
+    level interface into what the polynomial categories actually
+    implement, and thus can be extended or changed.
+    
+    The VALUES are likely vampir values in a list.
+    
+    The CONSTRAINTS represent constraints that get creating
+
 ### Core Category
 
 ###### \[in package GEB.SPEC\]
@@ -624,7 +709,7 @@ to the GEB-DOCS/DOCS:@OPEN-TYPE that allows for user extension.
 
 - [type] SUBSTOBJ
 
-- [type] <SUBSTOBJ>
+- [class] <SUBSTOBJ> \<SUBSTMORPH\> DIRECT-POINTWISE-MIXIN META-MIXIN CAT-OBJ
 
     the class corresponding to SUBSTOBJ. See GEB-DOCS/DOCS:@OPEN-CLOSED
 
@@ -640,7 +725,7 @@ type substobj = so0
 ```
 
 
-- [type] PROD
+- [class] PROD \<SUBSTOBJ\>
 
     The PRODUCT object. Takes two CAT-OBJ values that
     get put into a pair.
@@ -662,7 +747,7 @@ type substobj = so0
     
     Here we create a product of two GEB-BOOL:BOOL types.
 
-- [type] COPROD
+- [class] COPROD \<SUBSTOBJ\>
 
     the CO-PRODUCT object. Takes CAT-OBJ values that
     get put into a choice of either value.
@@ -685,7 +770,7 @@ type substobj = so0
     Here we create the boolean type, having a choice between two unit
     values.
 
-- [type] SO0
+- [class] SO0 \<SUBSTOBJ\>
 
     The Initial Object. This is sometimes known as the
     [VOID](https://en.wikipedia.org/wiki/Void_type) type.
@@ -703,7 +788,7 @@ type substobj = so0
     `lisp
     `
 
-- [type] SO1
+- [class] SO1 \<SUBSTOBJ\>
 
     The Terminal Object. This is sometimes referred to as the
     [Unit](https://en.wikipedia.org/wiki/Unit_type) type.
@@ -756,7 +841,7 @@ to the GEB-DOCS/DOCS:@OPEN-TYPE that allows for user extension.
 
     The morphisms of the SUBSTMORPH category
 
-- [type] <SUBSTMORPH>
+- [class] <SUBSTMORPH> DIRECT-POINTWISE-MIXIN META-MIXIN CAT-MORPH
 
     the class type corresponding to SUBSTMORPH. See GEB-DOCS/DOCS:@OPEN-CLOSED
 
@@ -783,7 +868,7 @@ morphism to the layout specified by the given SUBSTOBJ. Thus
 we can view this as automatically lifting a SUBSTOBJ into a
 SUBSTMORPH
 
-- [type] COMP
+- [class] COMP \<SUBSTMORPH\>
 
     The composition morphism. Takes two CAT-MORPH values that get
     applied in standard composition order.
@@ -829,7 +914,7 @@ SUBSTMORPH
     ```
 
 
-- [type] CASE
+- [class] CASE \<SUBSTMORPH\>
 
     Eliminates coproducts. Namely Takes two CAT-MORPH values, one
     gets applied on the left coproduct while the other gets applied on the
@@ -860,7 +945,7 @@ SUBSTMORPH
     MCASE to denote a morphism saying. IF the input is of the shape SO1,
     then give us True, otherwise flip the value of the boolean coming in.
 
-- [type] INIT
+- [class] INIT \<SUBSTMORPH\>
 
     The INITIAL Morphism, takes any CAT-OBJ and
     creates a moprhism from SO0 (also known as void) to the object given.
@@ -883,7 +968,7 @@ SUBSTMORPH
     
     In this example we are creating a unit value out of void.
 
-- [type] TERMINAL
+- [class] TERMINAL \<SUBSTMORPH\>
 
     The TERMINAL morphism, Takes any CAT-OBJ and creates a
     morphism from that object to SO1 (also known as unit).
@@ -919,7 +1004,7 @@ SUBSTMORPH
     
     The fourth example is taking a GEB-BOOL:BOOL and returning GEB-BOOL:TRUE.
 
-- [type] PAIR
+- [class] PAIR \<SUBSTMORPH\>
 
     Introduces products. Namely Takes two CAT-MORPH values. When
     the PAIR morphism is applied on data, these two CAT-MORPH's are
@@ -948,11 +1033,11 @@ SUBSTMORPH
     projects back the left field SO1 as the first value of the pair and
     projects back the GEB-BOOL:BOOL field as the second values.
 
-- [type] DISTRIBUTE
+- [class] DISTRIBUTE \<SUBSTMORPH\>
 
     The distributive law
 
-- [type] INJECT-LEFT
+- [class] INJECT-LEFT \<SUBSTMORPH\>
 
     The left injection morphism. Takes two CAT-OBJ values. It is
     the dual of INJECT-RIGHT
@@ -984,7 +1069,7 @@ SUBSTMORPH
     morphism saying. `IF` the input is of the shape SO1, then give us True,
     otherwise flip the value of the boolean coming in.
 
-- [type] INJECT-RIGHT
+- [class] INJECT-RIGHT \<SUBSTMORPH\>
 
     The right injection morphism. Takes two CAT-OBJ values. It is
     the dual of INJECT-LEFT
@@ -1016,7 +1101,7 @@ SUBSTMORPH
     MCASE to denote a morphism saying. IF the input is of the shape SO1,
     then give us True, otherwise flip the value of the boolean coming in.
 
-- [type] PROJECT-LEFT
+- [class] PROJECT-LEFT \<SUBSTMORPH\>
 
     The LEFT PROJECTION. Takes two
     CAT-MORPH values. When the LEFT PROJECTION morphism is then applied, it grabs the left value of a product,
@@ -1044,7 +1129,7 @@ SUBSTMORPH
     
     (GEB-BOOL:BOOL × SO1 × GEB-BOOL:BOOL)
 
-- [type] PROJECT-RIGHT
+- [class] PROJECT-RIGHT \<SUBSTMORPH\>
 
     The RIGHT PROJECTION. Takes two
     CAT-MORPH values. When the RIGHT PROJECTION morphism is then applied, it grabs the right value of a product,
@@ -1073,7 +1158,7 @@ SUBSTMORPH
     
     (GEB-BOOL:BOOL × SO1 × GEB-BOOL:BOOL)
 
-- [type] FUNCTOR
+- [class] FUNCTOR \<SUBSTMORPH\>
 
 The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH
 
@@ -1128,6 +1213,47 @@ The @GEB-ACCESSORS specific to @GEB-SUBSTMORPH
 - [method] MCADR (PROJECT-RIGHT PROJECT-RIGHT)
 
     Right projection (product elimination)
+
+#### Realized Subst Objs
+
+This section covers the REALIZED-OBJECT type. This
+represents a realized SUBSTOBJ term.
+
+The REALIZED-OBJECT is not a real constructor but rather a sum
+type for the following type
+
+```lisp
+(deftype realized-object () `(or left right list so1 so0))
+```
+
+In ML we would have written something like
+
+```haskell
+type realized-object = so0
+                     | so1
+                     | list
+                     | left
+                     | right
+```
+
+
+- [type] REALIZED-OBJECT
+
+    A realized object that can be sent into.
+    
+    Lists represent PROD in the <SUBSTOBJ> category
+    
+    LEFT and RIGHT represents realized values for COPROD
+    
+    Lastly SO1 and SO0 represent the proper class
+
+- [class] LEFT DIRECT-POINTWISE-MIXIN
+
+- [class] RIGHT DIRECT-POINTWISE-MIXIN
+
+- [function] LEFT OBJ
+
+- [function] RIGHT OBJ
 
 ### Accessors
 
@@ -1188,6 +1314,11 @@ likely to be used. They may even augment existing classes.
     the then branch of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
+- [generic-function] CODE OBJ
+
+    the code of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
 ### Constructors
 
 ###### \[in package GEB.SPEC\]
@@ -1237,6 +1368,68 @@ More Ergonomic API variants for *SO0* and *SO1*
 ### API
 
 Various forms and structures built on-top of @GEB-CATEGORIES
+
+- [method] GAPPLY (MORPH \<SUBSTMORPH\>) OBJECT
+
+    My main documentation can be found on GAPPLY
+    
+    I am the GAPPLY for <SBUSTMORPH>, the
+    OBJECT that I expect is of type REALIZED-OBJECT. See the
+    documentation for REALIZED-OBJECT for the forms it can take.
+    
+    Some examples of me are
+    
+    ```lisp
+    GEB> (gapply (comp
+                  (mcase geb-bool:true
+                         geb-bool:not)
+                  (->right so1 geb-bool:bool))
+                 (left so1))
+    (right s-1)
+    GEB> (gapply (comp
+                  (mcase geb-bool:true
+                         geb-bool:not)
+                  (->right so1 geb-bool:bool))
+                 (right so1))
+    (left s-1)
+    GEB> (gapply geb-bool:and
+                 (list (right so1)
+                       (right so1)))
+    (right s-1)
+    GEB> (gapply geb-bool:and
+                 (list (left so1)
+                       (right so1)))
+    (left s-1)
+    GEB> (gapply geb-bool:and
+                 (list (right so1)
+                       (left so1)))
+    (left s-1)
+    GEB> (gapply geb-bool:and
+                 (list (left so1)
+                       (left so1)))
+    (left s-1)
+    ```
+
+
+- [method] GAPPLY (MORPH OPAQUE-MORPH) OBJECT
+
+    My main documentation can be found on GAPPLY
+    
+    I am the GAPPLY for a generic OPAQUE-MOPRH
+    I simply dispatch GAPPLY on my interior code
+    `lisp
+    GEB> (gapply (comp geb-list:*car* geb-list:*cons*)
+                 (list (right geb-bool:true-obj) (left geb-list:*nil*)))
+    (right GEB-BOOL:TRUE)
+    `
+
+- [method] GAPPLY (MORPH OPAQUE) OBJECT
+
+    My main documentation can be found on GAPPLY
+    
+    I am the GAPPLY for a generic OPAQUE I
+    simply dispatch GAPPLY on my interior code, which
+    is likely just an object
 
 #### Booleans
 
@@ -1290,19 +1483,67 @@ The functions given work on this.
 
 - [symbol-macro] OR
 
+#### Lists
+
+###### \[in package GEB-LIST\]
+Here we define out the idea of a List. It comes naturally from the
+concept of coproducts. Since we lack polymorphism this list is
+concrete over [GEB-BOOL:@GEB-BOOL][section] In ML syntax it looks like
+
+```haskell
+data List = Nil | Cons Bool List
+```
+
+We likewise define it with coproducts, with the recursive type being opaque
+
+```lisp
+(defparameter *nil* (so1))
+
+(defparameter *cons-type* (reference 'cons))
+
+(defparameter *canonical-cons-type*
+  (opaque 'cons
+          (prod geb-bool:bool *cons-type*)))
+
+(defparameter *list*
+  (coprod *nil* *cons-type*))
+```
+
+The functions given work on this.
+
+- [variable] *NIL* NIL
+
+- [variable] *CONS-TYPE* CONS
+
+- [variable] *LIST* LIST
+
+- [variable] *CAR* CAR
+
+- [variable] *CONS* CONS-Μ
+
+- [variable] *CDR* CDR
+
+- [symbol-macro] CONS->LIST
+
+- [symbol-macro] NIL->LIST
+
+- [variable] *CANONICAL-CONS-TYPE* CONS
+
 #### Translation Functions
 
 ###### \[in package GEB.TRANS\]
 These cover various conversions from @GEB-SUBSTMORPH and @GEB-SUBSTMU
 into other categorical data structures.
 
-- [generic-function] TO-POLY MORPHISM
+- [method] TO-POLY (OBJ \<SUBSTOBJ\>)
 
-    Turns a @GEB-SUBSTMORPH into a POLY:POLY
+- [method] TO-POLY (OBJ \<SUBSTMORPH\>)
 
-- [function] TO-CIRCUIT OBJ NAME
+- [method] TO-CIRCUIT (OBJ \<SUBSTMORPH\>) NAME
 
     Turns a @GEB-SUBSTMORPH to a Vamp-IR Term
+
+- [method] TO-BITC (OBJ \<SUBSTMORPH\>)
 
 #### Utility
 
@@ -1341,7 +1582,7 @@ Various utility functions ontop of @GEB-CATEGORIES
     (const f x) : a → b
     ```
     
-    Further, If the input `F` is an ALIAS, then we wrap the output
+    Further, If the input `F` has an ALIAS, then we wrap the output
     in a new alias to denote it's a constant version of that value.
     
     Example:
@@ -1406,6 +1647,23 @@ Various utility functions ontop of @GEB-CATEGORIES
     In category terms, `a → c^b` is isomorphic to `a → b → c`
 
 
+- [function] COPROD-MOR F G
+
+    Given f : A  → B and g : C  → D gives appropriate morphism between
+    COPROD objects f x g : A + B  → C + D via the unversal property.
+    That is, the morphism part of the coproduct functor Geb x Geb → Geb
+
+- [function] PROD-MOR F G
+
+    Given f : A  → B and g : C  → D gives appropriate morphism between
+    PROD objects f x g : A x B  → C x D via the unversal property.
+    This is the morphism part of the product functor Geb x Geb → Geb
+
+- [function] UNCURRY Y Z F
+
+    Given a morphism f : x → z^y and explicitly given y and z variables
+    produces an uncurried version f' : x × y → z of said morphism
+
 - [generic-function] TEXT-NAME MORPH
 
     Gets the name of the moprhism
@@ -1427,6 +1685,73 @@ with GEB:
 => 10
 ```
 
+
+## Extension Sets for Categories
+
+###### \[in package GEB.EXTENSION.SPEC\]
+This package contains many extensions one may see over the codebase.
+
+Each extension adds an unique feature to the categories they are
+extending. To learn more, read about the individual extension you are
+interested in.
+
+Common Sub expressions represent repeat logic that can be found
+throughout any piece of code
+
+- [class] COMMON-SUB-EXPRESSION DIRECT-POINTWISE-MIXIN META-MIXIN CAT-MORPH
+
+    I represent common sub-expressions found throughout the code.
+    
+    I implement a few categorical extensions. I am a valid
+    CAT-MORPH along with fulling the interface for the
+    GEB.POLY.SPEC:<POLY> category.
+    
+    The name should come from an algorithm that automatically fines common
+    sub-expressions and places the appropriate names.
+
+- [function] MAKE-COMMON-SUB-EXPRESSION &KEY OBJ NAME
+
+The Opaque extension lets users write categorical objects and
+morphisms where their implementation hide the specifics of what
+types they are operating over
+
+- [class] OPAQUE CAT-OBJ META-MIXIN
+
+    I represent an object where we want to hide the implementation
+    details of what kind of GEB:SUBSTOBJ I am.
+
+- [class] REFERENCE CAT-OBJ CAT-MORPH DIRECT-POINTWISE-MIXIN META-MIXIN
+
+    I represent a reference to an OPAQUE identifier.
+
+- [class] OPAQUE-MORPH CAT-MORPH META-MIXIN
+
+    This represents a morphsim where we want to deal with an
+    OPAQUE that we know intimate details of
+
+- [method] CODE (OPAQUE-MORPH OPAQUE-MORPH)
+
+    the code that represents the underlying morphsism
+
+- [method] DOM (OPAQUE-MORPH OPAQUE-MORPH)
+
+    The dom of the opaque morph
+
+- [method] CODOM (OPAQUE-MORPH OPAQUE-MORPH)
+
+    The codom of the opaque morph
+
+- [method] CODE (OPAQUE OPAQUE)
+
+- [method] NAME (OPAQUE OPAQUE)
+
+- [method] NAME (REFERENCE REFERENCE)
+
+- [function] REFERENCE NAME
+
+- [function] OPAQUE-MORPH CODE &KEY (DOM (DOM CODE)) (CODOM (CODOM CODE))
+
+- [function] OPAQUE NAME CODE
 
 ## The GEB GUI
 
@@ -1455,7 +1780,7 @@ layout of the term, showing what kind of data
 #### Aiding the Visualizer
 
 One can aid the visualization process a bit, this can be done by
-simply playing GEB:ALIAS around the object, this will place it
+simply placing ALIAS around the object, this will place it
 in a box with a name to better identify it in the graphing procedure.
 
 ### The GEB Graphizer
@@ -1520,6 +1845,12 @@ The core types that facilittate the functionality
     to know if we are the left or the right or the nth child of a
     particular node. This information is tracked, by storing the object
     that goes to it in the meta table and recovering the note.
+
+- [class] NODE-NOTE
+
+- [class] SQUASH-NOTE
+
+    This note should be squashed into another note and or node.
 
 - [function] MAKE-NOTE &REST INITARGS &KEY FROM NOTE VALUE &ALLOW-OTHER-KEYS
 
@@ -1589,6 +1920,248 @@ ways that are intuitive to the user
     These simplifications should not change the semantics of the graph,
     only display it in a more bearable way
 
+## Bits (Boolean Circuit) Specification
+
+###### \[in package GEB.BITC\]
+This covers a GEB view of Boolean Circuits. In particular this type will
+be used in translating GEB's view of Boolean Circuits into Vampir
+
+### Bits Types
+
+###### \[in package GEB.BITC.SPEC\]
+This section covers the types of things one can find in the BITS
+constructors
+
+- [type] BITC
+
+- [class] <BITC> DIRECT-POINTWISE-MIXIN CAT-MORPH
+
+- [class] COMPOSE \<BITC\>
+
+    composes the MCAR and the MCADR
+
+- [class] FORK \<BITC\>
+
+    Copies the MCAR of length n onto length 2\*n by copying its
+    inputs (MCAR).
+
+- [class] PARALLEL \<BITC\>
+
+    ```lisp
+    (parallel x y)
+    ```
+    
+    constructs a PARALLEL term where the MCAR is `x` and the
+    MCADR is `y`,
+    
+    where if
+    
+    ```
+    x : a → b,          y : c → d
+    -------------------------------
+    (parallel x y) : a + c → b + d
+    ```
+    
+    then the PARALLEL will return a function from a and c to b
+    and d where the MCAR and MCADR run on subvectors of the input.
+
+- [class] SWAP \<BITC\>
+
+    ```lisp
+    (swap n m)
+    ```
+    
+    binds the MCAR to n and MCADR to m, where if the input
+    vector is of length `n + m`, then it swaps the bits, algebraically we
+    view it as
+    
+    ```lisp
+    (swap n m) : #*b₁...bₙbₙ₊₁...bₙ₊ₘ → #*bₙ₊₁...bₘ₊ₙb₁...bₙ
+    ```
+
+
+- [class] ONE \<BITC\>
+
+    ONE represents the map from 0 onto 1 producing a vector
+    with only 1 in it.
+
+- [class] ZERO \<BITC\>
+
+    ZERO map from 0 onto 1 producing a vector with only 0 in
+    it.
+
+- [class] IDENT \<BITC\>
+
+    IDENT represents the identity
+
+- [class] DROP \<BITC\>
+
+    DROP represents the unique morphism from n to 0.
+
+- [class] BRANCH \<BITC\>
+
+    ```lisp
+    (branch x y)
+    ```
+    
+    constructs a BRANCH term where the MCAR is `x` and the
+    MCADR is `y`,
+    
+    where if
+    
+    ```
+    x : a → b,          y : a → b
+    -------------------------------
+    (branch x y) : 1+a → b
+    ```
+    
+    then the BRANCH will return a function on the type `1 + a`, where the
+    1 represents a bit to branch on. If the first bit is `0`, then the
+    MCAR is ran, however if the bit is `1`, then the MCADR is ran.
+
+### Bits (Boolean Circuit) Constructors
+
+###### \[in package GEB.BITC.SPEC\]
+Every accessor for each of the CLASS's found here are from @GEB-ACCESSORS
+
+- [function] COMPOSE MCAR MCADR &REST ARGS
+
+    Creates a multiway constructor for COMPOSE
+
+- [function] FORK MCAR
+
+    FORK ARG1
+
+- [function] PARALLEL MCAR MCADR &REST ARGS
+
+    Creates a multiway constructor for PARALLEL
+
+- [function] SWAP MCAR MCADR
+
+    swap ARG1 and ARG2
+
+- [symbol-macro] ONE
+
+- [symbol-macro] ZERO
+
+- [function] IDENT MCAR
+
+    ident ARG1
+
+- [function] DROP MCAR
+
+    drop ARG1
+
+- [function] BRANCH MCAR MCADR
+
+    branch with ARG1 or ARG2
+
+### Bits (Boolean Circuit) API
+
+###### \[in package GEB.BITC.MAIN\]
+This covers the Bits (Boolean Circuit) API
+
+- [method] GAPPLY (MORPHISM \<BITC\>) (OBJECT BIT-VECTOR)
+
+    My My main documentation can be found on GAPPLY
+    
+    I am the GAPPLY for <BITC>, the
+    OBJECT that I expect is of type NUMBER. GAPPLY
+    reduces down to ordinary common lisp expressions rather straight
+    forwardly
+    
+    ```lisp
+    ;; figure out the number of bits the function takes
+    GEB-TEST> (dom (to-bitc geb-bool:and))
+    2 (2 bits, #x2, #o2, #b10)
+    GEB-TEST> (gapply (to-bitc geb-bool:and) #*11)
+    #*1
+    GEB-TEST> (gapply (to-bitc geb-bool:and) #*10)
+    #*0
+    GEB-TEST> (gapply (to-bitc geb-bool:and) #*01)
+    #*0
+    GEB-TEST> (gapply (to-bitc geb-bool:and) #*00)
+    #*0
+    ```
+
+
+- [method] GAPPLY (MORPHISM \<BITC\>) (OBJECT LIST)
+
+    I am a helper gapply function, where the second argument for
+    <BITC> is a list. See the docs for the BIT-VECTOR version for
+    the proper one. We do allow sending in a list like so
+    
+    ```lisp
+    ;; figure out the number of bits the function takes
+    GEB-TEST> (dom (to-bitc geb-bool:and))
+    2 (2 bits, #x2, #o2, #b10)
+    GEB-TEST> (gapply (to-bitc geb-bool:and) (list 1 1))
+    #*1
+    GEB-TEST> (gapply (to-bitc geb-bool:and) (list 1 0))
+    #*0
+    GEB-TEST> (gapply (to-bitc geb-bool:and) (list 0 1))
+    #*0
+    GEB-TEST> (gapply (to-bitc geb-bool:and) (list 0 0))
+    #*0
+    ```
+
+
+- [method] DOM (X \<BITC\>)
+
+    Gives the length of the bit vector the <BITC> moprhism takes
+
+- [method] CODOM (X \<BITC\>)
+
+    Gives the length of the bit vector the <BITC> morphism returns
+
+### Bits (Boolean Circuit) Transformations
+
+###### \[in package GEB.BITC.TRANS\]
+This covers transformation functions from
+
+- [method] TO-CIRCUIT (MORPHISM \<BITC\>) NAME
+
+    Turns a BITC term into a Vamp-IR Gate with the given name
+
+- [method] TO-VAMPIR (OBJ COMPOSE) VALUES CONSTRAINTS
+
+- [method] TO-VAMPIR (OBJ FORK) VALUES CONSTRAINTS
+
+    Copy input n intput bits into 2\*n output bits
+
+- [method] TO-VAMPIR (OBJ PARALLEL) VALUES CONSTRAINTS
+
+    Take n + m bits, execute car the n bits and cadr on the m bits and
+    concat the results from car and cadr
+
+- [method] TO-VAMPIR (OBJ SWAP) VALUES CONSTRAINTS
+
+    Turn n + m bits into m + n bits by swapping
+
+- [method] TO-VAMPIR (OBJ ONE) VALUES CONSTRAINTS
+
+    Produce a bitvector of length 1 containing 1
+
+- [method] TO-VAMPIR (OBJ ZERO) VALUES CONSTRAINTS
+
+    Produce a bitvector of length 1 containing 0
+
+- [method] TO-VAMPIR (OBJ IDENT) VALUES CONSTRAINTS
+
+    turn n bits into n bits by doing nothing
+
+- [method] TO-VAMPIR (OBJ DROP) VALUES CONSTRAINTS
+
+    turn n bits into an empty bitvector
+
+- [method] TO-VAMPIR (OBJ BRANCH) VALUES CONSTRAINTS
+
+    Look at the first bit.
+    
+    If its 0, run f on the remaining bits.
+    
+    If its 1, run g on the remaining bits.
+
 ## Polynomial Specification
 
 ###### \[in package GEB.POLY\]
@@ -1603,7 +2176,7 @@ constructors
 
 - [type] POLY
 
-- [type] <POLY>
+- [class] <POLY> DIRECT-POINTWISE-MIXIN
 
 - [type] IDENT
 
@@ -1630,6 +2203,52 @@ constructors
 
     If the MCAR argument is strictly less than the MCADR then the
     THEN branch is taken, otherwise the ELSE branch is taken.
+
+### Polynomial API
+
+###### \[in package GEB.POLY.MAIN\]
+This covers the polynomial API
+
+- [method] GAPPLY (MORPHISM \<POLY\>) OBJECT
+
+    My main documentation can be found on GAPPLY
+    
+    I am the GAPPLY for POLY:<POLY>, the
+    OBJECT that I expect is of type NUMBER. GAPPLY reduces down to
+    ordinary common lisp expressions rather straight forwardly
+    
+    Some examples of me are
+    
+    ```lisp
+    (in-package :geb.poly)
+    
+    POLY> (gapply (if-zero (- ident ident 1) 10 ident) 5)
+    5 (3 bits, #x5, #o5, #b101)
+    
+    POLY> (gapply (if-zero (- ident ident) 10 ident) 5)
+    10 (4 bits, #xA, #o12, #b1010)
+    
+    POLY> (gapply (- (* 2 ident ident) (* ident ident)) 5)
+    25 (5 bits, #x19, #o31, #b11001)
+    ```
+
+
+- [method] GAPPLY (MORPHISM INTEGER) OBJECT
+
+    My main documentation can be found on GAPPLY
+    
+    I am the GAPPLY for INTEGERs, the
+    OBJECT that I expect is of type NUMBER. I simply return myself.
+    
+    Some examples of me are
+    
+    ```lisp
+    (in-package :geb.poly)
+    
+    POLY> (gapply 10 5)
+    10 (4 bits, #xA, #o12, #b1010)
+    ```
+
 
 ### Polynomial Constructors
 
@@ -1664,7 +2283,8 @@ Every accessor for each of the CLASS's found here are from @GEB-ACCESSORS
 
 - [function] IF-ZERO PRED THEN ELSE
 
-    checks if PREDICATE is zero then take the THEN branch otherwise the ELSE branch
+    checks if PREDICATE is zero then take the THEN branch otherwise
+    the ELSE branch
 
 - [function] IF-LT MCAR MCADR THEN ELSE
 
@@ -1675,138 +2295,774 @@ Every accessor for each of the CLASS's found here are from @GEB-ACCESSORS
 ###### \[in package GEB.POLY.TRANS\]
 This covers transformation functions from
 
-- [generic-function] TO-VAMPIR MORPHISM VALUE
-
-    Turns a POLY term into a Vamp-IR term with a given value
-
-- [function] TO-CIRCUIT MORPHISM NAME
+- [method] TO-CIRCUIT (MORPHISM \<POLY\>) NAME
 
     Turns a POLY term into a Vamp-IR Gate with the given name
+
+- [method] TO-VAMPIR (OBJ INTEGER) VALUE LET-VARS
+
+    Numbers act like a constant function, ignoring input
+
+- [method] TO-VAMPIR (OBJ IDENT) VALUE LET-VARS
+
+    Identity acts as the identity function
+
+- [method] TO-VAMPIR (OBJ +) VALUE LET-VARS
+
+    Propagates the value and adds them
+
+- [method] TO-VAMPIR (OBJ \*) VALUE LET-VARS
+
+    Propagates the value and times them
+
+- [method] TO-VAMPIR (OBJ -) VALUE LET-VARS
+
+    Propagates the value and subtracts them
+
+- [method] TO-VAMPIR (OBJ /) VALUE LET-VARS
+
+- [method] TO-VAMPIR (OBJ COMPOSE) VALUE LET-VARS
+
+- [method] TO-VAMPIR (OBJ IF-ZERO) VALUE LET-VARS
+
+    The PREDICATE that comes in must be 1 or 0 for the formula to work out.
+
+- [method] TO-VAMPIR (OBJ IF-LT) VALUE LET-VARS
+
+- [method] TO-VAMPIR (OBJ MOD) VALUE LET-VARS
 
 ## The Simply Typed Lambda Calculus model
 
 ###### \[in package GEB.LAMBDA\]
 This covers GEB's view on simply typed lambda calculus
 
+This serves as a useful frontend for those wishing to write a compiler
+to GEB and do not wish to target the categorical model.
+
+If one is targeting their compiler to the frontend, then the following
+code should be useful for you.
+
+```lisp
+(in-package :geb.lambda.main)
+
+MAIN>
+(to-circuit
+ (lamb (list (coprod so1 so1))
+              (index 0))
+ :id)
+(def id x1 = {
+   (x1)
+ };)
+
+MAIN>
+(to-circuit
+ (lamb (list (coprod so1 so1))
+              (case-on (index 0)
+                              (lamb (list so1)
+                                           (right so1 (unit)))
+                              (lamb (list so1)
+                                           (left so1 (unit)))))
+ :not)
+(def not x1 = {
+   (((1 - x1) * 1) + (x1 * 0), ((1 - x1) * 1) + (x1 * 0))
+ };)
+
+MAIN> (to-circuit (lamb (list geb-bool:bool)
+                        (left so1 (right so1 (index 0)))) :foo)
+(def foo x1 = {
+   (0, 1, x1)
+ };)
+```
+
+For testing purposes, it may be useful to go to the `BITC` backend and
+run our interpreter
+
+```lisp
+MAIN>
+(gapply (to-bitc
+         (lamb (list (coprod so1 so1))
+               (case-on (index 0)
+                        (lamb (list so1)
+                              (right so1 (unit)))
+                        (lamb (list so1)
+                              (left so1 (unit))))))
+        #*1)
+#*00
+MAIN>
+(gapply (to-bitc
+         (lamb (list (coprod so1 so1))
+               (case-on (index 0)
+                        (lamb (list so1)
+                              (right so1 (unit)))
+                        (lamb (list so1)
+                              (left so1 (unit))))))
+        #*0)
+#*11
+```
+
+
 ### Lambda Specification
 
 ###### \[in package GEB.LAMBDA.SPEC\]
 This covers the various the abstract data type that is the simply
-  typed lambda calculus within GEB.
-
-The specification follows from the sum type declaration
-
-```lisp
-(defunion stlc
-  (absurd (value t))
-  unit
-  (left (value t))
-  (right (value t))
-  (case-on (lty geb.spec:substmorph)
-           (rty geb.spec:substmorph)
-           (cod geb.spec:substmorph)
-           (on t) (left t) (right t))
-  (pair (lty geb.spec:substmorph) (rty geb.spec:substmorph) (left t) (right t))
-  (fst  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (snd  (lty geb.spec:substmorph) (rty geb.spec:substmorph) (value t))
-  (lamb (vty geb.spec:substmorph) (tty geb.spec:substmorph) (value t))
-  (app  (dom geb.spec:substmorph) (cod geb.spec:substmorph) (func t) (obj t))
-  (index (index fixnum)))
-```
-
-
-- [type] <STLC>
+typed lambda calculus within GEB. The class presents untyped STLC terms.
 
 - [type] STLC
 
-- [type] ABSURD
+    Type of untyped terms of STLC. Each class of a term has a slot for a type,
+    which can be filled by auxillary functions or by user. Types are
+    represented as SUBSTOBJ.
 
-- [function] ABSURD-VALUE INSTANCE
+- [class] <STLC> DIRECT-POINTWISE-MIXIN META-MIXIN CAT-OBJ
 
-- [type] UNIT
+    Class of untyped terms of simply typed lambda claculus. Given our
+    presentation, we look at the latter as a type theory spanned by empty,
+    unit types as well as coproduct, product, and function types.
 
-- [type] PAIR
+- [class] ABSURD \<STLC\>
 
-- [function] PAIR-LTY INSTANCE
+    The ABSURD term provides an element of an arbitrary type
+    given a term of the empty type, denoted by SO0.
+    The formal grammar of ABSURD is
+    
+    ```lisp
+    (absurd tcod term)
+    ```
+    
+    where we possibly can include type information by
+    
+    ```lisp
+    (absurd tcod term :ttype ttype)
+    ```
+    
+    The intended semantics are: TCOD is a type whose term we want to
+    get (and hence a SUBSTOBJ) and TERM is a term
+    of the empty type (and hence an STLC.
+    
+    This corresponds to the elimination rule of the empty type. Namely,
+    given
+    $$\Gamma \vdash \text{tcod : Type}$$ and
+    $$\Gamma \vdash \text{term : so0}$$ one deduces
+    $$\Gamma \vdash \text{(absurd tcod term) : tcod}$$
 
-- [function] PAIR-RTY INSTANCE
+- [class] UNIT \<STLC\>
 
-- [function] PAIR-LEFT INSTANCE
+    The unique term of the unit type, the latter represented by
+    SO1. The formal grammar of UNIT is
+    
+    ```lisp
+    (unit)
+    ```
+    
+    where we can optionally include type information by
+    
+    ```lisp
+    (unit :ttype ttype)
+    ```
+    
+    Clearly the type of UNIT is SO1 but here
+    we provide all terms untyped.
+    
+    This grammar corresponds to the introduction rule of the unit type. Namely
+    $$\Gamma \dashv \text{(unit) : so1}$$
 
-- [function] PAIR-RIGHT INSTANCE
+- [class] LEFT \<STLC\>
 
-- [type] LEFT
+    Term of a coproduct type gotten by injecting into the left type of the coproduct. The formal grammar of
+    LEFT is
+    
+    ```lisp
+    (left rty term)
+    ```
+    
+    where we can include optional type information by
+    
+    ```lisp
+    (left rty term :ttype ttype)
+    ```
+    
+    The indended semantics are as follows: RTY should
+    be a type (and hence a SUBSTOBJ) and specify the
+    right part of the coproduct of the type TTYPE of
+    the entire term. The term (and hence an STLC) we are injecting
+    is TERM.
+    
+    This corresponds to the introduction rule of the coproduct type. Namely, given
+    $$\Gamma \dashv \text{(ttype term) : Type}$$ and
+    $$\Gamma \dashv \text{rty : Type}$$
+    with
+    $$\Gamma \dashv \text{term : (ttype term)}$$ we deduce
+    $$\Gamma \dashv \text{(left rty term) : (coprod (ttype term) rty)}$$
 
-- [function] LEFT-VALUE INSTANCE
+- [class] RIGHT \<STLC\>
 
-- [type] RIGHT
+    Term of a coproduct type gotten by injecting into the right type of
+    the coproduct. The formal grammar of RIGHT is
+    
+    ```lisp
+    (right lty term)
+    ```
+    
+    where we can include optional type information by
+    
+    ```lisp
+    (right lty term :ttype ttype)
+    ```
+    
+    The indended semantics are as follows: LTY should be a type (and
+    hence a SUBSTOBJ) and specify the left part of
+    the coproduct of the type TTYPE of the entire term. The term (and
+    hence an STLC) we are injecting is TERM.
+    
+    This corresponds to the introduction rule of the coproduct type. Namely, given
+    $$\Gamma \dashv \text{(ttype term) : Type}$$ and
+    $$\Gamma \dashv \text{lty : Type}$$
+    with
+    $$\Gamma \dashv \text{term : (ttype term)}$$ we deduce
+    $$\Gamma \dashv \text{(right lty term) : (coprod lty (ttype term))}$$
 
-- [function] RIGHT-VALUE INSTANCE
+- [class] CASE-ON \<STLC\>
 
-- [type] CASE-ON
+    A term of an arbutrary type provided by casing on a coproduct term. The
+    formal grammar of CASE-ON is
+    
+    ```lisp
+    (case-on on ltm rtm)
+    ```
+    
+    where we can possibly include type information by
+    
+    ```lisp
+    (case-on on ltm rtm :ttype ttype)
+    ```
+    
+    The intended semantics are as follows: ON is a term (and hence an
+    STLC) of a coproduct type, and LTM and RTM terms (hence
+    also STLC) of the same type in the context of - appropriately
+    - (mcar (ttype on)) and (mcadr (ttype on)).
+    
+    This corresponds to the elimination rule of the coprodut type. Namely, given
+    $$\Gamma \vdash \text{on : (coprod (mcar (ttype on)) (mcadr (ttype on)))}$$
+    and
+    $$\text{(mcar (ttype on))} , \Gamma \vdash \text{ltm : (ttype ltm)}$$
+    , $$\text{(mcadr (ttype on))} , \Gamma \vdash \text{rtm : (ttype ltm)}$$
+    we get
+    $$\Gamma \vdash \text{(case-on on ltm rtm) : (ttype ltm)}$$
+    Note that in practice we append contexts on the left as computation of
+    INDEX is done from the left. Otherwise, the rules are the same as in
+    usual type theory if context was read from right to left.
 
-- [function] CASE-ON-LTY INSTANCE
+- [class] PAIR \<STLC\>
 
-- [function] CASE-ON-RTY INSTANCE
+    A term of the product type gotten by pairing a terms of a left and right
+    parts of the product. The formal grammar of PAIR is
+    
+    ```lisp
+    (pair ltm rtm)
+    ```
+    
+    where we can possibly include type information by
+    
+    ```lisp
+    (pair ltm rtm :ttype ttype)
+    ```
+    
+    The intended semantics are as follows: LTM is a term (and hence an
+    STLC) of a left part of the product type whose terms we are
+    producing. RTM is a term (hence also STLC)of the right part
+    of the product.
+    
+    The grammar corresponds to the introdcution rule of the pair type. Given
+    $$\Gamma \vdash \text{ltm : (mcar (ttype (pair ltm rtm)))}$$ and
+    $$\Gamma \vdash \text{rtm : (mcadr (ttype (pair ltm rtm)))}$$ we have
+    $$\Gamma \vdash \text{(pair ltm rtm) : (ttype (pair ltm rtm))}$$
 
-- [function] CASE-ON-COD INSTANCE
+- [class] FST \<STLC\>
 
-- [function] CASE-ON-ON INSTANCE
+    The first projection of a term of a product type.
+    The formal grammar of FST is:
+    
+    ```lisp
+    (fst term)
+    ```
+    
+    where we can possibly include type information by
+    
+    ```lisp
+    (fst term :ttype ttype)
+    ```
+    
+    The indended semantics are as follows: TERM is a
+    term (and hence an STLC) of a product type, to whose left part
+    we are projecting to.
+    
+    This corresponds to the first projection function gotten by induction
+    on a term of a product type.
 
-- [function] CASE-ON-LEFT INSTANCE
+- [class] SND \<STLC\>
 
-- [function] CASE-ON-RIGHT INSTANCE
+    The second projection of a term of a product type.
+    The formal grammar of SND is:
+    
+    ```lisp
+    (snd term)
+    ```
+    
+    where we can possibly include type information by
+    
+    ```lisp
+    (snd term :ttype ttype)
+    ```
+    
+    The indended semantics are as follows: TERM is a
+    term (and hence an STLC) of a product type, to whose right
+    part we are projecting to.
+    
+    This corresponds to the second projection function gotten by induction
+    on a term of a product type.
 
-- [type] FST
+- [class] LAMB \<STLC\>
 
-- [function] FST-LTY INSTANCE
+    A term of a function type gotten by providing a term in the codomain
+    of the function type by assuming one is given variables in the
+    specified list of types. LAMB takes in the TDOM
+    accessor a list of types - and hence of SUBSTOBJ - and in the
+    TERM a term - and hence an STLC. The formal grammar
+    of LAMB is:
+    
+    ```lisp
+    (lamb tdom term)
+    ```
+    
+    where we can possibly include type information by
+    
+    ```lisp
+    (lamb tdom term :ttype ttype)
+    ```
+    
+    The intended semnatics are: TDOM is a list of types (and
+    hence a list of SUBSTOBJ) whose iterative product of
+    components form the domain of the function type. TERM
+    is a term (and hence an STLC) of the codomain of the function type
+    gotten in the context to whom we append the list of the domains.
+    
+    For a list of length 1, corresponds to the introduction rule of the function
+    type. Namely, given
+    $$\Gamma \vdash \text{tdom : Type}$$ and
+    $$\Gamma, \text{tdom} \vdash \text{term : (ttype term)}$$ we have
+    $$\Gamma \vdash \text{(lamb tdom term) : (so-hom-obj tdom (ttype term))}$$
+    
+    For a list of length n, this coreesponds to the iterated lambda type, e.g.
+    
+    ```lisp
+    (lamb (list so1 so0) (index 0))
+    ```
+    
+    is a term of
+    
+    ```lisp
+    (so-hom-obj (prod so1 so0) so0)
+    ```
+    
+    or equivalently
+    
+    ```lisp
+    (so-hom-obj so1 (so-hom-obj so0 so0))
+    ```
+    
+    due to Geb's computational definition of the function type.
+    
+    Note that INDEX 0 in the above code is of type SO1.
+    So that after annotating the term, one gets
+    
+    ```lisp
+    LAMBDA> (ttype (term (lamb (list so1 so0)) (index 0)))
+    s-1
+    ```
+    
+    So the counting of indeces starts with the leftmost argument for
+    computational reasons. In practice, typing of LAMB corresponds with
+    taking a list of arguments provided to a lambda term, making it a context
+    in that order and then counting the index of the varibale. Type-theoretically,
+    
+    $$\Gamma \vdash \lambda \Delta (index i)$$
+    $$\Delta, \Gamma \vdash (index i)$$
+    
+    So that by the operational semantics of INDEX, the type of (index i)
+    in the above context will be the i'th element of the Delta context counted from
+    the left. Note that in practice we append contexts on the left as computation of
+    INDEX is done from the left. Otherwise, the rules are the same as in
+    usual type theory if context was read from right to left.
 
-- [function] FST-RTY INSTANCE
+- [class] APP \<STLC\>
 
-- [function] FST-VALUE INSTANCE
+    A term of an arbitrary type gotten by applying a function of an iterated
+    function type with a corresponding codomain iteratively to terms in the
+    domains. APP takes as argument for the FUN accessor
+    a function - and hence an STLC - whose function type has domain an
+    iterated GEB:PROD of [SUBSTOBJ][clas] and for the TERM
+    a list of terms - and hence of STLC - matching the types of the
+    product. The formal grammar of APP is
+    
+    ```lisp
+    (app fun term)
+    ```
+    
+    where we can possibly include type information by
+    
+    ```lisp
+    (app fun term :ttype ttype)
+    ```
+    
+    The intended semantics are as follows:
+    FUN is a term (and hence an STLC) of a coproduct
+     type - say of (so-hom-obj (ttype term) y) - and TERM is a
+    list of terms (hence also of STLC) with nth term in the list having the
+    n-th part of the function type.
+    
+    For a one-argument term list, this corresponds to the elimination rule of the
+    function type. Given
+    $$\Gamma \vdash \text{fun : (so-hom-obj (ttype term) y)}$$ and
+    $$\Gamma \vdash \text{term : (ttype term)}$$ we get
+    $$\Gamma \vdash \text{(app fun term) : y}$$
+    
+    For several arguments, this corresponds to successive function application.
+    Using currying, this corresponds to, given
+    
+    ```
+    G ⊢ (so-hom-obj (A₁ × ··· × Aₙ₋₁) Aₙ)
+    G ⊢ f : (so-hom-obj (A₁ × ··· × Aₙ₋₁)
+    G ⊢ tᵢ : Aᵢ
+    ```
+    
+    then for each `i` less than `n` gets us
+    
+    ```lisp
+    G ⊢ (app f t₁ ··· tₙ₋₁) : Aₙ
+    ```
+    
+    Note again that i'th term should correspond to the ith element of the product
+    in the codomain counted from the left.
 
-- [type] SND
+- [class] INDEX \<STLC\>
 
-- [function] SND-LTY INSTANCE
+    The variable term of an arbitrary type in a context. The formal
+    grammar of INDEX is
+    
+    ```lisp
+    (index pos)
+    ```
+    
+    where we can possibly include type information by
+    
+    ```lisp
+    (index pos :ttype ttype)
+    ```
+    
+    The intended semantics are as follows: POS is a
+    natural number indicating the position of a type in a context.
+    
+    This corresponds to the variable rule. Namely given a context
+    $$\Gamma\_1 , \ldots , \Gamma\_{pos} , \ldots , \Gamma\_k $$ we have
+    
+    $$\Gamma\_1 , \ldots , \Gamma\_k \vdash \text{(index pos) :} \Gamma\_{pos}$$
+    
+    Note that we add contexts on the left rather than on the right contra classical
+    type-theoretic notation.
 
-- [function] SND-RTY INSTANCE
+- [function] ABSURD TCOD TERM &KEY (TTYPE NIL)
 
-- [function] SND-VALUE INSTANCE
+- [function] UNIT &KEY (TTYPE NIL)
 
-- [type] LAMB
+- [function] LEFT RTY TERM &KEY (TTYPE NIL)
 
-- [function] LAMB-VTY INSTANCE
+- [function] RIGHT LTY TERM &KEY (TTYPE NIL)
 
-- [function] LAMB-TTY INSTANCE
+- [function] CASE-ON ON LTM RTM &KEY (TTYPE NIL)
 
-- [function] LAMB-VALUE INSTANCE
+- [function] PAIR LTM RTM &KEY (TTYPE NIL)
 
-- [type] APP
+- [function] FST TERM &KEY (TTYPE NIL)
 
-- [function] APP-DOM INSTANCE
+- [function] SND TERM &KEY (TTYPE NIL)
 
-- [function] APP-COD INSTANCE
+- [function] LAMB TDOM TERM &KEY (TTYPE NIL)
 
-- [function] APP-FUNC INSTANCE
+- [function] APP FUN TERM &KEY (TTYPE NIL)
 
-- [function] APP-OBJ INSTANCE
+- [function] INDEX POS &KEY (TTYPE NIL)
 
-- [type] INDEX
+Accessors of ABSURD
 
-- [function] INDEX-INDEX INSTANCE
+- [method] TCOD (ABSURD ABSURD)
 
-- [function] TYPED V TYP
+    An arbitrary type
 
-    Puts together the type declaration with the value itself for lambda terms
+- [method] TERM (ABSURD ABSURD)
 
-- [function] TYPED-STLC-TYPE INSTANCE
+    A term of the empty type
 
-- [function] TYPED-STLC-VALUE INSTANCE
+- [method] TTYPE (ABSURD ABSURD)
+
+Accessors of UNIT
+
+- [method] TTYPE (UNIT UNIT)
+
+Accessors of LEFT
+
+- [method] RTY (LEFT LEFT)
+
+    Right argument of coproduct type
+
+- [method] TERM (LEFT LEFT)
+
+    Term of the left argument of coproduct type
+
+- [method] TTYPE (LEFT LEFT)
+
+Accessors of RIGHT
+
+- [method] LTY (RIGHT RIGHT)
+
+    Left argument of coproduct type
+
+- [method] TERM (RIGHT RIGHT)
+
+    Term of the right argument of coproduct type
+
+- [method] TTYPE (RIGHT RIGHT)
+
+Accessors of CASE-ON
+
+- [method] ON (CASE-ON CASE-ON)
+
+    Term of coproduct type
+
+- [method] LTM (CASE-ON CASE-ON)
+
+    Term in context of left argument of coproduct type
+
+- [method] RTM (CASE-ON CASE-ON)
+
+    Term in context of right argument of coproduct type
+
+- [method] TTYPE (CASE-ON CASE-ON)
+
+Accessors of PAIR
+
+- [method] LTM (PAIR PAIR)
+
+    Term of left argument of the product type
+
+- [method] RTM (PAIR PAIR)
+
+    Term of right argument of the product type
+
+- [method] TTYPE (PAIR PAIR)
+
+Accessors of FST
+
+- [method] TERM (FST FST)
+
+    Term of product type
+
+- [method] TTYPE (FST FST)
+
+Accessors of SND
+
+- [method] TERM (SND SND)
+
+    Term of product type
+
+- [method] TTYPE (SND SND)
+
+Accessors of LAMB
+
+- [method] TDOM (LAMB LAMB)
+
+    Domain of the lambda term
+
+- [method] TERM (LAMB LAMB)
+
+    Term of the codomain mapped to given a variable of tdom
+
+- [method] TTYPE (LAMB LAMB)
+
+Accessors of APP
+
+- [method] FUN (APP APP)
+
+    Term of exponential type
+
+- [method] TERM (APP APP)
+
+    List of Terms of the domain
+
+- [method] TTYPE (APP APP)
+
+Accessors of INDEX
+
+- [method] POS (INDEX INDEX)
+
+    Position of type
+
+- [method] TTYPE (INDEX INDEX)
+
+- [generic-function] TCOD OBJ
+
+- [generic-function] TDOM OBJ
+
+- [generic-function] TERM OBJ
+
+- [generic-function] RTY OBJ
+
+- [generic-function] LTY OBJ
+
+- [generic-function] LTM OBJ
+
+- [generic-function] RTM OBJ
+
+- [generic-function] ON OBJ
+
+- [generic-function] FUN OBJ
+
+- [generic-function] POS OBJ
+
+- [generic-function] TTYPE OBJ
 
 ### Main functionality
 
 ###### \[in package GEB.LAMBDA.MAIN\]
 This covers the main API for the STLC module
+
+- [generic-function] ANN-TERM1 CTX TTERM
+
+    Given a list of SUBSTOBJ objects with
+    SO-HOM-OBJ occurences replaced by FUN-TYPE
+    and an STLC similarly replacing type occurences of the hom object
+    to FUN-TYPE, provides the TTYPE accessor to all
+    subterms as well as the term itself, using FUN-TYPE. Once again,
+    note  that it is important for the context and term to be giving as
+    per above description. While not always, not doing so result in an error upon
+    evaluation. As an example of a valid entry we have
+    
+    ```lisp
+     (ann-term1 (list so1 (fun-type so1 so1)) (app (index 1) (list (index 0))))
+    ```
+    
+    while
+    
+    ```lisp
+    (ann-term1 (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (index 0))))
+    ```
+    
+    produces an error trying to use HOM-COD. This warning applies to other
+    functions taking in context and terms below as well.
+    
+    Moreover, note that for terms whose typing needs addition of new context
+    we append contexts on the left rather than on the right contra usual type
+    theoretic notation for the convenience of computation. That means, e.g. that
+    asking for a type of a lambda term as below produces:
+    
+    ```lisp
+    LAMBDA> (ttype (term (ann-term1 (lambda (list so1 so0) (index 0)))))
+    s-1
+    ```
+    
+    as we count indeces from the left of the context while appending new types to
+    the context on the left as well. For more info check LAMB
+
+- [function] HOM-COD CTX F
+
+    Given a context of SUBSTOBJ with occurences of
+    SO-HOM-OBJ replaced by FUN-TYPE, and similarly
+    an STLC term of the stand-in for the hom object, produces the stand-in
+    to the codomain.
+
+- [function] INDEX-CHECK I CTX
+
+    Given an natural number I and a context, checks that the context is of
+    length at least I and then produces the Ith entry of the context counted
+    from the left starting with 0.
+
+- [function] FUN-TO-HOM T1
+
+    Given a SUBSTOBJ whose subobjects might have a
+    FUN-TYPE occurence replaces all occurences of FUN-TYPE with a
+    suitable SO-HOM-OBJ, hence giving a pure
+    SUBSTOBJ
+    
+    ```lisp
+    LAMBDA> (fun-to-hom (fun-type geb-bool:bool geb-bool:bool))
+    (× (+ GEB-BOOL:FALSE GEB-BOOL:TRUE) (+ GEB-BOOL:FALSE GEB-BOOL:TRUE))
+    ```
+
+
+- [function] ANN-TERM2 TTERM
+
+    Given an STLC term with a TTYPE accessor from
+    ANN-TERM1 - i.e. including possible FUN-TYPE
+    occurences - re-annotates the term and its subterms with actual
+    SUBSTOBJ objects.
+
+- [function] ANNOTATED-TERM CTX TERM
+
+    Given a context consisting of a list of SUBSTOBJ
+    with occurences of SO-HOM-OBJ replaced by
+    FUN-TYPE and an STLC term with similarly replaced occurences
+    of SO-HOM-OBJ, provides an STLC with all
+    subterms typed, i.e. providing the TTYPE accessor,
+    which is a pure SUBSTOBJ
+
+- [function] TYPE-OF-TERM-W-FUN CTX TTERM
+
+    Given a context consisting of a list of SUBSTOBJ with
+    occurences of SO-HOM-OBJ replaced by FUN-TYPE
+    and an STLC term with similarly replaced occurences of
+    SO-HOM-OBJ, gives out a type of the whole term with
+    occurences of SO-HOM-OBJ replaced by FUN-TYPE.
+
+- [function] TYPE-OF-TERM CTX TTERM
+
+    Given a context consisting of a list of SUBSTOBJ with
+    occurences of SO-HOM-OBJ replaced by FUN-TYPE
+    and an STLC term with similarly replaced occurences of
+    SO-HOM-OBJ, provides the type of the whole term,
+    which is a pure SUBSTOBJ.
+
+- [generic-function] WELL-DEFP CTX TTERM
+
+    Given a context consisting of a list of SUBSTOBJ
+    with occurences of SO-HOM-OBJ replaced by
+    FUN-TYPE and an STLC term with similarly replaced
+    occurences of SO-HOM-OBJ, checks that the term
+    is well-defined in the context based on structural rules of simply
+    typed lambda calculus. returns the t if it is, otherwise returning
+    nil
+
+- [class] FUN-TYPE DIRECT-POINTWISE-MIXIN CAT-OBJ
+
+    Stand-in for the SO-HOM-OBJ object. It does not have
+    any computational properties and can be seen as just a function of two arguments
+    with accessors MCAR to the first argument and
+    MCADR to the second argument. There is an evident canonical
+    way to associate FUN-TYPE and SO-HOM-OBJ
+    pointwise.
+
+- [function] FUN-TYPE MCAR MCADR
+
+- [method] MCAR (FUN-TYPE FUN-TYPE)
+
+- [method] MCADR (FUN-TYPE FUN-TYPE)
+
+- [generic-function] MCAR OBJ
+
+    Can be seen as calling CAR on a generic CLOS
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] MCADR OBJ
+
+    like MCAR but for the CADR
 
 ### Transition Functions
 
@@ -1814,13 +3070,83 @@ This covers the main API for the STLC module
 These functions deal with transforming the data structure to other
 data types
 
-- [generic-function] COMPILE-CHECKED-TERM CONTEXT TYPE TERM
+One important note about the lambda conversions is that all
+transition functions except TO-CAT do not take a context.
 
-    Compiles a checked term into SubstMorph category
+Thus if the <STLC> term contains free variables, then call
+TO-CAT and give it the desired context before calling
+any other transition functions
 
-- [function] TO-POLY CONTEXT TYPE OBJ
+- [method] TO-CAT CONTEXT (TTERM \<STLC\>)
 
-- [function] TO-CIRCUIT CONTEXT TYPE OBJ NAME
+    Compiles a checked term in an appropriate context into the
+    morphism of the GEB category. In detail, it takes a context and a term with
+    following restrictions: Terms come from STLC  with occurences of
+    SO-HOM-OBJ replaced by FUN-TYPE and should
+    come without the slow of TTYPE accessor filled for any of
+    the subterms. Context should be a list of SUBSTOBJ with
+    the caveat that instead of SO-HOM-OBJ we ought to use
+    FUN-TYPE, a stand-in for the internal hom object with explicit
+    accessors to the domain and the codomain. Once again, note that it is important
+    for the context and term to be giving as per above description. While not
+    always, not doing so result in an error upon evaluation. As an example of a
+    valid entry we have
+    
+    ```lisp
+     (to-cat (list so1 (fun-type so1 so1)) (app (index 1) (list (index 0))))
+    ```
+    
+    while
+    
+    ```lisp
+    (to-cat (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (index 0))))
+    ```
+    
+    produces an error. Error of such kind mind pop up both on the level of evaluating
+    WELL-DEFP and ANN-TERM1.
+    
+    Moreover, note that for terms whose typing needs addition of new context
+    we append contexts on the left rather than on the right contra usual type
+    theoretic notation for the convenience of computation. That means, e.g. that
+    asking for a type of a lambda term as below produces:
+    
+    ```lisp
+    LAMBDA> (ttype (term (ann-term1 nil (lamb (list so1 so0) (index 0)))))
+    s-1
+    ```
+    
+    as we count indeces from the left of the context while appending new types to
+    the context on the left as well. For more info check LAMB
+
+- [method] TO-POLY (OBJ \<STLC\>)
+
+    I convert a lambda term into a GEB.POLY.SPEC:POLY term
+    
+    Note that <STLC> terms with free variables require a context,
+    and we do not supply them here to conform to the standard interface
+    
+    If you want to give a context, please call to-cat before
+    calling me
+
+- [method] TO-BITC (OBJ \<STLC\>)
+
+    I convert a lambda term into a GEB.BITC.SPEC:BITC term
+    
+    Note that <STLC> terms with free variables require a context,
+    and we do not supply them here to conform to the standard interface
+    
+    If you want to give a context, please call to-cat before
+    calling me
+
+- [method] TO-CIRCUIT (OBJ \<STLC\>) NAME
+
+    I convert a lambda term into a vampir term
+    
+    Note that <STLC> terms with free variables require a context,
+    and we do not supply them here to conform to the standard interface
+    
+    If you want to give a context, please call to-cat before
+    calling me
 
 #### Utility Functionality
 
@@ -1828,7 +3154,18 @@ These are utility functions relating to translating lambda terms to other types
 
 - [function] STLC-CTX-TO-MU CONTEXT
 
-    Converts a generic <STLC> context into a SUBSTMORPH
+    Converts a generic <STLC> context into a
+    SUBSTMORPH. Note that usually contexts can be interpreted
+    in a category as a $Sigma$-type$, which in a non-dependent setting gives us a
+    usual PROD
+    
+    ```lisp
+    LAMBDA> (stlc-ctx-to-mu (list so1 (fun-to-hom (fun-type geb-bool:bool geb-bool:bool))))
+    (× s-1
+       (× (+ GEB-BOOL:FALSE GEB-BOOL:TRUE) (+ GEB-BOOL:FALSE GEB-BOOL:TRUE))
+       s-1)
+    ```
+
 
 - [function] SO-HOM DOM COD
 
@@ -1895,6 +3232,10 @@ traversal as `LIST`'s are
 
     Works like C2MOP:COMPUTE-SLOTS however on the object
     rather than the class
+
+- [function] MAP-POINTWISE FUNCTION OBJ
+
+- [function] REDUCE-POINTWISE FUNCTION OBJ INITIAL
 
 ### Mixins Examples
 
@@ -2081,6 +3422,17 @@ used throughout the GEB codebase
 
 - [function] SHALLOW-COPY-OBJECT ORIGINAL
 
+- [generic-function] COPY-INSTANCE OBJECT &REST INITARGS &KEY &ALLOW-OTHER-KEYS
+
+    Makes and returns a shallow copy of OBJECT.
+    
+    An uninitialized object of the same class as OBJECT is allocated by
+    calling ALLOCATE-INSTANCE.  For all slots returned by
+    CLASS-SLOTS, the returned object has the
+    same slot values and slot-unbound status as OBJECT.
+    
+    REINITIALIZE-INSTANCE is called to update the copy with INITARGS.
+
 - [macro] MAKE-PATTERN OBJECT-NAME &REST CONSTRUCTOR-NAMES
 
     make pattern matching position style instead of record style. This
@@ -2113,6 +3465,16 @@ used throughout the GEB codebase
 - [function] NUMBER-TO-UNDER INDEX
 
     Turns an INTEGER into a subscripted STRING
+
+- [function] APPLY-N TIMES F INITIAL
+
+    Applies a function, f, n TIMES to the INITIAL values
+    
+    ```lisp
+    GEB> (apply-n 10 #'1+ 0)
+    10 (4 bits, #xA, #o12, #b1010)
+    ```
+
 
 ### Accessors
 
@@ -2170,6 +3532,11 @@ likely to be used. They may even augment existing classes.
 - [generic-function] ELSE OBJ
 
     the then branch of the
+    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
+
+- [generic-function] CODE OBJ
+
+    the code of the
     [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
 
 ## Testing

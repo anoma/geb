@@ -347,5 +347,6 @@
 (defun extract (stmts &optional (stream *standard-output*))
   (let ((*print-pretty*      t)
         (*print-miser-width* 40))
-    (format stream "~{~A~^~%~}" (append *standard-library* stmts)))
+    ;; don't use the standard library for now
+    (format stream "~{~A~^~%~}" stmts))
   stream)

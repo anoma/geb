@@ -82,7 +82,74 @@ any other transition functions"
 (in-package #:geb.lambda)
 
 (pax:defsection @stlc (:title "The Simply Typed Lambda Calculus model")
-  "This covers GEB's view on simply typed lambda calculus"
+  "This covers GEB's view on simply typed lambda calculus
+
+This serves as a useful frontend for those wishing to write a compiler
+to GEB and do not wish to target the categorical model.
+
+If one is targeting their compiler to the frontend, then the following
+code should be useful for you.
+
+```lisp
+(in-package :geb.lambda.main)
+
+MAIN>
+(to-circuit
+ (lamb (list (coprod so1 so1))
+              (index 0))
+ :id)
+(def id x1 = {
+   (x1)
+ };)
+
+MAIN>
+(to-circuit
+ (lamb (list (coprod so1 so1))
+              (case-on (index 0)
+                              (lamb (list so1)
+                                           (right so1 (unit)))
+                              (lamb (list so1)
+                                           (left so1 (unit)))))
+ :not)
+(def not x1 = {
+   (((1 - x1) * 1) + (x1 * 0), ((1 - x1) * 1) + (x1 * 0))
+ };)
+
+MAIN> (to-circuit (lamb (list geb-bool:bool)
+                        (left so1 (right so1 (index 0)))) :foo)
+(def foo x1 = {
+   (0, 1, x1)
+ };)
+```
+
+For testing purposes, it may be useful to go to the `BITC` backend and
+run our interpreter
+
+
+```lisp
+MAIN>
+(gapply (to-bitc
+         (lamb (list (coprod so1 so1))
+               (case-on (index 0)
+                        (lamb (list so1)
+                              (right so1 (unit)))
+                        (lamb (list so1)
+                              (left so1 (unit))))))
+        #*1)
+#*00
+MAIN>
+(gapply (to-bitc
+         (lamb (list (coprod so1 so1))
+               (case-on (index 0)
+                        (lamb (list so1)
+                              (right so1 (unit)))
+                        (lamb (list so1)
+                              (left so1 (unit))))))
+        #*0)
+#*11
+```
+
+"
   (@lambda-specs pax:section)
   (@lambda-api  pax:section)
   (@stlc-conversion pax:section))
