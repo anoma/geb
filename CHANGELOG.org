@@ -1,4 +1,25 @@
-
+* 0.3.0
+** User Facing Changes
+- _Lambda Changes_
+  1. Types are no longer required on all terms
+  2. Application and Lambda now take multiple arguments, and expect
+     arguments uncurried
+- _Core Category Changes_
+  + Opaque types now extend the core category
+- An interpreter now can be used from any category of the codebase
+- Cleaner Code generation, through the new BITC backend.
+** Bug Fixes
+- Geb to Poly had a few bugs fixed in injection, and pair
+  representations
+- Geb no longer exhausts the stack when trying to generate out
+  vampir for basic circuits.
+** Internal Changes
+- Reference extensions allow factoring out common parts, not used
+  outside of poly.
+- _We now have the following generic modules_
+  1. =GEB.GENERICS= - which hosts all generic transformations
+  2. =GEB.EXTENSION= - which holds all extensions
+- We have streamlined the package loading order.
 * 0.2.0
 - Change the graphing from a box and line diagram, to a proper graph diagram.
   + We now utilize clim-dot to draw the graph.
