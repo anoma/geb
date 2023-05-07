@@ -152,37 +152,11 @@
   :parent geb-trans
   (is obj-equalp
       (right so1)
-      (geb.generics:gapply
-       (uncurry (coprod so1 so1) (coprod so1 so1)
-                (to-cat
-                 (list (coprod so1 so1))
-                 (geb.lambda:lamb (coprod so1 so1)
-                                  (geb.lambda:index 0)) ))
-       (list (left so1) (right so1))))
-  (is obj-equalp
-      (right so1)
-      (geb.generics:gapply
-       (uncurry (coprod so1 so1) (coprod so1 so1)
-                (to-cat
-                 (list (coprod so1 so1))
-                 (geb.lambda:lamb (coprod so1 so1)
-                                  (geb.lambda:index 0)) ))
-       (list (right so1) (right so1))))
+      (gapply
+       (to-cat nil (lambda:lamb (list (coprod so1 so1)) (geb.lambda:index 0)))
+       (list (right so1) so1)))
   (is obj-equalp
       (left so1)
-      (geb.generics:gapply
-       (uncurry (coprod so1 so1) (coprod so1 so1)
-                (to-cat
-                 (list (coprod so1 so1))
-                 (geb.lambda:lamb (coprod so1 so1)
-                                  (geb.lambda:index 0)) ))
-       (list (left so1) (left so1))))
-  (is obj-equalp
-      (left so1)
-      (geb.generics:gapply
-       (uncurry (coprod so1 so1) (coprod so1 so1)
-                (to-cat
-                 (list (coprod so1 so1))
-                 (geb.lambda:lamb (coprod so1 so1)
-                                  (geb.lambda:index 0)) ))
-       (list (right so1) (left so1)))))
+      (gapply
+       (to-cat nil (lambda:lamb (list (coprod so1 so1)) (geb.lambda:index 0)))
+       (list (left so1) so1))))

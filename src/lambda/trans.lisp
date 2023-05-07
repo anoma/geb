@@ -61,17 +61,30 @@ always, not doing so result in an error upon evaluation. As an example of a
 valid entry we have
 
 ```lisp
- (to-cat (list so1 (fun-type so1 so1)) (app (index 0) (index 1)))
+ (to-cat (list so1 (fun-type so1 so1)) (app (index 1) (list (index 0))))
 ```
 
 while
 
 ```lisp
-(to-cat (list so1 (so-hom-obj so1 so1)) (app (index 0) (index 1)))
+(to-cat (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (index 0))))
 ```
 
 produces an error. Error of such kind mind pop up both on the level of evaluating
-[WELL-DEFP][generic-function] and [ANN-TERM1][generic-function]."
+[WELL-DEFP][generic-function] and [ANN-TERM1][generic-function].
+
+Moreover, note that for terms whose typing needs addition of new context
+we append contexts on the left rather than on the right contra usual type
+theoretic notation for the convenience of computation. That means, e.g. that
+asking for a type of a lambda term as below produces:
+
+```lisp
+LAMBDA> (ttype (term (ann-term1 nil (lamb (list so1 so0) (index 0)))))
+s-1
+```
+
+as we count indeces from the left of the context while appending new types to
+the context on the left as well. For more info check [LAMB][class]"
   (labels ((rec (context tterm)
              (match-of stlc tterm
                ((absurd tcod term)
@@ -106,17 +119,14 @@ produces an error. Error of such kind mind pop up both on the level of evaluatin
                   (comp (<-right (mcar tottt) (mcadr tottt))
                         (to-cat context term))))
                ((lamb tdom term)
-                (curry (commutes-left
-                        (rec (cons tdom context) term))))
+                (rec (append tdom context) term))
                ((app fun term)
-                (let ((tofun (ttype fun)))
-                  (comp
-                   (so-eval (fun-to-hom (mcar tofun))
-                            (fun-to-hom (mcadr tofun)))
-                   (geb:pair (rec context
-                                  fun)
-                             (rec context
-                                  term)))))
+                (comp (rec context fun)
+                      (reduce #'geb:pair
+                              (mapcar (lambda (x) (rec context x))
+                                      term)
+                              :initial-value (stlc-ctx-to-mu context)
+                              :from-end t)))
                ((index pos)
                 (stlc-ctx-proj context pos)))))
     (let ((ann-term (ann-term1 context tterm)))
@@ -130,7 +140,14 @@ produces an error. Error of such kind mind pop up both on the level of evaluatin
   "Converts a generic [<STLC>][type] context into a
 [SUBSTMORPH][GEB.SPEC:SUBSTMORPH]. Note that usually contexts can be interpreted
 in a category as a $\Sigma$-type$, which in a non-dependent setting gives us a
-usual [PROD][type]"
+usual [PROD][type]
+
+```lisp
+LAMBDA> (stlc-ctx-to-mu (list so1 (fun-to-hom (fun-type geb-bool:bool geb-bool:bool))))
+(× s-1
+   (× (+ GEB-BOOL:FALSE GEB-BOOL:TRUE) (+ GEB-BOOL:FALSE GEB-BOOL:TRUE))
+   s-1)
+```"
   (mvfoldr #'prod (mapcar #'fun-to-hom context) so1))
 
 (-> so-hom (substobj substobj) (or t substobj))

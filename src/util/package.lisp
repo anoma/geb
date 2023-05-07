@@ -17,6 +17,7 @@ used throughout the GEB codebase"
   (number-to-digits        pax:function)
   (digit-to-under          pax:function)
   (number-to-under         pax:function)
+  (apply-n                 pax:function)
   (@geb-accessors          pax:section))
 
 (pax:defsection @geb-accessors (:title "Accessors")

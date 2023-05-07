@@ -19,7 +19,7 @@
 (muffle-package-variance
  (uiop:define-package #:geb.lambda.spec
    (:documentation "Basic spec for creating lambda terms")
-   (:mix #:trivia #:serapeum #:common-lisp)))
+   (:mix #:trivia #:serapeum #:common-lisp #:geb.mixins)))
 
 (pax:define-package #:geb.spec
   (:documentation "Gödel, Escher, Bach categorical model")

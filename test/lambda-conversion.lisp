@@ -50,7 +50,7 @@
 (def void-to-unit-circuit
   (to-circuit
    (to-cat (list so-void-type)
-                                (lambda:absurd so-unit-type (lambda:index 0)))
+           (lambda:absurd so-unit-type (lambda:index 0)))
    :tc_void_to_unit))
 
 (def issue-58-circuit
@@ -58,12 +58,11 @@
     (lambda:case-on
       (lambda:left so-unit-type stlc-unit-term)
       (lambda:lamb
-        so-unit-type
-        (lambda:right so-unit-type stlc-unit-term))
+       (list so-unit-type)
+       (lambda:right so-unit-type stlc-unit-term))
       (lambda:lamb
-        so-unit-type
-        (lambda:left so-unit-type stlc-unit-term))
-      )
+       (list so-unit-type)
+       (lambda:left so-unit-type stlc-unit-term)))
     :tc_issue_58))
 
 (define-test compile-checked-term :parent geb.lambda.trans

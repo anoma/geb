@@ -47,8 +47,10 @@ $$\\Gamma \\vdash \\text{tcod : Type}$$ and
 $$\\Gamma \\vdash \\text{term : so0}$$ one deduces
 $$\\Gamma \\vdash \\text{(absurd tcod term) : tcod}$$"))
 
+(-> absurd (cat-obj <stlc> &key (:ttype t)) absurd)
 (defun absurd (tcod term &key (ttype nil))
-  (make-instance 'absurd :tcod tcod :term term :ttype ttype))
+  (values
+   (make-instance 'absurd :tcod tcod :term term :ttype ttype)))
 
 (defclass unit (<stlc>)
   ((ttype :initarg :ttype
@@ -75,8 +77,10 @@ we provide all terms untyped.
 This grammar corresponds to the introduction rule of the unit type. Namely
 $$\\Gamma \\dashv \\text{(unit) : so1}$$"))
 
+(-> unit (&key (:ttype t)) unit)
 (defun unit (&key (ttype nil))
-  (make-instance 'unit :ttype ttype))
+  (values
+   (make-instance 'unit :ttype ttype)))
 
 (defclass left (<stlc>)
   ((rty :initarg :rty
@@ -117,8 +121,10 @@ $$\\Gamma \\dashv \\text{term : (ttype term)}$$ we deduce
 $$\\Gamma \\dashv \\text{(left rty term) : (coprod (ttype term) rty)}$$
 "))
 
+(-> left (cat-obj <stlc> &key (:ttype t)) left)
 (defun left (rty term &key (ttype nil))
-  (make-instance 'left :rty rty :term term :ttype ttype))
+  (values
+   (make-instance 'left :rty rty :term term :ttype ttype)))
 
 (defclass right (<stlc>)
   ((lty :initarg :lty
@@ -158,8 +164,10 @@ $$\\Gamma \\dashv \\text{term : (ttype term)}$$ we deduce
 $$\\Gamma \\dashv \\text{(right lty term) : (coprod lty (ttype term))}$$
 "))
 
+(-> right (cat-obj <stlc> &key (:ttype t)) right)
 (defun right (lty term &key (ttype nil))
-  (make-instance 'right :lty lty :term term :ttype ttype))
+  (values
+   (make-instance 'right :lty lty :term term :ttype ttype)))
 
 (defclass case-on (<stlc>)
   ((on :initarg :on
@@ -176,8 +184,8 @@ $$\\Gamma \\dashv \\text{(right lty term) : (coprod lty (ttype term))}$$
           :accessor ttype
           :documentation ""))
   (:documentation
-   "A term of an arbutrary type provided by casing on a coproduct term. The formal grammar of
-[CASE-ON][class] is
+   "A term of an arbutrary type provided by casing on a coproduct term. The
+formal grammar of [CASE-ON][class] is
 
 ```lisp
 (case-on on ltm rtm)
@@ -195,14 +203,20 @@ also [STLC][type]) of the same type in the context of - appropriately
 - (mcar (ttype on)) and (mcadr (ttype on)).
 
 This corresponds to the elimination rule of the coprodut type. Namely, given
-$$\\Gamma \\vdash \\text{on : (coprod (mcar (ttype on)) (mcadr (ttype on)))}$$ and
-$$\\Gamma, \\text{(mcar (ttype on))} \\vdash \\text{ltm : (ttype ltm)}$$
-, $$\\Gamma, \\text{(mcadr (ttype on))} \\vdash \\text{rtm : (ttype ltm)}$$ we get
+$$\\Gamma \\vdash \\text{on : (coprod (mcar (ttype on)) (mcadr (ttype on)))}$$
+and
+$$\\text{(mcar (ttype on))} , \\Gamma \\vdash \\text{ltm : (ttype ltm)}$$
+, $$\\text{(mcadr (ttype on))} , \\Gamma \\vdash \\text{rtm : (ttype ltm)}$$
+we get
 $$\\Gamma \\vdash \\text{(case-on on ltm rtm) : (ttype ltm)}$$
-"))
+Note that in practice we append contexts on the left as computation of
+[INDEX][class] is done from the left. Otherwise, the rules are the same as in
+usual type theory if context was read from right to left."))
 
+(-> case-on (<stlc> <stlc> <stlc> &key (:ttype t)) case-on)
 (defun case-on (on ltm rtm &key (ttype nil))
-  (make-instance 'case-on :on on :ltm ltm :rtm rtm :ttype ttype))
+  (values
+   (make-instance 'case-on :on on :ltm ltm :rtm rtm :ttype ttype)))
 
 (defclass pair (<stlc>)
   ((ltm :initarg :ltm
@@ -216,8 +230,8 @@ $$\\Gamma \\vdash \\text{(case-on on ltm rtm) : (ttype ltm)}$$
           :accessor ttype
           :documentation ""))
   (:documentation
-   "A term of the product type gotten by pairing a terms of a left and right parts of the product.
-The formal grammar of [PAIR][class] is
+   "A term of the product type gotten by pairing a terms of a left and right
+parts of the product. The formal grammar of [PAIR][class] is
 
 ```lisp
 (pair ltm rtm)
@@ -240,8 +254,10 @@ $$\\Gamma \\vdash \\text{rtm : (mcadr (ttype (pair ltm rtm)))}$$ we have
 $$\\Gamma \\vdash \\text{(pair ltm rtm) : (ttype (pair ltm rtm))}$$
 "))
 
+(-> pair (<stlc> <stlc> &key (:ttype t)) pair)
 (defun pair (ltm rtm &key (ttype nil))
-  (make-instance 'pair :ltm ltm :rtm rtm :ttype ttype))
+  (values
+   (make-instance 'pair :ltm ltm :rtm rtm :ttype ttype)))
 
 (defclass fst (<stlc>)
   ((term :initarg :term
@@ -272,8 +288,10 @@ we are projecting to.
 This corresponds to the first projection function gotten by induction
 on a term of a product type."))
 
+(-> fst (<stlc> &key (:ttype t)) fst)
 (defun fst (term &key (ttype nil))
-  (make-instance 'fst :term term :ttype ttype))
+  (values
+   (make-instance 'fst :term term :ttype ttype)))
 
 (defclass snd (<stlc>)
   ((term :initarg :term
@@ -304,12 +322,15 @@ part we are projecting to.
 This corresponds to the second projection function gotten by induction
 on a term of a product type."))
 
+(-> snd (<stlc> &key (:ttype t)) snd)
 (defun snd (term &key (ttype nil))
-  (make-instance 'snd :term term :ttype ttype))
+  (values
+   (make-instance 'snd :term term :ttype ttype)))
 
 (defclass lamb (<stlc>)
   ((tdom :initarg :tdom
          :accessor tdom
+         :type     list
          :documentation "Domain of the lambda term")
    (term :initarg :term
          :accessor term
@@ -320,8 +341,11 @@ on a term of a product type."))
           :documentation ""))
   (:documentation
    "A term of a function type gotten by providing a term in the codomain
-of the function type by assuming one is given a variable in the
-domain. The formal grammar of [LAMB][class] is:
+of the function type by assuming one is given variables in the
+specified list of types. [LAMB][class] takes in the [TDOM][generic-function]
+accessor a list of types - and hence of [SUBSTOBJ][class] - and in the
+[TERM][generic-function] a term - and hence an [STLC][class]. The formal grammar
+of [LAMB][class] is:
 
 ```lisp
 (lamb tdom term)
@@ -333,19 +357,64 @@ where we can possibly include type information by
 (lamb tdom term :ttype ttype)
 ```
 
-THe intended semnatics are: [TDOM][generic-function] is the type (and
-hence a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]) which is the domain of the
-function type. [TERM][generic-function] is a term (and hence an
-[STLC][type]) of the codomain of the function type gotten in the
-context of the domain.
+The intended semnatics are: [TDOM][generic-function] is a list of types (and
+hence a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]) whose iterative product of
+components form the domain of the function type. [TERM][generic-function]
+is a term (and hence an [STLC][type]) of the codomain of the function type
+gotten in the context to whom we append the list of the domains.
 
-This corresponds to the introduction rule of the function type. Namely, given
+For a list of length 1, corresponds to the introduction rule of the function
+type. Namely, given
 $$\\Gamma \\vdash \\text{tdom : Type}$$ and
 $$\\Gamma, \\text{tdom} \\vdash \\text{term : (ttype term)}$$ we have
-$$\\Gamma \\vdash \\text{(lamb tdom term) : (so-hom-obj tdom (ttype term))}$$"))
+$$\\Gamma \\vdash \\text{(lamb tdom term) : (so-hom-obj tdom (ttype term))}$$
 
+For a list of length n, this coreesponds to the iterated lambda type, e.g.
+
+```lisp
+(lamb (list so1 so0) (index 0))
+```
+
+is a term of
+
+```lisp
+(so-hom-obj (prod so1 so0) so0)
+```
+
+or equivalently
+
+```lisp
+(so-hom-obj so1 (so-hom-obj so0 so0))
+```
+
+due to Geb's computational definition of the function type.
+
+Note that [INDEX][class] 0 in the above code is of type [SO1][class].
+So that after annotating the term, one gets
+
+```lisp
+LAMBDA> (ttype (term (lamb (list so1 so0)) (index 0)))
+s-1
+```
+
+So the counting of indeces starts with the leftmost argument for
+computational reasons. In practice, typing of [LAMB][class] corresponds with
+taking a list of arguments provided to a lambda term, making it a context
+in that order and then counting the index of the varibale. Type-theoretically,
+
+$$\\Gamma \\vdash \\lambda \\Delta (index i)$$
+$$\\Delta, \\Gamma \\vdash (index i)$$
+
+So that by the operational semantics of [INDEX][class], the type of (index i)
+in the above context will be the i'th element of the Delta context counted from
+the left. Note that in practice we append contexts on the left as computation of
+[INDEX][class] is done from the left. Otherwise, the rules are the same as in
+usual type theory if context was read from right to left."))
+
+(-> lamb (list <stlc> &key (:ttype t)) lamb)
 (defun lamb (tdom term &key (ttype nil))
-  (make-instance 'lamb :tdom tdom :term term :ttype ttype))
+  (values
+   (make-instance 'lamb :tdom tdom :term term :ttype ttype)))
 
 (defclass app (<stlc>)
   ((fun :initarg :fun
@@ -353,15 +422,20 @@ $$\\Gamma \\vdash \\text{(lamb tdom term) : (so-hom-obj tdom (ttype term))}$$"))
         :documentation "Term of exponential type")
    (term :initarg :term
          :accessor term
-         :documentation "Term of the domain")
+         :type list
+         :documentation "List of Terms of the domain")
    (ttype :initarg :ttype
           :initform nil
           :accessor ttype
           :documentation ""))
   (:documentation
-   "A term of an arbitrary type gotten by applying a function of a
-function type with a corresponding codomain to a term in the
-domain. The formal grammar of [APP][class] is
+   "A term of an arbitrary type gotten by applying a function of an iterated
+function type with a corresponding codomain iteratively to terms in the
+domains. [APP][class] takes as argument for the [FUN][generic-function] accessor
+a function - and hence an [STLC][class] - whose function type has domain an
+iterated [PROD][class] of [SUBSTOBJ][clas] and for the [TERM][generic-function]
+a list of terms - and hence of [STLC][class] - matching the types of the
+product. The formal grammar of [APP][class] is
 
 ```lisp
 (app fun term)
@@ -373,19 +447,34 @@ where we can possibly include type information by
 (app fun term :ttype ttype)
 ```
 
-The intended semantics are as follows: [FUN][generic-function] is a
-term (and hence an [STLC][type]) of a coproduct type - say of
-(so-hom-obj (ttype term) y) - and [TERM][generic-function] is a
-term (hence also [STLC][type]) of the domain.
+The intended semantics are as follows:
+[FUN][generic-function] is a term (and hence an [STLC][type]) of a coproduct
+ type - say of (so-hom-obj (ttype term) y) - and [TERM][generic-function] is a
+list of terms (hence also of [STLC][type]) with nth term in the list having the
+n-th part of the function type.
 
-This corresponds to the elimination rule of the function type. Given
+For a one-argument term list, this corresponds to the elimination rule of the
+function type. Given
 $$\\Gamma \\vdash \\text{fun : (so-hom-obj (ttype term) y)}$$ and
 $$\\Gamma \\vdash \\text{term : (ttype term)}$$ we get
 $$\\Gamma \\vdash \\text{(app fun term) : y}$$
-"))
 
+For several arguments, this corresponds to successive function application.
+Using currying, this corresponds to, given
+$$\\Gamma \\vdash (so-hom-obj (A_1 x \\ldots , A_{n-1}) A_n)$$
+$$\\Gamma \\vdash f : (so-hom-obj (A1 , \\ldots , A_{n-1}))$$
+and
+$$\Gamma  \\vdash t_i : A_i$$
+for each i less than n gets us
+$$\Gamma \\vdash app(f , t_1 , .... t_{n-1}) : A_n$$
+
+Note again that i'th term should correspond to the ith element of the product
+in the codomain counted from the left."))
+
+(-> app (<stlc> list &key (:ttype t)) app)
 (defun app (fun term &key (ttype nil))
-  (make-instance 'app :fun fun :term term :ttype ttype))
+  (values
+    (make-instance 'app :fun fun :term term :ttype ttype)))
 
 (defclass index (<stlc>)
   ((pos :initarg :pos
@@ -416,9 +505,13 @@ This corresponds to the variable rule. Namely given a context
 $$\\Gamma_1 , \\ldots , \\Gamma_{pos} , \\ldots , \\Gamma_k $$ we have
 
 $$\\Gamma_1 , \\ldots , \\Gamma_k \\vdash \\text{(index pos) :} \\Gamma_{pos}$$
-"))
 
+Note that we add contexts on the left rather than on the right contra classical
+type-theoretic notation."))
+
+(-> index (fixnum &key (:ttype t)) index)
 (defun index (pos &key (ttype nil))
-  (make-instance 'index :pos pos :ttype ttype))
+  (values
+   (make-instance 'index :pos pos :ttype ttype)))
 
 

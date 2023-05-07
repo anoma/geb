@@ -230,8 +230,23 @@ Further this can be used in type signatures
    "the then branch of the
 [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
 
-
 (defgeneric code (obj)
   (:documentation
    "the code of the
 [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;               Additional Utils
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defun apply-n (times f initial)
+  "Applies a function, f, n TIMES to the INITIAL values
+
+```lisp
+GEB> (apply-n 10 #'1+ 0)
+10 (4 bits, #xA, #o12, #b1010)
+```"
+  (let ((value initial))
+    (dotimes (n times value)
+      (setf value (funcall f value)))))
