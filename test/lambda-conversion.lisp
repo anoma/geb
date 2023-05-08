@@ -52,6 +52,19 @@
    (to-cat (list so-void-type)
            (lambda:absurd so-unit-type (lambda:index 0)))
    :tc_void_to_unit))
+(def lambda-not-with-lambda
+  (lambda:lamb
+   (list (coprod so1 so1))
+   (lambda:case-on (lambda:index 0)
+                   (lambda:lamb (list so1) (lambda:right so1 (lambda:unit)))
+                   (lambda:lamb (list so1) (lambda:left so1 (lambda:unit))))))
+
+(def lambda-not-without-lambda
+  (lambda:lamb
+   (list (coprod so1 so1))
+   (lambda:case-on (lambda:index 0)
+                   (lambda:right so1 (lambda:unit))
+                   (lambda:left so1 (lambda:unit)))))
 
 (def issue-58-circuit
   (to-circuit
@@ -64,6 +77,17 @@
        (list so-unit-type)
        (lambda:left so-unit-type stlc-unit-term)))
     :tc_issue_58))
+
+
+(define-test lambda.case-works-as-expected :parent geb.lambda.trans
+  (is equalp (gapply (to-bitc lambda-not-with-lambda) #*1) #*0)
+  (is equalp (gapply (to-bitc lambda-not-with-lambda) #*0) #*1)
+  (is equalp
+      (gapply (to-bitc lambda-not-without-lambda) #*0)
+      (gapply (to-bitc lambda-not-with-lambda) #*0))
+  (is equalp
+      (gapply (to-bitc lambda-not-without-lambda) #*1)
+      (gapply (to-bitc lambda-not-with-lambda) #*1)))
 
 (define-test compile-checked-term :parent geb.lambda.trans
   (is obj-equalp
