@@ -1,3 +1,7 @@
+* 0.3.1
+** Bug Fixes
+- Lambda to geb should now work, we fixed a bug with how case was
+  translated, and created some tests
 * 0.3.0
 ** User Facing Changes
 - _Lambda Changes_
