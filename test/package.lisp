@@ -3,6 +3,7 @@
   (:shadowing-import-from :parachute :name)
   (:shadowing-import-from :serapeum  :true)
   (:shadow :value :children)
+  (:import-from #:geb-bool #:bool)
   (:local-nicknames  (#:poly #:geb.poly)
                      (#:list #:geb-list)
                      (#:bool #:geb-bool)

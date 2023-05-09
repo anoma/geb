@@ -101,12 +101,18 @@ the context on the left as well. For more info check [LAMB][class]"
                   (comp (->right (mcar tott) (mcadr tott))
                         (rec context term))))
                ((case-on on ltm rtm)
-                (let ((toon (ttype on)))
-                  (comp (mcase (curry (rec
-                                       (cons (mcar toon) context) ltm))
-                               (curry (rec
-                                       (cons (mcadr toon) context) rtm)))
-                        (rec context on))))
+                (let ((ctx  (stlc-ctx-to-mu context))
+                      (mcr  (mcar (ttype on)))
+                      (mcdr (mcadr (ttype on))))
+                  (comp (comp (mcase (commutes-left (rec
+                                                     (cons mcr context) ltm))
+                                     (commutes-left (rec
+                                                     (cons mcdr context) rtm)))
+                              (commutes-left (distribute ctx
+                                                         (fun-to-hom mcr)
+                                                         (fun-to-hom mcdr))))
+                        (geb:pair (rec context on)
+                                  ctx))))
                ((pair ltm rtm)
                 (geb:pair (rec context ltm)
                           (rec context rtm)))
@@ -129,10 +135,10 @@ the context on the left as well. For more info check [LAMB][class]"
                               :from-end t)))
                ((index pos)
                 (stlc-ctx-proj context pos)))))
-    (let ((ann-term (ann-term1 context tterm)))
-      (if (well-defp context ann-term)
-          (rec context ann-term)
-          (error "not a well-defined ~A in said ~A" tterm context)))))
+    (if (well-defp context tterm)
+        (rec context (ann-term1 context tterm))
+        (error "not a well-defined ~A in said ~A" tterm context))))
+
 
 
 (-> stlc-ctx-to-mu (stlc-context) substobj)
@@ -158,6 +164,7 @@ LAMBDA> (stlc-ctx-to-mu (list so1 (fun-to-hom (fun-type geb-bool:bool geb-bool:b
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utility Functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (defun stlc-ctx-proj (context depth)
   "Given a context, we interpret it as a [PROD][class] object of appropriate

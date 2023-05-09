@@ -21,7 +21,6 @@
   :parent geb-bitc
   (of-type list test-circuit-1))
 
-
 (define-test bitc-evaluates-and-correctly
   :parent geb-bitc
   (is equalp #*1 (gapply (to-bitc geb-bool:and) #*11))
