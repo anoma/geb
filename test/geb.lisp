@@ -66,39 +66,37 @@
                                 (->left so1 so1)))
       "Checking the dom of pair")
   (is obj-equalp
-      (prod geb-bool:bool
-            geb-bool:bool)
+      (prod bool
+            bool)
       (codom (pair (->left geb-bool:false-obj geb-bool:true-obj)
                    (->left geb-bool:false-obj geb-bool:true-obj)))
       "Checking the codom of pair")
   (is obj-equalp
-      (dom (<-left so1 geb-bool:bool))
-      (prod so1 geb-bool:bool)
+      (dom (<-left so1 bool))
+      (prod so1 bool)
       "checking dom of projection")
   (is obj-equalp
-      (dom (distribute geb-bool:bool so1 so1))
-      (prod geb-bool:bool (coprod so1 so1))
+      (dom (distribute bool so1 so1))
+      (prod bool (coprod so1 so1))
       "checking dom of distribution")
   (is obj-equalp
-      (codom (distribute geb-bool:bool so1 so1))
-      (coprod (prod geb-bool:bool so1)
-              (prod geb-bool:bool so1))
+      (codom (distribute bool so1 so1))
+      (coprod (prod bool so1)
+              (prod bool so1))
       "checking codom of distribution"))
 
 
 (define-test curry
   :parent geb
-  (of-type substmorph (curry (<-left geb-bool:bool geb-bool:bool)))
+  (of-type substmorph (curry (<-left bool bool)))
   ;; may be typing this a bit too strictly
-  (of-type comp (curry (<-left geb-bool:bool so1)))
-  (is obj-equalp
-      (dom (geb:curry geb-bool:and))
-      geb-bool:bool))
+  (of-type comp (curry (<-left bool so1)))
+  (is obj-equalp (dom (geb:curry bool:and)) bool))
 
 
 (define-test geb-trans :parent geb)
 
-(def test-morph-2 (<-left so1 geb-bool:bool))
+(def test-morph-2 (<-left so1 bool))
 
 (def test-poly-2 (to-poly test-morph-2))
 
@@ -115,48 +113,18 @@
 
 ;; PLEASE FUZZ THIS!
 (define-test interpret-bool :parent geb-interpreter
-  (is
-   obj-equalp
-   (gapply geb-bool:and
-           (list (left so1)
-                 (left so1)))
-   (left so1))
-
-  (is
-   obj-equalp
-   (gapply geb-bool:and
-           (list (left so1)
-                 (right so1)))
-   (left so1))
-
-  (is
-   obj-equalp
-   (gapply geb-bool:and
-           (list (right so1)
-                 (right so1)))
-   (right so1))
-
-  (is
-   obj-equalp
-   (gapply geb-bool:not
-           (left so1))
-   (right so1))
-
-  (is
-   obj-equalp
-   (gapply geb-bool:not
-           (right so1))
-   (left so1)))
-
-(define-test gapply-bool-id
-  :parent geb-trans
   (is obj-equalp
-      (right so1)
-      (gapply
-       (to-cat nil (lambda:lamb (list (coprod so1 so1)) (geb.lambda:index 0)))
-       (list (right so1) so1)))
+      (gapply bool:and (list (left so1) (left so1)))
+      (left so1))
+
   (is obj-equalp
-      (left so1)
-      (gapply
-       (to-cat nil (lambda:lamb (list (coprod so1 so1)) (geb.lambda:index 0)))
-       (list (left so1) so1))))
+      (gapply bool:and (list (left so1) (right so1)))
+      (left so1))
+
+  (is obj-equalp
+      (gapply bool:and (list (right so1) (right so1)))
+      (right so1))
+
+  (is obj-equalp (gapply bool:not (left so1)) (right so1))
+
+  (is obj-equalp (gapply bool:not (right so1)) (left so1)))

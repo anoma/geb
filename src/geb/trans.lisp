@@ -120,7 +120,7 @@
        (apply #'bitc:parallel
               (append (list bitc:zero (bitc:ident car-width))
                       (zero-list (padding-bits cadr-width
-                                          car-width))))))
+                                               car-width))))))
     ;; Inject-right y -> x + y tags the y with a 1, indicating right,
     ;;   and pads the encoded y with as many zeros as would be needed
     ;;   to store either an x or a y.
@@ -130,7 +130,7 @@
        (apply #'bitc:parallel
               (append (list bitc:one (bitc:ident cadr-width))
                       (zero-list (padding-bits car-width
-                                          cadr-width))))))
+                                               cadr-width))))))
 
     ;; Case translates directly into a branch. The sub-morphisms of
     ;; case are padded with drop so they have the same input lengths.

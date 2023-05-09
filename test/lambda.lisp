@@ -37,20 +37,20 @@
 (def so1-prod
   (prod so1 so1))
 
-(def lambterm
+(def lamb-term
   (lambda:lamb (list so1-prod) unit-term))
 
-(def multilambterm
+(def multi-lamb-term
   (lambda:lamb (list so1 so0) (lambda:index 0)))
 
-(def multilambterm-type
-  (lambda:type-of-term-w-fun nil multilambterm))
+(def multi-lambterm-type
+  (lambda:type-of-term-w-fun nil multi-lamb-term))
 
-(def appterm
-  (lambda:app lambterm (list pair-of-units-term)))
+(def app-term
+  (lambda:app lamb-term (list pair-of-units-term)))
 
-(def multiappterm
-  (lambda:app multilambterm (list (lambda:index 0) (lambda:index 1))))
+(def multi-app-term
+  (lambda:app multi-lamb-term (list (lambda:index 0) (lambda:index 1))))
 
 (def context-list
   (list so1 so0 so01-coprod (geb.lambda.main:fun-type so0 so1)))
@@ -70,13 +70,15 @@
       "type of product of units is product of so1's")
   (is obj-equalp
       so1
-      (lambda:type-of-term nil
-                           (lambda:ltm (lambda:annotated-term nil pair-of-units-term)))
+      (lambda:type-of-term
+       nil
+       (lambda:ltm (lambda:annotated-term nil pair-of-units-term)))
       "type of the left unit term is so1")
   (is obj-equalp
       so1
-      (lambda:type-of-term nil
-                           (lambda:rtm (lambda:annotated-term nil pair-of-units-term)))))
+      (lambda:type-of-term
+       nil
+       (lambda:rtm (lambda:annotated-term nil pair-of-units-term)))))
 
 (define-test fst-unit-term-test
   :parent geb.lambda
@@ -86,8 +88,9 @@
       "type of the projection from (prod so1 so1) is so1")
   (is obj-equalp
       so1-prod
-      (lambda:type-of-term nil
-                           (lambda:term (lambda:annotated-term nil fst-pair-of-units-term)))
+      (lambda:type-of-term
+       nil
+       (lambda:term (lambda:annotated-term nil fst-pair-of-units-term)))
       "type of the term being projected is (prod so1 so1)"))
 
 (define-test snd-unit-term-test
@@ -98,8 +101,9 @@
       "type of the projection from (prod so1 so1) is so1")
   (is obj-equalp
       so1-prod
-      (lambda:type-of-term nil
-                           (lambda:term (lambda:annotated-term nil snd-pair-of-units-term)))
+      (lambda:type-of-term
+       nil
+       (lambda:term (lambda:annotated-term nil snd-pair-of-units-term)))
       "type of the term being projected is (prod so1 so1)"))
 
 (define-test proj-term-test
@@ -132,23 +136,21 @@
       so01-coprod
       (lambda:type-of-term nil
                            (lambda:ltm
-                            (lambda:annotated-term nil
-                                                   on-l-r-term)))
+                            (lambda:annotated-term nil on-l-r-term)))
       "test type annotation for left term")
   (is obj-equalp
       so01-coprod
       (lambda:type-of-term nil
                            (lambda:rtm
-                            (lambda:annotated-term nil
-                                                   on-l-r-term)))
+                            (lambda:annotated-term nil on-l-r-term)))
       "test type annotation for right term")
   (is obj-equalp
       so10-coprod
       (lambda:type-of-term nil
                            (lambda:on
-                            (lambda:annotated-term nil
-                                                   on-l-r-term)))
-      "type of annotated term supplied for the start of casing is that of the supplied coproduct"))
+                            (lambda:annotated-term nil on-l-r-term)))
+      "type of annotated term supplied for the start of casing is that
+      of the supplied coproduct"))
 
 (define-test inl-test
   :parent geb.lambda
@@ -181,35 +183,35 @@
   (is obj-equalp
       (so-hom-obj so1-prod so1)
       (lambda:type-of-term nil
-                           lambterm)
+                           lamb-term)
       "test type of lambda term")
   (is obj-equalp
       so1
       (lambda:type-of-term nil
                            (lambda:term
                             (lambda:annotated-term nil
-                                                   lambterm)))
+                                                   lamb-term)))
       "test type of annotated term for the lambda term"))
 
 (define-test app-test
   :parent geb.lambda
   (is obj-equalp
       so1
-      (lambda:type-of-term nil (lambda:app lambterm (list pair-of-units-term)))
+      (lambda:type-of-term nil (lambda:app lamb-term (list pair-of-units-term)))
       "type of function application term")
   (is obj-equalp
       (so-hom-obj so1-prod so1)
       (lambda:type-of-term nil
                            (lambda:fun
                             (lambda:annotated-term nil
-                                                   appterm)))
+                                                   app-term)))
       "test annotated fun term")
   (is obj-equalp
       so1-prod
       (lambda:type-of-term nil
                            (car (lambda:term
                                  (lambda:annotated-term nil
-                                                        appterm))))))
+                                                        app-term))))))
 
 (define-test index-tests
   :parent geb.lambda
@@ -258,17 +260,17 @@
   :parent geb.lambda
   (is obj-equalp
       so1
-      (mcadr multilambterm-type))
+      (mcadr multi-lambterm-type))
   (is obj-equalp
       (prod so1 so0)
-      (mcar multilambterm-type)))
+      (mcar multi-lambterm-type)))
 
 (define-test multi-app-term
   (is obj-equalp
       so1
-      (lambda:type-of-term (list so1 so0) multiappterm))
+      (lambda:type-of-term (list so1 so0) multi-app-term))
   (is obj-equalp
       (prod so1 so0)
-      (mcar (lambda:fun (lambda:ann-term1 (list so1 so0) multiappterm)))))
+      (mcar (lambda:fun (lambda:ann-term1 (list so1 so0) multi-app-term)))))
 
 
