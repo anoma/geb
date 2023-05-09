@@ -96,9 +96,10 @@ simply run this function to generate a fresh one
           (ccl:get-incremental-coverage))
     (mapc (lambda (test)
             (run-tests :summary? t :designators test)
-            (setf (gethash test coverage)
-                  (ccl:get-incremental-coverage)))
-          (children (find-test 'geb-test-suite)))
+            (when test
+              (setf (gethash test coverage)
+                    (ccl:get-incremental-coverage))))
+          (parachute:children (find-test 'geb-test-suite)))
     (ccl:report-coverage (if path
                              ;; this is bad by god fix
                              (format nil "~Areport.html" path)
