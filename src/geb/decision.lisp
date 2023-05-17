@@ -1,5 +1,4 @@
-(in-package :geb-tri)
-
+(in-package :geb-decision)
 
 (def yes   (alias yes   (so1)))
 (def no    (alias no    (so1)))

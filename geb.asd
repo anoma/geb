@@ -59,6 +59,7 @@
                  (:file geb)
                  (:file bool)
                  (:file list)
+                 (:file decision)
                  (:file trans)))
    (:module poly
     :serial t
