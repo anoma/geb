@@ -18,36 +18,6 @@ pointwise."))
 (defun fun-type (mcar mcadr)
   (make-instance 'fun-type :mcar mcar :mcadr mcadr))
 
-;; Below we list all possible ways of getting a term of the exponential,
-;; namely: projections, casing, absurd, lambda-abstraction and application
-
-;; Problem: this covers only canonical costructors, might need to
-;; further extend the definition
-
-(defun hom-cod (ctx f)
-  "Given a context of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with occurences of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class], and similarly
-an [STLC][type] term of the stand-in for the hom object, produces the stand-in
-to the codomain."
-  (let ((rec  (ann-term1 ctx f)))
-    (cond ((typep f 'fst)     (let ((tt (term f)))
-                                (if (typep tt 'pair)
-                                    (hom-cod ctx (ltm tt))
-                                    (hom-cod ctx tt))))
-          ((typep f 'snd)     (let ((tt (term f)))
-                                (if (typep tt 'pair)
-                                    (hom-cod ctx (rtm tt))
-                                    (hom-cod ctx tt))))
-          ((typep f 'case-on) (hom-cod
-                               (cons (mcar (ttype (ann-term1 ctx (on f))))
-                                     ctx)
-                               (ltm f)))
-          ((typep f 'absurd)  (hom-cod ctx (term f)))
-          ((typep f 'lamb)    (mcadr (ttype rec)))
-          ((typep f 'app)     (hom-cod ctx (fun f)))
-          ((typep f 'index)   (mcadr (ttype rec)))
-          (t                  (error "not a valid STLC exponential term")))))
-
 (-> index-check (fixnum list) cat-obj)
 (defun index-check (i ctx)
   "Given an natural number I and a context, checks that the context is of
@@ -137,10 +107,13 @@ the context on the left as well. For more info check [LAMB][class]"))
         ((lamb tdom term)   (let ((ant (ann-term1 (append tdom ctx) term)))
                               (lamb tdom
                                     ant
-                                    :ttype (fun-type (reduce #'prod tdom) (ttype ant)))))
-        ((app fun term)     (app (ann-term1 ctx fun)
-                                 (mapcar (lambda (trm) (ann-term1 ctx trm)) term)
-                                 :ttype (hom-cod ctx fun)))
+                                    :ttype (fun-type (reduce #'prod tdom
+                                                             :from-end t)
+                                                     (ttype ant)))))
+        ((app fun term) (let ((anfun (ann-term1 ctx fun)))
+                          (app anfun
+                               (mapcar (lambda (trm) (ann-term1 ctx trm)) term)
+                               :ttype (mcadr (ttype anfun)))))
         ((index pos)        (index pos
                                    :ttype (index-check pos ctx)))
         ((case-on on ltm rtm)
@@ -286,7 +259,13 @@ nil"))
                        (obj-equalp (mcadr lambda-type) (ttype term)))))
                ((app fun term)
                 (and (check fun)
-                     (check (reduce #'pair term))))
+                     (check (reduce #'pair term :from-end t))
+                     (typep (ttype fun) 'fun-type)
+                     (obj-equalp (ttype fun)
+                                 (fun-type (reduce #'prod
+                                                   (mapcar #'ttype term)
+                                                   :from-end t)
+                                           (ttype tterm)))))
                (index t)
                (unit t))))
     (let ((term (ignore-errors
