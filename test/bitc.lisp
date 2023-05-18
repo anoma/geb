@@ -27,3 +27,13 @@
   (is equalp #*0 (gapply (to-bitc geb-bool:and) #*10))
   (is equalp #*0 (gapply (to-bitc geb-bool:and) #*01))
   (is equalp #*0 (gapply (to-bitc geb-bool:and) #*00)))
+
+(define-test bitc-swap-evaluation
+  :parent geb-bitc
+  (is equalp #*011 (gapply (bitc:swap 0 3) #*011))
+  (is equalp #*011 (gapply (bitc:swap 3 0) #*011))
+  (is equalp #*101 (gapply (bitc:swap 2 1) #*011))
+  (is equalp #*110 (gapply (bitc:swap 2 1) #*101))
+  (is equalp #*011 (gapply (bitc:swap 2 1) #*110))
+  (is equalp #*01011 (gapply (bitc:swap 2 3) #*11010))
+  (is equalp #*100110 (gapply (bitc:swap 3 3) #*110100)))

@@ -67,7 +67,7 @@ GEB-TEST> (gapply (to-bitc geb-bool:and) #*00)
     (drop     #*)
     (swap
      (let ((n (mcar morphism)))
-       (concatenate 'bit-vector (subseq object 0) (subseq object 0 n))))
+       (concatenate 'bit-vector (subseq object n) (subseq object 0 n))))
     (parallel
      (let* ((cx (dom (mcar morphism)))
             (inp1 (subseq object 0 cx))
