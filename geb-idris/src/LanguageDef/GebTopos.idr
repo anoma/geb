@@ -2543,7 +2543,7 @@ showTypeFam : {0 nty : Nat} -> TypeFamily nty -> String
 showTypeFam {nty} (TFamily rtype) = show rtype
 
 public export
-Show (TypeFamily nty) where
+Show (LanguageDef.GebTopos.TypeFamily nty) where
   show = showTypeFam
 
 public export
@@ -2554,7 +2554,7 @@ typeFamEq {nty} (TFamily rt) (TFamily rt') =
     No neq => No $ \eq => case eq of Refl => neq Refl
 
 public export
-DecEq (TypeFamily nty) where
+DecEq (GebTopos.TypeFamily nty) where
   decEq = typeFamEq
 
 public export
@@ -2690,13 +2690,13 @@ record Arena where
   aAssign : aPosIdx -> aTy
 
 public export
-APDirType : (ar : Arena) -> ar.aPosIdx -> Type
+APDirType : (ar : LanguageDef.GebTopos.Arena) -> ar.aPosIdx -> Type
 APDirType ar i = (ar.aPos i).pDirTy
 
 public export
 record SliceArena (domSlice, codSlice : Type) where
   constructor ProdAr
-  saTy : codSlice -> Arena
+  saTy : codSlice -> LanguageDef.GebTopos.Arena
   saAssign : (i : codSlice) -> (saTy i).aTy -> domSlice
 
 public export
@@ -2704,7 +2704,7 @@ SliceEndoArena : Type -> Type
 SliceEndoArena base = SliceArena base base
 
 public export
-saAr : SliceArena domSlice codSlice -> codSlice -> Arena
+saAr : SliceArena domSlice codSlice -> codSlice -> LanguageDef.GebTopos.Arena
 saAr sa ci = sa.saTy ci
 
 public export
