@@ -48,11 +48,11 @@ main = do
   LanguageDef.Test.PolyProfunctorTest.polyProfunctorTest
   LanguageDef.Test.ADTCatTest.adtCatTest
   LanguageDef.Test.ProgFinSetTest.progFinSetTest
-  LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
   LanguageDef.Test.DiagramCatTest.diagramCatTest
   LanguageDef.Test.AdjunctionsTest.adjunctionsTest
   LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
   LanguageDef.Test.GebToposTest.gebToposTest
   LanguageDef.Test.RefinedADTTest.languageDefRefinedADTTest
+  LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
   LanguageDef.Test.TheoriesTest.theoriesTest
   LanguageDef.Test.FiguresTest.figuresTest
