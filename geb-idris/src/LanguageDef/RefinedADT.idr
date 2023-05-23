@@ -6,6 +6,119 @@ import public LanguageDef.Atom
 
 %default total
 
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+---- Dependent polynomial functors on a skeleton of `FinSet` ----
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+-- A constructor (equivalently, position) of a dependent polynomial functor
+-- from `FinSet/N` for some natural number `N` to `FinSet` itself (which is
+-- isomorphic to `FinSet/1`).
+public export
+record FinSetPosTo1 where
+  constructor FSP1
+  fsp1dir : List Nat
+
+public export
+deqFSPto1 : DecEqPred FinSetPosTo1
+deqFSPto1 (FSP1 d) (FSP1 d') with (decEq d d')
+  deqFSPto1 (FSP1 d) (FSP1 d) | Yes Refl = Yes Refl
+  deqFSPto1 (FSP1 d) (FSP1 d') | No neq =
+    No $ \eq => case eq of Refl => neq Refl
+
+public export
+DecEq FinSetPosTo1 where
+  decEq = deqFSPto1
+
+public export
+Eq FinSetPosTo1 where
+  p == p' = isYes $ decEq p p'
+
+-- Given a `FinSetPosTo1` and an `N`, check whether the `FinSetPosTo1` is
+-- a valid constructor of a dependent polynomial functor out of `FinSet/N`.
+public export
+checkFSPto1 : Nat -> FinSetPosTo1 -> Bool
+checkFSPto1 n = foldr (\d, b => d < n && b) True . fsp1dir
+
+public export
+showFSPto1 : FinSetPosTo1 -> String
+showFSPto1 = show . fsp1dir
+
+public export
+Show FinSetPosTo1 where
+  show = showFSPto1
+
+-- A dependent polynomial functor from `FinSet/N` for some natural number `N`
+-- to `FinSet` itself (which is isomorphic to `FinSet/1`).
+public export
+record FinSetPFto1 where
+  constructor FSPF1
+  fspf1pos : List FinSetPosTo1
+
+public export
+deqFSPFto1 : DecEqPred FinSetPFto1
+deqFSPFto1 (FSPF1 i) (FSPF1 i') with (decEq i i')
+  deqFSPFto1 (FSPF1 i) (FSPF1 i) | Yes Refl = Yes Refl
+  deqFSPFto1 (FSPF1 i) (FSPF1 i') | No neq =
+    No $ \eq => case eq of Refl => neq Refl
+
+public export
+DecEq FinSetPFto1 where
+  decEq = deqFSPFto1
+
+public export
+Eq FinSetPFto1 where
+  i == i' = isYes $ decEq i i'
+
+public export
+checkFSPFto1 : Nat -> FinSetPFto1 -> Bool
+checkFSPFto1 n = foldr (\i, b => checkFSPto1 n i && b) True . fspf1pos
+
+public export
+showFSPFto1 : FinSetPFto1 -> String
+showFSPFto1 = show . fspf1pos
+
+public export
+Show FinSetPFto1 where
+  show = showFSPFto1
+
+-- A dependent polynomial functor from `FinSet/N` to `FinSet/M` for
+-- some natural numbers `N` and `M`.
+public export
+record FinSetDepPF where
+  constructor FSDPF
+  fsdpfSlice : List FinSetPFto1
+
+public export
+deqFSDPF : DecEqPred FinSetDepPF
+deqFSDPF (FSDPF s) (FSDPF s') with (decEq s s')
+  deqFSDPF (FSDPF s) (FSDPF s) | Yes Refl = Yes Refl
+  deqFSDPF (FSDPF s) (FSDPF s') | No neq =
+    No $ \eq => case eq of Refl => neq Refl
+
+public export
+DecEq FinSetDepPF where
+  decEq = deqFSDPF
+
+public export
+Eq FinSetDepPF where
+  pf == pf' = isYes $ decEq pf pf'
+
+public export
+checkFSDPF : Nat -> Nat -> FinSetDepPF -> Bool
+checkFSDPF n m fsdpf =
+  length (fsdpfSlice fsdpf) < m &&
+  foldr (\i, b => checkFSPFto1 n i && b) True (fsdpfSlice fsdpf)
+
+public export
+showFSDPF : FinSetDepPF -> String
+showFSDPF = show . fsdpfSlice
+
+public export
+Show FinSetDepPF where
+  show = showFSDPF
+
 ------------------------------------------
 ------------------------------------------
 ---- Zeroth-order ADTs as polynomials ----
