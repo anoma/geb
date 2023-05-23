@@ -2036,7 +2036,7 @@ CatToPolyPos (MkCatSig o m eq i comp) = o
 
 public export
 CatToPolyDir : (c : CatSig) -> CatToPolyPos c -> Type
-CatToPolyDir (MkCatSig o m eq i comp) a = (b : o ** m a b)
+CatToPolyDir (MkCatSig o m eq i comp) = Sigma {a=o} . m
 
 public export
 CatToPoly : CatSig -> PolyFunc
