@@ -4,8 +4,15 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import public LanguageDef.Atom
 import public LanguageDef.RefinedADT
+import public LanguageDef.Theories
 
 %default total
+
+--------------------------------------
+--------------------------------------
+---- Geb term for core categories ----
+--------------------------------------
+--------------------------------------
 
 ----------------------------------
 ----------------------------------
