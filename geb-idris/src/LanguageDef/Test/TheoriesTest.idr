@@ -5,6 +5,12 @@ import LanguageDef.Theories
 
 %default total
 
+-----------------------
+-----------------------
+---- Bool category ----
+-----------------------
+-----------------------
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -18,6 +24,10 @@ theoriesTest = do
   putStrLn "==================="
   putStrLn "Begin TheoriesTest:"
   putStrLn "-------------------"
+  putStrLn ""
+  putStrLn "----"
+  putStrLn "Bool"
+  putStrLn "----"
   putStrLn ""
   putStrLn "-----------------"
   putStrLn "End TheoriesTest."
