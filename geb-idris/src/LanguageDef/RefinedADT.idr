@@ -38,8 +38,12 @@ Eq FinSetPosTo1 where
 -- Given a `FinSetPosTo1` and an `N`, check whether the `FinSetPosTo1` is
 -- a valid constructor of a dependent polynomial functor out of `FinSet/N`.
 public export
+checkListBound : Nat -> List Nat -> Bool
+checkListBound n = foldr (\d, b => d < n && b) True
+
+public export
 checkFSPto1 : Nat -> FinSetPosTo1 -> Bool
-checkFSPto1 n = foldr (\d, b => d < n && b) True . fsp1dir
+checkFSPto1 n fsp1 = checkListBound n (fsp1dir fsp1)
 
 public export
 showFSPto1 : FinSetPosTo1 -> String
