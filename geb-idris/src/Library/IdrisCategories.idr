@@ -215,7 +215,7 @@ BaseChangeF : {a, b : Type} -> (b -> a) -> SliceFunctor a b
 BaseChangeF f sla = sla . f
 
 public export
-Equalizer : {a : Type} -> {0 b : Type} -> (0 f, g : a -> b) -> Type
+Equalizer : {0 a : Type} -> {0 b : Type} -> (0 f, g : a -> b) -> Type
 Equalizer {a} {b} f g = Subset0 a (\x : a => f x = g x)
 
 public export
@@ -228,9 +228,9 @@ PreImage : {a : Type} -> {0 b : Type} -> (0 _ : a -> b) -> (0 _ : b) -> Type
 PreImage {a} {b} f elemb = Equalizer f (const elemb)
 
 public export
-Pullback : {a, b : Type} -> {0 c : Type} ->
+Pullback : {0 a, b : Type} -> {0 c : Type} ->
   (0 _ : a -> c) -> (0 _ : b -> c) -> Type
-Pullback {a} {b} {c} f g = Subset0 (a, b) (\(x, y) => f x = g y)
+Pullback {a} {b} {c} f g = Equalizer {a=(Pair a b)} {b=c} (f . fst) (g . snd)
 
 public export
 pbProj1 : {a, b : Type} -> {0 c : Type} -> {0 f : a -> c} -> {0 g : b -> c} ->
