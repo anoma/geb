@@ -24,6 +24,30 @@ public export
 lidx : {0 a : Type} -> ListIdx a -> a
 lidx {a} (Element0 (l, i) ok) = lindexN {a} i l {ok}
 
+public export
+data ListIdxR : Type -> Type where
+  LIz : {0 a : Type} -> (x : a) -> (0 xs : List a) -> ListIdxR a
+  LIs : {0 a : Type} -> (0 x : a) -> (xs : ListIdxR a) -> ListIdxR a
+
+public export
+lidxR : {0 a : Type} -> ListIdxR a -> a
+lidxR (LIz x xs) = x
+lidxR (LIs x xs) = lidxR xs
+
+public export
+lidxToR' : {0 a : Type} -> (0 sz : Nat) -> (l : ListIdx a) ->
+  (0 eq : snd (fst0 l) = sz) -> ListIdxR a
+lidxToR' n (Element0 ([], 0) ok) eq = void $ case ok of Refl impossible
+lidxToR' n (Element0 ((x :: xs), 0) ok) eq =
+  LIz x xs
+lidxToR' n (Element0 ([], (S i)) ok) eq = void $ case ok of Refl impossible
+lidxToR' (S i) (Element0 ((x :: xs), (S i)) ok) Refl =
+  LIs x $ lidxToR' i (Element0 (xs, i) ok) Refl
+
+public export
+lidxToR : {0 a : Type} -> ListIdx a -> ListIdxR a
+lidxToR l = lidxToR' (snd (fst0 l)) l Refl
+
 -- A polynomial endofunctor on a category can be described as an
 -- arena, or dependent set (the same arena also determines a Dirichlet
 -- endofunctor).  On a skeleton of `FinSet`, that's a mapping from
