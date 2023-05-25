@@ -26,8 +26,8 @@ lidx {a} (Element0 (l, i) ok) = lindexN {a} i l {ok}
 
 public export
 data ListIdxR : Type -> Type where
-  LIz : {0 a : Type} -> (x : a) -> (0 xs : List a) -> ListIdxR a
-  LIs : {0 a : Type} -> (0 x : a) -> (xs : ListIdxR a) -> ListIdxR a
+  LIz : {0 a : Type} -> (x : a) -> (xs : List a) -> ListIdxR a
+  LIs : {0 a : Type} -> (x : a) -> (xs : ListIdxR a) -> ListIdxR a
 
 public export
 lidxR : {0 a : Type} -> ListIdxR a -> a
@@ -47,6 +47,17 @@ lidxToR' (S i) (Element0 ((x :: xs), (S i)) ok) Refl =
 public export
 lidxToR : {0 a : Type} -> ListIdx a -> ListIdxR a
 lidxToR l = lidxToR' (snd (fst0 l)) l Refl
+
+public export
+lidxFromR : {0 a : Type} -> ListIdxR a -> ListIdx a
+lidxFromR (LIz x xs) = Element0 ((x :: xs), 0) Refl
+lidxFromR (LIs x xs) with (lidxFromR xs)
+  lidxFromR (LIs x xs) | Element0 ([], 0) eq =
+    void $ case eq of Refl impossible
+  lidxFromR (LIs x xs) | Element0 ([], (S i)) eq =
+    void $ case eq of Refl impossible
+  lidxFromR (LIs x xs) | Element0 ((x' :: xs'), i) eq =
+    Element0 (x :: x' :: xs', S i) eq
 
 -- A polynomial endofunctor on a category can be described as an
 -- arena, or dependent set (the same arena also determines a Dirichlet
