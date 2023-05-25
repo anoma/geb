@@ -6,6 +6,46 @@ import public LanguageDef.Atom
 
 %default total
 
+-------------------------------------------------------
+-------------------------------------------------------
+---- Polynomial functors on a skeleton of `FinSet` ----
+-------------------------------------------------------
+-------------------------------------------------------
+
+public export
+lidxOk : {0 a : Type} -> (List a, Nat) -> Bool
+lidxOk (ar, i) = i < length ar
+
+public export
+ListIdx : Type -> Type
+ListIdx a = PullbackDec {a=(List a)} {b=Nat} lidxOk
+
+public export
+lidx : {0 a : Type} -> ListIdx a -> a
+lidx {a} (Element0 (l, i) ok) = lindexN {a} i l {ok}
+
+-- A polynomial endofunctor on a category can be described as an
+-- arena, or dependent set (the same arena also determines a Dirichlet
+-- endofunctor).  On a skeleton of `FinSet`, that's a mapping from
+-- `FS n` for some natural number `n` to `Nat` itself.  That in turn
+-- may be represented concretely simply as a list of natural numbers.
+public export
+record FSArena where
+  constructor FSAr
+  fsaset : List Nat
+
+public export
+fspos : FSArena -> Nat
+fspos = length . fsaset
+
+public export
+FSPos : Type
+FSPos = PullbackDec {a=FSArena} {b=Nat} (lidxOk . mapFst fsaset)
+
+public export
+fsdir : FSPos -> Nat
+fsdir (Element0 (FSAr ar, i) ok) = lidx $ Element0 (ar, i) ok
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Dependent polynomial functors on a skeleton of `FinSet` ----
