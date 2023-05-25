@@ -448,7 +448,7 @@ fromLteSuccYes y = toIsYes (fromLteSucc $ fromIsYes y)
 
 public export
 lindexN : {0 a : Type} -> (i : Nat) -> (l : List a) ->
-  {auto 0 ok : IsTrue (length l > i)} -> a
+  {auto 0 ok : IsTrue (i < length l)} -> a
 lindexN {a} Z [] {ok=Refl} impossible
 lindexN {a} (S i) [] {ok=Refl} impossible
 lindexN {a} Z (x :: xs) {ok=Refl} = x
