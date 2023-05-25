@@ -447,6 +447,14 @@ fromLteSuccYes : {m, n : Nat} ->
 fromLteSuccYes y = toIsYes (fromLteSucc $ fromIsYes y)
 
 public export
+lindexN : {0 a : Type} -> (i : Nat) -> (l : List a) ->
+  {auto 0 ok : IsTrue (length l > i)} -> a
+lindexN {a} Z [] {ok=Refl} impossible
+lindexN {a} (S i) [] {ok=Refl} impossible
+lindexN {a} Z (x :: xs) {ok=Refl} = x
+lindexN {a} (S i) (x :: xs) {ok} = lindexN {a} i xs {ok}
+
+public export
 finToNatLT : {m : Nat} -> (i : Fin m) -> LT (finToNat i) m
 finToNatLT {m=Z} i = absurd i
 finToNatLT {m=(S m)} FZ = LTESucc LTEZero
