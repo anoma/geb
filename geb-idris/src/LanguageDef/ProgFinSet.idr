@@ -332,7 +332,7 @@ data DDRFSMorph : DRFSObj -> DRFSObj -> Type where
     DDRFSMorph x z -> DDRFSMorph y z -> DDRFSMorph (DRFSC x y) z
   DDRMcpL1 : {x, y, z : DRFSObj} -> -- left adjunct (first component)
     DDRFSMorph (DRFSC x y) z -> DDRFSMorph x z
-  DDRMcpL2 : {x, y, z : DRFSObj} -> -- left adjunct (seconc component)
+  DDRMcpL2 : {x, y, z : DRFSObj} -> -- left adjunct (second component)
     DDRFSMorph (DRFSC x y) z -> DDRFSMorph y z
   DDRMprL : {x, y, z : DRFSObj} -> -- left adjunct
     DDRFSMorph x y -> DDRFSMorph x z -> DDRFSMorph x (DRFSP y z)
