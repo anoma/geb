@@ -133,6 +133,21 @@ interpBoolMorph {b=BOBool} {b'=BOBool} (Element0 BMnot eq) = not
 interpBoolMorph {b=BOBool} {b'=BOBool} (Element0 BMtrue eq) = const True
 interpBoolMorph {b=BOBool} {b'=BOBool} (Element0 BMfalse eq) = const False
 
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Boolean circuits (such as modeled by BITC) as a Lawvere theory ----
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+-- Every object of this category is some natural number of bits.
+public export
+BCLawObj : Type
+BCLawObj = Nat
+
 --------------------------------------
 --------------------------------------
 ---- Single-sorted Lawvere theory ----
