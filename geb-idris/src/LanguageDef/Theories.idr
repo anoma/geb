@@ -179,6 +179,11 @@ data BCLawMorph : Type where
   --
   -- This is the left adjunct, which provides the product introduction rule.
   BCLMprodAdjL : List BCLawMorph -> BCLawMorph
+  --
+  -- This is the right adjunct, which provides the product elimination rule
+  -- (in particular when applied to `id`, in which case it becomes the counit).
+  -- The `Nat` parameter is an index into the returned list.
+  BCLMprodAdjR : BCLawMorph -> Nat -> BCLawMorph
 
 public export
 DecEq BCLawMorph where
@@ -191,11 +196,25 @@ DecEq BCLawMorph where
         No neq => case neq of Refl impossible
       decEqOne (BCLMid _) (BCLMprodAdjL _) =
         No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMid _) (BCLMprodAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
       decEqOne (BCLMprodAdjL _) (BCLMid _) =
         No $ \eq => case eq of Refl impossible
       decEqOne (BCLMprodAdjL fs) (BCLMprodAdjL gs) = case decEqList fs gs of
         Yes Refl => Yes Refl
         No neq => case neq of Refl impossible
+      decEqOne (BCLMprodAdjL _) (BCLMprodAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMprodAdjR _ _) (BCLMid _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMprodAdjR _ _) (BCLMprodAdjL _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMprodAdjR f m) (BCLMprodAdjR g n) =
+        case decEqOne f g of
+          Yes Refl => case decEq m n of
+            Yes Refl => Yes Refl
+            No neq => case neq of Refl impossible
+          No neq => case neq of Refl impossible
 
       public export
       decEqList : DecEqPred (List BCLawMorph)
@@ -219,6 +238,8 @@ Show BCLawMorph where
       showOne : BCLawMorph -> String
       showOne (BCLMid n) = "id[" ++ show n ++ "]"
       showOne (BCLMprodAdjL fs) = "prodAdjL[" ++ showList fs ++ "]"
+      showOne (BCLMprodAdjR f n) =
+        "prodAdjR[" ++ showOne f ++ ":" ++ show n ++ "]"
 
       public export
       showList : List BCLawMorph -> String
@@ -237,6 +258,8 @@ mutual
     m == k && n == k
   checkBCLMOne m (BCLOnbits n) (BCLMprodAdjL fs) =
     length fs == n && checkBCLMList m (BCLOnbits 1) fs
+  checkBCLMOne (BCLOnbits m) (BCLOnbits n) (BCLMprodAdjR f k) =
+    k < m && n == 1
 
   public export
   checkBCLMList : BCLawObj -> BCLawObj -> List BCLawMorph -> Bool
@@ -266,12 +289,6 @@ SignedBCLM = PullbackDec {a=BCLawSig} {b=BCLawMorph} checkSignedBCLM
 public export
 SignedBCLMList : Type
 SignedBCLMList = PullbackDec {a=BCLawSig} {b=(List BCLawMorph)} checkSignedBCLMs
-
-{- XXX compute this
-  -- This is the right adjunct, which provides the product elimination rule
-  -- (via the counit, which comes from applying the right adjunct to `id`).
-  BCLMprodAdjR : BCLawMorph -> List BCLawMorph
-  -}
 
 --------------------------------------
 --------------------------------------
