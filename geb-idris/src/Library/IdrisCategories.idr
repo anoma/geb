@@ -631,89 +631,123 @@ SliceAna {a} f =
 ------------------------------------------
 ------------------------------------------
 
+-- The category-theoretic style of defining slice objects (which is
+-- sort of dual to, or backwards from, the style of dependent types
+-- with universes, i.e. where an object of `Type/c` is a predicate
+-- `c -> Type`).
+
+public export
+ArrowT : Type -> Type -> Type
+ArrowT a b = a -> b
+
+public export
+OpArrowT : Type -> Type -> Type
+OpArrowT = flip ArrowT
+
+public export
 CSliceObj : Type -> Type
-CSliceObj c = (a : Type ** a -> c)
+CSliceObj c = Subset0 Type (OpArrowT c)
 
-CSliceObjDomain : {c : Type} -> CSliceObj c -> Type
-CSliceObjDomain (a ** _) = a
+public export
+CSliceObjDomain : {0 c : Type} -> CSliceObj c -> Type
+CSliceObjDomain = fst0
 
-CSliceObjMap : {c : Type} -> (x : CSliceObj c) -> (CSliceObjDomain x -> c)
-CSliceObjMap (_ ** mx) = mx
+public export
+0 CSliceObjMap : {0 c : Type} -> (x : CSliceObj c) -> (CSliceObjDomain x -> c)
+CSliceObjMap = snd0
 
-CSliceMorphism : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+public export
+CSliceMorphism : {0 c : Type} -> CSliceObj c -> CSliceObj c -> Type
 CSliceMorphism x y =
-  (w : CSliceObjDomain x -> CSliceObjDomain y **
-   ExtEq (CSliceObjMap y . w) (CSliceObjMap x))
+  Subset0
+    (CSliceObjDomain x -> CSliceObjDomain y)
+    (\w => ExtEq (CSliceObjMap y . w) (CSliceObjMap x))
 
-CSliceMorphismMap : {c : Type} -> {x, y : CSliceObj c} ->
+public export
+CSliceMorphismMap : {0 c : Type} -> {0 x, y : CSliceObj c} ->
   CSliceMorphism x y -> CSliceObjDomain x -> CSliceObjDomain y
-CSliceMorphismMap (w ** _) = w
+CSliceMorphismMap = fst0
 
-CSliceMorphismEq : {c : Type} -> {x, y : CSliceObj c} ->
+public export
+0 CSliceMorphismEq : {0 c : Type} -> {0 x, y : CSliceObj c} ->
   (f : CSliceMorphism x y) ->
   ExtEq (CSliceObjMap y . CSliceMorphismMap {x} {y} f) (CSliceObjMap x)
-CSliceMorphismEq (_ ** eq) = eq
+CSliceMorphismEq = snd0
 
-CSliceId : {c : Type} -> (w : CSliceObj c) -> CSliceMorphism w w
-CSliceId (a ** x) = (id ** \_ => Refl)
+public export
+CSliceId : {0 c : Type} -> (0 w : CSliceObj c) -> CSliceMorphism w w
+CSliceId (Element0 a x) = Element0 id (\_ => Refl)
 
-CSliceCompose : {c : Type} -> {u, v, w : CSliceObj c} ->
+public export
+CSliceCompose : {0 c : Type} -> {0 u, v, w : CSliceObj c} ->
   CSliceMorphism v w -> CSliceMorphism u v -> CSliceMorphism u w
 CSliceCompose {c} {u} {v} {w} g f =
-  (CSliceMorphismMap g . CSliceMorphismMap f **
-   \elem =>
-    trans
-      (CSliceMorphismEq g (CSliceMorphismMap f elem))
-      (CSliceMorphismEq f elem))
+  Element0
+    (CSliceMorphismMap g . CSliceMorphismMap f)
+    (\elem =>
+      trans
+        (CSliceMorphismEq g (CSliceMorphismMap f elem))
+        (CSliceMorphismEq f elem))
 
+public export
 Bundle : Type
-Bundle = (base : Type ** CSliceObj base)
+Bundle = DPair Type CSliceObj
 
+public export
 BundleBase : Bundle -> Type
-BundleBase (base ** (_ ** _)) = base
+BundleBase = fst
 
+public export
 BundleTotal : Bundle -> Type
-BundleTotal (_ ** (tot ** _)) = tot
+BundleTotal (_ ** so) = fst0 so
 
-BundleProj :
+public export
+0 BundleProj :
   (bundle : Bundle) -> (BundleTotal bundle) -> (BundleBase bundle)
-BundleProj (_ ** (_ ** proj)) = proj
+BundleProj (_ ** so) = snd0 so
 
+public export
 BundleFiber : (bundle : Bundle) -> (baseElem : BundleBase bundle) -> Type
 BundleFiber bundle baseElem =
-  (totalElem : BundleTotal bundle ** (BundleProj bundle totalElem = baseElem))
+  Subset0 (BundleTotal bundle) (Equal baseElem . BundleProj bundle)
 
+public export
 CRefinementBy : Type -> Type
 CRefinementBy = CSliceObj . Maybe
 
+public export
 CRefinement : Type
 CRefinement = DPair Type CRefinementBy
 
+public export
 CRefinementBundle : CRefinement -> Bundle
 CRefinementBundle (base ** slice) = (Maybe base ** slice)
 
+public export
 CRefinementBase : CRefinement -> Type
 CRefinementBase (base ** _) = base
 
+public export
 CRefinementTotal : CRefinement -> Type
 CRefinementTotal = BundleTotal . CRefinementBundle
 
-CRefinementProj :
+public export
+0 CRefinementProj :
   (r : CRefinement) -> (CRefinementTotal r) -> Maybe (CRefinementBase r)
-CRefinementProj (_ ** (_ ** proj)) = proj
+CRefinementProj (_ ** so) = snd0 so
 
+public export
 CRefinementFiber :
   (r : CRefinement) -> (baseElem : Maybe (CRefinementBase r)) -> Type
-CRefinementFiber (base ** (tot ** proj)) baseElem =
-  BundleFiber (Maybe base ** (tot ** proj)) baseElem
+CRefinementFiber (base ** so) baseElem = BundleFiber (Maybe base ** so) baseElem
 
+public export
 JustFiber : (r : CRefinement) -> (baseElem : CRefinementBase r) -> Type
-JustFiber (base ** (tot ** proj)) baseElem =
-  BundleFiber (Maybe base ** (tot ** proj)) (Just baseElem)
+JustFiber (base ** so) baseElem = BundleFiber (Maybe base ** so) (Just baseElem)
 
+public export
 NothingFiber : (r : CRefinement) -> Type
-NothingFiber (base ** (tot ** proj)) =
-  BundleFiber (Maybe base ** (tot ** proj)) Nothing
+NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
 
 -----------------------------------------------------------
 -----------------------------------------------------------
