@@ -290,6 +290,14 @@ public export
 SignedBCLMList : Type
 SignedBCLMList = PullbackDec {a=BCLawSig} {b=(List BCLawMorph)} checkSignedBCLMs
 
+---------------------
+---- Composition ----
+---------------------
+
+------------------------------
+---- Universal properties ----
+------------------------------
+
 --------------------------------------
 --------------------------------------
 ---- Single-sorted Lawvere theory ----
