@@ -625,6 +625,96 @@ SliceAna : {a : Type} -> SliceEndofunctor a -> Type
 SliceAna {a} f =
   (sa : SliceObj a) -> SliceCoalg f sa -> SliceMorphism {a} sa (SliceNu f)
 
+------------------------------------------
+------------------------------------------
+---- Slices, bundles, and refinements ----
+------------------------------------------
+------------------------------------------
+
+CSliceObj : Type -> Type
+CSliceObj c = (a : Type ** a -> c)
+
+CSliceObjDomain : {c : Type} -> CSliceObj c -> Type
+CSliceObjDomain (a ** _) = a
+
+CSliceObjMap : {c : Type} -> (x : CSliceObj c) -> (CSliceObjDomain x -> c)
+CSliceObjMap (_ ** mx) = mx
+
+CSliceMorphism : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSliceMorphism x y =
+  (w : CSliceObjDomain x -> CSliceObjDomain y **
+   ExtEq (CSliceObjMap y . w) (CSliceObjMap x))
+
+CSliceMorphismMap : {c : Type} -> {x, y : CSliceObj c} ->
+  CSliceMorphism x y -> CSliceObjDomain x -> CSliceObjDomain y
+CSliceMorphismMap (w ** _) = w
+
+CSliceMorphismEq : {c : Type} -> {x, y : CSliceObj c} ->
+  (f : CSliceMorphism x y) ->
+  ExtEq (CSliceObjMap y . CSliceMorphismMap {x} {y} f) (CSliceObjMap x)
+CSliceMorphismEq (_ ** eq) = eq
+
+CSliceId : {c : Type} -> (w : CSliceObj c) -> CSliceMorphism w w
+CSliceId (a ** x) = (id ** \_ => Refl)
+
+CSliceCompose : {c : Type} -> {u, v, w : CSliceObj c} ->
+  CSliceMorphism v w -> CSliceMorphism u v -> CSliceMorphism u w
+CSliceCompose {c} {u} {v} {w} g f =
+  (CSliceMorphismMap g . CSliceMorphismMap f **
+   \elem =>
+    trans
+      (CSliceMorphismEq g (CSliceMorphismMap f elem))
+      (CSliceMorphismEq f elem))
+
+Bundle : Type
+Bundle = (base : Type ** CSliceObj base)
+
+BundleBase : Bundle -> Type
+BundleBase (base ** (_ ** _)) = base
+
+BundleTotal : Bundle -> Type
+BundleTotal (_ ** (tot ** _)) = tot
+
+BundleProj :
+  (bundle : Bundle) -> (BundleTotal bundle) -> (BundleBase bundle)
+BundleProj (_ ** (_ ** proj)) = proj
+
+BundleFiber : (bundle : Bundle) -> (baseElem : BundleBase bundle) -> Type
+BundleFiber bundle baseElem =
+  (totalElem : BundleTotal bundle ** (BundleProj bundle totalElem = baseElem))
+
+CRefinementBy : Type -> Type
+CRefinementBy = CSliceObj . Maybe
+
+CRefinement : Type
+CRefinement = DPair Type CRefinementBy
+
+CRefinementBundle : CRefinement -> Bundle
+CRefinementBundle (base ** slice) = (Maybe base ** slice)
+
+CRefinementBase : CRefinement -> Type
+CRefinementBase (base ** _) = base
+
+CRefinementTotal : CRefinement -> Type
+CRefinementTotal = BundleTotal . CRefinementBundle
+
+CRefinementProj :
+  (r : CRefinement) -> (CRefinementTotal r) -> Maybe (CRefinementBase r)
+CRefinementProj (_ ** (_ ** proj)) = proj
+
+CRefinementFiber :
+  (r : CRefinement) -> (baseElem : Maybe (CRefinementBase r)) -> Type
+CRefinementFiber (base ** (tot ** proj)) baseElem =
+  BundleFiber (Maybe base ** (tot ** proj)) baseElem
+
+JustFiber : (r : CRefinement) -> (baseElem : CRefinementBase r) -> Type
+JustFiber (base ** (tot ** proj)) baseElem =
+  BundleFiber (Maybe base ** (tot ** proj)) (Just baseElem)
+
+NothingFiber : (r : CRefinement) -> Type
+NothingFiber (base ** (tot ** proj)) =
+  BundleFiber (Maybe base ** (tot ** proj)) Nothing
+
 -----------------------------------------------------------
 -----------------------------------------------------------
 ---- Fixed points in arbitrary subcategories of `Type` ----
