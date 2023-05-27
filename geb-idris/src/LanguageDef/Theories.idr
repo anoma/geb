@@ -230,33 +230,42 @@ Show BCLawMorph where
       showListRec (f :: []) = showOne f
       showListRec (f :: fs@(g :: gs)) = showOne f ++ ", " ++ showListRec fs
 
-public export
-checkBCLMCurried : BCLawObj -> BCLawObj -> BCLawMorph -> Bool
-checkBCLMCurried = checkBCLMOne where
-  mutual
-    public export
-    checkBCLMOne : BCLawObj -> BCLawObj -> BCLawMorph -> Bool
-    checkBCLMOne m n (BCLMid k) =
-      m == k && n == k
-    checkBCLMOne m (BCLOnbits n) (BCLMprodAdjL fs) =
-      length fs == n && checkBCLMList m (BCLOnbits 1) fs
+mutual
+  public export
+  checkBCLMOne : BCLawObj -> BCLawObj -> BCLawMorph -> Bool
+  checkBCLMOne m n (BCLMid k) =
+    m == k && n == k
+  checkBCLMOne m (BCLOnbits n) (BCLMprodAdjL fs) =
+    length fs == n && checkBCLMList m (BCLOnbits 1) fs
 
-    public export
-    checkBCLMList : BCLawObj -> BCLawObj -> List BCLawMorph -> Bool
-    checkBCLMList m n [] = True
-    checkBCLMList m n (f :: fs) = checkBCLMOne m n f && checkBCLMList m n fs
+  public export
+  checkBCLMList : BCLawObj -> BCLawObj -> List BCLawMorph -> Bool
+  checkBCLMList m n [] = True
+  checkBCLMList m n (f :: fs) = checkBCLMOne m n f && checkBCLMList m n fs
 
 public export
 checkBCLM : BCLawSig -> BCLawMorph -> Bool
-checkBCLM = uncurry checkBCLMCurried
+checkBCLM = uncurry checkBCLMOne
+
+public export
+checkBCLMs : BCLawSig -> List BCLawMorph -> Bool
+checkBCLMs = uncurry checkBCLMList
 
 public export
 checkSignedBCLM : (BCLawSig, BCLawMorph) -> Bool
 checkSignedBCLM = uncurry checkBCLM
 
 public export
+checkSignedBCLMs : (BCLawSig, List BCLawMorph) -> Bool
+checkSignedBCLMs = uncurry checkBCLMs
+
+public export
 SignedBCLM : Type
 SignedBCLM = PullbackDec {a=BCLawSig} {b=BCLawMorph} checkSignedBCLM
+
+public export
+SignedBCLMList : Type
+SignedBCLMList = PullbackDec {a=BCLawSig} {b=(List BCLawMorph)} checkSignedBCLMs
 
 {- XXX compute this
   -- This is the right adjunct, which provides the product elimination rule
