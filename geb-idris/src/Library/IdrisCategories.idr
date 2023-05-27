@@ -646,15 +646,15 @@ OpArrowT = flip ArrowT
 
 public export
 CSliceObj : Type -> Type
-CSliceObj c = Subset0 Type (OpArrowT c)
+CSliceObj c = DPair Type (OpArrowT c)
 
 public export
 CSliceObjDomain : {0 c : Type} -> CSliceObj c -> Type
-CSliceObjDomain = fst0
+CSliceObjDomain = fst
 
 public export
-0 CSliceObjMap : {0 c : Type} -> (x : CSliceObj c) -> (CSliceObjDomain x -> c)
-CSliceObjMap = snd0
+CSliceObjMap : {0 c : Type} -> (x : CSliceObj c) -> (CSliceObjDomain x -> c)
+CSliceObjMap = snd
 
 public export
 CSliceMorphism : {0 c : Type} -> CSliceObj c -> CSliceObj c -> Type
@@ -676,7 +676,7 @@ CSliceMorphismEq = snd0
 
 public export
 CSliceId : {0 c : Type} -> (0 w : CSliceObj c) -> CSliceMorphism w w
-CSliceId (Element0 a x) = Element0 id (\_ => Refl)
+CSliceId (a ** x) = Element0 id (\_ => Refl)
 
 public export
 CSliceCompose : {0 c : Type} -> {0 u, v, w : CSliceObj c} ->
@@ -690,6 +690,71 @@ CSliceCompose {c} {u} {v} {w} g f =
         (CSliceMorphismEq g (CSliceMorphismMap f elem)))
 
 public export
+CSInitObj : (c : Type) -> CSliceObj c
+CSInitObj c = (Void ** voidF c)
+
+public export
+csInitMorph : {0 c : Type} ->
+  (so : CSliceObj c) -> CSliceMorphism (CSInitObj c) so
+csInitMorph {c} (a ** pa) = Element0 (voidF a) (\el => void el)
+
+public export
+CSTermObj : (c : Type) -> CSliceObj c
+CSTermObj c = (c ** id)
+
+public export
+csTermMorph : {0 c : Type} ->
+  (so : CSliceObj c) -> CSliceMorphism so (CSTermObj c)
+csTermMorph {c} (a ** pa) = Element0 pa (\_ => Refl)
+
+public export
+CSCopObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
+CSCopObj {c} (a ** pa) (b ** pb) = (Either a b ** eitherElim {a} {b} {c} pa pb)
+
+public export
+csInjL : {0 c : Type} -> (l, r : CSliceObj c) -> CSliceMorphism l (CSCopObj l r)
+csInjL {c} (x ** px) (y ** py) = Element0 Left $ \_ => Refl
+
+public export
+csInjR : {0 c : Type} -> (l, r : CSliceObj c) -> CSliceMorphism r (CSCopObj l r)
+csInjR {c} (x ** px) (y ** py) = Element0 Right $ \_ => Refl
+
+public export
+csCase : {0 c : Type} -> {0 x, y, z : CSliceObj c} ->
+  CSliceMorphism x z -> CSliceMorphism y z -> CSliceMorphism (CSCopObj x y) z
+csCase {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f eqf) (Element0 g eqg) =
+    Element0 (eitherElim {a=x} {b=y} {c=z} f g) $
+      \el => case el of
+        Left ex => eqf ex
+        Right ey => eqg ey
+
+public export
+CSProdObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
+CSProdObj {c} (a ** pa) (b ** pb) =
+    (Pullback {a} {b} {c} pa pb **
+     \(Element0 (x, y) eq) => pa x {- `eq` ensures this is also `pb y` -})
+
+public export
+csProj1 : {0 c : Type} -> (l, r : CSliceObj c) ->
+  CSliceMorphism (CSProdObj l r) l
+csProj1 {c} (a ** pa) (b ** pb) =
+  Element0 (fst . fst0) $ \(Element0 (x, y) eq) => Refl
+
+public export
+csProj2 : {0 c : Type} -> (l, r : CSliceObj c) ->
+  CSliceMorphism (CSProdObj l r) r
+csProj2 {c} (a ** pa) (b ** pb) =
+  Element0 (snd . fst0) $ \(Element0 (x, y) eq) => eq
+
+public export
+csPair : {0 c : Type} -> {0 x, y, z : CSliceObj c} ->
+  CSliceMorphism x y -> CSliceMorphism x z -> CSliceMorphism x (CSProdObj y z)
+csPair {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f eqf) (Element0 g eqg) =
+    Element0 (\el => Element0 (f el, g el) $ trans (sym $ eqf el) $ eqg el) eqf
+
+public export
 Bundle : Type
 Bundle = DPair Type CSliceObj
 
@@ -699,12 +764,12 @@ BundleBase = fst
 
 public export
 BundleTotal : Bundle -> Type
-BundleTotal (_ ** so) = fst0 so
+BundleTotal (_ ** so) = fst so
 
 public export
 0 BundleProj :
   (bundle : Bundle) -> (BundleTotal bundle) -> (BundleBase bundle)
-BundleProj (_ ** so) = snd0 so
+BundleProj (_ ** so) = snd so
 
 public export
 BundleFiber : (bundle : Bundle) -> (baseElem : BundleBase bundle) -> Type
@@ -734,7 +799,7 @@ CRefinementTotal = BundleTotal . CRefinementBundle
 public export
 0 CRefinementProj :
   (r : CRefinement) -> (CRefinementTotal r) -> Maybe (CRefinementBase r)
-CRefinementProj (_ ** so) = snd0 so
+CRefinementProj (_ ** so) = snd so
 
 public export
 CRefinementFiber :
