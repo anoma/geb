@@ -145,8 +145,43 @@ interpBoolMorph {b=BOBool} {b'=BOBool} (Element0 BMfalse eq) = const False
 
 -- Every object of this category is some natural number of bits.
 public export
-BCLawObj : Type
-BCLawObj = Nat
+data BCLawObj : Type where
+  BCLOnbits : Nat -> BCLawObj
+
+public export
+DecEq BCLawObj where
+  decEq (BCLOnbits m) (BCLOnbits n) = case decEq m n of
+    Yes Refl => Yes Refl
+    No neq => case neq of Refl impossible
+
+public export
+Eq BCLawObj where
+  x == y = isYes $ decEq x y
+
+public export
+Show BCLawObj where
+  show (BCLOnbits n) = "2^" ++ show n
+
+public export
+BCLawSig : Type
+BCLawSig = (BCLawObj, BCLawObj)
+
+-- The total space of morphisms in the boolean-Lawvere category.
+-- Slices of this provide the morphisms indexed by signature
+-- (domain and codomain).  These should compile very directly to BITC.
+public export
+data BCLawMorph : Type where
+  -- The identity which is present in all categories.  Composition
+  -- is not explicit here, but derived.
+  BCLMid : BCLawObj -> BCLawMorph
+
+public export
+checkBCLMCurried : BCLawObj -> BCLawObj -> BCLawMorph -> Bool
+checkBCLMCurried m n (BCLMid k) = m == k && n == k
+
+public export
+checkBCLM : BCLawSig -> BCLawMorph -> Bool
+checkBCLM = uncurry checkBCLMCurried
 
 --------------------------------------
 --------------------------------------
