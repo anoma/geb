@@ -661,7 +661,7 @@ CSliceMorphism : {0 c : Type} -> CSliceObj c -> CSliceObj c -> Type
 CSliceMorphism x y =
   Subset0
     (CSliceObjDomain x -> CSliceObjDomain y)
-    (\w => ExtEq (CSliceObjMap y . w) (CSliceObjMap x))
+    (ExtEq (CSliceObjMap x) . ((.) (CSliceObjMap y)))
 
 public export
 CSliceMorphismMap : {0 c : Type} -> {0 x, y : CSliceObj c} ->
@@ -671,7 +671,7 @@ CSliceMorphismMap = fst0
 public export
 0 CSliceMorphismEq : {0 c : Type} -> {0 x, y : CSliceObj c} ->
   (f : CSliceMorphism x y) ->
-  ExtEq (CSliceObjMap y . CSliceMorphismMap {x} {y} f) (CSliceObjMap x)
+  ExtEq (CSliceObjMap x) (CSliceObjMap y . CSliceMorphismMap {x} {y} f)
 CSliceMorphismEq = snd0
 
 public export
@@ -686,8 +686,8 @@ CSliceCompose {c} {u} {v} {w} g f =
     (CSliceMorphismMap g . CSliceMorphismMap f)
     (\elem =>
       trans
-        (CSliceMorphismEq g (CSliceMorphismMap f elem))
-        (CSliceMorphismEq f elem))
+        (CSliceMorphismEq f elem)
+        (CSliceMorphismEq g (CSliceMorphismMap f elem)))
 
 public export
 Bundle : Type
