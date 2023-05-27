@@ -176,12 +176,34 @@ data BCLawMorph : Type where
   BCLMid : BCLawObj -> BCLawMorph
 
 public export
+DecEq BCLawMorph where
+  decEq (BCLMid m) (BCLMid n) = case decEq m n of
+    Yes Refl => Yes Refl
+    No neq => case neq of Refl impossible
+
+public export
+Eq BCLawMorph where
+  f == g = isYes $ decEq f g
+
+public export
+Show BCLawMorph where
+  show (BCLMid n) = "id[" ++ show n ++ "]"
+
+public export
 checkBCLMCurried : BCLawObj -> BCLawObj -> BCLawMorph -> Bool
 checkBCLMCurried m n (BCLMid k) = m == k && n == k
 
 public export
 checkBCLM : BCLawSig -> BCLawMorph -> Bool
 checkBCLM = uncurry checkBCLMCurried
+
+public export
+checkSignedBCLM : (BCLawSig, BCLawMorph) -> Bool
+checkSignedBCLM = uncurry checkBCLM
+
+public export
+SignedBCLM : Type
+SignedBCLM = PullbackDec {a=BCLawSig} {b=BCLawMorph} checkSignedBCLM
 
 --------------------------------------
 --------------------------------------
