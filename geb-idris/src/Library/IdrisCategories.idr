@@ -353,8 +353,56 @@ SliceDepPair : {0 a : Type} -> (x : SliceObj a) -> SliceObj (Sigma {a} x) ->
   SliceObj a
 SliceDepPair {a} x sl ea = Sigma {a=(x ea)} (sl . MkDPair ea)
 
+----------------------------------------
+----------------------------------------
+---- Subobject classifier in `Type` ----
+----------------------------------------
+----------------------------------------
+
+-- Subobject classifier in what I think is the style of the HoTT book with
+-- an `isProp` as in https://ncatlab.org/nlab/show/mere+proposition.
+
+public export
+IsHProp : Type -> Type
+IsHProp a = (x, y : a) -> x = y
+
+public export
+SubCFromHProp : Type
+SubCFromHProp = Subset0 Type IsHProp
+
+public export
+PowerObjFromProp : Type -> Type
+PowerObjFromProp a = a -> SubCFromHProp
+
+public export
+TrueForHProp : () -> SubCFromHProp
+TrueForHProp () = Element0 Unit $ \(), () => Refl
+
+public export
+ChiForHProp : {0 a, b : Type} ->
+  (f : a -> b) -> ((x, y : a) -> f x = f y -> x = y) ->
+  b -> SubCFromHProp
+ChiForHProp {a} {b} f isMonic eb =
+  Element0
+    (Exists0 a $ \x => f x = eb)
+    $ \(Evidence0 x eqx), (Evidence0 y eqy) =>
+      case isMonic x y (trans eqx (sym eqy)) of
+        Refl => case uip {eq=eqx} {eq'=eqy} of
+          Refl => Refl
+
+public export
+0 ChiForHPropPbToDom : {0 a, b : Type} ->
+  (f : a -> b) -> (isMonic : (x, y : a) -> f x = f y -> x = y) ->
+  Pullback {a=b} {b=Unit} {c=SubCFromHProp}
+    (ChiForHProp f isMonic) TrueForHProp ->
+  a
+ChiForHPropPbToDom {a} {b} f isMonic (Element0 (eb, ()) eq) =
+  fst0 $ replace {p=id} (sym $ elementInjectiveFst eq) ()
+
+-------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
+-------------------------------------------
 -------------------------------------------
 
 -- The dependent product functor induced by the given morphism.
