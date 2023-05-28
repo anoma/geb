@@ -371,12 +371,24 @@ SubCFromHProp : Type
 SubCFromHProp = Subset0 Type IsHProp
 
 public export
+SubCType : Type
+SubCType = SubCFromHProp
+
+public export
 PowerObjFromProp : Type -> Type
 PowerObjFromProp a = a -> SubCFromHProp
 
 public export
+PowObjType : Type -> Type
+PowObjType = PowerObjFromProp
+
+public export
 TrueForHProp : () -> SubCFromHProp
 TrueForHProp () = Element0 Unit $ \(), () => Refl
+
+public export
+TrueType : () -> SubCFromHProp
+TrueType = TrueForHProp
 
 public export
 ChiForHProp : {0 a, b : Type} ->
@@ -391,6 +403,12 @@ ChiForHProp {a} {b} f isMonic eb =
           Refl => Refl
 
 public export
+ChiType : {0 a, b : Type} ->
+  (f : a -> b) -> ((x, y : a) -> f x = f y -> x = y) ->
+  b -> SubCFromHProp
+ChiType = ChiForHProp
+
+public export
 0 ChiForHPropPbToDom : {0 a, b : Type} ->
   (f : a -> b) -> (isMonic : (x, y : a) -> f x = f y -> x = y) ->
   Pullback {a=b} {b=Unit} {c=SubCFromHProp}
@@ -398,6 +416,14 @@ public export
   a
 ChiForHPropPbToDom {a} {b} f isMonic (Element0 (eb, ()) eq) =
   fst0 $ replace {p=id} (sym $ elementInjectiveFst eq) ()
+
+public export
+0 ChiPbToDomType : {0 a, b : Type} ->
+  (f : a -> b) -> (isMonic : (x, y : a) -> f x = f y -> x = y) ->
+  Pullback {a=b} {b=Unit} {c=SubCFromHProp}
+    (ChiForHProp f isMonic) TrueForHProp ->
+  a
+ChiPbToDomType = ChiForHPropPbToDom
 
 -------------------------------------------
 -------------------------------------------
@@ -736,6 +762,11 @@ CSliceCompose {c} {u} {v} {w} g f =
       trans
         (CSliceMorphismEq f elem)
         (CSliceMorphismEq g (CSliceMorphismMap f elem)))
+
+public export
+csInj : {0 c : Type} ->
+  (so : CSliceObj c) -> CSliceObjDomain so -> (CSliceObjDomain so, c)
+csInj {c} (a ** pa) el = (el, pa el)
 
 public export
 CSInitObj : (c : Type) -> CSliceObj c
