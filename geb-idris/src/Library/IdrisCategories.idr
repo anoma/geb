@@ -834,6 +834,21 @@ csPair {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
     Element0 (\el => Element0 (f el, g el) $ trans (sym $ eqf el) $ eqg el) eqf
 
 public export
+csEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
+  (f, g : CSliceMorphism x y) -> CSliceObj c
+csEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
+  (Equalizer {a=x} {b=y} f g **
+   \(Element0 el eqel) => px el
+    {- also ensured by `eqf`, `eqg`, and `eqel` to be equal to `py (f el)`
+     - and to `py (g el)` -})
+
+public export
+csEqInj : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
+  (f, g : CSliceMorphism {c} x y) -> CSliceMorphism (csEq {c} {x} {y} f g) x
+csEqInj {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
+  Element0 fst0 $ \(Element0 el eqel) => Refl
+
+public export
 Bundle : Type
 Bundle = DPair Type CSliceObj
 
