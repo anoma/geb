@@ -764,6 +764,12 @@ CSliceCompose {c} {u} {v} {w} g f =
         (CSliceMorphismEq g (CSliceMorphismMap f elem)))
 
 public export
+CSExtEq : {0 c : Type} -> {x, y : CSliceObj c} ->
+  (f, g : CSliceMorphism x y) -> Type
+CSExtEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
+  ExtEq f g
+
+public export
 csInj : {0 c : Type} ->
   (so : CSliceObj c) -> CSliceObjDomain so -> (CSliceObjDomain so, c)
 csInj {c} (a ** pa) el = (el, pa el)
@@ -847,6 +853,19 @@ csEqInj : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
   (f, g : CSliceMorphism {c} x y) -> CSliceMorphism (csEq {c} {x} {y} f g) x
 csEqInj {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
   Element0 fst0 $ \(Element0 el eqel) => Refl
+
+public export
+csEqIntro : {0 c : Type} -> {x : CSliceObj c} -> {0 w, y : CSliceObj c} ->
+  (f, g : CSliceMorphism {c} x y) ->
+  (h : CSliceMorphism {c} w x) ->
+  CSExtEq {x=w} {y}
+    (CSliceCompose {u=w} {v=x} {w=y} f h)
+    (CSliceCompose {u=w} {v=x} {w=y} g h) ->
+  CSliceMorphism w (csEq {c} {x} {y} f g)
+csEqIntro {c} {x=(x ** px)} {w=(w ** pw)} {y=(y ** py)}
+  (Element0 f eqf) (Element0 g eqg) (Element0 h eqh) fgheq =
+    Element0 (\elw => Element0 (h elw) (fgheq elw)) $
+      \elw => trans (eqh elw) Refl
 
 public export
 Bundle : Type
