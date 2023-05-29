@@ -868,6 +868,16 @@ csEqIntro {c} {x=(x ** px)} {w=(w ** pw)} {y=(y ** py)}
       \elw => trans (eqh elw) Refl
 
 public export
+csDistrib : {0 c : Type} -> {0 w, x, y, z : CSliceObj c} ->
+  CSliceMorphism {c} (CSCopObj (CSProdObj w x) (CSProdObj w y)) z ->
+  CSliceMorphism {c} (CSProdObj w (CSCopObj x y)) z
+csDistrib {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f eqf) =
+    Element0
+      (\(Element0 (elw, elxy) eqel) => ?csDistrib_hole_el)
+      (\(Element0 (elw, elxy) eqel) => ?csDistrib_hole_eq)
+
+public export
 Bundle : Type
 Bundle = DPair Type CSliceObj
 
