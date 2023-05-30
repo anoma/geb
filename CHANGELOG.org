@@ -1,3 +1,21 @@
+* 0.3.2
+** User Facing Changes
+- _Lambda Changes_
+  - Added an error node so that users can express failure
+    + This is translated into a maybe type internally for now, and
+      affects the compilation downwards.
+** Bug Fixes
+- =Gapply= (the interpreter) now works correctly for the BITC in the
+  =SWAP= case.
+- Fix an issue where higher order functions in the Lambda frontend
+  would generate incorrect logic when extracting to the core category
+*** Internal
+- The pipeline extractor now properly takes the input stream given to it
+- The Vamp-IR extractor function now properly accepts null streams
+** Internal Changes
+- A maybe function now exists generically throughout the codebase,
+  allowing one to maybe any object type. See Maybe in the Generics
+  section of the documentation.
 * 0.3.1
 ** Bug Fixes
 - Lambda to geb should now work, we fixed a bug with how case was
