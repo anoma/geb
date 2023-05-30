@@ -30,8 +30,7 @@
   (mcar              (pax:method () (fun-type)))
   (mcadr             (pax:method () (fun-type)))
 
-  (mcar               pax:generic-function)
-  (mcadr              pax:generic-function))
+  (maybe             (pax:method () (fun-type))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; trans module
