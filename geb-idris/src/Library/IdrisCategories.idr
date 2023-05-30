@@ -874,8 +874,13 @@ csDistrib : {0 c : Type} -> {0 w, x, y, z : CSliceObj c} ->
 csDistrib {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
   (Element0 f eqf) =
     Element0
-      (\(Element0 (elw, elxy) eqel) => ?csDistrib_hole_el)
-      (\(Element0 (elw, elxy) eqel) => ?csDistrib_hole_eq)
+      (\(Element0 (elw, elxy) eqel) =>
+        f $ case elxy of
+          Left elx => Left $ Element0 (elw, elx) eqel
+          Right ely => Right $ Element0 (elw, ely) eqel)
+      (\(Element0 (elw, elxy) eqel) => case elxy of
+        Left elx => eqf $ Left $ Element0 (elw, elx) eqel
+        Right ely => eqf $ Right $ Element0 (elw, ely) eqel)
 
 public export
 Bundle : Type
