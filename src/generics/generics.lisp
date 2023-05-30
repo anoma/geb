@@ -24,6 +24,25 @@ GEB> (gapply (comp
 ```"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Object Functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defgeneric maybe (object)
+  (:documentation
+   "Wraps the given OBJECT into a Maybe monad The Maybe monad in this
+case is simply wrapping the term in a [coprod][geb.spec:coprod]
+of [so1][geb.spec:so1]
+
+``` lisp
+;; Before
+x
+
+;; After
+(COPROD SO1 X)
+```"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Conversion functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

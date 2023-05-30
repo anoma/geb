@@ -18,6 +18,25 @@ pointwise."))
 (defun fun-type (mcar mcadr)
   (make-instance 'fun-type :mcar mcar :mcadr mcadr))
 
+(defmethod maybe ((object fun-type))
+  "I recursively add maybe terms to my domain and codomain, and even
+return a maybe function. Thus if the original function was
+
+```
+f : a -> b
+```
+
+we would now be
+
+```
+f : maybe (maybe a -> maybe b)
+```
+
+for what maybe means checkout [my generic function documentation][maybe]."
+  (coprod so1
+          (fun-type (maybe (mcar object))
+                    (maybe (mcadr object)))))
+
 ;; Below we list all possible ways of getting a term of the exponential,
 ;; namely: projections, casing, absurd, lambda-abstraction and application
 

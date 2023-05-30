@@ -266,6 +266,26 @@ This is the morphism part of the product functor Geb x Geb → Geb"
 (defmethod text-name ((morph cat-obj))
   "Id")
 
+(defmethod maybe ((obj <substobj>))
+  "I recursively add maybe terms to all [\\<SBUSTOBJ\\>][class] terms,
+for what maybe means checkout [my generic function documentation][maybe].
+
+turning [products][prod] of A x B into Maybe (Maybe A x Maybe B),
+
+turning [coproducts][coprod] of A | B into Maybe (Maybe A | Maybe B),
+
+turning [SO1] into Maybe [SO1]
+
+and [SO0] into Maybe [SO0]"
+  (typecase-of substobj obj
+    (so0    (coprod so1 so0))
+    (so1    (coprod so1 so1))
+    (coprod (coprod so1 (coprod (maybe (mcar obj))
+                                (maybe (mcadr obj)))))
+    (prod   (coprod so1 (prod (maybe (mcar obj))
+                              (maybe (mcadr obj)))))
+    (otherwise (subclass-responsibility obj))))
+
 (defun curry (f)
   "Curries the given object, returns a [cat-morph]
 
