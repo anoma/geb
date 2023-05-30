@@ -22,10 +22,20 @@
                    (lambda:right so1 (lambda:unit))
                    (lambda:left so1 (lambda:unit)))))
 
+(def proper-not
+  (lambda:lamb
+   (list (coprod so1 so1))
+   (lambda:case-on (lambda:index 0)
+                   (lambda:right so1 (lambda:index 0))
+                   (lambda:left so1 (lambda:index 0)))))
+
 (def lambda-pairing
   (lambda:lamb (list geb-bool:bool)
                (lambda:pair (lambda:right so1 (lambda:index 0))
                             (lambda:left so1 (lambda:index 0)))))
+
+(def bool-id
+  (lambda:lamb (list (coprod so1 so1)) (geb.lambda:index 0)))
 
 (def issue-58-circuit
   (to-circuit
@@ -34,6 +44,18 @@
     (lambda:lamb (list so1) (lambda:right so1 (lambda:unit)))
     (lambda:lamb (list so1) (lambda:left so1 (lambda:unit))))
    :tc_issue_58))
+
+(defparameter *issue-94-circuit*
+  (lambda:app (lambda:lamb (list (lambda:fun-type
+                                  (lambda:fun-type (coprod so1 so1)
+                                                   (coprod so1 so1))
+                                  (coprod so1 so1)))
+                           (lambda:app (lambda:index 0)
+                                       (list (lambda:lamb (list (coprod so1 so1))
+                                                          (lambda:index 0)))))
+              (list (lambda:lamb (list (lambda:fun-type (coprod so1 so1)
+                                                        (coprod so1 so1)))
+                                 (lambda:left so1 (lambda:unit))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -63,13 +85,23 @@
   (is obj-equalp
       (right so1)
       (gapply
-       (to-cat nil (lambda:lamb (list (coprod so1 so1)) (geb.lambda:index 0)))
+       (to-cat nil bool-id)
        (list (right so1) so1)))
   (is obj-equalp
       (left so1)
       (gapply
-       (to-cat nil (lambda:lamb (list (coprod so1 so1)) (geb.lambda:index 0)))
-       (list (left so1) so1))))
+       (to-cat nil bool-id)
+       (list (left so1) so1)))
+  (is obj-equalp #*0 (gapply (to-bitc bool-id) #*0))
+  (is obj-equalp #*1 (gapply (to-bitc bool-id) #*1)))
+
+(define-test lambda.not-works :parent lambda.trans-eval
+  (is obj-equalp (left so1)  (gapply (to-cat nil proper-not)
+                                     (list (geb:right so1) so1)))
+  (is obj-equalp (right so1) (gapply (to-cat nil proper-not)
+                                     (list (geb:left so1) so1)))
+  (is equalp #*0 (gapply (to-bitc proper-not) #*1))
+  (is equalp #*1 (gapply (to-bitc proper-not) #*0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;               Compile checked term tests                  ;;
@@ -131,3 +163,9 @@
                                     (lambda:absurd so1 (lambda:index 0)))
                             :tc_void_to_unit))
   (of-type list issue-58-circuit))
+
+(define-test issue-94-compiles :parent geb.lambda.trans
+  (parachute:finish
+   (geb.entry:compile-down :stlc t
+                           :entry "geb-test::*issue-94-circuit*"
+                           :stream nil)))
