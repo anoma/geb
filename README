@@ -5,17 +5,11 @@ Welcome to the GEB project.
 
 ## Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
-
-
 ### code coverage
-
-
 
 For test coverage it can be found at the following links:
 
@@ -33,8 +27,6 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see GEB-TEST:CODE-COVERAGE
-
-
 
 ## Getting Started
 
@@ -291,8 +283,6 @@ conjectures about GEB
 
 ## Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -360,31 +350,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} cong C^{(A × B)}$,
+   $C^{(B^A)} \cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $varnothing$.
+   the empty sum is $\varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
+$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ mathsf{2} = lbrace 1, 2 rbrace$,
-$ mathsf{1} = lbrace 1 rbrace$,
-$ mathsf{0} = lbrace  rbrace = varnothing$,
+where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
+$ \mathsf{1} = \lbrace 1 \rbrace$,
+$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -406,8 +396,6 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
-
-
 
 ### Morphisms
 
@@ -652,6 +640,21 @@ examples often given in the specific methods
                   (->right so1 geb-bool:bool))
                  (right so1))
     (left s-1)
+    ```
+
+
+- [generic-function] MAYBE OBJECT
+
+    Wraps the given OBJECT into a Maybe monad The Maybe monad in this
+    case is simply wrapping the term in a coprod
+    of so1
+    
+    ```lisp
+    ;; Before
+    x
+    
+    ;; After
+    (COPROD SO1 X)
     ```
 
 
@@ -1667,6 +1670,21 @@ Various utility functions ontop of @GEB-CATEGORIES
 - [generic-function] TEXT-NAME MORPH
 
     Gets the name of the moprhism
+
+These utilities are ontop of CAT-OBJ
+
+- [method] MAYBE (OBJ \<SUBSTOBJ\>)
+
+    I recursively add maybe terms to all <SBUSTOBJ> terms,
+    for what maybe means checkout my generic function documentation.
+    
+    turning products of A x B into Maybe (Maybe A x Maybe B),
+    
+    turning coproducts of A | B into Maybe (Maybe A | Maybe B),
+    
+    turning SO1 into Maybe SO1
+    
+    and SO0 into Maybe SO0
 
 ### Examples
 
@@ -2770,6 +2788,18 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     Note that we add contexts on the left rather than on the right contra classical
     type-theoretic notation.
 
+- [class] ERR \<STLC\>
+
+    An error term of a type supplied by the user. The formal grammar of
+    ERR is
+    `lisp
+    (err ttype)
+    `
+    The intended semantics are as follows: ERR represents an error node
+    currently having no particular feedback but with functionality to be of an
+    arbitrary type. Note that this is the only STLC term class which does not
+    have TTYPE a possibly empty accessor.
+
 - [function] ABSURD TCOD TERM &KEY (TTYPE NIL)
 
 - [function] UNIT &KEY (TTYPE NIL)
@@ -2791,6 +2821,8 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
 - [function] APP FUN TERM &KEY (TTYPE NIL)
 
 - [function] INDEX POS &KEY (TTYPE NIL)
+
+- [function] ERR TTYPE
 
 Accessors of ABSURD
 
@@ -2907,6 +2939,10 @@ Accessors of INDEX
     Position of type
 
 - [method] TTYPE (INDEX INDEX)
+
+Accessors of ERR
+
+- [method] TTYPE (ERR ERR)
 
 - [generic-function] TCOD OBJ
 
@@ -3051,18 +3087,30 @@ This covers the main API for the STLC module
 
 - [function] FUN-TYPE MCAR MCADR
 
+- [function] ERRORP TTERM
+
+    Evaluates to true iff the term has an error subterm.
+
 - [method] MCAR (FUN-TYPE FUN-TYPE)
 
 - [method] MCADR (FUN-TYPE FUN-TYPE)
 
-- [generic-function] MCAR OBJ
+- [method] MAYBE (OBJECT FUN-TYPE)
 
-    Can be seen as calling CAR on a generic CLOS
-    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
-
-- [generic-function] MCADR OBJ
-
-    like MCAR but for the CADR
+    I recursively add maybe terms to my domain and codomain, and even
+    return a maybe function. Thus if the original function was
+    
+    ```
+    f : a -> b
+    ```
+    
+    we would now be
+    
+    ```
+    f : maybe (maybe a -> maybe b)
+    ```
+    
+    for what maybe means checkout my generic function documentation.
 
 ### Transition Functions
 
@@ -3079,44 +3127,9 @@ any other transition functions
 
 - [method] TO-CAT CONTEXT (TTERM \<STLC\>)
 
-    Compiles a checked term in an appropriate context into the
-    morphism of the GEB category. In detail, it takes a context and a term with
-    following restrictions: Terms come from STLC  with occurences of
-    SO-HOM-OBJ replaced by FUN-TYPE and should
-    come without the slow of TTYPE accessor filled for any of
-    the subterms. Context should be a list of SUBSTOBJ with
-    the caveat that instead of SO-HOM-OBJ we ought to use
-    FUN-TYPE, a stand-in for the internal hom object with explicit
-    accessors to the domain and the codomain. Once again, note that it is important
-    for the context and term to be giving as per above description. While not
-    always, not doing so result in an error upon evaluation. As an example of a
-    valid entry we have
-    
-    ```lisp
-     (to-cat (list so1 (fun-type so1 so1)) (app (index 1) (list (index 0))))
-    ```
-    
-    while
-    
-    ```lisp
-    (to-cat (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (index 0))))
-    ```
-    
-    produces an error. Error of such kind mind pop up both on the level of evaluating
-    WELL-DEFP and ANN-TERM1.
-    
-    Moreover, note that for terms whose typing needs addition of new context
-    we append contexts on the left rather than on the right contra usual type
-    theoretic notation for the convenience of computation. That means, e.g. that
-    asking for a type of a lambda term as below produces:
-    
-    ```lisp
-    LAMBDA> (ttype (term (ann-term1 nil (lamb (list so1 so0) (index 0)))))
-    s-1
-    ```
-    
-    as we count indeces from the left of the context while appending new types to
-    the context on the left as well. For more info check LAMB
+    Compiles a checked term in said context to a Geb morphism. If the term has
+    an instance of an erorr term, wraps it in a Maybe monad, otherwise, compiles
+    according to the term model interpretation of STLC
 
 - [method] TO-POLY (OBJ \<STLC\>)
 

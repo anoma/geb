@@ -75,18 +75,12 @@ Welcome to the GEB project.
 <a id="x-28GEB-DOCS-2FDOCS-3A-40LINKS-20MGL-PAX-3ASECTION-29"></a>
 ## 1 Links
 
-
-
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
-
-
 <a id="x-28GEB-DOCS-2FDOCS-3A-40COVERAGE-20MGL-PAX-3ASECTION-29"></a>
 ### 1.1 code coverage
-
-
 
 For test coverage it can be found at the following links:
 
@@ -104,8 +98,6 @@ CCL tests are not currently displaying
 I recommend reading the CCL code coverage version, as it has proper tags.
 
 Currently they are manually generated, and thus for a more accurate assessment see [`GEB-TEST:CODE-COVERAGE`][417f]
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29"></a>
 ## 2 Getting Started
@@ -375,8 +367,6 @@ conjectures about GEB
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MODEL-20MGL-PAX-3ASECTION-29"></a>
 ## 5 Categorical Model
 
-
-
 Geb is organizing programming language concepts (and entities!) using
 [category theory](https://plato.stanford.edu/entries/category-theory/),
 originally developed by mathematicians,
@@ -444,31 +434,31 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} cong C^{(A × B)}$,
+   $C^{(B^A)} \cong C^{(A × B)}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
 4. The construction of sums (a.k.a.  co-products) $A + B$ of sets $A,B$,
    corresponding to forming disjoint unions of sets;
-   the empty sum is $varnothing$.
+   the empty sum is $\varnothing$.
 
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{sf 2} +x^{sf 1} - Dx^{sf 0}.$$
+$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ mathsf{2} = lbrace 1, 2 rbrace$,
-$ mathsf{1} = lbrace 1 rbrace$,
-$ mathsf{0} = lbrace  rbrace = varnothing$,
+where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
+$ \mathsf{1} = \lbrace 1 \rbrace$,
+$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -490,8 +480,6 @@ Benjamin Pierce's
 [*Basic Category Theory for Computer Scientists*](https://mitpress.mit.edu/9780262660716/) deserves being pointed out
 as it is very amenable *and*
 covers the background we need in 60 short pages.
-
-
 
 <a id="x-28GEB-DOCS-2FDOCS-3A-40MORPHISMS-20MGL-PAX-3ASECTION-29"></a>
 ### 5.1 Morphisms
@@ -753,6 +741,22 @@ examples often given in the specific methods
                   (->right so1 geb-bool:bool))
                  (right so1))
     (left s-1)
+    ```
+
+
+<a id="x-28GEB-2EGENERICS-3AMAYBE-20GENERIC-FUNCTION-29"></a>
+- [generic-function] **MAYBE** *OBJECT*
+
+    Wraps the given `OBJECT` into a Maybe monad The Maybe monad in this
+    case is simply wrapping the term in a [coprod][8be5]
+    of so1([`0`][5cfe] [`1`][f4ba])
+    
+    ```lisp
+    ;; Before
+    x
+    
+    ;; After
+    (COPROD SO1 X)
     ```
 
 
@@ -1897,6 +1901,22 @@ Various utility functions ontop of [Core Category][cb9e]
 
     Gets the name of the moprhism
 
+These utilities are ontop of [`CAT-OBJ`][74bd]
+
+<a id="x-28GEB-2EGENERICS-3AMAYBE-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
+- [method] **MAYBE** *(OBJ \<SUBSTOBJ\>)*
+
+    I recursively add maybe terms to all [<SBUSTOBJ>][7e58] terms,
+    for what maybe means checkout [my generic function documentation][65a4].
+    
+    turning [products][06c6] of A x B into Maybe (Maybe A x Maybe B),
+    
+    turning [coproducts][8be5] of A | B into Maybe (Maybe A | Maybe B),
+    
+    turning `SO1`([`0`][5cfe] [`1`][f4ba]) into Maybe `SO1`([`0`][5cfe] [`1`][f4ba])
+    
+    and `SO0`([`0`][5c7c] [`1`][7088]) into Maybe `SO0`([`0`][5c7c] [`1`][7088])
+
 <a id="x-28GEB-3A-40GEB-EXAMPLES-20MGL-PAX-3ASECTION-29"></a>
 ### 7.7 Examples
 
@@ -2030,7 +2050,7 @@ layout of the term, showing what kind of data
 #### 9.1.1 Aiding the Visualizer
 
 One can aid the visualization process a bit, this can be done by
-simply placing `ALIAS` around the object, this will place it
+simply placing ALIAS around the object, this will place it
 in a box with a name to better identify it in the graphing procedure.
 
 <a id="x-28GEB-GUI-2EGRAPHING-3A-40GRAPHING-MANUAL-20MGL-PAX-3ASECTION-29"></a>
@@ -3131,6 +3151,19 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     Note that we add contexts on the left rather than on the right contra classical
     type-theoretic notation.
 
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AERR-20CLASS-29"></a>
+- [class] **ERR** *[\<STLC\>][b36a]*
+
+    An error term of a type supplied by the user. The formal grammar of
+    [`ERR`][3a9f] is
+    `lisp
+    (err ttype)
+    `
+    The intended semantics are as follows: [`ERR`][3a9f] represents an error node
+    currently having no particular feedback but with functionality to be of an
+    arbitrary type. Note that this is the only [`STLC`][e373] term class which does not
+    have [`TTYPE`][134c] a possibly empty accessor.
+
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AABSURD-20FUNCTION-29"></a>
 - [function] **ABSURD** *TCOD TERM &KEY (TTYPE NIL)*
 
@@ -3163,6 +3196,9 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AINDEX-20FUNCTION-29"></a>
 - [function] **INDEX** *POS &KEY (TTYPE NIL)*
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3AERR-20FUNCTION-29"></a>
+- [function] **ERR** *TTYPE*
 
 Accessors of [`ABSURD`][4710]
 
@@ -3308,6 +3344,11 @@ Accessors of [`INDEX`][5b8b]
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2ESPEC-3AINDEX-29-29-29"></a>
 - [method] **TTYPE** *(INDEX INDEX)*
+
+Accessors of [`ERR`][3a9f]
+
+<a id="x-28GEB-2ELAMBDA-2ESPEC-3ATTYPE-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2ESPEC-3AERR-29-29-29"></a>
+- [method] **TTYPE** *(ERR ERR)*
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ATCOD-20GENERIC-FUNCTION-29"></a>
 - [generic-function] **TCOD** *OBJ*
@@ -3475,22 +3516,34 @@ This covers the main API for the [`STLC`][e373] module
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AFUN-TYPE-20FUNCTION-29"></a>
 - [function] **FUN-TYPE** *MCAR MCADR*
 
+<a id="x-28GEB-2ELAMBDA-2EMAIN-3AERRORP-20FUNCTION-29"></a>
+- [function] **ERRORP** *TTERM*
+
+    Evaluates to true iff the term has an error subterm.
+
 <a id="x-28GEB-2EUTILS-3AMCAR-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2EMAIN-3AFUN-TYPE-29-29-29"></a>
 - [method] **MCAR** *(FUN-TYPE FUN-TYPE)*
 
 <a id="x-28GEB-2EUTILS-3AMCADR-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2EMAIN-3AFUN-TYPE-29-29-29"></a>
 - [method] **MCADR** *(FUN-TYPE FUN-TYPE)*
 
-<a id="x-28GEB-2EUTILS-3AMCAR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCAR** *OBJ*
+<a id="x-28GEB-2EGENERICS-3AMAYBE-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2EMAIN-3AFUN-TYPE-29-29-29"></a>
+- [method] **MAYBE** *(OBJECT FUN-TYPE)*
 
-    Can be seen as calling [`CAR`][8c99] on a generic CLOS
-    [object](http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#object)
-
-<a id="x-28GEB-2EUTILS-3AMCADR-20GENERIC-FUNCTION-29"></a>
-- [generic-function] **MCADR** *OBJ*
-
-    like [`MCAR`][f1ce] but for the [`CADR`][74ab]
+    I recursively add maybe terms to my domain and codomain, and even
+    return a maybe function. Thus if the original function was
+    
+    ```
+    f : a -> b
+    ```
+    
+    we would now be
+    
+    ```
+    f : maybe (maybe a -> maybe b)
+    ```
+    
+    for what maybe means checkout [my generic function documentation][65a4].
 
 <a id="x-28GEB-2ELAMBDA-2ETRANS-3A-40STLC-CONVERSION-20MGL-PAX-3ASECTION-29"></a>
 ### 12.3 Transition Functions
@@ -3509,44 +3562,9 @@ any other transition functions
 <a id="x-28GEB-2EGENERICS-3ATO-CAT-20-28METHOD-20NIL-20-28T-20GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-29-29-29"></a>
 - [method] **TO-CAT** *CONTEXT (TTERM \<STLC\>)*
 
-    Compiles a checked term in an appropriate context into the
-    morphism of the GEB category. In detail, it takes a context and a term with
-    following restrictions: Terms come from [`STLC`][e373]  with occurences of
-    [`SO-HOM-OBJ`][07dd] replaced by [`FUN-TYPE`][8dcc] and should
-    come without the slow of [`TTYPE`][134c] accessor filled for any of
-    the subterms. Context should be a list of [`SUBSTOBJ`][3173] with
-    the caveat that instead of [`SO-HOM-OBJ`][07dd] we ought to use
-    [`FUN-TYPE`][8dcc], a stand-in for the internal hom object with explicit
-    accessors to the domain and the codomain. Once again, note that it is important
-    for the context and term to be giving as per above description. While not
-    always, not doing so result in an error upon evaluation. As an example of a
-    valid entry we have
-    
-    ```lisp
-     (to-cat (list so1 (fun-type so1 so1)) (app (index 1) (list (index 0))))
-    ```
-    
-    while
-    
-    ```lisp
-    (to-cat (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (index 0))))
-    ```
-    
-    produces an error. Error of such kind mind pop up both on the level of evaluating
-    [`WELL-DEFP`][4fcb] and [`ANN-TERM1`][ac2d].
-    
-    Moreover, note that for terms whose typing needs addition of new context
-    we append contexts on the left rather than on the right contra usual type
-    theoretic notation for the convenience of computation. That means, e.g. that
-    asking for a type of a lambda term as below produces:
-    
-    ```lisp
-    LAMBDA> (ttype (term (ann-term1 nil (lamb (list so1 so0) (index 0)))))
-    s-1
-    ```
-    
-    as we count indeces from the left of the context while appending new types to
-    the context on the left as well. For more info check [`LAMB`][8cde]
+    Compiles a checked term in said context to a Geb morphism. If the term has
+    an instance of an erorr term, wraps it in a Maybe monad, otherwise, compiles
+    according to the term model interpretation of [`STLC`][e373]
 
 <a id="x-28GEB-2EGENERICS-3ATO-POLY-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-29-29-29"></a>
 - [method] **TO-POLY** *(OBJ \<STLC\>)*
@@ -4104,6 +4122,7 @@ features and how to better lay out future tests
   [365a]: #x-28GEB-2EUTILS-3AELSE-20GENERIC-FUNCTION-29 "GEB.UTILS:ELSE GENERIC-FUNCTION"
   [3686]: #x-28GEB-DOCS-2FDOCS-3A-40ORIGINAL-EFFORTS-20MGL-PAX-3ASECTION-29 "Original Efforts"
   [399c]: #x-28GEB-BOOL-3A-40GEB-BOOL-20MGL-PAX-3ASECTION-29 "Booleans"
+  [3a9f]: #x-28GEB-2ELAMBDA-2ESPEC-3AERR-20CLASS-29 "GEB.LAMBDA.SPEC:ERR CLASS"
   [3d47]: #x-28GEB-DOCS-2FDOCS-3A-40GETTING-STARTED-20MGL-PAX-3ASECTION-29 "Getting Started"
   [3f85]: #x-28GEB-2ELAMBDA-2ESPEC-3APOS-20GENERIC-FUNCTION-29 "GEB.LAMBDA.SPEC:POS GENERIC-FUNCTION"
   [3f9d]: #x-28GEB-2ELAMBDA-2ESPEC-3ACASE-ON-20CLASS-29 "GEB.LAMBDA.SPEC:CASE-ON CLASS"
@@ -4124,7 +4143,6 @@ features and how to better lay out future tests
   [4938]: #x-28GEB-2EMIXINS-3A-40MIXIN-EXAMPLES-20MGL-PAX-3ASECTION-29 "Mixins Examples"
   [49d4]: #x-28GEB-2EMAIN-3A-40GEB-UTILITY-20MGL-PAX-3ASECTION-29 "Utility"
   [4a87]: #x-28GEB-DOCS-2FDOCS-3A-40OPEN-TYPE-20MGL-PAX-3AGLOSSARY-TERM-29 "GEB-DOCS/DOCS:@OPEN-TYPE MGL-PAX:GLOSSARY-TERM"
-  [4fcb]: #x-28GEB-2ELAMBDA-2EMAIN-3AWELL-DEFP-20GENERIC-FUNCTION-29 "GEB.LAMBDA.MAIN:WELL-DEFP GENERIC-FUNCTION"
   [4ffa]: #x-28GEB-2EUTILS-3A-40GEB-UTILS-MANUAL-20MGL-PAX-3ASECTION-29 "Geb Utilities"
   [56b3]: #x-28GEB-2ELAMBDA-2ESPEC-3ALEFT-20CLASS-29 "GEB.LAMBDA.SPEC:LEFT CLASS"
   [57dc]: #x-28GEB-2ESPEC-3ASUBSTMORPH-20TYPE-29 "GEB.SPEC:SUBSTMORPH TYPE"
@@ -4139,6 +4157,7 @@ features and how to better lay out future tests
   [603e]: #x-28GEB-GUI-3A-40VISAULIZER-AID-20MGL-PAX-3ASECTION-29 "Aiding the Visualizer"
   [6228]: #x-28GEB-3A-40GEB-API-20MGL-PAX-3ASECTION-29 "API"
   [6444]: #x-28GEB-2ESPEC-3ALEFT-20CLASS-29 "GEB.SPEC:LEFT CLASS"
+  [65a4]: #x-28GEB-2EGENERICS-3AMAYBE-20GENERIC-FUNCTION-29 "GEB.GENERICS:MAYBE GENERIC-FUNCTION"
   [684b]: http://www.lispworks.com/documentation/HyperSpec/Body/s_if.htm "IF MGL-PAX:MACRO"
   [6a3c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_bt_sb.htm "BIT FUNCTION"
   [6b63]: #x-28GEB-2EBITC-3A-40BITC-MANUAL-20MGL-PAX-3ASECTION-29 "Bits (Boolean Circuit) Specification"
