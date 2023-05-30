@@ -343,7 +343,7 @@
    *pwless32*
    *next-range*))
 
-(-> extract (list &optional stream) stream)
+(-> extract (list &optional (or null stream)) (or null stream))
 (defun extract (stmts &optional (stream *standard-output*))
   (let ((*print-pretty*      t)
         (*print-miser-width* 40))
