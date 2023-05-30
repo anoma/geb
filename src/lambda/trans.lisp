@@ -84,7 +84,13 @@ s-1
 ```
 
 as we count indeces from the left of the context while appending new types to
-the context on the left as well. For more info check [LAMB][class]"
+the context on the left as well. For more info check [LAMB][class]
+
+Finally, note that the compilation uncurries the final morphism. That is,
+if the type of the term is an exponential object, [TO-CAT] uncurries the
+morphism in the Geb category instead producing a morphism into the domain
+of the exponential from a corresponding product. If the exponential is
+iterated, so is the uncurrying."
   (labels ((rec (context tterm)
              (match-of stlc tterm
                ((absurd tcod term)
@@ -101,18 +107,15 @@ the context on the left as well. For more info check [LAMB][class]"
                   (comp (->right (mcar tott) (mcadr tott))
                         (rec context term))))
                ((case-on on ltm rtm)
-                (let ((ctx  (stlc-ctx-to-mu context))
-                      (mcr  (mcar (ttype on)))
-                      (mcdr (mcadr (ttype on))))
-                  (comp (comp (mcase (commutes-left (rec
-                                                     (cons mcr context) ltm))
-                                     (commutes-left (rec
-                                                     (cons mcdr context) rtm)))
-                              (commutes-left (distribute ctx
-                                                         (fun-to-hom mcr)
-                                                         (fun-to-hom mcdr))))
-                        (geb:pair (rec context on)
-                                  ctx))))
+                (let ((mcartoon  (mcar (ttype on)))
+                      (mcadrtoon (mcadr (ttype on)))
+                      (ctx       (stlc-ctx-to-mu context)))
+                  (comp (mcase (commutes-left (rec
+                                               (cons (fun-to-hom mcartoon) context) ltm))
+                               (commutes-left (rec
+                                               (cons  (fun-to-hom mcadrtoon) context) rtm)))
+                        (comp (distribute ctx mcartoon mcadrtoon)
+                              (geb:pair ctx (rec context on))))))
                ((pair ltm rtm)
                 (geb:pair (rec context ltm)
                           (rec context rtm)))
@@ -125,21 +128,80 @@ the context on the left as well. For more info check [LAMB][class]"
                   (comp (<-right (mcar tottt) (mcadr tottt))
                         (to-cat context term))))
                ((lamb tdom term)
-                (rec (append tdom context) term))
+                (apply-n (length tdom)
+                         #'(lambda (x) (curry (commutes-left x)))
+                         (rec (append tdom context) term)))
                ((app fun term)
-                (comp (rec context fun)
-                      (reduce #'geb:pair
-                              (mapcar (lambda (x) (rec context x))
-                                      term)
-                              :initial-value (stlc-ctx-to-mu context)
-                              :from-end t)))
+                (let ((tofun (ttype fun)))
+                  (comp
+                   (so-eval (fun-to-hom (mcar tofun))
+                            (fun-to-hom (mcadr tofun)))
+                   (geb:pair (rec context fun)
+                             (reduce #'geb:pair
+                                     (mapcar #'(lambda (x) (rec context x)) term)
+                                     :from-end t)))))
                ((index pos)
                 (stlc-ctx-proj context pos)))))
-    (if (well-defp context tterm)
-        (rec context (ann-term1 context tterm))
-        (error "not a well-defined ~A in said ~A" tterm context))))
+    (cond ((not (well-defp context tterm))
+           (error "not a well-defined ~A in said ~A" tterm context))
+          ((typep (type-of-term-w-fun context tterm) 'fun-type)
+           (fun-uncurry-prod (type-of-term-w-fun context tterm)
+                             (rec context (ann-term1 context tterm))))
+          (t
+           (rec context (ann-term1 context tterm))))))
 
+(defun fun-depth (obj)
+  "Looks at how iterated a function type is with [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
+being 0 iterated looking at the [MCADR][generic-function]. E.g.:
 
+```lisp
+TRANS> (fun-depth so1)
+0
+
+TRANS> (fun-depth (fun-type so1 so1))
+1
+
+TRANS> (fun-depth (fun-type so1 (fun-type so1 so1)))
+2
+
+TRANS> (fun-depth (fun-type (fun-type so1 so1) so1))
+1
+```"
+  (if (not (typep obj 'fun-type))
+      0
+      (1+ (fun-depth (mcadr obj)))))
+
+(defun fun-uncurry-prod (obj f)
+  "Takes a morphism f : X -> obj where obj is an iterated function type
+represented in Geb as B^(A1 x ... x An) and uncurries it but looking at the
+iteration as product to a morphism f' : (A1 x ... An) x X -> B. E.g:
+
+``lisp
+TRANS> (fun-uncurry-prod (fun-type so1 (fun-type so1 so1)) (init so1))
+(∘ (∘ (∘ (<-left s-1 s-1)
+         ((∘ (<-left s-1 s-1)
+             ((<-left s-1 (× s-1 s-1))
+              (∘ (<-left s-1 s-1) (<-right s-1 (× s-1 s-1)))))
+          (∘ (<-right s-1 s-1) (<-right s-1 (× s-1 s-1)))))
+      ((∘ (0-> s-1) (<-left s-0 (× s-1 s-1))) (<-right s-0 (× s-1 s-1))))
+   ((<-right (× s-1 s-1) s-0) (<-left (× s-1 s-1) s-0)))
+
+TRANS> (dom (fun-uncurry-prod (fun-type so1 (fun-type so1 so1)) (init so1)))
+(× (× s-1 s-1) s-0)
+
+TRANS> (codom (fun-uncurry-prod (fun-type so1 (fun-type so1 so1)) (init so1)))
+s-1
+```"
+  (labels ((lst-mcar (num ob)
+             (if (= num 1)
+                 (list (mcar ob))
+                 (cons (mcar (apply-n (1- num) #'mcadr ob))
+                       (lst-mcar (1- num) ob)))))
+    (commutes-left (uncurry (reduce #'prod
+                                    (lst-mcar (fun-depth obj) obj)
+                                    :from-end t)
+                            (apply-n (fun-depth obj) #'mcadr obj)
+                            f))))
 
 (-> stlc-ctx-to-mu (stlc-context) substobj)
 (defun stlc-ctx-to-mu (context)
@@ -175,6 +237,24 @@ length with fibrations given by [PROD][class] projections."
       (comp (stlc-ctx-proj (cdr context) (1- depth))
             (<-right (fun-to-hom (car context))
                      (stlc-ctx-to-mu (cdr context))))))
+
+(defun prod-rem (num obj)
+  "Given a product A0 x A1 x ... x An and a positive integer k gives a
+corresponding composition of morphisms projecting to Ak x ... x An"
+  (if (= num 1)
+      (<-right (mcar obj) (mcadr obj))
+      (comp (<-right (mcar (apply-n (- num 1) #'mcadr obj))
+                     (apply-n num #'mcadr obj))
+            (prod-rem (1- num) obj))))
+
+(defun prod-proj (num obj)
+  "Given a product A0 x ... x An and an integer k less than n gives a
+corresponding composition of projection morphism to Ak"
+  (if (zerop num)
+      (<-left (mcar obj) (mcadr obj))
+      (let ((codm (codom (prod-rem num obj))))
+        (comp (<-left (mcar codm) codm)
+              (prod-rem num obj)))))
 
 (defun index-to-projection (depth typ-a typ-b prod)
   (if (zerop depth)
