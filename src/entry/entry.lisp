@@ -49,7 +49,7 @@
           (stlc
            (format stream "~A" (to-cat nil eval)))
           (vampir
-           (geb.vampir:extract (to-circuit eval vampir-name)))
+           (geb.vampir:extract (to-circuit eval vampir-name) stream))
           (t
            (format stream eval)))))
 
