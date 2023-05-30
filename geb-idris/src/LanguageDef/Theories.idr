@@ -185,6 +185,22 @@ data BCLawMorph : Type where
   -- The `Nat` parameter is an index into the returned list.
   BCLMprodAdjR : BCLawMorph -> Nat -> BCLawMorph
 
+  -- Every BCLawObj with a non-zero number of bits may also be viewed as a
+  -- product of the first bit (which itself is a coproduct of two terminal
+  -- objects, which in turn are products of zero bits) with a BCLawObj with
+  -- one fewer bit.  This is the right adjunct which distributes the product
+  -- of the first bit with the rest of the bits over the coproduct which
+  -- comprises the first bit, traverses the isomorphism between `1 * a` and `a`,
+  -- and then applies the coproduct elimination rule (to produce from two
+  -- morphisms of the same signature a morphism whose domain is one bit longer).
+  BCLMbranchAdjR : BCLawMorph -> BCLawMorph -> BCLawMorph
+
+  -- The left adjunct which inverts `BCLMbranchAdjR` -- a morphism from
+  -- `1 + a` bits to `b` bits can be decomposed into two morphisms from
+  -- `a` bits to `b` bits.
+  BCLMbranchAdjL1 : BCLawMorph -> BCLawMorph
+  BCLMbranchAdjL2 : BCLawMorph -> BCLawMorph
+
 public export
 DecEq BCLawMorph where
   decEq = decEqOne where
@@ -198,12 +214,24 @@ DecEq BCLawMorph where
         No $ \eq => case eq of Refl impossible
       decEqOne (BCLMid _) (BCLMprodAdjR _ _) =
         No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMid _) (BCLMbranchAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMid _) (BCLMbranchAdjL1 _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMid _) (BCLMbranchAdjL2 _) =
+        No $ \eq => case eq of Refl impossible
       decEqOne (BCLMprodAdjL _) (BCLMid _) =
         No $ \eq => case eq of Refl impossible
       decEqOne (BCLMprodAdjL fs) (BCLMprodAdjL gs) = case decEqList fs gs of
         Yes Refl => Yes Refl
         No neq => case neq of Refl impossible
       decEqOne (BCLMprodAdjL _) (BCLMprodAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMprodAdjL _) (BCLMbranchAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMprodAdjL _) (BCLMbranchAdjL1 _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMprodAdjL _) (BCLMbranchAdjL2 _) =
         No $ \eq => case eq of Refl impossible
       decEqOne (BCLMprodAdjR _ _) (BCLMid _) =
         No $ \eq => case eq of Refl impossible
@@ -214,6 +242,55 @@ DecEq BCLawMorph where
           Yes Refl => case decEq m n of
             Yes Refl => Yes Refl
             No neq => case neq of Refl impossible
+          No neq => case neq of Refl impossible
+      decEqOne (BCLMprodAdjR _ _) (BCLMbranchAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMprodAdjR _ _) (BCLMbranchAdjL1 _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMprodAdjR _ _) (BCLMbranchAdjL2 _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjR _ _) (BCLMid _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjR _ _) (BCLMprodAdjL _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjR _ _) (BCLMprodAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjR f g) (BCLMbranchAdjR f' g') =
+        case (decEqOne f f', decEqOne g g') of
+          (Yes Refl, Yes Refl) => Yes Refl
+          (No neq, _) => No $ \eq => case eq of Refl => neq Refl
+          (_, No neq) => No $ \eq => case eq of Refl => neq Refl
+      decEqOne (BCLMbranchAdjR _ _) (BCLMbranchAdjL1 _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjR _ _) (BCLMbranchAdjL2 _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL1 _) (BCLMid _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL1 _) (BCLMprodAdjL _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL1 _) (BCLMprodAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL1 _) (BCLMbranchAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL1 f) (BCLMbranchAdjL1 g) =
+        case decEqOne f g of
+          Yes Refl => Yes Refl
+          No neq => case neq of Refl impossible
+      decEqOne (BCLMbranchAdjL1 _) (BCLMbranchAdjL2 _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL2 _) (BCLMid _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL2 _) (BCLMprodAdjL _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL2 _) (BCLMprodAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL2 _) (BCLMbranchAdjR _ _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL2 _) (BCLMbranchAdjL1 _) =
+        No $ \eq => case eq of Refl impossible
+      decEqOne (BCLMbranchAdjL2 f) (BCLMbranchAdjL2 g) =
+        case decEqOne f g of
+          Yes Refl => Yes Refl
           No neq => case neq of Refl impossible
 
       public export
@@ -240,6 +317,10 @@ Show BCLawMorph where
       showOne (BCLMprodAdjL fs) = "prodAdjL[" ++ showList fs ++ "]"
       showOne (BCLMprodAdjR f n) =
         "prodAdjR[" ++ showOne f ++ ":" ++ show n ++ "]"
+      showOne (BCLMbranchAdjR f g) =
+        "branchAdjR[" ++ showOne f ++ "/" ++ showOne g ++ "]"
+      showOne (BCLMbranchAdjL1 f) = "branchAdjL1[" ++ showOne f ++ "]"
+      showOne (BCLMbranchAdjL2 f) = "branchAdjL2[" ++ showOne f ++ "]"
 
       public export
       showList : List BCLawMorph -> String
@@ -260,6 +341,16 @@ mutual
     length fs == n && checkBCLMList m (BCLOnbits 1) fs
   checkBCLMOne (BCLOnbits m) (BCLOnbits n) (BCLMprodAdjR f k) =
     k < m && n == 1
+  checkBCLMOne (BCLOnbits m) (BCLOnbits n) (BCLMbranchAdjR f g) =
+    case m of
+      S m' =>
+        checkBCLMOne (BCLOnbits m') (BCLOnbits n) f &&
+        checkBCLMOne (BCLOnbits m') (BCLOnbits n) g
+      Z => False
+  checkBCLMOne (BCLOnbits m) (BCLOnbits n) (BCLMbranchAdjL1 f) =
+    checkBCLMOne (BCLOnbits (S m)) (BCLOnbits n) f
+  checkBCLMOne (BCLOnbits m) (BCLOnbits n) (BCLMbranchAdjL2 f) =
+    checkBCLMOne (BCLOnbits (S m)) (BCLOnbits n) f
 
   public export
   checkBCLMList : BCLawObj -> BCLawObj -> List BCLawMorph -> Bool
