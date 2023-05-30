@@ -29,7 +29,10 @@
   (coprod-mor        pax:function)
   (prod-mor          pax:function)
   (uncurry           pax:function)
-  (text-name         pax:generic-function))
+  (text-name         pax:generic-function)
+
+  "These utilities are ontop of [CAT-OBJ]"
+  (maybe             (pax:method () (<substobj>))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Standard Library throughout the codebase
