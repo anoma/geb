@@ -10,8 +10,7 @@ unit types as well as coproduct, product, and function types."))
   "Type of untyped terms of [STLC][type]. Each class of a term has a slot for a type,
 which can be filled by auxillary functions or by user. Types are
 represented as [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]."
-  '(or absurd unit left right case-on pair fst snd lamb app index))
-
+  '(or absurd unit left right case-on pair fst snd lamb app index err))
 
 ;; New defgenerics
 
@@ -537,4 +536,23 @@ type-theoretic notation."))
   (values
    (make-instance 'index :pos pos :ttype ttype)))
 
+(defclass err (<stlc>)
+  ((ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation
+   "An error term of a type supplied by the user. The formal grammar of
+[ERR][class] is
+```lisp
+(err ttype)
+```
+The intended semantics are as follows: [ERR][class] represents an error node
+currently having no particular feedback but with functionality to be of an
+arbitrary type. Note that this is the only STLC term class which does not
+have [TTYPE][generic-function] a possibly empty accessor."))
 
+(-> err (cat-obj) err)
+(defun err (ttype)
+  (values
+   (make-instance 'err :ttype ttype)))

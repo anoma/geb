@@ -37,6 +37,26 @@
 (def bool-id
   (lambda:lamb (list (coprod so1 so1)) (geb.lambda:index 0)))
 
+(def case-error-left
+  (lambda:case-on (lambda:left so1 (lambda:unit))
+                  (lambda:err so1)
+                  (lambda:unit)))
+
+(def case-error-right
+  (lambda:case-on (lambda:left so1 (lambda:unit))
+                  (lambda:unit)
+                  (lambda:err so1)))
+
+(def case-error-top
+  (lambda:case-on (lambda:err (coprod so1 so1))
+                  (lambda:unit)
+                  (lambda:unit)))
+
+(def context-dependent-case
+  (lambda:case-on (lambda:index 0)
+                  (lambda:err so1)
+                  (lambda:unit)))
+
 (def issue-58-circuit
   (to-circuit
    (lambda:case-on
@@ -102,6 +122,26 @@
                                      (list (geb:left so1) so1)))
   (is equalp #*0 (gapply (to-bitc proper-not) #*1))
   (is equalp #*1 (gapply (to-bitc proper-not) #*0)))
+
+(define-test error-handling-case :parent lambda.trans-eval
+  (is obj-equalp (left so1) (gapply (to-cat nil case-error-left)
+                                    (list so1)))
+  (is obj-equalp (right so1) (gapply (to-cat nil case-error-right)
+                                     (list so1)))
+  (is obj-equalp (left so1) (gapply (to-cat nil case-error-top)
+                                    (list so1)))
+  (is obj-equalp (left so1) (gapply (to-cat (list (coprod so1 so1))
+                                            context-dependent-case)
+                                    (list (right
+                                           (left
+                                            (right so1)))
+                                          so1)))
+  (is obj-equalp (right so1) (gapply (to-cat (list (coprod so1 so1))
+                                             context-dependent-case)
+                                     (list (right
+                                            (right
+                                             (right so1)))
+                                           so1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;               Compile checked term tests                  ;;
