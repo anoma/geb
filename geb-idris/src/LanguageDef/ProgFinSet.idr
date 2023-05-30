@@ -1840,6 +1840,11 @@ BITCSig = SignatureT BITCObj
 
 public export
 data BITCMorphF : HomEndofunctor BITCObj where
+  BITCident : (n : Nat) -> BITCMorphF h (BITCn n, BITCn n)
+  BITCcompose : {k, m, n : Nat} ->
+    BITCMorphF h (BITCn m, BITCn n) ->
+    BITCMorphF h (BITCn k, BITCn m) ->
+    BITCMorphF h (BITCn k, BITCn n)
   BITCfork : (n : Nat) -> BITCMorphF h (BITCn n, BITCn $ 2 * n)
   BITCparallel : {a, b, c, d : Nat} ->
     h (BITCn a, BITCn b) -> h (BITCn c, BITCn d) ->
