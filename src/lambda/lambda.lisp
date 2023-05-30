@@ -65,6 +65,7 @@ to the codomain."
           ((typep f 'lamb)    (mcadr (ttype rec)))
           ((typep f 'app)     (hom-cod ctx (fun f)))
           ((typep f 'index)   (mcadr (ttype rec)))
+          ((typep f 'err)     (mcadr (ttype f)))
           (t                  (error "not a valid STLC exponential term")))))
 
 (-> index-check (fixnum list) cat-obj)
@@ -162,6 +163,7 @@ the context on the left as well. For more info check [LAMB][class]"))
                                  :ttype (hom-cod ctx fun)))
         ((index pos)        (index pos
                                    :ttype (index-check pos ctx)))
+        ((err ttype)        (err ttype))
         ((case-on on ltm rtm)
          (let* ((ann-on     (ann-term1 ctx on))
                 (type-of-on (ttype ann-on))
@@ -227,7 +229,8 @@ occurences - re-annotates the term and its subterms with actual
                                 (mapcar #'ann-term2 term)
                                 :ttype (fun-to-hom (ttype tterm))))
     ((index pos)           (index pos
-                                  :ttype (fun-to-hom (ttype tterm))))))
+                                  :ttype (fun-to-hom (ttype tterm))))
+    ((err ttype)           (err (fun-to-hom ttype)))))
 
 (defun annotated-term (ctx term)
   "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
@@ -307,7 +310,25 @@ nil"))
                 (and (check fun)
                      (check (reduce #'pair term))))
                (index t)
-               (unit t))))
+               (unit t)
+               (err t))))
     (let ((term (ignore-errors
                  (ann-term1 ctx tterm))))
       (and term (check term)))))
+
+(defun errorp (tterm)
+  "Evaluates to true iff the term has an error subterm."
+  (cond ((or (typep tterm 'index)
+             (typep tterm 'unit)) nil)
+        ((typep tterm 'err)       t)
+        ((typep tterm 'case-on)   (or (errorp (on tterm))
+                                      (errorp (rtm tterm))
+                                      (errorp (ltm tterm))))
+        ((typep tterm 'pair)      (or (errorp (ltm tterm))
+                                      (errorp (rtm tterm))))
+        ((typep tterm 'app)       (or (errorp (fun tterm))
+                                      (some #'identity
+                                            (mapcar
+                                             (lambda (x) (errorp x))
+                                             (term tterm)))))
+        (t                        (errorp (term tterm)))))

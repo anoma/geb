@@ -17,3 +17,4 @@
 (easy-printer lamb)
 (easy-printer app)
 (easy-printer index)
+(easy-printer err)

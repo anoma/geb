@@ -47,6 +47,189 @@ calling me"
 (defmethod empty ((class (eql (find-class 'list)))) nil)
 
 (defmethod to-cat (context (tterm <stlc>))
+  "Compiles a checked term in said context to a Geb morphism. If the term has
+an instance of an erorr term, wraps it in a Maybe monad, otherwise, compiles
+according to the term model interpretation of STLC"
+  (if (errorp tterm)
+      (to-cat-err context tterm)
+      (to-cat-cor context tterm)))
+
+(defun maybe-comp (ob)
+  "Takes a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with possible fun-type instances
+and removes them"
+  (fun-to-hom (maybe ob)))
+
+(defun maybe-rest (ob)
+  "Takes a Geb object wrapped in Maybe and gives out the part without the
+error node"
+  (mcadr (maybe-comp ob)))
+
+(defmethod to-cat-err (context (tterm <stlc>))
+  "Compiles a checked term with an error term in an appropriate context into the
+morphism of the GEB category using a Maybe monad wrapper, that is, given a
+context G and a term t of type A produces a morphism with domain
+(stlc-ctx-maybe context) and codomain (maybe A).
+
+Terms come from [STLC][type] with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ]
+replaced by [FUN-TYPE][class] and should come without the slow of
+[TTYPE][generic-function] accessor filled for any of the subterms. Context should
+be a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with the caveat that instead of
+[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] we ought to use [FUN-TYPE][class], a stand-in
+for the internal hom object with explicit accessors to the domain and the
+codomain. Once again, note that it is important for the context and term to be
+giving as per above description. While not always, not doing so result in an
+error upon evaluation. As an example of a valid entry we have
+
+```lisp
+ (to-cat-err (list so1 (fun-type so1 so1)) (app (index 1) (list (error so1))))
+```
+
+while
+
+```lisp
+(to-cat-err (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (error so1))))
+```
+
+produces an error. Error of such kind mind pop up both on the level of evaluating
+[WELL-DEFP][generic-function] and [ANN-TERM1][generic-function].
+
+Moreover, note that for terms whose typing needs addition of new context
+we append contexts on the left rather than on the right contra usual type
+theoretic notation for the convenience of computation. That means, e.g. that
+asking for a type of a lambda term as below produces:
+
+```lisp
+LAMBDA> (ttype (term (ann-term1 nil (lamb (list so1 so0) (index 0)))))
+s-1
+```
+
+as we count indeces from the left of the context while appending new types to
+the context on the left as well. For more info check [LAMB][class]
+
+Note that the Maybe wrapper also applies to the context elements due to
+functoriality concerns. Hence if one wanted to check the whether the term
+(case-on (index 0) (err so1) (unit)) with a bool in contexts fails on the
+left entry, one would need to evaluate
+
+```lisp
+LAMBDA> (gapply  (to-cat (list (coprod so1 so1))
+                         (case-on (index 0)
+                                  (err so1)
+                                  (unit)))
+                         (list (geb:right (geb:left (geb:right so1))) so1))
+(left s-1)
+```
+
+and hence get an error part of the wrapper. While evaluating the right branch
+will be done by:
+
+```lisp
+  LAMBDA> (gapply  (to-cat (list (coprod so1 so1))
+                           (case-on (index 0)
+                                    (err so1)
+                                    (unit)))
+                   (list (geb:right (geb:right (geb:right so1))) so1))
+(right s-1)
+```
+
+This follows from the fact that bool arapped in maybe is 1 + (bool + bool)"
+  (labels ((rec (context tterm)
+             (match-of stlc tterm
+               ((absurd tcod term)
+                (comp  (mcase (->left so1 (maybe-rest tcod))
+                              (init (maybe-comp tcod)))
+                       (rec context term)))
+               (unit
+                (comp (->right so1 so1)
+                      (terminal (stlc-ctx-maybe context))))
+               ((left rty term)
+                (comp  (->right so1 (maybe-rest (ttype tterm)))
+                       (comp (->left (maybe-comp (ttype term))
+                                     (maybe-comp rty))
+                             (rec context term))))
+               ((right lty term)
+                (comp (->right so1 (maybe-rest (ttype tterm)))
+                      (comp  (->right (maybe-comp lty)
+                                      (maybe-comp (ttype term)))
+                             (rec context term))))
+               ((case-on on ltm rtm)
+                (let ((mcartoon  (mcar (ttype on)))
+                      (mcadrtoon (mcadr (ttype on)))
+                      (ctx       (stlc-ctx-maybe context)))
+                  (comp (mcase (comp (->left so1 (maybe-rest (ttype tterm)))
+                                     (terminal (prod ctx so1)))
+                               (comp (mcase (commutes-left
+                                             (rec
+                                              (cons mcartoon
+                                                    context)
+                                              ltm))
+                                            (commutes-left
+                                             (rec
+                                              (cons mcadrtoon
+                                                    context)
+                                              rtm)))
+                                     (distribute ctx
+                                                 (maybe-comp mcartoon)
+                                                 (maybe-comp mcadrtoon))))
+                        (comp (distribute ctx
+                                          so1
+                                          (maybe-rest (coprod mcartoon
+                                                              mcadrtoon)))
+                              (geb:pair ctx (rec context on))))))
+               ((pair ltm rtm)
+                (let ((lty  (ttype ltm))
+                      (rty  (ttype rtm)))
+                  (comp (->right so1 (prod (maybe-comp lty)
+                                           (maybe-comp rty)))
+                        (geb:pair (rec context ltm)
+                                  (rec context rtm)))))
+               ((fst term)
+                (let ((mcarttot (mcar (ttype term))))
+                  (comp (mcase (->left so1 (maybe-rest mcarttot))
+                               (<-left (maybe-comp mcarttot)
+                                       (maybe (mcadr (ttype term)))))
+                        (rec context term))))
+               ((snd term)
+                (let ((mcadrttot (mcadr (ttype term))))
+                  (comp (mcase (->left so1 (maybe-rest mcadrttot))
+                               (<-right (maybe-comp (mcar (ttype term)))
+                                        (maybe-comp mcadrttot)))
+                        (rec context term))))
+               ((lamb tdom term)
+                (comp (->right so1 (maybe-rest (fun-to-hom (ttype tterm))))
+                      (apply-n (length tdom)
+                               #'(lambda (x) (curry (commutes-left x)))
+                               (rec (append
+                                     (mapcar #'maybe-comp tdom)
+                                     context) term))))
+               ((app fun term)
+                (let ((tofun (ttype fun)))
+                  (comp
+                   (mcase (->left so1 (maybe-rest tofun))
+                          (commutes-left
+                           (so-eval (maybe-comp (mcar tofun))
+                                    (maybe-comp (mcadr tofun)))))
+                   (comp (distribute (reduce #'prod
+                                             (mapcar #'maybe-comp term)
+                                             :from-end t)
+                                     so1
+                                     (maybe-rest tofun))
+                         (geb:pair (reduce #'geb:pair
+                                           (mapcar #'(lambda (x) (rec context x)) term)
+                                           :from-end t)
+                                   (rec context
+                                        fun))))))
+               ((index pos)
+                (stlc-ctx-proj (mapcar #'maybe context) pos))
+               ((err ttype)
+                (comp (->left so1 (maybe-comp ttype))
+                      (terminal (stlc-ctx-maybe context)))))))
+    (if (not (well-defp context tterm))
+        (error "not a well-defined ~A in said ~A" tterm context)
+        (rec context (ann-term1 context tterm)))))
+
+
+(defmethod to-cat-cor (context (tterm <stlc>))
   "Compiles a checked term in an appropriate context into the
 morphism of the GEB category. In detail, it takes a context and a term with
 following restrictions: Terms come from [STLC][type]  with occurences of
@@ -61,13 +244,13 @@ always, not doing so result in an error upon evaluation. As an example of a
 valid entry we have
 
 ```lisp
- (to-cat (list so1 (fun-type so1 so1)) (app (index 1) (list (index 0))))
+ (to-cat-cor (list so1 (fun-type so1 so1)) (app (index 1) (list (index 0))))
 ```
 
 while
 
 ```lisp
-(to-cat (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (index 0))))
+(to-cat-cor (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (index 0))))
 ```
 
 produces an error. Error of such kind mind pop up both on the level of evaluating
@@ -87,7 +270,7 @@ as we count indeces from the left of the context while appending new types to
 the context on the left as well. For more info check [LAMB][class]
 
 Finally, note that the compilation uncurries the final morphism. That is,
-if the type of the term is an exponential object, [TO-CAT] uncurries the
+if the type of the term is an exponential object, [TO-CAT-COR] uncurries the
 morphism in the Geb category instead producing a morphism into the domain
 of the exponential from a corresponding product. If the exponential is
 iterated, so is the uncurrying."
@@ -98,14 +281,12 @@ iterated, so is the uncurrying."
                       (rec context term)))
                (unit
                 (terminal (stlc-ctx-to-mu context)))
-               ((left term)
-                (let ((tott (ttype tterm)))
-                  (comp (->left (mcar tott) (mcadr tott))
-                        (rec context term))))
-               ((right term)
-                (let ((tott (ttype tterm)))
-                  (comp (->right (mcar tott) (mcadr tott))
-                        (rec context term))))
+               ((left rty term)
+                (comp (->left (ttype term) rty)
+                      (rec context term)))
+               ((right lty term)
+                (comp (->right lty (ttype term))
+                      (rec context term)))
                ((case-on on ltm rtm)
                 (let ((mcartoon  (mcar (ttype on)))
                       (mcadrtoon (mcadr (ttype on)))
@@ -141,7 +322,9 @@ iterated, so is the uncurrying."
                                      (mapcar #'(lambda (x) (rec context x)) term)
                                      :from-end t)))))
                ((index pos)
-                (stlc-ctx-proj context pos)))))
+                (stlc-ctx-proj context pos))
+               (err
+                (error "Not meant for the compiler")))))
     (cond ((not (well-defp context tterm))
            (error "not a well-defined ~A in said ~A" tterm context))
           ((typep (type-of-term-w-fun context tterm) 'fun-type)
@@ -217,6 +400,11 @@ LAMBDA> (stlc-ctx-to-mu (list so1 (fun-to-hom (fun-type geb-bool:bool geb-bool:b
    s-1)
 ```"
   (mvfoldr #'prod (mapcar #'fun-to-hom context) so1))
+
+(defun stlc-ctx-maybe (context)
+  "Takes a context seen as product of appropriate [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
+and iteratively applies Maybe to its elements."
+  (mvfoldr #'prod (mapcar (lambda (x) (maybe-comp x)) context) so1))
 
 (-> so-hom (substobj substobj) (or t substobj))
 (defun so-hom (dom cod)

@@ -158,6 +158,7 @@ constructors"
   (lamb pax:class)
   (app pax:class)
   (index pax:class)
+  (err pax:class)
 
   (absurd pax:function)
   (unit pax:function)
@@ -170,6 +171,7 @@ constructors"
   (lamb pax:function)
   (app pax:function)
   (index pax:function)
+  (err pax:function)
 
   "Accessors of [ABSURD][class]"
 
@@ -222,6 +224,9 @@ constructors"
   "Accessors of [INDEX][class]"
   (pos (pax:method () (index)))
   (ttype (pax:method () (index)))
+
+  "Accessors of [ERR][class]"
+  (ttype (pax:method () (err)))
 
   (tcod pax:generic-function)
   (tdom pax:generic-function)
