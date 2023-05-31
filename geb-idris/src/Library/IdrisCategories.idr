@@ -894,16 +894,24 @@ CSSigma {c} {d} f (x ** px) = (x ** f . px)
 public export
 csSigmaLeftAdjunct : {0 c, d : Type} -> (f : c -> d) ->
   {x : CSliceObj c} -> {y : CSliceObj d} ->
-  CSliceMorphism (CSSigma {c} {d} f x) y ->
-  CSliceMorphism x (CSBaseChange {c=d} {d=c} f y)
+  CSliceMorphism {c=d} (CSSigma {c} {d} f x) y ->
+  CSliceMorphism {c} x (CSBaseChange {c=d} {d=c} f y)
 csSigmaLeftAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
   Element0 (\elx => Element0 (px elx, g elx) $ eqg elx) (\_ => Refl)
+
+-- Introduction rule for sigma.
+public export
+csSigmaUnit : {0 c, d : Type} -> (f : c -> d) -> (x : CSliceObj c) ->
+  CSliceMorphism {c} x (CSBaseChange {c=d} {d=c} f (CSSigma {c} {d} f x))
+csSigmaUnit {c} {d} f x =
+  csSigmaLeftAdjunct {c} {d} f {x} {y=(CSSigma {c} {d} f x)}
+    (CSliceId {c=d} $ CSSigma {c} {d} f x)
 
 public export
 csSigmaRightAdjunct : {0 c, d : Type} -> (f : c -> d) ->
   {x : CSliceObj c} -> {y : CSliceObj d} ->
-  CSliceMorphism x (CSBaseChange {c=d} {d=c} f y) ->
-  CSliceMorphism (CSSigma {c} {d} f x) y
+  CSliceMorphism {c} x (CSBaseChange {c=d} {d=c} f y) ->
+  CSliceMorphism {c=d} (CSSigma {c} {d} f x) y
 csSigmaRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
   Element0 (snd . fst0 . g) $ \elx => trans (cong f $ eqg elx) (snd0 $ g elx)
 
