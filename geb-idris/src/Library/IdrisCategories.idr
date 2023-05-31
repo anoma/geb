@@ -900,6 +900,14 @@ csSigmaLeftAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
   Element0 (\elx => Element0 (px elx, g elx) $ eqg elx) (\_ => Refl)
 
 public export
+csSigmaRightAdjunct : {0 c, d : Type} -> (f : c -> d) ->
+  {x : CSliceObj c} -> {y : CSliceObj d} ->
+  CSliceMorphism x (CSBaseChange {c=d} {d=c} f y) ->
+  CSliceMorphism (CSSigma {c} {d} f x) y
+csSigmaRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
+  Element0 (snd . fst0 . g) $ \elx => trans (cong f $ eqg elx) (snd0 $ g elx)
+
+public export
 CSPi : {c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
 CSPi {c} {d} f x =
   ((eld : d ** CSliceMorphism {c} (PreImage f eld ** fst0) x) ** fst)
