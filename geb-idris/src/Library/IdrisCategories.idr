@@ -937,6 +937,22 @@ csPiLeftAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
     (\_ => Refl)
 
 public export
+csPiRightAdjunct : {0 c, d : Type} -> (f : c -> d) ->
+  {x : CSliceObj c} -> {y : CSliceObj d} ->
+  CSliceMorphism {c=d} y (CSPi {c} {d} f x) ->
+  CSliceMorphism {c} (CSBaseChange {c=d} {d=c} f y) x
+csPiRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
+  ?csPiRightAdjunct_hole
+
+-- Elimination rule for pi.
+public export
+csPiCounit : {c, d : Type} -> (f : c -> d) -> (x : CSliceObj c) ->
+  CSliceMorphism {c} (CSBaseChange {c=d} {d=c} f (CSPi {c} {d} f x)) x
+csPiCounit {c} {d} f x =
+  csPiRightAdjunct {c} {d} f {x} {y=(CSPi {c} {d} f x)}
+    (CSliceId {c=d} $ CSPi {c} {d} f x)
+
+public export
 Bundle : Type
 Bundle = DPair Type CSliceObj
 
