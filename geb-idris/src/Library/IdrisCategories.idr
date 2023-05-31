@@ -888,8 +888,8 @@ CSSigma {c} {d} (x ** px) f = (x ** f . px)
 
 public export
 CSPi : {c, d : Type} -> CSliceObj c -> (c -> d) -> CSliceObj d
-CSPi {c} {d} (x ** px) f =
-  ((eld : d ** (elc : PreImage f eld) -> PreImage px (fst0 elc)) ** fst)
+CSPi {c} {d} x f =
+  ((eld : d ** CSliceMorphism {c} (PreImage f eld ** fst0) x) ** fst)
 
 public export
 Bundle : Type
