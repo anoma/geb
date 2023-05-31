@@ -907,6 +907,7 @@ csSigmaUnit {c} {d} f x =
   csSigmaLeftAdjunct {c} {d} f {x} {y=(CSSigma {c} {d} f x)}
     (CSliceId {c=d} $ CSSigma {c} {d} f x)
 
+-- Elimination rule for sigma.
 public export
 csSigmaRightAdjunct : {0 c, d : Type} -> (f : c -> d) ->
   {x : CSliceObj c} -> {y : CSliceObj d} ->
@@ -919,6 +920,21 @@ public export
 CSPi : {c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
 CSPi {c} {d} f x =
   ((eld : d ** CSliceMorphism {c} (PreImage f eld ** fst0) x) ** fst)
+
+-- Introduction rule for pi.
+public export
+csPiLeftAdjunct : {0 c, d : Type} -> (f : c -> d) ->
+  {x : CSliceObj c} -> {y : CSliceObj d} ->
+  CSliceMorphism {c} (CSBaseChange {c=d} {d=c} f y) x ->
+  CSliceMorphism {c=d} y (CSPi {c} {d} f x)
+csPiLeftAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
+  Element0
+    (\ely =>
+      (py ely **
+       Element0
+        (\(Element0 elc eq) => g $ Element0 (elc, ely) eq)
+        (\(Element0 elc eq) => eqg $ Element0 (elc, ely) eq)))
+    (\_ => Refl)
 
 public export
 Bundle : Type
