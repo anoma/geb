@@ -855,6 +855,17 @@ csEqInj {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
   Element0 fst0 $ \(Element0 el eqel) => Refl
 
 public export
+0 csEqInjEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
+  (f, g : CSliceMorphism {c} x y) ->
+  CSExtEq {x=(csEq {c} {x} {y} f g)} {y}
+    (CSliceCompose {u=(csEq {c} {x} {y} f g)} {v=x} {w=y}
+      f (csEqInj {c} {x} {y} f g))
+    (CSliceCompose {u=(csEq {c} {x} {y} f g)} {v=x} {w=y}
+      g (csEqInj {c} {x} {y} f g))
+csEqInjEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
+  \(Element0 elx eqfgx) => eqfgx
+
+public export
 csEqIntro : {0 c : Type} -> {x : CSliceObj c} -> {0 w, y : CSliceObj c} ->
   (f, g : CSliceMorphism {c} x y) ->
   (h : CSliceMorphism {c} w x) ->
