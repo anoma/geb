@@ -883,6 +883,15 @@ csDistrib {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
         Right ely => eqf $ Right $ Element0 (elw, ely) eqel)
 
 public export
+CSSigma : {0 c, d : Type} -> CSliceObj c -> (c -> d) -> CSliceObj d
+CSSigma {c} {d} (x ** px) f = (x ** f . px)
+
+public export
+CSPi : {c, d : Type} -> CSliceObj c -> (c -> d) -> CSliceObj d
+CSPi {c} {d} (x ** px) f =
+  ((eld : d ** (elc : PreImage f eld) -> PreImage px (fst0 elc)) ** fst)
+
+public export
 Bundle : Type
 Bundle = DPair Type CSliceObj
 
