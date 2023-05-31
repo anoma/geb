@@ -883,8 +883,21 @@ csDistrib {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
         Right ely => eqf $ Right $ Element0 (elw, ely) eqel)
 
 public export
+CSBaseChange : {0 c : Type} -> {d : Type} ->
+  (d -> c) -> CSliceObj c -> CSliceObj d
+CSBaseChange {c} {d} f (x ** px) = (Pullback {a=d} {b=x} {c} f px ** fst . fst0)
+
+public export
 CSSigma : {0 c, d : Type} -> CSliceObj c -> (c -> d) -> CSliceObj d
 CSSigma {c} {d} (x ** px) f = (x ** f . px)
+
+public export
+csSigmaRightAdjunct : {0 c, d : Type} -> {x : CSliceObj c} -> (f : c -> d) ->
+  {y : CSliceObj d} ->
+  CSliceMorphism (CSSigma {c} {d} x f) y ->
+  CSliceMorphism x (CSBaseChange {c=d} {d=c} f y)
+csSigmaRightAdjunct {c} {d} {x=(x ** px)} f {y=(y ** py)} (Element0 g eqg) =
+  Element0 (\elx => Element0 (px elx, g elx) $ eqg elx) (\_ => Refl)
 
 public export
 CSPi : {c, d : Type} -> CSliceObj c -> (c -> d) -> CSliceObj d
