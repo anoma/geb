@@ -942,7 +942,11 @@ csPiRightAdjunct : {0 c, d : Type} -> (f : c -> d) ->
   CSliceMorphism {c=d} y (CSPi {c} {d} f x) ->
   CSliceMorphism {c} (CSBaseChange {c=d} {d=c} f y) x
 csPiRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
-  ?csPiRightAdjunct_hole
+  Element0
+    (\(Element0 (elc, ely) eq) =>
+      fst0 (snd $ g ely) $ Element0 elc $ trans eq $ eqg ely)
+    (\(Element0 (elc, ely) eq) =>
+      snd0 (snd $ g ely) $ Element0 elc $ trans eq $ eqg ely)
 
 -- Elimination rule for pi.
 public export
