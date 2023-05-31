@@ -888,20 +888,20 @@ CSBaseChange : {0 c : Type} -> {d : Type} ->
 CSBaseChange {c} {d} f (x ** px) = (Pullback {a=d} {b=x} {c} f px ** fst . fst0)
 
 public export
-CSSigma : {0 c, d : Type} -> CSliceObj c -> (c -> d) -> CSliceObj d
-CSSigma {c} {d} (x ** px) f = (x ** f . px)
+CSSigma : {0 c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
+CSSigma {c} {d} f (x ** px) = (x ** f . px)
 
 public export
-csSigmaRightAdjunct : {0 c, d : Type} -> {x : CSliceObj c} -> (f : c -> d) ->
-  {y : CSliceObj d} ->
-  CSliceMorphism (CSSigma {c} {d} x f) y ->
+csSigmaRightAdjunct : {0 c, d : Type} -> (f : c -> d) ->
+  {x : CSliceObj c} -> {y : CSliceObj d} ->
+  CSliceMorphism (CSSigma {c} {d} f x) y ->
   CSliceMorphism x (CSBaseChange {c=d} {d=c} f y)
-csSigmaRightAdjunct {c} {d} {x=(x ** px)} f {y=(y ** py)} (Element0 g eqg) =
+csSigmaRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
   Element0 (\elx => Element0 (px elx, g elx) $ eqg elx) (\_ => Refl)
 
 public export
-CSPi : {c, d : Type} -> CSliceObj c -> (c -> d) -> CSliceObj d
-CSPi {c} {d} x f =
+CSPi : {c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
+CSPi {c} {d} f x =
   ((eld : d ** CSliceMorphism {c} (PreImage f eld ** fst0) x) ** fst)
 
 public export
