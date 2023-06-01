@@ -727,6 +727,14 @@ CSliceObjDomain : {0 c : Type} -> CSliceObj c -> Type
 CSliceObjDomain = fst
 
 public export
+CSliceFromSlice : {c : Type} -> SliceObj c -> CSliceObj c
+CSliceFromSlice {c} sl = (Sigma {a=c} sl ** fst)
+
+public export
+SliceFromCSlice : {0 c : Type} -> CSliceObj c -> SliceObj c
+SliceFromCSlice {c} (x ** px) elc = PreImage {a=x} {b=c} px elc
+
+public export
 CSliceObjMap : {0 c : Type} -> (x : CSliceObj c) -> (CSliceObjDomain x -> c)
 CSliceObjMap = snd
 
@@ -937,13 +945,13 @@ csSigmaRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
   Element0 (snd . fst0 . g) $ \elx => trans (cong f $ eqg elx) (snd0 $ g elx)
 
 public export
-CSGBCMorph : {c : Type} -> {0 d : Type} -> (c -> d) -> CSliceObj c -> d -> Type
+CSGBCMorph : {c : Type} -> {0 d : Type} -> (c -> d) -> CSliceObj c -> SliceObj d
 CSGBCMorph {c} {d} f x =
   flip (CSliceMorphism {c}) x . CSGBaseChange {c=d} {d=c} f
 
 public export
 CSPi : {c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
-CSPi {c} {d} f x = (Sigma {a=d} (CSGBCMorph {c} {d} f x) ** fst)
+CSPi {c} {d} = CSliceFromSlice {c=d} .* CSGBCMorph {c} {d}
 
 -- Introduction rule for pi.
 public export
