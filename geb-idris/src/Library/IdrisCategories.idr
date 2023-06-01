@@ -783,6 +783,10 @@ csInj : {0 c : Type} ->
 csInj {c} (a ** pa) el = (el, pa el)
 
 public export
+CSPushF : {0 x, y : Type} -> (f : x -> y) -> CSliceObj x -> CSliceObj y
+CSPushF {x} {y} f (a ** pa) = (a ** f . pa)
+
+public export
 CSInitObj : (c : Type) -> CSliceObj c
 CSInitObj c = (Void ** voidF c)
 
@@ -1073,6 +1077,43 @@ JustFiber (base ** so) baseElem = BundleFiber (Maybe base ** so) (Just baseElem)
 public export
 NothingFiber : (r : CRefinement) -> Type
 NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
+
+----------------------------------------------------------
+---- Pullbacks as adjunction between slice categories ----
+----------------------------------------------------------
+
+-- Introduction rule for pullbacks in `Type`, expressed in terms of
+-- `CSliceObj`.  Pullback is the right adjoint of postcomposition, AKA
+-- pushfoward.
+--
+-- Adjunction details:
+--  - C a category
+--  - X, Y : objects of C
+--  - f : a morphism, Y -> X
+--  - Category on the left: C/X; category on the right: C/Y
+--  - `L(f)` is postcomposition with `f` (AKA "pushforward"), C/Y -> C/X
+--  - `R(f)` is pullback along `f`, C/X -> C/Y
+--  - Adjuncts: (C/X)(L(A), B) === (C/Y)(A, R(B)) (for A : C/Y; B : C/X)
+
+-- Left adjunct of postcomposition/pullback adjunction.
+-- This is the introduction rule for pullbacks (since the domain
+-- component of a base change is a pullback).
+public export
+pbLeftAdjunct : {0 x, y : Type} ->
+  (0 f : y -> x) -> (a : CSliceObj y) -> (0 b : CSliceObj x) ->
+  CSliceMorphism {c=x} (CSPushF {x=y} {y=x} f a) b ->
+  CSliceMorphism {c=y} a (CSBaseChange {c=x} {d=y} f b)
+pbLeftAdjunct {x} {y} f (a ** pa) (b ** pb) (Element0 h eqh) =
+  Element0 (\ela => Element0 (pa ela, h ela) $ eqh ela) $ \_ => Refl
+
+-- Right adjunct of postcomposition/pullback adjunction.
+public export
+pbRightAdjunct : {0 x, y : Type} ->
+  (0 f : y -> x) -> (a : CSliceObj y) -> (0 b : CSliceObj x) ->
+  CSliceMorphism {c=y} a (CSBaseChange {c=x} {d=y} f b) ->
+  CSliceMorphism {c=x} (CSPushF {x=y} {y=x} f a) b
+pbRightAdjunct {x} {y} f (a ** pa) (b ** pb) (Element0 h eqh) =
+  Element0 (snd . fst0 . h) $ \ela => trans (cong f $ eqh ela) $ snd0 (h ela)
 
 -----------------------------------------------------------
 -----------------------------------------------------------
