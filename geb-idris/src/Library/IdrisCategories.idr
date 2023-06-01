@@ -902,6 +902,32 @@ csDistrib {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
         Right ely => eqf $ Right $ Element0 (elw, ely) eqel)
 
 public export
+CSPullback : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism x z -> CSliceMorphism y z -> CSliceObj c
+CSPullback {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f eqf) (Element0 g eqg) =
+    (Pullback {a=x} {b=y} {c=z} f g **
+     \(Element0 (elx, ely) eqxy) => px elx)
+
+public export
+CSPproj1 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism x z) -> (g : CSliceMorphism y z) ->
+  CSliceMorphism (CSPullback {c} {x} {y} {z} f g) x
+CSPproj1 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f eqf) (Element0 g eqg) =
+    Element0 (fst . fst0) $ \(Element0 (elx, ely) eqfg) => Refl
+
+public export
+CSPproj2 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism x z) -> (g : CSliceMorphism y z) ->
+  CSliceMorphism (CSPullback {c} {x} {y} {z} f g) y
+CSPproj2 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f eqf) (Element0 g eqg) =
+    Element0 (snd . fst0) $
+      \(Element0 (elx, ely) eqfg) =>
+        trans (trans (eqf elx) $ cong pz eqfg) (sym $ eqg ely)
+
+public export
 CSBaseChange : {0 c : Type} -> {d : Type} ->
   (d -> c) -> CSliceObj c -> CSliceObj d
 CSBaseChange {c} {d} f (x ** px) = (Pullback {a=d} {b=x} {c} f px ** fst . fst0)
