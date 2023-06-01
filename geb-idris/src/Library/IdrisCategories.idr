@@ -899,6 +899,15 @@ CSBaseChange : {0 c : Type} -> {d : Type} ->
 CSBaseChange {c} {d} f (x ** px) = (Pullback {a=d} {b=x} {c} f px ** fst . fst0)
 
 public export
+CSGElem : {0 c : Type} -> c -> CSliceObj c
+CSGElem {c} elc = (Unit ** \() => elc)
+
+public export
+CSGBaseChange : {0 c : Type} -> {d : Type} ->
+  (d -> c) -> c -> CSliceObj d
+CSGBaseChange {c} {d} f elc = CSBaseChange {c} {d} f (CSGElem {c} elc)
+
+public export
 CSSigma : {0 c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
 CSSigma {c} {d} f (x ** px) = (x ** f . px)
 
@@ -928,9 +937,13 @@ csSigmaRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
   Element0 (snd . fst0 . g) $ \elx => trans (cong f $ eqg elx) (snd0 $ g elx)
 
 public export
+CSGBCMorph : {c : Type} -> {0 d : Type} -> (c -> d) -> CSliceObj c -> d -> Type
+CSGBCMorph {c} {d} f x eld =
+  CSliceMorphism {c} (CSGBaseChange {c=d} {d=c} f eld) x
+
+public export
 CSPi : {c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
-CSPi {c} {d} f x =
-  ((eld : d ** CSliceMorphism {c} (PreImage f eld ** fst0) x) ** fst)
+CSPi {c} {d} f x = (Sigma {a=d} (CSGBCMorph {c} {d} f x) ** fst)
 
 -- Introduction rule for pi.
 public export
@@ -943,8 +956,8 @@ csPiLeftAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
     (\ely =>
       (py ely **
        Element0
-        (\(Element0 elc eq) => g $ Element0 (elc, ely) eq)
-        (\(Element0 elc eq) => eqg $ Element0 (elc, ely) eq)))
+        (\(Element0 (elc, ()) eq) => g $ Element0 (elc, ely) eq)
+        (\(Element0 (elc, ()) eq) => eqg $ Element0 (elc, ely) eq)))
     (\_ => Refl)
 
 public export
@@ -955,9 +968,9 @@ csPiRightAdjunct : {0 c, d : Type} -> (f : c -> d) ->
 csPiRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
   Element0
     (\(Element0 (elc, ely) eq) =>
-      fst0 (snd $ g ely) $ Element0 elc $ trans eq $ eqg ely)
+      fst0 (snd $ g ely) $ Element0 (elc, ()) $ trans eq $ eqg ely)
     (\(Element0 (elc, ely) eq) =>
-      snd0 (snd $ g ely) $ Element0 elc $ trans eq $ eqg ely)
+      snd0 (snd $ g ely) $ Element0 (elc, ()) $ trans eq $ eqg ely)
 
 -- Elimination rule for pi.
 public export
