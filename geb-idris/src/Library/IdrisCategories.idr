@@ -938,8 +938,8 @@ csSigmaRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
 
 public export
 CSGBCMorph : {c : Type} -> {0 d : Type} -> (c -> d) -> CSliceObj c -> d -> Type
-CSGBCMorph {c} {d} f x eld =
-  CSliceMorphism {c} (CSGBaseChange {c=d} {d=c} f eld) x
+CSGBCMorph {c} {d} f x =
+  flip (CSliceMorphism {c}) x . CSGBaseChange {c=d} {d=c} f
 
 public export
 CSPi : {c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
