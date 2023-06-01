@@ -1115,6 +1115,15 @@ pbRightAdjunct : {0 x, y : Type} ->
 pbRightAdjunct {x} {y} f (a ** pa) (b ** pb) (Element0 h eqh) =
   Element0 (snd . fst0 . h) $ \ela => trans (cong f $ eqh ela) $ snd0 (h ela)
 
+-- Elimination rule for pullback.
+public export
+pbCounit : {0 x : Type} -> {y : Type} ->
+  (f : y -> x) -> (b : CSliceObj x) ->
+  CSliceMorphism {c=x} (CSPushF {x=y} {y=x} f (CSBaseChange {c=x} {d=y} f b)) b
+pbCounit {x} {y} f b =
+  pbRightAdjunct {x} {y} f (CSBaseChange {c=x} {d=y} f b) b
+    (CSliceId {c=y} (CSBaseChange {c=x} {d=y} f b))
+
 -----------------------------------------------------------
 -----------------------------------------------------------
 ---- Fixed points in arbitrary subcategories of `Type` ----
