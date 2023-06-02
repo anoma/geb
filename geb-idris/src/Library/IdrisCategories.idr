@@ -981,7 +981,7 @@ csSigmaRightAdjunct : {0 c, d : Type} -> (f : c -> d) ->
 csSigmaRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
   Element0 (snd . fst0 . g) $ \elx => trans (cong f $ eqg elx) (snd0 $ g elx)
 
--- Elimination rule for base change / pullback.
+-- Elimination rule for base change / pullback (in terms of Sigma).
 public export
 csSigmaCounit : {c, d : Type} -> (f : c -> d) -> (y : CSliceObj d) ->
   CSliceMorphism {c=d} (CSSigma {c} {d} f (CSBaseChange {c=d} {d=c} f y)) y
