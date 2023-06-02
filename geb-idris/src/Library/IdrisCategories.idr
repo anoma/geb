@@ -239,12 +239,12 @@ PullbackDec {a} {b} p = PreImage {a=(Pair a b)} {b=Bool} p True
 public export
 pbProj1 : {a, b : Type} -> {0 c : Type} -> {0 f : a -> c} -> {0 g : b -> c} ->
   Pullback f g -> a
-pbProj1 {a} {b} {c} {f} {g} (Element0 (x, y) eq) = x
+pbProj1 {a} {b} {c} {f} {g} = fst . fst0
 
 public export
 pbProj2 : {a, b : Type} -> {0 c : Type} -> {0 f : a -> c} -> {0 g : b -> c} ->
   Pullback f g -> b
-pbProj2 {a} {b} {c} {f} {g} (Element0 (x, y) eq) = y
+pbProj2 {a} {b} {c} {f} {g} = snd . fst0
 
 -- A special case of `DepProdF` where `b` is the terminal object and
 -- `f` is the unique morphism into it.  A slice object over the terminal
@@ -1086,10 +1086,12 @@ csPBproj2 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
 public export
 pbIntro : {0 a, b, b', c : Type} -> {0 p : a -> c} ->
   {0 g : b -> c} -> {0 g' : b' -> c} ->
-  CSliceMorphism {c} (a ** p) (CSProdObj {c} (b ** g) (b' ** g')) ->
-  (a -> Pullback {a=b} {b=b'} {c} g g')
-pbIntro {a} {b} {b'} {c} {p} {g} {g'} (Element0 f eqf) ela =
-  Element0 (fst (fst0 $ f ela), snd (fst0 $ f ela)) $ snd0 $ f ela
+  (f : CSliceMorphism {c} (a ** p) (CSProdObj {c} (b ** g) (b' ** g'))) ->
+  CSliceMorphism {c=b}
+    (a ** \ela => fst (fst0 (fst0 f ela)))
+    (Pullback {a=b} {b=b'} {c} g g' ** pbProj1 {f=g} {g=g'})
+pbIntro {a} {b} {b'} {c} {p} {g} {g'} (Element0 f eqf) =
+  Element0 f $ \ela => Refl
 
 public export
 Bundle : Type
