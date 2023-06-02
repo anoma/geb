@@ -783,16 +783,6 @@ csInj : {0 c : Type} ->
 csInj {c} (a ** pa) el = (el, pa el)
 
 public export
-CSPushF : {0 x, y : Type} -> (f : x -> y) -> CSliceObj x -> CSliceObj y
-CSPushF {x} {y} f (a ** pa) = (a ** f . pa)
-
-public export
-csPushMap : {0 x, y : Type} -> {0 f : x -> y} -> {0 a, b : CSliceObj x} ->
-  CSliceMorphism {c=x} a b -> CSliceMorphism {c=y} (CSPushF f a) (CSPushF f b)
-csPushMap {x} {y} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
-  Element0 g $ \ela => cong f $ eqg ela
-
-public export
 CSInitObj : (c : Type) -> CSliceObj c
 CSInitObj c = (Void ** voidF c)
 
@@ -951,11 +941,23 @@ CSGBaseChange : {0 c : Type} -> {d : Type} ->
   (d -> c) -> c -> CSliceObj d
 CSGBaseChange {c} {d} f elc = CSBaseChange {c} {d} f (CSGElem {c} elc)
 
+-- Sigma, also known as dependent sum.
 public export
 CSSigma : {0 c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
 CSSigma {c} {d} f (x ** px) = (x ** f . px)
 
--- Introduction rule for base change / pullback.
+-- Sigma is also known as pushforward.
+public export
+CSPushF : {0 c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
+CSPushF = CSSigma
+
+public export
+csPushMap : {0 x, y : Type} -> {0 f : x -> y} -> {0 a, b : CSliceObj x} ->
+  CSliceMorphism {c=x} a b -> CSliceMorphism {c=y} (CSPushF f a) (CSPushF f b)
+csPushMap {x} {y} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
+  Element0 g $ \ela => cong f $ eqg ela
+
+-- Introduction rule for base change / pullback (in terms of Sigma).
 public export
 csSigmaLeftAdjunct : {0 c, d : Type} -> (f : c -> d) ->
   {x : CSliceObj c} -> {y : CSliceObj d} ->
@@ -1125,7 +1127,7 @@ NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
 public export
 pbLeftAdjunct : {0 x, y : Type} ->
   (0 f : y -> x) -> (a : CSliceObj y) -> (0 b : CSliceObj x) ->
-  CSliceMorphism {c=x} (CSPushF {x=y} {y=x} f a) b ->
+  CSliceMorphism {c=x} (CSPushF {c=y} {d=x} f a) b ->
   CSliceMorphism {c=y} a (CSBaseChange {c=x} {d=y} f b)
 pbLeftAdjunct {x} {y} f (a ** pa) (b ** pb) (Element0 h eqh) =
   Element0 (\ela => Element0 (pa ela, h ela) $ eqh ela) $ \_ => Refl
@@ -1135,7 +1137,7 @@ public export
 pbRightAdjunct : {0 x, y : Type} ->
   (0 f : y -> x) -> (a : CSliceObj y) -> (0 b : CSliceObj x) ->
   CSliceMorphism {c=y} a (CSBaseChange {c=x} {d=y} f b) ->
-  CSliceMorphism {c=x} (CSPushF {x=y} {y=x} f a) b
+  CSliceMorphism {c=x} (CSPushF {c=y} {d=x} f a) b
 pbRightAdjunct {x} {y} f (a ** pa) (b ** pb) (Element0 h eqh) =
   Element0 (snd . fst0 . h) $ \ela => trans (cong f $ eqh ela) $ snd0 (h ela)
 
@@ -1143,7 +1145,7 @@ pbRightAdjunct {x} {y} f (a ** pa) (b ** pb) (Element0 h eqh) =
 public export
 pbCounit : {0 x : Type} -> {y : Type} ->
   (f : y -> x) -> (b : CSliceObj x) ->
-  CSliceMorphism {c=x} (CSPushF {x=y} {y=x} f (CSBaseChange {c=x} {d=y} f b)) b
+  CSliceMorphism {c=x} (CSPushF {c=y} {d=x} f (CSBaseChange {c=x} {d=y} f b)) b
 pbCounit {x} {y} f b =
   pbRightAdjunct {x} {y} f (CSBaseChange {c=x} {d=y} f b) b
     (CSliceId {c=y} (CSBaseChange {c=x} {d=y} f b))
