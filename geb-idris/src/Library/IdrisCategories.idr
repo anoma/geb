@@ -952,9 +952,9 @@ CSPushF : {0 c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
 CSPushF = CSSigma
 
 public export
-csPushMap : {0 x, y : Type} -> {0 f : x -> y} -> {0 a, b : CSliceObj x} ->
-  CSliceMorphism {c=x} a b -> CSliceMorphism {c=y} (CSPushF f a) (CSPushF f b)
-csPushMap {x} {y} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
+csSigmaMap : {0 x, y : Type} -> {0 f : x -> y} -> {0 a, b : CSliceObj x} ->
+  CSliceMorphism {c=x} a b -> CSliceMorphism {c=y} (CSSigma f a) (CSSigma f b)
+csSigmaMap {x} {y} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
   Element0 g $ \ela => cong f $ eqg ela
 
 -- Introduction rule for base change / pullback (in terms of Sigma).
