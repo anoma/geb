@@ -842,7 +842,8 @@ csProj2 {c} (a ** pa) (b ** pb) =
 
 public export
 csPair : {0 c : Type} -> {0 x, y, z : CSliceObj c} ->
-  CSliceMorphism x y -> CSliceMorphism x z -> CSliceMorphism x (CSProdObj y z)
+  CSliceMorphism {c} x y -> CSliceMorphism {c} x z ->
+  CSliceMorphism {c} x (CSProdObj y z)
 csPair {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
   (Element0 f eqf) (Element0 g eqg) =
     Element0 (\el => Element0 (f el, g el) $ trans (sym $ eqf el) $ eqg el) eqf
