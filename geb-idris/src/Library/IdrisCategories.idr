@@ -1013,6 +1013,15 @@ csPiLeftAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
         (\(Element0 (elc, ()) eq) => eqg $ Element0 (elc, ely) eq)))
     (\_ => Refl)
 
+-- Introduction rule for pullback (in terms of Pi).
+public export
+csPiUnit : {c, d : Type} -> (f : c -> d) -> (y : CSliceObj d) ->
+  CSliceMorphism {c=d} y (CSPi {c} {d} f (CSBaseChange {c=d} {d=c} f y))
+csPiUnit {c} {d} f y =
+  csPiLeftAdjunct {c} {d} f {x=(CSBaseChange {c=d} {d=c} f y)} {y}
+    (CSliceId {c} $ CSBaseChange {c=d} {d=c} f y)
+
+-- Elimination rule for pullback (in terms of Pi).
 public export
 csPiRightAdjunct : {0 c, d : Type} -> (f : c -> d) ->
   {x : CSliceObj c} -> {y : CSliceObj d} ->
