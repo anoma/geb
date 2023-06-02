@@ -955,6 +955,7 @@ public export
 CSSigma : {0 c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
 CSSigma {c} {d} f (x ** px) = (x ** f . px)
 
+-- Introduction rule for base change / pullback.
 public export
 csSigmaLeftAdjunct : {0 c, d : Type} -> (f : c -> d) ->
   {x : CSliceObj c} -> {y : CSliceObj d} ->
@@ -979,6 +980,14 @@ csSigmaRightAdjunct : {0 c, d : Type} -> (f : c -> d) ->
   CSliceMorphism {c=d} (CSSigma {c} {d} f x) y
 csSigmaRightAdjunct {c} {d} f {x=(x ** px)} {y=(y ** py)} (Element0 g eqg) =
   Element0 (snd . fst0 . g) $ \elx => trans (cong f $ eqg elx) (snd0 $ g elx)
+
+-- Elimination rule for base change / pullback.
+public export
+csSigmaCounit : {c, d : Type} -> (f : c -> d) -> (y : CSliceObj d) ->
+  CSliceMorphism {c=d} (CSSigma {c} {d} f (CSBaseChange {c=d} {d=c} f y)) y
+csSigmaCounit {c} {d} f y =
+  csSigmaRightAdjunct {c} {d} f {x=(CSBaseChange {c=d} {d=c} f y)} {y}
+    (CSliceId {c} $ CSBaseChange {c=d} {d=c} f y)
 
 public export
 CSGBCMorph : {c : Type} -> {0 d : Type} -> (c -> d) -> CSliceObj c -> SliceObj d
