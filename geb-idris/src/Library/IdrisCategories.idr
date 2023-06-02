@@ -941,6 +941,21 @@ csSigmaMap : {0 c, d : Type} -> {0 f : c -> d} -> {0 a, b : CSliceObj c} ->
 csSigmaMap {c} {d} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
   Element0 g $ \ela => cong f $ eqg ela
 
+-- Pullback is the right adjoint of postcomposition, AKA pushfoward, AKA Sigma.
+--
+-- Adjunction details:
+--  - C a category
+--  - X, Y : objects of C
+--  - f : a morphism, Y -> X
+--  - Category on the left: C/X; category on the right: C/Y
+--  - `L(f)` is postcomposition with `f` (AKA "Sigma"/"pushforward"), C/Y -> C/X
+--  - `R(f)` is pullback along `f`, C/X -> C/Y
+--  - Adjuncts: (C/X)(L(A), B) === (C/Y)(A, R(B)) (for A : C/Y; B : C/X)
+
+-- Left adjunct of postcomposition/pullback adjunction.
+-- This is the introduction rule for pullbacks (since the domain
+-- component of a base change is a pullback).
+
 -- Introduction rule for base change / pullback (in terms of Sigma).
 public export
 csSigmaLeftAdjunct : {0 c, d : Type} -> (f : c -> d) ->
@@ -1125,52 +1140,6 @@ JustFiber (base ** so) baseElem = BundleFiber (Maybe base ** so) (Just baseElem)
 public export
 NothingFiber : (r : CRefinement) -> Type
 NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
-
-----------------------------------------------------------
----- Pullbacks as adjunction between slice categories ----
-----------------------------------------------------------
-
--- Introduction rule for pullbacks in `Type`, expressed in terms of
--- `CSliceObj`.  Pullback is the right adjoint of postcomposition, AKA
--- pushfoward.
---
--- Adjunction details:
---  - C a category
---  - X, Y : objects of C
---  - f : a morphism, Y -> X
---  - Category on the left: C/X; category on the right: C/Y
---  - `L(f)` is postcomposition with `f` (AKA "pushforward"), C/Y -> C/X
---  - `R(f)` is pullback along `f`, C/X -> C/Y
---  - Adjuncts: (C/X)(L(A), B) === (C/Y)(A, R(B)) (for A : C/Y; B : C/X)
-
--- Left adjunct of postcomposition/pullback adjunction.
--- This is the introduction rule for pullbacks (since the domain
--- component of a base change is a pullback).
-public export
-pbLeftAdjunct : {0 x, y : Type} ->
-  (0 f : y -> x) -> (a : CSliceObj y) -> (0 b : CSliceObj x) ->
-  CSliceMorphism {c=x} (CSPushF {c=y} {d=x} f a) b ->
-  CSliceMorphism {c=y} a (CSBaseChange {c=x} {d=y} f b)
-pbLeftAdjunct {x} {y} f (a ** pa) (b ** pb) (Element0 h eqh) =
-  Element0 (\ela => Element0 (pa ela, h ela) $ eqh ela) $ \_ => Refl
-
--- Right adjunct of postcomposition/pullback adjunction.
-public export
-pbRightAdjunct : {0 x, y : Type} ->
-  (0 f : y -> x) -> (a : CSliceObj y) -> (0 b : CSliceObj x) ->
-  CSliceMorphism {c=y} a (CSBaseChange {c=x} {d=y} f b) ->
-  CSliceMorphism {c=x} (CSPushF {c=y} {d=x} f a) b
-pbRightAdjunct {x} {y} f (a ** pa) (b ** pb) (Element0 h eqh) =
-  Element0 (snd . fst0 . h) $ \ela => trans (cong f $ eqh ela) $ snd0 (h ela)
-
--- Elimination rule for pullback.
-public export
-pbCounit : {0 x : Type} -> {y : Type} ->
-  (f : y -> x) -> (b : CSliceObj x) ->
-  CSliceMorphism {c=x} (CSPushF {c=y} {d=x} f (CSBaseChange {c=x} {d=y} f b)) b
-pbCounit {x} {y} f b =
-  pbRightAdjunct {x} {y} f (CSBaseChange {c=x} {d=y} f b) b
-    (CSliceId {c=y} (CSBaseChange {c=x} {d=y} f b))
 
 -----------------------------------------------------------
 -----------------------------------------------------------
