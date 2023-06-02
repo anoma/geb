@@ -787,6 +787,12 @@ CSPushF : {0 x, y : Type} -> (f : x -> y) -> CSliceObj x -> CSliceObj y
 CSPushF {x} {y} f (a ** pa) = (a ** f . pa)
 
 public export
+csPushMap : {0 x, y : Type} -> {0 f : x -> y} -> {0 a, b : CSliceObj x} ->
+  CSliceMorphism {c=x} a b -> CSliceMorphism {c=y} (CSPushF f a) (CSPushF f b)
+csPushMap {x} {y} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
+  Element0 g $ \ela => cong f $ eqg ela
+
+public export
 CSInitObj : (c : Type) -> CSliceObj c
 CSInitObj c = (Void ** voidF c)
 
