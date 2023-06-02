@@ -1082,6 +1082,16 @@ csPBproj2 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
       \(Element0 (elx, ely) eqfg) =>
         trans (cong pz eqfg) (sym $ eqg ely)
 
+-- Pullback introduction in `Type` using slice morphisms.
+public export
+pbIntro : {0 a, b, b', c : Type} -> {0 p : a -> c} ->
+  {0 g : b -> c} -> {0 g' : b' -> c} ->
+  CSliceMorphism {c} (a ** p) (b ** g) ->
+  CSliceMorphism {c} (a ** p) (b' ** g') ->
+  (a -> Pullback {a=b} {b=b'} {c} g g')
+pbIntro {a} {b} {b'} {c} {p} {g} {g'} (Element0 f eqf) (Element0 f' eqf') ela =
+  Element0 (f ela, f' ela) $ trans (sym $ eqf ela) $ eqf' ela
+
 public export
 Bundle : Type
 Bundle = DPair Type CSliceObj
