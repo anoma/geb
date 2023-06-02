@@ -902,32 +902,6 @@ csDistrib {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
         Right ely => eqf $ Right $ Element0 (elw, ely) eqel)
 
 public export
-CSPullback : {0 c : Type} -> {x, y, z : CSliceObj c} ->
-  CSliceMorphism {c} x z -> CSliceMorphism {c} y z -> CSliceObj c
-CSPullback {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
-  (Element0 f eqf) (Element0 g eqg) =
-    (Pullback {a=x} {b=y} {c=z} f g **
-     \(Element0 (elx, ely) eqxy) => px elx)
-
-public export
-csPBproj1 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
-  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
-  CSliceMorphism {c} (CSPullback {c} {x} {y} {z} f g) x
-csPBproj1 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
-  (Element0 f eqf) (Element0 g eqg) =
-    Element0 (fst . fst0) $ \(Element0 (elx, ely) eqfg) => Refl
-
-public export
-csPBproj2 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
-  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
-  CSliceMorphism {c} (CSPullback {c} {x} {y} {z} f g) y
-csPBproj2 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
-  (Element0 f eqf) (Element0 g eqg) =
-    Element0 (snd . fst0) $
-      \(Element0 (elx, ely) eqfg) =>
-        trans (trans (eqf elx) $ cong pz eqfg) (sym $ eqg ely)
-
-public export
 CSBaseChange : {0 c : Type} -> {d : Type} ->
   (d -> c) -> CSliceObj c -> CSliceObj d
 CSBaseChange {c} {d} f (x ** px) = (Pullback {a=d} {b=x} {c} f px ** fst . fst0)
@@ -1066,6 +1040,32 @@ csPiCounit : {c, d : Type} -> (f : c -> d) -> (x : CSliceObj c) ->
 csPiCounit {c} {d} f x =
   csPiRightAdjunct {c} {d} f {x} {y=(CSPi {c} {d} f x)}
     (CSliceId {c=d} $ CSPi {c} {d} f x)
+
+public export
+CSPullback : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism {c} x z -> CSliceMorphism {c} y z -> CSliceObj c
+CSPullback {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f eqf) (Element0 g eqg) =
+    (Pullback {a=x} {b=y} {c=z} f g **
+     \(Element0 (elx, ely) eqxy) => px elx)
+
+public export
+csPBproj1 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
+  CSliceMorphism {c} (CSPullback {c} {x} {y} {z} f g) x
+csPBproj1 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f eqf) (Element0 g eqg) =
+    Element0 (fst . fst0) $ \(Element0 (elx, ely) eqfg) => Refl
+
+public export
+csPBproj2 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
+  CSliceMorphism {c} (CSPullback {c} {x} {y} {z} f g) y
+csPBproj2 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f eqf) (Element0 g eqg) =
+    Element0 (snd . fst0) $
+      \(Element0 (elx, ely) eqfg) =>
+        trans (trans (eqf elx) $ cong pz eqfg) (sym $ eqg ely)
 
 public export
 Bundle : Type
