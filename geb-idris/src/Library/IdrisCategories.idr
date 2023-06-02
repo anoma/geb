@@ -1046,8 +1046,7 @@ CSPullback : {0 c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism {c} x z -> CSliceMorphism {c} y z -> CSliceObj c
 CSPullback {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
   (Element0 f eqf) (Element0 g eqg) =
-    (Pullback {a=x} {b=y} {c=z} f g **
-     \(Element0 (elx, ely) eqxy) => px elx)
+    CSSigma {c=z} {d=c} pz $ CSProdObj {c=z} (x ** f) (y ** g)
 
 public export
 csPBproj1 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
@@ -1055,7 +1054,7 @@ csPBproj1 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism {c} (CSPullback {c} {x} {y} {z} f g) x
 csPBproj1 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
   (Element0 f eqf) (Element0 g eqg) =
-    Element0 (fst . fst0) $ \(Element0 (elx, ely) eqfg) => Refl
+    Element0 (fst . fst0) $ \(Element0 (elx, ely) eqfg) => sym $ eqf elx
 
 public export
 csPBproj2 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
@@ -1065,7 +1064,7 @@ csPBproj2 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
   (Element0 f eqf) (Element0 g eqg) =
     Element0 (snd . fst0) $
       \(Element0 (elx, ely) eqfg) =>
-        trans (trans (eqf elx) $ cong pz eqfg) (sym $ eqg ely)
+        trans (cong pz eqfg) (sym $ eqg ely)
 
 public export
 Bundle : Type
