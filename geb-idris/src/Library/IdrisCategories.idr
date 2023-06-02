@@ -933,6 +933,16 @@ CSBaseChange : {0 c : Type} -> {d : Type} ->
 CSBaseChange {c} {d} f (x ** px) = (Pullback {a=d} {b=x} {c} f px ** fst . fst0)
 
 public export
+csBaseChangeMap : {0 c, d : Type} -> {0 f : d -> c} -> {0 a, b : CSliceObj c} ->
+  CSliceMorphism {c} a b ->
+  CSliceMorphism {c=d} (CSBaseChange f a) (CSBaseChange f b)
+csBaseChangeMap {c} {d} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
+  Element0
+    (\(Element0 (eld, ela) eqfpa) =>
+      Element0 (eld, g ela) $ trans eqfpa $ eqg ela)
+    (\(Element0 (eld, ela) eqfpa) => Refl)
+
+public export
 CSGElem : {0 c : Type} -> c -> CSliceObj c
 CSGElem {c} elc = (Unit ** \() => elc)
 
@@ -999,6 +1009,19 @@ CSGBCMorph {c} {d} f x =
 public export
 CSPi : {c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
 CSPi {c} {d} = CSliceFromSlice {c=d} .* CSGBCMorph {c} {d}
+
+public export
+csPiMap : {0 c, d : Type} -> {0 f : c -> d} -> {0 a, b : CSliceObj c} ->
+  CSliceMorphism {c} a b -> CSliceMorphism {c=d} (CSPi f a) (CSPi f b)
+csPiMap {c} {d} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
+  Element0
+    (\(eld ** Element0 pi eqpi) =>
+      (eld **
+       Element0
+        (\(Element0 (elc, ()) eqf) => g $ pi $ Element0 (elc, ()) eqf)
+        (\(Element0 (elc, ()) eqf) => trans (eqpi $ Element0 (elc, ()) eqf) $
+          eqg $ pi $ Element0 (elc, ()) eqf))) $
+    \(eld ** Element0 pi eqpi) => Refl
 
 -- Introduction rule for pi.
 public export
