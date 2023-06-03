@@ -8,6 +8,42 @@ import public LanguageDef.Syntax
 
 %default total
 
+public export
+data CatSortObj : Type where
+  CSOobj : CatSortObj
+  CSOmorph : CatSortObj
+  CSOcomp : CatSortObj -- pairs of "composable" or "compatible" morphisms
+  CSO1 : CatSortObj
+  CSOprod : CatSortObj -> CatSortObj -> CatSortObj
+
+public export
+data CatSortMorph : CatSortObj -> CatSortObj -> Type where
+  CSMid : (a : CatSortObj) -> CatSortMorph a a
+  CSMdom : CatSortMorph CSOmorph CSOobj
+  CSMcod : CatSortMorph CSOmorph CSOobj
+  CSMcomp : CatSortMorph CSOcomp CSOmorph
+  CSM1 : (a : CatSortObj) -> CatSortMorph a CSO1
+  CSMprod : {0 a, b, c : CatSortObj} ->
+    CatSortMorph a b -> CatSortMorph a c -> CatSortMorph a (CSOprod b c)
+  CSMproj1 : {0 a, b : CatSortObj} -> CatSortMorph (CSOprod a b) a
+  CSMproj2 : {0 a, b : CatSortObj} -> CatSortMorph (CSOprod a b) b
+
+public export
+csmComp : {a, b, c : CatSortObj} ->
+  CatSortMorph b c -> CatSortMorph a b -> CatSortMorph a c
+csmComp {a} {b} {c=b} (CSMid b) f = f
+csmComp {a} {b=a} {c} g (CSMid a) = g
+csmComp {a} {b=CSOobj} {c} g f = ?CSMcomp_hole_0
+csmComp {a} {b=CSOmorph} {c} g f = ?CSMcomp_hole_1
+csmComp {a} {b=CSOcomp} {c} g f = ?CSMcomp_hole_2
+csmComp {a} {b=CSO1} {c} g f = ?CSMcomp_hole_3
+csmComp {a} {b=(CSOprod x y)} {c} g f = ?CSMcomp_hole_4
+
+public export
+csmEq : {0 a, b : CatSortObj} ->
+  CatSortMorph a b -> CatSortMorph a b -> CatSortObj
+csmEq {a} {b} f g = ?csmEq_hole
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Variably-parameterized-type families ----
