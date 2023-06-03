@@ -17,28 +17,12 @@ import public LanguageDef.RefinedADT
 -- theory with generic object `Bool`).
 public export
 data LawBoolObj : Type where
-  LB1 : LawBoolObj
-  LBB : LawBoolObj
-  LBP : LawBoolObj -> LawBoolObj -> LawBoolObj
-
-public export
-data LawBoolTerm : Type where
-  LBu : LawBoolTerm
-  LBt : LawBoolTerm
-  LBf : LawBoolTerm
-  LBp : LawBoolTerm -> LawBoolTerm -> LawBoolTerm
-
-public export
-LBTobj : LawBoolTerm -> LawBoolObj
-LBTobj LBu = LB1
-LBTobj LBt = LBB
-LBTobj LBf = LBB
-LBTobj (LBp x y) = LBP (LBTobj x) (LBTobj y)
+  LBOn : Nat -> LawBoolObj
 
 public export
 data LawBoolMorph : Type where
   LBMid : LawBoolObj -> LawBoolMorph
-  LBMconst : LawBoolObj -> LawBoolTerm -> LawBoolMorph
+  LBMconst : LawBoolObj -> LawBoolMorph -> LawBoolMorph
   LBMbranch : LawBoolMorph -> LawBoolMorph -> LawBoolMorph
   LBMinjl : LawBoolObj -> LawBoolObj -> LawBoolMorph
   LBMinjr : LawBoolObj -> LawBoolObj -> LawBoolMorph
