@@ -971,6 +971,10 @@ pairInj2 : {a, b : Type} -> {p, p' : (a, b)} -> p = p' -> snd p = snd p'
 pairInj2 Refl = Refl
 
 public export
+pairFstSnd : {0 a, b : Type} -> (p : (a, b)) -> p = (fst p, snd p)
+pairFstSnd {a} {b} (ela, elb) = Refl
+
+public export
 DecEqPred : (a: Type) -> Type
 DecEqPred a = (x, x': a) -> Dec (x = x')
 
