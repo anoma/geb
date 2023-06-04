@@ -1082,6 +1082,30 @@ csPBproj2 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
       \(Element0 (elx, ely) eqfg) =>
         trans (cong pz eqfg) (sym $ eqg ely)
 
+public export
+CSGBCMorphOp : {c : Type} -> {0 d : Type} ->
+  (c -> d) -> CSliceObj c -> SliceObj d
+CSGBCMorphOp {c} {d} f x =
+  CSliceMorphism {c} x . CSGBaseChange {c=d} {d=c} f
+
+public export
+CSDepExp : {c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
+CSDepExp {c} {d} = CSliceFromSlice {c=d} .* CSGBCMorphOp {c} {d}
+
+public export
+CSPolyF : {dom, dir, pos, cod : Type} ->
+  (dir -> dom) -> (dir -> pos) -> (pos -> cod) ->
+  CSliceObj dom -> CSliceObj cod
+CSPolyF {dom} {dir} {pos} {cod} f g h =
+  CSPi h . CSSigma g . CSBaseChange f
+
+public export
+CSDirichF : {dom, dir, pos, cod : Type} ->
+  (dir -> dom) -> (dir -> pos) -> (pos -> cod) ->
+  CSliceObj dom -> CSliceObj cod
+CSDirichF {dom} {dir} {pos} {cod} f g h =
+  CSDepExp h . CSSigma g . CSBaseChange f
+
 -- Pullback introduction in `Type` using slice morphisms.
 public export
 pbIntro : {0 a, b, b', c : Type} -> {0 p : a -> c} ->
