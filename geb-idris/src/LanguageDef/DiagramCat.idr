@@ -33,7 +33,11 @@ csmComp : {a, b, c : CatSortObj} ->
   CatSortMorph b c -> CatSortMorph a b -> CatSortMorph a c
 csmComp {a} {b} {c=b} (CSMid b) f = f
 csmComp {a} {b=a} {c} g (CSMid a) = g
-csmComp {a} {b=CSOobj} {c} g f = ?CSMcomp_hole_0
+csmComp {a} {b=CSOobj} {c=CSO1} (CSM1 CSOobj) f = CSM1 a
+csmComp {a=CSOmorph} {b=CSOobj} {c=(CSOprod c c')} (CSMprod d d') CSMdom = ?CSMcomp_hole_5a_0
+csmComp {a=CSOmorph} {b=CSOobj} {c=(CSOprod c c')} (CSMprod d d') CSMcod = ?CSMcomp_hole_5a_1
+csmComp {a=(CSOprod CSOobj b)} {b=CSOobj} {c=(CSOprod c c')} (CSMprod d d') CSMproj1 = ?CSMcomp_hole_5a_2
+csmComp {a=(CSOprod a CSOobj)} {b=CSOobj} {c=(CSOprod c c')} (CSMprod d d') CSMproj2 = ?CSMcomp_hole_5a_3
 csmComp {a} {b=CSOmorph} {c} g f = ?CSMcomp_hole_1
 csmComp {a} {b=CSOcomp} {c} g f = ?CSMcomp_hole_2
 csmComp {a} {b=CSO1} {c} g f = ?CSMcomp_hole_3
