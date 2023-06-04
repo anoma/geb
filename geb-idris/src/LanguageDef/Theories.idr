@@ -17,18 +17,76 @@ import public LanguageDef.RefinedADT
 -- theory with generic object `Bool`).
 public export
 data LawBoolObj : Type where
+  -- The number of bits in the object.
   LBOn : Nat -> LawBoolObj
 
 public export
-data LawBoolMorph : Type where
-  LBMid : LawBoolObj -> LawBoolMorph
-  LBMconst : LawBoolObj -> LawBoolMorph -> LawBoolMorph
-  LBMbranch : LawBoolMorph -> LawBoolMorph -> LawBoolMorph
-  LBMinjl : LawBoolObj -> LawBoolObj -> LawBoolMorph
-  LBMinjr : LawBoolObj -> LawBoolObj -> LawBoolMorph
-  LBMprod : LawBoolMorph -> LawBoolMorph -> LawBoolMorph
-  LBMproj1 : LawBoolObj -> LawBoolObj -> LawBoolMorph
-  LBMproj2 : LawBoolObj -> LawBoolObj -> LawBoolMorph
+DecEq LawBoolObj where
+  decEq (LBOn m) (LBOn n) = case decEq m n of
+    Yes Refl => Yes Refl
+    No neq => case neq of Refl impossible
+
+public export
+Eq LawBoolObj where
+  x == y = isYes $ decEq x y
+
+public export
+Show LawBoolObj where
+  show (LBOn n) = "2^" ++ show n
+
+public export
+LawBoolSig : Type
+LawBoolSig = ProductMonad LawBoolObj
+
+public export
+LBOTerminal : LawBoolObj
+LBOTerminal = LBOn 0
+
+public export
+LBOBool : LawBoolObj
+LBOBool = LBOn 1
+
+public export
+LawBoolMorphDom : Type
+LawBoolMorphDom = LawBoolSig
+
+public export
+LawBoolMorphCod : Type
+LawBoolMorphCod = LawBoolSig
+
+public export
+data LawBoolMorphPos : Type where
+  LBMPosId : LawBoolObj -> LawBoolMorphPos
+  LBMPosConst : LawBoolObj -> LawBoolObj -> LawBoolMorphPos
+  LBMPosBranch : LawBoolObj -> LawBoolObj -> LawBoolMorphPos
+  LBMPosProd : LawBoolObj -> LawBoolObj -> LawBoolObj -> LawBoolMorphPos
+  LBMPosProj1 : LawBoolObj -> LawBoolObj -> LawBoolMorphPos
+  LBMPosProj2 : LawBoolObj -> LawBoolObj -> LawBoolMorphPos
+
+public export
+data LawBoolMorphDir : Type where
+  LBMDirId : LawBoolObj -> LawBoolMorphDir
+
+public export
+lbmSigma : LawBoolMorphPos -> LawBoolMorphCod
+lbmSigma (LBMPosId x) = (x, x)
+lbmSigma (LBMPosConst x y) = (x, y)
+lbmSigma (LBMPosBranch (LBOn n) y) = (LBOn (S n), y)
+lbmSigma (LBMPosProd x (LBOn m) (LBOn n)) = (x, LBOn (m + n))
+lbmSigma (LBMPosProj1 (LBOn m) (LBOn n)) = (LBOn (m + n), LBOn m)
+lbmSigma (LBMPosProj2 (LBOn m) (LBOn n)) = (LBOn (m + n), LBOn n)
+
+public export
+lbmPi : LawBoolMorphDir -> LawBoolMorphPos
+lbmPi (LBMDirId x) = LBMPosId x
+
+public export
+lbmBaseChange : LawBoolMorphDir -> LawBoolMorphDom
+lbmBaseChange (LBMDirId x) = (x, x)
+
+public export
+LawBoolMorphF : CSliceObj LawBoolSig -> CSliceObj LawBoolSig
+LawBoolMorphF = CSPolyF lbmBaseChange lbmPi lbmSigma
 
 ---------------------------------------
 ---------------------------------------
