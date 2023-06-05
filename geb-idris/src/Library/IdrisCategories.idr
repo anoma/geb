@@ -1111,7 +1111,7 @@ CSPolyF : {dom, dir, pos, cod : Type} ->
   (dir -> dom) -> (dir -> pos) -> (pos -> cod) ->
   CSliceObj dom -> CSliceObj cod
 CSPolyF {dom} {dir} {pos} {cod} f g h =
-  CSPi h . CSSigma g . CSBaseChange f
+  CSSigma h . CSPi g . CSBaseChange f
 
 public export
 csPolyMap : {dom, dir, pos, cod : Type} ->
@@ -1120,14 +1120,16 @@ csPolyMap : {dom, dir, pos, cod : Type} ->
   CSliceMorphism {c=dom} a b ->
   CSliceMorphism {c=cod} (CSPolyF f g h a) (CSPolyF f g h b)
 csPolyMap {dom} {dir} {pos} {cod} {f} {g} {h} {a} {b} m =
-  csPiMap {f=h} (csSigmaMap {f=g} (csBaseChangeMap {f} m))
+  csSigmaMap {f=h}
+    {a=(CSPi g $ CSBaseChange f a)} {b=(CSPi g $ CSBaseChange f b)} $
+    csPiMap {f=g} $ csBaseChangeMap {f} m
 
 public export
 CSDirichF : {dom, dir, pos, cod : Type} ->
   (dir -> dom) -> (dir -> pos) -> (pos -> cod) ->
   CSliceObj dom -> CSliceObj cod
 CSDirichF {dom} {dir} {pos} {cod} f g h =
-  CSDepExp h . CSSigma g . CSBaseChange f
+  CSSigma h . CSDepExp g . CSBaseChange f
 
 -- Dirichlet functors are contravariant.
 public export
@@ -1137,7 +1139,9 @@ csDirichMap : {dom, dir, pos, cod : Type} ->
   CSliceMorphism {c=dom} a b ->
   CSliceMorphism {c=cod} (CSDirichF f g h b) (CSDirichF f g h a)
 csDirichMap {dom} {dir} {pos} {cod} {f} {g} {h} {a} {b} m =
-  csDepExpMap {f=h} (csSigmaMap {f=g} (csBaseChangeMap {f} m))
+  csSigmaMap {f=h}
+    {a=(CSDepExp g $ CSBaseChange f b)} {b=(CSDepExp g $ CSBaseChange f a)} $
+    csDepExpMap {f=g} $ csBaseChangeMap {f} m
 
 -- Pullback introduction in `Type` using slice morphisms.
 public export
