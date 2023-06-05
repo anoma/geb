@@ -115,7 +115,7 @@ record DiagPrshfObj where
   -- category-theoretic style, DPObj would have type `DiagDiagVert -> Type`.
   -- That's the same type as `DCObj`, but when we interpret diagrams as
   -- presheaves rather than copresheaves, we interpret the edge type
-  -- differently see `DPMorph`.
+  -- differently; see `DPMorph`.
   DPObj : CSliceObj DiagDiagVert
 
   -- This is `DPMorph`'s signature backwards, reflecting that we are
