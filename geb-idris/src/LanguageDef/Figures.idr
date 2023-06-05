@@ -39,11 +39,19 @@ public export
 CoprshfDiagSrc : DiagDiagEdge -> DiagDiagVert
 CoprshfDiagSrc = const DDVedge
 
+public export
+CDSbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
+CDSbc = CSBaseChange CoprshfDiagSrc
+
 -- The targets of the edges of the diagram which, when interpreted as an
 -- index category for copresheaves, defines the category of diagrams.
 public export
 CoprshfDiagTgt : DiagDiagEdge -> DiagDiagVert
 CoprshfDiagTgt = const DDVvert
+
+public export
+CDTbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
+CDTbc = CSBaseChange CoprshfDiagTgt
 
 -- The sources of the edges of the diagram which, when interpreted as an
 -- index category for presheaves, defines the category of diagrams.
@@ -52,11 +60,19 @@ public export
 PrshfDiagSrc : DiagDiagEdge -> DiagDiagVert
 PrshfDiagSrc = CoprshfDiagTgt
 
+public export
+PDSbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
+PDSbc = CSBaseChange PrshfDiagSrc
+
 -- The targets of the edges of the diagram which, when interpreted as an
 -- index category for presheaves, defines the category of diagrams.
 public export
 PrshfDiagTgt : DiagDiagEdge -> DiagDiagVert
 PrshfDiagTgt = CoprshfDiagSrc
+
+public export
+PDTbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
+PDTbc = CSBaseChange PrshfDiagTgt
 
 ------------------------
 ---- (Co)presheaves ----
@@ -72,7 +88,7 @@ public export
 record DiagCoprshfObj where
   constructor DCObj
   -- If we wrote it in dependent-type-with-universes style rather than
-  -- category-theoretic style, DCObj would hae type `DiagDiagVert -> Type` --
+  -- category-theoretic style, DCObj would have type `DiagDiagVert -> Type` --
   -- although there are only two objects, so this is also equivalent to
   -- simply two `Type`s.
   DCObj : CSliceObj DiagDiagVert
@@ -84,10 +100,7 @@ record DiagCoprshfObj where
   -- (There are only two edges, so this is equivalent to simply two functions,
   -- both from the `Type` to which we map `DDVedge` to the type to which
   -- we map `DDVvert`, representing the source and target maps.)
-  DCMorph :
-    CSliceMorphism {c=DiagDiagEdge}
-      (CSBaseChange {c=DiagDiagVert} {d=DiagDiagEdge} CoprshfDiagSrc DCObj)
-      (CSBaseChange {c=DiagDiagVert} {d=DiagDiagEdge} CoprshfDiagTgt DCObj)
+  DCMorph : CSliceMorphism {c=DiagDiagEdge} (CDSbc DCObj) (CDTbc DCObj)
 
 -- The objects of the category of diagrams, when that category is defined
 -- as the presheaf category on the diagram (interpreted as an index
@@ -99,14 +112,11 @@ public export
 record DiagPrshfObj where
   constructor DPObj
   -- If we wrote it in dependent-type-with-universes style rather than
-  -- category-theoretic style, DPObj would hae type `DiagDiagVert -> Type`.
+  -- category-theoretic style, DPObj would have type `DiagDiagVert -> Type`.
   DPObj : CSliceObj DiagDiagVert
 
   -- This is `DPMorph`'s signature backwards, reflecting that we are
   -- now interpreting the diagram as a "generic figure", meaning as a
   -- presheaf (contravariant functor), rather than the usual interpretation
   -- of "diagram" as "(covariant) functor", AKA copresheaf.
-  DPMorph :
-    CSliceMorphism {c=DiagDiagEdge}
-      (CSBaseChange {c=DiagDiagVert} {d=DiagDiagEdge} PrshfDiagSrc DPObj)
-      (CSBaseChange {c=DiagDiagVert} {d=DiagDiagEdge} PrshfDiagTgt DPObj)
+  DPMorph : CSliceMorphism {c=DiagDiagEdge} (PDSbc DPObj) (PDTbc DPObj)
