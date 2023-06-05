@@ -139,3 +139,24 @@ record DiagPrshfObj where
   -- the presheaf interpretation must be a collection of subobjects of some
   -- type of edges.
   DPMorph : CSliceMorphism {c=DiagDiagEdge} (PDSbc DPObj) (PDTbc DPObj)
+
+---------------------
+---------------------
+---- Prafunctors ----
+---------------------
+---------------------
+
+public export
+IndexCat : Type
+IndexCat = DiagCoprshfObj
+
+-- A copresheaf on `j`, a category (which in this formulation is defined via a
+-- diagram in `Type`), is a covariant functor from `j` to `Type`.  As such it
+-- is a choice of a type for each vertex and a function for each edge (with
+-- domain and codomain matching source and target, respectively).
+--
+-- (The copresheaves on a given index category `j` themselves form the objects
+-- of a functor category, whose morphisms are natural transformations).
+public export
+record Copresheaf (j : IndexCat) where
+  constructor CoPrshf
