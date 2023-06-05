@@ -113,10 +113,29 @@ record DiagPrshfObj where
   constructor DPObj
   -- If we wrote it in dependent-type-with-universes style rather than
   -- category-theoretic style, DPObj would have type `DiagDiagVert -> Type`.
+  -- That's the same type as `DCObj`, but when we interpret diagrams as
+  -- presheaves rather than copresheaves, we interpret the edge type
+  -- differently see `DPMorph`.
   DPObj : CSliceObj DiagDiagVert
 
   -- This is `DPMorph`'s signature backwards, reflecting that we are
   -- now interpreting the diagram as a "generic figure", meaning as a
   -- presheaf (contravariant functor), rather than the usual interpretation
   -- of "diagram" as "(covariant) functor", AKA copresheaf.
+  --
+  -- That's the same signature as `DPMorph`, but when we interpret diagrams
+  -- as presheaves rather than copresheaves, we interpret the source and
+  -- target mappings differently (as we must, since they point in opposite
+  -- directions).  In this interpretation, rather than mapping each edge
+  -- to its source or target respectively, the source mapping maps each
+  -- vertex to the set of edges with that vertex as source, and the target
+  -- mapping maps each vertex to the set of edges with that vertex as target.
+  --
+  -- This also means that, while we interpret the vertex type the same way
+  -- in both the copresheaf and presheaf interpretations, we interpret the
+  -- edge type differently.  In the copresheaf interpretation, it was just
+  -- the type of edges.  In the presheaf interpretation, however, because the
+  -- source and target mappings produce _sets_ of edges, the edge type in
+  -- the presheaf interpretation must be a collection of subobjects of some
+  -- type of edges.
   DPMorph : CSliceMorphism {c=DiagDiagEdge} (PDSbc DPObj) (PDTbc DPObj)
