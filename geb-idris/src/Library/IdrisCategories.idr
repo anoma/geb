@@ -771,6 +771,22 @@ CSliceCompose {c} {u} {v} {w} g f =
         (CSliceMorphismEq f elem)
         (CSliceMorphismEq g (CSliceMorphismMap f elem)))
 
+-- (The object-map component of a) functor between slice categories.
+public export
+CSliceFunctor : Type -> Type -> Type
+CSliceFunctor c d = CSliceObj c -> CSliceObj d
+
+-- The morphism-map component of a functor between slice categories.
+CSliceFMap : {c, d : Type} -> CSliceFunctor c d -> Type
+CSliceFMap {c} {d} f =
+  (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f x) (f y)
+
+-- The morphism-map component of a contravariant functor between slice
+-- categories.
+CSliceFContramap : {c, d : Type} -> CSliceFunctor c d -> Type
+CSliceFContramap {c} {d} f =
+  (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f y) (f x)
+
 public export
 CSExtEq : {0 c : Type} -> {x, y : CSliceObj c} ->
   (f, g : CSliceMorphism x y) -> Type
@@ -903,15 +919,13 @@ csDistrib {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
         Right ely => eqf $ Right $ Element0 (elw, ely) eqel)
 
 public export
-CSBaseChange : {0 c : Type} -> {d : Type} ->
-  (d -> c) -> CSliceObj c -> CSliceObj d
+CSBaseChange : {0 c : Type} -> {d : Type} -> (d -> c) -> CSliceFunctor c d
 CSBaseChange {c} {d} f (x ** px) = (Pullback {a=d} {b=x} {c} f px ** fst . fst0)
 
 public export
-csBaseChangeMap : {0 c, d : Type} -> {0 f : d -> c} -> {0 a, b : CSliceObj c} ->
-  CSliceMorphism {c} a b ->
-  CSliceMorphism {c=d} (CSBaseChange f a) (CSBaseChange f b)
-csBaseChangeMap {c} {d} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
+csBaseChangeMap : {0 c, d : Type} -> {0 f : d -> c} ->
+  CSliceFMap {c} {d} (CSBaseChange {c} {d} f)
+csBaseChangeMap {c} {d} {f} (a ** pa) (b ** pb) (Element0 g eqg) =
   Element0
     (\(Element0 (eld, ela) eqfpa) =>
       Element0 (eld, g ela) $ trans eqfpa $ eqg ela)
@@ -928,7 +942,7 @@ CSGBaseChange {c} {d} f elc = CSBaseChange {c} {d} f (CSGElem {c} elc)
 
 -- Sigma, also known as dependent sum.
 public export
-CSSigma : {0 c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
+CSSigma : {0 c, d : Type} -> (c -> d) -> CSliceFunctor c d
 CSSigma {c} {d} f (x ** px) = (x ** f . px)
 
 -- Sigma is also known as pushforward.
@@ -937,9 +951,9 @@ CSPushF : {0 c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
 CSPushF = CSSigma
 
 public export
-csSigmaMap : {0 c, d : Type} -> {0 f : c -> d} -> {0 a, b : CSliceObj c} ->
-  CSliceMorphism {c} a b -> CSliceMorphism {c=d} (CSSigma f a) (CSSigma f b)
-csSigmaMap {c} {d} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
+csSigmaMap : {0 c, d : Type} -> {0 f : c -> d} ->
+  CSliceFMap {c} {d} (CSSigma {c} {d} f)
+csSigmaMap {c} {d} {f} (a ** pa) (b ** pb) (Element0 g eqg) =
   Element0 g $ \ela => cong f $ eqg ela
 
 -- Pullback is the right adjoint of postcomposition, AKA pushfoward, AKA Sigma.
@@ -997,13 +1011,13 @@ CSGBCMorph {c} {d} f x =
   flip (CSliceMorphism {c}) x . CSGBaseChange {c=d} {d=c} f
 
 public export
-CSPi : {c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
+CSPi : {c, d : Type} -> (c -> d) -> CSliceFunctor c d
 CSPi {c} {d} = CSliceFromSlice {c=d} .* CSGBCMorph {c} {d}
 
 public export
-csPiMap : {0 c, d : Type} -> {0 f : c -> d} -> {0 a, b : CSliceObj c} ->
-  CSliceMorphism {c} a b -> CSliceMorphism {c=d} (CSPi f a) (CSPi f b)
-csPiMap {c} {d} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 g eqg) =
+csPiMap : {0 c, d : Type} -> {0 f : c -> d} ->
+  CSliceFMap {c} {d} (CSPi {c} {d} f)
+csPiMap {c} {d} {f} (a ** pa) (b ** pb) (Element0 g eqg) =
   Element0
     (\(eld ** Element0 pi eqpi) =>
       (eld **
@@ -1083,20 +1097,20 @@ csPBproj2 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
         trans (cong pz eqfg) (sym $ eqg ely)
 
 public export
-CSGBCMorphOp : {c : Type} -> {0 d : Type} ->
-  (c -> d) -> CSliceObj c -> SliceObj d
+CSGBCMorphOp : {c : Type} -> {0 d : Type} -> (c -> d) ->
+  CSliceObj c -> SliceObj d
 CSGBCMorphOp {c} {d} f x =
   CSliceMorphism {c} x . CSGBaseChange {c=d} {d=c} f
 
 public export
-CSDepExp : {c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
+CSDepExp : {c, d : Type} -> (c -> d) -> CSliceFunctor c d
 CSDepExp {c} {d} = CSliceFromSlice {c=d} .* CSGBCMorphOp {c} {d}
 
 -- `CSDepExp` is contravariant.
 public export
-csDepExpMap : {0 c, d : Type} -> {0 f : c -> d} -> {a, b : CSliceObj c} ->
-  CSliceMorphism {c} a b -> CSliceMorphism {c=d} (CSDepExp f b) (CSDepExp f a)
-csDepExpMap {c} {d} {f} {a=(a ** pa)} {b=(b ** pb)} (Element0 m eqm) =
+csDepExpMap : {0 c, d : Type} -> {0 f : c -> d} ->
+  CSliceFContramap {c} {d} (CSDepExp {c} {d} f)
+csDepExpMap {c} {d} {f} (a ** pa) (b ** pb) (Element0 m eqm) =
   Element0
     (\(eld ** Element0 exp eqexp) =>
      (eld **
@@ -1116,13 +1130,12 @@ CSPolyF {dom} {dir} {pos} {cod} f g h =
 public export
 csPolyMap : {dom, dir, pos, cod : Type} ->
   {f : dir -> dom} -> {g : dir -> pos} -> {h : pos -> cod} ->
-  {a, b : CSliceObj dom} ->
-  CSliceMorphism {c=dom} a b ->
-  CSliceMorphism {c=cod} (CSPolyF f g h a) (CSPolyF f g h b)
-csPolyMap {dom} {dir} {pos} {cod} {f} {g} {h} {a} {b} m =
+  CSliceFMap {c=dom} {d=cod} (CSPolyF f g h)
+csPolyMap {dom} {dir} {pos} {cod} {f} {g} {h} a b m =
   csSigmaMap {f=h}
-    {a=(CSPi g $ CSBaseChange f a)} {b=(CSPi g $ CSBaseChange f b)} $
-    csPiMap {f=g} $ csBaseChangeMap {f} m
+    (CSPi g (CSBaseChange f a)) (CSPi g (CSBaseChange f b)) $
+    csPiMap {f=g} (CSBaseChange f a) (CSBaseChange f b) $
+    csBaseChangeMap {f} a b m
 
 public export
 CSDirichF : {dom, dir, pos, cod : Type} ->
@@ -1135,13 +1148,12 @@ CSDirichF {dom} {dir} {pos} {cod} f g h =
 public export
 csDirichMap : {dom, dir, pos, cod : Type} ->
   {f : dir -> dom} -> {g : dir -> pos} -> {h : pos -> cod} ->
-  {a, b : CSliceObj dom} ->
-  CSliceMorphism {c=dom} a b ->
-  CSliceMorphism {c=cod} (CSDirichF f g h b) (CSDirichF f g h a)
-csDirichMap {dom} {dir} {pos} {cod} {f} {g} {h} {a} {b} m =
+  CSliceFContramap {c=dom} {d=cod} (CSDirichF f g h)
+csDirichMap {dom} {dir} {pos} {cod} {f} {g} {h} a b m =
   csSigmaMap {f=h}
-    {a=(CSDepExp g $ CSBaseChange f b)} {b=(CSDepExp g $ CSBaseChange f a)} $
-    csDepExpMap {f=g} $ csBaseChangeMap {f} m
+    (CSDepExp g (CSBaseChange f b)) (CSDepExp g (CSBaseChange f a)) $
+    csDepExpMap {f=g} (CSBaseChange f a) (CSBaseChange f b) $
+    csBaseChangeMap {f} a b m
 
 -- Pullback introduction in `Type` using slice morphisms.
 public export
