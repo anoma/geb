@@ -788,6 +788,28 @@ CSliceFContramap {c} {d} f =
   (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f y) (f x)
 
 public export
+CSliceNatTrans : {c, d : Type} ->
+  CSliceFunctor c d -> CSliceFunctor c d -> Type
+CSliceNatTrans {c} {d} f g =
+  (a : CSliceObj c) -> CSliceMorphism {c=d} (f a) (g a)
+
+public export
+CSNTvcomp : {0 c, d : Type} -> {0 f, g, h : CSliceFunctor c d} ->
+  CSliceNatTrans g h -> CSliceNatTrans f g -> CSliceNatTrans f h
+CSNTvcomp {c} {d} {f} {g} {h} beta alpha a =
+  CSliceCompose {c=d} (beta a) (alpha a)
+
+public export
+CSNThcomp : {0 c, d, e : Type} ->
+  {f, f' : CSliceFunctor c d} -> {g, g' : CSliceFunctor d e} ->
+  CSliceFMap {c=d} {d=e} g ->
+  CSliceNatTrans {c=d} {d=e} g g' -> CSliceNatTrans {c} {d} f f' ->
+  CSliceNatTrans {c} {d=e} (g . f) (g' . f')
+CSNThcomp {c} {d} {e} {f} {f'} {g} {g'} gm beta alpha a =
+  CSliceCompose {c=e} {u=(g (f a))} {w=(g' (f' a))}
+    (beta (f' a)) (gm (f a) (f' a) (alpha a))
+
+public export
 CSExtEq : {0 c : Type} -> {x, y : CSliceObj c} ->
   (f, g : CSliceMorphism x y) -> Type
 CSExtEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
