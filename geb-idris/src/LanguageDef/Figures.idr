@@ -55,8 +55,8 @@ PrshfDiagSrc = CoprshfDiagTgt
 -- The targets of the edges of the diagram which, when interpreted as an
 -- index category for presheaves, defines the category of diagrams.
 public export
-prshfDiagTgt : DiagDiagEdge -> DiagDiagVert
-prshfDiagTgt = CoprshfDiagSrc
+PrshfDiagTgt : DiagDiagEdge -> DiagDiagVert
+PrshfDiagTgt = CoprshfDiagSrc
 
 ------------------------
 ---- (Co)presheaves ----
@@ -66,8 +66,8 @@ prshfDiagTgt = CoprshfDiagSrc
 -- as the copresheaf category on the diagram (interpreted as an index
 -- category) of diagrams themselves (DiagDiagVert/DiagDiagEdge).
 --
--- A copresheaf is a functor, so the _objects_ are functors from
--- the `DiagDiag` index category to `Type`.
+-- A copresheaf is a (covariant) functor, so the _objects_ are
+-- (covariant) functors from the `DiagDiag` index category to `Type`.
 public export
 record DiagCoprshfObj where
   constructor DCObj
@@ -78,8 +78,30 @@ record DiagCoprshfObj where
   -- If we wrote it in dependent-type-with-universes style rather than
   -- category-theoretic style, DCMorphMap would look something like this:
   --  DCMorphMap : (e : DiagDiagEdge) ->
-  --    dcObjMap (coprshfDiagSrc e) -> dcObjMap (coprshfDiagTgt e)
+  --    DCObjMap (coprshfDiagSrc e) -> DCObjMap (coprshfDiagTgt e)
   DCMorphMap :
     CSliceMorphism {c=DiagDiagEdge}
       (CSBaseChange {c=DiagDiagVert} {d=DiagDiagEdge} CoprshfDiagSrc DCObjMap)
       (CSBaseChange {c=DiagDiagVert} {d=DiagDiagEdge} CoprshfDiagTgt DCObjMap)
+
+-- The objects of the category of diagrams, when that category is defined
+-- as the presheaf category on the diagram (interpreted as an index
+-- category) of diagrams themselves (DiagDiagVert/DiagDiagEdge).
+--
+-- A presheaf is a (contravariant) functor, so the _objects_ are
+-- (contravariant) functors from the `DiagDiag` index category to `Type`.
+public export
+record DiagPrshfObj where
+  constructor DPObj
+  -- If we wrote it in dependent-type-with-universes style rather than
+  -- category-theoretic style, DPObjMap would hae type `DiagDiagVert -> Type`.
+  DPObjMap : CSliceObj DiagDiagVert
+
+  -- This is `DPMorphMap`'s signature backwards, reflecting that we are
+  -- now interpreting the diagram as a "generic figure", meaning as a
+  -- presheaf (contravariant functor), rather than the usual interpretation
+  -- of "diagram" as "(covariant) functor", AKA copresheaf.
+  DPMorphMap :
+    CSliceMorphism {c=DiagDiagEdge}
+      (CSBaseChange {c=DiagDiagVert} {d=DiagDiagEdge} PrshfDiagSrc DPObjMap)
+      (CSBaseChange {c=DiagDiagVert} {d=DiagDiagEdge} PrshfDiagTgt DPObjMap)
