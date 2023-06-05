@@ -160,3 +160,50 @@ IndexCat = DiagCoprshfObj
 public export
 record Copresheaf (j : IndexCat) where
   constructor CoPrshf
+
+---------------------------------
+---------------------------------
+---- Minimal topos interface ----
+---------------------------------
+---------------------------------
+
+mutual
+  public export
+  data MinToposObj : Type where
+    MT1 : MinToposObj
+    MTB : MinToposObj
+    MTP : MinToposObj -> MinToposObj -> MinToposObj
+    MTE : {0 a, b : MinToposObj} ->
+      MinToposMorph a b -> MinToposMorph a b -> MinToposObj
+    MTT : MinToposObj -> MinToposObj
+
+  public export
+  data MinToposMorph : MinToposObj -> MinToposObj -> Type where
+    MTid : (a : MinToposObj) -> MinToposMorph a a
+    MTcomp : {0 a, b, c : MinToposObj} ->
+      MinToposMorph b c -> MinToposMorph a b -> MinToposMorph a c
+    MTterm : (a : MinToposObj) -> MinToposMorph a MT1
+    Mtif : {0 a : MinToposObj} ->
+      MinToposMorph MT1 a -> MinToposMorph MT1 a -> MinToposMorph MTB a
+    Mtbt : {0 a : MinToposObj} -> MinToposMorph MTB a -> MinToposMorph MT1 a
+    Mtbf : {0 a : MinToposObj} -> MinToposMorph MTB a -> MinToposMorph MT1 a
+
+  public export
+  data MinToposEq : {0 a, b : MinToposObj} ->
+      MinToposMorph a b -> MinToposMorph a b -> Type where
+
+mutual
+  public export
+  interpMinToposObj : MinToposObj -> Type
+  interpMinToposObj x = ?interpMinToposObj_hole
+
+  public export
+  interpMinToposMorph : {0 a, b : MinToposObj} ->
+    MinToposMorph a b -> interpMinToposObj a -> interpMinToposObj b
+  interpMinToposMorph f = ?interpMinToposMorph_hole
+
+  public export
+  interpMinToposEq : {0 a, b : MinToposObj} -> {0 f, g : MinToposMorph a b} ->
+    MinToposEq {a} {b} f g ->
+    ExtEq (interpMinToposMorph {a} {b} f) (interpMinToposMorph {a} {b} g)
+  interpMinToposEq {a} {b} {f} {g} eq = ?interpMinToposEq_hole
