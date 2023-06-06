@@ -84,8 +84,32 @@ ccCurry : {0 a, b, c : CompCatObj} ->
 ccCurry {a} {b} {c} f = ?ccCurry_hole
 
 public export
+ccEval1 : (a : CompCatObj) -> CompCatMorph (CCP (ccHomObj CC1 a) CC1) a
+ccEval1 a = cmp1 a CC1
+
+public export
 ccEval : (a, b : CompCatObj) -> CompCatMorph (CCP (ccHomObj a b) a) b
-ccEval a b = ?ccEval_hole
+ccEval CC1 b = ccEval1 b
+ccEval CCB b =
+  CCif
+    -- Second parameter to `eval` is condition
+    (cmp2 (CCP b b) CCB)
+    -- First half of first parameter to `eval` is true branch
+    (ccComp (cmp1 b b) (cmp1 (CCP b b) CCB))
+    -- Second half of first parameter to `eval` is false branch
+    (ccComp (cmp2 b b) (cmp1 (CCP b b) CCB))
+ccEval (CCP a a') b =
+  ccComp
+    (ccEval a' b) $
+    CCp
+      (ccComp
+        (ccEval a $ ccHomObj a' b)
+        (CCp
+          (cmp1 (ccHomObj a (ccHomObj a' b)) (CCP a a'))
+          (ccComp
+            (cmp1 a a')
+            (cmp2 (ccHomObj a (ccHomObj a' b)) (CCP a a')))))
+      (ccComp (cmp2 a a') (cmp2 (ccHomObj a (ccHomObj a' b)) (CCP a a')))
 
 public export
 ccUncurry : {a, b, c : CompCatObj} ->
