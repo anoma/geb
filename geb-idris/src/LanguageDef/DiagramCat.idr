@@ -137,6 +137,7 @@ record DSToType where
   -- the corresponding non-dependent direction.
   ds2tdir : ds2tpos -> DSCatObj
 
+{-
 public export
 interpDSToType : DSToType -> DSCatObj -> Type
 interpDSToType ds2t ds = (i : ds2tpos ds2t ** DSCatMorph (ds2tdir ds2t i) ds)
@@ -191,6 +192,7 @@ public export
 DSCatFMN2 : {n : Nat} -> {dspf : DSPF} ->
   (ds : DSCatObj) -> DSCatFMN1 n dspf ds -> Type
 DSCatFMN2 {n} {dspf} ds = snd (DSCatFMN n dspf ds)
+-}
 
 -----------------------------------------
 -----------------------------------------
