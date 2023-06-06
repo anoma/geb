@@ -72,6 +72,27 @@ public export
 cmp2 : (a, b : CompCatObj) -> CompCatMorph (CCP a b) b
 cmp2 a b = CCp2 {a=(CCP a b)} {b=a} {c=b} $ CCid $ CCP a b
 
+public export
+ccHomObj : CompCatObj -> CompCatObj -> CompCatObj
+ccHomObj CC1 b = b
+ccHomObj CCB b = CCP b b
+ccHomObj (CCP a b) c = ccHomObj a (ccHomObj b c)
+
+public export
+ccCurry : {0 a, b, c : CompCatObj} ->
+  CompCatMorph (CCP a b) c -> CompCatMorph a (ccHomObj b c)
+ccCurry {a} {b} {c} f = ?ccCurry_hole
+
+public export
+ccEval : (a, b : CompCatObj) -> CompCatMorph (CCP (ccHomObj a b) a) b
+ccEval a b = ?ccEval_hole
+
+public export
+ccUncurry : {a, b, c : CompCatObj} ->
+  CompCatMorph a (ccHomObj b c) -> CompCatMorph (CCP a b) c
+ccUncurry {a} {b} {c} f =
+  ccComp (ccEval b c) $ CCp (ccComp f (cmp1 a b)) (cmp2 a b)
+
 ---------------------------------
 ---------------------------------
 ---- Minimal topos interface ----
