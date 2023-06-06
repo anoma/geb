@@ -190,44 +190,35 @@ data CompCatMorph : CompCatObj -> CompCatObj -> Type where
   CCp2 : {a, b, c : CompCatObj} ->
     CompCatMorph a (CCP b c) -> CompCatMorph a c
 
-public export
-ccComp : {a, b, c : CompCatObj} ->
-  CompCatMorph b c -> CompCatMorph a b -> CompCatMorph a c
-ccComp {a} {b} {c=b} (CCid b) f = f
-ccComp {a} {b=a} {c=b} g (CCid a) = g
-ccComp {a} {b} {c} g (CCconst a {b} f) = CCconst a {b=c} $ ccComp g f
-ccComp {a} {b} {c} (CCconst b {b=c} g) f = CCconst a {b=c} g
-ccComp {a} {b} {c} (CCif {a=b} {b=c} cond g g') f =
-  CCif {a} {b=c} (ccComp cond f) (ccComp g f) (ccComp g' f)
-ccComp {a} {b} {c} g (CCif {a} {b} cond f f') =
-  CCif {a} {b=c} cond (ccComp g f) (ccComp g f')
-ccComp {a} {b=CC1} {c=CCB} CCt f = CCconst a {b=CCB} CCt
-ccComp {a} {b=CC1} {c=CCB} CCf f = CCconst a {b=CCB} CCf
-ccComp {a=CC1} {b=CCB} {c=c} (CCif {a=CCB} {b=c} cond f g) CCt = ccComp f CCt
-ccComp {a=CC1} {b=CCB} {c=c} (CCif {a=CCB} {b=c} cond f g) CCf = ccComp f CCf
-ccComp {a=CC1} {b=CCB} {c=(CCP b c)} (CCp f g) CCt =
-  CCp {a=CC1} {b} {c} (ccComp f CCt) (ccComp g CCt)
-ccComp {a=CC1} {b=CCB} {c=(CCP b c)} (CCp f g) CCf =
-  CCp {a=CC1} {b} {c} (ccComp f CCf) (ccComp g CCf)
-ccComp {a=CC1} {b=CCB} {c=c} (CCp1 {a=CCB} {b=c} {c=d} f) CCt =
-  CCp1 {a=CC1} {b=c} {c=d} $ ccComp {a=CC1} {b=CCB} {c=(CCP c d)} f CCt
-ccComp {a=CC1} {b=CCB} {c=c} (CCp1 {a=CCB} {b=c} {c=d} f) CCf =
-  CCp1 {a=CC1} {b=c} {c=d} $ ccComp {a=CC1} {b=CCB} {c=(CCP c d)} f CCf
-ccComp {a=CC1} {b=CCB} {c} (CCp2 {a=CCB} {b} {c} f) CCt =
-  CCp2 {a=CC1} {b} {c} $ ccComp {a=CC1} {b=CCB} {c=(CCP b c)} f CCt
-ccComp {a=CC1} {b=CCB} {c} (CCp2 {a=CCB} {b} {c} f) CCf =
-  CCp2 {a=CC1} {b} {c} $ ccComp {a=CC1} {b=CCB} {c=(CCP b c)} f CCf
-ccComp (CCp1 g) (CCp1 f) = ?ccComp_hole_p1p1
-ccComp (CCp1 g) (CCp2 f) = ?ccComp_hole_p1p2
-ccComp (CCp1 g) (CCp f f') = ?ccComp_hole_p1p
-ccComp (CCp2 g) (CCp1 f) = ?ccComp_hole_p2p1
-ccComp (CCp2 g) (CCp2 f) = ?ccComp_hole_p2p2
-ccComp (CCp2 g) (CCp f f') = ?ccComp_hole_p2p
-ccComp (CCp g g') (CCp1 f) = ?ccComp_hole_pp1
-ccComp (CCp g g') (CCp2 f) = ?ccComp_hole_pp2
-ccComp {a} {b=(CCP b' c')} {c=(CCP b c)}
-  (CCp {a=(CCP b' c')} {b} {c} g g') (CCp {a} {b=b'} {c=c'} f f') =
-    ?ccComp_hole_pp
+mutual
+  public export
+  ccComp : {a, b, c : CompCatObj} ->
+    CompCatMorph b c -> CompCatMorph a b -> CompCatMorph a c
+  ccComp (CCid _) f = f
+  ccComp {a} (CCconst b {b=b'} t) f = CCconst a {b=b'} t
+  ccComp {a} {b} {c} (CCif {a=b} {b=c} cond g g') f =
+    postCompIf {a} {b} {c} cond g g' f
+  ccComp {a} CCt _ = CCconst a {b=CCB} CCt
+  ccComp {a} CCf _ = CCconst a {b=CCB} CCf
+  ccComp (CCp g g') f = CCp (ccComp g f) (ccComp g' f)
+  ccComp {a} {b} {c} (CCp1 {a=b} {b=c} {c=c'} g) f = postCompProj1 g f
+  ccComp {a} {b} {c} (CCp2 {a=b} {b=b'} {c} g) f = postCompProj2 g f
+
+  public export
+  postCompIf : {a, b, c : CompCatObj} ->
+    CompCatMorph b CCB -> CompCatMorph b c -> CompCatMorph b c ->
+    CompCatMorph a b -> CompCatMorph a c
+  postCompIf cond g g' f = ?postCompIf_hole_3
+
+  public export
+  postCompProj1 : {a, b, c, c' : CompCatObj} ->
+    CompCatMorph b (CCP c c') -> CompCatMorph a b -> CompCatMorph a c
+  postCompProj1 {a} {b} {c} {c'} g f = ?postCompProj1_hole
+
+  public export
+  postCompProj2 : {a, b, b', c : CompCatObj} ->
+    CompCatMorph b (CCP b' c) -> CompCatMorph a b -> CompCatMorph a c
+  postCompProj2 {a} {b} {b'} {c} g f = ?postCompProj2_hole
 
 ---------------------------------
 ---------------------------------
