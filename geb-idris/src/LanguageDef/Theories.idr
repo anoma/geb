@@ -92,7 +92,14 @@ ccCurry : {a, b, c : CompCatObj} ->
 ccCurry {a} {b=CC1} {c} f = ccComp f $ CCp (CCid a) $ cm1 a
 ccCurry {a} {b=CCB} {c} f =
   CCp (ccComp f $ CCp (CCid a) $ cct a) (ccComp f $ CCp (CCid a) $ ccf a)
-ccCurry {a} {b=(CCP b b')} {c} f = ?ccCurry_hole_2
+ccCurry {a} {b=(CCP b b')} {c} f =
+  ccCurry {a} {b} {c=(ccHomObj b' c)} $ ccCurry {a=(CCP a b)} {b=b'} {c} $
+    ccComp f $
+      CCp
+        (ccComp (cmp1 a b) (cmp1 (CCP a b) b'))
+        (CCp
+          (ccComp (cmp2 a b) (cmp1 (CCP a b) b'))
+          (cmp2 (CCP a b) b'))
 
 public export
 ccEval1 : (a : CompCatObj) -> CompCatMorph (CCP (ccHomObj CC1 a) CC1) a
