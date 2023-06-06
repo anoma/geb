@@ -146,9 +146,14 @@ record DiagPrshfObj where
 ---------------------
 ---------------------
 
+-- We should start using `DiagCoprshfObj` instead of the record type below,
+-- but we begin with a more explicit but less reflective representation.
+-- (IndexCat = DiagCoprshfObj)
 public export
-IndexCat : Type
-IndexCat = DiagCoprshfObj
+record IndexCat where
+  constructor IC
+  icVert : Type
+  icEdge : icVert -> icVert -> Type
 
 -- A copresheaf on `j`, a category (which in this formulation is defined via a
 -- diagram in `Type`), is a covariant functor from `j` to `Type`.  As such it
@@ -159,4 +164,39 @@ IndexCat = DiagCoprshfObj
 -- of a functor category, whose morphisms are natural transformations).
 public export
 record Copresheaf (j : IndexCat) where
-  constructor CoPrshf
+  constructor Coprshf
+  coprshfObj : icVert j -> Type
+  coprshfMorph : (x, y : icVert j) ->
+    icEdge j x y -> coprshfObj x -> coprshfObj y
+
+-- A polyomial functor can be given the structure of a prafunctor by assigning
+-- a copresheaf to each position and direction.
+public export
+record PrafunctorData (p : PolyFunc) (dom, cod : IndexCat) where
+  constructor PRAF
+  praPos : pfPos p -> Copresheaf cod
+  praDir : (i : pfPos p) -> pfDir {p} i -> Copresheaf dom
+
+public export
+InterpPRAFobj : {p : PolyFunc} -> {dom, cod : IndexCat} ->
+  PrafunctorData p dom cod -> Copresheaf dom -> icVert cod -> Type
+InterpPRAFobj {p=(pos ** dir)}
+  {dom=(IC dvert dedge)} {cod=(IC cvert cedge)} (PRAF prap prad)
+  (Coprshf obj morph) v =
+    ?InterpPRAFobj_hole
+
+public export
+InterpPRAFmorph : {p : PolyFunc} -> {dom, cod : IndexCat} ->
+  (prad : PrafunctorData p dom cod) -> (domc : Copresheaf dom) ->
+  (x, y : icVert cod) -> icEdge cod x y ->
+  InterpPRAFobj prad domc x -> InterpPRAFobj prad domc y
+InterpPRAFmorph {p=(pos ** dir)}
+  {dom=(IC dvert dedge)} {cod=(IC cvert cedge)} (PRAF prap prad)
+  (Coprshf obj morph) x y e =
+    ?InterpPRAFmorph_hole
+
+public export
+InterpPRAF : {p : PolyFunc} -> {dom, cod : IndexCat} ->
+  PrafunctorData p dom cod -> Copresheaf dom -> Copresheaf cod
+InterpPRAF prad codc =
+  Coprshf (InterpPRAFobj prad codc) (InterpPRAFmorph prad codc)
