@@ -201,9 +201,13 @@ ccComp {a} CCt _ = CCconst a {b=CCB} CCt
 ccComp {a} CCf _ = CCconst a {b=CCB} CCf
 ccComp (CCp g g') f = CCp (ccComp g f) (ccComp g' f)
 ccComp {a} {b} {c} (CCp1 {a=b} {b=c} {c=c'} g) f =
-  CCp1 {a} {b=c} {c=c'} $ ccComp g f
+  case g of
+    CCp g1 g2 => ccComp g1 f
+    g' => CCp1 {a} {b=c} {c=c'} $ ccComp g' f
 ccComp {a} {b} {c} (CCp2 {a=b} {b=b'} {c} g) f =
-  CCp2 {a} {b=b'} {c} $ ccComp g f
+  case g of
+    CCp g1 g2 => ccComp g2 f
+    g' => CCp2 {a} {b=b'} {c} $ ccComp g' f
 
 ---------------------------------
 ---------------------------------
