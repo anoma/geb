@@ -42,7 +42,12 @@ ccComp : {a, b, c : CompCatObj} ->
 ccComp (CCid _) f = f
 ccComp {a} (CCconst b {b=b'} t) f = CCconst a {b=b'} t
 ccComp {a} {b} {c} (CCif {a=b} {b=c} cond g g') f =
-  CCif (ccComp cond f) (ccComp g f) (ccComp g' f)
+  case ccComp cond f of
+    CCt => ccComp g f
+    CCf => ccComp g' f
+    CCconst d {b=CCB} CCt => ccComp g f
+    CCconst d {b=CCB} CCf => ccComp g' f
+    evalcond => CCif evalcond (ccComp g f) (ccComp g' f)
 ccComp {a} CCt _ = CCconst a {b=CCB} CCt
 ccComp {a} CCf _ = CCconst a {b=CCB} CCf
 ccComp (CCp g g') f = CCp (ccComp g f) (ccComp g' f)
