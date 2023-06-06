@@ -217,10 +217,14 @@ ccComp {a=CC1} {b=CCB} {c} (CCp2 {a=CCB} {b} {c} f) CCt =
   CCp2 {a=CC1} {b} {c} $ ccComp {a=CC1} {b=CCB} {c=(CCP b c)} f CCt
 ccComp {a=CC1} {b=CCB} {c} (CCp2 {a=CCB} {b} {c} f) CCf =
   CCp2 {a=CC1} {b} {c} $ ccComp {a=CC1} {b=CCB} {c=(CCP b c)} f CCf
-ccComp (CCp1 {a=(CCP a a')} {b} {c} g) f = ?ccComp_p1l_hole
-ccComp (CCp2 {a=(CCP a a')} {b} {c} g) f = ?ccComp_p2l_hole
-ccComp {a} {b} {c} g (CCp1 {a} {b=b} {c=c'} f) = ?ccComp_p1r_hole
-ccComp {a} {b} {c} g (CCp2 {a} {b=b'} {c=b} f) = ?ccComp_p1r_hole_2
+ccComp (CCp1 g) (CCp1 f) = ?ccComp_hole_p1p1
+ccComp (CCp1 g) (CCp2 f) = ?ccComp_hole_p1p2
+ccComp (CCp1 g) (CCp f f') = ?ccComp_hole_p1p
+ccComp (CCp2 g) (CCp1 f) = ?ccComp_hole_p2p1
+ccComp (CCp2 g) (CCp2 f) = ?ccComp_hole_p2p2
+ccComp (CCp2 g) (CCp f f') = ?ccComp_hole_p2p
+ccComp (CCp g g') (CCp1 f) = ?ccComp_hole_pp1
+ccComp (CCp g g') (CCp2 f) = ?ccComp_hole_pp2
 ccComp {a} {b=(CCP b' c')} {c=(CCP b c)}
   (CCp {a=(CCP b' c')} {b} {c} g g') (CCp {a} {b=b'} {c=c'} f f') =
     ?ccComp_hole_pp
