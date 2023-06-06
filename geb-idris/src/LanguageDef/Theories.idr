@@ -65,6 +65,14 @@ cm1 : (a : CompCatObj) -> CompCatMorph a CC1
 cm1 a = CCconst a {b=CC1} $ CCid CC1
 
 public export
+cct : (a : CompCatObj) -> CompCatMorph a CCB
+cct a = CCconst a {b=CCB} CCt
+
+public export
+ccf : (a : CompCatObj) -> CompCatMorph a CCB
+ccf a = CCconst a {b=CCB} CCf
+
+public export
 cmp1 : (a, b : CompCatObj) -> CompCatMorph (CCP a b) a
 cmp1 a b = CCp1 {a=(CCP a b)} {b=a} {c=b} $ CCid $ CCP a b
 
@@ -79,9 +87,12 @@ ccHomObj CCB b = CCP b b
 ccHomObj (CCP a b) c = ccHomObj a (ccHomObj b c)
 
 public export
-ccCurry : {0 a, b, c : CompCatObj} ->
+ccCurry : {a, b, c : CompCatObj} ->
   CompCatMorph (CCP a b) c -> CompCatMorph a (ccHomObj b c)
-ccCurry {a} {b} {c} f = ?ccCurry_hole
+ccCurry {a} {b=CC1} {c} f = ccComp f $ CCp (CCid a) $ cm1 a
+ccCurry {a} {b=CCB} {c} f =
+  CCp (ccComp f $ CCp (CCid a) $ cct a) (ccComp f $ CCp (CCid a) $ ccf a)
+ccCurry {a} {b=(CCP b b')} {c} f = ?ccCurry_hole_2
 
 public export
 ccEval1 : (a : CompCatObj) -> CompCatMorph (CCP (ccHomObj CC1 a) CC1) a
