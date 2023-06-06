@@ -209,6 +209,18 @@ ccComp {a} {b} {c} (CCp2 {a=b} {b=b'} {c} g) f =
     CCp g1 g2 => ccComp g2 f
     g' => CCp2 {a} {b=b'} {c} $ ccComp g' f
 
+public export
+cm1 : (a : CompCatObj) -> CompCatMorph a CC1
+cm1 a = CCconst a {b=CC1} $ CCid CC1
+
+public export
+cmp1 : (a, b : CompCatObj) -> CompCatMorph (CCP a b) a
+cmp1 a b = CCp1 {a=(CCP a b)} {b=a} {c=b} $ CCid $ CCP a b
+
+public export
+cmp2 : (a, b : CompCatObj) -> CompCatMorph (CCP a b) b
+cmp2 a b = CCp2 {a=(CCP a b)} {b=a} {c=b} $ CCid $ CCP a b
+
 ---------------------------------
 ---------------------------------
 ---- Minimal topos interface ----
