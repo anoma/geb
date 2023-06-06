@@ -190,35 +190,20 @@ data CompCatMorph : CompCatObj -> CompCatObj -> Type where
   CCp2 : {a, b, c : CompCatObj} ->
     CompCatMorph a (CCP b c) -> CompCatMorph a c
 
-mutual
-  public export
-  ccComp : {a, b, c : CompCatObj} ->
-    CompCatMorph b c -> CompCatMorph a b -> CompCatMorph a c
-  ccComp (CCid _) f = f
-  ccComp {a} (CCconst b {b=b'} t) f = CCconst a {b=b'} t
-  ccComp {a} {b} {c} (CCif {a=b} {b=c} cond g g') f =
-    postCompIf {a} {b} {c} cond g g' f
-  ccComp {a} CCt _ = CCconst a {b=CCB} CCt
-  ccComp {a} CCf _ = CCconst a {b=CCB} CCf
-  ccComp (CCp g g') f = CCp (ccComp g f) (ccComp g' f)
-  ccComp {a} {b} {c} (CCp1 {a=b} {b=c} {c=c'} g) f = postCompProj1 g f
-  ccComp {a} {b} {c} (CCp2 {a=b} {b=b'} {c} g) f = postCompProj2 g f
-
-  public export
-  postCompIf : {a, b, c : CompCatObj} ->
-    CompCatMorph b CCB -> CompCatMorph b c -> CompCatMorph b c ->
-    CompCatMorph a b -> CompCatMorph a c
-  postCompIf cond g g' f = ?postCompIf_hole_3
-
-  public export
-  postCompProj1 : {a, b, c, c' : CompCatObj} ->
-    CompCatMorph b (CCP c c') -> CompCatMorph a b -> CompCatMorph a c
-  postCompProj1 {a} {b} {c} {c'} g f = ?postCompProj1_hole
-
-  public export
-  postCompProj2 : {a, b, b', c : CompCatObj} ->
-    CompCatMorph b (CCP b' c) -> CompCatMorph a b -> CompCatMorph a c
-  postCompProj2 {a} {b} {b'} {c} g f = ?postCompProj2_hole
+public export
+ccComp : {a, b, c : CompCatObj} ->
+  CompCatMorph b c -> CompCatMorph a b -> CompCatMorph a c
+ccComp (CCid _) f = f
+ccComp {a} (CCconst b {b=b'} t) f = CCconst a {b=b'} t
+ccComp {a} {b} {c} (CCif {a=b} {b=c} cond g g') f =
+  CCif (ccComp cond f) (ccComp g f) (ccComp g' f)
+ccComp {a} CCt _ = CCconst a {b=CCB} CCt
+ccComp {a} CCf _ = CCconst a {b=CCB} CCf
+ccComp (CCp g g') f = CCp (ccComp g f) (ccComp g' f)
+ccComp {a} {b} {c} (CCp1 {a=b} {b=c} {c=c'} g) f =
+  CCp1 {a} {b=c} {c=c'} $ ccComp g f
+ccComp {a} {b} {c} (CCp2 {a=b} {b=b'} {c} g) f =
+  CCp2 {a} {b=b'} {c} $ ccComp g f
 
 ---------------------------------
 ---------------------------------
