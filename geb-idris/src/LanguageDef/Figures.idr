@@ -181,13 +181,13 @@ data CompCatMorph : CompCatObj -> CompCatObj -> Type where
   CCif : {0 a, b : CompCatObj} ->
     CompCatMorph a CCB -> CompCatMorph a b -> CompCatMorph a b ->
     CompCatMorph a b
-  CCt : {0 a : CompCatObj} -> CompCatMorph CCB a -> CompCatMorph CC1 a
-  CCf : {0 a : CompCatObj} -> CompCatMorph CCB a -> CompCatMorph CC1 a
+  CCt : CompCatMorph CC1 CCB
+  CCf : CompCatMorph CC1 CCB
   CCp : {0 a, b, c : CompCatObj} ->
     CompCatMorph a b -> CompCatMorph a c -> CompCatMorph a (CCP b c)
-  CCp1 : {0 a, b, c : CompCatObj} ->
+  CCp1 : {a, b, c : CompCatObj} ->
     CompCatMorph a (CCP b c) -> CompCatMorph a b
-  CCp2 : {0 a, b, c : CompCatObj} ->
+  CCp2 : {a, b, c : CompCatObj} ->
     CompCatMorph a (CCP b c) -> CompCatMorph a c
 
 public export
@@ -201,6 +201,22 @@ ccComp {a} {b} {c} (CCif {a=b} {b=c} cond g g') f =
   CCif {a} {b=c} (ccComp cond f) (ccComp g f) (ccComp g' f)
 ccComp {a} {b} {c} g (CCif {a} {b} cond f f') =
   CCif {a} {b=c} cond (ccComp g f) (ccComp g f')
+ccComp {a} {b=CC1} {c=CCB} CCt f = CCconst a {b=CCB} CCt
+ccComp {a} {b=CC1} {c=CCB} CCf f = CCconst a {b=CCB} CCf
+ccComp {a=CC1} {b=CCB} {c=c} (CCif {a=CCB} {b=c} cond f g) CCt = ccComp f CCt
+ccComp {a=CC1} {b=CCB} {c=c} (CCif {a=CCB} {b=c} cond f g) CCf = ccComp f CCf
+ccComp {a=CC1} {b=CCB} {c=(CCP b c)} (CCp f g) CCt =
+  CCp {a=CC1} {b} {c} (ccComp f CCt) (ccComp g CCt)
+ccComp {a=CC1} {b=CCB} {c=(CCP b c)} (CCp f g) CCf =
+  CCp {a=CC1} {b} {c} (ccComp f CCf) (ccComp g CCf)
+ccComp {a=CC1} {b=CCB} {c=c} (CCp1 {a=CCB} {b=c} {c=d} f) CCt =
+  CCp1 {a=CC1} {b=c} {c=d} $ ccComp {a=CC1} {b=CCB} {c=(CCP c d)} f CCt
+ccComp {a=CC1} {b=CCB} {c=c} (CCp1 {a=CCB} {b=c} {c=d} f) CCf =
+  CCp1 {a=CC1} {b=c} {c=d} $ ccComp {a=CC1} {b=CCB} {c=(CCP c d)} f CCf
+ccComp {a=CC1} {b=CCB} {c} (CCp2 {a=CCB} {b} {c} f) CCt =
+  CCp2 {a=CC1} {b} {c} $ ccComp {a=CC1} {b=CCB} {c=(CCP b c)} f CCt
+ccComp {a=CC1} {b=CCB} {c} (CCp2 {a=CCB} {b} {c} f) CCf =
+  CCp2 {a=CC1} {b} {c} $ ccComp {a=CC1} {b=CCB} {c=(CCP b c)} f CCf
 ccComp {a} {b} {c} g f = ?ccComp_hole
 
 ---------------------------------
