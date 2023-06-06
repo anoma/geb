@@ -163,15 +163,74 @@ record Copresheaf (j : IndexCat) where
 
 ---------------------------------
 ---------------------------------
+---- Computational substrate ----
+---------------------------------
+---------------------------------
+
+public export
+data CompCatObj : Type where
+  CC1 : CompCatObj
+  CCB : CompCatObj
+  CCP : CompCatObj -> CompCatObj -> CompCatObj
+
+public export
+data CompCatMorph : CompCatObj -> CompCatObj -> Type where
+  CCid : (a : CompCatObj) -> CompCatMorph a a
+  CCconst : (a : CompCatObj) -> {0 b : CompCatObj} ->
+    CompCatMorph CC1 b -> CompCatMorph a b
+  CCif : {0 a, b : CompCatObj} ->
+    CompCatMorph a CCB -> CompCatMorph a b -> CompCatMorph a b ->
+    CompCatMorph a b
+  CCt : {0 a : CompCatObj} -> CompCatMorph CCB a -> CompCatMorph CC1 a
+  CCf : {0 a : CompCatObj} -> CompCatMorph CCB a -> CompCatMorph CC1 a
+  CCp : {0 a, b, c : CompCatObj} ->
+    CompCatMorph a b -> CompCatMorph a c -> CompCatMorph a (CCP b c)
+  CCp1 : {0 a, b, c : CompCatObj} ->
+    CompCatMorph a (CCP b c) -> CompCatMorph a b
+  CCp2 : {0 a, b, c : CompCatObj} ->
+    CompCatMorph a (CCP b c) -> CompCatMorph a c
+
+public export
+ccComp : {a, b, c : CompCatObj} ->
+  CompCatMorph b c -> CompCatMorph a b -> CompCatMorph a c
+ccComp {a} {b} {c=b} (CCid b) f = f
+ccComp {a} {b=a} {c=b} g (CCid a) = g
+ccComp {a} {b} {c} g (CCconst a {b} f) = CCconst a {b=c} $ ccComp g f
+ccComp {a} {b} {c} (CCconst b {b=c} g) f = CCconst a {b=c} g
+ccComp {a} {b} {c} (CCif {a=b} {b=c} cond g g') f =
+  CCif {a} {b=c} (ccComp cond f) (ccComp g f) (ccComp g' f)
+ccComp {a} {b} {c} g (CCif {a} {b} cond f f') =
+  CCif {a} {b=c} cond (ccComp g f) (ccComp g f')
+ccComp {a} {b} {c} g f = ?ccComp_hole
+
+---------------------------------
+---------------------------------
 ---- Minimal topos interface ----
 ---------------------------------
 ---------------------------------
 
+{-
 mutual
   public export
+  data MinToposCat : Type where
+    MTCb : MinToposCat
+    MTCs : (cat : MinToposCat) -> MinToposObj cat -> MinToposCat
+
+  public export
+  data MinToposObj : MinToposCat -> Type where
+    MT1 : (cat : MinToposCat) -> MinToposObj cat
+    MTB : (cat : MinToposCat) -> MinToposObj cat
+    MTP : {0 cat : MinToposCat} -> {0 x, y, z : MinToposObj cat} ->
+      MinToposMorph {cat} x z -> MinToposMorph {cat} y z -> MinToposObj cat
+    MTS : {0 cat : MinToposCat} -> {0 x : MinToposObj cat} ->
+      MinToposMorph {cat} x z -> MinToposMorph {cat} y z -> MinToposObj cat
+    MTT : {0 cat : MinToposCat} -> MinToposObj cat -> MinToposObj cat
+
+  public export
+  data MinToposMorph : {0 cat : MinToposCat} ->
+      MinToposObj cat -> MinToposObj cat -> Type where
+  public export
   data MinToposObj : Type where
-    MT1 : MinToposObj
-    MTB : MinToposObj
     MTP : MinToposObj -> MinToposObj -> MinToposObj
     MTE : {0 a, b : MinToposObj} ->
       MinToposMorph a b -> MinToposMorph a b -> MinToposObj
@@ -207,3 +266,4 @@ mutual
     MinToposEq {a} {b} f g ->
     ExtEq (interpMinToposMorph {a} {b} f) (interpMinToposMorph {a} {b} g)
   interpMinToposEq {a} {b} {f} {g} eq = ?interpMinToposEq_hole
+    -}
