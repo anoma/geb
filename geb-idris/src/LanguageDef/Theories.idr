@@ -202,11 +202,15 @@ ccComp (CCp g g') f = CCp (ccComp g f) (ccComp g' f)
 ccComp {a} {b} {c} (CCp1 {a=b} {b=c} {c=c'} g) f =
   case g of
     CCp g1 g2 => ccComp g1 f
-    g' => CCp1 {a} {b=c} {c=c'} $ ccComp g' f
+    g' => case ccComp g' f of
+      CCp g'f1 g'f2 => g'f1
+      g'f => CCp1 {a} {b=c} {c=c'} g'f
 ccComp {a} {b} {c} (CCp2 {a=b} {b=b'} {c} g) f =
   case g of
     CCp g1 g2 => ccComp g2 f
-    g' => CCp2 {a} {b=b'} {c} $ ccComp g' f
+    g' => case ccComp g' f of
+      CCp g'f1 g'f2 => g'f2
+      g'f => CCp2 {a} {b=b'} {c} g'f
 
 public export
 cm1 : (a : CompCatObj) -> CompCatMorph a CC1
