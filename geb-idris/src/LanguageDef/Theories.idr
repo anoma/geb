@@ -72,7 +72,15 @@ data CompCatMorph : CompCatObj -> CompCatObj -> Type where
 
 public export
 Show (CompCatMorph a b) where
-  show f = ?show_compcatmorph_hole
+  show (CCid a) = "id(" ++ show a ++ ")"
+  show (CCconst a t) = "![" ++ show t ++ "]"
+  show (CCif cond tb fb) =
+    "(" ++ show cond ++ " ? " ++ show tb ++ " : " ++ show fb ++ ")"
+  show CCt = "t"
+  show CCf = "f"
+  show (CCp f g) = "(" ++ show f ++ "*" ++ show g ++ ")"
+  show (CCp1 f) = "p1(" ++ show f ++ ")"
+  show (CCp2 f) = "p2(" ++ show f ++ ")"
 
 public export
 DecEq (CompCatMorph a b) where
