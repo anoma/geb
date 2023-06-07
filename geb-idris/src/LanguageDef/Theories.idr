@@ -192,8 +192,9 @@ ccComp {a} {b} {c} (CCif {a=b} {b=c} cond g g') f =
   case ccComp cond f of
     CCt => ccComp g f
     CCf => ccComp g' f
-    CCconst d {b=CCB} CCt => ccComp g f
-    CCconst d {b=CCB} CCf => ccComp g' f
+    CCconst _ cond => case ccInterpTerm cond of
+      True => ccComp g f
+      False => ccComp g' f
     evalcond => CCif evalcond (ccComp g f) (ccComp g' f)
 ccComp {a} CCt _ = CCconst a {b=CCB} CCt
 ccComp {a} CCf _ = CCconst a {b=CCB} CCf
