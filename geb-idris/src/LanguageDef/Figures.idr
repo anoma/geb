@@ -182,8 +182,10 @@ InterpPRAFobj : {p : PolyFunc} -> {dom, cod : IndexCat} ->
   PrafunctorData p dom cod -> Copresheaf dom -> icVert cod -> Type
 InterpPRAFobj {p=(pos ** dir)}
   {dom=(IC dvert dedge)} {cod=(IC cvert cedge)} (PRAF prap prad)
-  (Coprshf obj morph) v =
-    ?InterpPRAFobj_hole
+  (Coprshf obj morph) cv =
+    (i : pos **
+     (coprshfObj (prap i) cv,
+      (d : dir i) -> (dv : dvert) -> (coprshfObj (prad i d) dv, obj dv)))
 
 public export
 InterpPRAFmorph : {p : PolyFunc} -> {dom, cod : IndexCat} ->
@@ -192,8 +194,8 @@ InterpPRAFmorph : {p : PolyFunc} -> {dom, cod : IndexCat} ->
   InterpPRAFobj prad domc x -> InterpPRAFobj prad domc y
 InterpPRAFmorph {p=(pos ** dir)}
   {dom=(IC dvert dedge)} {cod=(IC cvert cedge)} (PRAF prap prad)
-  (Coprshf obj morph) x y e =
-    ?InterpPRAFmorph_hole
+  (Coprshf obj morph) x y e (i ** (co, m)) =
+    (i ** (coprshfMorph (prap i) x y e co, m))
 
 public export
 InterpPRAF : {p : PolyFunc} -> {dom, cod : IndexCat} ->
