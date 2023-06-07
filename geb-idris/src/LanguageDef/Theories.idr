@@ -249,18 +249,6 @@ cmu : CompCatMorph CC1 CC1
 cmu = CCid CC1
 
 public export
-CCGenTerm : {a : CompCatObj} -> CCInterpObj a -> CompCatMorph CC1 a
-CCGenTerm {a=CC1} () = cmu
-CCGenTerm {a=CCB} True = cct1
-CCGenTerm {a=CCB} False = ccf1
-CCGenTerm {a=(CCP a b)} (x, x') =
-  CCp {a=CC1} {b=a} {c=b} (CCGenTerm x) (CCGenTerm x')
-
-public export
-CCMetaReduceTerm : {a : CompCatObj} -> CompCatMorph CC1 a -> CompCatMorph CC1 a
-CCMetaReduceTerm t = CCGenTerm $ ccInterpTerm t
-
-public export
 ccHomObj : CompCatObj -> CompCatObj -> CompCatObj
 ccHomObj CC1 b = b
 ccHomObj CCB b = CCP b b
@@ -322,6 +310,18 @@ ccUncurry : {a, b, c : CompCatObj} ->
   CompCatMorph a (ccHomObj b c) -> CompCatMorph (CCP a b) c
 ccUncurry {a} {b} {c} f =
   ccComp (ccEval b c) $ CCp (ccComp f (cmp1 a b)) (cmp2 a b)
+
+public export
+CCGenTerm : {a : CompCatObj} -> CCInterpObj a -> CompCatMorph CC1 a
+CCGenTerm {a=CC1} () = cmu
+CCGenTerm {a=CCB} True = cct1
+CCGenTerm {a=CCB} False = ccf1
+CCGenTerm {a=(CCP a b)} (x, x') =
+  CCp {a=CC1} {b=a} {c=b} (CCGenTerm x) (CCGenTerm x')
+
+public export
+CCMetaReduceTerm : {a : CompCatObj} -> CompCatMorph CC1 a -> CompCatMorph CC1 a
+CCMetaReduceTerm t = CCGenTerm $ ccInterpTerm t
 
 public export
 CCGenMorph : {a, b : CompCatObj} ->
