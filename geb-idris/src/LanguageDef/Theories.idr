@@ -20,6 +20,40 @@ data CompCatObj : Type where
   CCP : CompCatObj -> CompCatObj -> CompCatObj
 
 public export
+Show CompCatObj where
+  show CC1 = "1"
+  show CCB = "B"
+  show (CCP a b) = "(" ++ show a ++ "*" ++ show b ++ ")"
+
+public export
+DecEq CompCatObj where
+  decEq CC1 CC1 = Yes Refl
+  decEq CCB CCB = Yes Refl
+  decEq (CCP a b) (CCP a' b') =
+    case decEq a a' of
+      Yes Refl =>
+        case decEq b b' of
+          Yes Refl => Yes Refl
+          No neq => No $ \eq => case eq of Refl => neq Refl
+      No neq => No $ \eq => case eq of Refl => neq Refl
+  decEq CC1 CCB = No $ \eq => case eq of Refl impossible
+  decEq CC1 (CCP a b) = No $ \eq => case eq of Refl impossible
+  decEq CCB CC1 = No $ \eq => case eq of Refl impossible
+  decEq CCB (CCP a b) = No $ \eq => case eq of Refl impossible
+  decEq (CCP a b) CC1 = No $ \eq => case eq of Refl impossible
+  decEq (CCP a b) CCB = No $ \eq => case eq of Refl impossible
+
+public export
+Eq CompCatObj where
+  a == b = isYes $ decEq a b
+
+public export
+CCInterpObj : CompCatObj -> Type
+CCInterpObj CC1 = Unit
+CCInterpObj CCB = Bool
+CCInterpObj (CCP a b) = Pair (CCInterpObj a) (CCInterpObj b)
+
+public export
 data CompCatMorph : CompCatObj -> CompCatObj -> Type where
   CCid : (a : CompCatObj) -> CompCatMorph a a
   CCconst : (a : CompCatObj) -> {0 b : CompCatObj} ->
@@ -35,6 +69,36 @@ data CompCatMorph : CompCatObj -> CompCatObj -> Type where
     CompCatMorph a (CCP b c) -> CompCatMorph a b
   CCp2 : {a, b, c : CompCatObj} ->
     CompCatMorph a (CCP b c) -> CompCatMorph a c
+
+public export
+Show (CompCatMorph a b) where
+  show f = ?show_compcatmorph_hole
+
+public export
+DecEq (CompCatMorph a b) where
+  decEq f g = ?decEq_compcatmorph_hole
+
+public export
+Eq (CompCatMorph a b) where
+  f == g = isYes $ decEq f g
+
+public export
+ccInterpMorph : {a, b : CompCatObj} ->
+  CompCatMorph a b -> CCInterpObj a -> CCInterpObj b
+ccInterpMorph (CCid a) x = x
+ccInterpMorph (CCconst _ t) _ = ccInterpMorph t ()
+ccInterpMorph (CCif cond tb fb) x = case ccInterpMorph cond x of
+  True => ccInterpMorph tb x
+  False => ccInterpMorph fb x
+ccInterpMorph CCt () = True
+ccInterpMorph CCf () = False
+ccInterpMorph (CCp f g) x = (ccInterpMorph f x, ccInterpMorph g x)
+ccInterpMorph (CCp1 f) x = fst $ ccInterpMorph f x
+ccInterpMorph (CCp2 f) x = snd $ ccInterpMorph f x
+
+public export
+ccInterpTerm : {a : CompCatObj} -> CompCatMorph CC1 a -> CCInterpObj a
+ccInterpTerm t = ccInterpMorph t ()
 
 public export
 ccComp : {a, b, c : CompCatObj} ->
@@ -69,8 +133,16 @@ cct : (a : CompCatObj) -> CompCatMorph a CCB
 cct a = CCconst a {b=CCB} CCt
 
 public export
+cct1 : CompCatMorph CC1 CCB
+cct1 = cct CC1
+
+public export
 ccf : (a : CompCatObj) -> CompCatMorph a CCB
 ccf a = CCconst a {b=CCB} CCf
+
+public export
+ccf1 : CompCatMorph CC1 CCB
+ccf1 = ccf CC1
 
 public export
 cmp1 : (a, b : CompCatObj) -> CompCatMorph (CCP a b) a
@@ -81,10 +153,34 @@ cmp2 : (a, b : CompCatObj) -> CompCatMorph (CCP a b) b
 cmp2 a b = CCp2 {a=(CCP a b)} {b=a} {c=b} $ CCid $ CCP a b
 
 public export
+cmu : CompCatMorph CC1 CC1
+cmu = CCid CC1
+
+public export
+CCGenTerm : {a : CompCatObj} -> CCInterpObj a -> CompCatMorph CC1 a
+CCGenTerm {a=CC1} () = cmu
+CCGenTerm {a=CCB} True = cct1
+CCGenTerm {a=CCB} False = ccf1
+CCGenTerm {a=(CCP a b)} (x, x') =
+  CCp {a=CC1} {b=a} {c=b} (CCGenTerm x) (CCGenTerm x')
+
+public export
+CCMetaReduceTerm : {a : CompCatObj} -> CompCatMorph CC1 a -> CompCatMorph CC1 a
+CCMetaReduceTerm t = CCGenTerm $ ccInterpTerm t
+
+public export
 ccHomObj : CompCatObj -> CompCatObj -> CompCatObj
 ccHomObj CC1 b = b
 ccHomObj CCB b = CCP b b
 ccHomObj (CCP a b) c = ccHomObj a (ccHomObj b c)
+
+public export
+CCHomInterpInv : (a, b : CompCatObj) ->
+  (CCInterpObj a -> CCInterpObj b) -> CCInterpObj (ccHomObj a b)
+CCHomInterpInv CC1 b f = f ()
+CCHomInterpInv CCB b f = (f True, f False)
+CCHomInterpInv (CCP a a') b f = CCHomInterpInv a (ccHomObj a' b) $
+  CCHomInterpInv a' b . curry f
 
 public export
 ccCurry : {a, b, c : CompCatObj} ->
@@ -134,6 +230,37 @@ ccUncurry : {a, b, c : CompCatObj} ->
   CompCatMorph a (ccHomObj b c) -> CompCatMorph (CCP a b) c
 ccUncurry {a} {b} {c} f =
   ccComp (ccEval b c) $ CCp (ccComp f (cmp1 a b)) (cmp2 a b)
+
+public export
+CCGenMorph : {a, b : CompCatObj} ->
+  (CCInterpObj a -> CCInterpObj b) -> CompCatMorph a b
+CCGenMorph {a=CC1} {b} f = CCGenTerm {a=b} $ f ()
+CCGenMorph {a=CCB} {b} f =
+  CCif
+    (CCid CCB)
+    (CCconst CCB $ CCGenTerm $ f True)
+    (CCconst CCB $ CCGenTerm $ f False)
+CCGenMorph {a=(CCP a a')} {b} f =
+  ccUncurry $ CCGenMorph {a} {b=(ccHomObj a' b)} $
+  CCHomInterpInv a' b . curry f
+
+-- "True" branch of the right adjunct of the boolean-defining adjunction.
+public export
+CCbrat : {a : CompCatObj} -> CompCatMorph CCB a -> CompCatMorph CC1 a
+CCbrat f = CCGenTerm $ ccInterpMorph f True
+
+-- "False" branch of the right adjunct of the boolean-defining adjunction.
+public export
+CCbraf : {a : CompCatObj} -> CompCatMorph CCB a -> CompCatMorph CC1 a
+CCbraf f = CCGenTerm $ ccInterpMorph f False
+
+public export
+CCpa1 : {a, b, c : CompCatObj} -> CompCatMorph a (CCP b c) -> CompCatMorph a b
+CCpa1 f = CCGenMorph $ fst . ccInterpMorph f
+
+public export
+CCpa2 : {a, b, c : CompCatObj} -> CompCatMorph a (CCP b c) -> CompCatMorph a c
+CCpa2 f = CCGenMorph $ snd . ccInterpMorph f
 
 ---------------------------------
 ---------------------------------
