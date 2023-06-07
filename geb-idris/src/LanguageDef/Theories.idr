@@ -75,7 +75,7 @@ Show (CompCatMorph a b) where
   show (CCid a) = "id(" ++ show a ++ ")"
   show (CCconst a t) = "![" ++ show t ++ "]"
   show (CCif cond tb fb) =
-    "(" ++ show cond ++ " ? " ++ show tb ++ " : " ++ show fb ++ ")"
+    "(" ++ show cond ++ " => " ++ show tb ++ " | " ++ show fb ++ ")"
   show CCt = "t"
   show CCf = "f"
   show (CCp f g) = "(" ++ show f ++ "*" ++ show g ++ ")"
@@ -84,7 +84,82 @@ Show (CompCatMorph a b) where
 
 public export
 DecEq (CompCatMorph a b) where
-  decEq f g = ?decEq_compcatmorph_hole
+  decEq (CCid a) (CCid a) = Yes Refl
+  decEq (CCid _) (CCconst _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCid _) (CCif _ _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCid _) (CCp _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCid _) (CCp1 _) = No $ \eq => case eq of Refl impossible
+  decEq (CCid _) (CCp2 _) = No $ \eq => case eq of Refl impossible
+  decEq (CCconst _ _) (CCid _) = No $ \eq => case eq of Refl impossible
+  decEq (CCconst a t) (CCconst a t') = case decEq t t' of
+    Yes Refl => Yes Refl
+    No neq => No $ \eq => case eq of Refl => neq Refl
+  decEq (CCconst _ _) (CCif _ _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCconst _ _) CCt = No $ \eq => case eq of Refl impossible
+  decEq (CCconst _ _) CCf = No $ \eq => case eq of Refl impossible
+  decEq (CCconst _ _) (CCp _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCconst _ _) (CCp1 _) = No $ \eq => case eq of Refl impossible
+  decEq (CCconst _ _) (CCp2 _) = No $ \eq => case eq of Refl impossible
+  decEq (CCif _ _ _) (CCid _) = No $ \eq => case eq of Refl impossible
+  decEq (CCif _ _ _) (CCconst _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCif cond tb fb) (CCif cond' tb' fb') =
+    case (decEq cond cond', decEq tb tb', decEq fb fb') of
+      (Yes Refl, Yes Refl, Yes Refl) => Yes Refl
+      (No neq, _, _) => No $ \eq => case eq of Refl => neq Refl
+      (_, No neq, _) => No $ \eq => case eq of Refl => neq Refl
+      (_, _, No neq) => No $ \eq => case eq of Refl => neq Refl
+  decEq (CCif _ _ _) CCt = No $ \eq => case eq of Refl impossible
+  decEq (CCif _ _ _) CCf = No $ \eq => case eq of Refl impossible
+  decEq (CCif _ _ _) (CCp _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCif _ _ _) (CCp1 _) = No $ \eq => case eq of Refl impossible
+  decEq (CCif _ _ _) (CCp2 _) = No $ \eq => case eq of Refl impossible
+  decEq CCt (CCconst _ _) = No $ \eq => case eq of Refl impossible
+  decEq CCt (CCif _ _ _) = No $ \eq => case eq of Refl impossible
+  decEq CCt CCt = Yes Refl
+  decEq CCt CCf = No $ \eq => case eq of Refl impossible
+  decEq CCt (CCp1 _) = No $ \eq => case eq of Refl impossible
+  decEq CCt (CCp2 _) = No $ \eq => case eq of Refl impossible
+  decEq CCf (CCconst _ _) = No $ \eq => case eq of Refl impossible
+  decEq CCf (CCif _ _ _) = No $ \eq => case eq of Refl impossible
+  decEq CCf CCt = No $ \eq => case eq of Refl impossible
+  decEq CCf CCf = Yes Refl
+  decEq CCf (CCp1 _) = No $ \eq => case eq of Refl impossible
+  decEq CCf (CCp2 _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp _ _) (CCid _ ) = No $ \eq => case eq of Refl impossible
+  decEq (CCp _ _) (CCconst _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp _ _) (CCif _ _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp f g) (CCp f' g') = case (decEq f f', decEq g g') of
+      (Yes Refl, Yes Refl) => Yes Refl
+      (No neq, _) => No $ \eq => case eq of Refl => neq Refl
+      (_, No neq) => No $ \eq => case eq of Refl => neq Refl
+  decEq (CCp _ _) (CCp1 _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp _ _) (CCp2 _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp1 _) (CCid _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp1 _) (CCconst _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp1 _) (CCif _ _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp1 _) CCt = No $ \eq => case eq of Refl impossible
+  decEq (CCp1 _) CCf = No $ \eq => case eq of Refl impossible
+  decEq (CCp1 _) (CCp _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp1 {a} {b} {c} f) (CCp1 {a} {b} {c=c'} g) =
+    case decEq c c' of
+      Yes Refl => case decEq f g of
+        Yes Refl => Yes Refl
+        No neq => No $ \eq => case eq of Refl => neq Refl
+      No neq => No $ \eq => case eq of Refl => neq Refl
+  decEq (CCp1 _) (CCp2 _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp2 _) (CCid _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp2 _) (CCconst _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp2 _) (CCif _ _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp2 _) CCt = No $ \eq => case eq of Refl impossible
+  decEq (CCp2 _) CCf = No $ \eq => case eq of Refl impossible
+  decEq (CCp2 _) (CCp _ _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp2 _) (CCp1 _) = No $ \eq => case eq of Refl impossible
+  decEq (CCp2 {a} {b} {c} f) (CCp2 {a} {b=b'} {c} g) =
+    case decEq b b' of
+      Yes Refl => case decEq f g of
+        Yes Refl => Yes Refl
+        No neq => No $ \eq => case eq of Refl => neq Refl
+      No neq => No $ \eq => case eq of Refl => neq Refl
 
 public export
 Eq (CompCatMorph a b) where
