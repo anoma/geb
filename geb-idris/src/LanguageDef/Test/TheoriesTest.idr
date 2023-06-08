@@ -34,6 +34,27 @@ ccBin4Chi = ccHomObj ccBin4 CCB
 ccBin4ChiF : CompCatMorph TheoriesTest.ccBin4 CCB
 ccBin4ChiF = CCconst ccBin4 CCf
 
+ccBin4t : CompCatMorph CC1 TheoriesTest.ccBin4
+ccBin4t = CCconst _ $ CCp CCt $ CCconst _ $ CCp CCf $ CCp CCt CCf
+
+ccBin4tEv : CompCatMorph CC1 CCB
+ccBin4tEv = ccComp (ccEval ccBin4 CCB) (CCp (ccQuote ccBin4ChiF) ccBin4t)
+
+CCBig : CompCatObj
+CCBig = ccHomObj (ccHomObj (ccHomObj CCB CCB) CCB) CCB
+
+ccBigId : CompCatMorph CCBig CCBig
+ccBigId = CCid CCBig
+
+ccQB : CompCatMorph CC1 (ccHomObj CCBig CCBig)
+ccQB = ccQuote ccBigId
+
+ccBigTrue : CompCatMorph (ccHomObj CCBig CCBig) CCB
+ccBigTrue = CCconst _ CCt
+
+ccThroughCompose : CompCatMorph CC1 CCB
+ccThroughCompose = ccComp ccBigTrue ccQB
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -66,6 +87,10 @@ theoriesTest = do
   putStrLn $ "quote(const-f[ccBin4Chi]) = " ++ show (ccQuote ccBin4ChiF)
   putStrLn $ "unquote(quote(const-f[ccBin4Chi])) = " ++
     show (ccUnquote {a=ccBin4} {b=CCB} (ccQuote ccBin4ChiF))
+  putStrLn $ "eval(ccBin4->CCB) = " ++ show (ccEval ccBin4 CCB)
+  putStrLn $ "ccBin4tEv = " ++ show ccBin4tEv
+  putStrLn $ "CCBig = " ++ show CCBig
+  putStrLn $ "ccThroughCompose = " ++ show ccThroughCompose
   putStrLn ""
   putStrLn "-----------------"
   putStrLn "End TheoriesTest."
