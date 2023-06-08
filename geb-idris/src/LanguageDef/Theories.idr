@@ -80,7 +80,7 @@ data CompCatMorph : CompCatObj -> CompCatObj -> Type where
 
 public export
 Show (CompCatMorph a b) where
-  show (CCid a) = "id(" ++ show a ++ ")"
+  show (CCid a) = "id"
   show (CCconst a t) = "![" ++ show t ++ "]"
   show (CCif cond tb fb) =
     "(" ++ show cond ++ " => " ++ show tb ++ " | " ++ show fb ++ ")"
@@ -326,6 +326,23 @@ ccUncurry : {a, b, c : CompCatObj} ->
   CompCatMorph a (ccHomObj b c) -> CompCatMorph (CCP a b) c
 ccUncurry {a} {b} {c} f =
   ccComp (ccEval b c) $ CCp (ccComp f (cmp1 a b)) (cmp2 a b)
+
+-----------------
+---- Quoting ----
+-----------------
+
+public export
+CCHomTerm : CompCatObj -> CompCatObj -> Type
+CCHomTerm a b = CompCatMorph CC1 (ccHomObj a b)
+
+public export
+ccUnquote : {a, b : CompCatObj} -> CCHomTerm a b -> CompCatMorph a b
+ccUnquote {a} {b} t =
+  ccComp (ccUncurry {a=CC1} {b=a} {c=b} t) $ CCp (cm1 a) (CCid a)
+
+public export
+ccQuote : {a, b : CompCatObj} -> CompCatMorph a b -> CCHomTerm a b
+ccQuote {a} {b} f = ccCurry {a=CC1} {b=a} {c=b} $ ccComp f $ cmp2 CC1 a
 
 ---------------------------
 ---- Internal language ----
