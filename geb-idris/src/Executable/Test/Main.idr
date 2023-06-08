@@ -30,8 +30,8 @@ import Library.Test.CategoryTheoryTest
 %default total
 
 export
-main : IO ()
-main = do
+totalTests : IO ()
+totalTests = do
   Test.TestLibrary.testLibraryTest
   Library.Test.IdrisUtilsTest.idrisUtilsTest
   Library.Test.IdrisCategoriesTest.libraryIdrisCategoriesTest
@@ -58,3 +58,13 @@ main = do
   LanguageDef.Test.TheoriesTest.theoriesTest
   LanguageDef.Test.FiguresTest.figuresTest
   LanguageDef.Test.GebTest.gebTest
+
+export
+partial potentiallyNonTerminatingTests : IO ()
+potentiallyNonTerminatingTests = pure ()
+
+export
+partial main : IO ()
+main = do
+  totalTests
+  potentiallyNonTerminatingTests
