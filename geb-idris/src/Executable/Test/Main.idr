@@ -61,7 +61,8 @@ totalTests = do
 
 export
 partial potentiallyNonTerminatingTests : IO ()
-potentiallyNonTerminatingTests = pure ()
+potentiallyNonTerminatingTests = do
+  LanguageDef.Test.GebTest.gebTestPotentiallyNonTerminating
 
 export
 partial main : IO ()

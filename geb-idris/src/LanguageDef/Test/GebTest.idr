@@ -23,3 +23,8 @@ gebTest = do
   putStrLn "End GebTest."
   putStrLn "============"
   pure ()
+
+export
+partial
+gebTestPotentiallyNonTerminating : IO ()
+gebTestPotentiallyNonTerminating = pure ()
