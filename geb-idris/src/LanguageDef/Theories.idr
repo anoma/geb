@@ -13,6 +13,10 @@ import public LanguageDef.RefinedADT
 ---------------------------------
 ---------------------------------
 
+-----------------------------------------------
+---- Objects of category closest to `bitc` ----
+-----------------------------------------------
+
 public export
 data CompCatObj : Type where
   CC1 : CompCatObj
@@ -52,6 +56,10 @@ CCInterpObj : CompCatObj -> Type
 CCInterpObj CC1 = Unit
 CCInterpObj CCB = Bool
 CCInterpObj (CCP a b) = Pair (CCInterpObj a) (CCInterpObj b)
+
+-------------------------------------------------
+---- Morphisms of category closest to `bitc` ----
+-------------------------------------------------
 
 public export
 data CompCatMorph : CompCatObj -> CompCatObj -> Type where
@@ -165,6 +173,10 @@ public export
 Eq (CompCatMorph a b) where
   f == g = isYes $ decEq f g
 
+-------------------------------------
+---- Metalanguage interpretation ----
+-------------------------------------
+
 public export
 ccInterpMorph : {a, b : CompCatObj} ->
   CompCatMorph a b -> CCInterpObj a -> CCInterpObj b
@@ -183,6 +195,10 @@ public export
 ccInterpTerm : {a : CompCatObj} -> CompCatMorph CC1 a -> CCInterpObj a
 ccInterpTerm t = ccInterpMorph t ()
 
+-----------------------------------------------------
+---- Composition (defined, not explicit in term) ----
+-----------------------------------------------------
+
 public export
 ccComp : {a, b, c : CompCatObj} ->
   CompCatMorph b c -> CompCatMorph a b -> CompCatMorph a c
@@ -195,11 +211,11 @@ ccComp {a} {b} {c} (CCif {a=b} {b=c} cond g g') f =
     CCconst _ cond => case ccInterpTerm cond of
       True => ccComp g f
       False => ccComp g' f
-    evalcond => case a of
-      CC1 => case ccInterpTerm evalcond of
+    compcond => case a of
+      CC1 => case ccInterpTerm compcond of
         True => ccComp g f
         False => ccComp g' f
-      a' => CCif evalcond (ccComp g f) (ccComp g' f)
+      a' => CCif compcond (ccComp g f) (ccComp g' f)
 ccComp {a} CCt _ = CCconst a {b=CCB} CCt
 ccComp {a} CCf _ = CCconst a {b=CCB} CCf
 ccComp (CCp g g') f = CCp (ccComp g f) (ccComp g' f)
@@ -215,6 +231,10 @@ ccComp {a} {b} {c} (CCp2 {a=b} {b=b'} {c} g) f =
     g' => case ccComp g' f of
       CCp g'f1 g'f2 => g'f2
       g'f => CCp2 {a} {b=b'} {c} g'f
+
+-----------------------------
+---- Universal morphisms ----
+-----------------------------
 
 public export
 cm1 : (a : CompCatObj) -> CompCatMorph a CC1
@@ -248,19 +268,15 @@ public export
 cmu : CompCatMorph CC1 CC1
 cmu = CCid CC1
 
+---------------------------
+---- Cartesian closure ----
+---------------------------
+
 public export
 ccHomObj : CompCatObj -> CompCatObj -> CompCatObj
 ccHomObj CC1 b = b
 ccHomObj CCB b = CCP b b
 ccHomObj (CCP a b) c = ccHomObj a (ccHomObj b c)
-
-public export
-CCHomInterpInv : (a, b : CompCatObj) ->
-  (CCInterpObj a -> CCInterpObj b) -> CCInterpObj (ccHomObj a b)
-CCHomInterpInv CC1 b f = f ()
-CCHomInterpInv CCB b f = (f True, f False)
-CCHomInterpInv (CCP a a') b f = CCHomInterpInv a (ccHomObj a' b) $
-  CCHomInterpInv a' b . curry f
 
 public export
 ccCurry : {a, b, c : CompCatObj} ->
@@ -311,6 +327,10 @@ ccUncurry : {a, b, c : CompCatObj} ->
 ccUncurry {a} {b} {c} f =
   ccComp (ccEval b c) $ CCp (ccComp f (cmp1 a b)) (cmp2 a b)
 
+---------------------------
+---- Internal language ----
+---------------------------
+
 public export
 CCGenTerm : {a : CompCatObj} -> CCInterpObj a -> CompCatMorph CC1 a
 CCGenTerm {a=CC1} () = cmu
@@ -322,6 +342,14 @@ CCGenTerm {a=(CCP a b)} (x, x') =
 public export
 CCMetaReduceTerm : {a : CompCatObj} -> CompCatMorph CC1 a -> CompCatMorph CC1 a
 CCMetaReduceTerm t = CCGenTerm $ ccInterpTerm t
+
+public export
+CCHomInterpInv : (a, b : CompCatObj) ->
+  (CCInterpObj a -> CCInterpObj b) -> CCInterpObj (ccHomObj a b)
+CCHomInterpInv CC1 b f = f ()
+CCHomInterpInv CCB b f = (f True, f False)
+CCHomInterpInv (CCP a a') b f = CCHomInterpInv a (ccHomObj a' b) $
+  CCHomInterpInv a' b . curry f
 
 public export
 CCGenMorph : {a, b : CompCatObj} ->
@@ -336,6 +364,14 @@ CCGenMorph {a=(CCP a a')} {b} f =
   ccUncurry $ CCGenMorph {a} {b=(ccHomObj a' b)} $
   CCHomInterpInv a' b . curry f
 
+-- Left adjunct of the boolean-defining adjunction.
+public export
+CCbla : {a : CompCatObj} ->
+  CompCatMorph CC1 a -> CompCatMorph CC1 a -> CompCatMorph CCB a
+CCbla f g = CCGenMorph $ \b => case b of
+  True => ccInterpTerm f
+  False => ccInterpTerm g
+
 -- "True" branch of the right adjunct of the boolean-defining adjunction.
 public export
 CCbrat : {a : CompCatObj} -> CompCatMorph CCB a -> CompCatMorph CC1 a
@@ -345,14 +381,6 @@ CCbrat f = CCGenTerm $ ccInterpMorph f True
 public export
 CCbraf : {a : CompCatObj} -> CompCatMorph CCB a -> CompCatMorph CC1 a
 CCbraf f = CCGenTerm $ ccInterpMorph f False
-
-public export
-CCpa1 : {a, b, c : CompCatObj} -> CompCatMorph a (CCP b c) -> CompCatMorph a b
-CCpa1 f = CCGenMorph $ fst . ccInterpMorph f
-
-public export
-CCpa2 : {a, b, c : CompCatObj} -> CompCatMorph a (CCP b c) -> CompCatMorph a c
-CCpa2 f = CCGenMorph $ snd . ccInterpMorph f
 
 ---------------------------------
 ---------------------------------
