@@ -3,6 +3,7 @@ module Executable.Test.Main
 import Test.TestLibrary
 import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
+import LanguageDef.Test.GebTest
 import LanguageDef.Test.RefinedADTTest
 import LanguageDef.Test.FiguresTest
 import LanguageDef.Test.TheoriesTest
@@ -56,3 +57,4 @@ main = do
   LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
   LanguageDef.Test.TheoriesTest.theoriesTest
   LanguageDef.Test.FiguresTest.figuresTest
+  LanguageDef.Test.GebTest.gebTest
