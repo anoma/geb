@@ -14,16 +14,72 @@ import public LanguageDef.PolyCat
 ------------------------------
 ------------------------------
 
--- A quiver (see https://ncatlab.org/nlab/show/quiver and
+-- In this section, we shall define the notion of a "quiver"
+-- (see https://ncatlab.org/nlab/show/quiver and
 -- https://en.wikipedia.org/wiki/Quiver_(mathematics) ) internal to the
 -- metalanguage -- in this case, Idris's `Type`.
 --
--- A quiver may be viewed as a functor from the walking quiver (see again the
--- ncatlab page) to `Set`, or in general any category, or in this specific
--- case, Idris's `Type`.  When viewed as such, quivers may be treated as the
--- objects of the category of functors from the walking quiver to Idris's
--- `Type`, where the morphisms of the category are, as usual in functor
--- categories, the natural transformations.
+-- A quiver may be viewed as a functor from the category called the "walking
+-- quiver" (see again the ncatlab page) to `Set`, or in general any category,
+-- or in this specific case, Idris's `Type`.  When viewed as such, quivers may
+-- be treated as the objects of the category of functors from the walking
+-- quiver to Idris's `Type`, where the morphisms of the category are, as usual
+-- in functor categories, the natural transformations.
+
+-- So we begin by defining the walking quiver.
+
+----------------------------
+---- The walking quiver ----
+----------------------------
+
+-- The walking quiver's objects.
+public export
+data WQObj : Type where
+  WQOvert : WQObj
+  WQOedge : WQObj
+
+-- The walking quiver's (non-identity) morphisms.
+public export
+data WQMorph : Type where
+  WQMsrc : WQMorph
+  WQMtgt : WQMorph
+
+-- Next we specify the signatures of the walking quiver's morphisms
+-- by assigning to each morphism a source and target object.
+
+public export
+WQSrc : WQMorph -> WQObj
+WQSrc WQMsrc = WQOedge
+WQSrc WQMtgt = WQOedge
+
+public export
+WQTgt : WQMorph -> WQObj
+WQTgt WQMsrc = WQOvert
+WQTgt WQMtgt = WQOvert
+
+-- We do not here explicitly define composition in the walking quiver,
+-- because it does not contain any compositions between two non-identity
+-- morphisms.  Since the identities are units of composition, the
+-- composition map is fully determined just by prescribing that it follows
+-- the laws of a category.
+--
+-- Therefore, we can now treat the walking quiver as defined as a category.
+
+-- Above, we defined the notion of "quiver" (internal to `Type`) as a functor
+-- from a category which we called the "walking quiver" to `Type`.  However,
+-- we defined that notion without explicitly defining the walking quiver
+-- itself; we just defined what constitutes a specification of a functor
+-- _from_ it to `Type`.
+--
+-- But the walking quiver is so-called because it may itself be viewed _as_
+-- a quiver -- that is, as a particular functor from a particular category
+-- (which, as often with such functors, we call an "index category") to
+-- `Type` (or whichever category the notion of "quiver" is internal to).
+-- So we now define the walking quiver as a quiver, which involves first
+-- defining the ("index") category which constitutes the domain of the
+-- walking quiver (when it is viewed as a quiver), and then defining the
+-- object-map and morphism-map components of the the functor which
+-- correpsonds to the walking quiver.
 --
 -- Note that we are not (yet) defining the walking quiver itself -- we're
 -- jumping straight to defining what a functor _from_ the walking quiver to
@@ -92,51 +148,10 @@ record MLQMorph (dom, cod : MLQuiver) where
 ---- The walking quiver as a quiver ----
 ----------------------------------------
 
--- Above, we defined the notion of "quiver" (internal to `Type`) as a functor
--- from a category which we called the "walking quiver" to `Type`.  However,
--- we defined that notion without explicitly defining the walking quiver
--- itself; we just defined what constitutes a specification of a functor
--- _from_ it to `Type`.
---
--- But the walking quiver is so-called because it may itself be viewed _as_
--- a quiver -- that is, as a particular functor from a particular category
--- (which, as often with such functors, we call an "index category") to
--- `Type` (or whichever category the notion of "quiver" is internal to).
--- So we now define the walking quiver as a quiver, which involves first
--- defining the ("index") category which constitutes the domain of the
--- walking quiver (when it is viewed as a quiver), and then defining the
--- object-map and morphism-map components of the the functor which
--- correpsonds to the walking quiver.
-
-public export
-data QuivIdxObj : Type where
-  QIOvert : QuivIdxObj
-  QIOedge : QuivIdxObj
-
--- The morphisms of the index category which constitutes the domain of
--- the walking quiver.
-public export
-data QuivIdxMorph : Type where
-  QIMsrc : QuivIdxMorph
-  QIMtgt : QuivIdxMorph
-
--- Next we define the two functions which comprise the morphism-map
--- component of the walking quiver.
-
-public export
-WQSrc : QuivIdxMorph -> QuivIdxObj
-WQSrc QIMsrc = QIOedge
-WQSrc QIMtgt = QIOedge
-
-public export
-WQTgt : QuivIdxMorph -> QuivIdxObj
-WQTgt QIMsrc = QIOvert
-WQTgt QIMtgt = QIOvert
-
 -- Now we can define the walking quiver as a quiver.
 public export
 WalkingQuiv : MLQuiver
-WalkingQuiv = MLQuiv QuivIdxObj QuivIdxMorph WQSrc WQTgt
+WalkingQuiv = MLQuiv WQObj WQMorph WQSrc WQTgt
 
 -- Next we define the two base-change functors, from the slice category
 -- of `Type` over the objects of the index (domain) category of the walking
@@ -145,11 +160,11 @@ WalkingQuiv = MLQuiv QuivIdxObj QuivIdxMorph WQSrc WQTgt
 -- the morphism-map component of the walking quiver.
 
 public export
-WQSbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
+WQSbc : CSliceObj WQObj -> CSliceObj WQMorph
 WQSbc = CSBaseChange WQSrc
 
 public export
-WQTbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
+WQTbc : CSliceObj WQObj -> CSliceObj WQMorph
 WQTbc = CSBaseChange WQTgt
 
 ------------------------
@@ -164,7 +179,7 @@ WQTbc = CSBaseChange WQTgt
 --
 -- The objects of the category of diagrams, when that category is defined
 -- as the copresheaf category on the diagram (interpreted as an index
--- category) of diagrams themselves (QuivIdxObj/QuivIdxMorph).
+-- category) of diagrams themselves (WQObj/WQMorph).
 --
 -- A copresheaf is a (covariant) functor, so the _objects_ are
 -- (covariant) functors from the `DiagDiag` index category to `Type`.
@@ -172,23 +187,23 @@ public export
 record DiagCoprshfObj where
   constructor DCObj
   -- If we wrote it in dependent-type-with-universes style rather than
-  -- category-theoretic style, DCObj would have type `QuivIdxObj -> Type` --
+  -- category-theoretic style, DCObj would have type `WQObj -> Type` --
   -- although there are only two objects, so this is also equivalent to
   -- simply two `Type`s.
-  DCObj : CSliceObj QuivIdxObj
+  DCObj : CSliceObj WQObj
 
   -- If we wrote it in dependent-type-with-universes style rather than
   -- category-theoretic style, DCMorph would look something like this:
-  --  DCMorph : (e : QuivIdxMorph) ->
+  --  DCMorph : (e : WQMorph) ->
   --    DCObj (coprshfDiagSrc e) -> DCObj (coprshfDiagTgt e)
   -- (There are only two edges, so this is equivalent to simply two functions,
-  -- both from the `Type` to which we map `QIOedge` to the type to which
-  -- we map `QIOvert`, representing the source and target maps.)
-  DCMorph : CSliceMorphism {c=QuivIdxMorph} (WQSbc DCObj) (WQTbc DCObj)
+  -- both from the `Type` to which we map `WQOedge` to the type to which
+  -- we map `WQOvert`, representing the source and target maps.)
+  DCMorph : CSliceMorphism {c=WQMorph} (WQSbc DCObj) (WQTbc DCObj)
 
 -- The objects of the category of diagrams, when that category is defined
 -- as the presheaf category on the diagram (interpreted as an index
--- category) of diagrams themselves (QuivIdxObj/QuivIdxMorph).
+-- category) of diagrams themselves (WQObj/WQMorph).
 --
 -- A presheaf is a (contravariant) functor, so the _objects_ are
 -- (contravariant) functors from the `DiagDiag` index category to `Type`.
@@ -196,11 +211,11 @@ public export
 record DiagPrshfObj where
   constructor DPObj
   -- If we wrote it in dependent-type-with-universes style rather than
-  -- category-theoretic style, DPObj would have type `QuivIdxObj -> Type`.
+  -- category-theoretic style, DPObj would have type `WQObj -> Type`.
   -- That's the same type as `DCObj`, but when we interpret diagrams as
   -- presheaves rather than copresheaves, we interpret the edge type
   -- differently; see `DPMorph`.
-  DPObj : CSliceObj QuivIdxObj
+  DPObj : CSliceObj WQObj
 
   DPEdgeTot : Type
 
@@ -224,7 +239,7 @@ record DiagPrshfObj where
   -- source and target mappings produce _sets_ of edges, the edge type in
   -- the presheaf interpretation must be a collection of subobjects of some
   -- type of edges.
-  DPMorph : QuivIdxMorph -> (DPEdgeTot -> Type)
+  DPMorph : WQMorph -> (DPEdgeTot -> Type)
 
 ---------------------
 ---------------------
