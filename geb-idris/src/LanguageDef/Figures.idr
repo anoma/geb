@@ -120,34 +120,44 @@ data QuivIdxMorph : Type where
   QIMsrc : QuivIdxMorph
   QIMtgt : QuivIdxMorph
 
--- The sources of the edges of the diagram which, when interpreted as an
--- index category for copresheaves, defines the category of diagrams.
-public export
-CoprshfDiagSrc : QuivIdxMorph -> QuivIdxObj
-CoprshfDiagSrc QIMsrc = QIOedge
-CoprshfDiagSrc QIMtgt = QIOedge
+-- Next we define the two functions which comprise the morphism-map
+-- component of the walking quiver.
 
 public export
-CDSbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
-CDSbc = CSBaseChange CoprshfDiagSrc
-
--- The targets of the edges of the diagram which, when interpreted as an
--- index category for copresheaves, defines the category of diagrams.
-public export
-CoprshfDiagTgt : QuivIdxMorph -> QuivIdxObj
-CoprshfDiagTgt QIMsrc = QIOvert
-CoprshfDiagTgt QIMtgt = QIOvert
+WQSrc : QuivIdxMorph -> QuivIdxObj
+WQSrc QIMsrc = QIOedge
+WQSrc QIMtgt = QIOedge
 
 public export
-CDTbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
-CDTbc = CSBaseChange CoprshfDiagTgt
+WQTgt : QuivIdxMorph -> QuivIdxObj
+WQTgt QIMsrc = QIOvert
+WQTgt QIMtgt = QIOvert
+
+-- Now we can define the walking quiver as a quiver.
+public export
+WalkingQuiv : MLQuiver
+WalkingQuiv = MLQuiv QuivIdxObj QuivIdxMorph WQSrc WQTgt
+
+-- Next we define the two base-change functors, from the slice category
+-- of `Type` over the objects of the index (domain) category of the walking
+-- quiver to the slice category of `Type` over the morphisms of the index
+-- category of the walking quiver, induced by the two functions which determine
+-- the morphism-map component of the walking quiver.
+
+public export
+WQSbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
+WQSbc = CSBaseChange WQSrc
+
+public export
+WQTbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
+WQTbc = CSBaseChange WQTgt
 
 -- The sources of the edges of the diagram which, when interpreted as an
 -- index category for presheaves, defines the category of diagrams.
 -- (Such an index category is sometimes called a "generic figure").
 public export
 PrshfDiagSrc : QuivIdxMorph -> QuivIdxObj
-PrshfDiagSrc = CoprshfDiagTgt
+PrshfDiagSrc = WQTgt
 
 {- XXXX
 public export
@@ -159,7 +169,7 @@ PDSbc = CSBaseChange PrshfDiagSrc
 -- index category for presheaves, defines the category of diagrams.
 public export
 PrshfDiagTgt : QuivIdxMorph -> QuivIdxObj
-PrshfDiagTgt = CoprshfDiagSrc
+PrshfDiagTgt = WQSrc
 
 {- XXX
 public export
@@ -193,7 +203,7 @@ record DiagCoprshfObj where
   -- (There are only two edges, so this is equivalent to simply two functions,
   -- both from the `Type` to which we map `QIOedge` to the type to which
   -- we map `QIOvert`, representing the source and target maps.)
-  DCMorph : CSliceMorphism {c=QuivIdxMorph} (CDSbc DCObj) (CDTbc DCObj)
+  DCMorph : CSliceMorphism {c=QuivIdxMorph} (WQSbc DCObj) (WQTbc DCObj)
 
 -- The objects of the category of diagrams, when that category is defined
 -- as the presheaf category on the diagram (interpreted as an index
