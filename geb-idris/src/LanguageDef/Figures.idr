@@ -107,62 +107,63 @@ record MLQMorph (dom, cod : MLQuiver) where
 -- walking quiver (when it is viewed as a quiver), and then defining the
 -- object-map and morphism-map components of the the functor which
 -- correpsonds to the walking quiver.
-public export
-data DiagDiagVert : Type where
-  DDVvert : DiagDiagVert
-  DDVedge : DiagDiagVert
 
--- The edges of the diagram which, when interpreted as an index category
--- for (co)presheaves, defines the category of diagrams.
 public export
-data DiagDiagEdge : Type where
-  DDEsrc : DiagDiagEdge
-  DDEtgt : DiagDiagEdge
+data QuivIdxObj : Type where
+  QIOvert : QuivIdxObj
+  QIOedge : QuivIdxObj
+
+-- The morphisms of the index category which constitutes the domain of
+-- the walking quiver.
+public export
+data QuivIdxMorph : Type where
+  QIMsrc : QuivIdxMorph
+  QIMtgt : QuivIdxMorph
 
 -- The sources of the edges of the diagram which, when interpreted as an
 -- index category for copresheaves, defines the category of diagrams.
 public export
-CoprshfDiagSrc : DiagDiagEdge -> DiagDiagVert
-CoprshfDiagSrc DDEsrc = DDVedge
-CoprshfDiagSrc DDEtgt = DDVedge
+CoprshfDiagSrc : QuivIdxMorph -> QuivIdxObj
+CoprshfDiagSrc QIMsrc = QIOedge
+CoprshfDiagSrc QIMtgt = QIOedge
 
 public export
-CDSbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
+CDSbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
 CDSbc = CSBaseChange CoprshfDiagSrc
 
 -- The targets of the edges of the diagram which, when interpreted as an
 -- index category for copresheaves, defines the category of diagrams.
 public export
-CoprshfDiagTgt : DiagDiagEdge -> DiagDiagVert
-CoprshfDiagTgt DDEsrc = DDVvert
-CoprshfDiagTgt DDEtgt = DDVvert
+CoprshfDiagTgt : QuivIdxMorph -> QuivIdxObj
+CoprshfDiagTgt QIMsrc = QIOvert
+CoprshfDiagTgt QIMtgt = QIOvert
 
 public export
-CDTbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
+CDTbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
 CDTbc = CSBaseChange CoprshfDiagTgt
 
 -- The sources of the edges of the diagram which, when interpreted as an
 -- index category for presheaves, defines the category of diagrams.
 -- (Such an index category is sometimes called a "generic figure").
 public export
-PrshfDiagSrc : DiagDiagEdge -> DiagDiagVert
+PrshfDiagSrc : QuivIdxMorph -> QuivIdxObj
 PrshfDiagSrc = CoprshfDiagTgt
 
 {- XXXX
 public export
-PDSbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
+PDSbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
 PDSbc = CSBaseChange PrshfDiagSrc
 -}
 
 -- The targets of the edges of the diagram which, when interpreted as an
 -- index category for presheaves, defines the category of diagrams.
 public export
-PrshfDiagTgt : DiagDiagEdge -> DiagDiagVert
+PrshfDiagTgt : QuivIdxMorph -> QuivIdxObj
 PrshfDiagTgt = CoprshfDiagSrc
 
 {- XXX
 public export
-PDTbc : CSliceObj DiagDiagVert -> CSliceObj (CSliceObj DiagDiagEdge
+PDTbc : CSliceObj QuivIdxObj -> CSliceObj (CSliceObj QuivIdxMorph
 PDTbc = CSBaseChange PrshfDiagTgt
 -}
 
@@ -172,7 +173,7 @@ PDTbc = CSBaseChange PrshfDiagTgt
 
 -- The objects of the category of diagrams, when that category is defined
 -- as the copresheaf category on the diagram (interpreted as an index
--- category) of diagrams themselves (DiagDiagVert/DiagDiagEdge).
+-- category) of diagrams themselves (QuivIdxObj/QuivIdxMorph).
 --
 -- A copresheaf is a (covariant) functor, so the _objects_ are
 -- (covariant) functors from the `DiagDiag` index category to `Type`.
@@ -180,23 +181,23 @@ public export
 record DiagCoprshfObj where
   constructor DCObj
   -- If we wrote it in dependent-type-with-universes style rather than
-  -- category-theoretic style, DCObj would have type `DiagDiagVert -> Type` --
+  -- category-theoretic style, DCObj would have type `QuivIdxObj -> Type` --
   -- although there are only two objects, so this is also equivalent to
   -- simply two `Type`s.
-  DCObj : CSliceObj DiagDiagVert
+  DCObj : CSliceObj QuivIdxObj
 
   -- If we wrote it in dependent-type-with-universes style rather than
   -- category-theoretic style, DCMorph would look something like this:
-  --  DCMorph : (e : DiagDiagEdge) ->
+  --  DCMorph : (e : QuivIdxMorph) ->
   --    DCObj (coprshfDiagSrc e) -> DCObj (coprshfDiagTgt e)
   -- (There are only two edges, so this is equivalent to simply two functions,
-  -- both from the `Type` to which we map `DDVedge` to the type to which
-  -- we map `DDVvert`, representing the source and target maps.)
-  DCMorph : CSliceMorphism {c=DiagDiagEdge} (CDSbc DCObj) (CDTbc DCObj)
+  -- both from the `Type` to which we map `QIOedge` to the type to which
+  -- we map `QIOvert`, representing the source and target maps.)
+  DCMorph : CSliceMorphism {c=QuivIdxMorph} (CDSbc DCObj) (CDTbc DCObj)
 
 -- The objects of the category of diagrams, when that category is defined
 -- as the presheaf category on the diagram (interpreted as an index
--- category) of diagrams themselves (DiagDiagVert/DiagDiagEdge).
+-- category) of diagrams themselves (QuivIdxObj/QuivIdxMorph).
 --
 -- A presheaf is a (contravariant) functor, so the _objects_ are
 -- (contravariant) functors from the `DiagDiag` index category to `Type`.
@@ -204,11 +205,11 @@ public export
 record DiagPrshfObj where
   constructor DPObj
   -- If we wrote it in dependent-type-with-universes style rather than
-  -- category-theoretic style, DPObj would have type `DiagDiagVert -> Type`.
+  -- category-theoretic style, DPObj would have type `QuivIdxObj -> Type`.
   -- That's the same type as `DCObj`, but when we interpret diagrams as
   -- presheaves rather than copresheaves, we interpret the edge type
   -- differently; see `DPMorph`.
-  DPObj : CSliceObj DiagDiagVert
+  DPObj : CSliceObj QuivIdxObj
 
   DPEdgeTot : Type
 
@@ -232,7 +233,7 @@ record DiagPrshfObj where
   -- source and target mappings produce _sets_ of edges, the edge type in
   -- the presheaf interpretation must be a collection of subobjects of some
   -- type of edges.
-  DPMorph : DiagDiagEdge -> (DPEdgeTot -> Type)
+  DPMorph : QuivIdxMorph -> (DPEdgeTot -> Type)
 
 ---------------------
 ---------------------
