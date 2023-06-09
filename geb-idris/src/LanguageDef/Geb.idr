@@ -62,6 +62,56 @@ mutual
     GebCatTerm -> GebObjTerm -> GebObjTerm -> GebMorphTerm -> Bool
   checkGebMorphTerm _ impossible
 
+-------------------------------------------------------
+-------------------------------------------------------
+---- Idris denotational semantics and verification ----
+-------------------------------------------------------
+-------------------------------------------------------
+
+--------------------------------------
+---- Typechecker self-consistency ----
+--------------------------------------
+
+mutual
+  public export
+  0 goSigConsis : (c : GebCatTerm) -> (o : GebObjTerm) ->
+    IsTrue (checkGebObjTerm c o) -> IsTrue (checkGebCatTerm c)
+  goSigConsis _ _ _ impossible
+
+  public export
+  0 gmSigConsisCat :
+    (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
+    IsTrue (checkGebMorphTerm c dom cod m) -> IsTrue (checkGebCatTerm c)
+  gmSigConsisCat _ _ _ impossible
+
+  public export
+  0 gmSigConsisDom :
+    (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
+    IsTrue (checkGebMorphTerm c dom cod m) -> IsTrue (checkGebObjTerm c dom)
+  gmSigConsisDom _ _ _ impossible
+
+  public export
+  0 gmSigConsisCod :
+    (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
+    IsTrue (checkGebMorphTerm c dom cod m) -> IsTrue (checkGebObjTerm c cod)
+  gmSigConsisCod _ _ _ impossible
+
+  public export
+  0 gmSigConsisDomCod :
+    (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
+    IsTrue (checkGebObjTerm c dom) -> IsTrue (checkGebObjTerm c cod)
+  gmSigConsisDomCod _ _ _ impossible
+
+  public export
+  0 gmSigConsisCodDom :
+    (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
+    IsTrue (checkGebObjTerm c cod) -> IsTrue (checkGebObjTerm c dom)
+  gmSigConsisCodDom _ _ _ impossible
+
+---------------------------
+---- Typechecked terms ----
+---------------------------
+
 public export
 GebCat : Type
 GebCat = Refinement {a=GebCatTerm} checkGebCatTerm
@@ -105,48 +155,6 @@ checkGebMorphSigTerm (c, dom, cod, m) = checkGebMorphTerm c dom cod m
 public export
 GebMorph : Type
 GebMorph = Refinement {a=GebMorphSigTerm} checkGebMorphSigTerm
-
--------------------------------------------------------
--------------------------------------------------------
----- Idris denotational semantics and verification ----
--------------------------------------------------------
--------------------------------------------------------
-
-mutual
-  public export
-  0 goSigConsis : (c : GebCatTerm) -> (o : GebObjTerm) ->
-    IsTrue (checkGebObjTerm c o) -> IsTrue (checkGebCatTerm c)
-  goSigConsis _ _ _ impossible
-
-  public export
-  0 gmSigConsisCat :
-    (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
-    IsTrue (checkGebMorphTerm c dom cod m) -> IsTrue (checkGebCatTerm c)
-  gmSigConsisCat _ _ _ impossible
-
-  public export
-  0 gmSigConsisDom :
-    (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
-    IsTrue (checkGebMorphTerm c dom cod m) -> IsTrue (checkGebObjTerm c dom)
-  gmSigConsisDom _ _ _ impossible
-
-  public export
-  0 gmSigConsisCod :
-    (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
-    IsTrue (checkGebMorphTerm c dom cod m) -> IsTrue (checkGebObjTerm c cod)
-  gmSigConsisCod _ _ _ impossible
-
-  public export
-  0 gmSigConsisDomCod :
-    (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
-    IsTrue (checkGebObjTerm c dom) -> IsTrue (checkGebObjTerm c cod)
-  gmSigConsisDomCod _ _ _ impossible
-
-  public export
-  0 gmSigConsisCodDom :
-    (c : GebCatTerm) -> (dom, cod : GebObjTerm) -> (m : GebMorphTerm) ->
-    IsTrue (checkGebObjTerm c cod) -> IsTrue (checkGebObjTerm c dom)
-  gmSigConsisCodDom _ _ _ impossible
 
 public export
 goCat : GebObj -> GebCat
