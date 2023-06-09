@@ -8,6 +8,68 @@ import public LanguageDef.PolyCat
 
 %default total
 
+------------------------------
+------------------------------
+---- Metalanguage quivers ----
+------------------------------
+------------------------------
+
+-- A quiver (see https://ncatlab.org/nlab/show/quiver and
+-- https://en.wikipedia.org/wiki/Quiver_(mathematics) ) internal to the
+-- metalanguage -- in this case, Idris's `Type`.
+--
+-- A quiver may be viewed as a functor from the walking quiver (see again the
+-- ncatlab page) to `Set`, or in general any category, or in this specific
+-- case, Idris's `Type`.  When viewed as such, quivers may be treated as the
+-- objects of the category of functors from the walking quiver to Idris's
+-- `Type`, where the morphisms of the category are, as usual in functor
+-- categories, the natural transformations.
+--
+-- Note that we are not (yet) defining the walking quiver itself -- we're
+-- jumping straight to defining what a functor _from_ the walking quiver to
+-- the metalanguage looks like.  This is because we will later define quivers,
+-- including the walking quiver, in terms of quivers themselves (via either
+-- of the notions of diagram or figure, which are dual to each other and which
+-- we will define as quivers).
+public export
+record MLQuiver where
+  constructor MLQuiv
+  -- The object-map component of a quiver takes each object of the walking
+  -- quiver -- of which there are precisely two -- to an object of the
+  -- category `Type`, i.e. to a metalanguage type.
+  mlqVert : Type
+  mlqEdge : Type
+
+  -- Because a quiver may be viewed as a functor, it has a morphism-map
+  -- component.  There are only two non-identity morphisms in the walking
+  -- quiver, and morphisms in `Type` are simply functions, so the morphism-map
+  -- component of a quiver is determined by a pair of functions.  Because of
+  -- the particular structure of the walking quiver (there's no way to get
+  -- via morphisms from the vertex object to the edge object), there are no
+  -- compositions of either of the two non-identity morphisms with each other
+  -- (and hence no compositions of either of the two non-identity morphisms
+  -- with any non-identity morphisms), so the morphism-map component does not
+  -- need any explicit identity-preserving or composition-preserving conditions;
+  -- a correct morphism map is precisely determined by any two functions with
+  -- the signatures below.
+  mlqSrc : mlqEdge -> mlqVert
+  mlqTgt : mlqEdge -> mlqVert
+
+-- The morphisms of the (functor) category `Quiv` are natural transformations.
+-- The walking quiver has two objects, so a natural transformation has two
+-- components.  The target category is `Type`, so each component is simply a
+-- function between the targets of the object-map components of the functors
+-- (in general, each component of a natural transformation between functors is
+-- a morphism in the target category of the functors).
+public export
+record MLQMorph (dom, cod : MLQuiver) where
+  constructor MLQM
+  mlqmVert : mlqVert dom -> mlqVert cod
+  mlqmEdge : mlqEdge dom -> mlqEdge cod
+
+  0 mlqSrcNaturality : ExtEq (mlqmVert . mlqSrc dom) (mlqSrc cod . mlqmEdge)
+  0 mlqTgtNaturality : ExtEq (mlqmVert . mlqTgt dom) (mlqTgt cod . mlqmEdge)
+
 ------------------------------------------------------------
 ------------------------------------------------------------
 ---- Presheaf/figure-style diagram/category definitions ----
