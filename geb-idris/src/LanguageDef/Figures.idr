@@ -70,19 +70,43 @@ record MLQMorph (dom, cod : MLQuiver) where
   0 mlqSrcNaturality : ExtEq (mlqmVert . mlqSrc dom) (mlqSrc cod . mlqmEdge)
   0 mlqTgtNaturality : ExtEq (mlqmVert . mlqTgt dom) (mlqTgt cod . mlqmEdge)
 
+---------------------------------
+---------------------------------
+---- Categories from quivers ----
+---------------------------------
+---------------------------------
+
+-- A quiver is a covariant functor from the walking quiver to the category
+-- to which the quiver is internal (in the above definition, that's `Type`).
+-- We can now use the notion of "quiver" as a basis for a definition of
+-- "category" internal to the same category to which our definition of
+-- "quiver" is internal (in this case, Idris's `Type`).
+
 ------------------------------------------------------------
 ------------------------------------------------------------
 ---- Presheaf/figure-style diagram/category definitions ----
 ------------------------------------------------------------
 ------------------------------------------------------------
 
-------------------
----- Diagrams ----
-------------------
+----------------------------------------
+---- The walking quiver as a quiver ----
+----------------------------------------
 
--- The vertices of the diagram, which, when interpreted as an index
--- category for presheaves or copreasheaves (depending on the directions
--- of the edges), defines the category of diagrams.
+-- Above, we defined the notion of "quiver" (internal to `Type`) as a functor
+-- from a category which we called the "walking quiver" to `Type`.  However,
+-- we defined that notion without explicitly defining the walking quiver
+-- itself; we just defined what constitutes a specification of a functor
+-- _from_ it to `Type`.
+--
+-- But the walking quiver is so-called because it may itself be viewed _as_
+-- a quiver -- that is, as a particular functor from a particular category
+-- (which, as often with such functors, we call an "index category") to
+-- `Type` (or whichever category the notion of "quiver" is internal to).
+-- So we now define the walking quiver as a quiver, which involves first
+-- defining the ("index") category which constitutes the domain of the
+-- walking quiver (when it is viewed as a quiver), and then defining the
+-- object-map and morphism-map components of the the functor which
+-- correpsonds to the walking quiver.
 public export
 data DiagDiagVert : Type where
   DDVvert : DiagDiagVert
