@@ -152,35 +152,16 @@ public export
 WQTbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
 WQTbc = CSBaseChange WQTgt
 
--- The sources of the edges of the diagram which, when interpreted as an
--- index category for presheaves, defines the category of diagrams.
--- (Such an index category is sometimes called a "generic figure").
-public export
-PrshfDiagSrc : QuivIdxMorph -> QuivIdxObj
-PrshfDiagSrc = WQTgt
-
-{- XXXX
-public export
-PDSbc : CSliceObj QuivIdxObj -> CSliceObj QuivIdxMorph
-PDSbc = CSBaseChange PrshfDiagSrc
--}
-
--- The targets of the edges of the diagram which, when interpreted as an
--- index category for presheaves, defines the category of diagrams.
-public export
-PrshfDiagTgt : QuivIdxMorph -> QuivIdxObj
-PrshfDiagTgt = WQSrc
-
-{- XXX
-public export
-PDTbc : CSliceObj QuivIdxObj -> CSliceObj (CSliceObj QuivIdxMorph
-PDTbc = CSBaseChange PrshfDiagTgt
--}
-
 ------------------------
 ---- (Co)presheaves ----
 ------------------------
 
+-- Quivers are functors to `Type` (insofar as we have defined them to this
+-- point -- they can be generalized to have arbitrary codomain categories,
+-- although the structure of the quiver categories will depend on the structure
+-- of the codomain category) from the walking quiver -- that is, using
+-- the walking quiver as an index (domain) category.
+--
 -- The objects of the category of diagrams, when that category is defined
 -- as the copresheaf category on the diagram (interpreted as an index
 -- category) of diagrams themselves (QuivIdxObj/QuivIdxMorph).
