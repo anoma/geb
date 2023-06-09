@@ -37,7 +37,8 @@ data DiagDiagEdge : Type where
 -- index category for copresheaves, defines the category of diagrams.
 public export
 CoprshfDiagSrc : DiagDiagEdge -> DiagDiagVert
-CoprshfDiagSrc = const DDVedge
+CoprshfDiagSrc DDEsrc = DDVedge
+CoprshfDiagSrc DDEtgt = DDVedge
 
 public export
 CDSbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
@@ -47,7 +48,8 @@ CDSbc = CSBaseChange CoprshfDiagSrc
 -- index category for copresheaves, defines the category of diagrams.
 public export
 CoprshfDiagTgt : DiagDiagEdge -> DiagDiagVert
-CoprshfDiagTgt = const DDVvert
+CoprshfDiagTgt DDEsrc = DDVvert
+CoprshfDiagTgt DDEtgt = DDVvert
 
 public export
 CDTbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
@@ -60,9 +62,11 @@ public export
 PrshfDiagSrc : DiagDiagEdge -> DiagDiagVert
 PrshfDiagSrc = CoprshfDiagTgt
 
+{- XXXX
 public export
 PDSbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
 PDSbc = CSBaseChange PrshfDiagSrc
+-}
 
 -- The targets of the edges of the diagram which, when interpreted as an
 -- index category for presheaves, defines the category of diagrams.
@@ -70,9 +74,11 @@ public export
 PrshfDiagTgt : DiagDiagEdge -> DiagDiagVert
 PrshfDiagTgt = CoprshfDiagSrc
 
+{- XXX
 public export
-PDTbc : CSliceObj DiagDiagVert -> CSliceObj DiagDiagEdge
+PDTbc : CSliceObj DiagDiagVert -> CSliceObj (CSliceObj DiagDiagEdge
 PDTbc = CSBaseChange PrshfDiagTgt
+-}
 
 ------------------------
 ---- (Co)presheaves ----
@@ -118,6 +124,8 @@ record DiagPrshfObj where
   -- differently; see `DPMorph`.
   DPObj : CSliceObj DiagDiagVert
 
+  DPEdgeTot : Type
+
   -- This is `DPMorph`'s signature backwards, reflecting that we are
   -- now interpreting the diagram as a "generic figure", meaning as a
   -- presheaf (contravariant functor), rather than the usual interpretation
@@ -138,7 +146,7 @@ record DiagPrshfObj where
   -- source and target mappings produce _sets_ of edges, the edge type in
   -- the presheaf interpretation must be a collection of subobjects of some
   -- type of edges.
-  DPMorph : CSliceMorphism {c=DiagDiagEdge} (PDSbc DPObj) (PDTbc DPObj)
+  DPMorph : DiagDiagEdge -> (DPEdgeTot -> Type)
 
 ---------------------
 ---------------------
