@@ -430,6 +430,28 @@ public export
   a
 ChiPbToDomType = ChiForHPropPbToDom
 
+----------------------------------------------------
+----------------------------------------------------
+---- Natural transformations and their algebras ----
+----------------------------------------------------
+----------------------------------------------------
+
+public export
+AppFunctor : (f, g : Type -> Type) -> Type -> Type
+AppFunctor f g a = f a -> g a
+
+public export
+NaturalTransformation : (Type -> Type) -> (Type -> Type) -> Type
+NaturalTransformation f g = Pi (AppFunctor f g)
+
+public export
+AdjUnit : (Type -> Type) -> Type
+AdjUnit f = NaturalTransformation id f
+
+public export
+AdjCounit : (Type -> Type) -> Type
+AdjCounit f = NaturalTransformation f id
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
@@ -1380,28 +1402,6 @@ mutual
     subst m v
   depFreeEqCata {a} {sl} sv sa subst alg m (InSlF m (InSlC eq)) =
     depFreeEqCataF {a} {sl} sv sa subst alg m eq
-
-----------------------------------------------------
-----------------------------------------------------
----- Natural transformations and their algebras ----
-----------------------------------------------------
-----------------------------------------------------
-
-public export
-AppFunctor : (f, g : Type -> Type) -> Type -> Type
-AppFunctor f g a = f a -> g a
-
-public export
-NaturalTransformation : (Type -> Type) -> (Type -> Type) -> Type
-NaturalTransformation f g = Pi (AppFunctor f g)
-
-public export
-AdjUnit : (Type -> Type) -> Type
-AdjUnit f = NaturalTransformation id f
-
-public export
-AdjCounit : (Type -> Type) -> Type
-AdjCounit f = NaturalTransformation f id
 
 --------------------
 --------------------
