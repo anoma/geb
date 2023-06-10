@@ -967,6 +967,32 @@ CSGBaseChange : {0 c : Type} -> {d : Type} ->
   (d -> c) -> c -> CSliceObj d
 CSGBaseChange {c} {d} f elc = CSBaseChange {c} {d} f (CSGElem {c} elc)
 
+public export
+CSHomObj : {c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
+CSHomObj {c} (x ** px) (y ** py) =
+  ((el : c ** (PreImage px el -> PreImage py el)) ** fst)
+
+public export
+csCurry : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism {c} (CSProdObj x y) z ->
+  CSliceMorphism {c} x (CSHomObj {c} y z)
+csCurry {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)} (Element0 f eqf) =
+  Element0
+    (\elx =>
+      (px elx ** \(Element0 ely eqxy) =>
+        Element0
+          (f $ Element0 (elx, ely) $ sym eqxy)
+          (sym $ eqf (Element0 (elx, ely) (sym eqxy)))))
+    $ \_ => Refl
+
+public export
+csEval : {0 c : Type} -> (x, y : CSliceObj c) ->
+  CSliceMorphism {c} (CSProdObj {c} (CSHomObj {c} x y) x) y
+csEval {c} (x ** px) (y ** py) =
+  Element0
+    (\(Element0 ((elc ** f), elx) eq) => fst0 $ f $ Element0 elx $ sym eq)
+    $ \(Element0 ((elc ** f), elx) eq) => sym $ snd0 $ f $ Element0 elx $ sym eq
+
 -- Sigma, also known as dependent sum.
 public export
 CSSigma : {0 c, d : Type} -> (c -> d) -> CSliceFunctor c d
