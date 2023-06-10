@@ -129,6 +129,24 @@ public export
 CQuivCodMap : CSliceFunctor WQObj WQMorph
 CQuivCodMap = CSBaseChange WQTgt
 
+-- Given an object map, we can take a diagonal of it which maps each
+-- object of the walking quiver to a symmetric pair of objects of `Type`.
+public export
+QuivDiagMap : QuivObjMap -> WQSigT -> Type
+QuivDiagMap f (a, b) = (f a, f b)
+
+-- And the category-theoretic style.
+public export
+CQuivDiagMap : CSliceFunctor WQObj WQSigT
+CQuivDiagMap (x ** px) = (ProductMonad x ** mapHom {f=Pair} px)
+
+-- Given an object map, we can take its diagonal and then pull it back
+-- along `WQSig` to obtain a mapping from each morphism to a pair made
+-- up of a term of its domain together with a term of its codomain.
+public export
+QuivSigMap : QuivObjMap -> WQMorph -> Type
+QuivSigMap = BaseChangeF WQSig . QuivDiagMap
+
 -- Because of the particular structure of the walking quiver (there's no way to
 -- get via morphisms from the vertex object to the edge object), there are no
 -- compositions of either of the two non-identity morphisms with each other
