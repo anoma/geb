@@ -121,10 +121,6 @@ public export
 CQuivCodMap : CSliceFunctor WQObj WQMorph
 CQuivCodMap = CSBaseChange WQTgt
 
-public export
-CQuivMorphMap : CSliceFunctor WQObj WQMorph
-CQuivMorphMap f = CSHomObj (CQuivDomMap f) (CQuivCodMap f)
-
 -- Because of the particular structure of the walking quiver (there's no way to
 -- get via morphisms from the vertex object to the edge object), there are no
 -- compositions of either of the two non-identity morphisms with each other
@@ -136,6 +132,10 @@ CQuivMorphMap f = CSHomObj (CQuivDomMap f) (CQuivCodMap f)
 public export
 QuivMorphMap : SliceObj QuivObjMap
 QuivMorphMap f = SliceMorphism {a=WQMorph} (QuivDomMap f) (QuivCodMap f)
+
+public export
+CQuivMorphMap : CSliceFunctor WQObj WQMorph
+CQuivMorphMap f = CSHomObj (CQuivDomMap f) (CQuivCodMap f)
 
 -- A (metalanguage) quiver, as a functor, is an object map together with a
 -- morphism map.
