@@ -782,15 +782,30 @@ CSliceFunctor : Type -> Type -> Type
 CSliceFunctor c d = CSliceObj c -> CSliceObj d
 
 -- The morphism-map component of a functor between slice categories.
+public export
 CSliceFMap : {c, d : Type} -> CSliceFunctor c d -> Type
 CSliceFMap {c} {d} f =
   (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f x) (f y)
 
 -- The morphism-map component of a contravariant functor between slice
 -- categories.
+public export
 CSliceFContramap : {c, d : Type} -> CSliceFunctor c d -> Type
 CSliceFContramap {c} {d} f =
   (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f y) (f x)
+
+-- Lift an endofunctor on `Type` to a functor on its slice categories.
+public export
+CSliceFLift : {f : Type -> Type} ->
+  (fm : {0 a, b : Type} -> (a -> b) -> f a -> f b) ->
+  (0 c : Type) -> CSliceFunctor c (f c)
+CSliceFLift {f} fm c (x ** px) = (f x ** fm {a=x} {b=c} px)
+
+-- `CSliceFLift` using Idris's typeclass inference (on `Functor`).
+public export
+CSliceFLift' : {f : Type -> Type} ->
+  Functor f => (0 c : Type) -> CSliceFunctor c (f c)
+CSliceFLift' {f} = CSliceFLift {f} (map {f})
 
 public export
 CSliceNatTrans : {c, d : Type} ->
