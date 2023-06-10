@@ -172,6 +172,11 @@ TypeCat =
 ---------------------------------------
 ---------------------------------------
 
+-- The hom-object in `Type`.
+public export
+TypeHomObj : Type -> Type -> Type
+TypeHomObj a b = a -> b
+
 -- Objects of the slice category `Type` over `a`.
 -- If we treat `a` as a discrete category, then we could also view
 -- a slice object over `a` as a functor from `a` to `Type`.

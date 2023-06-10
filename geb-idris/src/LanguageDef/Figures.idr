@@ -57,6 +57,14 @@ WQTgt : WQMorph -> WQObj
 WQTgt WQMsrc = WQOvert
 WQTgt WQMtgt = WQOvert
 
+public export
+WQSigT : Type
+WQSigT = (WQObj, WQObj)
+
+public export
+WQSig : WQMorph -> WQSigT
+WQSig m = (WQSrc m, WQTgt m)
+
 -- We do not here explicitly define composition in the walking quiver,
 -- because it does not contain any compositions between two non-identity
 -- morphisms.  Since the identities are units of composition, the
@@ -65,28 +73,59 @@ WQTgt WQMtgt = WQOvert
 --
 -- Therefore, we can now treat the walking quiver as defined as a category.
 
--- Above, we defined the notion of "quiver" (internal to `Type`) as a functor
--- from a category which we called the "walking quiver" to `Type`.  However,
--- we defined that notion without explicitly defining the walking quiver
--- itself; we just defined what constitutes a specification of a functor
--- _from_ it to `Type`.
+----------------------------
+---- Quivers in general ----
+----------------------------
+
+-- Now, we define the notion of "quiver" (internal to `Type`) as a functor
+-- from the walking quiver (whose objects are `WQObj` and whose morphisms
+-- are `WQMorph`) to `Type`.
+
+-- First, we define the type of the object-map component of a quiver.
+-- In the usual style of dependent types with universes, we would define this
+-- as the type `WQObj -> Type`.  However, we are going to be category-theoretic.
+-- To do that, we consider `WQObj -> Type` as meaning a slice of `Type` over
+-- `WQObj`, and we use the categorial notion of "slice" to define it.  This
+-- amounts to defining a "total space" which describes all the data of _all_
+-- of the types in `Type` which are in the range of the object-map component,
+-- together with a "projection" from the total space to `WQObj` which fibers
+-- the total space into a `WQObj`-indexed type family.
 --
--- But the walking quiver is so-called because it may itself be viewed _as_
--- a quiver -- that is, as a particular functor from a particular category
--- (which, as often with such functors, we call an "index category") to
--- `Type` (or whichever category the notion of "quiver" is internal to).
--- So we now define the walking quiver as a quiver, which involves first
--- defining the ("index") category which constitutes the domain of the
--- walking quiver (when it is viewed as a quiver), and then defining the
--- object-map and morphism-map components of the the functor which
--- correpsonds to the walking quiver.
---
--- Note that we are not (yet) defining the walking quiver itself -- we're
--- jumping straight to defining what a functor _from_ the walking quiver to
--- the metalanguage looks like.  This is because we will later define quivers,
--- including the walking quiver, in terms of quivers themselves (via either
--- of the notions of diagram or figure, which are dual to each other and which
--- we will define as quivers).
+-- Because there are only two terms in `WQObj`, this is just an abstract
+-- way of defining a pair of types.  The reason for doing it this way is
+-- that it translates directly to more general situations (in particular,
+-- to the definition of (co)presheaves), and in a category-theoretic rather
+-- than type-theoretic style.
+public export
+QuivObjMap : Type
+QuivObjMap = CSliceObj WQObj
+
+-- Given an object-map and a morphism, we can define the fiber of the total
+-- space of the object map over the source of the morphism, which corresponds
+-- to the type of the object map applied to the domain of the morphism.
+public export
+QuivObjMapDom : QuivObjMap -> CSliceObj WQMorph
+QuivObjMapDom = CSBaseChange WQSrc
+
+-- We also define the analogue for the codomain.
+public export
+QuivObjMapCod : QuivObjMap -> CSliceObj WQMorph
+QuivObjMapCod = CSBaseChange WQTgt
+
+-- Therefore, given an object map, we can define a corresponding morphism map
+-- as a slice morphism, over the total space of the object map sliced by
+-- morphisms, from the object which slices by domain to the object which
+-- slices by codomain.
+public export
+QuivMorphMap : QuivObjMap -> Type
+QuivMorphMap f = CSliceMorphism {c=WQMorph} (QuivObjMapDom f) (QuivObjMapCod f)
+
+-- A (metalanguage) quiver, as a functor, is an object map together with a
+-- morphism map.
+public export
+MLQuiver' : Type
+MLQuiver' = Sigma {a=QuivObjMap} QuivMorphMap
+
 public export
 record MLQuiver where
   constructor MLQuiv
@@ -125,6 +164,29 @@ record MLQMorph (dom, cod : MLQuiver) where
 
   0 mlqSrcNaturality : ExtEq (mlqmVert . mlqSrc dom) (mlqSrc cod . mlqmEdge)
   0 mlqTgtNaturality : ExtEq (mlqmVert . mlqTgt dom) (mlqTgt cod . mlqmEdge)
+
+-- Above, we defined the notion of "quiver" (internal to `Type`) as a functor
+-- from a category which we called the "walking quiver" to `Type`.  However,
+-- we defined that notion without explicitly defining the walking quiver
+-- itself; we just defined what constitutes a specification of a functor
+-- _from_ it to `Type`.
+--
+-- But the walking quiver is so-called because it may itself be viewed _as_
+-- a quiver -- that is, as a particular functor from a particular category
+-- (which, as often with such functors, we call an "index category") to
+-- `Type` (or whichever category the notion of "quiver" is internal to).
+-- So we now define the walking quiver as a quiver, which involves first
+-- defining the ("index") category which constitutes the domain of the
+-- walking quiver (when it is viewed as a quiver), and then defining the
+-- object-map and morphism-map components of the the functor which
+-- correpsonds to the walking quiver.
+--
+-- Note that we are not (yet) defining the walking quiver itself -- we're
+-- jumping straight to defining what a functor _from_ the walking quiver to
+-- the metalanguage looks like.  This is because we will later define quivers,
+-- including the walking quiver, in terms of quivers themselves (via either
+-- of the notions of diagram or figure, which are dual to each other and which
+-- we will define as quivers).
 
 ---------------------------------
 ---------------------------------
