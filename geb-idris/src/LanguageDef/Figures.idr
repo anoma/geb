@@ -85,16 +85,16 @@ WQSig m = (WQSrc m, WQTgt m)
 -- is just a slightly abstract way of defining a pair of types.  The reason
 -- for doing it this way is that it translates directly to more general
 -- situations (in particular, to the definition of (co)presheaves).
---
--- Here we do _not_ use a category-theory-style `CSliceObj`, nor even call
--- this a `SliceObject` -- because we are going to represent it in Geb as
--- an internal functor, there will be a type of Geb which represents the
--- objects of the target category, which will replace `Type` here.
 public export
 QuivObjMap : Type
 QuivObjMap = WQObj -> Type
 
--- The category-theoretic form of `QuivObjMap`.
+-- The category-theoretic form of `QuivObjMap`.  In this formulation,
+-- the total space could be viewed (conceptually, though an implementation
+-- might below the surface be more compact) as a coproduct of one object of
+-- `Type` for each object of the walking quiver (as represented by a term
+-- of the `WQObj` type), with the projection map taking each term of a `Type`
+-- to the corresponding object of the walking quiver.
 public export
 CQuivObjMap : Type
 CQuivObjMap = CSliceObj WQObj
@@ -107,6 +107,14 @@ QuivDomMap : QuivObjMap -> WQMorph -> Type
 QuivDomMap = BaseChangeF WQSrc
 
 -- This is the analogue of `QuivDomMap` in category-theoretic style.
+-- Given a slice object representing an object map (the object component
+-- of a quiver), it re-slices it over morphisms by their domains.  (That
+-- means that instead of being fibred over objects of the walking quiver,
+-- the range of the object map is fibred over collections of morphisms,
+-- in this case the collection of morphisms whose domain maps to each fiber
+-- of the range of the object map.  We might now view the total space as
+-- a type of _pairs_ of a term of the range of the object map and a morphism,
+-- where the term is in the type to which the domain of the morphism is mapped.)
 public export
 CQuivDomMap : CSliceFunctor WQObj WQMorph
 CQuivDomMap = CSBaseChange WQSrc
@@ -130,8 +138,8 @@ CQuivCodMap = CSBaseChange WQTgt
 -- a correct morphism map is precisely determined by any two functions with
 -- the signatures below.
 public export
-QuivMorphMap : SliceObj QuivObjMap
-QuivMorphMap f = SliceMorphism {a=WQMorph} (QuivDomMap f) (QuivCodMap f)
+QuivMorphMap : QuivObjMap -> Type
+QuivMorphMap f = (m : WQMorph) -> TypeHomObj (QuivDomMap f m) (QuivCodMap f m)
 
 public export
 CQuivMorphMap : CSliceFunctor WQObj WQMorph
