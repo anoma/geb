@@ -121,6 +121,10 @@ public export
 CQuivCodMap : CSliceFunctor WQObj WQMorph
 CQuivCodMap = CSBaseChange WQTgt
 
+public export
+CQuivMorphMap : CSliceFunctor WQObj WQMorph
+CQuivMorphMap f = CSHomObj (CQuivDomMap f) (CQuivCodMap f)
+
 -- Because of the particular structure of the walking quiver (there's no way to
 -- get via morphisms from the vertex object to the edge object), there are no
 -- compositions of either of the two non-identity morphisms with each other
@@ -197,12 +201,6 @@ WalkingQuiv = (WalkingQuivObjMap ** WalkingQuivMorphMap)
 ---- Presheaf/figure-style diagram/category definitions ----
 ------------------------------------------------------------
 ------------------------------------------------------------
-
--- Next we define the two base-change functors, from the slice category
--- of `Type` over the objects of the index (domain) category of the walking
--- quiver to the slice category of `Type` over the morphisms of the index
--- category of the walking quiver, induced by the two functions which determine
--- the morphism-map component of the walking quiver.
 
 ------------------------
 ---- (Co)presheaves ----
