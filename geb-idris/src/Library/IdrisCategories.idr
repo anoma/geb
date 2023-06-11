@@ -816,11 +816,30 @@ CSliceFContramap : {c, d : Type} -> CSliceFunctor c d -> Type
 CSliceFContramap {c} {d} f =
   (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f y) (f x)
 
+-- The slices of `Type` themselves form a (two-)category (which is internal to
+-- `Type`), where the morphisms, as usual in a two-category, are the functors
+-- (between slice categories, in this case).
+public export
+Slice2CatObj : Type
+Slice2CatObj = DPair Type CSliceObj
+
+-- The object-map component of a functor which comprises a morphism
+-- in the two-category of slices of `Type`.
+public export
+Slice2CatMorphObj : Slice2CatObj -> Slice2CatObj -> Type
+Slice2CatMorphObj sx sy = CSliceFunctor (fst sx) (fst sy)
+
+-- The morphism-map component of a functor which comprises a morphism
+-- in the two-category of slices of `Type`.
+public export
+Slice2CatMorphMap : {sx, sy : Slice2CatObj} -> Slice2CatMorphObj sx sy -> Type
+Slice2CatMorphMap {sx} {sy} = CSliceFMap {c=(fst sx)} {d=(fst sy)}
+
 -- Lift an endofunctor on `Type` to a functor between slice categories.
 -- Note that _which_ two slice categories the lifted functor goes between is
 -- polymorphic in the base type of the slice, with the codomain category
 -- computed from the domain category by the application of the endofunctor
--- on `Type`.  Consequently, `CSliceLift` _itself_, without providing a
+-- on `Type`.  Consequently, `CSliceLift f` _itself_, without providing a
 -- base-type parameter, is a natural transformation in `Type` from
 -- `CSliceObj` _viewed_ as a functor to `BaseChangeF f CSliceObj`.
 --
@@ -834,9 +853,10 @@ CSliceFContramap {c} {d} f =
 --   (fm : {0 a, b : Type} -> (a -> b) -> f a -> f b) ->
 --   NaturalTransformation CSliceObj (BaseChangeF f CSliceObj)
 --
--- But note now that _this_ is furthermore functorial in `f`.  So we may now
--- view `CSliceLift` as a _functor_ from the category of endofunctors on
--- `Type` (i.e., `Type -> Type`) to the category of _natural transformations_
+-- But note now that _this_ is furthermore functorial in `f`.  So we could now
+-- view `CSliceLift` (without either a base-type _or_ a function parameter)
+-- as a _functor_ from the category of endofunctors on `Type`
+-- (i.e., `Type -> Type`) to the category of _natural transformations_
 -- on endofunctors of `Type`.  However, this viewpoint loses the information
 -- that all of the output natural transformations are between functors which
 -- have been pre-composed with `CSliceObj` viewed as an _internal_ functor
@@ -849,8 +869,8 @@ CSliceFLift {f} fm c (x ** px) = (f x ** fm {a=x} {b=c} px)
 
 -- `CSliceFLift` using Idris's typeclass inference (on `Functor`).
 public export
-CSliceFLift' : {f : Type -> Type} ->
-  Functor f => (c : Type) -> CSliceFunctor c (f c)
+CSliceFLift' : {f : Type -> Type} -> Functor f =>
+  NaturalTransformation CSliceObj (BaseChangeF f CSliceObj)
 CSliceFLift' {f} = CSliceFLift {f} (map {f})
 
 public export
