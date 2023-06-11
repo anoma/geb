@@ -864,13 +864,13 @@ Slice2CatMorphMap {sx} {sy} = CSliceFMap {c=(fst sx)} {d=(fst sy)}
 public export
 CSliceFLift : {f : Type -> Type} ->
   (fm : {0 a, b : Type} -> (a -> b) -> f a -> f b) ->
-  NaturalTransformation CSliceObj (BaseChangeF f CSliceObj)
+  (c : Type) -> CSliceFunctor c (f c)
 CSliceFLift {f} fm c (x ** px) = (f x ** fm {a=x} {b=c} px)
 
 -- `CSliceFLift` using Idris's typeclass inference (on `Functor`).
 public export
 CSliceFLift' : {f : Type -> Type} -> Functor f =>
-  NaturalTransformation CSliceObj (BaseChangeF f CSliceObj)
+  (c : Type) -> CSliceFunctor c (f c)
 CSliceFLift' {f} = CSliceFLift {f} (map {f})
 
 public export
