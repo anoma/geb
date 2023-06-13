@@ -1316,6 +1316,10 @@ CSliceOverSliceToBaseSlice {c} {sl=(x ** px)} (y ** py) =
   (CSGSigma {c=x} (y ** py) ** px . py)
 
 public export
+CSliceOfSliceObj : {c : Type} -> CSliceObj c -> Type
+CSliceOfSliceObj {c} sl = (sl' : CSliceObj c ** CSliceMorphism {c} sl' sl)
+
+public export
 Bundle : Type
 Bundle = DPair Type CSliceObj
 

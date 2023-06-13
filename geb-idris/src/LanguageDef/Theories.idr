@@ -7,6 +7,25 @@ import public LanguageDef.RefinedADT
 
 %default total
 
+-------------------------------------------------------
+-------------------------------------------------------
+---- Mutually-recursive family of slice categories ----
+-------------------------------------------------------
+-------------------------------------------------------
+
+mutual
+  public export
+  data MinMLCat : Type where
+    MMCbase : MinMLCat
+    MMCslice : {0 cat : MinMLCat} -> MinMLObj cat -> MinMLCat
+
+  public export
+  data MinMLObj : MinMLCat -> Type where
+
+  public export
+  data MinMLMorph : {0 cat : MinMLCat} ->
+      MinMLObj cat -> MinMLObj cat -> Type where
+
 ---------------------------------
 ---------------------------------
 ---- Computational substrate ----
