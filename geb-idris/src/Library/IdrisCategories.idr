@@ -1079,6 +1079,10 @@ public export
 CSSigma : {0 c, d : Type} -> (c -> d) -> CSliceFunctor c d
 CSSigma {c} {d} f (x ** px) = (x ** f . px)
 
+public export
+CSGSigma : {0 c : Type} -> CSliceObj c -> Type
+CSGSigma {c} = CSliceObjDomain . CSSigma {c} {d=()} (const ())
+
 -- Sigma is also known as pushforward.
 public export
 CSPushF : {0 c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
@@ -1300,6 +1304,16 @@ pbIntro : {0 a, b, b', c : Type} -> {0 p : a -> c} ->
      \el => (pbProj1 {f=g} {g=g'} el, pbProj2 {f=g} {g=g'} el))
 pbIntro {a} {b} {b'} {c} {p} {g} {g'} (Element0 f eqf) =
   Element0 f $ \ela => pairFstSnd (fst0 $ f ela)
+
+public export
+CSliceOverSliceObj : {0 c : Type} -> CSliceObj c -> Type
+CSliceOverSliceObj {c} sl = CSliceObj (CSGSigma {c} sl)
+
+public export
+CSliceOverSliceToBaseSlice : {0 c : Type} -> {sl : CSliceObj c} ->
+  CSliceOverSliceObj sl -> CSliceObj c
+CSliceOverSliceToBaseSlice {c} {sl=(x ** px)} (y ** py) =
+  (CSGSigma {c=x} (y ** py) ** px . py)
 
 public export
 Bundle : Type
