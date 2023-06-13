@@ -1823,3 +1823,9 @@ InterpDiagToHSPFMorph : {dtta : DiagToTypeArena} ->
   HomSlice (InterpDiagToHSPFObj {dtta} dthsa dgm ty)
 InterpDiagToHSPFMorph {dtta} dthsa dgm (i ** m) sig =
   (j : dthsrMorph (dthsDir dthsa i) ** dthsrSig (dthsDir dthsa i) j = sig)
+
+-------------------------
+-------------------------
+---- Finite diagrams ----
+-------------------------
+-------------------------
