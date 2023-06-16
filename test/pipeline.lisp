@@ -16,7 +16,9 @@
   (parachute:finish
    (geb.entry:compile-down :vampir t
                            :stlc t
-                           :entry "geb-test::test-compilation-eval-2"))
+                           :entry "geb-test::test-compilation-eval-2"
+                           :stream nil))
   (parachute:finish
    (geb.entry:compile-down :stlc t
-                           :entry "geb-test::*entry*")))
+                           :entry "geb-test::*entry*"
+                           :stream nil)))
