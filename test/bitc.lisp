@@ -37,3 +37,30 @@
   (is equalp #*011 (gapply (bitc:swap 2 1) #*110))
   (is equalp #*01011 (gapply (bitc:swap 2 3) #*11010))
   (is equalp #*100110 (gapply (bitc:swap 3 3) #*110100)))
+
+(define-test bitc-full-evaluation-tests
+  :parent geb-bitc
+  ;; parallel test
+  (is equalp
+      #*10100
+      (gapply (bitc:parallel (bitc:swap 2 1)
+                             (bitc:ident 2))
+              #*01100))
+  ;; fork!
+  (is equalp #*0101 (gapply (bitc:fork 2) #*01))
+  ;; compose!
+  (is equalp
+      #*1001
+      (gapply (bitc:compose
+               (bitc:parallel (bitc:swap 1 1) ; bool not
+                              (bitc:ident 2)) ; bool id
+               (bitc:fork 2))
+              #*01))
+  ;; drop it!
+  (is equalp
+      #*1
+      (gapply (bitc:parallel (bitc:drop 1) (bitc:ident 1))
+              #*01))
+  ;; and now branch it! also testing one and zero
+  (is equalp #*1 (gapply (bitc:branch bitc:one bitc:zero) #*01))
+  (is equalp #*0 (gapply (bitc:branch bitc:one bitc:zero) #*11)))
