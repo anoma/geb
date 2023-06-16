@@ -153,6 +153,44 @@ The functions given work on this."
   (nil->list   pax:symbol-macro)
   (*canonical-cons-type* pax:variable))
 
+(geb.utils:muffle-package-variance
+ (uiop:define-package #:geb-decision
+   (:documentation "Defines out a decision datatype for for the geb language")
+   (:nicknames :geb-dec)                ; nicer shorthand
+   (:shadow :no :yes)
+   (:mix #:geb.main #:geb.spec #:serapeum #:common-lisp)))
+
+(in-package #:geb-decision)
+
+(pax:defsection @geb-decision (:title "Decisions")
+  "Here we define out the idea of a Decision. Namely it allows us to
+model information that may be uncertain. In ADT terms the type would
+look something like
+
+```lisp
+(deftype decision () `(or yes no maybe))
+```
+
+In GEB terms it is defined like
+
+```lisp
+(def decision
+  (coprod yes (coprod no maybe)))
+```
+
+We also define out API functions to operate on this"
+  (decision      pax:symbol-macro)
+  (yes           pax:symbol-macro)
+  (no            pax:symbol-macro)
+  (maybe         pax:symbol-macro)
+  (inj-maybe     pax:symbol-macro)
+  (inj-yes       pax:symbol-macro)
+  (inj-no        pax:symbol-macro)
+  (demote        pax:symbol-macro)
+  (promote       pax:symbol-macro)
+  (merge-opinion pax:symbol-macro))
+
+
 
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb
@@ -197,14 +235,3 @@ The functions given work on this."
   (+ 1 2 3 4)
   => 10
   ```")
-
-
-(geb.utils:muffle-package-variance
- (uiop:define-package #:geb-tri
-   (:documentation "Defines out booleans for the geb language")
-   (:mix #:geb.main #:geb.spec #:serapeum #:common-lisp)
-   (:shadow :false :true :not :and :or :no)
-   (:export
-    :bool :fasle :true :not :and :or)))
-
-(in-package #:geb-tri)
