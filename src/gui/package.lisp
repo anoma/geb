@@ -9,6 +9,7 @@
   "This section covers the suite of tools that help visualize geb
 objects and make the system nice to work with"
   (@geb-visualizer pax:section)
+  (@geb-exporter   pax:section)
   (geb-gui.graphing:@graphing-manual pax:section))
 
 (pax:defsection @geb-visualizer (:title "Visualizer")
@@ -22,6 +23,11 @@ layout of the term, showing what kind of data "
   (visualize       pax:function)
   (kill-running    pax:function)
   (@visaulizer-aid pax:section))
+
+(pax:defsection @geb-exporter (:title "Export Visualizer")
+  "This works like the normal visualizer except it exports it to a
+  file to be used by other projects or perhaps in papers"
+  (svg pax:function))
 
 (pax:defsection @visaulizer-aid (:title "Aiding the Visualizer")
   "One can aid the visualization process a bit, this can be done by

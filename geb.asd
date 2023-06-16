@@ -117,7 +117,7 @@
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
 
 (asdf:defsystem :geb/gui
-  :depends-on (:geb :mcclim :clim :bordeaux-threads :mcclim-dot)
+  :depends-on (:geb :mcclim :clim :bordeaux-threads :mcclim-dot :mcclim-svg)
   :description "geb gui presenter"
   :pathname "src/gui/"
   :serial t
