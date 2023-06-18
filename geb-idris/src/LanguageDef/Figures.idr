@@ -147,6 +147,14 @@ public export
 QuivSigMap : QuivObjMap -> WQMorph -> Type
 QuivSigMap = BaseChangeF WQSig . QuivDiagMap
 
+public export
+CQuivSigMap : CSliceFunctor WQObj WQMorph
+CQuivSigMap = CSBaseChange WQSig . CQuivDiagMap
+
+public export
+QuivMorphHom : QuivObjMap -> WQMorph -> Type
+QuivMorphHom f m = TypeHomObj (QuivDomMap f m) (QuivCodMap f m)
+
 -- Because of the particular structure of the walking quiver (there's no way to
 -- get via morphisms from the vertex object to the edge object), there are no
 -- compositions of either of the two non-identity morphisms with each other
@@ -157,7 +165,7 @@ QuivSigMap = BaseChangeF WQSig . QuivDiagMap
 -- the signatures below.
 public export
 QuivMorphMap : QuivObjMap -> Type
-QuivMorphMap f = (m : WQMorph) -> TypeHomObj (QuivDomMap f m) (QuivCodMap f m)
+QuivMorphMap = Pi {a=WQMorph} . QuivMorphHom
 
 public export
 CQuivMorphMap : CSliceFunctor WQObj WQMorph
