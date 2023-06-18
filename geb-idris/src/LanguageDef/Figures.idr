@@ -44,21 +44,38 @@ IsNeSQPathAccDec sq veq acc adec e (e' :: es) =
   in
   IsNeSQPathAccDec sq veq (sqTgt sq e = sqSrc sq e', acc) adec' e' es
 
+public export
 0 IsNeSQPath : (sq : SQuiver) -> sqEdge sq -> List (sqEdge sq) -> Type
 IsNeSQPath sq = IsNeSQPathAcc sq Unit
 
+public export
 0 IsNeSQPathDec : (sq : SQuiver) -> DecEqPred (sqVert sq) ->
   (e : sqEdge sq) -> (es : List (sqEdge sq)) -> Dec (IsNeSQPath sq e es)
 IsNeSQPathDec sq veq = IsNeSQPathAccDec sq veq Unit (Yes ())
 
+public export
 0 IsSQPath : (sq : SQuiver) -> List (sqEdge sq) -> Type
 IsSQPath sq [] = Unit
 IsSQPath sq (e :: es) = IsNeSQPath sq e es
 
+public export
 0 IsSQPathDec : (sq : SQuiver) -> DecEqPred (sqVert sq) ->
   (es : List (sqEdge sq)) -> Dec (IsSQPath sq es)
 IsSQPathDec sq veq [] = Yes ()
 IsSQPathDec sq veq (e :: es) = IsNeSQPathDec sq veq e es
+
+public export
+SQuivPath : SQuiver -> Type
+SQuivPath sq = Subset0 (List (sqEdge sq)) (IsSQPath sq)
+
+public export
+0 IsSQPathTest : (sq : SQuiver) -> DecEqPred (sqVert sq) ->
+  (es : List (sqEdge sq)) -> Bool
+IsSQPathTest sq veq es = isYes $ IsSQPathDec sq veq es
+
+public export
+SQuivPathDec : (sq : SQuiver) -> DecEqPred (sqVert sq) -> Type
+SQuivPathDec sq veq = Refinement {a=(List (sqEdge sq))} (IsSQPathTest sq veq)
 
 public export
 record CPCat where
