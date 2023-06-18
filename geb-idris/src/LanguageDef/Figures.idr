@@ -23,6 +23,14 @@ record SQuiver where
   sqTgt : sqEdge -> sqVert
 
 public export
+data SQuivPath : (sq : SQuiver) -> sqVert sq -> sqVert sq -> Type where
+  SQLoop : {0 sq : SQuiver} -> (v : sqVert sq) -> SQuivPath sq v v
+  SQComp : {0 sq : SQuiver} -> (src : sqVert sq) -> {0 next, tgt : sqVert sq} ->
+    (e : sqEdge sq) -> sqSrc sq e = src -> sqTgt sq e = next ->
+    SQuivPath sq next tgt -> SQuivPath sq src tgt
+
+{-
+public export
 0 IsNeSQPathAcc :
   (sq : SQuiver) -> Type -> sqEdge sq -> List (sqEdge sq) -> Type
 IsNeSQPathAcc sq acc e [] = acc
@@ -76,6 +84,7 @@ IsSQPathTest sq veq es = isYes $ IsSQPathDec sq veq es
 public export
 SQuivPathDec : (sq : SQuiver) -> DecEqPred (sqVert sq) -> Type
 SQuivPathDec sq veq = Refinement {a=(List (sqEdge sq))} (IsSQPathTest sq veq)
+-}
 
 public export
 record CPCat where
