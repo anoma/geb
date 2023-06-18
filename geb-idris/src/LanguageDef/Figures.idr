@@ -8,6 +8,72 @@ import public LanguageDef.PolyCat
 
 %default total
 
+---------------------------------
+---------------------------------
+---- Categories from quivers ----
+---------------------------------
+---------------------------------
+
+public export
+record SQuiver where
+  constructor SQuiv
+  sqVert : Type
+  sqEdge : Type
+  sqSrc : sqEdge -> sqVert
+  sqTgt : sqEdge -> sqVert
+
+public export
+0 IsNeSQPathAcc :
+  (sq : SQuiver) -> Type -> sqEdge sq -> List (sqEdge sq) -> Type
+IsNeSQPathAcc sq acc e [] = acc
+IsNeSQPathAcc sq acc e (e' :: es) =
+  IsNeSQPathAcc sq (sqTgt sq e = sqSrc sq e', acc) e' es
+
+public export
+0 IsNeSQPathAccDec :
+  (sq : SQuiver) -> DecEqPred (sqVert sq) -> (acc : Type) -> Dec acc ->
+  (e : sqEdge sq) -> (es : List (sqEdge sq)) -> Dec (IsNeSQPathAcc sq acc e es)
+IsNeSQPathAccDec sq veq acc adec e [] = adec
+IsNeSQPathAccDec sq veq acc adec e (e' :: es) =
+  let
+    adec' : Dec (sq .sqTgt e = sq .sqSrc e', acc) =
+      case (veq (sqTgt sq e) (sqSrc sq e'), adec) of
+        (Yes eq, Yes eacc) => Yes (eq, eacc)
+        (No neq, _) => No $ \(eq, eacc) => neq eq
+        (_ , No nacc) => No $ \(eq, eacc) => nacc eacc
+  in
+  IsNeSQPathAccDec sq veq (sqTgt sq e = sqSrc sq e', acc) adec' e' es
+
+0 IsNeSQPath : (sq : SQuiver) -> sqEdge sq -> List (sqEdge sq) -> Type
+IsNeSQPath sq = IsNeSQPathAcc sq Unit
+
+0 IsNeSQPathDec : (sq : SQuiver) -> DecEqPred (sqVert sq) ->
+  (e : sqEdge sq) -> (es : List (sqEdge sq)) -> Dec (IsNeSQPath sq e es)
+IsNeSQPathDec sq veq = IsNeSQPathAccDec sq veq Unit (Yes ())
+
+0 IsSQPath : (sq : SQuiver) -> List (sqEdge sq) -> Type
+IsSQPath sq [] = Unit
+IsSQPath sq (e :: es) = IsNeSQPath sq e es
+
+0 IsSQPathDec : (sq : SQuiver) -> DecEqPred (sqVert sq) ->
+  (es : List (sqEdge sq)) -> Dec (IsSQPath sq es)
+IsSQPathDec sq veq [] = Yes ()
+IsSQPathDec sq veq (e :: es) = IsNeSQPathDec sq veq e es
+
+public export
+record CPCat where
+  constructor CPC
+  cpcObj : Type
+  cpcObjEq : Type
+  cpcObjEqDom : cpcObjEq -> cpcObj
+  cpcObjEqCod : cpcObjEq -> cpcObj
+  cpcMorph : Type
+  cpcMorphEq : Type
+  cpcMorphEqDom : cpcMorphEq -> cpcMorph
+  cpcMorphEqCod : cpcMorphEq -> cpcMorph
+  cpcDom : cpcMorph -> cpcObj
+  cpcCod : cpcMorph -> cpcObj
+
 ------------------------------
 ------------------------------
 ---- Metalanguage quivers ----
