@@ -5,6 +5,7 @@ import Library.IdrisCategories
 import public LanguageDef.Atom
 import public LanguageDef.RefinedADT
 import public LanguageDef.PolyCat
+import public LanguageDef.ADTCat
 
 %default total
 
@@ -21,6 +22,11 @@ record SQuiver where
   SQEdge : Type
   sqSrc : SQEdge -> SQVert
   sqTgt : SQEdge -> SQVert
+
+public export
+data SQPathData : SliceObj SQuiver where
+  SQPDLoop : {0 sq : SQuiver} -> SQVert sq -> SQPathData sq
+  SQPDComp : {0 sq : SQuiver} -> SQEdge sq -> List (SQEdge sq) -> SQPathData sq
 
 public export
 0 IsNeSQPathAcc :
