@@ -17,22 +17,22 @@ import public LanguageDef.PolyCat
 public export
 record SQuiver where
   constructor SQuiv
-  sqVert : Type
-  sqEdge : Type
-  sqSrc : sqEdge -> sqVert
-  sqTgt : sqEdge -> sqVert
+  SQVert : Type
+  SQEdge : Type
+  sqSrc : SQEdge -> SQVert
+  sqTgt : SQEdge -> SQVert
 
 public export
 0 IsNeSQPathAcc :
-  (sq : SQuiver) -> Type -> sqEdge sq -> List (sqEdge sq) -> Type
+  (sq : SQuiver) -> Type -> SQEdge sq -> List (SQEdge sq) -> Type
 IsNeSQPathAcc sq acc e [] = acc
 IsNeSQPathAcc sq acc e (e' :: es) =
   IsNeSQPathAcc sq (sqTgt sq e = sqSrc sq e', acc) e' es
 
 public export
 0 IsNeSQPathAccDec :
-  (sq : SQuiver) -> DecEqPred (sqVert sq) -> (acc : Type) -> Dec acc ->
-  (e : sqEdge sq) -> (es : List (sqEdge sq)) -> Dec (IsNeSQPathAcc sq acc e es)
+  (sq : SQuiver) -> DecEqPred (SQVert sq) -> (acc : Type) -> Dec acc ->
+  (e : SQEdge sq) -> (es : List (SQEdge sq)) -> Dec (IsNeSQPathAcc sq acc e es)
 IsNeSQPathAccDec sq veq acc adec e [] = adec
 IsNeSQPathAccDec sq veq acc adec e (e' :: es) =
   let
@@ -45,37 +45,37 @@ IsNeSQPathAccDec sq veq acc adec e (e' :: es) =
   IsNeSQPathAccDec sq veq (sqTgt sq e = sqSrc sq e', acc) adec' e' es
 
 public export
-0 IsNeSQPath : (sq : SQuiver) -> sqEdge sq -> List (sqEdge sq) -> Type
+0 IsNeSQPath : (sq : SQuiver) -> SQEdge sq -> List (SQEdge sq) -> Type
 IsNeSQPath sq = IsNeSQPathAcc sq Unit
 
 public export
-0 IsNeSQPathDec : (sq : SQuiver) -> DecEqPred (sqVert sq) ->
-  (e : sqEdge sq) -> (es : List (sqEdge sq)) -> Dec (IsNeSQPath sq e es)
+0 IsNeSQPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
+  (e : SQEdge sq) -> (es : List (SQEdge sq)) -> Dec (IsNeSQPath sq e es)
 IsNeSQPathDec sq veq = IsNeSQPathAccDec sq veq Unit (Yes ())
 
 public export
-0 IsSQPath : (sq : SQuiver) -> List (sqEdge sq) -> Type
+0 IsSQPath : (sq : SQuiver) -> List (SQEdge sq) -> Type
 IsSQPath sq [] = Unit
 IsSQPath sq (e :: es) = IsNeSQPath sq e es
 
 public export
-0 IsSQPathDec : (sq : SQuiver) -> DecEqPred (sqVert sq) ->
-  (es : List (sqEdge sq)) -> Dec (IsSQPath sq es)
+0 IsSQPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
+  (es : List (SQEdge sq)) -> Dec (IsSQPath sq es)
 IsSQPathDec sq veq [] = Yes ()
 IsSQPathDec sq veq (e :: es) = IsNeSQPathDec sq veq e es
 
 public export
 SQuivPath : SQuiver -> Type
-SQuivPath sq = Subset0 (List (sqEdge sq)) (IsSQPath sq)
+SQuivPath sq = Subset0 (List (SQEdge sq)) (IsSQPath sq)
 
 public export
-0 IsSQPathTest : (sq : SQuiver) -> DecEqPred (sqVert sq) ->
-  (es : List (sqEdge sq)) -> Bool
+0 IsSQPathTest : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
+  (es : List (SQEdge sq)) -> Bool
 IsSQPathTest sq veq es = isYes $ IsSQPathDec sq veq es
 
 public export
-SQuivPathDec : (sq : SQuiver) -> DecEqPred (sqVert sq) -> Type
-SQuivPathDec sq veq = Refinement {a=(List (sqEdge sq))} (IsSQPathTest sq veq)
+SQuivPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) -> Type
+SQuivPathDec sq veq = Refinement {a=(List (SQEdge sq))} (IsSQPathTest sq veq)
 
 public export
 record CPCat where
