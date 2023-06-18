@@ -26,7 +26,7 @@ public export
 data SQuivPath : (sq : SQuiver) -> sqVert sq -> sqVert sq -> Type where
   SQLoop : {0 sq : SQuiver} -> (v : sqVert sq) -> SQuivPath sq v v
   SQComp : {0 sq : SQuiver} -> (src : sqVert sq) -> {0 next, tgt : sqVert sq} ->
-    (e : sqEdge sq) -> (0 _ : sqSrc sq e = src) -> (0 _ : sqTgt sq e = next) ->
+    (e : sqEdge sq) -> sqSrc sq e = src -> sqTgt sq e = next ->
     SQuivPath sq next tgt -> SQuivPath sq src tgt
 
 {-
