@@ -23,6 +23,21 @@
         (push (bt:make-thread #'run) *running*)
         (funcall #'run))))
 
+(defun svg (object path &key (default-view (make-instance 'show-view)))
+  "Runs the visualizer, outputting a static SVG image at the directory of choice.
+
+You can customize the view. By default it uses the show-view, which is
+the default of the visualizer.
+
+A good example usage is
+
+```lisp
+GEB-TEST> (geb-gui:svg (shallow-copy-object geb-bool:and) \"/tmp/foo.svg\")
+```"
+  (clime:with-output-to-drawing-stream (stream :svg path :preview nil)
+    (setf (clim:stream-default-view stream) default-view)
+    (display-graph-dot object stream)))
+
 (defun kill-running ()
   "Kills all threads and open gui objects created by VISUALIZE"
   (flet ((destroy-alive (x)
@@ -59,16 +74,25 @@
   (cond ((typep (root frame) 'graph:node)
          (graph-dot (root frame) pane))
         ((graph-p frame)
-         (display-graph frame pane))
+         (display-graph-frame frame pane))
         (t
          (handler-case (present-object (root frame) pane)
            (error (c)
              (declare (ignore c))
              (format pane "issue displaying, please call swap to get it back into a graph~%")
-             (display-graph frame pane))))))
+             (display-graph-frame frame pane))))))
 
-(defun display-graph (frame pane)
-  (apply (if (dot-p frame)
-             #'graph-dot
-             #'graph-node)
-         (list (graph:passes (graph:graphize (root frame) nil)) pane)))
+(defun display-graph-frame (frame pane)
+  (funcall (if (dot-p frame)
+               #'display-graph-dot
+               #'display-graph-node)
+           (root frame) pane))
+
+(defun display-graph-dot (object pane)
+  (graph-dot (pass-graph object) pane))
+
+(defun display-graph-node (object pane)
+  (graph-node (pass-graph object) pane))
+
+(defun pass-graph (object)
+  (graph:passes (graph:graphize object nil)))
