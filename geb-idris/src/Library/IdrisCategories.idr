@@ -1399,6 +1399,65 @@ public export
 NothingFiber : (r : CRefinement) -> Type
 NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
 
+------------------------------------------------------
+------------------------------------------------------
+---- Dependent polynomial endofunctors as W-types ----
+------------------------------------------------------
+------------------------------------------------------
+
+--------------------------------------------------
+---- Definition and interpretation of W-types ----
+--------------------------------------------------
+
+public export
+record WTypeFunc (parambase, posbase : Type) where
+  constructor MkWTF
+  wtPos : Type
+  wtDir : Type
+  wtAssign : wtDir -> parambase
+  wtDirSlice : wtDir -> wtPos
+  wtPosSlice : wtPos -> posbase
+
+public export
+WTypeEndoFunc : Type -> Type
+WTypeEndoFunc base = WTypeFunc base base
+
+public export
+InterpWTF : {parambase, posbase : Type} ->
+  WTypeFunc parambase posbase -> SliceFunctor parambase posbase
+InterpWTF {parambase} {posbase} wtf sl ib =
+  (i : PreImage {a=(wtPos wtf)} {b=posbase} (wtPosSlice wtf) ib **
+   (d : PreImage {a=(wtDir wtf)} {b=(wtPos wtf)} (wtDirSlice wtf) (fst0 i)) ->
+   sl $ wtAssign wtf $ fst0 d)
+
+-----------------------------
+---- Algebras of W-types ----
+-----------------------------
+
+public export
+WTFAlg : {a : Type} -> WTypeEndoFunc a -> SliceObj a -> Type
+WTFAlg {a} wtf sa = SliceMorphism {a} (InterpWTF wtf sa) sa
+
+-------------------------------------
+---- Initial algebras of W-types ----
+-------------------------------------
+
+public export
+data WTFMu : {a : Type} -> WTypeEndoFunc a -> SliceObj a where
+  InWTFM : {a : Type} -> {wtf : WTypeEndoFunc a} ->
+    (i : (dc : a ** PreImage {a=(wtPos wtf)} {b=a} (wtPosSlice wtf) dc)) ->
+    ((d :
+        PreImage {a=(wtDir wtf)} {b=(wtPos wtf)}
+          (wtDirSlice wtf) (fst0 (snd i))) ->
+      WTFMu {a} wtf (wtAssign wtf (fst0 d))) ->
+    WTFMu {a} wtf (fst i)
+
+public export
+wtfCata : {0 a : Type} -> {wtf : WTypeEndoFunc a} -> {sa : SliceObj a} ->
+  WTFAlg wtf sa -> SliceMorphism {a} (WTFMu wtf) sa
+wtfCata {a} {wtf} {sa} alg _ (InWTFM (dc ** i) dm) =
+  alg dc (i ** \d => wtfCata {a} {wtf} {sa} alg (wtAssign wtf (fst0 d)) $ dm d)
+
 -----------------------------------------------------------
 -----------------------------------------------------------
 ---- Fixed points in arbitrary subcategories of `Type` ----
