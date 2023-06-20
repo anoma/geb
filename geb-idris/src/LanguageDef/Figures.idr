@@ -75,13 +75,13 @@ SQuivPath : SQuiver -> Type
 SQuivPath sq = Subset0 (SQPathData sq) (IsSQPath sq)
 
 public export
-0 IsSQPathTest : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
+0 isSQPath : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
   (es : SQPathData sq) -> Bool
-IsSQPathTest sq veq es = isYes $ IsSQPathDec sq veq es
+isSQPath sq veq es = isYes $ IsSQPathDec sq veq es
 
 public export
 SQuivPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) -> Type
-SQuivPathDec sq veq = Refinement {a=(SQPathData sq)} (IsSQPathTest sq veq)
+SQuivPathDec sq veq = Refinement {a=(SQPathData sq)} (isSQPath sq veq)
 
 public export
 record CPCat where
