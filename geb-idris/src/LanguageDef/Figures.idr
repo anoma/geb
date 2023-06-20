@@ -9,6 +9,41 @@ import public LanguageDef.ADTCat
 
 %default total
 
+-----------------------------------------------
+-----------------------------------------------
+---- Relations in category-theoretic style ----
+-----------------------------------------------
+-----------------------------------------------
+
+public export
+record CRelation (a, b : Type) where
+  constructor CRel
+  CRrel : Type
+  crSrc : CRrel -> a
+  crTgt : CRrel -> b
+
+public export
+CEndoRel : Type -> Type
+CEndoRel a = CRelation a a
+
+public export
+CRelMorph : {0 a, b : Type} -> CRelation a b -> CRelation a b -> Type
+CRelMorph {a} {b} r r' =
+  Subset0 (CRrel r -> CRrel r') $
+    \m => (ExtEq (crSrc r' . m) (crSrc r), ExtEq (crTgt r' . m) (crTgt r))
+
+public export
+CRelId : {0 a, b : Type} -> (0 r : CRelation a b) -> CRelMorph {a} {b} r r
+CRelId {a} {b} r = Element0 id (\_ => Refl, \_ => Refl)
+
+public export
+CRelCompose : {0 a, b : Type} -> {0 r, r', r'' : CRelation a b} ->
+  CRelMorph r' r'' -> CRelMorph r r' -> CRelMorph r r''
+CRelCompose (Element0 g geq) (Element0 f feq) =
+  Element0 (g . f)
+    (\el => trans (fst geq $ f el) (fst feq el),
+     \el => trans (snd geq $ f el) (snd feq el))
+
 ---------------------------------
 ---------------------------------
 ---- Categories from quivers ----
