@@ -157,6 +157,14 @@ public export
 SSCQuiver : SQuiver -> SQuiver
 SSCQuiver sq = SQuiv (SQVert sq) (SSCEdge sq) (SSCsrc {sq}) (SSCtgt {sq})
 
+-----------------------------
+---- Equivalence closure ----
+-----------------------------
+
+public export
+SECQuiver : SQuiver -> SQuiver
+SECQuiver = SPCQuiver . SSCQuiver
+
 ---------------------------
 ---- Symmetric closure ----
 ---------------------------
