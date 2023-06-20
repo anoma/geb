@@ -10,6 +10,20 @@ import LanguageDef.Adjunctions
 
 %default total
 
+------------------------
+------------------------
+---- Finite quivers ----
+------------------------
+------------------------
+
+-- A finite quiver, which is to say, a quiver internal to (a skeleton of)
+-- `FinSet`.
+public export
+record FinQuiv where
+  constructor FQ
+  fqVert : Nat
+  fqEdge : List (BUNat fqVert, BUNat fqVert)
+
 ---------------------------------
 ---------------------------------
 ---- Terms of core Geb logic ----
