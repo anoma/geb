@@ -3547,6 +3547,72 @@ SPFToDepPolyF {w} {z} (posdep ** dirdep ** assign) =
   ((w, Sigma {a=(Sigma {a=z} posdep)} dirdep, Sigma {a=z} posdep, z) **
    (assign, DPair.fst, DPair.fst))
 
+-------------------------------------------------------
+-------------------------------------------------------
+---- Conversions between SlicePolyFunc and W-types ----
+-------------------------------------------------------
+-------------------------------------------------------
+
+public export
+WTFtoSPF : {parambase, posbase : Type} ->
+  WTypeFunc parambase posbase -> SlicePolyFunc parambase posbase
+WTFtoSPF {parambase} {posbase} (MkWTF pos dir assign dsl psl) =
+  (\i => PreImage {a=pos} {b=posbase} psl i **
+   \x => PreImage {a=dir} {b=pos} dsl $ fst0 $ snd x **
+   \d => assign $ fst0 $ snd d)
+
+public export
+SPFtoWTF : {parambase, posbase : Type} ->
+  SlicePolyFunc parambase posbase -> WTypeFunc parambase posbase
+SPFtoWTF (posdep ** dirdep ** assign) =
+  MkWTF
+    (Sigma {a=posbase} posdep)
+    (Sigma {a=(Sigma {a=posbase} posdep)} dirdep)
+    assign
+    fst
+    fst
+
+public export
+InterpWTFtoSPF : {parambase, posbase : Type} ->
+  (wtf : WTypeFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpSPFunc {a=parambase} {b=posbase}
+    (WTFtoSPF {parambase} {posbase} wtf) sl ib ->
+  InterpWTF {parambase} {posbase} wtf sl ib
+InterpWTFtoSPF (MkWTF pos dir assign dsl psl) sl ib = id
+
+public export
+InterpWTFtoSPFInv : {parambase, posbase : Type} ->
+  (wtf : WTypeFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpWTF {parambase} {posbase} wtf sl ib ->
+  InterpSPFunc {a=parambase} {b=posbase}
+    (WTFtoSPF {parambase} {posbase} wtf) sl ib
+InterpWTFtoSPFInv (MkWTF pos dir assign dsl psl) sl ib = id
+
+public export
+InterpSPFtoWTF : {parambase, posbase : Type} ->
+  (spf : SlicePolyFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib ->
+  InterpSPFunc {a=parambase} {b=posbase} spf sl ib
+InterpSPFtoWTF {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
+  (Element0 {type=(Sigma {a=posbase} posdep)} (ib' ** i) eq ** p) =
+    (rewrite sym eq in i **
+     \d => p $
+      Element0 ((ib ** rewrite sym eq in i) ** d) (rewrite sym eq in Refl))
+
+public export
+InterpSPFtoWTFInv : {parambase, posbase : Type} ->
+  (spf : SlicePolyFunc parambase posbase) ->
+  (sl : SliceObj parambase) -> (ib : posbase) ->
+  InterpSPFunc {a=parambase} {b=posbase} spf sl ib ->
+  InterpWTF {parambase} {posbase} (SPFtoWTF {parambase} {posbase} spf) sl ib
+InterpSPFtoWTFInv {parambase} {posbase} (posdep ** dirdep ** assign) sl ib
+  (i ** d) =
+    (Element0 (ib ** i) Refl **
+     \(Element0 (i' ** di) deq) => rewrite deq in d $ rewrite sym deq in di)
+
 ------------------------------------------------
 ------------------------------------------------
 ----- Polynomial bifunctors and profunctors ----
