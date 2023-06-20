@@ -51,8 +51,8 @@ CRelated {a} {b} = SliceFromCSlice {c=(a, b)}
 public export
 record IsEquiv {0 a : Type} (r : CEndoRel a) where
   constructor IEQ
-  IErefl : (0 x : a) -> CRelated r (x, x)
-  IEsym : (0 x, x' : a) -> CRelated r (x, x') -> CRelated r (x', x)
+  IErefl : Pi {a} (CRelated r . ProductNTUnit)
+  IEsym : SliceMorphism {a=(a, a)} (CRelated r) (CRelated r . Builtin.swap)
   IEtrans : (0 x, x', x'' : a) ->
     CRelated r (x', x'') -> CRelated r (x, x') -> CRelated r (x, x'')
 
