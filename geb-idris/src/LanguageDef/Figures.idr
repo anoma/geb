@@ -134,6 +134,33 @@ public export
 SPCQuiver : SQuiver -> SQuiver
 SPCQuiver sq = SQuiv (SQVert sq) (SQuivPath sq) (sqpSrc {sq}) (sqpTgt {sq})
 
+---------------------------
+---- Symmetric closure ----
+---------------------------
+
+public export
+data SSCEdge : SQuiver -> Type where
+  SSCEv : {0 sq : SQuiver} -> SQEdge sq -> SSCEdge sq
+  SSCEsym : {0 sq : SQuiver} -> SQEdge sq -> SSCEdge sq
+
+public export
+SSCsrc : {sq : SQuiver} -> SSCEdge sq -> SQVert sq
+SSCsrc {sq} (SSCEv {sq} e) = sqSrc sq e
+SSCsrc {sq} (SSCEsym {sq} e) = sqTgt sq e
+
+public export
+SSCtgt : {sq : SQuiver} -> SSCEdge sq -> SQVert sq
+SSCtgt {sq} (SSCEv {sq} e) = sqTgt sq e
+SSCtgt {sq} (SSCEsym {sq} e) = sqSrc sq e
+
+public export
+SSCQuiver : SQuiver -> SQuiver
+SSCQuiver sq = SQuiv (SQVert sq) (SSCEdge sq) (SSCsrc {sq}) (SSCtgt {sq})
+
+---------------------------
+---- Symmetric closure ----
+---------------------------
+
 public export
 record CPCat where
   constructor CPC
