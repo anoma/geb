@@ -1410,17 +1410,43 @@ NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
 --------------------------------------------------
 
 public export
-record WTypeFunc (parambase, posbase : Type) where
+record WTypeFunc (dom, cod : Type) where
   constructor MkWTF
   wtPos : Type
   wtDir : Type
-  wtAssign : wtDir -> parambase
+  wtAssign : wtDir -> dom
   wtDirSlice : wtDir -> wtPos
-  wtPosSlice : wtPos -> posbase
+  wtPosSlice : wtPos -> cod
 
 public export
 WTypeEndoFunc : Type -> Type
 WTypeEndoFunc base = WTypeFunc base base
+
+public export
+CSPolyWTF : {dom, cod : Type} -> WTypeFunc dom cod -> CSliceFunctor dom cod
+CSPolyWTF {dom} {cod} wtf =
+  CSPolyF {dom} {dir=(wtDir wtf)} {pos=(wtPos wtf)} {cod}
+    (wtAssign wtf) (wtDirSlice wtf) (wtPosSlice wtf)
+
+public export
+csPolyMapWTF : {dom, cod : Type} -> (wtf : WTypeFunc dom cod) ->
+  CSliceFMap {c=dom} {d=cod} (CSPolyWTF {dom} {cod} wtf)
+csPolyMapWTF {dom} {cod} wtf =
+  csPolyMap {dom} {dir=(wtDir wtf)} {pos=(wtPos wtf)} {cod}
+    {f=(wtAssign wtf)} {g=(wtDirSlice wtf)} {h=(wtPosSlice wtf)}
+
+public export
+CSDirichWTF : {dom, cod : Type} -> WTypeFunc dom cod -> CSliceFunctor dom cod
+CSDirichWTF {dom} {cod} wtf =
+  CSDirichF {dom} {dir=(wtDir wtf)} {pos=(wtPos wtf)} {cod}
+    (wtAssign wtf) (wtDirSlice wtf) (wtPosSlice wtf)
+
+public export
+csDirichMapWTF : {dom, cod : Type} -> (wtf : WTypeFunc dom cod) ->
+  CSliceFContramap {c=dom} {d=cod} (CSDirichWTF {dom} {cod} wtf)
+csDirichMapWTF {dom} {cod} wtf =
+  csDirichMap {dom} {dir=(wtDir wtf)} {pos=(wtPos wtf)} {cod}
+    {f=(wtAssign wtf)} {g=(wtDirSlice wtf)} {h=(wtPosSlice wtf)}
 
 public export
 InterpWTF : {parambase, posbase : Type} ->
