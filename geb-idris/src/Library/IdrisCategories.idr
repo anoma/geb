@@ -836,6 +836,11 @@ CSliceFContramap : {c, d : Type} -> CSliceFunctor c d -> Type
 CSliceFContramap {c} {d} f =
   (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f y) (f x)
 
+public export
+SliceFunctorFromCSlice : {c, d : Type} -> CSliceFunctor c d -> SliceFunctor c d
+SliceFunctorFromCSlice {c} {d} f =
+  SliceFromCSlice {c=d} . f . CSliceFromSlice {c}
+
 -- The slices of `Type` themselves form a (two-)category (which is internal to
 -- `Type`), where the morphisms, as usual in a two-category, are the functors
 -- (between slice categories, in this case).
@@ -1474,11 +1479,10 @@ CSWPolyAlgMap {c} wtf = CSliceFAlgMap {c} (CSPolyWTF {dom=c} {cod=c} wtf)
 
 public export
 data SliceWTFMu : {0 c : Type} -> WTypeEndoFunc c -> SliceObj c where
-  InWM : {0 c : Type} -> {0 wtf : WTypeEndoFunc c} -> {0 el : c} ->
-    SliceFromCSlice {c}
-      (CSPolyWTF {dom=c} {cod=c} wtf $
-        CSliceFromSlice {c} $ SliceWTFMu {c} wtf) el ->
-    SliceWTFMu {c} wtf el
+  InWM : {0 c : Type} -> {0 wtf : WTypeEndoFunc c} ->
+    SliceAlg {a=c}
+      (SliceFunctorFromCSlice {c} $ CSPolyWTF {dom=c} {cod=c} wtf)
+      (SliceWTFMu {c} wtf)
 
 public export
 CSWTFMu : {c : Type} -> WTypeEndoFunc c -> CSliceObj c
