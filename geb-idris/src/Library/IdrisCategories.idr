@@ -784,6 +784,19 @@ public export
 CSliceMorphismEq = snd0
 
 public export
+SlCSInv : {0 c : Type} -> (0 sl : SliceObj c) ->
+  SliceMorphism {a=c} (SliceFromCSlice {c} (CSliceFromSlice {c} sl)) sl
+SlCSInv {c} sl elc (Element0 (elc' ** els) eq) = replace {p=sl} eq els
+
+public export
+CSSlInv : {0 c : Type} -> (0 sl : CSliceObj c) ->
+  CSliceMorphism {c} (CSliceFromSlice {c} (SliceFromCSlice {c} sl)) sl
+CSSlInv {c} (x ** px) =
+  Element0
+    (\(elc ** Element0 elx eq) => elx)
+    (\(elc ** Element0 elx eq) => sym eq)
+
+public export
 CSliceId : {0 c : Type} -> (0 w : CSliceObj c) -> CSliceMorphism w w
 CSliceId (a ** x) = Element0 id (\_ => Refl)
 
@@ -2082,7 +2095,7 @@ Satisfies p x = p x = True
 
 public export
 Refinement : {a : Type} -> (0 pred : DecPred a) -> Type
-Refinement {a} p = Subset0 a (Satisfies p)
+Refinement {a} p = Equalizer {a} {b=Bool} p (const True)
 
 public export
 refinementFstEq : {0 a : Type} -> {0 pred : DecPred a} ->
@@ -2210,11 +2223,6 @@ public export
 Eq a => (pr : DecPred a) => Eq (Refinement {a} pr) where
   Element0 x p == Element0 x' p' = x == x'
   Element0 x p /= Element0 x' p' = x /= x'
-
-public export
-Show a => (pr : DecPred a) => Show (Refinement {a} pr) where
-  show (Element0 x _) = show x
-  showPrec d (Element0 x _) = showPrec d x
 
 --------------------------
 ---- Refined functors ----
@@ -2688,6 +2696,20 @@ Algebra f a = f a -> a
 public export
 Coalgebra : (Type -> Type) -> Type -> Type
 Coalgebra f a = a -> f a
+
+-- Objects of the category of F-algebras for a given functor.
+public export
+FIFace : (Type -> Type) -> Type
+FIFace f = DPair Type (Algebra f)
+
+-- Morphisms of the category of F-algebras for a given functor.
+public export
+FIFaceMorph :
+  {0 f : Type -> Type} ->
+  {0 m : {0 x, y : Type} -> (x -> y) -> f x -> f y} ->
+  FIFace f -> FIFace f -> Type
+FIFaceMorph {f} {m} (a ** g) (b ** h) =
+  Subset0 (a -> b) (\j => ExtEq (j . g) (h . m j))
 
 -- For a given functor `F` and object `v`, form the functor `Fv` defined by
 -- `Fv[x] = v + F[x]`.  We call it `TranslateFunctor` because it adds

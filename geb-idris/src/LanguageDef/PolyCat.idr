@@ -1044,6 +1044,12 @@ PFAlgCPS : PolyFunc -> Type -> Type
 PFAlgCPS p = PFAlg p . Continuation
 
 public export
+0 PolyAlgCommutes : (0 p : PolyFunc) -> {0 a, b : Type} -> (0 j : a -> b) ->
+  (g : Algebra (InterpPolyFunc p) a) -> (h : Algebra (InterpPolyFunc p) b) ->
+  Type
+PolyAlgCommutes p {a} {b} j g h = ExtEq (j . g) (h . InterpPFMap p j)
+
+public export
 PolyContinuation : Type -> Type
 PolyContinuation a = PolyNatTrans (PFHomArena a) PFIdentityArena
 
