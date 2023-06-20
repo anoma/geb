@@ -24,11 +24,6 @@ record SQuiver where
   sqTgt : SQEdge -> SQVert
 
 public export
-data SQPathData : SliceObj SQuiver where
-  SQPDLoop : {0 sq : SQuiver} -> SQVert sq -> SQPathData sq
-  SQPDComp : {0 sq : SQuiver} -> SQEdge sq -> List (SQEdge sq) -> SQPathData sq
-
-public export
 0 IsNeSQPathAcc :
   (sq : SQuiver) -> Type -> SQEdge sq -> List (SQEdge sq) -> Type
 IsNeSQPathAcc sq acc e [] = acc
@@ -58,6 +53,11 @@ public export
 0 IsNeSQPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
   (e : SQEdge sq) -> (es : List (SQEdge sq)) -> Dec (IsNeSQPath sq e es)
 IsNeSQPathDec sq veq = IsNeSQPathAccDec sq veq Unit (Yes ())
+
+public export
+data SQPathData : SliceObj SQuiver where
+  SQPDLoop : {0 sq : SQuiver} -> SQVert sq -> SQPathData sq
+  SQPDComp : {0 sq : SQuiver} -> SQEdge sq -> List (SQEdge sq) -> SQPathData sq
 
 public export
 0 IsSQPath : (sq : SQuiver) -> List (SQEdge sq) -> Type
