@@ -627,19 +627,19 @@ but1 : BUNat 4
 but1 = Left ()
 
 bat1 : BANat 4
-bat1 = u2a but1
+bat1 = u2a {n=4} but1
 
 bat2 : BANat 4
-bat2 = MkBANat 3
+bat2 = MkBANat {n=4} 3
 
 but2 : BUNat 4
-but2 = a2u bat2
+but2 = a2u {n=4} bat2
 
 tbut21 : Assertion
 tbut21 = Assert $ MkBUNat {n=4} 3 == but2
 
 tbut22 : Assertion
-tbut22 = Assert $ u2a but2 == bat2
+tbut22 = Assert $ u2a {n=4} but2 == bat2
 
 bnclm0 : BNCListMorph
 bnclm0 = [ 3, 1, 5, 0 ]
@@ -703,10 +703,10 @@ bncpm0 : BNCPolyM
 bncpm0 = #| 4 #+ #| 2 #* PI #^ 3 #+ PI #^ 4
 
 bncpm0mod200 : BANat 200 -> BANat 200
-bncpm0mod200 = baPolyM bncpm0
+bncpm0mod200 = baPolyM {m=200} {n=199} bncpm0
 
 bncpm0mod100 : BANat 200 -> BANat 100
-bncpm0mod100 = baPolyM bncpm0
+bncpm0mod100 = baPolyM {m=200} {n=99} bncpm0
 
 bncpm1 : BNCPolyM
 bncpm1 = (PI #+ #| 1) #^ 3
@@ -739,10 +739,10 @@ bncpmt8 : Assertion
 bncpmt8 = Assert $ metaBNCPolyM 100 bncpm0 3 == 38
 
 bncpmt9 : Assertion
-bncpmt9 = Assert $ fst0 (bncpm0mod200 (MkBANat 3)) == 139
+bncpmt9 = Assert $ fst0 (bncpm0mod200 (MkBANat {n=200} 3)) == 139
 
 bncpmt10 : Assertion
-bncpmt10 = Assert $ fst0 (bncpm0mod100 (MkBANat 3)) == 39
+bncpmt10 = Assert $ fst0 (bncpm0mod100 (MkBANat {n=200} 3)) == 39
 
 bncpmt11 : Assertion
 bncpmt11 = Assert $ metaBNCPolyM 200 (bncpm0 #- bncpm1) 3 == 75
@@ -1148,7 +1148,7 @@ polyCatTest = do
   putStrLn $ "bat1: " ++ show bat1
   putStrLn $ "but1: " ++ show but1
   putStrLn $ "bat2: " ++ show bat2
-  putStrLn $ "bat2 (long): " ++ baShowLong bat2
+  putStrLn $ "bat2 (long): " ++ baShowLong {n=4} bat2
   putStrLn $ "but2: " ++ show but2
   putStrLn ""
   putStrLn "------------------------------"
