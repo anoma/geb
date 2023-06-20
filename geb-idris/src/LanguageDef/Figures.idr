@@ -41,12 +41,48 @@ CRelCompose : {0 a, b : Type} -> {0 r, r', r'' : CRelation a b} ->
 CRelCompose {a} {b} = CSliceCompose {c=(a, b)}
 
 public export
+CRelFunctor : Type -> Type -> Type -> Type -> Type
+CRelFunctor a b c d = CSliceFunctor (a, b) (c, d)
+
+public export
+CEndoRelFunctor : Type -> Type -> Type
+CEndoRelFunctor a b = CRelFunctor a a b b
+
+public export
+CRelEndofunctor : Type -> Type -> Type
+CRelEndofunctor a b = CRelFunctor a b a b
+
+public export
+CEndoRelEndofunctor : Type -> Type
+CEndoRelEndofunctor a = CRelFunctor a a a a
+
+public export
+CRelFAlgMap : {0 a, b : Type} -> CRelEndofunctor a b -> CRelation a b -> Type
+CRelFAlgMap {a} {b} f r = CRelMorph {a} {b} (f r) r
+
+public export
+CRelFAlg : {a, b : Type} -> CRelEndofunctor a b -> Type
+CRelFAlg {a} {b} f = DPair (CRelation a b) (CRelFAlgMap {a} {b} f)
+
+public export
+CRelFCoalgMap : {0 a, b : Type} -> CRelEndofunctor a b -> CRelation a b -> Type
+CRelFCoalgMap {a} {b} f r = CRelMorph {a} {b} r (f r)
+
+public export
+CRelFCoalg : {a, b : Type} -> CRelEndofunctor a b -> Type
+CRelFCoalg {a} {b} f = DPair (CRelation a b) (CRelFCoalgMap {a} {b} f)
+
+public export
 CRelated : {0 a, b : Type} -> (r : CRelation a b) -> SliceObj (a, b)
 CRelated {a} {b} = SliceFromCSlice {c=(a, b)}
 
 -------------------------------
 ---- Equivalence relations ----
 -------------------------------
+
+public export
+CRelReflF : {a : Type} -> CEndoRelEndofunctor a
+CRelReflF {a} (r ** p) = (Either r a ** eitherElim p $ ProductNTUnit {a})
 
 public export
 record IsEquiv {0 a : Type} (r : CEndoRel a) where

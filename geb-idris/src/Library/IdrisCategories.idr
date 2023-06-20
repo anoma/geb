@@ -803,6 +803,26 @@ public export
 CSliceFunctor : Type -> Type -> Type
 CSliceFunctor c d = CSliceObj c -> CSliceObj d
 
+public export
+CSliceEndofunctor : Type -> Type
+CSliceEndofunctor c = CSliceFunctor c c
+
+public export
+CSliceFAlgMap : {0 c : Type} -> CSliceEndofunctor c -> CSliceObj c -> Type
+CSliceFAlgMap {c} f a = CSliceMorphism {c} (f a) a
+
+public export
+CSliceFAlg : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceFAlg {c} f = DPair (CSliceObj c) (CSliceFAlgMap {c} f)
+
+public export
+CSliceFCoalgMap : {0 c : Type} -> CSliceEndofunctor c -> CSliceObj c -> Type
+CSliceFCoalgMap {c} f a = CSliceMorphism {c} a (f a)
+
+public export
+CSliceFCoalg : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceFCoalg {c} f = DPair (CSliceObj c) (CSliceFCoalgMap {c} f)
+
 -- The morphism-map component of a functor between slice categories.
 public export
 CSliceFMap : {c, d : Type} -> CSliceFunctor c d -> Type
