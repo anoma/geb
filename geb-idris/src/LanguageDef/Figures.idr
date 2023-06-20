@@ -60,6 +60,18 @@ data SQPathData : SliceObj SQuiver where
   SQPDComp : {0 sq : SQuiver} -> SQEdge sq -> List (SQEdge sq) -> SQPathData sq
 
 public export
+showSQPD : {0 sq : SQuiver} -> (SQVert sq -> String) -> (SQEdge sq -> String) ->
+  SQPathData sq -> String
+showSQPD {sq} shv she (SQPDLoop v) = shv v
+showSQPD {sq} shv she (SQPDComp e es) =
+  let Show (SQEdge sq) where show = she in show (e :: es)
+
+public export
+(shv : Show (SQVert sq)) => (she : Show (SQEdge sq)) =>
+    Show (SQPathData sq) where
+  show = showSQPD show show
+
+public export
 0 IsSQPath : (sq : SQuiver) -> SQPathData sq -> Type
 IsSQPath sq (SQPDLoop {sq} v) = Unit
 IsSQPath sq (SQPDComp {sq} e es) = IsNeSQPath sq e es
