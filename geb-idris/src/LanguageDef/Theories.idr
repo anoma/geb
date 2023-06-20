@@ -222,6 +222,7 @@ public export
 ccComp : {a, b, c : CompCatObj} ->
   CompCatMorph b c -> CompCatMorph a b -> CompCatMorph a c
 ccComp (CCid _) f = f
+ccComp g (CCid _) = g
 ccComp {a} (CCconst b {b=b'} t) f = CCconst a {b=b'} t
 ccComp {a} {b} {c} (CCif {a=b} {b=c} cond g g') f =
   case ccComp cond f of
