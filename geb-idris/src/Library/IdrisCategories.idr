@@ -2220,17 +2220,6 @@ public export
 RefinedPi : {a : Refined} -> RefinedSlice a -> Type
 RefinedPi {a} p = Pi {a=(RefinedType a)} (RefinedType . p)
 
-public export
-DecEq a => (pr : DecPred a) => DecEq (Refinement {a} pr) where
-  decEq (Element0 x p) (Element0 x' p') = case decEq x x' of
-    Yes Refl => Yes $ rewrite uip {eq=p} {eq'=p'} in Refl
-    No neq => No $ \eq => case eq of Refl => neq Refl
-
-public export
-Eq a => (pr : DecPred a) => Eq (Refinement {a} pr) where
-  Element0 x p == Element0 x' p' = x == x'
-  Element0 x p /= Element0 x' p' = x /= x'
-
 --------------------------
 ---- Refined functors ----
 --------------------------
