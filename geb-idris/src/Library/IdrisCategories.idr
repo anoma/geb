@@ -854,6 +854,13 @@ SliceFunctorFromCSlice : {c, d : Type} -> CSliceFunctor c d -> SliceFunctor c d
 SliceFunctorFromCSlice {c} {d} f =
   SliceFromCSlice {c=d} . f . CSliceFromSlice {c}
 
+public export
+CSMorphFromSlice : {c : Type} -> {x, y : SliceObj c} ->
+  SliceMorphism x y ->
+  CSliceMorphism {c} (CSliceFromSlice {c} x) (CSliceFromSlice {c} y)
+CSMorphFromSlice {c} {x} {y} m =
+  Element0 (\(elc ** elx) => (elc ** m elc elx)) $ \(elc ** elx) => Refl
+
 -- The slices of `Type` themselves form a (two-)category (which is internal to
 -- `Type`), where the morphisms, as usual in a two-category, are the functors
 -- (between slice categories, in this case).
