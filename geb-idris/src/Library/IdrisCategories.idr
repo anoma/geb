@@ -1488,6 +1488,29 @@ public export
 CSWTFMu : {c : Type} -> WTypeEndoFunc c -> CSliceObj c
 CSWTFMu {c} wtf = CSliceFromSlice {c} (SliceWTFMu {c} wtf)
 
+mutual
+  public export
+  cswCataTot : {0 c : Type} -> {0 wtf : WTypeEndoFunc c} -> {x : CSliceObj c} ->
+    CSWPolyAlgMap {c} wtf x -> fst (CSWTFMu {c} wtf) -> fst x
+  cswCataTot {c = c} {wtf=(MkWTF pos dir f g h)} {x=(x ** px)}
+    (Element0 alg algeq) (elc ** (InWM elc (Element0 (i ** d) eq))) =
+      alg (i ** Element0 ?cswCataTot_hole_1 ?cswCataTot_hole_2)
+
+  public export
+  0 cswCataEq :
+    {0 c : Type} -> {0 wtf : WTypeEndoFunc c} -> {x : CSliceObj c} ->
+    (alg : CSWPolyAlgMap {c} wtf x) ->
+    ExtEq (snd $ CSWTFMu {c} wtf) (snd x . cswCataTot {c} {wtf} {x} alg)
+  cswCataEq {c} {wtf=(MkWTF pos dir f g h)} {x=(x ** px)}
+    (Element0 alg algeq) (elc ** (InWM elc (Element0 (i ** d) eq))) =
+      ?cswCataEq_hole
+
+public export
+cswCata : {0 c : Type} -> {0 wtf : WTypeEndoFunc c} -> {x : CSliceObj c} ->
+  CSWPolyAlgMap {c} wtf x -> CSliceMorphism {c} (CSWTFMu {c} wtf) x
+cswCata {c} {wtf} {x} alg =
+  Element0 (cswCataTot {c} {wtf} {x} alg) (cswCataEq {c} {wtf} {x} alg)
+
 public export
 data WTFMu : {a : Type} -> WTypeEndoFunc a -> SliceObj a where
   InWTFM : {a : Type} -> {wtf : WTypeEndoFunc a} ->
