@@ -15,6 +15,12 @@ import public LanguageDef.ADTCat
 ---------------------------------
 ---------------------------------
 
+---------------------------
+---- Quivers in `Type` ----
+---------------------------
+
+-- A "strict quiver", where the only equalities (among vertices or edges)
+-- are intensional.
 public export
 record SQuiver where
   constructor SQuiv
@@ -22,6 +28,10 @@ record SQuiver where
   SQEdge : Type
   sqSrc : SQEdge -> SQVert
   sqTgt : SQEdge -> SQVert
+
+---------------
+---- Paths ----
+---------------
 
 public export
 0 IsNeSQPathAcc :
@@ -60,6 +70,18 @@ data SQPathData : SliceObj SQuiver where
   SQPDComp : {0 sq : SQuiver} -> SQEdge sq -> List (SQEdge sq) -> SQPathData sq
 
 public export
+sqpdSrc : {sq : SQuiver} -> SQPathData sq -> SQVert sq
+sqpdSrc {sq} (SQPDLoop {sq} v) = v
+sqpdSrc {sq} (SQPDComp {sq} e es) = sqSrc sq e
+
+public export
+sqpdTgt : {sq : SQuiver} -> SQPathData sq -> SQVert sq
+sqpdTgt {sq} (SQPDLoop {sq} v) = v
+sqpdTgt {sq} (SQPDComp {sq} e es) = case last' es of
+  Just e' => sqTgt sq e'
+  Nothing => sqTgt sq e
+
+public export
 showSQPD : {0 sq : SQuiver} -> (SQVert sq -> String) -> (SQEdge sq -> String) ->
   SQPathData sq -> String
 showSQPD {sq} shv she (SQPDLoop v) = shv v
@@ -94,6 +116,23 @@ isSQPath sq veq es = isYes $ IsSQPathDec sq veq es
 public export
 SQuivPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) -> Type
 SQuivPathDec sq veq = Refinement {a=(SQPathData sq)} (isSQPath sq veq)
+
+public export
+sqpSrc : {sq : SQuiver} -> SQuivPath sq -> SQVert sq
+sqpSrc {sq} p = sqpdSrc (fst0 p)
+
+public export
+sqpTgt : {sq : SQuiver} -> SQuivPath sq -> SQVert sq
+sqpTgt {sq} p = sqpdTgt (fst0 p)
+
+----------------------
+---- Path closure ----
+----------------------
+
+-- The path closure, or reflexive/transitive closure, of a quiver.
+public export
+SPCQuiver : SQuiver -> SQuiver
+SPCQuiver sq = SQuiv (SQVert sq) (SQuivPath sq) (sqpSrc {sq}) (sqpTgt {sq})
 
 public export
 record CPCat where
