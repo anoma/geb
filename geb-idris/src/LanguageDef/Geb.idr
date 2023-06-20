@@ -2,6 +2,11 @@ module LanguageDef.Geb
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import LanguageDef.PolyCat
+import LanguageDef.Theories
+import LanguageDef.DiagramCat
+import LanguageDef.RefinedADT
+import LanguageDef.Adjunctions
 
 %default total
 
