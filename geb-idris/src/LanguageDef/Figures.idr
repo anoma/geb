@@ -60,28 +60,28 @@ data SQPathData : SliceObj SQuiver where
   SQPDComp : {0 sq : SQuiver} -> SQEdge sq -> List (SQEdge sq) -> SQPathData sq
 
 public export
-0 IsSQPath : (sq : SQuiver) -> List (SQEdge sq) -> Type
-IsSQPath sq [] = Unit
-IsSQPath sq (e :: es) = IsNeSQPath sq e es
+0 IsSQPath : (sq : SQuiver) -> SQPathData sq -> Type
+IsSQPath sq (SQPDLoop {sq} v) = Unit
+IsSQPath sq (SQPDComp {sq} e es) = IsNeSQPath sq e es
 
 public export
 0 IsSQPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
-  (es : List (SQEdge sq)) -> Dec (IsSQPath sq es)
-IsSQPathDec sq veq [] = Yes ()
-IsSQPathDec sq veq (e :: es) = IsNeSQPathDec sq veq e es
+  (p : SQPathData sq) -> Dec (IsSQPath sq p)
+IsSQPathDec sq veq (SQPDLoop {sq} v) = Yes ()
+IsSQPathDec sq veq (SQPDComp {sq} e es) = IsNeSQPathDec sq veq e es
 
 public export
 SQuivPath : SQuiver -> Type
-SQuivPath sq = Subset0 (List (SQEdge sq)) (IsSQPath sq)
+SQuivPath sq = Subset0 (SQPathData sq) (IsSQPath sq)
 
 public export
 0 IsSQPathTest : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
-  (es : List (SQEdge sq)) -> Bool
+  (es : SQPathData sq) -> Bool
 IsSQPathTest sq veq es = isYes $ IsSQPathDec sq veq es
 
 public export
 SQuivPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) -> Type
-SQuivPathDec sq veq = Refinement {a=(List (SQEdge sq))} (IsSQPathTest sq veq)
+SQuivPathDec sq veq = Refinement {a=(SQPathData sq)} (IsSQPathTest sq veq)
 
 public export
 record CPCat where
