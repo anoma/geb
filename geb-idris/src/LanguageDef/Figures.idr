@@ -15,6 +15,10 @@ import public LanguageDef.ADTCat
 -----------------------------------------------
 -----------------------------------------------
 
+-----------------------------------------
+---- Relations as slices of products ----
+-----------------------------------------
+
 public export
 CRelation : Type -> Type -> Type
 CRelation a b = CSliceObj (a, b)
@@ -35,6 +39,22 @@ public export
 CRelCompose : {0 a, b : Type} -> {0 r, r', r'' : CRelation a b} ->
   CRelMorph r' r'' -> CRelMorph r r' -> CRelMorph r r''
 CRelCompose {a} {b} = CSliceCompose {c=(a, b)}
+
+public export
+CRelated : {0 a, b : Type} -> (r : CRelation a b) -> SliceObj (a, b)
+CRelated {a} {b} = SliceFromCSlice {c=(a, b)}
+
+-------------------------------
+---- Equivalence relations ----
+-------------------------------
+
+public export
+record IsEquiv {0 a : Type} (r : CEndoRel a) where
+  constructor IEQ
+  IErefl : (0 x : a) -> CRelated r (x, x)
+  IEsym : (0 x, x' : a) -> CRelated r (x, x') -> CRelated r (x', x)
+  IEtrans : (0 x, x', x'' : a) ->
+    CRelated r (x', x'') -> CRelated r (x, x') -> CRelated r (x, x'')
 
 ---------------------------------
 ---------------------------------
