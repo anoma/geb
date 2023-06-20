@@ -73,6 +73,18 @@ CRelFCoalg : {a, b : Type} -> CRelEndofunctor a b -> Type
 CRelFCoalg {a} {b} f = DPair (CRelation a b) (CRelFCoalgMap {a} {b} f)
 
 public export
+CRelFMap : {a, b, c, d : Type} -> CRelFunctor a b c d -> Type
+CRelFMap {a} {b} {c} {d} f =
+  (x, y : CRelation a b) ->
+  CRelMorph {a} {b} x y -> CRelMorph {a=c} {b=d} (f x) (f y)
+
+public export
+CRelFContramap : {a, b, c, d : Type} -> CRelFunctor a b c d -> Type
+CRelFContramap {a} {b} {c} {d} f =
+  (x, y : CRelation a b) ->
+  CRelMorph {a} {b} x y -> CRelMorph {a=c} {b=d} (f y) (f x)
+
+public export
 CRelated : {0 a, b : Type} -> (r : CRelation a b) -> SliceObj (a, b)
 CRelated {a} {b} = SliceFromCSlice {c=(a, b)}
 
