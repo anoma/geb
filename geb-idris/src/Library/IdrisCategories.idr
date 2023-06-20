@@ -1464,9 +1464,25 @@ public export
 WTFAlg : {a : Type} -> WTypeEndoFunc a -> SliceObj a -> Type
 WTFAlg {a} wtf sa = SliceMorphism {a} (InterpWTF wtf sa) sa
 
+public export
+CSWPolyAlgMap : {c : Type} -> WTypeEndoFunc c -> CSliceObj c -> Type
+CSWPolyAlgMap {c} wtf = CSliceFAlgMap {c} (CSPolyWTF {dom=c} {cod=c} wtf)
+
 -------------------------------------
 ---- Initial algebras of W-types ----
 -------------------------------------
+
+public export
+data SliceWTFMu : {0 c : Type} -> WTypeEndoFunc c -> SliceObj c where
+  InWM : {0 c : Type} -> {0 wtf : WTypeEndoFunc c} -> {0 el : c} ->
+    SliceFromCSlice {c}
+      (CSPolyWTF {dom=c} {cod=c} wtf $
+        CSliceFromSlice {c} $ SliceWTFMu {c} wtf) el ->
+    SliceWTFMu {c} wtf el
+
+public export
+CSWTFMu : {c : Type} -> WTypeEndoFunc c -> CSliceObj c
+CSWTFMu {c} wtf = CSliceFromSlice {c} (SliceWTFMu {c} wtf)
 
 public export
 data WTFMu : {a : Type} -> WTypeEndoFunc a -> SliceObj a where
