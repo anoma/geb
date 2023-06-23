@@ -2701,24 +2701,25 @@ FAlgMorph : {f : Type -> Type} ->
 FAlgMorph {f} {fm} (a ** g) (b ** h) =
   Subset0 (a -> b) $ \j => ExtEq (j . g) (h . fm j)
 
+-- Objects of the category of F-algebras for a given functor may also
+-- be viewed as interfaces.
+public export
+FIFace : (Type -> Type) -> Type
+FIFace = FAlgObj
+
+-- Morphisms of the category of F-algebras for a given functor may be
+-- viewed as implementations of an interface in terms of another.
+public export
+FIFaceMorph :
+  {f : Type -> Type} ->
+  {fm : {0 x, y : Type} -> (x -> y) -> f x -> f y} ->
+  FIFace f -> FIFace f -> Type
+FIFaceMorph {fm} = FAlgMorph {fm}
+
 -- The dual of an F-algebra: an F-coalgebra.
 public export
 Coalgebra : (Type -> Type) -> Type -> Type
 Coalgebra f a = a -> f a
-
--- Objects of the category of F-algebras for a given functor.
-public export
-FIFace : (Type -> Type) -> Type
-FIFace f = DPair Type (Algebra f)
-
--- Morphisms of the category of F-algebras for a given functor.
-public export
-FIFaceMorph :
-  {0 f : Type -> Type} ->
-  {0 m : {0 x, y : Type} -> (x -> y) -> f x -> f y} ->
-  FIFace f -> FIFace f -> Type
-FIFaceMorph {f} {m} (a ** g) (b ** h) =
-  Subset0 (a -> b) (\j => ExtEq (j . g) (h . m j))
 
 -- For a given functor `F` and object `v`, form the functor `Fv` defined by
 -- `Fv[x] = v + F[x]`.  We call it `TranslateFunctor` because it adds
