@@ -1080,7 +1080,7 @@ MuS0EF : Type
 MuS0EF = Mu Subst0EndoF
 
 public export
-pCataS0EF : ParamCata Subst0EndoF
+pCataS0EF : FreeFEval Subst0EndoF
 pCataS0EF v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC com => alg $ case com of
@@ -1499,7 +1499,7 @@ NuRNatF : Type
 NuRNatF = Nu RNatF
 
 public export
-cataRNatF : ParamCata RNatF
+cataRNatF : FreeFEval RNatF
 cataRNatF v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC n => alg $ case n of
@@ -1555,7 +1555,7 @@ NuENatF : Type
 NuENatF = Nu ENatF
 
 public export
-cataENatF : ParamCata ENatF
+cataENatF : FreeFEval ENatF
 cataENatF v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC n => alg $ case n of
@@ -3325,7 +3325,7 @@ NSList : Type
 NSList = NSexpType NSLIST
 
 public export
-nsexpCata : ProductCatParamCata NSexpFunctor
+nsexpCata : ProductCatFreeFEval NSexpFunctor
 nsexpCata v carrier alg type (InFreeProduct type term) = alg type $ case type of
   NSexpNat => nsexpCataNat term
   NSEXP => nsexpCataExp term

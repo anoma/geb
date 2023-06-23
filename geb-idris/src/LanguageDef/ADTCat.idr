@@ -1982,7 +1982,7 @@ termCataRec = termCata . talgFromRec
 public export
 termCataCtx : {0 ctx, a : Type} -> (ctx -> TermAlgRec a) -> ctx -> TermMu -> a
 termCataCtx {ctx} {a} alg =
-  pfParamCata {p=ADTTermPF} {x=ctx} {a} ?termCataCtx_hole
+  pfFreeFEval {p=ADTTermPF} {x=ctx} {a} ?termCataCtx_hole
 
 ----------------------
 ---- Constructors ----
@@ -2142,7 +2142,7 @@ AsSubstObjAlg STPosPair dir (i, cont) = ?IsSubstObj_alg_hole_3
 
 public export
 asSubstObj : STMu -> Maybe SOMu
-asSubstObj = pfParamCata AsSubstObjAlg (SOPos0, const Nothing)
+asSubstObj = pfFreeFEval AsSubstObjAlg (SOPos0, const Nothing)
 
 public export
 isSubstObj : STMu -> Bool
