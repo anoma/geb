@@ -1093,7 +1093,7 @@ pCataS0EF v a subst alg (InFree x) = case x of
 
 public export
 cataS0EF : Catamorphism Subst0EndoF
-cataS0EF = cataFromParam pCataS0EF
+cataS0EF = cataFromEval pCataS0EF
 
 public export
 showFreeS0EF : {v : Type} -> (v -> String) -> FreeS0EF v -> String
@@ -1464,7 +1464,7 @@ LimitRNat = TrEitherF RNatF
 
 public export
 ColimitRNat : Type -> Type
-ColimitRNat = ColimitIterF RNatF
+ColimitRNat = ScalePairF RNatF
 
 public export
 TRNat0 : TermRNat v a
@@ -3216,7 +3216,7 @@ FreeFSexp = FreeMonad . FSexpF
 
 public export
 FreeFSalg : {atom : Type} -> ArityMap atom -> Type -> Type
-FreeFSalg = FreeAlgebra . FSexpF
+FreeFSalg = FreeAlgSig . FSexpF
 
 public export
 MuFSexp : {atom : Type} -> ArityMap atom -> Type
@@ -3232,7 +3232,7 @@ CofreeFSexp = CofreeComonad . FSexpF
 
 public export
 CofreeFScoalg : {atom : Type} -> ArityMap atom -> Type -> Type
-CofreeFScoalg = CofreeCoalgebra . FSexpF
+CofreeFScoalg = CofreeCoalgSig . FSexpF
 
 public export
 NuFSexp : {atom : Type} -> ArityMap atom -> Type

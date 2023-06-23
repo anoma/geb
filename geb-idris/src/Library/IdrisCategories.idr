@@ -2751,10 +2751,10 @@ TrEitherF : (Type -> Type) -> (Type -> Type)
 TrEitherF f a = TranslateFunctor f a a
 
 public export
-sliceTrMap : {a : Type} -> {f : Type -> Type} ->
+sliceTrLift : {a : Type} -> {f : Type -> Type} ->
   (SliceObj a -> SliceObj (f a)) ->
   SliceObj a -> SliceObj (TrEitherF f a)
-sliceTrMap {a} {f} m sa = trElim {f} {v=a} {a} {x=Type} sa (m sa)
+sliceTrLift {a} {f} m sa = trElim {f} {v=a} {a} {x=Type} sa (m sa)
 
 -- For a given functor `F`, form the functor `Fa` defined by
 -- `Fa[x] = a * F[x]`.  We call it `ScaleFunctor` because it multiplies
@@ -2772,8 +2772,8 @@ Functor f => Bifunctor (ScaleFunctor f) where
   bimap f' g' (SFN x fx) = SFN (f' x) (map g' fx)
 
 public export
-ColimitIterF : (Type -> Type) -> (Type -> Type)
-ColimitIterF f a = ScaleFunctor f a a
+ScalePairF : (Type -> Type) -> (Type -> Type)
+ScalePairF f a = ScaleFunctor f a a
 
 export
 treeLabel : {f : Type -> Type} -> {l, a : Type} -> ScaleFunctor f l a -> l
@@ -2842,20 +2842,20 @@ data FreeMonad : (Type -> Type) -> (Type -> Type) where
     TermAlgebra f a (FreeMonad f a)
 
 public export
-FreeAlgebra : (Type -> Type) -> Type -> Type
-FreeAlgebra f a = Algebra f (FreeMonad f a)
+FreeAlgSig : (Type -> Type) -> Type -> Type
+FreeAlgSig f a = Algebra f (FreeMonad f a)
 
 public export
-BigStepAlgebra : (Type -> Type) -> Type -> Type
-BigStepAlgebra f a = Algebra (FreeMonad f) a
+FreeMAlgSig : (Type -> Type) -> Type -> Type
+FreeMAlgSig f a = Algebra (FreeMonad f) a
 
 public export
-InitialAlgebra : (Type -> Type) -> Type
-InitialAlgebra f = FreeAlgebra f Void
+InitAlgSig : (Type -> Type) -> Type
+InitAlgSig f = FreeAlgSig f Void
 
 public export
-InitAlgFromUniv : (Type -> Type) -> Type
-InitAlgFromUniv f = NaturalTransformation (Algebra f) Prelude.id
+InitAlgFromUSig : (Type -> Type) -> Type
+InitAlgFromUSig f = NaturalTransformation (Algebra f) Prelude.id
 
 -- If `F` has a terminal coalgebra, then for every object `a`, the functor
 -- `Fa` defined above also has a terminal coalgebra, which is isomorphic
@@ -2870,37 +2870,29 @@ data CofreeComonad : (Type -> Type) -> (Type -> Type) where
     Inf (ScaleFunctor f a (CofreeComonad f a)) -> CofreeComonad f a
 
 public export
-CofreeCoalgebra : (Type -> Type) -> Type -> Type
-CofreeCoalgebra f a = Coalgebra f (CofreeComonad f a)
+CofreeCoalgSig : (Type -> Type) -> Type -> Type
+CofreeCoalgSig f a = Coalgebra f (CofreeComonad f a)
 
 public export
-BigStepCoalgebra : (Type -> Type) -> Type -> Type
-BigStepCoalgebra f a = Coalgebra (CofreeComonad f) a
+CofreeCMCoalgSig : (Type -> Type) -> Type -> Type
+CofreeCMCoalgSig f a = Coalgebra (CofreeComonad f) a
 
 public export
-CofreeCoalgMap : (f : Type -> Type) -> Type
-CofreeCoalgMap f =
-  (a, b : Type) -> (a -> b) -> CofreeCoalgebra f a -> CofreeCoalgebra f b
+TerminalCoalgSig : (Type -> Type) -> Type
+TerminalCoalgSig f = CofreeCoalgSig f Unit
 
 public export
-CofreeCoalgSubtrees : (f : Type -> Type) -> Type
-CofreeCoalgSubtrees f =
-  (a, b : Type) -> (a -> b) -> CofreeCoalgebra f a -> Coalgebra f b
+TerminalCoalgFromUSig : (Type -> Type) -> Type
+TerminalCoalgFromUSig f = (a : Type ** (Coalgebra f a, a))
 
-public export
-TerminalCoalgebra : (Type -> Type) -> Type
-TerminalCoalgebra f = CofreeCoalgebra f Unit
-
-public export
-TermCoalgFromUniv : (Type -> Type) -> Type
-TermCoalgFromUniv f = (a : Type ** (Coalgebra f a, a))
-
+-- The unit of the free monad.
 public export
 inFV : {f : Type -> Type} -> Coalgebra (FreeMonad f) a
 inFV = InFree . TFV
 
+-- The free algebra of a functor.
 public export
-inFC : {f : Type -> Type} -> Algebra f (FreeMonad f a)
+inFC : {f : Type -> Type} -> {0 a : Type} -> FreeAlgSig f a
 inFC = InFree . TFC
 
 public export
@@ -2922,19 +2914,21 @@ outCFC : {f : Type -> Type} -> {a : Type} -> Coalgebra f (CofreeComonad f a)
 outCFC {f} (InCofree x) = case x of SFN _ fa => fa
 
 -- Special case of `FreeMonad` where `v` is `Void`.
--- This is the fixpoint of an endofunctor (if it exists).
+-- This is the fixpoint (least fixed point) of an endofunctor
+-- (if it exists).
 public export
 Mu : (Type -> Type) -> Type
 Mu f = FreeMonad f Void
 
 -- Special case of `CofreeComonad` where `v` is `Unit`.
--- This is the cofixpoint of an endofunctor (if it exists).
+-- This is the cofixpoint (greatest fixed point) of an endofunctor
+-- (if it exists).
 public export
 Nu : (Type -> Type) -> Type
-Nu f = CofreeComonad f ()
+Nu f = CofreeComonad f Unit
 
 public export
-outNu : {f : Type -> Type} -> Coalgebra f (Nu f)
+outNu : {f : Type -> Type} -> TerminalCoalgSig f
 outNu {f} (InCofree x) = case x of SFN () fn => fn
 
 -- The signature of the "eval" universal morphism for "FreeMonad f".
@@ -2946,44 +2940,48 @@ FreeFEval f =
 -- Special induction.
 public export
 Catamorphism : (Type -> Type) -> Type
-Catamorphism f = (a : Type) -> Algebra f a -> FreeMonad f Void -> a
+Catamorphism f = (a : Type) -> Algebra f a -> Mu f -> a
 
 public export
-cataFromParam : {f : Type -> Type} -> FreeFEval f -> Catamorphism f
-cataFromParam pcata a = pcata Void a (voidF a)
+cataFromEval : {f : Type -> Type} -> FreeFEval f -> Catamorphism f
+cataFromEval pcata a = pcata Void a (voidF a)
+
+-- A form of general induction, which we could view as being able to
+-- use the "eval" morphism of a free monad with arbitrary-depth rather
+-- than single-depth pattern matching, since it requires only an algebra
+-- of the free monad and not an algebra of the base functor.
+public export
+FreeFEvalGen : (Type -> Type) -> Type
+FreeFEvalGen f =
+  (v, a : Type) -> (v -> a) -> FreeMAlgSig f a -> FreeMonad f v -> a
 
 public export
-ParamBigStepCata : (Type -> Type) -> Type
-ParamBigStepCata f =
-  (v, a : Type) -> (v -> a) -> BigStepAlgebra f a -> FreeMonad f v -> a
+FreeMCata : (Type -> Type) -> Type
+FreeMCata f = (a : Type) -> FreeMAlgSig f a -> Mu f -> a
 
+-- The signature of the "trace" universal morphism for "CofreeComonad f".
 public export
-BigStepCata : (Type -> Type) -> Type
-BigStepCata f =
-  (a : Type) -> BigStepAlgebra f a -> FreeMonad f Void -> a
-
-public export
-ParamAna : (Type -> Type) -> Type
-ParamAna f =
+CofreeFTrace : (Type -> Type) -> Type
+CofreeFTrace f =
   (l, a : Type) -> (a -> l) -> Coalgebra f a -> a -> CofreeComonad f l
 
 public export
 Anamorphism : (Type -> Type) -> Type
-Anamorphism f = (a : Type) -> Coalgebra f a -> a -> CofreeComonad f Unit
+Anamorphism f = (a : Type) -> Coalgebra f a -> a -> Nu f
 
 public export
-anaFromParam : {f : Type -> Type} -> ParamAna f -> Anamorphism f
-anaFromParam pana a = pana Unit a (const ())
+anaFromTrace : {f : Type -> Type} -> CofreeFTrace f -> Anamorphism f
+anaFromTrace pana a = pana Unit a (const ())
 
 public export
-ParamBigStepAna : (Type -> Type) -> Type
-ParamBigStepAna f =
-  (l, a : Type) -> (a -> l) -> BigStepCoalgebra f a -> a -> CofreeComonad f l
+CofreeFTraceGen : (Type -> Type) -> Type
+CofreeFTraceGen f =
+  (l, a : Type) -> (a -> l) -> CofreeCMCoalgSig f a -> a -> CofreeComonad f l
 
 public export
-BigStepAna : (Type -> Type) -> Type
-BigStepAna f =
-  (a : Type) -> BigStepCoalgebra f a -> a -> CofreeComonad f Unit
+CofreeCMAna : (Type -> Type) -> Type
+CofreeCMAna f =
+  (a : Type) -> CofreeCMCoalgSig f a -> a -> Nu f
 
 --------------------------------------------------------
 ---- Natural transformations on (co)free (co)monads ----
@@ -3294,12 +3292,12 @@ FinCovarHomAlgToAlg {n=(S n)} alg (x, p) = FinCovarHomAlgToAlg (alg x) p
 
 public export
 finCovarFreeAlgebra : (n : Nat) -> (0 a : Type) ->
-  FreeAlgebra (FinCovarHomFunc n) a
+  FreeAlgSig (FinCovarHomFunc n) a
 finCovarFreeAlgebra Z a x = InFree $ TFC ()
 finCovarFreeAlgebra (S n) a (x, p) = InFree $ TFC (x, p)
 
 public export
-FinCovarInitialAlgebra : (n : Nat) -> InitialAlgebra (FinCovarHomFunc n)
+FinCovarInitialAlgebra : (n : Nat) -> InitAlgSig (FinCovarHomFunc n)
 FinCovarInitialAlgebra n = finCovarFreeAlgebra n Void
 
 mutual
@@ -3344,19 +3342,19 @@ finCovarReturn : {n : Nat} -> {0 a : Type} -> a -> FreeFinCovar n a
 finCovarReturn x = InFree $ TFV x
 
 public export
-finCovarBigStepCata : {n : Nat} -> ParamBigStepCata (FinCovarHomFunc n)
-finCovarBigStepCata {n} v a subst alg (InFree x) = case x of
+finCovarFreeMCata : {n : Nat} -> FreeFEvalGen (FinCovarHomFunc n)
+finCovarFreeMCata {n} v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC com => alg $ InFree $ TFC $
     mapProductN n (finCovarMap subst) com
 
 public export
-finCovarBigStepCataN : (n, n' : Nat) -> (v, a : Type) ->
+finCovarFreeMCataN : (n, n' : Nat) -> (v, a : Type) ->
   (v -> a) -> Algebra (FreeFinCovar n') a ->
   ProductN n (FreeFinCovar n' v) ->
   ProductN n a
-finCovarBigStepCataN n n' v a subst alg =
-  mapProductN n (finCovarBigStepCata v a subst alg)
+finCovarFreeMCataN n n' v a subst alg =
+  mapProductN n (finCovarFreeMCata v a subst alg)
 
 mutual
   public export
@@ -3491,12 +3489,12 @@ MuFinPoly = Mu . FinPolyFunc
 
 public export
 finPolyFreeAlgebra : (fpd : FinPolyData) -> (0 a : Type) ->
-  FreeAlgebra (FinPolyFunc fpd) a
+  FreeAlgSig (FinPolyFunc fpd) a
 finPolyFreeAlgebra [] a v = void v
 finPolyFreeAlgebra fpd a x = InFree $ TFC x
 
 public export
-FinPolyInitialAlgebra : (fpd : FinPolyData) -> InitialAlgebra (FinPolyFunc fpd)
+FinPolyInitialAlgebra : (fpd : FinPolyData) -> InitAlgSig (FinPolyFunc fpd)
 FinPolyInitialAlgebra fpd = finPolyFreeAlgebra fpd Void
 
 mutual
@@ -3568,28 +3566,28 @@ finPolyReturn : {fpd : FinPolyData} -> {0 a : Type} -> a -> FreeFinPoly fpd a
 finPolyReturn x = InFree $ TFV x
 
 public export
-finPolyBigStepCata : {fpd : FinPolyData} ->
-  ParamBigStepCata (FinPolyFunc fpd)
-finPolyBigStepCata {fpd} v a subst alg (InFree x) = case x of
+finPolyFreeMCata : {fpd : FinPolyData} ->
+  FreeFEvalGen (FinPolyFunc fpd)
+finPolyFreeMCata {fpd} v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC com => alg $ InFree $ TFC $ finPolyFuncMap subst com
 
 public export
-finPolyBigStepCataFunc : (fpd, fpd' : FinPolyData) -> (v, a : Type) ->
+finPolyFreeMCataFunc : (fpd, fpd' : FinPolyData) -> (v, a : Type) ->
   (v -> a) -> Algebra (FreeFinPoly fpd') a ->
   FinPolyFunc fpd (FreeFinPoly fpd' v) ->
   FinPolyFunc fpd a
-finPolyBigStepCataFunc fpd fpd' v a subst alg =
+finPolyFreeMCataFunc fpd fpd' v a subst alg =
   finPolyMap {fpd} {a=(FreeFinPoly fpd' v)} {b=a}
-    (finPolyBigStepCata {fpd=fpd'} v a subst alg)
+    (finPolyFreeMCata {fpd=fpd'} v a subst alg)
 
 public export
-finPolyBigStepCataN : (fpd : FinPolyData) -> (n : Nat) -> (v, a : Type) ->
+finPolyFreeMCataN : (fpd : FinPolyData) -> (n : Nat) -> (v, a : Type) ->
   (v -> a) -> Algebra (FreeFinPoly fpd) a ->
   ProductN n (FreeFinPoly fpd v) ->
   ProductN n a
-finPolyBigStepCataN fpd n v a subst alg =
-  mapProductN n (finPolyBigStepCata {fpd} v a subst alg)
+finPolyFreeMCataN fpd n v a subst alg =
+  mapProductN n (finPolyFreeMCata {fpd} v a subst alg)
 
 {-
  - This won't work until the specification for polynomial endofunctors
@@ -8495,7 +8493,7 @@ Subst0TypeLimitIter = TrEitherF Subst0TypeF
 
 public export
 Subst0TypeColimitIter : Type -> Type
-Subst0TypeColimitIter = ColimitIterF Subst0TypeF
+Subst0TypeColimitIter = ScalePairF Subst0TypeF
 
 public export
 Subst0TypeAlg : Type -> Type

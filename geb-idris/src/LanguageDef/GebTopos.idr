@@ -554,7 +554,7 @@ InitialInterpObj interp Obj0 = Void
 public export
 ExtendInitialInterpObj : {obj : Type} ->
   SliceObj obj -> SliceObj (TrEitherF InitialObjF obj)
-ExtendInitialInterpObj = sliceTrMap InitialInterpObj
+ExtendInitialInterpObj = sliceTrLift InitialInterpObj
 
 public export
 initialInterpUnit : {obj : Type} -> (hom : HomSlice obj) ->
@@ -876,7 +876,7 @@ CoprodInterpObj interp (ObjCp x y) = Either (interp x) (interp y)
 public export
 ExtendCoprodInterpObj : {obj : Type} ->
   SliceObj obj -> SliceObj (TrEitherF CoprodObjF obj)
-ExtendCoprodInterpObj = sliceTrMap CoprodInterpObj
+ExtendCoprodInterpObj = sliceTrLift CoprodInterpObj
 
 public export
 coprodInterpUnit : {obj : Type} -> (hom : HomSlice obj) ->
