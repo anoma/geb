@@ -1187,9 +1187,9 @@ PFParamAlg : PolyFunc -> Type -> Type -> Type
 PFParamAlg p x a = PFAlg p (x -> a)
 
 public export
-pfParamCata : {0 p : PolyFunc} -> {0 x, a : Type} ->
+pfFreeFEval : {0 p : PolyFunc} -> {0 x, a : Type} ->
   PFParamAlg p x a -> x -> PolyFuncMu p -> a
-pfParamCata alg = flip $ pfCata alg
+pfFreeFEval alg = flip $ pfCata alg
 
 -- Catamorphism which passes not only the output of the previous
 -- induction steps but also the original `PolyFuncMu` to the algebra.

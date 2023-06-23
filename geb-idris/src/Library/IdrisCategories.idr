@@ -2688,6 +2688,19 @@ public export
 Algebra : (Type -> Type) -> Type -> Type
 Algebra f a = f a -> a
 
+-- The objects of the category formed by the F-algebras of a given functor.
+public export
+FAlgObj : (Type -> Type) -> Type
+FAlgObj f = DPair Type (Algebra f)
+
+-- The morphisms of the category formed by the F-algebras of a given functor.
+public export
+FAlgMorph : {f : Type -> Type} ->
+  {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
+  (g, h : FAlgObj f) -> Type
+FAlgMorph {f} {fm} (a ** g) (b ** h) =
+  Subset0 (a -> b) $ \j => ExtEq (j . g) (h . fm j)
+
 -- The dual of an F-algebra: an F-coalgebra.
 public export
 Coalgebra : (Type -> Type) -> Type -> Type
@@ -2923,10 +2936,10 @@ public export
 outNu : {f : Type -> Type} -> Coalgebra f (Nu f)
 outNu {f} (InCofree x) = case x of SFN () fn => fn
 
--- Parameterized special induction.
+-- The signature of the "eval" universal morphism for "FreeMonad f".
 public export
-ParamCata : (Type -> Type) -> Type
-ParamCata f =
+FreeFEval : (Type -> Type) -> Type
+FreeFEval f =
   (v, a : Type) -> (v -> a) -> Algebra f a -> FreeMonad f v -> a
 
 -- Special induction.
@@ -2935,7 +2948,7 @@ Catamorphism : (Type -> Type) -> Type
 Catamorphism f = (a : Type) -> Algebra f a -> FreeMonad f Void -> a
 
 public export
-cataFromParam : {f : Type -> Type} -> ParamCata f -> Catamorphism f
+cataFromParam : {f : Type -> Type} -> FreeFEval f -> Catamorphism f
 cataFromParam pcata a = pcata Void a (voidF a)
 
 public export
@@ -3021,7 +3034,7 @@ natTransFreeAlg {f} {g} nt a = InFree . TFC . nt (FreeMonad g a)
 public export
 natTransMapFree :
   {f, g : Type -> Type} ->
-  ParamCata f ->
+  FreeFEval f ->
   NaturalTransformation f g ->
   FreeMonadNatTrans f g
 natTransMapFree {f} {g} cataF nt carrier =
@@ -3290,7 +3303,7 @@ FinCovarInitialAlgebra n = finCovarFreeAlgebra n Void
 
 mutual
   public export
-  cataFinCovar : (n : Nat) -> ParamCata (FinCovarHomFunc n)
+  cataFinCovar : (n : Nat) -> FreeFEval (FinCovarHomFunc n)
   cataFinCovar n v a subst alg (InFree x) = case x of
     TFV var => subst var
     TFC com => alg $ case n of
@@ -3487,7 +3500,7 @@ FinPolyInitialAlgebra fpd = finPolyFreeAlgebra fpd Void
 
 mutual
   public export
-  cataFinPoly : (fpd : FinPolyData) -> ParamCata (FinPolyFunc fpd)
+  cataFinPoly : (fpd : FinPolyData) -> FreeFEval (FinPolyFunc fpd)
   cataFinPoly fpd v a subst alg (InFree poly) = case poly of
     TFV var => subst var
     TFC com => alg $ case fpd of
@@ -4282,7 +4295,7 @@ FreeNatCovar = FreeMonad NatCovarHomFunc
 {-
 mutual
   public export
-  cataNatCovar : ParamCata NatCovarHomFunc
+  cataNatCovar : FreeFEval NatCovarHomFunc
   cataNatCovar v a subst alg (InFree x) = case x of
     TFV var => subst var
     TFC com => alg $ (cataNatCovar v a subst alg) . com
@@ -4336,7 +4349,7 @@ NuNat : Type
 NuNat = Nu NatF
 
 public export
-cataNatF : ParamCata NatF
+cataNatF : FreeFEval NatF
 cataNatF v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC n => alg $ case n of
@@ -7004,7 +7017,7 @@ NuList : Type -> Type
 NuList = Nu . ListF
 
 public export
-cataListF : {atom : Type} -> ParamCata $ ListF atom
+cataListF : {atom : Type} -> FreeFEval $ ListF atom
 cataListF v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC l => alg $ case l of
@@ -7083,7 +7096,7 @@ NuBinNat : Type
 NuBinNat = Nu BinNatF
 
 public export
-cataBinNatF : ParamCata BinNatF
+cataBinNatF : FreeFEval BinNatF
 cataBinNatF = cataListF {atom=Bool}
 
 public export
@@ -7380,8 +7393,8 @@ NuProduct : {idx : Type} ->
 NuProduct f = ProductCatCofreeComonad f (const ())
 
 public export
-ProductCatParamCata : {idx : Type} -> ProductCatObjectEndoMap idx -> Type
-ProductCatParamCata f =
+ProductCatFreeFEval : {idx : Type} -> ProductCatObjectEndoMap idx -> Type
+ProductCatFreeFEval f =
   (v, a : ProductCatObject idx) ->
   ProductCatTermAlgebra f v a ->
   ProductCatMorphism (ProductCatFreeMonad f v) a
@@ -8509,7 +8522,7 @@ CofreeSubst0Type = CofreeComonad Subst0TypeF
 
 -- Parameterized special induction.
 public export
-subst0TypeCata : ParamCata Subst0TypeF
+subst0TypeCata : FreeFEval Subst0TypeF
 subst0TypeCata v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC com => alg $ case com of
