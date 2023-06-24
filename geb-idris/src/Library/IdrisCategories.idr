@@ -3004,6 +3004,10 @@ freeAppJoin : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
 freeAppJoin {f} {a} eval ftree =
   freeFJoin {f} eval {a=b} . freeFApp {f} eval {a} {b=(FreeMonad f b)} ftree
 
+public export
+freeEvalToGen : {f : Type -> Type} -> FreeFEval f -> FreeFEvalGen f
+freeEvalToGen {f} eval v a subst alg = alg . freeMap {f} eval subst
+
 -- The signature of the "trace" universal morphism for "CofreeComonad f".
 public export
 CofreeFTrace : (Type -> Type) -> Type
@@ -4443,10 +4447,7 @@ natJoin = freeFJoin freeEvalNatF
 
 public export
 natEvalGen : FreeFEvalGen NatF
-natEvalGen v a subst alg (InFree (TFV var)) = subst var
-natEvalGen v a subst alg (InFree (TFC x)) = alg $ case x of
-  ZeroF => NatFZ
-  SuccF n => NatFS $ natEvalGen v (FreeNat a) (inFV . subst) natJoin n
+natEvalGen = freeEvalToGen {f=NatF} freeEvalNatF
 
 public export
 parseMuNatF : Nat -> MuNat
