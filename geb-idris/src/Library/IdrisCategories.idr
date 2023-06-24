@@ -4361,10 +4361,6 @@ interpNatFAlg ZeroF = Z
 interpNatFAlg (SuccF n) = S n
 
 public export
-showNatFAlg : NatAlg String
-showNatFAlg = show
-
-public export
 interpFreeNatF : {v : Type} -> (subst : v -> Nat) -> FreeNat v -> Nat
 interpFreeNatF {v} subst = cataNatF v Nat subst interpNatFAlg
 
@@ -4373,12 +4369,29 @@ interpMuNatF : MuNat -> Nat
 interpMuNatF = interpFreeNatF {v=Void} (voidF Nat)
 
 public export
+showNatFAlg : NatAlg String
+showNatFAlg = show
+
+public export
+showFreeNatF : {v : Type} -> (subst : v -> String) -> FreeNat v -> String
+showFreeNatF {v} subst = cataNatF v String subst showNatFAlg
+
+public export
+showMuNatF : MuNat -> String
+showMuNatF = show . interpMuNatF
+
+public export
 NatFZ : FreeMonad NatF a
 NatFZ = InFree $ TFC ZeroF
 
 public export
 NatFS : FreeMonad NatF a -> FreeMonad NatF a
 NatFS = InFree . TFC . SuccF
+
+public export
+parseMuNatF : Nat -> MuNat
+parseMuNatF Z = NatFZ
+parseMuNatF (S n) = NatFS $ parseMuNatF n
 
 ---------------------------------------
 ---- Natural numbers as a category ----
