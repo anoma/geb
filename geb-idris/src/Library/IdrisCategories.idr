@@ -2946,6 +2946,20 @@ public export
 cataFromEval : {f : Type -> Type} -> FreeFEval f -> Catamorphism f
 cataFromEval pcata a = pcata Void a (voidF a)
 
+{-
+ - Note that the inverse of `cataFromEval`, which would be the following
+ - (it would have to assume explicitly that `f` was a functor, i.e. that
+ - it had a `map`), can not be guaranteed to be terminating without
+ - stronger hypotheses:
+ -
+public export
+freeEvalFromCata : Catamorphism f ->
+  ({0 a, b : Type} -> (a -> b) -> f a -> f b) -> FreeFEval f
+freeEvalFromCata {f} cata fm v a subst alg (InFree (TFV var)) = subst var
+freeEvalFromCata {f} cata fm v a subst alg (InFree (TFC x)) = alg $
+  fm {a=(FreeMonad f v)} {b=a} (freeEvalFromCata {f} cata fm v a subst alg) x
+  -}
+
 -- A form of general induction, which we could view as being able to
 -- use the "eval" morphism of a free monad with arbitrary-depth rather
 -- than single-depth pattern matching, since it requires only an algebra
