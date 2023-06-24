@@ -2946,6 +2946,11 @@ public export
 cataFromEval : {f : Type -> Type} -> FreeFEval f -> Catamorphism f
 cataFromEval pcata a = pcata Void a (voidF a)
 
+public export
+freeFJoin : {f : Type -> Type} -> FreeFEval f ->
+  {a : Type} -> FreeMonad f (FreeMonad f a) -> FreeMonad f a
+freeFJoin {f} {a} eval = eval (FreeMonad f a) (FreeMonad f a) id inFC
+
 -- A form of general induction, which we could view as being able to
 -- use the "eval" morphism of a free monad with arbitrary-depth rather
 -- than single-depth pattern matching, since it requires only an algebra
@@ -2958,6 +2963,10 @@ FreeFEvalGen f =
 public export
 FreeMCata : (Type -> Type) -> Type
 FreeMCata f = (a : Type) -> FreeMAlgSig f a -> Mu f -> a
+
+public export
+algToGen : {a : Type} -> FreeFEval f -> Algebra f a -> FreeMAlgSig f a
+algToGen {f} {a} eval = eval a a id
 
 -- The signature of the "trace" universal morphism for "CofreeComonad f".
 public export
@@ -4348,12 +4357,12 @@ NuNat : Type
 NuNat = Nu NatF
 
 public export
-cataNatF : FreeFEval NatF
-cataNatF v a subst alg (InFree x) = case x of
+freeEvalNatF : FreeFEval NatF
+freeEvalNatF v a subst alg (InFree x) = case x of
   TFV var => subst var
   TFC n => alg $ case n of
     ZeroF => ZeroF
-    SuccF n' => SuccF $ cataNatF v a subst alg n'
+    SuccF n' => SuccF $ freeEvalNatF v a subst alg n'
 
 public export
 interpNatFAlg : NatAlg Nat
@@ -4362,7 +4371,7 @@ interpNatFAlg (SuccF n) = S n
 
 public export
 interpFreeNatF : {v : Type} -> (subst : v -> Nat) -> FreeNat v -> Nat
-interpFreeNatF {v} subst = cataNatF v Nat subst interpNatFAlg
+interpFreeNatF {v} subst = freeEvalNatF v Nat subst interpNatFAlg
 
 public export
 interpMuNatF : MuNat -> Nat
@@ -4374,7 +4383,7 @@ showNatFAlg = show
 
 public export
 showFreeNatF : {v : Type} -> (subst : v -> String) -> FreeNat v -> String
-showFreeNatF {v} subst = cataNatF v String subst showNatFAlg
+showFreeNatF {v} subst = freeEvalNatF v String subst showNatFAlg
 
 public export
 showMuNatF : MuNat -> String
@@ -4387,6 +4396,21 @@ NatFZ = InFree $ TFC ZeroF
 public export
 NatFS : FreeMonad NatF a -> FreeMonad NatF a
 NatFS = InFree . TFC . SuccF
+
+public export
+cataNatF : Catamorphism NatF
+cataNatF = cataFromEval freeEvalNatF
+
+public export
+natJoin : {a : Type} -> FreeNat (FreeNat a) -> FreeNat a
+natJoin = freeFJoin freeEvalNatF
+
+public export
+natEvalGen : FreeFEvalGen NatF
+natEvalGen v a subst alg (InFree (TFV var)) = subst var
+natEvalGen v a subst alg (InFree (TFC x)) = alg $ case x of
+  ZeroF => NatFZ
+  SuccF n => NatFS $ natEvalGen v (FreeNat a) (inFV . subst) natJoin n
 
 public export
 parseMuNatF : Nat -> MuNat
