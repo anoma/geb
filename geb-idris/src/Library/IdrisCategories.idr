@@ -2946,11 +2946,6 @@ public export
 cataFromEval : {f : Type -> Type} -> FreeFEval f -> Catamorphism f
 cataFromEval pcata a = pcata Void a (voidF a)
 
-public export
-freeFJoin : {f : Type -> Type} -> FreeFEval f ->
-  {a : Type} -> FreeMonad f (FreeMonad f a) -> FreeMonad f a
-freeFJoin {f} {a} eval = eval (FreeMonad f a) (FreeMonad f a) id inFC
-
 -- A form of general induction, which we could view as being able to
 -- use the "eval" morphism of a free monad with arbitrary-depth rather
 -- than single-depth pattern matching, since it requires only an algebra
@@ -2967,6 +2962,47 @@ FreeMCata f = (a : Type) -> FreeMAlgSig f a -> Mu f -> a
 public export
 algToGen : {a : Type} -> FreeFEval f -> Algebra f a -> FreeMAlgSig f a
 algToGen {f} {a} eval = eval a a id
+
+public export
+freeBind : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
+  (a -> FreeMonad f b) -> FreeMonad f a -> FreeMonad f b
+freeBind {f} {a} {b} eval m = eval a (FreeMonad f b) m inFC
+
+public export
+freeMap : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
+  (a -> b) -> FreeMonad f a -> FreeMonad f b
+freeMap {f} {a} {b} eval m = freeBind {f} {a} {b} eval (inFV . m)
+
+public export
+freeFJoin : {f : Type -> Type} -> FreeFEval f ->
+  {a : Type} -> FreeMonad f (FreeMonad f a) -> FreeMonad f a
+freeFJoin {f} {a} eval = freeBind {f} {a=(FreeMonad f a)} {b=a} eval id
+
+public export
+freeFApp : {f : Type -> Type} -> FreeFEval f ->
+  {a, b : Type} -> FreeMonad f (a -> b) -> FreeMonad f a -> FreeMonad f b
+freeFApp {f} {a} {b} eval ftree x =
+  freeBind {f} eval {a=(a -> b)} {b} (flip (freeMap {f} eval) x) ftree
+
+public export
+freeFTreeBind : {f : Type -> Type} -> FreeFEval f ->
+  {a, b : Type} -> FreeMonad f (a -> b) -> a -> FreeMonad f b
+freeFTreeBind {f} {a} {b} eval ftree = freeFApp {f} eval {a} {b} ftree . inFV
+
+-- Pattern-matching of arbitrary depth, folding to a single value.
+-- (the latter of which need not (necessarily) be a free algebra itself).
+public export
+freeAppFold : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
+  FreeMonad f (a -> b) -> Algebra f b -> FreeMonad f a -> b
+freeAppFold {f} eval {a} {b} ftree alg =
+  algToGen {f} {a=b} eval alg . freeFApp {f} eval {a} {b} ftree
+
+-- Pattern-matching of arbitrary depth, folding to another free monad.
+public export
+freeAppJoin : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
+  FreeMonad f (a -> FreeMonad f b) -> FreeMonad f a -> FreeMonad f b
+freeAppJoin {f} {a} eval ftree =
+  freeFJoin {f} eval {a=b} . freeFApp {f} eval {a} {b=(FreeMonad f b)} ftree
 
 -- The signature of the "trace" universal morphism for "CofreeComonad f".
 public export
