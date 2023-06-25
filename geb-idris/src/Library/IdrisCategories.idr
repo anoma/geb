@@ -2932,10 +2932,23 @@ outNu : {f : Type -> Type} -> TerminalCoalgSig f
 outNu {f} (InCofree x) = case x of SFN () fn => fn
 
 -- The signature of the "eval" universal morphism for "FreeMonad f".
+-- (This is the right adjunct of the free/forgetful adjunction between
+-- the category of F-algebras of `f` and `Type`.)
 public export
 FreeFEval : (Type -> Type) -> Type
 FreeFEval f =
   (v, a : Type) -> (v -> a) -> Algebra f a -> FreeMonad f v -> a
+
+-- This is the signature of the left adjunct of the free/forgetful adjunction
+-- between the category of F-algebras of `f` and `Type`.
+public export
+FreeFLA : (Type -> Type) -> Type
+FreeFLA f = (v, a : Type) -> Algebra f a -> (FreeMonad f v -> a) -> v -> a
+
+-- The left adjunct itself.
+public export
+freeFLA : {f : Type -> Type} -> FreeFLA f
+freeFLA {f} v a alg eval = eval . inFV
 
 -- Special induction.
 public export
