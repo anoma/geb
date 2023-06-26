@@ -3014,9 +3014,14 @@ FAlgObjFromFree :
 FAlgObjFromFree {f} {fm} (a ** m) = (a ** FAlgFromFree {f} {fm} {a} m)
 
 public export
-FFreeAlgFromObj :
+FAlgObjToFree : {f : Type -> Type} -> FreeFEval f ->
+  (alg : FAlgObj f) -> FreeMAlgSig f (fst alg)
+FAlgObjToFree {f} eval (a ** m) = algToGen {a} eval m
+
+public export
+FAlgObjToFreeObj :
   {f : Type -> Type} -> FreeFEval f -> FAlgObj f -> FAlgObj (FreeMonad f)
-FFreeAlgFromObj {f} eval (a ** m) = (a ** algToGen {a} eval m)
+FAlgObjToFreeObj {f} eval (a ** m) = (a ** algToGen {a} eval m)
 
 public export
 freeBind : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
