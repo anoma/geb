@@ -3,6 +3,7 @@ module Executable.Test.Main
 import Test.TestLibrary
 import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
+import Library.Test.IdrisAlgebraTest
 import LanguageDef.Test.GebTest
 import LanguageDef.Test.RefinedADTTest
 import LanguageDef.Test.FiguresTest
@@ -35,6 +36,7 @@ totalTests = do
   Test.TestLibrary.testLibraryTest
   Library.Test.IdrisUtilsTest.idrisUtilsTest
   Library.Test.IdrisCategoriesTest.libraryIdrisCategoriesTest
+  Library.Test.IdrisAlgebraTest.libraryIdrisAlgebraTest
   LanguageDef.Test.AtomTest.languageDefAtomTest
   LanguageDef.Test.UniversalCategoryTest.languageDefUniversalCategoryTest
   LanguageDef.Test.InterpretationTest.languageDefInterpretationTest
