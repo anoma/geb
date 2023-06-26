@@ -43,8 +43,11 @@
     ;; vampir api functions
     :*bool*
     :bool
+    :*base-range*
     :*next-range*
     :next-range
+    :*range-n*
+    :range-n
     :*range32*
     :range32
 
