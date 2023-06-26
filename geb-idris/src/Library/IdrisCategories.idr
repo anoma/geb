@@ -2996,6 +2996,29 @@ algToGen : {a : Type} -> FreeFEval f -> Algebra f a -> FreeMAlgSig f a
 algToGen {f} {a} eval = eval a a id
 
 public export
+FAlgFromFree :
+  {f : Type -> Type} -> {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
+  FreeMAlgSig f a -> Algebra f a
+FAlgFromFree {f} {fm} {a} m = m . inFC . fm inFV
+
+public export
+FAlgFromFreeObj :
+  {f : Type -> Type} -> {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
+  (alg : FAlgObj $ FreeMonad f) -> Algebra f (fst alg)
+FAlgFromFreeObj {f} {fm} (a ** m) = FAlgFromFree {f} {fm} {a} m
+
+public export
+FAlgObjFromFree :
+  {f : Type -> Type} -> {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
+  FAlgObj (FreeMonad f) -> FAlgObj f
+FAlgObjFromFree {f} {fm} (a ** m) = (a ** FAlgFromFree {f} {fm} {a} m)
+
+public export
+FFreeAlgFromObj :
+  {f : Type -> Type} -> FreeFEval f -> FAlgObj f -> FAlgObj (FreeMonad f)
+FFreeAlgFromObj {f} eval (a ** m) = (FreeMonad f a ** algToGen {a} eval m)
+
+public export
 freeBind : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
   (a -> FreeMonad f b) -> FreeMonad f a -> FreeMonad f b
 freeBind {f} {a} {b} eval m = eval a (FreeMonad f b) m inFC
