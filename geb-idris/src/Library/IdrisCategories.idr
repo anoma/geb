@@ -7191,14 +7191,6 @@ public export
 BinNatF : Type -> Type
 BinNatF = ListF Bool
 
--- Inherited from ListF.
-public export
-Functor BinNatF
-
--- Inherited from ListF.
-public export
-(Show carrier) => Show (BinNatF carrier)
-
 public export
 BinNatAlg : Type -> Type
 BinNatAlg = Algebra BinNatF
