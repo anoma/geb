@@ -2992,8 +2992,8 @@ FreeMCata : (Type -> Type) -> Type
 FreeMCata f = (a : Type) -> FreeMAlgSig f a -> Mu f -> a
 
 public export
-algToGen : {a : Type} -> FreeFEval f -> Algebra f a -> FreeMAlgSig f a
-algToGen {f} {a} eval = eval a a id
+FAlgToFree : {a : Type} -> FreeFEval f -> Algebra f a -> FreeMAlgSig f a
+FAlgToFree {f} {a} eval = eval a a id
 
 public export
 FAlgFromFree :
@@ -3016,12 +3016,12 @@ FAlgObjFromFree {f} {fm} (a ** m) = (a ** FAlgFromFree {f} {fm} {a} m)
 public export
 FAlgObjToFree : {f : Type -> Type} -> FreeFEval f ->
   (alg : FAlgObj f) -> FreeMAlgSig f (fst alg)
-FAlgObjToFree {f} eval (a ** m) = algToGen {a} eval m
+FAlgObjToFree {f} eval (a ** m) = FAlgToFree {a} eval m
 
 public export
 FAlgObjToFreeObj :
   {f : Type -> Type} -> FreeFEval f -> FAlgObj f -> FAlgObj (FreeMonad f)
-FAlgObjToFreeObj {f} eval (a ** m) = (a ** algToGen {a} eval m)
+FAlgObjToFreeObj {f} eval (a ** m) = (a ** FAlgToFree {a} eval m)
 
 public export
 freeBind : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
@@ -3055,7 +3055,7 @@ public export
 freeAppFold : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
   FreeMonad f (a -> b) -> Algebra f b -> FreeMonad f a -> b
 freeAppFold {f} eval {a} {b} ftree alg =
-  algToGen {f} {a=b} eval alg . freeFApp {f} eval {a} {b} ftree
+  FAlgToFree {f} {a=b} eval alg . freeFApp {f} eval {a} {b} ftree
 
 -- Pattern-matching of arbitrary depth, folding to another free monad.
 public export
