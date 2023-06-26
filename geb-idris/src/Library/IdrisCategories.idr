@@ -2693,13 +2693,18 @@ public export
 FAlgObj : (Type -> Type) -> Type
 FAlgObj f = DPair Type (Algebra f)
 
+public export
+FAlgCommutes : {f : Type -> Type} ->
+  {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
+  (g, h : FAlgObj f) -> (fst g -> fst h) -> Type
+FAlgCommutes {f} {fm} (a ** g) (b ** h) j = ExtEq (j . g) (h . fm j)
+
 -- The morphisms of the category formed by the F-algebras of a given functor.
 public export
 FAlgMorph : {f : Type -> Type} ->
   {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
   (g, h : FAlgObj f) -> Type
-FAlgMorph {f} {fm} (a ** g) (b ** h) =
-  Subset0 (a -> b) $ \j => ExtEq (j . g) (h . fm j)
+FAlgMorph {f} {fm} g h = Subset0 (fst g -> fst h) (FAlgCommutes {f} {fm} g h)
 
 -- Objects of the category of F-algebras for a given functor may also
 -- be viewed as interfaces.
