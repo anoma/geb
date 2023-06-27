@@ -3068,6 +3068,16 @@ public export
 freeEvalToGen : {f : Type -> Type} -> FreeFEval f -> FreeFEvalGen f
 freeEvalToGen {f} eval v a subst alg = alg . freeMap {f} eval subst
 
+-- Lift a natural transformation between functors to a natural transformation
+-- between their free monads.
+public export
+freeNTlift :
+  {f : Type -> Type} -> FreeFEval f ->
+  {g : Type -> Type} -> NaturalTransformation f g ->
+  NaturalTransformation (FreeMonad f) (FreeMonad g)
+freeNTlift {f} feval {g} alpha a =
+  feval a (FreeMonad g a) inFV (inFC . alpha (FreeMonad g a))
+
 -- The signature of the "trace" universal morphism for "CofreeComonad f".
 public export
 CofreeFTrace : (Type -> Type) -> Type
