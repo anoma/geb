@@ -134,10 +134,8 @@ bnFreeAlgCommutesLemma :
   m (InFree (TFC (ConsF b x))) = m (InFree (TFC (ConsF b (InFree (TFV (m x))))))
 bnFreeAlgCommutesLemma a m equ eqact b (InFree (TFV var)) =
   rewrite equ var in Refl
-bnFreeAlgCommutesLemma a m equ eqact b (InFree (TFC NilF)) =
-  ?bnFreeAlgCommutesLemma_hole_nil
-bnFreeAlgCommutesLemma a m equ eqact b (InFree (TFC (ConsF b' x))) =
-  ?bnFreeAlgCommutesLemma_hole_cons
+bnFreeAlgCommutesLemma a m equ eqact b x =
+  sym $ eqact $ inFC $ ConsF b $ inFV x
 
 public export
 bnFreeAlgCommutes :
