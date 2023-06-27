@@ -7235,6 +7235,10 @@ cataBinNatF : FreeFEval BinNatF
 cataBinNatF = cataListF {atom=Bool}
 
 public export
+cataBinNatF' : {a : Type} -> BinNatAlg a -> FreeMAlgSig BinNatF a
+cataBinNatF' = FAlgToFree cataBinNatF
+
+public export
 Show MuBinNat
 
 public export
