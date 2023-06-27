@@ -106,10 +106,41 @@ bnAlgObjToFreeIso (a ** m) =
      Element0 id $ \el => case el of NilF => Refl ; ConsF b x => Refl)
     (\el => Refl, \el => Refl)
 
+-- The unit property of an algebra over a free monad.
+public export
+FreeMonadAlgUnitP : {f : Type -> Type} ->
+  FreeFEval f -> FAlgObj (FreeMonad f) -> Type
+FreeMonadAlgUnitP {f} eval alg =
+  ExtEq (snd alg . IdrisCategories.inFV) Prelude.id
+
+-- The action property of an algebra over a free monad.
+public export
+FreeMonadAlgActP : {f : Type -> Type} ->
+  FreeFEval f -> FAlgObj (FreeMonad f) -> Type
+FreeMonadAlgActP {f} eval alg =
+  ExtEq (snd alg . (freeMap eval $ snd alg)) (snd alg . freeFJoin eval)
+
+-- The properties required to make an algebra over the underlying endofunctor
+-- of a monad into an algebra over a monad.
+public export
+FreeMonadAlgP : {f : Type -> Type} ->
+  FreeFEval f -> FAlgObj (FreeMonad f) -> Type
+FreeMonadAlgP {f} eval alg =
+  (FreeMonadAlgUnitP {f} eval alg, FreeMonadAlgActP {f} eval alg)
+
+-- The signature of an algebra not only over the underlying endofunctor of
+-- a free monad, but over the free monad _as_ a monad in the sense of "algebra
+-- over a monad", which is an algebra over the underlying endofunctor together
+-- with conditions that represent compatibility between that algebra and the
+-- unit and multiplication of the monad.
+public export
+FreeMonadAlg : {f : Type -> Type} -> FreeFEval f -> Type
+FreeMonadAlg {f} eval = (a : FAlgObj (FreeMonad f) ** FreeMonadAlgP {f} eval a)
+
 -- The unit property of an algebra over a monad.
 public export
 bnAlgObjToFreeUnit : (a : FAlgObj BinNatF) ->
-  ExtEq (bnAlgObjToFree a . IdrisCategories.inFV) Prelude.id
+  FreeMonadAlgUnitP IdrisCategories.evalBinNatF (bnAlgObjToFreeObj a)
 bnAlgObjToFreeUnit (a ** m) el = Refl
 
 -- The action property of an algebra over a monad.
@@ -117,9 +148,7 @@ bnAlgObjToFreeUnit (a ** m) el = Refl
 -- _is_ an algebra over a monad (not only over the underlying endofunctor).
 public export
 bnAlgObjToFreeAct : (a : FAlgObj BinNatF) ->
-  ExtEq
-    (bnAlgObjToFree a . IdrisAlgebra.freeBinNatMap (bnAlgObjToFree a))
-    (bnAlgObjToFree a . IdrisAlgebra.freeBinNatJoin)
+  FreeMonadAlgActP IdrisCategories.evalBinNatF (bnAlgObjToFreeObj a)
 bnAlgObjToFreeAct (a ** m) (InFree (TFV var)) = Refl
 bnAlgObjToFreeAct (a ** m) (InFree (TFC x)) = case x of
   NilF => Refl
@@ -128,7 +157,7 @@ bnAlgObjToFreeAct (a ** m) (InFree (TFC x)) = case x of
 public export
 bnFreeAlgCommutesLemma :
   (a : Type) -> (m : FreeMAlgSig BinNatF a) ->
-  ExtEq (m . IdrisAlgebra.freeBinNatMap m) (m . IdrisAlgebra.freeBinNatJoin) ->
+  FreeMonadAlgActP IdrisCategories.evalBinNatF (a ** m) ->
   (b : Bool) -> (x : FreeBinNat a) ->
   m (InFree (TFC (ConsF b (InFree (TFV (m x)))))) = m (InFree (TFC (ConsF b x)))
 bnFreeAlgCommutesLemma a m eqact b x =
@@ -137,36 +166,34 @@ bnFreeAlgCommutesLemma a m eqact b x =
 public export
 bnFreeAlgCommutes :
   (a : Type) -> (m : FreeMAlgSig BinNatF a) ->
-  ExtEq (m . IdrisCategories.inFV) Prelude.id ->
-  ExtEq (m . IdrisAlgebra.freeBinNatMap m) (m . IdrisAlgebra.freeBinNatJoin) ->
+  FreeMonadAlgP IdrisCategories.evalBinNatF (a ** m) ->
   (el : FreeBinNat a) ->
   cataBinNatF
     (m . InFree . TFC . mapSnd Library.IdrisCategories.inFV) el =
   m (evalBinNatF a (FreeBinNat a) IdrisCategories.inFV IdrisCategories.inFC el)
-bnFreeAlgCommutes a m equ eqact (InFree (TFV var)) = sym $ equ var
-bnFreeAlgCommutes a m equ eqact (InFree (TFC x)) =
+bnFreeAlgCommutes a m (equ, eqact) (InFree (TFV var)) = sym $ equ var
+bnFreeAlgCommutes a m (equ, eqact) (InFree (TFC x)) =
   case x of
     NilF => Refl
     ConsF b x' =>
-      rewrite bnFreeAlgCommutes a m equ eqact x' in
+      rewrite bnFreeAlgCommutes a m (equ, eqact) x' in
       bnFreeAlgCommutesLemma a m eqact b _
 
 public export
 bnFreeAlgCommutes' :
   (a : Type) -> (m : FreeMAlgSig BinNatF a) ->
-  ExtEq (m . IdrisCategories.inFV) Prelude.id ->
-  ExtEq (m . IdrisAlgebra.freeBinNatMap m) (m . IdrisAlgebra.freeBinNatJoin) ->
+  FreeMonadAlgP IdrisCategories.evalBinNatF (a ** m) ->
   (el : FreeBinNat a) ->
   m el =
   cataBinNatF
     (m . InFree . TFC . mapSnd Library.IdrisCategories.inFV)
     (evalBinNatF a (FreeBinNat a) IdrisCategories.inFV IdrisCategories.inFC el)
-bnFreeAlgCommutes' a m equ eqact (InFree (TFV var)) = equ var
-bnFreeAlgCommutes' a m equ eqact (InFree (TFC x)) =
+bnFreeAlgCommutes' a m (equ, eqact) (InFree (TFV var)) = equ var
+bnFreeAlgCommutes' a m (equ, eqact) (InFree (TFC x)) =
   case x of
     NilF => Refl
     ConsF b x' =>
-      rewrite sym (bnFreeAlgCommutes' a m equ eqact x') in
+      rewrite sym (bnFreeAlgCommutes' a m (equ, eqact) x') in
       sym $ bnFreeAlgCommutesLemma a m eqact b x'
 
 -- This (together with `bnAlgObjToFreeIso` above) completes the demonstration
@@ -178,14 +205,11 @@ bnFreeAlgCommutes' a m equ eqact (InFree (TFC x)) =
 -- https://ncatlab.org/nlab/show/algebra+for+an+endofunctor#relation_to_algebras_over_a_monad .)
 public export
 bnAlgObjFromFreeIso : (a : FAlgObj FreeBinNat) ->
-  ExtEq (snd a . IdrisCategories.inFV) Prelude.id ->
-  ExtEq
-    (snd a . (IdrisAlgebra.freeBinNatMap $ snd a))
-    (snd a . IdrisAlgebra.freeBinNatJoin) ->
+  FreeMonadAlgP IdrisCategories.evalBinNatF a ->
   FAlgIso {f=FreeBinNat} {fm=IdrisAlgebra.freeBinNatMap}
     (bnAlgObjToFreeObj (bnAlgObjFromFree a)) a
-bnAlgObjFromFreeIso (a ** m) equ eqact =
+bnAlgObjFromFreeIso (a ** m) algp =
   Element0
-    (Element0 id $ bnFreeAlgCommutes a m equ eqact,
-     Element0 id $ bnFreeAlgCommutes' a m equ eqact)
+    (Element0 id $ bnFreeAlgCommutes a m algp,
+     Element0 id $ bnFreeAlgCommutes' a m algp)
     (\el => Refl, \el => Refl)
