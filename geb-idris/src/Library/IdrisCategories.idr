@@ -2858,10 +2858,6 @@ public export
 InitAlgSig : (Type -> Type) -> Type
 InitAlgSig f = FreeAlgSig f Void
 
-public export
-InitAlgFromUSig : (Type -> Type) -> Type
-InitAlgFromUSig f = NaturalTransformation (Algebra f) Prelude.id
-
 -- If `F` has a terminal coalgebra, then for every object `a`, the functor
 -- `Fa` defined above also has a terminal coalgebra, which is isomorphic
 -- to `CofreeComonad[F, a]`.  Thus `CofreeComonad` allows us to create terminal
@@ -2885,10 +2881,6 @@ CofreeCMCoalgSig f a = Coalgebra (CofreeComonad f) a
 public export
 TerminalCoalgSig : (Type -> Type) -> Type
 TerminalCoalgSig f = CofreeCoalgSig f Unit
-
-public export
-TerminalCoalgFromUSig : (Type -> Type) -> Type
-TerminalCoalgFromUSig f = (a : Type ** (Coalgebra f a, a))
 
 -- The unit of the free monad.
 public export
@@ -2986,10 +2978,6 @@ public export
 FreeFEvalGen : (Type -> Type) -> Type
 FreeFEvalGen f =
   (v, a : Type) -> (v -> a) -> FreeMAlgSig f a -> FreeMonad f v -> a
-
-public export
-FreeMCata : (Type -> Type) -> Type
-FreeMCata f = (a : Type) -> FreeMAlgSig f a -> Mu f -> a
 
 public export
 FAlgToFree : {a : Type} -> FreeFEval f -> Algebra f a -> FreeMAlgSig f a
