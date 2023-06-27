@@ -130,8 +130,7 @@ bnFreeAlgCommutesLemma :
   (a : Type) -> (m : FreeMAlgSig BinNatF a) ->
   ExtEq (m . IdrisAlgebra.freeBinNatMap m) (m . IdrisAlgebra.freeBinNatJoin) ->
   (b : Bool) -> (x : FreeBinNat a) ->
-  m (InFree (TFC (ConsF b (InFree (TFV (m x)))))) =
-    m (InFree (TFC (ConsF b x)))
+  m (InFree (TFC (ConsF b (InFree (TFV (m x)))))) = m (InFree (TFC (ConsF b x)))
 bnFreeAlgCommutesLemma a m eqact b x =
   eqact $ inFC $ ConsF b $ inFV x
 
