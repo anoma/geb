@@ -128,12 +128,12 @@ bnAlgObjToFreeAct (a ** m) (InFree (TFC x)) = case x of
 public export
 bnFreeAlgCommutesLemma :
   (a : Type) -> (m : FreeMAlgSig BinNatF a) ->
-  ExtEq (m . IdrisCategories.inFV) Prelude.id ->
   ExtEq (m . IdrisAlgebra.freeBinNatMap m) (m . IdrisAlgebra.freeBinNatJoin) ->
   (b : Bool) -> (x : FreeBinNat a) ->
-  m (InFree (TFC (ConsF b x))) = m (InFree (TFC (ConsF b (InFree (TFV (m x))))))
-bnFreeAlgCommutesLemma a m equ eqact b x =
-  sym $ eqact $ inFC $ ConsF b $ inFV x
+  m (InFree (TFC (ConsF b (InFree (TFV (m x)))))) =
+    m (InFree (TFC (ConsF b x)))
+bnFreeAlgCommutesLemma a m eqact b x =
+  eqact $ inFC $ ConsF b $ inFV x
 
 public export
 bnFreeAlgCommutes :
@@ -150,7 +150,7 @@ bnFreeAlgCommutes a m equ eqact (InFree (TFC x)) =
     NilF => Refl
     ConsF b x' =>
       rewrite bnFreeAlgCommutes a m equ eqact x' in
-      sym $ bnFreeAlgCommutesLemma a m equ eqact b _
+      bnFreeAlgCommutesLemma a m eqact b _
 
 public export
 bnFreeAlgCommutes' :
@@ -168,7 +168,7 @@ bnFreeAlgCommutes' a m equ eqact (InFree (TFC x)) =
     NilF => Refl
     ConsF b x' =>
       rewrite sym (bnFreeAlgCommutes' a m equ eqact x') in
-      bnFreeAlgCommutesLemma a m equ eqact b x'
+      sym $ bnFreeAlgCommutesLemma a m eqact b x'
 
 -- This (together with `bnAlgObjToFreeIso` above) completes the demonstration
 -- that the category of algebras over the monad `FreeBinNat` is equivalent to
