@@ -105,3 +105,79 @@ bnAlgObjToFreeIso (a ** m) =
     (Element0 id $ \el => case el of NilF => Refl ; ConsF b x => Refl,
      Element0 id $ \el => case el of NilF => Refl ; ConsF b x => Refl)
     (\el => Refl, \el => Refl)
+
+-- The unit property of an algebra over a monad.
+public export
+bnAlgObjToFreeUnit : (a : FAlgObj BinNatF) ->
+  ExtEq (bnAlgObjToFree a . IdrisCategories.inFV) Prelude.id
+bnAlgObjToFreeUnit (a ** m) el = Refl
+
+-- The action property of an algebra over a monad.
+-- Together with the unit property above, this shows that `bnAlgObjToFree a`
+-- _is_ an algebra over a monad (not only over the underlying endofunctor).
+public export
+bnAlgObjToFreeAct : (a : FAlgObj BinNatF) ->
+  ExtEq
+    (bnAlgObjToFree a . IdrisAlgebra.freeBinNatMap (bnAlgObjToFree a))
+    (bnAlgObjToFree a . IdrisAlgebra.freeBinNatJoin)
+bnAlgObjToFreeAct (a ** m) (InFree (TFV var)) = Refl
+bnAlgObjToFreeAct (a ** m) (InFree (TFC x)) = case x of
+  NilF => Refl
+  ConsF b x' => rewrite bnAlgObjToFreeAct (a ** m) x' in Refl
+
+public export
+bnFreeAlgCommutes :
+  (a : Type) -> (m : FreeMAlgSig BinNatF a) ->
+  ExtEq (m . IdrisCategories.inFV) Prelude.id ->
+  ExtEq (m . IdrisAlgebra.freeBinNatMap m) (m . IdrisAlgebra.freeBinNatJoin) ->
+  (el : FreeBinNat a) ->
+  cataListF a a Prelude.id
+    (\x => m (InFree (TFC (bimap Prelude.id (InFree . TFV) x)))) el =
+  m (cataListF a (FreeMonad (\arg => ListF Bool arg) a) (\x => InFree (TFV x))
+    (\x => InFree (TFC x)) el)
+bnFreeAlgCommutes a m equ eqact (InFree (TFV var)) = sym $ equ var
+bnFreeAlgCommutes a m equ eqact (InFree (TFC x)) =
+  case x of
+    NilF => Refl
+    ConsF b x' =>
+      rewrite bnFreeAlgCommutes a m equ eqact x' in
+      ?bnFreeAlgCommutes_hole
+
+public export
+bnFreeAlgCommutes' :
+  (a : Type) -> (m : FreeMAlgSig BinNatF a) ->
+  ExtEq (m . IdrisCategories.inFV) Prelude.id ->
+  ExtEq (m . IdrisAlgebra.freeBinNatMap m) (m . IdrisAlgebra.freeBinNatJoin) ->
+  (el : FreeBinNat a) ->
+  m el =
+  cataListF a a Prelude.id
+    (\x => m (InFree (TFC (bimap Prelude.id (\x => InFree (TFV x)) x))))
+    (cataListF a
+      (FreeMonad (\arg => ListF Bool arg) a)
+      (\x => InFree (TFV x)) (\x => InFree (TFC x)) el)
+bnFreeAlgCommutes' a m equ eqact (InFree (TFV var)) = equ var
+bnFreeAlgCommutes' a m equ eqact (InFree (TFC x)) =
+  case x of
+    NilF => Refl
+    ConsF b x' =>
+      rewrite sym (bnFreeAlgCommutes' a m equ eqact x') in
+      ?bnFreeAlgCommutes'_hole
+
+-- This (together with `bnAlgObjToFreeIso` above) completes the demonstration
+-- that the category of algebras over the monad `FreeBinNat` is equivalent to
+-- the category of algebras over the underlying endofunctor `BinNatF`, with
+-- the equivalence being witnessed by `bnAlgObjToFreeObj` and
+-- `bnAlgObjFromFree`.
+public export
+bnAlgObjFromFreeIso : (a : FAlgObj FreeBinNat) ->
+  ExtEq (snd a . IdrisCategories.inFV) Prelude.id ->
+  ExtEq
+    (snd a . (IdrisAlgebra.freeBinNatMap $ snd a))
+    (snd a . IdrisAlgebra.freeBinNatJoin) ->
+  FAlgIso {f=FreeBinNat} {fm=IdrisAlgebra.freeBinNatMap}
+    (bnAlgObjToFreeObj (bnAlgObjFromFree a)) a
+bnAlgObjFromFreeIso (a ** m) equ eqact =
+  Element0
+    (Element0 id $ bnFreeAlgCommutes a m equ eqact,
+     Element0 id $ bnFreeAlgCommutes' a m equ eqact)
+    (\el => Refl, \el => Refl)
