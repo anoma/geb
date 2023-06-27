@@ -106,37 +106,6 @@ bnAlgObjToFreeIso (a ** m) =
      Element0 id $ \el => case el of NilF => Refl ; ConsF b x => Refl)
     (\el => Refl, \el => Refl)
 
--- The unit property of an algebra over a free monad.
-public export
-FreeMonadAlgUnitP : {f : Type -> Type} ->
-  FreeFEval f -> FAlgObj (FreeMonad f) -> Type
-FreeMonadAlgUnitP {f} eval alg =
-  ExtEq (snd alg . IdrisCategories.inFV) Prelude.id
-
--- The action property of an algebra over a free monad.
-public export
-FreeMonadAlgActP : {f : Type -> Type} ->
-  FreeFEval f -> FAlgObj (FreeMonad f) -> Type
-FreeMonadAlgActP {f} eval alg =
-  ExtEq (snd alg . (freeMap eval $ snd alg)) (snd alg . freeFJoin eval)
-
--- The properties required to make an algebra over the underlying endofunctor
--- of a monad into an algebra over a monad.
-public export
-FreeMonadAlgP : {f : Type -> Type} ->
-  FreeFEval f -> FAlgObj (FreeMonad f) -> Type
-FreeMonadAlgP {f} eval alg =
-  (FreeMonadAlgUnitP {f} eval alg, FreeMonadAlgActP {f} eval alg)
-
--- The signature of an algebra not only over the underlying endofunctor of
--- a free monad, but over the free monad _as_ a monad in the sense of "algebra
--- over a monad", which is an algebra over the underlying endofunctor together
--- with conditions that represent compatibility between that algebra and the
--- unit and multiplication of the monad.
-public export
-FreeMonadAlg : {f : Type -> Type} -> FreeFEval f -> Type
-FreeMonadAlg {f} eval = (a : FAlgObj (FreeMonad f) ** FreeMonadAlgP {f} eval a)
-
 -- The unit property of an algebra over a monad.
 public export
 bnAlgObjToFreeUnit : (a : FAlgObj BinNatF) ->
