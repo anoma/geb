@@ -91,3 +91,13 @@ bnAlgObjToFree = FAlgObjToFree {f=BinNatF} cataBinNatF
 public export
 bnAlgObjToFreeObj : FAlgObj BinNatF -> FAlgObj FreeBinNat
 bnAlgObjToFreeObj = FAlgObjToFreeObj {f=BinNatF} cataBinNatF
+
+public export
+bnAlgObjToFreeIso : (a : FAlgObj BinNatF) ->
+  FAlgIso {f=BinNatF} {fm=Prelude.map}
+    (bnAlgObjFromFree (bnAlgObjToFreeObj a)) a
+bnAlgObjToFreeIso (a ** m) =
+  Element0
+    (Element0 id $ \el => case el of NilF => Refl ; ConsF b x => Refl,
+     Element0 id $ \el => case el of NilF => Refl ; ConsF b x => Refl)
+    (\el => Refl, \el => Refl)
