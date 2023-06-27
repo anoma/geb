@@ -132,8 +132,6 @@ bnFreeAlgCommutesLemma :
   ExtEq (m . IdrisAlgebra.freeBinNatMap m) (m . IdrisAlgebra.freeBinNatJoin) ->
   (b : Bool) -> (x : FreeBinNat a) ->
   m (InFree (TFC (ConsF b x))) = m (InFree (TFC (ConsF b (InFree (TFV (m x))))))
-bnFreeAlgCommutesLemma a m equ eqact b (InFree (TFV var)) =
-  rewrite equ var in Refl
 bnFreeAlgCommutesLemma a m equ eqact b x =
   sym $ eqact $ inFC $ ConsF b $ inFV x
 
