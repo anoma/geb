@@ -77,6 +77,10 @@ freeBinNatMap : {a, b : Type} -> (a -> b) -> FreeBinNat a -> FreeBinNat b
 freeBinNatMap = freeMap cataBinNatF
 
 public export
+freeBinNatJoin : {a : Type} -> FreeBinNat (FreeBinNat a) -> FreeBinNat a
+freeBinNatJoin = freeFJoin cataBinNatF
+
+public export
 bnAlgFromFreeObj : (alg : FAlgObj FreeBinNat) -> Algebra BinNatF (fst alg)
 bnAlgFromFreeObj = FAlgFromFreeObj {f=BinNatF} {fm=map}
 
