@@ -7231,12 +7231,12 @@ NuBinNat : Type
 NuBinNat = Nu BinNatF
 
 public export
-cataBinNatF : FreeFEval BinNatF
-cataBinNatF = cataListF {atom=Bool}
+evalBinNatF : FreeFEval BinNatF
+evalBinNatF = cataListF {atom=Bool}
 
 public export
-cataBinNatF' : {a : Type} -> BinNatAlg a -> FreeMAlgSig BinNatF a
-cataBinNatF' = FAlgToFree cataBinNatF
+cataBinNatF : {a : Type} -> BinNatAlg a -> FreeMAlgSig BinNatF a
+cataBinNatF = FAlgToFree evalBinNatF
 
 public export
 Show MuBinNat
@@ -7261,7 +7261,7 @@ interpBinNatFBinAlg (ConsF b n) = boolToDigit b :: n
 
 public export
 interpMuBinNatBin : MuBinNat -> Bin
-interpMuBinNatBin = cataBinNatF Void Bin (voidF Bin) interpBinNatFBinAlg
+interpMuBinNatBin = evalBinNatF Void Bin (voidF Bin) interpBinNatFBinAlg
 
 public export
 muBinNatToNat : MuBinNat -> Nat
@@ -7273,7 +7273,7 @@ binNatLengthAlg = lengthAlg {atom=Bool}
 
 public export
 binNatLength : FreeMonadNatTrans BinNatF NatF
-binNatLength = natTransMapFree cataBinNatF binNatLengthAlg
+binNatLength = natTransMapFree evalBinNatF binNatLengthAlg
 
 -----------------------------------------------------
 ---- Pairs of fixed-width binary natural numbers ----

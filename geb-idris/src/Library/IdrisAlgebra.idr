@@ -74,11 +74,11 @@ FSEqObj = FAlgObj FreeBinNat
 
 public export
 freeBinNatMap : {a, b : Type} -> (a -> b) -> FreeBinNat a -> FreeBinNat b
-freeBinNatMap = freeMap cataBinNatF
+freeBinNatMap = freeMap evalBinNatF
 
 public export
 freeBinNatJoin : {a : Type} -> FreeBinNat (FreeBinNat a) -> FreeBinNat a
-freeBinNatJoin = freeFJoin cataBinNatF
+freeBinNatJoin = freeFJoin evalBinNatF
 
 public export
 bnAlgFromFreeObj : (alg : FAlgObj FreeBinNat) -> Algebra BinNatF (fst alg)
@@ -90,11 +90,11 @@ bnAlgObjFromFree = FAlgObjFromFree {f=BinNatF} {fm=map}
 
 public export
 bnAlgObjToFree : (alg : FAlgObj BinNatF) -> FreeMAlgSig BinNatF (fst alg)
-bnAlgObjToFree = FAlgObjToFree {f=BinNatF} cataBinNatF
+bnAlgObjToFree = FAlgObjToFree {f=BinNatF} evalBinNatF
 
 public export
 bnAlgObjToFreeObj : FAlgObj BinNatF -> FAlgObj FreeBinNat
-bnAlgObjToFreeObj = FAlgObjToFreeObj {f=BinNatF} cataBinNatF
+bnAlgObjToFreeObj = FAlgObjToFreeObj {f=BinNatF} evalBinNatF
 
 public export
 bnAlgObjToFreeIso : (a : FAlgObj BinNatF) ->
@@ -140,9 +140,9 @@ bnFreeAlgCommutes :
   ExtEq (m . IdrisCategories.inFV) Prelude.id ->
   ExtEq (m . IdrisAlgebra.freeBinNatMap m) (m . IdrisAlgebra.freeBinNatJoin) ->
   (el : FreeBinNat a) ->
-  cataBinNatF'
+  cataBinNatF
     (m . InFree . TFC . mapSnd Library.IdrisCategories.inFV) el =
-  m (cataBinNatF a (FreeBinNat a) IdrisCategories.inFV IdrisCategories.inFC el)
+  m (evalBinNatF a (FreeBinNat a) IdrisCategories.inFV IdrisCategories.inFC el)
 bnFreeAlgCommutes a m equ eqact (InFree (TFV var)) = sym $ equ var
 bnFreeAlgCommutes a m equ eqact (InFree (TFC x)) =
   case x of
@@ -158,9 +158,9 @@ bnFreeAlgCommutes' :
   ExtEq (m . IdrisAlgebra.freeBinNatMap m) (m . IdrisAlgebra.freeBinNatJoin) ->
   (el : FreeBinNat a) ->
   m el =
-  cataBinNatF'
+  cataBinNatF
     (m . InFree . TFC . mapSnd Library.IdrisCategories.inFV)
-    (cataBinNatF a (FreeBinNat a) IdrisCategories.inFV IdrisCategories.inFC el)
+    (evalBinNatF a (FreeBinNat a) IdrisCategories.inFV IdrisCategories.inFC el)
 bnFreeAlgCommutes' a m equ eqact (InFree (TFV var)) = equ var
 bnFreeAlgCommutes' a m equ eqact (InFree (TFC x)) =
   case x of
