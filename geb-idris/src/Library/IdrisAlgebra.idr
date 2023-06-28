@@ -182,3 +182,8 @@ bnAlgObjFromFreeIso (a ** m) algp =
     (Element0 id $ bnFreeAlgCommutes a m algp,
      Element0 id $ bnFreeAlgCommutes' a m algp)
     (\el => Refl, \el => Refl)
+
+-- From _Toposes, Triples, and Theories_ by Michael Barr and Charles Wells,
+-- morphisms of a monad (a monad is also known as a "triple") correspond
+-- bijectively with functors between Eilenberg-Moore categories which commute
+-- with the functors underlying the monads.
