@@ -3012,6 +3012,11 @@ FAlgObjToFreeObj :
 FAlgObjToFreeObj {f} eval (a ** m) = (a ** FAlgToFree {a} eval m)
 
 public export
+FAlgFreeAlgOn : (f : Type -> Type) -> (eval : FreeFEval f) ->
+  (a : Type) -> FAlgObj (FreeMonad f)
+FAlgFreeAlgOn f eval a = (FreeMonad f a ** FAlgToFree eval inFC)
+
+public export
 freeBind : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
   (a -> FreeMonad f b) -> FreeMonad f a -> FreeMonad f b
 freeBind {f} {a} {b} eval m = eval a (FreeMonad f b) m inFC
