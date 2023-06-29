@@ -187,3 +187,20 @@ bnAlgObjFromFreeIso (a ** m) algp =
 -- morphisms of a monad (a monad is also known as a "triple") correspond
 -- bijectively with functors between Eilenberg-Moore categories which commute
 -- with the functors underlying the monads.
+
+-- Every morphism between _free_ algebras over a monad (such as the free monad
+-- of a functor that has one, which includes all polynomial functors)
+-- corresponds to a Kleisli morphism.
+public export
+klMorphToFreeAlgMorph :
+  (f : Type -> Type) -> {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
+  (eval : FreeFEval f) ->
+  {a, b : Type} -> (m : Algebra f a) -> (n : Algebra f b) ->
+  (g : a -> FreeMonad f b) ->
+  FAlgMorph {f=(FreeMonad f)} {fm=(freeMap eval)}
+    (FreeMonad f a ** freeFJoin eval)
+    (FreeMonad f b ** freeFJoin eval)
+klMorphToFreeAlgMorph f {fm} eval {a} {b} m n g =
+  Element0
+    (freeBind eval g)
+    (\el => ?klMorphToAlgMorph_hole)
