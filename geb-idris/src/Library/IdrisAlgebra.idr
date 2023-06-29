@@ -5,6 +5,50 @@ import Library.IdrisCategories
 
 %default total
 
+----------------------------------
+----------------------------------
+---- Categories of F-algebras ----
+----------------------------------
+----------------------------------
+
+public export
+FunctorIdP :
+  (f : Type -> Type) -> (fm : {0 a, b : Type} -> (a -> b) -> f a -> f b) -> Type
+FunctorIdP f fm = (a : Type) -> ExtEq (fm $ id {a}) (id {a=(f a)})
+
+public export
+FunctorCompP :
+  (f : Type -> Type) -> (fm : {0 a, b : Type} -> (a -> b) -> f a -> f b) -> Type
+FunctorCompP f fm = {a, b, c : Type} ->
+  (h : b -> c) -> (g : a -> b) -> ExtEq (fm (h . g)) (fm h . fm g)
+
+public export
+FunctorP :
+  (f : Type -> Type) -> (fm : {0 a, b : Type} -> (a -> b) -> f a -> f b) -> Type
+FunctorP f fm = (FunctorIdP f fm, FunctorCompP f fm)
+
+public export
+fAlgId :
+  {f : Type -> Type} -> {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
+  FunctorIdP f fm ->
+  (alg : FAlgObj f) -> FAlgMorph {f} {fm} alg alg
+fAlgId {f} {fm} idp (a ** m) = Element0 id $ \el => cong m $ sym $ idp a el
+
+public export
+fAlgComp :
+  {f : Type -> Type} -> {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
+  FunctorCompP f fm -> {a, b, c : FAlgObj f} ->
+  FAlgMorph {f} {fm} b c -> FAlgMorph {f} {fm} a b -> FAlgMorph {f} {fm} a c
+fAlgComp {f} {fm} compp {a=(a ** ma)} {b=(b ** mb)} {c=(c ** mc)}
+  (Element0 h heq) (Element0 g geq) =
+    Element0 (h . g) $
+      \el =>
+        trans
+          (trans
+            (cong h $ geq el)
+            (heq $ fm g el))
+          (cong mc $ sym $ compp h g el)
+
 ----------------------------------------
 ----------------------------------------
 ---- F-algebra universal properties ----
