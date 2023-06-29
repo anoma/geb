@@ -191,16 +191,16 @@ bnAlgObjFromFreeIso (a ** m) algp =
 -- Every morphism between _free_ algebras over a monad (such as the free monad
 -- of a functor that has one, which includes all polynomial functors)
 -- corresponds to a Kleisli morphism.
+
 public export
 klMorphToFreeAlgMorph :
   (f : Type -> Type) -> {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
   (eval : FreeFEval f) ->
   {a, b : Type} -> (m : Algebra f a) -> (n : Algebra f b) ->
   (g : a -> FreeMonad f b) ->
+  FAlgCommutes {fm=(freeMap eval)}
+    (FAlgFreeAlgOn f eval a) (FAlgFreeAlgOn f eval b) (freeBind eval g) ->
   FAlgMorph {f=(FreeMonad f)} {fm=(freeMap eval)}
-    (FreeMonad f a ** freeFJoin eval)
-    (FreeMonad f b ** freeFJoin eval)
-klMorphToFreeAlgMorph f {fm} eval {a} {b} m n g =
-  Element0
-    (freeBind eval g)
-    (\el => ?klMorphToAlgMorph_hole)
+    (FAlgFreeAlgOn f eval a) (FAlgFreeAlgOn f eval b)
+klMorphToFreeAlgMorph f {fm} eval {a} {b} m n g comm =
+  Element0 (freeBind eval g) comm
