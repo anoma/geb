@@ -36,6 +36,22 @@ data BinNatFinContravar : (alg : BinNatAlgObj) ->
   BNFprod : {0 a : Type} -> {0 m : BinNatAlg a} -> {0 f : a -> Type} ->
     {0 b : Bool} -> {0 ela : a} -> f (m (ConsF b (m NilF))) -> f ela ->
     BinNatFinContravar (a ** m) f (ConsF b ela)
+  -- `ConsF True NilF` is also a terminal object, which is represented by a
+  -- contravariant const-`Unit`-valued functor.
+  BNFterm : {0 a : Type} -> {0 m : BinNatAlg a} -> {0 f : a -> Type} ->
+    BinNatFinContravar (a ** m) f (ConsF True $ m NilF)
+
+public export
+data BinNatFinCovar : (alg : BinNatAlgObj) ->
+    (fst alg -> Type) -> (BinNatF (fst alg) -> Type) where
+  -- `NilF` is an initial object, which is represented by a covariant
+  -- const-`Unit`-valued functor.
+  BNFinitN : {0 a : Type} -> {0 m : BinNatAlg a} -> {0 f : a -> Type} ->
+    BinNatFinCovar (a ** m) f NilF
+  -- `ConsF False NilF` is also an initial object, which is represented by a
+  -- covariant const-`Unit`-valued functor.
+  BNFinitF : {0 a : Type} -> {0 m : BinNatAlg a} -> {0 f : a -> Type} ->
+    BinNatFinCovar (a ** m) f (ConsF False $ m NilF)
 
 -------------------------------------------------------
 -------------------------------------------------------
