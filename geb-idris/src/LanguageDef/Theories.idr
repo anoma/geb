@@ -22,25 +22,25 @@ import public LanguageDef.RefinedADT
 -- We do this by defining contravariant and covariant components of the
 -- hom-functor.
 --
--- The contravariant component comes from `List Bool`'s being a product.
+-- The contravariant component comes from `[True]`'s being a terminal object.
 public export
 data BinNatFinContravar : (alg : BinNatAlgObj) ->
     (fst alg -> Type) -> (BinNatF (fst alg) -> Type) where
   -- There's no contravariant component into `NilF`, because `NilF` is
   -- an initial object, which is represented by a covariant functor, not
-  -- a contravariant one.
+  -- a contravariant one.  For the same reason, there's no contravariant
+  -- component into `ConsF False NilF` -- that is also an initial object.
   --
-  -- The contravariant component into `ConsF` is the product of the
-  -- contravariant components into the `Bool` at the head and the `List Bool`
-  -- at the tail.
-  BNFprod : {0 a : Type} -> {0 m : BinNatAlg a} -> {0 f : a -> Type} ->
-    {0 b : Bool} -> {0 ela : a} -> f (m (ConsF b (m NilF))) -> f ela ->
-    BinNatFinContravar (a ** m) f (ConsF b ela)
+  -- There's no contravariant component into `ConsF _ $ ConsF _ _` either,
+  -- as that is a coproduct, which is represented by a covariant functor.
   -- `ConsF True NilF` is also a terminal object, which is represented by a
   -- contravariant const-`Unit`-valued functor.
   BNFterm : {0 a : Type} -> {0 m : BinNatAlg a} -> {0 f : a -> Type} ->
     BinNatFinContravar (a ** m) f (ConsF True $ m NilF)
 
+-- The covariant component comes from `List Bool`'s being a coproduct
+-- in this context (and from the empty list, or a list of `False`s, being
+-- an initial object).
 public export
 data BinNatFinCovar : (alg : BinNatAlgObj) ->
     (fst alg -> Type) -> (BinNatF (fst alg) -> Type) where
@@ -52,6 +52,12 @@ data BinNatFinCovar : (alg : BinNatAlgObj) ->
   -- covariant const-`Unit`-valued functor.
   BNFinitF : {0 a : Type} -> {0 m : BinNatAlg a} -> {0 f : a -> Type} ->
     BinNatFinCovar (a ** m) f (ConsF False $ m NilF)
+  -- The covariant component out of `ConsF` is the product of the
+  -- covariant components out of the `Bool` at the head and the `List Bool`
+  -- at the tail.
+  BNFcoprod : {0 a : Type} -> {0 m : BinNatAlg a} -> {0 f : a -> Type} ->
+    {0 b : Bool} -> {0 ela : a} -> f (m (ConsF b (m NilF))) -> f ela ->
+    BinNatFinCovar (a ** m) f (ConsF b ela)
 
 -------------------------------------------------------
 -------------------------------------------------------
