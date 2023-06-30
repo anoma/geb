@@ -103,6 +103,10 @@ InitialFAlg f {fm} = Subset0 (FAlgObj f) (IsInitialFAlg {f} {fm})
 -------------------------------
 -------------------------------
 
+-------------------------------
+---- Algebras of `BinNatF` ----
+-------------------------------
+
 -- The effect of an equalizer on morphisms between objects of `FinSet`
 -- may be viewed as erasing some terms from the domain, so we can represent
 -- objects of `FinSet` as lists of booleans, where the length is the
@@ -113,8 +117,8 @@ InitialFAlg f {fm} = Subset0 (FAlgObj f) (IsInitialFAlg {f} {fm})
 -- thereby requiring only that the type implement the interface of `List Bool`,
 -- not that it be `List Bool` precisely.
 public export
-FSEqObj : Type
-FSEqObj = FAlgObj FreeBinNat
+BinNatAlgObj : Type
+BinNatAlgObj = FAlgObj BinNatF
 
 public export
 freeBinNatMap : {a, b : Type} -> (a -> b) -> FreeBinNat a -> FreeBinNat b

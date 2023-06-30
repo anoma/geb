@@ -2863,7 +2863,7 @@ InitAlgSig f = FreeAlgSig f Void
 -- to `CofreeComonad[F, a]`.  Thus `CofreeComonad` allows us to create terminal
 -- `Fa`-coalgebras parameterized over arbitrary objects `a`, with the terminal
 -- coalgebra of `F` itself being the special case where `a` is the terminal
--- object (`Unit`).  `CofreeComonad` is sometimes written `Finf`.
+-- object (`Unit`).  `CofreeComonad` is sometimes written `F_inf`.
 public export
 data CofreeComonad : (Type -> Type) -> (Type -> Type) where
   InCofree :
