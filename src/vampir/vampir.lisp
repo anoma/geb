@@ -122,6 +122,14 @@
    :func :negative31
    :arguments (list a)))
 
+
+(defparameter *base-range*
+  (make-alias
+   :name :base_range
+   :inputs (list (make-constant :const 0))
+   :body
+   (list (make-wire :var :[]))))
+
 (defparameter *next-range*
   (let ((a-wire (make-wire :var :a)))
     (make-alias
@@ -149,18 +157,25 @@
                                     (make-infix :op :\\
                                                 :lhs a-wire
                                                 :rhs (make-constant :const 2)))))
-      (make-equality :lhs a-wire
-                     :rhs
-                     (make-infix :op :+
-                                 :lhs (make-wire :var :a0)
-                                 :rhs (make-infix :op :*
-                                                  :lhs (make-constant :const 2)
-                                                  :rhs (make-wire :var :a1))))
-      (make-tuples :wires (list
-                           (make-wire :var :a0)
-                           (make-application :func :range
+      (make-infix :op :|:|
+                      :lhs (make-wire :var :a0)
+                      :rhs (make-application :func :range
                                              :arguments
-                                             (list (make-wire :var :a1)))))))))
+                                             (list (make-wire :var :a1))))))))
+(defparameter *range-n*
+  (make-alias
+   :name :range-n
+   :inputs (list :n)
+   :body
+   (list (make-application :func :iter
+                           :arguments (list (make-wire :var :n)
+                                            (make-wire :var :next_range)
+                                            (make-wire :var :base_range))))))
+
+(defun range-n (n a)
+  (make-application :func :range-n
+                    :arguments (list n
+                                     a)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Range
