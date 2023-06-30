@@ -2,10 +2,37 @@ module LanguageDef.Theories
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import Library.IdrisAlgebra
 import public LanguageDef.Atom
 import public LanguageDef.RefinedADT
 
 %default total
+
+---------------------------------------------------
+---------------------------------------------------
+---- Refined `Fin` using algebras of `BinNatF` ----
+---------------------------------------------------
+---------------------------------------------------
+
+-- Given an implementation of the `BinNatF` interface -- that is, an
+-- algebra of `BinNatF` -- we can treat the carrier of the algebra as
+-- a type of objects of a category by constructing a type of morphisms
+-- between objects.
+--
+-- We do this by defining contravariant and covariant components of the
+-- hom-functor.
+--
+-- The contravariant component comes from `List Bool`'s being a product.
+public export
+BinNatFinContravar : (alg : BinNatAlgObj) ->
+  (fst alg -> Type) -> (BinNatF (fst alg) -> Type)
+-- There's no contravariant component into `NilF`, because `NilF` is
+-- an initial object, which is represented by a covariant functor, not
+-- a contravariant one.
+BinNatFinContravar (a ** m) f NilF = Void
+-- The contravariant component into `ConsF` is the product of the contravariant
+-- components into the `Bool` at the head and the `List Bool` at the tail.
+BinNatFinContravar (a ** m) f (ConsF b ela) = (f $ m $ ConsF b $ m NilF, f ela)
 
 -------------------------------------------------------
 -------------------------------------------------------

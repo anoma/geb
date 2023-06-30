@@ -2,6 +2,7 @@ module LanguageDef.ProgFinSet
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import Library.IdrisAlgebra
 import LanguageDef.PolyCat
 import public LanguageDef.Atom
 import public LanguageDef.Adjunctions
