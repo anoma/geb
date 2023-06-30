@@ -24,18 +24,15 @@ import public LanguageDef.RefinedADT
 --
 -- The contravariant component comes from `List Bool`'s being a product.
 public export
-data BinNatFinContravar : (alg : BinNatAlgObj) ->
-    (fst alg -> Type) -> (BinNatF (fst alg) -> Type) where
-  -- There's no contravariant component into `NilF`, because `NilF` is
-  -- an initial object, which is represented by a covariant functor, not
-  -- a contravariant one.
-  --
-  -- The contravariant component into `ConsF` is the product of the
-  -- contravariant components into the `Bool` at the head and the `List Bool`
-  -- at the tail.
-  BNFprod : {0 a : Type} -> {0 m : BinNatAlg a} -> {0 f : a -> Type} ->
-    {0 b : Bool} -> {0 ela : a} -> f (m (ConsF b (m NilF))) -> f ela ->
-    BinNatFinContravar (a ** m) f (ConsF b ela)
+BinNatFinContravar : (alg : BinNatAlgObj) ->
+  (fst alg -> Type) -> (BinNatF (fst alg) -> Type)
+-- There's no contravariant component into `NilF`, because `NilF` is
+-- an initial object, which is represented by a covariant functor, not
+-- a contravariant one.
+BinNatFinContravar (a ** m) f NilF = Void
+-- The contravariant component into `ConsF` is the product of the contravariant
+-- components into the `Bool` at the head and the `List Bool` at the tail.
+BinNatFinContravar (a ** m) f (ConsF b ela) = (f $ m $ ConsF b $ m NilF, f ela)
 
 -------------------------------------------------------
 -------------------------------------------------------
