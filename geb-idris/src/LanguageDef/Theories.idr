@@ -59,6 +59,11 @@ data BinNatFinCovar : (alg : BinNatAlgObj) ->
     {0 b : Bool} -> {0 ela : a} -> f (m (ConsF b (m NilF))) -> f ela ->
     BinNatFinCovar (a ** m) f (ConsF b ela)
 
+public export
+data BinNatMorph : (alg : BinNatAlgObj) -> fst alg -> fst alg -> Type where
+  BNMid : {0 a : Type} -> {0 m : BinNatAlg a} ->
+    (ela : a) -> BinNatMorph (a ** m) ela ela
+
 -------------------------------------------------------
 -------------------------------------------------------
 ---- Mutually-recursive family of slice categories ----
