@@ -49,6 +49,27 @@ IndInd : Type
 IndInd = DPair IndIndF1 IndIndF2
 
 --------------------------------------
+---- Example (dependent contexts) ----
+--------------------------------------
+
+public export
+data ArgDCtx : IndIndF1 where
+  DCnil : {0 a : Type} -> {0 b : a -> Type} -> ArgDCtx (a ** b)
+  DCcons : {0 a : Type} -> {0 b : a -> Type} ->
+    (ctx : a) -> b ctx -> ArgDCtx (a ** b)
+
+public export
+data ArgDType : IndIndF2 ArgDCtx where
+  DTbase : {0 a : Type} -> {0 b : a -> Type} ->
+    {0 alg : IndIndAlg ArgDCtx a b} ->
+    (ctx : ArgDCtx (a ** b)) -> ArgDType a b alg ctx
+  DTpi : {0 a : Type} -> {0 b : a -> Type} ->
+    {0 alg : IndIndAlg ArgDCtx a b} ->
+    (ctx : ArgDCtx (a ** b)) ->
+    (dom : b (alg ctx)) -> (cod : b (alg $ DCcons {a} {b} (alg ctx) dom)) ->
+    ArgDType a b alg ctx
+
+--------------------------------------
 ---- Indexed/dependent definition ----
 --------------------------------------
 
@@ -107,9 +128,9 @@ public export
 NatIndInd : Type
 NatIndInd = DepIndInd Nat
 
-------------------------------
----- Example (SortedList) ----
-------------------------------
+--------------------------------
+---- Example (sorted lists) ----
+--------------------------------
 
 public export
 data ArgSList : NatIndIndF1 where
