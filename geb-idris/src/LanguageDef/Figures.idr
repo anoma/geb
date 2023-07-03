@@ -10,6 +10,66 @@ import public LanguageDef.ADTCat
 
 %default total
 
+-----------------------------------------
+-----------------------------------------
+---- Inductive-inductive definitions ----
+-----------------------------------------
+-----------------------------------------
+
+-- See
+-- https://www.semanticscholar.org/paper/A-Categorical-Semantics-for-Inductive-Inductive-Altenkirch-Morris/4653b2f69670c358063bac0d57d4288fbfe6d52c
+
+--------------------------------
+---- Non-indexed definition ----
+--------------------------------
+
+public export
+FamSetObj : Type
+FamSetObj = PolyFunc
+
+public export
+FamSetMorph : FamSetObj -> FamSetObj -> Type
+FamSetMorph = DirichNatTrans
+
+public export
+IndIndF1 : Type
+IndIndF1 = FamSetObj -> Type
+
+public export
+IndIndF2 : IndIndF1 -> Type
+IndIndF2 f1 = (a : Type) -> (b : a -> Type) ->
+  (f1 (a ** b) -> a) -> f1 (a ** b) -> Type
+
+public export
+IndInd : Type
+IndInd = DPair IndIndF1 IndIndF2
+
+--------------------------------------
+---- Indexed/dependent definition ----
+--------------------------------------
+
+public export
+DepFamSetObj : Type -> Type
+DepFamSetObj x = (a : Type ** (x, a) -> Type)
+
+public export
+DepFamSetMorph : {x : Type} -> DepFamSetObj x -> DepFamSetObj x -> x -> Type
+DepFamSetMorph {x} (a ** b) (a' ** b') elx =
+  (onPos : (x, a) -> (x, a') ** SliceMorphism {a=(x, a)} b (b' . onPos))
+
+public export
+DepIndIndF1 : Type -> Type
+DepIndIndF1 x = DepFamSetObj x -> Type
+
+public export
+DepIndIndF2 : {x : Type} -> DepIndIndF1 x -> Type
+DepIndIndF2 {x} f1 = (a : Type) -> (b : (x, a) -> Type) ->
+  (f1 (a ** b) -> a) -> f1 (a ** b) -> Type
+
+public export
+DepIndInd : Type -> Type
+DepIndInd x = DPair (DepIndIndF1 x) (DepIndIndF2 {x})
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Relations in category-theoretic style ----
