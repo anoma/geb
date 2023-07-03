@@ -73,7 +73,7 @@ DepIndIndAlg {x} f1 a b = f1 (a ** b) -> a
 public export
 DepIndIndF2 : {x : Type} -> DepIndIndF1 x -> Type
 DepIndIndF2 {x} f1 = (a : Type) -> (b : (x, a) -> Type) ->
-  DepIndIndAlg {x} f1 a b -> f1 (a ** b) -> Type
+  DepIndIndAlg {x} f1 a b -> x -> f1 (a ** b) -> Type
 
 public export
 DepIndInd : Type -> Type
@@ -115,12 +115,17 @@ public export
 data ArgSList : NatIndIndF1 where
   SLnil : {0 a : Type} -> {0 b : (Nat, a) -> Type} -> ArgSList (a ** b)
   SLcons : {0 a : Type} -> {0 b : (Nat, a) -> Type} ->
-    (n : Nat) -> (ela : a) -> b (n, ela) -> ArgSList (a ** b)
+    (n : Nat) -> (l : a) -> b (n, l) -> ArgSList (a ** b)
 
 public export
 data ArgLteL : NatIndIndF2 ArgSList where
   IsSLnil : {0 a : Type} -> {0 b : (Nat, a) -> Type} ->
-    {0 alg : NatIndIndAlg ArgSList a b} -> ArgLteL a b alg (SLnil {a} {b})
+    {0 alg : NatIndIndAlg ArgSList a b} -> {0 m : Nat} ->
+    ArgLteL a b alg m (SLnil {a} {b})
+  IsSLcons : {0 a : Type} -> {0 b : (Nat, a) -> Type} ->
+    {0 alg : NatIndIndAlg ArgSList a b} ->
+    {m, n : Nat} -> LTE m n -> {l : a} -> (p : b (n, l)) ->
+    ArgLteL a b alg m (SLcons {a} {b} n l p)
 
 -----------------------------------------------
 -----------------------------------------------
