@@ -66,13 +66,61 @@ DepIndIndF1 : Type -> Type
 DepIndIndF1 x = DepFamSetObj x -> Type
 
 public export
+DepIndIndAlg : {0 x : Type} ->
+  DepIndIndF1 x -> (a : Type) -> ((x, a) -> Type) -> Type
+DepIndIndAlg {x} f1 a b = f1 (a ** b) -> a
+
+public export
 DepIndIndF2 : {x : Type} -> DepIndIndF1 x -> Type
 DepIndIndF2 {x} f1 = (a : Type) -> (b : (x, a) -> Type) ->
-  (f1 (a ** b) -> a) -> f1 (a ** b) -> Type
+  DepIndIndAlg {x} f1 a b -> f1 (a ** b) -> Type
 
 public export
 DepIndInd : Type -> Type
 DepIndInd x = DPair (DepIndIndF1 x) (DepIndIndF2 {x})
+
+---------------------------------------------------------
+---- Nat-dependent indexed inductive-inductive types ----
+---------------------------------------------------------
+
+public export
+NatFamSetObj : Type
+NatFamSetObj = DepFamSetObj Nat
+
+public export
+NatFamSetMorph : NatFamSetObj -> NatFamSetObj -> Nat -> Type
+NatFamSetMorph = DepFamSetMorph {x=Nat}
+
+public export
+NatIndIndF1 : Type
+NatIndIndF1 = DepIndIndF1 Nat
+
+public export
+NatIndIndAlg : NatIndIndF1 -> (a : Type) -> ((Nat, a) -> Type) -> Type
+NatIndIndAlg = DepIndIndAlg {x=Nat}
+
+public export
+NatIndIndF2 : NatIndIndF1 -> Type
+NatIndIndF2 = DepIndIndF2 {x=Nat}
+
+public export
+NatIndInd : Type
+NatIndInd = DepIndInd Nat
+
+------------------------------
+---- Example (SortedList) ----
+------------------------------
+
+public export
+data ArgSList : NatIndIndF1 where
+  SLnil : {0 a : Type} -> {0 b : (Nat, a) -> Type} -> ArgSList (a ** b)
+  SLcons : {0 a : Type} -> {0 b : (Nat, a) -> Type} ->
+    (n : Nat) -> (ela : a) -> b (n, ela) -> ArgSList (a ** b)
+
+public export
+data ArgLteL : NatIndIndF2 ArgSList where
+  IsSLnil : {0 a : Type} -> {0 b : (Nat, a) -> Type} ->
+    {0 alg : NatIndIndAlg ArgSList a b} -> ArgLteL a b alg (SLnil {a} {b})
 
 -----------------------------------------------
 -----------------------------------------------
