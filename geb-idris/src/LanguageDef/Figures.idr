@@ -36,9 +36,13 @@ IndIndF1 : Type
 IndIndF1 = FamSetObj -> Type
 
 public export
+IndIndAlg : IndIndF1 -> (a : Type) -> (a -> Type) -> Type
+IndIndAlg f1 a b = f1 (a ** b) -> a
+
+public export
 IndIndF2 : IndIndF1 -> Type
 IndIndF2 f1 = (a : Type) -> (b : a -> Type) ->
-  (f1 (a ** b) -> a) -> f1 (a ** b) -> Type
+  IndIndAlg f1 a b -> f1 (a ** b) -> Type
 
 public export
 IndInd : Type
