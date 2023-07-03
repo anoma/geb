@@ -69,6 +69,18 @@ data ArgDType : IndIndF2 ArgDCtx where
     (dom : b (alg ctx)) -> (cod : b (alg $ DCcons {a} {b} (alg ctx) dom)) ->
     ArgDType a b alg ctx
 
+mutual
+  public export
+  partial
+  data DCtx : Type where
+    InDCtx : ArgDCtx (DCtx ** DType) -> DCtx
+
+  public export
+  partial
+  data DType : DCtx -> Type where
+    InDType : (ctx : ArgDCtx (DCtx ** DType)) ->
+      ArgDType DCtx DType InDCtx ctx -> DType (InDCtx ctx)
+
 --------------------------------------
 ---- Indexed/dependent definition ----
 --------------------------------------
@@ -147,6 +159,18 @@ data ArgLteL : NatIndIndF2 ArgSList where
     {0 alg : NatIndIndAlg ArgSList a b} ->
     {m, n : Nat} -> LTE m n -> {l : a} -> (p : b (n, l)) ->
     ArgLteL a b alg m (SLcons {a} {b} n l p)
+
+mutual
+  public export
+  partial
+  data SortedList : Type where
+    InSL : ArgSList (SortedList ** LteAll) -> SortedList
+  
+  public export
+  partial
+  data LteAll : (Nat, SortedList) -> Type where
+    InLte : (m : Nat) -> (sl : ArgSList (SortedList ** LteAll)) ->
+      ArgLteL SortedList LteAll InSL m sl -> LteAll (m, InSL sl)
 
 -----------------------------------------------
 -----------------------------------------------
