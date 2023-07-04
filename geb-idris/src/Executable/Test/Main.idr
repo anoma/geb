@@ -26,6 +26,7 @@ import LanguageDef.Test.MetaprogrammingTest
 import LanguageDef.Test.LogicTest
 import LanguageDef.Test.ComputationalEffectsTest
 import LanguageDef.Test.EmbeddedTest
+import LanguageDef.Test.PolyIndTypesTest
 import Library.Test.CategoryTheoryTest
 
 %default total
@@ -60,6 +61,7 @@ totalTests = do
   LanguageDef.Test.TheoriesTest.theoriesTest
   LanguageDef.Test.FiguresTest.figuresTest
   LanguageDef.Test.GebTest.gebTest
+  LanguageDef.Test.PolyIndTypesTest.polyIndTypesTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()
