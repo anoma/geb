@@ -8,6 +8,7 @@ import public LanguageDef.RefinedADT
 import public LanguageDef.PolyCat
 import public LanguageDef.ADTCat
 import public LanguageDef.Figures
+import public LanguageDef.Theories
 import public LanguageDef.Syntax
 import public LanguageDef.DiagramCat
 
