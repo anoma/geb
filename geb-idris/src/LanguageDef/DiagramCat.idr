@@ -1857,11 +1857,9 @@ record PRAFunctor (dom, cod : PreDiagram) where
   prafPos : PCopresheaf cod
   prafDir : ElemCatObj {j=cod} prafPos -> PCopresheaf dom
   prafAssign :
-    (i : pdVert cod) -> (p : pcprObj prafPos i) ->
-    (i' : pdVert cod) -> (f : pdEdge cod (i, i')) ->
-    (j : pdVert dom) ->
-    pcprObj (prafDir (i' ** pcprMorph prafPos i i' f p)) j ->
-    pcprObj (prafDir (i ** p)) j
+    (p, p' : ElemCatObj {j=cod} prafPos) ->
+    ElemCatDiagMorph {j=cod} {pcpr=prafPos} p p' ->
+    (j : pdVert dom) -> pcprObj (prafDir p') j -> pcprObj (prafDir p) j
 
 -------------------------
 -------------------------
