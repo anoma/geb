@@ -1845,7 +1845,7 @@ record PRAFunctor (dom, cod : PreDiagram) where
   constructor PRAf
   prafPos : PCopresheaf cod
   prafDir : Sigma {a=(pdVert cod)} (pcprObj prafPos) -> PCopresheaf dom
-  prafDirMapCod :
+  prafAssign :
     (i, i' : pdVert cod) -> (f : pdEdge cod (i, i')) ->
     (p : pcprObj prafPos i) ->
     SliceMorphism {a=(pdVert dom)}
