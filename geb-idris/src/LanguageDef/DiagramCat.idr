@@ -1838,6 +1838,26 @@ record PCopresheaf (j : PreDiagram) where
   pcprMorph : (x, y : pdVert j) ->
     pdEdge j (x, y) -> pcprObj x -> pcprObj y
 
+-- (Co)presheaves over a given diagram themselves form a category.
+-- Since a copresheaf is a functor, a morphism in a category
+-- of (co)presheaves is a natural transformation.
+public export
+PCMorphSig : {j : PreDiagram} -> PCopresheaf j -> PCopresheaf j -> Type
+PCMorphSig {j} pcpr pcpr' =
+  SliceMorphism {a=(pdVert j)} (pcprObj pcpr) (pcprObj pcpr')
+
+public export
+PCMorphNaturality : {j : PreDiagram} -> {pcpr, pcpr' : PCopresheaf j} ->
+  PCMorphSig {j} pcpr pcpr' -> Type
+PCMorphNaturality {j} {pcpr} {pcpr'} alpha =
+  (x, y : pdVert j) -> (e : pdEdge j (x, y)) ->
+  ExtEq ?PCMorphNaturality_hole_1 ?PCMorphNaturality_hole_2
+
+public export
+PCMorph : {j : PreDiagram} -> PCopresheaf j -> PCopresheaf j -> Type
+PCMorph {j} pcpr pcpr' =
+  DPair (PCMorphSig {j} pcpr pcpr') (PCMorphNaturality {j} {pcpr} {pcpr'})
+
 public export
 ElemCatObj : {j : PreDiagram} -> PCopresheaf j -> Type
 ElemCatObj {j} pcpr = Sigma {a=(pdVert j)} (pcprObj pcpr)
@@ -1859,7 +1879,7 @@ record PRAFunctor (dom, cod : PreDiagram) where
   prafAssign :
     (p, p' : ElemCatObj {j=cod} prafPos) ->
     ElemCatDiagMorph {j=cod} {pcpr=prafPos} p p' ->
-    SliceMorphism {a=(pdVert dom)} (pcprObj (prafDir p')) (pcprObj (prafDir p))
+    PCMorphSig {j=dom} (prafDir p') (prafDir p)
 
 -------------------------
 -------------------------
