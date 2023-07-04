@@ -1844,14 +1844,14 @@ public export
 record PRAFunctor (dom, cod : PreDiagram) where
   constructor PRAf
   prafCod : PCopresheaf cod
-  prafDir : (i : pdVert cod) -> pdVert dom -> pcprObj prafCod i -> Type
+  prafDir : Sigma {a=(pdVert cod)} (pcprObj prafCod) -> pdVert dom -> Type
   prafDirMapDom : (i : pdVert cod) -> (j, j' : pdVert dom) ->
     pdEdge dom (j, j') ->
-    (p : pcprObj prafCod i) -> prafDir i j p -> prafDir i j' p
+    (p : pcprObj prafCod i) -> prafDir (i ** p) j -> prafDir (i ** p) j'
   prafDirMapCod : (i, i' : pdVert cod) -> (j : pdVert dom) ->
     (f : pdEdge cod (i, i')) ->
     (p : pcprObj prafCod i) ->
-    prafDir i' j (pcprMorph prafCod i i' f p) -> prafDir i j p
+    prafDir (i' ** pcprMorph prafCod i i' f p) j -> prafDir (i ** p) j
 
 -------------------------
 -------------------------
