@@ -1840,9 +1840,9 @@ record PRAFunctor (dom, cod : PreDiagram) where
   prafDir : (i : pdVert cod) -> prafPos i -> pdVert dom -> Type
   prafOnPos : (i, i' : pdVert cod) ->
     pdEdge cod (i, i') -> prafPos i -> prafPos i'
-  prafOnDir : (i : pdVert cod) -> (p : prafPos i) -> (j, j' : pdVert dom) ->
+  prafOnDirDom : (i : pdVert cod) -> (p : prafPos i) -> (j, j' : pdVert dom) ->
     pdEdge dom (j, j') -> prafDir i p j -> prafDir i p j'
-  prafComp : (i, i' : pdVert cod) -> (j : pdVert dom) ->
+  prafOnDirCod : (i, i' : pdVert cod) -> (j : pdVert dom) ->
     (f : pdEdge cod (i, i')) -> (p : prafPos i) ->
     (d' : prafDir i' (prafOnPos i i' f p) j) -> prafDir i p j
 
