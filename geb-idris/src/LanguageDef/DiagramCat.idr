@@ -1845,9 +1845,9 @@ record PRAFunctor (dom, cod : PreDiagram) where
   constructor PRAf
   prafCod : PCopresheaf cod
   prafDir : Sigma {a=(pdVert cod)} (pcprObj prafCod) -> pdVert dom -> Type
-  prafDirMapDom : (i : pdVert cod) -> (j, j' : pdVert dom) ->
-    pdEdge dom (j, j') ->
-    (p : pcprObj prafCod i) -> prafDir (i ** p) j -> prafDir (i ** p) j'
+  prafDirMapDom : (j, j' : pdVert dom) -> pdEdge dom (j, j') ->
+    (p : Sigma {a=(pdVert cod)} (pcprObj prafCod)) ->
+    prafDir p j -> prafDir p j'
   prafDirMapCod : (i, i' : pdVert cod) -> (j : pdVert dom) ->
     (f : pdEdge cod (i, i')) ->
     (p : pcprObj prafCod i) ->
