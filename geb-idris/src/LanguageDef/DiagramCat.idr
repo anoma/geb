@@ -1837,17 +1837,14 @@ public export
 record PRAFunctor (dom, cod : PreDiagram) where
   constructor PRAf
   prafPos : pdVert cod -> Type
-  prafDir : pdVert cod -> pdVert dom -> Type
-  prafProj : (i : pdVert cod) -> (j : pdVert dom) ->
-    prafDir i j -> prafPos i
+  prafDir : (i : pdVert cod) -> prafPos i -> pdVert dom -> Type
   prafOnPos : (i, i' : pdVert cod) ->
     pdEdge cod (i, i') -> prafPos i -> prafPos i'
-  prafOnDir : (i : pdVert cod) -> (j, j' : pdVert dom) ->
-    pdEdge dom (j, j') -> prafDir i j -> prafDir i j'
+  prafOnDir : (i : pdVert cod) -> (p : prafPos i) -> (j, j' : pdVert dom) ->
+    pdEdge dom (j, j') -> prafDir i p j -> prafDir i p j'
   prafComp : (i, i' : pdVert cod) -> (j : pdVert dom) ->
-    (f : pdEdge cod (i, i')) -> (p : prafPos i) -> (d' : prafDir i' j) ->
-    prafOnPos i i' f p = prafProj i' j d' ->
-    prafDir i j
+    (f : pdEdge cod (i, i')) -> (p : prafPos i) ->
+    (d' : prafDir i' (prafOnPos i i' f p) j) -> prafDir i p j
 
 -------------------------
 -------------------------
