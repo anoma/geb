@@ -14,6 +14,7 @@ modules =
     , LanguageDef.PolyCat
     , LanguageDef.Atom
     , LanguageDef.RefinedADT
+    , LanguageDef.PolyIndTypes
     , LanguageDef.Expression
     , LanguageDef.UniversalCategory
     , LanguageDef.Interpretation
@@ -32,6 +33,7 @@ modules =
     , LanguageDef.Test.PolyCatTest
     , LanguageDef.Test.AtomTest
     , LanguageDef.Test.RefinedADTTest
+    , LanguageDef.Test.PolyIndTypesTest
     , LanguageDef.Test.ExpressionTest
     , LanguageDef.Test.InterpretationTest
     , LanguageDef.Test.SyntaxTest
