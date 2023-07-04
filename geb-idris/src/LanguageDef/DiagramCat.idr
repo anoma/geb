@@ -1838,13 +1838,24 @@ record PCopresheaf (j : PreDiagram) where
   pcprMorph : (x, y : pdVert j) ->
     pdEdge j (x, y) -> pcprObj x -> pcprObj y
 
+public export
+ElemCatObj : {j : PreDiagram} -> PCopresheaf j -> Type
+ElemCatObj {j} pcpr = Sigma {a=(pdVert j)} (pcprObj pcpr)
+
+public export
+ElemCatDiagMorph : {j : PreDiagram} -> {0 pcpr : PCopresheaf j} ->
+  ElemCatObj {j} pcpr -> ElemCatObj {j} pcpr -> Type
+ElemCatDiagMorph {j} {pcpr} x y =
+  Subset0 (pdEdge j (fst x, fst y)) $
+    \e => pcprMorph pcpr (fst x) (fst y) e (snd x) = snd y
+
 -- See https://topos.site/blog/2022/08/imagining-bicomodules-with-type-theory/ .
 
 public export
 record PRAFunctor (dom, cod : PreDiagram) where
   constructor PRAf
   prafPos : PCopresheaf cod
-  prafDir : Sigma {a=(pdVert cod)} (pcprObj prafPos) -> PCopresheaf dom
+  prafDir : ElemCatObj {j=cod} prafPos -> PCopresheaf dom
   prafAssign :
     (i, i' : pdVert cod) -> (f : pdEdge cod (i, i')) ->
     (p : pcprObj prafPos i) ->
