@@ -1859,7 +1859,7 @@ record PRAFunctor (dom, cod : PreDiagram) where
   prafAssign :
     (p, p' : ElemCatObj {j=cod} prafPos) ->
     ElemCatDiagMorph {j=cod} {pcpr=prafPos} p p' ->
-    (j : pdVert dom) -> pcprObj (prafDir p') j -> pcprObj (prafDir p) j
+    SliceMorphism {a=(pdVert dom)} (pcprObj (prafDir p')) (pcprObj (prafDir p))
 
 -------------------------
 -------------------------
