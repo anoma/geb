@@ -3719,26 +3719,26 @@ data PFSObjF : Type -> Type where
 
 public export
 data PFSObj : Type where
-  InPFSO : PFSObjF PFSObj -> PFSObj
+  InPFSO : PFSObjF ProgFinSet.PFSObj -> PFSObj
 
 public export
-InPFSBC : BicartObjF PFSObj -> PFSObj
-InPFSBC = InPFSO . PFSObjBC
+InPFSBC : BicartObjF ProgFinSet.PFSObj -> ProgFinSet.PFSObj
+InPFSBC = ProgFinSet.InPFSO . PFSObjBC
 
 public export
-PFS0 : PFSObj
+PFS0 : ProgFinSet.PFSObj
 PFS0 = InPFSBC BCOInitial
 
 public export
-PFS1 : PFSObj
+PFS1 : ProgFinSet.PFSObj
 PFS1 = InPFSBC BCOTerminal
 
 public export
-PFSC : PFSObj -> PFSObj -> PFSObj
+PFSC : ProgFinSet.PFSObj -> ProgFinSet.PFSObj -> ProgFinSet.PFSObj
 PFSC = InPFSBC .* BCOCoproduct
 
 public export
-PFSP : PFSObj -> PFSObj -> PFSObj
+PFSP : ProgFinSet.PFSObj -> ProgFinSet.PFSObj -> ProgFinSet.PFSObj
 PFSP = InPFSBC .* BCOProduct
 
 -- Endofunctors on the initial bicartesian distributive category (equivalently,
@@ -3765,9 +3765,9 @@ PFSEndoFunc = PFSEndoFuncMut PPBFunc
 -- Endofunctors in the initial bicartesian category, indexed by the
 -- type of their positions.
 public export
-data PFSDepObj : PFSObj -> Type where
+data PFSDepObj : ProgFinSet.PFSObj -> Type where
   PFSDO0 : PFSDepObj PFS0
-  PFSDOy : PFSObj -> PFSDepObj PFS1
+  PFSDOy : ProgFinSet.PFSObj -> PFSDepObj PFS1
   PFSDOC : PFSDepObj a -> PFSDepObj b -> PFSDepObj (PFSC a b)
   PFSDOP : PFSDepObj a -> PFSDepObj b -> PFSDepObj (PFSP a b)
 
