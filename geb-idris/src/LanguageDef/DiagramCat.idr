@@ -1843,13 +1843,13 @@ record PCopresheaf (j : PreDiagram) where
 public export
 record PRAFunctor (dom, cod : PreDiagram) where
   constructor PRAf
-  prafCod : PCopresheaf cod
-  prafDom : Sigma {a=(pdVert cod)} (pcprObj prafCod) -> PCopresheaf dom
+  prafPos : PCopresheaf cod
+  prafDir : Sigma {a=(pdVert cod)} (pcprObj prafPos) -> PCopresheaf dom
   prafDirMapCod :
     (i, i' : pdVert cod) -> (f : pdEdge cod (i, i')) -> (j : pdVert dom) ->
-    (p : pcprObj prafCod i) ->
-    pcprObj (prafDom (i' ** pcprMorph prafCod i i' f p)) j ->
-    pcprObj (prafDom (i ** p)) j
+    (p : pcprObj prafPos i) ->
+    pcprObj (prafDir (i' ** pcprMorph prafPos i i' f p)) j ->
+    pcprObj (prafDir (i ** p)) j
 
 -------------------------
 -------------------------
