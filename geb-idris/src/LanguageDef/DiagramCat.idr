@@ -1831,6 +1831,13 @@ InterpDiagToHSPFMorph {dtta} dthsa dgm (i ** m) sig =
 -----------------------------------
 -----------------------------------
 
+public export
+record PCopresheaf (j : PreDiagram) where
+  constructor PCoprshf
+  pcprObj : pdVert j -> Type
+  pcprMorph : (x, y : pdVert j) ->
+    pdEdge j (x, y) -> pcprObj x -> pcprObj y
+
 -- See https://topos.site/blog/2022/08/imagining-bicomodules-with-type-theory/ .
 
 public export
