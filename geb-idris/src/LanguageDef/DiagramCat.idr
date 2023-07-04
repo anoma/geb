@@ -5,6 +5,7 @@ import Library.IdrisCategories
 import public LanguageDef.Atom
 import public LanguageDef.PolyCat
 import public LanguageDef.Syntax
+import public LanguageDef.Figures
 
 %default total
 
@@ -1823,6 +1824,30 @@ InterpDiagToHSPFMorph : {dtta : DiagToTypeArena} ->
   HomSlice (InterpDiagToHSPFObj {dtta} dthsa dgm ty)
 InterpDiagToHSPFMorph {dtta} dthsa dgm (i ** m) sig =
   (j : dthsrMorph (dthsDir dthsa i) ** dthsrSig (dthsDir dthsa i) j = sig)
+
+-----------------------------------
+-----------------------------------
+---- Prafunctors (Bicomodules) ----
+-----------------------------------
+-----------------------------------
+
+-- See https://topos.site/blog/2022/08/imagining-bicomodules-with-type-theory/ .
+
+public export
+record PRAFunctor (dom, cod : PreDiagram) where
+  constructor PRAf
+  prafPos : pdVert cod -> Type
+  prafDir : pdVert cod -> pdVert dom -> Type
+  prafProj : (i : pdVert cod) -> (j : pdVert dom) ->
+    prafDir i j -> prafPos i
+  prafOnPos : (i, i' : pdVert cod) ->
+    pdEdge cod (i, i') -> prafPos i -> prafPos i'
+  prafOnDir : (i : pdVert cod) -> (j, j' : pdVert dom) ->
+    pdEdge dom (j, j') -> prafDir i j -> prafDir i j'
+  prafComp : (i, i' : pdVert cod) -> (j : pdVert dom) ->
+    (f : pdEdge cod (i, i')) -> (p : prafPos i) -> (d' : prafDir i' j) ->
+    prafOnPos i i' f p = prafProj i' j d' ->
+    prafDir i j
 
 -------------------------
 -------------------------
