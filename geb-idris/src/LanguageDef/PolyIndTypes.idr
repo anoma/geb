@@ -14,11 +14,11 @@ import public LanguageDef.DiagramCat
 
 %default total
 
------------------------------------
------------------------------------
----- Prafunctors (Bicomodules) ----
------------------------------------
------------------------------------
+-------------------------------
+-------------------------------
+---- Copresheaf categories ----
+-------------------------------
+-------------------------------
 
 public export
 record PCopresheaf (j : PreDiagram) where
@@ -49,6 +49,12 @@ PCMorph {j} pcpr pcpr' =
     (PCMorphComponents {j} pcpr pcpr')
     (PCMorphNaturality {j} {pcpr} {pcpr'})
 
+--------------------------------
+--------------------------------
+---- Categories of elements ----
+--------------------------------
+--------------------------------
+
 public export
 ElemCatObj : {j : PreDiagram} -> PCopresheaf j -> Type
 ElemCatObj {j} pcpr = Sigma {a=(pdVert j)} (pcprObj pcpr)
@@ -59,6 +65,12 @@ ElemCatDiagMorph : {j : PreDiagram} -> {0 pcpr : PCopresheaf j} ->
 ElemCatDiagMorph {j} {pcpr} x y =
   Subset0 (pdEdge j (fst x, fst y)) $
     \e => pcprMorph pcpr (fst x) (fst y) e (snd x) = snd y
+
+-----------------------------------
+-----------------------------------
+---- Prafunctors (Bicomodules) ----
+-----------------------------------
+-----------------------------------
 
 -- See https://topos.site/blog/2022/08/imagining-bicomodules-with-type-theory/ .
 
