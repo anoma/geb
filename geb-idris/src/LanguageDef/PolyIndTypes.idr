@@ -90,15 +90,32 @@ record PRAFunctor (dom, cod : PreDiagram) where
 public export
 InterpPRAobj : {dom, cod : PreDiagram} -> PRAFunctor dom cod ->
   PCopresheaf dom -> pdVert cod -> Type
-InterpPRAobj {dom} {cod} praf pcpr b =
-  (j : pcprObj (prafPos praf) b ** PCMorph (prafDir praf (b ** j)) pcpr)
+InterpPRAobj {dom} {cod} praf pcpr i =
+  (p : pcprObj (prafPos praf) i ** PCMorph (prafDir praf (i ** p)) pcpr)
+
+public export
+InterpPRAmorphPos : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> pdEdge cod (i, j) ->
+  InterpPRAobj {dom} {cod} praf pcdom i ->
+  pcprObj (prafPos praf) j
+InterpPRAmorphPos {dom} {cod} praf pcdom i j e p =
+  pcprMorph (prafPos praf) i j e (fst p)
+
+public export
+InterpPRAmorphDir : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
+  (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
+  PCMorph (prafDir praf (j ** InterpPRAmorphPos praf pcdom i j e p)) pcdom
+InterpPRAmorphDir {dom} {cod} praf pcdom i j e p =
+  ?InterpPRAmorphDir_hole
 
 public export
 InterpPRAmorph : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
   (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> pdEdge cod (i, j) ->
   InterpPRAobj {dom} {cod} praf pcdom i ->
   InterpPRAobj {dom} {cod} praf pcdom j
-InterpPRAmorph {dom} {cod} praf pcdom i j e el = ?InterpPRAmorph_hole
+InterpPRAmorph {dom} {cod} praf pcdom i j e p =
+  (InterpPRAmorphPos praf pcdom i j e p ** InterpPRAmorphDir praf pcdom i j e p)
 
 public export
 InterpPRA : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
