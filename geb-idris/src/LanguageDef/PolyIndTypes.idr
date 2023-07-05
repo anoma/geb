@@ -14,143 +14,6 @@ import public LanguageDef.DiagramCat
 
 %default total
 
--------------------------------
--------------------------------
----- Copresheaf categories ----
--------------------------------
--------------------------------
-
-public export
-record PCopresheaf (j : PreDiagram) where
-  constructor PCoprshf
-  pcprObj : pdVert j -> Type
-  pcprMorph : (x, y : pdVert j) ->
-    pdEdge j (x, y) -> pcprObj x -> pcprObj y
-
--- (Co)presheaves over a given diagram themselves form a category.
--- Since a copresheaf is a functor, a morphism in a category
--- of (co)presheaves is a natural transformation.
-public export
-PCMorphComponents : {j : PreDiagram} -> PCopresheaf j -> PCopresheaf j -> Type
-PCMorphComponents {j} pcpr pcpr' =
-  SliceMorphism {a=(pdVert j)} (pcprObj pcpr) (pcprObj pcpr')
-
-public export
-0 PCMorphNaturality : {j : PreDiagram} -> {pcpr, pcpr' : PCopresheaf j} ->
-  PCMorphComponents {j} pcpr pcpr' -> Type
-PCMorphNaturality {j} {pcpr} {pcpr'} alpha =
-  (x, y : pdVert j) -> (e : pdEdge j (x, y)) ->
-  ExtEq (alpha y . pcprMorph pcpr x y e) (pcprMorph pcpr' x y e . alpha x)
-
-public export
-PCMorph : {j : PreDiagram} -> PCopresheaf j -> PCopresheaf j -> Type
-PCMorph {j} pcpr pcpr' =
-  Subset0
-    (PCMorphComponents {j} pcpr pcpr')
-    (PCMorphNaturality {j} {pcpr} {pcpr'})
-
---------------------------------
---------------------------------
----- Categories of elements ----
---------------------------------
---------------------------------
-
-public export
-ElemCatObj : {j : PreDiagram} -> PCopresheaf j -> Type
-ElemCatObj {j} pcpr = Sigma {a=(pdVert j)} (pcprObj pcpr)
-
-public export
-ElemCatDiagMorph : {j : PreDiagram} -> {0 pcpr : PCopresheaf j} ->
-  ElemCatObj {j} pcpr -> ElemCatObj {j} pcpr -> Type
-ElemCatDiagMorph {j} {pcpr} x y =
-  Subset0 (pdEdge j (fst x, fst y)) $
-    \e => pcprMorph pcpr (fst x) (fst y) e (snd x) = snd y
-
------------------------------------
------------------------------------
----- Prafunctors (Bicomodules) ----
------------------------------------
------------------------------------
-
--- See https://topos.site/blog/2022/08/imagining-bicomodules-with-type-theory/ .
-
-public export
-record PRAFunctor (dom, cod : PreDiagram) where
-  constructor PRAf
-  prafPos : PCopresheaf cod
-  -- `prafDir` and `prafAssign` between them comprise a contravariant functor
-  -- from the category of elements of `prafPos` (which is a copresheaf over
-  -- `cod`) to the category of copresheaves over `dom`.
-  prafDir : ElemCatObj {j=cod} prafPos -> PCopresheaf dom
-  prafAssign :
-    (p, p' : ElemCatObj {j=cod} prafPos) ->
-    ElemCatDiagMorph {j=cod} {pcpr=prafPos} p' p ->
-    PCMorph {j=dom} (prafDir p) (prafDir p')
-
-public export
-InterpPRAobj : {dom, cod : PreDiagram} -> PRAFunctor dom cod ->
-  PCopresheaf dom -> pdVert cod -> Type
-InterpPRAobj {dom} {cod} praf pcpr i =
-  (p : pcprObj (prafPos praf) i ** PCMorph (prafDir praf (i ** p)) pcpr)
-
-public export
-InterpPRAmorphPos : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
-  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> pdEdge cod (i, j) ->
-  InterpPRAobj {dom} {cod} praf pcdom i ->
-  pcprObj (prafPos praf) j
-InterpPRAmorphPos {dom} {cod} praf pcdom i j e p =
-  pcprMorph (prafPos praf) i j e (fst p)
-
-public export
-InterpPRAmorphComponents :
-  {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
-  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
-  (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
-  PCMorphComponents
-    (prafDir praf (j ** InterpPRAmorphPos praf pcdom i j e p)) pcdom
-InterpPRAmorphComponents {dom} {cod} (PRAf (PCoprshf objcod morphcod) dir asn)
-  (PCoprshf objdom morphdom) i j e (p ** Element0 alpha natural) =
-    ?InterpPRAmorphComponents_hole
-
-public export
-InterpPRAmorphNaturality :
-  {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
-  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
-  (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
-  PCMorphNaturality
-    {pcpr=(prafDir praf (j ** InterpPRAmorphPos praf pcdom i j e p))}
-    {pcpr'=pcdom}
-    (InterpPRAmorphComponents praf pcdom i j e p)
-InterpPRAmorphNaturality {dom} {cod} (PRAf (PCoprshf objcod morphcod) dir asn)
-  (PCoprshf objdom morphdom) i j e (p ** Element0 alpha natural) =
-    ?InterpPRAmorphNaturality_hole
-
-public export
-InterpPRAmorphDir : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
-  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
-  (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
-  PCMorph (prafDir praf (j ** InterpPRAmorphPos praf pcdom i j e p)) pcdom
-InterpPRAmorphDir praf pcdom i j e p =
-  Element0
-    (InterpPRAmorphComponents praf pcdom i j e p)
-    (InterpPRAmorphNaturality praf pcdom i j e p)
-
-public export
-InterpPRAmorph : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
-  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> pdEdge cod (i, j) ->
-  InterpPRAobj {dom} {cod} praf pcdom i ->
-  InterpPRAobj {dom} {cod} praf pcdom j
-InterpPRAmorph {dom} {cod} praf pcdom i j e p =
-  (InterpPRAmorphPos praf pcdom i j e p ** InterpPRAmorphDir praf pcdom i j e p)
-
-public export
-InterpPRA : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
-  PCopresheaf dom -> PCopresheaf cod
-InterpPRA {dom} {cod} praf pcdom =
-  PCoprshf
-    (InterpPRAobj {dom} {cod} praf pcdom)
-    (InterpPRAmorph {dom} {cod} praf pcdom)
-
 -----------------------------------------
 -----------------------------------------
 ---- Inductive-inductive definitions ----
@@ -312,3 +175,140 @@ mutual
   data LteAll : (Nat, SortedList) -> Type where
     InLte : (m : Nat) -> (sl : ArgSList (SortedList ** LteAll)) ->
       ArgLteL SortedList LteAll InSL m sl -> LteAll (m, InSL sl)
+
+-------------------------------
+-------------------------------
+---- Copresheaf categories ----
+-------------------------------
+-------------------------------
+
+public export
+record PCopresheaf (j : PreDiagram) where
+  constructor PCoprshf
+  pcprObj : pdVert j -> Type
+  pcprMorph : (x, y : pdVert j) ->
+    pdEdge j (x, y) -> pcprObj x -> pcprObj y
+
+-- (Co)presheaves over a given diagram themselves form a category.
+-- Since a copresheaf is a functor, a morphism in a category
+-- of (co)presheaves is a natural transformation.
+public export
+PCMorphComponents : {j : PreDiagram} -> PCopresheaf j -> PCopresheaf j -> Type
+PCMorphComponents {j} pcpr pcpr' =
+  SliceMorphism {a=(pdVert j)} (pcprObj pcpr) (pcprObj pcpr')
+
+public export
+0 PCMorphNaturality : {j : PreDiagram} -> {pcpr, pcpr' : PCopresheaf j} ->
+  PCMorphComponents {j} pcpr pcpr' -> Type
+PCMorphNaturality {j} {pcpr} {pcpr'} alpha =
+  (x, y : pdVert j) -> (e : pdEdge j (x, y)) ->
+  ExtEq (alpha y . pcprMorph pcpr x y e) (pcprMorph pcpr' x y e . alpha x)
+
+public export
+PCMorph : {j : PreDiagram} -> PCopresheaf j -> PCopresheaf j -> Type
+PCMorph {j} pcpr pcpr' =
+  Subset0
+    (PCMorphComponents {j} pcpr pcpr')
+    (PCMorphNaturality {j} {pcpr} {pcpr'})
+
+--------------------------------
+--------------------------------
+---- Categories of elements ----
+--------------------------------
+--------------------------------
+
+public export
+ElemCatObj : {j : PreDiagram} -> PCopresheaf j -> Type
+ElemCatObj {j} pcpr = Sigma {a=(pdVert j)} (pcprObj pcpr)
+
+public export
+ElemCatDiagMorph : {j : PreDiagram} -> {0 pcpr : PCopresheaf j} ->
+  ElemCatObj {j} pcpr -> ElemCatObj {j} pcpr -> Type
+ElemCatDiagMorph {j} {pcpr} x y =
+  Subset0 (pdEdge j (fst x, fst y)) $
+    \e => pcprMorph pcpr (fst x) (fst y) e (snd x) = snd y
+
+-----------------------------------
+-----------------------------------
+---- Prafunctors (Bicomodules) ----
+-----------------------------------
+-----------------------------------
+
+-- See https://topos.site/blog/2022/08/imagining-bicomodules-with-type-theory/ .
+
+public export
+record PRAFunctor (dom, cod : PreDiagram) where
+  constructor PRAf
+  prafPos : PCopresheaf cod
+  -- `prafDir` and `prafAssign` between them comprise a contravariant functor
+  -- from the category of elements of `prafPos` (which is a copresheaf over
+  -- `cod`) to the category of copresheaves over `dom`.
+  prafDir : ElemCatObj {j=cod} prafPos -> PCopresheaf dom
+  prafAssign :
+    (p, p' : ElemCatObj {j=cod} prafPos) ->
+    ElemCatDiagMorph {j=cod} {pcpr=prafPos} p' p ->
+    PCMorph {j=dom} (prafDir p) (prafDir p')
+
+public export
+InterpPRAobj : {dom, cod : PreDiagram} -> PRAFunctor dom cod ->
+  PCopresheaf dom -> pdVert cod -> Type
+InterpPRAobj {dom} {cod} praf pcpr i =
+  (p : pcprObj (prafPos praf) i ** PCMorph (prafDir praf (i ** p)) pcpr)
+
+public export
+InterpPRAmorphPos : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> pdEdge cod (i, j) ->
+  InterpPRAobj {dom} {cod} praf pcdom i ->
+  pcprObj (prafPos praf) j
+InterpPRAmorphPos {dom} {cod} praf pcdom i j e p =
+  pcprMorph (prafPos praf) i j e (fst p)
+
+public export
+InterpPRAmorphComponents :
+  {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
+  (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
+  PCMorphComponents
+    (prafDir praf (j ** InterpPRAmorphPos praf pcdom i j e p)) pcdom
+InterpPRAmorphComponents {dom} {cod} (PRAf (PCoprshf objcod morphcod) dir asn)
+  (PCoprshf objdom morphdom) i j e (p ** Element0 alpha natural) =
+    ?InterpPRAmorphComponents_hole
+
+public export
+InterpPRAmorphNaturality :
+  {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
+  (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
+  PCMorphNaturality
+    {pcpr=(prafDir praf (j ** InterpPRAmorphPos praf pcdom i j e p))}
+    {pcpr'=pcdom}
+    (InterpPRAmorphComponents praf pcdom i j e p)
+InterpPRAmorphNaturality {dom} {cod} (PRAf (PCoprshf objcod morphcod) dir asn)
+  (PCoprshf objdom morphdom) i j e (p ** Element0 alpha natural) =
+    ?InterpPRAmorphNaturality_hole
+
+public export
+InterpPRAmorphDir : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
+  (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
+  PCMorph (prafDir praf (j ** InterpPRAmorphPos praf pcdom i j e p)) pcdom
+InterpPRAmorphDir praf pcdom i j e p =
+  Element0
+    (InterpPRAmorphComponents praf pcdom i j e p)
+    (InterpPRAmorphNaturality praf pcdom i j e p)
+
+public export
+InterpPRAmorph : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> pdEdge cod (i, j) ->
+  InterpPRAobj {dom} {cod} praf pcdom i ->
+  InterpPRAobj {dom} {cod} praf pcdom j
+InterpPRAmorph {dom} {cod} praf pcdom i j e p =
+  (InterpPRAmorphPos praf pcdom i j e p ** InterpPRAmorphDir praf pcdom i j e p)
+
+public export
+InterpPRA : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  PCopresheaf dom -> PCopresheaf cod
+InterpPRA {dom} {cod} praf pcdom =
+  PCoprshf
+    (InterpPRAobj {dom} {cod} praf pcdom)
+    (InterpPRAmorph {dom} {cod} praf pcdom)
