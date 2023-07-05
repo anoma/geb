@@ -87,6 +87,27 @@ record PRAFunctor (dom, cod : PreDiagram) where
     ElemCatDiagMorph {j=cod} {pcpr=prafPos} p' p ->
     PCMorph {j=dom} (prafDir p) (prafDir p')
 
+public export
+InterpPRAobj : {dom, cod : PreDiagram} -> PRAFunctor dom cod ->
+  PCopresheaf dom -> pdVert cod -> Type
+InterpPRAobj {dom} {cod} praf pcpr b =
+  (j : pcprObj (prafPos praf) b ** PCMorph (prafDir praf (b ** j)) pcpr)
+
+public export
+InterpPRAmorph : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> pdEdge cod (i, j) ->
+  InterpPRAobj {dom} {cod} praf pcdom i ->
+  InterpPRAobj {dom} {cod} praf pcdom j
+InterpPRAmorph {dom} {cod} praf pcdom i j e el = ?InterpPRAmorph_hole
+
+public export
+InterpPRA : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  PCopresheaf dom -> PCopresheaf cod
+InterpPRA {dom} {cod} praf pcdom =
+  PCoprshf
+    (InterpPRAobj {dom} {cod} praf pcdom)
+    (InterpPRAmorph {dom} {cod} praf pcdom)
+
 -----------------------------------------
 -----------------------------------------
 ---- Inductive-inductive definitions ----
