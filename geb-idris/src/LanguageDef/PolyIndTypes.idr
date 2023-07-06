@@ -52,6 +52,21 @@ public export
 IndInd : Type
 IndInd = DPair IndIndF1 IndIndF2
 
+mutual
+  public export
+  partial
+  data IndInd1 : IndInd -> Type where
+    InI1 : {0 f1 : IndIndF1} -> {0 f2 : IndIndF2 f1} ->
+      f1 (IndInd1 (f1 ** f2) ** IndInd2 (f1 ** f2)) -> IndInd1 (f1 ** f2)
+
+  public export
+  partial
+  data IndInd2 : (ii : IndInd) -> IndInd1 ii -> Type where
+    InI2 : {0 f1 : IndIndF1} -> {0 f2 : IndIndF2 f1} ->
+      (i1 : f1 (IndInd1 (f1 ** f2) ** IndInd2 (f1 ** f2))) ->
+      f2 (IndInd1 (f1 ** f2)) (IndInd2 (f1 ** f2)) InI1 i1 ->
+      IndInd2 (f1 ** f2) (InI1 i1)
+
 --------------------------------------
 ---- Example (dependent contexts) ----
 --------------------------------------
