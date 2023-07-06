@@ -91,6 +91,11 @@ mutual
       f2 (IndInd1 (f1 ** f2) p) (IndInd2 (f1 ** f2) p) InI1c i1 ->
       IndInd2 (f1 ** f2) p (InI1c i1)
 
+public export
+partial
+IndIndF : IndInd -> PolyFunc -> PolyFunc
+IndIndF ii p = (IndInd1 ii p ** IndInd2 ii p)
+
 --------------------------------------
 ---- Example (dependent contexts) ----
 --------------------------------------
