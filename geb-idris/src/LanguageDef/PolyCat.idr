@@ -2710,6 +2710,12 @@ SPFToPrimes : {parambase, posbase : Type} ->
 SPFToPrimes (posdep ** dirdep ** assign) =
   (dirdep ** \ipos, paramslice => paramslice $ assign ipos)
 
+public export
+SPFToPrimes' : {dom, cod : Type} ->
+  SlicePolyFunc dom cod -> SlicePolyFunc'' dom cod
+SPFToPrimes' (pos ** dir ** assign) =
+  (pos ** \p, eld => Subset0 (dir p) (\d => Equal (assign (p ** d)) eld))
+
 -- Yet another equivalent way of specifying a SlicePolyFunc.
 public export
 DepParamPolyFunc : Type -> Type -> Type
