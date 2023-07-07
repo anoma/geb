@@ -214,10 +214,10 @@ bnFreeAlgCommutes' a m (equ, eqact) (InFree (TFC x)) =
       sym $ bnFreeAlgCommutesLemma a m eqact b x'
 
 -- This (together with `bnAlgObjToFreeIso` above) completes the demonstration
--- that the category of algebras over the monad `FreeBinNat` is equivalent to
--- the category of algebras over the underlying endofunctor `BinNatF`, with
--- the equivalence being witnessed by `bnAlgObjToFreeObj` and
--- `bnAlgObjFromFree`.
+-- that the category of algebras over the monad `FreeBinNat` (the
+-- "Eilenberg-Moore category') is equivalent to the category of algebras over
+-- the underlying endofunctor `BinNatF`, with the equivalence being witnessed
+-- by `bnAlgObjToFreeObj` and `bnAlgObjFromFree`.
 -- (See proposition 3.1 from
 -- https://ncatlab.org/nlab/show/algebra+for+an+endofunctor#relation_to_algebras_over_a_monad .)
 public export
@@ -231,7 +231,45 @@ bnAlgObjFromFreeIso (a ** m) algp =
      Element0 id $ bnFreeAlgCommutes' a m algp)
     (\el => Refl, \el => Refl)
 
--- From _Toposes, Triples, and Theories_ by Michael Barr and Charles Wells,
--- morphisms of a monad (a monad is also known as a "triple") correspond
--- bijectively with functors between Eilenberg-Moore categories which commute
--- with the functors underlying the monads.
+-- From _Toposes, Triples, and Theories_ (section 3.6) by Michael Barr and
+-- Charles Wells, morphisms in the category of monads (a monad is known in
+-- that book as a "triple") correspond bijectively with functors between
+-- Eilenberg-Moore categories which commute with the functors underlying the
+-- monads.
+--
+-- This is the definition of a morphism in the category of free monads.
+public export
+FreeMonadCatMorph : {f, g : Type -> Type} ->
+  (feval : FreeFEval f) -> (geval : FreeFEval g) -> Type
+FreeMonadCatMorph {f} {g} feval geval =
+  Subset0 (NaturalTransformation (FreeMonad f) (FreeMonad g)) $
+    \alpha =>
+      (ExtEqNT
+        (vcompNT
+          {f=(Prelude.id)} {g=(FreeMonad f)} {h=(FreeMonad g)}
+          alpha (freeMunit f))
+        (freeMunit g),
+       ExtEqNT
+        (vcompNT
+          {f=(FreeMonad f . FreeMonad f)} {g=(FreeMonad f)} {h=(FreeMonad g)}
+          alpha
+          (freeMmult {f} feval))
+        (vcompNT
+          {f=(FreeMonad f . FreeMonad f)}
+          {g=(FreeMonad g . FreeMonad g)}
+          {h=(FreeMonad g)}
+          (freeMmult {f=g} geval)
+          (hcompNT
+            {f=(FreeMonad f)} {g=(FreeMonad f)}
+            {f'=(FreeMonad g)} {g'=(FreeMonad g)}
+            (freeMap {f} feval) alpha alpha)))
+
+-- Derive (the object-map component of) a functor between the Eilenberg-Moore
+-- categories of a pair of monads from a morphism between the monads.
+public export
+FreeMonadMorphToFunctor : {f, g : Type -> Type} ->
+  {feval : FreeFEval f} -> {geval : FreeFEval g} ->
+  FreeMonadCatMorph {f} {g} feval geval ->
+  FAlgObj f -> FAlgObj g
+FreeMonadMorphToFunctor {f} {g} {feval} {geval} mm falg =
+  ?FreeMonadAlgMorphToFunctor_hole
