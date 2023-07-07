@@ -448,7 +448,7 @@ public export
 vcompNT : {f, g, h : Type -> Type} ->
   NaturalTransformation g h -> NaturalTransformation f g ->
   NaturalTransformation f h
-vcompNT beta alpha x = beta x . alpha x
+vcompNT {f} {g} {h} beta alpha x = beta x . alpha x
 
 public export
 hcompNT : {f, f', g, g' : Type -> Type} ->
@@ -458,7 +458,7 @@ hcompNT : {f, f', g, g' : Type -> Type} ->
 hcompNT {f} {f'} {g} {g'} gmap beta alpha x = beta (f' x) . gmap (alpha x)
 
 public export
-ExtEqNT : {f, g, h : Type -> Type} ->
+ExtEqNT : {f, g : Type -> Type} ->
   NaturalTransformation f g -> NaturalTransformation f g -> Type
 ExtEqNT alpha beta = (x : Type) -> ExtEq (alpha x) (beta x)
 
