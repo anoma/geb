@@ -445,6 +445,24 @@ NaturalTransformation : (Type -> Type) -> (Type -> Type) -> Type
 NaturalTransformation f g = Pi (AppFunctor f g)
 
 public export
+vcompNT : {f, g, h : Type -> Type} ->
+  NaturalTransformation g h -> NaturalTransformation f g ->
+  NaturalTransformation f h
+vcompNT beta alpha x = beta x . alpha x
+
+public export
+hcompNT : {f, f', g, g' : Type -> Type} ->
+  ({a, b : Type} -> (a -> b) -> g a -> g b) ->
+  NaturalTransformation g g' -> NaturalTransformation f f' ->
+  NaturalTransformation (g . f) (g' . f')
+hcompNT {f} {f'} {g} {g'} gmap beta alpha x = beta (f' x) . gmap (alpha x)
+
+public export
+ExtEqNT : {f, g, h : Type -> Type} ->
+  NaturalTransformation f g -> NaturalTransformation f g -> Type
+ExtEqNT alpha beta = (x : Type) -> ExtEq (alpha x) (beta x)
+
+public export
 AdjUnit : (Type -> Type) -> Type
 AdjUnit f = NaturalTransformation id f
 
@@ -2887,6 +2905,11 @@ public export
 inFV : {f : Type -> Type} -> Coalgebra (FreeMonad f) a
 inFV = InFree . TFV
 
+public export
+freeMunit : (f : Type -> Type) ->
+  NaturalTransformation (Prelude.id {a=Type}) (FreeMonad f)
+freeMunit f a = inFV {f} {a}
+
 -- The free algebra of a functor.
 public export
 inFC : {f : Type -> Type} -> {0 a : Type} -> FreeAlgSig f a
@@ -3032,6 +3055,11 @@ freeFJoin : {f : Type -> Type} -> FreeFEval f ->
 freeFJoin {f} {a} eval = freeBind {f} {a=(FreeMonad f a)} {b=a} eval id
 
 public export
+freeMmult : {f : Type -> Type} -> FreeFEval f ->
+  NaturalTransformation (FreeMonad f . FreeMonad f) (FreeMonad f)
+freeMmult {f} eval a = freeFJoin {f} eval {a}
+
+public export
 freeFApp : {f : Type -> Type} -> FreeFEval f ->
   {a, b : Type} -> FreeMonad f (a -> b) -> FreeMonad f a -> FreeMonad f b
 freeFApp {f} {a} {b} eval ftree x =
@@ -3091,6 +3119,13 @@ FreeMonadAlgP {f} eval alg =
 public export
 FreeMonadAlg : {f : Type -> Type} -> FreeFEval f -> Type
 FreeMonadAlg {f} eval = (a : FAlgObj (FreeMonad f) ** FreeMonadAlgP {f} eval a)
+
+-- A morphism in the Eilenberg-Moore category of a (free) monad.
+public export
+FreeMonadAlgMorph : {f : Type -> Type} -> {eval : FreeFEval f} ->
+  FreeMonadAlg {f} eval -> FreeMonadAlg {f} eval -> Type
+FreeMonadAlgMorph {f} {eval} ((a ** m) ** ap) ((b ** n) ** bp) =
+  Subset0 (a -> b) $ \g => ExtEq (g . m) (n . freeMap {f} eval g)
 
 -- Every morphism between _free_ algebras over a monad (such as the free monad
 -- of a functor that has one, which includes all polynomial functors)
