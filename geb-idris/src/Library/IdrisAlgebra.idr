@@ -233,9 +233,9 @@ bnAlgObjFromFreeIso (a ** m) algp =
 
 -- From _Toposes, Triples, and Theories_ (section 3.6) by Michael Barr and
 -- Charles Wells, morphisms in the category of monads (a monad is known in
--- that book as a "triple") correspond bijectively with functors between
--- Eilenberg-Moore categories which commute with the functors underlying the
--- monads.
+-- that book as a "triple") correspond bijectively with (contravariant) functors
+-- between Eilenberg-Moore categories which commute with the functors underlying
+-- the monads.
 --
 -- This is the definition of a morphism in the category of free monads.
 public export
@@ -264,12 +264,23 @@ FreeMonadCatMorph {f} {g} feval geval =
             {f'=(FreeMonad g)} {g'=(FreeMonad g)}
             (freeMap {f} feval) alpha alpha)))
 
--- Derive (the object-map component of) a functor between the Eilenberg-Moore
--- categories of a pair of monads from a morphism between the monads.
+-- Derive (the object-map component of) a (contravariant) functor between the
+-- Eilenberg-Moore categories of a pair of monads from a morphism between the
+-- monads.
 public export
-FreeMonadMorphToFunctor : {f, g : Type -> Type} ->
+FreeMonadMorphToMonadFunctor : {f, g : Type -> Type} ->
   {feval : FreeFEval f} -> {geval : FreeFEval g} ->
   FreeMonadCatMorph {f} {g} feval geval ->
-  FAlgObj f -> FAlgObj g
-FreeMonadMorphToFunctor {f} {g} {feval} {geval} mm falg =
-  ?FreeMonadAlgMorphToFunctor_hole
+  (a : Type ** FreeMAlgSig g a) -> (b : Type ** FreeMAlgSig f b)
+FreeMonadMorphToMonadFunctor {f} {g} {feval} {geval}
+  (Element0 alpha comm) (a ** m) = (a ** m . alpha a)
+
+public export
+FreeMonadMorphToFunctorFunctor : {f, g : Type -> Type} ->
+  {fm : {0 a, b : Type} -> (a -> b) -> f a -> f b} ->
+  {feval : FreeFEval f} -> {geval : FreeFEval g} ->
+  FreeMonadCatMorph {f} {g} feval geval ->
+  (a : Type ** Algebra g a) -> (b : Type ** Algebra f b)
+FreeMonadMorphToFunctorFunctor {f} {fm} {g} {feval} {geval}
+  (Element0 alpha comm) (a ** m) =
+    (a ** FAlgFromFree {f} {fm} $ FAlgToFree geval m . alpha a)
