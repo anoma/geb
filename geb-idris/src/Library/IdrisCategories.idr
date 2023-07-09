@@ -5674,7 +5674,11 @@ ltSliceMax = NatObjInd NatLTSlice () (\_ => Right)
 
 public export
 ltSliceMaxCorrect : (n : NatObj) -> ltSliceObjToNat {n} (ltSliceMax n) = n
-ltSliceMaxCorrect = NatObjInd _ Refl (\_ => cong (InNat . SuccF))
+ltSliceMaxCorrect =
+  NatObjInd
+    (\m => ltSliceObjToNat {n=m} (ltSliceMax m) = m)
+    Refl
+    (\m, eq => cong (InNat . SuccF) eq)
 
 public export
 NatLTGenInductionStep : (NatObj -> Type) -> Type
