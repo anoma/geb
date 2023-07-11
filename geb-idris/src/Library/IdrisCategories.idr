@@ -291,6 +291,17 @@ SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
 SliceMorphism {a} s s' = (e : a) -> s e -> s' e
 
 public export
+sliceId : {a : Type} -> (sl : SliceObj a) -> SliceMorphism {a} sl sl
+sliceId {a} sl _ = id
+
+public export
+sliceComp : {a : Type} -> {x, y, z : SliceObj a} ->
+  SliceMorphism {a} y z ->
+  SliceMorphism {a} x y ->
+  SliceMorphism {a} x z
+sliceComp {a} {x} {y} {z} g f ela elx = g ela $ f ela elx
+
+public export
 SliceExtEq : {a : Type} -> {s, s' : SliceObj a} ->
   (f, g : SliceMorphism {a} s s') -> Type
 SliceExtEq {a} {s} {s'} f g = (e : a) -> ExtEq (f e) (g e)
