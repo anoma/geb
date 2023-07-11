@@ -358,7 +358,7 @@ WQSig m = (WQSrc m, WQTgt m)
 -- situations (in particular, to the definition of (co)presheaves).
 public export
 QuivObjMap : Type
-QuivObjMap = WQObj -> Type
+QuivObjMap = SliceObj WQObj
 
 -- The category-theoretic form of `QuivObjMap`.  In this formulation,
 -- the total space could be viewed (conceptually, though an implementation
@@ -374,7 +374,7 @@ CQuivObjMap = CSliceObj WQObj
 -- a mapping from morphisms to the `Type`s to which their domains are
 -- mapped by the object map.
 public export
-QuivDomMap : QuivObjMap -> WQMorph -> Type
+QuivDomMap : QuivObjMap -> SliceObj WQMorph
 QuivDomMap = BaseChangeF WQSrc
 
 -- This is the analogue of `QuivDomMap` in category-theoretic style.
@@ -392,7 +392,7 @@ CQuivDomMap = CSBaseChange WQSrc
 
 -- And the same for codomains.
 public export
-QuivCodMap : QuivObjMap -> WQMorph -> Type
+QuivCodMap : QuivObjMap -> SliceObj WQMorph
 QuivCodMap = BaseChangeF WQTgt
 
 -- And the category-theoretic style for codomains.
@@ -415,7 +415,7 @@ CQuivDiagMap (x ** px) = (ProductMonad x ** mapHom {f=Pair} px)
 -- along `WQSig` to obtain a mapping from each morphism to a pair made
 -- up of a term of its domain together with a term of its codomain.
 public export
-QuivSigMap : QuivObjMap -> WQMorph -> Type
+QuivSigMap : QuivObjMap -> SliceObj WQMorph
 QuivSigMap = BaseChangeF WQSig . QuivDiagMap
 
 public export
@@ -423,7 +423,7 @@ CQuivSigMap : CSliceFunctor WQObj WQMorph
 CQuivSigMap = CSBaseChange WQSig . CQuivDiagMap
 
 public export
-QuivMorphHom : QuivObjMap -> WQMorph -> Type
+QuivMorphHom : QuivObjMap -> SliceObj WQMorph
 QuivMorphHom f m = TypeHomObj (QuivDomMap f m) (QuivCodMap f m)
 
 -- Because of the particular structure of the walking quiver (there's no way to
@@ -435,7 +435,7 @@ QuivMorphHom f m = TypeHomObj (QuivDomMap f m) (QuivCodMap f m)
 -- a correct morphism map is precisely determined by any two functions with
 -- the signatures below.
 public export
-QuivMorphMap : QuivObjMap -> Type
+QuivMorphMap : SliceObj QuivObjMap
 QuivMorphMap = Pi {a=WQMorph} . QuivMorphHom
 
 public export
