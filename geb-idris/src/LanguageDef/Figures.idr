@@ -392,6 +392,30 @@ public export
 PCQuiver : MLQuiver -> MLQuiver
 PCQuiver q = (PCQuiverObj q ** PCQuiverMorph q)
 
+public export
+PCQAlg : MLQuiver -> Type
+PCQAlg q = MLQMorph (PCQuiver q) q
+
+public export
+PCQpure : (q : MLQuiver) -> MLQMorph q (PCQuiver q)
+PCQpure q = ?PCQpure_hole
+
+-- The "eval" universal morphism of `PCQuiver`.
+public export
+PCQeval : (v, a : MLQuiver) -> MLQMorph v a -> PCQAlg a ->
+  MLQMorph (PCQuiver v) a
+PCQeval v a m alg = ?PCQEval_hole
+
+public export
+PCQbind : {q, q' : MLQuiver} ->
+  MLQMorph q (PCQuiver q') -> MLQMorph (PCQuiver q) (PCQuiver q')
+PCQbind {q} {q'} m = PCQeval q (PCQuiver q') m ?PCQbind_hole_init_alg
+
+public export
+PCQmap : {q, q' : MLQuiver} ->
+  MLQMorph q q' -> MLQMorph (PCQuiver q) (PCQuiver q')
+PCQmap {q} {q'} m = PCQbind {q} {q'} (MLQMcomp ?PCQmap_hole m)
+
 ---------------------------
 ---- Symmetric closure ----
 ---------------------------
