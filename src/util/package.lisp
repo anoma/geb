@@ -1,6 +1,7 @@
 (pax:define-package #:geb.utils
   (:documentation "provides the utility functions for the Geb project")
-  (:use #:common-lisp #:serapeum))
+  (:use #:common-lisp #:serapeum)
+  (:export #:@geb-utils-manual #:@geb-accessors))
 
 (in-package :geb.utils)
 

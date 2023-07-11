@@ -31,7 +31,8 @@ object into a format for a graphing backend."
  (uiop:define-package #:geb-gui.graphing.passes
    (:mix #:geb-gui.core
          #:geb.common
-         #:common-lisp)))
+         #:common-lisp)
+   (:export #:@pass-manual)))
 
 (in-package :geb-gui.graphing.passes)
 
@@ -47,11 +48,12 @@ ways that are intuitive to the user"
          #:geb-gui.graphing.passes
          #:geb.common
          #:common-lisp)
-   (:reexport #:geb-gui.core #:geb-gui.graphing.passes)))
+   (:reexport #:geb-gui.core #:geb-gui.graphing.passes)
+   (:export #:@graphing-manual)))
 
 (in-package :geb-gui.graphing)
 
 (pax:defsection @graphing-manual (:title "The GEB Graphizer")
   "This section covers the GEB Graph representation"
-  (geb-gui.core:@graphing-core pax:section)
+  (geb-gui.core::@graphing-core pax:section)
   (@pass-manual pax:section))

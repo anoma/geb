@@ -8,7 +8,8 @@
  (uiop:define-package #:geb.lambda.main
    (:documentation "A basic lambda calculus model")
    (:mix #:geb.lambda.spec #:geb.common #:common-lisp)
-   (:reexport #:geb.lambda.spec)))
+   (:reexport #:geb.lambda.spec)
+   (:export #:@lambda-api)))
 
 (in-package #:geb.lambda.main)
 
@@ -42,7 +43,8 @@
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb.lambda.trans
    (:documentation "A basic lambda translator into other parts of geb")
-   (:mix #:geb.lambda.spec #:geb.common #:common-lisp :geb.lambda.main)))
+   (:mix #:geb.lambda.spec #:geb.common #:common-lisp :geb.lambda.main)
+   (:export #:@utility #:@stlc-conversion)))
 
 (in-package #:geb.lambda.trans)
 
@@ -77,7 +79,8 @@ any other transition functions"
  (uiop:define-package #:geb.lambda
    (:documentation "A basic lambda calculus model")
    (:mix #:geb.lambda.spec #:geb.lambda.trans #:geb.common #:common-lisp)
-   (:use-reexport #:geb.lambda.spec #:geb.lambda.main #:geb.lambda.trans)))
+   (:use-reexport #:geb.lambda.spec #:geb.lambda.main #:geb.lambda.trans)
+   (:export #:@stlc)))
 
 (in-package #:geb.lambda)
 

@@ -1,7 +1,8 @@
 (geb.utils:muffle-package-variance
  (defpackage #:geb-gui
    (:local-nicknames (#:graph #:geb-gui.graphing))
-   (:use :clim :clim-lisp)))
+   (:use :clim :clim-lisp)
+   (:export #:@geb-exporter #:@geb-gui-manual #:@geb-exporter)))
 
 (in-package :geb-gui)
 

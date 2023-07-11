@@ -1,11 +1,12 @@
 (pax:define-package :geb.mixins
   (:documentation "Package defines various useful mixins")
   (:local-nicknames (:util :geb.utils))
-  (:use #:serapeum #:common-lisp))
+  (:use #:serapeum #:common-lisp)
+  (:export #:@mixins #:@mixins-cat #:@metadata))
 
 (in-package :geb.mixins)
 
-(pax:defsection @mixins (:title "Mixins")
+(pax:defsection @mixins (:title "Mixins" :export t)
   "Various [mixins](https://en.wikipedia.org/wiki/Mixin) of the
    project. Overall all these offer various services to the rest of the
    project"

@@ -7,31 +7,36 @@
 (muffle-package-variance
  (defpackage #:geb.poly.spec
    (:shadow :+ :* :/ :- :mod)
-   (:use #:geb.utils #:cl)))
+   (:use #:geb.utils #:cl)
+   (:export #:@poly #:@poly-constructors)))
 
 (muffle-package-variance
  (defpackage #:geb.bitc.spec
    (:export :dom :codom)
    (:shadow :drop :fork)
-   (:use #:geb.utils #:cl #:geb.mixins)))
+   (:use #:geb.utils #:cl #:geb.mixins)
+   (:export #:@bitc #:@bitc-constructors)))
 
 ;; please document this later.
 (muffle-package-variance
  (uiop:define-package #:geb.lambda.spec
    (:documentation "Basic spec for creating lambda terms")
-   (:mix #:trivia #:serapeum #:common-lisp #:geb.mixins)))
+   (:mix #:trivia #:serapeum #:common-lisp #:geb.mixins)
+   (:export #:@lambda-specs)))
 
 (pax:define-package #:geb.spec
   (:documentation "Gödel, Escher, Bach categorical model")
   (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils)
   (:shadow :left :right :prod :case)
   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj
-   :same-type-to-list :pair-to-list))
+   :same-type-to-list :pair-to-list
+   #:@geb-categories #:@geb-substmu #:@geb-substmorph #:@geb-constructors #:@geb-realized))
 
 (muffle-package-variance
  (uiop:define-package #:geb.extension.spec
    (:documentation "Extensions of the various categories")
-   (:mix #:trivia #:serapeum #:common-lisp #:geb.mixins #:geb.utils)))
+   (:mix #:trivia #:serapeum #:common-lisp #:geb.mixins #:geb.utils)
+   (:export #:@geb-extensions)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb Package Documentation

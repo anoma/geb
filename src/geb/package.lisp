@@ -8,7 +8,8 @@
    (:use #:common-lisp #:geb.generics #:geb.extension.spec #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
    (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
-   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj :dom :codom)))
+   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj :dom :codom
+            #:@geb-utility)))
 
 (in-package #:geb.main)
 
@@ -57,7 +58,8 @@
          #:geb.generics)
    (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
-   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
+   (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj
+            #:@geb-translation)))
 
 (in-package #:geb.trans)
 
@@ -79,7 +81,8 @@ into other categorical data structures."
    (:mix #:geb.main #:geb.spec #:serapeum #:common-lisp)
    (:shadow :false :true :not :and :or)
    (:export
-    :bool :fasle :true :not :and :or)))
+    :bool :fasle :true :not :and :or
+    #:@geb-bool)))
 
 (in-package #:geb-bool)
 
@@ -114,7 +117,8 @@ The functions given work on this."
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb-list
    (:documentation "Defines out booleans for the geb language")
-   (:use #:geb.common)))
+   (:use #:geb.common)
+   (:export #:@geb-list)))
 
 (in-package #:geb-list)
 
@@ -196,7 +200,8 @@ We also define out API functions to operate on this"
  (uiop:define-package #:geb
    (:documentation "Gödel, Escher, Bach categorical model")
    (:use #:geb.common)
-   (:use-reexport #:geb.spec #:geb.trans #:geb.main)))
+   (:use-reexport #:geb.spec #:geb.trans #:geb.main)
+   (:export #:@geb #:geb-api #:@geb-examples)))
 
 (in-package #:geb)
 
@@ -216,8 +221,8 @@ We also define out API functions to operate on this"
   (gapply                     (pax:method () (<substmorph> t)))
   (gapply                     (pax:method () (opaque-morph t)))
   (gapply                     (pax:method () (opaque t)))
-  (geb-bool::@geb-bool        pax:section)
-  (geb-list::@geb-list        pax:section)
+  (geb-bool:@geb-bool        pax:section)
+  (geb-list:@geb-list        pax:section)
   (geb.trans:@geb-translation pax:section)
   (@geb-utility               pax:section))
 
