@@ -261,9 +261,9 @@ public export
 SECQuiver : SQuiver -> SQuiver
 SECQuiver = SPCQuiver . SSCQuiver
 
----------------------------
----- Symmetric closure ----
----------------------------
+----------------------------
+---- Category as quiver ----
+----------------------------
 
 public export
 record CPCat where
