@@ -1,3 +1,8 @@
+* 0.3.2-1
+- Revision fixup
+  + MGL-pax had a regression where @documentation is not exported, we
+    work around this by exporting every library, this issue can be
+    tracked [[https://github.com/melisgl/mgl-pax/issues/30][here]].
 * 0.3.2
 ** User Facing Changes
 - _Lambda Changes_
