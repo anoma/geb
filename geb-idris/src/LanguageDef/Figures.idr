@@ -173,8 +173,9 @@ public export
 CQuivMorphMap : CSliceFunctor WQObj WQMorph
 CQuivMorphMap f = CSHomObj (CQuivDomMap f) (CQuivCodMap f)
 
--- A (metalanguage) quiver, as a functor, is an object map together with a
--- morphism map.
+-- A (metalanguage) quiver, as a functor, is an object map (from objects of
+-- the walking quiver to types in `Type`) together with a morphism map (from
+-- the morphisms of the walking quiver to the functions on `Type`).
 public export
 MLQuiver : Type
 MLQuiver = Sigma {a=QuivObjMap} QuivMorphMap
