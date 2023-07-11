@@ -179,12 +179,14 @@ public export
 MLQuiver : Type
 MLQuiver = Sigma {a=QuivObjMap} QuivMorphMap
 
--- The morphisms of the (functor) category `Quiv` are natural transformations.
--- The walking quiver has two objects, so a natural transformation has two
--- components.  The target category is `Type`, so each component is simply a
--- function between the targets of the object-map components of the functors
--- (in general, each component of a natural transformation between functors is
--- a morphism in the target category of the functors).
+-- The morphisms of the (functor) category `Quiv` (i.e. the category of
+-- functors from the walking quiver to `Type`, whose objects are `MLQuiver`)
+-- are natural transformations.  The walking quiver has two objects, so a
+-- natural transformation has two components.  The target category is `Type`,
+-- so each component is simply a function between the targets of the object-map
+-- components of the functors (in general, each component of a natural
+-- transformation between functors is a morphism in the target category of the
+-- functors).
 public export
 record MLQMorph (dom, cod : MLQuiver) where
   constructor MLQM
