@@ -262,155 +262,163 @@ WalkingQuiv = (WalkingQuivObjMap ** WalkingQuivMorphMap)
 -------------------------------
 -------------------------------
 
----------------------------
----- Quivers in `Type` ----
----------------------------
-
--- A "strict quiver", where the only equalities (among vertices or edges)
--- are intensional.
-public export
-record SQuiver where
-  constructor SQuiv
-  SQVert : Type
-  SQEdge : Type
-  sqSrc : SQEdge -> SQVert
-  sqTgt : SQEdge -> SQVert
-
 ---------------
 ---- Paths ----
 ---------------
 
 public export
-0 IsNeSQPathAcc :
-  (sq : SQuiver) -> Type -> SQEdge sq -> List (SQEdge sq) -> Type
-IsNeSQPathAcc sq acc e [] = acc
-IsNeSQPathAcc sq acc e (e' :: es) =
-  IsNeSQPathAcc sq (sqTgt sq e = sqSrc sq e', acc) e' es
+0 IsNeQPathAcc :
+  (q : MLQuiver) -> Type -> MLQedgeTot q -> List (MLQedgeTot q) -> Type
+IsNeQPathAcc q acc e [] = acc
+IsNeQPathAcc q acc e (e' :: es) =
+  IsNeQPathAcc q (MLQtgt q e = MLQsrc q e', acc) e' es
 
 public export
-0 IsNeSQPathAccDec :
-  (sq : SQuiver) -> DecEqPred (SQVert sq) -> (acc : Type) -> Dec acc ->
-  (e : SQEdge sq) -> (es : List (SQEdge sq)) -> Dec (IsNeSQPathAcc sq acc e es)
-IsNeSQPathAccDec sq veq acc adec e [] = adec
-IsNeSQPathAccDec sq veq acc adec e (e' :: es) =
+0 IsNeQPathAccDec :
+  (q : MLQuiver) -> DecEqPred (MLQvert q) -> (acc : Type) -> Dec acc ->
+  (e : MLQedgeTot q) -> (es : List (MLQedgeTot q)) -> Dec (IsNeQPathAcc q acc e es)
+IsNeQPathAccDec q veq acc adec e [] = adec
+IsNeQPathAccDec q veq acc adec e (e' :: es) =
   let
-    adec' : Dec (sq .sqTgt e = sq .sqSrc e', acc) =
-      case (veq (sqTgt sq e) (sqSrc sq e'), adec) of
+    adec' : Dec (MLQtgt q e = MLQsrc q e', acc) =
+      case (veq (MLQtgt q e) (MLQsrc q e'), adec) of
         (Yes eq, Yes eacc) => Yes (eq, eacc)
         (No neq, _) => No $ \(eq, eacc) => neq eq
         (_ , No nacc) => No $ \(eq, eacc) => nacc eacc
   in
-  IsNeSQPathAccDec sq veq (sqTgt sq e = sqSrc sq e', acc) adec' e' es
+  IsNeQPathAccDec q veq (MLQtgt q e = MLQsrc q e', acc) adec' e' es
 
 public export
-0 IsNeSQPath : (sq : SQuiver) -> SQEdge sq -> List (SQEdge sq) -> Type
-IsNeSQPath sq = IsNeSQPathAcc sq Unit
+0 IsNeQPath : (q : MLQuiver) -> MLQedgeTot q -> List (MLQedgeTot q) -> Type
+IsNeQPath q = IsNeQPathAcc q Unit
 
 public export
-0 IsNeSQPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
-  (e : SQEdge sq) -> (es : List (SQEdge sq)) -> Dec (IsNeSQPath sq e es)
-IsNeSQPathDec sq veq = IsNeSQPathAccDec sq veq Unit (Yes ())
+0 IsNeQPathDec : (q : MLQuiver) -> DecEqPred (MLQvert q) ->
+  (e : MLQedgeTot q) -> (es : List (MLQedgeTot q)) -> Dec (IsNeQPath q e es)
+IsNeQPathDec q veq = IsNeQPathAccDec q veq Unit (Yes ())
 
 public export
-data SQPathData : SliceObj SQuiver where
-  SQPDLoop : {0 sq : SQuiver} -> SQVert sq -> SQPathData sq
-  SQPDComp : {0 sq : SQuiver} -> SQEdge sq -> List (SQEdge sq) -> SQPathData sq
+data QPathData : SliceObj MLQuiver where
+  QPDLoop : {0 q : MLQuiver} -> MLQvert q -> QPathData q
+  QPDComp : {0 q : MLQuiver} -> MLQedgeTot q -> List (MLQedgeTot q) -> QPathData q
 
 public export
-sqpdSrc : {sq : SQuiver} -> SQPathData sq -> SQVert sq
-sqpdSrc {sq} (SQPDLoop {sq} v) = v
-sqpdSrc {sq} (SQPDComp {sq} e es) = sqSrc sq e
+qpdSrc : {q : MLQuiver} -> QPathData q -> MLQvert q
+qpdSrc {q} (QPDLoop {q} v) = v
+qpdSrc {q} (QPDComp {q} e es) = MLQsrc q e
 
 public export
-sqpdTgt : {sq : SQuiver} -> SQPathData sq -> SQVert sq
-sqpdTgt {sq} (SQPDLoop {sq} v) = v
-sqpdTgt {sq} (SQPDComp {sq} e es) = case last' es of
-  Just e' => sqTgt sq e'
-  Nothing => sqTgt sq e
+qpdTgt : {q : MLQuiver} -> QPathData q -> MLQvert q
+qpdTgt {q} (QPDLoop {q} v) = v
+qpdTgt {q} (QPDComp {q} e es) = case last' es of
+  Just e' => MLQtgt q e'
+  Nothing => MLQtgt q e
 
 public export
-showSQPD : {0 sq : SQuiver} -> (SQVert sq -> String) -> (SQEdge sq -> String) ->
-  SQPathData sq -> String
-showSQPD {sq} shv she (SQPDLoop v) = shv v
-showSQPD {sq} shv she (SQPDComp e es) =
-  let Show (SQEdge sq) where show = she in show (e :: es)
+showQPD : {0 q : MLQuiver} -> (MLQvert q -> String) -> (MLQedgeTot q -> String) ->
+  QPathData q -> String
+showQPD {q} shv she (QPDLoop v) = shv v
+showQPD {q} shv she (QPDComp e es) =
+  let Show (MLQedgeTot q) where show = she in show (e :: es)
 
 public export
-(shv : Show (SQVert sq)) => (she : Show (SQEdge sq)) =>
-    Show (SQPathData sq) where
-  show = showSQPD show show
+(shv : Show (MLQvert q)) => (she : Show (MLQedgeTot q)) =>
+    Show (QPathData q) where
+  show = showQPD show show
 
 public export
-0 IsSQPath : (sq : SQuiver) -> SQPathData sq -> Type
-IsSQPath sq (SQPDLoop {sq} v) = Unit
-IsSQPath sq (SQPDComp {sq} e es) = IsNeSQPath sq e es
+0 IsQPath : (q : MLQuiver) -> QPathData q -> Type
+IsQPath q (QPDLoop {q} v) = Unit
+IsQPath q (QPDComp {q} e es) = IsNeQPath q e es
 
 public export
-0 IsSQPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
-  (p : SQPathData sq) -> Dec (IsSQPath sq p)
-IsSQPathDec sq veq (SQPDLoop {sq} v) = Yes ()
-IsSQPathDec sq veq (SQPDComp {sq} e es) = IsNeSQPathDec sq veq e es
+0 IsQPathDec : (q : MLQuiver) -> DecEqPred (MLQvert q) ->
+  (p : QPathData q) -> Dec (IsQPath q p)
+IsQPathDec q veq (QPDLoop {q} v) = Yes ()
+IsQPathDec q veq (QPDComp {q} e es) = IsNeQPathDec q veq e es
 
 public export
-SQuivPath : SQuiver -> Type
-SQuivPath sq = Subset0 (SQPathData sq) (IsSQPath sq)
+QuivPath : MLQuiver -> Type
+QuivPath q = Subset0 (QPathData q) (IsQPath q)
 
 public export
-0 isSQPath : (sq : SQuiver) -> DecEqPred (SQVert sq) ->
-  (es : SQPathData sq) -> Bool
-isSQPath sq veq es = isYes $ IsSQPathDec sq veq es
+0 isQPath : (q : MLQuiver) -> DecEqPred (MLQvert q) ->
+  (es : QPathData q) -> Bool
+isQPath q veq es = isYes $ IsQPathDec q veq es
 
 public export
-SQuivPathDec : (sq : SQuiver) -> DecEqPred (SQVert sq) -> Type
-SQuivPathDec sq veq = Refinement {a=(SQPathData sq)} (isSQPath sq veq)
+QuivPathDec : (q : MLQuiver) -> DecEqPred (MLQvert q) -> Type
+QuivPathDec q veq = Refinement {a=(QPathData q)} (isQPath q veq)
 
 public export
-sqpSrc : {sq : SQuiver} -> SQuivPath sq -> SQVert sq
-sqpSrc {sq} p = sqpdSrc (fst0 p)
+qpSrc : {q : MLQuiver} -> QuivPath q -> MLQvert q
+qpSrc {q} p = qpdSrc (fst0 p)
 
 public export
-sqpTgt : {sq : SQuiver} -> SQuivPath sq -> SQVert sq
-sqpTgt {sq} p = sqpdTgt (fst0 p)
+qpTgt : {q : MLQuiver} -> QuivPath q -> MLQvert q
+qpTgt {q} p = qpdTgt (fst0 p)
 
 ----------------------
 ---- Path closure ----
 ----------------------
 
+public export
+PCQuiverObj : MLQuiver -> WQObj -> Type
+PCQuiverObj q WQOvert = MLQvert q
+PCQuiverObj q WQOedge = QuivPath q
+
+public export
+PCQuiverMorph : (q : MLQuiver) ->
+  (m : WQMorph) -> PCQuiverObj q (WQSrc m) -> PCQuiverObj q (WQTgt m)
+PCQuiverMorph q WQMsrc = qpSrc {q}
+PCQuiverMorph q WQMtgt = qpTgt {q}
+
 -- The path closure, or reflexive/transitive closure, of a quiver.
 public export
-SPCQuiver : SQuiver -> SQuiver
-SPCQuiver sq = SQuiv (SQVert sq) (SQuivPath sq) (sqpSrc {sq}) (sqpTgt {sq})
+PCQuiver : MLQuiver -> MLQuiver
+PCQuiver q = (PCQuiverObj q ** PCQuiverMorph q)
 
 ---------------------------
 ---- Symmetric closure ----
 ---------------------------
 
 public export
-data SSCEdge : SQuiver -> Type where
-  SSCEv : {0 sq : SQuiver} -> SQEdge sq -> SSCEdge sq
-  SSCEsym : {0 sq : SQuiver} -> SQEdge sq -> SSCEdge sq
+data SCEdge : MLQuiver -> Type where
+  SCEv : {0 q : MLQuiver} -> MLQedgeTot q -> SCEdge q
+  SCEsym : {0 q : MLQuiver} -> MLQedgeTot q -> SCEdge q
 
 public export
-SSCsrc : {sq : SQuiver} -> SSCEdge sq -> SQVert sq
-SSCsrc {sq} (SSCEv {sq} e) = sqSrc sq e
-SSCsrc {sq} (SSCEsym {sq} e) = sqTgt sq e
+SCsrc : {q : MLQuiver} -> SCEdge q -> MLQvert q
+SCsrc {q} (SCEv {q} e) = MLQsrc q e
+SCsrc {q} (SCEsym {q} e) = MLQtgt q e
 
 public export
-SSCtgt : {sq : SQuiver} -> SSCEdge sq -> SQVert sq
-SSCtgt {sq} (SSCEv {sq} e) = sqTgt sq e
-SSCtgt {sq} (SSCEsym {sq} e) = sqSrc sq e
+SCtgt : {q : MLQuiver} -> SCEdge q -> MLQvert q
+SCtgt {q} (SCEv {q} e) = MLQtgt q e
+SCtgt {q} (SCEsym {q} e) = MLQsrc q e
 
 public export
-SSCQuiver : SQuiver -> SQuiver
-SSCQuiver sq = SQuiv (SQVert sq) (SSCEdge sq) (SSCsrc {sq}) (SSCtgt {sq})
+SCQuiverObj : MLQuiver -> WQObj -> Type
+SCQuiverObj q WQOvert = MLQvert q
+SCQuiverObj q WQOedge = SCEdge q
+
+public export
+SCQuiverMorph : (q : MLQuiver) ->
+  (m : WQMorph) -> SCQuiverObj q (WQSrc m) -> SCQuiverObj q (WQTgt m)
+SCQuiverMorph q WQMsrc = SCsrc {q}
+SCQuiverMorph q WQMtgt = SCtgt {q}
+
+public export
+SCQuiver : MLQuiver -> MLQuiver
+SCQuiver q = (SCQuiverObj q ** SCQuiverMorph q)
 
 -----------------------------
 ---- Equivalence closure ----
 -----------------------------
 
 public export
-SECQuiver : SQuiver -> SQuiver
-SECQuiver = SPCQuiver . SSCQuiver
+ECQuiver : MLQuiver -> MLQuiver
+ECQuiver = PCQuiver . SCQuiver
 
 ---------------------------------
 ---------------------------------
