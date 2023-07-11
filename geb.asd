@@ -5,7 +5,7 @@
                        :cl-reexport
                        :mgl-pax
                        :command-line-arguments)
-  :version "0.3.2"
+  :version "0.3.2-1"
   :description "Gödel, Escher, Bach, a categorical view of computation"
   :build-pathname "../build/geb.image"
   :entry-point "geb.entry::entry"
