@@ -180,6 +180,27 @@ public export
 MLQuiver : Type
 MLQuiver = Sigma {a=QuivObjMap} QuivMorphMap
 
+public export
+MLQvert : SliceObj MLQuiver
+MLQvert q = fst q WQOvert
+
+public export
+MLQedgeTot : MLQuiver -> Type
+MLQedgeTot q = fst q WQOedge
+
+public export
+MLQsrc : (q : MLQuiver) -> MLQedgeTot q -> MLQvert q
+MLQsrc q = snd q WQMsrc
+
+public export
+MLQtgt : (q : MLQuiver) -> MLQedgeTot q -> MLQvert q
+MLQtgt q = snd q WQMtgt
+
+public export
+MLQedge : (q : MLQuiver) -> MLQvert q -> MLQvert q -> Type
+MLQedge q src tgt =
+  Subset0 (MLQedgeTot q) $ \e => (MLQsrc q e = src, MLQtgt q e = tgt)
+
 -- The morphisms of the (functor) category `Quiv` as a category internal
 -- to the metalanguage's `Type` (i.e. the category of functors from the
 -- walking quiver to `Type`, whose objects are `MLQuiver`) are natural
