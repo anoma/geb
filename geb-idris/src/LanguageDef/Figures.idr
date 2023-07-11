@@ -231,6 +231,15 @@ record MLQMorph (dom, cod : MLQuiver) where
       (mlqmComponent (WQTgt m) . snd dom m)
       (snd cod m . mlqmComponent (WQSrc m))
 
+public export
+MLQMid : (0 x : MLQuiver) -> MLQMorph x x
+MLQMid x = ?MLQMid_hole
+
+public export
+MLQMcomp : {0 x, y, z : MLQuiver} ->
+  MLQMorph y z -> MLQMorph x y -> MLQMorph x z
+MLQMcomp {x} {y} {z} g f = ?MLQMcomp_hole
+
 ----------------------------------------
 ---- The walking quiver as a quiver ----
 ----------------------------------------
@@ -376,7 +385,7 @@ PCQuiverMorph : (q : MLQuiver) ->
 PCQuiverMorph q WQMsrc = qpSrc {q}
 PCQuiverMorph q WQMtgt = qpTgt {q}
 
--- The path closure, or reflexive/transitive closure, of a quiver.
+-- The path-closure (i.e. reflexive/transitive-closure) monad (on `Quiv`).
 public export
 PCQuiver : MLQuiver -> MLQuiver
 PCQuiver q = (PCQuiverObj q ** PCQuiverMorph q)
@@ -411,6 +420,7 @@ SCQuiverMorph : (q : MLQuiver) ->
 SCQuiverMorph q WQMsrc = SCsrc {q}
 SCQuiverMorph q WQMtgt = SCtgt {q}
 
+-- The symmetric-closure monad (on `Quiv`).
 public export
 SCQuiver : MLQuiver -> MLQuiver
 SCQuiver q = (SCQuiverObj q ** SCQuiverMorph q)
@@ -419,6 +429,7 @@ SCQuiver q = (SCQuiverObj q ** SCQuiverMorph q)
 ---- Equivalence closure ----
 -----------------------------
 
+-- The equivalence-closure monad (on `Quiv`).
 public export
 ECQuiver : MLQuiver -> MLQuiver
 ECQuiver = PCQuiver . SCQuiver
@@ -434,6 +445,31 @@ ECQuiver = PCQuiver . SCQuiver
 -- We can now use the notion of "quiver" as a basis for a definition of
 -- "category" internal to the same category to which our definition of
 -- "quiver" is internal (in this case, Idris's `Type`).
+--
+-- Specifically, we can define the category of free categories internal to
+-- `Type` as the Kleisli category of the path-closure monad on `Quiv`.
+
+public export
+KPCQuivObj : Type
+KPCQuivObj = MLQuiver
+
+public export
+KPCQuivMorph : KPCQuivObj -> KPCQuivObj -> Type
+KPCQuivMorph x y = MLQMorph x (PCQuiver y)
+
+public export
+KPQMbind : {0 x, y : KPCQuivObj} ->
+  KPCQuivMorph x y -> MLQMorph (PCQuiver x) (PCQuiver y)
+KPQMbind {x} {y} f = ?KPQMbind_hole
+
+public export
+KPQMid : (0 x : KPCQuivObj) -> KPCQuivMorph x x
+KPQMid x = ?KPQMid_hole
+
+public export
+KPQMcomp : {0 x, y, z : KPCQuivObj} ->
+  KPCQuivMorph y z -> KPCQuivMorph x y -> KPCQuivMorph x z
+KPQMcomp {x} {y} {z} g f = ?KPQMcomp_hole
 
 -----------------------------------------------
 -----------------------------------------------
