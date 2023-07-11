@@ -10,101 +10,6 @@ import public LanguageDef.ADTCat
 
 %default total
 
------------------------------------------------
------------------------------------------------
----- Relations in category-theoretic style ----
------------------------------------------------
------------------------------------------------
-
------------------------------------------
----- Relations as slices of products ----
------------------------------------------
-
-public export
-CRelation : Type -> Type -> Type
-CRelation a b = CSliceObj (a, b)
-
-public export
-CEndoRel : Type -> Type
-CEndoRel a = CRelation a a
-
-public export
-CRelMorph : {0 a, b : Type} -> CRelation a b -> CRelation a b -> Type
-CRelMorph {a} {b} = CSliceMorphism {c=(a, b)}
-
-public export
-CRelId : {0 a, b : Type} -> (0 r : CRelation a b) -> CRelMorph {a} {b} r r
-CRelId {a} {b} = CSliceId {c=(a, b)}
-
-public export
-CRelCompose : {0 a, b : Type} -> {0 r, r', r'' : CRelation a b} ->
-  CRelMorph r' r'' -> CRelMorph r r' -> CRelMorph r r''
-CRelCompose {a} {b} = CSliceCompose {c=(a, b)}
-
-public export
-CRelFunctor : Type -> Type -> Type -> Type -> Type
-CRelFunctor a b c d = CSliceFunctor (a, b) (c, d)
-
-public export
-CEndoRelFunctor : Type -> Type -> Type
-CEndoRelFunctor a b = CRelFunctor a a b b
-
-public export
-CRelEndofunctor : Type -> Type -> Type
-CRelEndofunctor a b = CRelFunctor a b a b
-
-public export
-CEndoRelEndofunctor : Type -> Type
-CEndoRelEndofunctor a = CRelFunctor a a a a
-
-public export
-CRelFAlgMap : {0 a, b : Type} -> CRelEndofunctor a b -> CRelation a b -> Type
-CRelFAlgMap {a} {b} f r = CRelMorph {a} {b} (f r) r
-
-public export
-CRelFAlg : {a, b : Type} -> CRelEndofunctor a b -> Type
-CRelFAlg {a} {b} f = DPair (CRelation a b) (CRelFAlgMap {a} {b} f)
-
-public export
-CRelFCoalgMap : {0 a, b : Type} -> CRelEndofunctor a b -> CRelation a b -> Type
-CRelFCoalgMap {a} {b} f r = CRelMorph {a} {b} r (f r)
-
-public export
-CRelFCoalg : {a, b : Type} -> CRelEndofunctor a b -> Type
-CRelFCoalg {a} {b} f = DPair (CRelation a b) (CRelFCoalgMap {a} {b} f)
-
-public export
-CRelFMap : {a, b, c, d : Type} -> CRelFunctor a b c d -> Type
-CRelFMap {a} {b} {c} {d} f =
-  (x, y : CRelation a b) ->
-  CRelMorph {a} {b} x y -> CRelMorph {a=c} {b=d} (f x) (f y)
-
-public export
-CRelFContramap : {a, b, c, d : Type} -> CRelFunctor a b c d -> Type
-CRelFContramap {a} {b} {c} {d} f =
-  (x, y : CRelation a b) ->
-  CRelMorph {a} {b} x y -> CRelMorph {a=c} {b=d} (f y) (f x)
-
-public export
-CRelated : {0 a, b : Type} -> (r : CRelation a b) -> SliceObj (a, b)
-CRelated {a} {b} = SliceFromCSlice {c=(a, b)}
-
--------------------------------
----- Equivalence relations ----
--------------------------------
-
-public export
-CRelReflF : {a : Type} -> CEndoRelEndofunctor a
-CRelReflF {a} (r ** p) = (Either r a ** eitherElim p $ ProductNTUnit {a})
-
-public export
-record IsEquiv {0 a : Type} (r : CEndoRel a) where
-  constructor IEQ
-  IErefl : (0 x : a) -> CRelated r (x, x)
-  IEsym : (0 x, x' : a) -> CRelated r (x, x') -> CRelated r (x', x)
-  IEtrans : (0 x, x', x'' : a) ->
-    CRelated r (x', x'') -> CRelated r (x, x') -> CRelated r (x, x'')
-
 ---------------------------------
 ---------------------------------
 ---- Categories from quivers ----
@@ -500,6 +405,101 @@ WalkingQuiv = (WalkingQuivObjMap ** WalkingQuivMorphMap)
 -- We can now use the notion of "quiver" as a basis for a definition of
 -- "category" internal to the same category to which our definition of
 -- "quiver" is internal (in this case, Idris's `Type`).
+
+-----------------------------------------------
+-----------------------------------------------
+---- Relations in category-theoretic style ----
+-----------------------------------------------
+-----------------------------------------------
+
+-----------------------------------------
+---- Relations as slices of products ----
+-----------------------------------------
+
+public export
+CRelation : Type -> Type -> Type
+CRelation a b = CSliceObj (a, b)
+
+public export
+CEndoRel : Type -> Type
+CEndoRel a = CRelation a a
+
+public export
+CRelMorph : {0 a, b : Type} -> CRelation a b -> CRelation a b -> Type
+CRelMorph {a} {b} = CSliceMorphism {c=(a, b)}
+
+public export
+CRelId : {0 a, b : Type} -> (0 r : CRelation a b) -> CRelMorph {a} {b} r r
+CRelId {a} {b} = CSliceId {c=(a, b)}
+
+public export
+CRelCompose : {0 a, b : Type} -> {0 r, r', r'' : CRelation a b} ->
+  CRelMorph r' r'' -> CRelMorph r r' -> CRelMorph r r''
+CRelCompose {a} {b} = CSliceCompose {c=(a, b)}
+
+public export
+CRelFunctor : Type -> Type -> Type -> Type -> Type
+CRelFunctor a b c d = CSliceFunctor (a, b) (c, d)
+
+public export
+CEndoRelFunctor : Type -> Type -> Type
+CEndoRelFunctor a b = CRelFunctor a a b b
+
+public export
+CRelEndofunctor : Type -> Type -> Type
+CRelEndofunctor a b = CRelFunctor a b a b
+
+public export
+CEndoRelEndofunctor : Type -> Type
+CEndoRelEndofunctor a = CRelFunctor a a a a
+
+public export
+CRelFAlgMap : {0 a, b : Type} -> CRelEndofunctor a b -> CRelation a b -> Type
+CRelFAlgMap {a} {b} f r = CRelMorph {a} {b} (f r) r
+
+public export
+CRelFAlg : {a, b : Type} -> CRelEndofunctor a b -> Type
+CRelFAlg {a} {b} f = DPair (CRelation a b) (CRelFAlgMap {a} {b} f)
+
+public export
+CRelFCoalgMap : {0 a, b : Type} -> CRelEndofunctor a b -> CRelation a b -> Type
+CRelFCoalgMap {a} {b} f r = CRelMorph {a} {b} r (f r)
+
+public export
+CRelFCoalg : {a, b : Type} -> CRelEndofunctor a b -> Type
+CRelFCoalg {a} {b} f = DPair (CRelation a b) (CRelFCoalgMap {a} {b} f)
+
+public export
+CRelFMap : {a, b, c, d : Type} -> CRelFunctor a b c d -> Type
+CRelFMap {a} {b} {c} {d} f =
+  (x, y : CRelation a b) ->
+  CRelMorph {a} {b} x y -> CRelMorph {a=c} {b=d} (f x) (f y)
+
+public export
+CRelFContramap : {a, b, c, d : Type} -> CRelFunctor a b c d -> Type
+CRelFContramap {a} {b} {c} {d} f =
+  (x, y : CRelation a b) ->
+  CRelMorph {a} {b} x y -> CRelMorph {a=c} {b=d} (f y) (f x)
+
+public export
+CRelated : {0 a, b : Type} -> (r : CRelation a b) -> SliceObj (a, b)
+CRelated {a} {b} = SliceFromCSlice {c=(a, b)}
+
+-------------------------------
+---- Equivalence relations ----
+-------------------------------
+
+public export
+CRelReflF : {a : Type} -> CEndoRelEndofunctor a
+CRelReflF {a} (r ** p) = (Either r a ** eitherElim p $ ProductNTUnit {a})
+
+public export
+record IsEquiv {0 a : Type} (r : CEndoRel a) where
+  constructor IEQ
+  IErefl : (0 x : a) -> CRelated r (x, x)
+  IEsym : (0 x, x' : a) -> CRelated r (x, x') -> CRelated r (x', x)
+  IEtrans : (0 x, x', x'' : a) ->
+    CRelated r (x', x'') -> CRelated r (x, x') -> CRelated r (x, x'')
 
 ------------------------------------------------------------
 ------------------------------------------------------------
