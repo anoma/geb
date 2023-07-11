@@ -14,6 +14,16 @@ import public LanguageDef.DiagramCat
 
 %default total
 
+-------------------------------
+-------------------------------
+---- Slices with relations ----
+-------------------------------
+-------------------------------
+
+public export
+record SliceRelPF (dom, cod : Type) where
+  constructor SRPF
+
 ---------------------------------------
 ---------------------------------------
 ---- Dependent polynomial functors ----
