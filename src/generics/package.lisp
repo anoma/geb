@@ -1,5 +1,6 @@
 (pax:define-package :geb.generics
-  (:use #:common-lisp))
+  (:use #:common-lisp)
+  (:export #:@generics))
 
 (in-package :geb.generics)
 

@@ -9,7 +9,8 @@
    (:local-nicknames (:vamp :geb.vampir.spec)
                      (:ext  :geb.extensions))
    (:use #:geb.common #:geb.poly.spec)
-   (:shadowing-import-from #:geb.poly.spec :+ :* :/ :- :mod)))
+   (:shadowing-import-from #:geb.poly.spec :+ :* :/ :- :mod)
+   (:export #:@poly-trans)))
 
 (in-package :geb.poly.trans)
 
@@ -34,7 +35,8 @@
 (geb.utils:muffle-package-variance
  (defpackage #:geb.poly.main
    (:use #:geb.common)
-   (:local-nicknames (#:poly #:geb.poly.spec))))
+   (:local-nicknames (#:poly #:geb.poly.spec))
+   (:export #:@poly-api)))
 
 (in-package :geb.poly.main)
 
@@ -47,7 +49,8 @@
  (uiop:define-package #:geb.poly
    (:use #:geb.common)
    (:shadowing-import-from #:geb.poly.spec :+ :* :/ :- :mod)
-   (:use-reexport #:geb.poly.trans #:geb.poly.spec #:geb.poly.main)))
+   (:use-reexport #:geb.poly.trans #:geb.poly.spec #:geb.poly.main)
+   (:export #:@poly-manual)))
 
 (in-package :geb.poly)
 
