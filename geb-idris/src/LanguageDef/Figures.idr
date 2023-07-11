@@ -210,6 +210,17 @@ MLQedge q src tgt =
 -- components of the functors (in general, each component of a natural
 -- transformation between functors is a morphism in the target category of the
 -- functors).
+--
+-- When we view the functors in `Quiv` as quivers, a natural transformation
+-- comprises a vertex (object) map and an edge (morphism) map, where the
+-- naturality condition states that the endpoints of an edge which is an
+-- output of the morphism map are the outputs of the object map.  In other
+-- words, a natural transformation from a functor in `Quiv` to another specifies
+-- a quiver/graph homomorphism.  (Note that that in turn specifies a functor
+-- between the free categories on the graphs, but that not all functors between
+-- free categories on those graphs may be specified that way -- such functors
+-- map edges of the domain to arbitrary _paths_ in the codomain, not necessarily
+-- only to edges in the codomain.)
 public export
 record MLQMorph (dom, cod : MLQuiver) where
   constructor MLQM
