@@ -233,12 +233,14 @@ record MLQMorph (dom, cod : MLQuiver) where
 
 public export
 MLQMid : (0 x : MLQuiver) -> MLQMorph x x
-MLQMid x = ?MLQMid_hole
+MLQMid x = MLQM (\_ => id) $ \_, _ => Refl
 
 public export
-MLQMcomp : {0 x, y, z : MLQuiver} ->
+MLQMcomp : {x, y, z : MLQuiver} ->
   MLQMorph y z -> MLQMorph x y -> MLQMorph x z
-MLQMcomp {x} {y} {z} g f = ?MLQMcomp_hole
+MLQMcomp {x} {y} {z} (MLQM gc gn) (MLQM fc fn) =
+  MLQM (sliceComp gc fc) $
+    \m, el => trans (cong (gc $ WQTgt m) $ fn m el) (gn m $ fc (WQSrc m) el)
 
 ----------------------------------------
 ---- The walking quiver as a quiver ----
