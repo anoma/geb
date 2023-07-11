@@ -166,24 +166,6 @@ public export
 SECQuiver : SQuiver -> SQuiver
 SECQuiver = SPCQuiver . SSCQuiver
 
-----------------------------
----- Category as quiver ----
-----------------------------
-
-public export
-record CPCat where
-  constructor CPC
-  cpcObj : Type
-  cpcObjEq : Type
-  cpcObjEqDom : cpcObjEq -> cpcObj
-  cpcObjEqCod : cpcObjEq -> cpcObj
-  cpcMorph : Type
-  cpcMorphEq : Type
-  cpcMorphEqDom : cpcMorphEq -> cpcMorph
-  cpcMorphEqCod : cpcMorphEq -> cpcMorph
-  cpcDom : cpcMorph -> cpcObj
-  cpcCod : cpcMorph -> cpcObj
-
 ------------------------------
 ------------------------------
 ---- Metalanguage quivers ----
@@ -500,6 +482,24 @@ record IsEquiv {0 a : Type} (r : CEndoRel a) where
   IEsym : (0 x, x' : a) -> CRelated r (x, x') -> CRelated r (x', x)
   IEtrans : (0 x, x', x'' : a) ->
     CRelated r (x', x'') -> CRelated r (x, x') -> CRelated r (x, x'')
+
+--------------------------------------------------------
+---- Congruence-parameterized categories as quivers ----
+--------------------------------------------------------
+
+public export
+record CPCat where
+  constructor CPC
+  cpcObj : Type
+  cpcObjEq : Type
+  cpcObjEqDom : cpcObjEq -> cpcObj
+  cpcObjEqCod : cpcObjEq -> cpcObj
+  cpcMorph : Type
+  cpcMorphEq : Type
+  cpcMorphEqDom : cpcMorphEq -> cpcMorph
+  cpcMorphEqCod : cpcMorphEq -> cpcMorph
+  cpcDom : cpcMorph -> cpcObj
+  cpcCod : cpcMorph -> cpcObj
 
 ------------------------------------------------------------
 ------------------------------------------------------------
