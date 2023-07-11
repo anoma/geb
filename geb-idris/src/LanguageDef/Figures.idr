@@ -276,7 +276,8 @@ IsNeQPathAcc q acc e (e' :: es) =
 public export
 0 IsNeQPathAccDec :
   (q : MLQuiver) -> DecEqPred (MLQvert q) -> (acc : Type) -> Dec acc ->
-  (e : MLQedgeTot q) -> (es : List (MLQedgeTot q)) -> Dec (IsNeQPathAcc q acc e es)
+  (e : MLQedgeTot q) -> (es : List (MLQedgeTot q)) ->
+  Dec (IsNeQPathAcc q acc e es)
 IsNeQPathAccDec q veq acc adec e [] = adec
 IsNeQPathAccDec q veq acc adec e (e' :: es) =
   let
@@ -299,8 +300,10 @@ IsNeQPathDec q veq = IsNeQPathAccDec q veq Unit (Yes ())
 
 public export
 data QPathData : SliceObj MLQuiver where
-  QPDLoop : {0 q : MLQuiver} -> MLQvert q -> QPathData q
-  QPDComp : {0 q : MLQuiver} -> MLQedgeTot q -> List (MLQedgeTot q) -> QPathData q
+  QPDLoop : {0 q : MLQuiver} ->
+    MLQvert q -> QPathData q
+  QPDComp : {0 q : MLQuiver} ->
+    MLQedgeTot q -> List (MLQedgeTot q) -> QPathData q
 
 public export
 qpdSrc : {q : MLQuiver} -> QPathData q -> MLQvert q
@@ -315,8 +318,8 @@ qpdTgt {q} (QPDComp {q} e es) = case last' es of
   Nothing => MLQtgt q e
 
 public export
-showQPD : {0 q : MLQuiver} -> (MLQvert q -> String) -> (MLQedgeTot q -> String) ->
-  QPathData q -> String
+showQPD : {0 q : MLQuiver} -> (MLQvert q -> String) ->
+  (MLQedgeTot q -> String) -> QPathData q -> String
 showQPD {q} shv she (QPDLoop v) = shv v
 showQPD {q} shv she (QPDComp e es) =
   let Show (MLQedgeTot q) where show = she in show (e :: es)
