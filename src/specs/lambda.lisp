@@ -449,7 +449,7 @@ usual type theory if context was read from right to left."))
 function type with a corresponding codomain iteratively to terms in the
 domains. [APP][class] takes as argument for the [FUN][generic-function] accessor
 a function - and hence an [STLC][type] - whose function type has domain an
-iterated [GEB:PROD][class] of [SUBSTOBJ][clas] and for the [TERM][generic-function]
+iterated [GEB:PROD][class] of [SUBSTOBJ][class] and for the [TERM][generic-function]
 a list of terms - and hence of [STLC][type] - matching the types of the
 product. The formal grammar of [APP][class] is
 
