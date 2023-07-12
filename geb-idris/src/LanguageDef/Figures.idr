@@ -324,7 +324,7 @@ qpdSrc {q} (QPDComp {q} e es) = MLQsrc q e
 public export
 qpdTgt : {q : MLQuiver} -> QPathData q -> MLQvert q
 qpdTgt {q} (QPDLoop {q} v) = v
-qpdTgt {q} (QPDComp {q} e es) = case last' es of
+qpdTgt {q} (QPDComp {q} e es) = case maybeLast es of
   Just e' => MLQtgt q e'
   Nothing => MLQtgt q e
 
@@ -407,17 +407,35 @@ PCQpureNaturality : (q : MLQuiver) -> (m : WQMorph) ->
   ExtEq
     (PCQpureComponent q (WQTgt m) . snd q m)
     (snd (PCQuiver q) m . PCQpureComponent q (WQSrc m))
-PCQpureNaturality q m = ?PCQpureNaturality_hole
+PCQpureNaturality (f ** fm) WQMsrc el = Refl
+PCQpureNaturality (f ** fm) WQMtgt el = Refl
 
 public export
 PCQpure : (q : MLQuiver) -> MLQMorph q (PCQuiver q)
 PCQpure q = MLQM (PCQpureComponent q) (PCQpureNaturality q)
 
+public export
+PCQevalComponent : (v, a : MLQuiver) -> MLQMorph v a -> PCQAlg a ->
+  SliceMorphism {a=WQObj} (fst $ PCQuiver v) (fst a)
+PCQevalComponent (vf ** vfm) (af ** afm)
+  (MLQM mcomp mnat) (MLQM algcomp algnat) =
+    ?PCQevalComponent_hole
+
+public export
+PCQevalNaturality : (v, a : MLQuiver) ->
+  (subst : MLQMorph v a) -> (alg : PCQAlg a) ->
+  (m : WQMorph) ->
+  ExtEq
+    (PCQevalComponent v a subst alg (WQTgt m) . snd (PCQuiver v) m)
+    (snd a m . PCQevalComponent v a subst alg (WQSrc m))
+PCQevalNaturality v a subst alg m = ?PCQevalNaturality_hole
+
 -- The "eval" universal morphism of `PCQuiver`.
 public export
 PCQeval : (v, a : MLQuiver) -> MLQMorph v a -> PCQAlg a ->
   MLQMorph (PCQuiver v) a
-PCQeval v a m alg = ?PCQEval_hole
+PCQeval v a m alg =
+  MLQM (PCQevalComponent v a m alg) (PCQevalNaturality v a m alg)
 
 public export
 PCQbind : {q, q' : MLQuiver} ->
