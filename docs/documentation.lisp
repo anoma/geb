@@ -25,6 +25,8 @@
 Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
+
+Maintainers: please read the [maintainers guide](https://github.com/anoma/geb/blob/main/docs/maintainers-guide.org)
 """
   (@coverage pax:section))
 
