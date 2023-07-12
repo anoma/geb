@@ -9,6 +9,8 @@ Here is the [official repository](https://github.com/anoma/geb/)
 
 and [HTML documentation](https://anoma.github.io/geb/) for the latest version.
 
+Maintainers: please read the [maintainers guide](https://github.com/anoma/geb/blob/main/docs/maintainers-guide.org)
+
 ### code coverage
 
 For test coverage it can be found at the following links:
@@ -104,26 +106,28 @@ to use
 An example use of this binary is as follows
 
 ```bash
-mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.main::*entry*" -l -v -o "foo.pir"
+mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.main::*entry*" -l -p -o "foo.pir"
 
 mariari@Gensokyo % cat foo.pir
 def entry x1 = {
   (x1)
 };%
-mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.main::*entry*" -l -v
+mariari@Gensokyo % ./geb.image -i "foo.lisp" -e "geb.lambda.main::*entry*" -l -p
 def *entry* x {
   0
 }
 
-./geb.image -h
+mariari@Gensokyo % ./geb.image -h
   -i --input                      string   Input geb file location
-  -e --entry-point                string   The function to run, should be fully qualified I.E.
-                                           geb::my-main
+  -e --entry-point                string   The function to run, should be fully qualified I.E. geb::my-main
   -l --stlc                       boolean  Use the simply typed lambda calculus frontend
   -o --output                     string   Save the output to a file rather than printing
-  -v --vampir                     string   Return a vamp-ir expression
+  -v --version                    boolean  Prints the current version of the compiler
+  -p --vampir                     string   Return a vamp-ir expression
   -h -? --help                    boolean  The current help message
 
+mariari@Gensokyo % ./geb.image -v
+0.3.2
 ```
 
 starting from a file *foo.lisp* that has
@@ -300,7 +304,7 @@ $$A—f;g;h→D$$ (or $h∘g∘f$ if you prefer)
 and we enjoy the luxury of not having to worry about
 the order in which we compose;
 for the sake of completeness,
-there are identify functions $A —\mathrm{id}\_A→ A$ on each set $A$,
+there are identify functions $A —\mathrm\{id\}\_A→ A$ on each set $A$,
 serving as identities
 (which correspond to the composite of the empty path on an object).
 Sets and functions *together* form **a** category—based on
@@ -350,14 +354,14 @@ In particular,
 we shall rely on the following
 universal constructions:
 
-1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf{1}$.
+1. The construction of binary products $A × B$ of sets $A,B$, and the empty product $\mathsf\{1\}$.
 
 2. The construction of “function spaces” $B^A$ of sets $A,B$, called *exponentials*,
    i.e., collections of functions between pairs of sets.
 
 3. The so-called [*currying*](https://en.wikipedia.org/wiki/Currying)
 of functions,
-   $C^{(B^A)} \cong C^{(A × B)}$,
+   $C^\{(B^A)\} \cong C^\{(A × B)\}$,
    such that providing several arguments to a function can done
    either simultaneously, or in sequence.
 
@@ -368,13 +372,13 @@ of functions,
 Product, sums and exponentials
 are the (almost) complete tool chest for writing
 polynomial expressions, e.g.,
-$$Ax^{\sf 2} +x^{\sf 1} - Dx^{\sf 0}.$$
+$$Ax^\{\sf 2\} +x^\{\sf 1\} - Dx^\{\sf 0\}.$$
 (We need these later to define [“algebraic data types”](https://en.wikipedia.org/wiki/Polynomial_functor_(type_theory)).)
 In the above expression,
 we have sets instead of numbers/constants
-where $ \mathsf{2} = \lbrace 1, 2 \rbrace$,
-$ \mathsf{1} = \lbrace 1 \rbrace$,
-$ \mathsf{0} = \lbrace  \rbrace = \varnothing$,
+where $ \mathsf\{2\} = \lbrace 1, 2 \rbrace$,
+$ \mathsf\{1\} = \lbrace 1 \rbrace$,
+$ \mathsf\{0\} = \lbrace  \rbrace = \varnothing$,
 and $A$ and $B$ are arbitrary (finite) sets.
 We are only missing a counterpart for the *variable*!
 Raising an arbitrary set to “the power” of a constant set
@@ -1491,7 +1495,7 @@ The functions given work on this.
 ###### \[in package GEB-LIST\]
 Here we define out the idea of a List. It comes naturally from the
 concept of coproducts. Since we lack polymorphism this list is
-concrete over [GEB-BOOL:@GEB-BOOL][section] In ML syntax it looks like
+concrete over GEB-BOOL:@GEB-BOOL In ML syntax it looks like
 
 ```haskell
 data List = Nil | Cons Bool List
@@ -1800,6 +1804,25 @@ layout of the term, showing what kind of data
 One can aid the visualization process a bit, this can be done by
 simply placing ALIAS around the object, this will place it
 in a box with a name to better identify it in the graphing procedure.
+
+### Export Visualizer
+
+This works like the normal visualizer except it exports it to a
+file to be used by other projects or perhaps in papers
+
+- [function] SVG OBJECT PATH &KEY (DEFAULT-VIEW (MAKE-INSTANCE 'SHOW-VIEW))
+
+    Runs the visualizer, outputting a static SVG image at the directory of choice.
+    
+    You can customize the view. By default it uses the show-view, which is
+    the default of the visualizer.
+    
+    A good example usage is
+    
+    ```lisp
+    GEB-TEST> (geb-gui:svg (shallow-copy-object geb-bool:and) "/tmp/foo.svg")
+    ```
+
 
 ### The GEB Graphizer
 
@@ -2196,28 +2219,28 @@ constructors
 
 - [class] <POLY> DIRECT-POINTWISE-MIXIN
 
-- [type] IDENT
+- [class] IDENT \<POLY\>
 
     The Identity Element
 
-- [type] +
+- [class] + \<POLY\>
 
-- [type] *
+- [class] * \<POLY\>
 
-- [type] /
+- [class] / \<POLY\>
 
-- [type] -
+- [class] - \<POLY\>
 
-- [type] MOD
+- [class] MOD \<POLY\>
 
-- [type] COMPOSE
+- [class] COMPOSE \<POLY\>
 
-- [type] IF-ZERO
+- [class] IF-ZERO \<POLY\>
 
     compare with zero: equal takes first branch;
     not-equal takes second branch
 
-- [type] IF-LT
+- [class] IF-LT \<POLY\>
 
     If the MCAR argument is strictly less than the MCADR then the
     THEN branch is taken, otherwise the ELSE branch is taken.
@@ -2459,9 +2482,9 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     
     This corresponds to the elimination rule of the empty type. Namely,
     given
-    $$\Gamma \vdash \text{tcod : Type}$$ and
-    $$\Gamma \vdash \text{term : so0}$$ one deduces
-    $$\Gamma \vdash \text{(absurd tcod term) : tcod}$$
+    $$\Gamma \vdash \text\{tcod : Type\}$$ and
+    $$\Gamma \vdash \text\{term : so0\}$$ one deduces
+    $$\Gamma \vdash \text\{(absurd tcod term) : tcod\}$$
 
 - [class] UNIT \<STLC\>
 
@@ -2482,7 +2505,7 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     we provide all terms untyped.
     
     This grammar corresponds to the introduction rule of the unit type. Namely
-    $$\Gamma \dashv \text{(unit) : so1}$$
+    $$\Gamma \dashv \text\{(unit) : so1\}$$
 
 - [class] LEFT \<STLC\>
 
@@ -2506,11 +2529,11 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     is TERM.
     
     This corresponds to the introduction rule of the coproduct type. Namely, given
-    $$\Gamma \dashv \text{(ttype term) : Type}$$ and
-    $$\Gamma \dashv \text{rty : Type}$$
+    $$\Gamma \dashv \text\{(ttype term) : Type\}$$ and
+    $$\Gamma \dashv \text\{rty : Type\}$$
     with
-    $$\Gamma \dashv \text{term : (ttype term)}$$ we deduce
-    $$\Gamma \dashv \text{(left rty term) : (coprod (ttype term) rty)}$$
+    $$\Gamma \dashv \text\{term : (ttype term)\}$$ we deduce
+    $$\Gamma \dashv \text\{(left rty term) : (coprod (ttype term) rty)\}$$
 
 - [class] RIGHT \<STLC\>
 
@@ -2533,11 +2556,11 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     hence an STLC) we are injecting is TERM.
     
     This corresponds to the introduction rule of the coproduct type. Namely, given
-    $$\Gamma \dashv \text{(ttype term) : Type}$$ and
-    $$\Gamma \dashv \text{lty : Type}$$
+    $$\Gamma \dashv \text\{(ttype term) : Type\}$$ and
+    $$\Gamma \dashv \text\{lty : Type\}$$
     with
-    $$\Gamma \dashv \text{term : (ttype term)}$$ we deduce
-    $$\Gamma \dashv \text{(right lty term) : (coprod lty (ttype term))}$$
+    $$\Gamma \dashv \text\{term : (ttype term)\}$$ we deduce
+    $$\Gamma \dashv \text\{(right lty term) : (coprod lty (ttype term))\}$$
 
 - [class] CASE-ON \<STLC\>
 
@@ -2560,12 +2583,12 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     - (mcar (ttype on)) and (mcadr (ttype on)).
     
     This corresponds to the elimination rule of the coprodut type. Namely, given
-    $$\Gamma \vdash \text{on : (coprod (mcar (ttype on)) (mcadr (ttype on)))}$$
+    $$\Gamma \vdash \text\{on : (coprod (mcar (ttype on)) (mcadr (ttype on)))\}$$
     and
-    $$\text{(mcar (ttype on))} , \Gamma \vdash \text{ltm : (ttype ltm)}$$
-    , $$\text{(mcadr (ttype on))} , \Gamma \vdash \text{rtm : (ttype ltm)}$$
+    $$\text\{(mcar (ttype on))\} , \Gamma \vdash \text\{ltm : (ttype ltm)\}$$
+    , $$\text\{(mcadr (ttype on))\} , \Gamma \vdash \text\{rtm : (ttype ltm)\}$$
     we get
-    $$\Gamma \vdash \text{(case-on on ltm rtm) : (ttype ltm)}$$
+    $$\Gamma \vdash \text\{(case-on on ltm rtm) : (ttype ltm)\}$$
     Note that in practice we append contexts on the left as computation of
     INDEX is done from the left. Otherwise, the rules are the same as in
     usual type theory if context was read from right to left.
@@ -2591,9 +2614,9 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     of the product.
     
     The grammar corresponds to the introdcution rule of the pair type. Given
-    $$\Gamma \vdash \text{ltm : (mcar (ttype (pair ltm rtm)))}$$ and
-    $$\Gamma \vdash \text{rtm : (mcadr (ttype (pair ltm rtm)))}$$ we have
-    $$\Gamma \vdash \text{(pair ltm rtm) : (ttype (pair ltm rtm))}$$
+    $$\Gamma \vdash \text\{ltm : (mcar (ttype (pair ltm rtm)))\}$$ and
+    $$\Gamma \vdash \text\{rtm : (mcadr (ttype (pair ltm rtm)))\}$$ we have
+    $$\Gamma \vdash \text\{(pair ltm rtm) : (ttype (pair ltm rtm))\}$$
 
 - [class] FST \<STLC\>
 
@@ -2666,9 +2689,9 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     
     For a list of length 1, corresponds to the introduction rule of the function
     type. Namely, given
-    $$\Gamma \vdash \text{tdom : Type}$$ and
-    $$\Gamma, \text{tdom} \vdash \text{term : (ttype term)}$$ we have
-    $$\Gamma \vdash \text{(lamb tdom term) : (so-hom-obj tdom (ttype term))}$$
+    $$\Gamma \vdash \text\{tdom : Type\}$$ and
+    $$\Gamma, \text\{tdom\} \vdash \text\{term : (ttype term)\}$$ we have
+    $$\Gamma \vdash \text\{(lamb tdom term) : (so-hom-obj tdom (ttype term))\}$$
     
     For a list of length n, this coreesponds to the iterated lambda type, e.g.
     
@@ -2718,7 +2741,7 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     function type with a corresponding codomain iteratively to terms in the
     domains. APP takes as argument for the FUN accessor
     a function - and hence an STLC - whose function type has domain an
-    iterated GEB:PROD of [SUBSTOBJ][clas] and for the TERM
+    iterated GEB:PROD of SUBSTOBJ and for the TERM
     a list of terms - and hence of STLC - matching the types of the
     product. The formal grammar of APP is
     
@@ -2740,9 +2763,9 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     
     For a one-argument term list, this corresponds to the elimination rule of the
     function type. Given
-    $$\Gamma \vdash \text{fun : (so-hom-obj (ttype term) y)}$$ and
-    $$\Gamma \vdash \text{term : (ttype term)}$$ we get
-    $$\Gamma \vdash \text{(app fun term) : y}$$
+    $$\Gamma \vdash \text\{fun : (so-hom-obj (ttype term) y)\}$$ and
+    $$\Gamma \vdash \text\{term : (ttype term)\}$$ we get
+    $$\Gamma \vdash \text\{(app fun term) : y\}$$
     
     For several arguments, this corresponds to successive function application.
     Using currying, this corresponds to, given
@@ -2781,9 +2804,9 @@ typed lambda calculus within GEB. The class presents untyped STLC terms.
     natural number indicating the position of a type in a context.
     
     This corresponds to the variable rule. Namely given a context
-    $$\Gamma\_1 , \ldots , \Gamma\_{pos} , \ldots , \Gamma\_k $$ we have
+    $$\Gamma\_1 , \ldots , \Gamma\_\{pos\} , \ldots , \Gamma\_k $$ we have
     
-    $$\Gamma\_1 , \ldots , \Gamma\_k \vdash \text{(index pos) :} \Gamma\_{pos}$$
+    $$\Gamma\_1 , \ldots , \Gamma\_k \vdash \text\{(index pos) :\} \Gamma\_\{pos\}$$
     
     Note that we add contexts on the left rather than on the right contra classical
     type-theoretic notation.
@@ -2992,7 +3015,7 @@ This covers the main API for the STLC module
     (ann-term1 (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (index 0))))
     ```
     
-    produces an error trying to use HOM-COD. This warning applies to other
+    produces an error trying to use. This warning applies to other
     functions taking in context and terms below as well.
     
     Moreover, note that for terms whose typing needs addition of new context
@@ -3007,13 +3030,6 @@ This covers the main API for the STLC module
     
     as we count indeces from the left of the context while appending new types to
     the context on the left as well. For more info check LAMB
-
-- [function] HOM-COD CTX F
-
-    Given a context of SUBSTOBJ with occurences of
-    SO-HOM-OBJ replaced by FUN-TYPE, and similarly
-    an STLC term of the stand-in for the hom object, produces the stand-in
-    to the codomain.
 
 - [function] INDEX-CHECK I CTX
 
