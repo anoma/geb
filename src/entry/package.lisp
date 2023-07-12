@@ -26,26 +26,28 @@ to use
 An example use of this binary is as follows
 
 ```bash
-mariari@Gensokyo % ./geb.image -i \"foo.lisp\" -e \"geb.lambda.main::*entry*\" -l -v -o \"foo.pir\"
+mariari@Gensokyo % ./geb.image -i \"foo.lisp\" -e \"geb.lambda.main::*entry*\" -l -p -o \"foo.pir\"
 
 mariari@Gensokyo % cat foo.pir
 def entry x1 = {
   (x1)
 };%
-mariari@Gensokyo % ./geb.image -i \"foo.lisp\" -e \"geb.lambda.main::*entry*\" -l -v
+mariari@Gensokyo % ./geb.image -i \"foo.lisp\" -e \"geb.lambda.main::*entry*\" -l -p
 def *entry* x {
   0
 }
 
-./geb.image -h
+mariari@Gensokyo % ./geb.image -h
   -i --input                      string   Input geb file location
-  -e --entry-point                string   The function to run, should be fully qualified I.E.
-                                           geb::my-main
+  -e --entry-point                string   The function to run, should be fully qualified I.E. geb::my-main
   -l --stlc                       boolean  Use the simply typed lambda calculus frontend
   -o --output                     string   Save the output to a file rather than printing
-  -v --vampir                     string   Return a vamp-ir expression
+  -v --version                    boolean  Prints the current version of the compiler
+  -p --vampir                     string   Return a vamp-ir expression
   -h -? --help                    boolean  The current help message
 
+mariari@Gensokyo % ./geb.image -v
+0.3.2
 ```
 
 starting from a file *foo.lisp* that has
