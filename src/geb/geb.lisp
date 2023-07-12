@@ -485,6 +485,30 @@ GEB> (gapply geb-bool:and
     (substobj object)
     (otherwise (subclass-responsibility morph))))
 
+(defmethod gapply ((morph <natmorph>) object)
+  (typecase-of natmorph morph
+    (nat-add   (+ (car object) (cadr object)))
+    (nat-mult  (* (car object) (cadr object)))
+    (nat-sub   (- (car object) (cadr object)))
+    (nat-div   (multiple-value-bind (q)
+                   (floor (car object) (cadr object)) q))
+    (nat-const  (pos morph))
+    (nat-inj    object)
+    (nat-concat  (+ (* (expt 2 (num-right morph)) (car object)) (cadr object)))
+    (one-bit-to-bool (if (= object 0)
+                         (left so1)
+                         (right so1)))
+    (nat-decompose (if (>= object  (expt 2 (1- (num morph))))
+                       (list 1 (- object (expt 2 (1- (num morph)))))
+                       (list 0 object)))
+    (nat-eq        (if (= (car object) (cadr object))
+                       (left so1)
+                       (right so1)))
+    (nat-lt        (if (< (car object) (cadr object))
+                       (left so1)
+                       (right so1)))
+    (otherwise (subclass-responsibility morph))))
+
 ;; I believe this is the correct way to use gapply for cat-obj
 (defmethod gapply ((morph cat-obj) object)
   "My main documentation can be found on [GAPPLY][generic-function]

@@ -21,7 +21,8 @@
   (dom    (pax:method () (<seqn>)))
   (dom    (pax:generic-function))
   (cod    (pax:method () (<seqn>)))
-  (cod    (pax:generic-function)))
+  (cod    (pax:generic-function))
+  (gapply (pax:method () (<seqn> t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; trans module
