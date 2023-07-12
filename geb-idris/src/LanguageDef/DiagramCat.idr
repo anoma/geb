@@ -5,7 +5,6 @@ import Library.IdrisCategories
 import public LanguageDef.Atom
 import public LanguageDef.PolyCat
 import public LanguageDef.Syntax
-import public LanguageDef.Figures
 
 %default total
 
