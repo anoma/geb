@@ -1,0 +1,33 @@
+* Abstract
+
+This document covers information around maintaining the =geb=
+code-base. It covers a wide range of topics such as git practices,
+version numbering, and more.
+** Version convention
+We follow =major.minor.patch=. Versions previous to =v0.4.0= did not
+properly follow this convention, leading to weird versions like
+=v0.3.2-1=, meaning version =0.5.1= in reality if we versioned the
+code correctly.
+** Git conventions
+We follow some basic rules derived from the git project:
+- main/master is preparation for releases
+- the latest tag is where people should base their topics off of
+  + If someone violates this, kindly remind them, and rebase it for
+    them.
+  + If this gets confusing make a =base= and tell people to always
+    base off base
+- bug fix commits should be based on where the bug was introduced.
+- Try to keep a clean graph that is /useful/
+  + useful meaning, we can undo merges, port bug fixes forward, do git
+    bisecting
+- If one has time, make sure every commit in a persons topic compiles
+  and passes tests.
+
+Some practices one should avoid
+- Squashing all topics.
+- Rebasing all topics on main.
+** Release Conventions
+For a release I like to manually see what topics have been merged and
+create a change log (this can be improved), bump the version,
+sometimes run the documentation update as a batch commit, and then set
+a tag.
