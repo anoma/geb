@@ -16,7 +16,6 @@
   "This covers the main API for the STLC module"
 
   (ann-term1          pax:generic-function)
-  (hom-cod            pax:function)
   (index-check        pax:function)
   (fun-to-hom         pax:function)
   (ann-term2          pax:function)
