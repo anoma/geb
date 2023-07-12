@@ -12,4 +12,4 @@
   (:import-from #:geb-gui    #:@geb-gui-manual)
   (:import-from #:geb.extension.spec
                 #:@geb-extensions)
-  (:export build-docs))
+  (:export build-docs #:@closed-type #:@open-type #:@clos #:glossery))
