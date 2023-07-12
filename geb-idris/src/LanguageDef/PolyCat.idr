@@ -2998,6 +2998,10 @@ public export
 SPFPolyId : (y : Type) -> SlicePolyFunc y y
 SPFPolyId y = (const Unit ** const Unit ** fst . fst)
 
+public export
+SPFConst : {y : Type} -> SliceObj y -> SlicePolyFunc y y
+SPFConst {y} sl = (sl ** const Void ** \(_ ** v) => void v)
+
 -- A (covariant) hom-functor in `Poly`, which may also be viewed as the same
 -- hom-functor in any slice category (by precomposition).
 public export
