@@ -21,11 +21,16 @@
    #'argument-handlers
    :name "geb"))
 
+(defparameter *no-input-text*
+  "Please provide an input file with -p or see the help command with -h")
+
 (defun argument-handlers (&key help stlc output input entry-point vampir)
   (flet ((run (stream)
            (cond (help
                   (command-line-arguments:show-option-help +command-line-spec+
                                                            :sort-names t))
+                 ((null input)
+                  (format stream *no-input-text*))
                  (t
                   (load input)
                   (compile-down :vampir vampir
