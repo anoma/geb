@@ -3909,6 +3909,10 @@ public export
 InterpSPFFree : {a : Type} -> SlicePolyEndoFunc a -> SliceEndofunctor a
 InterpSPFFree {a} = InterpSPFunc {a} . SPFFreeM {a}
 
+public export
+SPFMAlg : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a -> Type
+SPFMAlg spf sa = SliceMorphism (InterpSPFFree spf sa) sa
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Dependent-polynomial-functors coalgebra ----

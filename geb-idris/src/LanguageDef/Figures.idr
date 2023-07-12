@@ -11,6 +11,15 @@ import public LanguageDef.DiagramCat
 
 %default total
 
+-- The signature of the "eval" universal morphism for "SPFFreeM spf".
+-- (This is the right adjunct of the free/forgetful adjunction between
+-- the category of F-algebras of `spf` and `Type/a`.)
+public export
+SPFMeval : {a : Type} -> SlicePolyEndoFunc a -> Type
+SPFMeval {a} spf = (slv, sla : SliceObj a) ->
+  SliceMorphism {a} slv sla -> SPFAlg spf sla ->
+  SliceMorphism {a} (InterpSPFFree {a} spf slv) sla
+
 ------------------------------
 ------------------------------
 ---- Metalanguage quivers ----
