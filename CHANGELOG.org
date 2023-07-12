@@ -1,3 +1,21 @@
+* 0.4.0
+** User Facing Changes
+- _Binary_
+  + Binary now has a =-v= flag for version
+  + the old vampir =-v= has been moved to =-p=
+- _GUI_
+  + The gui can now generate out =svg= files, read the docs to find
+    out more!
+- _Libraries_
+  + The tri module has been moved to the =geb-decision= module, with
+    properly exported functions
+** Internal changes
+- There is now a maintainers guide.
+- Documentation has been fixed to recreate the old behavior of
+  mgl-pax. More can be read [[https://github.com/melisgl/mgl-pax/issues/30][here]].
+- More testing of BITC.
+- Better Vampir generation
+  + Namely we can generate lists and exponentials
 * 0.3.2-1
 - Revision fixup
   + MGL-pax had a regression where @documentation is not exported, we
