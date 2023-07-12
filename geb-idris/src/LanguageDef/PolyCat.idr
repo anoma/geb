@@ -3913,6 +3913,24 @@ public export
 SPFMAlg : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a -> Type
 SPFMAlg spf sa = SliceMorphism (InterpSPFFree spf sa) sa
 
+-- The signature of the "eval" universal morphism for "SPFFreeM spf".
+-- (This is the right adjunct of the free/forgetful adjunction between
+-- the category of F-algebras of `spf` and `Type/a`.)
+public export
+SPFMeval : {a : Type} -> SlicePolyEndoFunc a -> Type
+SPFMeval {a} spf = (slv, sla : SliceObj a) ->
+  SliceMorphism {a} slv sla -> SPFAlg spf sla ->
+  SliceMorphism {a} (SlicePolyFree {a} spf slv) sla
+
+-- All polynomial functors have universal eval morphisms.
+public export
+spfmEval : {a : Type} -> (spf : SlicePolyEndoFunc a) -> SPFMeval spf
+spfmEval {a} (pos ** dir ** assign) slv sla subst alg =
+  spfCata {a} {spf=(SPFTranslate {a} (pos ** dir ** assign) slv)} {sa=sla} $
+    \ela, (p ** d) => case p of
+      Left elv => subst ela elv
+      Right elp => alg ela (elp ** d)
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Dependent-polynomial-functors coalgebra ----
