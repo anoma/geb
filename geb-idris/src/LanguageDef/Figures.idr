@@ -7,6 +7,7 @@ import public LanguageDef.Atom
 import public LanguageDef.RefinedADT
 import public LanguageDef.PolyCat
 import public LanguageDef.ADTCat
+import public LanguageDef.DiagramCat
 
 %default total
 
