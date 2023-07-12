@@ -9,7 +9,9 @@
      :type boolean :optional t :documentation "Use the simply typed lambda calculus frontend")
     (("output" #\o)
      :type string :optional t :documentation "Save the output to a file rather than printing")
-    (("vampir" #\v)
+    (("version" #\v)
+     :type boolean :optional t :documentation "Prints the current version of the compiler")
+    (("vampir" #\p)
      :type string :optional t :documentation "Return a vamp-ir expression")
     (("help" #\h #\?)
      :type boolean :optional t :documentation "The current help message")))
@@ -21,11 +23,13 @@
    #'argument-handlers
    :name "geb"))
 
-(defun argument-handlers (&key help stlc output input entry-point vampir)
+(defun argument-handlers (&key help stlc output input entry-point vampir version)
   (flet ((run (stream)
            (cond (help
                   (command-line-arguments:show-option-help +command-line-spec+
                                                            :sort-names t))
+                 (version
+                  (format stream (asdf:system-version (asdf:find-system :geb))))
                  (t
                   (load input)
                   (compile-down :vampir vampir
