@@ -431,7 +431,8 @@ GEB:SUBSTOBJ. Read @OPEN-CLOSED for information on how to use them.")
 
 (defun build-docs ()
   (mgl-pax:update-asdf-system-readmes
-   @index :geb)
+   @index :geb
+   :formats '(:markdown :plain))
   (mgl-pax:update-asdf-system-html-docs
    @index :geb
    :target-dir (asdf/system:system-relative-pathname :geb "docs/")
