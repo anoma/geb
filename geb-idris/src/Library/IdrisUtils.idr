@@ -1436,3 +1436,10 @@ public export
 plusZeroRightZero : {m, n : Nat} -> m + n = 0 -> n = 0
 plusZeroRightZero {m} {n} eq =
   plusZeroLeftZero {m=n} {n=m} $ trans (sym $ plusCommutative m n) eq
+
+-- Idris's `last'`, but with its internals exported to allow things to
+-- be proven about it.
+public export
+maybeLast : List a -> Maybe a
+maybeLast [] = Nothing
+maybeLast xs@(_::_) = Just (last xs)
