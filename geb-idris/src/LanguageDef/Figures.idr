@@ -397,8 +397,21 @@ PCQAlg : MLQuiver -> Type
 PCQAlg q = MLQMorph (PCQuiver q) q
 
 public export
+PCQpureComponent : (q : MLQuiver) ->
+  SliceMorphism {a=WQObj} (fst q) (fst $ PCQuiver q)
+PCQpureComponent (f ** fm) WQOvert elfx = elfx
+PCQpureComponent (f ** fm) WQOedge elfx = Element0 (QPDComp elfx []) ()
+
+public export
+PCQpureNaturality : (q : MLQuiver) -> (m : WQMorph) ->
+  ExtEq
+    (PCQpureComponent q (WQTgt m) . snd q m)
+    (snd (PCQuiver q) m . PCQpureComponent q (WQSrc m))
+PCQpureNaturality q m = ?PCQpureNaturality_hole
+
+public export
 PCQpure : (q : MLQuiver) -> MLQMorph q (PCQuiver q)
-PCQpure q = ?PCQpure_hole
+PCQpure q = MLQM (PCQpureComponent q) (PCQpureNaturality q)
 
 -- The "eval" universal morphism of `PCQuiver`.
 public export
