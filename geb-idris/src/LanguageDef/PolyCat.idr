@@ -3123,7 +3123,7 @@ SPFSliceInitial x =
 -- the slice category `Type/x`.
 public export
 SPFSliceTerminal : (x : Type) -> SlicePolyEndoFunc x
-SPFSliceTerminal x = (const Unit ** const Void ** \x => void $ snd x)
+SPFSliceTerminal x = (const Unit ** const Void ** \d => void $ snd d)
 
 public export
 SPFSliceCoproduct : {x, y : Type} ->
@@ -3858,37 +3858,56 @@ SPFFreeAlg : {a : Type} -> (sf : SlicePolyEndoFunc a) -> (sl : SliceObj a) ->
 SPFFreeAlg {a} (posdep ** dirdep ** assign) sl ea (i ** d) =
   InSlFc {f=(InterpSPFunc (posdep ** dirdep ** assign))} {sa=sl} {ea} (i ** d)
 
-{-
 public export
-SPFTranslatePos : {0 x, y : Type} -> SlicePolyFunc x y -> Type -> Type
-SPFTranslatePos = PFTranslatePos . spfFunc
+SPFTranslate : {a : Type} ->
+  SlicePolyEndoFunc a -> SliceObj a -> SlicePolyEndoFunc a
+SPFTranslate {a} spf sl = SPFSliceCoproduct {x=a} {y=a} (SPFConst {y=a} sl) spf
 
 public export
-SPFTranslateDir : {x, y : Type} -> (spf : SlicePolyFunc x y) -> (a : Type) ->
-  SPFTranslatePos spf a -> Type
-SPFTranslateDir spf a = PFTranslateDir (spfFunc spf) a
+SPFTranslateUnit : {a : Type} -> SlicePolyEndoFunc a -> SlicePolyEndoFunc a
+SPFTranslateUnit {a} spf = SPFTranslate {a} spf (const Unit)
 
 public export
-SPFTranslateFunc : {x, y : Type} -> (spf : SlicePolyFunc x y) -> (a : Type) ->
-  PolyFunc
-SPFTranslateFunc spf a = (SPFTranslatePos spf a ** SPFTranslateDir spf a)
+SlicePolyFree : {a : Type} -> SlicePolyEndoFunc a -> SliceEndofunctor a
+SlicePolyFree {a} = SPFMu {a} .* SPFTranslate {a}
 
 public export
-SPFTranslateIdx : {0 x, y : Type} -> (spf : SlicePolyFunc x y) -> (a : Type) ->
-  (a -> y) -> SliceIdx (SPFTranslateFunc spf a) x y
-SPFTranslateIdx ((pos ** dir) ** idx) a f (PFVar v) di = f v
-SPFTranslateIdx ((pos ** dir) ** idx) a f (PFCom i) di = idx i di
+SPFFreeMPos : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a
+SPFFreeMPos spf {a} = SlicePolyFree {a} spf (const Unit)
 
 public export
-SPFTranslate : {x, y : Type} -> SlicePolyFunc x y -> (a : Type) ->
-  (a -> y) -> SlicePolyFunc x y
-SPFTranslate spf a f = (SPFTranslateFunc spf a ** SPFTranslateIdx spf a f)
+SPFFreeMDirAlg : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
+  SPFAlg {a} (SPFTranslateUnit {a} spf) (const Type)
+SPFFreeMDirAlg {a} (pos ** dir ** assign) ela (Left () ** d) =
+  Unit
+SPFFreeMDirAlg {a} (pos ** dir ** assign) ela (Right p ** d) =
+  Sigma {a=(dir (ela ** p))} d
 
 public export
-SPFFreeMFromMu : {x : Type} -> SlicePolyEndoF x -> SliceObj x -> SliceObj x
-SPFFreeMFromMu spf sx =
-  SPFMu {a=x} (SPFTranslate {x} {y=x} spf (Sigma sx) DPair.fst)
-  -}
+SPFFreeMDir : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
+  Sigma (SPFFreeMPos {a} spf) -> Type
+SPFFreeMDir {a} spf (ela ** i) =
+  spfCata {a} {spf=(SPFTranslateUnit {a} spf)} {sa=(const Type)}
+    (SPFFreeMDirAlg {a} spf) ela i
+
+public export
+SPFFreeMAssign : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
+  Sigma (SPFFreeMDir {a} spf) -> a
+SPFFreeMAssign {a} (pos ** dir ** assign)
+  ((ela ** (InSPFM (ela ** Left ()) _)) ** ()) =
+    ela
+SPFFreeMAssign {a} (pos ** dir ** assign)
+  ((ela ** (InSPFM (ela ** Right p) _)) ** (d ** _)) =
+    assign ((ela ** p) ** d)
+
+public export
+SPFFreeM : {a : Type} -> SlicePolyEndoFunc a -> SlicePolyEndoFunc a
+SPFFreeM {a} spf =
+  (SPFFreeMPos {a} spf ** SPFFreeMDir {a} spf ** SPFFreeMAssign {a} spf)
+
+public export
+InterpSPFFree : {a : Type} -> SlicePolyEndoFunc a -> SliceEndofunctor a
+InterpSPFFree {a} = InterpSPFunc {a} . SPFFreeM {a}
 
 -------------------------------------------------
 -------------------------------------------------
