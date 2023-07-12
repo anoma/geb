@@ -75,7 +75,7 @@ while
 (ann-term1 (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (index 0))))
 ```
 
-produces an error trying to use [HOM-COD]. This warning applies to other
+produces an error trying to use. This warning applies to other
 functions taking in context and terms below as well.
 
 Moreover, note that for terms whose typing needs addition of new context
