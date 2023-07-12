@@ -417,9 +417,18 @@ PCQpure q = MLQM (PCQpureComponent q) (PCQpureNaturality q)
 public export
 PCQevalComponent : (v, a : MLQuiver) -> MLQMorph v a -> PCQAlg a ->
   SliceMorphism {a=WQObj} (fst $ PCQuiver v) (fst a)
-PCQevalComponent (vf ** vfm) (af ** afm)
-  (MLQM mcomp mnat) (MLQM algcomp algnat) =
-    ?PCQevalComponent_hole
+PCQevalComponent (vf ** vfm) (af ** afm) (MLQM mcomp mnat) (MLQM algcomp algnat)
+  WQOvert x =
+    mcomp WQOvert x
+PCQevalComponent (vf ** vfm) (af ** afm) (MLQM mcomp mnat) (MLQM algcomp algnat)
+  WQOedge (Element0 qpd isqp) =
+    algcomp WQOedge $ case qpd of
+      QPDLoop x => Element0 (QPDLoop $ mcomp WQOvert x) ()
+      QPDComp ve vl =>
+        Element0 (QPDComp (mcomp WQOedge ve) (map (mcomp WQOedge) vl)) $
+          case vl of
+            [] => ()
+            ve' :: ves => ?PCQevalComponent_hole
 
 public export
 PCQevalNaturality : (v, a : MLQuiver) ->
@@ -428,7 +437,12 @@ PCQevalNaturality : (v, a : MLQuiver) ->
   ExtEq
     (PCQevalComponent v a subst alg (WQTgt m) . snd (PCQuiver v) m)
     (snd a m . PCQevalComponent v a subst alg (WQSrc m))
-PCQevalNaturality v a subst alg m = ?PCQevalNaturality_hole
+PCQevalNaturality (vf ** vfm) (af ** afm)
+  (MLQM mcomp mnat) (MLQM algcomp algnat) WQMsrc (Element0 qpd isqp) =
+    ?PCQevalNaturality_hole_src
+PCQevalNaturality (vf ** vfm) (af ** afm)
+  (MLQM mcomp mnat) (MLQM algcomp algnat) WQMtgt (Element0 qpd isqp) =
+    ?PCQevalNaturality_hole_tgt
 
 -- The "eval" universal morphism of `PCQuiver`.
 public export
