@@ -752,6 +752,41 @@ record PreDiagram where
   pdEdge : HomSlice pdVert
 
 public export
+PDSig : PreDiagram -> Type
+PDSig pd = SignatureT $ pdVert pd
+
+public export
+PDPathIdPosT : (pd : PreDiagram) -> SliceObj (PDSig pd)
+PDPathIdPosT pd (v, w) = v = w
+
+public export
+PDPathCompPosT : (pd : PreDiagram) -> SliceObj (PDSig pd)
+PDPathCompPosT pd (v, x) = (w : pdVert pd ** pdEdge pd (v, w))
+
+public export
+PDPathPos : (pd : PreDiagram) -> SliceObj (PDSig pd)
+PDPathPos pd (v, w) = Either (PDPathIdPosT pd (v, w)) (PDPathCompPosT pd (v, w))
+
+public export
+PDPathDir : (pd : PreDiagram) -> Sigma (PDPathPos pd) -> Type
+PDPathDir pd ((v, w) ** (Left _)) = Void
+PDPathDir pd ((v, x) ** (Right (w ** e))) = Unit
+
+public export
+PDPathBC : (pd : PreDiagram) -> Sigma (PDPathDir pd) -> PDSig pd
+PDPathBC pd (((v, x) ** Left w) ** d) = void d
+PDPathBC pd (((v, x) ** Right (w ** e)) ** ()) = (w, x)
+
+public export
+PDPathF : (pd : PreDiagram) ->
+  SlicePolyFunc (PDSig pd) (PDSig pd)
+PDPathF pd = (PDPathPos pd ** PDPathDir pd ** PDPathBC pd)
+
+public export
+PDPath : (pd : PreDiagram) -> SliceObj (PDSig pd)
+PDPath pd = SPFMu (PDPathF pd)
+
+public export
 PreDiagFreeHom : (diag : PreDiagram) -> HomSlice (pdVert diag)
 PreDiagFreeHom diag = FreeHomM (pdVert diag) (pdEdge diag)
 
