@@ -391,7 +391,7 @@ InterpPRAfmapComponents {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
       \i', j', e', el' =>
         trans
           (cong (comp j') (alphanat i' j' e' el'))
-          (natural i' j' e' $alpha i' el'))
+          (natural i' j' e' $ alpha i' el'))
 
 public export
 InterpPRAfmapNaturality :
