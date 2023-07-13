@@ -2873,6 +2873,54 @@ InterpSPFMap {a} {b} spf {sa} {sa'} =
   PredDepPolyFMap
     {parambase=a} {posbase=b} (spfPos spf) (spfDir spf) (spfAssign spf) sa sa'
 
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Generalized-polynomial-functor-style slice polynomial functors ----
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+-- `SlicePolyFunc''`, but with field names.
+public export
+record SliceArena (dom, cod : Type) where
+  constructor SlAr
+  SLApos : SliceObj cod
+  SLAdir : Sigma {a=cod} SLApos -> SliceObj dom
+
+public export
+SLAPomap : {dom : Type} -> {0 cod : Type} ->
+  SliceArena dom cod -> SliceFunctor dom cod
+SLAPomap {dom} {cod} ar sl j =
+  (p : SLApos ar j ** SliceMorphism {a=dom} (SLAdir ar (j ** p)) sl)
+
+public export
+SLAPfmap : {dom : Type} -> {0 cod : Type} ->
+  (ar : SliceArena dom cod) ->
+  {a, b : SliceObj dom} ->
+  SliceMorphism {a=dom} a b ->
+  SliceMorphism {a=cod} (SLAPomap {dom} {cod} ar a) (SLAPomap {dom} {cod} ar b)
+SLAPfmap {dom} {cod} ar {a} {b} m elcod elmap =
+  (fst elmap ** sliceComp m $ snd elmap)
+
+public export
+SlArToPrimes : {0 dom, cod : Type} ->
+  SliceArena dom cod -> SlicePolyFunc'' dom cod
+SlArToPrimes {dom} {cod} ar = (SLApos ar ** SLAdir ar)
+
+public export
+SlArFromPrimes : {0 dom, cod : Type} ->
+  SlicePolyFunc'' dom cod -> SliceArena dom cod
+SlArFromPrimes {dom} {cod} spf = SlAr (fst spf) (snd spf)
+
+public export
+SlArToSPF : {dom, cod : Type} ->
+  SliceArena dom cod -> SlicePolyFunc dom cod
+SlArToSPF = SPFFromPrimes . SlArToPrimes
+
+public export
+SlArFromSPF : {dom, cod : Type} ->
+  SlicePolyFunc dom cod -> SliceArena dom cod
+SlArFromSPF = SlArFromPrimes . SPFToPrimes'
+
 -----------------------------------------------------
 -----------------------------------------------------
 ---- Parameterized dependent polynomial functors ----
@@ -3897,8 +3945,8 @@ SPFFreeMAssign {a} (pos ** dir ** assign)
   ((ela ** (InSPFM (ela ** Left ()) _)) ** ()) =
     ela
 SPFFreeMAssign {a} (pos ** dir ** assign)
-  ((ela ** (InSPFM (ela ** Right p) _)) ** (d ** _)) =
-    assign ((ela ** p) ** d)
+  ((ela ** (InSPFM (ela ** Right p) q)) ** d) =
+    assign ((ela ** p) ** fst d)
 
 public export
 SPFFreeM : {a : Type} -> SlicePolyEndoFunc a -> SlicePolyEndoFunc a
