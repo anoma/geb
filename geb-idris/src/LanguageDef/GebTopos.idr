@@ -2581,8 +2581,8 @@ record SliceArena' (domSlice, codSlice : Type) where
   saAssign : (i : codSlice) -> (saTy i).aTy -> domSlice
 
 public export
-SliceEndoArena : Type -> Type
-SliceEndoArena base = SliceArena' base base
+SliceEndoArena' : Type -> Type
+SliceEndoArena' base = SliceArena' base base
 
 public export
 saAr : SliceArena' domSlice codSlice -> codSlice -> LanguageDef.GebTopos.Arena
@@ -2657,13 +2657,13 @@ saInterpDirichMap {domSlice} {codSlice} sa {ds} {ds'} m ci (pi ** piDir ** eq) =
   (pi ** piDir . smApp m ** \di, dd => eq di (m di dd))
 
 public export
-SAAlg : {base : Type} -> SliceEndoArena base -> SliceObj base -> Type
+SAAlg : {base : Type} -> SliceEndoArena' base -> SliceObj base -> Type
 SAAlg {base} sa s = SliceMorphism {a=base} (SAInterpPoly sa s) s
 
 public export
-data SAInterpMu : {0 base : Type} -> SliceEndoArena base -> SliceObj base where
+data SAInterpMu : {0 base : Type} -> SliceEndoArena' base -> SliceObj base where
   InSAM :
-    {0 base : Type} -> {0 sa : SliceEndoArena base} ->
+    {0 base : Type} -> {0 sa : SliceEndoArena' base} ->
     SAAlg {base} sa (SAInterpMu sa)
 
 ------------------------------------------------------------------
