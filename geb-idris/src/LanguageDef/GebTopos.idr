@@ -2575,60 +2575,60 @@ APDirType : (ar : LanguageDef.GebTopos.Arena) -> ar.aPosIdx -> Type
 APDirType ar i = (ar.aPos i).pDirTy
 
 public export
-record SliceArena (domSlice, codSlice : Type) where
+record SliceArena' (domSlice, codSlice : Type) where
   constructor ProdAr
   saTy : codSlice -> LanguageDef.GebTopos.Arena
   saAssign : (i : codSlice) -> (saTy i).aTy -> domSlice
 
 public export
 SliceEndoArena : Type -> Type
-SliceEndoArena base = SliceArena base base
+SliceEndoArena base = SliceArena' base base
 
 public export
-saAr : SliceArena domSlice codSlice -> codSlice -> LanguageDef.GebTopos.Arena
+saAr : SliceArena' domSlice codSlice -> codSlice -> LanguageDef.GebTopos.Arena
 saAr sa ci = sa.saTy ci
 
 public export
-saPosIdx : SliceArena domSlice codSlice -> codSlice -> Type
+saPosIdx : SliceArena' domSlice codSlice -> codSlice -> Type
 saPosIdx sa ci = (saAr sa ci).aPosIdx
 
 public export
-saPos : (sa : SliceArena domSlice codSlice) ->
+saPos : (sa : SliceArena' domSlice codSlice) ->
   (ci : codSlice) -> saPosIdx sa ci -> Position
 saPos sa ci pi = (saAr sa ci).aPos pi
 
 public export
-saDirTy : (sa : SliceArena domSlice codSlice) ->
+saDirTy : (sa : SliceArena' domSlice codSlice) ->
   (ci : codSlice) -> saPosIdx sa ci -> Type
 saDirTy sa ci pi = (saPos sa ci pi).pDirTy
 
 public export
 saDir :
-  (sa : SliceArena domSlice codSlice) -> (ci : codSlice) ->
+  (sa : SliceArena' domSlice codSlice) -> (ci : codSlice) ->
   (pi : saPosIdx sa ci) -> List (saDirTy sa ci pi)
 saDir sa ci pi = (saPos sa ci pi).pDir
 
 public export
 saDirIdx :
-  (sa : SliceArena domSlice codSlice) -> (ci : codSlice) ->
+  (sa : SliceArena' domSlice codSlice) -> (ci : codSlice) ->
   (pi : saPosIdx sa ci) -> Type
 saDirIdx sa ci pi = (i : Nat ** InBounds i (saDir sa ci pi))
 
 public export
-sapAssign : (sa : SliceArena domSlice codSlice) -> (ci : codSlice) ->
+sapAssign : (sa : SliceArena' domSlice codSlice) -> (ci : codSlice) ->
   (pi : saPosIdx sa ci) -> saDirTy sa ci pi -> domSlice
 sapAssign sa ci pi = sa.saAssign ci . (saTy sa ci).aPosTyMap pi
 
 public export
 SAInterpPoly : {domSlice : Type} -> {0 codSlice : Type} ->
-  SliceArena domSlice codSlice -> SliceFunctor domSlice codSlice
+  SliceArena' domSlice codSlice -> SliceFunctor domSlice codSlice
 SAInterpPoly sa ds ci =
   (pi : saPosIdx sa ci ** piDir : List (Sigma {a=domSlice} ds) **
    map fst piDir = map (sapAssign sa ci pi) (saDir sa ci pi))
 
 public export
 saInterpPolyMap : {domSlice : Type} -> {0 codSlice : Type} ->
-  (sa : SliceArena domSlice codSlice) ->
+  (sa : SliceArena' domSlice codSlice) ->
   {ds, ds' : SliceObj domSlice} ->
   SliceMorphism ds ds' ->
   SliceMorphism (SAInterpPoly sa ds) (SAInterpPoly sa ds')
@@ -2637,7 +2637,7 @@ saInterpPolyMap {domSlice} {codSlice} sa {ds} {ds'} m ci (pi ** piDir ** eq) =
 
 public export
 SAInterpDirich : {domSlice : Type} -> {codSlice : Type} ->
-  SliceArena domSlice codSlice -> SliceFunctor domSlice codSlice
+  SliceArena' domSlice codSlice -> SliceFunctor domSlice codSlice
 SAInterpDirich {domSlice} {codSlice} sa ds ci =
   (pi : saPosIdx sa ci **
    piDir : Sigma {a=domSlice} ds -> saDirIdx sa ci pi **
@@ -2649,7 +2649,7 @@ SAInterpDirich {domSlice} {codSlice} sa ds ci =
 
 public export
 saInterpDirichMap : {domSlice : Type} -> {0 codSlice : Type} ->
-  (sa : SliceArena domSlice codSlice) ->
+  (sa : SliceArena' domSlice codSlice) ->
   {ds, ds' : SliceObj domSlice} ->
   SliceMorphism ds ds' ->
   SliceMorphism (SAInterpDirich sa ds') (SAInterpDirich sa ds)
