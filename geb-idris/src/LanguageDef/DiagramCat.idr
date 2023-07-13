@@ -765,22 +765,24 @@ PDPathCompPosT pd (v, x) = (w : pdVert pd ** pdEdge pd (v, w))
 
 public export
 PDPathPos : (pd : PreDiagram) -> SliceObj (PDSig pd)
-PDPathPos pd (v, w) = Either (PDPathIdPosT pd (v, w)) (PDPathCompPosT pd (v, w))
+PDPathPos pd (v, x) = Either (PDPathIdPosT pd (v, x)) (PDPathCompPosT pd (v, x))
 
 public export
-PDPathDir : (pd : PreDiagram) -> Sigma (PDPathPos pd) -> Type
-PDPathDir pd ((v, w) ** (Left _)) = Void
-PDPathDir pd ((v, x) ** (Right (w ** e))) = Unit
+PDPathDir : (pd : PreDiagram) -> Sigma (PDPathPos pd) -> SliceObj (PDSig pd)
+-- The identity position has no directions.
+PDPathDir pd ((v, x) ** Left eqvx) (v', x') = Void
+-- The composition position has one direction (i.e. one sub-path),
+-- whose source must be the target of the edge, and whose target must
+-- be the target of the composed path.
+PDPathDir pd ((v, x) ** Right (w ** e)) (w', x') = (w' = w, x' = x)
 
 public export
-PDPathBC : (pd : PreDiagram) -> Sigma (PDPathDir pd) -> PDSig pd
-PDPathBC pd (((v, x) ** Left w) ** d) = void d
-PDPathBC pd (((v, x) ** Right (w ** e)) ** ()) = (w, x)
+PDPathAr : (pd : PreDiagram) -> SliceEndoArena (PDSig pd)
+PDPathAr pd = SlAr (PDPathPos pd) (PDPathDir pd)
 
 public export
-PDPathF : (pd : PreDiagram) ->
-  SlicePolyFunc (PDSig pd) (PDSig pd)
-PDPathF pd = (PDPathPos pd ** PDPathDir pd ** PDPathBC pd)
+PDPathF : (pd : PreDiagram) -> SlicePolyFunc (PDSig pd) (PDSig pd)
+PDPathF pd = SlArToSPF (PDPathAr pd)
 
 public export
 PDPath : (pd : PreDiagram) -> SliceObj (PDSig pd)
