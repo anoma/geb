@@ -1,3 +1,8 @@
+* 0.4.1
+** Bug fix patch
+- Previously we used =asdf:system-version= which is not defined in
+  older asdf versions, thus we have moved it to the more common
+  =asdf:component-version=
 * 0.4.0
 ** User Facing Changes
 - _Binary_
