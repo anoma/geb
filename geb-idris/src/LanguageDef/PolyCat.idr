@@ -2887,6 +2887,10 @@ record SliceArena (dom, cod : Type) where
   SLAdir : Sigma {a=cod} SLApos -> SliceObj dom
 
 public export
+SliceEndoArena : Type -> Type
+SliceEndoArena base = SliceArena base base
+
+public export
 SLAPomap : {dom : Type} -> {0 cod : Type} ->
   SliceArena dom cod -> SliceFunctor dom cod
 SLAPomap {dom} {cod} ar sl j =
