@@ -11,6 +11,49 @@ import public LanguageDef.DiagramCat
 
 %default total
 
+{-
+public export
+SPFFreeMDirAlg' : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
+  SPFAlg {a} (SPFTranslateUnit {a} spf) (const Type)
+SPFFreeMDirAlg' {a} (pos ** dir ** assign) ela (Left () ** d) =
+  Unit
+SPFFreeMDirAlg' {a} (pos ** dir ** assign) ela (Right p ** d) =
+  Sigma {a=(dir (ela ** p))} d
+  -}
+
+-- XXX make a convenience SLAPmu
+
+-- XXX switch to using SliceArena (then move to PolyCat)
+public export
+SPFFreeMDir' : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
+  Sigma (SPFFreeMPos {a} spf) -> SliceObj a
+SPFFreeMDir' {a} spf (ela ** i) =
+  SPFMu {a} (?letsseehere ** ?shallwe ** ?whatdoyoutyink)
+  {-
+  spfCata {a} {spf=(SPFTranslateUnit {a} spf)} {sa=(const Type)}
+    (SPFFreeMDirAlg' {a} spf) ela i
+    -}
+
+public export
+SPFreeToInterp : {a : Type} ->
+  (spf : SlicePolyEndoFunc a) -> (sa : SliceObj a) ->
+  SliceMorphism (SlicePolyFree spf sa) (InterpSPFFree spf sa)
+SPFreeToInterp {a} spf@(pos ** dir ** assign) sa =
+  spfmEval {a} spf sa (InterpSPFFree spf sa)
+    (\ela, elsa => (InSPFM (ela ** Left ()) (\v => void v) ** \() => elsa))
+    (\ela, (p ** d) =>
+      (InSPFM (ela ** Right p) (\di => fst $ d di) **
+       \(di ** elm) => case d di of
+        (InSPFM (_ ** Left ()) _ ** elsa) => elsa ()
+        (InSPFM (_ ** Right p) _ ** elsa) => ?SPFreeToInterp_hole_alg_2))
+
+public export
+SPInterpToFree : {0 a : Type} ->
+  (spf : SlicePolyEndoFunc a) -> (sa : SliceObj a) ->
+  SliceMorphism (InterpSPFFree spf sa) (SlicePolyFree spf sa)
+SPInterpToFree {a} spf@(pos ** dir ** assign) sa ela (p ** d) =
+  ?SPInterpToFree_hole
+
 ------------------------------
 ------------------------------
 ---- Metalanguage quivers ----
