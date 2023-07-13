@@ -179,3 +179,66 @@ is capable of succesfully evaluating all compiled terms"
     (seqn-lt          (if (< (car vector) (cadr vector))
                           (list 0 0)
                           (list 1 0)))))
+
+(defmethod well-defp-cat ((morph <seqn>))
+  (etypecase-of seqn morph
+    (composition
+     (let* ((mcar  (mcar morph))
+            (mcadr (mcadr morph))
+            (dom (dom mcar))
+            (cod (cod mcadr)))
+       (if (and (well-defp-cat mcar)
+                (well-defp-cat mcadr)
+                (obj-equalp dom
+                            cod))
+           t
+           (error "Co(Domains) do not match for ~A with domain
+                                    of MCAR ~A1 and codomain of MCADR ~A2."
+                  morph cod dom))))
+    (parallel-seq
+     (if (and (well-defp-cat (mcar morph))
+              (well-defp-cat (mcadr morph)))
+         t
+         (error "Not well-defined parallel composition ~A" morph)))
+    (branch-seq
+     (let* ((mcar (mcar morph))
+            (mcadr (mcadr morph))
+            (dom1  (dom mcar))
+            (dom2  (dom mcadr))
+            (cod1  (cod mcar))
+            (cod2  (cod mcadr)))
+       (if (and (well-defp-cat mcar)
+                (well-defp-cat mcadr)
+                (obj-equalp dom1 dom2)
+                (obj-equalp cod1 cod2))
+           t
+           (error "Not a well-defined branching ~A.
+                                   ~A1 has dom ~a1 and cod ~a2.
+                                   ~A2 has dom ~a3 and cod ~a4"
+                  morph mcar dom1 cod1 mcadr dom2 cod2))))
+    (shift-front
+     (if (>= (length (mcar morph))
+             (mcadr morph))
+         t
+         (error "Wrong shift-length for ~A" morph)))
+    ((or id
+         fork-seq
+         drop-nil
+         drop-width
+         remove-right
+         remove-left
+         inj-length-left
+         inj-length-right
+         inj-size
+         zero-bit
+         one-bit
+         seqn-add
+         seqn-multiply
+         seqn-divide
+         seqn-subtract
+         seqn-nat
+         seqn-concat
+         seqn-decompose
+         seqn-eq
+         seqn-lt)
+     t)))
