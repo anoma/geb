@@ -394,14 +394,15 @@ InterpPRAfmapComponents {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
           (natural i' j' e' $ alpha i' el'))
 
 public export
-InterpPRAfmapNaturality :
+0 InterpPRAfmapNaturality :
   {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
   {pc, pc' : PCopresheaf dom} ->
   (m : PCMorph {j=dom} pc pc') ->
   PCMorphNaturality {pcpr=(InterpPRA praf pc)} {pcpr'=(InterpPRA praf pc')}
     (InterpPRAfmapComponents {pc} {pc'} praf m)
 InterpPRAfmapNaturality {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
-  (PRAf (PCoprshf objcod morphcod) dir fmap) (Element0 comp natural) =
+  (PRAf (PCoprshf objcod morphcod) dir fmap) (Element0 comp natural)
+  i j e (p ** Element0 alpha alphanat) =
     ?InterpPRAfmapNaturality_hole
 
 public export
