@@ -375,3 +375,32 @@ InterpPRA {dom} {cod} praf pcdom =
   PCoprshf
     (InterpPRAobj {dom} {cod} praf pcdom)
     (InterpPRAmorph {dom} {cod} praf pcdom)
+
+public export
+InterpPRAfmapComponents :
+  {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  {pc, pc' : PCopresheaf dom} ->
+  PCMorph {j=dom} pc pc' ->
+  PCMorphComponents {j=cod} (InterpPRA praf pc) (InterpPRA praf pc')
+InterpPRAfmapComponents {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
+  (PRAf (PCoprshf objcod morphcod) dir fmap) (Element0 comp natural) =
+    ?InterpPRAfmapComponents_hole
+
+public export
+InterpPRAfmapNaturality :
+  {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  {pc, pc' : PCopresheaf dom} ->
+  (m : PCMorph {j=dom} pc pc') ->
+  PCMorphNaturality {pcpr=(InterpPRA praf pc)} {pcpr'=(InterpPRA praf pc')}
+    (InterpPRAfmapComponents {pc} {pc'} praf m)
+InterpPRAfmapNaturality {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
+  (PRAf (PCoprshf objcod morphcod) dir fmap) (Element0 comp natural) =
+    ?InterpPRAfmapNaturality_hole
+
+public export
+InterpPRAfmap : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
+  {pc, pc' : PCopresheaf dom} ->
+  PCMorph {j=dom} pc pc' ->
+  PCMorph {j=cod} (InterpPRA praf pc) (InterpPRA praf pc')
+InterpPRAfmap praf m =
+  Element0 (InterpPRAfmapComponents praf m) (InterpPRAfmapNaturality praf m)
