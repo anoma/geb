@@ -294,20 +294,20 @@ public export
 record PRAFunctor (dom, cod : PreDiagram) where
   constructor PRAf
   prafPos : PCopresheaf cod
-  -- `prafDir` and `prafAssign` between them comprise a contravariant functor
-  -- from the category of elements of `prafPos` (which is a copresheaf over
-  -- `cod`) to the category of copresheaves over `dom`.
-  prafDir : ElemCatObj {j=cod} prafPos -> PCopresheaf dom
-  prafAssign :
+  -- `prafDirObj` and `prafDirMorph` between them comprise a contravariant
+  -- functor from the category of elements of `prafPos` (which is a copresheaf
+  -- over `cod`) to the category of copresheaves over `dom`.
+  prafDirObj : ElemCatObj {j=cod} prafPos -> PCopresheaf dom
+  prafDirMorph :
     (p, p' : ElemCatObj {j=cod} prafPos) ->
     ElemCatDiagMorph {j=cod} {pcpr=prafPos} p' p ->
-    PCMorph {j=dom} (prafDir p) (prafDir p')
+    PCMorph {j=dom} (prafDirObj p) (prafDirObj p')
 
 public export
 InterpPRAobj : {dom, cod : PreDiagram} -> PRAFunctor dom cod ->
   PCopresheaf dom -> pdVert cod -> Type
 InterpPRAobj {dom} {cod} praf pcpr i =
-  (p : pcprObj (prafPos praf) i ** PCMorph (prafDir praf (i ** p)) pcpr)
+  (p : pcprObj (prafPos praf) i ** PCMorph (prafDirObj praf (i ** p)) pcpr)
 
 public export
 InterpPRAmorphPos : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
@@ -323,7 +323,7 @@ InterpPRAmorphComponents :
   (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
   (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
   PCMorphComponents
-    (prafDir praf (j ** InterpPRAmorphPos praf pcdom i j e p)) pcdom
+    (prafDirObj praf (j ** InterpPRAmorphPos praf pcdom i j e p)) pcdom
 InterpPRAmorphComponents {dom} {cod} (PRAf (PCoprshf objcod morphcod) dir asn)
   (PCoprshf objdom morphdom) i j e (p ** Element0 alpha natural) =
     ?InterpPRAmorphComponents_hole
@@ -334,7 +334,7 @@ InterpPRAmorphNaturality :
   (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
   (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
   PCMorphNaturality
-    {pcpr=(prafDir praf (j ** InterpPRAmorphPos praf pcdom i j e p))}
+    {pcpr=(prafDirObj praf (j ** InterpPRAmorphPos praf pcdom i j e p))}
     {pcpr'=pcdom}
     (InterpPRAmorphComponents praf pcdom i j e p)
 InterpPRAmorphNaturality {dom} {cod} (PRAf (PCoprshf objcod morphcod) dir asn)
@@ -345,7 +345,7 @@ public export
 InterpPRAmorphDir : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
   (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
   (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
-  PCMorph (prafDir praf (j ** InterpPRAmorphPos praf pcdom i j e p)) pcdom
+  PCMorph (prafDirObj praf (j ** InterpPRAmorphPos praf pcdom i j e p)) pcdom
 InterpPRAmorphDir praf pcdom i j e p =
   Element0
     (InterpPRAmorphComponents praf pcdom i j e p)
