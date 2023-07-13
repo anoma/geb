@@ -331,7 +331,7 @@ InterpPRAmorphComponents {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
       fst0 (fmap (j ** morphcod i j e p) (i ** p) (Element0 e Refl)) vd dvd
 
 public export
-InterpPRAmorphNaturality :
+0 InterpPRAmorphNaturality :
   {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
   (pcdom : PCopresheaf dom) -> (i, j : pdVert cod) -> (e : pdEdge cod (i, j)) ->
   (p : InterpPRAobj {dom} {cod} praf pcdom i) ->
@@ -339,9 +339,16 @@ InterpPRAmorphNaturality :
     {pcpr=(prafDirObj praf (j ** InterpPRAmorphPos praf pcdom i j e p))}
     {pcpr'=pcdom}
     (InterpPRAmorphComponents praf pcdom i j e p)
-InterpPRAmorphNaturality {dom} {cod} (PRAf (PCoprshf objcod morphcod) dir fmap)
-  (PCoprshf objdom morphdom) i j e (p ** Element0 alpha natural) =
-    ?InterpPRAmorphNaturality_hole
+InterpPRAmorphNaturality {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
+  (PRAf (PCoprshf objcod morphcod) dir fmap)
+  (PCoprshf objdom morphdom) i j e (p ** Element0 alpha natural) i' j' e' el =
+    let eq = snd0 (fmap (j ** morphcod i j e p) (i ** p) (Element0 e Refl)) i' j' e' el in
+    trans
+      (cong (alpha j') $
+        snd0 (fmap (j ** morphcod i j e p) (i ** p) (Element0 e Refl))
+          i' j' e' el) $
+      natural i' j' e' $
+      fst0 (fmap (j ** morphcod i j e p) (i ** p) (Element0 e Refl)) i' el
 
 public export
 InterpPRAmorphDir : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
