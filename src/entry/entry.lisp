@@ -29,7 +29,7 @@
                   (command-line-arguments:show-option-help +command-line-spec+
                                                            :sort-names t))
                  (version
-                  (format stream (asdf:system-version (asdf:find-system :geb))))
+                  (format stream (asdf:component-version (asdf:find-system :geb))))
                  (t
                   (load input)
                   (compile-down :vampir vampir
