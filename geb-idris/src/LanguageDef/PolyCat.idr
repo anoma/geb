@@ -3924,12 +3924,50 @@ SPFTranslateUnit : {a : Type} -> SlicePolyEndoFunc a -> SlicePolyEndoFunc a
 SPFTranslateUnit {a} spf = SPFTranslate {a} spf (const Unit)
 
 public export
+SlArTranslateUnit : {a : Type} -> SliceEndoArena a -> SlicePolyEndoFunc a
+SlArTranslateUnit {a} = SPFTranslateUnit {a} . SlArToSPF
+
+public export
 SlicePolyFree : {a : Type} -> SlicePolyEndoFunc a -> SliceEndofunctor a
 SlicePolyFree {a} = SPFMu {a} .* SPFTranslate {a}
 
 public export
+SliceArenaFree : {a : Type} -> SliceEndoArena a -> SliceEndofunctor a
+SliceArenaFree {a} = SlicePolyFree {a} . SlArToSPF
+
+-- The signature of the "eval" universal morphism for "SPFFreeM spf".
+-- (This is the right adjunct of the free/forgetful adjunction between
+-- the category of F-algebras of `spf` and `Type/a`.)
+public export
+SPFMeval : {a : Type} -> SlicePolyEndoFunc a -> Type
+SPFMeval {a} spf = (slv, sla : SliceObj a) ->
+  SliceMorphism {a} slv sla -> SPFAlg spf sla ->
+  SliceMorphism {a} (SlicePolyFree {a} spf slv) sla
+
+-- All polynomial functors have universal eval morphisms.
+public export
+spfmEval : {a : Type} -> (spf : SlicePolyEndoFunc a) -> SPFMeval spf
+spfmEval {a} (pos ** dir ** assign) slv sla subst alg =
+  spfCata {a} {spf=(SPFTranslate {a} (pos ** dir ** assign) slv)} {sa=sla} $
+    \ela, (p ** d) => case p of
+      Left elv => subst ela elv
+      Right elp => alg ela (elp ** d)
+
+public export
+SlArFreeMPos : {a : Type} -> SliceEndoArena a -> SliceObj a
+SlArFreeMPos {a} ar = SliceArenaFree {a} ar (const Unit)
+
+public export
 SPFFreeMPos : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a
 SPFFreeMPos spf {a} = SlicePolyFree {a} spf (const Unit)
+
+public export
+SlArFreeMDirAlg : {a : Type} -> (ar : SliceEndoArena a) ->
+  SPFAlg {a} (SlArTranslateUnit {a} ar) (const $ SliceObj a)
+SlArFreeMDirAlg {a} ar ela (Left () ** d) ela' =
+  ela = ela'
+SlArFreeMDirAlg {a} ar ela (Right p ** d) ela' =
+  Sigma {a=(Sigma {a} (SLAdir ar (ela ** p)))} $ flip d ela'
 
 public export
 SPFFreeMDirAlg : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
@@ -3938,6 +3976,14 @@ SPFFreeMDirAlg {a} (pos ** dir ** assign) ela (Left () ** d) =
   Unit
 SPFFreeMDirAlg {a} (pos ** dir ** assign) ela (Right p ** d) =
   Sigma {a=(dir (ela ** p))} d
+
+public export
+SlArFreeMDir : {a : Type} -> (ar : SliceEndoArena a) ->
+  Sigma (SlArFreeMPos {a} ar) -> SliceObj a
+SlArFreeMDir {a} ar (ela ** i) =
+  spfCata {a}
+    {spf=(SlArTranslateUnit {a} ar)} {sa=(const $ SliceObj a)}
+    (SlArFreeMDirAlg {a} ar) ela i
 
 public export
 SPFFreeMDir : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
@@ -3957,6 +4003,45 @@ SPFFreeMAssign {a} (pos ** dir ** assign)
     assign ((ela ** p) ** fst d)
 
 public export
+SlArFreeM : {a : Type} -> SliceEndoArena a -> SliceEndoArena a
+SlArFreeM {a} ar = SlAr (SlArFreeMPos {a} ar) (SlArFreeMDir {a} ar)
+
+public export
+InterpSlArFree : {a : Type} -> SliceEndoArena a -> SliceEndofunctor a
+InterpSlArFree {a} = SLAPomap {dom=a} {cod=a} . SlArFreeM {a}
+
+public export
+SlArFreeToInterp : {a : Type} ->
+  (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
+  SliceMorphism (SliceArenaFree ar sa) (InterpSlArFree ar sa)
+SlArFreeToInterp {a} ar sa =
+  spfmEval {a} (SlArToSPF ar) sa (InterpSlArFree ar sa)
+    (\ela, elsa => (InSPFM (ela ** Left ()) (\v => void v) ** \_, Refl => elsa))
+    (\ela, (p ** d) =>
+      (InSPFM (ela ** Right p) (\di => fst $ d di) **
+       \ela', ((ela'' ** d'') ** d''') => snd (d (ela'' ** d'')) ela' d'''))
+
+public export
+SlArInterpToFreeCurried : {a : Type} ->
+  (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
+  (ela : a) -> (p : SlArFreeMPos ar ela) ->
+  SliceMorphism {a} (SLAdir (SlArFreeM ar) (ela ** p)) sa ->
+  SliceArenaFree ar sa ela
+SlArInterpToFreeCurried {a} ar sa ela (InSPFM (ela ** (Left ())) d) m =
+  InSPFM (ela ** Left $ m ela Refl) $ \v => void v
+SlArInterpToFreeCurried {a} ar sa ela (InSPFM (ela ** (Right p)) d) m =
+  InSPFM (ela ** Right p) $ \(ela' ** d') =>
+    SlArInterpToFreeCurried {a} ar sa ela' (d (ela' ** d')) $
+      \ela'', d'' => m ela'' ((ela' ** d') ** d'')
+
+public export
+SlArInterpToFree : {a : Type} ->
+  (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
+  SliceMorphism (InterpSlArFree ar sa) (SliceArenaFree ar sa)
+SlArInterpToFree {a} ar sa ela (p ** m) =
+  SlArInterpToFreeCurried {a} ar sa ela p m
+
+public export
 SPFFreeM : {a : Type} -> SlicePolyEndoFunc a -> SlicePolyEndoFunc a
 SPFFreeM {a} spf =
   (SPFFreeMPos {a} spf ** SPFFreeMDir {a} spf ** SPFFreeMAssign {a} spf)
@@ -3968,24 +4053,6 @@ InterpSPFFree {a} = InterpSPFunc {a} . SPFFreeM {a}
 public export
 SPFMAlg : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a -> Type
 SPFMAlg spf sa = SliceMorphism (InterpSPFFree spf sa) sa
-
--- The signature of the "eval" universal morphism for "SPFFreeM spf".
--- (This is the right adjunct of the free/forgetful adjunction between
--- the category of F-algebras of `spf` and `Type/a`.)
-public export
-SPFMeval : {a : Type} -> SlicePolyEndoFunc a -> Type
-SPFMeval {a} spf = (slv, sla : SliceObj a) ->
-  SliceMorphism {a} slv sla -> SPFAlg spf sla ->
-  SliceMorphism {a} (SlicePolyFree {a} spf slv) sla
-
--- All polynomial functors have universal eval morphisms.
-public export
-spfmEval : {a : Type} -> (spf : SlicePolyEndoFunc a) -> SPFMeval spf
-spfmEval {a} (pos ** dir ** assign) slv sla subst alg =
-  spfCata {a} {spf=(SPFTranslate {a} (pos ** dir ** assign) slv)} {sa=sla} $
-    \ela, (p ** d) => case p of
-      Left elv => subst ela elv
-      Right elp => alg ela (elp ** d)
 
 -------------------------------------------------
 -------------------------------------------------
