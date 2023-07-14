@@ -12,12 +12,20 @@ import public LanguageDef.DiagramCat
 %default total
 
 public export
+SliceArenaFree : {a : Type} -> SliceEndoArena a -> SliceEndofunctor a
+SliceArenaFree {a} = SlicePolyFree {a} . SlArToSPF
+
+public export
 SlArFreeMPos : {a : Type} -> SliceEndoArena a -> SliceObj a
-SlArFreeMPos {a} ar = SlicePolyFree {a} (SlArToSPF ar) (const Unit)
+SlArFreeMPos {a} ar = SliceArenaFree {a} ar (const Unit)
+
+public export
+SlArTranslateUnit : {a : Type} -> SliceEndoArena a -> SlicePolyEndoFunc a
+SlArTranslateUnit {a} = SPFTranslateUnit {a} . SlArToSPF
 
 public export
 SlArFreeMDirAlg : {a : Type} -> (ar : SliceEndoArena a) ->
-  SPFAlg {a} (SPFTranslateUnit {a} $ SlArToSPF ar) (const $ SliceObj a)
+  SPFAlg {a} (SlArTranslateUnit {a} ar) (const $ SliceObj a)
 SlArFreeMDirAlg {a} ar ela (Left () ** d) ela' =
   ela = ela'
 SlArFreeMDirAlg {a} ar ela (Right p ** d) ela' =
@@ -28,7 +36,7 @@ SlArFreeMDir : {a : Type} -> (ar : SliceEndoArena a) ->
   Sigma (SlArFreeMPos {a} ar) -> SliceObj a
 SlArFreeMDir {a} ar (ela ** i) =
   spfCata {a}
-    {spf=(SPFTranslateUnit {a} $ SlArToSPF ar)} {sa=(const $ SliceObj a)}
+    {spf=(SlArTranslateUnit {a} ar)} {sa=(const $ SliceObj a)}
     (SlArFreeMDirAlg {a} ar) ela i
 
 public export
@@ -42,7 +50,7 @@ InterpSlArFree {a} = SLAPomap {dom=a} {cod=a} . SlArFreeM {a}
 public export
 SlArFreeToInterp : {a : Type} ->
   (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
-  SliceMorphism (SlicePolyFree (SlArToSPF ar) sa) (InterpSlArFree ar sa)
+  SliceMorphism (SliceArenaFree ar sa) (InterpSlArFree ar sa)
 SlArFreeToInterp {a} ar sa =
   spfmEval {a} (SlArToSPF ar) sa (InterpSlArFree ar sa)
     (\ela, elsa => (InSPFM (ela ** Left ()) (\v => void v) ** \_, Refl => elsa))
@@ -55,7 +63,7 @@ SlArInterpToFreeCurried : {a : Type} ->
   (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
   (ela : a) -> (p : SlArFreeMPos ar ela) ->
   SliceMorphism {a} (SLAdir (SlArFreeM ar) (ela ** p)) sa ->
-  SlicePolyFree (SlArToSPF ar) sa ela
+  SliceArenaFree ar sa ela
 SlArInterpToFreeCurried {a} ar sa ela (InSPFM (ela ** (Left ())) d) m =
   InSPFM (ela ** Left $ m ela Refl) $ \v => void v
 SlArInterpToFreeCurried {a} ar sa ela (InSPFM (ela ** (Right p)) d) m =
@@ -66,7 +74,7 @@ SlArInterpToFreeCurried {a} ar sa ela (InSPFM (ela ** (Right p)) d) m =
 public export
 SlArInterpToFree : {a : Type} ->
   (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
-  SliceMorphism (InterpSlArFree ar sa) (SlicePolyFree (SlArToSPF ar) sa)
+  SliceMorphism (InterpSlArFree ar sa) (SliceArenaFree ar sa)
 SlArInterpToFree {a} ar sa ela (p ** m) =
   SlArInterpToFreeCurried {a} ar sa ela p m
 
