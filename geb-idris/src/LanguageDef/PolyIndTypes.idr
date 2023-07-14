@@ -429,21 +429,26 @@ InterpPRAfmap praf m =
 
 mutual
   public export
+  partial
   data PRAFmuObj : {base : PreDiagram} ->
       (praf : PRAEndoFunctor base) -> pdVert base -> Type where
     InPRAo : {0 base : PreDiagram} -> {0 praf : PRAEndoFunctor base} ->
-      (0 v : pdVert base) ->
-      InterpPRAobj {dom=base} {cod=base} praf (PRAFmu {base} praf) v ->
-      PRAFmuObj {base} praf v
+      (0 i : pdVert base) ->
+      InterpPRAobj {dom=base} {cod=base} praf (PRAFmu {base} praf) i ->
+      PRAFmuObj {base} praf i
 
   public export
+  partial
   PRAFmuMorph : {base : PreDiagram} ->
     (praf : PRAEndoFunctor base) ->
-    (x, y : pdVert base) -> pdEdge base (x, y) ->
-    PRAFmuObj praf x -> PRAFmuObj praf y
-  PRAFmuMorph {base} praf x y e el = ?PRAFmuMorph_hole
+    (i, j : pdVert base) -> pdEdge base (i, j) ->
+    PRAFmuObj praf i -> PRAFmuObj praf j
+  PRAFmuMorph {base} praf i j e (InPRAo i x) =
+    InPRAo {base} {praf} j $
+      InterpPRAmorph {dom=base} {cod=base} praf (PRAFmu {base} praf) i j e x
 
   public export
+  partial
   PRAFmu : {base : PreDiagram} ->
     (praf : PRAEndoFunctor base) ->
     PCopresheaf base
