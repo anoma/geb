@@ -403,7 +403,10 @@ public export
 InterpPRAfmapNaturality {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
   (PRAf (PCoprshf objcod morphcod) dir fmap) (Element0 comp natural)
   i j e (p ** Element0 alpha alphanat) =
-    ?InterpPRAfmapNaturality_hole
+    dpEq12 Refl $
+      s0Eq12
+        (?InterpPRAfmapNaturality_hole_1)
+        (?InterpPRAfmapNaturality_hole_2)
 
 public export
 InterpPRAfmap : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->

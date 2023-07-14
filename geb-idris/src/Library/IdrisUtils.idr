@@ -102,6 +102,12 @@ fcong : {0 a, b : Type} -> {0 f, g : a -> b} ->
   (f ~=~ g) -> {x : a} -> f x = g x
 fcong Refl = Refl
 
+public export
+dpEq12 : {0 a : Type} -> {0 p : a -> Type} -> {x, y : a} ->
+  {0 px : p x} -> {0 py : p y} ->
+  x = y -> px = py -> MkDPair {p} x px = MkDPair {p} y py
+dpEq12 {a} {p} {x} {y=x} {px} {py=px} Refl Refl = Refl
+
 export
 mkDPairInjectiveFstHet :
   {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
@@ -171,6 +177,13 @@ Ord type => Ord (Subset0 type dep) where
 public export
 Show type => Show (Subset0 type dep) where
   show = show . fst0
+
+public export
+s0Eq12 : {0 a : Type} -> {0 p : a -> Type} -> {x, y : a} ->
+  {0 px : p x} -> {0 py : p y} ->
+  x = y -> px = py ->
+  Element0 {type=a} {dep=p} x px = Element0 {type=a} {dep=p} y py
+s0Eq12 {a} {p} {x} {y=x} {px} {py=px} Refl Refl = Refl
 
 -- Like Idris's standard `Exists`, but with the `this` dependent type
 -- taking a zero-usage type parameter.
