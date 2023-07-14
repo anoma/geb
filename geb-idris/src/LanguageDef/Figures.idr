@@ -12,28 +12,28 @@ import public LanguageDef.DiagramCat
 %default total
 
 public export
-SlArFreeMPos' : {a : Type} -> SliceEndoArena a -> SliceObj a
-SlArFreeMPos' {a} ar = SlicePolyFree {a} (SlArToSPF ar) (const Unit)
+SlArFreeMPos : {a : Type} -> SliceEndoArena a -> SliceObj a
+SlArFreeMPos {a} ar = SlicePolyFree {a} (SlArToSPF ar) (const Unit)
 
 public export
-SlArFreeMDirAlg' : {a : Type} -> (ar : SliceEndoArena a) ->
+SlArFreeMDirAlg : {a : Type} -> (ar : SliceEndoArena a) ->
   SPFAlg {a} (SPFTranslateUnit {a} $ SlArToSPF ar) (const $ SliceObj a)
-SlArFreeMDirAlg' {a} ar ela (Left () ** d) ela' =
+SlArFreeMDirAlg {a} ar ela (Left () ** d) ela' =
   ela = ela'
-SlArFreeMDirAlg' {a} ar ela (Right p ** d) ela' =
+SlArFreeMDirAlg {a} ar ela (Right p ** d) ela' =
   Sigma {a=(Sigma {a} (SLAdir ar (ela ** p)))} $ flip d ela'
 
 public export
-SlArFreeMDir' : {a : Type} -> (ar : SliceEndoArena a) ->
-  Sigma (SlArFreeMPos' {a} ar) -> SliceObj a
-SlArFreeMDir' {a} ar (ela ** i) =
+SlArFreeMDir : {a : Type} -> (ar : SliceEndoArena a) ->
+  Sigma (SlArFreeMPos {a} ar) -> SliceObj a
+SlArFreeMDir {a} ar (ela ** i) =
   spfCata {a}
     {spf=(SPFTranslateUnit {a} $ SlArToSPF ar)} {sa=(const $ SliceObj a)}
-    (SlArFreeMDirAlg' {a} ar) ela i
+    (SlArFreeMDirAlg {a} ar) ela i
 
 public export
 SlArFreeM : {a : Type} -> SliceEndoArena a -> SliceEndoArena a
-SlArFreeM {a} ar = SlAr (SlArFreeMPos' {a} ar) (SlArFreeMDir' {a} ar)
+SlArFreeM {a} ar = SlAr (SlArFreeMPos {a} ar) (SlArFreeMDir {a} ar)
 
 public export
 InterpSlArFree : {a : Type} -> SliceEndoArena a -> SliceEndofunctor a
@@ -53,7 +53,7 @@ SlArFreeToInterp {a} ar sa =
 public export
 SlArInterpToFreeCurried : {a : Type} ->
   (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
-  (ela : a) -> (p : SlArFreeMPos' ar ela) ->
+  (ela : a) -> (p : SlArFreeMPos ar ela) ->
   SliceMorphism {a} (SLAdir (SlArFreeM ar) (ela ** p)) sa ->
   SlicePolyFree (SlArToSPF ar) sa ela
 SlArInterpToFreeCurried {a} ar sa ela (InSPFM (ela ** (Left ())) d) m =
