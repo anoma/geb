@@ -452,4 +452,4 @@ mutual
   PRAFmu : {base : PreDiagram} ->
     (praf : PRAEndoFunctor base) ->
     PCopresheaf base
-  PRAFmu {base} praf = PCoprshf (PRAFmuObj praf) (PRAFmuMorph praf)
+  PRAFmu {base} praf = PCoprshf {j=base} (PRAFmuObj praf) (PRAFmuMorph praf)
