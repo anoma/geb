@@ -256,7 +256,7 @@ public export
   PCMorphComponents {j} pcpr pcpr' -> Type
 PCMorphNaturality {j} {pcpr} {pcpr'} alpha =
   (x, y : pdVert j) -> (e : pdEdge j (x, y)) ->
-  ExtEq (alpha y . pcprMorph pcpr x y e) (pcprMorph pcpr' x y e . alpha x)
+  FunExt -> alpha y . pcprMorph pcpr x y e = pcprMorph pcpr' x y e . alpha x
 
 public export
 PCMorph : {j : PreDiagram} -> PCopresheaf j -> PCopresheaf j -> Type
@@ -341,14 +341,18 @@ public export
     (InterpPRAmorphComponents praf pcdom i j e p)
 InterpPRAmorphNaturality {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
   (PRAf (PCoprshf objcod morphcod) dir fmap)
-  (PCoprshf objdom morphdom) i j e (p ** Element0 alpha natural) i' j' e' el =
-    let eq = snd0 (fmap (j ** morphcod i j e p) (i ** p) (Element0 e Refl)) i' j' e' el in
-    trans
-      (cong (alpha j') $
-        snd0 (fmap (j ** morphcod i j e p) (i ** p) (Element0 e Refl))
-          i' j' e' el) $
-      natural i' j' e' $
-      fst0 (fmap (j ** morphcod i j e p) (i ** p) (Element0 e Refl)) i' el
+  (PCoprshf objdom morphdom) i j e (p ** Element0 alpha natural) i' j' e'
+  funext =
+    funExt $ \el =>
+      trans
+        (cong (alpha j')
+          (fcong (snd0 (fmap
+            (j ** morphcod i j e p) (i ** p) (Element0 e Refl))
+            i' j' e' funext) {x=el})
+        )
+        (fcong (natural i' j' e' funext)
+          {x=(fst0 (fmap
+            (j ** morphcod i j e p) (i ** p) (Element0 e Refl)) i' el)})
 
 public export
 InterpPRAmorphDir : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
@@ -388,10 +392,10 @@ InterpPRAfmapComponents {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
     (p **
      Element0
       (sliceComp comp alpha) $
-      \i', j', e', el' =>
+      \i', j', e', funext => funExt $ \el' =>
         trans
-          (cong (comp j') (alphanat i' j' e' el'))
-          (natural i' j' e' $ alpha i' el'))
+          (cong (comp j') $ fcong (alphanat i' j' e' funext) {x=el'})
+          (fcong (natural i' j' e' funext) {x=(alpha i' el')}))
 
 public export
 0 InterpPRAfmapNaturality :
@@ -402,7 +406,7 @@ public export
     (InterpPRAfmapComponents {pc} {pc'} praf m)
 InterpPRAfmapNaturality {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
   (PRAf (PCoprshf objcod morphcod) dir fmap) (Element0 comp natural)
-  i j e (p ** Element0 alpha alphanat) =
+  i j e funext = funExt $ \(p ** Element0 alpha alphanat) =>
     dpEq12 Refl $
       s0Eq12
         (?InterpPRAfmapNaturality_hole_1)
