@@ -282,6 +282,11 @@ ElemCatDiagMorph {j} {pcpr} x y =
   Subset0 (pdEdge j (fst x, fst y)) $
     \e => pcprMorph pcpr (fst x) (fst y) e (snd x) = snd y
 
+public export
+ElemCatDiagOpMorph : {j : PreDiagram} -> {0 pcpr : PCopresheaf j} ->
+  ElemCatObj {j} pcpr -> ElemCatObj {j} pcpr -> Type
+ElemCatDiagOpMorph {j} {pcpr} = flip $ ElemCatDiagMorph {j} {pcpr}
+
 -----------------------------------
 -----------------------------------
 ---- Prafunctors (Bicomodules) ----
@@ -300,7 +305,7 @@ record PRAFunctor (dom, cod : PreDiagram) where
   prafDirObj : ElemCatObj {j=cod} prafPos -> PCopresheaf dom
   prafDirMorph :
     (p, p' : ElemCatObj {j=cod} prafPos) ->
-    ElemCatDiagMorph {j=cod} {pcpr=prafPos} p' p ->
+    ElemCatDiagOpMorph {j=cod} {pcpr=prafPos} p p' ->
     PCMorph {j=dom} (prafDirObj p) (prafDirObj p')
 
 public export
