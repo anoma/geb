@@ -3954,6 +3954,16 @@ spfmEval {a} (pos ** dir ** assign) slv sla subst alg =
       Right elp => alg ela (elp ** d)
 
 public export
+SlArFMeval : {a : Type} -> SliceEndoArena a -> Type
+SlArFMeval {a} ar = (slv, sla : SliceObj a) ->
+  SliceMorphism {a} slv sla -> SPFAlg (SlArToSPF ar) sla ->
+  SliceMorphism {a} (SliceArenaFree {a} ar slv) sla
+
+public export
+slarEval : {a : Type} -> (ar : SliceEndoArena a) -> SlArFMeval ar
+slarEval {a} ar = spfmEval {a} (SlArToSPF ar)
+
+public export
 SlArFreeMPos : {a : Type} -> SliceEndoArena a -> SliceObj a
 SlArFreeMPos {a} ar = SliceArenaFree {a} ar (const Unit)
 
