@@ -2925,6 +2925,10 @@ SlArFromSPF : {dom, cod : Type} ->
   SlicePolyFunc dom cod -> SliceArena dom cod
 SlArFromSPF = SlArFromPrimes . SPFToPrimes'
 
+public export
+SlArMu : {a : Type} -> SliceEndoArena a -> SliceObj a
+SlArMu {a} = SPFMu {a} . SlArToSPF {dom=a} {cod=a}
+
 -----------------------------------------------------
 -----------------------------------------------------
 ---- Parameterized dependent polynomial functors ----
