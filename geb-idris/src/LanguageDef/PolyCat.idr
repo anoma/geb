@@ -3968,10 +3968,6 @@ SlArFreeMPos : {a : Type} -> SliceEndoArena a -> SliceObj a
 SlArFreeMPos {a} ar = SliceArenaFree {a} ar (const Unit)
 
 public export
-SPFFreeMPos : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a
-SPFFreeMPos spf {a} = SlicePolyFree {a} spf (const Unit)
-
-public export
 SlArFreeMDirAlg : {a : Type} -> (ar : SliceEndoArena a) ->
   SPFAlg {a} (SlArTranslateUnit {a} ar) (const $ SliceObj a)
 SlArFreeMDirAlg {a} ar ela (Left () ** d) ela' =
@@ -3980,37 +3976,12 @@ SlArFreeMDirAlg {a} ar ela (Right p ** d) ela' =
   Sigma {a=(Sigma {a} (SLAdir ar (ela ** p)))} $ flip d ela'
 
 public export
-SPFFreeMDirAlg : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
-  SPFAlg {a} (SPFTranslateUnit {a} spf) (const Type)
-SPFFreeMDirAlg {a} (pos ** dir ** assign) ela (Left () ** d) =
-  Unit
-SPFFreeMDirAlg {a} (pos ** dir ** assign) ela (Right p ** d) =
-  Sigma {a=(dir (ela ** p))} d
-
-public export
 SlArFreeMDir : {a : Type} -> (ar : SliceEndoArena a) ->
   Sigma (SlArFreeMPos {a} ar) -> SliceObj a
 SlArFreeMDir {a} ar (ela ** i) =
   spfCata {a}
     {spf=(SlArTranslateUnit {a} ar)} {sa=(const $ SliceObj a)}
     (SlArFreeMDirAlg {a} ar) ela i
-
-public export
-SPFFreeMDir : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
-  Sigma (SPFFreeMPos {a} spf) -> Type
-SPFFreeMDir {a} spf (ela ** i) =
-  spfCata {a} {spf=(SPFTranslateUnit {a} spf)} {sa=(const Type)}
-    (SPFFreeMDirAlg {a} spf) ela i
-
-public export
-SPFFreeMAssign : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
-  Sigma (SPFFreeMDir {a} spf) -> a
-SPFFreeMAssign {a} (pos ** dir ** assign)
-  ((ela ** (InSPFM (ela ** Left ()) _)) ** ()) =
-    ela
-SPFFreeMAssign {a} (pos ** dir ** assign)
-  ((ela ** (InSPFM (ela ** Right p) q)) ** d) =
-    assign ((ela ** p) ** fst d)
 
 public export
 SlArFreeM : {a : Type} -> SliceEndoArena a -> SliceEndoArena a
@@ -4025,7 +3996,7 @@ SlArFreeToInterp : {a : Type} ->
   (ar : SliceEndoArena a) -> (sa : SliceObj a) ->
   SliceMorphism (SliceArenaFree ar sa) (InterpSlArFree ar sa)
 SlArFreeToInterp {a} ar sa =
-  spfmEval {a} (SlArToSPF ar) sa (InterpSlArFree ar sa)
+  slarEval {a} ar sa (InterpSlArFree ar sa)
     (\ela, elsa => (InSPFM (ela ** Left ()) (\v => void v) ** \_, Refl => elsa))
     (\ela, (p ** d) =>
       (InSPFM (ela ** Right p) (\di => fst $ d di) **
@@ -4053,8 +4024,21 @@ SlArInterpToFree {a} ar sa ela (p ** m) =
 
 public export
 SPFFreeM : {a : Type} -> SlicePolyEndoFunc a -> SlicePolyEndoFunc a
-SPFFreeM {a} spf =
-  (SPFFreeMPos {a} spf ** SPFFreeMDir {a} spf ** SPFFreeMAssign {a} spf)
+SPFFreeM {a} spf = SlArToSPF (SlArFreeM (SlArFromSPF spf))
+
+public export
+SPFFreeMPos : {a : Type} -> SlicePolyEndoFunc a -> SliceObj a
+SPFFreeMPos spf = spfPos (SPFFreeM spf)
+
+public export
+SPFFreeMDir : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
+  Sigma (SPFFreeMPos {a} spf) -> Type
+SPFFreeMDir spf = spfDir (SPFFreeM spf)
+
+public export
+SPFFreeMAssign : {a : Type} -> (spf : SlicePolyEndoFunc a) ->
+  Sigma (SPFFreeMDir {a} spf) -> a
+SPFFreeMAssign spf = spfAssign (SPFFreeM spf)
 
 public export
 InterpSPFFree : {a : Type} -> SlicePolyEndoFunc a -> SliceEndofunctor a
