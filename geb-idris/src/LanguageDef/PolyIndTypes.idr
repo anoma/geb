@@ -304,6 +304,10 @@ record PRAFunctor (dom, cod : PreDiagram) where
     PCMorph {j=dom} (prafDirObj p) (prafDirObj p')
 
 public export
+PRAEndoFunctor : PreDiagram -> Type
+PRAEndoFunctor base = PRAFunctor base base
+
+public export
 InterpPRAobj : {dom, cod : PreDiagram} -> PRAFunctor dom cod ->
   PCopresheaf dom -> pdVert cod -> Type
 InterpPRAobj {dom} {cod} praf pcpr i =
@@ -422,3 +426,18 @@ InterpPRAfmap : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
   PCMorph {j=cod} (InterpPRA praf pc) (InterpPRA praf pc')
 InterpPRAfmap praf m =
   Element0 (InterpPRAfmapComponents praf m) (InterpPRAfmapNaturality praf m)
+
+mutual
+  public export
+  data PRAFmuObj : {base : PreDiagram} -> (praf : PRAEndoFunctor base) ->
+      pdVert base -> Type where
+
+  public export
+  PRAFmuMorph : {base : PreDiagram} -> (praf : PRAEndoFunctor base) ->
+      (x, y : pdVert base) -> pdEdge base (x, y) ->
+      PRAFmuObj praf x -> PRAFmuObj praf y
+  PRAFmuMorph {base} praf x y e el = ?PRAFmuMorph_hole
+
+public export
+PRAFmu : {base : PreDiagram} -> (praf : PRAEndoFunctor base) -> PCopresheaf base
+PRAFmu {base} praf = PCoprshf (PRAFmuObj praf) (PRAFmuMorph praf)
