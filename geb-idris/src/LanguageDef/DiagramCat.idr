@@ -174,9 +174,13 @@ DS2DS = Sigma {a=DSToType} DSToDep
 public export
 interpDStoDep : (ds2ds : DS2DS) ->
   (ds : DSCatObj) -> interpDSToType (fst ds2ds) ds -> Type
-interpDStoDep (DS21 tpos tdir ** DS2D dpos ddiro ddirm) (ipos ** idir)
-  (tp ** onPos ** onDir) =
-    (dp : dpos tp ** ?interpDStoDep_hole)
+interpDStoDep (DS21 tpos tdir ** DS2D dpos ddiro ddirm) ids
+  (tp ** tm) =
+    (dp : dpos tp **
+     m : DSCatMorph (ddiro (tp ** dp)) ids **
+     (td: DSCatSigma (tdir tp)) ->
+        DSCatMorphApp tm td =
+        DSCatMorphApp m (DSCatMorphApp (ddirm (tp ** dp)) td))
 
 public export
 interpDStoDS : DS2DS -> DSCatEndofunctorOMap
