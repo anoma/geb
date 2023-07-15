@@ -42,13 +42,12 @@ IndIndF1 : Type
 IndIndF1 = PolyFunc -> Type
 
 public export
-IndIndAlg : IndIndF1 -> (a : Type) -> (a -> Type) -> Type
-IndIndAlg f1 a b = f1 (a ** b) -> a
+IndIndAlg : IndIndF1 -> PolyFunc -> Type
+IndIndAlg f1 p = f1 p -> pfPos p
 
 public export
 IndIndF2 : IndIndF1 -> Type
-IndIndF2 f1 = (a : Type) -> (b : a -> Type) ->
-  IndIndAlg f1 a b -> f1 (a ** b) -> Type
+IndIndF2 f1 = (p : PolyFunc) -> IndIndAlg f1 p -> f1 p -> Type
 
 public export
 IndInd : Type
@@ -70,7 +69,7 @@ mutual
       (i : pfPos p) -> pfDir {p} i -> IndInd2 (f1 ** f2) p (InI1v i)
     InI2c : {0 f1 : IndIndF1} -> {0 f2 : IndIndF2 f1} -> {0 p : PolyFunc} ->
       (i1 : f1 (IndInd1 (f1 ** f2) p ** IndInd2 (f1 ** f2) p)) ->
-      f2 (IndInd1 (f1 ** f2) p) (IndInd2 (f1 ** f2) p) InI1c i1 ->
+      f2 (IndInd1 (f1 ** f2) p ** IndInd2 (f1 ** f2) p) InI1c i1 ->
       IndInd2 (f1 ** f2) p (InI1c i1)
 
 public export
@@ -91,13 +90,13 @@ data ArgDCtx : IndIndF1 where
 public export
 data ArgDType : IndIndF2 ArgDCtx where
   DTbase : {0 a : Type} -> {0 b : a -> Type} ->
-    {0 alg : IndIndAlg ArgDCtx a b} ->
-    (ctx : ArgDCtx (a ** b)) -> ArgDType a b alg ctx
+    {0 alg : IndIndAlg ArgDCtx (a ** b)} ->
+    (ctx : ArgDCtx (a ** b)) -> ArgDType (a ** b) alg ctx
   DTpi : {0 a : Type} -> {0 b : a -> Type} ->
-    {0 alg : IndIndAlg ArgDCtx a b} ->
+    {0 alg : IndIndAlg ArgDCtx (a ** b)} ->
     (ctx : ArgDCtx (a ** b)) ->
     (dom : b (alg ctx)) -> (cod : b (alg $ DCcons {a} {b} (alg ctx) dom)) ->
-    ArgDType a b alg ctx
+    ArgDType (a ** b) alg ctx
 
 mutual
   public export
@@ -109,7 +108,7 @@ mutual
   partial
   data DType : DCtx -> Type where
     InDType : (ctx : ArgDCtx (DCtx ** DType)) ->
-      ArgDType DCtx DType InDCtx ctx -> DType (InDCtx ctx)
+      ArgDType (DCtx ** DType) InDCtx ctx -> DType (InDCtx ctx)
 
 --------------------------------------
 ---- Indexed/dependent definition ----
