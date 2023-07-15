@@ -42,7 +42,7 @@ IndIndF1 : Type
 IndIndF1 = PolyFunc -> Type
 
 public export
-IndIndAlg : IndIndF1 -> PolyFunc -> Type
+IndIndAlg : IndIndF1 -> IndIndF1
 IndIndAlg f1 p = f1 p -> pfPos p
 
 public export
