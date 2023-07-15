@@ -137,11 +137,51 @@ record DSToType where
   -- the corresponding non-dependent direction.
   ds2tdir : ds2tpos -> DSCatObj
 
-{-
 public export
 interpDSToType : DSToType -> DSCatObj -> Type
 interpDSToType ds2t ds = (i : ds2tpos ds2t ** DSCatMorph (ds2tdir ds2t i) ds)
 
+public export
+record DSToDep (ds2t : DSToType) where
+  constructor DS2D
+  -- Together with `ds2tpos`, this makes, in effect, a copresheaf on the
+  -- diagram which represents a polynomial functor (just two vertices with
+  -- one edge between them).
+  ds2dpos : ds2tpos ds2t -> Type
+
+  -- Together with `ds2tdir ds2t`, this completes the `prafDirObj` component
+  -- of the generalized polynomial endofunctor represented by `DSToDep`.
+  ds2dDirObj : Sigma {a=(ds2tpos ds2t)} ds2dpos -> DSCatObj
+
+  -- To produce `prafDirMorph`, we only need to specify one function,
+  -- because there is only one distinct non-identity morphism in the
+  -- codomain diagram, the one which assigns the output dependent type
+  -- to its non-dependent type.  `prafDirMorph` is the morphism-map
+  -- component of a contravariant functor, so we could take it as an
+  -- ordinary functor operating on a morphism going in the opposite
+  -- direction, from the non-dependent to the dependent type.  So
+  -- we need to specify a morphism of copresheaves -- that is, a natural
+  -- transformation -- from the object-map component of `prafDirObj` applied
+  -- to the non-dependent type to the object-map componenent of `prafDirObj`
+  -- applied to the dependent type.
+  ds2dDirMorph : (i : Sigma {a=(ds2tpos ds2t)} ds2dpos) ->
+    DSCatMorph (ds2tdir ds2t $ fst i) (ds2dDirObj i)
+
+public export
+DS2DS : Type
+DS2DS = Sigma {a=DSToType} DSToDep
+
+public export
+interpDStoDep : (ds2ds : DS2DS) ->
+  (ds : DSCatObj) -> interpDSToType (fst ds2ds) ds -> Type
+interpDStoDep ds2ds ds = ?interpDStoDep_hole
+
+public export
+interpDStoDS : DS2DS -> DSCatEndofunctorOMap
+interpDStoDS ds2ds ds =
+  (interpDSToType (fst ds2ds) ds ** interpDStoDep ds2ds ds)
+
+{-
 -- The input to this functor is some arbitrary type together with
 -- some arbitrary type dependent upon it.  Its output is a dependent
 -- type which depends upon the output of the interpretation of
