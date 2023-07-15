@@ -24,26 +24,6 @@ public export
 record SliceRelPF (dom, cod : Type) where
   constructor SRPF
 
----------------------------------------
----------------------------------------
----- Dependent polynomial functors ----
----------------------------------------
----------------------------------------
-
-public export
-SliceGenPF : Type -> Type -> Type
-SliceGenPF dom cod = (pos : SliceObj cod ** SliceObj (dom, Sigma pos))
-
-public export
-SGPFtoSPF : {dom, cod : Type} -> SliceGenPF dom cod -> SlicePolyFunc dom cod
-SGPFtoSPF {dom} {cod} (pos ** dir) =
-  (pos ** Sigma {a=dom} . flip (curry dir) ** \i => fst $ snd $ i)
-
-public export
-SPFtoSGPF : {dom, cod : Type} -> SlicePolyFunc dom cod -> SliceGenPF dom cod
-SPFtoSGPF {dom} {cod} (pos ** dir ** assign) =
-  (pos ** \(i, j) => Subset0 (dir j) $ \d => Equal (assign (j ** d)) i)
-
 -----------------------------------------
 -----------------------------------------
 ---- Inductive-inductive definitions ----
