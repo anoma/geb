@@ -58,16 +58,12 @@ SPFtoSGPF {dom} {cod} (pos ** dir ** assign) =
 --------------------------------
 
 public export
-FamSetObj : Type
-FamSetObj = PolyFunc
-
-public export
-FamSetMorph : FamSetObj -> FamSetObj -> Type
+FamSetMorph : PolyFunc -> PolyFunc -> Type
 FamSetMorph = DirichNatTrans
 
 public export
 IndIndF1 : Type
-IndIndF1 = FamSetObj -> Type
+IndIndF1 = PolyFunc -> Type
 
 public export
 IndIndAlg : IndIndF1 -> (a : Type) -> (a -> Type) -> Type
