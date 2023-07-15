@@ -188,29 +188,6 @@ interpDStoDS ds2ds ds =
   (interpDSToType (fst ds2ds) ds ** interpDStoDep ds2ds ds)
 
 {-
--- The input to this functor is some arbitrary type together with
--- some arbitrary type dependent upon it.  Its output is a dependent
--- type which depends upon the output of the interpretation of
--- `ds2t` applied to the original arbitrary input type.
---
--- Consequently, it may be viewed as "for any type `A`, a dependent polynomial
--- functor from the slice category `Type/A` to the slice category
--- `Type/(interpDSToType A)`".
-
-public export
-interpDSToDep : {pos : Type} -> (pos -> DSToType) -> DSCatObj -> pos -> Type
-interpDSToDep {pos} ds2dr ds i =
-  (j : ds2tpos (ds2dr i) ** DSCatMorph (ds2tdir (ds2dr i) j) ds)
-
-public export
-DSPF : Type
-DSPF = Sigma {a=DSToType} $ \ds2t => ds2tpos ds2t -> DSToType
-
-public export
-interpDStoDS : DSPF -> DSCatEndofunctorOMap
-interpDStoDS dspf ds =
-  (interpDSToType (fst dspf) ds ** interpDSToDep (snd dspf) ds . fst)
-
 public export
 interpDStoDSFMap : (dspf : DSPF) -> DSCatEndofunctorFMap (interpDStoDS dspf)
 interpDStoDSFMap (DS21 pos dir ** ds2dr) (a ** sa) (b ** sb) (m ** sm) =
