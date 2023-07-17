@@ -156,6 +156,7 @@
    (:file bitc)
    (:file pipeline)
    (:file list)
+   (:file mixins)
    (:module gui
     :serial t
     :components ((:file test)
