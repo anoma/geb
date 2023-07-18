@@ -391,17 +391,16 @@ RFMCompose g f = finHFToHVect (RFMComposeElem g f)
 -- recursive types.
 
 public export
-record FSPolyF where
-  constructor FSPArena
-  -- The length of the list is the number of positions (so the position set
-  -- is the set of natural numbers less than the length of the list),
-  -- and each element is the number of directions at the corresponding position
-  -- (so the direction set is the set of natural numbers less than the element).
-  fspArena : List FSObj
+FSPolyF : Type
+-- The length of the list is the number of positions (so the position set
+-- is the set of natural numbers less than the length of the list),
+-- and each element is the number of directions at the corresponding position
+-- (so the direction set is the set of natural numbers less than the element).
+FSPolyF = List FSObj
 
 public export
 fsPolyNPos : FSPolyF -> FSObj
-fsPolyNPos = length . fspArena
+fsPolyNPos = length
 
 public export
 fsPolyPos : FSPolyF -> Type
@@ -409,7 +408,7 @@ fsPolyPos p = FSElem (fsPolyNPos p)
 
 public export
 fsPolyNDir : (p : FSPolyF) -> fsPolyPos p -> FSObj
-fsPolyNDir (FSPArena a) i = index' a i
+fsPolyNDir a i = index' a i
 
 public export
 fsPolyDir : (p : FSPolyF) -> fsPolyPos p -> Type
@@ -421,7 +420,7 @@ FSExpMap n l = map (FSExpObj n) l
 
 public export
 FSPolyApply : FSPolyF -> FSObj -> FSObj
-FSPolyApply (FSPArena a) n = FSCoproductList (FSExpMap n a)
+FSPolyApply a n = FSCoproductList (FSExpMap n a)
 
 public export
 fspPF : FSPolyF -> PolyFunc
@@ -447,7 +446,7 @@ FSRepresentableMap {m} {n} {x=(S x)} f =
 public export
 FSPolyMapList : (l : List Nat) -> {m, n : FSObj} ->
   FSMorph m n ->
-  FSMorph (FSPolyApply (FSPArena l) m) (FSPolyApply (FSPArena l) n)
+  FSMorph (FSPolyApply l m) (FSPolyApply l n)
 FSPolyMapList [] {m} {n} v = []
 FSPolyMapList (x :: xs) {m} {n} v =
   map (weakenN (FSCoproductList (FSExpMap n xs))) (FSRepresentableMap v) ++
@@ -456,7 +455,7 @@ FSPolyMapList (x :: xs) {m} {n} v =
 public export
 FSPolyMap : (p : FSPolyF) -> {m, n : FSObj} ->
   FSMorph m n -> FSMorph (FSPolyApply p m) (FSPolyApply p n)
-FSPolyMap (FSPArena l) v = FSPolyMapList l v
+FSPolyMap l v = FSPolyMapList l v
 
 public export
 InterpFSPolyF : FSPolyF -> Type -> Type
@@ -490,11 +489,11 @@ FSSliceToType = FSTypeFamType
 
 public export
 FSPolyFToSlice : (p : FSPolyF) -> FSSlice (fsPolyNPos p)
-FSPolyFToSlice p = fromList (fspArena p)
+FSPolyFToSlice = fromList
 
 public export
 SliceToFSPolyF : {n : FSObj} -> FSSlice n -> FSPolyF
-SliceToFSPolyF {n} sl = FSPArena (toList sl)
+SliceToFSPolyF {n} = toList
 
 public export
 FSSliceFiberMap : {n : FSObj} -> FSSlice n -> FSSlice n -> FSElem n -> Type
@@ -626,7 +625,7 @@ FSConstructorMap {k=(S k)} {m} {n} (i :: v) =
 public export
 FSPosApply : {m, n : Nat} -> (aq : List Nat) ->
   (hd : Fin (length aq)) -> FSMorph (index' aq hd) m ->
-  FSMorph (power n m) (FSPolyApply (FSPArena aq) n)
+  FSMorph (power n m) (FSPolyApply aq n)
 FSPosApply {m} {n} [] hd v = absurd hd
 FSPosApply {m} {n} (k :: aq') FZ v =
   map (weakenN (FSCoproductList (FSExpMap n aq'))) (FSConstructorMap {n} v)
@@ -635,8 +634,7 @@ FSPosApply {m} {n} (k :: aq') (FS hd') v =
 
 public export
 FSPNTApplyList : {ap, aq : List Nat} ->
-  FSPNatTrans (FSPArena ap) (FSPArena aq) ->
-  FSPolyMorph (FSPArena ap) (FSPArena aq)
+  FSPNatTrans ap aq -> FSPolyMorph ap aq
 FSPNTApplyList {ap=[]} {aq}
     ([] ** []) n =
   []
@@ -648,12 +646,12 @@ FSPNTApplyList {ap=(m :: ap')} {aq}
 
 public export
 FSPNTApply : {p, q : FSPolyF} -> FSPNatTrans p q -> FSPolyMorph p q
-FSPNTApply {p=(FSPArena ap)} {q=(FSPArena aq)} = FSPNTApplyList {ap} {aq}
+FSPNTApply {p=ap} {q=aq} = FSPNTApplyList {ap} {aq}
 
 public export
 InterpFSPNT : {p, q : FSPolyF} -> FSPNatTrans p q ->
   SliceMorphism {a=Type} (InterpFSPolyF p) (InterpFSPolyF q)
-InterpFSPNT {p=(FSPArena ap)} {q=(FSPArena aq)} (onPos ** onDir) x (i ** v) =
+InterpFSPNT {p=ap} {q=aq} (onPos ** onDir) x (i ** v) =
   (FSApply onPos i ** finFToVect $ \j => index (FSApply (finFGet i onDir) j) v)
 
 -- A slice morphism can be viewed as a special case of a natural transformation
@@ -691,7 +689,7 @@ FSPAlg p n = FSMorph (FSPolyApply p n) n
 
 public export
 FSListToPFAlg : {n : FSObj} -> {l : List Nat} ->
-  FSPAlg (FSPArena l) n -> PFAlg (fspPF (FSPArena l)) (FSElem n)
+  FSPAlg l n -> PFAlg (fspPF l) (FSElem n)
 FSListToPFAlg {n} {l=[]} alg i f = absurd i
 FSListToPFAlg {n} {l=(x :: l')} alg FZ f =
   FSApply (take (power n x) alg) $ finPowFin $ finFToVect f
@@ -701,7 +699,7 @@ FSListToPFAlg {n} {l=(x :: l')} alg (FS i) f =
 public export
 FSPToPFAlg : {n : FSObj} -> {p : FSPolyF} ->
   FSPAlg p n -> PFAlg (fspPF p) (FSElem n)
-FSPToPFAlg {n} {p=(FSPArena l)} alg i = FSListToPFAlg {n} {l} alg i
+FSPToPFAlg {n} {p=l} alg i = FSListToPFAlg {n} {l} alg i
 
 --------------------------------------------------------
 ---- Initial algebras of FinSet polynomial functors ----
@@ -719,5 +717,5 @@ data FSPolyFMu : FSPolyF -> Type where
 public export
 fspCata : {p : FSPolyF} -> {0 a : FSObj} ->
   FSPAlg p a -> FSPolyFMu p -> FSElem a
-fspCata {p=(FSPArena l)} {a} alg (InFSP i v) =
+fspCata {p=l} {a} alg (InFSP i v) =
   ?fspCata_hole
