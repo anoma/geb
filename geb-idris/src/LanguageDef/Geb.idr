@@ -7,22 +7,30 @@ import LanguageDef.Theories
 import LanguageDef.DiagramCat
 import LanguageDef.RefinedADT
 import LanguageDef.Adjunctions
+import LanguageDef.NatPrefixCat
 
 %default total
 
-------------------------
-------------------------
----- Finite quivers ----
-------------------------
-------------------------
+----------------------------------------------------
+----------------------------------------------------
+---- Coproduct-of-product types (finitary ADTs) ----
+----------------------------------------------------
+----------------------------------------------------
 
--- A finite quiver, which is to say, a quiver internal to (a skeleton of)
--- `FinSet`.
+-- A family of `n` finite ADTs.
 public export
-record FinQuiv where
-  constructor FQ
-  fqVert : Nat
-  fqEdge : List (BUNat fqVert, BUNat fqVert)
+FinPCTfam : FSObj -> Type
+FinPCTfam Z = Unit
+FinPCTfam (S n) = List $ List $ Fin n
+
+-- A family of `n` potentially-infinite ADTs.
+public export
+PCTfam : FSObj -> Type
+PCTfam n = Vect n $ List $ Fin n
+
+public export
+FSSlicePF : FSObj -> FSObj -> Type
+FSSlicePF dom cod = Vect cod (List $ List $ Fin dom)
 
 ---------------------------------
 ---------------------------------
