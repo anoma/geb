@@ -6,6 +6,7 @@ import public Data.Contravariant
 import public Data.List
 import public Data.List.Equalities
 import public Data.List.Reverse
+import public Data.List.Quantifiers
 import public Data.Nat
 import public Data.Nat.Order.Properties
 import public Data.Nat.Division
@@ -1365,7 +1366,7 @@ blockIndent n = unlines . map (indent n) . lines
 public export
 data HList : List Type -> Type where
   HNil : HList []
-  HCons : ty -> HList tys -> HList (ty :: tys)
+  HCons : ty -> IdrisUtils.HList tys -> HList (ty :: tys)
 
 public export
 mapExtEq : {0 a, b : Type} -> (f, g : a -> b) -> (l : List a) ->
