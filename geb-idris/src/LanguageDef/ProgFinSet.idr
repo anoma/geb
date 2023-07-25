@@ -925,10 +925,12 @@ ListUMI : (a : Type) -> UMagmaI (List a)
 ListUMI a = MkUMag (ListUI a) (ListMagI a)
 
 -- `List` implements the Sized interface.
+public export
 ListSzI : SizedIF List
 ListSzI a l = Ssz (length l)
 
 -- `List` implements the Indexable interface.
+public export
 ListIdxI : IndexableI List ListSzI
 ListIdxI = Iidx {f=List} {sz=ListSzI} $
   \fx, i, ok => index' fx (natToFinLT i)
