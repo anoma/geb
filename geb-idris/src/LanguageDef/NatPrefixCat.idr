@@ -517,7 +517,7 @@ FSSliceMorphToType {n} {sl} {sl'} m i d = Vect.index d $ finFGet i m
 -- prefix of the natural numbers `Fin m` for some natural number `m` --
 -- specifically, where `m` is the successor of the maximum cardinality of the
 -- types in the type family which corresponds to the dependent-type view of the
--- slice object.  (The dependet-type view is that a slice object over `Fin n`
+-- slice object.  (The dependent-type view is that a slice object over `Fin n`
 -- is a type family indexed by `Fin n`, where the dependent sum of the family is
 -- the "total space" -- the domain of the morphism which defines the slice
 -- object -- in the category-theoretic view.)  Note that the category-theoretic

@@ -11,6 +11,67 @@ import LanguageDef.NatPrefixCat
 
 %default total
 
+----------------------------------------
+----------------------------------------
+---- Finite directed acyclic graphs ----
+----------------------------------------
+----------------------------------------
+
+-- A representation of a finite topologically-sorted set -- a list of
+-- equivalence classes, each represented by its cardinality.
+public export
+FinTSort : Type
+FinTSort = List Nat
+
+-- A level of the given topological sort.
+public export
+FinTSLevel : FinTSort -> Type
+FinTSLevel = Fin . length
+
+-- A level other than the lowest of the given topological sort.
+public export
+FinTSInnerLevel : FinTSort -> Type
+FinTSInnerLevel = Fin . pred . length
+
+-- An inner (non-lowest) level of a topological sort viewed as an
+-- unconstrained level.
+public export
+FinTSWeaken : SliceMorphism {a=FinTSort} FinTSInnerLevel FinTSLevel
+FinTSWeaken [] lev = absurd lev
+FinTSWeaken (_ :: _) lev = weaken lev
+
+-- A node of a DAG at the given level of a topological sort.
+public export
+FinSortNode : (ts : FinTSort) -> FinTSLevel ts -> Type
+FinSortNode ts lev = Fin $ index' ts lev
+
+-- A node of a DAG at the given level, which is not the lowest, of the given
+-- topological sort.
+public export
+FinSortInnerNode : (ts : FinTSort) -> FinTSInnerLevel ts -> Type
+FinSortInnerNode ts = FinSortNode ts . FinTSWeaken ts
+
+-- A node of a DAG whose representation uses the above representation of
+-- a topological sort.
+public export
+FinDAGNode : FinTSort -> Type
+FinDAGNode ts = Sigma {a=(FinTSLevel ts)} $ FinSortNode ts
+
+-- A representation of an edge of a DAG, pointing from a lower-numbered level
+-- to a higher-numbered level in the given topological sort.  The parameter
+-- is the lower-numbered level.
+public export
+FinDAGEdge : (ts : FinTSort) -> FinTSInnerLevel ts -> Type
+FinDAGEdge ts lev = ?FinDAGEdge_hole
+
+-- A representation of a finite directed acyclic (multi)graph (DAG) -- a list of
+-- edges each of which points from a lower-numbered level to a higher-numbered
+-- level in the given topological sort.
+public export
+FinDAG : FinTSort -> Type
+FinDAG = ?FinDAG_hole
+
+
 ----------------------------------------------------
 ----------------------------------------------------
 ---- Coproduct-of-product types (finitary ADTs) ----
@@ -21,7 +82,7 @@ import LanguageDef.NatPrefixCat
 public export
 FinPCTfam : FSObj -> Type
 FinPCTfam Z = Unit
-FinPCTfam (S n) = List $ List $ Fin n
+FinPCTfam (S n) = List $ List $ Either Nat $ Fin n
 
 -- A family of `n` potentially-infinite ADTs.
 public export
