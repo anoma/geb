@@ -4,12 +4,59 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.PolyCat
 import LanguageDef.Theories
+import LanguageDef.Figures
 import LanguageDef.DiagramCat
 import LanguageDef.RefinedADT
 import LanguageDef.Adjunctions
 import LanguageDef.NatPrefixCat
+import LanguageDef.ProgFinSet
 
 %default total
+
+--------------------------
+--------------------------
+---- Matrix interface ----
+--------------------------
+--------------------------
+
+-- Functor which takes a type to a (two-dimensional) matrix of terms of
+-- that type.
+public export
+MatrixF : Type -> Type
+MatrixF = List . List
+
+-- For any type `a`, given a functor assigning types to terms of `a`,
+-- produce a functor assigning types to terms of type `Coproduct (List a)`.
+--
+-- A functor assigning types to terms of a type `a` may be viewed as an
+-- object of the slice category of `Type` over `a`.  Consequently, this
+-- functor itself may be viewed as a natural transformation between functors
+-- from `Type` to the two-category of slice categories of `Type`.
+public export
+CoproductT : NaturalTransformation SliceObj (SliceObj . List)
+CoproductT a ta l = Sigma {a=(ListMember l)} (ta . listGet)
+
+-- For any type `a`, given a functor assigning types to terms of `a`,
+-- produce a functor assigning types to terms of type `Product (List a)`.
+--
+-- A functor assigning types to terms of a type `a` may be viewed as an
+-- object of the slice category of `Type` over `a`.  Consequently, this
+-- functor itself may be viewed as a natural transformation between functors
+-- from `Type` to the two-category of slice categories of `Type`.
+public export
+ProductT : NaturalTransformation SliceObj (SliceObj . List)
+ProductT a ta l = All ta l
+
+-- For any type `a`, given a functor assigning types to terms of `a`, produce
+-- a functor assigning types to terms of type `MatrixF a`.
+--
+-- A functor assigning types to terms of a type `a` may be viewed as an
+-- object of the slice category of `Type` over `a`.  Consequently, this
+-- functor itself may be viewed as a natural transformation between functors
+-- from `Type` to the two-category of slice categories of `Type`.
+public export
+MatrixT : NaturalTransformation SliceObj (SliceObj . MatrixF)
+MatrixT a ta = CoproductT (List a) (ProductT a ta)
 
 ----------------------------------------
 ----------------------------------------
