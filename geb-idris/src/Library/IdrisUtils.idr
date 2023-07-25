@@ -1274,6 +1274,10 @@ ListMember : {a : Type} -> List a -> Type
 ListMember {a} l = Subset0 a (ListContains l)
 
 public export
+listGet : {a : Type} -> {l : List a} -> ListMember {a} l -> a
+listGet {a} {l} = fst0
+
+public export
 ListMemberDec : {a : Type} -> DecEqPred a -> List a -> Type
 ListMemberDec {a} deq l = Subset0 a (ListContainsTrue deq l)
 
