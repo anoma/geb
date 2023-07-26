@@ -115,6 +115,27 @@ public export
 (m : NatMatrix) => Show (FinMatrixT m) where
   show {m} = showFinMatrixT {m}
 
+public export
+MkMaybeAllFin : List Nat -> (l : List Nat) -> Maybe (All Fin l)
+MkMaybeAllFin ns [] = Just Nil
+MkMaybeAllFin [] (_ :: _) = Nothing
+MkMaybeAllFin (n :: ns) (k :: ks) = case (natToFin n k, MkMaybeAllFin ns ks) of
+  (Just i, Just ks') => Just (i :: ks')
+  _ => Nothing
+
+public export
+MkMaybeFinMatrixT : (m : NatMatrix) -> Nat -> List Nat -> Maybe (FinMatrixT m)
+MkMaybeFinMatrixT m n l = case natToFin n (length m) of
+  Just i => case MkMaybeAllFin l (index' m i) of
+    Just l' => Just (i ** l')
+    Nothing => Nothing
+  Nothing => Nothing
+
+public export
+MkFinMatrixT : (m : NatMatrix) -> (n : Nat) -> (l : List Nat) ->
+  {auto ok : IsJustTrue (MkMaybeFinMatrixT m n l)} -> FinMatrixT m
+MkFinMatrixT m n l {ok} = fromIsJust ok
+
 ----------------------------------------
 ----------------------------------------
 ---- Finite directed acyclic graphs ----

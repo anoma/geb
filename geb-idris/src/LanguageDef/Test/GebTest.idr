@@ -21,7 +21,7 @@ TFM1 = FinMatrixT NM1
 
 public export
 tfm1t1 : TFM1
-tfm1t1 = (natToFinLT 2 ** [FZ, natToFinLT 2, natToFinLT 7])
+tfm1t1 = MkFinMatrixT NM1 2 [0, 2, 7]
 
 ----------------------------------
 ----------------------------------
