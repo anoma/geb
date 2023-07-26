@@ -85,9 +85,9 @@ showAll {a} {p} sh (x :: l') = shf :: showAll sh l' where
     show = sf x
 
 public export
-showFinProd : {0 a : Type} -> {0 p : a -> Type} -> {l : List a} ->
+showProd : {0 a : Type} -> {0 p : a -> Type} -> {l : List a} ->
   ((x : a) -> p x -> String) -> Show (ProductT a p l)
-showFinProd {a} {p} {l} sh = shfp where
+showProd {a} {p} {l} sh = shfp where
   sfp : All p l -> String
   sfp = let _ : All (Show . p) l = showAll {a} {p} sh l in show
 
@@ -98,7 +98,7 @@ public export
 showFinMatrixT : {m : NatMatrix} -> FinMatrixT m -> String
 showFinMatrixT {m} = shm where
   sh : {n : Fin (length m)} -> Show (All Fin (index' m n))
-  sh {n} = showFinProd {a=Nat} {p=Fin} {l=(index' m n)} (\_ => show)
+  sh {n} = showProd {a=Nat} {p=Fin} {l=(index' m n)} (\_ => show)
 
   [shf] Show (Fin (length m)) where
     show = show
