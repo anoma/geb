@@ -61,7 +61,7 @@ ProductT a ta l = All ta l
 -- from `Type` to the two-category of slice categories of `Type`.
 public export
 MatrixT : NaturalTransformation SliceObj (SliceObj . MatrixF)
-MatrixT a ta = CoproductT (List a) (ProductT a ta)
+MatrixT a = CoproductT (List a) . ProductT a
 
 public export
 showAll : {0 a : Type} -> {0 p : a -> Type} -> ((x : a) -> p x -> String) ->
