@@ -68,11 +68,8 @@ showAll : {0 a : Type} -> {0 p : a -> Type} -> ((x : a) -> p x -> String) ->
   (l : List a) -> All (Show . p) l
 showAll {a} {p} sh [] = Nil
 showAll {a} {p} sh (x :: l') = shf :: showAll sh l' where
-  sf : (x : a) -> p x -> String
-  sf = sh
-
   [shf] Show (p x) where
-    show = sf x
+    show = sh x
 
 public export
 showProd : {0 a : Type} -> {0 p : a -> Type} -> {l : List a} ->
@@ -107,9 +104,6 @@ showMatrixT : {0 a : Type} -> {0 p : a -> Type} -> {m : MatrixF a} ->
 showMatrixT {m} shp = shm where
   sh : {n : Fin (length m)} -> Show (All p (index' m n))
   sh {n} = showProd {a} {p} {l=(index' m n)} shp
-
-  [shf] Show (Fin (length m)) where
-    show = show
 
   [shdp] Show (DPair (Fin (length m)) (All p . index' m)) where
     -- Copied from the Idris standard libraries because I can't figure out
