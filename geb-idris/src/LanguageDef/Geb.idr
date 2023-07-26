@@ -19,11 +19,20 @@ import LanguageDef.ProgFinSet
 --------------------------
 --------------------------
 
+-- Bounded natural numbers used as list indexes.
+public export
+ListNI : {0 a : Type} -> List a -> Type
+ListNI {a} = Fin . length {a}
+
 -- Functor which takes a type to a (two-dimensional) matrix of terms of
 -- that type.
 public export
 MatrixF : Type -> Type
 MatrixF = List . List
+
+public export
+NatMatrix : Type
+NatMatrix = MatrixF Nat
 
 -- For any type `a`, given a functor assigning types to terms of `a`,
 -- produce a functor assigning types to terms of type `Coproduct (List a)`.
@@ -34,7 +43,7 @@ MatrixF = List . List
 -- from `Type` to the two-category of slice categories of `Type`.
 public export
 CoproductT : NaturalTransformation SliceObj (SliceObj . List)
-CoproductT a ta l = Sigma {a=(ListMember l)} (ta . listGet)
+CoproductT a ta l = Sigma {a=(Fin $ length l)} (ta . index' {a} l)
 
 -- For any type `a`, given a functor assigning types to terms of `a`,
 -- produce a functor assigning types to terms of type `Product (List a)`.
@@ -58,6 +67,54 @@ public export
 MatrixT : NaturalTransformation SliceObj (SliceObj . MatrixF)
 MatrixT a ta = CoproductT (List a) (ProductT a ta)
 
+-- Given a matrix of natural numbers, produce a type whose terms are
+-- coproducts-of-products-of-`Fin n`.
+public export
+FinMatrixT : NatMatrix -> Type
+FinMatrixT = MatrixT Nat Fin
+
+public export
+showAll : {0 a : Type} -> {0 p : a -> Type} -> ((x : a) -> p x -> String) ->
+  (l : List a) -> All (Show . p) l
+showAll {a} {p} sh [] = Nil
+showAll {a} {p} sh (x :: l') = shf :: showAll sh l' where
+  sf : (x : a) -> p x -> String
+  sf = sh
+
+  [shf] Show (p x) where
+    show = sf x
+
+public export
+showFinProd : {0 a : Type} -> {0 p : a -> Type} -> {l : List a} ->
+  ((x : a) -> p x -> String) -> Show (ProductT a p l)
+showFinProd {a} {p} {l} sh = shfp where
+  sfp : All p l -> String
+  sfp = let _ : All (Show . p) l = showAll {a} {p} sh l in show
+
+  [shfp] Show (All p l) where
+    show = sfp
+
+public export
+showFinMatrixT : {m : NatMatrix} -> FinMatrixT m -> String
+showFinMatrixT {m} = shm where
+    sh : {n : Fin (length m)} -> Show (All Fin (index' m n))
+    sh {n} = showFinProd {a=Nat} {p=Fin} {l=(index' m n)} (\_ => show)
+
+    [shf] Show (Fin (length m)) where
+      show = show
+
+    [shdp] Show (DPair (Fin (length m)) (All Fin . index' m)) where
+      -- Copied from the Idris standard libraries because I can't figure out
+      -- how to get Idris to infer (Show DPair).
+      show (n ** l) = let _ = sh {n} in "(" ++ show n ++ " ** " ++ show l ++ ")"
+
+    shm : FinMatrixT m -> String
+    shm = let _ = shdp in show
+
+public export
+(m : NatMatrix) => Show (FinMatrixT m) where
+  show {m} = showFinMatrixT {m}
+
 ----------------------------------------
 ----------------------------------------
 ---- Finite directed acyclic graphs ----
@@ -73,7 +130,7 @@ FinTSort = List Nat
 -- A level of the given topological sort.
 public export
 FinTSLevel : FinTSort -> Type
-FinTSLevel = Fin . length
+FinTSLevel = ListNI {a=Nat}
 
 -- A level other than the lowest of the given topological sort.
 public export
