@@ -30,10 +30,6 @@ public export
 MatrixF : Type -> Type
 MatrixF = List . List
 
-public export
-NatMatrix : Type
-NatMatrix = MatrixF Nat
-
 -- For any type `a`, given a functor assigning types to terms of `a`,
 -- produce a functor assigning types to terms of type `Coproduct (List a)`.
 --
@@ -88,6 +84,28 @@ showProd {a} {p} {l} sh = shfp where
   [shfp] Show (All p l) where
     show = sfp
 
+public export
+showMatrixT : {0 a : Type} -> {0 p : a -> Type} -> {m : MatrixF a} ->
+  ((x : a) -> p x -> String) -> MatrixT a p m -> String
+showMatrixT {m} shp = shm where
+  sh : {n : Fin (length m)} -> Show (All p (index' m n))
+  sh {n} = showProd {a} {p} {l=(index' m n)} shp
+
+  [shf] Show (Fin (length m)) where
+    show = show
+
+  [shdp] Show (DPair (Fin (length m)) (All p . index' m)) where
+    -- Copied from the Idris standard libraries because I can't figure out
+    -- how to get Idris to infer (Show DPair).
+    show (n ** l) = let _ = sh {n} in "(" ++ show n ++ " ** " ++ show l ++ ")"
+
+  shm : MatrixT a p m -> String
+  shm = let _ = shdp in show
+
+public export
+NatMatrix : Type
+NatMatrix = MatrixF Nat
+
 -- Given a matrix of natural numbers, produce a type whose terms are
 -- coproducts-of-products-of-`Fin n`.
 public export
@@ -96,20 +114,7 @@ FinMatrixT = MatrixT Nat Fin
 
 public export
 showFinMatrixT : {m : NatMatrix} -> FinMatrixT m -> String
-showFinMatrixT {m} = shm where
-  sh : {n : Fin (length m)} -> Show (All Fin (index' m n))
-  sh {n} = showProd {a=Nat} {p=Fin} {l=(index' m n)} (\_ => show)
-
-  [shf] Show (Fin (length m)) where
-    show = show
-
-  [shdp] Show (DPair (Fin (length m)) (All Fin . index' m)) where
-    -- Copied from the Idris standard libraries because I can't figure out
-    -- how to get Idris to infer (Show DPair).
-    show (n ** l) = let _ = sh {n} in "(" ++ show n ++ " ** " ++ show l ++ ")"
-
-  shm : FinMatrixT m -> String
-  shm = let _ = shdp in show
+showFinMatrixT {m} = showMatrixT {a=Nat} {p=Fin} {m} (\_ => show)
 
 public export
 (m : NatMatrix) => Show (FinMatrixT m) where
