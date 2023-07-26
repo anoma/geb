@@ -35,6 +35,23 @@ public export
 CoproductT : NaturalTransformation SliceObj (SliceObj . List)
 CoproductT a ta l = Sigma {a=(Fin $ length l)} (ta . index' {a} l)
 
+public export
+showCoprod : {0 a : Type} -> {0 p : a -> Type} -> {l : List a} ->
+  ((x : a) -> p x -> String) -> Show (CoproductT a p l)
+showCoprod {a} {p} {l} sh = shfc where
+  sfp : {x : a} -> Show (p x)
+  sfp {x} = shfp where
+    [shfp] Show (p x) where
+      show = sh x
+
+  sfpi : {i : Fin (length l)} -> Show (p (index' l i))
+  sfpi {i} = sfp {x=(index' l i)}
+
+  [shfc] Show (CoproductT a p l) where
+    -- Copied from the Idris standard libraries because I can't figure out
+    -- how to get Idris to infer (Show DPair).
+    show (i ** l) = let _ = sfpi {i} in "(" ++ show i ++ " ** " ++ show l ++ ")"
+
 -- For any type `a`, given a functor assigning types to terms of `a`,
 -- produce a functor assigning types to terms of type `Product (List a)`.
 --
