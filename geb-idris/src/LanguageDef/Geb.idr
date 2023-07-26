@@ -24,12 +24,6 @@ public export
 ListNI : {0 a : Type} -> List a -> Type
 ListNI {a} = Fin . length {a}
 
--- Functor which takes a type to a (two-dimensional) matrix of terms of
--- that type.
-public export
-MatrixF : Type -> Type
-MatrixF = List . List
-
 -- For any type `a`, given a functor assigning types to terms of `a`,
 -- produce a functor assigning types to terms of type `Coproduct (List a)`.
 --
@@ -50,18 +44,7 @@ CoproductT a ta l = Sigma {a=(Fin $ length l)} (ta . index' {a} l)
 -- from `Type` to the two-category of slice categories of `Type`.
 public export
 ProductT : NaturalTransformation SliceObj (SliceObj . List)
-ProductT a ta l = All ta l
-
--- For any type `a`, given a functor assigning types to terms of `a`, produce
--- a functor assigning types to terms of type `MatrixF a`.
---
--- A functor assigning types to terms of a type `a` may be viewed as an
--- object of the slice category of `Type` over `a`.  Consequently, this
--- functor itself may be viewed as a natural transformation between functors
--- from `Type` to the two-category of slice categories of `Type`.
-public export
-MatrixT : NaturalTransformation SliceObj (SliceObj . MatrixF)
-MatrixT = vcompNT (whiskerLeft CoproductT List) ProductT
+ProductT a ta = All {a} ta
 
 public export
 showAll : {0 a : Type} -> {0 p : a -> Type} -> ((x : a) -> p x -> String) ->
@@ -83,6 +66,23 @@ showProd {a} {p} {l} sh = shfp where
 
   [shfp] Show (All p l) where
     show = sfp
+
+-- Functor which takes a type to a (two-dimensional) matrix of terms of
+-- that type.
+public export
+MatrixF : Type -> Type
+MatrixF = List . List
+
+-- For any type `a`, given a functor assigning types to terms of `a`, produce
+-- a functor assigning types to terms of type `MatrixF a`.
+--
+-- A functor assigning types to terms of a type `a` may be viewed as an
+-- object of the slice category of `Type` over `a`.  Consequently, this
+-- functor itself may be viewed as a natural transformation between functors
+-- from `Type` to the two-category of slice categories of `Type`.
+public export
+MatrixT : NaturalTransformation SliceObj (SliceObj . MatrixF)
+MatrixT = vcompNT (whiskerLeft CoproductT List) ProductT
 
 public export
 showMatrixT : {0 a : Type} -> {0 p : a -> Type} -> {m : MatrixF a} ->
