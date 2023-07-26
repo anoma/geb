@@ -469,6 +469,19 @@ hcompNT : {f, f', g, g' : Type -> Type} ->
 hcompNT {f} {f'} {g} {g'} gmap beta alpha x = beta (f' x) . gmap (alpha x)
 
 public export
+whiskerLeft : {f, g : Type -> Type} ->
+  NaturalTransformation f g -> (k : Type -> Type) ->
+  NaturalTransformation (f . k) (g . k)
+whiskerLeft {f} {g} alpha k x = alpha (k x)
+
+public export
+whiskerRight : {f, g : Type -> Type} ->
+  (h : Type -> Type) -> ({a, b : Type} -> (a -> b) -> h a -> h b) ->
+  NaturalTransformation f g ->
+  NaturalTransformation (h . f) (h . g)
+whiskerRight {f} {g} h hmap alpha x = hmap (alpha x)
+
+public export
 ExtEqNT : {f, g : Type -> Type} ->
   NaturalTransformation f g -> NaturalTransformation f g -> Type
 ExtEqNT alpha beta = (x : Type) -> ExtEq (alpha x) (beta x)
