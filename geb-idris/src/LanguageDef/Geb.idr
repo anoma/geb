@@ -67,12 +67,6 @@ public export
 MatrixT : NaturalTransformation SliceObj (SliceObj . MatrixF)
 MatrixT a ta = CoproductT (List a) (ProductT a ta)
 
--- Given a matrix of natural numbers, produce a type whose terms are
--- coproducts-of-products-of-`Fin n`.
-public export
-FinMatrixT : NatMatrix -> Type
-FinMatrixT = MatrixT Nat Fin
-
 public export
 showAll : {0 a : Type} -> {0 p : a -> Type} -> ((x : a) -> p x -> String) ->
   (l : List a) -> All (Show . p) l
@@ -93,6 +87,12 @@ showProd {a} {p} {l} sh = shfp where
 
   [shfp] Show (All p l) where
     show = sfp
+
+-- Given a matrix of natural numbers, produce a type whose terms are
+-- coproducts-of-products-of-`Fin n`.
+public export
+FinMatrixT : NatMatrix -> Type
+FinMatrixT = MatrixT Nat Fin
 
 public export
 showFinMatrixT : {m : NatMatrix} -> FinMatrixT m -> String
