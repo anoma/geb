@@ -97,19 +97,19 @@ showFinProd {a} {p} {l} sh = shfp where
 public export
 showFinMatrixT : {m : NatMatrix} -> FinMatrixT m -> String
 showFinMatrixT {m} = shm where
-    sh : {n : Fin (length m)} -> Show (All Fin (index' m n))
-    sh {n} = showFinProd {a=Nat} {p=Fin} {l=(index' m n)} (\_ => show)
+  sh : {n : Fin (length m)} -> Show (All Fin (index' m n))
+  sh {n} = showFinProd {a=Nat} {p=Fin} {l=(index' m n)} (\_ => show)
 
-    [shf] Show (Fin (length m)) where
-      show = show
+  [shf] Show (Fin (length m)) where
+    show = show
 
-    [shdp] Show (DPair (Fin (length m)) (All Fin . index' m)) where
-      -- Copied from the Idris standard libraries because I can't figure out
-      -- how to get Idris to infer (Show DPair).
-      show (n ** l) = let _ = sh {n} in "(" ++ show n ++ " ** " ++ show l ++ ")"
+  [shdp] Show (DPair (Fin (length m)) (All Fin . index' m)) where
+    -- Copied from the Idris standard libraries because I can't figure out
+    -- how to get Idris to infer (Show DPair).
+    show (n ** l) = let _ = sh {n} in "(" ++ show n ++ " ** " ++ show l ++ ")"
 
-    shm : FinMatrixT m -> String
-    shm = let _ = shdp in show
+  shm : FinMatrixT m -> String
+  shm = let _ = shdp in show
 
 public export
 (m : NatMatrix) => Show (FinMatrixT m) where
