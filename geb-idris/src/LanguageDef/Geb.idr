@@ -33,7 +33,7 @@ ListNI {a} = Fin . length {a}
 -- from `Type` to the two-category of slice categories of `Type`.
 public export
 CoproductT : NaturalTransformation SliceObj (SliceObj . List)
-CoproductT a ta l = Sigma {a=(Fin $ length l)} (ta . index' {a} l)
+CoproductT a ta l = Sigma {a=(ListNI l)} (ta . index' {a} l)
 
 public export
 showCoprod : {0 a : Type} -> {0 p : a -> Type} -> {l : List a} ->
@@ -44,7 +44,7 @@ showCoprod {a} {p} {l} sh = shfc where
     [shfp] Show (p x) where
       show = sh x
 
-  sfpi : {i : Fin (length l)} -> Show (p (index' l i))
+  sfpi : {i : ListNI l} -> Show (p (index' l i))
   sfpi {i} = sfp {x=(index' l i)}
 
   [shfc] Show (CoproductT a p l) where
@@ -100,10 +100,10 @@ public export
 showMatrixT : {0 a : Type} -> {0 p : a -> Type} -> {m : MatrixF a} ->
   ((x : a) -> p x -> String) -> MatrixT a p m -> String
 showMatrixT {m} shp = shm where
-  sh : {n : Fin (length m)} -> Show (All p (index' m n))
+  sh : {n : ListNI m} -> Show (All p (index' m n))
   sh {n} = showProd {a} {p} {l=(index' m n)} shp
 
-  [shdp] Show (DPair (Fin (length m)) (All p . index' m)) where
+  [shdp] Show (DPair (ListNI m) (All p . index' m)) where
     show = showDP show $ \n => let _ = sh {n} in show
 
   shm : MatrixT a p m -> String
