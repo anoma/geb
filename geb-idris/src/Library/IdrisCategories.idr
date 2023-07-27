@@ -664,16 +664,16 @@ InSlFc {a} {f} {sa} {ea} fsea =
   InSlF {a} {f} {sa} ea
     (InSlC {a} {f} {sv=sa} {sa=(SliceFreeM {a} f sa)} {ea} fsea)
 
--- The type of free catamorphisms in slice categories.
+-- The signature of the "eval" universal morphism for "SliceFreeM f".
 public export
-SliceFreeCata : {a : Type} -> SliceEndofunctor a -> Type
-SliceFreeCata {a} f =
+SliceFreeFEval : {a : Type} -> SliceEndofunctor a -> Type
+SliceFreeFEval {a} f =
   (sv, sa : SliceObj a) -> SliceMorphism {a} sv sa -> SliceAlg f sa ->
   SliceMorphism {a} (SliceFreeM f sv) sa
 
 public export
-SliceFreeCataF : {a : Type} -> SliceEndofunctor a -> Type
-SliceFreeCataF {a} f =
+SliceFreeFEvalF : {a : Type} -> SliceEndofunctor a -> Type
+SliceFreeFEvalF {a} f =
   (sv, sa : SliceObj a) -> SliceMorphism {a} sv sa -> SliceAlg f sa ->
   SliceMorphism {a} (f $ SliceFreeM f sv) sa
 
@@ -700,7 +700,7 @@ sliceFreeReturn {a} {f} sl ea = InSlFv {ea}
 -- If we can define a catamorphism, then we can define join.
 public export
 sliceFreeJoin : {a : Type} -> {f : SliceEndofunctor a} ->
-  SliceFreeCata f -> SliceFreeJoin f
+  SliceFreeFEval f -> SliceFreeJoin f
 sliceFreeJoin {a} {f} cata sl =
   cata (SliceFreeM f sl) (SliceFreeM f sl) (\_ => id) (\_ => InSlFc)
 
@@ -1648,12 +1648,12 @@ depFreeEqMap {a} {sl} {rs} {rs'} m _ feq =
 public export
 DepFreeEqCata : {a : Type} -> SliceObj a -> Type
 DepFreeEqCata {a} sl =
-  SliceFreeCata {a=(DepRelObj {a} (sl, sl))} (DepFreeEqF {a} {sl})
+  SliceFreeFEval {a=(DepRelObj {a} (sl, sl))} (DepFreeEqF {a} {sl})
 
 public export
 DepFreeEqCataF : {a : Type} -> SliceObj a -> Type
 DepFreeEqCataF {a} sl =
-  SliceFreeCataF {a=(DepRelObj {a} (sl, sl))} (DepFreeEqF {a} {sl})
+  SliceFreeFEvalF {a=(DepRelObj {a} (sl, sl))} (DepFreeEqF {a} {sl})
 
 mutual
   public export
