@@ -7301,6 +7301,29 @@ public export
 lengthLF : {atom : Type} -> NaturalTransformation (FreeList atom) FreeNat
 lengthLF = natTransMapFree cataListF lengthAlg
 
+public export
+ListMuSlice : Type -> Type
+ListMuSlice = SliceObj . MuList
+
+public export
+ListTypeAlg : Type -> Type
+ListTypeAlg atom = ListAlg atom Type
+
+public export
+ListTypeMuSlice : {atom : Type} -> ListTypeAlg atom -> ListMuSlice atom
+ListTypeMuSlice {atom} = cataListF {atom} Void Type (voidF Type)
+
+public export
+listMuPi : {atom : Type} -> (tyalg : ListTypeAlg atom) ->
+  tyalg NilF ->
+  ((x : atom) -> (l : MuList atom) -> ListTypeMuSlice tyalg l ->
+   tyalg (ConsF x $ ListTypeMuSlice tyalg l)) ->
+  Pi {a=(MuList atom)} $ ListTypeMuSlice {atom} tyalg
+listMuPi {atom} tyalg nalg calg (InFree (TFV v)) = void v
+listMuPi {atom} tyalg nalg calg (InFree (TFC l)) = case l of
+  NilF => nalg
+  ConsF x l' => calg x l' $ listMuPi tyalg nalg calg l'
+
 --------------------------------------------
 ---- Fixed-width binary natural numbers ----
 --------------------------------------------
