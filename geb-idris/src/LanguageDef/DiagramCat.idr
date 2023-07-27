@@ -532,7 +532,7 @@ chComp {obj} {a} {b} {c} {hom} g f = InSlFc $ CHComp g f
 
 public export
 HomSliceCata : Type -> Type
-HomSliceCata obj = SliceFreeCata {a=(SignatureT obj)} (CatHomF {obj})
+HomSliceCata obj = SliceFreeFEval {a=(SignatureT obj)} (CatHomF {obj})
 
 public export
 homSliceCata : {obj : Type} -> HomSliceCata obj
@@ -708,12 +708,12 @@ SigCatFreeEq {obj} {hom} rel = CatFreeEq {obj} {hom} (SigToCatRel rel)
 public export
 CatFreeEqCata : {obj : Type} -> HomSlice obj -> Type
 CatFreeEqCata {obj} hom =
-  SliceFreeCata {a=(CatRelObj {obj} hom)} (CatFreeEqF {obj} {hom})
+  SliceFreeFEval {a=(CatRelObj {obj} hom)} (CatFreeEqF {obj} {hom})
 
 public export
 CatFreeEqCataF : {obj : Type} -> HomSlice obj -> Type
 CatFreeEqCataF {obj} hom =
-  SliceFreeCataF {a=(CatRelObj {obj} hom)} (CatFreeEqF {obj} {hom})
+  SliceFreeFEvalF {a=(CatRelObj {obj} hom)} (CatFreeEqF {obj} {hom})
 
 mutual
   public export

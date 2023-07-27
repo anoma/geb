@@ -421,7 +421,7 @@ G0MEq : Type
 G0MEq = G0Exp G0MEQ
 
 public export
-g0ExpFreeCata : SliceFreeCata G0ExpF
+g0ExpFreeCata : SliceFreeFEval G0ExpF
 g0ExpFreeCata sv sa subst alg sl (InSlF sl x) = case x of
   InSlV v => subst sl v
   InSlC c => alg sl $ case sl of
