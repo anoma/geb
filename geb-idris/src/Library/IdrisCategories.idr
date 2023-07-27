@@ -7316,13 +7316,13 @@ ListTypeMuSlice {atom} = cataListF {atom} Void Type (voidF Type)
 public export
 listMuPi : {atom : Type} -> (tyalg : ListTypeAlg atom) ->
   tyalg NilF ->
-  ((x : atom) -> (l : MuList atom) -> ListTypeMuSlice tyalg l ->
-   tyalg (ConsF x $ ListTypeMuSlice tyalg l)) ->
+  ((x : atom) -> (ty : Type) -> ty -> tyalg (ConsF x ty)) ->
   Pi {a=(MuList atom)} $ ListTypeMuSlice {atom} tyalg
 listMuPi {atom} tyalg nalg calg (InFree (TFV v)) = void v
 listMuPi {atom} tyalg nalg calg (InFree (TFC l)) = case l of
   NilF => nalg
-  ConsF x l' => calg x l' $ listMuPi tyalg nalg calg l'
+  ConsF x l' =>
+    calg x (ListTypeMuSlice tyalg l') $ listMuPi tyalg nalg calg l'
 
 --------------------------------------------
 ---- Fixed-width binary natural numbers ----
