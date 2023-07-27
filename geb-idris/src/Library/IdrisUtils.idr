@@ -125,6 +125,15 @@ mkDPairInjectiveSndHet :
 mkDPairInjectiveSndHet Refl = Refl
 
 public export
+showDP : {0 a : Type} -> {0 p : a -> Type} ->
+  (a -> String) -> ((x : a) -> p x -> String) ->
+  DPair a p -> String
+showDP {a} {p} showA showP (x ** l) =
+  -- Copied from the Idris standard libraries because I can't figure out
+  -- how to get Idris to infer (Show DPair).
+  "(" ++ showA x ++ " ** " ++ showP x l ++ ")"
+
+public export
 maybeElim : {0 a, b : Type} -> (a -> b) -> b -> Maybe a -> b
 maybeElim f g (Just e) = f e
 maybeElim f g Nothing = g

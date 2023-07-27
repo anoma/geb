@@ -48,9 +48,7 @@ showCoprod {a} {p} {l} sh = shfc where
   sfpi {i} = sfp {x=(index' l i)}
 
   [shfc] Show (CoproductT a p l) where
-    -- Copied from the Idris standard libraries because I can't figure out
-    -- how to get Idris to infer (Show DPair).
-    show (i ** l) = let _ = sfpi {i} in "(" ++ show i ++ " ** " ++ show l ++ ")"
+    show = showDP show $ \i => let _ = sfpi {i} in show
 
 -- For any type `a`, given a functor assigning types to terms of `a`,
 -- produce a functor assigning types to terms of type `Product (List a)`.
@@ -106,9 +104,7 @@ showMatrixT {m} shp = shm where
   sh {n} = showProd {a} {p} {l=(index' m n)} shp
 
   [shdp] Show (DPair (Fin (length m)) (All p . index' m)) where
-    -- Copied from the Idris standard libraries because I can't figure out
-    -- how to get Idris to infer (Show DPair).
-    show (n ** l) = let _ = sh {n} in "(" ++ show n ++ " ** " ++ show l ++ ")"
+    show = showDP show $ \n => let _ = sh {n} in show
 
   shm : MatrixT a p m -> String
   shm = let _ = shdp in show
