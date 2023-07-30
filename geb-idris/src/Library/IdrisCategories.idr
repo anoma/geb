@@ -7306,6 +7306,27 @@ ListMuSlice : Type -> Type
 ListMuSlice = SliceObj . MuList
 
 public export
+ListF1 : Type -> Type -> Type
+ListF1 = ListF
+
+public export
+ListFPos : Type -> Type
+ListFPos = Either Unit
+
+public export
+ListFDir : {atom : Type} -> ListFPos atom -> Type
+ListFDir {atom} (Left ()) = Void
+ListFDir {atom} (Right x) = Unit
+
+public export
+ListFIndAlg : Type -> Type -> Type
+ListFIndAlg = ListAlg
+
+public export
+ListF2 : Type -> Type
+ListF2 atom = (ty : Type) -> ListFIndAlg atom ty -> ty -> Type
+
+public export
 ListTypeAlg : Type -> Type
 ListTypeAlg atom = ListAlg atom Type
 
