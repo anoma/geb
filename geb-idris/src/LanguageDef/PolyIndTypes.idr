@@ -42,16 +42,33 @@ IndIndF1 : Type
 IndIndF1 = PolyFunc -> Type
 
 public export
+IndIndF1' : Type
+IndIndF1' = (pos : Type) -> (pos -> Type) -> Type
+
+public export
 IndIndAlg : IndIndF1 -> IndIndF1
 IndIndAlg f1 p = f1 p -> pfPos p
+
+public export
+IndIndAlg' : IndIndF1' -> IndIndF1'
+IndIndAlg' f1 pos dir = f1 pos dir -> pos
 
 public export
 IndIndF2 : IndIndF1 -> Type
 IndIndF2 f1 = (p : PolyFunc) -> IndIndAlg f1 p -> f1 p -> Type
 
 public export
+IndIndF2' : IndIndF1' -> Type
+IndIndF2' f1 = (pos : Type) -> (dir : pos -> Type) ->
+  IndIndAlg' f1 pos dir -> f1 pos dir -> Type
+
+public export
 IndInd : Type
 IndInd = DPair IndIndF1 IndIndF2
+
+public export
+IndInd' : Type
+IndInd' = DPair IndIndF1' IndIndF2'
 
 mutual
   public export
@@ -71,6 +88,31 @@ mutual
       (i1 : f1 (IndInd1 (f1 ** f2) p ** IndInd2 (f1 ** f2) p)) ->
       f2 (IndInd1 (f1 ** f2) p ** IndInd2 (f1 ** f2) p) InI1c i1 ->
       IndInd2 (f1 ** f2) p (InI1c i1)
+
+mutual
+  public export
+  data IndInd1' : IndInd' -> (pos : Type) -> (pos -> Type) ->
+      Type where
+    InI1v' : {0 f1 : IndIndF1'} -> {0 f2 : IndIndF2' f1} ->
+      {0 pos : Type} -> {0 dir : pos -> Type} ->
+      pos -> IndInd1' (f1 ** f2) pos dir
+    InI1c' : {0 f1 : IndIndF1'} -> {0 f2 : IndIndF2' f1} ->
+      {0 pos : Type} -> {0 dir : pos -> Type} ->
+      f1 (IndInd1' (f1 ** f2) pos dir) (IndInd2' (f1 ** f2) pos dir) ->
+      IndInd1' (f1 ** f2) pos dir
+
+  public export
+  data IndInd2' : (ii : IndInd') -> (pos : Type) -> (dir : pos -> Type) ->
+      IndInd1' ii pos dir -> Type where
+    InI2v' : {0 f1 : IndIndF1'} -> {0 f2 : IndIndF2' f1} ->
+      {0 pos : Type} -> {0 dir : pos -> Type} ->
+      (i : pos) -> dir i -> IndInd2' (f1 ** f2) pos dir (InI1v' i)
+    InI2c' : {0 f1 : IndIndF1'} -> {0 f2 : IndIndF2' f1} ->
+      {0 pos : Type} -> {0 dir : pos -> Type} ->
+      (i1 : f1 (IndInd1' (f1 ** f2) pos dir) (IndInd2' (f1 ** f2) pos dir)) ->
+      f2 (IndInd1' (f1 ** f2) pos dir) (IndInd2' (f1 ** f2) pos dir)
+        InI1c' i1 ->
+      IndInd2' (f1 ** f2) pos dir (InI1c' i1)
 
 public export
 partial
