@@ -13,6 +13,83 @@ import LanguageDef.ProgFinSet
 
 %default total
 
+public export
+partial
+data ListIndInd2 : {atom : Type} -> ListF2 atom ->
+    (pos : Type) -> (pos -> Type) -> FreeList atom pos -> Type where
+  LI2v : {0 atom : Type} -> {0 f2 : ListF2 atom} ->
+    {0 pos : Type} -> {0 dir : pos -> Type} ->
+    (i : pos) -> dir i ->
+    ListIndInd2 {atom} f2 pos dir (IdrisCategories.inFV i)
+  LI2c : {0 atom : Type} -> {0 f2 : ListF2 atom} ->
+    {0 pos : Type} -> {0 dir : pos -> Type} ->
+    (i1 : ListF1 atom $ FreeList atom pos) ->
+    f2 (FreeList atom pos) (ListIndInd2 f2 pos dir) IdrisCategories.inFC i1 ->
+    ListIndInd2 {atom} f2 pos dir (IdrisCategories.inFC i1)
+
+public export
+AListF : Type -> Type -> Type
+AListF = Either () .* Pair
+
+public export
+AListAlg : Type -> Type -> Type
+AListAlg atom x = AListF atom x -> x
+
+public export
+AListTypeAlg : Type -> Type
+AListTypeAlg atom = AListAlg atom Type
+
+public export
+MuAList : Type -> Type
+MuAList = Mu . AListF
+
+public export
+cataAListF : {0 atom : Type} -> FreeFEval $ AListF atom
+cataAListF v a subst alg (InFree x) = case x of
+  TFV var => subst var
+  TFC l => alg $ case l of
+    Left () => Left ()
+    Right (MkPair x l') => Right $ MkPair x $ cataAListF v a subst alg l'
+
+public export
+AListMuSlice : Type -> Type
+AListMuSlice = SliceObj . MuAList
+
+public export
+AListTypeMuSlice : {0 atom : Type} -> AListTypeAlg atom -> AListMuSlice atom
+AListTypeMuSlice {atom} = cataAListF {atom} Void Type (voidF Type)
+
+public export
+AListMuPiAlg : {atom : Type} -> AListTypeAlg atom -> Type
+AListMuPiAlg = ?AListMuPiAlg_hole
+
+public export
+alistMuPi' : {atom : Type} -> (tyalg : AListTypeAlg atom) ->
+  (() -> tyalg (Left ())) ->
+  ((x : atom) -> (ty : Type) -> ty -> tyalg (Right $ MkPair x ty)) ->
+  Pi {a=(MuAList atom)} $ AListTypeMuSlice {atom} tyalg
+alistMuPi' {atom} tyalg nalg calg (InFree (TFV v)) = void v
+alistMuPi' {atom} tyalg nalg calg (InFree (TFC l)) = case l of
+  Left () => nalg ()
+  Right (MkPair x l') =>
+    calg x (AListTypeMuSlice tyalg l') $ alistMuPi' tyalg nalg calg l'
+
+public export
+listMuPi' : {atom : Type} -> (tyalg : ListTypeAlg atom) ->
+  tyalg NilF ->
+  ((x : atom) -> (ty : Type) -> ty -> tyalg (ConsF x ty)) ->
+  Pi {a=(MuList atom)} $ ListTypeMuSlice {atom} tyalg
+listMuPi' {atom} tyalg nalg calg (InFree (TFV v)) = void v
+listMuPi' {atom} tyalg nalg calg (InFree (TFC l)) = case l of
+  NilF => nalg
+  ConsF x l' =>
+    calg x (ListTypeMuSlice tyalg l') $ listMuPi' tyalg nalg calg l'
+
+public export
+listMuSliceCata' : {atom : Type} -> (dom, cod : ListTypeAlg atom) ->
+  SliceMorphism {a=(MuList atom)} (ListTypeMuSlice dom) (ListTypeMuSlice cod)
+listMuSliceCata' {atom} dom cod = ?listMuSliceCata'_hole
+
 --------------------------
 --------------------------
 ---- Matrix interface ----
