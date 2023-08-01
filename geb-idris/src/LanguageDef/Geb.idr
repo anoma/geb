@@ -41,22 +41,39 @@ public export
 0 TSFlt : (0 tsf : TopoSortedFin) -> (0 _, _ : TSFVert tsf) -> Type
 TSFlt tsf v v' = LT (tsfOrd tsf v) (tsfOrd tsf v')
 
+-- An edge incoming to the given vertex of a topologically sorted finite graph.
+public export
+record DAGincE (tsf : TopoSortedFin) (tgt : TSFVert tsf) where
+  constructor DAGie
+  diSrc : TSFVert tsf
+  0 diLT : TSFlt tsf diSrc tgt
+
 public export
 record DAGedge (tsf : TopoSortedFin) where
   constructor DAGe
-  deSrc : TSFVert tsf
   deTgt : TSFVert tsf
-  0 deLT : TSFlt tsf deSrc deTgt
+  deEdge : DAGincE tsf deTgt
+
+-- A set of edges incoming to the given vertex of a topologically sorted
+-- finite graph.
+public export
+record DAGincSet (tsf : TopoSortedFin) (tgt : TSFVert tsf) where
+  constructor DAGis
+  disE : List $ DAGincE tsf tgt
 
 public export
-DAGedgeT : TopoSortedFin -> Type
-DAGedgeT = List . DAGedge
+DAGieTV : (tsf : TopoSortedFin) -> Vect (tsfVert tsf) Type
+DAGieTV tsf = finFToVect $ DAGincSet tsf
+
+public export
+DAGedgeSet : TopoSortedFin -> Type
+DAGedgeSet tsf = HVect {k=(tsfVert tsf)} (DAGieTV tsf)
 
 public export
 record FinDAG where
   constructor FDAG
   fdagVert : TopoSortedFin
-  fdagEdge : DAGedgeT fdagVert
+  fdagEdge : DAGedgeSet fdagVert
 
 ------------------------------
 ------------------------------
