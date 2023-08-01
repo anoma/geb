@@ -13,6 +13,53 @@ import LanguageDef.ProgFinSet
 
 %default total
 
+----------------------------------------
+----------------------------------------
+---- Finite directed acyclic graphs ----
+----------------------------------------
+----------------------------------------
+
+public export
+FinTopoSort : SliceObj FSObj
+FinTopoSort n = Vect n FSObj
+
+public export
+record TopoSortedFin where
+  constructor TSFin
+  tsfVert : FSObj
+  tsfSort : FinTopoSort tsfVert
+
+public export
+TSFVert : TopoSortedFin -> Type
+TSFVert = FSElem . tsfVert
+
+public export
+0 tsfOrd : (0 tsf : TopoSortedFin) -> (0 _ : TSFVert tsf) -> FSObj
+tsfOrd tsf v = Vect.index v (tsfSort tsf)
+
+public export
+0 TSFlt : (0 tsf : TopoSortedFin) -> (0 _, _ : TSFVert tsf) -> Type
+TSFlt tsf v v' = LT (tsfOrd tsf v) (tsfOrd tsf v')
+
+public export
+record DAGedge (tsf : TopoSortedFin) where
+  constructor DAGe
+  deSrc : TSFVert tsf
+  deTgt : TSFVert tsf
+  0 deLT : TSFlt tsf deSrc deTgt
+
+public export
+record FinDAG where
+  constructor FDAG
+  fdagVert : TopoSortedFin
+  fdagEdge : List (DAGedge fdagVert)
+
+------------------------------
+------------------------------
+---- List-dependent types ----
+------------------------------
+------------------------------
+
 public export
 partial
 data ListIndInd2 : {atom : Type} -> ListF2 atom ->
@@ -282,8 +329,8 @@ FinDAGEdge ts lev = ?FinDAGEdge_hole
 -- edges each of which points from a lower-numbered level to a higher-numbered
 -- level in the given topological sort.
 public export
-FinDAG : FinTSort -> Type
-FinDAG = ?FinDAG_hole
+FinDAG' : FinTSort -> Type
+FinDAG' = ?FinDAG_hole
 
 
 ----------------------------------------------------
