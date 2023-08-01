@@ -49,10 +49,14 @@ record DAGedge (tsf : TopoSortedFin) where
   0 deLT : TSFlt tsf deSrc deTgt
 
 public export
+DAGedgeT : TopoSortedFin -> Type
+DAGedgeT = List . DAGedge
+
+public export
 record FinDAG where
   constructor FDAG
   fdagVert : TopoSortedFin
-  fdagEdge : List (DAGedge fdagVert)
+  fdagEdge : DAGedgeT fdagVert
 
 ------------------------------
 ------------------------------
