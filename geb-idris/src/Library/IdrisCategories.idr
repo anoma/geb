@@ -7324,7 +7324,8 @@ ListFIndAlg = ListAlg
 
 public export
 ListF2 : Type -> Type
-ListF2 atom = NaturalTransformation (ListFIndAlg atom) (SliceObj . ListF atom)
+ListF2 atom = (pos : Type) -> (pos -> Type) ->
+  ListFIndAlg atom pos -> ListF atom pos -> Type
 
 public export
 ListTypeAlg : Type -> Type
