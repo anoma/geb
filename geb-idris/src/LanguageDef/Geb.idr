@@ -75,6 +75,21 @@ record FinDAG where
   fdagVert : TopoSortedFin
   fdagEdge : DAGedgeSet fdagVert
 
+-----------------------------------
+-----------------------------------
+---- Parameterizations of DAGs ----
+-----------------------------------
+-----------------------------------
+
+mutual
+  public export
+  record TSFParam (tssf : TopoSortedFin) where
+    constructor TSFP
+    -- tsfpV : HVect {k=(tsfVert tsf)} TFSParam_hole
+
+  public export
+  data TSFVertParam : (tsf : TopoSortedFin) -> TSFParam tsf -> Type where
+
 ------------------------------
 ------------------------------
 ---- List-dependent types ----
