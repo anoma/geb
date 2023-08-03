@@ -128,3 +128,14 @@
   (is obj-equalp (gapply bool:not (left so1)) (right so1))
 
   (is obj-equalp (gapply bool:not (right so1)) (left so1)))
+
+(define-test geb-de-concat
+  :parent geb-interpreter
+  (is obj-equalp (list 1 0) (gapply (geb.extension.spec:nat-decompose 3) 4))
+  (is obj-equalp 4 (gapply (geb.extension.spec:nat-concat 1 2) (list 1 0)))
+  (is obj-equalp 4 (gapply (comp (geb.extension.spec:nat-concat 1 2)
+                                 (geb.extension.spec:nat-decompose 3))
+                           4))
+  (is obj-equalp (list 1 0) (gapply (comp (geb.extension.spec:nat-decompose 3)
+                                          (geb.extension.spec:nat-concat 1 2))
+                                    (list 1 0))))
