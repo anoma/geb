@@ -224,6 +224,13 @@ constructors"
   (app pax:class)
   (index pax:class)
   (err pax:class)
+  (plus pax:class)
+  (times pax:class)
+  (minus pax:class)
+  (divide pax:class) 
+  (bit-choice pax:class)
+  (lamb-eq pax:class)
+  (lamb-lt pax:class)
 
   (absurd pax:function)
   (unit pax:function)
@@ -237,6 +244,14 @@ constructors"
   (app pax:function)
   (index pax:function)
   (err pax:function)
+  (plus pax:function)
+  (times pax:function)
+  (minus pax:function)
+  (divide pax:function)
+  (bit-choice pax:function)
+  (lamb-eq    pax:function)
+  (lamb-lt    pax:function)
+  
 
   "Accessors of [ABSURD][class]"
 
@@ -248,37 +263,37 @@ constructors"
   (ttype (pax:method () (unit)))
 
   "Accessors of [LEFT][class]"
-  (rty (pax:method () (left)))
-  (term (pax:method () (left)))
+  (rty   (pax:method () (left)))
+  (term  (pax:method () (left)))
   (ttype (pax:method () (left)))
 
   "Accessors of [RIGHT][class]"
-  (lty (pax:method () (right)))
-  (term (pax:method () (right)))
+  (lty   (pax:method () (right)))
+  (term  (pax:method () (right)))
   (ttype (pax:method () (right)))
 
   "Accessors of [CASE-ON][class]"
-  (on (pax:method () (case-on)))
-  (ltm (pax:method () (case-on)))
-  (rtm (pax:method () (case-on)))
+  (on    (pax:method () (case-on)))
+  (ltm   (pax:method () (case-on)))
+  (rtm   (pax:method () (case-on)))
   (ttype (pax:method () (case-on)))
 
   "Accessors of [PAIR][class]"
-  (ltm (pax:method () (pair)))
-  (rtm (pax:method () (pair)))
+  (ltm   (pax:method () (pair)))
+  (rtm   (pax:method () (pair)))
   (ttype (pax:method () (pair)))
 
   "Accessors of [FST][class]"
-  (term (pax:method () (fst)))
+  (term  (pax:method () (fst)))
   (ttype (pax:method () (fst)))
 
   "Accessors of [SND][class]"
-  (term (pax:method () (snd)))
+  (term  (pax:method () (snd)))
   (ttype (pax:method () (snd)))
 
   "Accessors of [LAMB][class]"
-  (tdom (pax:method () (lamb)))
-  (term (pax:method () (lamb)))
+  (tdom  (pax:method () (lamb)))
+  (term  (pax:method () (lamb)))
   (ttype (pax:method () (lamb)))
 
   "Accessors of [APP][class]"
@@ -290,8 +305,42 @@ constructors"
   (pos (pax:method () (index)))
   (ttype (pax:method () (index)))
 
-  "Accessors of [ERR][class]"
+  "Accessor of [ERR][class]"
   (ttype (pax:method () (err)))
+
+  "Accessors of [PLUS][class]"
+  (ltm   (pax:method () (plus)))
+  (rtm   (pax:method () (plus)))
+  (ttype (pax:method () (plus)))
+
+  "Accessors of [TIMES][class]"
+  (ltm   (pax:method () (times)))
+  (rtm   (pax:method () (times)))
+  (ttype (pax:method () (times)))
+
+  "Accessors of [MINUS][class]"
+  (ltm   (pax:method () (minus)))
+  (rtm   (pax:method () (minus)))
+  (ttype (pax:method () (minus)))
+
+  "Accessors of [DIVIDE][class]"
+  (ltm   (pax:method () (divide)))
+  (rtm   (pax:method () (divide)))
+  (ttype (pax:method () (divide)))
+
+  "Accessors of [BIT-CHOICE][class]"
+  (bitv  (pax:method () (bit-choice)))
+  (ttype (pax:method () (bit-choice)))
+
+  "Accessors of [LAMB-EQ][class]"
+  (ltm   (pax:method () (lamb-eq)))
+  (rtm   (pax:method () (lamb-eq)))
+  (ttype (pax:method () (lamb-eq)))
+
+  "Accessors of [LAMB-LT][class]"
+  (ltm   (pax:method () (lamb-lt)))
+  (rtm   (pax:method () (lamb-lt)))
+  (ttype (pax:method () (lamb-lt)))
 
   (tcod pax:generic-function)
   (tdom pax:generic-function)
@@ -303,7 +352,8 @@ constructors"
   (on pax:generic-function)
   (fun pax:generic-function)
   (pos pax:generic-function)
-  (ttype pax:generic-function))
+  (ttype pax:generic-function)
+  (bitv pax:generic-function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb Package Documentation
@@ -496,4 +546,64 @@ throughout any piece of code"
   (name  (pax:method () (reference)))
   (reference    pax:function)
   (opaque-morph pax:function)
-  (opaque       pax:function))
+  (opaque       pax:function)
+  "The Natural Object/Morphism extension allows to expand the core Geb category
+   with additional constructors standing in for bt-sequence representation of
+   natural numbers along with basic operation relating to those."
+  (natobj       pax:type)
+  (<natobj>     pax:class)
+
+  (nat-width    pax:class)
+
+  (num   (pax:method () (nat-width)))
+
+  (nat-width    pax:function)
+
+  (natmorph     pax:type)
+  (<natmorph>   pax:class)
+
+  (nat-add         pax:class)
+  (nat-mult        pax:class)
+  (nat-sub         pax:class)
+  (nat-div         pax:class)
+  (nat-const       pax:class)
+  (nat-inj         pax:class)
+  (nat-concat      pax:class)
+  (one-bit-to-bool pax:class)
+  (nat-decompose   pax:class)
+  (nat-eq          pax:class)
+  (nat-lt          pax:class)
+
+  (num       (pax:method () (nat-add)))
+  (num       (pax:method () (nat-mult)))
+  (num       (pax:method () (nat-sub)))
+  (num       (pax:method () (nat-div)))
+  (num       (pax:method () (nat-const)))
+  (pos       (pax:method () (nat-const)))
+  (num       (pax:method () (nat-inj)))
+  (num-left  (pax:method () (nat-concat)))
+  (num-right (pax:method () (nat-concat)))
+  (num       (pax:method () (nat-decompose)))
+  (num       (pax:method () (nat-eq)))
+  (num       (pax:method () (nat-lt)))
+
+  (nat-add         pax:function)
+  (nat-mult        pax:function)
+  (nat-sub         pax:function)
+  (nat-div         pax:function)
+  (nat-const       pax:function)
+  (nat-inj         pax:function)
+  (nat-concat      pax:function)
+  (one-bit-to-bool pax:function)
+  (nat-decompose   pax:function)
+  (nat-eq          pax:function)
+  (nat-lt          pax:function)
+
+  (num          pax:generic-function)
+  (pos          pax:generic-function)
+  (num-left     pax:generic-function)
+  (num-right    pax:generic-function)
+
+  (*one-bit-to-bool* pax:variable)
+  (one-bit-to-bool   pax:symbol-macro))
+

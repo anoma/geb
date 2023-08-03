@@ -78,7 +78,7 @@
 
 (defmethod to-circuit ((obj <substmorph>) name)
   "Turns a @GEB-SUBSTMORPH to a Vamp-IR Term"
-  (to-circuit (to-bitc obj) name))
+  (to-circuit (to-seqn obj) name))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Morph to Bitc Implementation
@@ -189,3 +189,171 @@ should calculate
 
 We use an optimized version in actual code, which happens to compute the same result"
   (max (- number number2) 0))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Geb to Seqn Implementation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmethod to-seqn ((obj <substobj>))
+  "Preserves identity morphims"
+  (seqn:id (geb.seqn.main:width obj)))
+
+(defmethod to-seqn ((obj geb.extension.spec:<natobj>))
+  (seqn:id (geb.seqn.main:width obj)))
+
+(defmethod to-seqn ((obj comp))
+  "Preserves composition"
+  (seqn:composition (to-seqn (mcar obj))
+                    (to-seqn (mcadr obj))))
+
+(defmethod to-seqn ((obj init))
+  "Produces a list of zeroes
+Currently not aligning with semantics of drop-width
+as domain and codomain can be of differing lengths"
+  (seqn:drop-width (list 0)
+                   (width (mcar obj))))
+
+(defmethod to-seqn ((obj terminal))
+  "Drops everything to the terminal object,
+i.e. to nothing"
+  (drop-nil (width (mcar obj))))
+
+(defmethod to-seqn ((obj inject-left))
+  "Injects an x by marking its entries with 0
+and then inserting as padded bits if necessary"
+  (let ((l1 (width (mcar obj)))
+        (l3 (width (coprod (mcar obj)
+                              (mcadr obj)))))
+    ;; (a1,...,an) -> (0, a1,...,an) -> (1, max(a1, b1),..., max(an, 0) or max(an, bn))
+    ;; if lengths match
+    (composition (parallel-seq zero-bit
+                               (inj-coprod-parallel l1 l3))
+                 (inj-length-right (list 0)
+                                   l1))))
+
+(defmethod to-seqn ((obj inject-right))
+  "Injects an x by marking its entries with 1
+and then inserting as padded bits if necessary"
+  (let ((l2 (width (mcadr obj)))
+        (l3 (width (coprod (mcar obj)
+                              (mcadr obj)))))
+    (composition (parallel-seq one-bit
+                               (inj-coprod-parallel l2
+                                                    l3))
+                 (inj-length-right (list 0)
+                                   l2))))
+
+(defmethod to-seqn ((obj case))
+  "Cases by forgetting the padding and if necessary dropping
+the extra entries if one of the inputs had more of them to start
+with"
+  (let* ((lft (dom (mcar obj)))
+         (rt  (dom (mcadr obj)))
+         (cpr (dom obj))
+         (wlft (width lft))
+         (wrt  (width rt))
+         (mcar (mcar obj))
+         (mcadr (mcadr obj))
+         (lengthleft (length wlft))
+         (lengthright (length wrt)))
+    (labels
+        ((funor (x y z)
+           (composition (to-seqn z)
+                        (composition (remove-right x)
+                                     (parallel-seq
+                                      (drop-width (butlast
+                                                   (cdr (width cpr))
+                                                   (- (length y)
+                                                      (length x)))
+                                                  x)
+                                      (drop-nil (nthcdr (1+ (length x))
+                                                        (width cpr)))))))
+         (funinj (x y)
+           (composition (to-seqn x)
+                        (drop-width (cdr (width cpr)) y))))
+      (cond ((< lengthleft lengthright)
+             ;; branch on the left counts the first entries of an occuring and drops the rest
+             ;; then injects it into the smaller bit sizes if necessary
+             ;; (max(a1, b1),,,.,(max (an, bn),..., max(0, bm))) -> (a1,...,an,0)
+             ;; -> (a1,....,an)
+             ;; branch on the right is just injecting
+             ;; (max(a1, b1),..., max(0, bn)) -> (b1, ...., bn) -> codom))
+             (branch-seq (funor wlft wrt mcar) (funinj mcadr wrt)))
+            ((< lengthright lengthleft)
+             (branch-seq (funinj mcar wlft) (funor wrt wlft mcadr)))
+            ((= lengthright lengthleft)
+             (branch-seq (funinj mcar wlft) (funinj mcadr wrt)))))))
+
+(defmethod to-seqn ((obj project-left))
+  "Takes a list of an even length and cuts the right half"
+  (let ((sw (width (mcar obj))))
+    (composition (remove-right sw)
+                 (parallel-seq (id sw)
+                               (drop-nil (width (mcadr obj)))))))
+
+(defmethod to-seqn  ((obj project-right))
+  "Takes a list of an even length and cuts the left half"
+  (let ((sw (width (mcadr obj))))
+    (composition (remove-left sw)
+                 (parallel-seq (drop-nil (width (mcar obj)))
+                               (id sw)))))
+
+(defmethod to-seqn ((obj pair))
+  "Forks entries and then applies both morphism
+on corresponding entries"
+  (composition (parallel-seq (to-seqn (mcar obj))
+                             (to-seqn (mcdr obj)))
+               (fork-seq (width (dom obj)))))
+
+(defmethod to-seqn ((obj distribute))
+  "Given A x (B + C) simply moves the 1-bit entry
+to the front and keep the same padding relations to
+get ((A x B) + (A x C)) as times appends sequences"
+  (shift-front (width (dom obj))
+               (1+ (length (width (mcar obj))))))
+
+(defmethod to-seqn ((obj geb.extension.spec:nat-add))
+  "Addition is interpreted as addition"
+  (seqn-add (geb.extension.spec:num obj)))
+
+(defmethod to-seqn ((obj geb.extension.spec:nat-mult))
+  "Multiplication is interpreted as multiplication"
+  (seqn-multiply (geb.extension.spec:num obj)))
+
+(defmethod to-seqn ((obj geb.extension.spec:nat-sub))
+  "Subtraction is interpreted as subtraction"
+  (seqn-subtract (geb.extension.spec:num obj)))
+
+(defmethod to-seqn ((obj geb.extension.spec:nat-div))
+  "Division is interpreted as divition"
+  (seqn-divide (geb.extension.spec:num obj)))
+
+(defmethod to-seqn ((obj geb.extension.spec:nat-const))
+  "A choice of a natural number is the same exact choice in SeqN"
+  (seqn-nat (geb.extension.spec:num obj) (geb.extension.spec:pos obj)))
+
+(defmethod to-seqn ((obj geb.extension.spec:nat-inj))
+  "Injection of bit-sizes is interpreted in the same maner in SeqN"
+  (let ((num (geb.extension.spec:num obj)))
+    (inj-size num (1+ num))))
+
+(defmethod to-seqn ((obj geb.extension.spec:nat-concat))
+  "Concatenation is interpreted as concatenation"
+  (seqn-concat (geb.extension.spec:num-left obj)
+               (geb.extension.spec:num-right obj )))
+
+(defmethod to-seqn ((obj geb.extension.spec:one-bit-to-bool))
+  "Iso interpreted in an evident manner"
+  (inj-length-left (list 1) (list 0)))
+
+(defmethod to-seqn ((obj geb.extension.spec:nat-decompose))
+  "Decomposition is interpreted on the nose"
+  (seqn-decompose (geb.extension.spec:num obj)))
+
+(defmethod to-seqn ((obj geb.extension.spec:nat-eq))
+  "Equality predicate is interpreted on the nose"
+  (seqn-eq (geb.extension.spec:num obj)))
+
+(defmethod to-seqn ((obj geb.extension.spec:nat-lt))
+  "Equality predicate is interpreted on the nose"
+  (seqn-lt (geb.extension.spec:num obj)))

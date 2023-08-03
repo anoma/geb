@@ -41,6 +41,11 @@ where necessary and takes their pointwise product"
                   (width (mcadr obj))))
     (otherwise (geb.utils:subclass-responsibility obj))))
 
+(defmethod width ((obj <natobj>))
+  (typecase-of natobj obj
+    (nat-width (list (num obj)))
+    (otherwise (geb.utils:subclass-responsibility obj))))
+
 (defun inj-coprod-parallel (obj copr)
   "takes an width(A) or width(B) already transformed with a width(A+B)
 and gives an appropriate injection of (a1,...,an) into
@@ -101,7 +106,7 @@ For a less formal description consult the specs file"
     (inj-length-left  (append (mcar x) (mcadr x)))
     (inj-length-right (append (mcar x) (mcadr x)))
     (inj-size         (list (mcadr x)))
-    (branch-seq       (mcadr x))
+    (branch-seq       (cod (mcar x)))
     (zero-bit         (list 1))
     (one-bit          (list 1))
     (shift-front      (let ((mcar (mcar x))

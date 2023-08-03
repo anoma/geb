@@ -6,7 +6,7 @@
  (defpackage #:geb.main
    (:documentation "Gödel, Escher, Bach categorical model")
    (:use #:common-lisp #:geb.generics #:geb.extension.spec #:serapeum #:geb.mixins #:geb.utils #:geb.spec)
-   (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec))
+   (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec) (#:seqn #:geb.seqn.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj :dom :codom)))
 
@@ -21,8 +21,11 @@
   (commutes          pax:function)
   (commutes-left     pax:function)
   (!->               pax:function)
+  (so-eval           (pax:method () (<natobj> t)))
   (so-eval           (pax:method () (<substobj> t)))
-  (so-hom-obj        pax:function)
+  (so-hom-obj        (pax:method () (<natobj> t)))
+  (so-hom-obj        (pax:method () (<substobj> t)))
+  (so-hom-obj        (pax:generic-function))
   (so-card-alg       pax:generic-function)
   (so-card-alg       (pax:method () (<substobj>)))
   (curry             pax:function)
@@ -32,7 +35,8 @@
   (text-name         pax:generic-function)
 
   "These utilities are ontop of [CAT-OBJ]"
-  (maybe             (pax:method () (<substobj>))))
+  (maybe             (pax:method () (<substobj>)))
+  (maybe             (pax:method () (<natobj>))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Standard Library throughout the codebase
@@ -54,8 +58,8 @@
  (defpackage #:geb.trans
    (:documentation "Gödel, Escher, Bach categorical model")
    (:use #:common-lisp #:serapeum #:geb.mixins #:geb.utils #:geb.spec #:geb.main
-         #:geb.generics)
-   (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec))
+         #:geb.generics #:geb.seqn.spec #:geb.seqn.main)
+   (:local-nicknames (#:poly #:geb.poly.spec) (#:bitc #:geb.bitc.spec) (#:seqn #:geb.seqn.spec))
    (:shadowing-import-from #:geb.spec :left :right :prod :case)
    (:export :prod :case :mcar :mcadr :mcaddr :mcdr :name :func :obj)))
 
@@ -67,7 +71,26 @@ into other categorical data structures."
   (to-poly    (pax:method () (<substobj>)))
   (to-poly    (pax:method () (<substmorph>)))
   (to-circuit (pax:method () (<substmorph> t)))
-  (to-bitc    (pax:method () (<substmorph>))))
+  (to-bitc    (pax:method () (<substmorph>)))
+  (to-seqn    (pax:method () (<substobj>)))
+  (to-seqn    (pax:method () (geb.extension.spec:<natobj>)))
+  (to-seqn    (pax:method () (comp)))
+  (to-seqn    (pax:method () (init)))
+  (to-seqn    (pax:method () (terminal)))
+  (to-seqn    (pax:method () (inject-left)))
+  (to-seqn    (pax:method () (inject-right)))
+  (to-seqn    (pax:method () (case)))
+  (to-seqn    (pax:method () (project-left)))
+  (to-seqn    (pax:method () (project-right)))
+  (to-seqn    (pax:method () (pair)))
+  (to-seqn    (pax:method () (distribute)))
+  (to-seqn    (pax:method () (geb.extension.spec:nat-div)))
+  (to-seqn    (pax:method () (geb.extension.spec:nat-const)))
+  (to-seqn    (pax:method () (geb.extension.spec:nat-inj)))
+  (to-seqn    (pax:method () (geb.extension.spec:one-bit-to-bool)))
+  (to-seqn    (pax:method () (geb.extension.spec:nat-decompose)))
+  (to-seqn    (pax:method () (geb.extension.spec:nat-eq)))
+  (to-seqn    (pax:method () (geb.extension.spec:nat-lt))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; bool module

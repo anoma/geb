@@ -164,6 +164,30 @@ the context on the left as well. For more info check [LAMB][class]"))
         ((index pos)        (index pos
                                    :ttype (index-check pos ctx)))
         ((err ttype)        (err ttype))
+        ((plus ltm rtm)        (let ((ant (ann-term1 ctx ltm)))
+                                 (plus ant
+                                       (ann-term1 ctx rtm)
+                                       :ttype (ttype ant))))
+        ((times ltm rtm)        (let ((ant (ann-term1 ctx ltm)))
+                                  (times ant
+                                         (ann-term1 ctx rtm)
+                                         :ttype (ttype ant))))
+        ((minus ltm rtm)        (let ((ant (ann-term1 ctx ltm)))
+                                  (minus ant
+                                         (ann-term1 ctx rtm)
+                                         :ttype (ttype ant))))
+        ((divide ltm rtm)        (let ((ant (ann-term1 ctx ltm)))
+                                   (divide ant
+                                           (ann-term1 ctx rtm)
+                                           :ttype (ttype ant))))
+        ((bit-choice bitv)       (bit-choice bitv
+                                             :ttype (nat-width (array-total-size bitv))))
+        ((lamb-eq ltm rtm)         (lamb-eq (ann-term1 ctx ltm)
+                                            (ann-term1 ctx rtm)
+                                            :ttype (coprod so1 so1)))
+        ((lamb-lt ltm rtm)         (lamb-lt (ann-term1 ctx ltm)
+                                             (ann-term1 ctx rtm)
+                                             :ttype (coprod so1 so1)))
         ((case-on on ltm rtm)
          (let* ((ann-on     (ann-term1 ctx on))
                 (type-of-on (ttype ann-on))
@@ -230,7 +254,15 @@ occurences - re-annotates the term and its subterms with actual
                                 :ttype (fun-to-hom (ttype tterm))))
     ((index pos)           (index pos
                                   :ttype (fun-to-hom (ttype tterm))))
-    ((err ttype)           (err (fun-to-hom ttype)))))
+    ((err ttype)           (err (fun-to-hom ttype)))
+    ((or plus
+         times
+         minus
+         divide
+         bit-choice
+         lamb-eq
+         lamb-lt)
+     tterm)))
 
 (defun annotated-term (ctx term)
   "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
@@ -309,9 +341,17 @@ nil"))
                ((app fun term)
                 (and (check fun)
                      (check (reduce #'pair term))))
+               ((or (plus ltm rtm)
+                    (minus ltm rtm)
+                    (times ltm rtm)
+                    (divide ltm rtm)
+                    (lamb-eq ltm rtm)
+                    (lamb-lt ltm rtm))
+                (obj-equalp (ttype ltm) (ttype rtm)))
                (index t)
                (unit t)
-               (err t))))
+               (err t)
+               (bit-choice t))))
     (let ((term (ignore-errors
                  (ann-term1 ctx tterm))))
       (and term (check term)))))
@@ -319,7 +359,9 @@ nil"))
 (defun errorp (tterm)
   "Evaluates to true iff the term has an error subterm."
   (cond ((or (typep tterm 'index)
-             (typep tterm 'unit)) nil)
+             (typep tterm 'unit)
+             (typep tterm 'bit-choice))
+         nil)
         ((typep tterm 'err)       t)
         ((typep tterm 'case-on)   (or (errorp (on tterm))
                                       (errorp (rtm tterm))
@@ -331,4 +373,12 @@ nil"))
                                             (mapcar
                                              (lambda (x) (errorp x))
                                              (term tterm)))))
+        ((or (typep tterm 'plus)
+             (typep tterm 'minus)
+             (typep tterm 'times)
+             (typep tterm 'divide)
+             (typep tterm 'lamb-eq)
+             (typep tterm 'lamb-lt))
+         (or (errorp (ltm tterm))
+             (errorp (rtm tterm))))
         (t                        (errorp (term tterm)))))

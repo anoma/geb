@@ -32,15 +32,12 @@ GEB> (gapply (comp
   (:documentation
    "Wraps the given OBJECT into a Maybe monad The Maybe monad in this
 case is simply wrapping the term in a [coprod][geb.spec:coprod]
-of [so1][geb.spec:so1]
+of [so1][geb.spec:so1]"))
 
-``` lisp
-;; Before
-x
-
-;; After
-(COPROD SO1 X)
-```"))
+(defgeneric so-eval (object1 object2)
+  (:documentation
+   "Takes in X and Y Geb objects and provides an evaluation morphism
+(prod (so-hom-obj X Y) X) -> Y"))
 
 (defgeneric so-eval (object1 object2)
   (:documentation
@@ -58,6 +55,10 @@ x
 (defgeneric to-poly (morphism)
   (:documentation
    "Turns a given MORPHISM into a [GEB.POLY.SPEC:POLY]"))
+
+(defgeneric to-seqn (morphism)
+  (:documentation
+   "Turns a given MORPHISM into a [GEB.SEQN.SPEC:SEQN]"))
 
 (defgeneric to-circuit (morphism name)
   (:documentation

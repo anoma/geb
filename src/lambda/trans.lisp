@@ -32,6 +32,18 @@ calling me"
        (to-cat nil)
        geb.common:to-poly))
 
+(defmethod to-seqn ((obj <stlc>))
+  "I convert a lambda term into a [GEB.SEQN.SPEC:SEQN] term
+
+Note that [\\<STLC\\>] terms with free variables require a context,
+and we do not supply them here to conform to the standard interface
+
+If you want to give a context, please call [to-cat] before
+calling me"
+  (~>> obj
+       (to-cat nil)
+       geb.common:to-seqn))
+
 (defmethod to-circuit ((obj <stlc>) name)
   "I convert a lambda term into a vampir term
 
@@ -41,7 +53,7 @@ and we do not supply them here to conform to the standard interface
 If you want to give a context, please call [to-cat] before
 calling me"
   (assure list
-    (~> (to-bitc obj)
+    (~> (to-seqn obj)
         (geb.common:to-circuit name))))
 
 (defmethod empty ((class (eql (find-class 'list)))) nil)
@@ -63,6 +75,15 @@ and removes them"
   "Takes a Geb object wrapped in Maybe and gives out the part without the
 error node"
   (mcadr (maybe-comp ob)))
+
+(defun dispatch (tterm)
+  (typecase tterm
+    (plus #'nat-add)
+    (minus #'nat-sub)
+    (times #'nat-mult)
+    (divide #'nat-div)
+    (lamb-eq #'nat-eq)
+    (lamb-lt #'nat-lt)))
 
 (defmethod to-cat-err (context (tterm <stlc>))
   "Compiles a checked term with an error term in an appropriate context into the
@@ -221,13 +242,42 @@ This follows from the fact that bool arapped in maybe is 1 + (bool + bool)"
                                         fun))))))
                ((index pos)
                 (stlc-ctx-proj (mapcar #'maybe context) pos))
+               ((bit-choice bitv)
+                (comp (comp (->right so1 (ttype tterm))
+                            (nat-const (ttype tterm) (reduce
+                                                      #'(lambda (a b)
+                                                          (+ (ash a 1) b))
+                                                      bitv)))
+                      (terminal (stlc-ctx-maybe context))))
                ((err ttype)
                 (comp (->left so1 (maybe-comp ttype))
-                      (terminal (stlc-ctx-maybe context)))))))
+                      (terminal (stlc-ctx-maybe context))))
+               ((or plus
+                    minus
+                    times
+                    divide
+                    lamb-eq
+                    lamb-lt)
+                (let ((tyltm (ttype (ltm tterm))))
+                  (labels ((arith (op)
+                             (comp (mcase (terminal (prod (maybe tyltm)
+                                               so1))
+                               (commutes-left (comp
+                                               (mcase (terminal (prod tyltm
+                                                                      so1))
+                                                      (funcall op tyltm))
+                                               (distribute tyltm
+                                                           so1
+                                                           tyltm))))
+                        (comp (distribute (maybe tyltm)
+                                          so1
+                                          tyltm)
+                              (geb:pair (rec context (ltm tterm))
+                                        (rec context (rtm tterm)))))))
+                    (arith (dispatch tterm))))))))
     (if (not (well-defp context tterm))
         (error "not a well-defined ~A in said ~A" tterm context)
         (rec context (ann-term1 context tterm)))))
-
 
 (defmethod to-cat-cor (context (tterm <stlc>))
   "Compiles a checked term in an appropriate context into the
@@ -313,23 +363,48 @@ iterated, so is the uncurrying."
                          #'(lambda (x) (curry (commutes-left x)))
                          (rec (append tdom context) term)))
                ((app fun term)
-                (let ((tofun (ttype fun)))
-                  (comp
-                   (so-eval (fun-to-hom (mcar tofun))
-                            (fun-to-hom (mcadr tofun)))
-                   (geb:pair (rec context fun)
-                             (reduce #'geb:pair
-                                     (mapcar #'(lambda (x) (rec context x)) term)
-                                     :from-end t)))))
+                (let ((tofun (ttype fun))
+                      (reducify (reduce #'geb:pair
+                                        (mapcar #'(lambda (x) (rec context x))
+                                                term)
+                                        :from-end t)))
+                  (if (typep fun 'lamb)
+                      (comp (to-cat-cor context fun)
+                            (geb:pair reducify
+                                      (stlc-ctx-to-mu context)))
+                      (comp
+                       (so-eval (fun-to-hom (mcar tofun))
+                                (fun-to-hom (mcadr tofun)))
+                       (geb:pair (rec context fun)
+                                 reducify)))))
                ((index pos)
                 (stlc-ctx-proj context pos))
+               ((bit-choice bitv)
+                (comp (nat-const (num (ttype tterm))
+                                 (reduce
+                                  (lambda (a b) (+ (ash a 1) b))
+                                  bitv))
+                      (terminal (stlc-ctx-to-mu context))))
                (err
-                (error "Not meant for the compiler")))))
+                (error "Not meant for the compiler"))
+               ((or plus
+                    minus
+                    times
+                    divide
+                    lamb-eq
+                    lamb-lt)
+                (let ((ltm (ltm tterm)))
+                  (labels ((arith (op)
+                             (comp (funcall op (num (ttype ltm)))
+                                   (geb:pair (rec context ltm)
+                                             (rec context (rtm tterm))))))
+                    (arith (dispatch tterm))))))))
     (cond ((not (well-defp context tterm))
            (error "not a well-defined ~A in said ~A" tterm context))
-          ((typep (type-of-term-w-fun context tterm) 'fun-type)
-           (fun-uncurry-prod (type-of-term-w-fun context tterm)
-                             (rec context (ann-term1 context tterm))))
+          ((typep tterm 'lamb)
+           (rec (append (mapcar #'fun-to-hom (tdom tterm)) context)
+                (ann-term1 (append (mapcar #'fun-to-hom (tdom tterm)) context)
+                           (term tterm))))
           (t
            (rec context (ann-term1 context tterm))))))
 
