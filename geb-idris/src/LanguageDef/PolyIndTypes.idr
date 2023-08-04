@@ -118,7 +118,7 @@ data ArgDType : IndIndF2 ArgDCtx where
   DTpi : {0 a : Type} -> {0 b : a -> Type} ->
     {0 alg : IndIndAlg ArgDCtx (a ** b)} ->
     (ctx : ArgDCtx (a ** b)) ->
-    (dom : b (alg ctx)) -> (cod : b (alg $ DCcons {a} {b} (alg ctx) dom)) ->
+    Pi {a=(b (alg ctx))} (b . alg . DCcons {a} {b} (alg ctx)) ->
     ArgDType (a ** b) alg ctx
 
 mutual
