@@ -53,5 +53,5 @@ ways that are intuitive to the user"
 
 (pax:defsection @graphing-manual (:title "The GEB Graphizer")
   "This section covers the GEB Graph representation"
-  (geb-gui.core:@graphing-core pax:section)
+  (geb-gui.core::@graphing-core pax:section)
   (@pass-manual pax:section))

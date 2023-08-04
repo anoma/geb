@@ -9,7 +9,7 @@
   "This section covers the suite of tools that help visualize geb
 objects and make the system nice to work with"
   (@geb-visualizer pax:section)
-  (geb-gui.graphing:@graphing-manual pax:section))
+  (geb-gui.graphing::@graphing-manual pax:section))
 
 (pax:defsection @geb-visualizer (:title "Visualizer")
   "The GEB visualizer deals with visualizing any objects found in the GEB:@GEB-CATEGORIES

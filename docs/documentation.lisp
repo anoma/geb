@@ -13,6 +13,7 @@
   (@geb              pax:section)
   (@geb-extensions   pax:section)
   (@geb-gui-manual   pax:section)
+  (@seqn-manual      pax:section)
   (@bitc-manual      pax:section)
   (@poly-manual      pax:section)
   (@stlc             pax:section)

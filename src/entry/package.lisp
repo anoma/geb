@@ -5,6 +5,7 @@
    (:documentation "Entry point for the geb codebase")
    (:local-nicknames  (#:poly #:geb.poly)
                       (#:bitc #:geb.bitc)
+                      (#:seqn #:geb.seqn)
                       (:lambda     :geb.lambda))
    (:use #:geb.common)))
 

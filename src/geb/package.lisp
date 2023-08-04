@@ -180,7 +180,7 @@ The functions given work on this."
   (gapply                     (pax:method () (opaque t)))
   (geb-bool::@geb-bool        pax:section)
   (geb-list::@geb-list        pax:section)
-  (geb.trans:@geb-translation pax:section)
+  (geb.trans::@geb-translation pax:section)
   (@geb-utility               pax:section))
 
 (pax:defsection @geb-examples (:title "Examples")
