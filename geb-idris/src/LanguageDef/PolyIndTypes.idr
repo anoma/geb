@@ -11,6 +11,7 @@ import public LanguageDef.Figures
 import public LanguageDef.Theories
 import public LanguageDef.Syntax
 import public LanguageDef.DiagramCat
+import LanguageDef.NatPrefixCat
 
 %default total
 
@@ -40,6 +41,28 @@ record SliceRelPF (dom, cod : Type) where
 public export
 IndIndF1 : Type
 IndIndF1 = PolyFunc -> Type
+
+public export
+record FinIndIndF1Constr where
+  constructor FII1c
+  f1cNDir1 : FSObj
+  f1cNDir2 : FSObj
+  f1cType : Vect f1cNDir2 (Fin f1cNDir1)
+
+public export
+InterpF1c1 : FinIndIndF1Constr -> PolyFunc -> Type
+InterpF1c1 c p =
+  (i : Vect (f1cNDir1 c) (pfPos p) **
+   HVect {k=(f1cNDir2 c)} $ map (pfDir {p} . flip index i) $ f1cType c)
+
+public export
+InterpF1c2 : (c : FinIndIndF1Constr) ->
+  Pi {a=PolyFunc} $ SliceObj . InterpF1c1 c
+InterpF1c2 c p i = ?InterpF1c2_hole
+
+public export
+InterpF1c : FinIndIndF1Constr -> PolyFunc -> PolyFunc
+InterpF1c c p = (InterpF1c1 c p ** InterpF1c2 c p)
 
 public export
 IndIndAlg : IndIndF1 -> IndIndF1
