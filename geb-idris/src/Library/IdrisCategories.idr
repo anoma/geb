@@ -2262,6 +2262,62 @@ public export
 RefinedPi : {a : Refined} -> RefinedSlice a -> Type
 RefinedPi {a} p = Pi {a=(RefinedType a)} (RefinedType . p)
 
+-- A decidable predicate on `a` -- that is, a predicate on `a` together with
+-- a decision procedure for that predicate for any term of `a`.
+public export
+DecProp : Type -> Type
+DecProp a = Subset0 (SliceObj a) $ (Pi {a} . (.) Dec)
+
+public export
+0 PropHolds : {0 a : Type} -> DecProp a -> SliceObj a
+PropHolds {a} p x = IsYesTrue {a=(fst0 p x)} $ snd0 p x
+
+public export
+RefinementP : {a : Type} -> (0 p : DecProp a) -> Type
+RefinementP {a} p = Subset0 a (PropHolds {a} p)
+
+public export
+0 DecPropToPred : {0 a : Type} -> DecProp a -> DecPred a
+DecPropToPred {a} p x = isYes {a=(fst0 p x)} $ snd0 p x
+
+public export
+RefinementPIsRefinement : {0 a : Type} -> (0 p : DecProp a) ->
+  RefinementP {a} p = Refinement {a} (DecPropToPred p)
+RefinementPIsRefinement {a} p = Refl
+
+public export
+0 DecPredToProp : {0 a : Type} -> DecPred a -> DecProp a
+DecPredToProp {a} p =
+  Element0 (Satisfies {a} p) $ \x => decEq {t=Bool} (p x) True
+
+public export
+RefinementAsRefinementP : {0 a : Type} -> (0 p : DecPred a) ->
+  Refinement {a} p -> RefinementP {a} (DecPredToProp p)
+RefinementAsRefinementP {a} p x = Element0 (fst0 x) $ rewrite snd0 x in Refl
+
+public export
+RARPpresFst : {0 a : Type} -> {0 p : DecPred a} ->
+  (0 x : Refinement {a} p) ->
+  fst0 (RefinementAsRefinementP {a} p x) = fst0 x
+RARPpresFst {a} {p} x = Refl
+
+public export
+RefinementPAsRefinement : {0 a : Type} -> (p : DecPred a) ->
+  RefinementP {a} (DecPredToProp p) -> Refinement {a} p
+RefinementPAsRefinement {a} p (Element0 x eq) with (decEq (p x) True)
+  RefinementPAsRefinement {a} p (Element0 x _) | Yes deq =
+    Element0 x deq
+  RefinementPAsRefinement {a} p (Element0 x eq) | No _ =
+    void $ case eq of Refl impossible
+
+public export
+RPARpresFst : {0 a : Type} -> {p : DecPred a} ->
+  (x : RefinementP {a} $ DecPredToProp p) ->
+  fst0 (RefinementPAsRefinement {a} p x) = fst0 x
+RPARpresFst {a} {p} (Element0 x eq) with (decEq (p x) True)
+  RPARpresFst {a} {p} (Element0 _ _) | Yes _ = Refl
+  RPARpresFst {a} {p} (Element0 _ eq) | No _ = void $ case eq of Refl impossible
+
 --------------------------
 ---- Refined functors ----
 --------------------------
