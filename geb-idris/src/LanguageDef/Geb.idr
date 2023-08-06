@@ -189,7 +189,7 @@ ListNI {a} = Fin . length {a}
 --
 -- A functor assigning types to terms of a type `a` may be viewed as an
 -- object of the slice category of `Type` over `a`.  Consequently, this
--- functor itself may be viewed as a natural transformation between functors
+-- assignment itself may be viewed as a natural transformation between functors
 -- from `Type` to the two-category of slice categories of `Type`.
 public export
 CoproductT : NaturalTransformation SliceObj (SliceObj . List)
@@ -215,7 +215,7 @@ showCoprod {a} {p} {l} sh = shfc where
 --
 -- A functor assigning types to terms of a type `a` may be viewed as an
 -- object of the slice category of `Type` over `a`.  Consequently, this
--- functor itself may be viewed as a natural transformation between functors
+-- assignment itself may be viewed as a natural transformation between functors
 -- from `Type` to the two-category of slice categories of `Type`.
 public export
 ProductT : NaturalTransformation SliceObj (SliceObj . List)
@@ -274,7 +274,7 @@ NatMatrix : Type
 NatMatrix = MatrixF Nat
 
 -- Given a matrix of natural numbers, produce a type whose terms are
--- coproducts-of-products-of-`Fin n`.
+-- coproducts-of-products-of-`Fin n` (where the matrix determines the `n`s).
 public export
 FinMatrixT : NatMatrix -> Type
 FinMatrixT = MatrixT Nat Fin
