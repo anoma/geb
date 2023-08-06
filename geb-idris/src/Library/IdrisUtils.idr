@@ -1046,6 +1046,15 @@ FinDecoder : Type -> Nat -> Type
 FinDecoder a size = Fin size -> a
 
 public export
+VectDecoder : Type -> Nat -> Type
+VectDecoder = flip Vect
+
+public export
+VectToFinDecoder : {0 a : Type} -> {0 size : Nat} ->
+  VectDecoder a size -> FinDecoder a size
+VectToFinDecoder {a} {size} = flip $ index {len=size} {elem=a}
+
+public export
 FinEncoder : {a : Type} -> {size : Nat} -> FinDecoder a size -> Type
 FinEncoder {a} {size} decoder = (e : a) -> (x : Fin size ** decoder x = e)
 
@@ -1056,10 +1065,21 @@ NatEncoder {a} {size} decoder =
     (n : Nat ** x : IsJustTrue (natToFin n size) ** decoder (fromIsJust x) = e)
 
 public export
+VectEncoder : {a : Type} -> {size : Nat} -> VectDecoder a size -> Type
+VectEncoder {a} {size} vd = NatEncoder {a} {size} (VectToFinDecoder vd)
+
+public export
 NatToFinEncoder : {a : Type} -> {size : Nat} -> {d : FinDecoder a size} ->
   NatEncoder {a} {size} d -> FinEncoder {a} {size} d
 NatToFinEncoder {a} {size} {d} enc e with (enc e)
   NatToFinEncoder {a} {size} {d} enc e | (n ** x ** eq) = (fromIsJust x ** eq)
+
+public export
+VectToFinEncoder : {a : Type} -> {size : Nat} -> {vd : VectDecoder a size} ->
+  VectEncoder {a} {size} vd -> FinEncoder {a} {size} (VectToFinDecoder vd)
+VectToFinEncoder {a} {size} {vd} ve ea with (ve ea)
+  VectToFinEncoder {a} {size} {vd} ve ea | (n ** islt ** eq) =
+    (fromIsJust islt ** eq)
 
 public export
 FinDecEncoding : (a : Type) -> (size : Nat) -> Type
@@ -1069,6 +1089,11 @@ public export
 NatDecEncoding : {a : Type} -> {size : Nat} ->
   (d : FinDecoder a size) -> NatEncoder {a} {size} d -> FinDecEncoding a size
 NatDecEncoding {a} {size} d enc = (d ** NatToFinEncoder enc)
+
+public export
+VectDecEncoding : {a : Type} -> {size : Nat} ->
+  (d : VectDecoder a size) -> VectEncoder {a} {size} d -> FinDecEncoding a size
+VectDecEncoding {a} {size} d e = (flip index d ** VectToFinEncoder e)
 
 public export
 fdeEq : {0 a : Type} -> {n : Nat} -> FinDecEncoding a n -> a -> a -> Bool
