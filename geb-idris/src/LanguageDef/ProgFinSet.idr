@@ -2948,22 +2948,19 @@ BCDOPosSz : Nat
 BCDOPosSz = 4
 
 public export
-BCDOFinDecoder : FinDecoder BCDOPos BCDOPosSz
-BCDOFinDecoder FZ = BCDO_0
-BCDOFinDecoder (FS FZ) = BCDO_1
-BCDOFinDecoder (FS (FS FZ)) = BCDO_C
-BCDOFinDecoder (FS (FS (FS FZ))) = BCDO_P
+BCDOVectDecoder : VectDecoder BCDOPos BCDOPosSz
+BCDOVectDecoder = [ BCDO_0, BCDO_1, BCDO_C, BCDO_P ]
 
 public export
-BCDONatEncoder : NatEncoder BCDOFinDecoder
-BCDONatEncoder BCDO_0 = (0 ** Refl ** Refl)
-BCDONatEncoder BCDO_1 = (1 ** Refl ** Refl)
-BCDONatEncoder BCDO_C = (2 ** Refl ** Refl)
-BCDONatEncoder BCDO_P = (3 ** Refl ** Refl)
+BCDOVectEncoder : VectEncoder BCDOVectDecoder
+BCDOVectEncoder BCDO_0 = (0 ** Refl ** Refl)
+BCDOVectEncoder BCDO_1 = (1 ** Refl ** Refl)
+BCDOVectEncoder BCDO_C = (2 ** Refl ** Refl)
+BCDOVectEncoder BCDO_P = (3 ** Refl ** Refl)
 
 public export
 BCDOFinDecEncoding : FinDecEncoding BCDOPos BCDOPosSz
-BCDOFinDecEncoding = NatDecEncoding BCDOFinDecoder BCDONatEncoder
+BCDOFinDecEncoding = VectDecEncoding BCDOVectDecoder BCDOVectEncoder
 
 public export
 DecEq BCDOPos where
