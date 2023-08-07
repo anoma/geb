@@ -11,7 +11,7 @@ import public LanguageDef.Figures
 import public LanguageDef.Theories
 import public LanguageDef.Syntax
 import public LanguageDef.DiagramCat
-import LanguageDef.NatPrefixCat
+import public LanguageDef.NatPrefixCat
 
 %default total
 
@@ -103,6 +103,31 @@ mutual
       FinIndF2t2 f1 i d a t ->
       FinIndF2t2 f1 i (S d)
         (FF2AS {f1} {i} {d} a t') (FF2t1e {f1} {i} {d} {a} t t')
+
+public export
+record FinIndIndF2Constr (f1 : FinIndIndF1) where
+  constructor FII2c
+  f2cNDir1 : FSObj
+  f2cNDir2 : FSObj
+  f2cType : FinIndF2Assign f1 f2cNDir1 f2cNDir2
+
+public export
+record FinIndIndF2 (f1 : FinIndIndF1) where
+  constructor FII2
+  f2Constr : List (FinIndIndF2Constr f1)
+
+public export
+FinIndInd : Type
+FinIndInd = DPair FinIndIndF1 FinIndIndF2
+
+mutual
+  public export
+  data FinIndIndMu1 : SliceObj FinIndInd where
+    -- XXX
+
+  public export
+  data FinIndIndMu2 : Pi {a=FinIndInd} (SliceObj . FinIndIndMu1) where
+    -- XXX
 
 public export
 IndIndAlg : IndIndF1 -> IndIndF1
