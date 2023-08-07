@@ -94,12 +94,12 @@ mutual
       (a : FinIndF2Assign f1 i d) -> FinIndF2t1 f1 i d a -> Type where
     FF2t2hd :
       {0 f1 : FinIndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
-      (t : FinIndF2t1 f1 i d a) ->
+      {t : FinIndF2t1 f1 i d a} ->
       FinIndF2t2 f1 i (S d)
         (FF2AS {f1} {i} {d} a t) (FF2t1e {f1} {i} {d} {a} t t)
     FF2t2tl :
       {0 f1 : FinIndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
-      (t, t' : FinIndF2t1 f1 i d a) ->
+      {t, t' : FinIndF2t1 f1 i d a} ->
       FinIndF2t2 f1 i d a t ->
       FinIndF2t2 f1 i (S d)
         (FF2AS {f1} {i} {d} a t') (FF2t1e {f1} {i} {d} {a} t t')
