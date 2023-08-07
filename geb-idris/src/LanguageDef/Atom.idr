@@ -64,172 +64,172 @@ data OldAtom : Type where
 -- since Idris-2 doesn't have built-in enums.
 
 public export
-GASize : Nat
-GASize = 32
+OASize : Nat
+OASize = 32
 
 public export
-GAFin : Type
-GAFin = Fin GASize
+OAFin : Type
+OAFin = Fin OASize
 
 public export
-GADecoder : FinDecoder OldAtom GASize
-GADecoder FZ = SL_ATOM
-GADecoder (FS FZ) = SL_NAT
-GADecoder (FS (FS FZ)) = SL_NATL
-GADecoder (FS (FS (FS FZ))) = SL_EXP
-GADecoder (FS (FS (FS (FS FZ)))) = SL_EXPL
-GADecoder (FS (FS (FS (FS (FS FZ))))) = POS_Z
-GADecoder (FS (FS (FS (FS (FS (FS FZ)))))) = POS_S
-GADecoder (FS (FS (FS (FS (FS (FS (FS FZ))))))) = POS_X
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))) = POS_NN
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))) = POS_NC
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))) = POS_XN
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))) =
+OADecoder : FinDecoder OldAtom OASize
+OADecoder FZ = SL_ATOM
+OADecoder (FS FZ) = SL_NAT
+OADecoder (FS (FS FZ)) = SL_NATL
+OADecoder (FS (FS (FS FZ))) = SL_EXP
+OADecoder (FS (FS (FS (FS FZ)))) = SL_EXPL
+OADecoder (FS (FS (FS (FS (FS FZ))))) = POS_Z
+OADecoder (FS (FS (FS (FS (FS (FS FZ)))))) = POS_S
+OADecoder (FS (FS (FS (FS (FS (FS (FS FZ))))))) = POS_X
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))) = POS_NN
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))) = POS_NC
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))) = POS_XN
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))) =
   POS_XC
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))) =
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))) =
   DIR_S
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   FZ))))))))))))) =
     DIR_XA
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS FZ)))))))))))))) =
     DIR_XNL
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS FZ))))))))))))))) =
     DIR_XXL
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS FZ)))))))))))))))) =
     DIR_NCHD
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS FZ))))))))))))))))) =
     DIR_NCTL
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS FZ)))))))))))))))))) =
     DIR_XCHD
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS FZ))))))))))))))))))) =
     DIR_XCTL
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))) =
     FBT_ATOM
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))) =
     FBT_BNAT
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))) =
     FBT_INITIAL
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))) =
     FBT_COPRODUCT
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))))) =
     FBT_COPRODUCT_L
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   FZ))))))))))))))))))))))))) =
     FBT_TERMINAL
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS FZ)))))))))))))))))))))))))) =
     FBT_PRODUCT
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS FZ))))))))))))))))))))))))))) =
     FBT_PRODUCT_L
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS FZ)))))))))))))))))))))))))))) =
     TERM_U
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS FZ))))))))))))))))))))))))))))) =
     TERM_L
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS FZ)))))))))))))))))))))))))))))) =
     TERM_R
-GADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
+OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
   (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))))))))))) =
     TERM_P
 
 public export
-GAEncoder : NatEncoder GADecoder
-GAEncoder SL_ATOM = (0 ** Refl ** Refl)
-GAEncoder SL_NAT = (1 ** Refl ** Refl)
-GAEncoder SL_NATL = (2 ** Refl ** Refl)
-GAEncoder SL_EXP = (3 ** Refl ** Refl)
-GAEncoder SL_EXPL = (4 ** Refl ** Refl)
-GAEncoder POS_Z = (5 ** Refl ** Refl)
-GAEncoder POS_S = (6 ** Refl ** Refl)
-GAEncoder POS_X = (7 ** Refl ** Refl)
-GAEncoder POS_NN = (8 ** Refl ** Refl)
-GAEncoder POS_NC = (9 ** Refl ** Refl)
-GAEncoder POS_XN = (10 ** Refl ** Refl)
-GAEncoder POS_XC = (11 ** Refl ** Refl)
-GAEncoder DIR_S = (12 ** Refl ** Refl)
-GAEncoder DIR_XA = (13 ** Refl ** Refl)
-GAEncoder DIR_XNL = (14 ** Refl ** Refl)
-GAEncoder DIR_XXL = (15 ** Refl ** Refl)
-GAEncoder DIR_NCHD = (16 ** Refl ** Refl)
-GAEncoder DIR_NCTL = (17 ** Refl ** Refl)
-GAEncoder DIR_XCHD = (18 ** Refl ** Refl)
-GAEncoder DIR_XCTL = (19 ** Refl ** Refl)
-GAEncoder FBT_ATOM = (20 ** Refl ** Refl)
-GAEncoder FBT_BNAT = (21 ** Refl ** Refl)
-GAEncoder FBT_INITIAL = (22 ** Refl ** Refl)
-GAEncoder FBT_COPRODUCT = (23 ** Refl ** Refl)
-GAEncoder FBT_COPRODUCT_L = (24 ** Refl ** Refl)
-GAEncoder FBT_TERMINAL = (25 ** Refl ** Refl)
-GAEncoder FBT_PRODUCT = (26 ** Refl ** Refl)
-GAEncoder FBT_PRODUCT_L = (27 ** Refl ** Refl)
-GAEncoder TERM_U = (28 ** Refl ** Refl)
-GAEncoder TERM_L = (29 ** Refl ** Refl)
-GAEncoder TERM_R = (30 ** Refl ** Refl)
-GAEncoder TERM_P = (31 ** Refl ** Refl)
+OAEncoder : NatEncoder OADecoder
+OAEncoder SL_ATOM = (0 ** Refl ** Refl)
+OAEncoder SL_NAT = (1 ** Refl ** Refl)
+OAEncoder SL_NATL = (2 ** Refl ** Refl)
+OAEncoder SL_EXP = (3 ** Refl ** Refl)
+OAEncoder SL_EXPL = (4 ** Refl ** Refl)
+OAEncoder POS_Z = (5 ** Refl ** Refl)
+OAEncoder POS_S = (6 ** Refl ** Refl)
+OAEncoder POS_X = (7 ** Refl ** Refl)
+OAEncoder POS_NN = (8 ** Refl ** Refl)
+OAEncoder POS_NC = (9 ** Refl ** Refl)
+OAEncoder POS_XN = (10 ** Refl ** Refl)
+OAEncoder POS_XC = (11 ** Refl ** Refl)
+OAEncoder DIR_S = (12 ** Refl ** Refl)
+OAEncoder DIR_XA = (13 ** Refl ** Refl)
+OAEncoder DIR_XNL = (14 ** Refl ** Refl)
+OAEncoder DIR_XXL = (15 ** Refl ** Refl)
+OAEncoder DIR_NCHD = (16 ** Refl ** Refl)
+OAEncoder DIR_NCTL = (17 ** Refl ** Refl)
+OAEncoder DIR_XCHD = (18 ** Refl ** Refl)
+OAEncoder DIR_XCTL = (19 ** Refl ** Refl)
+OAEncoder FBT_ATOM = (20 ** Refl ** Refl)
+OAEncoder FBT_BNAT = (21 ** Refl ** Refl)
+OAEncoder FBT_INITIAL = (22 ** Refl ** Refl)
+OAEncoder FBT_COPRODUCT = (23 ** Refl ** Refl)
+OAEncoder FBT_COPRODUCT_L = (24 ** Refl ** Refl)
+OAEncoder FBT_TERMINAL = (25 ** Refl ** Refl)
+OAEncoder FBT_PRODUCT = (26 ** Refl ** Refl)
+OAEncoder FBT_PRODUCT_L = (27 ** Refl ** Refl)
+OAEncoder TERM_U = (28 ** Refl ** Refl)
+OAEncoder TERM_L = (29 ** Refl ** Refl)
+OAEncoder TERM_R = (30 ** Refl ** Refl)
+OAEncoder TERM_P = (31 ** Refl ** Refl)
 
 public export
-OldAtomEncoding : FinDecEncoding OldAtom GASize
-OldAtomEncoding = NatDecEncoding GADecoder GAEncoder
+OldAtomEncoding : FinDecEncoding OldAtom OASize
+OldAtomEncoding = NatDecEncoding OADecoder OAEncoder
 
 public export
-gaToString : OldAtom -> String
-gaToString SL_ATOM = "SL_ATOM"
-gaToString SL_NAT = "SL_NAT"
-gaToString SL_NATL = "SL_NATL"
-gaToString SL_EXP = "SL_EXP"
-gaToString SL_EXPL = "SL_EXPL"
-gaToString POS_Z = "POS_Z"
-gaToString POS_S = "POS_S"
-gaToString POS_X = "POS_X"
-gaToString POS_NN = "POS_NN"
-gaToString POS_NC = "POS_NC"
-gaToString POS_XN = "POS_XN"
-gaToString POS_XC = "POS_XC"
-gaToString DIR_S = "DIR_S"
-gaToString DIR_XA = "DIR_XA"
-gaToString DIR_XNL = "DIR_XNL"
-gaToString DIR_XXL = "DIR_XXL"
-gaToString DIR_NCHD = "DIR_NCHD"
-gaToString DIR_NCTL = "DIR_NCTL"
-gaToString DIR_XCHD = "DIR_XCHD"
-gaToString DIR_XCTL = "DIR_XCTL"
-gaToString FBT_ATOM = "FBT_ATOM"
-gaToString FBT_BNAT = "FBT_BNAT"
-gaToString FBT_INITIAL = "FBT_INITIAL"
-gaToString FBT_COPRODUCT = "FBT_COPRODUCT"
-gaToString FBT_COPRODUCT_L = "FBT_COPRODUCT_L"
-gaToString FBT_TERMINAL = "FBT_TERMINAL"
-gaToString FBT_PRODUCT = "FBT_PRODUCT"
-gaToString FBT_PRODUCT_L = "FBT_PRODUCT_L"
-gaToString TERM_U = "TERM_U"
-gaToString TERM_L = "TERM_L"
-gaToString TERM_R = "TERM_R"
-gaToString TERM_P = "TERM_P"
+oaToString : OldAtom -> String
+oaToString SL_ATOM = "SL_ATOM"
+oaToString SL_NAT = "SL_NAT"
+oaToString SL_NATL = "SL_NATL"
+oaToString SL_EXP = "SL_EXP"
+oaToString SL_EXPL = "SL_EXPL"
+oaToString POS_Z = "POS_Z"
+oaToString POS_S = "POS_S"
+oaToString POS_X = "POS_X"
+oaToString POS_NN = "POS_NN"
+oaToString POS_NC = "POS_NC"
+oaToString POS_XN = "POS_XN"
+oaToString POS_XC = "POS_XC"
+oaToString DIR_S = "DIR_S"
+oaToString DIR_XA = "DIR_XA"
+oaToString DIR_XNL = "DIR_XNL"
+oaToString DIR_XXL = "DIR_XXL"
+oaToString DIR_NCHD = "DIR_NCHD"
+oaToString DIR_NCTL = "DIR_NCTL"
+oaToString DIR_XCHD = "DIR_XCHD"
+oaToString DIR_XCTL = "DIR_XCTL"
+oaToString FBT_ATOM = "FBT_ATOM"
+oaToString FBT_BNAT = "FBT_BNAT"
+oaToString FBT_INITIAL = "FBT_INITIAL"
+oaToString FBT_COPRODUCT = "FBT_COPRODUCT"
+oaToString FBT_COPRODUCT_L = "FBT_COPRODUCT_L"
+oaToString FBT_TERMINAL = "FBT_TERMINAL"
+oaToString FBT_PRODUCT = "FBT_PRODUCT"
+oaToString FBT_PRODUCT_L = "FBT_PRODUCT_L"
+oaToString TERM_U = "TERM_U"
+oaToString TERM_L = "TERM_L"
+oaToString TERM_R = "TERM_R"
+oaToString TERM_P = "TERM_P"
 
 public export
 Show OldAtom where
-  show a = gaToString a
+  show a = oaToString a
 
 public export
 Eq OldAtom where
