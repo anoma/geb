@@ -2271,6 +2271,11 @@ public export
   DecSlice {a} sl -> SliceObj a
 SliceInhabited {a} {sl} p x = IsYesTrue {a=(sl x)} $ p x
 
+public export
+0 SliceDecPred : {0 a : Type} -> {0 sl : SliceObj a} ->
+  DecSlice {a} sl -> DecPred a
+SliceDecPred {a} {sl} p x = isYes {a=(sl x)} $ p x
+
 -- A decidable predicate on `a` -- that is, a predicate on `a` together with
 -- a decision procedure for that predicate for any term of `a`.
 public export
@@ -2287,7 +2292,7 @@ RefinementP {a} p = Subset0 a (PropHolds {a} p)
 
 public export
 0 DecPropToPred : {0 a : Type} -> DecProp a -> DecPred a
-DecPropToPred {a} p x = isYes {a=(fst0 p x)} $ snd0 p x
+DecPropToPred {a} p = SliceDecPred {a} {sl=(fst0 p)} (snd0 p)
 
 public export
 RefinementPIsRefinement : {0 a : Type} -> (0 p : DecProp a) ->
