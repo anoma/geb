@@ -1273,23 +1273,23 @@ NList = SList Nat
 
 public export
 GExp : Type
-GExp = SExp GebAtom
+GExp = SExp OldAtom
 
 public export
 FrGExp : Type -> Type
-FrGExp = FrSExpM GebAtom
+FrGExp = FrSExpM OldAtom
 
 public export
 GList : Type
-GList = SList GebAtom
+GList = SList OldAtom
 
 public export
 FrGList : Type -> Type
-FrGList = FrSListM GebAtom
+FrGList = FrSListM OldAtom
 
 public export
 GBtAtom : Type
-GBtAtom = SExpToBtAtom GebAtom
+GBtAtom = SExpToBtAtom OldAtom
 
 public export
 GBTExp : Type
@@ -1297,16 +1297,16 @@ GBTExp = BTExp GBtAtom
 
 public export
 GExpAlg : Type -> Type
-GExpAlg = SExpAlg GebAtom
+GExpAlg = SExpAlg OldAtom
 
 public export
 GExpMaybeAlg : Type -> Type
-GExpMaybeAlg = SExpMaybeAlg GebAtom
+GExpMaybeAlg = SExpMaybeAlg OldAtom
 
 public export
 GExpBoolAlg : Type
-GExpBoolAlg = SExpBoolAlg GebAtom
+GExpBoolAlg = SExpBoolAlg OldAtom
 
 public export
 GExpMaybeCtxAlg : Type -> Type -> Type
-GExpMaybeCtxAlg = SExpMaybeCtxAlg GebAtom
+GExpMaybeCtxAlg = SExpMaybeCtxAlg OldAtom

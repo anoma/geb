@@ -16,51 +16,51 @@ import Library.IdrisUtils
 ---------------------------------
 
 public export
-data GebAtom : Type where
+data OldAtom : Type where
   -- Slices of the Geb S-expression type itself.
-  SL_ATOM : GebAtom
-  SL_NAT : GebAtom
-  SL_NATL : GebAtom
-  SL_EXP : GebAtom
-  SL_EXPL : GebAtom
+  SL_ATOM : OldAtom
+  SL_NAT : OldAtom
+  SL_NATL : OldAtom
+  SL_EXP : OldAtom
+  SL_EXPL : OldAtom
 
   -- Positions of the (dependent) polynomial endofunctor whose fixed point
   -- is the Geb S-expression.
-  POS_Z : GebAtom
-  POS_S : GebAtom
-  POS_X : GebAtom
-  POS_NN : GebAtom
-  POS_NC : GebAtom
-  POS_XN : GebAtom
-  POS_XC : GebAtom
+  POS_Z : OldAtom
+  POS_S : OldAtom
+  POS_X : OldAtom
+  POS_NN : OldAtom
+  POS_NC : OldAtom
+  POS_XN : OldAtom
+  POS_XC : OldAtom
 
   -- Directions of the Geb S-expression endofunctor.
-  DIR_S : GebAtom
-  DIR_XA : GebAtom
-  DIR_XNL : GebAtom
-  DIR_XXL : GebAtom
-  DIR_NCHD : GebAtom
-  DIR_NCTL : GebAtom
-  DIR_XCHD : GebAtom
-  DIR_XCTL : GebAtom
+  DIR_S : OldAtom
+  DIR_XA : OldAtom
+  DIR_XNL : OldAtom
+  DIR_XXL : OldAtom
+  DIR_NCHD : OldAtom
+  DIR_NCTL : OldAtom
+  DIR_XCHD : OldAtom
+  DIR_XCTL : OldAtom
 
   -- Finite unrefined types
-  FBT_ATOM : GebAtom
-  FBT_BNAT : GebAtom
-  FBT_INITIAL : GebAtom
-  FBT_COPRODUCT : GebAtom
-  FBT_COPRODUCT_L : GebAtom
-  FBT_TERMINAL : GebAtom
-  FBT_PRODUCT : GebAtom
-  FBT_PRODUCT_L : GebAtom
+  FBT_ATOM : OldAtom
+  FBT_BNAT : OldAtom
+  FBT_INITIAL : OldAtom
+  FBT_COPRODUCT : OldAtom
+  FBT_COPRODUCT_L : OldAtom
+  FBT_TERMINAL : OldAtom
+  FBT_PRODUCT : OldAtom
+  FBT_PRODUCT_L : OldAtom
 
   -- Terms of finite product/coproduct types
-  TERM_U : GebAtom
-  TERM_L : GebAtom
-  TERM_R : GebAtom
-  TERM_P : GebAtom
+  TERM_U : OldAtom
+  TERM_L : OldAtom
+  TERM_R : OldAtom
+  TERM_P : OldAtom
 
--- The rest of this file implements enumerated-type interfaces for `GebAtom`,
+-- The rest of this file implements enumerated-type interfaces for `OldAtom`,
 -- since Idris-2 doesn't have built-in enums.
 
 public export
@@ -72,7 +72,7 @@ GAFin : Type
 GAFin = Fin GASize
 
 public export
-GADecoder : FinDecoder GebAtom GASize
+GADecoder : FinDecoder OldAtom GASize
 GADecoder FZ = SL_ATOM
 GADecoder (FS FZ) = SL_NAT
 GADecoder (FS (FS FZ)) = SL_NATL
@@ -189,11 +189,11 @@ GAEncoder TERM_R = (30 ** Refl ** Refl)
 GAEncoder TERM_P = (31 ** Refl ** Refl)
 
 public export
-GebAtomEncoding : FinDecEncoding GebAtom GASize
-GebAtomEncoding = NatDecEncoding GADecoder GAEncoder
+OldAtomEncoding : FinDecEncoding OldAtom GASize
+OldAtomEncoding = NatDecEncoding GADecoder GAEncoder
 
 public export
-gaToString : GebAtom -> String
+gaToString : OldAtom -> String
 gaToString SL_ATOM = "SL_ATOM"
 gaToString SL_NAT = "SL_NAT"
 gaToString SL_NATL = "SL_NATL"
@@ -228,17 +228,17 @@ gaToString TERM_R = "TERM_R"
 gaToString TERM_P = "TERM_P"
 
 public export
-Show GebAtom where
+Show OldAtom where
   show a = gaToString a
 
 public export
-Eq GebAtom where
-  (==) = fdeEq GebAtomEncoding
+Eq OldAtom where
+  (==) = fdeEq OldAtomEncoding
 
 public export
-Ord GebAtom where
-  (<) = fdeLt GebAtomEncoding
+Ord OldAtom where
+  (<) = fdeLt OldAtomEncoding
 
 public export
-DecEq GebAtom where
-  decEq = fdeDecEq GebAtomEncoding
+DecEq OldAtom where
+  decEq = fdeDecEq OldAtomEncoding

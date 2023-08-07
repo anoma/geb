@@ -2610,14 +2610,14 @@ PathF vEq carrier =
 
 public export
 GebTermProductCatObject : Type
-GebTermProductCatObject = ProductCatObject GebAtom
+GebTermProductCatObject = ProductCatObject OldAtom
 
 -- A morphism in a product category is a product of morphisms.
 -- (In an Idris category, morphisms are functions.)
 public export
 GebTermProductCatMorphism :
   GebTermProductCatObject -> GebTermProductCatObject -> Type
-GebTermProductCatMorphism = ProductCatMorphism {idx=GebAtom}
+GebTermProductCatMorphism = ProductCatMorphism {idx=OldAtom}
 
 -- An endofunctor on the Idris product category in which Geb terms are defined
 -- is a function on objects of the product category together with a function
@@ -2625,7 +2625,7 @@ GebTermProductCatMorphism = ProductCatMorphism {idx=GebAtom}
 
 public export
 GebTermProductCatObjectMap : Type
-GebTermProductCatObjectMap = ProductCatObjectEndoMap GebAtom
+GebTermProductCatObjectMap = ProductCatObjectEndoMap OldAtom
 
 public export
 GebTermProductCatMorphismMap : GebTermProductCatObjectMap -> Type
@@ -2633,7 +2633,7 @@ GebTermProductCatMorphismMap = ProductCatMorphismEndoMap
 
 public export
 GebTermProductCatEndofunctor : Type
-GebTermProductCatEndofunctor = ProductCatEndofunctor GebAtom
+GebTermProductCatEndofunctor = ProductCatEndofunctor OldAtom
 
 ------------------------------------------
 ---- Term-checking and interpretation ----
