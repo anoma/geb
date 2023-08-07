@@ -50,19 +50,60 @@ record FinIndIndF1Constr where
   f1cType : Vect f1cNDir2 (Fin f1cNDir1)
 
 public export
-InterpF1c1 : FinIndIndF1Constr -> PolyFunc -> Type
-InterpF1c1 c p =
+InterpFI1c : FinIndIndF1Constr -> PolyFunc -> Type
+InterpFI1c c p =
   (i : Vect (f1cNDir1 c) (pfPos p) **
    HVect {k=(f1cNDir2 c)} $ map (pfDir {p} . flip index i) $ f1cType c)
 
 public export
-InterpF1c2 : (c : FinIndIndF1Constr) ->
-  Pi {a=PolyFunc} $ SliceObj . InterpF1c1 c
-InterpF1c2 c p i = ?InterpF1c2_hole
+record FinIndIndF1 where
+  constructor FII1
+  f1Constr : List FinIndIndF1Constr
 
 public export
-InterpF1c : FinIndIndF1Constr -> PolyFunc -> PolyFunc
-InterpF1c c p = (InterpF1c1 c p ** InterpF1c2 c p)
+InterpFI1  : FinIndIndF1 -> PolyFunc -> Type
+InterpFI1 f1 p =
+  (i : Fin (length (f1Constr f1)) ** InterpFI1c (index' (f1Constr f1) i) p)
+
+mutual
+  public export
+  data FinIndF2Assign : IndIndF1 -> Nat -> Nat -> Type where
+    FF2AZ : {0 f1 : IndIndF1} -> {0 i : Nat} ->
+      FinIndF2Assign f1 i Z
+    FF2AS : {0 f1 : IndIndF1} -> {0 i, d : Nat} ->
+      (a : FinIndF2Assign f1 i d) -> FinIndF2t1 f1 i d a ->
+      FinIndF2Assign f1 i (S d)
+
+  public export
+  partial
+  data FinIndF2t1 : (f1 : IndIndF1) -> (i, d : Nat) ->
+      FinIndF2Assign f1 i d -> Type where
+    FF2t1p : -- parameter
+      {0 f1 : IndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
+      Fin i -> FinIndF2t1 f1 i d a
+    FF2t1a : -- algebra application
+      {0 f1 : IndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
+      f1 (FinIndF2t1 f1 i d a ** FinIndF2t2 f1 i d a) -> FinIndF2t1 f1 i d a
+    FF2t1e : -- extend context with parameter not used in this term
+      {0 f1 : IndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
+      FinIndF2t1 f1 i d a -> (t' : FinIndF2t1 f1 i d a) ->
+      FinIndF2t1 f1 i (S d) (FF2AS {f1} {i} {d} a t')
+
+  public export
+  partial
+  data FinIndF2t2 : (f1 : IndIndF1) -> (i, d : Nat) ->
+      (a : FinIndF2Assign f1 i d) -> FinIndF2t1 f1 i d a -> Type where
+    FF2t2hd :
+      {0 f1 : IndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
+      (t : FinIndF2t1 f1 i d a) ->
+      FinIndF2t2 f1 i (S d)
+        (FF2AS {f1} {i} {d} a t) (FF2t1e {f1} {i} {d} {a} t t)
+    FF2t2tl :
+      {0 f1 : IndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
+      (t, t' : FinIndF2t1 f1 i d a) ->
+      FinIndF2t2 f1 i d a t ->
+      FinIndF2t2 f1 i (S d)
+        (FF2AS {f1} {i} {d} a t') (FF2t1e {f1} {i} {d} {a} t t')
 
 public export
 IndIndAlg : IndIndF1 -> IndIndF1
