@@ -26,10 +26,13 @@ T0F : FinIndIndF1
 T0F = FII1 [ t0Starter, t0Maker, t0DepMaker ]
 
 t1Starter : FinIndIndF2Constr T0F
-t1Starter = FII2c 0 0 FF2AZ
+t1Starter = FII2c 0 0 FF2AZ ?t1Starter_param_hole
+
+t1Id : FinIndIndF2Constr T0F
+t1Id = FII2c 1 0 FF2AZ ?t1Id_param_hole
 
 T1F : FinIndIndF2 T0F
-T1F = FII2 [ t1Starter ]
+T1F = FII2 [ t1Starter, t1Id ]
 
 T01F : FinIndInd
 T01F = (T0F ** T1F)
