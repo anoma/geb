@@ -53,6 +53,13 @@ interpFSPP {n=(S n)} (k :: ks) i sl =
 interpFSP : {n : Nat} -> FinSliceProd n -> SliceObj (Fin n) -> Type
 interpFSP {n} p = interpFSPP {n} (fst0 p) (fromIsYes $ snd0 p)
 
+FinSliceFS : Type
+FinSliceFS = List FinSliceProdS
+
+0 FinSliceFBounded : Nat -> SliceObj FinSliceFS
+FinSliceFBounded n [] = Unit
+FinSliceFBounded n (p :: ps) = (FinSliceBounded n p, FinSliceFBounded n ps)
+
 ----------------------------------------
 ----------------------------------------
 ---- Finite directed acyclic graphs ----
