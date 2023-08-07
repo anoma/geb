@@ -42,6 +42,12 @@ public export
 IndIndF1 : Type
 IndIndF1 = PolyFunc -> Type
 
+-- "Structure" or "syntax" of constructors of the non-dependent half of an
+-- inductively defined sigma (dependent-pair) type.
+public export
+FinIndIndF1ConstrS : Type
+FinIndIndF1ConstrS = (FSObj, FSObj, List FSObj)
+
 public export
 record FinIndIndF1Constr where
   constructor FII1c
