@@ -47,13 +47,13 @@ record FinIndIndF1Constr where
   constructor FII1c
   f1cNDir1 : FSObj
   f1cNDir2 : FSObj
-  f1cType : Vect f1cNDir2 (Fin f1cNDir1)
+  f1cAssign : Vect f1cNDir2 (Fin f1cNDir1)
 
 public export
 InterpFI1c : FinIndIndF1Constr -> PolyFunc -> Type
 InterpFI1c c p =
   (i : Vect (f1cNDir1 c) (pfPos p) **
-   HVect {k=(f1cNDir2 c)} $ map (pfDir {p} . flip index i) $ f1cType c)
+   HVect {k=(f1cNDir2 c)} $ map (pfDir {p} . flip index i) $ f1cAssign c)
 
 public export
 record FinIndIndF1 where
@@ -109,7 +109,8 @@ record FinIndIndF2Constr (f1 : FinIndIndF1) where
   constructor FII2c
   f2cNDir1 : FSObj
   f2cNDir2 : FSObj
-  f2cType : FinIndF2Assign f1 f2cNDir1 f2cNDir2
+  f2cTelAssign : FinIndF2Assign f1 f2cNDir1 f2cNDir2
+  f2cParamAssign : FinIndF2t1 f1 f2cNDir1 f2cNDir2 f2cTelAssign
 
 public export
 record FinIndIndF2 (f1 : FinIndIndF1) where
