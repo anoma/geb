@@ -47,6 +47,16 @@ FinSliceProdP n =
 FinSliceProd : Nat -> Type
 FinSliceProd n = Refinement {a=FinSliceProdS} (isFinSliceBounded n)
 
+interpFSPP : {n : Nat} -> (p : FinSliceProdS) -> (0 _ : FinSliceBounded n p) ->
+  SliceObj (Fin n) -> Type
+interpFSPP {n} [] i sl = Unit
+interpFSPP {n=Z} (_ :: _) i sl = void i
+interpFSPP {n=(S n)} (k :: ks) i sl =
+  (sl $ natToFinLT k, interpFSPP {n=(S n)} ks (snd i) sl)
+
+interpFSP : {n : Nat} -> FinSliceProd n -> SliceObj (Fin n) -> Type
+interpFSP {n} p = interpFSPP {n} (fst0 p) (fromIsYes $ snd0 p)
+
 ----------------------------------------
 ----------------------------------------
 ---- Finite directed acyclic graphs ----
