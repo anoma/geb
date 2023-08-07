@@ -22,28 +22,28 @@ import LanguageDef.ProgFinSet
 FinSliceProdS : Type
 FinSliceProdS = List Nat
 
-0 FinSliceBounded : Nat -> SliceObj FinSliceProdS
-FinSliceBounded _ [] = Unit
-FinSliceBounded Z (_ :: _) = Void
-FinSliceBounded (S n) (k :: ks) = (LTE k n, FinSliceBounded (S n) ks)
+0 FinProdBounded : Nat -> SliceObj FinSliceProdS
+FinProdBounded _ [] = Unit
+FinProdBounded Z (_ :: _) = Void
+FinProdBounded (S n) (k :: ks) = (LTE k n, FinProdBounded (S n) ks)
 
-0 IsFinSliceBounded :
-  (n : Nat) -> DecSlice {a=FinSliceProdS} (FinSliceBounded n)
-IsFinSliceBounded _ [] = Yes ()
-IsFinSliceBounded Z (_ :: _) = No id
-IsFinSliceBounded (S n) (k :: ks) =
-  case (isLTE k n, IsFinSliceBounded (S n) ks) of
+0 IsFinProdBounded :
+  (n : Nat) -> DecSlice {a=FinSliceProdS} (FinProdBounded n)
+IsFinProdBounded _ [] = Yes ()
+IsFinProdBounded Z (_ :: _) = No id
+IsFinProdBounded (S n) (k :: ks) =
+  case (isLTE k n, IsFinProdBounded (S n) ks) of
     (Yes lte, Yes bounded) => Yes (lte, bounded)
     (No gt, _) => No $ \bounded => void $ gt $ fst bounded
     (_ , No notBounded) => No $ \bounded => void $ notBounded $ snd bounded
 
-0 isFinSliceBounded : (n : Nat) -> DecPred FinSliceProdS
-isFinSliceBounded n = SliceDecPred $ IsFinSliceBounded n
+0 isFinProdBounded : (n : Nat) -> DecPred FinSliceProdS
+isFinProdBounded n = SliceDecPred $ IsFinProdBounded n
 
 FinSliceProd : Nat -> Type
-FinSliceProd n = Refinement {a=FinSliceProdS} (isFinSliceBounded n)
+FinSliceProd n = Refinement {a=FinSliceProdS} (isFinProdBounded n)
 
-interpFSPP : {n : Nat} -> (p : FinSliceProdS) -> (0 _ : FinSliceBounded n p) ->
+interpFSPP : {n : Nat} -> (p : FinSliceProdS) -> (0 _ : FinProdBounded n p) ->
   SliceObj (Fin n) -> Type
 interpFSPP {n} [] i sl = Unit
 interpFSPP {n=Z} (_ :: _) i sl = void i
@@ -58,7 +58,7 @@ FinSliceFS = List FinSliceProdS
 
 0 FinSliceFBounded : Nat -> SliceObj FinSliceFS
 FinSliceFBounded n [] = Unit
-FinSliceFBounded n (p :: ps) = (FinSliceBounded n p, FinSliceFBounded n ps)
+FinSliceFBounded n (p :: ps) = (FinProdBounded n p, FinSliceFBounded n ps)
 
 ----------------------------------------
 ----------------------------------------
