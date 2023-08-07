@@ -31,8 +31,25 @@ t1Starter = FII2c 0 0 FF2AZ $ FF2t1a (FZ ** [] ** [])
 t1Id : FinIndIndF2Constr T0F
 t1Id = FII2c 1 0 FF2AZ $ FF2t1p FZ
 
+t1Maker : FinIndIndF2Constr T0F
+t1Maker = FII2c 2 2 (FF2AS (FF2AS FF2AZ $ FF2t1p FZ) $ FF2t1p $ FS FZ) $
+  FF2t1a (FS FZ ** [FF2t1p FZ, FF2t1p $ FS FZ] ** [])
+
+t1Telescope : FinIndIndF2Constr T0F
+t1Telescope = FII2c 1 6
+  (FF2AS (FF2AS (FF2AS (FF2AS (FF2AS (FF2AS FF2AZ
+    $ FF2t1p FZ)
+    $ FF2t1p FZ)
+    $ FF2t1a ((FS (FS FZ)) **
+      [FF2t1p FZ] **
+      [?t1Telescope_FF2t2hd_hole, ?t1Telescope_FF2t2tl_hole]))
+    $ ?t1Telescope_hole_tel_4)
+    $ ?t1Telescope_hole_tel_5)
+    $ ?t1Telescope_hole_tel_6) $
+  ?t1Telescope_hole_param
+
 T1F : FinIndIndF2 T0F
-T1F = FII2 [ t1Starter, t1Id ]
+T1F = FII2 [ t1Starter, t1Id, t1Maker, t1Telescope ]
 
 T01F : FinIndInd
 T01F = (T0F ** T1F)
