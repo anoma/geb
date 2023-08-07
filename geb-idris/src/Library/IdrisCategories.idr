@@ -2324,19 +2324,13 @@ RARPpresFst {a} {p} x = Refl
 public export
 RefinementPAsRefinement : {0 a : Type} -> (p : DecPred a) ->
   RefinementP {a} (DecPredToProp p) -> Refinement {a} p
-RefinementPAsRefinement {a} p (Element0 x eq) with (decEq (p x) True)
-  RefinementPAsRefinement {a} p (Element0 x _) | Yes deq =
-    Element0 x deq
-  RefinementPAsRefinement {a} p (Element0 x eq) | No _ =
-    void $ case eq of Refl impossible
+RefinementPAsRefinement {a} p x = Element0 (fst0 x) (fromIsYes $ snd0 x)
 
 public export
 RPARpresFst : {0 a : Type} -> {p : DecPred a} ->
   (x : RefinementP {a} $ DecPredToProp p) ->
   fst0 (RefinementPAsRefinement {a} p x) = fst0 x
-RPARpresFst {a} {p} (Element0 x eq) with (decEq (p x) True)
-  RPARpresFst {a} {p} (Element0 _ _) | Yes _ = Refl
-  RPARpresFst {a} {p} (Element0 _ eq) | No _ = void $ case eq of Refl impossible
+RPARpresFst {a} {p} x = Refl
 
 --------------------------
 ---- Refined functors ----
