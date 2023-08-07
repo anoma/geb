@@ -2295,9 +2295,15 @@ public export
 DecPropToPred {a} p = SliceDecPred {a} {sl=(fst0 p)} (snd0 p)
 
 public export
-RefinementPIsRefinement : {0 a : Type} -> (0 p : DecProp a) ->
-  RefinementP {a} p = Refinement {a} (DecPropToPred p)
+0 RefinementPIsRefinement : {0 a : Type} -> {0 sl : SliceObj a} ->
+  (0 p : DecSlice {a} sl) ->
+  RefinementP {a} (Element0 sl p) = Refinement {a} (SliceDecPred p)
 RefinementPIsRefinement {a} p = Refl
+
+public export
+0 RefinementPIsRefinementP : {0 a : Type} -> (0 p : DecProp a) ->
+  RefinementP {a} p = Refinement {a} (DecPropToPred p)
+RefinementPIsRefinementP {a} p = Refl
 
 public export
 0 DecPredToProp : {0 a : Type} -> DecPred a -> DecProp a
