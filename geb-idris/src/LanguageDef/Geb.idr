@@ -19,6 +19,34 @@ import LanguageDef.ProgFinSet
 ------------------------------------------------
 ------------------------------------------------
 
+FinSliceProdS : Type
+FinSliceProdS = List Nat
+
+0 FinSliceBounded : Nat -> SliceObj FinSliceProdS
+FinSliceBounded _ [] = Unit
+FinSliceBounded Z (_ :: _) = Void
+FinSliceBounded (S n) (k :: ks) = (LTE k n, FinSliceBounded (S n) ks)
+
+0 IsFinSliceBounded :
+  (n : Nat) -> DecSlice {a=FinSliceProdS} (FinSliceBounded n)
+IsFinSliceBounded _ [] = Yes ()
+IsFinSliceBounded Z (_ :: _) = No id
+IsFinSliceBounded (S n) (k :: ks) =
+  case (isLTE k n, IsFinSliceBounded (S n) ks) of
+    (Yes lte, Yes bounded) => Yes (lte, bounded)
+    (No gt, _) => No $ \bounded => void $ gt $ fst bounded
+    (_ , No notBounded) => No $ \bounded => void $ notBounded $ snd bounded
+
+0 isFinSliceBounded : (n : Nat) -> DecPred FinSliceProdS
+isFinSliceBounded n = SliceDecPred $ IsFinSliceBounded n
+
+FinSliceProdP : Nat -> Type
+FinSliceProdP n =
+  RefinementP $ Element0 (FinSliceBounded n) (IsFinSliceBounded n)
+
+FinSliceProd : Nat -> Type
+FinSliceProd n = Refinement {a=FinSliceProdS} (isFinSliceBounded n)
+
 ----------------------------------------
 ----------------------------------------
 ---- Finite directed acyclic graphs ----
