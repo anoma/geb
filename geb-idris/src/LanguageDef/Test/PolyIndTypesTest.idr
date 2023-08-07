@@ -26,7 +26,7 @@ T0F : FinIndIndF1
 T0F = FII1 [ t0Starter, t0Maker, t0DepMaker ]
 
 t1Starter : FinIndIndF2Constr T0F
-t1Starter = FII2c 0 0 ?t1Starter_hole
+t1Starter = FII2c 0 0 FF2AZ
 
 T1F : FinIndIndF2 T0F
 T1F = FII2 [ t1Starter ]
