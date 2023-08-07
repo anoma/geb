@@ -61,45 +61,44 @@ record FinIndIndF1 where
   f1Constr : List FinIndIndF1Constr
 
 public export
-InterpFI1  : FinIndIndF1 -> PolyFunc -> Type
+InterpFI1  : FinIndIndF1 -> IndIndF1
 InterpFI1 f1 p =
   (i : Fin (length (f1Constr f1)) ** InterpFI1c (index' (f1Constr f1) i) p)
 
 mutual
   public export
-  data FinIndF2Assign : IndIndF1 -> Nat -> Nat -> Type where
-    FF2AZ : {0 f1 : IndIndF1} -> {0 i : Nat} ->
+  data FinIndF2Assign : FinIndIndF1 -> Nat -> Nat -> Type where
+    FF2AZ : {0 f1 : FinIndIndF1} -> {0 i : Nat} ->
       FinIndF2Assign f1 i Z
-    FF2AS : {0 f1 : IndIndF1} -> {0 i, d : Nat} ->
+    FF2AS : {0 f1 : FinIndIndF1} -> {0 i, d : Nat} ->
       (a : FinIndF2Assign f1 i d) -> FinIndF2t1 f1 i d a ->
       FinIndF2Assign f1 i (S d)
 
   public export
-  partial
-  data FinIndF2t1 : (f1 : IndIndF1) -> (i, d : Nat) ->
+  data FinIndF2t1 : (f1 : FinIndIndF1) -> (i, d : Nat) ->
       FinIndF2Assign f1 i d -> Type where
     FF2t1p : -- parameter
-      {0 f1 : IndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
+      {0 f1 : FinIndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
       Fin i -> FinIndF2t1 f1 i d a
     FF2t1a : -- algebra application
-      {0 f1 : IndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
-      f1 (FinIndF2t1 f1 i d a ** FinIndF2t2 f1 i d a) -> FinIndF2t1 f1 i d a
+      {0 f1 : FinIndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
+      InterpFI1 f1 (FinIndF2t1 f1 i d a ** FinIndF2t2 f1 i d a) ->
+      FinIndF2t1 f1 i d a
     FF2t1e : -- extend context with parameter not used in this term
-      {0 f1 : IndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
+      {0 f1 : FinIndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
       FinIndF2t1 f1 i d a -> (t' : FinIndF2t1 f1 i d a) ->
       FinIndF2t1 f1 i (S d) (FF2AS {f1} {i} {d} a t')
 
   public export
-  partial
-  data FinIndF2t2 : (f1 : IndIndF1) -> (i, d : Nat) ->
+  data FinIndF2t2 : (f1 : FinIndIndF1) -> (i, d : Nat) ->
       (a : FinIndF2Assign f1 i d) -> FinIndF2t1 f1 i d a -> Type where
     FF2t2hd :
-      {0 f1 : IndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
+      {0 f1 : FinIndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
       (t : FinIndF2t1 f1 i d a) ->
       FinIndF2t2 f1 i (S d)
         (FF2AS {f1} {i} {d} a t) (FF2t1e {f1} {i} {d} {a} t t)
     FF2t2tl :
-      {0 f1 : IndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
+      {0 f1 : FinIndIndF1} -> {0 i, d : Nat} -> {0 a : FinIndF2Assign f1 i d} ->
       (t, t' : FinIndF2t1 f1 i d a) ->
       FinIndF2t2 f1 i d a t ->
       FinIndF2t2 f1 i (S d)
