@@ -40,10 +40,6 @@ IsFinSliceBounded (S n) (k :: ks) =
 0 isFinSliceBounded : (n : Nat) -> DecPred FinSliceProdS
 isFinSliceBounded n = SliceDecPred $ IsFinSliceBounded n
 
-FinSliceProdP : Nat -> Type
-FinSliceProdP n =
-  RefinementP $ Element0 (FinSliceBounded n) (IsFinSliceBounded n)
-
 FinSliceProd : Nat -> Type
 FinSliceProd n = Refinement {a=FinSliceProdS} (isFinSliceBounded n)
 
