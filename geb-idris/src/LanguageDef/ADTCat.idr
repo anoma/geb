@@ -1853,7 +1853,7 @@ Show FinPCTermMu where
 public export
 record TermAtom where
   constructor TAtom
-  tAtom : GebAtom
+  tAtom : OldAtom
   tData : Nat
 
 public export
@@ -1997,7 +1997,7 @@ InTermAtom : TermAtom -> TermMu -> TermMu
 InTermAtom n t = InPFM (Right n) $ \() => t
 
 public export
-InAtom : GebAtom -> Nat -> TermMu -> TermMu
+InAtom : OldAtom -> Nat -> TermMu -> TermMu
 InAtom = InTermAtom .* TAtom
 
 public export

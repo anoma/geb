@@ -1941,12 +1941,12 @@ FinRF : Nat -> Type -> Type
 FinRF = ConstSPF . FinR
 
 -------------------------------------
----- GebAtom as constant functor ----
+---- OldAtom as constant functor ----
 -------------------------------------
 
 public export
-GebAtomF : Type -> Type
-GebAtomF = const GebAtom
+OldAtomF : Type -> Type
+OldAtomF = const OldAtom
 
 ----------------------------------------
 ----------------------------------------
@@ -2135,7 +2135,7 @@ ftypeToGExp : SliceMorphism {a=FS3CP} FinBCSl FTypeToGExpSl
 ftypeToGExp = ftypeCata FTypeToGExpAlg
 
 public export
-BNatFromSExpAlg : GebAtom -> Pi {a=Nat} (GExpMaybeAlg . FinR)
+BNatFromSExpAlg : OldAtom -> Pi {a=Nat} (GExpMaybeAlg . FinR)
 BNatFromSExpAlg ea n (SXF a ns xs) = case decEq ea a of
   Yes Refl => case (ns, xs) of
     ([n'], []) => case isLT n' n of
@@ -2257,7 +2257,7 @@ FTSlProdL = FTProdL .* FTc
 public export
 data FinTermSl : FTSlice -> Type where
   -- A term of an atom type is an atom
-  InFTA : GebAtom -> FinTermSl FTSlA
+  InFTA : OldAtom -> FinTermSl FTSlA
   -- A term of a bounded-natural-number type is a number which obeys the bounds.
   InFTN : {0 n : Nat} -> FinR n -> FinTermSl $ FTSlN n
   -- A term of a coproduct type is a term from one of the component types.
@@ -2304,7 +2304,7 @@ FinTermN : Nat -> Type
 FinTermN = FinTermSl . FTSlN
 
 public export
-TA : GebAtom -> FinTermA
+TA : OldAtom -> FinTermA
 TA = InFTA
 
 --------------------------------------------
@@ -3006,7 +3006,7 @@ data GExpSlice : Type where
   GSEXPL : GExpSlice
 
 public export
-gSliceAtom : GExpSlice -> GebAtom
+gSliceAtom : GExpSlice -> OldAtom
 gSliceAtom GSATOM = SL_ATOM
 gSliceAtom GSNAT = SL_NAT
 gSliceAtom GSNATL = SL_NATL
@@ -3057,7 +3057,7 @@ data GWExpNonAtomPos : Type where
 
 public export
 data GWExpPos : Type where
-  GPA : GebAtom -> GWExpPos
+  GPA : OldAtom -> GWExpPos
   GPNAP : GWExpNonAtomPos -> GWExpPos
 
 public export
@@ -3089,7 +3089,7 @@ GPXC : GWExpPos
 GPXC = GPNAP GPNAXC
 
 public export
-gNonAtomPosAtom : GWExpNonAtomPos -> GebAtom
+gNonAtomPosAtom : GWExpNonAtomPos -> OldAtom
 gNonAtomPosAtom GPNAZ = POS_Z
 gNonAtomPosAtom GPNAS = POS_S
 gNonAtomPosAtom GPNAX = POS_X
@@ -3099,7 +3099,7 @@ gNonAtomPosAtom GPNAXN = POS_XN
 gNonAtomPosAtom GPNAXC = POS_XC
 
 public export
-gPosAtom : GWExpPos -> GebAtom
+gPosAtom : GWExpPos -> OldAtom
 gPosAtom (GPA a) = a
 gPosAtom (GPNAP i) = gNonAtomPosAtom i
 
@@ -3162,7 +3162,7 @@ data GWExpDir : Type where
   GDXCTL : GWExpDir
 
 public export
-gDirAtom : GWExpDir -> GebAtom
+gDirAtom : GWExpDir -> OldAtom
 gDirAtom GDS = DIR_S
 gDirAtom GDXA = DIR_XA
 gDirAtom GDXNL = DIR_XNL
@@ -3282,7 +3282,7 @@ GWExpXL = GWExpWT GSEXPL
 public export
 record GWExpAlg (sa : GExpSlice -> Type) where
   constructor GAlg
-  galgA : GebAtom -> sa GSATOM
+  galgA : OldAtom -> sa GSATOM
   galgZ : sa GSNAT
   galgS : sa GSNAT -> sa GSNAT
   galgNN : sa GSNATL
@@ -3382,7 +3382,7 @@ gwexpCata {sa} alg = wtfCata {wtf=GWExpWTF} {sa} (GAlgToSPF {sa} alg)
 
 public export
 GWExpWTtoGExpAlgSl : SliceObj GExpSlice
-GWExpWTtoGExpAlgSl GSATOM = GebAtom
+GWExpWTtoGExpAlgSl GSATOM = OldAtom
 GWExpWTtoGExpAlgSl GSNAT = Nat
 GWExpWTtoGExpAlgSl GSNATL = List Nat
 GWExpWTtoGExpAlgSl GSEXP = GExp
@@ -3401,7 +3401,7 @@ gwexpWTtoGExp : GWExpX -> GExp
 gwexpWTtoGExp = gwexpWTtoGExpSl GSEXP
 
 public export
-InGA : GebAtom -> GWExpA
+InGA : OldAtom -> GWExpA
 InGA a = InWTFM (GSATOM ** Element0 (GPA a) Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -3505,7 +3505,7 @@ InGXC x xs = InWTFM (GSEXPL ** Element0 GPXC Refl) $ \(Element0 d dsl) =>
     GDXCTL => xs
 
 public export
-InGX : GebAtom -> GWExpNL -> GWExpXL -> GWExpX
+InGX : OldAtom -> GWExpNL -> GWExpXL -> GWExpX
 InGX a ns xs = InWTFM (GSEXP ** Element0 GPX Refl) $ \(Element0 d dsl) =>
   case d of
     GDS => void $ case dsl of Refl impossible
@@ -3518,7 +3518,7 @@ InGX a ns xs = InWTFM (GSEXP ** Element0 GPX Refl) $ \(Element0 d dsl) =>
     GDXCTL => void $ case dsl of Refl impossible
 
 public export
-InGNatX : GebAtom -> List Nat -> GWExpXL -> GWExpX
+InGNatX : OldAtom -> List Nat -> GWExpXL -> GWExpX
 InGNatX a ns = InGX a (InGNatList ns)
 
 public export
@@ -3526,7 +3526,7 @@ InGWExpList : List GWExpX -> GWExpXL
 InGWExpList = foldr InGXC InGXN
 
 public export
-GExpToWTAlg : SXLAlg GebAtom GWExpX GWExpXL
+GExpToWTAlg : SXLAlg OldAtom GWExpX GWExpXL
 GExpToWTAlg = SXA InGNatX InGXN InGXC
 
 public export
@@ -3550,7 +3550,7 @@ gexpToWT = sxCata GExpToWTAlg
 
 public export
 GAtomF : PolyFunc
-GAtomF = PFConstArena GebAtom
+GAtomF = PFConstArena OldAtom
 
 public export
 GAtomPos : Type
@@ -3642,12 +3642,12 @@ GNatDir : SliceObj GNatPos
 GNatDir = pfDir {p=GNatF}
 
 public export
-gNatPosAtom : GNatPos -> GebAtom
+gNatPosAtom : GNatPos -> OldAtom
 gNatPosAtom (Left ()) = POS_S
 gNatPosAtom (Right ()) = POS_Z
 
 public export
-gNatDirAtom : Sigma {a=GNatPos} GNatDir -> GebAtom
+gNatDirAtom : Sigma {a=GNatPos} GNatDir -> OldAtom
 gNatDirAtom ((Left ()) ** ()) = DIR_S
 gNatDirAtom ((Right ()) ** v) = void v
 
@@ -3682,11 +3682,11 @@ GExpDir : SliceObj GExpPos
 GExpDir = pfDir {p=GExpF}
 
 public export
-GExpPosAtom : GExpPos -> GebAtom
+GExpPosAtom : GExpPos -> OldAtom
 GExpPosAtom () = POS_X
 
 public export
-GExpDirAtom : Sigma {a=GExpPos} GExpDir -> GebAtom
+GExpDirAtom : Sigma {a=GExpPos} GExpDir -> OldAtom
 GExpDirAtom (() ** FZ) = DIR_XA
 GExpDirAtom (() ** FS FZ) = DIR_XNL
 GExpDirAtom (() ** FS (FS FZ)) = DIR_XXL
@@ -3721,12 +3721,12 @@ GNatLFDir : SliceObj GNatLFPos
 GNatLFDir = spfSliceDir GNatLSPF ()
 
 public export
-GNatLFPosAtom : GNatLFPos -> GebAtom
+GNatLFPosAtom : GNatLFPos -> OldAtom
 GNatLFPosAtom (Left ()) = POS_NN
 GNatLFPosAtom (Right ()) = POS_NC
 
 public export
-GNatLFDirAtom : Sigma {a=GNatLFPos} GNatLFDir -> GebAtom
+GNatLFDirAtom : Sigma {a=GNatLFPos} GNatLFDir -> OldAtom
 GNatLFDirAtom ((Left ()) ** d) = void d
 GNatLFDirAtom (Right () ** (Left ())) = DIR_NCHD
 GNatLFDirAtom (Right () ** Right ()) = DIR_NCTL
@@ -3757,12 +3757,12 @@ GExpLFDir : SliceObj GExpLFPos
 GExpLFDir = spfSliceDir GExpLSPF ()
 
 public export
-GExpLFPosAtom : GExpLFPos -> GebAtom
+GExpLFPosAtom : GExpLFPos -> OldAtom
 GExpLFPosAtom (Left ()) = POS_XN
 GExpLFPosAtom (Right ()) = POS_XC
 
 public export
-GExpLFDirAtom : Sigma {a=GExpLFPos} GExpLFDir -> GebAtom
+GExpLFDirAtom : Sigma {a=GExpLFPos} GExpLFDir -> OldAtom
 GExpLFDirAtom ((Left ()) ** d) = void d
 GExpLFDirAtom (Right () ** (Left ())) = DIR_XCHD
 GExpLFDirAtom (Right () ** Right ()) = DIR_XCTL
@@ -3854,7 +3854,7 @@ gsexpCata {sa} = spfCata {spf=GSExpSPF} {sa}
 
 public export
 GSExptoGExpAlgSl : SliceObj GExpSlice
-GSExptoGExpAlgSl GSATOM = GebAtom
+GSExptoGExpAlgSl GSATOM = OldAtom
 GSExptoGExpAlgSl GSNAT = Nat
 GSExptoGExpAlgSl GSNATL = List Nat
 GSExptoGExpAlgSl GSEXP = GExp
