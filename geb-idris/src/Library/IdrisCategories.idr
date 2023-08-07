@@ -2262,15 +2262,24 @@ public export
 RefinedPi : {a : Refined} -> RefinedSlice a -> Type
 RefinedPi {a} p = Pi {a=(RefinedType a)} (RefinedType . p)
 
+public export
+DecSlice : {a : Type} -> SliceObj a -> Type
+DecSlice {a} = Pi {a} . (.) Dec
+
+public export
+0 SliceInhabited : {0 a : Type} -> {0 sl : SliceObj a} ->
+  DecSlice {a} sl -> SliceObj a
+SliceInhabited {a} {sl} p x = IsYesTrue {a=(sl x)} $ p x
+
 -- A decidable predicate on `a` -- that is, a predicate on `a` together with
 -- a decision procedure for that predicate for any term of `a`.
 public export
 DecProp : Type -> Type
-DecProp a = Subset0 (SliceObj a) $ (Pi {a} . (.) Dec)
+DecProp a = Subset0 (SliceObj a) (DecSlice {a})
 
 public export
 0 PropHolds : {0 a : Type} -> DecProp a -> SliceObj a
-PropHolds {a} p x = IsYesTrue {a=(fst0 p x)} $ snd0 p x
+PropHolds {a} p = SliceInhabited {a} {sl=(fst0 p)} (snd0 p)
 
 public export
 RefinementP : {a : Type} -> (0 p : DecProp a) -> Type
