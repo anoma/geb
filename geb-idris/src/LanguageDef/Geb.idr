@@ -27,7 +27,7 @@ FinProdBounded n = All (GT n)
 
 0 IsFinProdBounded :
   (n : Nat) -> DecSlice {a=FinSliceProdS} (FinProdBounded n)
-IsFinProdBounded n = decAll (isGT n)
+IsFinProdBounded n = all (isGT n)
 
 0 isFinProdBounded : (n : Nat) -> DecPred FinSliceProdS
 isFinProdBounded n = SliceDecPred $ IsFinProdBounded n
@@ -53,7 +53,7 @@ FinMatrixBounded n = All (FinProdBounded n)
 
 0 IsFinMatrixBounded :
   (n : Nat) -> DecSlice {a=FinMatrixS} (FinMatrixBounded n)
-IsFinMatrixBounded n = decAll (IsFinProdBounded n)
+IsFinMatrixBounded n = all (IsFinProdBounded n)
 
 0 isFinMatrixBounded : (n : Nat) -> DecPred FinMatrixS
 isFinMatrixBounded n = SliceDecPred $ IsFinMatrixBounded n
