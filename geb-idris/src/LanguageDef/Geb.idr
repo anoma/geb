@@ -23,19 +23,11 @@ FinSliceProdS : Type
 FinSliceProdS = List Nat
 
 0 FinProdBounded : Nat -> SliceObj FinSliceProdS
-FinProdBounded _ [] = Unit
-FinProdBounded Z (_ :: _) = Void
-FinProdBounded (S n) (k :: ks) = (LTE k n, FinProdBounded (S n) ks)
+FinProdBounded n = All (GT n)
 
 0 IsFinProdBounded :
   (n : Nat) -> DecSlice {a=FinSliceProdS} (FinProdBounded n)
-IsFinProdBounded _ [] = Yes ()
-IsFinProdBounded Z (_ :: _) = No id
-IsFinProdBounded (S n) (k :: ks) =
-  case (isLTE k n, IsFinProdBounded (S n) ks) of
-    (Yes lte, Yes bounded) => Yes (lte, bounded)
-    (No gt, _) => No $ \bounded => void $ gt $ fst bounded
-    (_ , No notBounded) => No $ \bounded => void $ notBounded $ snd bounded
+IsFinProdBounded n = decAll (isGT n)
 
 0 isFinProdBounded : (n : Nat) -> DecPred FinSliceProdS
 isFinProdBounded n = SliceDecPred $ IsFinProdBounded n
@@ -46,9 +38,9 @@ FinSliceProd n = Refinement {a=FinSliceProdS} (isFinProdBounded n)
 interpFSPP : {n : Nat} -> (p : FinSliceProdS) -> (0 _ : FinProdBounded n p) ->
   SliceObj (Fin n) -> Type
 interpFSPP {n} [] i sl = Unit
-interpFSPP {n=Z} (_ :: _) i sl = void i
-interpFSPP {n=(S n)} (k :: ks) i sl =
-  (sl $ natToFinLT k, interpFSPP {n=(S n)} ks (snd i) sl)
+interpFSPP {n=Z} (_ :: _) (gt :: _) sl = void $ succNotLTEzero gt
+interpFSPP {n=(S n)} (k :: ks) (_ :: gt) sl =
+  (sl $ natToFinLT k, interpFSPP {n=(S n)} ks gt sl)
 
 interpFSP : {n : Nat} -> FinSliceProd n -> SliceObj (Fin n) -> Type
 interpFSP {n} p = interpFSPP {n} (fst0 p) (fromIsYes $ snd0 p)
