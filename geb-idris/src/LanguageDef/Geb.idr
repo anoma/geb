@@ -57,17 +57,11 @@ FinMatrixS : Type
 FinMatrixS = List FinSliceProdS
 
 0 FinMatrixBounded : Nat -> SliceObj FinMatrixS
-FinMatrixBounded n [] = Unit
-FinMatrixBounded n (p :: ps) = (FinProdBounded n p, FinMatrixBounded n ps)
+FinMatrixBounded n = All (FinProdBounded n)
 
 0 IsFinMatrixBounded :
   (n : Nat) -> DecSlice {a=FinMatrixS} (FinMatrixBounded n)
-IsFinMatrixBounded n [] = Yes ()
-IsFinMatrixBounded n (p :: ps) =
-  case (IsFinProdBounded n p, IsFinMatrixBounded n ps) of
-    (Yes bounded, Yes bounded') => Yes (bounded, bounded')
-    (No notBounded, _) => No $ \bounded => void $ notBounded $ fst bounded
-    (_, No notBounded) => No $ \bounded => void $ notBounded $ snd bounded
+IsFinMatrixBounded n = decAll (IsFinProdBounded n)
 
 0 isFinMatrixBounded : (n : Nat) -> DecPred FinMatrixS
 isFinMatrixBounded n = SliceDecPred $ IsFinMatrixBounded n
