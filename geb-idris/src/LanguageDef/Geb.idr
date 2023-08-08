@@ -53,12 +53,37 @@ interpFSPP {n=(S n)} (k :: ks) i sl =
 interpFSP : {n : Nat} -> FinSliceProd n -> SliceObj (Fin n) -> Type
 interpFSP {n} p = interpFSPP {n} (fst0 p) (fromIsYes $ snd0 p)
 
-FinSliceFS : Type
-FinSliceFS = List FinSliceProdS
+FinMatrixS : Type
+FinMatrixS = List FinSliceProdS
 
-0 FinSliceFBounded : Nat -> SliceObj FinSliceFS
-FinSliceFBounded n [] = Unit
-FinSliceFBounded n (p :: ps) = (FinProdBounded n p, FinSliceFBounded n ps)
+0 FinMatrixBounded : Nat -> SliceObj FinMatrixS
+FinMatrixBounded n [] = Unit
+FinMatrixBounded n (p :: ps) = (FinProdBounded n p, FinMatrixBounded n ps)
+
+0 IsFinMatrixBounded :
+  (n : Nat) -> DecSlice {a=FinMatrixS} (FinMatrixBounded n)
+IsFinMatrixBounded n [] = Yes ()
+IsFinMatrixBounded n (p :: ps) =
+  case (IsFinProdBounded n p, IsFinMatrixBounded n ps) of
+    (Yes bounded, Yes bounded') => Yes (bounded, bounded')
+    (No notBounded, _) => No $ \bounded => void $ notBounded $ fst bounded
+    (_, No notBounded) => No $ \bounded => void $ notBounded $ snd bounded
+
+0 isFinMatrixBounded : (n : Nat) -> DecPred FinMatrixS
+isFinMatrixBounded n = SliceDecPred $ IsFinMatrixBounded n
+
+FinMatrix : Nat -> Type
+FinMatrix n = Refinement {a=FinMatrixS} (isFinMatrixBounded n)
+
+interpFSFP : {n : Nat} -> (p : FinMatrixS) -> (0 _ : FinMatrixBounded n p) ->
+  SliceObj (Fin n) -> SliceObj (Fin $ length p)
+interpFSFP {n} [] bounded sl i = absurd i
+interpFSFP {n} (p :: ps) bounded sl FZ = ?interpFSFP_hole_2
+interpFSFP {n} (p :: ps) bounded sl (FS i) = ?interpFSFP_hole_3
+
+interpFSF : {n : Nat} ->
+  (sl : FinMatrix n) -> SliceObj (Fin n) -> SliceObj (Fin $ length $ fst0 sl)
+interpFSF {n} sl = interpFSFP {n} (fst0 sl) (fromIsYes $ snd0 sl)
 
 ----------------------------------------
 ----------------------------------------
