@@ -35,15 +35,15 @@ isFinProdBounded n = SliceDecPred $ IsFinProdBounded n
 FinSliceProd : Nat -> Type
 FinSliceProd n = Refinement {a=FinSliceProdS} (isFinProdBounded n)
 
-interpFSPP : {n : Nat} -> (p : FinSliceProdS) -> (0 _ : FinProdBounded n p) ->
+InterpFSPP : {n : Nat} -> (p : FinSliceProdS) -> (0 _ : FinProdBounded n p) ->
   SliceObj (Fin n) -> Type
-interpFSPP {n} [] i sl = Unit
-interpFSPP {n=Z} (_ :: _) (gt :: _) sl = void $ succNotLTEzero gt
-interpFSPP {n=(S n)} (k :: ks) (_ :: gt) sl =
-  (sl $ natToFinLT k, interpFSPP {n=(S n)} ks gt sl)
+InterpFSPP {n} [] i sl = Unit
+InterpFSPP {n=Z} (_ :: _) (gt :: _) sl = void $ succNotLTEzero gt
+InterpFSPP {n=(S n)} (k :: ks) (_ :: gt) sl =
+  (sl $ natToFinLT k, InterpFSPP {n=(S n)} ks gt sl)
 
-interpFSP : {n : Nat} -> FinSliceProd n -> SliceObj (Fin n) -> Type
-interpFSP {n} p = interpFSPP {n} (fst0 p) (fromIsYes $ snd0 p)
+InterpFSP : {n : Nat} -> FinSliceProd n -> SliceObj (Fin n) -> Type
+InterpFSP {n} p = InterpFSPP {n} (fst0 p) (fromIsYes $ snd0 p)
 
 FinMatrixS : Type
 FinMatrixS = List FinSliceProdS
@@ -61,15 +61,18 @@ isFinMatrixBounded n = SliceDecPred $ IsFinMatrixBounded n
 FinMatrix : Nat -> Type
 FinMatrix n = Refinement {a=FinMatrixS} (isFinMatrixBounded n)
 
-interpFSFP : {n : Nat} -> (p : FinMatrixS) -> (0 _ : FinMatrixBounded n p) ->
-  SliceObj (Fin n) -> SliceObj (Fin $ length p)
-interpFSFP {n} [] bounded sl i = absurd i
-interpFSFP {n} (p :: ps) bounded sl FZ = ?interpFSFP_hole_2
-interpFSFP {n} (p :: ps) bounded sl (FS i) = ?interpFSFP_hole_3
+InterpFSMP : {n : Nat} -> (p : FinMatrixS) -> (0 _ : FinMatrixBounded n p) ->
+  SliceObj (Fin n) -> Type
+InterpFSMP {n} ps bounded sl =
+  Subset0 (Nat, List Nat) $
+    \(i, p) =>
+      (b : LT i (length ps) **
+       InterpFSP {n} (Element0 (index' ps $ natToFinLT i) $
+        ?InterpFSMP_hole_pred $ indexAll ?InterpFSMP_hole_elem bounded) sl)
 
-interpFSF : {n : Nat} ->
-  (sl : FinMatrix n) -> SliceObj (Fin n) -> SliceObj (Fin $ length $ fst0 sl)
-interpFSF {n} sl = interpFSFP {n} (fst0 sl) (fromIsYes $ snd0 sl)
+InterpFSM : {n : Nat} ->
+  (sl : FinMatrix n) -> SliceObj (Fin n) -> Type
+InterpFSM {n} sl = InterpFSMP {n} (fst0 sl) (fromIsYes $ snd0 sl)
 
 ----------------------------------------
 ----------------------------------------
