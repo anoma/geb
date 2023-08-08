@@ -1495,3 +1495,12 @@ public export
 maybeLast : List a -> Maybe a
 maybeLast [] = Nothing
 maybeLast xs@(_::_) = Just (last xs)
+
+public export
+decAll : {0 a : Type} -> {0 p : a -> Type} ->
+  ((x : a) -> Dec (p x)) -> (l : List a) -> Dec (All p l)
+decAll {a} {p} dec [] = Yes []
+decAll {a} {p} dec (x :: xs) = case (dec x, decAll {a} {p} dec xs) of
+  (Yes px, Yes pxs) => Yes (px :: pxs)
+  (No npx, _) => No $ \(px :: pxs) => npx px
+  (_, No npxs) => No $ \(px :: pxs) => npxs pxs
