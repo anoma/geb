@@ -37,9 +37,9 @@ gebTest = do
   putStrLn "Begin GebTest:"
   putStrLn "--------------"
   putStrLn ""
-  putStrLn "----------:"
-  putStrLn "FinMatrixT:"
-  putStrLn "----------:"
+  putStrLn "----------"
+  putStrLn "FinMatrixT"
+  putStrLn "----------"
   putStrLn ""
   putStrLn $ "NM1 = " ++ show NM1
   putStrLn $ "tfm1t1 = " ++ showFinMatrixT tfm1t1
