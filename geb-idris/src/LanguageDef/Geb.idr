@@ -55,6 +55,15 @@ public export
 BinTree : Type -> Type
 BinTree = FreeMonad ProductMonad
 
+-- The universal `eval` morphism for `BinTree`.
+public export
+binTreeEval : FreeFEval ProductMonad
+binTreeEval v a subst alg x = case x of
+  InFree x' => case x' of
+    TFV v => subst v
+    TFC c => alg $ case c of
+      (c1, c2) => (binTreeEval v a subst alg c1, binTreeEval v a subst alg c2)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Finitary dependent polynomial functors ----
