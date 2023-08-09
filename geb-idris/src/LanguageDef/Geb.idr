@@ -10,6 +10,7 @@ import LanguageDef.RefinedADT
 import LanguageDef.Adjunctions
 import LanguageDef.NatPrefixCat
 import LanguageDef.ProgFinSet
+import LanguageDef.PolyIndTypes
 
 %default total
 
@@ -73,8 +74,20 @@ binTreeEval v a subst alg x = case x of
       (c1, c2) => (binTreeEval v a subst alg c1, binTreeEval v a subst alg c2)
 
 public export
-BinTreeF1 : PolyFunc -> Type
+BinTreeF1 : IndIndF1
 BinTreeF1 = BinTreeF . pfPos
+
+public export
+BinTreeIndIndAlg : IndIndF1
+BinTreeIndIndAlg = IndIndAlg BinTreeF1
+
+public export
+BinTreeF2 : Type
+BinTreeF2 = IndIndF2 BinTreeF1
+
+public export
+BinTreeIndInd : BinTreeF2 -> IndInd
+BinTreeIndInd f2 = (BinTreeF1 ** f2)
 
 ------------------------------------------------
 ------------------------------------------------
