@@ -4428,30 +4428,30 @@ TFDepthToMu {n} (m ** (lte, type)) = (m ** type)
 -- hom-set is isomorphic to the object itself.  From the perspective
 -- of (dependent) types, these are the terms of the object/type.
 public export
-data FinTFNewTermAlg : FinTFNewIndAlg (\_, _ => Type) where
+data FinTFNewTrAlg : FinTFNewIndAlg (\_, _ => Type) where
   FTTUnit :
     {0 hyp : FinTFDepth Z -> Type} ->
-    FinTFNewTermAlg Z hyp FTFNTerminal
+    FinTFNewTrAlg Z hyp FTFNTerminal
   FTTLeft :
     {0 m, n : Nat} -> {0 hyp : FinTFDepth (maximum m n) -> Type} ->
     {0 x : FinTFNew m} -> {0 y : FinTFNew n} ->
     hyp (FinPromoteLeft {n} x) ->
-    FinTFNewTermAlg (maximum m n) hyp (FTFNCoproduct x y)
+    FinTFNewTrAlg (maximum m n) hyp (FTFNCoproduct x y)
   FTTRight :
     {0 m, n : Nat} -> {0 hyp : FinTFDepth (maximum m n) -> Type} ->
     {0 x : FinTFNew m} -> {0 y : FinTFNew n} ->
     hyp (FinPromoteRight {m} y) ->
-    FinTFNewTermAlg (maximum m n) hyp (FTFNCoproduct x y)
+    FinTFNewTrAlg (maximum m n) hyp (FTFNCoproduct x y)
   FTTPair :
     {0 m, n : Nat} -> {0 hyp : FinTFDepth (maximum m n) -> Type} ->
     {0 x : FinTFNew m} -> {0 y : FinTFNew n} ->
     hyp (FinPromoteLeft {n} x) ->
     hyp (FinPromoteRight {m} y) ->
-    FinTFNewTermAlg (maximum m n) hyp (FTFNProduct x y)
+    FinTFNewTrAlg (maximum m n) hyp (FTFNProduct x y)
 
 public export
 FinTFNewTerm : {funext : FunExt} -> (n : Nat) -> FinTFNew n -> Type
-FinTFNewTerm {funext} = finTFNewInd {funext} FinTFNewTermAlg
+FinTFNewTerm {funext} = finTFNewInd {funext} FinTFNewTrAlg
 
 -- Generate the exponential object of a pair of finite unrefined objects.
 public export
@@ -5537,12 +5537,12 @@ s0ObjCard = s0ObjFreeCata s0ObjCardAlg
 -- is an inpretation within `Type` of the index (which is a term of
 -- `FreeS0Obj v`).
 public export
-s0ObjTermAlg : FreeS0SliceAlg
-s0ObjTermAlg = MkS0ObjAlg Void Unit Either Pair
+s0ObjTrAlg : FreeS0SliceAlg
+s0ObjTrAlg = MkS0ObjAlg Void Unit Either Pair
 
 public export
 s0ObjTerm : {0 v : Type} -> (v -> Type) -> FreeS0Slice v
-s0ObjTerm = s0slice s0ObjTermAlg
+s0ObjTerm = s0slice s0ObjTrAlg
 
 -- For any object `x` of the zeroth-order substitution category, a
 -- `FreeS0DepSet x` is a type which depends on `x`.  In dependent
@@ -7026,17 +7026,17 @@ p !*^ n = foldrNatNoUnit ((!*) p) Subst1 p n
 ----------------------------------------
 
 public export
-SubstTermAlg : MetaSOAlg Type
-SubstTermAlg SO0 = Void
-SubstTermAlg SO1 = ()
-SubstTermAlg (x !!+ y) = Either x y
-SubstTermAlg (x !!* y) = Pair x y
-SubstTermAlg (SOn n) = Fin n
+SubstTrAlg : MetaSOAlg Type
+SubstTrAlg SO0 = Void
+SubstTrAlg SO1 = ()
+SubstTrAlg (x !!+ y) = Either x y
+SubstTrAlg (x !!* y) = Pair x y
+SubstTrAlg (SOn n) = Fin n
 
 -- Variant from an algebra rather than explicit recursion
 public export
 SubstTerm' : SubstObjMu -> Type
-SubstTerm' = substObjCata SubstTermAlg
+SubstTerm' = substObjCata SubstTrAlg
 
 -- Variant using explicit recursion
 public export
@@ -10010,13 +10010,13 @@ interpFinSubst : {0 c, d : Nat} -> FinSubstT c d -> Type
 interpFinSubst = finSubstCata InterpFSAlg
 
 public export
-InterpTermAlg : FSTAlg (\_, _, x, _ => interpFinSubst x)
-InterpTermAlg = MkFSTAlg () (\_ => Left) (\_ => Right) (\_, _ => MkPair)
+InterpTrAlg : FSTAlg (\_, _, x, _ => interpFinSubst x)
+InterpTrAlg = MkFSTAlg () (\_ => Left) (\_ => Right) (\_, _ => MkPair)
 
 public export
 interpFinSubstTerm : {0 c, d : Nat} -> {x : FinSubstT c d} ->
   FinSubstTerm x -> interpFinSubst {c} {d} x
-interpFinSubstTerm {x} = fstCata InterpTermAlg
+interpFinSubstTerm {x} = fstCata InterpTrAlg
 
 public export
 interpFinSubstMorph : {0 cx, dx, cy, dy, depth : Nat} ->

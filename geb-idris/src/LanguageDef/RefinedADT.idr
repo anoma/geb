@@ -2168,8 +2168,8 @@ SExpTreeF : Type -> Type -> Type
 SExpTreeF = ScaleFunctor SExpBaseF
 
 public export
-SExpTermAlg : Type -> Type -> Type
-SExpTermAlg = TermAlgebra SExpBaseF
+SExpTrAlg : Type -> Type -> Type
+SExpTrAlg = TrAlgebra SExpBaseF
 
 public export
 SExpTreeCoalg : Type -> Type -> Type
