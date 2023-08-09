@@ -89,6 +89,25 @@ public export
 BinTreeIndInd : BinTreeF2 -> IndInd
 BinTreeIndInd f2 = (BinTreeF1 ** f2)
 
+public export
+BinTreeFreeM1 : PolyFunc -> Type
+BinTreeFreeM1 = BinTree . pfPos
+
+public export
+partial
+data BinTreeFreeM2 : (f2 : BinTreeF2) ->
+    (p : PolyFunc) -> BinTreeFreeM1 p -> Type where
+  InBT2v : {0 f2 : BinTreeF2} -> {0 p : PolyFunc} ->
+    (i : pfPos p) -> pfDir {p} i -> BinTreeFreeM2 f2 p (IdrisCategories.inFV i)
+  InBT2c : {0 f2 : BinTreeF2} -> {0 p : PolyFunc} ->
+    (i1 : BinTreeF (BinTreeFreeM1 p)) ->
+    f2 (BinTreeFreeM1 p ** BinTreeFreeM2 f2 p) IdrisCategories.inFC i1 ->
+    BinTreeFreeM2 f2 p (IdrisCategories.inFC i1)
+
+public export
+BinTreeFreeIndIndM : BinTreeF2 -> PolyFunc -> PolyFunc
+BinTreeFreeIndIndM f2 p = (BinTreeFreeM1 p ** BinTreeFreeM2 f2 p)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Finitary dependent polynomial functors ----
