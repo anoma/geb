@@ -45,11 +45,19 @@ MaybeCS = CSliceObj . Maybe
 ---- Binary trees as free monads over product monad ----
 --------------------------------------------------------
 
+public export
+Functor ProductMonad where
+  map = mapHom
+
 -- A binary tree may be viewed as the free monad over the product monad
 -- (which is the monad of the product adjunction; it takes `a` to `(a, a)`).
 public export
-BinTreeF : Type -> Type -> Type
-BinTreeF = TranslateFunctor ProductMonad
+BinTreeF : Type -> Type
+BinTreeF = ProductMonad
+
+public export
+BinTreeTF : Type -> Type -> Type
+BinTreeTF = TranslateFunctor ProductMonad
 
 public export
 BinTree : Type -> Type
@@ -63,6 +71,10 @@ binTreeEval v a subst alg x = case x of
     TFV v => subst v
     TFC c => alg $ case c of
       (c1, c2) => (binTreeEval v a subst alg c1, binTreeEval v a subst alg c2)
+
+public export
+BinTreeF1 : PolyFunc -> Type
+BinTreeF1 = BinTreeF . pfPos
 
 ------------------------------------------------
 ------------------------------------------------
