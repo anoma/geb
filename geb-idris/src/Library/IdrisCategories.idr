@@ -2906,18 +2906,18 @@ treeSubtree (SFN _ fx) = fx
 -- object.  When `v` is the initial object (`Void`), it specializes to
 -- generating `F`-algebras.
 public export
-TermAlgebra : (Type -> Type) -> Type -> Type -> Type
-TermAlgebra f v a = Algebra (TranslateFunctor f v) a
+TrAlgebra : (Type -> Type) -> Type -> Type -> Type
+TrAlgebra f v = Algebra (TranslateFunctor f v)
 
 public export
 voidAlg : {f : Type -> Type} -> {a : Type} ->
-  Algebra f a -> TermAlgebra f Void a
+  Algebra f a -> TrAlgebra f Void a
 voidAlg alg (TFV {v=Void} _) impossible
 voidAlg alg (TFC x) = alg x
 
 public export
 TermCoalgebra : (Type -> Type) -> Type -> Type -> Type
-TermCoalgebra f v a = Coalgebra (TranslateFunctor f v) a
+TermCoalgebra f v = Coalgebra (TranslateFunctor f v)
 
 -- A coalgebra on a functor representing a type of labeled trees (as generated
 -- by `ScaleFunctor` above) may be viewed as a polymorphic coalgebra, because
@@ -2956,7 +2956,7 @@ TreeAlgebra f v a = Algebra (ScaleFunctor f v) a
 public export
 data FreeMonad : (Type -> Type) -> (Type -> Type) where
   InFree : {f : Type -> Type} -> {0 a : Type} ->
-    TermAlgebra f a (FreeMonad f a)
+    TrAlgebra f a (FreeMonad f a)
 
 public export
 FreeAlgSig : (Type -> Type) -> Type -> Type
@@ -3372,7 +3372,7 @@ CoproductToCoproductFAlg f g f' g' a =
 
 public export
 partial
-muFree : Functor f => TermAlgebra f v a -> FreeMonad f v -> a
+muFree : Functor f => TrAlgebra f v a -> FreeMonad f v -> a
 muFree alg (InFree x) = alg $ case x of
   TFV x => TFV x
   TFC x => TFC $ map (muFree alg) x
@@ -7667,10 +7667,10 @@ treeSubtreeProduct : ProductCatTreeFunctor f l a i -> f a i
 treeSubtreeProduct (ProductCatTreeNode _ fx) = fx
 
 public export
-ProductCatTermAlgebra : {idx : Type} ->
+ProductCatTrAlgebra : {idx : Type} ->
   ProductCatObjectEndoMap idx -> ProductCatObject idx -> ProductCatObject idx ->
   Type
-ProductCatTermAlgebra f v a =
+ProductCatTrAlgebra f v a =
   ProductCatAlgebra (ProductCatTermFunctor f v) a
 
 public export
@@ -7693,7 +7693,7 @@ data ProductCatFreeMonad : {idx : Type} ->
     ProductCatObjectEndoMap idx -> ProductCatObjectEndoMap idx where
   InFreeProduct : {idx : Type} ->
     {f : ProductCatObjectEndoMap idx} -> {0 a : ProductCatObject idx} ->
-    ProductCatTermAlgebra f a (ProductCatFreeMonad f a)
+    ProductCatTrAlgebra f a (ProductCatFreeMonad f a)
 
 public export
 data ProductCatCofreeComonad : {idx : Type} ->
@@ -7753,7 +7753,7 @@ public export
 ProductCatFreeFEval : {idx : Type} -> ProductCatObjectEndoMap idx -> Type
 ProductCatFreeFEval f =
   (v, a : ProductCatObject idx) ->
-  ProductCatTermAlgebra f v a ->
+  ProductCatTrAlgebra f v a ->
   ProductCatMorphism (ProductCatFreeMonad f v) a
 
 public export

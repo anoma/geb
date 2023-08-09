@@ -3184,15 +3184,15 @@ BicartDistTerm : Type
 BicartDistTerm = PolyFuncMu BicartDistTermF
 
 public export
-BicartDistTermAlg : SliceObj Type
-BicartDistTermAlg = PFAlg BicartDistTermF
+BicartDistTrAlg : SliceObj Type
+BicartDistTrAlg = PFAlg BicartDistTermF
 
 public export
-bicartDistTermCata : {0 a : Type} -> BicartDistTermAlg a -> BicartDistTerm -> a
+bicartDistTermCata : {0 a : Type} -> BicartDistTrAlg a -> BicartDistTerm -> a
 bicartDistTermCata = pfCata {p=BicartDistTermF}
 
 public export
-BCDTShowAlg : BicartDistTermAlg String
+BCDTShowAlg : BicartDistTrAlg String
 BCDTShowAlg BCDT_U dir =
   show BCDT_U
 BCDTShowAlg BCDT_L dir =
@@ -3243,12 +3243,12 @@ Eq BicartDistTerm where
   (==) = bcdtEq
 
 public export
-BCDObjTermAlg : SliceObj Type
-BCDObjTermAlg = PFProductAlg BicartDistTermF BicartDistObjF
+BCDObjTrAlg : SliceObj Type
+BCDObjTrAlg = PFProductAlg BicartDistTermF BicartDistObjF
 
 public export
 bcdObjTermCata : {0 a : Type} ->
-  BCDObjTermAlg a -> BicartDistTerm -> BicartDistObj -> a
+  BCDObjTrAlg a -> BicartDistTerm -> BicartDistObj -> a
 bcdObjTermCata = pfProductCata {p=BicartDistTermF} {q=BicartDistObjF}
 
 -- Type-checking for terms against objects (determing whether a given general
@@ -3288,7 +3288,7 @@ MkBicartDistTypedTerm t {checks} = MkRefinement {a=BicartDistTerm} t
 -------------------
 
 public export
-BCDTNumLeavesAlg : BicartDistTermAlg Nat
+BCDTNumLeavesAlg : BicartDistTrAlg Nat
 BCDTNumLeavesAlg BCDT_U d = 1
 BCDTNumLeavesAlg BCDT_L d = d BCDTermL
 BCDTNumLeavesAlg BCDT_R d = d BCDTermR
@@ -3299,7 +3299,7 @@ bcdtNumLeaves : BicartDistTerm -> Nat
 bcdtNumLeaves = bicartDistTermCata BCDTNumLeavesAlg
 
 public export
-BCDTNumInternalNodesAlg : BicartDistTermAlg Nat
+BCDTNumInternalNodesAlg : BicartDistTrAlg Nat
 BCDTNumInternalNodesAlg BCDT_U d = 0
 BCDTNumInternalNodesAlg BCDT_L d = 1 + d BCDTermL
 BCDTNumInternalNodesAlg BCDT_R d = 1 + d BCDTermR
@@ -3310,7 +3310,7 @@ bcdtNumInternalNodes : BicartDistTerm -> Nat
 bcdtNumInternalNodes = bicartDistTermCata BCDTNumInternalNodesAlg
 
 public export
-BCDTSizeAlg : BicartDistTermAlg Nat
+BCDTSizeAlg : BicartDistTrAlg Nat
 BCDTSizeAlg BCDT_U d = 1
 BCDTSizeAlg BCDT_L d = 1 + d BCDTermL
 BCDTSizeAlg BCDT_R d = 1 + d BCDTermR
@@ -3321,7 +3321,7 @@ bcdtSize : BicartDistTerm -> Nat
 bcdtSize = bicartDistTermCata BCDTSizeAlg
 
 public export
-BCDTDepthAlg : BicartDistTermAlg Nat
+BCDTDepthAlg : BicartDistTrAlg Nat
 BCDTDepthAlg BCDT_U d = 0
 BCDTDepthAlg BCDT_L d = 1 + d BCDTermL
 BCDTDepthAlg BCDT_R d = 1 + d BCDTermR
@@ -3696,12 +3696,12 @@ bcoCompCata : BCOCompAlg (a -> a) -> BicartObj -> a -> a
 bcoCompCata = bcoCata . bcoCompAlg
 
 public export
-BCOTermAlg : BCOAlg Type
-BCOTermAlg = MkBCOAlg Void Unit Either Pair
+BCOTrAlg : BCOAlg Type
+BCOTrAlg = MkBCOAlg Void Unit Either Pair
 
 public export
 BCOTerm : BicartObj -> Type
-BCOTerm = bcoCata BCOTermAlg
+BCOTerm = bcoCata BCOTrAlg
 
 public export
 BCOHomAlg : BCOCompAlg (BicartObj -> BicartObj)

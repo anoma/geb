@@ -1592,15 +1592,15 @@ SOTermValidation : SOMu -> STMu -> Type
 SOTermValidation = pfProductCata SOTermValidationAlg
 
 public export
-SOCheckedTermAlg : SOAlg Type
-SOCheckedTermAlg SOPos0 d = Void
-SOCheckedTermAlg SOPos1 d = Unit
-SOCheckedTermAlg SOPosC d = Either (d SODirL) (d SODirR)
-SOCheckedTermAlg SOPosP d = Pair (d SODir1) (d SODir2)
+SOCheckedTrAlg : SOAlg Type
+SOCheckedTrAlg SOPos0 d = Void
+SOCheckedTrAlg SOPos1 d = Unit
+SOCheckedTrAlg SOPosC d = Either (d SODirL) (d SODirR)
+SOCheckedTrAlg SOPosP d = Pair (d SODir1) (d SODir2)
 
 public export
 SOCheckedTerm : SOMu -> Type
-SOCheckedTerm = pfCata SOCheckedTermAlg
+SOCheckedTerm = pfCata SOCheckedTrAlg
 
 public export
 SOCheckedTermPFAlg : SOAlg PolyFunc
@@ -1800,15 +1800,15 @@ FinPCTermF = pfSquareArena pfMaybeArena
 --  - right
 --  - pair
 public export
-FinPCTermAlg : Type -> Type
-FinPCTermAlg a = (a, a -> a, a -> a, a -> a -> a)
+FinPCTrAlg : Type -> Type
+FinPCTrAlg a = (a, a -> a, a -> a, a -> a -> a)
 
 public export
-FinPCTermAlgToPF : {a : Type} -> FinPCTermAlg a -> PFAlg FinPCTermF a
-FinPCTermAlgToPF (u, l, r, p) (Right (), Right ()) d = u
-FinPCTermAlgToPF (u, l, r, p) (Right (), Left ()) d = r $ d $ Right ()
-FinPCTermAlgToPF (u, l, r, p) (Left (), Right ()) d = l $ d $ Left ()
-FinPCTermAlgToPF (u, l, r, p) (Left (), Left ()) d =
+FinPCTrAlgToPF : {a : Type} -> FinPCTrAlg a -> PFAlg FinPCTermF a
+FinPCTrAlgToPF (u, l, r, p) (Right (), Right ()) d = u
+FinPCTrAlgToPF (u, l, r, p) (Right (), Left ()) d = r $ d $ Right ()
+FinPCTrAlgToPF (u, l, r, p) (Left (), Right ()) d = l $ d $ Left ()
+FinPCTrAlgToPF (u, l, r, p) (Left (), Left ()) d =
   p (d $ Left ()) (d $ Right ())
 
 public export
@@ -1816,8 +1816,8 @@ FinPCTermMu : Type
 FinPCTermMu = PolyFuncMu FinPCTermF
 
 public export
-finPCTermCata : {a : Type} -> FinPCTermAlg a -> FinPCTermMu -> a
-finPCTermCata = pfCata {p=FinPCTermF} . FinPCTermAlgToPF
+finPCTermCata : {a : Type} -> FinPCTrAlg a -> FinPCTermMu -> a
+finPCTermCata = pfCata {p=FinPCTermF} . FinPCTrAlgToPF
 
 public export
 FinPCTermFreePF : PolyFunc
@@ -1829,11 +1829,11 @@ FinPCTermFreeM = InterpPolyFuncFreeM FinPCTermF
 
 public export
 finPCTermSubstCata : {a, b : Type} ->
-  (a -> b) -> FinPCTermAlg b -> FinPCTermFreeM a -> b
-finPCTermSubstCata subst = pfSubstCata subst . FinPCTermAlgToPF
+  (a -> b) -> FinPCTrAlg b -> FinPCTermFreeM a -> b
+finPCTermSubstCata subst = pfSubstCata subst . FinPCTrAlgToPF
 
 public export
-FinPCTermShowAlg : FinPCTermAlg String
+FinPCTermShowAlg : FinPCTrAlg String
 FinPCTermShowAlg =
   ("!",
    \x => "l[" ++ x ++ "]",
@@ -1957,30 +1957,30 @@ TermMu = PolyFuncMu ADTTermPF
 ---------------------------------
 
 public export
-TermAlg : Type -> Type
-TermAlg = PFAlg ADTTermPF
+TrAlg : Type -> Type
+TrAlg = PFAlg ADTTermPF
 
 public export
-termCata : {0 a : Type} -> TermAlg a -> TermMu -> a
+termCata : {0 a : Type} -> TrAlg a -> TermMu -> a
 termCata = pfCata {p=ADTTermPF}
 
 public export
-record TermAlgRec (a : Type) where
-  constructor MkTermAlg
+record TrAlgRec (a : Type) where
+  constructor MkTrAlg
   talgProd : ProdAlg a
   talgCoprod : CoprodAlg a
 
 public export
-talgFromRec : {0 a : Type} -> TermAlgRec a -> TermAlg a
+talgFromRec : {0 a : Type} -> TrAlgRec a -> TrAlg a
 talgFromRec alg (Left len) ts = MkProdAlg alg.talgProd len ts
 talgFromRec alg (Right idx) t = MkCoprodAlg alg.talgCoprod idx t
 
 public export
-termCataRec : {0 a : Type} -> TermAlgRec a -> TermMu -> a
+termCataRec : {0 a : Type} -> TrAlgRec a -> TermMu -> a
 termCataRec = termCata . talgFromRec
 
 public export
-termCataCtx : {0 ctx, a : Type} -> (ctx -> TermAlgRec a) -> ctx -> TermMu -> a
+termCataCtx : {0 ctx, a : Type} -> (ctx -> TrAlgRec a) -> ctx -> TermMu -> a
 termCataCtx {ctx} {a} alg =
   pfFreeFEval {p=ADTTermPF} {x=ctx} {a} ?termCataCtx_hole
 
@@ -2009,16 +2009,16 @@ InNat = InAtom SL_NAT
 -------------------
 
 public export
-TermSizeAlg : TermAlgRec Nat
-TermSizeAlg = MkTermAlg (foldl (+) 1) (const $ (+) 1)
+TermSizeAlg : TrAlgRec Nat
+TermSizeAlg = MkTrAlg (foldl (+) 1) (const $ (+) 1)
 
 public export
 termSize : TermMu -> Nat
 termSize = termCataRec TermSizeAlg
 
 public export
-TermDepthAlg : TermAlgRec Nat
-TermDepthAlg = MkTermAlg (S . foldl max 0) (const $ (+) 1)
+TermDepthAlg : TrAlgRec Nat
+TermDepthAlg = MkTrAlg (S . foldl max 0) (const $ (+) 1)
 
 public export
 termDepth : TermMu -> Nat
@@ -2039,8 +2039,8 @@ termShowCoproduct : TermAtom -> String -> String
 termShowCoproduct n t = "[" ++ show n ++ ":" ++ t ++ "]"
 
 public export
-TermShowAlg : TermAlgRec String
-TermShowAlg = MkTermAlg termShowProduct termShowCoproduct
+TermShowAlg : TrAlgRec String
+TermShowAlg = MkTrAlg termShowProduct termShowCoproduct
 
 public export
 Show TermMu where
@@ -2116,9 +2116,9 @@ fbcObjRep : FinBCObjMu -> TermMu
 fbcObjRep = fbcObjCataRec FBCObjRepAlg
 
 public export
-FBCObjParseAlg : TermAlgRec (Maybe FinBCObjMu)
+FBCObjParseAlg : TrAlgRec (Maybe FinBCObjMu)
 FBCObjParseAlg =
-  MkTermAlg
+  MkTrAlg
     (\ts => let tra = sequence ts in map ?FBCObjParse_hole_prod tra)
     (\ts => ?FBCObjParse_hole_coprod)
 
@@ -3295,19 +3295,19 @@ t $$ t' = InADTT (ADTPair t t')
 ----------------------
 
 public export
-TermAlg' : Type -> Type
-TermAlg' a = ADTTermF a -> a
+TrAlg' : Type -> Type
+TrAlg' a = ADTTermF a -> a
 
 public export
 TermEndoAlg : Type
-TermEndoAlg = TermAlg' ADTTerm
+TermEndoAlg = TrAlg' ADTTerm
 
 ----------------------------------------------------------
 ---- Zero-usage (compile-time-only) term catamorphism ----
 ----------------------------------------------------------
 
 public export
-0 termCataZeroUsage : {0 a : Type} -> (0 _ : TermAlg' a) -> (0 _ : ADTTerm) -> a
+0 termCataZeroUsage : {0 a : Type} -> (0 _ : TrAlg' a) -> (0 _ : ADTTerm) -> a
 termCataZeroUsage alg (InADTT t) = alg $ case t of
   ADTUnit => ADTUnit
   ADTLeft t => ADTLeft (termCataZeroUsage alg t)
@@ -3319,7 +3319,7 @@ termCataZeroUsage alg (InADTT t) = alg $ case t of
 --------------------------------------
 
 public export
-TermSizeAlg' : TermAlg' Nat
+TermSizeAlg' : TrAlg' Nat
 TermSizeAlg' ADTUnit = 1
 TermSizeAlg' (ADTLeft t) = S t
 TermSizeAlg' (ADTRight t) = S t
@@ -3330,7 +3330,7 @@ public export
 termSize' = termCataZeroUsage TermSizeAlg'
 
 public export
-TermDepthAlg' : TermAlg' Nat
+TermDepthAlg' : TrAlg' Nat
 TermDepthAlg' ADTUnit = 1
 TermDepthAlg' (ADTLeft t) = S t
 TermDepthAlg' (ADTRight t) = S t
@@ -3346,7 +3346,7 @@ termDepth' = termCataZeroUsage TermDepthAlg'
 
 mutual
   public export
-  termFold : {0 a : Type} -> TermAlg' a -> (a -> a) -> ADTTerm -> a
+  termFold : {0 a : Type} -> TrAlg' a -> (a -> a) -> ADTTerm -> a
   termFold alg cont (InADTT t) = case t of
     ADTUnit => cont (alg ADTUnit)
     ADTLeft l => termFold alg (cont . alg . ADTLeft) l
@@ -3354,7 +3354,7 @@ mutual
     ADTPair l r => termFold alg (termFoldPair alg cont r) l
 
   public export
-  termFoldPair : {0 a : Type} -> TermAlg' a -> (a -> a) -> ADTTerm -> a -> a
+  termFoldPair : {0 a : Type} -> TrAlg' a -> (a -> a) -> ADTTerm -> a -> a
   termFoldPair alg cont r l = termFold alg (cont . alg . ADTPair l) r
 
 ---------------------------------------
@@ -3379,7 +3379,7 @@ mutual
   public export
   partial
   termStackRun : {0 a : Type} ->
-    TermAlg' a -> TermStack a -> ADTTerm -> a
+    TrAlg' a -> TermStack a -> ADTTerm -> a
   termStackRun alg stack (InADTT t) = case t of
     ADTUnit => termContRun alg stack (alg ADTUnit)
     ADTLeft l => termStackRun alg (TSELeft :: stack) l
@@ -3388,7 +3388,7 @@ mutual
 
   public export
   partial
-  termContRun : {0 a : Type} -> TermAlg' a -> TermStack a -> a -> a
+  termContRun : {0 a : Type} -> TrAlg' a -> TermStack a -> a -> a
   termContRun {a} alg [] result = result
   termContRun {a} alg (elem :: stack) result = case elem of
     TSELeft => termContRun alg stack (alg $ ADTLeft result)
@@ -3402,7 +3402,7 @@ mutual
 ------------------------------------------
 
 public export
-termCata' : {0 a : Type} -> TermAlg' a -> ADTTerm -> a
+termCata' : {0 a : Type} -> TrAlg' a -> ADTTerm -> a
 termCata' alg = termFold alg id
 
 -------------------------------------------------------------
@@ -3423,12 +3423,12 @@ mutual
     gebTermToADTTerm t :: gebTermListToADTTermList ts
 
 public export
-termToGebTermAlg : TermAlgRec GebTerm
-termToGebTermAlg = MkTermAlg GebRecordTerm GebSumTerm
+termToGebTrAlg : TrAlgRec GebTerm
+termToGebTrAlg = MkTrAlg GebRecordTerm GebSumTerm
 
 public export
 termToGebTerm : TermMu -> GebTerm
-termToGebTerm = termCataRec termToGebTermAlg
+termToGebTerm = termCataRec termToGebTrAlg
 
 -----------------------------------------------------
 -----------------------------------------------------
