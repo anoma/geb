@@ -13,6 +13,48 @@ import LanguageDef.ProgFinSet
 
 %default total
 
+----------------------------------------------------
+----------------------------------------------------
+---- Binary trees with interpretations of atoms ----
+----------------------------------------------------
+----------------------------------------------------
+
+---------------------------------------------------
+---- Partial interpretations as `Maybe`-slices ----
+---------------------------------------------------
+
+-- For a given object `a`, a category-theory-style slice object over `Maybe a`
+-- maybe viewed as an object together with an interpretation of that object
+-- as a representation of `a`, which may be partial both in the sense that
+-- the object may have more structure than is determined solely by its
+-- representing `a` and in the sense that it might represent only part of the
+-- structure of `a`.
+--
+-- One specific application of this is that if we imagine that `a` is a type
+-- whose terms some interface knows how to interpret, then given a slice
+-- `(b : Type ** f : b -> Maybe a)` over `Maybe a`, we could build an
+-- interpretation of some type of structure containing terms of `b` which knows
+-- how to interpret a given structure of that type whenever all the terms
+-- of `b` contained in that structure have interpretations as `Just a` under
+-- `f`.
+public export
+MaybeCS : Type -> Type
+MaybeCS = CSliceObj . Maybe
+
+--------------------------------------------------------
+---- Binary trees as free monads over product monad ----
+--------------------------------------------------------
+
+-- A binary tree may be viewed as the free monad over the product monad
+-- (which is the monad of the product adjunction; it takes `a` to `(a, a)`).
+public export
+BinTreeF : Type -> Type -> Type
+BinTreeF = TranslateFunctor ProductMonad
+
+public export
+BinTree : Type -> Type
+BinTree = FreeMonad ProductMonad
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Finitary dependent polynomial functors ----
