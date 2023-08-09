@@ -142,39 +142,39 @@ PairShowAlg () d = "(" ++ d PAIRFST ++ "," ++ d PAIRSND ++ ")"
 ----------------------------------
 
 public export
-BinTreeF : ParamPolyFunc PolyFunc
-BinTreeF a = pfCoproductArena a PairF
+BinTree'F : ParamPolyFunc PolyFunc
+BinTree'F a = pfCoproductArena a PairF
 
 public export
-BinTreeAlg : PolyFunc -> Type -> Type
-BinTreeAlg a = PFAlg (BinTreeF a)
+BinTree'Alg : PolyFunc -> Type -> Type
+BinTree'Alg a = PFAlg (BinTree'F a)
 
 public export
-BinTreeMu : PolyFunc -> Type
-BinTreeMu a = PolyFuncMu (BinTreeF a)
+BinTree'Mu : PolyFunc -> Type
+BinTree'Mu a = PolyFuncMu (BinTree'F a)
 
 public export
 binTreeCata : {0 a : PolyFunc} -> {0 b : Type} ->
-  BinTreeAlg a b -> BinTreeMu a -> b
-binTreeCata {a} {b} = pfCata {p=(BinTreeF a)} {a=b}
+  BinTree'Alg a b -> BinTree'Mu a -> b
+binTreeCata {a} {b} = pfCata {p=(BinTree'F a)} {a=b}
 
 public export
-BinTreeShowAlg : {a : PolyFunc} -> PFAlg a String -> BinTreeAlg a String
-BinTreeShowAlg {a=(pos ** dir)} alg (Left i) d = alg i d
-BinTreeShowAlg {a=(pos ** dir)} alg (Right ()) d = PairShowAlg () d
+BinTree'ShowAlg : {a : PolyFunc} -> PFAlg a String -> BinTree'Alg a String
+BinTree'ShowAlg {a=(pos ** dir)} alg (Left i) d = alg i d
+BinTree'ShowAlg {a=(pos ** dir)} alg (Right ()) d = PairShowAlg () d
 
 public export
-binTreeShow : {a : PolyFunc} -> PFAlg a String -> BinTreeMu a -> String
-binTreeShow = binTreeCata . BinTreeShowAlg
+binTreeShow : {a : PolyFunc} -> PFAlg a String -> BinTree'Mu a -> String
+binTreeShow = binTreeCata . BinTree'ShowAlg
 
 -- Construct a leaf of a binary tree.
 public export
-InBTL : {a : PolyFunc} -> PolyFuncMu a -> BinTreeMu a
+InBTL : {a : PolyFunc} -> PolyFuncMu a -> BinTree'Mu a
 InBTL {a=a@(pos ** dir)} = pfCata {p=a} $ \i, d => InPFM (Left i) d
 
 -- Construct an internal node of a binary tree.
 public export
-InBTN : {a : PolyFunc} -> BinTreeMu a -> BinTreeMu a -> BinTreeMu a
+InBTN : {a : PolyFunc} -> BinTree'Mu a -> BinTree'Mu a -> BinTree'Mu a
 InBTN {a=(pos ** dir)} x y = InPFM (Right ()) $ \i => case i of
   False => x
   True => y
@@ -184,8 +184,8 @@ InBTN {a=(pos ** dir)} x y = InPFM (Right ()) $ \i => case i of
 -----------------------------------------
 
 public export
-BinTreeB : Type
-BinTreeB = BinTreeMu BoolF
+BinTree'B : Type
+BinTree'B = BinTree'Mu BoolF
 
 ---------------------------
 ---------------------------
@@ -299,21 +299,21 @@ sexpBCata {a} = spfCata {spf=(SexpF a)}
 -- component handling both cases to produce the return type for the overall
 -- expressions.
 public export
-BinTreeAlgToSexpAlg : {0 a : PolyFunc} -> {0 b : Type} ->
-  BinTreeAlg a b -> SexpAlg a (const b)
-BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Left ()) (i ** d) = alg (Left i) d
-BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right False) (() ** d) = alg (Right ()) d
-BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right True) ((False ** d)) = d ()
-BinTreeAlgToSexpAlg {a=(_ ** _)} alg (Right True) ((True ** d)) = d ()
+BinTree'AlgToSexpAlg : {0 a : PolyFunc} -> {0 b : Type} ->
+  BinTree'Alg a b -> SexpAlg a (const b)
+BinTree'AlgToSexpAlg {a=(_ ** _)} alg (Left ()) (i ** d) = alg (Left i) d
+BinTree'AlgToSexpAlg {a=(_ ** _)} alg (Right False) (() ** d) = alg (Right ()) d
+BinTree'AlgToSexpAlg {a=(_ ** _)} alg (Right True) ((False ** d)) = d ()
+BinTree'AlgToSexpAlg {a=(_ ** _)} alg (Right True) ((True ** d)) = d ()
 
 public export
 sexpBTCata : {a : PolyFunc} -> {b : Type} ->
-  BinTreeAlg a b -> SexpSliceM a (const b)
-sexpBTCata {a} {b} = sexpBCata {a} {sa=(const b)} . BinTreeAlgToSexpAlg
+  BinTree'Alg a b -> SexpSliceM a (const b)
+sexpBTCata {a} {b} = sexpBCata {a} {sa=(const b)} . BinTree'AlgToSexpAlg
 
 public export
 SexpShowAlg : {a : PolyFunc} -> PFAlg a String -> SexpAlg a (const String)
-SexpShowAlg alg = BinTreeAlgToSexpAlg (BinTreeShowAlg alg)
+SexpShowAlg alg = BinTree'AlgToSexpAlg (BinTree'ShowAlg alg)
 
 public export
 sexpBShow : {a : PolyFunc} ->
@@ -431,7 +431,7 @@ soProductHomCata = pfProductHomCata {p=SubstObjPF} {q=SubstObjPF}
 
 public export
 SOHomAlg : {m : Type -> Type} -> {isMonad : Monad m} -> Type -> Type
-SOHomAlg a = BinTreeAlg BoolF (a -> m a)
+SOHomAlg a = BinTree'Alg BoolF (a -> m a)
 
 public export
 SOHomAlgToFAlg : {m : Type -> Type} -> {isMonad : Monad m} -> {0 a : Type} ->
@@ -691,7 +691,7 @@ SOHomReflectAlg v u f = InSOP v (InSOP u f)
 public export
 SOHomReflect : {v, u, f : SOMu} -> {a : Type} ->
   (SOInterp v -> a) -> (SOInterp u -> a) -> (SOInterp f -> a -> a -> a) ->
-  SOInterp (SOHomReflectAlg v u f) -> BinTreeAlg BoolF a
+  SOInterp (SOHomReflectAlg v u f) -> BinTree'Alg BoolF a
 SOHomReflect vi ui fi alg (Left False) d = vi $ fst alg
 SOHomReflect vi ui fi alg (Left True) d = ui $ fst $ snd alg
 SOHomReflect vi ui fi alg (Right ()) d = fi (snd $ snd alg) (d False) (d True)
