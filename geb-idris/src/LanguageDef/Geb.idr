@@ -52,61 +52,75 @@ Functor ProductMonad where
 
 -- A binary tree may be viewed as the free monad over the product monad
 -- (which is the monad of the product adjunction; it takes `a` to `(a, a)`).
+-- We extend this, however, to be parameterized over an atom type, so that
+-- the free monad expresses a binary tree with some specified type (possibly
+-- `Void`) of atoms guaranteed to be available.
+-- Using `|>` rather than `.` is insignificant up to isomorphism; it just
+-- establishes the convention that an atom is `Left` and a pair is `Right`,
+-- rather than the other way around.
 public export
-BinTreeF : Type -> Type
-BinTreeF = ProductMonad
+BinTreeF : Type -> Type -> Type
+BinTreeF = (|>) ProductMonad . Either
 
 public export
-BinTreeTF : Type -> Type -> Type
-BinTreeTF = TranslateFunctor ProductMonad
+BinTreeTF : Type -> Type -> Type -> Type
+BinTreeTF = TranslateFunctor . BinTreeF
 
 public export
-BinTree : Type -> Type
-BinTree = FreeMonad ProductMonad
+BinTree : Type -> Type -> Type
+BinTree = FreeMonad . BinTreeF
 
 -- The universal `eval` morphism for `BinTree`.
 public export
-binTreeEval : FreeFEval ProductMonad
-binTreeEval v a subst alg x = case x of
+binTreeEval : {0 atom : Type} -> FreeFEval (BinTreeF atom)
+binTreeEval {atom} v a subst alg x = case x of
   InFree x' => case x' of
     TFV v => subst v
     TFC c => alg $ case c of
-      (c1, c2) => (binTreeEval v a subst alg c1, binTreeEval v a subst alg c2)
+      Left ea =>
+        Left ea
+      Right (c1, c2) =>
+        Right
+          (binTreeEval {atom} v a subst alg c1,
+           binTreeEval {atom} v a subst alg c2)
 
 public export
-BinTreeF1 : IndIndF1
-BinTreeF1 = BinTreeF . pfPos
+BinTreeF1 : Type -> IndIndF1
+BinTreeF1 = (|>) pfPos . BinTreeF
 
 public export
-BinTreeIndIndAlg : IndIndF1
-BinTreeIndIndAlg = IndIndAlg BinTreeF1
+BinTreeIndIndAlg : Type -> IndIndF1
+BinTreeIndIndAlg = IndIndAlg . BinTreeF1
 
 public export
-BinTreeF2 : Type
-BinTreeF2 = IndIndF2 BinTreeF1
+BinTreeF2 : Type -> Type
+BinTreeF2 = IndIndF2 . BinTreeF1
 
 public export
-BinTreeIndInd : BinTreeF2 -> IndInd
-BinTreeIndInd f2 = (BinTreeF1 ** f2)
+BinTreeIndInd : {atom : Type} -> BinTreeF2 atom -> IndInd
+BinTreeIndInd {atom} f2 = (BinTreeF1 atom ** f2)
 
 public export
-BinTreeFreeM1 : PolyFunc -> Type
-BinTreeFreeM1 = BinTree . pfPos
+BinTreeFreeM1 : Type -> PolyFunc -> Type
+BinTreeFreeM1 = (|>) pfPos . BinTree
 
 public export
 partial
-data BinTreeFreeM2 : (f2 : BinTreeF2) ->
-    (p : PolyFunc) -> BinTreeFreeM1 p -> Type where
-  InBT2v : {0 f2 : BinTreeF2} -> {0 p : PolyFunc} ->
-    (i : pfPos p) -> pfDir {p} i -> BinTreeFreeM2 f2 p (IdrisCategories.inFV i)
-  InBT2c : {0 f2 : BinTreeF2} -> {0 p : PolyFunc} ->
-    (i1 : BinTreeF (BinTreeFreeM1 p)) ->
-    f2 (BinTreeFreeM1 p ** BinTreeFreeM2 f2 p) IdrisCategories.inFC i1 ->
-    BinTreeFreeM2 f2 p (IdrisCategories.inFC i1)
+data BinTreeFreeM2 : {0 atom : Type} -> (f2 : BinTreeF2 atom) ->
+    (p : PolyFunc) -> BinTreeFreeM1 atom p -> Type where
+  InBT2v : {0 atom : Type} -> {0 f2 : BinTreeF2 atom} -> {0 p : PolyFunc} ->
+    (i : pfPos p) -> pfDir {p} i ->
+    BinTreeFreeM2 {atom} f2 p (IdrisCategories.inFV i)
+  InBT2c : {0 atom : Type} -> {0 f2 : BinTreeF2 atom} -> {0 p : PolyFunc} ->
+    (i1 : BinTreeF atom (BinTreeFreeM1 atom p)) ->
+    f2 (BinTreeFreeM1 atom p ** BinTreeFreeM2 {atom} f2 p)
+      IdrisCategories.inFC i1 ->
+    BinTreeFreeM2 {atom} f2 p (IdrisCategories.inFC i1)
 
 public export
-BinTreeFreeIndIndM : BinTreeF2 -> PolyFunc -> PolyFunc
-BinTreeFreeIndIndM f2 p = (BinTreeFreeM1 p ** BinTreeFreeM2 f2 p)
+BinTreeFreeIndIndM : {atom : Type} -> BinTreeF2 atom -> PolyFunc -> PolyFunc
+BinTreeFreeIndIndM {atom} f2 p =
+  (BinTreeFreeM1 atom p ** BinTreeFreeM2 {atom} f2 p)
 
 ------------------------------------------------
 ------------------------------------------------
