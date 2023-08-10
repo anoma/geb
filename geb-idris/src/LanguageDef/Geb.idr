@@ -65,6 +65,10 @@ BinTreeF : Type -> Type -> Type
 BinTreeF = (|>) ProductMonad . Either
 
 public export
+BinTreeAlg : Type -> Type -> Type
+BinTreeAlg = Algebra . BinTreeF
+
+public export
 BinTreeTF : Type -> Type -> Type -> Type
 BinTreeTF = TranslateFunctor . BinTreeF
 
@@ -123,6 +127,27 @@ public export
 BinTreeFreeIndIndM : {atom : Type} -> BinTreeF2 atom -> PolyFunc -> PolyFunc
 BinTreeFreeIndIndM {atom} f2 p =
   (BinTreeFreeM1 atom p ** BinTreeFreeM2 {atom} f2 p)
+
+public export
+BinTreeF2' : Type -> Type
+BinTreeF2' atom = (a : Type) -> (p : a -> Type) ->
+  BinTreeAlg atom a -> BinTreeF atom a -> Type
+
+public export
+partial
+data BinTreeFreeM2' : {0 atom : Type} -> (f2 : BinTreeF2' atom) ->
+    {0 atom' : Type} -> (p : atom' -> Type) ->
+    BinTree atom atom' -> Type where
+  InBT2v' : {0 atom, atom' : Type} ->
+    {0 f2 : BinTreeF2' atom} -> {0 p : atom' -> Type} ->
+    (i : atom') -> p i ->
+    BinTreeFreeM2' {atom} {atom'} f2 p (IdrisCategories.inFV i)
+  InBT2c' : {0 atom, atom' : Type} ->
+    {0 f2 : BinTreeF2' atom} -> {0 p : atom' -> Type} ->
+    (i1 : BinTreeF atom (BinTree atom atom')) ->
+    f2 (BinTree atom atom') (BinTreeFreeM2' {atom} f2 {atom'} p)
+      IdrisCategories.inFC i1 ->
+    BinTreeFreeM2' {atom} {atom'} f2 p (IdrisCategories.inFC i1)
 
 ------------------------------------------------
 ------------------------------------------------
