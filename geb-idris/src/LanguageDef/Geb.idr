@@ -38,11 +38,11 @@ public export
 MaybeCS : Type -> Type
 MaybeCS = CSliceObj . Maybe
 
-----------------------------------------------------
-----------------------------------------------------
----- Binary trees with interpretations of atoms ----
-----------------------------------------------------
-----------------------------------------------------
+--------------------------------------------------
+--------------------------------------------------
+---- Binary trees and types dependent on them ----
+--------------------------------------------------
+--------------------------------------------------
 
 --------------------------------------------------------
 ---- Binary trees as free monads over product monad ----
@@ -73,6 +73,10 @@ BinTreeTF : Type -> Type -> Type -> Type
 BinTreeTF = TranslateFunctor . BinTreeF
 
 public export
+BinTreeMu : Type -> Type
+BinTreeMu = Mu . BinTreeF
+
+public export
 BinTree : Type -> Type -> Type
 BinTree = FreeMonad . BinTreeF
 
@@ -89,6 +93,15 @@ binTreeEval {atom} v a subst alg x = case x of
         Right
           (binTreeEval {atom} v a subst alg c1,
            binTreeEval {atom} v a subst alg c2)
+
+public export
+binTreeBind : {atom : Type} -> {a, b : Type} ->
+  (a -> BinTree atom b) -> BinTree atom a -> BinTree atom b
+binTreeBind {atom} = freeBind {f=(BinTreeF atom)} $ binTreeEval {atom}
+
+-------------------------------------
+---- Binary-tree-dependent types ----
+-------------------------------------
 
 public export
 BinTreeF1 : Type -> IndIndF1
@@ -148,6 +161,25 @@ data BinTreeFreeM2' : {0 atom : Type} -> (f2 : BinTreeF2' atom) ->
     f2 (BinTree atom atom') (BinTreeFreeM2' {atom} f2 {atom'} p)
       IdrisCategories.inFC i1 ->
     BinTreeFreeM2' {atom} {atom'} f2 p (IdrisCategories.inFC i1)
+
+public export
+record PolyBTDep (atom : Type) where
+  constructor PBTD
+  pbtdPos : Type
+  pbtdDir1 : pbtdPos -> Type
+  pbtdDir2 : pbtdPos -> Type
+  pbtdAssign : SliceMorphism {a=pbtdPos} pbtdDir2 (BinTree atom . pbtdDir1)
+  pbtdCod : Pi {a=pbtdPos} $ BinTree atom . pbtdDir1
+
+public export
+data BinTreeMu2 : {0 atom : Type} -> (f2 : PolyBTDep atom) ->
+    SliceObj (BinTreeMu atom) where
+  InBT2 : {0 atom : Type} -> {0 f2 : PolyBTDep atom} ->
+    (i : pbtdPos f2) ->
+    (d1 : pbtdDir1 f2 i -> BinTreeMu atom) ->
+    ((d2 : pbtdDir2 f2 i) -> BinTreeMu2 {atom} f2 $
+      binTreeBind d1 $ pbtdAssign f2 i d2) ->
+    BinTreeMu2 {atom} f2 $ binTreeBind d1 $ pbtdCod f2 i
 
 ------------------------------------------------
 ------------------------------------------------
