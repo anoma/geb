@@ -172,14 +172,20 @@ record PolyBTDep (atom : Type) where
   pbtdCod : Pi {a=pbtdPos} $ BinTree atom . pbtdDir1
 
 public export
-data BinTreeMu2 : {0 atom : Type} -> (f2 : PolyBTDep atom) ->
-    SliceObj (BinTreeMu atom) where
-  InBT2 : {0 atom : Type} -> {0 f2 : PolyBTDep atom} ->
+data BinTreeFreeM2'' : {0 atom : Type} -> (f2 : PolyBTDep atom) ->
+    {0 atom' : Type} -> (p : atom' -> Type) ->
+    SliceObj (BinTree atom atom') where
+  InBTF2v : {0 atom, atom' : Type} ->
+    {0 f2 : PolyBTDep atom} -> {0 p : atom' -> Type} ->
+    (i : atom') -> p i ->
+    BinTreeFreeM2'' {atom} {atom'} f2 p (IdrisCategories.inFV i)
+  InBTF2c : {0 atom, atom' : Type} ->
+    {0 f2 : PolyBTDep atom} -> {0 p : atom' -> Type} ->
     (i : pbtdPos f2) ->
-    (d1 : pbtdDir1 f2 i -> BinTreeMu atom) ->
-    ((d2 : pbtdDir2 f2 i) -> BinTreeMu2 {atom} f2 $
+    (d1 : pbtdDir1 f2 i -> BinTree atom atom') ->
+    ((d2 : pbtdDir2 f2 i) -> BinTreeFreeM2'' {atom} {atom'} f2 p $
       binTreeBind d1 $ pbtdAssign f2 i d2) ->
-    BinTreeMu2 {atom} f2 $ binTreeBind d1 $ pbtdCod f2 i
+    BinTreeFreeM2'' {atom} f2 {atom'} p $ binTreeBind d1 $ pbtdCod f2 i
 
 ------------------------------------------------
 ------------------------------------------------
