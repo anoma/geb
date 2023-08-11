@@ -97,13 +97,36 @@ public export
   BinTreeMu' atom -> List (BinTreeMu' atom) -> BinTreeMu' atom
 ($:) = foldl {t=List} ($*)
 
+-- The "translate" functor: `BinTreeTrF[atom, A, X] == A + BinTreeF[atom, X]`.
+-- Note, however, that since `BinTreeF[atom, X]` itself is
+-- `atom + X * X`, `BinTreeTrF[atom, A, X]` is `A + atom + X * X`, which
+-- can also be written `BinTreeF[A + atom], X`.
+--
+-- The `flip` is insignificant up to ismorphism; we simply use it to make
+-- the convention that an `A`-atom of `BinTreeTrF[atom, A, X]` is `Left`
+-- whereas an `atom`-atom is `Right`.
+public export
+BinTreeTrF : Type -> Type -> Type -> Type
+BinTreeTrF = BinTreeF .* flip Either
+
+-- A "translated" term.
+public export
+BTFt : {0 atom, a, x : Type} -> a -> BinTreeTrF atom a x
+BTFt = ($$!) . Left
+
+-- An "atom" term.
+public export
+BTFa : {0 atom, a, x : Type} -> atom -> BinTreeTrF atom a x
+BTFa = ($$!) . Right
+
+-- A "pair" term.
+public export
+BTFp : {0 atom, a, x : Type} -> x -> x -> BinTreeTrF atom a x
+BTFp = Right .* MkPair
+
 public export
 BinTreeAlg : Type -> Type -> Type
 BinTreeAlg = Algebra . BinTreeF
-
-public export
-BinTreeTF : Type -> Type -> Type -> Type
-BinTreeTF = TranslateFunctor . BinTreeF
 
 public export
 BinTreeMu : Type -> Type
