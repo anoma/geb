@@ -100,7 +100,8 @@ public export
 -- The "translate" functor: `BinTreeTrF[atom, A, X] == A + BinTreeF[atom, X]`.
 -- Note, however, that since `BinTreeF[atom, X]` itself is
 -- `atom + X * X`, `BinTreeTrF[atom, A, X]` is `A + atom + X * X`, which
--- can also be written `BinTreeF[A + atom], X`.
+-- can also be written `BinTreeF[A + atom, X]`.  So
+-- `BinTreeTrF[atom, A] == BinTreeF[A + atom]`.
 --
 -- The `flip` is insignificant up to ismorphism; we simply use it to make
 -- the convention that an `A`-atom of `BinTreeTrF[atom, A, X]` is `Left`
@@ -123,6 +124,15 @@ BTFa = ($$!) . Right
 public export
 BTFp : {0 atom, a, x : Type} -> x -> x -> BinTreeTrF atom a x
 BTFp = Right .* MkPair
+
+-- Because for any functor `f`, `FreeMonad[f][a] == Mu[Translate[f,a]]`,
+-- and for a binary tree in particular,
+-- `Translate[BinTreeF[atom],a] == BinTreeF[A + atom]`, we have
+-- `FreeMonad[BinTreeF[atom]][a] == Mu[Translate[BinTreeF[atom],a]] ==
+-- Mu[BinTreeF[A + atom]] == BinTreeMu[A + atom]`.
+public export
+BinTreeFM : Type -> Type -> Type
+BinTreeFM atom a = BinTreeMu' (Either a atom)
 
 public export
 BinTreeAlg : Type -> Type -> Type
