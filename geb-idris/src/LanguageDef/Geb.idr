@@ -54,15 +54,48 @@ Functor ProductMonad where
 
 -- A binary tree may be viewed as the free monad over the product monad
 -- (which is the monad of the product adjunction; it takes `a` to `(a, a)`).
--- We extend this, however, to be parameterized over an atom type, so that
--- the free monad expresses a binary tree with some specified type (possibly
--- `Void`) of atoms guaranteed to be available.
+--
+-- `BinTreeF` is the bifunctor such that for each `A : Type`,
+-- `Mu[BinTreeF(A)]` == FreeMonad[ProductMonad](A).
+--
 -- Using `|>` rather than `.` is insignificant up to isomorphism; it just
 -- establishes the convention that an atom is `Left` and a pair is `Right`,
 -- rather than the other way around.
 public export
 BinTreeF : Type -> Type -> Type
 BinTreeF = (|>) ProductMonad . Either
+
+prefix 1 $$!
+public export
+($$!) : {0 atom, ty : Type} -> atom -> BinTreeF atom ty
+($$!) = Left
+
+%hide LanguageDef.ADTCat.infixr.($$*)
+infixr 10 $$*
+public export
+($$*) : {0 atom, ty : Type} -> ty -> ty -> BinTreeF atom ty
+($$*) = Right .* MkPair
+
+public export
+data BinTreeMu' : Type -> Type where
+  InBTm : {0 atom : Type} -> BinTreeF atom (BinTreeMu' atom) -> BinTreeMu' atom
+
+prefix 1 $!
+public export
+($!) : {0 atom : Type} -> atom -> BinTreeMu' atom
+($!) = InBTm . ($$!)
+
+%hide LanguageDef.ADTCat.infixr.($*)
+infixr 10 $*
+public export
+($*) : {0 atom : Type} -> BinTreeMu' atom -> BinTreeMu' atom -> BinTreeMu' atom
+($*) = InBTm .* ($$*)
+
+infix 1 $:
+public export
+($:) : {0 atom : Type} ->
+  BinTreeMu' atom -> List (BinTreeMu' atom) -> BinTreeMu' atom
+($:) = foldl {t=List} ($*)
 
 public export
 BinTreeAlg : Type -> Type -> Type
