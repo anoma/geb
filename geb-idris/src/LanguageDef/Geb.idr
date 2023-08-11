@@ -73,6 +73,11 @@ public export
   BinTreeMu' atom -> List (BinTreeMu' atom) -> BinTreeMu' atom
 ($:) = foldl {t=List} ($*)
 
+infix 1 $:
+public export
+($:!) : {0 atom : Type} -> BinTreeMu' atom -> List atom -> BinTreeMu' atom
+($:!) = (|>) (map ($!)) . ($:)
+
 -- The "translate" functor: `BinTreeTrF[atom, A, X] == A + BinTreeF[atom, X]`.
 -- Note, however, that since `BinTreeF[atom, X]` itself is
 -- `atom + X * X`, `BinTreeTrF[atom, A, X]` is `A + atom + X * X`, which
