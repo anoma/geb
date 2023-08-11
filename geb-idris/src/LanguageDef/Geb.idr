@@ -130,9 +130,36 @@ BTFp = Right .* MkPair
 -- `Translate[BinTreeF[atom],a] == BinTreeF[A + atom]`, we have
 -- `FreeMonad[BinTreeF[atom]][a] == Mu[Translate[BinTreeF[atom],a]] ==
 -- Mu[BinTreeF[A + atom]] == BinTreeMu[A + atom]`.
+--
+-- As with `BinTreeTrF`, the `flip` is insignificant up to ismorphism; we
+-- simply use it to make the convention that a variable term of
+-- `BinTreeFM[atom, A]` is `Left`, whereas a compound term is `Right`.
 public export
 BinTreeFM : Type -> Type -> Type
-BinTreeFM atom a = BinTreeMu' (Either a atom)
+BinTreeFM = BinTreeMu' .* flip Either
+
+-- A "variable" term.
+public export
+InBTv : {0 atom, a : Type} -> a -> BinTreeFM atom a
+InBTv {atom} {a} =
+  InBTm {atom=(Either a atom)} . BTFt {atom} {a} {x=(BinTreeFM atom a)}
+
+-- A "compound" term.
+public export
+InBTc : {0 atom, a : Type} ->
+  BinTreeF (Either a atom) (BinTreeFM atom a) -> BinTreeFM atom a
+InBTc {atom} {a} = InBTm {atom=(Either a atom)}
+
+-- A "compound" atom term.
+public export
+InBTa : {0 atom, a : Type} -> atom -> BinTreeFM atom a
+InBTa {atom} {a} = InBTc {atom} {a} . BTFa {atom} {a} {x=(BinTreeFM atom a)}
+
+-- A "compound" pair term.
+public export
+InBTp : {0 atom, a : Type} ->
+  BinTreeFM atom a -> BinTreeFM atom a -> BinTreeFM atom a
+InBTp {atom} {a} = InBTc {atom} {a} .* BTFp {atom} {a} {x=(BinTreeFM atom a)}
 
 public export
 BinTreeAlg : Type -> Type -> Type
