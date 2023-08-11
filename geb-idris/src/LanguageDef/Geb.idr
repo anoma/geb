@@ -14,30 +14,6 @@ import LanguageDef.PolyIndTypes
 
 %default total
 
----------------------------------------------------
----------------------------------------------------
----- Partial interpretations as `Maybe`-slices ----
----------------------------------------------------
----------------------------------------------------
-
--- For a given object `a`, a category-theory-style slice object over `Maybe a`
--- maybe viewed as an object together with an interpretation of that object
--- as a representation of `a`, which may be partial both in the sense that
--- the object may have more structure than is determined solely by its
--- representing `a` and in the sense that it might represent only part of the
--- structure of `a`.
---
--- One specific application of this is that if we imagine that `a` is a type
--- whose terms some interface knows how to interpret, then given a slice
--- `(b : Type ** f : b -> Maybe a)` over `Maybe a`, we could build an
--- interpretation of some type of structure containing terms of `b` which knows
--- how to interpret a given structure of that type whenever all the terms
--- of `b` contained in that structure have interpretations as `Just a` under
--- `f`.
-public export
-MaybeCS : Type -> Type
-MaybeCS = CSliceObj . Maybe
-
 --------------------------------------------------
 --------------------------------------------------
 ---- Binary trees and types dependent on them ----
@@ -279,6 +255,30 @@ data BinTreeFreeM2'' : {0 atom : Type} -> (f2 : PolyBTDep atom) ->
     ((d2 : pbtdDir2 f2 i) -> BinTreeFreeM2'' {atom} f2 {atom'} p $
       binTreeBind d1 $ pbtdAssign f2 i d2) ->
     BinTreeFreeM2'' {atom} f2 {atom'} p $ binTreeBind d1 $ pbtdCod f2 i
+
+---------------------------------------------------
+---------------------------------------------------
+---- Partial interpretations as `Maybe`-slices ----
+---------------------------------------------------
+---------------------------------------------------
+
+-- For a given object `a`, a category-theory-style slice object over `Maybe a`
+-- maybe viewed as an object together with an interpretation of that object
+-- as a representation of `a`, which may be partial both in the sense that
+-- the object may have more structure than is determined solely by its
+-- representing `a` and in the sense that it might represent only part of the
+-- structure of `a`.
+--
+-- One specific application of this is that if we imagine that `a` is a type
+-- whose terms some interface knows how to interpret, then given a slice
+-- `(b : Type ** f : b -> Maybe a)` over `Maybe a`, we could build an
+-- interpretation of some type of structure containing terms of `b` which knows
+-- how to interpret a given structure of that type whenever all the terms
+-- of `b` contained in that structure have interpretations as `Just a` under
+-- `f`.
+public export
+MaybeCS : Type -> Type
+MaybeCS = CSliceObj . Maybe
 
 ------------------------------------------------
 ------------------------------------------------
