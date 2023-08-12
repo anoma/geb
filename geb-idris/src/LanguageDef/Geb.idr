@@ -224,7 +224,7 @@ BinTreeIndInd {atom} f2 = (BinTreeF1 atom ** f2)
 
 public export
 BinTreeFreeM1 : Type -> PolyFunc -> Type
-BinTreeFreeM1 = (|>) pfPos . BinTree
+BinTreeFreeM1 = (|>) pfPos . BinTreeFM
 
 public export
 partial
@@ -232,12 +232,12 @@ data BinTreeFreeM2 : {0 atom : Type} -> (f2 : BinTreeF2 atom) ->
     (p : PolyFunc) -> BinTreeFreeM1 atom p -> Type where
   InBT2v : {0 atom : Type} -> {0 f2 : BinTreeF2 atom} -> {0 p : PolyFunc} ->
     (i : pfPos p) -> pfDir {p} i ->
-    BinTreeFreeM2 {atom} f2 p (IdrisCategories.inFV i)
+    BinTreeFreeM2 {atom} f2 p (InBTv i)
   InBT2c : {0 atom : Type} -> {0 f2 : BinTreeF2 atom} -> {0 p : PolyFunc} ->
     (i1 : BinTreeF atom (BinTreeFreeM1 atom p)) ->
     f2 (BinTreeFreeM1 atom p ** BinTreeFreeM2 {atom} f2 p)
-      IdrisCategories.inFC i1 ->
-    BinTreeFreeM2 {atom} f2 p (IdrisCategories.inFC i1)
+      InBTc i1 ->
+    BinTreeFreeM2 {atom} f2 p (InBTc i1)
 
 public export
 BinTreeFreeIndIndM : {atom : Type} -> BinTreeF2 atom -> PolyFunc -> PolyFunc
@@ -253,17 +253,17 @@ public export
 partial
 data BinTreeFreeM2' : {0 atom : Type} -> (f2 : BinTreeF2' atom) ->
     {0 atom' : Type} -> (p : atom' -> Type) ->
-    BinTree atom atom' -> Type where
+    BinTreeFM atom atom' -> Type where
   InBT2v' : {0 atom, atom' : Type} ->
     {0 f2 : BinTreeF2' atom} -> {0 p : atom' -> Type} ->
     (i : atom') -> p i ->
-    BinTreeFreeM2' {atom} {atom'} f2 p (IdrisCategories.inFV i)
+    BinTreeFreeM2' {atom} {atom'} f2 p (InBTv i)
   InBT2c' : {0 atom, atom' : Type} ->
     {0 f2 : BinTreeF2' atom} -> {0 p : atom' -> Type} ->
-    (i1 : BinTreeF atom (BinTree atom atom')) ->
-    f2 (BinTree atom atom') (BinTreeFreeM2' {atom} f2 {atom'} p)
-      IdrisCategories.inFC i1 ->
-    BinTreeFreeM2' {atom} {atom'} f2 p (IdrisCategories.inFC i1)
+    (i1 : BinTreeF atom (BinTreeFM atom atom')) ->
+    f2 (BinTreeFM atom atom') (BinTreeFreeM2' {atom} f2 {atom'} p)
+      InBTc i1 ->
+    BinTreeFreeM2' {atom} {atom'} f2 p (InBTc i1)
 
 public export
 record PolyBTDep (atom : Type) where
@@ -271,24 +271,24 @@ record PolyBTDep (atom : Type) where
   pbtdPos : Type
   pbtdDir1 : pbtdPos -> Type
   pbtdDir2 : pbtdPos -> Type
-  pbtdAssign : SliceMorphism {a=pbtdPos} pbtdDir2 (BinTree atom . pbtdDir1)
-  pbtdCod : Pi {a=pbtdPos} $ BinTree atom . pbtdDir1
+  pbtdAssign : SliceMorphism {a=pbtdPos} pbtdDir2 (BinTreeFM atom . pbtdDir1)
+  pbtdCod : Pi {a=pbtdPos} $ BinTreeFM atom . pbtdDir1
 
 public export
 data BinTreeFreeM2'' : {0 atom : Type} -> (f2 : PolyBTDep atom) ->
     {0 atom' : Type} -> (p : atom' -> Type) ->
-    SliceObj (BinTree atom atom') where
+    SliceObj (BinTreeFM atom atom') where
   InBTF2v : {0 atom : Type} -> {0 f2 : PolyBTDep atom} ->
     {0 atom' : Type} -> {0 p : atom' -> Type} ->
     (i : atom') -> p i ->
-    BinTreeFreeM2'' {atom} f2 {atom'} p (IdrisCategories.inFV i)
+    BinTreeFreeM2'' {atom} f2 {atom'} p (InBTv i)
   InBTF2c : {0 atom : Type} -> {0 f2 : PolyBTDep atom} ->
     {0 atom' : Type} -> {0 p : atom' -> Type} ->
     (i : pbtdPos f2) ->
-    (d1 : pbtdDir1 f2 i -> BinTree atom atom') ->
+    (d1 : pbtdDir1 f2 i -> BinTreeFM atom atom') ->
     ((d2 : pbtdDir2 f2 i) -> BinTreeFreeM2'' {atom} f2 {atom'} p $
-      binTreeBind d1 $ pbtdAssign f2 i d2) ->
-    BinTreeFreeM2'' {atom} f2 {atom'} p $ binTreeBind d1 $ pbtdCod f2 i
+      binTreeBind' d1 $ pbtdAssign f2 i d2) ->
+    BinTreeFreeM2'' {atom} f2 {atom'} p $ binTreeBind' d1 $ pbtdCod f2 i
 
 ---------------------------------------------------
 ---------------------------------------------------
