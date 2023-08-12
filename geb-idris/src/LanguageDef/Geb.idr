@@ -147,19 +147,33 @@ InBTv {atom} {a} =
 -- A "compound" term.
 public export
 InBTc : {0 atom, a : Type} ->
-  BinTreeF (Either a atom) (BinTreeFM atom a) -> BinTreeFM atom a
-InBTc {atom} {a} = InBTm {atom=(Either a atom)}
+  BinTreeF atom (BinTreeFM atom a) -> BinTreeFM atom a
+InBTc {atom} {a} = InBTm {atom=(Either a atom)} . mapFst Right
 
 -- A "compound" atom term.
 public export
 InBTa : {0 atom, a : Type} -> atom -> BinTreeFM atom a
-InBTa {atom} {a} = InBTc {atom} {a} . BTFa {atom} {a} {x=(BinTreeFM atom a)}
+InBTa {atom} {a} = ($!) {atom=(Either a atom)} . Right
 
 -- A "compound" pair term.
 public export
 InBTp : {0 atom, a : Type} ->
   BinTreeFM atom a -> BinTreeFM atom a -> BinTreeFM atom a
-InBTp {atom} {a} = InBTc {atom} {a} .* BTFp {atom} {a} {x=(BinTreeFM atom a)}
+InBTp {atom} {a} = ($*) {atom=(Either a atom)}
+
+-- The universal `eval` morphism for `BinTreeFM`.
+public export
+binTreeEval' : {0 atom, v, a : Type} ->
+  (v -> a) -> BinTreeAlg atom a -> BinTreeFM atom v -> a
+binTreeEval' {atom} {v} {a} subst alg =
+  binTreeCata {atom=(Either v atom)} {a} $
+    eitherElim (eitherElim subst (alg . Left)) (alg . Right)
+
+public export
+binTreeBind' : {0 atom : Type} -> {0 a, b : Type} ->
+  (a -> BinTreeFM atom b) -> BinTreeFM atom a -> BinTreeFM atom b
+binTreeBind' {atom} =
+  flip (binTreeEval' {atom} {v=a} {a=(BinTreeFM atom b)}) $ InBTc {atom} {a=b}
 
 public export
 BinTreeMu : Type -> Type
