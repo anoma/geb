@@ -11,6 +11,7 @@ import LanguageDef.Adjunctions
 import LanguageDef.NatPrefixCat
 import LanguageDef.ProgFinSet
 import LanguageDef.PolyIndTypes
+import LanguageDef.Syntax
 
 %default total
 
@@ -112,7 +113,26 @@ binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
   Left ea => ($$!) ea
   Right (x1, x2) => binTreeCata alg x1 $$* binTreeCata alg x2
 
--- XXX Show
+public export
+BinTreeShowLinesAlg : {0 atom : Type} ->
+  (atom -> String) -> BinTreeAlg atom (List String)
+BinTreeShowLinesAlg sha (Left ea) =
+  [sha ea]
+BinTreeShowLinesAlg sha (Right (xs, ys)) =
+  ["::"] ++ indentLines xs ++ indentLines ys
+
+public export
+binTreeLines : {0 atom : Type} ->
+  (atom -> String) -> BinTreeMu atom -> List String
+binTreeLines = binTreeCata . BinTreeShowLinesAlg
+
+public export
+binTreeShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
+binTreeShow = showLines . binTreeLines
+
+public export
+Show atom => Show (BinTreeMu atom) where
+  show = binTreeShow show
 
 public export
 binTreePairCata : {0 atom, atom', a : Type} ->
