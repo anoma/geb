@@ -63,36 +63,36 @@ public export
 ($$*) = Right .* MkPair
 
 public export
-data BinTreeMu' : Type -> Type where
-  InBTm : {0 atom : Type} -> BinTreeF atom (BinTreeMu' atom) -> BinTreeMu' atom
+data BinTreeMu : Type -> Type where
+  InBTm : {0 atom : Type} -> BinTreeF atom (BinTreeMu atom) -> BinTreeMu atom
 
 prefix 1 $!
 public export
-($!) : {0 atom : Type} -> atom -> BinTreeMu' atom
+($!) : {0 atom : Type} -> atom -> BinTreeMu atom
 ($!) = InBTm . ($$!)
 
 %hide LanguageDef.ADTCat.infixr.($*)
 infixr 10 $*
 public export
-($*) : {0 atom : Type} -> BinTreeMu' atom -> BinTreeMu' atom -> BinTreeMu' atom
+($*) : {0 atom : Type} -> BinTreeMu atom -> BinTreeMu atom -> BinTreeMu atom
 ($*) = InBTm .* ($$*)
 
 infix 1 $:
 public export
 ($:) : {0 atom : Type} ->
-  BinTreeMu' atom -> List (BinTreeMu' atom) -> BinTreeMu' atom
+  BinTreeMu atom -> List (BinTreeMu atom) -> BinTreeMu atom
 ($:) = foldl {t=List} ($*)
 
 infix 1 $:
 public export
-($:!) : {0 atom : Type} -> BinTreeMu' atom -> List atom -> BinTreeMu' atom
+($:!) : {0 atom : Type} -> BinTreeMu atom -> List atom -> BinTreeMu atom
 ($:!) = (|>) (map ($!)) . ($:)
 
 -- The universal "catamorphism" morphism of the initial algebra `Mu[BinTreeF]`.
 -- This is also the universal "eval" morphism for the free monad of the
 -- product monad.
 public export
-binTreeCata : {0 atom, a : Type} -> BinTreeAlg atom a -> BinTreeMu' atom -> a
+binTreeCata : {0 atom, a : Type} -> BinTreeAlg atom a -> BinTreeMu atom -> a
 binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
   Left ea => Left ea
   Right (x1, x2) => Right (binTreeCata alg x1, binTreeCata alg x2)
@@ -136,7 +136,7 @@ BTFp = Right .* MkPair
 -- `BinTreeFM[atom, A]` is `Left`, whereas a compound term is `Right`.
 public export
 BinTreeFM : Type -> Type -> Type
-BinTreeFM = BinTreeMu' .* flip Either
+BinTreeFM = BinTreeMu .* flip Either
 
 -- A "variable" term.
 public export
@@ -163,44 +163,17 @@ InBTp {atom} {a} = ($*) {atom=(Either a atom)}
 
 -- The universal `eval` morphism for `BinTreeFM`.
 public export
-binTreeEval' : {0 atom, v, a : Type} ->
+binTreeEval : {0 atom, v, a : Type} ->
   (v -> a) -> BinTreeAlg atom a -> BinTreeFM atom v -> a
-binTreeEval' {atom} {v} {a} subst alg =
+binTreeEval {atom} {v} {a} subst alg =
   binTreeCata {atom=(Either v atom)} {a} $
     eitherElim (eitherElim subst (alg . Left)) (alg . Right)
 
 public export
-binTreeBind' : {0 atom : Type} -> {0 a, b : Type} ->
+binTreeBind : {0 atom : Type} -> {0 a, b : Type} ->
   (a -> BinTreeFM atom b) -> BinTreeFM atom a -> BinTreeFM atom b
-binTreeBind' {atom} =
-  flip (binTreeEval' {atom} {v=a} {a=(BinTreeFM atom b)}) $ InBTc {atom} {a=b}
-
-public export
-BinTreeMu : Type -> Type
-BinTreeMu = Mu . BinTreeF
-
-public export
-BinTree : Type -> Type -> Type
-BinTree = FreeMonad . BinTreeF
-
--- The universal `eval` morphism for `BinTree`.
-public export
-binTreeEval : {0 atom : Type} -> FreeFEval (BinTreeF atom)
-binTreeEval {atom} v a subst alg x = case x of
-  InFree x' => case x' of
-    TFV v => subst v
-    TFC c => alg $ case c of
-      Left ea =>
-        Left ea
-      Right (c1, c2) =>
-        Right
-          (binTreeEval {atom} v a subst alg c1,
-           binTreeEval {atom} v a subst alg c2)
-
-public export
-binTreeBind : {atom : Type} -> {a, b : Type} ->
-  (a -> BinTree atom b) -> BinTree atom a -> BinTree atom b
-binTreeBind {atom} = freeBind {f=(BinTreeF atom)} $ binTreeEval {atom}
+binTreeBind {atom} =
+  flip (binTreeEval {atom} {v=a} {a=(BinTreeFM atom b)}) $ InBTc {atom} {a=b}
 
 -------------------------------------
 ---- Binary-tree-dependent types ----
@@ -287,8 +260,8 @@ data BinTreeFreeM2'' : {0 atom : Type} -> (f2 : PolyBTDep atom) ->
     (i : pbtdPos f2) ->
     (d1 : pbtdDir1 f2 i -> BinTreeFM atom atom') ->
     ((d2 : pbtdDir2 f2 i) -> BinTreeFreeM2'' {atom} f2 {atom'} p $
-      binTreeBind' d1 $ pbtdAssign f2 i d2) ->
-    BinTreeFreeM2'' {atom} f2 {atom'} p $ binTreeBind' d1 $ pbtdCod f2 i
+      binTreeBind d1 $ pbtdAssign f2 i d2) ->
+    BinTreeFreeM2'' {atom} f2 {atom'} p $ binTreeBind d1 $ pbtdCod f2 i
 
 ---------------------------------------------------
 ---------------------------------------------------
