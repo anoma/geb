@@ -32,7 +32,9 @@ Functor ProductMonad where
 -- (which is the monad of the product adjunction; it takes `a` to `(a, a)`).
 --
 -- `BinTreeF` is the bifunctor such that for each `A : Type`,
--- `Mu[BinTreeF(A)]` == FreeMonad[ProductMonad](A).
+-- `Mu[BinTreeF(A)]` == FreeMonad[ProductMonad](A).  It is what we
+-- call the "translate functor" (see below, where we define the translate
+-- functor of `BinTreeF` itself) of the product monad.
 --
 -- Using `|>` rather than `.` is insignificant up to isomorphism; it just
 -- establishes the convention that an atom is `Left` and a pair is `Right`,
@@ -40,6 +42,10 @@ Functor ProductMonad where
 public export
 BinTreeF : Type -> Type -> Type
 BinTreeF = (|>) ProductMonad . Either
+
+public export
+Bifunctor BinTreeF where
+  bimap = (|>) (mapHom {f=Pair}) . bimap {f=Either}
 
 prefix 1 $$!
 public export
