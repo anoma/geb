@@ -91,18 +91,17 @@ public export
 ($*) : {0 atom : Type} -> BinTreeMu atom -> BinTreeMu atom -> BinTreeMu atom
 ($*) = InBTm .* ($$*)
 
--- XXX switch to NonEmpty (w/prefix)
-infix 1 $:
+prefix 1 $:
 public export
 ($:) : {0 atom : Type} ->
-  BinTreeMu atom -> List (BinTreeMu atom) -> BinTreeMu atom
-($:) = foldl {t=List} ($*)
+  (l : List (BinTreeMu atom)) -> {auto 0 ne : NonEmpty l} -> BinTreeMu atom
+($:) {atom} (x :: xs) {ne=IsNonEmpty} = foldl {t=List} ($*) x xs
 
--- XXX switch to NonEmpty (w/prefix)
-infix 1 $:
+prefix 1 $:
 public export
-($:!) : {0 atom : Type} -> BinTreeMu atom -> List atom -> BinTreeMu atom
-($:!) = (|>) (map ($!)) . ($:)
+($:!) : {0 atom : Type} ->
+  (l : List atom) -> {auto 0 ne : NonEmpty l} -> BinTreeMu atom
+($:!) {atom} l {ne} = ($:) (map ($!) l) {ne=(mapNonEmpty {l} {ne})}
 
 -- The universal "catamorphism" morphism of the initial algebra `Mu[BinTreeF]`.
 -- This is also the universal "eval" morphism for the free monad of the
