@@ -84,6 +84,16 @@ public export
 ($:!) : {0 atom : Type} -> BinTreeMu' atom -> List atom -> BinTreeMu' atom
 ($:!) = (|>) (map ($!)) . ($:)
 
+-- The universal "catamorphism" morphism of the initial algebra `Mu[BinTreeF]`.
+-- This is also the universal "eval" morphism for the free monad of the
+-- product monad.
+public export
+binTreeCata : {0 atom, a : Type} ->
+  Algebra (BinTreeF atom) a -> BinTreeMu' atom -> a
+binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
+  Left ea => Left ea
+  Right (x1, x2) => Right (binTreeCata alg x1, binTreeCata alg x2)
+
 -- The "translate" functor: `BinTreeTrF[atom, A, X] == A + BinTreeF[atom, X]`.
 -- Note, however, that since `BinTreeF[atom, X]` itself is
 -- `atom + X * X`, `BinTreeTrF[atom, A, X]` is `A + atom + X * X`, which
