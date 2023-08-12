@@ -51,6 +51,10 @@ public export
 BinTreeAlg : Type -> Type -> Type
 BinTreeAlg = Algebra . BinTreeF
 
+public export
+BinTreeProdAlg : Type -> Type -> Type -> Type
+BinTreeProdAlg atom atom' = Algebra (ProductF (BinTreeF atom) (BinTreeF atom'))
+
 prefix 1 $$!
 public export
 ($$!) : {0 atom, ty : Type} -> atom -> BinTreeF atom ty
@@ -87,12 +91,14 @@ public export
 ($*) : {0 atom : Type} -> BinTreeMu atom -> BinTreeMu atom -> BinTreeMu atom
 ($*) = InBTm .* ($$*)
 
+-- XXX switch to NonEmpty (w/prefix)
 infix 1 $:
 public export
 ($:) : {0 atom : Type} ->
   BinTreeMu atom -> List (BinTreeMu atom) -> BinTreeMu atom
 ($:) = foldl {t=List} ($*)
 
+-- XXX switch to NonEmpty (w/prefix)
 infix 1 $:
 public export
 ($:!) : {0 atom : Type} -> BinTreeMu atom -> List atom -> BinTreeMu atom
@@ -106,6 +112,19 @@ binTreeCata : {0 atom, a : Type} -> BinTreeAlg atom a -> BinTreeMu atom -> a
 binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
   Left ea => ($$!) ea
   Right (x1, x2) => binTreeCata alg x1 $$* binTreeCata alg x2
+
+-- XXX Show
+
+public export
+binTreePairCata : {0 atom, atom', a : Type} ->
+  BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
+binTreePairCata {atom} {atom'} alg =
+  binTreeCata {atom=atom'} {a} .
+    (|>) ((.) alg . flip MkPair) . flip (binTreeCata {atom} {a})
+
+-- XXX DecEq
+
+-- XXX Eq
 
 -- The "translate" functor: `BinTreeTrF[atom, A, X] == A + BinTreeF[atom, X]`.
 -- Note, however, that since `BinTreeF[atom, X]` itself is
