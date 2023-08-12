@@ -47,6 +47,10 @@ public export
 Bifunctor BinTreeF where
   bimap = (|>) (mapHom {f=Pair}) . bimap {f=Either}
 
+public export
+BinTreeAlg : Type -> Type -> Type
+BinTreeAlg = Algebra . BinTreeF
+
 prefix 1 $$!
 public export
 ($$!) : {0 atom, ty : Type} -> atom -> BinTreeF atom ty
@@ -88,8 +92,7 @@ public export
 -- This is also the universal "eval" morphism for the free monad of the
 -- product monad.
 public export
-binTreeCata : {0 atom, a : Type} ->
-  Algebra (BinTreeF atom) a -> BinTreeMu' atom -> a
+binTreeCata : {0 atom, a : Type} -> BinTreeAlg atom a -> BinTreeMu' atom -> a
 binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
   Left ea => Left ea
   Right (x1, x2) => Right (binTreeCata alg x1, binTreeCata alg x2)
@@ -157,10 +160,6 @@ public export
 InBTp : {0 atom, a : Type} ->
   BinTreeFM atom a -> BinTreeFM atom a -> BinTreeFM atom a
 InBTp {atom} {a} = InBTc {atom} {a} .* BTFp {atom} {a} {x=(BinTreeFM atom a)}
-
-public export
-BinTreeAlg : Type -> Type -> Type
-BinTreeAlg = Algebra . BinTreeF
 
 public export
 BinTreeMu : Type -> Type
