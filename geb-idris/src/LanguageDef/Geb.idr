@@ -76,6 +76,11 @@ public export
 ($!) : {0 atom : Type} -> atom -> BinTreeMu atom
 ($!) = InBTm . ($$!)
 
+infixr 10 $>
+public export
+($>) : {0 atom : Type} -> (BinTreeMu atom, BinTreeMu atom) -> BinTreeMu atom
+($>) = InBTm . ($$>)
+
 %hide LanguageDef.ADTCat.infixr.($*)
 infixr 10 $*
 public export
@@ -99,8 +104,8 @@ public export
 public export
 binTreeCata : {0 atom, a : Type} -> BinTreeAlg atom a -> BinTreeMu atom -> a
 binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
-  Left ea => Left ea
-  Right (x1, x2) => Right (binTreeCata alg x1, binTreeCata alg x2)
+  Left ea => ($$!) ea
+  Right (x1, x2) => binTreeCata alg x1 $$* binTreeCata alg x2
 
 -- The "translate" functor: `BinTreeTrF[atom, A, X] == A + BinTreeF[atom, X]`.
 -- Note, however, that since `BinTreeF[atom, X]` itself is
@@ -128,7 +133,7 @@ BTFa = ($$!) . Right
 -- A "pair" term.
 public export
 BTFp : {0 atom, a, x : Type} -> x -> x -> BinTreeTrF atom a x
-BTFp = Right .* MkPair
+BTFp = ($$*)
 
 -- Because for any functor `f`, `FreeMonad[f][a] == Mu[Translate[f,a]]`,
 -- and for a binary tree in particular,
@@ -149,16 +154,16 @@ InBTv : {0 atom, a : Type} -> a -> BinTreeFM atom a
 InBTv {atom} {a} =
   InBTm {atom=(Either a atom)} . BTFt {atom} {a} {x=(BinTreeFM atom a)}
 
--- A "compound" term.
-public export
-InBTc : {0 atom, a : Type} ->
-  BinTreeF atom (BinTreeFM atom a) -> BinTreeFM atom a
-InBTc {atom} {a} = InBTm {atom=(Either a atom)} . mapFst Right
-
 -- A "compound" atom term.
 public export
 InBTa : {0 atom, a : Type} -> atom -> BinTreeFM atom a
 InBTa {atom} {a} = ($!) {atom=(Either a atom)} . Right
+
+-- A "compound" term.
+public export
+InBTc : {0 atom, a : Type} ->
+  BinTreeF atom (BinTreeFM atom a) -> BinTreeFM atom a
+InBTc {atom} {a} = eitherElim InBTa ($>)
 
 -- A "compound" pair term.
 public export
