@@ -56,11 +56,16 @@ public export
 ($$!) : {0 atom, ty : Type} -> atom -> BinTreeF atom ty
 ($$!) = Left
 
+infixr 10 $$>
+public export
+($$>) : {0 atom, ty : Type} -> (ty, ty) -> BinTreeF atom ty
+($$>) = Right
+
 %hide LanguageDef.ADTCat.infixr.($$*)
 infixr 10 $$*
 public export
 ($$*) : {0 atom, ty : Type} -> ty -> ty -> BinTreeF atom ty
-($$*) = Right .* MkPair
+($$*) = ($$>) .* MkPair
 
 public export
 data BinTreeMu : Type -> Type where
@@ -167,7 +172,7 @@ binTreeEval : {0 atom, v, a : Type} ->
   (v -> a) -> BinTreeAlg atom a -> BinTreeFM atom v -> a
 binTreeEval {atom} {v} {a} subst alg =
   binTreeCata {atom=(Either v atom)} {a} $
-    eitherElim (eitherElim subst (alg . Left)) (alg . Right)
+    eitherElim (eitherElim subst (alg . ($$!))) (alg . ($$>))
 
 public export
 binTreeBind : {0 atom : Type} -> {0 a, b : Type} ->
