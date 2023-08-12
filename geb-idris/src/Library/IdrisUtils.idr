@@ -986,6 +986,11 @@ monoidFromList id compose [] = id
 monoidFromList id compose (x :: l) = magmaFromNonEmptyList compose x l
 
 public export
+mapNonEmpty : {0 a, b : Type} -> {0 f : a -> b} -> {0 l : List a} ->
+  {0 ne : NonEmpty l} -> NonEmpty (map f l)
+mapNonEmpty {a} {b} {f} {l=(x :: xs)} {ne=IsNonEmpty} = IsNonEmpty
+
+public export
 pairInj1 : {a, b : Type} -> {p, p' : (a, b)} -> p = p' -> fst p = fst p'
 pairInj1 Refl = Refl
 
