@@ -125,6 +125,10 @@ binTreePairCata {atom} {atom'} alg =
 
 -- XXX Eq
 
+-- XXX Functor, Applicative, Monad
+
+-- XXX bind
+
 -- The "translate" functor: `BinTreeTrF[atom, A, X] == A + BinTreeF[atom, X]`.
 -- Note, however, that since `BinTreeF[atom, X]` itself is
 -- `atom + X * X`, `BinTreeTrF[atom, A, X]` is `A + atom + X * X`, which
@@ -191,17 +195,19 @@ InBTp {atom} {a} = ($*) {atom=(Either a atom)}
 
 -- The universal `eval` morphism for `BinTreeFM`.
 public export
-binTreeEval : {0 atom, v, a : Type} ->
+binTreeFMEval : {0 atom, v, a : Type} ->
   (v -> a) -> BinTreeAlg atom a -> BinTreeFM atom v -> a
-binTreeEval {atom} {v} {a} subst alg =
+binTreeFMEval {atom} {v} {a} subst alg =
   binTreeCata {atom=(Either v atom)} {a} $
     eitherElim (eitherElim subst (alg . ($$!))) (alg . ($$>))
 
 public export
-binTreeBind : {0 atom : Type} -> {0 a, b : Type} ->
+binTreeFMBind : {0 atom : Type} -> {0 a, b : Type} ->
   (a -> BinTreeFM atom b) -> BinTreeFM atom a -> BinTreeFM atom b
-binTreeBind {atom} =
-  flip (binTreeEval {atom} {v=a} {a=(BinTreeFM atom b)}) $ InBTc {atom} {a=b}
+binTreeFMBind {atom} =
+  flip (binTreeFMEval {atom} {v=a} {a=(BinTreeFM atom b)}) $ InBTc {atom} {a=b}
+
+-- XXX Functor, Applicative, Monad
 
 -------------------------------------
 ---- Binary-tree-dependent types ----
@@ -288,8 +294,8 @@ data BinTreeFreeM2'' : {0 atom : Type} -> (f2 : PolyBTDep atom) ->
     (i : pbtdPos f2) ->
     (d1 : pbtdDir1 f2 i -> BinTreeFM atom atom') ->
     ((d2 : pbtdDir2 f2 i) -> BinTreeFreeM2'' {atom} f2 {atom'} p $
-      binTreeBind d1 $ pbtdAssign f2 i d2) ->
-    BinTreeFreeM2'' {atom} f2 {atom'} p $ binTreeBind d1 $ pbtdCod f2 i
+      binTreeFMBind d1 $ pbtdAssign f2 i d2) ->
+    BinTreeFreeM2'' {atom} f2 {atom'} p $ binTreeFMBind d1 $ pbtdCod f2 i
 
 ---------------------------------------------------
 ---------------------------------------------------
