@@ -81,6 +81,8 @@ gebTest = do
     (show $ parProdClosureShape (btPolyShape 3) (btPolyShape 2))
   putStrLn $ "leftCoclosure(btPolyShape 3, btPolyShape 5) = " ++
     (show $ leftCoclosureShape (btPolyShape 3) (btPolyShape 5))
+  putStrLn $ "leftCoclosure(btPolyShape 5, btPolyShape 3) = " ++
+    (show $ leftCoclosureShape (btPolyShape 5) (btPolyShape 3))
   putStrLn ""
   putStrLn "------------"
   putStrLn "End GebTest."
