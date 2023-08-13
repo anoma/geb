@@ -125,13 +125,17 @@ BinTreeAlg : Type -> Type -> Type
 BinTreeAlg = Algebra . BinTreeF
 
 -- The universal "catamorphism" morphism of the initial algebra `Mu[BinTreeF]`.
--- This is also the universal "eval" morphism for the free monad of the
--- product monad.
 public export
 binTreeCata : {0 atom, a : Type} -> BinTreeAlg atom a -> BinTreeMu atom -> a
 binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
   Left ea => ($$!) ea
   Right (x1, x2) => binTreeCata alg x1 $$* binTreeCata alg x2
+
+-- The (universal) catamorphism of `Mu[BinTreeF]` is also the universal "eval"
+-- morphism for the free monad of the product monad.
+public export
+prodFMEval : {0 atom, a : Type} -> BinTreeAlg atom a -> BinTreeMu atom -> a
+prodFMEval = binTreeCata
 
 public export
 BinTreeShowLinesAlg : {0 atom : Type} ->
@@ -311,7 +315,7 @@ public export
 binTreeFMEval : {0 atom, v, a : Type} ->
   (v -> a) -> BinTreeAlg atom a -> BinTreeFM atom v -> a
 binTreeFMEval {atom} {v} {a} subst alg =
-  binTreeCata {atom=(Either v atom)} {a} $
+  prodFMEval {atom=(Either v atom)} {a} $
     eitherElim (eitherElim subst (alg . ($$!))) (alg . ($$>))
 
 public export
