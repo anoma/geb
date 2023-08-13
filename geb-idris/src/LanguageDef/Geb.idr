@@ -88,9 +88,16 @@ public export
 ($$*) : {0 atom, ty : Type} -> ty -> ty -> BinTreeF atom ty
 ($$*) = ($$>) .* MkPair
 
+-- The initial algebra (least fixed point) of `BinTreeF`.
 public export
 data BinTreeMu : Type -> Type where
   InBTm : {0 atom : Type} -> BinTreeF atom (BinTreeMu atom) -> BinTreeMu atom
+
+-- The initial algebra of `BinTreeF` is also the free monad of the
+-- product monad.
+public export
+ProdFM : Type -> Type
+ProdFM = BinTreeMu
 
 prefix 1 $!
 public export
@@ -134,8 +141,16 @@ binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
 -- The (universal) catamorphism of `Mu[BinTreeF]` is also the universal "eval"
 -- morphism for the free monad of the product monad.
 public export
-prodFMEval : {0 atom, a : Type} -> BinTreeAlg atom a -> BinTreeMu atom -> a
+prodFMEval : {0 atom, a : Type} -> BinTreeAlg atom a -> ProdFM atom -> a
 prodFMEval = binTreeCata
+
+public export
+prodFMBind : {0 atom : Type} -> {0 a : Type} ->
+  (atom -> ProdFM a) -> ProdFM atom -> ProdFM a
+prodFMBind {atom} {a} =
+  prodFMEval {atom} {a=(ProdFM a)} . flip eitherElim (InBTm {atom=a} . ($$>))
+
+-- XXX Functor, Applicative, Monad
 
 public export
 BinTreeShowLinesAlg : {0 atom : Type} ->
@@ -157,10 +172,6 @@ binTreeShow = showLines . binTreeLines
 public export
 Show atom => Show (BinTreeMu atom) where
   show = binTreeShow show
-
--- XXX bind
-
--- XXX Functor, Applicative, Monad
 
 -- An algebra of `BinTreeProdF` provides simultaneous induction on a
 -- pair of `BinTreeMu`s.  This means that:
