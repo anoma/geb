@@ -141,9 +141,39 @@ binTreePairCata {atom} {atom'} alg =
   binTreeCata {atom=atom'} {a} .
     (|>) ((.) alg . flip MkPair) . flip (binTreeCata {atom} {a})
 
--- XXX DecEq
+public export
+BinTreeEqAlg : {0 atom : Type} ->
+  DecEqPred atom -> BinTreeProdAlg atom atom Bool
+BinTreeEqAlg deq xs = ?BinTreeEqAlg_hole
 
--- XXX Eq
+public export
+binTreeEq : {0 atom : Type} ->
+  DecEqPred atom -> BinTreeMu atom -> BinTreeMu atom -> Bool
+binTreeEq = binTreePairCata . BinTreeEqAlg
+
+public export
+binTreeEqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
+  (x, x' : BinTreeMu atom) -> IsTrue (binTreeEq deq x x') -> x = x'
+binTreeEqCorrect deq x x' eq = ?binTreeEqCorrect_hole
+
+public export
+binTreeNeqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
+  (x, x' : BinTreeMu atom) -> IsFalse (binTreeEq deq x x') -> Not (x = x')
+binTreeNeqCorrect deq x x' neq = ?binTreeNeqCorrect_hole
+
+public export
+binTreeDecEq : {0 atom : Type} -> DecEqPred atom -> DecEqPred (BinTreeMu atom)
+binTreeDecEq deq x x' with (binTreeEq deq x x') proof prf
+  binTreeDecEq deq x x' | True = Yes $ binTreeEqCorrect deq x x' prf
+  binTreeDecEq deq x x' | False = No $ binTreeNeqCorrect deq x x' prf
+
+public export
+DecEq atom => Eq (BinTreeMu atom) where
+  (==) = binTreeEq decEq
+
+public export
+DecEq atom => DecEq (BinTreeMu atom) where
+  decEq = binTreeDecEq decEq
 
 -- XXX Functor, Applicative, Monad
 
