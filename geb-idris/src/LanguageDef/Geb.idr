@@ -157,27 +157,49 @@ Show atom => Show (BinTreeMu atom) where
   show = binTreeShow show
 
 -- An algebra of `BinTreeProdF` provides simultaneous induction on a
--- pair of `BinTreeMu`s.
+-- pair of `BinTreeMu`s.  This means that:
+--  - The result for a pair of atoms takes into account both atoms
+--  - The result for an atom and a pair takes into account both the atom and
+--    the result of simultaneous induction on the two branches of the pair
+--  - The result for pairs of pairs takes into account the results of
+--    simultaneous induction for each of the four pairs of branches of
+--    the input trees
 public export
 BinTreeProdAlg : Type -> Type -> Type -> Type
 BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
-binTreePairCata : {0 atom, atom', a : Type} ->
+binTreeProdCata : {0 atom, atom', a : Type} ->
   BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreePairCata {atom} {atom'} alg =
+binTreeProdCata {atom} {atom'} alg =
   binTreeCata {atom=atom'} {a} .
     (|>) ((.) alg . flip MkPair) . flip (binTreeCata {atom} {a})
 
+-- An algebra of `BinTreeParProdF` provides parallel induction on a
+-- pair of `BinTreeMu`s.  This means that:
+--  - The result for a pair of atoms takes into account both atoms
+--  - The result for an atom and a pair takes into account only the atom
+--  - The result for pairs of pairs takes into account the results of parallel
+--    induction for each of the four combinations of parallel inductions on one
+--    branch of the first input tree with one branch of the second input tree
+public export
+BinTreeParProdAlg : Type -> Type -> Type -> Type
+BinTreeParProdAlg = Algebra .* BinTreeParProdF
+
+public export
+binTreeParProdCata : {0 atom, atom', a : Type} ->
+  BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
+binTreeParProdCata {atom} {atom'} alg = ?binTreeParProdCata_hole
+
 public export
 BinTreeEqAlg : {0 atom : Type} ->
-  DecEqPred atom -> BinTreeProdAlg atom atom Bool
+  DecEqPred atom -> BinTreeParProdAlg atom atom Bool
 BinTreeEqAlg deq xs = ?BinTreeEqAlg_hole
 
 public export
 binTreeEq : {0 atom : Type} ->
   DecEqPred atom -> BinTreeMu atom -> BinTreeMu atom -> Bool
-binTreeEq = binTreePairCata . BinTreeEqAlg
+binTreeEq = binTreeParProdCata . BinTreeEqAlg
 
 public export
 binTreeEqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
