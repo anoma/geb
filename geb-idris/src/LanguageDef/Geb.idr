@@ -155,6 +155,18 @@ prodFMBind {atom} {a} = prodFMEval {atom} {a=(ProdFM a)} . flip eitherElim ($>)
 ---- Various forms of product catamorphism ----
 -----------------------------------------------
 
+-- An algebra for catamorphisms on pairs of `BinTreeMu`s that uses the
+-- product-hom adjunction.
+public export
+BinTreeProdHomAlg : Type -> Type -> Type -> Type
+BinTreeProdHomAlg = (|>) BinTreeAlg . (.) . BinTreeAlg
+
+public export
+binTreeProdHomCata : {0 atom, atom', a : Type} ->
+  BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
+binTreeProdHomCata {atom} {atom'} =
+  binTreeCata {atom=atom'} {a} .* binTreeCata {atom} {a=(BinTreeAlg atom' a)}
+
 -- An algebra of `BinTreeProdF` provides simultaneous induction on a
 -- pair of `BinTreeMu`s.  This means that:
 --  - The result for a pair of atoms takes into account both atoms
@@ -189,18 +201,6 @@ public export
 binTreeParProdCata : {0 atom, atom', a : Type} ->
   BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
 binTreeParProdCata {atom} {atom'} alg = ?binTreeParProdCata_hole
-
--- An algebra for catamorphisms on pairs of `BinTreeMu`s that uses the
--- product-hom adjunction.
-public export
-BinTreeProdHomAlg : Type -> Type -> Type -> Type
-BinTreeProdHomAlg = (|>) BinTreeAlg . (.) . BinTreeAlg
-
-public export
-binTreeProdHomCata : {0 atom, atom', a : Type} ->
-  BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeProdHomCata {atom} {atom'} =
-  binTreeCata {atom=atom'} {a} .* binTreeCata {atom} {a=(BinTreeAlg atom' a)}
 
 -------------------
 ---- Utilities ----
