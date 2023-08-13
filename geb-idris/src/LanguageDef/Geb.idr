@@ -310,13 +310,18 @@ InBTp : {0 atom, a : Type} ->
   BinTreeFM atom a -> BinTreeFM atom a -> BinTreeFM atom a
 InBTp {atom} {a} = ($*) {atom=(Either a atom)}
 
+public export
+BinTreeToProdFMAlg : {0 atom, v, a : Type} ->
+  (v -> a) -> BinTreeAlg atom a -> BinTreeAlg (Either v atom) a
+BinTreeToProdFMAlg {atom} {v} {a} subst alg =
+  eitherElim (eitherElim subst (alg . ($$!))) (alg . ($$>))
+
 -- The universal `eval` morphism for `BinTreeFM`.
 public export
 binTreeFMEval : {0 atom, v, a : Type} ->
   (v -> a) -> BinTreeAlg atom a -> BinTreeFM atom v -> a
-binTreeFMEval {atom} {v} {a} subst alg =
-  prodFMEval {atom=(Either v atom)} {a} $
-    eitherElim (eitherElim subst (alg . ($$!))) (alg . ($$>))
+binTreeFMEval {atom} {v} {a} =
+  prodFMEval {atom=(Either v atom)} {a} .* BinTreeToProdFMAlg {atom} {v} {a}
 
 public export
 binTreeFMBind : {0 atom : Type} -> {0 a, b : Type} ->
