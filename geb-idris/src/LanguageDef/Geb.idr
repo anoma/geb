@@ -215,7 +215,7 @@ BinTreeParProdAlgArgToProdHomAlgArg : {0 atom, atom', a : Type} ->
     (Either
       (atom, atom')
       (Either atom atom'))
-    (ProductMonad $ ProductMonad a) ->
+    (ProductMonad $ ProductMonad a)
 BinTreeParProdAlgArgToProdHomAlgArg (Left x) (Left x') =
   Left $ Left (x, x')
 BinTreeParProdAlgArgToProdHomAlgArg (Left x) (Right (_, _)) =
