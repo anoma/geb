@@ -154,6 +154,10 @@ public export
 Show atom => Show (BinTreeMu atom) where
   show = binTreeShow show
 
+-- XXX bind
+
+-- XXX Functor, Applicative, Monad
+
 -- An algebra of `BinTreeProdF` provides simultaneous induction on a
 -- pair of `BinTreeMu`s.  This means that:
 --  - The result for a pair of atoms takes into account both atoms
@@ -187,7 +191,7 @@ BinTreeParProdAlg = Algebra .* BinTreeParProdF
 public export
 binTreeParProdCata : {0 atom, atom', a : Type} ->
   BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeParProdCata = ?binTreeParProdCata_hole
+binTreeParProdCata {atom} {atom'} alg = ?binTreeParProdCata_hole
 
 public export
 BinTreeEqAlg : {0 atom : Type} ->
@@ -234,10 +238,6 @@ binTreeProdHomCata : {0 atom, atom', a : Type} ->
   BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
 binTreeProdHomCata {atom} {atom'} =
   binTreeCata {atom=atom'} .* ?binTreeProdHomCata_hole
-
--- XXX Functor, Applicative, Monad
-
--- XXX bind
 
 -- The "translate" functor: `BinTreeTrF[atom, A, X] == A + BinTreeF[atom, X]`.
 -- Note, however, that since `BinTreeF[atom, X]` itself is
