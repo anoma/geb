@@ -208,21 +208,28 @@ BinTreeParProdAlg : Type -> Type -> Type -> Type
 BinTreeParProdAlg = Algebra .* BinTreeParProdF
 
 public export
-BinTreeParProdToProdHomAlg : {0 atom, atom', a : Type} ->
-  BinTreeParProdAlg atom atom' a -> BinTreeProdHomAlg atom atom' a
-BinTreeParProdToProdHomAlg alg (Left x) (Left x') =
-  alg $ Left $ Left (x, x')
-BinTreeParProdToProdHomAlg alg (Left x) (Right _) =
-  alg $ Left $ Right $ Left x
-BinTreeParProdToProdHomAlg alg (Right _) (Left x') =
-  alg $ Left $ Right $ Right x'
-BinTreeParProdToProdHomAlg alg (Right (alg1, alg2)) (Right p) =
-  alg $ Right ((alg1 $ Right p, alg2 $ Right p), p)
+BinTreeParProdAlgArgToProdHomAlgArg : {0 atom, atom', a : Type} ->
+  Either atom (ProductMonad (Either atom' (a, a) -> a)) ->
+  Either atom' (ProductMonad a) ->
+  Either
+    (Either
+      (atom, atom')
+      (Either atom atom'))
+    (ProductMonad $ ProductMonad a) ->
+BinTreeParProdAlgArgToProdHomAlgArg (Left x) (Left x') =
+  Left $ Left (x, x')
+BinTreeParProdAlgArgToProdHomAlgArg (Left x) (Right (_, _)) =
+  Left $ Right $ Left x
+BinTreeParProdAlgArgToProdHomAlgArg (Right (_, _)) (Left x') =
+  Left $ Right $ Right x'
+BinTreeParProdAlgArgToProdHomAlgArg (Right (alg1, alg2)) (Right p) =
+  Right ((alg1 $ Right p, alg2 $ Right p), p)
 
 public export
 binTreeParProdCata : {0 atom, atom', a : Type} ->
   BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeParProdCata alg = binTreeProdHomCata (BinTreeParProdToProdHomAlg alg)
+binTreeParProdCata alg =
+  binTreeProdHomCata (alg .* BinTreeParProdAlgArgToProdHomAlgArg)
 
 -------------------
 ---- Utilities ----
