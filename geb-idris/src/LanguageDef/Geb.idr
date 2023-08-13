@@ -151,6 +151,10 @@ prodFMBind {atom} {a} = prodFMEval {atom} {a=(ProdFM a)} . flip eitherElim ($>)
 
 -- XXX Functor, Applicative, Monad
 
+-----------------------------------------------
+---- Various forms of product catamorphism ----
+-----------------------------------------------
+
 -- An algebra of `BinTreeProdF` provides simultaneous induction on a
 -- pair of `BinTreeMu`s.  This means that:
 --  - The result for a pair of atoms takes into account both atoms
@@ -197,6 +201,10 @@ binTreeProdHomCata : {0 atom, atom', a : Type} ->
   BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
 binTreeProdHomCata {atom} {atom'} =
   binTreeCata {atom=atom'} .* ?binTreeProdHomCata_hole
+
+-------------------
+---- Utilities ----
+-------------------
 
 public export
 BinTreeShowLinesAlg : {0 atom : Type} ->
@@ -255,6 +263,10 @@ DecEq atom => Eq (BinTreeMu atom) where
 public export
 DecEq atom => DecEq (BinTreeMu atom) where
   decEq = binTreeDecEq decEq
+
+----------------------------------
+---- Free monad of `BinTreeF` ----
+----------------------------------
 
 -- The "translate" functor: `BinTreeTrF[atom, A, X] == A + BinTreeF[atom, X]`.
 -- Note, however, that since `BinTreeF[atom, X]` itself is
