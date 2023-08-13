@@ -57,21 +57,6 @@ public export
 BinTreeProdF : Type -> Type -> Type -> Type
 BinTreeProdF atom atom' = ProductF (BinTreeF atom) (BinTreeF atom')
 
--- The parallel product of two `BinTreeF` functors -- that is, the product
--- in the category of Dirichlet endofunctors on `Type`.
---
--- In the parallel product, the positions and directions are both products
--- of those of the individual functors.  The positions of `BinTreeF atom`
--- are `atom + 1` and the corresponding directions are `Void` for each
--- `atom` and `2` for the `1`, so the positions of `BinTreeParProdF atom atom'`
--- are `atom * atom' + atom' + atom + 1` and the corresponding directions
--- are `Void` for each combination involving `atom` and `4` for the `1`.
-public export
-BinTreeParProdF : Type -> Type -> Type -> Type
-BinTreeParProdF atom atom' =
-  Either (Either (atom, atom') (Either atom atom')) .
-  (ProductMonad .  ProductMonad)
-
 prefix 1 $$!
 public export
 ($$!) : {0 atom, ty : Type} -> atom -> BinTreeF atom ty
@@ -199,6 +184,21 @@ binTreeProdCata : {atom, atom', a : Type} ->
   BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
 binTreeProdCata alg =
   binTreeProdHomCata (alg .* BinTreeProdHomAlgArgToProdAlgArg .* MkPair)
+
+-- The parallel product of two `BinTreeF` functors -- that is, the product
+-- in the category of Dirichlet endofunctors on `Type`.
+--
+-- In the parallel product, the positions and directions are both products
+-- of those of the individual functors.  The positions of `BinTreeF atom`
+-- are `atom + 1` and the corresponding directions are `Void` for each
+-- `atom` and `2` for the `1`, so the positions of `BinTreeParProdF atom atom'`
+-- are `atom * atom' + atom' + atom + 1` and the corresponding directions
+-- are `Void` for each combination involving `atom` and `4` for the `1`.
+public export
+BinTreeParProdF : Type -> Type -> Type -> Type
+BinTreeParProdF atom atom' =
+  Either (Either (atom, atom') (Either atom atom')) .
+  (ProductMonad .  ProductMonad)
 
 -- An algebra of `BinTreeParProdF` provides parallel induction on a
 -- pair of `BinTreeMu`s.  This means that:
