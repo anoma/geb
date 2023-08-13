@@ -48,9 +48,31 @@ public export
 Bifunctor BinTreeF where
   bimap = (|>) (mapHom {f=Pair}) . bimap {f=Either}
 
+-- The polynomial product of two `BinTreeF` functors -- that is, the product
+-- in the category of polynomial endofunctors on `Type`.
+--
+-- In the polynomial product, the positions are products of those of the
+-- individual functors, while the directions are the corresponding coproducts.
 public export
 BinTreeProdF : Type -> Type -> Type -> Type
 BinTreeProdF atom atom' = ProductF (BinTreeF atom) (BinTreeF atom')
+
+-- The parallel product of two `BinTreeF` functors -- that is, the product
+-- in the category of Dirichlet endofunctors on `Type`.
+--
+-- In the parallel product, the positions and directions are both products
+-- of those of the individual functors.  The positions of `BinTreeF atom`
+-- are `atom + 1` and the corresponding directions are `Void` for each
+-- `atom` and `2` for the `1`, so the positions of `BinTreeParProdF atom atom'`
+-- are `atom * atom' + atom' + atom + 1` and the corresponding directions
+-- are `Void` for each combination involving `atom` and `4` for the `1`.
+public export
+BinTreeParProdF : Type -> Type -> Type -> Type
+BinTreeParProdF atom atom' =
+  Either (atom, atom') . -- both input trees are atoms
+  Either atom . -- left input tree is atom, right input tree is pair
+  Either atom' . -- right input tree is atom, left input tree is pair
+  (ProductMonad .  ProductMonad) -- both input trees are pairs
 
 prefix 1 $$!
 public export
@@ -134,6 +156,8 @@ public export
 Show atom => Show (BinTreeMu atom) where
   show = binTreeShow show
 
+-- An algebra of `BinTreeProdF` provides simultaneous induction on a
+-- pair of `BinTreeMu`s.
 public export
 BinTreeProdAlg : Type -> Type -> Type -> Type
 BinTreeProdAlg = Algebra .* BinTreeProdF
