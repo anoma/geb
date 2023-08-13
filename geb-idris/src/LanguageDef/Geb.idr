@@ -263,28 +263,8 @@ binTreeEq : {0 atom : Type} ->
 binTreeEq = binTreeParProdCata . BinTreeEqAlg
 
 public export
-binTreeEqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
-  (x, x' : BinTreeMu atom) -> IsTrue (binTreeEq deq x x') -> x = x'
-binTreeEqCorrect deq x x' eq = ?binTreeEqCorrect_hole
-
-public export
-binTreeNeqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
-  (x, x' : BinTreeMu atom) -> IsFalse (binTreeEq deq x x') -> Not (x = x')
-binTreeNeqCorrect deq x x' neq = ?binTreeNeqCorrect_hole
-
-public export
-binTreeDecEq : {0 atom : Type} -> DecEqPred atom -> DecEqPred (BinTreeMu atom)
-binTreeDecEq deq x x' with (binTreeEq deq x x') proof prf
-  binTreeDecEq deq x x' | True = Yes $ binTreeEqCorrect deq x x' prf
-  binTreeDecEq deq x x' | False = No $ binTreeNeqCorrect deq x x' prf
-
-public export
 DecEq atom => Eq (BinTreeMu atom) where
   (==) = binTreeEq decEq
-
-public export
-DecEq atom => DecEq (BinTreeMu atom) where
-  decEq = binTreeDecEq decEq
 
 ----------------------------------
 ---- Free monad of `BinTreeF` ----
@@ -466,6 +446,30 @@ data BinTreeFreeM2'' : {0 atom : Type} -> (f2 : PolyBTDep atom) ->
     ((d2 : pbtdDir2 f2 i) -> BinTreeFreeM2'' {atom} f2 {atom'} p $
       binTreeFMBind d1 $ pbtdAssign f2 i d2) ->
     BinTreeFreeM2'' {atom} f2 {atom'} p $ binTreeFMBind d1 $ pbtdCod f2 i
+
+--------------------------------------
+---- Correctness of equality test ----
+--------------------------------------
+
+public export
+binTreeEqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
+  (x, x' : BinTreeMu atom) -> IsTrue (binTreeEq deq x x') -> x = x'
+binTreeEqCorrect deq x x' eq = ?binTreeEqCorrect_hole
+
+public export
+binTreeNeqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
+  (x, x' : BinTreeMu atom) -> IsFalse (binTreeEq deq x x') -> Not (x = x')
+binTreeNeqCorrect deq x x' neq = ?binTreeNeqCorrect_hole
+
+public export
+binTreeDecEq : {0 atom : Type} -> DecEqPred atom -> DecEqPred (BinTreeMu atom)
+binTreeDecEq deq x x' with (binTreeEq deq x x') proof prf
+  binTreeDecEq deq x x' | True = Yes $ binTreeEqCorrect deq x x' prf
+  binTreeDecEq deq x x' | False = No $ binTreeNeqCorrect deq x x' prf
+
+public export
+DecEq atom => DecEq (BinTreeMu atom) where
+  decEq = binTreeDecEq decEq
 
 ---------------------------------------------------
 ---------------------------------------------------
