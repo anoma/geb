@@ -69,10 +69,8 @@ BinTreeProdF atom atom' = ProductF (BinTreeF atom) (BinTreeF atom')
 public export
 BinTreeParProdF : Type -> Type -> Type -> Type
 BinTreeParProdF atom atom' =
-  Either (atom, atom') . -- both input trees are atoms
-  Either atom . -- left input tree is atom, right input tree is pair
-  Either atom' . -- right input tree is atom, left input tree is pair
-  (ProductMonad .  ProductMonad) -- both input trees are pairs
+  Either (Either (atom, atom') (Either atom atom')) .
+  (ProductMonad .  ProductMonad)
 
 prefix 1 $$!
 public export
@@ -189,7 +187,7 @@ BinTreeParProdAlg = Algebra .* BinTreeParProdF
 public export
 binTreeParProdCata : {0 atom, atom', a : Type} ->
   BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeParProdCata {atom} {atom'} alg = ?binTreeParProdCata_hole
+binTreeParProdCata = ?binTreeParProdCata_hole
 
 public export
 BinTreeEqAlg : {0 atom : Type} ->
@@ -224,6 +222,18 @@ DecEq atom => Eq (BinTreeMu atom) where
 public export
 DecEq atom => DecEq (BinTreeMu atom) where
   decEq = binTreeDecEq decEq
+
+-- An algebra for catamorphisms on pairs of `BinTreeMu`s that uses the
+-- product-hom adjunction.
+public export
+BinTreeProdHomAlg : Type -> Type -> Type -> Type
+BinTreeProdHomAlg = (|>) BinTreeAlg . (.) . BinTreeAlg
+
+public export
+binTreeProdHomCata : {0 atom, atom', a : Type} ->
+  BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
+binTreeProdHomCata {atom} {atom'} =
+  binTreeCata {atom=atom'} .* ?binTreeProdHomCata_hole
 
 -- XXX Functor, Applicative, Monad
 
