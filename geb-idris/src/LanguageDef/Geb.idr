@@ -200,7 +200,7 @@ public export
 binTreeProdHomCata : {0 atom, atom', a : Type} ->
   BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
 binTreeProdHomCata {atom} {atom'} =
-  binTreeCata {atom=atom'} .* ?binTreeProdHomCata_hole
+  binTreeCata {atom=atom'} {a} .* binTreeCata {atom} {a=(BinTreeAlg atom' a)}
 
 -------------------
 ---- Utilities ----
