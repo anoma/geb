@@ -49,12 +49,8 @@ Bifunctor BinTreeF where
   bimap = (|>) (mapHom {f=Pair}) . bimap {f=Either}
 
 public export
-BinTreeAlg : Type -> Type -> Type
-BinTreeAlg = Algebra . BinTreeF
-
-public export
-BinTreeProdAlg : Type -> Type -> Type -> Type
-BinTreeProdAlg atom atom' = Algebra (ProductF (BinTreeF atom) (BinTreeF atom'))
+BinTreeProdF : Type -> Type -> Type -> Type
+BinTreeProdF atom atom' = ProductF (BinTreeF atom) (BinTreeF atom')
 
 prefix 1 $$!
 public export
@@ -104,6 +100,10 @@ public export
   (l : List atom) -> {auto 0 ne : NonEmpty l} -> BinTreeMu atom
 ($:!) {atom} l {ne} = ($:) (map ($!) l) {ne=(mapNonEmpty {l} {ne})}
 
+public export
+BinTreeAlg : Type -> Type -> Type
+BinTreeAlg = Algebra . BinTreeF
+
 -- The universal "catamorphism" morphism of the initial algebra `Mu[BinTreeF]`.
 -- This is also the universal "eval" morphism for the free monad of the
 -- product monad.
@@ -133,6 +133,10 @@ binTreeShow = showLines . binTreeLines
 public export
 Show atom => Show (BinTreeMu atom) where
   show = binTreeShow show
+
+public export
+BinTreeProdAlg : Type -> Type -> Type -> Type
+BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
 binTreePairCata : {0 atom, atom', a : Type} ->
