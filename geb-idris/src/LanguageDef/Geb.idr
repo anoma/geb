@@ -180,11 +180,21 @@ BinTreeProdAlg : Type -> Type -> Type -> Type
 BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
-binTreeProdCata : {0 atom, atom', a : Type} ->
+BinTreeProdToProdHomAlg : {0 atom, atom', a : Type} ->
+  BinTreeProdAlg atom atom' a -> BinTreeProdHomAlg atom atom' a
+BinTreeProdToProdHomAlg alg (Left x) (Left x') =
+  alg (Left x, Left x')
+BinTreeProdToProdHomAlg alg (Left x) (Right x') =
+  alg (Left x, Right x')
+BinTreeProdToProdHomAlg alg (Right (alg1, alg2)) (Left x') =
+  alg (Right (alg1 $ Left x', alg2 $ Left x'), Left x')
+BinTreeProdToProdHomAlg alg (Right (alg1, alg2)) (Right p) =
+  alg (Right (alg1 $ Right p, alg2 $ Right p), Right p)
+
+public export
+binTreeProdCata : {atom, atom', a : Type} ->
   BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeProdCata {atom} {atom'} alg =
-  binTreeCata {atom=atom'} {a} .
-    (|>) ((.) alg . flip MkPair) . flip (binTreeCata {atom} {a})
+binTreeProdCata alg = binTreeProdHomCata (BinTreeProdToProdHomAlg alg)
 
 -- An algebra of `BinTreeParProdF` provides parallel induction on a
 -- pair of `BinTreeMu`s.  This means that:
