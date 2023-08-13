@@ -76,8 +76,8 @@ gebTest = do
   putStrLn $ "parProdClosure/dirichHom(btPolyShape 5, btPolyShape 3) = " ++
     (show $ parProdClosureShape (btPolyShape 5) (btPolyShape 3))
   putStrLn $ "parProdClosure/dirichHom(btPolyShape 2, btPolyShape 3) = " ++
-    (show $ parProdClosureShape (btPolyShape 2) (btPolyShape 2))
-  putStrLn $ "parProdClosure/dirichHom(btPolyShape 3, btPolyShape 3) = " ++
+    (show $ parProdClosureShape (btPolyShape 2) (btPolyShape 3))
+  putStrLn $ "parProdClosure/dirichHom(btPolyShape 3, btPolyShape 2) = " ++
     (show $ parProdClosureShape (btPolyShape 3) (btPolyShape 2))
   putStrLn $ "leftCoclosure(btPolyShape 3, btPolyShape 5) = " ++
     (show $ leftCoclosureShape (btPolyShape 3) (btPolyShape 5))
