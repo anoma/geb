@@ -48,15 +48,6 @@ public export
 Bifunctor BinTreeF where
   bimap = (|>) (mapHom {f=Pair}) . bimap {f=Either}
 
--- The polynomial product of two `BinTreeF` functors -- that is, the product
--- in the category of polynomial endofunctors on `Type`.
---
--- In the polynomial product, the positions are products of those of the
--- individual functors, while the directions are the corresponding coproducts.
-public export
-BinTreeProdF : Type -> Type -> Type -> Type
-BinTreeProdF atom atom' = ProductF (BinTreeF atom) (BinTreeF atom')
-
 prefix 1 $$!
 public export
 ($$!) : {0 atom, ty : Type} -> atom -> BinTreeF atom ty
@@ -147,16 +138,25 @@ BinTreeProdHomAlg : Type -> Type -> Type -> Type
 BinTreeProdHomAlg = (|>) BinTreeAlg . (.) . BinTreeAlg
 
 public export
+binTreeProdHomCata : {0 atom, atom', a : Type} ->
+  BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
+binTreeProdHomCata {atom} {atom'} =
+  binTreeCata {atom=atom'} {a} .* binTreeCata {atom} {a=(BinTreeAlg atom' a)}
+
+public export
 BinTreeProdHomAlgArg : Type -> Type -> Type -> Type
 BinTreeProdHomAlgArg atom atom' a =
  (Either atom (ProductMonad (Either atom' (a, a) -> a)),
   Either atom' (ProductMonad a))
 
+-- The polynomial product of two `BinTreeF` functors -- that is, the product
+-- in the category of polynomial endofunctors on `Type`.
+--
+-- In the polynomial product, the positions are products of those of the
+-- individual functors, while the directions are the corresponding coproducts.
 public export
-binTreeProdHomCata : {0 atom, atom', a : Type} ->
-  BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeProdHomCata {atom} {atom'} =
-  binTreeCata {atom=atom'} {a} .* binTreeCata {atom} {a=(BinTreeAlg atom' a)}
+BinTreeProdF : Type -> Type -> Type -> Type
+BinTreeProdF atom atom' = ProductF (BinTreeF atom) (BinTreeF atom')
 
 -- An algebra of `BinTreeProdF` provides simultaneous induction on a
 -- pair of `BinTreeMu`s.  This means that:
