@@ -162,6 +162,12 @@ BinTreeProdHomAlg : Type -> Type -> Type -> Type
 BinTreeProdHomAlg = (|>) BinTreeAlg . (.) . BinTreeAlg
 
 public export
+BinTreeProdHomAlgArg : Type -> Type -> Type -> Type
+BinTreeProdHomAlgArg atom atom' a =
+ (Either atom (ProductMonad (Either atom' (a, a) -> a)),
+  Either atom' (ProductMonad a))
+
+public export
 binTreeProdHomCata : {0 atom, atom', a : Type} ->
   BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
 binTreeProdHomCata {atom} {atom'} =
@@ -181,9 +187,8 @@ BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
 BinTreeProdAlgArgToProdHomAlgArg : {0 atom, atom', a : Type} ->
- (Either atom (ProductMonad (Either atom' (a, a) -> a)),
-  Either atom' (ProductMonad a)) ->
- (Either atom (ProductMonad a), Either atom' (ProductMonad a))
+  BinTreeProdHomAlgArg atom atom' a ->
+  (Either atom (ProductMonad a), Either atom' (ProductMonad a))
 BinTreeProdAlgArgToProdHomAlgArg (Left x, Left x') =
   (Left x, Left x')
 BinTreeProdAlgArgToProdHomAlgArg (Left x, Right x') =
@@ -212,8 +217,7 @@ BinTreeParProdAlg = Algebra .* BinTreeParProdF
 
 public export
 BinTreeParProdAlgArgToProdHomAlgArg : {0 atom, atom', a : Type} ->
-  (Either atom (ProductMonad (Either atom' (a, a) -> a)),
-   Either atom' (ProductMonad a)) ->
+  BinTreeProdHomAlgArg atom atom' a ->
   Either
     (Either
       (atom, atom')
