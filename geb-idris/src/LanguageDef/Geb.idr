@@ -196,7 +196,10 @@ binTreeParProdCata {atom} {atom'} alg = ?binTreeParProdCata_hole
 public export
 BinTreeEqAlg : {0 atom : Type} ->
   DecEqPred atom -> BinTreeParProdAlg atom atom Bool
-BinTreeEqAlg deq xs = ?BinTreeEqAlg_hole
+BinTreeEqAlg deq (Left (Left (ea, ea'))) = isYes $ deq ea ea'
+BinTreeEqAlg deq (Left (Right (Left _))) = False
+BinTreeEqAlg deq (Left (Right (Right _))) = False
+BinTreeEqAlg deq (Right ((eq11, eq12), (eq21, eq22))) = eq11 && eq22
 
 public export
 binTreeEq : {0 atom : Type} ->
