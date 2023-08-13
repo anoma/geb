@@ -3136,7 +3136,7 @@ FAlgFreeAlgOn f eval a = (FreeMonad f a ** FAlgToFree eval inFC)
 public export
 freeBind : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
   (a -> FreeMonad f b) -> FreeMonad f a -> FreeMonad f b
-freeBind {f} {a} {b} eval m = eval a (FreeMonad f b) m inFC
+freeBind {f} {a} {b} eval = flip (eval a (FreeMonad f b)) inFC
 
 public export
 freeMap : {f : Type -> Type} -> FreeFEval f -> {a, b : Type} ->
