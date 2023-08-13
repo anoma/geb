@@ -180,21 +180,24 @@ BinTreeProdAlg : Type -> Type -> Type -> Type
 BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
-BinTreeProdToProdHomAlg : {0 atom, atom', a : Type} ->
-  BinTreeProdAlg atom atom' a -> BinTreeProdHomAlg atom atom' a
-BinTreeProdToProdHomAlg alg (Left x) (Left x') =
-  alg (Left x, Left x')
-BinTreeProdToProdHomAlg alg (Left x) (Right x') =
-  alg (Left x, Right x')
-BinTreeProdToProdHomAlg alg (Right (alg1, alg2)) (Left x') =
-  alg (Right (alg1 $ Left x', alg2 $ Left x'), Left x')
-BinTreeProdToProdHomAlg alg (Right (alg1, alg2)) (Right p) =
-  alg (Right (alg1 $ Right p, alg2 $ Right p), Right p)
+BinTreeProdAlgArgToProdHomAlgArg : {0 atom, atom', a : Type} ->
+ Either atom (ProductMonad (Either atom' (a, a) -> a)) ->
+ Either atom' (ProductMonad a) ->
+ (Either atom (ProductMonad a), Either atom' (ProductMonad a))
+BinTreeProdAlgArgToProdHomAlgArg (Left x) (Left x') =
+  (Left x, Left x')
+BinTreeProdAlgArgToProdHomAlgArg (Left x) (Right x') =
+  (Left x, Right x')
+BinTreeProdAlgArgToProdHomAlgArg (Right (alg1, alg2)) (Left x') =
+  (Right (alg1 $ Left x', alg2 $ Left x'), Left x')
+BinTreeProdAlgArgToProdHomAlgArg (Right (alg1, alg2)) (Right p) =
+  (Right (alg1 $ Right p, alg2 $ Right p), Right p)
 
 public export
 binTreeProdCata : {atom, atom', a : Type} ->
   BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeProdCata alg = binTreeProdHomCata (BinTreeProdToProdHomAlg alg)
+binTreeProdCata alg =
+  binTreeProdHomCata (alg .* BinTreeProdAlgArgToProdHomAlgArg)
 
 -- An algebra of `BinTreeParProdF` provides parallel induction on a
 -- pair of `BinTreeMu`s.  This means that:
