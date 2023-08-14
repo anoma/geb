@@ -71,6 +71,12 @@ gebTest = do
     (show $ polyShapeHomObj (btPolyShape 3) (btPolyShape 5))
   putStrLn $ "btPolyShape 3 ^ btPolyShape 5 = " ++
     (show $ polyShapeExponential (btPolyShape 3) (btPolyShape 5))
+  putStrLn $ "btPolyShape 3 -> 5 = " ++
+    (show $ polyShapeHomObj (btPolyShape 3) (constPolyShape 5))
+  putStrLn $ "3 -> btPolyShape 5 = " ++
+    (show $ polyShapeHomObj (constPolyShape 3) (btPolyShape 5))
+  putStrLn $ "btPolyShape 3 -> 7 = " ++
+    (show $ polyShapeHomObj (btPolyShape 3) (constPolyShape 7))
   putStrLn $ "parProdClosure/dirichHom(btPolyShape 3, btPolyShape 5) = " ++
     (show $ parProdClosureShape (btPolyShape 3) (btPolyShape 5))
   putStrLn $ "parProdClosure/dirichHom(btPolyShape 5, btPolyShape 3) = " ++
