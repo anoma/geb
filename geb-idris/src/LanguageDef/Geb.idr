@@ -115,15 +115,15 @@ binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
   Right (x1, x2) => binTreeCata alg x1 $$* binTreeCata alg x2
 
 -- The (universal) catamorphism of `Mu[BinTreeF]` is also the universal "eval"
--- morphism for the free monad of the product monad.
+-- morphism for the free monad of the product monad (with a slight
+-- rearrangement of parameters via `eitherElim`).
 public export
-prodFMEval : {0 atom, a : Type} -> BinTreeAlg atom a -> ProdFM atom -> a
-prodFMEval = binTreeCata
+prodFMEval : {0 v, a : Type} -> (v -> a) -> ((a, a) -> a) -> ProdFM v -> a
+prodFMEval = binTreeCata {atom=v} {a} .* eitherElim
 
 public export
-prodFMBind : {0 atom : Type} -> {0 a : Type} ->
-  (atom -> ProdFM a) -> ProdFM atom -> ProdFM a
-prodFMBind {atom} {a} = prodFMEval {atom} {a=(ProdFM a)} . flip eitherElim ($>)
+prodFMBind : {0 a, b : Type} -> (a -> ProdFM b) -> ProdFM a -> ProdFM b
+prodFMBind {a} {b} = flip (prodFMEval {v=a} {a=(ProdFM b)}) $ ($>) {atom=b}
 
 -- XXX Functor, Applicative, Monad
 
