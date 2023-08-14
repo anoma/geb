@@ -1964,6 +1964,15 @@ Functor ProductMonad where
   map = mapHom
 
 public export
+Applicative ProductMonad where
+  pure ea = (ea, ea)
+  (f, g) <*> (ea, ea') = (f ea, g ea')
+
+public export
+Monad ProductMonad where
+  (ea, ea') >>= f = (fst $ f ea, snd $ f ea')
+
+public export
 ProductNTUnit : {a : Type} -> a -> ProductMonad a
 ProductNTUnit x = (x, x)
 
