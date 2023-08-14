@@ -221,8 +221,8 @@ BinTreeProdHomAlgArgToParProdAlgArg (Left x) (Right (_, _)) =
   Left $ Right $ Left x
 BinTreeProdHomAlgArgToParProdAlgArg (Right (_, _)) (Left x') =
   Left $ Right $ Right x'
-BinTreeProdHomAlgArgToParProdAlgArg (Right (alg1, alg2)) (Right p) =
-  Right ((alg1 $ Right p, alg2 $ Right p), p)
+BinTreeProdHomAlgArgToParProdAlgArg (Right alg) (Right p) =
+  Right (mapHom (flip apply $ Right p) alg, p)
 
 public export
 binTreeParProdCata : {0 atom, atom', a : Type} ->
