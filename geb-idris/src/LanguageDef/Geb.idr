@@ -25,10 +25,6 @@ import LanguageDef.Syntax
 ---- Binary trees as free monads over product monad ----
 --------------------------------------------------------
 
-public export
-Functor ProductMonad where
-  map = mapHom
-
 -- A binary tree may be viewed as the free monad over the product monad
 -- (which is the monad of the product adjunction; it takes `a` to `(a, a)`).
 --
