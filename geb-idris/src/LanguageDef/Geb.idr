@@ -143,12 +143,6 @@ binTreeProdHomCata : {0 atom, atom', a : Type} ->
 binTreeProdHomCata {atom} {atom'} =
   binTreeCata {atom=atom'} {a} .* binTreeCata {atom} {a=(BinTreeAlg atom' a)}
 
-public export
-BinTreeProdHomAlgArg : Type -> Type -> Type -> Type
-BinTreeProdHomAlgArg atom atom' a =
- (Either atom (ProductMonad (Either atom' (a, a) -> a)),
-  Either atom' (ProductMonad a))
-
 -- The polynomial product of two `BinTreeF` functors -- that is, the product
 -- in the category of polynomial endofunctors on `Type`.
 --
@@ -172,16 +166,17 @@ BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
 BinTreeProdHomAlgArgToProdAlgArg : {0 atom, atom', a : Type} ->
-  BinTreeProdHomAlgArg atom atom' a ->
+  Either atom (ProductMonad (Either atom' (a, a) -> a)) ->
+  Either atom' (ProductMonad a) ->
   (Either atom (ProductMonad a), Either atom' (ProductMonad a))
-BinTreeProdHomAlgArgToProdAlgArg {atom} {atom'} {a} (x, x') =
+BinTreeProdHomAlgArgToProdAlgArg {atom} {atom'} {a} x x' =
   (mapSnd (mapHom (flip apply x')) x, x')
 
 public export
 binTreeProdCata : {atom, atom', a : Type} ->
   BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeProdCata alg =
-  binTreeProdHomCata (alg .* BinTreeProdHomAlgArgToProdAlgArg .* MkPair)
+binTreeProdCata =
+  binTreeProdHomCata . flip (.*) BinTreeProdHomAlgArgToProdAlgArg
 
 -- The parallel product of two `BinTreeF` functors -- that is, the product
 -- in the category of Dirichlet endofunctors on `Type`.
@@ -211,7 +206,8 @@ BinTreeParProdAlg = Algebra .* BinTreeParProdF
 
 public export
 BinTreeProdHomAlgArgToParProdAlgArg : {0 atom, atom', a : Type} ->
-  BinTreeProdHomAlgArg atom atom' a ->
+  Either atom (ProductMonad (Either atom' (a, a) -> a)) ->
+  Either atom' (ProductMonad a) ->
   Either
     (Either
       (atom, atom')
@@ -219,20 +215,20 @@ BinTreeProdHomAlgArgToParProdAlgArg : {0 atom, atom', a : Type} ->
         atom
         atom'))
     (ProductMonad $ ProductMonad a)
-BinTreeProdHomAlgArgToParProdAlgArg (Left x, Left x') =
+BinTreeProdHomAlgArgToParProdAlgArg (Left x) (Left x') =
   Left $ Left (x, x')
-BinTreeProdHomAlgArgToParProdAlgArg (Left x, Right (_, _)) =
+BinTreeProdHomAlgArgToParProdAlgArg (Left x) (Right (_, _)) =
   Left $ Right $ Left x
-BinTreeProdHomAlgArgToParProdAlgArg (Right (_, _), Left x') =
+BinTreeProdHomAlgArgToParProdAlgArg (Right (_, _)) (Left x') =
   Left $ Right $ Right x'
-BinTreeProdHomAlgArgToParProdAlgArg (Right (alg1, alg2), Right p) =
+BinTreeProdHomAlgArgToParProdAlgArg (Right (alg1, alg2)) (Right p) =
   Right ((alg1 $ Right p, alg2 $ Right p), p)
 
 public export
 binTreeParProdCata : {0 atom, atom', a : Type} ->
   BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeParProdCata alg =
-  binTreeProdHomCata (alg . BinTreeProdHomAlgArgToParProdAlgArg .* MkPair)
+binTreeParProdCata =
+  binTreeProdHomCata . flip (.*) BinTreeProdHomAlgArgToParProdAlgArg
 
 -------------------
 ---- Utilities ----
