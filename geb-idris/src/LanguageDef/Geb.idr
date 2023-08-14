@@ -174,10 +174,8 @@ public export
 BinTreeProdHomAlgArgToProdAlgArg : {0 atom, atom', a : Type} ->
   BinTreeProdHomAlgArg atom atom' a ->
   (Either atom (ProductMonad a), Either atom' (ProductMonad a))
-BinTreeProdHomAlgArgToProdAlgArg (Left x, x') =
-  (Left x, x')
-BinTreeProdHomAlgArgToProdAlgArg (Right (alg1, alg2), x') =
-  (Right (alg1 x', alg2 x'), x')
+BinTreeProdHomAlgArgToProdAlgArg {atom} {atom'} {a} (x, x') =
+  (mapSnd (mapHom (flip apply x')) x, x')
 
 public export
 binTreeProdCata : {atom, atom', a : Type} ->
