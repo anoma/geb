@@ -1500,3 +1500,7 @@ public export
 maybeLast : List a -> Maybe a
 maybeLast [] = Nothing
 maybeLast xs@(_::_) = Just (last xs)
+
+public export
+applyPure : Applicative f => {0 a, b : Type} -> f (a -> b) -> a -> f b
+applyPure = (|>) pure . (<*>)

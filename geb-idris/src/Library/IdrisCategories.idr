@@ -1973,6 +1973,10 @@ Monad ProductMonad where
   (ea, ea') >>= f = (fst $ f ea, snd $ f ea')
 
 public export
+applyHom : {0 a, b : Type} -> ProductMonad (a -> b) -> a -> ProductMonad b
+applyHom = applyPure {f=ProductMonad}
+
+public export
 ProductNTUnit : {a : Type} -> a -> ProductMonad a
 ProductNTUnit x = (x, x)
 
