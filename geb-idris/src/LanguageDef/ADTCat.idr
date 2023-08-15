@@ -1331,11 +1331,11 @@ stCata : {0 a : Type} -> STAlg a -> STMu -> a
 stCata = pfCata {p=SubstTermPF}
 
 public export
-STProdAlg : Type -> Type
-STProdAlg = PFProductAlg SubstTermPF SubstTermPF
+STProdAlg' : Type -> Type
+STProdAlg' = PFProductAlg SubstTermPF SubstTermPF
 
 public export
-stProdCata : {0 a : Type} -> STProdAlg a -> STMu -> STMu -> a
+stProdCata : {0 a : Type} -> STProdAlg' a -> STMu -> STMu -> a
 stProdCata {a} = pfProductCata {a} {p=SubstTermPF} {q=SubstTermPF}
 
 public export
@@ -1453,7 +1453,7 @@ Show STMu where
   show = stCata STShowAlg
 
 public export
-STEqAlg : STProdAlg Bool
+STEqAlg : STProdAlg' Bool
 STEqAlg (STPosLeaf, STPosLeaf) d = True
 STEqAlg (STPosLeaf, STPosLeft) d = False
 STEqAlg (STPosLeaf, STPosRight) d = False
@@ -1921,16 +1921,16 @@ ADTTermDir : ADTTermPos -> Type
 ADTTermDir = pfDir {p=ADTTermPF}
 
 public export
-ProdAlg : Type -> Type
-ProdAlg a = List a -> a
+ProdAlg' : Type -> Type
+ProdAlg' a = List a -> a
 
 public export
-MkProdAlg : {0 a : Type} -> ProdAlg a -> PFAlg ProdTermPF a
-MkProdAlg alg len = alg . toList . finFToVect {n=len}
+MkProdAlg' : {0 a : Type} -> ProdAlg' a -> PFAlg ProdTermPF a
+MkProdAlg' alg len = alg . toList . finFToVect {n=len}
 
 public export
-prodCata : {0 a : Type} -> ProdAlg a -> PolyFuncMu ProdTermPF -> a
-prodCata = pfCata {p=ProdTermPF} . MkProdAlg
+prodCata : {0 a : Type} -> ProdAlg' a -> PolyFuncMu ProdTermPF -> a
+prodCata = pfCata {p=ProdTermPF} . MkProdAlg'
 
 public export
 CoprodAlg : Type -> Type
@@ -1967,12 +1967,12 @@ termCata = pfCata {p=ADTTermPF}
 public export
 record TrAlgRec (a : Type) where
   constructor MkTrAlg
-  talgProd : ProdAlg a
+  talgProd : ProdAlg' a
   talgCoprod : CoprodAlg a
 
 public export
 talgFromRec : {0 a : Type} -> TrAlgRec a -> TrAlg a
-talgFromRec alg (Left len) ts = MkProdAlg alg.talgProd len ts
+talgFromRec alg (Left len) ts = MkProdAlg' alg.talgProd len ts
 talgFromRec alg (Right idx) t = MkCoprodAlg alg.talgCoprod idx t
 
 public export
@@ -2076,13 +2076,13 @@ FinBCObjDir = pfDir {p=FinBCObjPF}
 public export
 record FinBCObjAlgRec (a : Type) where
   constructor MkFinBCObjAlg
-  fbcAlgProd : ProdAlg a
-  fbcAlgCoprod : ProdAlg a
+  fbcAlgProd : ProdAlg' a
+  fbcAlgCoprod : ProdAlg' a
 
 public export
 fbcAlgFromRec : {0 a : Type} -> FinBCObjAlgRec a -> PFAlg FinBCObjPF a
-fbcAlgFromRec alg (Left len) ts = MkProdAlg alg.fbcAlgProd len ts
-fbcAlgFromRec alg (Right len) ts = MkProdAlg alg.fbcAlgCoprod len ts
+fbcAlgFromRec alg (Left len) ts = MkProdAlg' alg.fbcAlgProd len ts
+fbcAlgFromRec alg (Right len) ts = MkProdAlg' alg.fbcAlgCoprod len ts
 
 public export
 FinBCObjMu : Type
