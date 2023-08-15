@@ -3194,7 +3194,7 @@ freeAppJoin {f} {a} eval ftree =
 
 public export
 freeEvalToGen : {f : Type -> Type} -> FreeFEval f -> FreeFEvalGen f
-freeEvalToGen {f} eval v a subst alg = alg . freeMap {f} eval subst
+freeEvalToGen {f} eval v a subst = (|>) (freeMap {f} eval subst)
 
 -- The unit property of an algebra over a free monad.
 public export

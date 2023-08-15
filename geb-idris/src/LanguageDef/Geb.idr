@@ -206,6 +206,14 @@ public export
 prodFMmul : NaturalTransformation (ProdFM . ProdFM) ProdFM
 prodFMmul a = prodFMjoin {a}
 
+public export
+ProdAlgToFree : {0 a : Type} -> ProdAlg a -> ProdFMAlg a
+ProdAlgToFree {a} = prodFMEvalMon {v=a}
+
+public export
+ProdAlgFromFree : {0 a : Type} -> ProdFMAlg a -> ProdAlg a
+ProdAlgFromFree {a} alg = alg . ($>) . mapHom ($!)
+
 -- Pattern-matching of arbitrary depth, folding to a single value
 -- (not (necessarily) a tree).
 public export
