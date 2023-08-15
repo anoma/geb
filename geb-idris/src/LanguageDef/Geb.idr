@@ -91,6 +91,10 @@ public export
 ProdFM : Type -> Type
 ProdFM = BinTreeMu
 
+public export
+ProdFMAlg : Type -> Type
+ProdFMAlg = Algebra ProdFM
+
 prefix 1 $!
 public export
 ($!) : {0 atom : Type} -> atom -> BinTreeMu atom
@@ -415,6 +419,10 @@ BTFp = ($$*)
 public export
 BinTreeFM : Type -> Type -> Type
 BinTreeFM = BinTreeMu .* flip Either
+
+public export
+BinTreeFMAlg : Type -> Type -> Type
+BinTreeFMAlg = Algebra . BinTreeFM
 
 -- A "variable" term.
 public export

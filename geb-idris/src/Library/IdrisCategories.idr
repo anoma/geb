@@ -2977,7 +2977,7 @@ FreeAlgSig f a = Algebra f (FreeMonad f a)
 
 public export
 FreeMAlgSig : (Type -> Type) -> Type -> Type
-FreeMAlgSig f a = Algebra (FreeMonad f) a
+FreeMAlgSig = Algebra . FreeMonad
 
 public export
 InitAlgSig : (Type -> Type) -> Type
