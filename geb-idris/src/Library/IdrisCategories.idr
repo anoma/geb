@@ -3070,12 +3070,12 @@ FreeFEval f =
 -- between the category of F-algebras of `f` and `Type`.
 public export
 FreeFLA : (Type -> Type) -> Type
-FreeFLA f = (v, a : Type) -> Algebra f a -> (FreeMonad f v -> a) -> v -> a
+FreeFLA f = (v, a : Type) -> (FreeMonad f v -> a) -> v -> a
 
 -- The left adjunct itself.
 public export
 freeFLA : {f : Type -> Type} -> FreeFLA f
-freeFLA {f} v a alg eval = eval . inFV
+freeFLA {f} v a = (|>) inFV
 
 -- Special induction.
 public export
