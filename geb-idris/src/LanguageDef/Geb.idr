@@ -25,6 +25,10 @@ import LanguageDef.Syntax
 ---- Binary trees as free monads over product monad ----
 --------------------------------------------------------
 
+public export
+ProdAlg : Type -> Type
+ProdAlg = Algebra ProductMonad
+
 -- A binary tree may be viewed as the free monad over the product monad
 -- (which is the monad of the product adjunction; it takes `a` to `(a, a)`).
 --
@@ -60,10 +64,14 @@ public export
 ($$*) : {0 atom, ty : Type} -> ty -> ty -> BinTreeF atom ty
 ($$*) = ($$>) .* MkPair
 
+public export
+BinTreeAlg : Type -> Type -> Type
+BinTreeAlg = Algebra . BinTreeF
+
 -- The initial algebra (least fixed point) of `BinTreeF`.
 public export
 data BinTreeMu : Type -> Type where
-  InBTm : {0 atom : Type} -> BinTreeF atom (BinTreeMu atom) -> BinTreeMu atom
+  InBTm : {0 atom : Type} -> BinTreeAlg atom (BinTreeMu atom)
 
 -- The initial algebra of `BinTreeF` is also the free monad of the
 -- product monad.
@@ -78,7 +86,7 @@ public export
 
 infixr 10 $>
 public export
-($>) : {0 atom : Type} -> (BinTreeMu atom, BinTreeMu atom) -> BinTreeMu atom
+($>) : {0 atom : Type} -> ProdAlg (BinTreeMu atom)
 ($>) = InBTm . ($$>)
 
 %hide LanguageDef.ADTCat.infixr.($*)
@@ -99,10 +107,6 @@ public export
   (l : List atom) -> {auto 0 ne : NonEmpty l} -> BinTreeMu atom
 ($:!) {atom} l {ne} = ($:) (map ($!) l) {ne=(mapNonEmpty {l} {ne})}
 
-public export
-BinTreeAlg : Type -> Type -> Type
-BinTreeAlg = Algebra . BinTreeF
-
 -- The universal "catamorphism" morphism of the initial algebra `Mu[BinTreeF]`.
 public export
 binTreeCata : {0 atom, a : Type} -> BinTreeAlg atom a -> BinTreeMu atom -> a
@@ -114,12 +118,16 @@ binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
 -- morphism for the free monad of the product monad (with a slight
 -- rearrangement of parameters via `eitherElim`).
 public export
-prodFMEval : {0 v, a : Type} -> (v -> a) -> ((a, a) -> a) -> ProdFM v -> a
+prodFMEval : {0 v, a : Type} -> (v -> a) -> ProdAlg a -> ProdFM v -> a
 prodFMEval = binTreeCata {atom=v} {a} .* eitherElim
 
 public export
 prodFMBind : {0 a, b : Type} -> (a -> ProdFM b) -> ProdFM a -> ProdFM b
 prodFMBind {a} {b} = flip (prodFMEval {v=a} {a=(ProdFM b)}) $ ($>) {atom=b}
+
+public export
+prodFMEvalMon : {0 a : Type} -> ProdAlg a -> ProdFM a -> a
+prodFMEvalMon = prodFMEval {v=a} id
 
 -- XXX Functor, Applicative, Monad
 
