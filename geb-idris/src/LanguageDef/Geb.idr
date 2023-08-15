@@ -29,6 +29,10 @@ public export
 ProdAlg : Type -> Type
 ProdAlg = Algebra ProductMonad
 
+public export
+ProdCoalg : Type -> Type
+ProdCoalg = Coalgebra ProductMonad
+
 -- A binary tree may be viewed as the free monad over the product monad
 -- (which is the monad of the product adjunction; it takes `a` to `(a, a)`).
 --
@@ -68,10 +72,18 @@ public export
 BinTreeAlg : Type -> Type -> Type
 BinTreeAlg = Algebra . BinTreeF
 
+public export
+BinTreeCoalg : Type -> Type -> Type
+BinTreeCoalg = Coalgebra . BinTreeF
+
 -- The initial algebra (least fixed point) of `BinTreeF`.
 public export
 data BinTreeMu : Type -> Type where
   InBTm : {0 atom : Type} -> BinTreeAlg atom (BinTreeMu atom)
+
+public export
+outBTm : {0 atom : Type} -> BinTreeCoalg atom (BinTreeMu atom)
+outBTm {atom} (InBTm {atom} x) = x
 
 -- The initial algebra of `BinTreeF` is also the free monad of the
 -- product monad.
@@ -125,6 +137,8 @@ public export
 prodFMBind : {0 a, b : Type} -> (a -> ProdFM b) -> ProdFM a -> ProdFM b
 prodFMBind {a} {b} = flip (prodFMEval {v=a} {a=(ProdFM b)}) $ ($>) {atom=b}
 
+-- Evaluate the free monad of the product monad -- equivalently, `BinTreeMu` --
+-- to the type of its variables (atoms), using a monoid on the variables.
 public export
 prodFMEvalMon : {0 a : Type} -> ProdAlg a -> ProdFM a -> a
 prodFMEvalMon = prodFMEval {v=a} id
@@ -170,9 +184,9 @@ BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
 BinTreeProdHomAlgArgToProdAlgArg : {0 atom, atom', a : Type} ->
-  Either atom (ProductMonad (Either atom' (a, a) -> a)) ->
-  Either atom' (ProductMonad a) ->
-  (Either atom (ProductMonad a), Either atom' (ProductMonad a))
+  BinTreeF atom (BinTreeAlg atom' a) ->
+  BinTreeF atom' a ->
+  (BinTreeF atom a, BinTreeF atom' a)
 BinTreeProdHomAlgArgToProdAlgArg {atom} {atom'} {a} x x' =
   (mapSnd (flip applyHom x') x, x')
 
@@ -210,15 +224,9 @@ BinTreeParProdAlg = Algebra .* BinTreeParProdF
 
 public export
 BinTreeProdHomAlgArgToParProdAlgArg : {0 atom, atom', a : Type} ->
-  Either atom (ProductMonad (Either atom' (a, a) -> a)) ->
-  Either atom' (ProductMonad a) ->
-  Either
-    (Either
-      (atom, atom')
-      (Either
-        atom
-        atom'))
-    (ProductMonad $ ProductMonad a)
+  BinTreeF atom (BinTreeAlg atom' a) ->
+  BinTreeF atom' a ->
+  BinTreeF (Either (atom, atom') (Either atom atom')) (ProductMonad a)
 BinTreeProdHomAlgArgToParProdAlgArg (Left x) (Left x') =
   Left $ Left (x, x')
 BinTreeProdHomAlgArgToParProdAlgArg (Left x) (Right (_, _)) =
