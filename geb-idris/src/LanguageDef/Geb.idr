@@ -208,8 +208,7 @@ binTreeProdCata =
 public export
 BinTreeParProdF : Type -> Type -> Type -> Type
 BinTreeParProdF atom atom' =
-  Either (Either (atom, atom') (Either atom atom')) .
-  (ProductMonad .  ProductMonad)
+  BinTreeF (Either (atom, atom') (Either atom atom')) . ProductMonad
 
 -- An algebra of `BinTreeParProdF` provides parallel induction on a
 -- pair of `BinTreeMu`s.  This means that:
