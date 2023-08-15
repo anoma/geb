@@ -143,13 +143,6 @@ public export
 prodFMEvalMon : {0 v : Type} -> ProdAlg v -> ProdFM v -> v
 prodFMEvalMon = prodFMEval {v} id
 
--- Pattern-matching of arbitrary depth, folding to a single value
--- (not (necessarily) a tree).
-public export
-prodFMpmatch : {0 v, a : Type} -> ProdFM (v -> a) -> ProdAlg a -> ProdFM v -> a
-prodFMpmatch {v} {a} pat alg =
-  prodFMEval {v} {a} (prodFMEvalMon {v=(v -> a)} ((.) alg . applyHom) pat) alg
-
 public export
 prodFMvar : {0 atom : Type} -> atom -> ProdFM atom
 prodFMvar = ($!)
@@ -200,6 +193,13 @@ prodFMunit atom = ($!) {atom}
 public export
 prodFMmul : NaturalTransformation (ProdFM . ProdFM) ProdFM
 prodFMmul a = prodFMjoin {a}
+
+-- Pattern-matching of arbitrary depth, folding to a single value
+-- (not (necessarily) a tree).
+public export
+prodFMpmatch : {0 v, a : Type} -> ProdFM (v -> a) -> ProdAlg a -> ProdFM v -> a
+prodFMpmatch {v} {a} pat alg =
+  prodFMEval {v} {a} (prodFMEvalMon {v=(v -> a)} ((.) alg . applyHom) pat) alg
 
 -- Pattern-matching of arbitrary depth, folding to a tree.
 public export
