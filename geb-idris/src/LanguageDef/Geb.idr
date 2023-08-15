@@ -128,10 +128,18 @@ binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
 
 -- The (universal) catamorphism of `Mu[BinTreeF]` is also the universal "eval"
 -- morphism for the free monad of the product monad (with a slight
--- rearrangement of parameters via `eitherElim`).
+-- rearrangement of parameters via `eitherElim`).  The eval morphism is the
+-- right adjunct of the free/forgetful adjunction between the category of
+-- F-algebras of `ProductMonad` and `Type`.
 public export
 prodFMEval : {0 v, a : Type} -> (v -> a) -> ProdAlg a -> ProdFM v -> a
 prodFMEval = binTreeCata {atom=v} {a} .* eitherElim
+
+-- The left adjunct of the free/forgetful adjunction between the category of
+-- F-algebras of `ProductMonad` and `Type` (the right adjunct is `prodFMEVal`).
+public export
+prodFMleftAdj : {0 v, a : Type} -> (ProdFM v -> a) -> v -> a
+prodFMleftAdj {v} {a} = (|>) ($!)
 
 public export
 prodFMBind : {0 a, b : Type} -> (a -> ProdFM b) -> ProdFM a -> ProdFM b
