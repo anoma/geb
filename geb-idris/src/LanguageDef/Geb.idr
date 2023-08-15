@@ -226,7 +226,7 @@ public export
 BinTreeProdHomAlgArgToParProdAlgArg : {0 atom, atom', a : Type} ->
   BinTreeF atom (BinTreeAlg atom' a) ->
   BinTreeF atom' a ->
-  BinTreeF (Either (atom, atom') (Either atom atom')) (ProductMonad a)
+  BinTreeParProdF atom atom' a
 BinTreeProdHomAlgArgToParProdAlgArg (Left x) (Left x') =
   Left $ Left (x, x')
 BinTreeProdHomAlgArgToParProdAlgArg (Left x) (Right (_, _)) =
