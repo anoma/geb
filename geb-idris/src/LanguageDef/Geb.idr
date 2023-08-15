@@ -183,12 +183,19 @@ BinTreeProdAlg : Type -> Type -> Type -> Type
 BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
-BinTreeProdHomAlgArgToProdAlgArg : {0 atom, atom', a : Type} ->
+btApplyAlg : {0 atom, atom', a : Type} ->
+  BinTreeF atom (BinTreeAlg atom' a) ->
+  BinTreeF atom' a ->
+  BinTreeF atom a
+btApplyAlg {atom} {atom'} {a} = (|>) (flip applyHom) . flip mapSnd
+
+public export
+BinTreeProdHomAlgArgToProdAlgArg : {atom, atom', a : Type} ->
   BinTreeF atom (BinTreeAlg atom' a) ->
   BinTreeF atom' a ->
   (BinTreeF atom a, BinTreeF atom' a)
-BinTreeProdHomAlgArgToProdAlgArg {atom} {atom'} {a} x x' =
-  (mapSnd (flip applyHom x') x, x')
+BinTreeProdHomAlgArgToProdAlgArg {atom} {atom'} {a} =
+  (|>) ProductNTUnit . mapFst . btApplyAlg {atom} {atom'} {a}
 
 public export
 binTreeProdCata : {atom, atom', a : Type} ->
