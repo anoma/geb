@@ -140,8 +140,15 @@ prodFMBind {a} {b} = flip (prodFMEval {v=a} {a=(ProdFM b)}) $ ($>) {atom=b}
 -- Evaluate the free monad of the product monad -- equivalently, `BinTreeMu` --
 -- to the type of its variables (atoms), using a monoid on the variables.
 public export
-prodFMEvalMon : {0 a : Type} -> ProdAlg a -> ProdFM a -> a
-prodFMEvalMon = prodFMEval {v=a} id
+prodFMEvalMon : {0 v : Type} -> ProdAlg v -> ProdFM v -> v
+prodFMEvalMon = prodFMEval {v} id
+
+-- Pattern-matching of arbitrary depth, folding to a single value
+-- (not (necessarily) a tree).
+public export
+prodFMpmatch : {0 v, a : Type} -> ProdFM (v -> a) -> ProdAlg a -> ProdFM v -> a
+prodFMpmatch {v} {a} pat alg =
+  prodFMEval {v} {a} (prodFMEvalMon {v=(v -> a)} ((.) alg . applyHom) pat) alg
 
 -- XXX Functor, Applicative, Monad
 
@@ -183,11 +190,9 @@ BinTreeProdAlg : Type -> Type -> Type -> Type
 BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
-btApplyAlg : {0 atom, atom', a : Type} ->
-  BinTreeF atom (BinTreeAlg atom' a) ->
-  BinTreeF atom' a ->
-  BinTreeF atom a
-btApplyAlg {atom} {atom'} {a} = (|>) (flip applyHom) . flip mapSnd
+btApply : {0 atom, v, a : Type} ->
+  BinTreeF atom (v -> a) -> v -> BinTreeF atom a
+btApply {atom} {v} {a} = (|>) (flip applyHom) . flip mapSnd
 
 public export
 BinTreeProdHomAlgArgToProdAlgArg : {atom, atom', a : Type} ->
@@ -195,7 +200,7 @@ BinTreeProdHomAlgArgToProdAlgArg : {atom, atom', a : Type} ->
   BinTreeF atom' a ->
   (BinTreeF atom a, BinTreeF atom' a)
 BinTreeProdHomAlgArgToProdAlgArg {atom} {atom'} {a} =
-  (|>) ProductNTUnit . mapFst . btApplyAlg {atom} {atom'} {a}
+  (|>) ProductNTUnit . mapFst . btApply {atom} {v=(BinTreeF atom' a)} {a}
 
 public export
 binTreeProdCata : {atom, atom', a : Type} ->
@@ -380,6 +385,13 @@ public export
 binTreeFMEvalMon : {0 atom, a : Type} ->
   BinTreeAlg atom a -> BinTreeFM atom a -> a
 binTreeFMEvalMon {atom} {a} = binTreeFMEval {atom} {v=a} {a} id
+
+public export
+binTreeFMpmatch : {0 atom, v, a : Type} ->
+  BinTreeFM atom (v -> a) -> BinTreeAlg atom a -> BinTreeFM atom v -> a
+binTreeFMpmatch {atom} {v} {a} pat alg =
+  binTreeFMEval {atom} {v} {a}
+    (binTreeFMEvalMon {atom} {a=(v -> a)} ((.) alg . btApply) pat) alg
 
 -- XXX Functor, Applicative, Monad
 
