@@ -358,12 +358,6 @@ InBTp : {0 atom, a : Type} ->
   BinTreeFM atom a -> BinTreeFM atom a -> BinTreeFM atom a
 InBTp {atom} {a} = ($*) {atom=(Either a atom)}
 
-public export
-BinTreeEitherAlgFromSubstAlg : {0 atom, v, a : Type} ->
-  (v -> a) -> BinTreeAlg atom a -> BinTreeAlg (Either v atom) a
-BinTreeEitherAlgFromSubstAlg {atom} {v} {a} subst alg =
-  eitherElim (eitherElim subst (alg . ($$!))) (alg . ($$>))
-
 -- The universal `eval` morphism for `BinTreeFM`.
 -- Because the free monad of a binary tree is isomorphic to a binary
 -- tree with an `Either` atom type, this is just a binary tree
@@ -371,15 +365,21 @@ BinTreeEitherAlgFromSubstAlg {atom} {v} {a} subst alg =
 public export
 binTreeFMEval : {0 atom, v, a : Type} ->
   (v -> a) -> BinTreeAlg atom a -> BinTreeFM atom v -> a
-binTreeFMEval {atom} {v} {a} =
-  binTreeCata {atom=(Either v atom)} {a} .*
-    BinTreeEitherAlgFromSubstAlg {atom} {v} {a}
+binTreeFMEval {atom} {v} {a} subst alg =
+  prodFMEval {v=(Either v atom)} {a}
+    (eitherElim subst (alg . ($$!)))
+    (alg . ($$>))
 
 public export
 binTreeFMBind : {0 atom : Type} -> {0 a, b : Type} ->
   (a -> BinTreeFM atom b) -> BinTreeFM atom a -> BinTreeFM atom b
 binTreeFMBind {atom} =
   flip (binTreeFMEval {atom} {v=a} {a=(BinTreeFM atom b)}) $ InBTc {atom} {a=b}
+
+public export
+binTreeFMEvalMon : {0 atom, a : Type} ->
+  BinTreeAlg atom a -> BinTreeFM atom a -> a
+binTreeFMEvalMon {atom} {a} = binTreeFMEval {atom} {v=a} {a} id
 
 -- XXX Functor, Applicative, Monad
 
