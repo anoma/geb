@@ -150,7 +150,75 @@ prodFMpmatch : {0 v, a : Type} -> ProdFM (v -> a) -> ProdAlg a -> ProdFM v -> a
 prodFMpmatch {v} {a} pat alg =
   prodFMEval {v} {a} (prodFMEvalMon {v=(v -> a)} ((.) alg . applyHom) pat) alg
 
--- XXX Functor, Applicative, Monad
+public export
+prodFMvar : {0 atom : Type} -> atom -> ProdFM atom
+prodFMvar = ($!)
+
+public export
+prodFMcom : {0 atom : Type} -> ProductMonad (ProdFM atom) -> ProdFM atom
+prodFMcom = ($>)
+
+public export
+prodFMmap : {0 a, b : Type} -> (a -> b) -> ProdFM a -> ProdFM b
+prodFMmap = prodFMBind {a} {b} . (.) ($!)
+
+public export
+Functor ProdFM where
+  map = prodFMmap
+
+public export
+prodFMjoin : {0 a : Type} -> ProdFM (ProdFM a) -> ProdFM a
+prodFMjoin = prodFMBind {a=(ProdFM a)} {b=a} id
+
+public export
+applyHomFM : {0 a, b : Type} ->
+  (ProdFM a -> ProdFM b, ProdFM a -> ProdFM b) -> ProdFM a -> ProdFM b
+applyHomFM {a} {b} = ($>) .* applyHom {a=(ProdFM a)} {b=(ProdFM b)}
+
+public export
+prodFMpure : {0 a : Type} -> a -> ProdFM a
+prodFMpure {a} = ($!) {atom=a}
+
+public export
+prodFMapp : {0 a, b : Type} -> ProdFM (a -> b) -> ProdFM a -> ProdFM b
+prodFMapp {a} {b} =
+  prodFMEval {v=(a -> b)} {a=(ProdFM a -> ProdFM b)} prodFMmap applyHomFM
+
+public export
+Applicative ProdFM where
+  pure = prodFMpure
+  (<*>) = prodFMapp
+
+public export
+Monad ProdFM where
+  (>>=) = flip prodFMBind
+
+public export
+prodFMunit : NaturalTransformation Prelude.id ProdFM
+prodFMunit atom = ($!) {atom}
+
+public export
+prodFMmul : NaturalTransformation (ProdFM . ProdFM) ProdFM
+prodFMmul a = prodFMjoin {a}
+
+-- Pattern-matching of arbitrary depth, folding to a tree.
+public export
+prodFMpmatchTree : {0 v, a : Type} ->
+  ProdFM (v -> ProdFM a) -> ProdFM v -> ProdFM a
+prodFMpmatchTree {v} {a} =
+  prodFMEval {v=(v -> ProdFM a)} {a=(ProdFM v -> ProdFM a)}
+    (prodFMBind {a=v} {b=a})
+    (applyHomFM {a=v} {b=a})
+
+-- Performs more substitutions than `prodFMpmatchTree` on the fly by composition
+-- in the metalanguage.
+public export
+prodFMsubstTree : {0 v : Type} ->
+  ProdFM (v -> ProdFM v) -> ProdFM v -> ProdFM v
+prodFMsubstTree {v} =
+  prodFMEval {v=(v -> ProdFM v)} {a=(ProdFM v -> ProdFM v)}
+    (prodFMBind {a=v} {b=v})
+    (uncurry (|>))
 
 -----------------------------------------------
 ---- Various forms of product catamorphism ----
