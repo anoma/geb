@@ -177,7 +177,7 @@ prodFMjoin = prodFMBind {a=(ProdFM a)} {b=a} id
 
 public export
 applyHomFM : {0 a, b : Type} ->
-  (ProdFM a -> ProdFM b, ProdFM a -> ProdFM b) -> ProdFM a -> ProdFM b
+  ProductMonad (ProdFM a -> ProdFM b) -> ProdFM a -> ProdFM b
 applyHomFM {a} {b} = ($>) .* applyHom {a=(ProdFM a)} {b=(ProdFM b)}
 
 public export
@@ -212,7 +212,7 @@ ProdAlgToFree {a} = prodFMEvalMon {v=a}
 
 public export
 ProdAlgFromFree : {0 a : Type} -> ProdFMAlg a -> ProdAlg a
-ProdAlgFromFree {a} alg = alg . ($>) . mapHom ($!)
+ProdAlgFromFree {a} = (|>) (($>) . mapHom ($!))
 
 -- Pattern-matching of arbitrary depth, folding to a single value
 -- (not (necessarily) a tree).
