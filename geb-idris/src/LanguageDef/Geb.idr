@@ -479,13 +479,103 @@ binTreeFMEvalMon : {0 atom, a : Type} ->
 binTreeFMEvalMon {atom} {a} = binTreeFMEval {atom} {v=a} {a} id
 
 public export
+binTreeFMvar : {0 atom, a: Type} -> a -> BinTreeFM atom a
+binTreeFMvar = InBTv
+
+public export
+binTreeFMcom : {0 atom , a: Type} ->
+  BinTreeF atom (BinTreeFM atom a) -> BinTreeFM atom a
+binTreeFMcom = InBTc
+
+public export
+binTreeFMmap : {0 atom, a, b : Type} ->
+  (a -> b) -> BinTreeFM atom a -> BinTreeFM atom b
+binTreeFMmap = binTreeFMBind . (.) InBTv
+
+public export
+Functor (BinTreeFM atom) where
+  map = binTreeFMmap
+
+public export
+binTreeFMjoin : {0 atom, a : Type} ->
+  BinTreeFM atom (BinTreeFM atom a) -> BinTreeFM atom a
+binTreeFMjoin = binTreeFMBind {atom} {a=(BinTreeFM atom a)} {b=a} id
+
+public export
+binTreeFMpure : {0 atom, a : Type} -> a -> BinTreeFM atom a
+binTreeFMpure = InBTv
+
+public export
+btApplyHom : {0 atom, a, b : Type} ->
+  BinTreeF atom (BinTreeFM atom a -> BinTreeFM atom b) ->
+  BinTreeFM atom a -> BinTreeFM atom b
+btApplyHom = flip (eitherElim InBTa . flip applyHomFM)
+
+public export
+binTreeFMapp : {0 atom, a, b : Type} ->
+  BinTreeFM atom (a -> b) -> BinTreeFM atom a -> BinTreeFM atom b
+binTreeFMapp {atom} {a} {b} =
+  binTreeFMEval {atom} {v=(a -> b)} {a=(BinTreeFM atom a -> BinTreeFM atom b)}
+    binTreeFMmap
+    btApplyHom
+
+public export
+Applicative (BinTreeFM atom) where
+  pure = binTreeFMpure
+  (<*>) = binTreeFMapp
+
+public export
+Monad (BinTreeFM atom) where
+  (>>=) = flip binTreeFMBind
+
+public export
+binTreeFMunit : {0 atom : Type} ->
+  NaturalTransformation Prelude.id (BinTreeFM atom)
+binTreeFMunit {atom} a = InBTv {atom} {a}
+
+public export
+binTreeFMmul : {0 atom : Type} ->
+  NaturalTransformation (BinTreeFM atom . BinTreeFM atom) (BinTreeFM atom)
+binTreeFMmul {atom} a = binTreeFMjoin {atom} {a}
+
+public export
+BinTreeAlgToFree : {0 atom, a : Type} ->
+  BinTreeAlg atom a -> BinTreeFMAlg atom a
+BinTreeAlgToFree = binTreeFMEvalMon
+
+public export
+BinTreeAlgFromFree : {0 atom, a : Type} ->
+  BinTreeFMAlg atom a -> BinTreeAlg atom a
+BinTreeAlgFromFree {atom} {a} =
+  (|>) (InBTc {atom} {a} . mapSnd {f=Either} (mapHom InBTv))
+
+public export
 binTreeFMpmatch : {0 atom, v, a : Type} ->
   BinTreeFM atom (v -> a) -> BinTreeAlg atom a -> BinTreeFM atom v -> a
 binTreeFMpmatch {atom} {v} {a} pat alg =
   binTreeFMEval {atom} {v} {a}
     (binTreeFMEvalMon {atom} {a=(v -> a)} ((.) alg . btApplyPure) pat) alg
 
--- XXX Functor, Applicative, Monad
+-- Pattern-matching of arbitrary depth, folding to a tree.
+public export
+binTreeFMpmatchTree : {0 atom, v, a : Type} ->
+  BinTreeFM atom (v -> BinTreeFM atom a) -> BinTreeFM atom v -> BinTreeFM atom a
+binTreeFMpmatchTree {atom} {v} {a} =
+  binTreeFMEval {atom}
+    {v=(v -> BinTreeFM atom a)} {a=(BinTreeFM atom v -> BinTreeFM atom a)}
+    (binTreeFMBind {atom} {a=v} {b=a})
+    (btApplyHom {atom} {a=v} {b=a})
+
+-- Performs more substitutions than `binTreeFMpmatchTree` on the fly by
+-- composition in the metalanguage.
+public export
+binTreeFMsubstTree : {0 atom, v : Type} ->
+  BinTreeFM atom (v -> BinTreeFM atom v) -> BinTreeFM atom v -> BinTreeFM atom v
+binTreeFMsubstTree {atom} {v} =
+  binTreeFMEval {atom}
+    {v=(v -> BinTreeFM atom v)} {a=(BinTreeFM atom v -> BinTreeFM atom v)}
+    (binTreeFMBind {a=v} {b=v})
+    (eitherElim (const . InBTa) (uncurry (|>)))
 
 -------------------------------------
 ---- Binary-tree-dependent types ----
