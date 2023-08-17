@@ -577,6 +577,35 @@ binTreeFMsubstTree {atom} {v} =
     (binTreeFMBind {a=v} {b=v})
     (eitherElim (const . InBTa) (uncurry (|>)))
 
+------------------------------------------------
+---- Polynomial binary-tree-dependent types ----
+------------------------------------------------
+
+public export
+record BTMPolyDep (atom : Type) where
+  constructor BTMPD
+  btmPos : Type
+  btmDir1 : SliceObj btmPos
+  btmDir2 : SliceObj btmPos
+  btmDep : SliceMorphism {a=btmPos} btmDir2 (BinTreeFM atom . btmDir1)
+  btmAssign : Pi {a=btmPos} $ BinTreeFM atom . btmDir1
+
+public export
+data BTMDepMu : {0 atom : Type} ->
+    BTMPolyDep atom -> SliceObj (BinTreeMu atom) where
+  InBTD : {0 atom : Type} -> {0 btmpd : BTMPolyDep atom} ->
+    (i : btmPos btmpd) ->
+    (d1 : btmDir1 btmpd i -> BinTreeMu atom) ->
+    ((d2 : btmDir2 btmpd i) ->
+      BTMDepMu {atom} btmpd $
+        prodFMBind {a=(Either (btmDir1 btmpd i) atom)} {b=atom}
+          (eitherElim d1 ($!))
+          (btmDep btmpd i d2)) ->
+    BTMDepMu {atom} btmpd $
+      prodFMBind {a=(Either (btmDir1 btmpd i) atom)} {b=atom}
+        (eitherElim d1 ($!))
+        (btmAssign btmpd i)
+
 -------------------------------------
 ---- Binary-tree-dependent types ----
 -------------------------------------
