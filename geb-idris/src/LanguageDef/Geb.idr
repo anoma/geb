@@ -599,47 +599,37 @@ record BTMPolyDep (atom : Type) where
   btmAssign : Pi {a=btmPos} $ BinTreeFM atom . btmDir1
 
 public export
+btmpdToSPF : {atom : Type} ->
+  BTMPolyDep atom -> SlicePolyFunc (BinTreeMu atom) (BinTreeMu atom)
+btmpdToSPF {atom} btmpd =
+  ((\bt : BinTreeMu atom =>
+    (i : btmPos btmpd **
+     d1 : btmDir1 btmpd i -> BinTreeMu atom **
+     Equal (btFullSubst d1 (btmAssign btmpd i)) bt)) **
+   \pos => btmDir2 btmpd (fst (snd pos)) **
+   \posdir =>
+    btFullSubst
+      (fst $ snd $ snd $ fst posdir)
+      (btmDep btmpd (fst $ snd $ fst posdir) $ snd posdir))
+
+public export
 InterpBTMPolyDep : {atom : Type} ->
   BTMPolyDep atom -> SliceEndofunctor (BinTreeMu atom)
-InterpBTMPolyDep {atom} btmpd sl x =
-  (i : btmPos btmpd **
-   d1 : btmDir1 btmpd i -> BinTreeMu atom **
-   (btFullSubst d1 (btmAssign btmpd i) = x,
-    (d2 : btmDir2 btmpd i) -> sl $ btFullSubst d1 $ btmDep btmpd i d2))
+InterpBTMPolyDep btmpd = InterpSPFunc (btmpdToSPF btmpd)
 
 public export
 BinTreeDepFM : {atom : Type} ->
   BTMPolyDep atom -> SliceEndofunctor (BinTreeMu atom)
-BinTreeDepFM {atom} = SliceFreeM {a=(BinTreeMu atom)} . InterpBTMPolyDep {atom}
+BinTreeDepFM btmpd = SlicePolyFree (btmpdToSPF btmpd)
 
 public export
 BinTreeDepMu : {atom : Type} -> BTMPolyDep atom -> SliceObj (BinTreeMu atom)
-BinTreeDepMu {atom} = SliceMu {a=(BinTreeMu atom)} . InterpBTMPolyDep {atom}
+BinTreeDepMu btmpd = SPFMu (btmpdToSPF btmpd)
 
 public export
-binTreeDepEval : {0 atom : Type} -> (btmpd : BTMPolyDep atom) ->
-  SliceFreeFEval {a=(BinTreeMu atom)} (InterpBTMPolyDep {atom} btmpd)
-binTreeDepEval btmpd sv sa subst alg bt (InSlF bt x) = case x of
-  InSlV v => subst bt v
-  InSlC c => alg bt $ case c of
-    (i ** d1 ** (eq, xs)) =>
-      (i **
-       d1 **
-       (eq,
-        \d2 =>
-          binTreeDepEval {atom} btmpd sv sa subst alg
-            (btFullSubst d1 $ btmDep btmpd i d2)
-            (xs d2)))
-
-public export
-data BTMDepMu : {0 atom : Type} ->
-    BTMPolyDep atom -> SliceObj (BinTreeMu atom) where
-  InBTD : {0 atom : Type} -> {0 btmpd : BTMPolyDep atom} ->
-    (i : btmPos btmpd) ->
-    (d1 : btmDir1 btmpd i -> BinTreeMu atom) ->
-    ((d2 : btmDir2 btmpd i) ->
-      BTMDepMu {atom} btmpd $ btFullSubst d1 $ btmDep btmpd i d2) ->
-    BTMDepMu {atom} btmpd $ btFullSubst d1 $ btmAssign btmpd i
+binTreeDepEval : {atom : Type} -> (btmpd : BTMPolyDep atom) ->
+  SPFMeval {a=(BinTreeMu atom)} (btmpdToSPF {atom} btmpd)
+binTreeDepEval btmpd = spfmEval (btmpdToSPF btmpd)
 
 -------------------------------------
 ---- Binary-tree-dependent types ----
