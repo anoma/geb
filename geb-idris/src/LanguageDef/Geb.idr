@@ -608,6 +608,30 @@ InterpBTMPolyDep {atom} btmpd sl x =
     (d2 : btmDir2 btmpd i) -> sl $ btFullSubst d1 $ btmDep btmpd i d2))
 
 public export
+BinTreeDepFM : {atom : Type} ->
+  BTMPolyDep atom -> SliceEndofunctor (BinTreeMu atom)
+BinTreeDepFM {atom} = SliceFreeM {a=(BinTreeMu atom)} . InterpBTMPolyDep {atom}
+
+public export
+BinTreeDepMu : {atom : Type} -> BTMPolyDep atom -> SliceObj (BinTreeMu atom)
+BinTreeDepMu {atom} = SliceMu {a=(BinTreeMu atom)} . InterpBTMPolyDep {atom}
+
+public export
+binTreeDepEval : {0 atom : Type} -> (btmpd : BTMPolyDep atom) ->
+  SliceFreeFEval {a=(BinTreeMu atom)} (InterpBTMPolyDep {atom} btmpd)
+binTreeDepEval btmpd sv sa subst alg bt (InSlF bt x) = case x of
+  InSlV v => subst bt v
+  InSlC c => alg bt $ case c of
+    (i ** d1 ** (eq, xs)) =>
+      (i **
+       d1 **
+       (eq,
+        \d2 =>
+          binTreeDepEval {atom} btmpd sv sa subst alg
+            (btFullSubst d1 $ btmDep btmpd i d2)
+            (xs d2)))
+
+public export
 data BTMDepMu : {0 atom : Type} ->
     BTMPolyDep atom -> SliceObj (BinTreeMu atom) where
   InBTD : {0 atom : Type} -> {0 btmpd : BTMPolyDep atom} ->
