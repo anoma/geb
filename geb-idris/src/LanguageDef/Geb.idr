@@ -52,7 +52,7 @@ public export
 Bifunctor BinTreeF where
   bimap = (|>) (mapHom {f=Pair}) . bimap {f=Either}
 
-prefix 1 $$!
+prefix 11 $$!
 public export
 ($$!) : {0 atom, ty : Type} -> atom -> BinTreeF atom ty
 ($$!) = Left
@@ -95,7 +95,7 @@ public export
 ProdFMAlg : Type -> Type
 ProdFMAlg = Algebra ProdFM
 
-prefix 1 $!
+prefix 11 $!
 public export
 ($!) : {0 atom : Type} -> atom -> BinTreeMu atom
 ($!) = InBTm . ($$!)
@@ -111,13 +111,14 @@ public export
 ($*) : {0 atom : Type} -> BinTreeMu atom -> BinTreeMu atom -> BinTreeMu atom
 ($*) = InBTm .* ($$*)
 
-prefix 1 $:
+prefix 11 $:
 public export
 ($:) : {0 atom : Type} ->
   (l : List (BinTreeMu atom)) -> {auto 0 ne : NonEmpty l} -> BinTreeMu atom
-($:) {atom} (x :: xs) {ne=IsNonEmpty} = foldl {t=List} ($*) x xs
+($:) {atom} (x :: []) {ne=IsNonEmpty} = x
+($:) {atom} (x :: xs@(x' :: xs')) {ne=IsNonEmpty} = x $* $: xs
 
-prefix 1 $:
+prefix 11 $:
 public export
 ($:!) : {0 atom : Type} ->
   (l : List atom) -> {auto 0 ne : NonEmpty l} -> BinTreeMu atom
