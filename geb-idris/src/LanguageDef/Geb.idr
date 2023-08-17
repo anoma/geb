@@ -594,9 +594,9 @@ record BTMPolyDep (atom : Type) where
   constructor BTMPD
   btmPosCtor : Type
   btmPosParam : SliceObj btmPosCtor
+  btmPosCod : Pi {a=btmPosCtor} $ BinTreeFM atom . btmPosParam
   btmDir : SliceObj btmPosCtor
   btmDirDom : SliceMorphism {a=btmPosCtor} btmDir (BinTreeFM atom . btmPosParam)
-  btmPosCod : Pi {a=btmPosCtor} $ BinTreeFM atom . btmPosParam
 
 public export
 btmpdToSPF : {atom : Type} ->
