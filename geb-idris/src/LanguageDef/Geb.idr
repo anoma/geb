@@ -592,25 +592,25 @@ binTreeFMsubstTree {atom} {v} =
 public export
 record BTMPolyDep (atom : Type) where
   constructor BTMPD
-  btmPos : Type
-  btmDir1 : SliceObj btmPos
-  btmDir2 : SliceObj btmPos
-  btmDep : SliceMorphism {a=btmPos} btmDir2 (BinTreeFM atom . btmDir1)
-  btmAssign : Pi {a=btmPos} $ BinTreeFM atom . btmDir1
+  btmPosCtor : Type
+  btmPosParam : SliceObj btmPosCtor
+  btmDir : SliceObj btmPosCtor
+  btmDirDom : SliceMorphism {a=btmPosCtor} btmDir (BinTreeFM atom . btmPosParam)
+  btmPosCod : Pi {a=btmPosCtor} $ BinTreeFM atom . btmPosParam
 
 public export
 btmpdToSPF : {atom : Type} ->
   BTMPolyDep atom -> SlicePolyFunc (BinTreeMu atom) (BinTreeMu atom)
 btmpdToSPF {atom} btmpd =
   ((\bt : BinTreeMu atom =>
-    (i : btmPos btmpd **
-     d1 : btmDir1 btmpd i -> BinTreeMu atom **
-     Equal (btFullSubst d1 (btmAssign btmpd i)) bt)) **
-   \pos => btmDir2 btmpd (fst (snd pos)) **
+    (i : btmPosCtor btmpd **
+     d1 : btmPosParam btmpd i -> BinTreeMu atom **
+     Equal (btFullSubst d1 (btmPosCod btmpd i)) bt)) **
+   \pos => btmDir btmpd (fst (snd pos)) **
    \posdir =>
     btFullSubst
       (fst $ snd $ snd $ fst posdir)
-      (btmDep btmpd (fst $ snd $ fst posdir) $ snd posdir))
+      (btmDirDom btmpd (fst $ snd $ fst posdir) $ snd posdir))
 
 public export
 InterpBTMPolyDep : {atom : Type} ->
