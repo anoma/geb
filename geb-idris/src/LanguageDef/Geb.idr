@@ -599,6 +599,15 @@ record BTMPolyDep (atom : Type) where
   btmAssign : Pi {a=btmPos} $ BinTreeFM atom . btmDir1
 
 public export
+InterpBTMPolyDep : {atom : Type} ->
+  BTMPolyDep atom -> SliceEndofunctor (BinTreeMu atom)
+InterpBTMPolyDep {atom} btmpd sl x =
+  (i : btmPos btmpd **
+   d1 : btmDir1 btmpd i -> BinTreeMu atom **
+   (btFullSubst d1 (btmAssign btmpd i) = x,
+    (d2 : btmDir2 btmpd i) -> sl $ btFullSubst d1 $ btmDep btmpd i d2))
+
+public export
 data BTMDepMu : {0 atom : Type} ->
     BTMPolyDep atom -> SliceObj (BinTreeMu atom) where
   InBTD : {0 atom : Type} -> {0 btmpd : BTMPolyDep atom} ->
@@ -607,15 +616,6 @@ data BTMDepMu : {0 atom : Type} ->
     ((d2 : btmDir2 btmpd i) ->
       BTMDepMu {atom} btmpd $ btFullSubst d1 $ btmDep btmpd i d2) ->
     BTMDepMu {atom} btmpd $ btFullSubst d1 $ btmAssign btmpd i
-
-public export
-InterpBTMPolyDep : {atom : Type} ->
-  BTMPolyDep atom -> SliceEndofunctor (BinTreeMu atom)
-InterpBTMPolyDep {atom} btmpd sl x =
-  (i : btmPos btmpd **
-   d1 : btmDir1 btmpd i -> BinTreeMu atom **
-   (btFullSubst d1 (btmAssign btmpd i) = x,
-    (d2 : btmDir2 btmpd i) -> sl $ btFullSubst d1 $ btmDep btmpd i d2))
 
 -------------------------------------
 ---- Binary-tree-dependent types ----
