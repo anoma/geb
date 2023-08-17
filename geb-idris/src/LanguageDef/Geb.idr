@@ -615,16 +615,16 @@ btmpdToSPF {atom} btmpd =
 public export
 InterpBTMPolyDep : {atom : Type} ->
   BTMPolyDep atom -> SliceEndofunctor (BinTreeMu atom)
-InterpBTMPolyDep btmpd = InterpSPFunc (btmpdToSPF btmpd)
+InterpBTMPolyDep = InterpSPFunc . btmpdToSPF
 
 public export
 BinTreeDepFM : {atom : Type} ->
   BTMPolyDep atom -> SliceEndofunctor (BinTreeMu atom)
-BinTreeDepFM btmpd = SlicePolyFree (btmpdToSPF btmpd)
+BinTreeDepFM = SlicePolyFree . btmpdToSPF
 
 public export
 BinTreeDepMu : {atom : Type} -> BTMPolyDep atom -> SliceObj (BinTreeMu atom)
-BinTreeDepMu btmpd = SPFMu (btmpdToSPF btmpd)
+BinTreeDepMu = SPFMu . btmpdToSPF
 
 public export
 binTreeDepEval : {atom : Type} -> (btmpd : BTMPolyDep atom) ->
