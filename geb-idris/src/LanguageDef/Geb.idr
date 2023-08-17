@@ -473,6 +473,14 @@ binTreeFMBind : {0 atom : Type} -> {0 a, b : Type} ->
 binTreeFMBind {atom} =
   flip (binTreeFMEval {atom} {v=a} {a=(BinTreeFM atom b)}) $ InBTc {atom} {a=b}
 
+-- Substitute for all "variable" terms in a `BinTreeFM` to produce
+-- a term with no variables (`BinTreeMu`).
+public export
+btFullSubst : {0 atom, v : Type} ->
+  (v -> BinTreeMu atom) -> BinTreeFM atom v -> BinTreeMu atom
+btFullSubst {atom} {v} subst =
+  prodFMBind {a=(Either v atom)} {b=atom} (eitherElim subst ($!))
+
 public export
 binTreeFMEvalMon : {0 atom, a : Type} ->
   BinTreeAlg atom a -> BinTreeFM atom a -> a
@@ -597,14 +605,8 @@ data BTMDepMu : {0 atom : Type} ->
     (i : btmPos btmpd) ->
     (d1 : btmDir1 btmpd i -> BinTreeMu atom) ->
     ((d2 : btmDir2 btmpd i) ->
-      BTMDepMu {atom} btmpd $
-        prodFMBind {a=(Either (btmDir1 btmpd i) atom)} {b=atom}
-          (eitherElim d1 ($!))
-          (btmDep btmpd i d2)) ->
-    BTMDepMu {atom} btmpd $
-      prodFMBind {a=(Either (btmDir1 btmpd i) atom)} {b=atom}
-        (eitherElim d1 ($!))
-        (btmAssign btmpd i)
+      BTMDepMu {atom} btmpd $ btFullSubst d1 $ btmDep btmpd i d2) ->
+    BTMDepMu {atom} btmpd $ btFullSubst d1 $ btmAssign btmpd i
 
 -------------------------------------
 ---- Binary-tree-dependent types ----
