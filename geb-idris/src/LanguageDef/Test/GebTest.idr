@@ -3,6 +3,7 @@ module LanguageDef.Test.GebTest
 import Test.TestLibrary
 import LanguageDef.Geb
 import LanguageDef.PolyCat
+import LanguageDef.ProgFinSet
 
 %default total
 
@@ -34,6 +35,67 @@ tfm1t1 = MkFinMatrixT NM1 2 [0, 2, 7]
 -- two directions and `n` positions with zero directions.
 btPolyShape : Nat -> PolyShape
 btPolyShape n = [(2, 1), (0, n)]
+
+--------------------
+--------------------
+---- BTMPolyDep ----
+--------------------
+--------------------
+
+BCDObt : Type
+BCDObt = BinTreeMu BCDOPos
+
+bcdo0 : BCDObt
+bcdo0 = $! BCDO_0
+
+bcdo1 : BCDObt
+bcdo1 = $! BCDO_1
+
+bcdoc : BCDObt
+bcdoc = $! BCDO_C
+
+bcdop : BCDObt
+bcdop = $! BCDO_P
+
+bcdoC : BCDObt -> BCDObt -> BCDObt
+bcdoC x y = $: [ $! BCDO_C, x, y ]
+
+bcdoC01 : BCDObt
+bcdoC01 = bcdoC bcdo0 bcdo1
+
+bcdoPosCod : Pi {a=BCDOPos} $ BinTreeFM BCDOPos . BicartDistObjDir
+bcdoPosCod BCDO_0 = $!> BCDO_0
+bcdoPosCod BCDO_1 = $!> BCDO_1
+bcdoPosCod BCDO_C = $: [ $!> BCDO_C, $!< BCDCopL, $!< BCDCopR ]
+bcdoPosCod BCDO_P = $: [ $!> BCDO_P, $!< BCDProd1, $!< BCDProd2 ]
+
+BcdoDir : SliceObj BCDOPos
+BcdoDir _ = Void
+
+bcdoDirDom :
+  SliceMorphism {a=BCDOPos} BcdoDir (BinTreeFM BCDOPos . BicartDistObjDir)
+bcdoDirDom _ v = void v
+
+BCDObtm : BTMPolyDep BCDOPos
+BCDObtm = BTMPD BCDOPos BicartDistObjDir bcdoPosCod BcdoDir bcdoDirDom
+
+BCDOvalid : SliceObj (BinTreeMu BCDOPos)
+BCDOvalid = BinTreeDepMu BCDObtm
+
+bcdo0valid : BCDOvalid GebTest.bcdo0
+bcdo0valid = InSPFM (bcdo0 ** BCDO_0 ** voidF _ ** Refl) $ \v => void v
+
+bcdo1valid : BCDOvalid GebTest.bcdo1
+bcdo1valid = InSPFM (bcdo1 ** BCDO_1 ** voidF _ ** Refl) $ \v => void v
+
+bcdoC01valid : BCDOvalid GebTest.bcdoC01
+bcdoC01valid =
+  InSPFM
+    (bcdoC01 **
+     BCDO_C **
+     (\d => case d of BCDCopL => bcdo0 ; BCDCopR => bcdo1) **
+     Refl) $
+    \v => void v
 
 ----------------------------------
 ----------------------------------
@@ -89,6 +151,14 @@ gebTest = do
     (show $ leftCoclosureShape (btPolyShape 3) (btPolyShape 5))
   putStrLn $ "leftCoclosure(btPolyShape 5, btPolyShape 3) = " ++
     (show $ leftCoclosureShape (btPolyShape 5) (btPolyShape 3))
+  putStrLn ""
+  putStrLn "----------"
+  putStrLn "BTMPolyDep"
+  putStrLn "----------"
+  putStrLn ""
+  putStrLn $ "bcdo0 = " ++ show bcdo0
+  putStrLn $ "bcdoC01 = "
+  putStrLn $ show bcdoC01
   putStrLn ""
   putStrLn "------------"
   putStrLn "End GebTest."
