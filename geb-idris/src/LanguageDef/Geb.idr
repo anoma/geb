@@ -224,7 +224,8 @@ prodFMappMon : {0 v, a : Type} -> ProdFM (v -> a) -> ProdAlg a -> ProdFM v -> a
 prodFMappMon {v} {a} pat alg =
   prodFMEval {v} {a} (prodFMEvalMon {v=(v -> a)} ((.) alg . applyHom) pat) alg
 
--- Pattern-matching of arbitrary depth, folding to a tree.
+-- Like `prodFMappMon` but making explicit use of the output being
+-- another binary tree.
 public export
 prodFMappMonTree : {0 v, a : Type} ->
   ProdFM (v -> ProdFM a) -> ProdFM v -> ProdFM a
@@ -581,7 +582,8 @@ binTreeFMappMon {atom} {v} {a} pat alg =
   binTreeFMEval {atom} {v} {a}
     (binTreeFMEvalMon {atom} {a=(v -> a)} ((.) alg . btApplyPure) pat) alg
 
--- Pattern-matching of arbitrary depth, folding to a tree.
+-- Like `binTreeFMappMon` but making explicit use of the output being
+-- another binary tree.
 public export
 binTreeFMappMonTree : {0 atom, v, a : Type} ->
   BinTreeFM atom (v -> BinTreeFM atom a) -> BinTreeFM atom v -> BinTreeFM atom a
