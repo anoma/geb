@@ -215,23 +215,25 @@ public export
 ProdAlgFromFree : {0 a : Type} -> ProdFMAlg a -> ProdAlg a
 ProdAlgFromFree {a} = (|>) (($>) . mapHom ($!))
 
--- Pattern-matching of arbitrary depth, folding to a single value
--- (not (necessarily) a tree).
+-- Like `prodFMapp` but with a monoid on the output factored out.
+-- Should have the same input-output behavior as, but perhaps building
+-- smaller intermediate structures than:
+-- (|>) (prodFMEvalMon {v=a}) . ((|>) . prodFMapp {a=v} {b=a})
 public export
-prodFMpmatch : {0 v, a : Type} -> ProdFM (v -> a) -> ProdAlg a -> ProdFM v -> a
-prodFMpmatch {v} {a} pat alg =
+prodFMappMon : {0 v, a : Type} -> ProdFM (v -> a) -> ProdAlg a -> ProdFM v -> a
+prodFMappMon {v} {a} pat alg =
   prodFMEval {v} {a} (prodFMEvalMon {v=(v -> a)} ((.) alg . applyHom) pat) alg
 
 -- Pattern-matching of arbitrary depth, folding to a tree.
 public export
-prodFMpmatchTree : {0 v, a : Type} ->
+prodFMappMonTree : {0 v, a : Type} ->
   ProdFM (v -> ProdFM a) -> ProdFM v -> ProdFM a
-prodFMpmatchTree {v} {a} =
+prodFMappMonTree {v} {a} =
   prodFMEval {v=(v -> ProdFM a)} {a=(ProdFM v -> ProdFM a)}
     (prodFMBind {a=v} {b=a})
     (applyHomFM {a=v} {b=a})
 
--- Performs more substitutions than `prodFMpmatchTree` on the fly by composition
+-- Performs more substitutions than `prodFMappMonTree` on the fly by composition
 -- in the metalanguage.
 public export
 prodFMsubstTree : {0 v : Type} ->
@@ -568,24 +570,28 @@ BinTreeAlgFromFree : {0 atom, a : Type} ->
 BinTreeAlgFromFree {atom} {a} =
   (|>) (InBTc {atom} {a} . mapSnd {f=Either} (mapHom InBTv))
 
+-- Like `binTreeFMapp` but with a monoid on the output factored out.
+-- Should have the same input-output behavior as, but perhaps building
+-- smaller intermediate structures than:
+--  (|>) (binTreeFMEvalMon {a}) . ((|>) . binTreeFMapp {a=v} {b=a})
 public export
-binTreeFMpmatch : {0 atom, v, a : Type} ->
+binTreeFMappMon : {0 atom, v, a : Type} ->
   BinTreeFM atom (v -> a) -> BinTreeAlg atom a -> BinTreeFM atom v -> a
-binTreeFMpmatch {atom} {v} {a} pat alg =
+binTreeFMappMon {atom} {v} {a} pat alg =
   binTreeFMEval {atom} {v} {a}
     (binTreeFMEvalMon {atom} {a=(v -> a)} ((.) alg . btApplyPure) pat) alg
 
 -- Pattern-matching of arbitrary depth, folding to a tree.
 public export
-binTreeFMpmatchTree : {0 atom, v, a : Type} ->
+binTreeFMappMonTree : {0 atom, v, a : Type} ->
   BinTreeFM atom (v -> BinTreeFM atom a) -> BinTreeFM atom v -> BinTreeFM atom a
-binTreeFMpmatchTree {atom} {v} {a} =
+binTreeFMappMonTree {atom} {v} {a} =
   binTreeFMEval {atom}
     {v=(v -> BinTreeFM atom a)} {a=(BinTreeFM atom v -> BinTreeFM atom a)}
     (binTreeFMBind {atom} {a=v} {b=a})
     (btApplyHom {atom} {a=v} {b=a})
 
--- Performs more substitutions than `binTreeFMpmatchTree` on the fly by
+-- Performs more substitutions than `binTreeFMappMonTree` on the fly by
 -- composition in the metalanguage.
 public export
 binTreeFMsubstTree : {0 atom, v : Type} ->
