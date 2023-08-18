@@ -439,10 +439,20 @@ InBTv : {0 atom, a : Type} -> a -> BinTreeFM atom a
 InBTv {atom} {a} =
   InBTm {atom=(Either a atom)} . BTFt {atom} {a} {x=(BinTreeFM atom a)}
 
+prefix 11 $!<
+public export
+($!<) : {0 atom, a : Type} -> a -> BinTreeFM atom a
+($!<) = InBTv
+
 -- A "compound" atom term.
 public export
 InBTa : {0 atom, a : Type} -> atom -> BinTreeFM atom a
 InBTa {atom} {a} = ($!) {atom=(Either a atom)} . Right
+
+prefix 11 $!>
+public export
+($!>) : {0 atom, a : Type} -> atom -> BinTreeFM atom a
+($!>) = InBTa
 
 -- A "compound" term.
 public export
