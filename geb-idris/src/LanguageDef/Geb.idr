@@ -604,6 +604,64 @@ binTreeFMsubstTree {atom} {v} =
     (binTreeFMBind {a=v} {b=v})
     (eitherElim (const . InBTa) (uncurry (|>)))
 
+-------------------------------------------------------------
+---- Unrefined finitary polynomial types as binary trees ----
+-------------------------------------------------------------
+
+-- The simplest form of finitary polynomial types is just a finite
+-- set of constructors each of which has a finite set of arguments (of
+-- the type itself).  A finite type is a type whose argument sets are
+-- all empty (zero-size).
+public export
+record FPFunctor where
+  constructor FPF
+  fpfNpos : Nat
+  fpfNdir : Vect fpfNpos Nat
+
+public export
+FPFatom : FPFunctor -> Type
+FPFatom = Fin . fpfNpos
+
+public export
+FPFbt : FPFunctor -> Type
+FPFbt = BinTreeMu . FPFatom
+
+public export
+FPFpred : FPFunctor -> Type
+FPFpred = DecPred . FPFbt
+
+-- If the context is `n`, we expect a tuple of S n` terms.
+-- There are no tuples with 0 terms.  A tuple of 1 term is a term.
+-- A tuple of `S (S n))` terms is a pair of a term and a tuple of `S n` terms.
+--
+-- A term (which is also a tuple of 1 term) is either an atom
+-- representing a constructor with no parameters, or a pair of an atom
+-- representing a constructor with `S n` parameters together with a
+-- tuple of `S n` terms.
+public export
+CheckFPFctx : FPFunctor -> Type
+CheckFPFctx fpf = Nat
+
+public export
+initFPFctx : (fpf : FPFunctor) -> CheckFPFctx fpf
+initFPFctx fpf = 0
+
+public export
+CheckFPFAlg : (fpf : FPFunctor) ->
+  BinTreeAlg (FPFatom fpf) (CheckFPFctx fpf -> Bool)
+CheckFPFAlg fpf (Left ea) 0 = index ea (fpfNdir fpf) == 0
+CheckFPFAlg fpf (Right (bt, bt')) 0 = ?CheckFPFAlg_hole
+CheckFPFAlg fpf (Left ea) (S ctx) = False
+CheckFPFAlg fpf (Right (bt, bt')) (S ctx) = bt 0 && bt' ctx
+
+public export
+checkFPF : (fpf : FPFunctor) -> FPFpred fpf
+checkFPF fpf x =
+  binTreeCata {atom=(FPFatom fpf)} {a=(CheckFPFctx fpf -> Bool)}
+    (CheckFPFAlg fpf)
+    x
+    (initFPFctx fpf)
+
 ------------------------------------------------
 ---- Polynomial binary-tree-dependent types ----
 ------------------------------------------------
