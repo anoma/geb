@@ -628,6 +628,22 @@ public export
 MaybeCS : Type -> Type
 MaybeCS = CSliceObj . Maybe
 
+---------------------------------------------------
+---------------------------------------------------
+---- Partial interpretations as `Maybe`-slices ----
+---------------------------------------------------
+---------------------------------------------------
+
+-- For given objects `a` and `b`, a category-theory-style slice object over
+-- `Either a b` maybe viewed as an object with a type `b` whose typechecking
+-- might fail with an error from `a`.
+--
+-- `Either Void b` is isomorphic to `b`; `Either Unit b` is isomorphic to
+-- `Maybe b`.
+public export
+EitherCS : Type -> Type -> Type
+EitherCS = CSliceObj .* Either
+
 -------------------------------------------------------------
 -------------------------------------------------------------
 ---- Unrefined finitary polynomial types as binary trees ----
