@@ -644,6 +644,19 @@ public export
 EitherCS : Type -> Type -> Type
 EitherCS = CSliceObj .* Either
 
+------------------------------------------
+------------------------------------------
+---- Kleisli algebras of binary trees ----
+------------------------------------------
+------------------------------------------
+
+public export
+BinTreeKlAlg :
+  {0 m : Type -> Type} -> {isMonad : Monad m} -> {0 atom, a : Type} ->
+  BinTreeAlg atom (a -> a) -> BinTreeAlg atom (a -> m a)
+BinTreeKlAlg {m} {isMonad} {atom} {a} alg (Left x) ea = pure $ alg (Left x) ea
+BinTreeKlAlg {m} {isMonad} {atom} {a} alg (Right (bt, bt')) ea = bt ea >>= bt'
+
 -------------------------------------------------------------
 -------------------------------------------------------------
 ---- Unrefined finitary polynomial types as binary trees ----
