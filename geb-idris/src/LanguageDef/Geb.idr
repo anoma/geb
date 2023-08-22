@@ -653,8 +653,8 @@ EitherCS = CSliceObj .* Either
 public export
 BinTreeKlAlg :
   {0 m : Type -> Type} -> {isMonad : Monad m} -> {0 atom, a : Type} ->
-  BinTreeAlg atom (a -> a) -> BinTreeAlg atom (a -> m a)
-BinTreeKlAlg {m} {isMonad} {atom} {a} alg (Left x) ea = pure $ alg (Left x) ea
+  (atom -> a -> m a) -> BinTreeAlg atom (a -> m a)
+BinTreeKlAlg {m} {isMonad} {atom} {a} alg (Left x) ea = alg x ea
 BinTreeKlAlg {m} {isMonad} {atom} {a} alg (Right (bt, bt')) ea = bt ea >>= bt'
 
 -------------------------------------------------------------
