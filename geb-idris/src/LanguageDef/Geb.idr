@@ -656,7 +656,14 @@ public export
 FPFpred : FPFunctor -> Type
 FPFpred = DecPred . FPFbt
 
--- If the context is `n`, we expect a tuple of S n` terms.
+-- If the context is `Nothing`, we expect not to find anything --
+-- we should have been a term at the end of a tuple.  Thus we _always_
+-- fail if we check a term with a context of `Nothing`.
+--
+-- If the context is `Just 0`, we expect to find a constructor, and
+-- we return the number of arguments that constructor expects.
+--
+-- If the context is `Just (S n)`, we expect a tuple of `S n` terms.
 -- There are no tuples with 0 terms.  A tuple of 1 term is a term.
 -- A tuple of `S (S n))` terms is a pair of a term and a tuple of `S n` terms.
 --
@@ -666,27 +673,63 @@ FPFpred = DecPred . FPFbt
 -- tuple of `S n` terms.
 public export
 CheckFPFctx : FPFunctor -> Type
-CheckFPFctx fpf = Nat
+CheckFPFctx fpf = Maybe Nat
 
 public export
 initFPFctx : (fpf : FPFunctor) -> CheckFPFctx fpf
-initFPFctx fpf = 0
+initFPFctx fpf = Just 1
 
 public export
 CheckFPFAlg : (fpf : FPFunctor) ->
-  BinTreeAlg (FPFatom fpf) (CheckFPFctx fpf -> Bool)
-CheckFPFAlg fpf (Left ea) 0 = index ea (fpfNdir fpf) == 0
-CheckFPFAlg fpf (Right (bt, bt')) 0 = ?CheckFPFAlg_hole
-CheckFPFAlg fpf (Left ea) (S ctx) = False
-CheckFPFAlg fpf (Right (bt, bt')) (S ctx) = bt 0 && bt' ctx
+  BinTreeAlg (FPFatom fpf) (CheckFPFctx fpf -> Maybe (CheckFPFctx fpf))
+CheckFPFAlg _ _ Nothing = Nothing
+CheckFPFAlg fpf (Left c) (Just 0) =
+  -- We expected to find a constructor, and we have found one, so we return
+  -- the number of arguments that we expect to find paired with it.
+  Just $ Just $ index c (fpfNdir fpf)
+CheckFPFAlg fpf (Right (_, _)) (Just 0) =
+  -- We expected to find a constructor, but we found a pair, so we fail.
+  Nothing
+CheckFPFAlg fpf (Left ea) (Just (S 0)) =
+  -- We expected to find a single term, and we have found a lone constructor.
+  -- A lone constructor is a valid (single) term if and only if it has no
+  -- parameters.  So if this term is a lone constructor, we succeed, but
+  -- return a context of `Nothing`, because we expect a constructor with no
+  -- parameters to not be paired with anything.
+  case (index ea (fpfNdir fpf)) of
+    0 => Just Nothing
+    (S _) => Nothing
+CheckFPFAlg fpf (Left _) (Just (S (S n))) =
+  -- We expected to find a tuple of at least two terms, but we found
+  -- a lone constructor, which at most can be a single term, so we fail.
+  Nothing
+CheckFPFAlg fpf (Right (bt, bt')) (Just (S 0)) =
+  ?CheckFPFalg_hole_pair_single_term
+CheckFPFAlg fpf (Right (bt, bt')) (Just (S (S n))) =
+  ?CheckFPFalg_hole_pair_term_tuple
 
 public export
 checkFPF : (fpf : FPFunctor) -> FPFpred fpf
-checkFPF fpf x =
-  binTreeCata {atom=(FPFatom fpf)} {a=(CheckFPFctx fpf -> Bool)}
+checkFPF fpf x = case
+  (binTreeCata
+    {atom=(FPFatom fpf)}
+    {a=(CheckFPFctx fpf -> Maybe (CheckFPFctx fpf))}
     (CheckFPFAlg fpf)
     x
-    (initFPFctx fpf)
+    (initFPFctx fpf)) of
+      Just Nothing =>
+        -- We returned successes to all steps of checking the algebra, and
+        -- we expect no further terms precisely when we found no further
+        -- terms, so the check has passed.
+        True
+      Just (Just _) =>
+        -- We returned successes to all steps of checking the algebra, but
+        -- we expected further terms and have not found any, so the check
+        -- has failed.
+        False
+      Nothing =>
+        -- One of the steps of checking the algebra failed.
+        False
 
 ------------------------------------------------
 ------------------------------------------------
