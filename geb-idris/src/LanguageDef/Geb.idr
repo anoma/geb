@@ -628,11 +628,11 @@ public export
 MaybeCS : Type -> Type
 MaybeCS = CSliceObj . Maybe
 
----------------------------------------------------
----------------------------------------------------
----- Partial interpretations as `Maybe`-slices ----
----------------------------------------------------
----------------------------------------------------
+----------------------------------------------
+----------------------------------------------
+---- Typechecked terms as `Either`-slices ----
+----------------------------------------------
+----------------------------------------------
 
 -- For given objects `a` and `b`, a category-theory-style slice object over
 -- `Either a b` maybe viewed as an object with a type `b` whose typechecking
