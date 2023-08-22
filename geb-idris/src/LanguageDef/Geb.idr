@@ -682,7 +682,10 @@ initFPFctx fpf = Just 1
 public export
 CheckFPFAlg : (fpf : FPFunctor) ->
   BinTreeAlg (FPFatom fpf) (CheckFPFctx fpf -> Maybe (CheckFPFctx fpf))
-CheckFPFAlg _ _ Nothing = Nothing
+CheckFPFAlg _ _ Nothing =
+  -- We did not expect to find any term paired with the most recent
+  -- one that we checked, but we have found one.
+  Nothing
 CheckFPFAlg fpf (Left c) (Just 0) =
   -- We expected to find a constructor, and we have found one, so we return
   -- the number of arguments that we expect to find paired with it.
@@ -704,9 +707,45 @@ CheckFPFAlg fpf (Left _) (Just (S (S n))) =
   -- a lone constructor, which at most can be a single term, so we fail.
   Nothing
 CheckFPFAlg fpf (Right (bt, bt')) (Just (S 0)) =
-  ?CheckFPFalg_hole_pair_single_term
+  -- We expected to find a single term, and we have found a pair of terms.
+  -- A pair of terms is a single term if and only if the left term is
+  -- a constructor and the right term is a tuple of terms with the number
+  -- of arguments that the constructor expects.
+  case bt (Just 0) of
+    Just Nothing =>
+      -- Checking the left tree as a constructor succeeded, but we
+      -- expected no further terms.  This case is actually impossible
+      -- given the way the rest of the algebra is written.
+      Nothing
+    Just (Just 0) =>
+      -- Checking the left tree as a constructor succeeded, but we
+      -- expected no further terms, and we have found at least one.
+      Nothing
+    Just (Just (S n)) =>
+      -- Checking the left tree as a constructor succeeded, and that
+      -- particular constructor expects to be paired with `S n` terms.
+      bt' $ Just $ S n
+    Nothing =>
+      -- Checking the left tree as a constructor failed.
+      Nothing
 CheckFPFAlg fpf (Right (bt, bt')) (Just (S (S n))) =
-  ?CheckFPFalg_hole_pair_term_tuple
+  -- We expected to find a tuple of `S (S n))` terms.  That means
+  -- that we expected to find a pair of a term with a tuple of `S n` terms.
+  case bt (Just (S 0)) of
+    Just Nothing =>
+      -- Checking the left tree as a term succeeded, and we
+      -- expected no further terms.  That is the expected
+      -- result for the left tree, since we are expecting a
+      -- list of terms, so now we check the right tree.
+      bt' (Just (S n))
+    Just (Just _) =>
+      -- This case is actually impossible given the way the rest of
+      -- the algebra is written -- a term never expects further terms;
+      -- only a constructor does.
+      Nothing
+    Nothing =>
+      -- Checking the left tree as a term failed.
+      Nothing
 
 public export
 checkFPF : (fpf : FPFunctor) -> FPFpred fpf
