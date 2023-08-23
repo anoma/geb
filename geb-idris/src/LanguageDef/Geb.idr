@@ -675,9 +675,9 @@ ehPure : {0 e, a : Type} -> a -> EitherHom e a
 ehPure {a} {e} = const . Right
 
 public export
-heBindHom : {0 e, a : Type} ->
+ehBindHom : {0 e, a : Type} ->
   EitherHom e a -> (a -> EitherHom e a) -> EitherHom e a
-heBindHom {e} {a} = flip $ biapp (eitherElim Left)
+ehBindHom {e} {a} = flip $ biapp (eitherElim Left)
 
 public export
 BinTreeBindAlg :
