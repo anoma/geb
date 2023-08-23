@@ -644,20 +644,40 @@ public export
 EitherCS : Type -> Type -> Type
 EitherCS = CSliceObj .* Either
 
-------------------------------------------
-------------------------------------------
----- Kleisli algebras of binary trees ----
-------------------------------------------
-------------------------------------------
+-----------------------------------------
+-----------------------------------------
+---- Either algebras of binary trees ----
+-----------------------------------------
+-----------------------------------------
 
 public export
 HomEither : Type -> Type -> Type
-HomEither e a = a -> Either e a
+HomEither a e = a -> Either e a
 
 public export
-heBind : {0 e, a : Type} ->
-  HomEither e a -> (a -> HomEither e a) -> HomEither e a
-heBind {e} {a} = flip $ biapp (eitherElim Left)
+heMap : {0 a, e, e' : Type} -> (e -> e') -> HomEither a e -> HomEither a e'
+heMap = (.) . mapFst {f=Either}
+
+public export
+Functor (HomEither a) where
+  map = heMap
+
+public export
+hePure : {0 a, e : Type} -> e -> HomEither a e
+hePure {a} {e} = const . Left
+
+public export
+EitherHom : Type -> Type -> Type
+EitherHom = flip HomEither
+
+public export
+ehPure : {0 e, a : Type} -> a -> EitherHom e a
+ehPure {a} {e} = const . Right
+
+public export
+heBindHom : {0 e, a : Type} ->
+  EitherHom e a -> (a -> EitherHom e a) -> EitherHom e a
+heBindHom {e} {a} = flip $ biapp (eitherElim Left)
 
 public export
 BinTreeBindAlg :
