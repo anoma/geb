@@ -655,6 +655,11 @@ HomEither : Type -> Type -> Type
 HomEither e a = a -> Either e a
 
 public export
+heBind : {0 e, a : Type} ->
+  HomEither e a -> (a -> HomEither e a) -> HomEither e a
+heBind {e} {a} = flip $ biapp (eitherElim Left)
+
+public export
 BinTreeBindAlg :
   {0 m : Type -> Type} -> {0 atom, a : Type} ->
   (alg : atom -> a -> m a) -> (bind : m a -> (a -> m a) -> m a) ->
