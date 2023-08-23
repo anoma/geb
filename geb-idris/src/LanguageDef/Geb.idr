@@ -655,11 +655,18 @@ HomEither : Type -> Type -> Type
 HomEither e a = a -> Either e a
 
 public export
-BinTreeKlAlg :
+BinTreeBindAlg :
+  {0 m : Type -> Type} -> {0 atom, a : Type} ->
+  (alg : atom -> a -> m a) -> (bind : m a -> (a -> m a) -> m a) ->
+  BinTreeAlg atom (a -> m a)
+BinTreeBindAlg {m} alg bind (Left x) ea = alg x ea
+BinTreeBindAlg {m} alg bind (Right (bt, bt')) ea = bind (bt ea) bt'
+
+public export
+BinTreeMonadAlg :
   {0 m : Type -> Type} -> {isMonad : Monad m} -> {0 atom, a : Type} ->
   (atom -> a -> m a) -> BinTreeAlg atom (a -> m a)
-BinTreeKlAlg {m} {isMonad} {atom} {a} alg (Left x) ea = alg x ea
-BinTreeKlAlg {m} {isMonad} {atom} {a} alg (Right (bt, bt')) ea = bt ea >>= bt'
+BinTreeMonadAlg {m} {isMonad} alg = BinTreeBindAlg {m} alg (>>=)
 
 -------------------------------------------------------------
 -------------------------------------------------------------
