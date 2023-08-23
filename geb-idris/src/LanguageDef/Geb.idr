@@ -651,6 +651,10 @@ EitherCS = CSliceObj .* Either
 ------------------------------------------
 
 public export
+HomEither : Type -> Type -> Type
+HomEither e a = a -> Either e a
+
+public export
 BinTreeKlAlg :
   {0 m : Type -> Type} -> {isMonad : Monad m} -> {0 atom, a : Type} ->
   (atom -> a -> m a) -> BinTreeAlg atom (a -> m a)
