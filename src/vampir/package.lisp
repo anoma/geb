@@ -25,10 +25,12 @@
    :wire        :var
    :constant    :const
    :tuple       :wires
+   :curly       :value
+   :brackets
 
    ;; Constructors
-   :make-alias :make-pub :make-infix :make-application :make-tuples
-   :make-bind  :make-equality :make-wire :make-constant))
+   :make-alias :make-pub :make-infix :make-application :make-tuples :make-curly
+   :make-bind  :make-equality :make-wire :make-constant :make-brackets))
 
 (geb.utils:muffle-package-variance
  (defpackage #:geb.vampir

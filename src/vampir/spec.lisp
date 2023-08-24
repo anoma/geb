@@ -21,11 +21,11 @@
 ;; called base in the file
 ;; Values are called over a normal form!?!?!?
 (deftype expression ()
-  `(or infix application normal-form tuple
+  `(or infix application normal-form tuple curly
        geb.extension.spec:common-sub-expression))
 
 (deftype normal-form ()
-  `(or wire constant))
+  `(or wire constant brackets))
 
 (deftype primitive ()
   `(or (eql :+) (eql :-) (eql :*) (eql :^) (eql :\\) (eql :%) (eql :/) (eql :|:|)))
@@ -130,19 +130,28 @@
           :type    list
           :accessor wires)))
 
+(defclass curly (mixins)
+  ((value :initarg :value
+          :accessor value
+          :type expression
+          :documentation "The wire argument inside the curly bracket")))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Normal Form Product Types
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defclass wire (mixins)
   ((var :initarg :var
-        :accessor var
-        :type     (or symbol keyword)))
+        :accessor var))
   (:documentation "A reference in vamp-ir"))
 
 (defclass constant (mixins)
   ((const :initarg :const
           :accessor const)))
+
+(defclass brackets (mixins)
+  ()
+  (:documentation "Brackets designating 0-bit integer"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Alias
@@ -210,3 +219,17 @@
 
 (defun make-tuples (&key wires)
   (make-instance 'tuple :wires wires))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Curly Brackets
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun make-curly (&key value)
+  (make-instance 'curly :value value))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Brackets
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun make-brackets ()
+  (make-instance 'brackets))
