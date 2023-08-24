@@ -719,20 +719,20 @@ btPairCata {atom} {x} {p} alg bt bt' =
 -- We call this a `Texp` for "tuple-expression".
 
 public export
-BTTexp1 : Type -> Type -> Type -> Type
-BTTexp1 atom x t = Either atom t
+BTTexp1 : Type -> Type -> Type
+BTTexp1 = BTSexp1
 
 public export
-BTTexp2 : Type -> Type -> Type -> Type
-BTTexp2 atom x t = (n : Nat ** Vect (S (S n)) x)
+BTTexp2 : Type -> Type
+BTTexp2 x = (n : Nat ** Vect (S (S n)) x)
 
 public export
 BTTexpF : Type -> (Type, Type) -> (Type, Type)
-BTTexpF atom (x, t) = (BTTexp1 atom x t, BTTexp2 atom x t)
+BTTexpF atom (x, t) = (BTTexp1 atom t, BTTexp2 x)
 
 public export
 BTTexpAlg : Type -> Type -> Type -> Type
-BTTexpAlg atom x t = (BTTexp1 atom x t -> x, BTTexp2 atom x t -> t)
+BTTexpAlg atom x t = (BTTexp1 atom t -> x, BTTexp2 x -> t)
 
 -- When performing induction on tuples, we must keep track of the
 -- results of induction for the previous elements of the tuple.
