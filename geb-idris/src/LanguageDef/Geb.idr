@@ -756,7 +756,7 @@ BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Left ea) (S n ** xs) =
 BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Right (et, et')) (n ** xs) =
   let
     ex = et (n ** xs)
-    ex' = et' $ (S n ** Vect.snoc xs ex)
+    ex' = et' (S n ** Vect.snoc xs ex)
   in
   xalg $ Right $ talg (n ** ex :: ex' :: xs)
 
