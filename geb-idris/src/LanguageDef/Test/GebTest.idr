@@ -105,26 +105,6 @@ BcdoC01valid =
 BcdoShouldntBeValid : BCDObt
 BcdoShouldntBeValid = bcdoC bcdo0 bcdoc
 
--- For the context, we use the expected size of the root tuple
--- (a zero-length tuple is the same thing as an atom).
-CheckBCDOctx : Type
-CheckBCDOctx = Nat
-
-initBCDOctx : CheckBCDOctx
-initBCDOctx = ?initBCDOctx_hole
-
-CheckBCDOAlg : BinTreeAlg BCDOPos (CheckBCDOctx -> Bool)
-CheckBCDOAlg = ?matchBCDO_hole
-
-checkBCDO : BCDObt -> Bool
-checkBCDO x =
-  binTreeCata {atom=BCDOPos} {a=(CheckBCDOctx -> Bool)}
-    CheckBCDOAlg x initBCDOctx
-
-checkBCDO' : BCDObt -> Bool
-checkBCDO' (InBTm (Left x)) = ?checkBCDO'_hole_1
-checkBCDO' (InBTm (Right x)) = ?checkBCDO'_hole_2
-
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
