@@ -367,6 +367,10 @@ binTreeShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
 binTreeShow = showLines . binTreeLines
 
 public export
+binTreeShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
+binTreeShowI {atom} = binTreeShow show
+
+public export
 BinTreeEqAlg : {0 atom : Type} ->
   DecEqPred atom -> BinTreeParProdAlg atom atom Bool
 BinTreeEqAlg deq (Left (Left (ea, ea'))) = isYes $ deq ea ea'
@@ -793,9 +797,14 @@ public export
 btTexpShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
 btTexpShow = showLines . btTexpLines
 
+-- Show a binary tree as a tuple-expression.
+public export
+btTexpShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
+btTexpShowI {atom} = btTexpShow show
+
 public export
 Show atom => Show (BinTreeMu atom) where
-  show = btTexpShow show
+  show = btTexpShowI
 
 -----------------------------------------
 -----------------------------------------
