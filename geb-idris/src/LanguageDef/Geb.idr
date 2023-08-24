@@ -730,18 +730,36 @@ public export
 BTTexpAlg : Type -> Type -> Type -> Type
 BTTexpAlg atom x t = (BTTexp1 atom x t -> x, BTTexp2 atom x t -> t)
 
+-- When performing induction on tuples, we must keep track of the
+-- results of induction for the previous elements of the tuple.
+-- Thus the context of en expression during tuple-induction is a
+-- vector of the results of induction on the preceding elements of the tuple.
+public export
+BTTexpIndCtx : Type -> Type -> Type
+BTTexpIndCtx x t = (n : Nat ** Vect n x)
+
+public export
+BTTexpIndAlgObj : Type -> Type -> Type
+BTTexpIndAlgObj x t = BTTexpIndCtx x t -> x
+
 public export
 BTTexpAlgToBTAlg : {0 atom, x, t : Type} ->
-  BTTexpAlg atom x t -> BinTreeAlg atom x
+  BTTexpAlg atom x t -> BinTreeAlg atom (BTTexpIndAlgObj x t)
 BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Left ea) =
-  xalg $ Left ea
+  ?BTTexpAlgToBTAlg_hole_atom
 BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Right et) =
-  xalg $ Right $ ?BTTexpAlgToBTAlg_hole
+  ?BTTexpAlgToBTAlg_hole_tuple
+
+public export
+btTexpCataCtx : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> BTTexpIndCtx x t -> BinTreeMu atom -> x
+btTexpCataCtx {atom} {x} {t} =
+  flip . binTreeCata {a=(BTTexpIndAlgObj x t)} . BTTexpAlgToBTAlg
 
 public export
 btTexpCata : {0 atom, x, t : Type} ->
   BTTexpAlg atom x t -> BinTreeMu atom -> x
-btTexpCata {atom} {x} {t} = binTreeCata . BTTexpAlgToBTAlg
+btTexpCata {atom} {x} {t} = flip (btTexpCataCtx {atom} {x} {t}) (0 ** [])
 
 public export
 btTupleCata : {0 atom, x, t : Type} ->
