@@ -668,16 +668,16 @@ EitherCS = CSliceObj .* Either
 -- over `2` and the product category `Type x Type`.
 
 public export
-BTSexp1 : Type -> Type -> Type -> Type
-BTSexp1 atom x p = Either atom p
+BTSexp1 : Type -> Type -> Type
+BTSexp1 = Either
 
 public export
-BTSexp2 : Type -> Type -> Type -> Type
-BTSexp2 atom x p = (x, x)
+BTSexp2 : Type -> Type
+BTSexp2 = ProductMonad
 
 public export
 BTSexpF : Type -> (Type, Type) -> (Type, Type)
-BTSexpF atom (x, p) = (BTSexp1 atom x p, BTSexp2 atom x p)
+BTSexpF atom (x, p) = (BTSexp1 atom p, BTSexp2 x)
 
 -- Using this equivalence, we can write a binary tree algebra in terms of
 -- a slice algebra.  This definition of a "BTSexp" algebra is another way
@@ -688,7 +688,7 @@ BTSexpF atom (x, p) = (BTSexp1 atom x p, BTSexp2 atom x p)
 -- for induction on expressions and pairs.
 public export
 BTSexpAlg : Type -> Type -> Type -> Type
-BTSexpAlg atom x p = (BTSexp1 atom x p -> x, BTSexp2 atom x p -> p)
+BTSexpAlg atom x p = (BTSexp1 atom p -> x, BTSexp2 x -> p)
 
 public export
 BTSexpAlgToBTAlg : {0 atom, x, p : Type} ->
