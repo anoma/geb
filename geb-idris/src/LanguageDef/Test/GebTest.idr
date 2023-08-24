@@ -164,9 +164,12 @@ gebTest = do
   putStrLn "BTMPolyDep"
   putStrLn "----------"
   putStrLn ""
-  putStrLn $ "bcdo0 = " ++ show bcdo0
+  putStrLn $ "bcdo0 = " ++ binTreeShowI bcdo0
+  putStrLn $ "(alternate show = " ++ btTexpShowI bcdo0 ++ ")"
   putStrLn $ "bcdoC01 = "
-  putStrLn $ show bcdoC01
+  putStrLn $ binTreeShowI bcdoC01
+  putStrLn $ "(alternate show)"
+  putStrLn $ btTexpShowI bcdoC01
   putStrLn ""
   putStrLn "------------"
   putStrLn "End GebTest."
