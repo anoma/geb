@@ -705,6 +705,49 @@ btPairCata : {0 atom, x, p : Type} ->
 btPairCata {atom} {x} {p} alg bt bt' =
   snd alg (btSexpCata alg bt, btSexpCata alg bt')
 
+------------------------------------
+---- S-exp as `atom` or `tuple` ----
+------------------------------------
+
+-- Another equivalent way we can view binary trees is "either an atom or
+-- a tuple of at least two expressions".  As with the "atom-or-pair" view,
+-- we can express this as a dependent-polynomial-functor algebra.
+-- We call this a `Texp` for "tuple-expression".
+
+public export
+BTTexp1 : Type -> Type -> Type -> Type
+BTTexp1 atom x t = Either atom t
+
+public export
+BTTexp2 : Type -> Type -> Type -> Type
+BTTexp2 atom x t = (n : Nat ** Vect (S (S n)) x)
+
+public export
+BTTexpF : Type -> (Type, Type) -> (Type, Type)
+BTTexpF atom (x, t) = (BTTexp1 atom x t, BTTexp2 atom x t)
+
+public export
+BTTexpAlg : Type -> Type -> Type -> Type
+BTTexpAlg atom x t = (BTTexp1 atom x t -> x, BTTexp2 atom x t -> t)
+
+public export
+BTTexpAlgToBTAlg : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> BinTreeAlg atom x
+BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Left ea) =
+  xalg $ Left ea
+BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Right et) =
+  xalg $ Right $ ?BTTexpAlgToBTAlg_hole
+
+public export
+btTexpCata : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> BinTreeMu atom -> x
+btTexpCata {atom} {x} {t} = binTreeCata . BTTexpAlgToBTAlg
+
+public export
+btTupleCata : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> (n : Nat) -> Vect (S (S n)) (BinTreeMu atom) -> t
+btTupleCata {atom} {x} {t} alg n btv = snd alg (n ** map (btTexpCata alg) btv)
+
 -----------------------------------------
 -----------------------------------------
 ---- Either algebras of binary trees ----
