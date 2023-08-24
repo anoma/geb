@@ -739,16 +739,26 @@ BTTexpIndCtx : Type -> Type -> Type
 BTTexpIndCtx x t = (n : Nat ** Vect n x)
 
 public export
+BTTexpIndInitCtx : (0 x, t : Type) -> BTTexpIndCtx x t
+BTTexpIndInitCtx x t = (0 ** [])
+
+public export
 BTTexpIndAlgObj : Type -> Type -> Type
 BTTexpIndAlgObj x t = BTTexpIndCtx x t -> x
 
 public export
 BTTexpAlgToBTAlg : {0 atom, x, t : Type} ->
   BTTexpAlg atom x t -> BinTreeAlg atom (BTTexpIndAlgObj x t)
-BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Left ea) =
-  ?BTTexpAlgToBTAlg_hole_atom
-BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Right et) =
-  ?BTTexpAlgToBTAlg_hole_tuple
+BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Left ea) (0 ** []) =
+  xalg $ Left ea
+BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Left ea) (S n ** xs) =
+  xalg $ Right $ talg (n ** xalg (Left ea) :: xs)
+BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Right (et, et')) (n ** xs) =
+  let
+    ex = et (n ** xs)
+    ex' = et' $ (S n ** Vect.snoc xs ex)
+  in
+  xalg $ Right $ talg (n ** ex :: ex' :: xs)
 
 public export
 btTexpCataCtx : {0 atom, x, t : Type} ->
@@ -759,7 +769,8 @@ btTexpCataCtx {atom} {x} {t} =
 public export
 btTexpCata : {0 atom, x, t : Type} ->
   BTTexpAlg atom x t -> BinTreeMu atom -> x
-btTexpCata {atom} {x} {t} = flip (btTexpCataCtx {atom} {x} {t}) (0 ** [])
+btTexpCata {atom} {x} {t} =
+  flip (btTexpCataCtx {atom} {x} {t}) (BTTexpIndInitCtx x t)
 
 public export
 btTupleCata : {0 atom, x, t : Type} ->
