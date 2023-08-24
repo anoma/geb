@@ -720,7 +720,7 @@ btPairCata {atom} {x} {p} alg bt bt' =
 
 public export
 BTTexp1 : Type -> Type -> Type
-BTTexp1 = BTSexp1
+BTTexp1 = Either
 
 public export
 BTTexp2 : Type -> Type
