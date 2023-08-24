@@ -650,6 +650,10 @@ EitherCS = CSliceObj .* Either
 ---------------------------------------
 ---------------------------------------
 
+--------------------------------------------------------
+---- Binary trees as "atom-or-pair"-style S-expressions
+--------------------------------------------------------
+
 -- We can distinguish "pair of binary trees" as a polynomial-fixed-point
 -- type of its own by defining the notion together with that of "binary tree"
 -- itself with a _dependent_ polynomial endofunctor on the slice category of
@@ -685,13 +689,15 @@ BTSexpAlg atom x p = (BTSexp1 atom x p -> x, BTSexp2 atom x p -> p)
 public export
 BTSexpAlgToBTAlg : {0 atom, x, p : Type} ->
   BTSexpAlg atom x p -> BinTreeAlg atom x
-BTSexpAlgToBTAlg {atom} {x} {p} (xalg, palg) (Left ea) = xalg $ Left ea
-BTSexpAlgToBTAlg {atom} {x} {p} (xalg, palg) (Right ep) = xalg $ Right $ palg ep
+BTSexpAlgToBTAlg {atom} {x} {p} (xalg, palg) (Left ea) =
+  xalg $ Left ea
+BTSexpAlgToBTAlg {atom} {x} {p} (xalg, palg) (Right ep) =
+  xalg $ Right $ palg ep
 
 public export
 btSexpCata : {0 atom, x, p : Type} ->
   BTSexpAlg atom x p -> BinTreeMu atom -> x
-btSexpCata {atom} {x} {p} alg = binTreeCata (BTSexpAlgToBTAlg alg)
+btSexpCata {atom} {x} {p} = binTreeCata . BTSexpAlgToBTAlg
 
 public export
 btPairCata : {0 atom, x, p : Type} ->
