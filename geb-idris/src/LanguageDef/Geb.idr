@@ -367,10 +367,6 @@ binTreeShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
 binTreeShow = showLines . binTreeLines
 
 public export
-Show atom => Show (BinTreeMu atom) where
-  show = binTreeShow show
-
-public export
 BinTreeEqAlg : {0 atom : Type} ->
   DecEqPred atom -> BinTreeParProdAlg atom atom Bool
 BinTreeEqAlg deq (Left (Left (ea, ea'))) = isYes $ deq ea ea'
@@ -776,6 +772,30 @@ public export
 btTupleCata : {0 atom, x, t : Type} ->
   BTTexpAlg atom x t -> (n : Nat) -> Vect (S (S n)) (BinTreeMu atom) -> t
 btTupleCata {atom} {x} {t} alg n btv = snd alg (n ** map (btTexpCata alg) btv)
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+btTexpLinesAlg : {0 atom : Type} ->
+  (atom -> String) -> BTTexpAlg atom (List String) (List String)
+btTexpLinesAlg sha =
+  (eitherElim (\ea => [sha ea]) indentLines, \(n ** sv) => foldl (++) [] sv)
+
+public export
+btTexpLines : {0 atom : Type} ->
+  (atom -> String) -> BinTreeMu atom -> List String
+btTexpLines = btTexpCata . btTexpLinesAlg
+
+-- Show a binary tree as a tuple-expression.
+public export
+btTexpShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
+btTexpShow = showLines . btTexpLines
+
+public export
+Show atom => Show (BinTreeMu atom) where
+  show = btTexpShow show
 
 -----------------------------------------
 -----------------------------------------
