@@ -644,6 +644,61 @@ public export
 EitherCS : Type -> Type -> Type
 EitherCS = CSliceObj .* Either
 
+---------------------------------------
+---------------------------------------
+---- Binary trees as S-expressions ----
+---------------------------------------
+---------------------------------------
+
+-- We can distinguish "pair of binary trees" as a polynomial-fixed-point
+-- type of its own by defining the notion together with that of "binary tree"
+-- itself with a _dependent_ polynomial endofunctor on the slice category of
+-- `Type` over `2`, of which we treat one term as "binary tree" and the other
+-- as "pair of binary trees".
+--
+-- Another view is to use the equivalence between the slice category of `Type`
+-- over `2` and the product category `Type x Type`.
+
+public export
+BTSexp1 : Type -> Type -> Type -> Type
+BTSexp1 atom x p = Either atom p
+
+public export
+BTSexp2 : Type -> Type -> Type -> Type
+BTSexp2 atom x p = (x, x)
+
+public export
+BTSexpF : Type -> (Type, Type) -> (Type, Type)
+BTSexpF atom (x, p) = (BTSexp1 atom x p, BTSexp2 atom x p)
+
+-- Using this equivalence, we can write a binary tree algebra in terms of
+-- a slice algebra.  This definition of a "BTSexp" algebra is another way
+-- of writing a morphism in the slice category of `Type` over `2`.
+--
+-- What this allows as an expressive (not logical) extension to the notion
+-- of a binary-tree algebra is a catamorphism that returns different types
+-- for induction on expressions and pairs.
+public export
+BTSexpAlg : Type -> Type -> Type -> Type
+BTSexpAlg atom x p = (BTSexp1 atom x p -> x, BTSexp2 atom x p -> p)
+
+public export
+BTSexpAlgToBTAlg : {0 atom, x, p : Type} ->
+  BTSexpAlg atom x p -> BinTreeAlg atom x
+BTSexpAlgToBTAlg {atom} {x} {p} (xalg, palg) (Left ea) = xalg $ Left ea
+BTSexpAlgToBTAlg {atom} {x} {p} (xalg, palg) (Right ep) = xalg $ Right $ palg ep
+
+public export
+btSexpCata : {0 atom, x, p : Type} ->
+  BTSexpAlg atom x p -> BinTreeMu atom -> x
+btSexpCata {atom} {x} {p} alg = binTreeCata (BTSexpAlgToBTAlg alg)
+
+public export
+btPairCata : {0 atom, x, p : Type} ->
+  BTSexpAlg atom x p -> BinTreeMu atom -> BinTreeMu atom -> p
+btPairCata {atom} {x} {p} alg bt bt' =
+  snd alg (btSexpCata alg bt, btSexpCata alg bt')
+
 -----------------------------------------
 -----------------------------------------
 ---- Either algebras of binary trees ----
