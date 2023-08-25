@@ -287,7 +287,7 @@ btApplyPure : {0 atom, v, a : Type} ->
 btApplyPure {atom} {v} {a} = (|>) (flip applyHom) . flip mapSnd
 
 public export
-BinTreeProdHomAlgArgToProdAlgArg : {atom, atom', a : Type} ->
+BinTreeProdHomAlgArgToProdAlgArg : {0 atom, atom', a : Type} ->
   BinTreeF atom (BinTreeAlg atom' a) ->
   BinTreeF atom' a ->
   (BinTreeF atom a, BinTreeF atom' a)
@@ -295,7 +295,7 @@ BinTreeProdHomAlgArgToProdAlgArg {atom} {atom'} {a} =
   (|>) ProductNTUnit . mapFst . btApplyPure {atom} {v=(BinTreeF atom' a)} {a}
 
 public export
-binTreeProdCata : {atom, atom', a : Type} ->
+binTreeProdCata : {0 atom, atom', a : Type} ->
   BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
 binTreeProdCata =
   binTreeProdHomCata . flip (.*) BinTreeProdHomAlgArgToProdAlgArg
