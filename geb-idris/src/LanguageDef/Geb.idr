@@ -118,7 +118,7 @@ public export
 ($:) {atom} (x :: []) {ne=IsNonEmpty} = x
 ($:) {atom} (x :: xs@(x' :: xs')) {ne=IsNonEmpty} = x $* $: xs
 
-prefix 11 $:
+prefix 11 $:!
 public export
 ($:!) : {0 atom : Type} ->
   (l : List atom) -> {auto 0 ne : NonEmpty l} -> BinTreeMu atom
