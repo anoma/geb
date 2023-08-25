@@ -105,6 +105,13 @@ BcdoC01valid =
 BcdoShouldntBeValid : BCDObt
 BcdoShouldntBeValid = bcdoC bcdo0 bcdoc
 
+bcdoDeep : BCDObt
+bcdoDeep =
+  $: [
+      $: [ $: [ bcdoC bcdo1 bcdo0, bcdo0 ], bcdo1 ],
+      $: [ $: [ bcdo0, bcdo1 ], $: [ bcdo1, bcdo0 ] ]
+     ]
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
@@ -170,6 +177,8 @@ gebTest = do
   putStrLn $ binTreeShowI bcdoC01
   putStrLn $ "(alternate show)"
   putStrLn $ btTexpShowI bcdoC01
+  putStrLn $ "bcdoDeep = " ++ binTreeShowI bcdoDeep
+  putStrLn $ "(alternate show = " ++ btTexpShowI bcdoDeep ++ ")"
   putStrLn ""
   putStrLn "------------"
   putStrLn "End GebTest."
