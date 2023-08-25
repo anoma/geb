@@ -350,6 +350,23 @@ binTreeParProdCata =
 -------------------
 
 public export
+BtShowAlg : {0 atom : Type} ->
+  (atom -> String) -> BinTreeAlg atom String
+BtShowAlg sha = eitherElim sha $ \(x, x') => "[" ++ x ++ " " ++ x' ++ "]"
+
+public export
+btShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
+btShow = binTreeCata . BtShowAlg
+
+public export
+btShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
+btShowI {atom} = btShow show
+
+public export
+Show atom => Show (BinTreeMu atom) where
+  show = btShowI
+
+public export
 BinTreeShowLinesAlg : {0 atom : Type} ->
   (atom -> String) -> BinTreeAlg atom (List String)
 BinTreeShowLinesAlg sha (Left ea) =
@@ -369,10 +386,6 @@ binTreeShow = showLines . binTreeLines
 public export
 binTreeShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
 binTreeShowI {atom} = binTreeShow show
-
-public export
-Show atom => Show (BinTreeMu atom) where
-  show = binTreeShowI
 
 public export
 BinTreeEqAlg : {0 atom : Type} ->

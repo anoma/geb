@@ -172,12 +172,16 @@ gebTest = do
   putStrLn "----------"
   putStrLn ""
   putStrLn $ "bcdo0 = " ++ binTreeShowI bcdo0
+  putStrLn $ "(alternate show = " ++ btShowI bcdo0 ++ ")"
   putStrLn $ "(alternate show = " ++ btTexpShowI bcdo0 ++ ")"
   putStrLn $ "bcdoC01 = "
   putStrLn $ binTreeShowI bcdoC01
   putStrLn $ "(alternate show)"
+  putStrLn $ btShowI bcdoC01
+  putStrLn $ "(alternate show)"
   putStrLn $ btTexpShowI bcdoC01
   putStrLn $ "bcdoDeep = " ++ binTreeShowI bcdoDeep
+  putStrLn $ "(alternate show = " ++ btShowI bcdoDeep ++ ")"
   putStrLn $ "(alternate show = " ++ btTexpShowI bcdoDeep ++ ")"
   putStrLn ""
   putStrLn "------------"
