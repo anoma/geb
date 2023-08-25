@@ -1977,7 +1977,7 @@ applyHom : {0 a, b : Type} -> ProductMonad (a -> b) -> a -> ProductMonad b
 applyHom = applyPure {f=ProductMonad}
 
 public export
-ProductNTUnit : {a : Type} -> a -> ProductMonad a
+ProductNTUnit : {0 a : Type} -> a -> ProductMonad a
 ProductNTUnit x = (x, x)
 
 -- The right adjoint to the diagonal functor from the Idris type system
