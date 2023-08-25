@@ -752,11 +752,10 @@ mutual
   btTexpCataToVec (xalg, talg) (InBTm (Left ea)) = (0 ** [xalg $ Left ea])
   btTexpCataToVec (xalg, talg) (InBTm (Right (bt, bt'))) =
     let
-      (n ** xs) = btTexpCataToVec (xalg, talg) bt
-      (n' ** xs') = btTexpCataToVec (xalg, talg) bt'
+      x = btTexpCata (xalg, talg) bt
+      (n ** xs) = btTexpCataToVec (xalg, talg) bt'
     in
-    (S (n + n') **
-     replace {p=(flip Vect x)} (sym $ plusSuccRightSucc (S n) n') (xs ++ xs'))
+    (S n ** x :: xs)
 
 public export
 btTupleMapCata : {0 atom, x, t : Type} ->
