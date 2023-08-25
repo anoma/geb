@@ -781,6 +781,44 @@ btTupleCata : {0 atom, x, t : Type} ->
   BTTexpAlg atom x t -> (n : Nat) -> Vect (S (S n)) (BinTreeMu atom) -> t
 btTupleCata {atom} {x} {t} alg n btv = snd alg (n ** map (btTexpCata alg) btv)
 
+mutual
+  public export
+  btTexpCata' : {0 atom, x, t : Type} ->
+    BTTexpAlg atom x t -> BinTreeMu atom -> x
+  btTexpCata' (xalg, talg) (InBTm (Left ea)) = xalg $ Left ea
+  btTexpCata' (xalg, talg) (InBTm (Right (bt, bt'))) =
+    let
+      x = btTexpCata' (xalg, talg) bt
+      (n ** xs) = btTexpCataToVec' (xalg, talg) bt'
+    in
+    xalg $ Right $ talg (n ** Vect.snoc xs x)
+
+  public export
+  btTexpCataToVec' : {0 atom, x, t : Type} ->
+    BTTexpAlg atom x t -> BinTreeMu atom -> (n : Nat ** Vect (S n) x)
+  btTexpCataToVec' (xalg, talg) (InBTm (Left ea)) = (0 ** [xalg $ Left ea])
+  btTexpCataToVec' (xalg, talg) (InBTm (Right (bt, bt'))) =
+    let
+      (n ** xs) = btTexpCataToVec' (xalg, talg) bt
+      (n' ** xs') = btTexpCataToVec' (xalg, talg) bt'
+    in
+    (S (n + n') **
+     replace {p=(flip Vect x)} (sym $ plusSuccRightSucc (S n) n') (xs ++ xs'))
+
+  public export
+  btTupleMapCata' : {0 atom, x, t : Type} ->
+    BTTexpAlg atom x t -> (n : Nat) -> Vect (S (S n)) (BinTreeMu atom) ->
+    Vect (S (S n)) x
+  btTupleMapCata' alg 0 [x, x'] =
+    [btTexpCata' alg x, btTexpCata' alg x']
+  btTupleMapCata' alg (S n) (x :: xs) =
+    btTexpCata' alg x :: btTupleMapCata' alg n xs
+
+  public export
+  btTupleCata' : {0 atom, x, t : Type} ->
+    BTTexpAlg atom x t -> (n : Nat) -> Vect (S (S n)) (BinTreeMu atom) -> t
+  btTupleCata' (xalg, talg) n xs = talg (n ** btTupleMapCata' (xalg, talg) n xs)
+
 -------------------
 ---- Utilities ----
 -------------------
