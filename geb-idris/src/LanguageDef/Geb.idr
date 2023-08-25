@@ -380,12 +380,12 @@ binTreeLines : {0 atom : Type} ->
 binTreeLines = binTreeCata . BinTreeShowLinesAlg
 
 public export
-binTreeShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
-binTreeShow = showLines . binTreeLines
+btShowLines : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
+btShowLines = showLines . binTreeLines
 
 public export
-binTreeShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
-binTreeShowI {atom} = binTreeShow show
+btShowLinesI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
+btShowLinesI {atom} = btShowLines show
 
 public export
 BinTreeEqAlg : {0 atom : Type} ->
