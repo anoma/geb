@@ -36,6 +36,18 @@ tfm1t1 = MkFinMatrixT NM1 2 [0, 2, 7]
 btPolyShape : Nat -> PolyShape
 btPolyShape n = [(2, 1), (0, n)]
 
+-------------------------------------
+-------------------------------------
+---- BinTree as Tuple-expression ----
+-------------------------------------
+-------------------------------------
+
+BTT : Type
+BTT = BinTreeMu Nat
+
+btt0 : BTT
+btt0 = $: [ $:! [ 82, 17] , $! 34, $! 52, $! 74 ]
+
 --------------------
 --------------------
 ---- BTMPolyDep ----
@@ -166,6 +178,13 @@ gebTest = do
     (show $ leftCoclosureShape (btPolyShape 3) (btPolyShape 5))
   putStrLn $ "leftCoclosure(btPolyShape 5, btPolyShape 3) = " ++
     (show $ leftCoclosureShape (btPolyShape 5) (btPolyShape 3))
+  putStrLn ""
+  putStrLn "---------------------------"
+  putStrLn "BinTree as Tuple-expression"
+  putStrLn "---------------------------"
+  putStrLn ""
+  putStrLn $ "btt0 as pairs = " ++ btShowI btt0
+  putStrLn $ "btt0 as tuples = " ++ btTexpShowI btt0
   putStrLn ""
   putStrLn "----------"
   putStrLn "BTMPolyDep"
