@@ -46,7 +46,19 @@ BTT : Type
 BTT = BinTreeMu Nat
 
 btt0 : BTT
-btt0 = $: [ $:! [ 82, 17] , $! 34, $! 52, $! 74 ]
+btt0 = $: [ $:! [ 82, 17 ] , $! 34, $! 52, $! 74 ]
+
+btt1 : BTT
+btt1 = $:! [ 4, 5 ] $* $:! [ 6, 14, 15 ]
+
+btt2 : BTT
+btt2 = $: [ $:! [ 4, 5 ] , $! 6, $! 14, $! 15 ]
+
+btt0neq1 : Assertion
+btt0neq1 = Assert $ not $ binTreeEq' decEq btt0 btt1
+
+btt1eq2 : Assertion
+btt1eq2 = Assert $ binTreeEq' decEq btt1 btt2
 
 --------------------
 --------------------
@@ -185,6 +197,8 @@ gebTest = do
   putStrLn ""
   putStrLn $ "btt0 as pairs = " ++ btShowI btt0
   putStrLn $ "btt0 as tuples = " ++ btTexpShowI btt0
+  putStrLn $ "btt1 as pairs = " ++ btShowI btt1
+  putStrLn $ "btt1 as tuples = " ++ btTexpShowI btt1
   putStrLn ""
   putStrLn "----------"
   putStrLn "BTMPolyDep"
