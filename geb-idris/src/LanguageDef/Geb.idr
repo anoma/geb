@@ -744,7 +744,7 @@ mutual
       x = btTexpCata' (xalg, talg) bt
       (n ** xs) = btTexpCataToVec' (xalg, talg) bt'
     in
-    xalg $ Right $ talg (n ** Vect.snoc xs x)
+    xalg $ Right $ talg (n ** x :: xs)
 
   public export
   btTexpCataToVec' : {0 atom, x, t : Type} ->
