@@ -736,41 +736,41 @@ BTTexpAlg atom x t = (BTTexp1 atom t -> x, BTTexp2 x -> t)
 
 mutual
   public export
-  btTexpCata' : {0 atom, x, t : Type} ->
+  btTexpCata : {0 atom, x, t : Type} ->
     BTTexpAlg atom x t -> BinTreeMu atom -> x
-  btTexpCata' (xalg, talg) (InBTm (Left ea)) = xalg $ Left ea
-  btTexpCata' (xalg, talg) (InBTm (Right (bt, bt'))) =
+  btTexpCata (xalg, talg) (InBTm (Left ea)) = xalg $ Left ea
+  btTexpCata (xalg, talg) (InBTm (Right (bt, bt'))) =
     let
-      x = btTexpCata' (xalg, talg) bt
-      (n ** xs) = btTexpCataToVec' (xalg, talg) bt'
+      x = btTexpCata (xalg, talg) bt
+      (n ** xs) = btTexpCataToVec (xalg, talg) bt'
     in
     xalg $ Right $ talg (n ** x :: xs)
 
   public export
-  btTexpCataToVec' : {0 atom, x, t : Type} ->
+  btTexpCataToVec : {0 atom, x, t : Type} ->
     BTTexpAlg atom x t -> BinTreeMu atom -> (n : Nat ** Vect (S n) x)
-  btTexpCataToVec' (xalg, talg) (InBTm (Left ea)) = (0 ** [xalg $ Left ea])
-  btTexpCataToVec' (xalg, talg) (InBTm (Right (bt, bt'))) =
+  btTexpCataToVec (xalg, talg) (InBTm (Left ea)) = (0 ** [xalg $ Left ea])
+  btTexpCataToVec (xalg, talg) (InBTm (Right (bt, bt'))) =
     let
-      (n ** xs) = btTexpCataToVec' (xalg, talg) bt
-      (n' ** xs') = btTexpCataToVec' (xalg, talg) bt'
+      (n ** xs) = btTexpCataToVec (xalg, talg) bt
+      (n' ** xs') = btTexpCataToVec (xalg, talg) bt'
     in
     (S (n + n') **
      replace {p=(flip Vect x)} (sym $ plusSuccRightSucc (S n) n') (xs ++ xs'))
 
   public export
-  btTupleMapCata' : {0 atom, x, t : Type} ->
+  btTupleMapCata : {0 atom, x, t : Type} ->
     BTTexpAlg atom x t -> (n : Nat) -> Vect (S (S n)) (BinTreeMu atom) ->
     Vect (S (S n)) x
-  btTupleMapCata' alg 0 [x, x'] =
-    [btTexpCata' alg x, btTexpCata' alg x']
-  btTupleMapCata' alg (S n) (x :: xs) =
-    btTexpCata' alg x :: btTupleMapCata' alg n xs
+  btTupleMapCata alg 0 [x, x'] =
+    [btTexpCata alg x, btTexpCata alg x']
+  btTupleMapCata alg (S n) (x :: xs) =
+    btTexpCata alg x :: btTupleMapCata alg n xs
 
   public export
-  btTupleCata' : {0 atom, x, t : Type} ->
+  btTupleCata : {0 atom, x, t : Type} ->
     BTTexpAlg atom x t -> (n : Nat) -> Vect (S (S n)) (BinTreeMu atom) -> t
-  btTupleCata' (xalg, talg) n xs = talg (n ** btTupleMapCata' (xalg, talg) n xs)
+  btTupleCata (xalg, talg) n xs = talg (n ** btTupleMapCata (xalg, talg) n xs)
 
 -------------------
 ---- Utilities ----
@@ -784,7 +784,7 @@ BtTexpShowAlg sha = (eitherElim sha id, \(n ** sv) => foldl (++) "" sv)
 -- Show a binary tree as a tuple-expression.
 public export
 btTexpShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
-btTexpShow = btTexpCata' . BtTexpShowAlg
+btTexpShow = btTexpCata . BtTexpShowAlg
 
 -- Show a binary tree as a tuple-expression.
 public export
