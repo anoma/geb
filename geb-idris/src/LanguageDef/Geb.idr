@@ -778,7 +778,8 @@ btTupleCata (xalg, talg) n xs = talg (n ** btTupleMapCata (xalg, talg) n xs)
 public export
 BtTexpShowAlg : {0 atom : Type} ->
   (atom -> String) -> BTTexpAlg atom String String
-BtTexpShowAlg sha = (eitherElim sha id, \(n ** sv) => foldl (++) "" sv)
+BtTexpShowAlg sha =
+  (eitherElim sha id, \(n ** sv) => "[" ++ unwords (toList sv) ++ "]")
 
 -- Show a binary tree as a tuple-expression.
 public export
