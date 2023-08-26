@@ -867,7 +867,7 @@ BinTreeAutoBindAlg {m} alg autobind (Right (bt, bt')) ea = autobind (bt ea) bt'
 
 public export
 BinTreeMonadAlg :
-  {0 m : Type -> Type} -> {isMonad : Monad m} -> {0 atom, a : Type} ->
+  {0 m : Type -> Type} -> {auto isMonad : Monad m} -> {0 atom, a : Type} ->
   (atom -> a -> m a) -> BinTreeAlg atom (a -> m a)
 BinTreeMonadAlg {m} {a} {isMonad} alg =
   BinTreeAutoBindAlg {m} alg ((>>=) {a} {b=a})
