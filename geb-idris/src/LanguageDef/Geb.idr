@@ -811,6 +811,19 @@ HomEither : Type -> Type -> Type -> Type
 HomEither a e = CovarHomFunc a . Either e
 
 public export
+Functor (HomEither a e) where
+  map = map {f=(CovarHomFunc a)} . map {f=(Either e)}
+
+public export
+Applicative (HomEither a e) where
+  pure = pure {f=(CovarHomFunc a)} . pure {f=(Either e)}
+  (g <*> f) x = g x <*> f x
+
+public export
+Monad (HomEither a e) where
+  (f >>= g) x = f x >>= flip g x
+
+public export
 EitherHom : Type -> Type -> Type -> Type
 EitherHom = flip HomEither
 
