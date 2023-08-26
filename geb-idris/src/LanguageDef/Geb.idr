@@ -807,61 +807,71 @@ btTexpShowI {atom} = btTexpShow show
 -----------------------------------------
 
 public export
-HomEither : Type -> Type -> Type
-HomEither a e = a -> Either e a
+HomEither : Type -> Type -> Type -> Type
+HomEither a e = CovarHomFunc a . Either e
 
 public export
-heMap : {0 a, e, e' : Type} -> (e -> e') -> HomEither a e -> HomEither a e'
-heMap = (.) . mapFst {f=Either}
-
-public export
-Functor (HomEither a) where
-  map = heMap
-
-public export
-hePure : {0 a, e : Type} -> e -> HomEither a e
-hePure {a} {e} = const . Left
-
-public export
-EitherHom : Type -> Type -> Type
+EitherHom : Type -> Type -> Type -> Type
 EitherHom = flip HomEither
 
 public export
-ehPure : {0 e, a : Type} -> a -> EitherHom e a
-ehPure {a} {e} = const . Right
+AutoHomEither : Type -> Type -> Type
+AutoHomEither a e = HomEither a e a
 
 public export
-ehBindHom : {0 e, a : Type} ->
-  EitherHom e a -> (a -> EitherHom e a) -> EitherHom e a
-ehBindHom {e} {a} = flip $ biapp (eitherElim Left)
+aheMap : {0 a, e, e' : Type} ->
+  (e -> e') -> AutoHomEither a e -> AutoHomEither a e'
+aheMap = (.) . mapFst {f=Either} {a=e} {b=a} {c=e'}
 
 public export
-BinTreeBindAlg :
+Functor (AutoHomEither a) where
+  map = aheMap
+
+public export
+ahePure : {0 a, e : Type} -> e -> AutoHomEither a e
+ahePure {a} {e} = const . Left
+
+public export
+EitherAutoHom : Type -> Type -> Type
+EitherAutoHom = flip AutoHomEither
+
+public export
+ehaPure : {0 e, a : Type} -> a -> EitherAutoHom e a
+ehaPure {a} {e} = const . Right
+
+public export
+eahBindHom : {0 e, a : Type} ->
+  EitherAutoHom e a -> (a -> EitherAutoHom e a) -> EitherAutoHom e a
+eahBindHom {e} {a} = flip $ biapp (eitherElim Left)
+
+public export
+BinTreeAutoBindAlg :
   {0 m : Type -> Type} -> {0 atom, a : Type} ->
-  (alg : atom -> a -> m a) -> (bind : m a -> (a -> m a) -> m a) ->
+  (alg : atom -> a -> m a) -> (autobind : m a -> (a -> m a) -> m a) ->
   BinTreeAlg atom (a -> m a)
-BinTreeBindAlg {m} alg bind (Left x) ea = alg x ea
-BinTreeBindAlg {m} alg bind (Right (bt, bt')) ea = bind (bt ea) bt'
+BinTreeAutoBindAlg {m} alg autobind (Left x) ea = alg x ea
+BinTreeAutoBindAlg {m} alg autobind (Right (bt, bt')) ea = autobind (bt ea) bt'
 
 public export
 BinTreeMonadAlg :
   {0 m : Type -> Type} -> {isMonad : Monad m} -> {0 atom, a : Type} ->
   (atom -> a -> m a) -> BinTreeAlg atom (a -> m a)
-BinTreeMonadAlg {m} {isMonad} alg = BinTreeBindAlg {m} alg (>>=)
+BinTreeMonadAlg {m} {a} {isMonad} alg =
+  BinTreeAutoBindAlg {m} alg ((>>=) {a} {b=a})
 
 public export
-BinTreeEitherHomAlg : {0 atom, a, e : Type} ->
-  (alg : atom -> a -> EitherHom e a) ->
-  BinTreeAlg atom (a -> EitherHom e a)
-BinTreeEitherHomAlg {atom} {a} {e} =
-  flip (BinTreeBindAlg {m=(EitherHom e)} {atom} {a}) (ehBindHom {e} {a})
+BinTreeEitherAutoHomAlg : {0 atom, a, e : Type} ->
+  (alg : atom -> a -> EitherAutoHom e a) ->
+  BinTreeAlg atom (a -> EitherAutoHom e a)
+BinTreeEitherAutoHomAlg {atom} {a} {e} =
+  flip (BinTreeAutoBindAlg {m=(EitherAutoHom e)} {atom} {a}) eahBindHom
 
 public export
-binTreeEitherHomCata : {0 atom, a, e : Type} ->
-  (alg : atom -> a -> EitherHom e a) ->
-  BinTreeMu atom -> a -> EitherHom e a
-binTreeEitherHomCata {atom} {a} {e} =
-  binTreeCata {atom} {a=(a -> a -> Either e a)} . BinTreeEitherHomAlg
+binTreeEitherAutoHomCata : {0 atom, a, e : Type} ->
+  (alg : atom -> a -> EitherAutoHom e a) ->
+  BinTreeMu atom -> a -> EitherAutoHom e a
+binTreeEitherAutoHomCata {atom} {a} {e} =
+  binTreeCata {atom} {a=(a -> a -> Either e a)} . BinTreeEitherAutoHomAlg
 
 -------------------------------------------------------------
 -------------------------------------------------------------

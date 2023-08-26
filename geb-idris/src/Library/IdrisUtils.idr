@@ -25,6 +25,8 @@ import public Control.Relation
 import public Control.Order
 import public Control.Monad.Identity
 import public Control.Monad.Trans
+import public Control.Monad.Reader
+import public Control.Monad.Either
 import public Data.Binary
 import public Data.Nat.Properties
 import public Data.Nat.Exponentiation
