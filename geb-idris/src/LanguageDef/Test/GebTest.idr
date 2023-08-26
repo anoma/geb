@@ -55,10 +55,10 @@ btt2 : BTT
 btt2 = $: [ $:! [ 4, 5 ] , $! 6, $! 14, $! 15 ]
 
 btt0neq1 : Assertion
-btt0neq1 = Assert $ not $ binTreeEq' decEq btt0 btt1
+btt0neq1 = Assert $ not $ binTreeEq decEq btt0 btt1
 
 btt1eq2 : Assertion
-btt1eq2 = Assert $ binTreeEq' decEq btt1 btt2
+btt1eq2 = Assert $ binTreeEq decEq btt1 btt2
 
 --------------------
 --------------------
