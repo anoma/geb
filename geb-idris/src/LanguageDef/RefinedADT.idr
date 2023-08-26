@@ -1010,7 +1010,7 @@ data SumRepOrCorepF :
 
 public export
 Functor (SumRepOrCorepF generator obj rep) where
-  map f (SumRepOrCorep l) = SumRepOrCorep $ map f l
+  map f (SumRepOrCorep l) = SumRepOrCorep $ map @{BifunctorToFunctor} f l
 
 public export
 (Show obj, Show rep, Show carrier, Show (generator obj rep)) =>
