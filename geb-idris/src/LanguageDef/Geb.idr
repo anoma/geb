@@ -314,37 +314,28 @@ BinTreeParProdF atom atom' =
 --  - The result for pairs of pairs takes into account the results of parallel
 --    induction for each of the four combinations of parallel inductions on one
 --    branch of the first input tree with one branch of the second input tree
+-- This amounts to a special case of the product where atom/pair combinations
+-- depend only on the atom.
 public export
 BinTreeParProdAlg : Type -> Type -> Type -> Type
 BinTreeParProdAlg = Algebra .* BinTreeParProdF
 
 public export
-BinTreeProdHomAlgArgToParProdAlgArg : {0 atom, atom', a : Type} ->
-  BinTreeF atom (BinTreeAlg atom' a) ->
-  BinTreeF atom' a ->
-  BinTreeParProdF atom atom' a
-BinTreeProdHomAlgArgToParProdAlgArg (Left x) (Left x') =
-  Left $ Left (x, x')
-BinTreeProdHomAlgArgToParProdAlgArg (Left x) (Right (_, _)) =
-  Left $ Right $ Left x
-BinTreeProdHomAlgArgToParProdAlgArg (Right (_, _)) (Left x') =
-  Left $ Right $ Right x'
-BinTreeProdHomAlgArgToParProdAlgArg (Right alg) (Right p) =
-  Right (applyHom alg (Right p), p)
+BinTreeParProdAlgToProdAlg : {0 atom, atom', a : Type} ->
+  BinTreeParProdAlg atom atom' a -> BinTreeProdAlg atom atom' a
+BinTreeParProdAlgToProdAlg alg (Left ea, Left ea') =
+  alg $ Left $ Left (ea, ea')
+BinTreeParProdAlgToProdAlg alg (Left ea, Right (_, _)) =
+  alg $ Left $ Right $ Left ea
+BinTreeParProdAlgToProdAlg alg (Right (_, _), Left ea') =
+  alg $ Left $ Right $ Right ea'
+BinTreeParProdAlgToProdAlg alg (Right (x1, x2), Right (x1', x2')) =
+  alg $ Right ((x1, x2), (x3, x4))
 
 public export
 binTreeParProdCata : {0 atom, atom', a : Type} ->
   BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeParProdCata alg (InBTm (Left ea)) (InBTm (Left ea')) =
-  alg $ Left $ Left (ea, ea')
-binTreeParProdCata alg (InBTm (Left ea)) (InBTm (Right (_, _))) =
-  alg $ Left $ Right $ Left ea
-binTreeParProdCata alg (InBTm (Right (_, _))) (InBTm (Left ea')) =
-  alg $ Left $ Right $ Right ea'
-binTreeParProdCata alg (InBTm (Right (x1, x2))) (InBTm (Right (x1', x2'))) =
-  alg $ Right $
-    ((binTreeParProdCata alg x1 x1', binTreeParProdCata alg x1 x2'),
-     (binTreeParProdCata alg x2 x1', binTreeParProdCata alg x2 x2'))
+binTreeParProdCata = binTreeProdCata . BinTreeParProdAlgToProdAlg
 
 -------------------
 ---- Utilities ----
