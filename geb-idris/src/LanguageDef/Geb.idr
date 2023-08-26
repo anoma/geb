@@ -769,17 +769,14 @@ mutual
 
 public export
 btTupleMapCata : {0 atom, x, t : Type} ->
-  BTTexpAlg atom x t -> (n : Nat) -> Vect (S (S n)) (BinTreeMu atom) ->
+  BTTexpAlg atom x t -> {0 n : Nat} -> Vect (S (S n)) (BinTreeMu atom) ->
   Vect (S (S n)) x
-btTupleMapCata alg 0 [x, x'] =
-  [btTexpCata alg x, btTexpCata alg x']
-btTupleMapCata alg (S n) (x :: xs) =
-  btTexpCata alg x :: btTupleMapCata alg n xs
+btTupleMapCata alg {t} = map $ btTexpCata {t} alg
 
 public export
 btTupleCata : {0 atom, x, t : Type} ->
-  BTTexpAlg atom x t -> (n : Nat) -> Vect (S (S n)) (BinTreeMu atom) -> t
-btTupleCata (xalg, talg) n xs = talg (n ** btTupleMapCata (xalg, talg) n xs)
+  BTTexpAlg atom x t -> {n : Nat} -> Vect (S (S n)) (BinTreeMu atom) -> t
+btTupleCata (xalg, talg) {n} xs = talg (n ** btTupleMapCata (xalg, talg) {n} xs)
 
 -------------------
 ---- Utilities ----
