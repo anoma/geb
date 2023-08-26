@@ -744,28 +744,28 @@ public export
 BTTexpAlg : Type -> Type -> Type -> Type
 BTTexpAlg atom x t = (BTTexp1 atom t -> x, BTTexp2 x -> t)
 
-mutual
-  public export
-  btTexpCata : {0 atom, x, t : Type} ->
-    BTTexpAlg atom x t -> BinTreeMu atom -> x
-  btTexpCata (xalg, talg) (InBTm (Left ea)) = xalg $ Left ea
-  btTexpCata (xalg, talg) (InBTm (Right (bt, bt'))) =
-    let
-      x = btTexpCata (xalg, talg) bt
-      (n ** xs) = btTexpCataToVec (xalg, talg) bt'
-    in
-    xalg $ Right $ talg (n ** x :: xs)
+public export
+btTexpCatas : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> BinTreeMu atom -> (x, (n : Nat ** Vect (S n) x))
+btTexpCatas (xalg, talg) (InBTm (Left ea)) =
+  let bt = xalg (Left ea) in (bt, (0 ** [bt]))
+btTexpCatas (xalg, talg) (InBTm (Right (bt, bt'))) =
+  let
+    hd = fst $ btTexpCatas (xalg, talg) bt
+    (n ** tl) = snd $ btTexpCatas (xalg, talg) bt'
+    btv = hd :: tl
+  in
+  (xalg $ Right $ talg (n ** btv), (S n ** btv))
 
-  public export
-  btTexpCataToVec : {0 atom, x, t : Type} ->
-    BTTexpAlg atom x t -> BinTreeMu atom -> (n : Nat ** Vect (S n) x)
-  btTexpCataToVec (xalg, talg) (InBTm (Left ea)) = (0 ** [xalg $ Left ea])
-  btTexpCataToVec (xalg, talg) (InBTm (Right (bt, bt'))) =
-    let
-      x = btTexpCata (xalg, talg) bt
-      (n ** xs) = btTexpCataToVec (xalg, talg) bt'
-    in
-    (S n ** x :: xs)
+public export
+btTexpCata : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> BinTreeMu atom -> x
+btTexpCata = fst .* btTexpCatas
+
+public export
+btTexpCataToVec : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> BinTreeMu atom -> (n : Nat ** Vect (S n) x)
+btTexpCataToVec = snd .* btTexpCatas
 
 public export
 btTupleMapCata : {0 atom, x, t : Type} ->
