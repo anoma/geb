@@ -130,11 +130,11 @@ freeBinNatJoin = freeFJoin evalBinNatF
 
 public export
 bnAlgFromFreeObj : (alg : FAlgObj FreeBinNat) -> Algebra BinNatF (fst alg)
-bnAlgFromFreeObj = FAlgFromFreeObj {f=BinNatF} {fm=map}
+bnAlgFromFreeObj = FAlgFromFreeObj {f=BinNatF} {fm=(map @{BifunctorToFunctor})}
 
 public export
 bnAlgObjFromFree : FAlgObj FreeBinNat -> FAlgObj BinNatF
-bnAlgObjFromFree = FAlgObjFromFree {f=BinNatF} {fm=map}
+bnAlgObjFromFree = FAlgObjFromFree {f=BinNatF} {fm=(map @{BifunctorToFunctor})}
 
 public export
 bnAlgObjToFree : (alg : FAlgObj BinNatF) -> FreeMAlgSig BinNatF (fst alg)
@@ -146,7 +146,7 @@ bnAlgObjToFreeObj = FAlgObjToFreeObj {f=BinNatF} evalBinNatF
 
 public export
 bnAlgObjToFreeIso : (a : FAlgObj BinNatF) ->
-  FAlgIso {f=BinNatF} {fm=Prelude.map}
+  FAlgIso {f=BinNatF} {fm=(Prelude.map @{BifunctorToFunctor})}
     (bnAlgObjFromFree (bnAlgObjToFreeObj a)) a
 bnAlgObjToFreeIso (a ** m) =
   Element0

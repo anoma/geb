@@ -1685,7 +1685,7 @@ mutual
 -- currying adjunction in the category of functors -- the functor
 -- categories `[C, [D, E]]` and `[C × D, E]` are equivalent.
 public export
-[bifunctorToFunctor] Bifunctor f => Functor (f a) where
+[BifunctorToFunctor] Bifunctor f => Functor (f a) where
   map = mapSnd
 
 -- A bifunctor with its arguments flipped is a bifunctor.  This
@@ -3465,11 +3465,11 @@ hyloFree : {v, c, a : Type} ->
 hyloFree unit coalg alg x =
   let
     transport =
-      map {f=l} . map @{bifunctorToFunctor} {f=(ScaleFunctor d v)} . map {f=r}
+      map {f=l} . map @{BifunctorToFunctor} {f=(ScaleFunctor d v)} . map {f=r}
     hylo_trans = transport $ hyloFree unit coalg alg
     unfolded = map {f=l} coalg x
     unfolded_trans =
-      map (map @{bifunctorToFunctor} {f=(ScaleFunctor d v)} (unit c)) unfolded
+      map (map @{BifunctorToFunctor} {f=(ScaleFunctor d v)} (unit c)) unfolded
   in
   alg (x, hylo_trans unfolded_trans)
 
