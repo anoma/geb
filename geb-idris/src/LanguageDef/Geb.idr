@@ -252,13 +252,13 @@ prodFMsubstTree {v} =
 -- product-hom adjunction.
 public export
 BinTreeProdHomAlg : Type -> Type -> Type -> Type
-BinTreeProdHomAlg = (|>) BinTreeAlg . (.) . BinTreeAlg
+BinTreeProdHomAlg atom atom' a = BinTreeAlg atom (BinTreeMu atom' -> a)
 
 public export
 binTreeProdHomCata : {0 atom, atom', a : Type} ->
   BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
 binTreeProdHomCata {atom} {atom'} =
-  binTreeCata {atom=atom'} {a} .* binTreeCata {atom} {a=(BinTreeAlg atom' a)}
+  binTreeCata {atom} {a=(BinTreeMu atom' -> a)}
 
 -- The polynomial product of two `BinTreeF` functors -- that is, the product
 -- in the category of polynomial endofunctors on `Type`.
@@ -274,31 +274,24 @@ BinTreeProdF atom atom' = ProductF (BinTreeF atom) (BinTreeF atom')
 --  - The result for a pair of atoms takes into account both atoms
 --  - The result for an atom and a pair takes into account both the atom and
 --    the result of simultaneous induction on the two branches of the pair
---  - The result for pairs of pairs takes into account the results of
---    simultaneous induction for each of the four pairs of branches of
---    the input trees
+--  - The result for pairs of pairs takes into account the results of parallel
+--    induction for each of the four combinations of parallel inductions on one
+--    branch of the first input tree with one branch of the second input tree
 public export
 BinTreeProdAlg : Type -> Type -> Type -> Type
 BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
-btApplyPure : {0 atom, v, a : Type} ->
-  BinTreeF atom (v -> a) -> v -> BinTreeF atom a
-btApplyPure {atom} {v} {a} = (|>) (flip applyHom) . flip mapSnd
-
-public export
-BinTreeProdHomAlgArgToProdAlgArg : {0 atom, atom', a : Type} ->
-  BinTreeF atom (BinTreeAlg atom' a) ->
-  BinTreeF atom' a ->
-  (BinTreeF atom a, BinTreeF atom' a)
-BinTreeProdHomAlgArgToProdAlgArg {atom} {atom'} {a} =
-  (|>) ProductNTUnit . mapFst . btApplyPure {atom} {v=(BinTreeF atom' a)} {a}
-
-public export
 binTreeProdCata : {0 atom, atom', a : Type} ->
   BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeProdCata =
-  binTreeProdHomCata . flip (.*) BinTreeProdHomAlgArgToProdAlgArg
+binTreeProdCata alg (InBTm (Left ea)) x' =
+  binTreeCata {atom=atom'} {a} (curry alg $ Left ea) x'
+binTreeProdCata alg x@(InBTm (Right (_, _))) (InBTm (Left ea')) =
+  binTreeCata {atom} {a} (flip (curry alg) $ Left ea') x
+binTreeProdCata alg (InBTm (Right (x1, x2))) (InBTm (Right (x1', x2'))) =
+  alg
+    (Right (binTreeProdCata alg x1 x1', binTreeProdCata alg x1 x2'),
+     Right (binTreeProdCata alg x2 x1', binTreeProdCata alg x2 x2'))
 
 -- The parallel product of two `BinTreeF` functors -- that is, the product
 -- in the category of Dirichlet endofunctors on `Type`.
@@ -342,8 +335,16 @@ BinTreeProdHomAlgArgToParProdAlgArg (Right alg) (Right p) =
 public export
 binTreeParProdCata : {0 atom, atom', a : Type} ->
   BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeParProdCata =
-  binTreeProdHomCata . flip (.*) BinTreeProdHomAlgArgToParProdAlgArg
+binTreeParProdCata alg (InBTm (Left ea)) (InBTm (Left ea')) =
+  alg $ Left $ Left (ea, ea')
+binTreeParProdCata alg (InBTm (Left ea)) (InBTm (Right (_, _))) =
+  alg $ Left $ Right $ Left ea
+binTreeParProdCata alg (InBTm (Right (_, _))) (InBTm (Left ea')) =
+  alg $ Left $ Right $ Right ea'
+binTreeParProdCata alg (InBTm (Right (x1, x2))) (InBTm (Right (x1', x2'))) =
+  alg $ Right $
+    ((binTreeParProdCata alg x1 x1', binTreeParProdCata alg x1 x2'),
+     (binTreeParProdCata alg x2 x1', binTreeParProdCata alg x2 x2'))
 
 -------------------
 ---- Utilities ----
@@ -587,6 +588,11 @@ BinTreeAlgFromFree : {0 atom, a : Type} ->
   BinTreeFMAlg atom a -> BinTreeAlg atom a
 BinTreeAlgFromFree {atom} {a} =
   (|>) (InBTc {atom} {a} . mapSnd {f=Either} (mapHom InBTv))
+
+public export
+btApplyPure : {0 atom, v, a : Type} ->
+  BinTreeF atom (v -> a) -> v -> BinTreeF atom a
+btApplyPure {atom} {v} {a} = (|>) (flip applyHom) . flip mapSnd
 
 -- Like `binTreeFMapp` but with a monoid on the output factored out.
 -- Should have the same input-output behavior as, but perhaps building
