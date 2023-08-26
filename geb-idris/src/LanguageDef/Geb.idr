@@ -849,6 +849,20 @@ BinTreeMonadAlg :
   (atom -> a -> m a) -> BinTreeAlg atom (a -> m a)
 BinTreeMonadAlg {m} {isMonad} alg = BinTreeBindAlg {m} alg (>>=)
 
+public export
+BinTreeEitherHomAlg : {0 atom, a, e : Type} ->
+  (alg : atom -> a -> EitherHom e a) ->
+  BinTreeAlg atom (a -> EitherHom e a)
+BinTreeEitherHomAlg {atom} {a} {e} =
+  flip (BinTreeBindAlg {m=(EitherHom e)} {atom} {a}) (ehBindHom {e} {a})
+
+public export
+binTreeEitherHomCata : {0 atom, a, e : Type} ->
+  (alg : atom -> a -> EitherHom e a) ->
+  BinTreeMu atom -> a -> EitherHom e a
+binTreeEitherHomCata {atom} {a} {e} =
+  binTreeCata {atom} {a=(a -> a -> Either e a)} . BinTreeEitherHomAlg
+
 -------------------------------------------------------------
 -------------------------------------------------------------
 ---- Unrefined finitary polynomial types as binary trees ----
