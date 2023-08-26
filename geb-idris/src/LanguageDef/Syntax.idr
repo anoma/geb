@@ -962,19 +962,21 @@ frsexpJoin = frsexpCata id frsexpJoinAlg
 
 public export
 frsexpBind : FrSExpM atom a -> (a -> FrSExpM atom b) -> FrSExpM atom b
-frsexpBind x f = frsexpJoin (map {f=(FrSExpM atom)} f x)
+frsexpBind x f =
+  frsexpJoin (map @{BifunctorToFunctor} {f=(FrSExpM atom)} f x)
 
 public export
 frsexpApp : FrSExpM atom (a -> b) -> FrSExpM atom a -> FrSExpM atom b
-frsexpApp xf = frsexpBind xf . flip (map {f=(FrSExpM atom)})
+frsexpApp xf =
+  frsexpBind xf . flip (map @{BifunctorToFunctor} {f=(FrSExpM atom)})
 
 public export
-Applicative (FrSExpM atom) where
+Applicative (FrSExpM atom) using BifunctorToFunctor where
   pure = frsexpReturn
   (<*>) = frsexpApp
 
 public export
-Monad (FrSExpM atom) where
+Monad (FrSExpM atom) using BifunctorToFunctor where
   (>>=) = frsexpBind
   join = frsexpJoin
 
