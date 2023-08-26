@@ -330,7 +330,7 @@ BinTreeParProdAlgToProdAlg alg (Left ea, Right (_, _)) =
 BinTreeParProdAlgToProdAlg alg (Right (_, _), Left ea') =
   alg $ Left $ Right $ Right ea'
 BinTreeParProdAlgToProdAlg alg (Right (x1, x2), Right (x1', x2')) =
-  alg $ Right ((x1, x2), (x3, x4))
+  alg $ Right ((x1, x2), (x1', x2'))
 
 public export
 binTreeParProdCata : {0 atom, atom', a : Type} ->
