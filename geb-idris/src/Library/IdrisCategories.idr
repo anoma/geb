@@ -3513,6 +3513,19 @@ CovarHomFunc : Type -> (Type -> Type)
 CovarHomFunc a = \ty => a -> ty
 
 public export
+Functor (CovarHomFunc a) where
+  map = (.)
+
+public export
+Applicative (CovarHomFunc a) where
+  pure = const
+  (g <*> f) x = g x (f x)
+
+public export
+Monad (CovarHomFunc a) where
+  (f >>= g) x = g (f x) x
+
+public export
 FinCovarHomFunc : Nat -> (Type -> Type)
 FinCovarHomFunc = ProductN
 
