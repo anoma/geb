@@ -284,14 +284,13 @@ BinTreeProdAlg = Algebra .* BinTreeProdF
 public export
 binTreeProdCata : {0 atom, atom', a : Type} ->
   BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeProdCata alg (InBTm (Left ea)) x' =
-  binTreeCata {atom=atom'} {a} (curry alg $ Left ea) x'
-binTreeProdCata alg x@(InBTm (Right (_, _))) (InBTm (Left ea')) =
-  binTreeCata {atom} {a} (flip (curry alg) $ Left ea') x
-binTreeProdCata alg (InBTm (Right (x1, x2))) (InBTm (Right x')) =
-  alg
-    (Right $ mapHom (binTreeProdCata alg x1) x',
-     Right $ mapHom (binTreeProdCata alg x2) x')
+binTreeProdCata {atom} {atom'} alg =
+  binTreeProdHomCata $ \alg' => case alg' of
+    Left ea => binTreeCata {atom=atom'} {a} (curry alg $ Left ea)
+    Right (alg1', alg2') => \(InBTm x') => case x' of
+      Left ea' => alg (Right (alg1' $ $! ea', alg2' $ $! ea'), Left ea')
+      Right (bt1', bt2') =>
+        alg (Right (alg1' bt1', alg1' bt2'), Right (alg2' bt1', alg2' bt2'))
 
 -- The parallel product of two `BinTreeF` functors -- that is, the product
 -- in the category of Dirichlet endofunctors on `Type`.
