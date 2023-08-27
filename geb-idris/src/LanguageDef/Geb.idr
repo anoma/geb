@@ -244,164 +244,6 @@ prodFMsubstTree {v} =
     (prodFMBind {a=v} {b=v})
     (uncurry (|>))
 
------------------------------------------------
----- Various forms of product catamorphism ----
------------------------------------------------
-
--- An algebra for catamorphisms on pairs of `BinTreeMu`s that uses the
--- product-hom adjunction.
-public export
-BinTreeProdHomAlg : Type -> Type -> Type -> Type
-BinTreeProdHomAlg atom atom' a = BinTreeAlg atom (BinTreeMu atom' -> a)
-
-public export
-binTreeProdHomCata : {0 atom, atom', a : Type} ->
-  BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeProdHomCata {atom} {atom'} =
-  binTreeCata {atom} {a=(BinTreeMu atom' -> a)}
-
--- The polynomial product of two `BinTreeF` functors -- that is, the product
--- in the category of polynomial endofunctors on `Type`.
---
--- In the polynomial product, the positions are products of those of the
--- individual functors, while the directions are the corresponding coproducts.
-public export
-BinTreeProdF : Type -> Type -> Type -> Type
-BinTreeProdF atom atom' = ProductF (BinTreeF atom) (BinTreeF atom')
-
--- An algebra of `BinTreeProdF` provides simultaneous induction on a
--- pair of `BinTreeMu`s.  This means that:
---  - The result for a pair of atoms takes into account both atoms
---  - The result for an atom and a pair takes into account both the atom and
---    the result of simultaneous induction on the two branches of the pair
---  - The result for pairs of pairs takes into account the results of parallel
---    induction for each of the four combinations of parallel inductions on one
---    branch of the first input tree with one branch of the second input tree
-public export
-BinTreeProdAlg : Type -> Type -> Type -> Type
-BinTreeProdAlg = Algebra .* BinTreeProdF
-
-public export
-BinTreeProdAlgToProdHomAlg : {0 atom, atom', a : Type} ->
-  BinTreeProdAlg atom atom' a -> BinTreeProdHomAlg atom atom' a
-BinTreeProdAlgToProdHomAlg alg
-  (Left ea) x' =
-    binTreeCata {atom=atom'} {a} (curry alg $ Left ea) x'
-BinTreeProdAlgToProdHomAlg alg
-  (Right (alg1', alg2')) (InBTm (Left ea')) =
-    alg (Right (alg1' $ $! ea', alg2' $ $! ea'), Left ea')
-BinTreeProdAlgToProdHomAlg alg
-  (Right (alg1', alg2')) (InBTm (Right (bt1', bt2'))) =
-    alg (Right (alg1' bt1', alg1' bt2'), Right (alg2' bt1', alg2' bt2'))
-
-public export
-binTreeProdCata : {0 atom, atom', a : Type} ->
-  BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeProdCata = binTreeProdHomCata . BinTreeProdAlgToProdHomAlg
-
--- The parallel product of two `BinTreeF` functors -- that is, the product
--- in the category of Dirichlet endofunctors on `Type`.
---
--- In the parallel product, the positions and directions are both products
--- of those of the individual functors.  The positions of `BinTreeF atom`
--- are `atom + 1` and the corresponding directions are `Void` for each
--- `atom` and `2` for the `1`, so the positions of `BinTreeParProdF atom atom'`
--- are `atom * atom' + atom' + atom + 1` and the corresponding directions
--- are `Void` for each combination involving `atom` and `4` for the `1`.
-public export
-BinTreeParProdF : Type -> Type -> Type -> Type
-BinTreeParProdF atom atom' =
-  BinTreeF (Either (atom, atom') (Either atom atom')) . ProductMonad
-
--- An algebra of `BinTreeParProdF` provides parallel induction on a
--- pair of `BinTreeMu`s.  This means that:
---  - The result for a pair of atoms takes into account both atoms
---  - The result for an atom and a pair takes into account only the atom
---  - The result for pairs of pairs takes into account the results of parallel
---    induction for each of the four combinations of parallel inductions on one
---    branch of the first input tree with one branch of the second input tree
--- This amounts to a special case of the product where atom/pair combinations
--- depend only on the atom.
-public export
-BinTreeParProdAlg : Type -> Type -> Type -> Type
-BinTreeParProdAlg = Algebra .* BinTreeParProdF
-
-public export
-BinTreeParProdAlgToProdAlg : {0 atom, atom', a : Type} ->
-  BinTreeParProdAlg atom atom' a -> BinTreeProdAlg atom atom' a
-BinTreeParProdAlgToProdAlg alg (Left ea, Left ea') =
-  alg $ Left $ Left (ea, ea')
-BinTreeParProdAlgToProdAlg alg (Left ea, Right (_, _)) =
-  alg $ Left $ Right $ Left ea
-BinTreeParProdAlgToProdAlg alg (Right (_, _), Left ea') =
-  alg $ Left $ Right $ Right ea'
-BinTreeParProdAlgToProdAlg alg (Right (x1, x2), Right (x1', x2')) =
-  alg $ Right ((x1, x2), (x1', x2'))
-
-public export
-binTreeParProdCata : {0 atom, atom', a : Type} ->
-  BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeParProdCata = binTreeProdCata . BinTreeParProdAlgToProdAlg
-
--------------------
----- Utilities ----
--------------------
-
-public export
-BtShowAlg : {0 atom : Type} ->
-  (atom -> String) -> BinTreeAlg atom String
-BtShowAlg sha = eitherElim sha $ \(x, x') => "[" ++ x ++ " " ++ x' ++ "]"
-
-public export
-btShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
-btShow = binTreeCata . BtShowAlg
-
-public export
-btShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
-btShowI {atom} = btShow show
-
-public export
-Show atom => Show (BinTreeMu atom) where
-  show = btShowI
-
-public export
-BinTreeShowLinesAlg : {0 atom : Type} ->
-  (atom -> String) -> BinTreeAlg atom (List String)
-BinTreeShowLinesAlg sha (Left ea) =
-  [sha ea]
-BinTreeShowLinesAlg sha (Right (xs, ys)) =
-  ["::"] ++ indentLines xs ++ indentLines ys
-
-public export
-binTreeLines : {0 atom : Type} ->
-  (atom -> String) -> BinTreeMu atom -> List String
-binTreeLines = binTreeCata . BinTreeShowLinesAlg
-
-public export
-btShowLines : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
-btShowLines = showLines . binTreeLines
-
-public export
-btShowLinesI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
-btShowLinesI {atom} = btShowLines show
-
-public export
-BinTreeEqAlg : {0 atom : Type} ->
-  DecEqPred atom -> BinTreeParProdAlg atom atom Bool
-BinTreeEqAlg deq (Left (Left (ea, ea'))) = isYes $ deq ea ea'
-BinTreeEqAlg deq (Left (Right (Left _))) = False
-BinTreeEqAlg deq (Left (Right (Right _))) = False
-BinTreeEqAlg deq (Right ((eq11, eq12), (eq21, eq22))) = eq11 && eq22
-
-public export
-binTreeEq : {0 atom : Type} ->
-  DecEqPred atom -> BinTreeMu atom -> BinTreeMu atom -> Bool
-binTreeEq = binTreeParProdCata . BinTreeEqAlg
-
-public export
-DecEq atom => Eq (BinTreeMu atom) where
-  (==) = binTreeEq decEq
-
 ----------------------------------
 ---- Free monad of `BinTreeF` ----
 ----------------------------------
@@ -623,6 +465,164 @@ binTreeFMsubstTree {atom} {v} =
     {v=(v -> BinTreeFM atom v)} {a=(BinTreeFM atom v -> BinTreeFM atom v)}
     (binTreeFMBind {a=v} {b=v})
     (eitherElim (const . InBTa) (uncurry (|>)))
+
+-----------------------------------------------
+---- Various forms of product catamorphism ----
+-----------------------------------------------
+
+-- An algebra for catamorphisms on pairs of `BinTreeMu`s that uses the
+-- product-hom adjunction.
+public export
+BinTreeProdHomAlg : Type -> Type -> Type -> Type
+BinTreeProdHomAlg atom atom' a = BinTreeAlg atom (BinTreeMu atom' -> a)
+
+public export
+binTreeProdHomCata : {0 atom, atom', a : Type} ->
+  BinTreeProdHomAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
+binTreeProdHomCata {atom} {atom'} =
+  binTreeCata {atom} {a=(BinTreeMu atom' -> a)}
+
+-- The polynomial product of two `BinTreeF` functors -- that is, the product
+-- in the category of polynomial endofunctors on `Type`.
+--
+-- In the polynomial product, the positions are products of those of the
+-- individual functors, while the directions are the corresponding coproducts.
+public export
+BinTreeProdF : Type -> Type -> Type -> Type
+BinTreeProdF atom atom' = ProductF (BinTreeF atom) (BinTreeF atom')
+
+-- An algebra of `BinTreeProdF` provides simultaneous induction on a
+-- pair of `BinTreeMu`s.  This means that:
+--  - The result for a pair of atoms takes into account both atoms
+--  - The result for an atom and a pair takes into account both the atom and
+--    the result of simultaneous induction on the two branches of the pair
+--  - The result for pairs of pairs takes into account the results of parallel
+--    induction for each of the four combinations of parallel inductions on one
+--    branch of the first input tree with one branch of the second input tree
+public export
+BinTreeProdAlg : Type -> Type -> Type -> Type
+BinTreeProdAlg = Algebra .* BinTreeProdF
+
+public export
+BinTreeProdAlgToProdHomAlg : {0 atom, atom', a : Type} ->
+  BinTreeProdAlg atom atom' a -> BinTreeProdHomAlg atom atom' a
+BinTreeProdAlgToProdHomAlg alg
+  (Left ea) x' =
+    binTreeCata {atom=atom'} {a} (curry alg $ Left ea) x'
+BinTreeProdAlgToProdHomAlg alg
+  (Right (alg1', alg2')) (InBTm (Left ea')) =
+    alg (Right (alg1' $ $! ea', alg2' $ $! ea'), Left ea')
+BinTreeProdAlgToProdHomAlg alg
+  (Right (alg1', alg2')) (InBTm (Right (bt1', bt2'))) =
+    alg (Right (alg1' bt1', alg1' bt2'), Right (alg2' bt1', alg2' bt2'))
+
+public export
+binTreeProdCata : {0 atom, atom', a : Type} ->
+  BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
+binTreeProdCata = binTreeProdHomCata . BinTreeProdAlgToProdHomAlg
+
+-- The parallel product of two `BinTreeF` functors -- that is, the product
+-- in the category of Dirichlet endofunctors on `Type`.
+--
+-- In the parallel product, the positions and directions are both products
+-- of those of the individual functors.  The positions of `BinTreeF atom`
+-- are `atom + 1` and the corresponding directions are `Void` for each
+-- `atom` and `2` for the `1`, so the positions of `BinTreeParProdF atom atom'`
+-- are `atom * atom' + atom' + atom + 1` and the corresponding directions
+-- are `Void` for each combination involving `atom` and `4` for the `1`.
+public export
+BinTreeParProdF : Type -> Type -> Type -> Type
+BinTreeParProdF atom atom' =
+  BinTreeF (Either (atom, atom') (Either atom atom')) . ProductMonad
+
+-- An algebra of `BinTreeParProdF` provides parallel induction on a
+-- pair of `BinTreeMu`s.  This means that:
+--  - The result for a pair of atoms takes into account both atoms
+--  - The result for an atom and a pair takes into account only the atom
+--  - The result for pairs of pairs takes into account the results of parallel
+--    induction for each of the four combinations of parallel inductions on one
+--    branch of the first input tree with one branch of the second input tree
+-- This amounts to a special case of the product where atom/pair combinations
+-- depend only on the atom.
+public export
+BinTreeParProdAlg : Type -> Type -> Type -> Type
+BinTreeParProdAlg = Algebra .* BinTreeParProdF
+
+public export
+BinTreeParProdAlgToProdAlg : {0 atom, atom', a : Type} ->
+  BinTreeParProdAlg atom atom' a -> BinTreeProdAlg atom atom' a
+BinTreeParProdAlgToProdAlg alg (Left ea, Left ea') =
+  alg $ Left $ Left (ea, ea')
+BinTreeParProdAlgToProdAlg alg (Left ea, Right (_, _)) =
+  alg $ Left $ Right $ Left ea
+BinTreeParProdAlgToProdAlg alg (Right (_, _), Left ea') =
+  alg $ Left $ Right $ Right ea'
+BinTreeParProdAlgToProdAlg alg (Right (x1, x2), Right (x1', x2')) =
+  alg $ Right ((x1, x2), (x1', x2'))
+
+public export
+binTreeParProdCata : {0 atom, atom', a : Type} ->
+  BinTreeParProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
+binTreeParProdCata = binTreeProdCata . BinTreeParProdAlgToProdAlg
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+BtShowAlg : {0 atom : Type} ->
+  (atom -> String) -> BinTreeAlg atom String
+BtShowAlg sha = eitherElim sha $ \(x, x') => "[" ++ x ++ " " ++ x' ++ "]"
+
+public export
+btShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
+btShow = binTreeCata . BtShowAlg
+
+public export
+btShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
+btShowI {atom} = btShow show
+
+public export
+Show atom => Show (BinTreeMu atom) where
+  show = btShowI
+
+public export
+BinTreeShowLinesAlg : {0 atom : Type} ->
+  (atom -> String) -> BinTreeAlg atom (List String)
+BinTreeShowLinesAlg sha (Left ea) =
+  [sha ea]
+BinTreeShowLinesAlg sha (Right (xs, ys)) =
+  ["::"] ++ indentLines xs ++ indentLines ys
+
+public export
+binTreeLines : {0 atom : Type} ->
+  (atom -> String) -> BinTreeMu atom -> List String
+binTreeLines = binTreeCata . BinTreeShowLinesAlg
+
+public export
+btShowLines : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
+btShowLines = showLines . binTreeLines
+
+public export
+btShowLinesI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
+btShowLinesI {atom} = btShowLines show
+
+public export
+BinTreeEqAlg : {0 atom : Type} ->
+  DecEqPred atom -> BinTreeParProdAlg atom atom Bool
+BinTreeEqAlg deq (Left (Left (ea, ea'))) = isYes $ deq ea ea'
+BinTreeEqAlg deq (Left (Right (Left _))) = False
+BinTreeEqAlg deq (Left (Right (Right _))) = False
+BinTreeEqAlg deq (Right ((eq11, eq12), (eq21, eq22))) = eq11 && eq22
+
+public export
+binTreeEq : {0 atom : Type} ->
+  DecEqPred atom -> BinTreeMu atom -> BinTreeMu atom -> Bool
+binTreeEq = binTreeParProdCata . BinTreeEqAlg
+
+public export
+DecEq atom => Eq (BinTreeMu atom) where
+  (==) = binTreeEq decEq
 
 ---------------------------------------------------
 ---------------------------------------------------
