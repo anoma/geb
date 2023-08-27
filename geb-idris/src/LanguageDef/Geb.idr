@@ -288,10 +288,10 @@ binTreeProdCata alg (InBTm (Left ea)) x' =
   binTreeCata {atom=atom'} {a} (curry alg $ Left ea) x'
 binTreeProdCata alg x@(InBTm (Right (_, _))) (InBTm (Left ea')) =
   binTreeCata {atom} {a} (flip (curry alg) $ Left ea') x
-binTreeProdCata alg (InBTm (Right (x1, x2))) (InBTm (Right (x1', x2'))) =
+binTreeProdCata alg (InBTm (Right (x1, x2))) (InBTm (Right x')) =
   alg
-    (Right (binTreeProdCata alg x1 x1', binTreeProdCata alg x1 x2'),
-     Right (binTreeProdCata alg x2 x1', binTreeProdCata alg x2 x2'))
+    (Right $ mapHom (binTreeProdCata alg x1) x',
+     Right $ mapHom (binTreeProdCata alg x2) x')
 
 -- The parallel product of two `BinTreeF` functors -- that is, the product
 -- in the category of Dirichlet endofunctors on `Type`.
