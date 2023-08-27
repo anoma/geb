@@ -466,8 +466,152 @@ binTreeFMsubstTree {atom} {v} =
     (binTreeFMBind {a=v} {b=v})
     (eitherElim (const . InBTa) (uncurry (|>)))
 
+---------------------------------------
+---------------------------------------
+---- Binary trees as S-expressions ----
+---------------------------------------
+---------------------------------------
+
+--------------------------------------------------------
+---- Binary trees as "atom-or-pair"-style S-expressions
+--------------------------------------------------------
+
+-- We can distinguish "pair of binary trees" as a polynomial-fixed-point
+-- type of its own by defining the notion together with that of "binary tree"
+-- itself with a _dependent_ polynomial endofunctor on the slice category of
+-- `Type` over `2`, of which we treat one term as "binary tree" and the other
+-- as "pair of binary trees".
+--
+-- Another view is to use the equivalence between the slice category of `Type`
+-- over `2` and the product category `Type x Type`.
+
+public export
+BTSexp1 : Type -> Type -> Type
+BTSexp1 = Either
+
+public export
+BTSexp2 : Type -> Type
+BTSexp2 = ProductMonad
+
+public export
+BTSexpF : Type -> (Type, Type) -> (Type, Type)
+BTSexpF atom (x, p) = (BTSexp1 atom p, BTSexp2 x)
+
+-- Using this equivalence, we can write a binary tree algebra in terms of
+-- a slice algebra.  This definition of a "BTSexp" algebra is another way
+-- of writing a morphism in the slice category of `Type` over `2`.
+--
+-- What this allows as an expressive (not logical) extension to the notion
+-- of a binary-tree algebra is a catamorphism that returns different types
+-- for induction on expressions and pairs.
+public export
+BTSexpAlg : Type -> Type -> Type -> Type
+BTSexpAlg atom x p = (BTSexp1 atom p -> x, BTSexp2 x -> p)
+
+public export
+BTSexpAlgToBTAlg : {0 atom, x, p : Type} ->
+  BTSexpAlg atom x p -> BinTreeAlg atom x
+BTSexpAlgToBTAlg {atom} {x} {p} (xalg, palg) (Left ea) =
+  xalg $ Left ea
+BTSexpAlgToBTAlg {atom} {x} {p} (xalg, palg) (Right ep) =
+  xalg $ Right $ palg ep
+
+public export
+btSexpCata : {0 atom, x, p : Type} ->
+  BTSexpAlg atom x p -> BinTreeMu atom -> x
+btSexpCata {atom} {x} {p} = binTreeCata . BTSexpAlgToBTAlg
+
+public export
+btPairCata : {0 atom, x, p : Type} ->
+  BTSexpAlg atom x p -> BinTreeMu atom -> BinTreeMu atom -> p
+btPairCata {atom} {x} {p} alg bt bt' =
+  snd alg (btSexpCata alg bt, btSexpCata alg bt')
+
+------------------------------------
+---- S-exp as `atom` or `tuple` ----
+------------------------------------
+
+-- Another equivalent way we can view binary trees is "either an atom or
+-- a tuple of at least two expressions".  As with the "atom-or-pair" view,
+-- we can express this as a dependent-polynomial-functor algebra.
+-- We call this a `Texp` for "tuple-expression".
+
+public export
+BTTexp1 : Type -> Type -> Type
+BTTexp1 = Either
+
+public export
+BTTexp2 : Type -> Type
+BTTexp2 x = (n : Nat ** Vect (S (S n)) x)
+
+public export
+BTTexpF : Type -> (Type, Type) -> (Type, Type)
+BTTexpF atom (x, t) = (BTTexp1 atom t, BTTexp2 x)
+
+public export
+BTTexpAlg : Type -> Type -> Type -> Type
+BTTexpAlg atom x t = (BTTexp1 atom t -> x, BTTexp2 x -> t)
+
+public export
+BTTexpAlgToBTAlg : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> BinTreeAlg atom (x, (n : Nat ** Vect (S n) x))
+BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Left ea) with (xalg $ Left ea)
+  BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Left ea) | ex =
+    (ex, (0 ** [ex]))
+BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Right ((hd, _), (_, (n ** tl)))) =
+  let vx = hd :: tl in
+  (xalg $ Right $ talg (n ** vx), (S n ** vx))
+
+public export
+btTexpCatas : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> BinTreeMu atom -> (x, (n : Nat ** Vect (S n) x))
+btTexpCatas = binTreeCata . BTTexpAlgToBTAlg
+
+public export
+btTexpCata : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> BinTreeMu atom -> x
+btTexpCata = fst .* btTexpCatas
+
+public export
+btTexpCataToVec : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> BinTreeMu atom -> (n : Nat ** Vect (S n) x)
+btTexpCataToVec = snd .* btTexpCatas
+
+public export
+btTupleMapCata : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> {0 n : Nat} -> Vect (S (S n)) (BinTreeMu atom) ->
+  Vect (S (S n)) x
+btTupleMapCata alg {t} = map $ btTexpCata {t} alg
+
+public export
+btTupleCata : {0 atom, x, t : Type} ->
+  BTTexpAlg atom x t -> {n : Nat} -> Vect (S (S n)) (BinTreeMu atom) -> t
+btTupleCata (xalg, talg) {n} xs = talg (n ** btTupleMapCata (xalg, talg) {n} xs)
+
+-------------------
+---- Utilities ----
+-------------------
+
+public export
+BtTexpShowAlg : {0 atom : Type} ->
+  (atom -> String) -> BTTexpAlg atom String String
+BtTexpShowAlg sha =
+  (eitherElim sha id, \(n ** sv) => "[" ++ unwords (toList sv) ++ "]")
+
+-- Show a binary tree as a tuple-expression.
+public export
+btTexpShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
+btTexpShow = btTexpCata . BtTexpShowAlg
+
+-- Show a binary tree as a tuple-expression.
+public export
+btTexpShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
+btTexpShowI {atom} = btTexpShow show
+
+-----------------------------------------------
 -----------------------------------------------
 ---- Various forms of product catamorphism ----
+-----------------------------------------------
 -----------------------------------------------
 
 -- An algebra for catamorphisms on pairs of `BinTreeMu`s that uses the
@@ -663,148 +807,6 @@ MaybeCS = CSliceObj . Maybe
 public export
 EitherCS : Type -> Type -> Type
 EitherCS = CSliceObj .* Either
-
----------------------------------------
----------------------------------------
----- Binary trees as S-expressions ----
----------------------------------------
----------------------------------------
-
---------------------------------------------------------
----- Binary trees as "atom-or-pair"-style S-expressions
---------------------------------------------------------
-
--- We can distinguish "pair of binary trees" as a polynomial-fixed-point
--- type of its own by defining the notion together with that of "binary tree"
--- itself with a _dependent_ polynomial endofunctor on the slice category of
--- `Type` over `2`, of which we treat one term as "binary tree" and the other
--- as "pair of binary trees".
---
--- Another view is to use the equivalence between the slice category of `Type`
--- over `2` and the product category `Type x Type`.
-
-public export
-BTSexp1 : Type -> Type -> Type
-BTSexp1 = Either
-
-public export
-BTSexp2 : Type -> Type
-BTSexp2 = ProductMonad
-
-public export
-BTSexpF : Type -> (Type, Type) -> (Type, Type)
-BTSexpF atom (x, p) = (BTSexp1 atom p, BTSexp2 x)
-
--- Using this equivalence, we can write a binary tree algebra in terms of
--- a slice algebra.  This definition of a "BTSexp" algebra is another way
--- of writing a morphism in the slice category of `Type` over `2`.
---
--- What this allows as an expressive (not logical) extension to the notion
--- of a binary-tree algebra is a catamorphism that returns different types
--- for induction on expressions and pairs.
-public export
-BTSexpAlg : Type -> Type -> Type -> Type
-BTSexpAlg atom x p = (BTSexp1 atom p -> x, BTSexp2 x -> p)
-
-public export
-BTSexpAlgToBTAlg : {0 atom, x, p : Type} ->
-  BTSexpAlg atom x p -> BinTreeAlg atom x
-BTSexpAlgToBTAlg {atom} {x} {p} (xalg, palg) (Left ea) =
-  xalg $ Left ea
-BTSexpAlgToBTAlg {atom} {x} {p} (xalg, palg) (Right ep) =
-  xalg $ Right $ palg ep
-
-public export
-btSexpCata : {0 atom, x, p : Type} ->
-  BTSexpAlg atom x p -> BinTreeMu atom -> x
-btSexpCata {atom} {x} {p} = binTreeCata . BTSexpAlgToBTAlg
-
-public export
-btPairCata : {0 atom, x, p : Type} ->
-  BTSexpAlg atom x p -> BinTreeMu atom -> BinTreeMu atom -> p
-btPairCata {atom} {x} {p} alg bt bt' =
-  snd alg (btSexpCata alg bt, btSexpCata alg bt')
-
-------------------------------------
----- S-exp as `atom` or `tuple` ----
-------------------------------------
-
--- Another equivalent way we can view binary trees is "either an atom or
--- a tuple of at least two expressions".  As with the "atom-or-pair" view,
--- we can express this as a dependent-polynomial-functor algebra.
--- We call this a `Texp` for "tuple-expression".
-
-public export
-BTTexp1 : Type -> Type -> Type
-BTTexp1 = Either
-
-public export
-BTTexp2 : Type -> Type
-BTTexp2 x = (n : Nat ** Vect (S (S n)) x)
-
-public export
-BTTexpF : Type -> (Type, Type) -> (Type, Type)
-BTTexpF atom (x, t) = (BTTexp1 atom t, BTTexp2 x)
-
-public export
-BTTexpAlg : Type -> Type -> Type -> Type
-BTTexpAlg atom x t = (BTTexp1 atom t -> x, BTTexp2 x -> t)
-
-public export
-BTTexpAlgToBTAlg : {0 atom, x, t : Type} ->
-  BTTexpAlg atom x t -> BinTreeAlg atom (x, (n : Nat ** Vect (S n) x))
-BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Left ea) with (xalg $ Left ea)
-  BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Left ea) | ex =
-    (ex, (0 ** [ex]))
-BTTexpAlgToBTAlg {atom} {x} {t} (xalg, talg) (Right ((hd, _), (_, (n ** tl)))) =
-  let vx = hd :: tl in
-  (xalg $ Right $ talg (n ** vx), (S n ** vx))
-
-public export
-btTexpCatas : {0 atom, x, t : Type} ->
-  BTTexpAlg atom x t -> BinTreeMu atom -> (x, (n : Nat ** Vect (S n) x))
-btTexpCatas = binTreeCata . BTTexpAlgToBTAlg
-
-public export
-btTexpCata : {0 atom, x, t : Type} ->
-  BTTexpAlg atom x t -> BinTreeMu atom -> x
-btTexpCata = fst .* btTexpCatas
-
-public export
-btTexpCataToVec : {0 atom, x, t : Type} ->
-  BTTexpAlg atom x t -> BinTreeMu atom -> (n : Nat ** Vect (S n) x)
-btTexpCataToVec = snd .* btTexpCatas
-
-public export
-btTupleMapCata : {0 atom, x, t : Type} ->
-  BTTexpAlg atom x t -> {0 n : Nat} -> Vect (S (S n)) (BinTreeMu atom) ->
-  Vect (S (S n)) x
-btTupleMapCata alg {t} = map $ btTexpCata {t} alg
-
-public export
-btTupleCata : {0 atom, x, t : Type} ->
-  BTTexpAlg atom x t -> {n : Nat} -> Vect (S (S n)) (BinTreeMu atom) -> t
-btTupleCata (xalg, talg) {n} xs = talg (n ** btTupleMapCata (xalg, talg) {n} xs)
-
--------------------
----- Utilities ----
--------------------
-
-public export
-BtTexpShowAlg : {0 atom : Type} ->
-  (atom -> String) -> BTTexpAlg atom String String
-BtTexpShowAlg sha =
-  (eitherElim sha id, \(n ** sv) => "[" ++ unwords (toList sv) ++ "]")
-
--- Show a binary tree as a tuple-expression.
-public export
-btTexpShow : {0 atom : Type} -> (atom -> String) -> BinTreeMu atom -> String
-btTexpShow = btTexpCata . BtTexpShowAlg
-
--- Show a binary tree as a tuple-expression.
-public export
-btTexpShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
-btTexpShowI {atom} = btTexpShow show
 
 -----------------------------------------
 -----------------------------------------
