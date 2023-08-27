@@ -282,15 +282,22 @@ BinTreeProdAlg : Type -> Type -> Type -> Type
 BinTreeProdAlg = Algebra .* BinTreeProdF
 
 public export
+BinTreeProdAlgToProdHomAlg : {0 atom, atom', a : Type} ->
+  BinTreeProdAlg atom atom' a -> BinTreeProdHomAlg atom atom' a
+BinTreeProdAlgToProdHomAlg alg
+  (Left ea) x' =
+    binTreeCata {atom=atom'} {a} (curry alg $ Left ea) x'
+BinTreeProdAlgToProdHomAlg alg
+  (Right (alg1', alg2')) (InBTm (Left ea')) =
+    alg (Right (alg1' $ $! ea', alg2' $ $! ea'), Left ea')
+BinTreeProdAlgToProdHomAlg alg
+  (Right (alg1', alg2')) (InBTm (Right (bt1', bt2'))) =
+    alg (Right (alg1' bt1', alg1' bt2'), Right (alg2' bt1', alg2' bt2'))
+
+public export
 binTreeProdCata : {0 atom, atom', a : Type} ->
   BinTreeProdAlg atom atom' a -> BinTreeMu atom -> BinTreeMu atom' -> a
-binTreeProdCata {atom} {atom'} alg =
-  binTreeProdHomCata $ \alg' => case alg' of
-    Left ea => binTreeCata {atom=atom'} {a} (curry alg $ Left ea)
-    Right (alg1', alg2') => \(InBTm x') => case x' of
-      Left ea' => alg (Right (alg1' $ $! ea', alg2' $ $! ea'), Left ea')
-      Right (bt1', bt2') =>
-        alg (Right (alg1' bt1', alg1' bt2'), Right (alg2' bt1', alg2' bt2'))
+binTreeProdCata = binTreeProdHomCata . BinTreeProdAlgToProdHomAlg
 
 -- The parallel product of two `BinTreeF` functors -- that is, the product
 -- in the category of Dirichlet endofunctors on `Type`.
