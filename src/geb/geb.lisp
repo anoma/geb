@@ -536,3 +536,48 @@ I am the [GAPPLY][generic-function] for a generic [OPAQUE][class] I
 simply dispatch [GAPPLY][generic-function] on my interior code, which
 is likely just an object"
   (gapply (code morph) object))
+
+(defmethod well-defp-cat ((morph <substmorph>))
+  (etypecase-of substmorph morph
+    (comp
+     (let ((mcar (mcar morph))
+           (mcadr (mcadr morph)))
+       (if (and (well-defp-cat mcar)
+                (well-defp-cat mcadr)
+                (obj-equalp (dom mcar)
+                            (codom mcadr)))
+           t
+           (error "(Co)Domains do not match for ~A" morph))))
+    (case
+        (let ((mcar (mcar morph))
+              (mcadr (mcadr morph)))
+          (if (and (well-defp-cat mcar)
+                   (well-defp-cat mcadr)
+                   (obj-equalp (codom mcar)
+                               (codom mcadr)))
+              t
+              (error "Casing ill-defined for ~A" morph))))
+    (pair
+     (let ((mcar (mcar morph))
+           (mcdr (mcdr morph)))
+       (if (and (well-defp-cat mcar)
+                (well-defp-cat mcdr)
+                (obj-equalp (dom mcar)
+                            (dom mcdr)))
+           t
+           (error "Pairing ill-defined for ~A" morph))))
+    ((or substobj
+         init
+         terminal
+         project-left
+         project-right
+         inject-left
+         inject-right
+         distribute)
+     t)))
+
+(defmethod well-defp-cat ((morph <natmorph>))
+  t)
+
+(defmethod well-defp-cat ((morph <natobj>))
+  t)

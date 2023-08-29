@@ -18,12 +18,13 @@
   (width              (pax:method () (<natobj>)))
   (width               pax:generic-function)
   (inj-coprod-parallel pax:function)
-  (zero-list           pax:function)
-  (dom    (pax:method () (<seqn>)))
-  (dom    (pax:generic-function))
-  (cod    (pax:method () (<seqn>)))
-  (cod    (pax:generic-function))
-  (gapply (pax:method () (<seqn> t))))
+  (zero-list              pax:function)
+  (dom                 (pax:method () (<seqn>)))
+  (dom                 (pax:generic-function))
+  (cod                 (pax:method () (<seqn>)))
+  (cod                 (pax:generic-function))
+  (well-defp-cat       (pax:method () (<seqn>)))
+  (gapply              (pax:method () (<seqn> t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; trans module

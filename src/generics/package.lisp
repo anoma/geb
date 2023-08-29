@@ -14,6 +14,7 @@ You can view their documentation in their respective API sections.
 The main documentation for the functionality is given here, with
 examples often given in the specific methods"
   (gapply         pax:generic-function)
+  (well-defp-cat  pax:generic-function)
   (maybe          pax:generic-function)
   (so-eval        pax:generic-function)
   (to-circuit     pax:generic-function)

@@ -23,6 +23,12 @@ GEB> (gapply (comp
 (left s-1)
 ```"))
 
+(defgeneric well-defp-cat (morphism)
+  (:documentation "Given a moprhism of a category, checks that
+it is well-defined. E.g. that composition of morphism is
+well-defined by checking that the domain of MCAR corresponds
+to the codomain of MCADR"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Object Functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
