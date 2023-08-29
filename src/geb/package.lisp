@@ -21,7 +21,7 @@
   (commutes          pax:function)
   (commutes-left     pax:function)
   (!->               pax:function)
-  (so-eval           pax:function)
+  (so-eval           (pax:method () (<substobj> t)))
   (so-hom-obj        pax:function)
   (so-card-alg       pax:generic-function)
   (so-card-alg       (pax:method () (<substobj>)))
