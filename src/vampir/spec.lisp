@@ -28,7 +28,8 @@
   `(or wire constant brackets))
 
 (deftype primitive ()
-  `(or (eql :+) (eql :-) (eql :*) (eql :^) (eql :\\) (eql :%) (eql :/) (eql :|:|)))
+  `(or (eql :+) (eql :-) (eql :*) (eql :^) (eql :\\) (eql :%) (eql :/)
+       (eql :|:|) (eql :\|)))
 
 (deftype constraint-list ()
   `(satisfies constraint-list))
