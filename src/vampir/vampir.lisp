@@ -590,18 +590,24 @@
 (defparameter *standard-library*
   (list
    *bool*
-   *range31*
-   *range32*
-   *int-range31*
-   *int-range32*
-   *negative31*
-   *negative32*
-   *non-negative32*
-   *less32*
-   *mod32*
-   *pwmod32*
-   *pwless32*
-   *next-range*))
+   *base-range*
+   *next-range*
+   *range-n*
+   *hd*
+   *tl*
+   *n-th*
+   *negative*
+   *plus-range*
+   *mult-range*
+   *minus-range*
+   *isZero*
+   *combine-aux*
+   *combine*
+   *take-base*
+   *take-ind*
+   *take*
+   *drop-ith-rec*
+   *drop-ith*))
 
 (-> extract (list &optional (or null stream)) (or null stream))
 (defun extract (stmts &optional (stream *standard-output*))
