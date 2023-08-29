@@ -54,7 +54,7 @@
    (:module geb
     :serial t
     :description "The Main Geb Module"
-    :depends-on (util specs)
+    :depends-on (util specs seqn)
     :components ((:file package)
                  (:file geb)
                  (:file bool)
@@ -74,6 +74,13 @@
     :depends-on (util vampir mixins specs)
     :components ((:file package)
                  (:file bitc)
+                 (:file trans)))
+   (:module seqn
+    :serial t
+    :description "seqn (Multi-Bit Sequences)"
+    :depends-on (util vampir mixins specs)
+    :components ((:file package)
+                 (:file seqn)
                  (:file trans)))
    (:module lambda
     :serial t
@@ -102,6 +109,8 @@
                  (:file extension-printer)
                  (:file bitc)
                  (:file bitc-printer)
+                 (:file seqn)
+                 (:file seqn-printer)
                  ;; HACK: to make the package properly refer to the
                  ;; right symbols
                  (:file ../util/package)))
@@ -112,7 +121,7 @@
    (:module entry
     :serial t
     :description "Entry point for the geb codebase"
-    :depends-on (util geb vampir specs poly bitc lambda)
+    :depends-on (util geb vampir specs poly bitc lambda seqn)
     :components ((:file package)
                  (:file entry))))
   :in-order-to ((asdf:test-op (asdf:test-op :geb/test))))
@@ -154,6 +163,7 @@
    (:file lambda-trans)
    (:file poly)
    (:file bitc)
+   (:file seqn)
    (:file pipeline)
    (:file list)
    (:module gui

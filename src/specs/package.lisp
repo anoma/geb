@@ -17,6 +17,11 @@
    (:use #:geb.utils #:cl #:geb.mixins)
    (:export #:@bitc #:@bitc-constructors)))
 
+(muffle-package-variance
+ (defpackage #:geb.seqn.spec
+   (:use #:geb.utils #:cl #:geb.mixins)
+   (:export #:@seqn #:@seqn-constructors)))
+
 ;; please document this later.
 (muffle-package-variance
  (uiop:define-package #:geb.lambda.spec
@@ -138,6 +143,67 @@ constructors"
   (ident    pax:function)
   (drop     pax:function)
   (branch   pax:function))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Geb Seqn Package Documentation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(in-package :geb.seqn.spec)
+
+(pax:defsection @seqn (:title "Seqn Types")
+  (seqn             pax:type)
+  (<seqn>           pax:class)
+  (composition      pax:class)
+  (id               pax:class)
+  (parallel-seq     pax:class)
+  (fork-seq         pax:class)
+  (drop-nil         pax:class)
+  (remove-right     pax:class)
+  (remove-left      pax:class)
+  (drop-width       pax:class)
+  (inj-length-left  pax:class)
+  (inj-length-right pax:class)
+  (inj-size         pax:class)
+  (branch-seq       pax:class)
+  (shift-front      pax:class)
+  (zero-bit         pax:class)
+  (one-bit          pax:class)
+  (seqn-add         pax:class)
+  (seqn-subtract    pax:class)
+  (seqn-multiply    pax:class)
+  (seqn-divide      pax:class)
+  (seqn-nat         pax:class)
+  (seqn-concat      pax:class)
+  (seqn-decompose   pax:class)
+  (seqn-eq          pax:class)
+  (seqn-lt          pax:class))
+
+(pax:defsection @seqn-constructors (:title "Seqn Constructors")
+  "Every accessor for each of the classes making up seqn"
+  (composition      pax:function)
+  (id               pax:function)
+  (fork-seq         pax:function)
+  (parallel-seq     pax:function)
+  (drop-nil         pax:function)
+  (remove-right     pax:function)
+  (remove-left      pax:function)
+  (drop-width       pax:function)
+  (inj-length-left  pax:function)
+  (inj-length-right pax:function)
+  (inj-size         pax:function)
+  (branch-seq       pax:function)
+  (shift-front      pax:function)
+  (zero-bit         pax:symbol-macro)
+  (one-bit          pax:symbol-macro)
+  (seqn-add         pax:function)
+  (seqn-subtract    pax:function)
+  (seqn-multiply    pax:function)
+  (seqn-divide      pax:function)
+  (seqn-nat         pax:function)
+  (seqn-concat      pax:function)
+  (seqn-decompose   pax:function)
+  (seqn-eq          pax:function)
+  (seqn-lt          pax:function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb lambda Package Documentation
