@@ -65,6 +65,7 @@ any other transition functions"
   (to-cat     (pax:method () (t <stlc>)))
   (to-poly    (pax:method () (<stlc>)))
   (to-bitc    (pax:method () (<stlc>)))
+  (to-seqn    (pax:method () (<stlc>)))
   (to-circuit (pax:method () (<stlc> t)))
   (@utility   pax:section))
 

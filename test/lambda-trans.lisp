@@ -57,6 +57,27 @@
                   (lambda:err so1)
                   (lambda:unit)))
 
+(def one-bit
+  (lambda:bit-choice #*0000000000000001))
+
+(def plus-one
+  (lambda:lamb (list (nat-width 16)) (lambda:plus (lambda:index 0)
+                                                  one-bit)))
+(def minus-one
+  (lambda:lamb (list (nat-width 16)) (lambda:minus (lambda:index 0)
+                                                   one-bit)))
+
+(def less-than-1 (lambda:lamb (list (nat-width 16))
+                              (lambda:case-on (lambda:lamb-lt (lambda:index 0)
+                                                              one-bit)
+                                              (lambda:bit-choice #*0)
+                                              (lambda:bit-choice #*1))))
+(def is-1 (lambda:lamb (list (nat-width 16))
+                       (lambda:case-on (lambda:lamb-eq (lambda:index 0)
+                                                       one-bit)
+                                       (lambda:bit-choice #*0)
+                                       (lambda:bit-choice #*1))))
+
 (def issue-58-circuit
   (to-circuit
    (lambda:case-on
@@ -92,7 +113,13 @@
       (gapply (to-bitc lambda-not-with-lambda) #*0))
   (is equalp
       (gapply (to-bitc lambda-not-without-lambda) #*1)
-      (gapply (to-bitc lambda-not-with-lambda) #*1)))
+      (gapply (to-bitc lambda-not-with-lambda) #*1))
+  (is equalp (list 0 0) (gapply (to-seqn lambda-not-with-lambda) (list 1 0 0)))
+  (is equalp (list 1 0) (gapply (to-seqn lambda-not-with-lambda) (list 0 0 0)))
+  (is equalp (gapply (to-seqn lambda-not-without-lambda) (list 0 0 0))
+             (gapply (to-seqn lambda-not-with-lambda) (list 0 0 0)))
+  (is equalp (gapply (to-seqn lambda-not-without-lambda) (list 1 0 0))
+             (gapply (to-seqn lambda-not-with-lambda) (list 1 0 0))))
 
 (define-test lambda.preserves-pair :parent lambda.trans-eval
   (is obj-equalp
@@ -113,7 +140,9 @@
        (to-cat nil bool-id)
        (list (left so1) so1)))
   (is obj-equalp #*0 (gapply (to-bitc bool-id) #*0))
-  (is obj-equalp #*1 (gapply (to-bitc bool-id) #*1)))
+  (is obj-equalp #*1 (gapply (to-bitc bool-id) #*1))
+  (is obj-equalp (list 0 0) (gapply (to-seqn bool-id) (list 0 0 0)))
+  (is obj-equalp (list 1 0) (gapply (to-seqn bool-id) (list 1 0 0))))
 
 (define-test lambda.not-works :parent lambda.trans-eval
   (is obj-equalp (left so1)  (gapply (to-cat nil proper-not)
@@ -121,7 +150,9 @@
   (is obj-equalp (right so1) (gapply (to-cat nil proper-not)
                                      (list (geb:left so1) so1)))
   (is equalp #*0 (gapply (to-bitc proper-not) #*1))
-  (is equalp #*1 (gapply (to-bitc proper-not) #*0)))
+  (is equalp #*1 (gapply (to-bitc proper-not) #*0))
+  (is equalp (list 0 0) (gapply (to-seqn proper-not) (list 1 0 0)))
+  (is equalp (list 1 0) (gapply (to-seqn proper-not) (list 0 0 0))))
 
 (define-test error-handling-case :parent lambda.trans-eval
   (is obj-equalp (left so1) (gapply (to-cat nil case-error-left)
@@ -142,6 +173,20 @@
                                             (right
                                              (right so1)))
                                            so1))))
+
+(define-test arithmetic-compilation :parent lambda.trans-eval
+  (is obj-equalp 1 (gapply (to-cat nil plus-one) (list 0 so1)))
+  (is obj-equalp 2 (gapply (to-cat nil plus-one) (list 1 so1)))
+  (is obj-equalp (list 1) (gapply (to-seqn plus-one) (list 0 0)))
+  (is obj-equalp (list 2) (gapply (to-seqn plus-one) (list 1 0)))
+  (is obj-equalp 0 (gapply (to-cat nil less-than-1) (list 0 so1)))
+  (is obj-equalp 1 (gapply (to-cat nil less-than-1) (list 1 so1)))
+  (is obj-equalp (list 0) (gapply (to-seqn less-than-1) (list 0 so1)))
+  (is obj-equalp (list 1) (gapply (to-seqn less-than-1) (list 1 so1)))
+  (is obj-equalp 0 (gapply (to-cat nil is-1) (list 1 so1)))
+  (is obj-equalp 1 (gapply (to-cat nil is-1) (list 0 so1)))
+  (is obj-equalp (list 0) (gapply (to-seqn is-1) (list 1 so1)))
+  (is obj-equalp (list 1) (gapply (to-seqn is-1) (list 0 so1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;               Compile checked term tests                  ;;

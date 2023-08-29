@@ -9,6 +9,7 @@
                      (#:bool #:geb-bool)
                      (#:dec  #:geb-decision)
                      (#:bitc #:geb.bitc)
+                     (#:seqn #:geb.seqn.spec)
                      (#:lambda #:geb.lambda))
   (:use #:geb.common #:parachute))
 

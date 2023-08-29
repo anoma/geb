@@ -11,6 +11,22 @@
                         (curry (right-morph (comp fun (gather fst x y))))))
     (prod         (curry (curry (prod-left-assoc fun))))))
 
+(defmethod curry-prod (fun fst (snd <natobj>))
+  (let ((num (num snd)))
+    (if (= num 1)
+        (pair
+         ;; On the left, see what the morphism does at 0
+         (curry (comp fun
+                      (prod-mor fst
+                                (nat-const 1 0))))
+         ;; On the left, see what the morphism does at 0
+         (curry (comp fun
+                      (prod-mor fst
+                                (nat-const 1 1)))))
+        (curry (comp fun
+                     (prod-mor fst
+                               (nat-concat 1 (1- num))))))))
+
 (defmethod dom ((x <substmorph>))
   (assure cat-obj
     (typecase-of substmorph x
@@ -28,6 +44,19 @@
        (prod (mcar x) (mcadr x)))
       (otherwise
        (subclass-responsibility x)))))
+
+(defmethod dom ((x <natmorph>))
+  (cond ((typep x 'nat-concat)      (prod (nat-width (num-left x))
+                                          (nat-width (num-right x))))
+        ((typep x 'nat-const)       so1)
+        ((typep x 'nat-inj)         (nat-width (num x)))
+        ((typep x 'one-bit-to-bool) (nat-width 1))
+        ((typep x 'nat-decompose)   (nat-width (num x)))
+        (t                          (let ((bit (nat-width (num x))))
+                                     (prod bit bit)))))
+
+(defmethod dom ((x <natobj>))
+  x)
 
 (defmethod dom ((ref reference))
   ref)
@@ -54,6 +83,28 @@
        (coprod (mcar x) (mcadr x)))
       (otherwise
        (subclass-responsibility x)))))
+
+(defmethod codom ((x <natmorph>))
+  (typecase-of natmorph x
+    (nat-inj         (nat-width (1+ (num x))))
+    (nat-concat      (nat-width (+ (num-left x) (num-right x))))
+    (one-bit-to-bool (coprod so1 so1))
+    (nat-decompose   (prod (nat-width 1) (nat-width (1- (num x)))))
+    ((or nat-eq
+         nat-lt)
+     (coprod so1 so1))
+    ((or nat-add
+         nat-sub
+         nat-mult
+         nat-div
+         nat-const)
+     (nat-width (num x)))
+    (otherwise
+     (subclass-responsibility x))))
+
+(defmethod codom ((x <natobj>))
+  x)
+
 
 (-> const (cat-morph cat-obj) (or t comp))
 (defun const (f x)
@@ -172,13 +223,40 @@ u
                                 (comp (<-right a b)
                                       (<-right hom (prod a b)))))))))
 
-(defun so-hom-obj (x z)
+(defmethod so-eval ((x <natobj>) y)
+  (let ((num (num x)))
+    (if (= num 1)
+        (comp (so-eval (coprod so1 so1)
+                       y)
+              (prod-mor (so-hom-obj x y)
+                        one-bit-to-bool))
+        (comp (so-eval (prod (nat-width 1)
+                             (nat-width (1- num)))
+                       y)
+              (prod-mor (so-hom-obj x y)
+                        (nat-decompose num))))))
+
+(defmethod so-hom-obj ((x <substobj>) z)
   (match-of substobj x
     (so0          so1)
     (so1          z)
     ((coprod x y) (prod (so-hom-obj x z)
                         (so-hom-obj y z)))
     ((prod x y)   (so-hom-obj x (so-hom-obj y z)))))
+
+(defmethod so-hom-obj ((x <natobj>) z)
+  (let ((num (num x))
+        (bool (coprod so1 so1)))
+    (if (= num 1)
+        (so-hom-obj bool
+                    z)
+        ;; The left part of the product is associated with what the
+        ;; function does on 0, right part of what it does on 1
+        ;; using the choice of interpreting false as left and
+        ;; true as right in bool
+        (so-hom-obj  (prod  (nat-width 1)
+                            (nat-width (1- num)))
+                     z))))
 
 (-> so-forget-right (cat-obj cat-obj cat-obj) substmorph)
 (defun so-forget-right (x y z)
@@ -283,6 +361,9 @@ and [SO0] into Maybe [SO0]"
     (prod   (coprod so1 (prod (maybe (mcar obj))
                               (maybe (mcadr obj)))))
     (otherwise (subclass-responsibility obj))))
+
+(defmethod maybe ((obj <natobj>))
+  (coprod so1 obj))
 
 (defun curry (f)
   "Curries the given object, returns a [cat-morph]
@@ -402,6 +483,30 @@ GEB> (gapply geb-bool:and
                (dom morph)
                (cadr object)))))
     (substobj object)
+    (otherwise (subclass-responsibility morph))))
+
+(defmethod gapply ((morph <natmorph>) object)
+  (typecase-of natmorph morph
+    (nat-add   (+ (car object) (cadr object)))
+    (nat-mult  (* (car object) (cadr object)))
+    (nat-sub   (- (car object) (cadr object)))
+    (nat-div   (multiple-value-bind (q)
+                   (floor (car object) (cadr object)) q))
+    (nat-const  (pos morph))
+    (nat-inj    object)
+    (nat-concat  (+ (* (expt 2 (num-right morph)) (car object)) (cadr object)))
+    (one-bit-to-bool (if (= object 0)
+                         (left so1)
+                         (right so1)))
+    (nat-decompose (if (>= object  (expt 2 (1- (num morph))))
+                       (list 1 (- object (expt 2 (1- (num morph)))))
+                       (list 0 object)))
+    (nat-eq        (if (= (car object) (cadr object))
+                       (left so1)
+                       (right so1)))
+    (nat-lt        (if (< (car object) (cadr object))
+                       (left so1)
+                       (right so1)))
     (otherwise (subclass-responsibility morph))))
 
 ;; I believe this is the correct way to use gapply for cat-obj
