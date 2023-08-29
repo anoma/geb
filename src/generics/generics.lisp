@@ -42,6 +42,11 @@ x
 (COPROD SO1 X)
 ```"))
 
+(defgeneric so-eval (object1 object2)
+  (:documentation
+   "Takes in X and Y Geb objects and provides an evaluation morphism
+(prod (so-hom-obj X Y) X) -> Y"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Conversion functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

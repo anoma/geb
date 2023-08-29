@@ -15,6 +15,7 @@ The main documentation for the functionality is given here, with
 examples often given in the specific methods"
   (gapply     pax:generic-function)
   (maybe      pax:generic-function)
+  (so-eval    pax:generic-function)
   (to-circuit pax:generic-function)
   (to-bitc    pax:generic-function)
   (to-poly    pax:generic-function)

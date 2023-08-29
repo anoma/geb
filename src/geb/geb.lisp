@@ -155,20 +155,18 @@ u
     (geb:so0          1)
     (geb:so1          1)))
 
-
-(-> so-eval (substobj substobj) substmorph)
-(defun so-eval (x y)
+(defmethod so-eval ((x <substobj>) y)
   (match-of substobj x
     (so0          (comp (init y) (<-right so1 so0)))
     (so1          (<-left y so1))
     ((coprod a b) (comp (mcase (comp (so-eval a y)
-                                     (so-forget-middle (!-> a y) (!-> b y) a))
+                                     (so-forget-middle (so-hom-obj a y) (so-hom-obj b y) a))
                                (comp (so-eval b y)
-                                     (so-forget-first (!-> a y) (!-> b y) b)))
-                        (distribute (prod (!-> a y) (!-> b y)) a b)))
+                                     (so-forget-first (so-hom-obj a y) (so-hom-obj b y) b)))
+                        (distribute (prod (so-hom-obj a y) (so-hom-obj b y)) a b)))
     ((prod a b)   (let ((eyz   (so-eval b y))
                         (exhyz (so-eval a (so-hom-obj b y)))
-                        (hom   (!-> a (so-hom-obj b y))))
+                        (hom   (so-hom-obj a (so-hom-obj b y))))
                     (comp eyz
                           (pair (comp exhyz (so-forget-right hom a b))
                                 (comp (<-right a b)
