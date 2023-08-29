@@ -122,7 +122,6 @@
    :func :negative31
    :arguments (list a)))
 
-
 (defparameter *base-range*
   (make-alias
    :name :base_range
@@ -164,7 +163,7 @@
                                              (list (make-wire :var :a1))))))))
 (defparameter *range-n*
   (make-alias
-   :name :range-n
+   :name :range_n
    :inputs (list :n)
    :body
    (list (make-application :func :iter
@@ -173,9 +172,255 @@
                                             (make-wire :var :base_range))))))
 
 (defun range-n (n a)
-  (make-application :func :range-n
+  (make-application :func :range_n
                     :arguments (list n
                                      a)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; List operations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defparameter *hd*
+  (make-alias
+   :name :hd
+   :inputs (list :|(h:t)|)
+   :body
+   (list (make-wire :var :h))))
+
+(defparameter *tl*
+  (make-alias
+   :name :tl
+   :inputs (list :|(h:t)|)
+   :body
+   (list (make-wire :var :t))))
+
+(defun hd (a)
+  (make-application :func :hd
+                    :arguments (list a)))
+(defun tl (a)
+  (make-application :func :tl
+                    :arguments (list a)))
+
+(defparameter *n-th*
+  (make-alias
+   :name :n_th
+   :inputs (list :lst :n)
+   :body
+   (list
+    (make-application :func :hd
+                      :arguments
+                      (list (make-application
+                             :func :iter
+                             :arguments
+                             (list (make-wire :var :n)
+                                   (make-wire :var :tl)
+                                   (make-wire :var :lst))))))))
+
+(defun n-th (lst n)
+  (make-application :func :nth
+                    :arguments (list lst n)))
+
+(defparameter *negative*
+  (let ((num (make-wire :var :n)))
+    (make-alias
+     :name :negative
+     :inputs (list :n :a)
+     :body
+     (list (make-application
+            :func :nth
+            :arguments
+            (list (range-n
+                   (make-infix :op :+
+                               :lhs num
+                               :rhs (make-constant :const 1))
+                   (make-infix :op :+
+                               :lhs (make-wire :var :a)
+                               :rhs
+                               (make-infix :op :^
+                                           :lhs (make-constant :const 2)
+                                           :rhs num)))
+                  num))))))
+
+(defun negative (n a)
+  (make-application :func :negative
+                    :arguments (list n a)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Primitive operations with range checks
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defparameter *plus-range*
+  (let ((plus (make-infix :op :+
+                          :lhs (make-wire :var :x1)
+                          :rhs (make-wire :var :x2))))
+    (make-alias
+     :name :plus_range
+     :inputs (list :n :x1 :x2)
+     :body (list (make-application :func :range_n
+                                   :arguments (list (make-wire :var :n)
+                                                    plus))
+                 plus))))
+
+(defun plus-range (n x1 x2)
+  (make-application :func :plus_range
+                    :arguments (list n x1 x2)))
+
+(defparameter *mult-range*
+  (let ((times (make-infix :op :*
+                           :lhs (make-wire :var :x1)
+                           :rhs (make-wire :var :x2))))
+    (make-alias
+     :name :mult_range
+     :inputs (list :n :x1 :x2)
+     :body (list (make-application :func :mult_range
+                                   :arguments (list (make-wire :var :n)
+                                                    times))
+                 times))))
+
+(defun mult-range (n x1 x2)
+  (make-application :func :mult_range
+                    :arguments (list n x1 x2)))
+
+(defparameter *minus-range*
+  (let ((minus (make-infix :op :-
+                           :lhs (make-wire :var :x1)
+                           :rhs (make-wire :var :x2))))
+    (make-alias
+     :name :minus_range
+     :inputs (list :n :x1 :x2)
+     :body (list (make-equality :lhs (negative (make-wire :var :n)
+                                               minus)
+                                :rhs (make-constant :const 1))
+                 minus))))
+
+(defun minus-range (n x1 x2)
+  (make-application :func :minus_range
+                    :arguments (list n x1 x2)))
+
+(defparameter *isZero*
+  (let ((one (make-constant :const 1))
+        (wire-a (make-wire :var :a))
+        (wire-ai (make-wire :var :ai))
+        (wire-b  (make-wire :var :b)))
+    (make-alias
+     :name :isZero
+     :inputs (list :a)
+     :body (list (make-bind :names (list wire-ai)
+                            :value (make-application
+                                    :func :fresh
+                                    :arguments (list (make-infix :op :\|
+                                                                 :lhs one
+                                                                 :rhs wire-a))))
+                 (make-bind :names (list wire-b)
+                            :value (make-infix :op :-
+                                               :lhs one
+                                               :rhs (make-infix :op :*
+                                                                :lhs wire-ai
+                                                                :rhs wire-a)))
+                 (make-equality :lhs (make-infix :op :*
+                                                 :lhs wire-a
+                                                 :rhs wire-b)
+                                :rhs (make-constant :const 0))
+                 (make-infix :op :-
+                             :lhs one
+                             :rhs wire-b)))))
+
+(defun isZero (a)
+  (make-application :func :isZero
+                    :arguments (list a)))
+
+(-> cons-deconstruct (&rest keyword) list)
+(defun cons-deconstruct (&rest symbols)
+  (list
+   (reduce (lambda (x pattern)
+             (make-infix :lhs (make-wire :var x)
+                         :rhs pattern
+                         :op :|:|))
+           (butlast symbols)
+           :from-end t
+           :initial-value (make-wire :var (car (last symbols))))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Operations on Lists
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defparameter *combine-aux*
+  (make-alias
+   :name :combine-aux
+   :inputs (list :x :y)
+   :body (list (make-infix :op :+
+                           :lhs (make-wire :var :x)
+                           :rhs (make-infix :op :*
+                                            :lhs (make-constant :const 2)
+                                            :rhs (make-wire :var :y))))))
+
+(defparameter *combine*
+  (make-alias
+   :name :combine
+   :inputs (list :xs)
+   :body (list (make-application :func :fold
+                                 :arguments (list (make-wire :var :xs)
+                                                  (make-wire :var :combine_aux)
+                                                  (make-constant :const 0))))))
+
+(defun combine (xs)
+  (make-application :func :combine
+                    :arguments (list xs)))
+
+(defparameter *take-base*
+  (make-alias
+   :name :take_base
+   :inputs (list :lst)
+   :body (list (make-brackets))))
+
+(defparameter *take-ind*
+  (make-alias
+   :name :take_ind
+   :inputs (list :take (cons-deconstruct :h :t))
+   :body (list (make-infix :lhs (make-wire :var :h)
+                           :rhs (make-application
+                                 :func :take
+                                 :arguments (list (make-wire :var t)))
+                           :op :|:|))))
+
+(defparameter *take*
+  (make-alias
+   :name :take
+   :inputs (list :n)
+   :body (list (make-application :func :iter
+                                 :arguments (list (make-wire :var :n)
+                                                  (make-wire :var :take_ind)
+                                                  (make-wire :var :take_base))))))
+
+(defparameter *drop-ith-rec*
+  (make-alias
+   :name :drop_ith_rec
+   :inputs (list (cons-deconstruct :h :t))
+   :body (list (make-infix :lhs (make-wire :var :h)
+                           :rhs (make-application
+                                 :func :take
+                                 :arguments (list (make-wire :var :t)))
+                           :op :|:|))))
+
+(defparameter *drop-ith*
+  (let ((one (make-constant :const 1)))
+    (make-alias
+     :name :drop_ith
+     :inputs (list :n)
+     :body (list (make-application
+                  :func :iter
+                  :arguments (list (make-wire :var :n)
+                                   (make-wire :var :drop_ith_rec)
+                                   (make-application
+                                    :func :fun
+                                    :arguments
+                                    (list (make-infix :lhs (make-wire :var :h)
+                                                      :rhs one
+                                                      :op :|:|)
+                                          (make-curly :value one)))))))))
+
+(defun drop-ith (n)
+  (make-application :func :drop_ith
+                    :arguments (list n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Range
@@ -345,18 +590,24 @@
 (defparameter *standard-library*
   (list
    *bool*
-   *range31*
-   *range32*
-   *int-range31*
-   *int-range32*
-   *negative31*
-   *negative32*
-   *non-negative32*
-   *less32*
-   *mod32*
-   *pwmod32*
-   *pwless32*
-   *next-range*))
+   *base-range*
+   *next-range*
+   *range-n*
+   *hd*
+   *tl*
+   *n-th*
+   *negative*
+   *plus-range*
+   *mult-range*
+   *minus-range*
+   *isZero*
+   *combine-aux*
+   *combine*
+   *take-base*
+   *take-ind*
+   *take*
+   *drop-ith-rec*
+   *drop-ith*))
 
 (-> extract (list &optional (or null stream)) (or null stream))
 (defun extract (stmts &optional (stream *standard-output*))
