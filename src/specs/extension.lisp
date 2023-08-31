@@ -80,7 +80,7 @@ of natural numbers"))
 number [NUM] and produces an object standing for cardinality
 2^([NUM]) corresponding to [NUM]-wide bit number.
 
-The formal grammar of [NAT-WIDTH][NAT-WIDTH class] is
+The formal grammar of [NAT-WIDTH][class] is
 
 ```lisp
 (nat-width num)
@@ -99,7 +99,7 @@ are to consder."))
   ((num :initarg :num
         :accessor num
         :documentation ""))
-  (:documentation "Given a natural number [NAT] greater than 0, gives a morphsm
+  (:documentation "Given a natural number [NUM] greater than 0, gives a morphsm
 (nat-add num) : (nat-mod num) x (nat-mod num) -> (nat-mod num) representing
 floored addition of two bits of length n.
 
@@ -113,7 +113,7 @@ The formal grammar of [NAT-ADD][class] is
   ((num :initarg :num
         :accessor num
         :documentation ""))
-  (:documentation "Given a natural number [NAT] greater than 0, gives a morphsm
+  (:documentation "Given a natural number [NUM] greater than 0, gives a morphsm
 (nat-mult num) : (nat-mod num) x (nat-mod num) -> (nat-mod n) representing floored
 multiplication in natural numbers modulo n.
 
@@ -127,11 +127,11 @@ The formal grammar of [NAT-MULT][class] is
   ((num :initarg :num
         :accessor num
         :documentation ""))
-  (:documentation "Given a natural number [NAT] greater than 0, gives a morphsm
+  (:documentation "Given a natural number [NUM] greater than 0, gives a morphsm
 (nat-sub sum) : (nat-mod num) x (nat-mod num) -> (nat-mod num) representing
 floored subtraction of two bits of length n.
 
-The formal grammar of [NAT-SUB][class] isy
+The formal grammar of [NAT-SUB][class] is
 
 ```lisp
 (nat-sub num)
@@ -141,7 +141,7 @@ The formal grammar of [NAT-SUB][class] isy
   ((num :initarg :num
         :accessor num
         :documentation ""))
-  (:documentation "Given a natural number [NAT] greater than 0, gives a morphsm
+  (:documentation "Given a natural number [NUM] greater than 0, gives a morphsm
 (nat-div num) : (nat-mod num) x (nat-mod num) -> (nat-mod num) representing
 floored division in natural numbers modulo n.
 
@@ -173,8 +173,8 @@ The formal grammar of [NAT-ADD][class] is
   ((num :initarg :num
         :accessor num
         :documentation ""))
-  (:documentation "Given a nutural number [NAT] presents a [NAT]-wide bit number
-as a ([NAT] + 1)-wide bit number via injecting.
+  (:documentation "Given a nutural number [NUM] presents a [NUM]-wide bit number
+as a ([NUM] + 1)-wide bit number via injecting.
 
 The formal grammar of [NAT-INJ][class] is
 
@@ -283,6 +283,11 @@ which evaluated to true iff the first input is less than the second"))
 
 (defun nat-lt (num)
   (make-instance 'nat-lt :num num))
+
+(defgeneric num (obj))
+(defgeneric pos (obj))
+(defgeneric num-left (obj))
+(defgeneric num-right (obj))
 
 
 
