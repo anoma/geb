@@ -16,6 +16,7 @@ examples often given in the specific methods"
   (well-defp-cat  pax:generic-function)
   (maybe          pax:generic-function)
   (so-eval        pax:generic-function)
+  (width          pax:generic-function)
   (to-circuit     pax:generic-function)
   (to-bitc        pax:generic-function)
   (to-seqn        pax:generic-function)

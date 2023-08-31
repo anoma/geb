@@ -50,6 +50,11 @@ of [so1][geb.spec:so1]"))
    "Takes in X and Y Geb objects and provides an evaluation morphism
 (prod (so-hom-obj X Y) X) -> Y"))
 
+(defgeneric width (object)
+  (:documentation
+   "Given an OBJECT of Geb presents it as a SeqN object. That is,
+width corresponds the object part of the to-seqn functor."))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Conversion functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

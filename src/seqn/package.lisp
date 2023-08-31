@@ -15,7 +15,6 @@
   (seq-max-fill        pax:function)
   (width              (pax:method () (<substobj>)))
   (width              (pax:method () (<natobj>)))
-  (width               pax:generic-function)
   (inj-coprod-parallel pax:function)
   (zero-list              pax:function)
   (dom                 (pax:method () (<seqn>)))
