@@ -8,11 +8,11 @@
           :accessor mcadr
           :documentation ""))
   (:documentation
-   "Stand-in for the [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] object. It does not have
+   "Stand-in for the [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] object. It does not have
 any computational properties and can be seen as just a function of two arguments
 with accessors [MCAR][generic-function] to the first argument and
 [MCADR][generic-function] to the second argument. There is an evident canonical
-way to associate [FUN-TYPE][class] and [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ]
+way to associate [FUN-TYPE][class] and [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ]
 pointwise."))
 
 (defun fun-type (mcar mcadr)
@@ -88,7 +88,7 @@ from the left starting with 0."
 (defgeneric ann-term1 (ctx tterm)
   (:documentation
    "Given a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] objects with
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] occurences replaced by [FUN-TYPE][class]
+[SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] occurences replaced by [FUN-TYPE][class]
 and an [STLC][type] similarly replacing type occurences of the hom object
 to [FUN-TYPE][class], provides the [TTYPE][generic-function] accessor to all
 subterms as well as the term itself, using [FUN-TYPE][class]. Once again,
@@ -202,7 +202,7 @@ the context on the left as well. For more info check [LAMB][class]"))
 (defun fun-to-hom (t1)
   "Given a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] whose subobjects might have a
 [FUN-TYPE][class] occurence replaces all occurences of [FUN-TYPE][class] with a
-suitable [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], hence giving a pure
+suitable [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], hence giving a pure
 [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
 
 ```lisp
@@ -266,9 +266,9 @@ occurences - re-annotates the term and its subterms with actual
 
 (defun annotated-term (ctx term)
   "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
-with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by
+with occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by
 [FUN-TYPE][class] and an [STLC][type] term with similarly replaced occurences
-of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], provides an [STLC][type] with all
+of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], provides an [STLC][type] with all
 subterms typed, i.e. providing the [TTYPE][generic-function] accessor,
 which is a pure [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]"
   (ann-term2 (ann-term1 ctx term)))
@@ -279,19 +279,19 @@ which is a pure [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]"
 
 (defun type-of-term-w-fun (ctx tterm)
   "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
-occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class]
+occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class]
 and an [STLC][type] term with similarly replaced occurences of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], gives out a type of the whole term with
-occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class]."
+[SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], gives out a type of the whole term with
+occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class]."
   (ttype (ann-term1 ctx tterm)))
 
 ;; Actual type info
 
 (defun type-of-term (ctx tterm)
   "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
-occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class]
+occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class]
 and an [STLC][type] term with similarly replaced occurences of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], provides the type of the whole term,
+[SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], provides the type of the whole term,
 which is a pure [SUBSTOBJ][type]."
   (fun-to-hom (type-of-term-w-fun ctx tterm)))
 
@@ -300,9 +300,9 @@ which is a pure [SUBSTOBJ][type]."
 (defgeneric well-defp (ctx tterm)
   (:documentation
    "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
-with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by
+with occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by
 [FUN-TYPE][class] and an [STLC][type] term with similarly replaced
-occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ], checks that the term
+occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], checks that the term
 is well-defined in the context based on structural rules of simply
 typed lambda calculus. returns the t if it is, otherwise returning
 nil"))

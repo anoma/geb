@@ -25,7 +25,6 @@
   (so-eval           (pax:method () (<substobj> t)))
   (so-hom-obj        (pax:method () (<natobj> t)))
   (so-hom-obj        (pax:method () (<substobj> t)))
-  (so-hom-obj        (pax:generic-function))
   (so-card-alg       pax:generic-function)
   (so-card-alg       (pax:method () (<substobj>)))
   (curry             pax:function)

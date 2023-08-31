@@ -40,10 +40,10 @@ to the codomain of MCADR"))
 case is simply wrapping the term in a [coprod][geb.spec:coprod]
 of [so1][geb.spec:so1]"))
 
-(defgeneric so-eval (object1 object2)
+(defgeneric so-hom-obj (object1 object2)
   (:documentation
-   "Takes in X and Y Geb objects and provides an evaluation morphism
-(prod (so-hom-obj X Y) X) -> Y"))
+   "Takes in X and Y Geb objects and provides an internal hom-object
+(so-hom-obj X Y) representing a set of functions from X to Y"))
 
 (defgeneric so-eval (object1 object2)
   (:documentation

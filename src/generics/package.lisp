@@ -15,6 +15,7 @@ examples often given in the specific methods"
   (gapply         pax:generic-function)
   (well-defp-cat  pax:generic-function)
   (maybe          pax:generic-function)
+  (so-hom-obj     pax:generic-function)
   (so-eval        pax:generic-function)
   (to-circuit     pax:generic-function)
   (to-bitc        pax:generic-function)
