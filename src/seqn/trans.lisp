@@ -181,11 +181,7 @@ removed already and hence we cannot count as usual"
         (cadr (cadr inputs))
         (mcar (mcar obj)))
     (if (const-check inputs)
-        (let ((plus (+ (vamp:const car)
-                       (vamp:const cadr))))
-          (if (> (expt 2 mcar) plus)
-              (vamp:make-constant :const plus)
-              (error "Range Exceeded")))
+        (optimize-arithmetic obj car cadr)
         (list (geb.vampir:plus-range (vamp:make-constant :const mcar)
                                      car
                                      cadr)))))
@@ -195,10 +191,7 @@ removed already and hence we cannot count as usual"
   (let ((car (car inputs))
         (cadr (cadr inputs)))
     (if (const-check inputs)
-        (let ((minus (- (vamp:const car) (vamp:const cadr))))
-          (if (<= 0 minus)
-              (vamp:make-constant :const minus)
-              (error "Subtraction Produces Negative Numbers")))
+        (optimize-arithmetic obj car cadr)
         (list (geb.vampir:minus-range (vamp:make-constant :const (mcar obj))
                                       car
                                       cadr)))))
@@ -209,10 +202,7 @@ removed already and hence we cannot count as usual"
         (cadr (cadr inputs))
         (mcar (mcar obj)))
     (if (const-check inputs)
-        (let ((mult (* (vamp:const car) (vamp:const cadr))))
-          (if (> (expt 2 mcar) mult)
-              (vamp:make-constant :const mult)
-              (error "Range Exceeded")))
+        (optimize-arithmetic obj car cadr)
         (list (geb.vampir:mult-range (vamp:make-constant :const mcar)
                                      car
                                      cadr)))))
@@ -222,9 +212,7 @@ removed already and hence we cannot count as usual"
   (let ((car (car inputs))
         (cadr (cadr inputs)))
     (if (const-check inputs)
-        (vamp:make-constant
-         :const
-         (multiple-value-bind (q) (floor (vamp:const car) (vamp:const cadr)) q))
+        (optimize-arithmetic obj car cadr)
         (list (vamp:make-infix :op :/
                                :lhs (car inputs)
                                :rhs (cadr inputs))))))
@@ -238,9 +226,7 @@ removed already and hence we cannot count as usual"
   (let ((car (car inputs))
         (cadr (cadr inputs)))
     (if (const-check inputs)
-        (list (vamp:make-constant
-               :const (+ (* (expt 2 (mcadr obj)) (vamp:const car))
-                         (vamp:const cadr))))
+        (optimize-concat obj car cadr)
         (list (vamp:make-infix
                :op :+
                :lhs (vamp:make-infix :op :*
@@ -295,15 +281,11 @@ removed already and hence we cannot count as usual"
         (cadr (cadr inputs))
         (zero (vamp:make-constant :const 0)))
     (if (const-check inputs)
-        (if (zerop (- (vamp:const car) (vamp:const cadr)))
-            (list zero
-                  zero)
-            (list (vamp:make-constant :const 1)
-                  zero))
+        (optimize-predicate obj car cadr zero)
         (list (geb.vampir:isZero (vamp:make-infix :op :-
                                                   :lhs (car inputs)
                                                   :rhs (cadr inputs)))
-              (vamp:make-constant :const 0)))))
+              zero))))
 
 (defmethod to-vampir ((obj seqn-lt) inputs constraints)
   (declare (ignore constraints))
@@ -311,11 +293,7 @@ removed already and hence we cannot count as usual"
         (cadr (cadr inputs))
         (zero (vamp:make-constant :const 0)))
     (if (const-check inputs)
-        (if (< (vamp:const car) (vamp:const cadr))
-            (list zero
-                  zero)
-            (list (vamp:make-constant :const 1)
-                  zero))
+        (optimize-predicate obj car cadr zero)
         (list (geb.vampir:negative (vamp:make-constant :const (mcar obj))
                                    (vamp:make-infix :op :-
                                                     :lhs car
@@ -325,6 +303,43 @@ removed already and hence we cannot count as usual"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun optimize-arithmetic (obj car cadr)
+  (typecase obj
+    (seqn-add (let ((plus (+ (vamp:const car)
+                             (vamp:const cadr))))
+                (if (> (expt 2 (mcar obj)) plus)
+                    (vamp:make-constant :const plus)
+                    (error "Range Exceeded"))))
+    (seqn-subtract (let ((minus (- (vamp:const car) (vamp:const cadr))))
+                     (if (<= 0 minus)
+                         (vamp:make-constant :const minus)
+                         (error "Subtraction Produces Negative Numbers"))))
+    (seqn-multiply (let ((mult (* (vamp:const car) (vamp:const cadr))))
+                     (if (> (expt 2 (mcar obj)) mult)
+                         (vamp:make-constant :const mult)
+                         (error "Range Exceeded")))) 
+    (seqn-divide (vamp:make-constant
+                  :const
+                  (multiple-value-bind (q)
+                      (floor (vamp:const car) (vamp:const cadr)) q)))))
+
+(defun optimize-predicate (obj car cadr zero)
+  (let ((one (vamp:make-constant :const 1)))
+    (typecase obj
+      (seqn-eq (if (zerop (- (vamp:const car) (vamp:const cadr)))
+                   (list zero zero)
+                   (list one
+                         zero)))
+      (seqn-lt (if (< (vamp:const car) (vamp:const cadr))
+                   (list zero zero)
+                   (list one
+                         zero))))))
+
+(defun optimize-concat (obj car cadr)
+  (list (vamp:make-constant
+               :const (+ (* (expt 2 (mcadr obj)) (vamp:const car))
+                         (vamp:const cadr)))))
 
 (defun optimize-branch (inp first-input)
   (let* ((carobj (car inp))
