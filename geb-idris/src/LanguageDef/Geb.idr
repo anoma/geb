@@ -654,11 +654,12 @@ BinTreeProdAlgToProdHomAlg alg
   (Left ea) x' =
     binTreeCata {atom=atom'} {a} (curry alg $ Left ea) x'
 BinTreeProdAlgToProdHomAlg alg
-  (Right (alg1', alg2')) (InBTm (Left ea')) =
-    alg (Right (alg1' $ $! ea', alg2' $ $! ea'), Left ea')
-BinTreeProdAlgToProdHomAlg alg
-  (Right (alg1', alg2')) (InBTm (Right (bt1', bt2'))) =
-    alg (Right (alg1' bt1', alg1' bt2'), Right (alg2' bt1', alg2' bt2'))
+  (Right (alg1', alg2')) x' =
+    case outBTm x' of
+      Left ea' =>
+        alg (Right (alg1' $ $! ea', alg2' $ $! ea'), Left ea')
+      Right (bt1', bt2') =>
+        alg (Right (alg1' bt1', alg1' bt2'), Right (alg2' bt1', alg2' bt2'))
 
 public export
 binTreeProdCata : {0 atom, atom', a : Type} ->
