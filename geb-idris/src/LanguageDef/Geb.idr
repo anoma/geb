@@ -608,41 +608,6 @@ public export
 btTexpShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
 btTexpShowI {atom} = btTexpShow show
 
--------------------------------------------------------
--------------------------------------------------------
----- Experiments with generalized pattern matching ----
--------------------------------------------------------
--------------------------------------------------------
-
-public export
-BinTreeGenAlgF : Type -> Type -> Type -> Type
-BinTreeGenAlgF atom a x = (BinTreeAlg atom a, Maybe x, Maybe x)
-
-public export
-BinTreeGenAlgAlg : Type -> Type -> Type -> Type
-BinTreeGenAlgAlg = Algebra .* BinTreeGenAlgF
-
-public export
-data BinTreeGenAlg : Type -> Type -> Type where
-  InBTGA : {0 atom, a : Type} ->
-    BinTreeGenAlgF atom a (BinTreeGenAlg atom a) -> BinTreeGenAlg atom a
-
-public export
-binTreeGenCata :
-  {0 atom, a : Type} -> BinTreeGenAlg atom a -> BinTreeMu atom -> a
-binTreeGenCata (InBTGA (alg, _, _)) (InBTm (Left ea)) =
-  alg $ Left ea
-binTreeGenCata galg@(InBTGA (alg, m1, m2)) (InBTm (Right (bt1, bt2))) =
-  case (m1, m2) of
-    (Nothing, Nothing) =>
-      alg $ Right (binTreeGenCata galg bt1, binTreeGenCata galg bt2)
-    (Nothing, Just mt2) =>
-      alg $ Right (binTreeGenCata galg bt1, binTreeGenCata mt2 bt2)
-    (Just mt1, Nothing) =>
-      alg $ Right (binTreeGenCata mt1 bt1, binTreeGenCata galg bt2)
-    (Just mt1, Just mt2) =>
-      alg $ Right (binTreeGenCata mt1 bt1, binTreeGenCata mt2 bt2)
-
 -----------------------------------------------
 -----------------------------------------------
 ---- Various forms of product catamorphism ----
@@ -1070,6 +1035,41 @@ checkFPF fpf x = case
       Nothing =>
         -- One of the steps of checking the algebra failed.
         False
+
+-------------------------------------------------------
+-------------------------------------------------------
+---- Experiments with generalized pattern matching ----
+-------------------------------------------------------
+-------------------------------------------------------
+
+public export
+BinTreeGenAlgF : Type -> Type -> Type -> Type
+BinTreeGenAlgF atom a x = (BinTreeAlg atom a, Maybe x, Maybe x)
+
+public export
+BinTreeGenAlgAlg : Type -> Type -> Type -> Type
+BinTreeGenAlgAlg = Algebra .* BinTreeGenAlgF
+
+public export
+data BinTreeGenAlg : Type -> Type -> Type where
+  InBTGA : {0 atom, a : Type} ->
+    BinTreeGenAlgF atom a (BinTreeGenAlg atom a) -> BinTreeGenAlg atom a
+
+public export
+binTreeGenCata :
+  {0 atom, a : Type} -> BinTreeGenAlg atom a -> BinTreeMu atom -> a
+binTreeGenCata (InBTGA (alg, _, _)) (InBTm (Left ea)) =
+  alg $ Left ea
+binTreeGenCata galg@(InBTGA (alg, m1, m2)) (InBTm (Right (bt1, bt2))) =
+  case (m1, m2) of
+    (Nothing, Nothing) =>
+      alg $ Right (binTreeGenCata galg bt1, binTreeGenCata galg bt2)
+    (Nothing, Just mt2) =>
+      alg $ Right (binTreeGenCata galg bt1, binTreeGenCata mt2 bt2)
+    (Just mt1, Nothing) =>
+      alg $ Right (binTreeGenCata mt1 bt1, binTreeGenCata galg bt2)
+    (Just mt1, Just mt2) =>
+      alg $ Right (binTreeGenCata mt1 bt1, binTreeGenCata mt2 bt2)
 
 ------------------------------------------------
 ------------------------------------------------
