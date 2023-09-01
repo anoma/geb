@@ -882,6 +882,29 @@ binTreeMonadCata {m} {isMonad} =
   binTreeBindCata {m} (map {f=m}) (pure {f=m}) ((<*>) {f=m}) ((>>=) {m})
 
 public export
+binTreeHomEitherCata :
+  {0 atom, a, e, b : Type} ->
+  (alg : atom -> HomEither a e b) -> (cons : a -> b -> a) ->
+  BinTreeMu atom -> HomEither a e b
+binTreeHomEitherCata {atom} {a} {e} {b} =
+  binTreeMonadCata {m=(Either e)} {atom} {a} {b}
+
+public export
+BinTreeAutoBindAlg :
+  {0 m : Type -> Type} -> {0 atom, a : Type} ->
+  (alg : atom -> a -> m a) -> (autobind : m a -> (a -> m a) -> m a) ->
+  BinTreeAlg atom (a -> m a)
+BinTreeAutoBindAlg {m} alg autobind (Left x) ea = alg x ea
+BinTreeAutoBindAlg {m} alg autobind (Right (bt, bt')) ea = autobind (bt ea) bt'
+
+public export
+BinTreeMonadAutoAlg :
+  {0 m : Type -> Type} -> {auto isMonad : Monad m} -> {0 atom, a : Type} ->
+  (atom -> a -> m a) -> BinTreeAlg atom (a -> m a)
+BinTreeMonadAutoAlg {m} {a} {isMonad} alg =
+  BinTreeAutoBindAlg {m} alg ((>>=) {a} {b=a})
+
+public export
 AutoHomEither : Type -> Type -> Type
 AutoHomEither a e = HomEither a e a
 
@@ -910,21 +933,6 @@ public export
 eahBindHom : {0 e, a : Type} ->
   EitherAutoHom e a -> (a -> EitherAutoHom e a) -> EitherAutoHom e a
 eahBindHom {e} {a} = flip $ biapp (eitherElim Left)
-
-public export
-BinTreeAutoBindAlg :
-  {0 m : Type -> Type} -> {0 atom, a : Type} ->
-  (alg : atom -> a -> m a) -> (autobind : m a -> (a -> m a) -> m a) ->
-  BinTreeAlg atom (a -> m a)
-BinTreeAutoBindAlg {m} alg autobind (Left x) ea = alg x ea
-BinTreeAutoBindAlg {m} alg autobind (Right (bt, bt')) ea = autobind (bt ea) bt'
-
-public export
-BinTreeMonadAutoAlg :
-  {0 m : Type -> Type} -> {auto isMonad : Monad m} -> {0 atom, a : Type} ->
-  (atom -> a -> m a) -> BinTreeAlg atom (a -> m a)
-BinTreeMonadAutoAlg {m} {a} {isMonad} alg =
-  BinTreeAutoBindAlg {m} alg ((>>=) {a} {b=a})
 
 public export
 BinTreeEitherAutoHomAlg : {0 atom, a, e : Type} ->
