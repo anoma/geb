@@ -851,6 +851,15 @@ BinTreeBindAlg {m} fm pu app bind alg cons (Right (bt, bt')) ea =
   bind (app {a=b} {b=a} (fm {a} {b=(b -> a)} cons (pu ea)) $ bt ea) bt'
 
 public export
+BinTreeMonadAlg :
+  {0 m : Type -> Type} -> {auto isMonad : Monad m} ->
+  {0 atom, a, b : Type} ->
+  (alg : atom -> a -> m b) -> (cons : a -> b -> a) ->
+  BinTreeAlg atom (a -> m b)
+BinTreeMonadAlg {m} {isMonad} =
+  BinTreeBindAlg {m} (map {f=m}) (pure {f=m}) ((<*>) {f=m}) ((>>=) {m})
+
+public export
 binTreeBindCata :
   {0 m : Type -> Type} -> (fm : {0 a, b : Type} -> (a -> b) -> m a -> m b) ->
   (pu : {0 a : Type} -> a -> m a) ->
@@ -862,6 +871,15 @@ binTreeBindCata :
 binTreeBindCata {m} fm pu app bind {atom} {a} {b} alg cons =
   binTreeCata {atom} {a=(a -> m b)}
     (BinTreeBindAlg {m} fm pu app bind {atom} {a} {b} alg cons)
+
+public export
+binTreeMonadCata :
+  {0 m : Type -> Type} -> {auto isMonad : Monad m} ->
+  {0 atom, a, b : Type} ->
+  (alg : atom -> a -> m b) -> (cons : a -> b -> a) ->
+  BinTreeMu atom -> a -> m b
+binTreeMonadCata {m} {isMonad} =
+  binTreeBindCata {m} (map {f=m}) (pure {f=m}) ((<*>) {f=m}) ((>>=) {m})
 
 public export
 AutoHomEither : Type -> Type -> Type
