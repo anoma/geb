@@ -837,6 +837,33 @@ EitherHom : Type -> Type -> Type -> Type
 EitherHom = flip HomEither
 
 public export
+BinTreeBindAlg :
+  {0 m : Type -> Type} -> (fm : {0 a, b : Type} -> (a -> b) -> m a -> m b) ->
+  (pu : {0 a : Type} -> a -> m a) ->
+  (app : {0 a, b : Type} -> m (a -> b) -> m a -> m b) ->
+  (bind : {0 a, b : Type} -> m a -> (a -> m b) -> m b) ->
+  {0 atom, a, b : Type} ->
+  (alg : atom -> a -> m b) -> (cons : a -> b -> a) ->
+  BinTreeAlg atom (a -> m b)
+BinTreeBindAlg {m} fm pu app bind alg cons (Left x) ea =
+  alg x ea
+BinTreeBindAlg {m} fm pu app bind alg cons (Right (bt, bt')) ea =
+  bind (app {a=b} {b=a} (fm {a} {b=(b -> a)} cons (pu ea)) $ bt ea) bt'
+
+public export
+binTreeBindCata :
+  {0 m : Type -> Type} -> (fm : {0 a, b : Type} -> (a -> b) -> m a -> m b) ->
+  (pu : {0 a : Type} -> a -> m a) ->
+  (app : {0 a, b : Type} -> m (a -> b) -> m a -> m b) ->
+  (bind : {0 a, b : Type} -> m a -> (a -> m b) -> m b) ->
+  {0 atom, a, b : Type} ->
+  (alg : atom -> a -> m b) -> (cons : a -> b -> a) ->
+  BinTreeMu atom -> a -> m b
+binTreeBindCata {m} fm pu app bind {atom} {a} {b} alg cons =
+  binTreeCata {atom} {a=(a -> m b)}
+    (BinTreeBindAlg {m} fm pu app bind {atom} {a} {b} alg cons)
+
+public export
 AutoHomEither : Type -> Type -> Type
 AutoHomEither a e = HomEither a e a
 
@@ -875,10 +902,10 @@ BinTreeAutoBindAlg {m} alg autobind (Left x) ea = alg x ea
 BinTreeAutoBindAlg {m} alg autobind (Right (bt, bt')) ea = autobind (bt ea) bt'
 
 public export
-BinTreeMonadAlg :
+BinTreeMonadAutoAlg :
   {0 m : Type -> Type} -> {auto isMonad : Monad m} -> {0 atom, a : Type} ->
   (atom -> a -> m a) -> BinTreeAlg atom (a -> m a)
-BinTreeMonadAlg {m} {a} {isMonad} alg =
+BinTreeMonadAutoAlg {m} {a} {isMonad} alg =
   BinTreeAutoBindAlg {m} alg ((>>=) {a} {b=a})
 
 public export
