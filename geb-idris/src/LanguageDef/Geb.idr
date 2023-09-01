@@ -890,6 +890,14 @@ binTreeHomEitherCata {atom} {a} {e} {b} =
   binTreeMonadCata {m=(Either e)} {atom} {a} {b}
 
 public export
+binTreeMaybeCata :
+  {0 atom, a, b : Type} ->
+  (alg : atom -> a -> Maybe b) -> (cons : a -> b -> a) ->
+  BinTreeMu atom -> a -> Maybe b
+binTreeMaybeCata {atom} {a} {b} =
+  binTreeMonadCata {m=Maybe} {atom} {a} {b}
+
+public export
 BinTreeAutoBindAlg :
   {0 m : Type -> Type} -> {0 atom, a : Type} ->
   (alg : atom -> a -> m a) -> (autobind : m a -> (a -> m a) -> m a) ->
