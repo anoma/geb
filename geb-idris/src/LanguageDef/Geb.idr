@@ -588,6 +588,15 @@ btTupleCata : {0 atom, x, t : Type} ->
   BTTexpAlg atom x t -> {n : Nat} -> Vect (S (S n)) (BinTreeMu atom) -> t
 btTupleCata (xalg, talg) {n} xs = talg (n ** btTupleMapCata (xalg, talg) {n} xs)
 
+-- A convenience version of `btTexpCata` which takes only one type
+-- (a return value for expressions), combining the induction hypotheses for
+-- expressions and tuples.
+public export
+btCataByTuple : {0 atom, x : Type} -> (atom -> x) -> (BTTexp2 x -> x) ->
+  BinTreeMu atom -> x
+btCataByTuple {atom} {x} aalg talg =
+  btTexpCata {atom} {x} {t=(BTTexp2 x)} (eitherElim aalg talg, id)
+
 -------------------
 ---- Utilities ----
 -------------------
