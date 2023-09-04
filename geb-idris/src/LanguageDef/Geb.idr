@@ -1007,119 +1007,44 @@ public export
 FPFpred : FPFunctor -> Type
 FPFpred = DecPred . FPFbt
 
--- If the context is `Nothing`, we expect not to find anything --
--- we should have been a term at the end of a tuple.  Thus we _always_
--- fail if we check a term with a context of `Nothing`.
---
--- If the context is `Just 0`, we expect to find a constructor, and
--- we return the number of arguments that constructor expects.
---
--- If the context is `Just (S n)`, we expect a tuple of `S n` terms.
--- There are no tuples with 0 terms.  A tuple of 1 term is a term.
--- A tuple of `S (S n))` terms is a pair of a term and a tuple of `S n` terms.
---
--- A term (which is also a tuple of 1 term) is either an atom
--- representing a constructor with no parameters, or a pair of an atom
--- representing a constructor with `S n` parameters together with a
--- tuple of `S n` terms.
 public export
-CheckFPFctx : FPFunctor -> Type
-CheckFPFctx fpf = Maybe Nat
+data FPFCheck : Type where
+  FPFconstr : Nat -> FPFCheck
+  FPFterm : FPFCheck
 
 public export
-initFPFctx : (fpf : FPFunctor) -> CheckFPFctx fpf
-initFPFctx fpf = Just 1
+data FPFErr : Type where
+  FPFnonConstrHd : FPFErr
+  FPFwrongNarg : Nat -> Nat -> FPFErr
 
 public export
-CheckFPFAlg : (fpf : FPFunctor) ->
-  BinTreeAlg (FPFatom fpf) (CheckFPFctx fpf -> Maybe (CheckFPFctx fpf))
-CheckFPFAlg _ _ Nothing =
-  -- We did not expect to find any term paired with the most recent
-  -- one that we checked, but we have found one.
-  Nothing
-CheckFPFAlg fpf (Left c) (Just 0) =
-  -- We expected to find a constructor, and we have found one, so we return
-  -- the number of arguments that we expect to find paired with it.
-  Just $ Just $ index c (fpfNdir fpf)
-CheckFPFAlg fpf (Right (_, _)) (Just 0) =
-  -- We expected to find a constructor, but we found a pair, so we fail.
-  Nothing
-CheckFPFAlg fpf (Left ea) (Just (S 0)) =
-  -- We expected to find a single term, and we have found a lone constructor.
-  -- A lone constructor is a valid (single) term if and only if it has no
-  -- parameters.  So if this term is a lone constructor, we succeed, but
-  -- return a context of `Nothing`, because we expect a constructor with no
-  -- parameters to not be paired with anything.
-  case (index ea (fpfNdir fpf)) of
-    0 => Just Nothing
-    (S _) => Nothing
-CheckFPFAlg fpf (Left _) (Just (S (S n))) =
-  -- We expected to find a tuple of at least two terms, but we found
-  -- a lone constructor, which at most can be a single term, so we fail.
-  Nothing
-CheckFPFAlg fpf (Right (bt, bt')) (Just (S 0)) =
-  -- We expected to find a single term, and we have found a pair of terms.
-  -- A pair of terms is a single term if and only if the left term is
-  -- a constructor and the right term is a tuple of terms with the number
-  -- of arguments that the constructor expects.
-  case bt (Just 0) of
-    Just Nothing =>
-      -- Checking the left tree as a constructor succeeded, but we
-      -- expected no further terms.  This case is actually impossible
-      -- given the way the rest of the algebra is written.
-      Nothing
-    Just (Just 0) =>
-      -- Checking the left tree as a constructor succeeded, but we
-      -- expected no further terms, and we have found at least one.
-      Nothing
-    Just (Just (S n)) =>
-      -- Checking the left tree as a constructor succeeded, and that
-      -- particular constructor expects to be paired with `S n` terms.
-      bt' $ Just $ S n
-    Nothing =>
-      -- Checking the left tree as a constructor failed.
-      Nothing
-CheckFPFAlg fpf (Right (bt, bt')) (Just (S (S n))) =
-  -- We expected to find a tuple of `S (S n))` terms.  That means
-  -- that we expected to find a pair of a term with a tuple of `S n` terms.
-  case bt (Just (S 0)) of
-    Just Nothing =>
-      -- Checking the left tree as a term succeeded, and we
-      -- expected no further terms.  That is the expected
-      -- result for the left tree, since we are expecting a
-      -- list of terms, so now we check the right tree.
-      bt' (Just (S n))
-    Just (Just _) =>
-      -- This case is actually impossible given the way the rest of
-      -- the algebra is written -- a term never expects further terms;
-      -- only a constructor does.
-      Nothing
-    Nothing =>
-      -- Checking the left tree as a term failed.
-      Nothing
+fpfCheck : {fpf : FPFunctor} ->
+  BinTreeMu (FPFatom fpf) -> Either FPFErr FPFCheck
+fpfCheck {fpf} = btCataByTuple {atom=(FPFatom fpf)} {x=(Either FPFErr FPFCheck)}
+  (\i =>
+    let ndir = index i (fpfNdir fpf) in
+    Right $ if ndir == 0 then FPFterm else FPFconstr ndir,
+   \(n ** v) =>
+    eitherElim
+      Left
+      (\v' => case index FZ v' of
+        FPFconstr n' =>
+          if n' == S n then Right FPFterm else Left $ FPFwrongNarg n' (S n)
+        FPFterm => Left FPFnonConstrHd)
+      $ sequence v)
 
 public export
-checkFPF : (fpf : FPFunctor) -> FPFpred fpf
-checkFPF fpf x = case
-  (binTreeCata
-    {atom=(FPFatom fpf)}
-    {a=(CheckFPFctx fpf -> Maybe (CheckFPFctx fpf))}
-    (CheckFPFAlg fpf)
-    x
-    (initFPFctx fpf)) of
-      Just Nothing =>
-        -- We returned successes to all steps of checking the algebra, and
-        -- we expect no further terms precisely when we found no further
-        -- terms, so the check has passed.
-        True
-      Just (Just _) =>
-        -- We returned successes to all steps of checking the algebra, but
-        -- we expected further terms and have not found any, so the check
-        -- has failed.
-        False
-      Nothing =>
-        -- One of the steps of checking the algebra failed.
-        False
+fpfValid : {fpf : FPFunctor} -> DecPred $ BinTreeMu (FPFatom fpf)
+fpfValid = isRight . fpfCheck
+
+public export
+FPFTerm : FPFunctor -> Type
+FPFTerm fpf = Refinement {a=(BinTreeMu (FPFatom fpf))} (fpfValid {fpf})
+
+public export
+MkFPF : (fpf : FPFunctor) -> (bt : BinTreeMu (FPFatom fpf)) ->
+  {auto 0 valid : IsTrue $ fpfValid {fpf} bt} -> FPFTerm fpf
+MkFPF fpf bt {valid} = MkRefinement {p=(fpfValid {fpf})} bt
 
 -------------------------------------------------------
 -------------------------------------------------------
