@@ -208,6 +208,37 @@ prodFMmul : NaturalTransformation (ProdFM . ProdFM) ProdFM
 prodFMmul a = prodFMjoin {a}
 
 public export
+prodFMfold : {0 elem, acc : Type} ->
+  (elem -> acc -> acc) -> acc -> ProdFM elem -> acc
+prodFMfold {elem} {acc} func =
+  flip $ prodFMEval {a=(acc -> acc)} func (uncurry (|>))
+
+public export
+Foldable ProdFM where
+  foldr = prodFMfold
+
+public export
+prodFMsequence : {0 f : Type -> Type} ->
+  {func : Functor f} -> {app : Applicative f} ->
+  {0 a : Type} -> ProdFM (f a) -> f (ProdFM a)
+prodFMsequence {f} {func} {app} {a} =
+  prodFMEval (map {f} prodFMpure) (map {f} ($>) . sequence {t=ProductMonad} {f})
+
+public export
+prodFMtraverse : {0 f : Type -> Type} ->
+  {func : Functor f} -> {app : Applicative f} ->
+  {0 a, b : Type} -> (a -> f b) -> ProdFM a -> f (ProdFM b)
+prodFMtraverse {f} {func} {app} {a} {b} =
+  (.) (prodFMsequence {f} {func} {app} {a=b}) . prodFMmap
+
+public export
+Traversable ProdFM where
+  traverse {f} =
+    prodFMtraverse
+      {func=(MkFunctor $ map {f})}
+      {app=(MkApplicative (pure {f}) ((<*>) {f}))}
+
+public export
 ProdAlgToFree : {0 a : Type} -> ProdAlg a -> ProdFMAlg a
 ProdAlgToFree {a} = prodFMEvalMon {v=a}
 
@@ -416,6 +447,41 @@ public export
 binTreeFMmul : {0 atom : Type} ->
   NaturalTransformation (BinTreeFM atom . BinTreeFM atom) (BinTreeFM atom)
 binTreeFMmul {atom} a = binTreeFMjoin {atom} {a}
+
+public export
+binTreeFMfold : {0 atom, elem, acc : Type} ->
+  (elem -> acc -> acc) -> acc -> BinTreeFM atom elem -> acc
+binTreeFMfold {elem} {acc} func =
+  flip $ binTreeFMEval {atom} {a=(acc -> acc)} func $
+    eitherElim (const id) (uncurry (|>))
+
+public export
+Foldable (BinTreeFM atom) where
+  foldr = binTreeFMfold
+
+public export
+binTreeFMsequence : {0 f : Type -> Type} ->
+  {func : Functor f} -> {app : Applicative f} ->
+  {0 atom, a : Type} -> BinTreeFM atom (f a) -> f (BinTreeFM atom a)
+binTreeFMsequence {f} {func} {app} {atom} {a} =
+  binTreeFMEval (map {f} binTreeFMpure) $
+    eitherElim
+      (pure {f} . InBTa)
+      (map {f} ($>) . sequence {t=ProductMonad} {f})
+
+public export
+binTreeFMtraverse : {0 f : Type -> Type} ->
+  {func : Functor f} -> {app : Applicative f} ->
+  {0 atom, a, b : Type} ->
+  (a -> f b) -> BinTreeFM atom a -> f (BinTreeFM atom b)
+binTreeFMtraverse {f} {func} {app} {a} {b} =
+  (.) (binTreeFMsequence {f} {func} {app} {a=b}) . binTreeFMmap
+
+Traversable (BinTreeFM atom) where
+  traverse {f} =
+    binTreeFMtraverse
+      {func=(MkFunctor $ map {f})}
+      {app=(MkApplicative (pure {f}) ((<*>) {f}))}
 
 public export
 BinTreeAlgToFree : {0 atom, a : Type} ->
