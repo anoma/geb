@@ -1973,6 +1973,14 @@ Monad ProductMonad where
   (ea, ea') >>= f = (fst $ f ea, snd $ f ea')
 
 public export
+Foldable ProductMonad where
+  foldr op a (x, y) = op x $ op y a
+
+public export
+Traversable ProductMonad where
+  traverse m (x, y) = map {f} MkPair (m x) <*> m y
+
+public export
 applyHom : {0 a, b : Type} -> ProductMonad (a -> b) -> a -> ProductMonad b
 applyHom = applyPure {f=ProductMonad}
 
