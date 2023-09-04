@@ -440,7 +440,7 @@ repeat f Z e = e
 repeat f (S n) e = repeat f n (f e)
 
 public export
-fromIsJust : {a : Type} -> {x : Maybe a} -> IsJustTrue x -> a
+fromIsJust : {a : Type} -> {x : Maybe a} -> (0 _ : IsJustTrue x) -> a
 fromIsJust {x=(Just x)} Refl = x
 fromIsJust {x=Nothing} Refl impossible
 
