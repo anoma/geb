@@ -1112,6 +1112,24 @@ MkFPF : (fpf : FPFunctor) -> (bt : BinTreeMu (FPFatom fpf)) ->
   {auto 0 valid : IsTrue $ fpfValid {fpf} bt} -> FPFTerm fpf
 MkFPF fpf bt {valid} = MkRefinement {p=(fpfValid {fpf})} bt
 
+public export
+checkFPFbounds : (fpf : FPFunctor) ->
+  BinTreeMu Nat -> Maybe $ BinTreeMu $ FPFatom fpf
+checkFPFbounds fpf =
+  traverse {f=Maybe} {b=(FPFatom fpf)} $ \n => natToFin n (fpfNpos fpf)
+
+public export
+validFPFn : (fpf : FPFunctor) -> DecPred $ BinTreeMu Nat
+validFPFn fpf = isJust . checkFPFbounds fpf
+
+public export
+MkFPFn : (fpf : FPFunctor) -> (bt : BinTreeMu Nat) ->
+  {auto 0 bounded : IsTrue $ validFPFn fpf bt} ->
+  {auto 0 valid : IsTrue $ fpfValid {fpf} $
+    fromIsJust {x=(checkFPFbounds fpf bt)} bounded} ->
+  FPFTerm fpf
+MkFPFn fpf bt {bounded} {valid} = Element0 (fromIsJust bounded) valid
+
 -------------------------------------------------------
 -------------------------------------------------------
 ---- Experiments with generalized pattern matching ----
