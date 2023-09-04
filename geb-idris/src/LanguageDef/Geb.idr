@@ -592,9 +592,12 @@ btTupleCata (xalg, talg) {n} xs = talg (n ** btTupleMapCata (xalg, talg) {n} xs)
 -- (a return value for expressions), combining the induction hypotheses for
 -- expressions and tuples.
 public export
-btCataByTuple : {0 atom, x : Type} -> (atom -> x) -> (BTTexp2 x -> x) ->
-  BinTreeMu atom -> x
-btCataByTuple {atom} {x} aalg talg =
+BTbyTupleAlg : (atom, x : Type) -> Type
+BTbyTupleAlg atom x = (atom -> x, BTTexp2 x -> x)
+
+public export
+btCataByTuple : {0 atom, x : Type} -> BTbyTupleAlg atom x -> BinTreeMu atom -> x
+btCataByTuple {atom} {x} (aalg, talg) =
   btTexpCata {atom} {x} {t=(BTTexp2 x)} (eitherElim aalg talg, id)
 
 -------------------
@@ -844,6 +847,17 @@ Monad (HomEither a e) where
 public export
 EitherHom : Type -> Type -> Type -> Type
 EitherHom = flip HomEither
+
+-- Simply an alias for `btCataByTuple` which specializes `btCataByTuple`'s
+-- output type to a `HomEither`.
+public export
+binTreeHomEitherCataByTuple :
+  {0 atom, a, e, b : Type} ->
+  (aalg : atom -> HomEither a e b) ->
+  (talg : BTTexp2 (HomEither a e b) -> HomEither a e b) ->
+  BinTreeMu atom -> HomEither a e b
+binTreeHomEitherCataByTuple {atom} {a} {e} {b} =
+  btCataByTuple {atom} {x=(HomEither a e b)} .* MkPair
 
 public export
 BinTreeBindAlg :
