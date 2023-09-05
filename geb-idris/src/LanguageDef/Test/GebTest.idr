@@ -120,7 +120,21 @@ btTermObj = MkFPFn BCDOfpf $ $! BCDOpos1
 
 public export
 btProd01 : BTbcdObj
-btProd01 = MkFPFn BCDOfpf $ $:! [ BCDOposC, BCDOpos0, BCDOpos1 ]
+btProd01 = MkFPFn BCDOfpf $ $:! [ BCDOposP, BCDOpos0, BCDOpos1 ]
+
+public export
+btCoprod10 : BTbcdObj
+btCoprod10 = MkFPFn BCDOfpf $ $:! [ BCDOposC, BCDOpos1, BCDOpos0 ]
+
+public export
+btCoprod1CvalidBounds : Assertion
+btCoprod1CvalidBounds =
+  Assert $ validFPFbounds BCDOfpf ($:! [ BCDOposC, BCDOpos1, BCDOposC ]) == True
+
+public export
+btCoprod1Cinvalid : Assertion
+btCoprod1Cinvalid =
+  Assert $ validFPFn BCDOfpf ($:! [ BCDOposC, BCDOpos1, BCDOposC ]) == False
 
 --------------------
 --------------------
@@ -286,6 +300,7 @@ gebTest = do
   putStrLn $ "btInitObj = " ++ show btInitObj
   putStrLn $ "btTermObj = " ++ show btTermObj
   putStrLn $ "btProd01 = " ++ show btProd01
+  putStrLn $ "btCoprod10 = " ++ show btCoprod10
   putStrLn ""
   putStrLn "------------"
   putStrLn "End GebTest."
