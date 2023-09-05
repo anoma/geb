@@ -686,6 +686,10 @@ public export
 btTexpShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
 btTexpShowI {atom} = btTexpShow show
 
+public export
+Show atom => Show (BinTreeMu atom) where
+  show = btTexpShowI
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Various forms of product catamorphism ----
@@ -804,10 +808,6 @@ btShow = binTreeCata . BtShowAlg
 public export
 btShowI : {0 atom : Type} -> Show atom => BinTreeMu atom -> String
 btShowI {atom} = btShow show
-
-public export
-Show atom => Show (BinTreeMu atom) where
-  show = btShowI
 
 public export
 BinTreeShowLinesAlg : {0 atom : Type} ->
