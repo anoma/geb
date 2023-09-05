@@ -60,6 +60,60 @@ btt0neq1 = Assert $ not $ binTreeEq decEq btt0 btt1
 btt1eq2 : Assertion
 btt1eq2 = Assert $ binTreeEq decEq btt1 btt2
 
+-------------------
+-------------------
+---- FPFunctor ----
+-------------------
+-------------------
+
+public export
+BCDOnPos : Nat
+BCDOnPos = 4
+
+public export
+BCDOpos0 : Nat
+BCDOpos0 = 0
+
+public export
+BCDOdir0 : Nat
+BCDOdir0 = 0
+
+public export
+BCDOpos1 : Nat
+BCDOpos1 = 1
+
+public export
+BCDOdir1 : Nat
+BCDOdir1 = 0
+
+public export
+BCDOposP : Nat
+BCDOposP = 2
+
+public export
+BCDOdirP : Nat
+BCDOdirP = 2
+
+public export
+BCDOposC : Nat
+BCDOposC = 3
+
+public export
+BCDOdirC : Nat
+BCDOdirC = 2
+
+public export
+BCDOfpf : FPFunctor
+BCDOfpf = FPF BCDOnPos [ BCDOdir0, BCDOdir1, BCDOdirC, BCDOdirP ]
+
+public export
+BTbcdObj : Type
+BTbcdObj = FPFTerm BCDOfpf
+
+public export
+btInitObj : BTbcdObj
+btInitObj = MkFPFn BCDOfpf $ $! BCDOpos0
+
 --------------------
 --------------------
 ---- BTMPolyDep ----
@@ -216,6 +270,12 @@ gebTest = do
   putStrLn $ "bcdoDeep = " ++ btShowLinesI bcdoDeep
   putStrLn $ "(alternate show = " ++ btShowI bcdoDeep ++ ")"
   putStrLn $ "(alternate show = " ++ btTexpShowI bcdoDeep ++ ")"
+  putStrLn ""
+  putStrLn "---------"
+  putStrLn "FPFunctor"
+  putStrLn "---------"
+  putStrLn ""
+  putStrLn $ "bitInitObj = " ++ show btInitObj
   putStrLn ""
   putStrLn "------------"
   putStrLn "End GebTest."
