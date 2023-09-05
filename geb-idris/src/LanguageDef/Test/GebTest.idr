@@ -123,8 +123,17 @@ btProd01 : BTbcdObj
 btProd01 = MkFPFn BCDOfpf $ $:! [ BCDOposP, BCDOpos0, BCDOpos1 ]
 
 public export
+btCoprod10bt : BTT
+btCoprod10bt = $:! [ BCDOposC, BCDOpos1, BCDOpos0 ]
+
+public export
 btCoprod10 : BTbcdObj
-btCoprod10 = MkFPFn BCDOfpf $ $:! [ BCDOposC, BCDOpos1, BCDOpos0 ]
+btCoprod10 = MkFPFn BCDOfpf btCoprod10bt
+
+public export
+btInvalidBoundsTest : Assertion
+btInvalidBoundsTest = Assert $
+  validFPFbounds BCDOfpf ($:! [ BCDOnPos , BCDOpos1, BCDOposC ]) == False
 
 public export
 btCoprod1CvalidBounds : Assertion
@@ -135,6 +144,47 @@ public export
 btCoprod1Cinvalid : Assertion
 btCoprod1Cinvalid =
   Assert $ validFPFn BCDOfpf ($:! [ BCDOposC, BCDOpos1, BCDOposC ]) == False
+
+public export
+btCoprod10hdBounds : Assertion
+btCoprod10hdBounds = Assert $
+  validFPFbounds BCDOfpf $ $: [ btCoprod10bt, $! BCDOpos0 ]
+
+public export
+btCoprod10hd : Assertion
+btCoprod10hd = Assert $
+  validFPFn BCDOfpf ($: [ btCoprod10bt, $! BCDOpos0 ]) == False
+
+public export
+btCoprod1Invalid : Assertion
+btCoprod1Invalid = Assert $
+  validFPFn BCDOfpf ($:! [ BCDOposC, BCDOpos0 ]) == False
+
+public export
+btCP001bt : BTT
+btCP001bt =
+  $: [ $! BCDOposC, $:! [ BCDOposP, BCDOpos0, BCDOpos0 ] , $! BCDOpos1 ]
+
+public export
+btCP001btb : BinTreeMu (FPFatom BCDOfpf)
+btCP001btb = MkFPFbounded BCDOfpf btCP001bt
+
+public export
+btCP001 : BTbcdObj
+btCP001 = MkFPFn BCDOfpf btCP001bt
+
+public export
+btC1P00bt : BTT
+btC1P00bt =
+  $: [ $! BCDOposC, $! BCDOpos1, $:! [ BCDOposP, BCDOpos0, BCDOpos0 ] ]
+
+public export
+btC1P00btb : BinTreeMu (FPFatom BCDOfpf)
+btC1P00btb = MkFPFbounded BCDOfpf btC1P00bt
+
+public export
+btC1P00 : BTbcdObj
+btC1P00 = ?btC1P00_hole -- MkFPFn BCDOfpf btC1P00bt
 
 --------------------
 --------------------
@@ -301,6 +351,8 @@ gebTest = do
   putStrLn $ "btTermObj = " ++ show btTermObj
   putStrLn $ "btProd01 = " ++ show btProd01
   putStrLn $ "btCoprod10 = " ++ show btCoprod10
+  putStrLn $ "check(btCP001bt) = " ++ show (fpfCheck {fpf=BCDOfpf} btCP001btb)
+  putStrLn $ "check(btC1P00bt) = " ++ show (fpfCheck {fpf=BCDOfpf} btC1P00btb)
   putStrLn ""
   putStrLn "------------"
   putStrLn "End GebTest."
