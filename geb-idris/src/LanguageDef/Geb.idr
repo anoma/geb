@@ -1084,6 +1084,16 @@ data FPFErr : Type where
   FPFwrongNarg : Nat -> Nat -> FPFErr
 
 public export
+fpfCheckTermVec : {0 n : Nat} -> Vect n FPFCheck -> Either FPFErr ()
+fpfCheckTermVec {n} =
+  foldr {t=(Vect n)}
+    (\x => eitherElim Left $ \() =>
+      case x of
+        FPFconstr n' => Left $ FPFwrongNarg 0 n'
+        FPFterm => Right ())
+    (Right ())
+
+public export
 fpfCheck : {fpf : FPFunctor} ->
   BinTreeMu (FPFatom fpf) -> Either FPFErr FPFCheck
 fpfCheck {fpf} = btCataByTuple {atom=(FPFatom fpf)} {x=(Either FPFErr FPFCheck)}
@@ -1095,7 +1105,13 @@ fpfCheck {fpf} = btCataByTuple {atom=(FPFatom fpf)} {x=(Either FPFErr FPFCheck)}
       Left
       (\v' => case index FZ v' of
         FPFconstr n' =>
-          if n' == S n then Right FPFterm else Left $ FPFwrongNarg n' (S n)
+          if n' == S n then
+            eitherElim
+              Left
+              (const $ Right FPFterm)
+              (fpfCheckTermVec $ tail v')
+          else
+            Left $ FPFwrongNarg n' (S n)
         FPFterm => Left FPFnonConstrHd)
       $ sequence v)
 
