@@ -1135,16 +1135,29 @@ checkFPFbounds fpf =
   traverse {f=Maybe} {b=(FPFatom fpf)} $ \n => natToFin n (fpfNpos fpf)
 
 public export
+validFPFbounds : (fpf : FPFunctor) -> DecPred $ BinTreeMu Nat
+validFPFbounds fpf = isJust . checkFPFbounds fpf
+
+public export
+checkFPFn : (fpf : FPFunctor) ->
+  BinTreeMu Nat -> Maybe $ FPFTerm fpf
+checkFPFn fpf bt with (checkFPFbounds fpf bt)
+  checkFPFn fpf bt | Just bt' = case decEq (fpfValid {fpf} bt') True of
+    Yes valid => Just $ Element0 bt' valid
+    No _ => Nothing
+  checkFPFn fpf bt | Nothing = Nothing
+
+public export
 validFPFn : (fpf : FPFunctor) -> DecPred $ BinTreeMu Nat
-validFPFn fpf = isJust . checkFPFbounds fpf
+validFPFn fpf = isJust . checkFPFn fpf
 
 public export
 MkFPFn : (fpf : FPFunctor) -> (bt : BinTreeMu Nat) ->
-  {auto 0 bounded : IsTrue $ validFPFn fpf bt} ->
-  {auto 0 valid : IsTrue $ fpfValid {fpf} $
-    fromIsJust {x=(checkFPFbounds fpf bt)} bounded} ->
+  {auto 0 valid : IsTrue $ validFPFn fpf bt} ->
   FPFTerm fpf
-MkFPFn fpf bt {bounded} {valid} = Element0 (fromIsJust bounded) valid
+MkFPFn fpf bt {valid} with (checkFPFn fpf bt)
+  MkFPFn fpf bt {valid} | Just t = t
+  MkFPFn fpf bt {valid} | Nothing = void $ case valid of Refl impossible
 
 -------------------------------------------------------
 -------------------------------------------------------
