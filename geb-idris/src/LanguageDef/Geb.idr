@@ -1079,9 +1079,20 @@ data FPFCheck : Type where
   FPFterm : FPFCheck
 
 public export
+Show FPFCheck where
+  show (FPFconstr n) = "(constr[" ++ show n ++ "])"
+  show FPFterm = "(term)"
+
+public export
 data FPFErr : Type where
   FPFnonConstrHd : FPFErr
   FPFwrongNarg : Nat -> Nat -> FPFErr
+
+public export
+Show FPFErr where
+  show FPFnonConstrHd = "(non-constructor head)"
+  show (FPFwrongNarg n n') = "(wrong number of arguments: expected " ++
+    show n ++ "; got " ++ show n' ++ ")"
 
 public export
 fpfCheckTermVec : {0 n : Nat} -> Vect n FPFCheck -> Either FPFErr ()
@@ -1137,6 +1148,15 @@ checkFPFbounds fpf =
 public export
 validFPFbounds : (fpf : FPFunctor) -> DecPred $ BinTreeMu Nat
 validFPFbounds fpf = isJust . checkFPFbounds fpf
+
+public export
+MkFPFbounded : (fpf : FPFunctor) -> (bt : BinTreeMu Nat) ->
+  {auto 0 bounded : IsTrue $ validFPFbounds fpf bt} ->
+  BinTreeMu (FPFatom fpf)
+MkFPFbounded fpf bt {bounded} with (checkFPFbounds fpf bt)
+  MkFPFbounded fpf bt {bounded} | Just bt' = bt'
+  MkFPFbounded fpf bt {bounded} | Nothing =
+    void $ case bounded of Refl impossible
 
 public export
 checkFPFn : (fpf : FPFunctor) ->
