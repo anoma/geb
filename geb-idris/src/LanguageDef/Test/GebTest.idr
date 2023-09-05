@@ -114,6 +114,14 @@ public export
 btInitObj : BTbcdObj
 btInitObj = MkFPFn BCDOfpf $ $! BCDOpos0
 
+public export
+btTermObj : BTbcdObj
+btTermObj = MkFPFn BCDOfpf $ $! BCDOpos1
+
+public export
+btProd01 : BTbcdObj
+btProd01 = MkFPFn BCDOfpf $ $:! [ BCDOposC, BCDOpos0, BCDOpos1 ]
+
 --------------------
 --------------------
 ---- BTMPolyDep ----
@@ -275,7 +283,9 @@ gebTest = do
   putStrLn "FPFunctor"
   putStrLn "---------"
   putStrLn ""
-  putStrLn $ "bitInitObj = " ++ show btInitObj
+  putStrLn $ "btInitObj = " ++ show btInitObj
+  putStrLn $ "btTermObj = " ++ show btTermObj
+  putStrLn $ "btProd01 = " ++ show btProd01
   putStrLn ""
   putStrLn "------------"
   putStrLn "End GebTest."
