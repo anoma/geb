@@ -863,6 +863,45 @@ CSliceEndofunctor : Type -> Type
 CSliceEndofunctor c = CSliceFunctor c c
 
 public export
+CSIdF : (c : Type) -> CSliceEndofunctor c
+CSIdF c = Prelude.id {a=(CSliceObj c)}
+
+-- The morphism-map component of a functor between slice categories.
+public export
+CSliceFMap : {c, d : Type} -> CSliceFunctor c d -> Type
+CSliceFMap {c} {d} f =
+  (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f x) (f y)
+
+-- The morphism-map component of a contravariant functor between slice
+-- categories.
+public export
+CSliceFContramap : {c, d : Type} -> CSliceFunctor c d -> Type
+CSliceFContramap {c} {d} f =
+  (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f y) (f x)
+
+public export
+CSliceNatTrans : {c, d : Type} ->
+  CSliceFunctor c d -> CSliceFunctor c d -> Type
+CSliceNatTrans {c} {d} f g =
+  (a : CSliceObj c) -> CSliceMorphism {c=d} (f a) (g a)
+
+public export
+CSNTvcomp : {0 c, d : Type} -> {0 f, g, h : CSliceFunctor c d} ->
+  CSliceNatTrans g h -> CSliceNatTrans f g -> CSliceNatTrans f h
+CSNTvcomp {c} {d} {f} {g} {h} beta alpha a =
+  CSliceCompose {c=d} (beta a) (alpha a)
+
+public export
+CSNThcomp : {0 c, d, e : Type} ->
+  {f, f' : CSliceFunctor c d} -> {g, g' : CSliceFunctor d e} ->
+  CSliceFMap {c=d} {d=e} g ->
+  CSliceNatTrans {c=d} {d=e} g g' -> CSliceNatTrans {c} {d} f f' ->
+  CSliceNatTrans {c} {d=e} (g . f) (g' . f')
+CSNThcomp {c} {d} {e} {f} {f'} {g} {g'} gm beta alpha a =
+  CSliceCompose {c=e} {u=(g (f a))} {w=(g' (f' a))}
+    (beta (f' a)) (gm (f a) (f' a) (alpha a))
+
+public export
 CSliceFAlgMap : {0 c : Type} -> CSliceEndofunctor c -> CSliceObj c -> Type
 CSliceFAlgMap {c} f a = CSliceMorphism {c} (f a) a
 
@@ -878,18 +917,23 @@ public export
 CSliceFCoalg : {c : Type} -> CSliceEndofunctor c -> Type
 CSliceFCoalg {c} f = DPair (CSliceObj c) (CSliceFCoalgMap {c} f)
 
--- The morphism-map component of a functor between slice categories.
+-- The signature of the `pure` or `unit` natural transformation of an
+-- applicative slice endofunctor (such as any slice monad).
 public export
-CSliceFMap : {c, d : Type} -> CSliceFunctor c d -> Type
-CSliceFMap {c} {d} f =
-  (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f x) (f y)
+CSlicePure : {c : Type} -> CSliceEndofunctor c -> Type
+CSlicePure {c} = CSliceNatTrans {c} {d=c} (CSIdF c)
 
--- The morphism-map component of a contravariant functor between slice
--- categories.
+-- The signature of the `bind` morphism of a slice monad.
 public export
-CSliceFContramap : {c, d : Type} -> CSliceFunctor c d -> Type
-CSliceFContramap {c} {d} f =
-  (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f y) (f x)
+CSliceBind : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceBind {c} m = (x, y : CSliceObj c) ->
+  CSliceMorphism x (m y) -> CSliceMorphism (m x) (m y)
+
+-- The signature of the `join` or `multiplication` natural transformation of a
+-- slice monad.
+public export
+CSliceJoin : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceJoin {c} f = CSliceNatTrans {c} {d=c} (f . f) f
 
 public export
 SliceFunctorFromCSlice : {c, d : Type} -> CSliceFunctor c d -> SliceFunctor c d
@@ -959,28 +1003,6 @@ public export
 CSliceFLift' : {f : Type -> Type} -> Functor f =>
   (c : Type) -> CSliceFunctor c (f c)
 CSliceFLift' {f} = CSliceFLift {f} (map {f})
-
-public export
-CSliceNatTrans : {c, d : Type} ->
-  CSliceFunctor c d -> CSliceFunctor c d -> Type
-CSliceNatTrans {c} {d} f g =
-  (a : CSliceObj c) -> CSliceMorphism {c=d} (f a) (g a)
-
-public export
-CSNTvcomp : {0 c, d : Type} -> {0 f, g, h : CSliceFunctor c d} ->
-  CSliceNatTrans g h -> CSliceNatTrans f g -> CSliceNatTrans f h
-CSNTvcomp {c} {d} {f} {g} {h} beta alpha a =
-  CSliceCompose {c=d} (beta a) (alpha a)
-
-public export
-CSNThcomp : {0 c, d, e : Type} ->
-  {f, f' : CSliceFunctor c d} -> {g, g' : CSliceFunctor d e} ->
-  CSliceFMap {c=d} {d=e} g ->
-  CSliceNatTrans {c=d} {d=e} g g' -> CSliceNatTrans {c} {d} f f' ->
-  CSliceNatTrans {c} {d=e} (g . f) (g' . f')
-CSNThcomp {c} {d} {e} {f} {f'} {g} {g'} gm beta alpha a =
-  CSliceCompose {c=e} {u=(g (f a))} {w=(g' (f' a))}
-    (beta (f' a)) (gm (f a) (f' a) (alpha a))
 
 public export
 CSExtEq : {0 c : Type} -> {x, y : CSliceObj c} ->
@@ -1182,10 +1204,22 @@ csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
        Element0 (m ex) $ trans (sym $ mcomm ex) ecomm) . pc))
     (\(ec ** fax) => Refl)
 
+-- The signature of the `apply` morphism of an applicative slice endofunctor.
+public export
+CSliceApply : {c, d : Type} -> CSliceFunctor c d -> Type
+CSliceApply {c} {d} f = (x, y : CSliceObj c) ->
+  CSliceMorphism {c=d} (f (CSHomObj x y)) (CSHomObj (f x) (f y))
+
 public export
 CSHomEither : {c : Type} ->
   CSliceObj c -> CSliceObj c -> CSliceEndofunctor c
 CSHomEither {c} a e = CSHomObj {c} a . CSCopObj {c} e
+
+public export
+csHomEitherMap : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceFMap {c} {d=c} (CSHomEither a e)
+csHomEitherMap {c} a e x y =
+  csHomMap a (CSCopObj e x) (CSCopObj e y). csEitherMap e x y
 
 -- Sigma, also known as dependent sum.
 public export
