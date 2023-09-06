@@ -936,6 +936,17 @@ CSliceJoin : {c : Type} -> CSliceEndofunctor c -> Type
 CSliceJoin {c} f = CSliceNatTrans {c} {d=c} (f . f) f
 
 public export
+csBindFromJoin : {c : Type} ->
+  (f : CSliceEndofunctor c) -> (fm : CSliceFMap f) ->
+  CSliceJoin f -> CSliceBind f
+csBindFromJoin {c} f fm j x y = CSliceCompose (j y) . fm x (f y)
+
+public export
+csJoinFromBind : {c : Type} -> (f : CSliceEndofunctor c) ->
+  CSliceBind f -> CSliceJoin f
+csJoinFromBind {c} f b a = b (f a) a $ CSliceId (f a)
+
+public export
 SliceFunctorFromCSlice : {c, d : Type} -> CSliceFunctor c d -> SliceFunctor c d
 SliceFunctorFromCSlice {c} {d} f =
   SliceFromCSlice {c=d} . f . CSliceFromSlice {c}
