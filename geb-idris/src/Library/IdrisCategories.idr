@@ -796,16 +796,17 @@ CSliceObjDomain : {0 c : Type} -> CSliceObj c -> Type
 CSliceObjDomain = fst
 
 public export
+CSliceObjMap : {0 c : Type} -> (x : CSliceObj c) -> (CSliceObjDomain x -> c)
+CSliceObjMap = snd
+
+public export
 CSliceFromSlice : {c : Type} -> SliceObj c -> CSliceObj c
 CSliceFromSlice {c} sl = (Sigma {a=c} sl ** fst)
 
 public export
 SliceFromCSlice : {0 c : Type} -> CSliceObj c -> SliceObj c
-SliceFromCSlice {c} (x ** px) elc = PreImage {a=x} {b=c} px elc
-
-public export
-CSliceObjMap : {0 c : Type} -> (x : CSliceObj c) -> (CSliceObjDomain x -> c)
-CSliceObjMap = snd
+SliceFromCSlice {c} x elc =
+  PreImage {a=(CSliceObjDomain x)} {b=c} (CSliceObjMap x) elc
 
 public export
 CSliceMorphism : {0 c : Type} -> CSliceObj c -> CSliceObj c -> Type
