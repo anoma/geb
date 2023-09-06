@@ -1034,6 +1034,16 @@ csCase {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
         Right ey => eqg ey
 
 public export
+csEitherMap : {c : Type} -> (e : CSliceObj c) ->
+  CSliceFMap {c} {d=c} (CSCopObj e)
+csEitherMap {c} (e ** pe) (x ** px) (y ** py) (Element0 m comm) =
+  Element0
+    (map {f=(Either e)} m)
+    (\el => case el of
+      Left ee => Refl
+      Right ex => comm ex)
+
+public export
 CSProdObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
 CSProdObj {c} (a ** pa) (b ** pb) =
     (Pullback {a} {b} {c} pa pb **
@@ -1160,6 +1170,22 @@ csEval {c} (x ** px) (y ** py) =
   Element0
     (\(Element0 ((elc ** f), elx) eq) => fst0 $ f $ Element0 elx $ sym eq)
     $ \(Element0 ((elc ** f), elx) eq) => sym $ snd0 $ f $ Element0 elx $ sym eq
+
+public export
+csHomMap : {c : Type} -> (a : CSliceObj c) ->
+  CSliceFMap {c} {d=c} (CSHomObj a)
+csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
+  Element0
+    (\(ec ** pc) =>
+     (ec **
+      (\(Element0 ex ecomm) =>
+       Element0 (m ex) $ trans (sym $ mcomm ex) ecomm) . pc))
+    (\(ec ** fax) => Refl)
+
+public export
+CSHomEither : {c : Type} ->
+  CSliceObj c -> CSliceObj c -> CSliceEndofunctor c
+CSHomEither {c} a e = CSHomObj {c} a . CSCopObj {c} e
 
 -- Sigma, also known as dependent sum.
 public export
