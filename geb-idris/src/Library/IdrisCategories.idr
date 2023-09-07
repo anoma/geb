@@ -873,6 +873,13 @@ CSliceFMap : {c, d : Type} -> CSliceFunctor c d -> Type
 CSliceFMap {c} {d} f =
   (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f x) (f y)
 
+public export
+CSliceFMapCompose : {c, d, e : Type} ->
+  (g : CSliceFunctor d e) -> (f : CSliceFunctor c d) ->
+  CSliceFMap g -> CSliceFMap f ->
+  CSliceFMap (g . f)
+CSliceFMapCompose {c} {d} {e} g f mg mf x y = mg (f x) (f y) . mf x y
+
 -- The morphism-map component of a contravariant functor between slice
 -- categories.
 public export
@@ -923,6 +930,13 @@ CSliceFCoalg {c} f = DPair (CSliceObj c) (CSliceFCoalgMap {c} f)
 public export
 CSlicePure : {c : Type} -> CSliceEndofunctor c -> Type
 CSlicePure {c} = CSliceNatTrans {c} {d=c} (CSIdF c)
+
+public export
+CSlicePureCompose : {c : Type} ->
+  (g, f : CSliceEndofunctor c) ->
+  CSlicePure g -> CSlicePure f ->
+  CSlicePure (g . f)
+CSlicePureCompose {c} g f pg pf a = CSliceCompose (pg (f a)) (pf a)
 
 -- The signature of the `bind` morphism of a slice monad.
 public export
@@ -1233,6 +1247,17 @@ public export
 CSliceApply : {c, d : Type} -> CSliceFunctor c d -> Type
 CSliceApply {c} {d} f = (x, y : CSliceObj c) ->
   CSliceMorphism {c=d} (f (CSHomObj x y)) (CSHomObj (f x) (f y))
+
+public export
+CSliceApplyCompose : {c, d, e : Type} ->
+  (g : CSliceFunctor d e) -> (f : CSliceFunctor c d) ->
+  CSliceFMap g ->
+  CSliceApply g -> CSliceApply f ->
+  CSliceApply (g . f)
+CSliceApplyCompose {c} {d} {e} g f gm ag af x y =
+  CSliceCompose
+    (ag (f x) (f y))
+    (gm (f (CSHomObj x y)) (CSHomObj (f x) (f y)) (af x y))
 
 public export
 CSHomEither : {c : Type} ->
