@@ -31,17 +31,15 @@ and skip 0es, making non-zero entries into wires"
       :name name
       :inputs wires
       :body
-      (append
-       (range-constraints-dom (dom morphism))
-       (list
-        (vamp:make-tuples
-         :wires
-         (remove nil
-                 (filter-map (lambda (x)
-                               (unless (zerop (car x))
-                                 (cadr x)))
-                             (prod-list (cod morphism)
-                                        (to-vampir morphism wires nil)))))))))))
+      (list
+       (vamp:make-tuples
+        :wires
+        (remove nil
+                (filter-map (lambda (x)
+                              (unless (zerop (car x))
+                                (cadr x)))
+                            (prod-list (cod morphism)
+                                       (to-vampir morphism wires nil))))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SeqN to Vamp-IR Compilation
@@ -186,9 +184,7 @@ removed already and hence we cannot count as usual"
           (if (> (expt 2 mcar) plus)
               (vamp:make-constant :const plus)
               (error "Range Exceeded")))
-        (list (geb.vampir:plus-range (vamp:make-constant :const mcar)
-                                     car
-                                     cadr)))))
+        (list (make-opt-plus car cadr)))))
 
 (defmethod to-vampir ((obj seqn-subtract) inputs constraints)
   (declare (ignore constraints))
@@ -199,9 +195,7 @@ removed already and hence we cannot count as usual"
           (if (<= 0 minus)
               (vamp:make-constant :const minus)
               (error "Subtraction Produces Negative Numbers")))
-        (list (geb.vampir:minus-range (vamp:make-constant :const (mcar obj))
-                                      car
-                                      cadr)))))
+        (list (make-opt-minus car cadr)))))
 
 (defmethod to-vampir ((obj seqn-multiply) inputs constraints)
   (declare (ignore constraints))
@@ -213,9 +207,7 @@ removed already and hence we cannot count as usual"
           (if (> (expt 2 mcar) mult)
               (vamp:make-constant :const mult)
               (error "Range Exceeded")))
-        (list (geb.vampir:mult-range (vamp:make-constant :const mcar)
-                                     car
-                                     cadr)))))
+        (list (make-opt-times car cadr)))))
 
 (defmethod to-vampir ((obj seqn-divide) inputs constraints)
   (declare (ignore constraints))
