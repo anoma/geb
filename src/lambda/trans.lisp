@@ -398,17 +398,21 @@ iterated, so is the uncurrying."
                              (comp (funcall op (num (ttype ltm)))
                                    (geb:pair (rec context ltm)
                                              (rec context (rtm tterm))))))
-                    (arith (dispatch tterm))))))))
-    (cond ((not (well-defp context tterm))
-           (error "not a well-defined ~A in said ~A" tterm context))
-          ((typep tterm 'lamb)
-           (rec (append (mapcar #'fun-to-hom (tdom tterm)) context)
-                (ann-term1 (append (mapcar #'fun-to-hom (tdom tterm)) context)
-                           (term tterm))))
-          (t
-           (rec context (ann-term1 context tterm))))))
-
-(defun fun-depth (obj)
+                    (arith (dispatch tterm)))))))
+           (rec1 (ctx tterm)
+             (if (typep tterm 'lamb)
+                 (rec1 (append (tdom tterm) ctx)
+                       (term tterm))
+                 (list ctx tterm))))
+    (if (not (well-defp context tterm))
+        (error "not a well-defined ~A in said ~A" tterm context)
+        (let* ((term (reducer tterm))
+               (recc (rec1 context term))
+               (car (car recc)))
+          (rec car
+               (ann-term1 car
+                          (cadr recc)))))))
+ (defun fun-depth (obj)
   "Looks at how iterated a function type is with [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
 being 0 iterated looking at the [MCADR][generic-function]. E.g.:
 
