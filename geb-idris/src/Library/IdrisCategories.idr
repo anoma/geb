@@ -1243,7 +1243,7 @@ public export
 csHomEitherMap : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSHomEither a e)
 csHomEitherMap {c} a e x y =
-  csHomMap a (CSCopObj e x) (CSCopObj e y). csEitherMap e x y
+  csHomMap a (CSCopObj e x) (CSCopObj e y) . csEitherMap e x y
 
 -- Sigma, also known as dependent sum.
 public export
