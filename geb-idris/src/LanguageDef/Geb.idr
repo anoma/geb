@@ -907,6 +907,41 @@ Applicative (HomEither a e) where
   (g <*> f) x = g x <*> f x
 
 public export
+csHomApply : {c : Type} -> (a : CSliceObj c) -> CSliceApply {c} (CSHomObj a)
+csHomApply {c} (a ** pa) = ?csHomApply_hole
+
+public export
+csEitherApply : {c : Type} -> (e : CSliceObj c) -> CSliceApply {c} (CSCopObj e)
+csEitherApply {c} (e ** pe) = ?csEitherApply_hole
+
+public export
+csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
+  CSlicePure {c} (CSHomEither a e)
+csHomEitherPure {c} a e =
+  CSlicePureCompose {c} (CSHomObj {c} a) (CSCopObj {c} e)
+    (csHomPure {c} a) (csEitherPure {c} e)
+
+public export
+csHomEitherApply : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceApply {c} (CSHomEither a e)
+csHomEitherApply {c} a e =
+  CSliceApplyCompose {c} {d=c} {e=c} (CSHomObj {c} a) (CSCopObj {c} e)
+    (csHomMap {c} a) (csHomApply {c} a) (csEitherApply {c} e)
+
+public export
+csHomEitherJoin : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceJoin {c} (CSHomEither a e)
+csHomEitherJoin {c} a e = ?csHomEitherJoin_hole
+
+public export
+csHomEitherBind : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceBind {c} (CSHomEither a e)
+csHomEitherBind {c} a e =
+  csBindFromJoin (CSHomEither a e)
+    (csHomEitherMap a e)
+    (csHomEitherJoin {c} a e)
+
+public export
 Monad (HomEither a e) where
   (f >>= g) x = f x >>= flip g x
 
