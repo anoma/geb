@@ -1078,6 +1078,11 @@ csEitherMap {c} (e ** pe) (x ** px) (y ** py) (Element0 m comm) =
       Right ex => comm ex)
 
 public export
+csEitherPure : {c : Type} -> (e : CSliceObj c) -> CSlicePure {c} (CSCopObj e)
+csEitherPure {c} (e ** pe) (b ** pb) =
+  Element0 Right $ \_ => Refl
+
+public export
 CSProdObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
 CSProdObj {c} (a ** pa) (b ** pb) =
     (Pullback {a} {b} {c} pa pb **
@@ -1215,6 +1220,13 @@ csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
       (\(Element0 ex ecomm) =>
        Element0 (m ex) $ trans (sym $ mcomm ex) ecomm) . pc))
     (\(ec ** fax) => Refl)
+
+public export
+csHomPure : {c : Type} -> (a : CSliceObj c) -> CSlicePure {c} (CSHomObj a)
+csHomPure {c} (a ** pa) (b ** pb) =
+  Element0
+    (\eb => (pb eb ** \(Element0 ea eq) => Element0 eb Refl))
+    (\_ => Refl)
 
 -- The signature of the `apply` morphism of an applicative slice endofunctor.
 public export
