@@ -887,24 +887,11 @@ public export
 EitherCS : Type -> Type -> Type
 EitherCS = CSliceObj .* Either
 
------------------------------------------
------------------------------------------
----- Either algebras of binary trees ----
------------------------------------------
------------------------------------------
-
-public export
-HomEither : Type -> Type -> Type -> Type
-HomEither a e = CovarHomFunc a . Either e
-
-public export
-Functor (HomEither a e) where
-  map = map {f=(CovarHomFunc a)} . map {f=(Either e)}
-
-public export
-Applicative (HomEither a e) where
-  pure = pure {f=(CovarHomFunc a)} . pure {f=(Either e)}
-  (g <*> f) x = g x <*> f x
+--------------------------------------------------------------
+--------------------------------------------------------------
+---- Dependent HomEither (to be moved to IdrisCategories) ----
+--------------------------------------------------------------
+--------------------------------------------------------------
 
 public export
 csHomApply : {c : Type} -> (a : CSliceObj c) -> CSliceApply {c} (CSHomObj a)
@@ -940,6 +927,25 @@ csHomEitherBind {c} a e =
   csBindFromJoin (CSHomEither a e)
     (csHomEitherMap a e)
     (csHomEitherJoin {c} a e)
+
+-----------------------------------------
+-----------------------------------------
+---- Either algebras of binary trees ----
+-----------------------------------------
+-----------------------------------------
+
+public export
+HomEither : Type -> Type -> Type -> Type
+HomEither a e = CovarHomFunc a . Either e
+
+public export
+Functor (HomEither a e) where
+  map = map {f=(CovarHomFunc a)} . map {f=(Either e)}
+
+public export
+Applicative (HomEither a e) where
+  pure = pure {f=(CovarHomFunc a)} . pure {f=(Either e)}
+  (g <*> f) x = g x <*> f x
 
 public export
 Monad (HomEither a e) where
