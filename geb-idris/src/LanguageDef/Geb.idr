@@ -916,6 +916,23 @@ csHomEitherApply {c} a e =
     (csHomMap {c} a) (csHomApply {c} a) (csEitherApply {c} e)
 
 public export
+csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
+csHomJoin {c} a = ?csHomJoin_hole
+
+public export
+csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
+csHomBind {c} a = csBindFromJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
+
+public export
+csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
+csEitherJoin {c} e = ?csEitherJoin_hole
+
+public export
+csEitherBind : {c : Type} -> (e : CSliceObj c) -> CSliceBind {c} (CSCopObj e)
+csEitherBind {c} e =
+  csBindFromJoin (CSCopObj e) (csEitherMap e) (csEitherJoin {c} e)
+
+public export
 csHomEitherJoin : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceJoin {c} (CSHomEither a e)
 csHomEitherJoin {c} a e = ?csHomEitherJoin_hole
