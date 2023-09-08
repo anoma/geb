@@ -895,7 +895,19 @@ EitherCS = CSliceObj .* Either
 
 public export
 csHomApply : {c : Type} -> (a : CSliceObj c) -> CSliceApply {c} (CSHomObj a)
-csHomApply {c} (a ** pa) = ?csHomApply_hole
+csHomApply {c} (a ** pa) (x ** px) (y ** py) =
+  Element0
+    (\(ec ** m) =>
+     (ec ** \(Element0 (ec' ** m') ccomm) =>
+      Element0 (ec ** \(Element0 ea acomm) =>
+        let
+          0 q' = snd0 (m (Element0 ea acomm))
+          q = snd (fst0 (m (Element0 ea acomm)))
+            (Element0 (fst0 $ m' $ Element0 ea $ trans acomm $ sym ccomm)
+             ?csHomApply_hole_1)
+        in
+        Element0 ?csHomApply_hole_2 ?csHomApply_hole_3) ?csHomApply_hole_4))
+    ?csHomApply_hole_5
 
 public export
 csEitherApply : {c : Type} -> (e : CSliceObj c) -> CSliceApply {c} (CSCopObj e)
