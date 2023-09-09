@@ -901,13 +901,15 @@ csHomApply {c} (a ** pa) (x ** px) (y ** py) =
      (ec ** \(Element0 (ec' ** m') ccomm) =>
       Element0 (ec ** \(Element0 ea acomm) =>
         let
-          0 q' = snd0 (m (Element0 ea acomm))
-          q = snd (fst0 (m (Element0 ea acomm)))
-            (Element0 (fst0 $ m' $ Element0 ea $ trans acomm $ sym ccomm)
-             ?csHomApply_hole_1)
+          0 meacomm = snd0 (m (Element0 ea acomm))
+          meaeq = snd (fst0 (m (Element0 ea acomm)))
+            (Element0 (fst0 $ m' $ Element0 ea $ trans acomm $ sym ccomm) $
+             trans
+              (snd0 $ m' $ Element0 ea $ trans acomm $ sym ccomm)
+              $ trans ccomm $ sym meacomm)
         in
-        Element0 ?csHomApply_hole_2 ?csHomApply_hole_3) ?csHomApply_hole_4))
-    ?csHomApply_hole_5
+        Element0 (fst0 meaeq) $ trans (snd0 meaeq) meacomm) Refl))
+    $ \(_ ** _) => Refl
 
 public export
 csEitherApply : {c : Type} -> (e : CSliceObj c) -> CSliceApply {c} (CSCopObj e)
