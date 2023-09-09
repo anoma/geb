@@ -913,7 +913,21 @@ csHomApply {c} (a ** pa) (x ** px) (y ** py) =
 
 public export
 csEitherApply : {c : Type} -> (e : CSliceObj c) -> CSliceApply {c} (CSCopObj e)
-csEitherApply {c} (e ** pe) = ?csEitherApply_hole
+csEitherApply {c} (e ** pe) (x ** px) (y ** py) =
+  Element0
+    (\x => case x of
+      Left ee => (pe ee ** \(Element0 _ _) => Element0 (Left ee) Refl)
+      Right (ec ** m) =>
+        (ec **
+         \(Element0 x' xcomm) => case x' of
+          Left ec' => Element0 (Left ec') xcomm
+          Right ex' =>
+            Element0
+              (Right $ fst0 $ m $ Element0 ex' xcomm)
+              $ snd0 $ m $ Element0 ex' xcomm))
+    $ \x => case x of
+      Left ee => Refl
+      Right (ec ** m) => Refl
 
 public export
 csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
