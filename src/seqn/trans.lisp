@@ -182,7 +182,7 @@ removed already and hence we cannot count as usual"
         (let ((plus (+ (vamp:const car)
                        (vamp:const cadr))))
           (if (> (expt 2 mcar) plus)
-              (vamp:make-constant :const plus)
+              (list (vamp:make-constant :const plus))
               (error "Range Exceeded")))
         (list (make-opt-plus car cadr)))))
 
@@ -192,9 +192,7 @@ removed already and hence we cannot count as usual"
         (cadr (cadr inputs)))
     (if (const-check inputs)
         (let ((minus (- (vamp:const car) (vamp:const cadr))))
-          (if (<= 0 minus)
-              (vamp:make-constant :const minus)
-              (error "Subtraction Produces Negative Numbers")))
+          (list (vamp:make-constant :const minus)))
         (list (make-opt-minus car cadr)))))
 
 (defmethod to-vampir ((obj seqn-multiply) inputs constraints)
@@ -205,7 +203,7 @@ removed already and hence we cannot count as usual"
     (if (const-check inputs)
         (let ((mult (* (vamp:const car) (vamp:const cadr))))
           (if (> (expt 2 mcar) mult)
-              (vamp:make-constant :const mult)
+              (list (vamp:make-constant :const mult))
               (error "Range Exceeded")))
         (list (make-opt-times car cadr)))))
 
@@ -214,9 +212,9 @@ removed already and hence we cannot count as usual"
   (let ((car (car inputs))
         (cadr (cadr inputs)))
     (if (const-check inputs)
-        (vamp:make-constant
-         :const
-         (multiple-value-bind (q) (floor (vamp:const car) (vamp:const cadr)) q))
+        (list (vamp:make-constant
+               :const
+               (multiple-value-bind (q) (floor (vamp:const car) (vamp:const cadr)) q)))
         (list (make-opt-divide (car inputs) (cadr inputs))))))
 
 (defmethod to-vampir ((obj seqn-nat) inputs constraints)

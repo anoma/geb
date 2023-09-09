@@ -283,6 +283,12 @@ This follows from the fact that bool arapped in maybe is 1 + (bool + bool)"
         (error "not a well-defined ~A in said ~A" tterm context)
         (rec context (ann-term1 context tterm)))))
 
+(defun b-reduce (tterm)
+  (if (obj-equalp (reducer tterm)
+                  tterm)
+      tterm
+      (b-reduce (reducer tterm))))
+
 (defmethod to-cat-cor (context (tterm <stlc>))
   "Compiles a checked term in an appropriate context into the
 morphism of the GEB category. In detail, it takes a context and a term with
@@ -408,7 +414,7 @@ iterated, so is the uncurrying."
                  (list ctx tterm))))
     (if (not (well-defp context tterm))
         (error "not a well-defined ~A in said ~A" tterm context)
-        (let* ((term (reducer tterm))
+        (let* ((term (b-reduce tterm))
                (recc (rec1 context term))
                (car (car recc)))
           (rec car
