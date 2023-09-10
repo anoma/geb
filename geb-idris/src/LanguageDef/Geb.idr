@@ -897,17 +897,16 @@ public export
 csHomApply : {c : Type} -> (a : CSliceObj c) -> CSliceApply {c} (CSHomObj a)
 csHomApply {c} (a ** pa) (x ** px) (y ** py) =
   Element0
-    (\(ec ** mac) =>
-     (ec ** \(Element0 (ec' ** max) ec'eq) =>
+    (\(ec ** fac) =>
+     (ec ** \(Element0 (ec' ** fax) ec'eq) =>
       Element0 (ec ** \ea =>
         let
-          (Element0 (ec'' ** mxy) ec''eq) = mac ea
-          (Element0 ey pyceq) = mxy
-            (Element0
-              (fst0 $ max $ Element0 (fst0 ea) $ trans (snd0 ea) $ sym ec'eq) $
-              trans
-                (snd0 $ max $ Element0 (fst0 ea) $ trans (snd0 ea) $ sym ec'eq)
-                $ trans ec'eq $ sym ec''eq)
+          (Element0 (ec'' ** fxy) ec''eq) = fac ea
+          ex = fax $ Element0 (fst0 ea) $ trans (snd0 ea) $ sym ec'eq
+          bork = ?what
+          (Element0 ey pyceq) =
+            fxy $
+              Element0 (fst0 ex) $ trans (snd0 ex) $ trans ec'eq $ sym ec''eq
         in
         Element0 ey $ trans pyceq ec''eq) Refl))
     $ \(_ ** _) => Refl
