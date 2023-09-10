@@ -945,7 +945,12 @@ csHomEitherApply {c} a e =
 
 public export
 csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
-csHomJoin {c} a = ?csHomJoin_hole
+csHomJoin {c} (a ** pa) (b ** pb) =
+  Element0
+    (\(elc ** m) =>
+      (?csHomJoin_h_elc **
+       \(Element0 ela acomm) => (Element0 ?csHomJoin_h_elb ?csHomJoin_h_bcomm)))
+    (\(elc ** m) => ?csHomJoin_hole_comm)
 
 public export
 csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
@@ -953,7 +958,10 @@ csHomBind {c} a = csBindFromJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
 
 public export
 csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
-csEitherJoin {c} e = ?csEitherJoin_hole
+csEitherJoin {c} (e ** pe) (b ** pb) =
+  Element0
+    (eitherElim Left id)
+    (\el => case el of Left ee => Refl ; Right x => Refl)
 
 public export
 csEitherBind : {c : Type} -> (e : CSliceObj c) -> CSliceBind {c} (CSCopObj e)
@@ -963,7 +971,7 @@ csEitherBind {c} e =
 public export
 csHomEitherJoin : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceJoin {c} (CSHomEither a e)
-csHomEitherJoin {c} a e = ?csHomEitherJoin_hole
+csHomEitherJoin {c} (a ** pa) (e ** pe) (b ** pb) = ?csHomEitherJoin_hole
 
 public export
 csHomEitherBind : {c : Type} -> (a, e : CSliceObj c) ->
