@@ -899,14 +899,15 @@ csHomApply {c} (a ** pa) (x ** px) (y ** py) =
   Element0
     (\(ec ** m) =>
      (ec ** \(Element0 (ec' ** m') ccomm) =>
-      Element0 (ec ** \(Element0 ea acomm) =>
+      Element0 (ec ** \ea =>
         let
-          0 meacomm = snd0 (m (Element0 ea acomm))
-          meaeq = snd (fst0 (m (Element0 ea acomm)))
-            (Element0 (fst0 $ m' $ Element0 ea $ trans acomm $ sym ccomm) $
-             trans
-              (snd0 $ m' $ Element0 ea $ trans acomm $ sym ccomm)
-              $ trans ccomm $ sym meacomm)
+          (Element0 mea meacomm) = m ea
+          meaeq = snd mea
+            (Element0
+              (fst0 $ m' $ Element0 (fst0 ea) $ trans (snd0 ea) $ sym ccomm) $
+              trans
+                (snd0 $ m' $ Element0 (fst0 ea) $ trans (snd0 ea) $ sym ccomm)
+                $ trans ccomm $ sym meacomm)
         in
         Element0 (fst0 meaeq) $ trans (snd0 meaeq) meacomm) Refl))
     $ \(_ ** _) => Refl
