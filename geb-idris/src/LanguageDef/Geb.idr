@@ -948,9 +948,16 @@ csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
 csHomJoin {c} (a ** pa) (b ** pb) =
   Element0
     (\(elc ** m) =>
-      (?csHomJoin_h_elc **
-       \(Element0 ela acomm) => (Element0 ?csHomJoin_h_elb ?csHomJoin_h_bcomm)))
-    (\(elc ** m) => ?csHomJoin_hole_comm)
+      (elc **
+       \(Element0 ela acomm) =>
+        Element0
+          (fst0 $ (snd $ fst0 $ m $ Element0 ela acomm) $
+            Element0 ela $ trans acomm $ sym $ snd0 $ m $ Element0 ela acomm) $
+          trans
+            ((snd0 $ (snd $ fst0 $ m $ Element0 ela acomm) $
+              Element0 ela $ trans acomm $ sym $ snd0 $ m $ Element0 ela acomm))
+            $ snd0 $ m $ Element0 ela acomm))
+    (\(elc ** m) => Refl)
 
 public export
 csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
