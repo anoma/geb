@@ -914,17 +914,17 @@ public export
 csEitherApply : {c : Type} -> (e : CSliceObj c) -> CSliceApply {c} (CSCopObj e)
 csEitherApply {c} (e ** pe) (x ** px) (y ** py) =
   Element0
-    (\x => case x of
+    (\el => case el of
       Left ee => (pe ee ** \(Element0 _ _) => Element0 (Left ee) Refl)
       Right (ec ** mxy) =>
         (ec **
-         \(Element0 x' pxceq) => case x' of
+         \(Element0 el' pxceq) => case el' of
           Left ec' => Element0 (Left ec') pxceq
           Right ex' =>
             Element0
               (Right $ fst0 $ mxy $ Element0 ex' pxceq)
               $ snd0 $ mxy $ Element0 ex' pxceq))
-    $ \x => case x of
+    $ \el => case el of
       Left ee => Refl
       Right (ec ** mxy) => Refl
 
