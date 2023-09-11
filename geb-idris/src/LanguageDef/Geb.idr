@@ -979,7 +979,16 @@ csEitherBind {c} e =
 public export
 csHomEitherJoin : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceJoin {c} (CSHomEither a e)
-csHomEitherJoin {c} (a ** pa) (e ** pe) (b ** pb) = ?csHomEitherJoin_hole
+csHomEitherJoin {c} (a ** pa) (e ** pe) (b ** pb) =
+  Element0
+    (\(elc ** faecb) =>
+      (elc **
+       \ela => case faecb ela of
+        Element0 (Left ee) paceq =>
+          Element0 (Left ee) paceq
+        Element0 (Right faeb) fceq =>
+          ?csHomEitherJoin_hole_cr))
+    (?csHomEitherJoin_hole_m)
 
 public export
 csHomEitherBind : {c : Type} -> (a, e : CSliceObj c) ->
