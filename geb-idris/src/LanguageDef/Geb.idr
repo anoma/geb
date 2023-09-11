@@ -916,17 +916,17 @@ csEitherApply {c} (e ** pe) (x ** px) (y ** py) =
   Element0
     (\x => case x of
       Left ee => (pe ee ** \(Element0 _ _) => Element0 (Left ee) Refl)
-      Right (ec ** m) =>
+      Right (ec ** mxy) =>
         (ec **
-         \(Element0 x' xcomm) => case x' of
-          Left ec' => Element0 (Left ec') xcomm
+         \(Element0 x' pxceq) => case x' of
+          Left ec' => Element0 (Left ec') pxceq
           Right ex' =>
             Element0
-              (Right $ fst0 $ m $ Element0 ex' xcomm)
-              $ snd0 $ m $ Element0 ex' xcomm))
+              (Right $ fst0 $ mxy $ Element0 ex' pxceq)
+              $ snd0 $ mxy $ Element0 ex' pxceq))
     $ \x => case x of
       Left ee => Refl
-      Right (ec ** m) => Refl
+      Right (ec ** mxy) => Refl
 
 public export
 csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
