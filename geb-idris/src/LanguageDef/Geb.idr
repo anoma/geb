@@ -903,7 +903,6 @@ csHomApply {c} (a ** pa) (x ** px) (y ** py) =
         let
           (Element0 (ec'' ** fxy) ec''eq) = fac ea
           ex = fax $ Element0 (fst0 ea) $ trans (snd0 ea) $ sym ec'eq
-          bork = ?what
           (Element0 ey pyceq) =
             fxy $
               Element0 (fst0 ex) $ trans (snd0 ex) $ trans ec'eq $ sym ec''eq
