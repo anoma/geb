@@ -916,17 +916,17 @@ csEitherApply {c} (e ** pe) (x ** px) (y ** py) =
   Element0
     (\el => case el of
       Left ee => (pe ee ** \(Element0 _ _) => Element0 (Left ee) Refl)
-      Right (ec ** mxy) =>
+      Right (ec ** fxy) =>
         (ec **
          \(Element0 el' pxceq) => case el' of
           Left ec' => Element0 (Left ec') pxceq
           Right ex' =>
             Element0
-              (Right $ fst0 $ mxy $ Element0 ex' pxceq)
-              $ snd0 $ mxy $ Element0 ex' pxceq))
+              (Right $ fst0 $ fxy $ Element0 ex' pxceq)
+              $ snd0 $ fxy $ Element0 ex' pxceq))
     $ \el => case el of
       Left ee => Refl
-      Right (ec ** mxy) => Refl
+      Right (ec ** fxy) => Refl
 
 public export
 csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
@@ -946,17 +946,19 @@ public export
 csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
 csHomJoin {c} (a ** pa) (b ** pb) =
   Element0
-    (\(elc ** m) =>
+    (\(elc ** facb) =>
       (elc **
-       \(Element0 ela acomm) =>
+       \(Element0 ela paceq) =>
         Element0
-          (fst0 $ (snd $ fst0 $ m $ Element0 ela acomm) $
-            Element0 ela $ trans acomm $ sym $ snd0 $ m $ Element0 ela acomm) $
+          (fst0 $ (snd $ fst0 $ facb $ Element0 ela paceq) $
+            Element0 ela $ trans paceq $ sym $ snd0 $ facb $
+            Element0 ela paceq) $
           trans
-            ((snd0 $ (snd $ fst0 $ m $ Element0 ela acomm) $
-              Element0 ela $ trans acomm $ sym $ snd0 $ m $ Element0 ela acomm))
-            $ snd0 $ m $ Element0 ela acomm))
-    (\(elc ** m) => Refl)
+            ((snd0 $ (snd $ fst0 $ facb $ Element0 ela paceq) $
+              Element0 ela $ trans paceq $ sym $ snd0 $ facb $
+              Element0 ela paceq))
+            $ snd0 $ facb $ Element0 ela paceq))
+    (\(elc ** facb) => Refl)
 
 public export
 csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
