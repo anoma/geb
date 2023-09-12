@@ -1061,7 +1061,9 @@ csTermMorph {c} (a ** pa) = Element0 pa (\_ => Refl)
 
 public export
 CSCopObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
-CSCopObj {c} (a ** pa) (b ** pb) = (Either a b ** eitherElim {a} {b} {c} pa pb)
+CSCopObj {c} a b =
+  (Either (fst a) (fst b) **
+   eitherElim {a=(fst a)} {b=(fst b)} {c} (snd a) (snd b))
 
 public export
 csInjL : {0 c : Type} -> (l, r : CSliceObj c) -> CSliceMorphism l (CSCopObj l r)
@@ -1110,9 +1112,9 @@ csEitherBind {c} e =
 
 public export
 CSProdObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
-CSProdObj {c} (a ** pa) (b ** pb) =
-    (Pullback {a} {b} {c} pa pb **
-     \(Element0 (x, y) eq) => pa x {- `eq` ensures this is also `pb y` -})
+CSProdObj {c} a b =
+    (Pullback {a=(fst a)} {b=(fst b)} {c} (snd a) (snd b) **
+     \(Element0 (x, y) eq) => snd a x {- `eq` ensures this is also `snd b y` -})
 
 public export
 csProj1 : {0 c : Type} -> (l, r : CSliceObj c) ->
@@ -1137,11 +1139,11 @@ csPair {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
 public export
 csEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
   (f, g : CSliceMorphism x y) -> CSliceObj c
-csEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
-  (Equalizer {a=x} {b=y} f g **
-   \(Element0 el eqel) => px el
-    {- also ensured by `eqf`, `eqg`, and `eqel` to be equal to `py (f el)`
-     - and to `py (g el)` -})
+csEq {c} {x} {y} (Element0 f eqf) (Element0 g eqg) =
+  (Equalizer {a=(fst x)} {b=(fst y)} f g **
+   \(Element0 el eqel) => (snd x) el
+    {- also ensured by `eqf`, `eqg`, and `eqel` to be equal to `snd y (f el)`
+     - and to `snd y (g el)` -})
 
 public export
 csEqInj : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
@@ -1212,8 +1214,8 @@ CSGBaseChange {c} {d} f elc = CSBaseChange {c} {d} f (CSGElem {c} elc)
 
 public export
 CSHomObj : {c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
-CSHomObj {c} (x ** px) (y ** py) =
-  ((el : c ** (PreImage px el -> PreImage py el)) ** fst)
+CSHomObj {c} x y =
+  ((el : c ** (PreImage (snd x) el -> PreImage (snd y) el)) ** fst)
 
 public export
 csCurry : {0 c : Type} -> {x, y, z : CSliceObj c} ->
@@ -1286,7 +1288,7 @@ CSliceApplyCompose : {c, d, e : Type} ->
   CSliceApply g -> CSliceApply f ->
   CSliceApply (g . f)
 CSliceApplyCompose {c} {d} {e} g f gm ag af x y =
-  CSliceCompose
+  CSliceCompose {u=(g (f (CSHomObj x y)))} {w=(CSHomObj (g (f x)) (g (f y)))}
     (ag (f x) (f y))
     (gm (f (CSHomObj x y)) (CSHomObj (f x) (f y)) (af x y))
 
