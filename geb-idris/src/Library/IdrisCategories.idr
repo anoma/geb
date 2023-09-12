@@ -1097,6 +1097,18 @@ csEitherPure {c} (e ** pe) (b ** pb) =
   Element0 Right $ \_ => Refl
 
 public export
+csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
+csEitherJoin {c} (e ** pe) (b ** pb) =
+  Element0
+    (eitherElim Left id)
+    (\el => case el of Left ee => Refl ; Right x => Refl)
+
+public export
+csEitherBind : {c : Type} -> (e : CSliceObj c) -> CSliceBind {c} (CSCopObj e)
+csEitherBind {c} e =
+  csBindFromJoin (CSCopObj e) (csEitherMap e) (csEitherJoin {c} e)
+
+public export
 CSProdObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
 CSProdObj {c} (a ** pa) (b ** pb) =
     (Pullback {a} {b} {c} pa pb **
@@ -1242,6 +1254,25 @@ csHomPure {c} (a ** pa) (b ** pb) =
     (\eb => (pb eb ** \(Element0 ea eq) => Element0 eb Refl))
     (\_ => Refl)
 
+public export
+csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
+csHomJoin {c} (a ** pa) (b ** pb) =
+  Element0
+    (\(elc ** facb) =>
+      (elc **
+        \ela =>
+          let
+            (Element0 fab fabeq) = facb ela
+            (Element0 elb pbeq) =
+              snd fab $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fabeq
+          in
+          Element0 elb $ trans pbeq fabeq))
+    (\(elc ** facb) => Refl)
+
+public export
+csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
+csHomBind {c} a = csBindFromJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
+
 -- The signature of the `apply` morphism of an applicative slice endofunctor.
 public export
 CSliceApply : {c, d : Type} -> CSliceFunctor c d -> Type
@@ -1269,6 +1300,39 @@ csHomEitherMap : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSHomEither a e)
 csHomEitherMap {c} a e x y =
   csHomMap a (CSCopObj e x) (CSCopObj e y) . csEitherMap e x y
+
+public export
+csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
+  CSlicePure {c} (CSHomEither a e)
+csHomEitherPure {c} a e =
+  CSlicePureCompose {c} (CSHomObj {c} a) (CSCopObj {c} e)
+    (csHomPure {c} a) (csEitherPure {c} e)
+
+public export
+csHomEitherJoin : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceJoin {c} (CSHomEither a e)
+csHomEitherJoin {c} (a ** pa) (e ** pe) (b ** pb) =
+  Element0
+    (\(elc ** faecb) =>
+      (elc **
+       \ela => case faecb ela of
+        Element0 (Left ee) paceq =>
+          Element0 (Left ee) paceq
+        Element0 (Right faeb) fceq =>
+          let
+            (Element0 x pbxeq) =
+              snd faeb $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fceq
+          in
+          Element0 x $ trans pbxeq fceq))
+    (\(elc ** faecb) => Refl)
+
+public export
+csHomEitherBind : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceBind {c} (CSHomEither a e)
+csHomEitherBind {c} a e =
+  csBindFromJoin (CSHomEither a e)
+    (csHomEitherMap a e)
+    (csHomEitherJoin {c} a e)
 
 -- Sigma, also known as dependent sum.
 public export
