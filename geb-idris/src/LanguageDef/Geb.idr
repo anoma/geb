@@ -948,16 +948,13 @@ csHomJoin {c} (a ** pa) (b ** pb) =
   Element0
     (\(elc ** facb) =>
       (elc **
-       \(Element0 ela paceq) =>
-        Element0
-          (fst0 $ (snd $ fst0 $ facb $ Element0 ela paceq) $
-            Element0 ela $ trans paceq $ sym $ snd0 $ facb $
-            Element0 ela paceq) $
-          trans
-            ((snd0 $ (snd $ fst0 $ facb $ Element0 ela paceq) $
-              Element0 ela $ trans paceq $ sym $ snd0 $ facb $
-              Element0 ela paceq))
-            $ snd0 $ facb $ Element0 ela paceq))
+        \ela =>
+          let
+            (Element0 fab fabeq) = facb ela
+            (Element0 elb pbeq) =
+              snd fab $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fabeq
+          in
+          Element0 elb $ trans pbeq fabeq))
     (\(elc ** facb) => Refl)
 
 public export
