@@ -987,8 +987,12 @@ csHomEitherJoin {c} (a ** pa) (e ** pe) (b ** pb) =
         Element0 (Left ee) paceq =>
           Element0 (Left ee) paceq
         Element0 (Right faeb) fceq =>
-          ?csHomEitherJoin_hole_cr))
-    (?csHomEitherJoin_hole_m)
+          let
+            (Element0 x pbxeq) =
+              snd faeb $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fceq
+          in
+          Element0 x $ trans pbxeq fceq))
+    (\(elc ** faecb) => Refl)
 
 public export
 csHomEitherBind : {c : Type} -> (a, e : CSliceObj c) ->
