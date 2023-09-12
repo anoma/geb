@@ -894,6 +894,37 @@ EitherCS = CSliceObj .* Either
 --------------------------------------------------------------
 
 public export
+csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
+csHomJoin {c} (a ** pa) (b ** pb) =
+  Element0
+    (\(elc ** facb) =>
+      (elc **
+        \ela =>
+          let
+            (Element0 fab fabeq) = facb ela
+            (Element0 elb pbeq) =
+              snd fab $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fabeq
+          in
+          Element0 elb $ trans pbeq fabeq))
+    (\(elc ** facb) => Refl)
+
+public export
+csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
+csHomBind {c} a = csBindFromJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
+
+public export
+csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
+csEitherJoin {c} (e ** pe) (b ** pb) =
+  Element0
+    (eitherElim Left id)
+    (\el => case el of Left ee => Refl ; Right x => Refl)
+
+public export
+csEitherBind : {c : Type} -> (e : CSliceObj c) -> CSliceBind {c} (CSCopObj e)
+csEitherBind {c} e =
+  csBindFromJoin (CSCopObj e) (csEitherMap e) (csEitherJoin {c} e)
+
+public export
 csHomApply : {c : Type} -> (a : CSliceObj c) -> CSliceApply {c} (CSHomObj a)
 csHomApply {c} (a ** pa) (x ** px) (y ** py) =
   Element0
@@ -936,44 +967,6 @@ csHomEitherPure {c} a e =
     (csHomPure {c} a) (csEitherPure {c} e)
 
 public export
-csHomEitherApply : {c : Type} -> (a, e : CSliceObj c) ->
-  CSliceApply {c} (CSHomEither a e)
-csHomEitherApply {c} a e =
-  CSliceApplyCompose {c} {d=c} {e=c} (CSHomObj {c} a) (CSCopObj {c} e)
-    (csHomMap {c} a) (csHomApply {c} a) (csEitherApply {c} e)
-
-public export
-csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
-csHomJoin {c} (a ** pa) (b ** pb) =
-  Element0
-    (\(elc ** facb) =>
-      (elc **
-        \ela =>
-          let
-            (Element0 fab fabeq) = facb ela
-            (Element0 elb pbeq) =
-              snd fab $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fabeq
-          in
-          Element0 elb $ trans pbeq fabeq))
-    (\(elc ** facb) => Refl)
-
-public export
-csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
-csHomBind {c} a = csBindFromJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
-
-public export
-csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
-csEitherJoin {c} (e ** pe) (b ** pb) =
-  Element0
-    (eitherElim Left id)
-    (\el => case el of Left ee => Refl ; Right x => Refl)
-
-public export
-csEitherBind : {c : Type} -> (e : CSliceObj c) -> CSliceBind {c} (CSCopObj e)
-csEitherBind {c} e =
-  csBindFromJoin (CSCopObj e) (csEitherMap e) (csEitherJoin {c} e)
-
-public export
 csHomEitherJoin : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceJoin {c} (CSHomEither a e)
 csHomEitherJoin {c} (a ** pa) (e ** pe) (b ** pb) =
@@ -998,6 +991,13 @@ csHomEitherBind {c} a e =
   csBindFromJoin (CSHomEither a e)
     (csHomEitherMap a e)
     (csHomEitherJoin {c} a e)
+
+public export
+csHomEitherApply : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceApply {c} (CSHomEither a e)
+csHomEitherApply {c} a e =
+  CSliceApplyCompose {c} {d=c} {e=c} (CSHomObj {c} a) (CSCopObj {c} e)
+    (csHomMap {c} a) (csHomApply {c} a) (csEitherApply {c} e)
 
 -----------------------------------------
 -----------------------------------------
