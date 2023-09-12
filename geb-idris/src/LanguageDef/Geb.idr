@@ -894,7 +894,8 @@ EitherCS = CSliceObj .* Either
 --------------------------------------------------------------
 
 public export
-csHomApply : {c : Type} -> (a : CSliceObj c) -> CSliceApply {c} (CSHomObj a)
+csHomApply : {c : Type} ->
+  (a : CSliceObj c) -> CSliceApply {c} {d=c} (CSHomObj a)
 csHomApply {c} (a ** pa) (x ** px) (y ** py) =
   Element0
     (\(ec ** fac) =>
@@ -911,7 +912,8 @@ csHomApply {c} (a ** pa) (x ** px) (y ** py) =
     $ \(_ ** _) => Refl
 
 public export
-csEitherApply : {c : Type} -> (e : CSliceObj c) -> CSliceApply {c} (CSCopObj e)
+csEitherApply : {c : Type} ->
+  (e : CSliceObj c) -> CSliceApply {c} {d=c} (CSCopObj e)
 csEitherApply {c} (e ** pe) (x ** px) (y ** py) =
   Element0
     (\el => case el of
