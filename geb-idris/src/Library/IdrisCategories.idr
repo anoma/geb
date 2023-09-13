@@ -1218,6 +1218,10 @@ CSHomObj {c} x y =
   ((el : c ** (PreImage (snd x) el -> PreImage (snd y) el)) ** fst)
 
 public export
+CSExpObj : {c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
+CSExpObj = flip CSHomObj
+
+public export
 csCurry : {0 c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism {c} (CSProdObj x y) z ->
   CSliceMorphism {c} x (CSHomObj {c} y z)
