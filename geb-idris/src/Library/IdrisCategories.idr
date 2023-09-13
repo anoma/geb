@@ -1358,9 +1358,9 @@ csHomGElemToMorph {c} {x} {y} el =
   csProd1LeftElim $ csUncurry {x=(CSTermObj c)} el
 
 public export
-csHomMorphToGElem : {c : Type} -> {x, y : CSliceObj c} ->
+csMorphToHomGElem : {c : Type} -> {x, y : CSliceObj c} ->
   CSliceMorphism x y -> CSHomGElem x y
-csHomMorphToGElem {c} {x} {y} el =
+csMorphToHomGElem {c} {x} {y} el =
   csCurry {x=(CSTermObj c)} $ csProdLeftIntro {x=(CSTermObj c)} {y=x} {z=y} el
 
 -- The signature of the `apply` morphism of an applicative slice endofunctor.
