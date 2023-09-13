@@ -1275,6 +1275,34 @@ public export
 csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
 csHomBind {c} a = csBindFromJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
 
+public export
+csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceMorphism b a -> CSliceNatTrans (CSHomObj a) (CSHomObj b)
+csCovarInternalYonedaToNTHom {c} {a} {b} f x =
+  csCurry {x=(CSHomObj a x)} $
+    CSliceCompose
+      {u=(CSProdObj (CSHomObj a x) b)} {v=(CSProdObj (CSHomObj a x) a)}
+      (csEval a x)
+      (csPair {x=(CSProdObj (CSHomObj a x) b)}
+        (csProj1 (CSHomObj a x) b)
+        (CSliceCompose {u=(CSProdObj (CSHomObj a x) b)}
+          f (csProj2 (CSHomObj a x) b)))
+
+public export
+csContravarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceMorphism a b -> CSliceNatTrans (CSExpObj a) (CSExpObj b)
+csContravarInternalYonedaToNTHom {c} {a} {b} f x =
+  csCurry $ CSliceCompose {u=(CSProdObj (CSHomObj x a) x)} f $ csEval x a
+
+-- A global element of an object of the slice category of `Type` over `c`.
+public export
+CSGElem : {c : Type} -> CSliceObj c -> Type
+CSGElem {c} = CSliceMorphism (CSTermObj c)
+
+public export
+CSHomGElem : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSHomGElem = CSGElem .* CSHomObj
+
 -- The signature of the `apply` morphism of an applicative slice endofunctor.
 public export
 CSliceApply : {c, d : Type} -> CSliceFunctor c d -> Type
