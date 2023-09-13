@@ -1239,6 +1239,17 @@ csEval {c} (x ** px) (y ** py) =
     $ \(Element0 ((elc ** f), elx) eq) => sym $ snd0 $ f $ Element0 elx $ sym eq
 
 public export
+csUncurry : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism {c} x (CSHomObj {c} y z) ->
+  CSliceMorphism {c} (CSProdObj x y) z
+csUncurry {c} {x} {y} {z} f =
+  CSliceCompose {u=(CSProdObj x y)} {v=(CSProdObj (CSHomObj y z) y)}
+    (csEval y z)
+    (csPair {x=(CSProdObj x y)}
+      (CSliceCompose {u=(CSProdObj x y)} f (csProj1 x y))
+      (csProj2 x y))
+
+public export
 csHomMap : {c : Type} -> (a : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSHomObj a)
 csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
