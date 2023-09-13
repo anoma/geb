@@ -1137,6 +1137,19 @@ csPair {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
     Element0 (\el => Element0 (f el, g el) $ trans (sym $ eqf el) $ eqg el) eqf
 
 public export
+csProd1LeftElim : {c : Type} -> {x, y : CSliceObj c} ->
+  CSliceMorphism (CSProdObj (CSTermObj c) x) y -> CSliceMorphism x y
+csProd1LeftElim {x} f =
+  CSliceCompose {v=(CSProdObj (CSTermObj c) x)}
+    f
+    (csPair (csTermMorph x) (CSliceId x))
+
+public export
+csProdLeftIntro : {c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism y z -> CSliceMorphism (CSProdObj x y) z
+csProdLeftIntro f = CSliceCompose {u=(CSProdObj x y)} f (csProj2 x y)
+
+public export
 csEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
   (f, g : CSliceMorphism x y) -> CSliceObj c
 csEq {c} {x} {y} (Element0 f eqf) (Element0 g eqg) =
@@ -1337,6 +1350,18 @@ CSGElem {c} = CSliceMorphism (CSTermObj c)
 public export
 CSHomGElem : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
 CSHomGElem = CSGElem .* CSHomObj
+
+public export
+csHomGElemToMorph : {c : Type} -> {x, y : CSliceObj c} ->
+  CSHomGElem x y -> CSliceMorphism x y
+csHomGElemToMorph {c} {x} {y} el =
+  csProd1LeftElim $ csUncurry {x=(CSTermObj c)} el
+
+public export
+csHomMorphToGElem : {c : Type} -> {x, y : CSliceObj c} ->
+  CSliceMorphism x y -> CSHomGElem x y
+csHomMorphToGElem {c} {x} {y} el =
+  csCurry {x=(CSTermObj c)} $ csProdLeftIntro {x=(CSTermObj c)} {y=x} {z=y} el
 
 -- The signature of the `apply` morphism of an applicative slice endofunctor.
 public export
