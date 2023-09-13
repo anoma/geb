@@ -1204,13 +1204,9 @@ csBaseChangeMap {c} {d} {f} (a ** pa) (b ** pb) (Element0 g eqg) =
     (\(Element0 (eld, ela) eqfpa) => Refl)
 
 public export
-CSGElem : {0 c : Type} -> c -> CSliceObj c
-CSGElem {c} elc = (Unit ** \() => elc)
-
-public export
-CSGBaseChange : {0 c : Type} -> {d : Type} ->
+CSPreImage : {0 c : Type} -> {d : Type} ->
   (d -> c) -> c -> CSliceObj d
-CSGBaseChange {c} {d} f elc = CSBaseChange {c} {d} f (CSGElem {c} elc)
+CSPreImage {c} {d} f elc = CSBaseChange {c} {d} f (Unit ** \() => elc)
 
 public export
 CSHomObj : {c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
@@ -1412,7 +1408,7 @@ csSigmaCounit {c} {d} f y =
 public export
 CSGBCMorph : {c : Type} -> {0 d : Type} -> (c -> d) -> CSliceObj c -> SliceObj d
 CSGBCMorph {c} {d} f x =
-  flip (CSliceMorphism {c}) x . CSGBaseChange {c=d} {d=c} f
+  flip (CSliceMorphism {c}) x . CSPreImage {c=d} {d=c} f
 
 public export
 CSPi : {c, d : Type} -> (c -> d) -> CSliceFunctor c d
@@ -1504,7 +1500,7 @@ public export
 CSGBCMorphOp : {c : Type} -> {0 d : Type} -> (c -> d) ->
   CSliceObj c -> SliceObj d
 CSGBCMorphOp {c} {d} f x =
-  CSliceMorphism {c} x . CSGBaseChange {c=d} {d=c} f
+  CSliceMorphism {c} x . CSPreImage {c=d} {d=c} f
 
 public export
 CSDepExp : {c, d : Type} -> (c -> d) -> CSliceFunctor c d
