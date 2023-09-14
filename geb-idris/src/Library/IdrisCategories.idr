@@ -365,6 +365,12 @@ SliceHom : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
 SliceHom = biapp $ \x, y => x -> y
 
 public export
+sliceFlip : {0 c : Type} -> {x, y, z : SliceObj c} ->
+  SliceMorphism x (SliceHom y z) ->
+  SliceMorphism y (SliceHom x z)
+sliceFlip {c} {x} {y} {z} f ec ey ex = f ec ex ey
+
+public export
 SliceDepPair : {0 a : Type} -> (x : SliceObj a) -> SliceObj (Sigma {a} x) ->
   SliceObj a
 SliceDepPair {a} x sl ea = Sigma {a=(x ea)} (sl . MkDPair ea)
@@ -1175,6 +1181,18 @@ csProdLeftIntro : {c : Type} -> {x, y, z : CSliceObj c} ->
 csProdLeftIntro f = CSliceCompose {u=(CSProdObj x y)} f (csProj2 x y)
 
 public export
+csProdComm : {0 c : Type} -> (x, y : CSliceObj c) ->
+  CSliceMorphism (CSProdObj x y) (CSProdObj y x)
+csProdComm x y = csPair {x=(CSProdObj x y)} (csProj2 x y) (csProj1 x y)
+
+public export
+csProdFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism (CSProdObj x y) z ->
+  CSliceMorphism (CSProdObj y x) z
+csProdFlip {x} {y} {z} =
+  flip (CSliceCompose {u=(CSProdObj y x)} {v=(CSProdObj x y)}) $ csProdComm y x
+
+public export
 csEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
   (f, g : CSliceMorphism x y) -> CSliceObj c
 csEq {c} {x} {y} (Element0 f eqf) (Element0 g eqg) =
@@ -1286,6 +1304,12 @@ csUncurry {c} {x} {y} {z} f =
     (csPair {x=(CSProdObj x y)}
       (CSliceCompose {u=(CSProdObj x y)} f (csProj1 x y))
       (csProj2 x y))
+
+public export
+csFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism x (CSHomObj y z) ->
+  CSliceMorphism y (CSHomObj x z)
+csFlip {c} {x} {y} {z} = csCurry . csProdFlip . csUncurry
 
 public export
 csHomMap : {c : Type} -> (a : CSliceObj c) ->
