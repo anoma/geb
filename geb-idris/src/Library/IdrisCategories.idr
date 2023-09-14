@@ -1310,23 +1310,6 @@ csHomMorphToMeta : {c : Type} -> {w, x, y, z : CSliceObj c} ->
 csHomMorphToMeta {c} {w} {x} {y} {z} =
   csHomGElemToMorph .* csAppMorphGElem {y=(CSHomObj y z)}
 
--- The signature of the `apply` morphism of an applicative slice endofunctor.
-public export
-CSliceApply : {c, d : Type} -> CSliceFunctor c d -> Type
-CSliceApply {c} {d} f = (x, y : CSliceObj c) ->
-  CSliceMorphism {c=d} (f (CSHomObj x y)) (CSHomObj (f x) (f y))
-
-public export
-CSliceApplyCompose : {c, d, e : Type} ->
-  (g : CSliceFunctor d e) -> (f : CSliceFunctor c d) ->
-  CSliceFMap g ->
-  CSliceApply g -> CSliceApply f ->
-  CSliceApply (g . f)
-CSliceApplyCompose {c} {d} {e} g f gm ag af x y =
-  CSliceCompose {u=(g (f (CSHomObj x y)))} {w=(CSHomObj (g (f x)) (g (f y)))}
-    (ag (f x) (f y))
-    (gm (f (CSHomObj x y)) (CSHomObj (f x) (f y)) (af x y))
-
 public export
 CSHomEither : {c : Type} ->
   CSliceObj c -> CSliceObj c -> CSliceEndofunctor c
@@ -1652,6 +1635,23 @@ NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
 ----------------------------
 ---- General operations ----
 ----------------------------
+
+-- The signature of the `apply` morphism of an applicative slice endofunctor.
+public export
+CSliceApply : {c, d : Type} -> CSliceFunctor c d -> Type
+CSliceApply {c} {d} f = (x, y : CSliceObj c) ->
+  CSliceMorphism {c=d} (f (CSHomObj x y)) (CSHomObj (f x) (f y))
+
+public export
+CSliceApplyCompose : {c, d, e : Type} ->
+  (g : CSliceFunctor d e) -> (f : CSliceFunctor c d) ->
+  CSliceFMap g ->
+  CSliceApply g -> CSliceApply f ->
+  CSliceApply (g . f)
+CSliceApplyCompose {c} {d} {e} g f gm ag af x y =
+  CSliceCompose {u=(g (f (CSHomObj x y)))} {w=(CSHomObj (g (f x)) (g (f y)))}
+    (ag (f x) (f y))
+    (gm (f (CSHomObj x y)) (CSHomObj (f x) (f y)) (af x y))
 
 -- The signature of the `pure` or `unit` natural transformation of an
 -- applicative slice endofunctor (such as any slice monad).
