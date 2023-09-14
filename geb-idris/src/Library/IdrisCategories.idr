@@ -1699,6 +1699,25 @@ csEitherPure {c} (e ** pe) (b ** pb) =
   Element0 Right $ \_ => Refl
 
 public export
+csEitherApply : {c : Type} ->
+  (e : CSliceObj c) -> CSliceApply {c} {d=c} (CSCopObj e)
+csEitherApply {c} (e ** pe) (x ** px) (y ** py) =
+  Element0
+    (\el => case el of
+      Left ee => (pe ee ** \(Element0 _ _) => Element0 (Left ee) Refl)
+      Right (ec ** fxy) =>
+        (ec **
+         \(Element0 el' pxceq) => case el' of
+          Left ec' => Element0 (Left ec') pxceq
+          Right ex' =>
+            Element0
+              (Right $ fst0 $ fxy $ Element0 ex' pxceq)
+              $ snd0 $ fxy $ Element0 ex' pxceq))
+    $ \el => case el of
+      Left ee => Refl
+      Right (ec ** fxy) => Refl
+
+public export
 csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
 csEitherJoin {c} (e ** pe) (b ** pb) =
   Element0
@@ -1720,6 +1739,24 @@ csHomPure {c} (a ** pa) (b ** pb) =
   Element0
     (\eb => (pb eb ** \(Element0 ea eq) => Element0 eb Refl))
     (\_ => Refl)
+
+public export
+csHomApply : {c : Type} ->
+  (a : CSliceObj c) -> CSliceApply {c} {d=c} (CSHomObj a)
+csHomApply {c} (a ** pa) (x ** px) (y ** py) =
+  Element0
+    (\(ec ** fac) =>
+     (ec ** \(Element0 (ec' ** fax) ec'eq) =>
+      Element0 (ec ** \ea =>
+        let
+          (Element0 (ec'' ** fxy) ec''eq) = fac ea
+          ex = fax $ Element0 (fst0 ea) $ trans (snd0 ea) $ sym ec'eq
+          (Element0 ey pyceq) =
+            fxy $
+              Element0 (fst0 ex) $ trans (snd0 ex) $ trans ec'eq $ sym ec''eq
+        in
+        Element0 ey $ trans pyceq ec''eq) Refl))
+    $ \(_ ** _) => Refl
 
 public export
 csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
@@ -1750,6 +1787,13 @@ csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
 csHomEitherPure {c} a e =
   CSlicePureCompose {c} (CSHomObj {c} a) (CSCopObj {c} e)
     (csHomPure {c} a) (csEitherPure {c} e)
+
+public export
+csHomEitherApply : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceApply {c} (CSHomEither a e)
+csHomEitherApply {c} a e =
+  CSliceApplyCompose {c} {d=c} {e=c} (CSHomObj {c} a) (CSCopObj {c} e)
+    (csHomMap {c} a) (csHomApply {c} a) (csEitherApply {c} e)
 
 public export
 csHomEitherJoin : {c : Type} -> (a, e : CSliceObj c) ->
