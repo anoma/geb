@@ -1363,6 +1363,32 @@ csMorphToHomGElem : {c : Type} -> {x, y : CSliceObj c} ->
 csMorphToHomGElem {c} {x} {y} el =
   csCurry {x=(CSTermObj c)} $ csProdLeftIntro {x=(CSTermObj c)} {y=x} {z=y} el
 
+public export
+csPartialApp : {c : Type} -> {w, x, y, z : CSliceObj c} ->
+  CSliceMorphism (CSProdObj x y) z -> CSliceMorphism w x ->
+  CSliceMorphism (CSProdObj w y) z
+csPartialApp g f = csUncurry $ CSliceCompose {w=(CSHomObj y z)} (csCurry g) f
+
+public export
+csPartialAppGElem : {c : Type} -> {w, x, y, z : CSliceObj c} ->
+  CSliceMorphism (CSProdObj x y) z -> CSGElem x -> CSliceMorphism y z
+csPartialAppGElem g t = csProd1LeftElim $ csPartialApp {w=(CSTermObj c)} g t
+
+public export
+csAppMorphGElem : {c : Type} -> {w, x, y : CSliceObj c} ->
+  CSliceMorphism (CSHomObj w x) y ->
+  CSliceMorphism w x -> CSGElem y
+csAppMorphGElem {c} {w} {x} {y} g f =
+  CSliceCompose {u=(CSTermObj c)} {v=(CSHomObj w x)} {w=y}
+    g (csMorphToHomGElem f)
+
+public export
+csHomMorphToMeta : {c : Type} -> {w, x, y, z : CSliceObj c} ->
+  CSliceMorphism (CSHomObj w x) (CSHomObj y z) ->
+  CSliceMorphism w x -> CSliceMorphism y z
+csHomMorphToMeta {c} {w} {x} {y} {z} =
+  csHomGElemToMorph .* csAppMorphGElem {y=(CSHomObj y z)}
+
 -- The signature of the `apply` morphism of an applicative slice endofunctor.
 public export
 CSliceApply : {c, d : Type} -> CSliceFunctor c d -> Type
