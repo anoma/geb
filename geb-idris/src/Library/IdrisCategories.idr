@@ -1750,6 +1750,16 @@ CSliceBind : {c : Type} -> CSliceEndofunctor c -> Type
 CSliceBind {c} m = (x, y : CSliceObj c) ->
   CSliceMorphism x (m y) -> CSliceMorphism (m x) (m y)
 
+public export
+CSliceInternalBind : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceInternalBind {c} m = (x, y : CSliceObj c) ->
+  CSliceMorphism (CSHomObj x (m y)) (CSHomObj (m x) (m y))
+
+public export
+csBindFromInternalBind : {c : Type} -> (f : CSliceEndofunctor c) ->
+  CSliceInternalBind f -> CSliceBind f
+csBindFromInternalBind {c} f bi x y = csHomMorphToMeta (bi x y)
+
 -- The signature of the `join` or `multiplication` natural transformation of a
 -- slice monad.
 public export
@@ -1757,15 +1767,34 @@ CSliceJoin : {c : Type} -> CSliceEndofunctor c -> Type
 CSliceJoin {c} f = CSliceNatTrans {c} {d=c} (f . f) f
 
 public export
-csBindFromJoin : {c : Type} ->
+csBindFromMapAndJoin : {c : Type} ->
   (f : CSliceEndofunctor c) -> (fm : CSliceFMap f) ->
   CSliceJoin f -> CSliceBind f
-csBindFromJoin {c} f fm j x y = CSliceCompose (j y) . fm x (f y)
+csBindFromMapAndJoin {c} f fm j x y = CSliceCompose (j y) . fm x (f y)
 
 public export
 csJoinFromBind : {c : Type} -> (f : CSliceEndofunctor c) ->
   CSliceBind f -> CSliceJoin f
 csJoinFromBind {c} f b a = b (f a) a $ CSliceId (f a)
+
+public export
+csJoinFromInternalBind : {c : Type} -> (f : CSliceEndofunctor c) ->
+  CSliceInternalBind f -> CSliceJoin f
+csJoinFromInternalBind {c} f =
+  csJoinFromBind f . csBindFromInternalBind f
+
+public export
+csMapFromPureAndBind : {c : Type} -> (f : CSliceEndofunctor c) ->
+  CSlicePure {c} f -> CSliceBind {c} f ->
+  CSliceFMap {c} {d=c} f
+csMapFromPureAndBind {c} f pu bi x y = bi x y . CSliceCompose (pu y)
+
+public export
+csMapFromPureAndInternalBind : {c : Type} -> (f : CSliceEndofunctor c) ->
+  CSlicePure {c} f -> CSliceInternalBind {c} f ->
+  CSliceFMap {c} {d=c} f
+csMapFromPureAndInternalBind {c} f pu bi =
+  csMapFromPureAndBind f pu (csBindFromInternalBind f bi)
 
 ----------------------------
 ---- Dependent `Either` ----
@@ -1805,7 +1834,7 @@ csEitherJoin {c} (e ** pe) (b ** pb) =
 public export
 csEitherBind : {c : Type} -> (e : CSliceObj c) -> CSliceBind {c} (CSCopObj e)
 csEitherBind {c} e =
-  csBindFromJoin (CSCopObj e) (csEitherMap e) (csEitherJoin {c} e)
+  csBindFromMapAndJoin (CSCopObj e) (csEitherMap e) (csEitherJoin {c} e)
 
 ------------------------------------
 ---- Dependent `Reader` (`Hom`) ----
@@ -1853,7 +1882,8 @@ csHomJoin {c} (a ** pa) (b ** pb) =
 
 public export
 csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
-csHomBind {c} a = csBindFromJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
+csHomBind {c} a =
+  csBindFromMapAndJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
 
 --------------------------------------------------------
 ---- Dependent combined `Reader` (`Hom`) + `Either` ----
@@ -1895,7 +1925,7 @@ public export
 csHomEitherBind : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceBind {c} (CSHomEither a e)
 csHomEitherBind {c} a e =
-  csBindFromJoin (CSHomEither a e)
+  csBindFromMapAndJoin (CSHomEither a e)
     (csHomEitherMap a e)
     (csHomEitherJoin {c} a e)
 
