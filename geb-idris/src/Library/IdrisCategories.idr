@@ -369,6 +369,84 @@ SliceDepPair : {0 a : Type} -> (x : SliceObj a) -> SliceObj (Sigma {a} x) ->
   SliceObj a
 SliceDepPair {a} x sl ea = Sigma {a=(x ea)} (sl . MkDPair ea)
 
+---------------------------------------------------------------
+---------------------------------------------------------------
+---- Applicatives and monads in slice categories of `Type` ----
+---------------------------------------------------------------
+---------------------------------------------------------------
+
+public export
+SliceFMap : {c, d : Type} -> SliceFunctor c d -> Type
+SliceFMap {c} {d} f =
+  (x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)
+
+public export
+SlicePure : {c : Type} -> SliceEndofunctor c -> Type
+SlicePure {c} = SliceNatTrans {x=c} {y=c} (SliceIdF c)
+
+public export
+SliceApply : {c, d : Type} -> SliceFunctor c d -> Type
+SliceApply {c} {d} f = (x, y : SliceObj c) ->
+  SliceMorphism {a=d} (f (SliceHom x y)) (SliceHom (f x) (f y))
+
+-- The signature of the `bind` morphism of a slice monad.
+public export
+SliceBind : {c : Type} -> SliceEndofunctor c -> Type
+SliceBind {c} m = (x, y : SliceObj c) ->
+  SliceMorphism x (m y) -> SliceMorphism (m x) (m y)
+
+-- The signature of the `bind` morphism of a slice monad.
+public export
+SliceInternalBind : {c : Type} -> SliceEndofunctor c -> Type
+SliceInternalBind {c} m = (x, y : SliceObj c) ->
+  SliceMorphism (SliceHom x (m y)) (SliceHom (m x) (m y))
+
+public export
+sliceBindFromInternalBind : {c : Type} -> (f : SliceEndofunctor c) ->
+  SliceInternalBind f -> SliceBind f
+sliceBindFromInternalBind {c} f bi x y fxy ec = bi x y ec (fxy ec)
+
+public export
+SliceJoin : {c : Type} -> SliceEndofunctor c -> Type
+SliceJoin {c} f = SliceNatTrans {x=c} {y=c} (f . f) f
+
+public export
+sliceBindFromMapAndJoin : {c : Type} ->
+  (f : SliceEndofunctor c) -> (fm : SliceFMap f) ->
+  SliceJoin f -> SliceBind f
+sliceBindFromMapAndJoin {c} f fm j x y = sliceComp (j y) . fm x (f y)
+
+public export
+sliceJoinFromBind : {c : Type} -> (f : SliceEndofunctor c) ->
+  SliceBind f -> SliceJoin f
+sliceJoinFromBind {c} f b a = b (f a) a $ sliceId (f a)
+
+public export
+sliceJoinFromInternalBind : {c : Type} -> (f : SliceEndofunctor c) ->
+  SliceInternalBind f -> SliceJoin f
+sliceJoinFromInternalBind {c} f =
+  sliceJoinFromBind f . sliceBindFromInternalBind f
+
+public export
+sliceMapFromPureAndBind : {c : Type} -> (f : SliceEndofunctor c) ->
+  SlicePure {c} f -> SliceBind {c} f ->
+  SliceFMap {c} {d=c} f
+sliceMapFromPureAndBind {c} f pu bi x y = bi x y . sliceComp (pu y)
+
+public export
+sliceMapFromPureAndInternalBind : {c : Type} -> (f : SliceEndofunctor c) ->
+  SlicePure {c} f -> SliceInternalBind {c} f ->
+  SliceFMap {c} {d=c} f
+sliceMapFromPureAndInternalBind {c} f pu bi =
+  sliceMapFromPureAndBind f pu (sliceBindFromInternalBind f bi)
+
+public export
+sliceApplyFromPureAndInternalBind : {c : Type} -> (f : SliceEndofunctor c) ->
+  SlicePure {c} f -> SliceInternalBind {c} f ->
+  SliceApply {c} {d=c} f
+sliceApplyFromPureAndInternalBind {c} f pu bi x y ec ffxy fxc =
+  bi (SliceHom x y) y ec (\fxyc => bi x y ec (pu y ec . fxyc) fxc) ffxy
+
 ----------------------------------------
 ----------------------------------------
 ---- Subobject classifier in `Type` ----
