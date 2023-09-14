@@ -925,42 +925,6 @@ public export
 CSliceFCoalg : {c : Type} -> CSliceEndofunctor c -> Type
 CSliceFCoalg {c} f = DPair (CSliceObj c) (CSliceFCoalgMap {c} f)
 
--- The signature of the `pure` or `unit` natural transformation of an
--- applicative slice endofunctor (such as any slice monad).
-public export
-CSlicePure : {c : Type} -> CSliceEndofunctor c -> Type
-CSlicePure {c} = CSliceNatTrans {c} {d=c} (CSIdF c)
-
-public export
-CSlicePureCompose : {c : Type} ->
-  (g, f : CSliceEndofunctor c) ->
-  CSlicePure g -> CSlicePure f ->
-  CSlicePure (g . f)
-CSlicePureCompose {c} g f pg pf a = CSliceCompose (pg (f a)) (pf a)
-
--- The signature of the `bind` morphism of a slice monad.
-public export
-CSliceBind : {c : Type} -> CSliceEndofunctor c -> Type
-CSliceBind {c} m = (x, y : CSliceObj c) ->
-  CSliceMorphism x (m y) -> CSliceMorphism (m x) (m y)
-
--- The signature of the `join` or `multiplication` natural transformation of a
--- slice monad.
-public export
-CSliceJoin : {c : Type} -> CSliceEndofunctor c -> Type
-CSliceJoin {c} f = CSliceNatTrans {c} {d=c} (f . f) f
-
-public export
-csBindFromJoin : {c : Type} ->
-  (f : CSliceEndofunctor c) -> (fm : CSliceFMap f) ->
-  CSliceJoin f -> CSliceBind f
-csBindFromJoin {c} f fm j x y = CSliceCompose (j y) . fm x (f y)
-
-public export
-csJoinFromBind : {c : Type} -> (f : CSliceEndofunctor c) ->
-  CSliceBind f -> CSliceJoin f
-csJoinFromBind {c} f b a = b (f a) a $ CSliceId (f a)
-
 public export
 SliceFunctorFromCSlice : {c, d : Type} -> CSliceFunctor c d -> SliceFunctor c d
 SliceFunctorFromCSlice {c} {d} f =
@@ -1092,23 +1056,6 @@ csEitherMap {c} (e ** pe) (x ** px) (y ** py) (Element0 m comm) =
     (\el => case el of
       Left ee => Refl
       Right ex => comm ex)
-
-public export
-csEitherPure : {c : Type} -> (e : CSliceObj c) -> CSlicePure {c} (CSCopObj e)
-csEitherPure {c} (e ** pe) (b ** pb) =
-  Element0 Right $ \_ => Refl
-
-public export
-csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
-csEitherJoin {c} (e ** pe) (b ** pb) =
-  Element0
-    (eitherElim Left id)
-    (\el => case el of Left ee => Refl ; Right x => Refl)
-
-public export
-csEitherBind : {c : Type} -> (e : CSliceObj c) -> CSliceBind {c} (CSCopObj e)
-csEitherBind {c} e =
-  csBindFromJoin (CSCopObj e) (csEitherMap e) (csEitherJoin {c} e)
 
 public export
 CSProdObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
@@ -1274,32 +1221,6 @@ csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
     (\(ec ** fax) => Refl)
 
 public export
-csHomPure : {c : Type} -> (a : CSliceObj c) -> CSlicePure {c} (CSHomObj a)
-csHomPure {c} (a ** pa) (b ** pb) =
-  Element0
-    (\eb => (pb eb ** \(Element0 ea eq) => Element0 eb Refl))
-    (\_ => Refl)
-
-public export
-csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
-csHomJoin {c} (a ** pa) (b ** pb) =
-  Element0
-    (\(elc ** facb) =>
-      (elc **
-        \ela =>
-          let
-            (Element0 fab fabeq) = facb ela
-            (Element0 elb pbeq) =
-              snd fab $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fabeq
-          in
-          Element0 elb $ trans pbeq fabeq))
-    (\(elc ** facb) => Refl)
-
-public export
-csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
-csHomBind {c} a = csBindFromJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
-
-public export
 csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
   CSliceMorphism b a -> CSliceNatTrans (CSHomObj a) (CSHomObj b)
 csCovarInternalYonedaToNTHom {c} {a} {b} f x =
@@ -1416,39 +1337,6 @@ csHomEitherMap : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSHomEither a e)
 csHomEitherMap {c} a e x y =
   csHomMap a (CSCopObj e x) (CSCopObj e y) . csEitherMap e x y
-
-public export
-csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
-  CSlicePure {c} (CSHomEither a e)
-csHomEitherPure {c} a e =
-  CSlicePureCompose {c} (CSHomObj {c} a) (CSCopObj {c} e)
-    (csHomPure {c} a) (csEitherPure {c} e)
-
-public export
-csHomEitherJoin : {c : Type} -> (a, e : CSliceObj c) ->
-  CSliceJoin {c} (CSHomEither a e)
-csHomEitherJoin {c} (a ** pa) (e ** pe) (b ** pb) =
-  Element0
-    (\(elc ** faecb) =>
-      (elc **
-       \ela => case faecb ela of
-        Element0 (Left ee) paceq =>
-          Element0 (Left ee) paceq
-        Element0 (Right faeb) fceq =>
-          let
-            (Element0 x pbxeq) =
-              snd faeb $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fceq
-          in
-          Element0 x $ trans pbxeq fceq))
-    (\(elc ** faecb) => Refl)
-
-public export
-csHomEitherBind : {c : Type} -> (a, e : CSliceObj c) ->
-  CSliceBind {c} (CSHomEither a e)
-csHomEitherBind {c} a e =
-  csBindFromJoin (CSHomEither a e)
-    (csHomEitherMap a e)
-    (csHomEitherJoin {c} a e)
 
 -- Sigma, also known as dependent sum.
 public export
@@ -1754,6 +1642,140 @@ JustFiber (base ** so) baseElem = BundleFiber (Maybe base ** so) (Just baseElem)
 public export
 NothingFiber : (r : CRefinement) -> Type
 NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
+
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---- Dependent (slice) applicatives (lax monoidal functors) and monads ----
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+----------------------------
+---- General operations ----
+----------------------------
+
+-- The signature of the `pure` or `unit` natural transformation of an
+-- applicative slice endofunctor (such as any slice monad).
+public export
+CSlicePure : {c : Type} -> CSliceEndofunctor c -> Type
+CSlicePure {c} = CSliceNatTrans {c} {d=c} (CSIdF c)
+
+public export
+CSlicePureCompose : {c : Type} ->
+  (g, f : CSliceEndofunctor c) ->
+  CSlicePure g -> CSlicePure f ->
+  CSlicePure (g . f)
+CSlicePureCompose {c} g f pg pf a = CSliceCompose (pg (f a)) (pf a)
+
+-- The signature of the `bind` morphism of a slice monad.
+public export
+CSliceBind : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceBind {c} m = (x, y : CSliceObj c) ->
+  CSliceMorphism x (m y) -> CSliceMorphism (m x) (m y)
+
+-- The signature of the `join` or `multiplication` natural transformation of a
+-- slice monad.
+public export
+CSliceJoin : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceJoin {c} f = CSliceNatTrans {c} {d=c} (f . f) f
+
+public export
+csBindFromJoin : {c : Type} ->
+  (f : CSliceEndofunctor c) -> (fm : CSliceFMap f) ->
+  CSliceJoin f -> CSliceBind f
+csBindFromJoin {c} f fm j x y = CSliceCompose (j y) . fm x (f y)
+
+public export
+csJoinFromBind : {c : Type} -> (f : CSliceEndofunctor c) ->
+  CSliceBind f -> CSliceJoin f
+csJoinFromBind {c} f b a = b (f a) a $ CSliceId (f a)
+
+----------------------------
+---- Dependent `Either` ----
+----------------------------
+
+public export
+csEitherPure : {c : Type} -> (e : CSliceObj c) -> CSlicePure {c} (CSCopObj e)
+csEitherPure {c} (e ** pe) (b ** pb) =
+  Element0 Right $ \_ => Refl
+
+public export
+csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
+csEitherJoin {c} (e ** pe) (b ** pb) =
+  Element0
+    (eitherElim Left id)
+    (\el => case el of Left ee => Refl ; Right x => Refl)
+
+public export
+csEitherBind : {c : Type} -> (e : CSliceObj c) -> CSliceBind {c} (CSCopObj e)
+csEitherBind {c} e =
+  csBindFromJoin (CSCopObj e) (csEitherMap e) (csEitherJoin {c} e)
+
+------------------------------------
+---- Dependent `Reader` (`Hom`) ----
+------------------------------------
+
+public export
+csHomPure : {c : Type} -> (a : CSliceObj c) -> CSlicePure {c} (CSHomObj a)
+csHomPure {c} (a ** pa) (b ** pb) =
+  Element0
+    (\eb => (pb eb ** \(Element0 ea eq) => Element0 eb Refl))
+    (\_ => Refl)
+
+public export
+csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
+csHomJoin {c} (a ** pa) (b ** pb) =
+  Element0
+    (\(elc ** facb) =>
+      (elc **
+        \ela =>
+          let
+            (Element0 fab fabeq) = facb ela
+            (Element0 elb pbeq) =
+              snd fab $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fabeq
+          in
+          Element0 elb $ trans pbeq fabeq))
+    (\(elc ** facb) => Refl)
+
+public export
+csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
+csHomBind {c} a = csBindFromJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
+
+--------------------------------------------------------
+---- Dependent combined `Reader` (`Hom`) + `Either` ----
+--------------------------------------------------------
+
+public export
+csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
+  CSlicePure {c} (CSHomEither a e)
+csHomEitherPure {c} a e =
+  CSlicePureCompose {c} (CSHomObj {c} a) (CSCopObj {c} e)
+    (csHomPure {c} a) (csEitherPure {c} e)
+
+public export
+csHomEitherJoin : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceJoin {c} (CSHomEither a e)
+csHomEitherJoin {c} (a ** pa) (e ** pe) (b ** pb) =
+  Element0
+    (\(elc ** faecb) =>
+      (elc **
+       \ela => case faecb ela of
+        Element0 (Left ee) paceq =>
+          Element0 (Left ee) paceq
+        Element0 (Right faeb) fceq =>
+          let
+            (Element0 x pbxeq) =
+              snd faeb $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fceq
+          in
+          Element0 x $ trans pbxeq fceq))
+    (\(elc ** faecb) => Refl)
+
+public export
+csHomEitherBind : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceBind {c} (CSHomEither a e)
+csHomEitherBind {c} a e =
+  csBindFromJoin (CSHomEither a e)
+    (csHomEitherMap a e)
+    (csHomEitherJoin {c} a e)
 
 ------------------------------------------------------
 ------------------------------------------------------
