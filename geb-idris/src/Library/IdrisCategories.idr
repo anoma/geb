@@ -375,6 +375,17 @@ SliceDepPair : {0 a : Type} -> (x : SliceObj a) -> SliceObj (Sigma {a} x) ->
   SliceObj a
 SliceDepPair {a} x sl ea = Sigma {a=(x ea)} (sl . MkDPair ea)
 
+public export
+piMap : {0 c : Type} -> {0 x, y : SliceObj c} ->
+  SliceMorphism x y -> Pi x -> Pi y
+piMap {c} {x} {y} g f ec = g ec $ f ec
+
+public export
+sliceApp : {0 c : Type} -> {0 x, y, z : SliceObj c} ->
+  SliceMorphism x (SliceHom y z) -> SliceMorphism x y ->
+  SliceMorphism x z
+sliceApp {c} {x} {y} {z} g f ec ex = g ec ex $ f ec ex
+
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 ---- Applicatives and monads in slice categories of `Type` ----
@@ -445,6 +456,11 @@ sliceMapFromPureAndInternalBind : {c : Type} -> (f : SliceEndofunctor c) ->
   SliceFMap {c} {d=c} f
 sliceMapFromPureAndInternalBind {c} f pu bi =
   sliceMapFromPureAndBind f pu (sliceBindFromInternalBind f bi)
+
+public export
+applyFromBindHelper : {0 a, b, c : Type} ->
+  (b -> c) -> (((a -> b) -> c) -> c) -> a -> c
+applyFromBindHelper = (|>) . ((|>) (flip apply) . (.))
 
 public export
 sliceApplyFromPureAndInternalBind : {c : Type} -> (f : SliceEndofunctor c) ->
@@ -1366,6 +1382,9 @@ csContravarInternalYonedaFromNTHom {c} {a=(a ** pa)} {b=(b ** pb)} alpha =
         snd0 $ snd (faa2ba (pa ela ** id)) $ Element0 ela $ flsm (pa ela ** id))
 
 -- A global element of an object of the slice category of `Type` over `c`.
+-- This is also precisely what a dependent-type system usually calls a
+-- pi type -- `CSGElem x` for `x` a `CSliceObj` is the analogue of
+-- `Pi x` for `x` a `SliceObj`.
 public export
 CSGElem : {c : Type} -> CSliceObj c -> Type
 CSGElem {c} = CSliceMorphism (CSTermObj c)
@@ -1373,6 +1392,18 @@ CSGElem {c} = CSliceMorphism (CSTermObj c)
 public export
 CSHomGElem : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
 CSHomGElem = CSGElem .* CSHomObj
+
+public export
+csgApp : {c : Type} -> {0 x, y : CSliceObj c} ->
+  CSliceMorphism x y -> CSGElem x -> CSGElem y
+csgApp {c} {x} {y} = CSliceCompose {u=(CSTermObj c)} {v=x} {w=y}
+
+public export
+csRightApp : {c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism x (CSHomObj y z) -> CSliceMorphism x y ->
+  CSliceMorphism x z
+csRightApp {c} {x} {y} {z} =
+  CSliceCompose {v=(CSProdObj (CSHomObj y z) y)} (csEval y z) .* csPair
 
 public export
 csHomGElemToMorph : {c : Type} -> {x, y : CSliceObj c} ->
