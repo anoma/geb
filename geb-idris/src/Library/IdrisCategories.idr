@@ -2132,9 +2132,7 @@ csEitherBind {c} e =
 public export
 csHomPure : {c : Type} -> (a : CSliceObj c) -> CSlicePure {c} (CSHomObj a)
 csHomPure {c} (a ** pa) (b ** pb) =
-  Element0
-    (\eb => (pb eb ** \(Element0 ea eq) => Element0 eb Refl))
-    (\_ => Refl)
+  Element0 (\eb => (pb eb ** \_ => Element0 eb Refl)) (\_ => Refl)
 
 public export
 csHomMap : {c : Type} -> (a : CSliceObj c) ->
