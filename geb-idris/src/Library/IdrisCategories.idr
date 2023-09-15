@@ -2212,6 +2212,27 @@ csHomPure {c} (a ** pa) (b ** pb) =
   Element0 (\eb => (pb eb ** \_ => Element0 eb Refl)) (\_ => Refl)
 
 public export
+csHomInternalBind : {c : Type} ->
+  (a : CSliceObj c) -> CSliceInternalBind {c} (CSHomObj a)
+csHomInternalBind {c} (a ** pa) (x ** px) (y ** py) =
+  Element0
+    (\(elc ** fxay) =>
+     (elc **
+      \(Element0 (elc' ** fax) ceq') =>
+       Element0
+        (elc **
+         \(Element0 ela paceq) =>
+          let
+            (Element0 elx pxceq) = fax (Element0 ela $ trans paceq $ sym ceq')
+            (Element0 (elc'' ** fay) ceq'') =
+              fxay (Element0 elx $ trans pxceq ceq')
+            (Element0 ely pyeq) = fay (Element0 ela $ trans paceq $ sym ceq'')
+          in
+          Element0 ely $ trans pyeq ceq'')
+        Refl))
+    (\(elc ** fxay) => Refl)
+
+public export
 csHomMap : {c : Type} -> (a : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSHomObj a)
 csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
