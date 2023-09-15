@@ -1960,6 +1960,17 @@ csEitherPure {c} (e ** pe) (b ** pb) =
   Element0 Right $ \_ => Refl
 
 public export
+csEitherInternalBind : {c : Type} ->
+  (e : CSliceObj c) -> CSliceInternalBind {c} (CSCopObj e)
+csEitherInternalBind {c} (e ** pe) (x ** px) (y ** py) =
+  Element0
+    (\(elc ** fxey) =>
+     (elc ** \(Element0 elex xeq) => case elex of
+      Left ee => Element0 (Left ee) xeq
+      Right ex => fxey (Element0 ex xeq)))
+    (\(elc ** fxey) => Refl)
+
+public export
 csEitherMap : {c : Type} -> (e : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSCopObj e)
 csEitherMap {c} (e ** pe) (x ** px) (y ** py) (Element0 m comm) =
