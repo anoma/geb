@@ -1396,19 +1396,18 @@ csEqIntro {c} {x=(x ** px)} {w=(w ** pw)} {y=(y ** py)}
       \elw => trans (eqh elw) Refl
 
 public export
-csDistrib : {0 c : Type} -> {0 w, x, y, z : CSliceObj c} ->
-  CSliceMorphism {c} (CSCopObj (CSProdObj w x) (CSProdObj w y)) z ->
-  CSliceMorphism {c} (CSProdObj w (CSCopObj x y)) z
-csDistrib {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
-  (Element0 f eqf) =
-    Element0
-      (\(Element0 (elw, elxy) eqel) =>
-        f $ case elxy of
-          Left elx => Left $ Element0 (elw, elx) eqel
-          Right ely => Right $ Element0 (elw, ely) eqel)
-      (\(Element0 (elw, elxy) eqel) => case elxy of
-        Left elx => eqf $ Left $ Element0 (elw, elx) eqel
-        Right ely => eqf $ Right $ Element0 (elw, ely) eqel)
+csDistrib : {c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism
+    (CSProdObj x (CSCopObj y z))
+    (CSCopObj (CSProdObj x y) (CSProdObj x z))
+csDistrib {c} (x ** px) (y ** py) (z ** pz) =
+  Element0
+    (\(Element0 (elx, eleyz) pxeyz) => case eleyz of
+      Left ely => Left $ Element0 (elx, ely) pxeyz
+      Right elz => Right $ Element0 (elx, elz) pxeyz)
+    (\(Element0 (elx, eleyz) pxeyz) => case eleyz of
+      Left ely => Refl
+      Right elz => Refl)
 
 public export
 csGather : {c : Type} -> (x, y, z : CSliceObj c) ->
