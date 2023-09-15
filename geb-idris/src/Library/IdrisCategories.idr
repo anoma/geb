@@ -1175,16 +1175,6 @@ csCase {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
         Right ey => eqg ey
 
 public export
-csEitherMap : {c : Type} -> (e : CSliceObj c) ->
-  CSliceFMap {c} {d=c} (CSCopObj e)
-csEitherMap {c} (e ** pe) (x ** px) (y ** py) (Element0 m comm) =
-  Element0
-    (map {f=(Either e)} m)
-    (\el => case el of
-      Left ee => Refl
-      Right ex => comm ex)
-
-public export
 CSProdObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
 CSProdObj {c} a b =
     (Pullback {a=(fst a)} {b=(fst b)} {c} (snd a) (snd b) **
@@ -1355,17 +1345,6 @@ csFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
 csFlip {c} {x} {y} {z} = csCurry . csProdFlip . csUncurry
 
 public export
-csHomMap : {c : Type} -> (a : CSliceObj c) ->
-  CSliceFMap {c} {d=c} (CSHomObj a)
-csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
-  Element0
-    (\(ec ** pc) =>
-     (ec **
-      (\(Element0 ex ecomm) =>
-       Element0 (m ex) $ trans (sym $ mcomm ex) ecomm) . pc))
-    (\(ec ** fax) => Refl)
-
-public export
 csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
   CSliceMorphism b a -> CSliceNatTrans (CSHomObj a) (CSHomObj b)
 csCovarInternalYonedaToNTHom {c} {a} {b} f x =
@@ -1474,12 +1453,6 @@ public export
 CSHomEither : {c : Type} ->
   CSliceObj c -> CSliceObj c -> CSliceEndofunctor c
 CSHomEither {c} a e = CSHomObj {c} a . CSCopObj {c} e
-
-public export
-csHomEitherMap : {c : Type} -> (a, e : CSliceObj c) ->
-  CSliceFMap {c} {d=c} (CSHomEither a e)
-csHomEitherMap {c} a e x y =
-  csHomMap a (CSCopObj e x) (CSCopObj e y) . csEitherMap e x y
 
 -- Sigma, also known as dependent sum.
 public export
@@ -1982,6 +1955,16 @@ csApplyFromPureAndInternalBind {c} f pu bi x y =
 ----------------------------
 
 public export
+csEitherMap : {c : Type} -> (e : CSliceObj c) ->
+  CSliceFMap {c} {d=c} (CSCopObj e)
+csEitherMap {c} (e ** pe) (x ** px) (y ** py) (Element0 m comm) =
+  Element0
+    (map {f=(Either e)} m)
+    (\el => case el of
+      Left ee => Refl
+      Right ex => comm ex)
+
+public export
 csEitherPure : {c : Type} -> (e : CSliceObj c) -> CSlicePure {c} (CSCopObj e)
 csEitherPure {c} (e ** pe) (b ** pb) =
   Element0 Right $ \_ => Refl
@@ -2020,6 +2003,17 @@ csEitherBind {c} e =
 ------------------------------------
 ---- Dependent `Reader` (`Hom`) ----
 ------------------------------------
+
+public export
+csHomMap : {c : Type} -> (a : CSliceObj c) ->
+  CSliceFMap {c} {d=c} (CSHomObj a)
+csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
+  Element0
+    (\(ec ** pc) =>
+     (ec **
+      (\(Element0 ex ecomm) =>
+       Element0 (m ex) $ trans (sym $ mcomm ex) ecomm) . pc))
+    (\(ec ** fax) => Refl)
 
 public export
 csHomPure : {c : Type} -> (a : CSliceObj c) -> CSlicePure {c} (CSHomObj a)
@@ -2069,6 +2063,12 @@ csHomBind {c} a =
 --------------------------------------------------------
 ---- Dependent combined `Reader` (`Hom`) + `Either` ----
 --------------------------------------------------------
+
+public export
+csHomEitherMap : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceFMap {c} {d=c} (CSHomEither a e)
+csHomEitherMap {c} a e x y =
+  csHomMap a (CSCopObj e x) (CSCopObj e y) . csEitherMap e x y
 
 public export
 csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
