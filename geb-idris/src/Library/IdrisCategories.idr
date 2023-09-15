@@ -467,7 +467,7 @@ sliceApplyFromPureAndInternalBind {c} f pu bi x y ec ffxy fxc =
 public export
 applyFromBindHelper : {0 a, b, c : Type} ->
   (b -> c) -> (((a -> b) -> c) -> c) -> a -> c
-applyFromBindHelper = (|>) . ((|>) (flip apply) . (.))
+applyFromBindHelper = (|>) . (|>) (flip apply) . (.)
 
 -- An alternative version of `sliceApplyFromPureAndInternalBind`
 -- which makes it explicit how to recast it into category-theoretic style.
@@ -1782,6 +1782,37 @@ JustFiber (base ** so) baseElem = BundleFiber (Maybe base ** so) (Just baseElem)
 public export
 NothingFiber : (r : CRefinement) -> Type
 NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Internal reflections of slice morphisms within slice categories ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+public export
+csInternalCompose : {c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism (CSHomObj y z) (CSHomObj (CSHomObj x y) (CSHomObj x z))
+csInternalCompose {c} (x ** px) (y ** py) (z ** pz) =
+  Element0
+    (\(elc ** fyz) =>
+     (elc **
+      \(Element0 (elc' ** fxy) eqc) =>
+        Element0
+          (elc **
+           \(Element0 elx eqx) =>
+            let
+              (Element0 ely eqy) = fxy (Element0 elx $ trans eqx $ sym eqc)
+            in
+            fyz (Element0 ely $ trans eqy eqc))
+          Refl))
+    (\(elc ** fyz) => Refl)
+
+public export
+csInternalPipe : {c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism (CSHomObj x y) (CSHomObj (CSHomObj y z) (CSHomObj x z))
+csInternalPipe {c} x y z =
+  csFlip {c} {x=(CSHomObj y z)} {y=(CSHomObj x y)} {z=(CSHomObj x z)} $
+    csInternalCompose {c} x y z
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
