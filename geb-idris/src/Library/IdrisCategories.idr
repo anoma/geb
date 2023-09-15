@@ -467,7 +467,10 @@ sliceApplyFromPureAndInternalBind {c} f pu bi x y ec ffxy fxc =
 public export
 applyFromBindHelper : {0 a, b, c : Type} ->
   (b -> c) -> (((a -> b) -> c) -> c) -> a -> c
-applyFromBindHelper = (|>) . (|>) (flip apply) . (.)
+applyFromBindHelper =
+  (|>) {a} {b=((a -> b) -> c)} {c} .
+  preCompFlipApp {a} {b} {c=((a -> b) -> c)} .
+  (.) {a=(a -> b)} {b} {c}
 
 -- An alternative version of `sliceApplyFromPureAndInternalBind`
 -- which makes it explicit how to recast it into category-theoretic style.
