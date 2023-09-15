@@ -1829,6 +1829,17 @@ csInternalPipe {c} x y z =
   csFlip {c} {x=(CSHomObj y z)} {y=(CSHomObj x y)} {z=(CSHomObj x z)} $
     csInternalCompose {c} x y z
 
+public export
+csInternalPreCompFlipApp : {c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism (CSHomObj (CSHomObj (CSHomObj x y) y) z) (CSHomObj x z)
+csInternalPreCompFlipApp {c} x y z =
+  csHomMorphToMeta
+    {x=(CSHomObj (CSHomObj x y) y)}
+    {y=(CSHomObj (CSHomObj (CSHomObj x y) y) z)}
+    {z=(CSHomObj x z)}
+    (csInternalPipe {c} x (CSHomObj (CSHomObj x y) y) z)
+    (csInternalFlipApply {c} x y)
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Dependent (slice) applicatives (lax monoidal functors) and monads ----
