@@ -53,6 +53,14 @@ public export
 (.**) = (.) . (.) . (.)
 
 public export
+flipApp : {0 a, b : Type} -> a -> (a -> b) -> b
+flipApp = flip apply
+
+public export
+preCompFlipApp : {0 a, b, c : Type} -> (((a -> b) -> b) -> c) -> a -> c
+preCompFlipApp {a} {b} {c} = (|>) {a} {b=((a -> b) -> b)} {c} (flipApp {a} {b})
+
+public export
 [IdFunctor] Functor Prelude.id where
   map = id
 
