@@ -1935,6 +1935,48 @@ csMapFromPureAndInternalBind : {c : Type} -> (f : CSliceEndofunctor c) ->
 csMapFromPureAndInternalBind {c} f pu bi =
   csMapFromPureAndBind f pu (csBindFromInternalBind f bi)
 
+public export
+csApplyFromBindHelper : {c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism
+    (CSHomObj y z)
+    (CSHomObj (CSHomObj (CSHomObj (CSHomObj x y) z) z) (CSHomObj x z))
+csApplyFromBindHelper {c} x y z =
+  CSliceCompose
+    {u=(CSHomObj y z)}
+    {v=(CSHomObj x (CSHomObj (CSHomObj x y) z))}
+    {w=(CSHomObj (CSHomObj (CSHomObj (CSHomObj x y) z) z) (CSHomObj x z))}
+    (csInternalPipe x (CSHomObj (CSHomObj x y) z) z) $
+  CSliceCompose
+    {u=(CSHomObj y z)}
+    {v=(CSHomObj (CSHomObj (CSHomObj x y) y) (CSHomObj (CSHomObj x y) z))}
+    {w=(CSHomObj x (CSHomObj (CSHomObj x y) z))}
+    (csInternalPreCompFlipApp {c} x y (CSHomObj (CSHomObj x y) z))
+    (csInternalCompose (CSHomObj x y) y z)
+
+public export
+csApplyFromPureAndInternalBind : {c : Type} -> (f : CSliceEndofunctor c) ->
+  CSlicePure {c} f -> CSliceInternalBind {c} f ->
+  CSliceApply {c} {d=c} f
+csApplyFromPureAndInternalBind {c} f pu bi x y =
+  CSliceCompose
+    {u=(f (CSHomObj x y))}
+    {v=(CSHomObj (CSHomObj (CSHomObj x y) (f y)) (f y))}
+    {w=(CSHomObj (f x) (f y))}
+    (CSliceCompose
+      {u=(CSHomObj (CSHomObj (CSHomObj x y) (f y)) (f y))}
+      {v=(CSHomObj x (f y))}
+      {w=(CSHomObj (f x) (f y))}
+      (bi x y)
+      (csHomMorphToMeta
+        {c}
+        {w=y}
+        {x=(f y)}
+        {y=(CSHomObj (CSHomObj (CSHomObj x y) (f y)) (f y))}
+        {z=(CSHomObj x (f y))}
+        (csApplyFromBindHelper x y (f y)) (pu y)))
+    (csFlip {x=(CSHomObj (CSHomObj x y) (f y))} {y=(f (CSHomObj x y))} $
+      bi (CSHomObj x y) y)
+
 ----------------------------
 ---- Dependent `Either` ----
 ----------------------------
