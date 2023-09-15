@@ -1973,43 +1973,26 @@ csEitherInternalBind {c} (e ** pe) (x ** px) (y ** py) =
 public export
 csEitherMap : {c : Type} -> (e : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSCopObj e)
-csEitherMap {c} (e ** pe) (x ** px) (y ** py) (Element0 m comm) =
-  Element0
-    (map {f=(Either e)} m)
-    (\el => case el of
-      Left ee => Refl
-      Right ex => comm ex)
+csEitherMap {c} e =
+  csMapFromPureAndInternalBind {c} (CSCopObj e)
+    (csEitherPure e) (csEitherInternalBind e)
 
 public export
 csEitherApply : {c : Type} ->
   (e : CSliceObj c) -> CSliceApply {c} {d=c} (CSCopObj e)
-csEitherApply {c} (e ** pe) (x ** px) (y ** py) =
-  Element0
-    (\el => case el of
-      Left ee => (pe ee ** \(Element0 _ _) => Element0 (Left ee) Refl)
-      Right (ec ** fxy) =>
-        (ec **
-         \(Element0 el' pxceq) => case el' of
-          Left ec' => Element0 (Left ec') pxceq
-          Right ex' =>
-            Element0
-              (Right $ fst0 $ fxy $ Element0 ex' pxceq)
-              $ snd0 $ fxy $ Element0 ex' pxceq))
-    $ \el => case el of
-      Left ee => Refl
-      Right (ec ** fxy) => Refl
+csEitherApply {c} e =
+  csApplyFromPureAndInternalBind {c} (CSCopObj e)
+    (csEitherPure e) (csEitherInternalBind e)
 
 public export
 csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
-csEitherJoin {c} (e ** pe) (b ** pb) =
-  Element0
-    (eitherElim Left id)
-    (\el => case el of Left ee => Refl ; Right x => Refl)
+csEitherJoin {c} e =
+  csJoinFromInternalBind {c} (CSCopObj e) (csEitherInternalBind e)
 
 public export
 csEitherBind : {c : Type} -> (e : CSliceObj c) -> CSliceBind {c} (CSCopObj e)
 csEitherBind {c} e =
-  csBindFromMapAndJoin (CSCopObj e) (csEitherMap e) (csEitherJoin {c} e)
+  csBindFromInternalBind (CSCopObj e) (csEitherInternalBind e)
 
 ------------------------------------
 ---- Dependent `Reader` (`Hom`) ----
