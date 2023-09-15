@@ -1790,6 +1790,21 @@ NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
 -------------------------------------------------------------------------
 
 public export
+csInternalId : {c : Type} -> (x: CSliceObj c) -> CSHomGElem x x
+csInternalId {c} x = Element0 (\elc => (elc ** id)) $ \elc => Refl
+
+public export
+csInternalApply : {c : Type} -> (x, y : CSliceObj c) ->
+  CSliceMorphism (CSHomObj x y) (CSHomObj x y)
+csInternalApply {c} x y = CSliceId {c} (CSHomObj x y)
+
+public export
+csInternalFlipApply : {c : Type} -> (x, y : CSliceObj c) ->
+  CSliceMorphism x (CSHomObj (CSHomObj x y) y)
+csInternalFlipApply {c} x y =
+  csFlip {c} {x=(CSHomObj x y)} {y=x} {z=y} $ csInternalApply {c} x y
+
+public export
 csInternalCompose : {c : Type} -> (x, y, z : CSliceObj c) ->
   CSliceMorphism (CSHomObj y z) (CSHomObj (CSHomObj x y) (CSHomObj x z))
 csInternalCompose {c} (x ** px) (y ** py) (z ** pz) =
