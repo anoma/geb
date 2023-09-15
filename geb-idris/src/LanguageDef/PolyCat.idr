@@ -3327,6 +3327,18 @@ sliceMorphProduct : {sa, sa' : SliceObj a} -> {sb, sb' : SliceObj b} ->
     (SlicePolyProd sa sb) (SlicePolyProd sa' sb')
 sliceMorphProduct ma mb (ea, eb) (sea, seb) = (ma ea sea, mb eb seb)
 
+---------------------------------------------------------
+---------------------------------------------------------
+---- Some specific dependent applicatives and monads ----
+---------------------------------------------------------
+---------------------------------------------------------
+
+public export
+sliceEitherInternalBind : {c : Type} ->
+  (e : SliceObj c) -> SliceInternalBind {c} (SliceObjCoproduct e)
+sliceEitherInternalBind {c} e x y ec =
+  eitherElim {a=(e ec)} {b=(x ec)} {c=(Either (e ec) (y ec))} Left
+
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 ---- Direct interpretation of DepParamPolyFunc form of SliceFunctor ----
