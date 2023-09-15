@@ -2230,6 +2230,64 @@ csHomEitherBind {c} a e =
     (csHomEitherMap a e)
     (csHomEitherJoin {c} a e)
 
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Yoneda-lemma forms for functors from slice categories to `Type` ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+public export
+csCovarYonedaToNT :
+  {c : Type} -> {a : CSliceObj c} -> (f : CSliceObj c -> Type) ->
+  f a -> ((b : CSliceObj c) -> CSliceMorphism a b -> f b)
+csCovarYonedaToNT {c} {a} f = ?csCovarYonedaToNT_hole
+
+public export
+csCovarYonedaToNTHom :
+  {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceMorphism b a ->
+  ((x : CSliceObj c) -> CSliceMorphism a x -> CSliceMorphism b x)
+csCovarYonedaToNTHom {b} = csCovarYonedaToNT (CSliceMorphism b)
+
+public export
+csCovarYonedaFromNT :
+  {c : Type} -> {a : CSliceObj c} -> (f : CSliceObj c -> Type) ->
+  ((b : CSliceObj c) -> CSliceMorphism a b -> f b) -> f a
+csCovarYonedaFromNT {c} {a} f = ?csCovarYonedaFromNT_hole
+
+public export
+csCovarYonedaFromNTHom :
+  {c : Type} -> {a, b : CSliceObj c} ->
+  ((x : CSliceObj c) -> CSliceMorphism a x -> CSliceMorphism b x) ->
+  CSliceMorphism b a
+csCovarYonedaFromNTHom {b} = csCovarYonedaFromNT (CSliceMorphism b)
+
+public export
+csContravarYonedaToNT :
+  {c : Type} -> {a : CSliceObj c} -> (f : CSliceObj c -> Type) ->
+  f a -> ((b : CSliceObj c) -> CSliceMorphism b a -> f b)
+csContravarYonedaToNT {c} {a} f = ?csContravarYonedaToNT_hole
+
+public export
+csContravarYonedaToNTHom :
+  {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceMorphism a b ->
+  ((x : CSliceObj c) -> CSliceMorphism x a -> CSliceMorphism x b)
+csContravarYonedaToNTHom {b} = csContravarYonedaToNT (flip CSliceMorphism b)
+
+public export
+csContravarYonedaFromNT :
+  {c : Type} -> {a : CSliceObj c} -> (f : CSliceObj c -> Type) ->
+  ((b : CSliceObj c) -> CSliceMorphism b a -> f b) -> f a
+csContravarYonedaFromNT {c} {a} f = ?csContravarYonedaFromNT_hole
+
+public export
+csContravarYonedaFromNTHom :
+  {c : Type} -> {a, b : CSliceObj c} ->
+  ((x : CSliceObj c) -> CSliceMorphism x a -> CSliceMorphism x b) ->
+  CSliceMorphism a b
+csContravarYonedaFromNTHom {b} = csContravarYonedaFromNT (flip CSliceMorphism b)
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Dependent polynomial endofunctors as W-types ----
