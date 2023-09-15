@@ -458,16 +458,40 @@ sliceMapFromPureAndInternalBind {c} f pu bi =
   sliceMapFromPureAndBind f pu (sliceBindFromInternalBind f bi)
 
 public export
-applyFromBindHelper : {0 a, b, c : Type} ->
-  (b -> c) -> (((a -> b) -> c) -> c) -> a -> c
-applyFromBindHelper = (|>) . ((|>) (flip apply) . (.))
-
-public export
 sliceApplyFromPureAndInternalBind : {c : Type} -> (f : SliceEndofunctor c) ->
   SlicePure {c} f -> SliceInternalBind {c} f ->
   SliceApply {c} {d=c} f
 sliceApplyFromPureAndInternalBind {c} f pu bi x y ec ffxy fxc =
   bi (SliceHom x y) y ec (\fxyc => bi x y ec (pu y ec . fxyc) fxc) ffxy
+
+public export
+applyFromBindHelper : {0 a, b, c : Type} ->
+  (b -> c) -> (((a -> b) -> c) -> c) -> a -> c
+applyFromBindHelper = (|>) . ((|>) (flip apply) . (.))
+
+-- An alternative version of `sliceApplyFromPureAndInternalBind`
+-- which makes it explicit how to recast it into category-theoretic style.
+public export
+sliceApplyFromPureAndInternalBind' : {c : Type} -> (f : SliceEndofunctor c) ->
+  SlicePure {c} f -> SliceInternalBind {c} f ->
+  SliceApply {c} {d=c} f
+sliceApplyFromPureAndInternalBind' {c} f pu bi x y =
+  sliceComp
+    {x=(f (SliceHom x y))}
+    {y=(SliceHom (SliceHom (SliceHom x y) (f y)) (f y))}
+    {z=(SliceHom (f x) (f y))}
+    (sliceComp
+      (bi x y)
+      (piMap {c}
+        {x=(SliceHom y (f y))}
+        {y=(
+          SliceHom
+            (SliceHom (SliceHom (SliceHom x y) (f y)) (f y))
+            (SliceHom x (f y)))}
+        (\ec' : c => applyFromBindHelper {a=(x ec')} {b=(y ec')} {c=(f y ec')})
+        (pu y)))
+    (sliceFlip {x=(SliceHom (SliceHom x y) (f y))} {y=(f (SliceHom x y))} $
+      bi (SliceHom x y) y)
 
 ----------------------------------------
 ----------------------------------------
