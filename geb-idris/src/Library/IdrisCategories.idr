@@ -1955,6 +1955,11 @@ csApplyFromPureAndInternalBind {c} f pu bi x y =
 ----------------------------
 
 public export
+csEitherPure : {c : Type} -> (e : CSliceObj c) -> CSlicePure {c} (CSCopObj e)
+csEitherPure {c} (e ** pe) (b ** pb) =
+  Element0 Right $ \_ => Refl
+
+public export
 csEitherMap : {c : Type} -> (e : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSCopObj e)
 csEitherMap {c} (e ** pe) (x ** px) (y ** py) (Element0 m comm) =
@@ -1963,11 +1968,6 @@ csEitherMap {c} (e ** pe) (x ** px) (y ** py) (Element0 m comm) =
     (\el => case el of
       Left ee => Refl
       Right ex => comm ex)
-
-public export
-csEitherPure : {c : Type} -> (e : CSliceObj c) -> CSlicePure {c} (CSCopObj e)
-csEitherPure {c} (e ** pe) (b ** pb) =
-  Element0 Right $ \_ => Refl
 
 public export
 csEitherApply : {c : Type} ->
@@ -2005,6 +2005,13 @@ csEitherBind {c} e =
 ------------------------------------
 
 public export
+csHomPure : {c : Type} -> (a : CSliceObj c) -> CSlicePure {c} (CSHomObj a)
+csHomPure {c} (a ** pa) (b ** pb) =
+  Element0
+    (\eb => (pb eb ** \(Element0 ea eq) => Element0 eb Refl))
+    (\_ => Refl)
+
+public export
 csHomMap : {c : Type} -> (a : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSHomObj a)
 csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
@@ -2014,13 +2021,6 @@ csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
       (\(Element0 ex ecomm) =>
        Element0 (m ex) $ trans (sym $ mcomm ex) ecomm) . pc))
     (\(ec ** fax) => Refl)
-
-public export
-csHomPure : {c : Type} -> (a : CSliceObj c) -> CSlicePure {c} (CSHomObj a)
-csHomPure {c} (a ** pa) (b ** pb) =
-  Element0
-    (\eb => (pb eb ** \(Element0 ea eq) => Element0 eb Refl))
-    (\_ => Refl)
 
 public export
 csHomApply : {c : Type} ->
@@ -2065,17 +2065,17 @@ csHomBind {c} a =
 --------------------------------------------------------
 
 public export
-csHomEitherMap : {c : Type} -> (a, e : CSliceObj c) ->
-  CSliceFMap {c} {d=c} (CSHomEither a e)
-csHomEitherMap {c} a e x y =
-  csHomMap a (CSCopObj e x) (CSCopObj e y) . csEitherMap e x y
-
-public export
 csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
   CSlicePure {c} (CSHomEither a e)
 csHomEitherPure {c} a e =
   CSlicePureCompose {c} (CSHomObj {c} a) (CSCopObj {c} e)
     (csHomPure {c} a) (csEitherPure {c} e)
+
+public export
+csHomEitherMap : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceFMap {c} {d=c} (CSHomEither a e)
+csHomEitherMap {c} a e x y =
+  csHomMap a (CSCopObj e x) (CSCopObj e y) . csEitherMap e x y
 
 public export
 csHomEitherApply : {c : Type} -> (a, e : CSliceObj c) ->
