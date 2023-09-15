@@ -2238,55 +2238,69 @@ csHomEitherBind {c} a e =
 
 public export
 csCovarYonedaToNT :
-  {c : Type} -> {a : CSliceObj c} -> (f : CSliceObj c -> Type) ->
+  {c : Type} -> {f : CSliceObj c -> Type} ->
+  -- Morphism map for a covariant functor from `CSliceObj c` to `Type`.
+  (fm : {0 x, y : CSliceObj c} -> CSliceMorphism x y -> f x -> f y) ->
+  {a : CSliceObj c} ->
   f a -> ((b : CSliceObj c) -> CSliceMorphism a b -> f b)
-csCovarYonedaToNT {c} {a} f = ?csCovarYonedaToNT_hole
+csCovarYonedaToNT {c} {f} fm {a} fa b mab = fm {x=a} {y=b} mab fa
 
 public export
 csCovarYonedaToNTHom :
   {c : Type} -> {a, b : CSliceObj c} ->
   CSliceMorphism b a ->
   ((x : CSliceObj c) -> CSliceMorphism a x -> CSliceMorphism b x)
-csCovarYonedaToNTHom {b} = csCovarYonedaToNT (CSliceMorphism b)
+csCovarYonedaToNTHom {a} {b} =
+  csCovarYonedaToNT {f=(CSliceMorphism b)}
+    (?csCovarYonedaToNTHom_map_hole)
 
 public export
 csCovarYonedaFromNT :
-  {c : Type} -> {a : CSliceObj c} -> (f : CSliceObj c -> Type) ->
+  {c : Type} -> {f : CSliceObj c -> Type} ->
+  {a : CSliceObj c} ->
   ((b : CSliceObj c) -> CSliceMorphism a b -> f b) -> f a
-csCovarYonedaFromNT {c} {a} f = ?csCovarYonedaFromNT_hole
+csCovarYonedaFromNT {c} {f} {a} alpha = alpha a (CSliceId a)
 
 public export
 csCovarYonedaFromNTHom :
   {c : Type} -> {a, b : CSliceObj c} ->
   ((x : CSliceObj c) -> CSliceMorphism a x -> CSliceMorphism b x) ->
   CSliceMorphism b a
-csCovarYonedaFromNTHom {b} = csCovarYonedaFromNT (CSliceMorphism b)
+csCovarYonedaFromNTHom {b} =
+  csCovarYonedaFromNT {f=(CSliceMorphism b)}
 
 public export
 csContravarYonedaToNT :
-  {c : Type} -> {a : CSliceObj c} -> (f : CSliceObj c -> Type) ->
-  f a -> ((b : CSliceObj c) -> CSliceMorphism b a -> f b)
-csContravarYonedaToNT {c} {a} f = ?csContravarYonedaToNT_hole
+  {c : Type} -> {f : CSliceObj c -> Type} ->
+  -- Morphism map for a contravariant functor from `CSliceObj c` to `Type`.
+  (fcm : {0 x, y : CSliceObj c} -> CSliceMorphism y x -> f x -> f y) ->
+  {a : CSliceObj c} ->
+  f a -> ((b : CSliceObj c) -> flip CSliceMorphism a b -> f b)
+csContravarYonedaToNT {c} {f} fcm {a} fa b mba = fcm {x=a} {y=b} mba fa
 
 public export
 csContravarYonedaToNTHom :
   {c : Type} -> {a, b : CSliceObj c} ->
   CSliceMorphism a b ->
   ((x : CSliceObj c) -> CSliceMorphism x a -> CSliceMorphism x b)
-csContravarYonedaToNTHom {b} = csContravarYonedaToNT (flip CSliceMorphism b)
+csContravarYonedaToNTHom {a} {b} =
+  csContravarYonedaToNT {f=(flip CSliceMorphism b)}
+    (?csContravarYonedaToNTHom_map_hole)
 
 public export
 csContravarYonedaFromNT :
-  {c : Type} -> {a : CSliceObj c} -> (f : CSliceObj c -> Type) ->
-  ((b : CSliceObj c) -> CSliceMorphism b a -> f b) -> f a
-csContravarYonedaFromNT {c} {a} f = ?csContravarYonedaFromNT_hole
+  {c : Type} -> {f : CSliceObj c -> Type} ->
+  {a : CSliceObj c} ->
+  ((b : CSliceObj c) -> flip CSliceMorphism a b -> f b) -> f a
+csContravarYonedaFromNT {c} {f} {a} alpha = alpha a (CSliceId a)
 
 public export
 csContravarYonedaFromNTHom :
   {c : Type} -> {a, b : CSliceObj c} ->
   ((x : CSliceObj c) -> CSliceMorphism x a -> CSliceMorphism x b) ->
   CSliceMorphism a b
-csContravarYonedaFromNTHom {b} = csContravarYonedaFromNT (flip CSliceMorphism b)
+csContravarYonedaFromNTHom {b} =
+  csContravarYonedaFromNT {f=(flip CSliceMorphism b)}
 
 ------------------------------------------------------
 ------------------------------------------------------
