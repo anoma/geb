@@ -1976,6 +1976,56 @@ csInternalPreCompFlipApp {c} x y z =
     (csInternalPipe {c} x (CSHomObj (CSHomObj x y) y) z)
     (csInternalFlipApply {c} x y)
 
+-------------------------------------
+-------------------------------------
+---- Product-of-slice categories ----
+-------------------------------------
+-------------------------------------
+
+-- The product of the slice category of `Type` over `c` with the slice
+-- category of `Type` over `d` is equivalent to the slice category of
+-- `Type` over `Either c d`.
+public export
+CProdSliceObj : Type -> Type -> Type
+CProdSliceObj = CSliceObj .* Either
+
+public export
+CProdSlObjPair : {c, d : Type} ->
+  CSliceObj c -> CSliceObj d -> CProdSliceObj c d
+CProdSlObjPair {c} {d} (x ** px) (y ** py) =
+  (Either x y ** bimap {f=Either} px py)
+
+public export
+CProdSlObj1 : {c, d : Type} -> CProdSliceObj c d -> CSliceObj c
+CProdSlObj1 {c} {d} (x ** px) =
+  (Subset0 x (IsLeftTrue . px) ** \(Element0 ex isl) => fromIsLeft isl)
+
+public export
+CProdSlObj2 : {c, d : Type} -> CProdSliceObj c d -> CSliceObj d
+CProdSlObj2 {c} {d} (x ** px) =
+  (Subset0 x (IsRightTrue . px) ** \(Element0 ex isl) => fromIsRight isl)
+
+public export
+CSqSliceObj : Type -> Type
+CSqSliceObj c = CProdSliceObj c c
+
+-- The domain of the internal-bind natural transformation takes `(a, b)` to
+-- `a -> f b`.
+public export
+BindAsNTdom : {c : Type} -> CSliceEndofunctor c -> CSliceFunctor (Either c c) c
+BindAsNTdom {c} f x = CSHomObj (CProdSlObj1 x) (f $ CProdSlObj2 x)
+
+-- The codomain of the internal-bind natural transformation takes `(a, b)` to
+-- `f a -> f b`.
+public export
+BindAsNTcod : {c : Type} -> CSliceEndofunctor c -> CSliceFunctor (Either c c) c
+BindAsNTcod {c} f x = CSHomObj (f $ CProdSlObj1 x) (f $ CProdSlObj2 x)
+
+public export
+CSliceInternalBindAsNT : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceInternalBindAsNT {c} f =
+  CSliceNatTrans {c=(Either c c)} {d=c} (BindAsNTdom f) (BindAsNTcod f)
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Dependent (slice) applicatives (lax monoidal functors) and monads ----
