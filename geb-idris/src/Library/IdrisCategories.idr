@@ -2098,6 +2098,10 @@ csMapFromPureAndInternalBind : {c : Type} -> (f : CSliceEndofunctor c) ->
 csMapFromPureAndInternalBind {c} f pu bi =
   csMapFromPureAndBind f pu (csBindFromInternalBind f bi)
 
+-- To see this and the following function as they would be written in
+-- Haskell, see the definition of `apply` in terms of `pure` and `bind` at
+-- https://www.cis.upenn.edu/~cis1940/fall16/lectures/08-functor-applicative.html
+-- (under "Monad < Applicative < Functor").
 public export
 csApplyFromBindHelper : {c : Type} -> (x, y, z : CSliceObj c) ->
   CSliceMorphism
