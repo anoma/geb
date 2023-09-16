@@ -1582,8 +1582,14 @@ csFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
 csFlip {c} {x} {y} {z} = csCurry . csProdFlip . csUncurry
 
 public export
-CSNTFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
-CSNTFunctor {c} a b = CSliceNatTrans {c} {d=c} (CSHomObj a) (CSHomObj b)
+CSNTCovarFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSNTCovarFunctor {c} a b =
+  CSliceNatTrans {c} {d=c} (CSHomObj a) (CSHomObj b)
+
+public export
+CSNTContravarFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSNTContravarFunctor {c} a b =
+  CSliceNatTrans {c} {d=c} (CSExpObj a) (CSExpObj b)
 
 -- A global element of an object of the slice category of `Type` over `c`.
 -- This is also precisely what a dependent-type system usually calls a
@@ -1978,7 +1984,7 @@ NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
 
 public export
 csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceMorphism b a -> CSliceNatTrans (CSHomObj a) (CSHomObj b)
+  CSliceMorphism b a -> CSNTCovarFunctor a b
 csCovarInternalYonedaToNTHom {c} {a} {b} f x =
   csCurry {x=(CSHomObj a x)} $
     CSliceCompose
@@ -1991,19 +1997,19 @@ csCovarInternalYonedaToNTHom {c} {a} {b} f x =
 
 public export
 csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceNatTrans (CSHomObj a) (CSHomObj b) -> CSliceMorphism b a
+  CSNTCovarFunctor a b -> CSliceMorphism b a
 csCovarInternalYonedaFromNTHom {c} {a} {b} alpha =
   csHomMorphToMeta (alpha a) (CSliceId a)
 
 public export
 csContravarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceMorphism a b -> CSliceNatTrans (CSExpObj a) (CSExpObj b)
+  CSliceMorphism a b -> CSNTContravarFunctor a b
 csContravarInternalYonedaToNTHom {c} {a} {b} f x =
   csCurry $ CSliceCompose {u=(CSProdObj (CSHomObj x a) x)} f $ csEval x a
 
 public export
 csContravarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceNatTrans (CSExpObj a) (CSExpObj b) -> CSliceMorphism a b
+  CSNTContravarFunctor a b -> CSliceMorphism a b
 csContravarInternalYonedaFromNTHom {c} {a} {b} alpha =
   csHomMorphToMeta (alpha a) (CSliceId a)
 
