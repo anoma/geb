@@ -1283,6 +1283,79 @@ csInj : {0 c : Type} ->
   (so : CSliceObj c) -> CSliceObjDomain so -> (CSliceObjDomain so, c)
 csInj {c} (a ** pa) el = (el, pa el)
 
+-------------------------------------------------------------------------
+---- Yoneda-lemma forms for functors from slice categories to `Type` ----
+-------------------------------------------------------------------------
+
+public export
+csCovarYonedaToNT :
+  {c : Type} -> {f : CSliceObj c -> Type} ->
+  -- Morphism map for a covariant functor from `CSliceObj c` to `Type`.
+  (fm : {0 v, w : CSliceObj c} -> CSliceMorphism v w -> f v -> f w) ->
+  {a : CSliceObj c} ->
+  f a -> ((b : CSliceObj c) -> CSliceMorphism a b -> f b)
+csCovarYonedaToNT {c} {f} fm {a} fa b mab = fm {v=a} {w=b} mab fa
+
+public export
+csCovarYonedaToNTHom :
+  {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceMorphism b a ->
+  ((x : CSliceObj c) -> CSliceMorphism a x -> CSliceMorphism b x)
+csCovarYonedaToNTHom {a} {b} =
+  csCovarYonedaToNT {c} {f=(CSliceMorphism b)} {a} $ CSliceCompose {u=b}
+
+public export
+csCovarYonedaFromNT :
+  {c : Type} -> {f : CSliceObj c -> Type} ->
+  {a : CSliceObj c} ->
+  ((b : CSliceObj c) -> CSliceMorphism a b -> f b) -> f a
+csCovarYonedaFromNT {c} {f} {a} alpha = alpha a (CSliceId a)
+
+public export
+csCovarYonedaFromNTHom :
+  {c : Type} -> {a, b : CSliceObj c} ->
+  ((x : CSliceObj c) -> CSliceMorphism a x -> CSliceMorphism b x) ->
+  CSliceMorphism b a
+csCovarYonedaFromNTHom {b} =
+  csCovarYonedaFromNT {f=(CSliceMorphism b)}
+
+public export
+csContravarYonedaToNT :
+  {c : Type} -> {f : CSliceObj c -> Type} ->
+  -- Morphism map for a contravariant functor from `CSliceObj c` to `Type`
+  -- (that is to say, a functor from `op(CSliceObj c)` to `Type`).
+  (fcm : {u, v : CSliceObj c} -> flip CSliceMorphism v u -> f v -> f u) ->
+  {a : CSliceObj c} ->
+  f a -> ((b : CSliceObj c) -> flip CSliceMorphism a b -> f b)
+csContravarYonedaToNT {c} {f} fcm {a} fa b mba = fcm {u=b} {v=a} mba fa
+
+public export
+csContravarYonedaToNTHom :
+  {c : Type} -> {a, b : CSliceObj c} ->
+  flip CSliceMorphism b a ->
+  ((x : CSliceObj c) -> flip CSliceMorphism a x -> flip CSliceMorphism b x)
+csContravarYonedaToNTHom {a} {b} =
+  csContravarYonedaToNT {f=(flip CSliceMorphism b)} {a} $ CSlicePipe {w=b}
+
+public export
+csContravarYonedaFromNT :
+  {c : Type} -> {f : CSliceObj c -> Type} ->
+  {a : CSliceObj c} ->
+  ((b : CSliceObj c) -> flip CSliceMorphism a b -> f b) -> f a
+csContravarYonedaFromNT {c} {f} {a} alpha = alpha a (CSliceId a)
+
+public export
+csContravarYonedaFromNTHom :
+  {c : Type} -> {a, b : CSliceObj c} ->
+  ((x : CSliceObj c) -> flip CSliceMorphism a x -> flip CSliceMorphism b x) ->
+  CSliceMorphism a b
+csContravarYonedaFromNTHom {b} =
+  csContravarYonedaFromNT {f=(flip CSliceMorphism b)}
+
+-------------------------------------------------
+---- Universal morphisms in slice categories ----
+-------------------------------------------------
+
 public export
 CSInitObj : (c : Type) -> CSliceObj c
 CSInitObj c = (Void ** voidF c)
@@ -1899,10 +1972,43 @@ public export
 NothingFiber : (r : CRefinement) -> Type
 NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
 
--------------------------------------------------------------------------
+---------------------------------------------------------
+---- Yoneda-lemma forms internal to slice categories ----
+---------------------------------------------------------
+
+public export
+csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceMorphism b a -> CSliceNatTrans (CSHomObj a) (CSHomObj b)
+csCovarInternalYonedaToNTHom {c} {a} {b} f x =
+  csCurry {x=(CSHomObj a x)} $
+    CSliceCompose
+      {u=(CSProdObj (CSHomObj a x) b)} {v=(CSProdObj (CSHomObj a x) a)}
+      (csEval a x)
+      (csPair {x=(CSProdObj (CSHomObj a x) b)}
+        (csProj1 (CSHomObj a x) b)
+        (CSliceCompose {u=(CSProdObj (CSHomObj a x) b)}
+          f (csProj2 (CSHomObj a x) b)))
+
+public export
+csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceNatTrans (CSHomObj a) (CSHomObj b) -> CSliceMorphism b a
+csCovarInternalYonedaFromNTHom {c} {a} {b} alpha =
+  csHomMorphToMeta (alpha a) (CSliceId a)
+
+public export
+csContravarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceMorphism a b -> CSliceNatTrans (CSExpObj a) (CSExpObj b)
+csContravarInternalYonedaToNTHom {c} {a} {b} f x =
+  csCurry $ CSliceCompose {u=(CSProdObj (CSHomObj x a) x)} f $ csEval x a
+
+public export
+csContravarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceNatTrans (CSExpObj a) (CSExpObj b) -> CSliceMorphism a b
+csContravarInternalYonedaFromNTHom {c} {a} {b} alpha =
+  csHomMorphToMeta (alpha a) (CSliceId a)
+
 -------------------------------------------------------------------------
 ---- Internal reflections of slice morphisms within slice categories ----
--------------------------------------------------------------------------
 -------------------------------------------------------------------------
 
 public export
@@ -1957,9 +2063,7 @@ csInternalPreCompFlipApp {c} x y z =
     (csInternalFlipApply {c} x y)
 
 -------------------------------------
--------------------------------------
 ---- Product-of-slice categories ----
--------------------------------------
 -------------------------------------
 
 -- The product of the slice category of `Type` over `c` with the slice
@@ -2355,114 +2459,6 @@ csHomEitherBind {c} a e =
   csBindFromMapAndJoin (CSHomEither a e)
     (csHomEitherMap a e)
     (csHomEitherJoin {c} a e)
-
--------------------------------------------------------------------------
--------------------------------------------------------------------------
----- Yoneda-lemma forms for functors from slice categories to `Type` ----
--------------------------------------------------------------------------
--------------------------------------------------------------------------
-
-public export
-csCovarYonedaToNT :
-  {c : Type} -> {f : CSliceObj c -> Type} ->
-  -- Morphism map for a covariant functor from `CSliceObj c` to `Type`.
-  (fm : {0 v, w : CSliceObj c} -> CSliceMorphism v w -> f v -> f w) ->
-  {a : CSliceObj c} ->
-  f a -> ((b : CSliceObj c) -> CSliceMorphism a b -> f b)
-csCovarYonedaToNT {c} {f} fm {a} fa b mab = fm {v=a} {w=b} mab fa
-
-public export
-csCovarYonedaToNTHom :
-  {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceMorphism b a ->
-  ((x : CSliceObj c) -> CSliceMorphism a x -> CSliceMorphism b x)
-csCovarYonedaToNTHom {a} {b} =
-  csCovarYonedaToNT {c} {f=(CSliceMorphism b)} {a} $ CSliceCompose {u=b}
-
-public export
-csCovarYonedaFromNT :
-  {c : Type} -> {f : CSliceObj c -> Type} ->
-  {a : CSliceObj c} ->
-  ((b : CSliceObj c) -> CSliceMorphism a b -> f b) -> f a
-csCovarYonedaFromNT {c} {f} {a} alpha = alpha a (CSliceId a)
-
-public export
-csCovarYonedaFromNTHom :
-  {c : Type} -> {a, b : CSliceObj c} ->
-  ((x : CSliceObj c) -> CSliceMorphism a x -> CSliceMorphism b x) ->
-  CSliceMorphism b a
-csCovarYonedaFromNTHom {b} =
-  csCovarYonedaFromNT {f=(CSliceMorphism b)}
-
-public export
-csContravarYonedaToNT :
-  {c : Type} -> {f : CSliceObj c -> Type} ->
-  -- Morphism map for a contravariant functor from `CSliceObj c` to `Type`
-  -- (that is to say, a functor from `op(CSliceObj c)` to `Type`).
-  (fcm : {u, v : CSliceObj c} -> flip CSliceMorphism v u -> f v -> f u) ->
-  {a : CSliceObj c} ->
-  f a -> ((b : CSliceObj c) -> flip CSliceMorphism a b -> f b)
-csContravarYonedaToNT {c} {f} fcm {a} fa b mba = fcm {u=b} {v=a} mba fa
-
-public export
-csContravarYonedaToNTHom :
-  {c : Type} -> {a, b : CSliceObj c} ->
-  flip CSliceMorphism b a ->
-  ((x : CSliceObj c) -> flip CSliceMorphism a x -> flip CSliceMorphism b x)
-csContravarYonedaToNTHom {a} {b} =
-  csContravarYonedaToNT {f=(flip CSliceMorphism b)} {a} $ CSlicePipe {w=b}
-
-public export
-csContravarYonedaFromNT :
-  {c : Type} -> {f : CSliceObj c -> Type} ->
-  {a : CSliceObj c} ->
-  ((b : CSliceObj c) -> flip CSliceMorphism a b -> f b) -> f a
-csContravarYonedaFromNT {c} {f} {a} alpha = alpha a (CSliceId a)
-
-public export
-csContravarYonedaFromNTHom :
-  {c : Type} -> {a, b : CSliceObj c} ->
-  ((x : CSliceObj c) -> flip CSliceMorphism a x -> flip CSliceMorphism b x) ->
-  CSliceMorphism a b
-csContravarYonedaFromNTHom {b} =
-  csContravarYonedaFromNT {f=(flip CSliceMorphism b)}
-
----------------------------------------------------------
----------------------------------------------------------
----- Yoneda-lemma forms internal to slice categories ----
----------------------------------------------------------
----------------------------------------------------------
-
-public export
-csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceMorphism b a -> CSliceNatTrans (CSHomObj a) (CSHomObj b)
-csCovarInternalYonedaToNTHom {c} {a} {b} f x =
-  csCurry {x=(CSHomObj a x)} $
-    CSliceCompose
-      {u=(CSProdObj (CSHomObj a x) b)} {v=(CSProdObj (CSHomObj a x) a)}
-      (csEval a x)
-      (csPair {x=(CSProdObj (CSHomObj a x) b)}
-        (csProj1 (CSHomObj a x) b)
-        (CSliceCompose {u=(CSProdObj (CSHomObj a x) b)}
-          f (csProj2 (CSHomObj a x) b)))
-
-public export
-csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceNatTrans (CSHomObj a) (CSHomObj b) -> CSliceMorphism b a
-csCovarInternalYonedaFromNTHom {c} {a} {b} alpha =
-  csHomMorphToMeta (alpha a) (CSliceId a)
-
-public export
-csContravarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceMorphism a b -> CSliceNatTrans (CSExpObj a) (CSExpObj b)
-csContravarInternalYonedaToNTHom {c} {a} {b} f x =
-  csCurry $ CSliceCompose {u=(CSProdObj (CSHomObj x a) x)} f $ csEval x a
-
-public export
-csContravarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceNatTrans (CSExpObj a) (CSExpObj b) -> CSliceMorphism a b
-csContravarInternalYonedaFromNTHom {c} {a} {b} alpha =
-  csHomMorphToMeta (alpha a) (CSliceId a)
 
 ------------------------------------------------------
 ------------------------------------------------------
