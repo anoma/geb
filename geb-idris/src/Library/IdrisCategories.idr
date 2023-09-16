@@ -1152,6 +1152,10 @@ CSliceNatTrans {c} {d} f g =
   (a : CSliceObj c) -> CSliceMorphism {c=d} (f a) (g a)
 
 public export
+CSliceNTid : {c, d : Type} -> (f : CSliceFunctor c d) -> CSliceNatTrans f f
+CSliceNTid {c} {d} f a = CSliceId (f a)
+
+public export
 CSNTvcomp : {0 c, d : Type} -> {0 f, g, h : CSliceFunctor c d} ->
   CSliceNatTrans g h -> CSliceNatTrans f g -> CSliceNatTrans f h
 CSNTvcomp {c} {d} {f} {g} {h} beta alpha a =
@@ -1503,6 +1507,10 @@ csFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism x (CSHomObj y z) ->
   CSliceMorphism y (CSHomObj x z)
 csFlip {c} {x} {y} {z} = csCurry . csProdFlip . csUncurry
+
+public export
+CSNTFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSNTFunctor {c} a b = CSliceNatTrans {c} {d=c} (CSHomObj a) (CSHomObj b)
 
 -- A global element of an object of the slice category of `Type` over `c`.
 -- This is also precisely what a dependent-type system usually calls a
