@@ -453,6 +453,24 @@ fromIsJust {x=(Just x)} Refl = x
 fromIsJust {x=Nothing} Refl impossible
 
 public export
+IsLeftTrue : {0 a, b : Type} -> Either a b -> Type
+IsLeftTrue x = isLeft x = True
+
+public export
+fromIsLeft : {0 a, b : Type} -> {x : Either a b} -> (0 _ : IsLeftTrue x) -> a
+fromIsLeft {x=(Left x)} Refl = x
+fromIsLeft {x=(Right _)} Refl impossible
+
+public export
+IsRightTrue : {0 a, b : Type} -> Either a b -> Type
+IsRightTrue x = isRight x = True
+
+public export
+fromIsRight : {0 a, b : Type} -> {x : Either a b} -> (0 _ : IsRightTrue x) -> b
+fromIsRight {x=(Left _)} Refl impossible
+fromIsRight {x=(Right x)} Refl = x
+
+public export
 IsYesTrue : {a : Type} -> Dec a -> Type
 IsYesTrue x = isYes x = True
 
