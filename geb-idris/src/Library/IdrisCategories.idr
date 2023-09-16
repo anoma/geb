@@ -1158,6 +1158,21 @@ CSNTvcomp {c} {d} {f} {g} {h} beta alpha a =
   CSliceCompose {c=d} (beta a) (alpha a)
 
 public export
+CSWhiskerLeft : {0 c, d, e : Type} ->
+  {0 g, h : CSliceFunctor d e} ->
+  (nu : CSliceNatTrans {c=d} {d=e} g h) -> (f : CSliceFunctor c d) ->
+  CSliceNatTrans {c} {d=e} (g . f) (h . f)
+CSWhiskerLeft {c} {d} {e} {g} {h} nu f a = nu (f a)
+
+public export
+CSWhiskerRight : {0 c, d, e : Type} ->
+  {f, g : CSliceFunctor c d} ->
+  {h : CSliceFunctor d e} ->
+  CSliceFMap {c=d} {d=e} h -> (nu : CSliceNatTrans {c} {d} f g) ->
+  CSliceNatTrans {c} {d=e} (h . f) (h . g)
+CSWhiskerRight {c} {d} {e} {f} {g} {h} hm nu a = hm (f a) (g a) (nu a)
+
+public export
 CSNThcomp : {0 c, d, e : Type} ->
   {f, f' : CSliceFunctor c d} -> {g, g' : CSliceFunctor d e} ->
   CSliceFMap {c=d} {d=e} g ->
