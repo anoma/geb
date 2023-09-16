@@ -2004,7 +2004,7 @@ NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
 
 public export
 csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceMorphism b a -> CSNTCovarFunctor a b
+  flip CSliceMorphism a b -> CSNTCovarFunctor a b
 csCovarInternalYonedaToNTHom {c} {a} {b} f x =
   csCurry {x=(CSHomObj a x)} $
     CSliceCompose
@@ -2017,7 +2017,7 @@ csCovarInternalYonedaToNTHom {c} {a} {b} f x =
 
 public export
 csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSNTCovarFunctor a b -> CSliceMorphism b a
+  CSNTCovarFunctor a b -> flip CSliceMorphism a b
 csCovarInternalYonedaFromNTHom {c} {a} {b} alpha =
   csHomMorphToMeta (alpha a) (CSliceId a)
 
