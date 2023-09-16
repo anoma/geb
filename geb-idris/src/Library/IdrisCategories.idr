@@ -2445,14 +2445,8 @@ csCovarInternalYonedaToNTHom {c} {a} {b} f x =
 public export
 csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
   CSliceNatTrans (CSHomObj a) (CSHomObj b) -> CSliceMorphism b a
-csCovarInternalYonedaFromNTHom {c} {a=(a ** pa)} {b=(b ** pb)} alpha =
-  let (Element0 faa2ba flsm) = alpha (a ** pa) in
-  Element0
-    (\elb =>
-      fst0 $ snd (faa2ba (pb elb ** id)) $ Element0 elb $ flsm (pb elb ** id))
-    (\elb =>
-      trans (flsm (pb elb ** id)) $ sym $
-        snd0 $ snd (faa2ba (pb elb ** id)) $ Element0 elb $ flsm (pb elb ** id))
+csCovarInternalYonedaFromNTHom {c} {a} {b} alpha =
+  csHomMorphToMeta (alpha a) (CSliceId a)
 
 public export
 csContravarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
@@ -2463,14 +2457,8 @@ csContravarInternalYonedaToNTHom {c} {a} {b} f x =
 public export
 csContravarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
   CSliceNatTrans (CSExpObj a) (CSExpObj b) -> CSliceMorphism a b
-csContravarInternalYonedaFromNTHom {c} {a=(a ** pa)} {b=(b ** pb)} alpha =
-  let (Element0 faa2ba flsm) = alpha (a ** pa) in
-  Element0
-    (\ela =>
-      fst0 $ snd (faa2ba (pa ela ** id)) $ Element0 ela $ flsm (pa ela ** id))
-    (\ela =>
-      trans (flsm (pa ela ** id)) $ sym $
-        snd0 $ snd (faa2ba (pa ela ** id)) $ Element0 ela $ flsm (pa ela ** id))
+csContravarInternalYonedaFromNTHom {c} {a} {b} alpha =
+  csHomMorphToMeta (alpha a) (CSliceId a)
 
 ------------------------------------------------------
 ------------------------------------------------------
