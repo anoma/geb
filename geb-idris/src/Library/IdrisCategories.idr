@@ -1180,7 +1180,8 @@ CSNThcomp : {0 c, d, e : Type} ->
   CSliceNatTrans {c} {d=e} (g . f) (g' . f')
 CSNThcomp {c} {d} {e} {f} {f'} {g} {g'} gm beta alpha a =
   CSliceCompose {c=e} {u=(g (f a))} {w=(g' (f' a))}
-    (beta (f' a)) (gm (f a) (f' a) (alpha a))
+    (CSWhiskerLeft {c} {d} {e} {g} {h=g'} beta f' a)
+    (CSWhiskerRight {c} {d} {e} {f} {g=f'} {h=g} gm alpha a)
 
 public export
 CSliceFAlgMap : {0 c : Type} -> CSliceEndofunctor c -> CSliceObj c -> Type
