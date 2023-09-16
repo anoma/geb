@@ -2251,51 +2251,26 @@ csHomInternalBind {c} (a ** pa) (x ** px) (y ** py) =
 public export
 csHomMap : {c : Type} -> (a : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSHomObj a)
-csHomMap {c} (a ** pa) (x ** px) (y ** py) (Element0 m mcomm) =
-  Element0
-    (\(ec ** pc) =>
-     (ec **
-      (\(Element0 ex ecomm) =>
-       Element0 (m ex) $ trans (sym $ mcomm ex) ecomm) . pc))
-    (\(ec ** fax) => Refl)
+csHomMap {c} a =
+  csMapFromPureAndInternalBind {c} (CSHomObj a)
+    (csHomPure a) (csHomInternalBind a)
 
 public export
 csHomApply : {c : Type} ->
   (a : CSliceObj c) -> CSliceApply {c} {d=c} (CSHomObj a)
-csHomApply {c} (a ** pa) (x ** px) (y ** py) =
-  Element0
-    (\(ec ** fac) =>
-     (ec ** \(Element0 (ec' ** fax) ec'eq) =>
-      Element0 (ec ** \ea =>
-        let
-          (Element0 (ec'' ** fxy) ec''eq) = fac ea
-          ex = fax $ Element0 (fst0 ea) $ trans (snd0 ea) $ sym ec'eq
-          (Element0 ey pyceq) =
-            fxy $
-              Element0 (fst0 ex) $ trans (snd0 ex) $ trans ec'eq $ sym ec''eq
-        in
-        Element0 ey $ trans pyceq ec''eq) Refl))
-    $ \(_ ** _) => Refl
+csHomApply {c} a =
+  csApplyFromPureAndInternalBind {c} (CSHomObj a)
+    (csHomPure a) (csHomInternalBind a)
 
 public export
 csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
-csHomJoin {c} (a ** pa) (b ** pb) =
-  Element0
-    (\(elc ** facb) =>
-      (elc **
-        \ela =>
-          let
-            (Element0 fab fabeq) = facb ela
-            (Element0 elb pbeq) =
-              snd fab $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fabeq
-          in
-          Element0 elb $ trans pbeq fabeq))
-    (\(elc ** facb) => Refl)
+csHomJoin {c} a =
+  csJoinFromInternalBind {c} (CSHomObj a) (csHomInternalBind a)
 
 public export
 csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
 csHomBind {c} a =
-  csBindFromMapAndJoin (CSHomObj a) (csHomMap a) (csHomJoin {c} a)
+  csBindFromInternalBind {c} (CSHomObj a) (csHomInternalBind a)
 
 --------------------------------------------------------
 ---- Dependent combined `Reader` (`Hom`) + `Either` ----
