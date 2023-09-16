@@ -1504,49 +1504,6 @@ csFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism y (CSHomObj x z)
 csFlip {c} {x} {y} {z} = csCurry . csProdFlip . csUncurry
 
-public export
-csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceMorphism b a -> CSliceNatTrans (CSHomObj a) (CSHomObj b)
-csCovarInternalYonedaToNTHom {c} {a} {b} f x =
-  csCurry {x=(CSHomObj a x)} $
-    CSliceCompose
-      {u=(CSProdObj (CSHomObj a x) b)} {v=(CSProdObj (CSHomObj a x) a)}
-      (csEval a x)
-      (csPair {x=(CSProdObj (CSHomObj a x) b)}
-        (csProj1 (CSHomObj a x) b)
-        (CSliceCompose {u=(CSProdObj (CSHomObj a x) b)}
-          f (csProj2 (CSHomObj a x) b)))
-
-public export
-csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceNatTrans (CSHomObj a) (CSHomObj b) -> CSliceMorphism b a
-csCovarInternalYonedaFromNTHom {c} {a=(a ** pa)} {b=(b ** pb)} alpha =
-  let (Element0 faa2ba flsm) = alpha (a ** pa) in
-  Element0
-    (\elb =>
-      fst0 $ snd (faa2ba (pb elb ** id)) $ Element0 elb $ flsm (pb elb ** id))
-    (\elb =>
-      trans (flsm (pb elb ** id)) $ sym $
-        snd0 $ snd (faa2ba (pb elb ** id)) $ Element0 elb $ flsm (pb elb ** id))
-
-public export
-csContravarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceMorphism a b -> CSliceNatTrans (CSExpObj a) (CSExpObj b)
-csContravarInternalYonedaToNTHom {c} {a} {b} f x =
-  csCurry $ CSliceCompose {u=(CSProdObj (CSHomObj x a) x)} f $ csEval x a
-
-public export
-csContravarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceNatTrans (CSExpObj a) (CSExpObj b) -> CSliceMorphism a b
-csContravarInternalYonedaFromNTHom {c} {a=(a ** pa)} {b=(b ** pb)} alpha =
-  let (Element0 faa2ba flsm) = alpha (a ** pa) in
-  Element0
-    (\ela =>
-      fst0 $ snd (faa2ba (pa ela ** id)) $ Element0 ela $ flsm (pa ela ** id))
-    (\ela =>
-      trans (flsm (pa ela ** id)) $ sym $
-        snd0 $ snd (faa2ba (pa ela ** id)) $ Element0 ela $ flsm (pa ela ** id))
-
 -- A global element of an object of the slice category of `Type` over `c`.
 -- This is also precisely what a dependent-type system usually calls a
 -- pi type -- `CSGElem x` for `x` a `CSliceObj` is the analogue of
@@ -2442,6 +2399,55 @@ csContravarYonedaFromNTHom :
   CSliceMorphism a b
 csContravarYonedaFromNTHom {b} =
   csContravarYonedaFromNT {f=(flip CSliceMorphism b)}
+
+---------------------------------------------------------
+---------------------------------------------------------
+---- Yoneda-lemma forms internal to slice categories ----
+---------------------------------------------------------
+---------------------------------------------------------
+
+public export
+csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceMorphism b a -> CSliceNatTrans (CSHomObj a) (CSHomObj b)
+csCovarInternalYonedaToNTHom {c} {a} {b} f x =
+  csCurry {x=(CSHomObj a x)} $
+    CSliceCompose
+      {u=(CSProdObj (CSHomObj a x) b)} {v=(CSProdObj (CSHomObj a x) a)}
+      (csEval a x)
+      (csPair {x=(CSProdObj (CSHomObj a x) b)}
+        (csProj1 (CSHomObj a x) b)
+        (CSliceCompose {u=(CSProdObj (CSHomObj a x) b)}
+          f (csProj2 (CSHomObj a x) b)))
+
+public export
+csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceNatTrans (CSHomObj a) (CSHomObj b) -> CSliceMorphism b a
+csCovarInternalYonedaFromNTHom {c} {a=(a ** pa)} {b=(b ** pb)} alpha =
+  let (Element0 faa2ba flsm) = alpha (a ** pa) in
+  Element0
+    (\elb =>
+      fst0 $ snd (faa2ba (pb elb ** id)) $ Element0 elb $ flsm (pb elb ** id))
+    (\elb =>
+      trans (flsm (pb elb ** id)) $ sym $
+        snd0 $ snd (faa2ba (pb elb ** id)) $ Element0 elb $ flsm (pb elb ** id))
+
+public export
+csContravarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceMorphism a b -> CSliceNatTrans (CSExpObj a) (CSExpObj b)
+csContravarInternalYonedaToNTHom {c} {a} {b} f x =
+  csCurry $ CSliceCompose {u=(CSProdObj (CSHomObj x a) x)} f $ csEval x a
+
+public export
+csContravarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceNatTrans (CSExpObj a) (CSExpObj b) -> CSliceMorphism a b
+csContravarInternalYonedaFromNTHom {c} {a=(a ** pa)} {b=(b ** pb)} alpha =
+  let (Element0 faa2ba flsm) = alpha (a ** pa) in
+  Element0
+    (\ela =>
+      fst0 $ snd (faa2ba (pa ela ** id)) $ Element0 ela $ flsm (pa ela ** id))
+    (\ela =>
+      trans (flsm (pa ela ** id)) $ sym $
+        snd0 $ snd (faa2ba (pa ela ** id)) $ Element0 ela $ flsm (pa ela ** id))
 
 ------------------------------------------------------
 ------------------------------------------------------
