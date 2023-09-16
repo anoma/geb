@@ -1521,6 +1521,10 @@ CSGElem : {c : Type} -> CSliceObj c -> Type
 CSGElem {c} = CSliceMorphism (CSTermObj c)
 
 public export
+csConst : {c : Type} -> {x, y : CSliceObj c} -> CSGElem y -> CSliceMorphism x y
+csConst {c} {x} {y} ey = CSliceCompose {v=(CSTermObj c)} ey (csTermMorph x)
+
+public export
 CSHomGElem : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
 CSHomGElem = CSGElem .* CSHomObj
 
@@ -1573,6 +1577,17 @@ csHomMorphToMeta : {c : Type} -> {w, x, y, z : CSliceObj c} ->
   CSliceMorphism w x -> CSliceMorphism y z
 csHomMorphToMeta {c} {w} {x} {y} {z} =
   csHomGElemToMorph .* csAppMorphGElem {y=(CSHomObj y z)}
+
+public export
+csConstMorph : {c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism y z -> CSliceMorphism x (CSHomObj y z)
+csConstMorph {c} {x} {y} {z} =
+  csConst {c} {x} {y=(CSHomObj y z)} . csMorphToHomGElem {x=y} {y=z}
+
+public export
+csConstId : {c : Type} ->
+  {x, y : CSliceObj c} -> CSliceMorphism x (CSHomObj y y)
+csConstId {c} {x} {y} = csConstMorph {c} {x} {y} {z=y} (CSliceId y)
 
 public export
 CSHomEither : {c : Type} ->
