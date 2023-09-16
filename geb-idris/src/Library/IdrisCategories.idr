@@ -1938,6 +1938,16 @@ public export
 CSliceOfSliceObj : {c : Type} -> CSliceObj c -> Type
 CSliceOfSliceObj {c} sl = (sl' : CSliceObj c ** CSliceMorphism {c} sl' sl)
 
+-- A slice object _in_ a slice category of `Type` may also be viewed as
+-- a slice object of `Type` itself, over a product.  Slice categories of
+-- slice categories form full subcategories of slice categories over
+-- products, with the objects selected by a commutativity condition on the
+-- projections.
+public export
+CSliceCatSliceObj : {c : Type} -> CSliceObj c -> Type
+CSliceCatSliceObj {c} (x ** px) =
+  Subset0 (CSliceObj (c, x)) $ \(y ** py) => ExtEq (fst . py) (px . snd . py)
+
 public export
 Bundle : Type
 Bundle = DPair Type CSliceObj
