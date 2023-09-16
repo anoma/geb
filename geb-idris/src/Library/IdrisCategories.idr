@@ -1288,19 +1288,42 @@ csInj {c} (a ** pa) el = (el, pa el)
 -------------------------------------------------------------------------
 
 public export
+CSTypeFunctor : Type -> Type
+CSTypeFunctor c = CSliceObj c -> Type
+
+public export
+CSTypeNT : {c : Type} -> CSTypeFunctor c -> CSTypeFunctor c -> Type
+CSTypeNT {c} f g = SliceMorphism {a=(CSliceObj c)} f g
+
+public export
+CSCovarHomTypeNT : {c : Type} -> CSliceObj c -> CSTypeFunctor c -> Type
+CSCovarHomTypeNT {c} = CSTypeNT {c} . CSliceMorphism
+
+public export
+CSCovarHomHomTypeNT : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSCovarHomHomTypeNT {c} a = CSCovarHomTypeNT {c} a . CSliceMorphism
+
+public export
+CSContravarHomTypeNT : {c : Type} -> CSliceObj c -> CSTypeFunctor c -> Type
+CSContravarHomTypeNT {c} = CSTypeNT {c} . flip CSliceMorphism
+
+public export
+CSContravarHomHomTypeNT : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSContravarHomHomTypeNT {c} a = CSContravarHomTypeNT {c} a . flip CSliceMorphism
+
+public export
 csCovarYonedaToNT :
-  {c : Type} -> {f : CSliceObj c -> Type} ->
+  {c : Type} -> {f : CSTypeFunctor c} ->
   -- Morphism map for a covariant functor from `CSliceObj c` to `Type`.
   (fm : {0 v, w : CSliceObj c} -> CSliceMorphism v w -> f v -> f w) ->
   {a : CSliceObj c} ->
-  f a -> ((b : CSliceObj c) -> CSliceMorphism a b -> f b)
+  f a -> CSCovarHomTypeNT a f
 csCovarYonedaToNT {c} {f} fm {a} fa b mab = fm {v=a} {w=b} mab fa
 
 public export
 csCovarYonedaToNTHom :
   {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceMorphism b a ->
-  ((x : CSliceObj c) -> CSliceMorphism a x -> CSliceMorphism b x)
+  CSliceMorphism b a -> CSCovarHomHomTypeNT a b
 csCovarYonedaToNTHom {a} {b} =
   csCovarYonedaToNT {c} {f=(CSliceMorphism b)} {a} $ CSliceCompose {u=b}
 
@@ -1308,14 +1331,13 @@ public export
 csCovarYonedaFromNT :
   {c : Type} -> {f : CSliceObj c -> Type} ->
   {a : CSliceObj c} ->
-  ((b : CSliceObj c) -> CSliceMorphism a b -> f b) -> f a
+  CSCovarHomTypeNT a f -> f a
 csCovarYonedaFromNT {c} {f} {a} alpha = alpha a (CSliceId a)
 
 public export
 csCovarYonedaFromNTHom :
   {c : Type} -> {a, b : CSliceObj c} ->
-  ((x : CSliceObj c) -> CSliceMorphism a x -> CSliceMorphism b x) ->
-  CSliceMorphism b a
+  CSCovarHomHomTypeNT a b -> CSliceMorphism b a
 csCovarYonedaFromNTHom {b} =
   csCovarYonedaFromNT {f=(CSliceMorphism b)}
 
@@ -1326,14 +1348,13 @@ csContravarYonedaToNT :
   -- (that is to say, a functor from `op(CSliceObj c)` to `Type`).
   (fcm : {u, v : CSliceObj c} -> flip CSliceMorphism v u -> f v -> f u) ->
   {a : CSliceObj c} ->
-  f a -> ((b : CSliceObj c) -> flip CSliceMorphism a b -> f b)
+  f a -> CSContravarHomTypeNT a f
 csContravarYonedaToNT {c} {f} fcm {a} fa b mba = fcm {u=b} {v=a} mba fa
 
 public export
 csContravarYonedaToNTHom :
   {c : Type} -> {a, b : CSliceObj c} ->
-  flip CSliceMorphism b a ->
-  ((x : CSliceObj c) -> flip CSliceMorphism a x -> flip CSliceMorphism b x)
+  flip CSliceMorphism b a -> CSContravarHomHomTypeNT a b
 csContravarYonedaToNTHom {a} {b} =
   csContravarYonedaToNT {f=(flip CSliceMorphism b)} {a} $ CSlicePipe {w=b}
 
@@ -1341,14 +1362,13 @@ public export
 csContravarYonedaFromNT :
   {c : Type} -> {f : CSliceObj c -> Type} ->
   {a : CSliceObj c} ->
-  ((b : CSliceObj c) -> flip CSliceMorphism a b -> f b) -> f a
+  CSContravarHomTypeNT a f -> f a
 csContravarYonedaFromNT {c} {f} {a} alpha = alpha a (CSliceId a)
 
 public export
 csContravarYonedaFromNTHom :
   {c : Type} -> {a, b : CSliceObj c} ->
-  ((x : CSliceObj c) -> flip CSliceMorphism a x -> flip CSliceMorphism b x) ->
-  CSliceMorphism a b
+  CSContravarHomHomTypeNT a b -> flip CSliceMorphism b a
 csContravarYonedaFromNTHom {b} =
   csContravarYonedaFromNT {f=(flip CSliceMorphism b)}
 
