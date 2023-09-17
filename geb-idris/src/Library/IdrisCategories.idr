@@ -1278,6 +1278,11 @@ CSExtEq : {0 c : Type} -> {x, y : CSliceObj c} ->
 CSExtEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
   ExtEq f g
 
+-- An object of `Type/c` from a global element (term) of `c`.
+public export
+CSGObj : {0 c : Type} -> c -> CSliceObj c
+CSGObj {c} elc = (Unit ** \() => elc)
+
 -------------------------------------------------------------------------
 ---- Yoneda-lemma forms for functors from slice categories to `Type` ----
 -------------------------------------------------------------------------
