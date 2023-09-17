@@ -1417,45 +1417,6 @@ csProdFlip {x} {y} {z} =
   flip (CSliceCompose {u=(CSProdObj y x)} {v=(CSProdObj x y)}) $ csProdComm y x
 
 public export
-csEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
-  (f, g : CSliceMorphism x y) -> CSliceObj c
-csEq {c} {x} {y} (Element0 f eqf) (Element0 g eqg) =
-  (Equalizer {a=(fst x)} {b=(fst y)} f g **
-   \(Element0 el eqel) => (snd x) el
-    {- also ensured by `eqf`, `eqg`, and `eqel` to be equal to `snd y (f el)`
-     - and to `snd y (g el)` -})
-
-public export
-csEqInj : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
-  (f, g : CSliceMorphism {c} x y) -> CSliceMorphism (csEq {c} {x} {y} f g) x
-csEqInj {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
-  Element0 fst0 $ \(Element0 el eqel) => Refl
-
-public export
-0 csEqInjEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
-  (f, g : CSliceMorphism {c} x y) ->
-  CSExtEq {x=(csEq {c} {x} {y} f g)} {y}
-    (CSliceCompose {u=(csEq {c} {x} {y} f g)} {v=x} {w=y}
-      f (csEqInj {c} {x} {y} f g))
-    (CSliceCompose {u=(csEq {c} {x} {y} f g)} {v=x} {w=y}
-      g (csEqInj {c} {x} {y} f g))
-csEqInjEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
-  \(Element0 elx eqfgx) => eqfgx
-
-public export
-csEqIntro : {0 c : Type} -> {x : CSliceObj c} -> {0 w, y : CSliceObj c} ->
-  (f, g : CSliceMorphism {c} x y) ->
-  (h : CSliceMorphism {c} w x) ->
-  CSExtEq {x=w} {y}
-    (CSliceCompose {u=w} {v=x} {w=y} f h)
-    (CSliceCompose {u=w} {v=x} {w=y} g h) ->
-  CSliceMorphism w (csEq {c} {x} {y} f g)
-csEqIntro {c} {x=(x ** px)} {w=(w ** pw)} {y=(y ** py)}
-  (Element0 f eqf) (Element0 g eqg) (Element0 h eqh) fgheq =
-    Element0 (\elw => Element0 (h elw) (fgheq elw)) $
-      \elw => trans (eqh elw) Refl
-
-public export
 csDistrib : {c : Type} -> (x, y, z : CSliceObj c) ->
   CSliceMorphism
     (CSProdObj x (CSCopObj y z))
@@ -1531,16 +1492,6 @@ csFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism x (CSHomObj y z) ->
   CSliceMorphism y (CSHomObj x z)
 csFlip {c} {x} {y} {z} = csCurry . csProdFlip . csUncurry
-
-public export
-CSNTCovarFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
-CSNTCovarFunctor {c} a b =
-  CSliceNatTrans {c} {d=c} (CSHomObj a) (CSHomObj b)
-
-public export
-CSNTContravarFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
-CSNTContravarFunctor {c} a b =
-  CSliceNatTrans {c} {d=c} (CSExpObj a) (CSExpObj b)
 
 -- A global element of an object of the slice category of `Type` over `c`.
 -- This is also precisely what a dependent-type system usually calls a
@@ -1618,6 +1569,45 @@ public export
 csConstId : {c : Type} ->
   {x, y : CSliceObj c} -> CSliceMorphism x (CSHomObj y y)
 csConstId {c} {x} {y} = csConstMorph {c} {x} {y} {z=y} (CSliceId y)
+
+public export
+csEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
+  (f, g : CSliceMorphism x y) -> CSliceObj c
+csEq {c} {x} {y} (Element0 f eqf) (Element0 g eqg) =
+  (Equalizer {a=(fst x)} {b=(fst y)} f g **
+   \(Element0 el eqel) => (snd x) el
+    {- also ensured by `eqf`, `eqg`, and `eqel` to be equal to `snd y (f el)`
+     - and to `snd y (g el)` -})
+
+public export
+csEqInj : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
+  (f, g : CSliceMorphism {c} x y) -> CSliceMorphism (csEq {c} {x} {y} f g) x
+csEqInj {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
+  Element0 fst0 $ \(Element0 el eqel) => Refl
+
+public export
+0 csEqInjEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
+  (f, g : CSliceMorphism {c} x y) ->
+  CSExtEq {x=(csEq {c} {x} {y} f g)} {y}
+    (CSliceCompose {u=(csEq {c} {x} {y} f g)} {v=x} {w=y}
+      f (csEqInj {c} {x} {y} f g))
+    (CSliceCompose {u=(csEq {c} {x} {y} f g)} {v=x} {w=y}
+      g (csEqInj {c} {x} {y} f g))
+csEqInjEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
+  \(Element0 elx eqfgx) => eqfgx
+
+public export
+csEqIntro : {0 c : Type} -> {x : CSliceObj c} -> {0 w, y : CSliceObj c} ->
+  (f, g : CSliceMorphism {c} x y) ->
+  (h : CSliceMorphism {c} w x) ->
+  CSExtEq {x=w} {y}
+    (CSliceCompose {u=w} {v=x} {w=y} f h)
+    (CSliceCompose {u=w} {v=x} {w=y} g h) ->
+  CSliceMorphism w (csEq {c} {x} {y} f g)
+csEqIntro {c} {x=(x ** px)} {w=(w ** pw)} {y=(y ** py)}
+  (Element0 f eqf) (Element0 g eqg) (Element0 h eqh) fgheq =
+    Element0 (\elw => Element0 (h elw) (fgheq elw)) $
+      \elw => trans (eqh elw) Refl
 
 ------------------------------------------------------------------------------
 ---- Dependent universal morphisms (adjunctions between slice categories) ----
@@ -1875,6 +1865,16 @@ pbIntro {a} {b} {b'} {c} {p} {g} {g'} (Element0 f eqf) =
 ---------------------------------------------------------
 ---- Yoneda-lemma forms internal to slice categories ----
 ---------------------------------------------------------
+
+public export
+CSNTCovarFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSNTCovarFunctor {c} a b =
+  CSliceNatTrans {c} {d=c} (CSHomObj a) (CSHomObj b)
+
+public export
+CSNTContravarFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSNTContravarFunctor {c} a b =
+  CSliceNatTrans {c} {d=c} (CSExpObj a) (CSExpObj b)
 
 public export
 csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
