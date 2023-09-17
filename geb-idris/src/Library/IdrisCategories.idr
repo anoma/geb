@@ -1609,6 +1609,42 @@ csEqIntro {c} {x=(x ** px)} {w=(w ** pw)} {y=(y ** py)}
     Element0 (\elw => Element0 (h elw) (fgheq elw)) $
       \elw => trans (eqh elw) Refl
 
+public export
+csPullbackEq1 : {0 c : Type} -> {x, y : CSliceObj c} -> (z : CSliceObj c) ->
+  CSliceMorphism {c} x z -> CSliceMorphism {c} (CSProdObj x y) z
+csPullbackEq1 {c} {x} {y} z f =
+  CSliceCompose f {u=(CSProdObj x y)} (csProj1 x y)
+
+public export
+csPullbackEq2 : {0 c : Type} -> {x, y : CSliceObj c} -> (z : CSliceObj c) ->
+  CSliceMorphism {c} y z -> CSliceMorphism {c} (CSProdObj x y) z
+csPullbackEq2 {c} {x} {y} z g =
+  CSliceCompose g {u=(CSProdObj x y)} (csProj2 x y)
+
+public export
+CSPullback : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism {c} x z -> CSliceMorphism {c} y z -> CSliceObj c
+CSPullback {c} {x} {y} {z} f g =
+  csEq {c} {x=(CSProdObj {c} x y)} {y=z} (csPullbackEq1 z f) (csPullbackEq2 z g)
+
+public export
+csPBproj1 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
+  CSliceMorphism {c} (CSPullback {c} {x} {y} {z} f g) x
+csPBproj1 {x} {y} {z} f g =
+  CSliceCompose {u=(CSPullback f g)} {v=(CSProdObj x y)}
+    (csProj1 x y)
+    (csEqInj {x=(CSProdObj x y)} (csPullbackEq1 z f) (csPullbackEq2 z g))
+
+public export
+csPBproj2 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
+  CSliceMorphism {c} (CSPullback {c} {x} {y} {z} f g) y
+csPBproj2 {x} {y} {z} f g =
+  CSliceCompose {u=(CSPullback f g)} {v=(CSProdObj x y)}
+    (csProj2 x y)
+    (csEqInj {x=(CSProdObj x y)} (csPullbackEq1 z f) (csPullbackEq2 z g))
+
 ------------------------------------------------------------------------------
 ---- Dependent universal morphisms (adjunctions between slice categories) ----
 ------------------------------------------------------------------------------
@@ -1630,6 +1666,12 @@ public export
 CSPreImage : {0 c : Type} -> {d : Type} ->
   (d -> c) -> c -> CSliceObj d
 CSPreImage {c} {d} = (|>) (CSGObj {c}) . CSBaseChange {c} {d}
+
+public export
+CSGBCMorphOp : {c : Type} -> {0 d : Type} -> (c -> d) ->
+  CSliceObj c -> SliceObj d
+CSGBCMorphOp {c} {d} f x =
+  CSliceMorphism {c} x . CSPreImage {c=d} {d=c} f
 
 -- Sigma, also known as dependent sum.
 public export
@@ -1765,37 +1807,6 @@ csPiCounit : {c, d : Type} -> (f : c -> d) -> (x : CSliceObj c) ->
 csPiCounit {c} {d} f x =
   csPiRightAdjunct {c} {d} f {x} {y=(CSPi {c} {d} f x)}
     (CSliceId {c=d} $ CSPi {c} {d} f x)
-
-public export
-CSPullback : {0 c : Type} -> {x, y, z : CSliceObj c} ->
-  CSliceMorphism {c} x z -> CSliceMorphism {c} y z -> CSliceObj c
-CSPullback {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
-  (Element0 f eqf) (Element0 g eqg) =
-    CSSigma {c=z} {d=c} pz $ CSProdObj {c=z} (x ** f) (y ** g)
-
-public export
-csPBproj1 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
-  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
-  CSliceMorphism {c} (CSPullback {c} {x} {y} {z} f g) x
-csPBproj1 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
-  (Element0 f eqf) (Element0 g eqg) =
-    Element0 (fst . fst0) $ \(Element0 (elx, ely) eqfg) => sym $ eqf elx
-
-public export
-csPBproj2 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
-  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
-  CSliceMorphism {c} (CSPullback {c} {x} {y} {z} f g) y
-csPBproj2 {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
-  (Element0 f eqf) (Element0 g eqg) =
-    Element0 (snd . fst0) $
-      \(Element0 (elx, ely) eqfg) =>
-        trans (cong pz eqfg) (sym $ eqg ely)
-
-public export
-CSGBCMorphOp : {c : Type} -> {0 d : Type} -> (c -> d) ->
-  CSliceObj c -> SliceObj d
-CSGBCMorphOp {c} {d} f x =
-  CSliceMorphism {c} x . CSPreImage {c=d} {d=c} f
 
 public export
 CSDepExp : {c, d : Type} -> (c -> d) -> CSliceFunctor c d
