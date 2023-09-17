@@ -1902,51 +1902,6 @@ csDirichMap {dom} {dir} {pos} {cod} {f} {g} {h} a b m =
     csDepExpMap {f=g} (CSBaseChange f a) (CSBaseChange f b) $
     csBaseChangeMap {f} a b m
 
----------------------------------------------------------
----- Yoneda-lemma forms internal to slice categories ----
----------------------------------------------------------
-
-public export
-CSNTCovarFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
-CSNTCovarFunctor {c} a b =
-  CSliceNatTrans {c} {d=c} (CSHomObj a) (CSHomObj b)
-
-public export
-CSNTContravarFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
-CSNTContravarFunctor {c} a b =
-  CSliceNatTrans {c} {d=c} (CSExpObj a) (CSExpObj b)
-
-public export
-csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  flip CSliceMorphism a b -> CSNTCovarFunctor a b
-csCovarInternalYonedaToNTHom {c} {a} {b} f x =
-  csCurry {x=(CSHomObj a x)} $
-    CSliceCompose
-      {u=(CSProdObj (CSHomObj a x) b)} {v=(CSProdObj (CSHomObj a x) a)}
-      (csEval a x)
-      (csPair {x=(CSProdObj (CSHomObj a x) b)}
-        (csProj1 (CSHomObj a x) b)
-        (CSliceCompose {u=(CSProdObj (CSHomObj a x) b)}
-          f (csProj2 (CSHomObj a x) b)))
-
-public export
-csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSNTCovarFunctor a b -> flip CSliceMorphism a b
-csCovarInternalYonedaFromNTHom {c} {a} {b} alpha =
-  csHomMorphToMeta (alpha a) (CSliceId a)
-
-public export
-csContravarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSliceMorphism a b -> CSNTContravarFunctor a b
-csContravarInternalYonedaToNTHom {c} {a} {b} f x =
-  csCurry $ CSliceCompose {u=(CSProdObj (CSHomObj x a) x)} f $ csEval x a
-
-public export
-csContravarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
-  CSNTContravarFunctor a b -> CSliceMorphism a b
-csContravarInternalYonedaFromNTHom {c} {a} {b} alpha =
-  csHomMorphToMeta (alpha a) (CSliceId a)
-
 -------------------------------------------------------------------------
 ---- Internal reflections of slice morphisms within slice categories ----
 -------------------------------------------------------------------------
@@ -2001,6 +1956,51 @@ csInternalPreCompFlipApp {c} x y z =
     {z=(CSHomObj x z)}
     (csInternalPipe {c} x (CSHomObj (CSHomObj x y) y) z)
     (csInternalFlipApply {c} x y)
+
+---------------------------------------------------------
+---- Yoneda-lemma forms internal to slice categories ----
+---------------------------------------------------------
+
+public export
+CSNTCovarFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSNTCovarFunctor {c} a b =
+  CSliceNatTrans {c} {d=c} (CSHomObj a) (CSHomObj b)
+
+public export
+CSNTContravarFunctor : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
+CSNTContravarFunctor {c} a b =
+  CSliceNatTrans {c} {d=c} (CSExpObj a) (CSExpObj b)
+
+public export
+csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  flip CSliceMorphism a b -> CSNTCovarFunctor a b
+csCovarInternalYonedaToNTHom {c} {a} {b} f x =
+  csCurry {x=(CSHomObj a x)} $
+    CSliceCompose
+      {u=(CSProdObj (CSHomObj a x) b)} {v=(CSProdObj (CSHomObj a x) a)}
+      (csEval a x)
+      (csPair {x=(CSProdObj (CSHomObj a x) b)}
+        (csProj1 (CSHomObj a x) b)
+        (CSliceCompose {u=(CSProdObj (CSHomObj a x) b)}
+          f (csProj2 (CSHomObj a x) b)))
+
+public export
+csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSNTCovarFunctor a b -> flip CSliceMorphism a b
+csCovarInternalYonedaFromNTHom {c} {a} {b} alpha =
+  csHomMorphToMeta (alpha a) (CSliceId a)
+
+public export
+csContravarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSliceMorphism a b -> CSNTContravarFunctor a b
+csContravarInternalYonedaToNTHom {c} {a} {b} f x =
+  csCurry $ CSliceCompose {u=(CSProdObj (CSHomObj x a) x)} f $ csEval x a
+
+public export
+csContravarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
+  CSNTContravarFunctor a b -> CSliceMorphism a b
+csContravarInternalYonedaFromNTHom {c} {a} {b} alpha =
+  csHomMorphToMeta (alpha a) (CSliceId a)
 
 -------------------------------------
 ---- Product-of-slice categories ----
