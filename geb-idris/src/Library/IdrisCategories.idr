@@ -1571,9 +1571,9 @@ csConstId : {c : Type} ->
 csConstId {c} {x} {y} = csConstMorph {c} {x} {y} {z=y} (CSliceId y)
 
 public export
-csEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
+CSEqObj : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
   (f, g : CSliceMorphism x y) -> CSliceObj c
-csEq {c} {x} {y} (Element0 f eqf) (Element0 g eqg) =
+CSEqObj {c} {x} {y} (Element0 f eqf) (Element0 g eqg) =
   (Equalizer {a=(fst x)} {b=(fst y)} f g **
    \(Element0 el eqel) => (snd x) el
     {- also ensured by `eqf`, `eqg`, and `eqel` to be equal to `snd y (f el)`
@@ -1581,17 +1581,17 @@ csEq {c} {x} {y} (Element0 f eqf) (Element0 g eqg) =
 
 public export
 csEqInj : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
-  (f, g : CSliceMorphism {c} x y) -> CSliceMorphism (csEq {c} {x} {y} f g) x
+  (f, g : CSliceMorphism {c} x y) -> CSliceMorphism (CSEqObj {c} {x} {y} f g) x
 csEqInj {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
   Element0 fst0 $ \(Element0 el eqel) => Refl
 
 public export
 0 csEqInjEq : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
   (f, g : CSliceMorphism {c} x y) ->
-  CSExtEq {x=(csEq {c} {x} {y} f g)} {y}
-    (CSliceCompose {u=(csEq {c} {x} {y} f g)} {v=x} {w=y}
+  CSExtEq {x=(CSEqObj {c} {x} {y} f g)} {y}
+    (CSliceCompose {u=(CSEqObj {c} {x} {y} f g)} {v=x} {w=y}
       f (csEqInj {c} {x} {y} f g))
-    (CSliceCompose {u=(csEq {c} {x} {y} f g)} {v=x} {w=y}
+    (CSliceCompose {u=(CSEqObj {c} {x} {y} f g)} {v=x} {w=y}
       g (csEqInj {c} {x} {y} f g))
 csEqInjEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
   \(Element0 elx eqfgx) => eqfgx
@@ -1603,7 +1603,7 @@ csEqIntro : {0 c : Type} -> {x : CSliceObj c} -> {0 w, y : CSliceObj c} ->
   CSExtEq {x=w} {y}
     (CSliceCompose {u=w} {v=x} {w=y} f h)
     (CSliceCompose {u=w} {v=x} {w=y} g h) ->
-  CSliceMorphism w (csEq {c} {x} {y} f g)
+  CSliceMorphism w (CSEqObj {c} {x} {y} f g)
 csEqIntro {c} {x=(x ** px)} {w=(w ** pw)} {y=(y ** py)}
   (Element0 f eqf) (Element0 g eqg) (Element0 h eqh) fgheq =
     Element0 (\elw => Element0 (h elw) (fgheq elw)) $
@@ -1625,7 +1625,8 @@ public export
 CSPullback : {0 c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism {c} x z -> CSliceMorphism {c} y z -> CSliceObj c
 CSPullback {c} {x} {y} {z} f g =
-  csEq {c} {x=(CSProdObj {c} x y)} {y=z} (csPullbackEq1 z f) (csPullbackEq2 z g)
+  CSEqObj {c} {x=(CSProdObj {c} x y)} {y=z}
+    (csPullbackEq1 z f) (csPullbackEq2 z g)
 
 public export
 csPBproj1 : {0 c : Type} -> {x, y, z : CSliceObj c} ->
