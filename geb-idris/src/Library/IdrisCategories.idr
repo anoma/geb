@@ -2046,7 +2046,7 @@ csContravarInternalYonedaFromNTHom {c} {a} {b} alpha =
 
 public export
 csInternalId : {c : Type} -> (x: CSliceObj c) -> CSHomGElem x x
-csInternalId {c} x = Element0 (\elc => (elc ** id)) $ \elc => Refl
+csInternalId {c} x = csMorphToHomGElem (CSliceId x)
 
 public export
 csInternalApply : {c : Type} -> (x, y : CSliceObj c) ->
