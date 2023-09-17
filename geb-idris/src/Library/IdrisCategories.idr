@@ -1678,10 +1678,6 @@ csPBproj2 {x} {y} {z} f g =
     (csProj2 x y)
     (csEqInj {x=(CSProdObj x y)} (csPullbackEq1 z f) (csPullbackEq2 z g))
 
-------------------------------
----- Subobject classifier ----
-------------------------------
-
 ------------------------------------------------------------------------------
 ---- Dependent universal morphisms (adjunctions between slice categories) ----
 ------------------------------------------------------------------------------
