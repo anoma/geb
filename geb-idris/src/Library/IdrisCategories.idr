@@ -1862,6 +1862,8 @@ csDepExpMap {c} {d} {f} (a ** pa) (b ** pb) (Element0 m eqm) =
         (\_ => Refl))) $
     \(eld ** Element0 exp eqexp) => Refl
 
+-- Polynomial functors are compositions of base changes, dependent sums
+-- (`CSSigma`), and dependent products (`CSPi`).
 public export
 CSPolyF : {dom, dir, pos, cod : Type} ->
   (dir -> dom) -> (dir -> pos) -> (pos -> cod) ->
@@ -1869,6 +1871,7 @@ CSPolyF : {dom, dir, pos, cod : Type} ->
 CSPolyF {dom} {dir} {pos} {cod} f g h =
   CSSigma h . CSPi g . CSBaseChange f
 
+-- Polynomial functors are covariant.
 public export
 csPolyMap : {dom, dir, pos, cod : Type} ->
   {f : dir -> dom} -> {g : dir -> pos} -> {h : pos -> cod} ->
@@ -1879,6 +1882,8 @@ csPolyMap {dom} {dir} {pos} {cod} {f} {g} {h} a b m =
     csPiMap {f=g} (CSBaseChange f a) (CSBaseChange f b) $
     csBaseChangeMap {f} a b m
 
+-- Dirichlet functors are compositions of base changes, dependent sums
+-- (`CSSigma`), and dependent exponentials (`CSDepExp`).
 public export
 CSDirichF : {dom, dir, pos, cod : Type} ->
   (dir -> dom) -> (dir -> pos) -> (pos -> cod) ->
