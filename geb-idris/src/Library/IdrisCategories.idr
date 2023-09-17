@@ -2050,23 +2050,6 @@ public export
 CSqSliceObj : Type -> Type
 CSqSliceObj c = CProdSliceObj c c
 
--- The domain of the internal-bind natural transformation takes `(a, b)` to
--- `a -> f b`.
-public export
-BindAsNTdom : {c : Type} -> CSliceEndofunctor c -> CSliceFunctor (Either c c) c
-BindAsNTdom {c} f x = CSHomObj (CProdSlObj1 x) (f $ CProdSlObj2 x)
-
--- The codomain of the internal-bind natural transformation takes `(a, b)` to
--- `f a -> f b`.
-public export
-BindAsNTcod : {c : Type} -> CSliceEndofunctor c -> CSliceFunctor (Either c c) c
-BindAsNTcod {c} f x = CSHomObj (f $ CProdSlObj1 x) (f $ CProdSlObj2 x)
-
-public export
-CSliceInternalBindAsNT : {c : Type} -> CSliceEndofunctor c -> Type
-CSliceInternalBindAsNT {c} f =
-  CSliceNatTrans {c=(Either c c)} {d=c} (BindAsNTdom f) (BindAsNTcod f)
-
 ----------------------------------------------
 ---- Slice categories of slice categories ----
 ----------------------------------------------
@@ -2150,6 +2133,23 @@ public export
 csBindFromInternalBind : {c : Type} -> (f : CSliceEndofunctor c) ->
   CSliceInternalBind f -> CSliceBind f
 csBindFromInternalBind {c} f bi x y = csHomMorphToMeta (bi x y)
+
+-- The domain of the internal-bind natural transformation takes `(a, b)` to
+-- `a -> f b`.
+public export
+BindAsNTdom : {c : Type} -> CSliceEndofunctor c -> CSliceFunctor (Either c c) c
+BindAsNTdom {c} f x = CSHomObj (CProdSlObj1 x) (f $ CProdSlObj2 x)
+
+-- The codomain of the internal-bind natural transformation takes `(a, b)` to
+-- `f a -> f b`.
+public export
+BindAsNTcod : {c : Type} -> CSliceEndofunctor c -> CSliceFunctor (Either c c) c
+BindAsNTcod {c} f x = CSHomObj (f $ CProdSlObj1 x) (f $ CProdSlObj2 x)
+
+public export
+CSliceInternalBindAsNT : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceInternalBindAsNT {c} f =
+  CSliceNatTrans {c=(Either c c)} {d=c} (BindAsNTdom f) (BindAsNTcod f)
 
 -- The signature of the `join` or `multiplication` natural transformation of a
 -- slice monad.
