@@ -1953,66 +1953,6 @@ CSliceCatSliceObj : {c : Type} -> CSliceObj c -> Type
 CSliceCatSliceObj {c} (x ** px) =
   Subset0 (CSliceObj (c, x)) $ \(y ** py) => ExtEq (fst . py) (px . snd . py)
 
-public export
-Bundle : Type
-Bundle = DPair Type CSliceObj
-
-public export
-BundleBase : Bundle -> Type
-BundleBase = fst
-
-public export
-BundleTotal : Bundle -> Type
-BundleTotal (_ ** so) = fst so
-
-public export
-0 BundleProj :
-  (bundle : Bundle) -> (BundleTotal bundle) -> (BundleBase bundle)
-BundleProj (_ ** so) = snd so
-
-public export
-BundleFiber : (bundle : Bundle) -> (baseElem : BundleBase bundle) -> Type
-BundleFiber bundle baseElem =
-  Subset0 (BundleTotal bundle) (Equal baseElem . BundleProj bundle)
-
-public export
-CRefinementBy : Type -> Type
-CRefinementBy = CSliceObj . Maybe
-
-public export
-CRefinement : Type
-CRefinement = DPair Type CRefinementBy
-
-public export
-CRefinementBundle : CRefinement -> Bundle
-CRefinementBundle (base ** slice) = (Maybe base ** slice)
-
-public export
-CRefinementBase : CRefinement -> Type
-CRefinementBase (base ** _) = base
-
-public export
-CRefinementTotal : CRefinement -> Type
-CRefinementTotal = BundleTotal . CRefinementBundle
-
-public export
-0 CRefinementProj :
-  (r : CRefinement) -> (CRefinementTotal r) -> Maybe (CRefinementBase r)
-CRefinementProj (_ ** so) = snd so
-
-public export
-CRefinementFiber :
-  (r : CRefinement) -> (baseElem : Maybe (CRefinementBase r)) -> Type
-CRefinementFiber (base ** so) baseElem = BundleFiber (Maybe base ** so) baseElem
-
-public export
-JustFiber : (r : CRefinement) -> (baseElem : CRefinementBase r) -> Type
-JustFiber (base ** so) baseElem = BundleFiber (Maybe base ** so) (Just baseElem)
-
-public export
-NothingFiber : (r : CRefinement) -> Type
-NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
-
 ---------------------------------------------------------
 ---- Yoneda-lemma forms internal to slice categories ----
 ---------------------------------------------------------
@@ -2628,6 +2568,72 @@ wtfCata : {0 a : Type} -> {wtf : WTypeEndoFunc a} -> {sa : SliceObj a} ->
   WTFAlg wtf sa -> SliceMorphism {a} (WTFMu wtf) sa
 wtfCata {a} {wtf} {sa} alg _ (InWTFM (dc ** i) dm) =
   alg dc (i ** \d => wtfCata {a} {wtf} {sa} alg (wtAssign wtf (fst0 d)) $ dm d)
+
+------------------------------------------
+------------------------------------------
+---- Bundles, refinements, and fibers ----
+------------------------------------------
+------------------------------------------
+
+public export
+Bundle : Type
+Bundle = DPair Type CSliceObj
+
+public export
+BundleBase : Bundle -> Type
+BundleBase = fst
+
+public export
+BundleTotal : Bundle -> Type
+BundleTotal (_ ** so) = fst so
+
+public export
+0 BundleProj :
+  (bundle : Bundle) -> (BundleTotal bundle) -> (BundleBase bundle)
+BundleProj (_ ** so) = snd so
+
+public export
+BundleFiber : (bundle : Bundle) -> (baseElem : BundleBase bundle) -> Type
+BundleFiber bundle baseElem =
+  Subset0 (BundleTotal bundle) (Equal baseElem . BundleProj bundle)
+
+public export
+CRefinementBy : Type -> Type
+CRefinementBy = CSliceObj . Maybe
+
+public export
+CRefinement : Type
+CRefinement = DPair Type CRefinementBy
+
+public export
+CRefinementBundle : CRefinement -> Bundle
+CRefinementBundle (base ** slice) = (Maybe base ** slice)
+
+public export
+CRefinementBase : CRefinement -> Type
+CRefinementBase (base ** _) = base
+
+public export
+CRefinementTotal : CRefinement -> Type
+CRefinementTotal = BundleTotal . CRefinementBundle
+
+public export
+0 CRefinementProj :
+  (r : CRefinement) -> (CRefinementTotal r) -> Maybe (CRefinementBase r)
+CRefinementProj (_ ** so) = snd so
+
+public export
+CRefinementFiber :
+  (r : CRefinement) -> (baseElem : Maybe (CRefinementBase r)) -> Type
+CRefinementFiber (base ** so) baseElem = BundleFiber (Maybe base ** so) baseElem
+
+public export
+JustFiber : (r : CRefinement) -> (baseElem : CRefinementBase r) -> Type
+JustFiber (base ** so) baseElem = BundleFiber (Maybe base ** so) (Just baseElem)
+
+public export
+NothingFiber : (r : CRefinement) -> Type
+NothingFiber (base ** so) = BundleFiber (Maybe base ** so) Nothing
 
 -----------------------------------------------------------
 -----------------------------------------------------------
