@@ -1349,6 +1349,23 @@ csTermMorph : {0 c : Type} ->
   (so : CSliceObj c) -> CSliceMorphism so (CSTermObj c)
 csTermMorph {c} (a ** pa) = Element0 pa (\_ => Refl)
 
+-- A global element of an object of the slice category of `Type` over `c`.
+-- This is also precisely what a dependent-type system usually calls a
+-- pi type -- `CSGElem x` for `x` a `CSliceObj` is the analogue of
+-- `Pi x` for `x` a `SliceObj`.
+public export
+CSGElem : {c : Type} -> CSliceObj c -> Type
+CSGElem {c} = CSliceMorphism (CSTermObj c)
+
+public export
+csConst : {c : Type} -> {x, y : CSliceObj c} -> CSGElem y -> CSliceMorphism x y
+csConst {c} {x} {y} ey = CSliceCompose {v=(CSTermObj c)} ey (csTermMorph x)
+
+public export
+csgApp : {c : Type} -> {0 x, y : CSliceObj c} ->
+  CSliceMorphism x y -> CSGElem x -> CSGElem y
+csgApp {c} {x} {y} = CSliceCompose {u=(CSTermObj c)} {v=x} {w=y}
+
 --------------------
 ---- Coproducts ----
 --------------------
@@ -1517,26 +1534,9 @@ csFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism y (CSHomObj x z)
 csFlip {c} {x} {y} {z} = csCurry . csProdFlip . csUncurry
 
--- A global element of an object of the slice category of `Type` over `c`.
--- This is also precisely what a dependent-type system usually calls a
--- pi type -- `CSGElem x` for `x` a `CSliceObj` is the analogue of
--- `Pi x` for `x` a `SliceObj`.
-public export
-CSGElem : {c : Type} -> CSliceObj c -> Type
-CSGElem {c} = CSliceMorphism (CSTermObj c)
-
-public export
-csConst : {c : Type} -> {x, y : CSliceObj c} -> CSGElem y -> CSliceMorphism x y
-csConst {c} {x} {y} ey = CSliceCompose {v=(CSTermObj c)} ey (csTermMorph x)
-
 public export
 CSHomGElem : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
 CSHomGElem = CSGElem .* CSHomObj
-
-public export
-csgApp : {c : Type} -> {0 x, y : CSliceObj c} ->
-  CSliceMorphism x y -> CSGElem x -> CSGElem y
-csgApp {c} {x} {y} = CSliceCompose {u=(CSTermObj c)} {v=x} {w=y}
 
 public export
 csRightApp : {c : Type} -> {x, y, z : CSliceObj c} ->
