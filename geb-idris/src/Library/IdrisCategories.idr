@@ -1278,11 +1278,6 @@ CSExtEq : {0 c : Type} -> {x, y : CSliceObj c} ->
 CSExtEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
   ExtEq f g
 
-public export
-csInj : {0 c : Type} ->
-  (so : CSliceObj c) -> CSliceObjDomain so -> (CSliceObjDomain so, c)
-csInj {c} (a ** pa) el = (el, pa el)
-
 -------------------------------------------------------------------------
 ---- Yoneda-lemma forms for functors from slice categories to `Type` ----
 -------------------------------------------------------------------------
