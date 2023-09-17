@@ -1701,6 +1701,11 @@ CSPreImage : {0 c : Type} -> {d : Type} ->
 CSPreImage {c} {d} = (|>) (CSGObj {c}) . CSBaseChange {c} {d}
 
 public export
+CSGBCMorph : {c : Type} -> {0 d : Type} -> (c -> d) -> CSliceObj c -> SliceObj d
+CSGBCMorph {c} {d} f x =
+  flip (CSliceMorphism {c}) x . CSPreImage {c=d} {d=c} f
+
+public export
 CSGBCMorphOp : {c : Type} -> {0 d : Type} -> (c -> d) ->
   CSliceObj c -> SliceObj d
 CSGBCMorphOp {c} {d} f x =
@@ -1775,11 +1780,7 @@ csSigmaCounit {c} {d} f y =
   csSigmaRightAdjunct {c} {d} f {x=(CSBaseChange {c=d} {d=c} f y)} {y}
     (CSliceId {c} $ CSBaseChange {c=d} {d=c} f y)
 
-public export
-CSGBCMorph : {c : Type} -> {0 d : Type} -> (c -> d) -> CSliceObj c -> SliceObj d
-CSGBCMorph {c} {d} f x =
-  flip (CSliceMorphism {c}) x . CSPreImage {c=d} {d=c} f
-
+-- The covariant dependent hom-functor.
 public export
 CSPi : {c, d : Type} -> (c -> d) -> CSliceFunctor c d
 CSPi {c} {d} = CSliceFromSlice {c=d} .* CSGBCMorph {c} {d}
@@ -1841,6 +1842,8 @@ csPiCounit {c} {d} f x =
   csPiRightAdjunct {c} {d} f {x} {y=(CSPi {c} {d} f x)}
     (CSliceId {c=d} $ CSPi {c} {d} f x)
 
+-- The dependent exponential functor, which is the contravariant dual of
+-- the (covariant) CSPi.
 public export
 CSDepExp : {c, d : Type} -> (c -> d) -> CSliceFunctor c d
 CSDepExp {c} {d} = CSliceFromSlice {c=d} .* CSGBCMorphOp {c} {d}
