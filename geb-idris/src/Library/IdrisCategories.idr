@@ -1539,24 +1539,6 @@ csGather {c} x y z =
         (csInjR y z) (csProj2 x z)))
 
 public export
-CSBaseChange : {0 c : Type} -> {d : Type} -> (d -> c) -> CSliceFunctor c d
-CSBaseChange {c} {d} f (x ** px) = (Pullback {a=d} {b=x} {c} f px ** fst . fst0)
-
-public export
-csBaseChangeMap : {0 c, d : Type} -> {0 f : d -> c} ->
-  CSliceFMap {c} {d} (CSBaseChange {c} {d} f)
-csBaseChangeMap {c} {d} {f} (a ** pa) (b ** pb) (Element0 g eqg) =
-  Element0
-    (\(Element0 (eld, ela) eqfpa) =>
-      Element0 (eld, g ela) $ trans eqfpa $ eqg ela)
-    (\(Element0 (eld, ela) eqfpa) => Refl)
-
-public export
-CSPreImage : {0 c : Type} -> {d : Type} ->
-  (d -> c) -> c -> CSliceObj d
-CSPreImage {c} {d} f elc = CSBaseChange {c} {d} f (Unit ** \() => elc)
-
-public export
 CSHomObj : {c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
 CSHomObj {c} x y =
   ((el : c ** (PreImage (snd x) el -> PreImage (snd y) el)) ** fst)
@@ -1691,9 +1673,22 @@ csConstId : {c : Type} ->
 csConstId {c} {x} {y} = csConstMorph {c} {x} {y} {z=y} (CSliceId y)
 
 public export
-CSHomEither : {c : Type} ->
-  CSliceObj c -> CSliceObj c -> CSliceEndofunctor c
-CSHomEither {c} a e = CSHomObj {c} a . CSCopObj {c} e
+CSBaseChange : {0 c : Type} -> {d : Type} -> (d -> c) -> CSliceFunctor c d
+CSBaseChange {c} {d} f (x ** px) = (Pullback {a=d} {b=x} {c} f px ** fst . fst0)
+
+public export
+csBaseChangeMap : {0 c, d : Type} -> {0 f : d -> c} ->
+  CSliceFMap {c} {d} (CSBaseChange {c} {d} f)
+csBaseChangeMap {c} {d} {f} (a ** pa) (b ** pb) (Element0 g eqg) =
+  Element0
+    (\(Element0 (eld, ela) eqfpa) =>
+      Element0 (eld, g ela) $ trans eqfpa $ eqg ela)
+    (\(Element0 (eld, ela) eqfpa) => Refl)
+
+public export
+CSPreImage : {0 c : Type} -> {d : Type} ->
+  (d -> c) -> c -> CSliceObj d
+CSPreImage {c} {d} = (|>) (CSGObj {c}) . CSBaseChange {c} {d}
 
 -- Sigma, also known as dependent sum.
 public export
@@ -2451,6 +2446,11 @@ csHomBind {c} a =
 --------------------------------------------------------
 ---- Dependent combined `Reader` (`Hom`) + `Either` ----
 --------------------------------------------------------
+
+public export
+CSHomEither : {c : Type} ->
+  CSliceObj c -> CSliceObj c -> CSliceEndofunctor c
+CSHomEither {c} a e = CSHomObj {c} a . CSCopObj {c} e
 
 public export
 csHomEitherPure : {c : Type} -> (a, e : CSliceObj c) ->
