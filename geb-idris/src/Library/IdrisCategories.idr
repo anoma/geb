@@ -1524,12 +1524,14 @@ csGather : {c : Type} -> (x, y, z : CSliceObj c) ->
     (CSProdObj x (CSCopObj y z))
 csGather {c} x y z =
   csPair {x=(CSCopObj (CSProdObj x y) (CSProdObj x z))}
-    (csCase {x=(CSProdObj x y)} {y=(CSProdObj x z)}
+    (csCase {x=(CSProdObj x y)} {y=(CSProdObj x z)} {z=x}
       (csProj1 x y)
       (csProj1 x z))
-    (csCase {x=(CSProdObj x y)} {y=(CSProdObj x z)}
-      (CSliceCompose {u=(CSProdObj x y)} (csInjL y z) (csProj2 x y))
-      (CSliceCompose {u=(CSProdObj x z)} (csInjR y z) (csProj2 x z)))
+    (csCase {x=(CSProdObj x y)} {y=(CSProdObj x z)} {z=(CSCopObj y z)}
+      (CSliceCompose {u=(CSProdObj x y)} {w=(CSCopObj y z)}
+        (csInjL y z) (csProj2 x y))
+      (CSliceCompose {u=(CSProdObj x z)} {w=(CSCopObj y z)}
+        (csInjR y z) (csProj2 x z)))
 
 public export
 CSBaseChange : {0 c : Type} -> {d : Type} -> (d -> c) -> CSliceFunctor c d
