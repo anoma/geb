@@ -1066,7 +1066,7 @@ CSliceMorphism : {0 c : Type} -> CSliceObj c -> CSliceObj c -> Type
 CSliceMorphism x y =
   Subset0
     (CSliceObjDomain x -> CSliceObjDomain y)
-    (ExtEq (CSliceObjMap x) . ((.) (CSliceObjMap y)))
+    (ExtEq (CSliceObjMap x) . (.) (CSliceObjMap y))
 
 public export
 CSliceMorphismMap : {0 c : Type} -> {0 x, y : CSliceObj c} ->
