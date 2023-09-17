@@ -1902,18 +1902,6 @@ csDirichMap {dom} {dir} {pos} {cod} {f} {g} {h} a b m =
     csDepExpMap {f=g} (CSBaseChange f a) (CSBaseChange f b) $
     csBaseChangeMap {f} a b m
 
--- Pullback introduction in `Type` using slice morphisms.
-public export
-pbIntro : {0 a, b, b', c : Type} -> {0 p : a -> c} ->
-  {0 g : b -> c} -> {0 g' : b' -> c} ->
-  (f : CSliceMorphism {c} (a ** p) (CSProdObj {c} (b ** g) (b' ** g'))) ->
-  CSliceMorphism {c=(b, b')}
-    (a ** \ela => fst0 (fst0 f ela))
-    (Pullback {a=b} {b=b'} {c} g g' **
-     \el => (pbProj1 {f=g} {g=g'} el, pbProj2 {f=g} {g=g'} el))
-pbIntro {a} {b} {b'} {c} {p} {g} {g'} (Element0 f eqf) =
-  Element0 f $ \ela => pairFstSnd (fst0 $ f ela)
-
 ---------------------------------------------------------
 ---- Yoneda-lemma forms internal to slice categories ----
 ---------------------------------------------------------
