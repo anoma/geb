@@ -1417,20 +1417,6 @@ csProdFlip {x} {y} {z} =
   flip (CSliceCompose {u=(CSProdObj y x)} {v=(CSProdObj x y)}) $ csProdComm y x
 
 public export
-csDistrib : {c : Type} -> (x, y, z : CSliceObj c) ->
-  CSliceMorphism
-    (CSProdObj x (CSCopObj y z))
-    (CSCopObj (CSProdObj x y) (CSProdObj x z))
-csDistrib {c} (x ** px) (y ** py) (z ** pz) =
-  Element0
-    (\(Element0 (elx, eleyz) pxeyz) => case eleyz of
-      Left ely => Left $ Element0 (elx, ely) pxeyz
-      Right elz => Right $ Element0 (elx, elz) pxeyz)
-    (\(Element0 (elx, eleyz) pxeyz) => case eleyz of
-      Left ely => Refl
-      Right elz => Refl)
-
-public export
 csGather : {c : Type} -> (x, y, z : CSliceObj c) ->
   CSliceMorphism
     (CSCopObj (CSProdObj x y) (CSProdObj x z))
@@ -1445,6 +1431,20 @@ csGather {c} x y z =
         (csInjL y z) (csProj2 x y))
       (CSliceCompose {u=(CSProdObj x z)} {w=(CSCopObj y z)}
         (csInjR y z) (csProj2 x z)))
+
+public export
+csDistrib : {c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism
+    (CSProdObj x (CSCopObj y z))
+    (CSCopObj (CSProdObj x y) (CSProdObj x z))
+csDistrib {c} (x ** px) (y ** py) (z ** pz) =
+  Element0
+    (\(Element0 (elx, eleyz) pxeyz) => case eleyz of
+      Left ely => Left $ Element0 (elx, ely) pxeyz
+      Right elz => Right $ Element0 (elx, elz) pxeyz)
+    (\(Element0 (elx, eleyz) pxeyz) => case eleyz of
+      Left ely => Refl
+      Right elz => Refl)
 
 public export
 CSHomObj : {c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
