@@ -2132,6 +2132,19 @@ CSliceFLift' {f} = CSliceFLift {f} (map {f})
 ---- General operations ----
 ----------------------------
 
+-- The signature of the `pure` or `unit` natural transformation of an
+-- applicative slice endofunctor (such as any slice monad).
+public export
+CSlicePure : {c : Type} -> CSliceEndofunctor c -> Type
+CSlicePure {c} = CSliceNatTrans {c} {d=c} (CSIdF c)
+
+public export
+CSlicePureCompose : {c : Type} ->
+  (g, f : CSliceEndofunctor c) ->
+  CSlicePure g -> CSlicePure f ->
+  CSlicePure (g . f)
+CSlicePureCompose {c} g f pg pf a = CSliceCompose (pg (f a)) (pf a)
+
 -- The signature of the `apply` morphism of an applicative slice endofunctor.
 public export
 CSliceApply : {c, d : Type} -> CSliceFunctor c d -> Type
@@ -2148,19 +2161,6 @@ CSliceApplyCompose {c} {d} {e} g f gm ag af x y =
   CSliceCompose {u=(g (f (CSHomObj x y)))} {w=(CSHomObj (g (f x)) (g (f y)))}
     (ag (f x) (f y))
     (gm (f (CSHomObj x y)) (CSHomObj (f x) (f y)) (af x y))
-
--- The signature of the `pure` or `unit` natural transformation of an
--- applicative slice endofunctor (such as any slice monad).
-public export
-CSlicePure : {c : Type} -> CSliceEndofunctor c -> Type
-CSlicePure {c} = CSliceNatTrans {c} {d=c} (CSIdF c)
-
-public export
-CSlicePureCompose : {c : Type} ->
-  (g, f : CSliceEndofunctor c) ->
-  CSlicePure g -> CSlicePure f ->
-  CSlicePure (g . f)
-CSlicePureCompose {c} g f pg pf a = CSliceCompose (pg (f a)) (pf a)
 
 -- The signature of the `bind` morphism of a slice monad.
 public export
