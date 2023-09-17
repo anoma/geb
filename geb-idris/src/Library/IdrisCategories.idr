@@ -1192,6 +1192,17 @@ CSNThcomp {c} {d} {e} {f} {f'} {g} {g'} gm beta alpha a =
     (CSWhiskerRight {c} {d} {e} {f} {g=f'} {h=g} gm alpha a)
 
 public export
+CSExtEq : {0 c : Type} -> {x, y : CSliceObj c} ->
+  (f, g : CSliceMorphism x y) -> Type
+CSExtEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
+  ExtEq f g
+
+-- An object of `Type/c` from a global element (term) of `c`.
+public export
+CSGObj : {0 c : Type} -> c -> CSliceObj c
+CSGObj {c} elc = (Unit ** \() => elc)
+
+public export
 CSliceFAlgMap : {0 c : Type} -> CSliceEndofunctor c -> CSliceObj c -> Type
 CSliceFAlgMap {c} f a = CSliceMorphism {c} (f a) a
 
@@ -1218,6 +1229,10 @@ CSMorphFromSlice : {c : Type} -> {x, y : SliceObj c} ->
   CSliceMorphism {c} (CSliceFromSlice {c} x) (CSliceFromSlice {c} y)
 CSMorphFromSlice {c} {x} {y} m =
   Element0 (\(elc ** elx) => (elc ** m elc elx)) $ \(elc ** elx) => Refl
+
+-----------------------------------------------
+---- Higher categories of slice categories ----
+-----------------------------------------------
 
 -- The slices of `Type` themselves form a (two-)category (which is internal to
 -- `Type`), where the morphisms, as usual in a two-category, are the functors
@@ -1275,17 +1290,6 @@ public export
 CSliceFLift' : {f : Type -> Type} -> Functor f =>
   (c : Type) -> CSliceFunctor c (f c)
 CSliceFLift' {f} = CSliceFLift {f} (map {f})
-
-public export
-CSExtEq : {0 c : Type} -> {x, y : CSliceObj c} ->
-  (f, g : CSliceMorphism x y) -> Type
-CSExtEq {c} {x=(x ** px)} {y=(y ** py)} (Element0 f eqf) (Element0 g eqg) =
-  ExtEq f g
-
--- An object of `Type/c` from a global element (term) of `c`.
-public export
-CSGObj : {0 c : Type} -> c -> CSliceObj c
-CSGObj {c} elc = (Unit ** \() => elc)
 
 -------------------------------------------------------------------------
 ---- Yoneda-lemma forms for functors from slice categories to `Type` ----
