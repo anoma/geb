@@ -1323,6 +1323,10 @@ csContravarYonedaFromNTHom {b} =
 ---- Universal morphisms and derived utilities in slice categories ----
 -----------------------------------------------------------------------
 
+------------------------
+---- Initial object ----
+------------------------
+
 public export
 CSInitObj : (c : Type) -> CSliceObj c
 CSInitObj c = (Void ** voidF c)
@@ -1332,6 +1336,10 @@ csInitMorph : {0 c : Type} ->
   (so : CSliceObj c) -> CSliceMorphism (CSInitObj c) so
 csInitMorph {c} (a ** pa) = Element0 (voidF a) (\el => void el)
 
+-------------------------
+---- Terminal object ----
+-------------------------
+
 public export
 CSTermObj : (c : Type) -> CSliceObj c
 CSTermObj c = (c ** id)
@@ -1340,6 +1348,10 @@ public export
 csTermMorph : {0 c : Type} ->
   (so : CSliceObj c) -> CSliceMorphism so (CSTermObj c)
 csTermMorph {c} (a ** pa) = Element0 pa (\_ => Refl)
+
+--------------------
+---- Coproducts ----
+--------------------
 
 public export
 CSCopObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
@@ -1364,6 +1376,10 @@ csCase {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
       \el => case el of
         Left ex => eqf ex
         Right ey => eqg ey
+
+------------------
+---- Products ----
+------------------
 
 public export
 CSProdObj : {0 c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
@@ -1432,6 +1448,10 @@ csGather {c} x y z =
       (CSliceCompose {u=(CSProdObj x z)} {w=(CSCopObj y z)}
         (csInjR y z) (csProj2 x z)))
 
+------------------------
+---- Distributivity ----
+------------------------
+
 public export
 csDistrib : {c : Type} -> (x, y, z : CSliceObj c) ->
   CSliceMorphism
@@ -1445,6 +1465,10 @@ csDistrib {c} (x ** px) (y ** py) (z ** pz) =
     (\(Element0 (elx, eleyz) pxeyz) => case eleyz of
       Left ely => Refl
       Right elz => Refl)
+
+------------------------------------
+---- Hom-objects (exponentials) ----
+------------------------------------
 
 public export
 CSHomObj : {c : Type} -> CSliceObj c -> CSliceObj c -> CSliceObj c
@@ -1570,6 +1594,10 @@ csConstId : {c : Type} ->
   {x, y : CSliceObj c} -> CSliceMorphism x (CSHomObj y y)
 csConstId {c} {x} {y} = csConstMorph {c} {x} {y} {z=y} (CSliceId y)
 
+--------------------
+---- Equalizers ----
+--------------------
+
 public export
 CSEqObj : {0 c : Type} -> {x : CSliceObj c} -> {0 y : CSliceObj c} ->
   (f, g : CSliceMorphism x y) -> CSliceObj c
@@ -1608,6 +1636,10 @@ csEqIntro {c} {x=(x ** px)} {w=(w ** pw)} {y=(y ** py)}
   (Element0 f eqf) (Element0 g eqg) (Element0 h eqh) fgheq =
     Element0 (\elw => Element0 (h elw) (fgheq elw)) $
       \elw => trans (eqh elw) Refl
+
+----------------------------------------------------------
+---- Pullbacks (derived from products and equalizers) ----
+----------------------------------------------------------
 
 public export
 csPullbackEq1 : {0 c : Type} -> {x, y : CSliceObj c} -> (z : CSliceObj c) ->
