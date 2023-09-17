@@ -1929,30 +1929,6 @@ pbIntro : {0 a, b, b', c : Type} -> {0 p : a -> c} ->
 pbIntro {a} {b} {b'} {c} {p} {g} {g'} (Element0 f eqf) =
   Element0 f $ \ela => pairFstSnd (fst0 $ f ela)
 
-public export
-CSliceOverSliceObj : {0 c : Type} -> CSliceObj c -> Type
-CSliceOverSliceObj {c} sl = CSliceObj (CSGSigma {c} sl)
-
-public export
-CSliceOverSliceToBaseSlice : {0 c : Type} -> {sl : CSliceObj c} ->
-  CSliceOverSliceObj sl -> CSliceObj c
-CSliceOverSliceToBaseSlice {c} {sl=(x ** px)} (y ** py) =
-  (CSGSigma {c=x} (y ** py) ** px . py)
-
-public export
-CSliceOfSliceObj : {c : Type} -> CSliceObj c -> Type
-CSliceOfSliceObj {c} sl = (sl' : CSliceObj c ** CSliceMorphism {c} sl' sl)
-
--- A slice object _in_ a slice category of `Type` may also be viewed as
--- a slice object of `Type` itself, over a product.  Slice categories of
--- slice categories form full subcategories of slice categories over
--- products, with the objects selected by a commutativity condition on the
--- projections.
-public export
-CSliceCatSliceObj : {c : Type} -> CSliceObj c -> Type
-CSliceCatSliceObj {c} (x ** px) =
-  Subset0 (CSliceObj (c, x)) $ \(y ** py) => ExtEq (fst . py) (px . snd . py)
-
 ---------------------------------------------------------
 ---- Yoneda-lemma forms internal to slice categories ----
 ---------------------------------------------------------
@@ -2090,6 +2066,34 @@ public export
 CSliceInternalBindAsNT : {c : Type} -> CSliceEndofunctor c -> Type
 CSliceInternalBindAsNT {c} f =
   CSliceNatTrans {c=(Either c c)} {d=c} (BindAsNTdom f) (BindAsNTcod f)
+
+----------------------------------------------
+---- Slice categories of slice categories ----
+----------------------------------------------
+
+public export
+CSliceOverSliceObj : {0 c : Type} -> CSliceObj c -> Type
+CSliceOverSliceObj {c} sl = CSliceObj (CSGSigma {c} sl)
+
+public export
+CSliceOverSliceToBaseSlice : {0 c : Type} -> {sl : CSliceObj c} ->
+  CSliceOverSliceObj sl -> CSliceObj c
+CSliceOverSliceToBaseSlice {c} {sl=(x ** px)} (y ** py) =
+  (CSGSigma {c=x} (y ** py) ** px . py)
+
+public export
+CSliceOfSliceObj : {c : Type} -> CSliceObj c -> Type
+CSliceOfSliceObj {c} sl = (sl' : CSliceObj c ** CSliceMorphism {c} sl' sl)
+
+-- A slice object _in_ a slice category of `Type` may also be viewed as
+-- a slice object of `Type` itself, over a product.  Slice categories of
+-- slice categories form full subcategories of slice categories over
+-- products, with the objects selected by a commutativity condition on the
+-- projections.
+public export
+CSliceCatSliceObj : {c : Type} -> CSliceObj c -> Type
+CSliceCatSliceObj {c} (x ** px) =
+  Subset0 (CSliceObj (c, x)) $ \(y ** py) => ExtEq (fst . py) (px . snd . py)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
