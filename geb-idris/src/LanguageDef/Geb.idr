@@ -477,6 +477,7 @@ binTreeFMtraverse : {0 f : Type -> Type} ->
 binTreeFMtraverse {f} {func} {app} {a} {b} =
   (.) (binTreeFMsequence {f} {func} {app} {a=b}) . binTreeFMmap
 
+public export
 Traversable (BinTreeFM atom) where
   traverse {f} =
     binTreeFMtraverse
