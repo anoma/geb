@@ -1027,6 +1027,10 @@ SliceAna {a} f =
 ------------------------------------------
 ------------------------------------------
 
+----------------------------------------------------------
+---- General slice-category definitions and utilities ----
+----------------------------------------------------------
+
 -- The category-theoretic style of defining slice objects (which is
 -- sort of dual to, or backwards from, the style of dependent types
 -- with universes, i.e. where an object of `Type/c` is a predicate
@@ -1372,9 +1376,9 @@ csContravarYonedaFromNTHom :
 csContravarYonedaFromNTHom {b} =
   csContravarYonedaFromNT {f=(flip CSliceMorphism b)}
 
--------------------------------------------------
----- Universal morphisms in slice categories ----
--------------------------------------------------
+-----------------------------------------------------------------------
+---- Universal morphisms and derived utilities in slice categories ----
+-----------------------------------------------------------------------
 
 public export
 CSInitObj : (c : Type) -> CSliceObj c
@@ -1671,6 +1675,10 @@ public export
 csConstId : {c : Type} ->
   {x, y : CSliceObj c} -> CSliceMorphism x (CSHomObj y y)
 csConstId {c} {x} {y} = csConstMorph {c} {x} {y} {z=y} (CSliceId y)
+
+------------------------------------------------------------------------------
+---- Dependent universal morphisms (adjunctions between slice categories) ----
+------------------------------------------------------------------------------
 
 public export
 CSBaseChange : {0 c : Type} -> {d : Type} -> (d -> c) -> CSliceFunctor c d
