@@ -2049,30 +2049,53 @@ CSqSliceObj c = CProdSliceObj c c
 ---- Slice categories of slice categories ----
 ----------------------------------------------
 
+-- As with a slice category of `Type`, an object of a slice category of a
+-- slice category of `Type` is an object together with a morphism to the
+-- object over which we are slicing the base category; in this case, a
+-- _slice_ object together with a _slice_ morphism to the _slice_ object
+-- over which we are slicing the slice category.
 public export
 CSliceObjOfSliceCat : {c : Type} -> CSliceObj c -> Type
 CSliceObjOfSliceCat {c} sl = (sl' : CSliceObj c ** CSliceMorphism {c} sl' sl)
 
+-- We shall show below that there is a second way of viewing a slice object
+-- of a slice category:  as a slice category of `Type`, over a sigma object
+-- (in `Type`) -- the sigma object being the result of applying the sigma
+-- functor from the slice category to `Type` to the object over which we are
+-- slicing the slice category.  When taking a dependent-type perspective and
+-- viewing the slice category as the category of types depending on the object
+-- over which we are slicing, the result of applying the sigma-to-`Type`
+-- functor to an object of that category is the dependent sum (pair) of that
+-- object viewed as a predicate (i.e. a function from the type corresponding
+-- to the object over which we are slicing to `Type` itself).
 public export
 CSliceObjOverSigma : {0 c : Type} -> CSliceObj c -> Type
 CSliceObjOverSigma {c} sl = CSliceObj (CSGSigma {c} sl)
 
+-- This shows how given a slice object over a sigma type (which we have noted
+-- above and shall show below is equivalent to an object of a slice category
+-- of a slice category) can be viewed as a slice object of the base type
+-- (the base type, from the dependent-type perspective, being the first,
+-- non-dependent component of the dependent sum/pair).
 public export
 CSliceObjOverSigmaToBaseSlice : {0 c : Type} -> {sl : CSliceObj c} ->
-  CSliceObjOverSigma sl -> CSliceObj c
+  CSliceObjOverSigma {c} sl -> CSliceObj c
 CSliceObjOverSigmaToBaseSlice {c} {sl=(x ** px)} (y ** py) =
   (CSGSigma {c=x} (y ** py) ** px . py)
 
--- A slice object _in_ a slice category of `Type` may also be viewed as
--- a slice object of `Type` itself, over a product.  Slice categories of
--- slice categories form full subcategories of slice categories over
--- products, with the objects selected by a commutativity condition on the
--- projections.
+-- There is also a second way of viewing an object of a slice category of a
+-- slice category as a slice object of `Type` itself (i.e. a third way of
+-- viewing such objects), as an object of a _full subcategory_ of a slice
+-- category over a product, where the objects of the full subcategory are
+-- selected by an additional commutativity condition.
 public export
 CSliceOverProdSubcatObj : {c : Type} -> CSliceObj c -> Type
 CSliceOverProdSubcatObj {c} (x ** px) =
   Subset0 (CSliceObj (c, x)) $ \(y ** py) => ExtEq (fst . py) (px . snd . py)
 
+-- Here we show the equivalence of the three ways of viewing objects of
+-- slice categories of slice categories, by converting them amongst each
+-- other in a loop.
 public export
 CSliceObjOfSliceCatToSliceObjOverSigma : {c : Type} -> {x : CSliceObj c} ->
   CSliceObjOfSliceCat {c} x -> CSliceObjOverSigma {c} x
@@ -2093,14 +2116,25 @@ CSliceOverProdSubcatToSliceObjOfSliceCat {c} {x=(x ** px)}
   (Element0 (y ** py) ycomm) =
     ((y ** fst . py) ** Element0 (snd . py) ycomm)
 
+-- Relatedly, there is also an alternative way of looking at pullbacks: a
+-- pullback in a slice category (including a slice category over the terminal
+-- object, which is equivalent to simply `Type` itself) may be viewed as
+-- a product in a slice category over the sigma object of the object over which
+-- `Type` is being sliced.  Because of the equivalence above, this means that
+-- a pullback constitutes a _fourth_ way of viewing an object of a slice
+-- category of a slice category.
 public export
 CSPullbackAsSigmaSliceProd : {c : Type} -> {x, y, z : CSliceObj c} ->
   (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
-  CSliceObj (CSGSigma {c} z)
+  CSliceObjOverSigma {c} z
 CSPullbackAsSigmaSliceProd {c} {x=(x ** px)} {y=(y ** py)} {z=z@(zb ** pz)}
   (Element0 f fcomm) (Element0 g gcomm) =
     CSProdObj {c=(CSGSigma {c} z)} (x ** f) (y ** g)
 
+-- Here we show the equivalence of the definition of pullback as a slice
+-- object over a sigma type with the earlier definition of pullback as an
+-- equalizer of products (which is also equivalent to the direct
+-- universal-morphism definition of pullbacks).
 public export
 CSPullbackToSigmaSliceProd : {c : Type} -> {x, y, z : CSliceObj c} ->
   (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
