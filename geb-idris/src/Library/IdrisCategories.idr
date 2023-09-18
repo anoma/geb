@@ -1643,6 +1643,32 @@ csEqIntro {c} {x=(x ** px)} {w=(w ** pw)} {y=(y ** py)}
     Element0 (\elw => Element0 (h elw) (fgheq elw)) $
       \elw => trans (eqh elw) Refl
 
+------------------------------------------------------
+---- Distributivity of equalizers over coproducts ----
+------------------------------------------------------
+
+public export
+csEqDistrib : {c : Type} -> {x, y, z : CSliceObj c} ->
+  (f, g : CSliceMorphism {c} (CSCopObj x y) z) ->
+  CSliceMorphism
+    (CSEqObj {c} {x=(CSCopObj x y)} {y=z} f g)
+    (CSCopObj
+      (CSEqObj {c} {x} {y=z}
+        (CSliceCompose {u=x} {v=(CSCopObj x y)} {w=z} f (csInjL x y))
+        (CSliceCompose {u=x} {v=(CSCopObj x y)} {w=z} g (csInjL x y)))
+      (CSEqObj {c} {x=y} {y=z}
+        (CSliceCompose {u=y} {v=(CSCopObj x y)} {w=z} f (csInjR x y))
+        (CSliceCompose {u=y} {v=(CSCopObj x y)} {w=z} g (csInjR x y))))
+csEqDistrib {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f fcomm) (Element0 g gcomm) =
+    Element0
+      (\(Element0 exy fgeq) => case exy of
+        Left elx => Left $ Element0 elx fgeq
+        Right ely => Right $ Element0 ely fgeq)
+      (\(Element0 exy fgeq) => case exy of
+        Left elx => Refl
+        Right ely => Refl)
+
 ----------------------------------------------------------
 ---- Pullbacks (derived from products and equalizers) ----
 ----------------------------------------------------------
