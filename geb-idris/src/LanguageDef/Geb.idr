@@ -244,7 +244,7 @@ ProdAlgToFree {a} = prodFMEvalMon {v=a}
 
 public export
 ProdAlgFromFree : {0 a : Type} -> ProdFMAlg a -> ProdAlg a
-ProdAlgFromFree {a} = (|>) (($>) . mapHom ($!))
+ProdAlgFromFree {a} = (|>) (($>) . map {f=ProductMonad} ($!))
 
 -- Like `prodFMapp` but with a monoid on the output factored out.
 -- Should have the same input-output behavior as, but perhaps building
