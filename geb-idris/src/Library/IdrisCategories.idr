@@ -1722,6 +1722,34 @@ pbIntro : {0 a, b, b', c : Type} -> {0 p : a -> c} ->
 pbIntro {a} {b} {b'} {c} {p} {g} {g'} (Element0 f eqf) =
   Element0 f $ \ela => pairFstSnd (fst0 $ f ela)
 
+------------------------------------------------------
+---- Distributivity of pullbacks over coproducts -----
+------------------------------------------------------
+
+public export
+csPullbackDistrib : {c : Type} -> {w, x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism {c} w z) ->
+  (g : CSliceMorphism {c} (CSCopObj x y) z) ->
+  CSliceMorphism
+    (CSPullback {c} {x=w} {y=(CSCopObj x y)} {z} f g)
+    (CSCopObj {c}
+      (CSPullback {c} {x=w} {y=x} {z}
+        f
+        (CSliceCompose {u=x} {v=(CSCopObj x y)} {w=z} g (csInjL x y)))
+      (CSPullback {c} {x=w} {y} {z} f
+        (CSliceCompose {u=y} {v=(CSCopObj x y)} {w=z} g (csInjR x y))))
+csPullbackDistrib {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f fcomm) (Element0 g gcomm) =
+    Element0
+      (\(Element0 (Element0 (elw, exy) wxyeq) fgeq) =>
+        case exy of
+          Left elx => Left $ Element0 (Element0 (elw, elx) wxyeq) fgeq
+          Right ely => Right $ Element0 (Element0 (elw, ely) wxyeq) fgeq)
+      (\(Element0 (Element0 (elw, exy) wxyeq) fgeq) =>
+        case exy of
+          Left elx => Refl
+          Right ely => Refl)
+
 ------------------------------------------------------------------------------
 ---- Dependent universal morphisms (adjunctions between slice categories) ----
 ------------------------------------------------------------------------------
