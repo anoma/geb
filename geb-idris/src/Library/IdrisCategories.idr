@@ -1471,9 +1471,9 @@ csGather {c} x y z =
       (CSliceCompose {u=(CSProdObj x z)} {w=(CSCopObj y z)}
         (csInjR y z) (csProj2 x z)))
 
-------------------------
----- Distributivity ----
-------------------------
+----------------------------------------------------
+---- Distributivity of products over coproducts ----
+----------------------------------------------------
 
 public export
 csDistrib : {c : Type} -> (x, y, z : CSliceObj c) ->
