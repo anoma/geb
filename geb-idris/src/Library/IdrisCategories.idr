@@ -694,6 +694,12 @@ public export
   a
 ChiPbToDomType = ChiForHPropPbToDom
 
+public export
+0 ChiForHPropDomToPbBase : {0 a, b : Type} ->
+  (f : a -> b) -> (isMonic : (x, y : a) -> f x = f y -> x = y) ->
+  a -> (a, b)
+ChiForHPropDomToPbBase {a} {b} f isMonic ela = (ela, f ela)
+
 ----------------------------------------------------
 ----------------------------------------------------
 ---- Natural transformations and their algebras ----
