@@ -2073,6 +2073,24 @@ CSliceCatSliceObj : {c : Type} -> CSliceObj c -> Type
 CSliceCatSliceObj {c} (x ** px) =
   Subset0 (CSliceObj (c, x)) $ \(y ** py) => ExtEq (fst . py) (px . snd . py)
 
+public export
+CSliceOfSliceProdToMorph : {c : Type} -> {x : CSliceObj c} ->
+  CSliceCatSliceObj {c} x -> CSliceOfSliceObj {c} x
+CSliceOfSliceProdToMorph {c} {x=(x ** px)} (Element0 (y ** py) ycomm) =
+  ((y ** fst . py) ** Element0 (snd . py) ycomm)
+
+public export
+CSliceOfSliceMorphToSigma : {c : Type} -> {x : CSliceObj c} ->
+  CSliceOfSliceObj {c} x -> CSliceOverSliceObj {c} x
+CSliceOfSliceMorphToSigma {c} {x=(x ** pxc)} ((y ** pyc) ** Element0 pyx comm) =
+  (y ** pyx)
+
+public export
+CSliceOfSliceSigmaToProd : {c : Type} -> {x : CSliceObj c} ->
+  CSliceOverSliceObj {c} x -> CSliceCatSliceObj {c} x
+CSliceOfSliceSigmaToProd {c} {x=(x ** px)} (y ** py) =
+  Element0 (y ** \ely => (px $ py ely, py ely)) $ \_ => Refl
+
 -----------------------------------------------
 ---- Higher categories of slice categories ----
 -----------------------------------------------
