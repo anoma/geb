@@ -2091,6 +2091,45 @@ CSliceOfSliceSigmaToProd : {c : Type} -> {x : CSliceObj c} ->
 CSliceOfSliceSigmaToProd {c} {x=(x ** px)} (y ** py) =
   Element0 (y ** \ely => (px $ py ely, py ely)) $ \_ => Refl
 
+public export
+CSPullbackAsSigmaSliceProd : {c : Type} -> {x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
+  CSliceObj (CSGSigma {c} z)
+CSPullbackAsSigmaSliceProd {c} {x=(x ** px)} {y=(y ** py)} {z=z@(zb ** pz)}
+  (Element0 f fcomm) (Element0 g gcomm) =
+    CSProdObj {c=(CSGSigma {c} z)} (x ** f) (y ** g)
+
+public export
+CSPullbackToSigmaSliceProd : {c : Type} -> {x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
+  CSliceMorphism {c}
+    (CSPullback {c} {x} {y} {z} f g)
+    (CSliceOverSliceToBaseSlice {c} {sl=z} $
+      CSPullbackAsSigmaSliceProd {c} {x} {y} {z} f g)
+CSPullbackToSigmaSliceProd {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f fcomm) (Element0 g gcomm) =
+    Element0
+      (\(Element0 (Element0 (elx, ely) pxyeq) fgeq) => Element0 (elx, ely) fgeq)
+      (\(Element0 (Element0 (elx, ely) pxyeq) fgeq) => fcomm elx)
+
+public export
+CSPullbackFromSigmaSliceProd : {c : Type} -> {x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
+  CSliceMorphism {c}
+    (CSliceOverSliceToBaseSlice {c} {sl=z} $
+      CSPullbackAsSigmaSliceProd {c} {x} {y} {z} f g)
+    (CSPullback {c} {x} {y} {z} f g)
+CSPullbackFromSigmaSliceProd {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f fcomm) (Element0 g gcomm) =
+    Element0
+      (\(Element0 (elx, ely) fgcomm) =>
+        Element0
+          (Element0 (elx, ely) $
+            trans (fcomm elx) $ rewrite fgcomm in sym $ gcomm ely)
+          fgcomm)
+      (\(Element0 (elx, ely) fgcomm) =>
+        sym $ fcomm elx)
+
 -----------------------------------------------
 ---- Higher categories of slice categories ----
 -----------------------------------------------
