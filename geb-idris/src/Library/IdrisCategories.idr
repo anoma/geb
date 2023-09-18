@@ -2050,6 +2050,10 @@ CSqSliceObj c = CProdSliceObj c c
 ----------------------------------------------
 
 public export
+CSliceObjOfSliceCat : {c : Type} -> CSliceObj c -> Type
+CSliceObjOfSliceCat {c} sl = (sl' : CSliceObj c ** CSliceMorphism {c} sl' sl)
+
+public export
 CSliceObjOverSigma : {0 c : Type} -> CSliceObj c -> Type
 CSliceObjOverSigma {c} sl = CSliceObj (CSGSigma {c} sl)
 
@@ -2058,10 +2062,6 @@ CSliceObjOverSigmaToBaseSlice : {0 c : Type} -> {sl : CSliceObj c} ->
   CSliceObjOverSigma sl -> CSliceObj c
 CSliceObjOverSigmaToBaseSlice {c} {sl=(x ** px)} (y ** py) =
   (CSGSigma {c=x} (y ** py) ** px . py)
-
-public export
-CSliceObjOfSliceCat : {c : Type} -> CSliceObj c -> Type
-CSliceObjOfSliceCat {c} sl = (sl' : CSliceObj c ** CSliceMorphism {c} sl' sl)
 
 -- A slice object _in_ a slice category of `Type` may also be viewed as
 -- a slice object of `Type` itself, over a product.  Slice categories of
@@ -2072,13 +2072,6 @@ public export
 CSliceOverProdSubcatObj : {c : Type} -> CSliceObj c -> Type
 CSliceOverProdSubcatObj {c} (x ** px) =
   Subset0 (CSliceObj (c, x)) $ \(y ** py) => ExtEq (fst . py) (px . snd . py)
-
-public export
-CSliceOverProdSubcatToSliceObjOfSliceCat : {c : Type} -> {x : CSliceObj c} ->
-  CSliceOverProdSubcatObj {c} x -> CSliceObjOfSliceCat {c} x
-CSliceOverProdSubcatToSliceObjOfSliceCat {c} {x=(x ** px)}
-  (Element0 (y ** py) ycomm) =
-    ((y ** fst . py) ** Element0 (snd . py) ycomm)
 
 public export
 CSliceObjOfSliceCatToSliceObjOverSigma : {c : Type} -> {x : CSliceObj c} ->
@@ -2092,6 +2085,13 @@ CSliceObjOverSigmaToSliceOverProdSubcatObj : {c : Type} -> {x : CSliceObj c} ->
   CSliceObjOverSigma {c} x -> CSliceOverProdSubcatObj {c} x
 CSliceObjOverSigmaToSliceOverProdSubcatObj {c} {x=(x ** px)} (y ** py) =
   Element0 (y ** \ely => (px $ py ely, py ely)) $ \_ => Refl
+
+public export
+CSliceOverProdSubcatToSliceObjOfSliceCat : {c : Type} -> {x : CSliceObj c} ->
+  CSliceOverProdSubcatObj {c} x -> CSliceObjOfSliceCat {c} x
+CSliceOverProdSubcatToSliceObjOfSliceCat {c} {x=(x ** px)}
+  (Element0 (y ** py) ycomm) =
+    ((y ** fst . py) ** Element0 (snd . py) ycomm)
 
 public export
 CSPullbackAsSigmaSliceProd : {c : Type} -> {x, y, z : CSliceObj c} ->
