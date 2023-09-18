@@ -2050,18 +2050,18 @@ CSqSliceObj c = CProdSliceObj c c
 ----------------------------------------------
 
 public export
-CSliceOverSliceObj : {0 c : Type} -> CSliceObj c -> Type
-CSliceOverSliceObj {c} sl = CSliceObj (CSGSigma {c} sl)
+CSliceObjOverSigma : {0 c : Type} -> CSliceObj c -> Type
+CSliceObjOverSigma {c} sl = CSliceObj (CSGSigma {c} sl)
 
 public export
-CSliceOverSliceToBaseSlice : {0 c : Type} -> {sl : CSliceObj c} ->
-  CSliceOverSliceObj sl -> CSliceObj c
-CSliceOverSliceToBaseSlice {c} {sl=(x ** px)} (y ** py) =
+CSliceObjOverSigmaToBaseSlice : {0 c : Type} -> {sl : CSliceObj c} ->
+  CSliceObjOverSigma sl -> CSliceObj c
+CSliceObjOverSigmaToBaseSlice {c} {sl=(x ** px)} (y ** py) =
   (CSGSigma {c=x} (y ** py) ** px . py)
 
 public export
-CSliceOfSliceObj : {c : Type} -> CSliceObj c -> Type
-CSliceOfSliceObj {c} sl = (sl' : CSliceObj c ** CSliceMorphism {c} sl' sl)
+CSliceObjOfSliceCat : {c : Type} -> CSliceObj c -> Type
+CSliceObjOfSliceCat {c} sl = (sl' : CSliceObj c ** CSliceMorphism {c} sl' sl)
 
 -- A slice object _in_ a slice category of `Type` may also be viewed as
 -- a slice object of `Type` itself, over a product.  Slice categories of
@@ -2069,26 +2069,28 @@ CSliceOfSliceObj {c} sl = (sl' : CSliceObj c ** CSliceMorphism {c} sl' sl)
 -- products, with the objects selected by a commutativity condition on the
 -- projections.
 public export
-CSliceCatSliceObj : {c : Type} -> CSliceObj c -> Type
-CSliceCatSliceObj {c} (x ** px) =
+CSliceOverProdSubcatObj : {c : Type} -> CSliceObj c -> Type
+CSliceOverProdSubcatObj {c} (x ** px) =
   Subset0 (CSliceObj (c, x)) $ \(y ** py) => ExtEq (fst . py) (px . snd . py)
 
 public export
-CSliceOfSliceProdToMorph : {c : Type} -> {x : CSliceObj c} ->
-  CSliceCatSliceObj {c} x -> CSliceOfSliceObj {c} x
-CSliceOfSliceProdToMorph {c} {x=(x ** px)} (Element0 (y ** py) ycomm) =
-  ((y ** fst . py) ** Element0 (snd . py) ycomm)
+CSliceOverProdSubcatToSliceObjOfSliceCat : {c : Type} -> {x : CSliceObj c} ->
+  CSliceOverProdSubcatObj {c} x -> CSliceObjOfSliceCat {c} x
+CSliceOverProdSubcatToSliceObjOfSliceCat {c} {x=(x ** px)}
+  (Element0 (y ** py) ycomm) =
+    ((y ** fst . py) ** Element0 (snd . py) ycomm)
 
 public export
-CSliceOfSliceMorphToSigma : {c : Type} -> {x : CSliceObj c} ->
-  CSliceOfSliceObj {c} x -> CSliceOverSliceObj {c} x
-CSliceOfSliceMorphToSigma {c} {x=(x ** pxc)} ((y ** pyc) ** Element0 pyx comm) =
-  (y ** pyx)
+CSliceObjOfSliceCatToSliceObjOverSigma : {c : Type} -> {x : CSliceObj c} ->
+  CSliceObjOfSliceCat {c} x -> CSliceObjOverSigma {c} x
+CSliceObjOfSliceCatToSliceObjOverSigma {c} {x=(x ** pxc)}
+  ((y ** pyc) ** Element0 pyx comm) =
+    (y ** pyx)
 
 public export
-CSliceOfSliceSigmaToProd : {c : Type} -> {x : CSliceObj c} ->
-  CSliceOverSliceObj {c} x -> CSliceCatSliceObj {c} x
-CSliceOfSliceSigmaToProd {c} {x=(x ** px)} (y ** py) =
+CSliceObjOverSigmaToSliceOverProdSubcatObj : {c : Type} -> {x : CSliceObj c} ->
+  CSliceObjOverSigma {c} x -> CSliceOverProdSubcatObj {c} x
+CSliceObjOverSigmaToSliceOverProdSubcatObj {c} {x=(x ** px)} (y ** py) =
   Element0 (y ** \ely => (px $ py ely, py ely)) $ \_ => Refl
 
 public export
@@ -2104,7 +2106,7 @@ CSPullbackToSigmaSliceProd : {c : Type} -> {x, y, z : CSliceObj c} ->
   (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
   CSliceMorphism {c}
     (CSPullback {c} {x} {y} {z} f g)
-    (CSliceOverSliceToBaseSlice {c} {sl=z} $
+    (CSliceObjOverSigmaToBaseSlice {c} {sl=z} $
       CSPullbackAsSigmaSliceProd {c} {x} {y} {z} f g)
 CSPullbackToSigmaSliceProd {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
   (Element0 f fcomm) (Element0 g gcomm) =
@@ -2116,7 +2118,7 @@ public export
 CSPullbackFromSigmaSliceProd : {c : Type} -> {x, y, z : CSliceObj c} ->
   (f : CSliceMorphism {c} x z) -> (g : CSliceMorphism {c} y z) ->
   CSliceMorphism {c}
-    (CSliceOverSliceToBaseSlice {c} {sl=z} $
+    (CSliceObjOverSigmaToBaseSlice {c} {sl=z} $
       CSPullbackAsSigmaSliceProd {c} {x} {y} {z} f g)
     (CSPullback {c} {x} {y} {z} f g)
 CSPullbackFromSigmaSliceProd {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
