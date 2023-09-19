@@ -1488,6 +1488,37 @@ csCopLeftIntro : {c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism x z -> CSliceMorphism x (CSCopObj y z)
 csCopLeftIntro = CSliceCompose {w=(CSCopObj y z)} (csInjR y z)
 
+public export
+csCopComm : {0 c : Type} -> (x, y : CSliceObj c) ->
+  CSliceMorphism (CSCopObj x y) (CSCopObj y x)
+csCopComm x y = csCase {x} {y} {z=(CSCopObj y x)} (csInjR y x) (csInjL y x)
+
+public export
+csCopFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism (CSCopObj x y) z ->
+  CSliceMorphism (CSCopObj y x) z
+csCopFlip {x} {y} {z} =
+  CSlicePipe {u=(CSCopObj y x)} {v=(CSCopObj x y)} $ csCopComm y x
+
+public export
+csEitherBimap : {c : Type} -> CSliceBimap {c} {d=c} {e=c} (CSCopObj {c})
+csEitherBimap {c} {w} {x} {y} {z} f g =
+  csCase {x=w} {y=x} {z=(CSCopObj y z)}
+    (CSliceCompose {u=w} {v=y} {w=(CSCopObj y z)} (csInjL y z) f)
+    (CSliceCompose {u=x} {v=z} {w=(CSCopObj y z)} (csInjR y z) g)
+
+public export
+csEitherMapFst : {c : Type} -> CSliceMapFst {c} {d=c} {e=c} (CSCopObj {c})
+csEitherMapFst = csMapFstFromBimap {f=CSCopObj} csEitherBimap
+
+public export
+csEitherMapSnd : {c : Type} -> CSliceMapSnd {c} {d=c} {e=c} (CSCopObj {c})
+csEitherMapSnd = csMapSndFromBimap {f=CSCopObj} csEitherBimap
+
+public export
+csEitherMapHom : {c : Type} -> CSliceMapHom {c} {e=c} (CSCopObj {c})
+csEitherMapHom = csMapHomFromBimap {f=CSCopObj} csEitherBimap
+
 ------------------
 ---- Products ----
 ------------------
