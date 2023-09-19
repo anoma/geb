@@ -1197,6 +1197,32 @@ CSNThcomp {c} {d} {e} {f} {f'} {g} {g'} gm beta alpha a =
     (CSWhiskerLeft {c} {d} {e} {g} {h=g'} beta f' a)
     (CSWhiskerRight {c} {d} {e} {f} {g=f'} {h=g} gm alpha a)
 
+-- (The object-map component of a) bifunctor on slice categories.
+public export
+CSliceBifunctor : Type -> Type -> Type -> Type
+CSliceBifunctor c d e = CSliceObj c -> CSliceObj d -> CSliceObj e
+
+-- The morphism-map component of a bifunctor on slice categories.
+public export
+CSliceBimap : {c, d, e : Type} -> CSliceBifunctor c d e -> Type
+CSliceBimap {c} {d} f =
+  (w, x : CSliceObj c) -> (y, z : CSliceObj d) ->
+  CSliceMorphism {c} w x -> CSliceMorphism {c=d} y z ->
+  CSliceMorphism {c=e} (f w y) (f x z)
+
+-- (The object-map component of a) profunctor on slice categories.
+public export
+CSliceProfunctor : Type -> Type -> Type -> Type
+CSliceProfunctor = CSliceBifunctor
+
+-- The morphism-map component of a profunctor on slice categories.
+public export
+CSliceDimap : {c, d, e : Type} -> CSliceProfunctor c d e -> Type
+CSliceDimap {c} {d} f =
+  (w, x : CSliceObj c) -> (y, z : CSliceObj d) ->
+  CSliceMorphism {c} w x -> CSliceMorphism {c=d} y z ->
+  CSliceMorphism {c=e} (f x y) (f w z)
+
 public export
 CSExtEq : {0 c : Type} -> {x, y : CSliceObj c} ->
   (f, g : CSliceMorphism x y) -> Type
