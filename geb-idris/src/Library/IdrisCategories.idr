@@ -1527,6 +1527,18 @@ csPairBimap {c} {w} {x} {y} {z} f g =
     (CSliceCompose {u=(CSProdObj w x)} {v=x} {w=z} g (csProj2 w x))
 
 public export
+csPairMapFst : {c : Type} -> CSliceMapFst {c} {d=c} {e=c} (CSProdObj {c})
+csPairMapFst = csMapFstFromBimap {f=CSProdObj} csPairBimap
+
+public export
+csPairMapSnd : {c : Type} -> CSliceMapSnd {c} {d=c} {e=c} (CSProdObj {c})
+csPairMapSnd = csMapSndFromBimap {f=CSProdObj} csPairBimap
+
+public export
+csPairMapHom : {c : Type} -> CSliceMapHom {c} {e=c} (CSProdObj {c})
+csPairMapHom = csMapHomFromBimap {f=CSProdObj} csPairBimap
+
+public export
 csGather : {c : Type} -> (x, y, z : CSliceObj c) ->
   CSliceMorphism
     (CSCopObj (CSProdObj x y) (CSProdObj x z))
