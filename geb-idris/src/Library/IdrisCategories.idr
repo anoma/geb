@@ -1606,11 +1606,9 @@ csGather {c} x y z =
     (csCase {x=(CSProdObj x y)} {y=(CSProdObj x z)} {z=x}
       (csProj1 x y)
       (csProj1 x z))
-    (csCase {x=(CSProdObj x y)} {y=(CSProdObj x z)} {z=(CSCopObj y z)}
-      (CSliceCompose {u=(CSProdObj x y)} {w=(CSCopObj y z)}
-        (csInjL y z) (csProj2 x y))
-      (CSliceCompose {u=(CSProdObj x z)} {w=(CSCopObj y z)}
-        (csInjR y z) (csProj2 x z)))
+    (csEitherBimap {w=(CSProdObj x y)} {x=(CSProdObj x z)} {y} {z}
+      (csProj2 x y)
+      (csProj2 x z))
 
 ----------------------------------------------------
 ---- Distributivity of products over coproducts ----
