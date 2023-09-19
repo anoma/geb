@@ -1406,6 +1406,18 @@ csInitMorph : {0 c : Type} ->
   (so : CSliceObj c) -> CSliceMorphism (CSInitObj c) so
 csInitMorph {c} (a ** pa) = Element0 (voidF a) (\el => void el)
 
+-- A morphism into the initial object may be interpreted logically as
+-- showing that the domain represents a (global, within the slice category)
+-- contradiction.
+public export
+CSGContra : {c : Type} -> CSliceObj c -> Type
+CSGContra {c} = flip CSliceMorphism (CSInitObj c)
+
+public export
+csExFalso : {c : Type} -> {x, y : CSliceObj c} ->
+  CSGContra y -> CSliceMorphism y x
+csExFalso {c} {x} {y} = CSliceCompose {v=(CSInitObj c)} (csInitMorph x)
+
 -------------------------
 ---- Terminal object ----
 -------------------------
@@ -1429,7 +1441,7 @@ CSGElem {c} = CSliceMorphism (CSTermObj c)
 
 public export
 csConst : {c : Type} -> {x, y : CSliceObj c} -> CSGElem y -> CSliceMorphism x y
-csConst {c} {x} {y} ey = CSliceCompose {v=(CSTermObj c)} ey (csTermMorph x)
+csConst {c} {x} {y} = CSlicePipe {v=(CSTermObj c)} (csTermMorph x)
 
 public export
 csgApp : {c : Type} -> {0 x, y : CSliceObj c} ->
