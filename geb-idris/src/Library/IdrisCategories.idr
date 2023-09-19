@@ -1476,6 +1476,18 @@ csCase {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
         Left ex => eqf ex
         Right ey => eqg ey
 
+public export
+csCop1LeftElim : {c : Type} -> {x, y : CSliceObj c} ->
+  CSliceMorphism x (CSCopObj (CSInitObj c) y) -> CSliceMorphism x y
+csCop1LeftElim {y} =
+  CSliceCompose {v=(CSCopObj (CSInitObj c) y)}
+    (csCase {x=(CSInitObj c)} (csInitMorph y) (CSliceId y))
+
+public export
+csCopLeftIntro : {c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism x z -> CSliceMorphism x (CSCopObj y z)
+csCopLeftIntro = CSliceCompose {w=(CSCopObj y z)} (csInjR y z)
+
 ------------------
 ---- Products ----
 ------------------
@@ -1509,9 +1521,8 @@ csPair {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
 public export
 csProd1LeftElim : {c : Type} -> {x, y : CSliceObj c} ->
   CSliceMorphism (CSProdObj (CSTermObj c) x) y -> CSliceMorphism x y
-csProd1LeftElim {x} f =
-  CSliceCompose {v=(CSProdObj (CSTermObj c) x)}
-    f
+csProd1LeftElim {x} =
+  CSlicePipe {v=(CSProdObj (CSTermObj c) x)}
     (csPair (csTermMorph x) (CSliceId x))
 
 public export
@@ -1549,6 +1560,10 @@ csPairMapSnd = csMapSndFromBimap {f=CSProdObj} csPairBimap
 public export
 csPairMapHom : {c : Type} -> CSliceMapHom {c} {e=c} (CSProdObj {c})
 csPairMapHom = csMapHomFromBimap {f=CSProdObj} csPairBimap
+
+-----------------------------------------------------------------------------
+---- Combining products and coproducts (without assuming distributivity) ----
+-----------------------------------------------------------------------------
 
 public export
 csGather : {c : Type} -> (x, y, z : CSliceObj c) ->
