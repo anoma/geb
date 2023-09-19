@@ -1206,9 +1206,9 @@ CSliceBifunctor c d e = CSliceObj c -> CSliceObj d -> CSliceObj e
 public export
 CSliceBimap : {c, d, e : Type} -> CSliceBifunctor c d e -> Type
 CSliceBimap {c} {d} f =
-  (w, x : CSliceObj c) -> (y, z : CSliceObj d) ->
-  CSliceMorphism {c} w x -> CSliceMorphism {c=d} y z ->
-  CSliceMorphism {c=e} (f w y) (f x z)
+  {w, y : CSliceObj c} -> {x, z : CSliceObj d} ->
+  CSliceMorphism {c} w y -> CSliceMorphism {c=d} x z ->
+  CSliceMorphism {c=e} (f w x) (f y z)
 
 -- (The object-map component of a) profunctor on slice categories.
 public export
@@ -1219,9 +1219,9 @@ CSliceProfunctor = CSliceBifunctor
 public export
 CSliceDimap : {c, d, e : Type} -> CSliceProfunctor c d e -> Type
 CSliceDimap {c} {d} f =
-  (w, x : CSliceObj c) -> (y, z : CSliceObj d) ->
-  CSliceMorphism {c} w x -> CSliceMorphism {c=d} y z ->
-  CSliceMorphism {c=e} (f x y) (f w z)
+  (w, y : CSliceObj c) -> (x, z : CSliceObj d) ->
+  CSliceMorphism {c} w y -> CSliceMorphism {c=d} x z ->
+  CSliceMorphism {c=e} (f y x) (f w z)
 
 public export
 CSExtEq : {0 c : Type} -> {x, y : CSliceObj c} ->
@@ -1482,9 +1482,7 @@ csProdFlip {x} {y} {z} =
   CSlicePipe {u=(CSProdObj y x)} {v=(CSProdObj x y)} $ csProdComm y x
 
 public export
-csPairBimap : {c : Type} -> {w, x, y, z : CSliceObj c} ->
-  (f : CSliceMorphism {c} w y) -> (g : CSliceMorphism {c} x z) ->
-  CSliceMorphism {c} (CSProdObj {c} w x) (CSProdObj {c} y z)
+csPairBimap : {c : Type} -> CSliceBimap {c} {d=c} {e=c} (CSProdObj {c})
 csPairBimap {c} {w} {x} {y} {z} f g =
   csPair {x=(CSProdObj w x)} {y} {z}
     (CSliceCompose {u=(CSProdObj w x)} {v=w} {w=y} f (csProj1 w x))
