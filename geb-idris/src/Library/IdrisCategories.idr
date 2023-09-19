@@ -1453,7 +1453,7 @@ csProdFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism (CSProdObj x y) z ->
   CSliceMorphism (CSProdObj y x) z
 csProdFlip {x} {y} {z} =
-  flip (CSliceCompose {u=(CSProdObj y x)} {v=(CSProdObj x y)}) $ csProdComm y x
+  CSlicePipe {u=(CSProdObj y x)} {v=(CSProdObj x y)} $ csProdComm y x
 
 public export
 csPairBimap : {c : Type} -> {w, x, y, z : CSliceObj c} ->
