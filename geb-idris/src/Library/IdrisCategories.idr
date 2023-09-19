@@ -1456,6 +1456,15 @@ csProdFlip {x} {y} {z} =
   flip (CSliceCompose {u=(CSProdObj y x)} {v=(CSProdObj x y)}) $ csProdComm y x
 
 public export
+csParallelPair : {c : Type} -> {w, x, y, z : CSliceObj c} ->
+  (f : CSliceMorphism {c} w y) -> (g : CSliceMorphism {c} x z) ->
+  CSliceMorphism {c} (CSProdObj {c} w x) (CSProdObj {c} y z)
+csParallelPair {c} {w} {x} {y} {z} f g =
+  csPair {x=(CSProdObj w x)} {y} {z}
+    (CSliceCompose {u=(CSProdObj w x)} {v=w} {w=y} f (csProj1 w x))
+    (CSliceCompose {u=(CSProdObj w x)} {v=x} {w=z} g (csProj2 w x))
+
+public export
 csGather : {c : Type} -> (x, y, z : CSliceObj c) ->
   CSliceMorphism
     (CSCopObj (CSProdObj x y) (CSProdObj x z))
