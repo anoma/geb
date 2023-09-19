@@ -1224,41 +1224,41 @@ CSliceDimap {c} {d} f =
   CSliceMorphism {c=e} (f y x) (f w z)
 
 public export
-CSMapFst : {c, d, e : Type} -> CSliceBifunctor c d e -> Type
-CSMapFst {c} {d} {e} f =
+CSliceMapFst : {c, d, e : Type} -> CSliceBifunctor c d e -> Type
+CSliceMapFst {c} {d} {e} f =
   {w, y : CSliceObj c} -> {x : CSliceObj d} ->
   CSliceMorphism {c} w y -> CSliceMorphism {c=e} (f w x) (f y x)
 
 public export
-CSMapSnd : {c, d, e : Type} -> CSliceBifunctor c d e -> Type
-CSMapSnd {c} {d} {e} f =
+CSliceMapSnd : {c, d, e : Type} -> CSliceBifunctor c d e -> Type
+CSliceMapSnd {c} {d} {e} f =
   {w : CSliceObj c} -> {x, z : CSliceObj d} ->
   CSliceMorphism {c=d} x z -> CSliceMorphism {c=e} (f w x) (f w z)
 
 public export
-CSMapHom : {c, e : Type} -> CSliceBifunctor c c e -> Type
-CSMapHom {c} {e} f =
+CSliceMapHom : {c, e : Type} -> CSliceBifunctor c c e -> Type
+CSliceMapHom {c} {e} f =
   {w, y : CSliceObj c} ->
   CSliceMorphism {c} w y -> CSliceMorphism {c=e} (f w w) (f y y)
 
 public export
 csMapFstFromBimap : {c, d, e : Type} -> {f : CSliceBifunctor c d e} ->
-  CSliceBimap f -> CSMapFst f
+  CSliceBimap f -> CSliceMapFst f
 csMapFstFromBimap bi = flip bi (CSliceId _)
 
 public export
 csMapSndFromBimap : {c, d, e : Type} -> {f : CSliceBifunctor c d e} ->
-  CSliceBimap f -> CSMapSnd f
+  CSliceBimap f -> CSliceMapSnd f
 csMapSndFromBimap bi = bi (CSliceId _)
 
 public export
 csMapHomFromBimap : {c, e : Type} -> {f : CSliceBifunctor c c e} ->
-  CSliceBimap f -> CSMapHom f
+  CSliceBimap f -> CSliceMapHom f
 csMapHomFromBimap bi g = bi g g
 
 public export
 csBimapFromMapFstAndSnd : {c, d, e : Type} -> {f : CSliceBifunctor c d e} ->
-  CSMapFst f -> CSMapSnd f -> CSliceBimap f
+  CSliceMapFst f -> CSliceMapSnd f -> CSliceBimap f
 csBimapFromMapFstAndSnd mfst msnd fwy fxz = CSliceCompose (mfst fwy) (msnd fxz)
 
 public export
