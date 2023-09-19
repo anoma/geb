@@ -1456,10 +1456,10 @@ csProdFlip {x} {y} {z} =
   flip (CSliceCompose {u=(CSProdObj y x)} {v=(CSProdObj x y)}) $ csProdComm y x
 
 public export
-csParallelPair : {c : Type} -> {w, x, y, z : CSliceObj c} ->
+csPairBimap : {c : Type} -> {w, x, y, z : CSliceObj c} ->
   (f : CSliceMorphism {c} w y) -> (g : CSliceMorphism {c} x z) ->
   CSliceMorphism {c} (CSProdObj {c} w x) (CSProdObj {c} y z)
-csParallelPair {c} {w} {x} {y} {z} f g =
+csPairBimap {c} {w} {x} {y} {z} f g =
   csPair {x=(CSProdObj w x)} {y} {z}
     (CSliceCompose {u=(CSProdObj w x)} {v=w} {w=y} f (csProj1 w x))
     (CSliceCompose {u=(CSProdObj w x)} {v=x} {w=z} g (csProj2 w x))
@@ -1470,7 +1470,7 @@ csGather : {c : Type} -> (x, y, z : CSliceObj c) ->
     (CSCopObj (CSProdObj x y) (CSProdObj x z))
     (CSProdObj x (CSCopObj y z))
 csGather {c} x y z =
-  csPair {x=(CSCopObj (CSProdObj x y) (CSProdObj x z))}
+  csPair {x=(CSCopObj (CSProdObj x y) (CSProdObj x z))} {y=x} {z=(CSCopObj y z)}
     (csCase {x=(CSProdObj x y)} {y=(CSProdObj x z)} {z=x}
       (csProj1 x y)
       (csProj1 x z))
@@ -1665,8 +1665,8 @@ csProdEqToEqProd : {c : Type} -> {w, x, y, z : CSliceObj c} ->
       (CSEqObj {c} {x=w} {y} f g)
       (CSEqObj {c} {x} {y=z} f' g'))
     (CSEqObj {c} {x=(CSProdObj w x)} {y=(CSProdObj y z)}
-      (csParallelPair {c} {w} {x} {y} {z} f f')
-      (csParallelPair {c} {w} {x} {y} {z} g g'))
+      (csPairBimap {c} {w} {x} {y} {z} f f')
+      (csPairBimap {c} {w} {x} {y} {z} g g'))
 csProdEqToEqProd {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
   (Element0 f feq) (Element0 g geq) (Element0 f' feq') (Element0 g' geq') =
     Element0
@@ -1682,8 +1682,8 @@ csEqProdToProdEq : {c : Type} -> {w, x, y, z : CSliceObj c} ->
   (f', g' : CSliceMorphism {c} x z) ->
   CSliceMorphism
     (CSEqObj {c} {x=(CSProdObj w x)} {y=(CSProdObj y z)}
-      (csParallelPair {c} {w} {x} {y} {z} f f')
-      (csParallelPair {c} {w} {x} {y} {z} g g'))
+      (csPairBimap {c} {w} {x} {y} {z} f f')
+      (csPairBimap {c} {w} {x} {y} {z} g g'))
     (CSProdObj {c}
       (CSEqObj {c} {x=w} {y} f g)
       (CSEqObj {c} {x} {y=z} f' g'))
