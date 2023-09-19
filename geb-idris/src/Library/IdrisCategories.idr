@@ -1652,6 +1652,51 @@ csEqIntro {c} {x=(x ** px)} {w=(w ** pw)} {y=(y ** py)}
     Element0 (\elw => Element0 (h elw) (fgheq elw)) $
       \elw => trans (eqh elw) Refl
 
+---------------------------------------------------------------------------
+---- Equivalence of equalizers of products with products of equalizers ----
+---------------------------------------------------------------------------
+
+public export
+csProdEqToEqProd : {c : Type} -> {w, x, y, z : CSliceObj c} ->
+  (f, g : CSliceMorphism {c} w y) ->
+  (f', g' : CSliceMorphism {c} x z) ->
+  CSliceMorphism
+    (CSProdObj {c}
+      (CSEqObj {c} {x=w} {y} f g)
+      (CSEqObj {c} {x} {y=z} f' g'))
+    (CSEqObj {c} {x=(CSProdObj w x)} {y=(CSProdObj y z)}
+      (csParallelPair {c} {w} {x} {y} {z} f f')
+      (csParallelPair {c} {w} {x} {y} {z} g g'))
+csProdEqToEqProd {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f feq) (Element0 g geq) (Element0 f' feq') (Element0 g' geq') =
+    Element0
+      (\(Element0 (Element0 elw fgeq, Element0 elx fgeq') wxeq) =>
+        Element0 (Element0 (elw, elx) wxeq) $
+          rewrite fgeq in rewrite fgeq' in s0Eq12 Refl uip)
+      (\(Element0 (Element0 elw fgeq, Element0 elx fgeq') wxeq) =>
+        Refl)
+
+public export
+csEqProdToProdEq : {c : Type} -> {w, x, y, z : CSliceObj c} ->
+  (f, g : CSliceMorphism {c} w y) ->
+  (f', g' : CSliceMorphism {c} x z) ->
+  CSliceMorphism
+    (CSEqObj {c} {x=(CSProdObj w x)} {y=(CSProdObj y z)}
+      (csParallelPair {c} {w} {x} {y} {z} f f')
+      (csParallelPair {c} {w} {x} {y} {z} g g'))
+    (CSProdObj {c}
+      (CSEqObj {c} {x=w} {y} f g)
+      (CSEqObj {c} {x} {y=z} f' g'))
+csEqProdToProdEq {c} {w=(w ** pw)} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
+  (Element0 f feq) (Element0 g geq) (Element0 f' feq') (Element0 g' geq') =
+    Element0
+      (\(Element0 (Element0 (elw, elx) wxeq) fgeq) =>
+        Element0
+          (Element0 elw $ pairInj1 $ elementInjectiveFst fgeq,
+          (Element0 elx $ pairInj2 $ elementInjectiveFst fgeq))
+          wxeq)
+      (\(Element0 (Element0 (elw, elx) wxeq) fgeq) => Refl)
+
 ------------------------------------------------------
 ---- Distributivity of equalizers over coproducts ----
 ------------------------------------------------------
