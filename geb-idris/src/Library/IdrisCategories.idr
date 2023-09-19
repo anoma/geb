@@ -1663,18 +1663,16 @@ csEval {c} (x ** px) (y ** py) =
     $ \(Element0 ((elc ** f), elx) eq) => sym $ snd0 $ f $ Element0 elx $ sym eq
 
 public export
-csUncurry : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+csUncurry : {c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism {c} x (CSHomObj {c} y z) ->
   CSliceMorphism {c} (CSProdObj x y) z
 csUncurry {c} {x} {y} {z} f =
   CSliceCompose {u=(CSProdObj x y)} {v=(CSProdObj (CSHomObj y z) y)}
     (csEval y z)
-    (csPair {x=(CSProdObj x y)}
-      (CSliceCompose {u=(CSProdObj x y)} f (csProj1 x y))
-      (csProj2 x y))
+    (csPairMapFst f)
 
 public export
-csFlip : {0 c : Type} -> {x, y, z : CSliceObj c} ->
+csFlip : {c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism x (CSHomObj y z) ->
   CSliceMorphism y (CSHomObj x z)
 csFlip {c} {x} {y} {z} = csCurry . csProdFlip . csUncurry
