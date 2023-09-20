@@ -2156,9 +2156,12 @@ csInternalPreCompFlipApp {c} x y z =
     (csInternalPipe {c} x (CSHomObj (CSHomObj x y) y) z)
     (csInternalFlipApply {c} x y)
 
-------------------------------------------------------------------------------
----- Dependent universal morphisms (adjunctions between slice categories) ----
-------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+---- Dependent universal functors (adjunctions between slice categories) ----
+-----------------------------------------------------------------------------
+
+-- These may be viewed as (universal) morphisms in the two-category of
+-- slice categories and slice functors.
 
 public export
 CSBaseChange : {0 c : Type} -> {d : Type} -> (d -> c) -> CSliceFunctor c d
