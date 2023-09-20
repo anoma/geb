@@ -2630,8 +2630,7 @@ csApplyFromPureAndInternalBind {c} f pu bi x y =
 
 public export
 csEitherPure : {c : Type} -> (e : CSliceObj c) -> CSlicePure {c} (CSCopObj e)
-csEitherPure {c} (e ** pe) (b ** pb) =
-  Element0 Right $ \_ => Refl
+csEitherPure {c} = csInjR
 
 public export
 csEitherInternalBind : {c : Type} ->
