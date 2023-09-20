@@ -1477,6 +1477,38 @@ csCase {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
         Right ey => eqg ey
 
 public export
+csInjLL : {0 c : Type} -> (ll, lr, r : CSliceObj c) ->
+  CSliceMorphism ll (CSCopObj (CSCopObj ll lr) r)
+csInjLL {c} ll lr r =
+  CSliceCompose {u=ll} {v=(CSCopObj ll lr)} {w=(CSCopObj (CSCopObj ll lr) r)}
+    (csInjL (CSCopObj ll lr) r)
+    (csInjL ll lr)
+
+public export
+csInjLR : {0 c : Type} -> (ll, lr, r : CSliceObj c) ->
+  CSliceMorphism lr (CSCopObj (CSCopObj ll lr) r)
+csInjLR {c} ll lr r =
+  CSliceCompose {u=lr} {v=(CSCopObj ll lr)} {w=(CSCopObj (CSCopObj ll lr) r)}
+    (csInjL (CSCopObj ll lr) r)
+    (csInjR ll lr)
+
+public export
+csInjRL : {0 c : Type} -> (l, rl, rr : CSliceObj c) ->
+  CSliceMorphism rl (CSCopObj l (CSCopObj rl rr))
+csInjRL {c} l rl rr =
+  CSliceCompose {u=rl} {v=(CSCopObj rl rr)} {w=(CSCopObj l (CSCopObj rl rr))}
+    (csInjR l (CSCopObj rl rr))
+    (csInjL rl rr)
+
+public export
+csInjRR : {0 c : Type} -> (l, rl, rr : CSliceObj c) ->
+  CSliceMorphism rr (CSCopObj l (CSCopObj rl rr))
+csInjRR {c} l rl rr =
+  CSliceCompose {u=rr} {v=(CSCopObj rl rr)} {w=(CSCopObj l (CSCopObj rl rr))}
+    (csInjR l (CSCopObj rl rr))
+    (csInjR rl rr)
+
+public export
 csCop1LeftElim : {c : Type} -> {x, y : CSliceObj c} ->
   CSliceMorphism x (CSCopObj (CSInitObj c) y) -> CSliceMorphism x y
 csCop1LeftElim {y} =
@@ -1548,6 +1580,38 @@ csPair : {0 c : Type} -> {0 x, y, z : CSliceObj c} ->
 csPair {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
   (Element0 f eqf) (Element0 g eqg) =
     Element0 (\el => Element0 (f el, g el) $ trans (sym $ eqf el) $ eqg el) eqf
+
+public export
+csProj11 : {0 c : Type} -> (l1, l2, r : CSliceObj c) ->
+  CSliceMorphism (CSProdObj (CSProdObj l1 l2) r) l1
+csProj11 {c} l1 l2 r =
+  CSliceCompose {u=(CSProdObj (CSProdObj l1 l2) r)} {v=(CSProdObj l1 l2)} {w=l1}
+    (csProj1 l1 l2)
+    (csProj1 (CSProdObj l1 l2) r)
+
+public export
+csProj12 : {0 c : Type} -> (l1, l2, r : CSliceObj c) ->
+  CSliceMorphism (CSProdObj (CSProdObj l1 l2) r) l2
+csProj12 {c} l1 l2 r =
+  CSliceCompose {u=(CSProdObj (CSProdObj l1 l2) r)} {v=(CSProdObj l1 l2)} {w=l2}
+    (csProj2 l1 l2)
+    (csProj1 (CSProdObj l1 l2) r)
+
+public export
+csProj21 : {0 c : Type} -> (l, r1, r2 : CSliceObj c) ->
+  CSliceMorphism (CSProdObj l (CSProdObj r1 r2)) r1
+csProj21 {c} l r1 r2 =
+  CSliceCompose {u=(CSProdObj l (CSProdObj r1 r2))} {v=(CSProdObj r1 r2)} {w=r1}
+    (csProj1 r1 r2)
+    (csProj2 l (CSProdObj r1 r2))
+
+public export
+csProj22 : {0 c : Type} -> (l, r1, r2 : CSliceObj c) ->
+  CSliceMorphism (CSProdObj l (CSProdObj r1 r2)) r2
+csProj22 {c} l r1 r2 =
+  CSliceCompose {u=(CSProdObj l (CSProdObj r1 r2))} {v=(CSProdObj r1 r2)} {w=r2}
+    (csProj2 r1 r2)
+    (csProj2 l (CSProdObj r1 r2))
 
 public export
 csProd1LeftElim : {c : Type} -> {x, y : CSliceObj c} ->
