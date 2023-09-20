@@ -1775,13 +1775,25 @@ csEval {c} (x ** px) (y ** py) =
     $ \(Element0 ((elc ** f), elx) eq) => sym $ snd0 $ f $ Element0 elx $ sym eq
 
 public export
+csComposeBeforeEval : {c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism x (CSProdObj (CSHomObj y z) y) ->
+  CSliceMorphism x z
+csComposeBeforeEval {c} {x} {y} {z} =
+  CSliceCompose {v=(CSProdObj (CSHomObj y z) y)} (csEval y z)
+
+public export
+csComposeAfterEval : {c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism y z ->
+  CSliceMorphism (CSProdObj (CSHomObj x y) x) z
+csComposeAfterEval {c} {x} {y} {z} =
+  CSlicePipe {u=(CSProdObj (CSHomObj x y) x)} (csEval x y)
+
+public export
 csUncurry : {c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism {c} x (CSHomObj {c} y z) ->
   CSliceMorphism {c} (CSProdObj x y) z
 csUncurry {c} {x} {y} {z} f =
-  CSliceCompose {u=(CSProdObj x y)} {v=(CSProdObj (CSHomObj y z) y)}
-    (csEval y z)
-    (csPairMapFst f)
+  csComposeBeforeEval {c} {x=(CSProdObj x y)} {y} {z} (csPairMapFst f)
 
 public export
 csFlip : {c : Type} -> {x, y, z : CSliceObj c} ->
@@ -1837,20 +1849,6 @@ csHomMorphToMeta : {c : Type} -> {w, x, y, z : CSliceObj c} ->
   CSliceMorphism w x -> CSliceMorphism y z
 csHomMorphToMeta {c} {w} {x} {y} {z} =
   csHomGElemToMorph .* csAppMorphGElem {y=(CSHomObj y z)}
-
-public export
-csComposeBeforeEval : {c : Type} -> {x, y, z : CSliceObj c} ->
-  CSliceMorphism x (CSProdObj (CSHomObj y z) y) ->
-  CSliceMorphism x z
-csComposeBeforeEval {c} {x} {y} {z} =
-  CSliceCompose {v=(CSProdObj (CSHomObj y z) y)} (csEval y z)
-
-public export
-csComposeAfterEval : {c : Type} -> {x, y, z : CSliceObj c} ->
-  CSliceMorphism y z ->
-  CSliceMorphism (CSProdObj (CSHomObj x y) x) z
-csComposeAfterEval {c} {x} {y} {z} =
-  CSlicePipe {u=(CSProdObj (CSHomObj x y) x)} (csEval x y)
 
 public export
 csConstMorph : {c : Type} -> {x, y, z : CSliceObj c} ->
