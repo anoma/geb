@@ -1839,6 +1839,20 @@ csHomMorphToMeta {c} {w} {x} {y} {z} =
   csHomGElemToMorph .* csAppMorphGElem {y=(CSHomObj y z)}
 
 public export
+csComposeBeforeEval : {c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism x (CSProdObj (CSHomObj y z) y) ->
+  CSliceMorphism x z
+csComposeBeforeEval {c} {x} {y} {z} =
+  CSliceCompose {v=(CSProdObj (CSHomObj y z) y)} (csEval y z)
+
+public export
+csComposeAfterEval : {c : Type} -> {x, y, z : CSliceObj c} ->
+  CSliceMorphism y z ->
+  CSliceMorphism (CSProdObj (CSHomObj x y) x) z
+csComposeAfterEval {c} {x} {y} {z} =
+  CSlicePipe {u=(CSProdObj (CSHomObj x y) x)} (csEval x y)
+
+public export
 csConstMorph : {c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism y z -> CSliceMorphism x (CSHomObj y z)
 csConstMorph {c} {x} {y} {z} =
@@ -2062,11 +2076,8 @@ public export
 csCovarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
   flip CSliceMorphism a b -> CSNTCovarFunctor a b
 csCovarInternalYonedaToNTHom {c} {a} {b} f x =
-  csCurry {x=(CSHomObj a x)} $
-    CSliceCompose
-      {u=(CSProdObj (CSHomObj a x) b)} {v=(CSProdObj (CSHomObj a x) a)}
-      (csEval a x)
-      (csPairMapSnd f)
+  csCurry $
+    csComposeBeforeEval {x=(CSProdObj (CSHomObj a x) b)} $ csPairMapSnd f
 
 public export
 csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
@@ -2078,7 +2089,7 @@ public export
 csContravarInternalYonedaToNTHom : {c : Type} -> {a, b : CSliceObj c} ->
   CSliceMorphism a b -> CSNTContravarFunctor a b
 csContravarInternalYonedaToNTHom {c} {a} {b} f x =
-  csCurry $ CSliceCompose {u=(CSProdObj (CSHomObj x a) x)} f $ csEval x a
+  csCurry $ csComposeAfterEval f
 
 public export
 csContravarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
