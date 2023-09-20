@@ -1509,6 +1509,10 @@ csInjRR {c} l rl rr =
     (csInjR rl rr)
 
 public export
+csCodiag : {c : Type} -> (x : CSliceObj c) -> CSliceMorphism (CSCopObj x x) x
+csCodiag {c} x = csCase {c} {x=x} {y=x} {z=x} (CSliceId x) (CSliceId x)
+
+public export
 csCop1LeftElim : {c : Type} -> {x, y : CSliceObj c} ->
   CSliceMorphism x (CSCopObj (CSInitObj c) y) -> CSliceMorphism x y
 csCop1LeftElim {y} =
@@ -1550,6 +1554,26 @@ csEitherMapSnd = csMapSndFromBimap {f=CSCopObj} csEitherBimap
 public export
 csEitherMapHom : {c : Type} -> CSliceMapHom {c} {e=c} (CSCopObj {c})
 csEitherMapHom = csMapHomFromBimap {f=CSCopObj} csEitherBimap
+
+public export
+csCopAssocL : {0 c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism (CSCopObj x (CSCopObj y z)) (CSCopObj (CSCopObj x y) z)
+csCopAssocL x y z =
+  csCase {x} {y=(CSCopObj y z)} {z=(CSCopObj (CSCopObj x y) z)}
+    (csInjLL x y z)
+    (csCase {x=y} {y=z} {z=(CSCopObj (CSCopObj x y) z)}
+      (csInjLR x y z)
+      (csInjR (CSCopObj x y) z))
+
+public export
+csCopAssocR : {0 c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism (CSCopObj (CSCopObj x y) z) (CSCopObj x (CSCopObj y z))
+csCopAssocR x y z =
+  csCase {x=(CSCopObj x y)} {y=z} {z=(CSCopObj x (CSCopObj y z))}
+    (csCase {x} {y} {z=(CSCopObj x (CSCopObj y z))}
+      (csInjL x (CSCopObj y z))
+      (csInjRL x y z))
+    (csInjRR x y z)
 
 ------------------
 ---- Products ----
@@ -1614,6 +1638,10 @@ csProj22 {c} l r1 r2 =
     (csProj2 l (CSProdObj r1 r2))
 
 public export
+csDiag : {c : Type} -> (x : CSliceObj c) -> CSliceMorphism x (CSProdObj x x)
+csDiag {c} x = csPair {c} {x=x} {y=x} {z=x} (CSliceId x) (CSliceId x)
+
+public export
 csProd1LeftElim : {c : Type} -> {x, y : CSliceObj c} ->
   CSliceMorphism (CSProdObj (CSTermObj c) x) y -> CSliceMorphism x y
 csProd1LeftElim {x} =
@@ -1655,6 +1683,26 @@ csPairMapSnd = csMapSndFromBimap {f=CSProdObj} csPairBimap
 public export
 csPairMapHom : {c : Type} -> CSliceMapHom {c} {e=c} (CSProdObj {c})
 csPairMapHom = csMapHomFromBimap {f=CSProdObj} csPairBimap
+
+public export
+csProdAssocL : {0 c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism (CSProdObj x (CSProdObj y z)) (CSProdObj (CSProdObj x y) z)
+csProdAssocL x y z =
+  csPair {x=(CSProdObj x (CSProdObj y z))} {y=(CSProdObj x y)} {z}
+    (csPair {x=(CSProdObj x (CSProdObj y z))}
+      (csProj1 x (CSProdObj y z))
+      (csProj21 x y z))
+    (csProj22 x y z)
+
+public export
+csProdAssocR : {0 c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism (CSProdObj (CSProdObj x y) z) (CSProdObj x (CSProdObj y z))
+csProdAssocR x y z =
+  csPair {x=(CSProdObj (CSProdObj x y) z)} {y=x} {z=(CSProdObj y z)}
+    (csProj11 x y z)
+    (csPair {x=(CSProdObj (CSProdObj x y) z)} {y} {z}
+      (csProj12 x y z)
+      (csProj2 (CSProdObj x y) z))
 
 -----------------------------------------------------------------------------
 ---- Combining products and coproducts (without assuming distributivity) ----
