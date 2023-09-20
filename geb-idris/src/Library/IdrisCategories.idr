@@ -2066,10 +2066,7 @@ csCovarInternalYonedaToNTHom {c} {a} {b} f x =
     CSliceCompose
       {u=(CSProdObj (CSHomObj a x) b)} {v=(CSProdObj (CSHomObj a x) a)}
       (csEval a x)
-      (csPair {x=(CSProdObj (CSHomObj a x) b)}
-        (csProj1 (CSHomObj a x) b)
-        (CSliceCompose {u=(CSProdObj (CSHomObj a x) b)}
-          f (csProj2 (CSHomObj a x) b)))
+      (csPairMapSnd f)
 
 public export
 csCovarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
