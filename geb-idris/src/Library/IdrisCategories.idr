@@ -2656,17 +2656,24 @@ CSliceApplyCompose {c} {d} {e} g f gm ag af x y =
     (ag (f x) (f y))
     (gm (f (CSHomObj x y)) (CSHomObj (f x) (f y)) (af x y))
 
--- The signature of the `bind` morphism of a slice monad.
+-- The signature of the `bind` operation of a slice monad as a
+-- natural transformation between functors from a slice category
+-- to the base category (`Type`).
 public export
 CSliceBind : {c : Type} -> CSliceEndofunctor c -> Type
 CSliceBind {c} m = (x, y : CSliceObj c) ->
   CSliceMorphism x (m y) -> CSliceMorphism (m x) (m y)
 
+-- The signature of the `bind` morphism of a slice monad as a
+-- natural transformation between slice endofunctors.
 public export
 CSliceInternalBind : {c : Type} -> CSliceEndofunctor c -> Type
 CSliceInternalBind {c} m = (x, y : CSliceObj c) ->
   CSliceMorphism (CSHomObj x (m y)) (CSHomObj (m x) (m y))
 
+-- The "internal" bind (a natural transformation between slice
+-- endofunctors) is (strictly) stronger than the earlier bind
+-- in `Type`.  (In particular, we can derive `CSliceApply` from it.)
 public export
 csBindFromInternalBind : {c : Type} -> (f : CSliceEndofunctor c) ->
   CSliceInternalBind f -> CSliceBind f
