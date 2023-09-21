@@ -1802,6 +1802,22 @@ csFlip : {c : Type} -> {x, y, z : CSliceObj c} ->
 csFlip {c} {x} {y} {z} = csCurry . csProdFlip . csUncurry
 
 public export
+csEvalSnd : {c : Type} -> {x : CSliceObj c} -> (y, z : CSliceObj c) ->
+  CSliceMorphism (CSProdObj x (CSProdObj (CSHomObj y z) y)) (CSProdObj x z)
+csEvalSnd {x} y z = csPairMapSnd $ csEval y z
+
+public export
+csEvalTwice : {c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism (CSProdObj (CSHomObj y z) (CSProdObj (CSHomObj x y) x)) z
+csEvalTwice {c} x y z =
+  CSliceCompose
+    {u=(CSProdObj (CSHomObj y z) (CSProdObj (CSHomObj x y) x))}
+    {v=(CSProdObj (CSHomObj y z) y)}
+    {w=z}
+    (csEval y z)
+    (csEvalSnd x y)
+
+public export
 CSHomGElem : {c : Type} -> CSliceObj c -> CSliceObj c -> Type
 CSHomGElem = CSGElem .* CSHomObj
 
@@ -2124,17 +2140,6 @@ csInternalFlipApply {c} x y =
   csFlip {c} {x=(CSHomObj x y)} {y=x} {z=y} $ csInternalApply {c} x y
 
 public export
-csInternalEvalTwice : {c : Type} -> (x, y, z : CSliceObj c) ->
-  CSliceMorphism (CSProdObj (CSHomObj y z) (CSProdObj (CSHomObj x y) x)) z
-csInternalEvalTwice {c} x y z =
-  CSliceCompose
-    {u=(CSProdObj (CSHomObj y z) (CSProdObj (CSHomObj x y) x))}
-    {v=(CSProdObj (CSHomObj y z) y)}
-    {w=z}
-    (csEval y z)
-    (csPairMapSnd $ csEval x y)
-
-public export
 csInternalComposePair : {c : Type} -> (x, y, z : CSliceObj c) ->
   CSliceMorphism (CSProdObj (CSHomObj y z) (CSHomObj x y)) (CSHomObj x z)
 csInternalComposePair {c} x y z =
@@ -2144,7 +2149,7 @@ csInternalComposePair {c} x y z =
     {v=(CSProdObj (CSHomObj y z) (CSProdObj (CSHomObj x y) x))}
     {w=z}
     (csProdAssocR (CSHomObj y z) (CSHomObj x y) x) $
-    (csInternalEvalTwice {c} x y z)
+    (csEvalTwice {c} x y z)
 
 public export
 csInternalCompose : {c : Type} -> (x, y, z : CSliceObj c) ->
