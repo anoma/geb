@@ -1809,8 +1809,7 @@ public export
 csRightApp : {c : Type} -> {x, y, z : CSliceObj c} ->
   CSliceMorphism x (CSHomObj y z) -> CSliceMorphism x y ->
   CSliceMorphism x z
-csRightApp {c} {x} {y} {z} =
-  CSliceCompose {v=(CSProdObj (CSHomObj y z) y)} (csEval y z) .* csPair
+csRightApp {c} {x} {y} {z} = csComposeBeforeEval .* csPair
 
 public export
 csHomGElemToMorph : {c : Type} -> {x, y : CSliceObj c} ->
