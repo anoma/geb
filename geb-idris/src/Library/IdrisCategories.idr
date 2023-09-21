@@ -2098,6 +2098,16 @@ csContravarInternalYonedaFromNTHom {c} {a} {b} alpha =
 ---- Internal reflections of slice morphisms within slice categories ----
 -------------------------------------------------------------------------
 
+-- The hom-profunctor, defined as a composition of components of
+-- natural transformations derived from the Yoneda lemma.
+public export
+csHomDimap : {c : Type} -> CSliceDimap {c} {d=c} {e=c} (CSHomObj {c})
+csHomDimap {c} {w} {x} {y} {z} f g =
+  CSliceCompose
+    {u=(CSHomObj y x)} {v=(CSHomObj w x)} {w=(CSHomObj w z)}
+    (csContravarInternalYonedaToNTHom g w)
+    (csCovarInternalYonedaToNTHom f x)
+
 public export
 csInternalId : {c : Type} -> (x: CSliceObj c) -> CSHomGElem x x
 csInternalId {c} x = csMorphToHomGElem (CSliceId x)
