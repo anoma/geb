@@ -1219,7 +1219,7 @@ CSliceProfunctor = CSliceBifunctor
 public export
 CSliceDimap : {c, d, e : Type} -> CSliceProfunctor c d e -> Type
 CSliceDimap {c} {d} f =
-  (w, y : CSliceObj c) -> (x, z : CSliceObj d) ->
+  {w, y : CSliceObj c} -> {x, z : CSliceObj d} ->
   CSliceMorphism {c} w y -> CSliceMorphism {c=d} x z ->
   CSliceMorphism {c=e} (f y x) (f w z)
 
