@@ -2789,77 +2789,13 @@ csEitherPure {c} = csInjR
 public export
 csEitherInternalBind : {c : Type} ->
   (e : CSliceObj c) -> CSliceInternalBind {c} (CSCopObj e)
-csEitherInternalBind {c} (e ** pe) (x ** px) (y ** py) =
-  Element0
-    (\(elc ** fxey) =>
-     (elc ** \(Element0 elex xeq) => case elex of
-      Left ee => Element0 (Left ee) xeq
-      Right ex => fxey (Element0 ex xeq)))
-    (\(elc ** fxey) => Refl)
-
--- An alternative formulation of the above which shows how it can be
--- written abstractly in terms of universal morphisms.
-public export
-csEitherInternalBind' : {c : Type} ->
-  (e : CSliceObj c) -> CSliceInternalBind {c} (CSCopObj e)
-csEitherInternalBind' {c} e x y =
-  csCurry {x=(CSHomObj x) (CSCopObj e y)} {y=(CSCopObj e x)} {z=(CSCopObj e y)}
-    $ CSliceCompose
-      {u=(CSProdObj (CSHomObj x (CSCopObj e y)) (CSCopObj e x))}
-      {v=(CSCopObj
-        (CSProdObj e (CSHomObj x (CSCopObj e y)))
-        (CSProdObj x (CSHomObj x (CSCopObj e y))))}
-      {w=(CSCopObj e y)}
-      (csCase
-        {x=(CSProdObj e (CSHomObj x (CSCopObj e y)))}
-        {y=(CSProdObj x (CSHomObj x (CSCopObj e y)))}
-        {z=(CSCopObj e y)}
-        (CSliceCompose
-          {u=(CSProdObj e (CSHomObj x (CSCopObj e y)))}
-          {w=(CSCopObj e y)}
-          (csInjL e y)
-          (csProj1 e (CSHomObj x (CSCopObj e y))))
-        (CSliceCompose
-          {u=(CSProdObj x (CSHomObj x (CSCopObj e y)))}
-          {v=(CSProdObj (CSHomObj x (CSCopObj e y)) x)}
-          {w=(CSCopObj e y)}
-          (csEval x (CSCopObj e y))
-          (csProdComm x (CSHomObj x (CSCopObj e y)))))
-    $ CSliceCompose
-      {u=(CSProdObj (CSHomObj x (CSCopObj e y)) (CSCopObj e x))}
-      {v=(CSCopObj
-        (CSProdObj (CSHomObj x (CSCopObj e y)) e)
-        (CSProdObj (CSHomObj x (CSCopObj e y)) x))}
-      {w=(CSCopObj
-        (CSProdObj e (CSHomObj x (CSCopObj e y)))
-        (CSProdObj x (CSHomObj x (CSCopObj e y))))}
-      (csCase
-        {x=(CSProdObj (CSHomObj x (CSCopObj e y)) e)}
-        {y=(CSProdObj (CSHomObj x (CSCopObj e y)) x)}
-        {z=(CSCopObj
-          (CSProdObj e (CSHomObj x (CSCopObj e y)))
-          (CSProdObj x (CSHomObj x (CSCopObj e y))))}
-        (CSliceCompose
-          {u=(CSProdObj (CSHomObj x (CSCopObj e y)) e)}
-          {v=(CSProdObj e (CSHomObj x (CSCopObj e y)))}
-          {w=(CSCopObj
-            (CSProdObj e (CSHomObj x (CSCopObj e y)))
-            (CSProdObj x (CSHomObj x (CSCopObj e y))))}
-          (csInjL
-            (CSProdObj e (CSHomObj x (CSCopObj e y)))
-            (CSProdObj x (CSHomObj x (CSCopObj e y))))
-          (csProdComm (CSHomObj x (CSCopObj e y)) e))
-        (CSliceCompose
-          {u=(CSProdObj (CSHomObj x (CSCopObj e y)) x)}
-          {v=(CSProdObj x (CSHomObj x (CSCopObj e y)))}
-          {w=(CSCopObj
-            (CSProdObj e (CSHomObj x (CSCopObj e y)))
-            (CSProdObj x (CSHomObj x (CSCopObj e y))))}
-          (csInjR
-            (CSProdObj e (CSHomObj x (CSCopObj e y)))
-            (CSProdObj x (CSHomObj x (CSCopObj e y))))
-          (csProdComm (CSHomObj x (CSCopObj e y)) x)))
-      (csDistrib (CSHomObj x (CSCopObj e y)) e x)
+csEitherInternalBind {c} e x y =
+  csFlip {x=(CSCopObj e x)} {y=(CSHomObj x (CSCopObj e y))} {z=(CSCopObj e y)} $
+  csCase {x=e} {y=x} {z=(CSHomObj (CSHomObj x (CSCopObj e y)) (CSCopObj e y))}
+    (csFlip {x=(CSHomObj x (CSCopObj e y))} {z=(CSCopObj e y)} $
+      csConstMorph {x=(CSHomObj x (CSCopObj e y))} {z=(CSCopObj e y)} $
+      csInjL e y)
+    (csInternalFlipApply x $ CSCopObj e y)
 
 public export
 csEitherMap : {c : Type} -> (e : CSliceObj c) ->
