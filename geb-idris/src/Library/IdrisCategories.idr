@@ -2185,7 +2185,8 @@ csInternalPreCompFlipApp {c} x y z =
 
 public export
 CSBaseChange : {0 c : Type} -> {d : Type} -> (d -> c) -> CSliceFunctor c d
-CSBaseChange {c} {d} f (x ** px) = (Pullback {a=d} {b=x} {c} f px ** fst . fst0)
+CSBaseChange {c} {d} f (x ** px) =
+  (Pullback {a=d} {b=x} {c} f px ** pbProj1 {f} {g=px})
 
 public export
 csBaseChangeMap : {0 c, d : Type} -> {0 f : d -> c} ->
