@@ -2110,9 +2110,9 @@ csContravarInternalYonedaFromNTHom : {c : Type} -> {a, b : CSliceObj c} ->
 csContravarInternalYonedaFromNTHom {c} {a} {b} alpha =
   csHomMorphToMeta (alpha a) (CSliceId a)
 
--------------------------------------------------------------------------
----- Internal reflections of slice morphisms within slice categories ----
--------------------------------------------------------------------------
+---------------------------------------
+---- Slice-category hom-profunctor ----
+---------------------------------------
 
 public export
 csHomContramapFst : {c : Type} -> {a, b : CSliceObj c} ->
@@ -2133,6 +2133,10 @@ csHomDimap {c} {w} {x} {y} {z} f g =
     {u=(CSHomObj y x)} {v=(CSHomObj w x)} {w=(CSHomObj w z)}
     (csHomContramapFst g w)
     (csHomMapSnd f x)
+
+-------------------------------------------------------------------------
+---- Internal reflections of slice morphisms within slice categories ----
+-------------------------------------------------------------------------
 
 public export
 csInternalId : {c : Type} -> (x: CSliceObj c) -> CSHomGElem x x
