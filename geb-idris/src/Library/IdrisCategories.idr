@@ -2786,6 +2786,18 @@ csMapFromPureAndInternalBind : {c : Type} -> (f : CSliceEndofunctor c) ->
 csMapFromPureAndInternalBind {c} f pu bi =
   csMapFromPureAndBind f pu (csBindFromInternalBind f bi)
 
+public export
+csInternalBindFromMapAndJoin : {c : Type} ->
+  (f : CSliceEndofunctor c) ->
+  (fm : CSliceInternalFMap f) -> CSliceJoin f -> CSliceInternalBind f
+csInternalBindFromMapAndJoin {c} f fm j x y =
+  CSliceCompose
+    {u=(CSHomObj x (f y))}
+    {v=(CSHomObj (f x) (f (f y)))}
+    {w=(CSHomObj (f x) (f y))}
+    (csContravarInternalYonedaToNTHom (j y) (f x))
+    (fm x (f y))
+
 -- To see this and the following function as they would be written in
 -- Haskell, see the definition of `apply` in terms of `pure` and `bind` at
 -- https://www.cis.upenn.edu/~cis1940/fall16/lectures/08-functor-applicative.html
