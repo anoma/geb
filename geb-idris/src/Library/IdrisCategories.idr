@@ -2197,6 +2197,38 @@ csInternalPreCompFlipApp {c} x y z =
     (csInternalPipe {c} x (CSHomObj (CSHomObj x y) y) z)
     (csInternalFlipApply {c} x y)
 
+---------------------------------
+---- Internal slice functors ----
+---------------------------------
+
+public export
+CSliceInternalFMap : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceInternalFMap {c} f =
+  (x, y : CSliceObj c) -> CSliceMorphism (CSHomObj x y) (CSHomObj (f x) (f y))
+
+public export
+CSliceInternalFMapCompose : {c : Type} ->
+  (g, f : CSliceEndofunctor c) ->
+  CSliceInternalFMap g -> CSliceInternalFMap f ->
+  CSliceInternalFMap (g . f)
+CSliceInternalFMapCompose {c} g f mg mf x y =
+  CSliceCompose
+    {u=(CSHomObj x y)}
+    {v=(CSHomObj (f x) (f y))}
+    {w=(CSHomObj (g (f x)) (g (f y)))}
+    (mg (f x) (f y))
+    (mf x y)
+
+public export
+CSliceFMapFromInternalFMap : {c : Type} ->
+  (f : CSliceEndofunctor c) -> CSliceInternalFMap f -> CSliceFMap f
+CSliceFMapFromInternalFMap {c} f mf x y = csHomMorphToMeta $ mf x y
+
+public export
+CSliceInternalFContramap : {c : Type} -> CSliceEndofunctor c -> Type
+CSliceInternalFContramap {c} f =
+  (x, y : CSliceObj c) -> CSliceMorphism (CSHomObj x y) (CSHomObj (f y) (f x))
+
 -----------------------------------------------------------------------------
 ---- Dependent universal functors (adjunctions between slice categories) ----
 -----------------------------------------------------------------------------
