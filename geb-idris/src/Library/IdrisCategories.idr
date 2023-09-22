@@ -2654,7 +2654,7 @@ CSlicePureCompose : {c : Type} ->
   CSlicePure (g . f)
 CSlicePureCompose {c} g f pg pf a = CSliceCompose (pg (f a)) (pf a)
 
--- The signature of the `apply` morphism of an applicative slice endofunctor.
+-- The signature of the `apply` morphism of an applicative slice functor.
 public export
 CSliceApply : {c, d : Type} -> CSliceFunctor c d -> Type
 CSliceApply {c} {d} f = (x, y : CSliceObj c) ->
