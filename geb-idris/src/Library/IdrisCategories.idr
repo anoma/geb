@@ -1156,6 +1156,13 @@ CSliceFContramap {c} {d} f =
   (x, y : CSliceObj c) -> CSliceMorphism x y -> CSliceMorphism (f y) (f x)
 
 public export
+CSliceFContramapCompose : {c, d, e : Type} ->
+  (g : CSliceFunctor d e) -> (f : CSliceFunctor c d) ->
+  CSliceFContramap g -> CSliceFContramap f ->
+  CSliceFMap (g . f)
+CSliceFContramapCompose {c} {d} {e} g f mg mf x y = mg (f y) (f x) . mf x y
+
+public export
 CSliceNatTrans : {c, d : Type} ->
   CSliceFunctor c d -> CSliceFunctor c d -> Type
 CSliceNatTrans {c} {d} f g =
