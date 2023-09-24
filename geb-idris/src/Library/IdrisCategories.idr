@@ -2787,6 +2787,19 @@ csMapFromPureAndInternalBind {c} f pu bi =
   csMapFromPureAndBind f pu (csBindFromInternalBind f bi)
 
 public export
+csInternalMapFromPureAndInternalBind : {c : Type} ->
+  (f : CSliceEndofunctor c) ->
+  CSlicePure {c} f -> CSliceInternalBind {c} f ->
+  CSliceInternalFMap {c} f
+csInternalMapFromPureAndInternalBind {c} f pu bi x y =
+  CSliceCompose
+    {u=(CSHomObj x y)}
+    {v=(CSHomObj x (f y))}
+    {w=(CSHomObj (f x) (f y))}
+    (bi x y)
+    (csContravarInternalYonedaToNTHom (pu y) x)
+
+public export
 csInternalBindFromMapAndJoin : {c : Type} ->
   (f : CSliceEndofunctor c) ->
   (fm : CSliceInternalFMap f) -> CSliceJoin f -> CSliceInternalBind f
