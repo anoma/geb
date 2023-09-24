@@ -2882,22 +2882,24 @@ csEitherInternalFMap {c} e x y =
     $ csDistrib (CSHomObj x y) e x
 
 public export
+csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
+csEitherJoin {c} e a =
+  csCase {x=e} {y=(CSCopObj e a)} {z=(CSCopObj e a)}
+    (csInjL e a)
+    (CSliceId (CSCopObj e a))
+
+public export
 csEitherInternalBind : {c : Type} ->
   (e : CSliceObj c) -> CSliceInternalBind {c} (CSCopObj e)
-csEitherInternalBind {c} e x y =
-  csFlip {x=(CSCopObj e x)} {y=(CSHomObj x (CSCopObj e y))} {z=(CSCopObj e y)} $
-  csCase {x=e} {y=x} {z=(CSHomObj (CSHomObj x (CSCopObj e y)) (CSCopObj e y))}
-    (csFlip {x=(CSHomObj x (CSCopObj e y))} {z=(CSCopObj e y)} $
-      csConstMorph {x=(CSHomObj x (CSCopObj e y))} {z=(CSCopObj e y)} $
-      csInjL e y)
-    (csInternalFlipApply x $ CSCopObj e y)
+csEitherInternalBind {c} e =
+  csInternalBindFromMapAndJoin {c} (CSCopObj e)
+    (csEitherInternalFMap e) (csEitherJoin e)
 
 public export
 csEitherMap : {c : Type} -> (e : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSCopObj e)
 csEitherMap {c} e =
-  csMapFromPureAndInternalBind {c} (CSCopObj e)
-    (csEitherPure e) (csEitherInternalBind e)
+  CSliceFMapFromInternalFMap {c} (CSCopObj e) (csEitherInternalFMap e)
 
 public export
 csEitherApply : {c : Type} ->
@@ -2905,11 +2907,6 @@ csEitherApply : {c : Type} ->
 csEitherApply {c} e =
   csApplyFromPureAndInternalBind {c} (CSCopObj e)
     (csEitherPure e) (csEitherInternalBind e)
-
-public export
-csEitherJoin : {c : Type} -> (e : CSliceObj c) -> CSliceJoin {c} (CSCopObj e)
-csEitherJoin {c} e =
-  csJoinFromInternalBind {c} (CSCopObj e) (csEitherInternalBind e)
 
 public export
 csEitherBind : {c : Type} -> (e : CSliceObj c) -> CSliceBind {c} (CSCopObj e)
