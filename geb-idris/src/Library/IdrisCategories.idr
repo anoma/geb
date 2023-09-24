@@ -2853,6 +2853,22 @@ csEitherPure : {c : Type} -> (e : CSliceObj c) -> CSlicePure {c} (CSCopObj e)
 csEitherPure {c} = csInjR
 
 public export
+csEitherInternalFMap : {c : Type} ->
+  (e : CSliceObj c) -> CSliceInternalFMap (CSCopObj {c} e)
+csEitherInternalFMap {c} e x y =
+  csCurry {x=(CSHomObj x y)} {y=(CSCopObj e x)} {z=(CSCopObj e y)}
+  $ CSliceCompose
+    {u=(CSProdObj (CSHomObj x y) (CSCopObj e x))}
+    {v=(CSCopObj (CSProdObj (CSHomObj x y) e) (CSProdObj (CSHomObj x y) x))}
+    {w=(CSCopObj e y)}
+    (csEitherBimap
+      {w=(CSProdObj (CSHomObj x y) e)}
+      {x=(CSProdObj (CSHomObj x y) x)}
+      (csProj2 (CSHomObj x y) e)
+      (csEval x y))
+    $ csDistrib (CSHomObj x y) e x
+
+public export
 csEitherInternalBind : {c : Type} ->
   (e : CSliceObj c) -> CSliceInternalBind {c} (CSCopObj e)
 csEitherInternalBind {c} e x y =
