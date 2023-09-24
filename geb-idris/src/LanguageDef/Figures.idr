@@ -170,6 +170,8 @@ public export
 QuivMorphMap : SliceObj QuivObjMap
 QuivMorphMap = Pi {a=WQMorph} . QuivMorphHom
 
+-- Note:  I think this is the generalized slice-profunctor form
+-- of CSNTCovarFunctor.
 public export
 CQuivMorphMap : CSliceFunctor WQObj WQMorph
 CQuivMorphMap f = CSHomObj (CQuivDomMap f) (CQuivCodMap f)
