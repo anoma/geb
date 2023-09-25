@@ -2979,8 +2979,13 @@ csHomApply {c} a =
 
 public export
 csHomJoin : {c : Type} -> (a : CSliceObj c) -> CSliceJoin {c} (CSHomObj a)
-csHomJoin {c} a =
-  csJoinFromInternalBind {c} (CSHomObj a) (csHomInternalBind a)
+csHomJoin {c} a x =
+  csFlip {y=(CSHomObj a (CSHomObj a x))}
+  $ CSlicePipe
+  {u=a} {v=(CSProdObj a a)} {w=(CSHomObj (CSHomObj a (CSHomObj a x)) x)}
+  (csDiag a)
+  $ csFlip {x=(CSHomObj a (CSHomObj a x))} {y=(CSProdObj a a)}
+  $ csInternalUncurry a a x
 
 public export
 csHomBind : {c : Type} -> (a : CSliceObj c) -> CSliceBind {c} (CSHomObj a)
