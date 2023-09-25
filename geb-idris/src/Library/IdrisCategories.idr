@@ -3049,12 +3049,18 @@ csHomEitherJoin {c} a e =
     (csHomMap a) (csHomJoin a) (csEitherJoin e) (csHomEitherDistrib a e)
 
 public export
+csHomEitherInternalBind : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceInternalBind {c} (CSHomEither a e)
+csHomEitherInternalBind a e =
+  csInternalBindFromMapAndJoin (CSHomEither a e)
+    (csHomEitherInternalMap {c} a e) (csHomEitherJoin {c} a e)
+
+public export
 csHomEitherBind : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceBind {c} (CSHomEither a e)
 csHomEitherBind {c} a e =
-  csBindFromMapAndJoin (CSHomEither a e)
-    (csHomEitherMap a e)
-    (csHomEitherJoin {c} a e)
+  csBindFromInternalBind (CSHomEither a e)
+    (csHomEitherInternalBind {c} a e)
 
 ------------------------------------------------------
 ------------------------------------------------------
