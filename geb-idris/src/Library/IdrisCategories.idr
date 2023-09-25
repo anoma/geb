@@ -2995,10 +2995,17 @@ csHomEitherPure {c} a e =
     (csHomPure {c} a) (csEitherPure {c} e)
 
 public export
+csHomEitherInternalMap : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceInternalFMap {c} (CSHomEither a e)
+csHomEitherInternalMap {c} a e =
+  CSliceInternalFMapCompose (CSHomObj a) (CSCopObj e)
+    (csHomInternalFMap {c} a) (csEitherInternalFMap {c} e)
+
+public export
 csHomEitherMap : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceFMap {c} {d=c} (CSHomEither a e)
-csHomEitherMap {c} a e x y =
-  csHomMap a (CSCopObj e x) (CSCopObj e y) . csEitherMap e x y
+csHomEitherMap {c} a e =
+  CSliceFMapFromInternalFMap (CSHomEither a e) (csHomEitherInternalMap {c} a e)
 
 public export
 csHomEitherApply : {c : Type} -> (a, e : CSliceObj c) ->
