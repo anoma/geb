@@ -3032,22 +3032,21 @@ csHomEitherApply {c} a e =
     (csHomMap {c} a) (csHomApply {c} a) (csEitherApply {c} e)
 
 public export
+csHomEitherDistrib : {c : Type} -> (a, e : CSliceObj c) ->
+  CSliceDistributor {c} (CSHomObj a) (CSCopObj e)
+csHomEitherDistrib {c} a e x =
+  csCase {x=e} {y=(CSHomObj a x)} {z=(CSHomObj a (CSCopObj e x))}
+    (csFlip {z=(CSCopObj e x)} $
+      csConstMorph {x=a} {y=e} {z=(CSCopObj e x)} $ csInjL e x)
+    (csHomMap a x (CSCopObj e x) $ csInjR e x)
+
+public export
 csHomEitherJoin : {c : Type} -> (a, e : CSliceObj c) ->
   CSliceJoin {c} (CSHomEither a e)
-csHomEitherJoin {c} (a ** pa) (e ** pe) (b ** pb) =
-  Element0
-    (\(elc ** faecb) =>
-      (elc **
-       \ela => case faecb ela of
-        Element0 (Left ee) paceq =>
-          Element0 (Left ee) paceq
-        Element0 (Right faeb) fceq =>
-          let
-            (Element0 x pbxeq) =
-              snd faeb $ Element0 (fst0 ela) $ trans (snd0 ela) $ sym fceq
-          in
-          Element0 x $ trans pbxeq fceq))
-    (\(elc ** faecb) => Refl)
+csHomEitherJoin {c} a e =
+  CSliceJoinDistribCompose {c}
+    (CSHomObj a) (CSCopObj e)
+    (csHomMap a) (csHomJoin a) (csEitherJoin e) (csHomEitherDistrib a e)
 
 public export
 csHomEitherBind : {c : Type} -> (a, e : CSliceObj c) ->
