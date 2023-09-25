@@ -2197,6 +2197,21 @@ csInternalPreCompFlipApp {c} x y z =
     (csInternalPipe {c} x (CSHomObj (CSHomObj x y) y) z)
     (csInternalFlipApply {c} x y)
 
+public export
+csInternalUncurry : {c : Type} -> (x, y, z : CSliceObj c) ->
+  CSliceMorphism {c}
+    (CSHomObj x (CSHomObj {c} y z)) (CSHomObj (CSProdObj x y) z)
+csInternalUncurry {c} x y z =
+  csCurry {x=(CSHomObj x (CSHomObj y z))} {y=(CSProdObj x y)}
+  $ CSlicePipe
+  {u=(CSProdObj (CSHomObj x (CSHomObj y z)) (CSProdObj x y))}
+  -- {v=(CSProdObj (CSHomObj y z) (CSProdObj (CSHomObj x y) x))}
+  {v=(CSProdObj (CSProdObj (CSHomObj x (CSHomObj y z)) x) y)}
+  {w=z}
+  (csProdAssocL (CSHomObj x (CSHomObj y z)) x y)
+  $ csUncurry
+  $ csEval x (CSHomObj y z)
+
 ---------------------------------
 ---- Internal slice functors ----
 ---------------------------------
