@@ -2933,6 +2933,11 @@ csEitherBind {c} e =
 ------------------------------------
 
 public export
+csHomInternalFMap : {c : Type} ->
+  (a : CSliceObj c) -> CSliceInternalFMap (CSHomObj {c} a)
+csHomInternalFMap = csInternalCompose
+
+public export
 csHomPure : {c : Type} -> (a : CSliceObj c) -> CSlicePure {c} (CSHomObj a)
 csHomPure {c} (a ** pa) (b ** pb) =
   Element0 (\eb => (pb eb ** \_ => Element0 eb Refl)) (\_ => Refl)
