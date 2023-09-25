@@ -2772,6 +2772,23 @@ CSliceJoin : {c : Type} -> CSliceEndofunctor c -> Type
 CSliceJoin {c} f = CSliceNatTrans {c} {d=c} (f . f) f
 
 public export
+CSliceDistributor : {c : Type} ->
+  CSliceEndofunctor c -> CSliceEndofunctor c -> Type
+CSliceDistributor {c} g f = CSliceNatTrans {c} {d=c} (f . g) (g . f)
+
+public export
+CSliceJoinDistribCompose : {c : Type} ->
+  (g, f : CSliceEndofunctor c) ->
+  CSliceFMap {c} {d=c} g ->
+  CSliceJoin g -> CSliceJoin f ->
+  CSliceDistributor g f ->
+  CSliceJoin (g . f)
+CSliceJoinDistribCompose {c} g f mg jg jf dist =
+  CSNTvcomp
+    (CSWhiskerRight mg jf)
+    (CSWhiskerLeft (CSNTvcomp (CSWhiskerLeft jg f) (CSWhiskerRight mg dist)) f)
+
+public export
 csBindFromMapAndJoin : {c : Type} ->
   (f : CSliceEndofunctor c) -> (fm : CSliceFMap f) ->
   CSliceJoin f -> CSliceBind f
