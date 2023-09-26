@@ -1983,3 +1983,68 @@ gmCod (Element0 (c, dom, cod, m) p) =
 ---- Idris evaluator (operational semantics) -- for some categories only ----
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
+
+---------------------------------------------------------
+---------------------------------------------------------
+---- Dependent polynomial bifunctors and profunctors ----
+---------------------------------------------------------
+---------------------------------------------------------
+
+public export
+record DepBiArena (0 c, d, e : Type) where
+  constructor DepBAr
+  dbarPos : SliceObj e
+  dbarDir1 : SliceObj (Sigma {a=e} dbarPos, c)
+  dbarDir2 : SliceObj (Sigma {a=e} dbarPos, d)
+
+public export
+dbarPosDir1 : {0 c, d, e : Type} ->
+  (dbar : DepBiArena c d e) ->
+  (pos : Sigma {a=e} $ dbarPos dbar) -> SliceObj c
+dbarPosDir1 dbar pos = dbarDir1 dbar . MkPair pos
+
+public export
+dbarPosDir2 : {0 c, d, e : Type} ->
+  (dbar : DepBiArena c d e) ->
+  (pos : Sigma {a=e} $ dbarPos dbar) -> SliceObj d
+dbarPosDir2 dbar pos = dbarDir2 dbar . MkPair pos
+
+public export
+dbarPosDir : {0 c, d, e : Type} ->
+  (dbar : DepBiArena c d e) ->
+  (pos : Sigma {a=e} $ dbarPos dbar) -> SliceObj (Either c d)
+dbarPosDir dbar pos domel = case domel of
+  Left cel => dbarPosDir1 dbar pos cel
+  Right del => dbarPosDir2 dbar pos del
+
+public export
+SliceBifunctor : Type -> Type -> Type -> Type
+SliceBifunctor c d e = SliceObj c -> SliceObj d -> SliceObj e
+
+public export
+SliceEndoBifunctor : Type -> Type
+SliceEndoBifunctor e = SliceBifunctor e e e
+
+public export
+SliceProfunctor : Type -> Type -> Type -> Type
+SliceProfunctor = SliceBifunctor
+
+public export
+SliceEndoProfunctor : Type -> Type
+SliceEndoProfunctor = SliceEndoBifunctor
+
+public export
+InterpDepBiArPolyBi : {c, d, e : Type} ->
+  DepBiArena c d e -> SliceBifunctor c d e
+InterpDepBiArPolyBi {c} {d} {e} dbar dom1sl dom2sl codel =
+  (pos : dbarPos dbar codel **
+   (SliceMorphism {a=c} (dbarPosDir1 dbar (codel ** pos)) dom1sl,
+    SliceMorphism {a=d} (dbarPosDir2 dbar (codel ** pos)) dom2sl))
+
+public export
+InterpDepBiArPolyPro : {c, d, e : Type} ->
+  DepBiArena c d e -> SliceBifunctor c d e
+InterpDepBiArPolyPro {c} {d} {e} dbar dom1sl dom2sl codel =
+  (pos : dbarPos dbar codel **
+   (SliceMorphism {a=c} dom1sl (dbarPosDir1 dbar (codel ** pos)),
+    SliceMorphism {a=d} (dbarPosDir2 dbar (codel ** pos)) dom2sl))
