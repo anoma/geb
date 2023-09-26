@@ -1990,6 +1990,32 @@ gmCod (Element0 (c, dom, cod, m) p) =
 ---------------------------------------------------------
 ---------------------------------------------------------
 
+public export
+record DepArena (0 dom, cod : Type) where
+  constructor DepAr
+  darPos : SliceObj cod
+  darDir : SliceObj (Sigma {a=cod} darPos, dom)
+
+public export
+darPosDir : {0 dom, cod : Type} ->
+  (dar : DepArena dom cod) ->
+  (pos : Sigma {a=cod} $ darPos dar) -> SliceObj dom
+darPosDir dar pos = darDir dar . MkPair pos
+
+public export
+InterpDepArPoly : {dom, cod : Type} ->
+  DepArena dom cod -> SliceFunctor dom cod
+InterpDepArPoly {dom} {cod} dar domsl codel =
+  (pos : darPos dar codel **
+   SliceMorphism {a=dom} (darPosDir dar (codel ** pos)) domsl)
+
+public export
+InterpDepArDirich : {dom, cod : Type} ->
+  DepArena dom cod -> SliceFunctor dom cod
+InterpDepArDirich {dom} {cod} dar domsl codel =
+  (pos : darPos dar codel **
+   SliceMorphism {a=dom} domsl (darPosDir dar (codel ** pos)))
+
 -- A dependent bi-arena, which (in some cases given other inputs as well)
 -- may be interpreted as a slice bifunctor, or a slice profunctor, or a
 -- slice-valued bifunctor or profunctor or specifically hom-functor on
