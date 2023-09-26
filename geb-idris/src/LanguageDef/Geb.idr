@@ -1990,32 +1990,50 @@ gmCod (Element0 (c, dom, cod, m) p) =
 ---------------------------------------------------------
 ---------------------------------------------------------
 
+-- A dependent bi-arena, which (in some cases given other inputs as well)
+-- may be interpreted as a slice bifunctor, or a slice profunctor, or a
+-- slice-valued bifunctor or profunctor or specifically hom-functor on
+-- families of categories.  One category-theoretic view of this type is as a
+-- (co)presheaf on a quiver which looks similar to that of a W-type but with
+-- two domain slices:
+--
+--  `(Either c d) <- dbarDir -> dbarPos -> e`
+--
+-- That quiver is acyclic, which allows it to be viewed as a collection of
+-- dependent types without having to have a notion of mutual type dependency.
 public export
 record DepBiArena (0 c, d, e : Type) where
   constructor DepBAr
   dbarPos : SliceObj e
-  dbarDir1 : SliceObj (Sigma {a=e} dbarPos, c)
-  dbarDir2 : SliceObj (Sigma {a=e} dbarPos, d)
+  dbarDir1 : (ele : e) -> dbarPos ele -> c -> Type
+  dbarDir2 : (ele : e) -> dbarPos ele -> d -> Type
+
+-- Various equivalent ways of viewing the pair `(dbarDir1, dbarDir2)`.
 
 public export
-dbarDomPosDir1 : {0 c, d, e : Type} ->
+dbarSigmaPosDir1 : {0 c, d, e : Type} ->
   (dbar : DepBiArena c d e) ->
   (pos : Sigma {a=e} $ dbarPos dbar) -> SliceObj c
-dbarDomPosDir1 dbar pos = dbarDir1 dbar . MkPair pos
+dbarSigmaPosDir1 dbar pos = dbarDir1 dbar (fst pos) (snd pos)
 
 public export
-dbarDomPosDir2 : {0 c, d, e : Type} ->
+dbarSigmaPosDir2 : {0 c, d, e : Type} ->
   (dbar : DepBiArena c d e) ->
   (pos : Sigma {a=e} $ dbarPos dbar) -> SliceObj d
-dbarDomPosDir2 dbar pos = dbarDir2 dbar . MkPair pos
+dbarSigmaPosDir2 dbar pos = dbarDir2 dbar (fst pos) (snd pos)
 
 public export
-dbarPosDomDir : {0 c, d, e : Type} ->
+dbarPosDir : {0 c, d, e : Type} ->
+  (dbar : DepBiArena c d e) ->
+  (ele : e) -> dbarPos dbar ele -> SliceObj (Either c d)
+dbarPosDir dbar ele pos =
+  eitherElim (dbarDir1 dbar ele pos) (dbarDir2 dbar ele pos)
+
+public export
+dbarSigmaPosDir : {0 c, d, e : Type} ->
   (dbar : DepBiArena c d e) ->
   (pos : Sigma {a=e} $ dbarPos dbar) -> SliceObj (Either c d)
-dbarPosDomDir dbar pos domel = case domel of
-  Left cel => dbarDomPosDir1 dbar pos cel
-  Right del => dbarDomPosDir2 dbar pos del
+dbarSigmaPosDir dbar pos = dbarPosDir dbar (fst pos) (snd pos)
 
 public export
 SliceBifunctor : Type -> Type -> Type -> Type
@@ -2038,13 +2056,13 @@ InterpDepBiArPolyBi : {c, d, e : Type} ->
   DepBiArena c d e -> SliceBifunctor c d e
 InterpDepBiArPolyBi {c} {d} {e} dbar dom1sl dom2sl codel =
   (pos : dbarPos dbar codel **
-   (SliceMorphism {a=c} (dbarDomPosDir1 dbar (codel ** pos)) dom1sl,
-    SliceMorphism {a=d} (dbarDomPosDir2 dbar (codel ** pos)) dom2sl))
+   (SliceMorphism {a=c} (dbarSigmaPosDir1 dbar (codel ** pos)) dom1sl,
+    SliceMorphism {a=d} (dbarSigmaPosDir2 dbar (codel ** pos)) dom2sl))
 
 public export
 InterpDepBiArPolyPro : {c, d, e : Type} ->
   DepBiArena c d e -> SliceBifunctor c d e
 InterpDepBiArPolyPro {c} {d} {e} dbar dom1sl dom2sl codel =
   (pos : dbarPos dbar codel **
-   (SliceMorphism {a=c} dom1sl (dbarDomPosDir1 dbar (codel ** pos)),
-    SliceMorphism {a=d} (dbarDomPosDir2 dbar (codel ** pos)) dom2sl))
+   (SliceMorphism {a=c} dom1sl (dbarSigmaPosDir1 dbar (codel ** pos)),
+    SliceMorphism {a=d} (dbarSigmaPosDir2 dbar (codel ** pos)) dom2sl))
