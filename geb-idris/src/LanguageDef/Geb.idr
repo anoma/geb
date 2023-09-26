@@ -1994,27 +1994,27 @@ public export
 record DepArena (0 dom, cod : Type) where
   constructor DepAr
   darPos : SliceObj cod
-  darDir : SliceObj (Sigma {a=cod} darPos, dom)
+  darDir : dom -> (elcod : cod) -> darPos elcod -> Type
 
 public export
-darPosDir : {0 dom, cod : Type} ->
+darSigmaDir : {0 dom, cod : Type} ->
   (dar : DepArena dom cod) ->
   (pos : Sigma {a=cod} $ darPos dar) -> SliceObj dom
-darPosDir dar pos = darDir dar . MkPair pos
+darSigmaDir {dom} {cod} dar pos eldom = darDir dar eldom (fst pos) (snd pos)
 
 public export
 InterpDepArPoly : {dom, cod : Type} ->
   DepArena dom cod -> SliceFunctor dom cod
 InterpDepArPoly {dom} {cod} dar domsl codel =
   (pos : darPos dar codel **
-   SliceMorphism {a=dom} (darPosDir dar (codel ** pos)) domsl)
+   SliceMorphism {a=dom} (darSigmaDir dar (codel ** pos)) domsl)
 
 public export
 InterpDepArDirich : {dom, cod : Type} ->
   DepArena dom cod -> SliceFunctor dom cod
 InterpDepArDirich {dom} {cod} dar domsl codel =
   (pos : darPos dar codel **
-   SliceMorphism {a=dom} domsl (darPosDir dar (codel ** pos)))
+   SliceMorphism {a=dom} domsl (darSigmaDir dar (codel ** pos)))
 
 -- A dependent bi-arena, which (in some cases given other inputs as well)
 -- may be interpreted as a slice bifunctor, or a slice profunctor, or a
