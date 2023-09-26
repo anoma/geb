@@ -1998,24 +1998,24 @@ record DepBiArena (0 c, d, e : Type) where
   dbarDir2 : SliceObj (Sigma {a=e} dbarPos, d)
 
 public export
-dbarPosDir1 : {0 c, d, e : Type} ->
+dbarDomPosDir1 : {0 c, d, e : Type} ->
   (dbar : DepBiArena c d e) ->
   (pos : Sigma {a=e} $ dbarPos dbar) -> SliceObj c
-dbarPosDir1 dbar pos = dbarDir1 dbar . MkPair pos
+dbarDomPosDir1 dbar pos = dbarDir1 dbar . MkPair pos
 
 public export
-dbarPosDir2 : {0 c, d, e : Type} ->
+dbarDomPosDir2 : {0 c, d, e : Type} ->
   (dbar : DepBiArena c d e) ->
   (pos : Sigma {a=e} $ dbarPos dbar) -> SliceObj d
-dbarPosDir2 dbar pos = dbarDir2 dbar . MkPair pos
+dbarDomPosDir2 dbar pos = dbarDir2 dbar . MkPair pos
 
 public export
-dbarPosDir : {0 c, d, e : Type} ->
+dbarPosDomDir : {0 c, d, e : Type} ->
   (dbar : DepBiArena c d e) ->
   (pos : Sigma {a=e} $ dbarPos dbar) -> SliceObj (Either c d)
-dbarPosDir dbar pos domel = case domel of
-  Left cel => dbarPosDir1 dbar pos cel
-  Right del => dbarPosDir2 dbar pos del
+dbarPosDomDir dbar pos domel = case domel of
+  Left cel => dbarDomPosDir1 dbar pos cel
+  Right del => dbarDomPosDir2 dbar pos del
 
 public export
 SliceBifunctor : Type -> Type -> Type -> Type
@@ -2038,13 +2038,13 @@ InterpDepBiArPolyBi : {c, d, e : Type} ->
   DepBiArena c d e -> SliceBifunctor c d e
 InterpDepBiArPolyBi {c} {d} {e} dbar dom1sl dom2sl codel =
   (pos : dbarPos dbar codel **
-   (SliceMorphism {a=c} (dbarPosDir1 dbar (codel ** pos)) dom1sl,
-    SliceMorphism {a=d} (dbarPosDir2 dbar (codel ** pos)) dom2sl))
+   (SliceMorphism {a=c} (dbarDomPosDir1 dbar (codel ** pos)) dom1sl,
+    SliceMorphism {a=d} (dbarDomPosDir2 dbar (codel ** pos)) dom2sl))
 
 public export
 InterpDepBiArPolyPro : {c, d, e : Type} ->
   DepBiArena c d e -> SliceBifunctor c d e
 InterpDepBiArPolyPro {c} {d} {e} dbar dom1sl dom2sl codel =
   (pos : dbarPos dbar codel **
-   (SliceMorphism {a=c} dom1sl (dbarPosDir1 dbar (codel ** pos)),
-    SliceMorphism {a=d} (dbarPosDir2 dbar (codel ** pos)) dom2sl))
+   (SliceMorphism {a=c} dom1sl (dbarDomPosDir1 dbar (codel ** pos)),
+    SliceMorphism {a=d} (dbarDomPosDir2 dbar (codel ** pos)) dom2sl))
