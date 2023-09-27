@@ -1984,54 +1984,11 @@ gmCod (Element0 (c, dom, cod, m) p) =
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
----------------------------------------------------------
----------------------------------------------------------
----- Dependent polynomial bifunctors and profunctors ----
----------------------------------------------------------
----------------------------------------------------------
-
-public export
-record DepArena (0 dom, cod : Type) where
-  constructor DepAr
-  darPos : SliceObj cod
-  darDir : dom -> (elcod : cod) -> darPos elcod -> Type
-
-public export
-darSigmaDir : {0 dom, cod : Type} ->
-  (dar : DepArena dom cod) ->
-  (pos : Sigma {a=cod} $ darPos dar) -> SliceObj dom
-darSigmaDir {dom} {cod} dar pos eldom = darDir dar eldom (fst pos) (snd pos)
-
-public export
-InterpDepArPoly : {dom, cod : Type} ->
-  DepArena dom cod -> SliceFunctor dom cod
-InterpDepArPoly {dom} {cod} dar domsl codel =
-  (pos : darPos dar codel **
-   SliceMorphism {a=dom} (darSigmaDir dar (codel ** pos)) domsl)
-
-public export
-InterpDepArDirich : {dom, cod : Type} ->
-  DepArena dom cod -> SliceFunctor dom cod
-InterpDepArDirich {dom} {cod} dar domsl codel =
-  (pos : darPos dar codel **
-   SliceMorphism {a=dom} domsl (darSigmaDir dar (codel ** pos)))
-
--- A dependent bi-arena, which (in some cases given other inputs as well)
--- may be interpreted as a slice bifunctor, or a slice profunctor, or a
--- slice-valued bifunctor or profunctor or specifically hom-functor on
--- families of categories.  One category-theoretic view of this type is as a
--- (co)presheaf on a quiver which looks similar to that of a W-type but with
--- two domain slices:
---
---  `(c, d) <- dbarDir -> dbarPos -> e`
---
--- That quiver is acyclic, which allows it to be viewed as a collection of
--- dependent types without having to have a notion of mutual type dependency.
-public export
-record DepBiArena (0 c, d, e : Type) where
-  constructor DepBAr
-  dbarPos : SliceObj e
-  dbarDir : c -> d -> (ele : e) -> dbarPos ele -> Type
+----------------------------------------------
+----------------------------------------------
+---- Dependent bifunctors and profunctors ----
+----------------------------------------------
+----------------------------------------------
 
 public export
 SliceBifunctor : Type -> Type -> Type -> Type
@@ -2049,11 +2006,32 @@ public export
 SliceEndoProfunctor : Type -> Type
 SliceEndoProfunctor = SliceEndoBifunctor
 
+---------------------------------------------------------
+---------------------------------------------------------
+---- Dependent polynomial bifunctors and profunctors ----
+---------------------------------------------------------
+---------------------------------------------------------
+
 public export
-InterpDepBiArPolyBi : {c, d, e : Type} ->
-  DepBiArena c d e -> SliceBifunctor c d e
-InterpDepBiArPolyBi {c} {d} {e} dbar dom1sl dom2sl ele =
-  (pos : dbarPos dbar ele **
-   SliceMorphism {a=(c,d)}
-    (\elcd => dbarDir dbar (fst elcd) (snd elcd) ele pos)
-    (\elcd => (dom1sl (fst elcd), dom2sl (snd elcd))))
+record DepArena (0 dom, cod : Type) where
+  constructor DepAr
+  darPos : SliceObj cod
+  darDir : (elcod : cod) -> darPos elcod -> SliceObj dom
+
+public export
+InterpDepAr : {dom, cod : Type} ->
+  (Type -> Type -> Type) ->
+  DepArena dom cod -> SliceFunctor dom cod
+InterpDepAr {dom} {cod} bf dar domsl elcod =
+  (pos : darPos dar elcod **
+  (eldom : dom) -> bf (domsl eldom) (darDir dar elcod pos eldom))
+
+public export
+InterpDepArPoly : {dom, cod : Type} ->
+  DepArena dom cod -> SliceFunctor dom cod
+InterpDepArPoly  = InterpDepAr OpArrowT
+
+public export
+InterpDepArDirich : {dom, cod : Type} ->
+  DepArena dom cod -> SliceFunctor dom cod
+InterpDepArDirich = InterpDepAr ArrowT
