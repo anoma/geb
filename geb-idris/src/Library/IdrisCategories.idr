@@ -753,6 +753,40 @@ public export
 AdjCounit : (Type -> Type) -> Type
 AdjCounit f = NaturalTransformation f id
 
+---------------------
+---------------------
+---- Profunctors ----
+---------------------
+---------------------
+
+public export
+interface Profunctor f where
+  constructor MkProfunctor
+
+  total
+  dimap : (c -> a) -> (b -> d) -> f a b -> f c d
+  dimap f g = lmap f . rmap g
+
+  total
+  lmap : (c -> a) -> f a b -> f c b
+  lmap = flip dimap id
+
+  total
+  rmap : (b -> d) -> f a b -> f a d
+  rmap = dimap id
+
+public export
+ProfunctorDP : Type
+ProfunctorDP = DPair (Type -> Type -> Type) Profunctor
+
+public export
+PfSliceObj : Type
+PfSliceObj = SliceObj ProfunctorDP
+
+public export
+PfCatObj : PfSliceObj
+PfCatObj = const Unit
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
@@ -3355,40 +3389,6 @@ public export
 public export
 Bifunctor f => Bifunctor (flip f) where
   bimap f g = bimap g f
-
----------------------
----------------------
----- Profunctors ----
----------------------
----------------------
-
-public export
-interface Profunctor f where
-  constructor MkProfunctor
-
-  total
-  dimap : (c -> a) -> (b -> d) -> f a b -> f c d
-  dimap f g = lmap f . rmap g
-
-  total
-  lmap : (c -> a) -> f a b -> f c b
-  lmap = flip dimap id
-
-  total
-  rmap : (b -> d) -> f a b -> f a d
-  rmap = dimap id
-
-public export
-ProfunctorDP : Type
-ProfunctorDP = DPair (Type -> Type -> Type) Profunctor
-
-public export
-PfSliceObj : Type
-PfSliceObj = SliceObj ProfunctorDP
-
-public export
-PfCatObj : PfSliceObj
-PfCatObj = const Unit
 
 --------------------------------------------------------------
 --------------------------------------------------------------
