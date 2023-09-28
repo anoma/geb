@@ -1081,6 +1081,10 @@ ArrowT : Type -> Type -> Type
 ArrowT a b = a -> b
 
 public export
+Profunctor ArrowT where
+  dimap fca fbd fab = fbd . fab . fca
+
+public export
 OpArrowT : Type -> Type -> Type
 OpArrowT = flip ArrowT
 
