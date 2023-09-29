@@ -275,6 +275,42 @@ prodFMsubstTree {v} =
     (prodFMBind {a=v} {b=v})
     (uncurry (|>))
 
+------------------------------------------
+---- Combinators on `ProdFM` algebras ----
+------------------------------------------
+
+public export
+prodFMAlgInjectLeft : {0 a : Type} ->
+  ProdAlg a -> ProdAlg a -> Algebra (BinTreeF a . ProdFM) a
+prodFMAlgInjectLeft {a} alg algl =
+  eitherElim id (alg . bimap (prodFMEvalMon algl) (prodFMEvalMon alg))
+
+public export
+prodFMAlgInjectRight : {0 a : Type} ->
+  ProdAlg a -> ProdAlg a -> Algebra (BinTreeF a . ProdFM) a
+prodFMAlgInjectRight {a} alg algr =
+  eitherElim id (alg . bimap (prodFMEvalMon alg) (prodFMEvalMon algr))
+
+public export
+prodFMSpecializeLeft : {0 a : Type} ->
+  ProdAlg a -> ProdAlg a -> ProdFMAlg a
+prodFMSpecializeLeft {a} = (|>) (outBTm {atom=a}) .* prodFMAlgInjectLeft
+
+public export
+prodFMSpecializeRight : {0 a : Type} ->
+  ProdAlg a -> ProdAlg a -> ProdFMAlg a
+prodFMSpecializeRight {a} = (|>) (outBTm {atom=a}) .* prodFMAlgInjectRight
+
+public export
+prodSpecializeLeft : {0 a : Type} ->
+  ProdAlg a -> ProdAlg a -> ProdAlg a
+prodSpecializeLeft = ProdAlgFromFree .* prodFMSpecializeLeft
+
+public export
+prodSpecializeRight : {0 a : Type} ->
+  ProdAlg a -> ProdAlg a -> ProdAlg a
+prodSpecializeRight = ProdAlgFromFree .* prodFMSpecializeRight
+
 ----------------------------------
 ---- Free monad of `BinTreeF` ----
 ----------------------------------
