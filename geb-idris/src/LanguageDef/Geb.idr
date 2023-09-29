@@ -1203,19 +1203,19 @@ binTreeGenCata (InBTm (Right (bt1, bt2))) galg@(InBTGA (alg, m1, m2)) =
 
 public export
 binTreeFMSpecializeLeft : {0 atom, a : Type} ->
-  BinTreeAlg atom a -> BinTreeFMAlg atom a -> BinTreeFMAlg atom a
+  BinTreeAlg atom a -> BinTreeAlg atom a -> BinTreeFMAlg atom a
 binTreeFMSpecializeLeft {atom} {a} alg algl (InBTm x) = case x of
   Left eaa => case eaa of
     Left v => v
     Right ea => alg $ Left ea
   Right (bt, bt') =>
-    alg $ Right (algl bt, binTreeFMEvalMon alg bt')
+    alg $ Right (binTreeFMEvalMon algl bt, binTreeFMEvalMon alg bt')
 
 public export
 binTreeSpecializeLeft : {0 atom, a : Type} ->
   BinTreeAlg atom a -> BinTreeAlg atom a -> BinTreeAlg atom a
 binTreeSpecializeLeft {atom} {a} alg algl =
-  BinTreeAlgFromFree $ binTreeFMSpecializeLeft alg $ binTreeFMEvalMon algl
+  BinTreeAlgFromFree $ binTreeFMSpecializeLeft alg algl
 
 ------------------------------------------------
 ------------------------------------------------
