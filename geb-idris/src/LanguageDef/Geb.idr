@@ -1180,19 +1180,19 @@ data BinTreeGenAlg : Type -> Type -> Type where
 
 public export
 binTreeGenCata :
-  {0 atom, a : Type} -> BinTreeGenAlg atom a -> BinTreeMu atom -> a
-binTreeGenCata (InBTGA (alg, _, _)) (InBTm (Left ea)) =
+  {0 atom, a : Type} -> BinTreeMu atom -> BinTreeGenAlg atom a -> a
+binTreeGenCata (InBTm (Left ea)) (InBTGA (alg, _, _)) =
   alg $ Left ea
-binTreeGenCata galg@(InBTGA (alg, m1, m2)) (InBTm (Right (bt1, bt2))) =
+binTreeGenCata (InBTm (Right (bt1, bt2))) galg@(InBTGA (alg, m1, m2)) =
   case (m1, m2) of
     (Nothing, Nothing) =>
-      alg $ Right (binTreeGenCata galg bt1, binTreeGenCata galg bt2)
+      alg $ Right (binTreeGenCata bt1 galg, binTreeGenCata bt2 galg)
     (Nothing, Just mt2) =>
-      alg $ Right (binTreeGenCata galg bt1, binTreeGenCata mt2 bt2)
+      alg $ Right (binTreeGenCata bt1 galg, binTreeGenCata bt2 mt2)
     (Just mt1, Nothing) =>
-      alg $ Right (binTreeGenCata mt1 bt1, binTreeGenCata galg bt2)
+      alg $ Right (binTreeGenCata bt1 mt1, binTreeGenCata bt2 galg)
     (Just mt1, Just mt2) =>
-      alg $ Right (binTreeGenCata mt1 bt1, binTreeGenCata mt2 bt2)
+      alg $ Right (binTreeGenCata bt1 mt1, binTreeGenCata bt2 mt2)
 
 ------------------------------------------------
 ------------------------------------------------
