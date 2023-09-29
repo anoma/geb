@@ -1238,12 +1238,19 @@ binTreeGenCata (InBTm (Right (bt1, bt2))) galg@(InBTGA (alg, m1, m2)) =
 ---------------------------------------
 
 public export
+binTreeFMAlgInjectLeft : {0 atom, a : Type} ->
+  BinTreeAlg atom a -> BinTreeAlg atom a ->
+  Algebra (BinTreeF (Either a atom) . BinTreeFM atom) a
+binTreeFMAlgInjectLeft {atom} {a} alg algl =
+  eitherElim
+    (eitherElim id (alg . Left))
+    (alg . Right . bimap (binTreeFMEvalMon algl) (binTreeFMEvalMon alg))
+
+public export
 binTreeFMSpecializeLeft : {0 atom, a : Type} ->
   BinTreeAlg atom a -> BinTreeAlg atom a -> BinTreeFMAlg atom a
-binTreeFMSpecializeLeft {atom} {a} alg algl (InBTm x) = case x of
-  Left eaa => eitherElim id (alg . Left) eaa
-  Right (bt, bt') =>
-    alg $ Right (binTreeFMEvalMon algl bt, binTreeFMEvalMon alg bt')
+binTreeFMSpecializeLeft {atom} {a} =
+  (|>) (outBTm {atom=(Either a atom)}) .* binTreeFMAlgInjectLeft
 
 public export
 binTreeSpecializeLeft : {0 atom, a : Type} ->
