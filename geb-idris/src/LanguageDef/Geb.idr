@@ -1205,9 +1205,7 @@ public export
 binTreeFMSpecializeLeft : {0 atom, a : Type} ->
   BinTreeAlg atom a -> BinTreeAlg atom a -> BinTreeFMAlg atom a
 binTreeFMSpecializeLeft {atom} {a} alg algl (InBTm x) = case x of
-  Left eaa => case eaa of
-    Left v => v
-    Right ea => alg $ Left ea
+  Left eaa => eitherElim id (alg . Left) eaa
   Right (bt, bt') =>
     alg $ Right (binTreeFMEvalMon algl bt, binTreeFMEvalMon alg bt')
 
