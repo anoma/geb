@@ -1214,8 +1214,7 @@ binTreeFMSpecializeLeft {atom} {a} alg algl (InBTm x) = case x of
 public export
 binTreeSpecializeLeft : {0 atom, a : Type} ->
   BinTreeAlg atom a -> BinTreeAlg atom a -> BinTreeAlg atom a
-binTreeSpecializeLeft {atom} {a} alg algl =
-  BinTreeAlgFromFree $ binTreeFMSpecializeLeft alg algl
+binTreeSpecializeLeft = BinTreeAlgFromFree .* binTreeFMSpecializeLeft
 
 ------------------------------------------------
 ------------------------------------------------
