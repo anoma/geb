@@ -1263,7 +1263,7 @@ binTreeFMAlgInjectRight : {0 atom, a : Type} ->
   Algebra (BinTreeF (Either a atom) . BinTreeFM atom) a
 binTreeFMAlgInjectRight {atom} {a} alg algr =
   eitherElim
-    (eitherElim id (alg . Right))
+    (eitherElim id (alg . Left))
     (alg . Right . bimap (binTreeFMEvalMon alg) (binTreeFMEvalMon algr))
 
 public export
