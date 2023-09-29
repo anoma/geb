@@ -1184,15 +1184,14 @@ binTreeGenCata :
 binTreeGenCata (InBTm (Left ea)) (InBTGA (alg, _, _)) =
   alg $ Left ea
 binTreeGenCata (InBTm (Right (bt1, bt2))) galg@(InBTGA (alg, m1, m2)) =
-  case (m1, m2) of
-    (Nothing, Nothing) =>
-      alg $ Right (binTreeGenCata bt1 galg, binTreeGenCata bt2 galg)
-    (Nothing, Just mt2) =>
-      alg $ Right (binTreeGenCata bt1 galg, binTreeGenCata bt2 mt2)
-    (Just mt1, Nothing) =>
-      alg $ Right (binTreeGenCata bt1 mt1, binTreeGenCata bt2 galg)
-    (Just mt1, Just mt2) =>
-      alg $ Right (binTreeGenCata bt1 mt1, binTreeGenCata bt2 mt2)
+  let
+    (alg1, alg2) = case (m1, m2) of
+      (Nothing, Nothing) => (galg, galg)
+      (Nothing, Just mt2) => (galg, mt2)
+      (Just mt1, Nothing) => (mt1, galg)
+      (Just mt1, Just mt2) => (mt1, mt2)
+  in
+  alg $ Right (binTreeGenCata bt1 alg1, binTreeGenCata bt2 alg2)
 
 ------------------------------------------------
 ------------------------------------------------
