@@ -1257,6 +1257,26 @@ binTreeSpecializeLeft : {0 atom, a : Type} ->
   BinTreeAlg atom a -> BinTreeAlg atom a -> BinTreeAlg atom a
 binTreeSpecializeLeft = BinTreeAlgFromFree .* binTreeFMSpecializeLeft
 
+public export
+binTreeFMAlgInjectRight : {0 atom, a : Type} ->
+  BinTreeAlg atom a -> BinTreeAlg atom a ->
+  Algebra (BinTreeF (Either a atom) . BinTreeFM atom) a
+binTreeFMAlgInjectRight {atom} {a} alg algr =
+  eitherElim
+    (eitherElim id (alg . Right))
+    (alg . Right . bimap (binTreeFMEvalMon alg) (binTreeFMEvalMon algr))
+
+public export
+binTreeFMSpecializeRight : {0 atom, a : Type} ->
+  BinTreeAlg atom a -> BinTreeAlg atom a -> BinTreeFMAlg atom a
+binTreeFMSpecializeRight {atom} {a} =
+  (|>) (outBTm {atom=(Either a atom)}) .* binTreeFMAlgInjectRight
+
+public export
+binTreeSpecializeRight : {0 atom, a : Type} ->
+  BinTreeAlg atom a -> BinTreeAlg atom a -> BinTreeAlg atom a
+binTreeSpecializeRight = BinTreeAlgFromFree .* binTreeFMSpecializeRight
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Polynomial binary-tree-dependent types ----
