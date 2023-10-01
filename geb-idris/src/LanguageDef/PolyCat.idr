@@ -2588,6 +2588,13 @@ InterpPolyLKan (ppos ** pdir) (qpos ** qdir) a (i ** f) =
   (pdir i ** (f, (i ** id)))
 
 public export
+InterpLKanPoly : (p, q : PolyFunc) -> (a : Type) ->
+  LKanExt (InterpPolyFunc p) (InterpPolyFunc q) a ->
+  InterpPolyFunc (PolyLKanExt p q) a
+InterpLKanPoly (ppos ** pdir) (qpos ** qdir) a (b ** (f, (i ** d))) =
+  (i ** \(qi ** qpd) => f (qi ** d . qpd))
+
+public export
 PolyRKanPoly : (p, q : PolyFunc) -> (a : Type) ->
   InterpPolyFunc (PolyRKanExt p q) a ->
   PolyNatTrans (pfCompositionArena (PFHomArena a) q) p
