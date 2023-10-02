@@ -722,18 +722,6 @@ pfParProdClosureNT q r =
   (pfParProdClosurePosNT q r ** pfParProdClosureDirNT q r)
 
 public export
-PolyRKanExtPos : PolyFunc -> PolyFunc -> Type
-PolyRKanExtPos g j = (pfPos j, PolyNatTrans j g)
-
-public export
-PolyRKanExtDir : (g, j : PolyFunc) -> PolyRKanExtPos g j -> Type
-PolyRKanExtDir g j (pi, alpha) = pfDir {p=j} pi
-
-public export
-PolyRKanExt : (g, j : PolyFunc) -> PolyFunc
-PolyRKanExt g j = (PolyRKanExtPos g j ** PolyRKanExtDir g j)
-
-public export
 pfLeftCoclosurePos : (q, p : PolyFunc) -> Type
 pfLeftCoclosurePos q p = pfPos p
 
@@ -2593,29 +2581,6 @@ InterpLKanPoly : (p, q : PolyFunc) -> (a : Type) ->
   InterpPolyFunc (PolyLKanExt p q) a
 InterpLKanPoly (ppos ** pdir) (qpos ** qdir) a (b ** (f, (i ** d))) =
   (i ** \(qi ** qpd) => f (qi ** d . qpd))
-
-public export
-PolyRKanPoly : (p, q : PolyFunc) -> (a : Type) ->
-  InterpPolyFunc (PolyRKanExt p q) a ->
-  PolyNatTrans (pfCompositionArena (PFHomArena a) q) p
-PolyRKanPoly (ppos ** pdir) (qpos ** qdir) a ((qi, (onPos ** onDir)) ** pd) =
-  (\(u ** di) => case u of () => onPos qi **
-   \(u ** di), pdi => case u of
-    () =>
-      (pd (onDir qi pdi) **
-       onDir (di (pd (onDir qi pdi))) ?PolyRKanPoly_hole_ondir))
-
-public export
-InterpPolyRKan : (p, q : PolyFunc) -> (a : Type) ->
-  InterpPolyFunc (PolyRKanExt p q) a ->
-  RKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
-InterpPolyRKan p q a rk b qf =
-  InterpPolyNT
-    {p=(pfCompositionArena (PFHomArena a) q)}
-    {q=p}
-    (PolyRKanPoly p q a rk)
-    b
-    ((() ** DPair.fst . qf) ** \(x ** qd) => DPair.snd (qf x) qd)
 
 ---------------------------------------
 ---------------------------------------
