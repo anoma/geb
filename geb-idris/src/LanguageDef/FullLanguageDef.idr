@@ -1,6 +1,5 @@
 module LanguageDef.FullLanguageDef
 
-import public LanguageDef.Atom
 import public LanguageDef.RefinedADT
 import public LanguageDef.UniversalCategory
 import public LanguageDef.Interpretation
