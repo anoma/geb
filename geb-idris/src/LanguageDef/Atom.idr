@@ -15,6 +15,45 @@ import Library.IdrisUtils
 ---------------------------------
 ---------------------------------
 
+-- "Core" atoms, which are reserved for use by typecheckers and evaluators
+-- for the core logic of Geb -- the single category (which in particular is
+-- a topos and contains natural numbers with Robinson arithmetic) in which
+-- the remainder of Geb can be specified (using the internal logic of the
+-- topos) and typechecked (using the arithmetic), and in which the notions
+-- of Geb "module", "language", and "program" are defined (see "language atoms"
+-- below).
+--
+-- All of these atoms correspond directly to universal properties (in the
+-- sense of category theory).
+public export
+data CoreAtom : Type where
+
+-- "Language" atoms, which, like core atoms, are reserved for use by
+-- typecheckers and evaluators for the core logic of Geb, but which are
+-- not required in order to specify the core logic itself -- rather, they
+-- are definable _within_ the core logic.  However, although they can be
+-- defined within the core logic, these particular definitions are reserved,
+-- because they are the ones required to specify (within the core logic of
+-- Geb) and expose the core logic and all the logics and languages that can
+-- can be specified within the core logic, such as "data type", "function",
+-- "macro", "language", "logic", "module", "definition", and "program".
+--
+-- Thus these are all _definitions_, and are all expressed in terms of
+-- universal properties -- aliases, in other words, for particular objects
+-- and morphisms of the core logic.  They could therefore be defined as
+-- conventions, but making them reserved definitions within the official
+-- language definition itself _enforces_ the conventions.
+public export
+data LangAtom : Type where
+
+-- The core atoms and language atoms between themselves comprise the
+-- reserved atoms.
+
+public export
+data ReservedAtom : Type where
+  RA_C : CoreAtom -> ReservedAtom
+  RA_L : LangAtom -> ReservedAtom
+
 public export
 data OldAtom : Type where
   -- Slices of the Geb S-expression type itself.
