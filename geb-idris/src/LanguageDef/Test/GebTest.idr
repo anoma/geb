@@ -1,6 +1,8 @@
 module LanguageDef.Test.GebTest
 
 import Test.TestLibrary
+import LanguageDef.BinTree
+import LanguageDef.Test.BinTreeTest
 import LanguageDef.Geb
 import LanguageDef.PolyCat
 import LanguageDef.ProgFinSet
@@ -41,6 +43,8 @@ btPolyShape n = [(2, 1), (0, n)]
 ---- BinTree as Tuple-expression ----
 -------------------------------------
 -------------------------------------
+
+%hide LanguageDef.ADTCat.infixr.($*)
 
 BTT : Type
 BTT = BinTreeMu Nat
