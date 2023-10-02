@@ -1,6 +1,7 @@
 module LanguageDef.Atom
 
 import Library.IdrisUtils
+import Library.IdrisCategories
 
 %default total
 
@@ -53,6 +54,30 @@ public export
 data ReservedAtom : Type where
   RA_C : CoreAtom -> ReservedAtom
   RA_L : LangAtom -> ReservedAtom
+
+-- "Implementation" atoms.
+
+-- The implementation atom type is parameterized on the maximum size of an
+-- embedded natural number supported by the implementation (which, when added
+-- to the size of the reserved atoms, might reflect, for example, the maximum
+-- finite field size supported by a back end, or the maximum node size of a
+-- tree used by a bignum library).
+public export
+IMPL_ATOM_SZ : Nat
+
+public export
+data ImplAtom : Type where
+  IA_NAT : Refinement {a=Nat} (flip Data.Nat.lt IMPL_ATOM_SZ) -> ImplAtom
+
+-- The reserved atoms and the implementation atoms together comprise
+-- the "syntax" atoms -- the type of atoms used by this specific Geb
+-- implementation's internal (binary-tree) representation of the concepts
+-- of the Geb language definition, and provided in the form of an s-expression
+-- syntax to the programmer.
+public export
+data SyntaxAtom : Type where
+  TA_R : ReservedAtom -> SyntaxAtom
+  TA_I : ImplAtom -> SyntaxAtom
 
 public export
 data OldAtom : Type where
