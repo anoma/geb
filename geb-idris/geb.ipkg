@@ -5,6 +5,7 @@ modules =
     , Library.IdrisUtils
     , Library.IdrisCategories
     , Library.CategoryTheory
+    , LanguageDef.BinTree
     , LanguageDef.Geb
     , LanguageDef.NatPrefixCat
     , LanguageDef.PolyProfunctor
@@ -24,6 +25,7 @@ modules =
     , LanguageDef.ComputationalEffects
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
+    , LanguageDef.Test.BinTreeTest
     , LanguageDef.Test.GebTest
     , LanguageDef.Test.NatPrefixCatTest
     , LanguageDef.Test.PolyProfunctorTest
