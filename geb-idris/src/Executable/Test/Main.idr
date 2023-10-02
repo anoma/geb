@@ -4,6 +4,7 @@ import Test.TestLibrary
 import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
 import Library.Test.IdrisAlgebraTest
+import LanguageDef.Test.BinTreeTest
 import LanguageDef.Test.GebTest
 import LanguageDef.Test.RefinedADTTest
 import LanguageDef.Test.FiguresTest
@@ -38,6 +39,7 @@ totalTests = do
   Library.Test.IdrisUtilsTest.idrisUtilsTest
   Library.Test.IdrisCategoriesTest.libraryIdrisCategoriesTest
   Library.Test.IdrisAlgebraTest.libraryIdrisAlgebraTest
+  LanguageDef.Test.BinTreeTest.binTreeTest
   LanguageDef.Test.AtomTest.languageDefAtomTest
   LanguageDef.Test.UniversalCategoryTest.languageDefUniversalCategoryTest
   LanguageDef.Test.InterpretationTest.languageDefInterpretationTest
