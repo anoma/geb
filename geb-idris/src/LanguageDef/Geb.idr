@@ -16,6 +16,84 @@ import LanguageDef.Syntax
 
 %default total
 
+-------------------------------------------------
+-------------------------------------------------
+---- Functors in `Cat` as internal to `Type` ----
+-------------------------------------------------
+-------------------------------------------------
+
+-------------------------------------------------------------------------------
+---- Product `Cat`-functor (the functor which produces a product category) ----
+-------------------------------------------------------------------------------
+
+-- A functor in the category of categories, which produces the product category.
+-- This is the first component of the object map of a polynomial endofunctor in
+-- the category of presheaves over the walking quiver.
+public export
+ProdCatOMap1 : (o : Type) -> (m : o -> o -> Type) -> Type
+ProdCatOMap1 o m = (o, o)
+
+-- This is the second component.
+public export
+ProdCatOMap2 : (o : Type) -> (m : o -> o -> Type) ->
+  ProdCatOMap1 o m -> ProdCatOMap1 o m -> Type
+ProdCatOMap2 o m x y = (m (fst x) (fst y), m (snd x) (snd y))
+
+public export
+ProdCatOMap : (o : Type) -> (m : o -> o -> Type) ->
+  (o' : Type ** o' -> o' -> Type)
+ProdCatOMap o m = (ProdCatOMap1 o m ** ProdCatOMap2 o m)
+
+-- The morphism map of an endofunctor in the category of presheaves over the
+-- walking quiver is a map from morphisms to morphisms of the category of
+-- presheaves, and the morphisms of the category of presheaves are natural
+-- transformations.  So the morphism map takes natural transformations to
+-- natural transformations (in the presheaf category).  This is the morphism
+-- map of the functor which produces the product category of the input category.
+public export
+ProdCatFMap :
+  (o, o' : Type) -> (m : o -> o -> Type) -> (m' : o' -> o' -> Type) ->
+  (ont : o -> o') -> (mnt : (x, y : o) -> m x y -> m' (ont x) (ont y)) ->
+  (font : ProdCatOMap1 o m -> ProdCatOMap1 o' m' **
+   (x, y :  ProdCatOMap1 o m) ->
+    ProdCatOMap2 o m x y -> ProdCatOMap2 o' m' (font x) (font y))
+ProdCatFMap o o' m m' ont mnt =
+  (\xy => (ont (fst xy), ont (snd xy)) **
+   \xx', yy', mm' =>
+    (mnt (fst xx') (fst yy') (fst mm'), (mnt (snd xx') (snd yy') (snd mm'))))
+
+-- The diagonal functor from a category to its product category.  This is
+-- a natural transformation in the category of presheaves over the walking
+-- quiver, from the identity functor to the `ProdCatOMap` functor.
+-- That means that for each object of the category of presheaves over the
+-- walking quiver, we specify a morphism from that object to its image under
+-- `ProdCatOMap`.
+--
+-- An object in a category of presheaves is a functor from the index category
+-- (in this case, the walking quiver) to `Type`, and a morphism in that
+-- category is a natural transformation between those functors.
+--
+-- So, the diagonal functor in this formulation -- a polymorphic one in which
+-- the input category could be any category -- consists of, for each presheaf
+-- on the walking quiver, a natural transformation from the identity functor
+-- to `ProdCatOMap`/`ProdCatFMap`.
+public export
+internalDiagOMap : (o : Type) -> (m : o -> o -> Type) -> o -> ProdCatOMap1 o m
+internalDiagOMap o m x = (x, x)
+
+public export
+internalDiagFMap : (o : Type) -> (m : o -> o -> Type) -> (x, y : o) ->
+  m x y -> ProdCatOMap2 o m (internalDiagOMap o m x) (internalDiagOMap o m y)
+internalDiagFMap o m x y f = (f, f)
+
+---------------------------------------------------------
+---- Adjunction with the product category: coproduct ----
+---------------------------------------------------------
+
+-------------------------------------------------------
+---- Adjunction with the product category: product ----
+-------------------------------------------------------
+
 ---------------------------------------------------
 ---------------------------------------------------
 ---- Partial interpretations as `Maybe`-slices ----
