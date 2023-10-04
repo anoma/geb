@@ -78,21 +78,49 @@ ProdCatFMap o o' m m' ont mnt =
 -- on the walking quiver, a natural transformation from the identity functor
 -- to `ProdCatOMap`/`ProdCatFMap`.
 public export
-internalDiagOMap : (o : Type) -> (m : o -> o -> Type) -> o -> ProdCatOMap1 o m
-internalDiagOMap o m x = (x, x)
+InternalDiagOMap : (o : Type) -> (m : o -> o -> Type) -> o -> ProdCatOMap1 o m
+InternalDiagOMap o m x = (x, x)
 
 public export
-internalDiagFMap : (o : Type) -> (m : o -> o -> Type) -> (x, y : o) ->
-  m x y -> ProdCatOMap2 o m (internalDiagOMap o m x) (internalDiagOMap o m y)
-internalDiagFMap o m x y f = (f, f)
+InternalDiagFMap : (o : Type) -> (m : o -> o -> Type) -> (x, y : o) ->
+  m x y -> ProdCatOMap2 o m (InternalDiagOMap o m x) (InternalDiagOMap o m y)
+InternalDiagFMap o m x y f = (f, f)
 
 ---------------------------------------------------------
 ---- Adjunction with the product category: coproduct ----
 ---------------------------------------------------------
 
+public export
+CopROMap : (o : Type) -> (m : o -> o -> Type) -> o -> ProdCatOMap1 o m
+CopROMap = InternalDiagOMap
+
+public export
+CopRFMap : (o : Type) -> (m : o -> o -> Type) -> (x, y : o) ->
+  m x y -> ProdCatOMap2 o m (CopROMap o m x) (CopROMap o m y)
+CopRFMap = InternalDiagFMap
+
+public export
+CopFreeRAdj : (o : Type) -> (m : o -> o -> Type) ->
+  (a : ProdCatOMap1 o m) -> (b : o) -> Type
+CopFreeRAdj o m = flip $ (.) (uncurry Pair) . (mapHom {f=Pair} . flip m)
+
 -------------------------------------------------------
 ---- Adjunction with the product category: product ----
 -------------------------------------------------------
+
+public export
+ProdLOMap : (o : Type) -> (m : o -> o -> Type) -> o -> ProdCatOMap1 o m
+ProdLOMap = InternalDiagOMap
+
+public export
+ProdLFMap : (o : Type) -> (m : o -> o -> Type) -> (x, y : o) ->
+  m x y -> ProdCatOMap2 o m (ProdLOMap o m x) (ProdLOMap o m y)
+ProdLFMap = InternalDiagFMap
+
+public export
+ProdFreeLAdj : (o : Type) -> (m : o -> o -> Type) ->
+  (a : ProdCatOMap1 o m) -> (b : o) -> Type
+ProdFreeLAdj o m = flip $ (.) (uncurry Pair) . (mapHom {f=Pair} . m)
 
 ---------------------------------------------------
 ---------------------------------------------------
