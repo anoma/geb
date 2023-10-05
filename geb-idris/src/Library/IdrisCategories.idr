@@ -5896,6 +5896,36 @@ fromCoYoC : (f : (Type -> Type) -> Type) ->
   CoYoCoprshf f r -> f r
 fromCoYoC f {isF} {r} (MkCoYoC (b ** (alpha, x))) = isF b r alpha x
 
+public export
+record CoDoubleYo (a, b : Type) where
+  constructor MkCoDoubleYo
+  CoDoubleYoEmbed :
+    (f : Type -> Type ** isF : Functor f **
+    (NaturalTransformation f (CovarHomFunc a), f b))
+
+public export
+fromCoDoubleYo : {a, b : Type} -> CoDoubleYo a b -> a -> b
+fromCoDoubleYo {a} {b} (MkCoDoubleYo (f ** isF ** (alpha, x))) = alpha b x
+
+public export
+toCoDoubleYo : {a, b : Type} -> (a -> b) -> CoDoubleYo a b
+toCoDoubleYo {a} {b} m =
+  MkCoDoubleYo
+    (CovarHomFunc a **
+     MkFunctor (map {f=(CovarHomFunc a)}) **
+     ((\_ => id), m))
+
+public export
+Profunctor CoDoubleYo where
+  dimap mca mbd (MkCoDoubleYo (f ** MkFunctor fm ** (alpha, x))) =
+    MkCoDoubleYo
+      (f ** MkFunctor fm **
+      (
+      -- This is the vertical composition of the Yoneda embedding of `mca`
+      -- after `alpha`.
+      \x => (|>) mca . alpha x,
+      fm mbd x))
+
 ---------------------------
 ---------------------------
 ---- Profunctor optics ----
