@@ -5879,6 +5879,23 @@ Profunctor DoubleYo where
   dimap mca mbd (MkDoubleYo y) =
     MkDoubleYo $ \f, isF, x => map {f} mbd $ y f isF $ map {f} mca x
 
+public export
+record CoYoCoprshf (f : (Type -> Type) -> Type) (r : Type -> Type) where
+  constructor MkCoYoC
+  CoYoCEmbed : (b : Type -> Type ** (NaturalTransformation b r, f b))
+
+public export
+toCoYoC : (f : (Type -> Type) -> Type) ->
+  {r : Type -> Type} -> f r -> CoYoCoprshf f r
+toCoYoC f {r} x = MkCoYoC (r ** ((\_ => id), x))
+
+public export
+fromCoYoC : (f : (Type -> Type) -> Type) ->
+  {isF : (g, h : Type -> Type) -> NaturalTransformation g h -> f g -> f h} ->
+  {r : Type -> Type} ->
+  CoYoCoprshf f r -> f r
+fromCoYoC f {isF} {r} (MkCoYoC (b ** (alpha, x))) = isF b r alpha x
+
 ---------------------------
 ---------------------------
 ---- Profunctor optics ----
