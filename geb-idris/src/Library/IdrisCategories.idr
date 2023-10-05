@@ -5926,6 +5926,49 @@ Profunctor CoDoubleYo where
       \x => (|>) mca . alpha x,
       fm mbd x))
 
+public export
+record ProYo (p : Type -> Type -> Type) (c, d : Type) where
+  constructor MkProYo
+  ProYoEmbed : (0 x, y : Type) -> (x -> c) -> (d -> y) -> p x y
+
+public export
+fromProYo : {p : Type -> Type -> Type} ->
+  {0 c, d : Type} -> ProYo p c d -> p c d
+fromProYo {p} {c} {d} (MkProYo py) = py c d id id
+
+public export
+toProYo : {p : Type -> Type -> Type} -> {isP : Profunctor p} ->
+  {0 c, d : Type} -> p c d -> ProYo p c d
+toProYo {p} {isP} {c} {d} pxy =
+  MkProYo $ \x, y, con, cov => dimap {f=p} con cov pxy
+
+public export
+Profunctor (ProYo p) where
+  dimap mca mbd (MkProYo py) =
+    MkProYo $ \x, y, con, cov => py x y (mca . con) (cov . mbd)
+
+public export
+record CoProYo (p : Type -> Type -> Type) (c, d : Type) where
+  constructor MkCoProYo
+  CoProYoEmbed : Exists {type=(Type, Type)} $
+    \xy => (c -> fst xy, snd xy -> d, p (fst xy) (snd xy))
+
+public export
+fromCoProYo : {p : Type -> Type -> Type} -> {isP : Profunctor p} ->
+  {0 c, d : Type} -> CoProYo p c d -> p c d
+fromCoProYo {p} {c} {d}
+  (MkCoProYo (Evidence xy (cx, yd, pxy))) = dimap {f=p} cx yd pxy
+
+public export
+toCoProYo : {p : Type -> Type -> Type} ->
+  {0 c, d : Type} -> p c d -> CoProYo p c d
+toCoProYo {p} {c} {d} pcd = MkCoProYo (Evidence (c, d) (id, id, pcd))
+
+public export
+Profunctor (CoProYo p) where
+  dimap {a} {b} {c} {d} mca mbd (MkCoProYo (Evidence xy (ax, yb, pxy))) =
+    MkCoProYo (Evidence xy (ax . mca, mbd . yb, pxy))
+
 ---------------------------
 ---------------------------
 ---- Profunctor optics ----
