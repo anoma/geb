@@ -1414,35 +1414,35 @@ depProdArPairMap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
   (fst fx ** \eldom => mapSnd (m eldom) (snd fx eldom))
 
 public export
-InterpDepProdArCovarPoly : {dom, cod1, cod2 : Type} ->
+InterpDepProdArCovarHom : {dom, cod1, cod2 : Type} ->
   DepProdArena dom cod1 cod2 -> SliceFunctor dom (cod1, cod2)
-InterpDepProdArCovarPoly {dom} {cod1} {cod2} =
+InterpDepProdArCovarHom {dom} {cod1} {cod2} =
   InterpDepProdAr (\_, (_, _) => ArrowT)
 
 public export
-depProdArPolyProfCovarMap : {dom, cod1, cod2 : Type} ->
+depProdArHomMap : {dom, cod1, cod2 : Type} ->
   (dar : DepProdArena dom cod1 cod2) ->
   {x, y : SliceObj dom} ->
   SliceMorphism {a=dom} x y ->
   SliceMorphism {a=(cod1, cod2)}
-    (InterpDepProdArCovarPoly {dom} {cod1} {cod2} dar x)
-    (InterpDepProdArCovarPoly {dom} {cod1} {cod2} dar y)
-depProdArPolyProfCovarMap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
+    (InterpDepProdArCovarHom {dom} {cod1} {cod2} dar x)
+    (InterpDepProdArCovarHom {dom} {cod1} {cod2} dar y)
+depProdArHomMap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
   (fst fx ** \eldom, ely => m eldom $ snd fx eldom ely)
 
 public export
-InterpDepProdArContraPoly : {dom, cod1, cod2 : Type} ->
+InterpDepProdArContraHom : {dom, cod1, cod2 : Type} ->
   DepProdArena dom cod1 cod2 -> SliceFunctor dom (cod1, cod2)
-InterpDepProdArContraPoly {dom} {cod1} {cod2} =
+InterpDepProdArContraHom {dom} {cod1} {cod2} =
   InterpDepProdAr (\_, (_, _) => OpArrowT)
 
 public export
-depProdArPolyProfContramap : {dom, cod1, cod2 : Type} ->
+depProdArHomContramap : {dom, cod1, cod2 : Type} ->
   (dar : DepProdArena dom cod1 cod2) ->
   {x, y : SliceObj dom} ->
   SliceMorphism {a=dom} y x ->
   SliceMorphism {a=(cod1, cod2)}
-    (InterpDepProdArContraPoly {dom} {cod1} {cod2} dar x)
-    (InterpDepProdArContraPoly {dom} {cod1} {cod2} dar y)
-depProdArPolyProfContramap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
+    (InterpDepProdArContraHom {dom} {cod1} {cod2} dar x)
+    (InterpDepProdArContraHom {dom} {cod1} {cod2} dar y)
+depProdArHomContramap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
   (fst fx ** \eldom, ely => snd fx eldom $ m eldom ely)
