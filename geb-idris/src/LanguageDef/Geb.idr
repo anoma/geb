@@ -1295,6 +1295,13 @@ record DepArena (0 dom, cod : Type) where
   darDir : (elcod : cod) -> darPos elcod -> SliceObj dom
 
 public export
+InterpDepArGen : {dom, cod : Type} ->
+  SliceBifunctor dom dom cod ->
+  DepArena dom cod -> SliceFunctor dom cod
+InterpDepArGen {dom} {cod} bf dar domsl elcod =
+  (pos : darPos dar elcod ** bf (darDir dar elcod pos) domsl elcod)
+
+public export
 InterpDepAr : {dom, cod : Type} ->
   (dom -> cod -> Type -> Type -> Type) ->
   DepArena dom cod -> SliceFunctor dom cod
