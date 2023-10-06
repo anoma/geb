@@ -1308,9 +1308,27 @@ InterpDepArPoly : {dom, cod : Type} ->
 InterpDepArPoly = InterpDepAr $ \_, _ => OpArrowT
 
 public export
+depArPolyMap : {dom, cod : Type} -> (dar : DepArena dom cod) ->
+  {x, y : SliceObj dom} ->
+  SliceMorphism {a=dom} x y ->
+  SliceMorphism {a=cod}
+    (InterpDepArPoly {dom} {cod} dar x) (InterpDepArPoly {dom} {cod} dar y)
+depArPolyMap {dom} {cod} dar {x} {y} m elcod fx =
+  (fst fx ** sliceComp m (snd fx))
+
+public export
 InterpDepArDirich : {dom, cod : Type} ->
   DepArena dom cod -> SliceFunctor dom cod
 InterpDepArDirich = InterpDepAr $ \_, _ => ArrowT
+
+public export
+depArDirichContramap : {dom, cod : Type} -> (dar : DepArena dom cod) ->
+  {x, y : SliceObj dom} ->
+  SliceMorphism {a=dom} y x ->
+  SliceMorphism {a=cod}
+    (InterpDepArDirich {dom} {cod} dar x) (InterpDepArDirich {dom} {cod} dar y)
+depArDirichContramap {dom} {cod} dar {x} {y} m elcod fx =
+  (fst fx ** sliceComp (snd fx) m)
 
 public export
 DepCopArena : (0 dom1, dom2, cod : Type) -> Type
@@ -1332,10 +1350,40 @@ InterpDepCopArCovarPoly {dom1} {dom2} {cod} =
   InterpDepCopAr (\_, _ => OpArrowT) (\_, _ => OpArrowT)
 
 public export
+depCopArCovarPolyMap : {dom1, dom2, cod : Type} ->
+  (dar : DepCopArena dom1 dom2 cod) ->
+  {x1, y1 : SliceObj dom1} ->
+  {x2, y2 : SliceObj dom2} ->
+  SliceMorphism {a=(Either dom1 dom2)} (eitherElim x1 x2) (eitherElim y1 y2) ->
+  SliceMorphism {a=cod}
+    (InterpDepCopArCovarPoly {dom1} {dom2} {cod} dar x1 x2)
+    (InterpDepCopArCovarPoly {dom1} {dom2} {cod} dar y1 y2)
+depCopArCovarPolyMap {dom1} {dom2} {cod} dar m elcod (pos ** dirmap) =
+  (pos **
+   \eldom => case eldom of
+    Left ell => m (Left ell) . dirmap (Left ell)
+    Right elr => m (Right elr) . dirmap (Right elr))
+
+public export
 InterpDepCopArPolyProf : {dom1, dom2, cod : Type} ->
   DepCopArena dom1 dom2 cod -> SliceProfunctor dom1 dom2 cod
 InterpDepCopArPolyProf {dom1} {dom2} {cod} =
   InterpDepCopAr (\_, _ => ArrowT) (\_, _ => OpArrowT)
+
+public export
+depCopArPolyProfDimap : {dom1, dom2, cod : Type} ->
+  (dar : DepCopArena dom1 dom2 cod) ->
+  {x1, y1 : SliceObj dom1} ->
+  {x2, y2 : SliceObj dom2} ->
+  SliceMorphism {a=(Either dom1 dom2)} (eitherElim y1 x2) (eitherElim x1 y2) ->
+  SliceMorphism {a=cod}
+    (InterpDepCopArPolyProf {dom1} {dom2} {cod} dar x1 x2)
+    (InterpDepCopArPolyProf {dom1} {dom2} {cod} dar y1 y2)
+depCopArPolyProfDimap {dom1} {dom2} {cod} dar m elcod (pos ** dirmap) =
+  (pos **
+   \eldom => case eldom of
+    Left ell => dirmap (Left ell) . m (Left ell)
+    Right elr => m (Right elr) . dirmap (Right elr))
 
 public export
 DepProdArena : (0 dom, cod1, cod2 : Type) -> Type
