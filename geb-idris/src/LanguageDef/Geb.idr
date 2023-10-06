@@ -1397,20 +1397,20 @@ InterpDepProdAr {dom} {cod1} {cod2} pf dbar =
   InterpDepAr {dom} {cod=(Pair cod1 cod2)} pf dbar
 
 public export
-InterpDepProdArCovarPoly : {dom, cod1, cod2 : Type} ->
+InterpDepProdArPair : {dom, cod1, cod2 : Type} ->
   DepProdArena dom cod1 cod2 -> SliceFunctor dom (cod1, cod2)
-InterpDepProdArCovarPoly {dom} {cod1} {cod2} =
+InterpDepProdArPair {dom} {cod1} {cod2} =
   InterpDepProdAr (\_, (_, _) => Pair)
 
 public export
-depProdArCovarPolyMap : {dom, cod1, cod2 : Type} ->
+depProdArPairMap : {dom, cod1, cod2 : Type} ->
   (dar : DepProdArena dom cod1 cod2) ->
   {x, y : SliceObj dom} ->
   SliceMorphism {a=dom} x y ->
   SliceMorphism {a=(cod1, cod2)}
-    (InterpDepProdArCovarPoly {dom} {cod1} {cod2} dar x)
-    (InterpDepProdArCovarPoly {dom} {cod1} {cod2} dar y)
-depProdArCovarPolyMap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
+    (InterpDepProdArPair {dom} {cod1} {cod2} dar x)
+    (InterpDepProdArPair {dom} {cod1} {cod2} dar y)
+depProdArPairMap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
   (fst fx ** \eldom => mapSnd (m eldom) (snd fx eldom))
 
 public export
