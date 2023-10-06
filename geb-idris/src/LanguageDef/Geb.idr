@@ -1347,3 +1347,15 @@ InterpDepProdAr : {dom, cod1, cod2 : Type} ->
   DepProdArena dom cod1 cod2 -> SliceFunctor dom (cod1, cod2)
 InterpDepProdAr {dom} {cod1} {cod2} pf dbar =
   InterpDepAr {dom} {cod=(Pair cod1 cod2)} pf dbar
+
+public export
+InterpDepProdArCovarPoly : {dom, cod1, cod2 : Type} ->
+  DepProdArena dom cod1 cod2 -> SliceFunctor dom (cod1, cod2)
+InterpDepProdArCovarPoly {dom} {cod1} {cod2} =
+  InterpDepProdAr (\_, (_, _) => Pair)
+
+public export
+InterpDepProdArPolyProf : {dom, cod1, cod2 : Type} ->
+  DepProdArena dom cod1 cod2 -> SliceFunctor dom (cod1, cod2)
+InterpDepProdArPolyProf {dom} {cod1} {cod2} =
+  InterpDepProdAr (\_, (_, _) => ArrowT)
