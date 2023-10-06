@@ -1300,12 +1300,12 @@ InterpDepAr : {dom, cod : Type} ->
   DepArena dom cod -> SliceFunctor dom cod
 InterpDepAr {dom} {cod} bf dar domsl elcod =
   (pos : darPos dar elcod **
-  (eldom : dom) -> bf eldom elcod (domsl eldom) (darDir dar elcod pos eldom))
+  (eldom : dom) -> bf eldom elcod (darDir dar elcod pos eldom) (domsl eldom))
 
 public export
 InterpDepArPoly : {dom, cod : Type} ->
   DepArena dom cod -> SliceFunctor dom cod
-InterpDepArPoly = InterpDepAr $ \_, _ => OpArrowT
+InterpDepArPoly = InterpDepAr $ \_, _ => ArrowT
 
 public export
 depArPolyMap : {dom, cod : Type} -> (dar : DepArena dom cod) ->
@@ -1319,7 +1319,7 @@ depArPolyMap {dom} {cod} dar {x} {y} m elcod fx =
 public export
 InterpDepArDirich : {dom, cod : Type} ->
   DepArena dom cod -> SliceFunctor dom cod
-InterpDepArDirich = InterpDepAr $ \_, _ => ArrowT
+InterpDepArDirich = InterpDepAr $ \_, _ => OpArrowT
 
 public export
 depArDirichContramap : {dom, cod : Type} -> (dar : DepArena dom cod) ->
@@ -1347,7 +1347,7 @@ public export
 InterpDepCopArCovarPoly : {dom1, dom2, cod : Type} ->
   DepCopArena dom1 dom2 cod -> SliceBifunctor dom1 dom2 cod
 InterpDepCopArCovarPoly {dom1} {dom2} {cod} =
-  InterpDepCopAr (\_, _ => OpArrowT) (\_, _ => OpArrowT)
+  InterpDepCopAr (\_, _ => ArrowT) (\_, _ => ArrowT)
 
 public export
 depCopArCovarPolyMap : {dom1, dom2, cod : Type} ->
@@ -1368,7 +1368,7 @@ public export
 InterpDepCopArPolyProf : {dom1, dom2, cod : Type} ->
   DepCopArena dom1 dom2 cod -> SliceProfunctor dom1 dom2 cod
 InterpDepCopArPolyProf {dom1} {dom2} {cod} =
-  InterpDepCopAr (\_, _ => ArrowT) (\_, _ => OpArrowT)
+  InterpDepCopAr (\_, _ => OpArrowT) (\_, _ => ArrowT)
 
 public export
 depCopArPolyProfDimap : {dom1, dom2, cod : Type} ->
@@ -1411,13 +1411,13 @@ depProdArCovarPolyMap : {dom, cod1, cod2 : Type} ->
     (InterpDepProdArCovarPoly {dom} {cod1} {cod2} dar x)
     (InterpDepProdArCovarPoly {dom} {cod1} {cod2} dar y)
 depProdArCovarPolyMap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
-  (fst fx ** \eldom => mapFst (m eldom) (snd fx eldom))
+  (fst fx ** \eldom => mapSnd (m eldom) (snd fx eldom))
 
 public export
 InterpDepProdArPolyProf : {dom, cod1, cod2 : Type} ->
   DepProdArena dom cod1 cod2 -> SliceFunctor dom (cod1, cod2)
 InterpDepProdArPolyProf {dom} {cod1} {cod2} =
-  InterpDepProdAr (\_, (_, _) => ArrowT)
+  InterpDepProdAr (\_, (_, _) => OpArrowT)
 
 public export
 depProdArPolyProfContramap : {dom, cod1, cod2 : Type} ->
