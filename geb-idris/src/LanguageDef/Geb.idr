@@ -1313,14 +1313,14 @@ InterpDepArDirich : {dom, cod : Type} ->
 InterpDepArDirich = InterpDepAr ArrowT
 
 public export
-DepBiArena : (0 dom1, dom2, cod : Type) -> Type
-DepBiArena dom1 dom2 cod = DepArena (Either dom1 dom2) cod
+DepCopArena : (0 dom1, dom2, cod : Type) -> Type
+DepCopArena dom1 dom2 cod = DepArena (Either dom1 dom2) cod
 
 public export
-InterpDepBiAr : {dom1, dom2, cod : Type} ->
+InterpDepCopAr : {dom1, dom2, cod : Type} ->
   (Type -> Type -> Type) -> (Type -> Type -> Type) ->
-  DepBiArena dom1 dom2 cod -> SliceBifunctor dom1 dom2 cod
-InterpDepBiAr {dom1} {dom2} {cod} bf1 bf2 dbar dom1sl dom2sl elcod =
+  DepCopArena dom1 dom2 cod -> SliceBifunctor dom1 dom2 cod
+InterpDepCopAr {dom1} {dom2} {cod} bf1 bf2 dbar dom1sl dom2sl elcod =
   (pos : darPos dbar elcod **
   ((eldom1 : dom1) ->
     bf1 (dom1sl eldom1) (darDir dbar elcod pos $ Left eldom1),
@@ -1328,11 +1328,11 @@ InterpDepBiAr {dom1} {dom2} {cod} bf1 bf2 dbar dom1sl dom2sl elcod =
     bf2 (dom2sl eldom2) (darDir dbar elcod pos $ Right eldom2)))
 
 public export
-InterpDepBiArCovarPoly : {dom1, dom2, cod : Type} ->
-  DepBiArena dom1 dom2 cod -> SliceBifunctor dom1 dom2 cod
-InterpDepBiArCovarPoly {dom1} {dom2} {cod} = InterpDepBiAr OpArrowT OpArrowT
+InterpDepCopArCovarPoly : {dom1, dom2, cod : Type} ->
+  DepCopArena dom1 dom2 cod -> SliceBifunctor dom1 dom2 cod
+InterpDepCopArCovarPoly {dom1} {dom2} {cod} = InterpDepCopAr OpArrowT OpArrowT
 
 public export
-InterpDepBiArPolyProf : {dom1, dom2, cod : Type} ->
-  DepBiArena dom1 dom2 cod -> SliceBifunctor dom1 dom2 cod
-InterpDepBiArPolyProf {dom1} {dom2} {cod} = InterpDepBiAr ArrowT OpArrowT
+InterpDepCopArPolyProf : {dom1, dom2, cod : Type} ->
+  DepCopArena dom1 dom2 cod -> SliceBifunctor dom1 dom2 cod
+InterpDepCopArPolyProf {dom1} {dom2} {cod} = InterpDepCopAr ArrowT OpArrowT
