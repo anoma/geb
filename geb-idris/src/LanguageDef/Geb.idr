@@ -1296,21 +1296,21 @@ record DepArena (0 dom, cod : Type) where
 
 public export
 InterpDepAr : {dom, cod : Type} ->
-  (Type -> Type -> Type) ->
+  (dom -> cod -> Type -> Type -> Type) ->
   DepArena dom cod -> SliceFunctor dom cod
 InterpDepAr {dom} {cod} bf dar domsl elcod =
   (pos : darPos dar elcod **
-  (eldom : dom) -> bf (domsl eldom) (darDir dar elcod pos eldom))
+  (eldom : dom) -> bf eldom elcod (domsl eldom) (darDir dar elcod pos eldom))
 
 public export
 InterpDepArPoly : {dom, cod : Type} ->
   DepArena dom cod -> SliceFunctor dom cod
-InterpDepArPoly = InterpDepAr OpArrowT
+InterpDepArPoly = InterpDepAr $ \_, _ => OpArrowT
 
 public export
 InterpDepArDirich : {dom, cod : Type} ->
   DepArena dom cod -> SliceFunctor dom cod
-InterpDepArDirich = InterpDepAr ArrowT
+InterpDepArDirich = InterpDepAr $ \_, _ => ArrowT
 
 public export
 DepCopArena : (0 dom1, dom2, cod : Type) -> Type
