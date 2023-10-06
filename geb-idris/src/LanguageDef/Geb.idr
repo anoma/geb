@@ -1414,9 +1414,9 @@ depProdArCovarPolyMap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
   (fst fx ** \eldom => mapSnd (m eldom) (snd fx eldom))
 
 public export
-InterpDepProdArPolyProf : {dom, cod1, cod2 : Type} ->
+InterpDepProdArContraPoly : {dom, cod1, cod2 : Type} ->
   DepProdArena dom cod1 cod2 -> SliceFunctor dom (cod1, cod2)
-InterpDepProdArPolyProf {dom} {cod1} {cod2} =
+InterpDepProdArContraPoly {dom} {cod1} {cod2} =
   InterpDepProdAr (\_, (_, _) => OpArrowT)
 
 public export
@@ -1425,7 +1425,7 @@ depProdArPolyProfContramap : {dom, cod1, cod2 : Type} ->
   {x, y : SliceObj dom} ->
   SliceMorphism {a=dom} y x ->
   SliceMorphism {a=(cod1, cod2)}
-    (InterpDepProdArPolyProf {dom} {cod1} {cod2} dar x)
-    (InterpDepProdArPolyProf {dom} {cod1} {cod2} dar y)
+    (InterpDepProdArContraPoly {dom} {cod1} {cod2} dar x)
+    (InterpDepProdArContraPoly {dom} {cod1} {cod2} dar y)
 depProdArPolyProfContramap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
   (fst fx ** \eldom, ely => snd fx eldom $ m eldom ely)
