@@ -1288,6 +1288,19 @@ SliceEndoProfunctor = SliceEndoBifunctor
 ---------------------------------------------------------
 ---------------------------------------------------------
 
+-- A dependent polynomial functor is defined between slice categories --
+-- `Type/dom` -> `Type/cod`.  A dependent polynomial (non-enriched)
+-- profunctor, therefore, should be from `Type/dom -> Type/cod -> Type`.
+--
+-- However, because a plain `Type` is now involved, we can add more
+-- dependency in the profunctor case -- we could parameterize the whole
+-- profunctor on a type `param`, so that `dom` and `cod` are now themselves
+-- slices over `param`.
+public export
+DepProfunctor : {param : Type} -> (dom, cod : SliceObj param) -> Type
+DepProfunctor {param} dom cod =
+  (p : param) -> SliceObj (dom p) -> SliceObj (cod p) -> Type
+
 public export
 record DepArena (0 dom, cod : Type) where
   constructor DepAr
