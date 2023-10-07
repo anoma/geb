@@ -3621,9 +3621,20 @@ public export
   join = case ProdMonad {funcf} {funcg} {applf} {applg} l r of
     MkMonad _ jp => jp
 
+-- The diagonal functor from `Type` to `Type, Type`.
+public export
+DiagonalF : Type -> (Type, Type)
+DiagonalF a = (a, a)
+
+-- The right adjoint to the diagonal functor from the Idris type system
+-- (`Type`).
+public export
+ProductRAdjoint : (Type, Type) -> Type
+ProductRAdjoint (t, t') = Pair t t'
+
 public export
 ProductMonad : Type -> Type
-ProductMonad a = Pair a a
+ProductMonad = ProductRAdjoint . DiagonalF
 
 public export
 Functor ProductMonad where
@@ -3654,12 +3665,6 @@ public export
 ProductNTUnit : {0 a : Type} -> a -> ProductMonad a
 ProductNTUnit x = (x, x)
 
--- The right adjoint to the diagonal functor from the Idris type system
--- (`Type`).
-public export
-ProductAdjunct : (Type, Type) -> Type
-ProductAdjunct (t, t') = Pair t t'
-
 -- The right adjoint to the diagonal functor from the category of Idris
 -- functors (`Type -> Type`).
 public export
@@ -3685,19 +3690,19 @@ public export
   map m (Left x) = Left $ map m x
   map m (Right y) = Right $ map m y
 
+-- The left adjoint to the diagonal functor, in the Idris type system.
+public export
+CoproductLAdjoint : (Type, Type) -> Type
+CoproductLAdjoint (t, t') = Either t t'
+
 public export
 CoproductComonad : Type -> Type
-CoproductComonad a = Either a a
+CoproductComonad = CoproductLAdjoint . DiagonalF
 
 public export
 CoproductNTCounit : {a : Type} -> CoproductComonad a -> a
 CoproductNTCounit (Left x) = x
 CoproductNTCounit (Right x) = x
-
--- The left adjoint to the diagonal functor, in the Idris type system.
-public export
-CoproductAdjunct : (Type, Type) -> Type
-CoproductAdjunct (t, t') = Either t t'
 
 -- The left adjoint to the diagonal functor from the category of Idris
 -- functors (`Type -> Type`).
@@ -10723,7 +10728,7 @@ subst0TypeCata v a subst alg (InFree x) = case x of
 public export
 interpretSubst0Alg : Subst0TypeAlg Type
 interpretSubst0Alg = CoproductAlgL {l=Subst0TypeFCases}
-  (const (), const Void, ProductAdjunct, CoproductAdjunct)
+  (const (), const Void, ProductRAdjoint, CoproductLAdjoint)
 
 public export
 Subst0Unit : FreeSubst0Type carrier
@@ -10810,11 +10815,11 @@ subst0NewConstraintAlg = CoproductAlgL {l=Subst0TypeFCases}
 
     -- The product type can have either of two constraints:  "must
     -- be equal" and "must be different".
-    CoproductAdjunct,
+    CoproductLAdjoint,
 
     -- The coproduct type can have either of two constraints:  "must
     -- be left" and "must be right".
-    CoproductAdjunct
+    CoproductLAdjoint
   )
 
 -- This algebra, given a type of constraints, generates a new
