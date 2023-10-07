@@ -1473,6 +1473,9 @@ depProdArHomContramap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
 ------------------------
 ------------------------
 
+-- A quotient type is a type together with a relation which we shall
+-- implicitly treat (when defining the morphisms of the category of
+-- quotientable types) as an equivalence relation.
 public export
 QType : Type
 QType = Subset0 Type RelationOn
@@ -1482,16 +1485,20 @@ QBase : QType -> Type
 QBase = fst0
 
 public export
-0 QRel : (x : QType) -> RelationOn (QBase x)
-QRel = snd0
+0 QBaseRel : (0 x : QType) -> RelationOn (QBase x)
+QBaseRel x = snd0 x
+
+public export
+0 QEffRel : (0 x : QType) -> RelationOn (QBase x)
+QEffRel x = curry $ FreePrEquivF (uncurry $ QBaseRel x)
 
 public export
 QFunc : QType -> QType -> Type
 QFunc x y = QBase x -> QBase y
 
 public export
-0 QPres : (x, y : QType) -> SliceObj (QFunc x y)
-QPres x y f = (b, b' : QBase x) -> QRel x b b' -> QRel y (f b) (f b')
+0 QPres : (0 x, y : QType) -> SliceObj (QFunc x y)
+QPres x y f = (b, b' : QBase x) -> QEffRel x b b' -> QEffRel y (f b) (f b')
 
 public export
 QMorph : QType -> QType -> Type
