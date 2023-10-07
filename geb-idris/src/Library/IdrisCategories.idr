@@ -998,6 +998,13 @@ sliceFreeJoin {a} {f} cata sl =
   cata (SliceFreeM f sl) (SliceFreeM f sl) (\_ => id) (\_ => InSlFc)
 
 public export
+sliceFreeBindFromEval : {c : Type} ->
+  (f : SliceEndofunctor c) -> (eval : SliceFreeFEval f) ->
+  SliceBind (SliceFreeM f)
+sliceFreeBindFromEval {c} f eval x y mxfy =
+  eval x (SliceFreeM f y) mxfy (\ea => InSlFc {sa=y} {ea})
+
+public export
 SliceMu : {a : Type} -> SliceEndofunctor a -> SliceObj a
 SliceMu {a} f = SliceFreeM {a} f (const Void)
 
