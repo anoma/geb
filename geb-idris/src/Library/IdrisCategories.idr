@@ -3792,6 +3792,89 @@ public export
 MorphFunctor : (Type -> Type) -> Type
 MorphFunctor = FNatTransDep ProductMonad
 
+----------------------------------------------------
+----------------------------------------------------
+---- Equivalence relations using slice functors ----
+----------------------------------------------------
+----------------------------------------------------
+
+-- The type of proof-relevant relations between two types.
+public export
+PrRelP : (Type, Type) -> Type
+PrRelP = SliceObj . ProductRAdjoint
+
+public export
+PrRel : Type -> Type -> Type
+PrRel = curry PrRelP
+
+-- The type of proof-relevant (endo-)relations on a type.
+public export
+PrERel : Type -> Type
+PrERel = PrRelP . DiagonalF
+
+-- An endofunctor on a proof-relevant relation.
+public export
+PrRelFP : (Type, Type) -> Type
+PrRelFP = SliceEndofunctor . ProductRAdjoint
+
+public export
+PrRelF : Type -> Type -> Type
+PrRelF = curry PrRelFP
+
+-- An endofunctor on a proof-relevant endo-relation.
+public export
+PrERelF : Type -> Type
+PrERelF = PrRelFP . DiagonalF
+
+-- The functor whose algebras are the equivalence relations.
+public export
+data PrEquivF : {0 a : Type} -> PrERelF a where
+  PrErefl : {0 a : Type} -> {0 r : PrERel a} ->
+    (ea : a) -> PrEquivF {a} r (ea, ea)
+  PrEsym : {0 a : Type} -> {0 r : PrERel a} ->
+    (ea, ea' : a) -> r (ea, ea') -> PrEquivF {a} r (ea', ea)
+  PrEtrans : {0 a : Type} -> {0 r : PrERel a} ->
+    (ea, ea', ea'' : a) -> r (ea, ea') -> r (ea', ea'') ->
+    PrEquivF {a} r (ea, ea'')
+
+-- The interface of an equivalence relation.
+public export
+PrEquivRelI : (a : Type) -> SliceObj (PrERel a)
+PrEquivRelI a = SliceAlg (PrEquivF {a})
+
+-- An equivalence relation.
+public export
+PrEquivRel : Type -> Type
+PrEquivRel a = DPair (PrERel a) (PrEquivRelI a)
+
+-- The free (dependent) monad of `PrEquivF`.
+public export
+FreePrEquivF : {a : Type} -> PrERelF a
+FreePrEquivF {a} = SliceFreeM (PrEquivF {a})
+
+-- The free equivalence monad of any relation satisfies the interface of an
+-- equivalence relation.
+public export
+FreePrEquivI : {a : Type} -> (r : PrERel a) ->
+  PrEquivRelI a (FreePrEquivF {a} r)
+FreePrEquivI {a} r pa =
+  InSlFc {f=(PrEquivF {a})} {a=(ProductMonad a)} {sa=r} {ea=pa}
+
+-- The free equivalence monad has the universal `eval` morphism of a free monad.
+public export
+freePrEquivEval : {a : Type} -> SliceFreeFEval (PrEquivF {a})
+freePrEquivEval {a} sv sa subst alg pa (InSlF pa (InSlV ev)) = subst pa ev
+freePrEquivEval {a} sv sa subst alg pa (InSlF pa (InSlC x)) = case x of
+  PrErefl ea =>
+    alg (ea, ea) (PrErefl ea)
+  PrEsym ea ea' r =>
+    alg (ea', ea) $ PrEsym ea ea'
+      (freePrEquivEval {a} sv sa subst alg (ea, ea') r)
+  PrEtrans ea ea' ea'' r r' =>
+    alg (ea, ea'') $ PrEtrans ea ea' ea''
+      (freePrEquivEval {a} sv sa subst alg (ea, ea') r)
+      (freePrEquivEval {a} sv sa subst alg (ea', ea'') r')
+
 -----------------------
 -----------------------
 ---- Refined types ----
