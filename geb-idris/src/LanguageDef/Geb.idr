@@ -1466,3 +1466,33 @@ depProdArHomContramap : {dom, cod1, cod2 : Type} ->
     (InterpDepProdArContraHom {dom} {cod1} {cod2} dar y)
 depProdArHomContramap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
   (fst fx ** \eldom, ely => snd fx eldom $ m eldom ely)
+
+------------------------
+------------------------
+---- Quotient types ----
+------------------------
+------------------------
+
+public export
+QType : Type
+QType = Subset0 Type RelationOn
+
+public export
+QBase : QType -> Type
+QBase = fst0
+
+public export
+0 QRel : (x : QType) -> RelationOn (QBase x)
+QRel = snd0
+
+public export
+QFunc : QType -> QType -> Type
+QFunc x y = QBase x -> QBase y
+
+public export
+0 QPres : (x, y : QType) -> SliceObj (QFunc x y)
+QPres x y f = (b, b' : QBase x) -> QRel x b b' -> QRel y (f b) (f b')
+
+public export
+QMorph : QType -> QType -> Type
+QMorph x y = Subset0 (QFunc x y) (QPres x y)
