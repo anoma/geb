@@ -3953,8 +3953,8 @@ freePrEquivBind = sliceFreeBindFromEval PrEquivF freePrEquivEval
 public export
 freeEquivBindPres : {a, b : Type} -> {ra : PrERel a} -> {rb : PrERel b} ->
   {f : a -> b} ->
-  ((ea, ea' : a) -> ra (ea, ea') -> FreePrEquivF rb (f ea, f ea')) ->
-  (ea, ea' : a) -> FreePrEquivF ra (ea, ea') -> FreePrEquivF rb (f ea, f ea')
+  PrERelPres {a} {b} f ra (FreePrEquivF rb) ->
+  PrERelPres {a} {b} f (FreePrEquivF ra) (FreePrEquivF rb)
 freeEquivBindPres {a} {b} {ra} {rb} {f} pres ea ea' =
   freePrEquivEval ra (FreePrEquivF rb . mapHom {f=Pair} f)
     (\(x1, x2) => pres x1 x2)
