@@ -3838,12 +3838,17 @@ PrRelBiPres : {a, a', b, b' : Type} ->
 PrRelBiPres {a} {a'} {b} {b'} f f' =
   PrRelPres {a} {a'} {b} {b'} (bimap {f=Pair} f f')
 
+public export
+PrERelBiPres : {a, b : Type} ->
+  (a -> b) -> (a -> b) -> PrERel a -> PrERel b -> Type
+PrERelBiPres {a} {b} = PrRelBiPres {a} {a'=a} {b} {b'=b}
+
 -- A type which represents the claim that the images of any pair of elements
 -- related in some given way in `a` under some given morphism from `a` to `b`
 -- are related in some given way in `b`.
 public export
 PrERelPres : {a, b : Type} -> (a -> b) -> PrERel a -> PrERel b -> Type
-PrERelPres {a} {b} f = PrRelBiPres {a} {a'=a} {b} {b'=b} f f
+PrERelPres {a} {b} f = PrERelBiPres {a} {b} f f
 
 -- The statement that `r` implies `r'`.
 --
