@@ -4021,6 +4021,21 @@ freeEquivBindPres {a} {b} {ra} {rb} {f} =
   freeEquivBindBiPres {a} {b} {ra} {rb} {f} {g=f} $
     \ea, ea, Refl => InSlFc $ PrErefl $ f ea
 
+-- If an equivalence-preserving morphism agrees (up to codomain equivalence)
+-- with another morphism on _intensionally_ equal elements of the domain, then
+-- the two morphisms agree (up to codomain equivalence) on all _equivalent_
+-- elements of the domain (i.e. the morphisms are extensionally equal).
+public export
+PresEqRel : {a, b : Type} ->
+  {f, g : a -> b} -> {ra : PrERel a} -> {rb : PrERel b} ->
+  PrERelPres {a} {b} g ra (FreePrEquivF rb) ->
+  PrERelIntExt f g (FreePrEquivF rb) ->
+  PrERelBiPres f g (FreePrEquivF ra) (FreePrEquivF rb)
+PresEqRel {a} {b} {f} {g} {ra} {rb} gpres bipres ea ea' eqa =
+  FrPrEtrans (bipres ea ea Refl)
+  $ FrPrEtrans (freeEquivBindPres {a} {b} {ra} {rb} {f=g} gpres ea ea' eqa)
+  $ FrPrErefl (g ea')
+
 -----------------------
 -----------------------
 ---- Refined types ----
