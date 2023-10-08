@@ -1503,3 +1503,22 @@ QPres x y f = (b, b' : QBase x) -> QEffRel x b b' -> QEffRel y (f b) (f b')
 public export
 QMorph : QType -> QType -> Type
 QMorph x y = Subset0 (QFunc x y) (QPres x y)
+
+-- Using the Kleisli category of the free equivalence monad, we can generate
+-- quotientable-type morphisms by showing only that _base_-related elements
+-- are mapped to _closure_-related elements (we do not have to show explicitly
+-- that all _closure_-related elements are mapped to closure-related elements).
+
+public export
+0 QKPres : (0 x, y : QType) -> SliceObj (QFunc x y)
+QKPres x y f = (b, b' : QBase x) -> QBaseRel x b b' -> QEffRel y (f b) (f b')
+
+public export
+0 QKBind : {0 x, y : QType} -> {0 f : QFunc x y} -> QKPres x y f -> QPres x y f
+QKBind {x=(Element0 x rx)} {y=(Element0 y ry)} {f} =
+  freeEquivBindPres {a=x} {b=y} {ra=(uncurry rx)} {rb=(uncurry ry)} {f}
+
+public export
+QMkMorph : {0 x, y : QType} -> {f : QFunc x y} -> (0 _ : QKPres x y f) ->
+  QMorph x y
+QMkMorph {x} {y} {f} pres = Element0 f (QKBind {x} {y} {f} pres)
