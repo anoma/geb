@@ -1507,6 +1507,15 @@ QMorph : QType -> QType -> Type
 QMorph x y = Subset0 (QFunc x y) (QPres x y)
 
 public export
+QMorphBase : {0 x, y : QType} -> QMorph x y -> QBase x -> QBase y
+QMorphBase = fst0
+
+public export
+0 QMorphPres : {0 x, y : QType} ->
+  (f : QMorph x y) -> QPres x y (QMorphBase {x} {y} f)
+QMorphPres = snd0
+
+public export
 0 QKPres : (0 x, y : QType) -> SliceObj (QFunc x y)
 QKPres x y f =
   PrERelPres {a=(QBase x)} {b=(QBase y)}
@@ -1542,3 +1551,22 @@ data QTEquiv : RelationOn QType where
 public export
 QTypeQT : QType
 QTypeQT = Element0 QType QTEquiv
+
+-- We can also define an extensional equality on morphisms of `QType`.
+public export
+0 QMExtEq : {0 x, y : QType} -> QMorph x y -> QMorph x y -> Type
+QMExtEq {x} {y} f g =
+  PrERelBiPres {a=(QBase x)} {b=(QBase y)}
+    (QMorphBase f) (QMorphBase g) (uncurry $ QEffRel x) (uncurry $ QEffRel y)
+
+-- Using the notion of extensional equality on QType morphisms (up to the
+-- equivalences embedded within the types), we can define the hom-set of
+-- of any two `QType`s within `QType` itself, thus making `QType` Cartesian
+-- closed.
+public export
+QMHom : QType -> QType -> QType
+QMHom x y = Element0 (QMorph x y) (QMExtEq {x} {y})
+
+public export
+QMExp : QType -> QType -> QType
+QMExp = flip QMHom
