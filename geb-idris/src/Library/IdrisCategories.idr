@@ -3844,6 +3844,26 @@ data PrEquivF : {0 a : Type} -> PrERelF a where
     (ea, ea', ea'' : a) -> r (ea, ea') -> r (ea', ea'') ->
     PrEquivF {a} r (ea, ea'')
 
+public export
+prEquivMapHom : {0 a, b : Type} -> {0 r : PrERel b} -> {f : a -> b} ->
+  (pa : (a, a)) -> PrEquivF {a} (r . mapHom {f=Pair} f) pa ->
+  PrEquivF {a=b} r (mapHom {f=Pair} f pa)
+prEquivMapHom {a} {b} {r} {f} (ea, ea) (PrErefl ea) =
+  PrErefl (f ea)
+prEquivMapHom {a} {b} {r} {f} (ea', ea) (PrEsym ea ea' rb) =
+  PrEsym (f ea) (f ea') rb
+prEquivMapHom {a} {b} {r} {f} (ea, ea'') (PrEtrans ea ea' ea'' rb rb') =
+  PrEtrans (f ea) (f ea') (f ea'') rb rb'
+
+public export
+prEquivFMap : {0 a : Type} -> SliceFMap {c=(a, a)} {d=(a, a)} (PrEquivF {a})
+prEquivFMap r r' m (ea, ea) (PrErefl ea) =
+  PrErefl ea
+prEquivFMap r r' m (ea, ea') (PrEsym ea' ea rx) =
+  PrEsym ea' ea (m (ea', ea) rx)
+prEquivFMap r r' m (ea, ea'') (PrEtrans ea ea' ea'' rx rx') =
+  PrEtrans ea ea' ea'' (m (ea, ea') rx) (m (ea', ea'') rx')
+
 -- The interface of an equivalence relation.
 public export
 PrEquivRelI : (a : Type) -> SliceObj (PrERel a)
