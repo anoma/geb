@@ -3819,6 +3819,46 @@ public export
 PrERel : Type -> Type
 PrERel = PrRelP . DiagonalF
 
+-- A type which represents the claim that the images of any pair of elements
+-- related in some given way in `(a, a')` under some given morphism from
+-- (`a, a'` to `b, b'`) and -- are related in some given way in `(b, b')`.
+public export
+PrRelPres : {a, a', b, b' : Type} ->
+  ((a, a') -> (b, b')) -> PrRel a a' -> PrRel b b' -> Type
+PrRelPres {a} {a'} {b} {b'} f ra rb =
+  (ea : a) -> (ea' : a') -> ra (ea, ea') -> rb $ f (ea, ea')
+
+-- Like `PrRelPres`, but where we are given separate morphisms from
+-- `a -> b` and `a' -> b'` -- in other words, the morphism passed to
+-- `PrRelPres` can be factored through two such morphisms with no
+-- "cross-dependencies" (between unprimed and primed objects).
+public export
+PrRelBiPres : {a, a', b, b' : Type} ->
+  (a -> b) -> (a' -> b') -> PrRel a a' -> PrRel b b' -> Type
+PrRelBiPres {a} {a'} {b} {b'} f f' =
+  PrRelPres {a} {a'} {b} {b'} (bimap {f=Pair} f f')
+
+-- A type which represents the claim that the images of any pair of elements
+-- related in some given way in `a` under some given morphism from `a` to `b`
+-- are related in some given way in `b`.
+public export
+PrERelPres : {a, b : Type} -> (a -> b) -> PrERel a -> PrERel b -> Type
+PrERelPres {a} {b} f = PrRelBiPres {a} {a'=a} {b} {b'=b} f f
+
+-- The statement that `r` implies `r'`.
+--
+-- Note that if we view a `PrRel` as a presheaf on `Type` with three
+-- vertices `a, b, r` and arrows from `a` and `b` to `r` (or the other
+-- way around if we view it as a copresheaf), then a `PrRelImp` is a morphism
+-- in the category of such presheaves.
+public export
+PrRelImp : {a, b : Type} -> (r, r' : PrRel a b) -> Type
+PrRelImp {a} {b} = PrRelBiPres {a} {a'=b} {b=a} {b'=b} id id
+
+public export
+PrRelBiImp : {a, b : Type} -> (r, r' : PrRel a b) -> Type
+PrRelBiImp r r' = (PrRelImp r r', PrRelImp r' r)
+
 -- An endofunctor on a proof-relevant relation.
 public export
 PrRelFP : (Type, Type) -> Type
