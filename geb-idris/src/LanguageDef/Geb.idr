@@ -1591,3 +1591,13 @@ QMHom x y = Element0 (QMorph x y) (QMExtEq {x} {y})
 public export
 QMExp : QType -> QType -> QType
 QMExp = flip QMHom
+
+public export
+qmId : (a : QType) -> QMorph a a
+qmId a = Element0 (id {a=(QBase a)}) $ \_, _ => id
+
+public export
+qmComp : {a, b, c : QType} -> QMorph b c -> QMorph a b -> QMorph a c
+qmComp {a} {b} {c} g f =
+  Element0 (QMorphBase g . QMorphBase f) $ \ea, ea', aeq =>
+    QMorphPres g (QMorphBase f ea) (QMorphBase f ea') $ QMorphPres f ea ea' aeq
