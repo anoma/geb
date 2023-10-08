@@ -1559,14 +1559,20 @@ QMExtEq {x} {y} f g =
   PrERelBiPres {a=(QBase x)} {b=(QBase y)}
     (QMorphBase f) (QMorphBase g) (uncurry $ QEffRel x) (uncurry $ QEffRel y)
 
+-- This type represents that two `QType` morphisms agree (up to codomain
+-- equivalence) on intensionally equal elements of the domain.
+public export
+0 QMIntExt : {0 x, y : QType} -> (f, g : QMorph x y) -> Type
+QMIntExt {x} {y} f g =
+  (ex : QBase x) ->
+    QEffRel y (QMorphBase {x} {y} f ex) (QMorphBase {x} {y} g ex)
+
 -- To show that `QType` morphisms are extensionally equal, we only need to
 -- show that they agree (up to codomain equivalence) on _intensionally_
 -- equal elements of the domain.
 public export
 0 MkQMExtEq : {0 x, y : QType} -> {f, g : QMorph x y} ->
-  ((ex : QBase x) ->
-   QEffRel y (QMorphBase {x} {y} f ex) (QMorphBase {x} {y} g ex)) ->
-  QMExtEq {x} {y} f g
+  QMIntExt {x} {y} f g -> QMExtEq {x} {y} f g
 MkQMExtEq {x} {y} {f} {g} exteq =
   PresEqRel
     {a=(QBase x)} {b=(QBase y)} {f=(QMorphBase f)} {g=(QMorphBase g)}
