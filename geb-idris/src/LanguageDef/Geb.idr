@@ -1525,3 +1525,20 @@ public export
 QMkMorph : {0 x, y : QType} -> {f : QFunc x y} -> (0 _ : QKPres x y f) ->
   QMorph x y
 QMkMorph {x} {y} {f} pres = Element0 f (QKBind {x} {y} {f} pres)
+
+-- We can form an equivalence relation on `QType` itself which states that
+-- two `QType`s are equivalent if they have the same underlying type and
+-- their equivalence relations are equivalent.  This equivalence relation is
+-- therefore using the notion of equivalence relation to "hide" the witnesses
+-- of equivalence relations themselves.  (It is introducing a proof-irrelevant
+-- layer on top of proof-relevant relations.)
+public export
+data QTEquiv : RelationOn QType where
+  QTE : {0 x : Type} -> {0 r, r' : RelationOn x} ->
+    PrRelBiImp (uncurry r) (uncurry r') ->
+    QTEquiv (Element0 x r) (Element0 x r')
+
+-- Using `QTEquiv`, we can make `QType` itself a `QType`.
+public export
+QTypeQT : QType
+QTypeQT = Element0 QType QTEquiv
