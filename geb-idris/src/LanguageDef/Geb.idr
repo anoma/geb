@@ -1635,3 +1635,26 @@ QTCat = SC
       (QMorphBase g (QMorphBase f ea)) (QMorphBase g (QMorphBase f ea'))
     $ QMorphPres g (QMorphBase f ea) (QMorphBase f ea')
     $ QMorphPres f ea ea' aeq)
+
+public export
+0 ClosureOfEmptyRelImpliesEq : (0 a : Type) ->
+  PrRelImp (FreePrEquivF $ uncurry $ EmptyRel a) (EqPrRel {a} {b=a})
+ClosureOfEmptyRelImpliesEq a ea ea' =
+  freePrEquivEval {a} (uncurry $ EmptyRel a) (\(x, y) => x = y)
+    (\(ea, ea'), v => void v)
+    (\(ea, ea'), eqa => case eqa of
+      PrErefl _ => Refl
+      PrEsym _ _ Refl => Refl
+      PrEtrans _ _ _ Refl Refl => Refl)
+    (ea, ea')
+
+public export
+0 EqImpliesClosureOfEmptyRel : (0 a : Type) ->
+  PrRelImp (EqPrRel {a} {b=a}) (FreePrEquivF $ uncurry $ EmptyRel a)
+EqImpliesClosureOfEmptyRel a ea _ Refl = FrPrErefl ea
+
+public export
+0 ClosureOfEmptyRelIsEq : (0 a : Type) ->
+  PrRelBiImp (FreePrEquivF $ uncurry $ EmptyRel a) (EqPrRel {a} {b=a})
+ClosureOfEmptyRelIsEq a =
+  (ClosureOfEmptyRelImpliesEq a, EqImpliesClosureOfEmptyRel a)
