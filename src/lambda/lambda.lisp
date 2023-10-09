@@ -319,13 +319,15 @@ nil"))
                                                    (mapcar #'ttype term)
                                                    :from-end t)
                                            (ttype tterm)))))
-               ((or (plus ltm rtm)
-                    (minus ltm rtm)
-                    (times ltm rtm)
-                    (divide ltm rtm)
-                    (lamb-eq ltm rtm)
-                    (lamb-lt ltm rtm))
-                (obj-equalp (ttype ltm) (ttype rtm)))
+               ((or plus
+                    minus
+                    divide
+                    times)
+                (obj-equalp (ttype (ltm tterm))
+                            (ttype (rtm tterm))))
+               ((or lamb-eq
+                    lamb-lt)
+                t)
                (index t)
                (unit t)
                (err t)
@@ -360,3 +362,321 @@ nil"))
          (or (errorp (ltm tterm))
              (errorp (rtm tterm))))
         (t                        (errorp (term tterm)))))
+
+(defun dispatch (tterm)
+  "A dispatch refering the class of a term to its function"
+  (typecase tterm
+    (absurd #'absurd)
+    (unit   #'unit)
+    (left   #'left)
+    (right   #'right)
+    (case-on #'case-on)
+    (fst #'fst)
+    (snd #'snd)
+    (pair #'pair)
+    (lamb #'lamb)
+    (app #'app)
+    (index #'index)
+    (err #'err)
+    (bit-choice #'bit-choice)
+    (plus #'plus)
+    (minus #'minus)
+    (divide #'divide)
+    (times #'times)
+    (lamb-eq #'lamb-eq)
+    (lamb-lt #'lamb-lt)))
+
+(defun dispatch-arith (tterm)
+  "A dispatch refering the class of an arithmetic term
+to its corresponding operation"
+  (typecase tterm
+    (plus #'+)
+    (minus #'-)
+    (divide #'floor)
+    (times #'*)
+    (lamb-eq #'=)
+    (lamb-lt #'<)))
+
+(defun index-excess (tterm)
+  "Checks all indeces occuring in a term which will be substituted.
+If position exceeds n, adds depth to the index. Necessary for
+beta-substitution of indices which point outside of the app term"
+  (labels ((rec (n tterm)
+             (typecase tterm
+               (absurd    (absurd (tcod tterm)
+                                  (rec n (term tterm))))
+               (left      (left (rty tterm)
+                                (rec n (term tterm))))
+               (right     (right (lty tterm)
+                                 (rec n (term tterm))))
+               (case-on   (case-on (rec n (on tterm))
+                                   (rec (1+ n) (ltm tterm))
+                                   (rec (1+ n) (rtm tterm))))
+               (fst       (fst (rec n (term tterm))))
+               (snd       (snd (rec n (term tterm))))
+               (lamb      (lamb (tdom tterm)
+                                (rec (1+ n) (term tterm))))
+               (app       (app (rec n (fun tterm))
+                               (list (rec n (car (term tterm))))))
+               (index     (if (>= (pos tterm) n)
+                              (index (1+ (pos tterm)))
+                              tterm))
+               ((or unit
+                    err
+                    bit-choice)
+                tterm)
+               ((or plus
+                    times
+                    minus
+                    divide
+                    lamb-eq
+                    lamb-lt
+                    pair)
+                (funcall (dispatch tterm)
+                         (rec n (ltm tterm))
+                         (rec n (rtm tterm)))))))
+    (rec 0 tterm)))
+
+(defun index-lack (n tterm)
+  "Checks if a term has made substitutions and decreases the index
+of term accordingly"
+  (labels ((rec (n tterm)
+             (if (typep tterm 'list)
+                 tterm
+                 (typecase tterm
+                   (absurd    (absurd (tcod tterm)
+                                      (rec n (term tterm))))
+                   (left      (left (rty tterm)
+                                    (rec n (term tterm))))
+                   (right     (right (lty tterm)
+                                     (rec n (term tterm))))
+                   (case-on   (case-on (rec n (on tterm))
+                                       (rec (1+ n) (ltm tterm))
+                                       (rec (1+ n) (rtm tterm))))
+                   (fst       (fst (rec n (term tterm))))
+                   (snd       (snd (rec n (term tterm))))
+                   (lamb      (lamb (tdom tterm)
+                                    (rec (1+ n) (term tterm))))
+                   (app      (app (rec n (fun tterm))
+                                  (list (rec n (car (term tterm))))))
+                   (index     (if (> (pos tterm) n)
+                                  (index (1- (pos tterm)))
+                                  tterm))
+                   ((or unit
+                        err
+                        bit-choice)
+                    tterm)
+                   ((or plus
+                        times
+                        minus
+                        divide
+                        lamb-eq
+                        lamb-lt
+                        pair)
+                    (funcall (dispatch tterm)
+                             (rec n (ltm tterm))
+                             (rec n (rtm tterm))))))))
+    (rec n tterm)))
+
+(defun delist (tterm)
+  "We mark substituted terms by listing them. This function recovers the car
+of the list."
+  (labels ((rec (tterm)
+             (if (typep tterm 'list)
+                 (car tterm)
+                 (typecase tterm
+                   (absurd    (absurd (tcod tterm)
+                                      (rec (term tterm))))
+                   (left      (left (rty tterm)
+                                    (rec (term tterm))))
+                   (right     (right (lty tterm)
+                                     (rec (term tterm))))
+                   (case-on   (case-on (rec (on tterm))
+                                       (rec (ltm tterm))
+                                       (rec (rtm tterm))))
+                   (fst       (fst (rec (term tterm))))
+                   (snd       (snd (rec (term tterm))))
+                   (lamb      (lamb (tdom tterm)
+                                    (rec (term tterm))))
+                   (app      (app (rec (fun tterm))
+                                  (list (rec (car (term tterm))))))
+                   ((or unit
+                        err
+                        index
+                        bit-choice)
+                    tterm)
+                   ((or plus
+                        times
+                        minus
+                        divide
+                        lamb-eq
+                        lamb-lt
+                        pair)
+                    (funcall (dispatch tterm)
+                             (rec (ltm tterm))
+                             (rec (rtm tterm))))))))
+    (rec tterm)))
+
+(defun sub (ind term-to-replace sub-in)
+  "Substitutes the occurence of index (ind) inside of the top
+subterms of sub-on by term-to-replace. We mark replaced terms by
+listing them"
+  (typecase sub-in
+    (absurd   (absurd (tcod sub-in) (sub ind
+                                         term-to-replace
+                                         (term sub-in))))
+    (left     (left (rty sub-in) (sub ind
+                                      term-to-replace
+                                      (term sub-in))))
+    (right     (right (lty sub-in) (sub ind
+                                        term-to-replace
+                                        (term sub-in))))
+    (case-on   (case-on (sub ind
+                             term-to-replace
+                             (on sub-in))
+                        (sub (1+ ind)
+                             (index-excess term-to-replace)
+                             (ltm sub-in))
+                        (sub (1+ ind)
+                             (index-excess term-to-replace)
+                             (rtm sub-in))))
+    (fst        (fst (substitute ind
+                                 term-to-replace
+                                 (term sub-in))))
+    (snd        (snd (substitute ind
+                                 term-to-replace
+                                 (term sub-in))))
+    (lamb      (lamb (tdom sub-in)
+                     (sub (1+ ind)
+                          (index-excess term-to-replace)
+                          (term sub-in))))
+    (app        (app (sub ind term-to-replace (fun sub-in))
+                     (list (sub ind term-to-replace (car (term sub-in))))))
+    (index      (if (= (pos sub-in) ind)
+                    (list term-to-replace)
+                    sub-in))
+    ((or unit
+         err
+         bit-choice)
+     sub-in)
+    ((or plus
+         times
+         minus
+         divide
+         lamb-eq
+         lamb-lt
+         pair)
+     (funcall (dispatch sub-in)
+              (sub ind term-to-replace (ltm sub-in))
+              (sub ind term-to-replace (rtm sub-in))))))
+
+(defun reducer (tterm)
+  "Reduces a given Lambda term by applying explict beta-reduction
+when possible alongside arithmetic simplification. We assume that the
+lambda and app terms are  1-argument"
+  (labels ((rec (tterm) 
+             (typecase tterm
+               (absurd   (absurd (tcod tterm) (rec (term tterm))))
+               (left     (left (rty tterm) (rec (term tterm))))
+               (right    (right (lty tterm) (rec (term tterm))))
+               (case-on  (let ((on (on tterm))
+                               (ltm (ltm tterm))
+                               (rtm (rtm tterm)))
+                           (cond ((typep on 'left)
+                                  (delist (index-lack 0
+                                                      (sub 0 on ltm))))
+                                 ((typep on 'right)
+                                  (delist (index-lack 0
+                                                      (sub 0 on rtm))))
+                                 (t
+                                  (case-on (rec on)
+                                           (rec ltm)
+                                           (rec rtm))))))
+               (pair     (pair (rec (ltm tterm))
+                               (rec (rtm tterm))))
+               (fst      (let ((term (term tterm)))
+                           (if (typep (rec term) 'pair)
+                               (rec (ltm term))
+                               (fst (rec term)))))
+               (snd      (let ((term (term tterm)))
+                           (if (typep (rec term) 'pair)
+                               (rec (rtm term))
+                               (snd (rec term)))))
+               (lamb     (lamb (tdom tterm) (rec (term tterm))))
+               (app      (let ((fun (fun tterm))
+                               (term (car (term tterm))))
+                           (cond ((typep fun 'lamb)
+                                  (delist (index-lack 0
+                                                      (sub 0
+                                                           (rec term)
+                                                           (rec (term fun))))))
+                                 ((and (typep fun 'case-on)
+                                       (typep (ltm fun) 'lamb)
+                                       (typep (rtm fun) 'lamb))
+                                  (let ((irec (index-excess (rec term))))
+                                    (rec (case-on (rec (on fun))
+                                                  (delist
+                                                   (index-lack 0
+                                                               (sub 0 irec
+                                                                    (rec (term (ltm fun))))))
+                                                  (delist
+                                                   (index-lack 0
+                                                               (sub 0 irec
+                                                                    (rec (term (rtm fun))))))))))
+                                 ((and (typep fun 'case-on)
+                                       (typep (ltm fun) 'lamb)
+                                       (typep (rtm fun) 'case-on))
+                                  (rec (case-on (rec (on fun))
+                                                (delist
+                                                 (index-lack 0
+                                                             (sub 0 (index-excess (rec term))
+                                                                  (rec (term (ltm fun))))))
+                                                (rec (app (rtm fun) (list (index-excess term)))))))
+                                 ((and (typep fun 'case-on)
+                                       (typep (ltm fun) 'lamb)
+                                       (typep (rtm fun) 'case-on))
+                                  (rec (case-on (rec (on fun))
+                                                (rec (app (ltm fun) (list (index-excess term))))
+                                                (delist
+                                                 (index-lack 0
+                                                             (sub 0 (index-excess (rec term))
+                                                                  (rec (term (rtm fun)))))))))
+                                 ((typep fun 'err)
+                                  (err (mcadr (ttype fun))))
+                                 (t (app (rec fun) (list (rec term)))))))
+               ((or lamb-eq
+                    lamb-lt)
+                (let ((ltm (ltm tterm))
+                      (rtm (rtm tterm)))
+                  (if (and (typep ltm 'bit-choice)
+                           (typep rtm 'bit-choice))
+                      (if (funcall (dispatch-arith tterm)
+                                   (bitv ltm)
+                                   (bitv rtm))
+                          (left so1 (unit))
+                          (right so1 (unit)))
+                      (funcall (dispatch tterm)
+                               (rec ltm)
+                               (rec rtm)))))
+               ((or plus
+                    times
+                    minus
+                    divide)
+                (let ((ltm (ltm tterm))
+                      (rtm (rtm tterm)))
+                  (if (and (typep ltm 'bit-choice)
+                           (typep rtm 'bit-choice))
+                      (bit-choice
+                       (funcall (dispatch-arith tterm)
+                                (bitv ltm)
+                                (bitv rtm)))
+                      (funcall (dispatch tterm)
+                               (rec ltm)
+                               (rec rtm)))))
+               ((or unit
+                    index
+                    err
+                    bit-choice)
+                tterm))))
+    (rec tterm)))
+
