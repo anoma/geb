@@ -1649,8 +1649,10 @@ QTCat = SC
     $ QMorphPres f ea ea' aeq)
 
 ----------------------------------------------
+---------------------------------------------
 ---- Closures of some universal relations ----
 ----------------------------------------------
+---------------------------------------------
 
 public export
 0 ClosureOfEmptyRelImpliesEq : (0 a : Type) ->
@@ -1699,7 +1701,9 @@ ClosureOfEqRelIsEq a =
   (ClosureOfEqRelImpliesEq a, EqImpliesClosureOfEqRel a)
 
 ---------------------------------------------
+---------------------------------------------
 ---- Predicates on and slices of `QType` ----
+---------------------------------------------
 ---------------------------------------------
 
 -- A predicate is a pi type in the dependent-type view.  In the categorial
@@ -1729,3 +1733,124 @@ QSliceRel sl sl' = Exists0 (QSliceObjRel sl sl') (QSliceMorphRel sl sl')
 public export
 QSliceObj : QType -> QType
 QSliceObj a = Element0 (QSliceBase a) (QSliceRel {a})
+
+----------------------------------------------------
+----------------------------------------------------
+---- Universal objects and morphisms in `QType` ----
+----------------------------------------------------
+----------------------------------------------------
+
+-----------------
+---- Initial ----
+-----------------
+
+public export
+QInitBase : Type
+QInitBase = Void
+
+public export
+0 QInitRel : RelationOn QInitBase
+QInitRel v = void v
+
+public export
+QInit : QType
+QInit = Element0 QInitBase QInitRel
+
+public export
+qInitBase : (x : QType) -> QInitBase -> QBase x
+qInitBase x v = void v
+
+public export
+QInitPres : (x : QType) -> QPres QInit x (qInitBase x)
+QInitPres x v = void v
+
+public export
+qInit : (x : QType) -> QMorph QInit x
+qInit x = Element0 (qInitBase x) (QInitPres x)
+
+------------------
+---- Terminal ----
+------------------
+
+public export
+QTermBase : Type
+QTermBase = Unit
+
+public export
+0 QTermRel : RelationOn QTermBase
+QTermRel () () = Unit
+
+public export
+QTerm : QType
+QTerm = Element0 QTermBase QTermRel
+
+public export
+qTermBase : (x : QType) -> QBase x -> QTermBase
+qTermBase x ex = ()
+
+public export
+0 QTermPres : (x : QType) -> QPres x QTerm (qTermBase x)
+QTermPres x ex ex' eqx = FrPrErefl ()
+
+public export
+qTerm : (x : QType) -> QMorph x QTerm
+qTerm x = Element0 (qTermBase x) (QTermPres x)
+
+-----------------
+---- Product ----
+-----------------
+
+public export
+QProdBase : (x, y : QType) -> Type
+QProdBase x y = (QBase x, QBase y)
+
+public export
+0 QProdRel : (x, y : QType) -> RelationOn (QProdBase x y)
+QProdRel x y pxy pxy' =
+  (QBaseRel x (fst pxy) (fst pxy'), QBaseRel y (snd pxy) (snd pxy'))
+
+public export
+QProd : QType -> QType -> QType
+QProd x y = Element0 (QBase x, QBase y) (QProdRel x y)
+
+public export
+qProdIntro : {0 x, y, z : QType} ->
+  QMorph x y -> QMorph x z -> QMorph x (QProd y z)
+qProdIntro {x} {y} {z} f g =
+  Element0
+    (\ex => (QMorphBase f ex, QMorphBase g ex))
+    (\ea, ea', aeq =>
+      let
+        feq = QMorphPres f ea ea' aeq
+        geq = QMorphPres g ea ea' aeq
+      in
+      ?qProdIntro_pres_hole)
+
+public export
+qProj1 : (0 x, y : QType) -> QMorph (QProd x y) x
+qProj1 x y = Element0 fst $ ?qProj1_pres_hole
+
+public export
+qProj2 : (0 x, y : QType) -> QMorph (QProd x y) y
+qProj2 x y = Element0 snd $ ?qProj2_pres_hole
+
+----------------------------
+----------------------------
+---- Quivers in `QType` ----
+----------------------------
+----------------------------
+
+-- A quiver in `QType` is a functor from the walking quiver -- a generic
+-- figure with two objects and two parallel non-identity morphisms -- to
+-- `QType`.  Such a functor is determined by a choice of two `QType`s and
+-- two parallel `QMorph`s between them.
+--
+-- However, there is another way of looking at this:  when we view the
+-- functor as contravariant, so that it is a presheaf rather than a
+-- copresheaf -- a functor from the _opposite_ category of the walking quiver
+-- to `QType` -- it is equivalent to a `QType` together with a `QType`
+-- dependent on pairs of the first `QType`, or, to put it another way, a
+-- `QType` together with a slice over its product.
+public export
+QQuivEdge : QType -> QType
+QQuivEdge vert = QPred $ QProd vert vert
