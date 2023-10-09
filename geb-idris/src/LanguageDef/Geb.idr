@@ -1796,6 +1796,42 @@ public export
 qTerm : (x : QType) -> QMorph x QTerm
 qTerm x = Element0 (qTermBase x) (QTermPres x)
 
+-------------------
+---- Coproduct ----
+-------------------
+
+public export
+QCoproductBase : (x, y : QType) -> Type
+QCoproductBase x y = Either (QBase x) (QBase y)
+
+public export
+0 QCoproductRel : (x, y : QType) -> RelationOn (QCoproductBase x y)
+QCoproductRel x y exy exy' =
+  case (exy, exy') of
+    (Left ex, Left ex') => QBaseRel x ex ex'
+    (Right ey, Right ey') => QBaseRel y ey ey'
+    _ => Void
+
+public export
+QCoproduct : QType -> QType -> QType
+QCoproduct x y = Element0 (QCoproductBase x y) (QCoproductRel x y)
+
+public export
+qInjL : (0 x, y : QType) -> QMorph x (QCoproduct x y)
+qInjL x y = Element0 Left $ \ex, ex', eqx => ?qInjl_pres_hole
+
+public export
+qInjR : (0 x, y : QType) -> QMorph y (QCoproduct x y)
+qInjR x y = Element0 Right $ \ey, ey', eqy => ?qInjr_pres_hole
+
+public export
+qCase : {0 x, y, z : QType} ->
+  QMorph x z -> QMorph y z -> QMorph (QCoproduct x y) z
+qCase f g =
+  Element0
+    (eitherElim (QMorphBase f) (QMorphBase g))
+    ?qCase_pres_hole
+
 -----------------
 ---- Product ----
 -----------------
