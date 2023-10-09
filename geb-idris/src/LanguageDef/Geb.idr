@@ -1681,3 +1681,7 @@ public export
   PrRelBiImp (FreePrEquivF $ EqPrRel {a} {b=a}) (EqPrRel {a} {b=a})
 ClosureOfEqRelIsEq a =
   (ClosureOfEqRelImpliesEq a, EqImpliesClosureOfEqRel a)
+
+public export
+QSliceObj : QType -> QType
+QSliceObj a = QMHom a QTypeQT
