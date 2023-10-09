@@ -5482,6 +5482,10 @@ ContravarHomFunc : Type -> (Type -> Type)
 ContravarHomFunc a = \ty => ty -> a
 
 public export
+[ContravarHomFuncContravar] Contravariant (ContravarHomFunc a) where
+  contramap = (|>)
+
+public export
 FinContravarHomFunc : Nat -> (Type -> Type)
 FinContravarHomFunc n = \ty => ty -> Fin n
 
@@ -6217,6 +6221,32 @@ Profunctor CoDoubleYo where
       -- after `alpha`.
       \x => (|>) mca . alpha x,
       fm mbd x))
+
+public export
+record ContraCoDoubleYo (a, b : Type) where
+  constructor MkContraCoDoubleYo
+  ContraCoDoubleYoEmbed :
+    (f : Type -> Type ** isF : Contravariant f **
+    (NaturalTransformation f (ContravarHomFunc b), f a))
+
+public export
+fromContraCoDoubleYo : {a, b : Type} -> ContraCoDoubleYo a b -> a -> b
+fromContraCoDoubleYo {a} {b} (MkContraCoDoubleYo (f ** isF ** (alpha, x))) =
+  alpha a x
+
+public export
+toContraCoDoubleYo : {a, b : Type} -> (a -> b) -> ContraCoDoubleYo a b
+toContraCoDoubleYo {a} {b} m =
+  MkContraCoDoubleYo
+    (ContravarHomFunc b **
+     ContravarHomFuncContravar {a=b} **
+     ((\_ => id), m))
+
+public export
+Profunctor ContraCoDoubleYo where
+  dimap mca mbd (MkContraCoDoubleYo (f ** fcontra ** (alpha, x))) =
+    MkContraCoDoubleYo
+      (f ** fcontra ** (\x => mbd .* alpha x, contramap {f} mca x))
 
 ---------------------------
 ---------------------------
