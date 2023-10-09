@@ -6193,6 +6193,26 @@ Profunctor DoubleYo where
     MkDoubleYo $ \f, isF, x => map {f} mbd $ y f isF $ map {f} mca x
 
 public export
+record ContraDoubleYo (a, b : Type) where
+  constructor MkContraDoubleYo
+  ContraDoubleYoEmbed : (f : Type -> Type) -> Contravariant f -> f b -> f a
+
+public export
+toContraDoubleYo : (a -> b) -> ContraDoubleYo a b
+toContraDoubleYo m = MkContraDoubleYo $ \f, isCF, x => contramap {f} m x
+
+public export
+fromContraDoubleYo : {a, b : Type} -> ContraDoubleYo a b -> a -> b
+fromContraDoubleYo {a} {b} (MkContraDoubleYo y) =
+  y (ContravarHomFunc b) (ContravarHomFuncContravar {a=b}) id
+
+public export
+Profunctor ContraDoubleYo where
+  dimap mca mbd (MkContraDoubleYo y) =
+    MkContraDoubleYo $
+      \f, isCF, x => contramap {f} mca $ y f isCF $ contramap {f} mbd x
+
+public export
 record CoDoubleYo (a, b : Type) where
   constructor MkCoDoubleYo
   CoDoubleYoEmbed :
