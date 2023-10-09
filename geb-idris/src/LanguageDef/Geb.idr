@@ -1601,3 +1601,28 @@ qmComp : {a, b, c : QType} -> QMorph b c -> QMorph a b -> QMorph a c
 qmComp {a} {b} {c} g f =
   Element0 (QMorphBase g . QMorphBase f) $ \ea, ea', aeq =>
     QMorphPres g (QMorphBase f ea) (QMorphBase f ea') $ QMorphPres f ea ea' aeq
+
+-- This definition shows that the objects of `QType` with the morphisms
+-- of `QMorph` quotiented by `QMExtEq` form a category, with identity and
+-- composition given by `qmId` and `qmComp`.
+public export
+0 QTCat : SCat
+QTCat = SC
+  QType
+  (uncurry QMorph)
+  qmId
+  qmComp
+  (\(x, y) =>
+    MkEq (QMExtEq {x} {y})
+      (MkEquivalence
+        QMorphPres
+        (\pres, ex, ex', eqx => FrPrEsym $ pres ex' ex $ FrPrEsym eqx)
+        (\presxy, presyz =>
+          MkQMExtEq $
+            \ex =>
+              FrPrEtrans
+                (presxy ex ex $ FrPrErefl ex)
+                (presyz ex ex $ FrPrErefl ex))))
+  ?QTCat_hole_idl
+  ?QTCat_hole_idr
+  ?QTCat_hole_assoc
