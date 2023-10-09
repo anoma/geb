@@ -1544,8 +1544,13 @@ QMkMorph {x} {y} {f} pres = Element0 f (QKBind {x} {y} {f} pres)
 public export
 data QTEquiv : RelationOn QType where
   QTE : {0 x : Type} -> {0 r, r' : RelationOn x} ->
-    PrRelBiImp (uncurry r) (uncurry r') ->
+    PrRelBiImp (FreePrEquivF $ uncurry r) (FreePrEquivF $ uncurry r') ->
     QTEquiv (Element0 x r) (Element0 x r')
+
+public export
+QTEqIso : {0 x, y : QType} -> QTEquiv x y -> QMorph x y
+QTEqIso {x=(Element0 x r)} {y=(Element0 x r')} (QTE {x} {r} {r'} imp) =
+  Element0 id $ fst imp
 
 -- Using `QTEquiv`, we can make `QType` itself a `QType`.
 public export
