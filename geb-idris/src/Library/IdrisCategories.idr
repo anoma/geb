@@ -11233,45 +11233,57 @@ PredicateNu {t} f = CofreeCMPredicate f $ TerminalSliceObj t
 ---- Relations ----
 -------------------
 
+public export
 EmptyRel : (t : Type) -> RelationOn t
 EmptyRel t el el' = Void
 
+public export
 VoidRel : RelationOn Void
 VoidRel v _ = void v
 
+public export
 FullRel : (t : Type) -> RelationOn t
 FullRel t el el' = ()
 
+public export
 UnitRel : RelationOn Unit
 UnitRel = FullRel ()
 
+public export
 ProductRelation : RelationOn a -> RelationOn b -> RelationOn (a, b)
 ProductRelation rel rel' (el1, el1') (el2, el2') = (rel el1 el2, rel' el1' el2')
 
+public export
 CoproductRelation : RelationOn a -> RelationOn b -> RelationOn (Either a b)
 CoproductRelation rel rel' (Left el1) (Left el2) = rel el1 el2
 CoproductRelation rel rel' (Left el1) (Right el2') = Void
 CoproductRelation rel rel' (Right el1') (Left el2) = Void
 CoproductRelation rel rel' (Right el1') (Right el2') = rel' el1' el2'
 
+public export
 SubRelation : {a : Type} -> (sub, super : RelationOn a) -> Type
 SubRelation {a} sub super = (el1, el2 : a) -> sub el1 el2 -> super el1 el2
 
+public export
 RelationEquiv : {a : Type} -> (r, r' : RelationOn a) -> Type
 RelationEquiv r r' = (SubRelation r r', SubRelation r' r)
 
+public export
 EqualOverRelations : {a, b : Type} ->
   RelationOn a -> RelationOn b -> (f, g : a -> b) -> Type
 EqualOverRelations rel rel' f g =
   (el, el' : a) -> rel el el' -> rel' (f el) (g el')
 
+public export
 PreservesRelations : {a, b : Type} ->
   RelationOn a -> RelationOn b -> (a -> b) -> Type
 PreservesRelations rel rel' f = EqualOverRelations rel rel' f f
 
+public export
 RelMorphism : {a, b : Type} -> RelationOn a -> RelationOn b -> Type
 RelMorphism rel rel' = Subset0 (a -> b) (PreservesRelations rel rel')
 
+public export
 RelFunctor : Type -> Type
 RelFunctor t = RelationOn t -> RelationOn t
 
