@@ -1473,6 +1473,10 @@ depProdArHomContramap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
 ------------------------
 ------------------------
 
+---------------------
+---- Definitions ----
+---------------------
+
 -- A quotient type is a type together with a relation which we shall
 -- implicitly treat (when defining the morphisms of the category of
 -- quotientable types) as an equivalence relation.
@@ -1534,6 +1538,10 @@ public export
 QMkMorph : {0 x, y : QType} -> {f : QFunc x y} -> (0 _ : QKPres x y f) ->
   QMorph x y
 QMkMorph {x} {y} {f} pres = Element0 f (QKBind {x} {y} {f} pres)
+
+-----------------------------------------
+---- Self-internalization of `QType` ----
+-----------------------------------------
 
 -- We can form an equivalence relation on `QType` itself which states that
 -- two `QType`s are equivalent if they have the same underlying type and
@@ -1607,6 +1615,10 @@ qmComp {a} {b} {c} g f =
   Element0 (QMorphBase g . QMorphBase f) $ \ea, ea', aeq =>
     QMorphPres g (QMorphBase f ea) (QMorphBase f ea') $ QMorphPres f ea ea' aeq
 
+----------------------------------------------------------------------------
+---- `QType` as category (with explicit equivalence) internal to `Type` ----
+----------------------------------------------------------------------------
+
 -- This definition shows that the objects of `QType` with the morphisms
 -- of `QMorph` quotiented by `QMExtEq` form a category, with identity and
 -- composition given by `qmId` and `qmComp`.
@@ -1635,6 +1647,10 @@ QTCat = SC
       (QMorphBase g (QMorphBase f ea)) (QMorphBase g (QMorphBase f ea'))
     $ QMorphPres g (QMorphBase f ea) (QMorphBase f ea')
     $ QMorphPres f ea ea' aeq)
+
+----------------------------------------------
+---- Closures of some universal relations ----
+----------------------------------------------
 
 public export
 0 ClosureOfEmptyRelImpliesEq : (0 a : Type) ->
@@ -1681,6 +1697,10 @@ public export
   PrRelBiImp (FreePrEquivF $ EqPrRel {a} {b=a}) (EqPrRel {a} {b=a})
 ClosureOfEqRelIsEq a =
   (ClosureOfEqRelImpliesEq a, EqImpliesClosureOfEqRel a)
+
+---------------------------------------------
+---- Predicates on and slices of `QType` ----
+---------------------------------------------
 
 -- A predicate is a pi type in the dependent-type view.  In the categorial
 -- view, it is a discrete presheaf, which is the opposite category of a
