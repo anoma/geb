@@ -170,7 +170,8 @@ constructors"
   (seqn-concat      pax:class)
   (seqn-decompose   pax:class)
   (seqn-eq          pax:class)
-  (seqn-lt          pax:class))
+  (seqn-lt          pax:class)
+  (seqn-mod         pax:class))
 
 (pax:defsection @seqn-constructors (:title "Seqn Constructors")
   "Every accessor for each of the classes making up seqn"
@@ -197,7 +198,8 @@ constructors"
   (seqn-concat      pax:function)
   (seqn-decompose   pax:function)
   (seqn-eq          pax:function)
-  (seqn-lt          pax:function))
+  (seqn-lt          pax:function)
+  (seqn-mod         pax:function))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Geb lambda Package Documentation
@@ -231,6 +233,7 @@ constructors"
   (bit-choice pax:class)
   (lamb-eq pax:class)
   (lamb-lt pax:class)
+  (modulo  pax:class)
 
   (absurd pax:function)
   (unit pax:function)
@@ -251,6 +254,7 @@ constructors"
   (bit-choice pax:function)
   (lamb-eq    pax:function)
   (lamb-lt    pax:function)
+  (absurd     pax:function)
   
 
   "Accessors of [ABSURD][class]"
@@ -341,6 +345,11 @@ constructors"
   (ltm   (pax:method () (lamb-lt)))
   (rtm   (pax:method () (lamb-lt)))
   (ttype (pax:method () (lamb-lt)))
+
+  "Accessors of [MODULO][class]"
+  (ltm   (pax:method () (modulo)))
+  (rtm   (pax:method () (modulo)))
+  (ttype (pax:method () (modulo)))
 
   (tcod pax:generic-function)
   (tdom pax:generic-function)
@@ -573,6 +582,7 @@ throughout any piece of code"
   (nat-decompose   pax:class)
   (nat-eq          pax:class)
   (nat-lt          pax:class)
+  (nat-mod         pax:class)
 
   (num       (pax:method () (nat-add)))
   (num       (pax:method () (nat-mult)))
@@ -586,6 +596,7 @@ throughout any piece of code"
   (num       (pax:method () (nat-decompose)))
   (num       (pax:method () (nat-eq)))
   (num       (pax:method () (nat-lt)))
+  (num       (pax:method () (nat-mod)))
 
   (nat-add         pax:function)
   (nat-mult        pax:function)
@@ -598,6 +609,7 @@ throughout any piece of code"
   (nat-decompose   pax:function)
   (nat-eq          pax:function)
   (nat-lt          pax:function)
+  (nat-mod         pax:function)
 
   (num          pax:generic-function)
   (pos          pax:generic-function)
