@@ -1817,20 +1817,44 @@ QCoproduct : QType -> QType -> QType
 QCoproduct x y = Element0 (QCoproductBase x y) (QCoproductRel x y)
 
 public export
+qInjLBase : (0 x, y : QType) -> QBase x -> QCoproductBase x y
+qInjLBase x y = Left
+
+public export
+0 QInjLPres : (0 x, y : QType) -> QPres x (QCoproduct x y) (qInjLBase x y)
+QInjLPres x y = ?qInjLPres_hole
+
+public export
 qInjL : (0 x, y : QType) -> QMorph x (QCoproduct x y)
-qInjL x y = Element0 Left $ \ex, ex', eqx => ?qInjl_pres_hole
+qInjL x y = Element0 (qInjLBase x y) (QInjLPres x y)
+
+public export
+qInjRBase : (0 x, y : QType) -> QBase y -> QCoproductBase x y
+qInjRBase x y = Right
+
+public export
+0 QInjRPres : (0 x, y : QType) -> QPres y (QCoproduct x y) (qInjRBase x y)
+QInjRPres x y = ?qInjRPres_hole
 
 public export
 qInjR : (0 x, y : QType) -> QMorph y (QCoproduct x y)
-qInjR x y = Element0 Right $ \ey, ey', eqy => ?qInjr_pres_hole
+qInjR x y = Element0 (qInjRBase x y) (QInjRPres x y)
+
+public export
+qCaseBase : {0 x, y, z : QType} ->
+   QMorph x z -> QMorph y z -> QCoproductBase x y -> QBase z
+qCaseBase f g = eitherElim (QMorphBase f) (QMorphBase g)
+
+public export
+0 QCasePres : {0 x, y, z : QType} ->
+   (f : QMorph x z) -> (g : QMorph y z) ->
+   QPres (QCoproduct x y) z (qCaseBase {x} {y} {z} f g)
+QCasePres {x} {y} {z} f g = ?QCasePres_hole
 
 public export
 qCase : {0 x, y, z : QType} ->
   QMorph x z -> QMorph y z -> QMorph (QCoproduct x y) z
-qCase f g =
-  Element0
-    (eitherElim (QMorphBase f) (QMorphBase g))
-    ?qCase_pres_hole
+qCase f g = Element0 (qCaseBase f g) (QCasePres f g)
 
 -----------------
 ---- Product ----
