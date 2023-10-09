@@ -163,15 +163,11 @@
                                     (list so1)))
   (is obj-equalp (left so1) (gapply (to-cat (list (coprod so1 so1))
                                             context-dependent-case)
-                                    (list (right
-                                           (left
-                                            (right so1)))
+                                    (list (left so1)
                                           so1)))
   (is obj-equalp (right so1) (gapply (to-cat (list (coprod so1 so1))
                                              context-dependent-case)
-                                     (list (right
-                                            (right
-                                             (right so1)))
+                                     (list (right so1)
                                            so1))))
 
 (define-test arithmetic-compilation :parent lambda.trans-eval

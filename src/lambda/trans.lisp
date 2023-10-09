@@ -87,172 +87,83 @@ error node"
     (modulo #'nat-mod)))
 
 (defmethod to-cat-err (context (tterm <stlc>))
-  "Compiles a checked term with an error term in an appropriate context into the
-morphism of the GEB category using a Maybe monad wrapper, that is, given a
-context G and a term t of type A produces a morphism with domain
-(stlc-ctx-maybe context) and codomain (maybe A).
-
-Terms come from [STLC][type] with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ]
-replaced by [FUN-TYPE][class] and should come without the slow of
-[TTYPE][generic-function] accessor filled for any of the subterms. Context should
-be a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with the caveat that instead of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] we ought to use [FUN-TYPE][class], a stand-in
-for the internal hom object with explicit accessors to the domain and the
-codomain. Once again, note that it is important for the context and term to be
-giving as per above description. While not always, not doing so result in an
-error upon evaluation. As an example of a valid entry we have
-
-```lisp
- (to-cat-err (list so1 (fun-type so1 so1)) (app (index 1) (list (error so1))))
-```
-
-while
-
-```lisp
-(to-cat-err (list so1 (so-hom-obj so1 so1)) (app (index 1) (list (error so1))))
-```
-
-produces an error. Error of such kind mind pop up both on the level of evaluating
-[WELL-DEFP][generic-function] and [ANN-TERM1][generic-function].
-
-Moreover, note that for terms whose typing needs addition of new context
-we append contexts on the left rather than on the right contra usual type
-theoretic notation for the convenience of computation. That means, e.g. that
-asking for a type of a lambda term as below produces:
-
-```lisp
-LAMBDA> (ttype (term (ann-term1 nil (lamb (list so1 so0) (index 0)))))
-s-1
-```
-
-as we count indeces from the left of the context while appending new types to
-the context on the left as well. For more info check [LAMB][class]
-
-Note that the Maybe wrapper also applies to the context elements due to
-functoriality concerns. Hence if one wanted to check the whether the term
-(case-on (index 0) (err so1) (unit)) with a bool in contexts fails on the
-left entry, one would need to evaluate
-
-```lisp
-LAMBDA> (gapply  (to-cat (list (coprod so1 so1))
-                         (case-on (index 0)
-                                  (err so1)
-                                  (unit)))
-                         (list (geb:right (geb:left (geb:right so1))) so1))
-(left s-1)
-```
-
-and hence get an error part of the wrapper. While evaluating the right branch
-will be done by:
-
-```lisp
-  LAMBDA> (gapply  (to-cat (list (coprod so1 so1))
-                           (case-on (index 0)
-                                    (err so1)
-                                    (unit)))
-                   (list (geb:right (geb:right (geb:right so1))) so1))
-(right s-1)
-```
-
-This follows from the fact that bool arapped in maybe is 1 + (bool + bool)"
+  "Wrapps compilation in a maybe monad. The inductive hypothesis is:
+term TTERM with type TTYPE in context A1....An gets interpreted as a
+morphism of type A1 x ... x An x so1 -> 1 + TTYPE"
   (labels ((rec (context tterm)
              (match-of stlc tterm
                ((absurd tcod term)
-                (comp  (mcase (->left so1 (maybe-rest tcod))
-                              (init (maybe-comp tcod)))
-                       (rec context term)))
+                (comp (coprod-mor so1
+                                  (init tcod))
+                      (rec context term)))
                (unit
                 (comp (->right so1 so1)
-                      (terminal (stlc-ctx-maybe context))))
+                      (terminal (stlc-ctx-to-mu context))))
                ((left rty term)
-                (comp  (->right so1 (maybe-rest (ttype tterm)))
-                       (comp (->left (maybe-comp (ttype term))
-                                     (maybe-comp rty))
-                             (rec context term))))
+                (comp (coprod-mor so1
+                                  (->left (ttype term) rty))
+                      (rec context term)))
                ((right lty term)
-                (comp (->right so1 (maybe-rest (ttype tterm)))
-                      (comp  (->right (maybe-comp lty)
-                                      (maybe-comp (ttype term)))
-                             (rec context term))))
+                (comp (coprod-mor so1
+                                  (->right lty (ttype term)))
+                      (rec context term)))
                ((case-on on ltm rtm)
                 (let ((mcartoon  (mcar (ttype on)))
                       (mcadrtoon (mcadr (ttype on)))
-                      (ctx       (stlc-ctx-maybe context)))
-                  (comp (mcase (comp (->left so1 (maybe-rest (ttype tterm)))
-                                     (terminal (prod ctx so1)))
-                               (comp (mcase (commutes-left
-                                             (rec
-                                              (cons mcartoon
-                                                    context)
-                                              ltm))
-                                            (commutes-left
-                                             (rec
-                                              (cons mcadrtoon
-                                                    context)
-                                              rtm)))
-                                     (distribute ctx
-                                                 (maybe-comp mcartoon)
-                                                 (maybe-comp mcadrtoon))))
-                        (comp (distribute ctx
+                      (ctx       (stlc-ctx-to-mu context)))
+                  (comp (comp (mcase (comp (->left so1 (ttype ltm))
+                                           (terminal (prod ctx so1)))
+                                     (comp (mcase (commutes-left
+                                                   (rec (cons mcartoon context)
+                                                        ltm))
+                                                  (commutes-left
+                                                   (rec (cons mcadrtoon context)
+                                                        rtm)))
+                                           (distribute ctx mcartoon mcadrtoon)))
+                              (distribute ctx
                                           so1
-                                          (maybe-rest (coprod mcartoon
-                                                              mcadrtoon)))
-                              (geb:pair ctx (rec context on))))))
+                                          (coprod mcartoon
+                                                  mcadrtoon)))
+                        (geb:pair ctx (rec context on)))))
                ((pair ltm rtm)
-                (let ((lty  (ttype ltm))
-                      (rty  (ttype rtm)))
-                  (comp (->right so1 (prod (maybe-comp lty)
-                                           (maybe-comp rty)))
-                        (geb:pair (rec context ltm)
-                                  (rec context rtm)))))
+                (let ((tyltm (ttype ltm))
+                      (tyrtm (ttype rtm)))
+                  (comp (mcase (comp (->left so1 (ttype tterm))
+                                     (terminal (prod (maybe tyltm) so1)))
+                               (commutes-left (comp
+                                               (coprod-mor (terminal (prod tyrtm
+                                                                           so1))
+                                                           (commutes-left (prod tyrtm tyltm)))
+                                               (distribute tyrtm
+                                                           so1
+                                                           tyltm))))
+                        (comp (distribute (maybe tyltm)
+                                          so1
+                                          tyrtm)
+                              (geb:pair (rec context (ltm tterm))
+                                        (rec context (rtm tterm)))))))
                ((fst term)
-                (let ((mcarttot (mcar (ttype term))))
-                  (comp (mcase (->left so1 (maybe-rest mcarttot))
-                               (<-left (maybe-comp mcarttot)
-                                       (maybe (mcadr (ttype term)))))
+                (let ((ttype (ttype term)))
+                  (comp (coprod-mor so1 (<-left (mcar ttype) (mcadr ttype)))
                         (rec context term))))
                ((snd term)
-                (let ((mcadrttot (mcadr (ttype term))))
-                  (comp (mcase (->left so1 (maybe-rest mcadrttot))
-                               (<-right (maybe-comp (mcar (ttype term)))
-                                        (maybe-comp mcadrttot)))
+                (let ((ttype (ttype term)))
+                  (comp (coprod-mor so1 (<-left (mcar ttype) (mcadr ttype)))
                         (rec context term))))
-               ((lamb tdom term)
-                (comp (->right so1 (maybe-rest (fun-to-hom (ttype tterm))))
-                      (apply-n (length tdom)
-                               #'(lambda (x) (curry (commutes-left x)))
-                               (rec (append
-                                     (mapcar #'maybe-comp tdom)
-                                     context) term))))
-               ((app fun term)
-                (let ((tofun (ttype fun)))
-                  (comp
-                   (mcase (->left so1 (maybe-rest tofun))
-                          (commutes-left
-                           (so-eval (maybe-comp (mcar tofun))
-                                    (maybe-comp (mcadr tofun)))))
-                   (comp (distribute (reduce #'prod
-                                             (mapcar #'maybe-comp term)
-                                             :from-end t)
-                                     so1
-                                     (maybe-rest tofun))
-                         (geb:pair (reduce #'geb:pair
-                                           (mapcar #'(lambda (x) (rec context x)) term)
-                                           :from-end t)
-                                   (rec context
-                                        fun))))))
+               (lamb
+                (error "No function application passes"))
+               (app
+                (error "No function application passes"))
                ((index pos)
-                (stlc-ctx-proj (mapcar #'maybe context) pos))
+                (comp (->right so1 (codom (stlc-ctx-proj context pos)))
+                      (stlc-ctx-proj context pos)))
                ((bit-choice bitv)
-                (comp (comp (->right so1 (ttype tterm))
-                            (nat-const (ttype tterm) (reduce
-                                                      #'(lambda (a b)
-                                                          (+ (ash a 1) b))
-                                                      bitv)))
-                      (terminal (stlc-ctx-maybe context))))
+                (comp (->right so1 (nat-width 24))
+                      (comp (nat-const 24 bitv)
+                            (terminal (stlc-ctx-to-mu context)))))
                ((err ttype)
-                (comp (->left so1 (maybe-comp ttype))
-                      (terminal (stlc-ctx-maybe context))))
+                (comp (->left so1 ttype)
+                      (terminal (stlc-ctx-to-mu context))))
                ((or plus
                     minus
                     times
@@ -260,26 +171,37 @@ This follows from the fact that bool arapped in maybe is 1 + (bool + bool)"
                     lamb-eq
                     lamb-lt
                     modulo)
-                (let ((tyltm (ttype (ltm tterm))))
+                (let ((tyltm (ttype (ltm tterm)))
+                      (tyrtm (ttype (rtm tterm))))
                   (labels ((arith (op)
-                             (comp (mcase (terminal (prod (maybe tyltm)
-                                               so1))
-                               (commutes-left (comp
-                                               (mcase (terminal (prod tyltm
-                                                                      so1))
-                                                      (funcall op tyltm))
-                                               (distribute tyltm
-                                                           so1
-                                                           tyltm))))
-                        (comp (distribute (maybe tyltm)
-                                          so1
-                                          tyltm)
-                              (geb:pair (rec context (ltm tterm))
-                                        (rec context (rtm tterm)))))))
-                    (arith (dispatch tterm))))))))
+                             (comp (mcase (comp (->left so1 (ttype tterm))
+                                                (terminal (prod (maybe tyltm) so1)))
+                                          (commutes-left (comp
+                                                          (coprod-mor (terminal (prod tyrtm
+                                                                                      so1))
+                                                                      (commutes-left (funcall op 24)))
+                                                          (distribute tyrtm
+                                                                      so1
+                                                                      tyltm))))
+                                   (comp (distribute (maybe tyltm)
+                                                     so1
+                                                     tyrtm)
+                                         (geb:pair (rec context (ltm tterm))
+                                                   (rec context (rtm tterm)))))))
+                    (arith (dispatch tterm)))))))
+           (rec1 (ctx tterm)
+             (if (typep tterm 'lamb)
+                 (rec1 (append (tdom tterm) ctx)
+                       (term tterm))
+                 (list ctx tterm))))
     (if (not (well-defp context tterm))
         (error "not a well-defined ~A in said ~A" tterm context)
-        (rec context (ann-term1 context tterm)))))
+        (let* ((term (geb.lambda.main:reducer tterm))
+               (recc (rec1 context term))
+               (car (car recc)))
+          (rec car
+               (ann-term1 car
+                          (cadr recc)))))))
 
 (defmethod to-cat-cor (context (tterm <stlc>))
   "Compiles a checked term in an appropriate context into the
