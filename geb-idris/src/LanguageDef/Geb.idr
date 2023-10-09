@@ -1623,6 +1623,10 @@ QTCat = SC
               FrPrEtrans
                 (presxy ex ex $ FrPrErefl ex)
                 (presyz ex ex $ FrPrErefl ex))))
-  ?QTCat_hole_idl
-  ?QTCat_hole_idr
-  ?QTCat_hole_assoc
+  QMorphPres
+  QMorphPres
+  (\f, g, h, ea, ea', aeq =>
+    QMorphPres h
+      (QMorphBase g (QMorphBase f ea)) (QMorphBase g (QMorphBase f ea'))
+    $ QMorphPres g (QMorphBase f ea) (QMorphBase f ea')
+    $ QMorphPres f ea ea' aeq)
