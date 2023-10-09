@@ -103,5 +103,8 @@
     :pwmod32
 
     :*range-n*
-    :range-n)))
+    :range-n
+
+    :*mod-n*
+    :mod-n)))
 

@@ -328,6 +328,10 @@ get ((A x B) + (A x C)) as times appends sequences"
   "Division is interpreted as divition"
   (seqn-divide (geb.extension.spec:num obj)))
 
+(defmethod to-seqn ((obj geb.extension.spec:nat-mod))
+  "Division is interpreted as divition"
+  (seqn-mod (geb.extension.spec:num obj)))
+
 (defmethod to-seqn ((obj geb.extension.spec:nat-const))
   "A choice of a natural number is the same exact choice in SeqN"
   (seqn-nat (geb.extension.spec:num obj) (geb.extension.spec:pos obj)))

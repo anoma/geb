@@ -83,7 +83,8 @@ error node"
     (times #'nat-mult)
     (divide #'nat-div)
     (lamb-eq #'nat-eq)
-    (lamb-lt #'nat-lt)))
+    (lamb-lt #'nat-lt)
+    (modulo #'nat-mod)))
 
 (defmethod to-cat-err (context (tterm <stlc>))
   "Compiles a checked term with an error term in an appropriate context into the
@@ -257,7 +258,8 @@ This follows from the fact that bool arapped in maybe is 1 + (bool + bool)"
                     times
                     divide
                     lamb-eq
-                    lamb-lt)
+                    lamb-lt
+                    modulo)
                 (let ((tyltm (ttype (ltm tterm))))
                   (labels ((arith (op)
                              (comp (mcase (terminal (prod (maybe tyltm)
@@ -392,7 +394,8 @@ iterated, so is the uncurrying."
                     times
                     divide
                     lamb-eq
-                    lamb-lt)
+                    lamb-lt
+                    modulo)
                 (let ((ltm (ltm tterm)))
                   (labels ((arith (op)
                              (comp (funcall op (num (ttype ltm)))
