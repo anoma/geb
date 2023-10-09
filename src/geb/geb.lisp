@@ -353,14 +353,7 @@ turning [coproducts][coprod] of A | B into Maybe (Maybe A | Maybe B),
 turning [SO1] into Maybe [SO1]
 
 and [SO0] into Maybe [SO0]"
-  (typecase-of substobj obj
-    (so0    (coprod so1 so0))
-    (so1    (coprod so1 so1))
-    (coprod (coprod so1 (coprod (maybe (mcar obj))
-                                (maybe (mcadr obj)))))
-    (prod   (coprod so1 (prod (maybe (mcar obj))
-                              (maybe (mcadr obj)))))
-    (otherwise (subclass-responsibility obj))))
+  (coprod so1 obj))
 
 (defmethod maybe ((obj <natobj>))
   (coprod so1 obj))
