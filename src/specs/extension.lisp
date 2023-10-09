@@ -69,7 +69,7 @@ of natural numbers"))
 
 (deftype natmorph ()
   '(or nat-add nat-inj nat-mult nat-sub nat-div nat-const nat-concat
-       one-bit-to-bool nat-decompose nat-eq nat-lt))
+       one-bit-to-bool nat-decompose nat-eq nat-lt nat-mod))
 
 (defclass nat-width (<natobj>)
   ((num :initarg :num
@@ -233,6 +233,14 @@ which evaluated to true iff both inputs are the same"))
   (:documentation "Morphism nat-width n x nat-width n -> bool
 which evaluated to true iff the first input is less than the second"))
 
+(defclass nat-mod (<natmorph>)
+  ((num :initarg :num
+        :accessor num
+        :documentation ""))
+  (:documentation "Morphism nat-width n x nat-width n -> nat-width n
+which takes a modulo of the left projection of a pair by the second
+projection of a pari"))
+
 (defun nat-add (num)
   (values
    (make-instance 'nat-add :num num)))
@@ -283,6 +291,9 @@ which evaluated to true iff the first input is less than the second"))
 
 (defun nat-lt (num)
   (make-instance 'nat-lt :num num))
+
+(defun nat-mod (num)
+  (make-instance 'nat-mod :num num))
 
 
 

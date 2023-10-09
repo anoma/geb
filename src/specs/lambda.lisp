@@ -11,7 +11,7 @@ unit types as well as coproduct, product, and function types."))
 which can be filled by auxillary functions or by user. Types are
 represented as [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]."
   '(or absurd unit left right case-on pair fst snd lamb app index err
-    plus times minus divide bit-choice lamb-eq lamb-lt))
+    plus times minus divide bit-choice lamb-eq lamb-lt modulo))
 
 ;; New defgenerics
 
@@ -744,3 +744,33 @@ will be associated with the 0 input and teh second branch with 1."))
 (defun lamb-lt (ltm rtm &key (ttype nil))
   (values
    (make-instance 'lamb-lt :ltm ltm :rtm rtm :ttype ttype)))
+
+(defclass modulo (<stlc>)
+  ((ltm :initarg :ltm
+        :accessor ltm
+        :documentation "")
+   (rtm :initarg :rtm
+        :accessor rtm
+        :documentation "")
+   (ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation "A term representing syntactic modulus of the first number
+by the second number. The formal grammar of [MODULO] is
+
+```lisp
+(modulo ltm rtm)
+```
+
+where we can possibly supply typing info by
+
+```lisp
+(modulo ltm rtm :ttype ttype)
+```
+
+meaning that we take ltm mod rtm"))
+
+(defun modulo (ltm rtm &key (ttype nil))
+  (values
+   (make-instance 'modulo :ltm ltm :rtm rtm :ttype ttype)))

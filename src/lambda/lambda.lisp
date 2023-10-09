@@ -158,8 +158,12 @@ the context on the left as well. For more info check [LAMB][class]"))
                                             (ann-term1 ctx rtm)
                                             :ttype (coprod so1 so1)))
         ((lamb-lt ltm rtm)         (lamb-lt (ann-term1 ctx ltm)
+                                            (ann-term1 ctx rtm)
+                                            :ttype (coprod so1 so1)))
+        ((modulo ltm rtm)          (let ((ant (ann-term1 ctx ltm)))
+                                     (modulo ant
                                              (ann-term1 ctx rtm)
-                                             :ttype (coprod so1 so1)))
+                                             :ttype (ttype ant))))
         ((case-on on ltm rtm)
          (let* ((ann-on     (ann-term1 ctx on))
                 (type-of-on (ttype ann-on))
@@ -231,6 +235,7 @@ occurences - re-annotates the term and its subterms with actual
          times
          minus
          divide
+         modulo
          bit-choice
          lamb-eq
          lamb-lt)
@@ -322,7 +327,8 @@ nil"))
                ((or plus
                     minus
                     divide
-                    times)
+                    times
+                    modulo)
                 (obj-equalp (ttype (ltm tterm))
                             (ttype (rtm tterm))))
                ((or lamb-eq
@@ -358,7 +364,8 @@ nil"))
              (typep tterm 'times)
              (typep tterm 'divide)
              (typep tterm 'lamb-eq)
-             (typep tterm 'lamb-lt))
+             (typep tterm 'lamb-lt)
+             (typep tterm 'modulo))
          (or (errorp (ltm tterm))
              (errorp (rtm tterm))))
         (t                        (errorp (term tterm)))))

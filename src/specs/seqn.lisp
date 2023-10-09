@@ -4,7 +4,7 @@
   '(or composition id fork-seq drop-nil remove-right remove-left drop-width
     inj-length-left inj-length-right inj-size branch-seq shift-front zero-bit
     one-bit parallel-seq seqn-add seqn-subtract seqn-multiply seqn-divide
-    seqn-nat seqn-concat seqn-decompose seqn-lt seqn-eq))
+    seqn-nat seqn-concat seqn-decompose seqn-lt seqn-eq seqn-mod))
 
 (defclass <seqn> (geb.mixins:direct-pointwise-mixin cat-morph) ()
   (:documentation "Seqn is a category whose objects are finite sequences of natural numbers.
@@ -262,6 +262,15 @@ seqn-eq n : (n, n) -> (1, 0) with the intended semantics being
 that the morphism takes two n-bit integers and produces 1 iff the first
 one is less than the second"))
 
+(defclass seqn-mod (<seqn>)
+  ((mcar :initarg :mcar
+         :accessor mcar
+         :documentation ""))
+  (:documentation " The type signature of the morphism is
+seqn-mod n : (n, n) -> (n) with the intended semantics being
+that the morphism takes two n-bit integers and produces the
+modulo of the first integer by the second"))
+
 (serapeum:-> composition (<seqn> <seqn>) composition)
 (defun composition (mcar mcadr)
   (values
@@ -378,6 +387,11 @@ one is less than the second"))
   (values
    (make-instance 'seqn-lt :mcar mcar)))
 
+(serapeum:-> seqn-mod (fixnum) seqn-mod)
+(defun seqn-mod (mcar)
+  (values
+   (make-instance 'seqn-mod :mcar mcar)))
+
 (make-pattern composition mcar mcadr)
 (make-pattern id mcar)
 (make-pattern fork-seq mcar)
@@ -402,4 +416,5 @@ one is less than the second"))
 (make-pattern seqn-decompose)
 (make-pattern seqn-eq)
 (make-pattern seqn-lt)
+(make-pattern seqn-mod)
 

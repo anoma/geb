@@ -322,6 +322,15 @@ removed already and hence we cannot count as usual"
                                                     :rhs cadr))
               zero))))
 
+(defmethod to-vampir ((obj seqn-mod) inputs constraints)
+  (declare (ignore constraints))
+  (let ((car (car inputs))
+        (cadr (cadr inputs)))
+    (if (const-check inputs)
+        (list (vamp:make-constant :const (mod (vamp:const car) (vamp:const cadr))))
+        (list (geb.vampir:mod-n (vamp:make-constant :const (mcar obj))
+                                car cadr)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

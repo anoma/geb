@@ -30,3 +30,4 @@
 (easy-printer seqn-decompose)
 (easy-printer seqn-eq)
 (easy-printer seqn-lt)
+(easy-printer seqn-mod)
