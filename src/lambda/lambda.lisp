@@ -365,7 +365,8 @@ nil"))
     (divide #'divide)
     (times #'times)
     (lamb-eq #'lamb-eq)
-    (lamb-lt #'lamb-lt)))
+    (lamb-lt #'lamb-lt)
+    (modulo  #'modulo)))
 
 (defun dispatch-arith (tterm)
   "A dispatch refering the class of an arithmetic term
@@ -376,7 +377,8 @@ to its corresponding operation"
     (divide #'floor)
     (times #'*)
     (lamb-eq #'=)
-    (lamb-lt #'<)))
+    (lamb-lt #'<)
+    (modulo #'mod)))
 
 (defun index-excess (tterm)
   "Checks all indeces occuring in a term which will be substituted.
@@ -412,7 +414,8 @@ beta-substitution of indices which point outside of the app term"
                     divide
                     lamb-eq
                     lamb-lt
-                    pair)
+                    pair
+                    modulo)
                 (funcall (dispatch tterm)
                          (rec n (ltm tterm))
                          (rec n (rtm tterm)))))))
@@ -453,7 +456,8 @@ of term accordingly"
                         divide
                         lamb-eq
                         lamb-lt
-                        pair)
+                        pair
+                        modulo)
                     (funcall (dispatch tterm)
                              (rec n (ltm tterm))
                              (rec n (rtm tterm))))))))
@@ -491,7 +495,8 @@ of term accordingly"
                         divide
                         lamb-eq
                         lamb-lt
-                        pair)
+                        pair
+                        modulo)
                     (funcall (dispatch tterm)
                              (rec (ltm tterm))
                              (rec (rtm tterm))))))))
@@ -544,7 +549,8 @@ subterms of sub-on by term-to-replace"
          divide
          lamb-eq
          lamb-lt
-         pair)
+         pair
+         modulo)
      (funcall (dispatch sub-in)
               (sub ind term-to-replace (ltm sub-in))
               (sub ind term-to-replace (rtm sub-in))))))
@@ -599,7 +605,8 @@ with index 0"
          divide
          lamb-eq
          lamb-lt
-         pair)
+         pair
+         modulo)
      (funcall (dispatch tterm)
               (to-ind-app (ltm tterm))
               (to-ind-app (rtm tterm))))))
@@ -633,7 +640,8 @@ with index 0"
          divide
          lamb-eq
          lamb-lt
-         pair)
+         pair
+         modulo)
      (funcall (dispatch tterm)
               (to-ind-app (ltm tterm))
               (to-ind-app (rtm tterm))))))
@@ -728,7 +736,8 @@ when possible. Does not recurse on the whole term. Use b-reduce for that"
                ((or plus
                     times
                     minus
-                    divide)
+                    divide
+                    modulo)
                 (let ((ltm (ltm tterm))
                       (rtm (rtm tterm)))
                   (if (and (typep ltm 'bit-choice)
