@@ -1658,3 +1658,26 @@ public export
   PrRelBiImp (FreePrEquivF $ uncurry $ EmptyRel a) (EqPrRel {a} {b=a})
 ClosureOfEmptyRelIsEq a =
   (ClosureOfEmptyRelImpliesEq a, EqImpliesClosureOfEmptyRel a)
+
+public export
+0 ClosureOfEqRelImpliesEq : (0 a : Type) ->
+  PrRelImp (FreePrEquivF $ EqPrRel {a} {b=a}) (EqPrRel {a} {b=a})
+ClosureOfEqRelImpliesEq a ea ea' =
+  freePrEquivEval {a} (EqPrRel {a} {b=a}) (\(x, y) => x = y)
+    (\(ea, ea'), Refl => Refl)
+    (\(ea, ea'), eqa => case eqa of
+      PrErefl _ => Refl
+      PrEsym _ _ Refl => Refl
+      PrEtrans _ _ _ Refl Refl => Refl)
+    (ea, ea')
+
+public export
+0 EqImpliesClosureOfEqRel : (0 a : Type) ->
+  PrRelImp (EqPrRel {a} {b=a}) (FreePrEquivF $ EqPrRel {a} {b=a})
+EqImpliesClosureOfEqRel a ea _ Refl = FrPrErefl ea
+
+public export
+0 ClosureOfEqRelIsEq : (0 a : Type) ->
+  PrRelBiImp (FreePrEquivF $ EqPrRel {a} {b=a}) (EqPrRel {a} {b=a})
+ClosureOfEqRelIsEq a =
+  (ClosureOfEqRelImpliesEq a, EqImpliesClosureOfEqRel a)
