@@ -1874,25 +1874,44 @@ QProd : QType -> QType -> QType
 QProd x y = Element0 (QBase x, QBase y) (QProdRel x y)
 
 public export
+qProdIntroBase : {0 x, y, z : QType} ->
+  QMorph x y -> QMorph x z -> QBase x -> QProdBase y z
+qProdIntroBase {x} {y} {z} f g ex = (QMorphBase f ex, QMorphBase g ex)
+
+public export
+0 QProdIntroPres : {0 x, y, z : QType} ->
+   (f : QMorph x y) -> (g : QMorph x z) ->
+   QPres x (QProd y z) (qProdIntroBase {x} {y} {z} f g)
+QProdIntroPres {x} {y} {z} f g = ?QProdIntroPres_hole
+
+public export
 qProdIntro : {0 x, y, z : QType} ->
   QMorph x y -> QMorph x z -> QMorph x (QProd y z)
-qProdIntro {x} {y} {z} f g =
-  Element0
-    (\ex => (QMorphBase f ex, QMorphBase g ex))
-    (\ea, ea', aeq =>
-      let
-        feq = QMorphPres f ea ea' aeq
-        geq = QMorphPres g ea ea' aeq
-      in
-      ?qProdIntro_pres_hole)
+qProdIntro {x} {y} {z} f g = Element0 (qProdIntroBase f g) (QProdIntroPres f g)
+
+public export
+qProj1Base : (0 x, y : QType) -> QProdBase x y -> QBase x
+qProj1Base x y = fst
+
+public export
+0 QProj1Pres : (0 x, y : QType) -> QPres (QProd x y) x (qProj1Base x y)
+QProj1Pres x y = ?qProj1Pres_hole
 
 public export
 qProj1 : (0 x, y : QType) -> QMorph (QProd x y) x
-qProj1 x y = Element0 fst $ ?qProj1_pres_hole
+qProj1 x y = Element0 (qProj1Base x y) (QProj1Pres x y)
+
+public export
+qProj2Base : (0 x, y : QType) -> QProdBase x y -> QBase y
+qProj2Base x y = snd
+
+public export
+0 QProj2Pres : (0 x, y : QType) -> QPres (QProd x y) y (qProj2Base x y)
+QProj2Pres x y = ?qProj2Pres_hole
 
 public export
 qProj2 : (0 x, y : QType) -> QMorph (QProd x y) y
-qProj2 x y = Element0 snd $ ?qProj2_pres_hole
+qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
 
 ----------------------------
 ----------------------------
