@@ -6115,6 +6115,23 @@ Contravariant (ContraCoYo f) where
   contramap g (MkContraCoYo (ty ** (x, h))) = MkContraCoYo (ty ** (x, h . g))
 
 public export
+record YoCoprshf (f : (Type -> Type) -> Type) (r : Type -> Type) where
+  constructor MkYoC
+  YoCEmbed : (b : Type -> Type) -> NaturalTransformation r b -> f b
+
+public export
+toYoC : (f : (Type -> Type) -> Type) ->
+  {auto isF :
+    (g, h : Type -> Type) -> NaturalTransformation g h -> f g -> f h} ->
+  {r : Type -> Type} -> f r -> YoCoprshf f r
+toYoC f {isF} {r} x = MkYoC $ \b, alpha => isF r b alpha x
+
+public export
+fromYoC : (f : (Type -> Type) -> Type) -> {r : Type -> Type} ->
+  YoCoprshf f r -> f r
+fromYoC f {r} (MkYoC y) = y r $ \_ => id
+
+public export
 record CoYoCoprshf (f : (Type -> Type) -> Type) (r : Type -> Type) where
   constructor MkCoYoC
   CoYoCEmbed : (b : Type -> Type ** (NaturalTransformation b r, f b))
