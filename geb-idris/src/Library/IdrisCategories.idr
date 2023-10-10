@@ -796,6 +796,11 @@ public export
 ProfPrshfMap : ((Type -> Type -> Type) -> Type) -> Type
 ProfPrshfMap pi = {p, q : Type -> Type -> Type} -> ProfNT p q -> pi p -> pi q
 
+-- Called 'HNatProf` by Milewski.
+public export
+ProfPrshfNT : (pi, rho : ((Type -> Type -> Type) -> Type)) -> Type
+ProfPrshfNT pi rho = {p : Type -> Type -> Type} -> Profunctor p -> pi p -> rho p
+
 public export
 ProfMap : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
 ProfMap pf = {p, q : Type -> Type -> Type} -> ProfNT p q -> ProfNT (pf p) (pf q)
