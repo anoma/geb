@@ -787,6 +787,35 @@ public export
 PfCatObj : PfSliceObj
 PfCatObj = const Unit
 
+public export
+ProfNT : (p, q : Type -> Type -> Type) -> Type
+ProfNT p q = {a, b : Type} -> p a b -> q a b
+
+-- Called 'HFunProf` by Milewski.
+public export
+ProfPrshfMap : ((Type -> Type -> Type) -> Type) -> Type
+ProfPrshfMap pi = {p, q : Type -> Type -> Type} -> ProfNT p q -> pi p -> pi q
+
+public export
+ProfMap : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
+ProfMap pf = {p, q : Type -> Type -> Type} -> ProfNT p q -> ProfNT (pf p) (pf q)
+
+public export
+ProfReturn : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
+ProfReturn pf = (p : Type -> Type -> Type) -> ProfNT p (pf p)
+
+public export
+ProfJoin : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
+ProfJoin pf = (p : Type -> Type -> Type) -> ProfNT (pf (pf p)) (pf p)
+
+public export
+ProfExtract : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
+ProfExtract pf = (p : Type -> Type -> Type) -> ProfNT (pf p) p
+
+public export
+ProfDuplicate : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
+ProfDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
