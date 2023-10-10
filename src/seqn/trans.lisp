@@ -31,17 +31,16 @@ and skip 0es, making non-zero entries into wires"
       :name name
       :inputs wires
       :body
-      (append
-       (range-constraints-dom (dom morphism))
-       (list
-        (vamp:make-tuples
-         :wires
-         (remove nil
-                 (filter-map (lambda (x)
-                               (unless (zerop (car x))
-                                 (cadr x)))
-                             (prod-list (cod morphism)
-                                        (to-vampir morphism wires nil)))))))))))
+      (list
+       (vamp:make-tuples
+        :wires
+        (mapcar 'to-vampir-opt
+                (remove nil
+                        (filter-map (lambda (x)
+                                      (unless (zerop (car x))
+                                        (cadr x)))
+                                    (prod-list (cod morphism)
+                                               (to-vampir morphism wires nil)))))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SeqN to Vamp-IR Compilation
@@ -55,6 +54,64 @@ to (n) for some n"
   (declare (ignore constraints))
   (declare (ignore values))
   (geb.utils:subclass-responsibility obj))
+
+(defun const-check (obj1 obj2)
+  (and (typep obj1 'vamp:constant)
+       (typep obj2 'vamp:constant)))
+
+(defmethod to-vampir-opt ((obj vamp:application))
+  (let* ((zero (vamp:make-constant :const 0))
+         (one (vamp:make-constant :const 1))
+         (car (car (vamp:arguments obj)))
+         (cadr (cadr (vamp:arguments obj)))
+         (opcar (to-vampir-opt car))
+         (opcadr (to-vampir-opt cadr)))
+    (cond  ((obj-equalp (vamp:func obj) :isZero)
+            (if (const-check opcar opcadr)
+                (if (= (vamp:const opcar)
+                       (vamp:const opcadr))
+                    zero
+                    one)))
+           ((obj-equalp (vamp:func obj) :negative)
+            (if (const-check opcar opcadr)
+                (if (< (vamp:const opcar)
+                       (vamp:const opcadr))
+                    zero
+                    one)))
+           (t (mapcar 'to-vampir-opt (vamp:arguments obj))))))
+
+(defmethod to-vampir-opt ((obj vamp:constant))
+  obj)
+
+(defmethod to-vampir-opt ((obj geb.vampir.spec:infix))
+  (let*  ((lhs (vamp:lhs obj))
+          (rhs (vamp:rhs obj))
+          (oplhs (to-vampir-opt lhs))
+          (oprhs (to-vampir-opt rhs))
+          (constl (vamp:const oplhs))
+          (constr (vamp:const oprhs))
+          (ob+ (obj-equalp (vamp:op obj) :+))
+          (ob- (obj-equalp (vamp:op obj) :-))
+          (ob/ (obj-equalp (vamp:op obj) :/))
+          (ob* (obj-equalp (vamp:op obj) :*)))
+    (if (const-check oplhs
+                     oprhs)
+        (cond (ob+  (vamp:make-constant
+                     :const (+ constl constr)))
+              (ob- (vamp:make-constant
+                    :const (- constl constr)))
+              (ob* (vamp:make-constant
+                    :const (* constl constr)))
+              (ob/ (vamp:make-constant
+                    :const
+                    (multiple-value-bind (q)
+                        (floor constl
+                               constr)
+                      q))))
+        (cond (ob+ (make-opt-plus oplhs oprhs))
+              (ob- (make-opt-minus oplhs oprhs))
+              (ob/ (make-opt-divide oplhs oprhs))
+              (ob* (make-opt-times oplhs oprhs))))))
 
 (defun infix-creation (symbol value1 value2)
   (vamp:make-infix :op symbol
@@ -144,13 +201,20 @@ branching. If 0 run the MCAR, if 1 run the MCADR"
   (let* ((car   (car inputs))
          (left  (to-vampir (mcar obj) (cdr inputs) constraints))
          (right (to-vampir (mcadr obj) (cdr inputs) constraints)))
-    (cond
-      ((not (typep car 'vamp:constant))
-       (mapcar (lambda (x) (optimize-branch x car)) (prod-list left right)))
-      ((= (vamp:const car) 0)
-       left)
-      (t
-       right))))
+    (mapcar (lambda (x) (infix-creation
+                         :+
+                         (infix-creation
+                          :*
+                          (infix-creation
+                           :-
+                           (vamp:make-constant :const 1)
+                           car)
+                          (car x))
+                         (infix-creation
+                          :*
+                          car
+                          (cadr x))))
+            (prod-list left right))))
 
 (defmethod to-vampir ((obj shift-front) inputs constraints)
   "Takes the MCADR entry and moves it upward leaving everything
@@ -171,61 +235,21 @@ removed already and hence we cannot count as usual"
   (declare (ignore inputs  constraints))
   (list (vamp:make-constant :const 1)))
 
-(defun const-check (inputs)
-  (and (typep (car inputs) 'vamp:constant)
-       (typep (cadr inputs) 'vamp:constant)))
-
 (defmethod to-vampir ((obj seqn-add) inputs constraints)
   (declare (ignore constraints))
-  (let ((car (car inputs))
-        (cadr (cadr inputs))
-        (mcar (mcar obj)))
-    (if (const-check inputs)
-        (let ((plus (+ (vamp:const car)
-                       (vamp:const cadr))))
-          (if (> (expt 2 mcar) plus)
-              (vamp:make-constant :const plus)
-              (error "Range Exceeded")))
-        (list (geb.vampir:plus-range (vamp:make-constant :const mcar)
-                                     car
-                                     cadr)))))
+  (list (infix-creation :+ (car inputs) (cadr inputs))))
 
 (defmethod to-vampir ((obj seqn-subtract) inputs constraints)
   (declare (ignore constraints))
-  (let ((car (car inputs))
-        (cadr (cadr inputs)))
-    (if (const-check inputs)
-        (let ((minus (- (vamp:const car) (vamp:const cadr))))
-          (if (<= 0 minus)
-              (vamp:make-constant :const minus)
-              (error "Subtraction Produces Negative Numbers")))
-        (list (geb.vampir:minus-range (vamp:make-constant :const (mcar obj))
-                                      car
-                                      cadr)))))
+  (list (infix-creation :- (car inputs) (cadr inputs))))
 
 (defmethod to-vampir ((obj seqn-multiply) inputs constraints)
   (declare (ignore constraints))
-  (let ((car (car inputs))
-        (cadr (cadr inputs))
-        (mcar (mcar obj)))
-    (if (const-check inputs)
-        (let ((mult (* (vamp:const car) (vamp:const cadr))))
-          (if (> (expt 2 mcar) mult)
-              (vamp:make-constant :const mult)
-              (error "Range Exceeded")))
-        (list (geb.vampir:mult-range (vamp:make-constant :const mcar)
-                                     car
-                                     cadr)))))
+  (list (infix-creation :* (car obj) (cadr obj))))
 
 (defmethod to-vampir ((obj seqn-divide) inputs constraints)
   (declare (ignore constraints))
-  (let ((car (car inputs))
-        (cadr (cadr inputs)))
-    (if (const-check inputs)
-        (vamp:make-constant
-         :const
-         (multiple-value-bind (q) (floor (vamp:const car) (vamp:const cadr)) q))
-        (list (make-opt-divide (car inputs) (cadr inputs))))))
+  (list (infix-creation :/ (car inputs) (cadr inputs))))
 
 (defmethod to-vampir ((obj seqn-nat) inputs constraints)
   (declare (ignore constraints))
@@ -233,16 +257,11 @@ removed already and hence we cannot count as usual"
 
 (defmethod to-vampir ((obj seqn-concat) inputs constraints)
   (declare (ignore constraints))
-  (let ((car (car inputs))
-        (cadr (cadr inputs)))
-    (if (const-check inputs)
-        (list (vamp:make-constant
-               :const (+ (* (expt 2 (mcadr obj)) (vamp:const car))
-                         (vamp:const cadr))))
-        (list (make-opt-plus (make-opt-times car
-                                             (vamp:make-constant
-                                              :const (expt 2 (mcadr obj))))
-                             cadr)))))
+  (list (infix-creation :+
+                        (infix-creation :* (car inputs)
+                                        (vamp:make-constant
+                                         :const (expt 2 (mcadr obj))))
+                        (cadr inputs))))
 
 (defmethod to-vampir ((obj seqn-decompose) inputs constraints)
   (declare (ignore constraints))
@@ -253,30 +272,12 @@ removed already and hence we cannot count as usual"
                 :arguments (list (vamp:make-constant :const mcar)
                                  car)))
          (lst  (list (vamp:make-constant :const (1- mcar))
-                     rng))
-         (dpth (range-depth rng)))
-    (cond ((typep car 'vamp:constant)
-           (optimize-decompose mcar car))
-          ((zerop dpth)
-           (list (vamp:make-application :func :n_th
-                                        :arguments lst)
-                 (geb.vampir:combine
-                  (vamp:make-application :func :drop_ith
-                                         :arguments lst))))
-          (t
-           (list (vamp:make-application
-                  :func :n_th
-                  :arguments
-                  (list
-                   (vamp:make-constant :const (1- mcar))
-                   (geb.utils:apply-n dpth
-                                      (lambda (x)
-                                        (cadr (vamp:arguments
-                                               (car (vamp:arguments
-                                                     (cadr (vamp:arguments x)))))))
-                                      rng)))
-                 (geb.vampir:combine
-                  (vamp:make-application :func :drop_ith :arguments lst)))))))
+                     rng)))
+    (list (vamp:make-application :func :n_th
+                                 :arguments lst)
+          (geb.vampir:combine
+           (vamp:make-application :func :drop_ith
+                                  :arguments lst)))))
 
 (defun range-depth (x)
   (let ((cadr (cadr (vamp:arguments x))))
@@ -286,89 +287,22 @@ removed already and hence we cannot count as usual"
 
 (defmethod to-vampir ((obj seqn-eq) inputs constraints)
   (declare (ignore constraints))
-  (let ((car (car inputs))
-        (cadr (cadr inputs))
-        (zero (vamp:make-constant :const 0)))
-    (if (const-check inputs)
-        (if (zerop (- (vamp:const car) (vamp:const cadr)))
-            (list zero
-                  zero)
-            (list (vamp:make-constant :const 1)
-                  zero))
-        (list (geb.vampir:isZero (make-opt-minus (car inputs)
-                                                 (cadr inputs)))
-              zero))))
+  (list (geb.vampir:isZero (infix-creation :-
+                                           (car inputs)
+                                           (cadr inputs)))
+        (vamp:make-constant :const 0)))
 
 (defmethod to-vampir ((obj seqn-lt) inputs constraints)
   (declare (ignore constraints))
-  (let ((car (car inputs))
-        (cadr (cadr inputs))
-        (zero (vamp:make-constant :const 0)))
-    (if (const-check inputs)
-        (if (< (vamp:const car) (vamp:const cadr))
-            (list zero
-                  zero)
-            (list (vamp:make-constant :const 1)
-                  zero))
-        (list (geb.vampir:negative (vamp:make-constant :const (mcar obj))
-                                   (make-opt-minus car
-                                                   cadr))
-              zero))))
+  (list (geb.vampir:negative (vamp:make-constant :const (mcar obj))
+                             (infix-creation :-
+                                             (car inputs)
+                                             (cadr inputs)))
+        (vamp:make-constant :const 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun optimize-branch (inp first-input)
-  (let* ((carobj (car inp))
-         (cadrobj (cadr inp))
-         (ifzero (make-opt-minus (vamp:make-constant :const 1) first-input))
-         (ifone  (make-opt-times first-input cadrobj))
-         (output (make-opt-plus (make-opt-times ifzero carobj) ifone)))
-    (cond ((and (typep carobj 'vamp:constant)
-                (typep cadrobj 'vamp:constant))
-           (let* ((carobjnum (vamp:const carobj))
-                  (cadrobjnum (vamp:const cadrobj))
-                  (careq0 (zerop carobjnum))
-                  (careq1 (= carobjnum 1))
-                  (cadreq0 (zerop carobjnum))
-                  (cadreq1 (= carobjnum 1)))
-             (cond ((= carobjnum cadrobjnum 0)
-                    (vamp:make-constant :const 0))
-                   ((and careq0
-                         (not cadreq1))
-                    ifone)
-                   ((and careq0
-                         cadreq1)
-                    first-input)
-                   ((and (not careq1)
-                         cadreq0)
-                    (make-opt-times ifzero carobj))
-                   ((and careq1
-                         cadreq0)
-                    ifzero)
-                   ((and (= carobjnum cadrobjnum 1))
-                    (make-opt-plus ifzero
-                                   first-input))
-                   (t output))))
-          ((typep carobj 'vamp:constant)
-           (let ((carobjnum (vamp:const carobj)))
-             (cond ((zerop carobjnum)
-                    (make-opt-times first-input
-                                    cadrobj))
-                   ((= carobjnum 1)
-                    (make-opt-plus ifzero ifone))
-                   (t output))))
-          ((typep cadrobj 'vamp:constant)
-           (let ((cadrobjnum (vamp:const cadrobj)))
-             (cond ((zerop cadrobjnum)
-                    (make-opt-times ifzero carobj))
-                   ((= cadrobjnum 1)
-                    (make-opt-plus (make-opt-times ifzero
-                                                   carobj)
-                                   first-input))
-                   (t  output))))
-          (t output))))
 
 
 ;; happens when the first input is constant
