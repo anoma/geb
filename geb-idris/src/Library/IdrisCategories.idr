@@ -6321,6 +6321,27 @@ Profunctor ContraCoDoubleYo where
     MkContraCoDoubleYo
       (f ** fcontra ** (\x => mbd .* alpha x, contramap {f} mca x))
 
+-- Profunctor-profunctor polymorphism:  the Yoneda lemma in the category
+-- of profunctors on `Type`.
+public export
+record ProYoPrshf
+    (pp : (Type -> Type -> Type) -> Type) (p : Type -> Type -> Type) where
+  constructor MkProYoP
+  ProYoPEmbed : (q : Type -> Type -> Type) ->
+    {auto 0 _ : Profunctor q} -> ProfNT p q -> pp q
+
+public export
+toProYoP : (f : (Type -> Type -> Type) -> Type) ->
+  {auto isF : ProfPrshfMap f} ->
+  {r : Type -> Type -> Type} -> f r -> ProYoPrshf f r
+toProYoP f {isF} {r} fr = MkProYoP $ \q, alpha => isF alpha fr
+
+public export
+fromProYoP : (f : (Type -> Type -> Type) -> Type) ->
+  {r : Type -> Type -> Type} -> {auto isP : Profunctor r} ->
+  ProYoPrshf f r -> f r
+fromProYoP f {r} {isP} (MkProYoP py) = py r id
+
 ---------------------------
 ---------------------------
 ---- Profunctor optics ----
