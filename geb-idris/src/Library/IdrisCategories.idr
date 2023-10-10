@@ -6342,6 +6342,28 @@ fromProYoP : (f : (Type -> Type -> Type) -> Type) ->
   ProYoPrshf f r -> f r
 fromProYoP f {r} {isP} (MkProYoP py) = py r id
 
+-- The existential dual of the preceding universal.
+public export
+record ProCoYoPrshf
+    (pp : (Type -> Type -> Type) -> Type) (p : Type -> Type -> Type) where
+  constructor MkProCoYoP
+  ProCoYoPEmbed : (q : Type -> Type -> Type ** (Profunctor q, ProfNT q p, pp q))
+
+public export
+toProCoYoP :
+  (f : (Type -> Type -> Type) -> Type) ->
+  {r : Type -> Type -> Type} -> {auto isP : Profunctor r} ->
+  f r -> ProCoYoPrshf f r
+toProCoYoP f {r} {isP} fr = MkProCoYoP (r ** (isP, id, fr))
+
+public export
+fromProCoYoP :
+  (f : (Type -> Type -> Type) -> Type) -> {auto isF : ProfPrshfMap f} ->
+  {r : Type -> Type -> Type} ->
+  ProCoYoPrshf f r -> f r
+fromProCoYoP f {isF} {r} (MkProCoYoP (q ** (isPq, alpha, fq))) =
+  isF alpha fq
+
 ---------------------------
 ---------------------------
 ---- Profunctor optics ----
