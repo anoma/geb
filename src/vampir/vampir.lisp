@@ -597,9 +597,6 @@
    *tl*
    *n-th*
    *negative*
-   *plus-range*
-   *mult-range*
-   *minus-range*
    *isZero*
    *combine-aux*
    *combine*
