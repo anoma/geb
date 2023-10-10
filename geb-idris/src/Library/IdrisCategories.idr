@@ -6134,6 +6134,7 @@ fromCoYoC f {isF} {r} (MkCoYoC (b ** (alpha, x))) = isF b r alpha x
 public export
 record ProYo (p : Type -> Type -> Type) (c, d : Type) where
   constructor MkProYo
+  -- Called `Yoneda/runYoneda` in some Haskell libraries.
   ProYoEmbed : (0 x, y : Type) -> (x -> c) -> (d -> y) -> p x y
 
 public export
@@ -6155,6 +6156,7 @@ Profunctor (ProYo p) where
 public export
 record CoProYo (p : Type -> Type -> Type) (c, d : Type) where
   constructor MkCoProYo
+  -- Called `CoYoneda` in some Haskell libraries.
   CoProYoEmbed : Exists {type=(Type, Type)} $
     \xy => (c -> fst xy, snd xy -> d, p (fst xy) (snd xy))
 
