@@ -401,68 +401,20 @@ iterated, so is the uncurrying."
                              (comp (funcall op (num (ttype ltm)))
                                    (geb:pair (rec context ltm)
                                              (rec context (rtm tterm))))))
-                    (arith (dispatch tterm))))))))
-    (cond ((not (well-defp context tterm))
-           (error "not a well-defined ~A in said ~A" tterm context))
-          ((typep tterm 'lamb)
-           (rec (append (mapcar #'fun-to-hom (tdom tterm)) context)
-                (ann-term1 (append (mapcar #'fun-to-hom (tdom tterm)) context)
-                           (term tterm))))
-          (t
-           (rec context (ann-term1 context tterm))))))
-
-(defun fun-depth (obj)
-  "Looks at how iterated a function type is with [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
-being 0 iterated looking at the [MCADR][generic-function]. E.g.:
-
-```lisp
-TRANS> (fun-depth so1)
-0
-
-TRANS> (fun-depth (fun-type so1 so1))
-1
-
-TRANS> (fun-depth (fun-type so1 (fun-type so1 so1)))
-2
-
-TRANS> (fun-depth (fun-type (fun-type so1 so1) so1))
-1
-```"
-  (if (not (typep obj 'fun-type))
-      0
-      (1+ (fun-depth (mcadr obj)))))
-
-(defun fun-uncurry-prod (obj f)
-  "Takes a morphism f : X -> obj where obj is an iterated function type
-represented in Geb as B^(A1 x ... x An) and uncurries it but looking at the
-iteration as product to a morphism f' : (A1 x ... An) x X -> B. E.g:
-
-``lisp
-TRANS> (fun-uncurry-prod (fun-type so1 (fun-type so1 so1)) (init so1))
-(∘ (∘ (∘ (<-left s-1 s-1)
-         ((∘ (<-left s-1 s-1)
-             ((<-left s-1 (× s-1 s-1))
-              (∘ (<-left s-1 s-1) (<-right s-1 (× s-1 s-1)))))
-          (∘ (<-right s-1 s-1) (<-right s-1 (× s-1 s-1)))))
-      ((∘ (0-> s-1) (<-left s-0 (× s-1 s-1))) (<-right s-0 (× s-1 s-1))))
-   ((<-right (× s-1 s-1) s-0) (<-left (× s-1 s-1) s-0)))
-
-TRANS> (dom (fun-uncurry-prod (fun-type so1 (fun-type so1 so1)) (init so1)))
-(× (× s-1 s-1) s-0)
-
-TRANS> (codom (fun-uncurry-prod (fun-type so1 (fun-type so1 so1)) (init so1)))
-s-1
-```"
-  (labels ((lst-mcar (num ob)
-             (if (= num 1)
-                 (list (mcar ob))
-                 (cons (mcar (apply-n (1- num) #'mcadr ob))
-                       (lst-mcar (1- num) ob)))))
-    (commutes-left (uncurry (reduce #'prod
-                                    (lst-mcar (fun-depth obj) obj)
-                                    :from-end t)
-                            (apply-n (fun-depth obj) #'mcadr obj)
-                            f))))
+                    (arith (dispatch tterm)))))))
+           (rec1 (ctx tterm)
+             (if (typep tterm 'lamb)
+                 (rec1 (append (tdom tterm) ctx)
+                       (term tterm))
+                 (list ctx tterm))))
+    (if (not (well-defp context tterm))
+        (error "not a well-defined ~A in said ~A" tterm context)
+        (let* ((term (geb.lambda.main:reducer tterm))
+               (recc (rec1 context term))
+               (car (car recc)))
+          (rec car
+               (ann-term1 car
+                          (cadr recc)))))))
 
 (-> stlc-ctx-to-mu (stlc-context) substobj)
 (defun stlc-ctx-to-mu (context)
