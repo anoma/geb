@@ -27,6 +27,7 @@
   (fun-type           pax:class)
   (fun-type           pax:function)
   (errorp             pax:function)
+  (reducer            pax:function)
 
   (mcar              (pax:method () (fun-type)))
   (mcadr             (pax:method () (fun-type)))

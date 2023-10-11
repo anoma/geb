@@ -65,7 +65,6 @@ $$\\Gamma \\vdash \\text{tcod : Type}$$ and
 $$\\Gamma \\vdash \\text{term : so0}$$ one deduces
 $$\\Gamma \\vdash \\text{(absurd tcod term) : tcod}$$"))
 
-(-> absurd (cat-obj <stlc> &key (:ttype t)) absurd)
 (defun absurd (tcod term &key (ttype nil))
   (values
    (make-instance 'absurd :tcod tcod :term term :ttype ttype)))
@@ -95,7 +94,6 @@ we provide all terms untyped.
 This grammar corresponds to the introduction rule of the unit type. Namely
 $$\\Gamma \\dashv \\text{(unit) : so1}$$"))
 
-(-> unit (&key (:ttype t)) unit)
 (defun unit (&key (ttype nil))
   (values
    (make-instance 'unit :ttype ttype)))
@@ -139,7 +137,6 @@ $$\\Gamma \\dashv \\text{term : (ttype term)}$$ we deduce
 $$\\Gamma \\dashv \\text{(left rty term) : (coprod (ttype term) rty)}$$
 "))
 
-(-> left (cat-obj <stlc> &key (:ttype t)) left)
 (defun left (rty term &key (ttype nil))
   (values
    (make-instance 'left :rty rty :term term :ttype ttype)))
@@ -182,7 +179,6 @@ $$\\Gamma \\dashv \\text{term : (ttype term)}$$ we deduce
 $$\\Gamma \\dashv \\text{(right lty term) : (coprod lty (ttype term))}$$
 "))
 
-(-> right (cat-obj <stlc> &key (:ttype t)) right)
 (defun right (lty term &key (ttype nil))
   (values
    (make-instance 'right :lty lty :term term :ttype ttype)))
@@ -231,7 +227,6 @@ Note that in practice we append contexts on the left as computation of
 [INDEX][class] is done from the left. Otherwise, the rules are the same as in
 usual type theory if context was read from right to left."))
 
-(-> case-on (<stlc> <stlc> <stlc> &key (:ttype t)) case-on)
 (defun case-on (on ltm rtm &key (ttype nil))
   (values
    (make-instance 'case-on :on on :ltm ltm :rtm rtm :ttype ttype)))
@@ -272,7 +267,6 @@ $$\\Gamma \\vdash \\text{rtm : (mcadr (ttype (pair ltm rtm)))}$$ we have
 $$\\Gamma \\vdash \\text{(pair ltm rtm) : (ttype (pair ltm rtm))}$$
 "))
 
-(-> pair (<stlc> <stlc> &key (:ttype t)) pair)
 (defun pair (ltm rtm &key (ttype nil))
   (values
    (make-instance 'pair :ltm ltm :rtm rtm :ttype ttype)))
@@ -306,7 +300,6 @@ we are projecting to.
 This corresponds to the first projection function gotten by induction
 on a term of a product type."))
 
-(-> fst (<stlc> &key (:ttype t)) fst)
 (defun fst (term &key (ttype nil))
   (values
    (make-instance 'fst :term term :ttype ttype)))
@@ -340,7 +333,6 @@ part we are projecting to.
 This corresponds to the second projection function gotten by induction
 on a term of a product type."))
 
-(-> snd (<stlc> &key (:ttype t)) snd)
 (defun snd (term &key (ttype nil))
   (values
    (make-instance 'snd :term term :ttype ttype)))
@@ -429,7 +421,6 @@ the left. Note that in practice we append contexts on the left as computation of
 [INDEX][class] is done from the left. Otherwise, the rules are the same as in
 usual type theory if context was read from right to left."))
 
-(-> lamb (list <stlc> &key (:ttype t)) lamb)
 (defun lamb (tdom term &key (ttype nil))
   (values
    (make-instance 'lamb :tdom tdom :term term :ttype ttype)))
@@ -495,7 +486,6 @@ G ⊢ (app f t₁ ··· tₙ₋₁) : Aₙ
 Note again that i'th term should correspond to the ith element of the product
 in the codomain counted from the left."))
 
-(-> app (<stlc> list &key (:ttype t)) app)
 (defun app (fun term &key (ttype nil))
   (values
     (make-instance 'app :fun fun :term term :ttype ttype)))
@@ -533,7 +523,6 @@ $$\\Gamma_1 , \\ldots , \\Gamma_k \\vdash \\text{(index pos) :} \\Gamma_{pos}$$
 Note that we add contexts on the left rather than on the right contra classical
 type-theoretic notation."))
 
-(-> index (fixnum &key (:ttype t)) index)
 (defun index (pos &key (ttype nil))
   (values
    (make-instance 'index :pos pos :ttype ttype)))
@@ -556,7 +545,6 @@ currently having no particular feedback but with functionality to be of an
 arbitrary type. Note that this is the only STLC term class which does not
 have [TTYPE][generic-function] a possibly empty accessor."))
 
-(-> err (cat-obj) err)
 (defun err (ttype)
   (values
    (make-instance 'err :ttype ttype)))

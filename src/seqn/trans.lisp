@@ -184,7 +184,7 @@ removed already and hence we cannot count as usual"
         (let ((plus (+ (vamp:const car)
                        (vamp:const cadr))))
           (if (> (expt 2 mcar) plus)
-              (vamp:make-constant :const plus)
+              (list (vamp:make-constant :const plus))
               (error "Range Exceeded")))
         (list (geb.vampir:plus-range (vamp:make-constant :const mcar)
                                      car
@@ -197,7 +197,7 @@ removed already and hence we cannot count as usual"
     (if (const-check inputs)
         (let ((minus (- (vamp:const car) (vamp:const cadr))))
           (if (<= 0 minus)
-              (vamp:make-constant :const minus)
+              (list (vamp:make-constant :const minus))
               (error "Subtraction Produces Negative Numbers")))
         (list (geb.vampir:minus-range (vamp:make-constant :const (mcar obj))
                                       car
@@ -211,7 +211,7 @@ removed already and hence we cannot count as usual"
     (if (const-check inputs)
         (let ((mult (* (vamp:const car) (vamp:const cadr))))
           (if (> (expt 2 mcar) mult)
-              (vamp:make-constant :const mult)
+              (list (vamp:make-constant :const mult))
               (error "Range Exceeded")))
         (list (geb.vampir:mult-range (vamp:make-constant :const mcar)
                                      car
@@ -222,9 +222,9 @@ removed already and hence we cannot count as usual"
   (let ((car (car inputs))
         (cadr (cadr inputs)))
     (if (const-check inputs)
-        (vamp:make-constant
-         :const
-         (multiple-value-bind (q) (floor (vamp:const car) (vamp:const cadr)) q))
+        (list  (vamp:make-constant
+                :const
+                (multiple-value-bind (q) (floor (vamp:const car) (vamp:const cadr)) q)))
         (list (vamp:make-infix :op :/
                                :lhs (car inputs)
                                :rhs (cadr inputs))))))
