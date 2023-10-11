@@ -222,12 +222,10 @@ removed already and hence we cannot count as usual"
   (let ((car (car inputs))
         (cadr (cadr inputs)))
     (if (const-check inputs)
-        (list  (vamp:make-constant
-                :const
-                (multiple-value-bind (q) (floor (vamp:const car) (vamp:const cadr)) q)))
-        (list (vamp:make-infix :op :/
-                               :lhs (car inputs)
-                               :rhs (cadr inputs))))))
+        (list (vamp:make-constant
+               :const
+               (multiple-value-bind (q) (floor (vamp:const car) (vamp:const cadr)) q)))
+        (list (make-opt-divide (car inputs) (cadr inputs))))))
 
 (defmethod to-vampir ((obj seqn-nat) inputs constraints)
   (declare (ignore constraints))
@@ -241,13 +239,10 @@ removed already and hence we cannot count as usual"
         (list (vamp:make-constant
                :const (+ (* (expt 2 (mcadr obj)) (vamp:const car))
                          (vamp:const cadr))))
-        (list (vamp:make-infix
-               :op :+
-               :lhs (vamp:make-infix :op :*
-                                     :lhs car
-                                     :rhs (vamp:make-constant
-                                           :const (expt 2 (mcadr obj))))
-               :rhs cadr)))))
+        (list (make-opt-plus (make-opt-times car
+                                             (vamp:make-constant
+                                              :const (expt 2 (mcadr obj))))
+                             cadr)))))
 
 (defmethod to-vampir ((obj seqn-decompose) inputs constraints)
   (declare (ignore constraints))
@@ -300,10 +295,9 @@ removed already and hence we cannot count as usual"
                   zero)
             (list (vamp:make-constant :const 1)
                   zero))
-        (list (geb.vampir:isZero (vamp:make-infix :op :-
-                                                  :lhs (car inputs)
-                                                  :rhs (cadr inputs)))
-              (vamp:make-constant :const 0)))))
+        (list (geb.vampir:isZero (make-opt-minus (car inputs)
+                                                 (cadr inputs)))
+              zero))))
 
 (defmethod to-vampir ((obj seqn-lt) inputs constraints)
   (declare (ignore constraints))
@@ -317,9 +311,8 @@ removed already and hence we cannot count as usual"
             (list (vamp:make-constant :const 1)
                   zero))
         (list (geb.vampir:negative (vamp:make-constant :const (mcar obj))
-                                   (vamp:make-infix :op :-
-                                                    :lhs car
-                                                    :rhs cadr))
+                                   (make-opt-minus car
+                                                   cadr))
               zero))))
 
 (defmethod to-vampir ((obj seqn-mod) inputs constraints)
@@ -338,9 +331,9 @@ removed already and hence we cannot count as usual"
 (defun optimize-branch (inp first-input)
   (let* ((carobj (car inp))
          (cadrobj (cadr inp))
-         (ifzero (infix-creation :- (vamp:make-constant :const 1) first-input))
-         (ifone  (infix-creation :* first-input cadrobj))
-         (output (infix-creation :+ (infix-creation :* ifzero carobj) ifone)))
+         (ifzero (make-opt-minus (vamp:make-constant :const 1) first-input))
+         (ifone  (make-opt-times first-input cadrobj))
+         (output (make-opt-plus (make-opt-times ifzero carobj) ifone)))
     (cond ((and (typep carobj 'vamp:constant)
                 (typep cadrobj 'vamp:constant))
            (let* ((carobjnum (vamp:const carobj))
@@ -359,40 +352,30 @@ removed already and hence we cannot count as usual"
                     first-input)
                    ((and (not careq1)
                          cadreq0)
-                    (infix-creation :*
-                                    ifzero
-                                    carobj))
+                    (make-opt-times ifzero carobj))
                    ((and careq1
                          cadreq0)
                     ifzero)
                    ((and (= carobjnum cadrobjnum 1))
-                    (infix-creation :+
-                                    ifzero
-                                    first-input))
+                    (make-opt-plus ifzero
+                                   first-input))
                    (t output))))
           ((typep carobj 'vamp:constant)
            (let ((carobjnum (vamp:const carobj)))
              (cond ((zerop carobjnum)
-                    (infix-creation :*
-                                    first-input
+                    (make-opt-times first-input
                                     cadrobj))
                    ((= carobjnum 1)
-                    (infix-creation :+
-                                    ifzero
-                                    ifone))
+                    (make-opt-plus ifzero ifone))
                    (t output))))
           ((typep cadrobj 'vamp:constant)
            (let ((cadrobjnum (vamp:const cadrobj)))
              (cond ((zerop cadrobjnum)
-                    (infix-creation :*
-                                    ifzero
-                                    carobj))
+                    (make-opt-times ifzero carobj))
                    ((= cadrobjnum 1)
-                    (infix-creation :+
-                                    (infix-creation :*
-                                                    ifzero
-                                                    carobj)
-                                    first-input))
+                    (make-opt-plus (make-opt-times ifzero
+                                                   carobj)
+                                   first-input))
                    (t  output))))
           (t output))))
 
@@ -407,3 +390,62 @@ removed already and hence we cannot count as usual"
       (list (vamp:make-constant
              :const 0)
             first-input)))
+
+(defun make-opt-plus (value1 value2)
+  (let ((base (infix-creation :+
+                              value1
+                              value2)))
+    (cond ((typep value1 'vamp:constant)
+           (if (zerop (vamp:const value1))
+               value2
+               base))
+          ((typep value2 'vamp:constant)
+           (if (zerop (vamp:const value2))
+               value1
+               base))
+          (t
+           base))))
+
+(defun make-opt-minus (value1 value2)
+  (let ((base (infix-creation :-
+                              value1
+                              value2)))
+    (cond ((typep value2 'vamp:constant)
+           (if (zerop (vamp:const value2))
+               value1
+               base))
+          (t
+           base))))
+
+(defun make-opt-divide (value1 value2)
+  (let ((base (infix-creation :/
+                              value1
+                              value2)))
+    (cond ((typep value2 'vamp:constant)
+           (if (= (vamp:const value2) 1)
+               value1
+               base))
+          (t
+           base))))
+
+(defun make-opt-times (value1 value2)
+  (let ((base (infix-creation :*
+                              value1
+                              value2))
+        (zero (vamp:make-constant :const 0)))
+    (cond ((typep value1 'vamp:constant)
+           (cond ((zerop (vamp:const value1))
+                  zero)
+                 ((= (vamp:const value1) 1)
+                  value2)
+                 (t
+                  base)))
+          ((typep value2 'vamp:constant)
+           (cond ((zerop (vamp:const value2))
+                  zero)
+                 ((= (vamp:const value2) 1)
+                  value1)
+                 (t
+                  base)))
+          (t
+           base))))
