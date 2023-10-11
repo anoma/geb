@@ -97,7 +97,8 @@
          nat-sub
          nat-mult
          nat-div
-         nat-const)
+         nat-const
+         nat-mod)
      (nat-width (num x)))
     (otherwise
      (subclass-responsibility x))))
@@ -492,6 +493,7 @@ GEB> (gapply geb-bool:and
     (nat-sub   (- (car object) (cadr object)))
     (nat-div   (multiple-value-bind (q)
                    (floor (car object) (cadr object)) q))
+    (nat-mod   (mod (car object) (cadr object)))
     (nat-const  (pos morph))
     (nat-inj    object)
     (nat-concat  (+ (* (expt 2 (num-right morph)) (car object)) (cadr object)))

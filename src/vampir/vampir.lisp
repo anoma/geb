@@ -245,6 +245,74 @@
   (make-application :func :negative
                     :arguments (list n a)))
 
+(defparameter *nonnegative*
+  (make-alias
+   :name :nonnegative
+   :inputs (list :n :a)
+   :body
+   (list (make-infix :op :-
+                     :lhs  (make-constant :const 1)
+                     :rhs (make-application
+                           :func :negative
+                           :arguments (list (make-constant :const :n)
+                                            (make-wire :var :a)))))))
+
+(defun nonnegative (n a)
+  (make-application :func :nonnegative
+                    :arguments (list n a)))
+
+(defparameter *mod-n*
+  (let ((numb   (make-constant :const :n))
+        (a-wire (make-wire :var :a))
+        (b-wire (make-wire :var :b))
+        (q-wire (make-wire :var :q))
+        (r-wire (make-wire :var :r)))
+    (make-alias :name :mod32
+                :inputs (list :n :a :b)
+                :body (list
+                       (make-equality
+                        :lhs (make-application :func :nonnegative
+                                               :arguments (list numb b-wire))
+                        :rhs (make-constant :const 0))
+                       (make-bind
+                        :names (list q-wire)
+                        :value (make-application
+                                :func :fresh
+                                :arguments (list (make-infix :op :/
+                                                             :lhs a-wire
+                                                             :rhs b-wire))))
+                       (make-bind
+                        :names (list r-wire)
+                        :value (make-application
+                                :func :fresh
+                                :arguments (list (make-infix :op :%
+                                                             :lhs a-wire
+                                                             :rhs b-wire))))
+                       (make-equality :lhs (make-application
+                                            :func :nonnegative
+                                            :arguments (list numb r-wire))
+                                      :rhs (make-constant :const :0))
+                       (make-equality :lhs a-wire
+                                      :rhs (make-infix
+                                            :op :+
+                                            :lhs (make-infix :op :*
+                                                             :lhs b-wire
+                                                             :rhs q-wire)
+                                            :rhs q-wire))
+                       (make-equality :lhs (make-application
+                                            :func :negative
+                                            :arguments
+                                            (list numb
+                                                  (make-infix :op :-
+                                                              :lhs r-wire
+                                                              :rhs b-wire)))
+                                      :rhs (make-constant :const 0))
+                       r-wire))))
+
+(defun mod-n (n a b)
+  (make-application :func :mod-n
+                    :arguments (list n a b)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Primitive operations with range checks
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -607,7 +675,9 @@
    *take-ind*
    *take*
    *drop-ith-rec*
-   *drop-ith*))
+   *drop-ith*
+   *nonnegative*
+   *mod-n*))
 
 (-> extract (list &optional (or null stream)) (or null stream))
 (defun extract (stmts &optional (stream *standard-output*))

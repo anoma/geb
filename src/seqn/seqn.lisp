@@ -84,6 +84,7 @@ For a less formal desription consult the specs file"
     (seqn-subtract    (list (mcar x) (mcar x)))
     (seqn-multiply    (list (mcar x) (mcar x)))
     (seqn-divide      (list (mcar x) (mcar x)))
+    (seqn-mod         (list (mcar x) (mcar x)))
     (seqn-nat         (list 0))
     (seqn-concat      (list (mcar x) (mcadr x)))
     (seqn-decompose   (list (mcar x)))
@@ -119,6 +120,7 @@ For a less formal description consult the specs file"
     (seqn-multiply    (list (mcar x)))
     (seqn-divide      (list (mcar x)))
     (seqn-nat         (list (mcar x)))
+    (seqn-mod         (list (mcar x)))
     (seqn-concat      (list (+ (mcar x) (mcadr x))))
     (seqn-decompose   (list 1 (1- (mcar x))))
     (seqn-eq          (list 1 0))
@@ -167,6 +169,7 @@ is capable of succesfully evaluating all compiled terms"
     (seqn-multiply    (list (* (car vector) (cadr vector))))
     (seqn-divide      (list (multiple-value-bind (q)
                                 (floor (car vector) (cadr vector)) q)))
+    (seqn-mod         (list (mod (car vector) (cadr vector))))
     (seqn-nat         (list (mcadr morphism)))
     (seqn-concat      (list (+ (* (expt 2 (mcadr morphism)) (car vector))
                                (cadr vector))))
@@ -236,6 +239,7 @@ is capable of succesfully evaluating all compiled terms"
          seqn-multiply
          seqn-divide
          seqn-subtract
+         seqn-mod
          seqn-nat
          seqn-concat
          seqn-decompose

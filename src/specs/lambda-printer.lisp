@@ -25,3 +25,4 @@
 (easy-printer bit-choice)
 (easy-printer lamb-eq)
 (easy-printer lamb-lt)
+(easy-printer modulo)
