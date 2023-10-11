@@ -86,6 +86,12 @@ error node"
     (lamb-lt #'nat-lt)
     (modulo #'nat-mod)))
 
+(defparameter *int* (nat-width 24)
+  "A Juvix stand-in for a type of integers of their bit-choice.
+In this version, the choice is that of 24-bits.")
+
+(def int *int*)
+
 (defmethod to-cat-err (context (tterm <stlc>))
   "Compiles a checked term with an error term in an appropriate context into the
 morphism of the GEB category using a Maybe monad wrapper, that is, given a
@@ -263,19 +269,19 @@ This follows from the fact that bool arapped in maybe is 1 + (bool + bool)"
                 (let ((tyltm (ttype (ltm tterm))))
                   (labels ((arith (op)
                              (comp (mcase (terminal (prod (maybe tyltm)
-                                               so1))
-                               (commutes-left (comp
-                                               (mcase (terminal (prod tyltm
-                                                                      so1))
-                                                      (funcall op tyltm))
-                                               (distribute tyltm
-                                                           so1
-                                                           tyltm))))
-                        (comp (distribute (maybe tyltm)
-                                          so1
-                                          tyltm)
-                              (geb:pair (rec context (ltm tterm))
-                                        (rec context (rtm tterm)))))))
+                                                          so1))
+                                          (commutes-left (comp
+                                                          (mcase (terminal (prod tyltm
+                                                                                 so1))
+                                                                 (funcall op tyltm))
+                                                          (distribute tyltm
+                                                                      so1
+                                                                      tyltm))))
+                                   (comp (distribute (maybe tyltm)
+                                                     so1
+                                                     tyltm)
+                                         (geb:pair (rec context (ltm tterm))
+                                                   (rec context (rtm tterm)))))))
                     (arith (dispatch tterm))))))))
     (if (not (well-defp context tterm))
         (error "not a well-defined ~A in said ~A" tterm context)
@@ -382,10 +388,8 @@ iterated, so is the uncurrying."
                ((index pos)
                 (stlc-ctx-proj context pos))
                ((bit-choice bitv)
-                (comp (nat-const (num (ttype tterm))
-                                 (reduce
-                                  (lambda (a b) (+ (ash a 1) b))
-                                  bitv))
+                (comp (nat-const 24
+                                 bitv)
                       (terminal (stlc-ctx-to-mu context))))
                (err
                 (error "Not meant for the compiler"))

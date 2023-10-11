@@ -143,17 +143,17 @@ the context on the left as well. For more info check [LAMB][class]"))
         ((times ltm rtm)        (let ((ant (ann-term1 ctx ltm)))
                                   (times ant
                                          (ann-term1 ctx rtm)
-                                         :ttype (ttype ant))))
+                                         :ttype (nat-width 24))))
         ((minus ltm rtm)        (let ((ant (ann-term1 ctx ltm)))
                                   (minus ant
                                          (ann-term1 ctx rtm)
-                                         :ttype (ttype ant))))
+                                         :ttype (nat-width 24))))
         ((divide ltm rtm)        (let ((ant (ann-term1 ctx ltm)))
                                    (divide ant
                                            (ann-term1 ctx rtm)
-                                           :ttype (ttype ant))))
+                                           :ttype (nat-width 24))))
         ((bit-choice bitv)       (bit-choice bitv
-                                             :ttype (nat-width (array-total-size bitv))))
+                                             :ttype (nat-width 24)))
         ((lamb-eq ltm rtm)         (lamb-eq (ann-term1 ctx ltm)
                                             (ann-term1 ctx rtm)
                                             :ttype (coprod so1 so1)))
@@ -326,8 +326,8 @@ nil"))
                                            (ttype tterm)))))
                ((or plus
                     minus
-                    divide
                     times
+                    divide
                     modulo)
                 (obj-equalp (ttype (ltm tterm))
                             (ttype (rtm tterm))))

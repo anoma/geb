@@ -58,25 +58,25 @@
                   (lambda:unit)))
 
 (def one-bit
-  (lambda:bit-choice #*0000000000000001))
+  (lambda:bit-choice 1))
 
 (def plus-one
-  (lambda:lamb (list (nat-width 16)) (lambda:plus (lambda:index 0)
+  (lambda:lamb (list (nat-width 24)) (lambda:plus (lambda:index 0)
                                                   one-bit)))
 (def minus-one
-  (lambda:lamb (list (nat-width 16)) (lambda:minus (lambda:index 0)
+  (lambda:lamb (list (nat-width 24)) (lambda:minus (lambda:index 0)
                                                    one-bit)))
 
-(def less-than-1 (lambda:lamb (list (nat-width 16))
+(def less-than-1 (lambda:lamb (list (nat-width 24))
                               (lambda:case-on (lambda:lamb-lt (lambda:index 0)
                                                               one-bit)
-                                              (lambda:bit-choice #*0)
-                                              (lambda:bit-choice #*1))))
-(def is-1 (lambda:lamb (list (nat-width 16))
+                                              (lambda:bit-choice 0)
+                                              (lambda:bit-choice 1))))
+(def is-1 (lambda:lamb (list (nat-width 24))
                        (lambda:case-on (lambda:lamb-eq (lambda:index 0)
                                                        one-bit)
-                                       (lambda:bit-choice #*0)
-                                       (lambda:bit-choice #*1))))
+                                       (lambda:bit-choice 0)
+                                       (lambda:bit-choice 1))))
 
 (def issue-58-circuit
   (to-circuit
