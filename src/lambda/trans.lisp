@@ -91,11 +91,11 @@ morphism of the GEB category using a Maybe monad wrapper, that is, given a
 context G and a term t of type A produces a morphism with domain
 (stlc-ctx-maybe context) and codomain (maybe A).
 
-Terms come from [STLC][type] with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ]
+Terms come from [STLC][type] with occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ]
 replaced by [FUN-TYPE][class] and should come without the slow of
 [TTYPE][generic-function] accessor filled for any of the subterms. Context should
 be a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with the caveat that instead of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] we ought to use [FUN-TYPE][class], a stand-in
+[SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] we ought to use [FUN-TYPE][class], a stand-in
 for the internal hom object with explicit accessors to the domain and the
 codomain. Once again, note that it is important for the context and term to be
 giving as per above description. While not always, not doing so result in an
@@ -283,10 +283,10 @@ This follows from the fact that bool arapped in maybe is 1 + (bool + bool)"
   "Compiles a checked term in an appropriate context into the
 morphism of the GEB category. In detail, it takes a context and a term with
 following restrictions: Terms come from [STLC][type]  with occurences of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and should
+[SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and should
 come without the slow of [TTYPE][generic-function] accessor filled for any of
 the subterms. Context should be a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
-the caveat that instead of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] we ought to use
+the caveat that instead of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] we ought to use
 [FUN-TYPE][class], a stand-in for the internal hom object with explicit
 accessors to the domain and the codomain. Once again, note that it is important
 for the context and term to be giving as per above description. While not
@@ -484,7 +484,7 @@ and iteratively applies Maybe to its elements."
 (-> so-hom (substobj substobj) (or t substobj))
 (defun so-hom (dom cod)
   "Computes the hom-object of two [SUBSTMORPH]s"
-  (geb:so-hom-obj dom cod))
+  (so-hom-obj dom cod))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utility Functions

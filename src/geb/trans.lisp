@@ -196,10 +196,10 @@ We use an optimized version in actual code, which happens to compute the same re
 
 (defmethod to-seqn ((obj <substobj>))
   "Preserves identity morphims"
-  (seqn:id (geb.seqn.main:width obj)))
+  (seqn:id (geb.common:width obj)))
 
 (defmethod to-seqn ((obj geb.extension.spec:<natobj>))
-  (seqn:id (geb.seqn.main:width obj)))
+  (seqn:id (geb.common:width obj)))
 
 (defmethod to-seqn ((obj comp))
   "Preserves composition"
