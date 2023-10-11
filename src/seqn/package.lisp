@@ -5,7 +5,7 @@
    (:mix #:geb.mixins #:geb.generics #:geb.spec
          #:geb.extension.spec #:geb.seqn.spec
          #:serapeum #:common-lisp)
-   (:export #:@seqn-api)))
+   (:export :cod :dom #:@seqn-api)))
 
 (in-package :geb.seqn.main)
 
@@ -20,9 +20,7 @@
   (inj-coprod-parallel pax:function)
   (zero-list              pax:function)
   (dom                 (pax:method () (<seqn>)))
-  (dom                 (pax:generic-function))
   (cod                 (pax:method () (<seqn>)))
-  (cod                 (pax:generic-function))
   (well-defp-cat       (pax:method () (<seqn>)))
   (gapply              (pax:method () (<seqn> t))))
 
