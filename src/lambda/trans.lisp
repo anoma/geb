@@ -32,6 +32,18 @@ calling me"
        (to-cat nil)
        geb.common:to-poly))
 
+(defmethod to-seqn ((obj <stlc>))
+  "I convert a lambda term into a [GEB.SEQN.SPEC:SEQN] term
+
+Note that [\\<STLC\\>] terms with free variables require a context,
+and we do not supply them here to conform to the standard interface
+
+If you want to give a context, please call [to-cat] before
+calling me"
+  (~>> obj
+       (to-cat nil)
+       geb.common:to-seqn))
+
 (defmethod to-circuit ((obj <stlc>) name)
   "I convert a lambda term into a vampir term
 
@@ -41,7 +53,7 @@ and we do not supply them here to conform to the standard interface
 If you want to give a context, please call [to-cat] before
 calling me"
   (assure list
-    (~> (to-bitc obj)
+    (~> (to-seqn obj)
         (geb.common:to-circuit name))))
 
 (defmethod empty ((class (eql (find-class 'list)))) nil)
@@ -64,17 +76,33 @@ and removes them"
 error node"
   (mcadr (maybe-comp ob)))
 
+(defun dispatch (tterm)
+  (typecase tterm
+    (plus #'nat-add)
+    (minus #'nat-sub)
+    (times #'nat-mult)
+    (divide #'nat-div)
+    (lamb-eq #'nat-eq)
+    (lamb-lt #'nat-lt)
+    (modulo #'nat-mod)))
+
+(defparameter *int* (nat-width 24)
+  "A Juvix stand-in for a type of integers of their bit-choice.
+In this version, the choice is that of 24-bits.")
+
+(def int *int*)
+
 (defmethod to-cat-err (context (tterm <stlc>))
   "Compiles a checked term with an error term in an appropriate context into the
 morphism of the GEB category using a Maybe monad wrapper, that is, given a
 context G and a term t of type A produces a morphism with domain
 (stlc-ctx-maybe context) and codomain (maybe A).
 
-Terms come from [STLC][type] with occurences of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ]
+Terms come from [STLC][type] with occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ]
 replaced by [FUN-TYPE][class] and should come without the slow of
 [TTYPE][generic-function] accessor filled for any of the subterms. Context should
 be a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with the caveat that instead of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] we ought to use [FUN-TYPE][class], a stand-in
+[SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] we ought to use [FUN-TYPE][class], a stand-in
 for the internal hom object with explicit accessors to the domain and the
 codomain. Once again, note that it is important for the context and term to be
 giving as per above description. While not always, not doing so result in an
@@ -221,22 +249,52 @@ This follows from the fact that bool arapped in maybe is 1 + (bool + bool)"
                                         fun))))))
                ((index pos)
                 (stlc-ctx-proj (mapcar #'maybe context) pos))
+               ((bit-choice bitv)
+                (comp (comp (->right so1 (ttype tterm))
+                            (nat-const (ttype tterm) (reduce
+                                                      #'(lambda (a b)
+                                                          (+ (ash a 1) b))
+                                                      bitv)))
+                      (terminal (stlc-ctx-maybe context))))
                ((err ttype)
                 (comp (->left so1 (maybe-comp ttype))
-                      (terminal (stlc-ctx-maybe context)))))))
+                      (terminal (stlc-ctx-maybe context))))
+               ((or plus
+                    minus
+                    times
+                    divide
+                    lamb-eq
+                    lamb-lt
+                    modulo)
+                (let ((tyltm (ttype (ltm tterm))))
+                  (labels ((arith (op)
+                             (comp (mcase (terminal (prod (maybe tyltm)
+                                                          so1))
+                                          (commutes-left (comp
+                                                          (mcase (terminal (prod tyltm
+                                                                                 so1))
+                                                                 (funcall op tyltm))
+                                                          (distribute tyltm
+                                                                      so1
+                                                                      tyltm))))
+                                   (comp (distribute (maybe tyltm)
+                                                     so1
+                                                     tyltm)
+                                         (geb:pair (rec context (ltm tterm))
+                                                   (rec context (rtm tterm)))))))
+                    (arith (dispatch tterm))))))))
     (if (not (well-defp context tterm))
         (error "not a well-defined ~A in said ~A" tterm context)
         (rec context (ann-term1 context tterm)))))
-
 
 (defmethod to-cat-cor (context (tterm <stlc>))
   "Compiles a checked term in an appropriate context into the
 morphism of the GEB category. In detail, it takes a context and a term with
 following restrictions: Terms come from [STLC][type]  with occurences of
-[SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and should
+[SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and should
 come without the slow of [TTYPE][generic-function] accessor filled for any of
 the subterms. Context should be a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
-the caveat that instead of [SO-HOM-OBJ][GEB.MAIN:SO-HOM-OBJ] we ought to use
+the caveat that instead of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] we ought to use
 [FUN-TYPE][class], a stand-in for the internal hom object with explicit
 accessors to the domain and the codomain. Once again, note that it is important
 for the context and term to be giving as per above description. While not
@@ -313,78 +371,54 @@ iterated, so is the uncurrying."
                          #'(lambda (x) (curry (commutes-left x)))
                          (rec (append tdom context) term)))
                ((app fun term)
-                (let ((tofun (ttype fun)))
-                  (comp
-                   (so-eval (fun-to-hom (mcar tofun))
-                            (fun-to-hom (mcadr tofun)))
-                   (geb:pair (rec context fun)
-                             (reduce #'geb:pair
-                                     (mapcar #'(lambda (x) (rec context x)) term)
-                                     :from-end t)))))
+                (let ((tofun (ttype fun))
+                      (reducify (reduce #'geb:pair
+                                        (mapcar #'(lambda (x) (rec context x))
+                                                term)
+                                        :from-end t)))
+                  (if (typep fun 'lamb)
+                      (comp (to-cat-cor context fun)
+                            (geb:pair reducify
+                                      (stlc-ctx-to-mu context)))
+                      (comp
+                       (so-eval (fun-to-hom (mcar tofun))
+                                (fun-to-hom (mcadr tofun)))
+                       (geb:pair (rec context fun)
+                                 reducify)))))
                ((index pos)
                 (stlc-ctx-proj context pos))
+               ((bit-choice bitv)
+                (comp (nat-const 24
+                                 bitv)
+                      (terminal (stlc-ctx-to-mu context))))
                (err
-                (error "Not meant for the compiler")))))
-    (cond ((not (well-defp context tterm))
-           (error "not a well-defined ~A in said ~A" tterm context))
-          ((typep (type-of-term-w-fun context tterm) 'fun-type)
-           (fun-uncurry-prod (type-of-term-w-fun context tterm)
-                             (rec context (ann-term1 context tterm))))
-          (t
-           (rec context (ann-term1 context tterm))))))
-
-(defun fun-depth (obj)
-  "Looks at how iterated a function type is with [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
-being 0 iterated looking at the [MCADR][generic-function]. E.g.:
-
-```lisp
-TRANS> (fun-depth so1)
-0
-
-TRANS> (fun-depth (fun-type so1 so1))
-1
-
-TRANS> (fun-depth (fun-type so1 (fun-type so1 so1)))
-2
-
-TRANS> (fun-depth (fun-type (fun-type so1 so1) so1))
-1
-```"
-  (if (not (typep obj 'fun-type))
-      0
-      (1+ (fun-depth (mcadr obj)))))
-
-(defun fun-uncurry-prod (obj f)
-  "Takes a morphism f : X -> obj where obj is an iterated function type
-represented in Geb as B^(A1 x ... x An) and uncurries it but looking at the
-iteration as product to a morphism f' : (A1 x ... An) x X -> B. E.g:
-
-``lisp
-TRANS> (fun-uncurry-prod (fun-type so1 (fun-type so1 so1)) (init so1))
-(∘ (∘ (∘ (<-left s-1 s-1)
-         ((∘ (<-left s-1 s-1)
-             ((<-left s-1 (× s-1 s-1))
-              (∘ (<-left s-1 s-1) (<-right s-1 (× s-1 s-1)))))
-          (∘ (<-right s-1 s-1) (<-right s-1 (× s-1 s-1)))))
-      ((∘ (0-> s-1) (<-left s-0 (× s-1 s-1))) (<-right s-0 (× s-1 s-1))))
-   ((<-right (× s-1 s-1) s-0) (<-left (× s-1 s-1) s-0)))
-
-TRANS> (dom (fun-uncurry-prod (fun-type so1 (fun-type so1 so1)) (init so1)))
-(× (× s-1 s-1) s-0)
-
-TRANS> (codom (fun-uncurry-prod (fun-type so1 (fun-type so1 so1)) (init so1)))
-s-1
-```"
-  (labels ((lst-mcar (num ob)
-             (if (= num 1)
-                 (list (mcar ob))
-                 (cons (mcar (apply-n (1- num) #'mcadr ob))
-                       (lst-mcar (1- num) ob)))))
-    (commutes-left (uncurry (reduce #'prod
-                                    (lst-mcar (fun-depth obj) obj)
-                                    :from-end t)
-                            (apply-n (fun-depth obj) #'mcadr obj)
-                            f))))
+                (error "Not meant for the compiler"))
+               ((or plus
+                    minus
+                    times
+                    divide
+                    lamb-eq
+                    lamb-lt
+                    modulo)
+                (let ((ltm (ltm tterm)))
+                  (labels ((arith (op)
+                             (comp (funcall op (num (ttype ltm)))
+                                   (geb:pair (rec context ltm)
+                                             (rec context (rtm tterm))))))
+                    (arith (dispatch tterm)))))))
+           (rec1 (ctx tterm)
+             (if (typep tterm 'lamb)
+                 (rec1 (append (tdom tterm) ctx)
+                       (term tterm))
+                 (list ctx tterm))))
+    (if (not (well-defp context tterm))
+        (error "not a well-defined ~A in said ~A" tterm context)
+        (let* ((term (geb.lambda.main:reducer tterm))
+               (recc (rec1 context term))
+               (car (car recc)))
+          (rec car
+               (ann-term1 car
+                          (cadr recc)))))))
 
 (-> stlc-ctx-to-mu (stlc-context) substobj)
 (defun stlc-ctx-to-mu (context)
@@ -409,7 +443,7 @@ and iteratively applies Maybe to its elements."
 (-> so-hom (substobj substobj) (or t substobj))
 (defun so-hom (dom cod)
   "Computes the hom-object of two [SUBSTMORPH]s"
-  (geb:so-hom-obj dom cod))
+  (so-hom-obj dom cod))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utility Functions

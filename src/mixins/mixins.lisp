@@ -53,8 +53,9 @@
   (c2mop:class-direct-slots (class-of object)))
 
 (defmethod obj-equalp ((obj1 pointwise-mixin) (obj2 pointwise-mixin))
-  (obj-equalp (to-pointwise-list obj1)
-              (to-pointwise-list obj2)))
+  (and (c2mop:subclassp (type-of obj1) (type-of obj2))
+       (obj-equalp (to-pointwise-list obj1)
+                   (to-pointwise-list obj2))))
 
 (defmethod obj-equalp ((obj1 list) (obj2 list))
   (or (eq obj1 obj2)

@@ -27,6 +27,7 @@
   (fun-type           pax:class)
   (fun-type           pax:function)
   (errorp             pax:function)
+  (reducer            pax:function)
 
   (mcar              (pax:method () (fun-type)))
   (mcadr             (pax:method () (fun-type)))
@@ -65,6 +66,7 @@ any other transition functions"
   (to-cat     (pax:method () (t <stlc>)))
   (to-poly    (pax:method () (<stlc>)))
   (to-bitc    (pax:method () (<stlc>)))
+  (to-seqn    (pax:method () (<stlc>)))
   (to-circuit (pax:method () (<stlc> t)))
   (@utility   pax:section))
 

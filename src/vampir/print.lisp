@@ -93,7 +93,7 @@ of ()'s for any non normal form"
     (spc:application
      (pprint-logical-block (stream nil :prefix "(" :suffix ")")
        (print-object expr stream)))
-    ((or spc:tuple spc:normal-form)
+    ((or spc:tuple spc:normal-form spc:curly)
      (print-object expr stream))
     (geb.extension.spec:common-sub-expression
      (extract-expression (geb.spec:obj expr) stream)))
@@ -118,5 +118,11 @@ of ()'s for any non normal form"
   (pprint-logical-block (stream nil :prefix "(" :suffix ")")
     (format stream "~{~(~a~)~^, ~}" (spc:wires tup))))
 
+(defmethod print-object ((curly spc:curly) stream)
+  (format stream "{~A}" (spc:value curly)))
+
 (defmethod print-object ((const spc:constant) stream)
-  (format stream "~A" (spc:const const)))
+  (format stream "~(~a~)" (spc:const const)))
+
+(defmethod print-object ((brackets spc:brackets) stream)
+  (format stream "[]"))

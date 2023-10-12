@@ -10,7 +10,8 @@ unit types as well as coproduct, product, and function types."))
   "Type of untyped terms of [STLC][type]. Each class of a term has a slot for a type,
 which can be filled by auxillary functions or by user. Types are
 represented as [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]."
-  '(or absurd unit left right case-on pair fst snd lamb app index err))
+  '(or absurd unit left right case-on pair fst snd lamb app index err
+    plus times minus divide bit-choice lamb-eq lamb-lt modulo))
 
 ;; New defgenerics
 
@@ -25,19 +26,20 @@ represented as [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]."
 (defgeneric on (obj))
 (defgeneric fun (obj))
 (defgeneric pos (obj))
+(defgeneric bitv (obj))
 
 
 (defclass absurd (<stlc>)
   ((tcod :initarg :tcod
-        :accessor tcod
-        :documentation "An arbitrary type")
+         :accessor tcod
+         :documentation "An arbitrary type")
    (term :initarg :term
          :accessor term
          :documentation "A term of the empty type")
    (ttype :initarg :ttype
-         :initform nil
-         :accessor ttype
-         :documentation ""))
+          :initform nil
+          :accessor ttype
+          :documentation ""))
   (:documentation
    "The [ABSURD][class] term provides an element of an arbitrary type
 given a term of the empty type, denoted by [SO0][GEB.SPEC:SO0 class].
@@ -63,7 +65,6 @@ $$\\Gamma \\vdash \\text{tcod : Type}$$ and
 $$\\Gamma \\vdash \\text{term : so0}$$ one deduces
 $$\\Gamma \\vdash \\text{(absurd tcod term) : tcod}$$"))
 
-(-> absurd (cat-obj <stlc> &key (:ttype t)) absurd)
 (defun absurd (tcod term &key (ttype nil))
   (values
    (make-instance 'absurd :tcod tcod :term term :ttype ttype)))
@@ -93,7 +94,6 @@ we provide all terms untyped.
 This grammar corresponds to the introduction rule of the unit type. Namely
 $$\\Gamma \\dashv \\text{(unit) : so1}$$"))
 
-(-> unit (&key (:ttype t)) unit)
 (defun unit (&key (ttype nil))
   (values
    (make-instance 'unit :ttype ttype)))
@@ -137,7 +137,6 @@ $$\\Gamma \\dashv \\text{term : (ttype term)}$$ we deduce
 $$\\Gamma \\dashv \\text{(left rty term) : (coprod (ttype term) rty)}$$
 "))
 
-(-> left (cat-obj <stlc> &key (:ttype t)) left)
 (defun left (rty term &key (ttype nil))
   (values
    (make-instance 'left :rty rty :term term :ttype ttype)))
@@ -180,7 +179,6 @@ $$\\Gamma \\dashv \\text{term : (ttype term)}$$ we deduce
 $$\\Gamma \\dashv \\text{(right lty term) : (coprod lty (ttype term))}$$
 "))
 
-(-> right (cat-obj <stlc> &key (:ttype t)) right)
 (defun right (lty term &key (ttype nil))
   (values
    (make-instance 'right :lty lty :term term :ttype ttype)))
@@ -229,7 +227,6 @@ Note that in practice we append contexts on the left as computation of
 [INDEX][class] is done from the left. Otherwise, the rules are the same as in
 usual type theory if context was read from right to left."))
 
-(-> case-on (<stlc> <stlc> <stlc> &key (:ttype t)) case-on)
 (defun case-on (on ltm rtm &key (ttype nil))
   (values
    (make-instance 'case-on :on on :ltm ltm :rtm rtm :ttype ttype)))
@@ -270,7 +267,6 @@ $$\\Gamma \\vdash \\text{rtm : (mcadr (ttype (pair ltm rtm)))}$$ we have
 $$\\Gamma \\vdash \\text{(pair ltm rtm) : (ttype (pair ltm rtm))}$$
 "))
 
-(-> pair (<stlc> <stlc> &key (:ttype t)) pair)
 (defun pair (ltm rtm &key (ttype nil))
   (values
    (make-instance 'pair :ltm ltm :rtm rtm :ttype ttype)))
@@ -304,7 +300,6 @@ we are projecting to.
 This corresponds to the first projection function gotten by induction
 on a term of a product type."))
 
-(-> fst (<stlc> &key (:ttype t)) fst)
 (defun fst (term &key (ttype nil))
   (values
    (make-instance 'fst :term term :ttype ttype)))
@@ -338,7 +333,6 @@ part we are projecting to.
 This corresponds to the second projection function gotten by induction
 on a term of a product type."))
 
-(-> snd (<stlc> &key (:ttype t)) snd)
 (defun snd (term &key (ttype nil))
   (values
    (make-instance 'snd :term term :ttype ttype)))
@@ -427,7 +421,6 @@ the left. Note that in practice we append contexts on the left as computation of
 [INDEX][class] is done from the left. Otherwise, the rules are the same as in
 usual type theory if context was read from right to left."))
 
-(-> lamb (list <stlc> &key (:ttype t)) lamb)
 (defun lamb (tdom term &key (ttype nil))
   (values
    (make-instance 'lamb :tdom tdom :term term :ttype ttype)))
@@ -493,7 +486,6 @@ G ⊢ (app f t₁ ··· tₙ₋₁) : Aₙ
 Note again that i'th term should correspond to the ith element of the product
 in the codomain counted from the left."))
 
-(-> app (<stlc> list &key (:ttype t)) app)
 (defun app (fun term &key (ttype nil))
   (values
     (make-instance 'app :fun fun :term term :ttype ttype)))
@@ -531,7 +523,6 @@ $$\\Gamma_1 , \\ldots , \\Gamma_k \\vdash \\text{(index pos) :} \\Gamma_{pos}$$
 Note that we add contexts on the left rather than on the right contra classical
 type-theoretic notation."))
 
-(-> index (fixnum &key (:ttype t)) index)
 (defun index (pos &key (ttype nil))
   (values
    (make-instance 'index :pos pos :ttype ttype)))
@@ -544,15 +535,242 @@ type-theoretic notation."))
   (:documentation
    "An error term of a type supplied by the user. The formal grammar of
 [ERR][class] is
+
 ```lisp
 (err ttype)
 ```
+
 The intended semantics are as follows: [ERR][class] represents an error node
 currently having no particular feedback but with functionality to be of an
 arbitrary type. Note that this is the only STLC term class which does not
 have [TTYPE][generic-function] a possibly empty accessor."))
 
-(-> err (cat-obj) err)
 (defun err (ttype)
   (values
    (make-instance 'err :ttype ttype)))
+
+(defclass plus (<stlc>)
+  ((ltm :initarg :ltm
+        :accessor ltm
+        :documentation "")
+   (rtm :initarg :rtm
+        :accessor rtm
+        :documentation "")
+   (ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation "A term representing syntactic summation of two bits
+of the same width. The formal grammar of [PLUS] is
+
+```lisp
+(plus ltm rtm)
+```
+
+where we can possibly supply typing info by
+
+```lisp
+(plus ltm rtm :ttype ttype)
+```
+
+Note that the summation is ranged, so if the operation goes
+above the bit-size of supplied inputs, the corresponding
+Vamp-IR code will not verify."))
+
+(defun plus (ltm rtm &key (ttype nil))
+  (values
+   (make-instance 'plus :ltm ltm :rtm rtm :ttype ttype)))
+
+(defclass times (<stlc>)
+  ((ltm :initarg :ltm
+        :accessor ltm
+        :documentation "")
+   (rtm :initarg :rtm
+        :accessor rtm
+        :documentation "")
+   (ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation "A term representing syntactic multiplication of two bits
+of the same width. The formal grammar of [TIMES] is
+
+```lisp
+(times ltm rtm)
+```
+
+where we can possibly supply typing info by
+
+```lisp
+(times ltm rtm :ttype ttype)
+```
+
+Note that the multiplication is ranged, so if the operation goes
+above the bit-size of supplied inputs, the corresponding
+Vamp-IR code will not verify."))
+
+(defun times (ltm rtm &key (ttype nil))
+  (values
+   (make-instance 'times :ltm ltm :rtm rtm :ttype ttype)))
+
+(defclass minus (<stlc>)
+  ((ltm :initarg :ltm
+        :accessor ltm
+        :documentation "")
+   (rtm :initarg :rtm
+        :accessor rtm
+        :documentation "")
+   (ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation "A term representing syntactic subtraction of two bits
+of the same width. The formal grammar of [MINUS] is
+
+```lisp
+(minus ltm rtm)
+```
+
+where we can possibly supply typing info by
+
+```lisp
+(minus ltm rtm :ttype ttype)
+```
+
+Note that the subtraction is ranged, so if the operation goes
+below zero, the corresponding Vamp-IR code will not verify."))
+
+(defun minus (ltm rtm &key (ttype nil))
+  (values
+   (make-instance 'minus :ltm ltm :rtm rtm :ttype ttype)))
+
+(defclass divide (<stlc>)
+  ((ltm :initarg :ltm
+        :accessor ltm
+        :documentation "")
+   (rtm :initarg :rtm
+        :accessor rtm
+        :documentation "")
+   (ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation "A term representing syntactic division (floored)
+of two bits of the same width. The formal grammar of [DIVIDE] is
+
+```lisp
+(minus ltm rtm)
+```
+
+where we can possibly supply typing info by
+
+```lisp
+(minus ltm rtm :ttype ttype)
+```
+
+"))
+
+(defun divide (ltm rtm &key (ttype nil))
+  (values
+   (make-instance 'divide :ltm ltm :rtm rtm :ttype ttype)))
+
+(defclass bit-choice (<stlc>)
+  ((bitv :initarg :bitv
+         :accessor bitv
+         :documentation "")
+   (ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation "A term representing a choice of a bit. The formal
+grammar of [BIT-CHOICE] is
+
+```lisp
+(bit-choice bitv)
+```
+
+where we can possibly supply typing info by
+
+```lisp
+(bit-choice bitv :ttype ttype)
+```
+
+Note that the size of bits matter for the operations one supplies them
+to. E.g. (plus (bit-choice #*1) (bit-choice #*00)) is not going to pass
+our type-check, as both numbers ought to be of exact same bit-width."))
+
+(defun bit-choice (bitv &key (ttype nil))
+  (values
+   (make-instance 'bit-choice :bitv bitv :ttype ttype)))
+
+(defclass lamb-eq (<stlc>)
+  ((ltm :initarg :ltm
+        :accessor ltm
+        :documentation "")
+   (rtm :initarg :rtm
+        :accessor rtm
+        :documentation "")
+   (ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation "lamb-eq predicate takes in two bit inputs of same bit-width
+and gives true if they are equal and false otherwise. Note that for the usual
+Vamp-IR code interpretations, that means that we associate true with left input
+into bool and false with the right. Appropriately, in Vamp-IR the first branch
+will be associated with the 0 input and teh second branch with 1."))
+
+(defun lamb-eq (ltm rtm &key (ttype nil))
+  (values
+   (make-instance 'lamb-eq :ltm ltm :rtm rtm :ttype ttype)))
+
+(defclass lamb-lt (<stlc>)
+  ((ltm :initarg :ltm
+        :accessor ltm
+        :documentation "")
+   (rtm :initarg :rtm
+        :accessor rtm
+        :documentation "")
+   (ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation "lamb-lt predicate takes in two bit inputs of same bit-width
+and gives true if ltm is less than rtm and false otherwise. Note that for the usual
+Vamp-IR code interpretations, that means that we associate true with left input
+into bool and false with the right. Appropriately, in Vamp-IR the first branch
+will be associated with the 0 input and teh second branch with 1."))
+
+(defun lamb-lt (ltm rtm &key (ttype nil))
+  (values
+   (make-instance 'lamb-lt :ltm ltm :rtm rtm :ttype ttype)))
+
+(defclass modulo (<stlc>)
+  ((ltm :initarg :ltm
+        :accessor ltm
+        :documentation "")
+   (rtm :initarg :rtm
+        :accessor rtm
+        :documentation "")
+   (ttype :initarg :ttype
+          :initform nil
+          :accessor ttype
+          :documentation ""))
+  (:documentation "A term representing syntactic modulus of the first number
+by the second number. The formal grammar of [MODULO] is
+
+```lisp
+(modulo ltm rtm)
+```
+
+where we can possibly supply typing info by
+
+```lisp
+(modulo ltm rtm :ttype ttype)
+```
+
+meaning that we take ltm mod rtm"))
+
+(defun modulo (ltm rtm &key (ttype nil))
+  (values
+   (make-instance 'modulo :ltm ltm :rtm rtm :ttype ttype)))

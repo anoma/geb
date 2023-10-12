@@ -25,10 +25,12 @@
    :wire        :var
    :constant    :const
    :tuple       :wires
+   :curly       :value
+   :brackets
 
    ;; Constructors
-   :make-alias :make-pub :make-infix :make-application :make-tuples
-   :make-bind  :make-equality :make-wire :make-constant))
+   :make-alias :make-pub :make-infix :make-application :make-tuples :make-curly
+   :make-bind  :make-equality :make-wire :make-constant :make-brackets))
 
 (geb.utils:muffle-package-variance
  (defpackage #:geb.vampir
@@ -51,6 +53,28 @@
     :*range32*
     :range32
 
+    :*hd*
+    :hd
+    :*tl*
+    :tl
+    :nth
+    :*negative*
+    :negative
+
+    :*plus-range*
+    :plus-range
+    :*mult-range*
+    :mult-range
+    :*minus-range*
+    :minus-range
+
+    :*isZero*
+    :isZero
+
+    :*combine*
+    :combine
+    :*drop-ith*
+    :drop-ith
     :*int-range32*
     :int-range32
 
@@ -76,5 +100,11 @@
     :mod32
 
     :*pwmod32*
-    :pwmod32)))
+    :pwmod32
+
+    :*range-n*
+    :range-n
+
+    :*mod-n*
+    :mod-n)))
 

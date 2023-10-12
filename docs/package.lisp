@@ -4,6 +4,7 @@
   (:import-from #:geb.mixins #:@mixins)
   (:import-from #:geb.utils  #:@geb-utils-manual)
   (:import-from #:geb-test   #:@geb-test-manual)
+  (:import-from #:geb.seqn   #:@seqn-manual)
   (:import-from #:geb.poly   #:@poly-manual)
   (:import-from #:geb.bitc   #:@bitc-manual)
   (:import-from #:geb.specs  #:@geb-specs)
