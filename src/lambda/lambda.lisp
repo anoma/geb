@@ -18,25 +18,6 @@ pointwise."))
 (defun fun-type (mcar mcadr)
   (make-instance 'fun-type :mcar mcar :mcadr mcadr))
 
-(defmethod maybe ((object fun-type))
-  "I recursively add maybe terms to my domain and codomain, and even
-return a maybe function. Thus if the original function was
-
-```
-f : a -> b
-```
-
-we would now be
-
-```
-f : maybe (maybe a -> maybe b)
-```
-
-for what maybe means checkout [my generic function documentation][maybe]."
-  (coprod so1
-          (fun-type (maybe (mcar object))
-                    (maybe (mcadr object)))))
-
 (-> index-check (fixnum list) cat-obj)
 (defun index-check (i ctx)
   "Given an natural number I and a context, checks that the context is of
