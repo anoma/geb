@@ -30,9 +30,7 @@
   (reducer            pax:function)
 
   (mcar              (pax:method () (fun-type)))
-  (mcadr             (pax:method () (fun-type)))
-
-  (maybe             (pax:method () (fun-type))))
+  (mcadr             (pax:method () (fun-type))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; trans module

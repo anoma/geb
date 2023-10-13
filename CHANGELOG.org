@@ -1,3 +1,22 @@
+* 0.5.0
+
+** User Facing Changes
+- Natural Numbers have been added to the pipeline, from lambda down to
+  vampir generation
+  + Added =modulo= logic down the pipeline as well
+- The Lambda Pipeline into Geb now Assumes =24= bits of precision
+- We now have a new intermediate layer, the =seqn= layer replaces the
+  =bitc= layer as the default, hopefully ending in more optimal code
+- Made some optimization passes to the vampir backend, along with
+  breaking those changes into passes
+- Improved optional value compilation from the lambda level
+** Internal Changes
+- Moved the following generic functions to the generic package
+  + =so-eval=
+  + =width=
+  + =so-hom=obj=
+** Bug fix
+- Fixed a bug where =obj-equalp= would compute equality incorrectly
 * 0.4.1
 ** Bug fix patch
 - Previously we used =asdf:system-version= which is not defined in
