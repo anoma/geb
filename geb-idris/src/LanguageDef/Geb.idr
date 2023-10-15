@@ -1940,13 +1940,13 @@ Iso s t a b = (s -> a, b -> t)
 
 public export
 PrePostPair : Type -> Type -> Type -> Type -> Type
-PrePostPair = flip .* Iso
+PrePostPair s t a b = Iso a b s t
 
 public export
 record DoubleProYo (s, t, a, b : Type) where
   constructor MkDoubleProYo
   DoubleProYoEmbed : (0 p : Type -> Type -> Type) ->
-    Profunctor p -> p b a -> p s t
+    Profunctor p -> p s t -> p a b
 
 public export
 toDoubleProYo : {0 s, t, a, b : Type} ->
@@ -1957,10 +1957,10 @@ public export
 fromDoubleProYo : {0 s, t, a, b : Type} ->
   DoubleProYo s t a b -> PrePostPair s t a b
 fromDoubleProYo {s} {t} {a} {b} (MkDoubleProYo py) =
-  (py (ContravarHomAsPro b) ContravarHomPro id,
-   py (CovarHomAsPro a) CovarHomPro id)
+  (py (ContravarHomAsPro s) ContravarHomPro id,
+   py (CovarHomAsPro t) CovarHomPro id)
 
 public export
 Profunctor (DoubleProYo s t) where
   dimap mca mbd (MkDoubleProYo y) =
-    MkDoubleProYo $ \p, isP => y p isP . dimap mbd mca
+    MkDoubleProYo $ \p, isP => dimap mca mbd . y p isP
