@@ -867,6 +867,10 @@ PrePostPair : Type -> Type -> Type -> Type -> Type
 PrePostPair s t a b = (a -> s, t -> b)
 
 public export
+Profunctor (PrePostPair s t) where
+  dimap mca mbd (mas, mtb) = (mas . mca, mbd . mtb)
+
+public export
 Iso : Type -> Type -> Type -> Type -> Type
 Iso s t a b = PrePostPair a b s t
 
