@@ -836,6 +836,32 @@ public export
 ProfDuplicate : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
 ProfDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
 
+public export
+CovarHomAsPro : Type -> Type -> Type -> Type
+CovarHomAsPro s c d = s -> d
+
+public export
+covarHomDimap : {0 s, a, b, c, d : Type} ->
+  (c -> a) -> (b -> d) -> CovarHomAsPro s a b -> CovarHomAsPro s c d
+covarHomDimap {s} {a} {b} {c} {d} fca fbd fsb = fbd . fsb
+
+public export
+[CovarHomPro] Profunctor (CovarHomAsPro s) where
+  dimap = covarHomDimap {s}
+
+public export
+ContravarHomAsPro : Type -> Type -> Type -> Type
+ContravarHomAsPro t c d = c -> t
+
+public export
+contravarHomDimap : {0 t, a, b, c, d : Type} ->
+  (c -> a) -> (b -> d) -> ContravarHomAsPro t a b -> ContravarHomAsPro t c d
+contravarHomDimap {t} {a} {b} {c} {d} fca fbd fat = fat . fca
+
+public export
+[ContravarHomPro] Profunctor (ContravarHomAsPro t) where
+  dimap {t} = contravarHomDimap {t}
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
