@@ -862,6 +862,14 @@ public export
 [ContravarHomPro] Profunctor (ContravarHomAsPro t) where
   dimap {t} = contravarHomDimap {t}
 
+public export
+PrePostPair : Type -> Type -> Type -> Type -> Type
+PrePostPair s t a b = (a -> s, t -> b)
+
+public export
+Iso : Type -> Type -> Type -> Type -> Type
+Iso s t a b = PrePostPair a b s t
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
@@ -6268,6 +6276,49 @@ Profunctor (CoProYo p) where
   dimap {a} {b} {c} {d} mca mbd (MkCoProYo (Evidence xy (ax, yb, pxy))) =
     MkCoProYo (Evidence xy (ax . mca, mbd . yb, pxy))
 
+-- Profunctor-profunctor polymorphism:  the Yoneda lemma in the category
+-- of profunctors on `Type`.
+public export
+record ProYoPrshf
+    (pp : (Type -> Type -> Type) -> Type) (p : Type -> Type -> Type) where
+  constructor MkProYoP
+  ProYoPEmbed : (q : Type -> Type -> Type) ->
+    {auto 0 _ : Profunctor q} -> ProfNT p q -> pp q
+
+public export
+toProYoP : (f : (Type -> Type -> Type) -> Type) ->
+  {auto isF : ProfPrshfMap f} ->
+  {r : Type -> Type -> Type} -> f r -> ProYoPrshf f r
+toProYoP f {isF} {r} fr = MkProYoP $ \q, alpha => isF alpha fr
+
+public export
+fromProYoP : (f : (Type -> Type -> Type) -> Type) ->
+  {r : Type -> Type -> Type} -> {auto isP : Profunctor r} ->
+  ProYoPrshf f r -> f r
+fromProYoP f {r} {isP} (MkProYoP py) = py r id
+
+-- The existential dual of the preceding universal.
+public export
+record ProCoYoPrshf
+    (pp : (Type -> Type -> Type) -> Type) (p : Type -> Type -> Type) where
+  constructor MkProCoYoP
+  ProCoYoPEmbed : (q : Type -> Type -> Type ** (Profunctor q, ProfNT q p, pp q))
+
+public export
+toProCoYoP :
+  (f : (Type -> Type -> Type) -> Type) ->
+  {r : Type -> Type -> Type} -> {auto isP : Profunctor r} ->
+  f r -> ProCoYoPrshf f r
+toProCoYoP f {r} {isP} fr = MkProCoYoP (r ** (isP, id, fr))
+
+public export
+fromProCoYoP :
+  (f : (Type -> Type -> Type) -> Type) -> {auto isF : ProfPrshfMap f} ->
+  {r : Type -> Type -> Type} ->
+  ProCoYoPrshf f r -> f r
+fromProCoYoP f {isF} {r} (MkProCoYoP (q ** (isPq, alpha, fq))) =
+  isF alpha fq
+
 public export
 record DoubleYo (a, b : Type) where
   constructor MkDoubleYo
@@ -6361,57 +6412,6 @@ Profunctor ContraCoDoubleYo where
   dimap mca mbd (MkContraCoDoubleYo (f ** fcontra ** (alpha, x))) =
     MkContraCoDoubleYo
       (f ** fcontra ** (\x => mbd .* alpha x, contramap {f} mca x))
-
--- Profunctor-profunctor polymorphism:  the Yoneda lemma in the category
--- of profunctors on `Type`.
-public export
-record ProYoPrshf
-    (pp : (Type -> Type -> Type) -> Type) (p : Type -> Type -> Type) where
-  constructor MkProYoP
-  ProYoPEmbed : (q : Type -> Type -> Type) ->
-    {auto 0 _ : Profunctor q} -> ProfNT p q -> pp q
-
-public export
-toProYoP : (f : (Type -> Type -> Type) -> Type) ->
-  {auto isF : ProfPrshfMap f} ->
-  {r : Type -> Type -> Type} -> f r -> ProYoPrshf f r
-toProYoP f {isF} {r} fr = MkProYoP $ \q, alpha => isF alpha fr
-
-public export
-fromProYoP : (f : (Type -> Type -> Type) -> Type) ->
-  {r : Type -> Type -> Type} -> {auto isP : Profunctor r} ->
-  ProYoPrshf f r -> f r
-fromProYoP f {r} {isP} (MkProYoP py) = py r id
-
--- The existential dual of the preceding universal.
-public export
-record ProCoYoPrshf
-    (pp : (Type -> Type -> Type) -> Type) (p : Type -> Type -> Type) where
-  constructor MkProCoYoP
-  ProCoYoPEmbed : (q : Type -> Type -> Type ** (Profunctor q, ProfNT q p, pp q))
-
-public export
-toProCoYoP :
-  (f : (Type -> Type -> Type) -> Type) ->
-  {r : Type -> Type -> Type} -> {auto isP : Profunctor r} ->
-  f r -> ProCoYoPrshf f r
-toProCoYoP f {r} {isP} fr = MkProCoYoP (r ** (isP, id, fr))
-
-public export
-fromProCoYoP :
-  (f : (Type -> Type -> Type) -> Type) -> {auto isF : ProfPrshfMap f} ->
-  {r : Type -> Type -> Type} ->
-  ProCoYoPrshf f r -> f r
-fromProCoYoP f {isF} {r} (MkProCoYoP (q ** (isPq, alpha, fq))) =
-  isF alpha fq
-
-public export
-PrePostPair : Type -> Type -> Type -> Type -> Type
-PrePostPair s t a b = (a -> s, t -> b)
-
-public export
-Iso : Type -> Type -> Type -> Type -> Type
-Iso s t a b = PrePostPair a b s t
 
 public export
 record DoubleProYo (s, t, a, b : Type) where
