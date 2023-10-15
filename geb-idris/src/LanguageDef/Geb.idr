@@ -1935,12 +1935,12 @@ QQuivEdge : QType -> QType
 QQuivEdge vert = QPred $ QProd vert vert
 
 public export
-Iso : Type -> Type -> Type -> Type -> Type
-Iso s t a b = (s -> a, b -> t)
+PrePostPair : Type -> Type -> Type -> Type -> Type
+PrePostPair s t a b = (a -> s, t -> b)
 
 public export
-PrePostPair : Type -> Type -> Type -> Type -> Type
-PrePostPair s t a b = Iso a b s t
+Iso : Type -> Type -> Type -> Type -> Type
+Iso s t a b = PrePostPair a b s t
 
 public export
 record DoubleProYo (s, t, a, b : Type) where
