@@ -1933,34 +1933,3 @@ qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
 public export
 QQuivEdge : QType -> QType
 QQuivEdge vert = QPred $ QProd vert vert
-
-public export
-PrePostPair : Type -> Type -> Type -> Type -> Type
-PrePostPair s t a b = (a -> s, t -> b)
-
-public export
-Iso : Type -> Type -> Type -> Type -> Type
-Iso s t a b = PrePostPair a b s t
-
-public export
-record DoubleProYo (s, t, a, b : Type) where
-  constructor MkDoubleProYo
-  DoubleProYoEmbed : (0 p : Type -> Type -> Type) ->
-    Profunctor p -> p s t -> p a b
-
-public export
-toDoubleProYo : {0 s, t, a, b : Type} ->
-  PrePostPair s t a b -> DoubleProYo s t a b
-toDoubleProYo m = MkDoubleProYo $ \p, isP => dimap {f=p} (fst m) (snd m)
-
-public export
-fromDoubleProYo : {0 s, t, a, b : Type} ->
-  DoubleProYo s t a b -> PrePostPair s t a b
-fromDoubleProYo {s} {t} {a} {b} (MkDoubleProYo py) =
-  (py (ContravarHomAsPro s) ContravarHomPro id,
-   py (CovarHomAsPro t) CovarHomPro id)
-
-public export
-Profunctor (DoubleProYo s t) where
-  dimap mca mbd (MkDoubleProYo y) =
-    MkDoubleProYo $ \p, isP => dimap mca mbd . y p isP
