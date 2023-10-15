@@ -764,16 +764,17 @@ interface Profunctor f where
   constructor MkProfunctor
 
   total
-  dimap : (c -> a) -> (b -> d) -> f a b -> f c d
-  dimap f g = lmap f . rmap g
+  dimap : {0 a, b, c, d : Type} -> (c -> a) -> (b -> d) -> f a b -> f c d
 
-  total
-  lmap : (c -> a) -> f a b -> f c b
-  lmap = flip dimap id
+public export
+total
+lmap : Profunctor f => {0 a, b, c : Type} -> (c -> a) -> f a b -> f c b
+lmap {a} {b} {c} = flip (dimap {a} {b} {c} {d=b}) id
 
-  total
-  rmap : (b -> d) -> f a b -> f a d
-  rmap = dimap id
+public export
+total
+rmap : Profunctor f => {0 a, b, d : Type} -> (b -> d) -> f a b -> f a d
+rmap {a} {b} {d} = dimap {a} {b} {c=a} {d} id
 
 public export
 ProfunctorDP : Type
@@ -1136,7 +1137,7 @@ ArrowT : Type -> Type -> Type
 ArrowT a b = a -> b
 
 public export
-Profunctor ArrowT where
+[ArrowTProfunctor] Profunctor ArrowT where
   dimap fca fbd fab = fbd . fab . fca
 
 public export
