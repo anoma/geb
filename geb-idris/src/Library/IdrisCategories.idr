@@ -6427,6 +6427,11 @@ record DoubleProYo (s, t, a, b : Type) where
     Profunctor p -> p s t -> p a b
 
 public export
+Profunctor (DoubleProYo s t) where
+  dimap mca mbd (MkDoubleProYo y) =
+    MkDoubleProYo $ \p, isP => dimap mca mbd . y p isP
+
+public export
 toDoubleProYo : {0 s, t, a, b : Type} ->
   PrePostPair s t a b -> DoubleProYo s t a b
 toDoubleProYo m = MkDoubleProYo $ \p, isP => dimap {f=p} (fst m) (snd m)
@@ -6439,16 +6444,16 @@ fromDoubleProYo {s} {t} {a} {b} (MkDoubleProYo py) =
    py (CovarHomAsPro t) CovarHomPro id)
 
 public export
-Profunctor (DoubleProYo s t) where
-  dimap mca mbd (MkDoubleProYo y) =
-    MkDoubleProYo $ \p, isP => dimap mca mbd . y p isP
-
-public export
 record CoDoubleProYo (s, t, a, b : Type) where
   constructor MkCoDoubleProYo
   CoDoubleProYoEmbed :
     (p : Type -> Type -> Type ** isP : Profunctor p **
      (ProfNT p (PrePostPair s t), p a b))
+
+public export
+Profunctor (CoDoubleProYo s t) where
+  dimap mca mbd (MkCoDoubleProYo (p ** MkProfunctor dm ** (alpha, pab))) =
+    MkCoDoubleProYo (p ** MkProfunctor dm ** (alpha, dm mca mbd pab))
 
 public export
 fromCoDoubleProYo : {s, t, a, b : Type} ->
@@ -6460,11 +6465,6 @@ toCoDoubleProYo : {s, t, a, b : Type} ->
   PrePostPair s t a b -> CoDoubleProYo s t a b
 toCoDoubleProYo {s} {t} {a} {b} fp =
   MkCoDoubleProYo (PrePostPair s t ** PrePostPairProf ** (id, fp))
-
-public export
-Profunctor (CoDoubleProYo s t) where
-  dimap mca mbd (MkCoDoubleProYo (p ** MkProfunctor dm ** (alpha, pab))) =
-    MkCoDoubleProYo (p ** MkProfunctor dm ** (alpha, dm mca mbd pab))
 
 ---------------------------
 ---------------------------
