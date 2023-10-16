@@ -965,53 +965,53 @@ EndoProfHComp = ProfNTcomp
 ------------------------------------------------------------------
 
 public export
-ProfCatObj : Type
-ProfCatObj = EndoProfVMorph
+ProfBicatObj : Type
+ProfBicatObj = EndoProfVMorph
 
 public export
-ProfCatMorph : ProfCatObj -> ProfCatObj -> Type
-ProfCatMorph = EndoProfHMorph
+ProfBicatMorph : ProfBicatObj -> ProfBicatObj -> Type
+ProfBicatMorph = EndoProfHMorph
 
 public export
-ProfCatId : (p : ProfCatObj) -> ProfCatMorph p p
-ProfCatId = ProfNTid
+ProfBicatId : (p : ProfBicatObj) -> ProfBicatMorph p p
+ProfBicatId = ProfNTid
 
 public export
-ProfCatComp : {p, q, r : ProfCatObj} ->
-  ProfCatMorph q r -> ProfCatMorph p q -> ProfCatMorph p r
-ProfCatComp = ProfNTcomp
+ProfBicatComp : {p, q, r : ProfBicatObj} ->
+  ProfBicatMorph q r -> ProfBicatMorph p q -> ProfBicatMorph p r
+ProfBicatComp = ProfNTcomp
 
 -- The signature of the morphism-map component of a functor in the category
 -- of profunctors (i.e. the category whose objects are profunctors and whose
 -- morphisms are natural transformations).
 public export
-ProfCatMap : (ProfCatObj -> ProfCatObj) -> Type
-ProfCatMap pf = {p, q : Type -> Type -> Type} ->
+ProfBicatMap : (ProfBicatObj -> ProfBicatObj) -> Type
+ProfBicatMap pf = {p, q : Type -> Type -> Type} ->
   ProfNT p q -> ProfNT (pf p) (pf q)
 
 -- The signature of the "return"/"unit" natural transformation of a monad in the
 -- category of profunctors.
 public export
-ProfCatReturn : (ProfCatObj -> ProfCatObj) -> Type
-ProfCatReturn pf = (p : Type -> Type -> Type) -> ProfNT p (pf p)
+ProfBicatReturn : (ProfBicatObj -> ProfBicatObj) -> Type
+ProfBicatReturn pf = (p : Type -> Type -> Type) -> ProfNT p (pf p)
 
 -- The signature of the "join"/"multiply" natural transformation of a monad in
 -- the category of profunctors.
 public export
-ProfCatJoin : (ProfCatObj -> ProfCatObj) -> Type
-ProfCatJoin pf = (p : Type -> Type -> Type) -> ProfNT (pf (pf p)) (pf p)
+ProfBicatJoin : (ProfBicatObj -> ProfBicatObj) -> Type
+ProfBicatJoin pf = (p : Type -> Type -> Type) -> ProfNT (pf (pf p)) (pf p)
 
 -- The signature of the "extract"/"erase"/"counit" natural transformation of a
 -- comonad in the category of profunctors.
 public export
-ProfCatExtract : (ProfCatObj -> ProfCatObj) -> Type
-ProfCatExtract pf = (p : Type -> Type -> Type) -> ProfNT (pf p) p
+ProfBicatExtract : (ProfBicatObj -> ProfBicatObj) -> Type
+ProfBicatExtract pf = (p : Type -> Type -> Type) -> ProfNT (pf p) p
 
 -- The signature of the "duplicate"/"comultiply" natural transformation of a
 -- comonad in the category of profunctors.
 public export
-ProfCatDuplicate : (ProfCatObj -> ProfCatObj) -> Type
-ProfCatDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
+ProfBicatDuplicate : (ProfBicatObj -> ProfBicatObj) -> Type
+ProfBicatDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
 
 -------------------------------------------
 -------------------------------------------
