@@ -1171,20 +1171,20 @@ SliceAna {a} f =
 -- `c -> Type`).
 
 public export
-ArrowT : Type -> Type -> Type
-ArrowT a b = a -> b
+HomProf : Type -> Type -> Type
+HomProf a b = a -> b
 
 public export
-[ArrowTProfunctor] Profunctor ArrowT where
+[HomProfProfunctor] Profunctor HomProf where
   dimap fca fbd fab = fbd . fab . fca
 
 public export
-OpArrowT : Type -> Type -> Type
-OpArrowT = flip ArrowT
+OpHomProf : Type -> Type -> Type
+OpHomProf = flip HomProf
 
 public export
 CSliceObj : Type -> Type
-CSliceObj c = DPair Type (OpArrowT c)
+CSliceObj c = DPair Type (OpHomProf c)
 
 public export
 CSliceObjDomain : {0 c : Type} -> CSliceObj c -> Type
@@ -6337,11 +6337,11 @@ Profunctor DoubleYo where
     MkDoubleYo $ \f, isF, x => map {f} mbd $ y f isF $ map {f} mca x
 
 public export
-toDoubleYo : ProfNT ArrowT DoubleYo
+toDoubleYo : ProfNT HomProf DoubleYo
 toDoubleYo m = MkDoubleYo $ \f, isF, x => map {f} m x
 
 public export
-fromDoubleYo : ProfNT DoubleYo ArrowT
+fromDoubleYo : ProfNT DoubleYo HomProf
 fromDoubleYo (MkDoubleYo y) = y id (MkFunctor id)
 
 public export
@@ -6356,11 +6356,11 @@ Profunctor ContraDoubleYo where
       \f, isCF, x => contramap {f} mca $ y f isCF $ contramap {f} mbd x
 
 public export
-toContraDoubleYo : ProfNT ArrowT ContraDoubleYo
+toContraDoubleYo : ProfNT HomProf ContraDoubleYo
 toContraDoubleYo m = MkContraDoubleYo $ \f, isCF, x => contramap {f} m x
 
 public export
-fromContraDoubleYo : ProfNT ContraDoubleYo ArrowT
+fromContraDoubleYo : ProfNT ContraDoubleYo HomProf
 fromContraDoubleYo {a} {b} (MkContraDoubleYo y) =
   y (ContravarHomFunc b) (ContravarHomFuncContravar {a=b}) id
 
@@ -6383,11 +6383,11 @@ Profunctor CoDoubleYo where
       fm mbd x))
 
 public export
-fromCoDoubleYo : ProfNT CoDoubleYo ArrowT
+fromCoDoubleYo : ProfNT CoDoubleYo HomProf
 fromCoDoubleYo {a} {b} (MkCoDoubleYo (f ** isF ** (alpha, x))) = alpha b x
 
 public export
-toCoDoubleYo : ProfNT ArrowT CoDoubleYo
+toCoDoubleYo : ProfNT HomProf CoDoubleYo
 toCoDoubleYo {a} {b} m =
   MkCoDoubleYo
     (CovarHomFunc a **
@@ -6408,12 +6408,12 @@ Profunctor ContraCoDoubleYo where
       (f ** fcontra ** (\x => mbd .* alpha x, contramap {f} mca x))
 
 public export
-fromContraCoDoubleYo : ProfNT ContraCoDoubleYo ArrowT
+fromContraCoDoubleYo : ProfNT ContraCoDoubleYo HomProf
 fromContraCoDoubleYo {a} {b} (MkContraCoDoubleYo (f ** isF ** (alpha, x))) =
   alpha a x
 
 public export
-toContraCoDoubleYo : ProfNT ArrowT ContraCoDoubleYo
+toContraCoDoubleYo : ProfNT HomProf ContraCoDoubleYo
 toContraCoDoubleYo {a} {b} m =
   MkContraCoDoubleYo
     (ContravarHomFunc b **
