@@ -1325,7 +1325,7 @@ InterpDepAr {dom} {cod} bf dar domsl elcod =
 public export
 InterpDepArPoly : {dom, cod : Type} ->
   DepArena dom cod -> SliceFunctor dom cod
-InterpDepArPoly = InterpDepAr $ \_, _ => ArrowT
+InterpDepArPoly = InterpDepAr $ \_, _ => HomProf
 
 public export
 depArPolyMap : {dom, cod : Type} -> (dar : DepArena dom cod) ->
@@ -1339,7 +1339,7 @@ depArPolyMap {dom} {cod} dar {x} {y} m elcod fx =
 public export
 InterpDepArDirich : {dom, cod : Type} ->
   DepArena dom cod -> SliceFunctor dom cod
-InterpDepArDirich = InterpDepAr $ \_, _ => OpArrowT
+InterpDepArDirich = InterpDepAr $ \_, _ => OpHomProf
 
 public export
 depArDirichContramap : {dom, cod : Type} -> (dar : DepArena dom cod) ->
@@ -1367,7 +1367,7 @@ public export
 InterpDepCopArCovarPoly : {dom1, dom2, cod : Type} ->
   DepCopArena dom1 dom2 cod -> SliceBifunctor dom1 dom2 cod
 InterpDepCopArCovarPoly {dom1} {dom2} {cod} =
-  InterpDepCopAr (\_, _ => ArrowT) (\_, _ => ArrowT)
+  InterpDepCopAr (\_, _ => HomProf) (\_, _ => HomProf)
 
 public export
 depCopArCovarPolyMap : {dom1, dom2, cod : Type} ->
@@ -1388,7 +1388,7 @@ public export
 InterpDepCopArPolyProf : {dom1, dom2, cod : Type} ->
   DepCopArena dom1 dom2 cod -> SliceProfunctor dom1 dom2 cod
 InterpDepCopArPolyProf {dom1} {dom2} {cod} =
-  InterpDepCopAr (\_, _ => OpArrowT) (\_, _ => ArrowT)
+  InterpDepCopAr (\_, _ => OpHomProf) (\_, _ => HomProf)
 
 public export
 depCopArPolyProfDimap : {dom1, dom2, cod : Type} ->
@@ -1437,7 +1437,7 @@ public export
 InterpDepProdArCovarHom : {dom, cod1, cod2 : Type} ->
   DepProdArena dom cod1 cod2 -> SliceFunctor dom (cod1, cod2)
 InterpDepProdArCovarHom {dom} {cod1} {cod2} =
-  InterpDepProdAr (\_, (_, _) => ArrowT)
+  InterpDepProdAr (\_, (_, _) => HomProf)
 
 public export
 depProdArHomMap : {dom, cod1, cod2 : Type} ->
@@ -1454,7 +1454,7 @@ public export
 InterpDepProdArContraHom : {dom, cod1, cod2 : Type} ->
   DepProdArena dom cod1 cod2 -> SliceFunctor dom (cod1, cod2)
 InterpDepProdArContraHom {dom} {cod1} {cod2} =
-  InterpDepProdAr (\_, (_, _) => OpArrowT)
+  InterpDepProdAr (\_, (_, _) => OpHomProf)
 
 public export
 depProdArHomContramap : {dom, cod1, cod2 : Type} ->
