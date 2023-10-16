@@ -929,6 +929,59 @@ public export
 Iso : Type -> Type -> Type -> Type -> Type
 Iso s t a b = PrePostPair a b s t
 
+-----------------------------------------------
+---- Category of endoprofunctors on `Type` ----
+-----------------------------------------------
+
+-- We may view endoprofunctors on `Type` as forming a one-object category
+-- whose only object is `Type`, whose morphisms are the endo-profunctors,
+-- whose identity is the hom-profunctor, and which has a composition given by
+-- the coend below.
+
+public export
+EndoProfMorph : Type
+EndoProfMorph = Type -> Type -> Type
+
+public export
+EndoProfId : EndoProfMorph
+EndoProfId = HomProf
+
+-- The profunctor whose coend is the composition of two endo-profunctors.
+public export
+EndoProfComposeProf :
+  EndoProfMorph -> EndoProfMorph -> Type -> Type -> EndoProfMorph
+EndoProfComposeProf q p e c d d' = (q e d, p d' c)
+
+public export
+EndoProfCompose : EndoProfMorph -> EndoProfMorph -> EndoProfMorph
+EndoProfCompose q p e c = Coend $ EndoProfComposeProf q p e c
+
+public export
+EndoProfLeftId : (p : EndoProfMorph) -> {auto isP : Profunctor p} ->
+  ProfNT (EndoProfCompose HomProf p) p
+EndoProfLeftId p {isP} {a} {b} (c ** (mac, pcb)) = lmap mac pcb
+
+public export
+EndoProfRightId : (p : EndoProfMorph) -> {auto isP : Profunctor p} ->
+  ProfNT p (EndoProfCompose HomProf p)
+EndoProfRightId p {isP} {a} {b} pab = (a ** (id, pab))
+
+public export
+EndoProfAssocLeft : (p, q, r : EndoProfMorph) ->
+  ProfNT
+    (EndoProfCompose p (EndoProfCompose q r))
+    (EndoProfCompose (EndoProfCompose p q) r)
+EndoProfAssocLeft p q r (c ** (pac, (d ** (qcd, rdb)))) =
+  (d ** ((c ** (pac, qcd)), rdb))
+
+public export
+EndoProfAssocRight : (p, q, r : EndoProfMorph) ->
+  ProfNT
+    (EndoProfCompose (EndoProfCompose p q) r)
+    (EndoProfCompose p (EndoProfCompose q r))
+EndoProfAssocRight p q r (c ** ((d ** (pad, qdc)), rcb)) =
+  (d ** (pad, (c ** (qdc, rcb))))
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
