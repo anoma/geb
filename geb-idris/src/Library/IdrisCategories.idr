@@ -816,25 +816,36 @@ public export
 ProfPrshfNT : (pi, rho : ((Type -> Type -> Type) -> Type)) -> Type
 ProfPrshfNT pi rho = {p : Type -> Type -> Type} -> Profunctor p -> pi p -> rho p
 
+-- The signature of the morphism-map component of a functor in the category
+-- of profunctors (i.e. the category whose objects are profunctors and whose
+-- morphisms are natural transformations).
 public export
-ProfMap : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfMap pf = {p, q : Type -> Type -> Type} -> ProfNT p q -> ProfNT (pf p) (pf q)
+ProfCatMap : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
+ProfCatMap pf = {p, q : Type -> Type -> Type} -> ProfNT p q -> ProfNT (pf p) (pf q)
 
+-- The signature of the "return"/"unit" natural transformation of a monad in the
+-- category of profunctors.
 public export
-ProfReturn : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfReturn pf = (p : Type -> Type -> Type) -> ProfNT p (pf p)
+ProfCatReturn : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
+ProfCatReturn pf = (p : Type -> Type -> Type) -> ProfNT p (pf p)
 
+-- The signature of the "join"/"multiply" natural transformation of a monad in
+-- the category of profunctors.
 public export
-ProfJoin : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfJoin pf = (p : Type -> Type -> Type) -> ProfNT (pf (pf p)) (pf p)
+ProfCatJoin : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
+ProfCatJoin pf = (p : Type -> Type -> Type) -> ProfNT (pf (pf p)) (pf p)
 
+-- The signature of the "extract"/"erase"/"counit" natural transformation of a
+-- comonad in the category of profunctors.
 public export
-ProfExtract : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfExtract pf = (p : Type -> Type -> Type) -> ProfNT (pf p) p
+ProfCatExtract : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
+ProfCatExtract pf = (p : Type -> Type -> Type) -> ProfNT (pf p) p
 
+-- The signature of the "duplicate"/"comultiply" natural transformation of a
+-- comonad in the category of profunctors.
 public export
-ProfDuplicate : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
+ProfCatDuplicate : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
+ProfCatDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
 
 public export
 CovarHomAsPro : Type -> Type -> Type -> Type
