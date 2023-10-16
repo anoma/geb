@@ -764,11 +764,19 @@ AdjCounit f = NaturalTransformation f id
 ---------------------------------------------------
 
 public export
+0 ProfunctorSig : Type
+ProfunctorSig = Type -> Type -> Type
+
+public export
+0 DimapSig : ProfunctorSig -> Type
+DimapSig p = {0 a, b, c, d : Type} -> (c -> a) -> (b -> d) -> p a b -> p c d
+
+public export
 interface Profunctor f where
   constructor MkProfunctor
 
   total
-  dimap : {0 a, b, c, d : Type} -> (c -> a) -> (b -> d) -> f a b -> f c d
+  dimap : DimapSig f
 
 public export
 total
