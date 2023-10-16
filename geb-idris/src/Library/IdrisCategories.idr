@@ -6332,31 +6332,22 @@ record DoubleYo (a, b : Type) where
   DoubleYoEmbed : (f : Type -> Type) -> Functor f -> f a -> f b
 
 public export
-toDoubleYo : (a -> b) -> DoubleYo a b
-toDoubleYo m = MkDoubleYo $ \f, isF, x => map {f} m x
-
-public export
-fromDoubleYo : DoubleYo a b -> a -> b
-fromDoubleYo (MkDoubleYo y) = y id (MkFunctor id)
-
-public export
 Profunctor DoubleYo where
   dimap mca mbd (MkDoubleYo y) =
     MkDoubleYo $ \f, isF, x => map {f} mbd $ y f isF $ map {f} mca x
 
 public export
+toDoubleYo : ProfNT ArrowT DoubleYo
+toDoubleYo m = MkDoubleYo $ \f, isF, x => map {f} m x
+
+public export
+fromDoubleYo : ProfNT DoubleYo ArrowT
+fromDoubleYo (MkDoubleYo y) = y id (MkFunctor id)
+
+public export
 record ContraDoubleYo (a, b : Type) where
   constructor MkContraDoubleYo
   ContraDoubleYoEmbed : (f : Type -> Type) -> Contravariant f -> f b -> f a
-
-public export
-toContraDoubleYo : (a -> b) -> ContraDoubleYo a b
-toContraDoubleYo m = MkContraDoubleYo $ \f, isCF, x => contramap {f} m x
-
-public export
-fromContraDoubleYo : {a, b : Type} -> ContraDoubleYo a b -> a -> b
-fromContraDoubleYo {a} {b} (MkContraDoubleYo y) =
-  y (ContravarHomFunc b) (ContravarHomFuncContravar {a=b}) id
 
 public export
 Profunctor ContraDoubleYo where
@@ -6365,23 +6356,20 @@ Profunctor ContraDoubleYo where
       \f, isCF, x => contramap {f} mca $ y f isCF $ contramap {f} mbd x
 
 public export
+toContraDoubleYo : ProfNT ArrowT ContraDoubleYo
+toContraDoubleYo m = MkContraDoubleYo $ \f, isCF, x => contramap {f} m x
+
+public export
+fromContraDoubleYo : ProfNT ContraDoubleYo ArrowT
+fromContraDoubleYo {a} {b} (MkContraDoubleYo y) =
+  y (ContravarHomFunc b) (ContravarHomFuncContravar {a=b}) id
+
+public export
 record CoDoubleYo (a, b : Type) where
   constructor MkCoDoubleYo
   CoDoubleYoEmbed :
     (f : Type -> Type ** isF : Functor f **
     (NaturalTransformation f (CovarHomFunc a), f b))
-
-public export
-fromCoDoubleYo : {a, b : Type} -> CoDoubleYo a b -> a -> b
-fromCoDoubleYo {a} {b} (MkCoDoubleYo (f ** isF ** (alpha, x))) = alpha b x
-
-public export
-toCoDoubleYo : {a, b : Type} -> (a -> b) -> CoDoubleYo a b
-toCoDoubleYo {a} {b} m =
-  MkCoDoubleYo
-    (CovarHomFunc a **
-     MkFunctor (map {f=(CovarHomFunc a)}) **
-     ((\_ => id), m))
 
 public export
 Profunctor CoDoubleYo where
@@ -6395,6 +6383,18 @@ Profunctor CoDoubleYo where
       fm mbd x))
 
 public export
+fromCoDoubleYo : ProfNT CoDoubleYo ArrowT
+fromCoDoubleYo {a} {b} (MkCoDoubleYo (f ** isF ** (alpha, x))) = alpha b x
+
+public export
+toCoDoubleYo : ProfNT ArrowT CoDoubleYo
+toCoDoubleYo {a} {b} m =
+  MkCoDoubleYo
+    (CovarHomFunc a **
+     MkFunctor (map {f=(CovarHomFunc a)}) **
+     ((\_ => id), m))
+
+public export
 record ContraCoDoubleYo (a, b : Type) where
   constructor MkContraCoDoubleYo
   ContraCoDoubleYoEmbed :
@@ -6402,23 +6402,23 @@ record ContraCoDoubleYo (a, b : Type) where
     (NaturalTransformation f (ContravarHomFunc b), f a))
 
 public export
-fromContraCoDoubleYo : {a, b : Type} -> ContraCoDoubleYo a b -> a -> b
+Profunctor ContraCoDoubleYo where
+  dimap mca mbd (MkContraCoDoubleYo (f ** fcontra ** (alpha, x))) =
+    MkContraCoDoubleYo
+      (f ** fcontra ** (\x => mbd .* alpha x, contramap {f} mca x))
+
+public export
+fromContraCoDoubleYo : ProfNT ContraCoDoubleYo ArrowT
 fromContraCoDoubleYo {a} {b} (MkContraCoDoubleYo (f ** isF ** (alpha, x))) =
   alpha a x
 
 public export
-toContraCoDoubleYo : {a, b : Type} -> (a -> b) -> ContraCoDoubleYo a b
+toContraCoDoubleYo : ProfNT ArrowT ContraCoDoubleYo
 toContraCoDoubleYo {a} {b} m =
   MkContraCoDoubleYo
     (ContravarHomFunc b **
      ContravarHomFuncContravar {a=b} **
      ((\_ => id), m))
-
-public export
-Profunctor ContraCoDoubleYo where
-  dimap mca mbd (MkContraCoDoubleYo (f ** fcontra ** (alpha, x))) =
-    MkContraCoDoubleYo
-      (f ** fcontra ** (\x => mbd .* alpha x, contramap {f} mca x))
 
 public export
 record DoubleProYo (s, t, a, b : Type) where
