@@ -821,7 +821,8 @@ ProfPrshfNT pi rho = {p : Type -> Type -> Type} -> Profunctor p -> pi p -> rho p
 -- morphisms are natural transformations).
 public export
 ProfCatMap : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfCatMap pf = {p, q : Type -> Type -> Type} -> ProfNT p q -> ProfNT (pf p) (pf q)
+ProfCatMap pf = {p, q : Type -> Type -> Type} ->
+  ProfNT p q -> ProfNT (pf p) (pf q)
 
 -- The signature of the "return"/"unit" natural transformation of a monad in the
 -- category of profunctors.
