@@ -827,59 +827,6 @@ public export
 ProfPrshfNT : (pi, rho : ((Type -> Type -> Type) -> Type)) -> Type
 ProfPrshfNT pi rho = {p : Type -> Type -> Type} -> Profunctor p -> pi p -> rho p
 
--------------------------------------------------------------------
----- Category of profunctors and their natural transformations ----
--------------------------------------------------------------------
-
-public export
-ProfCatObj : Type
-ProfCatObj = Type -> Type -> Type
-
-public export
-ProfCatMorph : ProfCatObj -> ProfCatObj -> Type
-ProfCatMorph = ProfNT
-
-public export
-ProfCatId : (p : ProfCatObj) -> ProfCatMorph p p
-ProfCatId = ProfNTid
-
-public export
-ProfCatComp : {p, q, r : ProfCatObj} ->
-  ProfCatMorph q r -> ProfCatMorph p q -> ProfCatMorph p r
-ProfCatComp = ProfNTcomp
-
--- The signature of the morphism-map component of a functor in the category
--- of profunctors (i.e. the category whose objects are profunctors and whose
--- morphisms are natural transformations).
-public export
-ProfCatMap : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfCatMap pf = {p, q : Type -> Type -> Type} ->
-  ProfNT p q -> ProfNT (pf p) (pf q)
-
--- The signature of the "return"/"unit" natural transformation of a monad in the
--- category of profunctors.
-public export
-ProfCatReturn : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfCatReturn pf = (p : Type -> Type -> Type) -> ProfNT p (pf p)
-
--- The signature of the "join"/"multiply" natural transformation of a monad in
--- the category of profunctors.
-public export
-ProfCatJoin : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfCatJoin pf = (p : Type -> Type -> Type) -> ProfNT (pf (pf p)) (pf p)
-
--- The signature of the "extract"/"erase"/"counit" natural transformation of a
--- comonad in the category of profunctors.
-public export
-ProfCatExtract : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfCatExtract pf = (p : Type -> Type -> Type) -> ProfNT (pf p) p
-
--- The signature of the "duplicate"/"comultiply" natural transformation of a
--- comonad in the category of profunctors.
-public export
-ProfCatDuplicate : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
-ProfCatDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
-
 -------------------------------------
 ---- Hom-functors as profunctors ----
 -------------------------------------
@@ -997,17 +944,74 @@ EndoProfAssocRight p q r (c ** ((d ** (pad, qdc)), rcb)) =
 --------------------------------------------------
 
 public export
-EndoProfHMorph : EndoProfMorph -> EndoProfMorph -> Type
+EndoProfVMorph : Type
+EndoProfVMorph = EndoProfMorph
+
+public export
+EndoProfHMorph : EndoProfVMorph -> EndoProfVMorph -> Type
 EndoProfHMorph = ProfNT
 
 public export
-EndoProfHId : (p : EndoProfMorph) -> EndoProfHMorph p p
+EndoProfHId : (p : EndoProfVMorph) -> EndoProfHMorph p p
 EndoProfHId = ProfNTid
 
 public export
-EndoProfHComp : {p, q, r : EndoProfMorph} ->
+EndoProfHComp : {p, q, r : EndoProfVMorph} ->
   EndoProfHMorph q r -> EndoProfHMorph p q -> EndoProfHMorph p r
 EndoProfHComp = ProfNTcomp
+
+------------------------------------------------------------------
+---- Functors in the bicategory of endo-profunctors on `Type` ----
+------------------------------------------------------------------
+
+public export
+ProfCatObj : Type
+ProfCatObj = EndoProfVMorph
+
+public export
+ProfCatMorph : ProfCatObj -> ProfCatObj -> Type
+ProfCatMorph = EndoProfHMorph
+
+public export
+ProfCatId : (p : ProfCatObj) -> ProfCatMorph p p
+ProfCatId = ProfNTid
+
+public export
+ProfCatComp : {p, q, r : ProfCatObj} ->
+  ProfCatMorph q r -> ProfCatMorph p q -> ProfCatMorph p r
+ProfCatComp = ProfNTcomp
+
+-- The signature of the morphism-map component of a functor in the category
+-- of profunctors (i.e. the category whose objects are profunctors and whose
+-- morphisms are natural transformations).
+public export
+ProfCatMap : (ProfCatObj -> ProfCatObj) -> Type
+ProfCatMap pf = {p, q : Type -> Type -> Type} ->
+  ProfNT p q -> ProfNT (pf p) (pf q)
+
+-- The signature of the "return"/"unit" natural transformation of a monad in the
+-- category of profunctors.
+public export
+ProfCatReturn : (ProfCatObj -> ProfCatObj) -> Type
+ProfCatReturn pf = (p : Type -> Type -> Type) -> ProfNT p (pf p)
+
+-- The signature of the "join"/"multiply" natural transformation of a monad in
+-- the category of profunctors.
+public export
+ProfCatJoin : (ProfCatObj -> ProfCatObj) -> Type
+ProfCatJoin pf = (p : Type -> Type -> Type) -> ProfNT (pf (pf p)) (pf p)
+
+-- The signature of the "extract"/"erase"/"counit" natural transformation of a
+-- comonad in the category of profunctors.
+public export
+ProfCatExtract : (ProfCatObj -> ProfCatObj) -> Type
+ProfCatExtract pf = (p : Type -> Type -> Type) -> ProfNT (pf p) p
+
+-- The signature of the "duplicate"/"comultiply" natural transformation of a
+-- comonad in the category of profunctors.
+public export
+ProfCatDuplicate : (ProfCatObj -> ProfCatObj) -> Type
+ProfCatDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
 
 -------------------------------------------
 -------------------------------------------
