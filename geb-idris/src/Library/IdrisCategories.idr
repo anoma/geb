@@ -6238,47 +6238,50 @@ fromCoYoC f {isF} {r} (MkCoYoC (b ** (alpha, x))) = isF b r alpha x
 public export
 record ProYo (p : Type -> Type -> Type) (c, d : Type) where
   constructor MkProYo
-  -- Called `Yoneda/runYoneda` in some Haskell libraries.
-  ProYoEmbed : (0 x, y : Type) -> (x -> c) -> (d -> y) -> p x y
+  -- An equivalent structure is called `Yoneda/runYoneda` in some Haskell
+  -- libraries; this formulation makes the Yoneda-lemma instantiation more
+  -- explicit, and in particular factors out the `PrePostPair` notion.
+  ProYoEmbed : ProfNT (PrePostPair c d) p
 
 public export
 fromProYo : {p : Type -> Type -> Type} ->
-  {0 c, d : Type} -> ProYo p c d -> p c d
-fromProYo {p} {c} {d} (MkProYo py) = py c d id id
+  ProfNT (ProYo p) p
+fromProYo {p} (MkProYo py) = py (id, id)
 
 public export
 toProYo : {p : Type -> Type -> Type} -> {isP : Profunctor p} ->
-  {0 c, d : Type} -> p c d -> ProYo p c d
-toProYo {p} {isP} {c} {d} pxy =
-  MkProYo $ \x, y, con, cov => dimap {f=p} con cov pxy
+  ProfNT p (ProYo p)
+toProYo {p} {isP} pxy = MkProYo $ \(con, cov) => dimap {f=p} con cov pxy
 
 public export
 Profunctor (ProYo p) where
   dimap mca mbd (MkProYo py) =
-    MkProYo $ \x, y, con, cov => py x y (mca . con) (cov . mbd)
+    MkProYo $ \(con, cov) => py (mca . con, cov . mbd)
 
 public export
 record CoProYo (p : Type -> Type -> Type) (c, d : Type) where
   constructor MkCoProYo
-  -- Called `CoYoneda` in some Haskell libraries.
+  -- An equivalent structure is called `CoYoneda` in some Haskell
+  -- libraries; this formulation makes the (co-)Yoneda-lemma instantiation more
+  -- explicit, and in particular factors out the `PrePostPair` notion.
   CoProYoEmbed : Exists {type=(Type, Type)} $
-    \xy => (c -> fst xy, snd xy -> d, p (fst xy) (snd xy))
+    \ab => (PrePostPair (fst ab) (snd ab) c d, p (fst ab) (snd ab))
 
 public export
 fromCoProYo : {p : Type -> Type -> Type} -> {isP : Profunctor p} ->
-  {0 c, d : Type} -> CoProYo p c d -> p c d
-fromCoProYo {p} {c} {d}
-  (MkCoProYo (Evidence xy (cx, yd, pxy))) = dimap {f=p} cx yd pxy
+  ProfNT (CoProYo p) p
+fromCoProYo {p} {a} {b}
+  (MkCoProYo (Evidence ab ((ca, bd), pab))) = dimap {f=p} ca bd pab
 
 public export
 toCoProYo : {p : Type -> Type -> Type} ->
-  {0 c, d : Type} -> p c d -> CoProYo p c d
-toCoProYo {p} {c} {d} pcd = MkCoProYo (Evidence (c, d) (id, id, pcd))
+  ProfNT p (CoProYo p)
+toCoProYo {p} {a} {b} pab = MkCoProYo (Evidence (a, b) ((id, id), pab))
 
 public export
 Profunctor (CoProYo p) where
-  dimap {a} {b} {c} {d} mca mbd (MkCoProYo (Evidence xy (ax, yb, pxy))) =
-    MkCoProYo (Evidence xy (ax . mca, mbd . yb, pxy))
+  dimap {a} {b} {c} {d} mca mbd (MkCoProYo (Evidence xy ((ax, yb), pxy))) =
+    MkCoProYo (Evidence xy ((ax . mca, mbd . yb), pxy))
 
 -- Profunctor-profunctor polymorphism:  the Yoneda lemma in the category
 -- of profunctors on `Type`.
