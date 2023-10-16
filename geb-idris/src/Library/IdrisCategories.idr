@@ -793,18 +793,16 @@ PfCatObj : PfSliceObj
 PfCatObj = const Unit
 
 public export
-End : (p : Type -> Type -> Type) -> {auto 0 isPp : Profunctor p} -> Type
+End : (p : Type -> Type -> Type) -> Type
 End p = (b : Type) -> p b b
 
 public export
-Coend : (p : Type -> Type -> Type) -> {auto 0 isPp : Profunctor p} -> Type
+Coend : (p : Type -> Type -> Type) -> Type
 Coend p = (b : Type ** p b b)
 
 public export
-ProfDiNT : (p, q : Type -> Type -> Type) ->
-  {auto 0 isPp : Profunctor p} -> {auto 0 isPq : Profunctor q} ->
-  Type
-ProfDiNT p q {isPp} {isPq} = (a : Type) -> p a a -> q a a
+ProfDiNT : (p, q : Type -> Type -> Type) -> Type
+ProfDiNT p q = (a : Type) -> p a a -> q a a
 
 public export
 ProfNT : (p, q : Type -> Type -> Type) -> Type
