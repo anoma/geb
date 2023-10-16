@@ -903,6 +903,18 @@ public export
 [ContravarHomPro] Profunctor (ContravarHomAsPro t) where
   dimap {t} = contravarHomDimap {t}
 
+public export
+HomProf : Type -> Type -> Type
+HomProf a b = a -> b
+
+public export
+[HomProfProfunctor] Profunctor HomProf where
+  dimap fca fbd fab = fbd . fab . fca
+
+public export
+OpHomProf : Type -> Type -> Type
+OpHomProf = flip HomProf
+
 -------------------------------------------------------------
 ---- Pre-/post-composition pairs and isos as profunctors ----
 -------------------------------------------------------------
@@ -1214,18 +1226,6 @@ SliceAna {a} f =
 -- sort of dual to, or backwards from, the style of dependent types
 -- with universes, i.e. where an object of `Type/c` is a predicate
 -- `c -> Type`).
-
-public export
-HomProf : Type -> Type -> Type
-HomProf a b = a -> b
-
-public export
-[HomProfProfunctor] Profunctor HomProf where
-  dimap fca fbd fab = fbd . fab . fca
-
-public export
-OpHomProf : Type -> Type -> Type
-OpHomProf = flip HomProf
 
 public export
 CSliceObj : Type -> Type
