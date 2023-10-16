@@ -6432,13 +6432,13 @@ Profunctor (DoubleProYo s t) where
     MkDoubleProYo $ \p, isP => dimap mca mbd . y p isP
 
 public export
-toDoubleProYo : {0 s, t, a, b : Type} ->
-  PrePostPair s t a b -> DoubleProYo s t a b
+toDoubleProYo : {0 s, t : Type} ->
+  ProfNT (PrePostPair s t) (DoubleProYo s t)
 toDoubleProYo m = MkDoubleProYo $ \p, isP => dimap {f=p} (fst m) (snd m)
 
 public export
-fromDoubleProYo : {0 s, t, a, b : Type} ->
-  DoubleProYo s t a b -> PrePostPair s t a b
+fromDoubleProYo : {0 s, t : Type} ->
+  ProfNT (DoubleProYo s t) (PrePostPair s t)
 fromDoubleProYo {s} {t} {a} {b} (MkDoubleProYo py) =
   (py (ContravarHomAsPro s) ContravarHomPro id,
    py (CovarHomAsPro t) CovarHomPro id)
@@ -6456,13 +6456,13 @@ Profunctor (CoDoubleProYo s t) where
     MkCoDoubleProYo (p ** MkProfunctor dm ** (alpha, dm mca mbd pab))
 
 public export
-fromCoDoubleProYo : {s, t, a, b : Type} ->
-  CoDoubleProYo s t a b -> PrePostPair s t a b
+fromCoDoubleProYo : {s, t : Type} ->
+  ProfNT (CoDoubleProYo s t) (PrePostPair s t)
 fromCoDoubleProYo (MkCoDoubleProYo (p ** isP ** (alpha, pab))) = alpha pab
 
 public export
-toCoDoubleProYo : {s, t, a, b : Type} ->
-  PrePostPair s t a b -> CoDoubleProYo s t a b
+toCoDoubleProYo : {s, t : Type} ->
+  ProfNT (PrePostPair s t) (CoDoubleProYo s t)
 toCoDoubleProYo {s} {t} {a} {b} fp =
   MkCoDoubleProYo (PrePostPair s t ** PrePostPairProf ** (id, fp))
 
