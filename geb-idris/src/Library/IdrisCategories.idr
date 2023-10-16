@@ -981,7 +981,7 @@ ProfBicatComp : {p, q, r : ProfBicatObj} ->
   ProfBicatMorph q r -> ProfBicatMorph p q -> ProfBicatMorph p r
 ProfBicatComp = ProfNTcomp
 
--- The signature of the morphism-map component of a functor in the category
+-- The signature of the morphism-map component of a functor in the bicategory
 -- of profunctors (i.e. the category whose objects are profunctors and whose
 -- morphisms are natural transformations).
 public export
@@ -990,25 +990,25 @@ ProfBicatMap pf = {p, q : Type -> Type -> Type} ->
   ProfNT p q -> ProfNT (pf p) (pf q)
 
 -- The signature of the "return"/"unit" natural transformation of a monad in the
--- category of profunctors.
+-- bicategory of profunctors.
 public export
 ProfBicatReturn : (ProfBicatObj -> ProfBicatObj) -> Type
 ProfBicatReturn pf = (p : Type -> Type -> Type) -> ProfNT p (pf p)
 
 -- The signature of the "join"/"multiply" natural transformation of a monad in
--- the category of profunctors.
+-- the bicategory of profunctors.
 public export
 ProfBicatJoin : (ProfBicatObj -> ProfBicatObj) -> Type
 ProfBicatJoin pf = (p : Type -> Type -> Type) -> ProfNT (pf (pf p)) (pf p)
 
 -- The signature of the "extract"/"erase"/"counit" natural transformation of a
--- comonad in the category of profunctors.
+-- comonad in the bicategory of profunctors.
 public export
 ProfBicatExtract : (ProfBicatObj -> ProfBicatObj) -> Type
 ProfBicatExtract pf = (p : Type -> Type -> Type) -> ProfNT (pf p) p
 
 -- The signature of the "duplicate"/"comultiply" natural transformation of a
--- comonad in the category of profunctors.
+-- comonad in the bicategory of profunctors.
 public export
 ProfBicatDuplicate : (ProfBicatObj -> ProfBicatObj) -> Type
 ProfBicatDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
