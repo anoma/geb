@@ -936,7 +936,8 @@ Iso s t a b = PrePostPair a b s t
 -- We may view endoprofunctors on `Type` as forming a one-object category
 -- whose only object is `Type`, whose morphisms are the endo-profunctors,
 -- whose identity is the hom-profunctor, and which has a composition given by
--- the coend below.
+-- the coend below.  (Furthermore, this forms a bicategory when we add as
+-- two-cells the natural transformations between endo-profunctors.)
 
 public export
 EndoProfMorph : Type
