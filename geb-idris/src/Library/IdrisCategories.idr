@@ -808,6 +808,15 @@ public export
 ProfNT : (p, q : Type -> Type -> Type) -> Type
 ProfNT p q = {a, b : Type} -> p a b -> q a b
 
+public export
+ProfNTid : (p : Type -> Type -> Type) -> ProfNT p p
+ProfNTid p = id
+
+public export
+ProfNTcomp : {p, q, r : Type -> Type -> Type} ->
+  ProfNT q r -> ProfNT p q -> ProfNT p r
+ProfNTcomp {p} {q} {r} alpha beta = (.) alpha beta
+
 -- Called 'HFunProf` by Milewski.
 public export
 ProfPrshfMap : ((Type -> Type -> Type) -> Type) -> Type
@@ -832,12 +841,12 @@ ProfCatMorph = ProfNT
 
 public export
 ProfCatId : (p : ProfCatObj) -> ProfCatMorph p p
-ProfCatId p = id
+ProfCatId = ProfNTid
 
 public export
-ProfCatComp : {0 p, q, r : ProfCatObj} ->
+ProfCatComp : {p, q, r : ProfCatObj} ->
   ProfCatMorph q r -> ProfCatMorph p q -> ProfCatMorph p r
-ProfCatComp alpha beta = (.) alpha beta
+ProfCatComp = ProfNTcomp
 
 -- The signature of the morphism-map component of a functor in the category
 -- of profunctors (i.e. the category whose objects are profunctors and whose
@@ -982,6 +991,23 @@ EndoProfAssocRight : (p, q, r : EndoProfMorph) ->
     (EndoProfCompose p (EndoProfCompose q r))
 EndoProfAssocRight p q r (c ** ((d ** (pad, qdc)), rcb)) =
   (d ** (pad, (c ** (qdc, rcb))))
+
+--------------------------------------------------
+---- Bicategory of endo-profunctors on `Type` ----
+--------------------------------------------------
+
+public export
+EndoProfHMorph : EndoProfMorph -> EndoProfMorph -> Type
+EndoProfHMorph = ProfNT
+
+public export
+EndoProfHId : (p : EndoProfMorph) -> EndoProfHMorph p p
+EndoProfHId = ProfNTid
+
+public export
+EndoProfHComp : {p, q, r : EndoProfMorph} ->
+  EndoProfHMorph q r -> EndoProfHMorph p q -> EndoProfHMorph p r
+EndoProfHComp = ProfNTcomp
 
 -------------------------------------------
 -------------------------------------------
