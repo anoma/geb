@@ -759,6 +759,10 @@ AdjCounit f = NaturalTransformation f id
 ---------------------
 ---------------------
 
+---------------------------------------------------
+---- Profunctor interface and core definitions ----
+---------------------------------------------------
+
 public export
 interface Profunctor f where
   constructor MkProfunctor
@@ -816,6 +820,27 @@ public export
 ProfPrshfNT : (pi, rho : ((Type -> Type -> Type) -> Type)) -> Type
 ProfPrshfNT pi rho = {p : Type -> Type -> Type} -> Profunctor p -> pi p -> rho p
 
+-------------------------------------------------------------------
+---- Category of profunctors and their natural transformations ----
+-------------------------------------------------------------------
+
+public export
+ProfCatObj : Type
+ProfCatObj = Type -> Type -> Type
+
+public export
+ProfCatMorph : ProfCatObj -> ProfCatObj -> Type
+ProfCatMorph = ProfNT
+
+public export
+ProfCatId : (p : ProfCatObj) -> ProfCatMorph p p
+ProfCatId p = id
+
+public export
+ProfCatComp : {0 p, q, r : ProfCatObj} ->
+  ProfCatMorph q r -> ProfCatMorph p q -> ProfCatMorph p r
+ProfCatComp alpha beta = (.) alpha beta
+
 -- The signature of the morphism-map component of a functor in the category
 -- of profunctors (i.e. the category whose objects are profunctors and whose
 -- morphisms are natural transformations).
@@ -848,6 +873,10 @@ public export
 ProfCatDuplicate : ((Type -> Type -> Type) -> (Type -> Type -> Type)) -> Type
 ProfCatDuplicate pf = (p : Type -> Type -> Type) -> ProfNT (pf p) (pf (pf p))
 
+-------------------------------------
+---- Hom-functors as profunctors ----
+-------------------------------------
+
 public export
 CovarHomAsPro : Type -> Type -> Type -> Type
 CovarHomAsPro s c d = s -> d
@@ -873,6 +902,10 @@ contravarHomDimap {t} {a} {b} {c} {d} fca fbd fat = fat . fca
 public export
 [ContravarHomPro] Profunctor (ContravarHomAsPro t) where
   dimap {t} = contravarHomDimap {t}
+
+-------------------------------------------------------------
+---- Pre-/post-composition pairs and isos as profunctors ----
+-------------------------------------------------------------
 
 public export
 PrePostPair : Type -> Type -> Type -> Type -> Type
