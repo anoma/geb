@@ -6440,6 +6440,29 @@ Profunctor (DoubleProYo s t) where
   dimap mca mbd (MkDoubleProYo y) =
     MkDoubleProYo $ \p, isP => dimap mca mbd . y p isP
 
+public export
+record CoDoubleProYo (s, t, a, b : Type) where
+  constructor MkCoDoubleProYo
+  CoDoubleProYoEmbed :
+    (p : Type -> Type -> Type ** isP : Profunctor p **
+     (ProfNT p (PrePostPair s t), p a b))
+
+public export
+fromCoDoubleProYo : {s, t, a, b : Type} ->
+  CoDoubleProYo s t a b -> PrePostPair s t a b
+fromCoDoubleProYo (MkCoDoubleProYo (p ** isP ** (alpha, pab))) = alpha pab
+
+public export
+toCoDoubleProYo : {s, t, a, b : Type} ->
+  PrePostPair s t a b -> CoDoubleProYo s t a b
+toCoDoubleProYo {s} {t} {a} {b} fp =
+  MkCoDoubleProYo (PrePostPair s t ** PrePostPairProf ** (id, fp))
+
+public export
+Profunctor (CoDoubleProYo s t) where
+  dimap mca mbd (MkCoDoubleProYo (p ** MkProfunctor dm ** (alpha, pab))) =
+    MkCoDoubleProYo (p ** MkProfunctor dm ** (alpha, dm mca mbd pab))
+
 ---------------------------
 ---------------------------
 ---- Profunctor optics ----
