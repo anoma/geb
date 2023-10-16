@@ -947,6 +947,34 @@ EndoProfAssocRight : (p, q, r : EndoProfMorph) ->
 EndoProfAssocRight p q r (c ** ((d ** (pad, qdc)), rcb)) =
   (d ** (pad, (c ** (qdc, rcb))))
 
+--------------------------------------
+---- Endo-pro(co)monads on `Type` ----
+--------------------------------------
+
+public export
+0 ProReturnSig : ProfunctorSig -> Type
+ProReturnSig p = ProfNT EndoProfId p
+
+public export
+0 ProJoinSig : ProfunctorSig -> Type
+ProJoinSig p = ProfNT (EndoProfCompose p p) p
+
+interface Profunctor p => ProMonad p where
+  proReturn : ProReturnSig p
+  proJoin : ProJoinSig p
+
+public export
+0 ProEraseSig : ProfunctorSig -> Type
+ProEraseSig p = ProfNT p EndoProfId
+
+public export
+0 ProDuplicateSig : ProfunctorSig -> Type
+ProDuplicateSig p = ProfNT p (EndoProfCompose p p)
+
+interface Profunctor p => ProComonad p where
+  proErase : ProEraseSig p
+  proDuplicate : ProDuplicateSig p
+
 --------------------------------------------------
 ---- Bicategory of endo-profunctors on `Type` ----
 --------------------------------------------------
