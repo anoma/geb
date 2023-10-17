@@ -2065,8 +2065,8 @@ FFDir : (ff : FunctorFam) -> FFPos ff -> Type -> Type
 FFDir = snd
 
 public export
-0 ffMapSig : FunctorFam -> Type
-ffMapSig ff = (pos : FFPos ff) -> FMapSig (FFDir ff pos)
+0 FFMapSig : FunctorFam -> Type
+FFMapSig ff = (pos : FFPos ff) -> FMapSig (FFDir ff pos)
 
 public export
 SumRepProf : FunctorFam -> ProfunctorSig
@@ -2074,12 +2074,12 @@ SumRepProf ff d c = (pos : FFPos ff ** RepProf (FFDir ff pos) d c)
 
 public export
 sumRepProfDimap : {0 ff : FunctorFam} ->
-  ffMapSig ff -> DimapSig (SumRepProf ff)
+  FFMapSig ff -> DimapSig (SumRepProf ff)
 sumRepProfDimap {ff} ffm mca mbd (pos ** mafb) =
   (pos ** repProfDimap {f=(FFDir ff pos)} (ffm pos) mca mbd mafb)
 
 public export
-SumRepProfunctor : {0 ff : FunctorFam} -> (ffm : ffMapSig ff) ->
+SumRepProfunctor : {0 ff : FunctorFam} -> (ffm : FFMapSig ff) ->
   Profunctor (SumRepProf ff)
 SumRepProfunctor {ff} ffm = MkProfunctor $ sumRepProfDimap {ff} ffm
 
