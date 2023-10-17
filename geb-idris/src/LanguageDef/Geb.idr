@@ -2049,6 +2049,41 @@ corepProfDimap : {0 f : Type -> Type} -> FMapSig f -> DimapSig (CorepProf f)
 corepProfDimap {f} fm mca mbd mfab = mbd . mfab . fm mca
 
 public export
+Functor f => Profunctor (CorepProf f) where
+  dimap = corepProfDimap {f} (map {f})
+
+public export
+RepProfFam : Type
+RepProfFam = (pos : Type ** pos -> Type -> Type)
+
+public export
+RpfPos : RepProfFam -> Type
+RpfPos = fst
+
+public export
+RpfDir : (rpf : RepProfFam) -> RpfPos rpf -> Type -> Type
+RpfDir = snd
+
+public export
+0 RPFMapSig : RepProfFam -> Type
+RPFMapSig rpf = (pos : RpfPos rpf) -> FMapSig (RpfDir rpf pos)
+
+public export
+SumRepProf : RepProfFam -> ProfunctorSig
+SumRepProf rpf d c = (pos : RpfPos rpf ** RepProf (RpfDir rpf pos) d c)
+
+public export
+sumRepProfDimap : {0 rpf : RepProfFam} ->
+  RPFMapSig rpf -> DimapSig (SumRepProf rpf)
+sumRepProfDimap {rpf} rpfm mca mbd (pos ** mafb) =
+  (pos ** repProfDimap {f=(RpfDir rpf pos)} (rpfm pos) mca mbd mafb)
+
+public export
+SumRepProfunctor : {0 rpf : RepProfFam} -> (rpfm : RPFMapSig rpf) ->
+  Profunctor (SumRepProf rpf)
+SumRepProfunctor {rpf} rpfm = MkProfunctor $ sumRepProfDimap {rpf} rpfm
+
+public export
 CatToPolyProfPos : SCat -> Type
 CatToPolyProfPos = scObj
 
