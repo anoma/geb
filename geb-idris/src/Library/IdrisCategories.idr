@@ -927,9 +927,9 @@ EndoProfLeftId : (p : EndoProfMorph) -> {auto isP : Profunctor p} ->
 EndoProfLeftId p {isP} {a} {b} (c ** (mac, pcb)) = lmap mac pcb
 
 public export
-EndoProfRightId : (p : EndoProfMorph) -> {auto isP : Profunctor p} ->
+EndoProfRightId : (p : EndoProfMorph) ->
   ProfNT p (EndoProfCompose HomProf p)
-EndoProfRightId p {isP} {a} {b} pab = (a ** (id, pab))
+EndoProfRightId p {a} {b} pab = (a ** (id, pab))
 
 public export
 EndoProfAssocLeft : (p, q, r : EndoProfMorph) ->
