@@ -2053,35 +2053,35 @@ Functor f => Profunctor (CorepProf f) where
   dimap = corepProfDimap {f} (map {f})
 
 public export
-RepProfFam : Type
-RepProfFam = (pos : Type ** pos -> Type -> Type)
+FunctorFam : Type
+FunctorFam = (pos : Type ** pos -> Type -> Type)
 
 public export
-RpfPos : RepProfFam -> Type
-RpfPos = fst
+FFPos : FunctorFam -> Type
+FFPos = fst
 
 public export
-RpfDir : (rpf : RepProfFam) -> RpfPos rpf -> Type -> Type
-RpfDir = snd
+FFDir : (ff : FunctorFam) -> FFPos ff -> Type -> Type
+FFDir = snd
 
 public export
-0 RPFMapSig : RepProfFam -> Type
-RPFMapSig rpf = (pos : RpfPos rpf) -> FMapSig (RpfDir rpf pos)
+0 ffMapSig : FunctorFam -> Type
+ffMapSig ff = (pos : FFPos ff) -> FMapSig (FFDir ff pos)
 
 public export
-SumRepProf : RepProfFam -> ProfunctorSig
-SumRepProf rpf d c = (pos : RpfPos rpf ** RepProf (RpfDir rpf pos) d c)
+SumRepProf : FunctorFam -> ProfunctorSig
+SumRepProf ff d c = (pos : FFPos ff ** RepProf (FFDir ff pos) d c)
 
 public export
-sumRepProfDimap : {0 rpf : RepProfFam} ->
-  RPFMapSig rpf -> DimapSig (SumRepProf rpf)
-sumRepProfDimap {rpf} rpfm mca mbd (pos ** mafb) =
-  (pos ** repProfDimap {f=(RpfDir rpf pos)} (rpfm pos) mca mbd mafb)
+sumRepProfDimap : {0 ff : FunctorFam} ->
+  ffMapSig ff -> DimapSig (SumRepProf ff)
+sumRepProfDimap {ff} ffm mca mbd (pos ** mafb) =
+  (pos ** repProfDimap {f=(FFDir ff pos)} (ffm pos) mca mbd mafb)
 
 public export
-SumRepProfunctor : {0 rpf : RepProfFam} -> (rpfm : RPFMapSig rpf) ->
-  Profunctor (SumRepProf rpf)
-SumRepProfunctor {rpf} rpfm = MkProfunctor $ sumRepProfDimap {rpf} rpfm
+SumRepProfunctor : {0 ff : FunctorFam} -> (ffm : ffMapSig ff) ->
+  Profunctor (SumRepProf ff)
+SumRepProfunctor {ff} ffm = MkProfunctor $ sumRepProfDimap {ff} ffm
 
 public export
 CatToPolyProfPos : SCat -> Type
