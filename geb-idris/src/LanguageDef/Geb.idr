@@ -2013,6 +2013,42 @@ HomProfToFromPolyId {a} {b} mab = Refl
 -----------------------------------------------------
 
 public export
+0 FMapSig : (Type -> Type) -> Type
+FMapSig f = {0 a, b : Type} -> (a -> b) -> f a -> f b
+
+public export
+0 FContramapSig : (Type -> Type) -> Type
+FContramapSig f = {0 a, b : Type} -> (b -> a) -> f a -> f b
+
+-- See https://ncatlab.org/nlab/show/profunctor#definition
+
+-- The representable profunctor from `Type^op x Type` to `Type` (also
+-- written `Type -|-> Type`) induced by the given functor from `Type` to
+-- `Type`.  Called `D(1, f)` on the above page.
+public export
+RepProf : (Type -> Type) -> ProfunctorSig
+RepProf f d c = d -> f c
+
+public export
+repProfDimap : {0 f : Type -> Type} -> FMapSig f -> DimapSig (RepProf f)
+repProfDimap {f} fm mca mbd mafb = fm mbd . mafb . mca
+
+public export
+Functor f => Profunctor (RepProf f) where
+  dimap = repProfDimap {f} (map {f})
+
+-- The (co-)representable profunctor from `Type x Type^op` to `Type`
+-- (also written `Type^op -|-> Type^op`) induced by the given functor from
+-- `Type` to `Type`.  Called `D(f, 1)` on the above page.
+public export
+CorepProf : (Type -> Type) -> ProfunctorSig
+CorepProf f c d = f c -> d
+
+public export
+corepProfDimap : {0 f : Type -> Type} -> FMapSig f -> DimapSig (CorepProf f)
+corepProfDimap {f} fm mca mbd mfab = mbd . mfab . fm mca
+
+public export
 CatToPolyProfPos : SCat -> Type
 CatToPolyProfPos = scObj
 
