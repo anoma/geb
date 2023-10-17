@@ -1959,7 +1959,8 @@ PolyProfData = (xy : (Type, Type) ** SliceObjPair xy)
 public export
 InterpPolyProfData : PolyProfData -> ProfunctorSig
 InterpPolyProfData ppd x y =
-  (ij : (fst (fst ppd), snd (fst ppd)) ** (x -> snd ppd ij, snd ppd ij -> y))
+  (ij : (fst (fst ppd), snd (fst ppd)) **
+   PrePostPair (snd ppd ij) (snd ppd ij) x y)
 
 public export
 ppdDimap : (ppd : PolyProfData) -> DimapSig (InterpPolyProfData ppd)
@@ -1994,6 +1995,18 @@ HomProfToPoly {a} {b} mab =
 public export
 HomProfFromPoly : ProfNT (InterpPolyProfData HomProfPolyData) HomProf
 HomProfFromPoly {a} {b} pab = snd (snd pab) . fst (snd pab)
+
+public export
+HomProfToFromPolyId : {a, b : Type} ->
+  (mab : HomProf a b) ->
+  ProfNTcomp
+     {p=HomProf}
+     {q=(InterpPolyProfData HomProfPolyData)}
+     {r=HomProf}
+    HomProfFromPoly HomProfToPoly {a} {b}
+    mab =
+  mab
+HomProfToFromPolyId {a} {b} mab = Refl
 
 -----------------------------------------------------
 ---- Category/polynomial-promonad correspondence ----
