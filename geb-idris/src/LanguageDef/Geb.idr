@@ -2099,6 +2099,53 @@ SumCorepProfunctor : {0 ff : FunctorFam} -> (ffm : FFMapSig ff) ->
 SumCorepProfunctor {ff} ffm = MkProfunctor $ sumCorepProfDimap {ff} ffm
 
 public export
+FunctorFamPair : Type
+FunctorFamPair = (FunctorFam, FunctorFam)
+
+public export
+FFPcorep : FunctorFamPair -> FunctorFam
+FFPcorep = fst
+
+public export
+FFPrep : FunctorFamPair -> FunctorFam
+FFPrep = snd
+
+public export
+0 FFPMapSig : FunctorFamPair -> Type
+FFPMapSig ffp = (FFMapSig $ FFPcorep ffp, FFMapSig $ FFPrep ffp)
+
+public export
+FFPMcorep : {0 ffp : FunctorFamPair} ->
+  FFPMapSig ffp -> FFMapSig (FFPcorep ffp)
+FFPMcorep = fst
+
+public export
+FFPMrep : {0 ffp : FunctorFamPair} ->
+  FFPMapSig ffp -> FFMapSig (FFPrep ffp)
+FFPMrep = snd
+
+public export
+SumRepCorepProf : FunctorFamPair -> ProfunctorSig
+SumRepCorepProf ffp d c =
+  Either (SumCorepProf (FFPcorep ffp) d c) (SumRepProf (FFPrep ffp) d c)
+
+public export
+sumRepCorepProfDimap : {0 ffp : FunctorFamPair} ->
+  FFPMapSig ffp -> DimapSig (SumRepCorepProf ffp)
+sumRepCorepProfDimap {ffp} ffpm mca mbd (Left (pos ** mfab)) =
+  Left $
+    sumCorepProfDimap {ff=(FFPcorep ffp)} (FFPMcorep ffpm) mca mbd (pos ** mfab)
+sumRepCorepProfDimap {ffp} ffpm mca mbd (Right (pos ** mafb)) =
+  Right $
+    sumRepProfDimap {ff=(FFPrep ffp)} (FFPMrep ffpm) mca mbd (pos ** mafb)
+
+public export
+SumRepCorepProfunctor : {0 ffp : FunctorFamPair} -> (ffpm : FFPMapSig ffp) ->
+  Profunctor (SumRepCorepProf ffp)
+SumRepCorepProfunctor {ffp} ffpm =
+  MkProfunctor $ sumRepCorepProfDimap {ffp} ffpm
+
+public export
 CatToPolyProfPos : SCat -> Type
 CatToPolyProfPos = scObj
 
