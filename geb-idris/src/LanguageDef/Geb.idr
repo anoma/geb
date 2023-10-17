@@ -2084,6 +2084,21 @@ SumRepProfunctor : {0 ff : FunctorFam} -> (ffm : FFMapSig ff) ->
 SumRepProfunctor {ff} ffm = MkProfunctor $ sumRepProfDimap {ff} ffm
 
 public export
+SumCorepProf : FunctorFam -> ProfunctorSig
+SumCorepProf ff c d = (pos : FFPos ff ** CorepProf (FFDir ff pos) c d)
+
+public export
+sumCorepProfDimap : {0 ff : FunctorFam} ->
+  FFMapSig ff -> DimapSig (SumCorepProf ff)
+sumCorepProfDimap {ff} ffm mca mbd (pos ** mfab) =
+  (pos ** corepProfDimap {f=(FFDir ff pos)} (ffm pos) mca mbd mfab)
+
+public export
+SumCorepProfunctor : {0 ff : FunctorFam} -> (ffm : FFMapSig ff) ->
+  Profunctor (SumCorepProf ff)
+SumCorepProfunctor {ff} ffm = MkProfunctor $ sumCorepProfDimap {ff} ffm
+
+public export
 CatToPolyProfPos : SCat -> Type
 CatToPolyProfPos = scObj
 
