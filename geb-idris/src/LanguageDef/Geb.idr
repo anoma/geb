@@ -1288,18 +1288,22 @@ SliceEndoProfunctor = SliceEndoBifunctor
 ---------------------------------------------------------
 ---------------------------------------------------------
 
+public export
+SliceObjEither : {0 param : Type} ->
+  (dom, cod : SliceObj param) -> SliceObj param
+SliceObjEither {param} dom cod ep = SliceObj (Either (dom ep) (cod ep))
+
 -- A dependent polynomial functor is defined between slice categories --
 -- `Type/dom` -> `Type/cod`.  A dependent polynomial (non-enriched)
 -- profunctor, therefore, should be from `Type/dom -> Type/cod -> Type`.
 --
--- However, because a plain `Type` is now involved, we can add more
--- dependency in the profunctor case -- we could parameterize the whole
--- profunctor on a type `param`, so that `dom` and `cod` are now themselves
--- slices over `param`.
+-- However, we can add further dependency by defining in effect a family
+-- of profunctors indexed by a type `param`, where each of the domain, codomain,
+-- and enriching categories depend on `param`.
 public export
-DepProfunctor : {param : Type} -> (dom, cod : SliceObj param) -> Type
-DepProfunctor {param} dom cod =
-  (p : param) -> SliceObj (dom p) -> SliceObj (cod p) -> Type
+DepProfunctor : {param : Type} -> (dom, cod, enr : SliceObj param) -> Type
+DepProfunctor {param} dom cod enr =
+  SliceMorphism {a=param} (SliceObjEither {param} dom cod) enr
 
 public export
 record DepArena (0 dom, cod : Type) where
@@ -1933,3 +1937,78 @@ qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
 public export
 QQuivEdge : QType -> QType
 QQuivEdge vert = QPred $ QProd vert vert
+
+-----------------------------------------------
+-----------------------------------------------
+---- Polynomial profunctors and categories ----
+-----------------------------------------------
+-----------------------------------------------
+
+-----------------------------------------------
+---- Polynomial endo-profunctors on `Type` ----
+-----------------------------------------------
+
+public export
+SliceObjPair : (Type, Type) -> Type
+SliceObjPair xy = SliceObj (Pair (fst xy) (snd xy))
+
+public export
+PolyProfData : Type
+PolyProfData = (xy : (Type, Type) ** SliceObjPair xy)
+
+public export
+InterpPolyProfData : PolyProfData -> ProfunctorSig
+InterpPolyProfData ppd x y =
+  (ij : (fst (fst ppd), snd (fst ppd)) ** (x -> snd ppd ij, snd ppd ij -> y))
+
+public export
+ppdDimap : (ppd : PolyProfData) -> DimapSig (InterpPolyProfData ppd)
+ppdDimap ppd mca mbd pab =
+  (fst pab ** (fst (snd pab) . mca, mbd . snd (snd pab)))
+
+public export
+HomProfPolyPos1 : Type
+HomProfPolyPos1 = Type
+
+public export
+HomProfPolyPos2 : Type
+HomProfPolyPos2 = Type
+
+public export
+HomProfPolyPos : (Type, Type)
+HomProfPolyPos = (HomProfPolyPos1, HomProfPolyPos2)
+
+public export
+HomProfPolyDir : SliceObjPair HomProfPolyPos
+HomProfPolyDir xy = Pair (fst xy) (snd xy)
+
+public export
+HomProfPolyData : PolyProfData
+HomProfPolyData = (HomProfPolyPos ** HomProfPolyDir)
+
+public export
+HomProfToPoly : ProfNT HomProf (InterpPolyProfData HomProfPolyData)
+HomProfToPoly {a} {b} mab =
+  ((a, Unit) ** (\ea => (ea, ()), \(ea, ()) => mab ea))
+
+public export
+HomProfFromPoly : ProfNT (InterpPolyProfData HomProfPolyData) HomProf
+HomProfFromPoly {a} {b} pab = snd (snd pab) . fst (snd pab)
+
+-----------------------------------------------------
+---- Category/polynomial-promonad correspondence ----
+-----------------------------------------------------
+
+public export
+CatToPolyProfPos : SCat -> Type
+CatToPolyProfPos = scObj
+
+public export
+CatToPolyProfDir :
+  (sc : SCat) -> (CatToPolyProfPos sc, CatToPolyProfPos sc) -> Type
+CatToPolyProfDir = scHom
+
+public export
+CatToPolyProf : SCat -> PolyProfData
+CatToPolyProf sc =
+  ((CatToPolyProfPos sc, CatToPolyProfPos sc) ** CatToPolyProfDir sc)
