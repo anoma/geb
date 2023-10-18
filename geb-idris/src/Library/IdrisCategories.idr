@@ -4204,7 +4204,45 @@ EqPrEquivRelI a (ea, ea'') (PrEtrans ea ea' ea'' eq eq') = trans eq eq'
 
 public export
 EqPrEquivRel : (0 a : Type) -> PrEquivRel a
-EqPrEquivRel a = (EqPrRel {a} {b=a} ** EqPrEquivRelI {a})
+EqPrEquivRel a = (EqPrRel {a} {b=a} ** EqPrEquivRelI a)
+
+-- Equality together with first-order extensional equality is a relation.
+public export
+data ExtEqPrRel : {0 a, b : Type} -> PrRel a b where
+  ExtEqEq : {0 a, b : Type} -> {ea : a} -> {eb : b} ->
+    EqPrRel {a} {b} (ea, eb) -> ExtEqPrRel {a} {b} (ea, eb)
+  ExtEqExtEq : {0 a, b, b' : Type} -> {f : a -> b} -> {f' : a -> b'} ->
+    ((ea : a) -> Equal (f ea) (f' ea)) ->
+    ExtEqPrRel {a=(a -> b)} {b=(a -> b')} (f, f')
+
+-- Equality together with first-order extensional equality is an equivalence
+-- relation.
+public export
+ExtEqPrEquivRelI : (0 a, b : Type) ->
+  PrEquivRelI (a -> b) (ExtEqPrRel {a=(a -> b)} {b=(a -> b)})
+ExtEqPrEquivRelI a b (fa, fa) (PrErefl fa) =
+  ExtEqEq $ EqPrEquivRelI (a -> b) (fa, fa) (PrErefl fa)
+ExtEqPrEquivRelI a b (fa', fa) (PrEsym fa fa' (ExtEqEq eq)) =
+  ExtEqExtEq $ \ea => case eq of Refl => Refl
+ExtEqPrEquivRelI a b (fa', fa) (PrEsym fa fa' (ExtEqExtEq eq)) =
+  ExtEqExtEq $ \ea => sym $ eq ea
+ExtEqPrEquivRelI a b (fa, fa'')
+  (PrEtrans fa fa' fa'' (ExtEqEq eq) (ExtEqEq eq')) =
+    ExtEqExtEq $ \ea => case eq of Refl => case eq' of Refl => Refl
+ExtEqPrEquivRelI a b (fa, fa'')
+  (PrEtrans fa fa' fa'' (ExtEqEq eq) (ExtEqExtEq eq')) =
+    ExtEqExtEq $ \ea => case eq of Refl => eq' ea
+ExtEqPrEquivRelI a b (fa, fa'')
+  (PrEtrans fa fa' fa'' (ExtEqExtEq eq) (ExtEqEq eq')) =
+    ExtEqExtEq $ \ea => case eq' of Refl => eq ea
+ExtEqPrEquivRelI a b (fa, fa'')
+  (PrEtrans fa fa' fa'' (ExtEqExtEq eq) (ExtEqExtEq eq')) =
+    ExtEqExtEq $ \ea => trans (eq ea) (eq' ea)
+
+public export
+ExtEqPrEquivRel : (0 a, b : Type) -> PrEquivRel (a -> b)
+ExtEqPrEquivRel a b =
+  (ExtEqPrRel {a=(a -> b)} {b=(a -> b)} ** ExtEqPrEquivRelI a b)
 
 -- The free (dependent) monad of `PrEquivF`.
 public export
