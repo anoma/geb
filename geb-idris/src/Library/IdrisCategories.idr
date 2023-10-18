@@ -4335,7 +4335,7 @@ freeEquivBindPres : {a, b : Type} -> {ra : PrERel a} -> {rb : PrERel b} ->
   PrERelPres {a} {b} f (FreePrEquivF ra) (FreePrEquivF rb)
 freeEquivBindPres {a} {b} {ra} {rb} {f} =
   freeEquivBindBiPres {a} {b} {ra} {rb} {f} {g=f} $
-    \ea, ea, Refl => InSlFc $ PrErefl $ f ea
+    \ea, ea, Refl => FrPrErefl $ f ea
 
 -- If an equivalence-preserving morphism agrees (up to codomain equivalence)
 -- with another morphism on _intensionally_ equal elements of the domain, then
