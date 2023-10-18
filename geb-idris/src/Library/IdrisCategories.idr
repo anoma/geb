@@ -4195,6 +4195,10 @@ FreePrEquivI {a} r pa =
   InSlFc {f=(PrEquivF {a})} {a=(ProductMonad a)} {sa=r} {ea=pa}
 
 public export
+FreePrEquivRel : {a : Type} -> PrERel a -> PrEquivRel a
+FreePrEquivRel {a} r = (FreePrEquivF {a} r ** FreePrEquivI {a} r)
+
+public export
 FrPrErefl : {a : Type} -> {r : PrERel a} -> (ea : a) -> FreePrEquivF r (ea, ea)
 FrPrErefl {a} {r} ea = InSlFc $ PrErefl ea
 
