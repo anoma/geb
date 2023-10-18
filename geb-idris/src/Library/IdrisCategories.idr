@@ -4367,12 +4367,27 @@ freeEquivBindPres {a} {b} {ra} {rb} {f} =
 -- elements of the domain (i.e. the morphisms are extensionally equal).
 public export
 PresEqRel : {a, b : Type} ->
+  {f, g : a -> b} -> {ra : PrERel a} -> {rb : PrEquivRel b} ->
+  PrERelPres {a} {b} g ra (fst rb) ->
+  PrERelIntExt f g (fst rb) ->
+  PrERelBiPres f g ra (fst rb)
+PresEqRel {a} {b} {f} {g} {ra} {rb} gpres bipres ea ea' eqa =
+  PrEquivTrans rb (gpres ea ea' eqa) (bipres ea ea Refl)
+
+-- If an equivalence-closure-preserving morphism agrees (up to the equivalence
+-- closure of a relation on the codomain) with another morphism on
+-- _intensionally_ equal -- elements of the domain, then the two morphisms
+-- agree (up to the equivalence closure of the domain relationship) on all
+-- _equivalent_ elements of the domain (i.e. the morphisms are extensionally
+-- equal).
+public export
+PresFrEqRel : {a, b : Type} ->
   {f, g : a -> b} -> {ra : PrERel a} -> {rb : PrERel b} ->
   PrERelPres {a} {b} g ra (FreePrEquivF rb) ->
   PrERelIntExt f g (FreePrEquivF rb) ->
   PrERelBiPres f g (FreePrEquivF ra) (FreePrEquivF rb)
-PresEqRel {a} {b} {f} {g} {ra} {rb} gpres bipres ea ea' eqa =
-  FrPrEtrans
+PresFrEqRel {a} {b} {f} {g} {ra} {rb} gpres bipres ea ea' eqa =
+  FrPrEtrans {r=rb}
     (freeEquivBindPres {a} {b} {ra} {rb} {f=g} gpres ea ea' eqa)
     (bipres ea ea Refl)
 
