@@ -4391,6 +4391,72 @@ PresFrEqRel {a} {b} {f} {g} {ra} {rb} gpres bipres ea ea' eqa =
     (freeEquivBindPres {a} {b} {ra} {rb} {f=g} gpres ea ea' eqa)
     (bipres ea ea Refl)
 
+---------------------------------------------
+---- Closures of some universal relations ----
+---------------------------------------------
+
+public export
+EmptyRel : (t : Type) -> RelationOn t
+EmptyRel t el el' = Void
+
+public export
+VoidRel : RelationOn Void
+VoidRel v _ = void v
+
+public export
+FullRel : (t : Type) -> RelationOn t
+FullRel t el el' = ()
+
+public export
+UnitRel : RelationOn Unit
+UnitRel = FullRel ()
+
+public export
+0 ClosureOfEmptyRelImpliesEq : (0 a : Type) ->
+  PrRelImp (FreePrEquivF $ uncurry $ EmptyRel a) (EqPrRel {a} {b=a})
+ClosureOfEmptyRelImpliesEq a ea ea' =
+  freePrEquivEval {a} (uncurry $ EmptyRel a) (\(x, y) => x = y)
+    (\(ea, ea'), v => void v)
+    (\(ea, ea'), eqa => case eqa of
+      PrErefl _ => Refl
+      PrEsym _ _ Refl => Refl
+      PrEtrans _ _ _ Refl Refl => Refl)
+    (ea, ea')
+
+public export
+0 EqImpliesClosureOfEmptyRel : (0 a : Type) ->
+  PrRelImp (EqPrRel {a} {b=a}) (FreePrEquivF $ uncurry $ EmptyRel a)
+EqImpliesClosureOfEmptyRel a ea _ Refl = FrPrErefl ea
+
+public export
+0 ClosureOfEmptyRelIsEq : (0 a : Type) ->
+  PrRelBiImp (FreePrEquivF $ uncurry $ EmptyRel a) (EqPrRel {a} {b=a})
+ClosureOfEmptyRelIsEq a =
+  (ClosureOfEmptyRelImpliesEq a, EqImpliesClosureOfEmptyRel a)
+
+public export
+0 ClosureOfEqRelImpliesEq : (0 a : Type) ->
+  PrRelImp (FreePrEquivF $ EqPrRel {a} {b=a}) (EqPrRel {a} {b=a})
+ClosureOfEqRelImpliesEq a ea ea' =
+  freePrEquivEval {a} (EqPrRel {a} {b=a}) (\(x, y) => x = y)
+    (\(ea, ea'), Refl => Refl)
+    (\(ea, ea'), eqa => case eqa of
+      PrErefl _ => Refl
+      PrEsym _ _ Refl => Refl
+      PrEtrans _ _ _ Refl Refl => Refl)
+    (ea, ea')
+
+public export
+0 EqImpliesClosureOfEqRel : (0 a : Type) ->
+  PrRelImp (EqPrRel {a} {b=a}) (FreePrEquivF $ EqPrRel {a} {b=a})
+EqImpliesClosureOfEqRel a ea _ Refl = FrPrErefl ea
+
+public export
+0 ClosureOfEqRelIsEq : (0 a : Type) ->
+  PrRelBiImp (FreePrEquivF $ EqPrRel {a} {b=a}) (EqPrRel {a} {b=a})
+ClosureOfEqRelIsEq a =
+  (ClosureOfEqRelImpliesEq a, EqImpliesClosureOfEqRel a)
+
 -----------------------
 -----------------------
 ---- Refined types ----
@@ -11756,22 +11822,6 @@ PredicateNu {t} f = CofreeCMPredicate f $ TerminalSliceObj t
 -------------------
 ---- Relations ----
 -------------------
-
-public export
-EmptyRel : (t : Type) -> RelationOn t
-EmptyRel t el el' = Void
-
-public export
-VoidRel : RelationOn Void
-VoidRel v _ = void v
-
-public export
-FullRel : (t : Type) -> RelationOn t
-FullRel t el el' = ()
-
-public export
-UnitRel : RelationOn Unit
-UnitRel = FullRel ()
 
 public export
 ProductRelation : RelationOn a -> RelationOn b -> RelationOn (a, b)
