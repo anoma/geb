@@ -1639,7 +1639,6 @@ public export
 QMExp : QType -> QType -> QType
 QMExp = flip QMHom
 
-{-
 public export
 qmId : (a : QType) -> QMorph a a
 qmId a = Element0 (id {a=(QBase a)}) $ \_, _ => id
@@ -1664,24 +1663,18 @@ QTCat = SC
   (uncurry QMorph)
   qmId
   qmComp
-  (\(x, y) =>
-    MkEq (QMExtEq {x} {y})
-      (MkEquivalence
-        QMorphPres
-        (\pres, ex, ex', eqx => FrPrEsym $ pres ex' ex $ FrPrEsym eqx)
-        (\presxy, presyz =>
-          MkQMExtEq $
-            \ex =>
-              FrPrEtrans
-                (presxy ex ex $ FrPrErefl ex)
-                (presyz ex ex $ FrPrErefl ex))))
-  QMorphPres
-  QMorphPres
+  (\(Element0 x (rx ** eqrx), Element0 y (ry ** eqry)) =>
+    MkEq (curry QMExtEq) ?Isequiv_hole)
+  (?QMorphPres_hole_idl)
+  (?QMorphPres_hole_idr)
+  (?QMorphPres_hole_assoc)
+  {-  XXX
   (\f, g, h, ea, ea', aeq =>
     QMorphPres h
       (QMorphBase g (QMorphBase f ea)) (QMorphBase g (QMorphBase f ea'))
     $ QMorphPres g (QMorphBase f ea) (QMorphBase f ea')
     $ QMorphPres f ea ea' aeq)
+    -}
 
 ----------------------------------------------
 ---------------------------------------------
@@ -1734,6 +1727,8 @@ public export
   PrRelBiImp (FreePrEquivF $ EqPrRel {a} {b=a}) (EqPrRel {a} {b=a})
 ClosureOfEqRelIsEq a =
   (ClosureOfEqRelImpliesEq a, EqImpliesClosureOfEqRel a)
+
+{-
 
 ---------------------------------------------
 ---------------------------------------------
