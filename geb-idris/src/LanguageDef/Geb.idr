@@ -1481,24 +1481,26 @@ depProdArHomContramap {dom} {cod1} {cod2} dar m (elcod1, elcod2) fx =
 ---- Definitions ----
 ---------------------
 
--- A quotient type is a type together with a relation which we shall
--- implicitly treat (when defining the morphisms of the category of
--- quotientable types) as an equivalence relation.
+-- A quotient type is a type together with an equivalence relation.
 public export
 QType : Type
-QType = Subset0 Type RelationOn
+QType = Subset0 Type PrEquivRel
 
 public export
 QBase : QType -> Type
 QBase = fst0
 
 public export
-0 QBaseRel : (0 x : QType) -> RelationOn (QBase x)
-QBaseRel x = snd0 x
+0 QRel : (0 x : QType) -> PrEquivRel (QBase x)
+QRel x = snd0 x
 
 public export
-0 QEffRel : (0 x : QType) -> RelationOn (QBase x)
-QEffRel x = curry $ FreePrEquivF (uncurry $ QBaseRel x)
+0 QBaseRel : (0 x : QType) -> PrERel (QBase x)
+QBaseRel x = fst (QRel x)
+
+public export
+0 QRelEquivI : (0 x : QType) -> PrEquivRelI (QBase x) (QBaseRel x)
+QRelEquivI x = snd (QRel x)
 
 public export
 QFunc : QType -> QType -> Type
@@ -1506,9 +1508,7 @@ QFunc x y = QBase x -> QBase y
 
 public export
 0 QPres : (0 x, y : QType) -> SliceObj (QFunc x y)
-QPres x y f =
-  PrERelPres {a=(QBase x)} {b=(QBase y)}
-    f (uncurry $ QEffRel x) (uncurry $ QEffRel y)
+QPres x y f = PrERelPres {a=(QBase x)} {b=(QBase y)} f (QBaseRel x) (QBaseRel y)
 
 public export
 QMorph : QType -> QType -> Type
@@ -1523,25 +1523,6 @@ public export
   (f : QMorph x y) -> QPres x y (QMorphBase {x} {y} f)
 QMorphPres = snd0
 
-public export
-0 QKPres : (0 x, y : QType) -> SliceObj (QFunc x y)
-QKPres x y f =
-  PrERelPres {a=(QBase x)} {b=(QBase y)}
-    f (uncurry $ QBaseRel x) (uncurry $ QEffRel y)
-
--- Using the Kleisli category of the free equivalence monad, we can generate
--- quotientable-type morphisms by showing only that _base_-related elements
--- are mapped to _closure_-related elements (we do not have to show explicitly
--- that all _closure_-related elements are mapped to closure-related elements).
-public export
-0 QKBind : {0 x, y : QType} -> {0 f : QFunc x y} -> QKPres x y f -> QPres x y f
-QKBind {x=(Element0 x rx)} {y=(Element0 y ry)} {f} =
-  freeEquivBindPres {a=x} {b=y} {ra=(uncurry rx)} {rb=(uncurry ry)} {f}
-
-public export
-QMkMorph : {0 x, y : QType} -> {f : QFunc x y} -> (0 _ : QKPres x y f) ->
-  QMorph x y
-QMkMorph {x} {y} {f} pres = Element0 f (QKBind {x} {y} {f} pres)
 
 -----------------------------------------
 ---- Self-internalization of `QType` ----
@@ -1554,48 +1535,97 @@ QMkMorph {x} {y} {f} pres = Element0 f (QKBind {x} {y} {f} pres)
 -- of equivalence relations themselves.  (It is introducing a proof-irrelevant
 -- layer on top of proof-relevant relations.)
 public export
-data QTEquiv : RelationOn QType where
-  QTE : {0 x : Type} -> {0 r, r' : RelationOn x} ->
-    PrRelBiImp (FreePrEquivF $ uncurry r) (FreePrEquivF $ uncurry r') ->
-    QTEquiv (Element0 x r) (Element0 x r')
+data QTEquiv : PrERel QType where
+  QTE : {0 x : Type} -> {0 r, r' : PrEquivRel x} ->
+    (0 _ : PrRelBiImp (fst r) (fst r')) -> QTEquiv (Element0 x r, Element0 x r')
+
+-- `QTEquiv` is an equivalence relation.
+public export
+QTEquivEquivI : PrEquivRelI QType QTEquiv
+QTEquivEquivI
+  (Element0 x r, Element0 x r) (PrErefl _) =
+    QTE $ PrEquivRefl (BiImpEquivERel x) (fst r)
+QTEquivEquivI
+  (Element0 x r, Element0 x r') (PrEsym _ _ (QTE eq)) =
+    QTE $ PrEquivSym {ea=(fst r')} {ea'=(fst r)} (BiImpEquivERel x) eq
+QTEquivEquivI
+  (Element0 x r, Element0 x r')
+  (PrEtrans (Element0 x r) (Element0 x r'') (Element0 x r')
+    (QTE eq) (QTE eq')) =
+      QTE $ PrEquivTrans {ea=(fst r)} {ea'=(fst r'')} {ea''=(fst r')}
+        (BiImpEquivERel x) eq eq'
 
 public export
-QTEqIso : {0 x, y : QType} -> QTEquiv x y -> QMorph x y
+QTEquivEquiv : PrEquivRel QType
+QTEquivEquiv = (QTEquiv ** QTEquivEquivI)
+
+-- Between any two `QTEquiv`-equivalent types, there is an isomorphism
+-- whose underlying function is the identity.
+public export
+QTEqIso : {0 x, y : QType} -> QTEquiv (x, y) -> QMorph x y
 QTEqIso {x=(Element0 x r)} {y=(Element0 x r')} (QTE {x} {r} {r'} imp) =
   Element0 id $ fst imp
 
 -- Using `QTEquiv`, we can make `QType` itself a `QType`.
 public export
 QTypeQT : QType
-QTypeQT = Element0 QType QTEquiv
+QTypeQT = Element0 QType QTEquivEquiv
 
 -- We can also define an extensional equality on morphisms of `QType`.
 public export
-0 QMExtEq : {0 x, y : QType} -> QMorph x y -> QMorph x y -> Type
-QMExtEq {x} {y} f g =
+0 QMExtEq : {0 x, y : QType} -> PrERel (QMorph x y)
+QMExtEq {x} {y} (f, g) =
   PrERelBiPres {a=(QBase x)} {b=(QBase y)}
-    (QMorphBase f) (QMorphBase g) (uncurry $ QEffRel x) (uncurry $ QEffRel y)
+    (QMorphBase f) (QMorphBase g) (QBaseRel x) (QBaseRel y)
+
+-- `QMExtEq` is an equivalence relation.
+public export
+0 QMExtEqEquivI : {0 x, y : QType} -> PrEquivRelI (QMorph x y) (QMExtEq {x} {y})
+QMExtEqEquivI {x=(Element0 x (rx ** eqx))} {y=(Element0 y (ry ** eqy))}
+  (Element0 f fpres, Element0 f fpres) (PrErefl _) =
+    fpres
+QMExtEqEquivI {x=(Element0 x (rx ** eqx))} {y=(Element0 y (ry ** eqy))}
+  (Element0 f fpres, Element0 g gpres) (PrEsym _ _ r) =
+    \ex, ex', rex =>
+      eqy (f ex, g ex') $ PrEtrans (f ex) (g ex) (g ex') (gpres ex ex' rex)
+      $ eqy (f ex, g ex) $ PrEtrans (f ex) (f ex') (g ex)
+      (eqy (f ex', g ex) $ PrEsym (g ex) (f ex') $ r ex ex' rex)
+      $ fpres ex ex' rex
+QMExtEqEquivI {x=(Element0 x (rx ** eqx))} {y=(Element0 y (ry ** eqy))}
+  (Element0 f fpres, Element0 g gpres) (PrEtrans _ (Element0 h hpres) _ r r') =
+    \ex, ex', rex =>
+      eqy (f ex, g ex') $ PrEtrans (f ex) (g ex) (g ex') (gpres ex ex' rex)
+      $ eqy (f ex, g ex) $ PrEtrans (f ex) (h ex') (g ex)
+      (eqy (h ex', g ex) $ PrEtrans (h ex') (g ex') (g ex)
+        (eqy (g ex', g ex) $ PrEsym (g ex) (g ex') $ gpres ex ex' rex)
+        (eqy (h ex', g ex') $ PrEtrans (h ex') (h ex) (g ex')
+          (r ex ex' rex)
+          $ eqy (h ex', h ex) $ PrEsym (h ex) (h ex') $ hpres ex ex' rex))
+      $ r' ex ex' rex
+
+public export
+0 QMExtEqEquiv : (0 x, y : QType) -> PrEquivRel (QMorph x y)
+QMExtEqEquiv x y = (QMExtEq {x} {y} ** QMExtEqEquivI {x} {y})
 
 -- This type represents that two `QType` morphisms agree (up to codomain
 -- equivalence) on intensionally equal elements of the domain.
 public export
-0 QMIntExt : {0 x, y : QType} -> (f, g : QMorph x y) -> Type
-QMIntExt {x} {y} f g =
-  (ex : QBase x) ->
-    QEffRel y (QMorphBase {x} {y} f ex) (QMorphBase {x} {y} g ex)
+0 QMIntExt : {0 x, y : QType} -> PrERel (QMorph x y)
+QMIntExt {x} {y} (f, g) = PrERelIntExt {a=(QBase x)} {b=(QBase y)}
+  (QMorphBase f) (QMorphBase g) (QBaseRel y)
 
 -- To show that `QType` morphisms are extensionally equal, we only need to
 -- show that they agree (up to codomain equivalence) on _intensionally_
 -- equal elements of the domain.
 public export
 0 MkQMExtEq : {0 x, y : QType} -> {f, g : QMorph x y} ->
-  QMIntExt {x} {y} f g -> QMExtEq {x} {y} f g
-MkQMExtEq {x} {y} {f} {g} exteq =
+  QMIntExt {x} {y} (f, g) -> QMExtEq {x} {y} (f, g)
+MkQMExtEq {x} {y} {f} {g} intext =
   PresEqRel
-    {a=(QBase x)} {b=(QBase y)} {f=(QMorphBase f)} {g=(QMorphBase g)}
-    {ra=(uncurry $ QBaseRel x)} {rb=(uncurry $ QBaseRel y)}
-    (\ea, ea', eqa => QMorphPres g ea ea' $ InSlFv eqa)
-    (\ea, ea', Refl => exteq ea)
+    {a=(QBase x)} {b=(QBase y)}
+    {f=(QMorphBase f)} {g=(QMorphBase g)}
+    {ra=(QBaseRel x)} {rb=(QRel y)}
+    (QMorphPres g) intext
 
 -- Using the notion of extensional equality on QType morphisms (up to the
 -- equivalences embedded within the types), we can define the hom-set of
@@ -1603,12 +1633,13 @@ MkQMExtEq {x} {y} {f} {g} exteq =
 -- closed.
 public export
 QMHom : QType -> QType -> QType
-QMHom x y = Element0 (QMorph x y) (QMExtEq {x} {y})
+QMHom x y = Element0 (QMorph x y) (QMExtEqEquiv x y)
 
 public export
 QMExp : QType -> QType -> QType
 QMExp = flip QMHom
 
+{-
 public export
 qmId : (a : QType) -> QMorph a a
 qmId a = Element0 (id {a=(QBase a)}) $ \_, _ => id
@@ -1937,6 +1968,7 @@ qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
 public export
 QQuivEdge : QType -> QType
 QQuivEdge vert = QPred $ QProd vert vert
+-}
 
 -----------------------------------------------
 -----------------------------------------------
