@@ -4181,6 +4181,20 @@ public export
 PrEquivRel : Type -> Type
 PrEquivRel a = DPair (PrERel a) (PrEquivRelI a)
 
+public export
+PrEquivRefl : {a : Type} -> (r : PrEquivRel a) -> (ea : a) -> fst r (ea, ea)
+PrEquivRefl {a} r ea = snd r (ea, ea) $ PrErefl ea
+
+public export
+PrEquivSym : {a : Type} -> (r : PrEquivRel a) -> {ea, ea' : a} ->
+  fst r (ea, ea') -> fst r (ea', ea)
+PrEquivSym {a} r {ea} {ea'} = snd r (ea', ea) . PrEsym ea ea'
+
+public export
+PrEquivTrans : {a : Type} -> (r : PrEquivRel a) -> {ea, ea', ea'' : a} ->
+  fst r (ea, ea') -> fst r (ea', ea'') -> fst r (ea, ea'')
+PrEquivTrans {a} r {ea} {ea'} {ea''} = snd r (ea, ea'') .* PrEtrans ea ea' ea''
+
 -- The free (dependent) monad of `PrEquivF`.
 public export
 FreePrEquivF : {a : Type} -> PrERelF a
@@ -4200,22 +4214,19 @@ FreePrEquivRel {a} r = (FreePrEquivF {a} r ** FreePrEquivI {a} r)
 
 public export
 FrPrErefl : {a : Type} -> {r : PrERel a} -> (ea : a) -> FreePrEquivF r (ea, ea)
-FrPrErefl {a} {r} ea =
-  FreePrEquivI r (ea, ea) $ PrErefl ea
+FrPrErefl {a} {r} = PrEquivRefl (FreePrEquivRel r)
 
 public export
 FrPrEsym : {a : Type} -> {r : PrERel a} ->
   {ea, ea' : a} -> FreePrEquivF r (ea, ea') -> FreePrEquivF r (ea', ea)
-FrPrEsym {a} {r} {ea} {ea'} =
-  FreePrEquivI r (ea', ea) . PrEsym ea ea'
+FrPrEsym {a} {r} = PrEquivSym (FreePrEquivRel r)
 
 public export
 FrPrEtrans : {a : Type} -> {r : PrERel a} ->
   {ea, ea', ea'' : a} ->
   FreePrEquivF r (ea, ea') -> FreePrEquivF r (ea', ea'') ->
   FreePrEquivF r (ea, ea'')
-FrPrEtrans {a} {r} {ea} {ea'} {ea''} =
-  FreePrEquivI r (ea, ea'') .* PrEtrans ea ea' ea''
+FrPrEtrans {a} {r} = PrEquivTrans (FreePrEquivRel r)
 
 -- The free equivalence monad has the universal `eval` morphism of a free monad.
 public export
