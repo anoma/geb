@@ -4200,20 +4200,22 @@ FreePrEquivRel {a} r = (FreePrEquivF {a} r ** FreePrEquivI {a} r)
 
 public export
 FrPrErefl : {a : Type} -> {r : PrERel a} -> (ea : a) -> FreePrEquivF r (ea, ea)
-FrPrErefl {a} {r} ea = InSlFc $ PrErefl ea
+FrPrErefl {a} {r} ea =
+  FreePrEquivI r (ea, ea) $ PrErefl ea
 
 public export
 FrPrEsym : {a : Type} -> {r : PrERel a} ->
   {ea, ea' : a} -> FreePrEquivF r (ea, ea') -> FreePrEquivF r (ea', ea)
-FrPrEsym {a} {r} {ea} {ea'} rfa = InSlFc $ PrEsym ea ea' rfa
+FrPrEsym {a} {r} {ea} {ea'} =
+  FreePrEquivI r (ea', ea) . PrEsym ea ea'
 
 public export
 FrPrEtrans : {a : Type} -> {r : PrERel a} ->
   {ea, ea', ea'' : a} ->
   FreePrEquivF r (ea, ea') -> FreePrEquivF r (ea', ea'') ->
   FreePrEquivF r (ea, ea'')
-FrPrEtrans {a} {r} {ea} {ea'} {ea''} rfa rfa' =
-  InSlFc $ PrEtrans ea ea' ea'' rfa rfa'
+FrPrEtrans {a} {r} {ea} {ea'} {ea''} =
+  FreePrEquivI r (ea, ea'') .* PrEtrans ea ea' ea''
 
 -- The free equivalence monad has the universal `eval` morphism of a free monad.
 public export
