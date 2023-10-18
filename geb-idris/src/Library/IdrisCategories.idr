@@ -4122,6 +4122,7 @@ public export
 PrRelImp : {a, b : Type} -> (r, r' : PrRel a b) -> Type
 PrRelImp {a} {b} = PrRelBiPres {a} {a'=b} {b=a} {b'=b} id id
 
+-- The statement that `r` and `r'` imply each other.
 public export
 PrRelBiImp : {a, b : Type} -> (r, r' : PrRel a b) -> Type
 PrRelBiImp r r' = (PrRelImp r r', PrRelImp r' r)
@@ -4243,6 +4244,30 @@ public export
 ExtEqPrEquivRel : (0 a, b : Type) -> PrEquivRel (a -> b)
 ExtEqPrEquivRel a b =
   (ExtEqPrRel {a=(a -> b)} {b=(a -> b)} ** ExtEqPrEquivRelI a b)
+
+-- Bi-implication is an equivalence relation on relations.
+public export
+BiImpEquivRelI : (0 a, b : Type) ->
+  PrEquivRelI (PrRel a b) (Prelude.uncurry $ PrRelBiImp {a} {b})
+BiImpEquivRelI a b (r, r) (PrErefl r) =
+  (\_, _ => id, \_, _ => id)
+BiImpEquivRelI a b (r', r) (PrEsym r r' (impl, impr)) =
+  (impr, impl)
+BiImpEquivRelI a b (r, r'') (PrEtrans r r' r'' (impl, impr) (impl', impr')) =
+  (\ea, eb => impl' ea eb . impl ea eb, \ea, eb => impr ea eb . impr' ea eb)
+
+public export
+BiImpEquivRel : (a, b : Type) -> PrEquivRel (PrRel a b)
+BiImpEquivRel a b = (Prelude.uncurry (PrRelBiImp {a} {b}) ** BiImpEquivRelI a b)
+
+public export
+BiImpEquivERelI : (0 a : Type) ->
+  PrEquivRelI (PrERel a) (Prelude.uncurry $ PrRelBiImp {a} {b=a})
+BiImpEquivERelI a = BiImpEquivRelI a a
+
+public export
+BiImpEquivERel : (a : Type) -> PrEquivRel (PrERel a)
+BiImpEquivERel a = BiImpEquivRel a a
 
 -- The free (dependent) monad of `PrEquivF`.
 public export
