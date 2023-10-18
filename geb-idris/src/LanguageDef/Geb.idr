@@ -1949,39 +1949,39 @@ QQuivEdge vert = QPred $ QProd vert vert
 -----------------------------------------------
 
 public export
-SliceObjPair : (Type, Type) -> Type
-SliceObjPair xy = SliceObj (Pair (fst xy) (snd xy))
-
-public export
 PolyProfData : Type
-PolyProfData = (xy : (Type, Type) ** SliceObjPair xy)
+PolyProfData = (pos : Type ** (pos -> Type, pos -> Type))
 
 public export
 InterpPolyProfData : PolyProfData -> ProfunctorSig
 InterpPolyProfData ppd x y =
-  (ij : (fst (fst ppd), snd (fst ppd)) **
-   PrePostPair (snd ppd ij) (snd ppd ij) x y)
+  (p : fst ppd ** PrePostPair (fst (snd ppd) p) (snd (snd ppd) p) x y)
 
 public export
 ppdDimap : (ppd : PolyProfData) -> DimapSig (InterpPolyProfData ppd)
 ppdDimap ppd mca mbd pab =
   (fst pab ** (fst (snd pab) . mca, mbd . snd (snd pab)))
 
+-- This position (together with the direction below) makes `HomProf` into a
+-- polynomial by turning its interpretation into `CoProYo`.
+--
+-- These positions are, I believe, the objects of the category of elements
+-- of `HomProf`.
 public export
-HomProfPolyPos1 : Type
-HomProfPolyPos1 = Type
+HomProfPolyPos : Type
+HomProfPolyPos = (ab : (Type, Type) ** fst ab -> snd ab)
 
 public export
-HomProfPolyPos2 : Type
-HomProfPolyPos2 = Type
+HomProfPolyDir1 : HomProfPolyPos -> Type
+HomProfPolyDir1 = fst . fst
 
 public export
-HomProfPolyPos : (Type, Type)
-HomProfPolyPos = (HomProfPolyPos1, HomProfPolyPos2)
+HomProfPolyDir2 : HomProfPolyPos -> Type
+HomProfPolyDir2 = snd . fst
 
 public export
-HomProfPolyDir : SliceObjPair HomProfPolyPos
-HomProfPolyDir xy = Pair (fst xy) (snd xy)
+HomProfPolyDir : (HomProfPolyPos -> Type, HomProfPolyPos -> Type)
+HomProfPolyDir = (HomProfPolyDir1, HomProfPolyDir2)
 
 public export
 HomProfPolyData : PolyProfData
@@ -1989,12 +1989,11 @@ HomProfPolyData = (HomProfPolyPos ** HomProfPolyDir)
 
 public export
 HomProfToPoly : ProfNT HomProf (InterpPolyProfData HomProfPolyData)
-HomProfToPoly {a} {b} mab =
-  ((a, Unit) ** (\ea => (ea, ()), \(ea, ()) => mab ea))
+HomProfToPoly {a} {b} mab = (((a, b) ** mab) ** (id, id))
 
 public export
 HomProfFromPoly : ProfNT (InterpPolyProfData HomProfPolyData) HomProf
-HomProfFromPoly {a} {b} pab = snd (snd pab) . fst (snd pab)
+HomProfFromPoly {a} {b} pab = snd (snd pab) . snd (fst pab) . fst (snd pab)
 
 public export
 HomProfToFromPolyId : {a, b : Type} ->
@@ -2007,6 +2006,37 @@ HomProfToFromPolyId : {a, b : Type} ->
     mab =
   mab
 HomProfToFromPolyId {a} {b} mab = Refl
+
+{- This dictates an equivalence relation that we could use in a logic
+ - with quotient types.
+public export
+HomProfFromToPolyId : {a, b : Type} ->
+  (mab : InterpPolyProfData HomProfPolyData a b) ->
+  ProfNTcomp
+     {p=(InterpPolyProfData HomProfPolyData)}
+     {q=HomProf}
+     {r=(InterpPolyProfData HomProfPolyData)}
+    HomProfToPoly HomProfFromPoly {a} {b}
+    mab =
+  mab
+HomProfFromToPolyId {a} {b} ((cd ** mcd) ** (mac, mdb)) =
+  HomProfFromToPolyId_hole
+-}
+
+public export
+CatToPolyProfPos : SCat -> Type
+CatToPolyProfPos = scObj
+
+public export
+CatToPolyProfDir :
+  (sc : SCat) -> (CatToPolyProfPos sc -> Type, CatToPolyProfPos sc -> Type)
+CatToPolyProfDir sc =
+  (Sigma {a=(scObj sc)} . curry (scHom sc),
+   Sigma {a=(scObj sc)} . flip (curry (scHom sc)))
+
+public export
+CatToPolyProf : SCat -> PolyProfData
+CatToPolyProf sc = (CatToPolyProfPos sc ** CatToPolyProfDir sc)
 
 -----------------------------------------------------
 ---- Category/polynomial-promonad correspondence ----
@@ -2144,17 +2174,3 @@ SumRepCorepProfunctor : {0 ffp : FunctorFamPair} -> (ffpm : FFPMapSig ffp) ->
   Profunctor (SumRepCorepProf ffp)
 SumRepCorepProfunctor {ffp} ffpm =
   MkProfunctor $ sumRepCorepProfDimap {ffp} ffpm
-
-public export
-CatToPolyProfPos : SCat -> Type
-CatToPolyProfPos = scObj
-
-public export
-CatToPolyProfDir :
-  (sc : SCat) -> (CatToPolyProfPos sc, CatToPolyProfPos sc) -> Type
-CatToPolyProfDir = scHom
-
-public export
-CatToPolyProf : SCat -> PolyProfData
-CatToPolyProf sc =
-  ((CatToPolyProfPos sc, CatToPolyProfPos sc) ** CatToPolyProfDir sc)
