@@ -4149,7 +4149,7 @@ data PrEquivF : {0 a : Type} -> PrERelF a where
   PrEsym : {0 a : Type} -> {0 r : PrERel a} ->
     (ea, ea' : a) -> r (ea, ea') -> PrEquivF {a} r (ea', ea)
   PrEtrans : {0 a : Type} -> {0 r : PrERel a} ->
-    (ea, ea', ea'' : a) -> r (ea, ea') -> r (ea', ea'') ->
+    (ea, ea', ea'' : a) -> r (ea', ea'') -> r (ea, ea') ->
     PrEquivF {a} r (ea, ea'')
 
 public export
@@ -4170,7 +4170,7 @@ prEquivFMap r r' m (ea, ea) (PrErefl ea) =
 prEquivFMap r r' m (ea, ea') (PrEsym ea' ea rx) =
   PrEsym ea' ea (m (ea', ea) rx)
 prEquivFMap r r' m (ea, ea'') (PrEtrans ea ea' ea'' rx rx') =
-  PrEtrans ea ea' ea'' (m (ea, ea') rx) (m (ea', ea'') rx')
+  PrEtrans ea ea' ea'' (m (ea', ea'') rx) (m (ea, ea') rx')
 
 -- The interface of an equivalence relation.
 public export
@@ -4193,7 +4193,7 @@ PrEquivSym {a} r {ea} {ea'} = snd r (ea', ea) . PrEsym ea ea'
 
 public export
 PrEquivTrans : {a : Type} -> (r : PrEquivRel a) -> {ea, ea', ea'' : a} ->
-  fst r (ea, ea') -> fst r (ea', ea'') -> fst r (ea, ea'')
+  fst r (ea', ea'') -> fst r (ea, ea') -> fst r (ea, ea'')
 PrEquivTrans {a} r {ea} {ea'} {ea''} = snd r (ea, ea'') .* PrEtrans ea ea' ea''
 
 -- Equality is an equivalence relation.
@@ -4201,7 +4201,7 @@ public export
 EqPrEquivRelI : (0 a : Type) -> PrEquivRelI a (EqPrRel {a} {b=a})
 EqPrEquivRelI a (ea, ea) (PrErefl ea) = Refl
 EqPrEquivRelI a (ea', ea) (PrEsym ea ea' eq) = sym eq
-EqPrEquivRelI a (ea, ea'') (PrEtrans ea ea' ea'' eq eq') = trans eq eq'
+EqPrEquivRelI a (ea, ea'') (PrEtrans ea ea' ea'' eq eq') = trans eq' eq
 
 public export
 EqPrEquivRel : (0 a : Type) -> PrEquivRel a
@@ -4238,7 +4238,7 @@ ExtEqPrEquivRelI a b (fa, fa'')
     ExtEqExtEq $ \ea => case eq' of Refl => eq ea
 ExtEqPrEquivRelI a b (fa, fa'')
   (PrEtrans fa fa' fa'' (ExtEqExtEq eq) (ExtEqExtEq eq')) =
-    ExtEqExtEq $ \ea => trans (eq ea) (eq' ea)
+    ExtEqExtEq $ \ea => trans (eq' ea) (eq ea)
 
 public export
 ExtEqPrEquivRel : (0 a, b : Type) -> PrEquivRel (a -> b)
@@ -4254,7 +4254,7 @@ BiImpEquivRelI a b (r, r) (PrErefl r) =
 BiImpEquivRelI a b (r', r) (PrEsym r r' (impl, impr)) =
   (impr, impl)
 BiImpEquivRelI a b (r, r'') (PrEtrans r r' r'' (impl, impr) (impl', impr')) =
-  (\ea, eb => impl' ea eb . impl ea eb, \ea, eb => impr ea eb . impr' ea eb)
+  (\ea, eb => impl ea eb . impl' ea eb, \ea, eb => impr' ea eb . impr ea eb)
 
 public export
 BiImpEquivRel : (a, b : Type) -> PrEquivRel (PrRel a b)
@@ -4298,7 +4298,7 @@ FrPrEsym {a} {r} = PrEquivSym (FreePrEquivRel r)
 public export
 FrPrEtrans : {a : Type} -> {r : PrERel a} ->
   {ea, ea', ea'' : a} ->
-  FreePrEquivF r (ea, ea') -> FreePrEquivF r (ea', ea'') ->
+  FreePrEquivF r (ea', ea'') -> FreePrEquivF r (ea, ea') ->
   FreePrEquivF r (ea, ea'')
 FrPrEtrans {a} {r} = PrEquivTrans (FreePrEquivRel r)
 
@@ -4314,8 +4314,8 @@ freePrEquivEval {a} sv sa subst alg pa (InSlF pa (InSlC x)) = case x of
       (freePrEquivEval {a} sv sa subst alg (ea, ea') r)
   PrEtrans ea ea' ea'' r r' =>
     alg (ea, ea'') $ PrEtrans ea ea' ea''
-      (freePrEquivEval {a} sv sa subst alg (ea, ea') r)
-      (freePrEquivEval {a} sv sa subst alg (ea', ea'') r')
+      (freePrEquivEval {a} sv sa subst alg (ea', ea'') r)
+      (freePrEquivEval {a} sv sa subst alg (ea, ea') r')
 
 public export
 freePrEquivBind : {a : Type} -> SliceBind (FreePrEquivF {a})
@@ -4330,10 +4330,9 @@ prEquivBimap : {a, b : Type} -> {rb : PrERel b} ->
 prEquivBimap {rb} {f} {g} ext (ea, ea) (PrErefl ea) =
   ext ea ea Refl
 prEquivBimap {rb} {f} {g} ext (ea', ea) (PrEsym ea ea' rfa) =
-  FrPrEtrans (ext ea' ea' Refl)
-  $ FrPrEtrans
-    (InSlFc {f=PrEquivF} $ PrEsym {r=(FreePrEquivF rb)} (f ea) (g ea') rfa)
-  $ ext ea ea Refl
+  FrPrEtrans (ext ea ea Refl)
+  $ FrPrEtrans (FrPrEsym {ea=(f ea)} {ea'=(g ea')} rfa)
+  $ ext ea' ea' Refl
 prEquivBimap {rb} {f} {g} ext (ea, ea'') (PrEtrans ea ea' ea'' rfa rfa') =
   FrPrEtrans rfa $ FrPrEtrans (FrPrEsym $ ext ea' ea' Refl) rfa'
 
@@ -4373,9 +4372,9 @@ PresEqRel : {a, b : Type} ->
   PrERelIntExt f g (FreePrEquivF rb) ->
   PrERelBiPres f g (FreePrEquivF ra) (FreePrEquivF rb)
 PresEqRel {a} {b} {f} {g} {ra} {rb} gpres bipres ea ea' eqa =
-  FrPrEtrans (bipres ea ea Refl)
-  $ FrPrEtrans (freeEquivBindPres {a} {b} {ra} {rb} {f=g} gpres ea ea' eqa)
-  $ FrPrErefl (g ea')
+  FrPrEtrans
+    (freeEquivBindPres {a} {b} {ra} {rb} {f=g} gpres ea ea' eqa)
+    (bipres ea ea Refl)
 
 -----------------------
 -----------------------
