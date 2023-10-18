@@ -4195,6 +4195,17 @@ PrEquivTrans : {a : Type} -> (r : PrEquivRel a) -> {ea, ea', ea'' : a} ->
   fst r (ea, ea') -> fst r (ea', ea'') -> fst r (ea, ea'')
 PrEquivTrans {a} r {ea} {ea'} {ea''} = snd r (ea, ea'') .* PrEtrans ea ea' ea''
 
+-- Equality is an equivalence relation.
+public export
+EqPrEquivRelI : (0 a : Type) -> PrEquivRelI a (EqPrRel {a} {b=a})
+EqPrEquivRelI a (ea, ea) (PrErefl ea) = Refl
+EqPrEquivRelI a (ea', ea) (PrEsym ea ea' eq) = sym eq
+EqPrEquivRelI a (ea, ea'') (PrEtrans ea ea' ea'' eq eq') = trans eq eq'
+
+public export
+EqPrEquivRel : (0 a : Type) -> PrEquivRel a
+EqPrEquivRel a = (EqPrRel {a} {b=a} ** EqPrEquivRelI {a})
+
 -- The free (dependent) monad of `PrEquivF`.
 public export
 FreePrEquivF : {a : Type} -> PrERelF a
