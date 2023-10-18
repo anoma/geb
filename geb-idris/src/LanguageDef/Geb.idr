@@ -1676,7 +1676,7 @@ QTCat = SC
     $ QMorphPres f ea ea' aeq)
     -}
 
-{-
+{- XXX
 
 ---------------------------------------------
 ---------------------------------------------
@@ -1696,17 +1696,18 @@ QSliceBase : QType -> Type
 QSliceBase a = Subset0 QType (flip QMorph a)
 
 public export
-0 QSliceObjRel : {a : QType} -> RelationOn (QSliceBase a)
-QSliceObjRel sl sl' = QTEquiv (fst0 sl) (fst0 sl')
+0 QSliceObjRel : {a : QType} -> PrERel (QSliceBase a)
+QSliceObjRel (sl, sl') = QTEquiv (fst0 sl, fst0 sl')
 
 public export
 0 QSliceMorphRel : {a : QType} -> (sl, sl' : QSliceBase a) ->
-  (0 _ : QSliceObjRel {a} sl sl') -> Type
+  (0 _ : QSliceObjRel {a} (sl, sl')) -> Type
 QSliceMorphRel sl sl' qte = QMExtEq (snd0 sl) $ qmComp (snd0 sl') $ QTEqIso qte
 
 public export
-0 QSliceRel : {a : QType} -> RelationOn (QSliceBase a)
-QSliceRel sl sl' = Exists0 (QSliceObjRel sl sl') (QSliceMorphRel sl sl')
+0 QSliceRel : {a : QType} -> PrERel (QSliceBase a)
+QSliceRel (sl, sl') =
+  Exists0 (QSliceObjRel (sl, sl')) (QSliceMorphRel (sl, sl'))
 
 public export
 QSliceObj : QType -> QType
@@ -1911,7 +1912,8 @@ qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
 public export
 QQuivEdge : QType -> QType
 QQuivEdge vert = QPred $ QProd vert vert
--}
+
+XXX -}
 
 -----------------------------------------------
 -----------------------------------------------
