@@ -6399,12 +6399,16 @@ fromCoYoC : (f : (Type -> Type) -> Type) ->
 fromCoYoC f {isF} {r} (MkCoYoC (b ** (alpha, x))) = isF b r alpha x
 
 public export
+ProYoEmbedding : ProfunctorSig -> Type -> Type -> Type
+ProYoEmbedding p c d = ProfNT (PrePostPair c d) p
+
+public export
 record ProYo (p : Type -> Type -> Type) (c, d : Type) where
   constructor MkProYo
   -- An equivalent structure is called `Yoneda/runYoneda` in some Haskell
   -- libraries; this formulation makes the Yoneda-lemma instantiation more
   -- explicit, and in particular factors out the `PrePostPair` notion.
-  ProYoEmbed : ProfNT (PrePostPair c d) p
+  ProYoEmbed : ProYoEmbedding p c d
 
 public export
 fromProYo : {p : Type -> Type -> Type} ->
@@ -6422,13 +6426,17 @@ Profunctor (ProYo p) where
     MkProYo $ \(con, cov) => py (mca . con, cov . mbd)
 
 public export
+CoProYoEmbedding : ProfunctorSig -> Type -> Type -> (Type, Type) -> Type
+CoProYoEmbedding p c d ab =
+  (PrePostPair (fst ab) (snd ab) c d, p (fst ab) (snd ab))
+
+public export
 record CoProYo (p : Type -> Type -> Type) (c, d : Type) where
   constructor MkCoProYo
   -- An equivalent structure is called `CoYoneda` in some Haskell
   -- libraries; this formulation makes the (co-)Yoneda-lemma instantiation more
   -- explicit, and in particular factors out the `PrePostPair` notion.
-  CoProYoEmbed : Exists {type=(Type, Type)} $
-    \ab => (PrePostPair (fst ab) (snd ab) c d, p (fst ab) (snd ab))
+  CoProYoEmbed : Exists {type=(Type, Type)} $ CoProYoEmbedding p c d
 
 public export
 fromCoProYo : {p : Type -> Type -> Type} -> {isP : Profunctor p} ->
