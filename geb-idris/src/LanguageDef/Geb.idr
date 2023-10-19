@@ -1664,7 +1664,7 @@ QTCat = SC
   qmId
   qmComp
   (\(Element0 x (rx ** eqrx), Element0 y (ry ** eqry)) =>
-    MkEq (curry QMExtEq) ?Isequiv_hole)
+    MkEq (curry QMExtEq) $ EquivItoIsEquiv QMExtEq QMExtEqEquivI)
   (?QMorphPres_hole_idl)
   (?QMorphPres_hole_idr)
   (?QMorphPres_hole_assoc)
