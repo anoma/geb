@@ -1989,8 +1989,6 @@ public export
 qProj2 : (0 x, y : QType) -> QMorph (QProduct x y) y
 qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
 
-{- XXX
-
 ----------------------------
 ----------------------------
 ---- Quivers in `QType` ----
@@ -2011,8 +2009,6 @@ qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
 public export
 QQuivEdge : QType -> QType
 QQuivEdge vert = QPred $ QProduct vert vert
-
-XXX -}
 
 -----------------------------------------------
 -----------------------------------------------
