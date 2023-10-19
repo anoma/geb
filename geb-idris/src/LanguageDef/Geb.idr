@@ -1790,8 +1790,16 @@ QInitBase : Type
 QInitBase = Void
 
 public export
+0 QInitBaseRel : PrERel QInitBase
+QInitBaseRel (v, v') = void v
+
+public export
+0 QInitBaseRelEquivI : PrEquivRelI QInitBase QInitBaseRel
+QInitBaseRelEquivI (v, v') _ = void v
+
+public export
 0 QInitRel : PrEquivRel QInitBase
-QInitRel = EqPrEquivRel QInitBase
+QInitRel = (QInitBaseRel ** QInitBaseRelEquivI)
 
 public export
 QInit : QType
@@ -1809,8 +1817,6 @@ public export
 qInit : (x : QType) -> QMorph QInit x
 qInit x = Element0 (qInitBase x) (QInitPres x)
 
-{- XXX
-
 ------------------
 ---- Terminal ----
 ------------------
@@ -1820,8 +1826,16 @@ QTermBase : Type
 QTermBase = Unit
 
 public export
-0 QTermRel : RelationOn QTermBase
-QTermRel () () = Unit
+0 QTermBaseRel : PrERel QTermBase
+QTermBaseRel ((), ()) = Unit
+
+public export
+0 QTermBaseRelEquivI : PrEquivRelI QTermBase QTermBaseRel
+QTermBaseRelEquivI ((), ()) eq = ()
+
+public export
+0 QTermRel : PrEquivRel QTermBase
+QTermRel = (QTermBaseRel ** QTermBaseRelEquivI)
 
 public export
 QTerm : QType
@@ -1833,11 +1847,13 @@ qTermBase x ex = ()
 
 public export
 0 QTermPres : (x : QType) -> QPres x QTerm (qTermBase x)
-QTermPres x ex ex' eqx = FrPrErefl ()
+QTermPres x ex ex' eqx = ()
 
 public export
 qTerm : (x : QType) -> QMorph x QTerm
 qTerm x = Element0 (qTermBase x) (QTermPres x)
+
+{- XXX
 
 -------------------
 ---- Coproduct ----
