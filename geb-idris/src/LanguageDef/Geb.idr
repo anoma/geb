@@ -1872,7 +1872,28 @@ QCoproductBaseRel x y exy =
 public export
 0 QCoproductBaseRelEquivI : (x, y : QType) ->
   PrEquivRelI (QCoproductBase x y) (QCoproductBaseRel x y)
-QCoproductBaseRelEquivI x y = ?QCoproductBaseRelEquivI_hole
+QCoproductBaseRelEquivI (Element0 x xeq) (Element0 y yeq) exyp exypeq =
+  case exyp of
+    (Left ex, Left ex') => case exypeq of
+      PrErefl _ => PrEquivRefl xeq ex
+      PrEsym _ _ r => PrEquivSym xeq r
+      PrEtrans _ (Left ex'') _ r r' => PrEquivTrans xeq r r'
+      PrEtrans _ (Right ey) _ r r' => void r
+    (Left ex, Right ey) => case exypeq of
+      PrErefl _ impossible
+      PrEsym _ _ r => void r
+      PrEtrans _ (Left ex'') _ r r' => void r
+      PrEtrans _ (Right ey) _ r r' => void r'
+    (Right ey, Left ex) => case exypeq of
+      PrErefl _ impossible
+      PrEsym _ _ r => void r
+      PrEtrans _ (Left ex'') _ r r' => void r'
+      PrEtrans _ (Right ey) _ r r' => void r
+    (Right ey, Right ey') => case exypeq of
+      PrErefl _ => PrEquivRefl yeq ey
+      PrEsym _ _ r => PrEquivSym yeq r
+      PrEtrans _ (Left ex'') _ r r' => void r'
+      PrEtrans _ (Right ey) _ r r' => PrEquivTrans yeq r r'
 
 public export
 0 QCoproductRel : (x, y : QType) -> PrEquivRel (QCoproductBase x y)
@@ -1888,7 +1909,7 @@ qInjLBase x y = Left
 
 public export
 0 QInjLPres : (0 x, y : QType) -> QPres x (QCoproduct x y) (qInjLBase x y)
-QInjLPres x y = ?qInjLPres_hole
+QInjLPres x y _ _ = id
 
 public export
 qInjL : (0 x, y : QType) -> QMorph x (QCoproduct x y)
@@ -1900,7 +1921,7 @@ qInjRBase x y = Right
 
 public export
 0 QInjRPres : (0 x, y : QType) -> QPres y (QCoproduct x y) (qInjRBase x y)
-QInjRPres x y = ?qInjRPres_hole
+QInjRPres x y _ _ = id
 
 public export
 qInjR : (0 x, y : QType) -> QMorph y (QCoproduct x y)
@@ -1915,7 +1936,10 @@ public export
 0 QCasePres : {0 x, y, z : QType} ->
    (f : QMorph x z) -> (g : QMorph y z) ->
    QPres (QCoproduct x y) z (qCaseBase {x} {y} {z} f g)
-QCasePres {x} {y} {z} f g = ?QCasePres_hole
+QCasePres f g (Left ex) (Left ex') = QMorphPres f ex ex'
+QCasePres f g (Left ex) (Right ey) = \v => void v
+QCasePres f g (Right ey) (Left ex) = \v => void v
+QCasePres f g (Right ey) (Right ey') = QMorphPres g ey ey'
 
 public export
 qCase : {0 x, y, z : QType} ->
