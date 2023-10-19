@@ -1563,8 +1563,7 @@ QTEquivEquiv = (QTEquiv ** QTEquivEquivI)
 -- whose underlying function is the identity.
 public export
 QTEqIso : {0 x, y : QType} -> QTEquiv (x, y) -> QMorph x y
-QTEqIso {x=(Element0 x r)} {y=(Element0 x r')} (QTE {x} {r} {r'} imp) =
-  Element0 id $ fst imp
+QTEqIso (QTE imp) = Element0 id $ fst imp
 
 -- Using `QTEquiv`, we can make `QType` itself a `QType`.
 public export
@@ -1697,8 +1696,6 @@ public export
 0 QTDCat : Diagram
 QTDCat = catToDiagForget QTSCat
 
-{- XXX
-
 ---------------------------------------------
 ---------------------------------------------
 ---- Predicates on and slices of `QType` ----
@@ -1723,16 +1720,62 @@ QSliceObjRel (sl, sl') = QTEquiv (fst0 sl, fst0 sl')
 public export
 0 QSliceMorphRel : {a : QType} -> (sl, sl' : QSliceBase a) ->
   (0 _ : QSliceObjRel {a} (sl, sl')) -> Type
-QSliceMorphRel sl sl' qte = QMExtEq (snd0 sl) $ qmComp (snd0 sl') $ QTEqIso qte
+QSliceMorphRel sl sl' qte = QMExtEq (snd0 sl, qmComp (snd0 sl') $ QTEqIso qte)
 
 public export
 0 QSliceRel : {a : QType} -> PrERel (QSliceBase a)
 QSliceRel (sl, sl') =
-  Exists0 (QSliceObjRel (sl, sl')) (QSliceMorphRel (sl, sl'))
+  Exists0 (QSliceObjRel (sl, sl')) (QSliceMorphRel sl sl')
+
+public export
+0 QSliceRelEquivI : {a : QType} -> PrEquivRelI (QSliceBase a) (QSliceRel {a})
+QSliceRelEquivI {a=(Element0 a (aeq ** aequiv))}
+  (Element0 (Element0 x (xeq ** xequiv)) (Element0 f fpres),
+   Element0 (Element0 x' (xeq' ** xequiv')) (Element0 f' fpres'))
+  eq =
+    case eq of
+      PrErefl _ =>
+        Evidence0
+          (QTE (\_, _ => id, \_, _ => id))
+          fpres
+      PrEsym _ _ (Evidence0 (QTE (impl, impr)) gpres) =>
+        Evidence0
+          (QTE (impr, impl))
+          $ \ea, ea', eaeq =>
+            aequiv (f ea, f' ea') $
+              PrEtrans (f ea) (f' ea) (f' ea')
+                (fpres' ea ea' $ impr ea ea' eaeq)
+                $ aequiv (f ea, f' ea) $
+                  PrEtrans (f ea) (f ea') (f' ea)
+                    (aequiv (f ea', f' ea) $ PrEsym (f' ea) (f ea') $
+                      gpres ea ea' $ impr ea ea' eaeq)
+                    (fpres ea ea' eaeq)
+      PrEtrans _ (Element0 (Element0 z (zeq ** zequiv)) (Element0 g gpres)) _
+        (Evidence0 (QTE (impl, impr)) gfpres)
+        (Evidence0 (QTE (impl', impr')) fgpres) =>
+          Evidence0
+            (QTE
+              (\ea, ea' => impl ea ea' . impl' ea ea',
+               \ea, ea' => impr' ea ea' . impr ea ea'))
+            $ \ea, ea', eaeq =>
+              aequiv (f ea, f' ea') $
+                PrEtrans (f ea) (g ea) (f' ea')
+                  (gfpres ea ea' $ impl' ea ea' eaeq)
+                  $ aequiv (f ea, g ea) $
+                    PrEtrans (f ea) (g ea') (g ea)
+                      (aequiv (g ea', g ea) $ PrEsym (g ea) (g ea') $
+                        gpres ea ea' $ impl' ea ea' eaeq)
+                      $ fgpres ea ea' eaeq
+
+public export
+0 QSliceRelEquiv : {a : QType} -> PrEquivRel (QSliceBase a)
+QSliceRelEquiv {a} = (QSliceRel {a} ** QSliceRelEquivI {a})
 
 public export
 QSliceObj : QType -> QType
-QSliceObj a = Element0 (QSliceBase a) (QSliceRel {a})
+QSliceObj a = Element0 (QSliceBase a) (QSliceRelEquiv {a})
+
+{- XXX
 
 ----------------------------------------------------
 ----------------------------------------------------
