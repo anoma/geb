@@ -4196,6 +4196,18 @@ PrEquivTrans : {a : Type} -> (r : PrEquivRel a) -> {ea, ea', ea'' : a} ->
   fst r (ea', ea'') -> fst r (ea, ea') -> fst r (ea, ea'')
 PrEquivTrans {a} r {ea} {ea'} {ea''} = snd r (ea, ea'') .* PrEtrans ea ea' ea''
 
+-- This shows the compatibility of the algebra-defined interface of an
+-- equivalence relation with another version using explicit universal
+-- quantifiers.
+public export
+EquivItoIsEquiv : {0 a : Type} ->
+  (0 r : PrERel a) -> PrEquivRelI a r -> IsEquivalence (curry r)
+EquivItoIsEquiv {a} r eq =
+  MkEquivalence
+    (\ea => eq (ea, ea) $ PrErefl ea)
+    (\rxy => eq (_, _) $ PrEsym _ _ rxy)
+    (\rxy, ryz => eq (_, _) $ PrEtrans _ _ _ ryz rxy)
+
 -- Equality is an equivalence relation.
 public export
 EqPrEquivRelI : (0 a : Type) -> PrEquivRelI a (EqPrRel {a} {b=a})
