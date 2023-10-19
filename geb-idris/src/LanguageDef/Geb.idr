@@ -1853,8 +1853,6 @@ public export
 qTerm : (x : QType) -> QMorph x QTerm
 qTerm x = Element0 (qTermBase x) (QTermPres x)
 
-{- XXX
-
 -------------------
 ---- Coproduct ----
 -------------------
@@ -1864,12 +1862,21 @@ QCoproductBase : (x, y : QType) -> Type
 QCoproductBase x y = Either (QBase x) (QBase y)
 
 public export
-0 QCoproductRel : (x, y : QType) -> RelationOn (QCoproductBase x y)
-QCoproductRel x y exy exy' =
-  case (exy, exy') of
-    (Left ex, Left ex') => QBaseRel x ex ex'
-    (Right ey, Right ey') => QBaseRel y ey ey'
+0 QCoproductBaseRel : (x, y : QType) -> PrERel (QCoproductBase x y)
+QCoproductBaseRel x y exy =
+  case exy of
+    (Left ex, Left ex') => QBaseRel x (ex, ex')
+    (Right ey, Right ey') => QBaseRel y (ey, ey')
     _ => Void
+
+public export
+0 QCoproductBaseRelEquivI : (x, y : QType) ->
+  PrEquivRelI (QCoproductBase x y) (QCoproductBaseRel x y)
+QCoproductBaseRelEquivI x y = ?QCoproductBaseRelEquivI_hole
+
+public export
+0 QCoproductRel : (x, y : QType) -> PrEquivRel (QCoproductBase x y)
+QCoproductRel x y = (QCoproductBaseRel x y ** QCoproductBaseRelEquivI x y)
 
 public export
 QCoproduct : QType -> QType -> QType
@@ -1914,6 +1921,8 @@ public export
 qCase : {0 x, y, z : QType} ->
   QMorph x z -> QMorph y z -> QMorph (QCoproduct x y) z
 qCase f g = Element0 (qCaseBase f g) (QCasePres f g)
+
+{- XXX
 
 -----------------
 ---- Product ----
