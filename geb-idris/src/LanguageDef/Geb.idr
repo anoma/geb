@@ -1775,8 +1775,6 @@ public export
 QSliceObj : QType -> QType
 QSliceObj a = Element0 (QSliceBase a) (QSliceRelEquiv {a})
 
-{- XXX
-
 ----------------------------------------------------
 ----------------------------------------------------
 ---- Universal objects and morphisms in `QType` ----
@@ -1792,8 +1790,8 @@ QInitBase : Type
 QInitBase = Void
 
 public export
-0 QInitRel : RelationOn QInitBase
-QInitRel v = void v
+0 QInitRel : PrEquivRel QInitBase
+QInitRel = EqPrEquivRel QInitBase
 
 public export
 QInit : QType
@@ -1810,6 +1808,8 @@ QInitPres x v = void v
 public export
 qInit : (x : QType) -> QMorph QInit x
 qInit x = Element0 (qInitBase x) (QInitPres x)
+
+{- XXX
 
 ------------------
 ---- Terminal ----
