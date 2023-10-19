@@ -1653,28 +1653,49 @@ qmComp {a} {b} {c} g f =
 ---- `QType` as category (with explicit equivalence) internal to `Type` ----
 ----------------------------------------------------------------------------
 
+public export
+0 QTFreeEqRel : (sig : SignatureT QType) -> EqRel (uncurry QMorph sig)
+QTFreeEqRel (_, _) =
+  MkEq (curry QMExtEq) $ EquivItoIsEquiv QMExtEq QMExtEqEquivI
+
+public export
+0 QTidL : {0 a, b : QType} -> (f : QMorph a b) ->
+  eqRel (QTFreeEqRel (a, b)) f (qmComp {a} {b} {c=b} (qmId b) f)
+QTidL = snd0
+
+public export
+0 QTidR : {0 a, b : QType} -> (f : QMorph a b) ->
+  eqRel (QTFreeEqRel (a, b)) f (qmComp {a} {b=a} {c=b} f (qmId a))
+QTidR = snd0
+
+public export
+0 QTassoc : {0 a, b, c, d : QType} ->
+  (f : QMorph a b) -> (g : QMorph b c) -> (h : QMorph c d) ->
+  eqRel (QTFreeEqRel (a, d))
+    (qmComp {a} {b=c} {c=d} h $ qmComp {a} {b} {c} g f)
+    (qmComp {a} {b} {c=d} (qmComp {a=b} {b=c} {c=d} h g) f)
+QTassoc (Element0 f fpres) (Element0 g gpres) (Element0 h hpres) ea ea' =
+  hpres (g $ f ea) (g $ f ea') . gpres (f ea) (f ea') . fpres ea ea'
+
 -- This definition shows that the objects of `QType` with the morphisms
 -- of `QMorph` quotiented by `QMExtEq` form a category, with identity and
 -- composition given by `qmId` and `qmComp`.
+
 public export
-0 QTCat : SCat
-QTCat = SC
+0 QTSCat : SCat
+QTSCat = SC
   QType
   (uncurry QMorph)
   qmId
   qmComp
-  (\(Element0 x (rx ** eqrx), Element0 y (ry ** eqry)) =>
-    MkEq (curry QMExtEq) $ EquivItoIsEquiv QMExtEq QMExtEqEquivI)
-  (?QMorphPres_hole_idl)
-  (?QMorphPres_hole_idr)
-  (?QMorphPres_hole_assoc)
-  {-  XXX
-  (\f, g, h, ea, ea', aeq =>
-    QMorphPres h
-      (QMorphBase g (QMorphBase f ea)) (QMorphBase g (QMorphBase f ea'))
-    $ QMorphPres g (QMorphBase f ea) (QMorphBase f ea')
-    $ QMorphPres f ea ea' aeq)
-    -}
+  QTFreeEqRel
+  QTidL
+  QTidR
+  QTassoc
+
+public export
+0 QTDCat : Diagram
+QTDCat = catToDiagForget QTSCat
 
 {- XXX
 
