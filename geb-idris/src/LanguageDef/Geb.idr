@@ -1922,64 +1922,74 @@ qCase : {0 x, y, z : QType} ->
   QMorph x z -> QMorph y z -> QMorph (QCoproduct x y) z
 qCase f g = Element0 (qCaseBase f g) (QCasePres f g)
 
-{- XXX
-
 -----------------
 ---- Product ----
 -----------------
 
 public export
-QProdBase : (x, y : QType) -> Type
-QProdBase x y = (QBase x, QBase y)
+QProductBase : (x, y : QType) -> Type
+QProductBase x y = (QBase x, QBase y)
 
 public export
-0 QProdRel : (x, y : QType) -> RelationOn (QProdBase x y)
-QProdRel x y pxy pxy' =
-  (QBaseRel x (fst pxy) (fst pxy'), QBaseRel y (snd pxy) (snd pxy'))
+0 QProductBaseRel : (x, y : QType) -> PrERel (QProductBase x y)
+QProductBaseRel x y (pxy, pxy') =
+  (QBaseRel x (fst pxy, fst pxy'), QBaseRel y (snd pxy, snd pxy'))
 
 public export
-QProd : QType -> QType -> QType
-QProd x y = Element0 (QBase x, QBase y) (QProdRel x y)
+0 QProductBaseRelEquivI : (x, y : QType) ->
+  PrEquivRelI (QProductBase x y) (QProductBaseRel x y)
+QProductBaseRelEquivI x y = ?QProductBaseRelEquivI_hole
+
+public export
+0 QProductRel : (x, y : QType) -> PrEquivRel (QProductBase x y)
+QProductRel x y = (QProductBaseRel x y ** QProductBaseRelEquivI x y)
+
+public export
+QProduct : QType -> QType -> QType
+QProduct x y = Element0 (QBase x, QBase y) (QProductRel x y)
 
 public export
 qProdIntroBase : {0 x, y, z : QType} ->
-  QMorph x y -> QMorph x z -> QBase x -> QProdBase y z
+  QMorph x y -> QMorph x z -> QBase x -> QProductBase y z
 qProdIntroBase {x} {y} {z} f g ex = (QMorphBase f ex, QMorphBase g ex)
 
 public export
-0 QProdIntroPres : {0 x, y, z : QType} ->
+0 QProductIntroPres : {0 x, y, z : QType} ->
    (f : QMorph x y) -> (g : QMorph x z) ->
-   QPres x (QProd y z) (qProdIntroBase {x} {y} {z} f g)
-QProdIntroPres {x} {y} {z} f g = ?QProdIntroPres_hole
+   QPres x (QProduct y z) (qProdIntroBase {x} {y} {z} f g)
+QProductIntroPres {x} {y} {z} f g = ?QProductIntroPres_hole
 
 public export
 qProdIntro : {0 x, y, z : QType} ->
-  QMorph x y -> QMorph x z -> QMorph x (QProd y z)
-qProdIntro {x} {y} {z} f g = Element0 (qProdIntroBase f g) (QProdIntroPres f g)
+  QMorph x y -> QMorph x z -> QMorph x (QProduct y z)
+qProdIntro {x} {y} {z} f g =
+  Element0 (qProdIntroBase f g) (QProductIntroPres f g)
 
 public export
-qProj1Base : (0 x, y : QType) -> QProdBase x y -> QBase x
+qProj1Base : (0 x, y : QType) -> QProductBase x y -> QBase x
 qProj1Base x y = fst
 
 public export
-0 QProj1Pres : (0 x, y : QType) -> QPres (QProd x y) x (qProj1Base x y)
+0 QProj1Pres : (0 x, y : QType) -> QPres (QProduct x y) x (qProj1Base x y)
 QProj1Pres x y = ?qProj1Pres_hole
 
 public export
-qProj1 : (0 x, y : QType) -> QMorph (QProd x y) x
+qProj1 : (0 x, y : QType) -> QMorph (QProduct x y) x
 qProj1 x y = Element0 (qProj1Base x y) (QProj1Pres x y)
 
 public export
-qProj2Base : (0 x, y : QType) -> QProdBase x y -> QBase y
+qProj2Base : (0 x, y : QType) -> QProductBase x y -> QBase y
 qProj2Base x y = snd
 
 public export
-0 QProj2Pres : (0 x, y : QType) -> QPres (QProd x y) y (qProj2Base x y)
+0 QProj2Pres : (0 x, y : QType) -> QPres (QProduct x y) y (qProj2Base x y)
 QProj2Pres x y = ?qProj2Pres_hole
 
 public export
-qProj2 : (0 x, y : QType) -> QMorph (QProd x y) y
+qProj2 : (0 x, y : QType) -> QMorph (QProduct x y) y
 qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
+
+{- XXX
 
 ----------------------------
 ----------------------------
@@ -2000,7 +2010,7 @@ qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
 -- `QType` together with a slice over its product.
 public export
 QQuivEdge : QType -> QType
-QQuivEdge vert = QPred $ QProd vert vert
+QQuivEdge vert = QPred $ QProduct vert vert
 
 XXX -}
 
