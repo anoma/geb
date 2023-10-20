@@ -1962,7 +1962,15 @@ QProductBaseRel x y (pxy, pxy') =
 public export
 0 QProductBaseRelEquivI : (x, y : QType) ->
   PrEquivRelI (QProductBase x y) (QProductBaseRel x y)
-QProductBaseRelEquivI x y = ?QProductBaseRelEquivI_hole
+QProductBaseRelEquivI (Element0 x xeq) (Element0 y yeq) ((ex, ey), (ex, ey))
+  (PrErefl _) =
+    (PrEquivRefl xeq ex, PrEquivRefl yeq ey)
+QProductBaseRelEquivI (Element0 x xeq) (Element0 y yeq) ((ex, ey), (ex', ey'))
+  (PrEsym _ _ (rx, ry)) =
+    (PrEquivSym xeq rx, PrEquivSym yeq ry)
+QProductBaseRelEquivI (Element0 x xeq) (Element0 y yeq) ((ex, ey), (ex', ey'))
+  (PrEtrans _ (ex'', ey'') _ (rx, ry) (rx', ry')) =
+    (PrEquivTrans xeq rx rx', PrEquivTrans yeq ry ry')
 
 public export
 0 QProductRel : (x, y : QType) -> PrEquivRel (QProductBase x y)
