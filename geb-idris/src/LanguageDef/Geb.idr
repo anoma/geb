@@ -1626,6 +1626,16 @@ MkQMExtEq {x} {y} {f} {g} intext =
     {ra=(QBaseRel x)} {rb=(QRel y)}
     (QMorphPres g) intext
 
+-- In particular, if two `QType` morphisms' base morphisms are extensionally
+-- equal, then the `QType` morphisms are equivalent under `QMExtEq`.
+public export
+0 QMEqFromExt : {0 x, y : QType} -> {f, g : QMorph x y} ->
+  ExtEq {a=(QBase x)} {b=(QBase y)}
+    (QMorphBase {x} {y} f) (QMorphBase {x} {y} g) ->
+  QMExtEq {x} {y} (f, g)
+QMEqFromExt {x} {y} {f} {g} eq = MkQMExtEq {x} {y} {f} {g} $
+  \_, ea, Refl => rewrite eq ea in PrEquivRefl (snd0 y) $ fst0 g ea
+
 public export
 qmId : (a : QType) -> QMorph a a
 qmId a = Element0 (id {a=(QBase a)}) $ \_, _ => id
