@@ -1626,18 +1626,6 @@ MkQMExtEq {x} {y} {f} {g} intext =
     {ra=(QBaseRel x)} {rb=(QRel y)}
     (QMorphPres g) intext
 
--- Using the notion of extensional equality on QType morphisms (up to the
--- equivalences embedded within the types), we can define the hom-set of
--- of any two `QType`s within `QType` itself, thus making `QType` Cartesian
--- closed.
-public export
-QMHom : QType -> QType -> QType
-QMHom x y = Element0 (QMorph x y) (QMExtEqEquiv x y)
-
-public export
-QMExp : QType -> QType -> QType
-QMExp = flip QMHom
-
 public export
 qmId : (a : QType) -> QMorph a a
 qmId a = Element0 (id {a=(QBase a)}) $ \_, _ => id
@@ -1695,85 +1683,6 @@ QTSCat = SC
 public export
 0 QTDCat : Diagram
 QTDCat = catToDiagForget QTSCat
-
----------------------------------------------
----------------------------------------------
----- Predicates on and slices of `QType` ----
----------------------------------------------
----------------------------------------------
-
--- A predicate is a pi type in the dependent-type view.  In the categorial
--- view, it is a discrete presheaf, which is the opposite category of a
--- discrete copresheaf, which is equivalent to a slice category.
-public export
-QPred : QType -> QType
-QPred a = QMHom a QTypeQT
-
-public export
-QSliceBase : QType -> Type
-QSliceBase a = Subset0 QType (flip QMorph a)
-
-public export
-0 QSliceObjRel : {a : QType} -> PrERel (QSliceBase a)
-QSliceObjRel (sl, sl') = QTEquiv (fst0 sl, fst0 sl')
-
-public export
-0 QSliceMorphRel : {a : QType} -> (sl, sl' : QSliceBase a) ->
-  (0 _ : QSliceObjRel {a} (sl, sl')) -> Type
-QSliceMorphRel sl sl' qte = QMExtEq (snd0 sl, qmComp (snd0 sl') $ QTEqIso qte)
-
-public export
-0 QSliceRel : {a : QType} -> PrERel (QSliceBase a)
-QSliceRel (sl, sl') =
-  Exists0 (QSliceObjRel (sl, sl')) (QSliceMorphRel sl sl')
-
-public export
-0 QSliceRelEquivI : {a : QType} -> PrEquivRelI (QSliceBase a) (QSliceRel {a})
-QSliceRelEquivI {a=(Element0 a (aeq ** aequiv))}
-  (Element0 (Element0 x (xeq ** xequiv)) (Element0 f fpres),
-   Element0 (Element0 x' (xeq' ** xequiv')) (Element0 f' fpres'))
-  eq =
-    case eq of
-      PrErefl _ =>
-        Evidence0
-          (QTE (\_, _ => id, \_, _ => id))
-          fpres
-      PrEsym _ _ (Evidence0 (QTE (impl, impr)) gpres) =>
-        Evidence0
-          (QTE (impr, impl))
-          $ \ea, ea', eaeq =>
-            aequiv (f ea, f' ea') $
-              PrEtrans (f ea) (f' ea) (f' ea')
-                (fpres' ea ea' $ impr ea ea' eaeq)
-                $ aequiv (f ea, f' ea) $
-                  PrEtrans (f ea) (f ea') (f' ea)
-                    (aequiv (f ea', f' ea) $ PrEsym (f' ea) (f ea') $
-                      gpres ea ea' $ impr ea ea' eaeq)
-                    (fpres ea ea' eaeq)
-      PrEtrans _ (Element0 (Element0 z (zeq ** zequiv)) (Element0 g gpres)) _
-        (Evidence0 (QTE (impl, impr)) gfpres)
-        (Evidence0 (QTE (impl', impr')) fgpres) =>
-          Evidence0
-            (QTE
-              (\ea, ea' => impl ea ea' . impl' ea ea',
-               \ea, ea' => impr' ea ea' . impr ea ea'))
-            $ \ea, ea', eaeq =>
-              aequiv (f ea, f' ea') $
-                PrEtrans (f ea) (g ea) (f' ea')
-                  (gfpres ea ea' $ impl' ea ea' eaeq)
-                  $ aequiv (f ea, g ea) $
-                    PrEtrans (f ea) (g ea') (g ea)
-                      (aequiv (g ea', g ea) $ PrEsym (g ea) (g ea') $
-                        gpres ea ea' $ impl' ea ea' eaeq)
-                      $ fgpres ea ea' eaeq
-
-public export
-0 QSliceRelEquiv : {a : QType} -> PrEquivRel (QSliceBase a)
-QSliceRelEquiv {a} = (QSliceRel {a} ** QSliceRelEquivI {a})
-
-public export
-QSliceObj : QType -> QType
-QSliceObj a = Element0 (QSliceBase a) (QSliceRelEquiv {a})
 
 ----------------------------------------------------
 ----------------------------------------------------
@@ -2021,6 +1930,118 @@ QProj2Pres x y _ _ = snd
 public export
 qProj2 : (0 x, y : QType) -> QMorph (QProduct x y) y
 qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
+
+------------------------------------
+---- Hom-objects (exponentials) ----
+------------------------------------
+
+-- Using the notion of extensional equality on QType morphisms (up to the
+-- equivalences embedded within the types), we can define the hom-set of
+-- of any two `QType`s within `QType` itself, thus making `QType` Cartesian
+-- closed.
+public export
+QHomBase : (x, y : QType) -> Type
+QHomBase = QMorph
+
+public export
+0 QHomBaseRel : (x, y : QType) -> PrERel (QHomBase x y)
+QHomBaseRel x y = QMExtEq {x} {y}
+
+public export
+0 QHomBaseRelEquivI : (x, y : QType) ->
+  PrEquivRelI (QHomBase x y) (QHomBaseRel x y)
+QHomBaseRelEquivI x y = QMExtEqEquivI {x} {y}
+
+public export
+0 QHomRel : (x, y : QType) -> PrEquivRel (QHomBase x y)
+QHomRel x y = (QHomBaseRel x y ** QHomBaseRelEquivI x y)
+
+public export
+QHom : QType -> QType -> QType
+QHom x y = Element0 (QHomBase x y) (QHomRel x y)
+
+public export
+QExp : QType -> QType -> QType
+QExp = flip QHom
+
+---------------------------------------------
+---------------------------------------------
+---- Predicates on and slices of `QType` ----
+---------------------------------------------
+---------------------------------------------
+
+-- A predicate is a pi type in the dependent-type view.  In the categorial
+-- view, it is a discrete presheaf, which is the opposite category of a
+-- discrete copresheaf, which is equivalent to a slice category.
+public export
+QPred : QType -> QType
+QPred a = QHom a QTypeQT
+
+public export
+QSliceBase : QType -> Type
+QSliceBase a = Subset0 QType (flip QMorph a)
+
+public export
+0 QSliceObjRel : {a : QType} -> PrERel (QSliceBase a)
+QSliceObjRel (sl, sl') = QTEquiv (fst0 sl, fst0 sl')
+
+public export
+0 QSliceMorphRel : {a : QType} -> (sl, sl' : QSliceBase a) ->
+  (0 _ : QSliceObjRel {a} (sl, sl')) -> Type
+QSliceMorphRel sl sl' qte = QMExtEq (snd0 sl, qmComp (snd0 sl') $ QTEqIso qte)
+
+public export
+0 QSliceRel : {a : QType} -> PrERel (QSliceBase a)
+QSliceRel (sl, sl') =
+  Exists0 (QSliceObjRel (sl, sl')) (QSliceMorphRel sl sl')
+
+public export
+0 QSliceRelEquivI : {a : QType} -> PrEquivRelI (QSliceBase a) (QSliceRel {a})
+QSliceRelEquivI {a=(Element0 a (aeq ** aequiv))}
+  (Element0 (Element0 x (xeq ** xequiv)) (Element0 f fpres),
+   Element0 (Element0 x' (xeq' ** xequiv')) (Element0 f' fpres'))
+  eq =
+    case eq of
+      PrErefl _ =>
+        Evidence0
+          (QTE (\_, _ => id, \_, _ => id))
+          fpres
+      PrEsym _ _ (Evidence0 (QTE (impl, impr)) gpres) =>
+        Evidence0
+          (QTE (impr, impl))
+          $ \ea, ea', eaeq =>
+            aequiv (f ea, f' ea') $
+              PrEtrans (f ea) (f' ea) (f' ea')
+                (fpres' ea ea' $ impr ea ea' eaeq)
+                $ aequiv (f ea, f' ea) $
+                  PrEtrans (f ea) (f ea') (f' ea)
+                    (aequiv (f ea', f' ea) $ PrEsym (f' ea) (f ea') $
+                      gpres ea ea' $ impr ea ea' eaeq)
+                    (fpres ea ea' eaeq)
+      PrEtrans _ (Element0 (Element0 z (zeq ** zequiv)) (Element0 g gpres)) _
+        (Evidence0 (QTE (impl, impr)) gfpres)
+        (Evidence0 (QTE (impl', impr')) fgpres) =>
+          Evidence0
+            (QTE
+              (\ea, ea' => impl ea ea' . impl' ea ea',
+               \ea, ea' => impr' ea ea' . impr ea ea'))
+            $ \ea, ea', eaeq =>
+              aequiv (f ea, f' ea') $
+                PrEtrans (f ea) (g ea) (f' ea')
+                  (gfpres ea ea' $ impl' ea ea' eaeq)
+                  $ aequiv (f ea, g ea) $
+                    PrEtrans (f ea) (g ea') (g ea)
+                      (aequiv (g ea', g ea) $ PrEsym (g ea) (g ea') $
+                        gpres ea ea' $ impl' ea ea' eaeq)
+                      $ fgpres ea ea' eaeq
+
+public export
+0 QSliceRelEquiv : {a : QType} -> PrEquivRel (QSliceBase a)
+QSliceRelEquiv {a} = (QSliceRel {a} ** QSliceRelEquivI {a})
+
+public export
+QSliceObj : QType -> QType
+QSliceObj a = Element0 (QSliceBase a) (QSliceRelEquiv {a})
 
 ----------------------------
 ----------------------------
