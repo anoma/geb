@@ -1989,7 +1989,8 @@ public export
 0 QProductIntroPres : {0 x, y, z : QType} ->
    (f : QMorph x y) -> (g : QMorph x z) ->
    QPres x (QProduct y z) (qProdIntroBase {x} {y} {z} f g)
-QProductIntroPres {x} {y} {z} f g = ?QProductIntroPres_hole
+QProductIntroPres {x} {y} {z} f g ea ea' rx =
+  (snd0 f ea ea' rx, snd0 g ea ea' rx)
 
 public export
 qProdIntro : {0 x, y, z : QType} ->
@@ -2003,7 +2004,7 @@ qProj1Base x y = fst
 
 public export
 0 QProj1Pres : (0 x, y : QType) -> QPres (QProduct x y) x (qProj1Base x y)
-QProj1Pres x y = ?qProj1Pres_hole
+QProj1Pres x y _ _ = fst
 
 public export
 qProj1 : (0 x, y : QType) -> QMorph (QProduct x y) x
@@ -2015,7 +2016,7 @@ qProj2Base x y = snd
 
 public export
 0 QProj2Pres : (0 x, y : QType) -> QPres (QProduct x y) y (qProj2Base x y)
-QProj2Pres x y = ?qProj2Pres_hole
+QProj2Pres x y _ _ = snd
 
 public export
 qProj2 : (0 x, y : QType) -> QMorph (QProduct x y) y
