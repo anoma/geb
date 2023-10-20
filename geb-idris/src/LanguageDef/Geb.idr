@@ -1989,6 +1989,28 @@ public export
 qHomEval : (x, y : QType) -> QMorph (QProduct (QHom x y) x) y
 qHomEval x y = Element0 (qHomEvalBase x y) (QHomEvalPres x y)
 
+public export
+qHomCurryBase : {0 x, y, z : QType} ->
+  QMorph (QProduct x y) z -> QBase x -> QBase (QHom y z)
+qHomCurryBase {x=(Element0 x xeq)} {y=(Element0 y yeq)} {z=(Element0 z zeq)}
+  (Element0 f fpres) ex =
+    Element0
+      (curry f ex)
+      $ \ey, ey', ry => fpres (ex, ey) (ex, ey') (PrEquivRefl xeq ex, ry)
+
+public export
+0 QHomCurryPres : {0 x, y, z : QType} ->
+  (f : QMorph (QProduct x y) z) ->
+  QPres x (QHom y z) (qHomCurryBase {x} {y} {z} f)
+QHomCurryPres {x=(Element0 x xeq)} {y=(Element0 y yeq)} {z=(Element0 z zeq)}
+  (Element0 f fpres) ex ex' rx ey ey' ry =
+    fpres (ex, ey) (ex', ey') (rx, ry)
+
+public export
+qHomCurry : {0 x, y, z : QType} ->
+  QMorph (QProduct x y) z -> QMorph x (QHom y z)
+qHomCurry {x} {y} {z} f = Element0 (qHomCurryBase f) (QHomCurryPres f)
+
 ---------------------------------------------
 ---------------------------------------------
 ---- Predicates on and slices of `QType` ----
