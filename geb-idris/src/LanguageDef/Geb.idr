@@ -1974,6 +1974,21 @@ public export
 QExp : QType -> QType -> QType
 QExp = flip QHom
 
+public export
+qHomEvalBase : (x, y : QType) -> QBase (QProduct (QHom x y) x) -> QBase y
+qHomEvalBase x y (Element0 f fpres, ex) = f ex
+
+public export
+0 QHomEvalPres : (x, y : QType) ->
+  QPres (QProduct (QHom x y) x) y (qHomEvalBase x y)
+QHomEvalPres (Element0 x xeq) (Element0 y yeq)
+  (Element0 f fpres, ex) (Element0 g gpres, ex') (fgpres, rx) =
+    fgpres ex ex' rx
+
+public export
+qHomEval : (x, y : QType) -> QMorph (QProduct (QHom x y) x) y
+qHomEval x y = Element0 (qHomEvalBase x y) (QHomEvalPres x y)
+
 ---------------------------------------------
 ---------------------------------------------
 ---- Predicates on and slices of `QType` ----
