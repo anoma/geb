@@ -2011,6 +2011,44 @@ qHomCurry : {0 x, y, z : QType} ->
   QMorph (QProduct x y) z -> QMorph x (QHom y z)
 qHomCurry {x} {y} {z} f = Element0 (qHomCurryBase f) (QHomCurryPres f)
 
+--------------------
+---- Equalizers ----
+--------------------
+
+public export
+QEqualizerBase : {x : QType} -> {0 y : QType} ->
+  QMorph x y -> QMorph x y -> Type
+QEqualizerBase {x} {y} f g =
+  Subset0 (QBase x) $ \ex => QBaseRel y (QMorphBase f ex, QMorphBase g ex)
+
+public export
+0 QEqualizerBaseRel : {0 x, y : QType} ->
+  (f, g : QMorph x y) -> PrERel (QEqualizerBase {x} {y} f g)
+QEqualizerBaseRel {x} {y} f g (Element0 ex fgeq, Element0 ex' fgeq') =
+  QBaseRel x (ex, ex')
+
+public export
+0 QEqualizerBaseRelEquivI : {0 x, y : QType} ->
+  (f, g : QMorph x y) ->
+  PrEquivRelI (QEqualizerBase {x} {y} f g) (QEqualizerBaseRel {x} {y} f g)
+QEqualizerBaseRelEquivI {x} {y} f g (Element0 ex fgeq, Element0 ex' fgeq') xeq =
+  case xeq of
+    PrErefl _ => PrEquivRefl (QRel x) ex
+    PrEsym _ _ r => PrEquivSym (QRel x) r
+    PrEtrans _ (Element0 ex'' rfg) _ r r' => PrEquivTrans (QRel x) r r'
+
+public export
+0 QEqualizerRel : {0 x, y : QType} ->
+  (f, g : QMorph x y) -> PrEquivRel (QEqualizerBase {x} {y} f g)
+QEqualizerRel {x} {y} f g =
+  (QEqualizerBaseRel {x} {y} f g ** QEqualizerBaseRelEquivI {x} {y} f g)
+
+public export
+QEqualizer : {x : QType} -> {0 y : QType} ->
+  QMorph x y -> QMorph x y -> QType
+QEqualizer {x} {y} f g =
+  Element0 (QEqualizerBase {x} {y} f g) (QEqualizerRel {x} {y} f g)
+
 ---------------------------------------------
 ---------------------------------------------
 ---- Predicates on and slices of `QType` ----
