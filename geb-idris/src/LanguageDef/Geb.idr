@@ -2134,6 +2134,24 @@ QCoequalizer : {0 x : QType} -> {y : QType} ->
 QCoequalizer {x} {y} f g =
   Element0 (QCoequalizerBase {x} {y} f g) (QCoequalizerRel {x} {y} f g)
 
+public export
+qCoeqIntroBase : {0 w, x, y : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph w y) -> QBase w -> QCoequalizerBase {x} {y} f g
+qCoeqIntroBase {w} {x} {y} {f} {g} = fst0
+
+public export
+0 QCoeqIntroPres : {0 w, x, y : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph w y) ->
+  QPres w (QCoequalizer {x} {y} f g) (qCoeqIntroBase {w} {x} {y} {f} {g} h)
+QCoeqIntroPres {w} {x} {y} {f} {g} h ew ew' rw =
+  InSlFv $ Right $ QMorphPres h ew ew' rw
+
+public export
+qCoeqIntro : {0 w, x, y : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph w y) -> QMorph w (QCoequalizer {x} {y} f g)
+qCoeqIntro {f} {g} h =
+  Element0 (qCoeqIntroBase {f} {g} h) (QCoeqIntroPres {f} {g} h)
+
 ---------------------------------------------
 ---------------------------------------------
 ---- Predicates on and slices of `QType` ----
