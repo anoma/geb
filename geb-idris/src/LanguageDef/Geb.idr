@@ -2158,17 +2158,39 @@ qCoeqElimBase : {0 x, y, z : QType} -> {0 f, g : QMorph x y} ->
 qCoeqElimBase {x} {y} {z} {f} {g} h eq ey = fst0 h ey
 
 public export
+0 QCoeqElimPresSubst : {0 x, y, z : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph y z) ->
+  (eq : QMExtEq {x} {y=z}
+    (qmComp {a=x} {b=y} {c=z} h f, qmComp {a=x} {b=y} {c=z} h g)) ->
+  SliceMorphism {a=(ProductMonad $ QBase y)}
+    (CoeqRelF
+      (QMorphBase {x} {y} f) (QMorphBase {x} {y} g) (QBaseRel x) (QBaseRel y))
+    (QBaseRel z . mapHom (QMorphBase {x=y} {y=z} h))
+QCoeqElimPresSubst {x} {y} {z} {f} {g} h hcoeq (ey, ey') ry =
+  ?QCoeqElimPresSubst_hole
+
+public export
+0 QCoeqElimPresAlg : {0 x, y, z : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph y z) ->
+  (eq : QMExtEq {x} {y=z}
+    (qmComp {a=x} {b=y} {c=z} h f, qmComp {a=x} {b=y} {c=z} h g)) ->
+  SliceAlg {a=(ProductMonad $ QBase y)} (PrEquivF {a=(QBase y)})
+    (QBaseRel z . mapHom (QMorphBase {x=y} {y=z} h))
+QCoeqElimPresAlg {x} {y} {z} {f} {g} h hcoeq (ey, ey') eqy =
+  ?QCoeqElimPresAlg_hole
+
+public export
 0 QCoeqElimPres : {0 x, y, z : QType} -> {0 f, g : QMorph x y} ->
   (h : QMorph y z) ->
   (eq : QMExtEq {x} {y=z}
     (qmComp {a=x} {b=y} {c=z} h f, qmComp {a=x} {b=y} {c=z} h g)) ->
   QPres (QCoequalizer {x} {y} f g) z (qCoeqElimBase {x} {y} {z} {f} {g} h eq)
-QCoeqElimPres {x} {y} {z} {f} {g} h eq ey ey' =
+QCoeqElimPres {x} {y} {z} {f} {g} h hcoeq ey ey' =
   freePrEquivEval {a=(QBase y)}
     (CoeqRelF (QMorphBase f) (QMorphBase g) (QBaseRel x) (QBaseRel y))
     (QBaseRel z . mapHom (QMorphBase h))
-    (?QCoeqElimPres_hole_subst)
-    (?QCoeqElimPres_hole_alg)
+    (QCoeqElimPresSubst h hcoeq)
+    (QCoeqElimPresAlg h hcoeq)
     (ey, ey')
 
 public export
