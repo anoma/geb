@@ -2149,6 +2149,37 @@ qCoeqIntro : {0 x, y : QType} -> (0 f, g : QMorph x y) ->
   QMorph y (QCoequalizer {x} {y} f g)
 qCoeqIntro f g = Element0 (qCoeqIntroBase f g) (QCoeqIntroPres f g)
 
+public export
+qCoeqElimBase : {0 x, y, z : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph y z) ->
+  QMExtEq {x} {y=z}
+    (qmComp {a=x} {b=y} {c=z} h f, qmComp {a=x} {b=y} {c=z} h g) ->
+  QCoequalizerBase {x} {y} f g -> QBase z
+qCoeqElimBase {x} {y} {z} {f} {g} h eq ey = fst0 h ey
+
+public export
+0 QCoeqElimPres : {0 x, y, z : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph y z) ->
+  (eq : QMExtEq {x} {y=z}
+    (qmComp {a=x} {b=y} {c=z} h f, qmComp {a=x} {b=y} {c=z} h g)) ->
+  QPres (QCoequalizer {x} {y} f g) z (qCoeqElimBase {x} {y} {z} {f} {g} h eq)
+QCoeqElimPres {x} {y} {z} {f} {g} h eq ey ey' =
+  freePrEquivEval {a=(QBase y)}
+    (CoeqRelF (QMorphBase f) (QMorphBase g) (QBaseRel x) (QBaseRel y))
+    (QBaseRel z . mapHom (QMorphBase h))
+    (?QCoeqElimPres_hole_subst)
+    (?QCoeqElimPres_hole_alg)
+    (ey, ey')
+
+public export
+qCoeqElim : {0 x, y, z : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph y z) ->
+  QMExtEq {x} {y=z}
+    (qmComp {a=x} {b=y} {c=z} h f, qmComp {a=x} {b=y} {c=z} h g) ->
+  QMorph (QCoequalizer {x} {y} f g) z
+qCoeqElim {x} {y} {z} {f} {g} h eq =
+  Element0 (qCoeqElimBase {f} {g} h eq) (QCoeqElimPres {f} {g} h eq)
+
 ---------------------------------------------
 ---------------------------------------------
 ---- Predicates on and slices of `QType` ----
