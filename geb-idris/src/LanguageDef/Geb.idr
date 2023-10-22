@@ -2120,7 +2120,7 @@ public export
   PrEquivRelI (QCoequalizerBase {x} {y} f g) (QCoequalizerBaseRel {x} {y} f g)
 QCoequalizerBaseRelEquivI {x} {y} f g =
   CoeqFreeEquivRelI {x=(QBase x)} {y=(QBase y)}
-  (QMorphBase f) (QMorphBase g) (QBaseRel x) (QBaseRel y)
+    (QMorphBase f) (QMorphBase g) (QBaseRel x) (QBaseRel y)
 
 public export
 0 QCoequalizerRel : {0 x, y : QType} ->
