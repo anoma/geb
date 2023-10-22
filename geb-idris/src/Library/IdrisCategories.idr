@@ -4403,6 +4403,31 @@ PresFrEqRel {a} {b} {f} {g} {ra} {rb} gpres bipres ea ea' eqa =
     (freeEquivBindPres {a} {b} {ra} {rb} {f=g} gpres ea ea' eqa)
     (bipres ea ea Refl)
 
+--------------------------------------------------
+---- Coequalization as (equivalence) relation ----
+--------------------------------------------------
+
+public export
+0 CoeqRelExtF : {0 x, y : Type} -> (0 f, g : x -> y) -> PrERel x -> PrERel y
+CoeqRelExtF {x} {y} f g rx (ey, ey') =
+  Exists0 (x, x) $ \(ex, ex') => (rx (ex, ex'), f ex = ey, g ex' = ey')
+
+public export
+0 CoeqRelF : {0 x, y : Type} -> (0 f, g : x -> y) -> PrERel x -> PrERelF y
+CoeqRelF {x} {y} f g = SliceCoproduct . CoeqRelExtF {x} {y} f g
+
+public export
+0 CoeqFreeEquivRelF : {0 x, y : Type} -> (0 f, g : x -> y) -> PrERel x ->
+  PrERelF y
+CoeqFreeEquivRelF {x} {y} f g rx = FreePrEquivF {a=y} . CoeqRelF {x} {y} f g rx
+
+public export
+0 CoeqFreeEquivRelI : {0 x, y : Type} -> (0 f, g : x -> y) ->
+  (rx : PrERel x) -> (ry : PrERel y) ->
+  PrEquivRelI y (CoeqFreeEquivRelF {x} {y} f g rx ry)
+CoeqFreeEquivRelI {x} {y} f g rx ry =
+  FreePrEquivI {a=y} (CoeqRelF {x} {y} f g rx ry)
+
 ---------------------------------------------
 ---- Closures of some universal relations ----
 ---------------------------------------------
