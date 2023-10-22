@@ -2166,8 +2166,13 @@ public export
     (CoeqRelF
       (QMorphBase {x} {y} f) (QMorphBase {x} {y} g) (QBaseRel x) (QBaseRel y))
     (QBaseRel z . mapHom (QMorphBase {x=y} {y=z} h))
-QCoeqElimPresSubst {x} {y} {z} {f} {g} h hcoeq (ey, ey') ry =
-  ?QCoeqElimPresSubst_hole
+QCoeqElimPresSubst {x} {y} {z} {f} {g} h hcoeq (ey, ey')
+  (Left (Evidence0 (ex, ex') (rx, feq, geq))) =
+    rewrite sym feq in rewrite sym geq in
+    hcoeq ex ex' rx
+QCoeqElimPresSubst {x} {y} {z} {f} {g} h hcoeq (ey, ey')
+  (Right yeq) =
+    QMorphPres h ey ey' yeq
 
 public export
 0 QCoeqElimPresAlg : {0 x, y, z : QType} -> {0 f, g : QMorph x y} ->
@@ -2176,8 +2181,7 @@ public export
     (qmComp {a=x} {b=y} {c=z} h f, qmComp {a=x} {b=y} {c=z} h g)) ->
   SliceAlg {a=(ProductMonad $ QBase y)} (PrEquivF {a=(QBase y)})
     (QBaseRel z . mapHom (QMorphBase {x=y} {y=z} h))
-QCoeqElimPresAlg {x} {y} {z} {f} {g} h hcoeq (ey, ey') eqy =
-  ?QCoeqElimPresAlg_hole
+QCoeqElimPresAlg {x} {y} {z} {f} {g} h hcoeq (ey, ey') eqy = ?QCoeqElimPresAlg_h
 
 public export
 0 QCoeqElimPres : {0 x, y, z : QType} -> {0 f, g : QMorph x y} ->
