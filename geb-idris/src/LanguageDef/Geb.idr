@@ -2098,6 +2098,42 @@ public export
 QEqElimEq {x} {y} f g (Element0 ex fgeq) (Element0 ex' fgeq') rx =
   PrEquivTrans (snd0 y) fgeq' $ snd0 f ex ex' rx
 
+----------------------
+---- Coequalizers ----
+----------------------
+
+public export
+QCoequalizerBase : {0 x : QType} -> {y : QType} ->
+  QMorph x y -> QMorph x y -> Type
+QCoequalizerBase {x} {y} f g = QBase y
+
+public export
+0 QCoequalizerBaseRel : {0 x, y : QType} ->
+  (f, g : QMorph x y) -> PrERel (QCoequalizerBase {x} {y} f g)
+QCoequalizerBaseRel {x} {y} f g =
+  CoeqFreeEquivRelF {x=(QBase x)} {y=(QBase y)}
+  (QMorphBase f) (QMorphBase g) (QBaseRel x) (QBaseRel y)
+
+public export
+0 QCoequalizerBaseRelEquivI : {0 x, y : QType} ->
+  (f, g : QMorph x y) ->
+  PrEquivRelI (QCoequalizerBase {x} {y} f g) (QCoequalizerBaseRel {x} {y} f g)
+QCoequalizerBaseRelEquivI {x} {y} f g =
+  CoeqFreeEquivRelI {x=(QBase x)} {y=(QBase y)}
+  (QMorphBase f) (QMorphBase g) (QBaseRel x) (QBaseRel y)
+
+public export
+0 QCoequalizerRel : {0 x, y : QType} ->
+  (f, g : QMorph x y) -> PrEquivRel (QCoequalizerBase {x} {y} f g)
+QCoequalizerRel {x} {y} f g =
+  (QCoequalizerBaseRel {x} {y} f g ** QCoequalizerBaseRelEquivI {x} {y} f g)
+
+public export
+QCoequalizer : {0 x : QType} -> {y : QType} ->
+  QMorph x y -> QMorph x y -> QType
+QCoequalizer {x} {y} f g =
+  Element0 (QCoequalizerBase {x} {y} f g) (QCoequalizerRel {x} {y} f g)
+
 ---------------------------------------------
 ---------------------------------------------
 ---- Predicates on and slices of `QType` ----
