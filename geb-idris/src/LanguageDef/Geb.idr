@@ -2181,7 +2181,9 @@ public export
     (qmComp {a=x} {b=y} {c=z} h f, qmComp {a=x} {b=y} {c=z} h g)) ->
   SliceAlg {a=(ProductMonad $ QBase y)} (PrEquivF {a=(QBase y)})
     (QBaseRel z . mapHom (QMorphBase {x=y} {y=z} h))
-QCoeqElimPresAlg {x} {y} {z} {f} {g} h hcoeq (ey, ey') eqy = ?QCoeqElimPresAlg_h
+QCoeqElimPresAlg {x} {y} {z} {f} {g} h hcoeq (ey, ey') eqy =
+  QRelEquivI z (mapHom (QMorphBase {x=y} {y=z} h) (ey, ey')) $
+    prEquivMapHom {r=(QBaseRel z)} {f=(QMorphBase h)} (ey, ey') eqy
 
 public export
 0 QCoeqElimPres : {0 x, y, z : QType} -> {0 f, g : QMorph x y} ->
