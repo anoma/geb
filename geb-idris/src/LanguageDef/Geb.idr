@@ -2049,6 +2049,55 @@ QEqualizer : {x : QType} -> {0 y : QType} ->
 QEqualizer {x} {y} f g =
   Element0 (QEqualizerBase {x} {y} f g) (QEqualizerRel {x} {y} f g)
 
+public export
+qEqIntroBase : {0 w, x, y : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph w x) ->
+  QMExtEq {x=w} {y}
+    (qmComp {a=w} {b=x} {c=y} f h, qmComp {a=w} {b=x} {c=y} g h) ->
+  QBase w -> QEqualizerBase {x} {y} f g
+qEqIntroBase {w} {x} {y} {f} {g} h eq ew =
+  Element0 (fst0 h ew) $ eq ew ew $ PrEquivRefl (QRel w) ew
+
+public export
+0 QEqIntroPres : {0 w, x, y : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph w x) ->
+  (eq : QMExtEq {x=w} {y}
+    (qmComp {a=w} {b=x} {c=y} f h, qmComp {a=w} {b=x} {c=y} g h)) ->
+  QPres w (QEqualizer {x} {y} f g) (qEqIntroBase {w} {x} {y} {f} {g} h eq)
+QEqIntroPres {w} {x} {y} {f} {g} h eq ew ew' rw = snd0 h ew ew' rw
+
+public export
+qEqIntro : {0 w, x, y : QType} -> {0 f, g : QMorph x y} ->
+  (h : QMorph w x) ->
+  QMExtEq {x=w} {y}
+    (qmComp {a=w} {b=x} {c=y} f h, qmComp {a=w} {b=x} {c=y} g h) ->
+  QMorph w (QEqualizer {x} {y} f g)
+qEqIntro {f} {g} h eq =
+  Element0 (qEqIntroBase {f} {g} h eq) (QEqIntroPres {f} {g} h eq)
+
+public export
+qEqElimBase : {0 x, y : QType} -> (0 f, g : QMorph x y) ->
+  QEqualizerBase {x} {y} f g -> QBase x
+qEqElimBase {x} {y} f g = fst0
+
+public export
+0 QEqElimPres : {0 x, y : QType} -> (0 f, g : QMorph x y) ->
+  QPres (QEqualizer {x} {y} f g) x (qEqElimBase {x} {y} f g)
+QEqElimPres f g (Element0 ex fgeq) (Element0 ex' fgeq') = id
+
+public export
+qEqElim : {0 x, y : QType} -> (0 f, g : QMorph x y) ->
+  QMorph (QEqualizer {x} {y} f g) x
+qEqElim f g = Element0 (qEqElimBase f g) (QEqElimPres f g)
+
+public export
+0 QEqElimEq : {0 x, y : QType} -> (0 f, g : QMorph x y) ->
+  QMExtEq {x=(QEqualizer {x} {y} f g)} {y}
+    (qmComp {a=(QEqualizer {x} {y} f g)} {b=x} {c=y} f (qEqElim {x} {y} f g),
+     qmComp {a=(QEqualizer {x} {y} f g)} {b=x} {c=y} g (qEqElim {x} {y} f g))
+QEqElimEq {x} {y} f g (Element0 ex fgeq) (Element0 ex' fgeq') rx =
+  PrEquivTrans (snd0 y) fgeq' $ snd0 f ex ex' rx
+
 ---------------------------------------------
 ---------------------------------------------
 ---- Predicates on and slices of `QType` ----
