@@ -2047,6 +2047,35 @@ qHomCurry : {0 x, y, z : QType} ->
   QMorph (QProduct x y) z -> QMorph x (QHom y z)
 qHomCurry {x} {y} {z} f = Element0 (qHomCurryBase f) (QHomCurryPres f)
 
+public export
+qHomUncurry : {x, y, z : QType} ->
+  QMorph x (QHom y z) -> QMorph (QProduct x y) z
+qHomUncurry {x} {y} {z} f = qmComp (qHomEval y z) (qProductMapFst f)
+
+----------------------------------------------
+---- Quotation (derived from hom-objects) ----
+----------------------------------------------
+
+-- A global element of a `QType` is a morphism from the terminal object.
+public export
+QGElem : QType -> Type
+QGElem = QMorph QTerm
+
+-- We shall refer to a global element of a hom-object as a "quotation".
+public export
+QQuotation : QType -> QType -> Type
+QQuotation = QGElem .* QHom
+
+public export
+qQuote : {x, y : QType} -> QMorph x y -> QQuotation x y
+qQuote {x} {y} = qHomCurry {x=QTerm} . flip qmComp (qProj2 QTerm x)
+
+public export
+qUnquote : {x, y : QType} -> QQuotation x y -> QMorph x y
+qUnquote {x} {y} =
+  qmPipe {b=(QProduct QTerm x)} (qProdIntro (qTerm x) (qmId x))
+  .  qHomUncurry {x=QTerm}
+
 --------------------
 ---- Equalizers ----
 --------------------
