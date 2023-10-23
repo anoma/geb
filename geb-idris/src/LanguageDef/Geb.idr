@@ -1063,7 +1063,6 @@ public export
 FinDAG' : FinTSort -> Type
 FinDAG' = ?FinDAG_hole
 
-
 ----------------------------------------------------
 ----------------------------------------------------
 ---- Coproduct-of-product types (finitary ADTs) ----
