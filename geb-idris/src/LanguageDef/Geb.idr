@@ -1958,6 +1958,22 @@ public export
 qProj2 : (0 x, y : QType) -> QMorph (QProduct x y) y
 qProj2 x y = Element0 (qProj2Base x y) (QProj2Pres x y)
 
+public export
+qProductBimap : {w, x, y, z : QType} ->
+  QMorph w y -> QMorph x z -> QMorph (QProduct w x) (QProduct y z)
+qProductBimap {w} {x} {y} {z} f g =
+  qProdIntro (qmComp f (qProj1 w x)) (qmComp g (qProj2 w x))
+
+public export
+qProductMapFst : {w, x, y : QType} ->
+  QMorph w y -> QMorph (QProduct w x) (QProduct y x)
+qProductMapFst {w} {x} {y} = flip (qProductBimap {w} {x} {y} {z=x}) (qmId x)
+
+public export
+qProductMapSnd : {w, x, y : QType} ->
+  QMorph w x -> QMorph (QProduct y w) (QProduct y x)
+qProductMapSnd {w} {x} {y} = qProductBimap {w=y} {x=w} {y} {z=x} (qmId y)
+
 ------------------------------------
 ---- Hom-objects (exponentials) ----
 ------------------------------------
