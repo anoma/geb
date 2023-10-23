@@ -1865,6 +1865,23 @@ qCase : {0 x, y, z : QType} ->
   QMorph x z -> QMorph y z -> QMorph (QCoproduct x y) z
 qCase f g = Element0 (qCaseBase f g) (QCasePres f g)
 
+public export
+qCoproductBimap : {w, x, y, z : QType} ->
+  QMorph w y -> QMorph x z -> QMorph (QCoproduct w x) (QCoproduct y z)
+qCoproductBimap {w} {x} {y} {z} f g =
+  qCase {x=w} {y=x} {z=(QCoproduct y z)}
+    (qmComp (qInjL y z) f) (qmComp (qInjR y z) g)
+
+public export
+qCoproductMapFst : {w, x, y : QType} ->
+  QMorph w y -> QMorph (QCoproduct w x) (QCoproduct y x)
+qCoproductMapFst {w} {x} {y} = flip (qCoproductBimap {w} {x} {y} {z=x}) (qmId x)
+
+public export
+qCoproductMapSnd : {w, x, y : QType} ->
+  QMorph w x -> QMorph (QCoproduct y w) (QCoproduct y x)
+qCoproductMapSnd {w} {x} {y} = qCoproductBimap {w=y} {x=w} {y} {z=x} (qmId y)
+
 -----------------
 ---- Product ----
 -----------------
