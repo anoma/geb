@@ -1645,6 +1645,10 @@ qmComp {a} {b} {c} g f =
   Element0 (QMorphBase g . QMorphBase f) $ \ea, ea', aeq =>
     QMorphPres g (QMorphBase f ea) (QMorphBase f ea') $ QMorphPres f ea ea' aeq
 
+public export
+qmPipe : {a, b, c : QType} -> QMorph a b -> QMorph b c -> QMorph a c
+qmPipe {a} {b} {c} = flip $ qmComp {a} {b} {c}
+
 ----------------------------------------------------------------------------
 ---- `QType` as category (with explicit equivalence) internal to `Type` ----
 ----------------------------------------------------------------------------
