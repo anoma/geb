@@ -2395,12 +2395,12 @@ QQuivEdge vert = QPred $ QProduct vert vert
 
 public export
 PolyProfData : Type
-PolyProfData = (pos : Type ** (pos -> Type, pos -> Type))
+PolyProfData = (pos : Type ** Either pos pos -> Type)
 
 public export
 InterpPolyProfData : PolyProfData -> ProfunctorSig
 InterpPolyProfData ppd x y =
-  (p : fst ppd ** PrePostPair (fst (snd ppd) p) (snd (snd ppd) p) x y)
+  (p : fst ppd ** PrePostPair (snd ppd $ Left p) (snd ppd $ Right p) x y)
 
 public export
 ppdDimap : (ppd : PolyProfData) -> DimapSig (InterpPolyProfData ppd)
@@ -2425,8 +2425,8 @@ HomProfPolyDir2 : HomProfPolyPos -> Type
 HomProfPolyDir2 = snd . fst
 
 public export
-HomProfPolyDir : (HomProfPolyPos -> Type, HomProfPolyPos -> Type)
-HomProfPolyDir = (HomProfPolyDir1, HomProfPolyDir2)
+HomProfPolyDir : Either HomProfPolyPos HomProfPolyPos -> Type
+HomProfPolyDir = eitherElim HomProfPolyDir1 HomProfPolyDir2
 
 public export
 HomProfPolyData : PolyProfData
@@ -2474,10 +2474,10 @@ CatToPolyProfPos = scObj
 
 public export
 CatToPolyProfDir :
-  (sc : SCat) -> (CatToPolyProfPos sc -> Type, CatToPolyProfPos sc -> Type)
-CatToPolyProfDir sc =
-  (Sigma {a=(scObj sc)} . curry (scHom sc),
-   Sigma {a=(scObj sc)} . flip (curry (scHom sc)))
+  (sc : SCat) -> Either (CatToPolyProfPos sc) (CatToPolyProfPos sc) -> Type
+CatToPolyProfDir sc = eitherElim
+  (Sigma {a=(scObj sc)} . curry (scHom sc))
+  (Sigma {a=(scObj sc)} . flip (curry (scHom sc)))
 
 public export
 CatToPolyProf : SCat -> PolyProfData
