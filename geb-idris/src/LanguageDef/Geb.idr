@@ -2287,26 +2287,26 @@ QPred : QType -> QType
 QPred a = QHom a QTypeQT
 
 public export
-QSliceBase : QType -> Type
-QSliceBase a = Subset0 QType (flip QMorph a)
+QSliceObjBase : QType -> Type
+QSliceObjBase a = Subset0 QType (flip QMorph a)
 
 public export
-0 QSliceObjRel : {a : QType} -> PrERel (QSliceBase a)
-QSliceObjRel (sl, sl') = QTEquiv (fst0 sl, fst0 sl')
+0 QSliceTotRel : {a : QType} -> PrERel (QSliceObjBase a)
+QSliceTotRel (sl, sl') = QTEquiv (fst0 sl, fst0 sl')
 
 public export
-0 QSliceMorphRel : {a : QType} -> (sl, sl' : QSliceBase a) ->
-  (0 _ : QSliceObjRel {a} (sl, sl')) -> Type
-QSliceMorphRel sl sl' qte = QMExtEq (snd0 sl, qmComp (snd0 sl') $ QTEqIso qte)
+0 QSliceProjRel : {a : QType} -> (sl, sl' : QSliceObjBase a) ->
+  (0 _ : QSliceTotRel {a} (sl, sl')) -> Type
+QSliceProjRel sl sl' qte = QMExtEq (snd0 sl, qmComp (snd0 sl') $ QTEqIso qte)
 
 public export
-0 QSliceRel : {a : QType} -> PrERel (QSliceBase a)
-QSliceRel (sl, sl') =
-  Exists0 (QSliceObjRel (sl, sl')) (QSliceMorphRel sl sl')
+0 QSliceObjRel : {a : QType} -> PrERel (QSliceObjBase a)
+QSliceObjRel (sl, sl') = Exists0 (QSliceTotRel (sl, sl')) (QSliceProjRel sl sl')
 
 public export
-0 QSliceRelEquivI : {a : QType} -> PrEquivRelI (QSliceBase a) (QSliceRel {a})
-QSliceRelEquivI {a=(Element0 a (aeq ** aequiv))}
+0 QSliceObjRelEquivI : {a : QType} ->
+  PrEquivRelI (QSliceObjBase a) (QSliceObjRel {a})
+QSliceObjRelEquivI {a=(Element0 a (aeq ** aequiv))}
   (Element0 (Element0 x (xeq ** xequiv)) (Element0 f fpres),
    Element0 (Element0 x' (xeq' ** xequiv')) (Element0 f' fpres'))
   eq =
@@ -2345,12 +2345,12 @@ QSliceRelEquivI {a=(Element0 a (aeq ** aequiv))}
                       $ fgpres ea ea' eaeq
 
 public export
-0 QSliceRelEquiv : {a : QType} -> PrEquivRel (QSliceBase a)
-QSliceRelEquiv {a} = (QSliceRel {a} ** QSliceRelEquivI {a})
+0 QSliceObjRelEquiv : {a : QType} -> PrEquivRel (QSliceObjBase a)
+QSliceObjRelEquiv {a} = (QSliceObjRel {a} ** QSliceObjRelEquivI {a})
 
 public export
 QSliceObj : QType -> QType
-QSliceObj a = Element0 (QSliceBase a) (QSliceRelEquiv {a})
+QSliceObj a = Element0 (QSliceObjBase a) (QSliceObjRelEquiv {a})
 
 ----------------------------
 ----------------------------
