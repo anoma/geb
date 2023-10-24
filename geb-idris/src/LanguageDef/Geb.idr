@@ -2279,12 +2279,9 @@ qCoeqElim {x} {y} {z} {f} {g} h eq =
 ---------------------------------------------
 ---------------------------------------------
 
--- A predicate is a pi type in the dependent-type view.  In the categorial
--- view, it is a discrete presheaf, which is the opposite category of a
--- discrete copresheaf, which is equivalent to a slice category.
-public export
-QPred : QType -> QType
-QPred a = QHom a QTypeQT
+-----------------------------
+---- In categorial style ----
+-----------------------------
 
 public export
 QSliceObjBase : QType -> Type
@@ -2351,6 +2348,17 @@ QSliceObjRelEquiv {a} = (QSliceObjRel {a} ** QSliceObjRelEquivI {a})
 public export
 QSliceObj : QType -> QType
 QSliceObj a = Element0 (QSliceObjBase a) (QSliceObjRelEquiv {a})
+
+---------------------------------
+---- In dependent-type style ----
+---------------------------------
+
+-- A predicate is a pi type in the dependent-type view.  In the categorial
+-- view, it is a discrete presheaf, which is the opposite category of a
+-- discrete copresheaf, which is equivalent to a slice category.
+public export
+QPred : QType -> QType
+QPred a = QHom a QTypeQT
 
 ----------------------------
 ----------------------------
