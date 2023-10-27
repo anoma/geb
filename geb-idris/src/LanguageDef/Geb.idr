@@ -2619,3 +2619,43 @@ SumRepCorepProfunctor : {0 ffp : FunctorFamPair} -> (ffpm : FFPMapSig ffp) ->
   Profunctor (SumRepCorepProf ffp)
 SumRepCorepProfunctor {ffp} ffpm =
   MkProfunctor $ sumRepCorepProfDimap {ffp} ffpm
+
+-------------------------------
+-------------------------------
+---- Finitary copresheaves ----
+-------------------------------
+-------------------------------
+
+------------------------
+---- Finite quivers ----
+------------------------
+
+-- A quiver (directed multigraph) internal to FinSet.
+record FSQuiv where
+  constructor FSQ
+  fsqVert : Nat
+  fsqEdge : Nat
+  fsqSrc : Vect fsqEdge (Fin fsqVert)
+  fsqTgt : Vect fsqEdge (Fin fsqVert)
+
+-- The signature of endpoints of an edge in or a path through a finite quiver.
+record FSQSig (fsq : FSQuiv) where
+  constructor FSQS
+  fsqsDom : Fin (fsqVert fsq)
+  fsqsCod : Fin (fsqVert fsq)
+
+-- An edge in a finite quiver with the given endpoints.
+record FSQEdge (sig : Sigma FSQSig) where
+  constructor FSQE
+  fsqeE : Fin (fsqEdge (fst sig))
+  0 fsqeDom : index fsqeE (fsqSrc (fst sig)) = fsqsDom (snd sig)
+  0 fsqeCod : index fsqeE (fsqTgt (fst sig)) = fsqsCod (snd sig)
+
+-- A path through a finite quiver (ordered starting from the target)
+-- with the given endpoints.
+data FSQPath : SliceObj (Sigma FSQSig) where
+  FSQPid : (0 fsq : FSQuiv) -> (0 v : Fin (fsqVert fsq)) ->
+    FSQPath (fsq ** FSQS v v)
+  FSQPcomp : (0 fsq : FSQuiv) -> {0 s, v, t : Fin (fsqVert fsq)} ->
+    FSQEdge (fsq ** FSQS v t) -> FSQPath (fsq ** FSQS s v) ->
+    FSQPath (fsq ** FSQS s t)
