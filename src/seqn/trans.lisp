@@ -63,23 +63,23 @@ to (n) for some n"
   (let* ((zero (vamp:make-constant :const 0))
          (one (vamp:make-constant :const 1))
          (car (car (vamp:arguments obj)))
-         (cadr (cadr (vamp:arguments obj)))
-         (opcar (to-vampir-opt car))
-         (opcadr (to-vampir-opt cadr))
-         (const-check (const-check opcar opcadr)))
+         (optcar (to-vampir-opt car)))
     (cond  ((obj-equalp (vamp:func obj) :isZero)
-            (if const-check
-                (if (= (vamp:const opcar)
-                       (vamp:const opcadr))
+            (if (typep optcar 'vamp:constant)
+                (if (zerop (vamp:const optcar))
                     zero
-                    one)))
+                    one)
+                (geb.vampir:isZero optcar)))
            ((obj-equalp (vamp:func obj) :negative)
-            (if const-check
-                (if (< (vamp:const opcar)
-                       (vamp:const opcadr))
-                    zero
-                    one)))
-           (t (mapcar 'to-vampir-opt (vamp:arguments obj))))))
+            (let ((optcadr (to-vampir-opt (cadr (vamp:arguments obj)))))
+              (if (typep optcadr 'vamp:constant)
+                  (if (< (vamp:const optcadr) 0)
+                      zero
+                      one)
+                  (geb.vampir:negative car optcadr))))
+           (t (vamp:make-application
+               :func (vamp:func obj)
+               :arguments (mapcar 'to-vampir-opt (vamp:arguments obj)))))))
 
 (defmethod to-vampir-opt ((obj vamp:constant))
   obj)
@@ -87,7 +87,7 @@ to (n) for some n"
 (defmethod to-vampir-opt ((obj vamp:wire))
   obj)
 
-(defmethod to-vampir-opt ((obj geb.vampir.spec:infix))
+(defmethod to-vampir-opt ((obj vamp:infix))
   (let*  ((lhs (vamp:lhs obj))
           (rhs (vamp:rhs obj))
           (oplhs (to-vampir-opt lhs))

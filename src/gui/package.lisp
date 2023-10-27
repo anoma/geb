@@ -19,8 +19,8 @@ the [GEB:SUBSTMORPH][type] changes any incoming term.
 
 if the visualizer gets a GEB:@GEB-SUBSTMU, then it shows the data
 layout of the term, showing what kind of data "
-  (visualize       pax:function)
-  (kill-running    pax:function)
+  (visualize       pax::function)
+  (kill-running    pax::function)
   (@visaulizer-aid pax:section))
 
 (pax:defsection @visaulizer-aid (:title "Aiding the Visualizer")

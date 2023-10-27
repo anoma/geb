@@ -17,11 +17,11 @@
 (pax:defsection @mixins-cat (:title "The Categorical Interface")
   "This covers the main Categorical interface required to be used and
 contained in various data structures"
-  (cat-obj    pax:class)
-  (cat-morph  pax:class)
-  (dom        pax:generic-function)
-  (codom      pax:generic-function)
-  (curry-prod pax:generic-function))
+  (cat-obj    pax:: class)
+  (cat-morph  pax::class)
+  (dom        pax::generic-function)
+  (codom      pax::generic-function)
+  (curry-prod pax::generic-function))
 
 (pax:defsection @metadata (:title "Metadata Mixin")
   "Metadata is a form of meta information about a particular
@@ -32,13 +32,13 @@ contained in various data structures"
 
   "For this task we offer the [META-MIXIN][class] which will allow
    metadata to be stored for any type that uses its service."
-  (meta-mixin pax:class)
+  (meta-mixin pax::class)
 
   "For working with the structure it is best to have operations to treat
    it like an ordinary hashtable"
 
-  (meta-insert pax:function)
-  (meta-lookup pax:function)
+  (meta-insert pax::function)
+  (meta-lookup pax::function)
 
   (@mixin-performance pax:section))
 
@@ -91,11 +91,11 @@ storage.")
    updating a slot in a pure manner (allocating a new object), or even
    checking if two objects are `EQUAL`-able adhoc. The pointwise API,
    however, derives the behavior and naturally allows such idioms"
-  (pointwise-mixin pax:class)
+  (pointwise-mixin pax::class)
   "Further we may wish to hide any values inherited from our superclass
    due to this we can instead compare only the slots defined directly
    in our class"
-  (direct-pointwise-mixin pax:class))
+  (direct-pointwise-mixin pax::class))
 
 (pax:defsection @pointwise-API (:title "Pointwise API")
   "These are the general API functions on any class that have the
@@ -106,12 +106,12 @@ storage.")
    objects. Overall the API is focused on allowing more generic
    operations on classes that make them as useful for generic data
    traversal as `LIST`'s are"
-  (to-pointwise-list pax:generic-function)
-  (obj-equalp        pax:generic-function)
+  (to-pointwise-list pax::generic-function)
+  (obj-equalp        pax::generic-function)
 
-  (pointwise-slots   pax:generic-function)
-  (map-pointwise     pax:function)
-  (reduce-pointwise  pax:function))
+  (pointwise-slots   pax::generic-function)
+  (map-pointwise     pax::function)
+  (reduce-pointwise  pax::function))
 
 (defun my-transcript (fn)
   (let ((pax:*transcribe-check-consistency*

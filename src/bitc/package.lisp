@@ -14,16 +14,16 @@
 
 (pax:defsection @bitc-trans (:title "Bits (Boolean Circuit) Transformations")
   "This covers transformation functions from"
-  (to-circuit (pax:method () (<bitc> t)))
-  (to-vampir  (pax:method () (compose t t)))
-  (to-vampir  (pax:method () (fork t t)))
-  (to-vampir  (pax:method () (parallel t t)))
-  (to-vampir  (pax:method () (swap t t)))
-  (to-vampir  (pax:method () (one t t)))
-  (to-vampir  (pax:method () (zero t t)))
-  (to-vampir  (pax:method () (ident t t)))
-  (to-vampir  (pax:method () (drop t t)))
-  (to-vampir  (pax:method () (branch t t))))
+  (to-circuit (pax::method () (<bitc> t)))
+  (to-vampir  (pax::method () (compose t t)))
+  (to-vampir  (pax::method () (fork t t)))
+  (to-vampir  (pax::method () (parallel t t)))
+  (to-vampir  (pax::method () (swap t t)))
+  (to-vampir  (pax::method () (one t t)))
+  (to-vampir  (pax::method () (zero t t)))
+  (to-vampir  (pax::method () (ident t t)))
+  (to-vampir  (pax::method () (drop t t)))
+  (to-vampir  (pax::method () (branch t t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; bitc module
@@ -45,10 +45,10 @@
 
 (pax:defsection @bitc-api (:title "Bits (Boolean Circuit) API")
   "This covers the Bits (Boolean Circuit) API"
-  (gapply (pax:method () (<bitc> bit-vector)))
-  (gapply (pax:method () (<bitc> list)))
-  (dom    (pax:method () (<bitc>)))
-  (codom  (pax:method () (<bitc>))))
+  (gapply (pax::method () (<bitc> bit-vector)))
+  (gapply (pax::method () (<bitc> list)))
+  (dom    (pax::method () (<bitc>)))
+  (codom  (pax::method () (<bitc>))))
 
 (in-package :geb.bitc)
 
