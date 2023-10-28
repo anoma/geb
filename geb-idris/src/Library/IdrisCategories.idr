@@ -6470,6 +6470,10 @@ public export
 FunctorExp : (Type -> Type) -> Type -> Type -> Type
 FunctorExp j a b = a -> j b
 
+public export
+Functor f => Profunctor (FunctorExp f) where
+  dimap mca mbd coalg = map {f} mbd . coalg . mca
+
 -- The right Kan extension of `g` along `j` (sometimes written `g/j`).
 -- (Note that the Haskell standard libraries reverse the parameters.
 -- "First parameter along second parameter" sounds easier to remember
@@ -6485,6 +6489,10 @@ RKanExt g j a = (b : Type) -> FunctorExp j a b -> g b
 public export
 ExpFunctor : (Type -> Type) -> Type -> Type -> Type
 ExpFunctor j a b = j b -> a
+
+public export
+Functor f => Profunctor (flip $ ExpFunctor f) where
+  dimap mca mbd alg = mbd . alg . map {f} mca
 
 -- The left Kan extension of `g` along `j`.
 -- (Note that the Haskell standard libraries reverse the parameters.)
