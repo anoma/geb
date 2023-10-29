@@ -27,11 +27,11 @@ Quiver : Type
 Quiver = PreDiagram
 
 public export
-qVert : Quiver -> Type
+qVert : SliceObj Quiver
 qVert = pdVert
 
 public export
-qSig : Quiver -> Type
+qSig : SliceObj Quiver
 qSig = SignatureT . qVert
 
 public export
@@ -44,7 +44,7 @@ qEdge = pdEdge
 
 -- A notion of identity and composition on a quiver.
 public export
-QuiverIC : Quiver -> Type
+QuiverIC : SliceObj Quiver
 QuiverIC q = SliceAlg CatHomF (qEdge q)
 
 -- A notion of a relation on the edges of a quiver.
@@ -62,11 +62,11 @@ record CatData where
   cdCong : QuivEdgeRel cdQuiv
 
 public export
-cdObj : CatData -> Type
+cdObj : SliceObj CatData
 cdObj = qVert . cdQuiv
 
 public export
-cdSig : CatData -> Type
+cdSig : SliceObj CatData
 cdSig = qSig . cdQuiv
 
 public export
@@ -78,7 +78,7 @@ cdHom : Pi {a=CatData} CDHomSlice
 cdHom cd = qEdge $ cdQuiv cd
 
 public export
-CDIC : CatData -> Type
+CDIC : SliceObj CatData
 CDIC = QuiverIC . cdQuiv
 
 public export
@@ -113,6 +113,35 @@ record LawfulCat where
   constructor LCat
   lcData : CatData
   0 lcLawful : CatDataLawful lcData
+
+public export
+lcObj : SliceObj LawfulCat
+lcObj = cdObj . lcData
+
+public export
+lcSig : SliceObj LawfulCat
+lcSig = cdSig . lcData
+
+public export
+LCHomSlice : SliceObj LawfulCat
+LCHomSlice = CDHomSlice . lcData
+
+public export
+lcHom : Pi {a=LawfulCat} LCHomSlice
+lcHom lc = cdHom $ lcData lc
+
+public export
+LCIC : SliceObj LawfulCat
+LCIC = CDIC . lcData
+
+public export
+lcId : (lc : LawfulCat) -> (x : lcObj lc) -> lcHom lc (x, x)
+lcId lc = cdId (lcData lc)
+
+public export
+lcComp : (lc : LawfulCat) -> {x, y, z : lcObj lc} ->
+  lcHom lc (y, z) -> lcHom lc (x, y) -> lcHom lc (x, z)
+lcComp lc = cdComp (lcData lc)
 
 -------------------------------------------------
 -------------------------------------------------
