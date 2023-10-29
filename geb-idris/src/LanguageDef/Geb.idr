@@ -237,14 +237,14 @@ record FunctorData (sig : FunctorSig) where
   fdMmap : MorphMap sig fdOmap
 
 public export
-0 FunctorIdLaw : (sig: FunctorSig) -> SliceObj (FunctorData sig)
+0 FunctorIdLaw : (sig : FunctorSig) -> SliceObj (FunctorData sig)
 FunctorIdLaw sig fd =
   (x : cdObj $ fst sig) ->
   cdCong (snd sig) (fdOmap fd x, fdOmap fd x)
     (cdId (snd sig) (fdOmap fd x), fdMmap fd x x (cdId (fst sig) x))
 
 public export
-0 FunctorCompLaw : (sig: FunctorSig) -> SliceObj (FunctorData sig)
+0 FunctorCompLaw : (sig : FunctorSig) -> SliceObj (FunctorData sig)
 FunctorCompLaw sig fd = (x, y, z : cdObj $ fst sig) ->
   (g : cdHom (fst sig) (y, z)) -> (f : cdHom (fst sig) (x, y)) ->
   cdCong (snd sig) (fdOmap fd x, fdOmap fd z)
