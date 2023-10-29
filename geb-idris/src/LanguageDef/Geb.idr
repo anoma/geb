@@ -91,6 +91,23 @@ cdComp : (cd : CatData) -> {x, y, z : cdObj cd} ->
 cdComp cd {x} {y} {z} g f = cdIdComp cd (x, z) $ CHComp {hom=(cdHom cd)} g f
 
 public export
+cdPipe : (cd : CatData) -> {x, y, z : cdObj cd} ->
+  cdHom cd (x, y) -> cdHom cd (y, z) -> cdHom cd (x, z)
+cdPipe cd = flip (cdComp cd)
+
+infixr 1 <|
+public export
+(<|) : {cd : CatData} -> {x, y, z : cdObj cd} ->
+  cdHom cd (y, z) -> cdHom cd (x, y) -> cdHom cd (x, z)
+(<|) {cd} = cdComp cd
+
+infixr 1 |>
+public export
+(|>) : {cd : CatData} -> {x, y, z : cdObj cd} ->
+  cdHom cd (x, y) -> cdHom cd (y, z) -> cdHom cd (x, z)
+(|>) {cd} = cdPipe cd
+
+public export
 0 CatEquivLaw : SliceObj CatData
 CatEquivLaw cd = (xy : cdSig cd) -> PrEquivRelI (cdHom cd xy) (cdCong cd xy)
 
@@ -167,17 +184,17 @@ lcPipe : (lc : LawfulCat) -> {x, y, z : lcObj lc} ->
   lcHom lc (x, y) -> lcHom lc (y, z) -> lcHom lc (x, z)
 lcPipe lc = flip (lcComp lc)
 
-infixr 1 <|
+infixr 1 <!
 public export
-(<|) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
+(<!) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
   lcHom lc (y, z) -> lcHom lc (x, y) -> lcHom lc (x, z)
-(<|) {lc} = lcComp lc
+(<!) {lc} = lcComp lc
 
-infixr 1 |>
+infixr 1 !>
 public export
-(|>) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
+(!>) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
   lcHom lc (x, y) -> lcHom lc (y, z) -> lcHom lc (x, z)
-(|>) {lc} = lcPipe lc
+(!>) {lc} = lcPipe lc
 
 -------------------------------------------------
 -------------------------------------------------
