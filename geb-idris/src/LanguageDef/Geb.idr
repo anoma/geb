@@ -16,6 +16,104 @@ import LanguageDef.Syntax
 
 %default total
 
+-----------------------------------------------
+-----------------------------------------------
+---- Categories defined via slice algebras ----
+-----------------------------------------------
+-----------------------------------------------
+
+public export
+Quiver : Type
+Quiver = PreDiagram
+
+public export
+qVert : Quiver -> Type
+qVert = pdVert
+
+public export
+qSig : Quiver -> Type
+qSig = SignatureT . qVert
+
+public export
+QHomSlice : SliceObj Quiver
+QHomSlice = HomSlice . qVert
+
+public export
+qEdge : Pi {a=Quiver} QHomSlice
+qEdge = pdEdge
+
+-- A notion of identity and composition on a quiver.
+public export
+QuiverIC : Quiver -> Type
+QuiverIC q = SliceAlg CatHomF (qEdge q)
+
+-- A notion of a relation on the edges of a quiver.
+public export
+QuivEdgeRel : SliceObj Quiver
+QuivEdgeRel q = Pi {a=(qSig q)} (PrERel . qEdge q)
+
+-- A quiver with notions of identity, composition, and congruence --
+-- which suffice to form the data of a category, but does not contain
+-- proofs of the category laws.
+public export
+record CatData where
+  cdQuiv : Quiver
+  cdIdComp : QuiverIC cdQuiv
+  cdCong : QuivEdgeRel cdQuiv
+
+public export
+cdObj : CatData -> Type
+cdObj = qVert . cdQuiv
+
+public export
+cdSig : CatData -> Type
+cdSig = qSig . cdQuiv
+
+public export
+CDHomSlice : SliceObj CatData
+CDHomSlice = QHomSlice . cdQuiv
+
+public export
+cdHom : Pi {a=CatData} CDHomSlice
+cdHom cd = qEdge $ cdQuiv cd
+
+public export
+CDIC : CatData -> Type
+CDIC = QuiverIC . cdQuiv
+
+public export
+cdId : (cd : CatData) -> (x : cdObj cd) -> cdHom cd (x, x)
+cdId cd x = cdIdComp cd (x, x) $ CHId {hom=(cdHom cd)} x
+
+public export
+cdComp : (cd : CatData) -> {x, y, z : cdObj cd} ->
+  cdHom cd (y, z) -> cdHom cd (x, y) -> cdHom cd (x, z)
+cdComp cd {x} {y} {z} g f = cdIdComp cd (x, z) $ CHComp {hom=(cdHom cd)} g f
+
+-- A type representing that a given `CatData` obeys the laws of a category.
+-- This could be viewed as stating that the relation on the edges is a
+-- congruence.
+public export
+record CatDataLawful (cd : CatData) where
+  constructor CatLaws
+  0 catLawEquiv : (xy : cdSig cd) -> PrEquivRelI (cdHom cd xy) (cdCong cd xy)
+  0 catLawIdL : {x, y : cdObj cd} -> (f : cdHom cd (x, y)) ->
+    cdCong cd (x, y) (cdComp cd {x} {y} {z=y} (cdId cd y) f, f)
+  0 catLawIdR : {x, y : cdObj cd} -> (f : cdHom cd (x, y)) ->
+    cdCong cd (x, y) (cdComp cd {x} {y=x} {z=y} f (cdId cd x), f)
+  0 catLawIdAssoc : {w, x, y, z : cdObj cd} ->
+    (f : cdHom cd (w, x)) -> (g : cdHom cd (x, y)) -> (h : cdHom cd (y, z)) ->
+    cdCong cd (w, z)
+      (cdComp cd {x=w} {y=x} {z} (cdComp cd {x} {y} {z} h g) f,
+       cdComp cd {x=w} {y} {z} h (cdComp cd {x=w} {y=x} {z=y} g f))
+
+-- A proven category, with underlying data and proofs of the laws.
+public export
+record LawfulCat where
+  constructor LCat
+  lcData : CatData
+  0 lcLawful : CatDataLawful lcData
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Functors in `Cat` as internal to `Type` ----
