@@ -122,6 +122,12 @@ binTreeCata {atom} {a} alg (InBTm x) = alg $ case x of
   Left ea => ($$!) ea
   Right (x1, x2) => binTreeCata alg x1 $$* binTreeCata alg x2
 
+public export
+btOpaqueCata : {a, b : Type} ->
+  ((c, d : Type) -> (BinTreeCoalg a c, BinTreeAlg b d) -> (c -> d)) ->
+  BinTreeMu a -> BinTreeMu b
+btOpaqueCata {a} {b} alg = alg (BinTreeMu a) (BinTreeMu b) (outBTm, InBTm)
+
 -- The (universal) catamorphism of `Mu[BinTreeF]` is also the universal "eval"
 -- morphism for the free monad of the product monad (with a slight
 -- rearrangement of parameters via `eitherElim`).  The eval morphism is the
