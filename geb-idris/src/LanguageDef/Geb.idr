@@ -266,6 +266,59 @@ record LawfulFunctor (sig : FunctorSig) where
 ---- Natural transformations ----
 ---------------------------------
 
+public export
+NTSig : Type
+NTSig = DPair FunctorSig (SignatureT . FunctorData)
+
+public export
+NTcdata : NTSig -> SignatureT CatData
+NTcdata = fst
+
+public export
+NTcdom : NTSig -> CatData
+NTcdom = fst . NTcdata
+
+public export
+NTccod : NTSig -> CatData
+NTccod = snd . NTcdata
+
+public export
+NTfdom : (sig : NTSig) -> FunctorData $ NTcdata sig
+NTfdom sig = fst $ snd sig
+
+public export
+NTfcod : (sig : NTSig) -> FunctorData $ NTcdata sig
+NTfcod sig = snd $ snd sig
+
+public export
+NTComponentSig : SliceObj NTSig
+NTComponentSig sig = (x : cdObj $ NTcdom sig) ->
+  cdHom (NTccod sig) (fdOmap (NTfdom sig) x, fdOmap (NTfcod sig) x)
+
+public export
+record NTData (sig : NTSig) where
+  constructor NTD
+  ntdC : NTComponentSig sig
+
+public export
+0 NaturalityLaw : (sig : NTSig) -> SliceObj (NTData sig)
+NaturalityLaw sig ntd =
+  (x, y : cdObj $ NTcdom sig) -> (m : cdHom (NTcdom sig) (x, y)) ->
+  cdCong (NTccod sig) (fdOmap (NTfdom sig) x, fdOmap (NTfcod sig) y)
+    (fdMmap (NTfcod sig) x y m <# ntdC ntd x,
+     ntdC ntd y <# fdMmap (NTfdom sig) x y m)
+
+public export
+record NTDataLawful {sig : NTSig} (ntd : NTData sig) where
+  constructor NTLaws
+  0 ntLawNatural : NaturalityLaw sig ntd
+
+public export
+record LawfulNT (sig : NTSig) where
+  constructor LNT
+  lntData : NTData sig
+  0 lntLawful : NTDataLawful lntData
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Functors in `Cat` as internal to `Type` ----
