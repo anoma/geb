@@ -218,45 +218,53 @@ public export
 ------------------
 
 public export
-ObjMap : CatData -> CatData -> Type
-ObjMap dom cod = cdObj dom -> cdObj cod
+FunctorSig : Type
+FunctorSig = SignatureT CatData
 
 public export
-MorphMap : (dom, cod : CatData) -> ObjMap dom cod -> Type
-MorphMap dom cod fo =
-  (x, y : cdObj dom) -> cdHom dom (x, y) -> cdHom cod (fo x, fo y)
+ObjMap : SliceObj FunctorSig
+ObjMap sig = cdObj (fst sig) -> cdObj (snd sig)
 
 public export
-record FunctorData (dom, cod : CatData) where
+MorphMap : (sig : FunctorSig) -> SliceObj (ObjMap sig)
+MorphMap sig fo = (x, y : cdObj $ fst sig) ->
+  cdHom (fst sig) (x, y) -> cdHom (snd sig) (fo x, fo y)
+
+public export
+record FunctorData (sig : FunctorSig) where
   constructor FunctorD
-  fdOmap : ObjMap dom cod
-  fdMmap : MorphMap dom cod fdOmap
+  fdOmap : ObjMap sig
+  fdMmap : MorphMap sig fdOmap
 
 public export
-0 FunctorIdLaw : (dom, cod : CatData) -> SliceObj (FunctorData dom cod)
-FunctorIdLaw dom cod fd =
-  (x : cdObj dom) ->
-  cdCong cod (fdOmap fd x, fdOmap fd x)
-    (cdId cod (fdOmap fd x), fdMmap fd x x (cdId dom x))
+0 FunctorIdLaw : (sig: FunctorSig) -> SliceObj (FunctorData sig)
+FunctorIdLaw sig fd =
+  (x : cdObj $ fst sig) ->
+  cdCong (snd sig) (fdOmap fd x, fdOmap fd x)
+    (cdId (snd sig) (fdOmap fd x), fdMmap fd x x (cdId (fst sig) x))
 
 public export
-0 FunctorCompLaw : (dom, cod : CatData) -> SliceObj (FunctorData dom cod)
-FunctorCompLaw dom cod fd =
-  (x, y, z : cdObj dom) -> (g : cdHom dom (y, z)) -> (f : cdHom dom (x, y)) ->
-  cdCong cod (fdOmap fd x, fdOmap fd z)
+0 FunctorCompLaw : (sig: FunctorSig) -> SliceObj (FunctorData sig)
+FunctorCompLaw sig fd = (x, y, z : cdObj $ fst sig) ->
+  (g : cdHom (fst sig) (y, z)) -> (f : cdHom (fst sig) (x, y)) ->
+  cdCong (snd sig) (fdOmap fd x, fdOmap fd z)
     (fdMmap fd x z (g <# f), fdMmap fd y z g <# fdMmap fd x y f)
 
 public export
-record FunctorDataLawful {dom, cod : CatData} (fd : FunctorData dom cod) where
+record FunctorDataLawful {sig : FunctorSig} (fd : FunctorData sig) where
   constructor FunctorLaws
-  0 funcLawId : FunctorIdLaw dom cod fd
-  0 funcLawComp : FunctorCompLaw dom cod fd
+  0 funcLawId : FunctorIdLaw sig fd
+  0 funcLawComp : FunctorCompLaw sig fd
 
 public export
-record LawfulFunctor (dom, cod : CatData) where
+record LawfulFunctor (sig : FunctorSig) where
   constructor LFunc
-  lfData : FunctorData dom cod
+  lfData : FunctorData sig
   0 lfLawful : FunctorDataLawful lfData
+
+---------------------------------
+---- Natural transformations ----
+---------------------------------
 
 -------------------------------------------------
 -------------------------------------------------
