@@ -65,6 +65,7 @@ QuivEdgeRel q = Pi {a=(qSig q)} (PrERel . qEdge q)
 -- proofs of the category laws.
 public export
 record CatData where
+  constructor CatD
   cdQuiv : Quiver
   cdIdComp : QuiverIC cdQuiv
   cdCong : QuivEdgeRel cdQuiv
@@ -90,7 +91,11 @@ CDIC : SliceObj CatData
 CDIC = QuiverIC . cdQuiv
 
 public export
-cdId : (cd : CatData) -> (x : cdObj cd) -> cdHom cd (x, x)
+cdIdSig : SliceObj CatData
+cdIdSig cd = (x : cdObj cd) -> cdHom cd (x, x)
+
+public export
+cdId : (cd : CatData) -> cdIdSig cd
 cdId cd x = cdIdComp cd (x, x) $ CHId {hom=(cdHom cd)} x
 
 public export
@@ -103,17 +108,17 @@ cdPipe : (cd : CatData) -> {x, y, z : cdObj cd} ->
   cdHom cd (x, y) -> cdHom cd (y, z) -> cdHom cd (x, z)
 cdPipe cd = flip (cdComp cd)
 
-infixr 1 <|
+infixr 1 <#
 public export
-(<|) : {cd : CatData} -> {x, y, z : cdObj cd} ->
+(<#) : {cd : CatData} -> {x, y, z : cdObj cd} ->
   cdHom cd (y, z) -> cdHom cd (x, y) -> cdHom cd (x, z)
-(<|) {cd} = cdComp cd
+(<#) {cd} = cdComp cd
 
 infixr 1 |>
 public export
-(|>) : {cd : CatData} -> {x, y, z : cdObj cd} ->
+(#>) : {cd : CatData} -> {x, y, z : cdObj cd} ->
   cdHom cd (x, y) -> cdHom cd (y, z) -> cdHom cd (x, z)
-(|>) {cd} = cdPipe cd
+(#>) {cd} = cdPipe cd
 
 public export
 0 CatEquivLaw : SliceObj CatData
@@ -179,8 +184,12 @@ LCIC : SliceObj LawfulCat
 LCIC = CDIC . lcData
 
 public export
-lcId : {lc : LawfulCat} -> (x : lcObj lc) -> lcHom lc (x, x)
-lcId {lc} = cdId (lcData lc)
+lcIdSig : SliceObj LawfulCat
+lcIdSig = cdIdSig . lcData
+
+public export
+lcId : (lc : LawfulCat) -> lcIdSig lc
+lcId lc = cdId (lcData lc)
 
 public export
 lcComp : (lc : LawfulCat) -> {x, y, z : lcObj lc} ->
@@ -203,6 +212,51 @@ public export
 (!>) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
   lcHom lc (x, y) -> lcHom lc (y, z) -> lcHom lc (x, z)
 (!>) {lc} = lcPipe lc
+
+------------------
+---- Functors ----
+------------------
+
+public export
+ObjMap : CatData -> CatData -> Type
+ObjMap dom cod = cdObj dom -> cdObj cod
+
+public export
+MorphMap : (dom, cod : CatData) -> ObjMap dom cod -> Type
+MorphMap dom cod fo =
+  (x, y : cdObj dom) -> cdHom dom (x, y) -> cdHom cod (fo x, fo y)
+
+public export
+record FunctorData (dom, cod : CatData) where
+  constructor FunctorD
+  fdOmap : ObjMap dom cod
+  fdMmap : MorphMap dom cod fdOmap
+
+public export
+0 FunctorIdLaw : (dom, cod : CatData) -> SliceObj (FunctorData dom cod)
+FunctorIdLaw dom cod fd =
+  (x : cdObj dom) ->
+  cdCong cod (fdOmap fd x, fdOmap fd x)
+    (cdId cod (fdOmap fd x), fdMmap fd x x (cdId dom x))
+
+public export
+0 FunctorCompLaw : (dom, cod : CatData) -> SliceObj (FunctorData dom cod)
+FunctorCompLaw dom cod fd =
+  (x, y, z : cdObj dom) -> (g : cdHom dom (y, z)) -> (f : cdHom dom (x, y)) ->
+  cdCong cod (fdOmap fd x, fdOmap fd z)
+    (fdMmap fd x z (g <# f), fdMmap fd y z g <# fdMmap fd x y f)
+
+public export
+record FunctorDataLawful {dom, cod : CatData} (fd : FunctorData dom cod) where
+  constructor FunctorLaws
+  0 funcLawId : FunctorIdLaw dom cod fd
+  0 funcLawComp : FunctorCompLaw dom cod fd
+
+public export
+record LawfulFunctor (dom, cod : CatData) where
+  constructor LFunc
+  lfData : FunctorData dom cod
+  0 lfLawful : FunctorDataLawful lfData
 
 -------------------------------------------------
 -------------------------------------------------
