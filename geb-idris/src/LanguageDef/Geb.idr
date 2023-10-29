@@ -135,13 +135,30 @@ LCIC : SliceObj LawfulCat
 LCIC = CDIC . lcData
 
 public export
-lcId : (lc : LawfulCat) -> (x : lcObj lc) -> lcHom lc (x, x)
-lcId lc = cdId (lcData lc)
+lcId : {lc : LawfulCat} -> (x : lcObj lc) -> lcHom lc (x, x)
+lcId {lc} = cdId (lcData lc)
 
 public export
 lcComp : (lc : LawfulCat) -> {x, y, z : lcObj lc} ->
   lcHom lc (y, z) -> lcHom lc (x, y) -> lcHom lc (x, z)
 lcComp lc = cdComp (lcData lc)
+
+public export
+lcPipe : (lc : LawfulCat) -> {x, y, z : lcObj lc} ->
+  lcHom lc (x, y) -> lcHom lc (y, z) -> lcHom lc (x, z)
+lcPipe lc = flip (lcComp lc)
+
+infixr 1 <|
+public export
+(<|) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
+  lcHom lc (y, z) -> lcHom lc (x, y) -> lcHom lc (x, z)
+(<|) {lc} = lcComp lc
+
+infixr 1 |>
+public export
+(|>) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
+  lcHom lc (x, y) -> lcHom lc (y, z) -> lcHom lc (x, z)
+(|>) {lc} = lcPipe lc
 
 -------------------------------------------------
 -------------------------------------------------
