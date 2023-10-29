@@ -22,6 +22,10 @@ import LanguageDef.Syntax
 -----------------------------------------------
 -----------------------------------------------
 
+-----------------
+---- Quivers ----
+-----------------
+
 public export
 Quiver : Type
 Quiver = PreDiagram
@@ -51,6 +55,10 @@ QuiverIC q = SliceAlg CatHomF (qEdge q)
 public export
 QuivEdgeRel : SliceObj Quiver
 QuivEdgeRel q = Pi {a=(qSig q)} (PrERel . qEdge q)
+
+--------------------
+---- Categories ----
+--------------------
 
 -- A quiver with notions of identity, composition, and congruence --
 -- which suffice to form the data of a category, but does not contain
