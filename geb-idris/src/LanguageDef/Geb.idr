@@ -90,22 +90,41 @@ cdComp : (cd : CatData) -> {x, y, z : cdObj cd} ->
   cdHom cd (y, z) -> cdHom cd (x, y) -> cdHom cd (x, z)
 cdComp cd {x} {y} {z} g f = cdIdComp cd (x, z) $ CHComp {hom=(cdHom cd)} g f
 
+public export
+0 CatEquivLaw : SliceObj CatData
+CatEquivLaw cd = (xy : cdSig cd) -> PrEquivRelI (cdHom cd xy) (cdCong cd xy)
+
+public export
+0 CatLeftIdLaw : SliceObj CatData
+CatLeftIdLaw cd =
+  (x, y : cdObj cd) -> (f : cdHom cd (x, y)) ->
+  cdCong cd (x, y) (cdComp cd {x} {y} {z=y} (cdId cd y) f, f)
+
+public export
+0 CatRightIdLaw : SliceObj CatData
+CatRightIdLaw cd =
+  (x, y : cdObj cd) -> (f : cdHom cd (x, y)) ->
+  cdCong cd (x, y) (cdComp cd {x} {y=x} {z=y} f (cdId cd x), f)
+
+public export
+0 CatAssocLaw : SliceObj CatData
+CatAssocLaw cd =
+  (w, x, y, z : cdObj cd) ->
+  (f : cdHom cd (w, x)) -> (g : cdHom cd (x, y)) -> (h : cdHom cd (y, z)) ->
+  cdCong cd (w, z)
+    (cdComp cd {x=w} {y=x} {z} (cdComp cd {x} {y} {z} h g) f,
+     cdComp cd {x=w} {y} {z} h (cdComp cd {x=w} {y=x} {z=y} g f))
+
 -- A type representing that a given `CatData` obeys the laws of a category.
 -- This could be viewed as stating that the relation on the edges is a
 -- congruence.
 public export
 record CatDataLawful (cd : CatData) where
   constructor CatLaws
-  0 catLawEquiv : (xy : cdSig cd) -> PrEquivRelI (cdHom cd xy) (cdCong cd xy)
-  0 catLawIdL : {x, y : cdObj cd} -> (f : cdHom cd (x, y)) ->
-    cdCong cd (x, y) (cdComp cd {x} {y} {z=y} (cdId cd y) f, f)
-  0 catLawIdR : {x, y : cdObj cd} -> (f : cdHom cd (x, y)) ->
-    cdCong cd (x, y) (cdComp cd {x} {y=x} {z=y} f (cdId cd x), f)
-  0 catLawIdAssoc : {w, x, y, z : cdObj cd} ->
-    (f : cdHom cd (w, x)) -> (g : cdHom cd (x, y)) -> (h : cdHom cd (y, z)) ->
-    cdCong cd (w, z)
-      (cdComp cd {x=w} {y=x} {z} (cdComp cd {x} {y} {z} h g) f,
-       cdComp cd {x=w} {y} {z} h (cdComp cd {x=w} {y=x} {z=y} g f))
+  0 catLawEquiv : CatEquivLaw cd
+  0 catLawIdL : CatLeftIdLaw cd
+  0 catLawIdR : CatRightIdLaw cd
+  0 catLawIdAssoc : CatAssocLaw cd
 
 -- A proven category, with underlying data and proofs of the laws.
 public export
