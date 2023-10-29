@@ -5227,10 +5227,18 @@ FIFaceMorph :
   FIFace f -> FIFace f -> Type
 FIFaceMorph {fm} = FAlgMorph {fm}
 
+public export
+Contravariant f => Functor (Algebra f) where
+  map m alg = m . alg . contramap {f} m
+
 -- The dual of an F-algebra: an F-coalgebra.
 public export
 Coalgebra : (Type -> Type) -> Type -> Type
 Coalgebra f a = a -> f a
+
+public export
+Contravariant f => Contravariant (Coalgebra f) where
+  contramap m coalg = contramap {f} m . coalg . m
 
 -- For a given functor `F` and object `v`, form the functor `Fv` defined by
 -- `Fv[x] = v + F[x]`.  We call it `TranslateFunctor` because it adds
