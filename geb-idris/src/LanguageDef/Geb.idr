@@ -99,26 +99,34 @@ cdId : (cd : CatData) -> cdIdSig cd
 cdId cd x = cdIdComp cd (x, x) $ CHId {hom=(cdHom cd)} x
 
 public export
-cdComp : (cd : CatData) -> {x, y, z : cdObj cd} ->
+cdCompSig : SliceObj CatData
+cdCompSig cd = (x, y, z : cdObj cd) ->
   cdHom cd (y, z) -> cdHom cd (x, y) -> cdHom cd (x, z)
-cdComp cd {x} {y} {z} g f = cdIdComp cd (x, z) $ CHComp {hom=(cdHom cd)} g f
 
 public export
-cdPipe : (cd : CatData) -> {x, y, z : cdObj cd} ->
+cdComp : (cd : CatData) -> cdCompSig cd
+cdComp cd x y z g f = cdIdComp cd (x, z) $ CHComp {hom=(cdHom cd)} g f
+
+public export
+cdPipeSig : SliceObj CatData
+cdPipeSig cd = (x, y, z : cdObj cd) ->
   cdHom cd (x, y) -> cdHom cd (y, z) -> cdHom cd (x, z)
-cdPipe cd = flip (cdComp cd)
+
+public export
+cdPipe : (cd : CatData) -> cdPipeSig cd
+cdPipe cd x y z = flip (cdComp cd x y z)
 
 infixr 1 <#
 public export
 (<#) : {cd : CatData} -> {x, y, z : cdObj cd} ->
   cdHom cd (y, z) -> cdHom cd (x, y) -> cdHom cd (x, z)
-(<#) {cd} = cdComp cd
+(<#) {cd} {x} {y} {z} = cdComp cd x y z
 
 infixr 1 |>
 public export
 (#>) : {cd : CatData} -> {x, y, z : cdObj cd} ->
   cdHom cd (x, y) -> cdHom cd (y, z) -> cdHom cd (x, z)
-(#>) {cd} = cdPipe cd
+(#>) {cd} {x} {y} {z} = cdPipe cd x y z
 
 public export
 0 CatEquivLaw : SliceObj CatData
@@ -128,13 +136,13 @@ public export
 0 CatLeftIdLaw : SliceObj CatData
 CatLeftIdLaw cd =
   (x, y : cdObj cd) -> (f : cdHom cd (x, y)) ->
-  cdCong cd (x, y) (cdComp cd {x} {y} {z=y} (cdId cd y) f, f)
+  cdCong cd (x, y) (cdComp cd x y y (cdId cd y) f, f)
 
 public export
 0 CatRightIdLaw : SliceObj CatData
 CatRightIdLaw cd =
   (x, y : cdObj cd) -> (f : cdHom cd (x, y)) ->
-  cdCong cd (x, y) (cdComp cd {x} {y=x} {z=y} f (cdId cd x), f)
+  cdCong cd (x, y) (cdComp cd x x y f (cdId cd x), f)
 
 public export
 0 CatAssocLaw : SliceObj CatData
@@ -142,8 +150,8 @@ CatAssocLaw cd =
   (w, x, y, z : cdObj cd) ->
   (f : cdHom cd (w, x)) -> (g : cdHom cd (x, y)) -> (h : cdHom cd (y, z)) ->
   cdCong cd (w, z)
-    (cdComp cd {x=w} {y=x} {z} (cdComp cd {x} {y} {z} h g) f,
-     cdComp cd {x=w} {y} {z} h (cdComp cd {x=w} {y=x} {z=y} g f))
+    (cdComp cd w x z (cdComp cd x y z h g) f,
+     cdComp cd w y z h (cdComp cd w x y g f))
 
 -- A type representing that a given `CatData` obeys the laws of a category.
 -- This could be viewed as stating that the relation on the edges is a
@@ -192,26 +200,32 @@ lcId : (lc : LawfulCat) -> lcIdSig lc
 lcId lc = cdId (lcData lc)
 
 public export
-lcComp : (lc : LawfulCat) -> {x, y, z : lcObj lc} ->
-  lcHom lc (y, z) -> lcHom lc (x, y) -> lcHom lc (x, z)
+lcCompSig : SliceObj LawfulCat
+lcCompSig = cdCompSig . lcData
+
+public export
+lcComp : (lc : LawfulCat) -> lcCompSig lc
 lcComp lc = cdComp (lcData lc)
 
 public export
-lcPipe : (lc : LawfulCat) -> {x, y, z : lcObj lc} ->
-  lcHom lc (x, y) -> lcHom lc (y, z) -> lcHom lc (x, z)
-lcPipe lc = flip (lcComp lc)
+lcPipeSig : SliceObj LawfulCat
+lcPipeSig = cdPipeSig . lcData
+
+public export
+lcPipe : (lc : LawfulCat) -> lcPipeSig lc
+lcPipe lc x y z = flip (lcComp lc x y z)
 
 infixr 1 <!
 public export
 (<!) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
   lcHom lc (y, z) -> lcHom lc (x, y) -> lcHom lc (x, z)
-(<!) {lc} = lcComp lc
+(<!) {lc} {x} {y} {z} = lcComp lc x y z
 
 infixr 1 !>
 public export
 (!>) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
   lcHom lc (x, y) -> lcHom lc (y, z) -> lcHom lc (x, z)
-(!>) {lc} = lcPipe lc
+(!>) {lc} {x} {y} {z} = lcPipe lc x y z
 
 ------------------
 ---- Functors ----
@@ -261,6 +275,10 @@ record LawfulFunctor (sig : FunctorSig) where
   constructor LFunc
   lfData : FunctorData sig
   0 lfLawful : FunctorDataLawful lfData
+
+---------------------------------------------------
+---- Two-categories with functors as morphisms ----
+---------------------------------------------------
 
 ---------------------------------
 ---- Natural transformations ----
