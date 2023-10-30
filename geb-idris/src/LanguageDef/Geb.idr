@@ -2980,3 +2980,42 @@ data FSQPath : SliceObj (Sigma FSQSig) where
   FSQPcomp : (0 fsq : FSQuiv) -> {0 s, v, t : Fin (fsqVert fsq)} ->
     FSQEdge (fsq ** FSQS v t) -> FSQPath (fsq ** FSQS s v) ->
     FSQPath (fsq ** FSQS s t)
+
+------------------------------------------------
+------------------------------------------------
+---- Discrete dependent polynomial functors ----
+------------------------------------------------
+------------------------------------------------
+
+-- A discrete slice polynomial functor.
+public export
+record DiscSlicePolyFunc (dom, cod : Type) where
+  constructor MkDSPF
+  dspfNConstr : Nat
+  dspfNField : Vect dspfNConstr Nat
+  dspfPos : Vect dspfNConstr (SliceObj cod)
+  dspfDir : (i : Fin dspfNConstr) ->
+    Vect (index i dspfNField) (SliceObj $ Sigma {a=cod} $ index i dspfPos)
+  dspfAssign : (i : Fin dspfNConstr) -> (j : Fin $ index i dspfNField) ->
+    Sigma {a=(Sigma {a=cod} $ index i dspfPos)} (index j $ dspfDir i) -> dom
+
+public export
+dspfToWType : {dom, cod : Type} ->
+  DiscSlicePolyFunc dom cod -> WTypeFunc dom cod
+dspfToWType {dom} {cod} (MkDSPF nconstr nfield pos dir assign) =
+  MkWTF
+    (i : Fin nconstr ** Sigma {a=cod} $ index i pos)
+    (i : Fin nconstr ** j : Fin (index i nfield) **
+     Sigma {a=(Sigma {a=cod} $ index i pos)} $ index j (dir i))
+    (\(i ** j ** pd) => assign i j pd)
+    (\(i ** j ** (p ** d)) => (i ** p))
+    (\p => fst (snd p))
+
+public export
+dspfToSpf : {0 dom, cod : Type} ->
+  DiscSlicePolyFunc dom cod -> SlicePolyFunc dom cod
+dspfToSpf {dom} {cod} (MkDSPF nconstr nfield pos dir assign) =
+  (\elc => (i : Fin nconstr ** index i pos elc) **
+   \(elc ** i ** p) =>
+    (j : Fin (index i nfield) ** index j (dir i) (elc ** p)) **
+   \((elc ** i ** p) ** (j ** d)) => assign i j ((elc ** p) ** d))
