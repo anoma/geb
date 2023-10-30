@@ -629,6 +629,17 @@ hvMap {n=(S n)} (t :: ts) (t' :: ts') f (x :: hv) =
   f FZ x :: hvMap {n} ts ts' (\i, u => f (FS i) u) hv
 
 public export
+HMatrix : {0 k : Nat} -> Vect k Nat -> Vect k Type -> Type
+HMatrix {k} ns tys = HVect {k} $ map (uncurry Vect) $ zip ns tys
+
+public export
+hmindex : {0 k : Nat} -> {ns : Vect k Nat} -> {tys : Vect k Type} ->
+  (i : Fin k) -> Fin (index i ns) -> HMatrix {k} ns tys -> index i tys
+hmindex {k=(S k)} {ns=(S n :: ns)} {tys=(ty :: tys)} FZ j (v :: hm) = index j v
+hmindex {k=(S k)} {ns=(n :: ns)} {tys=(ty :: tys)} (FS i) j (v :: hm) =
+  hmindex {k} {ns} {tys} i j hm
+
+public export
 mapIndex : {0 n : Nat} -> {0 a, b : Type} -> {0 f : a -> b} ->
   (v : Vect n a) -> (i : Fin n) -> index i (map f v) = f (index i v)
 mapIndex {n=(S n)} {a} {b} {f} (x :: v) FZ = Refl
