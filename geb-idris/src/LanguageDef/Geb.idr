@@ -3004,45 +3004,41 @@ GenPi {dom} {cod} f sld elc = (eld : PreImage f elc) -> sld $ fst0 eld
 
 public export
 DiscPi : {pos : Type} -> (nfield : pos -> Nat) ->
-  SliceFunctor (i : pos ** Fin (nfield i)) pos
+  SliceFunctor (Sigma {a=pos} (Fin . nfield)) pos
 DiscPi {pos} nfield sld i = HVect {k=(nfield i)} $ finFToVect $ sld . MkDPair i
 
 -- A discrete slice polynomial functor.
 public export
-record DiscSlicePolyFunc (dom, cod : Nat) where
+record DiscSlicePolyFunc (dom : Nat) (cod : Type) where
   constructor MkDSPF
-  dspfNConstr : Fin cod -> Nat
-  dspfNField : (i : Fin cod) -> Fin (dspfNConstr i) -> Nat
-  dspfFieldTypes : (i : Fin cod) -> (j : Fin (dspfNConstr i)) ->
-    Fin (dspfNField i j) -> Fin dom
+  dspfPos : SliceObj cod
+  dspfNField : Sigma {a=cod} dspfPos -> Nat
+  dspfFieldTypes :
+    Sigma {a=(Sigma {a=cod} dspfPos)} (Fin . dspfNField) -> Fin dom
 
 public export
-interpDSPF : {dom, cod : Nat} ->
-  DiscSlicePolyFunc dom cod -> SliceObj (Fin dom) -> SliceObj (Fin cod)
-interpDSPF {dom} {cod} (MkDSPF nconstr nfield ftypes) =
+interpDSPF : {dom : Nat} -> {cod : Type} ->
+  DiscSlicePolyFunc dom cod -> SliceObj (Fin dom) -> SliceObj cod
+interpDSPF {dom} {cod} (MkDSPF pos nfield ftypes) =
   DiscBaseChange
-    {dom=(Fin dom)}
-    {cod=(ij : (i : Fin cod ** Fin (nconstr i)) ** Fin (nfield (fst ij) (snd ij)))}
-    (\((i ** j) ** k) => ftypes i j k)
-  |> DiscPi {pos=(i : Fin cod ** Fin (nconstr i))} (\ij => nfield (fst ij) (snd ij))
-  |> DiscSigma {dom=(i : Fin cod ** Fin (nconstr i))} {cod=(Fin cod)}
-    (\(i ** j) => i)
+    {dom=(Fin dom)} {cod=(Sigma {a=(Sigma {a=cod} pos)} (Fin . nfield))}
+    ftypes
+  |> DiscPi {pos=(Sigma {a=cod} pos)} nfield
+  |> DiscSigma {dom=(Sigma {a=cod} pos)} {cod} DPair.fst
 
 public export
-dspfToWType : {dom, cod : Nat} ->
-  DiscSlicePolyFunc dom cod -> WTypeFunc (Fin dom) (Fin cod)
-dspfToWType {dom} {cod} (MkDSPF nconstr nfield ftypes) =
+dspfToWType : {dom : Nat} -> {cod : Type} ->
+  DiscSlicePolyFunc dom cod -> WTypeFunc (Fin dom) cod
+dspfToWType {dom} {cod} (MkDSPF pos nfield ftypes) =
   MkWTF
-    (i : Fin cod ** Fin (nconstr i))
-    (i : Fin cod ** j : Fin (nconstr i) ** Fin (nfield i j))
-    (\(i ** j ** k) => ftypes i j k)
-    (\(i ** j ** k) => (i ** j))
-    (\(i ** j) => i)
+    (Sigma {a=cod} pos)
+    (Sigma {a=(Sigma {a=cod} pos)} (Fin . nfield))
+    ftypes
+    DPair.fst
+    DPair.fst
 
 public export
-dspfToSpf : {dom, cod : Nat} ->
-  DiscSlicePolyFunc dom cod -> SlicePolyFunc (Fin dom) (Fin cod)
-dspfToSpf {dom} {cod} (MkDSPF nconstr nfield ftypes) =
-  (\i => Fin (nconstr i) **
-   \(i ** j) => Fin (nfield i j) **
-   \((i ** j) ** k) => ftypes i j k)
+dspfToSpf : {dom : Nat} -> {cod : Type} ->
+  DiscSlicePolyFunc dom cod -> SlicePolyFunc (Fin dom) cod
+dspfToSpf {dom} {cod} (MkDSPF pos nfield ftypes) =
+  (pos ** (Fin . nfield) ** ftypes)
