@@ -16,21 +16,21 @@
 (pax:defsection @lambda-api (:title "Main functionality")
   "This covers the main API for the STLC module"
 
-  (ann-term1          pax:generic-function)
-  (index-check        pax:function)
-  (fun-to-hom         pax:function)
-  (ann-term2          pax:function)
-  (annotated-term     pax:function)
-  (type-of-term-w-fun pax:function)
-  (type-of-term       pax:function)
-  (well-defp          pax:generic-function)
-  (fun-type           pax:class)
-  (fun-type           pax:function)
-  (errorp             pax:function)
-  (reducer            pax:function)
+  (ann-term1          generic-function)
+  (index-check        function)
+  (fun-to-hom         function)
+  (ann-term2          function)
+  (annotated-term     function)
+  (type-of-term-w-fun function)
+  (type-of-term       function)
+  (well-defp          generic-function)
+  (fun-type           class)
+  (fun-type           function)
+  (errorp             function)
+  (reducer            function)
 
-  (mcar              (pax:method () (fun-type)))
-  (mcadr             (pax:method () (fun-type))))
+  (mcar              (method () (fun-type)))
+  (mcadr             (method () (fun-type))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; trans module
@@ -48,8 +48,8 @@
 
 (pax:defsection @utility (:title "Utility Functionality")
   "These are utility functions relating to translating lambda terms to other types"
-  (stlc-ctx-to-mu  pax:function)
-  (so-hom  pax:function))
+  (stlc-ctx-to-mu  function)
+  (so-hom  function))
 
 (pax:defsection @stlc-conversion (:title "Transition Functions")
   "These functions deal with transforming the data structure to other
@@ -61,11 +61,11 @@ transition functions except [TO-CAT] do not take a context.
 Thus if the [\\<STLC\\>] term contains free variables, then call
 [TO-CAT] and give it the desired context before calling
 any other transition functions"
-  (to-cat     (pax:method () (t <stlc>)))
-  (to-poly    (pax:method () (<stlc>)))
-  (to-bitc    (pax:method () (<stlc>)))
-  (to-seqn    (pax:method () (<stlc>)))
-  (to-circuit (pax:method () (<stlc> t)))
+  (to-cat     (method () (t <stlc>)))
+  (to-poly    (method () (<stlc>)))
+  (to-bitc    (method () (<stlc>)))
+  (to-seqn    (method () (<stlc>)))
+  (to-circuit (method () (<stlc> t)))
   (@utility   pax:section))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
