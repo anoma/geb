@@ -3005,8 +3005,7 @@ GenPi {dom} {cod} f sld elc = (eld : PreImage f elc) -> sld $ fst0 eld
 public export
 DiscPi : {pos : Type} -> (nfield : pos -> Nat) ->
   SliceFunctor (i : pos ** Fin (nfield i)) pos
-DiscPi {pos} nfield sld i =
-  HVect {k=(nfield i)} $ finFToVect $ sld . MkDPair i
+DiscPi {pos} nfield sld i = HVect {k=(nfield i)} $ finFToVect $ sld . MkDPair i
 
 -- A discrete slice polynomial functor.
 public export
