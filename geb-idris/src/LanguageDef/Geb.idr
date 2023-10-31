@@ -3020,7 +3020,7 @@ record DiscSlicePolyFunc (dom, cod : Nat) where
 public export
 interpDSPF : {dom, cod : Nat} ->
   DiscSlicePolyFunc dom cod -> SliceObj (Fin dom) -> SliceObj (Fin cod)
-interpDSPF {dom} {cod} (MkDSPF nconstr nfield ftypes) {- i -} =
+interpDSPF {dom} {cod} (MkDSPF nconstr nfield ftypes) =
   DiscBaseChange
     {dom=(Fin dom)}
     {cod=(i : Fin cod ** j : Fin (nconstr i) ** Fin (nfield i j))}
