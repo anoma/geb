@@ -830,6 +830,25 @@ public export
 CoendBase : (p : Type -> Type -> Type) -> Type
 CoendBase p = (b : Type ** p b b)
 
+-- See for example the "coends" section at
+-- https://bartoszmilewski.com/2017/03/29/ends-and-coends/ .
+
+public export
+PolySumP : (Type -> Type -> Type) -> Type
+PolySumP p = (ab : (Type, Type) ** (snd ab -> fst ab, p (fst ab) (snd ab)))
+
+public export
+cowedgeLeft : {p : Type -> Type -> Type} -> Profunctor p =>
+  PolySumP p -> CoendBase p
+cowedgeLeft {p} ((a, b) ** (fba, pab)) =
+  (b ** lmap {f=p} {a} {b} {c=b} fba pab)
+
+public export
+cowedgeRight : {p : Type -> Type -> Type} -> Profunctor p =>
+  PolySumP p -> CoendBase p
+cowedgeRight {p} ((a, b) ** (fba, pab)) =
+  (a ** rmap {f=p} {a} {b} {d=a} fba pab)
+
 public export
 ProfDiNT : (p, q : Type -> Type -> Type) -> Type
 ProfDiNT p q = (a : Type) -> p a a -> q a a
