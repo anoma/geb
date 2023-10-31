@@ -2987,6 +2987,27 @@ data FSQPath : SliceObj (Sigma FSQSig) where
 ------------------------------------------------
 ------------------------------------------------
 
+public export
+DiscBaseChange : {dom : Type} -> {0 cod : Type} ->
+  (cod -> dom) -> SliceFunctor dom cod
+DiscBaseChange {dom} {cod} = (|>)
+
+public export
+DiscSigma : {dom : Type} -> {0 cod : Type} ->
+  (dom -> cod) -> SliceFunctor dom cod
+DiscSigma {dom} {cod} f sld elc = (eld : PreImage f elc ** sld $ fst0 eld)
+
+public export
+GenPi : {dom : Type} -> {0 cod : Type} ->
+  (dom -> cod) -> SliceFunctor dom cod
+GenPi {dom} {cod} f sld elc = (eld : PreImage f elc) -> sld $ fst0 eld
+
+public export
+DiscPi : {dom : Nat} -> {0 cod : Type} ->
+  (cod -> Fin dom) -> SliceFunctor (Fin dom) cod
+DiscPi {dom} {cod} f sld elc =
+  HVect {k=(finToNat $ f elc)} $ finFToVect $ sld . finToFin {n=dom} {i=(f elc)}
+
 -- A discrete slice polynomial functor.
 public export
 record DiscSlicePolyFunc (dom, cod : Nat) where
