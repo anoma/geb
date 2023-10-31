@@ -804,6 +804,28 @@ public export
 EndBase : (p : Type -> Type -> Type) -> Type
 EndBase p = (b : Type) -> p b b
 
+-- See for example "ends as equalizers" at
+-- https://bartoszmilewski.com/2017/03/29/ends-and-coends/ .
+
+public export
+PolyProdP : (Type -> Type -> Type) -> Type
+PolyProdP p = (a, b : Type) -> (a -> b) -> p a b
+
+public export
+wedgeLeft : {p : Type -> Type -> Type} -> Profunctor p =>
+  EndBase p -> PolyProdP p
+wedgeLeft {p} i a b f = lmap {f=p} {a=b} {b} {c=a} f (i b)
+
+public export
+wedgeRight : {p : Type -> Type -> Type} -> Profunctor p =>
+  EndBase p -> PolyProdP p
+wedgeRight {p} i a b f = rmap {f=p} {a} {b=a} {d=b} f (i a)
+
+public export
+End : (p : Type -> Type -> Type) -> Profunctor p => Type
+End p =
+  Equalizer {a=(EndBase p)} {b=(PolyProdP p)} (wedgeLeft {p}) (wedgeRight {p})
+
 public export
 CoendBase : (p : Type -> Type -> Type) -> Type
 CoendBase p = (b : Type ** p b b)
