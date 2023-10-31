@@ -2987,6 +2987,10 @@ data FSQPath : SliceObj (Sigma FSQSig) where
 ------------------------------------------------
 ------------------------------------------------
 
+---------------------
+---- Definitions ----
+---------------------
+
 public export
 DiscBaseChange : {dom : Type} -> {0 cod : Type} ->
   (cod -> dom) -> SliceFunctor dom cod
@@ -3007,7 +3011,6 @@ DiscPi : {pos : Type} -> (nfield : pos -> Nat) ->
   SliceFunctor (Sigma {a=pos} (Fin . nfield)) pos
 DiscPi {pos} nfield sld i = HVect {k=(nfield i)} $ finFToVect $ sld . MkDPair i
 
--- A discrete slice polynomial functor.
 public export
 record DiscSlicePolyFunc (dom, cod : Type) where
   constructor MkDSPF
@@ -3023,6 +3026,10 @@ interpDSPF {dom} {cod} (MkDSPF pos nfield ftypes) =
     ftypes
   |> DiscPi {pos=(Sigma {a=cod} pos)} nfield
   |> DiscSigma {dom=(Sigma {a=cod} pos)} {cod} DPair.fst
+
+-----------------------------------------------------------
+---- Relationships with other polynomial-functor forms ----
+-----------------------------------------------------------
 
 public export
 dspfToWType : {dom, cod : Type} ->
@@ -3040,3 +3047,7 @@ dspfToSpf : {dom, cod : Type} ->
   DiscSlicePolyFunc dom cod -> SlicePolyFunc dom cod
 dspfToSpf {dom} {cod} (MkDSPF pos nfield ftypes) =
   (pos ** (Fin . nfield) ** ftypes)
+
+----------------------
+---- Fixed points ----
+----------------------
