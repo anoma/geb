@@ -2992,21 +2992,21 @@ public export
 record DiscSlicePolyFunc (dom, cod : Type) where
   constructor MkDSPF
   dspfNConstr : Nat
-  dspfNField : Vect dspfNConstr Nat
-  dspfPos : Vect dspfNConstr (SliceObj cod)
+  dspfNField : Fin dspfNConstr -> Nat
+  dspfPos : Fin dspfNConstr -> SliceObj cod
   dspfDir : (i : Fin dspfNConstr) ->
-    Vect (index i dspfNField) (SliceObj $ Sigma {a=cod} $ index i dspfPos)
-  dspfAssign : (i : Fin dspfNConstr) -> (j : Fin $ index i dspfNField) ->
-    Sigma {a=(Sigma {a=cod} $ index i dspfPos)} (index j $ dspfDir i) -> dom
+    Fin (dspfNField i) -> SliceObj $ Sigma {a=cod} $ dspfPos i
+  dspfAssign : (i : Fin dspfNConstr) -> (j : Fin $ dspfNField i) ->
+    Sigma {a=(Sigma {a=cod} $ dspfPos i)} (dspfDir i j) -> dom
 
 public export
 dspfToWType : {dom, cod : Type} ->
   DiscSlicePolyFunc dom cod -> WTypeFunc dom cod
 dspfToWType {dom} {cod} (MkDSPF nconstr nfield pos dir assign) =
   MkWTF
-    (i : Fin nconstr ** Sigma {a=cod} $ index i pos)
-    (i : Fin nconstr ** j : Fin (index i nfield) **
-     Sigma {a=(Sigma {a=cod} $ index i pos)} $ index j (dir i))
+    (i : Fin nconstr ** Sigma {a=cod} $ pos i)
+    (i : Fin nconstr ** j : Fin (nfield i) **
+     Sigma {a=(Sigma {a=cod} $ pos i)} $ dir i j)
     (\(i ** j ** pd) => assign i j pd)
     (\(i ** j ** (p ** d)) => (i ** p))
     (\p => fst (snd p))
@@ -3015,7 +3015,15 @@ public export
 dspfToSpf : {0 dom, cod : Type} ->
   DiscSlicePolyFunc dom cod -> SlicePolyFunc dom cod
 dspfToSpf {dom} {cod} (MkDSPF nconstr nfield pos dir assign) =
-  (\elc => (i : Fin nconstr ** index i pos elc) **
+  (\elc => (i : Fin nconstr ** pos i elc) **
    \(elc ** i ** p) =>
-    (j : Fin (index i nfield) ** index j (dir i) (elc ** p)) **
+    (j : Fin (nfield i) ** dir i j (elc ** p)) **
    \((elc ** i ** p) ** (j ** d)) => assign i j ((elc ** p) ** d))
+
+public export
+interpDSPF : {0 dom, cod : Type} ->
+  DiscSlicePolyFunc dom cod -> SliceObj dom -> SliceObj cod
+interpDSPF {dom} {cod} (MkDSPF nconstr nfield pos dir assign) sld elc =
+  (i : Fin nconstr ** p : pos i elc **
+   HVect {k=(nfield i)} $ finFToVect $
+    \j => sld $ assign i j ((elc ** p) ** ?interpDSPF_hole))
