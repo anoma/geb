@@ -2989,41 +2989,35 @@ data FSQPath : SliceObj (Sigma FSQSig) where
 
 -- A discrete slice polynomial functor.
 public export
-record DiscSlicePolyFunc (dom, cod : Type) where
+record DiscSlicePolyFunc (dom, cod : Nat) where
   constructor MkDSPF
-  dspfNConstr : Nat
-  dspfNField : Fin dspfNConstr -> Nat
-  dspfPos : Fin dspfNConstr -> SliceObj cod
-  dspfDir : (i : Fin dspfNConstr) ->
-    Fin (dspfNField i) -> SliceObj $ Sigma {a=cod} $ dspfPos i
-  dspfAssign : (i : Fin dspfNConstr) -> (j : Fin $ dspfNField i) ->
-    Sigma {a=(Sigma {a=cod} $ dspfPos i)} (dspfDir i j) -> dom
+  dspfNConstr : Fin cod -> Nat
+  dspfNField : (i : Fin cod) -> Fin (dspfNConstr i) -> Nat
+  dspfFieldTypes : (i : Fin cod) -> (j : Fin (dspfNConstr i)) ->
+    Fin (dspfNField i j) -> Fin dom
 
 public export
-dspfToWType : {dom, cod : Type} ->
-  DiscSlicePolyFunc dom cod -> WTypeFunc dom cod
-dspfToWType {dom} {cod} (MkDSPF nconstr nfield pos dir assign) =
+dspfToWType : {dom, cod : Nat} ->
+  DiscSlicePolyFunc dom cod -> WTypeFunc (Fin dom) (Fin cod)
+dspfToWType {dom} {cod} (MkDSPF nconstr nfield ftypes) =
   MkWTF
-    (i : Fin nconstr ** Sigma {a=cod} $ pos i)
-    (i : Fin nconstr ** j : Fin (nfield i) **
-     Sigma {a=(Sigma {a=cod} $ pos i)} $ dir i j)
-    (\(i ** j ** pd) => assign i j pd)
-    (\(i ** j ** (p ** d)) => (i ** p))
-    (\p => fst (snd p))
+    (i : Fin cod ** Fin (nconstr i))
+    (i : Fin cod ** j : Fin (nconstr i) ** Fin (nfield i j))
+    (\(i ** j ** k) => ftypes i j k)
+    (\(i ** j ** k) => (i ** j))
+    (\(i ** j) => i)
 
 public export
-dspfToSpf : {0 dom, cod : Type} ->
-  DiscSlicePolyFunc dom cod -> SlicePolyFunc dom cod
-dspfToSpf {dom} {cod} (MkDSPF nconstr nfield pos dir assign) =
-  (\elc => (i : Fin nconstr ** pos i elc) **
-   \(elc ** i ** p) =>
-    (j : Fin (nfield i) ** dir i j (elc ** p)) **
-   \((elc ** i ** p) ** (j ** d)) => assign i j ((elc ** p) ** d))
+dspfToSpf : {dom, cod : Nat} ->
+  DiscSlicePolyFunc dom cod -> SlicePolyFunc (Fin dom) (Fin cod)
+dspfToSpf {dom} {cod} (MkDSPF nconstr nfield ftypes) =
+  (\i => Fin (nconstr i) **
+   \(i ** j) => Fin (nfield i j) **
+   \((i ** j) ** k) => ftypes i j k)
 
 public export
-interpDSPF : {0 dom, cod : Type} ->
-  DiscSlicePolyFunc dom cod -> SliceObj dom -> SliceObj cod
-interpDSPF {dom} {cod} (MkDSPF nconstr nfield pos dir assign) sld elc =
-  (i : Fin nconstr ** p : pos i elc **
-   HVect {k=(nfield i)} $ finFToVect $
-    \j => sld $ assign i j ((elc ** p) ** ?interpDSPF_hole))
+interpDSPF : {0 dom, cod : Nat} ->
+  DiscSlicePolyFunc dom cod -> SliceObj (Fin dom) -> SliceObj (Fin cod)
+interpDSPF {dom} {cod} (MkDSPF nconstr nfield ftypes) sld i =
+  (j : Fin (nconstr i) **
+   HVect {k=(nfield i j)} $ finFToVect $ Fin . finToNat . ftypes i j)
