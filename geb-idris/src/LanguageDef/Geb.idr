@@ -3003,14 +3003,10 @@ GenPi : {dom : Type} -> {0 cod : Type} ->
 GenPi {dom} {cod} f sld elc = (eld : PreImage f elc) -> sld $ fst0 eld
 
 public export
-DiscPi : {dspfCod : Type} ->
-  (nconstr : dspfCod -> Nat) ->
-  (nfield : (i : dspfCod) -> Fin (nconstr i) -> Nat) ->
-  SliceFunctor
-    (i : dspfCod ** (j : Fin (nconstr i) ** Fin (nfield i j)))
-    (i : dspfCod ** Fin (nconstr i))
-DiscPi {dspfCod} nconstr nfield sld (i ** j) =
-  HVect {k=(nfield i j)} $ finFToVect $ \n => sld (i ** j ** n)
+DiscPi : {pos : Type} -> (nfield : pos -> Nat) ->
+  SliceFunctor (i : pos ** Fin (nfield i)) pos
+DiscPi {pos} nfield sld i =
+  HVect {k=(nfield i)} $ finFToVect $ \n => sld (i ** n)
 
 -- A discrete slice polynomial functor.
 public export
@@ -3027,9 +3023,9 @@ interpDSPF : {dom, cod : Nat} ->
 interpDSPF {dom} {cod} (MkDSPF nconstr nfield ftypes) =
   DiscBaseChange
     {dom=(Fin dom)}
-    {cod=(i : Fin cod ** j : Fin (nconstr i) ** Fin (nfield i j))}
-    (\(i ** j ** k) => ftypes i j k)
-  |> DiscPi {dspfCod=(Fin cod)} nconstr nfield
+    {cod=(ij : (i : Fin cod ** Fin (nconstr i)) ** Fin (nfield (fst ij) (snd ij)))}
+    (\((i ** j) ** k) => ftypes i j k)
+  |> DiscPi {pos=(i : Fin cod ** Fin (nconstr i))} (\ij => nfield (fst ij) (snd ij))
   |> DiscSigma {dom=(i : Fin cod ** Fin (nconstr i))} {cod=(Fin cod)}
     (\(i ** j) => i)
 
