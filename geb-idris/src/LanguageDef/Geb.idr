@@ -3018,11 +3018,16 @@ record DiscSlicePolyFunc (dom, cod : Nat) where
     Fin (dspfNField i j) -> Fin dom
 
 public export
-interpDSPF : {0 dom, cod : Nat} ->
+interpDSPF : {dom, cod : Nat} ->
   DiscSlicePolyFunc dom cod -> SliceObj (Fin dom) -> SliceObj (Fin cod)
-interpDSPF {dom} {cod} (MkDSPF nconstr nfield ftypes) sld i =
-  (j : Fin (nconstr i) **
-   HVect {k=(nfield i j)} $ finFToVect $ Fin . finToNat . ftypes i j)
+interpDSPF {dom} {cod} (MkDSPF nconstr nfield ftypes) {- i -} =
+  DiscBaseChange
+    {dom=(Fin dom)}
+    {cod=(i : Fin cod ** j : Fin (nconstr i) ** Fin (nfield i j))}
+    (\(i ** j ** k) => ftypes i j k)
+  |> ?interpDSPF_hole
+  |> DiscSigma {dom=(i : Fin cod ** Fin (nconstr i))} {cod=(Fin cod)}
+    (\(i ** j) => i)
 
 public export
 dspfToWType : {dom, cod : Nat} ->
