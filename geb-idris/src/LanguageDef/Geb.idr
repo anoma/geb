@@ -3013,15 +3013,13 @@ record DiscSlicePolyFunc (dom, cod : Type) where
   constructor MkDSPF
   dspfPos : SliceObj cod
   dspfNField : Sigma {a=cod} dspfPos -> Nat
-  dspfFieldTypes :
-    Sigma {a=(Sigma {a=cod} dspfPos)} (Fin . dspfNField) -> dom
+  dspfFieldTypes : Sigma {a=(Sigma {a=cod} dspfPos)} (Fin . dspfNField) -> dom
 
 public export
 interpDSPF : {dom, cod : Type} ->
   DiscSlicePolyFunc dom cod -> SliceObj dom -> SliceObj cod
 interpDSPF {dom} {cod} (MkDSPF pos nfield ftypes) =
-  DiscBaseChange
-    {dom} {cod=(Sigma {a=(Sigma {a=cod} pos)} (Fin . nfield))}
+  DiscBaseChange {dom} {cod=(Sigma {a=(Sigma {a=cod} pos)} (Fin . nfield))}
     ftypes
   |> DiscPi {pos=(Sigma {a=cod} pos)} nfield
   |> DiscSigma {dom=(Sigma {a=cod} pos)} {cod} DPair.fst
