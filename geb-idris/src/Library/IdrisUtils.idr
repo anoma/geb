@@ -512,6 +512,10 @@ finToNatLT {m=(S m)} FZ = LTESucc LTEZero
 finToNatLT {m=(S m)} (FS i) = LTESucc $ finToNatLT {m} i
 
 public export
+finToFin : {n : Nat} -> {i : Fin n} -> Fin (finToNat i) -> Fin n
+finToFin {n} {i} j = weakenLTE j $ lteSuccLeft $ finToNatLT {m=n} i
+
+public export
 indexN : {0 a : Type} -> {n : Nat} ->
   (i : Nat) -> {auto ok : IsJustTrue (natToFin i n)} -> Vect n a -> a
 indexN _ {ok} = index (fromIsJust ok)
