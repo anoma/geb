@@ -801,12 +801,12 @@ PfCatObj : PfSliceObj
 PfCatObj = const Unit
 
 public export
-End : (p : Type -> Type -> Type) -> Type
-End p = (b : Type) -> p b b
+EndBase : (p : Type -> Type -> Type) -> Type
+EndBase p = (b : Type) -> p b b
 
 public export
-Coend : (p : Type -> Type -> Type) -> Type
-Coend p = (b : Type ** p b b)
+CoendBase : (p : Type -> Type -> Type) -> Type
+CoendBase p = (b : Type ** p b b)
 
 public export
 ProfDiNT : (p, q : Type -> Type -> Type) -> Type
@@ -919,7 +919,7 @@ EndoProfComposeProf q p e c d d' = (q e d, p d' c)
 
 public export
 EndoProfCompose : EndoProfMorph -> EndoProfMorph -> EndoProfMorph
-EndoProfCompose q p e c = Coend $ EndoProfComposeProf q p e c
+EndoProfCompose q p e c = CoendBase $ EndoProfComposeProf q p e c
 
 public export
 EndoProfLeftId : (p : EndoProfMorph) -> {auto isP : Profunctor p} ->
