@@ -2996,11 +2996,17 @@ DiscBaseChange : {dom : Type} -> {0 cod : Type} ->
   (cod -> dom) -> SliceFunctor dom cod
 DiscBaseChange {dom} {cod} = (|>)
 
+-- In general, the left Kan extension of `SliceObj dom` (viewed as a functor
+-- to `Type` from a discrete category formed from `dom`) along `f` (viewed
+-- as a functor between discrete categories formed from `dom` and `cod`).
 public export
 DiscSigma : {dom : Type} -> {0 cod : Type} ->
   (dom -> cod) -> SliceFunctor dom cod
 DiscSigma {dom} {cod} f sld elc = (eld : PreImage f elc ** sld $ fst0 eld)
 
+-- In general, the right Kan extension of `SliceObj dom` (viewed as a functor
+-- to `Type` from a discrete category formed from `dom`) along `f` (viewed
+-- as a functor between discrete categories formed from `dom` and `cod`).
 public export
 GenPi : {dom : Type} -> {0 cod : Type} ->
   (dom -> cod) -> SliceFunctor dom cod
