@@ -217,7 +217,7 @@
                                    (make-wire :var :lst))))))))
 
 (defun n-th (lst n)
-  (make-application :func :nth
+  (make-application :func :n_th
                     :arguments (list lst n)))
 
 (defparameter *negative*
@@ -227,7 +227,7 @@
      :inputs (list :n :a)
      :body
      (list (make-application
-            :func :nth
+            :func :n_th
             :arguments
             (list (range-n
                    (make-infix :op :+
@@ -267,7 +267,7 @@
         (b-wire (make-wire :var :b))
         (q-wire (make-wire :var :q))
         (r-wire (make-wire :var :r)))
-    (make-alias :name :mod32
+    (make-alias :name :mod_n
                 :inputs (list :n :a :b)
                 :body (list
                        (make-equality
@@ -278,7 +278,7 @@
                         :names (list q-wire)
                         :value (make-application
                                 :func :fresh
-                                :arguments (list (make-infix :op :/
+                                :arguments (list (make-infix :op :\\
                                                              :lhs a-wire
                                                              :rhs b-wire))))
                        (make-bind
@@ -298,7 +298,7 @@
                                             :lhs (make-infix :op :*
                                                              :lhs b-wire
                                                              :rhs q-wire)
-                                            :rhs q-wire))
+                                            :rhs r-wire))
                        (make-equality :lhs (make-application
                                             :func :negative
                                             :arguments
@@ -310,7 +310,7 @@
                        r-wire))))
 
 (defun mod-n (n a b)
-  (make-application :func :mod-n
+  (make-application :func :mod_n
                     :arguments (list n a b)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -413,7 +413,7 @@
 
 (defparameter *combine-aux*
   (make-alias
-   :name :combine-aux
+   :name :combine_aux
    :inputs (list :x :y)
    :body (list (make-infix :op :+
                            :lhs (make-wire :var :x)
@@ -462,7 +462,7 @@
 (defparameter *drop-ith-rec*
   (make-alias
    :name :drop_ith_rec
-   :inputs (list (cons-deconstruct :h :t))
+   :inputs (list :take (cons-deconstruct :h :t))
    :body (list (make-infix :lhs (make-wire :var :h)
                            :rhs (make-application
                                  :func :take
@@ -470,7 +470,7 @@
                            :op :|:|))))
 
 (defparameter *drop-ith*
-  (let ((one (make-constant :const 1)))
+  (let ((l-wire (make-wire :var :l)))
     (make-alias
      :name :drop_ith
      :inputs (list :n)
@@ -482,9 +482,9 @@
                                     :func :fun
                                     :arguments
                                     (list (make-infix :lhs (make-wire :var :h)
-                                                      :rhs one
+                                                      :rhs l-wire
                                                       :op :|:|)
-                                          (make-curly :value one)))))))))
+                                          (make-curly :value l-wire)))))))))
 
 (defun drop-ith (n)
   (make-application :func :drop_ith
