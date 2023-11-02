@@ -337,6 +337,57 @@ record LawfulNT (sig : NTSig) where
   lntData : NTData sig
   0 lntLawful : NTDataLawful lntData
 
+-----------------------------------------
+-----------------------------------------
+---- Internal representable functors ----
+-----------------------------------------
+-----------------------------------------
+
+public export
+algLift :
+  (0 f : Type -> Type) -> (fm : (0 x, y : Type) -> (x -> y) -> f x -> f y) ->
+  {0 a, b : Type} -> (m : Algebra f b) -> (h : a -> b) -> f a -> b
+algLift f fm {a} {b} = (|>) (fm a b) . (.)
+
+{-
+  Suppose the following:
+
+    - `f` is an endofunctor in `Type`
+    - `c` and `p` form an algebra of `f` (`c` is the object; `m`
+      is the morphism)
+    - `a` and `b` are the types of objects of two categories (we shall also
+      refer to the those categories themselves as `a` and `b`)
+    - `h` is a profunctor `a |-> b` enriched over a third category, whose
+      objects are of type `c` (we shall also refer to that category itself
+      as `c`) -- that is, a functor from `(op(b), a)` to `c` (the `h` is meant
+      to suggest `hom-(pro)functor`)
+
+  Under those conditions, we can produce a hom-profunctor `a |-> f(b)` where
+  `f(b)` is the image of `b` under `f`.
+
+  In particular, for example, if `f` is `ProductMonad` and `b` is `a`, then
+  this takes an endoprofunctor `h` on `a` and generates a hom-functor internal
+  to `c` extended by a covariant hom-functor represented by a pairwise
+  coproduct in `a`.
+-}
+public export
+covarHomProfuncLift :
+  (0 f : Type -> Type) -> (fm : (0 x, y : Type) -> (x -> y) -> f x -> f y) ->
+  {0 a, b, c : Type} -> (m : Algebra f c) -> (h : b -> a -> c) -> f b -> a -> c
+covarHomProfuncLift f fm {a} {b} {c} =
+  (|>) ((|>) . flip) . (|>) . flip . algLift f fm {a=b} {b=c}
+
+{-
+  Dually to `covarHomLift`, this produces a hom-profunctor `f(a) |-> b`
+  by extending the contravariant component.
+-}
+public export
+contravarHomProfuncLift :
+  (0 f : Type -> Type) -> (fm : (0 x, y : Type) -> (x -> y) -> f x -> f y) ->
+  {0 a, b, c : Type} -> (m : Algebra f c) -> (h : b -> a -> c) -> b -> f a -> c
+contravarHomProfuncLift f fm {a} {b} {c} =
+  (.) . algLift f fm {a} {b=c}
+
 -------------------------------------------------
 -------------------------------------------------
 ---- Functors in `Cat` as internal to `Type` ----
