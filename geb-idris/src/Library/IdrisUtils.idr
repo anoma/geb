@@ -967,13 +967,13 @@ diffToLte {m} {n} {k=(S k)} pleq =
     pleq
 
 public export
-multDivLTLemma : (k, m, n, diffmsnsk : Nat) ->
+0 multDivLTLemma : (k, m, n, diffmsnsk : Nat) ->
   diffmsnsk + S k = m * S n ->
   (diffmdivksn : Nat ** diffmdivksn + S (divNatNZ k (S n) SIsNonZero) = m)
 multDivLTLemma k m n diffmsnsk diffmsnskeq = ?multDivLTLemma_hole
 
 public export
-multDivLT : {k, m, n : Nat} ->
+0 multDivLT : {k, m, n : Nat} ->
   LT k (m * n) -> (nz : NonZero n) -> LT (divNatNZ k n nz) m
 multDivLT {k} {m} {n=(S n)} lt SIsNonZero =
   let
