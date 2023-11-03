@@ -3108,3 +3108,43 @@ dspfToSpf {dom} {cod} (MkDSPF pos nfield ftypes) =
 ----------------------
 ---- Fixed points ----
 ----------------------
+
+---------------------------------------
+---------------------------------------
+---- Polynomial functors on FinSet ----
+---------------------------------------
+---------------------------------------
+
+-- A slice category is identified by a category together with one of its
+-- objects.  In particular, a slice of `FinSet` is identified by an object
+-- of `FinSet`, i.e. a natural number.  Similarly, the _opposite_ of a slice
+-- category may be identified by the object whose slice category it is the
+-- opposite of.  Note that the opposite of a slice category is not (necessarily)
+-- equivalent to the coslice category, nor is it (necessarily) equivalent to
+-- a slice of the opposite of the base category (although those latter two are
+-- equivalent to _each other_) -- although it is equivalent to a coslice of the
+-- opposite of the base category!
+--
+-- The equivalences of categories with the opposite of a slice category in
+-- which we are most intereseted are:
+--
+--  - The subcategory of the polynomial endofunctors on `FinSet` whose
+--    position-sets (when we view endofunctors as `FinSet`s dependent on
+--    `FinSet`s) are the same as the object being sliced over
+--  - The opposite of the subcategory of the Dirichlet endofunctors on `FinSet`
+--    whose position-sets (when we view endofunctors as `FinSet`s dependent on
+--    `FinSet`s) are the same as the object being sliced over
+--  - The (contravariant) presheaf category into `FinSet` resulting from
+--    treating the object being sliced over as a discrete category (presheaves
+--    in general are sometimes called "generic figures" or "C-sets")
+public export
+record FinOpSlCat where
+  constructor FinOSC
+  finOSbase : FSObj
+
+-- A dependent product between opposites of slices of `FinSet` is determined
+-- by a morphism from the domain to the codomain.
+public export
+record FSPi (dom, cod : FinOpSlCat) where
+  constructor MkFSPi
+  fspiMorph : FSMorph (finOSbase dom) (finOSbase cod)
