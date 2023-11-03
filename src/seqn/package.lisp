@@ -41,6 +41,7 @@
 (pax:defsection @seqb-trans (:title "Seqn Transformations")
   "This covers transformation functions from"
   (to-circuit (method () (<seqn> t)))
+  (test-call  function)
   (to-vampir  (method () (id t t)))
   (to-vampir  (method () (composition t t)))
   (to-vampir  (method () (parallel-seq t t)))

@@ -44,6 +44,17 @@ and skip 0es, making non-zero entries into wires"
                                     (prod-list (cod morphism)
                                                (to-vampir morphism wires nil)))))))))))
 
+(defun test-call (circuit)
+  "Given a compiled VampIR function with name foo and arguments x1...xn prints
+an equality as foo x1 ... xn = y"
+  (let ((inputs (vamp:inputs circuit))
+        (name   (vamp:name circuit)))
+    (list (vamp:make-equality
+           :lhs (if (zerop (length inputs))
+                    (vamp:make-wire :var name)
+                    (vamp:make-application :func name :arguments inputs))
+           :rhs (vamp:make-wire :var :y)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SeqN to Vamp-IR Compilation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -13,6 +13,8 @@
      :type boolean :optional t :documentation "Prints the current version of the compiler")
     (("vampir" #\p)
      :type string :optional t :documentation "Return a vamp-ir expression")
+    (("test" #\t)
+     :type boolean :optional t :documentation "Prints a test equality with public parameters")
     (("help" #\h #\?)
      :type boolean :optional t :documentation "The current help message")))
 
@@ -26,7 +28,7 @@
 (defparameter *no-input-text*
   "Please provide an input file with -p or see the help command with -h")
 
-(defun argument-handlers (&key help stlc output input entry-point vampir version)
+(defun argument-handlers (&key help stlc output input entry-point vampir test version)
   (flet ((run (stream)
            (cond (help
                   (command-line-arguments:show-option-help +command-line-spec+
@@ -40,6 +42,7 @@
                   (compile-down :vampir vampir
                                 :stlc stlc
                                 :entry entry-point
+                                :test test
                                 :stream stream)))))
     (if output
         (with-open-file (file output :direction :output
@@ -49,12 +52,26 @@
         (run *standard-output*))))
 
 ;; this code is very bad please abstract out many of the components
-(defun compile-down (&key vampir stlc entry (stream *standard-output*))
+(defun compile-down (&key vampir stlc entry test (stream *standard-output*))
   (let* ((name        (read-from-string entry))
          (eval        (eval name))
          (vampir-name (renaming-scheme (intern (symbol-name name) 'keyword))))
-    (cond ((and vampir stlc)
+    (cond ((and vampir stlc test)
+           (let ((circuit (to-circuit eval vampir-name)))
+             (geb.vampir:extract (append circuit
+                                         (geb.seqn.trans:test-call
+                                          (car circuit)))
+                                 stream)
+             (format stream ";")))
+          ((and vampir stlc)
            (geb.vampir:extract (to-circuit eval vampir-name) stream))
+          ((and vampir test)
+           (let ((circuit (to-circuit eval vampir-name)))
+             (geb.vampir:extract (append circuit
+                                         (geb.seqn.trans:test-call
+                                          (car circuit)))
+                                 stream)
+             (format stream ";")))
           (stlc
            (format stream "~A" (to-cat nil eval)))
           (vampir
