@@ -3143,8 +3143,8 @@ record FinOpSlCat where
   finOSbase : FSObj
 
 -- A dependent product between opposites of slices of `FinSet` is determined
--- by a morphism from the domain to the codomain.
+-- by a morphism from the codomain to the domain.
 public export
 record FSPi (dom, cod : FinOpSlCat) where
   constructor MkFSPi
-  fspiMorph : FSMorph (finOSbase dom) (finOSbase cod)
+  fspiMorph : FSMorph (finOSbase cod) (finOSbase dom)
