@@ -3204,8 +3204,19 @@ SpliceCobase = fst
 SpliceBaseObj : SpliceCat -> Type
 SpliceBaseObj = SliceObj . SpliceBase
 
+SpliceBaseSlice : (cat : SpliceCat) -> SliceObj (SpliceBaseObj cat)
+SpliceBaseSlice cat = Sigma {a=(SpliceBase cat)}
+
+SpliceBaseFst : {cat : SpliceCat} -> {base : SpliceBaseObj cat} ->
+  SpliceBaseSlice cat base -> SpliceBase cat
+SpliceBaseFst {cat} {base} = fst
+
+SpliceBaseSnd : {cat : SpliceCat} -> {base : SpliceBaseObj cat} ->
+  (spl : SpliceBaseSlice cat base) -> base (SpliceBaseFst {cat} spl)
+SpliceBaseSnd {cat} {base} = snd
+
 SpliceCobaseObj : (cat : SpliceCat) -> SliceObj (SpliceBaseObj cat)
-SpliceCobaseObj cat = HomProf (SpliceCobase cat) . Sigma {a=(SpliceBase cat)}
+SpliceCobaseObj cat = HomProf (SpliceCobase cat) . SpliceBaseSlice cat
 
 SpliceObj : SpliceCat -> Type
 SpliceObj cat = Subset0 (SpliceBaseObj cat) (SpliceCobaseObj cat)
@@ -3217,8 +3228,8 @@ SpliceObjBase {cat} = fst0
   SpliceCobaseObj cat (SpliceObjBase {cat} spl)
 SpliceObjCobase {cat} = snd0
 
-SpliceTot : {cat : SpliceCat} -> SpliceObj cat -> Type
-SpliceTot {cat} spl = Sigma {a=(SpliceBase cat)} (SpliceObjBase spl)
+SpliceObjTot : {cat : SpliceCat} -> SpliceObj cat -> Type
+SpliceObjTot {cat} spl = SpliceBaseSlice cat (SpliceObjBase spl)
 
 SpliceSig : SpliceCat -> Type
 SpliceSig = SignatureT . SpliceObj
@@ -3230,10 +3241,10 @@ SpliceCod : {cat : SpliceCat} -> SpliceSig cat -> SpliceObj cat
 SpliceCod = snd
 
 SpliceDomTot : {cat : SpliceCat} -> SpliceSig cat -> Type
-SpliceDomTot {cat} sig = SpliceTot $ SpliceDom {cat} sig
+SpliceDomTot {cat} sig = SpliceObjTot $ SpliceDom {cat} sig
 
 SpliceCodTot : {cat : SpliceCat} -> SpliceSig cat -> Type
-SpliceCodTot {cat} sig = SpliceTot $ SpliceCod {cat} sig
+SpliceCodTot {cat} sig = SpliceObjTot $ SpliceCod {cat} sig
 
 SpliceDomBase : {cat : SpliceCat} -> SpliceSig cat -> SpliceBaseObj cat
 SpliceDomBase {cat} sig = SpliceObjBase $ SpliceDom {cat} sig
