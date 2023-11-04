@@ -166,6 +166,15 @@ TypeCat =
     (\x => Prelude.id)
     (\g, f => g . f)
 
+Type2Obj : Type
+Type2Obj = (Type, Type)
+
+Type2Sig : Type
+Type2Sig = (Type2Obj, Type2Obj)
+
+Type2Morph : Type2Sig -> Type
+Type2Morph ab = (fst (fst ab) -> fst (snd ab), snd (fst ab) -> snd (snd ab))
+
 ---------------------------------------
 ---------------------------------------
 ---- Dependent types, categorially ----

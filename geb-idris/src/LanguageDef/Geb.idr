@@ -3183,17 +3183,8 @@ DiscOpFactorize {pos} nfield sld i =
 ---------------------------
 ---------------------------
 
-Type2Obj : Type
-Type2Obj = ProductMonad Type
-
-Type2Sig : Type
-Type2Sig = ProductMonad Type2Obj
-
-Type2Morph : SliceObj Type2Sig
-Type2Morph ab = (fst (fst ab) -> fst (snd ab), snd (fst ab) -> snd (snd ab))
-
 SpliceCat : Type
-SpliceCat = Type2Obj
+SpliceCat = (Type, Type)
 
 SpliceBase : SpliceCat -> Type
 SpliceBase = snd
