@@ -3174,7 +3174,8 @@ DiscOpFactorization {pos} = Sigma {a=pos} . (.) Fin
 public export
 DiscOpFactorize : {pos : Type} -> (nfield : pos -> Nat) ->
   SliceFunctor (DiscOpFactorization {pos} nfield) pos
-DiscOpFactorize {pos} nfield sld i = HVect {k=(nfield i)} $ finFToVect $ sld . MkDPair i
+DiscOpFactorize {pos} nfield sld i =
+  HVect {k=(nfield i)} $ finFToVect $ sld . MkDPair i
 
 ---------------------------
 ---------------------------
@@ -3191,11 +3192,86 @@ Type2Sig = ProductMonad Type2Obj
 Type2Morph : SliceObj Type2Sig
 Type2Morph ab = (fst (fst ab) -> fst (snd ab), snd (fst ab) -> snd (snd ab))
 
-CosliceOfSliceObj : {c : Type} -> SliceObj (SliceObj c)
-CosliceOfSliceObj {c} = SliceObj . Sigma {a=c}
-
 SpliceCat : Type
-SpliceCat = (c : Type ** SliceObj c)
+SpliceCat = Type2Obj
 
-SpliceObj : SliceObj SpliceCat
-SpliceObj cat = CosliceOfSliceObj {c=(fst cat)} (snd cat)
+SpliceBase : SpliceCat -> Type
+SpliceBase = snd
+
+SpliceCobase : SpliceCat -> Type
+SpliceCobase = fst
+
+SpliceBaseObj : SpliceCat -> Type
+SpliceBaseObj = SliceObj . SpliceBase
+
+SpliceCobaseObj : (cat : SpliceCat) -> SliceObj (SpliceBaseObj cat)
+SpliceCobaseObj cat = HomProf (SpliceCobase cat) . Sigma {a=(SpliceBase cat)}
+
+SpliceObj : SpliceCat -> Type
+SpliceObj cat = Subset0 (SpliceBaseObj cat) (SpliceCobaseObj cat)
+
+SpliceObjBase : {cat : SpliceCat} -> SpliceObj cat -> SpliceBaseObj cat
+SpliceObjBase {cat} = fst0
+
+0 SpliceObjCobase : {cat : SpliceCat} -> (spl : SpliceObj cat) ->
+  SpliceCobaseObj cat (SpliceObjBase {cat} spl)
+SpliceObjCobase {cat} = snd0
+
+SpliceTot : {cat : SpliceCat} -> SpliceObj cat -> Type
+SpliceTot {cat} spl = Sigma {a=(SpliceBase cat)} (SpliceObjBase spl)
+
+SpliceSig : SpliceCat -> Type
+SpliceSig = SignatureT . SpliceObj
+
+SpliceDom : {cat : SpliceCat} -> SpliceSig cat -> SpliceObj cat
+SpliceDom = fst
+
+SpliceCod : {cat : SpliceCat} -> SpliceSig cat -> SpliceObj cat
+SpliceCod = snd
+
+SpliceDomTot : {cat : SpliceCat} -> SpliceSig cat -> Type
+SpliceDomTot {cat} sig = SpliceTot $ SpliceDom {cat} sig
+
+SpliceCodTot : {cat : SpliceCat} -> SpliceSig cat -> Type
+SpliceCodTot {cat} sig = SpliceTot $ SpliceCod {cat} sig
+
+SpliceDomBase : {cat : SpliceCat} -> SpliceSig cat -> SpliceBaseObj cat
+SpliceDomBase {cat} sig = SpliceObjBase $ SpliceDom {cat} sig
+
+SpliceCodBase : {cat : SpliceCat} -> SpliceSig cat -> SpliceBaseObj cat
+SpliceCodBase {cat} sig = SpliceObjBase $ SpliceCod {cat} sig
+
+0 SpliceDomCobase : {cat : SpliceCat} ->
+  (sig : SpliceSig cat) -> SpliceCobaseObj cat (SpliceDomBase {cat} sig)
+SpliceDomCobase {cat} sig = SpliceObjCobase $ SpliceDom {cat} sig
+
+0 SpliceCodCobase : {cat : SpliceCat} ->
+  (sig : SpliceSig cat) -> SpliceCobaseObj cat (SpliceCodBase {cat} sig)
+SpliceCodCobase {cat} sig = SpliceObjCobase $ SpliceCod {cat} sig
+
+SpliceBaseMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
+SpliceBaseMorph {cat} sig =
+  SliceMorphism {a=(SpliceBase cat)}
+    (SpliceDomBase {cat} sig)
+    (SpliceCodBase {cat} sig)
+
+0 SpliceCobaseMorph : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
+  SpliceBaseMorph {cat} sig -> Type
+SpliceCobaseMorph {cat} {sig=(Element0 domsl domcosl, Element0 codsl codcosl)} m =
+  (elb : SpliceBase cat) -> (elc : SpliceCobase cat) ->
+  (0 eqdb : fst (domcosl elc) = elb) -> (0 eqcb : fst (codcosl elc) = elb) ->
+    m elb (replace {p=domsl} eqdb $ snd $ domcosl elc) =
+    replace {p=codsl} eqcb (snd $ codcosl elc)
+
+SpliceMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
+SpliceMorph {cat} sig =
+  Subset0 (SpliceBaseMorph {cat} sig) (SpliceCobaseMorph {cat} {sig})
+
+SpliceMorphBase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
+  SpliceMorph {cat} sig -> SpliceBaseMorph {cat} sig
+SpliceMorphBase = fst0
+
+0 SpliceMorphCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
+  (m : SpliceMorph {cat} sig) ->
+  SpliceCobaseMorph {cat} {sig} (SpliceMorphBase {cat} {sig} m)
+SpliceMorphCobase = snd0
