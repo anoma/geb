@@ -3257,11 +3257,12 @@ SpliceBaseMorph {cat} sig =
 
 0 SpliceCobaseMorph : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   SpliceBaseMorph {cat} sig -> Type
-SpliceCobaseMorph {cat} {sig=(Element0 domsl domcosl, Element0 codsl codcosl)} m =
+SpliceCobaseMorph {cat} {sig} m =
   (elb : SpliceBase cat) -> (elc : SpliceCobase cat) ->
-  (0 eqdb : fst (domcosl elc) = elb) -> (0 eqcb : fst (codcosl elc) = elb) ->
-    m elb (replace {p=domsl} eqdb $ snd $ domcosl elc) =
-    replace {p=codsl} eqcb (snd $ codcosl elc)
+  (0 eqdb : fst (SpliceDomCobase sig elc) = elb) ->
+  (0 eqcb : fst (SpliceCodCobase sig elc) = elb) ->
+  m elb (replace {p=(SpliceDomBase sig)} eqdb $ snd $ SpliceDomCobase sig elc) =
+  replace {p=(SpliceCodBase sig)} eqcb (snd $ SpliceCodCobase sig elc)
 
 SpliceMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
 SpliceMorph {cat} sig =
