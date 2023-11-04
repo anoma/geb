@@ -3160,6 +3160,42 @@ record FinOpSlCat where
 -- A dependent product between opposites of slices of `FinSet` is determined
 -- by a morphism from the codomain to the domain.
 public export
-record FSPi (dom, cod : FinOpSlCat) where
+record FSOpPi (dom, cod : FinOpSlCat) where
   constructor MkFSPi
   fspiMorph : FSMorph (finOSbase cod) (finOSbase dom)
+
+public export
+DiscOpFactorization : {pos : Type} -> (nfield : pos -> Nat) -> Type
+DiscOpFactorization {pos} = Sigma {a=pos} . (.) Fin
+
+-- We define a discrete dependent product as one which factors through
+-- a type of (finite) dependent vectors.  So we insert a discrete-factorization
+-- functor into the polynomial-functor "pipeline".
+public export
+DiscOpFactorize : {pos : Type} -> (nfield : pos -> Nat) ->
+  SliceFunctor (DiscOpFactorization {pos} nfield) pos
+DiscOpFactorize {pos} nfield sld i = HVect {k=(nfield i)} $ finFToVect $ sld . MkDPair i
+
+---------------------------
+---------------------------
+---- Splices of `Type` ----
+---------------------------
+---------------------------
+
+Type2Obj : Type
+Type2Obj = ProductMonad Type
+
+Type2Sig : Type
+Type2Sig = ProductMonad Type2Obj
+
+Type2Morph : SliceObj Type2Sig
+Type2Morph ab = (fst (fst ab) -> fst (snd ab), snd (fst ab) -> snd (snd ab))
+
+CosliceOfSliceObj : {c : Type} -> SliceObj (SliceObj c)
+CosliceOfSliceObj {c} = SliceObj . Sigma {a=c}
+
+SpliceCat : Type
+SpliceCat = (c : Type ** SliceObj c)
+
+SpliceObj : SliceObj SpliceCat
+SpliceObj cat = CosliceOfSliceObj {c=(fst cat)} (snd cat)
