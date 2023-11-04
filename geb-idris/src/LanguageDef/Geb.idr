@@ -3063,6 +3063,8 @@ GenPi : {dom : Type} -> {0 cod : Type} ->
   (dom -> cod) -> SliceFunctor dom cod
 GenPi {dom} {cod} f sld elc = (eld : PreImage f elc) -> sld $ fst0 eld
 
+-- We define a discrete dependent product as one which factors through
+-- a type of (finite) dependent vectors.
 public export
 DiscPi : {pos : Type} -> (nfield : pos -> Nat) ->
   SliceFunctor (Sigma {a=pos} (Fin . nfield)) pos
