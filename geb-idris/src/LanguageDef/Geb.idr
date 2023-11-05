@@ -3317,16 +3317,11 @@ public export
 SpliceSigCobaseBaseProj {cat} sig elc =
   (SpliceDomCobaseBaseProj sig elc, SpliceCodCobaseBaseProj sig elc)
 
--- For a given pair of splice objects, this is the subobject of the splice
--- category's cobase object which maps to the same base type under both
--- splice objects' projections to the base (via the shared base projection
--- following their two different cobase projections).
 public export
-0 SpliceCobaseBaseProjEqualizer : {cat : SpliceCat} -> SpliceSig cat -> Type
-SpliceCobaseBaseProjEqualizer {cat} sig =
-  Equalizer {a=(SpliceCobase cat)} {b=(SpliceBase cat)}
-    (SpliceDomCobaseBaseProj sig)
-    (SpliceCodCobaseBaseProj sig)
+0 SpliceCobaseBaseProjEqual : {cat : SpliceCat} -> SpliceSig cat ->
+  SliceObj (SpliceCobase cat)
+SpliceCobaseBaseProjEqual {cat} sig elcp =
+  SpliceDomCobaseBaseProj sig elcp = SpliceCodCobaseBaseProj sig elcp
 
 public export
 SpliceBaseMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
@@ -3339,11 +3334,12 @@ public export
 0 SpliceBaseMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   SpliceBaseMorph {cat} sig -> Type
 SpliceBaseMorphPresCobase {cat} {sig} m =
-  (elcb : SpliceCobaseBaseProjEqualizer {cat} sig) ->
-  (m (SpliceDomCobaseBaseProj sig $ fst0 elcb) $
-    SpliceBaseSnd $ SpliceDomCobase sig $ fst0 elcb) =
-  (replace {p=(SpliceCodBase sig)} (sym (snd0 elcb)) $
-    SpliceBaseSnd $ SpliceCodCobase sig $ fst0 elcb)
+  (elc : SpliceCobase cat) ->
+  (projeq : SpliceCobaseBaseProjEqual {cat} sig elc **
+   replace {p=(SpliceCodBase sig)} projeq
+    (m (SpliceDomCobaseBaseProj sig elc)
+      (SpliceBaseSnd $ SpliceDomCobase sig elc)) =
+   SpliceBaseSnd (SpliceCodCobase sig elc))
 
 public export
 SpliceMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
