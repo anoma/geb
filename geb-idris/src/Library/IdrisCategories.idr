@@ -242,6 +242,11 @@ PreImage : {a : Type} -> {0 b : Type} -> (0 _ : a -> b) -> (0 _ : b) -> Type
 PreImage {a} {b} f elemb = Equalizer {a} {b} f (const elemb)
 
 public export
+WideEqualizer3 : {a : Type} -> {0 b : Type} -> (0 f, g, h : a -> b) -> Type
+WideEqualizer3 {a} {b} f g h =
+  Subset0 a (\ela => (f ela = g ela, g ela = h ela))
+
+public export
 Pullback : {a, b : Type} -> {0 c : Type} ->
   (0 _ : a -> c) -> (0 _ : b -> c) -> Type
 Pullback {a} {b} {c} f g = Equalizer {a=(Pair a b)} {b=c} (f . fst) (g . snd)
