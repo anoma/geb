@@ -265,6 +265,12 @@ pbProj2 : {a, b : Type} -> {0 c : Type} -> {0 f : a -> c} -> {0 g : b -> c} ->
   Pullback f g -> b
 pbProj2 {a} {b} {c} {f} {g} = snd . fst0
 
+public export
+WidePullback3 : {a, b, c : Type} -> {0 d : Type} ->
+  (0 _ : a -> d) -> (0 _ : b -> d) -> (0 _ : c -> d) -> Type
+WidePullback3 {a} {b} {c} {d} f g h =
+  WideEqualizer3 {a=(a, b, c)} {b=d} (f . fst) (g . fst . snd) (h . snd . snd)
+
 -- A special case of `DepProdF` where `b` is the terminal object and
 -- `f` is the unique morphism into it.  A slice object over the terminal
 -- object is isomorphic to its domain, so the slice category of a category
