@@ -3192,6 +3192,23 @@ SpliceBase = snd
 SpliceCobase : SpliceCat -> Type
 SpliceCobase = fst
 
+SpliceBasePair : SpliceCat -> Type
+SpliceBasePair = ProductMonad . SpliceBase
+
+SpliceCobasePair : SpliceCat -> Type
+SpliceCobasePair = ProductMonad . SpliceCobase
+
+SpliceDualPair : SpliceCat -> Type
+SpliceDualPair cat = (SpliceCobase cat, SpliceBase cat)
+
+SpliceDualPairBase : {cat : SpliceCat} ->
+  SpliceDualPair cat -> SpliceBase cat
+SpliceDualPairBase {cat} = snd
+
+SpliceDualPairCobase : {cat : SpliceCat} ->
+  SpliceDualPair cat -> SpliceCobase cat
+SpliceDualPairCobase {cat} = fst
+
 SpliceBaseObj : SpliceCat -> Type
 SpliceBaseObj = SliceObj . SpliceBase
 
@@ -3207,7 +3224,7 @@ SpliceBaseSnd : {cat : SpliceCat} -> {base : SpliceBaseObj cat} ->
 SpliceBaseSnd {cat} {base} = snd
 
 SpliceCobaseObj : (cat : SpliceCat) -> SliceObj (SpliceBaseObj cat)
-SpliceCobaseObj cat = HomProf (SpliceCobase cat) . SpliceBaseSlice cat
+SpliceCobaseObj cat = CovarHomFunc (SpliceCobase cat) . SpliceBaseSlice cat
 
 SpliceObj : SpliceCat -> Type
 SpliceObj cat = Subset0 (SpliceBaseObj cat) (SpliceCobaseObj cat)
@@ -3257,10 +3274,10 @@ SpliceBaseMorph {cat} sig =
     (SpliceDomBase {cat} sig)
     (SpliceCodBase {cat} sig)
 
-0 SpliceBaseMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
-  SpliceBaseMorph {cat} sig -> Type
-SpliceBaseMorphPresCobase {cat} {sig} m =
-  (elb : SpliceBase cat) -> (elc : SpliceCobase cat) ->
+0 SpliceBaseMorphPresDualPair : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
+  SpliceBaseMorph {cat} sig -> SpliceDualPair cat -> Type
+SpliceBaseMorphPresDualPair {cat} {sig} m el =
+  let elc = SpliceDualPairCobase el ; elb = SpliceDualPairBase el in
   (0 eqdb : SpliceBaseFst (SpliceDomCobase sig elc) = elb) ->
   (0 eqcb : SpliceBaseFst (SpliceCodCobase sig elc) = elb) ->
   m elb
@@ -3268,6 +3285,11 @@ SpliceBaseMorphPresCobase {cat} {sig} m =
      (SpliceBaseSnd $ SpliceDomCobase sig elc)) =
   replace {p=(SpliceCodBase sig)} eqcb
     (SpliceBaseSnd $ SpliceCodCobase sig elc)
+
+0 SpliceBaseMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
+  SpliceBaseMorph {cat} sig -> Type
+SpliceBaseMorphPresCobase {cat} {sig} =
+  Pi {a=(SpliceDualPair cat)} . SpliceBaseMorphPresDualPair {cat} {sig}
 
 SpliceMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
 SpliceMorph {cat} sig =
