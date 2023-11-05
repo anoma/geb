@@ -3300,13 +3300,6 @@ public export
 SpliceCodCobase {cat} sig = SpliceObjCobase $ SpliceCod {cat} sig
 
 public export
-SpliceBaseMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
-SpliceBaseMorph {cat} sig =
-  SliceMorphism {a=(SpliceBase cat)}
-    (SpliceDomBase {cat} sig)
-    (SpliceCodBase {cat} sig)
-
-public export
 0 SpliceDomCobaseBaseProj : {cat : SpliceCat} ->
   SpliceSig cat -> SpliceCobase cat -> SpliceBase cat
 SpliceDomCobaseBaseProj {cat} sig =
@@ -3330,6 +3323,13 @@ SpliceCobaseBaseProjEqualizer {cat} sig =
   Equalizer {a=(SpliceCobase cat)} {b=(SpliceBase cat)}
     (SpliceDomCobaseBaseProj sig)
     (SpliceCodCobaseBaseProj sig)
+
+public export
+SpliceBaseMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
+SpliceBaseMorph {cat} sig =
+  SliceMorphism {a=(SpliceBase cat)}
+    (SpliceDomBase {cat} sig)
+    (SpliceCodBase {cat} sig)
 
 public export
 0 SpliceBaseMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
