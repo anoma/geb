@@ -3325,24 +3325,18 @@ SpliceSigCobaseBaseProj {cat} sig elc =
   (SpliceDomCobaseBaseProj sig elc, SpliceCodCobaseBaseProj sig elc)
 
 public export
-0 SpliceBaseMorphPresDualPair : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
-  SpliceBaseMorph {cat} sig -> SpliceDualPair cat -> Type
-SpliceBaseMorphPresDualPair {cat} {sig} m el =
-  let elc = SpliceDualPairCobase el ; elb = SpliceDualPairBase el in
-  (eqdcb :
-    SpliceSigCobaseBaseProj sig elc = ProductNTUnit {a=(SpliceBase cat)} elb) ->
-  let eqdb = fstEq eqdcb ; eqcb = sndEq eqdcb in
-  m elb
-    (replace {p=(SpliceDomBase sig)} eqdb
-     (SpliceBaseSnd $ SpliceDomCobase sig elc)) =
-  replace {p=(SpliceCodBase sig)} eqcb
-    (SpliceBaseSnd $ SpliceCodCobase sig elc)
-
-public export
 0 SpliceBaseMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   SpliceBaseMorph {cat} sig -> Type
-SpliceBaseMorphPresCobase {cat} {sig} =
-  Pi {a=(SpliceDualPair cat)} . SpliceBaseMorphPresDualPair {cat} {sig}
+SpliceBaseMorphPresCobase {cat} {sig} m =
+  (elcb :
+    Equalizer
+      {a=(SpliceCobase cat)} {b=(SpliceBase cat)}
+      (SpliceDomCobaseBaseProj sig)
+      (SpliceCodCobaseBaseProj sig)) ->
+  (m (SpliceDomCobaseBaseProj sig $ fst0 elcb) $
+    SpliceBaseSnd $ SpliceDomCobase sig $ fst0 elcb) =
+  (replace {p=(SpliceCodBase sig)} (sym (snd0 elcb)) $
+    SpliceBaseSnd $ SpliceCodCobase sig $ fst0 elcb)
 
 public export
 SpliceMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
