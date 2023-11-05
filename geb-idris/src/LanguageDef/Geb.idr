@@ -3319,13 +3319,18 @@ SpliceCodCobaseBaseProj {cat} sig =
   SpliceCobaseBaseProj {cat} {bsl=(SpliceCodBase sig)} (SpliceCodCobase sig)
 
 public export
+0 SpliceSigCobaseBaseProj : {cat : SpliceCat} ->
+  SpliceSig cat -> SpliceCobase cat -> ProductMonad (SpliceBase cat)
+SpliceSigCobaseBaseProj {cat} sig elc =
+  (SpliceDomCobaseBaseProj sig elc, SpliceCodCobaseBaseProj sig elc)
+
+public export
 0 SpliceBaseMorphPresDualPair : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   SpliceBaseMorph {cat} sig -> SpliceDualPair cat -> Type
 SpliceBaseMorphPresDualPair {cat} {sig} m el =
   let elc = SpliceDualPairCobase el ; elb = SpliceDualPairBase el in
   (eqdcb :
-    (SpliceDomCobaseBaseProj sig elc, SpliceCodCobaseBaseProj sig elc) =
-    (elb, elb)) ->
+    SpliceSigCobaseBaseProj sig elc = ProductNTUnit {a=(SpliceBase cat)} elb) ->
   let eqdb = fstEq eqdcb ; eqcb = sndEq eqdcb in
   m elb
     (replace {p=(SpliceDomBase sig)} eqdb
