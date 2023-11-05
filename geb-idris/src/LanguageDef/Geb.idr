@@ -3369,3 +3369,8 @@ spliceComp : {cat : SpliceCat} ->
   SpliceMorph {cat} (spl, spl') ->
   SpliceMorph {cat} (spl, spl'')
 spliceComp {cat} spl = ?spliceComp_hole
+
+public export
+SpliceObjComp : {0 x, y, z : Type} ->
+  SpliceObj (y, z) -> SpliceObj (x, z) -> SpliceObj (x, y)
+SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
