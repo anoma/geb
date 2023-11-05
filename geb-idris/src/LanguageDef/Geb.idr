@@ -3278,8 +3278,11 @@ SpliceBaseMorph {cat} sig =
   SpliceBaseMorph {cat} sig -> SpliceDualPair cat -> Type
 SpliceBaseMorphPresDualPair {cat} {sig} m el =
   let elc = SpliceDualPairCobase el ; elb = SpliceDualPairBase el in
-  (0 eqdb : SpliceBaseFst (SpliceDomCobase sig elc) = elb) ->
-  (0 eqcb : SpliceBaseFst (SpliceCodCobase sig elc) = elb) ->
+  (eqdcb :
+    (SpliceBaseFst (SpliceDomCobase sig elc),
+     SpliceBaseFst (SpliceCodCobase sig elc)) =
+    (elb, elb)) ->
+  let eqdb = fstEq eqdcb ; eqcb = sndEq eqdcb in
   m elb
     (replace {p=(SpliceDomBase sig)} eqdb
      (SpliceBaseSnd $ SpliceDomCobase sig elc)) =
