@@ -3257,9 +3257,9 @@ SpliceBaseMorph {cat} sig =
     (SpliceDomBase {cat} sig)
     (SpliceCodBase {cat} sig)
 
-0 SpliceCobaseMorph : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
+0 SpliceBaseMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   SpliceBaseMorph {cat} sig -> Type
-SpliceCobaseMorph {cat} {sig} m =
+SpliceBaseMorphPresCobase {cat} {sig} m =
   (elb : SpliceBase cat) -> (elc : SpliceCobase cat) ->
   (0 eqdb : SpliceBaseFst (SpliceDomCobase sig elc) = elb) ->
   (0 eqcb : SpliceBaseFst (SpliceCodCobase sig elc) = elb) ->
@@ -3271,13 +3271,13 @@ SpliceCobaseMorph {cat} {sig} m =
 
 SpliceMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
 SpliceMorph {cat} sig =
-  Subset0 (SpliceBaseMorph {cat} sig) (SpliceCobaseMorph {cat} {sig})
+  Subset0 (SpliceBaseMorph {cat} sig) (SpliceBaseMorphPresCobase {cat} {sig})
 
 SpliceMorphBase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   SpliceMorph {cat} sig -> SpliceBaseMorph {cat} sig
 SpliceMorphBase = fst0
 
-0 SpliceMorphCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
+0 SpliceMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   (m : SpliceMorph {cat} sig) ->
-  SpliceCobaseMorph {cat} {sig} (SpliceMorphBase {cat} {sig} m)
-SpliceMorphCobase = snd0
+  SpliceBaseMorphPresCobase {cat} {sig} (SpliceMorphBase {cat} {sig} m)
+SpliceMorphPresCobase = snd0
