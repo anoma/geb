@@ -3317,6 +3317,10 @@ public export
 SpliceSigCobaseBaseProj {cat} sig elc =
   (SpliceDomCobaseBaseProj sig elc, SpliceCodCobaseBaseProj sig elc)
 
+-- For a given pair of splice objects, this is the subobject of the splice
+-- category's cobase object which maps to the same base type under both
+-- splice objects' projections to the base (via the shared base projection
+-- following their two different cobase projections).
 public export
 0 SpliceCobaseBaseProjEqualizer : {cat : SpliceCat} -> SpliceSig cat -> Type
 SpliceCobaseBaseProjEqualizer {cat} sig =
