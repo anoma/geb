@@ -3356,3 +3356,16 @@ public export
   (m : SpliceMorph {cat} sig) ->
   SpliceBaseMorphPresCobase {cat} {sig} (SpliceMorphBase {cat} {sig} m)
 SpliceMorphPresCobase = snd0
+
+public export
+spliceId : {cat : SpliceCat} ->
+  (spl : SpliceObj cat) -> SpliceMorph {cat} (spl, spl)
+spliceId {cat} spl = ?spliceId_hole
+
+public export
+spliceComp : {cat : SpliceCat} ->
+  {spl, spl', spl'' : SpliceObj cat} ->
+  SpliceMorph {cat} (spl', spl'') ->
+  SpliceMorph {cat} (spl, spl') ->
+  SpliceMorph {cat} (spl, spl'')
+spliceComp {cat} spl = ?spliceComp_hole
