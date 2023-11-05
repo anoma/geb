@@ -3183,97 +3183,125 @@ DiscOpFactorize {pos} nfield sld i =
 ---------------------------
 ---------------------------
 
+public export
 SpliceCat : Type
 SpliceCat = (Type, Type)
 
+public export
 SpliceBase : SpliceCat -> Type
 SpliceBase = snd
 
+public export
 SpliceCobase : SpliceCat -> Type
 SpliceCobase = fst
 
+public export
 SpliceBasePair : SpliceCat -> Type
 SpliceBasePair = ProductMonad . SpliceBase
 
+public export
 SpliceCobasePair : SpliceCat -> Type
 SpliceCobasePair = ProductMonad . SpliceCobase
 
+public export
 SpliceDualPair : SpliceCat -> Type
 SpliceDualPair cat = (SpliceCobase cat, SpliceBase cat)
 
+public export
 SpliceDualPairBase : {cat : SpliceCat} ->
   SpliceDualPair cat -> SpliceBase cat
 SpliceDualPairBase {cat} = snd
 
+public export
 SpliceDualPairCobase : {cat : SpliceCat} ->
   SpliceDualPair cat -> SpliceCobase cat
 SpliceDualPairCobase {cat} = fst
 
+public export
 SpliceBaseObj : SpliceCat -> Type
 SpliceBaseObj = SliceObj . SpliceBase
 
+public export
 SpliceBaseSlice : (cat : SpliceCat) -> SliceObj (SpliceBaseObj cat)
 SpliceBaseSlice cat = Sigma {a=(SpliceBase cat)}
 
+public export
 SpliceBaseFst : {cat : SpliceCat} -> {base : SpliceBaseObj cat} ->
   SpliceBaseSlice cat base -> SpliceBase cat
 SpliceBaseFst {cat} {base} = fst
 
+public export
 SpliceBaseSnd : {cat : SpliceCat} -> {base : SpliceBaseObj cat} ->
   (spl : SpliceBaseSlice cat base) -> base (SpliceBaseFst {cat} spl)
 SpliceBaseSnd {cat} {base} = snd
 
+public export
 SpliceCobaseObj : (cat : SpliceCat) -> SliceObj (SpliceBaseObj cat)
 SpliceCobaseObj cat = CovarHomFunc (SpliceCobase cat) . SpliceBaseSlice cat
 
+public export
 SpliceObj : SpliceCat -> Type
 SpliceObj cat = Subset0 (SpliceBaseObj cat) (SpliceCobaseObj cat)
 
+public export
 SpliceObjBase : {cat : SpliceCat} -> SpliceObj cat -> SpliceBaseObj cat
 SpliceObjBase {cat} = fst0
 
+public export
 0 SpliceObjCobase : {cat : SpliceCat} -> (spl : SpliceObj cat) ->
   SpliceCobaseObj cat (SpliceObjBase {cat} spl)
 SpliceObjCobase {cat} = snd0
 
+public export
 SpliceObjTot : {cat : SpliceCat} -> SpliceObj cat -> Type
 SpliceObjTot {cat} spl = SpliceBaseSlice cat (SpliceObjBase spl)
 
+public export
 SpliceSig : SpliceCat -> Type
 SpliceSig = SignatureT . SpliceObj
 
+public export
 SpliceDom : {cat : SpliceCat} -> SpliceSig cat -> SpliceObj cat
 SpliceDom = fst
 
+public export
 SpliceCod : {cat : SpliceCat} -> SpliceSig cat -> SpliceObj cat
 SpliceCod = snd
 
+public export
 SpliceDomTot : {cat : SpliceCat} -> SpliceSig cat -> Type
 SpliceDomTot {cat} sig = SpliceObjTot $ SpliceDom {cat} sig
 
+public export
 SpliceCodTot : {cat : SpliceCat} -> SpliceSig cat -> Type
 SpliceCodTot {cat} sig = SpliceObjTot $ SpliceCod {cat} sig
 
+public export
 SpliceDomBase : {cat : SpliceCat} -> SpliceSig cat -> SpliceBaseObj cat
 SpliceDomBase {cat} sig = SpliceObjBase $ SpliceDom {cat} sig
 
+public export
 SpliceCodBase : {cat : SpliceCat} -> SpliceSig cat -> SpliceBaseObj cat
 SpliceCodBase {cat} sig = SpliceObjBase $ SpliceCod {cat} sig
 
+public export
 0 SpliceDomCobase : {cat : SpliceCat} ->
   (sig : SpliceSig cat) -> SpliceCobaseObj cat (SpliceDomBase {cat} sig)
 SpliceDomCobase {cat} sig = SpliceObjCobase $ SpliceDom {cat} sig
 
+public export
 0 SpliceCodCobase : {cat : SpliceCat} ->
   (sig : SpliceSig cat) -> SpliceCobaseObj cat (SpliceCodBase {cat} sig)
 SpliceCodCobase {cat} sig = SpliceObjCobase $ SpliceCod {cat} sig
 
+public export
 SpliceBaseMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
 SpliceBaseMorph {cat} sig =
   SliceMorphism {a=(SpliceBase cat)}
     (SpliceDomBase {cat} sig)
     (SpliceCodBase {cat} sig)
 
+public export
 0 SpliceBaseMorphPresDualPair : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   SpliceBaseMorph {cat} sig -> SpliceDualPair cat -> Type
 SpliceBaseMorphPresDualPair {cat} {sig} m el =
@@ -3289,19 +3317,23 @@ SpliceBaseMorphPresDualPair {cat} {sig} m el =
   replace {p=(SpliceCodBase sig)} eqcb
     (SpliceBaseSnd $ SpliceCodCobase sig elc)
 
+public export
 0 SpliceBaseMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   SpliceBaseMorph {cat} sig -> Type
 SpliceBaseMorphPresCobase {cat} {sig} =
   Pi {a=(SpliceDualPair cat)} . SpliceBaseMorphPresDualPair {cat} {sig}
 
+public export
 SpliceMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
 SpliceMorph {cat} sig =
   Subset0 (SpliceBaseMorph {cat} sig) (SpliceBaseMorphPresCobase {cat} {sig})
 
+public export
 SpliceMorphBase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   SpliceMorph {cat} sig -> SpliceBaseMorph {cat} sig
 SpliceMorphBase = fst0
 
+public export
 0 SpliceMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   (m : SpliceMorph {cat} sig) ->
   SpliceBaseMorphPresCobase {cat} {sig} (SpliceMorphBase {cat} {sig} m)
