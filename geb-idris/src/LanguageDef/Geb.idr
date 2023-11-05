@@ -3257,6 +3257,11 @@ SpliceObjTot : {cat : SpliceCat} -> SpliceObj cat -> Type
 SpliceObjTot {cat} spl = SpliceBaseSlice cat (SpliceObjBase spl)
 
 public export
+0 SpliceCobaseBaseProj : {cat : SpliceCat} -> {bsl : SpliceBaseObj cat} ->
+  (cosl : SpliceCobaseObj cat bsl) -> SpliceCobase cat -> SpliceBase cat
+SpliceCobaseBaseProj {cat} {bsl} = (.) SpliceBaseFst
+
+public export
 SpliceSig : SpliceCat -> Type
 SpliceSig = SignatureT . SpliceObj
 
@@ -3302,13 +3307,24 @@ SpliceBaseMorph {cat} sig =
     (SpliceCodBase {cat} sig)
 
 public export
+0 SpliceDomCobaseBaseProj : {cat : SpliceCat} ->
+  SpliceSig cat -> SpliceCobase cat -> SpliceBase cat
+SpliceDomCobaseBaseProj {cat} sig =
+  SpliceCobaseBaseProj {cat} {bsl=(SpliceDomBase sig)} (SpliceDomCobase sig)
+
+public export
+0 SpliceCodCobaseBaseProj : {cat : SpliceCat} ->
+  SpliceSig cat -> SpliceCobase cat -> SpliceBase cat
+SpliceCodCobaseBaseProj {cat} sig =
+  SpliceCobaseBaseProj {cat} {bsl=(SpliceCodBase sig)} (SpliceCodCobase sig)
+
+public export
 0 SpliceBaseMorphPresDualPair : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   SpliceBaseMorph {cat} sig -> SpliceDualPair cat -> Type
 SpliceBaseMorphPresDualPair {cat} {sig} m el =
   let elc = SpliceDualPairCobase el ; elb = SpliceDualPairBase el in
   (eqdcb :
-    (SpliceBaseFst (SpliceDomCobase sig elc),
-     SpliceBaseFst (SpliceCodCobase sig elc)) =
+    (SpliceDomCobaseBaseProj sig elc, SpliceCodCobaseBaseProj sig elc) =
     (elb, elb)) ->
   let eqdb = fstEq eqdcb ; eqcb = sndEq eqdcb in
   m elb
