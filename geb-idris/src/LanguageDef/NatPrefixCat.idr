@@ -2,7 +2,6 @@ module LanguageDef.NatPrefixCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
-import LanguageDef.PolyCat
 
 %default total
 
@@ -423,7 +422,11 @@ FSPolyApply : FSPolyF -> FSObj -> FSObj
 FSPolyApply a n = FSCoproductList (FSExpMap n a)
 
 public export
-fspPF : FSPolyF -> PolyFunc
+FSPolyFunc : Type
+FSPolyFunc = (pos : Type ** pos -> Type)
+
+public export
+fspPF : FSPolyF -> FSPolyFunc
 fspPF p = (fsPolyPos p ** fsPolyDir p)
 
 public export
@@ -594,7 +597,13 @@ fspOnDirF : {p, q : FSPolyF} -> (alpha : FSPNatTrans p q) ->
 fspOnDirF (onPos ** onDir) i = FSApply $ finFGet i onDir
 
 public export
-fspNT : {p, q : FSPolyF} -> FSPNatTrans p q -> PolyNatTrans (fspPF p) (fspPF q)
+FSPolyNatTrans : FSPolyFunc -> FSPolyFunc -> Type
+FSPolyNatTrans p q =
+  (onPos : fst p -> fst q ** SliceMorphism (snd q . onPos) (snd p))
+
+public export
+fspNT : {p, q : FSPolyF} ->
+  FSPNatTrans p q -> FSPolyNatTrans (fspPF p) (fspPF q)
 fspNT alpha = (fspOnPosF alpha ** fspOnDirF alpha)
 
 -- A polymorphic function in FinSet, or equivalently, a family of functions,
@@ -688,8 +697,12 @@ FSPAlg : FSPolyF -> FSObj -> Type
 FSPAlg p n = FSMorph (FSPolyApply p n) n
 
 public export
+FSPolyAlg : FSPolyFunc -> Type -> Type
+FSPolyAlg p a = (i : fst p) -> (snd p i -> a) -> a
+
+public export
 FSListToPFAlg : {n : FSObj} -> {l : List Nat} ->
-  FSPAlg l n -> PFAlg (fspPF l) (FSElem n)
+  FSPAlg l n -> FSPolyAlg (fspPF l) (FSElem n)
 FSListToPFAlg {n} {l=[]} alg i f = absurd i
 FSListToPFAlg {n} {l=(x :: l')} alg FZ f =
   FSApply (take (power n x) alg) $ finPowFin $ finFToVect f
@@ -698,7 +711,7 @@ FSListToPFAlg {n} {l=(x :: l')} alg (FS i) f =
 
 public export
 FSPToPFAlg : {n : FSObj} -> {p : FSPolyF} ->
-  FSPAlg p n -> PFAlg (fspPF p) (FSElem n)
+  FSPAlg p n -> FSPolyAlg (fspPF p) (FSElem n)
 FSPToPFAlg {n} {p=l} alg i = FSListToPFAlg {n} {l} alg i
 
 --------------------------------------------------------
