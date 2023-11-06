@@ -2,6 +2,7 @@ module LanguageDef.Test.PolyCatTest
 
 import Test.TestLibrary
 import LanguageDef.PolyCat
+import LanguageDef.NatPrefixCat
 
 %default total
 
