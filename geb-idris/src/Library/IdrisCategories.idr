@@ -6684,11 +6684,11 @@ fromCoYoC : (f : (Type -> Type) -> Type) ->
 fromCoYoC f {isF} {r} (MkCoYoC (b ** (alpha, x))) = isF b r alpha x
 
 public export
-ProYoEmbedding : ProfunctorSig -> Type -> Type -> Type
+ProYoEmbedding : ProfunctorSig -> ProfunctorSig
 ProYoEmbedding p c d = ProfNT (PrePostPair c d) p
 
 public export
-record ProYo (p : Type -> Type -> Type) (c, d : Type) where
+record ProYo (p : ProfunctorSig) (c, d : Type) where
   constructor MkProYo
   -- An equivalent structure is called `Yoneda/runYoneda` in some Haskell
   -- libraries; this formulation makes the Yoneda-lemma instantiation more
@@ -6696,13 +6696,11 @@ record ProYo (p : Type -> Type -> Type) (c, d : Type) where
   ProYoEmbed : ProYoEmbedding p c d
 
 public export
-fromProYo : {p : Type -> Type -> Type} ->
-  ProfNT (ProYo p) p
+fromProYo : {p : ProfunctorSig} -> ProfNT (ProYo p) p
 fromProYo {p} (MkProYo py) = py (id, id)
 
 public export
-toProYo : {p : Type -> Type -> Type} -> {isP : Profunctor p} ->
-  ProfNT p (ProYo p)
+toProYo : {p : ProfunctorSig} -> {isP : Profunctor p} -> ProfNT p (ProYo p)
 toProYo {p} {isP} pxy = MkProYo $ \(con, cov) => dimap {f=p} con cov pxy
 
 public export
@@ -6716,7 +6714,7 @@ CoProYoEmbedding p c d ab =
   (PrePostPair (fst ab) (snd ab) c d, p (fst ab) (snd ab))
 
 public export
-record CoProYo (p : Type -> Type -> Type) (c, d : Type) where
+record CoProYo (p : ProfunctorSig) (c, d : Type) where
   constructor MkCoProYo
   -- An equivalent structure is called `CoYoneda` in some Haskell
   -- libraries; this formulation makes the (co-)Yoneda-lemma instantiation more
@@ -6724,13 +6722,13 @@ record CoProYo (p : Type -> Type -> Type) (c, d : Type) where
   CoProYoEmbed : Exists {type=(Type, Type)} $ CoProYoEmbedding p c d
 
 public export
-fromCoProYo : {p : Type -> Type -> Type} -> {isP : Profunctor p} ->
+fromCoProYo : {p : ProfunctorSig} -> {isP : Profunctor p} ->
   ProfNT (CoProYo p) p
 fromCoProYo {p} {a} {b}
   (MkCoProYo (Evidence ab ((ca, bd), pab))) = dimap {f=p} ca bd pab
 
 public export
-toCoProYo : {p : Type -> Type -> Type} ->
+toCoProYo : {p : ProfunctorSig} ->
   ProfNT p (CoProYo p)
 toCoProYo {p} {a} {b} pab = MkCoProYo (Evidence (a, b) ((id, id), pab))
 
@@ -6743,41 +6741,41 @@ Profunctor (CoProYo p) where
 -- of profunctors on `Type`.
 public export
 record ProYoPrshf
-    (pp : (Type -> Type -> Type) -> Type) (p : Type -> Type -> Type) where
+    (pp : (ProfunctorSig) -> Type) (p : ProfunctorSig) where
   constructor MkProYoP
-  ProYoPEmbed : (q : Type -> Type -> Type) ->
+  ProYoPEmbed : (q : ProfunctorSig) ->
     {auto 0 _ : Profunctor q} -> ProfNT p q -> pp q
 
 public export
-toProYoP : (f : (Type -> Type -> Type) -> Type) ->
+toProYoP : (f : (ProfunctorSig) -> Type) ->
   {auto isF : ProfPrshfMap f} ->
-  {r : Type -> Type -> Type} -> f r -> ProYoPrshf f r
+  {r : ProfunctorSig} -> f r -> ProYoPrshf f r
 toProYoP f {isF} {r} fr = MkProYoP $ \q, alpha => isF alpha fr
 
 public export
-fromProYoP : (f : (Type -> Type -> Type) -> Type) ->
-  {r : Type -> Type -> Type} -> {auto isP : Profunctor r} ->
+fromProYoP : (f : (ProfunctorSig) -> Type) ->
+  {r : ProfunctorSig} -> {auto isP : Profunctor r} ->
   ProYoPrshf f r -> f r
 fromProYoP f {r} {isP} (MkProYoP py) = py r id
 
 -- The existential dual of the preceding universal.
 public export
 record ProCoYoPrshf
-    (pp : (Type -> Type -> Type) -> Type) (p : Type -> Type -> Type) where
+    (pp : (ProfunctorSig) -> Type) (p : ProfunctorSig) where
   constructor MkProCoYoP
-  ProCoYoPEmbed : (q : Type -> Type -> Type ** (Profunctor q, ProfNT q p, pp q))
+  ProCoYoPEmbed : (q : ProfunctorSig ** (Profunctor q, ProfNT q p, pp q))
 
 public export
 toProCoYoP :
-  (f : (Type -> Type -> Type) -> Type) ->
-  {r : Type -> Type -> Type} -> {auto isP : Profunctor r} ->
+  (f : (ProfunctorSig) -> Type) ->
+  {r : ProfunctorSig} -> {auto isP : Profunctor r} ->
   f r -> ProCoYoPrshf f r
 toProCoYoP f {r} {isP} fr = MkProCoYoP (r ** (isP, id, fr))
 
 public export
 fromProCoYoP :
-  (f : (Type -> Type -> Type) -> Type) -> {auto isF : ProfPrshfMap f} ->
-  {r : Type -> Type -> Type} ->
+  (f : (ProfunctorSig) -> Type) -> {auto isF : ProfPrshfMap f} ->
+  {r : ProfunctorSig} ->
   ProCoYoPrshf f r -> f r
 fromProCoYoP f {isF} {r} (MkProCoYoP (q ** (isPq, alpha, fq))) =
   isF alpha fq
@@ -6879,7 +6877,7 @@ toContraCoDoubleYo {a} {b} m =
 public export
 record DoubleProYo (s, t, a, b : Type) where
   constructor MkDoubleProYo
-  DoubleProYoEmbed : (0 p : Type -> Type -> Type) ->
+  DoubleProYoEmbed : (0 p : ProfunctorSig) ->
     Profunctor p -> p s t -> p a b
 
 public export
@@ -6903,7 +6901,7 @@ public export
 record CoDoubleProYo (s, t, a, b : Type) where
   constructor MkCoDoubleProYo
   CoDoubleProYoEmbed :
-    (p : Type -> Type -> Type ** isP : Profunctor p **
+    (p : ProfunctorSig ** isP : Profunctor p **
      (ProfNT p (PrePostPair s t), p a b))
 
 public export
@@ -7078,7 +7076,7 @@ record Delim (s, t, b : Type) where
   unDelim : (b -> s) -> t
 
 public export
-DelimNoAnsTypeMod : Type -> Type -> Type
+DelimNoAnsTypeMod : ProfunctorSig
 DelimNoAnsTypeMod s b = Delim s s b
 
 public export
@@ -7095,11 +7093,11 @@ ContToPolyDelim : {a : Type} -> Continuation a -> PolyDelim a
 ContToPolyDelim (MkYo f) r = MkDelim $ f r
 
 public export
-DelimEndo : Type -> Type -> Type
+DelimEndo : ProfunctorSig
 DelimEndo s t = Delim s t s
 
 public export
-DelimTrans : Type -> Type -> Type
+DelimTrans : ProfunctorSig
 DelimTrans a b =
   NaturalTransformation (flip DelimNoAnsTypeMod a) (flip DelimNoAnsTypeMod b)
 
@@ -7299,7 +7297,7 @@ joinDensity f {isF} {a} =
 -- See https://prl.ccs.neu.edu/blog/2017/08/28/closure-conversion-as-coyoneda/
 
 public export
-Closure : Type -> Type -> Type
+Closure : ProfunctorSig
 Closure a b = (r : Type ** Pair r (Pair r a -> b))
 
 public export
@@ -7307,7 +7305,7 @@ ClosureConversionSig : (a, b : Type) -> Type
 ClosureConversionSig a b = (a -> b) -> Closure a b
 
 public export
-ClosureConversionF : Type -> Type -> Type -> Type
+ClosureConversionF : Type -> ProfunctorSig
 ClosureConversionF a b d = Pair d a -> b
 
 public export
@@ -7862,7 +7860,7 @@ NatPairIndFromNatObj p zz zs sz ss (S m') (S n') =
     NatPairIndFromNatObj p zz zs sz ss m' n'
 
 public export
-MapAlg : (Type -> Type) -> Type -> Type -> Type
+MapAlg : (Type -> Type) -> ProfunctorSig
 MapAlg f x v = (v -> x) -> f v -> x
 
 public export
@@ -7908,7 +7906,7 @@ FunctorIterInd {f} {a} p =
   NatObjInd (\n' => (ty : FunctorIter f n' a) -> p n' ty)
 
 public export
-FunctorIterMapAlg : (Type -> Type) -> Type -> Type -> Type
+FunctorIterMapAlg : (Type -> Type) -> ProfunctorSig
 FunctorIterMapAlg f x v = (v -> x) -> (n : NatObj) -> FunctorIter f n v -> x
 
 public export
@@ -8019,7 +8017,7 @@ omegaStepElim {f} {a} {b} elimInj elimIter (OmegaInj x) = elimInj x
 omegaStepElim {f} {a} {b} elimInj elimIter (OmegaIter fx) = elimIter fx
 
 public export
-OmegaMapAlg : (Type -> Type) -> Type -> Type -> Type
+OmegaMapAlg : (Type -> Type) -> ProfunctorSig
 OmegaMapAlg f x v = (v -> x) -> OmegaStep f v -> x
 
 public export
@@ -8094,7 +8092,7 @@ ChainInduction : {0 f : Type -> Type} -> {0 a : Type} ->
 ChainInduction {f} = FunctorIterInd {f=(OmegaStep f)}
 
 public export
-ChainMapAlg : (Type -> Type) -> Type -> Type -> Type
+ChainMapAlg : (Type -> Type) -> ProfunctorSig
 ChainMapAlg f x v = (v -> x) -> (n : NatObj) -> OmegaChain f n v -> x
 
 public export
@@ -8232,7 +8230,7 @@ ColimitInduction p z s (n ** ty) =
 
 -- AKA parameterized catamorphism.
 public export
-ColimitMapAlg : (Type -> Type) -> Type -> Type -> Type
+ColimitMapAlg : (Type -> Type) -> ProfunctorSig
 ColimitMapAlg f x v = (v -> x) -> OmegaColimit f v -> x
 
 public export
