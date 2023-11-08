@@ -3385,21 +3385,33 @@ public export
 DiYoneda : Type -> Type -> ProfunctorSig
 DiYoneda i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
 
+public export
+[DiYonedaProf] Profunctor (DiYoneda i j) where
+  dimap mca mbd (mib, maj) = (mbd . mib, maj . mca)
+
 -- The following categories are equivalent:
 --
---  1) the splice category over `(i, j)`
+--  1) the splice category of `Type` over `(i, j)`
 --  2) the category of profunctors `j -> i`, AKA functors `(op(i), j) -> Type`,
 --    where `i` and `j` are viewed as discrete categories, and the morphisms
 --    are paranatural transformations
---  3) the category of diagonal elements of the profunctor represented by
+--  3) the category of diagonal elements of the profunctor di-represented by
 --    `(i, j)`, i.e. `DiYoneda i j`
 --  4) the category of polynomial endo-profunctors on `Type` with position-set
 --    `(i, j)` (i.e. contravariant position-set `i` and
---    covariant position-set `j`)
+--    covariant position-set `j`), with paranatural transformations as morphisms
+--
+-- (I expect, but have not proven, that the category of profunctors `j -> i`
+-- with _natural_ transformations, as opposed to the more general _paranatural_
+-- transformations, as morphisms is equivalent to the category of
+-- _elements_, as opposed to the category of _diagonal_ elements, of the
+-- profunctor _represented_, as opposed to _direpresented_, by `(i, j)`,
+-- i.e. `PrePostPair i j` (the covariant form) or `Iso i j` (the contravariant
+-- form)).
 --
 -- This is analogous to how the following are equivalent:
 --
---  1) the slice category over `j`
+--  1) the slice category of `Type` over `j`
 --  2) the category of presheaves over `j`, AKA functors `op(j) -> Type`,
 --    where `j` is viewed as a discrete category, and the morphisms
 --    are natural transformations
@@ -3409,7 +3421,7 @@ DiYoneda i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
 --
 -- And dually:
 --
---  1) the coslice category over `i`
+--  1) the coslice category of `Type` over `i`
 --  2) the category of copresheaves over `i`, AKA functors `i -> Type`,
 --    where `i` is viewed as a discrete category, and the morphisms
 --    are natural transformations
