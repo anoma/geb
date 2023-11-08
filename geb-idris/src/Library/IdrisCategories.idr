@@ -942,6 +942,8 @@ OpHomProf = flip HomProf
 ---- Pre-/post-composition pairs and isos as profunctors ----
 -------------------------------------------------------------
 
+-- `PrePostPair s t a b` is a morphism from `(s, t)` to `(a, b)` in
+-- `(op(Type), Type)`.
 public export
 PrePostPair : Type -> Type -> Type -> Type -> Type
 PrePostPair s t a b = (a -> s, t -> b)
@@ -950,6 +952,8 @@ public export
 [PrePostPairProf] Profunctor (PrePostPair s t) where
   dimap mca mbd (mas, mtb) = (mas . mca, mbd . mtb)
 
+-- `Iso s t a b` is a morphism from `(s, t)` to `(a, b)` in
+-- `(Type, op(Type))`.
 public export
 Iso : Type -> Type -> Type -> Type -> Type
 Iso s t a b = PrePostPair a b s t
