@@ -3374,3 +3374,24 @@ public export
 SpliceObjComp : {0 x, y, z : Type} ->
   SpliceObj (y, z) -> SpliceObj (x, z) -> SpliceObj (x, y)
 SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
+
+-- Note that a splice category over `(i, j)` is equivalent to the
+-- category of profunctors `j -> i`, AKA functors `(op(i), j) -> Type`,
+-- where `i` and `j` are viewed as discrete categories, and the morphisms
+-- are paranatural transformations.  This is analogous to how a slice over
+-- `j` is equivalent to the category of presheaves over `j` viewed as a
+-- discrete category, and a coslice over `i` is equivalent to the category
+-- of copresheaves over `i` viewed as a discrete category.
+
+-------------------------------------
+-------------------------------------
+---- Paranatural transformations ----
+-------------------------------------
+-------------------------------------
+
+public export
+DiYoneda : Type -> Type -> ProfunctorSig
+DiYoneda i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
+
+-- Note that the category of diagonal elements of `DiYoneda i0 i1` is
+-- equivalent to the splice category over `(i0, i1)`.
