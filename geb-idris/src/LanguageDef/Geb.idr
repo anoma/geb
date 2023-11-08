@@ -3393,6 +3393,9 @@ DiYoneda i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
 --    are paranatural transformations
 --  3) the category of diagonal elements of the profunctor represented by
 --    `(i, j)`, i.e. `DiYoneda i j`
+--  4) the category of polynomial endo-profunctors on `Type` with position-set
+--    `(i, j)` (i.e. contravariant position-set `i` and
+--    covariant position-set `j`)
 --
 -- This is analogous to how the following are equivalent:
 --
@@ -3402,6 +3405,7 @@ DiYoneda i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
 --    are natural transformations
 --  3) the category of elements of the presheaf represented by `j`,
 --    i.e. the contravariant Yoneda embedding of `j`
+--  4) the category of Dirichlet endofunctors on `Type` with position-set `j`
 --
 -- And dually:
 --
@@ -3411,5 +3415,6 @@ DiYoneda i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
 --    are natural transformations
 --  3) the category of elements of the copresheaf represented by `i`,
 --    i.e. the covariant Yoneda embedding of `i`
+--  4) the category of polynomial endofunctors on `Type` with position-set `i`
 --
 -- The splice version unifies the two duals.
