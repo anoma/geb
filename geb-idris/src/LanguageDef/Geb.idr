@@ -3375,14 +3375,6 @@ SpliceObjComp : {0 x, y, z : Type} ->
   SpliceObj (y, z) -> SpliceObj (x, z) -> SpliceObj (x, y)
 SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
 
--- Note that a splice category over `(i, j)` is equivalent to the
--- category of profunctors `j -> i`, AKA functors `(op(i), j) -> Type`,
--- where `i` and `j` are viewed as discrete categories, and the morphisms
--- are paranatural transformations.  This is analogous to how a slice over
--- `j` is equivalent to the category of presheaves over `j` viewed as a
--- discrete category, and a coslice over `i` is equivalent to the category
--- of copresheaves over `i` viewed as a discrete category.
-
 -------------------------------------
 -------------------------------------
 ---- Paranatural transformations ----
@@ -3393,5 +3385,31 @@ public export
 DiYoneda : Type -> Type -> ProfunctorSig
 DiYoneda i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
 
--- Note that the category of diagonal elements of `DiYoneda i0 i1` is
--- equivalent to the splice category over `(i0, i1)`.
+-- The following categories are equivalent:
+--
+--  1) the splice category over `(i, j)`
+--  2) the category of profunctors `j -> i`, AKA functors `(op(i), j) -> Type`,
+--    where `i` and `j` are viewed as discrete categories, and the morphisms
+--    are paranatural transformations
+--  3) the category of diagonal elements of the profunctor represented by
+--    `(i, j)`, i.e. `DiYoneda i j`
+--
+-- This is analogous to how the following are equivalent:
+--
+--  1) the slice category over `j`
+--  2) the category of presheaves over `j`, AKA functors `op(j) -> Type`,
+--    where `j` is viewed as a discrete category, and the morphisms
+--    are natural transformations
+--  3) the category of elements of the presheaf represented by `j`,
+--    i.e. the contravariant Yoneda embedding of `j`
+--
+-- And dually:
+--
+--  1) the coslice category over `i`
+--  2) the category of copresheaves over `i`, AKA functors `i -> Type`,
+--    where `i` is viewed as a discrete category, and the morphisms
+--    are natural transformations
+--  3) the category of elements of the copresheaf represented by `i`,
+--    i.e. the covariant Yoneda embedding of `i`
+--
+-- The splice version unifies the two duals.
