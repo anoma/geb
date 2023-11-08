@@ -3406,8 +3406,9 @@ public export
 -- transformations, as morphisms is equivalent to the category of
 -- _elements_, as opposed to the category of _diagonal_ elements, of the
 -- profunctor _represented_, as opposed to _direpresented_, by `(i, j)`,
--- i.e. `PrePostPair i j` (the covariant form) or `Iso i j` (the contravariant
--- form)).
+-- i.e. `PrePostPair i j` (the (contravariant x covariant) Yoneda embedding of
+-- `(i, j)`) or `Iso i j` (the (covariant x contravariant) Yoneda embedding of
+-- `(i, j`))).
 --
 -- This is analogous to how the following are equivalent:
 --
