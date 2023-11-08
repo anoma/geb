@@ -3431,3 +3431,24 @@ public export
 --  4) the category of polynomial endofunctors on `Type` with position-set `i`
 --
 -- The splice version unifies the two duals.
+--
+-- Given an object in a splice category over `(i, j)`, with intermediate
+-- object `k`, injection `into : i -> k`, and projection `from : k -> j`,
+-- where we shall refer to the composition `from . into : i -> j` as `comp`,
+-- we can form objects of other splice categories in the following ways (which
+-- are functorial, so we are saying that there are the following functors
+-- between splice categories):
+--
+--  1) Given morphisms `f : x -> i` and `g : j -> y`, we can form an object
+--     of the splice category over `(x, y)` with intermediate object `k` by
+--     composing `f` before `into` and `g` after `from`.  Note that
+--     `(f, g)` is a morphism from `(i, j)` to `(x, y)` in `(op(Type), Type)`.
+--     This is the sigma functor in the latter category.  Note that `(f, g)`
+--     may equivalently be seen as `DiYoneda x y j i`, or `PrePostPair i j x y`,
+--     or `Iso x y i j`.
+--  2) If the base category has pullbacks, then given a morphism `f : x -> j`,
+--     we can form an object of the splice category over `(pb, x)` where
+--     `pb` is the pullback of `comp` and `f`
+--  3) If the base category has pushouts, then given a morphism `g : i -> y`,
+--     we can form an object of the splice category over `(y, po)` where
+--     `po` is the pushout of `comp` and `g`
