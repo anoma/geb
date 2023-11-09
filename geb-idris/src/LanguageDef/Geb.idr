@@ -3446,9 +3446,3 @@ public export
 --     This is the sigma functor in the latter category.  Note that `(f, g)`
 --     may equivalently be seen as `DiYoneda x y j i`, or `PrePostPair i j x y`,
 --     or `Iso x y i j`.  The intermediate object is still `k`.
---  2) If the base category has pullbacks, then given a morphism `g : y -> j`,
---     we can form an object of the splice category over `(pb, y)` where
---     `pb` is the pullback of `comp` and `g`
---  3) If the base category has pushouts, then given a morphism `f : i -> x`,
---     we can form an object of the splice category over `(x, po)` where
---     `po` is the pushout of `comp` and `f`
