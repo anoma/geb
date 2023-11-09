@@ -3443,6 +3443,6 @@ public export
 --     of the splice category over `(x, y)` with intermediate object `k` by
 --     composing `f` before `into` and `g` after `from`.  Note that
 --     `(f, g)` is a morphism from `(i, j)` to `(x, y)` in `(op(Type), Type)`.
---     This is the sigma functor in the latter category.  Note that `(f, g)`
+--     This is the sigma functor between splice categories.  Note that `(f, g)`
 --     may equivalently be seen as `DiYoneda x y j i`, or `PrePostPair i j x y`,
 --     or `Iso x y i j`.  The intermediate object is still `k`.
