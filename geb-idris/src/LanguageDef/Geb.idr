@@ -3382,11 +3382,11 @@ SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
 -------------------------------------
 
 public export
-DiYoneda : Type -> Type -> ProfunctorSig
-DiYoneda i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
+DiYonedaEmbed : Type -> Type -> ProfunctorSig
+DiYonedaEmbed i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
 
 public export
-[DiYonedaProf] Profunctor (DiYoneda i j) where
+[DiYonedaEmbedProf] Profunctor (DiYonedaEmbed i j) where
   dimap mca mbd (mib, maj) = (mbd . mib, maj . mca)
 
 -- The following categories are equivalent:
