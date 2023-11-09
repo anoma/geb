@@ -3469,6 +3469,10 @@ public export
 DualYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
 DualYonedaLemmaNT p c d = ProfNT (DualYonedaEmbed c d) p
 
+public export
+Profunctor (DualYonedaLemmaNT p) where
+  dimap {a} {b} {c} {d} mca mbd alpha (mac, mdb) = alpha (mca . mac, mdb . mbd)
+
 -- One direction of the natural isomorphism asserted by the Yoneda lemma
 -- on `(op(Type), Type)`.  This is called `toProYo` in another context.
 public export
@@ -3488,6 +3492,13 @@ public export
 DualCoYonedaEmbed : ProfunctorSig -> Type -> Type -> ProfunctorSig
 DualCoYonedaEmbed p c d a b = (PrePostPair a b c d, p a b)
 
+public export
+DualCoYoEmbedContraProf :
+  ContraProfunctor p => ContraProfunctor (DualCoYonedaEmbed p i j)
+DualCoYoEmbedContraProf = MkProfunctor $
+  \mca, mbd, ((mib, maj), pba) =>
+    ((mbd . mib, maj . mca), contraDimap {f=p} mbd mca pba)
+
 -- The co-Yoneda lemma asserts a natural isomorphism between two objects
 -- of the enriching category, one of which is a coend (existential type).
 -- This type is an explicit name for that object on the category
@@ -3497,6 +3508,11 @@ public export
 DualCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
 DualCoYonedaLemmaCoend p c d =
   Exists {type=(Type, Type)} $ \ab => DualCoYonedaEmbed p c d (fst ab) (snd ab)
+
+public export
+Profunctor (DualCoYonedaLemmaCoend p) where
+  dimap {a} {b} {c} {d} mca mbd (Evidence ij ((mai, mjb), pij)) =
+    Evidence ij ((mai . mca, mbd . mjb), pij)
 
 -- One direction of the natural isomorphism asserted by the co-Yoneda lemma
 -- on `(op(Type), Type)`.  This is called `toCoProYo` in another context.
