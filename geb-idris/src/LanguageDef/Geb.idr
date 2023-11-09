@@ -3553,6 +3553,11 @@ public export
 DiYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
 DiYonedaLemmaNT p c d = ProfDiNT (flip DualYonedaEmbed c d) p
 
+public export
+DiYonedaLemmaNTContraPro : ContraProfunctor (DiYonedaLemmaNT p)
+DiYonedaLemmaNTContraPro = MkProfunctor $
+  \mca, mbd, alpha, i, (mic, mdi) => alpha i (mca . mic, mdi . mbd)
+
 -- One direction of the paranatural isomorphism asserted by the
 -- diYoneda lemma on `(op(Type), Type)`.
 public export
