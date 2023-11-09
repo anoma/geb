@@ -3397,9 +3397,10 @@ public export
 --    are paranatural transformations
 --  3) the category of diagonal elements of the profunctor di-represented by
 --    `(i, j)`, i.e. `DiYoneda i j`
---  4) the category of polynomial endo-profunctors on `Type` with position-set
---    `(i, j)` (i.e. contravariant position-set `i` and
---    covariant position-set `j`), with paranatural transformations as morphisms
+--  4) the category of polynomial difunctors (endo-profunctors) on `Type` with
+--     position-set `(i, j)` (i.e. contravariant position-set `i` and
+--     covariant position-set `j`), with paranatural transformations as
+--     morphisms
 --
 -- (I expect, but have not proven, that the category of profunctors `j -> i`
 -- with _natural_ transformations, as opposed to the more general _paranatural_
