@@ -942,10 +942,14 @@ OpHomProf = flip HomProf
 ---- Pre-/post-composition pairs and isos as profunctors ----
 -------------------------------------------------------------
 
--- `PrePostPair s t a b` is a morphism from `(s, t)` to `(a, b)` in
--- `(op(Type), Type)`.
+-- `PrePostPair` embeds the object `(s, t)` of `(op(Type), Type)` into
+-- the category whose objects are profunctors `(op(Type), Type) -> Type)` and
+-- whose morphisms are natural transformations.  For more context, see
+-- `DualYonedaEmbed`, which is simply an alias for `PrePostPair`, but to
+-- emphasize the similarities and differences between `PrePostPair` and
+-- its paranatural-category-theoretic analogue `DiYonedaEmbed`.
 public export
-PrePostPair : Type -> Type -> Type -> Type -> Type
+PrePostPair : Type -> Type -> ProfunctorSig
 PrePostPair s t a b = (a -> s, t -> b)
 
 public export

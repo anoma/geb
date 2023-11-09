@@ -3381,6 +3381,49 @@ SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
 -------------------------------------
 -------------------------------------
 
+-- `DualYonedaEmbed` embeds the object `(i0, i1)` of `(op(Type), Type)` into
+-- the category whose objects are profunctors `(op(Type), Type) -> Type)` and
+-- whose morphisms are natural transformations.
+public export
+DualYonedaEmbed : Type -> Type -> ProfunctorSig
+DualYonedaEmbed = PrePostPair
+
+public export
+DualYonedaEmbedProf : Profunctor (PrePostPair s t)
+DualYonedaEmbedProf = PrePostPairProf
+
+-- The Yoneda lemma asserts a natural isomorphism between two objects
+-- of the enriching category, one of which is an object of natural
+-- transformations.  This type is an explicit name for that object on
+-- the category `(op(Type), Type)`.  An analogous type is called
+-- `Yoneda/runYoneda` in some Haskell libraries.
+public export
+DualYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
+DualYonedaLemmaNT p c d = ProfNT (DualYonedaEmbed c d) p
+
+-- One direction of the natural isomorphism asserted by the Yoneda lemma
+-- on `(op(Type), Type)`.  This is called `toProYo` in another context.
+public export
+DualYonedaLemmaL : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
+  ProfNT p (DualYonedaLemmaNT p)
+DualYonedaLemmaL p {isP} {a=i} {b=j} pij {a} {b} (mai, mjb) =
+  dimap {f=p} {a=i} {b=j} {c=a} {d=b} mai mjb pij
+
+-- The other direction of the natural isomorphism asserted by the Yoneda lemma
+-- on `(op(Type), Type)`.  This is called `fromProYo` in another context.
+public export
+DualYonedaLemmaR : (0 p : ProfunctorSig) ->
+  ProfNT (DualYonedaLemmaNT p) p
+DualYonedaLemmaR p dyembed {a=i} {b=j} = dyembed (id {a=i}, id {a=j})
+
+-- See https://arxiv.org/abs/2307.09289 .
+
+-- `DiYonedaEmbed` is sometimes written `yy(i0, i1)` .  It embeds
+-- the object `(i0, i1)` of `(op(Type), Type)` into the category
+-- whose objects are profunctors `(op(Type), Type) -> Type)` and whose
+-- morphisms are _paranatural_ transformations (compare to `DualYonedaEmbed`,
+-- where the codomain category's objects are the same, but the morphisms are
+-- the more strict _natural_ transformations).
 public export
 DiYonedaEmbed : Type -> Type -> ProfunctorSig
 DiYonedaEmbed i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
