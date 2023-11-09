@@ -3403,15 +3403,16 @@ public export
 --     morphisms
 --
 -- (I expect, but have not proven, that the category of profunctors `j -> i`
--- with _natural_ transformations, as opposed to the more general _paranatural_
--- transformations, as morphisms is equivalent to the category of
--- _elements_, as opposed to the category of _diagonal_ elements, of the
--- profunctor _represented_, as opposed to _direpresented_, by `(i, j)`,
--- i.e. `PrePostPair i j` (the (contravariant x covariant) Yoneda embedding of
--- `(i, j)`) or `Iso i j` (the (covariant x contravariant) Yoneda embedding of
--- `(i, j`)).  I further expect that it is probably equivalent to the slice
--- category of `(op(Type), Type)` over `(i, j)`, and to the category of
--- polynomial difunctors (endo-profunctors) on `Type` with position-set
+-- (AKA functors `(op(i), j) -> Type` where `i` and `j` are viewed as
+-- discrete categories) with _natural_ transformations, as opposed to the
+-- more general _paranatural_ transformations, as morphisms is equivalent to
+-- the category of _elements_, as opposed to the category of _diagonal_
+-- elements, of the profunctor _represented_, as opposed to _direpresented_, by
+-- `(i, j)`, i.e. `PrePostPair i j` (the (contravariant x covariant) Yoneda
+-- embedding of `(i, j)`) or `Iso i j` (the (covariant x contravariant) Yoneda
+-- embedding of `(i, j`)).  I further expect that it is probably equivalent to
+-- the slice category of `(op(Type), Type)` over `(i, j)`, and to the category
+-- of polynomial difunctors (endo-profunctors) on `Type` with position-set
 -- `(i, j)` with _natural_ (not just paranatural) transformations as morphisms.)
 --
 -- This is analogous to how the following are equivalent:
