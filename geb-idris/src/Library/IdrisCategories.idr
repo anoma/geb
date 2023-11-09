@@ -808,6 +808,24 @@ total
 rmap : Profunctor f => {0 a, b, d : Type} -> (b -> d) -> f a b -> f a d
 rmap {a} {b} {d} = dimap {a} {b} {c=a} {d} id
 
+-- A contravariant profunctor is a functor from `(Type, op(Type))` to
+-- `Type`.  Because `(Type, op(Type))` and `(op(Type), op)` are equivalent --
+-- unlike `op(Type)` and `Type`! -- we can also view a contravariant
+-- profunctor as simply a covariant profunctor with its arguments flipped.
+public export
+ContraProfunctor : ProfunctorSig -> Type
+ContraProfunctor p = Profunctor (flip p)
+
+public export
+0 ContraDimapSig : ProfunctorSig -> Type
+ContraDimapSig p = {0 a, b, c, d : Type} ->
+  (a -> c) -> (d -> b) -> p a b -> p c d
+
+public export
+contraDimap : {0 f : ProfunctorSig} -> ContraProfunctor f => ContraDimapSig f
+contraDimap {f} {a} {b} {c} {d} =
+  flip (dimap {f=(flip f)} {a=b} {b=a} {c=d} {d=c})
+
 public export
 ProfunctorDP : Type
 ProfunctorDP = DPair (Type -> Type -> Type) Profunctor
@@ -961,6 +979,13 @@ public export
 public export
 Iso : Type -> Type -> Type -> Type -> Type
 Iso s t a b = PrePostPair a b s t
+
+public export
+IsoContraProf : {0 s, t : Type} -> ContraProfunctor (Iso s t)
+IsoContraProf {s} {t} =
+  let _ = PrePostPairProf {s=t} {t=s} in
+  MkProfunctor $
+    \mca, mbd, msbat => swap $ dimap {f=(PrePostPair t s)} mca mbd $ swap msbat
 
 -----------------------------------------------
 ---- Category of endoprofunctors on `Type` ----
