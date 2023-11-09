@@ -3424,6 +3424,8 @@ public export
 --  3) the category of elements of the presheaf represented by `j`,
 --    i.e. the contravariant Yoneda embedding of `j`
 --  4) the category of Dirichlet endofunctors on `Type` with position-set `j`
+--  5) the opposite of the category of polynomial endofunctors on `Type` with
+--     position-set `i`
 --
 -- And dually:
 --
@@ -3433,7 +3435,6 @@ public export
 --    are natural transformations
 --  3) the category of elements of the copresheaf represented by `i`,
 --    i.e. the covariant Yoneda embedding of `i`
---  4) the category of polynomial endofunctors on `Type` with position-set `i`
 --
 -- The splice version unifies the two duals.
 --
