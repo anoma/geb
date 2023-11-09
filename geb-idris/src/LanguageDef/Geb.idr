@@ -3432,6 +3432,28 @@ public export
 [DiYonedaEmbedProf] Profunctor (DiYonedaEmbed i j) where
   dimap mca mbd (mib, maj) = (mbd . mib, maj . mca)
 
+-- The diYoneda lemma asserts a paranatural isomorphism between two objects
+-- of the enriching category, one of which is an object of paranatural
+-- transformations.  This type is an explicit name for that object on
+-- the category `(op(Type), Type)`.
+public export
+DiYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
+DiYonedaLemmaNT p c d = ProfDiNT (flip DualYonedaEmbed c d) p
+
+-- One direction of the paranatural isomorphism asserted by the
+-- diYoneda lemma on `(op(Type), Type)`.
+public export
+DiYonedaLemmaL : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
+  ProfDiNT p (DualYonedaLemmaNT p)
+DiYonedaLemmaL p {isP} i paa (mai, mib) = dimap {f=p} mai mib paa
+
+-- The other direction of the paranatural isomorphism asserted by the
+-- diYoneda lemma on `(op(Type), Type)`.
+public export
+DiYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
+  ProfDiNT (DualYonedaLemmaNT p) p
+DiYonedaLemmaR p {isP} i dye = dye (id {a=i}, id {a=i})
+
 -- The following categories are equivalent:
 --
 --  1) the splice category of `Type` over `(i, j)`
