@@ -3550,3 +3550,32 @@ public export
 DiYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
   ProfDiNT (DualYonedaLemmaNT p) p
 DiYonedaLemmaR p {isP} i dye = dye (id {a=i}, id {a=i})
+
+public export
+DiCoYonedaEmbed : ProfunctorSig -> Type -> Type -> ProfunctorSig
+DiCoYonedaEmbed p j0 j1 i0 i1 = (DiYonedaEmbed j0 j1 i0 i1, p i1 i0)
+
+-- The di-co-Yoneda lemma asserts a paranatural isomorphism between two objects
+-- of the enriching category, one of which is a coend (existential type).
+-- This type is an explicit name for that object on the category
+-- `(op(Type), Type)`.
+public export
+DiCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
+DiCoYonedaLemmaCoend p i0 i1 =
+  Exists {type=(Type, Type)} $
+    \j => flip (DiCoYonedaEmbed p i0 i1) (fst j) (snd j)
+
+-- One direction of the paranatural isomorphism asserted by the
+-- di-co-Yoneda lemma on `(op(Type), Type)`.
+public export
+DiCoYonedaLemmaL : (0 p : ProfunctorSig) ->
+  ProfDiNT p (DiCoYonedaLemmaCoend p)
+DiCoYonedaLemmaL p i pii = Evidence (i, i) ((id {a=i}, id {a=i}), pii)
+
+-- The other direction of the paranatural isomorphism asserted by the
+-- di-co-Yoneda lemma on `(op(Type), Type)`.
+public export
+DiCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
+  ProfDiNT (DiCoYonedaLemmaCoend p) p
+DiCoYonedaLemmaR p {isP} i (Evidence j ((mij0, mj1i), pij0)) =
+  dimap {f=p} mij0 mj1i pij0
