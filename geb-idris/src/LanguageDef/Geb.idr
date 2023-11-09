@@ -3623,9 +3623,5 @@ Profunctor p => Profunctor (FreePromonad p) where
   dimap {a} {b} {c} {d} mca mbd (InFPv pab) =
     InFPv {p} {a=c} {b=d} $ dimap {f=p} mca mbd pab
   dimap {a} {b} {c} {d} mca mbd (InFPM (i ** (pai, fpib))) =
-    let
-      rc = dimap {f=(FreePromonad p)} {a=i} {b}
-      pm = dimap {f=p} {a} {b} {c} {d}
-    in
     InFPM {p} {a=c} {b=d}
       (i ** (dimap {f=p} mca id pai, dimap {f=(FreePromonad p)} id mbd fpib))
