@@ -3416,6 +3416,35 @@ DualYonedaLemmaR : (0 p : ProfunctorSig) ->
   ProfNT (DualYonedaLemmaNT p) p
 DualYonedaLemmaR p dyembed {a=i} {b=j} = dyembed (id {a=i}, id {a=j})
 
+public export
+DualCoYonedaEmbed : ProfunctorSig -> Type -> Type -> ProfunctorSig
+DualCoYonedaEmbed p c d a b = (PrePostPair a b c d, p a b)
+
+-- The co-Yoneda lemma asserts a natural isomorphism between two objects
+-- of the enriching category, one of which is a coend (existential type).
+-- This type is an explicit name for that object on the category
+-- `(op(Type), Type)`.  An analogous type is called `CoYoneda` in some
+-- Haskell libraries.
+public export
+DualCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
+DualCoYonedaLemmaCoend p c d =
+  Exists {type=(Type, Type)} $ \ab => DualCoYonedaEmbed p c d (fst ab) (snd ab)
+
+-- One direction of the natural isomorphism asserted by the co-Yoneda lemma
+-- on `(op(Type), Type)`.  This is called `toCoProYo` in another context.
+public export
+DualCoYonedaLemmaL : (0 p : ProfunctorSig) ->
+  ProfNT p (DualCoYonedaLemmaCoend p)
+DualCoYonedaLemmaL p {a} {b} pab = Evidence (a, b) ((id {a}, id {a=b}), pab)
+
+-- One direction of the natural isomorphism asserted by the co-Yoneda lemma
+-- on `(op(Type), Type)`.  This is called `fromCoProYo` in another context.
+public export
+DualCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
+  ProfNT (DualCoYonedaLemmaCoend p) p
+DualCoYonedaLemmaR p {isP} {a=c} {b=d} (Evidence ab ((mca, mbd), pab)) =
+  dimap {f=p} mca mbd pab
+
 -- See https://arxiv.org/abs/2307.09289 .
 
 -- `DiYonedaEmbed` is sometimes written `yy(i0, i1)` .  It embeds
