@@ -3381,6 +3381,74 @@ SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
 -------------------------------------
 -------------------------------------
 
+-- The following categories are equivalent:
+--
+--  1) the splice category of `Type` over `(i, j)`
+--  2) the category of profunctors `j -> i`, AKA functors `(op(i), j) -> Type`,
+--    where `i` and `j` are viewed as discrete categories, and the morphisms
+--    are paranatural transformations
+--  3) the category of diagonal elements of the profunctor di-represented by
+--    `(i, j)`, i.e. `DiYoneda i j`
+--  4) the category of polynomial difunctors (endo-profunctors) on `Type` with
+--     position-set `(i, j)` (i.e. contravariant position-set `i` and
+--     covariant position-set `j`), with paranatural transformations as
+--     morphisms
+--
+-- (I expect, but have not proven, that the category of profunctors `j -> i`
+-- (AKA functors `(op(i), j) -> Type` where `i` and `j` are viewed as
+-- discrete categories) with _natural_ transformations, as opposed to the
+-- more general _paranatural_ transformations, as morphisms is equivalent to
+-- the category of _elements_, as opposed to the category of _diagonal_
+-- elements, of the profunctor _represented_, as opposed to _direpresented_, by
+-- `(i, j)`, i.e. `PrePostPair i j` (the (contravariant x covariant) Yoneda
+-- embedding of `(i, j)`) or `Iso i j` (the (covariant x contravariant) Yoneda
+-- embedding of `(i, j`)).  I further expect that it is probably equivalent to
+-- the slice category of `Type` over `(i, j)`, and to the category
+-- of polynomial difunctors (endo-profunctors) on `Type` with position-set
+-- `(i, j)` with _natural_ (not just paranatural) transformations as morphisms.)
+--
+-- This is analogous to how the following are equivalent:
+--
+--  1) the slice category of `Type` over `j`
+--  2) the category of presheaves over `j`, AKA functors `op(j) -> Type`,
+--    where `j` is viewed as a discrete category, and the morphisms
+--    are natural transformations
+--  3) the category of elements of the presheaf represented by `j`,
+--    i.e. the contravariant Yoneda embedding of `j`
+--  4) the category of Dirichlet endofunctors on `Type` with position-set `j`
+--  5) the opposite of the category of polynomial endofunctors on `Type` with
+--     position-set `j`
+--
+-- And dually:
+--
+--  1) the coslice category of `Type` over `i`
+--  2) the category of copresheaves over `i`, AKA functors `i -> Type`,
+--    where `i` is viewed as a discrete category, and the morphisms
+--    are natural transformations
+--  3) the category of elements of the copresheaf represented by `i`,
+--    i.e. the covariant Yoneda embedding of `i`
+--  4) the category of Dirichlet endofunctors on `op(Type)` with
+--     position-set `i`
+--  5) the opposite of the category of polynomial endofunctors on `op(Type)`
+--     with position-set `i`
+--
+-- The splice version unifies the two duals.
+--
+-- Given an object in a splice category over `(i, j)`, with intermediate
+-- object `k`, injection `into : i -> k`, and projection `from : k -> j`,
+-- where we shall refer to the composition `from . into : i -> j` as `comp`,
+-- we can form objects of other splice categories in the following ways (which
+-- are functorial, so we are saying that there are the following functors
+-- between splice categories):
+--
+--  1) Given morphisms `f : x -> i` and `g : j -> y`, we can form an object
+--     of the splice category over `(x, y)` with intermediate object `k` by
+--     composing `f` before `into` and `g` after `from`.  Note that
+--     `(f, g)` is a morphism from `(i, j)` to `(x, y)` in `(op(Type), Type)`.
+--     This is the sigma functor between splice categories.  Note that `(f, g)`
+--     may equivalently be seen as `DiYoneda x y j i`, or `PrePostPair i j x y`,
+--     or `Iso x y i j`.  The intermediate object is still `k`.
+
 -- `DualYonedaEmbed` embeds the object `(i0, i1)` of `(op(Type), Type)` into
 -- the category whose objects are profunctors `(op(Type), Type) -> Type)` and
 -- whose morphisms are natural transformations.
@@ -3482,71 +3550,3 @@ public export
 DiYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
   ProfDiNT (DualYonedaLemmaNT p) p
 DiYonedaLemmaR p {isP} i dye = dye (id {a=i}, id {a=i})
-
--- The following categories are equivalent:
---
---  1) the splice category of `Type` over `(i, j)`
---  2) the category of profunctors `j -> i`, AKA functors `(op(i), j) -> Type`,
---    where `i` and `j` are viewed as discrete categories, and the morphisms
---    are paranatural transformations
---  3) the category of diagonal elements of the profunctor di-represented by
---    `(i, j)`, i.e. `DiYoneda i j`
---  4) the category of polynomial difunctors (endo-profunctors) on `Type` with
---     position-set `(i, j)` (i.e. contravariant position-set `i` and
---     covariant position-set `j`), with paranatural transformations as
---     morphisms
---
--- (I expect, but have not proven, that the category of profunctors `j -> i`
--- (AKA functors `(op(i), j) -> Type` where `i` and `j` are viewed as
--- discrete categories) with _natural_ transformations, as opposed to the
--- more general _paranatural_ transformations, as morphisms is equivalent to
--- the category of _elements_, as opposed to the category of _diagonal_
--- elements, of the profunctor _represented_, as opposed to _direpresented_, by
--- `(i, j)`, i.e. `PrePostPair i j` (the (contravariant x covariant) Yoneda
--- embedding of `(i, j)`) or `Iso i j` (the (covariant x contravariant) Yoneda
--- embedding of `(i, j`)).  I further expect that it is probably equivalent to
--- the slice category of `Type` over `(i, j)`, and to the category
--- of polynomial difunctors (endo-profunctors) on `Type` with position-set
--- `(i, j)` with _natural_ (not just paranatural) transformations as morphisms.)
---
--- This is analogous to how the following are equivalent:
---
---  1) the slice category of `Type` over `j`
---  2) the category of presheaves over `j`, AKA functors `op(j) -> Type`,
---    where `j` is viewed as a discrete category, and the morphisms
---    are natural transformations
---  3) the category of elements of the presheaf represented by `j`,
---    i.e. the contravariant Yoneda embedding of `j`
---  4) the category of Dirichlet endofunctors on `Type` with position-set `j`
---  5) the opposite of the category of polynomial endofunctors on `Type` with
---     position-set `j`
---
--- And dually:
---
---  1) the coslice category of `Type` over `i`
---  2) the category of copresheaves over `i`, AKA functors `i -> Type`,
---    where `i` is viewed as a discrete category, and the morphisms
---    are natural transformations
---  3) the category of elements of the copresheaf represented by `i`,
---    i.e. the covariant Yoneda embedding of `i`
---  4) the category of Dirichlet endofunctors on `op(Type)` with
---     position-set `i`
---  5) the opposite of the category of polynomial endofunctors on `op(Type)`
---     with position-set `i`
---
--- The splice version unifies the two duals.
---
--- Given an object in a splice category over `(i, j)`, with intermediate
--- object `k`, injection `into : i -> k`, and projection `from : k -> j`,
--- where we shall refer to the composition `from . into : i -> j` as `comp`,
--- we can form objects of other splice categories in the following ways (which
--- are functorial, so we are saying that there are the following functors
--- between splice categories):
---
---  1) Given morphisms `f : x -> i` and `g : j -> y`, we can form an object
---     of the splice category over `(x, y)` with intermediate object `k` by
---     composing `f` before `into` and `g` after `from`.  Note that
---     `(f, g)` is a morphism from `(i, j)` to `(x, y)` in `(op(Type), Type)`.
---     This is the sigma functor between splice categories.  Note that `(f, g)`
---     may equivalently be seen as `DiYoneda x y j i`, or `PrePostPair i j x y`,
---     or `Iso x y i j`.  The intermediate object is still `k`.
