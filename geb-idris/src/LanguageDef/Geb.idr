@@ -3411,7 +3411,7 @@ public export
 -- `(i, j)`, i.e. `PrePostPair i j` (the (contravariant x covariant) Yoneda
 -- embedding of `(i, j)`) or `Iso i j` (the (covariant x contravariant) Yoneda
 -- embedding of `(i, j`)).  I further expect that it is probably equivalent to
--- the slice category of `(op(Type), Type)` over `(i, j)`, and to the category
+-- the slice category of `Type` over `(i, j)`, and to the category
 -- of polynomial difunctors (endo-profunctors) on `Type` with position-set
 -- `(i, j)` with _natural_ (not just paranatural) transformations as morphisms.)
 --
