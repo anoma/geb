@@ -273,14 +273,32 @@ bcdoDeep =
 -------------------------------------------
 -------------------------------------------
 
+T0StarterExp : List Nat
+T0StarterExp = []
+
 T0Starter : RawOp 0 0
-T0Starter = []
+T0Starter = rawOpFromList T0StarterExp
+
+T0MakerExp : List Nat
+T0MakerExp = [0, 0]
 
 T0Maker : RawOp 1 2
-T0Maker = rawOpFromList [0, 0]
+T0Maker = rawOpFromList T0MakerExp
+
+T0DepMakerExp : List Nat
+T0DepMakerExp = [0, 1, 1]
 
 T0DepMaker : RawOp 2 3
-T0DepMaker = rawOpFromList [0, 1, 1]
+T0DepMaker = rawOpFromList T0DepMakerExp
+
+T0DepMakerSortOp : RawSortOp 2
+T0DepMakerSortOp = rawSortOpFromList 3 T0DepMakerExp
+
+T0SortOpListExp : Vect 1 (List Nat)
+T0SortOpListExp = [ T0DepMakerExp ]
+
+T0SortOpList : RawSortOpList 2 1
+T0SortOpList = rawSortOpListFromList T0SortOpListExp
 
 T1Starter : RawOp 0 0
 T1Starter = []
