@@ -62,8 +62,8 @@ totalTests = do
   LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
   LanguageDef.Test.TheoriesTest.theoriesTest
   LanguageDef.Test.FiguresTest.figuresTest
-  LanguageDef.Test.GebTest.gebTest
   LanguageDef.Test.PolyIndTypesTest.polyIndTypesTest
+  LanguageDef.Test.GebTest.gebTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()
