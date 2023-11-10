@@ -376,6 +376,16 @@ IsNothingTrue : {a : Type} -> Maybe a -> Type
 IsNothingTrue x = isJust x = False
 
 public export
+0 ReturnsJust : {0 a, b : Type} -> (f : a -> Maybe b) -> (x : a) -> Type
+ReturnsJust {a} {b} f x = IsJust (f x)
+
+public export
+MkMaybe : {0 a, b : Type} ->
+  (f : a -> Maybe b) -> (x : a) -> {auto 0 j : ReturnsJust f x} -> b
+MkMaybe {a} {b} f x {j} with (f x)
+  MkMaybe {a} {b} f x {j=ItIsJust} | (Just x') = x'
+
+public export
 fromIsTrueNat : (m, n : Nat) -> m == n = True -> m = n
 fromIsTrueNat 0 0 Refl = Refl
 fromIsTrueNat 0 (S n) Refl impossible
