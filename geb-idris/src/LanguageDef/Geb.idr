@@ -3683,6 +3683,10 @@ RawOpDiscDir : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Vect a Type
 RawOpDiscDir {s} {a} op sorts = map (flip index sorts) op
 
+-- Given a mapping of sorts to concrete types, compute the interpretation
+-- of the raw operation:  that is, the result of applying the functor
+-- to an object of the finite product category -- i.e., to a finite list
+-- of types -- to obtain an object of `Type`.
 public export
 InterpRawOpDisc : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
