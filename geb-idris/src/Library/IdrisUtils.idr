@@ -526,6 +526,12 @@ finToFin : {n : Nat} -> {i : Fin n} -> Fin (finToNat i) -> Fin n
 finToFin {n} {i} j = weakenLTE j $ lteSuccLeft $ finToNatLT {m=n} i
 
 public export
+fromListMaybe : {0 a : Type} -> {n : Nat} -> List a -> Maybe (Vect n a)
+fromListMaybe {a} {n} l with (decEq n $ length l)
+  fromListMaybe {a} {n=(length l)} l | Yes Refl = Just $ Data.Vect.fromList l
+  fromListMaybe {a} {n} l | No _ = Nothing
+
+public export
 indexN : {0 a : Type} -> {n : Nat} ->
   (i : Nat) -> {auto ok : IsJustTrue (natToFin i n)} -> Vect n a -> a
 indexN _ {ok} = index (fromIsJust ok)

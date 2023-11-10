@@ -3658,15 +3658,9 @@ RawOp s a = Vect a (Fin s)
 -- use `Fin` explicitly.
 public export
 rawOpFromListMaybe : {s, a : Nat} -> List Nat -> Maybe (RawOp s a)
-rawOpFromListMaybe {s} {a=Z} [] = Just []
-rawOpFromListMaybe {s} {a=(S a)} [] = Nothing
-rawOpFromListMaybe {s} {a=Z} (_ :: _) = Nothing
-rawOpFromListMaybe {s} {a=(S a)} (n :: ns) =
-  case natToFin n s of
-    Just n' => case (rawOpFromListMaybe {s} {a} ns) of
-      Just op => Just $ n' :: op
-      Nothing => Nothing
-    Nothing => Nothing
+rawOpFromListMaybe {s} {a} ns =
+  fromListMaybe {a=Nat} {n=a} ns >>=
+  (traverse {a=Nat} {b=(Fin s)} {f=Maybe} {t=(Vect a)} $ \n => natToFin n s)
 
 public export
 rawOpFromList : {s, a : Nat} ->
