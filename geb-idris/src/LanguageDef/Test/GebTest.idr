@@ -266,6 +266,42 @@ bcdoDeep =
       $: [ $: [ bcdo0, bcdo1 ], $: [ bcdo1, bcdo0 ] ]
      ]
 
+-------------------------------------------
+-------------------------------------------
+---- Lawvere/profunctor representation ----
+-------------------------------------------
+-------------------------------------------
+
+T0Starter : RawOp 0 0
+T0Starter = []
+
+T0Maker : RawOp 1 2
+T0Maker = rawOpFromList [0, 0]
+
+T0DepMaker : RawOp 2 3
+T0DepMaker = rawOpFromList [0, 1, 1]
+
+T1Starter : RawOp 0 0
+T1Starter = []
+
+T1Id : RawOp 1 1
+T1Id = rawOpFromList [0]
+
+T1Maker : RawOp 2 3
+T1Maker = rawOpFromList [0, 0, 1]
+
+T1Composer : RawOp 2 5
+T1Composer = rawOpFromList [0, 0, 0, 1, 1]
+
+T1Distrib : RawOp 2 4
+T1Distrib = rawOpFromList [0, 0, 0, 1]
+
+T1DepComposer : RawOp 2 6
+T1DepComposer = rawOpFromList [0, 1, 1, 1, 1, 1]
+
+T1Telescope : RawOp 2 7
+T1Telescope = rawOpFromList [0, 1, 1, 1, 1, 1, 1]
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
