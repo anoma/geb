@@ -3632,6 +3632,10 @@ Profunctor p => Profunctor (FreePromonad p) where
 --------------------------------------------------
 --------------------------------------------------
 
+------------------------
+---- Raw operations ----
+------------------------
+
 -- We will interpret a raw operation as a functor from a finite-product
 -- category of the raw core category to the raw core category.  The number of
 -- products is the number of sorts referenced in the operation.  (The
@@ -3693,3 +3697,45 @@ public export
 InterpRawOp : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
 InterpRawOp {s} {a} op sorts = HVect {k=a} $ RawOpDir {s} {a} op sorts
+
+-------------------
+---- Raw sorts ----
+-------------------
+
+-- We will interpret a raw sort as a functor from a finite-product category of
+-- the raw core category to the raw core category.  A sort is defined by the
+-- operations which return it.
+
+-- An operation whose arity and return type are drawn from the
+-- given number of sorts.
+public export
+RawSortOp : Nat -> Type
+RawSortOp = DPair Nat . RawOp
+
+public export
+rawSortOpFromListMaybe : {s : Nat} -> Nat -> List Nat -> Maybe (RawSortOp s)
+rawSortOpFromListMaybe {s} a =
+  map {f=Maybe} (MkDPair a) . rawOpFromListMaybe {s} {a}
+
+public export
+rawSortOpFromList : {s : Nat} -> (n : Nat) -> (op : List Nat) ->
+  {auto 0 _ : ReturnsJust (uncurry $ rawSortOpFromListMaybe {s}) (n, op)} ->
+  RawSortOp s
+rawSortOpFromList {s} n = MkMaybe $ rawSortOpFromListMaybe {s} n
+
+-- A length-indexed list of operations whose arities and return types are drawn
+-- from the given number of sorts.
+public export
+RawSortOpList : Nat -> Nat -> Type
+RawSortOpList s n = Vect n (RawSortOp s)
+
+public export
+rawSortOpListFromListMaybe : {s, n : Nat} ->
+  Vect n (List Nat) -> Maybe (RawSortOpList s n)
+rawSortOpListFromListMaybe {s} {n} = traverse $ rawSortOpFromListMaybe {s} n
+
+public export
+rawSortOpListFromList : {s, n : Nat} -> (ops : Vect n $ List Nat) ->
+  {auto 0 _ : ReturnsJust (rawSortOpListFromListMaybe {s} {n}) ops} ->
+  RawSortOpList s n
+rawSortOpListFromList {s} {n} = MkMaybe $ rawSortOpListFromListMaybe {s} {n}
