@@ -3,6 +3,7 @@ module LanguageDef.Test.GebTest
 import Test.TestLibrary
 import LanguageDef.BinTree
 import LanguageDef.Test.BinTreeTest
+import LanguageDef.Test.DiagramCatTest
 import LanguageDef.Geb
 import LanguageDef.PolyCat
 import LanguageDef.ProgFinSet
@@ -287,8 +288,18 @@ T1Starter = []
 T1Id : RawOp 1 1
 T1Id = rawOpFromList [0]
 
-T1Maker : RawOp 2 3
-T1Maker = rawOpFromList [0, 0, 1]
+T1Maker : RawOp 2 4
+T1Maker = rawOpFromList [0, 0, 1, 1]
+
+T1Maker1dom : RawOpDom T1Maker
+T1Maker1dom = [DiagramCatTest.Test0, Sigma DiagramCatTest.Test1]
+
+T1Maker1p2 : InterpRawOp T1Maker T1Maker1dom
+T1Maker1p2 =
+  [T0Starter,
+   T0Maker T0Starter T0Starter,
+   (T0Starter ** T1Starter),
+   (T0Maker T0Starter T0Starter ** T1Id $ T0Maker T0Starter T0Starter)]
 
 T1Composer : RawOp 2 5
 T1Composer = rawOpFromList [0, 0, 0, 1, 1]
