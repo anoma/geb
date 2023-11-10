@@ -3632,16 +3632,16 @@ Profunctor p => Profunctor (FreePromonad p) where
 --------------------------------------------------
 --------------------------------------------------
 
--- We will interpret a raw operation as a profunctor between finite
--- product categories of the raw core category.  The number of
+-- We will interpret a raw operation as a functor from a finite-product
+-- category of the raw core category to the raw core category.  The number of
 -- products is the number of sorts referenced in the operation.  (The
 -- operation itself need not specify a sort -- it might be used by any
 -- number of definitions of sorts in the theory as a whole.)
 --
 -- We bootstrap the implementation by first assuming an interpretation of
 -- the raw core category into the metalanguage's `Type`, so our initial
--- interpretation of a raw operation will be as a profunctor of the form
--- `(op(RawCore^N), RawCore^N) -> RawCore`.)
+-- interpretation of a raw operation will be as a functor of the form
+-- `RawCore^N -> RawCore`.
 --
 -- Because we're modeling a multi-sorted theory, the arity is not just a
 -- number; rather, it's a list of sorts.  So the first parameter here is
@@ -3650,6 +3650,8 @@ public export
 RawOp : Nat -> Nat -> Type
 RawOp s a = Vect a (Fin s)
 
+-- A convenience for writing raw operations without having to
+-- use `Fin` explicitly.
 public export
 rawOpFromListMaybe : {s, a : Nat} -> List Nat -> Maybe (RawOp s a)
 rawOpFromListMaybe {s} {a=Z} [] = Just []
@@ -3668,16 +3670,20 @@ rawOpFromList : {s, a : Nat} ->
   RawOp s a
 rawOpFromList = MkMaybe rawOpFromListMaybe
 
--- A mapping of sorts to concrete types.
+-- A mapping of sorts to concrete types.  This is the interpretation (into
+-- the metalanguage) of the domain of the interpretation of the raw operation.
 public export
 RawOpDom : {s, a : Nat} -> RawOp s a -> Type
 RawOpDom {s} _ = Vect s Type
 
+-- Given a mapping of sorts to concrete types, compute the direction-set
+-- of the operation.  This is a discrete representation of it.
 public export
-RawOpVect : {s, a : Nat} ->
+RawOpDiscDir : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Vect a Type
-RawOpVect {s} {a} op sorts = map (flip index sorts) op
+RawOpDiscDir {s} {a} op sorts = map (flip index sorts) op
 
 public export
-InterpRawOp : {s, a : Nat} -> (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
-InterpRawOp {s} {a} op sorts = HVect {k=a} $ RawOpVect {s} {a} op sorts
+InterpRawOpDisc : {s, a : Nat} ->
+  (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
+InterpRawOpDisc {s} {a} op sorts = HVect {k=a} $ RawOpDiscDir {s} {a} op sorts
