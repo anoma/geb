@@ -294,7 +294,7 @@ T0DepMaker = rawOpFromList T0DepMakerExp
 T0DepMakerSortOp : RawSortOp 2
 T0DepMakerSortOp = rawSortOpFromList 3 T0DepMakerExp
 
-T0SortOpListExp : Vect 1 (List Nat)
+T0SortOpListExp : List (List Nat)
 T0SortOpListExp = [ T0DepMakerExp ]
 
 T0SortOpList : RawSortOpList 2 1
