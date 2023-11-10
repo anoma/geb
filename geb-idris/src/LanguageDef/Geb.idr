@@ -3716,6 +3716,10 @@ rawSortOpFromListMaybe {s} a =
   map {f=Maybe} (MkRawSortOp {s} {a}) . rawOpFromListMaybe {s} {a}
 
 public export
+rawSortOpFromListMaybeAnyLen : {s : Nat} -> List Nat -> Maybe (RawSortOp s)
+rawSortOpFromListMaybeAnyLen {s} l = rawSortOpFromListMaybe {s} (length l) l
+
+public export
 rawSortOpFromList : {s : Nat} -> (n : Nat) -> (op : List Nat) ->
   {auto 0 _ : ReturnsJust (uncurry $ rawSortOpFromListMaybe {s}) (n, op)} ->
   RawSortOp s
@@ -3729,13 +3733,13 @@ RawSortOpList s n = Vect n (RawSortOp s)
 
 public export
 rawSortOpListFromListMaybe : {s, n : Nat} ->
-  Vect n (List Nat) -> Maybe (RawSortOpList s n)
-rawSortOpListFromListMaybe {s} {n} =
-  traverse {f=Maybe} {t=(Vect n)} $
-    \l => rawSortOpFromListMaybe {s} (length l) l
+  List (List Nat) -> Maybe (RawSortOpList s n)
+rawSortOpListFromListMaybe {s} {n} ls =
+  fromListMaybe ls >>=
+  (traverse {f=Maybe} {t=(Vect n)} $ rawSortOpFromListMaybeAnyLen {s})
 
 public export
-rawSortOpListFromList : {s, n : Nat} -> (ops : Vect n $ List Nat) ->
+rawSortOpListFromList : {s, n : Nat} -> (ops : List $ List Nat) ->
   {auto 0 _ : ReturnsJust (rawSortOpListFromListMaybe {s} {n}) ops} ->
   RawSortOpList s n
 rawSortOpListFromList {s} {n} = MkMaybe $ rawSortOpListFromListMaybe {s} {n}
