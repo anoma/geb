@@ -300,14 +300,23 @@ T0SortOpListExp = [ T0StarterExp, T0MakerExp, T0DepMakerExp ]
 T0SortOpList : RawSortOpList 2 3
 T0SortOpList = rawSortOpListFromList T0SortOpListExp
 
+T1StarterExp : List Nat
+T1StarterExp = []
+
 T1Starter : RawOp 0 0
-T1Starter = []
+T1Starter = rawOpFromList T1StarterExp
+
+T1IdExp : List Nat
+T1IdExp = [0]
 
 T1Id : RawOp 1 1
-T1Id = rawOpFromList [0]
+T1Id = rawOpFromList T1IdExp
+
+T1MakerExp : List Nat
+T1MakerExp = [0, 0, 1, 1]
 
 T1Maker : RawOp 2 4
-T1Maker = rawOpFromList [0, 0, 1, 1]
+T1Maker = rawOpFromList T1MakerExp
 
 T1Maker1dom : RawOpDom T1Maker
 T1Maker1dom = [DiagramCatTest.Test0, Sigma DiagramCatTest.Test1]
@@ -319,17 +328,29 @@ T1Maker1p2 =
    (T0Starter ** T1Starter),
    (T0Maker T0Starter T0Starter ** T1Id $ T0Maker T0Starter T0Starter)]
 
+T1ComposerExp : List Nat
+T1ComposerExp = [0, 0, 0, 1, 1]
+
 T1Composer : RawOp 2 5
-T1Composer = rawOpFromList [0, 0, 0, 1, 1]
+T1Composer = rawOpFromList T1ComposerExp
+
+T1DistribExp : List Nat
+T1DistribExp = [0, 0, 0, 1]
 
 T1Distrib : RawOp 2 4
-T1Distrib = rawOpFromList [0, 0, 0, 1]
+T1Distrib = rawOpFromList T1DistribExp
+
+T1DepComposerExp : List Nat
+T1DepComposerExp = [0, 1, 1, 1, 1, 1]
 
 T1DepComposer : RawOp 2 6
-T1DepComposer = rawOpFromList [0, 1, 1, 1, 1, 1]
+T1DepComposer = rawOpFromList T1DepComposerExp
+
+T1TelescopeExp : List Nat
+T1TelescopeExp = [0, 1, 1, 1, 1, 1, 1]
 
 T1Telescope : RawOp 2 7
-T1Telescope = rawOpFromList [0, 1, 1, 1, 1, 1, 1]
+T1Telescope = rawOpFromList T1TelescopeExp
 
 ----------------------------------
 ----------------------------------
