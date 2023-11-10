@@ -3713,9 +3713,13 @@ RawSortOp : Nat -> Type
 RawSortOp = DPair Nat . RawOp
 
 public export
+MkRawSortOp : {s, a : Nat} -> RawOp s a -> RawSortOp s
+MkRawSortOp {s} {a} = MkDPair a
+
+public export
 rawSortOpFromListMaybe : {s : Nat} -> Nat -> List Nat -> Maybe (RawSortOp s)
 rawSortOpFromListMaybe {s} a =
-  map {f=Maybe} (MkDPair a) . rawOpFromListMaybe {s} {a}
+  map {f=Maybe} (MkRawSortOp {s} {a}) . rawOpFromListMaybe {s} {a}
 
 public export
 rawSortOpFromList : {s : Nat} -> (n : Nat) -> (op : List Nat) ->
@@ -3732,7 +3736,9 @@ RawSortOpList s n = Vect n (RawSortOp s)
 public export
 rawSortOpListFromListMaybe : {s, n : Nat} ->
   Vect n (List Nat) -> Maybe (RawSortOpList s n)
-rawSortOpListFromListMaybe {s} {n} = traverse $ rawSortOpFromListMaybe {s} n
+rawSortOpListFromListMaybe {s} {n} =
+  traverse {f=Maybe} {t=(Vect n)} $
+    \l => rawSortOpFromListMaybe {s} (length l) l
 
 public export
 rawSortOpListFromList : {s, n : Nat} -> (ops : Vect n $ List Nat) ->
