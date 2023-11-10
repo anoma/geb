@@ -295,9 +295,9 @@ T0DepMakerSortOp : RawSortOp 2
 T0DepMakerSortOp = rawSortOpFromList 3 T0DepMakerExp
 
 T0SortOpListExp : List (List Nat)
-T0SortOpListExp = [ T0DepMakerExp ]
+T0SortOpListExp = [ T0StarterExp, T0MakerExp, T0DepMakerExp ]
 
-T0SortOpList : RawSortOpList 2 1
+T0SortOpList : RawSortOpList 2 3
 T0SortOpList = rawSortOpListFromList T0SortOpListExp
 
 T1Starter : RawOp 0 0
