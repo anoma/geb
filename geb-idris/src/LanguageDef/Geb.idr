@@ -3644,14 +3644,35 @@ Profunctor p => Profunctor (FreePromonad p) where
 -- Because we're modeling a multi-sorted theory, the arity is not just a
 -- number; rather, it's a list of sorts.  So the first parameter here is
 -- the number of sorts, and the second is the _length_ of the arity.
+public export
 RawOp : Nat -> Nat -> Type
 RawOp s a = Vect a (Fin s)
 
+public export
+rawOpFromListMaybe : {s, a : Nat} -> List Nat -> Maybe (RawOp s a)
+rawOpFromListMaybe {s} {a=Z} [] = Just []
+rawOpFromListMaybe {s} {a=(S a)} [] = Nothing
+rawOpFromListMaybe {s} {a=Z} (_ :: _) = Nothing
+rawOpFromListMaybe {s} {a=(S a)} (n :: ns) =
+  case natToFin n s of
+    Just n' => case (rawOpFromListMaybe {s} {a} ns) of
+      Just op => Just $ n' :: op
+      Nothing => Nothing
+    Nothing => Nothing
+
+public export
+rawOpFromList : {s, a : Nat} ->
+  (ns : List Nat) -> {auto 0 _ : ReturnsJust (rawOpFromListMaybe {s} {a}) ns} ->
+  RawOp s a
+rawOpFromList = MkMaybe rawOpFromListMaybe
+
 -- The first (contravariant) component of the (interpreted) domain of a raw
 -- operation.
+public export
 RawOpDom1 : {s, a : Nat} -> RawOp s a -> Type
 RawOpDom1 {s} _ = Vect s Type
 
+public export
 RawOpDom2 : {0 s, a : Nat} -> RawOp s a -> Type
 RawOpDom2 _ = Type
 
@@ -3659,10 +3680,12 @@ RawOpDom2 _ = Type
 -- variable, the first step in interpreting it as a profunctor is to
 -- compute, given an object of its first variable, the (covariant)
 -- representing object of its curried form applied to that variable.
+public export
 RawOpRep : {s, a : Nat} -> (op : RawOp s a) -> RawOpDom1 {s} {a} op -> Type
 RawOpRep {s} {a} op tys1 = HVect {k=a} $ map (flip index tys1) op
 
 -- Interpret a raw operation.
+public export
 InterpRawOp : {s, a : Nat} -> (op : RawOp s a) ->
   RawOpDom1 {s} {a} op -> RawOpDom2 {s} {a} op -> Type
 InterpRawOp {s} {a} = CovarHomFunc .* RawOpRep {s} {a}
