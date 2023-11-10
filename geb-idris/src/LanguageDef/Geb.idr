@@ -3674,5 +3674,10 @@ RawOpDom : {s, a : Nat} -> RawOp s a -> Type
 RawOpDom {s} _ = Vect s Type
 
 public export
+RawOpVect : {s, a : Nat} ->
+  (op : RawOp s a) -> RawOpDom {s} {a} op -> Vect a Type
+RawOpVect {s} {a} op sorts = map (flip index sorts) op
+
+public export
 InterpRawOp : {s, a : Nat} -> (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
-InterpRawOp {s} {a} op sorts = HVect {k=a} $ map (flip index sorts) op
+InterpRawOp {s} {a} op sorts = HVect {k=a} $ RawOpVect {s} {a} op sorts
