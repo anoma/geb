@@ -3677,17 +3677,19 @@ RawOpDom : {s, a : Nat} -> RawOp s a -> Type
 RawOpDom {s} _ = Vect s Type
 
 -- Given a mapping of sorts to concrete types, compute the direction-set
--- of the operation.  This is a discrete representation of it.
+-- of the operation.  This is a discrete representation of it, using a
+-- vector of types and a vector of types dependent upon them, as opposed
+-- to an explicit pi type.
 public export
-RawOpDiscDir : {s, a : Nat} ->
+RawOpDir : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Vect a Type
-RawOpDiscDir {s} {a} op sorts = map (flip index sorts) op
+RawOpDir {s} {a} op sorts = map (flip index sorts) op
 
 -- Given a mapping of sorts to concrete types, compute the interpretation
 -- of the raw operation:  that is, the result of applying the functor
 -- to an object of the finite product category -- i.e., to a finite list
 -- of types -- to obtain an object of `Type`.
 public export
-InterpRawOpDisc : {s, a : Nat} ->
+InterpRawOp : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
-InterpRawOpDisc {s} {a} op sorts = HVect {k=a} $ RawOpDiscDir {s} {a} op sorts
+InterpRawOp {s} {a} op sorts = HVect {k=a} $ RawOpDir {s} {a} op sorts
