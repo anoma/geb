@@ -3625,3 +3625,44 @@ Profunctor p => Profunctor (FreePromonad p) where
   dimap {a} {b} {c} {d} mca mbd (InFPM (i ** (pai, fpib))) =
     InFPM {p} {a=c} {b=d}
       (i ** (dimap {f=p} mca id pai, dimap {f=(FreePromonad p)} id mbd fpib))
+
+--------------------------------------------------
+--------------------------------------------------
+---- Lawvere-style Geb program representation ----
+--------------------------------------------------
+--------------------------------------------------
+
+-- We will interpret a raw operation as a contravariant functor from a
+-- finite product category of the raw core category to a covariant
+-- representable endofunctor on the raw core category.  (This is a particular
+-- case of a profunctor of the form `(op(RawCore^N), RawCore) -> RawCore`.)
+-- We bootstrap the implementation by first assuming an interpretation of
+-- the raw core category into the metalanguage's `Type`, so our initial
+-- interpretation of a raw operation will be as a profunctor of the form
+-- `(op(RawCore^N), RawCore) -> RawCore`.)
+--
+-- Because we're modeling a multi-sorted theory, the arity is not just a
+-- number; rather, it's a list of sorts.  So the first parameter here is
+-- the number of sorts, and the second is the _length_ of the arity.
+RawOp : Nat -> Nat -> Type
+RawOp s a = Vect a (Fin s)
+
+-- The first (contravariant) component of the (interpreted) domain of a raw
+-- operation.
+RawOpDom1 : {s, a : Nat} -> RawOp s a -> Type
+RawOpDom1 {s} _ = Vect s Type
+
+RawOpDom2 : {0 s, a : Nat} -> RawOp s a -> Type
+RawOpDom2 _ = Type
+
+-- Because a raw operation is (covariant) representable in its second
+-- variable, the first step in interpreting it as a profunctor is to
+-- compute, given an object of its first variable, the (covariant)
+-- representing object of its curried form applied to that variable.
+RawOpRep : {s, a : Nat} -> (op : RawOp s a) -> RawOpDom1 {s} {a} op -> Type
+RawOpRep {s} {a} op tys1 = HVect {k=a} $ map (flip index tys1) op
+
+-- Interpret a raw operation.
+InterpRawOp : {s, a : Nat} -> (op : RawOp s a) ->
+  RawOpDom1 {s} {a} op -> RawOpDom2 {s} {a} op -> Type
+InterpRawOp {s} {a} = CovarHomFunc .* RawOpRep {s} {a}
