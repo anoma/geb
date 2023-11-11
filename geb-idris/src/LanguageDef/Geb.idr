@@ -3671,8 +3671,12 @@ rawOpFromList = MkMaybe rawOpFromListMaybe
 -- A mapping of sorts to concrete types.  This is the interpretation (into
 -- the metalanguage) of the domain of the interpretation of the raw operation.
 public export
+SortInterpretation : Nat -> Type
+SortInterpretation = flip Vect Type
+
+public export
 RawOpDom : {s, a : Nat} -> RawOp s a -> Type
-RawOpDom {s} _ = Vect s Type
+RawOpDom {s} _ = SortInterpretation s
 
 -- Given a mapping of sorts to concrete types, compute the direction-set
 -- of the operation.  This is a discrete representation of it, using a
