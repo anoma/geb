@@ -3780,9 +3780,12 @@ InterpRawSort {s} {n} ops sorts =
 ---- Raw theories ----
 ----------------------
 
--- Given a mapping of sorts to concrete types, compute the interpretation
--- of the theory comprised of all of those sorts.  This computation forms
--- an endofunctor on a finite product category of `Type`.
+-- Given a list of sorts with matching arities, and a vector of types of that
+-- arity, interpret all the sorts in the list in the context of the given types.
+-- This computation forms a functor between finite product categories of `Type`.
+-- In particular if the number of given sorts matches the arity of the sorts
+-- themselves, then the functor is an endofunctor, and it has a free monad
+-- which generates a free theory from the list of sorts.
 
 public export
 RawSortList : Nat -> Nat -> Type
@@ -3807,3 +3810,25 @@ InterpRawSortList : {s, n : Nat} ->
   RawSortListDom {s} {n} sorts -> RawSortListCod {s} {n} sorts
 InterpRawSortList {s} {n} sorts tys =
   map (\sort => InterpRawSort (DPair.snd sort) tys) sorts
+
+public export
+InterpRawSortListSl : {s, n : Nat} -> (sorts : RawSortList s n) ->
+  SliceFunctor (Fin s) (Fin n)
+InterpRawSortListSl {s} {n} sorts sls =
+  flip Vect.index $ InterpRawSortList {s} {n} sorts $ finFToVect sls
+
+public export
+FreeTheorySl : {s : Nat} -> (sorts : RawSortList s s) ->
+  SliceFunctor (Fin s) (Fin s)
+FreeTheorySl {s} sorts = SliceFreeM $ InterpRawSortListSl {s} {n=s} sorts
+
+public export
+FreeTheory : {s : Nat} ->
+  (sorts : RawSortList s s) ->
+  RawSortListDom {s} {n=s} sorts -> RawSortListCod {s} {n=s} sorts
+FreeTheory {s} sorts tys = finFToVect $ FreeTheorySl {s} sorts $ flip index tys
+
+public export
+InitialTheory : {s : Nat} ->
+  (sorts : RawSortList s s) -> RawSortListCod {s} {n=s} sorts
+InitialTheory {s} sorts = finFToVect $ SliceMu $ FreeTheorySl {s} sorts
