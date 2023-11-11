@@ -304,7 +304,7 @@ T0Sort1dom : RawSortDom {s=2} T0SortOpList
 T0Sort1dom = [Bool, String]
 
 T0Sort1t1 : InterpRawSort T0SortOpList T0Sort1dom
-T0Sort1t1 = (natToFinLT 2 ** [False, "a", "b"])
+T0Sort1t1 = (nf 2 ** [False, "a", "b"])
 
 T1StarterExp : List Nat
 T1StarterExp = []

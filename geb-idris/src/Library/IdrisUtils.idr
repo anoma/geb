@@ -525,6 +525,12 @@ public export
 finToFin : {n : Nat} -> {i : Fin n} -> Fin (finToNat i) -> Fin n
 finToFin {n} {i} j = weakenLTE j $ lteSuccLeft $ finToNatLT {m=n} i
 
+-- Nothing but an alias with a shorter name, in anticipation of using this
+-- one a lot.
+public export
+nf : {0 n : Nat} -> (x : Nat) -> {auto 0 ok : LT x n} -> Fin n
+nf {n} x {ok} = natToFinLT {n} x
+
 public export
 fromListMaybe : {0 a : Type} -> {n : Nat} -> List a -> Maybe (Vect n a)
 fromListMaybe {a} {n} l with (decEq n $ length l)
