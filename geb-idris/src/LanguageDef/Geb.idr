@@ -3832,3 +3832,14 @@ public export
 InitialTheory : {s : Nat} ->
   (sorts : RawSortList s s) -> RawSortListCod {s} {n=s} sorts
 InitialTheory {s} sorts = finFToVect $ SliceMu $ FreeTheorySl {s} sorts
+
+mutual
+  public export
+  evalTheory : {s : Nat} -> (sorts : RawSortList s s) ->
+    SliceFreeFEval (InterpRawSortListSl {s} sorts)
+  evalTheory {s} sorts sv sa subst alg i (InSlF i x) = case x of
+    InSlV v => subst i v
+    InSlC c => alg i $
+      let c' = replace {p=id} (mapIndex _ i) c in
+      replace {p=id} (sym (mapIndex _ i)) $
+      (DPair.fst c' ** ?evalTheory_hole $ DPair.snd c')
