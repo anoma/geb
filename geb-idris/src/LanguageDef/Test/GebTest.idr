@@ -300,6 +300,12 @@ T0SortOpListExp = [ T0StarterExp, T0MakerExp, T0DepMakerExp ]
 T0SortOpList : RawSortOpList 2 3
 T0SortOpList = rawSortOpListFromList T0SortOpListExp
 
+T0Sort1dom : RawSortDom {s=2} T0SortOpList
+T0Sort1dom = [Bool, String]
+
+T0Sort1t1 : InterpRawSort T0SortOpList T0Sort1dom
+T0Sort1t1 = (natToFinLT 2 ** [False, "a", "b"])
+
 T1StarterExp : List Nat
 T1StarterExp = []
 
@@ -321,8 +327,8 @@ T1Maker = rawOpFromList T1MakerExp
 T1Maker1dom : RawOpDom T1Maker
 T1Maker1dom = [DiagramCatTest.Test0, Sigma DiagramCatTest.Test1]
 
-T1Maker1p2 : InterpRawOp T1Maker T1Maker1dom
-T1Maker1p2 =
+T1Maker1t1 : InterpRawOp T1Maker T1Maker1dom
+T1Maker1t1 =
   [T0Starter,
    T0Maker T0Starter T0Starter,
    (T0Starter ** T1Starter),
