@@ -352,6 +352,20 @@ T1TelescopeExp = [0, 1, 1, 1, 1, 1, 1]
 T1Telescope : RawOp 2 7
 T1Telescope = rawOpFromList T1TelescopeExp
 
+T1SortOpListExp : List (List Nat)
+T1SortOpListExp =
+  [ T1StarterExp
+  , T1IdExp
+  , T1MakerExp
+  , T1ComposerExp
+  , T1DistribExp
+  , T1DepComposerExp
+  , T1TelescopeExp
+  ]
+
+T1SortOpList : RawSortOpList 2 7
+T1SortOpList = rawSortOpListFromList T1SortOpListExp
+
 ----------------------------------
 ----------------------------------
 ----- Exported test function -----
