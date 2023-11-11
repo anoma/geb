@@ -3690,7 +3690,8 @@ RawOpDir {s} {a} op sorts = map (flip index sorts) op
 -- Given a mapping of sorts to concrete types, compute the interpretation
 -- of the raw operation:  that is, the result of applying the functor
 -- to an object of the finite product category -- i.e., to a finite list
--- of types -- to obtain an object of `Type`.
+-- of types -- to obtain an object of `Type`.  This is a discrete 'pi'
+-- operation.
 public export
 InterpRawOp : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
@@ -3749,6 +3750,14 @@ rawSortOpListFromList : {s, n : Nat} -> (ops : List $ List Nat) ->
 rawSortOpListFromList {s} {n} = MkMaybe $ rawSortOpListFromListMaybe {s} {n}
 
 public export
+RawSort : Nat -> Type
+RawSort = DPair Nat . RawSortOpList
+
+public export
+MkRawSort : {s, n : Nat} -> RawSortOpList s n -> RawSort s
+MkRawSort {s} {n} = MkDPair n
+
+public export
 RawSortDom : {s, n : Nat} -> RawSortOpList s n -> Type
 RawSortDom {s} _ = SortInterpretation s
 
@@ -3766,3 +3775,20 @@ InterpRawSort : {s, n : Nat} ->
   (sort : RawSortOpList s n) -> RawSortDom {s} {n} sort -> Type
 InterpRawSort {s} {n} ops sorts =
   (i : Fin n ** InterpRawOp (DPair.snd $ index i ops) sorts)
+
+----------------------
+---- Raw theories ----
+----------------------
+
+-- Given a mapping of sorts to concrete types, compute the interpretation
+-- of the theory comprised of all of those sorts.  This computation forms
+-- an endofunctor on a finite product category of `Type`.
+
+public export
+RawSortList : Nat -> Nat -> Type
+RawSortList s n = Vect n (RawSort s)
+
+public export
+MkRawSortList : {s : Nat} ->
+  (sorts : List $ RawSort s) -> RawSortList s (length sorts)
+MkRawSortList {s} = Vect.fromList {elem=(RawSort s)}
