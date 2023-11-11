@@ -3792,3 +3792,18 @@ public export
 MkRawSortList : {s : Nat} ->
   (sorts : List $ RawSort s) -> RawSortList s (length sorts)
 MkRawSortList {s} = Vect.fromList {elem=(RawSort s)}
+
+public export
+RawSortListDom : {s, n : Nat} -> RawSortList s n -> Type
+RawSortListDom {s} _ = SortInterpretation s
+
+public export
+RawSortListCod : {s, n : Nat} -> RawSortList s n -> Type
+RawSortListCod {n} _ = SortInterpretation n
+
+public export
+InterpRawSortList : {s, n : Nat} ->
+  (sorts : RawSortList s n) ->
+  RawSortListDom {s} {n} sorts -> RawSortListCod {s} {n} sorts
+InterpRawSortList {s} {n} sorts tys =
+  map (\sort => InterpRawSort (DPair.snd sort) tys) sorts
