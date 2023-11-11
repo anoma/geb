@@ -3747,3 +3747,22 @@ rawSortOpListFromList : {s, n : Nat} -> (ops : List $ List Nat) ->
   {auto 0 _ : ReturnsJust (rawSortOpListFromListMaybe {s} {n}) ops} ->
   RawSortOpList s n
 rawSortOpListFromList {s} {n} = MkMaybe $ rawSortOpListFromListMaybe {s} {n}
+
+public export
+RawSortDom : {s, n : Nat} -> RawSortOpList s n -> Type
+RawSortDom {s} _ = SortInterpretation s
+
+-- Given a mapping of sorts to concrete types, compute the interpretation
+-- of the sort:  that is, the result of applying the functor
+-- to an object of the finite product category -- i.e., to a finite list
+-- of types -- to obtain an object of `Type`.
+--
+-- To obtain a term of a given sort, we must choose one of the operations
+-- in the list of operations that produce that sort, and apply it.
+--
+-- This is a discrete sigma operation, as `InterpRawOp` is a discrete pi.
+public export
+InterpRawSort : {s, n : Nat} ->
+  (sort : RawSortOpList s n) -> RawSortDom {s} {n} sort -> Type
+InterpRawSort {s} {n} ops sorts =
+  (i : Fin n ** InterpRawOp (DPair.snd $ index i ops) sorts)
