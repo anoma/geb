@@ -3222,7 +3222,11 @@ SpliceBaseObj : SpliceCat -> Type
 SpliceBaseObj = SliceObj . SpliceBase
 
 public export
-SpliceBaseSlice : (cat : SpliceCat) -> SliceObj (SpliceBaseObj cat)
+SpliceBaseObjSlice : SpliceCat -> Type
+SpliceBaseObjSlice = SliceObj . SpliceBaseObj
+
+public export
+SpliceBaseSlice : (cat : SpliceCat) -> SpliceBaseObjSlice cat
 SpliceBaseSlice cat = Sigma {a=(SpliceBase cat)}
 
 public export
@@ -3236,7 +3240,7 @@ SpliceBaseSnd : {cat : SpliceCat} -> {base : SpliceBaseObj cat} ->
 SpliceBaseSnd {cat} {base} = snd
 
 public export
-SpliceCobaseObj : (cat : SpliceCat) -> SliceObj (SpliceBaseObj cat)
+SpliceCobaseObj : (cat : SpliceCat) -> SpliceBaseObjSlice cat
 SpliceCobaseObj cat = CovarHomFunc (SpliceCobase cat) . SpliceBaseSlice cat
 
 public export
