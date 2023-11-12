@@ -3241,7 +3241,18 @@ SpliceBaseSnd {cat} {base} = snd
 
 public export
 SpliceCobaseObj : (cat : SpliceCat) -> SpliceBaseObjSlice cat
-SpliceCobaseObj cat = CovarHomFunc (SpliceCobase cat) . SpliceBaseSlice cat
+SpliceCobaseObj cat = Pi {a=(SpliceBase cat)} . flip BaseChangeF SliceObj
+
+public export
+SpliceCobaseSlice : {cat : SpliceCat} -> {bsl : SpliceBaseObj cat} ->
+  SpliceCobaseObj cat bsl -> SliceObj (SpliceBase cat)
+SpliceCobaseSlice {cat} {bsl} cosl i = Sigma {a=(bsl i)} $ cosl i
+
+public export
+SpliceCobaseTot : {cat : SpliceCat} -> {bsl : SpliceBaseObj cat} ->
+  SpliceCobaseObj cat bsl -> Type
+SpliceCobaseTot {cat} {bsl} cosl =
+  Sigma {a=(SpliceBase cat)} $ \i => Sigma {a=(bsl i)} $ cosl i
 
 public export
 SpliceObj : SpliceCat -> Type
@@ -3259,11 +3270,6 @@ SpliceObjCobase {cat} = snd0
 public export
 SpliceObjTot : {cat : SpliceCat} -> SpliceObj cat -> Type
 SpliceObjTot {cat} spl = SpliceBaseSlice cat (SpliceObjBase spl)
-
-public export
-0 SpliceCobaseBaseProj : {cat : SpliceCat} -> {bsl : SpliceBaseObj cat} ->
-  (cosl : SpliceCobaseObj cat bsl) -> SpliceCobase cat -> SpliceBase cat
-SpliceCobaseBaseProj {cat} {bsl} = (.) SpliceBaseFst
 
 public export
 SpliceSig : SpliceCat -> Type
@@ -3304,30 +3310,6 @@ public export
 SpliceCodCobase {cat} sig = SpliceObjCobase $ SpliceCod {cat} sig
 
 public export
-0 SpliceDomCobaseBaseProj : {cat : SpliceCat} ->
-  SpliceSig cat -> SpliceCobase cat -> SpliceBase cat
-SpliceDomCobaseBaseProj {cat} sig =
-  SpliceCobaseBaseProj {cat} {bsl=(SpliceDomBase sig)} (SpliceDomCobase sig)
-
-public export
-0 SpliceCodCobaseBaseProj : {cat : SpliceCat} ->
-  SpliceSig cat -> SpliceCobase cat -> SpliceBase cat
-SpliceCodCobaseBaseProj {cat} sig =
-  SpliceCobaseBaseProj {cat} {bsl=(SpliceCodBase sig)} (SpliceCodCobase sig)
-
-public export
-0 SpliceSigCobaseBaseProj : {cat : SpliceCat} ->
-  SpliceSig cat -> SpliceCobase cat -> ProductMonad (SpliceBase cat)
-SpliceSigCobaseBaseProj {cat} sig elc =
-  (SpliceDomCobaseBaseProj sig elc, SpliceCodCobaseBaseProj sig elc)
-
-public export
-0 SpliceCobaseBaseProjEqual : {cat : SpliceCat} -> SpliceSig cat ->
-  SliceObj (SpliceCobase cat)
-SpliceCobaseBaseProjEqual {cat} sig elcp =
-  SpliceDomCobaseBaseProj sig elcp = SpliceCodCobaseBaseProj sig elcp
-
-public export
 SpliceBaseMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
 SpliceBaseMorph {cat} sig =
   SliceMorphism {a=(SpliceBase cat)}
@@ -3335,20 +3317,16 @@ SpliceBaseMorph {cat} sig =
     (SpliceCodBase {cat} sig)
 
 public export
-0 SpliceBaseMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
+0 SpliceCobaseMorph : {cat : SpliceCat} -> (sig : SpliceSig cat) ->
   SpliceBaseMorph {cat} sig -> Type
-SpliceBaseMorphPresCobase {cat} {sig} m =
-  (elc : SpliceCobase cat) ->
-  (projeq : SpliceCobaseBaseProjEqual {cat} sig elc **
-   replace {p=(SpliceCodBase sig)} projeq
-    (m (SpliceDomCobaseBaseProj sig elc)
-      (SpliceBaseSnd $ SpliceDomCobase sig elc)) =
-   SpliceBaseSnd (SpliceCodCobase sig elc))
+SpliceCobaseMorph {cat} sig m =
+  (i : SpliceBase cat) -> (j : SpliceDomBase {cat} sig i) ->
+  SpliceDomCobase sig i j -> SpliceCodCobase sig i $ m i j
 
 public export
 SpliceMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
 SpliceMorph {cat} sig =
-  Subset0 (SpliceBaseMorph {cat} sig) (SpliceBaseMorphPresCobase {cat} {sig})
+  Subset0 (SpliceBaseMorph {cat} sig) (SpliceCobaseMorph {cat} {sig})
 
 public export
 SpliceMorphBase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
@@ -3356,10 +3334,10 @@ SpliceMorphBase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
 SpliceMorphBase = fst0
 
 public export
-0 SpliceMorphPresCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
+0 SpliceMorphCobase : {cat : SpliceCat} -> {sig : SpliceSig cat} ->
   (m : SpliceMorph {cat} sig) ->
-  SpliceBaseMorphPresCobase {cat} {sig} (SpliceMorphBase {cat} {sig} m)
-SpliceMorphPresCobase = snd0
+  SpliceCobaseMorph {cat} sig (SpliceMorphBase {cat} {sig} m)
+SpliceMorphCobase = snd0
 
 public export
 spliceId : {cat : SpliceCat} ->
