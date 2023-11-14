@@ -3864,3 +3864,16 @@ mutual
       let c' = replace {p=id} (mapIndex _ i) c in
       replace {p=id} (sym (mapIndex _ i)) $
       (DPair.fst c' ** ?evalTheory_hole $ DPair.snd c')
+
+-----------------------------------------------
+-----------------------------------------------
+---- Finite directed acyclic graphs (DAGs) ----
+-----------------------------------------------
+-----------------------------------------------
+
+-- See https://arxiv.org/abs/1303.0376 .
+
+public export
+data FinIdag : SliceObj (Nat, Nat) where
+  DAG0 : FinIdag (0, 0)
+  DAG1 : FinIdag (1, 1)
