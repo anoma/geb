@@ -606,6 +606,12 @@ finFToVect {a} {n=Z} f = []
 finFToVect {a} {n=(S n)} f = f FZ :: finFToVect {n} (f . FS)
 
 public export
+finFToVectIdx : {0 a : Type} -> {n : Nat} -> (f : Fin n -> a) -> (i : Fin n) ->
+  index i (finFToVect f) = f i
+finFToVectIdx {a} {n=(S _)} f FZ = Refl
+finFToVectIdx {a} {n=(S n)} f (FS i) = finFToVectIdx {a} {n} (f . FS) i
+
+public export
 finHFToHVect : {n : Nat} -> {t : Fin n -> Type} -> ((i : Fin n) -> t i) ->
   HVect (finFToVect t)
 finHFToHVect {n=Z} {t} f = []
