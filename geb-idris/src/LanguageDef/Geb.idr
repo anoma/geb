@@ -3946,9 +3946,17 @@ FinSig : Nat -> Type
 FinSig k = SignatureT (Fin k)
 
 public export
-FinDAGedge : {k : Nat} -> FSPOrd k -> Type
-FinDAGedge {k} ord = Subset0 (FinSig k) (FSPlt {k} ord)
+FinDAGsig : {k : Nat} -> FSPOrd k -> Type
+FinDAGsig {k} ord = Subset0 (FinSig k) (FSPgt {k} ord)
 
 public export
-FinDAGopEdge : {k : Nat} -> FSPOrd k -> Type
-FinDAGopEdge {k} ord = Subset0 (FinSig k) (FSPgt {k} ord)
+FinDAGopSig : {k : Nat} -> FSPOrd k -> Type
+FinDAGopSig {k} ord = Subset0 (FinSig k) (FSPlt {k} ord)
+
+public export
+FinDAGedgeSet : {k : Nat} -> (ord : FSPOrd k) -> Type
+FinDAGedgeSet {k} ord = FinDAGsig {k} ord -> Nat
+
+public export
+FinDAGopEdgeSet : {k : Nat} -> (ord : FSPOrd k) -> Type
+FinDAGopEdgeSet {k} ord = FinDAGopSig {k} ord -> Nat
