@@ -3915,32 +3915,16 @@ public export
 FSPltDec {k} ord m n = ord m < ord n
 
 public export
-0 FSPlteDec : {0 l, k : Nat} -> FSPOrd l k -> Fin k -> Fin k -> Bool
-FSPlteDec {l} {k} ord m n = ord m <= ord n
-
-public export
 0 FSPgtDec : {0 l, k : Nat} -> FSPOrd l k -> Fin k -> Fin k -> Bool
 FSPgtDec {l} {k} ord m n = ord m > ord n
-
-public export
-0 FSPgteDec : {0 l, k : Nat} -> FSPOrd l k -> Fin k -> Fin k -> Bool
-FSPgteDec {l} {k} ord m n = ord m >= ord n
 
 public export
 0 FSPlt : {0 l, k : Nat} -> FSPOrd l k -> PrERel (Fin k)
 FSPlt {l} {k} ord mn = IsTrue $ FSPltDec {l} {k} ord (fst mn) (snd mn)
 
 public export
-0 FSPlte : {0 l, k : Nat} -> FSPOrd l k -> PrERel (Fin k)
-FSPlte {l} {k} ord mn = IsTrue $ FSPlteDec {l} {k} ord (fst mn) (snd mn)
-
-public export
 0 FSPgt : {0 l, k : Nat} -> FSPOrd l k -> PrERel (Fin k)
 FSPgt {l} {k} ord mn = IsTrue $ FSPgtDec {l} {k} ord (fst mn) (snd mn)
-
-public export
-0 FSPgte : {0 l, k : Nat} -> FSPOrd l k -> PrERel (Fin k)
-FSPgte {l} {k} ord mn = IsTrue $ FSPgteDec {l} {k} ord (fst mn) (snd mn)
 
 public export
 FinSig : Nat -> Type
