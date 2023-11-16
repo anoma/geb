@@ -3861,9 +3861,22 @@ mutual
   evalTheory {s} sorts sv sa subst alg i (InSlF i x) = case x of
     InSlV v => subst i v
     InSlC c => alg i $
-      let c' = replace {p=id} (mapIndex _ i) c in
-      replace {p=id} (sym (mapIndex _ i)) $
-      (DPair.fst c' ** ?evalTheory_hole $ DPair.snd c')
+      let c' = replace {p=id} (mapIndex sorts i) c in
+      replace {p=id} (sym (mapIndex sorts i)) $
+      (DPair.fst c' **
+       evalOp {s} sorts sv sa subst alg
+        (index (DPair.fst c') $ snd $ index i sorts)
+        (DPair.snd c'))
+
+  public export
+  evalOp : {s : Nat} -> (sorts : RawSortList s s) ->
+    (sv, sa : SliceObj $ Fin s) -> SliceMorphism {a=(Fin s)} sv sa ->
+    SliceAlg (InterpRawSortListSl {s} {n=s} sorts) sa ->
+    (op : RawSortOp s) ->
+    InterpRawOp (snd op) (finFToVect $ FreeTheorySl {s} sorts sv) ->
+    InterpRawOp (snd op) (finFToVect sa)
+  evalOp {s} sorts sv sa subst alg op hv =
+    ?evalOp_hole
 
 -----------------------------------------------
 -----------------------------------------------
