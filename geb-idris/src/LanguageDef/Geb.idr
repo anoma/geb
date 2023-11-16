@@ -3856,6 +3856,7 @@ InitialTheory {s} sorts = finFToVect $ SliceMu $ FreeTheorySl {s} sorts
 
 mutual
   public export
+  partial
   evalTheory : {s : Nat} -> (sorts : RawSortList s s) ->
     SliceFreeFEval (InterpRawSortListSl {s} sorts)
   evalTheory {s} sorts sv sa subst alg i (InSlF i x) = case x of
@@ -3869,14 +3870,19 @@ mutual
         (DPair.snd c'))
 
   public export
+  partial
   evalOp : {s : Nat} -> (sorts : RawSortList s s) ->
     (sv, sa : SliceObj $ Fin s) -> SliceMorphism {a=(Fin s)} sv sa ->
     SliceAlg (InterpRawSortListSl {s} {n=s} sorts) sa ->
     (op : RawSortOp s) ->
     InterpRawOp (snd op) (finFToVect $ FreeTheorySl {s} sorts sv) ->
     InterpRawOp (snd op) (finFToVect sa)
-  evalOp {s} sorts sv sa subst alg op hv =
-    ?evalOp_hole
+  evalOp {s} sorts sv sa subst alg (Z ** []) [] = []
+  evalOp {s} sorts sv sa subst alg (S n ** p :: ps) (esa :: hv) =
+    replace {p=id} (sym (finFToVectIdx sa p))
+      (evalTheory {s} sorts sv sa subst alg p $
+        replace {p=id} (finFToVectIdx (FreeTheorySl {s} sorts sv) p) esa)
+    :: evalOp {s} sorts sv sa subst alg (n ** ps) hv
 
 -----------------------------------------------
 -----------------------------------------------
