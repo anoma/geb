@@ -136,86 +136,45 @@ OAFin : Type
 OAFin = Fin OASize
 
 public export
+OAVectDecoder : VectDecoder OldAtom OASize
+OAVectDecoder = [
+    SL_ATOM
+  , SL_NAT
+  , SL_NATL
+  , SL_EXP
+  , SL_EXPL
+  , POS_Z
+  , POS_S
+  , POS_X
+  , POS_NN
+  , POS_NC
+  , POS_XN
+  , POS_XC
+  , DIR_S
+  , DIR_XA
+  , DIR_XNL
+  , DIR_XXL
+  , DIR_NCHD
+  , DIR_NCTL
+  , DIR_XCHD
+  , DIR_XCTL
+  , FBT_ATOM
+  , FBT_BNAT
+  , FBT_INITIAL
+  , FBT_COPRODUCT
+  , FBT_COPRODUCT_L
+  , FBT_TERMINAL
+  , FBT_PRODUCT
+  , FBT_PRODUCT_L
+  , TERM_U
+  , TERM_L
+  , TERM_R
+  , TERM_P
+  ]
+
+public export
 OADecoder : FinDecoder OldAtom OASize
-OADecoder FZ = SL_ATOM
-OADecoder (FS FZ) = SL_NAT
-OADecoder (FS (FS FZ)) = SL_NATL
-OADecoder (FS (FS (FS FZ))) = SL_EXP
-OADecoder (FS (FS (FS (FS FZ)))) = SL_EXPL
-OADecoder (FS (FS (FS (FS (FS FZ))))) = POS_Z
-OADecoder (FS (FS (FS (FS (FS (FS FZ)))))) = POS_S
-OADecoder (FS (FS (FS (FS (FS (FS (FS FZ))))))) = POS_X
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))) = POS_NN
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))) = POS_NC
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))) = POS_XN
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))) =
-  POS_XC
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))) =
-  DIR_S
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  FZ))))))))))))) =
-    DIR_XA
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS FZ)))))))))))))) =
-    DIR_XNL
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS FZ))))))))))))))) =
-    DIR_XXL
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS FZ)))))))))))))))) =
-    DIR_NCHD
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS FZ))))))))))))))))) =
-    DIR_NCTL
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS FZ)))))))))))))))))) =
-    DIR_XCHD
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS FZ))))))))))))))))))) =
-    DIR_XCTL
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))) =
-    FBT_ATOM
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))) =
-    FBT_BNAT
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))) =
-    FBT_INITIAL
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))) =
-    FBT_COPRODUCT
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS FZ)))))))))))))))))))))))) =
-    FBT_COPRODUCT_L
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  FZ))))))))))))))))))))))))) =
-    FBT_TERMINAL
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS FZ)))))))))))))))))))))))))) =
-    FBT_PRODUCT
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS FZ))))))))))))))))))))))))))) =
-    FBT_PRODUCT_L
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS FZ)))))))))))))))))))))))))))) =
-    TERM_U
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS FZ))))))))))))))))))))))))))))) =
-    TERM_L
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS FZ)))))))))))))))))))))))))))))) =
-    TERM_R
-OADecoder (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS (FS
-  (FS (FS (FS (FS (FS (FS FZ))))))))))))))))))))))))))))))) =
-    TERM_P
+OADecoder = VectToFinDecoder OAVectDecoder
 
 public export
 OAEncoder : NatEncoder OADecoder
