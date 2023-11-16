@@ -116,7 +116,7 @@ ExtInverse f g = (ExtEq (f . g) id, ExtEq (g . f) id)
 
 public export
 ExtInversePair : {a, b : Type} -> (a -> b, b -> a) -> Type
-ExtInversePair (f, g) = ExtInverse f g
+ExtInversePair = uncurry ExtInverse
 
 -----------------------------------------------
 -----------------------------------------------
