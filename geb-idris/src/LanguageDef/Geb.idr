@@ -3884,11 +3884,11 @@ mutual
         replace {p=id} (finFToVectIdx (FreeTheorySl {s} sorts sv) p) esa)
     :: evalOp {s} sorts sv sa subst alg (n ** ps) hv
 
------------------------------------------------
------------------------------------------------
----- Finite directed acyclic graphs (DAGs) ----
------------------------------------------------
------------------------------------------------
+-------------------------------------------------
+-------------------------------------------------
+---- Inductive representation of finite DAGs ----
+-------------------------------------------------
+-------------------------------------------------
 
 -- See https://arxiv.org/abs/1303.0376 .
 
@@ -3896,3 +3896,59 @@ public export
 data FinIdag : SliceObj (Nat, Nat) where
   DAG0 : FinIdag (0, 0)
   DAG1 : FinIdag (1, 1)
+  -- This is incomplete.
+
+-----------------------------------------------
+-----------------------------------------------
+---- Finite directed acyclic graphs (DAGs) ----
+-----------------------------------------------
+-----------------------------------------------
+
+-- Impose a partial order on a finite set by slicing it into levels.
+public export
+FSPOrd : Nat -> Type
+FSPOrd k = Fin k -> Nat
+
+public export
+0 FSPltDec : {0 k : Nat} -> FSPOrd k -> Fin k -> Fin k -> Bool
+FSPltDec {k} ord m n = m < n
+
+public export
+0 FSPlteDec : {0 k : Nat} -> FSPOrd k -> Fin k -> Fin k -> Bool
+FSPlteDec {k} ord m n = m <= n
+
+public export
+0 FSPgtDec : {0 k : Nat} -> FSPOrd k -> Fin k -> Fin k -> Bool
+FSPgtDec {k} ord m n = m > n
+
+public export
+0 FSPgteDec : {0 k : Nat} -> FSPOrd k -> Fin k -> Fin k -> Bool
+FSPgteDec {k} ord m n = m >= n
+
+public export
+0 FSPlt : {0 k : Nat} -> FSPOrd k -> PrERel (Fin k)
+FSPlt {k} ord mn = IsTrue $ FSPltDec {k} ord (fst mn) (snd mn)
+
+public export
+0 FSPlte : {0 k : Nat} -> FSPOrd k -> PrERel (Fin k)
+FSPlte {k} ord mn = IsTrue $ FSPlteDec {k} ord (fst mn) (snd mn)
+
+public export
+0 FSPgt : {0 k : Nat} -> FSPOrd k -> PrERel (Fin k)
+FSPgt {k} ord mn = IsTrue $ FSPgtDec {k} ord (fst mn) (snd mn)
+
+public export
+0 FSPgte : {0 k : Nat} -> FSPOrd k -> PrERel (Fin k)
+FSPgte {k} ord mn = IsTrue $ FSPgteDec {k} ord (fst mn) (snd mn)
+
+public export
+FinSig : Nat -> Type
+FinSig k = SignatureT (Fin k)
+
+public export
+FinDAGedge : {k : Nat} -> FSPOrd k -> Type
+FinDAGedge {k} ord = Subset0 (FinSig k) (FSPlt {k} ord)
+
+public export
+FinDAGopEdge : {k : Nat} -> FSPOrd k -> Type
+FinDAGopEdge {k} ord = Subset0 (FinSig k) (FSPgt {k} ord)
