@@ -3911,20 +3911,31 @@ FSPOrd : Nat -> Nat -> Type
 FSPOrd l k = Fin k -> Fin l
 
 public export
+0 FSPordMap : {0 l, k : Nat} -> {0 a : Type} ->
+  (Fin l -> Fin l -> a) -> FSPOrd l k -> Fin k -> Fin k -> a
+FSPordMap {l} {k} cmp ord m n = cmp (ord m) (ord n)
+
+public export
 0 FSPltDec : {0 l, k : Nat} -> FSPOrd l k -> Fin k -> Fin k -> Bool
-FSPltDec {k} ord m n = ord m < ord n
+FSPltDec {l} {k} = FSPordMap {l} {k} {a=Bool} (<)
 
 public export
 0 FSPgtDec : {0 l, k : Nat} -> FSPOrd l k -> Fin k -> Fin k -> Bool
-FSPgtDec {l} {k} ord m n = ord m > ord n
+FSPgtDec {l} {k} = FSPordMap {l} {k} {a=Bool} (>)
+
+public export
+0 FSPordDec : {0 l, k : Nat} ->
+  (Fin l -> Fin l -> Bool) -> FSPOrd l k -> PrERel (Fin k)
+FSPordDec {l} {k} ord cmp mn =
+  IsTrue $ FSPordMap {l} {k} {a=Bool} ord cmp (fst mn) (snd mn)
 
 public export
 0 FSPlt : {0 l, k : Nat} -> FSPOrd l k -> PrERel (Fin k)
-FSPlt {l} {k} ord mn = IsTrue $ FSPltDec {l} {k} ord (fst mn) (snd mn)
+FSPlt {l} {k} = FSPordDec {l} {k} (<)
 
 public export
 0 FSPgt : {0 l, k : Nat} -> FSPOrd l k -> PrERel (Fin k)
-FSPgt {l} {k} ord mn = IsTrue $ FSPgtDec {l} {k} ord (fst mn) (snd mn)
+FSPgt {l} {k} = FSPordDec {l} {k} (>)
 
 public export
 FinSig : Nat -> Type
