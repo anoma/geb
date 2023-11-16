@@ -3905,58 +3905,59 @@ data FinIdag : SliceObj (Nat, Nat) where
 -----------------------------------------------
 
 -- Impose a partial order on a finite set by slicing it into levels.
+-- `l` is the number of levels; `k` is the size of the set being ordered.
 public export
-FSPOrd : Nat -> Type
-FSPOrd k = Fin k -> Nat
+FSPOrd : Nat -> Nat -> Type
+FSPOrd l k = Fin k -> Fin l
 
 public export
-0 FSPltDec : {0 k : Nat} -> FSPOrd k -> Fin k -> Fin k -> Bool
-FSPltDec {k} ord m n = m < n
+0 FSPltDec : {0 l, k : Nat} -> FSPOrd l k -> Fin k -> Fin k -> Bool
+FSPltDec {k} ord m n = ord m < ord n
 
 public export
-0 FSPlteDec : {0 k : Nat} -> FSPOrd k -> Fin k -> Fin k -> Bool
-FSPlteDec {k} ord m n = m <= n
+0 FSPlteDec : {0 l, k : Nat} -> FSPOrd l k -> Fin k -> Fin k -> Bool
+FSPlteDec {l} {k} ord m n = ord m <= ord n
 
 public export
-0 FSPgtDec : {0 k : Nat} -> FSPOrd k -> Fin k -> Fin k -> Bool
-FSPgtDec {k} ord m n = m > n
+0 FSPgtDec : {0 l, k : Nat} -> FSPOrd l k -> Fin k -> Fin k -> Bool
+FSPgtDec {l} {k} ord m n = ord m > ord n
 
 public export
-0 FSPgteDec : {0 k : Nat} -> FSPOrd k -> Fin k -> Fin k -> Bool
-FSPgteDec {k} ord m n = m >= n
+0 FSPgteDec : {0 l, k : Nat} -> FSPOrd l k -> Fin k -> Fin k -> Bool
+FSPgteDec {l} {k} ord m n = ord m >= ord n
 
 public export
-0 FSPlt : {0 k : Nat} -> FSPOrd k -> PrERel (Fin k)
-FSPlt {k} ord mn = IsTrue $ FSPltDec {k} ord (fst mn) (snd mn)
+0 FSPlt : {0 l, k : Nat} -> FSPOrd l k -> PrERel (Fin k)
+FSPlt {l} {k} ord mn = IsTrue $ FSPltDec {l} {k} ord (fst mn) (snd mn)
 
 public export
-0 FSPlte : {0 k : Nat} -> FSPOrd k -> PrERel (Fin k)
-FSPlte {k} ord mn = IsTrue $ FSPlteDec {k} ord (fst mn) (snd mn)
+0 FSPlte : {0 l, k : Nat} -> FSPOrd l k -> PrERel (Fin k)
+FSPlte {l} {k} ord mn = IsTrue $ FSPlteDec {l} {k} ord (fst mn) (snd mn)
 
 public export
-0 FSPgt : {0 k : Nat} -> FSPOrd k -> PrERel (Fin k)
-FSPgt {k} ord mn = IsTrue $ FSPgtDec {k} ord (fst mn) (snd mn)
+0 FSPgt : {0 l, k : Nat} -> FSPOrd l k -> PrERel (Fin k)
+FSPgt {l} {k} ord mn = IsTrue $ FSPgtDec {l} {k} ord (fst mn) (snd mn)
 
 public export
-0 FSPgte : {0 k : Nat} -> FSPOrd k -> PrERel (Fin k)
-FSPgte {k} ord mn = IsTrue $ FSPgteDec {k} ord (fst mn) (snd mn)
+0 FSPgte : {0 l, k : Nat} -> FSPOrd l k -> PrERel (Fin k)
+FSPgte {l} {k} ord mn = IsTrue $ FSPgteDec {l} {k} ord (fst mn) (snd mn)
 
 public export
 FinSig : Nat -> Type
 FinSig k = SignatureT (Fin k)
 
 public export
-FinDAGsig : {k : Nat} -> FSPOrd k -> Type
-FinDAGsig {k} ord = Subset0 (FinSig k) (FSPgt {k} ord)
+FinDAGsig : {l, k : Nat} -> FSPOrd l k -> Type
+FinDAGsig {l} {k} ord = Subset0 (FinSig k) (FSPgt {l} {k} ord)
 
 public export
-FinDAGopSig : {k : Nat} -> FSPOrd k -> Type
-FinDAGopSig {k} ord = Subset0 (FinSig k) (FSPlt {k} ord)
+FinDAGopSig : {l, k : Nat} -> FSPOrd l k -> Type
+FinDAGopSig {l} {k} ord = Subset0 (FinSig k) (FSPlt {l} {k} ord)
 
 public export
-FinDAGedgeSet : {k : Nat} -> (ord : FSPOrd k) -> Type
-FinDAGedgeSet {k} ord = FinDAGsig {k} ord -> Nat
+FinDAGedgeSet : {l, k : Nat} -> (ord : FSPOrd l k) -> Type
+FinDAGedgeSet {l} {k} ord = FinDAGsig {l} {k} ord -> Nat
 
 public export
-FinDAGopEdgeSet : {k : Nat} -> (ord : FSPOrd k) -> Type
-FinDAGopEdgeSet {k} ord = FinDAGopSig {k} ord -> Nat
+FinDAGopEdgeSet : {l, k : Nat} -> (ord : FSPOrd l k) -> Type
+FinDAGopEdgeSet {l} {k} ord = FinDAGopSig {l} {k} ord -> Nat
