@@ -5,6 +5,10 @@ modules =
     , Library.IdrisUtils
     , Library.IdrisCategories
     , Library.CategoryTheory
+    , Test.TestLibrary
+    , Library.Test.IdrisUtilsTest
+    , Library.Test.IdrisCategoriesTest
+    , Library.Test.CategoryTheoryTest
     , LanguageDef.FinCat
     , LanguageDef.BinTree
     , LanguageDef.Geb
@@ -46,10 +50,6 @@ modules =
     , LanguageDef.Test.LogicTest
     , LanguageDef.Test.ComputationalEffectsTest
     , LanguageDef.Test.EmbeddedTest
-    , Test.TestLibrary
-    , Library.Test.IdrisUtilsTest
-    , Library.Test.IdrisCategoriesTest
-    , Library.Test.CategoryTheoryTest
 
 depends = contrib, network, test
 
