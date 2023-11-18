@@ -3003,18 +3003,18 @@ SumRepCorepProfunctor {ffp} ffpm =
 ------------------------
 
 -- A quiver (directed multigraph) internal to FinSet.
-record FSQuiv where
-  constructor FSQ
+record FSQuiv' where
+  constructor FSQ'
   fsqVert : Nat
   fsqEdge : Nat
   fsqSrc : Vect fsqEdge (Fin fsqVert)
   fsqTgt : Vect fsqEdge (Fin fsqVert)
 
 -- The signature of endpoints of an edge in or a path through a finite quiver.
-record FSQSig (fsq : FSQuiv) where
+record FSQSig (FSQ' : FSQuiv') where
   constructor FSQS
-  fsqsDom : Fin (fsqVert fsq)
-  fsqsCod : Fin (fsqVert fsq)
+  fsqsDom : Fin (fsqVert FSQ')
+  fsqsCod : Fin (fsqVert FSQ')
 
 -- An edge in a finite quiver with the given endpoints.
 record FSQEdge (sig : Sigma FSQSig) where
@@ -3026,11 +3026,11 @@ record FSQEdge (sig : Sigma FSQSig) where
 -- A path through a finite quiver (ordered starting from the target)
 -- with the given endpoints.
 data FSQPath : SliceObj (Sigma FSQSig) where
-  FSQPid : (0 fsq : FSQuiv) -> (0 v : Fin (fsqVert fsq)) ->
-    FSQPath (fsq ** FSQS v v)
-  FSQPcomp : (0 fsq : FSQuiv) -> {0 s, v, t : Fin (fsqVert fsq)} ->
-    FSQEdge (fsq ** FSQS v t) -> FSQPath (fsq ** FSQS s v) ->
-    FSQPath (fsq ** FSQS s t)
+  FSQPid : (0 FSQ' : FSQuiv') -> (0 v : Fin (fsqVert FSQ')) ->
+    FSQPath (FSQ' ** FSQS v v)
+  FSQPcomp : (0 FSQ' : FSQuiv') -> {0 s, v, t : Fin (fsqVert FSQ')} ->
+    FSQEdge (FSQ' ** FSQS v t) -> FSQPath (FSQ' ** FSQS s v) ->
+    FSQPath (FSQ' ** FSQS s t)
 
 ------------------------------------------------
 ------------------------------------------------
@@ -3110,19 +3110,6 @@ dspfToSpf {dom} {cod} (MkDSPF pos nfield ftypes) =
 ----------------------
 ---- Fixed points ----
 ----------------------
-
------------------------------------------
------------------------------------------
----- Finitary quivers and categories ----
------------------------------------------
------------------------------------------
-
--- A quiver enriched over `FinSet` is one whose edge-objects are drawn
--- from `FinSet` -- in other words, whose edge-sets are all finite.
--- Such a quiver need not necessarily have a finite number of _vertices_.
-public export
-FinEnrQuiv : Type -> Type
-FinEnrQuiv v = (v, v) -> Nat
 
 ---------------------------------------
 ---------------------------------------
