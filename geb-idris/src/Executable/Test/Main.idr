@@ -4,6 +4,7 @@ import Test.TestLibrary
 import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
 import Library.Test.IdrisAlgebraTest
+import Library.Test.CategoryTheoryTest
 import LanguageDef.Test.FinCatTest
 import LanguageDef.Test.BinTreeTest
 import LanguageDef.Test.GebTest
@@ -29,7 +30,6 @@ import LanguageDef.Test.LogicTest
 import LanguageDef.Test.ComputationalEffectsTest
 import LanguageDef.Test.EmbeddedTest
 import LanguageDef.Test.PolyIndTypesTest
-import Library.Test.CategoryTheoryTest
 
 %default total
 
