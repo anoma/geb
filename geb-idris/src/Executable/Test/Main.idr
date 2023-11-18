@@ -4,6 +4,7 @@ import Test.TestLibrary
 import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
 import Library.Test.IdrisAlgebraTest
+import LanguageDef.Test.FinCatTest
 import LanguageDef.Test.BinTreeTest
 import LanguageDef.Test.GebTest
 import LanguageDef.Test.RefinedADTTest
@@ -64,6 +65,7 @@ totalTests = do
   LanguageDef.Test.FiguresTest.figuresTest
   LanguageDef.Test.PolyIndTypesTest.polyIndTypesTest
   LanguageDef.Test.GebTest.gebTest
+  LanguageDef.Test.FinCatTest.finCatTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()
