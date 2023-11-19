@@ -118,6 +118,28 @@ public export
 ExtInversePair : {a, b : Type} -> (a -> b, b -> a) -> Type
 ExtInversePair = uncurry ExtInverse
 
+-----------------------
+-----------------------
+---- Pointed types ----
+-----------------------
+-----------------------
+
+-- A type plus a distinguished single term.  Isomorphic to `Either () a`.
+public export
+data PointedT : Type -> Type where
+  Pt : {0 a : Type} -> a -> PointedT a
+  Pp : {0 a : Type} -> PointedT a
+
+-- The type whose terms represent objects of the subcategory of `Fin`, the
+-- category of finite sets, composed of the pointed finite sets -- the non-empty
+-- finite sets with one distinguished term each.
+--
+-- `PointedFin n` is `Fin n` plus a distinguished term, which isomorphic to
+-- `Fin (S n)` (as well as `Either () (Fin n)`).
+public export
+PointedFin : Nat -> Type
+PointedFin = PointedT . Fin
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Categories internal to Idris's `Type` ----
