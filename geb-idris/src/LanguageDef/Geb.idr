@@ -3170,6 +3170,10 @@ DiscOpFactorize {pos} nfield sld i =
 ---------------------------
 ---------------------------
 
+-------------------------------
+---- Objects and morphisms ----
+-------------------------------
+
 public export
 SpliceCat : Type
 SpliceCat = (Type, Type)
@@ -3364,6 +3368,33 @@ public export
   (m : SpliceMorph {cat} sig) ->
   SpliceCobaseMorph {cat} sig (SpliceMorphBase {cat} {sig} m)
 SpliceMorphCobase = snd0
+
+-----------------------------
+---- Polynomial functors ----
+-----------------------------
+
+public export
+SpliceBaseChangeBase : {cat : SpliceCat} -> {d : Type} ->
+  (d -> SpliceBase cat) -> SpliceObj cat -> SpliceBaseObj (SpliceCobase cat, d)
+SpliceBaseChangeBase {cat} {d} f spl = SpliceObjBase spl . f
+
+public export
+0 SpliceBaseChangeCobase : {cat : SpliceCat} -> {d : Type} ->
+  (f : d -> SpliceBase cat) -> (spl : SpliceObj cat) ->
+  SpliceCobaseObj (SpliceCobase cat, d) (SpliceBaseChangeBase {cat} {d} f spl)
+SpliceBaseChangeCobase {cat} {d} f spl = ?SpliceBaseChangeCobase_hole
+
+public export
+SpliceBaseChange : {cat : SpliceCat} -> {d : Type} ->
+  (d -> SpliceBase cat) -> SpliceObj cat -> SpliceObj (SpliceCobase cat, d)
+SpliceBaseChange {cat} {d} f spl =
+  Element0
+    (SpliceBaseChangeBase {cat} {d} f spl)
+    (SpliceBaseChangeCobase {cat} {d} f spl)
+
+----------------------------------------------
+---- Double category of splices of `Type` ----
+----------------------------------------------
 
 public export
 spliceId : {cat : SpliceCat} ->
