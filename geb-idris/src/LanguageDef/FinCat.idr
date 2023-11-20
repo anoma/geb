@@ -9,6 +9,18 @@ import Library.IdrisCategories
 --------------------------
 --------------------------
 
+---------------------------------------------
+---- Enriched quivers internal to `Type` ----
+---------------------------------------------
+
+-- An enriched quiver internal to `Type` is one whose edge-objects are drawn
+-- from some arbitrary category internal to `Type` (possibly `Type` itself,
+-- which is self-enriched), and whose vertex object comes from `Type` itself.
+-- An `EnrQuivV` is one whose vertex-object is `v`.
+public export
+EnrQuivV : Type -> Type -> Type
+EnrQuivV = HomProf . ProductMonad
+
 ------------------------------------------
 ---- `Type`-internal/enriched quivers ----
 ------------------------------------------
@@ -18,7 +30,7 @@ import Library.IdrisCategories
 -- metalanguage.  A `TypeQuivV v` is one whose vertex-object is `v`.
 public export
 TypeQuivV : Type -> Type
-TypeQuivV v = ProductMonad v -> Type
+TypeQuivV = flip EnrQuivV Type
 
 -----------------------------------
 ---- `FinSet`-enriched quivers ----
@@ -32,7 +44,7 @@ TypeQuivV v = ProductMonad v -> Type
 -- (`Type`), is `v`.
 public export
 FinEnrQuivV : Type -> Type
-FinEnrQuivV v = ProductMonad v -> Nat
+FinEnrQuivV = flip EnrQuivV Nat
 
 -----------------------------------
 ---- `FinSet`-internal quivers ----
