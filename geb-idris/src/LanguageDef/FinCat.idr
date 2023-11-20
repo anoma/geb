@@ -9,6 +9,22 @@ import Library.IdrisCategories
 --------------------------
 --------------------------
 
+--------------------------------------------------
+---- Quivers internal to arbitrary categories ----
+--------------------------------------------------
+
+-- An enriched quiver internal to a category which is itself internal to `Type`
+-- is one whose edge-objects are drawn from some arbitrary category internal to
+-- `Type` (possibly `Type` itself, which is self-enriched), and whose vertex
+-- object comes from some other arbitrary category internal to `Type` (again
+-- possibly `Type` itself).  A `QuivVE {vb} vp v e` is one whose vertex
+-- category's objects are indexed by `vb` and are of the form `vb v'` for
+-- some `v' : vb`, whose specific vertex-object is `v`, and whose edge-objects
+-- are drawn from `e`.
+public export
+QuivVE : {0 vb : Type} -> SliceObj vb -> vb -> Type -> Type
+QuivVE {vb} vp v = HomProf (ProductMonad $ vp v)
+
 ---------------------------------------------
 ---- Enriched quivers internal to `Type` ----
 ---------------------------------------------
@@ -16,10 +32,11 @@ import Library.IdrisCategories
 -- An enriched quiver internal to `Type` is one whose edge-objects are drawn
 -- from some arbitrary category internal to `Type` (possibly `Type` itself,
 -- which is self-enriched), and whose vertex object comes from `Type` itself.
--- An `EnrQuivV` is one whose vertex-object is `v`.
+-- An `EnrQuivVE v e` is one whose vertex-object is `v` and whose edge-objects
+-- are drawn from `e`.
 public export
-EnrQuivV : Type -> Type -> Type
-EnrQuivV = HomProf . ProductMonad
+EnrQuivVE : Type -> Type -> Type
+EnrQuivVE = QuivVE {vb=Type} id
 
 ------------------------------------------
 ---- `Type`-internal/enriched quivers ----
@@ -30,7 +47,7 @@ EnrQuivV = HomProf . ProductMonad
 -- metalanguage.  A `TypeQuivV v` is one whose vertex-object is `v`.
 public export
 TypeQuivV : Type -> Type
-TypeQuivV = flip EnrQuivV Type
+TypeQuivV = flip EnrQuivVE Type
 
 -----------------------------------
 ---- `FinSet`-enriched quivers ----
@@ -44,7 +61,7 @@ TypeQuivV = flip EnrQuivV Type
 -- (`Type`), is `v`.
 public export
 FinEnrQuivV : Type -> Type
-FinEnrQuivV = flip EnrQuivV Nat
+FinEnrQuivV = flip EnrQuivVE Nat
 
 -----------------------------------
 ---- `FinSet`-internal quivers ----
