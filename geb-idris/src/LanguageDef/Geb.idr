@@ -3376,7 +3376,7 @@ SpliceMorphCobase = snd0
 public export
 SpliceBaseChangeBase : {cat : SpliceCat} -> {d : Type} ->
   (d -> SpliceBase cat) -> SpliceObj cat -> SpliceBaseObj (SpliceCobase cat, d)
-SpliceBaseChangeBase {cat} {d} f spl = SpliceObjBase spl . f
+SpliceBaseChangeBase {cat} {d} f spl = ?SpliceBaseChangeBase_hole
 
 public export
 0 SpliceBaseChangeCobase : {cat : SpliceCat} -> {d : Type} ->
@@ -3384,6 +3384,7 @@ public export
   SpliceCobaseObj (SpliceCobase cat, d) (SpliceBaseChangeBase {cat} {d} f spl)
 SpliceBaseChangeCobase {cat} {d} f spl = ?SpliceBaseChangeCobase_hole
 
+{-
 public export
 SpliceBaseChange : {cat : SpliceCat} -> {d : Type} ->
   (d -> SpliceBase cat) -> SpliceObj cat -> SpliceObj (SpliceCobase cat, d)
@@ -3391,6 +3392,28 @@ SpliceBaseChange {cat} {d} f spl =
   Element0
     (SpliceBaseChangeBase {cat} {d} f spl)
     (SpliceBaseChangeCobase {cat} {d} f spl)
+    -}
+
+public export
+SpliceSigmaBase : {cat : SpliceCat} -> {d : Type} ->
+  (SpliceBase cat -> d) -> SpliceObj cat -> SpliceBaseObj (SpliceCobase cat, d)
+SpliceSigmaBase {cat} {d} f spl = ?SpliceSigmaBase_hole
+
+public export
+0 SpliceSigmaCobase : {cat : SpliceCat} -> {d : Type} ->
+  (f : SpliceBase cat -> d) -> (spl : SpliceObj cat) ->
+  SpliceCobaseObj (SpliceCobase cat, d) (SpliceSigmaBase {cat} {d} f spl)
+SpliceSigmaCobase {cat} {d} f spl = ?SpliceSigmaCobase_hole
+
+{-
+public export
+SpliceSigma : {cat : SpliceCat} -> {d : Type} ->
+  (SpliceBase cat -> d) -> SpliceObj cat -> SpliceObj (SpliceCobase cat, d)
+SpliceSigma {cat} {d} f spl =
+  Element0
+    (SpliceSigmaBase {cat} {d} f spl)
+    (SpliceSigmaCobase {cat} {d} f spl)
+    -}
 
 public export
 0 SpliceCosigmaBase : {cat : SpliceCat} -> {b : Type} ->
