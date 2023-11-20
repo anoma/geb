@@ -108,3 +108,23 @@ FinEnrQuivSL {v} q = TypeRQuivSL {v} (Fin . q)
 public export
 FinQuivSL : {n : Nat} -> FinQuivN n -> Type
 FinQuivSL {n} = FinEnrQuivSL {v=(Fin n)}
+
+-------------------------------
+---- Compositional quivers ----
+-------------------------------
+
+-- A compositional quiver is a quiver with an assignment of each pair of
+-- edges into and out of a shared vertex -- `x -- e --> y --> e' -- z` --
+-- to a single edge following the same path -- `x -- e' --> z`.
+
+public export
+TypeCQuivComp : {v : Type} -> TypeQuivV v -> Type
+TypeCQuivComp {v} q = (x, y, z : v) -> q (y, z) -> q (x, y) -> q (x, z)
+
+public export
+FinEnrQuivComp : {v : Type} -> FinEnrQuivV v -> Type
+FinEnrQuivComp {v} q = TypeCQuivComp {v} (Fin . q)
+
+public export
+FinQuivComp : {n : Nat} -> FinQuivN n -> Type
+FinQuivComp {n} = FinEnrQuivComp {v=(Fin n)}
