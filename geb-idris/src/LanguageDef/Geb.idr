@@ -3392,6 +3392,25 @@ SpliceBaseChange {cat} {d} f spl =
     (SpliceBaseChangeBase {cat} {d} f spl)
     (SpliceBaseChangeCobase {cat} {d} f spl)
 
+public export
+0 SpliceCosigmaBase : {cat : SpliceCat} -> {b : Type} ->
+  (b -> SpliceCobase cat) -> SpliceObj cat -> SpliceBaseObj (b, SpliceBase cat)
+SpliceCosigmaBase {cat} {b} f spl = SpliceObjBase {cat} spl
+
+public export
+0 SpliceCosigmaCobase : {cat : SpliceCat} -> {b : Type} ->
+  (f : b -> SpliceCobase cat) -> (spl : SpliceObj cat) ->
+  SpliceCobaseObj (b, SpliceBase cat) (SpliceCosigmaBase {cat} {b} f spl)
+SpliceCosigmaCobase {cat} {b} f spl = SpliceObjCobase spl . f
+
+public export
+0 SpliceCosigma : {cat : SpliceCat} -> {b : Type} ->
+  (f : b -> SpliceCobase cat) -> SpliceObj cat -> SpliceObj (b, SpliceBase cat)
+SpliceCosigma {cat} {b} f spl =
+  Element0
+    (SpliceCosigmaBase {cat} {b} f spl)
+    (SpliceCosigmaCobase {cat} {b} f spl)
+
 ----------------------------------------------
 ---- Double category of splices of `Type` ----
 ----------------------------------------------
