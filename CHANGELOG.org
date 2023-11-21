@@ -1,3 +1,8 @@
+* 0.5.1
+** Bug fix patch
+- =mgl-pax= updated on us causing build failures
+- Fix bug where the optimized Vampir output would produce incorrect
+  code
 * 0.5.0
 
 ** User Facing Changes
