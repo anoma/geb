@@ -25,6 +25,6 @@ as our testing framework.
 Please read the
 [manual](https://quickref.common-lisp.net/parachute.html) for extra
 features and how to better lay out future tests"
-  (run-tests pax:function)
-  (run-tests-error pax:function)
-  (code-coverage pax:function))
+  (run-tests       function)
+  (run-tests-error function)
+  (code-coverage   function))
