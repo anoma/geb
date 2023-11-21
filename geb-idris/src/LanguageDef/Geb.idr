@@ -353,7 +353,7 @@ algLift f fm {a} {b} = (|>) (fm a b) . (.)
   Suppose the following:
 
     - `f` is an endofunctor in `Type`
-    - `c` and `p` form an algebra of `f` (`c` is the object; `m`
+    - `c` and `m` form an algebra of `f` (`c` is the object; `m`
       is the morphism)
     - `a` and `b` are the types of objects of two categories (we shall also
       refer to the those categories themselves as `a` and `b`)
@@ -4016,3 +4016,25 @@ FinDAGedgeSet {l} {k} ord = FinDAGsig {l} {k} ord -> Nat
 public export
 FinDAGopEdgeSet : {l, k : Nat} -> (ord : FSPOrd l k) -> Type
 FinDAGopEdgeSet {l} {k} ord = FinDAGopSig {l} {k} ord -> Nat
+
+---------------------------------------------
+---------------------------------------------
+---- Programmer's FinSet via profunctors ----
+---------------------------------------------
+---------------------------------------------
+
+public export
+coprodHomLift : (Type -> Type -> Type) -> (Type, Type) -> Type -> Type
+coprodHomLift =
+  covarHomProfuncLift ProductMonad (\x, y => map {f=ProductMonad})
+    {a=Type} {b=Type} {c=Type} (\(x, y) => Either x y)
+
+public export
+prodHomLift : (Type -> Type -> Type) -> Type -> (Type, Type) -> Type
+prodHomLift =
+  contravarHomProfuncLift ProductMonad (\x, y => map {f=ProductMonad})
+    {a=Type} {b=Type} {c=Type} (\(x, y) => Pair x y)
+
+public export
+prodHomLiftCurry : (Type -> Type -> Type) -> (Type, Type) -> Type -> Type
+prodHomLiftCurry h (x, y) z = h x (h y z)
