@@ -24,12 +24,14 @@ Note that what is happening is that we look at the domain of the morphism
 and skip 0es, making non-zero entries into wires"
   (let* ((wire-count (length (dom morphism)))
          (wires (loop for i from 1 to wire-count
-                      collect (vamp:make-wire :var (intern (format nil "X~a" i)
-                                                           :keyword)))))
+                      collect (vamp:make-wire
+                               :var (intern
+                                     (format nil "X~a" (- wire-count i))
+                                     :keyword)))))
     (list
      (vamp:make-alias
       :name name
-      :inputs wires
+      :inputs (cdr (reverse wires))
       :body
       (list
        (vamp:make-tuples
