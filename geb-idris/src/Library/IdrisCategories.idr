@@ -1003,6 +1003,9 @@ OpHomProf = flip HomProf
 ---- Pre-/post-composition pairs and isos as profunctors ----
 -------------------------------------------------------------
 
+-- `PrePostPair s t a b` is a morphism from `(s, t)` to `(a, b)` in
+-- `(op(Type), Type)`.
+--
 -- `PrePostPair` embeds the object `(s, t)` of `(op(Type), Type)` into
 -- the category whose objects are profunctors `(op(Type), Type) -> Type)` and
 -- whose morphisms are natural transformations.  For more context, see

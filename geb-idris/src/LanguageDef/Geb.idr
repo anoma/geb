@@ -4019,3 +4019,40 @@ prodHomLift =
 public export
 prodHomLiftCurry : (Type -> Type -> Type) -> (Type, Type) -> Type -> Type
 prodHomLiftCurry h (x, y) z = h x (h y z)
+
+--------------------------------
+--------------------------------
+---- Categories of elements ----
+--------------------------------
+--------------------------------
+
+-- A profunctor `Type -> Type` is a functor `op(Type) -> Type -> Type`,
+-- so its category of elements consists of objects of `(op(Type), Type)`
+-- together with elements of the profunctor applied to them.
+public export
+ProfCatElemObj : ProfunctorSig -> Type
+ProfCatElemObj p = (ab : (Type, Type) ** p (fst ab) (snd ab))
+
+-- Because the domain of an endo-profunctor on `Type` is `(op(Type), Type)`,
+-- the morphism component of a morphism in its category of elements is a
+-- morphism in `(op(Type), Type)`, which is a `PrePostPair`.
+--
+-- (Besides a morphism in the functor's domain, a morphism in the category of
+-- elements also has an equality/commutativity component.)
+public export
+ProfCatElemDomMorph : {0 p : ProfunctorSig} ->
+  ProfCatElemObj p -> ProfCatElemObj p -> Type
+ProfCatElemDomMorph {p} ab cd =
+  PrePostPair (fst (fst ab)) (snd (fst ab)) (fst (fst cd)) (snd (fst cd))
+
+public export
+0 ProfCatElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
+  (ab, cd : ProfCatElemObj p) -> ProfCatElemDomMorph {p} ab cd -> Type
+ProfCatElemCommutes {p} {isP} ab cd mcabd =
+  dimap {f=p} (fst mcabd) (snd mcabd) (snd ab) = snd cd
+
+public export
+ProfCatElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
+  ProfCatElemObj p -> ProfCatElemObj p -> Type
+ProfCatElemMorph {p} {isP} ab cd =
+  Subset0 (ProfCatElemDomMorph {p} ab cd) (ProfCatElemCommutes {p} {isP} ab cd)
