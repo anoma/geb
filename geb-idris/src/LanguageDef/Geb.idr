@@ -3569,17 +3569,6 @@ DualYonedaLemmaR : (0 p : ProfunctorSig) ->
   ProfNT (DualYonedaLemmaNT p) p
 DualYonedaLemmaR p dyembed {a=i} {b=j} = dyembed (id {a=i}, id {a=j})
 
-public export
-DualCoYonedaEmbed : ProfunctorSig -> Type -> Type -> ProfunctorSig
-DualCoYonedaEmbed p c d a b = (PrePostPair c d a b, p a b)
-
-public export
-DualCoYoEmbedProf :
-  Profunctor p => Profunctor (DualCoYonedaEmbed p i j)
-DualCoYoEmbedProf = MkProfunctor $
-  \mca, mbd, ((mai, mjb), pab) =>
-    ((mai . mca, mbd . mjb), dimap {f=p} mca mbd pab)
-
 -- The co-Yoneda lemma asserts a natural isomorphism between two objects
 -- of the enriching category, one of which is a coend (existential type).
 -- This type is an explicit name for that object on the category
@@ -3589,7 +3578,7 @@ public export
 DualCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
 DualCoYonedaLemmaCoend p c d =
   Exists {type=(Type, Type)} $
-    \ab => flip (DualCoYonedaEmbed $ flip p) c d (snd ab) (fst ab)
+    \ab => (DualYonedaEmbed d c (snd ab) (fst ab), p (fst ab) (snd ab))
 
 public export
 Profunctor (DualCoYonedaLemmaCoend p) where
