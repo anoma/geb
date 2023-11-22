@@ -4026,6 +4026,10 @@ prodHomLiftCurry h (x, y) z = h x (h y z)
 --------------------------------
 --------------------------------
 
+-----------------------------------------------
+---- Categories of elements of profunctors ----
+-----------------------------------------------
+
 -- A profunctor `Type -> Type` is a functor `op(Type) -> Type -> Type`,
 -- so its category of elements consists of objects of `(op(Type), Type)`
 -- together with elements of the profunctor applied to them.
@@ -4042,17 +4046,48 @@ ProfCatElemObj p = (ab : (Type, Type) ** p (fst ab) (snd ab))
 public export
 ProfCatElemDomMorph : {0 p : ProfunctorSig} ->
   ProfCatElemObj p -> ProfCatElemObj p -> Type
-ProfCatElemDomMorph {p} ab cd =
-  PrePostPair (fst (fst ab)) (snd (fst ab)) (fst (fst cd)) (snd (fst cd))
+ProfCatElemDomMorph {p} pab pcd =
+  PrePostPair (fst (fst pab)) (snd (fst pab)) (fst (fst pcd)) (snd (fst pcd))
 
 public export
 0 ProfCatElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
-  (ab, cd : ProfCatElemObj p) -> ProfCatElemDomMorph {p} ab cd -> Type
-ProfCatElemCommutes {p} {isP} ab cd mcabd =
-  dimap {f=p} (fst mcabd) (snd mcabd) (snd ab) = snd cd
+  (pab, pcd : ProfCatElemObj p) -> ProfCatElemDomMorph {p} pab pcd -> Type
+ProfCatElemCommutes {p} {isP} pab pcd mcabd =
+  dimap {f=p} (fst mcabd) (snd mcabd) (snd pab) = snd pcd
 
 public export
 ProfCatElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
   ProfCatElemObj p -> ProfCatElemObj p -> Type
-ProfCatElemMorph {p} {isP} ab cd =
-  Subset0 (ProfCatElemDomMorph {p} ab cd) (ProfCatElemCommutes {p} {isP} ab cd)
+ProfCatElemMorph {p} {isP} pab pcd =
+  Subset0
+    (ProfCatElemDomMorph {p} pab pcd)
+    (ProfCatElemCommutes {p} {isP} pab pcd)
+
+--------------------------------------------------------
+---- Categories of diagonal elements of profunctors ----
+--------------------------------------------------------
+
+-- The category of diagonal elements of `p` is also called the category of
+-- `p`-structures.  See https://arxiv.org/abs/2307.09289.
+public export
+ProfCatDiagElemObj : ProfunctorSig -> Type
+ProfCatDiagElemObj = CoendBase -- (a : Type ** p a a)
+
+public export
+ProfCatDiagElemDomMorph : {0 p : ProfunctorSig} ->
+  ProfCatDiagElemObj p -> ProfCatDiagElemObj p -> Type
+ProfCatDiagElemDomMorph {p} paa pbb = fst paa -> fst pbb
+
+public export
+0 ProfCatDiagElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
+  (ab, cd : ProfCatDiagElemObj p) -> ProfCatDiagElemDomMorph {p} ab cd -> Type
+ProfCatDiagElemCommutes {p} {isP} paa pbb mab =
+  rmap {f=p} mab (snd paa) = lmap {f=p} mab (snd pbb)
+
+public export
+ProfCatDiagElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
+  ProfCatDiagElemObj p -> ProfCatDiagElemObj p -> Type
+ProfCatDiagElemMorph {p} {isP} pab pcd =
+  Subset0
+    (ProfCatDiagElemDomMorph {p} pab pcd)
+    (ProfCatDiagElemCommutes {p} {isP} pab pcd)
