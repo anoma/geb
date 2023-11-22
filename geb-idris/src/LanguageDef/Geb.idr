@@ -3632,26 +3632,26 @@ public export
 -- the category `(op(Type), Type)`.
 public export
 DiYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
-DiYonedaLemmaNT p c d = ProfDiNT (flip DualYonedaEmbed c d) p
+DiYonedaLemmaNT p c d = ProfDiNT (flip DiYonedaEmbed c d) p
 
 public export
-DiYonedaLemmaNTContraPro : ContraProfunctor (DiYonedaLemmaNT p)
-DiYonedaLemmaNTContraPro = MkProfunctor $
-  \mca, mbd, alpha, i, (mic, mdi) => alpha i (mca . mic, mdi . mbd)
+DiYonedaLemmaNTPro : Profunctor (DiYonedaLemmaNT p)
+DiYonedaLemmaNTPro = MkProfunctor $
+  \mca, mbd, alpha, i, (mdi, mic) => alpha i (mdi . mbd, mca . mic)
 
 -- One direction of the paranatural isomorphism asserted by the
 -- diYoneda lemma on `(op(Type), Type)`.
 public export
 DiYonedaLemmaL : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
-  ProfDiNT p (DualYonedaLemmaNT p)
-DiYonedaLemmaL p {isP} i paa (mai, mib) = dimap {f=p} mai mib paa
+  ProfDiNT p (DiYonedaLemmaNT p)
+DiYonedaLemmaL p {isP} i pii j (mij, mji) = dimap {f=p} mji mij pii
 
 -- The other direction of the paranatural isomorphism asserted by the
 -- diYoneda lemma on `(op(Type), Type)`.
 public export
 DiYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
-  ProfDiNT (DualYonedaLemmaNT p) p
-DiYonedaLemmaR p {isP} i dye = dye (id {a=i}, id {a=i})
+  ProfDiNT (DiYonedaLemmaNT p) p
+DiYonedaLemmaR p {isP} i dye = dye i (id {a=i}, id {a=i})
 
 public export
 DiCoYonedaEmbed : ProfunctorSig -> Type -> Type -> ProfunctorSig
