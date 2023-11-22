@@ -216,6 +216,10 @@ SliceObj : Type -> Type
 SliceObj a = a -> Type
 
 public export
+Contravariant SliceObj where
+  contramap {a} {b} sla f = f . sla
+
+public export
 FinSliceObj : Nat -> Type
 FinSliceObj = SliceObj . Fin
 
