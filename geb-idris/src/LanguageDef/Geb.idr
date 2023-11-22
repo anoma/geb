@@ -3350,8 +3350,8 @@ public export
 SpliceCobaseMorph {cat} sig m =
   (i : SpliceBase cat) ->
   SliceMorphism {a=(SpliceDomBase {cat} sig i)}
-    (SpliceDomCobaseTotSlice {cat} sig i)
     (BaseChangeF (m i) $ SpliceCodCobaseTotSlice {cat} sig i)
+    (SpliceDomCobaseTotSlice {cat} sig i)
 
 public export
 SpliceMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
