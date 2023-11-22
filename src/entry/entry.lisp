@@ -13,6 +13,8 @@
      :type boolean :optional t :documentation "Prints the current version of the compiler")
     (("vampir" #\p)
      :type string :optional t :documentation "Return a vamp-ir expression")
+    (("library" #\s)
+     :type boolean :optional t :documentation "Prints standard library")
     (("help" #\h #\?)
      :type boolean :optional t :documentation "The current help message")))
 
@@ -26,7 +28,7 @@
 (defparameter *no-input-text*
   "Please provide an input file with -p or see the help command with -h")
 
-(defun argument-handlers (&key help stlc output input entry-point vampir version)
+(defun argument-handlers (&key help stlc output input entry-point vampir library version)
   (flet ((run (stream)
            (cond (help
                   (command-line-arguments:show-option-help +command-line-spec+
@@ -39,6 +41,7 @@
                   (load input)
                   (compile-down :vampir vampir
                                 :stlc stlc
+                                :library library
                                 :entry entry-point
                                 :stream stream)))))
     (if output
@@ -49,16 +52,26 @@
         (run *standard-output*))))
 
 ;; this code is very bad please abstract out many of the components
-(defun compile-down (&key vampir stlc entry (stream *standard-output*))
-  (let* ((name        (read-from-string entry))
-         (eval        (eval name))
-         (vampir-name (renaming-scheme (intern (symbol-name name) 'keyword))))
-    (cond ((and vampir stlc)
+(defun compile-down (&key vampir stlc entry library (stream *standard-output*))
+  (let* ((name         (read-from-string entry))
+         (eval         (eval name))
+         (vampir-name  (renaming-scheme (intern (symbol-name name) 'keyword))))
+    (cond ((and vampir stlc library)
+           (geb.vampir:extract
+            (append geb.vampir::*standard-library*
+                    (to-circuit eval vampir-name))))
+          ((and vampir stlc)
            (geb.vampir:extract (to-circuit eval vampir-name) stream))
           (stlc
            (format stream "~A" (to-cat nil eval)))
+          ((and vampir library)
+           (geb.vampir:extract
+            (append geb.vampir::*standard-library*
+                    (to-circuit eval vampir-name))))
           (vampir
            (geb.vampir:extract (to-circuit eval vampir-name) stream))
+          (library
+           (geb.vampir:extract geb.vampir::*standard-library*))
           (t
            (format stream eval)))))
 
