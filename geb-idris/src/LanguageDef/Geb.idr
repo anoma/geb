@@ -3571,14 +3571,14 @@ DualYonedaLemmaR p dyembed {a=i} {b=j} = dyembed (id {a=i}, id {a=j})
 
 public export
 DualCoYonedaEmbed : ProfunctorSig -> Type -> Type -> ProfunctorSig
-DualCoYonedaEmbed p c d a b = (PrePostPair a b c d, p a b)
+DualCoYonedaEmbed p c d a b = (PrePostPair c d a b, p a b)
 
 public export
-DualCoYoEmbedContraProf :
-  ContraProfunctor p => ContraProfunctor (DualCoYonedaEmbed p i j)
-DualCoYoEmbedContraProf = MkProfunctor $
-  \mca, mbd, ((mib, maj), pba) =>
-    ((mbd . mib, maj . mca), contraDimap {f=p} mbd mca pba)
+DualCoYoEmbedProf :
+  Profunctor p => Profunctor (DualCoYonedaEmbed p i j)
+DualCoYoEmbedProf = MkProfunctor $
+  \mca, mbd, ((mai, mjb), pab) =>
+    ((mai . mca, mbd . mjb), dimap {f=p} mca mbd pab)
 
 -- The co-Yoneda lemma asserts a natural isomorphism between two objects
 -- of the enriching category, one of which is a coend (existential type).
@@ -3588,26 +3588,27 @@ DualCoYoEmbedContraProf = MkProfunctor $
 public export
 DualCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
 DualCoYonedaLemmaCoend p c d =
-  Exists {type=(Type, Type)} $ \ab => DualCoYonedaEmbed p c d (fst ab) (snd ab)
+  Exists {type=(Type, Type)} $
+    \ab => flip (DualCoYonedaEmbed $ flip p) c d (snd ab) (fst ab)
 
 public export
 Profunctor (DualCoYonedaLemmaCoend p) where
-  dimap {a} {b} {c} {d} mca mbd (Evidence ij ((mai, mjb), pij)) =
-    Evidence ij ((mai . mca, mbd . mjb), pij)
+  dimap {a} {b} {c} {d} mca mbd (Evidence ij ((mjb, mai), pij)) =
+    Evidence ij ((mbd . mjb, mai . mca), pij)
 
 -- One direction of the natural isomorphism asserted by the co-Yoneda lemma
 -- on `(op(Type), Type)`.  This is called `toCoProYo` in another context.
 public export
 DualCoYonedaLemmaL : (0 p : ProfunctorSig) ->
   ProfNT p (DualCoYonedaLemmaCoend p)
-DualCoYonedaLemmaL p {a} {b} pab = Evidence (a, b) ((id {a}, id {a=b}), pab)
+DualCoYonedaLemmaL p {a} {b} pab = Evidence (a, b) ((id {a=b}, id {a}), pab)
 
 -- One direction of the natural isomorphism asserted by the co-Yoneda lemma
 -- on `(op(Type), Type)`.  This is called `fromCoProYo` in another context.
 public export
 DualCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
   ProfNT (DualCoYonedaLemmaCoend p) p
-DualCoYonedaLemmaR p {isP} {a=c} {b=d} (Evidence ab ((mca, mbd), pab)) =
+DualCoYonedaLemmaR p {isP} {a=c} {b=d} (Evidence ab ((mbd, mca), pab)) =
   dimap {f=p} mca mbd pab
 
 -- See https://arxiv.org/abs/2307.09289 .
