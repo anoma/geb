@@ -882,9 +882,26 @@ wedgeRight : {p : Type -> Type -> Type} -> Profunctor p =>
 wedgeRight {p} i a b f = rmap {f=p} {a} {b=a} {d=b} f (i a)
 
 public export
-End : (p : Type -> Type -> Type) -> Profunctor p => Type
-End p =
+End : (p : Type -> Type -> Type) -> {isP : Profunctor p} -> Type
+End p {isP} =
   Equalizer {a=(EndBase p)} {b=(PolyProdP p)} (wedgeLeft {p}) (wedgeRight {p})
+
+-- Given two functors, we can define a profunctor whose end is the object
+-- of natural transformations between the given functors.
+public export
+NatTransProf : (Type -> Type) -> (Type -> Type) -> ProfunctorSig
+NatTransProf f g a b = (f a -> g b)
+
+public export
+[NatTransProfProf] (Functor f, Functor g) => Profunctor (NatTransProf f g) where
+  dimap mca mbd nuab =
+    map {f=g} {a=b} {b=d} mbd . nuab . map {f} {a=c} {b=a} mca
+
+public export
+NatTransAsEnd : (f, g : Type -> Type) ->
+  {auto funcf : Functor f} -> {auto funcg : Functor g} -> Type
+NatTransAsEnd f g {funcf} {funcg} =
+  End (NatTransProf f g) {isP=NatTransProfProf}
 
 public export
 CoendBase : (p : Type -> Type -> Type) -> Type
