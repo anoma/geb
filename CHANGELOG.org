@@ -1,3 +1,13 @@
+* 0.6.0
+** Juvix Testing patch
+- This release focuses mainly on a new cli feature =test= and =library=
+  + =test= adds a simple test call in vampir
+  + =library= dumps the standard library along with the desired data
+** User facing changes
+- =to-circuit= in =seqn= has it's arguments reversed
+- various vampir library functions have changed
+  + =mod_32= changed to =mod_n=
+  + =nth= changed to =n_th=
 * 0.5.1
 ** Bug fix patch
 - =mgl-pax= updated on us causing build failures
