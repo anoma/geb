@@ -6360,12 +6360,16 @@ data SubstObjF : Type -> Type where
   -- Product
   (!!*) : carrier -> carrier -> SubstObjF carrier
 
+  -- Fin(n)
+  SOn : (n : Nat) -> {auto 0 nz : NonZero n} -> SubstObjF carrier
+
 public export
 Functor SubstObjF where
   map m SO0 = SO0
   map m SO1 = SO1
   map m (x !!+ y) = m x !!+ m y
   map m (x !!* y) = m x !!* m y
+  map m (SOn n {nz}) = SOn n {nz}
 
 public export
 MetaSOAlg : Type -> Type
@@ -6403,6 +6407,22 @@ public export
 (!*) = InSO .* (!!*)
 
 public export
+SubstN : (n : Nat) -> {auto 0 nz : NonZero n} -> SubstObjMu
+SubstN n {nz} = InSO (SOn n {nz})
+
+public export
+SubstN1 : SubstObjMu
+SubstN1 = SubstN 1 {nz=SIsNonZero}
+
+public export
+SubstBool : SubstObjMu
+SubstBool = Subst1 !+ Subst1
+
+public export
+SubstMaybe : SubstObjMu -> SubstObjMu
+SubstMaybe x = Subst1 !+ x
+
+public export
 substObjCata : MetaSOAlg x -> SubstObjMu -> x
 substObjCata alg = substObjFold id where
   mutual
@@ -6418,6 +6438,7 @@ substObjCata alg = substObjFold id where
       SO1 => cont (alg SO1)
       p !!+ q => substObjCataCont (!!+) cont p q
       p !!* q => substObjCataCont (!!*) cont p q
+      SOn n {nz} => cont (alg $ SOn n {nz})
 
 public export
 data SubstObjNu : Type where
@@ -6439,6 +6460,7 @@ substObjAna coalg = substObjUnfold id where
       SO1 => cont (InSOLabel SO1)
       p !!+ q => substObjAnaCont (!!+) cont p q
       p !!* q => substObjAnaCont (!!*) cont p q
+      SOn n {nz} => cont (InSOLabel $ SOn n {nz})
 
 public export
 SubstObjPairAlg : Type -> Type
@@ -6458,6 +6480,7 @@ SOSizeAlg SO0 = 1
 SOSizeAlg SO1 = 1
 SOSizeAlg (p !!+ q) = p + q
 SOSizeAlg (p !!* q) = p + q
+SOSizeAlg (SOn n) = 1
 
 public export
 substObjSize : SubstObjMu -> Nat
@@ -6469,6 +6492,7 @@ SODepthAlg SO0 = 0
 SODepthAlg SO1 = 0
 SODepthAlg (p !!+ q) = smax p q
 SODepthAlg (p !!* q) = smax p q
+SODepthAlg (SOn n) = 0
 
 public export
 substObjDepth : SubstObjMu -> Nat
@@ -6482,6 +6506,7 @@ SOCardAlg SO0 = 0
 SOCardAlg SO1 = 1
 SOCardAlg (p !!+ q) = p + q
 SOCardAlg (p !!* q) = p * q
+SOCardAlg (SOn n) = n
 
 public export
 substObjCard : SubstObjMu -> Nat
@@ -6497,6 +6522,7 @@ SOShowAlg SO0 = "0"
 SOShowAlg SO1 = "1"
 SOShowAlg (x !!+ y) = "(" ++ x ++ " + " ++ y ++ ")"
 SOShowAlg (x !!* y) = x ++ " * " ++ y
+SOShowAlg (SOn n) = "Fin(" ++ show n ++ ")"
 
 public export
 Show SubstObjMu where
@@ -6516,6 +6542,8 @@ SubstObjMuEqAlg (p !!+ q) (InSO (r !!+ s)) = p r && q s
 SubstObjMuEqAlg (p !!+ q) _ = False
 SubstObjMuEqAlg (p !!* q) (InSO (r !!* s)) = p r && q s
 SubstObjMuEqAlg (p !!* q) _ = False
+SubstObjMuEqAlg (SOn m) (InSO (SOn n)) = m == n
+SubstObjMuEqAlg (SOn m) _ = False
 
 public export
 Eq SubstObjMu where
@@ -6530,12 +6558,16 @@ substObjMuDecEq (InSO SO0) (InSO (_ !!+ _)) =
   No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO SO0) (InSO (_ !!* _)) =
   No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO0) (InSO (SOn _)) =
+  No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO SO1) (InSO SO0) =
   No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO SO1) (InSO SO1) = Yes Refl
 substObjMuDecEq (InSO SO1) (InSO (_ !!+ _)) =
   No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO SO1) (InSO (_ !!* _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO SO1) (InSO (SOn _)) =
   No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO (_ !!+ _)) (InSO SO0) =
   No $ \eq => case eq of Refl impossible
@@ -6548,6 +6580,8 @@ substObjMuDecEq (InSO (w !!+ x)) (InSO (y !!+ z)) =
     (No neq, _) => No $ \eq => case eq of Refl => neq Refl
 substObjMuDecEq (InSO (_ !!+ _)) (InSO (_ !!* _)) =
   No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (_ !!+ _)) (InSO (SOn _)) =
+  No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO (_ !!* _)) (InSO SO0) =
   No $ \eq => case eq of Refl impossible
 substObjMuDecEq (InSO (_ !!* _)) (InSO SO1) =
@@ -6559,6 +6593,20 @@ substObjMuDecEq (InSO (w !!* x)) (InSO (y !!* z)) =
     (Yes Refl, Yes Refl) => Yes Refl
     (Yes Refl, No neq) => No $ \eq => case eq of Refl => neq Refl
     (No neq, _) => No $ \eq => case eq of Refl => neq Refl
+substObjMuDecEq (InSO (_ !!* _)) (InSO (SOn _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (SOn m)) (InSO SO0) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (SOn m)) (InSO SO1) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (SOn m)) (InSO (_ !!+ _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (SOn m)) (InSO (_ !!* _)) =
+  No $ \eq => case eq of Refl impossible
+substObjMuDecEq (InSO (SOn m {nz=nzm})) (InSO (SOn n {nz=nzn})) =
+  case decEq m n of
+    Yes Refl => rewrite nzUnique nzm nzn in Yes Refl
+    No neq => No $ \eq => case eq of Refl => neq Refl
 
 public export
 DecEq SubstObjMu where
@@ -6586,6 +6634,7 @@ SORemoveZeroAlg (p !!* q) = case p of
       InSO q' => case q' of
         SO0 => Subst0
         _ => p !* q
+SORemoveZeroAlg (SOn n) = InSO (SOn n)
 
 public export
 substObjRemoveZero : SubstObjMu -> SubstObjMu
@@ -6603,6 +6652,7 @@ SORemoveOneAlg (p !!* q) = case p of
       InSO q' => case q' of
         SO1 => p
         _ => p !* q
+SORemoveOneAlg (SOn n) = InSO (SOn n)
 
 public export
 substObjRemoveOne : SubstObjMu -> SubstObjMu
@@ -6640,6 +6690,7 @@ SubstTermAlg SO0 = Void
 SubstTermAlg SO1 = ()
 SubstTermAlg (x !!+ y) = Either x y
 SubstTermAlg (x !!* y) = Pair x y
+SubstTermAlg (SOn n) = Fin n
 
 -- Variant from an algebra rather than explicit recursion
 public export
@@ -6653,6 +6704,7 @@ SubstTerm (InSO SO0) = Void
 SubstTerm (InSO SO1) = ()
 SubstTerm (InSO (x !!+ y)) = Either (SubstTerm x) (SubstTerm y)
 SubstTerm (InSO (x !!* y)) = Pair (SubstTerm x) (SubstTerm y)
+SubstTerm (InSO (SOn n)) = Fin n
 
 public export
 showSubstTerm : {x : SubstObjMu} -> SubstTerm x -> String
@@ -6666,6 +6718,8 @@ showSubstTerm {x=(InSO (x !!+ y))} (Right t) =
   "R[" ++ showSubstTerm t ++ "]"
 showSubstTerm {x=(InSO (x !!* y))} (t, t') =
   "(" ++ showSubstTerm t ++ "," ++ showSubstTerm t' ++ ")"
+showSubstTerm {x=(InSO (SOn n))} m =
+  "(" ++ show m ++ "/" ++ show n ++ ")"
 
 public export
 (x : SubstObjMu) => Show (SubstTerm x) where
@@ -6677,6 +6731,7 @@ SubstContradictionAlg SO0 = ()
 SubstContradictionAlg SO1 = Void
 SubstContradictionAlg (x !!+ y) = Pair x y
 SubstContradictionAlg (x !!* y) = Either x y
+SubstContradictionAlg (SOn n) = Void
 
 -- `SubstContradiction x` is inhabited if and only if `x` is uninhabited;
 -- it is the dual of `SubstTerm x` (reflecting that a type is contradictory
@@ -6690,6 +6745,12 @@ SubstContradiction = substObjCata SubstContradictionAlg
 -------------------------------------
 
 public export
+SubstHomObjAlgN : (n : Nat) -> (0 _ : NonZero n) -> SubstObjMu -> SubstObjMu
+SubstHomObjAlgN Z SIsNonZero q impossible
+SubstHomObjAlgN (S Z) SIsNonZero q = q
+SubstHomObjAlgN (S (S n)) SIsNonZero q = q !* SubstHomObjAlgN (S n) SIsNonZero q
+
+public export
 SubstHomObjAlg : MetaSOAlg (SubstObjMu -> SubstObjMu)
 -- 0 -> x == 1
 SubstHomObjAlg SO0 _ = Subst1
@@ -6699,6 +6760,7 @@ SubstHomObjAlg SO1 q = q
 SubstHomObjAlg (p !!+ q) r = p r !* q r
 -- (p * q) -> r == p -> q -> r
 SubstHomObjAlg (p !!* q) r = p $ q r
+SubstHomObjAlg (SOn n {nz}) q = SubstHomObjAlgN n nz q
 
 public export
 SubstHomObj' : SubstObjMu -> SubstObjMu -> SubstObjMu
@@ -6734,6 +6796,25 @@ data SubstMorph : SubstObjMu -> SubstObjMu -> Type where
   SMProjRight : (x, y : SubstObjMu) -> SubstMorph (x !* y) y
   SMDistrib : (x, y, z : SubstObjMu) ->
     SubstMorph (x !* (y !+ z)) ((x !* y) !+ (x !* z))
+  SMNInj : (m, n : Nat) ->
+    {auto 0 m_nz : NonZero m} -> {auto 0 n_nz : NonZero n} ->
+    SubstMorph (SubstN m {nz=m_nz}) (SubstN n {nz=n_nz})
+  SMNConst : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    Nat -> SubstMorph Subst1 (SubstN n {nz})
+  SMNAdd : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) (SubstN n)
+  SMNMult : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) (SubstN n)
+  SMNSub : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) (SubstN n)
+  SMNDiv : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) (SubstN n)
+  SMNMod : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) (SubstN n)
+  SMNEq : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) SubstBool
+  SMNLt : (n : Nat) -> {auto 0 nz : NonZero n} ->
+    SubstMorph (SubstN n !* SubstN n) SubstBool
 
 public export
 showSubstMorph : {x, y : SubstObjMu} -> SubstMorph x y -> String
@@ -6751,6 +6832,21 @@ showSubstMorph (SMProjLeft x y) = "<-Left<" ++ show x ++ ", " ++ show y ++ ">"
 showSubstMorph (SMProjRight x y) = "<-Right<" ++ show x ++ ", " ++ show y ++ ">"
 showSubstMorph (SMDistrib x y z) =
   "distrib{" ++ show x ++ ", " ++ show y ++ ", " ++ show z ++ "}"
+showSubstMorph (SMNInj m n) = "inj{" ++ show m ++ ", " ++ show n ++ "}"
+showSubstMorph (SMNConst n k) = "const{" ++ show k ++ " -> " ++ show n ++ "}"
+showSubstMorph (SMNAdd n) = "+[%" ++ show n ++ "]"
+showSubstMorph (SMNMult n) = "*[%" ++ show n ++ "]"
+showSubstMorph (SMNSub n) = "-[%" ++ show n ++ "]"
+showSubstMorph (SMNDiv n) = "/[%" ++ show n ++ "]"
+showSubstMorph (SMNMod n) = "%[%" ++ show n ++ "]"
+showSubstMorph (SMNEq n) = "?=[" ++ show n ++ "]"
+showSubstMorph (SMNLt n) = "?<[" ++ show n ++ "]"
+
+public export
+SMParallel : {w, x, y, z : SubstObjMu} ->
+  SubstMorph w y -> SubstMorph x z -> SubstMorph (w !* x) (y !* z)
+SMParallel {w} {x} {y} {z} f g =
+  SMPair (f <! SMProjLeft w x) (g <! SMProjRight w x)
 
 public export
 soProdCommutes : (x, y : SubstObjMu) -> SubstMorph (x !* y) (y !* x)
@@ -6876,6 +6972,10 @@ public export
 SOTerm : SubstObjMu -> Type
 SOTerm = SubstMorph Subst1
 
+public export
+soConst : {x, y : SubstObjMu} -> SOTerm y -> SubstMorph x y
+soConst {x} {y} f = f <! SMToTerminal _
+
 --------------------------------------------------------------
 ---- Exponentiation (hom-objects) of substitutive objects ----
 --------------------------------------------------------------
@@ -6890,6 +6990,7 @@ SubstHomObj (InSO SO1) y = y
 SubstHomObj (InSO (x !!+ y)) z = SubstHomObj x z !* SubstHomObj y z
 -- (x * y) -> z == x -> y -> z
 SubstHomObj (InSO (x !!* y)) z = SubstHomObj x (SubstHomObj y z)
+SubstHomObj (InSO (SOn n {nz})) z = SubstHomObjAlgN n nz z
 
 infixr 10 !->
 public export
@@ -6900,6 +7001,52 @@ infix 10 !^
 public export
 (!^) : SubstObjMu -> SubstObjMu -> SubstObjMu
 (!^) = flip SubstHomObj
+
+public export
+SubstNIsZero : (n : Nat) -> SubstMorph (SubstN (S n)) SubstBool
+SubstNIsZero n =
+  SMNEq (S n) <! SMPair (SMId (SubstN (S n))) (soConst $ SMNConst (S n) 0)
+
+public export
+SubstNSucc : (n : Nat) -> SubstMorph (SubstN (S n)) (SubstN (S (S n)))
+SubstNSucc n =
+  SMNAdd (S (S n)) <!
+  (SMPair (SMId (SubstN (S (S n)))) (soConst $ SMNConst (S (S n)) 1)) <!
+  SMNInj (S n) (S (S n))
+
+public export
+SubstNPred : (n : Nat) -> SubstMorph (SubstN (S (S n))) (SubstN (S n))
+SubstNPred n =
+  SMNInj (S (S n)) (S n) <!
+  SMNSub (S (S n)) <!
+    SMPair (SMId (SubstN (S (S n)))) (soConst $ SMNConst (S (S n)) 1)
+
+public export
+substNIf0 : (n : Nat) -> SubstMorph (SubstN (S (S n))) (Subst1 !+ SubstN (S n))
+substNIf0 n =
+  SMCase
+    (SMInjLeft Subst1 (SubstN (S n)) <! SMToTerminal (SubstN (S n) !* Subst1))
+    (SMInjRight Subst1 (SubstN (S n)) <! SMProjLeft (SubstN (S n)) Subst1)
+  <! (SMDistrib (SubstN (S n)) Subst1 Subst1)
+  <! (SMPair (SubstNPred n) (SubstNIsZero (S n)))
+
+public export
+soEval0 : (y : SubstObjMu) ->
+  SubstMorph ((SubstN (S Z) !-> y) !* SubstN (S Z)) y
+soEval0 y = SMProjLeft y (SubstN (S Z))
+
+public export
+soEvalN : (n : Nat) -> (y : SubstObjMu) ->
+  SubstMorph ((SubstN (S n) !-> y) !* SubstN (S n)) y
+soEvalN Z y = soEval0 y
+soEvalN (S n) y =
+  let evN = soEvalN n y in
+  SMCase
+    (SMProjLeft y (SubstN (S n) !-> y)
+     <! SMProjLeft (y !* (SubstN (S n) !-> y)) Subst1)
+    (soEvalN n y <! soForgetFirst y (SubstN (S n) !-> y) (SubstN (S n)))
+  <! SMDistrib (y !* (SubstN (S n) !-> y)) Subst1 (SubstN (S n))
+  <! SMParallel (SMId (y !* (SubstN (S n) !-> y))) (substNIf0 n)
 
 public export
 soEval : (x, y : SubstObjMu) ->
@@ -6920,6 +7067,24 @@ soEval (InSO (x !!* y)) z =
     SMPair
       (exhyz <! soForgetRight _ _ _)
       (SMProjRight _ _ <! SMProjRight _ _)
+soEval (InSO (SOn Z {nz=SIsNonZero})) z impossible
+soEval (InSO (SOn (S n) {nz=SIsNonZero})) z = soEvalN n z
+
+public export
+soCurry0 : {x, z : SubstObjMu} ->
+  SubstMorph (x !* SubstN (S Z)) z -> SubstMorph x (SubstN (S Z) !-> z)
+soCurry0 {x} {z} f = f <! SMPair (SMId x) (soConst $ SMNConst 1 0)
+
+public export
+soCurryN : {x, z : SubstObjMu} -> {n : Nat} ->
+  SubstMorph (x !* SubstN (S n)) z -> SubstMorph x (SubstN (S n) !-> z)
+soCurryN {x} {z} {n=Z} f = soCurry0 {x} {z} f
+soCurryN {x} {z} {n=(S n)} f =
+  SMPair
+    (f <! SMPair (SMId x) (soConst $ SMNConst (S (S n)) 0))
+    (soCurryN {x} {z} {n} $ f <! SMPair
+      (SMProjLeft x (SubstN (S n)))
+      (SubstNSucc n <! SMProjRight x (SubstN (S n))))
 
 public export
 soCurry : {x, y, z : SubstObjMu} ->
@@ -6935,6 +7100,9 @@ soCurry {x} {y=(InSO (y !!* y'))} {z} f =
     cxhyz = soCurry {x} {y} {z=(SubstHomObj y' z)}
   in
   cxhyz $ cxyz $ soProdLeftAssoc f
+soCurry {x} {y=(InSO (SOn Z {nz=SIsNonZero}))} {z} f impossible
+soCurry {x} {y=(InSO (SOn (S n) {nz=SIsNonZero}))} {z} f =
+  soCurryN {x} {z} {n} f
 
 public export
 soUncurry : {x, y, z : SubstObjMu} ->
@@ -6987,6 +7155,8 @@ soSubst (SMCase g h) (SMProjRight _ _) = SMCase g h <! SMProjRight _ _
 soSubst (SMCase h j) (SMCase f g) =
   SMCase (soSubst (SMCase h j) f) (soSubst (SMCase h j) g)
 soSubst (SMCase g h) (SMDistrib _ _ _) = SMCase g h <! SMDistrib _ _ _
+soSubst (SMCase g h) (SMNEq m) = SMCase g h <! SMNEq m
+soSubst (SMCase g h) (SMNLt m) = SMCase g h <! SMNLt m
 soSubst (SMPair g h) f = SMPair (soSubst g f) (soSubst h f)
 soSubst (SMProjLeft _ _) (SMProjLeft _ _) = SMProjLeft _ _ <! SMProjLeft _ _
 soSubst (SMProjLeft _ _) (SMProjRight _ _) = SMProjLeft _ _ <! SMProjRight _ _
@@ -7002,6 +7172,15 @@ soSubst (SMDistrib _ _ _) (SMProjLeft _ _) = SMDistrib _ _ _ <! SMProjLeft _ _
 soSubst (SMDistrib _ _ _) (SMProjRight _ _) = SMDistrib _ _ _ <! SMProjRight _ _
 soSubst (SMDistrib _ _ _) (SMCase f g) = SMDistrib _ _ _ <! SMCase f g
 soSubst (SMDistrib _ _ _) (SMPair f g) = SMDistrib _ _ _ <! SMPair f g
+soSubst (SMNInj m n) f = SMNInj m n <! f
+soSubst (SMNConst m n) f = SMNConst m n <! f
+soSubst (SMNAdd n) f = SMNAdd n <! f
+soSubst (SMNMult n) f = SMNMult n <! f
+soSubst (SMNSub n) f = SMNSub n <! f
+soSubst (SMNDiv n) f = SMNDiv n <! f
+soSubst (SMNMod n) f = SMNMod n <! f
+soSubst (SMNEq n) f = SMNEq n <! f
+soSubst (SMNLt n) f = SMNLt n <! f
 
 public export
 soReduce : {x, y : SubstObjMu} -> SubstMorph x y -> SubstMorph x y
@@ -7016,6 +7195,15 @@ soReduce (SMPair f g) = SMPair (soReduce f) (soReduce g)
 soReduce (SMProjLeft _ _) = SMProjLeft _ _
 soReduce (SMProjRight _ _) = SMProjRight _ _
 soReduce (SMDistrib _ _ _) = SMDistrib _ _ _
+soReduce (SMNInj m n) = SMNInj m n
+soReduce (SMNConst m n) = SMNConst m n
+soReduce (SMNAdd n) = SMNAdd n
+soReduce (SMNMult n) = SMNMult n
+soReduce (SMNSub n) = SMNSub n
+soReduce (SMNDiv n) = SMNDiv n
+soReduce (SMNMod n) = SMNMod n
+soReduce (SMNEq n) = SMNEq n
+soReduce (SMNLt n) = SMNLt n
 
 -------------------------------------------
 ---- Morphisms as terms of hom-objects ----
@@ -7036,10 +7224,6 @@ MorphAsTerm {x} {y} f = soCurry {x=Subst1} {y=x} {z=y} $ soProdLeftIntro f
 ----------------------------------------------------------------------------
 ---- Homoiconicity: SubstMorph reflected into the substitutive category ----
 ----------------------------------------------------------------------------
-
-public export
-soConst : {x, y : SubstObjMu} -> SOTerm y -> SubstMorph x y
-soConst {x} {y} f = f <! SMToTerminal _
 
 public export
 soReflectedConst : (x, y : SubstObjMu) -> SubstMorph y (x !-> y)
@@ -7081,6 +7265,44 @@ soReflectedCase : (x, y, z : SubstObjMu) ->
 soReflectedCase x y z = SMId (SubstHomObj x z !* SubstHomObj y z)
 
 public export
+soReflectedPair0 : (y, z : SubstObjMu) ->
+  SubstMorph
+    ((SubstN (S Z) !-> y) !* (SubstN (S Z) !-> z)) (SubstN (S Z) !-> (y !* z))
+soReflectedPair0 y z = SMId (y !* z)
+
+public export
+soReflectedPairN : (n : Nat) -> (y, z : SubstObjMu) ->
+  SubstMorph
+    ((SubstN (S n) !-> y) !* (SubstN (S n) !-> z)) (SubstN (S n) !-> (y !* z))
+soReflectedPairN Z y z = soReflectedPair0 y z
+soReflectedPairN (S n) y z =
+  let
+    szyz = soReflectedPair0 y z
+    nyz = soReflectedPairN n y z
+  in
+  SMPair
+    (szyz <!
+      SMPair
+        (SMProjLeft y (SubstHomObjAlgN (S n) SIsNonZero y) <!
+          SMProjLeft
+            (y !* SubstHomObjAlgN (S n) SIsNonZero y)
+            (z !* SubstHomObjAlgN (S n) SIsNonZero z))
+        (SMProjLeft z (SubstHomObjAlgN (S n) SIsNonZero z) <!
+          SMProjRight
+            (y !* SubstHomObjAlgN (S n) SIsNonZero y)
+            (z !* SubstHomObjAlgN (S n) SIsNonZero z)))
+    (nyz <!
+      SMPair
+        (SMProjRight y (SubstHomObjAlgN (S n) SIsNonZero y) <!
+          SMProjLeft
+            (y !* SubstHomObjAlgN (S n) SIsNonZero y)
+            (z !* SubstHomObjAlgN (S n) SIsNonZero z))
+        (SMProjRight z (SubstHomObjAlgN (S n) SIsNonZero z) <!
+          SMProjRight
+            (y !* SubstHomObjAlgN (S n) SIsNonZero y)
+            (z !* SubstHomObjAlgN (S n) SIsNonZero z)))
+
+public export
 soReflectedPair : (x, y, z : SubstObjMu) ->
   SubstMorph ((x !-> y) !* (x !-> z)) (x !-> (y !* z))
 soReflectedPair (InSO SO0) _ _ = SMToTerminal _
@@ -7105,6 +7327,33 @@ soReflectedPair (InSO (w !!* x)) y z =
     wxyz = soReflectedPair w (x !-> y) (x !-> z)
   in
   covarYonedaEmbed xyz w <! wxyz
+soReflectedPair (InSO (SOn (S n) {nz=SIsNonZero})) y z = soReflectedPairN n y z
+
+public export
+soReflectedCompose0 : (y, z : SubstObjMu) ->
+  SubstMorph ((y !-> z) !* (SubstN (S Z) !-> y)) (SubstN (S Z) !-> z)
+soReflectedCompose0 y z = soEval y z
+
+public export
+soReflectedComposeN : (n : Nat) -> (y, z : SubstObjMu) ->
+  SubstMorph ((y !-> z) !* (SubstN (S n) !-> y)) (SubstN (S n) !-> z)
+soReflectedComposeN Z y z = soReflectedCompose0 y z
+soReflectedComposeN (S n) y z =
+  let
+    czyz = soReflectedCompose0 y z
+    csyz = soReflectedComposeN n y z
+  in
+  SMPair
+    (czyz <!
+      SMPair
+        (SMProjLeft (y !-> z) (y !* SubstHomObjAlgN (S n) SIsNonZero y))
+        (SMProjLeft y (SubstHomObjAlgN (S n) SIsNonZero y) <!
+         SMProjRight (y !-> z) (y !* SubstHomObjAlgN (S n) SIsNonZero y)))
+    (csyz <!
+      SMPair
+        (SMProjLeft (y !-> z) (y !* SubstHomObjAlgN (S n) SIsNonZero y))
+        (SMProjRight y (SubstHomObjAlgN (S n) SIsNonZero y) <!
+         SMProjRight (y !-> z) (y !* SubstHomObjAlgN (S n) SIsNonZero y)))
 
 public export
 soReflectedCompose : (x, y, z : SubstObjMu) ->
@@ -7128,6 +7377,8 @@ soReflectedCompose (InSO (w !!* x)) y z =
           (SMProjRight _ _ <! SMProjLeft _ _ <! SMProjLeft _ _)
           (SMProjRight _ _ <! SMProjLeft _ _))
         (SMProjRight _ _))
+soReflectedCompose (InSO (SOn (S n) {nz=SIsNonZero})) y z =
+  soReflectedComposeN n y z
 
 public export
 soReflectedPartialApp : (w, x, y, z : SubstObjMu) ->
@@ -7183,6 +7434,14 @@ showSubstHomTerm : {x, y : SubstObjMu} -> SubstHomTerm x y -> String
 showSubstHomTerm {x} {y} = showSubstTerm {x=(x !-> y)}
 
 public export
+substHomTermToFuncN : {n : Nat} -> {y : SubstObjMu} ->
+  SubstHomTerm (SubstN (S n)) y -> (SubstTerm (SubstN (S n)) -> SubstTerm y)
+substHomTermToFuncN {n=Z} {y} t FZ = t
+substHomTermToFuncN {n=(S n)} {y} (tz, ts) FZ = tz
+substHomTermToFuncN {n=(S n)} {y} (tz, ts) (FS k) =
+  substHomTermToFuncN {n} {y} ts k
+
+public export
 substHomTermToFunc : {x, y : SubstObjMu} ->
   SubstHomTerm x y -> (SubstTerm x -> SubstTerm y)
 substHomTermToFunc {x=(InSO SO0)} f t =
@@ -7195,6 +7454,15 @@ substHomTermToFunc {x=(InSO (x !!+ x'))} (f, f') (Right t) =
   substHomTermToFunc f' t
 substHomTermToFunc {x=(InSO (x !!* x'))} f (t, t') =
   substHomTermToFunc {x=x'} {y} (substHomTermToFunc {x} {y=(x' !-> y)} f t) t'
+substHomTermToFunc {x=(InSO (SOn (S n) {nz=SIsNonZero}))} {y} f t =
+  substHomTermToFuncN {n} {y} f t
+
+public export
+substFuncToHomTermN : {n : Nat} -> {y : SubstObjMu} ->
+  (SubstTerm (SubstN (S n)) -> SubstTerm y) -> SubstHomTerm (SubstN (S n)) y
+substFuncToHomTermN {n=Z} {y} f = f FZ
+substFuncToHomTermN {n=(S n)} {y} f =
+  (f FZ, substFuncToHomTermN {n} {y} $ f . FS)
 
 public export
 substFuncToHomTerm : {x, y : SubstObjMu} ->
@@ -7208,6 +7476,8 @@ substFuncToHomTerm {x=(InSO (x !!+ x'))} f =
 substFuncToHomTerm {x=(InSO (x !!* x'))} f =
   substFuncToHomTerm {x} {y=(x' !-> y)} $
     \t => substFuncToHomTerm {x=x'} {y} $ \t' => f (t, t')
+substFuncToHomTerm {x=(InSO (SOn (S n) {nz=SIsNonZero}))} f =
+  substFuncToHomTermN {n} {y} f
 
 public export
 SubstIdTerm : (x : SubstObjMu) -> SubstHomTerm x x
@@ -7299,6 +7569,39 @@ SubstTermToSOTerm (InSO (x !!+ y)) (Right t) =
   SMInjRight x y <! SubstTermToSOTerm y t
 SubstTermToSOTerm (InSO (x !!* y)) (t1, t2) =
   SMPair (SubstTermToSOTerm x t1) (SubstTermToSOTerm y t2)
+SubstTermToSOTerm (InSO (SOn n {nz})) k = SMNConst n {nz} (finToNat k)
+
+public export
+SubstTermToSubstMorph0 : {y : SubstObjMu} ->
+  SubstHomTerm (SubstN (S Z)) y -> SubstMorph (SubstN (S Z)) y
+SubstTermToSubstMorph0 {y} t = soConst $ SubstTermToSOTerm y t
+
+public export
+SubstNCase0 : {n : Nat} -> {y : SubstObjMu} ->
+  -- Zero case
+  SubstTerm y ->
+  -- Non-zero case
+  SubstMorph (SubstN (S n)) y ->
+  -- Result
+  SubstMorph (SubstN (S (S n))) y
+SubstNCase0 {n} {y} t f =
+  SMCase
+    (SMProjLeft y y <! SMProjLeft (y !* y) Subst1)
+    (SMProjRight y y <! SMProjLeft (y !* y) Subst1)
+  <! SMDistrib (y !* y) Subst1 Subst1
+  <!
+  SMPair
+    (SMPair
+      (soConst {x=(SubstN (S (S n)))} (SubstTermToSOTerm y t))
+      (f <! SubstNPred n))
+    (SubstNIsZero (S n))
+
+public export
+SubstTermToSubstMorphN : {n : Nat} -> {y : SubstObjMu} ->
+  SubstHomTerm (SubstN (S n)) y -> SubstMorph (SubstN (S n)) y
+SubstTermToSubstMorphN {n=Z} {y} t = SubstTermToSubstMorph0 {y} t
+SubstTermToSubstMorphN {n=(S n)} {y} (ty, ts) =
+  SubstNCase0 ty $ SubstTermToSubstMorphN {n} {y} ts
 
 public export
 SubstTermToSubstMorph : {x, y : SubstObjMu} ->
@@ -7311,6 +7614,18 @@ SubstTermToSubstMorph {x=(InSO (x !!+ x'))} {y} (t, t') =
   SMCase (SubstTermToSubstMorph t) (SubstTermToSubstMorph t')
 SubstTermToSubstMorph {x=(InSO (x !!* x'))} {y} t =
   soUncurry $ SubstTermToSubstMorph {x} {y=(x' !-> y)} t
+SubstTermToSubstMorph {x=(InSO (SOn (S n) {nz=SIsNonZero}))} {y} t =
+  SubstTermToSubstMorphN {n} {y} t
+
+public export
+finBinOpMod : (Nat -> Nat -> Nat) ->
+  {n : Nat} -> {nz : NonZero n} -> (m, k : Fin n) -> Fin n
+finBinOpMod op {n=(S n)} {nz=SIsNonZero} m k =
+  let
+    res = op (finToNat m) (finToNat k)
+    _ = modLTDivisor res n
+  in
+  natToFinLT $ modNatNZ res (S n) SIsNonZero
 
 public export
 SubstMorphToSubstTerm : {x, y : SubstObjMu} ->
@@ -7329,6 +7644,39 @@ SubstMorphToSubstTerm (SMPair f g) =
 SubstMorphToSubstTerm (SMProjLeft x y) = SubstProjLeftTerm x y
 SubstMorphToSubstTerm (SMProjRight x y) = SubstProjRightTerm x y
 SubstMorphToSubstTerm (SMDistrib x y z) = SubstDistribTerm x y z
+SubstMorphToSubstTerm (SMNInj (S m) (S n)
+  {m_nz=SIsNonZero} {n_nz=SIsNonZero}) =
+    substFuncToHomTerm {x=(SubstN (S m))} {y=(SubstN (S n))} $
+      \k =>
+        let
+          k' = finToNat k
+          _ = modLTDivisor k' n
+        in
+        natToFinLT $ modNatNZ k' (S n) SIsNonZero
+SubstMorphToSubstTerm (SMNConst (S n) k {nz=SIsNonZero}) =
+  substFuncToHomTerm {x=(SubstN 1)} {y=(SubstN (S n))} $
+    \FZ => let _ = modLTDivisor k n in natToFinLT $ modNatNZ k (S n) SIsNonZero
+SubstMorphToSubstTerm (SMNAdd (S n) {nz=SIsNonZero}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
+    \(k, p) => finBinOpMod {n=(S n)} {nz=SIsNonZero} (+) k p
+SubstMorphToSubstTerm (SMNMult (S n) {nz=SIsNonZero}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
+    \(k, p) => finBinOpMod {n=(S n)} {nz=SIsNonZero} (*) k p
+SubstMorphToSubstTerm (SMNSub (S n) {nz=SIsNonZero}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
+    \(k, p) => finBinOpMod {n=(S n)} {nz=SIsNonZero} minus k p
+SubstMorphToSubstTerm (SMNDiv (S n) {nz=SIsNonZero}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
+    \(k, p) => finBinOpMod {n=(S n)} {nz=SIsNonZero} div k p
+SubstMorphToSubstTerm (SMNMod (S n) {nz=SIsNonZero}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=(SubstN (S n))} $
+    \(k, p) => finBinOpMod {n=(S n)} {nz=SIsNonZero} mod k p
+SubstMorphToSubstTerm (SMNEq (S n) {nz=SIsNonZero}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=SubstBool} $
+    \(k, p) => case k == p of False => Left () ; True => Right ()
+SubstMorphToSubstTerm (SMNLt (S n) {nz=SIsNonZero}) =
+  substFuncToHomTerm {x=(SubstN (S n) !* (SubstN (S n)))} {y=SubstBool} $
+    \(k, p) => case k < p of False => Left () ; True => Right ()
 
 public export
 SOTermToSubstTerm : (x : SubstObjMu) -> SOTerm x -> SubstTerm x
@@ -7401,10 +7749,6 @@ soTuple {n=(S (S n))} {x} {v=(y :: (y' :: ys))} (m :: (m' :: ms)) =
 ------------------
 
 public export
-SubstBool : SubstObjMu
-SubstBool = Subst1 !+ Subst1
-
-public export
 SFalse : SOTerm SubstBool
 SFalse = SMInjLeft _ _
 
@@ -7442,7 +7786,7 @@ public export
 SHigherIfElse : {x, y : SubstObjMu} ->
   SubstMorph x SubstBool -> SubstMorph x y -> SubstMorph x y -> SubstMorph x y
 SHigherIfElse {x} {y} b t f =
-  soEval x y <! SMPair (SMCase (MorphAsTerm t) (MorphAsTerm f) <! b) (SMId x)
+  soEval x y <! SMPair (SMCase (MorphAsTerm f) (MorphAsTerm t) <! b) (SMId x)
 
 public export
 SEqual : (x : SubstObjMu) -> SubstMorph (x !* x) SubstBool
@@ -7462,6 +7806,7 @@ SEqual (InSO (x !!* y)) =
       (SEqual y <! SMPair
         (SMProjRight _ _ <! SMProjLeft _ _)
         (SMProjRight _ _ <! SMProjRight _ _))
+SEqual (InSO (SOn (S n) {nz})) = SMNEq (S n) {nz}
 
 public export
 SEqualF : {x, y : SubstObjMu} -> (f, g : SubstMorph x y) ->
@@ -7737,6 +8082,7 @@ MetaSOTypeAlg SO0 = Void
 MetaSOTypeAlg SO1 = Unit
 MetaSOTypeAlg (p !!+ q) = Either p q
 MetaSOTypeAlg (p !!* q) = Pair p q
+MetaSOTypeAlg (SOn (S n) {nz}) = Fin (S n)
 
 public export
 MetaSOType : SubstObjMu -> Type
@@ -7748,6 +8094,7 @@ MetaSOShowTypeAlg SO0 = "Void"
 MetaSOShowTypeAlg SO1 = "Unit"
 MetaSOShowTypeAlg (p !!+ q) = "Either (" ++ p ++ ") (" ++ q ++ ")"
 MetaSOShowTypeAlg (p !!* q) = "Pair (" ++ p ++ ") (" ++ q ++ ")"
+MetaSOShowTypeAlg (SOn n {nz}) = "Fin (" ++ show n ++ ")"
 
 public export
 metaSOShowType : SubstObjMu -> String
@@ -8328,6 +8675,16 @@ public export
 substObjToNat : SubstObjMu -> Nat
 substObjToNat = substObjCard
 
+-- Given a binary operation and a non-zero natural number size, produce
+-- a binary operation on an input which is assumed to be a product.
+--
+-- We implement this by applying the operation to the left and right
+-- projections.
+public export
+substMorphBinOpToBNC : (BNCPolyM -> BNCPolyM -> BNCPolyM) ->
+  (n : Nat) -> (0 _ : NonZero n) -> BNCPolyM
+substMorphBinOpToBNC op (S n) SIsNonZero = op (PI #/ #| (S n)) (PI #% #| (S n))
+
 public export
 substMorphToBNC : {x, y : SubstObjMu} -> SubstMorph x y -> BNCPolyM
 substMorphToBNC {y=x} (SMId x) = PI
@@ -8377,6 +8734,19 @@ substMorphToBNC {x=(x' !* (y' !+ z'))} {y=((x' !* y') !+ (x' !* z'))}
       IfLT yzin (#| cy)
         (#| cy #* xin #+ yzin)
         (#| cz #* xin #+ (yzin #- #| cy) #+ #| (cx * cy))
+substMorphToBNC (SMNInj m n {m_nz} {n_nz}) = PI #% #| n
+substMorphToBNC (SMNConst n k {nz}) = #| (modNatNZ k n nz)
+substMorphToBNC (SMNAdd n {nz}) = substMorphBinOpToBNC (#+) n nz
+substMorphToBNC (SMNMult n {nz}) = substMorphBinOpToBNC (#*) n nz
+substMorphToBNC (SMNSub n {nz}) = substMorphBinOpToBNC (#-) n nz
+substMorphToBNC (SMNDiv n {nz}) = substMorphBinOpToBNC (#/) n nz
+substMorphToBNC (SMNMod n {nz}) = substMorphBinOpToBNC (#%) n nz
+substMorphToBNC (SMNEq n {nz}) =
+  -- We implement testing `f = g` as `if (isZero (f - g))`.
+  -- The return value is just a boolean (true is 1; false is 0).
+  substMorphBinOpToBNC (\f, g => IfZero (f #- g) (#| 1) (#| 0)) n nz
+substMorphToBNC (SMNLt n {nz}) =
+  substMorphBinOpToBNC (\f, g => IfLT f g (#| 1) (#| 0)) n nz
 
 public export
 substMorphToFunc : {a, b : SubstObjMu} -> SubstMorph a b -> Integer -> Integer
@@ -8406,6 +8776,7 @@ natToSubstTerm (InSO (x !!* y)) n = do
   xt <- natToSubstTerm x xn
   yt <- natToSubstTerm y yn
   Just $ SMPair xt yt
+natToSubstTerm (InSO (SOn n {nz})) m = Just $ SMNConst n {nz} m
 
 public export
 NatToSubstTerm : (a : SubstObjMu) -> (n : Nat) ->
@@ -8526,6 +8897,69 @@ data Checked_STLC_Term : SOMu_Context -> SubstObjMu -> Type where
     {ctx : SOMu_Context} -> {i : Nat} -> {auto ok : InBounds i ctx} ->
     Checked_STLC_Term ctx (index i ctx {ok})
 
+  -- Cast (Fin m) to (Fin n)
+  Checked_STLC_NInj :
+    {ctx : SOMu_Context} -> {m, n : Nat} ->
+    {auto 0 m_nz : NonZero m} ->
+    {auto 0 n_nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN m) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NConst :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NAdd :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NMult :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NSub :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NDiv :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NMod :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n)
+
+  Checked_STLC_NEq :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx SubstBool
+
+  Checked_STLC_NLt :
+    {ctx : SOMu_Context} -> {n : Nat} ->
+    {auto 0 nz : NonZero n} ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx (SubstN n) ->
+    Checked_STLC_Term ctx SubstBool
+
 public export
 Checked_Closed_STLC_Function : SubstObjMu -> SubstObjMu -> Type
 Checked_Closed_STLC_Function x y = Checked_STLC_Term [] (x !-> y)
@@ -8583,6 +9017,47 @@ compileCheckedTerm {ctx} {ty=cod} (Checked_STLC_App {dom} {cod} f x) =
 compileCheckedTerm
   {ctx} {ty=(index i ctx {ok})} (Checked_STLC_Var {ctx} {i} {ok}) =
     stlcCtxProj ctx i {ok}
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz=n_nz}))}
+  (Checked_STLC_NInj {ctx} {m} {n} {m_nz} {n_nz} k) =
+    SMNInj m n <! (compileCheckedTerm {ctx} {ty=(SubstN m {nz=m_nz})} k)
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NConst {ctx} {n} {nz} k) =
+    compileCheckedTerm {ctx} {ty=(SubstN n {nz})} k
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NAdd {ctx} {n} {nz} m k) =
+    SMNAdd n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NMult {ctx} {n} {nz} m k) =
+    SMNMult n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NSub {ctx} {n} {nz} m k) =
+    SMNSub n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NDiv {ctx} {n} {nz} m k) =
+    SMNDiv n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=(InSO (SOn n {nz}))}
+  (Checked_STLC_NMod {ctx} {n} {nz} m k) =
+    SMNMod n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=SubstBool}
+  (Checked_STLC_NEq {ctx} {n} {nz} m k) =
+    SMNEq n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
+compileCheckedTerm {ctx} {ty=SubstBool}
+  (Checked_STLC_NLt {ctx} {n} {nz} m k) =
+    SMNLt n {nz} <! SMPair
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} k)
+      (compileCheckedTerm {ctx} {ty=(SubstN n {nz=nz})} m)
 
 public export
 data STLC_Term : Type where
