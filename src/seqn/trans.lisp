@@ -24,12 +24,14 @@ Note that what is happening is that we look at the domain of the morphism
 and skip 0es, making non-zero entries into wires"
   (let* ((wire-count (length (dom morphism)))
          (wires (loop for i from 1 to wire-count
-                      collect (vamp:make-wire :var (intern (format nil "X~a" i)
-                                                           :keyword)))))
+                      collect (vamp:make-wire
+                               :var (intern
+                                     (format nil "X~a" (- wire-count i))
+                                     :keyword)))))
     (list
      (vamp:make-alias
       :name name
-      :inputs wires
+      :inputs (cdr (reverse wires))
       :body
       (list
        (vamp:make-tuples
@@ -41,6 +43,17 @@ and skip 0es, making non-zero entries into wires"
                                         (cadr x)))
                                     (prod-list (cod morphism)
                                                (to-vampir morphism wires nil)))))))))))
+
+(defun test-call (circuit)
+  "Given a compiled VampIR function with name foo and arguments x1...xn prints
+an equality as foo x1 ... xn = y"
+  (let ((inputs (vamp:inputs circuit))
+        (name   (vamp:name circuit)))
+    (list (vamp:make-equality
+           :lhs (if (zerop (length inputs))
+                    (vamp:make-wire :var name)
+                    (vamp:make-application :func name :arguments inputs))
+           :rhs (vamp:make-wire :var :y)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SeqN to Vamp-IR Compilation
