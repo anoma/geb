@@ -4095,7 +4095,10 @@ ProfCatDiagElemDomMorph {p} paa pbb = fst paa -> fst pbb
 -- underlying a splice morphism from `spl` to `spl'` in `i/Type/j`,
 -- then `ProfCatDiagElemDomMorph {p} spl spl' m` is
 -- precisely the commutativity condition for `m` to constitute a
--- splice morphism (from `spl` to `spl'`).
+-- splice morphism (from `spl` to `spl'`):  it asserts the equality of
+-- a pair of pairs of morphisms, and hence, equivalently, a pair of
+-- equalities of morphisms, where each equality is the commutativity
+-- condition for one of the two triangles in the splice-morphism diagram.
 public export
 0 ProfCatDiagElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
   {paa, pbb : ProfCatDiagElemObj p} ->
