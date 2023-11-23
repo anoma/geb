@@ -1525,6 +1525,20 @@ public export
 CSliceMorphismEq = snd0
 
 public export
+CSliceFromSliceMorph : {0 c : Type} -> (x, y : SliceObj c) ->
+  SliceMorphism {a=c} x y ->
+  CSliceMorphism {c} (CSliceFromSlice {c} x) (CSliceFromSlice {c} y)
+CSliceFromSliceMorph {c} x y m =
+  Element0 (\(ec ** ex) => (ec ** m ec ex)) $ \(ec ** ex) => Refl
+
+public export
+SliceFromCSliceMorph : {0 c : Type} -> (x, y : CSliceObj c) ->
+  CSliceMorphism {c} x y ->
+  SliceMorphism {a=c} (SliceFromCSlice {c} x) (SliceFromCSlice {c} y)
+SliceFromCSliceMorph {c} x y (Element0 mxy eqmxy) ec (Element0 ex eqxc) =
+  Element0 (mxy ex) $ trans (sym $ eqmxy ex) eqxc
+
+public export
 SlCSInv : {0 c : Type} -> (0 sl : SliceObj c) ->
   SliceMorphism {a=c} (SliceFromCSlice {c} (CSliceFromSlice {c} sl)) sl
 SlCSInv {c} sl elc (Element0 (elc' ** els) eq) = replace {p=sl} eq els
