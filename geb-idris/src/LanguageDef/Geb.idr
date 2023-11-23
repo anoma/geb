@@ -4216,6 +4216,27 @@ public export
 prodHomLiftCurry : (Type -> Type -> Type) -> (Type, Type) -> Type -> Type
 prodHomLiftCurry h (x, y) z = h x (h y z)
 
+------------------------
+------------------------
+---- Free promonads ----
+------------------------
+------------------------
+
+public export
+data FreePromonad : ProfunctorSig -> ProfunctorSig where
+  InFPv : {0 p : ProfunctorSig} -> {0 a, b : Type} ->
+    p a b -> FreePromonad p a b
+  InFPM : {0 p : ProfunctorSig} -> {0 a, b : Type} ->
+    EndoProfCompose p (FreePromonad p) a b -> FreePromonad p a b
+
+public export
+Profunctor p => Profunctor (FreePromonad p) where
+  dimap {a} {b} {c} {d} mca mbd (InFPv pab) =
+    InFPv {p} {a=c} {b=d} $ dimap {f=p} mca mbd pab
+  dimap {a} {b} {c} {d} mca mbd (InFPM (i ** (pai, fpib))) =
+    InFPM {p} {a=c} {b=d}
+      (i ** (dimap {f=p} mca id pai, dimap {f=(FreePromonad p)} id mbd fpib))
+
 -------------------------------------
 -------------------------------------
 ---- Paranatural transformations ----
@@ -4445,21 +4466,6 @@ DiCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
   ProfDiNT (DiCoYonedaLemmaCoend p) p
 DiCoYonedaLemmaR p {isP} i (Evidence j ((mij1, mj0i), pj1j0)) =
   dimap {f=p} mij1 mj0i pj1j0
-
-public export
-data FreePromonad : ProfunctorSig -> ProfunctorSig where
-  InFPv : {0 p : ProfunctorSig} -> {0 a, b : Type} ->
-    p a b -> FreePromonad p a b
-  InFPM : {0 p : ProfunctorSig} -> {0 a, b : Type} ->
-    EndoProfCompose p (FreePromonad p) a b -> FreePromonad p a b
-
-public export
-Profunctor p => Profunctor (FreePromonad p) where
-  dimap {a} {b} {c} {d} mca mbd (InFPv pab) =
-    InFPv {p} {a=c} {b=d} $ dimap {f=p} mca mbd pab
-  dimap {a} {b} {c} {d} mca mbd (InFPM (i ** (pai, fpib))) =
-    InFPM {p} {a=c} {b=d}
-      (i ** (dimap {f=p} mca id pai, dimap {f=(FreePromonad p)} id mbd fpib))
 
 --------------------------------
 --------------------------------
