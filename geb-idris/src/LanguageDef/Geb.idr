@@ -4470,6 +4470,15 @@ prodHomLiftCurry h (x, y) z = h x (h y z)
 -- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
 -- category of elements.  The hom-profunctor has the twisted-arrow category as
 -- its category of elements.
+--
+-- The contravariant profunctor `SliceObj` has as its category of elements
+-- the category of polynomial endofunctors on `Type`.  Dually, the covariant
+-- profunctor `CosliceObj` has as its category of elements the category of
+-- Dirichlet endofunctors on `Type`.  Those categories have the same objects,
+-- which correspond to the "arenas" of such endofunctors (that is why the
+-- same data determine polynomial endofunctors and Dirichlet endofunctors),
+-- but different morphisms (meaning that polynomial endofunctors and Dirichlet
+-- endofunctors have different natural transformations for the same arenas).
 public export
 ProfCatElemObj : ProfunctorSig -> Type
 ProfCatElemObj p = (ab : (Type, Type) ** p (fst ab) (snd ab))
