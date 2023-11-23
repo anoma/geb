@@ -1498,15 +1498,6 @@ CSliceObjMap : {0 c : Type} -> (x : CSliceObj c) -> (CSliceObjDomain x -> c)
 CSliceObjMap = snd
 
 public export
-CSliceFromSlice : {c : Type} -> SliceObj c -> CSliceObj c
-CSliceFromSlice {c} sl = (Sigma {a=c} sl ** fst)
-
-public export
-SliceFromCSlice : {0 c : Type} -> CSliceObj c -> SliceObj c
-SliceFromCSlice {c} x elc =
-  PreImage {a=(CSliceObjDomain x)} {b=c} (CSliceObjMap x) elc
-
-public export
 CSliceMorphism : {0 c : Type} -> CSliceObj c -> CSliceObj c -> Type
 CSliceMorphism x y =
   Subset0
@@ -1523,6 +1514,15 @@ public export
   (f : CSliceMorphism x y) ->
   ExtEq (CSliceObjMap x) (CSliceObjMap y . CSliceMorphismMap {x} {y} f)
 CSliceMorphismEq = snd0
+
+public export
+CSliceFromSlice : {c : Type} -> SliceObj c -> CSliceObj c
+CSliceFromSlice {c} sl = (Sigma {a=c} sl ** fst)
+
+public export
+SliceFromCSlice : {0 c : Type} -> CSliceObj c -> SliceObj c
+SliceFromCSlice {c} x elc =
+  PreImage {a=(CSliceObjDomain x)} {b=c} (CSliceObjMap x) elc
 
 public export
 CSliceFromSliceMorph : {0 c : Type} -> (x, y : SliceObj c) ->
