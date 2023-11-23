@@ -3961,6 +3961,11 @@ SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
 -- `DualYonedaEmbed` embeds the object `(i0, i1)` of `(op(Type), Type)` into
 -- the category whose objects are profunctors `(op(Type), Type) -> Type)` and
 -- whose morphisms are natural transformations.
+--
+-- Note that `DualYonedaEmbed Unit b` is the profunctor which ignores its
+-- first argument and acts as `CovarHomFunc b` on its second argument, whereas
+-- `DualYonedaEmbed a Void` is the profunctor which ignores its second argument
+-- and acts as `ContravarHomFunc a` on its first argument.
 public export
 DualYonedaEmbed : Type -> Type -> ProfunctorSig
 DualYonedaEmbed = PrePostPair
@@ -4036,6 +4041,14 @@ DualCoYonedaLemmaR p {isP} {a=c} {b=d} (Evidence ab ((mbd, mca), pab)) =
 -- morphisms are _paranatural_ transformations (compare to `DualYonedaEmbed`,
 -- where the codomain category's objects are the same, but the morphisms are
 -- the more strict _natural_ transformations).
+--
+-- Note that `DiYonedaEmbed Void i1` is the profunctor which ignores its
+-- second argument and acts as `ContravarHomFunc i1` on its first argument,
+-- whereas `DiYonedaEmbed i0 Unit` is the profunctor which ignores its first
+-- argument and acts as `CovarHomFunc i0` on its second argument.  So
+-- `DiYonedaEmbed Void` is effectively the contravariant Yoneda embedding
+-- on `Type`, while `flip DiYonedaEmbed Unit` is effectively the covariant
+-- Yoneda embedding on `Type`.
 public export
 DiYonedaEmbed : Type -> Type -> ProfunctorSig
 DiYonedaEmbed i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
@@ -4461,24 +4474,6 @@ prodHomLiftCurry h (x, y) z = h x (h y z)
 -- A profunctor `Type -> Type` is a functor `op(Type) -> Type -> Type`,
 -- so its category of elements consists of objects of `(op(Type), Type)`
 -- together with elements of the profunctor applied to them.
---
--- Note that a covariant functor `Type -> Type` is a special case which
--- ignores its first argument, and a contravariant functor `op(Type) -> Type`
--- is a special case which ignores its second argument.  In particular, a
--- covariant representable `p _ x = CovarHom i x` has the coslice category
--- `i/Type` as its category of elements, and a contravariant representable
--- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
--- category of elements.  The hom-profunctor has the twisted-arrow category as
--- its category of elements.
---
--- The contravariant profunctor `SliceObj` has as its category of elements
--- the category of polynomial endofunctors on `Type`.  Dually, the covariant
--- profunctor `CosliceObj` has as its category of elements the category of
--- Dirichlet endofunctors on `Type`.  Those categories have the same objects,
--- which correspond to the "arenas" of such endofunctors (that is why the
--- same data determine polynomial endofunctors and Dirichlet endofunctors),
--- but different morphisms (meaning that polynomial endofunctors and Dirichlet
--- endofunctors have different natural transformations for the same arenas).
 public export
 ProfCatElemObj : ProfunctorSig -> Type
 ProfCatElemObj p = (ab : (Type, Type) ** p (fst ab) (snd ab))
@@ -4557,6 +4552,25 @@ ProfCatDiagElemCommutes {p} {isP} {paa} {pbb} mab =
 -- is precisely the type of splice morphisms from `spl` to `spl'`.
 -- Hence the category of diagonal elements of `DiYonedaEmbed i j` is
 -- equivalent to the splice category `i/Type/j`.
+--
+-- Note that a covariant functor `Type -> Type` is a special case of a
+-- profunctor which ignores its first argument, and a contravariant functor
+-- `op(Type) -> Type` is a special case of a profunctor which ignores its
+-- second argument.  In particular, a covariant representable
+-- `p _ x = CovarHom i x` has the coslice category
+-- `i/Type` as its category of elements, and a contravariant representable
+-- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
+-- category of elements.  The hom-profunctor has the twisted-arrow category as
+-- its category of elements.
+--
+-- The contravariant profunctor `SliceObj` has as its category of elements
+-- the category of polynomial endofunctors on `Type`.  Dually, the covariant
+-- profunctor `CosliceObj` has as its category of elements the category of
+-- Dirichlet endofunctors on `Type`.  Those categories have the same objects,
+-- which correspond to the "arenas" of such endofunctors (that is why the
+-- same data determine polynomial endofunctors and Dirichlet endofunctors),
+-- but different morphisms (meaning that polynomial endofunctors and Dirichlet
+-- endofunctors have different natural transformations for the same arenas).
 public export
 ProfCatDiagElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
   ProfCatDiagElemObj p -> ProfCatDiagElemObj p -> Type
