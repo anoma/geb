@@ -989,8 +989,9 @@ CovarTerm {a} {b} {c} h x = x
 -- taking the tensor product of the pair of covariant functors represented
 -- by each of the pair of objects in `a`.
 --
--- In particular, if `b` is `a` and `d` is `c`, then this is the covariant
--- hom-functor internal to `c` represented by a pairwise coproduct in `a`.
+-- In particular, if `b` is `a` and `d` is `c` and `p` is a product, then this
+-- is the covariant hom-functor internal to `c` represented by a pairwise
+-- coproduct in `a`.
 public export
 PCCovarHom : {0 a, b, c, d : Type} -> (p : c -> c -> d) ->
   (h : a -> b -> c) -> (a, a) -> b -> d
@@ -1003,8 +1004,9 @@ PCCovarHom {a} {b} {c} p h (x, y) z = p (h x z) (h y z)
 -- taking the tensor product of the pair of contravariant functors represented
 -- by each of the pair of objects in `b`.
 --
--- In particular, if `b` is `a` and `d` is `c`, then this is the contravariant
--- hom-functor internal to `c` represented by a pairwise product in `a`.
+-- In particular, if `b` is `a` and `d` is `c` and `p` is a product, then this
+-- is the contravariant hom-functor internal to `c` represented by a pairwise
+-- product in `a`.
 public export
 PPContraHom : {0 a, b, c, d : Type} -> (p : c -> c -> d) ->
   (h : a -> b -> c) -> (b, b) -> a -> d
