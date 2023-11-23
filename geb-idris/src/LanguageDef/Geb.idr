@@ -4516,6 +4516,14 @@ ProfCatElemMorph {p} {isP} pab pcd =
 -- `(a : Type ** (i -> a, a -> j))`, which is precisely the definition of
 -- a splice object between `i` and `j` (i.e. an object of the category
 -- `i/Type/j`).
+--
+-- If `p` is `DiYonedaEmbed Void j` for some `j : Type`, then
+-- `p` is naturally isomorphic to `ContravarHomFunc j`, and
+-- `ProfCatDiagElemObj p` is isomorphic to `SliceObj j`.
+--
+-- If `p` is `DiYonedaEmbed i Unit` for some `i : Type`, then
+-- `p` is naturally isomorphic to `CovarHomFunc i`, and
+-- `ProfCatDiagElemObj p` is isomorphic to `CosliceObj i`.
 public export
 ProfCatDiagElemObj : ProfunctorSig -> Type
 ProfCatDiagElemObj = CoendBase -- (a : Type ** p a a)
