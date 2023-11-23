@@ -4063,31 +4063,55 @@ ProfCatElemMorph {p} {isP} pab pcd =
     (ProfCatElemDomMorph {p} pab pcd)
     (ProfCatElemCommutes {p} {isP} pab pcd)
 
---------------------------------------------------------
----- Categories of diagonal elements of profunctors ----
---------------------------------------------------------
+---------------------------------------------------------------------
+---- Categories of structures / diagonal elements of profunctors ----
+---------------------------------------------------------------------
 
 -- The category of diagonal elements of `p` is also called the category of
 -- `p`-structures.  See https://arxiv.org/abs/2307.09289.
+--
+-- Note that if `p : ProfunctorSig` is `DiYonedaEmbed i j` for
+-- some `i, j : Type`, then `ProfCatDiagElemObj p` is
+-- `(a : Type ** (i -> a, a -> j))`, which is precisely the definition of
+-- a splice object between `i` and `j` (i.e. an object of the category
+-- `i/Type/j`).
 public export
 ProfCatDiagElemObj : ProfunctorSig -> Type
 ProfCatDiagElemObj = CoendBase -- (a : Type ** p a a)
 
+-- Note that if `p : ProfunctorSig` is `DiYonedaEmbed i j` for
+-- some `i, j : Type`, and `spl` and `spl'` are morphisms of the
+-- splice category `i/Type/j`, then `ProfCatDiagElemDomMorph {p} spl spl'` is
+-- the signature of the morphism underlying a splice morphism from
+-- `spl` to `spl'` (without the commutativity condition).
 public export
 ProfCatDiagElemDomMorph : {0 p : ProfunctorSig} ->
   ProfCatDiagElemObj p -> ProfCatDiagElemObj p -> Type
 ProfCatDiagElemDomMorph {p} paa pbb = fst paa -> fst pbb
 
+-- Note that if `p : ProfunctorSig` is `DiYonedaEmbed i j` for
+-- some `i, j : Type`, and `spl` and `spl'` are morphisms of the
+-- splice category `i/Type/j`, and `m` has the signature of a morphism
+-- underlying a splice morphism from `spl` to `spl'` in `i/Type/j`,
+-- then `ProfCatDiagElemDomMorph {p} spl spl' m` is
+-- precisely the commutativity condition for `m` to constitute a
+-- splice morphism (from `spl` to `spl'`).
 public export
 0 ProfCatDiagElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
-  (ab, cd : ProfCatDiagElemObj p) -> ProfCatDiagElemDomMorph {p} ab cd -> Type
-ProfCatDiagElemCommutes {p} {isP} paa pbb mab =
+  {paa, pbb : ProfCatDiagElemObj p} ->
+  ProfCatDiagElemDomMorph {p} paa pbb -> Type
+ProfCatDiagElemCommutes {p} {isP} {paa} {pbb} mab =
   rmap {f=p} mab (snd paa) = lmap {f=p} mab (snd pbb)
 
+-- As a consequence of the previous notes,
+-- `ProfCatDiagElemMorph {p=(DiYonedaEmbed i j)} spl spl'`
+-- is precisely the type of splice morphisms from `spl` to `spl'`.
+-- Hence the category of diagonal elements of `DiYonedaEmbed i j` is
+-- equivalent to the splice category `i/Type/j`.
 public export
 ProfCatDiagElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
   ProfCatDiagElemObj p -> ProfCatDiagElemObj p -> Type
-ProfCatDiagElemMorph {p} {isP} pab pcd =
+ProfCatDiagElemMorph {p} {isP} paa pbb =
   Subset0
-    (ProfCatDiagElemDomMorph {p} pab pcd)
-    (ProfCatDiagElemCommutes {p} {isP} pab pcd)
+    (ProfCatDiagElemDomMorph {p} paa pbb)
+    (ProfCatDiagElemCommutes {p} {isP} {paa} {pbb})
