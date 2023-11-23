@@ -4474,6 +4474,25 @@ prodHomLiftCurry h (x, y) z = h x (h y z)
 -- A profunctor `Type -> Type` is a functor `op(Type) -> Type -> Type`,
 -- so its category of elements consists of objects of `(op(Type), Type)`
 -- together with elements of the profunctor applied to them.
+--
+-- Note that a covariant functor `Type -> Type` is a special case of a
+-- profunctor which ignores its first argument, and a contravariant functor
+-- `op(Type) -> Type` is a special case of a profunctor which ignores its
+-- second argument.  In particular, a covariant representable
+-- `p _ x = CovarHom i x` has the coslice category
+-- `i/Type` as its category of elements, and a contravariant representable
+-- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
+-- category of elements.  The hom-profunctor has the twisted-arrow category as
+-- its category of elements.
+--
+-- The contravariant profunctor `SliceObj` has as its category of elements
+-- the category of polynomial endofunctors on `Type`.  Dually, the covariant
+-- profunctor `CosliceObj` has as its category of elements the category of
+-- Dirichlet endofunctors on `Type`.  Those categories have the same objects,
+-- which correspond to the "arenas" of such endofunctors (that is why the
+-- same data determine polynomial endofunctors and Dirichlet endofunctors),
+-- but different morphisms (meaning that polynomial endofunctors and Dirichlet
+-- endofunctors have different natural transformations for the same arenas).
 public export
 ProfCatElemObj : ProfunctorSig -> Type
 ProfCatElemObj p = (ab : (Type, Type) ** p (fst ab) (snd ab))
@@ -4560,25 +4579,6 @@ ProfCatDiagElemCommutes {p} {isP} {paa} {pbb} mab =
 -- is precisely the type of splice morphisms from `spl` to `spl'`.
 -- Hence the category of diagonal elements of `DiYonedaEmbed i j` is
 -- equivalent to the splice category `i/Type/j`.
---
--- Note that a covariant functor `Type -> Type` is a special case of a
--- profunctor which ignores its first argument, and a contravariant functor
--- `op(Type) -> Type` is a special case of a profunctor which ignores its
--- second argument.  In particular, a covariant representable
--- `p _ x = CovarHom i x` has the coslice category
--- `i/Type` as its category of elements, and a contravariant representable
--- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
--- category of elements.  The hom-profunctor has the twisted-arrow category as
--- its category of elements.
---
--- The contravariant profunctor `SliceObj` has as its category of elements
--- the category of polynomial endofunctors on `Type`.  Dually, the covariant
--- profunctor `CosliceObj` has as its category of elements the category of
--- Dirichlet endofunctors on `Type`.  Those categories have the same objects,
--- which correspond to the "arenas" of such endofunctors (that is why the
--- same data determine polynomial endofunctors and Dirichlet endofunctors),
--- but different morphisms (meaning that polynomial endofunctors and Dirichlet
--- endofunctors have different natural transformations for the same arenas).
 public export
 ProfCatDiagElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
   ProfCatDiagElemObj p -> ProfCatDiagElemObj p -> Type
