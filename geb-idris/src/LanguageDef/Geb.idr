@@ -4461,6 +4461,14 @@ prodHomLiftCurry h (x, y) z = h x (h y z)
 -- A profunctor `Type -> Type` is a functor `op(Type) -> Type -> Type`,
 -- so its category of elements consists of objects of `(op(Type), Type)`
 -- together with elements of the profunctor applied to them.
+--
+-- Note that a covariant functor `Type -> Type` is a special case which
+-- ignores its first argument, and a contravariant functor `op(Type) -> Type`
+-- is a special case which ignores its second argument.  In particular, a
+-- covariant representable `p _ x = CovarHom i x` has the coslice category
+-- `i/Type` as its category of elements, and a contravariant representable
+-- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
+-- category of elements.
 public export
 ProfCatElemObj : ProfunctorSig -> Type
 ProfCatElemObj p = (ab : (Type, Type) ** p (fst ab) (snd ab))
