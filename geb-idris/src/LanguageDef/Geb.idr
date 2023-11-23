@@ -2,17 +2,12 @@ module LanguageDef.Geb
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import Library.IdrisAlgebra
 import LanguageDef.BinTree
 import LanguageDef.PolyCat
-import LanguageDef.Theories
-import LanguageDef.Figures
 import LanguageDef.DiagramCat
-import LanguageDef.RefinedADT
-import LanguageDef.Adjunctions
 import LanguageDef.NatPrefixCat
-import LanguageDef.ProgFinSet
 import LanguageDef.PolyIndTypes
-import LanguageDef.Syntax
 
 %default total
 
