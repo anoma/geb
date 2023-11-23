@@ -217,7 +217,7 @@ SliceObj a = a -> Type
 
 public export
 Contravariant SliceObj where
-  contramap {a} {b} sla f = f . sla
+  contramap = (|>)
 
 public export
 FinSliceObj : Nat -> Type
