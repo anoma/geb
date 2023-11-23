@@ -4467,62 +4467,6 @@ prodHomLiftCurry h (x, y) z = h x (h y z)
 --------------------------------
 --------------------------------
 
------------------------------------------------
----- Categories of elements of profunctors ----
------------------------------------------------
-
--- A profunctor `Type -> Type` is a functor `op(Type) -> Type -> Type`,
--- so its category of elements consists of objects of `(op(Type), Type)`
--- together with elements of the profunctor applied to them.
---
--- Note that a covariant functor `Type -> Type` is a special case of a
--- profunctor which ignores its first argument, and a contravariant functor
--- `op(Type) -> Type` is a special case of a profunctor which ignores its
--- second argument.  In particular, a covariant representable
--- `p _ x = CovarHom i x` has the coslice category
--- `i/Type` as its category of elements, and a contravariant representable
--- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
--- category of elements.  The hom-profunctor has the twisted-arrow category as
--- its category of elements.
---
--- The contravariant profunctor `SliceObj` has as its category of elements
--- the category of polynomial endofunctors on `Type`.  Dually, the covariant
--- profunctor `CosliceObj` has as its category of elements the category of
--- Dirichlet endofunctors on `Type`.  Those categories have the same objects,
--- which correspond to the "arenas" of such endofunctors (that is why the
--- same data determine polynomial endofunctors and Dirichlet endofunctors),
--- but different morphisms (meaning that polynomial endofunctors and Dirichlet
--- endofunctors have different natural transformations for the same arenas).
-public export
-ProfCatElemObj : ProfunctorSig -> Type
-ProfCatElemObj p = (ab : (Type, Type) ** p (fst ab) (snd ab))
-
--- Because the domain of an endo-profunctor on `Type` is `(op(Type), Type)`,
--- the morphism component of a morphism in its category of elements is a
--- morphism in `(op(Type), Type)`, which is a `PrePostPair`.
---
--- (Besides a morphism in the functor's domain, a morphism in the category of
--- elements also has an equality/commutativity component.)
-public export
-ProfCatElemDomMorph : {0 p : ProfunctorSig} ->
-  ProfCatElemObj p -> ProfCatElemObj p -> Type
-ProfCatElemDomMorph {p} pab pcd =
-  PrePostPair (fst (fst pab)) (snd (fst pab)) (fst (fst pcd)) (snd (fst pcd))
-
-public export
-0 ProfCatElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
-  (pab, pcd : ProfCatElemObj p) -> ProfCatElemDomMorph {p} pab pcd -> Type
-ProfCatElemCommutes {p} {isP} pab pcd mcabd =
-  dimap {f=p} (fst mcabd) (snd mcabd) (snd pab) = snd pcd
-
-public export
-ProfCatElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
-  ProfCatElemObj p -> ProfCatElemObj p -> Type
-ProfCatElemMorph {p} {isP} pab pcd =
-  Subset0
-    (ProfCatElemDomMorph {p} pab pcd)
-    (ProfCatElemCommutes {p} {isP} pab pcd)
-
 ---------------------------------------------------------------------
 ---- Categories of structures / diagonal elements of profunctors ----
 ---------------------------------------------------------------------
@@ -4586,3 +4530,59 @@ ProfCatDiagElemMorph {p} {isP} paa pbb =
   Subset0
     (ProfCatDiagElemDomMorph {p} paa pbb)
     (ProfCatDiagElemCommutes {p} {isP} {paa} {pbb})
+
+-----------------------------------------------
+---- Categories of elements of profunctors ----
+-----------------------------------------------
+
+-- A profunctor `Type -> Type` is a functor `op(Type) -> Type -> Type`,
+-- so its category of elements consists of objects of `(op(Type), Type)`
+-- together with elements of the profunctor applied to them.
+--
+-- Note that a covariant functor `Type -> Type` is a special case of a
+-- profunctor which ignores its first argument, and a contravariant functor
+-- `op(Type) -> Type` is a special case of a profunctor which ignores its
+-- second argument.  In particular, a covariant representable
+-- `p _ x = CovarHom i x` has the coslice category
+-- `i/Type` as its category of elements, and a contravariant representable
+-- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
+-- category of elements.  The hom-profunctor has the twisted-arrow category as
+-- its category of elements.
+--
+-- The contravariant profunctor `SliceObj` has as its category of elements
+-- the category of polynomial endofunctors on `Type`.  Dually, the covariant
+-- profunctor `CosliceObj` has as its category of elements the category of
+-- Dirichlet endofunctors on `Type`.  Those categories have the same objects,
+-- which correspond to the "arenas" of such endofunctors (that is why the
+-- same data determine polynomial endofunctors and Dirichlet endofunctors),
+-- but different morphisms (meaning that polynomial endofunctors and Dirichlet
+-- endofunctors have different natural transformations for the same arenas).
+public export
+ProfCatElemObj : ProfunctorSig -> Type
+ProfCatElemObj p = (ab : (Type, Type) ** p (fst ab) (snd ab))
+
+-- Because the domain of an endo-profunctor on `Type` is `(op(Type), Type)`,
+-- the morphism component of a morphism in its category of elements is a
+-- morphism in `(op(Type), Type)`, which is a `PrePostPair`.
+--
+-- (Besides a morphism in the functor's domain, a morphism in the category of
+-- elements also has an equality/commutativity component.)
+public export
+ProfCatElemDomMorph : {0 p : ProfunctorSig} ->
+  ProfCatElemObj p -> ProfCatElemObj p -> Type
+ProfCatElemDomMorph {p} pab pcd =
+  PrePostPair (fst (fst pab)) (snd (fst pab)) (fst (fst pcd)) (snd (fst pcd))
+
+public export
+0 ProfCatElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
+  (pab, pcd : ProfCatElemObj p) -> ProfCatElemDomMorph {p} pab pcd -> Type
+ProfCatElemCommutes {p} {isP} pab pcd mcabd =
+  dimap {f=p} (fst mcabd) (snd mcabd) (snd pab) = snd pcd
+
+public export
+ProfCatElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
+  ProfCatElemObj p -> ProfCatElemObj p -> Type
+ProfCatElemMorph {p} {isP} pab pcd =
+  Subset0
+    (ProfCatElemDomMorph {p} pab pcd)
+    (ProfCatElemCommutes {p} {isP} pab pcd)
