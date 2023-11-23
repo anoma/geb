@@ -4468,6 +4468,7 @@ prodHomLiftCurry h (x, y) z = h x (h y z)
 -- covariant representable `p _ x = CovarHom i x` has the coslice category
 -- `i/Type` as its category of elements, and a contravariant representable
 -- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
+-- category of elements.  The hom-profunctor has the arrow category as its
 -- category of elements.
 public export
 ProfCatElemObj : ProfunctorSig -> Type
