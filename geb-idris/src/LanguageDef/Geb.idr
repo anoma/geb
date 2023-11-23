@@ -4592,3 +4592,43 @@ ProfCatElemMorph {p} {isP} pab pcd =
   Subset0
     (ProfCatElemDomMorph {p} pab pcd)
     (ProfCatElemCommutes {p} {isP} pab pcd)
+
+----------------------------
+----------------------------
+---- Coslice categories ----
+----------------------------
+----------------------------
+
+public export
+CCosliceObj : Type -> Type
+CCosliceObj c = DPair Type (HomProf c)
+
+public export
+CCosliceObjCodomain : {0 c : Type} -> CCosliceObj c -> Type
+CCosliceObjCodomain = fst
+
+public export
+CCosliceObjMap : {0 c : Type} ->
+  (x : CCosliceObj c) -> (c -> CCosliceObjCodomain {c} x)
+CCosliceObjMap = snd
+
+public export
+CCosliceMorphism : {0 c : Type} -> CCosliceObj c -> CCosliceObj c -> Type
+CCosliceMorphism x y =
+  Subset0
+    (CCosliceObjCodomain x -> CCosliceObjCodomain y)
+    (ExtEq (CCosliceObjMap y) . (|>) (CCosliceObjMap x))
+
+public export
+CCosliceMorphismMap : {0 c : Type} -> {0 x, y : CCosliceObj c} ->
+  CCosliceMorphism {c} x y ->
+  CCosliceObjCodomain {c} x -> CCosliceObjCodomain {c} y
+CCosliceMorphismMap = fst0
+
+public export
+0 CCosliceMorphismEq : {0 c : Type} -> {0 x, y : CCosliceObj c} ->
+  (f : CCosliceMorphism {c} x y) ->
+  ExtEq
+    (CCosliceObjMap {c} y)
+    (CCosliceObjMap {c} x |> CCosliceMorphismMap {c} {x} {y} f)
+CCosliceMorphismEq = snd0
