@@ -957,6 +957,26 @@ public export
 ProfPrshfNT : (pi, rho : ((Type -> Type -> Type) -> Type)) -> Type
 ProfPrshfNT pi rho = {p : Type -> Type -> Type} -> Profunctor p -> pi p -> rho p
 
+----------------------------
+---- Profunctor algebra ----
+----------------------------
+
+public export
+ProfCoalg : (Type -> Type) -> ProfunctorSig
+ProfCoalg f a b = a -> f b
+
+public export
+ProfDialg : (Type -> Type) -> (Type -> Type) -> ProfunctorSig
+ProfDialg = NatTransProf
+
+public export
+ProfAlg : ProfunctorSig -> (Type -> Type) -> Type
+ProfAlg p f = ProfNT (ProfCoalg f) (EndoProfCompose p $ ProfCoalg f)
+
+public export
+ProfConstAlg : ProfunctorSig -> Type -> Type
+ProfConstAlg p x = p x x
+
 -------------------------------------
 ---- Hom-functors as profunctors ----
 -------------------------------------
