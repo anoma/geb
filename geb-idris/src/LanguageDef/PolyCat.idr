@@ -2122,6 +2122,51 @@ ComonadToCat : (com : PFComonad) ->
   PFComonoidCorrect (fst com) (snd com) -> CatSig
 ComonadToCat (p ** c) holds = ComonoidToCat {p} c holds
 
+----------------------------------------------------
+----------------------------------------------------
+---- Density comonad (specifically) as category ----
+----------------------------------------------------
+----------------------------------------------------
+
+public export
+DensityToCatObj : PolyFunc -> Type
+DensityToCatObj p = pfPos (PolyDensityComonad p)
+
+public export
+DensityToCatEmanate : (p : PolyFunc) -> DensityToCatObj p -> Type
+DensityToCatEmanate p = pfDir {p=(PolyDensityComonad p)}
+
+public export
+DensityToCatCodom : (p : PolyFunc) -> (a : DensityToCatObj p) ->
+  DensityToCatEmanate p a -> DensityToCatObj p
+DensityToCatCodom (pos ** dir) i (j ** d) = j
+
+public export
+DensityToCatMorph : (p : PolyFunc) ->
+  DensityToCatObj p -> DensityToCatObj p -> Type
+DensityToCatMorph (pos ** dir) i j = dir j -> dir i
+
+public export
+DensityToCatId : (p : PolyFunc) ->
+  (a : DensityToCatObj p) -> DensityToCatMorph p a a
+DensityToCatId (pos ** dir) i = id {a=(dir i)}
+
+public export
+DensityToCatComp : (p : PolyFunc) ->
+  {a, b, c : DensityToCatObj p} ->
+  DensityToCatMorph p b c -> DensityToCatMorph p a b -> DensityToCatMorph p a c
+DensityToCatComp (pos ** dir) {a} {b} {c} = (|>)
+
+public export
+DensityToCat : PolyFunc -> CatSig
+DensityToCat p@(pos ** dir) =
+  MkCatSig
+    (DensityToCatObj p)
+    (DensityToCatMorph p)
+    (\a, b => ExtEq)
+    (DensityToCatId p)
+    (DensityToCatComp p)
+
 ------------------------------------
 ------------------------------------
 ---- Specific monoids/comonoids ----
