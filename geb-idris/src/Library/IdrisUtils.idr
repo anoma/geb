@@ -1478,11 +1478,6 @@ blockIndent : Nat -> String -> String
 blockIndent n = unlines . map (indent n) . lines
 
 public export
-data HList : List Type -> Type where
-  HNil : HList []
-  HCons : ty -> IdrisUtils.HList tys -> HList (ty :: tys)
-
-public export
 mapExtEq : {0 a, b : Type} -> (f, g : a -> b) -> (l : List a) ->
   ((x : a) -> f x = g x) -> map f l = map g l
 mapExtEq f g [] eq = Refl

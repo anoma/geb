@@ -990,7 +990,7 @@ Monad (FrSExpM atom) using BifunctorToFunctor where
 
 public export
 SExpGenTypeAlg : SExpTypeAlg atom -> SExpTypeAlg atom
-SExpGenTypeAlg alg x = (IdrisUtils.HList $ sxfSubexprs x, alg x)
+SExpGenTypeAlg alg x = (HList $ sxfSubexprs x, alg x)
 
 public export
 sexpGenTypeCata : SExpTypeAlg atom -> SExp atom -> Type
@@ -1002,7 +1002,7 @@ slistGenTypeCataL = slistCata . SExpGenTypeAlg
 
 public export
 slistGenTypeCata : SExpTypeAlg atom -> SList atom -> Type
-slistGenTypeCata alg l = IdrisUtils.HList (slistGenTypeCataL alg l)
+slistGenTypeCata alg l = HList (slistGenTypeCataL alg l)
 
 public export
 SExpDepAlg : {atom : Type} ->
@@ -1039,12 +1039,12 @@ mutual
     (step : SExpDepAlg alg paramAlg) ->
     (l : SList atom) ->
     Maybe (slistGenTypeCata alg l)
-  slistGenTypeDec alg paramAlg step [] = Just HNil
+  slistGenTypeDec alg paramAlg step [] = Just []
   slistGenTypeDec alg paramAlg step (x :: xs) =
     case
       (sexpGenTypeDec alg paramAlg step x,
        slistGenTypeDec alg paramAlg step xs) of
-        (Just v, Just vs) => Just (HCons v vs)
+        (Just v, Just vs) => Just (v :: vs)
         _ => Nothing
 
 ---------------------------
