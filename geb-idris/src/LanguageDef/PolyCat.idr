@@ -3350,6 +3350,14 @@ InterpSPNT : {w, z : Type} -> {f, g : SlicePolyFunc w z} ->
 InterpSPNT {w} {z} {f} {g} alpha slw posfi (posf ** dirsf) =
   (spntOnPos alpha posfi posf ** InterpSPNTDir alpha slw posfi posf dirsf)
 
+public export
+SPNatTrans'' : {w, z : Type} ->
+  SlicePolyFunc'' w z -> SlicePolyFunc'' w z -> Type
+SPNatTrans'' {w} {z} (fpos ** fdir) (gpos ** gdir) =
+  (onPos : SliceMorphism {a=z} fpos gpos **
+   (ez : z) -> (i : fpos ez) ->
+   SliceMorphism {a=w} (gdir (ez ** onPos ez i)) (fdir (ez ** i)))
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Composition of dependent polynomial functors ----
