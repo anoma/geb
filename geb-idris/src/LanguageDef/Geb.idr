@@ -33,6 +33,10 @@ UnitalAlg : Type -> Type
 UnitalAlg = Algebra UnitalF
 
 public export
+UnitalCoalg : Type -> Type
+UnitalCoalg = Coalgebra UnitalF
+
+public export
 MkU : {0 a : Type} -> a -> UnitalAlg a
 MkU x UOu = x
 
@@ -47,6 +51,14 @@ UnitalFM = FreeMonad UnitalF
 public export
 UnitalFAlg : (a : Type) -> UnitalAlg (UnitalFM a)
 UnitalFAlg a = inFC {a}
+
+public export
+UnitalCFCM : Type -> Type
+UnitalCFCM = CofreeComonad UnitalF
+
+public export
+UnitalCFCoalg : (a : Type) -> UnitalCoalg (UnitalCFCM a)
+UnitalCFCoalg a = outCFC {a}
 
 ---------------
 ---- Unars ----
