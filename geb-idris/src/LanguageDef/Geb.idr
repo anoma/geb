@@ -22,14 +22,15 @@ import LanguageDef.PolyIndTypes
 ---------------------------
 
 -- This is effectively just a name for the constant functor which
--- returns Unit, which is a covariant representable represented by Void.
+-- returns Unit, which is a covariant representable represented by Void,
+-- and also a contravariant representable represented by Unit.
 public export
-data UnitalObjF : Type -> Type where
-  UOu : UnitalObjF a
+data UnitalF : Type -> Type where
+  UOu : UnitalF a
 
 public export
 UnitalAlg : Type -> Type
-UnitalAlg = Algebra UnitalObjF
+UnitalAlg = Algebra UnitalF
 
 public export
 MkU : {0 a : Type} -> a -> UnitalAlg a
@@ -41,7 +42,7 @@ Uu alg = alg UOu
 
 public export
 UnitalFM : Type -> Type
-UnitalFM = FreeMonad UnitalObjF
+UnitalFM = FreeMonad UnitalF
 
 public export
 UnitalFAlg : (a : Type) -> UnitalAlg (UnitalFM a)
@@ -110,7 +111,7 @@ MagObjFMI a = inFC {a}
 -- Functor which generates objects of a monoidal category.
 public export
 data UMagObjF : Type -> Type where
-  MOu : UnitalObjF a -> UMagObjF a
+  MOu : UnitalF a -> UMagObjF a
   MOm : MagObjF a -> UMagObjF a
 
 public export
