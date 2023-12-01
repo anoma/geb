@@ -3890,6 +3890,33 @@ SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
 --------------------------------------------------
 --------------------------------------------------
 
+------------------
+---- Ordinals ----
+------------------
+
+public export
+record FinOrd where
+  constructor FO
+  FOn : Nat
+
+public export
+record OrdW where
+  constructor OW
+
+public export
+record OrdM where
+  constructor OM
+
+public export
+data PolyOrdWF : Type where
+  POrdWFn : FinOrd -> PolyOrdWF
+  POrdWFw : OrdW -> PolyOrdWF
+
+public export
+data PolyOrd : Type where
+  POrdWF : PolyOrdWF -> PolyOrd
+  POrdM : OrdM -> PolyOrd
+
 --------------------------------
 ---- Lawvere-style `FinSet` ----
 --------------------------------
@@ -3908,6 +3935,10 @@ FSLinitial = FSLcoprod []
 public export
 FSLterminal : FinSetLawObj
 FSLterminal = FSLprod []
+
+public export
+FSLn : Nat -> FinSetLawObj
+FSLn n = FSLcoprod (replicate n FSLterminal)
 
 --------------------------------------------------------------
 ---- Lawvere-style finitary dependent polynomial functors ----
