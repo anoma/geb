@@ -3890,6 +3890,31 @@ SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
 --------------------------------------------------
 --------------------------------------------------
 
+-- `FinSet`, so far without equalizers or coequalizers, presented in the
+-- style of a Lawvere theory.
+public export
+data FinSetLawObj : Type where
+  FSLprod : List FinSetLawObj -> FinSetLawObj
+  FSLcoprod : List FinSetLawObj -> FinSetLawObj
+
+public export
+FSLinitial : FinSetLawObj
+FSLinitial = FSLcoprod []
+
+public export
+FSLterminal : FinSetLawObj
+FSLterminal = FSLprod []
+
+-- The double category of finitary dependent polynomial functors, presented
+-- in the style of a Lawvere theory.
+public export
+data FPLawAxis : Type where
+  FPLAvert : FPLawAxis
+  FPLAhoriz : FPLawAxis
+
+public export
+data FinPolyLaw : FPLawAxis -> FinSetLawObj -> FinSetLawObj -> Type where
+
 ------------------------
 ---- Raw operations ----
 ------------------------
