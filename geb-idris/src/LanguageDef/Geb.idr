@@ -28,24 +28,24 @@ data UnitalObjF : Type -> Type where
   UOu : UnitalObjF a
 
 public export
-UnitalI : Type -> Type
-UnitalI = Algebra UnitalObjF
+UnitalAlg : Type -> Type
+UnitalAlg = Algebra UnitalObjF
 
 public export
-MkU : {0 a : Type} -> a -> UnitalI a
+MkU : {0 a : Type} -> a -> UnitalAlg a
 MkU x UOu = x
 
 public export
-Uu : {0 a : Type} -> UnitalI a -> a
+Uu : {0 a : Type} -> UnitalAlg a -> a
 Uu alg = alg UOu
 
 public export
-UnitalObjFM : Type -> Type
-UnitalObjFM = FreeMonad UnitalObjF
+UnitalFM : Type -> Type
+UnitalFM = FreeMonad UnitalObjF
 
 public export
-UnitalObjFUI : (a : Type) -> UnitalI (UnitalObjFM a)
-UnitalObjFUI a = inFC {a}
+UnitalFAlg : (a : Type) -> UnitalAlg (UnitalFM a)
+UnitalFAlg a = inFC {a}
 
 ---------------
 ---- Unars ----
@@ -118,12 +118,12 @@ UMagmaI : Type -> Type
 UMagmaI = Algebra UMagObjF
 
 public export
-MkUMag : {0 a : Type} -> UnitalI a -> MagmaI a -> UMagmaI a
+MkUMag : {0 a : Type} -> UnitalAlg a -> MagmaI a -> UMagmaI a
 MkUMag ui mi (MOu uo) = ui uo
 MkUMag ui mu (MOm mo) = mu mo
 
 public export
-MUu : {0 a : Type} -> UMagmaI a -> UnitalI a
+MUu : {0 a : Type} -> UMagmaI a -> UnitalAlg a
 MUu alg = alg . MOu
 
 public export
@@ -305,7 +305,7 @@ UMIfromLHI {a} li (MOm (MOb x y)) = li [x, y]
 --------------
 
 public export
-UnitUI : UnitalI Unit
+UnitUI : UnitalAlg Unit
 UnitUI = MkU ()
 
 --------------
@@ -320,7 +320,7 @@ ListLHI a = concat {a=(List a)} {t=List}
 
 -- `List a` implements the unital interface.
 public export
-ListUI : (a : Type) -> UnitalI (List a)
+ListUI : (a : Type) -> UnitalAlg (List a)
 ListUI a = MkU []
 
 -- `List a` implements the magma interface.
@@ -357,7 +357,7 @@ ListIdxI = Iidx {f=List} {sz=ListSzI} $
 -- there is one).
 public export
 CovarInit : {0 a, b, c, d : Type} ->
-  (u : UnitalI d) -> (h : a -> b -> c) -> b -> d
+  (u : UnitalAlg d) -> (h : a -> b -> c) -> b -> d
 CovarInit {a} {b} {c} {d} u h _ = Uu u
 
 -- If the terms of `a` and `b` are the objects of two categories,
@@ -367,7 +367,7 @@ CovarInit {a} {b} {c} {d} u h _ = Uu u
 -- there is one).
 public export
 ContravarTerm : {0 a, b, c, d : Type} ->
-  (u : UnitalI d) -> (h : a -> b -> c) -> a -> d
+  (u : UnitalAlg d) -> (h : a -> b -> c) -> a -> d
 ContravarTerm {a} {b} {c} {d} u h _ = Uu u
 
 -- If `a` is a type of objects which we assume to have a terminal object,

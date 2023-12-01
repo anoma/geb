@@ -686,24 +686,24 @@ ImplementationF {a} dom cod =
 -- The morphism interface of a terminal object, where `u` is the object
 -- component.
 public export
-data TermMorphF : {a : Type} -> (u : UnitalI a) -> HomEndofunctor a where
+data TermMorphF : {a : Type} -> (u : UnitalAlg a) -> HomEndofunctor a where
   TM1 : (x : a) -> TermMorphF {a} u h (x, Uu u)
 
 public export
-TerminalI : {a : Type} -> UnitalI a -> HomSlice a -> Type
+TerminalI : {a : Type} -> UnitalAlg a -> HomSlice a -> Type
 TerminalI {a} u = SliceAlg {a=(SignatureT a)} (TermMorphF {a} u)
 
 public export
-TermI : {a : Type} -> {u : UnitalI a} -> {h : HomSlice a} ->
+TermI : {a : Type} -> {u : UnitalAlg a} -> {h : HomSlice a} ->
   ((x : a) -> h (x, Uu u)) -> TerminalI {a} u h
 TermI {a} {u} {h} tid (x, Uu u) (TM1 x) = tid x
 
 public export
-TermMorphFM : {a : Type} -> (u : UnitalI a) -> HomEndofunctor a
+TermMorphFM : {a : Type} -> (u : UnitalAlg a) -> HomEndofunctor a
 TermMorphFM {a} u = SliceFreeM (TermMorphF {a} u)
 
 public export
-TermMorphFMI : {a : Type} -> (u : UnitalI a) -> (h : HomSlice a) ->
+TermMorphFMI : {a : Type} -> (u : UnitalAlg a) -> (h : HomSlice a) ->
   TerminalI {a} u (TermMorphFM {a} u h)
 TermMorphFMI {a} u h sig =
   InSlFc {f=(TermMorphF {a} u)} {a=(SignatureT a)} {sa=h} {ea=(sig)}
@@ -715,24 +715,24 @@ TermMorphFMI {a} u h sig =
 -- The morphism interface of an initial object, where `u` is the object
 -- component.
 public export
-data InitMorphF : {a : Type} -> (u : UnitalI a) -> HomEndofunctor a where
+data InitMorphF : {a : Type} -> (u : UnitalAlg a) -> HomEndofunctor a where
   IM0 : (x : a) -> InitMorphF {a} u h (Uu u, x)
 
 public export
-InitialI : {a : Type} -> UnitalI a -> HomSlice a -> Type
+InitialI : {a : Type} -> UnitalAlg a -> HomSlice a -> Type
 InitialI {a} u = SliceAlg {a=(SignatureT a)} (InitMorphF {a} u)
 
 public export
-InitI : {a : Type} -> {u : UnitalI a} -> {h : HomSlice a} ->
+InitI : {a : Type} -> {u : UnitalAlg a} -> {h : HomSlice a} ->
   ((x : a) -> h (Uu u, x)) -> InitialI {a} u h
 InitI {a} {u} {h} iid (Uu u, x) (IM0 x) = iid x
 
 public export
-InitMorphFM : {a : Type} -> (u : UnitalI a) -> HomEndofunctor a
+InitMorphFM : {a : Type} -> (u : UnitalAlg a) -> HomEndofunctor a
 InitMorphFM {a} u = SliceFreeM (InitMorphF {a} u)
 
 public export
-InitMorphFMI : {a : Type} -> (u : UnitalI a) -> (h : HomSlice a) ->
+InitMorphFMI : {a : Type} -> (u : UnitalAlg a) -> (h : HomSlice a) ->
   InitialI {a} u (InitMorphFM {a} u h)
 InitMorphFMI {a} u h sig =
   InSlFc {f=(InitMorphF {a} u)} {a=(SignatureT a)} {sa=h} {ea=(sig)}
@@ -1200,7 +1200,7 @@ BArithInvMorphFMI {a} maybeM fprod bnat h sig =
 --------------------------------------------
 
 public export
-data BACompMorphF : {a : Type} -> (bool : UnitalI a) -> (fprod : UMagmaI a) ->
+data BACompMorphF : {a : Type} -> (bool : UnitalAlg a) -> (fprod : UMagmaI a) ->
     (bnat : BNatI a) -> HomEndofunctor a where
   BACeq : (n : Nat) -> {auto 0 ok : Not (n = 0)} ->
     BACompMorphF bool fprod bnat h
@@ -1210,18 +1210,18 @@ data BACompMorphF : {a : Type} -> (bool : UnitalI a) -> (fprod : UMagmaI a) ->
       (Mb (MUm fprod) (bNat bnat n) (bNat bnat n), Uu bool)
 
 public export
-BACompI : {a : Type} -> UnitalI a -> UMagmaI a -> BNatI a -> HomSlice a -> Type
+BACompI : {a : Type} -> UnitalAlg a -> UMagmaI a -> BNatI a -> HomSlice a -> Type
 BACompI {a} bool fprod bnat =
   SliceAlg {a=(SignatureT a)} (BACompMorphF {a} bool fprod bnat)
 
 public export
-BACompMorphFM : {a : Type} -> (bool : UnitalI a) -> (fprod : UMagmaI a) ->
+BACompMorphFM : {a : Type} -> (bool : UnitalAlg a) -> (fprod : UMagmaI a) ->
   (bnat : BNatI a) -> HomEndofunctor a
 BACompMorphFM {a} bool fprod bnat =
   SliceFreeM (BACompMorphF {a} bool fprod bnat)
 
 public export
-BACompMorphFMI : {a : Type} -> (bool : UnitalI a) -> (fprod : UMagmaI a) ->
+BACompMorphFMI : {a : Type} -> (bool : UnitalAlg a) -> (fprod : UMagmaI a) ->
   (bnat : BNatI a) -> (h : HomSlice a) ->
   BACompI {a} bool fprod bnat (BACompMorphFM {a} bool fprod bnat h)
 BACompMorphFMI {a} bool fprod bnat h sig =
@@ -1234,7 +1234,7 @@ BACompMorphFMI {a} bool fprod bnat h sig =
 
 public export
 data ParamNNOMorphF : {a : Type} -> (fprod : UMagmaI a) ->
-    (nat : UnitalI a) -> HomEndofunctor a where
+    (nat : UnitalAlg a) -> HomEndofunctor a where
   PNNOZ : ParamNNOMorphF {a} fprod nat h (Uu $ MUu fprod, Uu nat)
   PNNOS : ParamNNOMorphF {a} fprod nat h (Uu nat, Uu nat)
   PNNOcata : {x, y : a} ->
@@ -1242,18 +1242,18 @@ data ParamNNOMorphF : {a : Type} -> (fprod : UMagmaI a) ->
     ParamNNOMorphF {a} fprod nat h (Mb (MUm fprod) x (Uu nat), y)
 
 public export
-ParamNNOI : {a : Type} -> UMagmaI a -> UnitalI a -> HomSlice a -> Type
+ParamNNOI : {a : Type} -> UMagmaI a -> UnitalAlg a -> HomSlice a -> Type
 ParamNNOI {a} fprod nat =
   SliceAlg {a=(SignatureT a)} (ParamNNOMorphF {a} fprod nat)
 
 public export
-ParamNNOMorphFM : {a : Type} -> (fprod : UMagmaI a) -> (nat : UnitalI a) ->
+ParamNNOMorphFM : {a : Type} -> (fprod : UMagmaI a) -> (nat : UnitalAlg a) ->
   HomEndofunctor a
 ParamNNOMorphFM {a} fprod nat =
   SliceFreeM (ParamNNOMorphF {a} fprod nat)
 
 public export
-ParamNNOMorphFMI : {a : Type} -> (fprod : UMagmaI a) -> (nat : UnitalI a) ->
+ParamNNOMorphFMI : {a : Type} -> (fprod : UMagmaI a) -> (nat : UnitalAlg a) ->
   (h : HomSlice a) ->
   ParamNNOI {a} fprod nat (ParamNNOMorphFM {a} fprod nat h)
 ParamNNOMorphFMI {a} fprod nat h sig =
@@ -1279,11 +1279,11 @@ TypeCat (x, x) (CHId x) = id {a=x}
 TypeCat (x, z) (CHComp {x} {y} {z} g f) = g . f
 
 public export
-TypeUIv : UnitalI Type
+TypeUIv : UnitalAlg Type
 TypeUIv = MkU Void
 
 public export
-TypeUIu : UnitalI Type
+TypeUIu : UnitalAlg Type
 TypeUIu = MkU Unit
 
 public export
@@ -1348,11 +1348,11 @@ TypeEFCat (f, f) (CHId f) = \x => Prelude.id {a=(f x)}
 TypeEFCat (f, h) (CHComp {x=f} {y=g} {z=h} beta alpha) = \x => beta x . alpha x
 
 public export
-TypeEFUIv : UnitalI (Type -> Type)
+TypeEFUIv : UnitalAlg (Type -> Type)
 TypeEFUIv = MkU (const Void)
 
 public export
-TypeEFUIu : UnitalI (Type -> Type)
+TypeEFUIu : UnitalAlg (Type -> Type)
 TypeEFUIu = MkU (const Unit)
 
 public export
