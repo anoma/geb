@@ -3890,6 +3890,10 @@ SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
 --------------------------------------------------
 --------------------------------------------------
 
+--------------------------------
+---- Lawvere-style `FinSet` ----
+--------------------------------
+
 -- `FinSet`, so far without equalizers or coequalizers, presented in the
 -- style of a Lawvere theory.
 public export
@@ -3905,15 +3909,47 @@ public export
 FSLterminal : FinSetLawObj
 FSLterminal = FSLprod []
 
+--------------------------------------------------------------
+---- Lawvere-style finitary dependent polynomial functors ----
+--------------------------------------------------------------
+
 -- The double category of finitary dependent polynomial functors, presented
 -- in the style of a Lawvere theory.
-public export
-data FPLawAxis : Type where
-  FPLAvert : FPLawAxis
-  FPLAhoriz : FPLawAxis
 
 public export
-data FinPolyLaw : FPLawAxis -> FinSetLawObj -> FinSetLawObj -> Type where
+data FinPolyLawVertMorph : FinSetLawObj -> FinSetLawObj -> Type where
+
+public export
+data FinPolyLawHorizMorph : FinSetLawObj -> FinSetLawObj -> Type where
+
+public export
+data FinPolyLawCell : {0 w, w', z, z' : FinSetLawObj} ->
+    FinPolyLawVertMorph w w' -> FinPolyLawVertMorph z z' ->
+    FinPolyLawHorizMorph w z -> FinPolyLawHorizMorph w' z' -> Type where
+
+public export
+data FPLawEdge : Type where
+  FPLEvert : FPLawEdge
+  FPLEhoriz : FPLawEdge
+  FPLEcell : FPLawEdge
+
+public export
+FPLMDom : FPLawEdge -> Type
+FPLMDom FPLEvert = (FinSetLawObj, FinSetLawObj)
+FPLMDom FPLEhoriz = (FinSetLawObj, FinSetLawObj)
+FPLMDom FPLEcell = (FinSetLawObj, FinSetLawObj, FinSetLawObj, FinSetLawObj)
+
+public export
+data FinPolyLawMorph : (0 e : FPLawEdge) -> FPLMDom e -> Type where
+  FLPMe : {0 w, z : FinSetLawObj} ->
+    FinPolyLawVertMorph w z -> FinPolyLawMorph FPLEvert (w, z)
+  FLPMh : {0 w, z : FinSetLawObj} ->
+    FinPolyLawHorizMorph w z -> FinPolyLawMorph FPLEhoriz (w, z)
+  FLPMc : {0 w, w', z, z' : FinSetLawObj} ->
+    {0 mvw : FinPolyLawVertMorph w w'} -> {0 mvz : FinPolyLawVertMorph z z'} ->
+    {0 mh : FinPolyLawHorizMorph w z} -> {0 mh' : FinPolyLawHorizMorph w' z'} ->
+    FinPolyLawCell {w} {w'} {z} {z'} mvw mvz mh mh' ->
+    FinPolyLawMorph FPLEcell (w, w', z, z')
 
 ------------------------
 ---- Raw operations ----
