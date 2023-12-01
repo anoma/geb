@@ -3890,6 +3890,29 @@ SpliceObjComp {x} {y} {z} spl' spl = ?SpliceObjComp_hole
 --------------------------------------------------
 --------------------------------------------------
 
+--------------------------------
+---- Lawvere-style `FinSet` ----
+--------------------------------
+
+-- `FinSet`, so far without explicit equalizers or coequalizers, presented
+-- in the style of a Lawvere theory.
+public export
+data FinSetLawObj : Type where
+  FSLprod : List FinSetLawObj -> FinSetLawObj
+  FSLcoprod : List FinSetLawObj -> FinSetLawObj
+
+public export
+FSLinitial : FinSetLawObj
+FSLinitial = FSLcoprod []
+
+public export
+FSLterminal : FinSetLawObj
+FSLterminal = FSLprod []
+
+public export
+FSLn : Nat -> FinSetLawObj
+FSLn n = FSLcoprod (replicate n FSLterminal)
+
 ------------------
 ---- Ordinals ----
 ------------------
@@ -3916,29 +3939,6 @@ public export
 data PolyOrd : Type where
   POrdWF : PolyOrdWF -> PolyOrd
   POrdM : OrdM -> PolyOrd
-
---------------------------------
----- Lawvere-style `FinSet` ----
---------------------------------
-
--- `FinSet`, so far without explicit equalizers or coequalizers, presented
--- in the style of a Lawvere theory.
-public export
-data FinSetLawObj : Type where
-  FSLprod : List FinSetLawObj -> FinSetLawObj
-  FSLcoprod : List FinSetLawObj -> FinSetLawObj
-
-public export
-FSLinitial : FinSetLawObj
-FSLinitial = FSLcoprod []
-
-public export
-FSLterminal : FinSetLawObj
-FSLterminal = FSLprod []
-
-public export
-FSLn : Nat -> FinSetLawObj
-FSLn n = FSLcoprod (replicate n FSLterminal)
 
 --------------------------------------------------------------
 ---- Lawvere-style finitary dependent polynomial functors ----
