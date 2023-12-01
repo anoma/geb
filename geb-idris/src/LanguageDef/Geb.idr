@@ -3921,8 +3921,8 @@ data PolyOrd : Type where
 ---- Lawvere-style `FinSet` ----
 --------------------------------
 
--- `FinSet`, so far without equalizers or coequalizers, presented in the
--- style of a Lawvere theory.
+-- `FinSet`, so far without explicit equalizers or coequalizers, presented
+-- in the style of a Lawvere theory.
 public export
 data FinSetLawObj : Type where
   FSLprod : List FinSetLawObj -> FinSetLawObj
