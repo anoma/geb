@@ -17,6 +17,54 @@ import LanguageDef.PolyIndTypes
 -------------------------------
 -------------------------------
 
+---------------------------------
+---- Empty/uninhabited types ----
+---------------------------------
+
+-- This is effectively just a name for the constant functor which
+-- returns Void.  It is not representable.
+--
+-- It is an initial object both in the category of polynomial endofunctors
+-- on `Type` and the category of Dirichlet endofunctors on `Type`.
+public export
+data EmptyF : Type -> Type where
+
+public export
+EmptyAlg : Type -> Type
+EmptyAlg = Algebra EmptyF
+
+public export
+EmptyCoalg : Type -> Type
+EmptyCoalg = Coalgebra EmptyF
+
+-- The deduction rule of `ex falso quodlibet` is an algebra of `EmptyF`.
+public export
+ExF : {0 a : Type} -> EmptyAlg a
+ExF {a} _ impossible
+
+-- A proof that a type is uninhabited -- in other words, a derivation of
+-- a contradiction from an arbitrary term of the type -- is a coalgebra
+-- of `EmptyF`.
+public export
+IsEmpty : {0 a : Type} -> (a -> Void) -> EmptyCoalg a
+IsEmpty {a} coalg x = case (coalg x) of _ impossible
+
+public export
+EmptyFM : Type -> Type
+EmptyFM = FreeMonad EmptyF
+
+public export
+EmptyFreeAlg : (a : Type) -> EmptyAlg (EmptyFM a)
+EmptyFreeAlg a = inFC {a}
+
+public export
+EmptyCFCM : Type -> Type
+EmptyCFCM = CofreeComonad EmptyF
+
+public export
+EmptyCofreeCoalg : (a : Type) -> EmptyCoalg (EmptyCFCM a)
+EmptyCofreeCoalg a = outCFC {a}
+
 ---------------------------
 ---- Unital structures ----
 ---------------------------
@@ -24,6 +72,9 @@ import LanguageDef.PolyIndTypes
 -- This is effectively just a name for the constant functor which
 -- returns Unit, which is a covariant representable represented by Void,
 -- and also a contravariant representable represented by Unit.
+--
+-- It is a terminal object both in the category of polynomial endofunctors
+-- on `Type` and the category of Dirichlet endofunctors on `Type`.
 public export
 data UnitalF : Type -> Type where
   UOu : UnitalF a
