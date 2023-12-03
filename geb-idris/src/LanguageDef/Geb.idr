@@ -36,6 +36,8 @@ public export
 UnitalCoalg : Type -> Type
 UnitalCoalg = Coalgebra UnitalF
 
+-- Since `Type` is well-pointed, an algebra of a `UnitalF` is effectively
+-- a type together with a term of that type.
 public export
 MkU : {0 a : Type} -> a -> UnitalAlg a
 MkU x UOu = x
@@ -44,49 +46,80 @@ public export
 Uu : {0 a : Type} -> UnitalAlg a -> a
 Uu alg = alg UOu
 
+-- Since `UnitalF` returns the terminal object for any input object, a
+-- coalgebra of `UnitalF` is effectively just a type, as any type has
+-- a morphism to the terminal object.
+public export
+MatchU : {0 a : Type} -> UnitalCoalg a
+MatchU {a} _ = UOu
+
 public export
 UnitalFM : Type -> Type
 UnitalFM = FreeMonad UnitalF
 
 public export
-UnitalFAlg : (a : Type) -> UnitalAlg (UnitalFM a)
-UnitalFAlg a = inFC {a}
+UnitalFreeAlg : (a : Type) -> UnitalAlg (UnitalFM a)
+UnitalFreeAlg a = inFC {a}
 
 public export
 UnitalCFCM : Type -> Type
 UnitalCFCM = CofreeComonad UnitalF
 
 public export
-UnitalCFCoalg : (a : Type) -> UnitalCoalg (UnitalCFCM a)
-UnitalCFCoalg a = outCFC {a}
+UnitalCofreeCoalg : (a : Type) -> UnitalCoalg (UnitalCFCM a)
+UnitalCofreeCoalg a = outCFC {a}
 
 ---------------
 ---- Unars ----
 ---------------
 
+-- Effectively the identity functor, which is a covariant representable
+-- represented by `Unit`.
 public export
-data UnarObjF : Type -> Type where
-  UOun : a -> UnarObjF a
+data UnarF : Type -> Type where
+  UOun : a -> UnarF a
 
 public export
-UnarI : Type -> Type
-UnarI = Algebra UnarObjF
+UnarAlg : Type -> Type
+UnarAlg = Algebra UnarF
 
 public export
-MkUn : {0 a : Type} -> (a -> a) -> UnarI a
+UnarCoalg : Type -> Type
+UnarCoalg = Coalgebra UnarF
+
+-- Since `UnarF a` is just `a`, an algebra or coalgebra of `UnarF` is
+-- effectively an endormorphism on `a`.
+public export
+MkUn : {0 a : Type} -> (a -> a) -> UnarAlg a
 MkUn f (UOun x) = f x
 
 public export
-Uun : {0 a : Type} -> UnarI a -> a -> a
+Uun : {0 a : Type} -> UnarAlg a -> a -> a
 Uun alg = alg . UOun
 
 public export
-UnarObjFM : Type -> Type
-UnarObjFM = FreeMonad UnarObjF
+MatchUn : {0 a : Type} -> (a -> a) -> UnarCoalg a
+MatchUn f x = UOun $ f x
 
 public export
-UnarObjFMI : (a : Type) -> UnarI (UnarObjFM a)
-UnarObjFMI a = inFC {a}
+TypeUn : {0 a : Type} -> UnarCoalg a -> a -> a
+TypeUn coalg x = case (coalg x) of UOun x' => x
+
+public export
+UnarFM : Type -> Type
+UnarFM = FreeMonad UnarF
+
+public export
+UnarFreeAlg : (a : Type) -> UnarAlg (UnarFM a)
+UnarFreeAlg a = inFC {a}
+
+public export
+UnarCFCM : Type -> Type
+UnarCFCM = CofreeComonad UnarF
+
+public export
+UnarCofreeCoalg : (a : Type) -> UnarCoalg (UnarCFCM a)
+UnarCofreeCoalg a = outCFC {a}
 
 ----------------
 ---- Magmas ----

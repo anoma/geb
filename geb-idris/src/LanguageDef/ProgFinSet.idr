@@ -1164,7 +1164,7 @@ BoundedArithMorphFMI {a} fprod bnat h sig =
 -----------------------------------------------------
 
 public export
-data BArithInvMorphF : {a : Type} -> (maybeM : UnarI a) ->
+data BArithInvMorphF : {a : Type} -> (maybeM : UnarAlg a) ->
     (fprod : UMagmaI a) -> (bnat : BNatI a) -> HomEndofunctor a where
   BAIsub : (n : Nat) -> {auto 0 ok : Not (n = 0)} ->
     BArithInvMorphF maybeM fprod bnat h
@@ -1177,18 +1177,18 @@ data BArithInvMorphF : {a : Type} -> (maybeM : UnarI a) ->
       (Mb (MUm fprod) (bNat bnat n) (bNat bnat n), Uun maybeM (bNat bnat n))
 
 public export
-BArithInvI : {a : Type} -> UnarI a -> UMagmaI a -> BNatI a ->HomSlice a -> Type
+BArithInvI : {a : Type} -> UnarAlg a -> UMagmaI a -> BNatI a ->HomSlice a -> Type
 BArithInvI {a} maybeM fprod bnat =
   SliceAlg {a=(SignatureT a)} (BArithInvMorphF {a} maybeM fprod bnat)
 
 public export
-BArithInvMorphFM : {a : Type} -> (maybeM : UnarI a) -> (fprod : UMagmaI a) ->
+BArithInvMorphFM : {a : Type} -> (maybeM : UnarAlg a) -> (fprod : UMagmaI a) ->
   (bnat : BNatI a) -> HomEndofunctor a
 BArithInvMorphFM {a} maybeM fprod bnat =
   SliceFreeM (BArithInvMorphF {a} maybeM fprod bnat)
 
 public export
-BArithInvMorphFMI : {a : Type} -> (maybeM : UnarI a) -> (fprod : UMagmaI a) ->
+BArithInvMorphFMI : {a : Type} -> (maybeM : UnarAlg a) -> (fprod : UMagmaI a) ->
   (bnat : BNatI a) -> (h : HomSlice a) ->
   BArithInvI {a} maybeM fprod bnat (BArithInvMorphFM {a} maybeM fprod bnat h)
 BArithInvMorphFMI {a} maybeM fprod bnat h sig =
