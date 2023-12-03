@@ -602,6 +602,281 @@ public export
 data RFS_Morph1_F : Type -> Type -> Type where
   RFS_const : obj -> obj -> term -> RFS_Morph1_F obj term
 
+------------------------------
+------------------------------
+---- Algebraic interfaces ----
+------------------------------
+------------------------------
+
+----------------
+---- Magmas ----
+----------------
+
+public export
+data MagObjF : Type -> Type where
+  MOb : a -> a -> MagObjF a
+
+public export
+MagmaI : Type -> Type
+MagmaI = Algebra MagObjF
+
+public export
+MkMag : {0 a : Type} -> (a -> a -> a) -> MagmaI a
+MkMag f (MOb x y) = f x y
+
+public export
+Mb : {0 a : Type} -> MagmaI a -> a -> a -> a
+Mb alg = alg .* MOb
+
+public export
+MagObjFM : Type -> Type
+MagObjFM = FreeMonad MagObjF
+
+public export
+MagObjFMI : (a : Type) -> MagmaI (MagObjFM a)
+MagObjFMI a = inFC {a}
+
+------------------------
+---- Unital magmas ----
+------------------------
+
+-- Functor which generates objects of a monoidal category.
+public export
+data UMagObjF : Type -> Type where
+  MOu : UnitalF a -> UMagObjF a
+  MOm : MagObjF a -> UMagObjF a
+
+public export
+UMagmaI : Type -> Type
+UMagmaI = Algebra UMagObjF
+
+public export
+MkUMag : {0 a : Type} -> UnitalAlg a -> MagmaI a -> UMagmaI a
+MkUMag ui mi (MOu uo) = ui uo
+MkUMag ui mu (MOm mo) = mu mo
+
+public export
+MUu : {0 a : Type} -> UMagmaI a -> UnitalAlg a
+MUu alg = alg . MOu
+
+public export
+MUm : {0 a : Type} -> UMagmaI a -> MagmaI a
+MUm alg = alg . MOm
+
+public export
+UMagU : {a : Type} -> UMagmaI a -> a
+UMagU = Uu . MUu
+
+public export
+UMagM : {a : Type} -> UMagmaI a -> a -> a -> a
+UMagM = Mb . MUm
+
+public export
+UMagObjFM : Type -> Type
+UMagObjFM = FreeMonad UMagObjF
+
+-- The free monad of `UMagObjF` implements the unital magma interface.
+public export
+UMagObjFUMI : (a : Type) -> UMagmaI (UMagObjFM a)
+UMagObjFUMI a =  inFC {a}
+
+----------------------------
+---- Dual unital magmas ----
+----------------------------
+
+public export
+data DUMagObjF : Type -> Type where
+  UM1 : UMagObjF a -> DUMagObjF a
+  UM2 : UMagObjF a -> DUMagObjF a
+
+public export
+DUMagmaI : Type -> Type
+DUMagmaI = Algebra DUMagObjF
+
+public export
+MkDUMag : {0 a : Type} -> UMagmaI a -> UMagmaI a -> DUMagmaI a
+MkDUMag um1 um2 (UM1 um) = um1 um
+MkDUMag um1 um2 (UM2 um) = um2 um
+
+public export
+DU1 : {0 a : Type} -> DUMagmaI a -> UMagmaI a
+DU1 alg = alg . UM1
+
+public export
+DU2 : {0 a : Type} -> DUMagmaI a -> UMagmaI a
+DU2 alg = alg . UM2
+
+public export
+DUMagU1 : {a : Type} -> DUMagmaI a -> a
+DUMagU1 = UMagU . DU1
+
+public export
+DUMagM1 : {a : Type} -> DUMagmaI a -> a -> a -> a
+DUMagM1 = UMagM . DU1
+
+public export
+DUMagU2 : {a : Type} -> DUMagmaI a -> a
+DUMagU2 = UMagU . DU2
+
+public export
+DUMagM2 : {a : Type} -> DUMagmaI a -> a -> a -> a
+DUMagM2 = UMagM . DU2
+
+public export
+DUMagObjFM : Type -> Type
+DUMagObjFM = FreeMonad DUMagObjF
+
+public export
+DUMagObjFUMI : (a : Type) -> DUMagmaI (DUMagObjFM a)
+DUMagObjFUMI a = inFC {a}
+
+---------------
+---- Sized ----
+---------------
+
+public export
+data SizedF : Type -> Type where
+  Ssz : Nat -> SizedF a
+
+public export
+SizedI : Type -> Type
+SizedI = Coalgebra SizedF
+
+public export
+SIsz : {0 a : Type} -> SizedI a -> a -> Nat
+SIsz {a} coalg x with (coalg x)
+  SIsz {a} coalg x | Ssz l = l
+
+public export
+SizedCFCM : Type -> Type
+SizedCFCM = CofreeComonad SizedF
+
+public export
+SizedCFCMI : (a : Type) -> SizedI (SizedCFCM a)
+SizedCFCMI a = outCFC {f=SizedF} {a}
+
+public export
+SizedIF : (Type -> Type) -> Type
+SizedIF f = NaturalTransformation f (SizedF . f)
+
+public export
+SizedIFtoI : {0f : Type -> Type} -> SizedIF f -> (a : Type) -> SizedI (f a)
+SizedIFtoI {f} sz a fx = sz a fx
+
+-------------------
+---- Indexable ----
+-------------------
+
+public export
+data IndexableI : (f : Type -> Type) -> SizedIF f -> Type where
+  Iidx : {0 f : Type -> Type} -> {0 sz : SizedIF f} ->
+    ({0 a : Type} -> (fx : f a) -> (i : Nat) ->
+     (ok : LT i (SIsz {a=(f a)} (sz a) fx)) -> a) ->
+    IndexableI f sz
+
+public export
+IxSz : {0 f : Type -> Type} -> {sz : SizedIF f} -> IndexableI f sz ->
+  {a : Type} -> f a -> Nat
+IxSz {f} {sz} (Iidx {f} {sz} idx) {a} fx = SIsz {a=(f a)} (sz a) fx
+
+public export
+IxI : {0 f : Type -> Type} -> {0 sz : SizedIF f} -> (ixi : IndexableI f sz) ->
+  {0 a : Type} -> (fx : f a) -> (i : Nat) ->
+  (ok : LT i (IxSz {f} {sz} ixi {a} fx)) -> a
+IxI {f} {sz} (Iidx {f} {sz} idx) {a} fx i ok = idx {a} fx i ok
+
+--------------
+---- List ----
+--------------
+
+-- `List` itself (as opposed to the functor which _generates_ a list of a
+-- given type, `ListF a` for any `a`) can be treated as an interface:  that
+-- of a type of which any list of terms can be treated as a (single) term.
+-- We call this `ListH` where the `H` is for "higher-order".
+public export
+ListHI : Type -> Type
+ListHI = Algebra List
+
+public export
+ListHIL : {a : Type} -> ListHI a -> List a -> a
+ListHIL {a} = Prelude.id {a=(Algebra List a)}
+
+public export
+ListHFM : Type -> Type
+ListHFM = FreeMonad List
+
+public export
+ListHFMI : (a : Type) -> ListHI (ListHFM a)
+ListHFMI a = inFC {f=List} {a}
+
+-- A type that implements the unital magma interface also implements
+-- the ListH interface.
+public export
+LHIfromUMI : {a : Type} -> UMagmaI a -> ListHI a
+LHIfromUMI {a} um =
+  foldl {t=List} {acc=a} {elem=a} (UMagM {a} um) (UMagU {a} um)
+
+-- A type that implements the ListH interface also implements the
+-- unital magma interface.
+public export
+UMIfromLHI : {a : Type} -> ListHI a -> UMagmaI a
+UMIfromLHI {a} li (MOu UOu) = li []
+UMIfromLHI {a} li (MOm (MOb x y)) = li [x, y]
+
+---------------------------
+---- Internal diagrams ----
+---------------------------
+
+---------------------------------------------
+---------------------------------------------
+---- Algebraic interface implementations ----
+---------------------------------------------
+---------------------------------------------
+
+--------------
+---- Unit ----
+--------------
+
+public export
+UnitUI : UnitalAlg Unit
+UnitUI = MkU ()
+
+--------------
+---- List ----
+--------------
+
+-- For any `a`, `List a` implements the ListH interface itself:  a list of lists
+-- may be treated as a list by concatenating them all.
+public export
+ListLHI : (a : Type) -> ListHI (List a)
+ListLHI a = concat {a=(List a)} {t=List}
+
+-- `List a` implements the unital interface.
+public export
+ListUI : (a : Type) -> UnitalAlg (List a)
+ListUI a = MkU []
+
+-- `List a` implements the magma interface.
+public export
+ListMagI : (a : Type) -> MagmaI (List a)
+ListMagI a = MkMag (++)
+
+-- `List a` implements the unital magma interface.
+public export
+ListUMI : (a : Type) -> UMagmaI (List a)
+ListUMI a = MkUMag (ListUI a) (ListMagI a)
+
+-- `List` implements the Sized interface.
+public export
+ListSzI : SizedIF List
+ListSzI a l = Ssz (length l)
+
+-- `List` implements the Indexable interface.
+public export
+ListIdxI : IndexableI List ListSzI
+ListIdxI = Iidx {f=List} {sz=ListSzI} $
+  \fx, i, ok => index' fx (natToFinLT i)
+
 --------------------------------------------------
 --------------------------------------------------
 ---- Categorial universal-property interfaces ----
