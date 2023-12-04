@@ -229,7 +229,7 @@ FinEnrQuivCoprshfMmap {v} q sl =
 ---- Internal to and enriched over `FinSet` ----
 ------------------------------------------------
 
--- Given a quiver internal and enriched over `FinSet`, a vertex
+-- Given a quiver internal to and enriched over `FinSet`, a vertex
 -- object, a slice object over the vertex object, and two vertices,
 -- this is the type of the slice between those two vertices of the
 -- morphism-map component of a presheaf on a category whose type of
@@ -240,7 +240,7 @@ FinQuivPrshfM : {0 n : Nat} ->
   FinQuivN n -> SliceObj (Fin n) -> Fin n -> Fin n -> Type
 FinQuivPrshfM {n} q sl dom cod = sl cod -> sl dom
 
--- Given a quiver internal and enriched over `FinSet`, a vertex
+-- Given a quiver internal to and enriched over `FinSet`, a vertex
 -- object, and a slice object over the vertex object, this type
 -- generates the morphism-map component of a presheaf on a category
 -- whose type of objects is the quiver's vertex object and whose
@@ -250,7 +250,7 @@ FinQuivPrshfMmap : {n : Nat} -> FinQuivN n -> SliceObj (Fin n) -> Type
 FinQuivPrshfMmap {n} q sl =
   (dom, cod : Fin n) -> FinQuivPrshfM {n} q sl dom cod
 
--- Given a quiver internal and enriched over `FinSet`, a vertex
+-- Given a quiver internal to and enriched over `FinSet`, a vertex
 -- object, a slice object over the vertex object, and two vertices,
 -- this is the type of the slice between those two vertices of the
 -- morphism-map component of a copresheaf on a category whose type of
@@ -261,7 +261,7 @@ FinQuivCoprshfM : {0 n : Nat} ->
   FinQuivN n -> SliceObj (Fin n) -> Fin n -> Fin n -> Type
 FinQuivCoprshfM {n} q sl dom cod = sl dom -> sl cod
 
--- Given a quiver internal and enriched over `FinSet`, a vertex
+-- Given a quiver internal to and enriched over `FinSet`, a vertex
 -- object, and a slice object over the vertex object, this type
 -- generates the morphism-map component of a copresheaf on a category
 -- whose type of objects is the quiver's vertex object and whose
