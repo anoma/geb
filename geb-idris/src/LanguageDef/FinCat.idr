@@ -115,7 +115,7 @@ FinQuivSL {n} = FinEnrQuivSL {v=(Fin n)}
 
 -- A compositional quiver is a quiver with an assignment of each pair of
 -- edges into and out of a shared vertex -- `x -- e --> y --> e' -- z` --
--- to a single edge following the same path -- `x -- e' --> z`.
+-- to a single edge following the same path -- `x -- e'' --> z`.
 
 public export
 TypeCQuivComp : {v : Type} -> TypeQuivV v -> Type
