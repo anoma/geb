@@ -140,6 +140,30 @@ FinQuivComp {n} = FinEnrQuivComp {v=(Fin n)}
 ----------------------------------------------
 
 public export
+TypeQuivInit : TypeQuivV Void
+TypeQuivInit (v, _) = void v
+
+public export
+TypeQuivInitSL : TypeRQuivSL {v=Void} TypeQuivInit
+TypeQuivInitSL v = void v
+
+public export
+TypeQuivInitComp : TypeCQuivComp {v=Void} TypeQuivInit
+TypeQuivInitComp v = void v
+
+public export
+TypeQuivTerm : TypeQuivV Unit
+TypeQuivTerm ((), ()) = Unit
+
+public export
+TypeQuivTermSL : TypeRQuivSL {v=Unit} TypeQuivTerm
+TypeQuivTermSL () = ()
+
+public export
+TypeQuivTermComp : TypeCQuivComp {v=Unit} TypeQuivTerm
+TypeQuivTermComp () () () () () = ()
+
+public export
 data TypeQuivCoprodV : {0 v, w : Type} ->
     TypeQuivV v -> TypeQuivV w -> TypeQuivV (Either v w) where
   TQCl : {0 v, w : Type} -> (qv : TypeQuivV v) -> (qw : TypeQuivV w) ->
