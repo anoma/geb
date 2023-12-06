@@ -16,7 +16,7 @@ public export
 data FinSetObjF : Type -> Type where
   FSO0 : {0 a : Type} -> FinSetObjF a
   FSO1 : {0 a : Type} -> FinSetObjF a
-  FSOC : {0 a : Type} -> FinSetObjF a -> FinSetObjF a -> FinSetObjF a
+  FSOC : {0 a : Type} -> a -> a -> FinSetObjF a
 
 -- An algebra of `FinSetObjF` may be viewed as a container that can hold any
 -- object of `FinSet` -- it can be constructed in all the ways that objects
@@ -58,6 +58,17 @@ FinSetObjFM : Type -> Type
 FinSetObjFM = FreeMonad FinSetObjF
 
 public export
+finSetObjEval : FreeFEval FinSetObjF
+finSetObjEval var term subst alg (InFree (TFV v)) = subst v
+finSetObjEval var term subst alg (InFree (TFC t)) = alg $ case t of
+  FSO0 => FSO0
+  FSO1 => FSO1
+  FSOC x y =>
+    FSOC
+      (finSetObjEval var term subst alg x)
+      (finSetObjEval var term subst alg y)
+
+public export
 FinSetObjMu : Type
 FinSetObjMu = Mu FinSetObjF
 
@@ -81,6 +92,16 @@ finSetObjInitAlgInv (InFree (TFC t)) = t
 public export
 FinSetObjCFCM : Type -> Type
 FinSetObjCFCM = CofreeComonad FinSetObjF
+
+public export
+finSetObjTrace : CofreeFTrace FinSetObjF
+finSetObjTrace label term ann coalg t = InCofree $ SFN (ann t) $ case coalg t of
+  FSO0 => FSO0
+  FSO1 => FSO1
+  FSOC x y =>
+    FSOC
+      (finSetObjTrace label term ann coalg x)
+      (finSetObjTrace label term ann coalg y)
 
 public export
 FinSetObjNu : Type
