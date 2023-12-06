@@ -608,6 +608,34 @@ data RFS_Morph1_F : Type -> Type -> Type where
 ------------------------------
 ------------------------------
 
+----------------
+---- Magmas ----
+----------------
+
+public export
+data MagObjF : Type -> Type where
+  MOb : a -> a -> MagObjF a
+
+public export
+MagmaI : Type -> Type
+MagmaI = Algebra MagObjF
+
+public export
+MkMag : {0 a : Type} -> (a -> a -> a) -> MagmaI a
+MkMag f (MOb x y) = f x y
+
+public export
+Mb : {0 a : Type} -> MagmaI a -> a -> a -> a
+Mb alg = alg .* MOb
+
+public export
+MagObjFM : Type -> Type
+MagObjFM = FreeMonad MagObjF
+
+public export
+MagObjFMI : (a : Type) -> MagmaI (MagObjFM a)
+MagObjFMI a = inFC {a}
+
 ------------------------
 ---- Unital magmas ----
 ------------------------
