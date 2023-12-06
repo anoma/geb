@@ -3,6 +3,56 @@ module LanguageDef.FinCat
 import Library.IdrisUtils
 import Library.IdrisCategories
 
+-------------------------------
+-------------------------------
+---- `FinSet` as interface ----
+-------------------------------
+-------------------------------
+
+-- A minimal interface to objects of `FinSet` must provide at least a
+-- terminal object and finite coproducts; the latter are equivalent to
+-- an initial object and binary coproducts, so we decompose them as such.
+public export
+data FinSetObjF : Type -> Type where
+  FSO0 : {0 a : Type} -> FinSetObjF a
+  FSO1 : {0 a : Type} -> FinSetObjF a
+  FSOC : {0 a : Type} -> FinSetObjF a -> FinSetObjF a -> FinSetObjF a
+
+-- An algebra of `FinSetObjF` may be viewed as a container that can hold any
+-- object of `FinSet` -- it can be constructed in all the ways that objects
+-- of `FinSet` can be constructed.
+public export
+FinSetObjAlg : Type -> Type
+FinSetObjAlg = Algebra FinSetObjF
+
+-- A coalgebra of `FinSetObjF` may be viewed as a container that always
+-- holds some object of `FinSet` -- it can always satisfy a pattern-match
+-- on the type of objects of `FinSet`.
+public export
+FinSetObjCoalg : Type -> Type
+FinSetObjCoalg = Coalgebra FinSetObjF
+
+-- A proalgebra of `FinSetObjF` is a type together with both an algebra
+-- and a coalgebra.
+public export
+FinSetObjProAlg : Type -> Type
+FinSetObjProAlg a = (FinSetObjAlg a, FinSetObjCoalg a)
+
+-- A dialgebra of `FinSetObjF` is a type together with a mapping between
+-- applications of `FinSetObjF` to it.
+public export
+FinSetObjDialg : Type -> Type
+FinSetObjDialg a = FinSetObjF a -> FinSetObjF a
+
+-- We can always derive a dialgebra from a proalgebra, simply by composition.
+-- We may not be able to go the other direction, however, so a proalgebra is
+-- in that sense more powerful.  By the same token, the _notion_ of proalgebra
+-- is in a sense less general -- there are strictly fewer proalgebras than
+-- dialgebras.
+public export
+FinSetObjProToDialg : {0 a : Type} -> FinSetObjProAlg a -> FinSetObjDialg a
+FinSetObjProToDialg (alg, coalg) = coalg . alg
+
 --------------------------
 --------------------------
 ---- Finitary quivers ----
