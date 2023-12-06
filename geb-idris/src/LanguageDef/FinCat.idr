@@ -36,7 +36,7 @@ FinSetObjCoalg = Coalgebra FinSetObjF
 -- and a coalgebra.
 public export
 FinSetObjProAlg : Type -> Type
-FinSetObjProAlg a = (FinSetObjAlg a, FinSetObjCoalg a)
+FinSetObjProAlg a = (FinSetObjCoalg a, FinSetObjAlg a)
 
 -- A dialgebra of `FinSetObjF` is a type together with a mapping between
 -- applications of `FinSetObjF` to it.
@@ -51,7 +51,7 @@ FinSetObjDialg a = FinSetObjF a -> FinSetObjF a
 -- dialgebras.
 public export
 FinSetObjProToDialg : {0 a : Type} -> FinSetObjProAlg a -> FinSetObjDialg a
-FinSetObjProToDialg (alg, coalg) = coalg . alg
+FinSetObjProToDialg (coalg, alg) = coalg . alg
 
 public export
 FinSetObjFM : Type -> Type
