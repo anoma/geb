@@ -53,6 +53,55 @@ public export
 FinSetObjProToDialg : {0 a : Type} -> FinSetObjProAlg a -> FinSetObjDialg a
 FinSetObjProToDialg (alg, coalg) = coalg . alg
 
+public export
+FinSetObjFM : Type -> Type
+FinSetObjFM = FreeMonad FinSetObjF
+
+public export
+FinSetObjMu : Type
+FinSetObjMu = Mu FinSetObjF
+
+public export
+finSetObjMuPure : {0 a : Type} -> Coalgebra FinSetObjFM a
+finSetObjMuPure {a} = inFV {f=FinSetObjF} {a}
+
+public export
+finSetObjFreeAlg : {0 a : Type} -> FinSetObjAlg (FinSetObjFM a)
+finSetObjFreeAlg {a} = inFC {f=FinSetObjF} {a}
+
+public export
+finSetObjInitAlg : FinSetObjAlg FinSetObjMu
+finSetObjInitAlg = finSetObjFreeAlg {a=Void}
+
+public export
+finSetObjInitAlgInv : FinSetObjCoalg FinSetObjMu
+finSetObjInitAlgInv (InFree (TFV v)) = void v
+finSetObjInitAlgInv (InFree (TFC t)) = t
+
+public export
+FinSetObjCFCM : Type -> Type
+FinSetObjCFCM = CofreeComonad FinSetObjF
+
+public export
+FinSetObjNu : Type
+FinSetObjNu = Nu FinSetObjF
+
+public export
+finSetObjNuErase : {0 a : Type} -> Algebra FinSetObjCFCM a
+finSetObjNuErase {a} (InCofree $ SFN ea _) = ea
+
+public export
+finSetObjCofreeCoalg : {a : Type} -> FinSetObjCoalg (FinSetObjCFCM a)
+finSetObjCofreeCoalg {a} = outCFC {f=FinSetObjF} {a}
+
+public export
+finSetObjTermCoalg : FinSetObjCoalg FinSetObjNu
+finSetObjTermCoalg = finSetObjCofreeCoalg {a=Unit}
+
+public export
+finSetObjTermCoalgInv : FinSetObjAlg FinSetObjNu
+finSetObjTermCoalgInv x = InCofree {f=FinSetObjF} {a=Unit} $ SFN () x
+
 --------------------------
 --------------------------
 ---- Finitary quivers ----
