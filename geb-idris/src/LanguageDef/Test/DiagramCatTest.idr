@@ -12,6 +12,18 @@ import LanguageDef.DiagramCat
 ----------------------------------
 ----------------------------------
 
+T0Starter' : Type
+T0Starter' = ()
+
+T0Maker' : Type -> Type
+T0Maker' = ProductMonad
+
+T0DepMaker' : (Type, Type) -> Type
+T0DepMaker' (a, b) = (a, b, b)
+
+Test0' : (Type, Type) -> Type
+Test0' (a, b) = Either T0Starter' (Either (T0Maker' a) (T0DepMaker' (a, b)))
+
 mutual
   public export
   data Test0 : Type where
