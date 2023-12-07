@@ -32,26 +32,17 @@ public export
 FinSetObjCoalg : Type -> Type
 FinSetObjCoalg = Coalgebra FinSetObjF
 
--- A proalgebra of `FinSetObjF` is a type together with both an algebra
--- and a coalgebra.
 public export
 FinSetObjProAlg : Type -> Type
-FinSetObjProAlg a = (FinSetObjCoalg a, FinSetObjAlg a)
+FinSetObjProAlg = EndoProAlgebra FinSetObjF
 
--- A dialgebra of `FinSetObjF` is a type together with a mapping between
--- applications of `FinSetObjF` to it.
 public export
 FinSetObjDialg : Type -> Type
-FinSetObjDialg a = FinSetObjF a -> FinSetObjF a
+FinSetObjDialg = EndoDialgebra FinSetObjF
 
--- We can always derive a dialgebra from a proalgebra, simply by composition.
--- We may not be able to go the other direction, however, so a proalgebra is
--- in that sense more powerful.  By the same token, the _notion_ of proalgebra
--- is in a sense less general -- there are strictly fewer proalgebras than
--- dialgebras.
 public export
 FinSetObjProToDialg : {0 a : Type} -> FinSetObjProAlg a -> FinSetObjDialg a
-FinSetObjProToDialg (coalg, alg) = coalg . alg
+FinSetObjProToDialg = EndoProToDiAlg {f=FinSetObjF}
 
 public export
 FinSetObjFM : Type -> Type

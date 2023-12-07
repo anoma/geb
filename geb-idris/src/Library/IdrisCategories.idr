@@ -5414,6 +5414,41 @@ public export
 Contravariant f => Contravariant (Coalgebra f) where
   contramap m coalg = contramap {f} m . coalg . m
 
+-- A proalgebra of a pair of functors is a type together with a coalgebra
+-- of one and an algebra of the other.
+public export
+ProAlgebra : (Type -> Type) -> (Type -> Type) -> Type -> Type
+ProAlgebra f g a = (Algebra f a, Coalgebra g a)
+
+public export
+EndoProAlgebra : (Type -> Type) -> Type -> Type
+EndoProAlgebra f = ProAlgebra f f
+
+-- A dialgebra of a pair of functors is a type together with a morphism
+-- between applications of the functor to it.
+public export
+Dialgebra : (Type -> Type) -> (Type -> Type) -> Type -> Type
+Dialgebra f g a = f a -> g a
+
+public export
+EndoDialgebra : (Type -> Type) -> Type -> Type
+EndoDialgebra f = Dialgebra f f
+
+-- We can always derive a dialgebra from a proalgebra, simply by composition.
+-- We may not be able to go the other direction, however, so a proalgebra is
+-- in that sense more powerful.  By the same token, the _notion_ of proalgebra
+-- is in a sense less general -- there are strictly fewer proalgebras than
+-- dialgebras.
+public export
+ProToDiAlg : {0 f, g : Type -> Type} -> {0 a : Type} ->
+  ProAlgebra f g a -> Dialgebra f g a
+ProToDiAlg {f} {g} {a} (alg, coalg) = coalg . alg
+
+public export
+EndoProToDiAlg : {0 f : Type -> Type} -> {0 a : Type} ->
+  EndoProAlgebra f a -> EndoDialgebra f a
+EndoProToDiAlg {f} = ProToDiAlg {f} {g=f}
+
 -- For a given functor `F` and object `v`, form the functor `Fv` defined by
 -- `Fv[x] = v + F[x]`.  We call it `TranslateFunctor` because it adds
 -- a constant functor (in effect, a type) to a given functor.
