@@ -94,24 +94,24 @@ finSetObjTrace label term ann coalg t = InCofree $ SFN (ann t) $ case coalg t of
       (finSetObjTrace label term ann coalg y)
 
 public export
-FinSetObjNu : Type
-FinSetObjNu = Nu FinSetObjF
-
-public export
-finSetObjNuErase : {0 a : Type} -> Algebra FinSetObjCFCM a
-finSetObjNuErase {a} (InCofree $ SFN ea _) = ea
+finSetObjErase : {0 a : Type} -> Algebra FinSetObjCFCM a
+finSetObjErase {a} = CFCMerase {f=FinSetObjF} {a}
 
 public export
 finSetObjCofreeCoalg : {a : Type} -> FinSetObjCoalg (FinSetObjCFCM a)
 finSetObjCofreeCoalg {a} = outCFC {f=FinSetObjF} {a}
 
 public export
+FinSetObjNu : Type
+FinSetObjNu = Nu FinSetObjF
+
+public export
 finSetObjTermCoalg : FinSetObjCoalg FinSetObjNu
-finSetObjTermCoalg = finSetObjCofreeCoalg {a=Unit}
+finSetObjTermCoalg = outNu {f=FinSetObjF}
 
 public export
 finSetObjTermCoalgInv : FinSetObjAlg FinSetObjNu
-finSetObjTermCoalgInv x = InCofree {f=FinSetObjF} {a=Unit} $ SFN () x
+finSetObjTermCoalgInv = outNuInv {f=FinSetObjF}
 
 --------------------------
 --------------------------
