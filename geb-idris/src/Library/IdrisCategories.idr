@@ -5605,6 +5605,10 @@ public export
 TerminalCoalgSig : (Type -> Type) -> Type
 TerminalCoalgSig f = CofreeCoalgSig f Unit
 
+public export
+CFCMerase : {0 f : Type -> Type} -> {0 a : Type} -> Algebra (CofreeComonad f) a
+CFCMerase {a} (InCofree $ SFN ea _) = ea
+
 -- The unit of the free monad.
 public export
 inFV : {f : Type -> Type} -> Coalgebra (FreeMonad f) a
@@ -5662,9 +5666,14 @@ public export
 Nu : (Type -> Type) -> Type
 Nu f = CofreeComonad f Unit
 
+-- The terminal coalgebra of a functor.
 public export
 outNu : {f : Type -> Type} -> TerminalCoalgSig f
-outNu {f} (InCofree x) = case x of SFN () fn => fn
+outNu {f} = outCFC {f} {a=Unit}
+
+public export
+outNuInv : {f : Type -> Type} -> Algebra f (Nu f)
+outNuInv {f} x = InCofree {f} {a=Unit} $ SFN () x
 
 -- The signature of the "eval" universal morphism for "FreeMonad f".
 -- (This is the right adjunct of the free/forgetful adjunction between
