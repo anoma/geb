@@ -73,12 +73,11 @@ finSetObjFreeAlg {a} = inFC {f=FinSetObjF} {a}
 
 public export
 finSetObjInitAlg : FinSetObjAlg FinSetObjMu
-finSetObjInitAlg = finSetObjFreeAlg {a=Void}
+finSetObjInitAlg = InitAlg {f=FinSetObjF}
 
 public export
 finSetObjInitAlgInv : FinSetObjCoalg FinSetObjMu
-finSetObjInitAlgInv (InFree (TFV v)) = void v
-finSetObjInitAlgInv (InFree (TFC t)) = t
+finSetObjInitAlgInv = InitAlgInv {f=FinSetObjF}
 
 public export
 FinSetObjCFCM : Type -> Type
