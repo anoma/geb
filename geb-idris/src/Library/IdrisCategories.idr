@@ -5645,6 +5645,16 @@ public export
 Mu : (Type -> Type) -> Type
 Mu f = FreeMonad f Void
 
+-- The initial algebra of a functor.
+public export
+InitAlg : {f : Type -> Type} -> Algebra f (Mu f)
+InitAlg {f} = inFC {f} {a=Void}
+
+public export
+InitAlgInv : {f : Type -> Type} -> Coalgebra f (Mu f)
+InitAlgInv {f} (InFree (TFV v)) = void v
+InitAlgInv {f} (InFree (TFC t)) = t
+
 -- Special case of `CofreeComonad` where `v` is `Unit`.
 -- This is the cofixpoint (greatest fixed point) of an endofunctor
 -- (if it exists).
