@@ -6714,8 +6714,8 @@ Functor f => Profunctor (FunctorExp f) where
 -- (Note that the Haskell standard libraries reverse the parameters.
 -- "First parameter along second parameter" sounds easier to remember
 -- to me, but I could be wrong.)
--- (Note that `RKanExt g j a` can be read as a natural transformation from
--- `FunctorExp j a` to `g`.)
+-- (Note that `RKanExt g j a` can be read as the set of natural transformations
+-- from `FunctorExp j a` to `g`.)
 public export
 RKanExt : (g, j : Type -> Type) -> Type -> Type
 RKanExt g j a = (b : Type) -> FunctorExp j a b -> g b
