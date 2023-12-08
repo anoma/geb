@@ -260,11 +260,12 @@ FinSetObjTermSliceF sl FSOTt = FinSetObjTermTermSliceF sl ()
 -- figure", then this would be a morphism in the presheaf category of the
 -- interval category.
 public export
-FinSetTermDepF : (obj, term : Type) -> (dep : term -> obj) ->
-  FinSetTermTermF obj term dep -> FinSetTermObjF obj term dep
-FinSetTermDepF obj term dep FST1 = FSO1
-FinSetTermDepF obj term dep (FSTl t r) = FSOC (dep t) r
-FinSetTermDepF obj term dep (FSTr l t) = FSOC l (dep t)
+FinSetTermDepF : (sl : SliceObj FinSetObjTermSlice) ->
+  (dep : sl FSOTt -> sl FSOTo) ->
+  FinSetObjTermSliceF sl FSOTt -> FinSetObjTermSliceF sl FSOTo
+FinSetTermDepF sl dep FST1 = FSO1
+FinSetTermDepF sl dep (FSTl t r) = FSOC (dep t) r
+FinSetTermDepF sl dep (FSTr l t) = FSOC l (dep t)
 
 --------------------------
 --------------------------
