@@ -230,6 +230,24 @@ public export
 FinSetTermTermF : (obj, term : Type) -> (dep : term -> obj) -> Type
 FinSetTermTermF obj term dep = FinSetTermF obj term
 
+public export
+data FinSetObjTermSlice : Type where
+  FSOTo : FinSetObjTermSlice
+  FSOTt : FinSetObjTermSlice
+
+public export
+FinSetObjTermObjSliceF : SliceFunctor FinSetObjTermSlice Unit
+FinSetObjTermObjSliceF sl () = FinSetObjF (sl FSOTo)
+
+public export
+FinSetObjTermTermSliceF : SliceFunctor FinSetObjTermSlice Unit
+FinSetObjTermTermSliceF sl () = FinSetTermF (sl FSOTo) (sl FSOTt)
+
+public export
+FinSetObjTermSliceF : SliceEndofunctor FinSetObjTermSlice
+FinSetObjTermSliceF sl FSOTo = FinSetObjTermObjSliceF sl ()
+FinSetObjTermSliceF sl FSOTt = FinSetObjTermTermSliceF sl ()
+
 -- `FinSetTermTermF` and `FinSetTermObjF` may both be viewed as copresheaves
 -- (into `Type`) on the interval category (with `obj` and `term` being the
 -- objects, and `dep` the one non-identity arrow).  Therefore, `FinSetTermDepF`
