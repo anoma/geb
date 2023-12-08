@@ -248,6 +248,10 @@ FinSetObjTermSliceF : SliceEndofunctor FinSetObjTermIdx
 FinSetObjTermSliceF sl FSOTo = FinSetObjTermObjSliceF sl ()
 FinSetObjTermSliceF sl FSOTt = FinSetObjTermTermSliceF sl ()
 
+public export
+FreeFinSetObjTermSlice : SliceEndofunctor FinSetObjTermIdx
+FreeFinSetObjTermSlice = SliceFreeM {a=FinSetObjTermIdx} FinSetObjTermSliceF
+
 -- `FinSetTermTermF` and `FinSetTermObjF` may both be viewed as copresheaves
 -- (into `Type`) on the interval category (with `obj` and `term` being the
 -- objects, and `dep` the one non-identity arrow).  Therefore, `FinSetTermDepF`
@@ -266,6 +270,17 @@ FinSetTermDepF : (sl : SliceObj FinSetObjTermIdx) ->
 FinSetTermDepF sl dep FST1 = FSO1
 FinSetTermDepF sl dep (FSTl t r) = FSOC (dep t) r
 FinSetTermDepF sl dep (FSTr l t) = FSOC l (dep t)
+
+public export
+FreeFinSetTermDep :
+  (sl : SliceObj FinSetObjTermIdx) -> (dep : sl FSOTt -> sl FSOTo) ->
+  FreeFinSetObjTermSlice sl FSOTt -> FreeFinSetObjTermSlice sl FSOTo
+FreeFinSetTermDep sl dep (InSlF FSOTt x) = InSlF FSOTo $ case x of
+  InSlV v => InSlV $ dep v
+  InSlC t => InSlC $ case t of
+    FST1 => FSO1
+    FSTl t' r => FSOC (FreeFinSetTermDep sl dep t') r
+    FSTr l t' => FSOC l (FreeFinSetTermDep sl dep t')
 
 --------------------------
 --------------------------
