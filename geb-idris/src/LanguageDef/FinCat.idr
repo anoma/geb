@@ -122,10 +122,6 @@ finSetObjTermCoalgInv = outNuInv {f=FinSetObjF}
 ---------------
 
 public export
-FinSetTermObjF : (obj, term : Type) -> (dep : term -> obj) -> Type
-FinSetTermObjF obj term dep = FinSetObjF obj
-
-public export
 data FinSetTermF : (obj, term : Type) -> Type where
   FST1 : {0 obj, term : Type} -> FinSetTermF obj term
   FSTl : {0 obj, term : Type} -> (t : term) -> (r : obj) -> FinSetTermF obj term
@@ -221,6 +217,14 @@ finSetTermTermCoalg {obj} = outNu {f=(FinSetTermF obj)}
 public export
 finSetTermTermCoalgInv : {obj : Type} -> FinSetTermAlg obj (FinSetTermNu obj)
 finSetTermTermCoalgInv {obj} = outNuInv {f=(FinSetTermF obj)}
+
+----------------------------------------
+---- Dependency of terms on objects ----
+----------------------------------------
+
+public export
+FinSetTermObjF : (obj, term : Type) -> (dep : term -> obj) -> Type
+FinSetTermObjF obj term dep = FinSetObjF obj
 
 public export
 FinSetTermTermF : (obj, term : Type) -> (dep : term -> obj) -> Type
