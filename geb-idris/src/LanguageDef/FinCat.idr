@@ -132,9 +132,111 @@ data FinSetTermF : (obj, term : Type) -> Type where
   FSTr : {0 obj, term : Type} -> (l : obj) -> (t : term) -> FinSetTermF obj term
 
 public export
+FinSetTermAlg : Type -> Type -> Type
+FinSetTermAlg obj = Algebra (FinSetTermF obj)
+
+-- A coalgebra of `FinSetTermF` may be viewed as a container that always
+-- holds some object of `FinSet` -- it can always satisfy a pattern-match
+-- on the type of objects of `FinSet`.
+public export
+FinSetTermCoalg : Type -> Type -> Type
+FinSetTermCoalg obj = Coalgebra (FinSetTermF obj)
+
+public export
+FinSetTermProAlg : Type -> Type -> Type
+FinSetTermProAlg = EndoProAlgebra . FinSetTermF
+
+public export
+FinSetTermDialg : Type -> Type -> Type
+FinSetTermDialg = EndoDialgebra . FinSetTermF
+
+public export
+FinSetTermProToDialg : {0 obj, a : Type} ->
+  FinSetTermProAlg obj a -> FinSetTermDialg obj a
+FinSetTermProToDialg {obj} = EndoProToDiAlg {f=(FinSetTermF obj)}
+
+public export
+FinSetTermFM : Type -> Type -> Type
+FinSetTermFM = FreeMonad . FinSetTermF
+
+public export
+finSetTermEval : {0 obj : Type} -> FreeFEval (FinSetTermF obj)
+finSetTermEval {obj} var term subst alg (InFree (TFV v)) = subst v
+finSetTermEval {obj} var term subst alg (InFree (TFC t)) = alg $ case t of
+  FST1 => FST1
+  FSTl t r => FSTl (finSetTermEval {obj} var term subst alg t) r
+  FSTr l t => FSTr l (finSetTermEval {obj} var term subst alg t)
+
+public export
+FinSetTermMu : Type -> Type
+FinSetTermMu = Mu . FinSetTermF
+
+public export
+finSetTermMuPure : {obj : Type} -> {0 a : Type} ->
+  Coalgebra (FinSetTermFM obj) a
+finSetTermMuPure {obj} {a} = inFV {f=(FinSetTermF obj)} {a}
+
+public export
+finSetTermFreeAlg : {obj : Type} -> {0 a : Type} ->
+  FinSetTermAlg obj (FinSetTermFM obj a)
+finSetTermFreeAlg {obj} {a} = inFC {f=(FinSetTermF obj)} {a}
+
+public export
+finSetTermInitAlg : {obj : Type} -> FinSetTermAlg obj (FinSetTermMu obj)
+finSetTermInitAlg {obj} = InitAlg {f=(FinSetTermF obj)}
+
+public export
+finSetTermInitAlgInv : {obj : Type} -> FinSetTermCoalg obj (FinSetTermMu obj)
+finSetTermInitAlgInv {obj} = InitAlgInv {f=(FinSetTermF obj)}
+
+public export
+FinSetTermCFCM : Type -> Type -> Type
+FinSetTermCFCM = CofreeComonad . FinSetTermF
+
+public export
+finSetTermTrace : {obj : Type} -> CofreeFTrace (FinSetTermF obj)
+finSetTermTrace {obj} label term ann coalg t =
+  InCofree $ SFN (ann t) $ case coalg t of
+    FST1 => FST1
+    FSTl t r => FSTl (finSetTermTrace {obj} label term ann coalg t) r
+    FSTr l t => FSTr l (finSetTermTrace {obj} label term ann coalg t)
+
+public export
+finSetTermErase : {obj : Type} -> {0 a : Type} -> Algebra (FinSetTermCFCM obj) a
+finSetTermErase {obj} {a} = CFCMerase {f=(FinSetTermF obj)} {a}
+
+public export
+finSetTermCofreeCoalg : {obj : Type} -> {a : Type} ->
+  FinSetTermCoalg obj (FinSetTermCFCM obj a)
+finSetTermCofreeCoalg {obj} {a} = outCFC {f=(FinSetTermF obj)} {a}
+
+public export
+FinSetTermNu : Type -> Type
+FinSetTermNu = Nu . FinSetTermF
+
+public export
+finSetTermTermCoalg : {obj : Type} -> FinSetTermCoalg obj (FinSetTermNu obj)
+finSetTermTermCoalg {obj} = outNu {f=(FinSetTermF obj)}
+
+public export
+finSetTermTermCoalgInv : {obj : Type} -> FinSetTermAlg obj (FinSetTermNu obj)
+finSetTermTermCoalgInv {obj} = outNuInv {f=(FinSetTermF obj)}
+
+public export
 FinSetTermTermF : (obj, term : Type) -> (dep : term -> obj) -> Type
 FinSetTermTermF obj term dep = FinSetTermF obj term
 
+-- `FinSetTermTermF` and `FinSetTermObjF` may both be viewed as copresheaves
+-- (into `Type`) on the interval category (with `obj` and `term` being the
+-- objects, and `dep` the one non-identity arrow).  Therefore, `FinSetTermDepF`
+-- may be viewed as a morphism in the copresheaf category of the interval
+-- category (i.e. a natural transformation between functors from the interval
+-- category to `Type`).
+--
+-- If we were to imagine `dep` going in the opposite direction, from `obj`
+-- to `term`, so that we were treating the interval category as a "generic
+-- figure", then this would be a morphism in the presheaf category of the
+-- interval category.
 public export
 FinSetTermDepF : (obj, term : Type) -> (dep : term -> obj) ->
   FinSetTermTermF obj term dep -> FinSetTermObjF obj term dep
