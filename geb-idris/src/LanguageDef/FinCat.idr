@@ -9,6 +9,10 @@ import Library.IdrisCategories
 -------------------------------
 -------------------------------
 
+-----------------
+---- Objects ----
+-----------------
+
 -- A minimal interface to objects of `FinSet` must provide at least a
 -- terminal object and finite coproducts; the latter are equivalent to
 -- an initial object and binary coproducts, so we decompose them as such.
@@ -112,6 +116,31 @@ finSetObjTermCoalg = outNu {f=FinSetObjF}
 public export
 finSetObjTermCoalgInv : FinSetObjAlg FinSetObjNu
 finSetObjTermCoalgInv = outNuInv {f=FinSetObjF}
+
+---------------
+---- Terms ----
+---------------
+
+public export
+FinSetTermObjF : (obj, term : Type) -> (dep : term -> obj) -> Type
+FinSetTermObjF obj term dep = FinSetObjF obj
+
+public export
+data FinSetTermF : (obj, term : Type) -> Type where
+  FST1 : {0 obj, term : Type} -> FinSetTermF obj term
+  FSTl : {0 obj, term : Type} -> (t : term) -> (r : obj) -> FinSetTermF obj term
+  FSTr : {0 obj, term : Type} -> (l : obj) -> (t : term) -> FinSetTermF obj term
+
+public export
+FinSetTermTermF : (obj, term : Type) -> (dep : term -> obj) -> Type
+FinSetTermTermF obj term dep = FinSetTermF obj term
+
+public export
+FinSetTermDepF : (obj, term : Type) -> (dep : term -> obj) ->
+  FinSetTermTermF obj term dep -> FinSetTermObjF obj term dep
+FinSetTermDepF obj term dep FST1 = FSO1
+FinSetTermDepF obj term dep (FSTl t r) = FSOC (dep t) r
+FinSetTermDepF obj term dep (FSTr l t) = FSOC l (dep t)
 
 --------------------------
 --------------------------
