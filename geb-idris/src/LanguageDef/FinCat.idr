@@ -244,9 +244,9 @@ FinSetObjTermTermSliceF : SliceFunctor FinSetObjTermIdx Unit
 FinSetObjTermTermSliceF sl () = FinSetTermF (sl FSOTo) (sl FSOTt)
 
 public export
-FinSetObjTermIdxF : SliceEndofunctor FinSetObjTermIdx
-FinSetObjTermIdxF sl FSOTo = FinSetObjTermObjSliceF sl ()
-FinSetObjTermIdxF sl FSOTt = FinSetObjTermTermSliceF sl ()
+FinSetObjTermSliceF : SliceEndofunctor FinSetObjTermIdx
+FinSetObjTermSliceF sl FSOTo = FinSetObjTermObjSliceF sl ()
+FinSetObjTermSliceF sl FSOTt = FinSetObjTermTermSliceF sl ()
 
 -- `FinSetTermTermF` and `FinSetTermObjF` may both be viewed as copresheaves
 -- (into `Type`) on the interval category (with `obj` and `term` being the
@@ -262,7 +262,7 @@ FinSetObjTermIdxF sl FSOTt = FinSetObjTermTermSliceF sl ()
 public export
 FinSetTermDepF : (sl : SliceObj FinSetObjTermIdx) ->
   (dep : sl FSOTt -> sl FSOTo) ->
-  FinSetObjTermIdxF sl FSOTt -> FinSetObjTermIdxF sl FSOTo
+  FinSetObjTermSliceF sl FSOTt -> FinSetObjTermSliceF sl FSOTo
 FinSetTermDepF sl dep FST1 = FSO1
 FinSetTermDepF sl dep (FSTl t r) = FSOC (dep t) r
 FinSetTermDepF sl dep (FSTr l t) = FSOC l (dep t)
