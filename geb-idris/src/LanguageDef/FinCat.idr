@@ -231,22 +231,22 @@ FinSetTermTermF : (obj, term : Type) -> (dep : term -> obj) -> Type
 FinSetTermTermF obj term dep = FinSetTermF obj term
 
 public export
-data FinSetObjTermSlice : Type where
-  FSOTo : FinSetObjTermSlice
-  FSOTt : FinSetObjTermSlice
+data FinSetObjTermIdx : Type where
+  FSOTo : FinSetObjTermIdx
+  FSOTt : FinSetObjTermIdx
 
 public export
-FinSetObjTermObjSliceF : SliceFunctor FinSetObjTermSlice Unit
+FinSetObjTermObjSliceF : SliceFunctor FinSetObjTermIdx Unit
 FinSetObjTermObjSliceF sl () = FinSetObjF (sl FSOTo)
 
 public export
-FinSetObjTermTermSliceF : SliceFunctor FinSetObjTermSlice Unit
+FinSetObjTermTermSliceF : SliceFunctor FinSetObjTermIdx Unit
 FinSetObjTermTermSliceF sl () = FinSetTermF (sl FSOTo) (sl FSOTt)
 
 public export
-FinSetObjTermSliceF : SliceEndofunctor FinSetObjTermSlice
-FinSetObjTermSliceF sl FSOTo = FinSetObjTermObjSliceF sl ()
-FinSetObjTermSliceF sl FSOTt = FinSetObjTermTermSliceF sl ()
+FinSetObjTermIdxF : SliceEndofunctor FinSetObjTermIdx
+FinSetObjTermIdxF sl FSOTo = FinSetObjTermObjSliceF sl ()
+FinSetObjTermIdxF sl FSOTt = FinSetObjTermTermSliceF sl ()
 
 -- `FinSetTermTermF` and `FinSetTermObjF` may both be viewed as copresheaves
 -- (into `Type`) on the interval category (with `obj` and `term` being the
@@ -260,9 +260,9 @@ FinSetObjTermSliceF sl FSOTt = FinSetObjTermTermSliceF sl ()
 -- figure", then this would be a morphism in the presheaf category of the
 -- interval category.
 public export
-FinSetTermDepF : (sl : SliceObj FinSetObjTermSlice) ->
+FinSetTermDepF : (sl : SliceObj FinSetObjTermIdx) ->
   (dep : sl FSOTt -> sl FSOTo) ->
-  FinSetObjTermSliceF sl FSOTt -> FinSetObjTermSliceF sl FSOTo
+  FinSetObjTermIdxF sl FSOTt -> FinSetObjTermIdxF sl FSOTo
 FinSetTermDepF sl dep FST1 = FSO1
 FinSetTermDepF sl dep (FSTl t r) = FSOC (dep t) r
 FinSetTermDepF sl dep (FSTr l t) = FSOC l (dep t)
