@@ -252,6 +252,29 @@ public export
 FreeFinSetObjTermSlice : SliceEndofunctor FinSetObjTermIdx
 FreeFinSetObjTermSlice = SliceFreeM {a=FinSetObjTermIdx} FinSetObjTermSliceF
 
+public export
+FinSetObjTermSliceEval : SliceFreeFEval FinSetObjTermSliceF
+FinSetObjTermSliceEval sv sa subst alg i (InSlF i t) = case t of
+  InSlV vt => subst i vt
+  InSlC ct => alg i $ case i of
+    FSOTo => case ct of
+      FSO0 => FSO0
+      FSO1 => FSO1
+      FSOC x y =>
+        FSOC
+          (FinSetObjTermSliceEval sv sa subst alg FSOTo x)
+          (FinSetObjTermSliceEval sv sa subst alg FSOTo y)
+    FSOTt => case ct of
+      FST1 => FST1
+      FSTl lt r =>
+        FSTl
+          (FinSetObjTermSliceEval sv sa subst alg FSOTt lt)
+          (FinSetObjTermSliceEval sv sa subst alg FSOTo r)
+      FSTr l rt =>
+        FSTr
+          (FinSetObjTermSliceEval sv sa subst alg FSOTo l)
+          (FinSetObjTermSliceEval sv sa subst alg FSOTt rt)
+
 -- `FinSetTermTermF` and `FinSetTermObjF` may both be viewed as copresheaves
 -- (into `Type`) on the interval category (with `obj` and `term` being the
 -- objects, and `dep` the one non-identity arrow).  Therefore, `FinSetTermDepF`
@@ -272,15 +295,35 @@ FinSetTermDepF sl dep (FSTl t r) = FSOC (dep t) r
 FinSetTermDepF sl dep (FSTr l t) = FSOC l (dep t)
 
 public export
+FreeFinSetTermDepSubst :
+  (sl : SliceObj FinSetObjTermIdx) -> (dep : sl FSOTt -> sl FSOTo) ->
+  (i : FinSetObjTermIdx) -> sl i -> FreeFinSetObjTermSlice sl FSOTo
+FreeFinSetTermDepSubst sl dep i t = InSlFv $ case i of
+  FSOTo => t
+  FSOTt => dep t
+
+FinSetObjTermSliceDep :
+  (sl : SliceObj FinSetObjTermIdx) -> (i : FinSetObjTermIdx) ->
+  FinSetObjTermSliceF (const $ FreeFinSetObjTermSlice sl FSOTo) i ->
+  FreeFinSetObjTermSlice sl FSOTo
+FinSetObjTermSliceDep sl i t = InSlFc $ case i of
+  FSOTo => t
+  FSOTt => case t of
+    FST1 => FSO1
+    FSTl l r => FSOC l r
+    FSTr l r => FSOC l r
+
+public export
 FreeFinSetTermDep :
   (sl : SliceObj FinSetObjTermIdx) -> (dep : sl FSOTt -> sl FSOTo) ->
   FreeFinSetObjTermSlice sl FSOTt -> FreeFinSetObjTermSlice sl FSOTo
-FreeFinSetTermDep sl dep (InSlF FSOTt x) = InSlF FSOTo $ case x of
-  InSlV v => InSlV $ dep v
-  InSlC t => InSlC $ case t of
-    FST1 => FSO1
-    FSTl t' r => FSOC (FreeFinSetTermDep sl dep t') r
-    FSTr l t' => FSOC l (FreeFinSetTermDep sl dep t')
+FreeFinSetTermDep sl dep =
+  FinSetObjTermSliceEval
+    sl
+    (const $ FreeFinSetObjTermSlice sl FSOTo)
+    (FreeFinSetTermDepSubst sl dep)
+    (FinSetObjTermSliceDep sl)
+    FSOTt
 
 --------------------------
 --------------------------
