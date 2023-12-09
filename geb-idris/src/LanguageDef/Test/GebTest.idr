@@ -329,10 +329,11 @@ T1Maker1dom = [DiagramCatTest.Test0, Sigma DiagramCatTest.Test1]
 
 T1Maker1t1 : InterpRawOp T1Maker T1Maker1dom
 T1Maker1t1 =
-  [T0Starter,
-   T0Maker T0Starter T0Starter,
-   (T0Starter ** T1Starter),
-   (T0Maker T0Starter T0Starter ** T1Id $ T0Maker T0Starter T0Starter)]
+  [T0Starter (T1u ()),
+   T0Maker (T0Starter (T1u ())) (T0Starter (T1u ())),
+   (T0Starter (T1u ()) ** T1Starter),
+   (T0Maker (T0Starter (T1u ())) (T0Starter (T1u ())) **
+    T1Id $ T0Maker (T0Starter (T1u ())) (T0Starter (T1u ())))]
 
 T1ComposerExp : List Nat
 T1ComposerExp = [0, 0, 0, 1, 1]
