@@ -26,22 +26,14 @@ Test0' (a, b) = Either T0Starter' (Either (T0Maker' a) (T0DepMaker' (a, b)))
 
 mutual
   public export
-  data Terminal : Type where
-    T1u : Unit -> Terminal
-
-  public export
   data Test0 : Type where
-    T0Starter : Terminal -> Test0
+    T0Starter : Test0
     T0Maker : Test0 -> Test0 -> Test0
     T0DepMaker : (a : Test0) -> Test1 a -> Test1 a -> Test0
 
   public export
-  data T0Pair : Type where
-    T0P : Test0 -> Test0 -> T0Pair
-
-  public export
   data Test1 : Test0 -> Type where
-    T1Starter : Test1 (T0Starter (T1u ()))
+    T1Starter : Test1 T0Starter
     T1Id : (a : Test0) -> Test1 a
     T1Maker : (a, b : Test0) -> Test1 a -> Test1 b -> Test1 (T0Maker a b)
     T1Composer : (a, b, c : Test0) ->
