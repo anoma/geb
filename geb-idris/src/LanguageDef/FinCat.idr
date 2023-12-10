@@ -223,14 +223,6 @@ finSetTermTermCoalgInv {obj} = outNuInv {f=(FinSetTermF obj)}
 ----------------------------------------
 
 public export
-FinSetTermObjF : (obj, term : Type) -> (dep : term -> obj) -> Type
-FinSetTermObjF obj term dep = FinSetObjF obj
-
-public export
-FinSetTermTermF : (obj, term : Type) -> (dep : term -> obj) -> Type
-FinSetTermTermF obj term dep = FinSetTermF obj term
-
-public export
 data FinSetObjTermIdx : Type where
   FSOTo : FinSetObjTermIdx
   FSOTt : FinSetObjTermIdx
@@ -275,17 +267,6 @@ FinSetObjTermSliceEval sv sa subst alg i (InSlF i t) = case t of
           (FinSetObjTermSliceEval sv sa subst alg FSOTo l)
           (FinSetObjTermSliceEval sv sa subst alg FSOTt rt)
 
--- `FinSetTermTermF` and `FinSetTermObjF` may both be viewed as copresheaves
--- (into `Type`) on the interval category (with `obj` and `term` being the
--- objects, and `dep` the one non-identity arrow).  Therefore, `FinSetTermDepF`
--- may be viewed as a morphism in the copresheaf category of the interval
--- category (i.e. a natural transformation between functors from the interval
--- category to `Type`).
---
--- If we were to imagine `dep` going in the opposite direction, from `obj`
--- to `term`, so that we were treating the interval category as a "generic
--- figure", then this would be a morphism in the presheaf category of the
--- interval category.
 public export
 FinSetTermDepF : (sl : SliceObj FinSetObjTermIdx) ->
   (dep : sl FSOTt -> sl FSOTo) ->
