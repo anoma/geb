@@ -22,6 +22,12 @@ data FinSetObjF : Type -> Type where
   FSO1 : {0 a : Type} -> FinSetObjF a
   FSOC : {0 a : Type} -> a -> a -> FinSetObjF a
 
+public export
+Functor FinSetObjF where
+  map f FSO0 = FSO0
+  map f FSO1 = FSO1
+  map f (FSOC x y) = FSOC (f x) (f y)
+
 -- An algebra of `FinSetObjF` may be viewed as a container that can hold any
 -- object of `FinSet` -- it can be constructed in all the ways that objects
 -- of `FinSet` can be constructed.
@@ -128,6 +134,12 @@ data FinSetTermF : (obj, term : Type) -> Type where
   FSTr : {0 obj, term : Type} -> (l : obj) -> (t : term) -> FinSetTermF obj term
 
 public export
+Bifunctor FinSetTermF where
+  bimap f g FST1 = FST1
+  bimap f g (FSTl t r) = FSTl (g t) (f r)
+  bimap f g (FSTr l t) = FSTr (f l) (g t)
+
+public export
 FinSetTermAlg : Type -> Type -> Type
 FinSetTermAlg obj = Algebra (FinSetTermF obj)
 
@@ -158,10 +170,14 @@ FinSetTermFM = FreeMonad . FinSetTermF
 public export
 finSetTermEval : {0 obj : Type} -> FreeFEval (FinSetTermF obj)
 finSetTermEval {obj} var term subst alg (InFree (TFV v)) = subst v
-finSetTermEval {obj} var term subst alg (InFree (TFC t)) = alg $ case t of
-  FST1 => FST1
-  FSTl t r => FSTl (finSetTermEval {obj} var term subst alg t) r
-  FSTr l t => FSTr l (finSetTermEval {obj} var term subst alg t)
+finSetTermEval {obj} var term subst alg (InFree (TFC t)) = alg $
+  -- Equivalent to
+  --  mapSnd (finSetTermEval {obj} var term subst alg) t
+  -- but Idris can't determine that that would be terminating.
+  case t of
+    FST1 => FST1
+    FSTl t r => FSTl (finSetTermEval {obj} var term subst alg t) r
+    FSTr l t => FSTr l (finSetTermEval {obj} var term subst alg t)
 
 public export
 FinSetTermMu : Type -> Type
