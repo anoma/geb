@@ -602,3 +602,19 @@ FinQuivPrshfMmap {n} q = TypeQuivPrshfMmap {v=(Fin n)} (Fin . q)
 public export
 FinQuivCoprshfMmap : {n : Nat} -> FinQuivN n -> FinSliceObj n -> Type
 FinQuivCoprshfMmap {n} q = TypeQuivCoprshfMmap {v=(Fin n)} (Fin . q)
+
+--------------------------------------------------
+---- Functors in free-(co)presheaf categories ----
+--------------------------------------------------
+
+public export
+TypeQuivPrshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
+TypeQuivPrshfFunctor {v} {w} qv qw =
+  (slv : SliceObj v ** TypeQuivPrshfMmap {v} qv slv) ->
+  (slw : SliceObj w ** TypeQuivPrshfMmap {v=w} qw slw)
+
+public export
+TypeQuivCoprshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
+TypeQuivCoprshfFunctor {v} {w} qv qw =
+  (slv : SliceObj v ** TypeQuivCoprshfMmap {v} qv slv) ->
+  (slw : SliceObj w ** TypeQuivCoprshfMmap {v=w} qw slw)
