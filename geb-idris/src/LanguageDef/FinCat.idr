@@ -533,134 +533,72 @@ TypeCQuivCompCoprod {v} {w} {qv} {qw} cv cw (Right ew) (Right ew') (Right ew'')
 ---- Internal to and enriched over `Type` ----
 ----------------------------------------------
 
--- Given a quiver internal to and enriched over `Type`, a vertex
--- object, a slice object over the vertex object, and two vertices,
--- this is the type of the slice between those two vertices of the
--- morphism-map component of a presheaf on a category whose type of
--- objects is the quiver's vertex object and whose object-map component
--- is the given slice object.
-public export
-TypeQuivPrshfM : {0 v : Type} -> TypeQuivV v -> SliceObj v -> v -> v -> Type
-TypeQuivPrshfM {v} q sl dom cod = sl cod -> sl dom
-
--- Given a quiver internal to and enriched over `Type`, a vertex
--- object, and a slice object over the vertex object, this type
--- generates the morphism-map component of a presheaf on a category
--- whose type of objects is the quiver's vertex object and whose
--- object-map component is the given slice object.
+-- Given a quiver internal to and enriched over `Type` and a slice object
+-- over its vertex object -- the latter of which may be treated as the
+-- object-map component of a functor from the free category on the quiver to
+-- `Type` (a "presheaf", if the functor is contravariant, or "copresheaf", if
+-- it is covariant) -- this is the type of the morphism-map component of such a
+-- contravariant functor (presheaf).
 public export
 TypeQuivPrshfMmap : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
 TypeQuivPrshfMmap {v} q sl =
-  (dom, cod : v) -> TypeQuivPrshfM {v} q sl dom cod
+  (dom, cod : v) -> q (dom, cod) -> sl cod -> sl dom
 
--- Given a quiver internal to and enriched over `Type`, a vertex
--- object, a slice object over the vertex object, and two vertices,
--- this is the type of the slice between those two vertices of the
--- morphism-map component of a copresheaf on a category whose type of
--- objects is the quiver's vertex object and whose object-map component
--- is the given slice object.
-public export
-TypeQuivCoprshfM : {0 v : Type} -> TypeQuivV v -> SliceObj v -> v -> v -> Type
-TypeQuivCoprshfM {v} q sl dom cod = sl dom -> sl cod
-
--- Given a quiver internal to and enriched over `Type`, a vertex
--- object, and a slice object over the vertex object, this type
--- generates the morphism-map component of a copresheaf on a category
--- whose type of objects is the quiver's vertex object and whose
--- object-map component is the given slice object.
+-- Given a quiver internal to and enriched over `Type` and a slice object
+-- over its vertex object -- the latter of which may be treated as the
+-- object-map component of a functor from the free category on the quiver to
+-- `Type` (a "presheaf", if the functor is contravariant, or "copresheaf", if
+-- it is covariant) -- this is the type of the morphism-map component of such a
+-- covariant functor (copresheaf).
 public export
 TypeQuivCoprshfMmap : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
 TypeQuivCoprshfMmap {v} q sl =
-  (dom, cod : v) -> TypeQuivCoprshfM {v} q sl dom cod
+  (dom, cod : v) -> q (dom, cod) -> sl dom -> sl cod
 
 --------------------------------
 ---- Enriched over `FinSet` ----
 --------------------------------
 
--- Given a quiver internal to `Type` but enriched over `FinSet`, a vertex
--- object, a slice object over the vertex object, and two vertices,
--- this is the type of the slice between those two vertices of the
--- morphism-map component of a presheaf on a category whose type of
--- objects is the quiver's vertex object and whose object-map component
--- is the given slice object.
-public export
-FinEnrQuivPrshfM : {0 v : Type} ->
-  FinEnrQuivV v -> SliceObj v -> v -> v -> Type
-FinEnrQuivPrshfM {v} q sl dom cod = sl cod -> sl dom
-
--- Given a quiver internal to `Type` but enriched over `FinSet`, a vertex
--- object, and a slice object over the vertex object, this type
--- generates the morphism-map component of a presheaf on a category
--- whose type of objects is the quiver's vertex object and whose
--- object-map component is the given slice object.
+-- Given a quiver internal to `Type` but enriched over `FinSet`, and a slice
+-- object over its vertex object -- the latter of which may be treated as the
+-- object-map component of a functor from the free category on the quiver to
+-- `Type` (a "presheaf", if the functor is contravariant, or "copresheaf", if
+-- it is covariant) -- this is the type of the morphism-map component of such a
+-- contravariant functor (presheaf).
 public export
 FinEnrQuivPrshfMmap : {v : Type} -> FinEnrQuivV v -> SliceObj v -> Type
-FinEnrQuivPrshfMmap {v} q sl =
-  (dom, cod : v) -> FinEnrQuivPrshfM {v} q sl dom cod
+FinEnrQuivPrshfMmap {v} q = TypeQuivPrshfMmap {v} (Fin . q)
 
--- Given a quiver internal to `Type` but enriched over `FinSet`, a vertex
--- object, a slice object over the vertex object, and two vertices,
--- this is the type of the slice between those two vertices of the
--- morphism-map component of a copresheaf on a category whose type of
--- objects is the quiver's vertex object and whose object-map component
--- is the given slice object.
-public export
-FinEnrQuivCoprshfM : {0 v : Type} ->
-  FinEnrQuivV v -> SliceObj v -> v -> v -> Type
-FinEnrQuivCoprshfM {v} q sl dom cod = sl dom -> sl cod
-
--- Given a quiver internal to `Type` but enriched over `FinSet`, a vertex
--- object, and a slice object over the vertex object, this type
--- generates the morphism-map component of a copresheaf on a category
--- whose type of objects is the quiver's vertex object and whose
--- object-map component is the given slice object.
+-- Given a quiver internal to `Type` but enriched over `FinSet`, and a slice
+-- object over its vertex object -- the latter of which may be treated as the
+-- object-map component of a functor from the free category on the quiver to
+-- `Type` (a "presheaf", if the functor is contravariant, or "copresheaf", if
+-- it is covariant) -- this is the type of the morphism-map component of such a
+-- contravariant functor (presheaf).
 public export
 FinEnrQuivCoprshfMmap : {v : Type} -> FinEnrQuivV v -> SliceObj v -> Type
-FinEnrQuivCoprshfMmap {v} q sl =
-  (dom, cod : v) -> FinEnrQuivCoprshfM {v} q sl dom cod
+FinEnrQuivCoprshfMmap {v} q = TypeQuivCoprshfMmap {v} (Fin . q)
 
 ------------------------------------------------
 ---- Internal to and enriched over `FinSet` ----
 ------------------------------------------------
 
--- Given a quiver internal to and enriched over `FinSet`, a vertex
--- object, a slice object over the vertex object, and two vertices,
--- this is the type of the slice between those two vertices of the
--- morphism-map component of a presheaf on a category whose type of
--- objects is the quiver's vertex object and whose object-map component
--- is the given slice object.
+-- Given a quiver internal to and enriched over `FinSet`, and a slice
+-- object over its vertex object -- the latter of which may be treated as the
+-- object-map component of a functor from the free category on the quiver to
+-- `Type` (a "presheaf", if the functor is contravariant, or "copresheaf", if
+-- it is covariant) -- this is the type of the morphism-map component of such a
+-- contravariant functor (presheaf).
 public export
-FinQuivPrshfM : {0 n : Nat} ->
-  FinQuivN n -> SliceObj (Fin n) -> Fin n -> Fin n -> Type
-FinQuivPrshfM {n} q sl dom cod = sl cod -> sl dom
+FinQuivPrshfMmap : {n : Nat} -> FinQuivN n -> FinSliceObj n -> Type
+FinQuivPrshfMmap {n} q = TypeQuivPrshfMmap {v=(Fin n)} (Fin . q)
 
--- Given a quiver internal to and enriched over `FinSet`, a vertex
--- object, and a slice object over the vertex object, this type
--- generates the morphism-map component of a presheaf on a category
--- whose type of objects is the quiver's vertex object and whose
--- object-map component is the given slice object.
+-- Given a quiver internal to and enriched over `FinSet`, and a slice
+-- object over its vertex object -- the latter of which may be treated as the
+-- object-map component of a functor from the free category on the quiver to
+-- `Type` (a "presheaf", if the functor is contravariant, or "copresheaf", if
+-- it is covariant) -- this is the type of the morphism-map component of such a
+-- covariant functor (copresheaf).
 public export
-FinQuivPrshfMmap : {n : Nat} -> FinQuivN n -> SliceObj (Fin n) -> Type
-FinQuivPrshfMmap {n} q sl =
-  (dom, cod : Fin n) -> FinQuivPrshfM {n} q sl dom cod
-
--- Given a quiver internal to and enriched over `FinSet`, a vertex
--- object, a slice object over the vertex object, and two vertices,
--- this is the type of the slice between those two vertices of the
--- morphism-map component of a copresheaf on a category whose type of
--- objects is the quiver's vertex object and whose object-map component
--- is the given slice object.
-public export
-FinQuivCoprshfM : {0 n : Nat} ->
-  FinQuivN n -> SliceObj (Fin n) -> Fin n -> Fin n -> Type
-FinQuivCoprshfM {n} q sl dom cod = sl dom -> sl cod
-
--- Given a quiver internal to and enriched over `FinSet`, a vertex
--- object, and a slice object over the vertex object, this type
--- generates the morphism-map component of a copresheaf on a category
--- whose type of objects is the quiver's vertex object and whose
--- object-map component is the given slice object.
-public export
-FinQuivCoprshfMmap : {n : Nat} -> FinQuivN n -> SliceObj (Fin n) -> Type
-FinQuivCoprshfMmap {n} q sl =
-  (dom, cod : Fin n) -> FinQuivCoprshfM {n} q sl dom cod
+FinQuivCoprshfMmap : {n : Nat} -> FinQuivN n -> FinSliceObj n -> Type
+FinQuivCoprshfMmap {n} q = TypeQuivCoprshfMmap {v=(Fin n)} (Fin . q)
