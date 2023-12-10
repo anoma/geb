@@ -268,12 +268,12 @@ FinSetObjTermSliceEval sv sa subst alg i (InSlF i t) = case t of
           (FinSetObjTermSliceEval sv sa subst alg FSOTt rt)
 
 public export
-FinSetTermDepF : (sl : SliceObj FinSetObjTermIdx) ->
+FinSetTermMorphF : (sl : SliceObj FinSetObjTermIdx) ->
   (dep : sl FSOTt -> sl FSOTo) ->
   FinSetObjTermSliceF sl FSOTt -> FinSetObjTermSliceF sl FSOTo
-FinSetTermDepF sl dep FST1 = FSO1
-FinSetTermDepF sl dep (FSTl t r) = FSOC (dep t) r
-FinSetTermDepF sl dep (FSTr l t) = FSOC l (dep t)
+FinSetTermMorphF sl dep FST1 = FSO1
+FinSetTermMorphF sl dep (FSTl t r) = FSOC (dep t) r
+FinSetTermMorphF sl dep (FSTr l t) = FSOC l (dep t)
 
 public export
 FreeFinSetTermDepSubst :
@@ -285,14 +285,20 @@ FreeFinSetTermDepSubst sl dep i t = InSlFv $ case i of
 
 FinSetObjTermSliceDep :
   (sl : SliceObj FinSetObjTermIdx) -> (i : FinSetObjTermIdx) ->
-  FinSetObjTermSliceF (const $ FreeFinSetObjTermSlice sl FSOTo) i ->
-  FreeFinSetObjTermSlice sl FSOTo
-FinSetObjTermSliceDep sl i t = InSlFc $ case i of
+  FinSetObjTermSliceF (const $ sl FSOTo) i -> FinSetObjTermSliceF sl FSOTo
+FinSetObjTermSliceDep sl i t = case i of
   FSOTo => t
   FSOTt => case t of
     FST1 => FSO1
     FSTl l r => FSOC l r
     FSTr l r => FSOC l r
+
+FreeFinSetObjTermSliceDep :
+  (sl : SliceObj FinSetObjTermIdx) -> (i : FinSetObjTermIdx) ->
+  FinSetObjTermSliceF (const $ FreeFinSetObjTermSlice sl FSOTo) i ->
+  FreeFinSetObjTermSlice sl FSOTo
+FreeFinSetObjTermSliceDep sl i t =
+  InSlFc $ FinSetObjTermSliceDep (FreeFinSetObjTermSlice sl) i t
 
 public export
 FreeFinSetTermDep :
@@ -303,7 +309,7 @@ FreeFinSetTermDep sl dep =
     sl
     (const $ FreeFinSetObjTermSlice sl FSOTo)
     (FreeFinSetTermDepSubst sl dep)
-    (FinSetObjTermSliceDep sl)
+    (FreeFinSetObjTermSliceDep sl)
     FSOTt
 
 --------------------------
