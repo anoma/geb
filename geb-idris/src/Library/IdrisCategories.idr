@@ -6704,7 +6704,7 @@ DirichFunc ((coeff, rep) :: l) ty =
 -- `CovarHomFunc a . j`.
 public export
 FunctorExp : (Type -> Type) -> Type -> Type -> Type
-FunctorExp j a b = a -> j b
+FunctorExp = (|>) CovarHomFunc . (|>)
 
 public export
 Functor f => Profunctor (FunctorExp f) where
@@ -6718,7 +6718,7 @@ Functor f => Profunctor (FunctorExp f) where
 -- from `FunctorExp j a` to `g`.)
 public export
 RKanExt : (g, j : Type -> Type) -> Type -> Type
-RKanExt g j a = (b : Type) -> FunctorExp j a b -> g b
+RKanExt g j = flip NaturalTransformation g . FunctorExp j
 
 -- Note that `ExpFunctor j a` can be read as
 -- `ContravarHomFunc a . j`.
