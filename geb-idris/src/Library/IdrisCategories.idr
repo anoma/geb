@@ -6731,7 +6731,7 @@ Functor f => Profunctor (flip $ ExpFunctor f) where
   dimap mca mbd alg = mbd . alg . map {f} mca
 
 -- The left Kan extension of `g` along `j`.
--- (Note that the Haskell standard libraries reverse the parameters.)
+-- (Note that the Haskell standard libraries reverse the parameters.
 -- "First parameter along second parameter" sounds easier to remember
 -- to me, but I could be wrong.)
 public export
