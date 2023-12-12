@@ -3871,9 +3871,9 @@ RawOpDir {s} {a} op sorts = map (flip index sorts) op
 -- of types -- to obtain an object of `Type`.  This is a discrete 'pi'
 -- operation.
 public export
-InterpRawOp : {s, a : Nat} ->
+InterpRawOpProd : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
-InterpRawOp {s} {a} op sorts = HVect {k=a} $ RawOpDir {s} {a} op sorts
+InterpRawOpProd {s} {a} op sorts = HVect {k=a} $ RawOpDir {s} {a} op sorts
 
 -------------------
 ---- Raw sorts ----
@@ -3947,12 +3947,12 @@ RawSortDom {s} _ = SortInterpretation s
 -- To obtain a term of a given sort, we must choose one of the operations
 -- in the list of operations that produce that sort, and apply it.
 --
--- This is a discrete sigma operation, as `InterpRawOp` is a discrete pi.
+-- This is a discrete sigma operation, as `InterpRawOpProd` is a discrete pi.
 public export
 InterpRawSort : {s, n : Nat} ->
   (sort : RawSortOpList s n) -> RawSortDom {s} {n} sort -> Type
 InterpRawSort {s} {n} ops sorts =
-  (i : Fin n ** InterpRawOp (DPair.snd $ index i ops) sorts)
+  (i : Fin n ** InterpRawOpProd (DPair.snd $ index i ops) sorts)
 
 ----------------------
 ---- Raw theories ----
@@ -4032,8 +4032,8 @@ mutual
     (sv, sa : SliceObj $ Fin s) -> SliceMorphism {a=(Fin s)} sv sa ->
     SliceAlg (InterpRawSortListSl {s} {n=s} sorts) sa ->
     (op : RawSortOp s) ->
-    InterpRawOp (snd op) (finFToVect $ FreeTheorySl {s} sorts sv) ->
-    InterpRawOp (snd op) (finFToVect sa)
+    InterpRawOpProd (snd op) (finFToVect $ FreeTheorySl {s} sorts sv) ->
+    InterpRawOpProd (snd op) (finFToVect sa)
   evalOp {s} sorts sv sa subst alg (Z ** []) [] = []
   evalOp {s} sorts sv sa subst alg (S n ** p :: ps) (esa :: hv) =
     replace {p=id} (sym (finFToVectIdx sa p))
