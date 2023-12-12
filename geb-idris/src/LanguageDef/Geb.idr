@@ -3944,6 +3944,21 @@ InterpRawOpList : {s, n : Nat} -> RawOpList s n ->
 InterpRawOpList {s} {n} ops sorts =
   finFToVect {n} {a=Type} $ \i => InterpTaggedRawOpDP {s} (index i ops) sorts
 
+public export
+RawEndoOpList : Nat -> Type
+RawEndoOpList s = RawOpList s s
+
+public export
+InterpRawOpListSl : {s, n : Nat} -> RawOpList s n ->
+  SliceFunctor (Fin s) (Fin n)
+InterpRawOpListSl {s} {n} ops sorts =
+  flip index $ InterpRawOpList {s} {n} ops $ finFToVect sorts
+
+public export
+FreeTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
+  SliceFunctor (Fin s) (Fin s)
+FreeTheorySl' {s} = SliceFreeM . InterpRawOpListSl {s} {n=s}
+
 -------------------
 ---- Raw sorts ----
 -------------------
