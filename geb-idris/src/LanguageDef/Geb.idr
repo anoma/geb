@@ -3865,15 +3865,53 @@ RawOpDir : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Vect a Type
 RawOpDir {s} {a} op sorts = map (flip index sorts) op
 
--- Given a mapping of sorts to concrete types, compute the interpretation
+-- Given a mapping of sorts to concrete types, compute an interpretation
 -- of the raw operation:  that is, the result of applying the functor
 -- to an object of the finite product category -- i.e., to a finite list
--- of types -- to obtain an object of `Type`.  This is a discrete 'pi'
--- operation.
+-- of types -- to obtain an object of `Type`.
+--
+-- This interpretation is a discrete 'pi' operation.
 public export
 InterpRawOpProd : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
-InterpRawOpProd {s} {a} op sorts = HVect {k=a} $ RawOpDir {s} {a} op sorts
+InterpRawOpProd {s} {a} op sorts =
+  HVect {k=a} $ RawOpDir {s} {a} op sorts
+
+-- This interpretation, dual to `InterpRawOpProd`,  is a discrete
+-- 'sigma' operation.
+public export
+InterpRawOpCop : {s, a : Nat} ->
+  (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
+InterpRawOpCop {s} {a} op sorts =
+  (i : Fin a ** index i $ RawOpDir {s} {a} op sorts)
+
+---------------------------
+---- Tagged operations ----
+---------------------------
+
+public export
+data OpTag : Type where
+  OP_PROD : OpTag
+  OP_COP : OpTag
+
+public export
+TaggedRawOp : Nat -> Nat -> Type
+TaggedRawOp s a = (OpTag, RawOp s a)
+
+public export
+taggedRawOpFromListMaybe : {s, a : Nat} ->
+  OpTag -> List Nat -> Maybe (TaggedRawOp s a)
+taggedRawOpFromListMaybe {s} {a} tag ns =
+  rawOpFromListMaybe {s} {a} ns >>= pure . MkPair tag
+
+public export
+taggedRawOpFromList : {s, a : Nat} ->
+  (tag : OpTag) -> (ns : List Nat) ->
+  {auto 0 j :
+    ReturnsJust (uncurry $ taggedRawOpFromListMaybe {s} {a}) (tag, ns)} ->
+  TaggedRawOp s a
+taggedRawOpFromList {s} {a} tag ns =
+  MkMaybe (uncurry $ taggedRawOpFromListMaybe {s} {a}) (tag, ns)
 
 -------------------
 ---- Raw sorts ----
