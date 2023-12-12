@@ -3955,9 +3955,22 @@ InterpRawOpListSl {s} {n} ops sorts =
   flip index $ InterpRawOpList {s} {n} ops $ finFToVect sorts
 
 public export
+InterpRawEndoOpListSl : {s : Nat} -> RawEndoOpList s ->
+  SliceFunctor (Fin s) (Fin s)
+InterpRawEndoOpListSl {s} = InterpRawOpListSl {s} {n=s}
+
+public export
 FreeTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
   SliceFunctor (Fin s) (Fin s)
-FreeTheorySl' {s} = SliceFreeM . InterpRawOpListSl {s} {n=s}
+FreeTheorySl' {s} = SliceFreeM . InterpRawEndoOpListSl {s}
+
+public export
+evalTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
+  SliceFreeFEval (InterpRawEndoOpListSl {s} ops)
+evalTheory' {s} ops sv sa subst alg i (InSlF i t) = case t of
+  InSlV vt => subst i vt
+  InSlC ct => alg i $
+    ?evalTheory'_hole
 
 -------------------
 ---- Raw sorts ----
