@@ -3899,6 +3899,13 @@ TaggedRawOp : Nat -> Nat -> Type
 TaggedRawOp s a = (OpTag, RawOp s a)
 
 public export
+InterpTaggedRawOp : {s, a : Nat} ->
+  (op : TaggedRawOp s a) -> RawOpDom {s} {a} (snd op) -> Type
+InterpTaggedRawOp {s} {a} op = case (fst op) of
+  OP_PROD => InterpRawOpProd {s} {a} (snd op)
+  OP_COP => InterpRawOpCop {s} {a} (snd op)
+
+public export
 taggedRawOpFromListMaybe : {s, a : Nat} ->
   OpTag -> List Nat -> Maybe (TaggedRawOp s a)
 taggedRawOpFromListMaybe {s} {a} tag ns =
@@ -3912,6 +3919,30 @@ taggedRawOpFromList : {s, a : Nat} ->
   TaggedRawOp s a
 taggedRawOpFromList {s} {a} tag ns =
   MkMaybe (uncurry $ taggedRawOpFromListMaybe {s} {a}) (tag, ns)
+
+-------------------------
+---- Operation lists ----
+-------------------------
+
+public export
+TaggedRawOpDP : Nat -> Type
+TaggedRawOpDP = DPair Nat . TaggedRawOp
+
+public export
+InterpTaggedRawOpDP : {s : Nat} ->
+  (op : TaggedRawOpDP s) -> RawOpDom {s} {a=(fst op)} (snd (snd op)) -> Type
+InterpTaggedRawOpDP {s} op = InterpTaggedRawOp {s} {a=(fst op)} (snd op)
+
+-- `n` tagged operations with sorts drawn from `Fin s`.
+public export
+RawOpList : Nat -> Nat -> Type
+RawOpList s n = Vect n (TaggedRawOpDP s)
+
+public export
+InterpRawOpList : {s, n : Nat} -> RawOpList s n ->
+  SortInterpretation s -> SortInterpretation n
+InterpRawOpList {s} {n} ops sorts =
+  finFToVect {n} {a=Type} $ \i => InterpTaggedRawOpDP {s} (index i ops) sorts
 
 -------------------
 ---- Raw sorts ----
