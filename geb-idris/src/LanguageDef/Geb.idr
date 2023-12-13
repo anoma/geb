@@ -3954,9 +3954,8 @@ TaggedRawOp s a = (OpTag, RawOp s a)
 public export
 InterpTaggedRawOp : {s, a : Nat} ->
   (op : TaggedRawOp s a) -> SortInterpretation s -> Type
-InterpTaggedRawOp {s} {a} op = case (fst op) of
-  OP_PROD => InterpRawOpProd {s} {a} (snd op)
-  OP_COP => InterpRawOpCop {s} {a} (snd op)
+InterpTaggedRawOp {s} {a} (OP_PROD, op) = InterpRawOpProd {s} {a} op
+InterpTaggedRawOp {s} {a} (OP_COP, op) = InterpRawOpCop {s} {a} op
 
 public export
 taggedRawOpFromListMaybe : {s, a : Nat} ->
@@ -3976,27 +3975,28 @@ taggedRawOpFromList {s} {a} tag ns =
 public export
 InterpTaggedRawOpSl : {s, a : Nat} ->
   (op : TaggedRawOp s a) -> SortInterpretationSl s -> Type
-InterpTaggedRawOpSl {s} {a} op = case (fst op) of
-  OP_PROD => InterpRawOpProdSl {s} {a} (snd op)
-  OP_COP => InterpRawOpCopSl {s} {a} (snd op)
+InterpTaggedRawOpSl {s} {a} (OP_PROD, op) = InterpRawOpProdSl {s} {a} op
+InterpTaggedRawOpSl {s} {a} (OP_COP, op) = InterpRawOpCopSl {s} {a} op
 
 public export
 InterpTaggedRawOpToSl : {s, a : Nat} ->
   (op : TaggedRawOp s a) -> (sorts : SortInterpretation s) ->
   InterpTaggedRawOp {s} {a} op sorts ->
   InterpTaggedRawOpSl {s} {a} op (SortInterpretationToSl sorts)
-InterpTaggedRawOpToSl {s} {a} (tag, v) sorts t = case tag of
-  OP_PROD => InterpRawOpProdToSl {s} {a} v sorts t
-  OP_COP => InterpRawOpCopToSl {s} {a} v sorts t
+InterpTaggedRawOpToSl {s} {a} (OP_PROD, v) sorts t =
+  InterpRawOpProdToSl {s} {a} v sorts t
+InterpTaggedRawOpToSl {s} {a} (OP_COP, v) sorts t =
+  InterpRawOpCopToSl {s} {a} v sorts t
 
 public export
 InterpTaggedRawOpFromSl : {s, a : Nat} ->
   (op : TaggedRawOp s a) -> (sorts : SortInterpretation s) ->
   InterpTaggedRawOpSl {s} {a} op (SortInterpretationToSl sorts) ->
   InterpTaggedRawOp {s} {a} op sorts
-InterpTaggedRawOpFromSl {s} {a} (tag, v) sorts t = case tag of
-  OP_PROD => InterpRawOpProdFromSl {s} {a} v sorts t
-  OP_COP => InterpRawOpCopFromSl {s} {a} v sorts t
+InterpTaggedRawOpFromSl {s} {a} (OP_PROD, v) sorts t =
+  InterpRawOpProdFromSl {s} {a} v sorts t
+InterpTaggedRawOpFromSl {s} {a} (OP_COP, v) sorts t =
+  InterpRawOpCopFromSl {s} {a} v sorts t
 
 -------------------------
 ---- Operation lists ----
@@ -4071,12 +4071,34 @@ FreeTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
 FreeTheorySl' {s} = SliceFreeM . InterpRawEndoOpListSl {s}
 
 public export
+partial
 evalTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
   SliceFreeFEval (InterpRawEndoOpListSl {s} ops)
-evalTheory' {s} ops sv sa subst alg i (InSlF i t) = case t of
-  InSlV vt => subst i vt
-  InSlC ct => alg i $
-    ?evalTheory'_hole
+evalTheory' {s} ops sv sa subst alg i (InSlF i t) with (index i ops) proof opeq
+  evalTheory' {s} ops sv sa subst alg i (InSlF i t) | op =
+    case t of
+      InSlV vt => subst i vt
+      InSlC ct =>
+        let
+          ct' =
+            replace
+              {p=(
+                \op' =>
+                  InterpTaggedRawOpSl
+                    (snd op')
+                    (SliceFreeM (InterpRawOpListSl ops) sv))}
+              opeq ct
+        in
+        alg i $ rewrite opeq in
+          case op of
+            (ar ** (OP_PROD, op')) =>
+              \ty =>
+                evalTheory' {s} ops sv sa subst alg
+                  (index ty op') (ct' ty)
+            (ar ** (OP_COP, op')) =>
+              (fst ct' **
+               evalTheory' {s} ops sv sa subst alg
+                (index (fst ct') op') (DPair.snd ct'))
 
 -------------------
 ---- Raw sorts ----
