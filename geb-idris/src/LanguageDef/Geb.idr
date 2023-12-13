@@ -4070,35 +4070,35 @@ FreeTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
   SliceFunctor (Fin s) (Fin s)
 FreeTheorySl' {s} = SliceFreeM . InterpRawEndoOpListSl {s}
 
-public export
-partial
-evalTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
-  SliceFreeFEval (InterpRawEndoOpListSl {s} ops)
-evalTheory' {s} ops sv sa subst alg i (InSlF i t) with (index i ops) proof opeq
-  evalTheory' {s} ops sv sa subst alg i (InSlF i t) | op =
-    case t of
-      InSlV vt => subst i vt
-      InSlC ct =>
-        let
-          ct' =
-            replace
-              {p=(
-                \op' =>
-                  InterpTaggedRawOpSl
-                    (snd op')
-                    (SliceFreeM (InterpRawOpListSl ops) sv))}
-              opeq ct
-        in
-        alg i $ rewrite opeq in
-          case op of
-            (ar ** (OP_PROD, op')) =>
-              \ty =>
-                evalTheory' {s} ops sv sa subst alg
-                  (index ty op') (ct' ty)
-            (ar ** (OP_COP, op')) =>
-              (fst ct' **
-               evalTheory' {s} ops sv sa subst alg
-                (index (fst ct') op') (DPair.snd ct'))
+mutual
+  public export
+  partial
+  evalTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
+    SliceFreeFEval (InterpRawEndoOpListSl {s} ops)
+  evalTheory' {s} ops sv sa subst alg i (InSlF i t) with (index i ops) proof opeq
+    evalTheory' {s} ops sv sa subst alg i (InSlF i t) | (ar ** (tag, op)) =
+      case t of
+        InSlV vt => subst i vt
+        InSlC ct => evalTheoryF' {s} ops sv sa subst alg i ct
+
+  public export
+  partial
+  evalTheoryF' : {s : Nat} -> (ops : RawEndoOpList s) ->
+    SliceFreeFEvalF (InterpRawEndoOpListSl {s} ops)
+  evalTheoryF' {s} ops sv sa subst alg i ct with (index i ops) proof opeq
+    evalTheoryF' {s} ops sv sa subst alg i ct | op =
+      alg i $
+      replace {p=(\op' => InterpTaggedRawOpSl (snd op') sa)} (sym opeq) $
+      case op of
+        (ar ** (tag, op')) => case tag of
+          OP_PROD =>
+            \ty =>
+              evalTheory' {s} ops sv sa subst alg (index ty op') (ct ty)
+          OP_COP =>
+            (fst ct **
+             evalTheory' {s} ops sv sa subst alg
+              (index (fst ct) op')
+              (DPair.snd ct))
 
 -------------------
 ---- Raw sorts ----
