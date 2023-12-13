@@ -3977,6 +3977,31 @@ taggedRawOpFromList : {s, a : Nat} ->
 taggedRawOpFromList {s} {a} tag ns =
   MkMaybe (uncurry $ taggedRawOpFromListMaybe {s} {a}) (tag, ns)
 
+public export
+InterpTaggedRawOpSl : {s, a : Nat} ->
+  (op : TaggedRawOp s a) -> SortInterpretationSl s -> Type
+InterpTaggedRawOpSl {s} {a} op = case (fst op) of
+  OP_PROD => InterpRawOpProdSl {s} {a} (snd op)
+  OP_COP => InterpRawOpCopSl {s} {a} (snd op)
+
+public export
+InterpTaggedRawOpToSl : {s, a : Nat} ->
+  (op : TaggedRawOp s a) -> (sorts : SortInterpretation s) ->
+  InterpTaggedRawOp {s} {a} op sorts ->
+  InterpTaggedRawOpSl {s} {a} op (SortInterpretationToSl sorts)
+InterpTaggedRawOpToSl {s} {a} (tag, v) sorts t = case tag of
+  OP_PROD => InterpRawOpProdToSl {s} {a} v sorts t
+  OP_COP => InterpRawOpCopToSl {s} {a} v sorts t
+
+public export
+InterpTaggedRawOpFromSl : {s, a : Nat} ->
+  (op : TaggedRawOp s a) -> (sorts : SortInterpretation s) ->
+  InterpTaggedRawOpSl {s} {a} op (SortInterpretationToSl sorts) ->
+  InterpTaggedRawOp {s} {a} op sorts
+InterpTaggedRawOpFromSl {s} {a} (tag, v) sorts t = case tag of
+  OP_PROD => InterpRawOpProdFromSl {s} {a} v sorts t
+  OP_COP => InterpRawOpCopFromSl {s} {a} v sorts t
+
 -------------------------
 ---- Operation lists ----
 -------------------------
@@ -3989,6 +4014,27 @@ public export
 InterpTaggedRawOpDP : {s : Nat} ->
   (op : TaggedRawOpDP s) -> RawOpDom {s} {a=(fst op)} (snd (snd op)) -> Type
 InterpTaggedRawOpDP {s} op = InterpTaggedRawOp {s} {a=(fst op)} (snd op)
+
+public export
+InterpTaggedRawOpDPSl : {s : Nat} ->
+  (op : TaggedRawOpDP s) -> SortInterpretationSl s -> Type
+InterpTaggedRawOpDPSl {s} op = InterpTaggedRawOpSl {s} {a=(fst op)} (snd op)
+
+public export
+InterpTaggedRawOpDPToSl : {s : Nat} ->
+  (op : TaggedRawOpDP s) -> (sorts : SortInterpretation s) ->
+  InterpTaggedRawOpDP op sorts ->
+  InterpTaggedRawOpDPSl op (SortInterpretationToSl sorts)
+InterpTaggedRawOpDPToSl {s} (ar ** op) sorts t =
+  InterpTaggedRawOpToSl {a=ar} op sorts t
+
+public export
+InterpTaggedRawOpDPFromSl : {s : Nat} ->
+  (op : TaggedRawOpDP s) -> (sorts : SortInterpretation s) ->
+  InterpTaggedRawOpDPSl op (SortInterpretationToSl sorts) ->
+  InterpTaggedRawOpDP op sorts
+InterpTaggedRawOpDPFromSl {s} (ar ** op) sorts t =
+  InterpTaggedRawOpFromSl {a=ar} op sorts t
 
 -- `n` tagged operations with sorts drawn from `Fin s`.
 public export
