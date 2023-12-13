@@ -4090,6 +4090,15 @@ public export
 InitialTheory' : {s : Nat} -> (ops : RawEndoOpList s) -> SliceObj (Fin s)
 InitialTheory' {s} = SliceMu . InterpRawEndoOpListSl {s}
 
+public export
+CofreeTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
+  SliceFunctor (Fin s) (Fin s)
+CofreeTheorySl' {s} = SliceCofreeCM . InterpRawEndoOpListSl {s}
+
+public export
+TerminalTheory' : {s : Nat} -> (ops : RawEndoOpList s) -> SliceObj (Fin s)
+TerminalTheory' {s} = SliceNu . InterpRawEndoOpListSl {s}
+
 mutual
   public export
   evalTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
@@ -4109,6 +4118,32 @@ mutual
     evalTheoryF' {s} ops sv sa subst alg i (ty ** t) | (ar ** (OP_COP, op)) =
       alg i $ rewrite opeq in
       (ty ** evalTheory' {s} ops sv sa subst alg (index ty op) t)
+
+mutual
+  public export
+  traceTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
+    SliceCofreeFTrace (InterpRawEndoOpListSl {s} ops)
+  traceTheory' {s} ops sl sa label coalg i esa =
+    InSlCF i $ InSlS (label i esa) $
+      traceTheoryF' {s} ops sl sa label coalg i esa
+
+  public export
+  traceTheoryF' : {s : Nat} -> (ops : RawEndoOpList s) ->
+    SliceCofreeFTraceF (InterpRawEndoOpListSl {s} ops)
+  traceTheoryF' {s} ops sl sa label coalg i esa =
+    traceOp' {s} ops sl sa label coalg i esa (coalg i esa)
+
+  public export
+  traceOp' : {s : Nat} -> (ops : RawEndoOpList s) ->
+    (sl, sa : SliceObj (Fin s)) -> SliceMorphism {a=(Fin s)} sa sl ->
+    SliceCoalg (InterpRawEndoOpListSl {s} ops) sa ->
+    (i : Fin s) -> sa i -> InterpTaggedRawOpSl (snd (index i ops)) sa ->
+    InterpTaggedRawOpSl (snd (index i ops)) (CofreeTheorySl' {s} ops sl)
+  traceOp' {s} ops sl sa label coalg i esa t with (index i ops) proof opeq
+    traceOp' {s} ops sl sa label coalg i esa t | (ar ** (OP_PROD, op)) =
+      \ty => traceTheory' {s} ops sl sa label coalg (index ty op) $ t ty
+    traceOp' {s} ops sl sa label coalg i esa (ty ** t) | (ar ** (OP_COP, op)) =
+      (ty ** traceTheory' {s} ops sl sa label coalg (index ty op) t)
 
 -------------------
 ---- Raw sorts ----
