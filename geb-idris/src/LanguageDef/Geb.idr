@@ -4054,21 +4054,6 @@ RawOpList : Nat -> Nat -> Type
 RawOpList s n = Vect n (TaggedRawOpDP s)
 
 public export
-rawOpListFromListMaybe : {s, n : Nat} ->
-  List (OpTag, List Nat) -> Maybe (RawOpList s n)
-rawOpListFromListMaybe {s} {n} ops =
-  fromListMaybe {a=(OpTag, List Nat)} {n} ops >>=
-  (traverse {a=(OpTag, List Nat)} {b=(TaggedRawOpDP s)} {f=Maybe} {t=(Vect n)} $
-   uncurry $ taggedRawOpDPFromListMaybe {s})
-
-public export
-rawOpListFromList : {s, n : Nat} ->
-  (ops : List (OpTag, List Nat)) ->
-  {auto 0 _ : ReturnsJust (rawOpListFromListMaybe {s} {n}) ops} ->
-  RawOpList s n
-rawOpListFromList = MkMaybe rawOpListFromListMaybe
-
-public export
 InterpRawOpListSl : {s, n : Nat} -> RawOpList s n ->
   SliceFunctor (Fin s) (Fin n)
 InterpRawOpListSl {s} {n} ops sorts i =
@@ -4095,8 +4080,6 @@ public export
 InterpRawEndoOpList : {s : Nat} -> RawEndoOpList s ->
   SortInterpretation s -> SortInterpretation s
 InterpRawEndoOpList {s} = InterpRawOpList {s} {n=s}
-
--- XXX go back and forth between `Sl` and non-`Sl` Interps of `RawOpList`
 
 public export
 FreeTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
@@ -4136,8 +4119,6 @@ mutual
       alg i $ rewrite opeq in
       (ty ** evalTheory' {s} ops sv sa subst alg (index ty op) t)
 
--- XXX go back and forth between `Sl` and non-`Sl` evals of `Theory`
-
 mutual
   public export
   traceTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
@@ -4164,14 +4145,9 @@ mutual
     traceOp' {s} ops sl sa label coalg i (ty ** t) | (ar ** (OP_COP, op)) =
       (ty ** traceTheory' {s} ops sl sa label coalg (index ty op) t)
 
--- XXX go back and forth between `Sl` and non-`Sl` traces of `Theory`
-
 -------------------
 ---- Raw sorts ----
 -------------------
-
--- XXX remove this and following sections in favor of `Theory'`, then
--- remove primes from names
 
 -- We will interpret a raw sort as a functor from a finite-product category of
 -- the raw core category to the raw core category.  A sort is defined by the
