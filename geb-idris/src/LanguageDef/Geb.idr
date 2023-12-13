@@ -4007,6 +4007,22 @@ TaggedRawOpDP : Nat -> Type
 TaggedRawOpDP = DPair Nat . TaggedRawOp
 
 public export
+taggedRawOpDPFromListMaybe : {s : Nat} ->
+  OpTag -> List Nat -> Maybe (TaggedRawOpDP s)
+taggedRawOpDPFromListMaybe {s} tag ns =
+  map {f=Maybe} (MkDPair (length ns)) $
+  taggedRawOpFromListMaybe {s} {a=(length ns)} tag ns
+
+public export
+taggedRawOpDPFromList : {s : Nat} ->
+  (tag : OpTag) -> (ns : List Nat) ->
+  {auto 0 j :
+    ReturnsJust (uncurry $ taggedRawOpDPFromListMaybe {s}) (tag, ns)} ->
+  TaggedRawOpDP s
+taggedRawOpDPFromList {s} tag ns {j} =
+  MkMaybe (uncurry $ taggedRawOpDPFromListMaybe {s}) (tag, ns) {j}
+
+public export
 InterpTaggedRawOpDP : {s : Nat} ->
   (op : TaggedRawOpDP s) -> SortInterpretation s -> Type
 InterpTaggedRawOpDP {s} op = InterpTaggedRawOp {s} {a=(fst op)} (snd op)
