@@ -4131,18 +4131,18 @@ mutual
   traceTheoryF' : {s : Nat} -> (ops : RawEndoOpList s) ->
     SliceCofreeFTraceF (InterpRawEndoOpListSl {s} ops)
   traceTheoryF' {s} ops sl sa label coalg i esa =
-    traceOp' {s} ops sl sa label coalg i esa (coalg i esa)
+    traceOp' {s} ops sl sa label coalg i (coalg i esa)
 
   public export
   traceOp' : {s : Nat} -> (ops : RawEndoOpList s) ->
     (sl, sa : SliceObj (Fin s)) -> SliceMorphism {a=(Fin s)} sa sl ->
     SliceCoalg (InterpRawEndoOpListSl {s} ops) sa ->
-    (i : Fin s) -> sa i -> InterpTaggedRawOpSl (snd (index i ops)) sa ->
+    (i : Fin s) -> InterpTaggedRawOpSl (snd (index i ops)) sa ->
     InterpTaggedRawOpSl (snd (index i ops)) (CofreeTheorySl' {s} ops sl)
-  traceOp' {s} ops sl sa label coalg i esa t with (index i ops) proof opeq
-    traceOp' {s} ops sl sa label coalg i esa t | (ar ** (OP_PROD, op)) =
+  traceOp' {s} ops sl sa label coalg i t with (index i ops)
+    traceOp' {s} ops sl sa label coalg i t | (ar ** (OP_PROD, op)) =
       \ty => traceTheory' {s} ops sl sa label coalg (index ty op) $ t ty
-    traceOp' {s} ops sl sa label coalg i esa (ty ** t) | (ar ** (OP_COP, op)) =
+    traceOp' {s} ops sl sa label coalg i (ty ** t) | (ar ** (OP_COP, op)) =
       (ty ** traceTheory' {s} ops sl sa label coalg (index ty op) t)
 
 -------------------
