@@ -324,7 +324,7 @@ T1MakerExp = [0, 0, 1, 1]
 T1Maker : RawOp 2 4
 T1Maker = rawOpFromList T1MakerExp
 
-T1Maker1dom : RawOpDom T1Maker
+T1Maker1dom : SortInterpretation 2
 T1Maker1dom = [DiagramCatTest.Test0, Sigma DiagramCatTest.Test1]
 
 T1Maker1t1 : InterpRawOpProd T1Maker T1Maker1dom
