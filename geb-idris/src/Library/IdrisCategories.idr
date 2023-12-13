@@ -1448,10 +1448,16 @@ data SliceCofreeCM : {a : Type} -> SliceEndofunctor a -> SliceEndofunctor a
 
 -- The type of cofree anamorphisms in slice categories.
 public export
-SliceCofreeAna : {a : Type} -> SliceEndofunctor a -> Type
-SliceCofreeAna {a} f =
+SliceCofreeFTrace : {a : Type} -> SliceEndofunctor a -> Type
+SliceCofreeFTrace {a} f =
   (sl, sa : SliceObj a) -> SliceMorphism {a} sa sl -> SliceCoalg f sa ->
   SliceMorphism {a} sa (SliceCofreeCM f sl)
+
+public export
+SliceCofreeFTraceF : {a : Type} -> SliceEndofunctor a -> Type
+SliceCofreeFTraceF {a} f =
+  (sl, sa : SliceObj a) -> SliceMorphism {a} sa sl -> SliceCoalg f sa ->
+  SliceMorphism {a} sa (f $ SliceCofreeCM f sl)
 
 -- The type of the slice-category cofree comonad's erase.
 public export
