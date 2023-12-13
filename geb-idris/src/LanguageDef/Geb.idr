@@ -4070,6 +4070,10 @@ FreeTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
   SliceFunctor (Fin s) (Fin s)
 FreeTheorySl' {s} = SliceFreeM . InterpRawEndoOpListSl {s}
 
+public export
+InitialTheory' : {s : Nat} -> (ops : RawEndoOpList s) -> SliceObj (Fin s)
+InitialTheory' {s} = SliceMu . InterpRawEndoOpListSl {s}
+
 mutual
   public export
   evalTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
