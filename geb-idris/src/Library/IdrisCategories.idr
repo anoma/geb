@@ -1333,7 +1333,7 @@ SliceInitFromUniv {a} sf x = (sa : SliceObj a) -> SliceAlg sf sa -> sa x
 
 public export
 SliceCoalg : {a : Type} -> SliceEndofunctor a -> SliceObj a -> Type
-SliceCoalg sf sa = SliceMorphism (sf sa) sa
+SliceCoalg sf sa = SliceMorphism sa (sf sa)
 
 public export
 SliceTermFromUniv : {a : Type} -> (sf : SliceEndofunctor a) -> SliceObj a
