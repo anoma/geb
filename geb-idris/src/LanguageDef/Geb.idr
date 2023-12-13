@@ -4072,7 +4072,6 @@ FreeTheorySl' {s} = SliceFreeM . InterpRawEndoOpListSl {s}
 
 mutual
   public export
-  partial
   evalTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
     SliceFreeFEval (InterpRawEndoOpListSl {s} ops)
   evalTheory' {s} ops sv sa subst alg i (InSlF i t) with (index i ops) proof opeq
@@ -4082,23 +4081,15 @@ mutual
         InSlC ct => evalTheoryF' {s} ops sv sa subst alg i ct
 
   public export
-  partial
   evalTheoryF' : {s : Nat} -> (ops : RawEndoOpList s) ->
     SliceFreeFEvalF (InterpRawEndoOpListSl {s} ops)
   evalTheoryF' {s} ops sv sa subst alg i ct with (index i ops) proof opeq
-    evalTheoryF' {s} ops sv sa subst alg i ct | op =
-      alg i $
-      replace {p=(\op' => InterpTaggedRawOpSl (snd op') sa)} (sym opeq) $
-      case op of
-        (ar ** (tag, op')) => case tag of
-          OP_PROD =>
-            \ty =>
-              evalTheory' {s} ops sv sa subst alg (index ty op') (ct ty)
-          OP_COP =>
-            (fst ct **
-             evalTheory' {s} ops sv sa subst alg
-              (index (fst ct) op')
-              (DPair.snd ct))
+    evalTheoryF' {s} ops sv sa subst alg i ct | (ar ** (OP_PROD, op)) =
+      alg i $ rewrite opeq in
+      \ty => evalTheory' {s} ops sv sa subst alg (index ty op) (ct ty)
+    evalTheoryF' {s} ops sv sa subst alg i (ty ** t) | (ar ** (OP_COP, op)) =
+      alg i $ rewrite opeq in
+      (ty ** evalTheory' {s} ops sv sa subst alg (index ty op) t)
 
 -------------------
 ---- Raw sorts ----
