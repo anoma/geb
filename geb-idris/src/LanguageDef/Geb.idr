@@ -3866,17 +3866,13 @@ SortInterpretationFromSl :
   {n : Nat} -> SortInterpretationSl n -> SortInterpretation n
 SortInterpretationFromSl {n} = finFToVect {n} {a=Type}
 
-public export
-RawOpDom : {s, a : Nat} -> RawOp s a -> Type
-RawOpDom {s} _ = SortInterpretation s
-
 -- Given a mapping of sorts to concrete types, compute the direction-set
 -- of the operation.  This is a discrete representation of it, using a
 -- vector of types and a vector of types dependent upon them, as opposed
 -- to an explicit pi type.
 public export
 RawOpDir : {s, a : Nat} ->
-  (op : RawOp s a) -> RawOpDom {s} {a} op -> Vect a Type
+  (op : RawOp s a) -> SortInterpretation s -> Vect a Type
 RawOpDir {s} {a} op sorts = map (flip index sorts) op
 
 -- Given a mapping of sorts to concrete types, compute an interpretation
@@ -3887,7 +3883,7 @@ RawOpDir {s} {a} op sorts = map (flip index sorts) op
 -- This interpretation is a discrete 'pi' operation.
 public export
 InterpRawOpProd : {s, a : Nat} ->
-  (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
+  (op : RawOp s a) -> SortInterpretation s -> Type
 InterpRawOpProd {s} {a} op sorts =
   HVect {k=a} $ RawOpDir {s} {a} op sorts
 
@@ -3898,7 +3894,7 @@ InterpRawOpProdSl {s} {a} op sorts = Pi {a=(Fin a)} (sorts . flip index op)
 
 public export
 InterpRawOpProdToSl : {s, a : Nat} ->
-  (op : RawOp s a) -> (sorts : RawOpDom {s} {a} op) ->
+  (op : RawOp s a) -> (sorts : SortInterpretation s) ->
   InterpRawOpProd {s} {a} op sorts ->
   InterpRawOpProdSl {s} {a} op (SortInterpretationToSl sorts)
 InterpRawOpProdToSl {s} {a} op sorts v i =
@@ -3906,7 +3902,7 @@ InterpRawOpProdToSl {s} {a} op sorts v i =
 
 public export
 InterpRawOpProdFromSl : {s, a : Nat} ->
-  (op : RawOp s a) -> (sorts : RawOpDom {s} {a} op) ->
+  (op : RawOp s a) -> (sorts : SortInterpretation s) ->
   InterpRawOpProdSl {s} {a} op (SortInterpretationToSl sorts) ->
   InterpRawOpProd {s} {a} op sorts
 InterpRawOpProdFromSl {s} {a=Z} [] sorts sl = []
@@ -3917,7 +3913,7 @@ InterpRawOpProdFromSl {s} {a=(S a)} (i :: v) sorts sl =
 -- 'sigma' operation.
 public export
 InterpRawOpCop : {s, a : Nat} ->
-  (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
+  (op : RawOp s a) -> SortInterpretation s -> Type
 InterpRawOpCop {s} {a} op sorts =
   (i : Fin a ** index i $ RawOpDir {s} {a} op sorts)
 
@@ -3928,7 +3924,7 @@ InterpRawOpCopSl {s} {a} op sorts = Sigma {a=(Fin a)} (sorts . flip index op)
 
 public export
 InterpRawOpCopToSl : {s, a : Nat} ->
-  (op : RawOp s a) -> (sorts : RawOpDom {s} {a} op) ->
+  (op : RawOp s a) -> (sorts : SortInterpretation s) ->
   InterpRawOpCop {s} {a} op sorts ->
   InterpRawOpCopSl {s} {a} op (SortInterpretationToSl sorts)
 InterpRawOpCopToSl {s} {a} op sorts (i ** ty) =
@@ -3936,7 +3932,7 @@ InterpRawOpCopToSl {s} {a} op sorts (i ** ty) =
 
 public export
 InterpRawOpCopFromSl : {s, a : Nat} ->
-  (op : RawOp s a) -> (sorts : RawOpDom {s} {a} op) ->
+  (op : RawOp s a) -> (sorts : SortInterpretation s) ->
   InterpRawOpCopSl {s} {a} op (SortInterpretationToSl sorts) ->
   InterpRawOpCop {s} {a} op sorts
 InterpRawOpCopFromSl {s} {a} op sorts (i ** ty) =
@@ -3957,7 +3953,7 @@ TaggedRawOp s a = (OpTag, RawOp s a)
 
 public export
 InterpTaggedRawOp : {s, a : Nat} ->
-  (op : TaggedRawOp s a) -> RawOpDom {s} {a} (snd op) -> Type
+  (op : TaggedRawOp s a) -> SortInterpretation s -> Type
 InterpTaggedRawOp {s} {a} op = case (fst op) of
   OP_PROD => InterpRawOpProd {s} {a} (snd op)
   OP_COP => InterpRawOpCop {s} {a} (snd op)
@@ -4012,7 +4008,7 @@ TaggedRawOpDP = DPair Nat . TaggedRawOp
 
 public export
 InterpTaggedRawOpDP : {s : Nat} ->
-  (op : TaggedRawOpDP s) -> RawOpDom {s} {a=(fst op)} (snd (snd op)) -> Type
+  (op : TaggedRawOpDP s) -> SortInterpretation s -> Type
 InterpTaggedRawOpDP {s} op = InterpTaggedRawOp {s} {a=(fst op)} (snd op)
 
 public export
