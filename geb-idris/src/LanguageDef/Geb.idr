@@ -4078,7 +4078,8 @@ mutual
   public export
   evalTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
     SliceFreeFEval (InterpRawEndoOpListSl {s} ops)
-  evalTheory' {s} ops sv sa subst alg i (InSlF i t) with (index i ops) proof opeq
+  evalTheory' {s} ops sv sa subst alg i (InSlF i t) with (index i ops)
+      proof opeq
     evalTheory' {s} ops sv sa subst alg i (InSlF i t) | (ar ** (tag, op)) =
       case t of
         InSlV vt => subst i vt
