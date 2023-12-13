@@ -3926,6 +3926,22 @@ InterpRawOpCopSl : {s, a : Nat} ->
   (op : RawOp s a) -> SortInterpretationSl s -> Type
 InterpRawOpCopSl {s} {a} op sorts = Sigma {a=(Fin a)} (sorts . flip index op)
 
+public export
+InterpRawOpCopToSl : {s, a : Nat} ->
+  (op : RawOp s a) -> (sorts : RawOpDom {s} {a} op) ->
+  InterpRawOpCop {s} {a} op sorts ->
+  InterpRawOpCopSl {s} {a} op (SortInterpretationToSl sorts)
+InterpRawOpCopToSl {s} {a} op sorts (i ** ty) =
+  (i ** replace {p=id} (mapIndex {f=(flip index sorts)} op i) ty)
+
+public export
+InterpRawOpCopFromSl : {s, a : Nat} ->
+  (op : RawOp s a) -> (sorts : RawOpDom {s} {a} op) ->
+  InterpRawOpCopSl {s} {a} op (SortInterpretationToSl sorts) ->
+  InterpRawOpCop {s} {a} op sorts
+InterpRawOpCopFromSl {s} {a} op sorts (i ** ty) =
+  (i ** replace {p=id} (sym (mapIndex {f=(flip index sorts)} op i)) ty)
+
 ---------------------------
 ---- Tagged operations ----
 ---------------------------
