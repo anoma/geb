@@ -3853,6 +3853,20 @@ SortInterpretation : Nat -> Type
 SortInterpretation = flip Vect Type
 
 public export
+SortInterpretationSl : Nat -> Type
+SortInterpretationSl = SliceObj . Fin
+
+public export
+SortInterpretationToSl :
+  {n : Nat} -> SortInterpretation n -> SortInterpretationSl n
+SortInterpretationToSl {n} = flip $ index {len=n} {elem=Type}
+
+public export
+SortInterpretationFromSl :
+  {n : Nat} -> SortInterpretationSl n -> SortInterpretation n
+SortInterpretationFromSl {n} = finFToVect {n} {a=Type}
+
+public export
 RawOpDom : {s, a : Nat} -> RawOp s a -> Type
 RawOpDom {s} _ = SortInterpretation s
 
@@ -3877,6 +3891,28 @@ InterpRawOpProd : {s, a : Nat} ->
 InterpRawOpProd {s} {a} op sorts =
   HVect {k=a} $ RawOpDir {s} {a} op sorts
 
+public export
+InterpRawOpProdSl : {s, a : Nat} ->
+  (op : RawOp s a) -> SortInterpretationSl s -> Type
+InterpRawOpProdSl {s} {a} op sorts = Pi {a=(Fin a)} (sorts . flip index op)
+
+public export
+InterpRawOpProdToSl : {s, a : Nat} ->
+  (op : RawOp s a) -> (sorts : RawOpDom {s} {a} op) ->
+  InterpRawOpProd {s} {a} op sorts ->
+  InterpRawOpProdSl {s} {a} op (SortInterpretationToSl sorts)
+InterpRawOpProdToSl {s} {a} op sorts v i =
+  replace {p=id} (mapIndex {f=(flip index sorts)} op i) $ index i v
+
+public export
+InterpRawOpProdFromSl : {s, a : Nat} ->
+  (op : RawOp s a) -> (sorts : RawOpDom {s} {a} op) ->
+  InterpRawOpProdSl {s} {a} op (SortInterpretationToSl sorts) ->
+  InterpRawOpProd {s} {a} op sorts
+InterpRawOpProdFromSl {s} {a=Z} [] sorts sl = []
+InterpRawOpProdFromSl {s} {a=(S a)} (i :: v) sorts sl =
+  sl FZ :: InterpRawOpProdFromSl {s} {a} v sorts (\ty => sl $ FS ty)
+
 -- This interpretation, dual to `InterpRawOpProd`,  is a discrete
 -- 'sigma' operation.
 public export
@@ -3884,6 +3920,11 @@ InterpRawOpCop : {s, a : Nat} ->
   (op : RawOp s a) -> RawOpDom {s} {a} op -> Type
 InterpRawOpCop {s} {a} op sorts =
   (i : Fin a ** index i $ RawOpDir {s} {a} op sorts)
+
+public export
+InterpRawOpCopSl : {s, a : Nat} ->
+  (op : RawOp s a) -> SortInterpretationSl s -> Type
+InterpRawOpCopSl {s} {a} op sorts = Sigma {a=(Fin a)} (sorts . flip index op)
 
 ---------------------------
 ---- Tagged operations ----
