@@ -4054,6 +4054,21 @@ RawOpList : Nat -> Nat -> Type
 RawOpList s n = Vect n (TaggedRawOpDP s)
 
 public export
+rawOpListFromListMaybe : {s, n : Nat} ->
+  List (OpTag, List Nat) -> Maybe (RawOpList s n)
+rawOpListFromListMaybe {s} {n} ops =
+  fromListMaybe {a=(OpTag, List Nat)} {n} ops >>=
+  (traverse {a=(OpTag, List Nat)} {b=(TaggedRawOpDP s)} {f=Maybe} {t=(Vect n)} $
+   uncurry $ taggedRawOpDPFromListMaybe {s})
+
+public export
+rawOpListFromList : {s, n : Nat} ->
+  (ops : List (OpTag, List Nat)) ->
+  {auto 0 _ : ReturnsJust (rawOpListFromListMaybe {s} {n}) ops} ->
+  RawOpList s n
+rawOpListFromList = MkMaybe rawOpListFromListMaybe
+
+public export
 InterpRawOpListSl : {s, n : Nat} -> RawOpList s n ->
   SliceFunctor (Fin s) (Fin n)
 InterpRawOpListSl {s} {n} ops sorts i =
