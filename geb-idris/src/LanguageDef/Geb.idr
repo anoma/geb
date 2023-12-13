@@ -4038,25 +4038,32 @@ RawOpList : Nat -> Nat -> Type
 RawOpList s n = Vect n (TaggedRawOpDP s)
 
 public export
-InterpRawOpList : {s, n : Nat} -> RawOpList s n ->
-  SortInterpretation s -> SortInterpretation n
-InterpRawOpList {s} {n} ops sorts =
-  finFToVect {n} {a=Type} $ \i => InterpTaggedRawOpDP {s} (index i ops) sorts
+InterpRawOpListSl : {s, n : Nat} -> RawOpList s n ->
+  SliceFunctor (Fin s) (Fin n)
+InterpRawOpListSl {s} {n} ops sorts i =
+  InterpTaggedRawOpDPSl {s} (index i ops) sorts
 
 public export
 RawEndoOpList : Nat -> Type
 RawEndoOpList s = RawOpList s s
 
 public export
-InterpRawOpListSl : {s, n : Nat} -> RawOpList s n ->
-  SliceFunctor (Fin s) (Fin n)
-InterpRawOpListSl {s} {n} ops sorts =
-  flip index $ InterpRawOpList {s} {n} ops $ finFToVect sorts
-
-public export
 InterpRawEndoOpListSl : {s : Nat} -> RawEndoOpList s ->
   SliceFunctor (Fin s) (Fin s)
 InterpRawEndoOpListSl {s} = InterpRawOpListSl {s} {n=s}
+
+public export
+InterpRawOpList : {s, n : Nat} -> RawOpList s n ->
+  SortInterpretation s -> SortInterpretation n
+InterpRawOpList {s} {n} ops sorts =
+  SortInterpretationFromSl
+  $ InterpRawOpListSl {s} {n} ops
+  $ SortInterpretationToSl sorts
+
+public export
+InterpRawEndoOpList : {s : Nat} -> RawEndoOpList s ->
+  SortInterpretation s -> SortInterpretation s
+InterpRawEndoOpList {s} = InterpRawOpList {s} {n=s}
 
 public export
 FreeTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
