@@ -4121,85 +4121,85 @@ InterpRawEndoOpList : {s : Nat} -> RawEndoOpList s ->
 InterpRawEndoOpList {s} = InterpRawOpList {s} {n=s}
 
 public export
-FreeTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
+FreeTheorySl : {s : Nat} -> (ops : RawEndoOpList s) ->
   SliceFunctor (Fin s) (Fin s)
-FreeTheorySl' {s} = SliceFreeM . InterpRawEndoOpListSl {s}
+FreeTheorySl {s} = SliceFreeM . InterpRawEndoOpListSl {s}
 
 public export
-InitialTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) -> SliceObj (Fin s)
-InitialTheorySl' {s} = SliceMu . InterpRawEndoOpListSl {s}
+InitialTheorySl : {s : Nat} -> (ops : RawEndoOpList s) -> SliceObj (Fin s)
+InitialTheorySl {s} = SliceMu . InterpRawEndoOpListSl {s}
 
 public export
-CofreeTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
+CofreeTheorySl : {s : Nat} -> (ops : RawEndoOpList s) ->
   SliceFunctor (Fin s) (Fin s)
-CofreeTheorySl' {s} = SliceCofreeCM . InterpRawEndoOpListSl {s}
+CofreeTheorySl {s} = SliceCofreeCM . InterpRawEndoOpListSl {s}
 
 public export
-TerminalTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) -> SliceObj (Fin s)
-TerminalTheorySl' {s} = SliceNu . InterpRawEndoOpListSl {s}
+TerminalTheorySl : {s : Nat} -> (ops : RawEndoOpList s) -> SliceObj (Fin s)
+TerminalTheorySl {s} = SliceNu . InterpRawEndoOpListSl {s}
 
 mutual
   public export
-  evalTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
+  evalTheorySl : {s : Nat} -> (ops : RawEndoOpList s) ->
     SliceFreeFEval (InterpRawEndoOpListSl {s} ops)
-  evalTheorySl' {s} ops sv sa subst alg i (InSlF i t) =
+  evalTheorySl {s} ops sv sa subst alg i (InSlF i t) =
     case t of
       InSlV vt => subst i vt
-      InSlC ct => evalTheoryFSl' {s} ops sv sa subst alg i ct
+      InSlC ct => evalTheoryFSl {s} ops sv sa subst alg i ct
 
   public export
-  evalTheoryFSl' : {s : Nat} -> (ops : RawEndoOpList s) ->
+  evalTheoryFSl : {s : Nat} -> (ops : RawEndoOpList s) ->
     SliceFreeFEvalF (InterpRawEndoOpListSl {s} ops)
-  evalTheoryFSl' {s} ops sv sa subst alg i ct with (index i ops) proof opeq
-    evalTheoryFSl' {s} ops sv sa subst alg i ct | (ar ** (OP_PROD, op)) =
+  evalTheoryFSl {s} ops sv sa subst alg i ct with (index i ops) proof opeq
+    evalTheoryFSl {s} ops sv sa subst alg i ct | (ar ** (OP_PROD, op)) =
       alg i $ rewrite opeq in
-      \ty => evalTheorySl' {s} ops sv sa subst alg (index ty op) (ct ty)
-    evalTheoryFSl' {s} ops sv sa subst alg i (ty ** t) | (ar ** (OP_COP, op)) =
+      \ty => evalTheorySl {s} ops sv sa subst alg (index ty op) (ct ty)
+    evalTheoryFSl {s} ops sv sa subst alg i (ty ** t) | (ar ** (OP_COP, op)) =
       alg i $ rewrite opeq in
-      (ty ** evalTheorySl' {s} ops sv sa subst alg (index ty op) t)
+      (ty ** evalTheorySl {s} ops sv sa subst alg (index ty op) t)
 
 public export
-evalTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
+evalTheory : {s : Nat} -> (ops : RawEndoOpList s) ->
   (sv, sa : SliceObj (Fin s)) ->
   SliceMorphism {a=(Fin s)} sv sa ->
   SliceAlg (InterpRawEndoOpListSl {s} ops) sa ->
-  SliceMorphism {a=(Fin s)} (FreeTheorySl' {s} ops sv) sa
-evalTheory' {s} ops sv sa subst alg =
-  evalTheorySl' {s} ops sv sa subst alg
+  SliceMorphism {a=(Fin s)} (FreeTheorySl {s} ops sv) sa
+evalTheory {s} ops sv sa subst alg =
+  evalTheorySl {s} ops sv sa subst alg
 
 mutual
   public export
-  traceTheorySl' : {s : Nat} -> (ops : RawEndoOpList s) ->
+  traceTheorySl : {s : Nat} -> (ops : RawEndoOpList s) ->
     SliceCofreeFTrace (InterpRawEndoOpListSl {s} ops)
-  traceTheorySl' {s} ops sl sa label coalg i esa =
+  traceTheorySl {s} ops sl sa label coalg i esa =
     InSlCF i $ InSlS (label i esa) $
-      traceTheoryFSl' {s} ops sl sa label coalg i esa
+      traceTheoryFSl {s} ops sl sa label coalg i esa
 
   public export
-  traceTheoryFSl' : {s : Nat} -> (ops : RawEndoOpList s) ->
+  traceTheoryFSl : {s : Nat} -> (ops : RawEndoOpList s) ->
     SliceCofreeFTraceF (InterpRawEndoOpListSl {s} ops)
-  traceTheoryFSl' {s} ops sl sa label coalg i esa =
-    traceOpSl' {s} ops sl sa label coalg i (coalg i esa)
+  traceTheoryFSl {s} ops sl sa label coalg i esa =
+    traceOpSl {s} ops sl sa label coalg i (coalg i esa)
 
   public export
-  traceOpSl' : {s : Nat} -> (ops : RawEndoOpList s) ->
+  traceOpSl : {s : Nat} -> (ops : RawEndoOpList s) ->
     (sl, sa : SliceObj (Fin s)) -> SliceMorphism {a=(Fin s)} sa sl ->
     SliceCoalg (InterpRawEndoOpListSl {s} ops) sa ->
     (i : Fin s) -> InterpTaggedRawOpSl (snd (index i ops)) sa ->
-    InterpTaggedRawOpSl (snd (index i ops)) (CofreeTheorySl' {s} ops sl)
-  traceOpSl' {s} ops sl sa label coalg i t with (index i ops)
-    traceOpSl' {s} ops sl sa label coalg i t | (ar ** (OP_PROD, op)) =
-      \ty => traceTheorySl' {s} ops sl sa label coalg (index ty op) $ t ty
-    traceOpSl' {s} ops sl sa label coalg i (ty ** t) | (ar ** (OP_COP, op)) =
-      (ty ** traceTheorySl' {s} ops sl sa label coalg (index ty op) t)
+    InterpTaggedRawOpSl (snd (index i ops)) (CofreeTheorySl {s} ops sl)
+  traceOpSl {s} ops sl sa label coalg i t with (index i ops)
+    traceOpSl {s} ops sl sa label coalg i t | (ar ** (OP_PROD, op)) =
+      \ty => traceTheorySl {s} ops sl sa label coalg (index ty op) $ t ty
+    traceOpSl {s} ops sl sa label coalg i (ty ** t) | (ar ** (OP_COP, op)) =
+      (ty ** traceTheorySl {s} ops sl sa label coalg (index ty op) t)
 
 public export
-traceTheory' : {s : Nat} -> (ops : RawEndoOpList s) ->
+traceTheory : {s : Nat} -> (ops : RawEndoOpList s) ->
   (sl, sa : SliceObj (Fin s)) -> SliceMorphism {a=(Fin s)} sa sl ->
   SliceCoalg (InterpRawEndoOpListSl {s} ops) sa ->
-  SliceMorphism {a=(Fin s)} sa (CofreeTheorySl' {s} ops sl)
-traceTheory' {s} ops sl sa label coalg =
-  traceTheorySl' {s} ops sl sa label coalg
+  SliceMorphism {a=(Fin s)} sa (CofreeTheorySl {s} ops sl)
+traceTheory {s} ops sl sa label coalg =
+  traceTheorySl {s} ops sl sa label coalg
 
 -------------------------------------------------
 -------------------------------------------------
