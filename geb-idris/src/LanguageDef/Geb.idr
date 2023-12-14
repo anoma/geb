@@ -4092,6 +4092,30 @@ InterpRawOpList {s} {n} ops sorts =
   $ SortInterpretationToSl sorts
 
 public export
+InterpRawOpListToSl : {s, n : Nat} -> (ops : RawOpList s n) ->
+  (sorts : SortInterpretation s) ->
+  SliceMorphism {a=(Fin n)}
+    (SortInterpretationToSl (InterpRawOpList {s} {n} ops sorts))
+    (InterpRawOpListSl {s} {n} ops (SortInterpretationToSl sorts))
+InterpRawOpListToSl {s} {n} ops sorts i op =
+  rewrite sym
+    (finFToVectIdx
+      (InterpRawOpListSl {s} {n} ops $ SortInterpretationToSl sorts) i) in
+  op
+
+public export
+InterpRawOpListFromSl : {s, n : Nat} -> (ops : RawOpList s n) ->
+  (sorts : SortInterpretation s) ->
+  SliceMorphism {a=(Fin n)}
+    (InterpRawOpListSl {s} {n} ops (SortInterpretationToSl sorts))
+    (SortInterpretationToSl (InterpRawOpList {s} {n} ops sorts))
+InterpRawOpListFromSl {s} {n} ops sorts i op =
+  rewrite
+    (finFToVectIdx
+      (InterpRawOpListSl {s} {n} ops $ SortInterpretationToSl sorts) i) in
+  op
+
+public export
 InterpRawEndoOpList : {s : Nat} -> RawEndoOpList s ->
   SortInterpretation s -> SortInterpretation s
 InterpRawEndoOpList {s} = InterpRawOpList {s} {n=s}
