@@ -3970,8 +3970,8 @@ InterpRawOpCopFromSl {s} {a} op sorts (i ** ty) =
 
 public export
 data OpTag : Type where
-  OP_PROD : OpTag
-  OP_COP : OpTag
+  OP_PI : OpTag
+  OP_SIGMA : OpTag
 
 public export
 TaggedRawOp : Nat -> Nat -> Type
@@ -3980,8 +3980,8 @@ TaggedRawOp s a = (OpTag, RawOp s a)
 public export
 InterpTaggedRawOp : {s, a : Nat} ->
   (op : TaggedRawOp s a) -> SortInterpretation s -> Type
-InterpTaggedRawOp {s} {a} (OP_PROD, op) = InterpRawOpProd {s} {a} op
-InterpTaggedRawOp {s} {a} (OP_COP, op) = InterpRawOpCop {s} {a} op
+InterpTaggedRawOp {s} {a} (OP_PI, op) = InterpRawOpProd {s} {a} op
+InterpTaggedRawOp {s} {a} (OP_SIGMA, op) = InterpRawOpCop {s} {a} op
 
 public export
 taggedRawOpFromListMaybe : {s, a : Nat} ->
@@ -4001,17 +4001,17 @@ taggedRawOpFromList {s} {a} tag ns =
 public export
 InterpTaggedRawOpSl : {s, a : Nat} ->
   (op : TaggedRawOp s a) -> SortInterpretationSl s -> Type
-InterpTaggedRawOpSl {s} {a} (OP_PROD, op) = InterpRawOpProdSl {s} {a} op
-InterpTaggedRawOpSl {s} {a} (OP_COP, op) = InterpRawOpCopSl {s} {a} op
+InterpTaggedRawOpSl {s} {a} (OP_PI, op) = InterpRawOpProdSl {s} {a} op
+InterpTaggedRawOpSl {s} {a} (OP_SIGMA, op) = InterpRawOpCopSl {s} {a} op
 
 public export
 InterpTaggedRawOpToSl : {s, a : Nat} ->
   (op : TaggedRawOp s a) -> (sorts : SortInterpretation s) ->
   InterpTaggedRawOp {s} {a} op sorts ->
   InterpTaggedRawOpSl {s} {a} op (SortInterpretationToSl sorts)
-InterpTaggedRawOpToSl {s} {a} (OP_PROD, v) sorts t =
+InterpTaggedRawOpToSl {s} {a} (OP_PI, v) sorts t =
   InterpRawOpProdToSl {s} {a} v sorts t
-InterpTaggedRawOpToSl {s} {a} (OP_COP, v) sorts t =
+InterpTaggedRawOpToSl {s} {a} (OP_SIGMA, v) sorts t =
   InterpRawOpCopToSl {s} {a} v sorts t
 
 public export
@@ -4019,9 +4019,9 @@ InterpTaggedRawOpFromSl : {s, a : Nat} ->
   (op : TaggedRawOp s a) -> (sorts : SortInterpretation s) ->
   InterpTaggedRawOpSl {s} {a} op (SortInterpretationToSl sorts) ->
   InterpTaggedRawOp {s} {a} op sorts
-InterpTaggedRawOpFromSl {s} {a} (OP_PROD, v) sorts t =
+InterpTaggedRawOpFromSl {s} {a} (OP_PI, v) sorts t =
   InterpRawOpProdFromSl {s} {a} v sorts t
-InterpTaggedRawOpFromSl {s} {a} (OP_COP, v) sorts t =
+InterpTaggedRawOpFromSl {s} {a} (OP_SIGMA, v) sorts t =
   InterpRawOpCopFromSl {s} {a} v sorts t
 
 -------------------------
@@ -4209,10 +4209,10 @@ mutual
   evalTheoryFSl : {s : Nat} -> (ops : RawEndoOpList s) ->
     SliceFreeFEvalF (InterpRawEndoOpListSl {s} ops)
   evalTheoryFSl {s} ops sv sa subst alg i ct with (index i ops) proof opeq
-    evalTheoryFSl {s} ops sv sa subst alg i ct | (ar ** (OP_PROD, op)) =
+    evalTheoryFSl {s} ops sv sa subst alg i ct | (ar ** (OP_PI, op)) =
       alg i $ rewrite opeq in
       \ty => evalTheorySl {s} ops sv sa subst alg (index ty op) (ct ty)
-    evalTheoryFSl {s} ops sv sa subst alg i (ty ** t) | (ar ** (OP_COP, op)) =
+    evalTheoryFSl {s} ops sv sa subst alg i (ty ** t) | (ar ** (OP_SIGMA, op)) =
       alg i $ rewrite opeq in
       (ty ** evalTheorySl {s} ops sv sa subst alg (index ty op) t)
 
@@ -4254,9 +4254,9 @@ mutual
     (i : Fin s) -> InterpTaggedRawOpSl (snd (index i ops)) sa ->
     InterpTaggedRawOpSl (snd (index i ops)) (CofreeTheorySl {s} ops sl)
   traceOpSl {s} ops sl sa label coalg i t with (index i ops)
-    traceOpSl {s} ops sl sa label coalg i t | (ar ** (OP_PROD, op)) =
+    traceOpSl {s} ops sl sa label coalg i t | (ar ** (OP_PI, op)) =
       \ty => traceTheorySl {s} ops sl sa label coalg (index ty op) $ t ty
-    traceOpSl {s} ops sl sa label coalg i (ty ** t) | (ar ** (OP_COP, op)) =
+    traceOpSl {s} ops sl sa label coalg i (ty ** t) | (ar ** (OP_SIGMA, op)) =
       (ty ** traceTheorySl {s} ops sl sa label coalg (index ty op) t)
 
 public export
