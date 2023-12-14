@@ -291,21 +291,6 @@ T0DepMakerExp = [0, 1, 1]
 T0DepMaker : RawOp 2 3
 T0DepMaker = rawOpFromList T0DepMakerExp
 
-T0DepMakerSortOp : RawSortOp 2
-T0DepMakerSortOp = rawSortOpFromList 3 T0DepMakerExp
-
-T0SortOpListExp : List (List Nat)
-T0SortOpListExp = [ T0StarterExp, T0MakerExp, T0DepMakerExp ]
-
-T0SortOpList : RawSortOpList 2 3
-T0SortOpList = rawSortOpListFromList T0SortOpListExp
-
-T0Sort1dom : RawSortDom {s=2} T0SortOpList
-T0Sort1dom = [Bool, String]
-
-T0Sort1t1 : InterpRawSort T0SortOpList T0Sort1dom
-T0Sort1t1 = (nf 2 ** [False, "a", "b"])
-
 T1StarterExp : List Nat
 T1StarterExp = []
 
@@ -368,9 +353,6 @@ T1SortOpListExp =
   , T1DepComposerExp
   , T1TelescopeExp
   ]
-
-T1SortOpList : RawSortOpList 2 7
-T1SortOpList = rawSortOpListFromList T1SortOpListExp
 
 ----------------------------------
 ----------------------------------
