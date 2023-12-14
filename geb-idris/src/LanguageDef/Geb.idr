@@ -3866,6 +3866,32 @@ SortInterpretationFromSl :
   {n : Nat} -> SortInterpretationSl n -> SortInterpretation n
 SortInterpretationFromSl {n} = finFToVect {n} {a=Type}
 
+public export
+SortMorphism : {s : Nat} ->
+  SortInterpretation s -> SortInterpretation s -> Type
+SortMorphism {s} sl sl' = HVect {k=s} $ map (uncurry HomProf) $ zip sl sl'
+
+public export
+SortMorphismToSl : {s : Nat} -> {sl, sl' : SortInterpretation s} ->
+  SortMorphism {s} sl sl' ->
+  SliceMorphism {a=(Fin s)}
+    (SortInterpretationToSl sl) (SortInterpretationToSl sl')
+SortMorphismToSl {s=(S s)} {sl=(ty :: tys)} {sl'=(ty' :: tys')}
+  (m :: ms) FZ i =
+    m i
+SortMorphismToSl {s=(S s)} {sl=(ty :: tys)} {sl'=(ty' :: tys')}
+  (m :: ms) (FS k) i =
+    SortMorphismToSl {s} {sl=tys} {sl'=tys'} ms k i
+
+public export
+SortMorphismFromSl : {s : Nat} -> {sl, sl' : SortInterpretation s} ->
+  SliceMorphism {a=(Fin s)}
+    (SortInterpretationToSl sl) (SortInterpretationToSl sl') ->
+  SortMorphism {s} sl sl'
+SortMorphismFromSl {s=Z} {sl=[]} {sl'=[]} m = []
+SortMorphismFromSl {s=(S s)} {sl=(ty :: tys)} {sl'=(ty' :: tys')} m =
+  m FZ :: SortMorphismFromSl {s} {sl=tys} {sl'=tys'} (\i => m $ FS i)
+
 -- Given a mapping of sorts to concrete types, compute the direction-set
 -- of the operation.  This is a discrete representation of it, using a
 -- vector of types and a vector of types dependent upon them, as opposed
@@ -4126,6 +4152,22 @@ FreeTheorySl : {s : Nat} -> (ops : RawEndoOpList s) ->
 FreeTheorySl {s} = SliceFreeM . InterpRawEndoOpListSl {s}
 
 public export
+FreeTheory : {s : Nat} -> (ops : RawEndoOpList s) ->
+  SortInterpretation s -> SortInterpretation s
+FreeTheory {s} ops sorts =
+  SortInterpretationFromSl
+  $ FreeTheorySl {s} ops
+  $ SortInterpretationToSl sorts
+
+public export
+FreeTheorySlEq : {s : Nat} -> (ops : RawEndoOpList s) ->
+  (sl : SortInterpretation s) -> (i : Fin s) ->
+  index i (FreeTheory {s} ops sl) =
+    FreeTheorySl ops (SortInterpretationToSl sl) i
+FreeTheorySlEq {s} ops sl i =
+  finFToVectIdx (FreeTheorySl {s} ops $ SortInterpretationToSl sl) i
+
+public export
 InitialTheorySl : {s : Nat} -> (ops : RawEndoOpList s) -> SliceObj (Fin s)
 InitialTheorySl {s} = SliceMu . InterpRawEndoOpListSl {s}
 
@@ -4160,12 +4202,20 @@ mutual
 
 public export
 evalTheory : {s : Nat} -> (ops : RawEndoOpList s) ->
-  (sv, sa : SliceObj (Fin s)) ->
-  SliceMorphism {a=(Fin s)} sv sa ->
-  SliceAlg (InterpRawEndoOpListSl {s} ops) sa ->
-  SliceMorphism {a=(Fin s)} (FreeTheorySl {s} ops sv) sa
+  (sv, sa : SortInterpretation s) ->
+  SortMorphism {s} sv sa ->
+  SliceAlg (InterpRawEndoOpListSl {s} ops) (SortInterpretationToSl sa) ->
+  SortMorphism {s} (FreeTheory ops sv) sa
 evalTheory {s} ops sv sa subst alg =
-  evalTheorySl {s} ops sv sa subst alg
+  SortMorphismFromSl {s} {sl=(FreeTheory ops sv)} {sl'=sa} $
+  \i, x =>
+    evalTheorySl {s} ops
+      (SortInterpretationToSl sv)
+      (SortInterpretationToSl sa)
+      (SortMorphismToSl subst)
+      alg
+      i
+      (rewrite sym (FreeTheorySlEq {s} ops sv i) in x)
 
 mutual
   public export
