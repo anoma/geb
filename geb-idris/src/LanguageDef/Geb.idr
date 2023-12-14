@@ -4177,6 +4177,22 @@ CofreeTheorySl : {s : Nat} -> (ops : RawEndoOpList s) ->
 CofreeTheorySl {s} = SliceCofreeCM . InterpRawEndoOpListSl {s}
 
 public export
+CofreeTheory : {s : Nat} -> (ops : RawEndoOpList s) ->
+  SortInterpretation s -> SortInterpretation s
+CofreeTheory {s} ops sorts =
+  SortInterpretationFromSl
+  $ CofreeTheorySl {s} ops
+  $ SortInterpretationToSl sorts
+
+public export
+CofreeTheorySlEq : {s : Nat} -> (ops : RawEndoOpList s) ->
+  (sl : SortInterpretation s) -> (i : Fin s) ->
+  index i (CofreeTheory {s} ops sl) =
+    CofreeTheorySl ops (SortInterpretationToSl sl) i
+CofreeTheorySlEq {s} ops sl i =
+  finFToVectIdx (CofreeTheorySl {s} ops $ SortInterpretationToSl sl) i
+
+public export
 TerminalTheorySl : {s : Nat} -> (ops : RawEndoOpList s) -> SliceObj (Fin s)
 TerminalTheorySl {s} = SliceNu . InterpRawEndoOpListSl {s}
 
@@ -4245,11 +4261,20 @@ mutual
 
 public export
 traceTheory : {s : Nat} -> (ops : RawEndoOpList s) ->
-  (sl, sa : SliceObj (Fin s)) -> SliceMorphism {a=(Fin s)} sa sl ->
-  SliceCoalg (InterpRawEndoOpListSl {s} ops) sa ->
-  SliceMorphism {a=(Fin s)} sa (CofreeTheorySl {s} ops sl)
+  (sl, sa : SortInterpretation s) -> SortMorphism {s} sa sl ->
+  SliceCoalg (InterpRawEndoOpListSl {s} ops) (SortInterpretationToSl sa) ->
+  SortMorphism {s} sa (CofreeTheory {s} ops sl)
 traceTheory {s} ops sl sa label coalg =
-  traceTheorySl {s} ops sl sa label coalg
+  SortMorphismFromSl {s} {sl=sa} {sl'=(CofreeTheory ops sl)} $
+  \i, x =>
+    rewrite CofreeTheorySlEq {s} ops sl i in
+    traceTheorySl {s} ops
+      (SortInterpretationToSl sl)
+      (SortInterpretationToSl sa)
+      (SortMorphismToSl label)
+      coalg
+      i
+      x
 
 -------------------------------------------------
 -------------------------------------------------
