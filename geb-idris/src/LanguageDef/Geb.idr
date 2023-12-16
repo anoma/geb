@@ -4936,3 +4936,15 @@ CCosliceMorphismEq = snd0
 --     "what would happen if we had an oracle for".  (It also allows us to
 --     perform implementation of a theory in terms of others, by substituting
 --     real implementations in for oracles, when such implementations exist.)
+-- 12) I think that the interface perspective combined with the ANF
+--     transformation, which leads to free implementations in terms of
+--     continuations and natural transformations (all using Yoneda!), might
+--     also give us coequalizers (as polynomial natural transformations and
+--     adjunctions with the two-object/two-parallel-morphisms category),
+--     and thus the ability to implement quotient types, _without_
+--     client-visible explicit equality, and _within_ a category (such as
+--     Idris's `Type`) which does not itself have (explicit, at least)
+--     coequalizers or quotient types.
+-- 13) Initial algebras (of polynomial profunctors) within this context give
+--     us categories/theories a la carte; terminal coalgebras give us
+--     (potentially non-terminating) execution traces.
