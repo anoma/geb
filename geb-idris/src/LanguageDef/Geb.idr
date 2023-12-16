@@ -4948,3 +4948,8 @@ CCosliceMorphismEq = snd0
 -- 13) Initial algebras (of polynomial profunctors) within this context give
 --     us categories/theories a la carte; terminal coalgebras give us
 --     (potentially non-terminating) execution traces.
+-- 14) Including in the language definition a standard library written
+--     in Geb itself allows Geb to self-host, and allows programs written
+--     in Geb to reason using the axioms of Geb, including about Geb itself,
+--     and to define languages as extensions of, or using components of, Geb
+--     itself.
