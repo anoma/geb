@@ -4875,10 +4875,27 @@ CCosliceMorphismEq = snd0
 --     profunctor categories).  It has both covariant and contravariant forms,
 --     so it too can be dualized to a comprehensive factorization of a
 --     _profunctor_, using the category of _diagonal_ elements (I think).
+--     Taking a (structural) (co)end of a difunctor on _any_ category
+--     takes us back to an object of `Type` (or any enriching category)
+--     (together with a universal paranatural transformation between that
+--     object and the difunctor), by analogue with how taking a sigma or
+--     pi (using the unique morphism to the terminal object of `Type`)
+--     on a slice category brins us back to `Type`:  a sigma of a slice
+--     category gives us the generalized analogue from type theory of a choice
+--     of a particular type from a type family (where the slice category is the
+--     type family) together with a term of that type, while the coend
+--     further generalizes that to a "term" of an object of an arbitrary
+--     category (it's using the category of diagonal elements to produce the
+--     analogue of a term); a pi of a slice category gives us the generalized
+--     analogue from type theory of a choice of terms from each type of a
+--     type family, while the end further generalizes that to a "type"
+--     dependent upon an object of an arbitrary category.
 --  8) Drawing _theories_ -- polynomial profunctors in profunctors themselves --
---     allows us to define categories internal to categories internal to Geb,
---     which is metacircular _metalogic_ (we identify a metalogic with a
---     higher category, such as Geb itself).
+--     from arbitrary categories by using dependencies on objects of arbitrary
+--     categories (using structural (co)ends as described above) allows us to
+--     define categories internal to categories internal to Geb, which is
+--     metacircular _metalogic_ (we identify a metalogic with a higher
+--     category, such as Geb itself).
 --  9) Higher categories of higher categories give us double categories,
 --     `n`-fold categories via iteration, and infinity-categories via
 --     fixed points of that iteration.
