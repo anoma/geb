@@ -4787,3 +4787,98 @@ public export
     (CCosliceObjMap {c} y)
     (CCosliceObjMap {c} x |> CCosliceMorphismMap {c} {x} {y} f)
 CCosliceMorphismEq = snd0
+
+---------------
+---------------
+---- Notes ----
+---------------
+---------------
+
+-------------------
+---- Dualities ----
+-------------------
+
+-- We summarize the what we gain from each dualization or other form of
+-- generalization from the simple `Poly` subcategory of `Type -> Type`:
+--
+--  1) Dirichlet endofunctors should emerge as a special case, like
+--     `Poly`, of extending to profunctors (`op(Type) -> Type -> Type`) --
+--     polynomial di/pro-functors will be "mixed" polynomial and Dirichlet
+--     (endo-)functors ("di/endo" is an important special case because we
+--     can make free ones and use the diYoneda embedding).
+--  2) Extending from polynomial endofunctors to polynomial _di_functors
+--     (endo-profunctors) allows us to use the _di-_(co-)Yoneda embedding
+--     rather than just the (contra-)Yoneda embedding, which is crucial to
+--     enabling categories a la carte because we need to specify universal
+--     properties both from the right and the left simultaneously.
+--  3) Extending from polynomial functors on `Type` to those on slice
+--     categories (`Type/c` for `c : Type`) gives us dependent data types;
+--     when we are also extending from polynomial functors to polynomial
+--     _pro_functors, the analogue is _splice_ categories, so for categories
+--     a la carte with dependent types, we use polynomial profunctors on
+--     splice categories.  Specifically, because this makes objects and
+--     morphisms dependent on objects of `Type`, it allows us to define
+--     _families_ of categories with mutual dependencies -- which is also
+--     in effect an absolute requirement of categories a la carte, because
+--     the adjunctions which define universal properties are not (necessarily,
+--     or even usually) between endofunctors, but between functors between
+--     different categories (for example, initial and terminal objects come
+--     from adjunctions between the categories which have them and the
+--     terminal category; products and coproducts come from adjunctions between
+--     the categories which have them and their product categories -- note
+--     that in that case, the other category _depends_ on the category we're
+--     defining).  In fact, even defining a single category without reference
+--     to other categories is at least more convenient when we use slice/splice
+--     categories because we can slice over `2` to define objects and morphisms
+--     using (potentially mutual) recursion, and indeed separate classes of
+--     _universal_ objects/morphisms with dependencies between them -- the
+--     object of morphisms will certainly depend on the object of objects, and
+--     the other way around can also happen, for example in the case of freely-
+--     generated (co)equalizers.  We might also slice over `Fin 3` to include
+--     functors, or `Fin 4` to include natural transformations as well, or
+--     `Fin 5` to add adjunctions.  We may therefore define categories a la
+--     carte by using (polynomial pro-)functors, (polynomial para-)natural
+--     transformations, and adjunctions by slicing over (internally-dependent)
+--     pairs of `Fin 5` with (internal) parameters -- categories of natural
+--     transformations might be indexed as `2 x (functor, functor)`, where
+--     `functor` in turn is indexed by `(category, category)`, and the two
+--     `category` parameters of the two `functor` parameters to `natural
+--     transformation` must match.  Thus categories a la carte require at least
+--     polynomial profunctors on splice categories.
+--  4) Extending from polynomial profunctors on slice categories to polynomial
+--     profunctors on presheaf categories allows us to specify internal
+--     morphisms, which we need in order to express the relationships among
+--     the internal parameters within the slice, which we need in order to
+--     express the coherence described above between parameters which ensure
+--     properties such as how natural transformations occur only between
+--     functors whose domains and codomains match.  This use of presheaf
+--     rather than just slice categories means that we end up using (structural)
+--     (co)ends rather than just sigma and pi types to construct polynomial
+--     (pro)functors inductively.
+--  5) Extending from polynomial (pro-)functors on presheaf categories to
+--     polynomial (pro-)functors on _profunctor_ categories allows us to
+--     combine the slice-to-splice extension with the slice-to-presheaf
+--     extension.  The splice extension is the one which allows us to the
+--     the _di_Yoneda embedding and paranatural transformations, thus using
+--     covariance and contravariance simultaneously, and the slice-to-presheaf
+--     extension is the one which allows us to ensure coherence among internal
+--     parameters, both of which are necessary for categories a la carte, so
+--     we do require profunctors on profunctor categories.  Thus we are
+--     forced into that form of reflection:  profunctors on profunctor
+--     categories are themselves objects of profunctor categories.  This is
+--     a category-theoretic, universal, formally-verifiable form of
+--     metacircularity.
+--  6) Drawing objects and morphisms in our definition of categories internal
+--     to Geb allows us to do enriched category theory.
+--  7) The universal factorization of a functor allows us to define
+--     polynomial functors across _arbitrary_ categories (not even just
+--     profunctor categories).  It has both covariant and contravariant forms,
+--     so it too can be dualized to a comprehensive factorization of a
+--     _profunctor_, using the category of _diagonal_ elements (I think).
+--  8) Drawing _theories_ -- polynomial profunctors in profunctors themselves --
+--     allows us to define categories internal to categories internal to Geb,
+--     which is metacircular _metalogic_ (we identify a metalogic with a
+--     higher category, such as Geb itself).
+--  9) Higher categories of higher categories give us double categories,
+--     `n`-fold categories via iteration, and infinity-categories via
+--     fixed points of that iteration.
