@@ -4801,17 +4801,24 @@ CCosliceMorphismEq = snd0
 -- We summarize the what we gain from each dualization or other form of
 -- generalization from the simple `Poly` subcategory of `Type -> Type`:
 --
---  1) Dirichlet endofunctors should emerge as a special case, like
+--  1) Extending from programming in a "base" category such as `Type` to
+--     programming in `Poly` itself gives us inductive data types a la carte,
+--     with a much wider variety of combinators on inductive types.  Polynomial
+--     functors also give us a notion of input interfaces (via algebras) and
+--     output interfaces (via coalgebras).
+--  2) Dirichlet endofunctors should emerge as a special case, like
 --     `Poly`, of extending to profunctors (`op(Type) -> Type -> Type`) --
 --     polynomial di/pro-functors will be "mixed" polynomial and Dirichlet
 --     (endo-)functors ("di/endo" is an important special case because we
 --     can make free ones and use the diYoneda embedding).
---  2) Extending from polynomial endofunctors to polynomial _di_functors
+--  3) Extending from polynomial endofunctors to polynomial _di_functors
 --     (endo-profunctors) allows us to use the _di-_(co-)Yoneda embedding
 --     rather than just the (contra-)Yoneda embedding, which is crucial to
 --     enabling categories a la carte because we need to specify universal
 --     properties both from the right and the left simultaneously.
---  3) Extending from polynomial functors on `Type` to those on slice
+--     Polynomial difunctors also give us a notion of _combined_ interfaces
+--     which specify both inputs and outputs at the same time.
+--  4) Extending from polynomial functors on `Type` to those on slice
 --     categories (`Type/c` for `c : Type`) gives us dependent data types;
 --     when we are also extending from polynomial functors to polynomial
 --     _pro_functors, the analogue is _splice_ categories, so for categories
@@ -4845,7 +4852,11 @@ CCosliceMorphismEq = snd0
 --     `category` parameters of the two `functor` parameters to `natural
 --     transformation` must match.  Thus categories a la carte require at least
 --     polynomial profunctors on splice categories.
---  4) Extending from polynomial profunctors on slice categories to polynomial
+--
+--     Extending polynomial (di-)functors to s(p)lice categories also extends
+--     our notion of polynomial-functors-as-interfaces to _multi-sorted_
+--     interfaces.
+--  5) Extending from polynomial profunctors on slice categories to polynomial
 --     profunctors on presheaf categories allows us to specify internal
 --     morphisms, which we need in order to express the relationships among
 --     the internal parameters within the slice, which we need in order to
@@ -4855,7 +4866,20 @@ CCosliceMorphismEq = snd0
 --     rather than just slice categories means that we end up using (structural)
 --     (co)ends rather than just sigma and pi types to construct polynomial
 --     (pro)functors inductively.
---  5) Extending from polynomial (pro-)functors on presheaf categories to
+--
+--     When combined with the "ANF transformation" enabled by the definition
+--     of polynomial (di-)functors, the extension to (co/pro-)sheaf categories
+--     as domains (prosheaves are just profunctors, just as (co)presheaves are
+--     just functors to `Type`, but we may use the term "prosheaf" to
+--     distinguish profunctors as _(co)domains_ of (pro)functors) also gives
+--     us inductive-inductive types (from presheaves, or the contravariant
+--     component of a prosheaf) and inductive-recursive types (from
+--     copresheaves, or the covariant component of a prosheaf).
+--
+--     Also, from the interface perspective, extending from (co)s(p)lices to
+--     (co/pro/pre)sheaves allows us to define _operations_, not just sorts,
+--     of generalized algebraic theories.
+--  6) Extending from polynomial (pro-)functors on presheaf categories to
 --     polynomial (pro-)functors on _profunctor_ categories allows us to
 --     combine the slice-to-splice extension with the slice-to-presheaf
 --     extension.  The splice extension is the one which allows us to the
@@ -4868,9 +4892,9 @@ CCosliceMorphismEq = snd0
 --     categories are themselves objects of profunctor categories.  This is
 --     a category-theoretic, universal, formally-verifiable form of
 --     metacircularity.
---  6) Drawing objects and morphisms in our definition of categories internal
+--  7) Drawing objects and morphisms in our definition of categories internal
 --     to Geb allows us to do enriched category theory.
---  7) The universal factorization of a functor allows us to define
+--  8) The universal factorization of a functor allows us to define
 --     polynomial functors across _arbitrary_ categories (not even just
 --     profunctor categories).  It has both covariant and contravariant forms,
 --     so it too can be dualized to a comprehensive factorization of a
@@ -4890,12 +4914,25 @@ CCosliceMorphismEq = snd0
 --     analogue from type theory of a choice of terms from each type of a
 --     type family, while the end further generalizes that to a "type"
 --     dependent upon an object of an arbitrary category.
---  8) Drawing _theories_ -- polynomial profunctors in profunctors themselves --
+--  9) Drawing _theories_ -- polynomial profunctors in profunctors themselves --
 --     from arbitrary categories by using dependencies on objects of arbitrary
 --     categories (using structural (co)ends as described above) allows us to
 --     define categories internal to categories internal to Geb, which is
 --     metacircular _metalogic_ (we identify a metalogic with a higher
 --     category, such as Geb itself).
---  9) Higher categories of higher categories give us double categories,
+-- 10) Higher categories of higher categories give us double categories,
 --     `n`-fold categories via iteration, and infinity-categories via
 --     fixed points of that iteration.
+-- 11) Extending from dialgebras to algebras of profunctors, in particular
+--     when combined with the internal "ANF transformation" allowed by the
+--     definition of a _polynomial_ profunctor (which can be viewed as an
+--     extension specifically of dialgebras between _polynomial_ functors),
+--     allows us to generate free formally-verifiable-and-executable
+--     specifications from all generalized algebraic theores -- even those
+--     for which we have no real implementation, and even those which depend
+--     on oracles which provably can _have_ no interpretation, because the
+--     "execution" need not reduce fully, but is expressed in terms of
+--     metalanguage continuations.  This allows us to inspect and execute
+--     "what would happen if we had an oracle for".  (It also allows us to
+--     perform implementation of a theory in terms of others, by substituting
+--     real implementations in for oracles, when such implementations exist.)
