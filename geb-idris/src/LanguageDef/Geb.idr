@@ -216,10 +216,13 @@ IntProfYonedaEmbed : (0 d, c : Type) ->
   d -> c -> IntProfunctorSig d c
 IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
 
+-- Merge two profunctors going in opposite directions (between `d` and `c`)
+-- into an embedding of `(op(d), c)` into its category of prosheaves.
 public export
-IntRelYonedaEmbed : (0 d, c : Type) ->
-  (relop, rel : IntProfunctorSig d c) -> d -> c -> IntProfunctorSig d c
-IntRelYonedaEmbed d c relop rel i0 i1 j0 j1 = (relop j0 i1, rel i0 j1)
+IntBidirProfEmbed : (0 d, c : Type) ->
+  (relop : IntProfunctorSig c d) -> (rel : IntProfunctorSig d c) ->
+  d -> c -> IntProfunctorSig d c
+IntBidirProfEmbed d c relop rel i0 i1 j0 j1 = (relop i1 j0, rel i0 j1)
 
 -- Suppose that `c` is a type of objects of a category internal to `Type`,
 -- and `mor` is a type dependent on pairs of terms of `c` (we could also
@@ -234,7 +237,7 @@ IntRelYonedaEmbed d c relop rel i0 i1 j0 j1 = (relop j0 i1, rel i0 j1)
 public export
 IntDiYonedaEmbed : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> c -> c -> IntDifunctorSig c
-IntDiYonedaEmbed c mor = IntRelYonedaEmbed c c mor mor
+IntDiYonedaEmbed c mor = IntBidirProfEmbed c c (flip mor) mor
 
 -----------------------------------------------
 -----------------------------------------------
