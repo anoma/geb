@@ -209,9 +209,9 @@ IntProfNTSig d c p q = (a : d) -> (b : c) -> p a b -> q a b
 -- `Type` is internal to `Type) of`PrePostPair`.
 public export
 IntProfYonedaEmbed : (0 d, c : Type) ->
-  (dm : IntDifunctorSig d) -> (cm : IntDifunctorSig c) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
   d -> c -> IntProfunctorSig d c
-IntProfYonedaEmbed d c dm cm s t a b = (dm a s, cm t b)
+IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
 
 public export
 IntRelYonedaEmbed : (0 d, c : Type) ->
