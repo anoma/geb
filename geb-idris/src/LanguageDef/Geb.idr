@@ -219,7 +219,7 @@ IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
 public export
 IntRelYonedaEmbed : (0 d, c : Type) ->
   (rel, rel' : IntProfunctorSig d c) -> d -> c -> IntProfunctorSig d c
-IntRelYonedaEmbed d c rel relop i0 i1 j0 j1 = (rel i0 j1, relop j0 i1)
+IntRelYonedaEmbed d c relop rel i0 i1 j0 j1 = (relop j0 i1, rel i0 j1)
 
 -- Suppose that `c` is a type of objects of a category internal to `Type`,
 -- and `mor` is a type dependent on pairs of terms of `c` (we could also
@@ -336,7 +336,7 @@ DiYonedaEmbed = IntDiYonedaEmbed Type HomProf
 
 public export
 [DiYonedaEmbedProf] Profunctor (DiYonedaEmbed i j) where
-  dimap mca mbd (mib, maj) = (mbd . mib, maj . mca)
+  dimap mca mbd (maj, mib) = (maj . mca, mbd . mib)
 
 -- The diYoneda lemma asserts a paranatural isomorphism between two objects
 -- of the enriching category, one of which is an object of paranatural
@@ -349,14 +349,14 @@ DiYonedaLemmaNT p c d = ProfDiNT (flip DiYonedaEmbed c d) p
 public export
 DiYonedaLemmaNTPro : Profunctor (DiYonedaLemmaNT p)
 DiYonedaLemmaNTPro = MkProfunctor $
-  \mca, mbd, alpha, i, (mdi, mic) => alpha i (mdi . mbd, mca . mic)
+  \mca, mbd, alpha, i, (mic, mdi) => alpha i (mca . mic, mdi . mbd)
 
 -- One direction of the paranatural isomorphism asserted by the
 -- diYoneda lemma on `(op(Type), Type)`.
 public export
 DiYonedaLemmaL : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
   ProfDiNT p (DiYonedaLemmaNT p)
-DiYonedaLemmaL p {isP} i pii j (mij, mji) = dimap {f=p} mji mij pii
+DiYonedaLemmaL p {isP} i pii j (mji, mij) = dimap {f=p} mji mij pii
 
 -- The other direction of the paranatural isomorphism asserted by the
 -- diYoneda lemma on `(op(Type), Type)`.
@@ -377,8 +377,8 @@ DiCoYonedaLemmaCoend p i0 i1 =
 
 public export
 Profunctor (DiCoYonedaLemmaCoend p) where
-  dimap {a} {b} {c} {d} mca mbd (Evidence ij ((mai, mjb), pij)) =
-    Evidence ij ((mai . mca, mbd . mjb), pij)
+  dimap {a} {b} {c} {d} mca mbd (Evidence ij ((mib, maj), pji)) =
+    Evidence ij ((mbd . mib, maj . mca), pji)
 
 -- One direction of the paranatural isomorphism asserted by the
 -- di-co-Yoneda lemma on `(op(Type), Type)`.
@@ -392,7 +392,7 @@ DiCoYonedaLemmaL p i pii = Evidence (i, i) ((id {a=i}, id {a=i}), pii)
 public export
 DiCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
   ProfDiNT (DiCoYonedaLemmaCoend p) p
-DiCoYonedaLemmaR p {isP} i (Evidence j ((mij1, mj0i), pj1j0)) =
+DiCoYonedaLemmaR p {isP} i (Evidence j ((mj0i, mij1), pj1j0)) =
   dimap {f=p} mij1 mj0i pj1j0
 
 -- `ProfYonedaEmbed` embeds the object `(i0, i1)` of `(op(Type), Type)` into
