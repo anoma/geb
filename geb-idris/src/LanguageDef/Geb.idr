@@ -408,7 +408,7 @@ DiCoYonedaLemmaR p {isP} i (Evidence j ((mj0i, mij1), pj1j0)) =
 -- and acts as `ContravarHomFunc a` on its first argument.
 public export
 ProfYonedaEmbed : Type -> Type -> ProfunctorSig
-ProfYonedaEmbed = PrePostPair
+ProfYonedaEmbed = IntProfYonedaEmbed Type Type HomProf HomProf
 
 public export
 ProfYonedaEmbedProf : Profunctor (PrePostPair s t)
