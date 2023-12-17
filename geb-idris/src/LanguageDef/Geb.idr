@@ -177,6 +177,362 @@ import LanguageDef.PolyIndTypes
 --     and to define languages as extensions of, or using components of, Geb
 --     itself.
 
+-------------------------------------
+-------------------------------------
+---- Paranatural transformations ----
+-------------------------------------
+-------------------------------------
+
+-- The following categories are equivalent:
+--
+--  1) the splice category of `Type` over `(i, j)`
+--  2) the category of profunctors `j -> i`, AKA functors `(op(i), j) -> Type`,
+--    where `i` and `j` are viewed as discrete categories, and the morphisms
+--    are paranatural transformations
+--  3) the category of diagonal elements of the profunctor di-represented by
+--    `(i, j)`, i.e. `DiYoneda i j`
+--  4) the category of polynomial difunctors (endo-profunctors) on
+--     `(op(Type), Type)` with position-set `(i, j)` (i.e. contravariant
+--     position-set `i` and covariant position-set `j`), with paranatural
+--     transformations as morphisms
+--
+-- (I expect, but have not proven, that the category of profunctors `j -> i`
+-- (AKA functors `(op(i), j) -> Type` where `i` and `j` are viewed as
+-- discrete categories) with _natural_ transformations, as opposed to the
+-- more general _paranatural_ transformations, as morphisms is equivalent to
+-- the category of _elements_, as opposed to the category of _diagonal_
+-- elements, of the profunctor _represented_, as opposed to _direpresented_, by
+-- `(i, j)`, i.e. `PrePostPair i j` (the (contravariant x covariant) Yoneda
+-- embedding of `(i, j)`) or `Iso i j` (the (covariant x contravariant) Yoneda
+-- embedding of `(i, j`)).  I further expect that it is probably equivalent to
+-- the slice category of `Type` over `(i, j)`, and to the category
+-- of polynomial difunctors (endo-profunctors) on `Type` with position-set
+-- `(i, j)` with _natural_ (not just paranatural) transformations as morphisms.)
+--
+-- This is analogous to how the following are equivalent:
+--
+--  1) the slice category of `Type` over `j`
+--  2) the category of presheaves over `j`, AKA functors `op(j) -> Type`,
+--    where `j` is viewed as a discrete category, and the morphisms
+--    are natural transformations
+--  3) the category of elements of the presheaf represented by `j`,
+--    i.e. the contravariant Yoneda embedding of `j`
+--  4) the category of Dirichlet endofunctors on `Type` with position-set `j`
+--  5) the opposite of the category of polynomial endofunctors on `Type` with
+--     position-set `j`
+--
+-- And dually:
+--
+--  1) the coslice category of `Type` over `i`
+--  2) the category of copresheaves over `i`, AKA functors `i -> Type`,
+--    where `i` is viewed as a discrete category, and the morphisms
+--    are natural transformations
+--  3) the category of elements of the copresheaf represented by `i`,
+--    i.e. the covariant Yoneda embedding of `i`
+--  4) the category of Dirichlet endofunctors on `op(Type)` with
+--     position-set `i`
+--  5) the opposite of the category of polynomial endofunctors on `op(Type)`
+--     with position-set `i`
+--
+-- The splice version unifies the two duals.
+--
+-- Given an object in a splice category over `(i, j)`, with intermediate
+-- object `k`, injection `into : i -> k`, and projection `from : k -> j`,
+-- where we shall refer to the composition `from . into : i -> j` as `comp`,
+-- we can form objects of other splice categories in the following ways (which
+-- are functorial, so we are saying that there are the following functors
+-- between splice categories):
+--
+--  1) Given morphisms `f : x -> i` and `g : j -> y`, we can form an object
+--     of the splice category over `(x, y)` with intermediate object `k` by
+--     composing `f` before `into` and `g` after `from`.  Note that
+--     `(f, g)` is a morphism from `(i, j)` to `(x, y)` in `(op(Type), Type)`.
+--     This is the sigma functor between splice categories.  Note that `(f, g)`
+--     may equivalently be seen as `DiYoneda x y j i`, or `PrePostPair i j x y`,
+--     or `Iso x y i j`.  The intermediate object is still `k`.
+
+-- See https://arxiv.org/abs/2307.09289 .
+
+-- `DiYonedaEmbed` is sometimes written `yy(i0, i1)` .  It embeds
+-- the object `(i0, i1)` of `(op(Type), Type)` into the category
+-- whose objects are profunctors `(op(Type), Type) -> Type)` and whose
+-- morphisms are _paranatural_ transformations (compare to `DualYonedaEmbed`,
+-- where the codomain category's objects are the same, but the morphisms are
+-- the more strict _natural_ transformations).
+--
+-- Note that `DiYonedaEmbed Void i1` is the profunctor which ignores its
+-- second argument and acts as `ContravarHomFunc i1` on its first argument,
+-- whereas `DiYonedaEmbed i0 Unit` is the profunctor which ignores its first
+-- argument and acts as `CovarHomFunc i0` on its second argument.  So
+-- `DiYonedaEmbed Void` is effectively the contravariant Yoneda embedding
+-- on `Type`, while `flip DiYonedaEmbed Unit` is effectively the covariant
+-- Yoneda embedding on `Type`.
+public export
+DiYonedaEmbed : Type -> Type -> ProfunctorSig
+DiYonedaEmbed i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
+
+public export
+[DiYonedaEmbedProf] Profunctor (DiYonedaEmbed i j) where
+  dimap mca mbd (mib, maj) = (mbd . mib, maj . mca)
+
+-- The diYoneda lemma asserts a paranatural isomorphism between two objects
+-- of the enriching category, one of which is an object of paranatural
+-- transformations.  This type is an explicit name for that object on
+-- the category `(op(Type), Type)`.
+public export
+DiYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
+DiYonedaLemmaNT p c d = ProfDiNT (flip DiYonedaEmbed c d) p
+
+public export
+DiYonedaLemmaNTPro : Profunctor (DiYonedaLemmaNT p)
+DiYonedaLemmaNTPro = MkProfunctor $
+  \mca, mbd, alpha, i, (mdi, mic) => alpha i (mdi . mbd, mca . mic)
+
+-- One direction of the paranatural isomorphism asserted by the
+-- diYoneda lemma on `(op(Type), Type)`.
+public export
+DiYonedaLemmaL : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
+  ProfDiNT p (DiYonedaLemmaNT p)
+DiYonedaLemmaL p {isP} i pii j (mij, mji) = dimap {f=p} mji mij pii
+
+-- The other direction of the paranatural isomorphism asserted by the
+-- diYoneda lemma on `(op(Type), Type)`.
+public export
+DiYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
+  ProfDiNT (DiYonedaLemmaNT p) p
+DiYonedaLemmaR p {isP} i dye = dye i (id {a=i}, id {a=i})
+
+-- The di-co-Yoneda lemma asserts a paranatural isomorphism between two objects
+-- of the enriching category, one of which is a coend (existential type).
+-- This type is an explicit name for that object on the category
+-- `(op(Type), Type)`.
+public export
+DiCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
+DiCoYonedaLemmaCoend p i0 i1 =
+  Exists {type=(Type, Type)} $
+    \j => (DiYonedaEmbed i0 i1 (fst j) (snd j), p (snd j) (fst j))
+
+public export
+Profunctor (DiCoYonedaLemmaCoend p) where
+  dimap {a} {b} {c} {d} mca mbd (Evidence ij ((mai, mjb), pij)) =
+    Evidence ij ((mai . mca, mbd . mjb), pij)
+
+-- One direction of the paranatural isomorphism asserted by the
+-- di-co-Yoneda lemma on `(op(Type), Type)`.
+public export
+DiCoYonedaLemmaL : (0 p : ProfunctorSig) ->
+  ProfDiNT p (DiCoYonedaLemmaCoend p)
+DiCoYonedaLemmaL p i pii = Evidence (i, i) ((id {a=i}, id {a=i}), pii)
+
+-- The other direction of the paranatural isomorphism asserted by the
+-- di-co-Yoneda lemma on `(op(Type), Type)`.
+public export
+DiCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
+  ProfDiNT (DiCoYonedaLemmaCoend p) p
+DiCoYonedaLemmaR p {isP} i (Evidence j ((mij1, mj0i), pj1j0)) =
+  dimap {f=p} mij1 mj0i pj1j0
+
+-- `ProfYonedaEmbed` embeds the object `(i0, i1)` of `(op(Type), Type)` into
+-- the category whose objects are profunctors `(op(Type), Type) -> Type)` and
+-- whose morphisms are natural transformations.
+--
+-- Note that `ProfYonedaEmbed Unit b` is the profunctor which ignores its
+-- first argument and acts as `CovarHomFunc b` on its second argument, whereas
+-- `ProfYonedaEmbed a Void` is the profunctor which ignores its second argument
+-- and acts as `ContravarHomFunc a` on its first argument.
+public export
+ProfYonedaEmbed : Type -> Type -> ProfunctorSig
+ProfYonedaEmbed = PrePostPair
+
+public export
+ProfYonedaEmbedProf : Profunctor (PrePostPair s t)
+ProfYonedaEmbedProf = PrePostPairProf
+
+-- The Yoneda lemma asserts a natural isomorphism between two objects
+-- of the enriching category, one of which is an object of natural
+-- transformations.  This type is an explicit name for that object on
+-- the category `(op(Type), Type)`.  An analogous type is called
+-- `Yoneda/runYoneda` in some Haskell libraries.
+public export
+ProfYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
+ProfYonedaLemmaNT p c d = ProfNT (ProfYonedaEmbed c d) p
+
+public export
+Profunctor (ProfYonedaLemmaNT p) where
+  dimap {a} {b} {c} {d} mca mbd alpha (mac, mdb) = alpha (mca . mac, mdb . mbd)
+
+-- One direction of the natural isomorphism asserted by the Yoneda lemma
+-- on `(op(Type), Type)`.  This is called `toProYo` in another context.
+public export
+ProfYonedaLemmaL : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
+  ProfNT p (ProfYonedaLemmaNT p)
+ProfYonedaLemmaL p {isP} {a=i} {b=j} pij {a} {b} (mai, mjb) =
+  dimap {f=p} {a=i} {b=j} {c=a} {d=b} mai mjb pij
+
+-- The other direction of the natural isomorphism asserted by the Yoneda lemma
+-- on `(op(Type), Type)`.  This is called `fromProYo` in another context.
+public export
+ProfYonedaLemmaR : (0 p : ProfunctorSig) ->
+  ProfNT (ProfYonedaLemmaNT p) p
+ProfYonedaLemmaR p dyembed {a=i} {b=j} = dyembed (id {a=i}, id {a=j})
+
+-- The co-Yoneda lemma asserts a natural isomorphism between two objects
+-- of the enriching category, one of which is a coend (existential type).
+-- This type is an explicit name for that object on the category
+-- `(op(Type), Type)`.  An analogous type is called `CoYoneda` in some
+-- Haskell libraries.
+public export
+ProfCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
+ProfCoYonedaLemmaCoend p c d =
+  Exists {type=(Type, Type)} $
+    \ab => (ProfYonedaEmbed d c (snd ab) (fst ab), p (fst ab) (snd ab))
+
+public export
+Profunctor (ProfCoYonedaLemmaCoend p) where
+  dimap {a} {b} {c} {d} mca mbd (Evidence ij ((mjb, mai), pij)) =
+    Evidence ij ((mbd . mjb, mai . mca), pij)
+
+-- One direction of the natural isomorphism asserted by the co-Yoneda lemma
+-- on `(op(Type), Type)`.  This is called `toCoProYo` in another context.
+public export
+ProfCoYonedaLemmaL : (0 p : ProfunctorSig) ->
+  ProfNT p (ProfCoYonedaLemmaCoend p)
+ProfCoYonedaLemmaL p {a} {b} pab = Evidence (a, b) ((id {a=b}, id {a}), pab)
+
+-- One direction of the natural isomorphism asserted by the co-Yoneda lemma
+-- on `(op(Type), Type)`.  This is called `fromCoProYo` in another context.
+public export
+ProfCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
+  ProfNT (ProfCoYonedaLemmaCoend p) p
+ProfCoYonedaLemmaR p {isP} {a=c} {b=d} (Evidence ab ((mbd, mca), pab)) =
+  dimap {f=p} mca mbd pab
+
+--------------------------------
+--------------------------------
+---- Categories of elements ----
+--------------------------------
+--------------------------------
+
+---------------------------------------------------------------------
+---- Categories of structures / diagonal elements of profunctors ----
+---------------------------------------------------------------------
+
+-- The category of diagonal elements of `p` is also called the category of
+-- `p`-structures.  See https://arxiv.org/abs/2307.09289.
+--
+-- Note that if `p : ProfunctorSig` is `DiYonedaEmbed i j` for
+-- some `i, j : Type`, then `ProfCatDiagElemObj p` is
+-- `(a : Type ** (i -> a, a -> j))`, which is precisely the definition of
+-- a splice object between `i` and `j` (i.e. an object of the category
+-- `i/Type/j`).
+--
+-- If `p` is `DiYonedaEmbed Void j` for some `j : Type`, then
+-- `p` is naturally isomorphic to `ContravarHomFunc j`, and
+-- `ProfCatDiagElemObj p` is isomorphic to `SliceObj j`.
+--
+-- If `p` is `DiYonedaEmbed i Unit` for some `i : Type`, then
+-- `p` is naturally isomorphic to `CovarHomFunc i`, and
+-- `ProfCatDiagElemObj p` is isomorphic to `CosliceObj i`.
+public export
+ProfCatDiagElemObj : ProfunctorSig -> Type
+ProfCatDiagElemObj = CoendBase -- (a : Type ** p a a)
+
+-- Note that if `p : ProfunctorSig` is `DiYonedaEmbed i j` for
+-- some `i, j : Type`, and `spl` and `spl'` are morphisms of the
+-- splice category `i/Type/j`, then `ProfCatDiagElemDomMorph {p} spl spl'` is
+-- the signature of the morphism underlying a splice morphism from
+-- `spl` to `spl'` (without the commutativity condition).
+public export
+ProfCatDiagElemDomMorph : {0 p : ProfunctorSig} ->
+  ProfCatDiagElemObj p -> ProfCatDiagElemObj p -> Type
+ProfCatDiagElemDomMorph {p} paa pbb = fst paa -> fst pbb
+
+-- Note that if `p : ProfunctorSig` is `DiYonedaEmbed i j` for
+-- some `i, j : Type`, and `spl` and `spl'` are morphisms of the
+-- splice category `i/Type/j`, and `m` has the signature of a morphism
+-- underlying a splice morphism from `spl` to `spl'` in `i/Type/j`,
+-- then `ProfCatDiagElemDomMorph {p} spl spl' m` is
+-- precisely the commutativity condition for `m` to constitute a
+-- splice morphism (from `spl` to `spl'`):  it asserts the equality of
+-- a pair of pairs of morphisms, and hence, equivalently, a pair of
+-- equalities of morphisms, where each equality is the commutativity
+-- condition for one of the two triangles in the splice-morphism diagram.
+public export
+0 ProfCatDiagElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
+  {paa, pbb : ProfCatDiagElemObj p} ->
+  ProfCatDiagElemDomMorph {p} paa pbb -> Type
+ProfCatDiagElemCommutes {p} {isP} {paa} {pbb} mab =
+  rmap {f=p} mab (snd paa) = lmap {f=p} mab (snd pbb)
+
+-- As a consequence of the previous notes,
+-- `ProfCatDiagElemMorph {p=(DiYonedaEmbed i j)} spl spl'`
+-- is precisely the type of splice morphisms from `spl` to `spl'`.
+-- Hence the category of diagonal elements of `DiYonedaEmbed i j` is
+-- equivalent to the splice category `i/Type/j`.
+public export
+ProfCatDiagElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
+  ProfCatDiagElemObj p -> ProfCatDiagElemObj p -> Type
+ProfCatDiagElemMorph {p} {isP} paa pbb =
+  Subset0
+    (ProfCatDiagElemDomMorph {p} paa pbb)
+    (ProfCatDiagElemCommutes {p} {isP} {paa} {pbb})
+
+-----------------------------------------------
+---- Categories of elements of profunctors ----
+-----------------------------------------------
+
+-- A profunctor `Type -> Type` is a functor `op(Type) -> Type -> Type`,
+-- so its category of elements consists of objects of `(op(Type), Type)`
+-- together with elements of the profunctor applied to them.
+--
+-- Note that a covariant functor `Type -> Type` is a special case of a
+-- profunctor which ignores its first argument, and a contravariant functor
+-- `op(Type) -> Type` is a special case of a profunctor which ignores its
+-- second argument.  In particular, a covariant representable
+-- `p _ x = CovarHom i x` has the coslice category
+-- `i/Type` as its category of elements, and a contravariant representable
+-- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
+-- category of elements.  The hom-profunctor has the twisted-arrow category as
+-- its category of elements.
+--
+-- The contravariant profunctor `SliceObj` has as its category of elements
+-- the category of polynomial endofunctors on `Type`.  Dually, the covariant
+-- profunctor `CosliceObj` has as its category of elements the category of
+-- Dirichlet endofunctors on `Type`.  Those categories have the same objects,
+-- which correspond to the "arenas" of such endofunctors (that is why the
+-- same data determine polynomial endofunctors and Dirichlet endofunctors),
+-- but different morphisms (meaning that polynomial endofunctors and Dirichlet
+-- endofunctors have different natural transformations for the same arenas).
+public export
+ProfCatElemObj : ProfunctorSig -> Type
+ProfCatElemObj p = (ab : (Type, Type) ** p (fst ab) (snd ab))
+
+-- Because the domain of an endo-profunctor on `Type` is `(op(Type), Type)`,
+-- the morphism component of a morphism in its category of elements is a
+-- morphism in `(op(Type), Type)`, which is a `PrePostPair`.
+--
+-- (Besides a morphism in the functor's domain, a morphism in the category of
+-- elements also has an equality/commutativity component.)
+public export
+ProfCatElemDomMorph : {0 p : ProfunctorSig} ->
+  ProfCatElemObj p -> ProfCatElemObj p -> Type
+ProfCatElemDomMorph {p} pab pcd =
+  PrePostPair (fst (fst pab)) (snd (fst pab)) (fst (fst pcd)) (snd (fst pcd))
+
+public export
+0 ProfCatElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
+  (pab, pcd : ProfCatElemObj p) -> ProfCatElemDomMorph {p} pab pcd -> Type
+ProfCatElemCommutes {p} {isP} pab pcd mcabd =
+  dimap {f=p} (fst mcabd) (snd mcabd) (snd pab) = snd pcd
+
+public export
+ProfCatElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
+  ProfCatElemObj p -> ProfCatElemObj p -> Type
+ProfCatElemMorph {p} {isP} pab pcd =
+  Subset0
+    (ProfCatElemDomMorph {p} pab pcd)
+    (ProfCatElemCommutes {p} {isP} pab pcd)
+
 -------------------------------
 -------------------------------
 ---- Algebraic interfaces -----
@@ -4557,362 +4913,6 @@ Profunctor p => Profunctor (FreePromonad p) where
   dimap {a} {b} {c} {d} mca mbd (InFPM (i ** (pai, fpib))) =
     InFPM {p} {a=c} {b=d}
       (i ** (dimap {f=p} mca id pai, dimap {f=(FreePromonad p)} id mbd fpib))
-
--------------------------------------
--------------------------------------
----- Paranatural transformations ----
--------------------------------------
--------------------------------------
-
--- The following categories are equivalent:
---
---  1) the splice category of `Type` over `(i, j)`
---  2) the category of profunctors `j -> i`, AKA functors `(op(i), j) -> Type`,
---    where `i` and `j` are viewed as discrete categories, and the morphisms
---    are paranatural transformations
---  3) the category of diagonal elements of the profunctor di-represented by
---    `(i, j)`, i.e. `DiYoneda i j`
---  4) the category of polynomial difunctors (endo-profunctors) on
---     `(op(Type), Type)` with position-set `(i, j)` (i.e. contravariant
---     position-set `i` and covariant position-set `j`), with paranatural
---     transformations as morphisms
---
--- (I expect, but have not proven, that the category of profunctors `j -> i`
--- (AKA functors `(op(i), j) -> Type` where `i` and `j` are viewed as
--- discrete categories) with _natural_ transformations, as opposed to the
--- more general _paranatural_ transformations, as morphisms is equivalent to
--- the category of _elements_, as opposed to the category of _diagonal_
--- elements, of the profunctor _represented_, as opposed to _direpresented_, by
--- `(i, j)`, i.e. `PrePostPair i j` (the (contravariant x covariant) Yoneda
--- embedding of `(i, j)`) or `Iso i j` (the (covariant x contravariant) Yoneda
--- embedding of `(i, j`)).  I further expect that it is probably equivalent to
--- the slice category of `Type` over `(i, j)`, and to the category
--- of polynomial difunctors (endo-profunctors) on `Type` with position-set
--- `(i, j)` with _natural_ (not just paranatural) transformations as morphisms.)
---
--- This is analogous to how the following are equivalent:
---
---  1) the slice category of `Type` over `j`
---  2) the category of presheaves over `j`, AKA functors `op(j) -> Type`,
---    where `j` is viewed as a discrete category, and the morphisms
---    are natural transformations
---  3) the category of elements of the presheaf represented by `j`,
---    i.e. the contravariant Yoneda embedding of `j`
---  4) the category of Dirichlet endofunctors on `Type` with position-set `j`
---  5) the opposite of the category of polynomial endofunctors on `Type` with
---     position-set `j`
---
--- And dually:
---
---  1) the coslice category of `Type` over `i`
---  2) the category of copresheaves over `i`, AKA functors `i -> Type`,
---    where `i` is viewed as a discrete category, and the morphisms
---    are natural transformations
---  3) the category of elements of the copresheaf represented by `i`,
---    i.e. the covariant Yoneda embedding of `i`
---  4) the category of Dirichlet endofunctors on `op(Type)` with
---     position-set `i`
---  5) the opposite of the category of polynomial endofunctors on `op(Type)`
---     with position-set `i`
---
--- The splice version unifies the two duals.
---
--- Given an object in a splice category over `(i, j)`, with intermediate
--- object `k`, injection `into : i -> k`, and projection `from : k -> j`,
--- where we shall refer to the composition `from . into : i -> j` as `comp`,
--- we can form objects of other splice categories in the following ways (which
--- are functorial, so we are saying that there are the following functors
--- between splice categories):
---
---  1) Given morphisms `f : x -> i` and `g : j -> y`, we can form an object
---     of the splice category over `(x, y)` with intermediate object `k` by
---     composing `f` before `into` and `g` after `from`.  Note that
---     `(f, g)` is a morphism from `(i, j)` to `(x, y)` in `(op(Type), Type)`.
---     This is the sigma functor between splice categories.  Note that `(f, g)`
---     may equivalently be seen as `DiYoneda x y j i`, or `PrePostPair i j x y`,
---     or `Iso x y i j`.  The intermediate object is still `k`.
-
--- See https://arxiv.org/abs/2307.09289 .
-
--- `DiYonedaEmbed` is sometimes written `yy(i0, i1)` .  It embeds
--- the object `(i0, i1)` of `(op(Type), Type)` into the category
--- whose objects are profunctors `(op(Type), Type) -> Type)` and whose
--- morphisms are _paranatural_ transformations (compare to `DualYonedaEmbed`,
--- where the codomain category's objects are the same, but the morphisms are
--- the more strict _natural_ transformations).
---
--- Note that `DiYonedaEmbed Void i1` is the profunctor which ignores its
--- second argument and acts as `ContravarHomFunc i1` on its first argument,
--- whereas `DiYonedaEmbed i0 Unit` is the profunctor which ignores its first
--- argument and acts as `CovarHomFunc i0` on its second argument.  So
--- `DiYonedaEmbed Void` is effectively the contravariant Yoneda embedding
--- on `Type`, while `flip DiYonedaEmbed Unit` is effectively the covariant
--- Yoneda embedding on `Type`.
-public export
-DiYonedaEmbed : Type -> Type -> ProfunctorSig
-DiYonedaEmbed i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
-
-public export
-[DiYonedaEmbedProf] Profunctor (DiYonedaEmbed i j) where
-  dimap mca mbd (mib, maj) = (mbd . mib, maj . mca)
-
--- The diYoneda lemma asserts a paranatural isomorphism between two objects
--- of the enriching category, one of which is an object of paranatural
--- transformations.  This type is an explicit name for that object on
--- the category `(op(Type), Type)`.
-public export
-DiYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
-DiYonedaLemmaNT p c d = ProfDiNT (flip DiYonedaEmbed c d) p
-
-public export
-DiYonedaLemmaNTPro : Profunctor (DiYonedaLemmaNT p)
-DiYonedaLemmaNTPro = MkProfunctor $
-  \mca, mbd, alpha, i, (mdi, mic) => alpha i (mdi . mbd, mca . mic)
-
--- One direction of the paranatural isomorphism asserted by the
--- diYoneda lemma on `(op(Type), Type)`.
-public export
-DiYonedaLemmaL : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
-  ProfDiNT p (DiYonedaLemmaNT p)
-DiYonedaLemmaL p {isP} i pii j (mij, mji) = dimap {f=p} mji mij pii
-
--- The other direction of the paranatural isomorphism asserted by the
--- diYoneda lemma on `(op(Type), Type)`.
-public export
-DiYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
-  ProfDiNT (DiYonedaLemmaNT p) p
-DiYonedaLemmaR p {isP} i dye = dye i (id {a=i}, id {a=i})
-
--- The di-co-Yoneda lemma asserts a paranatural isomorphism between two objects
--- of the enriching category, one of which is a coend (existential type).
--- This type is an explicit name for that object on the category
--- `(op(Type), Type)`.
-public export
-DiCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
-DiCoYonedaLemmaCoend p i0 i1 =
-  Exists {type=(Type, Type)} $
-    \j => (DiYonedaEmbed i0 i1 (fst j) (snd j), p (snd j) (fst j))
-
-public export
-Profunctor (DiCoYonedaLemmaCoend p) where
-  dimap {a} {b} {c} {d} mca mbd (Evidence ij ((mai, mjb), pij)) =
-    Evidence ij ((mai . mca, mbd . mjb), pij)
-
--- One direction of the paranatural isomorphism asserted by the
--- di-co-Yoneda lemma on `(op(Type), Type)`.
-public export
-DiCoYonedaLemmaL : (0 p : ProfunctorSig) ->
-  ProfDiNT p (DiCoYonedaLemmaCoend p)
-DiCoYonedaLemmaL p i pii = Evidence (i, i) ((id {a=i}, id {a=i}), pii)
-
--- The other direction of the paranatural isomorphism asserted by the
--- di-co-Yoneda lemma on `(op(Type), Type)`.
-public export
-DiCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
-  ProfDiNT (DiCoYonedaLemmaCoend p) p
-DiCoYonedaLemmaR p {isP} i (Evidence j ((mij1, mj0i), pj1j0)) =
-  dimap {f=p} mij1 mj0i pj1j0
-
--- `ProfYonedaEmbed` embeds the object `(i0, i1)` of `(op(Type), Type)` into
--- the category whose objects are profunctors `(op(Type), Type) -> Type)` and
--- whose morphisms are natural transformations.
---
--- Note that `ProfYonedaEmbed Unit b` is the profunctor which ignores its
--- first argument and acts as `CovarHomFunc b` on its second argument, whereas
--- `ProfYonedaEmbed a Void` is the profunctor which ignores its second argument
--- and acts as `ContravarHomFunc a` on its first argument.
-public export
-ProfYonedaEmbed : Type -> Type -> ProfunctorSig
-ProfYonedaEmbed = PrePostPair
-
-public export
-ProfYonedaEmbedProf : Profunctor (PrePostPair s t)
-ProfYonedaEmbedProf = PrePostPairProf
-
--- The Yoneda lemma asserts a natural isomorphism between two objects
--- of the enriching category, one of which is an object of natural
--- transformations.  This type is an explicit name for that object on
--- the category `(op(Type), Type)`.  An analogous type is called
--- `Yoneda/runYoneda` in some Haskell libraries.
-public export
-ProfYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
-ProfYonedaLemmaNT p c d = ProfNT (ProfYonedaEmbed c d) p
-
-public export
-Profunctor (ProfYonedaLemmaNT p) where
-  dimap {a} {b} {c} {d} mca mbd alpha (mac, mdb) = alpha (mca . mac, mdb . mbd)
-
--- One direction of the natural isomorphism asserted by the Yoneda lemma
--- on `(op(Type), Type)`.  This is called `toProYo` in another context.
-public export
-ProfYonedaLemmaL : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
-  ProfNT p (ProfYonedaLemmaNT p)
-ProfYonedaLemmaL p {isP} {a=i} {b=j} pij {a} {b} (mai, mjb) =
-  dimap {f=p} {a=i} {b=j} {c=a} {d=b} mai mjb pij
-
--- The other direction of the natural isomorphism asserted by the Yoneda lemma
--- on `(op(Type), Type)`.  This is called `fromProYo` in another context.
-public export
-ProfYonedaLemmaR : (0 p : ProfunctorSig) ->
-  ProfNT (ProfYonedaLemmaNT p) p
-ProfYonedaLemmaR p dyembed {a=i} {b=j} = dyembed (id {a=i}, id {a=j})
-
--- The co-Yoneda lemma asserts a natural isomorphism between two objects
--- of the enriching category, one of which is a coend (existential type).
--- This type is an explicit name for that object on the category
--- `(op(Type), Type)`.  An analogous type is called `CoYoneda` in some
--- Haskell libraries.
-public export
-ProfCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
-ProfCoYonedaLemmaCoend p c d =
-  Exists {type=(Type, Type)} $
-    \ab => (ProfYonedaEmbed d c (snd ab) (fst ab), p (fst ab) (snd ab))
-
-public export
-Profunctor (ProfCoYonedaLemmaCoend p) where
-  dimap {a} {b} {c} {d} mca mbd (Evidence ij ((mjb, mai), pij)) =
-    Evidence ij ((mbd . mjb, mai . mca), pij)
-
--- One direction of the natural isomorphism asserted by the co-Yoneda lemma
--- on `(op(Type), Type)`.  This is called `toCoProYo` in another context.
-public export
-ProfCoYonedaLemmaL : (0 p : ProfunctorSig) ->
-  ProfNT p (ProfCoYonedaLemmaCoend p)
-ProfCoYonedaLemmaL p {a} {b} pab = Evidence (a, b) ((id {a=b}, id {a}), pab)
-
--- One direction of the natural isomorphism asserted by the co-Yoneda lemma
--- on `(op(Type), Type)`.  This is called `fromCoProYo` in another context.
-public export
-ProfCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
-  ProfNT (ProfCoYonedaLemmaCoend p) p
-ProfCoYonedaLemmaR p {isP} {a=c} {b=d} (Evidence ab ((mbd, mca), pab)) =
-  dimap {f=p} mca mbd pab
-
---------------------------------
---------------------------------
----- Categories of elements ----
---------------------------------
---------------------------------
-
----------------------------------------------------------------------
----- Categories of structures / diagonal elements of profunctors ----
----------------------------------------------------------------------
-
--- The category of diagonal elements of `p` is also called the category of
--- `p`-structures.  See https://arxiv.org/abs/2307.09289.
---
--- Note that if `p : ProfunctorSig` is `DiYonedaEmbed i j` for
--- some `i, j : Type`, then `ProfCatDiagElemObj p` is
--- `(a : Type ** (i -> a, a -> j))`, which is precisely the definition of
--- a splice object between `i` and `j` (i.e. an object of the category
--- `i/Type/j`).
---
--- If `p` is `DiYonedaEmbed Void j` for some `j : Type`, then
--- `p` is naturally isomorphic to `ContravarHomFunc j`, and
--- `ProfCatDiagElemObj p` is isomorphic to `SliceObj j`.
---
--- If `p` is `DiYonedaEmbed i Unit` for some `i : Type`, then
--- `p` is naturally isomorphic to `CovarHomFunc i`, and
--- `ProfCatDiagElemObj p` is isomorphic to `CosliceObj i`.
-public export
-ProfCatDiagElemObj : ProfunctorSig -> Type
-ProfCatDiagElemObj = CoendBase -- (a : Type ** p a a)
-
--- Note that if `p : ProfunctorSig` is `DiYonedaEmbed i j` for
--- some `i, j : Type`, and `spl` and `spl'` are morphisms of the
--- splice category `i/Type/j`, then `ProfCatDiagElemDomMorph {p} spl spl'` is
--- the signature of the morphism underlying a splice morphism from
--- `spl` to `spl'` (without the commutativity condition).
-public export
-ProfCatDiagElemDomMorph : {0 p : ProfunctorSig} ->
-  ProfCatDiagElemObj p -> ProfCatDiagElemObj p -> Type
-ProfCatDiagElemDomMorph {p} paa pbb = fst paa -> fst pbb
-
--- Note that if `p : ProfunctorSig` is `DiYonedaEmbed i j` for
--- some `i, j : Type`, and `spl` and `spl'` are morphisms of the
--- splice category `i/Type/j`, and `m` has the signature of a morphism
--- underlying a splice morphism from `spl` to `spl'` in `i/Type/j`,
--- then `ProfCatDiagElemDomMorph {p} spl spl' m` is
--- precisely the commutativity condition for `m` to constitute a
--- splice morphism (from `spl` to `spl'`):  it asserts the equality of
--- a pair of pairs of morphisms, and hence, equivalently, a pair of
--- equalities of morphisms, where each equality is the commutativity
--- condition for one of the two triangles in the splice-morphism diagram.
-public export
-0 ProfCatDiagElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
-  {paa, pbb : ProfCatDiagElemObj p} ->
-  ProfCatDiagElemDomMorph {p} paa pbb -> Type
-ProfCatDiagElemCommutes {p} {isP} {paa} {pbb} mab =
-  rmap {f=p} mab (snd paa) = lmap {f=p} mab (snd pbb)
-
--- As a consequence of the previous notes,
--- `ProfCatDiagElemMorph {p=(DiYonedaEmbed i j)} spl spl'`
--- is precisely the type of splice morphisms from `spl` to `spl'`.
--- Hence the category of diagonal elements of `DiYonedaEmbed i j` is
--- equivalent to the splice category `i/Type/j`.
-public export
-ProfCatDiagElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
-  ProfCatDiagElemObj p -> ProfCatDiagElemObj p -> Type
-ProfCatDiagElemMorph {p} {isP} paa pbb =
-  Subset0
-    (ProfCatDiagElemDomMorph {p} paa pbb)
-    (ProfCatDiagElemCommutes {p} {isP} {paa} {pbb})
-
------------------------------------------------
----- Categories of elements of profunctors ----
------------------------------------------------
-
--- A profunctor `Type -> Type` is a functor `op(Type) -> Type -> Type`,
--- so its category of elements consists of objects of `(op(Type), Type)`
--- together with elements of the profunctor applied to them.
---
--- Note that a covariant functor `Type -> Type` is a special case of a
--- profunctor which ignores its first argument, and a contravariant functor
--- `op(Type) -> Type` is a special case of a profunctor which ignores its
--- second argument.  In particular, a covariant representable
--- `p _ x = CovarHom i x` has the coslice category
--- `i/Type` as its category of elements, and a contravariant representable
--- `p x _ = ContravarHom j x` has the slice category `Type/j` as its
--- category of elements.  The hom-profunctor has the twisted-arrow category as
--- its category of elements.
---
--- The contravariant profunctor `SliceObj` has as its category of elements
--- the category of polynomial endofunctors on `Type`.  Dually, the covariant
--- profunctor `CosliceObj` has as its category of elements the category of
--- Dirichlet endofunctors on `Type`.  Those categories have the same objects,
--- which correspond to the "arenas" of such endofunctors (that is why the
--- same data determine polynomial endofunctors and Dirichlet endofunctors),
--- but different morphisms (meaning that polynomial endofunctors and Dirichlet
--- endofunctors have different natural transformations for the same arenas).
-public export
-ProfCatElemObj : ProfunctorSig -> Type
-ProfCatElemObj p = (ab : (Type, Type) ** p (fst ab) (snd ab))
-
--- Because the domain of an endo-profunctor on `Type` is `(op(Type), Type)`,
--- the morphism component of a morphism in its category of elements is a
--- morphism in `(op(Type), Type)`, which is a `PrePostPair`.
---
--- (Besides a morphism in the functor's domain, a morphism in the category of
--- elements also has an equality/commutativity component.)
-public export
-ProfCatElemDomMorph : {0 p : ProfunctorSig} ->
-  ProfCatElemObj p -> ProfCatElemObj p -> Type
-ProfCatElemDomMorph {p} pab pcd =
-  PrePostPair (fst (fst pab)) (snd (fst pab)) (fst (fst pcd)) (snd (fst pcd))
-
-public export
-0 ProfCatElemCommutes : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
-  (pab, pcd : ProfCatElemObj p) -> ProfCatElemDomMorph {p} pab pcd -> Type
-ProfCatElemCommutes {p} {isP} pab pcd mcabd =
-  dimap {f=p} (fst mcabd) (snd mcabd) (snd pab) = snd pcd
-
-public export
-ProfCatElemMorph : {0 p : ProfunctorSig} -> {0 isP : Profunctor p} ->
-  ProfCatElemObj p -> ProfCatElemObj p -> Type
-ProfCatElemMorph {p} {isP} pab pcd =
-  Subset0
-    (ProfCatElemDomMorph {p} pab pcd)
-    (ProfCatElemCommutes {p} {isP} pab pcd)
 
 ----------------------------
 ----------------------------
