@@ -218,7 +218,7 @@ IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
 
 public export
 IntRelYonedaEmbed : (0 d, c : Type) ->
-  (rel, rel' : IntProfunctorSig d c) -> d -> c -> IntProfunctorSig d c
+  (relop, rel : IntProfunctorSig d c) -> d -> c -> IntProfunctorSig d c
 IntRelYonedaEmbed d c relop rel i0 i1 j0 j1 = (relop j0 i1, rel i0 j1)
 
 -- Suppose that `c` is a type of objects of a category internal to `Type`,
