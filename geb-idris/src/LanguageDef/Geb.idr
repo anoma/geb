@@ -177,11 +177,67 @@ import LanguageDef.PolyIndTypes
 --     and to define languages as extensions of, or using components of, Geb
 --     itself.
 
--------------------------------------
--------------------------------------
----- Paranatural transformations ----
--------------------------------------
--------------------------------------
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+---- Internal pro-/di-functors and (para-)natural transformations ----
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+
+-- The convention we use is that the first parameter (here, `d`) is the
+-- contravariant parameter, and the second parameter (`here, `c`) is
+-- the covariant parameter.  This is sometimes written as `c -/-> d`,
+-- and sometimes called a "correspondence from" `d` to `c`.
+-- Since `Cat` is cartesian closed, it may be viewed as a functor
+-- `c -> presheaves(d)`, or equivalently as a functor
+-- `op(d) -> copresheaves(c)`.  See
+-- https://en.wikipedia.org/wiki/Profunctor#Definition and
+-- https://ncatlab.org/nlab/show/profunctor#definition.
+public export
+IntProfunctorSig : (d, c : Type) -> Type
+IntProfunctorSig d c = d -> c -> Type
+
+public export
+IntDifunctorSig : (c : Type) -> Type
+IntDifunctorSig c = IntProfunctorSig c c
+
+public export
+IntProfNTSig : (d, c : Type) ->
+  (p, q : IntProfunctorSig d c) -> Type
+IntProfNTSig d c p q = (a : d) -> (b : c) -> p a b -> q a b
+
+-- This is the internal generalization (it is a generalization because
+-- `Type` is internal to `Type) of`PrePostPair`.
+public export
+IntProfYonedaEmbed : (0 d, c : Type) ->
+  (dm : IntDifunctorSig d) -> (cm : IntDifunctorSig c) ->
+  d -> c -> IntProfunctorSig d c
+IntProfYonedaEmbed d c dm cm s t a b = (dm a s, cm t b)
+
+public export
+IntRelYonedaEmbed : (0 d, c : Type) ->
+  (rel : IntProfunctorSig d c) -> d -> c -> IntProfunctorSig d c
+IntRelYonedaEmbed d c rel i0 i1 j0 j1 = (rel i0 j1, rel j0 i1)
+
+-- Suppose that `c` is a type of objects of a category internal to `Type`,
+-- and `mor` is a type dependent on pairs of terms of `c` (we could also
+-- express it dually as a `Type` together with morphisms `dom` and `cod` to
+-- `c`), which we interpret as _some_ morphisms of the category but not
+-- necessarily all.  Then `IntDiYonedaEmbed c mor` is the diYoneda embedding
+-- of the product of the opposite of the internal category and the internal
+-- category itself (`op(Type) x Type`) into the category whose objects are
+-- profunctors on the internal category -- that is, functors
+-- `op(c) -> c -> Type` -- and whose morphisms are paranatural
+-- transformations.
+public export
+IntDiYonedaEmbed : (0 c : Type) ->
+  (mor : IntDifunctorSig c) -> c -> c -> IntDifunctorSig c
+IntDiYonedaEmbed c = IntRelYonedaEmbed c c
+
+-----------------------------------------------
+-----------------------------------------------
+---- Paranatural transformations on `Type` ----
+-----------------------------------------------
+-----------------------------------------------
 
 -- The following categories are equivalent:
 --
@@ -267,9 +323,13 @@ import LanguageDef.PolyIndTypes
 -- `DiYonedaEmbed Void` is effectively the contravariant Yoneda embedding
 -- on `Type`, while `flip DiYonedaEmbed Unit` is effectively the covariant
 -- Yoneda embedding on `Type`.
+
+-- `Type` itself is a category internal to `Type`, so we may define the
+-- diYoneda embedding of `Type` as a specialization of the internal diYoneda
+-- embedding with `Type` as `obj` and `HomProf` as `mor`.
 public export
 DiYonedaEmbed : Type -> Type -> ProfunctorSig
-DiYonedaEmbed i0 i1 j0 j1 = (i0 -> j1, j0 -> i1)
+DiYonedaEmbed = IntDiYonedaEmbed Type HomProf
 
 public export
 [DiYonedaEmbedProf] Profunctor (DiYonedaEmbed i j) where
