@@ -206,7 +206,10 @@ IntProfNTSig : (d, c : Type) ->
 IntProfNTSig d c p q = (a : d) -> (b : c) -> p a b -> q a b
 
 -- This is the internal generalization (it is a generalization because
--- `Type` is internal to `Type) of`PrePostPair`.
+-- `Type` is internal to `Type`) of`PrePostPair`.  As such, it is the
+-- (covariant) Yoneda embedding of `(op(d), c)` into the category of
+-- `Type`-internal profunctors ("prosheaves") `op(d) -> c -> Type`.
+-- That is, `IntProfYonedaEmbed d c dmor cmor s t` is `Hom((s, t), (-, _))`.
 public export
 IntProfYonedaEmbed : (0 d, c : Type) ->
   (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
@@ -215,8 +218,8 @@ IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
 
 public export
 IntRelYonedaEmbed : (0 d, c : Type) ->
-  (rel : IntProfunctorSig d c) -> d -> c -> IntProfunctorSig d c
-IntRelYonedaEmbed d c rel i0 i1 j0 j1 = (rel i0 j1, rel j0 i1)
+  (rel, rel' : IntProfunctorSig d c) -> d -> c -> IntProfunctorSig d c
+IntRelYonedaEmbed d c rel relop i0 i1 j0 j1 = (rel i0 j1, relop j0 i1)
 
 -- Suppose that `c` is a type of objects of a category internal to `Type`,
 -- and `mor` is a type dependent on pairs of terms of `c` (we could also
@@ -231,7 +234,7 @@ IntRelYonedaEmbed d c rel i0 i1 j0 j1 = (rel i0 j1, rel j0 i1)
 public export
 IntDiYonedaEmbed : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> c -> c -> IntDifunctorSig c
-IntDiYonedaEmbed c = IntRelYonedaEmbed c c
+IntDiYonedaEmbed c mor = IntRelYonedaEmbed c c mor mor
 
 -----------------------------------------------
 -----------------------------------------------
