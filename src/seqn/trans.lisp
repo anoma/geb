@@ -26,7 +26,7 @@ and skip 0es, making non-zero entries into wires"
          (wires (loop for i from 1 to wire-count
                       collect (vamp:make-wire
                                :var (intern
-                                     (format nil "X~a" (- wire-count i))
+                                     (format nil "in~a" (- wire-count i))
                                      :keyword)))))
     (list
      (vamp:make-alias
@@ -46,14 +46,18 @@ and skip 0es, making non-zero entries into wires"
 
 (defun test-call (circuit)
   "Given a compiled VampIR function with name foo and arguments x1...xn prints
-an equality as foo x1 ... xn = y"
-  (let ((inputs (vamp:inputs circuit))
-        (name   (vamp:name circuit)))
-    (list (vamp:make-equality
-           :lhs (if (zerop (length inputs))
-                    (vamp:make-wire :var name)
-                    (vamp:make-application :func name :arguments inputs))
-           :rhs (vamp:make-wire :var :y)))))
+an equality as foo in1 ... in2 = out"
+  (let* ((inputs (vamp:inputs circuit))
+         (name   (vamp:name circuit)))
+    (flet ((app (x) (vamp:make-application :func name :arguments x)))
+      (list (vamp:make-equality
+             :lhs (cond ((zerop (length inputs))
+                         (vamp:make-wire :var name))
+                        ((= (length inputs) 1)
+                         (app (list (vamp:make-wire :var :in))))
+                        (t
+                         (app inputs)))
+             :rhs (vamp:make-wire :var :out))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SeqN to Vamp-IR Compilation
