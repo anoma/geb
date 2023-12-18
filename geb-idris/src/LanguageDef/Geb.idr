@@ -227,8 +227,8 @@ public export
 IntProfNTSig d c p q = (0 a : d) -> (0 b : c) -> p a b -> q a b
 
 public export
-0 IntProfDiNTSig : (0 c : Type) -> (0 p, q : IntDifunctorSig c) -> Type
-IntProfDiNTSig c p q = (0 a : c) -> p a a -> q a a
+0 IntDiNTSig : (0 c : Type) -> (0 p, q : IntDifunctorSig c) -> Type
+IntDiNTSig c p q = (0 a : c) -> p a a -> q a a
 
 -- This is the internal generalization (it is a generalization because
 -- `Type` is internal to `Type`) of`PrePostPair`.  As such, it is the
