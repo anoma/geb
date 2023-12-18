@@ -222,13 +222,18 @@ IntDimapSig d c dmor cmor p =
   dmor a s -> cmor t b -> p s t -> p a b
 
 public export
-0 IntProfNTSig : (0 d, c : Type) ->
-  (0 p, q : IntProfunctorSig d c) -> Type
-IntProfNTSig d c p q = (0 a : d) -> (0 b : c) -> p a b -> q a b
+0 IntEndoDimapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  IntDifunctorSig c -> Type
+IntEndoDimapSig c mor = IntDimapSig c c mor mor
 
 public export
-0 IntDiNTSig : (0 c : Type) -> (0 p, q : IntDifunctorSig c) -> Type
-IntDiNTSig c p q = (0 a : c) -> p a a -> q a a
+0 IntProfNTSig : (0 d, c : Type) ->
+  (0 p, q : IntProfunctorSig d c) -> Type
+IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
+
+public export
+IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
+IntDiNTSig c p q = (x : c) -> p x x -> q x x
 
 -- This is the internal generalization (it is a generalization because
 -- `Type` is internal to `Type`) of`PrePostPair`.  As such, it is the
@@ -268,9 +273,27 @@ IntDiYonedaEmbed c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
 public export
 IntDiYonedaEmbedDimap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
-  (0 s, t : c) -> IntDimapSig c c mor mor (IntDiYonedaEmbed c mor s t)
+  (0 s, t : c) -> IntEndoDimapSig c mor (IntDiYonedaEmbed c mor s t)
 IntDiYonedaEmbedDimap c mor comp s t a b i j
   cmia cmbj (cmat, cmsb) = (comp i a t cmat cmia, comp s b j cmbj cmsb)
+
+-- The diYoneda lemma asserts a paranatural isomorphism between two objects
+-- of the enriching category, one of which is an object of paranatural
+-- transformations.  This type is an explicit name for that object on
+-- the category `(op(Type), Type)`.
+public export
+IntDiYonedaLemmaNT : (c : Type) -> (mor, p : IntDifunctorSig c) ->
+  IntDifunctorSig c
+IntDiYonedaLemmaNT c mor p i j =
+  IntDiNTSig c (flip (IntDiYonedaEmbed c mor) i j) p
+
+public export
+IntDiYonedaLemmaNTDimap : (0 c : Type) ->
+  (0 mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (0 p : IntDifunctorSig c) ->
+  IntEndoDimapSig c mor (IntDiYonedaLemmaNT c mor p)
+IntDiYonedaLemmaNTDimap c mor comp p s t a b mas mtb embed i (mia, mbi) =
+  embed i (comp i a s mas mia, comp t b i mbi mtb)
 
 -----------------------------------------------
 -----------------------------------------------
@@ -380,12 +403,12 @@ public export
 -- the category `(op(Type), Type)`.
 public export
 DiYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
-DiYonedaLemmaNT p c d = ProfDiNT (flip DiYonedaEmbed c d) p
+DiYonedaLemmaNT = IntDiYonedaLemmaNT Type HomProf
 
 public export
 DiYonedaLemmaNTPro : Profunctor (DiYonedaLemmaNT p)
-DiYonedaLemmaNTPro = MkProfunctor $
-  \mca, mbd, alpha, i, (mic, mdi) => alpha i (mca . mic, mdi . mbd)
+DiYonedaLemmaNTPro {p} = MkProfunctor $
+  IntDiYonedaLemmaNTDimap Type HomProf (\_, _, _ => (.)) p _ _ _ _
 
 -- One direction of the paranatural isomorphism asserted by the
 -- diYoneda lemma on `(op(Type), Type)`.
