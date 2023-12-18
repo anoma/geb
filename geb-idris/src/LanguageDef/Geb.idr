@@ -193,28 +193,29 @@ import LanguageDef.PolyIndTypes
 -- https://en.wikipedia.org/wiki/Profunctor#Definition and
 -- https://ncatlab.org/nlab/show/profunctor#definition.
 public export
-IntProfunctorSig : (d, c : Type) -> Type
+0 IntProfunctorSig : (0 d, c : Type) -> Type
 IntProfunctorSig d c = d -> c -> Type
 
 public export
-IntDifunctorSig : (c : Type) -> Type
+0 IntDifunctorSig : (0 c : Type) -> Type
 IntDifunctorSig c = IntProfunctorSig c c
 
 public export
-IntDimapSig : (d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+0 IntDimapSig : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   IntProfunctorSig d c -> Type
-IntDimapSig d c dmor cmor p = (s : d) -> (t : c) -> (a : d) -> (b : c) ->
+IntDimapSig d c dmor cmor p =
+  (0 s : d) -> (0 t : c) -> (0 a : d) -> (0 b : c) ->
   dmor a s -> cmor t b -> p s t -> p a b
 
 public export
-IntProfNTSig : (d, c : Type) ->
-  (p, q : IntProfunctorSig d c) -> Type
-IntProfNTSig d c p q = (a : d) -> (b : c) -> p a b -> q a b
+0 IntProfNTSig : (0 d, c : Type) ->
+  (0 p, q : IntProfunctorSig d c) -> Type
+IntProfNTSig d c p q = (0 a : d) -> (0 b : c) -> p a b -> q a b
 
 public export
-IntProfDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
-IntProfDiNTSig c p q = (a : c) -> p a a -> q a a
+0 IntProfDiNTSig : (0 c : Type) -> (0 p, q : IntDifunctorSig c) -> Type
+IntProfDiNTSig c p q = (0 a : c) -> p a a -> q a a
 
 -- This is the internal generalization (it is a generalization because
 -- `Type` is internal to `Type`) of`PrePostPair`.  As such, it is the
@@ -229,10 +230,10 @@ IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
 
 public export
 IntProfYonedaEmbedDimap : (0 d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  (dcomp : (x, y, z : d) -> dmor y z -> dmor x y -> dmor x z) ->
-  (ccomp : (x, y, z : c) -> cmor y z -> cmor x y -> cmor x z) ->
-  (s : d) -> (t : c) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (dcomp : (0 x, y, z : d) -> dmor y z -> dmor x y -> dmor x z) ->
+  (ccomp : (0 x, y, z : c) -> cmor y z -> cmor x y -> cmor x z) ->
+  (0 s : d) -> (0 t : c) ->
   IntDimapSig d c dmor cmor (IntProfYonedaEmbed d c dmor cmor s t)
 IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
   dmia cmbj (dmas, cmtb) = (dcomp i a s dmas dmia, ccomp t b j cmbj cmtb)
@@ -253,9 +254,9 @@ IntDiYonedaEmbed : (0 c : Type) ->
 IntDiYonedaEmbed c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
 
 public export
-IntDiYonedaEmbedDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : (x, y, z : c) -> mor y z -> mor x y -> mor x z) ->
-  (s, t : c) -> IntDimapSig c c mor mor (IntDiYonedaEmbed c mor s t)
+IntDiYonedaEmbedDimap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (comp : (0 x, y, z : c) -> mor y z -> mor x y -> mor x z) ->
+  (0 s, t : c) -> IntDimapSig c c mor mor (IntDiYonedaEmbed c mor s t)
 IntDiYonedaEmbedDimap c mor comp s t a b i j
   cmia cmbj (cmat, cmsb) = (comp i a t cmat cmia, comp s b j cmbj cmsb)
 
@@ -359,7 +360,7 @@ DiYonedaEmbed = IntDiYonedaEmbed Type HomProf
 
 public export
 [DiYonedaEmbedProf] Profunctor (DiYonedaEmbed i j) where
-  dimap mca mbd (maj, mib) = (maj . mca, mbd . mib)
+  dimap = IntDiYonedaEmbedDimap Type HomProf (\_, _, _ => (.)) _ _ _ _ _ _
 
 -- The diYoneda lemma asserts a paranatural isomorphism between two objects
 -- of the enriching category, one of which is an object of paranatural
