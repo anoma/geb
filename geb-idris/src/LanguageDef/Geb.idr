@@ -241,33 +241,9 @@ IntDiNTSig c p q = (x : c) -> p x x -> q x x
 
 --------------------------------------------------------
 --------------------------------------------------------
----- Internal (pro/di-Yoneda) emebddings and lemmas ----
+---- Internal (di/pro-Yoneda) emebddings and lemmas ----
 --------------------------------------------------------
 --------------------------------------------------------
-
----------------------------------------------------------------
----- Pro-Yoneda (simultaneous covariant and contravariant) ----
----------------------------------------------------------------
-
--- This is the internal generalization (it is a generalization because
--- `Type` is internal to `Type`) of`PrePostPair`.  As such, it is the
--- (covariant) Yoneda embedding of `(op(d), c)` into the category of
--- `Type`-internal profunctors ("prosheaves") `op(d) -> c -> Type`.
--- That is, `IntProfYonedaEmbed d c dmor cmor s t` is `Hom((s, t), (-, _))`.
-public export
-IntProfYonedaEmbed : (0 d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  d -> c -> IntProfunctorSig d c
-IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
-
-public export
-IntProfYonedaEmbedDimap : (0 d, c : Type) ->
-  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
-  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
-  (0 s : d) -> (0 t : c) ->
-  IntDimapSig d c dmor cmor (IntProfYonedaEmbed d c dmor cmor s t)
-IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
-  dmia cmbj (dmas, cmtb) = (dcomp i a s dmas dmia, ccomp t b j cmbj cmtb)
 
 ---------------------------------
 ---- di-Yoneda (paranatural) ----
@@ -346,11 +322,35 @@ IntDiYonedaLemmaCoendBaseDimap c mor comp p s t a b mas mtb
   (Evidence ij ((mit, msj), pji)) =
     Evidence ij ((comp (fst ij) t b mtb mit, comp a s (snd ij) msj mas), pji)
 
------------------------------------------------
------------------------------------------------
----- Paranatural transformations on `Type` ----
------------------------------------------------
------------------------------------------------
+---------------------------------------------------------------
+---- Pro-Yoneda (simultaneous covariant and contravariant) ----
+---------------------------------------------------------------
+
+-- This is the internal generalization (it is a generalization because
+-- `Type` is internal to `Type`) of`PrePostPair`.  As such, it is the
+-- (covariant) Yoneda embedding of `(op(d), c)` into the category of
+-- `Type`-internal profunctors ("prosheaves") `op(d) -> c -> Type`.
+-- That is, `IntProfYonedaEmbed d c dmor cmor s t` is `Hom((s, t), (-, _))`.
+public export
+IntProfYonedaEmbed : (0 d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  d -> c -> IntProfunctorSig d c
+IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
+
+public export
+IntProfYonedaEmbedDimap : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (0 s : d) -> (0 t : c) ->
+  IntDimapSig d c dmor cmor (IntProfYonedaEmbed d c dmor cmor s t)
+IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
+  dmia cmbj (dmas, cmtb) = (dcomp i a s dmas dmia, ccomp t b j cmbj cmtb)
+
+--------------------------------------------------
+--------------------------------------------------
+---- (Para-)natural transformations on `Type` ----
+--------------------------------------------------
+--------------------------------------------------
 
 -- The following categories are equivalent:
 --
@@ -437,6 +437,10 @@ IntDiYonedaLemmaCoendBaseDimap c mor comp p s t a b mas mtb
 -- on `Type`, while `flip DiYonedaEmbed Unit` is effectively the covariant
 -- Yoneda embedding on `Type`.
 
+---------------------------------
+---- di-Yoneda (paranatural) ----
+---------------------------------
+
 -- `Type` itself is a category internal to `Type`, so we may define the
 -- diYoneda embedding of `Type` as a specialization of the internal diYoneda
 -- embedding with `Type` as `obj` and `HomProf` as `mor`.
@@ -519,6 +523,10 @@ DiCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
   ProfDiNT (DiCoYonedaLemmaCoend p) p
 DiCoYonedaLemmaR p {isP} i (Evidence j ((mj0i, mij1), pj1j0)) =
   dimap {f=p} mij1 mj0i pj1j0
+
+---------------------------------------------------------------
+---- Pro-Yoneda (simultaneous covariant and contravariant) ----
+---------------------------------------------------------------
 
 -- `ProfYonedaEmbed` embeds the object `(i0, i1)` of `(op(Type), Type)` into
 -- the category whose objects are profunctors `(op(Type), Type) -> Type)` and
