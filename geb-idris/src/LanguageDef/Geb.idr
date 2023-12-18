@@ -320,6 +320,15 @@ IntDiYonedaLemmaR : (0 c : Type) ->
   IntDiNTSig c (IntDiYonedaLemmaNT c mor p) p
 IntDiYonedaLemmaR c mor cid p i embed = embed i (cid i, cid i)
 
+-- The di-co-Yoneda lemma asserts a paranatural isomorphism between two objects
+-- of the enriching category, one of which is a coend (existential type).
+public export
+IntDiCoYonedaLemmaCoendBase : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (p : IntDifunctorSig c) -> IntDifunctorSig c
+IntDiCoYonedaLemmaCoendBase c mor p i j =
+  Exists {type=(c, c)} $ \xy =>
+    (IntDiYonedaEmbed c mor i j (fst xy) (snd xy), flip p (fst xy) (snd xy))
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Paranatural transformations on `Type` ----
@@ -473,9 +482,7 @@ DiYonedaLemmaR = IntDiYonedaLemmaR Type HomProf typeId
 -- `(op(Type), Type)`.
 public export
 DiCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
-DiCoYonedaLemmaCoend p i0 i1 =
-  Exists {type=(Type, Type)} $
-    \j => (DiYonedaEmbed i0 i1 (fst j) (snd j), p (snd j) (fst j))
+DiCoYonedaLemmaCoend = IntDiCoYonedaLemmaCoendBase Type HomProf
 
 public export
 Profunctor (DiCoYonedaLemmaCoend p) where
