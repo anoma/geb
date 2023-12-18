@@ -329,6 +329,15 @@ IntDiCoYonedaLemmaCoendBase c mor p i j =
   Exists {type=(c, c)} $ \xy =>
     (IntDiYonedaEmbed c mor i j (fst xy) (snd xy), flip p (fst xy) (snd xy))
 
+public export
+IntDiYonedaLemmaCoendBaseDimap : (0 c : Type) ->
+  (0 mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (0 p : IntDifunctorSig c) ->
+  IntEndoDimapSig c mor (IntDiCoYonedaLemmaCoendBase c mor p)
+IntDiYonedaLemmaCoendBaseDimap c mor comp p s t a b mas mtb
+  (Evidence ij ((mit, msj), pji)) =
+    Evidence ij ((comp (fst ij) t b mtb mit, comp a s (snd ij) msj mas), pji)
+
 -----------------------------------------------
 -----------------------------------------------
 ---- Paranatural transformations on `Type` ----
@@ -486,8 +495,7 @@ DiCoYonedaLemmaCoend = IntDiCoYonedaLemmaCoendBase Type HomProf
 
 public export
 Profunctor (DiCoYonedaLemmaCoend p) where
-  dimap {a} {b} {c} {d} mca mbd (Evidence ij ((mib, maj), pji)) =
-    Evidence ij ((mbd . mib, maj . mca), pji)
+  dimap {p} = IntDiYonedaLemmaCoendBaseDimap Type HomProf typeComp p _ _ _ _
 
 -- One direction of the paranatural isomorphism asserted by the
 -- di-co-Yoneda lemma on `(op(Type), Type)`.
