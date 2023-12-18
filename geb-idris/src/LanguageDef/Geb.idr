@@ -239,11 +239,15 @@ public export
 IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
 IntDiNTSig c p q = (x : c) -> p x x -> q x x
 
--------------------------------
--------------------------------
----- Internal Yoneda lemma ----
--------------------------------
--------------------------------
+--------------------------------------------------------
+--------------------------------------------------------
+---- Internal (pro/di-Yoneda) emebddings and lemmas ----
+--------------------------------------------------------
+--------------------------------------------------------
+
+---------------------------------------------------------------
+---- Pro-Yoneda (simultaneous covariant and contravariant) ----
+---------------------------------------------------------------
 
 -- This is the internal generalization (it is a generalization because
 -- `Type` is internal to `Type`) of`PrePostPair`.  As such, it is the
@@ -264,6 +268,10 @@ IntProfYonedaEmbedDimap : (0 d, c : Type) ->
   IntDimapSig d c dmor cmor (IntProfYonedaEmbed d c dmor cmor s t)
 IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
   dmia cmbj (dmas, cmtb) = (dcomp i a s dmas dmia, ccomp t b j cmbj cmtb)
+
+---------------------------------
+---- di-Yoneda (paranatural) ----
+---------------------------------
 
 -- Suppose that `c` is a type of objects of a category internal to `Type`,
 -- and `mor` is a type dependent on pairs of terms of `c` (we could also
