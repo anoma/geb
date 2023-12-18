@@ -237,25 +237,6 @@ IntProfYonedaEmbedDimap : (0 d, c : Type) ->
 IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
   dmia cmbj (dmas, cmtb) = (dcomp i a s dmas dmia, ccomp t b j cmbj cmtb)
 
--- Merge two profunctors going in opposite directions (between `d` and `c`)
--- into an embedding of `(op(d), c)` into its category of prosheaves.
-public export
-IntBidirProfEmbed : (0 d, c : Type) ->
-  (relop : IntProfunctorSig c d) -> (rel : IntProfunctorSig d c) ->
-  d -> c -> IntProfunctorSig d c
-IntBidirProfEmbed d c relop rel i0 i1 j0 j1 = (relop i1 j0, rel i0 j1)
-
-public export
-IntBidirProfEmbedDimap : (0 d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  (dcomp : (x, y, z : d) -> dmor y z -> dmor x y -> dmor x z) ->
-  (ccomp : (x, y, z : c) -> cmor y z -> cmor x y -> cmor x z) ->
-  (relop : IntProfunctorSig c d) -> (rel : IntProfunctorSig d c) ->
-  (s : d) -> (t : c) ->
-  IntDimapSig d c dmor cmor (IntBidirProfEmbed d c relop rel s t)
-IntBidirProfEmbedDimap d c dmor cmor dcomp ccomp relop rel s t a b i j
-  dmia cmbj (dmas, cmtb) = ?IntBidirProfEmbedDimap_hole
-
 -- Suppose that `c` is a type of objects of a category internal to `Type`,
 -- and `mor` is a type dependent on pairs of terms of `c` (we could also
 -- express it dually as a `Type` together with morphisms `dom` and `cod` to
@@ -269,7 +250,15 @@ IntBidirProfEmbedDimap d c dmor cmor dcomp ccomp relop rel s t a b i j
 public export
 IntDiYonedaEmbed : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> c -> c -> IntDifunctorSig c
-IntDiYonedaEmbed c mor = IntBidirProfEmbed c c (flip mor) mor
+IntDiYonedaEmbed c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
+
+public export
+IntDiYonedaEmbedDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : (x, y, z : c) -> mor y z -> mor x y -> mor x z) ->
+  (s, t : c) ->
+  IntDimapSig c c mor mor (IntDiYonedaEmbed c mor s t)
+IntDiYonedaEmbedDimap c mor comp s t a b i j
+  cmia cmbj (cmat, cmsb) = (comp i a t cmat cmia, comp s b j cmbj cmsb)
 
 -----------------------------------------------
 -----------------------------------------------
