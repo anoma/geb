@@ -205,7 +205,7 @@ IntDimapSig : (d, c : Type) ->
   (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
   IntProfunctorSig d c -> Type
 IntDimapSig d c dmor cmor p = (s : d) -> (t : c) -> (a : d) -> (b : c) ->
-  (dmor a s) -> (cmor t b) -> p s t -> p a b
+  dmor a s -> cmor t b -> p s t -> p a b
 
 public export
 IntProfNTSig : (d, c : Type) ->
@@ -255,8 +255,7 @@ IntDiYonedaEmbed c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
 public export
 IntDiYonedaEmbedDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : (x, y, z : c) -> mor y z -> mor x y -> mor x z) ->
-  (s, t : c) ->
-  IntDimapSig c c mor mor (IntDiYonedaEmbed c mor s t)
+  (s, t : c) -> IntDimapSig c c mor mor (IntDiYonedaEmbed c mor s t)
 IntDiYonedaEmbedDimap c mor comp s t a b i j
   cmia cmbj (cmat, cmsb) = (comp i a t cmat cmia, comp s b j cmbj cmsb)
 
