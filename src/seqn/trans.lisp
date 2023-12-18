@@ -258,7 +258,7 @@ removed already and hence we cannot count as usual"
 
 (defmethod to-vampir ((obj seqn-multiply) inputs constraints)
   (declare (ignore constraints))
-  (list (infix-creation :* (car obj) (cadr obj))))
+  (list (infix-creation :* (car inputs) (cadr inputs))))
 
 (defmethod to-vampir ((obj seqn-divide) inputs constraints)
   (declare (ignore constraints))
