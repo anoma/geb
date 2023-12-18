@@ -201,9 +201,20 @@ IntDifunctorSig : (c : Type) -> Type
 IntDifunctorSig c = IntProfunctorSig c c
 
 public export
+IntDimapSig : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  IntProfunctorSig d c -> Type
+IntDimapSig d c dmor cmor p = (s : d) -> (t : c) -> (a : d) -> (b : c) ->
+  (dmor a s) -> (cmor t b) -> p s t -> p a b
+
+public export
 IntProfNTSig : (d, c : Type) ->
   (p, q : IntProfunctorSig d c) -> Type
 IntProfNTSig d c p q = (a : d) -> (b : c) -> p a b -> q a b
+
+public export
+IntProfDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
+IntProfDiNTSig c p q = (a : c) -> p a a -> q a a
 
 -- This is the internal generalization (it is a generalization because
 -- `Type` is internal to `Type`) of`PrePostPair`.  As such, it is the
@@ -216,6 +227,16 @@ IntProfYonedaEmbed : (0 d, c : Type) ->
   d -> c -> IntProfunctorSig d c
 IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
 
+public export
+IntProfYonedaEmbedDimap : (0 d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : (x, y, z : d) -> dmor y z -> dmor x y -> dmor x z) ->
+  (ccomp : (x, y, z : c) -> cmor y z -> cmor x y -> cmor x z) ->
+  (s : d) -> (t : c) ->
+  IntDimapSig d c dmor cmor (IntProfYonedaEmbed d c dmor cmor s t)
+IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
+  dmia cmbj (dmas, cmtb) = (dcomp i a s dmas dmia, ccomp t b j cmbj cmtb)
+
 -- Merge two profunctors going in opposite directions (between `d` and `c`)
 -- into an embedding of `(op(d), c)` into its category of prosheaves.
 public export
@@ -223,6 +244,17 @@ IntBidirProfEmbed : (0 d, c : Type) ->
   (relop : IntProfunctorSig c d) -> (rel : IntProfunctorSig d c) ->
   d -> c -> IntProfunctorSig d c
 IntBidirProfEmbed d c relop rel i0 i1 j0 j1 = (relop i1 j0, rel i0 j1)
+
+public export
+IntBidirProfEmbedDimap : (0 d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : (x, y, z : d) -> dmor y z -> dmor x y -> dmor x z) ->
+  (ccomp : (x, y, z : c) -> cmor y z -> cmor x y -> cmor x z) ->
+  (relop : IntProfunctorSig c d) -> (rel : IntProfunctorSig d c) ->
+  (s : d) -> (t : c) ->
+  IntDimapSig d c dmor cmor (IntBidirProfEmbed d c relop rel s t)
+IntBidirProfEmbedDimap d c dmor cmor dcomp ccomp relop rel s t a b i j
+  dmia cmbj (dmas, cmtb) = ?IntBidirProfEmbedDimap_hole
 
 -- Suppose that `c` is a type of objects of a category internal to `Type`,
 -- and `mor` is a type dependent on pairs of terms of `c` (we could also
