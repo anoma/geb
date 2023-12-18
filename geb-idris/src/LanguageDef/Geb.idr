@@ -394,8 +394,12 @@ DiYonedaEmbed : Type -> Type -> ProfunctorSig
 DiYonedaEmbed = IntDiYonedaEmbed Type HomProf
 
 public export
+typeComp : IntCompSig Type HomProf
+typeComp = (\_, _, _ => (.))
+
+public export
 [DiYonedaEmbedProf] Profunctor (DiYonedaEmbed i j) where
-  dimap = IntDiYonedaEmbedDimap Type HomProf (\_, _, _ => (.)) _ _ _ _ _ _
+  dimap = IntDiYonedaEmbedDimap Type HomProf typeComp _ _ _ _ _ _
 
 -- The diYoneda lemma asserts a paranatural isomorphism between two objects
 -- of the enriching category, one of which is an object of paranatural
@@ -408,7 +412,7 @@ DiYonedaLemmaNT = IntDiYonedaLemmaNT Type HomProf
 public export
 DiYonedaLemmaNTPro : Profunctor (DiYonedaLemmaNT p)
 DiYonedaLemmaNTPro {p} = MkProfunctor $
-  IntDiYonedaLemmaNTDimap Type HomProf (\_, _, _ => (.)) p _ _ _ _
+  IntDiYonedaLemmaNTDimap Type HomProf typeComp p _ _ _ _
 
 -- One direction of the paranatural isomorphism asserted by the
 -- diYoneda lemma on `(op(Type), Type)`.
