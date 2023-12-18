@@ -322,6 +322,25 @@ IntDiYonedaLemmaCoendBaseDimap c mor comp p s t a b mas mtb
   (Evidence ij ((mit, msj), pji)) =
     Evidence ij ((comp (fst ij) t b mtb mit, comp a s (snd ij) msj mas), pji)
 
+-- One direction of the paranatural isomorphism asserted by the
+-- di-co-Yoneda lemma.
+public export
+IntDiCoYonedaLemmaL : (0 c : Type) ->
+  (0 mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
+  (0 p : IntDifunctorSig c) ->
+  IntDiNTSig c p (IntDiCoYonedaLemmaCoendBase c mor p)
+IntDiCoYonedaLemmaL c mor cid p i pii = Evidence (i, i) ((cid i, cid i), pii)
+
+-- The other direction of the paranatural isomorphism asserted by the
+-- di-co-Yoneda lemma.
+public export
+IntDiCoYonedaLemmaR : (0 c : Type) ->
+  (0 mor : IntDifunctorSig c) ->
+  (0 p : IntDifunctorSig c) -> (pdm : IntEndoDimapSig c mor p) ->
+  IntDiNTSig c (IntDiCoYonedaLemmaCoendBase c mor p) p
+IntDiCoYonedaLemmaR c mor p pdm x (Evidence ij ((mix, mxj), pji)) =
+  pdm (snd ij) (fst ij) x x mxj mix pji
+
 ---------------------------------------------------------------
 ---- Pro-Yoneda (simultaneous covariant and contravariant) ----
 ---------------------------------------------------------------
@@ -514,15 +533,15 @@ Profunctor (DiCoYonedaLemmaCoend p) where
 public export
 DiCoYonedaLemmaL : (0 p : ProfunctorSig) ->
   ProfDiNT p (DiCoYonedaLemmaCoend p)
-DiCoYonedaLemmaL p i pii = Evidence (i, i) ((id {a=i}, id {a=i}), pii)
+DiCoYonedaLemmaL = IntDiCoYonedaLemmaL Type HomProf typeId
 
 -- The other direction of the paranatural isomorphism asserted by the
 -- di-co-Yoneda lemma on `(op(Type), Type)`.
 public export
 DiCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
   ProfDiNT (DiCoYonedaLemmaCoend p) p
-DiCoYonedaLemmaR p {isP} i (Evidence j ((mj0i, mij1), pj1j0)) =
-  dimap {f=p} mij1 mj0i pj1j0
+DiCoYonedaLemmaR p {isP} =
+  IntDiCoYonedaLemmaR Type HomProf p (TypeProfDimap isP)
 
 ---------------------------------------------------------------
 ---- Pro-Yoneda (simultaneous covariant and contravariant) ----
