@@ -201,8 +201,17 @@ public export
 IntDifunctorSig c = IntProfunctorSig c c
 
 public export
+0 IntProCompSig : (0 c, d, e : Type) ->
+  (0 cdmor : IntProfunctorSig c d) ->
+  (0 demor : IntProfunctorSig d e) ->
+  (0 cemor : IntProfunctorSig c e) ->
+  Type
+IntProCompSig c d e cdmor demor cemor = (0 x : c) -> (0 y : d) -> (0 z : e) ->
+  demor y z -> cdmor x y -> cemor x z
+
+public export
 0 IntCompSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) -> Type
-IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
+IntCompSig c mor = IntProCompSig c c c mor mor mor
 
 public export
 0 IntDimapSig : (0 d, c : Type) ->
