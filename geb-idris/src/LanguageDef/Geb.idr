@@ -239,6 +239,10 @@ public export
   (0 p, q : IntProfunctorSig d c) -> Type
 IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
 
+------------------------------------------------------------------
+---- Natural transformations from paranatural transformations ----
+------------------------------------------------------------------
+
 public export
 IntProfToDifunctor :
   (0 d, c : Type) -> IntProfunctorSig d c -> IntDifunctorSig (d, c)
