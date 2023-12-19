@@ -239,13 +239,13 @@ IntEndoDimapSig c mor = IntDimapSig c c mor mor
 --------------------------------------------
 
 public export
-IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
-IntDiNTSig c p q = (x : c) -> p x x -> q x x
-
-public export
 0 IntProfNTSig : (0 d, c : Type) ->
   (0 p, q : IntProfunctorSig d c) -> Type
 IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
+
+public export
+IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
+IntDiNTSig c p q = (x : c) -> p x x -> q x x
 
 ------------------------------------------------------------------
 ---- Natural transformations from paranatural transformations ----
