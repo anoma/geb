@@ -234,6 +234,78 @@ public export
   IntDifunctorSig c -> Type
 IntEndoDimapSig c mor = IntDimapSig c c mor mor
 
+public export
+0 IntLmapSig : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  IntProfunctorSig d c -> Type
+IntLmapSig d c dmor cmor p =
+  (0 s : d) -> (0 t : c) -> (0 a : d) -> dmor a s -> p s t -> p a t
+
+public export
+0 IntEndoLmapSig : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  IntDifunctorSig c -> Type
+IntEndoLmapSig c cmor = IntLmapSig c c cmor cmor
+
+public export
+0 IntRmapSig : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  IntProfunctorSig d c -> Type
+IntRmapSig d c dmor cmor p =
+  (0 s : d) -> (0 t : c) -> (0 b : c) -> cmor t b -> p s t -> p s b
+
+public export
+0 IntEndoRmapSig : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  IntDifunctorSig c -> Type
+IntEndoRmapSig c cmor = IntRmapSig c c cmor cmor
+
+public export
+0 IntLmapFromDimap : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (0 cid : IntIdSig c cmor) ->
+  (p : IntProfunctorSig d c) ->
+  IntDimapSig d c dmor cmor p ->
+  IntLmapSig d c dmor cmor p
+IntLmapFromDimap d c dmor cmor cid p pdm s t a = flip (pdm s t a t) (cid t)
+
+public export
+0 IntEndoLmapFromDimap : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (0 cid : IntIdSig c cmor) -> (p : IntDifunctorSig c) ->
+  IntEndoDimapSig c cmor p -> IntEndoLmapSig c cmor p
+IntEndoLmapFromDimap c cmor cid = IntLmapFromDimap c c cmor cmor cid
+
+public export
+0 IntRmapFromDimap : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (0 did : IntIdSig d dmor) ->
+  (p : IntProfunctorSig d c) ->
+  IntDimapSig d c dmor cmor p ->
+  IntRmapSig d c dmor cmor p
+IntRmapFromDimap d c dmor cmor did p pdm s t b = pdm s t s b (did s)
+
+public export
+0 IntEndoRmapFromDimap : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (0 cid : IntIdSig c cmor) -> (p : IntDifunctorSig c) ->
+  IntEndoDimapSig c cmor p -> IntEndoRmapSig c cmor p
+IntEndoRmapFromDimap c cmor cid = IntRmapFromDimap c c cmor cmor cid
+
+public export
+0 IntDimapFromLRmaps : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (p : IntProfunctorSig d c) ->
+  IntLmapSig d c dmor cmor p ->
+  IntRmapSig d c dmor cmor p ->
+  IntDimapSig d c dmor cmor p
+IntDimapFromLRmaps d c dmor cmor p plm prm s t a b dmas cmtb =
+  plm s b a dmas . prm s t b cmtb
+
+public export
+0 IntEndoDimapFromLRmaps : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (p : IntDifunctorSig c) ->
+  IntEndoLmapSig c cmor p ->
+  IntEndoRmapSig c cmor p ->
+  IntEndoDimapSig c cmor p
+IntEndoDimapFromLRmaps c cmor = IntDimapFromLRmaps c c cmor cmor
+
 --------------------------------------------
 ---- (Di-/Para-)natural transformations ----
 --------------------------------------------
@@ -246,6 +318,22 @@ IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
 public export
 IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
 IntDiNTSig c p q = (x : c) -> p x x -> q x x
+
+public export
+0 IntParaNTCond : (c : Type) -> (cmor : IntDifunctorSig c) ->
+  (cid : IntIdSig c cmor) -> (ccomp : IntCompSig c cmor) ->
+  (p, q : IntDifunctorSig c) ->
+  IntEndoDimapSig c cmor p -> IntEndoDimapSig c cmor q ->
+  IntDiNTSig c p q -> Type
+IntParaNTCond c cmor cid ccomp p q pdm qdm alpha =
+  (i0, i1 : c) -> (i2 : cmor i0 i1) -> (d0 : p i0 i0) -> (d1 : p i1 i1) ->
+  let
+    prm = IntEndoRmapFromDimap c cmor cid p pdm i0 i0 i1 i2
+    plm = IntEndoLmapFromDimap c cmor cid p pdm i1 i1 i0 i2
+    qrm = IntEndoRmapFromDimap c cmor cid q qdm i0 i0 i1 i2
+    qlm = IntEndoLmapFromDimap c cmor cid q qdm i1 i1 i0 i2
+  in
+  (prm d0 = plm d1) -> (qrm (alpha i0 d0) = qlm (alpha i1 d1))
 
 ------------------------------------------------------------------
 ---- Natural transformations from paranatural transformations ----
