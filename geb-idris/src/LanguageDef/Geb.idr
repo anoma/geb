@@ -319,6 +319,9 @@ public export
 IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
 IntDiNTSig c p q = (x : c) -> p x x -> q x x
 
+-- This could be read as "`alpha` preserves structure-homomorphisms", which
+-- in turn means that each such paranatural transformation corresponds to
+-- a functor between categories of diagonal elements.
 public export
 0 IntParaNTCond : (c : Type) -> (cmor : IntDifunctorSig c) ->
   (cid : IntIdSig c cmor) -> (ccomp : IntCompSig c cmor) ->
