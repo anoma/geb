@@ -183,6 +183,10 @@ import LanguageDef.PolyIndTypes
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 
+-----------------------------------------
+---- Definitions of pro-/di-functors ----
+-----------------------------------------
+
 -- The convention we use is that the first parameter (here, `d`) is the
 -- contravariant parameter, and the second parameter (`here, `c`) is
 -- the covariant parameter.  This is sometimes written as `c -/-> d`,
@@ -229,6 +233,10 @@ public export
 0 IntEndoDimapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
   IntDifunctorSig c -> Type
 IntEndoDimapSig c mor = IntDimapSig c c mor mor
+
+--------------------------------------------
+---- (Di-/Para-)natural transformations ----
+--------------------------------------------
 
 public export
 IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
