@@ -1,3 +1,7 @@
+* 0.6.1
+** Bug fix patch
+- 1 minor bug fix in vampir extraction
+- minor naming changes in vampir dump
 * 0.6.0
 ** Juvix Testing patch
 - This release focuses mainly on a new cli feature =test= and =library=
