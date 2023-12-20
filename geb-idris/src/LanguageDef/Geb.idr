@@ -857,6 +857,20 @@ TwistArrEmbedMorph
      \funext => funExt $ \ea' => sym $ comm ea')
 
 public export
+TwistArrEmbedMorphInv : (arr, arr' : TwistArrObj) ->
+  ProfNTMorph
+    (TwistArrEmbedObjProf arr)
+    (TwistArrEmbedObjProf arr')
+    HomProf
+    (TwistArrEmbedObjMorph arr)
+    (TwistArrEmbedObjMorph arr') ->
+  TwistArrMorph arr arr'
+TwistArrEmbedMorphInv
+  ((a, b) ** mab) ((a', b') ** ma'b')
+  (x ** y ** (mxa, mby) ** (mxa', mb'y) ** comm) =
+    ?TwistArrEmbedMorphInv_hole
+
+public export
 TwistArrDiEmbedMorph : (arr, arr' : TwistArrObj) ->
   TwistArrMorph arr arr' ->
   ProfDiNTMorph
@@ -870,6 +884,20 @@ TwistArrDiEmbedMorph
     -- `ma'b'` isn't used, but that's because "comm" tells us that
     -- it's redundant -- it's determined by the other three morphisms.
     (a ** (mab, id {a}) ** (mbb' . mab, ma'a) ** Refl)
+
+public export
+TwistArrDiEmbedMorphInv : (arr, arr' : TwistArrObj) ->
+  ProfDiNTMorph
+    (TwistArrDiEmbedObjProf arr)
+    (TwistArrDiEmbedObjProf arr')
+    HomProf
+    (TwistArrDiEmbedObjMorph arr)
+    (TwistArrDiEmbedObjMorph arr') ->
+  TwistArrMorph arr arr'
+TwistArrDiEmbedMorphInv
+  ((a, b) ** mab) ((a', b') ** ma'b')
+  (x ** (mxb, max) ** (mxb', ma'x) ** comm) =
+    Element0 (?ma'a_hole, ?mbb'_hole) $ ?TwistArrDiEmbedMorphInv_hole
 
 -------------------------------------------------------------------------------
 ---- Double-pro-/di-Yoneda on `Type` (profunctor paranatural polymorphism) ----
