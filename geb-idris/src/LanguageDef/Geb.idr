@@ -832,8 +832,8 @@ public export
 ProfNTMorph : (p, q, r : ProfunctorSig) ->
   ProfNT p r -> ProfNT q r -> Type
 ProfNTMorph p q r pnt qnt =
-  (a : Type ** b : Type ** pab : p a b ** qab : q a b **
-   FunExt -> pnt pab = qnt qab)
+  (x : Type ** y : Type ** pxy : p x y ** qxy : q x y **
+   FunExt -> pnt pxy = qnt qxy)
 
 public export
 ProfDiNTMorph : (p, q, r : ProfunctorSig) ->
@@ -852,6 +852,7 @@ TwistArrEmbedMorph : (arr, arr' : TwistArrObj) ->
     (TwistArrEmbedObjMorph arr')
 TwistArrEmbedMorph
   ((a, b) ** mab) ((a', b') ** ma'b') (Element0 (ma'a, mbb') comm) =
+    -- This doesn't look right -- neither `mab` nor `ma'b'` are used.
     (a' ** b' ** (ma'a, mbb') ** (id {a=a'}, id {a=b'}) **
      \funext => funExt $ \ea' => sym $ comm ea')
 
