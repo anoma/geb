@@ -197,6 +197,56 @@ Type2Sig = (Type2Obj, Type2Obj)
 Type2Morph : Type2Sig -> Type
 Type2Morph ab = (fst (fst ab) -> fst (snd ab), snd (fst ab) -> snd (snd ab))
 
+------------------------
+------------------------
+---- Arrow category ----
+------------------------
+------------------------
+
+public export
+0 ArrObj : Type
+ArrObj = (ab : (Type, Type) ** fst ab -> snd ab)
+
+public export
+0 ArrMorphBase : ArrObj -> ArrObj -> Type
+ArrMorphBase ((a, b) ** mab) ((c, d) ** mcd) = (a -> c, b -> d)
+
+public export
+0 ArrMorphComm : (0 arr, arr' : ArrObj) ->
+  ArrMorphBase arr arr' -> Type
+ArrMorphComm ((a, b) ** mab) ((c, d) ** mcd) (mac, mbd) =
+  ExtEq (mbd . mab) (mcd . mac)
+
+public export
+0 ArrMorph : ArrObj -> ArrObj -> Type
+ArrMorph arr arr' =
+  Subset0 (ArrMorphBase arr arr') (ArrMorphComm arr arr')
+
+--------------------------------
+--------------------------------
+---- Twisted-arrow category ----
+--------------------------------
+--------------------------------
+
+public export
+0 TwistArrObj : Type
+TwistArrObj = (ab : (Type, Type) ** fst ab -> snd ab)
+
+public export
+0 TwistArrMorphBase : TwistArrObj -> TwistArrObj -> Type
+TwistArrMorphBase ((a, b) ** mab) ((c, d) ** mcd) = (c -> a, b -> d)
+
+public export
+0 TwistArrMorphComm : (0 tw, tw' : TwistArrObj) ->
+  TwistArrMorphBase tw tw' -> Type
+TwistArrMorphComm ((a, b) ** mab) ((c, d) ** mcd) (mca, mbd) =
+  ExtEq mcd (mbd . mab . mca)
+
+public export
+0 TwistArrMorph : TwistArrObj -> TwistArrObj -> Type
+TwistArrMorph tw tw' =
+  Subset0 (TwistArrMorphBase tw tw') (TwistArrMorphComm tw tw')
+
 ---------------------------------------
 ---------------------------------------
 ---- Dependent types, categorially ----
