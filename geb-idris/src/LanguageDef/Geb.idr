@@ -899,25 +899,93 @@ TwistArrDiEmbedMorphInv
   (x ** (mxb, max) ** (mxb', ma'x) ** comm) =
     Element0 (?ma'a_hole, ?mbb'_hole) $ ?TwistArrDiEmbedMorphInv_hole
 
+--------------------------------------------------------
+---- Double-Yoneda on `Type` (functor polymorphism) ----
+--------------------------------------------------------
+
+-- The signature of a (co)presheaf on the category of endofunctors on `Type`.
+public export
+0 FuncCoprshfObj : Type
+FuncCoprshfObj = (Type -> Type) -> Type
+
+-- The signature of the morphism-map component of a `FuncCoprshfObj` (since
+-- such an object is itself a functor).
+public export
+0 FuncCoprshfObjMapSig : FuncCoprshfObj -> Type
+FuncCoprshfObjMapSig fp =
+  (0 f, g : Type -> Type) -> NaturalTransformation f g -> fp f -> fp g
+
+-- `fapply x` is the functor on functors that applies a functor to `x`.
+public export
+fapply : Type -> FuncCoprshfObj
+fapply x f = f x
+
+public export
+fapplym : (x : Type) -> FuncCoprshfObjMapSig (fapply x)
+fapplym x f g alpha fx = alpha x fx
+
+-- A morphism in the category of (co)presheaves on the category of
+-- endofunctors on `Type` is a natural transformation, because the
+-- objects of that category are functors (whose domain is the category
+-- of endofunctors on `Type`, and whose codomain is `Type`).
+public export
+0 FuncCoprshfMorphBase : FuncCoprshfObj -> FuncCoprshfObj -> Type
+FuncCoprshfMorphBase fp gp = (0 f : Type -> Type) -> fp f -> gp f
+
+public export
+0 FuncCoprshfMorphNaturality :
+  (0 fp, gp : FuncCoprshfObj) ->
+  (0 fpm : FuncCoprshfObjMapSig fp) ->
+  (0 gpm : FuncCoprshfObjMapSig gp) ->
+  FuncCoprshfMorphBase fp gp -> Type
+FuncCoprshfMorphNaturality fp gp fpm gpm alpha =
+  (0 f, g : Type -> Type) ->
+  (0 nu : NaturalTransformation f g) ->
+  ExtEq {a=(fp f)} {b=(gp g)} (alpha g . fpm f g nu) (gpm f g nu . alpha f)
+
+public export
+0 FuncCoprshfMorph :
+  (0 fp, gp : FuncCoprshfObj) ->
+  (0 fpm : FuncCoprshfObjMapSig fp) ->
+  (0 gpm : FuncCoprshfObjMapSig gp) ->
+  Type
+FuncCoprshfMorph fp gp fpm gpm =
+  Subset0
+    (FuncCoprshfMorphBase fp gp)
+    (FuncCoprshfMorphNaturality fp gp fpm gpm)
+
 -------------------------------------------------------------------------------
 ---- Double-pro-/di-Yoneda on `Type` (profunctor paranatural polymorphism) ----
 -------------------------------------------------------------------------------
 
+-- The signature of a (co)presheaf on the category of endoprofunctors
+-- on `Type`.
 public export
 0 ProfCoprshfObj : Type
 ProfCoprshfObj = ProfunctorSig -> Type
 
+-- `profapply x y` is the functor on profunctors that applies a profunctor to
+-- `x` and `y`.
 public export
 profapply : Type -> Type -> ProfCoprshfObj
 profapply x y p = p x y
 
+-- `diapply x` is the functor on profunctors that applies a profunctor to
+-- `x` and `x`.
 public export
 diapply : Type -> ProfCoprshfObj
 diapply x = profapply x x
 
+-- The signature of an endprofunctor/difunctor/prosheaf (we'll use any
+-- one of those names to mean the same thing, depending on the context) on
+-- the category of endoprofunctors on `Type`.
 public export
 0 ProfProshfObj : Type
 ProfProshfObj = ProfunctorSig -> ProfCoprshfObj
+
+public export
+0 ProfProshfMorph : ProfProshfObj -> ProfProshfObj -> Type
+ProfProshfMorph pp pp' = (0 p, q : ProfunctorSig) -> pp p q -> pp' p q
 
 public export
 profappnt : Type -> Type -> ProfProshfObj
@@ -926,10 +994,6 @@ profappnt x y p q = profapply x y p -> profapply x y q
 public export
 diappnt : Type -> ProfProshfObj
 diappnt x = profappnt x x
-
-public export
-0 ProfProshfMorph : ProfProshfObj -> ProfProshfObj -> Type
-ProfProshfMorph pp pp' = (0 p, q : ProfunctorSig) -> pp p q -> pp' p q
 
 --------------------------------
 --------------------------------
