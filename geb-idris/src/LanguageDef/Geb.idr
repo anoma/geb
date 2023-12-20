@@ -773,13 +773,24 @@ ArrEmbedObjProf : ArrObj -> ProfunctorSig
 ArrEmbedObjProf arr = PrePostPair (ArrEmbedObjDom arr) (ArrEmbedObjCod arr)
 
 public export
+ArrDiEmbedObjProf : ArrObj -> ProfunctorSig
+ArrDiEmbedObjProf arr = DiYonedaEmbed (ArrEmbedObjDom arr) (ArrEmbedObjCod arr)
+
+public export
 ArrEmbedObjProfNT : ArrObj -> Type
-ArrEmbedObjProfNT arr =
-  ProfNT (PrePostPair (ArrEmbedObjDom arr) (ArrEmbedObjCod arr)) HomProf
+ArrEmbedObjProfNT arr = ProfNT (ArrEmbedObjProf arr) HomProf
+
+public export
+ArrDiEmbedObjProfNT : ArrObj -> Type
+ArrDiEmbedObjProfNT arr = ProfDiNT (ArrDiEmbedObjProf arr) HomProf
 
 public export
 ArrEmbedObjMorph : (arr : ArrObj) -> ArrEmbedObjProfNT arr
 ArrEmbedObjMorph ((a, b) ** mab) {a=s} {b=t} (msa, mbt) = mbt . mab . msa
+
+public export
+ArrDiEmbedObjMorph : (arr : ArrObj) -> ArrDiEmbedObjProfNT arr
+ArrDiEmbedObjMorph ((a, b) ** mab) x (msa, mbt) = id {a=x}
 
 public export
 TwistArrEmbedObjDom : TwistArrObj -> Type
@@ -798,12 +809,24 @@ TwistArrEmbedObjProf : TwistArrObj -> ProfunctorSig
 TwistArrEmbedObjProf = ArrEmbedObjProf
 
 public export
+TwistArrDiEmbedObjProf : TwistArrObj -> ProfunctorSig
+TwistArrDiEmbedObjProf = ArrDiEmbedObjProf
+
+public export
 TwistArrEmbedObjProfNT : TwistArrObj -> Type
 TwistArrEmbedObjProfNT = ArrEmbedObjProfNT
 
 public export
+TwistArrDiEmbedObjProfNT : TwistArrObj -> Type
+TwistArrDiEmbedObjProfNT = ArrDiEmbedObjProfNT
+
+public export
 TwistArrEmbedObjMorph : (arr : TwistArrObj) -> TwistArrEmbedObjProfNT arr
 TwistArrEmbedObjMorph = ArrEmbedObjMorph
+
+public export
+TwistArrDiEmbedObjMorph : (arr : TwistArrObj) -> TwistArrDiEmbedObjProfNT arr
+TwistArrDiEmbedObjMorph = ArrDiEmbedObjMorph
 
 public export
 ProfNTMorph : (p, q, r : ProfunctorSig) ->
@@ -811,6 +834,12 @@ ProfNTMorph : (p, q, r : ProfunctorSig) ->
 ProfNTMorph p q r pnt qnt =
   (a : Type ** b : Type ** pab : p a b ** qab : q a b **
    FunExt -> pnt pab = qnt qab)
+
+public export
+ProfDiNTMorph : (p, q, r : ProfunctorSig) ->
+  ProfDiNT p r -> ProfDiNT q r -> Type
+ProfDiNTMorph p q r pnt qnt =
+  (x : Type ** pxx : p x x ** qxx : q x x ** pnt x pxx = qnt x qxx)
 
 public export
 TwistArrEmbedMorph : (arr, arr' : TwistArrObj) ->
@@ -825,6 +854,21 @@ TwistArrEmbedMorph
   ((a, b) ** mab) ((a', b') ** ma'b') (Element0 (ma'a, mbb') comm) =
     (a' ** b' ** (ma'a, mbb') ** (id {a=a'}, id {a=b'}) **
      \funext => funExt $ \ea' => sym $ comm ea')
+
+public export
+TwistArrDiEmbedMorph : (arr, arr' : TwistArrObj) ->
+  TwistArrMorph arr arr' ->
+  ProfDiNTMorph
+    (TwistArrDiEmbedObjProf arr)
+    (TwistArrDiEmbedObjProf arr')
+    HomProf
+    (TwistArrDiEmbedObjMorph arr)
+    (TwistArrDiEmbedObjMorph arr')
+TwistArrDiEmbedMorph
+  ((a, b) ** mab) ((a', b') ** ma'b') (Element0 (ma'a, mbb') comm) =
+    -- `ma'b'` isn't used, but that's because "comm" tells us that
+    -- it's redundant -- it's determined by the other three morphisms.
+    (a ** (mab, id {a}) ** (mbb' . mab, ma'a) ** Refl)
 
 -------------------------------------------------------------------------------
 ---- Double-pro-/di-Yoneda on `Type` (profunctor paranatural polymorphism) ----
