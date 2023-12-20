@@ -24,12 +24,14 @@ Note that what is happening is that we look at the domain of the morphism
 and skip 0es, making non-zero entries into wires"
   (let* ((wire-count (length (dom morphism)))
          (wires (loop for i from 1 to wire-count
-                      collect (vamp:make-wire :var (intern (format nil "X~a" i)
-                                                           :keyword)))))
+                      collect (vamp:make-wire
+                               :var (intern
+                                     (format nil "in~a" (- wire-count i))
+                                     :keyword)))))
     (list
      (vamp:make-alias
       :name name
-      :inputs wires
+      :inputs (cdr (reverse wires))
       :body
       (list
        (vamp:make-tuples
@@ -41,6 +43,21 @@ and skip 0es, making non-zero entries into wires"
                                         (cadr x)))
                                     (prod-list (cod morphism)
                                                (to-vampir morphism wires nil)))))))))))
+
+(defun test-call (circuit)
+  "Given a compiled VampIR function with name foo and arguments x1...xn prints
+an equality as foo in1 ... in2 = out"
+  (let* ((inputs (vamp:inputs circuit))
+         (name   (vamp:name circuit)))
+    (flet ((app (x) (vamp:make-application :func name :arguments x)))
+      (list (vamp:make-equality
+             :lhs (cond ((zerop (length inputs))
+                         (vamp:make-wire :var name))
+                        ((= (length inputs) 1)
+                         (app (list (vamp:make-wire :var :in))))
+                        (t
+                         (app inputs)))
+             :rhs (vamp:make-wire :var :out))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SeqN to Vamp-IR Compilation
@@ -63,23 +80,23 @@ to (n) for some n"
   (let* ((zero (vamp:make-constant :const 0))
          (one (vamp:make-constant :const 1))
          (car (car (vamp:arguments obj)))
-         (cadr (cadr (vamp:arguments obj)))
-         (opcar (to-vampir-opt car))
-         (opcadr (to-vampir-opt cadr))
-         (const-check (const-check opcar opcadr)))
+         (optcar (to-vampir-opt car)))
     (cond  ((obj-equalp (vamp:func obj) :isZero)
-            (if const-check
-                (if (= (vamp:const opcar)
-                       (vamp:const opcadr))
+            (if (typep optcar 'vamp:constant)
+                (if (zerop (vamp:const optcar))
                     zero
-                    one)))
+                    one)
+                (geb.vampir:isZero optcar)))
            ((obj-equalp (vamp:func obj) :negative)
-            (if const-check
-                (if (< (vamp:const opcar)
-                       (vamp:const opcadr))
-                    zero
-                    one)))
-           (t (mapcar 'to-vampir-opt (vamp:arguments obj))))))
+            (let ((optcadr (to-vampir-opt (cadr (vamp:arguments obj)))))
+              (if (typep optcadr 'vamp:constant)
+                  (if (< (vamp:const optcadr) 0)
+                      zero
+                      one)
+                  (geb.vampir:negative car optcadr))))
+           (t (vamp:make-application
+               :func (vamp:func obj)
+               :arguments (mapcar 'to-vampir-opt (vamp:arguments obj)))))))
 
 (defmethod to-vampir-opt ((obj vamp:constant))
   obj)
@@ -87,7 +104,7 @@ to (n) for some n"
 (defmethod to-vampir-opt ((obj vamp:wire))
   obj)
 
-(defmethod to-vampir-opt ((obj geb.vampir.spec:infix))
+(defmethod to-vampir-opt ((obj vamp:infix))
   (let*  ((lhs (vamp:lhs obj))
           (rhs (vamp:rhs obj))
           (oplhs (to-vampir-opt lhs))
@@ -245,7 +262,7 @@ removed already and hence we cannot count as usual"
 
 (defmethod to-vampir ((obj seqn-multiply) inputs constraints)
   (declare (ignore constraints))
-  (list (infix-creation :* (car obj) (cadr obj))))
+  (list (infix-creation :* (car inputs) (cadr inputs))))
 
 (defmethod to-vampir ((obj seqn-divide) inputs constraints)
   (declare (ignore constraints))

@@ -16,17 +16,17 @@
 
 (pax:defsection @poly-trans (:title "Polynomial Transformations")
   "This covers transformation functions from"
-  (to-circuit (pax:method () (<poly> t)))
-  (to-vampir  (pax:method () (integer t t)))
-  (to-vampir  (pax:method () (ident t t)))
-  (to-vampir  (pax:method () (+ t t)))
-  (to-vampir  (pax:method () (* t t)))
-  (to-vampir  (pax:method () (- t t)))
-  (to-vampir  (pax:method () (/ t t)))
-  (to-vampir  (pax:method () (compose t t)))
-  (to-vampir  (pax:method () (if-zero t t)))
-  (to-vampir  (pax:method () (if-lt t t)))
-  (to-vampir  (pax:method () (mod t t))))
+  (to-circuit (method () (<poly> t)))
+  (to-vampir  (method () (integer t t)))
+  (to-vampir  (method () (ident t t)))
+  (to-vampir  (method () (+ t t)))
+  (to-vampir  (method () (* t t)))
+  (to-vampir  (method () (- t t)))
+  (to-vampir  (method () (/ t t)))
+  (to-vampir  (method () (compose t t)))
+  (to-vampir  (method () (if-zero t t)))
+  (to-vampir  (method () (if-lt t t)))
+  (to-vampir  (method () (mod t t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; poly module
@@ -42,8 +42,8 @@
 
 (pax:defsection @poly-api (:title "Polynomial API")
   "This covers the polynomial API"
-  (gapply             (pax:method () (poly:<poly> t)))
-  (gapply             (pax:method () (integer t))))
+  (gapply             (method () (poly:<poly> t)))
+  (gapply             (method () (integer t))))
 
 (geb.utils:muffle-package-variance
  (uiop:define-package #:geb.poly

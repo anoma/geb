@@ -45,6 +45,7 @@ mariari@Gensokyo % ./geb.image -h
   -o --output                     string   Save the output to a file rather than printing
   -v --version                    boolean  Prints the current version of the compiler
   -p --vampir                     string   Return a vamp-ir expression
+  -s --library                    boolean  Print standard library
   -h -? --help                    boolean  The current help message
 
 mariari@Gensokyo % ./geb.image -v
@@ -82,5 +83,14 @@ expects a symbol.
 
 the -l flag means that we are not expecting a geb term, but rather a
 lambda frontend term, this is to simply notify us to compile it as a
-lambda term rather than a geb term. In time this will go away"
-  (compile-down pax:function))
+lambda term rather than a geb term. In time this will go away
+
+The flag -s prints the standard library the compiler uses. If -p is
+used alongside it, the standard library gets printed before the
+compiled circuit.
+
+The flag -t after -p signals that the user wants to make an
+automatically generated test equality. Given a compiled VampIR
+function with name foo and arguments x1...xn prints an equality as
+foo x1 ... xn = y"
+  (compile-down function))

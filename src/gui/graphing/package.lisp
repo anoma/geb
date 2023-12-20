@@ -10,21 +10,21 @@ object into a format for a graphing backend."
   ;; please write more, me.  Put this is the API section, not
   ;; here... we should talk about the backends here!!!!!!!
   "The core types that facilittate the functionality"
-  (note pax:type)
-  (node pax:class)
-  (node-note pax:class)
-  (squash-note pax:class)
-  (make-note pax:function)
-  (make-squash pax:function)
-  (graphize pax:generic-function)
-  (value pax:generic-function)
-  (cons-note pax:function)
-  (apply-note pax:function)
-  (representation pax:generic-function)
-  (children       pax:generic-function)
-  (determine-text-and-object-from-node pax:function)
-  (noterize-children                   pax:function)
-  (notorize-children-with-index-schema pax:function))
+  (note type)
+  (node class)
+  (node-note class)
+  (squash-note class)
+  (make-note function)
+  (make-squash function)
+  (graphize generic-function)
+  (value generic-function)
+  (cons-note function)
+  (apply-note function)
+  (representation generic-function)
+  (children       generic-function)
+  (determine-text-and-object-from-node function)
+  (noterize-children                   function)
+  (notorize-children-with-index-schema function))
 
 
 (geb.utils:muffle-package-variance
@@ -39,7 +39,7 @@ object into a format for a graphing backend."
 (pax:defsection @pass-manual (:title "The GEB Graphizer Passes")
   "This changes how the graph is visualized, simplifying the graph in
 ways that are intuitive to the user"
-  (passes pax:function))
+  (passes function))
 
 
 (geb.utils:muffle-package-variance
