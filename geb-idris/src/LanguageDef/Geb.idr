@@ -752,6 +752,112 @@ ProfCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
 ProfCoYonedaLemmaR p {isP} {a=c} {b=d} (Evidence ab ((mbd, mca), pab)) =
   dimap {f=p} mca mbd pab
 
+-----------------------------------------------------------------------------
+---- Yoneda embedding of twisted-arrow category into profunctor category ----
+-----------------------------------------------------------------------------
+
+public export
+ArrEmbedObjDom : ArrObj -> Type
+ArrEmbedObjDom ((a, b) ** mab) = a
+
+public export
+ArrEmbedObjCod : ArrObj -> Type
+ArrEmbedObjCod ((a, b) ** mab) = b
+
+public export
+ArrEmbedObjObj : ArrObj -> (Type, Type)
+ArrEmbedObjObj arr = (ArrEmbedObjDom arr, ArrEmbedObjCod arr)
+
+public export
+ArrEmbedObjProf : ArrObj -> ProfunctorSig
+ArrEmbedObjProf arr = PrePostPair (ArrEmbedObjDom arr) (ArrEmbedObjCod arr)
+
+public export
+ArrEmbedObjProfNT : ArrObj -> Type
+ArrEmbedObjProfNT arr =
+  ProfNT (PrePostPair (ArrEmbedObjDom arr) (ArrEmbedObjCod arr)) HomProf
+
+public export
+ArrEmbedObjMorph : (arr : ArrObj) -> ArrEmbedObjProfNT arr
+ArrEmbedObjMorph ((a, b) ** mab) {a=s} {b=t} (msa, mbt) = mbt . mab . msa
+
+public export
+TwistArrEmbedObjDom : TwistArrObj -> Type
+TwistArrEmbedObjDom = ArrEmbedObjDom
+
+public export
+TwistArrEmbedObjCod : TwistArrObj -> Type
+TwistArrEmbedObjCod = ArrEmbedObjCod
+
+public export
+TwistArrEmbedObjObj : TwistArrObj -> (Type, Type)
+TwistArrEmbedObjObj = ArrEmbedObjObj
+
+public export
+TwistArrEmbedObjProf : TwistArrObj -> ProfunctorSig
+TwistArrEmbedObjProf = ArrEmbedObjProf
+
+public export
+TwistArrEmbedObjProfNT : TwistArrObj -> Type
+TwistArrEmbedObjProfNT = ArrEmbedObjProfNT
+
+public export
+TwistArrEmbedObjMorph : (arr : TwistArrObj) -> TwistArrEmbedObjProfNT arr
+TwistArrEmbedObjMorph = ArrEmbedObjMorph
+
+public export
+ProfNTMorph : (p, q, r : ProfunctorSig) ->
+  ProfNT p r -> ProfNT q r -> Type
+ProfNTMorph p q r pnt qnt =
+  (a : Type ** b : Type ** pab : p a b ** qab : q a b **
+   FunExt -> pnt pab = qnt qab)
+
+public export
+TwistArrEmbedMorph : (arr, arr' : TwistArrObj) ->
+  TwistArrMorph arr arr' ->
+  ProfNTMorph
+    (TwistArrEmbedObjProf arr)
+    (TwistArrEmbedObjProf arr')
+    HomProf
+    (TwistArrEmbedObjMorph arr)
+    (TwistArrEmbedObjMorph arr')
+TwistArrEmbedMorph
+  ((a, b) ** mab) ((a', b') ** ma'b') (Element0 (ma'a, mbb') comm) =
+    (a' ** b' ** (ma'a, mbb') ** (id {a=a'}, id {a=b'}) **
+     \funext => funExt $ \ea' => sym $ comm ea')
+
+-------------------------------------------------------------------------------
+---- Double-pro-/di-Yoneda on `Type` (profunctor paranatural polymorphism) ----
+-------------------------------------------------------------------------------
+
+public export
+0 ProfCoprshfObj : Type
+ProfCoprshfObj = ProfunctorSig -> Type
+
+public export
+profapply : Type -> Type -> ProfCoprshfObj
+profapply x y p = p x y
+
+public export
+diapply : Type -> ProfCoprshfObj
+diapply x = profapply x x
+
+public export
+0 ProfProshfObj : Type
+ProfProshfObj = ProfunctorSig -> ProfCoprshfObj
+
+public export
+profappnt : Type -> Type -> ProfProshfObj
+profappnt x y p q = profapply x y p -> profapply x y q
+
+public export
+diappnt : Type -> ProfProshfObj
+diappnt x = profappnt x x
+
+public export
+0 ProfProshfMorph : ProfProshfObj -> ProfProshfObj -> Type
+ProfProshfMorph pp pp' = (0 p, q : ProfunctorSig) -> pp p q -> pp' p q
+
 --------------------------------
 --------------------------------
 ---- Categories of elements ----

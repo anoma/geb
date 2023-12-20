@@ -230,7 +230,7 @@ ArrMorph arr arr' =
 
 public export
 0 TwistArrObj : Type
-TwistArrObj = (ab : (Type, Type) ** fst ab -> snd ab)
+TwistArrObj = ArrObj
 
 public export
 0 TwistArrMorphBase : TwistArrObj -> TwistArrObj -> Type
