@@ -367,6 +367,56 @@ IntProfToDifunctorDimap :
 IntProfToDifunctorDimap d c dmor cmor p dm (s, s') (t, t') (a, a') (b, b')
   (dmas, cmas) (dmbt, cmtb) ptt' = dm t t' b b' dmbt cmtb ptt'
 
+-----------------------------------------------
+-----------------------------------------------
+---- Internal Yoneda emebddings and lemmas ----
+-----------------------------------------------
+-----------------------------------------------
+
+-- Suppose that `c` is a type of objects of a category internal to `Type`,
+-- and `mor` is a type dependent on pairs of terms of `c` (we could also
+-- express it dually as a `Type` together with morphisms `dom` and `cod` to
+-- `c`), which we interpret as _some_ morphisms of the category but not
+-- necessarily all.  Then this is the signature of the morphism-map component
+-- of a (contravariant) presheaf on the category, as specified by whichever
+-- morphisms are included in `mor`.
+public export
+0 IntPrshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (0 objmap : c -> Type) -> Type
+IntPrshfMapSig c mor objmap = (0 a, b : c) -> mor b a -> objmap a -> objmap b
+
+-- As `IntPrshfMapSig`, but for a (covariant) copresheaf.
+public export
+0 IntCoprshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (0 objmap : c -> Type) -> Type
+IntCoprshfMapSig c mor objmap = (0 a, b : c) -> mor a b -> objmap a -> objmap b
+
+-- The object-map component of the (covariant) Yoneda embedding of
+-- `c` into the category of the (contravariant) presheaves on `c`.
+IntPrshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  c -> (c -> Type)
+IntPrshfYonedaEmbedObj c mor = flip mor
+
+-- The object-map component of the (contravariant) Yoneda embedding of
+-- `op(c)` into the category of the (covariant) copresheaves on `c`.
+IntCoprshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  c -> (c -> Type)
+IntCoprshfYonedaEmbedObj c mor = mor
+
+-- The morphism-map component of the (covariant) Yoneda embedding of
+-- `c` into the category of the (contravariant) presheaves on `c`.
+IntPrshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (a : c) -> IntPrshfMapSig c mor (IntPrshfYonedaEmbedObj c mor a)
+IntPrshfYonedaEmbedMor c mor comp a x y = flip $ comp y x a
+
+-- The morphism-map component of the (contravariant) Yoneda embedding of
+-- `op(c)` into the category of the (covariant) copresheaves on `c`.
+IntCoprshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (a : c) -> IntCoprshfMapSig c mor (IntCoprshfYonedaEmbedObj c mor a)
+IntCoprshfYonedaEmbedMor c mor comp a x y = comp a x y
+
 --------------------------------------------------------
 --------------------------------------------------------
 ---- Internal (di/pro-Yoneda) emebddings and lemmas ----
