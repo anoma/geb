@@ -391,6 +391,16 @@ public export
   (0 objmap : c -> Type) -> Type
 IntCoprshfMapSig c mor objmap = (0 x, y : c) -> mor x y -> objmap x -> objmap y
 
+-- The signature of a natural transformation between presheaves.
+public export
+0 IntPrshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
+IntPrshfNTSig c pobj qobj = (0 x : c) -> pobj x -> qobj x
+
+-- The signature of a natural transformation between copresheaves.
+public export
+0 IntCoprshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
+IntCoprshfNTSig = IntPrshfNTSig
+
 -- The object-map component of the (covariant) Yoneda embedding of
 -- `c` into the category of the (contravariant) presheaves on `c`.
 IntPrshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
@@ -423,7 +433,7 @@ IntCoprshfYonedaEmbedMor c mor comp a x y = comp a x y
 --------------------------------------
 --------------------------------------
 
---An internal polynomial functor is a sum of representable internal
+-- An internal polynomial functor is a sum of representable internal
 -- copresheaves. It can be expressed as a slice object over the object
 -- of the objects of the internal category.
 public export
@@ -453,6 +463,36 @@ InterpIDFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (ar : IntArena c) -> IntPrshfMapSig c mor (InterpIDFobj c mor ar)
 InterpIDFmap c mor comp (pos ** dir) x y m (i ** dm) =
   (i ** comp y x (dir i) dm m)
+
+public export
+IntPNTar : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> IntArena c -> Type
+IntPNTar c mor (ppos ** pdir) (qpos ** qdir) =
+  (onpos : ppos -> qpos ** (i : ppos) -> mor (qdir (onpos i)) (pdir i))
+
+public export
+InterpIPnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntArena c) -> IntPNTar c mor p q ->
+  IntCoprshfNTSig c (InterpIPFobj c mor p) (InterpIPFobj c mor q)
+InterpIPnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
+  (i ** dm) =
+    (onpos i ** comp (qdir (onpos i)) (pdir i) x dm (ondir i))
+
+public export
+IntDNTar : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> IntArena c -> Type
+IntDNTar c mor (ppos ** pdir) (qpos ** qdir) =
+  (onpos : ppos -> qpos ** (i : ppos) -> mor (pdir i) (qdir (onpos i)))
+
+public export
+InterpIDnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntArena c) -> IntDNTar c mor p q ->
+  IntPrshfNTSig c (InterpIDFobj c mor p) (InterpIDFobj c mor q)
+InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
+  (i ** dm) =
+    (onpos i ** comp x (pdir i) (qdir (onpos i)) (ondir i) dm)
 
 --------------------------------------------------------
 --------------------------------------------------------
