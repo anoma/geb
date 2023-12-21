@@ -417,6 +417,43 @@ IntCoprshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (a : c) -> IntCoprshfMapSig c mor (IntCoprshfYonedaEmbedObj c mor a)
 IntCoprshfYonedaEmbedMor c mor comp a x y = comp a x y
 
+--------------------------------------
+--------------------------------------
+---- Internal polynomial functors ----
+--------------------------------------
+--------------------------------------
+
+--An internal polynomial functor is a sum of representable internal
+-- copresheaves. It can be expressed as a slice object over the object
+-- of the objects of the internal category.
+public export
+0 IntArena : (0 c : Type) -> Type
+IntArena c = CSliceObj c
+
+public export
+InterpIPFobj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> c -> Type
+InterpIPFobj c mor (pos ** dir) a = (i : pos ** mor (dir i) a)
+
+public export
+InterpIPFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntArena c) -> IntCoprshfMapSig c mor (InterpIPFobj c mor ar)
+InterpIPFmap c mor comp (pos ** dir) x y m (i ** dm) =
+  (i ** comp (dir i) x y m dm)
+
+public export
+InterpIDFobj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> c -> Type
+InterpIDFobj c mor (pos ** dir) a = (i : pos ** mor a (dir i))
+
+public export
+InterpIDFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntArena c) -> IntPrshfMapSig c mor (InterpIDFobj c mor ar)
+InterpIDFmap c mor comp (pos ** dir) x y m (i ** dm) =
+  (i ** comp y x (dir i) dm m)
+
 --------------------------------------------------------
 --------------------------------------------------------
 ---- Internal (di/pro-Yoneda) emebddings and lemmas ----
