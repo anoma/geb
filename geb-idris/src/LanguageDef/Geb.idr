@@ -383,13 +383,13 @@ IntProfToDifunctorDimap d c dmor cmor p dm (s, s') (t, t') (a, a') (b, b')
 public export
 0 IntPrshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
   (0 objmap : c -> Type) -> Type
-IntPrshfMapSig c mor objmap = (0 a, b : c) -> mor b a -> objmap a -> objmap b
+IntPrshfMapSig c mor objmap = (0 x, y : c) -> mor y x -> objmap x -> objmap y
 
 -- As `IntPrshfMapSig`, but for a (covariant) copresheaf.
 public export
 0 IntCoprshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
   (0 objmap : c -> Type) -> Type
-IntCoprshfMapSig c mor objmap = (0 a, b : c) -> mor a b -> objmap a -> objmap b
+IntCoprshfMapSig c mor objmap = (0 x, y : c) -> mor x y -> objmap x -> objmap y
 
 -- The object-map component of the (covariant) Yoneda embedding of
 -- `c` into the category of the (contravariant) presheaves on `c`.
