@@ -1030,6 +1030,10 @@ TwistArrDiEmbedMorphInv
 ---- Double-Yoneda on `Type` (functor polymorphism) ----
 --------------------------------------------------------
 
+public export
+0 TypeFMapSig : (Type -> Type) -> Type
+TypeFMapSig f = (0 a, b : Type) -> (a -> b) -> f a -> f b
+
 -- The signature of the object-map component of a (co)presheaf on the category
 -- of endofunctors on `Type`.
 public export
@@ -1049,7 +1053,8 @@ FuncCoprshfObjFMapSig fp =
 -- of endofunctors on `Type`, and whose codomain is `Type`).
 public export
 0 FuncCoprshfMorphBase : FuncCoprshfObj -> FuncCoprshfObj -> Type
-FuncCoprshfMorphBase fp gp = (0 f : Type -> Type) -> fp f -> gp f
+FuncCoprshfMorphBase fp gp =
+  (0 f : Type -> Type) -> (fm : TypeFMapSig f) -> fp f -> gp f
 
 public export
 0 FuncCoprshfMorphNaturality :
@@ -1059,8 +1064,11 @@ public export
   FuncCoprshfMorphBase fp gp -> Type
 FuncCoprshfMorphNaturality fp gp fpm gpm alpha =
   (0 f, g : Type -> Type) ->
+  (0 fm : TypeFMapSig f) -> (0 gm : TypeFMapSig g) ->
   (0 nu : NaturalTransformation f g) ->
-  ExtEq {a=(fp f)} {b=(gp g)} (alpha g . fpm f g nu) (gpm f g nu . alpha f)
+  ExtEq {a=(fp f)} {b=(gp g)}
+    (alpha g gm . fpm f g nu)
+    (gpm f g nu . alpha f fm)
 
 public export
 0 FuncCoprshfMorph :
@@ -1084,6 +1092,27 @@ fapply x f = f x
 public export
 fapplym : (x : Type) -> FuncCoprshfObjFMapSig (fapply x)
 fapplym x f g alpha fx = alpha x fx
+
+-- `fapply` and `fapplym` together form the object-map component of
+-- an embedding of `Type` into the category of (co)presheaves on the
+-- category of endofunctors on `Type` (such an embedding is a functor
+-- from `Type` to `FuncCoprshfObj/FuncCoprshfObjFMapSig`).  We now define
+-- the morphism-map component of that embedding (`fapplyNT`).
+public export
+fapplyNTBase : (x, y : Type) -> (x -> y) ->
+  FuncCoprshfMorphBase (fapply x) (fapply y)
+fapplyNTBase x y m f fm = fm x y m
+
+public export
+fapplyNTnaturality : (x, y : Type) -> (m : x -> y) ->
+  FuncCoprshfMorphNaturality
+    (fapply x) (fapply y) (fapplym x) (fapplym y) (fapplyNTBase x y m)
+fapplyNTnaturality x y m = ?fapplyNTnaturality_hole
+
+public export
+fapplyNT : (x, y : Type) -> (x -> y) ->
+  FuncCoprshfMorph (fapply x) (fapply y) (fapplym x) (fapplym y)
+fapplyNT x y m = Element0 (fapplyNTBase x y m) (fapplyNTnaturality x y m)
 
 -------------------------------------------------------------------------------
 ---- Double-pro-/di-Yoneda on `Type` (profunctor paranatural polymorphism) ----
