@@ -1043,18 +1043,6 @@ public export
 FuncCoprshfObjFMapSig fp =
   (0 f, g : Type -> Type) -> NaturalTransformation f g -> fp f -> fp g
 
--- `fapply x` is the object-map component of a functor on functors that
--- applies a functor to `x`.
-public export
-fapply : Type -> FuncCoprshfObj
-fapply x f = f x
-
--- `fapply x` is the morphism-map component of a functor on functors that
--- applies a functor to `x`.
-public export
-fapplym : (x : Type) -> FuncCoprshfObjFMapSig (fapply x)
-fapplym x f g alpha fx = alpha x fx
-
 -- A morphism in the category of (co)presheaves on the category of
 -- endofunctors on `Type` is a natural transformation, because the
 -- objects of that category are functors (whose domain is the category
@@ -1084,6 +1072,18 @@ FuncCoprshfMorph fp gp fpm gpm =
   Subset0
     (FuncCoprshfMorphBase fp gp)
     (FuncCoprshfMorphNaturality fp gp fpm gpm)
+
+-- `fapply x` is the object-map component of a functor on functors that
+-- applies a functor to `x`.
+public export
+fapply : Type -> FuncCoprshfObj
+fapply x f = f x
+
+-- `fapply x` is the morphism-map component of a functor on functors that
+-- applies a functor to `x`.
+public export
+fapplym : (x : Type) -> FuncCoprshfObjFMapSig (fapply x)
+fapplym x f g alpha fx = alpha x fx
 
 -------------------------------------------------------------------------------
 ---- Double-pro-/di-Yoneda on `Type` (profunctor paranatural polymorphism) ----
