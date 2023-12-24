@@ -1030,7 +1030,8 @@ TwistArrDiEmbedMorphInv
 ---- Double-Yoneda on `Type` (functor polymorphism) ----
 --------------------------------------------------------
 
--- The signature of a (co)presheaf on the category of endofunctors on `Type`.
+-- The signature of the object-map component of a (co)presheaf on the category
+-- of endofunctors on `Type`.
 public export
 0 FuncCoprshfObj : Type
 FuncCoprshfObj = (Type -> Type) -> Type
@@ -1038,17 +1039,20 @@ FuncCoprshfObj = (Type -> Type) -> Type
 -- The signature of the morphism-map component of a `FuncCoprshfObj` (since
 -- such an object is itself a functor).
 public export
-0 FuncCoprshfObjMapSig : FuncCoprshfObj -> Type
-FuncCoprshfObjMapSig fp =
+0 FuncCoprshfObjFMapSig : FuncCoprshfObj -> Type
+FuncCoprshfObjFMapSig fp =
   (0 f, g : Type -> Type) -> NaturalTransformation f g -> fp f -> fp g
 
--- `fapply x` is the functor on functors that applies a functor to `x`.
+-- `fapply x` is the object-map component of a functor on functors that
+-- applies a functor to `x`.
 public export
 fapply : Type -> FuncCoprshfObj
 fapply x f = f x
 
+-- `fapply x` is the morphism-map component of a functor on functors that
+-- applies a functor to `x`.
 public export
-fapplym : (x : Type) -> FuncCoprshfObjMapSig (fapply x)
+fapplym : (x : Type) -> FuncCoprshfObjFMapSig (fapply x)
 fapplym x f g alpha fx = alpha x fx
 
 -- A morphism in the category of (co)presheaves on the category of
@@ -1062,8 +1066,8 @@ FuncCoprshfMorphBase fp gp = (0 f : Type -> Type) -> fp f -> gp f
 public export
 0 FuncCoprshfMorphNaturality :
   (0 fp, gp : FuncCoprshfObj) ->
-  (0 fpm : FuncCoprshfObjMapSig fp) ->
-  (0 gpm : FuncCoprshfObjMapSig gp) ->
+  (0 fpm : FuncCoprshfObjFMapSig fp) ->
+  (0 gpm : FuncCoprshfObjFMapSig gp) ->
   FuncCoprshfMorphBase fp gp -> Type
 FuncCoprshfMorphNaturality fp gp fpm gpm alpha =
   (0 f, g : Type -> Type) ->
@@ -1073,8 +1077,8 @@ FuncCoprshfMorphNaturality fp gp fpm gpm alpha =
 public export
 0 FuncCoprshfMorph :
   (0 fp, gp : FuncCoprshfObj) ->
-  (0 fpm : FuncCoprshfObjMapSig fp) ->
-  (0 gpm : FuncCoprshfObjMapSig gp) ->
+  (0 fpm : FuncCoprshfObjFMapSig fp) ->
+  (0 gpm : FuncCoprshfObjFMapSig gp) ->
   Type
 FuncCoprshfMorph fp gp fpm gpm =
   Subset0
