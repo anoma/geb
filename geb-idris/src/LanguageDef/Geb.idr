@@ -324,8 +324,12 @@ public export
   (p, q : IntProfunctorSig d c) ->
   IntDimapSig d c dmor cmor p -> IntDimapSig d c dmor cmor q ->
   IntProfNTSig d c p q -> Type
-IntProfNTNaturality d c dmor cmor did cid dcomp ccomp p q pdm qdm =
-  ?IntProfNTNaturality_hole
+IntProfNTNaturality d c dmor cmor did cid dcomp ccomp p q pdm qdm alpha =
+  (0 s : d) -> (0 t : c) -> (0 a : d) -> (0 b : c) ->
+  (0 dmas : dmor a s) -> (0 cmtb : cmor t b) ->
+  ExtEq
+    (qdm s t a b dmas cmtb . alpha s t)
+    (alpha a b . pdm s t a b dmas cmtb)
 
 public export
 IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
