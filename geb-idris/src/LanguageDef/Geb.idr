@@ -318,13 +318,10 @@ IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
 public export
 0 IntProfNTNaturality :
   (d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  (did : IntIdSig d dmor) -> (cid : IntIdSig c cmor) ->
-  (dcomp : IntCompSig d dmor) ->
-  (ccomp : IntCompSig c cmor) ->
   (p, q : IntProfunctorSig d c) ->
   IntDimapSig d c dmor cmor p -> IntDimapSig d c dmor cmor q ->
   IntProfNTSig d c p q -> Type
-IntProfNTNaturality d c dmor cmor did cid dcomp ccomp p q pdm qdm alpha =
+IntProfNTNaturality d c dmor cmor p q pdm qdm alpha =
   (0 s : d) -> (0 t : c) -> (0 a : d) -> (0 b : c) ->
   (0 dmas : dmor a s) -> (0 cmtb : cmor t b) ->
   ExtEq
@@ -340,19 +337,14 @@ IntDiNTSig c p q = (x : c) -> p x x -> q x x
 -- a functor between categories of diagonal elements.
 public export
 0 IntParaNTCond : (c : Type) -> (cmor : IntDifunctorSig c) ->
-  (cid : IntIdSig c cmor) ->
   (p, q : IntDifunctorSig c) ->
-  IntEndoDimapSig c cmor p -> IntEndoDimapSig c cmor q ->
+  IntEndoLmapSig c cmor p -> IntEndoRmapSig c cmor p ->
+  IntEndoLmapSig c cmor q -> IntEndoRmapSig c cmor q ->
   IntDiNTSig c p q -> Type
-IntParaNTCond c cmor cid p q pdm qdm alpha =
+IntParaNTCond c cmor p q plm prm qlm qrm alpha =
   (i0, i1 : c) -> (i2 : cmor i0 i1) -> (d0 : p i0 i0) -> (d1 : p i1 i1) ->
-  let
-    prm = IntEndoRmapFromDimap c cmor cid p pdm i0 i0 i1 i2
-    plm = IntEndoLmapFromDimap c cmor cid p pdm i1 i1 i0 i2
-    qrm = IntEndoRmapFromDimap c cmor cid q qdm i0 i0 i1 i2
-    qlm = IntEndoLmapFromDimap c cmor cid q qdm i1 i1 i0 i2
-  in
-  (prm d0 = plm d1) -> (qrm (alpha i0 d0) = qlm (alpha i1 d1))
+  (prm i0 i0 i1 i2 d0 = plm i1 i1 i0 i2 d1) ->
+  (qrm i0 i0 i1 i2 (alpha i0 d0) = qlm i1 i1 i0 i2 (alpha i1 d1))
 
 ------------------------------------------------------------------
 ---- Natural transformations from paranatural transformations ----
