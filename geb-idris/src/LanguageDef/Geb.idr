@@ -324,13 +324,25 @@ public export
 IntProfNTNaturality d c dmor cmor p q pdm qdm alpha =
   (0 s : d) -> (0 t : c) -> (0 a : d) -> (0 b : c) ->
   (0 dmas : dmor a s) -> (0 cmtb : cmor t b) ->
-  ExtEq
+  ExtEq {a=(p s t)} {b=(q a b)}
     (qdm s t a b dmas cmtb . alpha s t)
     (alpha a b . pdm s t a b dmas cmtb)
 
 public export
 IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
 IntDiNTSig c p q = (x : c) -> p x x -> q x x
+
+public export
+0 IntDiNTCond : (c : Type) -> (cmor : IntDifunctorSig c) ->
+  (p, q : IntDifunctorSig c) ->
+  IntEndoLmapSig c cmor p -> IntEndoRmapSig c cmor p ->
+  IntEndoLmapSig c cmor q -> IntEndoRmapSig c cmor q ->
+  IntDiNTSig c p q -> Type
+IntDiNTCond c cmor p q plm prm qlm qrm alpha =
+  (i0, i1 : c) -> (i2 : cmor i0 i1) ->
+  ExtEq {a=(p i1 i0)} {b=(q i0 i1)}
+    (qlm i1 i1 i0 i2 . alpha i1 . prm i1 i0 i1 i2)
+    (qrm i0 i0 i1 i2 . alpha i0 . plm i1 i0 i0 i2)
 
 -- This could be read as "`alpha` preserves structure-homomorphisms", which
 -- in turn means that each such paranatural transformation corresponds to
