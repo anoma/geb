@@ -289,6 +289,27 @@ public export
 IntEndoRmapFromDimap c cmor cid = IntRmapFromDimap c c cmor cmor cid
 
 public export
+0 IntLRmapsCommute : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (p : IntProfunctorSig d c) ->
+  IntLmapSig d c dmor cmor p ->
+  IntRmapSig d c dmor cmor p ->
+  Type
+IntLRmapsCommute d c dmor cmor p plm prm =
+  (0 s : d) -> (0 t : c) -> (0 a : d) -> (0 b : c) ->
+  (0 dmas : dmor a s) -> (0 cmtb : cmor t b) ->
+  ExtEq {a=(p s t)} {b=(p a b)}
+    (plm s b a dmas . prm s t b cmtb)
+    (prm a t b cmtb . plm s t a dmas)
+
+public export
+0 IntEndoLRmapsCommute : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (p : IntDifunctorSig c) ->
+  IntEndoLmapSig c cmor p -> IntEndoRmapSig c cmor p ->
+  Type
+IntEndoLRmapsCommute c cmor p plm prm = IntLRmapsCommute c c cmor cmor p plm prm
+
+public export
 0 IntDimapFromLRmaps : (0 d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   (p : IntProfunctorSig d c) ->
@@ -355,8 +376,21 @@ public export
   IntDiNTSig c p q -> Type
 IntParaNTCond c cmor p q plm prm qlm qrm alpha =
   (i0, i1 : c) -> (i2 : cmor i0 i1) -> (d0 : p i0 i0) -> (d1 : p i1 i1) ->
-  (prm i0 i0 i1 i2 d0 = plm i1 i1 i0 i2 d1) ->
-  (qrm i0 i0 i1 i2 (alpha i0 d0) = qlm i1 i1 i0 i2 (alpha i1 d1))
+  (plm i1 i1 i0 i2 d1 = prm i0 i0 i1 i2 d0) ->
+  (qlm i1 i1 i0 i2 (alpha i1 d1) = qrm i0 i0 i1 i2 (alpha i0 d0))
+
+-- Paranaturality is a (strictly) stronger condition than dinaturality.
+0 IntParaNTimpliesDi : (c : Type) -> (cmor : IntDifunctorSig c) ->
+  (p, q : IntDifunctorSig c) ->
+  (plm : IntEndoLmapSig c cmor p) -> (prm : IntEndoRmapSig c cmor p) ->
+  IntEndoLRmapsCommute c cmor p plm prm ->
+  (qlm : IntEndoLmapSig c cmor q) -> (qrm : IntEndoRmapSig c cmor q) ->
+  (alpha : IntDiNTSig c p q) ->
+  IntParaNTCond c cmor p q plm prm qlm qrm alpha ->
+  IntDiNTCond c cmor p q plm prm qlm qrm alpha
+IntParaNTimpliesDi c cmor p q plm prm comm qlm qrm alpha para i0 i1 i2 pi1i0 =
+  para i0 i1 i2 (plm i1 i0 i0 i2 pi1i0) (prm i1 i0 i1 i2 pi1i0) $
+    comm i1 i0 i0 i1 i2 i2 pi1i0
 
 ------------------------------------------------------------------
 ---- Natural transformations from paranatural transformations ----
