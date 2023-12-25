@@ -1034,6 +1034,13 @@ public export
 0 TypeFMapSig : (Type -> Type) -> Type
 TypeFMapSig f = (0 a, b : Type) -> (a -> b) -> f a -> f b
 
+public export
+0 TypeNaturality : (0 f, g : Type -> Type) ->
+  (0 fm : TypeFMapSig f) -> (0 gm : TypeFMapSig g) ->
+  NaturalTransformation f g -> Type
+TypeNaturality f g fm gm nu = (0 a, b : Type) -> (0 m : a -> b) ->
+  ExtEq {a=(f a)} {b=(g b)} (gm a b m . nu a) (nu b . fm a b m)
+
 -- The signature of the object-map component of a (co)presheaf on the category
 -- of endofunctors on `Type`.
 public export
@@ -1066,6 +1073,7 @@ FuncCoprshfMorphNaturality fp gp fpm gpm alpha =
   (0 f, g : Type -> Type) ->
   (0 fm : TypeFMapSig f) -> (0 gm : TypeFMapSig g) ->
   (0 nu : NaturalTransformation f g) ->
+  TypeNaturality f g fm gm nu ->
   ExtEq {a=(fp f)} {b=(gp g)}
     (alpha g gm . fpm f g nu)
     (gpm f g nu . alpha f fm)
@@ -1107,7 +1115,7 @@ public export
 fapplyNTnaturality : (x, y : Type) -> (m : x -> y) ->
   FuncCoprshfMorphNaturality
     (fapply x) (fapply y) (fapplym x) (fapplym y) (fapplyNTBase x y m)
-fapplyNTnaturality x y m = ?fapplyNTnaturality_hole
+fapplyNTnaturality x y m f g fm gm nu nunat = nunat x y m
 
 public export
 fapplyNT : (x, y : Type) -> (x -> y) ->
