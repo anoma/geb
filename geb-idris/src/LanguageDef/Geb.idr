@@ -316,6 +316,18 @@ public export
 IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
 
 public export
+0 IntProfNTNaturality :
+  (d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (did : IntIdSig d dmor) -> (cid : IntIdSig c cmor) ->
+  (dcomp : IntCompSig d dmor) ->
+  (ccomp : IntCompSig c cmor) ->
+  (p, q : IntProfunctorSig d c) ->
+  IntDimapSig d c dmor cmor p -> IntDimapSig d c dmor cmor q ->
+  IntProfNTSig d c p q -> Type
+IntProfNTNaturality d c dmor cmor did cid dcomp ccomp p q pdm qdm =
+  ?IntProfNTNaturality_hole
+
+public export
 IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
 IntDiNTSig c p q = (x : c) -> p x x -> q x x
 
@@ -324,11 +336,11 @@ IntDiNTSig c p q = (x : c) -> p x x -> q x x
 -- a functor between categories of diagonal elements.
 public export
 0 IntParaNTCond : (c : Type) -> (cmor : IntDifunctorSig c) ->
-  (cid : IntIdSig c cmor) -> (ccomp : IntCompSig c cmor) ->
+  (cid : IntIdSig c cmor) ->
   (p, q : IntDifunctorSig c) ->
   IntEndoDimapSig c cmor p -> IntEndoDimapSig c cmor q ->
   IntDiNTSig c p q -> Type
-IntParaNTCond c cmor cid ccomp p q pdm qdm alpha =
+IntParaNTCond c cmor cid p q pdm qdm alpha =
   (i0, i1 : c) -> (i2 : cmor i0 i1) -> (d0 : p i0 i0) -> (d1 : p i1 i1) ->
   let
     prm = IntEndoRmapFromDimap c cmor cid p pdm i0 i0 i1 i2
