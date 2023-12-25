@@ -1160,6 +1160,10 @@ public export
   FuncCoprshfMorphEq (fapply x) (fapply y) (fapplym x) (fapplym y)
     (fapplyNT x y (fapplyNTinv x y m)) m
 fapplyNTinvLthenR x y (Element0 alpha nat) f fm elfx =
+  let
+    fai = fapplyNTinv x y (Element0 alpha nat)
+    fmb = fm x y fai
+  in
   ?fapplyNTinvLthenR_hole
 
 -------------------------------------------------------------------------------
