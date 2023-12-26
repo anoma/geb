@@ -1112,8 +1112,8 @@ TwistArrDiEmbedMorphInv
 --------------------------------------------------------
 
 public export
-0 TypeFMapSig : (Type -> Type) -> Type
-TypeFMapSig f = (0 a, b : Type) -> (a -> b) -> f a -> f b
+0 TypeFMapSig : (0 _ : Type -> Type) -> Type
+TypeFMapSig = IntCoprshfMapSig Type HomProf
 
 public export
 0 TypeNaturality : (0 f, g : Type -> Type) ->
