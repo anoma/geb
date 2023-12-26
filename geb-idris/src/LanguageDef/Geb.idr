@@ -1243,8 +1243,9 @@ fapplyNT : (x, y : Type) -> (x -> y) ->
 fapplyNT x y m = Element0 (fapplyNTBase x y m) (fapplyNTnaturality x y m)
 
 -- `fapply(m)/fapplyNT` form an embedding of `Type` into
--- `FuncCoprshf(Obj/Morph)`.  We now show that `fapplyNT` has an inverse,
--- hence is bijective, which means that that embedding is full and faithful.
+-- `FuncCoprshf(Obj/Morph)`.  We now show as much as we can within Idris
+-- of a proof that `fapplyNT` has an inverse, hence is bijective, which
+-- means that that embedding is full and faithful.
 public export
 fapplyNTinv : (x, y : Type) ->
   FuncCoprshfMorph (fapply x) (fapply y) (fapplym x) (fapplym y) ->
