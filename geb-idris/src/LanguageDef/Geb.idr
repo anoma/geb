@@ -327,6 +327,14 @@ public export
   IntEndoDimapSig c cmor p
 IntEndoDimapFromLRmaps c cmor = IntDimapFromLRmaps c c cmor cmor
 
+public export
+constProf : (0 c, d : Type) -> Type -> IntProfunctorSig c d
+constProf c d x _ _ = x
+
+public export
+constDi : (0 c : Type) -> Type -> IntDifunctorSig c
+constDi c = constProf c c
+
 --------------------------------------------
 ---- (Di-/Para-)natural transformations ----
 --------------------------------------------
@@ -391,6 +399,14 @@ IntParaNTCond c cmor p q plm prm qlm qrm alpha =
 IntParaNTimpliesDi c cmor p q plm prm comm qlm qrm alpha para i0 i1 i2 pi1i0 =
   para i0 i1 i2 (plm i1 i0 i0 i2 pi1i0) (prm i1 i0 i1 i2 pi1i0) $
     comm i1 i0 i0 i1 i2 i2 pi1i0
+
+public export
+0 wedge : (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
+wedge c apex p = IntDiNTSig c (constDi c apex) p
+
+public export
+0 cowedge : (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
+cowedge c apex p = IntDiNTSig c p (constDi c apex)
 
 ------------------------------------------------------------------
 ---- Natural transformations from paranatural transformations ----
