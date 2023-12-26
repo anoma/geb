@@ -1157,11 +1157,6 @@ FuncCoprshfMorphBase fp gp =
   (0 f : Type -> Type) -> (fm : TypeFMapSig f) -> fp f -> gp f
 
 public export
-0 FuncCoprshfMorphBaseId : (fp, gp : FuncCoprshfObj) ->
-  FuncCoprshfMorphBase fp gp -> fp Prelude.id -> gp Prelude.id
-FuncCoprshfMorphBaseId fp gp m = m id (\a, b => id {a=(a -> b)})
-
-public export
 0 FuncCoprshfMorphBaseEq : (0 fp, gp : FuncCoprshfObj) ->
   (m, m' : FuncCoprshfMorphBase fp gp) -> Type
 FuncCoprshfMorphBaseEq fp gp m m' =
