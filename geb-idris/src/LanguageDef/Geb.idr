@@ -1124,9 +1124,21 @@ public export
 FuncCoprshfObjFMapSig fp =
   (0 f, g : Type -> Type) -> NaturalTransformation f g -> fp f -> fp g
 
+-- The identity-preserving condition on the morphism-map component of a
+-- `FuncCoprshfObj` (since such an object is itself a functor).
+public export
+0 FuncCoprshfObjFMapIdCond :
+  (fp : FuncCoprshfObj) -> FuncCoprshfObjFMapSig fp -> Type
+FuncCoprshfObjFMapIdCond fp fpm =
+  (0 f : Type -> Type) -> ExtEq (fpm f f (IdNT f)) (id {a=(fp f)})
+
 public export
 0 TypeFMapSig : (0 _ : Type -> Type) -> Type
 TypeFMapSig = IntCoprshfMapSig Type HomProf
+
+public export
+0 TypeFMapIdCond : (0 f : Type -> Type) -> TypeFMapSig f -> Type
+TypeFMapIdCond f fm = (0 x : Type) -> ExtEq (fm x x (id {a=x})) (id {a=(f x)})
 
 public export
 0 TypeNaturality : (0 f, g : Type -> Type) ->
@@ -1199,6 +1211,10 @@ public export
 fapplym : (x : Type) -> FuncCoprshfObjFMapSig (fapply x)
 fapplym x f g alpha fx = alpha x fx
 
+public export
+fapplymIdCond : (x : Type) -> FuncCoprshfObjFMapIdCond (fapply x) (fapplym x)
+fapplymIdCond x f elfx = Refl
+
 -- `fapply` and `fapplym` together form the object-map component of
 -- an embedding of `Type` into the category of (co)presheaves on the
 -- category of endofunctors on `Type` (such an embedding is a functor
@@ -1210,7 +1226,7 @@ fapplyNTBase : (x, y : Type) -> (x -> y) ->
 fapplyNTBase x y m f fm = fm x y m
 
 public export
-fapplyNTnaturality : (x, y : Type) -> (m : x -> y) ->
+0 fapplyNTnaturality : (x, y : Type) -> (m : x -> y) ->
   FuncCoprshfMorphNaturality
     (fapply x) (fapply y) (fapplym x) (fapplym y) (fapplyNTBase x y m)
 fapplyNTnaturality x y m f g fm gm nu nunat = nunat x y m
@@ -1240,9 +1256,9 @@ public export
   (m : FuncCoprshfMorph (fapply x) (fapply y) (fapplym x) (fapplym y)) ->
   FuncCoprshfMorphEq (fapply x) (fapply y) (fapplym x) (fapplym y)
     (fapplyNT x y (fapplyNTinv x y m)) m
-fapplyNTinvLthenR x y (Element0 alpha nat) f fm elfx =
+fapplyNTinvLthenR x y (Element0 beta nat) f fm elfx =
   let
-    fai = fapplyNTinv x y (Element0 alpha nat)
+    fai = fapplyNTinv x y (Element0 beta nat)
     fmb = fm x y fai
   in
   ?fapplyNTinvLthenR_hole
