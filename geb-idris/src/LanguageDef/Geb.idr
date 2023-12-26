@@ -328,12 +328,23 @@ public export
 IntEndoDimapFromLRmaps c cmor = IntDimapFromLRmaps c c cmor cmor
 
 public export
-constProf : (0 c, d : Type) -> Type -> IntProfunctorSig c d
-constProf c d x _ _ = x
+constProf : (0 d, c : Type) -> Type -> IntProfunctorSig d c
+constProf d c x _ _ = x
 
 public export
-constDi : (0 c : Type) -> Type -> IntDifunctorSig c
+constDimap : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (0 x : Type) -> IntDimapSig d c dmor cmor (constProf d c x)
+constDimap d c dmor cmor x s t a b dmas cmtb = id {a=x}
+
+public export
+constDi : (0 c : Type) -> (apex : Type) -> IntDifunctorSig c
 constDi c = constProf c c
+
+public export
+constEndoDimap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (0 x : Type) -> IntEndoDimapSig c mor (constDi c x)
+constEndoDimap c mor = constDimap c c mor mor
 
 --------------------------------------------
 ---- (Di-/Para-)natural transformations ----
