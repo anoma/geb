@@ -1384,17 +1384,29 @@ ParaCoprshfMorph pp qp pdm qdm =
     (ProfCoprshfMorphBase pp qp)
     (ParaCoprshfMorphNaturality pp qp pdm qdm)
 
--- `profapply x y` is the functor on profunctors that applies a profunctor to
--- `x` and `y`.
+-- `profapply x y` is the object-map component of a functor on difunctors that
+-- applies a difunctor to `x` and `y`.
 public export
 profapply : Type -> Type -> ProfCoprshfObj
 profapply x y p = p x y
 
--- `diapply x` is the functor on profunctors that applies a profunctor to
--- `x` and `x`.
+-- `profapplym x y` is the morphism-map component of a functor on difunctors
+-- that applies a difunctor to `x` and `y`.
+public export
+profapplym : (x, y : Type) -> ProfCoprshfObjFMapSig (profapply x y)
+profapplym x y p q alpha pxy = alpha pxy
+
+-- `diapply x` is the object-map component of a functor on difunctors that
+-- applies a difunctor to `x` and `x`.
 public export
 diapply : Type -> ProfCoprshfObj
 diapply x = profapply x x
+
+-- `diapplym x` is the morphism-map component of a functor on difunctors
+-- that applies a difunctor to `x` and `x`.
+public export
+diapplym : (x : Type) -> ParaCoprshfObjFMapSig (diapply x)
+diapplym x p q alpha pxx = alpha x pxx
 
 -- The signature of an endprofunctor/difunctor/prosheaf (we'll use any
 -- one of those names to mean the same thing, depending on the context) on
