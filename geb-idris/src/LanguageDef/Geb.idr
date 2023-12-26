@@ -1303,6 +1303,11 @@ public export
 TypeRmapSig p = IntEndoRmapSig Type HomProf p
 
 public export
+0 TypeDimapFromLR : (p : ProfunctorSig) ->
+  TypeLmapSig p -> TypeRmapSig p -> TypeDimapSig p
+TypeDimapFromLR p = IntEndoDimapFromLRmaps Type HomProf p
+
+public export
 0 ProfNaturality : (0 p, q : ProfunctorSig) ->
   (0 pdm : TypeDimapSig p) -> (0 qdm : TypeDimapSig q) ->
   ProfNT p q -> Type
@@ -1311,10 +1316,8 @@ ProfNaturality p q pdm qdm alpha =
 
 public export
 0 ProfParanaturality : (0 p, q : ProfunctorSig) ->
-  (0 plm : TypeLmapSig p) ->
-  (0 prm : TypeRmapSig p) ->
-  (0 qlm : TypeLmapSig q) ->
-  (0 qrm : TypeRmapSig q) ->
+  (0 plm : TypeLmapSig p) -> (0 prm : TypeRmapSig p) ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
   ProfDiNT p q -> Type
 ProfParanaturality p q plm prm qlm qrm =
   IntParaNTCond Type HomProf p q plm prm qlm qrm
@@ -1342,6 +1345,22 @@ ProfCoprshfMorphNaturality pp qp ppdm qpdm alpha =
   ExtEq {a=(pp p)} {b=(qp q)}
     (alpha q qdm . ppdm p q nu)
     (qpdm p q nu . alpha p pdm)
+
+public export
+0 ParaCoprshfMorphNaturality :
+  (0 pp, qp : ProfCoprshfObj) ->
+  (0 pdm : ParaCoprshfObjFMapSig pp) ->
+  (0 qdm : ParaCoprshfObjFMapSig qp) ->
+  ProfCoprshfMorphBase pp qp -> Type
+ParaCoprshfMorphNaturality pp qp ppdm qpdm alpha =
+  (0 p, q : ProfunctorSig) ->
+  (0 plm : TypeLmapSig p) -> (0 prm : TypeRmapSig p) ->
+  (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
+  (0 nu : ProfDiNT p q) ->
+  ProfParanaturality p q plm prm qlm qrm nu ->
+  ExtEq {a=(pp p)} {b=(qp q)}
+    (alpha q (TypeDimapFromLR q qlm qrm) . ppdm p q nu)
+    (qpdm p q nu . alpha p (TypeDimapFromLR p plm prm))
 
 -- `profapply x y` is the functor on profunctors that applies a profunctor to
 -- `x` and `y`.
