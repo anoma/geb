@@ -1362,6 +1362,28 @@ ParaCoprshfMorphNaturality pp qp ppdm qpdm alpha =
     (alpha q (TypeDimapFromLR q qlm qrm) . ppdm p q nu)
     (qpdm p q nu . alpha p (TypeDimapFromLR p plm prm))
 
+public export
+0 ProfCoprshfMorph :
+  (0 pp, qp : ProfCoprshfObj) ->
+  (0 pdm : ProfCoprshfObjFMapSig pp) ->
+  (0 qdm : ProfCoprshfObjFMapSig qp) ->
+  Type
+ProfCoprshfMorph pp qp pdm qdm =
+  Subset0
+    (ProfCoprshfMorphBase pp qp)
+    (ProfCoprshfMorphNaturality pp qp pdm qdm)
+
+public export
+0 ParaCoprshfMorph :
+  (0 pp, qp : ProfCoprshfObj) ->
+  (0 pdm : ParaCoprshfObjFMapSig pp) ->
+  (0 qdm : ParaCoprshfObjFMapSig qp) ->
+  Type
+ParaCoprshfMorph pp qp pdm qdm =
+  Subset0
+    (ProfCoprshfMorphBase pp qp)
+    (ParaCoprshfMorphNaturality pp qp pdm qdm)
+
 -- `profapply x y` is the functor on profunctors that applies a profunctor to
 -- `x` and `y`.
 public export
