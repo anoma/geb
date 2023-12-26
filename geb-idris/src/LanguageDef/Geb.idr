@@ -1408,6 +1408,28 @@ public export
 diapplym : (x : Type) -> ParaCoprshfObjFMapSig (diapply x)
 diapplym x p q alpha pxx = alpha x pxx
 
+-- `profapply` and `profapplym` together form the object-map component of
+-- an embedding of `(op(Type), Type)` into the category of (co)presheaves on the
+-- category of difunctors on `Type` with natural transformations (such an
+-- embedding is a functor from `(op(Type), Type)` to
+-- `ProfCoprshfObj/ProfCoprshfObjFMapSig`).  We now define the morphism-map
+-- component of that embedding (`profapplyNT`).
+public export
+profapplyNTBase : (s, t, a, b : Type) -> (a -> s) -> (t -> b) ->
+  ProfCoprshfMorphBase (profapply s t) (profapply a b)
+profapplyNTBase s t a b mas mtb p pdm pst = pdm s t a b mas mtb pst
+
+-- `diapply` and `diapplym` together form the object-map component of
+-- an embedding of `Type` into the category of (co)presheaves on the
+-- category of difunctors on `Type` with paranatural transformations (such
+-- an embedding is a functor from `Type` to
+-- `ProfCoprshfObj/ParaCoprshfObjFMapSig`).  We now define the morphism-map
+-- component of that embedding (`diapplyNT`).
+public export
+diapplyNTBase : (x, y : Type) -> (x -> y) ->
+  ProfCoprshfMorphBase (diapply x) (diapply y)
+diapplyNTBase x y m p pdm pxx = let pdmxy = pdm x x y y in ?diapplyNTBase_hole
+
 -- The signature of an endprofunctor/difunctor/prosheaf (we'll use any
 -- one of those names to mean the same thing, depending on the context) on
 -- the category of endoprofunctors on `Type`.
