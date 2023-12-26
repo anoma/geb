@@ -1111,17 +1111,6 @@ TwistArrDiEmbedMorphInv
 ---- Double-Yoneda on `Type` (functor polymorphism) ----
 --------------------------------------------------------
 
-public export
-0 TypeFMapSig : (0 _ : Type -> Type) -> Type
-TypeFMapSig = IntCoprshfMapSig Type HomProf
-
-public export
-0 TypeNaturality : (0 f, g : Type -> Type) ->
-  (0 fm : TypeFMapSig f) -> (0 gm : TypeFMapSig g) ->
-  NaturalTransformation f g -> Type
-TypeNaturality f g fm gm nu = (0 a, b : Type) -> (0 m : a -> b) ->
-  ExtEq {a=(f a)} {b=(g b)} (gm a b m . nu a) (nu b . fm a b m)
-
 -- The signature of the object-map component of a (co)presheaf on the category
 -- of endofunctors on `Type`.
 public export
@@ -1134,6 +1123,17 @@ public export
 0 FuncCoprshfObjFMapSig : FuncCoprshfObj -> Type
 FuncCoprshfObjFMapSig fp =
   (0 f, g : Type -> Type) -> NaturalTransformation f g -> fp f -> fp g
+
+public export
+0 TypeFMapSig : (0 _ : Type -> Type) -> Type
+TypeFMapSig = IntCoprshfMapSig Type HomProf
+
+public export
+0 TypeNaturality : (0 f, g : Type -> Type) ->
+  (0 fm : TypeFMapSig f) -> (0 gm : TypeFMapSig g) ->
+  NaturalTransformation f g -> Type
+TypeNaturality f g fm gm nu = (0 a, b : Type) -> (0 m : a -> b) ->
+  ExtEq {a=(f a)} {b=(g b)} (gm a b m . nu a) (nu b . fm a b m)
 
 -- A morphism in the category of (co)presheaves on the category of
 -- endofunctors on `Type` is a natural transformation, because the
