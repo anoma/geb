@@ -1319,6 +1319,30 @@ public export
 ProfParanaturality p q plm prm qlm qrm =
   IntParaNTCond Type HomProf p q plm prm qlm qrm
 
+-- A morphism in the category of (co)presheaves on the category of
+-- difunctors on `Type` is a natural transformation, because the
+-- objects of that category are functors (whose domain is the category
+-- of difunctors on `Type`, and whose codomain is `Type`).
+public export
+0 ProfCoprshfMorphBase : ProfCoprshfObj -> ProfCoprshfObj -> Type
+ProfCoprshfMorphBase pp qp =
+  (0 p : ProfunctorSig) -> (dm : TypeDimapSig p) -> pp p -> qp p
+
+public export
+0 ProfCoprshfMorphNaturality :
+  (0 pp, qp : ProfCoprshfObj) ->
+  (0 pdm : ProfCoprshfObjFMapSig pp) ->
+  (0 qdm : ProfCoprshfObjFMapSig qp) ->
+  ProfCoprshfMorphBase pp qp -> Type
+ProfCoprshfMorphNaturality pp qp ppdm qpdm alpha =
+  (0 p, q : ProfunctorSig) ->
+  (0 pdm : TypeDimapSig p) -> (0 qdm : TypeDimapSig q) ->
+  (0 nu : ProfNT p q) ->
+  ProfNaturality p q pdm qdm nu ->
+  ExtEq {a=(pp p)} {b=(qp q)}
+    (alpha q qdm . ppdm p q nu)
+    (qpdm p q nu . alpha p pdm)
+
 -- `profapply x y` is the functor on profunctors that applies a profunctor to
 -- `x` and `y`.
 public export
