@@ -1157,11 +1157,17 @@ FuncCoprshfMorphBase fp gp =
   (0 f : Type -> Type) -> (fm : TypeFMapSig f) -> fp f -> gp f
 
 public export
+0 FuncCoprshfMorphBaseId : (fp, gp : FuncCoprshfObj) ->
+  FuncCoprshfMorphBase fp gp -> fp Prelude.id -> gp Prelude.id
+FuncCoprshfMorphBaseId fp gp m = m id (\a, b => id {a=(a -> b)})
+
+public export
 0 FuncCoprshfMorphBaseEq : (0 fp, gp : FuncCoprshfObj) ->
   (m, m' : FuncCoprshfMorphBase fp gp) -> Type
 FuncCoprshfMorphBaseEq fp gp m m' =
   (0 f : Type -> Type) -> (0 fm : TypeFMapSig f) ->
-  ExtEq (m f fm) (m' f fm)
+  TypeFMapIdCond f fm ->
+  ExtEq {a=(fp f)} {b=(gp f)} (m f fm) (m' f fm)
 
 public export
 0 FuncCoprshfMorphNaturality :
@@ -1251,17 +1257,16 @@ public export
   ExtEq (fapplyNTinv x y (fapplyNT x y m)) m
 fapplyNTinvRthenL x y m elx = Refl
 
+-- We can not actually prove this theorem in Idris, because Idris doesn't
+-- know the rules of its own type system.  Proving this would amount to
+-- proving the double-Yoneda lemma on Idris's type system.
 public export
-0 fapplyNTinvLthenR : (x, y : Type) ->
+0 FapplyNTinvLthenRcond : Type
+FapplyNTinvLthenRcond =
+  (x, y : Type) ->
   (m : FuncCoprshfMorph (fapply x) (fapply y) (fapplym x) (fapplym y)) ->
   FuncCoprshfMorphEq (fapply x) (fapply y) (fapplym x) (fapplym y)
     (fapplyNT x y (fapplyNTinv x y m)) m
-fapplyNTinvLthenR x y (Element0 beta nat) f fm elfx =
-  let
-    fai = fapplyNTinv x y (Element0 beta nat)
-    fmb = fm x y fai
-  in
-  ?fapplyNTinvLthenR_hole
 
 -------------------------------------------------------------------------------
 ---- Double-pro-/di-Yoneda on `Type` (profunctor paranatural polymorphism) ----
