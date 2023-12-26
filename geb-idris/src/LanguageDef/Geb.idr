@@ -1274,6 +1274,51 @@ public export
 0 ProfCoprshfObj : Type
 ProfCoprshfObj = ProfunctorSig -> Type
 
+-- The signature of the morphism-map component of a `ProfCoprshfObj` (since
+-- such an object is itself a functor), when the copresheaf's domain is the
+-- category of endoprofunctors with natural transformations.
+public export
+0 ProfCoprshfObjFMapSig : ProfCoprshfObj -> Type
+ProfCoprshfObjFMapSig pp =
+  (0 p, q : ProfunctorSig) -> ProfNT p q -> pp p -> pp q
+
+-- The signature of the morphism-map component of a `ProfCoprshfObj` (since
+-- such an object is itself a functor), when the copresheaf's domain is the
+-- category of endoprofunctors with _paranatural_ transformations.
+public export
+0 ParaCoprshfObjFMapSig : ProfCoprshfObj -> Type
+ParaCoprshfObjFMapSig pp =
+  (0 p, q : ProfunctorSig) -> ProfDiNT p q -> pp p -> pp q
+
+public export
+0 TypeDimapSig : (0 _ : Type -> Type -> Type) -> Type
+TypeDimapSig p = IntEndoDimapSig Type HomProf p
+
+public export
+0 TypeLmapSig : (0 _ : Type -> Type -> Type) -> Type
+TypeLmapSig p = IntEndoLmapSig Type HomProf p
+
+public export
+0 TypeRmapSig : (0 _ : Type -> Type -> Type) -> Type
+TypeRmapSig p = IntEndoRmapSig Type HomProf p
+
+public export
+0 ProfNaturality : (0 p, q : ProfunctorSig) ->
+  (0 pdm : TypeDimapSig p) -> (0 qdm : TypeDimapSig q) ->
+  ProfNT p q -> Type
+ProfNaturality p q pdm qdm alpha =
+  IntProfNTNaturality Type Type HomProf HomProf p q pdm qdm $ \_, _ => alpha
+
+public export
+0 ProfParanaturality : (0 p, q : ProfunctorSig) ->
+  (0 plm : TypeLmapSig p) ->
+  (0 prm : TypeRmapSig p) ->
+  (0 qlm : TypeLmapSig q) ->
+  (0 qrm : TypeRmapSig q) ->
+  ProfDiNT p q -> Type
+ProfParanaturality p q plm prm qlm qrm =
+  IntParaNTCond Type HomProf p q plm prm qlm qrm
+
 -- `profapply x y` is the functor on profunctors that applies a profunctor to
 -- `x` and `y`.
 public export
