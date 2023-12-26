@@ -811,6 +811,10 @@ NaturalTransformation : (Type -> Type) -> (Type -> Type) -> Type
 NaturalTransformation f g = Pi (AppFunctor f g)
 
 public export
+IdNT : (f : Type -> Type) -> NaturalTransformation f f
+IdNT f a = id {a=(f a)}
+
+public export
 vcompNT : {f, g, h : Type -> Type} ->
   NaturalTransformation g h -> NaturalTransformation f g ->
   NaturalTransformation f h
