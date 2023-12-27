@@ -540,8 +540,8 @@ TypeCQuivCompCoprod {v} {w} {qv} {qw} cv cw (Right ew) (Right ew') (Right ew'')
 -- it is covariant) -- this is the type of the morphism-map component of such a
 -- contravariant functor (presheaf).
 public export
-TypeQuivPrshfMmap : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
-TypeQuivPrshfMmap {v} q sl =
+TypeQuivPreshfMmap : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
+TypeQuivPreshfMmap {v} q sl =
   (dom, cod : v) -> q (dom, cod) -> sl cod -> sl dom
 
 -- Given a quiver internal to and enriched over `Type` and a slice object
@@ -551,8 +551,8 @@ TypeQuivPrshfMmap {v} q sl =
 -- it is covariant) -- this is the type of the morphism-map component of such a
 -- covariant functor (copresheaf).
 public export
-TypeQuivCoprshfMmap : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
-TypeQuivCoprshfMmap {v} q sl =
+TypeQuivCopreshfMmap : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
+TypeQuivCopreshfMmap {v} q sl =
   (dom, cod : v) -> q (dom, cod) -> sl dom -> sl cod
 
 --------------------------------
@@ -566,8 +566,8 @@ TypeQuivCoprshfMmap {v} q sl =
 -- it is covariant) -- this is the type of the morphism-map component of such a
 -- contravariant functor (presheaf).
 public export
-FinEnrQuivPrshfMmap : {v : Type} -> FinEnrQuivV v -> SliceObj v -> Type
-FinEnrQuivPrshfMmap {v} q = TypeQuivPrshfMmap {v} (Fin . q)
+FinEnrQuivPreshfMmap : {v : Type} -> FinEnrQuivV v -> SliceObj v -> Type
+FinEnrQuivPreshfMmap {v} q = TypeQuivPreshfMmap {v} (Fin . q)
 
 -- Given a quiver internal to `Type` but enriched over `FinSet`, and a slice
 -- object over its vertex object -- the latter of which may be treated as the
@@ -576,8 +576,8 @@ FinEnrQuivPrshfMmap {v} q = TypeQuivPrshfMmap {v} (Fin . q)
 -- it is covariant) -- this is the type of the morphism-map component of such a
 -- contravariant functor (presheaf).
 public export
-FinEnrQuivCoprshfMmap : {v : Type} -> FinEnrQuivV v -> SliceObj v -> Type
-FinEnrQuivCoprshfMmap {v} q = TypeQuivCoprshfMmap {v} (Fin . q)
+FinEnrQuivCopreshfMmap : {v : Type} -> FinEnrQuivV v -> SliceObj v -> Type
+FinEnrQuivCopreshfMmap {v} q = TypeQuivCopreshfMmap {v} (Fin . q)
 
 ------------------------------------------------
 ---- Internal to and enriched over `FinSet` ----
@@ -590,8 +590,8 @@ FinEnrQuivCoprshfMmap {v} q = TypeQuivCoprshfMmap {v} (Fin . q)
 -- it is covariant) -- this is the type of the morphism-map component of such a
 -- contravariant functor (presheaf).
 public export
-FinQuivPrshfMmap : {n : Nat} -> FinQuivN n -> FinSliceObj n -> Type
-FinQuivPrshfMmap {n} q = TypeQuivPrshfMmap {v=(Fin n)} (Fin . q)
+FinQuivPreshfMmap : {n : Nat} -> FinQuivN n -> FinSliceObj n -> Type
+FinQuivPreshfMmap {n} q = TypeQuivPreshfMmap {v=(Fin n)} (Fin . q)
 
 -- Given a quiver internal to and enriched over `FinSet`, and a slice
 -- object over its vertex object -- the latter of which may be treated as the
@@ -600,24 +600,24 @@ FinQuivPrshfMmap {n} q = TypeQuivPrshfMmap {v=(Fin n)} (Fin . q)
 -- it is covariant) -- this is the type of the morphism-map component of such a
 -- covariant functor (copresheaf).
 public export
-FinQuivCoprshfMmap : {n : Nat} -> FinQuivN n -> FinSliceObj n -> Type
-FinQuivCoprshfMmap {n} q = TypeQuivCoprshfMmap {v=(Fin n)} (Fin . q)
+FinQuivCopreshfMmap : {n : Nat} -> FinQuivN n -> FinSliceObj n -> Type
+FinQuivCopreshfMmap {n} q = TypeQuivCopreshfMmap {v=(Fin n)} (Fin . q)
 
 --------------------------------------------------
 ---- Functors in free-(co)presheaf categories ----
 --------------------------------------------------
 
 public export
-TypeQuivPrshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
-TypeQuivPrshfFunctor {v} {w} qv qw =
-  (slv : SliceObj v ** TypeQuivPrshfMmap {v} qv slv) ->
-  (slw : SliceObj w ** TypeQuivPrshfMmap {v=w} qw slw)
+TypeQuivPreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
+TypeQuivPreshfFunctor {v} {w} qv qw =
+  (slv : SliceObj v ** TypeQuivPreshfMmap {v} qv slv) ->
+  (slw : SliceObj w ** TypeQuivPreshfMmap {v=w} qw slw)
 
 public export
-TypeQuivCoprshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
-TypeQuivCoprshfFunctor {v} {w} qv qw =
-  (slv : SliceObj v ** TypeQuivCoprshfMmap {v} qv slv) ->
-  (slw : SliceObj w ** TypeQuivCoprshfMmap {v=w} qw slw)
+TypeQuivCopreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
+TypeQuivCopreshfFunctor {v} {w} qv qw =
+  (slv : SliceObj v ** TypeQuivCopreshfMmap {v} qv slv) ->
+  (slw : SliceObj w ** TypeQuivCopreshfMmap {v=w} qw slw)
 
 -------------------------------------
 -------------------------------------
@@ -669,21 +669,21 @@ TypeQuivKanExtProf {v} slv _ = slv
 public export
 TypeQuivKanExtProfDimap :
   {v : Type} -> (q : TypeQuivV v) -> (slv : SliceObj v) ->
-  TypeQuivCoprshfMmap {v} q slv ->
+  TypeQuivCopreshfMmap {v} q slv ->
   TypeQuivDimapSig {v} q (TypeQuivKanExtProf {v} slv)
 TypeQuivKanExtProfDimap {v} q slv fm a b c d mca mbd slvb = fm b d mbd slvb
 
 public export
 TypeQuivKanExtProfLmap :
   {v : Type} -> (q : TypeQuivV v) -> (slv : SliceObj v) ->
-  TypeQuivCoprshfMmap {v} q slv ->
+  TypeQuivCopreshfMmap {v} q slv ->
   TypeQuivLmapSig {v} q (TypeQuivKanExtProf {v} slv)
 TypeQuivKanExtProfLmap {v} q slv fm a b c mba = id {a=(slv c)}
 
 public export
 TypeQuivKanExtProfRmap :
   {v : Type} -> (q : TypeQuivV v) -> (slv : SliceObj v) ->
-  TypeQuivCoprshfMmap {v} q slv ->
+  TypeQuivCopreshfMmap {v} q slv ->
   TypeQuivRmapSig {v} q (TypeQuivKanExtProf {v} slv)
 TypeQuivKanExtProfRmap {v} q slv fm a b c mab = fm a b mab
 
@@ -699,14 +699,14 @@ TypeQuivRKanProdP {v} q slv = TypeQuivProdP {v} q (TypeQuivKanExtProf {v} slv)
 public export
 TypeQuivRKanExt :
   {v : Type} -> (q : TypeQuivV v) -> (slv : SliceObj v) ->
-  TypeQuivCoprshfMmap {v} q slv -> Type
+  TypeQuivCopreshfMmap {v} q slv -> Type
 TypeQuivRKanExt {v} q slv fm =
   (pi : ((ev : v) -> slv ev) **
    (ev, ev' : v) -> (f : q (ev, ev')) -> fm ev ev' f (pi ev) = pi ev')
 
 public export
 TypeQuivLKanExtBase : {v : Type} -> (q : TypeQuivV v) -> (slv : SliceObj v) ->
-  TypeQuivCoprshfMmap {v} q slv -> Type
+  TypeQuivCopreshfMmap {v} q slv -> Type
 TypeQuivLKanExtBase {v} q slv fm =
   TypeQuivCoendBase {v} (TypeQuivKanExtProf {v} slv)
 
