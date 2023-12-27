@@ -300,7 +300,7 @@ mutual
 
 public export
 record PCopresheaf (j : PreDiagram) where
-  constructor PCoprshf
+  constructor PCopreshf
   pcprObj : pdVert j -> Type
   pcprMorph : (x, y : pdVert j) ->
     pdEdge j (x, y) -> pcprObj x -> pcprObj y
@@ -396,7 +396,7 @@ InterpPRAmorphComponents :
   PCMorphComponents {j=dom}
     (prafDirObj praf (j ** InterpPRAmorphPos praf pcdom i j e p)) pcdom
 InterpPRAmorphComponents {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
-  (PRAf (PCoprshf objcod morphcod) dir fmap)
+  (PRAf (PCopreshf objcod morphcod) dir fmap)
   pcdom i j e (p ** Element0 alpha natural) vd dvd =
     alpha vd $
       fst0 (fmap (j ** morphcod i j e p) (i ** p) (Element0 e Refl)) vd dvd
@@ -411,7 +411,7 @@ public export
     {pcpr'=pcdom}
     (InterpPRAmorphComponents {dom} {cod} praf pcdom i j e p)
 InterpPRAmorphNaturality {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
-  (PRAf (PCoprshf objcod morphcod) dir fmap)
+  (PRAf (PCopreshf objcod morphcod) dir fmap)
   pcdom i j e (p ** Element0 alpha natural) i' j' e'
   funext =
     funExt $ \el =>
@@ -447,7 +447,7 @@ public export
 InterpPRA : {dom, cod : PreDiagram} -> (praf : PRAFunctor dom cod) ->
   PCopresheaf dom -> PCopresheaf cod
 InterpPRA {dom} {cod} praf pcdom =
-  PCoprshf
+  PCopreshf
     (InterpPRAobj {dom} {cod} praf pcdom)
     (InterpPRAmorph {dom} {cod} praf pcdom)
 
@@ -458,7 +458,7 @@ InterpPRAfmapComponents :
   PCMorph {j=dom} pc pc' ->
   PCMorphComponents {j=cod} (InterpPRA praf pc) (InterpPRA praf pc')
 InterpPRAfmapComponents {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
-  (PRAf (PCoprshf objcod morphcod) dir fmap) (Element0 comp natural)
+  (PRAf (PCopreshf objcod morphcod) dir fmap) (Element0 comp natural)
   i (p ** Element0 alpha alphanat) =
     (p **
      Element0
@@ -478,7 +478,7 @@ public export
     {pcpr'=(InterpPRA {dom} {cod} praf pc')}
     (InterpPRAfmapComponents {pc} {pc'} praf m)
 InterpPRAfmapNaturality {dom=(MkPreDiag domv dome)} {cod=(MkPreDiag codv code)}
-  (PRAf (PCoprshf objcod morphcod) dir fmap) (Element0 comp natural)
+  (PRAf (PCopreshf objcod morphcod) dir fmap) (Element0 comp natural)
   i j e funext = funExt $ \(p ** Element0 alpha alphanat) =>
     dpEq12 Refl $
       s0Eq12
@@ -519,4 +519,4 @@ mutual
   PRAFmu : {base : PreDiagram} ->
     (praf : PRAEndoFunctor base) ->
     PCopresheaf base
-  PRAFmu {base} praf = PCoprshf {j=base} (PRAFmuObj praf) (PRAFmuMorph praf)
+  PRAFmu {base} praf = PCopreshf {j=base} (PRAFmuObj praf) (PRAFmuMorph praf)

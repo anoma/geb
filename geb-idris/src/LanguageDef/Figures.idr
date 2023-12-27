@@ -678,7 +678,7 @@ record CPCat where
 -- A copresheaf is a (covariant) functor, so the _objects_ are
 -- (covariant) functors from the `DiagDiag` index category to `Type`.
 public export
-record DiagCoprshfObj where
+record DiagCopreshfObj where
   constructor DCObj
   -- If we wrote it in dependent-type-with-universes style rather than
   -- category-theoretic style, DCObj would have type `WQObj -> Type` --
@@ -689,7 +689,7 @@ record DiagCoprshfObj where
   -- If we wrote it in dependent-type-with-universes style rather than
   -- category-theoretic style, DCMorph would look something like this:
   --  DCMorph : (e : WQMorph) ->
-  --    DCObj (coprshfDiagSrc e) -> DCObj (coprshfDiagTgt e)
+  --    DCObj (copreshfDiagSrc e) -> DCObj (copreshfDiagTgt e)
   -- (There are only two edges, so this is equivalent to simply two functions,
   -- both from the `Type` to which we map `WQOedge` to the type to which
   -- we map `WQOvert`, representing the source and target maps.)
@@ -702,7 +702,7 @@ record DiagCoprshfObj where
 -- A presheaf is a (contravariant) functor, so the _objects_ are
 -- (contravariant) functors from the `DiagDiag` index category to `Type`.
 public export
-record DiagPrshfObj where
+record DiagPreshfObj where
   constructor DPObj
   -- If we wrote it in dependent-type-with-universes style rather than
   -- category-theoretic style, DPObj would have type `WQObj -> Type`.
@@ -741,9 +741,9 @@ record DiagPrshfObj where
 ---------------------
 ---------------------
 
--- We should start using `DiagCoprshfObj` instead of the record type below,
+-- We should start using `DiagCopreshfObj` instead of the record type below,
 -- but we begin with a more explicit but less reflective representation.
--- (IndexCat = DiagCoprshfObj)
+-- (IndexCat = DiagCopreshfObj)
 public export
 record IndexCat where
   constructor IC
@@ -759,10 +759,10 @@ record IndexCat where
 -- of a functor category, whose morphisms are natural transformations).
 public export
 record Copresheaf (j : IndexCat) where
-  constructor Coprshf
-  coprshfObj : icVert j -> Type
-  coprshfMorph : (x, y : icVert j) ->
-    icEdge j x y -> coprshfObj x -> coprshfObj y
+  constructor Copreshf
+  copreshfObj : icVert j -> Type
+  copreshfMorph : (x, y : icVert j) ->
+    icEdge j x y -> copreshfObj x -> copreshfObj y
 
 -- A polyomial functor can be given the structure of a prafunctor by assigning
 -- a copresheaf to each position and direction.
@@ -777,10 +777,10 @@ InterpPRAFobj : {p : PolyFunc} -> {dom, cod : IndexCat} ->
   PrafunctorData p dom cod -> Copresheaf dom -> icVert cod -> Type
 InterpPRAFobj {p=(pos ** dir)}
   {dom=(IC dvert dedge)} {cod=(IC cvert cedge)} (PRAF prap prad)
-  (Coprshf obj morph) cv =
+  (Copreshf obj morph) cv =
     (i : pos **
-     (coprshfObj (prap i) cv,
-      (d : dir i) -> (dv : dvert) -> (coprshfObj (prad i d) dv, obj dv)))
+     (copreshfObj (prap i) cv,
+      (d : dir i) -> (dv : dvert) -> (copreshfObj (prad i d) dv, obj dv)))
 
 public export
 InterpPRAFmorph : {p : PolyFunc} -> {dom, cod : IndexCat} ->
@@ -789,11 +789,11 @@ InterpPRAFmorph : {p : PolyFunc} -> {dom, cod : IndexCat} ->
   InterpPRAFobj prad domc x -> InterpPRAFobj prad domc y
 InterpPRAFmorph {p=(pos ** dir)}
   {dom=(IC dvert dedge)} {cod=(IC cvert cedge)} (PRAF prap prad)
-  (Coprshf obj morph) x y e (i ** (co, m)) =
-    (i ** (coprshfMorph (prap i) x y e co, m))
+  (Copreshf obj morph) x y e (i ** (co, m)) =
+    (i ** (copreshfMorph (prap i) x y e co, m))
 
 public export
 InterpPRAF : {p : PolyFunc} -> {dom, cod : IndexCat} ->
   PrafunctorData p dom cod -> Copresheaf dom -> Copresheaf cod
 InterpPRAF prad codc =
-  Coprshf (InterpPRAFobj prad codc) (InterpPRAFmorph prad codc)
+  Copreshf (InterpPRAFobj prad codc) (InterpPRAFmorph prad codc)

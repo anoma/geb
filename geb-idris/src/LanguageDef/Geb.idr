@@ -462,51 +462,51 @@ IntProfToDifunctorDimap d c dmor cmor p dm (s, s') (t, t') (a, a') (b, b')
 -- of a (contravariant) presheaf on the category, as specified by whichever
 -- morphisms are included in `mor`.
 public export
-0 IntPrshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+0 IntPreshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
   (0 objmap : c -> Type) -> Type
-IntPrshfMapSig c mor objmap = (0 x, y : c) -> mor y x -> objmap x -> objmap y
+IntPreshfMapSig c mor objmap = (0 x, y : c) -> mor y x -> objmap x -> objmap y
 
--- As `IntPrshfMapSig`, but for a (covariant) copresheaf.
+-- As `IntPreshfMapSig`, but for a (covariant) copresheaf.
 public export
-0 IntCoprshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+0 IntCopreshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
   (0 objmap : c -> Type) -> Type
-IntCoprshfMapSig c mor objmap = (0 x, y : c) -> mor x y -> objmap x -> objmap y
+IntCopreshfMapSig c mor objmap = (0 x, y : c) -> mor x y -> objmap x -> objmap y
 
 -- The signature of a natural transformation between presheaves.
 public export
-0 IntPrshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
-IntPrshfNTSig c pobj qobj = (0 x : c) -> pobj x -> qobj x
+0 IntPreshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
+IntPreshfNTSig c pobj qobj = (0 x : c) -> pobj x -> qobj x
 
 -- The signature of a natural transformation between copresheaves.
 public export
-0 IntCoprshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
-IntCoprshfNTSig = IntPrshfNTSig
+0 IntCopreshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
+IntCopreshfNTSig = IntPreshfNTSig
 
 -- The object-map component of the (covariant) Yoneda embedding of
 -- `c` into the category of the (contravariant) presheaves on `c`.
-IntPrshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntPreshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   c -> (c -> Type)
-IntPrshfYonedaEmbedObj c mor = flip mor
+IntPreshfYonedaEmbedObj c mor = flip mor
 
 -- The object-map component of the (contravariant) Yoneda embedding of
 -- `op(c)` into the category of the (covariant) copresheaves on `c`.
-IntCoprshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntCopreshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   c -> (c -> Type)
-IntCoprshfYonedaEmbedObj c mor = mor
+IntCopreshfYonedaEmbedObj c mor = mor
 
 -- The morphism-map component of the (covariant) Yoneda embedding of
 -- `c` into the category of the (contravariant) presheaves on `c`.
-IntPrshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntPreshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
-  (a : c) -> IntPrshfMapSig c mor (IntPrshfYonedaEmbedObj c mor a)
-IntPrshfYonedaEmbedMor c mor comp a x y = flip $ comp y x a
+  (a : c) -> IntPreshfMapSig c mor (IntPreshfYonedaEmbedObj c mor a)
+IntPreshfYonedaEmbedMor c mor comp a x y = flip $ comp y x a
 
 -- The morphism-map component of the (contravariant) Yoneda embedding of
 -- `op(c)` into the category of the (covariant) copresheaves on `c`.
-IntCoprshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntCopreshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
-  (a : c) -> IntCoprshfMapSig c mor (IntCoprshfYonedaEmbedObj c mor a)
-IntCoprshfYonedaEmbedMor c mor comp a x y = comp a x y
+  (a : c) -> IntCopreshfMapSig c mor (IntCopreshfYonedaEmbedObj c mor a)
+IntCopreshfYonedaEmbedMor c mor comp a x y = comp a x y
 
 --------------------------------------
 --------------------------------------
@@ -529,7 +529,7 @@ InterpIPFobj c mor (pos ** dir) a = (i : pos ** mor (dir i) a)
 public export
 InterpIPFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
-  (ar : IntArena c) -> IntCoprshfMapSig c mor (InterpIPFobj c mor ar)
+  (ar : IntArena c) -> IntCopreshfMapSig c mor (InterpIPFobj c mor ar)
 InterpIPFmap c mor comp (pos ** dir) x y m (i ** dm) =
   (i ** comp (dir i) x y m dm)
 
@@ -541,7 +541,7 @@ InterpIDFobj c mor (pos ** dir) a = (i : pos ** mor a (dir i))
 public export
 InterpIDFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
-  (ar : IntArena c) -> IntPrshfMapSig c mor (InterpIDFobj c mor ar)
+  (ar : IntArena c) -> IntPreshfMapSig c mor (InterpIDFobj c mor ar)
 InterpIDFmap c mor comp (pos ** dir) x y m (i ** dm) =
   (i ** comp y x (dir i) dm m)
 
@@ -555,7 +555,7 @@ public export
 InterpIPnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (p, q : IntArena c) -> IntPNTar c mor p q ->
-  IntCoprshfNTSig c (InterpIPFobj c mor p) (InterpIPFobj c mor q)
+  IntCopreshfNTSig c (InterpIPFobj c mor p) (InterpIPFobj c mor q)
 InterpIPnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
   (i ** dm) =
     (onpos i ** comp (qdir (onpos i)) (pdir i) x dm (ondir i))
@@ -570,7 +570,7 @@ public export
 InterpIDnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (p, q : IntArena c) -> IntDNTar c mor p q ->
-  IntPrshfNTSig c (InterpIDFobj c mor p) (InterpIDFobj c mor q)
+  IntPreshfNTSig c (InterpIDFobj c mor p) (InterpIDFobj c mor q)
 InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
   (i ** dm) =
     (onpos i ** comp x (pdir i) (qdir (onpos i)) (ondir i) dm)
@@ -1114,27 +1114,27 @@ TwistArrDiEmbedMorphInv
 -- The signature of the object-map component of a (co)presheaf on the category
 -- of endofunctors on `Type`.
 public export
-0 FuncCoprshfObj : Type
-FuncCoprshfObj = (Type -> Type) -> Type
+0 FuncCopreshfObj : Type
+FuncCopreshfObj = (Type -> Type) -> Type
 
--- The signature of the morphism-map component of a `FuncCoprshfObj` (since
+-- The signature of the morphism-map component of a `FuncCopreshfObj` (since
 -- such an object is itself a functor).
 public export
-0 FuncCoprshfObjFMapSig : FuncCoprshfObj -> Type
-FuncCoprshfObjFMapSig fp =
+0 FuncCopreshfObjFMapSig : FuncCopreshfObj -> Type
+FuncCopreshfObjFMapSig fp =
   (0 f, g : Type -> Type) -> NaturalTransformation f g -> fp f -> fp g
 
 -- The identity-preserving condition on the morphism-map component of a
--- `FuncCoprshfObj` (since such an object is itself a functor).
+-- `FuncCopreshfObj` (since such an object is itself a functor).
 public export
-0 FuncCoprshfObjFMapIdCond :
-  (fp : FuncCoprshfObj) -> FuncCoprshfObjFMapSig fp -> Type
-FuncCoprshfObjFMapIdCond fp fpm =
+0 FuncCopreshfObjFMapIdCond :
+  (fp : FuncCopreshfObj) -> FuncCopreshfObjFMapSig fp -> Type
+FuncCopreshfObjFMapIdCond fp fpm =
   (0 f : Type -> Type) -> ExtEq (fpm f f (IdNT f)) (id {a=(fp f)})
 
 public export
 0 TypeFMapSig : (0 _ : Type -> Type) -> Type
-TypeFMapSig = IntCoprshfMapSig Type HomProf
+TypeFMapSig = IntCopreshfMapSig Type HomProf
 
 public export
 0 TypeFMapIdCond : (0 f : Type -> Type) -> TypeFMapSig f -> Type
@@ -1152,25 +1152,25 @@ TypeNaturality f g fm gm nu = (0 a, b : Type) -> (0 m : a -> b) ->
 -- objects of that category are functors (whose domain is the category
 -- of endofunctors on `Type`, and whose codomain is `Type`).
 public export
-0 FuncCoprshfMorphBase : FuncCoprshfObj -> FuncCoprshfObj -> Type
-FuncCoprshfMorphBase fp gp =
+0 FuncCopreshfMorphBase : FuncCopreshfObj -> FuncCopreshfObj -> Type
+FuncCopreshfMorphBase fp gp =
   (0 f : Type -> Type) -> (fm : TypeFMapSig f) -> fp f -> gp f
 
 public export
-0 FuncCoprshfMorphBaseEq : (0 fp, gp : FuncCoprshfObj) ->
-  (m, m' : FuncCoprshfMorphBase fp gp) -> Type
-FuncCoprshfMorphBaseEq fp gp m m' =
+0 FuncCopreshfMorphBaseEq : (0 fp, gp : FuncCopreshfObj) ->
+  (m, m' : FuncCopreshfMorphBase fp gp) -> Type
+FuncCopreshfMorphBaseEq fp gp m m' =
   (0 f : Type -> Type) -> (0 fm : TypeFMapSig f) ->
   TypeFMapIdCond f fm ->
   ExtEq {a=(fp f)} {b=(gp f)} (m f fm) (m' f fm)
 
 public export
-0 FuncCoprshfMorphNaturality :
-  (0 fp, gp : FuncCoprshfObj) ->
-  (0 fpm : FuncCoprshfObjFMapSig fp) ->
-  (0 gpm : FuncCoprshfObjFMapSig gp) ->
-  FuncCoprshfMorphBase fp gp -> Type
-FuncCoprshfMorphNaturality fp gp fpm gpm alpha =
+0 FuncCopreshfMorphNaturality :
+  (0 fp, gp : FuncCopreshfObj) ->
+  (0 fpm : FuncCopreshfObjFMapSig fp) ->
+  (0 gpm : FuncCopreshfObjFMapSig gp) ->
+  FuncCopreshfMorphBase fp gp -> Type
+FuncCopreshfMorphNaturality fp gp fpm gpm alpha =
   (0 f, g : Type -> Type) ->
   (0 fm : TypeFMapSig f) -> (0 gm : TypeFMapSig g) ->
   (0 nu : NaturalTransformation f g) ->
@@ -1180,70 +1180,70 @@ FuncCoprshfMorphNaturality fp gp fpm gpm alpha =
     (gpm f g nu . alpha f fm)
 
 public export
-0 FuncCoprshfMorph :
-  (0 fp, gp : FuncCoprshfObj) ->
-  (0 fpm : FuncCoprshfObjFMapSig fp) ->
-  (0 gpm : FuncCoprshfObjFMapSig gp) ->
+0 FuncCopreshfMorph :
+  (0 fp, gp : FuncCopreshfObj) ->
+  (0 fpm : FuncCopreshfObjFMapSig fp) ->
+  (0 gpm : FuncCopreshfObjFMapSig gp) ->
   Type
-FuncCoprshfMorph fp gp fpm gpm =
+FuncCopreshfMorph fp gp fpm gpm =
   Subset0
-    (FuncCoprshfMorphBase fp gp)
-    (FuncCoprshfMorphNaturality fp gp fpm gpm)
+    (FuncCopreshfMorphBase fp gp)
+    (FuncCopreshfMorphNaturality fp gp fpm gpm)
 
 public export
-0 FuncCoprshfMorphEq :
-  (0 fp, gp : FuncCoprshfObj) ->
-  (0 fpm : FuncCoprshfObjFMapSig fp) ->
-  (0 gpm : FuncCoprshfObjFMapSig gp) ->
-  (0 nu, nu' : FuncCoprshfMorph fp gp fpm gpm) ->
+0 FuncCopreshfMorphEq :
+  (0 fp, gp : FuncCopreshfObj) ->
+  (0 fpm : FuncCopreshfObjFMapSig fp) ->
+  (0 gpm : FuncCopreshfObjFMapSig gp) ->
+  (0 nu, nu' : FuncCopreshfMorph fp gp fpm gpm) ->
   Type
-FuncCoprshfMorphEq fp gp fpm gpm nu nu' =
-  FuncCoprshfMorphBaseEq fp gp (Subset0.fst0 nu) (Subset0.fst0 nu')
+FuncCopreshfMorphEq fp gp fpm gpm nu nu' =
+  FuncCopreshfMorphBaseEq fp gp (Subset0.fst0 nu) (Subset0.fst0 nu')
 
 -- `fapply x` is the object-map component of a functor on functors that
 -- applies a functor to `x`.
 public export
-fapply : Type -> FuncCoprshfObj
+fapply : Type -> FuncCopreshfObj
 fapply x f = f x
 
 -- `fapply x` is the morphism-map component of a functor on functors that
 -- applies a functor to `x`.
 public export
-fapplym : (x : Type) -> FuncCoprshfObjFMapSig (fapply x)
+fapplym : (x : Type) -> FuncCopreshfObjFMapSig (fapply x)
 fapplym x f g alpha fx = alpha x fx
 
 public export
-fapplymIdCond : (x : Type) -> FuncCoprshfObjFMapIdCond (fapply x) (fapplym x)
+fapplymIdCond : (x : Type) -> FuncCopreshfObjFMapIdCond (fapply x) (fapplym x)
 fapplymIdCond x f elfx = Refl
 
 -- `fapply` and `fapplym` together form the object-map component of
 -- an embedding of `Type` into the category of (co)presheaves on the
 -- category of endofunctors on `Type` (such an embedding is a functor
--- from `Type` to `FuncCoprshfObj/FuncCoprshfObjFMapSig`).  We now define
+-- from `Type` to `FuncCopreshfObj/FuncCopreshfObjFMapSig`).  We now define
 -- the morphism-map component of that embedding (`fapplyNT`).
 public export
 fapplyNTBase : (x, y : Type) -> (x -> y) ->
-  FuncCoprshfMorphBase (fapply x) (fapply y)
+  FuncCopreshfMorphBase (fapply x) (fapply y)
 fapplyNTBase x y m f fm = fm x y m
 
 public export
 0 fapplyNTnaturality : (x, y : Type) -> (m : x -> y) ->
-  FuncCoprshfMorphNaturality
+  FuncCopreshfMorphNaturality
     (fapply x) (fapply y) (fapplym x) (fapplym y) (fapplyNTBase x y m)
 fapplyNTnaturality x y m f g fm gm nu nunat = nunat x y m
 
 public export
 fapplyNT : (x, y : Type) -> (x -> y) ->
-  FuncCoprshfMorph (fapply x) (fapply y) (fapplym x) (fapplym y)
+  FuncCopreshfMorph (fapply x) (fapply y) (fapplym x) (fapplym y)
 fapplyNT x y m = Element0 (fapplyNTBase x y m) (fapplyNTnaturality x y m)
 
 -- `fapply(m)/fapplyNT` form an embedding of `Type` into
--- `FuncCoprshf(Obj/Morph)`.  We now show as much as we can within Idris
+-- `FuncCopreshf(Obj/Morph)`.  We now show as much as we can within Idris
 -- of a proof that `fapplyNT` has an inverse, hence is bijective, which
 -- means that that embedding is full and faithful.
 public export
 fapplyNTinv : (x, y : Type) ->
-  FuncCoprshfMorph (fapply x) (fapply y) (fapplym x) (fapplym y) ->
+  FuncCopreshfMorph (fapply x) (fapply y) (fapplym x) (fapplym y) ->
   (x -> y)
 fapplyNTinv x y (Element0 nu nat) =
   nu (id {a=Type}) $ \a, b => id {a=(a -> b)}
@@ -1260,8 +1260,8 @@ public export
 0 FapplyNTinvLthenRcond : Type
 FapplyNTinvLthenRcond =
   (x, y : Type) ->
-  (m : FuncCoprshfMorph (fapply x) (fapply y) (fapplym x) (fapplym y)) ->
-  FuncCoprshfMorphEq (fapply x) (fapply y) (fapplym x) (fapplym y)
+  (m : FuncCopreshfMorph (fapply x) (fapply y) (fapplym x) (fapplym y)) ->
+  FuncCopreshfMorphEq (fapply x) (fapply y) (fapplym x) (fapplym y)
     (fapplyNT x y (fapplyNTinv x y m)) m
 
 -------------------------------------------------------------------------------
@@ -1271,23 +1271,23 @@ FapplyNTinvLthenRcond =
 -- The signature of a (co)presheaf on the category of endoprofunctors
 -- on `Type`.
 public export
-0 ProfCoprshfObj : Type
-ProfCoprshfObj = ProfunctorSig -> Type
+0 ProfCopreshfObj : Type
+ProfCopreshfObj = ProfunctorSig -> Type
 
--- The signature of the morphism-map component of a `ProfCoprshfObj` (since
+-- The signature of the morphism-map component of a `ProfCopreshfObj` (since
 -- such an object is itself a functor), when the copresheaf's domain is the
 -- category of endoprofunctors with natural transformations.
 public export
-0 ProfCoprshfObjFMapSig : ProfCoprshfObj -> Type
-ProfCoprshfObjFMapSig pp =
+0 ProfCopreshfObjFMapSig : ProfCopreshfObj -> Type
+ProfCopreshfObjFMapSig pp =
   (0 p, q : ProfunctorSig) -> ProfNT p q -> pp p -> pp q
 
--- The signature of the morphism-map component of a `ProfCoprshfObj` (since
+-- The signature of the morphism-map component of a `ProfCopreshfObj` (since
 -- such an object is itself a functor), when the copresheaf's domain is the
 -- category of endoprofunctors with _paranatural_ transformations.
 public export
-0 ParaCoprshfObjFMapSig : ProfCoprshfObj -> Type
-ParaCoprshfObjFMapSig pp =
+0 ParaCopreshfObjFMapSig : ProfCopreshfObj -> Type
+ParaCopreshfObjFMapSig pp =
   (0 p, q : ProfunctorSig) -> ProfDiNT p q -> pp p -> pp q
 
 public export
@@ -1327,17 +1327,17 @@ ProfParanaturality p q plm prm qlm qrm =
 -- objects of that category are functors (whose domain is the category
 -- of difunctors on `Type`, and whose codomain is `Type`).
 public export
-0 ProfCoprshfMorphBase : ProfCoprshfObj -> ProfCoprshfObj -> Type
-ProfCoprshfMorphBase pp qp =
+0 ProfCopreshfMorphBase : ProfCopreshfObj -> ProfCopreshfObj -> Type
+ProfCopreshfMorphBase pp qp =
   (0 p : ProfunctorSig) -> (dm : TypeDimapSig p) -> pp p -> qp p
 
 public export
-0 ProfCoprshfMorphNaturality :
-  (0 pp, qp : ProfCoprshfObj) ->
-  (0 pdm : ProfCoprshfObjFMapSig pp) ->
-  (0 qdm : ProfCoprshfObjFMapSig qp) ->
-  ProfCoprshfMorphBase pp qp -> Type
-ProfCoprshfMorphNaturality pp qp ppdm qpdm alpha =
+0 ProfCopreshfMorphNaturality :
+  (0 pp, qp : ProfCopreshfObj) ->
+  (0 pdm : ProfCopreshfObjFMapSig pp) ->
+  (0 qdm : ProfCopreshfObjFMapSig qp) ->
+  ProfCopreshfMorphBase pp qp -> Type
+ProfCopreshfMorphNaturality pp qp ppdm qpdm alpha =
   (0 p, q : ProfunctorSig) ->
   (0 pdm : TypeDimapSig p) -> (0 qdm : TypeDimapSig q) ->
   (0 nu : ProfNT p q) ->
@@ -1347,12 +1347,12 @@ ProfCoprshfMorphNaturality pp qp ppdm qpdm alpha =
     (qpdm p q nu . alpha p pdm)
 
 public export
-0 ParaCoprshfMorphNaturality :
-  (0 pp, qp : ProfCoprshfObj) ->
-  (0 pdm : ParaCoprshfObjFMapSig pp) ->
-  (0 qdm : ParaCoprshfObjFMapSig qp) ->
-  ProfCoprshfMorphBase pp qp -> Type
-ParaCoprshfMorphNaturality pp qp ppdm qpdm alpha =
+0 ParaCopreshfMorphNaturality :
+  (0 pp, qp : ProfCopreshfObj) ->
+  (0 pdm : ParaCopreshfObjFMapSig pp) ->
+  (0 qdm : ParaCopreshfObjFMapSig qp) ->
+  ProfCopreshfMorphBase pp qp -> Type
+ParaCopreshfMorphNaturality pp qp ppdm qpdm alpha =
   (0 p, q : ProfunctorSig) ->
   (0 plm : TypeLmapSig p) -> (0 prm : TypeRmapSig p) ->
   (0 qlm : TypeLmapSig q) -> (0 qrm : TypeRmapSig q) ->
@@ -1363,71 +1363,71 @@ ParaCoprshfMorphNaturality pp qp ppdm qpdm alpha =
     (qpdm p q nu . alpha p (TypeDimapFromLR p plm prm))
 
 public export
-0 ProfCoprshfMorph :
-  (0 pp, qp : ProfCoprshfObj) ->
-  (0 pdm : ProfCoprshfObjFMapSig pp) ->
-  (0 qdm : ProfCoprshfObjFMapSig qp) ->
+0 ProfCopreshfMorph :
+  (0 pp, qp : ProfCopreshfObj) ->
+  (0 pdm : ProfCopreshfObjFMapSig pp) ->
+  (0 qdm : ProfCopreshfObjFMapSig qp) ->
   Type
-ProfCoprshfMorph pp qp pdm qdm =
+ProfCopreshfMorph pp qp pdm qdm =
   Subset0
-    (ProfCoprshfMorphBase pp qp)
-    (ProfCoprshfMorphNaturality pp qp pdm qdm)
+    (ProfCopreshfMorphBase pp qp)
+    (ProfCopreshfMorphNaturality pp qp pdm qdm)
 
 public export
-0 ParaCoprshfMorph :
-  (0 pp, qp : ProfCoprshfObj) ->
-  (0 pdm : ParaCoprshfObjFMapSig pp) ->
-  (0 qdm : ParaCoprshfObjFMapSig qp) ->
+0 ParaCopreshfMorph :
+  (0 pp, qp : ProfCopreshfObj) ->
+  (0 pdm : ParaCopreshfObjFMapSig pp) ->
+  (0 qdm : ParaCopreshfObjFMapSig qp) ->
   Type
-ParaCoprshfMorph pp qp pdm qdm =
+ParaCopreshfMorph pp qp pdm qdm =
   Subset0
-    (ProfCoprshfMorphBase pp qp)
-    (ParaCoprshfMorphNaturality pp qp pdm qdm)
+    (ProfCopreshfMorphBase pp qp)
+    (ParaCopreshfMorphNaturality pp qp pdm qdm)
 
 -- `profapply x y` is the object-map component of a functor on difunctors that
 -- applies a difunctor to `x` and `y`.
 public export
-profapply : Type -> Type -> ProfCoprshfObj
+profapply : Type -> Type -> ProfCopreshfObj
 profapply x y p = p x y
 
 -- `profapplym x y` is the morphism-map component of a functor on difunctors
 -- that applies a difunctor to `x` and `y`.
 public export
-profapplym : (x, y : Type) -> ProfCoprshfObjFMapSig (profapply x y)
+profapplym : (x, y : Type) -> ProfCopreshfObjFMapSig (profapply x y)
 profapplym x y p q alpha pxy = alpha pxy
 
 -- `diapply x` is the object-map component of a functor on difunctors that
 -- applies a difunctor to `x` and `x`.
 public export
-diapply : Type -> ProfCoprshfObj
+diapply : Type -> ProfCopreshfObj
 diapply x = profapply x x
 
 -- `diapplym x` is the morphism-map component of a functor on difunctors
 -- that applies a difunctor to `x` and `x`.
 public export
-diapplym : (x : Type) -> ParaCoprshfObjFMapSig (diapply x)
+diapplym : (x : Type) -> ParaCopreshfObjFMapSig (diapply x)
 diapplym x p q alpha pxx = alpha x pxx
 
 -- `profapply` and `profapplym` together form the object-map component of
 -- an embedding of `(op(Type), Type)` into the category of (co)presheaves on the
 -- category of difunctors on `Type` with natural transformations (such an
 -- embedding is a functor from `(op(Type), Type)` to
--- `ProfCoprshfObj/ProfCoprshfObjFMapSig`).  We now define the morphism-map
+-- `ProfCopreshfObj/ProfCopreshfObjFMapSig`).  We now define the morphism-map
 -- component of that embedding (`profapplyNT`).
 public export
 profapplyNTBase : (s, t, a, b : Type) -> (a -> s) -> (t -> b) ->
-  ProfCoprshfMorphBase (profapply s t) (profapply a b)
+  ProfCopreshfMorphBase (profapply s t) (profapply a b)
 profapplyNTBase s t a b mas mtb p pdm pst = pdm s t a b mas mtb pst
 
 -- `diapply` and `diapplym` together form the object-map component of
 -- an embedding of `Type` into the category of (co)presheaves on the
 -- category of difunctors on `Type` with paranatural transformations (such
 -- an embedding is a functor from `Type` to
--- `ProfCoprshfObj/ParaCoprshfObjFMapSig`).  We now define the morphism-map
+-- `ProfCopreshfObj/ParaCopreshfObjFMapSig`).  We now define the morphism-map
 -- component of that embedding (`diapplyNT`).
 public export
 diapplyNTBase : (x, y : Type) -> (x -> y) ->
-  ProfCoprshfMorphBase (diapply x) (diapply y)
+  ProfCopreshfMorphBase (diapply x) (diapply y)
 diapplyNTBase x y m p pdm pxx = let pdmxy = pdm x x y y in ?diapplyNTBase_hole
 
 -- The signature of an endprofunctor/difunctor/prosheaf (we'll use any
@@ -1435,7 +1435,7 @@ diapplyNTBase x y m p pdm pxx = let pdmxy = pdm x x y y in ?diapplyNTBase_hole
 -- the category of endoprofunctors on `Type`.
 public export
 0 ProfProshfObj : Type
-ProfProshfObj = ProfunctorSig -> ProfCoprshfObj
+ProfProshfObj = ProfunctorSig -> ProfCopreshfObj
 
 public export
 0 ProfProshfMorph : ProfProshfObj -> ProfProshfObj -> Type

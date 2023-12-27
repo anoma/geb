@@ -1003,13 +1003,13 @@ ProfNTcomp {p} {q} {r} alpha beta = (.) alpha beta
 
 -- Called 'HFunProf` by Milewski.
 public export
-ProfPrshfMap : ((Type -> Type -> Type) -> Type) -> Type
-ProfPrshfMap pi = {p, q : Type -> Type -> Type} -> ProfNT p q -> pi p -> pi q
+ProfPreshfMap : ((Type -> Type -> Type) -> Type) -> Type
+ProfPreshfMap pi = {p, q : Type -> Type -> Type} -> ProfNT p q -> pi p -> pi q
 
 -- Called 'HNatProf` by Milewski.
 public export
-ProfPrshfNT : (pi, rho : ((Type -> Type -> Type) -> Type)) -> Type
-ProfPrshfNT pi rho = {p : Type -> Type -> Type} -> Profunctor p -> pi p -> rho p
+ProfPreshfNT : (pi, rho : ((Type -> Type -> Type) -> Type)) -> Type
+ProfPreshfNT pi rho = {p : Type -> Type -> Type} -> Profunctor p -> pi p -> rho p
 
 -------------------------------------
 ---- Hom-functors as profunctors ----
@@ -6877,7 +6877,7 @@ Contravariant (ContraCoYo f) where
   contramap g (MkContraCoYo (ty ** (x, h))) = MkContraCoYo (ty ** (x, h . g))
 
 public export
-record YoCoprshf (f : (Type -> Type) -> Type) (r : Type -> Type) where
+record YoCopreshf (f : (Type -> Type) -> Type) (r : Type -> Type) where
   constructor MkYoC
   YoCEmbed : (b : Type -> Type) -> NaturalTransformation r b -> f b
 
@@ -6885,29 +6885,29 @@ public export
 toYoC : (f : (Type -> Type) -> Type) ->
   {auto isF :
     (g, h : Type -> Type) -> NaturalTransformation g h -> f g -> f h} ->
-  {r : Type -> Type} -> f r -> YoCoprshf f r
+  {r : Type -> Type} -> f r -> YoCopreshf f r
 toYoC f {isF} {r} x = MkYoC $ \b, alpha => isF r b alpha x
 
 public export
 fromYoC : (f : (Type -> Type) -> Type) -> {r : Type -> Type} ->
-  YoCoprshf f r -> f r
+  YoCopreshf f r -> f r
 fromYoC f {r} (MkYoC y) = y r $ \_ => id
 
 public export
-record CoYoCoprshf (f : (Type -> Type) -> Type) (r : Type -> Type) where
+record CoYoCopreshf (f : (Type -> Type) -> Type) (r : Type -> Type) where
   constructor MkCoYoC
   CoYoCEmbed : (b : Type -> Type ** (NaturalTransformation b r, f b))
 
 public export
 toCoYoC : (f : (Type -> Type) -> Type) ->
-  {r : Type -> Type} -> f r -> CoYoCoprshf f r
+  {r : Type -> Type} -> f r -> CoYoCopreshf f r
 toCoYoC f {r} x = MkCoYoC (r ** ((\_ => id), x))
 
 public export
 fromCoYoC : (f : (Type -> Type) -> Type) ->
   {isF : (g, h : Type -> Type) -> NaturalTransformation g h -> f g -> f h} ->
   {r : Type -> Type} ->
-  CoYoCoprshf f r -> f r
+  CoYoCopreshf f r -> f r
 fromCoYoC f {isF} {r} (MkCoYoC (b ** (alpha, x))) = isF b r alpha x
 
 public export
@@ -6967,7 +6967,7 @@ Profunctor (CoProYo p) where
 -- Profunctor-profunctor polymorphism:  the Yoneda lemma in the category
 -- of profunctors on `Type`.
 public export
-record ProYoPrshf
+record ProYoPreshf
     (pp : (ProfunctorSig) -> Type) (p : ProfunctorSig) where
   constructor MkProYoP
   ProYoPEmbed : (q : ProfunctorSig) ->
@@ -6975,19 +6975,19 @@ record ProYoPrshf
 
 public export
 toProYoP : (f : (ProfunctorSig) -> Type) ->
-  {auto isF : ProfPrshfMap f} ->
-  {r : ProfunctorSig} -> f r -> ProYoPrshf f r
+  {auto isF : ProfPreshfMap f} ->
+  {r : ProfunctorSig} -> f r -> ProYoPreshf f r
 toProYoP f {isF} {r} fr = MkProYoP $ \q, alpha => isF alpha fr
 
 public export
 fromProYoP : (f : (ProfunctorSig) -> Type) ->
   {r : ProfunctorSig} -> {auto isP : Profunctor r} ->
-  ProYoPrshf f r -> f r
+  ProYoPreshf f r -> f r
 fromProYoP f {r} {isP} (MkProYoP py) = py r id
 
 -- The existential dual of the preceding universal.
 public export
-record ProCoYoPrshf
+record ProCoYoPreshf
     (pp : (ProfunctorSig) -> Type) (p : ProfunctorSig) where
   constructor MkProCoYoP
   ProCoYoPEmbed : (q : ProfunctorSig ** (Profunctor q, ProfNT q p, pp q))
@@ -6996,14 +6996,14 @@ public export
 toProCoYoP :
   (f : (ProfunctorSig) -> Type) ->
   {r : ProfunctorSig} -> {auto isP : Profunctor r} ->
-  f r -> ProCoYoPrshf f r
+  f r -> ProCoYoPreshf f r
 toProCoYoP f {r} {isP} fr = MkProCoYoP (r ** (isP, id, fr))
 
 public export
 fromProCoYoP :
-  (f : (ProfunctorSig) -> Type) -> {auto isF : ProfPrshfMap f} ->
+  (f : (ProfunctorSig) -> Type) -> {auto isF : ProfPreshfMap f} ->
   {r : ProfunctorSig} ->
-  ProCoYoPrshf f r -> f r
+  ProCoYoPreshf f r -> f r
 fromProCoYoP f {isF} {r} (MkProCoYoP (q ** (isPq, alpha, fq))) =
   isF alpha fq
 
