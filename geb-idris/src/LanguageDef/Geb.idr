@@ -5966,3 +5966,10 @@ public export
     (CCosliceObjMap {c} y)
     (CCosliceObjMap {c} x |> CCosliceMorphismMap {c} {x} {y} f)
 CCosliceMorphismEq = snd0
+
+public export
+record ProYoProshf
+    (pp : ProfunctorSig -> ProfunctorSig) (p : ProfunctorSig) where
+  constructor MkProYoPro
+  ProYoProEmbed : (q : ProfunctorSig) ->
+    {auto 0 _ : Profunctor q} -> ProfNT p (pp q)
