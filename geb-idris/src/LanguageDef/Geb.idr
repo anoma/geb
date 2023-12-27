@@ -419,35 +419,6 @@ public export
 0 cowedge : (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
 cowedge c apex p = IntDiNTSig c p (constDi c apex)
 
-------------------------------------------------------------------
----- Natural transformations from paranatural transformations ----
-------------------------------------------------------------------
-
-public export
-IntProfToDifunctor :
-  (0 d, c : Type) -> IntProfunctorSig d c -> IntDifunctorSig (d, c)
-IntProfToDifunctor d c p (_, _) (ed, ec) = p ed ec
-
-public export
-IntProdCatMor : (0 c, d : Type) ->
-  IntDifunctorSig c -> IntDifunctorSig d -> IntDifunctorSig (c, d)
-IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
-
-public export
-IntProfCatMor : (0 d, c : Type) ->
-  IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
-IntProfCatMor d c dmor cmor = IntProdCatMor d c (flip dmor) cmor
-
-public export
-IntProfToDifunctorDimap :
-  (0 d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  (p : IntProfunctorSig d c) -> IntDimapSig d c dmor cmor p ->
-  IntEndoDimapSig (d, c)
-    (IntProfCatMor d c dmor cmor)
-    (IntProfToDifunctor d c p)
-IntProfToDifunctorDimap d c dmor cmor p dm (s, s') (t, t') (a, a') (b, b')
-  (dmas, cmas) (dmbt, cmtb) ptt' = dm t t' b b' dmbt cmtb ptt'
-
 -----------------------------------------------
 -----------------------------------------------
 ---- Internal Yoneda emebddings and lemmas ----
