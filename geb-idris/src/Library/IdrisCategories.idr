@@ -7521,7 +7521,9 @@ joinDensity f {isF} {a} =
 ----------------------------
 ----------------------------
 
--- See https://prl.ccs.neu.edu/blog/2017/08/28/closure-conversion-as-coyoneda/
+-- This closure-conversion algorithm uses the contravariant co-Yoneda
+-- lemma with a particular contravariant functor (presheaf); see
+-- https://prl.ccs.neu.edu/blog/2017/08/28/closure-conversion-as-coyoneda/
 
 public export
 Closure : ProfunctorSig
