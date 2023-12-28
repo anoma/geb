@@ -1074,6 +1074,12 @@ pairFstSnd : {0 a, b : Type} -> (p : (a, b)) -> p = (fst p, snd p)
 pairFstSnd {a} {b} (ela, elb) = Refl
 
 public export
+pairEqCong : {0 a, b : Type} -> {p, p' : (a, b)} ->
+  fst p = fst p' -> snd p = snd p' -> p = p'
+pairEqCong {a} {b} {p=(ela, elb)} {p'=(ela', elb')} eq eq' =
+  rewrite eq in rewrite eq' in Refl
+
+public export
 DecEqPred : (a: Type) -> Type
 DecEqPred a = (x, x': a) -> Dec (x = x')
 
