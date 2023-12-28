@@ -333,13 +333,18 @@ IntProdCatMor : (0 c, d : Type) ->
 IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
 
 public export
-IntProfCatMor : (0 d, c : Type) ->
-  IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
-IntProfCatMor d c dmor cmor = IntProdCatMor d c (flip dmor) cmor
+IntEndoProdCatMor : (0 c : Type) ->
+  IntDifunctorSig c -> IntDifunctorSig (c, c)
+IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
 
 public export
-IntOpProdCatMor : (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
-IntOpProdCatMor c mor = IntProfCatMor c c mor mor
+IntOpProdCatMor : (0 d, c : Type) ->
+  IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
+IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (flip dmor) cmor
+
+public export
+IntEndoOpProdCatMor : (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
+IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
 
 public export
 constProf : (0 d, c : Type) -> Type -> IntProfunctorSig d c
