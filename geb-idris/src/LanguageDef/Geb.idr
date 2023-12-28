@@ -700,14 +700,14 @@ IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
 -- The following categories are equivalent:
 --
 --  1) the splice category of `Type` over `(i, j)`
---  2) the category of profunctors `j -> i`, AKA functors `(op(i), j) -> Type`,
+--  2) the category of profunctors `i -> j`, AKA functors `(op(j), i) -> Type`,
 --    where `i` and `j` are viewed as discrete categories, and the morphisms
 --    are paranatural transformations
 --  3) the category of diagonal elements of the profunctor di-represented by
 --    `(i, j)`, i.e. `DiYoneda i j`
 --  4) the category of polynomial difunctors (endo-profunctors) on
---     `(op(Type), Type)` with position-set `(i, j)` (i.e. contravariant
---     position-set `i` and covariant position-set `j`), with paranatural
+--     `(op(Type), Type)` with position-set `(j, i)` (i.e. contravariant
+--     position-set `j` and covariant position-set `i`), with paranatural
 --     transformations as morphisms
 --
 -- (I expect, but have not proven, that the category of profunctors `j -> i`
