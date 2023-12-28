@@ -310,7 +310,7 @@ public export
 IntEndoLRmapsCommute c cmor p plm prm = IntLRmapsCommute c c cmor cmor p plm prm
 
 public export
-0 IntDimapFromLRmaps : (0 d, c : Type) ->
+IntDimapFromLRmaps : (0 d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   (p : IntProfunctorSig d c) ->
   IntLmapSig d c dmor cmor p ->
@@ -320,7 +320,7 @@ IntDimapFromLRmaps d c dmor cmor p plm prm s t a b dmas cmtb =
   plm s b a dmas . prm s t b cmtb
 
 public export
-0 IntEndoDimapFromLRmaps : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+IntEndoDimapFromLRmaps : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
   (p : IntDifunctorSig c) ->
   IntEndoLmapSig c cmor p ->
   IntEndoRmapSig c cmor p ->
@@ -479,14 +479,65 @@ IntDiYonedaEmbedMorph : (0 c : Type) ->
 IntDiYonedaEmbedMorph c mor comp s t a b (mas, mtb) i (mit, msi) =
   (comp i t b mtb mit, comp a s i msi mas)
 
--- This shows that for a given `(s, t)` in `opProd(c)`, the diYoneda
+-- We now show that for a given `(s, t)` in `opProd(c)`, the diYoneda
 -- embedding `IntDiYonedaEmbedObj c mor s t` is a difunctor on `c`.
 public export
-IntDiYonedaEmbedDimap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+IntDiYonedaEmbedLmap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
-  (0 s, t : c) -> IntEndoDimapSig c mor (IntDiYonedaEmbedObj c mor s t)
-IntDiYonedaEmbedDimap c mor comp s t a b i j
-  cmia cmbj (cmat, cmsb) = (comp i a t cmat cmia, comp s b j cmbj cmsb)
+  (0 s, t : c) -> IntEndoLmapSig c mor (IntDiYonedaEmbedObj c mor s t)
+IntDiYonedaEmbedLmap c mor comp s t a b i cmia (cmat, cmsb) =
+  (comp i a t cmat cmia, cmsb)
+
+public export
+IntDiYonedaEmbedRmap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (0 s, t : c) -> IntEndoRmapSig c mor (IntDiYonedaEmbedObj c mor s t)
+IntDiYonedaEmbedRmap c mor comp s t a b j cmbj (cmat, cmsb) =
+  (cmat, comp s b j cmbj cmsb)
+
+public export
+IntDiYonedaEmbedDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (s, t : c) -> IntEndoDimapSig c mor (IntDiYonedaEmbedObj c mor s t)
+IntDiYonedaEmbedDimap c mor comp s t =
+  IntEndoDimapFromLRmaps c mor (IntDiYonedaEmbedObj c mor s t)
+    (IntDiYonedaEmbedLmap c mor comp s t)
+    (IntDiYonedaEmbedRmap c mor comp s t)
+
+-- The diYoneda embedding of any morphism of `opProd(c)` is a
+-- paranatural transformation.
+public export
+IntDiYonedaEmbedMorphPara : (0 c : Type) ->
+  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (s, t, a, b : c) ->
+  (m : IntEndoOpProdCatMor c mor (s, t) (a, b)) ->
+  IntParaNTCond c mor
+    (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)
+    (IntDiYonedaEmbedLmap c mor comp s t)
+    (IntDiYonedaEmbedRmap c mor comp s t)
+    (IntDiYonedaEmbedLmap c mor comp a b)
+    (IntDiYonedaEmbedRmap c mor comp a b)
+    (IntDiYonedaEmbedMorph c mor comp s t a b m)
+IntDiYonedaEmbedMorphPara c mor comp s t a b (mas, mtb) =
+  ?IntDiYonedaEmbedMorphPara_hole
+
+-- The inverse of the morphism-map component of the diYoneda embedding.
+public export
+IntDiYonedaEmbedMorphInv : (0 c : Type) ->
+  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (s, t, a, b : c) ->
+  (gamma : IntDiNTSig c
+    (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)) ->
+  IntParaNTCond c mor
+    (IntDiYonedaEmbedObj c mor s t)(IntDiYonedaEmbedObj c mor a b)
+    (IntDiYonedaEmbedLmap c mor comp s t)
+    (IntDiYonedaEmbedRmap c mor comp s t)
+    (IntDiYonedaEmbedLmap c mor comp a b)
+    (IntDiYonedaEmbedRmap c mor comp a b)
+    gamma ->
+  IntEndoOpProdCatMor c mor (s, t) (a, b)
+IntDiYonedaEmbedMorphInv c mor comp s t a b gamma cond =
+  (?IntDiYOnedaEmbedMorphInv_hole_1, ?IntDiYOnedaEmbedMorphInv_hole_2)
 
 -- The diYoneda lemma asserts a paranatural isomorphism between two objects
 -- of the enriching category, one of which is an object of paranatural
@@ -704,8 +755,9 @@ TypeProfDimap : {0 p : ProfunctorSig} ->
 TypeProfDimap {p} isP = TypeDimap {p} (dimap {f=p})
 
 public export
-[DiYonedaEmbedProf] Profunctor (DiYonedaEmbed i j) where
-  dimap = IntDiYonedaEmbedDimap Type HomProf typeComp _ _ _ _ _ _
+0 DiYonedaEmbedProf : (i, j : Type) -> Profunctor (DiYonedaEmbed i j)
+DiYonedaEmbedProf i j =
+  MkProfunctor $ IntDiYonedaEmbedDimap Type HomProf typeComp _ _ _ _ _ _
 
 -- The diYoneda lemma asserts a paranatural isomorphism between two objects
 -- of the enriching category, one of which is an object of paranatural
