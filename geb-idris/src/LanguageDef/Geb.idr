@@ -518,8 +518,11 @@ IntDiYonedaEmbedMorphPara : (0 c : Type) ->
     (IntDiYonedaEmbedLmap c mor comp a b)
     (IntDiYonedaEmbedRmap c mor comp a b)
     (IntDiYonedaEmbedMorph c mor comp s t a b m)
-IntDiYonedaEmbedMorphPara c mor comp s t a b (mas, mtb) =
-  ?IntDiYonedaEmbedMorphPara_hole
+IntDiYonedaEmbedMorphPara c mor comp s t a b (mas, mtb) i0 i1
+  mi0i1 (mi0t, msi0) (mi1t, msi1) cond =
+    pairEqCong
+      (?IntDiYonedaEmbedMorphPara_hole_1)
+      (?IntDiYonedaEmbedMorphPara_hole_2)
 
 -- The inverse of the morphism-map component of the diYoneda embedding.
 public export
