@@ -343,7 +343,8 @@ IntOpProdCatMor : (0 d, c : Type) ->
 IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (flip dmor) cmor
 
 public export
-IntEndoOpProdCatMor : (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
+IntEndoOpProdCatMor :
+  (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
 IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
 
 public export
@@ -579,16 +580,31 @@ InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
 -- and `mor` is a type dependent on pairs of terms of `c` (we could also
 -- express it dually as a `Type` together with morphisms `dom` and `cod` to
 -- `c`), which we interpret as _some_ morphisms of the category but not
--- necessarily all.  Then `IntDiYonedaEmbedObj c mor` is the diYoneda embedding
+-- necessarily all.  Then `IntDiYonedaEmbedObj c mor` is the object-map
+-- component of the diYoneda embedding (since that embedding is a (di)functor)
 -- of the product of the opposite of the internal category and the internal
 -- category itself (`op(Type) x Type`) into the category whose objects are
--- profunctors on the internal category -- that is, functors
+-- difunctors on the internal category -- that is, functors
 -- `op(c) -> c -> Type` -- and whose morphisms are paranatural
 -- transformations.
 public export
 IntDiYonedaEmbedObj : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> c -> c -> IntDifunctorSig c
 IntDiYonedaEmbedObj c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
+
+-- The morphism-map component of the diYoneda embedding.
+-- The domain of that embedding is `opProd(c)`, and the codomain
+-- is the category of difunctors on `c` with paranatural transformations,
+-- so the morphism-map component takes morphisms of `opProd(c)` to
+-- paranatural transformations.
+public export
+IntDiYonedaEmbedMorph : (0 c : Type) ->
+  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (s, t, a, b : c) ->
+  IntEndoOpProdCatMor c mor (s, t) (a, b) ->
+  IntDiNTSig c (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)
+IntDiYonedaEmbedMorph c mor comp s t a b (mas, mtb) i (mit, msi) =
+  (comp i t b mtb mit, comp a s i msi mas)
 
 -- This shows that for a given `(s, t)` in `opProd(c)`, the diYoneda
 -- embedding `IntDiYonedaEmbedObj c mor s t` is a difunctor on `c`.
