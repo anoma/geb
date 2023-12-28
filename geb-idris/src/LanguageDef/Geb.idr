@@ -499,73 +499,6 @@ IntCopreshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (a : c) -> IntCopreshfMapSig c mor (IntCopreshfYonedaEmbedObj c mor a)
 IntCopreshfYonedaEmbedMor c mor comp a x y = comp a x y
 
---------------------------------------
---------------------------------------
----- Internal polynomial functors ----
---------------------------------------
---------------------------------------
-
--- An internal polynomial functor is a sum of representable internal
--- copresheaves. It can be expressed as a slice object over the object
--- of the objects of the internal category.
-public export
-0 IntArena : (0 c : Type) -> Type
-IntArena c = CSliceObj c
-
-public export
-InterpIPFobj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  IntArena c -> c -> Type
-InterpIPFobj c mor (pos ** dir) a = (i : pos ** mor (dir i) a)
-
-public export
-InterpIPFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : IntCompSig c mor) ->
-  (ar : IntArena c) -> IntCopreshfMapSig c mor (InterpIPFobj c mor ar)
-InterpIPFmap c mor comp (pos ** dir) x y m (i ** dm) =
-  (i ** comp (dir i) x y m dm)
-
-public export
-InterpIDFobj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  IntArena c -> c -> Type
-InterpIDFobj c mor (pos ** dir) a = (i : pos ** mor a (dir i))
-
-public export
-InterpIDFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : IntCompSig c mor) ->
-  (ar : IntArena c) -> IntPreshfMapSig c mor (InterpIDFobj c mor ar)
-InterpIDFmap c mor comp (pos ** dir) x y m (i ** dm) =
-  (i ** comp y x (dir i) dm m)
-
-public export
-IntPNTar : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  IntArena c -> IntArena c -> Type
-IntPNTar c mor (ppos ** pdir) (qpos ** qdir) =
-  (onpos : ppos -> qpos ** (i : ppos) -> mor (qdir (onpos i)) (pdir i))
-
-public export
-InterpIPnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : IntCompSig c mor) ->
-  (p, q : IntArena c) -> IntPNTar c mor p q ->
-  IntCopreshfNTSig c (InterpIPFobj c mor p) (InterpIPFobj c mor q)
-InterpIPnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
-  (i ** dm) =
-    (onpos i ** comp (qdir (onpos i)) (pdir i) x dm (ondir i))
-
-public export
-IntDNTar : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  IntArena c -> IntArena c -> Type
-IntDNTar c mor (ppos ** pdir) (qpos ** qdir) =
-  (onpos : ppos -> qpos ** (i : ppos) -> mor (pdir i) (qdir (onpos i)))
-
-public export
-InterpIDnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : IntCompSig c mor) ->
-  (p, q : IntArena c) -> IntDNTar c mor p q ->
-  IntPreshfNTSig c (InterpIDFobj c mor p) (InterpIDFobj c mor q)
-InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
-  (i ** dm) =
-    (onpos i ** comp x (pdir i) (qdir (onpos i)) (ondir i) dm)
-
 --------------------------------------------------------
 --------------------------------------------------------
 ---- Internal (di/pro-Yoneda) emebddings and lemmas ----
@@ -912,9 +845,78 @@ DiCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
 DiCoYonedaLemmaR p {isP} =
   IntDiCoYonedaLemmaR Type HomProf p (TypeProfDimap isP)
 
----------------------------------------------------------------
----- Pro-Yoneda (simultaneous covariant and contravariant) ----
----------------------------------------------------------------
+--------------------------------------
+--------------------------------------
+---- Internal polynomial functors ----
+--------------------------------------
+--------------------------------------
+
+-- An internal polynomial functor is a sum of representable internal
+-- copresheaves. It can be expressed as a slice object over the object
+-- of the objects of the internal category.
+public export
+0 IntArena : (0 c : Type) -> Type
+IntArena c = CSliceObj c
+
+public export
+InterpIPFobj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> c -> Type
+InterpIPFobj c mor (pos ** dir) a = (i : pos ** mor (dir i) a)
+
+public export
+InterpIPFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntArena c) -> IntCopreshfMapSig c mor (InterpIPFobj c mor ar)
+InterpIPFmap c mor comp (pos ** dir) x y m (i ** dm) =
+  (i ** comp (dir i) x y m dm)
+
+public export
+InterpIDFobj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> c -> Type
+InterpIDFobj c mor (pos ** dir) a = (i : pos ** mor a (dir i))
+
+public export
+InterpIDFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntArena c) -> IntPreshfMapSig c mor (InterpIDFobj c mor ar)
+InterpIDFmap c mor comp (pos ** dir) x y m (i ** dm) =
+  (i ** comp y x (dir i) dm m)
+
+public export
+IntPNTar : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> IntArena c -> Type
+IntPNTar c mor (ppos ** pdir) (qpos ** qdir) =
+  (onpos : ppos -> qpos ** (i : ppos) -> mor (qdir (onpos i)) (pdir i))
+
+public export
+InterpIPnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntArena c) -> IntPNTar c mor p q ->
+  IntCopreshfNTSig c (InterpIPFobj c mor p) (InterpIPFobj c mor q)
+InterpIPnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
+  (i ** dm) =
+    (onpos i ** comp (qdir (onpos i)) (pdir i) x dm (ondir i))
+
+public export
+IntDNTar : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> IntArena c -> Type
+IntDNTar c mor (ppos ** pdir) (qpos ** qdir) =
+  (onpos : ppos -> qpos ** (i : ppos) -> mor (pdir i) (qdir (onpos i)))
+
+public export
+InterpIDnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntArena c) -> IntDNTar c mor p q ->
+  IntPreshfNTSig c (InterpIDFobj c mor p) (InterpIDFobj c mor q)
+InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
+  (i ** dm) =
+    (onpos i ** comp x (pdir i) (qdir (onpos i)) (ondir i) dm)
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Pro-Yoneda (simultaneous covariant and contravariant) on `Type` ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 -- `ProfYonedaEmbed` embeds the object `(i0, i1)` of `(op(Type), Type)` into
 -- the category whose objects are profunctors `(op(Type), Type) -> Type)` and
