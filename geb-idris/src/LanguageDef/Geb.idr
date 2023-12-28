@@ -604,6 +604,9 @@ IntDiYonedaEmbedDimap c mor comp s t a b i j
 -- transformations.  This type is an explicit name for that object.
 -- It is the analogue to the standard form of the Yoneda lemma's "set/object of
 -- natural transformations from `Hom(_, a)` to `F`".
+--
+-- Like any object of natural transformations, this could be expressed
+-- as an end.
 public export
 IntDiYonedaLemmaNT : (c : Type) -> (mor, p : IntDifunctorSig c) ->
   IntDifunctorSig c
@@ -643,6 +646,11 @@ IntDiYonedaLemmaR c mor cid p i embed = embed i (cid i, cid i)
 
 -- The di-co-Yoneda lemma asserts a paranatural isomorphism between two objects
 -- of the enriching category, one of which is a coend (existential type).
+-- This type is an explicit name for that object.
+-- It is the analogue to the standard form of the co-Yoneda lemma's
+-- representation of the presheaf embedding of an object as a colimit
+-- of representables (the density theorem asserts that such a representation
+-- exists for every presheaf).
 public export
 IntDiCoYonedaLemmaCoendBase : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (p : IntDifunctorSig c) -> IntDifunctorSig c
@@ -650,6 +658,13 @@ IntDiCoYonedaLemmaCoendBase c mor p i j =
   Exists {type=(c, c)} $ \xy =>
     (IntDiYonedaEmbed c mor i j (fst xy) (snd xy), flip p (fst xy) (snd xy))
 
+-- This shows that for a given difunctor `p` on `c`,
+-- `IntDiCoYonedaLemmaCoendBase c mor p` is itself a difunctor (whose value
+-- for any `(s, t)` in `opProd(c)` is a coend representation of a presheaf).
+-- That makes it sensible to speak of paranatural transformations between
+-- `IntDiCoYonedaLemmaCoendBase c mor p` and `p`, and the di-co-Yoneda lemma
+-- exhibits a specific pair of such paranatural transformations, one in each
+-- direction, which are inverses to each other.
 public export
 IntDiYonedaLemmaCoendBaseDimap : (0 c : Type) ->
   (0 mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
