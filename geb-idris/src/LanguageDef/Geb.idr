@@ -590,6 +590,8 @@ IntDiYonedaEmbed : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> c -> c -> IntDifunctorSig c
 IntDiYonedaEmbed c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
 
+-- This shows that for a given `(s, t)` in `opProd(c)`, the diYoneda
+-- embedding `IntDiYonedaEmbed c mor s t` is a difunctor on `c`.
 public export
 IntDiYonedaEmbedDimap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
@@ -600,12 +602,21 @@ IntDiYonedaEmbedDimap c mor comp s t a b i j
 -- The diYoneda lemma asserts a paranatural isomorphism between two objects
 -- of the enriching category, one of which is an object of paranatural
 -- transformations.  This type is an explicit name for that object.
+-- It is the analogue to the standard form of the Yoneda lemma's "set/object of
+-- natural transformations from `Hom(_, a)` to `F`".
 public export
 IntDiYonedaLemmaNT : (c : Type) -> (mor, p : IntDifunctorSig c) ->
   IntDifunctorSig c
 IntDiYonedaLemmaNT c mor p i j =
   IntDiNTSig c (flip (IntDiYonedaEmbed c mor) i j) p
 
+-- This shows that for a given difunctor `p` on `c`,
+-- `IntDiYonedaLemmaNT c mor p` is itself a difunctor (whose value for any
+-- `(s, t)` in `opProd(c)` is an object (in `Type`) of paranatural
+-- transformations).  That makes it sensible to speak of paranatural
+-- transformations between `IntDiYonedaLemmaNT c mor p` and `p`, and
+-- the diYoneda lemma exhibits a specific pair of such paranatural
+-- transformations, one in each direction, which are inverses to each other.
 public export
 IntDiYonedaLemmaNTDimap : (0 c : Type) ->
   (0 mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
