@@ -328,6 +328,20 @@ public export
 IntEndoDimapFromLRmaps c cmor = IntDimapFromLRmaps c c cmor cmor
 
 public export
+IntProdCatMor : (0 c, d : Type) ->
+  IntDifunctorSig c -> IntDifunctorSig d -> IntDifunctorSig (c, d)
+IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
+
+public export
+IntProfCatMor : (0 d, c : Type) ->
+  IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
+IntProfCatMor d c dmor cmor = IntProdCatMor d c (flip dmor) cmor
+
+public export
+IntOpProdCatMor : (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
+IntOpProdCatMor c mor = IntProfCatMor c c mor mor
+
+public export
 constProf : (0 d, c : Type) -> Type -> IntProfunctorSig d c
 constProf d c x _ _ = x
 
