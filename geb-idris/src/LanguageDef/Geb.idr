@@ -583,30 +583,6 @@ IntDiCoYonedaLemmaR : (0 c : Type) ->
 IntDiCoYonedaLemmaR c mor p pdm x (Evidence ij ((mix, mxj), pji)) =
   pdm (snd ij) (fst ij) x x mxj mix pji
 
----------------------------------------------------------------
----- Pro-Yoneda (simultaneous covariant and contravariant) ----
----------------------------------------------------------------
-
--- This is the internal generalization (it is a generalization because
--- `Type` is internal to `Type`) of`PrePostPair`.  As such, it is the
--- (covariant) Yoneda embedding of `(op(d), c)` into the category of
--- `Type`-internal profunctors ("prosheaves") `op(d) -> c -> Type`.
--- That is, `IntProfYonedaEmbed d c dmor cmor s t` is `Hom((s, t), (-, _))`.
-public export
-IntProfYonedaEmbed : (0 d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  d -> c -> IntProfunctorSig d c
-IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
-
-public export
-IntProfYonedaEmbedDimap : (0 d, c : Type) ->
-  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
-  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
-  (0 s : d) -> (0 t : c) ->
-  IntDimapSig d c dmor cmor (IntProfYonedaEmbed d c dmor cmor s t)
-IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
-  dmia cmbj (dmas, cmtb) = (dcomp i a s dmas dmia, ccomp t b j cmbj cmtb)
-
 --------------------------------------------------
 --------------------------------------------------
 ---- (Para-)natural transformations on `Type` ----
@@ -911,6 +887,32 @@ InterpIDnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
 InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
   (i ** dm) =
     (onpos i ** comp x (pdir i) (qdir (onpos i)) (ondir i) dm)
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Internal Pro-Yoneda (simultaneous covariant and contravariant) ----
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+-- This is the internal generalization (it is a generalization because
+-- `Type` is internal to `Type`) of`PrePostPair`.  As such, it is the
+-- (covariant) Yoneda embedding of `(op(d), c)` into the category of
+-- `Type`-internal profunctors ("prosheaves") `op(d) -> c -> Type`.
+-- That is, `IntProfYonedaEmbed d c dmor cmor s t` is `Hom((s, t), (-, _))`.
+public export
+IntProfYonedaEmbed : (0 d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  d -> c -> IntProfunctorSig d c
+IntProfYonedaEmbed d c dmor cmor s t a b = (dmor a s, cmor t b)
+
+public export
+IntProfYonedaEmbedDimap : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (0 s : d) -> (0 t : c) ->
+  IntDimapSig d c dmor cmor (IntProfYonedaEmbed d c dmor cmor s t)
+IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
+  dmia cmbj (dmas, cmtb) = (dcomp i a s dmas dmia, ccomp t b j cmbj cmtb)
 
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
