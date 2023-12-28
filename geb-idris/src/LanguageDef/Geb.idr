@@ -579,23 +579,23 @@ InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
 -- and `mor` is a type dependent on pairs of terms of `c` (we could also
 -- express it dually as a `Type` together with morphisms `dom` and `cod` to
 -- `c`), which we interpret as _some_ morphisms of the category but not
--- necessarily all.  Then `IntDiYonedaEmbed c mor` is the diYoneda embedding
+-- necessarily all.  Then `IntDiYonedaEmbedObj c mor` is the diYoneda embedding
 -- of the product of the opposite of the internal category and the internal
 -- category itself (`op(Type) x Type`) into the category whose objects are
 -- profunctors on the internal category -- that is, functors
 -- `op(c) -> c -> Type` -- and whose morphisms are paranatural
 -- transformations.
 public export
-IntDiYonedaEmbed : (0 c : Type) ->
+IntDiYonedaEmbedObj : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> c -> c -> IntDifunctorSig c
-IntDiYonedaEmbed c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
+IntDiYonedaEmbedObj c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
 
 -- This shows that for a given `(s, t)` in `opProd(c)`, the diYoneda
--- embedding `IntDiYonedaEmbed c mor s t` is a difunctor on `c`.
+-- embedding `IntDiYonedaEmbedObj c mor s t` is a difunctor on `c`.
 public export
 IntDiYonedaEmbedDimap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
-  (0 s, t : c) -> IntEndoDimapSig c mor (IntDiYonedaEmbed c mor s t)
+  (0 s, t : c) -> IntEndoDimapSig c mor (IntDiYonedaEmbedObj c mor s t)
 IntDiYonedaEmbedDimap c mor comp s t a b i j
   cmia cmbj (cmat, cmsb) = (comp i a t cmat cmia, comp s b j cmbj cmsb)
 
@@ -606,12 +606,13 @@ IntDiYonedaEmbedDimap c mor comp s t a b i j
 -- natural transformations from `Hom(_, a)` to `F`".
 --
 -- Like any object of natural transformations, this could be expressed
--- as an end.
+-- as an end.  The end form of this lemma is sometimes called
+-- "Yoneda reduction".
 public export
 IntDiYonedaLemmaNT : (c : Type) -> (mor, p : IntDifunctorSig c) ->
   IntDifunctorSig c
 IntDiYonedaLemmaNT c mor p i j =
-  IntDiNTSig c (flip (IntDiYonedaEmbed c mor) i j) p
+  IntDiNTSig c (flip (IntDiYonedaEmbedObj c mor) i j) p
 
 -- This shows that for a given difunctor `p` on `c`,
 -- `IntDiYonedaLemmaNT c mor p` is itself a difunctor (whose value for any
@@ -656,7 +657,7 @@ IntDiCoYonedaLemmaCoendBase : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (p : IntDifunctorSig c) -> IntDifunctorSig c
 IntDiCoYonedaLemmaCoendBase c mor p i j =
   Exists {type=(c, c)} $ \xy =>
-    (IntDiYonedaEmbed c mor i j (fst xy) (snd xy), flip p (fst xy) (snd xy))
+    (IntDiYonedaEmbedObj c mor i j (fst xy) (snd xy), flip p (fst xy) (snd xy))
 
 -- This shows that for a given difunctor `p` on `c`,
 -- `IntDiCoYonedaLemmaCoendBase c mor p` is itself a difunctor (whose value
@@ -817,7 +818,7 @@ IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
 -- embedding with `Type` as `obj` and `HomProf` as `mor`.
 public export
 DiYonedaEmbed : Type -> Type -> ProfunctorSig
-DiYonedaEmbed = IntDiYonedaEmbed Type HomProf
+DiYonedaEmbed = IntDiYonedaEmbedObj Type HomProf
 
 public export
 typeId : IntIdSig Type HomProf
