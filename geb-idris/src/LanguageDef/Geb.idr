@@ -520,14 +520,18 @@ IntDiYonedaEmbedMorphPara : (0 c : Type) ->
     (IntDiYonedaEmbedMorph c mor comp s t a b m)
 IntDiYonedaEmbedMorphPara c mor comp s t a b (mas, mtb) i0 i1
   mi0i1 (mi0t, msi0) (mi1t, msi1) cond =
+    let
+      c1 = fstEq cond
+      c2 = sndEq cond
+    in
     pairEqCong
       (?IntDiYonedaEmbedMorphPara_hole_1)
       (?IntDiYonedaEmbedMorphPara_hole_2)
 
 -- The inverse of the morphism-map component of the diYoneda embedding.
 public export
-IntDiYonedaEmbedMorphInv : (0 c : Type) ->
-  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+IntDiYonedaEmbedMorphInv : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
   (s, t, a, b : c) ->
   (gamma : IntDiNTSig c
     (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)) ->
@@ -539,8 +543,12 @@ IntDiYonedaEmbedMorphInv : (0 c : Type) ->
     (IntDiYonedaEmbedRmap c mor comp a b)
     gamma ->
   IntEndoOpProdCatMor c mor (s, t) (a, b)
-IntDiYonedaEmbedMorphInv c mor comp s t a b gamma cond =
-  (?IntDiYOnedaEmbedMorphInv_hole_1, ?IntDiYOnedaEmbedMorphInv_hole_2)
+IntDiYonedaEmbedMorphInv c mor cid comp s t a b gamma cond =
+  let
+    gs = flip (curry $ gamma s) (cid s)
+    gt = curry (gamma t) (cid t)
+  in
+  (?IntDiYonedaEmbedMorphInv_hole_1, ?IntDiYonedaEmbedMorphInv_hole_2)
 
 -- The diYoneda lemma asserts a paranatural isomorphism between two objects
 -- of the enriching category, one of which is an object of paranatural
