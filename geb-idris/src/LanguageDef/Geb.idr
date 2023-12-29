@@ -209,17 +209,8 @@ public export
 IntIdSig c mor = (0 x : c) -> mor x x
 
 public export
-0 IntProCompSig : (0 c, d, e : Type) ->
-  (0 cdmor : IntProfunctorSig c d) ->
-  (0 demor : IntProfunctorSig d e) ->
-  (0 cemor : IntProfunctorSig c e) ->
-  Type
-IntProCompSig c d e cdmor demor cemor = (0 x : c) -> (0 y : d) -> (0 z : e) ->
-  demor y z -> cdmor x y -> cemor x z
-
-public export
 0 IntCompSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) -> Type
-IntCompSig c mor = IntProCompSig c c c mor mor mor
+IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
 
 public export
 0 IntDimapSig : (0 d, c : Type) ->
@@ -326,6 +317,45 @@ IntEndoDimapFromLRmaps : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
   IntEndoRmapSig c cmor p ->
   IntEndoDimapSig c cmor p
 IntEndoDimapFromLRmaps c cmor = IntDimapFromLRmaps c c cmor cmor
+
+------------------------------------
+---- Composition of profunctors ----
+------------------------------------
+
+-- The difunctor whose coend is the composition of two profunctors.
+public export
+IntProCompDi : (0 c, d, e : Type) ->
+  (q : IntProfunctorSig e d) ->
+  (p : IntProfunctorSig d c) ->
+  (i : e) -> (j : c) ->
+  IntDifunctorSig d
+IntProCompDi c d e q p i j s t = (p s j, q i t)
+
+public export
+IntProCompDimap : (0 c, d, e : Type) ->
+  (cmor : IntDifunctorSig c) ->
+  (dmor : IntDifunctorSig d) ->
+  (emor : IntDifunctorSig e) ->
+  (q : IntProfunctorSig e d) -> (p : IntProfunctorSig d c) ->
+  (qrm : IntRmapSig e d emor dmor q) -> (plm : IntLmapSig d c dmor cmor p) ->
+  (i : e) -> (j : c) ->
+  IntEndoDimapSig d dmor (IntProCompDi c d e q p i j)
+IntProCompDimap c d e cmor dmor emor q p qrm plm i j s t a b
+  dmas dmtb (psj, qit) = (plm s j a dmas psj, qrm i t b dmtb qit)
+
+-- The difunctor whose coend is the composition of two difunctors.
+public export
+IntDiCompDi : (0 c : Type) -> (q, p : IntDifunctorSig c) -> (a, b : c) ->
+  IntDifunctorSig c
+IntDiCompDi c = IntProCompDi c c c
+
+public export
+IntDiCompDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (q, p : IntDifunctorSig c) ->
+  (qrm : IntEndoRmapSig c mor q) -> (plm : IntEndoLmapSig c mor p) ->
+  (i, j : c) ->
+  IntEndoDimapSig c mor (IntDiCompDi c q p i j)
+IntDiCompDimap c mor = IntProCompDimap c c c mor mor mor
 
 public export
 IntProdCatMor : (0 c, d : Type) ->
