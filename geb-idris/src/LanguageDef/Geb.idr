@@ -327,79 +327,6 @@ IntEndoDimapFromLRmaps : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
   IntEndoDimapSig c cmor p
 IntEndoDimapFromLRmaps c cmor = IntDimapFromLRmaps c c cmor cmor
 
-------------------------------------
----- Composition of profunctors ----
-------------------------------------
-
--- The difunctor whose coend is the composition of two profunctors.
-public export
-IntProCompDi : (0 c, d, e : Type) ->
-  (q : IntProfunctorSig e d) ->
-  (p : IntProfunctorSig d c) ->
-  (i : e) -> (j : c) ->
-  IntDifunctorSig d
-IntProCompDi c d e q p i j s t = (p s j, q i t)
-
-public export
-IntProCompDiDimap : (0 c, d, e : Type) ->
-  (cmor : IntDifunctorSig c) ->
-  (dmor : IntDifunctorSig d) ->
-  (emor : IntDifunctorSig e) ->
-  (q : IntProfunctorSig e d) -> (p : IntProfunctorSig d c) ->
-  (qrm : IntRmapSig e d emor dmor q) -> (plm : IntLmapSig d c dmor cmor p) ->
-  (i : e) -> (j : c) ->
-  IntEndoDimapSig d dmor (IntProCompDi c d e q p i j)
-IntProCompDiDimap c d e cmor dmor emor q p qrm plm i j s t a b
-  dmas dmtb (psj, qit) = (plm s j a dmas psj, qrm i t b dmtb qit)
-
--- The difunctor whose coend is the composition of two difunctors.
-public export
-IntDiCompDi : (0 c : Type) -> (q, p : IntDifunctorSig c) -> (a, b : c) ->
-  IntDifunctorSig c
-IntDiCompDi c = IntProCompDi c c c
-
-public export
-IntDiCompDiDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  (q, p : IntDifunctorSig c) ->
-  (qrm : IntEndoRmapSig c mor q) -> (plm : IntEndoLmapSig c mor p) ->
-  (i, j : c) ->
-  IntEndoDimapSig c mor (IntDiCompDi c q p i j)
-IntDiCompDiDimap c mor = IntProCompDiDimap c c c mor mor mor
-
-public export
-IntProComp : (0 c, d, e : Type) ->
-  (q : IntProfunctorSig e d) ->
-  (p : IntProfunctorSig d c) ->
-  IntProfunctorSig e c
-IntProComp c d e q p i j =
-  Exists {type=d} $ \x : d => IntProCompDi c d e q p i j x x
-
-public export
-IntProCompDimap : (0 c, d, e : Type) ->
-  (cmor : IntDifunctorSig c) ->
-  (dmor : IntDifunctorSig d) ->
-  (emor : IntDifunctorSig e) ->
-  (q : IntProfunctorSig e d) -> (p : IntProfunctorSig d c) ->
-  (qlm : IntLmapSig e d emor dmor q) -> (prm : IntRmapSig d c dmor cmor p) ->
-  IntDimapSig e c emor cmor (IntProComp c d e q p)
-IntProCompDimap c d e cmor dmor emor q p qlm prm s t a b emas cmtb
-  (Evidence i (pit, qsi)) =
-    Evidence i (prm i t b cmtb pit, qlm s i a emas qsi)
-
-public export
-IntDiComp : (0 c : Type) ->
-  (q, p : IntDifunctorSig c) ->
-  IntDifunctorSig c
-IntDiComp c = IntProComp c c c
-
-public export
-IntDiCompDimap : (0 c : Type) ->
-  (cmor : IntDifunctorSig c) ->
-  (q, p : IntDifunctorSig c) ->
-  (qlm : IntEndoLmapSig c cmor q) -> (prm : IntEndoRmapSig c cmor p) ->
-  IntEndoDimapSig c cmor (IntDiComp c q p)
-IntDiCompDimap c cmor = IntProCompDimap c c c cmor cmor cmor
-
 --------------------------------------------
 ---- (Di-/Para-)natural transformations ----
 --------------------------------------------
@@ -500,6 +427,79 @@ public export
 0 cowedgeBase :
   (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
 cowedgeBase c apex p = IntDiNTSig c p (constDi c apex)
+
+------------------------------------
+---- Composition of profunctors ----
+------------------------------------
+
+-- The difunctor whose coend is the composition of two profunctors.
+public export
+IntProCompDi : (0 c, d, e : Type) ->
+  (q : IntProfunctorSig e d) ->
+  (p : IntProfunctorSig d c) ->
+  (i : e) -> (j : c) ->
+  IntDifunctorSig d
+IntProCompDi c d e q p i j s t = (p s j, q i t)
+
+public export
+IntProCompDiDimap : (0 c, d, e : Type) ->
+  (cmor : IntDifunctorSig c) ->
+  (dmor : IntDifunctorSig d) ->
+  (emor : IntDifunctorSig e) ->
+  (q : IntProfunctorSig e d) -> (p : IntProfunctorSig d c) ->
+  (qrm : IntRmapSig e d emor dmor q) -> (plm : IntLmapSig d c dmor cmor p) ->
+  (i : e) -> (j : c) ->
+  IntEndoDimapSig d dmor (IntProCompDi c d e q p i j)
+IntProCompDiDimap c d e cmor dmor emor q p qrm plm i j s t a b
+  dmas dmtb (psj, qit) = (plm s j a dmas psj, qrm i t b dmtb qit)
+
+-- The difunctor whose coend is the composition of two difunctors.
+public export
+IntDiCompDi : (0 c : Type) -> (q, p : IntDifunctorSig c) -> (a, b : c) ->
+  IntDifunctorSig c
+IntDiCompDi c = IntProCompDi c c c
+
+public export
+IntDiCompDiDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (q, p : IntDifunctorSig c) ->
+  (qrm : IntEndoRmapSig c mor q) -> (plm : IntEndoLmapSig c mor p) ->
+  (i, j : c) ->
+  IntEndoDimapSig c mor (IntDiCompDi c q p i j)
+IntDiCompDiDimap c mor = IntProCompDiDimap c c c mor mor mor
+
+public export
+IntProComp : (0 c, d, e : Type) ->
+  (q : IntProfunctorSig e d) ->
+  (p : IntProfunctorSig d c) ->
+  IntProfunctorSig e c
+IntProComp c d e q p i j =
+  Exists {type=d} $ \x : d => IntProCompDi c d e q p i j x x
+
+public export
+IntProCompDimap : (0 c, d, e : Type) ->
+  (cmor : IntDifunctorSig c) ->
+  (dmor : IntDifunctorSig d) ->
+  (emor : IntDifunctorSig e) ->
+  (q : IntProfunctorSig e d) -> (p : IntProfunctorSig d c) ->
+  (qlm : IntLmapSig e d emor dmor q) -> (prm : IntRmapSig d c dmor cmor p) ->
+  IntDimapSig e c emor cmor (IntProComp c d e q p)
+IntProCompDimap c d e cmor dmor emor q p qlm prm s t a b emas cmtb
+  (Evidence i (pit, qsi)) =
+    Evidence i (prm i t b cmtb pit, qlm s i a emas qsi)
+
+public export
+IntDiComp : (0 c : Type) ->
+  (q, p : IntDifunctorSig c) ->
+  IntDifunctorSig c
+IntDiComp c = IntProComp c c c
+
+public export
+IntDiCompDimap : (0 c : Type) ->
+  (cmor : IntDifunctorSig c) ->
+  (q, p : IntDifunctorSig c) ->
+  (qlm : IntEndoLmapSig c cmor q) -> (prm : IntEndoRmapSig c cmor p) ->
+  IntEndoDimapSig c cmor (IntDiComp c q p)
+IntDiCompDimap c cmor = IntProCompDimap c c c cmor cmor cmor
 
 -------------------------------------------
 ---- Profunctors in product categories ----
