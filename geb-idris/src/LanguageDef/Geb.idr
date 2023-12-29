@@ -366,6 +366,10 @@ IntDiCompDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoDimapSig c mor (IntDiCompDi c q p i j)
 IntDiCompDimap c mor = IntProCompDimap c c c mor mor mor
 
+-------------------------------------------
+---- Profunctors in product categories ----
+-------------------------------------------
+
 public export
 IntProdCatMor : (0 c, d : Type) ->
   IntDifunctorSig c -> IntDifunctorSig d -> IntDifunctorSig (c, d)
@@ -471,12 +475,14 @@ IntParaNTimpliesDi c cmor p q plm prm comm qlm qrm alpha para i0 i1 i2 pi1i0 =
     comm i1 i0 i0 i1 i2 i2 pi1i0
 
 public export
-0 wedge : (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
-wedge c apex p = IntDiNTSig c (constDi c apex) p
+0 wedgeBase :
+  (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
+wedgeBase c apex p = IntDiNTSig c (constDi c apex) p
 
 public export
-0 cowedge : (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
-cowedge c apex p = IntDiNTSig c p (constDi c apex)
+0 cowedgeBase :
+  (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
+cowedgeBase c apex p = IntDiNTSig c p (constDi c apex)
 
 --------------------------------------------------------
 --------------------------------------------------------
