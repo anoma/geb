@@ -213,6 +213,15 @@ public export
 IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
 
 public export
+0 IntAssocSig : (0 c : Type) ->
+  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  Type
+IntAssocSig c mor comp =
+  (w, x, y, z : c) ->
+  (h : mor y z) -> (g : mor x y) -> (f : mor w x) ->
+  comp w x z (comp x y z h g) f = comp w y z h (comp w x y g f)
+
+public export
 0 IntDimapSig : (0 d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   IntProfunctorSig d c -> Type
@@ -539,9 +548,7 @@ IntDiYonedaEmbedDimap c mor comp s t =
 public export
 IntDiYonedaEmbedMorphPara : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  (assoc : (w, x, y, z : c) ->
-    (h : mor y z) -> (g : mor x y) -> (f : mor w x) ->
-    comp w x z (comp x y z h g) f = comp w y z h (comp w x y g f)) ->
+  (assoc : IntAssocSig c mor comp) ->
   (s, t, a, b : c) ->
   (m : IntEndoOpProdCatMor c mor (s, t) (a, b)) ->
   IntParaNTCond c mor
