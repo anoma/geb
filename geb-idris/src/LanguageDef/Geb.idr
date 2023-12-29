@@ -509,6 +509,9 @@ IntDiYonedaEmbedDimap c mor comp s t =
 public export
 IntDiYonedaEmbedMorphPara : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (assoc : (w, x, y, z : c) ->
+    (h : mor y z) -> (g : mor x y) -> (f : mor w x) ->
+    comp w x z (comp x y z h g) f = comp w y z h (comp w x y g f)) ->
   (s, t, a, b : c) ->
   (m : IntEndoOpProdCatMor c mor (s, t) (a, b)) ->
   IntParaNTCond c mor
@@ -518,15 +521,15 @@ IntDiYonedaEmbedMorphPara : (0 c : Type) ->
     (IntDiYonedaEmbedLmap c mor comp a b)
     (IntDiYonedaEmbedRmap c mor comp a b)
     (IntDiYonedaEmbedMorph c mor comp s t a b m)
-IntDiYonedaEmbedMorphPara c mor comp s t a b (mas, mtb) i0 i1
+IntDiYonedaEmbedMorphPara c mor comp assoc s t a b (mas, mtb) i0 i1
   mi0i1 (mi0t, msi0) (mi1t, msi1) cond =
-    let
-      c1 = fstEq cond
-      c2 = sndEq cond
-    in
     pairEqCong
-      (?IntDiYonedaEmbedMorphPara_hole_1)
-      (?IntDiYonedaEmbedMorphPara_hole_2)
+      (rewrite assoc i0 i1 t b mtb mi1t mi0i1 in
+       rewrite fstEq cond in
+       Refl)
+      (rewrite sym (assoc a s i0 i1 mi0i1 msi0 mas) in
+       rewrite sndEq cond in
+       Refl)
 
 -- The inverse of the morphism-map component of the diYoneda embedding.
 public export
