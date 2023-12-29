@@ -517,9 +517,9 @@ IntDiNTCond c cmor p q plm prm qlm qrm alpha =
     (qrm i0 i0 i1 i2 . alpha i0 . plm i1 i0 i0 i2)
 
 public export
-IntDiNTvComp : (c : Type) -> (p, q, r : IntDifunctorSig c) ->
+IntDiNTcomp : (c : Type) -> (p, q, r : IntDifunctorSig c) ->
   IntDiNTSig c q r -> IntDiNTSig c p q -> IntDiNTSig c p r
-IntDiNTvComp c p q r beta alpha x = beta x . alpha x
+IntDiNTcomp c p q r beta alpha x = beta x . alpha x
 
 -- This could be read as "`alpha` preserves structure-homomorphisms", which
 -- in turn means that each such paranatural transformation corresponds to
@@ -549,7 +549,7 @@ IntParaNTimpliesDi c cmor p q plm prm comm qlm qrm alpha para i0 i1 i2 pi1i0 =
     comm i1 i0 i0 i1 i2 i2 pi1i0
 
 public export
-IntParaNTvComp : (c : Type) -> (mor : IntDifunctorSig c) ->
+IntParaNTcomp : (c : Type) -> (mor : IntDifunctorSig c) ->
   (p, q, r : IntDifunctorSig c) ->
   (plm : IntEndoLmapSig c mor p) -> (prm : IntEndoRmapSig c mor p) ->
   (qlm : IntEndoLmapSig c mor q) -> (qrm : IntEndoRmapSig c mor q) ->
@@ -558,8 +558,8 @@ IntParaNTvComp : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntParaNTCond c mor q r qlm qrm rlm rrm beta ->
   (alpha : IntDiNTSig c p q) ->
   IntParaNTCond c mor p q plm prm qlm qrm alpha ->
-  IntParaNTCond c mor p r plm prm rlm rrm (IntDiNTvComp c p q r beta alpha)
-IntParaNTvComp c mor p q r plm prm qlm qrm rlm rrm beta bcond alpha acond
+  IntParaNTCond c mor p r plm prm rlm rrm (IntDiNTcomp c p q r beta alpha)
+IntParaNTcomp c mor p q r plm prm qlm qrm rlm rrm beta bcond alpha acond
   i0 i1 mi0i1 p00 p11 pcomm =
     bcond i0 i1 mi0i1 (alpha i0 p00) (alpha i1 p11) $
       acond i0 i1 mi0i1 p00 p11 pcomm
