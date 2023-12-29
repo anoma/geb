@@ -535,20 +535,25 @@ IntDiYonedaEmbedMorphInv : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (s, t, a, b : c) ->
   (gamma : IntDiNTSig c
     (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)) ->
+  mor s t ->
   IntParaNTCond c mor
-    (IntDiYonedaEmbedObj c mor s t)(IntDiYonedaEmbedObj c mor a b)
+    (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)
     (IntDiYonedaEmbedLmap c mor comp s t)
     (IntDiYonedaEmbedRmap c mor comp s t)
     (IntDiYonedaEmbedLmap c mor comp a b)
     (IntDiYonedaEmbedRmap c mor comp a b)
     gamma ->
   IntEndoOpProdCatMor c mor (s, t) (a, b)
-IntDiYonedaEmbedMorphInv c mor cid comp s t a b gamma cond =
+IntDiYonedaEmbedMorphInv c mor cid comp s t a b gamma mst cond =
   let
     gs = flip (curry $ gamma s) (cid s)
     gt = curry (gamma t) (cid t)
+    cs = cond s s (cid s) (mst, cid s) (mst, cid s)
+    ct = cond t t (cid t)
+    (msb, mas) = gs mst
+    (mtb, mat) = gt mst
   in
-  (?IntDiYonedaEmbedMorphInv_hole_1, ?IntDiYonedaEmbedMorphInv_hole_2)
+  (mas, mtb)
 
 -- The diYoneda lemma asserts a paranatural isomorphism between two objects
 -- of the enriching category, one of which is an object of paranatural
