@@ -341,7 +341,7 @@ IntProCompDi : (0 c, d, e : Type) ->
 IntProCompDi c d e q p i j s t = (p s j, q i t)
 
 public export
-IntProCompDimap : (0 c, d, e : Type) ->
+IntProCompDiDimap : (0 c, d, e : Type) ->
   (cmor : IntDifunctorSig c) ->
   (dmor : IntDifunctorSig d) ->
   (emor : IntDifunctorSig e) ->
@@ -349,7 +349,7 @@ IntProCompDimap : (0 c, d, e : Type) ->
   (qrm : IntRmapSig e d emor dmor q) -> (plm : IntLmapSig d c dmor cmor p) ->
   (i : e) -> (j : c) ->
   IntEndoDimapSig d dmor (IntProCompDi c d e q p i j)
-IntProCompDimap c d e cmor dmor emor q p qrm plm i j s t a b
+IntProCompDiDimap c d e cmor dmor emor q p qrm plm i j s t a b
   dmas dmtb (psj, qit) = (plm s j a dmas psj, qrm i t b dmtb qit)
 
 -- The difunctor whose coend is the composition of two difunctors.
@@ -359,12 +359,12 @@ IntDiCompDi : (0 c : Type) -> (q, p : IntDifunctorSig c) -> (a, b : c) ->
 IntDiCompDi c = IntProCompDi c c c
 
 public export
-IntDiCompDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntDiCompDiDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (q, p : IntDifunctorSig c) ->
   (qrm : IntEndoRmapSig c mor q) -> (plm : IntEndoLmapSig c mor p) ->
   (i, j : c) ->
   IntEndoDimapSig c mor (IntDiCompDi c q p i j)
-IntDiCompDimap c mor = IntProCompDimap c c c mor mor mor
+IntDiCompDiDimap c mor = IntProCompDiDimap c c c mor mor mor
 
 -------------------------------------------
 ---- Profunctors in product categories ----
