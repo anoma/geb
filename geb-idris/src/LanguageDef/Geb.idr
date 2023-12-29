@@ -448,59 +448,6 @@ constEndoDimap c mor = constDimap c c mor mor
 --------------------------------------------
 
 public export
-0 IntProfNTSig : (0 d, c : Type) ->
-  (0 p, q : IntProfunctorSig d c) -> Type
-IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
-
-public export
-0 IntProfNTNaturality :
-  (d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  (p, q : IntProfunctorSig d c) ->
-  IntDimapSig d c dmor cmor p -> IntDimapSig d c dmor cmor q ->
-  IntProfNTSig d c p q -> Type
-IntProfNTNaturality d c dmor cmor p q pdm qdm alpha =
-  (0 s : d) -> (0 t : c) -> (0 a : d) -> (0 b : c) ->
-  (0 dmas : dmor a s) -> (0 cmtb : cmor t b) ->
-  ExtEq {a=(p s t)} {b=(q a b)}
-    (qdm s t a b dmas cmtb . alpha s t)
-    (alpha a b . pdm s t a b dmas cmtb)
-
-public export
-0 IntProfNTvComp : (0 d, c : Type) ->
-  (0 p, q, r : IntProfunctorSig d c) ->
-  IntProfNTSig d c q r -> IntProfNTSig d c p q -> IntProfNTSig d c p r
-IntProfNTvComp d c p q r beta alpha x y = beta x y . alpha x y
-
-public export
-0 IntProfNTwhiskerL : (0 e, d, c : Type) ->
-  (0 q, r : IntProfunctorSig e d) ->
-  IntProfNTSig e d q r ->
-  (p : IntProfunctorSig d c) ->
-  IntProfNTSig e c (IntProComp c d e q p) (IntProComp c d e r p)
-IntProfNTwhiskerL e d c q r nu p s t (Evidence i (pit, qsi)) =
-  Evidence i (pit, nu s i qsi)
-
-public export
-0 IntProfNTwhiskerR : (0 e, d, c : Type) ->
-  (0 p, q : IntProfunctorSig d c) ->
-  (r : IntProfunctorSig e d) ->
-  IntProfNTSig d c p q ->
-  IntProfNTSig e c (IntProComp c d e r p) (IntProComp c d e r q)
-IntProfNTwhiskerR e d c p q r nu s t (Evidence i (pit, rsi)) =
-  Evidence i (nu i t pit, rsi)
-
-public export
-0 IntProfNThComp : (0 e, d, c : Type) ->
-  (0 p, p' : IntProfunctorSig d c) ->
-  (0 q, q' : IntProfunctorSig e d) ->
-  IntProfNTSig e d q q' ->
-  IntProfNTSig d c p p' ->
-  IntProfNTSig e c (IntProComp c d e q p) (IntProComp c d e q' p')
-IntProfNThComp e d c p p' q q' beta alpha s t =
-  IntProfNTwhiskerL e d c q q' beta p' s t .
-  IntProfNTwhiskerR e d c p p' q alpha s t
-
-public export
 IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
 IntDiNTSig c p q = (x : c) -> p x x -> q x x
 
@@ -573,6 +520,63 @@ public export
 0 cowedgeBase :
   (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
 cowedgeBase c apex p = IntDiNTSig c p (constDi c apex)
+
+--------------------------------------------
+---- Profunctor natural transformations ----
+--------------------------------------------
+
+public export
+0 IntProfNTSig : (0 d, c : Type) ->
+  (0 p, q : IntProfunctorSig d c) -> Type
+IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
+
+public export
+0 IntProfNTNaturality :
+  (d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (p, q : IntProfunctorSig d c) ->
+  IntDimapSig d c dmor cmor p -> IntDimapSig d c dmor cmor q ->
+  IntProfNTSig d c p q -> Type
+IntProfNTNaturality d c dmor cmor p q pdm qdm alpha =
+  (0 s : d) -> (0 t : c) -> (0 a : d) -> (0 b : c) ->
+  (0 dmas : dmor a s) -> (0 cmtb : cmor t b) ->
+  ExtEq {a=(p s t)} {b=(q a b)}
+    (qdm s t a b dmas cmtb . alpha s t)
+    (alpha a b . pdm s t a b dmas cmtb)
+
+public export
+0 IntProfNTvComp : (0 d, c : Type) ->
+  (0 p, q, r : IntProfunctorSig d c) ->
+  IntProfNTSig d c q r -> IntProfNTSig d c p q -> IntProfNTSig d c p r
+IntProfNTvComp d c p q r beta alpha x y = beta x y . alpha x y
+
+public export
+0 IntProfNTwhiskerL : (0 e, d, c : Type) ->
+  (0 q, r : IntProfunctorSig e d) ->
+  IntProfNTSig e d q r ->
+  (p : IntProfunctorSig d c) ->
+  IntProfNTSig e c (IntProComp c d e q p) (IntProComp c d e r p)
+IntProfNTwhiskerL e d c q r nu p s t (Evidence i (pit, qsi)) =
+  Evidence i (pit, nu s i qsi)
+
+public export
+0 IntProfNTwhiskerR : (0 e, d, c : Type) ->
+  (0 p, q : IntProfunctorSig d c) ->
+  (r : IntProfunctorSig e d) ->
+  IntProfNTSig d c p q ->
+  IntProfNTSig e c (IntProComp c d e r p) (IntProComp c d e r q)
+IntProfNTwhiskerR e d c p q r nu s t (Evidence i (pit, rsi)) =
+  Evidence i (nu i t pit, rsi)
+
+public export
+0 IntProfNThComp : (0 e, d, c : Type) ->
+  (0 p, p' : IntProfunctorSig d c) ->
+  (0 q, q' : IntProfunctorSig e d) ->
+  IntProfNTSig e d q q' ->
+  IntProfNTSig d c p p' ->
+  IntProfNTSig e c (IntProComp c d e q p) (IntProComp c d e q' p')
+IntProfNThComp e d c p p' q q' beta alpha s t =
+  IntProfNTwhiskerL e d c q q' beta p' s t .
+  IntProfNTwhiskerR e d c p p' q alpha s t
 
 --------------------------------------------------------
 --------------------------------------------------------
