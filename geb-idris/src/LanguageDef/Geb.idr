@@ -447,6 +447,11 @@ IntDiNTCond c cmor p q plm prm qlm qrm alpha =
     (qlm i1 i1 i0 i2 . alpha i1 . prm i1 i0 i1 i2)
     (qrm i0 i0 i1 i2 . alpha i0 . plm i1 i0 i0 i2)
 
+public export
+IntDiNTvComp : (c : Type) -> (p, q, r : IntDifunctorSig c) ->
+  IntDiNTSig c q r -> IntDiNTSig c p q -> IntDiNTSig c p r
+IntDiNTvComp c p q r beta alpha x = beta x . alpha x
+
 -- This could be read as "`alpha` preserves structure-homomorphisms", which
 -- in turn means that each such paranatural transformation corresponds to
 -- a functor between categories of diagonal elements.
@@ -473,6 +478,22 @@ IntParaNTCond c cmor p q plm prm qlm qrm alpha =
 IntParaNTimpliesDi c cmor p q plm prm comm qlm qrm alpha para i0 i1 i2 pi1i0 =
   para i0 i1 i2 (plm i1 i0 i0 i2 pi1i0) (prm i1 i0 i1 i2 pi1i0) $
     comm i1 i0 i0 i1 i2 i2 pi1i0
+
+public export
+IntParaNTvComp : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (p, q, r : IntDifunctorSig c) ->
+  (plm : IntEndoLmapSig c mor p) -> (prm : IntEndoRmapSig c mor p) ->
+  (qlm : IntEndoLmapSig c mor q) -> (qrm : IntEndoRmapSig c mor q) ->
+  (rlm : IntEndoLmapSig c mor r) -> (rrm : IntEndoRmapSig c mor r) ->
+  (beta : IntDiNTSig c q r) ->
+  IntParaNTCond c mor q r qlm qrm rlm rrm beta ->
+  (alpha : IntDiNTSig c p q) ->
+  IntParaNTCond c mor p q plm prm qlm qrm alpha ->
+  IntParaNTCond c mor p r plm prm rlm rrm (IntDiNTvComp c p q r beta alpha)
+IntParaNTvComp c mor p q r plm prm qlm qrm rlm rrm beta bcond alpha acond
+  i0 i1 mi0i1 p00 p11 pcomm =
+    bcond i0 i1 mi0i1 (alpha i0 p00) (alpha i1 p11) $
+      acond i0 i1 mi0i1 p00 p11 pcomm
 
 public export
 0 wedgeBase :
