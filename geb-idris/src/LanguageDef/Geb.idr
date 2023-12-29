@@ -400,49 +400,6 @@ IntDiCompDimap : (0 c : Type) ->
   IntEndoDimapSig c cmor (IntDiComp c q p)
 IntDiCompDimap c cmor = IntProCompDimap c c c cmor cmor cmor
 
--------------------------------------------
----- Profunctors in product categories ----
--------------------------------------------
-
-public export
-IntProdCatMor : (0 c, d : Type) ->
-  IntDifunctorSig c -> IntDifunctorSig d -> IntDifunctorSig (c, d)
-IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
-
-public export
-IntEndoProdCatMor : (0 c : Type) ->
-  IntDifunctorSig c -> IntDifunctorSig (c, c)
-IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
-
-public export
-IntOpProdCatMor : (0 d, c : Type) ->
-  IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
-IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (flip dmor) cmor
-
-public export
-IntEndoOpProdCatMor :
-  (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
-IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
-
-public export
-constProf : (0 d, c : Type) -> Type -> IntProfunctorSig d c
-constProf d c x _ _ = x
-
-public export
-constDimap : (0 d, c : Type) ->
-  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
-  (0 x : Type) -> IntDimapSig d c dmor cmor (constProf d c x)
-constDimap d c dmor cmor x s t a b dmas cmtb = id {a=x}
-
-public export
-constDi : (0 c : Type) -> (apex : Type) -> IntDifunctorSig c
-constDi c = constProf c c
-
-public export
-constEndoDimap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
-  (0 x : Type) -> IntEndoDimapSig c mor (constDi c x)
-constEndoDimap c mor = constDimap c c mor mor
-
 --------------------------------------------
 ---- (Di-/Para-)natural transformations ----
 --------------------------------------------
@@ -511,6 +468,29 @@ IntParaNTcomp c mor p q r plm prm qlm qrm rlm rrm beta bcond alpha acond
     bcond i0 i1 mi0i1 (alpha i0 p00) (alpha i1 p11) $
       acond i0 i1 mi0i1 p00 p11 pcomm
 
+-----------------------------
+---- Wedges and cowedges ----
+-----------------------------
+
+public export
+constProf : (0 d, c : Type) -> Type -> IntProfunctorSig d c
+constProf d c x _ _ = x
+
+public export
+constDimap : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (0 x : Type) -> IntDimapSig d c dmor cmor (constProf d c x)
+constDimap d c dmor cmor x s t a b dmas cmtb = id {a=x}
+
+public export
+constDi : (0 c : Type) -> (apex : Type) -> IntDifunctorSig c
+constDi c = constProf c c
+
+public export
+constEndoDimap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (0 x : Type) -> IntEndoDimapSig c mor (constDi c x)
+constEndoDimap c mor = constDimap c c mor mor
+
 public export
 0 wedgeBase :
   (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
@@ -520,6 +500,30 @@ public export
 0 cowedgeBase :
   (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
 cowedgeBase c apex p = IntDiNTSig c p (constDi c apex)
+
+-------------------------------------------
+---- Profunctors in product categories ----
+-------------------------------------------
+
+public export
+IntProdCatMor : (0 c, d : Type) ->
+  IntDifunctorSig c -> IntDifunctorSig d -> IntDifunctorSig (c, d)
+IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
+
+public export
+IntEndoProdCatMor : (0 c : Type) ->
+  IntDifunctorSig c -> IntDifunctorSig (c, c)
+IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
+
+public export
+IntOpProdCatMor : (0 d, c : Type) ->
+  IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
+IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (flip dmor) cmor
+
+public export
+IntEndoOpProdCatMor :
+  (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
+IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
 
 --------------------------------------------
 ---- Profunctor natural transformations ----
