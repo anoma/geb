@@ -366,6 +366,40 @@ IntDiCompDiDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoDimapSig c mor (IntDiCompDi c q p i j)
 IntDiCompDiDimap c mor = IntProCompDiDimap c c c mor mor mor
 
+public export
+IntProComp : (0 c, d, e : Type) ->
+  (q : IntProfunctorSig e d) ->
+  (p : IntProfunctorSig d c) ->
+  IntProfunctorSig e c
+IntProComp c d e q p i j =
+  Exists {type=d} $ \x : d => IntProCompDi c d e q p i j x x
+
+public export
+IntProCompDimap : (0 c, d, e : Type) ->
+  (cmor : IntDifunctorSig c) ->
+  (dmor : IntDifunctorSig d) ->
+  (emor : IntDifunctorSig e) ->
+  (q : IntProfunctorSig e d) -> (p : IntProfunctorSig d c) ->
+  (qlm : IntLmapSig e d emor dmor q) -> (prm : IntRmapSig d c dmor cmor p) ->
+  IntDimapSig e c emor cmor (IntProComp c d e q p)
+IntProCompDimap c d e cmor dmor emor q p qlm prm s t a b emas cmtb
+  (Evidence i (pit, qsi)) =
+    Evidence i (prm i t b cmtb pit, qlm s i a emas qsi)
+
+public export
+IntDiComp : (0 c : Type) ->
+  (q, p : IntDifunctorSig c) ->
+  IntDifunctorSig c
+IntDiComp c = IntProComp c c c
+
+public export
+IntDiCompDimap : (0 c : Type) ->
+  (cmor : IntDifunctorSig c) ->
+  (q, p : IntDifunctorSig c) ->
+  (qlm : IntEndoLmapSig c cmor q) -> (prm : IntEndoRmapSig c cmor p) ->
+  IntEndoDimapSig c cmor (IntDiComp c q p)
+IntDiCompDimap c cmor = IntProCompDimap c c c cmor cmor cmor
+
 -------------------------------------------
 ---- Profunctors in product categories ----
 -------------------------------------------
