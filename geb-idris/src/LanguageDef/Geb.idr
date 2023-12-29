@@ -327,6 +327,10 @@ IntEndoDimapFromLRmaps : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
   IntEndoDimapSig c cmor p
 IntEndoDimapFromLRmaps c cmor = IntDimapFromLRmaps c c cmor cmor
 
+-----------------------------
+---- Utility profunctors ----
+-----------------------------
+
 public export
 constProf : (0 d, c : Type) -> Type -> IntProfunctorSig d c
 constProf d c x _ _ = x
