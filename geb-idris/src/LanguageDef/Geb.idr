@@ -247,6 +247,21 @@ public export
 IntEndoLmapSig c cmor = IntLmapSig c c cmor cmor
 
 public export
+0 IntLmapIdSig : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (did : IntIdSig d dmor) ->
+  (p : IntProfunctorSig d c) ->
+  IntLmapSig d c dmor cmor p -> Type
+IntLmapIdSig d c dmor cmor did p plm =
+  (0 s : d) -> (0 t : c) -> (0 pst : p s t) -> plm s t s (did s) pst = pst
+
+public export
+0 IntEndoLmapIdSig : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (cid : IntIdSig c cmor) -> (p : IntDifunctorSig c) ->
+  IntEndoLmapSig c cmor p -> Type
+IntEndoLmapIdSig c cmor = IntLmapIdSig c c cmor cmor
+
+public export
 0 IntRmapSig : (0 d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   IntProfunctorSig d c -> Type
@@ -257,6 +272,21 @@ public export
 0 IntEndoRmapSig : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
   IntDifunctorSig c -> Type
 IntEndoRmapSig c cmor = IntRmapSig c c cmor cmor
+
+public export
+0 IntRmapIdSig : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (cid : IntIdSig c cmor) ->
+  (p : IntProfunctorSig d c) ->
+  IntRmapSig d c dmor cmor p -> Type
+IntRmapIdSig d c dmor cmor cid p prm =
+  (0 s : d) -> (0 t : c) -> (0 pst : p s t) -> prm s t t (cid t) pst = pst
+
+public export
+0 IntEndoRmapIdSig : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (cid : IntIdSig c cmor) -> (p : IntDifunctorSig c) ->
+  IntEndoRmapSig c cmor p -> Type
+IntEndoRmapIdSig c cmor = IntRmapIdSig c c cmor cmor
 
 public export
 0 IntLmapFromDimap : (0 d, c : Type) ->
@@ -465,6 +495,10 @@ public export
   (0 p, q : IntDifunctorSig c) ->
   (plm : IntEndoLmapSig c cmor p) -> (prm : IntEndoRmapSig c cmor p) ->
   (qlm : IntEndoLmapSig c cmor q) -> (qrm : IntEndoRmapSig c cmor q) ->
+  (plid : IntEndoLmapIdSig c cmor cid p plm) ->
+  (prid : IntEndoRmapIdSig c cmor cid p prm) ->
+  (qlid : IntEndoLmapIdSig c cmor cid q qlm) ->
+  (qrid : IntEndoRmapIdSig c cmor cid q qrm) ->
   IntEndoLRmapsCommute c cmor p plm prm ->
   IntEndoLRmapsCommute c cmor q qlm qrm ->
   (alpha : IntProfNTSig c c p q) ->
@@ -473,8 +507,8 @@ public export
     (IntEndoDimapFromLRmaps c cmor q qlm qrm)
     alpha ->
   IntParaNTCond c cmor p q plm prm qlm qrm (IntProfNTRestrict c p q alpha)
-IntProfNTRestrictPara c cmor cid p q plm prm qlm qrm pcomm qcomm alpha nat s t
-  cmst pss ptt peq =
+IntProfNTRestrictPara c cmor cid p q plm prm qlm qrm
+  plid prid qlid qrid pcomm qcomm alpha nat s t cmst pss ptt peq =
     let
       nat_s = nat s s s t (cid s) cmst pss
       nat_t = nat t t s t cmst (cid t) ptt
