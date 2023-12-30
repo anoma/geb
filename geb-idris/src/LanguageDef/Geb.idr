@@ -336,6 +336,10 @@ constProf : (0 d, c : Type) -> Type -> IntProfunctorSig d c
 constProf d c x _ _ = x
 
 public export
+terminalProf : (0 d, c : Type) -> IntProfunctorSig d c
+terminalProf d c = constProf d c Unit
+
+public export
 constDimap : (0 d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   (0 x : Type) -> IntDimapSig d c dmor cmor (constProf d c x)
@@ -418,19 +422,83 @@ IntParaNTcomp c mor p q r plm prm qlm qrm rlm rrm beta bcond alpha acond
     bcond i0 i1 mi0i1 (alpha i0 p00) (alpha i1 p11) $
       acond i0 i1 mi0i1 p00 p11 pcomm
 
+--------------------------------------------
+---- Profunctor natural transformations ----
+--------------------------------------------
+
+public export
+0 IntProfNTSig : (0 d, c : Type) ->
+  (0 p, q : IntProfunctorSig d c) -> Type
+IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
+
+public export
+0 IntProfNTNaturality :
+  (d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (p, q : IntProfunctorSig d c) ->
+  IntDimapSig d c dmor cmor p -> IntDimapSig d c dmor cmor q ->
+  IntProfNTSig d c p q -> Type
+IntProfNTNaturality d c dmor cmor p q pdm qdm alpha =
+  (0 s : d) -> (0 t : c) -> (0 a : d) -> (0 b : c) ->
+  (0 dmas : dmor a s) -> (0 cmtb : cmor t b) ->
+  ExtEq {a=(p s t)} {b=(q a b)}
+    (qdm s t a b dmas cmtb . alpha s t)
+    (alpha a b . pdm s t a b dmas cmtb)
+
+public export
+0 IntProfNTvComp : (0 d, c : Type) ->
+  (0 p, q, r : IntProfunctorSig d c) ->
+  IntProfNTSig d c q r -> IntProfNTSig d c p q -> IntProfNTSig d c p r
+IntProfNTvComp d c p q r beta alpha x y = beta x y . alpha x y
+
+-------------------------------------------------------------------------------
+---- Restriction of natural transformations to paranatural transformations ----
+-------------------------------------------------------------------------------
+
+public export
+0 IntProfNTRestrict : (0 c : Type) ->
+  (0 p, q : IntDifunctorSig c) -> IntProfNTSig c c p q -> IntDiNTSig c p q
+IntProfNTRestrict c p q alpha x = alpha x x
+
+public export
+0 IntProfNTRestrictPara : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+  (0 p, q : IntDifunctorSig c) ->
+  (plm : IntEndoLmapSig c cmor p) -> (prm : IntEndoRmapSig c cmor p) ->
+  (qlm : IntEndoLmapSig c cmor q) -> (qrm : IntEndoRmapSig c cmor q) ->
+  IntEndoLRmapsCommute c cmor p plm prm ->
+  IntEndoLRmapsCommute c cmor q qlm qrm ->
+  (alpha : IntProfNTSig c c p q) ->
+  IntProfNTNaturality c c cmor cmor p q
+    (IntEndoDimapFromLRmaps c cmor p plm prm)
+    (IntEndoDimapFromLRmaps c cmor q qlm qrm)
+    alpha ->
+  IntParaNTCond c cmor p q plm prm qlm qrm (IntProfNTRestrict c p q alpha)
+IntProfNTRestrictPara c cmor p q plm prm qlm qrm pcomm qcomm alpha nat s t
+  cmst pss ptt peq =
+    ?IntProfNTRestrictPara_hole
+
 -----------------------------
 ---- Wedges and cowedges ----
 -----------------------------
 
 public export
-0 wedgeBase :
-  (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
-wedgeBase c apex p = IntDiNTSig c (constDi c apex) p
+0 IntGenEndBase : (d, c : Type) -> (0 p : IntProfunctorSig d c) -> Type
+IntGenEndBase d c = IntProfNTSig d c (terminalProf d c)
 
 public export
-0 cowedgeBase :
+0 WedgeBase :
   (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
-cowedgeBase c apex p = IntDiNTSig c p (constDi c apex)
+WedgeBase c apex p = IntDiNTSig c (constDi c apex) p
+
+public export
+0 CowedgeBase :
+  (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
+CowedgeBase c apex p = IntDiNTSig c p (constDi c apex)
+
+public export
+0 IntEndBase : (c : Type) -> (p : IntDifunctorSig c) -> Type
+-- Equivalent to `WedgeBase c Unit`.
+-- An `IntGenEndBase c c` can be restricted to an `IntEndBase c p`.
+IntEndBase c = IntDiNTSig c (terminalProf c c)
 
 ------------------------------------
 ---- Composition of profunctors ----
@@ -505,57 +573,9 @@ IntDiCompDimap : (0 c : Type) ->
   IntEndoDimapSig c cmor (IntDiComp c q p)
 IntDiCompDimap c cmor = IntProCompDimap c c c cmor cmor cmor
 
--------------------------------------------
----- Profunctors in product categories ----
--------------------------------------------
-
-public export
-IntProdCatMor : (0 c, d : Type) ->
-  IntDifunctorSig c -> IntDifunctorSig d -> IntDifunctorSig (c, d)
-IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
-
-public export
-IntEndoProdCatMor : (0 c : Type) ->
-  IntDifunctorSig c -> IntDifunctorSig (c, c)
-IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
-
-public export
-IntOpProdCatMor : (0 d, c : Type) ->
-  IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
-IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (flip dmor) cmor
-
-public export
-IntEndoOpProdCatMor :
-  (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
-IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
-
---------------------------------------------
----- Profunctor natural transformations ----
---------------------------------------------
-
-public export
-0 IntProfNTSig : (0 d, c : Type) ->
-  (0 p, q : IntProfunctorSig d c) -> Type
-IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
-
-public export
-0 IntProfNTNaturality :
-  (d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  (p, q : IntProfunctorSig d c) ->
-  IntDimapSig d c dmor cmor p -> IntDimapSig d c dmor cmor q ->
-  IntProfNTSig d c p q -> Type
-IntProfNTNaturality d c dmor cmor p q pdm qdm alpha =
-  (0 s : d) -> (0 t : c) -> (0 a : d) -> (0 b : c) ->
-  (0 dmas : dmor a s) -> (0 cmtb : cmor t b) ->
-  ExtEq {a=(p s t)} {b=(q a b)}
-    (qdm s t a b dmas cmtb . alpha s t)
-    (alpha a b . pdm s t a b dmas cmtb)
-
-public export
-0 IntProfNTvComp : (0 d, c : Type) ->
-  (0 p, q, r : IntProfunctorSig d c) ->
-  IntProfNTSig d c q r -> IntProfNTSig d c p q -> IntProfNTSig d c p r
-IntProfNTvComp d c p q r beta alpha x y = beta x y . alpha x y
+-----------------------------------
+---- Whiskering of profunctors ----
+-----------------------------------
 
 public export
 0 IntProfNTwhiskerL : (0 e, d, c : Type) ->
@@ -586,6 +606,30 @@ IntProfNThComp e d c p p' q q' beta alpha s t =
   IntProfNTwhiskerL e d c q q' beta p' s t .
   IntProfNTwhiskerR e d c p p' q alpha s t
 
+-------------------------------------------
+---- Profunctors in product categories ----
+-------------------------------------------
+
+public export
+IntProdCatMor : (0 c, d : Type) ->
+  IntDifunctorSig c -> IntDifunctorSig d -> IntDifunctorSig (c, d)
+IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
+
+public export
+IntEndoProdCatMor : (0 c : Type) ->
+  IntDifunctorSig c -> IntDifunctorSig (c, c)
+IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
+
+public export
+IntOpProdCatMor : (0 d, c : Type) ->
+  IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
+IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (flip dmor) cmor
+
+public export
+IntEndoOpProdCatMor :
+  (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
+IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
+
 --------------------------------------------------------
 --------------------------------------------------------
 ---- Internal (di/pro-Yoneda) emebddings and lemmas ----
@@ -611,6 +655,13 @@ public export
 IntDiYonedaEmbedObj : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> c -> c -> IntDifunctorSig c
 IntDiYonedaEmbedObj c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
+
+-- Embed `OpProd(c)` into `Type`.
+public export
+0 IntDiYonedaFullEmbedObj : (c : Type) ->
+  (mor : IntDifunctorSig c) -> IntDifunctorSig c
+IntDiYonedaFullEmbedObj c mor i0 i1 =
+  IntEndBase c $ IntDiYonedaEmbedObj c mor i0 i1
 
 -- The morphism-map component of the diYoneda embedding.
 -- The domain of that embedding is `opProd(c)`, and the codomain
