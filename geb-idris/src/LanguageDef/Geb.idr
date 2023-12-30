@@ -357,33 +357,6 @@ IntEndoDimapFromLRmaps : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
   IntEndoDimapSig c cmor p
 IntEndoDimapFromLRmaps c cmor = IntDimapFromLRmaps c c cmor cmor
 
------------------------------
----- Utility profunctors ----
------------------------------
-
-public export
-constProf : (0 d, c : Type) -> Type -> IntProfunctorSig d c
-constProf d c x _ _ = x
-
-public export
-terminalProf : (0 d, c : Type) -> IntProfunctorSig d c
-terminalProf d c = constProf d c Unit
-
-public export
-constDimap : (0 d, c : Type) ->
-  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
-  (0 x : Type) -> IntDimapSig d c dmor cmor (constProf d c x)
-constDimap d c dmor cmor x s t a b dmas cmtb = id {a=x}
-
-public export
-constDi : (0 c : Type) -> (apex : Type) -> IntDifunctorSig c
-constDi c = constProf c c
-
-public export
-constEndoDimap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
-  (0 x : Type) -> IntEndoDimapSig c mor (constDi c x)
-constEndoDimap c mor = constDimap c c mor mor
-
 --------------------------------------------
 ---- (Di-/Para-)natural transformations ----
 --------------------------------------------
@@ -518,6 +491,32 @@ IntProfNTRestrictPara c cmor cid p q plm prm qlm qrm plid prid qlid qrid
     in
     trans (trans nat_t congpeq) nat_s
 
+-----------------------------
+---- Utility profunctors ----
+-----------------------------
+
+public export
+constProf : (0 d, c : Type) -> Type -> IntProfunctorSig d c
+constProf d c x _ _ = x
+
+public export
+terminalProf : (0 d, c : Type) -> IntProfunctorSig d c
+terminalProf d c = constProf d c Unit
+
+public export
+constDimap : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  (0 x : Type) -> IntDimapSig d c dmor cmor (constProf d c x)
+constDimap d c dmor cmor x s t a b dmas cmtb = id {a=x}
+
+public export
+constDi : (0 c : Type) -> (apex : Type) -> IntDifunctorSig c
+constDi c = constProf c c
+
+public export
+constEndoDimap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (0 x : Type) -> IntEndoDimapSig c mor (constDi c x)
+constEndoDimap c mor = constDimap c c mor mor
 
 -----------------------------
 ---- Wedges and cowedges ----
