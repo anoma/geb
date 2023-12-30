@@ -409,6 +409,8 @@ IntParaNTimpliesDi c cmor p q plm prm comm qlm qrm alpha para i0 i1 i2 pi1i0 =
   para i0 i1 i2 (plm i1 i0 i0 i2 pi1i0) (prm i1 i0 i1 i2 pi1i0) $
     comm i1 i0 i0 i1 i2 i2 pi1i0
 
+-- Paranatural transformations compose (which dinatural transformations
+-- do not in general).
 public export
 IntParaNTcomp : (c : Type) -> (mor : IntDifunctorSig c) ->
   (p, q, r : IntDifunctorSig c) ->
@@ -500,14 +502,20 @@ constProf : (0 d, c : Type) -> Type -> IntProfunctorSig d c
 constProf d c x _ _ = x
 
 public export
-terminalProf : (0 d, c : Type) -> IntProfunctorSig d c
-terminalProf d c = constProf d c Unit
-
-public export
 constDimap : (0 d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   (0 x : Type) -> IntDimapSig d c dmor cmor (constProf d c x)
 constDimap d c dmor cmor x s t a b dmas cmtb = id {a=x}
+
+public export
+terminalProf : (0 d, c : Type) -> IntProfunctorSig d c
+terminalProf d c = constProf d c Unit
+
+public export
+terminalDimap : (0 d, c : Type) ->
+  (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
+  IntDimapSig d c dmor cmor (terminalProf d c)
+terminalDimap d c dmor cmor = constDimap d c dmor cmor Unit
 
 public export
 constDi : (0 c : Type) -> (apex : Type) -> IntDifunctorSig c
@@ -525,6 +533,15 @@ constEndoDimap c mor = constDimap c c mor mor
 public export
 0 IntGenEndBase : (d, c : Type) -> (0 p : IntProfunctorSig d c) -> Type
 IntGenEndBase d c = IntProfNTSig d c (terminalProf d c)
+
+public export
+0 IntGenEndBaseIsGenEnd :
+  (d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (0 p : IntProfunctorSig d c) -> (pdm : IntDimapSig d c dmor cmor p) ->
+  (endb : IntGenEndBase d c p) -> Type
+IntGenEndBaseIsGenEnd d c dmor cmor p =
+  IntProfNTNaturality d c dmor cmor
+    (terminalProf d c) p (terminalDimap d c dmor cmor)
 
 public export
 0 WedgeBase :
