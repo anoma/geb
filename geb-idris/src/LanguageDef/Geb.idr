@@ -1099,7 +1099,8 @@ DiCoYonedaLemmaR p {isP} =
 -- `c`), which we interpret as _some_ morphisms of the category but not
 -- necessarily all.  Then this is the signature of the morphism-map component
 -- of a (contravariant) presheaf on the category, as specified by whichever
--- morphisms are included in `mor`.
+-- morphisms are included in `mor`.  (The signature of the object map is
+-- simply `c -> Type`.)
 public export
 0 IntPreshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
   (0 objmap : c -> Type) -> Type
@@ -1158,18 +1159,22 @@ IntCopreshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
 IntCopreshfYonedaEmbedObj c mor = mor
 
 -- The morphism-map component of the (covariant) Yoneda embedding of
--- `c` into the category of the (contravariant) presheaves on `c`.
-IntPreshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+-- an object of `c` into the category of the (contravariant) presheaves on `c`
+-- (since the embedding of that object is a functor, it has a morphism-map
+-- component as well as an object-map component).
+IntPreshfYonedaEmbedObjFMap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (a : c) -> IntPreshfMapSig c mor (IntPreshfYonedaEmbedObj c mor a)
-IntPreshfYonedaEmbedMor c mor comp a x y = flip $ comp y x a
+IntPreshfYonedaEmbedObjFMap c mor comp a x y = flip $ comp y x a
 
 -- The morphism-map component of the (contravariant) Yoneda embedding of
--- `op(c)` into the category of the (covariant) copresheaves on `c`.
-IntCopreshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+-- an object of `op(c)` into the category of the (covariant) copresheaves on `c`
+-- (since the embedding of that object is a functor, it has a morphism-map
+-- component as well as an object-map component).
+IntCopreshfYonedaEmbedObjFMap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (a : c) -> IntCopreshfMapSig c mor (IntCopreshfYonedaEmbedObj c mor a)
-IntCopreshfYonedaEmbedMor c mor comp a x y = comp a x y
+IntCopreshfYonedaEmbedObjFMap c mor comp a x y = comp a x y
 
 --------------------------------------
 --------------------------------------
