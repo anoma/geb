@@ -499,25 +499,25 @@ public export
   (prid : IntEndoRmapIdSig c cmor cid p prm) ->
   (qlid : IntEndoLmapIdSig c cmor cid q qlm) ->
   (qrid : IntEndoRmapIdSig c cmor cid q qrm) ->
-  IntEndoLRmapsCommute c cmor p plm prm ->
-  IntEndoLRmapsCommute c cmor q qlm qrm ->
   (alpha : IntProfNTSig c c p q) ->
   IntProfNTNaturality c c cmor cmor p q
     (IntEndoDimapFromLRmaps c cmor p plm prm)
     (IntEndoDimapFromLRmaps c cmor q qlm qrm)
     alpha ->
   IntParaNTCond c cmor p q plm prm qlm qrm (IntProfNTRestrict c p q alpha)
-IntProfNTRestrictPara c cmor cid p q plm prm qlm qrm
-  plid prid qlid qrid pcomm qcomm alpha nat s t cmst pss ptt peq =
+IntProfNTRestrictPara c cmor cid p q plm prm qlm qrm plid prid qlid qrid
+  alpha nat s t cmst pss ptt peq =
     let
-      nat_s = nat s s s t (cid s) cmst pss
-      nat_t = nat t t s t cmst (cid t) ptt
-      pc_s = pcomm s s s t (cid s) cmst pss
-      pc_t = pcomm t t s t cmst (cid t) ptt
-      qc_s = qcomm s s s t (cid s) cmst (alpha s s pss)
-      qc_t = qcomm t t s t cmst (cid t) (alpha t t ptt)
+      qlrew = qlid s t (qrm s s t cmst (alpha s s pss))
+      qrrew = cong (qlm t t s cmst) $ qrid t t (alpha t t ptt)
+      plrew = plid s t (prm s s t cmst pss)
+      prrew = cong (plm t t s cmst) $ prid t t ptt
+      congpeq = cong (alpha s t) $ trans prrew $ trans peq (sym plrew)
+      nat_s = trans (sym $ nat s s s t (cid s) cmst pss) qlrew
+      nat_t = trans (sym qrrew) $ nat t t s t cmst (cid t) ptt
     in
-    ?IntProfNTRestrictPara_hole
+    trans (trans nat_t congpeq) nat_s
+
 
 -----------------------------
 ---- Wedges and cowedges ----
