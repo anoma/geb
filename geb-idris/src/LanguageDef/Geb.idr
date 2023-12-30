@@ -544,6 +544,12 @@ IntGenEndBaseIsGenEnd d c dmor cmor p =
     (terminalProf d c) p (terminalDimap d c dmor cmor)
 
 public export
+0 IntEndBase : (c : Type) -> (p : IntDifunctorSig c) -> Type
+-- Equivalent to `WedgeBase c Unit`.
+-- An `IntGenEndBase c c` can be restricted to an `IntEndBase c p`.
+IntEndBase c = IntDiNTSig c (terminalProf c c)
+
+public export
 0 WedgeBase :
   (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
 WedgeBase c apex p = IntDiNTSig c (constDi c apex) p
@@ -552,12 +558,6 @@ public export
 0 CowedgeBase :
   (0 c : Type) -> (0 apex : Type) -> (0 p : IntDifunctorSig c) -> Type
 CowedgeBase c apex p = IntDiNTSig c p (constDi c apex)
-
-public export
-0 IntEndBase : (c : Type) -> (p : IntDifunctorSig c) -> Type
--- Equivalent to `WedgeBase c Unit`.
--- An `IntGenEndBase c c` can be restricted to an `IntEndBase c p`.
-IntEndBase c = IntDiNTSig c (terminalProf c c)
 
 ------------------------------------
 ---- Composition of profunctors ----
