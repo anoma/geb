@@ -1121,6 +1121,30 @@ public export
 0 IntCopreshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
 IntCopreshfNTSig = IntPreshfNTSig
 
+-- The naturality condition of a natural transformation between presheaves.
+public export
+0 IntPreshfNTNaturality :
+  (c : Type) -> (cmor : IntDifunctorSig c) -> (0 pobj, qobj : c -> Type) ->
+  IntPreshfMapSig c cmor pobj -> IntPreshfMapSig c cmor qobj ->
+  IntPreshfNTSig c pobj qobj -> Type
+IntPreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
+  (0 x, y : c) -> (0 m : cmor y x) ->
+  ExtEq {a=(pobj x)} {b=(qobj y)}
+    (qmap x y m . alpha x)
+    (alpha y . pmap x y m)
+
+-- The naturality condition of a natural transformation between copresheaves.
+public export
+0 IntCopreshfNTNaturality :
+  (c : Type) -> (cmor : IntDifunctorSig c) -> (0 pobj, qobj : c -> Type) ->
+  IntCopreshfMapSig c cmor pobj -> IntCopreshfMapSig c cmor qobj ->
+  IntCopreshfNTSig c pobj qobj -> Type
+IntCopreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
+  (0 x, y : c) -> (0 m : cmor x y) ->
+  ExtEq {a=(pobj x)} {b=(qobj y)}
+    (qmap x y m . alpha x)
+    (alpha y . pmap x y m)
+
 -- The object-map component of the (covariant) Yoneda embedding of
 -- `c` into the category of the (contravariant) presheaves on `c`.
 IntPreshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
