@@ -460,7 +460,8 @@ public export
 IntProfNTRestrict c p q alpha x = alpha x x
 
 public export
-0 IntProfNTRestrictPara : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+0 IntProfNTRestrictPara :
+  (0 c : Type) -> (0 cmor : IntDifunctorSig c) -> (0 cid : IntIdSig c cmor) ->
   (0 p, q : IntDifunctorSig c) ->
   (plm : IntEndoLmapSig c cmor p) -> (prm : IntEndoRmapSig c cmor p) ->
   (qlm : IntEndoLmapSig c cmor q) -> (qrm : IntEndoRmapSig c cmor q) ->
@@ -472,8 +473,16 @@ public export
     (IntEndoDimapFromLRmaps c cmor q qlm qrm)
     alpha ->
   IntParaNTCond c cmor p q plm prm qlm qrm (IntProfNTRestrict c p q alpha)
-IntProfNTRestrictPara c cmor p q plm prm qlm qrm pcomm qcomm alpha nat s t
+IntProfNTRestrictPara c cmor cid p q plm prm qlm qrm pcomm qcomm alpha nat s t
   cmst pss ptt peq =
+    let
+      nat_s = nat s s s t (cid s) cmst pss
+      nat_t = nat t t s t cmst (cid t) ptt
+      pc_s = pcomm s s s t (cid s) cmst pss
+      pc_t = pcomm t t s t cmst (cid t) ptt
+      qc_s = qcomm s s s t (cid s) cmst (alpha s s pss)
+      qc_t = qcomm t t s t cmst (cid t) (alpha t t ptt)
+    in
     ?IntProfNTRestrictPara_hole
 
 -----------------------------
