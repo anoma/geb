@@ -1176,6 +1176,28 @@ IntCopreshfYonedaEmbedObjFMap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   (a : c) -> IntCopreshfMapSig c mor (IntCopreshfYonedaEmbedObj c mor a)
 IntCopreshfYonedaEmbedObjFMap c mor comp a x y = comp a x y
 
+-- The morphism-map component of the (covariant) Yoneda embedding itself --
+-- that is, the embedding of a _morphism_ into the morphisms of the
+-- (contravariant) presheaves on `c`, which are natural transformations.
+IntPreshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (a, b : c) -> mor a b ->
+  IntPreshfNTSig c
+    (IntPreshfYonedaEmbedObj c mor a)
+    (IntPreshfYonedaEmbedObj c mor b)
+IntPreshfYonedaEmbedMor c mor comp a b mab x mxa = comp x a b mab mxa
+
+-- The morphism-map component of the (contravariant) Yoneda embedding itself --
+-- that is, the embedding of a _morphism_ into the morphisms of the
+-- (covariant) copresheaves on `c`, which are natural transformations.
+IntCopreshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (a, b : c) -> mor b a ->
+  IntCopreshfNTSig c
+    (IntCopreshfYonedaEmbedObj c mor a)
+    (IntCopreshfYonedaEmbedObj c mor b)
+IntCopreshfYonedaEmbedMor c mor comp a b mba x max = comp b a x max mba
+
 --------------------------------------
 --------------------------------------
 ---- Internal polynomial functors ----
