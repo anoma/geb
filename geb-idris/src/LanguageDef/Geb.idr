@@ -676,9 +676,13 @@ IntProfNThComp e d c p p' q q' beta alpha s t =
   IntProfNTwhiskerL e d c q q' beta p' s t .
   IntProfNTwhiskerR e d c p p' q alpha s t
 
--------------------------------------------
----- Profunctors in product categories ----
--------------------------------------------
+--------------------------------------------------------
+---- Profunctors in opposite and product categories ----
+--------------------------------------------------------
+
+public export
+IntOpCatMor : (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig c
+IntOpCatMor c cmor = flip cmor
 
 public export
 IntProdCatMor : (0 c, d : Type) ->
@@ -693,7 +697,7 @@ IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
 public export
 IntOpProdCatMor : (0 d, c : Type) ->
   IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
-IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (flip dmor) cmor
+IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (IntOpCatMor d dmor) cmor
 
 public export
 IntEndoOpProdCatMor :
@@ -1860,7 +1864,7 @@ diapplyNTBase x y m p pdm pxx = let pdmxy = pdm x x y y in ?diapplyNTBase_hole
 -- the category of endoprofunctors on `Type`.
 public export
 0 ProfProshfObj : Type
-ProfProshfObj = ProfunctorSig -> ProfCopreshfObj
+ProfProshfObj = ProfunctorSig -> ProfunctorSig -> Type
 
 public export
 0 ProfProshfMorph : ProfProshfObj -> ProfProshfObj -> Type
