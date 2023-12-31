@@ -361,10 +361,18 @@ IntEndoDimapFromLRmaps c cmor = IntDimapFromLRmaps c c cmor cmor
 ---- (Di-/Para-)natural transformations ----
 --------------------------------------------
 
+-- The signature of a dinatural transformation, without the dinaturality
+-- condition.
 public export
 IntDiNTSig : (c : Type) -> (p, q : IntDifunctorSig c) -> Type
 IntDiNTSig c p q = (x : c) -> p x x -> q x x
 
+-- The dinaturality condition.  For our purposes, we will only be interested
+-- in _strong_ dinatural transformations, or "paranatural" transformations,
+-- which have the same base signature, together with a condition defined below.
+-- Therefore, our only use of this condition will be to prove that it follows
+-- from the paranaturality condition (so all paranatural transformations are
+-- dinatural, but not vice versa).
 public export
 0 IntDiNTCond : (c : Type) -> (cmor : IntDifunctorSig c) ->
   (p, q : IntDifunctorSig c) ->
@@ -458,6 +466,9 @@ IntProfNTvComp d c p q r beta alpha x y = beta x y . alpha x y
 -------------------------------------------------------------------------------
 ---- Restriction of natural transformations to paranatural transformations ----
 -------------------------------------------------------------------------------
+
+-- Here we show that given a natural transformation between profunctors,
+-- its restriction to the diagonal is paranatural.
 
 public export
 0 IntProfNTRestrict : (0 c : Type) ->
@@ -722,20 +733,6 @@ public export
 IntDiYonedaFullEmbedObj c mor i0 i1 =
   IntEndBase c $ IntDiYonedaEmbedObj c mor i0 i1
 
--- The morphism-map component of the diYoneda embedding.
--- The domain of that embedding is `opProd(c)`, and the codomain
--- is the category of difunctors on `c` with paranatural transformations,
--- so the morphism-map component takes morphisms of `opProd(c)` to
--- paranatural transformations.
-public export
-IntDiYonedaEmbedMorph : (0 c : Type) ->
-  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  (s, t, a, b : c) ->
-  IntEndoOpProdCatMor c mor (s, t) (a, b) ->
-  IntDiNTSig c (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)
-IntDiYonedaEmbedMorph c mor comp s t a b (mas, mtb) i (mit, msi) =
-  (comp i t b mtb mit, comp a s i msi mas)
-
 -- We now show that for a given `(s, t)` in `opProd(c)`, the diYoneda
 -- embedding `IntDiYonedaEmbedObj c mor s t` is a difunctor on `c`.
 public export
@@ -760,6 +757,20 @@ IntDiYonedaEmbedDimap c mor comp s t =
   IntEndoDimapFromLRmaps c mor (IntDiYonedaEmbedObj c mor s t)
     (IntDiYonedaEmbedLmap c mor comp s t)
     (IntDiYonedaEmbedRmap c mor comp s t)
+
+-- The morphism-map component of the diYoneda embedding.
+-- The domain of that embedding is `opProd(c)`, and the codomain
+-- is the category of difunctors on `c` with paranatural transformations,
+-- so the morphism-map component takes morphisms of `opProd(c)` to
+-- paranatural transformations.
+public export
+IntDiYonedaEmbedMorph : (0 c : Type) ->
+  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (s, t, a, b : c) ->
+  IntEndoOpProdCatMor c mor (s, t) (a, b) ->
+  IntDiNTSig c (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)
+IntDiYonedaEmbedMorph c mor comp s t a b (mas, mtb) i (mit, msi) =
+  (comp i t b mtb mit, comp a s i msi mas)
 
 -- The diYoneda embedding of any morphism of `opProd(c)` is a
 -- paranatural transformation.
