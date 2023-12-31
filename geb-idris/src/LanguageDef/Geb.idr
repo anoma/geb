@@ -1224,41 +1224,41 @@ IntCopreshfYonedaEmbedMorInv c mor cid a b alpha = alpha a (cid a)
 -- The projection morphism assigns to each position a "direction", which is
 -- an object of the internal category.
 public export
-0 IntArena : (0 c : Type) -> Type
+IntArena : (c : Type) -> Type
 IntArena c = CSliceObj c
 
 public export
-InterpIPFobj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+InterpIPFobj : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> c -> Type
 InterpIPFobj c mor (pos ** dir) a = (i : pos ** mor (dir i) a)
 
 public export
-InterpIPFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+InterpIPFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (ar : IntArena c) -> IntCopreshfMapSig c mor (InterpIPFobj c mor ar)
 InterpIPFmap c mor comp (pos ** dir) x y m (i ** dm) =
   (i ** comp (dir i) x y m dm)
 
 public export
-InterpIDFobj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+InterpIDFobj : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> c -> Type
 InterpIDFobj c mor (pos ** dir) a = (i : pos ** mor a (dir i))
 
 public export
-InterpIDFmap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+InterpIDFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (ar : IntArena c) -> IntPreshfMapSig c mor (InterpIDFobj c mor ar)
 InterpIDFmap c mor comp (pos ** dir) x y m (i ** dm) =
   (i ** comp y x (dir i) dm m)
 
 public export
-IntPNTar : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> IntArena c -> Type
 IntPNTar c mor (ppos ** pdir) (qpos ** qdir) =
   (onpos : ppos -> qpos ** (i : ppos) -> mor (qdir (onpos i)) (pdir i))
 
 public export
-InterpIPnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+InterpIPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (p, q : IntArena c) -> IntPNTar c mor p q ->
   IntCopreshfNTSig c (InterpIPFobj c mor p) (InterpIPFobj c mor q)
@@ -1267,13 +1267,13 @@ InterpIPnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
     (onpos i ** comp (qdir (onpos i)) (pdir i) x dm (ondir i))
 
 public export
-IntDNTar : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntDNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> IntArena c -> Type
 IntDNTar c mor (ppos ** pdir) (qpos ** qdir) =
   (onpos : ppos -> qpos ** (i : ppos) -> mor (pdir i) (qdir (onpos i)))
 
 public export
-InterpIDnt : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+InterpIDnt : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (p, q : IntArena c) -> IntDNTar c mor p q ->
   IntPreshfNTSig c (InterpIDFobj c mor p) (InterpIDFobj c mor q)
@@ -1291,7 +1291,7 @@ InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
 -- (sums of representable presheaves) with natural transformations.
 public export
 IntDirichEmbedObj : (c : Type) -> (a : c) -> IntArena c
-IntDirichEmbedObj c a = (() ** (\() => a))
+IntDirichEmbedObj c a = (() ** (\_ : Unit => a))
 
 -- Note that we can _not_ embed a category into its category of polynomial
 -- functors (sums of representable copresheaves) with natural transformations,
@@ -1302,7 +1302,35 @@ public export
 IntDirichEmbedMor : (c : Type) -> (mor : IntDifunctorSig c) ->
    (a, b : c) ->
    mor a b -> IntDNTar c mor (IntDirichEmbedObj c a) (IntDirichEmbedObj c b)
-IntDirichEmbedMor c mor a b m = ((\() => ()) ** (\() => m))
+IntDirichEmbedMor c mor a b m = ((\_ : Unit => ()) ** (\_ : Unit => m))
+
+-- The inverse of the embedding of a category into its category of
+-- Dirichlet functors.  The existence of this inverse shows that
+-- the embedding is full and faithful.
+public export
+IntDirichEmbedMorInv : (c : Type) -> (mor : IntDifunctorSig c) ->
+   (a, b : c) ->
+   IntDNTar c mor (IntDirichEmbedObj c a) (IntDirichEmbedObj c b) -> mor a b
+IntDirichEmbedMorInv c mor a b (pos ** dir) =
+  -- Note that `pos` has type `Unit -> Unit`, so there is only one thing
+  -- it can be, which is the identity on `Unit` (equivalently, the constant
+  -- function returning `()`).
+  dir ()
+
+-- Now we can define another notion:  the polynomial functors on a category
+-- not into `Type`, but into its category of Dirichlet functors.  In other
+-- words, we are defining its polynomial functors in an _enriched_ setting,
+-- where it is enriched over its category of Dirichlet functors rather than
+-- over `Type`.
+
+-- To define the notion of polynomial functor enriched over Dirichlet
+-- functors, we must first define what it means to be a position-set.
+-- A position-set is simply an object of the enriching category, so
+-- it is a Dirichlet functor (which we can encode as the arena which
+-- represents it).
+public export
+IntDirichEnrPos : (c : Type) -> Type
+IntDirichEnrPos = IntArena
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
