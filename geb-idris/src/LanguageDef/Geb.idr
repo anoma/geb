@@ -1198,6 +1198,30 @@ IntCopreshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
     (IntCopreshfYonedaEmbedObj c mor b)
 IntCopreshfYonedaEmbedMor c mor comp a b mba x max = comp b a x max mba
 
+-- The inverse of the morphism-map component of the (covariant) Yoneda
+-- embedding.  The existence of this inverse shows that the embedding
+-- is fully faithful.
+IntPreshfYonedaEmbedMorInv : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (cid : IntIdSig c mor) ->
+  (a, b : c) ->
+  IntPreshfNTSig c
+    (IntPreshfYonedaEmbedObj c mor a)
+    (IntPreshfYonedaEmbedObj c mor b) ->
+  mor a b
+IntPreshfYonedaEmbedMorInv c mor cid a b alpha = alpha a (cid a)
+
+-- The inverse of the morphism-map component of the (contravariant) Yoneda
+-- embedding.  The existence of this inverse shows that the embedding
+-- is fully faithful.
+IntCopreshfYonedaEmbedMorInv : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+  (cid : IntIdSig c mor) ->
+  (a, b : c) ->
+  IntCopreshfNTSig c
+    (IntCopreshfYonedaEmbedObj c mor a)
+    (IntCopreshfYonedaEmbedObj c mor b) ->
+  mor b a
+IntCopreshfYonedaEmbedMorInv c mor cid a b alpha = alpha a (cid a)
+
 --------------------------------------
 --------------------------------------
 ---- Internal polynomial functors ----
@@ -1206,7 +1230,10 @@ IntCopreshfYonedaEmbedMor c mor comp a b mba x max = comp b a x max mba
 
 -- An internal polynomial functor is a sum of representable internal
 -- copresheaves. It can be expressed as a slice object over the object
--- of the objects of the internal category.
+-- of the objects of the internal category -- the total-space object is
+-- the index of the sum, known as the "position set [or "type", or "object"]".
+-- The projection morphism assigns to each position a "direction", which is
+-- an object of the internal category.
 public export
 0 IntArena : (0 c : Type) -> Type
 IntArena c = CSliceObj c
