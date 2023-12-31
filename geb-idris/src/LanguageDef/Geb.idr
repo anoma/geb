@@ -1102,15 +1102,15 @@ DiCoYonedaLemmaR p {isP} =
 -- morphisms are included in `mor`.  (The signature of the object map is
 -- simply `c -> Type`.)
 public export
-0 IntPreshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
-  (0 objmap : c -> Type) -> Type
-IntPreshfMapSig c mor objmap = (0 x, y : c) -> mor y x -> objmap x -> objmap y
+IntPreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (objmap : c -> Type) -> Type
+IntPreshfMapSig c mor objmap = (x, y : c) -> mor y x -> objmap x -> objmap y
 
 -- As `IntPreshfMapSig`, but for a (covariant) copresheaf.
 public export
-0 IntCopreshfMapSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
-  (0 objmap : c -> Type) -> Type
-IntCopreshfMapSig c mor objmap = (0 x, y : c) -> mor x y -> objmap x -> objmap y
+IntCopreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (objmap : c -> Type) -> Type
+IntCopreshfMapSig c mor objmap = (x, y : c) -> mor x y -> objmap x -> objmap y
 
 -- The signature of a natural transformation between presheaves.
 public export
@@ -1574,7 +1574,7 @@ FuncCopreshfObjFMapIdCond fp fpm =
   (0 f : Type -> Type) -> ExtEq (fpm f f (IdNT f)) (id {a=(fp f)})
 
 public export
-0 TypeFMapSig : (0 _ : Type -> Type) -> Type
+0 TypeFMapSig : (Type -> Type) -> Type
 TypeFMapSig = IntCopreshfMapSig Type HomProf
 
 public export
