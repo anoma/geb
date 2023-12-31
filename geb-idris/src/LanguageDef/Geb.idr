@@ -1081,21 +1081,21 @@ DiCoYonedaLemmaR p {isP} =
 -----------------------------------------------
 -----------------------------------------------
 
--- As `IntPreshfMapSig`, but for a (covariant) copresheaf.
+-- Suppose that `c` is a type of objects of a category internal to `Type`,
+-- and `mor` is a type dependent on pairs of terms of `c` (we could also
+-- express it dually as a `Type` together with morphisms `dom` and `cod` to
+-- `c`), which we interpret as _some_ morphisms of the category but not
+-- necessarily all.  Then this is the signature of the morphism-map component
+-- of a (covariant) copresheaf on the category, as specified by whichever
+-- morphisms are included in `mor`.  (The signature of the object map is
+-- simply `c -> Type`.)
 public export
 IntCopreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
   (objmap : c -> Type) -> Type
 IntCopreshfMapSig c mor objmap =
   (x, y : c) -> mor x y -> objmap x -> objmap y
 
--- Suppose that `c` is a type of objects of a category internal to `Type`,
--- and `mor` is a type dependent on pairs of terms of `c` (we could also
--- express it dually as a `Type` together with morphisms `dom` and `cod` to
--- `c`), which we interpret as _some_ morphisms of the category but not
--- necessarily all.  Then this is the signature of the morphism-map component
--- of a (contravariant) presheaf on the category, as specified by whichever
--- morphisms are included in `mor`.  (The signature of the object map is
--- simply `c -> Type`.)
+-- As `IntCopreshfMapSig`, but for a (contravariant) presheaf.
 public export
 IntPreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
   (objmap : c -> Type) -> Type
