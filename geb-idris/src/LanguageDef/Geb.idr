@@ -1092,13 +1092,15 @@ DiCoYonedaLemmaR p {isP} =
 public export
 IntPreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
   (objmap : c -> Type) -> Type
-IntPreshfMapSig c mor objmap = (x, y : c) -> mor y x -> objmap x -> objmap y
+IntPreshfMapSig c mor objmap =
+  (x, y : c) -> IntOpCatMor c mor x y -> objmap x -> objmap y
 
 -- As `IntPreshfMapSig`, but for a (covariant) copresheaf.
 public export
 IntCopreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
   (objmap : c -> Type) -> Type
-IntCopreshfMapSig c mor objmap = (x, y : c) -> mor x y -> objmap x -> objmap y
+IntCopreshfMapSig c mor objmap =
+  (x, y : c) -> mor x y -> objmap x -> objmap y
 
 -- The signature of a natural transformation between presheaves.
 public export
