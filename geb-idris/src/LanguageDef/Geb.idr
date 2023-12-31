@@ -1281,6 +1281,29 @@ InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
   (i ** dm) =
     (onpos i ** comp x (pdir i) (qdir (onpos i)) (ondir i) dm)
 
+----------------------------------------
+----------------------------------------
+---- Internal polynomial difunctors ----
+----------------------------------------
+----------------------------------------
+
+-- We can embed a category `c/mor` into its category of Dirichlet functors
+-- (sums of representable presheaves) with natural transformations.
+public export
+IntDirichEmbedObj : (c : Type) -> (a : c) -> IntArena c
+IntDirichEmbedObj c a = (() ** (\() => a))
+
+-- Note that we can _not_ embed a category into its category of polynomial
+-- functors (sums of representable copresheaves) with natural transformations,
+-- because trying to define this with `IntPNTar` substituted for `IntDNTar`
+-- would require us to define a morphism in the opposite direction from `m`.
+-- There is no guarantee that such a morphism exists in `c/mor`.
+public export
+IntDirichEmbedMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+   (a, b : c) ->
+   mor a b -> IntDNTar c mor (IntDirichEmbedObj c a) (IntDirichEmbedObj c b)
+IntDirichEmbedMor c mor a b m = ((\() => ()) ** (\() => m))
+
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 ---- Internal Pro-Yoneda (simultaneous covariant and contravariant) ----
