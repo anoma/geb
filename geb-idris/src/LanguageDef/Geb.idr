@@ -1081,6 +1081,13 @@ DiCoYonedaLemmaR p {isP} =
 -----------------------------------------------
 -----------------------------------------------
 
+-- As `IntPreshfMapSig`, but for a (covariant) copresheaf.
+public export
+IntCopreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (objmap : c -> Type) -> Type
+IntCopreshfMapSig c mor objmap =
+  (x, y : c) -> mor x y -> objmap x -> objmap y
+
 -- Suppose that `c` is a type of objects of a category internal to `Type`,
 -- and `mor` is a type dependent on pairs of terms of `c` (we could also
 -- express it dually as a `Type` together with morphisms `dom` and `cod` to
@@ -1092,15 +1099,7 @@ DiCoYonedaLemmaR p {isP} =
 public export
 IntPreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
   (objmap : c -> Type) -> Type
-IntPreshfMapSig c mor objmap =
-  (x, y : c) -> IntOpCatMor c mor x y -> objmap x -> objmap y
-
--- As `IntPreshfMapSig`, but for a (covariant) copresheaf.
-public export
-IntCopreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (objmap : c -> Type) -> Type
-IntCopreshfMapSig c mor objmap =
-  (x, y : c) -> mor x y -> objmap x -> objmap y
+IntPreshfMapSig c mor = IntCopreshfMapSig c (IntOpCatMor c mor)
 
 -- The signature of a natural transformation between presheaves.
 public export
