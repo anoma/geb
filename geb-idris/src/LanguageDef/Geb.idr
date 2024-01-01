@@ -1281,16 +1281,25 @@ InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
   (i ** dm) =
     (onpos i ** comp x (pdir i) (qdir (onpos i)) (ondir i) dm)
 
-----------------------------------------
-----------------------------------------
----- Internal polynomial difunctors ----
-----------------------------------------
-----------------------------------------
+-------------------------------------
+-------------------------------------
+---- Dirichlet-functor embedding ----
+-------------------------------------
+-------------------------------------
+
+public export
+IntDirichCatObj : Type -> Type
+IntDirichCatObj = IntArena
+
+public export
+IntDirichCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntDifunctorSig (IntDirichCatObj c)
+IntDirichCatMor = IntDNTar
 
 -- We can embed a category `c/mor` into its category of Dirichlet functors
 -- (sums of representable presheaves) with natural transformations.
 public export
-IntDirichEmbedObj : (c : Type) -> (a : c) -> IntArena c
+IntDirichEmbedObj : (c : Type) -> (a : c) -> IntDirichCatObj c
 IntDirichEmbedObj c a = (() ** (\_ : Unit => a))
 
 -- Note that we can _not_ embed a category into its category of polynomial
@@ -1300,8 +1309,9 @@ IntDirichEmbedObj c a = (() ** (\_ : Unit => a))
 -- There is no guarantee that such a morphism exists in `c/mor`.
 public export
 IntDirichEmbedMor : (c : Type) -> (mor : IntDifunctorSig c) ->
-   (a, b : c) ->
-   mor a b -> IntDNTar c mor (IntDirichEmbedObj c a) (IntDirichEmbedObj c b)
+  (a, b : c) ->
+  mor a b ->
+  IntDirichCatMor c mor (IntDirichEmbedObj c a) (IntDirichEmbedObj c b)
 IntDirichEmbedMor c mor a b m = ((\_ : Unit => ()) ** (\_ : Unit => m))
 
 -- The inverse of the embedding of a category into its category of
@@ -1309,28 +1319,26 @@ IntDirichEmbedMor c mor a b m = ((\_ : Unit => ()) ** (\_ : Unit => m))
 -- the embedding is full and faithful.
 public export
 IntDirichEmbedMorInv : (c : Type) -> (mor : IntDifunctorSig c) ->
-   (a, b : c) ->
-   IntDNTar c mor (IntDirichEmbedObj c a) (IntDirichEmbedObj c b) -> mor a b
+  (a, b : c) ->
+  IntDirichCatMor c mor (IntDirichEmbedObj c a) (IntDirichEmbedObj c b) ->
+  mor a b
 IntDirichEmbedMorInv c mor a b (pos ** dir) =
   -- Note that `pos` has type `Unit -> Unit`, so there is only one thing
   -- it can be, which is the identity on `Unit` (equivalently, the constant
   -- function returning `()`).
   dir ()
 
--- Now we can define another notion:  the polynomial functors on a category
--- not into `Type`, but into its category of Dirichlet functors.  In other
--- words, we are defining its polynomial functors in an _enriched_ setting,
--- where it is enriched over its category of Dirichlet functors rather than
--- over `Type`.
+----------------------------------------
+----------------------------------------
+---- Internal polynomial difunctors ----
+----------------------------------------
+----------------------------------------
 
--- To define the notion of polynomial functor enriched over Dirichlet
--- functors, we must first define what it means to be a position-set.
--- A position-set is simply an object of the enriching category, so
--- it is a Dirichlet functor (which we can encode as the arena which
--- represents it).
-public export
-IntDirichEnrPos : (c : Type) -> Type
-IntDirichEnrPos = IntArena
+-- Now we can define another notion:  the polynomial functors on a category
+-- of Dirichlet functors.
+
+-- First, we consider which Dirichlet functors are the covariant
+-- representable ones.
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
