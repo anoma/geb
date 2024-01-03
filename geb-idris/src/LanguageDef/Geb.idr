@@ -1416,6 +1416,7 @@ public export
 GPRPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
   GenPolyRepProf c -> GenPolyRepProf c -> Type
 GPRPnt c mor (MkGPRP (MkGPR s) (MkGPR t)) (MkGPRP (MkGPR a) (MkGPR b)) =
+  -- A generalized `Iso s t a b`.
   (mor s a, mor b t)
 
 public export
@@ -1447,6 +1448,22 @@ InterpGPPdimap :
   (gprp : GenPolyProf c) -> IntEndoDimapSig c mor (InterpGPPobj c mor gprp)
 InterpGPPdimap c mor comp (MkGPP pos dir) x y a b max myb (i ** obj) =
   (i ** InterpGPRPdimap c mor comp (dir i) x y a b max myb obj)
+
+public export
+GPPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
+  GenPolyProf c -> GenPolyProf c -> Type
+GPPnt c mor (MkGPP pos dir) (MkGPP pos' dir') =
+  (onpos : pos -> pos' ** (i : pos) -> GPRPnt c mor (dir i) (dir' $ onpos i))
+
+public export
+InterpGPPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : GenPolyProf c) -> GPPnt c mor p q ->
+  IntEndoProfNTSig c (InterpGPPobj c mor p) (InterpGPPobj c mor q)
+InterpGPPnt c mor comp (MkGPP pos dir) (MkGPP pos' dir') (onpos ** ondir) x y
+  (i ** z) =
+    (onpos i **
+     InterpGPRPnt c mor comp (dir i) (dir' $ onpos i) (ondir i) x y z)
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
