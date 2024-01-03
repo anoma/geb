@@ -1343,7 +1343,7 @@ record GenPolyRep (c : Type) where
 public export
 InterpGPRcontra : (c : Type) -> (mor : IntDifunctorSig c) ->
   GenPolyRep c -> c -> Type
-InterpGPRcontra c mor (MkGPR field obj) x = (i : field) -> mor x (obj i)
+InterpGPRcontra c mor (MkGPR field obj) x = Pi {a=field} (mor x . obj)
 
 public export
 InterpGPRcontramap :
@@ -1355,7 +1355,7 @@ InterpGPRcontramap c mor comp (MkGPR field obj) x y m fields =
 public export
 InterpGPRcovar : (c : Type) -> (mor : IntDifunctorSig c) ->
   GenPolyRep c -> c -> Type
-InterpGPRcovar c mor (MkGPR field obj) y = (i : field) -> mor (obj i) y
+InterpGPRcovar c mor (MkGPR field obj) y = Pi {a=field} (flip mor y . obj)
 
 public export
 InterpGPRcovarmap :
