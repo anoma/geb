@@ -1334,11 +1334,45 @@ IntDirichEmbedMorInv c mor a b (pos ** dir) =
 ----------------------------------------
 ----------------------------------------
 
--- Now we can define another notion:  the polynomial functors on a category
--- of Dirichlet functors.
+public export
+record GenPolyRep (c : Type) where
+  constructor MkGPR
+  gprField : Type
+  gprObj : gprField -> c
 
--- First, we consider which Dirichlet functors are the covariant
--- representable ones.
+public export
+InterpGPRcontra : (c : Type) -> (mor : IntDifunctorSig c) ->
+  GenPolyRep c -> c -> Type
+InterpGPRcontra c mor (MkGPR field obj) x = (i : field) -> mor x (obj i)
+
+public export
+InterpGPRcovar : (c : Type) -> (mor : IntDifunctorSig c) ->
+  GenPolyRep c -> c -> Type
+InterpGPRcovar c mor (MkGPR field obj) y = (i : field) -> mor (obj i) y
+
+public export
+record GenPolyRepProf (c : Type) where
+  constructor MkGPRP
+  gprContravar : GenPolyRep c
+  gprCovar : GenPolyRep c
+
+public export
+InterpGPRPobj : (c : Type) -> (mor : IntDifunctorSig c) ->
+  GenPolyRepProf c -> c -> c -> Type
+InterpGPRPobj c mor (MkGPRP contravar covar) x y =
+  (InterpGPRcontra c mor contravar x, InterpGPRcovar c mor covar y)
+
+public export
+record GenPolyProf (c : Type) where
+  constructor MkGPP
+  gppPos : Type
+  gppDir : gppPos -> GenPolyRepProf c
+
+public export
+InterpGPPobj : (c : Type) -> (mor : IntDifunctorSig c) ->
+  GenPolyProf c -> c -> c -> Type
+InterpGPPobj c mor (MkGPP pos dir) x y =
+  (i : pos ** InterpGPRPobj c mor (dir i) x y)
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
