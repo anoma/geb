@@ -1337,32 +1337,29 @@ IntDirichEmbedMorInv c mor a b (pos ** dir) =
 public export
 record GenPolyRep (c : Type) where
   constructor MkGPR
-  gprField : Type
-  gprObj : gprField -> c
+  gprObj : c
 
 public export
 InterpGPRcontra : (c : Type) -> (mor : IntDifunctorSig c) ->
   GenPolyRep c -> c -> Type
-InterpGPRcontra c mor (MkGPR field obj) x = Pi {a=field} (mor x . obj)
+InterpGPRcontra c mor (MkGPR obj) = flip mor obj
 
 public export
 InterpGPRcontramap :
   (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (gpr : GenPolyRep c) -> IntPreshfMapSig c mor (InterpGPRcontra c mor gpr)
-InterpGPRcontramap c mor comp (MkGPR field obj) x y m fields =
-  \i : field => comp y x (obj i) (fields i) m
+InterpGPRcontramap c mor comp (MkGPR obj) x y = flip $ comp y x obj
 
 public export
 InterpGPRcovar : (c : Type) -> (mor : IntDifunctorSig c) ->
   GenPolyRep c -> c -> Type
-InterpGPRcovar c mor (MkGPR field obj) y = Pi {a=field} (flip mor y . obj)
+InterpGPRcovar c mor (MkGPR obj) = mor obj
 
 public export
 InterpGPRcovarmap :
   (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (gpr : GenPolyRep c) -> IntCopreshfMapSig c mor (InterpGPRcovar c mor gpr)
-InterpGPRcovarmap c mor comp (MkGPR field obj) x y m fields =
-  \i : field => comp (obj i) x y m (fields i)
+InterpGPRcovarmap c mor comp (MkGPR obj) x y = comp obj x y
 
 public export
 record GenPolyRepProf (c : Type) where
