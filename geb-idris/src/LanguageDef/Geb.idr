@@ -445,6 +445,11 @@ public export
 IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
 
 public export
+0 IntEndoProfNTSig : (0 c : Type) ->
+  (0 p, q : IntDifunctorSig c) -> Type
+IntEndoProfNTSig c = IntProfNTSig c c
+
+public export
 0 IntProfNTNaturality :
   (d, c : Type) -> (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
   (p, q : IntProfunctorSig d c) ->
@@ -1351,6 +1356,19 @@ InterpGPRcontramap :
 InterpGPRcontramap c mor comp (MkGPR obj) x y = flip $ comp y x obj
 
 public export
+GPRcontraNT : (c : Type) -> (mor : IntDifunctorSig c) ->
+  GenPolyRep c -> GenPolyRep c -> Type
+GPRcontraNT c mor (MkGPR obj) (MkGPR obj') = mor obj obj'
+
+public export
+InterpGPRcontraNT : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : GenPolyRep c) -> GPRcontraNT c mor p q ->
+  IntPreshfNTSig c (InterpGPRcontra c mor p) (InterpGPRcontra c mor q)
+InterpGPRcontraNT c mor comp (MkGPR obj) (MkGPR obj') alpha x =
+  comp x obj obj' alpha
+
+public export
 InterpGPRcovar : (c : Type) -> (mor : IntDifunctorSig c) ->
   GenPolyRep c -> c -> Type
 InterpGPRcovar c mor (MkGPR obj) = mor obj
@@ -1360,6 +1378,19 @@ InterpGPRcovarmap :
   (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (gpr : GenPolyRep c) -> IntCopreshfMapSig c mor (InterpGPRcovar c mor gpr)
 InterpGPRcovarmap c mor comp (MkGPR obj) x y = comp obj x y
+
+public export
+GPRcovarNT : (c : Type) -> (mor : IntDifunctorSig c) ->
+  GenPolyRep c -> GenPolyRep c -> Type
+GPRcovarNT c mor (MkGPR obj) (MkGPR obj') = mor obj' obj
+
+public export
+InterpGPRcovarNT : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : GenPolyRep c) -> GPRcovarNT c mor p q ->
+  IntPreshfNTSig c (InterpGPRcovar c mor p) (InterpGPRcovar c mor q)
+InterpGPRcovarNT c mor comp (MkGPR obj) (MkGPR obj') alpha x =
+  flip (comp obj' obj x) alpha
 
 public export
 record GenPolyRepProf (c : Type) where
@@ -1380,6 +1411,23 @@ InterpGPRPdimap :
 InterpGPRPdimap c mor comp (MkGPRP contravar covar) x y a b max myb (px, py) =
   (InterpGPRcontramap c mor comp contravar x a max px,
    InterpGPRcovarmap c mor comp covar y b myb py)
+
+public export
+GPRPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
+  GenPolyRepProf c -> GenPolyRepProf c -> Type
+GPRPnt c mor (MkGPRP (MkGPR s) (MkGPR t)) (MkGPRP (MkGPR a) (MkGPR b)) =
+  (mor s a, mor b t)
+
+public export
+InterpGPRPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : GenPolyRepProf c) -> GPRPnt c mor p q ->
+  IntEndoProfNTSig c (InterpGPRPobj c mor p) (InterpGPRPobj c mor q)
+InterpGPRPnt c mor comp
+  (MkGPRP (MkGPR s) (MkGPR t))
+  (MkGPRP (MkGPR a) (MkGPR b))
+  (msa, mbt) x y (mxs, mty) =
+    (comp x s a msa mxs, comp b t y mty mbt)
 
 public export
 record GenPolyProf (c : Type) where
