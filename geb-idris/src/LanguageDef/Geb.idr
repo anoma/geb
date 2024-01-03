@@ -1090,14 +1090,14 @@ DiCoYonedaLemmaR p {isP} =
 -- morphisms are included in `mor`.  (The signature of the object map is
 -- simply `c -> Type`.)
 public export
-IntCopreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
+0 IntCopreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
   (objmap : c -> Type) -> Type
 IntCopreshfMapSig c mor objmap =
-  (x, y : c) -> mor x y -> objmap x -> objmap y
+  (0 x, y : c) -> mor x y -> objmap x -> objmap y
 
 -- As `IntCopreshfMapSig`, but for a (contravariant) presheaf.
 public export
-IntPreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
+0 IntPreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
   (objmap : c -> Type) -> Type
 IntPreshfMapSig c mor = IntCopreshfMapSig c (IntOpCatMor c mor)
 
@@ -1346,9 +1346,23 @@ InterpGPRcontra : (c : Type) -> (mor : IntDifunctorSig c) ->
 InterpGPRcontra c mor (MkGPR field obj) x = (i : field) -> mor x (obj i)
 
 public export
+InterpGPRcontramap :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (gpr : GenPolyRep c) -> IntPreshfMapSig c mor (InterpGPRcontra c mor gpr)
+InterpGPRcontramap c mor comp (MkGPR field obj) x y m fields =
+  \i : field => comp y x (obj i) (fields i) m
+
+public export
 InterpGPRcovar : (c : Type) -> (mor : IntDifunctorSig c) ->
   GenPolyRep c -> c -> Type
 InterpGPRcovar c mor (MkGPR field obj) y = (i : field) -> mor (obj i) y
+
+public export
+InterpGPRcovarmap :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (gpr : GenPolyRep c) -> IntCopreshfMapSig c mor (InterpGPRcovar c mor gpr)
+InterpGPRcovarmap c mor comp (MkGPR field obj) x y m fields =
+  \i : field => comp (obj i) x y m (fields i)
 
 public export
 record GenPolyRepProf (c : Type) where
@@ -1358,9 +1372,17 @@ record GenPolyRepProf (c : Type) where
 
 public export
 InterpGPRPobj : (c : Type) -> (mor : IntDifunctorSig c) ->
-  GenPolyRepProf c -> c -> c -> Type
+  GenPolyRepProf c -> IntDifunctorSig c
 InterpGPRPobj c mor (MkGPRP contravar covar) x y =
   (InterpGPRcontra c mor contravar x, InterpGPRcovar c mor covar y)
+
+public export
+InterpGPRPdimap :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (gprp : GenPolyRepProf c) -> IntEndoDimapSig c mor (InterpGPRPobj c mor gprp)
+InterpGPRPdimap c mor comp (MkGPRP contravar covar) x y a b max myb (px, py) =
+  (InterpGPRcontramap c mor comp contravar x a max px,
+   InterpGPRcovarmap c mor comp covar y b myb py)
 
 public export
 record GenPolyProf (c : Type) where
@@ -1370,9 +1392,16 @@ record GenPolyProf (c : Type) where
 
 public export
 InterpGPPobj : (c : Type) -> (mor : IntDifunctorSig c) ->
-  GenPolyProf c -> c -> c -> Type
+  GenPolyProf c -> IntDifunctorSig c
 InterpGPPobj c mor (MkGPP pos dir) x y =
   (i : pos ** InterpGPRPobj c mor (dir i) x y)
+
+public export
+InterpGPPdimap :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (gprp : GenPolyProf c) -> IntEndoDimapSig c mor (InterpGPPobj c mor gprp)
+InterpGPPdimap c mor comp (MkGPP pos dir) x y a b max myb (i ** obj) =
+  (i ** InterpGPRPdimap c mor comp (dir i) x y a b max myb obj)
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
