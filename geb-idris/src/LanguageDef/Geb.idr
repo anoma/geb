@@ -1415,20 +1415,18 @@ InterpGPRPdimap c mor comp (MkGPRP contravar covar) x y a b max myb (px, py) =
 public export
 GPRPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
   GenPolyRepProf c -> GenPolyRepProf c -> Type
-GPRPnt c mor (MkGPRP (MkGPR s) (MkGPR t)) (MkGPRP (MkGPR a) (MkGPR b)) =
+GPRPnt c mor (MkGPRP s t) (MkGPRP a b) =
   -- A generalized `Iso s t a b`.
-  (mor s a, mor b t)
+  (GPRcontraNT c mor s a, GPRcovarNT c mor t b)
 
 public export
 InterpGPRPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (p, q : GenPolyRepProf c) -> GPRPnt c mor p q ->
   IntEndoProfNTSig c (InterpGPRPobj c mor p) (InterpGPRPobj c mor q)
-InterpGPRPnt c mor comp
-  (MkGPRP (MkGPR s) (MkGPR t))
-  (MkGPRP (MkGPR a) (MkGPR b))
-  (msa, mbt) x y (mxs, mty) =
-    (comp x s a msa mxs, comp b t y mty mbt)
+InterpGPRPnt c mor comp (MkGPRP s t) (MkGPRP a b) (msa, mtb) x y (msx, mty) =
+  (InterpGPRcontraNT c mor comp s a msa x msx,
+   InterpGPRcovarNT c mor comp t b mtb y mty)
 
 public export
 record GenPolyProf (c : Type) where
