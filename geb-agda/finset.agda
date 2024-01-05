@@ -16,7 +16,7 @@ module finset where
   Fin (succ (succ n)) = (Fin (succ n)) + 𝟙
 
 -- Read as: elements of FinSet are types A with some proof that there exists a natural number n with a n equivalence (working with UIP+funext think of it as a bijection) of Fin n and A.
--- We need not care in this context about (-1)-truncating. On the categorical level it will make no diffrence up to equivalence.
+-- We need not care in this context about (-1)-truncating. On the categorical level it will make no difference up to equivalence.
 
   FinSet : Type (lsuc lzero)
   FinSet = Σ[ A-n ∶ ((Type lzero) × ℕ) ] (Fin (pr₂ A-n) ≃ pr₁ A-n)

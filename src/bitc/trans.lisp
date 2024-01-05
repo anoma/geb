@@ -31,7 +31,7 @@
              constraints))
 
 (defmethod to-vampir ((obj fork) values constraints)
-  "Copy input n intput bits into 2*n output bits"
+  "Copy input n input bits into 2*n output bits"
   (declare (ignore constraints))
   (append values values))
 

@@ -3,7 +3,7 @@
 (defun subclass-responsibility (obj)
   "Denotes that the given method is the subclasses
    responsibility. Inspired from Smalltalk"
-  (error "Subclass Responsbility for ~A" (class-name (class-of obj))))
+  (error "Subclass Responsibility for ~A" (class-name (class-of obj))))
 
 (defun symbol-to-keyword (symbol)
   "Turns a [symbol] into a [keyword]"
@@ -92,7 +92,7 @@ if wanted
          (copy (allocate-instance class)))
     (dolist (slot (c2mop:class-slots class))
       ;; moved the mapcar into a let, as allocation wise, CCL
-      ;; preformed better this way.
+      ;; performed better this way.
       (let ((slot-name (c2mop:slot-definition-name slot)))
         (when (slot-boundp object slot-name)
           (setf (slot-value copy slot-name)

@@ -311,7 +311,7 @@ lambda term rather than a geb term. In time this will go away
         ((prod x y)   (so-hom-obj x (so-hom-obj y z)))))
     ```
     
-    If we forget a case, like [`GEB:COPROD`][8be5] it wanrs us with an non exhaustion warning.
+    If we forget a case, like [`GEB:COPROD`][8be5] it warns us with an non exhaustion warning.
     
     Meaning that if we update definitions this works well.
     
@@ -585,7 +585,7 @@ the fully fledged versions of the package they can simply without
 having to import too many packages at once.
 
 For example, the `geb.poly.spec` defines out the types and data
-structures of the [Polynomial Types][bd81], this is then rexported
+structures of the [Polynomial Types][bd81], this is then re-exported
 in `geb.poly`, giving the module `geb.poly` a convenient interface for
 all functions that operate on `geb.poly`.
 
@@ -725,14 +725,14 @@ contained in various data structures
 - [class] **CAT-OBJ**
 
     I offer the service of being a base category objects with no
-    extesnions
+    extensions
 
 <a id="x-28GEB-2EMIXINS-3ACAT-MORPH-20CLASS-29"></a>
 
 - [class] **CAT-MORPH**
 
     I offer the service of being a base categorical morphism with no
-    extesnions
+    extensions
 
 <a id="x-28GEB-2EMIXINS-3ADOM-20GENERIC-FUNCTION-29"></a>
 
@@ -2094,7 +2094,7 @@ into other categorical data structures.
 #### 7.6.4 Utility
 
 ###### \[in package GEB.MAIN\]
-Various utility functions ontop of [Core Category][cb9e]
+Various utility functions on top of [Core Category][cb9e]
 
 <a id="x-28GEB-2ESPEC-3APAIR-TO-LIST-20FUNCTION-29"></a>
 
@@ -2230,7 +2230,7 @@ Various utility functions ontop of [Core Category][cb9e]
 - [function] **COPROD-MOR** *F G*
 
     Given f : A  → B and g : C  → D gives appropriate morphism between
-    [`COPROD`][8be5] objects f x g : A + B  → C + D via the unversal property.
+    [`COPROD`][8be5] objects f x g : A + B  → C + D via the universal property.
     That is, the morphism part of the coproduct functor Geb x Geb → Geb
 
 <a id="x-28GEB-2EMAIN-3APROD-MOR-20FUNCTION-29"></a>
@@ -2238,7 +2238,7 @@ Various utility functions ontop of [Core Category][cb9e]
 - [function] **PROD-MOR** *F G*
 
     Given f : A  → B and g : C  → D gives appropriate morphism between
-    [`PROD`][06c6] objects f x g : A x B  → C x D via the unversal property.
+    [`PROD`][06c6] objects f x g : A x B  → C x D via the universal property.
     This is the morphism part of the product functor Geb x Geb → Geb
 
 <a id="x-28GEB-2EMAIN-3AUNCURRY-20FUNCTION-29"></a>
@@ -2254,7 +2254,7 @@ Various utility functions ontop of [Core Category][cb9e]
 
     Gets the name of the moprhism
 
-These utilities are ontop of [`CAT-OBJ`][74bd]
+These utilities are on top of [`CAT-OBJ`][74bd]
 
 <a id="x-28GEB-2EGENERICS-3AMAYBE-20-28METHOD-20NIL-20-28GEB-2ESPEC-3A-3CSUBSTOBJ-3E-29-29-29"></a>
 
@@ -2831,7 +2831,7 @@ The core types that facilittate the functionality
     
     Notice that in the pair case, we have a note and a shared node to
     place down, where as in both of the [MERGE-NOTE][1f37] examples, the
-    Note at the end is not pre-pended by any special information
+    Note at the end is not prepended by any special information
 
 <a id="x-28GEB-GUI-2ECORE-3ANODE-20CLASS-29"></a>
 
@@ -3173,7 +3173,7 @@ be used in translating GEB's view of multibit sequences into Vampir
      The type signature of the morphism is
     seqn-docompose n : (n) -> (1, (n - 1)) with the intended semantics being
     that the morphism takes an n-bit integer and splits it, taking the leftmost
-    bit to the left part of the codomain and the rest of the bits to the righ
+    bit to the left part of the codomain and the rest of the bits to the right
 
 <a id="x-28GEB-2ESEQN-2ESPEC-3ASEQN-EQ-20CLASS-29"></a>
 
@@ -3368,7 +3368,7 @@ this covers the seqn api
 - [method] **DOM** *(X \<SEQN\>)*
 
     Gives the domain of a morphism in SeqN.
-    For a less formal desription consult the specs file
+    For a less formal description consult the specs file
 
 <a id="x-28GEB-2ESEQN-2EMAIN-3ACOD-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3A-3CSEQN-3E-29-29-29"></a>
 
@@ -3387,7 +3387,7 @@ this covers the seqn api
 
     Takes a list of vectors of natural numbers and gives out their evaluations.
     Currently does not correspond directly to the intended semantics but
-    is capable of succesfully evaluating all compiled terms
+    is capable of successfully evaluating all compiled terms
 
 <a id="x-28GEB-2ESEQN-2ETRANS-3A-40SEQB-TRANS-20MGL-PAX-3ASECTION-29"></a>
 
@@ -3421,7 +3421,7 @@ This covers transformation functions from
 
 - [method] **TO-VAMPIR** *(OBJ PARALLEL-SEQ) INPUTS CONSTRAINTS*
 
-    Compile [`MCAR`][f1ce] and [`MCADR`][cc87] and then apppend the tuples
+    Compile [`MCAR`][f1ce] and [`MCADR`][cc87] and then append the tuples
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2ESEQN-2ESPEC-3AFORK-SEQ-20T-20T-29-29-29"></a>
 
@@ -3794,7 +3794,7 @@ This covers transformation functions from
 
 - [method] **TO-VAMPIR** *(OBJ FORK) VALUES CONSTRAINTS*
 
-    Copy input n intput bits into 2\*n output bits
+    Copy input n input bits into 2\*n output bits
 
 <a id="x-28GEB-2EGENERICS-3ATO-VAMPIR-20-28METHOD-20NIL-20-28GEB-2EBITC-2ESPEC-3APARALLEL-20T-20T-29-29-29"></a>
 
@@ -4173,7 +4173,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
 - [type] **STLC**
 
     Type of untyped terms of [`STLC`][e373]. Each class of a term has a slot for a type,
-    which can be filled by auxillary functions or by user. Types are
+    which can be filled by auxiliary functions or by user. Types are
     represented as [SUBSTOBJ][3173].
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-20CLASS-29"></a>
@@ -4252,7 +4252,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     (left rty term :ttype ttype)
     ```
     
-    The indended semantics are as follows: [`RTY`][abea] should
+    The intended semantics are as follows: [`RTY`][abea] should
     be a type (and hence a [SUBSTOBJ][3173]) and specify the
     right part of the coproduct of the type [`TTYPE`][134c] of
     the entire term. The term (and hence an [`STLC`][e373]) we are injecting
@@ -4282,7 +4282,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     (right lty term :ttype ttype)
     ```
     
-    The indended semantics are as follows: [`LTY`][15a3] should be a type (and
+    The intended semantics are as follows: [`LTY`][15a3] should be a type (and
     hence a [SUBSTOBJ][3173]) and specify the left part of
     the coproduct of the type [`TTYPE`][134c] of the entire term. The term (and
     hence an [`STLC`][e373]) we are injecting is [`TERM`][0171].
@@ -4298,7 +4298,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
 
 - [class] **CASE-ON** *[\<STLC\>][b36a]*
 
-    A term of an arbutrary type provided by casing on a coproduct term. The
+    A term of an arbitrary type provided by casing on a coproduct term. The
     formal grammar of [`CASE-ON`][3f9d] is
     
     ```lisp
@@ -4371,7 +4371,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     (fst term :ttype ttype)
     ```
     
-    The indended semantics are as follows: [`TERM`][0171] is a
+    The intended semantics are as follows: [`TERM`][0171] is a
     term (and hence an [`STLC`][e373]) of a product type, to whose left part
     we are projecting to.
     
@@ -4395,7 +4395,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     (snd term :ttype ttype)
     ```
     
-    The indended semantics are as follows: [`TERM`][0171] is a
+    The intended semantics are as follows: [`TERM`][0171] is a
     term (and hence an [`STLC`][e373]) of a product type, to whose right
     part we are projecting to.
     
@@ -4435,7 +4435,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     $$\Gamma, \text\{tdom\} \vdash \text\{term : (ttype term)\}$$ we have
     $$\Gamma \vdash \text\{(lamb tdom term) : (so-hom-obj tdom (ttype term))\}$$
     
-    For a list of length n, this coreesponds to the iterated lambda type, e.g.
+    For a list of length n, this corresponds to the iterated lambda type, e.g.
     
     ```lisp
     (lamb (list so1 so0) (index 0))
@@ -4463,10 +4463,10 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     s-1
     ```
     
-    So the counting of indeces starts with the leftmost argument for
+    So the counting of indices starts with the leftmost argument for
     computational reasons. In practice, typing of [`LAMB`][8cde] corresponds with
     taking a list of arguments provided to a lambda term, making it a context
-    in that order and then counting the index of the varibale. Type-theoretically,
+    in that order and then counting the index of the variable. Type-theoretically,
     
     $$\Gamma \vdash \lambda \Delta (index i)$$
     $$\Delta, \Gamma \vdash (index i)$$
@@ -4682,7 +4682,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     and gives true if they are equal and false otherwise. Note that for the usual
     Vamp-IR code interpretations, that means that we associate true with left input
     into bool and false with the right. Appropriately, in Vamp-IR the first branch
-    will be associated with the 0 input and teh second branch with 1.
+    will be associated with the 0 input and the second branch with 1.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3ALAMB-LT-20CLASS-29"></a>
 
@@ -4692,7 +4692,7 @@ typed lambda calculus within GEB. The class presents untyped [`STLC`][e373] term
     and gives true if ltm is less than rtm and false otherwise. Note that for the usual
     Vamp-IR code interpretations, that means that we associate true with left input
     into bool and false with the right. Appropriately, in Vamp-IR the first branch
-    will be associated with the 0 input and teh second branch with 1.
+    will be associated with the 0 input and the second branch with 1.
 
 <a id="x-28GEB-2ELAMBDA-2ESPEC-3AMODULO-20CLASS-29"></a>
 
@@ -5141,8 +5141,8 @@ This covers the main API for the [`STLC`][e373] module
 - [generic-function] **ANN-TERM1** *CTX TTERM*
 
     Given a list of [`SUBSTOBJ`][3173] objects with
-    [`SO-HOM-OBJ`][b5cf] occurences replaced by [`FUN-TYPE`][8dcc]
-    and an [`STLC`][e373] similarly replacing type occurences of the hom object
+    [`SO-HOM-OBJ`][b5cf] occurrences replaced by [`FUN-TYPE`][8dcc]
+    and an [`STLC`][e373] similarly replacing type occurrences of the hom object
     to [`FUN-TYPE`][8dcc], provides the [`TTYPE`][134c] accessor to all
     subterms as well as the term itself, using [`FUN-TYPE`][8dcc]. Once again,
     note  that it is important for the context and term to be giving as
@@ -5172,7 +5172,7 @@ This covers the main API for the [`STLC`][e373] module
     s-1
     ```
     
-    as we count indeces from the left of the context while appending new types to
+    as we count indices from the left of the context while appending new types to
     the context on the left as well. For more info check [`LAMB`][8cde]
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AINDEX-CHECK-20FUNCTION-29"></a>
@@ -5188,7 +5188,7 @@ This covers the main API for the [`STLC`][e373] module
 - [function] **FUN-TO-HOM** *T1*
 
     Given a [`SUBSTOBJ`][3173] whose subobjects might have a
-    [`FUN-TYPE`][8dcc] occurence replaces all occurences of [`FUN-TYPE`][8dcc] with a
+    [`FUN-TYPE`][8dcc] occurrence replaces all occurrences of [`FUN-TYPE`][8dcc] with a
     suitable [`SO-HOM-OBJ`][b5cf], hence giving a pure
     [`SUBSTOBJ`][3173]
     
@@ -5204,7 +5204,7 @@ This covers the main API for the [`STLC`][e373] module
 
     Given an [`STLC`][e373] term with a [`TTYPE`][134c] accessor from
     [`ANN-TERM1`][ac2d] - i.e. including possible [`FUN-TYPE`][8dcc]
-    occurences - re-annotates the term and its subterms with actual
+    occurrences - re-annotates the term and its subterms with actual
     [`SUBSTOBJ`][3173] objects.
 
 <a id="x-28GEB-2ELAMBDA-2EMAIN-3AANNOTATED-TERM-20FUNCTION-29"></a>
@@ -5212,8 +5212,8 @@ This covers the main API for the [`STLC`][e373] module
 - [function] **ANNOTATED-TERM** *CTX TERM*
 
     Given a context consisting of a list of [`SUBSTOBJ`][3173]
-    with occurences of [`SO-HOM-OBJ`][b5cf] replaced by
-    [`FUN-TYPE`][8dcc] and an [`STLC`][e373] term with similarly replaced occurences
+    with occurrences of [`SO-HOM-OBJ`][b5cf] replaced by
+    [`FUN-TYPE`][8dcc] and an [`STLC`][e373] term with similarly replaced occurrences
     of [`SO-HOM-OBJ`][b5cf], provides an [`STLC`][e373] with all
     subterms typed, i.e. providing the [`TTYPE`][134c] accessor,
     which is a pure [`SUBSTOBJ`][3173]
@@ -5223,8 +5223,8 @@ This covers the main API for the [`STLC`][e373] module
 - [function] **TYPE-OF-TERM-W-FUN** *CTX TTERM*
 
     Given a context consisting of a list of [`SUBSTOBJ`][3173] with
-    occurences of [`SO-HOM-OBJ`][b5cf] replaced by [`FUN-TYPE`][8dcc]
-    and an [`STLC`][e373] term with similarly replaced occurences of
+    occurernces of [`SO-HOM-OBJ`][b5cf] replaced by [`FUN-TYPE`][8dcc]
+    and an [`STLC`][e373] term with similarly replaced occurrences of
     [`SO-HOM-OBJ`][b5cf], gives out a type of the whole term with
     occurences of [`SO-HOM-OBJ`][b5cf] replaced by [`FUN-TYPE`][8dcc].
 
@@ -5233,8 +5233,8 @@ This covers the main API for the [`STLC`][e373] module
 - [function] **TYPE-OF-TERM** *CTX TTERM*
 
     Given a context consisting of a list of [`SUBSTOBJ`][3173] with
-    occurences of [`SO-HOM-OBJ`][b5cf] replaced by [`FUN-TYPE`][8dcc]
-    and an [`STLC`][e373] term with similarly replaced occurences of
+    occurrences of [`SO-HOM-OBJ`][b5cf] replaced by [`FUN-TYPE`][8dcc]
+    and an [`STLC`][e373] term with similarly replaced occurrences of
     [`SO-HOM-OBJ`][b5cf], provides the type of the whole term,
     which is a pure [`SUBSTOBJ`][3173].
 
@@ -5243,9 +5243,9 @@ This covers the main API for the [`STLC`][e373] module
 - [generic-function] **WELL-DEFP** *CTX TTERM*
 
     Given a context consisting of a list of [`SUBSTOBJ`][3173]
-    with occurences of [`SO-HOM-OBJ`][b5cf] replaced by
+    with occurrences of [`SO-HOM-OBJ`][b5cf] replaced by
     [`FUN-TYPE`][8dcc] and an [`STLC`][e373] term with similarly replaced
-    occurences of [`SO-HOM-OBJ`][b5cf], checks that the term
+    occurrences of [`SO-HOM-OBJ`][b5cf], checks that the term
     is well-defined in the context based on structural rules of simply
     typed lambda calculus. returns the t if it is, otherwise returning
     nil
@@ -5275,7 +5275,7 @@ This covers the main API for the [`STLC`][e373] module
 
 - [function] **REDUCER** *TTERM*
 
-    Reduces a given Lambda term by applying explict beta-reduction
+    Reduces a given Lambda term by applying explicit beta-reduction
     when possible alongside arithmetic simplification. We assume that the
     lambda and app terms are  1-argument
 
@@ -5307,7 +5307,7 @@ any other transition functions
 - [method] **TO-CAT** *CONTEXT (TTERM \<STLC\>)*
 
     Compiles a checked term in said context to a Geb morphism. If the term has
-    an instance of an erorr term, wraps it in a Maybe monad, otherwise, compiles
+    an instance of an error term, wraps it in a Maybe monad, otherwise, compiles
     according to the term model interpretation of [`STLC`][e373]
 
 <a id="x-28GEB-2EGENERICS-3ATO-POLY-20-28METHOD-20NIL-20-28GEB-2ELAMBDA-2ESPEC-3A-3CSTLC-3E-29-29-29"></a>

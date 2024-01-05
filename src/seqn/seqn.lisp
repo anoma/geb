@@ -63,7 +63,7 @@ taken during the width operation without filling in of the smaller object"
 
 (defmethod dom ((x <seqn>))
   "Gives the domain of a morphism in SeqN.
-For a less formal desription consult the specs file"
+For a less formal description consult the specs file"
   (typecase-of seqn x
     (composition      (dom (mcadr x)))
     (fork-seq         (mcar x))
@@ -130,7 +130,7 @@ For a less formal description consult the specs file"
 (defmethod gapply ((morphism <seqn>) vector)
   "Takes a list of vectors of natural numbers and gives out their evaluations.
 Currently does not correspond directly to the intended semantics but
-is capable of succesfully evaluating all compiled terms"
+is capable of successfully evaluating all compiled terms"
   (etypecase-of seqn morphism
     (id               vector)
     (composition      (gapply (mcar morphism)

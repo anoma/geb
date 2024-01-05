@@ -124,7 +124,7 @@
    (rhs :initarg  :rhs
         :accessor rhs
         :type     expression
-        :documentation "the argument to the rigth of the =")))
+        :documentation "the argument to the right of the =")))
 
 (defclass tuple (mixins)
   ((wires :initarg :wires

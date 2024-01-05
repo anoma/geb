@@ -242,7 +242,7 @@ seqn-concat n m = (n, m) -> (n+m)"))
   (:documentation " The type signature of the morphism is
 seqn-docompose n : (n) -> (1, (n - 1)) with the intended semantics being
 that the morphism takes an n-bit integer and splits it, taking the leftmost
-bit to the left part of the codomain and the rest of the bits to the righ"))
+bit to the left part of the codomain and the rest of the bits to the right"))
 
 (defclass seqn-eq (<seqn>)
   ((mcar :initarg :mcar

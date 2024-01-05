@@ -22,7 +22,7 @@ Lastly [SO1][class] and [SO0][class] represent the proper class"
 
 ;; we say that id doesn't exist, as we don't need the tag. If we find
 ;; that to ill typed (substobj is a substmorph as far as type checking
-;; is concerned without an explicit id constrcutor), then we can
+;; is concerned without an explicit id constructor), then we can
 ;; include it and remove it from the or type here.
 
 (defclass <substmorph> (direct-pointwise-mixin meta-mixin cat-morph) ()

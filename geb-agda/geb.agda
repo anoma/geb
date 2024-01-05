@@ -16,7 +16,7 @@ module geb where
   Fin (succ (succ n)) = (Fin (succ n)) + 𝟙
 
 -- Read as: elements of FinSet are types A with some proof that there exists a natural number n with a n equivalence (working with UIP+funext think of it as a bijection) of Fin n and A.
--- We need not care in this context about (-1)-truncating. On the categorical level it will make no diffrence up to equivalence.
+-- We need not care in this context about (-1)-truncating. On the categorical level it will make no difference up to equivalence.
 
   FinSet : Type (lsuc lzero)
   FinSet = Σ[ A-n ∶ ((Type lzero) × ℕ) ] (Fin (pr₂ A-n) ≃ pr₁ A-n)
@@ -761,7 +761,7 @@ module geb where
                                                            · ((comp-with-coprod-mor _ _ _) ⁻¹)
 -}
 
--- A good indication for the equivalence to actually suceed is that the coproduct structure is preserved. For that we need some extra lemmas
+-- A good indication for the equivalence to actually succeed is that the coproduct structure is preserved. For that we need some extra lemmas
 
   ω-to-Geb-mor-preserves-coprod-mor : (n m : ℕ) (f : Fin (succ n) → Fin m) (g : 𝟙 → Fin m) → ω-to-Geb-mor (succ (succ n)) m ([ f , g ]) ≡ [ ω-to-Geb-mor _ _ f , ω-to-Geb-mor _ _ g ]G
   ω-to-Geb-mor-preserves-coprod-mor n m f g = inx-are-joint-epi _ _

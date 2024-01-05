@@ -899,7 +899,7 @@ module HoTT where
     prop-decidable P (inr f) (inr g) = fun-ap inr (funext f g λ x → rec𝟘 _ (f x))
     
  
--- Observational equality for ℕ addtional lemmas
+-- Observational equality for ℕ additional lemmas
 
     Eqℕ-Prop : (n m : ℕ) → is-Prop (Eqℕ n m)
     Eqℕ-Prop zero zero = is-Contr-then-is-Prop 𝟙 𝟙-is-Contr

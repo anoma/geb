@@ -3,12 +3,12 @@
 (defclass cat-morph () ()
   (:documentation
    "I offer the service of being a base categorical morphism with no
-extesnions"))
+extensions"))
 
 (defclass cat-obj () ()
   (:documentation
    "I offer the service of being a base category objects with no
-extesnions"))
+extensions"))
 
 
 (defgeneric dom (cat-morph)
@@ -22,6 +22,6 @@ extesnions"))
 product. This returns a [CAT-MORPH][class].
 
 This interface version takes the left and right product type to
-properly dispatch on. Instances should specalize on the CAT-RIGHT argument
+properly dispatch on. Instances should specialize on the CAT-RIGHT argument
 
 Use [GEB.MAIN:CURRY][function] instead."))

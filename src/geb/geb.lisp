@@ -304,7 +304,7 @@ u
 
 (defun coprod-mor (f g)
   "Given f : A  → B and g : C  → D gives appropriate morphism between
-[COPROD][class] objects f x g : A + B  → C + D via the unversal property.
+[COPROD][class] objects f x g : A + B  → C + D via the universal property.
 That is, the morphism part of the coproduct functor Geb x Geb → Geb"
   (mcase (comp (->left (codom f) (codom g))
                f)
@@ -313,7 +313,7 @@ That is, the morphism part of the coproduct functor Geb x Geb → Geb"
 
 (defun prod-mor (f g)
    "Given f : A  → B and g : C  → D gives appropriate morphism between
-[PROD][class] objects f x g : A x B  → C x D via the unversal property.
+[PROD][class] objects f x g : A x B  → C x D via the universal property.
 This is the morphism part of the product functor Geb x Geb → Geb"
   (pair (comp f
               (<-left (dom f) (dom g)))
