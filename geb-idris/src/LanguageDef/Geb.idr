@@ -1340,6 +1340,14 @@ IntDirichEmbedMorInv c mor a b (pos ** dir) =
 -----------------------------------------
 
 public export
+SliceProfunctorSig : Type -> Type -> Type
+SliceProfunctorSig x y = SliceObj x -> SliceObj y -> Type
+
+public export
+SliceEndoProfSig : Type -> Type
+SliceEndoProfSig x = SliceProfunctorSig x x
+
+public export
 record DepPFpair (lpos, rpos : Type) where
   constructor DPFP
   dpfL : SlicePolyEndoFunc lpos
@@ -1366,32 +1374,36 @@ ppaDirR : (p : PProAr) -> SlicePolyEndoFunc (ppaPos p)
 ppaDirR p = dpfR (ppaDir p)
 
 public export
-InterpPPA : PProAr -> ProfunctorSig
+InterpPPA : (p : PProAr) -> SliceEndoProfSig (ppaPos p)
 InterpPPA (pos ** DPFP lpoly rpoly) x y =
-  SliceMorphism {a=(pos)}
-    (InterpSPFunc lpoly (const x))
-    (InterpSPFunc rpoly (const y))
+  SliceMorphism {a=pos} (InterpSPFunc lpoly x) (InterpSPFunc rpoly y)
 
 public export
-InterpPPAlmap : (p : PProAr) -> {a, b, c : Type} ->
-  (c -> a) -> InterpPPA p a b -> InterpPPA p c b
-InterpPPAlmap (pos ** DPFP lpoly rpoly) {a} {b} {c} mca dialg =
-  \i =>
-    dialg i
-    . InterpSPFMap {a=pos} {b=pos} {sa=(const c)} {sa'=(const a)}
-        lpoly (const mca) i
+InterpPPAlmap : (p : PProAr) -> {a, b, c : SliceObj (ppaPos p)} ->
+  SliceMorphism {a=(ppaPos p)} c a -> InterpPPA p a b -> InterpPPA p c b
+InterpPPAlmap p@(pos ** DPFP lpoly rpoly) {a} {b} {c} mca pab =
+  sliceComp {a=pos}
+    {x=(InterpSPFunc lpoly c)}
+    {y=(InterpSPFunc lpoly a)}
+    {z=(InterpSPFunc rpoly b)}
+    pab
+    (InterpSPFMap {a=pos} {b=pos} {sa=c} {sa'=a} lpoly mca)
 
 public export
-InterpPPArmap : (p : PProAr) -> {a, b, d : Type} ->
-  (b -> d) -> InterpPPA p a b -> InterpPPA p a d
-InterpPPArmap (pos ** DPFP lpoly rpoly) {a} {b} {d} mbd dialg =
-  \i =>
-    InterpSPFMap {a=pos} {b=pos} {sa=(const b)} {sa'=(const d)}
-      rpoly (const mbd) i
-    . dialg i
+InterpPPArmap : (p : PProAr) -> {a, b, d : SliceObj (ppaPos p)} ->
+  SliceMorphism {a=(ppaPos p)} b d -> InterpPPA p a b -> InterpPPA p a d
+InterpPPArmap (pos ** DPFP lpoly rpoly) {a} {b} {d} mbd pab =
+  sliceComp {a=pos}
+    {x=(InterpSPFunc lpoly a)}
+    {y=(InterpSPFunc rpoly b)}
+    {z=(InterpSPFunc rpoly d)}
+    (InterpSPFMap {a=pos} {b=pos} {sa=b} {sa'=d} rpoly mbd)
+    pab
 
 public export
-0 InterpPPAdimap : (p : PProAr) -> DimapSig (InterpPPA p)
+InterpPPAdimap : (p : PProAr) -> {a, b, c, d : SliceObj (ppaPos p)} ->
+  SliceMorphism {a=(ppaPos p)} c a -> SliceMorphism {a=(ppaPos p)} b d ->
+  InterpPPA p a b -> InterpPPA p c d
 InterpPPAdimap p {a} {b} {c} {d} mca mbd =
   InterpPPAlmap {a} {b=d} {c} p mca . InterpPPArmap {a} {b} {d} p mbd
 
