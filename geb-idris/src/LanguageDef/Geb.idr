@@ -1378,13 +1378,13 @@ public export
 InterpPPAlmap : (p : PProAr) -> {0 a, b, c : Type} ->
   (c -> a) -> InterpPPA p a b -> InterpPPA p c b
 InterpPPAlmap (pos ** DPFP lpoly rpoly) {a} {b} {c} mca dialg =
-  \i, (il ** dmc) => dialg i (il ** mca . dmc)
+  \i => dialg i . InterpPFMap (lpoly i) mca
 
 public export
 InterpPPArmap : (p : PProAr) -> {0 a, b, d : Type} ->
   (b -> d) -> InterpPPA p a b -> InterpPPA p a d
 InterpPPArmap (pos ** DPFP lpoly rpoly) {a} {b} {d} mbd dialg =
-  \i, (il ** dma) => let (ir ** dmb) = dialg i (il ** dma) in (ir ** mbd . dmb)
+  \i => InterpPFMap (rpoly i) mbd . dialg i
 
 public export
 InterpPPAdimap : (p : PProAr) -> DimapSig (InterpPPA p)
