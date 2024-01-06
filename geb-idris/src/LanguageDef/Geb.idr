@@ -1366,13 +1366,13 @@ ppaDirR : (p : PProAr) -> ppaPos p -> PolyFunc
 ppaDirR p = dpfR (ppaDir p)
 
 public export
-InterpPPAdep : (p : PProAr) -> ppaPos p -> ProfunctorSig
-InterpPPAdep (pos ** DPFP lpoly rpoly) i x y =
+InterpPPAdep : (p : PProAr) -> Type -> Type -> SliceObj (ppaPos p)
+InterpPPAdep (pos ** DPFP lpoly rpoly) x y i =
   HomProf (InterpPolyFunc (lpoly i) x) (InterpPolyFunc (rpoly i) y)
 
 public export
 InterpPPA : PProAr -> ProfunctorSig
-InterpPPA p x y = (i : ppaPos p) -> InterpPPAdep p i x y
+InterpPPA p = Pi {a=(ppaPos p)} .* InterpPPAdep p
 
 public export
 InterpPPAlmap : (p : PProAr) -> {0 a, b, c : Type} ->
