@@ -1361,8 +1361,7 @@ public export
 InterpPPArmap : (p : PProAr) -> {0 a, b, d : Type} ->
   (b -> d) -> InterpPPA p a b -> InterpPPA p a d
 InterpPPArmap (PPAr pos lpoly rpoly) {a} {b} {d} mbd (i ** dm) =
-  (i ** \(il ** dmla) =>
-    let (ir ** dmlb) = dm (il ** dmla) in (ir ** mbd . dmlb))
+  (i ** \el => let (ir ** dmlb) = dm el in (ir ** mbd . dmlb))
 
 public export
 InterpPPAdimap : (p : PProAr) -> DimapSig (InterpPPA p)
