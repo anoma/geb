@@ -1342,8 +1342,8 @@ IntDirichEmbedMorInv c mor a b (pos ** dir) =
 public export
 record DepPFpair (lpos, rpos : Type) where
   constructor DPFP
-  dpfL : lpos -> PolyFunc
-  dpfR : rpos -> PolyFunc
+  dpfL : SlicePolyEndoFunc lpos
+  dpfR : SlicePolyEndoFunc rpos
 
 public export
 PProAr : Type
@@ -1358,36 +1358,42 @@ ppaDir : (p : PProAr) -> DepPFpair (ppaPos p) (ppaPos p)
 ppaDir = DPair.snd
 
 public export
-ppaDirL : (p : PProAr) -> ppaPos p -> PolyFunc
+ppaDirL : (p : PProAr) -> SlicePolyEndoFunc (ppaPos p)
 ppaDirL p = dpfL (ppaDir p)
 
 public export
-ppaDirR : (p : PProAr) -> ppaPos p -> PolyFunc
+ppaDirR : (p : PProAr) -> SlicePolyEndoFunc (ppaPos p)
 ppaDirR p = dpfR (ppaDir p)
 
 public export
 InterpPPAdep : (p : PProAr) -> Type -> Type -> SliceObj (ppaPos p)
 InterpPPAdep (pos ** DPFP lpoly rpoly) x y i =
-  HomProf (InterpPolyFunc (lpoly i) x) (InterpPolyFunc (rpoly i) y)
+  HomProf (InterpSPFunc lpoly (const x) i) (InterpSPFunc rpoly (const y) i)
 
 public export
 InterpPPA : PProAr -> ProfunctorSig
 InterpPPA p = Pi {a=(ppaPos p)} .* InterpPPAdep p
 
 public export
-InterpPPAlmap : (p : PProAr) -> {0 a, b, c : Type} ->
+InterpPPAlmap : (p : PProAr) -> {a, b, c : Type} ->
   (c -> a) -> InterpPPA p a b -> InterpPPA p c b
 InterpPPAlmap (pos ** DPFP lpoly rpoly) {a} {b} {c} mca dialg =
-  \i => dialg i . InterpPFMap (lpoly i) mca
+  \i =>
+    dialg i
+    . InterpSPFMap {a=pos} {b=pos} {sa=(const c)} {sa'=(const a)}
+        lpoly (const mca) i
 
 public export
-InterpPPArmap : (p : PProAr) -> {0 a, b, d : Type} ->
+InterpPPArmap : (p : PProAr) -> {a, b, d : Type} ->
   (b -> d) -> InterpPPA p a b -> InterpPPA p a d
 InterpPPArmap (pos ** DPFP lpoly rpoly) {a} {b} {d} mbd dialg =
-  \i => InterpPFMap (rpoly i) mbd . dialg i
+  \i =>
+    InterpSPFMap {a=pos} {b=pos} {sa=(const b)} {sa'=(const d)}
+      rpoly (const mbd) i
+    . dialg i
 
 public export
-InterpPPAdimap : (p : PProAr) -> DimapSig (InterpPPA p)
+0 InterpPPAdimap : (p : PProAr) -> DimapSig (InterpPPA p)
 InterpPPAdimap p {a} {b} {c} {d} mca mbd =
   InterpPPAlmap {a} {b=d} {c} p mca . InterpPPArmap {a} {b} {d} p mbd
 
