@@ -1340,15 +1340,34 @@ IntDirichEmbedMorInv c mor a b (pos ** dir) =
 -----------------------------------------
 
 public export
-record PProAr where
-  constructor PPAr
-  ppaPos : Type
-  ppaL : ppaPos -> PolyFunc
-  ppaR : ppaPos -> PolyFunc
+record DepPFpair (lpos, rpos : Type) where
+  constructor DPFP
+  dpfL : lpos -> PolyFunc
+  dpfR : rpos -> PolyFunc
+
+public export
+PProAr : Type
+PProAr = CoendBase DepPFpair
+
+public export
+ppaPos : PProAr -> Type
+ppaPos = DPair.fst
+
+public export
+ppaDir : (p : PProAr) -> DepPFpair (ppaPos p) (ppaPos p)
+ppaDir = DPair.snd
+
+public export
+ppaDirL : (p : PProAr) -> ppaPos p -> PolyFunc
+ppaDirL p = dpfL (ppaDir p)
+
+public export
+ppaDirR : (p : PProAr) -> ppaPos p -> PolyFunc
+ppaDirR p = dpfR (ppaDir p)
 
 public export
 InterpPPAdep : (p : PProAr) -> ppaPos p -> ProfunctorSig
-InterpPPAdep (PPAr pos lpoly rpoly) i x y =
+InterpPPAdep (pos ** DPFP lpoly rpoly) i x y =
   HomProf (InterpPolyFunc (lpoly i) x) (InterpPolyFunc (rpoly i) y)
 
 public export
@@ -1358,13 +1377,13 @@ InterpPPA p x y = (i : ppaPos p) -> InterpPPAdep p i x y
 public export
 InterpPPAlmap : (p : PProAr) -> {0 a, b, c : Type} ->
   (c -> a) -> InterpPPA p a b -> InterpPPA p c b
-InterpPPAlmap (PPAr pos lpoly rpoly) {a} {b} {c} mca dialg =
+InterpPPAlmap (pos ** DPFP lpoly rpoly) {a} {b} {c} mca dialg =
   \i, (il ** dmc) => dialg i (il ** mca . dmc)
 
 public export
 InterpPPArmap : (p : PProAr) -> {0 a, b, d : Type} ->
   (b -> d) -> InterpPPA p a b -> InterpPPA p a d
-InterpPPArmap (PPAr pos lpoly rpoly) {a} {b} {d} mbd dialg =
+InterpPPArmap (pos ** DPFP lpoly rpoly) {a} {b} {d} mbd dialg =
   \i, (il ** dma) => let (ir ** dmb) = dialg i (il ** dma) in (ir ** mbd . dmb)
 
 public export
