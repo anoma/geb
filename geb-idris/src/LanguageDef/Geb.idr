@@ -1352,11 +1352,22 @@ InterpPPA (PPAr pos lpoly rpoly) x y =
   (i : pos ** InterpPolyFunc (lpoly i) x -> InterpPolyFunc (rpoly i) y)
 
 public export
-InterpPPAmap : (p : PProAr) -> DimapSig (InterpPPA p)
-InterpPPAmap (PPAr pos lpoly rpoly) {a} {b} {c} {d} mca mbd (iab ** dab) =
-  (iab ** \(il ** dmc) =>
-    let (ir ** dmb) = dab (il ** mca . dmc) in
-    (ir ** mbd . dmb))
+InterpPPAlmap : (p : PProAr) -> {0 a, b, c : Type} ->
+  (c -> a) -> InterpPPA p a b -> InterpPPA p c b
+InterpPPAlmap (PPAr pos lpoly rpoly) {a} {b} {c} mca (i ** dm) =
+  (i ** \(il ** dml) => dm (il ** mca . dml))
+
+public export
+InterpPPArmap : (p : PProAr) -> {0 a, b, d : Type} ->
+  (b -> d) -> InterpPPA p a b -> InterpPPA p a d
+InterpPPArmap (PPAr pos lpoly rpoly) {a} {b} {d} mbd (i ** dm) =
+  (i ** \(il ** dmla) =>
+    let (ir ** dmlb) = dm (il ** dmla) in (ir ** mbd . dmlb))
+
+public export
+InterpPPAdimap : (p : PProAr) -> DimapSig (InterpPPA p)
+InterpPPAdimap p {a} {b} {c} {d} mca mbd =
+  InterpPPAlmap {a} {b=d} {c} p mca . InterpPPArmap {a} {b} {d} p mbd
 
 ----------------------------------------
 ----------------------------------------
