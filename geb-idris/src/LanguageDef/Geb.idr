@@ -1366,13 +1366,11 @@ ppaDirR : (p : PProAr) -> SlicePolyEndoFunc (ppaPos p)
 ppaDirR p = dpfR (ppaDir p)
 
 public export
-InterpPPAdep : (p : PProAr) -> Type -> Type -> SliceObj (ppaPos p)
-InterpPPAdep (pos ** DPFP lpoly rpoly) x y i =
-  HomProf (InterpSPFunc lpoly (const x) i) (InterpSPFunc rpoly (const y) i)
-
-public export
 InterpPPA : PProAr -> ProfunctorSig
-InterpPPA p = Pi {a=(ppaPos p)} .* InterpPPAdep p
+InterpPPA (pos ** DPFP lpoly rpoly) x y =
+  SliceMorphism {a=(pos)}
+    (InterpSPFunc lpoly (const x))
+    (InterpSPFunc rpoly (const y))
 
 public export
 InterpPPAlmap : (p : PProAr) -> {a, b, c : Type} ->
