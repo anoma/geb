@@ -1333,6 +1333,31 @@ IntDirichEmbedMorInv c mor a b (pos ** dir) =
   -- function returning `()`).
   dir ()
 
+-----------------------------------------
+-----------------------------------------
+---- Polynomial difunctors on `Type` ----
+-----------------------------------------
+-----------------------------------------
+
+public export
+record PProAr where
+  constructor PPAr
+  ppaPos : Type
+  ppaL : ppaPos -> PolyFunc
+  ppaR : ppaPos -> PolyFunc
+
+public export
+InterpPPA : PProAr -> ProfunctorSig
+InterpPPA (PPAr pos lpoly rpoly) x y =
+  (i : pos ** InterpPolyFunc (lpoly i) x -> InterpPolyFunc (rpoly i) y)
+
+public export
+InterpPPAmap : (p : PProAr) -> DimapSig (InterpPPA p)
+InterpPPAmap (PPAr pos lpoly rpoly) {a} {b} {c} {d} mca mbd (iab ** dab) =
+  (iab ** \(il ** dmc) =>
+    let (ir ** dmb) = dab (il ** mca . dmc) in
+    (ir ** mbd . dmb))
+
 ----------------------------------------
 ----------------------------------------
 ---- Internal polynomial difunctors ----
