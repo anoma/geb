@@ -1349,7 +1349,7 @@ record PProAr where
 public export
 InterpPPA : PProAr -> ProfunctorSig
 InterpPPA (PPAr pos lpoly rpoly) x y =
-  (i : pos ** InterpPolyFunc (lpoly i) x -> InterpPolyFunc (rpoly i) y)
+  (i : pos ** HomProf (InterpPolyFunc (lpoly i) x) (InterpPolyFunc (rpoly i) y))
 
 public export
 InterpPPAlmap : (p : PProAr) -> {0 a, b, c : Type} ->
