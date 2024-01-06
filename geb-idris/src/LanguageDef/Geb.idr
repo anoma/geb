@@ -1349,19 +1349,19 @@ record PProAr where
 public export
 InterpPPA : PProAr -> ProfunctorSig
 InterpPPA (PPAr pos lpoly rpoly) x y =
-  (i : pos ** HomProf (InterpPolyFunc (lpoly i) x) (InterpPolyFunc (rpoly i) y))
+  (i : pos) -> HomProf (InterpPolyFunc (lpoly i) x) (InterpPolyFunc (rpoly i) y)
 
 public export
 InterpPPAlmap : (p : PProAr) -> {0 a, b, c : Type} ->
   (c -> a) -> InterpPPA p a b -> InterpPPA p c b
-InterpPPAlmap (PPAr pos lpoly rpoly) {a} {b} {c} mca (i ** dm) =
-  (i ** \(il ** dml) => dm (il ** mca . dml))
+InterpPPAlmap (PPAr pos lpoly rpoly) {a} {b} {c} mca dialg =
+  \i, (il ** dmc) => dialg i (il ** mca . dmc)
 
 public export
 InterpPPArmap : (p : PProAr) -> {0 a, b, d : Type} ->
   (b -> d) -> InterpPPA p a b -> InterpPPA p a d
-InterpPPArmap (PPAr pos lpoly rpoly) {a} {b} {d} mbd (i ** dm) =
-  (i ** \el => let (ir ** dmlb) = dm el in (ir ** mbd . dmlb))
+InterpPPArmap (PPAr pos lpoly rpoly) {a} {b} {d} mbd dialg =
+  \i, (il ** dma) => let (ir ** dmb) = dialg i (il ** dma) in (ir ** mbd . dmb)
 
 public export
 InterpPPAdimap : (p : PProAr) -> DimapSig (InterpPPA p)
