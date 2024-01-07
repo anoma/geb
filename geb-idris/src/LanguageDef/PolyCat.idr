@@ -3515,7 +3515,7 @@ public export
 SPFCell : {w, w', z, z' : Type} ->
   (w -> w') -> (z -> z') -> SlicePolyFunc w z -> SlicePolyFunc w' z' -> Type
 SPFCell {w} {w'} {z} {z'} f g spf spf' =
-  SPNatTrans (SliceFuncDimap spf f id) (SliceFuncDimap spf' id g)
+  SPNatTrans (SliceFuncLmap spf f) (SliceFuncRmap spf' g)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
