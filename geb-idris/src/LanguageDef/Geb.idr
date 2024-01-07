@@ -1385,14 +1385,15 @@ data PolyCatElemMor :
       (d ** (fst (snd e) ** comp (px (fst (snd e))) (fst e) d m (snd (snd e))))
 
 public export
-DirichCatElemObj : PolyFunc -> Type
-DirichCatElemObj p = (c : Type ** InterpDirichFunc p c)
+DirichCatElemObj : (c : Type) -> (mor : IntDifunctorSig c) -> IntArena c -> Type
+DirichCatElemObj c mor p = (x : c ** InterpIDFobj c mor p x)
 
 public export
-DirichCatElemMor : (p : PolyFunc) ->
-  DirichCatElemObj p -> DirichCatElemObj p -> Type
-DirichCatElemMor (pos ** dir) (c ** (cp ** cdm)) (d ** (dp ** ddm)) =
-  (m : c -> d ** ?DirichCatElemMor_hole)
+DirichCatElemMor :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (p : IntArena c) ->
+  DirichCatElemObj c mor p -> DirichCatElemObj c mor p -> Type
+DirichCatElemMor = ?DirichCatElemMor_hole
 
 ------------------------------------------------------
 ------------------------------------------------------
