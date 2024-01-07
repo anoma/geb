@@ -1415,8 +1415,8 @@ ppaDirR p = dpfR (ppaDir p)
 public export
 InterpPPAenr : (p : PProAr) ->
   SliceObj (ppaPos p) -> SliceObj (ppaPos p) -> SliceObj (ppaPos p)
-InterpPPAenr (pos ** DPFP lpoly rpoly) x y i =
-  HomProf (InterpSPFunc lpoly x i) (InterpSPFunc rpoly y i)
+InterpPPAenr (pos ** DPFP lpoly rpoly) x y =
+  SliceHom {a=pos} (InterpSPFunc lpoly x) (InterpSPFunc rpoly y)
 
 public export
 InterpPPA : (p : PProAr) -> SliceEndoProfSig (ppaPos p)
