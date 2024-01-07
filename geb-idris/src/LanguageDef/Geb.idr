@@ -1343,16 +1343,6 @@ public export
 PolyCatElemObj : (c : Type) -> (mor : IntDifunctorSig c) -> IntArena c -> Type
 PolyCatElemObj c mor p = (x : c ** InterpIPFobj c mor p x)
 
-public export
-DirichCatElemObj : PolyFunc -> Type
-DirichCatElemObj p = (c : Type ** InterpDirichFunc p c)
-
-public export
-DirichCatElemMor : (p : PolyFunc) ->
-  DirichCatElemObj p -> DirichCatElemObj p -> Type
-DirichCatElemMor (pos ** dir) (c ** (cp ** cdm)) (d ** (dp ** ddm)) =
-  (m : c -> d ** ?DirichCatElemMor_hole)
-
 -- Unfolding the definition of a morphism in the category of elements
 -- specifically of a polynomial endofunctor on `Type` yields the following:
 --
@@ -1393,6 +1383,16 @@ data PolyCatElemMor :
     PolyCatElemMor c mor comp (x ** px)
       e
       (d ** (fst (snd e) ** comp (px (fst (snd e))) (fst e) d m (snd (snd e))))
+
+public export
+DirichCatElemObj : PolyFunc -> Type
+DirichCatElemObj p = (c : Type ** InterpDirichFunc p c)
+
+public export
+DirichCatElemMor : (p : PolyFunc) ->
+  DirichCatElemObj p -> DirichCatElemObj p -> Type
+DirichCatElemMor (pos ** dir) (c ** (cp ** cdm)) (d ** (dp ** ddm)) =
+  (m : c -> d ** ?DirichCatElemMor_hole)
 
 ------------------------------------------------------
 ------------------------------------------------------
