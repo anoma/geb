@@ -1353,6 +1353,45 @@ record DepPFpair (lpos, rpos : Type) where
   dpfL : SlicePolyEndoFunc lpos
   dpfR : SlicePolyEndoFunc rpos
 
+-- We may view the two components of a `DepPFpair` as a single
+-- dependent polynomial functor.
+public export
+DepPFtoSPF : (lpos, rpos : Type) ->
+  DepPFpair lpos rpos -> SlicePolyEndoFunc (Either lpos rpos)
+DepPFtoSPF lpos rpos (DPFP (lpd ** ldd ** lasn) (rpd ** rdd ** rasn)) =
+  (eitherElim lpd rpd **
+   \(i ** id) => case i of
+    Left il => ldd (il ** id)
+    Right ir => rdd (ir ** id) **
+   \((i ** id) ** d) => case i of
+    Left il => Left $ lasn ((il ** id) ** d)
+    Right ir => Right $ rasn ((ir ** id) ** d))
+
+-- Note that the single-dependent-polynomial-functor form is more
+-- general than the `DepPFpair` form, specifically because the assignment
+-- morphism is not obliged to always take `Left` to `Left` and
+-- `Right` to `Right`.  However, `DepPFfromSPF . DepPFtoSPF` is the identity,
+-- so `DepPFtoSPF` is an (injective) embedding of `DepPFpair` into
+-- `SlicePolyEndoFunc lpos rpos`.  In particular, it is a full and faithful
+-- embedding into the subcategory of `SlicePolyEndoFunc lpos rpos` whose
+-- assignment morphisms _do_ always take `Left` to `Left` and
+-- `Right` to `Right`.
+public export
+DepPFfromSPF : (lpos, rpos : Type) ->
+  SlicePolyEndoFunc (Either lpos rpos) -> DepPFpair lpos rpos
+DepPFfromSPF lpos rpos (pd ** dd ** asn) =
+  DPFP
+    (pd . Left **
+     \(il ** id) => dd (Left il ** id) **
+     \((il ** id) ** d) => case asn ((Left il ** id) ** d) of
+      Left al => al
+      Right _ => il)
+    (pd . Right **
+     \(ir ** id) => dd (Right ir ** id) **
+     \((ir ** id) ** d) => case asn ((Right ir ** id) ** d) of
+      Left _ => ir
+      Right ar => ar)
+
 public export
 PProAr : Type
 PProAr = CoendBase DepPFpair
