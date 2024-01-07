@@ -11,62 +11,6 @@ import LanguageDef.PolyIndTypes
 
 %default total
 
-------------------------------------------------------
-------------------------------------------------------
----- Polynomial functors over polynomial functors ----
-------------------------------------------------------
-------------------------------------------------------
-
-public export
-PolyCatElemObj : PolyFunc -> Type
-PolyCatElemObj p = (c : Type ** InterpPolyFunc p c)
-
-public export
-DirichCatElemObj : PolyFunc -> Type
-DirichCatElemObj p = (c : Type ** InterpDirichFunc p c)
-
--- Unfolding the definition of a morphism in the category of elements
--- specifically of a polynomial endofunctor on `Type` yields the following:
---
---  - A position `i` of the polynomial functor
---  - A pair of types `c`, `d`
---  - An assignment of the directions of `p` at `i` to `c` (together with the
---    type `c`, this can be viewed as an object of the coslice category of
---    the direction-set)
---  - A morphism in `Type` (a function) from `c` to `d`
---
--- One way of looking at all of that together is, if we view a polynomial
--- functor `p` as generating open terms of a data structure, then a morphism
--- of its category of elements is a closed term with elements of `c`
--- substituted for its variables (comprising the type `c` which we then view
--- as a type of variables together with the choice of a position and and
--- assignment of its directions to `c`), together with a function from `c`
--- to `d`, which uniquely determines a closed term with elements of `d`
--- substituted for its variables, by mapping the elements of `c` in the
--- closed term with the function to elements of `d`, while preserving the
--- structure of the term.
---
--- Because of that unique determination, we do not need explicitly to choose
--- the domain object, as in the general definition of the category of elements
--- (or indeed of morphisms in general) -- `d` and `m` alone determine precisely
--- one object of the category of elements and one morphism of the catgory of
--- elements whose codomain is that object (and whose domain is the chosen
--- object).
-public export
-data PolyCatElemMor : (p : PolyFunc) ->
-    PolyCatElemObj p -> PolyCatElemObj p -> Type where
-  PCEM : (p : PolyFunc) ->
-    (e : PolyCatElemObj p) ->
-    -- `d` and `e` together form an object of the coslice category of `fst e`.
-    (d : Type) -> (m : fst e -> d) ->
-    PolyCatElemMor p e (d ** (fst (snd e) ** m . snd (snd e)))
-
-public export
-DirichCatElemMor : (p : PolyFunc) ->
-  DirichCatElemObj p -> DirichCatElemObj p -> Type
-DirichCatElemMor (pos ** dir) (c ** (cp ** cdm)) (d ** (dp ** ddm)) =
-  (m : c -> d ** ?DirichCatElemMor_hole)
-
 -------------------------------------
 -------------------------------------
 ---- Language architecture notes ----
@@ -1388,6 +1332,68 @@ IntDirichEmbedMorInv c mor a b (pos ** dir) =
   -- it can be, which is the identity on `Unit` (equivalently, the constant
   -- function returning `()`).
   dir ()
+
+-------------------------------------------
+-------------------------------------------
+---- Polynomial categories of elements ----
+-------------------------------------------
+-------------------------------------------
+
+public export
+PolyCatElemObj : PolyFunc -> Type
+PolyCatElemObj p = (c : Type ** InterpPolyFunc p c)
+
+public export
+DirichCatElemObj : PolyFunc -> Type
+DirichCatElemObj p = (c : Type ** InterpDirichFunc p c)
+
+public export
+DirichCatElemMor : (p : PolyFunc) ->
+  DirichCatElemObj p -> DirichCatElemObj p -> Type
+DirichCatElemMor (pos ** dir) (c ** (cp ** cdm)) (d ** (dp ** ddm)) =
+  (m : c -> d ** ?DirichCatElemMor_hole)
+
+-- Unfolding the definition of a morphism in the category of elements
+-- specifically of a polynomial endofunctor on `Type` yields the following:
+--
+--  - A position `i` of the polynomial functor
+--  - A pair of types `c`, `d`
+--  - An assignment of the directions of `p` at `i` to `c` (together with the
+--    type `c`, this can be viewed as an object of the coslice category of
+--    the direction-set)
+--  - A morphism in `Type` (a function) from `c` to `d`
+--
+-- One way of looking at all of that together is, if we view a polynomial
+-- functor `p` as generating open terms of a data structure, then a morphism
+-- of its category of elements is a closed term with elements of `c`
+-- substituted for its variables (comprising the type `c` which we then view
+-- as a type of variables together with the choice of a position and and
+-- assignment of its directions to `c`), together with a function from `c`
+-- to `d`, which uniquely determines a closed term with elements of `d`
+-- substituted for its variables, by mapping the elements of `c` in the
+-- closed term with the function to elements of `d`, while preserving the
+-- structure of the term.
+--
+-- Because of that unique determination, we do not need explicitly to choose
+-- the domain object, as in the general definition of the category of elements
+-- (or indeed of morphisms in general) -- `d` and `m` alone determine precisely
+-- one object of the category of elements and one morphism of the catgory of
+-- elements whose codomain is that object (and whose domain is the chosen
+-- object).
+public export
+data PolyCatElemMor : (p : PolyFunc) ->
+    PolyCatElemObj p -> PolyCatElemObj p -> Type where
+  PCEM : (p : PolyFunc) ->
+    (e : PolyCatElemObj p) ->
+    -- `d` and `e` together form an object of the coslice category of `fst e`.
+    (d : Type) -> (m : fst e -> d) ->
+    PolyCatElemMor p e (d ** (fst (snd e) ** m . snd (snd e)))
+
+------------------------------------------------------
+------------------------------------------------------
+---- Polynomial functors over polynomial functors ----
+------------------------------------------------------
+------------------------------------------------------
 
 -----------------------------------------
 -----------------------------------------
