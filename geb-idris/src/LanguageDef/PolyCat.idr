@@ -3135,31 +3135,29 @@ public export
 SPFSigma : (a : Type) -> SlicePolyFunc a ()
 SPFSigma a = (const a ** const Unit ** DPair.snd . DPair.fst)
 
--- Precomposition and postcomposition by base change give `SlicePolyFunc`
--- itself a profunctor structure (`dimap`).  (Note that, written as it is
--- here, it is covariant in its first argument and contravariant in the
--- second -- the reverse of the standard definition of profunctor.)
+-- Precomposition and postcomposition by base change give `flip SlicePolyFunc`
+-- itself a profunctor structure (`dimap`).
 public export
 SliceFuncDimap : {0 w, x, y, z : Type} ->
-  SlicePolyFunc w x -> (w -> y) -> (z -> x) -> SlicePolyFunc y z
-SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fwy fzx =
+  flip SlicePolyFunc x w -> (z -> x) -> (w -> y) -> flip SlicePolyFunc z y
+SliceFuncDimap {w} {x} {y} {z} (wxp ** wxd ** wxa) fzx fwy =
   (wxp . fzx **
    \izwxi => wxd (fzx (fst izwxi) ** snd izwxi) **
    \dd => fwy (wxa ((fzx (fst (fst dd)) ** snd (fst dd)) ** snd dd)))
 
 public export
-SliceFuncLmap : {0 w, x, y : Type} ->
-  SlicePolyFunc w x -> (w -> y) -> SlicePolyFunc y x
-SliceFuncLmap spf = flip (SliceFuncDimap spf) id
-
-public export
-SliceFuncRmap : {0 w, x, z : Type} ->
-  SlicePolyFunc w x -> (z -> x) -> SlicePolyFunc w z
+SliceFuncRmap : {0 w, x, y : Type} ->
+  flip SlicePolyFunc x w -> (w -> y) -> flip SlicePolyFunc x y
 SliceFuncRmap spf = SliceFuncDimap spf id
 
 public export
+SliceFuncLmap : {0 w, x, z : Type} ->
+  flip SlicePolyFunc x w -> (z -> x) -> flip SlicePolyFunc z w
+SliceFuncLmap spf = flip (SliceFuncDimap spf) id
+
+public export
 spfWeaken : {0 x, y : Type} -> SlicePolyFunc x Unit -> SlicePolyFunc x y
-spfWeaken {x} {y} spf = SliceFuncRmap spf (const ())
+spfWeaken {x} {y} spf = SliceFuncLmap spf (const ())
 
 --------------------------------------------------------------
 ---- As morphisms in the two-category of slice categories ----
@@ -3397,7 +3395,7 @@ spfDimapFromBaseChange : {0 w, x, y, z : Type} ->
   InterpSPFunc
     (spfCompose (SPFBaseChange g) (spfCompose spf (SPFBaseChange f))) sy ez ->
   InterpSPFunc
-    (SliceFuncDimap spf f g) sy ez
+    (SliceFuncDimap spf g f) sy ez
 spfDimapFromBaseChange (posdep ** dirdep ** assign) f g sy ez
   ((() ** d) ** di) with (d ()) proof prf
     spfDimapFromBaseChange (posdep ** dirdep ** assign) f g sy ez
@@ -3410,7 +3408,7 @@ spfDimapToBaseChange : {0 w, x, y, z : Type} ->
   (spf : SlicePolyFunc w x) -> (f : w -> y) -> (g : z -> x) ->
   (sy : SliceObj y) -> (ez : z) ->
   InterpSPFunc
-    (SliceFuncDimap spf f g) sy ez ->
+    (SliceFuncDimap spf g f) sy ez ->
   InterpSPFunc
     (spfCompose (SPFBaseChange g) (spfCompose spf (SPFBaseChange f))) sy ez
 spfDimapToBaseChange {w} {x} {y} {z} (posdep ** dirdep ** assign) f g sy ez
@@ -3428,7 +3426,7 @@ spfForgetParam (posdep ** dirdep ** assign) = (posdep ** dirdep ** const ())
 public export
 spfApplyPos : SlicePolyFunc x y -> y -> SlicePolyFunc x ()
 spfApplyPos (posdep ** dirdep ** assign) ey =
-  -- Equivalent to `SliceFuncDimap spf id (const ey)`.
+  -- Equivalent to `SliceFuncDimap spf (const ey) id`.
   (const (posdep ey) **
    \pd => dirdep (ey ** snd pd) **
    \dd => assign ((ey ** snd (fst dd)) ** snd dd))
@@ -3515,7 +3513,7 @@ public export
 SPFCell : {w, w', z, z' : Type} ->
   (w -> w') -> (z -> z') -> SlicePolyFunc w z -> SlicePolyFunc w' z' -> Type
 SPFCell {w} {w'} {z} {z'} f g spf spf' =
-  SPNatTrans (SliceFuncLmap spf f) (SliceFuncRmap spf' g)
+  SPNatTrans (SliceFuncRmap spf f) (SliceFuncLmap spf' g)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------

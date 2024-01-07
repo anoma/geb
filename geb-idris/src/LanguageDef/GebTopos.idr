@@ -3693,7 +3693,7 @@ GExpDirAtom (() ** FS (FS FZ)) = DIR_XXL
 
 public export
 GExpXSPF : SlicePolyFunc GExpXSlice ()
-GExpXSPF = SliceFuncDimap (pfSliceAll GExpF) (\(() ** d) => d) id
+GExpXSPF = SliceFuncRmap (pfSliceAll GExpF) (\(() ** d) => d)
 
 -----------------------------------------
 ---- Natural number list endofunctor ----
@@ -3710,7 +3710,7 @@ GNatExpLAssign (Right ()) = GSNATL
 
 public export
 GNatLExpSPF : SlicePolyFunc GExpSlice Unit
-GNatLExpSPF = SliceFuncLmap GListSPF GNatExpLAssign
+GNatLExpSPF = SliceFuncRmap GListSPF GNatExpLAssign
 
 public export
 GNatLFPos : Type
@@ -3746,7 +3746,7 @@ GXExpLAssign (Right ()) = GSEXPL
 
 public export
 GExpLExpSPF : SlicePolyFunc GExpSlice Unit
-GExpLExpSPF = SliceFuncLmap GListSPF GXExpLAssign
+GExpLExpSPF = SliceFuncRmap GListSPF GXExpLAssign
 
 public export
 GExpLFPos : Type
@@ -3781,7 +3781,7 @@ GNatExpAssign () = GSNAT
 
 public export
 GNatExpSPF : SlicePolyFunc GExpSlice Unit
-GNatExpSPF = SliceFuncLmap GNatSPF GNatExpAssign
+GNatExpSPF = SliceFuncRmap GNatSPF GNatExpAssign
 
 public export
 GXExpAssign : GExpXSlice -> GExpSlice
@@ -3791,7 +3791,7 @@ GXExpAssign (FS (FS FZ)) = GSEXPL
 
 public export
 GXExpSPF : SlicePolyFunc GExpSlice Unit
-GXExpSPF = SliceFuncLmap GExpXSPF GXExpAssign
+GXExpSPF = SliceFuncRmap GExpXSPF GXExpAssign
 
 public export
 GSExpCombinedSlice : Type
@@ -3813,7 +3813,7 @@ GSExpSPFAssign GSEXPL = Right (Right (Right (Right ())))
 
 public export
 GSExpSPF : SlicePolyEndoFunc GExpSlice
-GSExpSPF = SliceFuncRmap GSExpCombined GSExpSPFAssign
+GSExpSPF = SliceFuncLmap GSExpCombined GSExpSPFAssign
 
 public export
 GSExp : SliceObj GExpSlice
