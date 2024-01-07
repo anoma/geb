@@ -1340,8 +1340,8 @@ IntDirichEmbedMorInv c mor a b (pos ** dir) =
 -------------------------------------------
 
 public export
-PolyCatElemObj : PolyFunc -> Type
-PolyCatElemObj p = (c : Type ** InterpPolyFunc p c)
+PolyCatElemObj : (c : Type) -> (mor : IntDifunctorSig c) -> IntArena c -> Type
+PolyCatElemObj c mor p = (x : c ** InterpIPFobj c mor p x)
 
 public export
 DirichCatElemObj : PolyFunc -> Type
@@ -1381,13 +1381,18 @@ DirichCatElemMor (pos ** dir) (c ** (cp ** cdm)) (d ** (dp ** ddm)) =
 -- elements whose codomain is that object (and whose domain is the chosen
 -- object).
 public export
-data PolyCatElemMor : (p : PolyFunc) ->
-    PolyCatElemObj p -> PolyCatElemObj p -> Type where
-  PCEM : (p : PolyFunc) ->
-    (e : PolyCatElemObj p) ->
+data PolyCatElemMor :
+    (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+    (p : IntArena c) ->
+    PolyCatElemObj c mor p -> PolyCatElemObj c mor p -> Type where
+  PCEM : {c : Type} -> {mor : IntDifunctorSig c} ->
+    (comp : IntCompSig c mor) ->
+    (x : Type) -> (px : x -> c) -> (e : PolyCatElemObj c mor (x ** px)) ->
     -- `d` and `e` together form an object of the coslice category of `fst e`.
-    (d : Type) -> (m : fst e -> d) ->
-    PolyCatElemMor p e (d ** (fst (snd e) ** m . snd (snd e)))
+    (d : c) -> (m : mor (fst e) d) ->
+    PolyCatElemMor c mor comp (x ** px)
+      e
+      (d ** (fst (snd e) ** comp (px (fst (snd e))) (fst e) d m (snd (snd e))))
 
 ------------------------------------------------------
 ------------------------------------------------------
