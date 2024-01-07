@@ -45,6 +45,13 @@ DirichCatElemObj p = (c : Type ** InterpDirichFunc p c)
 -- substituted for its variables, by mapping the elements of `c` in the
 -- closed term with the function to elements of `d`, while preserving the
 -- structure of the term.
+--
+-- Because of that unique determination, we do not need explicitly to choose
+-- the domain object, as in the general definition of the category of elements
+-- (or indeed of morphisms in general) -- `d` and `m` alone determine precisely
+-- one object of the category of elements and one morphism of the catgory of
+-- elements whose codomain is that object (and whose domain is the chosen
+-- object).
 public export
 data PolyCatElemMor : (p : PolyFunc) ->
     PolyCatElemObj p -> PolyCatElemObj p -> Type where
