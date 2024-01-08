@@ -1329,6 +1329,21 @@ InterpIEPPdimap : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoDimapSig c mor (InterpIEPPobj c mor ar)
 InterpIEPPdimap c mor comp = InterpIPPdimap c c mor mor comp comp
 
+public export
+IntPPNTar : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  IntProAr d c -> IntProAr d c -> Type
+IntPPNTar d c dmor cmor
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
+    (onpos : ppos -> qpos **
+     ((i : ppos) -> dmor (pcontra i) (qcontra $ onpos i),
+      (i : ppos) -> cmor (qcovar $ onpos i) (pcovar i)))
+
+public export
+IntEPPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntEndoProAr c -> IntEndoProAr c -> Type
+IntEPPNTar c mor = IntPPNTar c c mor mor
+
 -------------------------------------
 -------------------------------------
 ---- Dirichlet-functor embedding ----
