@@ -1379,12 +1379,13 @@ data PolyCatElemMor :
     (comp : IntCompSig c mor) ->
     -- `pos` and `dir` together form an `IntArena c`.
     (pos : Type) -> (dir : pos -> c) ->
-    (e : PolyCatElemObj c mor (pos ** dir)) ->
-    -- `y` and `m` together form an object of the coslice category of `fst e`.
-    (y : c) -> (m : mor (fst e) y) ->
+    -- `i` and `dm` comprise a term of `InterpIPFobj c mor (pos ** dir) x`.
+    (x : c) -> (i : pos) -> (dm : mor (dir i) x) ->
+    -- `y` and `m` together form an object of the coslice category of `x`.
+    (y : c) -> (m : mor x y) ->
     PolyCatElemMor c mor comp (pos ** dir)
-      e
-      (y ** (fst (snd e) ** comp (dir (fst (snd e))) (fst e) y m (snd (snd e))))
+      (x ** (i ** dm))
+      (y ** (i ** comp (dir i) x y m dm))
 
 public export
 DirichCatElemObj : (c : Type) -> (mor : IntDifunctorSig c) -> IntArena c -> Type
@@ -1399,12 +1400,13 @@ data DirichCatElemMor :
     (comp : IntCompSig c mor) ->
     -- `pos` and `dir` together form an `IntArena c`.
     (pos : Type) -> (dir : pos -> c) ->
-    (e : DirichCatElemObj c mor (pos ** dir)) ->
-    -- `y` and `m` together form an object of the slice category of `fst e`.
-    (y : c) -> (m : mor y (fst e)) ->
+    -- `i` and `dm` comprise a term of `InterpIDFobj c mor (pos ** dir) x`.
+    (x : c) -> (i : pos) -> (dm : mor x (dir i)) ->
+    -- `y` and `m` together form an object of the slice category of `x`.
+    (y : c) -> (m : mor y x) ->
     DirichCatElemMor c mor comp (pos ** dir)
-      (y ** (fst (snd e) ** comp y (fst e) (dir (fst (snd e))) (snd (snd e)) m))
-      e
+      (y ** (i ** comp y x (dir i) dm m))
+      (x ** (i ** dm))
 
 ------------------------------------------------------
 ------------------------------------------------------
