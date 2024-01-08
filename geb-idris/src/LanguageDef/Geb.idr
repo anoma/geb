@@ -1420,6 +1420,10 @@ data DirichCatElemMor :
 -----------------------------------------
 -----------------------------------------
 
+---------------------------
+---- Profunctor arenas ----
+---------------------------
+
 public export
 IntProAr : (d, c : Type) -> Type
 IntProAr d c = (pos : Type ** (pos -> d, pos -> c))
@@ -1427,6 +1431,10 @@ IntProAr d c = (pos : Type ** (pos -> d, pos -> c))
 public export
 IntEndoProAr : (c : Type) -> Type
 IntEndoProAr c = IntProAr c c
+
+-----------------------------------------
+---- Profunctor arena interpretation ----
+-----------------------------------------
 
 public export
 InterpIPPobj : (d, c : Type) ->
@@ -1456,6 +1464,10 @@ InterpIEPPdimap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (ar : IntEndoProAr c) ->
   IntEndoDimapSig c mor (InterpIEPPobj c mor ar)
 InterpIEPPdimap c mor comp = InterpIPPdimap c c mor mor comp comp
+
+--------------------------------------------
+---- Profunctor natural transformations ----
+--------------------------------------------
 
 public export
 IntPPNTar : (d, c : Type) ->
@@ -1492,6 +1504,10 @@ InterpIEPPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProfNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
 InterpIEPPnt c mor comp = InterpIPPnt c c mor mor comp comp
 
+----------------------------------------------------
+---- Profunctor di/para-natural transformations ----
+----------------------------------------------------
+
 public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> Type
@@ -1517,6 +1533,48 @@ InterpIEPPdint c mor comp
     (onpos i **
      (comp a (pcontra i) (qcontra $ onpos i) (dcontra i passign) cmax,
       comp (qcovar $ onpos i) (pcovar i) a cmya (dcovar i passign)))
+
+------------------------------------------------------
+---- Profunctor categories of (diagonal) elements ----
+------------------------------------------------------
+
+PProfCatElemObj : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  IntProAr d c -> Type
+PProfCatElemObj d c dmor cmor p =
+  (x : d ** y : c ** InterpIPPobj d c dmor cmor p x y)
+
+public export
+data PProfCatElemMor :
+    (d, c : Type) ->
+    (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+    (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+    (p : IntProAr d c) ->
+    PProfCatElemObj d c dmor cmor p -> PProfCatElemObj d c dmor cmor p -> Type
+    where
+  PPCEM :
+    {d, c : Type} ->
+    {dmor : IntDifunctorSig d} -> {cmor : IntDifunctorSig c} ->
+    {dcomp : IntCompSig d dmor} -> {ccomp : IntCompSig c cmor} ->
+    -- `pos`, `contra`, and `covar` together form an `IntProAr d c`.
+    (pos : Type) -> (contra : pos -> d) -> (covar : pos -> c) ->
+    -- `i` `ddm`, and `cdm` together comprise a term of
+    -- `InterpIPPobj d c dmor cmor (pos ** (contra, covar)) x y`;
+    -- `x` and `ddm` together comprise an object of the slice category
+    -- of `contra i`; `y` and `cdm` together comprise an object of
+    -- the coslice category of `covar i`.  `x`, `y`, `i`, `ddm`, and `cdm`
+    -- all together comprise an object of the category of elements of
+    -- `(pos ** (contra, covar))`.
+    (x : d) -> (y : c) ->
+    (i : pos) -> (ddm : dmor x (contra i)) -> (cdm : cmor (covar i) y) ->
+    -- `a` and `dmax` together form an object of the slice category of `x`.
+    (a : d) -> (dmax : dmor a x) ->
+    -- `b` and `cmyb` together form an object of the coslice category of `y`.
+    (b : c) -> (cmyb : cmor y b) ->
+    PProfCatElemMor d c dmor cmor dcomp ccomp (pos ** (contra, covar))
+      (x ** y ** i ** (ddm, cdm))
+      (a ** b ** i **
+       (dcomp a x (contra i) ddm dmax, ccomp (covar i) y b cmyb cdm))
 
 ------------------------------------------------------
 ------------------------------------------------------
