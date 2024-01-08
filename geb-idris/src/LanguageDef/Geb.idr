@@ -1377,14 +1377,14 @@ data PolyCatElemMor :
     PolyCatElemObj c mor p -> PolyCatElemObj c mor p -> Type where
   PCEM : {c : Type} -> {mor : IntDifunctorSig c} ->
     (comp : IntCompSig c mor) ->
-    -- `x` and `px` together form an `IntArena c`.
-    (x : Type) -> (px : x -> c) ->
-    (e : PolyCatElemObj c mor (x ** px)) ->
+    -- `pos` and `dir` together form an `IntArena c`.
+    (pos : Type) -> (dir : pos -> c) ->
+    (e : PolyCatElemObj c mor (pos ** dir)) ->
     -- `d` and `m` together form an object of the coslice category of `fst e`.
     (d : c) -> (m : mor (fst e) d) ->
-    PolyCatElemMor c mor comp (x ** px)
+    PolyCatElemMor c mor comp (pos ** dir)
       e
-      (d ** (fst (snd e) ** comp (px (fst (snd e))) (fst e) d m (snd (snd e))))
+      (d ** (fst (snd e) ** comp (dir (fst (snd e))) (fst e) d m (snd (snd e))))
 
 public export
 DirichCatElemObj : (c : Type) -> (mor : IntDifunctorSig c) -> IntArena c -> Type
@@ -1397,13 +1397,13 @@ data DirichCatElemMor :
     DirichCatElemObj c mor p -> DirichCatElemObj c mor p -> Type where
   DCEM : {c : Type} -> {mor : IntDifunctorSig c} ->
     (comp : IntCompSig c mor) ->
-    -- `x` and `px` together form an `IntArena c`.
-    (x : Type) -> (px : x -> c) ->
-    (e : DirichCatElemObj c mor (x ** px)) ->
+    -- `pos` and `dir` together form an `IntArena c`.
+    (pos : Type) -> (dir : pos -> c) ->
+    (e : DirichCatElemObj c mor (pos ** dir)) ->
     -- `d` and `m` together form an object of the slice category of `fst e`.
     (d : c) -> (m : mor d (fst e)) ->
-    DirichCatElemMor c mor comp (x ** px)
-      (d ** (fst (snd e) ** comp d (fst e) (px (fst (snd e))) (snd (snd e)) m))
+    DirichCatElemMor c mor comp (pos ** dir)
+      (d ** (fst (snd e) ** comp d (fst e) (dir (fst (snd e))) (snd (snd e)) m))
       e
 
 ------------------------------------------------------
