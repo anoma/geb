@@ -1340,9 +1340,29 @@ IntPPNTar d c dmor cmor
       (i : ppos) -> cmor (qcovar $ onpos i) (pcovar i)))
 
 public export
+InterpIPPnt : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (p, q : IntProAr d c) -> IntPPNTar d c dmor cmor p q ->
+  IntProfNTSig d c (InterpIPPobj d c dmor cmor p) (InterpIPPobj d c dmor cmor q)
+InterpIPPnt d c dmor cmor dcomp ccomp
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  (onpos ** (dcontra, dcovar)) a b (i ** (dmax, cmyb)) =
+    (onpos i **
+     (dcomp a (pcontra i) (qcontra (onpos i)) (dcontra i) dmax,
+      ccomp (qcovar (onpos i)) (pcovar i) b cmyb (dcovar i)))
+
+public export
 IntEPPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> Type
 IntEPPNTar c mor = IntPPNTar c c mor mor
+
+public export
+InterpIEPPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntEndoProAr c) -> IntEPPNTar c mor p q ->
+  IntEndoProfNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
+InterpIEPPnt c mor comp = InterpIPPnt c c mor mor comp comp
 
 -------------------------------------
 -------------------------------------
