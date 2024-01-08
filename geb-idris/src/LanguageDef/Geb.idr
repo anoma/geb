@@ -1297,11 +1297,20 @@ IntProAr : (d, c : Type) -> Type
 IntProAr d c = (pos : Type ** (pos -> d, pos -> c))
 
 public export
+IntEndoProAr : (c : Type) -> Type
+IntEndoProAr c = IntProAr c c
+
+public export
 InterpIPPobj : (d, c : Type) ->
   (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
   IntProAr d c -> d -> c -> Type
 InterpIPPobj d c dmor cmor (pos ** (contra, covar)) a b =
    (i : pos ** (dmor a (contra i), cmor (covar i) b))
+
+public export
+InterpIEPPobj : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntEndoProAr c -> c -> c -> Type
+InterpIEPPobj c mor = InterpIPPobj c c mor mor
 
 public export
 InterpIPPdimap : (d, c : Type) ->
@@ -1312,6 +1321,13 @@ InterpIPPdimap : (d, c : Type) ->
 InterpIPPdimap d c dmor cmor dcomp ccomp (pos ** (contra, covar)) s t a b
   dmas cmtb (i ** (dmsx, cmyt)) =
     (i ** (dcomp a s (contra i) dmsx dmas, ccomp (covar i) t b cmtb cmyt))
+
+public export
+InterpIEPPdimap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntEndoProAr c) ->
+  IntEndoDimapSig c mor (InterpIEPPobj c mor ar)
+InterpIEPPdimap c mor comp = InterpIPPdimap c c mor mor comp comp
 
 -------------------------------------
 -------------------------------------
