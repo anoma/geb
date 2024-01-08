@@ -1364,6 +1364,32 @@ InterpIEPPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProfNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
 InterpIEPPnt c mor comp = InterpIPPnt c c mor mor comp comp
 
+public export
+IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntEndoProAr c -> IntEndoProAr c -> Type
+IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
+  (onpos : ppos -> qpos **
+   ((i : ppos) ->
+      mor (pcovar i) (pcontra i) -> mor (pcontra i) (qcontra $ onpos i),
+    (i : ppos) ->
+      mor (pcovar i) (pcontra i) -> mor (qcovar $ onpos i) (pcovar i)))
+
+public export
+InterpIEPPdint : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntEndoProAr c) -> IntPDiNTar c mor p q ->
+  IntDiNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
+InterpIEPPdint c mor comp
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  (onpos ** (dcontra, dcovar)) a (i ** (cmax, cmya)) =
+    let
+      passign : mor (pcovar i) (pcontra i) =
+        comp (pcovar i) a (pcontra i) cmax cmya
+    in
+    (onpos i **
+     (comp a (pcontra i) (qcontra $ onpos i) (dcontra i passign) cmax,
+      comp (qcovar $ onpos i) (pcovar i) a cmya (dcovar i passign)))
+
 -------------------------------------
 -------------------------------------
 ---- Dirichlet-functor embedding ----
