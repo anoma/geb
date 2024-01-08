@@ -1380,11 +1380,11 @@ data PolyCatElemMor :
     -- `pos` and `dir` together form an `IntArena c`.
     (pos : Type) -> (dir : pos -> c) ->
     (e : PolyCatElemObj c mor (pos ** dir)) ->
-    -- `x` and `m` together form an object of the coslice category of `fst e`.
-    (x : c) -> (m : mor (fst e) x) ->
+    -- `y` and `m` together form an object of the coslice category of `fst e`.
+    (y : c) -> (m : mor (fst e) y) ->
     PolyCatElemMor c mor comp (pos ** dir)
       e
-      (x ** (fst (snd e) ** comp (dir (fst (snd e))) (fst e) x m (snd (snd e))))
+      (y ** (fst (snd e) ** comp (dir (fst (snd e))) (fst e) y m (snd (snd e))))
 
 public export
 DirichCatElemObj : (c : Type) -> (mor : IntDifunctorSig c) -> IntArena c -> Type
@@ -1400,10 +1400,10 @@ data DirichCatElemMor :
     -- `pos` and `dir` together form an `IntArena c`.
     (pos : Type) -> (dir : pos -> c) ->
     (e : DirichCatElemObj c mor (pos ** dir)) ->
-    -- `x` and `m` together form an object of the slice category of `fst e`.
-    (x : c) -> (m : mor x (fst e)) ->
+    -- `y` and `m` together form an object of the slice category of `fst e`.
+    (y : c) -> (m : mor y (fst e)) ->
     DirichCatElemMor c mor comp (pos ** dir)
-      (x ** (fst (snd e) ** comp x (fst e) (dir (fst (snd e))) (snd (snd e)) m))
+      (y ** (fst (snd e) ** comp y (fst e) (dir (fst (snd e))) (snd (snd e)) m))
       e
 
 ------------------------------------------------------
