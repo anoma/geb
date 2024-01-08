@@ -1286,110 +1286,6 @@ InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
   (i ** dm) =
     (onpos i ** comp x (pdir i) (qdir (onpos i)) (ondir i) dm)
 
------------------------------------------
------------------------------------------
----- Internal polynomial profunctors ----
------------------------------------------
------------------------------------------
-
-public export
-IntProAr : (d, c : Type) -> Type
-IntProAr d c = (pos : Type ** (pos -> d, pos -> c))
-
-public export
-IntEndoProAr : (c : Type) -> Type
-IntEndoProAr c = IntProAr c c
-
-public export
-InterpIPPobj : (d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  IntProAr d c -> d -> c -> Type
-InterpIPPobj d c dmor cmor (pos ** (contra, covar)) a b =
-   (i : pos ** (dmor a (contra i), cmor (covar i) b))
-
-public export
-InterpIEPPobj : (c : Type) -> (mor : IntDifunctorSig c) ->
-  IntEndoProAr c -> c -> c -> Type
-InterpIEPPobj c mor = InterpIPPobj c c mor mor
-
-public export
-InterpIPPdimap : (d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
-  (ar : IntProAr d c) ->
-  IntDimapSig d c dmor cmor (InterpIPPobj d c dmor cmor ar)
-InterpIPPdimap d c dmor cmor dcomp ccomp (pos ** (contra, covar)) s t a b
-  dmas cmtb (i ** (dmsx, cmyt)) =
-    (i ** (dcomp a s (contra i) dmsx dmas, ccomp (covar i) t b cmtb cmyt))
-
-public export
-InterpIEPPdimap : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : IntCompSig c mor) ->
-  (ar : IntEndoProAr c) ->
-  IntEndoDimapSig c mor (InterpIEPPobj c mor ar)
-InterpIEPPdimap c mor comp = InterpIPPdimap c c mor mor comp comp
-
-public export
-IntPPNTar : (d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  IntProAr d c -> IntProAr d c -> Type
-IntPPNTar d c dmor cmor
-  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
-    (onpos : ppos -> qpos **
-     ((i : ppos) -> dmor (pcontra i) (qcontra $ onpos i),
-      (i : ppos) -> cmor (qcovar $ onpos i) (pcovar i)))
-
-public export
-InterpIPPnt : (d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
-  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
-  (p, q : IntProAr d c) -> IntPPNTar d c dmor cmor p q ->
-  IntProfNTSig d c (InterpIPPobj d c dmor cmor p) (InterpIPPobj d c dmor cmor q)
-InterpIPPnt d c dmor cmor dcomp ccomp
-  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
-  (onpos ** (dcontra, dcovar)) a b (i ** (dmax, cmyb)) =
-    (onpos i **
-     (dcomp a (pcontra i) (qcontra (onpos i)) (dcontra i) dmax,
-      ccomp (qcovar (onpos i)) (pcovar i) b cmyb (dcovar i)))
-
-public export
-IntEPPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
-  IntEndoProAr c -> IntEndoProAr c -> Type
-IntEPPNTar c mor = IntPPNTar c c mor mor
-
-public export
-InterpIEPPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : IntCompSig c mor) ->
-  (p, q : IntEndoProAr c) -> IntEPPNTar c mor p q ->
-  IntEndoProfNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
-InterpIEPPnt c mor comp = InterpIPPnt c c mor mor comp comp
-
-public export
-IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
-  IntEndoProAr c -> IntEndoProAr c -> Type
-IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
-  (onpos : ppos -> qpos **
-   ((i : ppos) ->
-      mor (pcovar i) (pcontra i) -> mor (pcontra i) (qcontra $ onpos i),
-    (i : ppos) ->
-      mor (pcovar i) (pcontra i) -> mor (qcovar $ onpos i) (pcovar i)))
-
-public export
-InterpIEPPdint : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : IntCompSig c mor) ->
-  (p, q : IntEndoProAr c) -> IntPDiNTar c mor p q ->
-  IntDiNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
-InterpIEPPdint c mor comp
-  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
-  (onpos ** (dcontra, dcovar)) a (i ** (cmax, cmya)) =
-    let
-      passign : mor (pcovar i) (pcontra i) =
-        comp (pcovar i) a (pcontra i) cmax cmya
-    in
-    (onpos i **
-     (comp a (pcontra i) (qcontra $ onpos i) (dcontra i passign) cmax,
-      comp (qcovar $ onpos i) (pcovar i) a cmya (dcovar i passign)))
-
 -------------------------------------
 -------------------------------------
 ---- Dirichlet-functor embedding ----
@@ -1517,6 +1413,110 @@ data DirichCatElemMor :
     DirichCatElemMor c mor comp (pos ** dir)
       (y ** (i ** comp y x (dir i) dm m))
       (x ** (i ** dm))
+
+-----------------------------------------
+-----------------------------------------
+---- Internal polynomial profunctors ----
+-----------------------------------------
+-----------------------------------------
+
+public export
+IntProAr : (d, c : Type) -> Type
+IntProAr d c = (pos : Type ** (pos -> d, pos -> c))
+
+public export
+IntEndoProAr : (c : Type) -> Type
+IntEndoProAr c = IntProAr c c
+
+public export
+InterpIPPobj : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  IntProAr d c -> d -> c -> Type
+InterpIPPobj d c dmor cmor (pos ** (contra, covar)) a b =
+   (i : pos ** (dmor a (contra i), cmor (covar i) b))
+
+public export
+InterpIEPPobj : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntEndoProAr c -> c -> c -> Type
+InterpIEPPobj c mor = InterpIPPobj c c mor mor
+
+public export
+InterpIPPdimap : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (ar : IntProAr d c) ->
+  IntDimapSig d c dmor cmor (InterpIPPobj d c dmor cmor ar)
+InterpIPPdimap d c dmor cmor dcomp ccomp (pos ** (contra, covar)) s t a b
+  dmas cmtb (i ** (dmsx, cmyt)) =
+    (i ** (dcomp a s (contra i) dmsx dmas, ccomp (covar i) t b cmtb cmyt))
+
+public export
+InterpIEPPdimap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntEndoProAr c) ->
+  IntEndoDimapSig c mor (InterpIEPPobj c mor ar)
+InterpIEPPdimap c mor comp = InterpIPPdimap c c mor mor comp comp
+
+public export
+IntPPNTar : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  IntProAr d c -> IntProAr d c -> Type
+IntPPNTar d c dmor cmor
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
+    (onpos : ppos -> qpos **
+     ((i : ppos) -> dmor (pcontra i) (qcontra $ onpos i),
+      (i : ppos) -> cmor (qcovar $ onpos i) (pcovar i)))
+
+public export
+InterpIPPnt : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (p, q : IntProAr d c) -> IntPPNTar d c dmor cmor p q ->
+  IntProfNTSig d c (InterpIPPobj d c dmor cmor p) (InterpIPPobj d c dmor cmor q)
+InterpIPPnt d c dmor cmor dcomp ccomp
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  (onpos ** (dcontra, dcovar)) a b (i ** (dmax, cmyb)) =
+    (onpos i **
+     (dcomp a (pcontra i) (qcontra (onpos i)) (dcontra i) dmax,
+      ccomp (qcovar (onpos i)) (pcovar i) b cmyb (dcovar i)))
+
+public export
+IntEPPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntEndoProAr c -> IntEndoProAr c -> Type
+IntEPPNTar c mor = IntPPNTar c c mor mor
+
+public export
+InterpIEPPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntEndoProAr c) -> IntEPPNTar c mor p q ->
+  IntEndoProfNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
+InterpIEPPnt c mor comp = InterpIPPnt c c mor mor comp comp
+
+public export
+IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntEndoProAr c -> IntEndoProAr c -> Type
+IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
+  (onpos : ppos -> qpos **
+   ((i : ppos) ->
+      mor (pcovar i) (pcontra i) -> mor (pcontra i) (qcontra $ onpos i),
+    (i : ppos) ->
+      mor (pcovar i) (pcontra i) -> mor (qcovar $ onpos i) (pcovar i)))
+
+public export
+InterpIEPPdint : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntEndoProAr c) -> IntPDiNTar c mor p q ->
+  IntDiNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
+InterpIEPPdint c mor comp
+  (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
+  (onpos ** (dcontra, dcovar)) a (i ** (cmax, cmya)) =
+    let
+      passign : mor (pcovar i) (pcontra i) =
+        comp (pcovar i) a (pcontra i) cmax cmya
+    in
+    (onpos i **
+     (comp a (pcontra i) (qcontra $ onpos i) (dcontra i passign) cmax,
+      comp (qcovar $ onpos i) (pcovar i) a cmya (dcovar i passign)))
 
 ------------------------------------------------------
 ------------------------------------------------------
