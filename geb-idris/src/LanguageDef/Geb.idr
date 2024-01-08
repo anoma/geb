@@ -1347,29 +1347,29 @@ PolyCatElemObj c mor p = (x : c ** InterpIPFobj c mor p x)
 -- specifically of a polynomial endofunctor on `Type` yields the following:
 --
 --  - A position `i` of the polynomial functor
---  - A pair of types `c`, `d`
---  - An assignment of the directions of `p` at `i` to `c` (together with the
---    type `c`, this can be viewed as an object of the coslice category of
+--  - A pair of types `x`, `y`
+--  - An assignment of the directions of `p` at `i` to `x` (together with the
+--    type `x`, this can be viewed as an object of the coslice category of
 --    the direction-set)
---  - A morphism in `Type` (a function) from `c` to `d`
+--  - A morphism in `Type` (a function) from `x` to `y`
 --
 -- One way of looking at all of that together is, if we view a polynomial
--- functor `p` as generating open terms of a data structure, then a morphism
--- of its category of elements is a closed term with elements of `c`
--- substituted for its variables (comprising the type `c` which we then view
+-- functor `p` as representing open terms of a data structure, then a morphism
+-- of its category of elements is a closed term with elements of `x`
+-- substituted for its variables (comprising the type `x` which we then view
 -- as a type of variables together with the choice of a position and and
--- assignment of its directions to `c`), together with a function from `c`
--- to `d`, which uniquely determines a closed term with elements of `d`
--- substituted for its variables, by mapping the elements of `c` in the
--- closed term with the function to elements of `d`, while preserving the
+-- assignment of its directions to `x`), together with a function from `x`
+-- to `y`, which uniquely determines a closed term with elements of `y`
+-- substituted for its variables, by mapping the elements of `x` in the
+-- closed term with the chosen function to elements of `y`, while preserving the
 -- structure of the term.
 --
 -- Because of that unique determination, we do not need explicitly to choose
--- the domain object, as in the general definition of the category of elements
--- (or indeed of morphisms in general) -- `d` and `m` alone determine precisely
--- one object of the category of elements and one morphism of the catgory of
--- elements whose codomain is that object (and whose domain is the chosen
--- object).
+-- the codomain object, as in the general definition of the category of elements
+-- (or indeed of morphisms in general) -- the choice of the domain object
+-- together with a morphism from its underlying object to some other object
+-- between them uniquely determine the one codomain object to which there
+-- is a corresponding morphism in the category of elements.
 public export
 data PolyCatElemMor :
     (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
@@ -1379,7 +1379,10 @@ data PolyCatElemMor :
     (comp : IntCompSig c mor) ->
     -- `pos` and `dir` together form an `IntArena c`.
     (pos : Type) -> (dir : pos -> c) ->
-    -- `i` and `dm` comprise a term of `InterpIPFobj c mor (pos ** dir) x`.
+    -- `i` and `dm` comprise a term of `InterpIPFobj c mor (pos ** dir) x`;
+    -- `x` and `dm` together comprise an object of the coslice category
+    -- of `dir i`.  `x`, `i`, and `dm` all together comprise an object of
+    -- the category of elements of `(pos ** dir)`.
     (x : c) -> (i : pos) -> (dm : mor (dir i) x) ->
     -- `y` and `m` together form an object of the coslice category of `x`.
     (y : c) -> (m : mor x y) ->
@@ -1400,7 +1403,10 @@ data DirichCatElemMor :
     (comp : IntCompSig c mor) ->
     -- `pos` and `dir` together form an `IntArena c`.
     (pos : Type) -> (dir : pos -> c) ->
-    -- `i` and `dm` comprise a term of `InterpIDFobj c mor (pos ** dir) x`.
+    -- `i` and `dm` comprise a term of `InterpIDFobj c mor (pos ** dir) x`;
+    -- `x` and `dm` together comprise an object of the slice category
+    -- of `dir i`.  `x`, `i`, and `dm` all together comprise an object of
+    -- the category of elements of `(pos ** dir)`.
     (x : c) -> (i : pos) -> (dm : mor x (dir i)) ->
     -- `y` and `m` together form an object of the slice category of `x`.
     (y : c) -> (m : mor y x) ->
