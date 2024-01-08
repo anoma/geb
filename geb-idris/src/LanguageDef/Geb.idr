@@ -1286,6 +1286,33 @@ InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
   (i ** dm) =
     (onpos i ** comp x (pdir i) (qdir (onpos i)) (ondir i) dm)
 
+-----------------------------------------
+-----------------------------------------
+---- Internal polynomial profunctors ----
+-----------------------------------------
+-----------------------------------------
+
+public export
+IntProAr : (d, c : Type) -> Type
+IntProAr d c = (pos : Type ** (pos -> d, pos -> c))
+
+public export
+InterpIPPobj : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  IntProAr d c -> d -> c -> Type
+InterpIPPobj d c dmor cmor (pos ** (contra, covar)) a b =
+   (i : pos ** (dmor a (contra i), cmor (covar i) b))
+
+public export
+InterpIPPdimap : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (ar : IntProAr d c) ->
+  IntDimapSig d c dmor cmor (InterpIPPobj d c dmor cmor ar)
+InterpIPPdimap d c dmor cmor dcomp ccomp (pos ** (contra, covar)) s t a b
+  dmas cmtb (i ** (dmsx, cmyt)) =
+    (i ** (dcomp a s (contra i) dmsx dmas, ccomp (covar i) t b cmtb cmyt))
+
 -------------------------------------
 -------------------------------------
 ---- Dirichlet-functor embedding ----
