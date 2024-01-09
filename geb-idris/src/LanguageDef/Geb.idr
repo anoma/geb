@@ -1558,6 +1558,38 @@ InterpIEPPdint c mor comp
      (comp a (pcontra i) (qcontra $ onpos i) (dcontra i passign) cmax,
       comp (qcovar $ onpos i) (pcovar i) a cmya (dcovar i passign)))
 
+public export
+intPDiNTvcomp :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (p, q, r : IntEndoProAr c) ->
+  IntPDiNTar c mor q r -> IntPDiNTar c mor p q -> IntPDiNTar c mor p r
+intPDiNTvcomp c mor comp
+  (ppos ** (pcontra, pcovar))
+  (qpos ** (qcontra, qcovar))
+  (rpos ** (rcontra, rcovar))
+  (bonpos ** (bcontra, bcovar))
+  (aonpos ** (acontra, acovar)) =
+    (bonpos . aonpos **
+      let
+        qasn :
+          ((i : ppos) -> mor (pcovar i) (pcontra i) ->
+            mor (qcovar (aonpos i)) (qcontra (aonpos i))) =
+          \i, pasn =>
+            comp (qcovar (aonpos i)) (pcontra i) (qcontra (aonpos i))
+              (acontra i pasn)
+              (comp (qcovar (aonpos i)) (pcovar i) (pcontra i)
+                pasn
+                (acovar i pasn))
+      in
+      (\i, pasn =>
+        comp (pcontra i) (qcontra (aonpos i)) (rcontra (bonpos (aonpos i)))
+          (bcontra (aonpos i) (qasn i pasn))
+          (acontra i pasn),
+       \i, pasn =>
+        comp (rcovar (bonpos (aonpos i))) (qcovar (aonpos i)) (pcovar i)
+          (acovar i pasn)
+          (bcovar (aonpos i) (qasn i pasn))))
+
 ------------------------------------------------------
 ---- Profunctor categories of (diagonal) elements ----
 ------------------------------------------------------
