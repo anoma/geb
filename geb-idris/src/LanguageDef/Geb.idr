@@ -1558,7 +1558,7 @@ data PProfCatElemMor :
     {dcomp : IntCompSig d dmor} -> {ccomp : IntCompSig c cmor} ->
     -- `pos`, `contra`, and `covar` together form an `IntProAr d c`.
     (pos : Type) -> (contra : pos -> d) -> (covar : pos -> c) ->
-    -- `i` `ddm`, and `cdm` together comprise a term of
+    -- `i`, `ddm`, and `cdm` together comprise a term of
     -- `InterpIPPobj d c dmor cmor (pos ** (contra, covar)) x y`;
     -- `x` and `ddm` together comprise an object of the slice category
     -- of `contra i`; `y` and `cdm` together comprise an object of
@@ -1575,6 +1575,34 @@ data PProfCatElemMor :
       (x ** y ** i ** (ddm, cdm))
       (a ** b ** i **
        (dcomp a x (contra i) ddm dmax, ccomp (covar i) y b cmyb cdm))
+
+public export
+PProfCatDiagElemObj : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntEndoProAr c -> Type
+PProfCatDiagElemObj c mor p = (x : c ** InterpIEPPobj c mor p x x)
+
+public export
+data PProfCatDiagElemMor :
+    (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+    (p : IntEndoProAr c) ->
+    PProfCatDiagElemObj c mor p -> PProfCatDiagElemObj c mor p -> Type where
+  PPCDEM :
+    {c : Type} -> {mor : IntDifunctorSig c} -> {comp : IntCompSig c mor} ->
+    -- `pos`, `contra`, and `covar` together form an `IntEndoProAr c`.
+    (pos : Type) -> (contra : pos -> c) -> (covar : pos -> c) ->
+    -- `x` and `mxy` together could be viewed as an object of the slice
+    -- category of `y`; `y` and `mxy` together could be viewed as an object
+    -- of the coslice category of `x`.
+    (x, y : c) -> (mxy : mor x y) ->
+    -- `i`, `mcontra`, and `mcovar` together comprise a term of
+    -- `InterpIEPPobj c mor (pos ** (contra, covar)) y x`; `y` and
+    -- `mcontra` together comprise an object of the slice category of
+    -- `contra i`; `x` and `mcovar` together comprise an object of the coslice
+    -- category of `covar i`.
+    (i : pos) -> (mcontra : mor y (contra i)) -> (mcovar : mor (covar i) x) ->
+    PProfCatDiagElemMor c mor comp (pos ** (contra, covar))
+      (x ** i ** (comp x y (contra i) mcontra mxy, mcovar))
+      (y ** i ** (mcontra, comp (covar i) x y mxy mcovar))
 
 ------------------------------------------------------
 ------------------------------------------------------
