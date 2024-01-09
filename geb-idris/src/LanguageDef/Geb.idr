@@ -1504,6 +1504,30 @@ InterpIEPPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProfNTSig c (InterpIEPPobj c mor p) (InterpIEPPobj c mor q)
 InterpIEPPnt c mor comp = InterpIPPnt c c mor mor comp comp
 
+public export
+intPPNTvcomp : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (p, q, r : IntProAr d c) ->
+  IntPPNTar d c dmor cmor q r ->
+  IntPPNTar d c dmor cmor p q ->
+  IntPPNTar d c dmor cmor p r
+intPPNTvcomp d c dmor cmor dcomp ccomp
+  (ppos ** (pcontra, pcovar))
+  (qpos ** (qcontra, qcovar))
+  (rpos ** (rcontra, rcovar))
+  (bonpos ** (bcontra, bcovar))
+  (aonpos ** (acontra, acovar)) =
+    (bonpos . aonpos **
+     (\i =>
+        dcomp (pcontra i) (qcontra (aonpos i)) (rcontra (bonpos (aonpos i)))
+          (bcontra (aonpos i))
+          (acontra i),
+      \i =>
+        ccomp (rcovar (bonpos (aonpos i))) (qcovar (aonpos i)) (pcovar i)
+          (acovar i)
+          (bcovar (aonpos i))))
+
 ----------------------------------------------------
 ---- Profunctor di/para-natural transformations ----
 ----------------------------------------------------
