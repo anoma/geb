@@ -6092,22 +6092,22 @@ SpliceDualPairCobase {cat} = fst
 
 public export
 data SpliceObj' : Type -> Type -> Type where
-  SplO : {0 j : Type} -> {i : SliceObj j} ->
-    (x : SliceObj j) -> SliceMorphism {a=j} i x ->
-    SpliceObj' j (Sigma {a=j} i)
+  SplO : {0 j : Type} -> (x : SliceObj j) ->
+  {i : SliceObj j} -> SliceMorphism {a=j} i x ->
+  SpliceObj' j (Sigma {a=j} i)
 
 public export
 SpliceSlice : {0 j, i : Type} -> SpliceObj' j i -> SliceObj j
-SpliceSlice {j} {i=(Sigma {a=j} i)} (SplO {j} {i} x mix) = x
+SpliceSlice {j} {i=(Sigma {a=j} i)} (SplO {j} x {i} mix) = x
 
 public export
 SpliceCoslice : {0 j, i : Type} -> SpliceObj' j i -> SliceObj j
-SpliceCoslice {j} {i=(Sigma {a=j} i)} (SplO {j} {i} x mix) = i
+SpliceCoslice {j} {i=(Sigma {a=j} i)} (SplO {j} x {i} mix) = i
 
 public export
 spliceAssign : {0 j, i : Type} -> (spl : SpliceObj' j i) ->
   SliceMorphism {a=j} (SpliceCoslice {j} {i} spl) (SpliceSlice {j} {i} spl)
-spliceAssign {j} {i=(Sigma {a=j} i)} (SplO {j} {i} x mix) = mix
+spliceAssign {j} {i=(Sigma {a=j} i)} (SplO {j} x {i} mix) = mix
 
 public export
 data SpliceMorph' : {j, i : Type} ->
@@ -6117,8 +6117,8 @@ data SpliceMorph' : {j, i : Type} ->
     (0 mix : SliceMorphism {a=j} i x) ->
     (0 mxx' : SliceMorphism {a=j} x x') ->
     SpliceMorph' {j} {i=(Sigma {a=j} i)}
-      (SplO {j} {i} x mix)
-      (SplO {j} {i} x' (sliceComp {a=j} mxx' mix))
+      (SplO {j} x {i} mix)
+      (SplO {j} x' {i} (sliceComp {a=j} mxx' mix))
 
 public export
 SpliceObj : SpliceCat -> Type
@@ -6152,7 +6152,7 @@ SpliceMorph {cat} sig =
 public export
 spliceId' : {0 j, i : Type} ->
   (spl : SpliceObj' j i) -> SpliceMorph' {j} {i} spl spl
-spliceId' {j} {i=(Sigma {a=j} i)} (SplO {j} {i} x mix) =
+spliceId' {j} {i=(Sigma {a=j} i)} (SplO {j} x {i} mix) =
   SplM {j} {i} {x} {x'=x} mix (sliceId {a=j} x)
 
 public export
