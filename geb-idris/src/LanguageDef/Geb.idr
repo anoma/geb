@@ -6097,6 +6097,19 @@ data SpliceObj' : Type -> Type -> Type where
     SpliceObj' j (Sigma {a=j} i)
 
 public export
+SpliceSlice : {0 j, i : Type} -> SpliceObj' j i -> SliceObj j
+SpliceSlice {j} {i=(Sigma {a=j} i)} (SplO {j} {i} x mix) = x
+
+public export
+SpliceCoslice : {0 j, i : Type} -> SpliceObj' j i -> SliceObj j
+SpliceCoslice {j} {i=(Sigma {a=j} i)} (SplO {j} {i} x mix) = i
+
+public export
+spliceAssign : {0 j, i : Type} -> (spl : SpliceObj' j i) ->
+  SliceMorphism {a=j} (SpliceCoslice {j} {i} spl) (SpliceSlice {j} {i} spl)
+spliceAssign {j} {i=(Sigma {a=j} i)} (SplO {j} {i} x mix) = mix
+
+public export
 data SpliceMorph' : {j, i : Type} ->
     SpliceObj' j i -> SpliceObj' j i -> Type where
   SplM : {0 j : Type} -> {0 i : SliceObj j} ->
