@@ -6091,6 +6091,23 @@ SpliceDualPairCobase : {cat : SpliceCat} ->
 SpliceDualPairCobase {cat} = fst
 
 public export
+data SpliceObj' : Type -> Type -> Type where
+  SplO : {0 j : Type} -> {i : SliceObj j} ->
+    (x : SliceObj j) -> SliceMorphism {a=j} i x ->
+    SpliceObj' j (Sigma {a=j} i)
+
+public export
+data SpliceMorph' : {j, i : Type} ->
+    SpliceObj' j i -> SpliceObj' j i -> Type where
+  SplM : {0 j : Type} -> {0 i : SliceObj j} ->
+    {0 x, x' : SliceObj j} ->
+    (0 mix : SliceMorphism {a=j} i x) ->
+    (0 mxx' : SliceMorphism {a=j} x x') ->
+    SpliceMorph' {j} {i=(Sigma {a=j} i)}
+      (SplO {j} {i} x mix)
+      (SplO {j} {i} x' (sliceComp {a=j} mxx' mix))
+
+public export
 SpliceBaseObj : SpliceCat -> Type
 SpliceBaseObj = SliceObj . SpliceBase
 
@@ -7064,20 +7081,3 @@ record ProYoProshf
   constructor MkProYoPro
   ProYoProEmbed : (q : ProfunctorSig) ->
     {auto 0 _ : Profunctor q} -> ProfNT p (pp q)
-
-public export
-data SpliceObj' : Type -> Type -> Type where
-  SplO : {0 j : Type} -> {i : SliceObj j} ->
-    (x : SliceObj j) -> SliceMorphism {a=j} i x ->
-    SpliceObj' j (Sigma {a=j} i)
-
-public export
-data SpliceMorph' : {j, i : Type} ->
-    SpliceObj' j i -> SpliceObj' j i -> Type where
-  SplM : {0 j : Type} -> {0 i : SliceObj j} ->
-    {0 x, x' : SliceObj j} ->
-    (0 mix : SliceMorphism {a=j} i x) ->
-    (0 mxx' : SliceMorphism {a=j} x x') ->
-    SpliceMorph' {j} {i=(Sigma {a=j} i)}
-      (SplO {j} {i} x mix)
-      (SplO {j} {i} x' (sliceComp {a=j} mxx' mix))
