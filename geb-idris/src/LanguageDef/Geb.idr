@@ -6137,9 +6137,15 @@ SpliceMorph {cat} sig =
 ----------------------------------------------
 
 public export
+spliceId' : {0 j, i : Type} ->
+  (spl : SpliceObj' j i) -> SpliceMorph' {j} {i} spl spl
+spliceId' {j} {i=(Sigma {a=j} i)} (SplO {j} {i} x mix) =
+  SplM {j} {i} {x} {x'=x} mix (sliceId {a=j} x)
+
+public export
 spliceId : {cat : SpliceCat} ->
   (spl : SpliceObj cat) -> SpliceMorph {cat} (spl, spl)
-spliceId {cat} spl = ?spliceId_hole
+spliceId {cat} spl = spliceId' {j=(SpliceBase cat)} {i=(SpliceCobase cat)} spl
 
 public export
 spliceComp : {cat : SpliceCat} ->
