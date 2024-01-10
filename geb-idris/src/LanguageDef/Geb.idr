@@ -6148,12 +6148,21 @@ spliceId : {cat : SpliceCat} ->
 spliceId {cat} spl = spliceId' {j=(SpliceBase cat)} {i=(SpliceCobase cat)} spl
 
 public export
+spliceComp' : {j, i : Type} -> {0 spl, spl', spl'' : SpliceObj' j i} ->
+  SpliceMorph' {j} {i} spl' spl'' ->
+  SpliceMorph' {j} {i} spl spl' ->
+  SpliceMorph' {j} {i} spl spl''
+spliceComp' {j} (SplM {i} {x} {x'} _ mxx') (SplM {x=y} miy myy') =
+  (SplM miy (sliceComp mxx' myy'))
+
+public export
 spliceComp : {cat : SpliceCat} ->
   {spl, spl', spl'' : SpliceObj cat} ->
   SpliceMorph {cat} (spl', spl'') ->
   SpliceMorph {cat} (spl, spl') ->
   SpliceMorph {cat} (spl, spl'')
-spliceComp {cat} spl = ?spliceComp_hole
+spliceComp {cat} {spl} {spl'} {spl''} =
+  spliceComp' {j=(SpliceBase cat)} {i=(SpliceCobase cat)} {spl} {spl'} {spl''}
 
 public export
 SpliceObjComp : {0 x, y, z : Type} ->
