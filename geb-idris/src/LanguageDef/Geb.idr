@@ -6177,17 +6177,6 @@ spliceComp : {cat : SpliceCat} ->
 spliceComp {cat} {spl} {spl'} {spl''} =
   spliceComp' {j=(SpliceBase cat)} {i=(SpliceCobase cat)} {spl} {spl'} {spl''}
 
-------------------------------------------------
----- Splice objects as discrete profunctors ----
-------------------------------------------------
-
-public export
-data SpliceDiscProf : {0 j, i : Type} -> SpliceObj' j i -> j -> i -> Type where
-  SplDProf : {0 j : Type} -> (x : SliceObj j) ->
-    {0 i : SliceObj j} -> {mix : SliceMorphism {a=j} i x} ->
-    {ej : j} -> (ei : i ej) ->
-    SpliceDiscProf {j} {i=(Sigma {a=j} i)} (SplO {j} x {i} mix) ej (ej ** ei)
-
 --------------------------------------------------
 --------------------------------------------------
 ---- Lawvere-style Geb program representation ----
