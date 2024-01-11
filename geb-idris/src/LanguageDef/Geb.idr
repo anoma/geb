@@ -1414,6 +1414,25 @@ data DirichCatElemMor :
       (y ** (i ** comp y x (dir i) dm m))
       (x ** (i ** dm))
 
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+---- Dirichlet presheaves enriched over polynomial copresheaves ----
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+
+public export
+IntDirichPolyCatObj : (d, c : Type) -> (cmor : IntDifunctorSig c) -> Type
+IntDirichPolyCatObj d c cmor =
+  (pos : IntArena c ** PolyCatElemObj c cmor pos -> d)
+
+public export
+InterpIDPFobj : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) ->
+  (cmor : IntDifunctorSig c) ->
+  IntDirichPolyCatObj d c cmor -> IntProfunctorSig d c
+InterpIDPFobj d c dmor cmor (pos ** dir) ed ec =
+  (i : InterpIPFobj c cmor pos ec ** dmor ed (dir (ec ** i)))
+
 -----------------------------------------
 -----------------------------------------
 ---- Internal polynomial profunctors ----
