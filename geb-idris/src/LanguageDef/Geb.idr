@@ -1433,6 +1433,19 @@ InterpIDPFobj : (d, c : Type) ->
 InterpIDPFobj d c dmor cmor (pos ** dir) ed ec =
   (i : InterpIPFobj c cmor pos ec ** dmor ed (dir (ec ** i)))
 
+public export
+IntPolyDirichCatObj : (d, c : Type) -> (dmor : IntDifunctorSig d) -> Type
+IntPolyDirichCatObj d c dmor =
+  (pos : IntArena d ** DirichCatElemObj d dmor pos -> c)
+
+public export
+InterpIPDFobj : (d, c : Type) ->
+  (dmor : IntDifunctorSig d) ->
+  (cmor : IntDifunctorSig c) ->
+  IntPolyDirichCatObj d c dmor -> IntProfunctorSig d c
+InterpIPDFobj d c dmor cmor (pos ** dir) ed ec =
+  (i : InterpIDFobj d dmor pos ed ** cmor ec (dir (ed ** i)))
+
 -----------------------------------------
 -----------------------------------------
 ---- Internal polynomial profunctors ----
