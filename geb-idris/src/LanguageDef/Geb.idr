@@ -6177,11 +6177,6 @@ spliceComp : {cat : SpliceCat} ->
 spliceComp {cat} {spl} {spl'} {spl''} =
   spliceComp' {j=(SpliceBase cat)} {i=(SpliceCobase cat)} {spl} {spl'} {spl''}
 
-public export
-spliceSubst : {0 x, y, z : Type} ->
-  SpliceObj (y, z) -> SpliceObj (x, y) -> SpliceObj (x, z)
-spliceSubst {x} {y} {z} spl' spl = ?SpliceObjComp_hole
-
 --------------------------------------------------
 --------------------------------------------------
 ---- Lawvere-style Geb program representation ----
