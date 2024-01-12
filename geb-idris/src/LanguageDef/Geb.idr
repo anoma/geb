@@ -213,6 +213,18 @@ public export
 IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
 
 public export
+0 IntIdLSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) -> IntIdSig c mor -> Type
+IntIdLSig c mor comp cid =
+  (0 x, y : c) -> (m : mor x y) -> comp x x y m (cid x) = m
+
+public export
+0 IntIdRSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) -> IntIdSig c mor -> Type
+IntIdRSig c mor comp cid =
+  (0 x, y : c) -> (m : mor x y) -> comp x y y (cid y) m = m
+
+public export
 0 IntAssocSig : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   Type
@@ -820,7 +832,9 @@ IntDiYonedaEmbedMorphNatural c mor comp assoc s t a b (mas, mtb) i0 i1 j0 j1
 -- paranatural transformation.
 public export
 0 IntDiYonedaEmbedMorphPara : (0 c : Type) ->
-  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (mor : IntDifunctorSig c) -> (0 cid : IntIdSig c mor) ->
+  (comp : IntCompSig c mor) ->
+  (idl : IntIdLSig c mor comp cid) -> (idr : IntIdRSig c mor comp cid) ->
   (assoc : IntAssocSig c mor comp) ->
   (s, t, a, b : c) ->
   (m : IntEndoOpProdCatMor c mor (s, t) (a, b)) ->
@@ -831,15 +845,17 @@ public export
     (IntDiYonedaEmbedLmap c mor comp a b)
     (IntDiYonedaEmbedRmap c mor comp a b)
     (IntDiYonedaEmbedMorph c mor comp s t a b m)
-IntDiYonedaEmbedMorphPara c mor comp assoc s t a b (mas, mtb) i0 i1
-  mi0i1 (mi0t, msi0) (mi1t, msi1) cond =
-    pairEqCong
-      (rewrite assoc i0 i1 t b mtb mi1t mi0i1 in
-       rewrite fstEq cond in
-       Refl)
-      (rewrite sym (assoc a s i0 i1 mi0i1 msi0 mas) in
-       rewrite sndEq cond in
-       Refl)
+IntDiYonedaEmbedMorphPara c mor cid comp idl idr assoc s t a b (mas, mtb) =
+  IntProfNTRestrictPara c mor cid
+    (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)
+    (IntDiYonedaEmbedLmap c mor comp s t) (IntDiYonedaEmbedRmap c mor comp s t)
+    (IntDiYonedaEmbedLmap c mor comp a b) (IntDiYonedaEmbedRmap c mor comp a b)
+    (\i, j, (mit, msj) => pairEqCong (idl i t mit) Refl)
+    (\i, j, (mit, msj) => pairEqCong Refl (idr s j msj))
+    (\i, j, (mib, maj) => pairEqCong (idl i b mib) Refl)
+    (\i, j, (mib, maj) => pairEqCong Refl (idr a j maj))
+    (IntDiYonedaEmbedMorphNT c mor comp s t a b (mas, mtb))
+    (IntDiYonedaEmbedMorphNatural c mor comp assoc s t a b (mas, mtb))
 
 -- The diYoneda lemma asserts a paranatural isomorphism between two objects
 -- of the enriching category, one of which is an object of paranatural
