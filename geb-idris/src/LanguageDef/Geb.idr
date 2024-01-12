@@ -476,8 +476,8 @@ IntProfNTvComp d c p q r beta alpha x y = beta x y . alpha x y
 -- its restriction to the diagonal is paranatural.
 
 public export
-0 IntProfNTRestrict : (0 c : Type) ->
-  (0 p, q : IntDifunctorSig c) -> IntProfNTSig c c p q -> IntDiNTSig c p q
+IntProfNTRestrict : (0 c : Type) ->
+  (0 p, q : IntDifunctorSig c) -> IntEndoProfNTSig c p q -> IntDiNTSig c p q
 IntProfNTRestrict c p q alpha x = alpha x x
 
 public export
@@ -767,6 +767,16 @@ IntDiYonedaEmbedDimap c mor comp s t =
     (IntDiYonedaEmbedLmap c mor comp s t)
     (IntDiYonedaEmbedRmap c mor comp s t)
 
+public export
+IntDiYonedaEmbedMorphNT : (0 c : Type) ->
+  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (s, t, a, b : c) ->
+  IntEndoOpProdCatMor c mor (s, t) (a, b) ->
+  IntEndoProfNTSig c
+    (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)
+IntDiYonedaEmbedMorphNT c mor comp s t a b (mas, mtb) i j (mit, msj) =
+  (comp i t b mtb mit, comp a s j msj mas)
+
 -- The morphism-map component of the diYoneda embedding.
 -- The domain of that embedding is `opProd(c)`, and the codomain
 -- is the category of difunctors on `c` with paranatural transformations,
@@ -778,13 +788,38 @@ IntDiYonedaEmbedMorph : (0 c : Type) ->
   (s, t, a, b : c) ->
   IntEndoOpProdCatMor c mor (s, t) (a, b) ->
   IntDiNTSig c (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)
-IntDiYonedaEmbedMorph c mor comp s t a b (mas, mtb) i (mit, msi) =
-  (comp i t b mtb mit, comp a s i msi mas)
+IntDiYonedaEmbedMorph c mor comp s t a b (mas, mtb) =
+  IntProfNTRestrict c
+    (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)
+    (IntDiYonedaEmbedMorphNT c mor comp s t a b (mas, mtb))
+
+-- The diYoneda embedding of any morphism of `opProd(c)` is a
+-- natural transformation.
+public export
+0 IntDiYonedaEmbedMorphNatural : (0 c : Type) ->
+  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (assoc : IntAssocSig c mor comp) ->
+  (s, t, a, b : c) ->
+  (m : IntEndoOpProdCatMor c mor (s, t) (a, b)) ->
+  IntProfNTNaturality c c mor mor
+    (IntDiYonedaEmbedObj c mor s t) (IntDiYonedaEmbedObj c mor a b)
+    (IntEndoDimapFromLRmaps c mor (IntDiYonedaEmbedObj c mor s t)
+      (IntDiYonedaEmbedLmap c mor comp s t)
+      (IntDiYonedaEmbedRmap c mor comp s t))
+    (IntEndoDimapFromLRmaps c mor (IntDiYonedaEmbedObj c mor a b)
+      (IntDiYonedaEmbedLmap c mor comp a b)
+      (IntDiYonedaEmbedRmap c mor comp a b))
+    (IntDiYonedaEmbedMorphNT c mor comp s t a b m)
+IntDiYonedaEmbedMorphNatural c mor comp assoc s t a b (mas, mtb) i0 i1 j0 j1
+  mj0i0 mi1j1 (mi0t, msi1) =
+    pairEqCong
+      (rewrite assoc j0 i0 t b mtb mi0t mj0i0 in Refl)
+      (rewrite sym (assoc a s i1 j1 mi1j1 msi1 mas) in Refl)
 
 -- The diYoneda embedding of any morphism of `opProd(c)` is a
 -- paranatural transformation.
 public export
-IntDiYonedaEmbedMorphPara : (0 c : Type) ->
+0 IntDiYonedaEmbedMorphPara : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (assoc : IntAssocSig c mor comp) ->
   (s, t, a, b : c) ->
