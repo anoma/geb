@@ -500,6 +500,29 @@ pfParProductArena : PolyFunc -> PolyFunc -> PolyFunc
 pfParProductArena p q = (pfParProductPos p q ** pfParProductDir p q)
 
 public export
+pfEqualizerPos : (p, q : PolyFunc) -> PolyNatTrans p q -> PolyNatTrans p q ->
+  Type
+pfEqualizerPos (ppos ** pdir) (qpos ** qdir)
+  (aonpos ** aondir) (bonpos ** bondir) =
+    Equalizer aonpos bonpos
+
+public export
+pfEqualizerDir : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) ->
+  pfEqualizerPos p q alpha beta -> Type
+pfEqualizerDir (ppos ** pdir) (qpos ** qdir)
+  (aonpos ** aondir) (bonpos ** bondir) (Element0 i eq) =
+    let
+      ao = aondir i
+      bo = replace {p=(\i' : qpos => qdir i' -> pdir i)} (sym eq) $ bondir i
+    in
+    ?pfEqualizerDir_hole
+
+public export
+pfEqualizer : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> PolyFunc
+pfEqualizer p q alpha beta =
+  (pfEqualizerPos p q alpha beta ** pfEqualizerDir p q alpha beta)
+
+public export
 pfCompositionPos : PolyFunc -> PolyFunc -> Type
 pfCompositionPos q p = (i : pfPos q ** (pfDir {p=q} i -> pfPos p))
 
