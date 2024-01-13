@@ -6175,9 +6175,10 @@ SpliceDualPairCobase {cat} = fst
 
 public export
 data SpliceObj' : Type -> Type -> Type where
-  SplO : {0 j : Type} -> (x : SliceObj j) ->
-  {i : SliceObj j} -> SliceMorphism {a=j} i x ->
-  SpliceObj' j (Sigma {a=j} i)
+  SplO :
+    {0 j : Type} -> (x : SliceObj j) ->
+    {i : SliceObj j} -> SliceMorphism {a=j} i x ->
+    SpliceObj' j (Sigma {a=j} i)
 
 public export
 SpliceSlice : {0 j, i : Type} -> SpliceObj' j i -> SliceObj j
