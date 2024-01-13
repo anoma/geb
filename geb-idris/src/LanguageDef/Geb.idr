@@ -6273,6 +6273,14 @@ SpliceCobaseChange : {j : Type} -> {i, i' : SliceObj j} ->
 SpliceCobaseChange {j} {i} {i'} m (SplO {j} x {i} mix) =
   SplO {j} x {i=i'} (sliceComp {a=j} mix m)
 
+public export
+SpliceDibaseChange : {j, j' : Type} -> (mj : j' -> j) ->
+  {i : SliceObj j} -> {i' : SliceObj j'} ->
+  (mi : SliceMorphism {a=j'} i' (i . mj)) ->
+  (spl : SpliceObj' j (Sigma {a=j} i)) -> SpliceObj' j' (Sigma {a=j'} i')
+SpliceDibaseChange {j} {j'} mj {i} {i'} mi (SplO {j} x {i} mix) =
+  SplO {j=j'} (x . mj) {i=i'} $ \ej', ei' => mix (mj ej') $ mi ej' ei'
+
 --------------------------------------------------
 --------------------------------------------------
 ---- Lawvere-style Geb program representation ----
