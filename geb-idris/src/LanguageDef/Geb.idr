@@ -6163,6 +6163,10 @@ SplMd {j} {i} {x} {y} myj mix mxy =
   SplM {j} {i} {x} {y} myj mix mxy
     (myj . mxy) (\_ => Refl) (mxy . mix) (\_ => Refl)
 
+spliceMorphBase : {0 j, i : Type} -> {sx, sy : SpliceObj j i} ->
+  SpliceMorph {j} {i} sx sy -> splObj sx -> splObj sy
+spliceMorphBase (SplM _ _ mxy _ _ _ _) = mxy
+
 MorphPresProjInj : {0 j, i : Type} -> {sx, sy : SpliceObj j i} ->
   SpliceMorph {j} {i} sx sy -> ExtEq (projInj sx) (projInj sy)
 MorphPresProjInj {j} {i} {sx=(SplO x px ix)} {sy=(SplO y py iy)}
@@ -6188,126 +6192,12 @@ splComp {j} {i}
       miz
       (\ei => trans (izeq ei) (cong myz $ iyeq ei))
 
+splObjComp : {0 k, j, i : Type} ->
+  SpliceObj j i -> SpliceObj k j -> SpliceObj k i
+splObjComp (SplO y py iy) (SplO x px ix) =
+  SplO (x, y) (px . fst) (MkPairF (ix . py . iy) iy)
+
 {-
-SpliceCat = (Type, Type)
-
-public export
-SpliceBase : SpliceCat -> Type
-SpliceBase = snd
-
-public export
-SpliceCobase : SpliceCat -> Type
-SpliceCobase = fst
-
-public export
-SpliceBasePair : SpliceCat -> Type
-SpliceBasePair = ProductMonad . SpliceBase
-
-public export
-SpliceCobasePair : SpliceCat -> Type
-SpliceCobasePair = ProductMonad . SpliceCobase
-
-public export
-SpliceDualPair : SpliceCat -> Type
-SpliceDualPair cat = (SpliceCobase cat, SpliceBase cat)
-
-public export
-SpliceDualPairBase : {cat : SpliceCat} ->
-  SpliceDualPair cat -> SpliceBase cat
-SpliceDualPairBase {cat} = snd
-
-public export
-SpliceDualPairCobase : {cat : SpliceCat} ->
-  SpliceDualPair cat -> SpliceCobase cat
-SpliceDualPairCobase {cat} = fst
-
-public export
-data SpliceObj' : Type -> Type -> Type where
-  SplO :
-    {0 j : Type} -> (x : SliceObj j) ->
-    {i : SliceObj j} -> SliceMorphism {a=j} i x ->
-    SpliceObj' j (Sigma {a=j} i)
-
-public export
-SpliceSlice : {0 j, i : Type} -> SpliceObj' j i -> SliceObj j
-SpliceSlice {j} {i=(Sigma {a=j} i)} (SplO {j} x {i} mix) = x
-
-public export
-SpliceCoslice : {0 j, i : Type} -> SpliceObj' j i -> SliceObj j
-SpliceCoslice {j} {i=(Sigma {a=j} i)} (SplO {j} x {i} mix) = i
-
-public export
-spliceAssign : {0 j, i : Type} -> (spl : SpliceObj' j i) ->
-  SliceMorphism {a=j} (SpliceCoslice {j} {i} spl) (SpliceSlice {j} {i} spl)
-spliceAssign {j} {i=(Sigma {a=j} i)} (SplO {j} x {i} mix) = mix
-
-public export
-data SpliceMorph' : {j, i : Type} ->
-    SpliceObj' j i -> SpliceObj' j i -> Type where
-  SplM : {0 j : Type} -> {0 i : SliceObj j} ->
-    {0 x, x' : SliceObj j} ->
-    (0 mix : SliceMorphism {a=j} i x) ->
-    (0 mxx' : SliceMorphism {a=j} x x') ->
-    SpliceMorph' {j} {i=(Sigma {a=j} i)}
-      (SplO {j} x {i} mix)
-      (SplO {j} x' {i} (sliceComp {a=j} mxx' mix))
-
-public export
-SpliceObj : SpliceCat -> Type
-SpliceObj cat = SpliceObj' (SpliceBase cat) (SpliceCobase cat)
-
-public export
-SpliceSig : SpliceCat -> Type
-SpliceSig = SignatureT . SpliceObj
-
-public export
-SpliceDom : {cat : SpliceCat} -> SpliceSig cat -> SpliceObj cat
-SpliceDom = fst
-
-public export
-SpliceCod : {cat : SpliceCat} -> SpliceSig cat -> SpliceObj cat
-SpliceCod = snd
-
-public export
-SpliceMorph : {cat : SpliceCat} -> SpliceSig cat -> Type
-SpliceMorph {cat} sig =
-  SpliceMorph'
-    {j=(SpliceBase cat)}
-    {i=(SpliceCobase cat)}
-    (SpliceDom sig)
-    (SpliceCod sig)
-
------------------------------------
----- Splice-category morphisms ----
------------------------------------
-
-public export
-spliceId' : {0 j, i : Type} ->
-  (spl : SpliceObj' j i) -> SpliceMorph' {j} {i} spl spl
-spliceId' {j} {i=(Sigma {a=j} i)} (SplO {j} x {i} mix) =
-  SplM {j} {i} {x} {x'=x} mix (sliceId {a=j} x)
-
-public export
-spliceId : {cat : SpliceCat} ->
-  (spl : SpliceObj cat) -> SpliceMorph {cat} (spl, spl)
-spliceId {cat} spl = spliceId' {j=(SpliceBase cat)} {i=(SpliceCobase cat)} spl
-
-public export
-spliceComp' : {j, i : Type} -> {0 spl, spl', spl'' : SpliceObj' j i} ->
-  SpliceMorph' {j} {i} spl' spl'' ->
-  SpliceMorph' {j} {i} spl spl' ->
-  SpliceMorph' {j} {i} spl spl''
-spliceComp' {j} (SplM {i} {x} {x'} _ mxx') (SplM {x=y} miy myy') =
-  (SplM miy (sliceComp mxx' myy'))
-
-public export
-spliceComp : {cat : SpliceCat} ->
-  {spl, spl', spl'' : SpliceObj cat} ->
-  SpliceMorph {cat} (spl', spl'') ->
-  SpliceMorph {cat} (spl, spl') ->
-  SpliceMorph {cat} (spl, spl'')
-spliceComp {cat} {spl} {spl'} {spl''} =
-  spliceComp' {j=(SpliceBase cat)} {i=(SpliceCobase cat)} {spl} {spl'} {spl''}
 
 -------------------------
 ---- Splice functors ----
