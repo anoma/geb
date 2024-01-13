@@ -6199,33 +6199,34 @@ splObjComp : {0 k, j, i : Type} ->
 splObjComp (SplO y py iy) (SplO x px ix) =
   SplO (x, y) (px . fst) (MkPairF (ix . py . iy) iy)
 
-{-
-
 -------------------------
 ---- Splice functors ----
 -------------------------
 
 public export
-SpliceBaseChange : {j, j' : Type} -> (m : j' -> j) -> (i : SliceObj j) ->
-  (spl : SpliceObj' j (Sigma {a=j} i)) -> SpliceObj' j' (Sigma {a=j'} (i . m))
-SpliceBaseChange {j} {j'} m i (SplO {j} x {i} mix) =
-  SplO {j=j'} (x . m) {i=(i . m)} $ \ej' => mix (m ej')
+SpliceSigma : {i, j, j' : Type} -> (m : j -> j') ->
+  SpliceObj j i -> SpliceObj j' i
+SpliceSigma {i} {j} {j'} m (SplO x proj inj) = SplO x (m . proj) inj
 
 public export
-SpliceCobaseChange : {j : Type} -> {i, i' : SliceObj j} ->
-  (m : SliceMorphism {a=j} i' i) ->
-  (spl : SpliceObj' j (Sigma {a=j} i)) -> SpliceObj' j (Sigma {a=j} i')
-SpliceCobaseChange {j} {i} {i'} m (SplO {j} x {i} mix) =
-  SplO {j} x {i=i'} (sliceComp {a=j} mix m)
+SpliceBaseChange : {i, j, j' : Type} -> (mj : j' -> j) ->
+  (spl : SpliceObj j i) ->
+  SpliceObj j' (Pullback {a=j'} {b=i} {c=j} mj (projInj spl))
+SpliceBaseChange {i} {j} {j'} mj (SplO x proj inj) =
+  SplO (Pullback {a=j'} {b=x} {c=j} mj proj) (fst . fst0) $
+    \(Element0 (ej', ei) eq) => Element0 (ej', inj ei) eq
 
 public export
-SpliceDibaseChange : {j, j' : Type} -> (mj : j' -> j) ->
-  {i : SliceObj j} -> {i' : SliceObj j'} ->
-  (mi : SliceMorphism {a=j'} i' (i . mj)) ->
-  (spl : SpliceObj' j (Sigma {a=j} i)) -> SpliceObj' j' (Sigma {a=j'} i')
-SpliceDibaseChange {j} {j'} mj {i} {i'} mi (SplO {j} x {i} mix) =
-  SplO {j=j'} (x . mj) {i=i'} $ \ej', ei' => mix (mj ej') $ mi ej' ei'
-  -}
+SpliceDibaseChange : {i, i', j, j' : Type} ->
+  (mj : j' -> j) ->
+  (spl : SpliceObj j i) ->
+  (mi : i' -> Pullback {a=j'} {b=i} {c=j} mj (projInj spl)) ->
+  SpliceObj j' i'
+SpliceDibaseChange {i} {i'} {j} {j'} mj (SplO x proj inj) mi =
+  SplO
+    (Pullback {a=j'} {b=x} {c=j} mj proj)
+    (fst . fst0)
+    (\ei' => case mi ei' of Element0 (ej', ei) eq => Element0 (ej', inj ei) eq)
 
 --------------------------------------------------
 --------------------------------------------------
