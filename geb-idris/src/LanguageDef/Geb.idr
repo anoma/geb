@@ -6139,6 +6139,44 @@ DiscOpFactorize {pos} nfield sld i =
 ---- Objects and morphisms ----
 -------------------------------
 
+record SpliceObj (j, i : Type) where
+  constructor SplO
+  splObj : Type
+  splProj : splObj -> j
+  splInj : i -> splObj
+
+data SplMorph : {0 j, i : Type} -> SpliceObj j i -> SpliceObj j i -> Type where
+  SplM : {0 j, i : Type} -> {0 x, y : Type} ->
+    (myj : y -> j) -> (mix : i -> x) -> (mxy : x -> y) ->
+    (mxj : x -> j) -> (0 xjeq : ExtEq {a=x} {b=j} mxj (myj . mxy)) ->
+    (miy : i -> y) -> (0 iyeq : ExtEq {a=i} {b=y} miy (mxy . mix)) ->
+    SplMorph {j} {i} (SplO x mxj mix) (SplO y myj miy)
+
+SplMd : {0 j, i : Type} -> {0 x, y : Type} ->
+  (myj : y -> j) -> (mix : i -> x) -> (mxy : x -> y) ->
+  SplMorph {j} {i} (SplO x (myj . mxy) mix) (SplO y myj (mxy . mix))
+SplMd {j} {i} {x} {y} myj mix mxy =
+  SplM {j} {i} {x} {y} myj mix mxy
+    (myj . mxy) (\_ => Refl) (mxy . mix) (\_ => Refl)
+
+splId : {0 j, i : Type} -> (spl : SpliceObj j i) -> SplMorph {j} {i} spl spl
+splId {j} {i} (SplO x proj inj) = SplMd {j} {i} {x} {y=x} proj inj (id {a=x})
+
+splComp : {0 j, i : Type} -> {sx, sy, sz : SpliceObj j i} ->
+  SplMorph {j} {i} sy sz -> SplMorph {j} {i} sx sy -> SplMorph {j} {i} sx sz
+splComp {j} {i}
+  (SplM {j} {i} {x=y} {y=z} mzj miy myz myj yjeq miz izeq)
+  (SplM {j} {i} {x} {y} myj mix mxy mxj xjeq miy iyeq) =
+    SplM {j} {i} {x} {y=z}
+      mzj
+      mix
+      (myz . mxy)
+      mxj
+      (\ex => trans (xjeq ex) (yjeq $ mxy ex))
+      miz
+      (\ei => trans (izeq ei) (cong myz $ iyeq ei))
+
+{-
 public export
 SpliceCat : Type
 SpliceCat = (Type, Type)
@@ -6285,6 +6323,7 @@ SpliceDibaseChange : {j, j' : Type} -> (mj : j' -> j) ->
   (spl : SpliceObj' j (Sigma {a=j} i)) -> SpliceObj' j' (Sigma {a=j'} i')
 SpliceDibaseChange {j} {j'} mj {i} {i'} mi (SplO {j} x {i} mix) =
   SplO {j=j'} (x . mj) {i=i'} $ \ej', ei' => mix (mj ej') $ mi ej' ei'
+  -}
 
 --------------------------------------------------
 --------------------------------------------------
