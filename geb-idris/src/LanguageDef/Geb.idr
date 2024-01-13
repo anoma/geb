@@ -6229,9 +6229,9 @@ SpliceMorph {cat} sig =
     (SpliceDom sig)
     (SpliceCod sig)
 
-----------------------------------------------
----- Double category of splices of `Type` ----
-----------------------------------------------
+-----------------------------------
+---- Splice-category morphisms ----
+-----------------------------------
 
 public export
 spliceId' : {0 j, i : Type} ->
@@ -6260,6 +6260,10 @@ spliceComp : {cat : SpliceCat} ->
   SpliceMorph {cat} (spl, spl'')
 spliceComp {cat} {spl} {spl'} {spl''} =
   spliceComp' {j=(SpliceBase cat)} {i=(SpliceCobase cat)} {spl} {spl'} {spl''}
+
+-------------------------
+---- Splice functors ----
+-------------------------
 
 public export
 SpliceBaseChange : {j, j' : Type} -> (m : j' -> j) -> (i : SliceObj j) ->
