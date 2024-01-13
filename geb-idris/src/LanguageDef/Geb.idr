@@ -6145,25 +6145,37 @@ record SpliceObj (j, i : Type) where
   splProj : splObj -> j
   splInj : i -> splObj
 
-data SplMorph : {0 j, i : Type} -> SpliceObj j i -> SpliceObj j i -> Type where
+projInj : {0 j, i : Type} -> SpliceObj j i -> i -> j
+projInj {j} {i} (SplO x proj inj) = proj . inj
+
+data SpliceMorph : {0 j, i : Type} ->
+    SpliceObj j i -> SpliceObj j i -> Type where
   SplM : {0 j, i : Type} -> {0 x, y : Type} ->
     (myj : y -> j) -> (mix : i -> x) -> (mxy : x -> y) ->
     (mxj : x -> j) -> (0 xjeq : ExtEq {a=x} {b=j} mxj (myj . mxy)) ->
     (miy : i -> y) -> (0 iyeq : ExtEq {a=i} {b=y} miy (mxy . mix)) ->
-    SplMorph {j} {i} (SplO x mxj mix) (SplO y myj miy)
+    SpliceMorph {j} {i} (SplO x mxj mix) (SplO y myj miy)
+
+MorphPresProjInj : {0 j, i : Type} -> {sx, sy : SpliceObj j i} ->
+  SpliceMorph {j} {i} sx sy -> ExtEq (projInj sx) (projInj sy)
+MorphPresProjInj {j} {i} {sx=(SplO x px ix)} {sy=(SplO y py iy)}
+  (SplM _ _ mxy _ xjeq _ iyeq) ei =
+    trans (xjeq $ ix ei) (cong py $ sym $ iyeq ei)
 
 SplMd : {0 j, i : Type} -> {0 x, y : Type} ->
   (myj : y -> j) -> (mix : i -> x) -> (mxy : x -> y) ->
-  SplMorph {j} {i} (SplO x (myj . mxy) mix) (SplO y myj (mxy . mix))
+  SpliceMorph {j} {i} (SplO x (myj . mxy) mix) (SplO y myj (mxy . mix))
 SplMd {j} {i} {x} {y} myj mix mxy =
   SplM {j} {i} {x} {y} myj mix mxy
     (myj . mxy) (\_ => Refl) (mxy . mix) (\_ => Refl)
 
-splId : {0 j, i : Type} -> (spl : SpliceObj j i) -> SplMorph {j} {i} spl spl
+splId : {0 j, i : Type} -> (spl : SpliceObj j i) -> SpliceMorph {j} {i} spl spl
 splId {j} {i} (SplO x proj inj) = SplMd {j} {i} {x} {y=x} proj inj (id {a=x})
 
 splComp : {0 j, i : Type} -> {sx, sy, sz : SpliceObj j i} ->
-  SplMorph {j} {i} sy sz -> SplMorph {j} {i} sx sy -> SplMorph {j} {i} sx sz
+  SpliceMorph {j} {i} sy sz ->
+  SpliceMorph {j} {i} sx sy ->
+  SpliceMorph {j} {i} sx sz
 splComp {j} {i}
   (SplM {j} {i} {x=y} {y=z} mzj miy myz myj yjeq miz izeq)
   (SplM {j} {i} {x} {y} myj mix mxy mxj xjeq miy iyeq) =
@@ -6177,8 +6189,6 @@ splComp {j} {i}
       (\ei => trans (izeq ei) (cong myz $ iyeq ei))
 
 {-
-public export
-SpliceCat : Type
 SpliceCat = (Type, Type)
 
 public export
