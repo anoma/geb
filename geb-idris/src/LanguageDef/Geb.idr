@@ -6156,18 +6156,18 @@ data SpliceMorph : {0 j, i : Type} ->
     (miy : i -> y) -> (0 iyeq : ExtEq {a=i} {b=y} miy (mxy . mix)) ->
     SpliceMorph {j} {i} (SplO x mxj mix) (SplO y myj miy)
 
-MorphPresProjInj : {0 j, i : Type} -> {sx, sy : SpliceObj j i} ->
-  SpliceMorph {j} {i} sx sy -> ExtEq (projInj sx) (projInj sy)
-MorphPresProjInj {j} {i} {sx=(SplO x px ix)} {sy=(SplO y py iy)}
-  (SplM _ _ mxy _ xjeq _ iyeq) ei =
-    trans (xjeq $ ix ei) (cong py $ sym $ iyeq ei)
-
 SplMd : {0 j, i : Type} -> {0 x, y : Type} ->
   (myj : y -> j) -> (mix : i -> x) -> (mxy : x -> y) ->
   SpliceMorph {j} {i} (SplO x (myj . mxy) mix) (SplO y myj (mxy . mix))
 SplMd {j} {i} {x} {y} myj mix mxy =
   SplM {j} {i} {x} {y} myj mix mxy
     (myj . mxy) (\_ => Refl) (mxy . mix) (\_ => Refl)
+
+MorphPresProjInj : {0 j, i : Type} -> {sx, sy : SpliceObj j i} ->
+  SpliceMorph {j} {i} sx sy -> ExtEq (projInj sx) (projInj sy)
+MorphPresProjInj {j} {i} {sx=(SplO x px ix)} {sy=(SplO y py iy)}
+  (SplM _ _ mxy _ xjeq _ iyeq) ei =
+    trans (xjeq $ ix ei) (cong py $ sym $ iyeq ei)
 
 splId : {0 j, i : Type} -> (spl : SpliceObj j i) -> SpliceMorph {j} {i} spl spl
 splId {j} {i} (SplO x proj inj) = SplMd {j} {i} {x} {y=x} proj inj (id {a=x})
