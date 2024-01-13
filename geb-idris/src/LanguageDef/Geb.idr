@@ -6209,12 +6209,24 @@ SpliceSigma : {i, j, j' : Type} -> (m : j -> j') ->
 SpliceSigma {i} {j} {j'} m (SplO x proj inj) = SplO x (m . proj) inj
 
 public export
+SpliceCosigma : {i, i', j  : Type} -> (m : i' -> i) ->
+  SpliceObj j i -> SpliceObj j i'
+SpliceCosigma {i} {i'} {j} m (SplO x proj inj) = SplO x proj (inj . m)
+
+public export
 SpliceBaseChange : {i, j, j' : Type} -> (mj : j' -> j) ->
   (spl : SpliceObj j i) ->
   SpliceObj j' (Pullback {a=j'} {b=i} {c=j} mj (projInj spl))
 SpliceBaseChange {i} {j} {j'} mj (SplO x proj inj) =
   SplO (Pullback {a=j'} {b=x} {c=j} mj proj) (fst . fst0) $
     \(Element0 (ej', ei) eq) => Element0 (ej', inj ei) eq
+
+public export
+SpliceCobaseChange : {i, i', j : Type} -> (mi : i' -> i) ->
+  (spl : SpliceObj j i) ->
+  SpliceObj j i'
+SpliceCobaseChange {i} {i'} {j} mi (SplO x proj inj) =
+  SplO (Either i x) (eitherElim (proj . inj) proj) (Left . mi)
 
 public export
 SpliceDibaseChange : {i, i', j, j' : Type} ->
