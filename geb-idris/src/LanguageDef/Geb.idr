@@ -6260,6 +6260,19 @@ spliceComp : {cat : SpliceCat} ->
 spliceComp {cat} {spl} {spl'} {spl''} =
   spliceComp' {j=(SpliceBase cat)} {i=(SpliceCobase cat)} {spl} {spl'} {spl''}
 
+public export
+SpliceBaseChange : {j, j' : Type} -> (m : j' -> j) -> (i : SliceObj j) ->
+  (spl : SpliceObj' j (Sigma {a=j} i)) -> SpliceObj' j' (Sigma {a=j'} (i . m))
+SpliceBaseChange {j} {j'} m i (SplO {j} x {i} mix) =
+  SplO {j=j'} (x . m) {i=(i . m)} $ \ej' => mix (m ej')
+
+public export
+SpliceCobaseChange : {j : Type} -> {i, i' : SliceObj j} ->
+  (m : SliceMorphism {a=j} i' i) ->
+  (spl : SpliceObj' j (Sigma {a=j} i)) -> SpliceObj' j (Sigma {a=j} i')
+SpliceCobaseChange {j} {i} {i'} m (SplO {j} x {i} mix) =
+  SplO {j} x {i=i'} (sliceComp {a=j} mix m)
+
 --------------------------------------------------
 --------------------------------------------------
 ---- Lawvere-style Geb program representation ----
