@@ -1642,6 +1642,39 @@ InterpIEPPdint c mor comp
       comp (qcovar $ onpos i) (pcovar i) a cmya (dcovar i passign)))
 
 public export
+IntPDiNTPara : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  (p, q : IntEndoProAr c) -> (ar : IntPDiNTar c mor p q) ->
+  IntParaNTCond c mor
+    (InterpIEPPobj c mor p)
+    (InterpIEPPobj c mor q)
+    (IntEndoLmapFromDimap c mor cid
+      (InterpIEPPobj c mor p) (InterpIEPPdimap c mor comp p))
+    (IntEndoRmapFromDimap c mor cid
+      (InterpIEPPobj c mor p) (InterpIEPPdimap c mor comp p))
+    (IntEndoLmapFromDimap c mor cid
+      (InterpIEPPobj c mor q) (InterpIEPPdimap c mor comp q))
+    (IntEndoRmapFromDimap c mor cid
+      (InterpIEPPobj c mor q) (InterpIEPPdimap c mor comp q))
+  (InterpIEPPdint c mor comp p q ar)
+IntPDiNTPara c mor cid comp
+  (ppos ** (pcovar, pcontra)) (qpos ** (qcovar, qcontra))
+  (onpos ** (dcontra, dcovar)) c0 c1 mc0c1
+  (i0 ** (mcp0, mpc0)) (i1 ** (mcp1, mpc1)) cond =
+    case mkDPairInjectiveFstHet cond of
+      Refl =>
+        let
+          eq2 = mkDPairInjectiveSndHet cond
+          eq21 = fstEq eq2
+          eq22 = sndEq eq2
+        in
+        dpEq12
+          Refl
+          $ pairEqCong
+            ?IntPDiNTPara_hole_2_1
+            ?IntPDiNTPara_hole_2_2
+
+public export
 intPDiNTvcomp :
   (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (p, q, r : IntEndoProAr c) ->
