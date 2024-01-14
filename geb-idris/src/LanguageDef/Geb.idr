@@ -1644,6 +1644,9 @@ InterpIEPPdint c mor comp
 public export
 IntPDiNTPara : (c : Type) -> (mor : IntDifunctorSig c) ->
   (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  (idl : IntIdLSig c mor comp cid) ->
+  (idr : IntIdRSig c mor comp cid) ->
+  (assoc : IntAssocSig c mor comp) ->
   (p, q : IntEndoProAr c) -> (ar : IntPDiNTar c mor p q) ->
   IntParaNTCond c mor
     (InterpIEPPobj c mor p)
@@ -1657,7 +1660,7 @@ IntPDiNTPara : (c : Type) -> (mor : IntDifunctorSig c) ->
     (IntEndoRmapFromDimap c mor cid
       (InterpIEPPobj c mor q) (InterpIEPPdimap c mor comp q))
   (InterpIEPPdint c mor comp p q ar)
-IntPDiNTPara c mor cid comp
+IntPDiNTPara c mor cid comp idl idr assoc
   (ppos ** (pcovar, pcontra)) (qpos ** (qcovar, qcontra))
   (onpos ** (dcontra, dcovar)) c0 c1 mc0c1
   (i0 ** (mcp0, mpc0)) (i1 ** (mcp1, mpc1)) cond =
@@ -1665,14 +1668,20 @@ IntPDiNTPara c mor cid comp
       Refl =>
         let
           eq2 = mkDPairInjectiveSndHet cond
-          eq21 = fstEq eq2
-          eq22 = sndEq eq2
+          eq21 = trans (fstEq eq2) $ idl c0 (pcovar i1) mcp0
+          eq22 = trans (sym $ idr (pcontra i1) c1 mpc1) $ sndEq eq2
+          a1 = assoc c0 c1 (pcovar i1) (qcovar $ onpos i1)
+            (dcontra i1 (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1)) mcp1 mc0c1
+          a2 = sym $ assoc c0 c0 (pcovar i1) (qcovar $ onpos i1)
+            (dcontra i1 (comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0)) mcp0 (cid c0)
+          il1 = idl c0 (pcovar i1) mcp0
         in
         dpEq12
           Refl
           $ pairEqCong
-            ?IntPDiNTPara_hole_2_1
-            ?IntPDiNTPara_hole_2_2
+            (trans a1 $ trans (rewrite il1 in rewrite eq21 in
+             ?IntPDiNTPara_hole_1) a2)
+            ?IntPDiNTPara_hole_2
 
 public export
 intPDiNTvcomp :
