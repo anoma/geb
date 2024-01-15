@@ -1652,6 +1652,23 @@ record InterpPDApro (pda : PolyDiAr) (x, y : Type) where
   ipdapParams : pdaContra pda ipdapPos -> x
   ipdapArgs : pdaCovar pda ipdapPos -> y
 
+public export
+pdaLmap : (pda : PolyDiAr) -> (0 s, t, a : Type) ->
+  (a -> s) -> InterpPDApro pda s t -> InterpPDApro pda a t
+pdaLmap (PDA pos contra covar assign) s t a mas (IPDAp i params args) =
+  IPDAp i ?pdaLmap_hole args
+
+public export
+pdaRmap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
+  (t -> b) -> InterpPDApro pda s t -> InterpPDApro pda s b
+pdaRmap (PDA pos contra covar assign) s t b mtb (IPDAp i params args) =
+  IPDAp i params (mtb . args)
+
+public export
+pdaDimap : (pda : PolyDiAr) -> (0 s, t, a, b : Type) ->
+  (a -> s) -> (t -> b) -> InterpPDApro pda s t -> InterpPDApro pda a b
+pdaDimap pda s t a b mas mtb = pdaLmap pda s b a mas . pdaRmap pda s t b mtb
+
 record InterpPDAf (pda : PolyDiAr) (x : Type) where
   constructor IPDAf
   ipdafPro : InterpPDApro pda x x
