@@ -1673,12 +1673,16 @@ IntPDiNTPara c mor cid comp idl idr assoc
           a2 = sym $ assoc c0 c0 (pcovar i1) (qcovar $ onpos i1)
             (dcontra i1) mcp0 (cid c0)
           il1 = idl c0 (pcovar i1) mcp0
+          ir1 = idr (qcontra $ onpos i1) c1
+            (comp (qcontra (onpos i1)) (pcontra i1) c1 mpc1 (dcovar i1))
+          a3 = assoc (qcontra (onpos i1)) (pcontra i1) c0 c1
+            mc0c1 mpc0 (dcovar i1)
         in
         dpEq12
           Refl
           $ pairEqCong
             (trans a1 $ trans (rewrite il1 in rewrite eq21 in Refl) a2)
-            ?IntPDiNTPara_hole
+            (trans ir1 $ trans (rewrite eq22 in Refl) a3)
 
 public export
 intPDiNTvcomp :
