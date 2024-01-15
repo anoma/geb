@@ -1579,6 +1579,8 @@ public export
 0 InterpIPPntNatural : (d, c : Type) ->
   (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
   (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
+  (dassoc : IntAssocSig d dmor dcomp) ->
+  (cassoc : IntAssocSig c cmor ccomp) ->
   (p, q : IntProAr d c) -> (ar : IntPPNTar d c dmor cmor p q) ->
   IntProfNTNaturality d c dmor cmor
     (InterpIPPobj d c dmor cmor p)
@@ -1586,14 +1588,14 @@ public export
     (InterpIPPdimap d c dmor cmor dcomp ccomp p)
     (InterpIPPdimap d c dmor cmor dcomp ccomp q)
     (InterpIPPnt d c dmor cmor dcomp ccomp p q ar)
-InterpIPPntNatural d c dmor cmor dcomp ccomp
+InterpIPPntNatural d c dmor cmor dcomp ccomp dassoc cassoc
   (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar))
   (onpos ** (dcontra, dcovar)) s t a b dmas cmtb (i ** (dmsp, cmpt)) =
     dpEq12
       Refl
       $ pairEqCong
-        ?InterpIPPntNatural_hole_1
-        ?InterpIPPntNatural_hole_2
+        (dassoc a s (pcontra i) (qcontra (onpos i)) (dcontra i) dmsp dmas)
+        (sym $ cassoc (qcovar $ onpos i) (pcovar i) t b cmtb cmpt (dcovar i))
 
 public export
 IntEPPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
