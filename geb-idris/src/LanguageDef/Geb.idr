@@ -1638,6 +1638,29 @@ intPPNTvcomp d c dmor cmor dcomp ccomp
 ----------------------------------------------------
 
 public export
+record PolyDiAr where
+  constructor PDA
+  pdaPos : Type
+  pdaContra : pdaPos -> Type
+  pdaCovar : pdaPos -> Type
+  pdaAssign : (i : pdaPos) -> pdaContra i -> pdaCovar i
+
+public export
+record InterpPDApro (pda : PolyDiAr) (x, y : Type) where
+  constructor IPDAp
+  ipdapConstr : pdaPos pda
+  ipdapParams : pdaContra pda ipdapConstr -> x
+  ipdapArgs : pdaCovar pda ipdapConstr -> y
+
+record InterpPDAf (pda : PolyDiAr) (x : Type) where
+  constructor IPDAf
+  ipdafPro : InterpPDApro pda x x
+  ipdafValid :
+    ExtEq {a=(pdaContra pda $ ipdapConstr ipdafPro)} {b=x}
+      (ipdapParams ipdafPro)
+      (ipdapArgs ipdafPro . pdaAssign pda (ipdapConstr ipdafPro))
+
+public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> Type
 IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
