@@ -1648,17 +1648,17 @@ record PolyDiAr where
 public export
 record InterpPDApro (pda : PolyDiAr) (x, y : Type) where
   constructor IPDAp
-  ipdapConstr : pdaPos pda
-  ipdapParams : pdaContra pda ipdapConstr -> x
-  ipdapArgs : pdaCovar pda ipdapConstr -> y
+  ipdapPos : pdaPos pda
+  ipdapParams : pdaContra pda ipdapPos -> x
+  ipdapArgs : pdaCovar pda ipdapPos -> y
 
 record InterpPDAf (pda : PolyDiAr) (x : Type) where
   constructor IPDAf
   ipdafPro : InterpPDApro pda x x
   ipdafValid :
-    ExtEq {a=(pdaContra pda $ ipdapConstr ipdafPro)} {b=x}
+    ExtEq {a=(pdaContra pda $ ipdapPos ipdafPro)} {b=x}
       (ipdapParams ipdafPro)
-      (ipdapArgs ipdafPro . pdaAssign pda (ipdapConstr ipdafPro))
+      (ipdapArgs ipdafPro . pdaAssign pda (ipdapPos ipdafPro))
 
 public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
