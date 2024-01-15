@@ -1620,10 +1620,8 @@ IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> Type
 IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
   (onpos : ppos -> qpos **
-   ((i : ppos) ->
-      mor (pcovar i) (pcontra i) -> mor (pcontra i) (qcontra $ onpos i),
-    (i : ppos) ->
-      mor (pcovar i) (pcontra i) -> mor (qcovar $ onpos i) (pcovar i)))
+   ((i : ppos) -> mor (pcontra i) (qcontra $ onpos i),
+    (i : ppos) -> mor (qcovar $ onpos i) (pcovar i)))
 
 public export
 InterpIEPPdint : (c : Type) -> (mor : IntDifunctorSig c) ->
@@ -1638,8 +1636,8 @@ InterpIEPPdint c mor comp
         comp (pcovar i) a (pcontra i) cmax cmya
     in
     (onpos i **
-     (comp a (pcontra i) (qcontra $ onpos i) (dcontra i passign) cmax,
-      comp (qcovar $ onpos i) (pcovar i) a cmya (dcovar i passign)))
+     (comp a (pcontra i) (qcontra $ onpos i) (dcontra i) cmax,
+      comp (qcovar $ onpos i) (pcovar i) a cmya (dcovar i)))
 
 public export
 IntPDiNTPara : (c : Type) -> (mor : IntDifunctorSig c) ->
@@ -1671,17 +1669,16 @@ IntPDiNTPara c mor cid comp idl idr assoc
           eq21 = trans (fstEq eq2) $ idl c0 (pcovar i1) mcp0
           eq22 = trans (sym $ idr (pcontra i1) c1 mpc1) $ sndEq eq2
           a1 = assoc c0 c1 (pcovar i1) (qcovar $ onpos i1)
-            (dcontra i1 (comp (pcontra i1) c1 (pcovar i1) mcp1 mpc1)) mcp1 mc0c1
+            (dcontra i1) mcp1 mc0c1
           a2 = sym $ assoc c0 c0 (pcovar i1) (qcovar $ onpos i1)
-            (dcontra i1 (comp (pcontra i1) c0 (pcovar i1) mcp0 mpc0)) mcp0 (cid c0)
+            (dcontra i1) mcp0 (cid c0)
           il1 = idl c0 (pcovar i1) mcp0
         in
         dpEq12
           Refl
           $ pairEqCong
-            (trans a1 $ trans (rewrite il1 in rewrite eq21 in
-             ?IntPDiNTPara_hole_1) a2)
-            ?IntPDiNTPara_hole_2
+            (trans a1 $ trans (rewrite il1 in rewrite eq21 in Refl) a2)
+            ?IntPDiNTPara_hole
 
 public export
 intPDiNTvcomp :
@@ -1695,25 +1692,14 @@ intPDiNTvcomp c mor comp
   (bonpos ** (bcontra, bcovar))
   (aonpos ** (acontra, acovar)) =
     (bonpos . aonpos **
-      let
-        qasn :
-          ((i : ppos) -> mor (pcovar i) (pcontra i) ->
-            mor (qcovar (aonpos i)) (qcontra (aonpos i))) =
-          \i, pasn =>
-            comp (qcovar (aonpos i)) (pcontra i) (qcontra (aonpos i))
-              (acontra i pasn)
-              (comp (qcovar (aonpos i)) (pcovar i) (pcontra i)
-                pasn
-                (acovar i pasn))
-      in
-      (\i, pasn =>
+      (\i =>
         comp (pcontra i) (qcontra (aonpos i)) (rcontra (bonpos (aonpos i)))
-          (bcontra (aonpos i) (qasn i pasn))
-          (acontra i pasn),
-       \i, pasn =>
+          (bcontra (aonpos i))
+          (acontra i),
+       \i =>
         comp (rcovar (bonpos (aonpos i))) (qcovar (aonpos i)) (pcovar i)
-          (acovar i pasn)
-          (bcovar (aonpos i) (qasn i pasn))))
+          (acovar i)
+          (bcovar (aonpos i))))
 
 ------------------------------------------------------
 ---- Profunctor categories of (diagonal) elements ----
