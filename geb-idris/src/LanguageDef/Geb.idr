@@ -1652,20 +1652,20 @@ record PolyDiAr where
   pdaPos : Type
   pdaContra : pdaPos -> Type
   pdaCovar : pdaPos -> Type
-  pdaAssign : (i : pdaPos) -> pdaContra i -> pdaCovar i
+  pdaAssign : (i : pdaPos) -> pdaCovar i -> pdaContra i
 
 public export
 record InterpPDApro (pda : PolyDiAr) (x, y : Type) where
   constructor IPDAp
   ipdapPos : pdaPos pda
-  ipdapParams : pdaContra pda ipdapPos -> x
+  ipdapParams : x -> pdaContra pda ipdapPos
   ipdapArgs : pdaCovar pda ipdapPos -> y
 
 public export
 pdaLmap : (pda : PolyDiAr) -> (0 s, t, a : Type) ->
   (a -> s) -> InterpPDApro pda s t -> InterpPDApro pda a t
 pdaLmap (PDA pos contra covar assign) s t a mas (IPDAp i params args) =
-  IPDAp i ?pdaLmap_hole args
+  IPDAp i (params . mas) args
 
 public export
 pdaRmap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
@@ -1682,9 +1682,11 @@ record InterpPDAf (pda : PolyDiAr) (x : Type) where
   constructor IPDAf
   ipdafPro : InterpPDApro pda x x
   ipdafValid :
-    ExtEq {a=(pdaContra pda $ ipdapPos ipdafPro)} {b=x}
-      (ipdapParams ipdafPro)
-      (ipdapArgs ipdafPro . pdaAssign pda (ipdapPos ipdafPro))
+    ExtEq
+      {a=(pdaCovar pda $ ipdapPos ipdafPro)}
+      {b=(pdaContra pda $ ipdapPos ipdafPro)}
+      (pdaAssign pda (ipdapPos ipdafPro))
+      (ipdapParams ipdafPro .  ipdapArgs ipdafPro)
 
 public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
