@@ -1652,26 +1652,26 @@ record PolyDiAr where
   pdaPos : Type
   pdaDirichDir : pdaPos -> Type
   pdaPolyDir : pdaPos -> Type
-  pdaHet : (i : pdaPos) -> pdaPolyDir i -> pdaDirichDir i
+  pdaSig : (i : pdaPos) -> pdaPolyDir i -> pdaDirichDir i
 
 public export
 record InterpPDApro (pda : PolyDiAr) (x, y : Type) where
   constructor IPDAp
   ipdapPos : pdaPos pda
-  ipdapParams : x -> pdaDirichDir pda ipdapPos
-  ipdapArgs : pdaPolyDir pda ipdapPos -> y
+  ipdapDirich : x -> pdaDirichDir pda ipdapPos
+  ipdapPoly : pdaPolyDir pda ipdapPos -> y
 
 public export
 pdaLmap : (pda : PolyDiAr) -> (0 s, t, a : Type) ->
   (a -> s) -> InterpPDApro pda s t -> InterpPDApro pda a t
-pdaLmap (PDA pos contra covar assign) s t a mas (IPDAp i params args) =
-  IPDAp i (params . mas) args
+pdaLmap (PDA pos dirich poly sig) s t a mas (IPDAp i d p) =
+  IPDAp i (d . mas) p
 
 public export
 pdaRmap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
   (t -> b) -> InterpPDApro pda s t -> InterpPDApro pda s b
-pdaRmap (PDA pos contra covar assign) s t b mtb (IPDAp i params args) =
-  IPDAp i params (mtb . args)
+pdaRmap (PDA pos dirich poly sig) s t b mtb (IPDAp i d p) =
+  IPDAp i d (mtb . p)
 
 public export
 pdaDimap : (pda : PolyDiAr) -> (0 s, t, a, b : Type) ->
@@ -1685,8 +1685,8 @@ record InterpPDAf (pda : PolyDiAr) (x : Type) where
     ExtEq
       {a=(pdaPolyDir pda $ ipdapPos ipdafPro)}
       {b=(pdaDirichDir pda $ ipdapPos ipdafPro)}
-      (ipdapParams ipdafPro . ipdapArgs ipdafPro)
-      (pdaHet pda (ipdapPos ipdafPro))
+      (ipdapDirich ipdafPro . ipdapPoly ipdafPro)
+      (pdaSig pda (ipdapPos ipdafPro))
 
 -- `InterpPDAf pda` is an "invariant functor", sometimes also called
 -- "exponential functor" -- see for example:
@@ -1698,7 +1698,7 @@ interpPDAimap : (pda : PolyDiAr) -> (0 a, b : Type) ->
   (mab : a -> b) -> (mba : b -> a) ->
   (inv : ExtEq {a} {b=a} (mba . mab) (Prelude.id {a})) ->
   InterpPDAf pda a -> InterpPDAf pda b
-interpPDAimap (PDA pos dirichd polyd het) a b mab mba inv
+interpPDAimap (PDA pos dirichd polyd sig) a b mab mba inv
   (IPDAf (IPDAp i params args) valid) =
     IPDAf (IPDAp i (params . mba) (mab . args)) $
       \ela => trans (cong params $ inv $ args ela) $ valid ela
