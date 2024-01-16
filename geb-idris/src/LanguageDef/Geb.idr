@@ -1650,16 +1650,16 @@ public export
 record PolyDiAr where
   constructor PDA
   pdaPos : Type
-  pdaContra : pdaPos -> Type
-  pdaCovar : pdaPos -> Type
-  pdaHet : (i : pdaPos) -> pdaCovar i -> pdaContra i
+  pdaDirichDir : pdaPos -> Type
+  pdaPolyDir : pdaPos -> Type
+  pdaHet : (i : pdaPos) -> pdaPolyDir i -> pdaDirichDir i
 
 public export
 record InterpPDApro (pda : PolyDiAr) (x, y : Type) where
   constructor IPDAp
   ipdapPos : pdaPos pda
-  ipdapParams : x -> pdaContra pda ipdapPos
-  ipdapArgs : pdaCovar pda ipdapPos -> y
+  ipdapParams : x -> pdaDirichDir pda ipdapPos
+  ipdapArgs : pdaPolyDir pda ipdapPos -> y
 
 public export
 pdaLmap : (pda : PolyDiAr) -> (0 s, t, a : Type) ->
@@ -1683,8 +1683,8 @@ record InterpPDAf (pda : PolyDiAr) (x : Type) where
   ipdafPro : InterpPDApro pda x x
   ipdafValid :
     ExtEq
-      {a=(pdaCovar pda $ ipdapPos ipdafPro)}
-      {b=(pdaContra pda $ ipdapPos ipdafPro)}
+      {a=(pdaPolyDir pda $ ipdapPos ipdafPro)}
+      {b=(pdaDirichDir pda $ ipdapPos ipdafPro)}
       (ipdapParams ipdafPro . ipdapArgs ipdafPro)
       (pdaHet pda (ipdapPos ipdafPro))
 
