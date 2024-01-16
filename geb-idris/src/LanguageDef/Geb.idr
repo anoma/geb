@@ -1685,8 +1685,8 @@ record InterpPDAf (pda : PolyDiAr) (x : Type) where
     ExtEq
       {a=(pdaCovar pda $ ipdapPos ipdafPro)}
       {b=(pdaContra pda $ ipdapPos ipdafPro)}
-      (pdaHet pda (ipdapPos ipdafPro))
       (ipdapParams ipdafPro . ipdapArgs ipdafPro)
+      (pdaHet pda (ipdapPos ipdafPro))
 
 public export
 IntHetArena : (c : Type) -> (mor : IntDifunctorSig c) -> IntEndoProAr c -> Type
