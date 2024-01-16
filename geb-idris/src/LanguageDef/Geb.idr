@@ -1688,6 +1688,21 @@ record InterpPDAf (pda : PolyDiAr) (x : Type) where
       (ipdapParams ipdafPro . ipdapArgs ipdafPro)
       (pdaHet pda (ipdapPos ipdafPro))
 
+-- `InterpPDAf pda` is an "invariant functor", sometimes also called
+-- "exponential functor" -- see for example:
+--  - http://comonad.com/reader/2008/rotten-bananas/
+--  - https://hackage.haskell.org/package/invariant/docs/Data-Functor-Invariant.html
+-- `mba` must be a left inverse of `mab` (not necessarily the other way around).
+public export
+interpPDAimap : (pda : PolyDiAr) -> (0 a, b : Type) ->
+  (mab : a -> b) -> (mba : b -> a) ->
+  (inv : ExtEq {a} {b=a} (mba . mab) (Prelude.id {a})) ->
+  InterpPDAf pda a -> InterpPDAf pda b
+interpPDAimap (PDA pos dirichd polyd het) a b mab mba inv
+  (IPDAf (IPDAp i params args) valid) =
+    IPDAf (IPDAp i (params . mba) (mab . args)) $
+      \ela => trans (cong params $ inv $ args ela) $ valid ela
+
 public export
 IntHetArena : (c : Type) -> (mor : IntDifunctorSig c) -> IntEndoProAr c -> Type
 IntHetArena c mor (pos ** (contra, covar)) =
