@@ -1686,7 +1686,7 @@ record InterpPDAf (pda : PolyDiAr) (x : Type) where
       {a=(pdaCovar pda $ ipdapPos ipdafPro)}
       {b=(pdaContra pda $ ipdapPos ipdafPro)}
       (pdaAssign pda (ipdapPos ipdafPro))
-      (ipdapParams ipdafPro .  ipdapArgs ipdafPro)
+      (ipdapParams ipdafPro . ipdapArgs ipdafPro)
 
 public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
