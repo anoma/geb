@@ -1638,6 +1638,15 @@ intPPNTvcomp d c dmor cmor dcomp ccomp
 ----------------------------------------------------
 
 public export
+record CatFromPrshf where
+  constructor CFP
+  cfpObj : Type
+  cfpMor : cfpObj -> cfpObj -> Type
+  cfpRepObj : cfpObj -> cfpObj -> Type
+  cfpRepMor : (a : cfpObj) -> (x, y : cfpObj) ->
+    cfpMor y x -> cfpRepObj a x -> cfpRepObj a y
+
+public export
 record PolyDiAr where
   constructor PDA
   pdaPos : Type
