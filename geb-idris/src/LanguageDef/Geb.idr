@@ -1689,6 +1689,15 @@ record InterpPDAf (pda : PolyDiAr) (x : Type) where
       (ipdapParams ipdafPro . ipdapArgs ipdafPro)
 
 public export
+IntHetArena : (c : Type) -> (mor : IntDifunctorSig c) -> IntEndoProAr c -> Type
+IntHetArena c mor (pos ** (contra, covar)) =
+  (i : pos) -> mor (contra i) (covar i)
+
+public export
+IntDiArena : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntDiArena c mor = DPair (IntEndoProAr c) (IntHetArena c mor)
+
+public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> Type
 IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
