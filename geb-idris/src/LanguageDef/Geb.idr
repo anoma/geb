@@ -1660,18 +1660,19 @@ record InterpPDApro (pda : PolyDiAr) (x, y : Type) where
   ipdapPos : pdaPos pda
   ipdapParams : x -> pdaContra pda ipdapPos
   ipdapArgs : pdaCovar pda ipdapPos -> y
+  ipdapAssign : x -> y
 
 public export
 pdaLmap : (pda : PolyDiAr) -> (0 s, t, a : Type) ->
   (a -> s) -> InterpPDApro pda s t -> InterpPDApro pda a t
-pdaLmap (PDA pos contra covar assign) s t a mas (IPDAp i params args) =
-  IPDAp i (params . mas) args
+pdaLmap (PDA pos contra covar assign) s t a mas (IPDAp i params args asn) =
+  IPDAp i (params . mas) args (asn . mas)
 
 public export
 pdaRmap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
   (t -> b) -> InterpPDApro pda s t -> InterpPDApro pda s b
-pdaRmap (PDA pos contra covar assign) s t b mtb (IPDAp i params args) =
-  IPDAp i params (mtb . args)
+pdaRmap (PDA pos contra covar assign) s t b mtb (IPDAp i params args asn) =
+  IPDAp i params (mtb . args) (mtb . asn)
 
 public export
 pdaDimap : (pda : PolyDiAr) -> (0 s, t, a, b : Type) ->
