@@ -1652,7 +1652,7 @@ record PolyDiAr where
   pdaPos : Type
   pdaContra : pdaPos -> Type
   pdaCovar : pdaPos -> Type
-  pdaAssign : (i : pdaPos) -> pdaCovar i -> pdaContra i
+  pdaHet : (i : pdaPos) -> pdaCovar i -> pdaContra i
 
 public export
 record InterpPDApro (pda : PolyDiAr) (x, y : Type) where
@@ -1685,7 +1685,7 @@ record InterpPDAf (pda : PolyDiAr) (x : Type) where
     ExtEq
       {a=(pdaCovar pda $ ipdapPos ipdafPro)}
       {b=(pdaContra pda $ ipdapPos ipdafPro)}
-      (pdaAssign pda (ipdapPos ipdafPro))
+      (pdaHet pda (ipdapPos ipdafPro))
       (ipdapParams ipdafPro . ipdapArgs ipdafPro)
 
 public export
