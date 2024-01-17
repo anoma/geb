@@ -1650,16 +1650,16 @@ public export
 record PolyDiAr where
   constructor PDA
   pdaPos : Type
-  pdaDirichDir : pdaPos -> Type
-  pdaPolyDir : pdaPos -> Type
-  pdaSig : (i : pdaPos) -> pdaPolyDir i -> pdaDirichDir i
+  pdaContraDir : pdaPos -> Type
+  pdaCovarDir : pdaPos -> Type
+  pdaSig : (i : pdaPos) -> pdaCovarDir i -> pdaContraDir i
 
 public export
 record InterpPDApro (pda : PolyDiAr) (x, y : Type) where
   constructor IPDAp
   ipdapPos : pdaPos pda
-  ipdapDirich : x -> pdaDirichDir pda ipdapPos
-  ipdapPoly : pdaPolyDir pda ipdapPos -> y
+  ipdapContra : x -> pdaContraDir pda ipdapPos
+  ipdapCovar : pdaCovarDir pda ipdapPos -> y
 
 public export
 pdaLmap : (pda : PolyDiAr) -> (0 s, t, a : Type) ->
@@ -1678,14 +1678,15 @@ pdaDimap : (pda : PolyDiAr) -> (0 s, t, a, b : Type) ->
   (a -> s) -> (t -> b) -> InterpPDApro pda s t -> InterpPDApro pda a b
 pdaDimap pda s t a b mas mtb = pdaLmap pda s b a mas . pdaRmap pda s t b mtb
 
+public export
 record InterpPDAf (pda : PolyDiAr) (x : Type) where
   constructor IPDAf
   ipdafPro : InterpPDApro pda x x
   ipdafValid :
     ExtEq
-      {a=(pdaPolyDir pda $ ipdapPos ipdafPro)}
-      {b=(pdaDirichDir pda $ ipdapPos ipdafPro)}
-      (ipdapDirich ipdafPro . ipdapPoly ipdafPro)
+      {a=(pdaCovarDir pda $ ipdapPos ipdafPro)}
+      {b=(pdaContraDir pda $ ipdapPos ipdafPro)}
+      (ipdapContra ipdafPro . ipdapCovar ipdafPro)
       (pdaSig pda (ipdapPos ipdafPro))
 
 -- `InterpPDAf pda` is an "invariant functor", sometimes also called
