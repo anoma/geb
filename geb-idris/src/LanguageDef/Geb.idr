@@ -1649,60 +1649,35 @@ record CatFromPrshf where
 public export
 record PolyDiAr where
   constructor PDA
-  pdaPos : Type
-  pdaContraDir : pdaPos -> Type
-  pdaCovarDir : pdaPos -> Type
-  pdaSig : (i : pdaPos) -> pdaCovarDir i -> pdaContraDir i
+  pdaContra : PolyFunc
+  pdaCovar : PolyFunc
 
 public export
-record InterpPDApro (pda : PolyDiAr) (x, y : Type) where
-  constructor IPDAp
-  ipdapPos : pdaPos pda
-  ipdapContra : x -> pdaContraDir pda ipdapPos
-  ipdapCovar : pdaCovarDir pda ipdapPos -> y
+InterpPDA : PolyDiAr -> Type -> Type -> Type
+InterpPDA (PDA contra covar) x y =
+  (z : Type ** (InterpPolyFunc contra x -> z, z -> InterpPolyFunc covar y))
 
 public export
-pdaLmap : (pda : PolyDiAr) -> (0 s, t, a : Type) ->
-  (a -> s) -> InterpPDApro pda s t -> InterpPDApro pda a t
-pdaLmap (PDA pos dirich poly sig) s t a mas (IPDAp i d p) =
-  IPDAp i (d . mas) p
+interpPDAlmap : (pda : PolyDiAr) -> (0 s, t, a : Type) ->
+  (a -> s) -> InterpPDA pda s t -> InterpPDA pda a t
+interpPDAlmap (PDA contra covar) s t a mas (z ** (msz, mzt)) =
+  (z ** (msz . InterpPFMap contra mas, mzt))
 
 public export
-pdaRmap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
-  (t -> b) -> InterpPDApro pda s t -> InterpPDApro pda s b
-pdaRmap (PDA pos dirich poly sig) s t b mtb (IPDAp i d p) =
-  IPDAp i d (mtb . p)
+interpPDArmap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
+  (t -> b) -> InterpPDA pda s t -> InterpPDA pda s b
+interpPDArmap (PDA contra covar) s t b mtb (z ** (msz, mzt)) =
+  (z ** (msz, InterpPFMap covar mtb . mzt))
 
 public export
-pdaDimap : (pda : PolyDiAr) -> (0 s, t, a, b : Type) ->
-  (a -> s) -> (t -> b) -> InterpPDApro pda s t -> InterpPDApro pda a b
-pdaDimap pda s t a b mas mtb = pdaLmap pda s b a mas . pdaRmap pda s t b mtb
+interpPDAdimap : (pda : PolyDiAr) -> (0 s, t, b : Type) ->
+  (a -> s) -> (t -> b) -> InterpPDA pda s t -> InterpPDA pda a b
+interpPDAdimap pda s t b mas mtb =
+  interpPDAlmap pda s b a mas . interpPDArmap pda s t b mtb
 
 public export
-record InterpPDAf (pda : PolyDiAr) (x : Type) where
-  constructor IPDAf
-  ipdafPro : InterpPDApro pda x x
-  ipdafValid :
-    ExtEq
-      {a=(pdaCovarDir pda $ ipdapPos ipdafPro)}
-      {b=(pdaContraDir pda $ ipdapPos ipdafPro)}
-      (ipdapContra ipdafPro . ipdapCovar ipdafPro)
-      (pdaSig pda (ipdapPos ipdafPro))
-
--- `InterpPDAf pda` is an "invariant functor", sometimes also called
--- "exponential functor" -- see for example:
---  - http://comonad.com/reader/2008/rotten-bananas/
---  - https://hackage.haskell.org/package/invariant/docs/Data-Functor-Invariant.html
--- `mba` must be a left inverse of `mab` (not necessarily the other way around).
-public export
-interpPDAimap : (pda : PolyDiAr) -> (0 a, b : Type) ->
-  (mab : a -> b) -> (mba : b -> a) ->
-  (inv : ExtEq {a} {b=a} (mba . mab) (Prelude.id {a})) ->
-  InterpPDAf pda a -> InterpPDAf pda b
-interpPDAimap (PDA pos dirichd polyd sig) a b mab mba inv
-  (IPDAf (IPDAp i params args) valid) =
-    IPDAf (IPDAp i (params . mba) (mab . args)) $
-      \ela => trans (cong params $ inv $ args ela) $ valid ela
+PDAend : PolyDiAr -> Type
+PDAend (PDA contra covar) = PolyNatTrans contra covar
 
 public export
 IntHetArena : (c : Type) -> (mor : IntDifunctorSig c) -> IntEndoProAr c -> Type
