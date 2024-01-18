@@ -33,6 +33,10 @@ ListTest = pfHomObj ListPF BoolPF
 pfIsEmpty : (a : Type) -> InterpPolyFunc ListTest a
 pfIsEmpty a = (\n => (n == 0 ** \v => void v) ** \(n ** (v ** _)) => void v)
 
+pfIsEmpty' : PolyNatTrans PFIdentityArena ListTest
+pfIsEmpty' =
+  (\(), n => (n == 0 ** \v => void v) ** \(), (_ ** v ** _) => void v)
+
 --------------------
 --------------------
 ---- FinMatrixT ----
