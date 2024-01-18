@@ -10,6 +10,29 @@ import LanguageDef.ProgFinSet
 
 %default total
 
+public export
+ListArPos : Type
+ListArPos = Nat
+
+public export
+ListArDir : Nat -> Type
+ListArDir = Fin
+
+public export
+ListPF : PolyFunc
+ListPF = (ListArPos ** ListArDir)
+
+public export
+BoolPF : PolyFunc
+BoolPF = PFConstArena Bool
+
+public export
+ListTest : PolyFunc
+ListTest = pfHomObj ListPF BoolPF
+
+pfIsEmpty : (a : Type) -> InterpPolyFunc ListTest a
+pfIsEmpty a = (\n => (n == 0 ** \v => void v) ** \(n ** (v ** _)) => void v)
+
 --------------------
 --------------------
 ---- FinMatrixT ----
