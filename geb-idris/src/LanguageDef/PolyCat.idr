@@ -397,7 +397,8 @@ pfCoproductPos (ppos ** pdir) (qpos ** qdir) = Either ppos qpos
 
 public export
 pfCoproductDir : (p, q : PolyFunc) -> pfCoproductPos p q -> Type
-pfCoproductDir (ppos ** pdir) (qpos ** qdir) = eitherElim pdir qdir
+pfCoproductDir (ppos ** pdir) (qpos ** qdir) (Left pi) = pdir pi
+pfCoproductDir (ppos ** pdir) (qpos ** qdir) (Right qi) = qdir qi
 
 public export
 pfCoproductArena : PolyFunc -> PolyFunc -> PolyFunc
@@ -409,7 +410,7 @@ pfProductPos (ppos ** pdir) (qpos ** qdir) = Pair ppos qpos
 
 public export
 pfProductDir : (p, q : PolyFunc) -> pfProductPos p q -> Type
-pfProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Either . bimap pdir qdir
+pfProductDir (ppos ** pdir) (qpos ** qdir) (pi, qi) = Either (pdir pi) (qdir qi)
 
 public export
 pfProductArena : PolyFunc -> PolyFunc -> PolyFunc
@@ -695,9 +696,14 @@ pfEvalOnDir : (p, q : PolyFunc) ->
   (i : pfPos (pfProductArena (pfHomObj p q) p)) ->
   pfDir {p=q} (pfEvalOnPos p q i) ->
   pfDir {p=(pfProductArena (pfHomObj p q) p)} i
-pfEvalOnDir (ppos ** pdir) (qpos ** qdir) qpi qd with
-    (pfEvalOnPos (ppos ** pdir) (qpos ** qdir) qpi)
-  pfEvalOnDir (ppos ** pdir) (qpos ** qdir) qpi qd | qi = ?pfEvalOnDir_hole
+pfEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd with
+    (pfEvalOnPos (ppos ** pdir) (qpos ** qdir) (qpd, pi)) proof eqq
+  pfEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd | qi with
+      (snd (qpd pi) (replace {p=qdir} (sym eqq) qd)) proof eqp
+    pfEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd | qi | Left () =
+      Left (pi ** replace {p=qdir} (sym eqq) qd ** rewrite eqp in ())
+    pfEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd | qi | Right pd =
+      Right pd
 
 public export
 pfEval : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena (pfHomObj p q) p) q
