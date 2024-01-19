@@ -11,6 +11,32 @@ import LanguageDef.PolyIndTypes
 
 %default total
 
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+---- Slice objects in the category of polynomial endofunctors on `Type` ----
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+----------------------------------
+---- Category-theoretic style ----
+----------------------------------
+
+CPFSliceObj : PolyFunc -> Type
+CPFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
+
+0 PFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
+PFNatTransEq (ppos ** pdir) (qpos ** qdir)
+  (aonpos ** aondir) (bonpos ** bondir) =
+    Exists0
+      (ExtEq {a=ppos} {b=qpos} aonpos bonpos)
+      $ \onposeq =>
+        (i : ppos) -> (d : qdir (aonpos i)) ->
+        bondir i (replace {p=qdir} (onposeq i) d) = aondir i d
+
+CPFSliceMorph : (p : PolyFunc) -> CPFSliceObj p -> CPFSliceObj p -> Type
+CPFSliceMorph p (q ** qp) (r ** rp) =
+  Subset0 (PolyNatTrans q r) (\qr => PFNatTransEq q p qp (pntVCatComp rp qr))
+
 -------------------------------------
 -------------------------------------
 ---- Language architecture notes ----
