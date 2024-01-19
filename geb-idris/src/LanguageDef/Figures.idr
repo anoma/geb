@@ -81,7 +81,7 @@ WQSig m = (WQSrc m, WQTgt m)
 -- from the walking quiver (whose objects are `WQObj` and whose morphisms
 -- are `WQMorph`) to `Type`.
 
--- Because there are only two terms in `WQObj`, a function from `WQObj` is
+-- Because there are only two terms in `WQObj`, a functor from `WQObj` is
 -- is just a slightly abstract way of defining a pair of types.  The reason
 -- for doing it this way is that it translates directly to more general
 -- situations (in particular, to the definition of (co)presheaves).
@@ -132,7 +132,7 @@ CQuivCodMap = CSBaseChange WQTgt
 -- Given an object map, we can take a diagonal of it which maps each
 -- object of the walking quiver to a symmetric pair of objects of `Type`.
 public export
-QuivDiagMap : QuivObjMap -> WQSigT -> Type
+QuivDiagMap : SliceFunctor WQObj WQSigT
 QuivDiagMap f (a, b) = (f a, f b)
 
 -- And the category-theoretic style.
