@@ -41,21 +41,69 @@ CPFSliceMorph p (q ** qp) (r ** rp) =
 ---- Arena/dependent-type-universe-style ----
 ---------------------------------------------
 
--- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
--- the same `onpos` component, so we can constrain the slice morphisms as
--- follows.
-data PFSliceMorph : {0 p : PolyFunc} ->
-    CPFSliceObj p -> CPFSliceObj p -> Type where
-  PFSM :
-    {0 ppos, qpos, rpos : Type} ->
-    {0 pdir : ppos -> Type} -> {0 qdir : qpos -> Type} ->
-    {0 rdir : rpos -> Type} ->
-    (0 rponpos : rpos -> ppos) -> (0 qronpos : qpos -> rpos) ->
-    (0 rpondir : (i : rpos) -> pdir (rponpos i) -> rdir i) ->
-    (0 qpondir : (i : qpos) -> pdir (rponpos $ qronpos i) -> qdir i) ->
-    PFSliceMorph {p=(ppos ** pdir)}
-      ((qpos ** qdir) ** (rponpos . qronpos ** qpondir))
-      ((rpos ** rdir) ** (rponpos ** rpondir))
+-- The direction-map of a polynomial functor, which we may view as a slice
+-- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
+-- from the discrete category whose objects are terms of `pos`.  (Because
+-- the domain category `pos` is discrete, there is no difference between viewing
+-- the functor `dir` as covariant or as contravariant, because it has no
+-- non-identity morphisms to map into functions of `Type`.)
+--
+-- As a functor into `Type`, it has a category of elements.
+PFCatElemObj : PolyFunc -> Type
+PFCatElemObj (pos ** dir) = Sigma {a=pos} dir
+
+-- A morphism in the category of elements consists of a morphism of the
+-- domain category -- of which there is always exactly one, the identity,
+-- since the domain category is the discrete category with objects from
+-- `pos` such that the `fmap` component takes the element of one output
+-- set to the other.  Since that morphism must be the identity, that means
+-- that the position components of the two objects of the category of
+-- elements must be the same.  `fmap` is also the identity (in `Type`) by the
+-- identity-to-identity functor law, so in this discrete case, the `fmap`
+-- output requirement for a morphism in the category of elements means that
+-- the elements of the output sets must also be equal.  Hence, the whole
+-- objects of the category of elements must be equal.
+--
+-- In other words, there is precisely one morphism in the category of elements
+-- between equal elements, and there are none between non-equal elements.
+-- So, that one morphism when it exists is also the identity.
+--
+-- That is all to say:  the category of elements of a (co)presheaf on a
+-- discrete category is also discrete.
+PFCatElemMor : {p : PolyFunc} -> PFCatElemObj p -> PFCatElemObj p -> Type
+PFCatElemMor {p=(pos ** dir)} x y = x = y
+
+-- This may be viewed as the object-map component of a (co)presheaf on the
+-- category of elements of the (co)presheaf which is equivalent to `p`.
+-- Because the category of elements is discrete, there is no difference
+-- between viewing it as a presheaf and as a copresheaf, and the morphism-map
+-- component is trivial; it has only identity morphisms to map, and can map
+-- them only to identities.
+--
+-- Note however that this way of writing a slice object only applies to
+-- polynomial functors and not to Dirichlet functors.  For Dirichlet functors,
+-- the on-directions component of the natural transformation which constitutes
+-- the projection component of a slice object (when written in the usual
+-- category-theoretic for) goes in the opposite direction -- from the
+-- direction-sets of the Dirichlet functor we are slicing over to the object
+-- component of the slice object -- and therefore can not be viewed as a
+-- fibration of the direction-sets.
+PFSliceObj : (p : PolyFunc) -> Type
+PFSliceObj (pos ** dir) = Sigma {a=pos} dir -> Type
+
+-- This is a morphism in the slice category of a polynomial functor
+-- (within the category of polynomial functors and their natural
+-- transformations), which, because a slice object may be viewed as
+-- a (co)presheaf on a category of elements, may in turn be viewed as a
+-- natural transformation between (co)presheaves.  Once again there is
+-- no difference between the presheaf and copresheaf viewpoints, because
+-- the domain category is discrete.  (In a non-discrete category, though
+-- the mapping would still go in the same direction from objects to objects,
+-- the naturality condition would be reversed for a copresheaf versus a
+-- presheaf.  In the absence of non-identity morphisms, there is no naturality
+-- condition; the functor is effectively just a function, on objects.)
+PFSliceMorph : {p : PolyFunc} -> PFSliceObj p -> PFSliceObj p -> Type
+PFSliceMorph {p=(pos ** dir)} = SliceMorphism {a=(Sigma {a=pos} dir)}
 
 -------------------------------------
 -------------------------------------
