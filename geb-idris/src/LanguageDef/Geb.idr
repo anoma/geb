@@ -37,6 +37,26 @@ CPFSliceMorph : (p : PolyFunc) -> CPFSliceObj p -> CPFSliceObj p -> Type
 CPFSliceMorph p (q ** qp) (r ** rp) =
   Subset0 (PolyNatTrans q r) (\qr => PFNatTransEq q p qp (pntVCatComp rp qr))
 
+---------------------------------------------
+---- Arena/dependent-type-universe-style ----
+---------------------------------------------
+
+-- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
+-- the same `onpos` component, so we can constrain the slice morphisms as
+-- follows.
+data PFSliceMorph : {0 p : PolyFunc} ->
+    CPFSliceObj p -> CPFSliceObj p -> Type where
+  PFSM :
+    {0 ppos, qpos, rpos : Type} ->
+    {0 pdir : ppos -> Type} -> {0 qdir : qpos -> Type} ->
+    {0 rdir : rpos -> Type} ->
+    (0 rponpos : rpos -> ppos) -> (0 qronpos : qpos -> rpos) ->
+    (0 rpondir : (i : rpos) -> pdir (rponpos i) -> rdir i) ->
+    (0 qpondir : (i : qpos) -> pdir (rponpos $ qronpos i) -> qdir i) ->
+    PFSliceMorph {p=(ppos ** pdir)}
+      ((qpos ** qdir) ** (rponpos . qronpos ** qpondir))
+      ((rpos ** rdir) ** (rponpos ** rpondir))
+
 -------------------------------------
 -------------------------------------
 ---- Language architecture notes ----
