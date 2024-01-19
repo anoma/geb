@@ -10,6 +10,20 @@ import LanguageDef.ProgFinSet
 
 %default total
 
+-- A polynomial slice operation maps a slice object to `Type` as a sum
+-- of representables.
+PSliceOp : (a : Type) -> Type
+PSliceOp a = (pos : Type ** pos -> SliceObj a)
+
+InterpPSliceOp : {a : Type} -> PSliceOp a -> SliceObj a -> Type
+InterpPSliceOp {a} (pos ** dir) sla = (i : pos ** SliceMorphism (dir i) sla)
+
+PSliceF : Type -> Type -> Type
+PSliceF a b = b -> PSliceOp a
+
+InterpPSliceF : {a, b : Type} -> PSliceF a b -> SliceObj a -> SliceObj b
+InterpPSliceF {a} {b} pf sla eb = InterpPSliceOp {a} (pf eb) sla
+
 public export
 ListArPos : Type
 ListArPos = Nat
