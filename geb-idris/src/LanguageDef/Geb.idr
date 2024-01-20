@@ -1532,8 +1532,8 @@ PFDirCatElemMor : {p : PolyFunc} ->
 PFDirCatElemMor {p=(pos ** dir)} x y = x = y
 
 -- This may be viewed as the object-map component of a (co)presheaf on the
--- category of elements of the (co)presheaf which is equivalent to `p`.
--- Because the category of elements is discrete, there is no difference
+-- category of elements of the (co)presheaf which is equivalent to `dir`.
+-- Because that category of elements is discrete, there is no difference
 -- between viewing it as a presheaf and as a copresheaf, and the morphism-map
 -- component is trivial; it has only identity morphisms to map, and can map
 -- them only to identities.
@@ -1542,7 +1542,7 @@ PFDirCatElemMor {p=(pos ** dir)} x y = x = y
 -- polynomial functors and not to Dirichlet functors.  For Dirichlet functors,
 -- the on-directions component of the natural transformation which constitutes
 -- the projection component of a slice object (when written in the usual
--- category-theoretic for) goes in the opposite direction -- from the
+-- category-theoretic form) goes in the opposite direction -- from the
 -- direction-sets of the Dirichlet functor we are slicing over to the object
 -- component of the slice object -- and therefore can not be viewed as a
 -- fibration of the direction-sets.
