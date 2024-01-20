@@ -1495,6 +1495,22 @@ CPFSliceMorph p (q ** qp) (r ** rp) =
 ---- Arena/dependent-type-universe-style ----
 ---------------------------------------------
 
+-- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
+-- the same `onpos` component, so we can constrain the slice morphisms as
+-- follows.
+data PFSliceMorph : {0 p : PolyFunc} ->
+    CPFSliceObj p -> CPFSliceObj p -> Type where
+  PFSM :
+    {0 ppos, qpos, rpos : Type} ->
+    {0 pdir : ppos -> Type} -> {0 qdir : qpos -> Type} ->
+    {0 rdir : rpos -> Type} ->
+    (0 rponpos : rpos -> ppos) -> (0 qronpos : qpos -> rpos) ->
+    (0 rpondir : (i : rpos) -> pdir (rponpos i) -> rdir i) ->
+    (0 qpondir : (i : qpos) -> pdir (rponpos $ qronpos i) -> qdir i) ->
+    PFSliceMorph {p=(ppos ** pdir)}
+      ((qpos ** qdir) ** (rponpos . qronpos ** qpondir))
+      ((rpos ** rdir) ** (rponpos ** rpondir))
+
 -- The direction-map of a polynomial functor, which we may view as a slice
 -- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
 -- from the discrete category whose objects are terms of `pos`.  (Because
@@ -1530,22 +1546,6 @@ PFDirCatElemObj (pos ** dir) = Sigma {a=pos} dir
 PFDirCatElemMor : {p : PolyFunc} ->
   PFDirCatElemObj p -> PFDirCatElemObj p -> Type
 PFDirCatElemMor {p=(pos ** dir)} x y = x = y
-
--- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
--- the same `onpos` component, so we can constrain the slice morphisms as
--- follows.
-data PFSliceMorph : {0 p : PolyFunc} ->
-    CPFSliceObj p -> CPFSliceObj p -> Type where
-  PFSM :
-    {0 ppos, qpos, rpos : Type} ->
-    {0 pdir : ppos -> Type} -> {0 qdir : qpos -> Type} ->
-    {0 rdir : rpos -> Type} ->
-    (0 rponpos : rpos -> ppos) -> (0 qronpos : qpos -> rpos) ->
-    (0 rpondir : (i : rpos) -> pdir (rponpos i) -> rdir i) ->
-    (0 qpondir : (i : qpos) -> pdir (rponpos $ qronpos i) -> qdir i) ->
-    PFSliceMorph {p=(ppos ** pdir)}
-      ((qpos ** qdir) ** (rponpos . qronpos ** qpondir))
-      ((rpos ** rdir) ** (rponpos ** rpondir))
 
 --------------------------------------------------------------------
 --------------------------------------------------------------------
