@@ -6414,7 +6414,7 @@ splComp : {j : Type} -> {0 i : Type} -> {splx, sply, splz : SpliceObj j i} ->
   SpliceMorph {j} {i} splx splz
 splComp (SplM _ myz) (SplM xyinj mxy) = SplM xyinj (sliceComp {a=j} myz mxy)
 
--- Substitute the first parameter into the second.
+-- Substitute the second parameter into the first.
 splObjSubst :
   {0 k : Type} -> {0 j : SliceObj k} -> {i : SliceObj (Sigma {a=k} j)} ->
   SpliceObj (Sigma {a=k} j) (Sigma {a=(Sigma {a=k} j)} i) ->
