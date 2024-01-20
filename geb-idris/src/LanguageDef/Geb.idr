@@ -6351,65 +6351,81 @@ DiscOpFactorize {pos} nfield sld i =
 ---- Objects and morphisms ----
 -------------------------------
 
-record SpliceObj (j, i : Type) where
-  constructor SplO
-  splObj : Type
-  splProj : splObj -> j
-  splInj : i -> splObj
+public export
+data SpliceObj : (j, i : Type) -> Type where
+  SplO : {0 j : Type} -> {cobase : SliceObj j} ->
+    (sl : SliceObj j) -> (inj : SliceMorphism {a=j} cobase sl) ->
+    SpliceObj j (Sigma {a=j} cobase)
 
-projInj : {0 j, i : Type} -> SpliceObj j i -> i -> j
-projInj {j} {i} (SplO x proj inj) = proj . inj
+SplCosl : {j, i : Type} -> SpliceObj j i -> SliceObj j
+SplCosl (SplO {j} {cobase} _ _) = cobase
+
+SplCoTot : {j, i : Type} -> SpliceObj j i -> Type
+SplCoTot (SplO {j} {cobase} _ _) = Sigma {a=j} cobase
+
+SplSl : {j, i : Type} -> SpliceObj j i -> SliceObj j
+SplSl (SplO {j} sl _) = sl
+
+SplTot : {j, i : Type} -> SpliceObj j i -> Type
+SplTot (SplO {j} sl _) = Sigma {a=j} sl
+
+splCoproj : {0 j, i : Type} -> (spl : SpliceObj j i) -> SplCoTot spl -> j
+splCoproj (SplO {j} {cobase} _ _) = DPair.fst
+
+splProj : {0 j, i : Type} -> (spl : SpliceObj j i) -> SplTot spl -> j
+splProj (SplO {j} sl _) = DPair.fst
+
+splInj : {0 j, i : Type} -> (spl : SpliceObj j i) ->
+  SliceMorphism {a=j} (SplCosl spl) (SplSl spl)
+splInj (SplO {j} _ inj) = inj
 
 data SpliceMorph : {0 j, i : Type} ->
     SpliceObj j i -> SpliceObj j i -> Type where
-  SplM : {0 j, i : Type} -> {0 x, y : Type} ->
-    {myj : y -> j} -> {mix : i -> x} -> (mxy : x -> y) ->
-    {mxj : x -> j} -> (0 xjeq : ExtEq {a=x} {b=j} mxj (myj . mxy)) ->
-    {miy : i -> y} -> (0 iyeq : ExtEq {a=i} {b=y} miy (mxy . mix)) ->
-    SpliceMorph {j} {i} (SplO x mxj mix) (SplO y myj miy)
+  SplM : {0 j : Type} -> {0 slx, sly, cobase : SliceObj j} ->
+    (xinj : SliceMorphism {a=j} cobase slx) ->
+    (mxy : SliceMorphism {a=j} slx sly) ->
+    SpliceMorph {j} {i=(Sigma {a=j} cobase)}
+      (SplO {j} {cobase} slx xinj)
+      (SplO {j} {cobase} sly $ sliceComp {a=j} mxy xinj)
 
-SplMd : {0 j, i : Type} -> {0 x, y : Type} ->
-  (myj : y -> j) -> (mix : i -> x) -> (mxy : x -> y) ->
-  SpliceMorph {j} {i} (SplO x (myj . mxy) mix) (SplO y myj (mxy . mix))
-SplMd {j} {i} {x} {y} myj mix mxy =
-  SplM {j} {i} {x} {y} {myj} {mix} mxy
-    {mxj=(myj . mxy)} (\_ => Refl) {miy=(mxy . mix)} (\_ => Refl)
+spliceMorphDomInj : {0 j, i : Type} -> {splx, sply : SpliceObj j i} ->
+  SpliceMorph {j} {i} splx sply ->
+  SliceMorphism {a=j} (SplCosl splx) (SplSl splx)
+spliceMorphDomInj (SplM xinj _) = xinj
 
-spliceMorphBase : {0 j, i : Type} -> {sx, sy : SpliceObj j i} ->
-  SpliceMorph {j} {i} sx sy -> splObj sx -> splObj sy
-spliceMorphBase (SplM mxy _ _) = mxy
+spliceMorphCodInj :
+  {j : Type} -> {0 i : Type} -> {splx, sply : SpliceObj j i} ->
+  SpliceMorph {j} {i} splx sply ->
+  SliceMorphism {a=j} (SplCosl sply) (SplSl sply)
+spliceMorphCodInj (SplM xinj mxy) = sliceComp {a=j} mxy xinj
 
-MorphPresProjInj : {0 j, i : Type} -> {sx, sy : SpliceObj j i} ->
-  SpliceMorph {j} {i} sx sy -> ExtEq (projInj sx) (projInj sy)
-MorphPresProjInj {j} {i} {sx=(SplO x px ix)} {sy=(SplO y py iy)}
-  (SplM mxy xjeq iyeq) ei =
-    trans (xjeq $ ix ei) (cong py $ sym $ iyeq ei)
+spliceMorphTot : {0 j, i : Type} -> {splx, sply : SpliceObj j i} ->
+  SpliceMorph {j} {i} splx sply ->
+  SliceMorphism {a=j} (SplSl splx) (SplSl sply)
+spliceMorphTot (SplM _ mxy) = mxy
 
-splId : {0 j, i : Type} -> (spl : SpliceObj j i) -> SpliceMorph {j} {i} spl spl
-splId {j} {i} (SplO x proj inj) = SplMd {j} {i} {x} {y=x} proj inj (id {a=x})
+splId : {j : Type} -> {0 i : Type} ->
+  (spl : SpliceObj j i) -> SpliceMorph {j} {i} spl spl
+splId (SplO {j} {cobase} sl inj) = SplM inj (sliceId {a=j} sl)
 
-splComp : {0 j, i : Type} -> {sx, sy, sz : SpliceObj j i} ->
-  SpliceMorph {j} {i} sy sz ->
-  SpliceMorph {j} {i} sx sy ->
-  SpliceMorph {j} {i} sx sz
-splComp {j} {i}
-  (SplM {j} {i} {x=y} {y=z} {myj=mzj} {mix=miy}
-    myz {mxj=myj} yjeq {miy=miz} izeq)
-  (SplM {j} {i} {x} {y} {myj} {mix}
-    mxy {mxj} xjeq {miy} iyeq) =
-      SplM {j} {i} {x} {y=z}
-        {myj=mzj}
-        {mix}
-        (myz . mxy)
-        {mxj}
-        (\ex => trans (xjeq ex) (yjeq $ mxy ex))
-        {miy=miz}
-        (\ei => trans (izeq ei) (cong myz $ iyeq ei))
+splComp : {j : Type} -> {0 i : Type} -> {splx, sply, splz : SpliceObj j i} ->
+  SpliceMorph {j} {i} sply splz ->
+  SpliceMorph {j} {i} splx sply ->
+  SpliceMorph {j} {i} splx splz
+splComp (SplM _ myz) (SplM xyinj mxy) = SplM xyinj (sliceComp {a=j} myz mxy)
 
-splObjComp : {0 k, j, i : Type} ->
-  SpliceObj j i -> SpliceObj k j -> SpliceObj k i
-splObjComp (SplO y py iy) (SplO x px ix) =
-  SplO (x, y) (px . fst) (MkPairF (ix . py . iy) iy)
+-- Substitute the first parameter into the second.
+splObjSubst :
+  {0 k : Type} -> {0 j : SliceObj k} -> {i : SliceObj (Sigma {a=k} j)} ->
+  SpliceObj (Sigma {a=k} j) (Sigma {a=(Sigma {a=k} j)} i) ->
+  SpliceObj k (Sigma {a=k} j) ->
+  SpliceObj (Sigma {a=k} j) (Sigma {a=(Sigma {a=k} j)} i)
+splObjSubst (SplO slx xinj) (SplO sly yinj) =
+  SplO
+    (\(ek ** ejk) => (slx (ek ** ejk), sly ek))
+    (\(ek ** ejk), ei => (xinj (ek ** ejk) ei, yinj ek ejk))
+
+{-
 
 -------------------------
 ---- Splice functors ----
@@ -6436,6 +6452,8 @@ SpliceDibaseChange {i} {i'} {j} {j'} mj (SplO x proj inj) mi =
     (Pullback {a=j'} {b=x} {c=j} mj proj)
     (fst . fst0)
     (\ei' => case mi ei' of Element0 (ej', ei) eq => Element0 (ej', inj ei) eq)
+
+    -}
 
 --------------------------------------------------
 --------------------------------------------------
