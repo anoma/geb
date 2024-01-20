@@ -1570,7 +1570,7 @@ PFSliceFunc (ppos ** pdir) (qpos ** qdir) = ?PFSliceFunc_hole
 -- of polynomial functors.
 InterpPFSliceFunc : {p, q : PolyFunc} ->
   PFSliceFunc p q -> PFSliceObj p -> PFSliceObj q
-InterpPFSliceFunc {p=(ppos ** pdir)} {q=(qpos ** qdir)} pfsf slp (iq ** id) =
+InterpPFSliceFunc {p=(ppos ** pdir)} {q=(qpos ** qdir)} pfsf slp (qi ** qd) =
   ?InterpPFSliceFunc_hole
 
 -- The morphism-map component of a functor between the slice categories of a
