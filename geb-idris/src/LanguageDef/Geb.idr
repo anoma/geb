@@ -1531,56 +1531,21 @@ PFDirCatElemMor : {p : PolyFunc} ->
   PFDirCatElemObj p -> PFDirCatElemObj p -> Type
 PFDirCatElemMor {p=(pos ** dir)} x y = x = y
 
--- This may be viewed as the object-map component of a (co)presheaf on the
--- category of elements of the (co)presheaf which is equivalent to `dir`.
--- Because that category of elements is discrete, there is no difference
--- between viewing it as a presheaf and as a copresheaf, and the morphism-map
--- component is trivial; it has only identity morphisms to map, and can map
--- them only to identities.
---
--- Note however that this way of writing a slice object only applies to
--- polynomial functors and not to Dirichlet functors.  For Dirichlet functors,
--- the on-directions component of the natural transformation which constitutes
--- the projection component of a slice object (when written in the usual
--- category-theoretic form) goes in the opposite direction -- from the
--- direction-sets of the Dirichlet functor we are slicing over to the object
--- component of the slice object -- and therefore can not be viewed as a
--- fibration of the direction-sets.
-PFSliceObj : (p : PolyFunc) -> Type
-PFSliceObj (pos ** dir) = Sigma {a=pos} dir -> Type
-
--- This is a morphism in the slice category of a polynomial functor
--- (within the category of polynomial functors and their natural
--- transformations), which, because a slice object may be viewed as
--- a (co)presheaf on a category of elements, may in turn be viewed as a
--- natural transformation between (co)presheaves.  Once again there is
--- no difference between the presheaf and copresheaf viewpoints, because
--- the domain category is discrete.  (In a non-discrete category, though
--- the mapping would still go in the same direction from objects to objects,
--- the naturality condition would be reversed for a copresheaf versus a
--- presheaf.  In the absence of non-identity morphisms, there is no naturality
--- condition; the functor is effectively just a function, on objects.)
-PFSliceMorph : {p : PolyFunc} -> PFSliceObj p -> PFSliceObj p -> Type
-PFSliceMorph {p=(pos ** dir)} = SliceMorphism {a=(Sigma {a=pos} dir)}
-
-PFSliceFunc : PolyFunc -> PolyFunc -> Type
-PFSliceFunc (ppos ** pdir) (qpos ** qdir) = ?PFSliceFunc_hole
-
--- The object-map component of a functor between the slice categories of a pair
--- of polynomial functors.
-InterpPFSliceFunc : {p, q : PolyFunc} ->
-  PFSliceFunc p q -> PFSliceObj p -> PFSliceObj q
-InterpPFSliceFunc {p=(ppos ** pdir)} {q=(qpos ** qdir)} pfsf slp (qi ** qd) =
-  ?InterpPFSliceFunc_hole
-
--- The morphism-map component of a functor between the slice categories of a
--- pair of polynomial functors.
-InterpPFSliceFuncMap : {p, q : PolyFunc} -> (pfsf : PFSliceFunc p q) ->
-  {slp, slp' : PFSliceObj p} -> PFSliceMorph {p} slp slp' ->
-  PFSliceMorph {p=q}
-    (InterpPFSliceFunc {p} {q} pfsf slp)
-    (InterpPFSliceFunc {p} {q} pfsf slp')
-InterpPFSliceFuncMap {p} {q} pfsf {slp} {slp'} m = ?InterpPFSliceFuncMap_hole
+-- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
+-- the same `onpos` component, so we can constrain the slice morphisms as
+-- follows.
+data PFSliceMorph : {0 p : PolyFunc} ->
+    CPFSliceObj p -> CPFSliceObj p -> Type where
+  PFSM :
+    {0 ppos, qpos, rpos : Type} ->
+    {0 pdir : ppos -> Type} -> {0 qdir : qpos -> Type} ->
+    {0 rdir : rpos -> Type} ->
+    (0 rponpos : rpos -> ppos) -> (0 qronpos : qpos -> rpos) ->
+    (0 rpondir : (i : rpos) -> pdir (rponpos i) -> rdir i) ->
+    (0 qpondir : (i : qpos) -> pdir (rponpos $ qronpos i) -> qdir i) ->
+    PFSliceMorph {p=(ppos ** pdir)}
+      ((qpos ** qdir) ** (rponpos . qronpos ** qpondir))
+      ((rpos ** rdir) ** (rponpos ** rpondir))
 
 --------------------------------------------------------------------
 --------------------------------------------------------------------
