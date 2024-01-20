@@ -11,123 +11,6 @@ import LanguageDef.PolyIndTypes
 
 %default total
 
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------
----- Slice objects in the category of polynomial endofunctors on `Type` ----
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------
-
-----------------------------------
----- Category-theoretic style ----
-----------------------------------
-
-CPFSliceObj : PolyFunc -> Type
-CPFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
-
-0 PFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
-PFNatTransEq (ppos ** pdir) (qpos ** qdir)
-  (aonpos ** aondir) (bonpos ** bondir) =
-    Exists0
-      (ExtEq {a=ppos} {b=qpos} aonpos bonpos)
-      $ \onposeq =>
-        (i : ppos) -> (d : qdir (aonpos i)) ->
-        bondir i (replace {p=qdir} (onposeq i) d) = aondir i d
-
-CPFSliceMorph : (p : PolyFunc) -> CPFSliceObj p -> CPFSliceObj p -> Type
-CPFSliceMorph p (q ** qp) (r ** rp) =
-  Subset0 (PolyNatTrans q r) (\qr => PFNatTransEq q p qp (pntVCatComp rp qr))
-
----------------------------------------------
----- Arena/dependent-type-universe-style ----
----------------------------------------------
-
--- The direction-map of a polynomial functor, which we may view as a slice
--- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
--- from the discrete category whose objects are terms of `pos`.  (Because
--- the domain category `pos` is discrete, there is no difference between viewing
--- the functor `dir` as covariant or as contravariant, because it has no
--- non-identity morphisms to map into functions of `Type`.)
---
--- As a functor into `Type`, it has a category of elements, which we
--- now define.  Note that this is not the category of elements of the
--- `PolyFunc` itself -- it is the category of elements of its `dir` component
--- viewed as a functor.
-PFDirCatElemObj : PolyFunc -> Type
-PFDirCatElemObj (pos ** dir) = Sigma {a=pos} dir
-
--- A morphism in the category of elements consists of a morphism of the
--- domain category -- of which there is always exactly one, the identity,
--- since the domain category is the discrete category with objects from
--- `pos` such that the `fmap` component takes the element of one output
--- set to the other.  Since that morphism must be the identity, that means
--- that the position components of the two objects of the category of
--- elements must be the same.  `fmap` is also the identity (in `Type`) by the
--- identity-to-identity functor law, so in this discrete case, the `fmap`
--- output requirement for a morphism in the category of elements means that
--- the elements of the output sets must also be equal.  Hence, the whole
--- objects of the category of elements must be equal.
---
--- In other words, there is precisely one morphism in the category of elements
--- between equal elements, and there are none between non-equal elements.
--- So, that one morphism when it exists is also the identity.
---
--- That is all to say:  the category of elements of a (co)presheaf on a
--- discrete category is also discrete.
-PFDirCatElemMor : {p : PolyFunc} ->
-  PFDirCatElemObj p -> PFDirCatElemObj p -> Type
-PFDirCatElemMor {p=(pos ** dir)} x y = x = y
-
--- This may be viewed as the object-map component of a (co)presheaf on the
--- category of elements of the (co)presheaf which is equivalent to `p`.
--- Because the category of elements is discrete, there is no difference
--- between viewing it as a presheaf and as a copresheaf, and the morphism-map
--- component is trivial; it has only identity morphisms to map, and can map
--- them only to identities.
---
--- Note however that this way of writing a slice object only applies to
--- polynomial functors and not to Dirichlet functors.  For Dirichlet functors,
--- the on-directions component of the natural transformation which constitutes
--- the projection component of a slice object (when written in the usual
--- category-theoretic for) goes in the opposite direction -- from the
--- direction-sets of the Dirichlet functor we are slicing over to the object
--- component of the slice object -- and therefore can not be viewed as a
--- fibration of the direction-sets.
-PFSliceObj : (p : PolyFunc) -> Type
-PFSliceObj (pos ** dir) = Sigma {a=pos} dir -> Type
-
--- This is a morphism in the slice category of a polynomial functor
--- (within the category of polynomial functors and their natural
--- transformations), which, because a slice object may be viewed as
--- a (co)presheaf on a category of elements, may in turn be viewed as a
--- natural transformation between (co)presheaves.  Once again there is
--- no difference between the presheaf and copresheaf viewpoints, because
--- the domain category is discrete.  (In a non-discrete category, though
--- the mapping would still go in the same direction from objects to objects,
--- the naturality condition would be reversed for a copresheaf versus a
--- presheaf.  In the absence of non-identity morphisms, there is no naturality
--- condition; the functor is effectively just a function, on objects.)
-PFSliceMorph : {p : PolyFunc} -> PFSliceObj p -> PFSliceObj p -> Type
-PFSliceMorph {p=(pos ** dir)} = SliceMorphism {a=(Sigma {a=pos} dir)}
-
-PFSliceFunc : PolyFunc -> PolyFunc -> Type
-PFSliceFunc (ppos ** pdir) (qpos ** qdir) = ?PFSliceFunc_hole
-
--- The object-map component of a functor between the slice categories of a pair
--- of polynomial functors.
-InterpPFSliceFunc : {p, q : PolyFunc} ->
-  PFSliceFunc p q -> PFSliceObj p -> PFSliceObj q
-InterpPFSliceFunc {p=(ppos ** pdir)} {q=(qpos ** qdir)} pfsf slp (iq ** id) =
-  ?InterpPFSliceFunc_hole
-
--- The morphism-map component of a functor between the slice categories of a
--- pair of polynomial functors.
-InterpPFSliceFuncMap : {p, q : PolyFunc} -> (pfsf : PFSliceFunc p q) ->
-  {slp, slp' : PFSliceObj p} -> PFSliceMorph {p} slp slp' ->
-  PFSliceMorph {p=q}
-    (InterpPFSliceFunc {p} {q} pfsf slp)
-    (InterpPFSliceFunc {p} {q} pfsf slp')
-InterpPFSliceFuncMap {p} {q} pfsf {slp} {slp'} m = ?InterpPFSliceFuncMap_hole
-
 -------------------------------------
 -------------------------------------
 ---- Language architecture notes ----
@@ -1581,6 +1464,123 @@ data DirichCatElemMor :
     DirichCatElemMor c mor comp (pos ** dir)
       (y ** (i ** comp y x (dir i) dm m))
       (x ** (i ** dm))
+
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+---- Slice objects in the category of polynomial endofunctors on `Type` ----
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+----------------------------------
+---- Category-theoretic style ----
+----------------------------------
+
+CPFSliceObj : PolyFunc -> Type
+CPFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
+
+0 PFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
+PFNatTransEq (ppos ** pdir) (qpos ** qdir)
+  (aonpos ** aondir) (bonpos ** bondir) =
+    Exists0
+      (ExtEq {a=ppos} {b=qpos} aonpos bonpos)
+      $ \onposeq =>
+        (i : ppos) -> (d : qdir (aonpos i)) ->
+        bondir i (replace {p=qdir} (onposeq i) d) = aondir i d
+
+CPFSliceMorph : (p : PolyFunc) -> CPFSliceObj p -> CPFSliceObj p -> Type
+CPFSliceMorph p (q ** qp) (r ** rp) =
+  Subset0 (PolyNatTrans q r) (\qr => PFNatTransEq q p qp (pntVCatComp rp qr))
+
+---------------------------------------------
+---- Arena/dependent-type-universe-style ----
+---------------------------------------------
+
+-- The direction-map of a polynomial functor, which we may view as a slice
+-- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
+-- from the discrete category whose objects are terms of `pos`.  (Because
+-- the domain category `pos` is discrete, there is no difference between viewing
+-- the functor `dir` as covariant or as contravariant, because it has no
+-- non-identity morphisms to map into functions of `Type`.)
+--
+-- As a functor into `Type`, it has a category of elements, which we
+-- now define.  Note that this is not the category of elements of the
+-- `PolyFunc` itself -- it is the category of elements of its `dir` component
+-- viewed as a functor.
+PFDirCatElemObj : PolyFunc -> Type
+PFDirCatElemObj (pos ** dir) = Sigma {a=pos} dir
+
+-- A morphism in the category of elements consists of a morphism of the
+-- domain category -- of which there is always exactly one, the identity,
+-- since the domain category is the discrete category with objects from
+-- `pos` such that the `fmap` component takes the element of one output
+-- set to the other.  Since that morphism must be the identity, that means
+-- that the position components of the two objects of the category of
+-- elements must be the same.  `fmap` is also the identity (in `Type`) by the
+-- identity-to-identity functor law, so in this discrete case, the `fmap`
+-- output requirement for a morphism in the category of elements means that
+-- the elements of the output sets must also be equal.  Hence, the whole
+-- objects of the category of elements must be equal.
+--
+-- In other words, there is precisely one morphism in the category of elements
+-- between equal elements, and there are none between non-equal elements.
+-- So, that one morphism when it exists is also the identity.
+--
+-- That is all to say:  the category of elements of a (co)presheaf on a
+-- discrete category is also discrete.
+PFDirCatElemMor : {p : PolyFunc} ->
+  PFDirCatElemObj p -> PFDirCatElemObj p -> Type
+PFDirCatElemMor {p=(pos ** dir)} x y = x = y
+
+-- This may be viewed as the object-map component of a (co)presheaf on the
+-- category of elements of the (co)presheaf which is equivalent to `p`.
+-- Because the category of elements is discrete, there is no difference
+-- between viewing it as a presheaf and as a copresheaf, and the morphism-map
+-- component is trivial; it has only identity morphisms to map, and can map
+-- them only to identities.
+--
+-- Note however that this way of writing a slice object only applies to
+-- polynomial functors and not to Dirichlet functors.  For Dirichlet functors,
+-- the on-directions component of the natural transformation which constitutes
+-- the projection component of a slice object (when written in the usual
+-- category-theoretic for) goes in the opposite direction -- from the
+-- direction-sets of the Dirichlet functor we are slicing over to the object
+-- component of the slice object -- and therefore can not be viewed as a
+-- fibration of the direction-sets.
+PFSliceObj : (p : PolyFunc) -> Type
+PFSliceObj (pos ** dir) = Sigma {a=pos} dir -> Type
+
+-- This is a morphism in the slice category of a polynomial functor
+-- (within the category of polynomial functors and their natural
+-- transformations), which, because a slice object may be viewed as
+-- a (co)presheaf on a category of elements, may in turn be viewed as a
+-- natural transformation between (co)presheaves.  Once again there is
+-- no difference between the presheaf and copresheaf viewpoints, because
+-- the domain category is discrete.  (In a non-discrete category, though
+-- the mapping would still go in the same direction from objects to objects,
+-- the naturality condition would be reversed for a copresheaf versus a
+-- presheaf.  In the absence of non-identity morphisms, there is no naturality
+-- condition; the functor is effectively just a function, on objects.)
+PFSliceMorph : {p : PolyFunc} -> PFSliceObj p -> PFSliceObj p -> Type
+PFSliceMorph {p=(pos ** dir)} = SliceMorphism {a=(Sigma {a=pos} dir)}
+
+PFSliceFunc : PolyFunc -> PolyFunc -> Type
+PFSliceFunc (ppos ** pdir) (qpos ** qdir) = ?PFSliceFunc_hole
+
+-- The object-map component of a functor between the slice categories of a pair
+-- of polynomial functors.
+InterpPFSliceFunc : {p, q : PolyFunc} ->
+  PFSliceFunc p q -> PFSliceObj p -> PFSliceObj q
+InterpPFSliceFunc {p=(ppos ** pdir)} {q=(qpos ** qdir)} pfsf slp (iq ** id) =
+  ?InterpPFSliceFunc_hole
+
+-- The morphism-map component of a functor between the slice categories of a
+-- pair of polynomial functors.
+InterpPFSliceFuncMap : {p, q : PolyFunc} -> (pfsf : PFSliceFunc p q) ->
+  {slp, slp' : PFSliceObj p} -> PFSliceMorph {p} slp slp' ->
+  PFSliceMorph {p=q}
+    (InterpPFSliceFunc {p} {q} pfsf slp)
+    (InterpPFSliceFunc {p} {q} pfsf slp')
+InterpPFSliceFuncMap {p} {q} pfsf {slp} {slp'} m = ?InterpPFSliceFuncMap_hole
 
 --------------------------------------------------------------------
 --------------------------------------------------------------------
