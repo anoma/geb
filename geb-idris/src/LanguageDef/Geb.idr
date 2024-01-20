@@ -48,9 +48,12 @@ CPFSliceMorph p (q ** qp) (r ** rp) =
 -- the functor `dir` as covariant or as contravariant, because it has no
 -- non-identity morphisms to map into functions of `Type`.)
 --
--- As a functor into `Type`, it has a category of elements.
-PFCatElemObj : PolyFunc -> Type
-PFCatElemObj (pos ** dir) = Sigma {a=pos} dir
+-- As a functor into `Type`, it has a category of elements, which we
+-- now define.  Note that this is not the category of elements of the
+-- `PolyFunc` itself -- it is the category of elements of its `dir` component
+-- viewed as a functor.
+PFDirCatElemObj : PolyFunc -> Type
+PFDirCatElemObj (pos ** dir) = Sigma {a=pos} dir
 
 -- A morphism in the category of elements consists of a morphism of the
 -- domain category -- of which there is always exactly one, the identity,
@@ -70,8 +73,9 @@ PFCatElemObj (pos ** dir) = Sigma {a=pos} dir
 --
 -- That is all to say:  the category of elements of a (co)presheaf on a
 -- discrete category is also discrete.
-PFCatElemMor : {p : PolyFunc} -> PFCatElemObj p -> PFCatElemObj p -> Type
-PFCatElemMor {p=(pos ** dir)} x y = x = y
+PFDirCatElemMor : {p : PolyFunc} ->
+  PFDirCatElemObj p -> PFDirCatElemObj p -> Type
+PFDirCatElemMor {p=(pos ** dir)} x y = x = y
 
 -- This may be viewed as the object-map component of a (co)presheaf on the
 -- category of elements of the (co)presheaf which is equivalent to `p`.
@@ -104,6 +108,25 @@ PFSliceObj (pos ** dir) = Sigma {a=pos} dir -> Type
 -- condition; the functor is effectively just a function, on objects.)
 PFSliceMorph : {p : PolyFunc} -> PFSliceObj p -> PFSliceObj p -> Type
 PFSliceMorph {p=(pos ** dir)} = SliceMorphism {a=(Sigma {a=pos} dir)}
+
+PFSliceFunc : PolyFunc -> PolyFunc -> Type
+PFSliceFunc (ppos ** pdir) (qpos ** qdir) = ?PFSliceFunc_hole
+
+-- The object-map component of a functor between the slice categories of a pair
+-- of polynomial functors.
+InterpPFSliceFunc : {p, q : PolyFunc} ->
+  PFSliceFunc p q -> PFSliceObj p -> PFSliceObj q
+InterpPFSliceFunc {p=(ppos ** pdir)} {q=(qpos ** qdir)} pfsf slp (iq ** id) =
+  ?InterpPFSliceFunc_hole
+
+-- The morphism-map component of a functor between the slice categories of a
+-- pair of polynomial functors.
+InterpPFSliceFuncMap : {p, q : PolyFunc} -> (pfsf : PFSliceFunc p q) ->
+  {slp, slp' : PFSliceObj p} -> PFSliceMorph {p} slp slp' ->
+  PFSliceMorph {p=q}
+    (InterpPFSliceFunc {p} {q} pfsf slp)
+    (InterpPFSliceFunc {p} {q} pfsf slp')
+InterpPFSliceFuncMap {p} {q} pfsf {slp} {slp'} m = ?InterpPFSliceFuncMap_hole
 
 -------------------------------------
 -------------------------------------
