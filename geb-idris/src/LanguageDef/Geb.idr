@@ -12,17 +12,6 @@ import LanguageDef.FinCat
 
 %default total
 
----------------------------------
----------------------------------
----- Categories from quivers ----
----------------------------------
----------------------------------
-
-record TypeQuiv where
-  constructor TQuiv
-  tqVert : Type
-  tqEdge : TypeQuivV tqVert
-
 -------------------------------------
 -------------------------------------
 ---- Language architecture notes ----
