@@ -9,6 +9,10 @@ modules =
     , Library.Test.IdrisUtilsTest
     , Library.Test.IdrisCategoriesTest
     , Library.Test.CategoryTheoryTest
+    , LanguageDef.Quiver
+    , LanguageDef.MLQuivCat
+    , LanguageDef.MLQuivUniv
+    , LanguageDef.GenPolyFunc
     , LanguageDef.FinCat
     , LanguageDef.BinTree
     , LanguageDef.Geb
@@ -30,6 +34,10 @@ modules =
     , LanguageDef.ComputationalEffects
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
+    , LanguageDef.Test.QuiverTest
+    , LanguageDef.Test.MLQuivCatTest
+    , LanguageDef.Test.MLQuivUnivTest
+    , LanguageDef.Test.GenPolyFuncTest
     , LanguageDef.Test.FinCatTest
     , LanguageDef.Test.BinTreeTest
     , LanguageDef.Test.GebTest
