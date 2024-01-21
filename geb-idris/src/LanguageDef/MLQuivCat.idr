@@ -84,8 +84,21 @@ public export
 FinQuivCopreshfMmap : {n : Nat} -> FinQuivN n -> FinSliceObj n -> Type
 FinQuivCopreshfMmap {n} q = TypeQuivCopreshfMmap {v=(Fin n)} (Fin . q)
 
+---------------------------------
+---------------------------------
+---- Categories from quivers ----
+---------------------------------
+---------------------------------
+
+record TypeQuiv where
+  constructor TQuiv
+  tqVert : Type
+  tqEdge : TypeQuivV tqVert
+
+--------------------------------------------------
 --------------------------------------------------
 ---- Functors in free-(co)presheaf categories ----
+--------------------------------------------------
 --------------------------------------------------
 
 -- The object-map component of a functor in a presheaf category.
@@ -196,14 +209,3 @@ TypeQuivLKanExtBase {v} q slv fm =
 public export
 TypeQuivLKanSumP : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
 TypeQuivLKanSumP {v} q slv = TypeQuivSumP {v} q (TypeQuivKanExtProf {v} slv)
-
----------------------------------
----------------------------------
----- Categories from quivers ----
----------------------------------
----------------------------------
-
-record TypeQuiv where
-  constructor TQuiv
-  tqVert : Type
-  tqEdge : TypeQuivV tqVert
