@@ -103,7 +103,7 @@ TypeCQuivCompCoprod {v} {w} {qv} {qw} cv cw (Right ew) (Right ew') (Right ew'')
 public export
 TypeQuivPreshfMmap : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
 TypeQuivPreshfMmap {v} q sl =
-  (dom, cod : v) -> q (dom, cod) -> sl cod -> sl dom
+  (dom, cod : v) -> q (cod, dom) -> sl dom -> sl cod
 
 -- Given a quiver internal to and enriched over `Type` and a slice object
 -- over its vertex object -- the latter of which may be treated as the
