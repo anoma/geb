@@ -4,12 +4,6 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.Quiver
 
-----------------------------------------------
-----------------------------------------------
----- Categories from quivers, inductively ----
-----------------------------------------------
-----------------------------------------------
-
 -------------------------------------
 -------------------------------------
 ---- (Co)presheaves from quivers ----
