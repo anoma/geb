@@ -88,12 +88,14 @@ FinQuivCopreshfMmap {n} q = TypeQuivCopreshfMmap {v=(Fin n)} (Fin . q)
 ---- Functors in free-(co)presheaf categories ----
 --------------------------------------------------
 
+-- The object-map component of a functor in a presheaf category.
 public export
 TypeQuivPreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
 TypeQuivPreshfFunctor {v} {w} qv qw =
   (slv : SliceObj v ** TypeQuivPreshfMmap {v} qv slv) ->
   (slw : SliceObj w ** TypeQuivPreshfMmap {v=w} qw slw)
 
+-- The object-map component of a functor in a copresheaf category.
 public export
 TypeQuivCopreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
 TypeQuivCopreshfFunctor {v} {w} qv qw =
