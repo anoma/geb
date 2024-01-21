@@ -5,6 +5,9 @@ import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
 import Library.Test.IdrisAlgebraTest
 import Library.Test.CategoryTheoryTest
+import LanguageDef.Test.QuiverTest
+import LanguageDef.Test.MLQuivCatTest
+import LanguageDef.Test.MLQuivUnivTest
 import LanguageDef.Test.FinCatTest
 import LanguageDef.Test.BinTreeTest
 import LanguageDef.Test.GebTest
@@ -57,7 +60,6 @@ totalTests = do
   LanguageDef.Test.ProgFinSetTest.progFinSetTest
   LanguageDef.Test.DiagramCatTest.diagramCatTest
   LanguageDef.Test.AdjunctionsTest.adjunctionsTest
-  LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
   LanguageDef.Test.GebToposTest.gebToposTest
   LanguageDef.Test.RefinedADTTest.languageDefRefinedADTTest
   LanguageDef.Test.SyntaxTest.languageDefSyntaxTest
@@ -66,6 +68,10 @@ totalTests = do
   LanguageDef.Test.PolyIndTypesTest.polyIndTypesTest
   LanguageDef.Test.GebTest.gebTest
   LanguageDef.Test.FinCatTest.finCatTest
+  LanguageDef.Test.QuiverTest.quiverTest
+  LanguageDef.Test.MLQuivCatTest.mlQuivCatTest
+  LanguageDef.Test.MLQuivUnivTest.mlQuivUnivTest
+  LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()
