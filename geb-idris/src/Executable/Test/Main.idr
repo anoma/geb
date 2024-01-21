@@ -8,6 +8,7 @@ import Library.Test.CategoryTheoryTest
 import LanguageDef.Test.QuiverTest
 import LanguageDef.Test.MLQuivCatTest
 import LanguageDef.Test.MLQuivUnivTest
+import LanguageDef.Test.GenPolyFuncTest
 import LanguageDef.Test.FinCatTest
 import LanguageDef.Test.BinTreeTest
 import LanguageDef.Test.GebTest
@@ -20,7 +21,6 @@ import LanguageDef.Test.ProgFinSetTest
 import LanguageDef.Test.DiagramCatTest
 import LanguageDef.Test.AdjunctionsTest
 import LanguageDef.Test.GebToposTest
-import LanguageDef.Test.GenPolyFuncTest
 import LanguageDef.Test.PolyCatTest
 import LanguageDef.Test.PolyProfunctorTest
 import LanguageDef.Test.AtomTest
