@@ -6383,36 +6383,43 @@ data SpliceMorph : {0 j, i : Type} ->
     SpliceObj j i -> SpliceObj j i -> Type where
   SplM : {0 j : Type} -> {0 slx, sly, cobase : SliceObj j} ->
     (xinj : SliceMorphism {a=j} cobase slx) ->
+    (yinj : SliceMorphism {a=j} cobase sly) ->
     (mxy : SliceMorphism {a=j} slx sly) ->
+    {auto 0 eq :
+      (ej : j) -> (ec : cobase ej) -> mxy ej (xinj ej ec) = yinj ej ec} ->
     SpliceMorph {j} {i=(Sigma {a=j} cobase)}
       (SplO {j} {cobase} slx xinj)
-      (SplO {j} {cobase} sly $ sliceComp {a=j} mxy xinj)
+      (SplO {j} {cobase} sly yinj)
 
 spliceMorphDomInj : {0 j, i : Type} -> {splx, sply : SpliceObj j i} ->
   SpliceMorph {j} {i} splx sply ->
   SliceMorphism {a=j} (SplCosl splx) (SplSl splx)
-spliceMorphDomInj (SplM xinj _) = xinj
+spliceMorphDomInj (SplM xinj _ _) = xinj
 
 spliceMorphCodInj :
   {j : Type} -> {0 i : Type} -> {splx, sply : SpliceObj j i} ->
   SpliceMorph {j} {i} splx sply ->
   SliceMorphism {a=j} (SplCosl sply) (SplSl sply)
-spliceMorphCodInj (SplM xinj mxy) = sliceComp {a=j} mxy xinj
+spliceMorphCodInj (SplM _ yinj _) = yinj
 
 spliceMorphTot : {0 j, i : Type} -> {splx, sply : SpliceObj j i} ->
   SpliceMorph {j} {i} splx sply ->
   SliceMorphism {a=j} (SplSl splx) (SplSl sply)
-spliceMorphTot (SplM _ mxy) = mxy
+spliceMorphTot (SplM _ _ mxy) = mxy
 
 splId : {j : Type} -> {0 i : Type} ->
   (spl : SpliceObj j i) -> SpliceMorph {j} {i} spl spl
-splId (SplO {j} {cobase} sl inj) = SplM inj (sliceId {a=j} sl)
+splId (SplO {j} {cobase} sl inj) = SplM inj inj (sliceId {a=j} sl)
 
 splComp : {j : Type} -> {0 i : Type} -> {splx, sply, splz : SpliceObj j i} ->
   SpliceMorph {j} {i} sply splz ->
   SpliceMorph {j} {i} splx sply ->
   SpliceMorph {j} {i} splx splz
-splComp (SplM _ myz) (SplM xyinj mxy) = SplM xyinj (sliceComp {a=j} myz mxy)
+splComp
+  (SplM {slx=sly} {sly=slz} {cobase} yinj zinj myz {eq})
+  (SplM {slx} {sly} {cobase} xinj _ mxy {eq=eq'}) =
+    SplM xinj zinj (sliceComp {a=j} myz mxy)
+      {eq=(\ej, ec => rewrite eq' ej ec in eq ej ec)}
 
 -- Substitute the second parameter into the first.
 splObjSubst :
