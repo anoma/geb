@@ -7189,3 +7189,45 @@ record ProYoProshf
   constructor MkProYoPro
   ProYoProEmbed : (q : ProfunctorSig) ->
     {auto 0 _ : Profunctor q} -> ProfNT p (pp q)
+
+------------------------------
+------------------------------
+---- Embeddings of `Type` ----
+------------------------------
+------------------------------
+
+0 MLProfSig : Type
+MLProfSig = IntDifunctorSig Type
+
+0 MLDimapSig : MLProfSig -> Type
+MLDimapSig = IntEndoDimapSig Type HomProf
+
+MLDirichCatObj : Type
+MLDirichCatObj = IntDirichCatObj Type
+
+MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
+MLDirichCatMor = IntDirichCatMor Type HomProf
+
+MLDirichCatElemObj : MLDirichCatObj -> Type
+MLDirichCatElemObj = DirichCatElemObj Type HomProf
+
+MLDirichCatElemMor : (ar : MLDirichCatObj) ->
+  MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
+MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
+
+-- We interpret the notion of a polynomial profunctor as a polynomial
+-- functor into the category of Dirichlet functors on `Type`.  Thus
+-- the positions are drawn from the category of Dirichlet functors.
+record MLPolyProfAr where
+  constructor MLPProf
+  mlppDirichPos : Type
+  mlppDirichDir : mlppDirichPos -> Type
+  mlppPolyDir : mlppDirichPos -> PolyFunc
+
+InterpMLPP : MLPolyProfAr -> MLProfSig
+InterpMLPP (MLPProf dpos ddir pdir) x y =
+  (i : InterpDirichFunc (dpos ** ddir) x ** InterpPolyFunc (pdir $ fst i) y)
+
+mlppDimap : (ar : MLPolyProfAr) -> MLDimapSig (InterpMLPP ar)
+mlppDimap (MLPProf dpos ddir pdir) s t a b mas mtb ((dp ** dd) ** (pp ** pd)) =
+  ((dp ** dd . mas) ** (pp ** mtb . pd))
