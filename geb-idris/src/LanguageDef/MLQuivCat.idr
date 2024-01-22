@@ -90,10 +90,20 @@ FinQuivCopreshfMmap {n} q = TypeQuivCopreshfMmap {v=(Fin n)} (Fin . q)
 ---------------------------------
 ---------------------------------
 
-record TypeQuiv where
-  constructor TQuiv
-  tqVert : Type
-  tqEdge : TypeQuivV tqVert
+-- A presheaf into `Type` from an internal category with object type `v`,
+-- defined via a quiver.
+record TQPresheaf (v : Type) where
+  constructor TQPre
+  tqpEdge : TypeQuivV v
+  tqpOmap : SliceObj v
+  tqpFmap : TypeQuivPreshfMmap {v} tqpEdge tqpOmap
+
+-- A category defined by a presheaf defined by a quiver.
+record TQCat where
+  constructor TQC
+  tqcObj : Type
+  tqcRep : tqcObj -> Type
+  tqcPrshf : (x : tqcObj) -> TQPresheaf (tqcRep x)
 
 --------------------------------------------------
 --------------------------------------------------
