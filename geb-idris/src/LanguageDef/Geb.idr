@@ -7215,19 +7215,31 @@ MLDirichCatElemMor : (ar : MLDirichCatObj) ->
   MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
 MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
 
+MLSliceCatObj : Type -> Type
+MLSliceCatObj = CSliceObj
+
+MLSliceCatMor : (c : Type) -> IntDifunctorSig (MLSliceCatObj c)
+MLSliceCatMor c = CSliceMorphism {c}
+
+mlSliceCatComp : (c : Type) -> IntCompSig (MLSliceCatObj c) (MLSliceCatMor c)
+mlSliceCatComp c x y z = CSliceCompose {c} {u=x} {v=y} {w=z}
+
+MLSliceToTypeAr : Type -> Type
+MLSliceToTypeAr = IntArena . MLSliceCatObj
+
+InterpMLSliceToType : (c : Type) -> MLSliceToTypeAr c -> CSliceObj c -> Type
+InterpMLSliceToType c = InterpIPFobj (MLSliceCatObj c) (MLSliceCatMor c)
+
 -- We interpret the notion of a polynomial profunctor as a polynomial
 -- functor into the category of Dirichlet functors on `Type`.  Thus
 -- the positions are drawn from the category of Dirichlet functors.
 record MLPolyProfAr where
   constructor MLPProf
-  mlppDirichPos : Type
-  mlppDirichDir : mlppDirichPos -> Type
-  mlppPolyDir : mlppDirichPos -> PolyFunc
+  mlppPos : Type
+  mlppContraDir : mlppPos -> Type
+  mlppCovarDir : (i : mlppPos) -> CSliceObj (mlppContraDir i)
 
 InterpMLPP : MLPolyProfAr -> MLProfSig
-InterpMLPP (MLPProf dpos ddir pdir) x y =
-  (i : InterpDirichFunc (dpos ** ddir) x ** InterpPolyFunc (pdir $ fst i) y)
-
-mlppDimap : (ar : MLPolyProfAr) -> MLDimapSig (InterpMLPP ar)
-mlppDimap (MLPProf dpos ddir pdir) s t a b mas mtb ((dp ** dd) ** (pp ** pd)) =
-  ((dp ** dd . mas) ** (pp ** mtb . pd))
+InterpMLPP (MLPProf pos contra covar) x y =
+  (i : pos ** slx : x -> contra i ** sly : y -> contra i **
+   CSliceMorphism {c=(contra i)} (covar i) (y ** sly))
