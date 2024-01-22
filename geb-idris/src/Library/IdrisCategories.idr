@@ -6845,7 +6845,9 @@ Contravariant (ContraYo f) where
 public export
 record CoYo (f : Type -> Type) (r : Type) where
   constructor MkCoYo
-  CoYoEmbed : LKanExt f Prelude.id r
+  CoYoEmbed : LKanExt f Prelude.id r -- `f` covariant
+           -- LKanExt g j a = (b : Type ** (j b -> a, g b))
+           -- LKanExt f Prelude.id r = (b : Type ** (b -> r, f b))
 
 public export
 fromCoYo : Functor f => CoYo f b -> f b
@@ -6862,7 +6864,8 @@ Functor (CoYo f) where
 public export
 record ContraCoYo (f : Type -> Type) (r : Type) where
   constructor MkContraCoYo
-  ContraCoYoEmbed : (a : Type ** (f a, r -> a))
+  ContraCoYoEmbed : (b : Type ** (f b, r -> b)) -- `f` contravariant
+ -- compare CoYo ~= (b : Type ** (f b, b -> r)) with `f` covariant
 
 public export
 fromContraCoYo : Contravariant f => ContraCoYo f b -> f b
