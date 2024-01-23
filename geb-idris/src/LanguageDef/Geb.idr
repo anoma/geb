@@ -7253,3 +7253,55 @@ InterpMLPP : MLPolyProfAr -> MLProfSig
 InterpMLPP (MLPProf pos contra covar) x y =
   (i : pos ** slx : x -> contra i ** sly : y -> contra i **
    CSliceMorphism {c=(contra i)} (covar i) (y ** sly))
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+---- Experiments with polynomial "difunctors" translated to exponentials ----
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+public export
+IntPolyCatObj : Type -> Type
+IntPolyCatObj = IntArena
+
+public export
+IntPolyCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntDifunctorSig (IntPolyCatObj c)
+IntPolyCatMor = IntDNTar
+
+MLPolyCatObj : Type
+MLPolyCatObj = IntPolyCatObj Type
+
+MLPolyCatMor : MLPolyCatObj -> MLPolyCatObj -> Type
+MLPolyCatMor = IntPolyCatMor Type HomProf
+
+MLPolyCatElemObj : MLPolyCatObj -> Type
+MLPolyCatElemObj = PolyCatElemObj Type HomProf
+
+NAlgF : Type -> Type
+NAlgF x = (x, x -> x)
+
+NAlg : Type
+NAlg = (x : Type ** NAlgF x)
+
+NAlgPF : MLPolyCatObj
+NAlgPF =
+  pfProductArena PFIdentityArena (pfHomObj PFIdentityArena PFIdentityArena)
+
+NAlgP : Type
+NAlgP = MLPolyCatElemObj NAlgPF
+
+public export
+nAlgToP : NAlg -> NAlgP
+nAlgToP (x ** (base, ind)) =
+  (x ** (((), \() => (() ** \() => Left ())) **
+   \y => case y of Left () => base ; Right (() ** (() ** ())) => ind base))
+
+public export
+nAlgFromP : NAlgP -> NAlg
+nAlgFromP (x ** (((), base) ** ind)) with (snd (base ()) ()) proof eq
+  nAlgFromP (x ** (((), base) ** ind)) | Left () =
+    (x **
+     (ind $ Left (), \ex => ind $ Right $ (() ** (() ** rewrite eq in ()))))
+  nAlgFromP (x ** (((), base) ** ind)) | Right () =
+    ?nAlgFromP_hole
