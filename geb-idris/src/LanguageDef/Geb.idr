@@ -1505,12 +1505,22 @@ data PFSliceMorph : {0 p : PolyFunc} ->
     {0 ppos, qpos, rpos : Type} ->
     {0 pdir : ppos -> Type} -> {0 qdir : qpos -> Type} ->
     {0 rdir : rpos -> Type} ->
-    (0 rponpos : rpos -> ppos) -> (0 qronpos : qpos -> rpos) ->
-    (0 rpondir : (i : rpos) -> pdir (rponpos i) -> rdir i) ->
-    (0 qpondir : (i : qpos) -> pdir (rponpos $ qronpos i) -> qdir i) ->
+    (rponpos : rpos -> ppos) -> (qronpos : qpos -> rpos) ->
+    (rpondir : (i : rpos) -> pdir (rponpos i) -> rdir i) ->
+    (qrondir : (i : qpos) -> rdir (qronpos i) -> qdir i) ->
     PFSliceMorph {p=(ppos ** pdir)}
-      ((qpos ** qdir) ** (rponpos . qronpos ** qpondir))
-      ((rpos ** rdir) ** (rponpos ** rpondir))
+      ((qpos ** qdir) **
+       (rponpos . qronpos ** \i, pd => qrondir i $ rpondir (qronpos i) pd))
+      ((rpos ** rdir) **
+       (rponpos ** rpondir))
+
+CPFSliceMorphFromPFS : (p : PolyFunc) -> (sp, sq : PFSliceObj p) ->
+  PFSliceMorph {p} sp sq -> CPFSliceMorph p sp sq
+CPFSliceMorphFromPFS (ppos ** pdir) ((qpos ** qdir) ** _) ((rpos ** rdir) ** _)
+  (PFSM rpop qrop rpod qrod) =
+    Element0
+      (qrop ** qrod)
+      (Evidence0 (\_ => Refl) $ \qi, pd => Refl)
 
 -- The direction-map of a polynomial functor, which we may view as a slice
 -- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
