@@ -1268,6 +1268,28 @@ IntCopreshfYonedaEmbedMorInv : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   mor b a
 IntCopreshfYonedaEmbedMorInv c mor cid a b alpha = alpha a (cid a)
 
+---------------------------------------------
+---- Exponentials in presheaf categories ----
+---------------------------------------------
+
+public export
+IntPreshfHomObjOmap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (xomap, yomap : c -> Type) ->
+  (xfmap : IntPreshfMapSig c mor xomap) ->
+  (yfmap : IntPreshfMapSig c mor yomap) ->
+  c -> Type
+IntPreshfHomObjOmap c mor xomap yomap xfmap yfmap a =
+  ?IntPreshfHomObjOmap_hole
+
+public export
+IntPreshfHomObjFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (xomap, yomap : c -> Type) ->
+  (xfmap : IntPreshfMapSig c mor xomap) ->
+  (yfmap : IntPreshfMapSig c mor yomap) ->
+  IntPreshfMapSig c mor (IntPreshfHomObjOmap c mor xomap yomap xfmap yfmap)
+IntPreshfHomObjFmap c mor xomap yomap xfmap yfmap a b mba =
+  ?IntPreshfHomObjFmap_hole
+
 --------------------------------------
 --------------------------------------
 ---- Internal polynomial functors ----
