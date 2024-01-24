@@ -1272,6 +1272,9 @@ IntCopreshfYonedaEmbedMorInv c mor cid a b alpha = alpha a (cid a)
 ---- Exponentials in presheaf categories ----
 ---------------------------------------------
 
+-- See for example
+-- https://math.stackexchange.com/questions/2402394/exponential-of-presheaves.
+
 public export
 IntPreshfHomObjOmap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (xomap, yomap : c -> Type) ->
