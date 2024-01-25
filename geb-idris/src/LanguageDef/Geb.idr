@@ -1442,10 +1442,10 @@ PolyCatElemObj c mor p = (x : c ** InterpIPFobj c mor p x)
 -- structure of the term.
 --
 -- Because of that unique determination, we do not need explicitly to choose
--- the codomain object, as in the general definition of the category of elements
--- (or indeed of morphisms in general) -- the choice of the domain object
--- together with a morphism from its underlying object to some other object
--- between them uniquely determine the one codomain object to which there
+-- the element component of the codomain object, as in the general definition
+-- of the category of elements -- the choice of both components of the domain
+-- object together with a morphism from its underlying object to some other
+-- object of `Type` between them uniquely determine the one codomain object to which there
 -- is a corresponding morphism in the category of elements.
 public export
 data PolyCatElemMor :
@@ -7347,3 +7347,26 @@ record PolyProAr (d, c : Type) where
   constructor PPA
   ppaPos : d -> Type
   ppaDir : Sigma {a=d} ppaPos -> c
+
+-- The category of elements of a functor from `Type` to `Type` (or of a
+-- functor from `op(Type)` to `Type`).
+MLCatElemObj : (Type -> Type) -> Type
+MLCatElemObj f = (x : Type ** f x)
+
+-- The data which determine morphisms of the category of elements of a
+-- (covariant) endofunctor on `Type`.
+MLCovarCatElemMorData : (Type -> Type) -> Type
+MLCovarCatElemMorData f =
+  (elobj : MLCatElemObj f ** y : Type ** fst elobj -> y)
+
+-- The morphisms of the category of elements of a (covariant) endofunctor on
+-- `Type`.
+data MLCovarCatElemMor : {0 f : Type -> Type} ->
+    (fm : {0 a, b : Type} -> (a -> b) -> f a -> f b) ->
+    MLCatElemObj f -> MLCatElemObj f -> Type where
+  MLCovCEM :
+    {0 f : Type -> Type} -> (fm : {0 a, b : Type} -> (a -> b) -> f a -> f b) ->
+    (mdata : MLCovarCatElemMorData f) ->
+    MLCovarCatElemMor {f} fm
+      (fst mdata)
+      (fst (snd mdata) ** fm (snd (snd mdata)) (snd (fst mdata)))
