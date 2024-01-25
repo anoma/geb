@@ -7357,9 +7357,11 @@ record MLCatElemObj (f : Type -> Type) where
 
 -- The data which determine morphisms of the category of elements of a
 -- (covariant) endofunctor on `Type`.
-MLCovarCatElemMorData : (Type -> Type) -> Type
-MLCovarCatElemMorData f =
-  (elobj : MLCatElemObj f ** y : Type ** mlcObj elobj -> y)
+record MLCovarCatElemMorData (f : Type -> Type) where
+  constructor MLElMor
+  mlcDom : MLCatElemObj f
+  mlcCodObj : Type
+  mlcMor : mlcObj mlcDom -> mlcCodObj
 
 -- The morphisms of the category of elements of a (covariant) endofunctor on
 -- `Type`.
@@ -7370,5 +7372,8 @@ data MLCovarCatElemMor : {0 f : Type -> Type} ->
     {0 f : Type -> Type} -> (fm : {0 a, b : Type} -> (a -> b) -> f a -> f b) ->
     (mdata : MLCovarCatElemMorData f) ->
     MLCovarCatElemMor {f} fm
-      (fst mdata)
-      (MLElObj (fst (snd mdata)) (fm (snd (snd mdata)) (mlcEl (fst mdata))))
+      (mlcDom mdata)
+      (MLElObj
+        (mlcCodObj mdata)
+        (fm {a=(mlcObj (mlcDom mdata))} {b=(mlcCodObj mdata)}
+          (mlcMor mdata) (mlcEl (mlcDom mdata))))
