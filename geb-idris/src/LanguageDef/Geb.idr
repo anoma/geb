@@ -7330,3 +7330,20 @@ nAlgFromP (x ** (((), base) ** ind)) with (snd (base ()) ()) proof eq
      (ind $ Left (), \ex => ind $ Right $ (() ** (() ** rewrite eq in ()))))
   nAlgFromP (x ** (((), base) ** ind)) | Right () =
     ?nAlgFromP_hole
+
+------------------------------------------
+------------------------------------------
+---- Alternative PolyFunc experiments ----
+------------------------------------------
+------------------------------------------
+
+PiBC : {w, y : Type} -> (y -> w -> Type) -> SliceFunctor w y
+PiBC {w} {y} dir slw ely = SliceMorphism {a=w} (dir ely) slw
+
+PolyProAr' : Type -> Type -> Type
+PolyProAr' d c = d -> IntArena c
+
+record PolyProAr (d, c : Type) where
+  constructor PPA
+  ppaPos : d -> Type
+  ppaDir : Sigma {a=d} ppaPos -> c
