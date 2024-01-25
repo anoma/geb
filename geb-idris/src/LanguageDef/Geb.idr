@@ -7377,3 +7377,26 @@ data MLCovarCatElemMor : {0 f : Type -> Type} ->
         (mlcCodObj mdata)
         (fm {a=(mlcObj (mlcDom mdata))} {b=(mlcCodObj mdata)}
           (mlcMor mdata) (mlcEl (mlcDom mdata))))
+
+-- The data which determine morphisms of the dual category of elements of a
+-- (contravariant) endofunctor on `Type`.
+record MLContravarCatElemMorData (f : Type -> Type) where
+  constructor MLdElMor
+  mldcDomObj : Type
+  mldcCod : MLCatElemObj f
+  mldcMor : mldcDomObj -> mlcObj mldcCod
+
+-- The morphisms of the dual category of elements of a (contravariant)
+-- endofunctor on `Type`.
+data MLContravarCatElemMor : {0 f : Type -> Type} ->
+    (fcm : {0 a, b : Type} -> (b -> a) -> f a -> f b) ->
+    MLCatElemObj f -> MLCatElemObj f -> Type where
+  MLContraCEM :
+    {0 f : Type -> Type} -> (fcm : {0 a, b : Type} -> (b -> a) -> f a -> f b) ->
+    (mdata : MLContravarCatElemMorData f) ->
+    MLContravarCatElemMor {f} fcm
+      (MLElObj
+        (mldcDomObj mdata)
+        (fcm {a=(mlcObj (mldcCod mdata))} {b=(mldcDomObj mdata)}
+          (mldcMor mdata) (mlcEl (mldcCod mdata))))
+      (mldcCod mdata)
