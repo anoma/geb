@@ -7350,14 +7350,16 @@ record PolyProAr (d, c : Type) where
 
 -- The category of elements of a functor from `Type` to `Type` (or of a
 -- functor from `op(Type)` to `Type`).
-MLCatElemObj : (Type -> Type) -> Type
-MLCatElemObj f = (x : Type ** f x)
+record MLCatElemObj (f : Type -> Type) where
+  constructor MLElObj
+  mlcObj : Type
+  mlcEl : f mlcObj
 
 -- The data which determine morphisms of the category of elements of a
 -- (covariant) endofunctor on `Type`.
 MLCovarCatElemMorData : (Type -> Type) -> Type
 MLCovarCatElemMorData f =
-  (elobj : MLCatElemObj f ** y : Type ** fst elobj -> y)
+  (elobj : MLCatElemObj f ** y : Type ** mlcObj elobj -> y)
 
 -- The morphisms of the category of elements of a (covariant) endofunctor on
 -- `Type`.
@@ -7369,4 +7371,4 @@ data MLCovarCatElemMor : {0 f : Type -> Type} ->
     (mdata : MLCovarCatElemMorData f) ->
     MLCovarCatElemMor {f} fm
       (fst mdata)
-      (fst (snd mdata) ** fm (snd (snd mdata)) (snd (fst mdata)))
+      (MLElObj (fst (snd mdata)) (fm (snd (snd mdata)) (mlcEl (fst mdata))))
