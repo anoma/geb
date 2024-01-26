@@ -1527,9 +1527,17 @@ CPFSliceMorph p (q ** qp) (r ** rp) =
 PFEraseSig : PolyFunc -> Type
 PFEraseSig = flip PolyNatTrans PFIdentityArena
 
+PFSliceObjPos : PolyFunc -> Type
+PFSliceObjPos (pos ** dir) = pos -> PolyFunc
+
+PFSliceObjDir : (p : PolyFunc) -> PFSliceObjPos p -> Type
+PFSliceObjDir (pos ** dir) spf = SliceMorphism {a=pos} dir (PFEraseSig . spf)
+
+PFSliceObjPF : PolyFunc -> PolyFunc
+PFSliceObjPF p = (PFSliceObjPos p ** PFSliceObjDir p)
+
 PFSliceObj : PolyFunc -> Type
-PFSliceObj (pos ** dir) =
-  (psl : pos -> PolyFunc ** SliceMorphism {a=pos} dir (PFEraseSig . psl))
+PFSliceObj p = pfPDir $ PFSliceObjPF p
 
 CPFSliceObjToPFS : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj p
 CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
