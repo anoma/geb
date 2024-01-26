@@ -353,3 +353,59 @@ mutual
 
   public export
   data FinMorph : (fc : FinCat) -> FinObj fc -> FinObj fc -> Type where
+
+------------------------------
+------------------------------
+---- Telescope categories ----
+------------------------------
+------------------------------
+
+mutual
+  public export
+  partial
+  data TelCat : Type where
+    TelBase : TelCat
+    TelSlice : {tc : TelCat} -> TelSliceCat tc -> TelCat
+
+  public export
+  partial
+  record TelSliceCat (tc : TelCat) where
+    constructor TSC
+    tscObj : TelObj tc
+
+  public export
+  partial
+  data TelObj : TelCat -> Type where
+    TOBase : Type -> TelObj TelBase
+    TOSlice : {tc : TelCat} -> {slc : TelSliceCat tc} ->
+      TelSliceObj {tc} slc -> TelObj (TelSlice {tc} slc)
+
+  public export
+  partial
+  data TelSliceObj : {tc : TelCat} -> TelSliceCat tc -> Type where
+    TSOb : {x : Type} -> SliceObj x -> TelSliceObj {tc=TelBase} (TSC $ TOBase x)
+    TSOsl : {tc : TelCat} -> {slc : TelSliceCat tc} ->
+      (x : TelSliceObj {tc} slc) ->
+      SliceObj (TelSliceSigma {tc} {slc} x) ->
+      TelSliceObj {tc=(TelSlice {tc} slc)} (TSC $ TOSlice {tc} {slc} x)
+
+  public export
+  partial
+  data TelSliceSigma : {tc : TelCat} -> {slc : TelSliceCat tc} ->
+      TelSliceObj {tc} slc -> Type where
+
+  public export
+  partial
+  data TelSigma : {tc : TelCat} -> TelObj tc -> Type where
+    TTBase : {x : Type} ->
+      x -> TelSigma {tc=TelBase} (TOBase x)
+    TTSlice : {tc : TelCat} -> {slc : TelSliceCat tc} ->
+      (x : TelSliceObj {tc} slc) ->
+      TelSliceSigma {tc} {slc} x ->
+      TelSigma {tc=(TelSlice {tc} slc)} (TOSlice {tc} {slc} x)
+
+  public export
+  partial
+  data TelMorph : {tc : TelCat} -> TelObj tc -> TelObj tc -> Type where
+    TMBase : {x, y : Type} ->
+      (x -> y) -> TelMorph {tc=TelBase} (TOBase x) (TOBase y)
