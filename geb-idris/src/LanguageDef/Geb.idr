@@ -1501,29 +1501,8 @@ data DirichCatElemMor :
 ---- Category-theoretic style ----
 ----------------------------------
 
--- The signature of the `erase` operation of a polynomial comonad, which
--- may be viewed as a section of the polynomial functor:  that is, one
--- direction for each position.
-PFEraseSig : PolyFunc -> Type
-PFEraseSig = flip PolyNatTrans PFIdentityArena
-
 CPFSliceObj : PolyFunc -> Type
 CPFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
-
-PFSliceObj : PolyFunc -> Type
-PFSliceObj (pos ** dir) =
-  (psl : pos -> PolyFunc ** SliceMorphism {a=pos} dir (PFEraseSig . psl))
-
-CPFSliceObjToPFS : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj p
-CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
-  (\i : ppos => (PreImage onpos i ** \(Element0 j inpre) => qdir j) **
-   \i : ppos, d : pdir i =>
-    (\_ => () ** \(Element0 j inpre), () => ondir j $ rewrite inpre in d))
-
-CPFSliceObjFromPFS : (p : PolyFunc) -> PFSliceObj p -> CPFSliceObj p
-CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
-  (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
-   (fst ** \(i ** j), d => snd (m i d) j ()))
 
 0 CPFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
 CPFNatTransEq (ppos ** pdir) (qpos ** qdir)
@@ -1541,6 +1520,27 @@ CPFSliceMorph p (q ** qp) (r ** rp) =
 ---------------------------------------------
 ---- Arena/dependent-type-universe-style ----
 ---------------------------------------------
+
+-- The signature of the `erase` operation of a polynomial comonad, which
+-- may be viewed as a section of the polynomial functor:  that is, one
+-- direction for each position.
+PFEraseSig : PolyFunc -> Type
+PFEraseSig = flip PolyNatTrans PFIdentityArena
+
+PFSliceObj : PolyFunc -> Type
+PFSliceObj (pos ** dir) =
+  (psl : pos -> PolyFunc ** SliceMorphism {a=pos} dir (PFEraseSig . psl))
+
+CPFSliceObjToPFS : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj p
+CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
+  (\i : ppos => (PreImage onpos i ** \(Element0 j inpre) => qdir j) **
+   \i : ppos, d : pdir i =>
+    (\_ => () ** \(Element0 j inpre), () => ondir j $ rewrite inpre in d))
+
+CPFSliceObjFromPFS : (p : PolyFunc) -> PFSliceObj p -> CPFSliceObj p
+CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
+  (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
+   (fst ** \(i ** j), d => snd (m i d) j ()))
 
 -- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
 -- the same `onpos` component, so we can constrain the slice morphisms as
