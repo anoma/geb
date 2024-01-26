@@ -1501,13 +1501,15 @@ data DirichCatElemMor :
 ---- Category-theoretic style ----
 ----------------------------------
 
+PFEraseSig : PolyFunc -> Type
+PFEraseSig = flip PolyNatTrans PFIdentityArena
+
 PFSliceObj : PolyFunc -> Type
 PFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
 
 PFSliceObj' : PolyFunc -> Type
 PFSliceObj' (pos ** dir) =
-  (psl : pos -> PolyFunc **
-   (i : pos) -> dir i -> Pi {a=(pfPos $ psl i)} (pfDir {p=(psl i)}))
+  (psl : pos -> PolyFunc ** SliceMorphism {a=pos} dir (PFEraseSig . psl))
 
 0 PFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
 PFNatTransEq (ppos ** pdir) (qpos ** qdir)
