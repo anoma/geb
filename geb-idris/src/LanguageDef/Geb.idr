@@ -1514,6 +1514,17 @@ PFSliceObj : PolyFunc -> Type
 PFSliceObj (pos ** dir) =
   (psl : pos -> PolyFunc ** SliceMorphism {a=pos} dir (PFEraseSig . psl))
 
+CPFSliceObjToPFS : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj p
+CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
+  (\i : ppos => (PreImage onpos i ** \(Element0 j inpre) => qdir j) **
+   \i : ppos, d : pdir i =>
+    (\_ => () ** \(Element0 j inpre), () => ondir j $ rewrite inpre in d))
+
+CPFSliceObjFromPFS : (p : PolyFunc) -> PFSliceObj p -> CPFSliceObj p
+CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
+  (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
+   (fst ** \(i ** j), d => snd (m i d) j ()))
+
 0 PFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
 PFNatTransEq (ppos ** pdir) (qpos ** qdir)
   (aonpos ** aondir) (bonpos ** bondir) =

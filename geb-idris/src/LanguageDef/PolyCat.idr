@@ -28,11 +28,11 @@ PolyFunc = DPair Type PolyFuncDir
 
 public export
 pfPos : PolyFunc -> Type
-pfPos (pos ** dir) = pos
+pfPos = fst
 
 public export
 pfDir : {p : PolyFunc} -> pfPos p -> Type
-pfDir {p=(pos ** dir)} i = dir i
+pfDir {p} i = snd p i
 
 public export
 pfPDir : PolyFunc -> Type
