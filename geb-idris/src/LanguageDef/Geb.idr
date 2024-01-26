@@ -1525,8 +1525,8 @@ CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
   (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
    (fst ** \(i ** j), d => snd (m i d) j ()))
 
-0 PFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
-PFNatTransEq (ppos ** pdir) (qpos ** qdir)
+0 CPFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
+CPFNatTransEq (ppos ** pdir) (qpos ** qdir)
   (aonpos ** aondir) (bonpos ** bondir) =
     Exists0
       (ExtEq {a=ppos} {b=qpos} aonpos bonpos)
@@ -1536,7 +1536,7 @@ PFNatTransEq (ppos ** pdir) (qpos ** qdir)
 
 CPFSliceMorph : (p : PolyFunc) -> CPFSliceObj p -> CPFSliceObj p -> Type
 CPFSliceMorph p (q ** qp) (r ** rp) =
-  Subset0 (PolyNatTrans q r) (\qr => PFNatTransEq q p qp (pntVCatComp rp qr))
+  Subset0 (PolyNatTrans q r) (\qr => CPFNatTransEq q p qp (pntVCatComp rp qr))
 
 ---------------------------------------------
 ---- Arena/dependent-type-universe-style ----
