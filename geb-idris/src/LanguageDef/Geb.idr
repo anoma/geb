@@ -1501,14 +1501,17 @@ data DirichCatElemMor :
 ---- Category-theoretic style ----
 ----------------------------------
 
+-- The signature of the `erase` operation of a polynomial comonad, which
+-- may be viewed as a section of the polynomial functor:  that is, one
+-- direction for each position.
 PFEraseSig : PolyFunc -> Type
 PFEraseSig = flip PolyNatTrans PFIdentityArena
 
-PFSliceObj : PolyFunc -> Type
-PFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
+CPFSliceObj : PolyFunc -> Type
+CPFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
 
-PFSliceObj' : PolyFunc -> Type
-PFSliceObj' (pos ** dir) =
+PFSliceObj : PolyFunc -> Type
+PFSliceObj (pos ** dir) =
   (psl : pos -> PolyFunc ** SliceMorphism {a=pos} dir (PFEraseSig . psl))
 
 0 PFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
@@ -1520,7 +1523,7 @@ PFNatTransEq (ppos ** pdir) (qpos ** qdir)
         (i : ppos) -> (d : qdir (aonpos i)) ->
         bondir i (replace {p=qdir} (onposeq i) d) = aondir i d
 
-CPFSliceMorph : (p : PolyFunc) -> PFSliceObj p -> PFSliceObj p -> Type
+CPFSliceMorph : (p : PolyFunc) -> CPFSliceObj p -> CPFSliceObj p -> Type
 CPFSliceMorph p (q ** qp) (r ** rp) =
   Subset0 (PolyNatTrans q r) (\qr => PFNatTransEq q p qp (pntVCatComp rp qr))
 
@@ -1532,7 +1535,7 @@ CPFSliceMorph p (q ** qp) (r ** rp) =
 -- the same `onpos` component, so we can constrain the slice morphisms as
 -- follows.
 data PFSliceMorph : {0 p : PolyFunc} ->
-    PFSliceObj p -> PFSliceObj p -> Type where
+    CPFSliceObj p -> CPFSliceObj p -> Type where
   PFSM :
     {0 ppos, qpos, rpos : Type} ->
     {0 pdir : ppos -> Type} -> {0 qdir : qpos -> Type} ->
@@ -1546,7 +1549,7 @@ data PFSliceMorph : {0 p : PolyFunc} ->
       ((rpos ** rdir) **
        (rponpos ** rpondir))
 
-CPFSliceMorphFromPFS : (p : PolyFunc) -> (sp, sq : PFSliceObj p) ->
+CPFSliceMorphFromPFS : (p : PolyFunc) -> (sp, sq : CPFSliceObj p) ->
   PFSliceMorph {p} sp sq -> CPFSliceMorph p sp sq
 CPFSliceMorphFromPFS (ppos ** pdir) ((qpos ** qdir) ** _) ((rpos ** rdir) ** _)
   (PFSM rpop qrop rpod qrod) =
