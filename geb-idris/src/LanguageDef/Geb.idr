@@ -1507,9 +1507,7 @@ PFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
 PFSliceObj' : PolyFunc -> Type
 PFSliceObj' (pos ** dir) =
   (psl : pos -> PolyFunc **
-   SliceMorphism {a=(Sigma {a=pos} (fst . psl))}
-    (dir . fst)
-    (\(i ** j) => snd (psl i) j))
+   (i : pos) -> dir i -> Pi {a=(pfPos $ psl i)} (pfDir {p=(psl i)}))
 
 0 PFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
 PFNatTransEq (ppos ** pdir) (qpos ** qdir)
