@@ -1576,6 +1576,16 @@ CPFSliceMorphFromPFS (ppos ** pdir) ((qpos ** qdir) ** _) ((rpos ** rdir) ** _)
       (qrop ** qrod)
       (Evidence0 (\_ => Refl) $ \qi, pd => Refl)
 
+0 CPFSliceMorphToPFS : FunExt -> (p : PolyFunc) -> (sp, sq : CPFSliceObj p) ->
+  CPFSliceMorph p sp sq -> PFSliceMorph {p} sp sq
+CPFSliceMorphToPFS funext (ppos ** pdir)
+  ((qpos ** qdir) ** (qponpos ** qpondir))
+  ((rpos ** rdir) ** (rponpos ** rpondir))
+  (Element0 (qrop ** qrod) (Evidence0 opeq odeq)) =
+    rewrite funExt opeq in
+    rewrite sym (funExt $ \i : qpos => funExt $ odeq i) in
+    PFSM {pdir} rponpos qrop rpondir qrod
+
 -- The direction-map of a polynomial functor, which we may view as a slice
 -- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
 -- from the discrete category whose objects are terms of `pos`.  (Because
