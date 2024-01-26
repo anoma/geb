@@ -327,3 +327,29 @@ FreeFinSetTermDep sl dep =
     (FreeFinSetTermDepSubst sl dep)
     (FreeFinSetObjTermSliceDep sl)
     FSOTt
+
+----------------------------------------
+----------------------------------------
+---- `FinSet` and its induced topoi ----
+----------------------------------------
+----------------------------------------
+
+mutual
+  public export
+  data FinCat : Type where
+    FCfs : FinCat -- `FinSet` itself
+    FCsl : (fc : FinCat) -> FinSlCat fc -> FinCat -- Slice category
+
+  public export
+  data FinObj : FinCat -> Type where
+    FOsigma :
+      (fc : FinCat) -> (slc : FinSlCat fc) -> FinObj (FCsl fc slc) -> FinObj fc
+
+  -- A slice category.
+  public export
+  record FinSlCat (fc : FinCat) where
+    constructor MkFinSlCat
+    fslBase : FinObj fc
+
+  public export
+  data FinMorph : (fc : FinCat) -> FinObj fc -> FinObj fc -> Type where
