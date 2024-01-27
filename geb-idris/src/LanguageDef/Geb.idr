@@ -1586,15 +1586,23 @@ PFBaseChange {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) (psl ** m) =
    \qi, qd =>
     (\_ => () ** \pslp, () => snd (m (onpos qi) (ondir qi qd)) pslp ()))
 
+PFSliceOverConst : {x : Type} -> PFSliceObj (PFConstArena x) -> x -> PolyFunc
+PFSliceOverConst {x} (psl ** m) ex =
+  -- The arguments of `m` include a term of type `Void`, so
+  -- it is impossible to apply (unless we find such a term, and
+  -- hence a contradiction in our metalanguage).  Thus we can and
+  -- must ignore it.
+  --
+  -- Put another way, `m` gives us no information, because its type
+  -- restricts it to being effectively just the unique morphism out
+  -- of the initial object.
+  psl ex
+
 -- A slice object over the terminal polynomial functor is effectively
 -- just a polynomial functor, just as a slice of `Type` over `Unit` is
 -- effectively just a type.
 PFSliceOver1 : PFSliceObj PFTerminalArena -> PolyFunc
-PFSliceOver1 (psl ** m) =
-  -- The arguments of `m` include a term of type `Void`, so
-  -- it is impossible to apply (unless we find such a term, and
-  -- hence a contradiction in our metalanguage).
-  psl ()
+PFSliceOver1 psl = PFSliceOverConst {x=Unit} psl ()
 
 -- By analogy with the application of a `SliceObj x` in `Type` to a term
 -- of `x`, `PFApp` is a base change from the slice category over `p` to
