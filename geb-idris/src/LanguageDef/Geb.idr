@@ -1586,6 +1586,15 @@ CPFSliceMorphToPFS funext (ppos ** pdir)
     rewrite sym (funExt $ \i : qpos => funExt $ odeq i) in
     PFSM {pdir} rponpos qrop rpondir qrod
 
+PFSliceMorph' : {p : PolyFunc} -> PFSliceObj p -> PFSliceObj p -> Type
+PFSliceMorph' {p=(pos ** dir)} (sppos ** spdir) (sqpos ** sqdir) =
+  Subset0
+    ((i : pos) -> PolyNatTrans (sppos i) (sqpos i))
+    (\ntfam =>
+      (i : pos) -> (d : dir i) -> (j : fst $ sppos i) ->
+        snd (ntfam i) j (snd (sqdir i d) (fst (ntfam i) j) ()) =
+        snd (spdir i d) j ())
+
 -- The direction-map of a polynomial functor, which we may view as a slice
 -- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
 -- from the discrete category whose objects are terms of `pos`.  (Because
