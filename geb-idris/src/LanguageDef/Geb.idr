@@ -1579,6 +1579,13 @@ CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
   (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
    (fst ** \(i ** j), d => snd (m i d) j ()))
 
+PFBaseChange : {p, q : PolyFunc} ->
+  DirichNatTrans q p -> PFSliceObj p -> PFSliceObj q
+PFBaseChange {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) (psl ** m) =
+  (psl . onpos **
+   \qi, qd =>
+    (\_ => () ** \pslp, () => snd (m (onpos qi) (ondir qi qd)) pslp ()))
+
 -- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
 -- the same `onpos` component, so we can constrain the slice morphisms as
 -- follows.
