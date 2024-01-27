@@ -1586,6 +1586,31 @@ PFBaseChange {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) (psl ** m) =
    \qi, qd =>
     (\_ => () ** \pslp, () => snd (m (onpos qi) (ondir qi qd)) pslp ()))
 
+-- A slice object over the terminal polynomial functor is effectively
+-- just a polynomial functor, just as a slice of `Type` over `Unit` is
+-- effectively just a type.
+PFSliceOver1 : PFSliceObj PFTerminalArena -> PolyFunc
+PFSliceOver1 (psl ** m) =
+  -- The arguments of `m` include a term of type `Void`, so
+  -- it is impossible to apply (unless we find such a term, and
+  -- hence a contradiction in our metalanguage).
+  psl ()
+
+-- By analogy with the application of a `SliceObj x` in `Type` to a term
+-- of `x`, `PFApp` is a base change from the slice category over `p` to
+-- the slice category over the terminal polynomial functor, which is
+-- effectively just the category of polynomial endofunctors on `Type`.
+-- Such a base change requires a Dirichlet (not polynomial!) natural
+-- transformation from the terminal polynomial functor (which is just
+-- a single position with no directions) to the functor being sliced over.
+-- That in turn amounts to simply a choice of position of the functor
+-- being sliced over, which dictates which dependent polynomial functor
+-- to select as the result.
+PFApp : {p : PolyFunc} -> PFSliceObj p -> pfPos p -> PolyFunc
+PFApp {p=p@(pos ** dir)} slp i =
+  PFSliceOver1 $
+    PFBaseChange {p} {q=PFTerminalArena} (\() => i ** \(), v => void v) slp
+
 -- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
 -- the same `onpos` component, so we can constrain the slice morphisms as
 -- follows.
