@@ -1614,8 +1614,8 @@ PFSliceOver1 psl = PFSliceOverConst {x=Unit} psl ()
 -- That in turn amounts to simply a choice of position of the functor
 -- being sliced over, which dictates which dependent polynomial functor
 -- to select as the result.
-PFApp : {p : PolyFunc} -> PFSliceObj p -> pfPos p -> PolyFunc
-PFApp {p=p@(pos ** dir)} slp i =
+PFApp1 : {p : PolyFunc} -> PFSliceObj p -> pfPos p -> PolyFunc
+PFApp1 {p=p@(pos ** dir)} slp i =
   PFSliceOver1 $
     PFBaseChange {p} {q=PFTerminalArena} (\() => i ** \(), v => void v) slp
 
