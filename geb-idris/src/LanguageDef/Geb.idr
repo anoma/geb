@@ -1497,6 +1497,27 @@ data DirichCatElemMor :
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
 
+public export
+IntPolyCatObj : Type -> Type
+IntPolyCatObj = IntArena
+
+public export
+IntPolyCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntDifunctorSig (IntPolyCatObj c)
+IntPolyCatMor = IntDNTar
+
+MLPolyCatObj : Type
+MLPolyCatObj = IntPolyCatObj Type
+
+MLPolyCatMor : MLPolyCatObj -> MLPolyCatObj -> Type
+MLPolyCatMor = IntPolyCatMor Type HomProf
+
+MLPolyCatElemObj : MLPolyCatObj -> Type
+MLPolyCatElemObj = PolyCatElemObj Type HomProf
+
+MLPolyCatElemMor : (p : MLPolyCatObj) -> (x, y : MLPolyCatElemObj p) -> Type
+MLPolyCatElemMor = PolyCatElemMor Type HomProf typeComp
+
 ----------------------------------
 ---- Category-theoretic style ----
 ----------------------------------
@@ -1586,6 +1607,8 @@ PFBaseChange {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) (psl ** m) =
    \qi, qd =>
     (\_ => () ** \pslp, () => snd (m (onpos qi) (ondir qi qd)) pslp ()))
 
+-- A slice object over a constant functor is effectively a polynomial
+-- functor parameterized over terms of the output type of the constant functor.
 PFSliceOverConst : {x : Type} -> PFSliceObj (PFConstArena x) -> x -> PolyFunc
 PFSliceOverConst {x} (psl ** m) ex =
   -- The arguments of `m` include a term of type `Void`, so
@@ -7401,24 +7424,6 @@ InterpMLPP (MLPProf pos contra covar) x y =
 ---- Experiments with polynomial "difunctors" translated to exponentials ----
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
-
-public export
-IntPolyCatObj : Type -> Type
-IntPolyCatObj = IntArena
-
-public export
-IntPolyCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
-  IntDifunctorSig (IntPolyCatObj c)
-IntPolyCatMor = IntDNTar
-
-MLPolyCatObj : Type
-MLPolyCatObj = IntPolyCatObj Type
-
-MLPolyCatMor : MLPolyCatObj -> MLPolyCatObj -> Type
-MLPolyCatMor = IntPolyCatMor Type HomProf
-
-MLPolyCatElemObj : MLPolyCatObj -> Type
-MLPolyCatElemObj = PolyCatElemObj Type HomProf
 
 NAlgF : Type -> Type
 NAlgF x = (x, x -> x)
