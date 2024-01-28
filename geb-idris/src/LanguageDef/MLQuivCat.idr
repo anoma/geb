@@ -270,3 +270,20 @@ MLDirichCatElemObj = DirichCatElemObj Type HomProf
 MLDirichCatElemMor : (ar : MLDirichCatObj) ->
   MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
 MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
+
+CDFSliceObj : MLDirichCatObj -> Type
+CDFSliceObj p = (q : MLDirichCatObj ** DirichNatTrans q p)
+
+0 CDFNatTransEq :
+  (p, q : MLDirichCatObj) -> (alpha, beta : DirichNatTrans p q) -> Type
+CDFNatTransEq (ppos ** pdir) (qpos ** qdir)
+  (aonpos ** aondir) (bonpos ** bondir) =
+    Exists0
+      (ExtEq {a=ppos} {b=qpos} aonpos bonpos)
+      $ \onposeq =>
+        (i : ppos) -> (d : pdir i) ->
+        bondir i d = replace {p=qdir} (onposeq i) (aondir i d)
+
+CDFSliceMorph : (p : MLDirichCatObj) -> CDFSliceObj p -> CDFSliceObj p -> Type
+CDFSliceMorph p (q ** qp) (r ** rp) =
+  Subset0 (DirichNatTrans q r) (\qr => CDFNatTransEq q p qp (dntVCatComp rp qr))
