@@ -7384,19 +7384,6 @@ MLProfSig = IntDifunctorSig Type
 0 MLDimapSig : MLProfSig -> Type
 MLDimapSig = IntEndoDimapSig Type HomProf
 
-MLDirichCatObj : Type
-MLDirichCatObj = IntDirichCatObj Type
-
-MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
-MLDirichCatMor = IntDirichCatMor Type HomProf
-
-MLDirichCatElemObj : MLDirichCatObj -> Type
-MLDirichCatElemObj = DirichCatElemObj Type HomProf
-
-MLDirichCatElemMor : (ar : MLDirichCatObj) ->
-  MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
-MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
-
 MLSliceCatObj : Type -> Type
 MLSliceCatObj = CSliceObj
 
