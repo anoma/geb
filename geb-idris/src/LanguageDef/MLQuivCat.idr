@@ -4,6 +4,7 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.Quiver
 import LanguageDef.PolyCat
+import LanguageDef.Geb
 
 -------------------------------------
 -------------------------------------
@@ -250,3 +251,22 @@ MLTel = SPFMu MLTelF
 
 MLFreeTel : SliceEndofunctor Type
 MLFreeTel = SlicePolyFree MLTelF
+
+------------------------------------------------
+------------------------------------------------
+---- Slice categories of Dirichlet functors ----
+------------------------------------------------
+------------------------------------------------
+
+MLDirichCatObj : Type
+MLDirichCatObj = IntDirichCatObj Type
+
+MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
+MLDirichCatMor = IntDirichCatMor Type HomProf
+
+MLDirichCatElemObj : MLDirichCatObj -> Type
+MLDirichCatElemObj = DirichCatElemObj Type HomProf
+
+MLDirichCatElemMor : (ar : MLDirichCatObj) ->
+  MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
+MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
