@@ -3,6 +3,7 @@ module LanguageDef.MLQuivCat
 import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.Quiver
+import LanguageDef.PolyCat
 
 -------------------------------------
 -------------------------------------
@@ -218,3 +219,34 @@ TypeQuivLKanExtBase {v} q slv fm =
 public export
 TypeQuivLKanSumP : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
 TypeQuivLKanSumP {v} q slv = TypeQuivSumP {v} q (TypeQuivKanExtProf {v} slv)
+
+----------------------------
+----------------------------
+---- Generalized arenas ----
+----------------------------
+----------------------------
+
+--------------------
+---- Telescopes ----
+--------------------
+
+data MLTelFPos : (tl : Type) -> Type where
+  MLUnitPos : {0 tl : Type} -> MLTelFPos tl
+  MLDPairPos : {hd : Type} -> {0 tl : Type} -> (hd -> tl) -> MLTelFPos tl
+
+MLTelFDir : Sigma {a=Type} MLTelFPos -> Type
+MLTelFDir (tl ** MLUnitPos) = Void
+MLTelFDir (tl ** (MLDPairPos {hd} {tl} f)) = Unit
+
+MLTelFAssign : Sigma {a=(Sigma {a=Type} MLTelFPos)} MLTelFDir -> Type
+MLTelFAssign ((tl ** MLUnitPos) ** v) = void v
+MLTelFAssign ((tl ** (MLDPairPos {hd} {tl} f)) ** ()) = hd
+
+MLTelF : SlicePolyEndoFunc Type
+MLTelF = (MLTelFPos ** MLTelFDir ** MLTelFAssign)
+
+MLTel : Type -> Type
+MLTel = SPFMu MLTelF
+
+MLFreeTel : SliceEndofunctor Type
+MLFreeTel = SlicePolyFree MLTelF
