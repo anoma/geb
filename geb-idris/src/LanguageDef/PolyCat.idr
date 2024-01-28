@@ -373,7 +373,7 @@ PFHomPos _ = Unit
 
 public export
 PFHomDir : (a : Type) -> PFHomPos a -> Type
-PFHomDir a () = a
+PFHomDir a _ = a
 
 public export
 PFHomArena : Type -> PolyFunc
@@ -2226,8 +2226,8 @@ PFReaderJoinOnPos env (() ** _) = ()
 public export
 PFReaderJoinOnDir : (env : Type) -> (i : pfHomComposePos env env) ->
   PFHomDir env (PFReaderJoinOnPos env i) -> pfHomComposeDir env env i
-PFReaderJoinOnDir env (() ** i) d with (i d) proof ideq
-  PFReaderJoinOnDir env (() ** i) d | () = (d ** rewrite ideq in d)
+PFReaderJoinOnDir env (() ** i) d with (i d)
+  PFReaderJoinOnDir env (() ** i) d | () = (d ** d)
 
 public export
 PFReaderJoin : (env : Type) ->
