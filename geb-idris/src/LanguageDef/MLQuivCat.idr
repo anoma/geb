@@ -232,15 +232,15 @@ TypeQuivLKanSumP {v} q slv = TypeQuivSumP {v} q (TypeQuivKanExtProf {v} slv)
 
 data MLTelFPos : (tl : Type) -> Type where
   MLUnitPos : {0 tl : Type} -> MLTelFPos tl
-  MLDPairPos : {hd : Type} -> {0 tl : Type} -> (hd -> tl) -> MLTelFPos tl
+  MLDPairPos : {0 tl : Type} -> SliceObj tl -> MLTelFPos tl
 
 MLTelFDir : Sigma {a=Type} MLTelFPos -> Type
 MLTelFDir (tl ** MLUnitPos) = Void
-MLTelFDir (tl ** (MLDPairPos {hd} {tl} f)) = Unit
+MLTelFDir (tl ** (MLDPairPos {tl} sl)) = Unit
 
 MLTelFAssign : Sigma {a=(Sigma {a=Type} MLTelFPos)} MLTelFDir -> Type
 MLTelFAssign ((tl ** MLUnitPos) ** v) = void v
-MLTelFAssign ((tl ** (MLDPairPos {hd} {tl} f)) ** ()) = hd
+MLTelFAssign ((tl ** (MLDPairPos {tl} sl)) ** ()) = Sigma {a=tl} sl
 
 MLTelF : SlicePolyEndoFunc Type
 MLTelF = (MLTelFPos ** MLTelFDir ** MLTelFAssign)
