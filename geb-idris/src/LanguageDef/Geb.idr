@@ -1648,6 +1648,12 @@ PFSliceOverConst {x} (psl ** m) ex =
 PFSliceOver1 : PFSliceObj PFTerminalArena -> PolyFunc
 PFSliceOver1 psl = PFSliceOverConst {x=Unit} psl ()
 
+PFAppI : {p : PolyFunc} ->
+  (el : MLDirichCatElemObj p) ->
+  PFSliceObj p -> PFSliceObj (PFHomArena $ fst el)
+PFAppI {p=p@(_ ** _)} (ty ** i ** d) =
+  PFBaseChange {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
+
 -- By analogy with the application of a `SliceObj x` in `Type` to a term
 -- of `x`, `PFApp` is a base change from the slice category over `p` to
 -- the slice category over the terminal polynomial functor, which is
@@ -1658,16 +1664,9 @@ PFSliceOver1 psl = PFSliceOverConst {x=Unit} psl ()
 -- That in turn amounts to simply a choice of position of the functor
 -- being sliced over, which dictates which dependent polynomial functor
 -- to select as the result.
-PFApp1 : {p : PolyFunc} -> PFSliceObj p -> pfPos p -> PolyFunc
-PFApp1 {p=p@(pos ** dir)} slp i =
-  PFSliceOver1 $
-    PFBaseChange {p} {q=PFTerminalArena} (\() => i ** \(), v => void v) slp
-
-PFAppI : {p : PolyFunc} ->
-  (el : MLDirichCatElemObj p) ->
-  PFSliceObj p -> PFSliceObj (PFHomArena $ fst el)
-PFAppI {p=p@(_ ** _)} (ty ** i ** d) =
-  PFBaseChange {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
+PFApp1 : {p : PolyFunc} -> pfPos p -> PFSliceObj p -> PolyFunc
+PFApp1 {p=p@(pos ** dir)} i slp =
+  PFSliceOver1 $ PFAppI {p} (Void ** i ** \v => void v) slp
 
 -- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
 -- the same `onpos` component, so we can constrain the slice morphisms as
