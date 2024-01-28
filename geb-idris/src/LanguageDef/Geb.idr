@@ -1678,14 +1678,21 @@ CPFSliceMorphToPFS funext (ppos ** pdir)
     rewrite sym (funExt $ \i : qpos => funExt $ odeq i) in
     PFSM {pdir} rponpos qrop rpondir qrod
 
-PFSliceMorph' : {p : PolyFunc} -> PFSliceObj p -> PFSliceObj p -> Type
-PFSliceMorph' {p=(pos ** dir)} (sppos ** spdir) (sqpos ** sqdir) =
-  Subset0
-    ((i : pos) -> PolyNatTrans (sppos i) (sqpos i))
-    (\ntfam =>
-      (i : pos) -> (d : dir i) -> (j : fst $ sppos i) ->
-        snd (ntfam i) j (snd (sqdir i d) (fst (ntfam i) j) ()) =
-        snd (spdir i d) j ())
+PFSliceMorphDomDir : {pos : Type} -> {dir : pos -> Type} ->
+  (dom : PFSliceObjPos (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
+  ((i : pos) -> PolyNatTrans (dom i) (fst cod i)) ->
+  PFSliceObjDir (pos ** dir) dom
+PFSliceMorphDomDir {pos} {dir} dom (codonpos ** codondir) ntfam i d =
+  (\_ => () **
+   \j, () => snd (ntfam i) j (snd (codondir i d) (fst (ntfam i) j) ()))
+
+data PFSliceMorph' : {pos : Type} -> {dir : pos -> Type} ->
+    PFSliceObj (pos ** dir) -> PFSliceObj (pos ** dir) -> Type where
+  PFSM' : {pos : Type} -> {dir : pos -> Type} ->
+    (dom : PFSliceObjPos (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
+    (ntfam : (i : pos) -> PolyNatTrans (dom i) (fst cod i)) ->
+    PFSliceMorph' {pos} {dir}
+      (dom ** PFSliceMorphDomDir {pos} {dir} dom cod ntfam) cod
 
 -- The direction-map of a polynomial functor, which we may view as a slice
 -- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
