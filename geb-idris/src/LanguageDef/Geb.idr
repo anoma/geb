@@ -1663,6 +1663,12 @@ PFApp1 {p=p@(pos ** dir)} slp i =
   PFSliceOver1 $
     PFBaseChange {p} {q=PFTerminalArena} (\() => i ** \(), v => void v) slp
 
+PFAppI : {p : PolyFunc} ->
+  (el : MLDirichCatElemObj p) ->
+  PFSliceObj p -> PFSliceObj (PFHomArena $ fst el)
+PFAppI {p=p@(_ ** _)} (ty ** i ** d) =
+  PFBaseChange {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
+
 -- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
 -- the same `onpos` component, so we can constrain the slice morphisms as
 -- follows.
