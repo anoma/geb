@@ -258,19 +258,6 @@ MLFreeTel = SlicePolyFree MLTelF
 ------------------------------------------------
 ------------------------------------------------
 
-MLDirichCatObj : Type
-MLDirichCatObj = IntDirichCatObj Type
-
-MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
-MLDirichCatMor = IntDirichCatMor Type HomProf
-
-MLDirichCatElemObj : MLDirichCatObj -> Type
-MLDirichCatElemObj = DirichCatElemObj Type HomProf
-
-MLDirichCatElemMor : (ar : MLDirichCatObj) ->
-  MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
-MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
-
 CDFSliceObj : MLDirichCatObj -> Type
 CDFSliceObj p = (q : MLDirichCatObj ** DirichNatTrans q p)
 
