@@ -1268,31 +1268,6 @@ IntCopreshfYonedaEmbedMorInv : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   mor b a
 IntCopreshfYonedaEmbedMorInv c mor cid a b alpha = alpha a (cid a)
 
----------------------------------------------
----- Exponentials in presheaf categories ----
----------------------------------------------
-
--- See for example
--- https://math.stackexchange.com/questions/2402394/exponential-of-presheaves.
-
-public export
-IntPreshfHomObjOmap : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (xomap, yomap : c -> Type) ->
-  (xfmap : IntPreshfMapSig c mor xomap) ->
-  (yfmap : IntPreshfMapSig c mor yomap) ->
-  c -> Type
-IntPreshfHomObjOmap c mor xomap yomap xfmap yfmap a =
-  ?IntPreshfHomObjOmap_hole
-
-public export
-IntPreshfHomObjFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (xomap, yomap : c -> Type) ->
-  (xfmap : IntPreshfMapSig c mor xomap) ->
-  (yfmap : IntPreshfMapSig c mor yomap) ->
-  IntPreshfMapSig c mor (IntPreshfHomObjOmap c mor xomap yomap xfmap yfmap)
-IntPreshfHomObjFmap c mor xomap yomap xfmap yfmap a b mba =
-  ?IntPreshfHomObjFmap_hole
-
 --------------------------------------
 --------------------------------------
 ---- Internal polynomial functors ----
@@ -2542,8 +2517,37 @@ ProfCoYonedaLemmaR : (0 p : ProfunctorSig) -> {auto isP : Profunctor p} ->
 ProfCoYonedaLemmaR p {isP} {a=c} {b=d} (Evidence ab ((mbd, mca), pab)) =
   dimap {f=p} mca mbd pab
 
+---------------------------------------------
+---------------------------------------------
+---- Exponentials in presheaf categories ----
+---------------------------------------------
+---------------------------------------------
+
+-- See for example
+-- https://math.stackexchange.com/questions/2402394/exponential-of-presheaves.
+
+public export
+IntPreshfHomObjOmap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (xomap, yomap : c -> Type) ->
+  (xfmap : IntPreshfMapSig c mor xomap) ->
+  (yfmap : IntPreshfMapSig c mor yomap) ->
+  c -> Type
+IntPreshfHomObjOmap c mor xomap yomap xfmap yfmap a =
+  ?IntPreshfHomObjOmap_hole
+
+public export
+IntPreshfHomObjFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (xomap, yomap : c -> Type) ->
+  (xfmap : IntPreshfMapSig c mor xomap) ->
+  (yfmap : IntPreshfMapSig c mor yomap) ->
+  IntPreshfMapSig c mor (IntPreshfHomObjOmap c mor xomap yomap xfmap yfmap)
+IntPreshfHomObjFmap c mor xomap yomap xfmap yfmap a b mba =
+  ?IntPreshfHomObjFmap_hole
+
+-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 ---- Yoneda embedding of twisted-arrow category into profunctor category ----
+-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
 public export
