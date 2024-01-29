@@ -1628,6 +1628,17 @@ PFBaseChange {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) (psl ** m) =
    \qi, qd =>
     (\_ => () ** \pslp, () => snd (m (onpos qi) (ondir qi qd)) pslp ()))
 
+PFSliceSigma : (q : PolyFunc) -> {p : PolyFunc} ->
+  PolyNatTrans p q -> PFSliceObj p -> PFSliceObj q
+PFSliceSigma q {p} beta sl with (CPFSliceObjFromPFS p sl)
+  PFSliceSigma q {p} beta sl | (r ** alpha) =
+    let csigma = (r ** pntVCatComp beta alpha) in
+    CPFSliceObjToPFS q csigma
+
+PFSliceCompose : (q : PolyFunc) -> {r : PolyFunc} ->
+  PFSliceObj r -> PFSliceObj (pfCompositionArena q r)
+PFSliceCompose q {r} sl = ?PFSliceCompose_hole
+
 -- A slice object over a constant functor is effectively a polynomial
 -- functor parameterized over terms of the output type of the constant functor.
 PFSliceOverConst : {x : Type} -> PFSliceObj (PFConstArena x) -> x -> PolyFunc
@@ -1719,6 +1730,11 @@ data PFSliceMorph' : {pos : Type} -> {dir : pos -> Type} ->
     (ntfam : (i : pos) -> PolyNatTrans (dom i) (fst cod i)) ->
     PFSliceMorph' {pos} {dir}
       (dom ** PFSliceMorphDomDir {pos} {dir} dom cod ntfam) cod
+
+public export
+InterpPFSliceObj : {p : PolyFunc} -> PFSliceObj p ->
+  (x : Type) -> SliceEndofunctor (InterpPolyFunc p x)
+InterpPFSliceObj {p=(pos ** dir)} (spos ** sdir) x = ?InterpPFSliceObj_hole
 
 -- The direction-map of a polynomial functor, which we may view as a slice
 -- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
