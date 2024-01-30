@@ -1702,6 +1702,28 @@ data PFSliceMorph' : {pos : Type} -> {dir : pos -> Type} ->
     PFSliceMorph' {pos} {dir}
       (dom ** PFSliceMorphDomDir {pos} {dir} dom cod ntfam) cod
 
+0 PFSliceMorphToPFS' :
+  (pos : Type) -> (dir : pos -> Type) ->
+  (sp, sq : CPFSliceObj (pos ** dir)) ->
+  PFSliceMorph {p=(pos ** dir)} sp sq ->
+  PFSliceMorph' {pos} {dir}
+    (CPFSliceObjToPFS (pos ** dir) sp) (CPFSliceObjToPFS (pos ** dir) sq)
+PFSliceMorphToPFS' pos dir
+  ((qpos ** qdir) ** (_ ** _))
+  ((rpos ** rdir) ** (_ ** _))
+  (PFSM rpop qrop rpod qrod) =
+    ?PFSliceMorphToPFS'_hole
+
+0 PFSliceMorphFromPFS' :
+  (pos : Type) -> (dir : pos -> Type) ->
+  (dom, cod : PFSliceObj (pos ** dir)) ->
+  PFSliceMorph' {pos} {dir} dom cod ->
+  PFSliceMorph {p=(pos ** dir)}
+    (CPFSliceObjFromPFS (pos ** dir) dom) (CPFSliceObjFromPFS (pos ** dir) cod)
+PFSliceMorphFromPFS' _ _ (_ ** _) (_ ** _)
+  (PFSM' {pos} {dir} dompos (codpos ** coddir) ntfam) =
+    ?PFSliceMorphFromPFS'_hole
+
 -- The direction-map of a polynomial functor, which we may view as a slice
 -- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
 -- from the discrete category whose objects are terms of `pos`.  (Because
