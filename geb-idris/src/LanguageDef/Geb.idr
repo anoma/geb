@@ -12,6 +12,27 @@ import LanguageDef.FinCat
 
 %default total
 
+------------------------------------------
+------------------------------------------
+---- Internal polynomial endofunctors ----
+------------------------------------------
+------------------------------------------
+
+-----------------------------------------------------------
+---- Representable endofunctors internal to `PolyFunc` ----
+-----------------------------------------------------------
+
+PFIntArena : Type
+PFIntArena = (pos : Type ** pos -> PolyFunc)
+
+InterpPFIntPoly : PFIntArena -> PolyFunc -> PolyFunc
+InterpPFIntPoly (pos ** dir) q =
+  pfSetCoproductArena {a=pos} $ \i => pfHomObj (dir i) q
+
+InterpPFIntDirich : PFIntArena -> PolyFunc -> PolyFunc
+InterpPFIntDirich (pos ** dir) q =
+  pfSetCoproductArena {a=pos} $ \i => pfHomObj q (dir i)
+
 -------------------------------------
 -------------------------------------
 ---- Language architecture notes ----
