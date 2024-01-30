@@ -1702,11 +1702,6 @@ data PFSliceMorph' : {pos : Type} -> {dir : pos -> Type} ->
     PFSliceMorph' {pos} {dir}
       (dom ** PFSliceMorphDomDir {pos} {dir} dom cod ntfam) cod
 
-public export
-InterpPFSliceObj : {p : PolyFunc} -> PFSliceObj p ->
-  (x : Type) -> SliceEndofunctor (InterpPolyFunc p x)
-InterpPFSliceObj {p=(pos ** dir)} (spos ** sdir) x = ?InterpPFSliceObj_hole
-
 -- The direction-map of a polynomial functor, which we may view as a slice
 -- object of `pos`, may equivalently be viewed as a (co)presheaf (into `Type`)
 -- from the discrete category whose objects are terms of `pos`.  (Because
