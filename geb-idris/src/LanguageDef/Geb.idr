@@ -1610,10 +1610,6 @@ PFSliceSigma q {p} beta sl with (CPFSliceObjFromPFS p sl)
     let csigma = (r ** pntVCatComp beta alpha) in
     CPFSliceObjToPFS q csigma
 
-PFSliceCompose : (q : PolyFunc) -> {r : PolyFunc} ->
-  PFSliceObj r -> PFSliceObj (pfCompositionArena q r)
-PFSliceCompose q {r} sl = ?PFSliceCompose_hole
-
 -- A slice object over a constant functor is effectively a polynomial
 -- functor parameterized over terms of the output type of the constant functor.
 PFSliceOverConst : {x : Type} -> PFSliceObj (PFConstArena x) -> x -> PolyFunc
