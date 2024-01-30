@@ -1538,6 +1538,29 @@ CPFSliceMorph p (q ** qp) (r ** rp) =
 ---- Arena/dependent-type-universe-style ----
 ---------------------------------------------
 
+-- A polynomial functor sliced over a covariant representable functor,
+-- in a dependent-type (arena) style, as opposed to the category-theoretic
+-- style using a morphism to the functor being sliced over.
+--
+-- The natural transformation's on-positions function is the unique (constant)
+-- function the the terminal object (`Unit`), since the position-set of a
+-- representable functor is the terminal object.  Thus the morphism component
+-- of a slice object (which is a polynomial natural transformation) is
+-- determined by a dependent on-directions function, which for each position of
+-- the polynomial functor which comprises the object component of the slice
+-- object maps the represented object to the direction-set at that position.
+PFCovarRepSliceObj : PolyFunc -> Type -> Type
+PFCovarRepSliceObj p x =
+  (spos : Type ** sdir : spos -> Type ** (i : spos) -> x -> sdir i)
+
+-- A Dirichlet functor sliced over a contravariant representable
+-- functor is a Dirichlet functor together with a Dirichlet natural
+-- transformation from that functor to the arena whose position-set is
+-- `Unit` and whose direction-set at its one position is the represented object.
+DFContravarRepSliceObj : PolyFunc -> Type -> Type
+DFContravarRepSliceObj p x =
+  (spos : Type ** sdir : spos -> Type ** (i : spos) -> sdir i -> x)
+
 -- The signature of the `erase` operation of a polynomial comonad, which
 -- may be viewed as a section of the polynomial functor:  that is, one
 -- direction for each position.
