@@ -12,6 +12,34 @@ import LanguageDef.FinCat
 
 %default total
 
+---------------------
+---------------------
+---- Free arenas ----
+---------------------
+---------------------
+
+ArenaArena : Type
+ArenaArena = PolyFunc -> PolyFunc
+
+data PolyFreeRel : ArenaArena ->
+    ((pos : Type) -> (pos -> Type) -> Type) ->
+    (pos : Type) -> (pos -> Type) -> Type where
+  PFRv : {ar : ArenaArena} ->
+    (pro : (pos : Type) -> (pos -> Type) -> Type) ->
+    {0 pos : Type} -> {0 dir : pos -> Type} ->
+    pro pos dir -> PolyFreeRel ar pro pos dir
+  PFRc : {ar : ArenaArena} ->
+    (pro : (pos : Type) -> (pos -> Type) -> Type) ->
+    {0 pos : Type} -> {0 dir : pos -> Type} ->
+    PolyFreeRel ar pro pos dir ->
+    PolyFreeRel ar pro (fst $ ar (pos ** dir)) (snd $ ar (pos ** dir))
+
+data PolyInitRel : (pos : Type) -> (pos -> Type) -> Type where
+  PFRi : PolyInitRel Void (\v => void v)
+
+PolyRelMu : ArenaArena -> (pos : Type) -> (pos -> Type) -> Type
+PolyRelMu ar = PolyFreeRel ar PolyInitRel
+
 ------------------------------------------
 ------------------------------------------
 ---- Internal polynomial endofunctors ----
@@ -34,9 +62,6 @@ InterpPFIntPolyDir : (ar : PFIntArena) -> (p : PolyFunc) ->
 InterpPFIntPolyDir (pos ** dir) q =
   pfSetCoproductDir {a=pos} $ \i => pfHomObj (dir i) q
 
-InterpPFIntPoly : PFIntArena -> PolyFunc -> PolyFunc
-InterpPFIntPoly p q = (InterpPFIntPolyPos p q ** InterpPFIntPolyDir p q)
-
 data PFIntPolyMuPosF : PFIntArena -> PolyFunc -> Type where
   PIMuPf : {p : PFIntArena} -> {q : PolyFunc} ->
     InterpPFIntPolyPos p q -> PFIntPolyMuPosF p q
@@ -47,29 +72,11 @@ data PFIntPolyMuDirF : (p : PFIntArena) -> (q : PolyFunc) ->
     (i : InterpPFIntPolyPos p q) -> InterpPFIntPolyDir p q i ->
     PFIntPolyMuDirF p q (PIMuPf {p} {q} i)
 
-PFIntPolyMuF : (p : PFIntArena) -> PolyFunc -> PolyFunc
+PFIntPolyMuF : (p : PFIntArena) -> ArenaArena
 PFIntPolyMuF ar p = (PFIntPolyMuPosF ar p ** PFIntPolyMuDirF ar p)
 
-data PFIntPolyRelInit : (pos : Type) -> (pos -> Type) -> Type where
-  InPFRv : PFIntPolyRelInit Void (\v => void v)
-
-data PFIntPolyFreeRel : PFIntArena ->
-    ((pos : Type) -> (pos -> Type) -> Type) ->
-    (pos : Type) -> (pos -> Type) -> Type where
-  InPFRi : {ar : PFIntArena} ->
-    (pro : (pos : Type) -> (pos -> Type) -> Type) ->
-    {0 pos : Type} -> {0 dir : pos -> Type} ->
-    pro pos dir -> PFIntPolyFreeRel ar pro pos dir
-  InPFRc : {ar : PFIntArena} ->
-    (pro : (pos : Type) -> (pos -> Type) -> Type) ->
-    {0 pos : Type} -> {0 dir : pos -> Type} ->
-    PFIntPolyFreeRel ar pro pos dir ->
-    PFIntPolyFreeRel ar pro
-      (PFIntPolyMuPosF ar (pos ** dir))
-      (PFIntPolyMuDirF ar (pos ** dir))
-
 PFIntPolyRel : PFIntArena -> (pos : Type) -> (pos -> Type) -> Type
-PFIntPolyRel ar = PFIntPolyFreeRel ar PFIntPolyRelInit
+PFIntPolyRel ar = PolyRelMu (PFIntPolyMuF ar)
 
 PFIntPolyMuFPF : PFIntArena -> Type
 PFIntPolyMuFPF ar =
