@@ -58,18 +58,18 @@ data PFIntPolyRel : PFIntArena -> (pos : Type) -> (pos -> Type) -> Type where
       (PFIntPolyMuPosF ar (pos ** dir))
       (PFIntPolyMuDirF ar (pos ** dir))
 
-PFIntPolyMuFPF' : PFIntArena -> Type
-PFIntPolyMuFPF' ar =
+PFIntPolyMuFPF : PFIntArena -> Type
+PFIntPolyMuFPF ar =
   Subset0 PolyFunc $ \p => PFIntPolyRel ar (pfPos p) (pfDir {p})
 
-PFIntPolyMuFPos' : (ar : PFIntArena) -> Type
-PFIntPolyMuFPos' ar = (p : PFIntPolyMuFPF' ar ** fst $ fst0 p)
+PFIntPolyMuFPos : (ar : PFIntArena) -> Type
+PFIntPolyMuFPos ar = (p : PFIntPolyMuFPF ar ** fst $ fst0 p)
 
-PFIntPolyMuFDir' : (ar : PFIntArena) -> PFIntPolyMuFPos' ar -> Type
-PFIntPolyMuFDir' ar (Element0 (pos ** dir) rel ** i) = dir i
+PFIntPolyMuFDir : (ar : PFIntArena) -> PFIntPolyMuFPos ar -> Type
+PFIntPolyMuFDir ar (Element0 (pos ** dir) rel ** i) = dir i
 
-PFIntPolyMuF' : PFIntArena -> PolyFunc
-PFIntPolyMuF' ar = (PFIntPolyMuFPos' ar ** PFIntPolyMuFDir' ar)
+PFIntPolyMu : PFIntArena -> PolyFunc
+PFIntPolyMu ar = (PFIntPolyMuFPos ar ** PFIntPolyMuFDir ar)
 
 InterpPFIntDirich : PFIntArena -> PolyFunc -> PolyFunc
 InterpPFIntDirich (pos ** dir) q =
