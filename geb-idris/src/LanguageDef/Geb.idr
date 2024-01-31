@@ -22,21 +22,15 @@ ArenaArena : Type
 ArenaArena = PolyFunc -> PolyFunc
 
 data PolyFreeRelPos : PolyFunc -> Type where
-  PFRPv :
-    (0 p : PolyFunc) -> (pro : PolyFunc -> Type) -> pro p -> PolyFreeRelPos p
-  PFRPc :
-    (0 p : PolyFunc) -> (pro : PolyFunc -> Type) -> PolyFreeRelPos p
+  PFRPc : (0 p : PolyFunc) -> PolyFreeRelPos p
 
 data PolyFreeRelDir : Sigma {a=PolyFunc} PolyFreeRelPos -> Type where
-  PFRDc :
-    (0 p : PolyFunc) -> (0 pro : PolyFunc -> Type) ->
-    PolyFreeRelDir (p ** (PFRPc p pro))
+  PFRDc : (0 p : PolyFunc) -> PolyFreeRelDir (p ** (PFRPc p))
 
 PolyFreeRelAssign : ArenaArena ->
   Sigma {a=(Sigma {a=PolyFunc} PolyFreeRelPos)} PolyFreeRelDir -> PolyFunc
 PolyFreeRelAssign ar
-  (((pos ** dir) ** PFRPc (pos ** dir) pro) ** PFRDc (pos ** dir) pro) =
-    ar (pos ** dir)
+  (((pos ** dir) ** PFRPc (pos ** dir)) ** PFRDc (pos ** dir)) = ar (pos ** dir)
 
 PolyRelSPF : ArenaArena -> SlicePolyEndoFunc PolyFunc
 PolyRelSPF ar = (PolyFreeRelPos ** PolyFreeRelDir ** PolyFreeRelAssign ar)
@@ -44,8 +38,14 @@ PolyRelSPF ar = (PolyFreeRelPos ** PolyFreeRelDir ** PolyFreeRelAssign ar)
 PolyFreeRelSPF : ArenaArena -> SlicePolyEndoFunc PolyFunc
 PolyFreeRelSPF ar = SPFFreeM (PolyRelSPF ar)
 
+PolyFreeRel' : ArenaArena -> SliceEndofunctor PolyFunc
+PolyFreeRel' ar = SlicePolyFree (PolyRelSPF ar)
+
+data PolyInitRel : PolyFunc -> Type where
+  PFRi : PolyInitRel (Void ** \v => void v)
+
 PolyRelMu' : ArenaArena -> PolyFunc -> Type
-PolyRelMu' ar = SPFMu (PolyRelSPF ar)
+PolyRelMu' ar = PolyFreeRel' ar PolyInitRel
 
 data PolyFreeRel : ArenaArena -> SliceEndofunctor PolyFunc where
   PFRv : {ar : ArenaArena} ->
@@ -54,9 +54,6 @@ data PolyFreeRel : ArenaArena -> SliceEndofunctor PolyFunc where
   PFRc : {ar : ArenaArena} ->
     (pro : PolyFunc -> Type) ->
     (0 p : PolyFunc) -> PolyFreeRel ar pro p -> PolyFreeRel ar pro (ar p)
-
-data PolyInitRel : PolyFunc -> Type where
-  PFRi : PolyInitRel (Void ** \v => void v)
 
 PolyRelMu : ArenaArena -> PolyFunc -> Type
 PolyRelMu ar = PolyFreeRel ar PolyInitRel
