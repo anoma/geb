@@ -21,6 +21,32 @@ import LanguageDef.FinCat
 ArenaArena : Type
 ArenaArena = PolyFunc -> PolyFunc
 
+data PolyFreeRelPos : PolyFunc -> Type where
+  PFRPv :
+    (0 p : PolyFunc) -> (pro : PolyFunc -> Type) -> pro p -> PolyFreeRelPos p
+  PFRPc :
+    (0 p : PolyFunc) -> (pro : PolyFunc -> Type) -> PolyFreeRelPos p
+
+data PolyFreeRelDir : Sigma {a=PolyFunc} PolyFreeRelPos -> Type where
+  PFRDc :
+    (0 p : PolyFunc) -> (0 pro : PolyFunc -> Type) ->
+    PolyFreeRelDir (p ** (PFRPc p pro))
+
+PolyFreeRelAssign : ArenaArena ->
+  Sigma {a=(Sigma {a=PolyFunc} PolyFreeRelPos)} PolyFreeRelDir -> PolyFunc
+PolyFreeRelAssign ar
+  (((pos ** dir) ** PFRPc (pos ** dir) pro) ** PFRDc (pos ** dir) pro) =
+    ar (pos ** dir)
+
+PolyRelSPF : ArenaArena -> SlicePolyEndoFunc PolyFunc
+PolyRelSPF ar = (PolyFreeRelPos ** PolyFreeRelDir ** PolyFreeRelAssign ar)
+
+PolyFreeRelSPF : ArenaArena -> SlicePolyEndoFunc PolyFunc
+PolyFreeRelSPF ar = SPFFreeM (PolyRelSPF ar)
+
+PolyRelMu' : ArenaArena -> PolyFunc -> Type
+PolyRelMu' ar = SPFMu (PolyRelSPF ar)
+
 data PolyFreeRel : ArenaArena -> SliceEndofunctor PolyFunc where
   PFRv : {ar : ArenaArena} ->
     (pro : PolyFunc -> Type) ->
