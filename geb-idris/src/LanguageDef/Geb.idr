@@ -71,24 +71,6 @@ PFIntPolyMuFDir' ar (Element0 (pos ** dir) rel ** i) = dir i
 PFIntPolyMuF' : PFIntArena -> PolyFunc
 PFIntPolyMuF' ar = (PFIntPolyMuFPos' ar ** PFIntPolyMuFDir' ar)
 
-mutual
-  partial
-  data PFIntPolyMuPos : PFIntArena -> Type where
-    PIMuP : {p : PFIntArena} ->
-      InterpPFIntPolyPos p (PFIntPolyMuPos p ** PFIntPolyMuDir p) ->
-      PFIntPolyMuPos p
-
-  partial
-  data PFIntPolyMuDir : (p : PFIntArena) -> PFIntPolyMuPos p -> Type where
-    PIMuD : {p : PFIntArena} ->
-      (i : InterpPFIntPolyPos p (PFIntPolyMuPos p ** PFIntPolyMuDir p)) ->
-      InterpPFIntPolyDir p (PFIntPolyMuPos p ** PFIntPolyMuDir p) i ->
-      PFIntPolyMuDir p (PIMuP {p} i)
-
-partial
-PFIntPolyMu : PFIntArena -> PolyFunc
-PFIntPolyMu p = (PFIntPolyMuPos p ** PFIntPolyMuDir p)
-
 InterpPFIntDirich : PFIntArena -> PolyFunc -> PolyFunc
 InterpPFIntDirich (pos ** dir) q =
   pfSetCoproductArena {a=pos} $ \i => pfHomObj q (dir i)
