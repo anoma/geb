@@ -25,9 +25,27 @@ import LanguageDef.FinCat
 PFIntArena : Type
 PFIntArena = (pos : Type ** pos -> PolyFunc)
 
+InterpPFIntPolyPos : PFIntArena -> PolyFunc -> Type
+InterpPFIntPolyPos (pos ** dir) q =
+  pfSetCoproductPos {a=pos} $ \i => pfHomObj (dir i) q
+
+InterpPFIntPolyDir : (ar : PFIntArena) -> (p : PolyFunc) ->
+  InterpPFIntPolyPos ar p -> Type
+InterpPFIntPolyDir (pos ** dir) q =
+  pfSetCoproductDir {a=pos} $ \i => pfHomObj (dir i) q
+
 InterpPFIntPoly : PFIntArena -> PolyFunc -> PolyFunc
-InterpPFIntPoly (pos ** dir) q =
-  pfSetCoproductArena {a=pos} $ \i => pfHomObj (dir i) q
+InterpPFIntPoly p q = (InterpPFIntPolyPos p q ** InterpPFIntPolyDir p q)
+
+data PFIntPolyMuPosF : PFIntArena -> PolyFunc -> Type where
+  PIMuPf : {p : PFIntArena} -> {q : PolyFunc} ->
+    InterpPFIntPolyPos p q -> PFIntPolyMuPosF p q
+
+data PFIntPolyMuDirF : (p : PFIntArena) -> (q : PolyFunc) ->
+    InterpPFIntPolyPos p q -> Type where
+  PIMuDf : {p : PFIntArena} -> {q : PolyFunc} ->
+    (i : InterpPFIntPolyPos p q) -> InterpPFIntPolyDir p q i ->
+    PFIntPolyMuDirF p q i
 
 mutual
   partial
