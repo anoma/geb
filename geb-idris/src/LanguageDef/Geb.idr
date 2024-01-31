@@ -25,7 +25,7 @@ data PolyFreeRelPos : PolyFunc -> Type where
   PFRPc : (0 p : PolyFunc) -> PolyFreeRelPos p
 
 data PolyFreeRelDir : Sigma {a=PolyFunc} PolyFreeRelPos -> Type where
-  PFRDc : (0 p : PolyFunc) -> PolyFreeRelDir (p ** (PFRPc p))
+  PFRDc : (0 p : PolyFunc) -> PolyFreeRelDir (p ** PFRPc p)
 
 PolyFreeRelAssign : ArenaArena ->
   Sigma {a=(Sigma {a=PolyFunc} PolyFreeRelPos)} PolyFreeRelDir -> PolyFunc
