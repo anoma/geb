@@ -29,6 +29,24 @@ InterpPFIntPoly : PFIntArena -> PolyFunc -> PolyFunc
 InterpPFIntPoly (pos ** dir) q =
   pfSetCoproductArena {a=pos} $ \i => pfHomObj (dir i) q
 
+mutual
+  partial
+  data PFIntPolyMuPos : PFIntArena -> Type where
+    PIMuP : {p : PFIntArena} ->
+      fst (InterpPFIntPoly p (PFIntPolyMuPos p ** PFIntPolyMuDir p)) ->
+      PFIntPolyMuPos p
+
+  partial
+  data PFIntPolyMuDir : (p : PFIntArena) -> PFIntPolyMuPos p -> Type where
+    PIMuD : {p : PFIntArena} ->
+      (i : fst (InterpPFIntPoly p (PFIntPolyMuPos p ** PFIntPolyMuDir p))) ->
+      snd (InterpPFIntPoly p (PFIntPolyMuPos p ** PFIntPolyMuDir p)) i ->
+      PFIntPolyMuDir p (PIMuP {p} i)
+
+partial
+PFIntPolyMu : PFIntArena -> PolyFunc
+PFIntPolyMu p = (PFIntPolyMuPos p ** PFIntPolyMuDir p)
+
 InterpPFIntDirich : PFIntArena -> PolyFunc -> PolyFunc
 InterpPFIntDirich (pos ** dir) q =
   pfSetCoproductArena {a=pos} $ \i => pfHomObj q (dir i)
