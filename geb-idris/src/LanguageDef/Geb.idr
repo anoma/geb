@@ -21,27 +21,22 @@ import LanguageDef.FinCat
 ArenaArena : Type
 ArenaArena = PolyFunc -> PolyFunc
 
-data PolyFreeRel : ArenaArena ->
-    ((pos : Type) -> (pos -> Type) -> Type) ->
-    (pos : Type) -> (pos -> Type) -> Type where
+data PolyFreeRel : ArenaArena -> (PolyFunc -> Type) -> (PolyFunc -> Type) where
   PFRv : {ar : ArenaArena} ->
-    (pro : (pos : Type) -> (pos -> Type) -> Type) ->
-    {0 pos : Type} -> {0 dir : pos -> Type} ->
-    pro pos dir -> PolyFreeRel ar pro pos dir
+    (pro : PolyFunc -> Type) ->
+    {0 p : PolyFunc} -> pro p -> PolyFreeRel ar pro p
   PFRc : {ar : ArenaArena} ->
-    (pro : (pos : Type) -> (pos -> Type) -> Type) ->
-    {0 pos : Type} -> {0 dir : pos -> Type} ->
-    PolyFreeRel ar pro pos dir ->
-    PolyFreeRel ar pro (fst $ ar (pos ** dir)) (snd $ ar (pos ** dir))
+    (pro : PolyFunc -> Type) ->
+    (0 p : PolyFunc) -> PolyFreeRel ar pro p -> PolyFreeRel ar pro (ar p)
 
-data PolyInitRel : (pos : Type) -> (pos -> Type) -> Type where
-  PFRi : PolyInitRel Void (\v => void v)
+data PolyInitRel : PolyFunc -> Type where
+  PFRi : PolyInitRel (Void ** \v => void v)
 
-PolyRelMu : ArenaArena -> (pos : Type) -> (pos -> Type) -> Type
+PolyRelMu : ArenaArena -> PolyFunc -> Type
 PolyRelMu ar = PolyFreeRel ar PolyInitRel
 
 PolyFuncMu : ArenaArena -> Type
-PolyFuncMu ar = Subset0 PolyFunc $ \p => PolyRelMu ar (pfPos p) (pfDir {p})
+PolyFuncMu ar = Subset0 PolyFunc $ PolyRelMu ar
 
 PolyFuncMuFst : ArenaArena -> Type
 PolyFuncMuFst ar = (p : PolyFuncMu ar ** fst $ fst0 p)
@@ -80,7 +75,7 @@ InterpPFIntPolyDir (pos ** dir) q =
 PFIntPolyMuF : (p : PFIntArena) -> ArenaArena
 PFIntPolyMuF ar p = (InterpPFIntPolyPos ar p ** InterpPFIntPolyDir ar p)
 
-PFIntPolyRel : PFIntArena -> (pos : Type) -> (pos -> Type) -> Type
+PFIntPolyRel : PFIntArena -> PolyFunc -> Type
 PFIntPolyRel ar = PolyRelMu (PFIntPolyMuF ar)
 
 PFIntPolyMuFPF : PFIntArena -> Type
