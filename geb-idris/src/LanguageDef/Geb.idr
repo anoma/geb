@@ -40,6 +40,21 @@ data PolyInitRel : (pos : Type) -> (pos -> Type) -> Type where
 PolyRelMu : ArenaArena -> (pos : Type) -> (pos -> Type) -> Type
 PolyRelMu ar = PolyFreeRel ar PolyInitRel
 
+PolyFuncMu : ArenaArena -> Type
+PolyFuncMu ar = Subset0 PolyFunc $ \p => PolyRelMu ar (pfPos p) (pfDir {p})
+
+PolyFuncMuFst : ArenaArena -> Type
+PolyFuncMuFst ar = (p : PolyFuncMu ar ** fst $ fst0 p)
+
+PolyFuncMuSnd : (ar : ArenaArena) -> PolyFuncMuFst ar -> Type
+PolyFuncMuSnd ar (Element0 (pos ** dir) rel ** i) = dir i
+
+PolyFuncMuPF : ArenaArena -> PolyFunc
+PolyFuncMuPF ar = MkDPair (PolyFuncMuFst ar) (PolyFuncMuSnd ar)
+
+PolyFuncMuSigma : ArenaArena -> Type
+PolyFuncMuSigma ar = DPair (PolyFuncMuFst ar) (PolyFuncMuSnd ar)
+
 ------------------------------------------
 ------------------------------------------
 ---- Internal polynomial endofunctors ----
@@ -69,17 +84,19 @@ PFIntPolyRel : PFIntArena -> (pos : Type) -> (pos -> Type) -> Type
 PFIntPolyRel ar = PolyRelMu (PFIntPolyMuF ar)
 
 PFIntPolyMuFPF : PFIntArena -> Type
-PFIntPolyMuFPF ar =
-  Subset0 PolyFunc $ \p => PFIntPolyRel ar (pfPos p) (pfDir {p})
+PFIntPolyMuFPF ar = PolyFuncMu (PFIntPolyMuF ar)
 
 PFIntPolyMuFPos : (ar : PFIntArena) -> Type
-PFIntPolyMuFPos ar = (p : PFIntPolyMuFPF ar ** fst $ fst0 p)
+PFIntPolyMuFPos ar = PolyFuncMuFst (PFIntPolyMuF ar)
 
 PFIntPolyMuFDir : (ar : PFIntArena) -> PFIntPolyMuFPos ar -> Type
-PFIntPolyMuFDir ar (Element0 (pos ** dir) rel ** i) = dir i
+PFIntPolyMuFDir ar = PolyFuncMuSnd (PFIntPolyMuF ar)
 
-PFIntPolyMu : PFIntArena -> PolyFunc
-PFIntPolyMu ar = (PFIntPolyMuFPos ar ** PFIntPolyMuFDir ar)
+PFIntPolyMuPF : PFIntArena -> PolyFunc
+PFIntPolyMuPF ar = PolyFuncMuPF (PFIntPolyMuF ar)
+
+PFIntPolyMuSigma : PFIntArena -> Type
+PFIntPolyMuSigma ar = PolyFuncMuSigma (PFIntPolyMuF ar)
 
 InterpPFIntDirich : PFIntArena -> PolyFunc -> PolyFunc
 InterpPFIntDirich (pos ** dir) q =
