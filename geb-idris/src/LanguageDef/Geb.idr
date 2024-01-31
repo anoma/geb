@@ -42,10 +42,13 @@ data PFIntPolyMuPosF : PFIntArena -> PolyFunc -> Type where
     InterpPFIntPolyPos p q -> PFIntPolyMuPosF p q
 
 data PFIntPolyMuDirF : (p : PFIntArena) -> (q : PolyFunc) ->
-    InterpPFIntPolyPos p q -> Type where
+    PFIntPolyMuPosF p q -> Type where
   PIMuDf : {p : PFIntArena} -> {q : PolyFunc} ->
     (i : InterpPFIntPolyPos p q) -> InterpPFIntPolyDir p q i ->
-    PFIntPolyMuDirF p q i
+    PFIntPolyMuDirF p q (PIMuPf {p} {q} i)
+
+PFIntPolyMuF : (p : PFIntArena) -> PolyFunc -> PolyFunc
+PFIntPolyMuF ar p = (PFIntPolyMuPosF ar p ** PFIntPolyMuDirF ar p)
 
 mutual
   partial
