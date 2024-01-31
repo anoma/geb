@@ -21,7 +21,7 @@ import LanguageDef.FinCat
 ArenaArena : Type
 ArenaArena = PolyFunc -> PolyFunc
 
-data PolyFreeRel : ArenaArena -> (PolyFunc -> Type) -> (PolyFunc -> Type) where
+data PolyFreeRel : ArenaArena -> SliceEndofunctor PolyFunc where
   PFRv : {ar : ArenaArena} ->
     (pro : PolyFunc -> Type) ->
     {0 p : PolyFunc} -> pro p -> PolyFreeRel ar pro p
