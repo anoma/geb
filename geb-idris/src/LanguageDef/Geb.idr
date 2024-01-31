@@ -51,14 +51,14 @@ mutual
   partial
   data PFIntPolyMuPos : PFIntArena -> Type where
     PIMuP : {p : PFIntArena} ->
-      fst (InterpPFIntPoly p (PFIntPolyMuPos p ** PFIntPolyMuDir p)) ->
+      InterpPFIntPolyPos p (PFIntPolyMuPos p ** PFIntPolyMuDir p) ->
       PFIntPolyMuPos p
 
   partial
   data PFIntPolyMuDir : (p : PFIntArena) -> PFIntPolyMuPos p -> Type where
     PIMuD : {p : PFIntArena} ->
-      (i : fst (InterpPFIntPoly p (PFIntPolyMuPos p ** PFIntPolyMuDir p))) ->
-      snd (InterpPFIntPoly p (PFIntPolyMuPos p ** PFIntPolyMuDir p)) i ->
+      (i : InterpPFIntPolyPos p (PFIntPolyMuPos p ** PFIntPolyMuDir p)) ->
+      InterpPFIntPolyDir p (PFIntPolyMuPos p ** PFIntPolyMuDir p) i ->
       PFIntPolyMuDir p (PIMuP {p} i)
 
 partial
