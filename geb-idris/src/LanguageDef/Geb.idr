@@ -50,13 +50,26 @@ data PFIntPolyMuDirF : (p : PFIntArena) -> (q : PolyFunc) ->
 PFIntPolyMuF : (p : PFIntArena) -> PolyFunc -> PolyFunc
 PFIntPolyMuF ar p = (PFIntPolyMuPosF ar p ** PFIntPolyMuDirF ar p)
 
-data PFIntPolyRel : PFIntArena -> (pos : Type) -> (pos -> Type) -> Type where
-  InPFRi : {ar : PFIntArena} -> PFIntPolyRel ar Void (\v => void v)
-  InPFR : {ar : PFIntArena} -> {0 pos : Type} -> {0 dir : pos -> Type} ->
-    PFIntPolyRel ar pos dir ->
-    PFIntPolyRel ar
+data PFIntPolyRelInit : (pos : Type) -> (pos -> Type) -> Type where
+  InPFRv : PFIntPolyRelInit Void (\v => void v)
+
+data PFIntPolyFreeRel : PFIntArena ->
+    ((pos : Type) -> (pos -> Type) -> Type) ->
+    (pos : Type) -> (pos -> Type) -> Type where
+  InPFRi : {ar : PFIntArena} ->
+    (pro : (pos : Type) -> (pos -> Type) -> Type) ->
+    {0 pos : Type} -> {0 dir : pos -> Type} ->
+    pro pos dir -> PFIntPolyFreeRel ar pro pos dir
+  InPFRc : {ar : PFIntArena} ->
+    (pro : (pos : Type) -> (pos -> Type) -> Type) ->
+    {0 pos : Type} -> {0 dir : pos -> Type} ->
+    PFIntPolyFreeRel ar pro pos dir ->
+    PFIntPolyFreeRel ar pro
       (PFIntPolyMuPosF ar (pos ** dir))
       (PFIntPolyMuDirF ar (pos ** dir))
+
+PFIntPolyRel : PFIntArena -> (pos : Type) -> (pos -> Type) -> Type
+PFIntPolyRel ar = PFIntPolyFreeRel ar PFIntPolyRelInit
 
 PFIntPolyMuFPF : PFIntArena -> Type
 PFIntPolyMuFPF ar =
