@@ -50,6 +50,27 @@ data PFIntPolyMuDirF : (p : PFIntArena) -> (q : PolyFunc) ->
 PFIntPolyMuF : (p : PFIntArena) -> PolyFunc -> PolyFunc
 PFIntPolyMuF ar p = (PFIntPolyMuPosF ar p ** PFIntPolyMuDirF ar p)
 
+data PFIntPolyRel : PFIntArena -> (pos : Type) -> (pos -> Type) -> Type where
+  InPFRi : {ar : PFIntArena} -> PFIntPolyRel ar Void (\v => void v)
+  InPFR : {ar : PFIntArena} -> {0 pos : Type} -> {0 dir : pos -> Type} ->
+    PFIntPolyRel ar pos dir ->
+    PFIntPolyRel ar
+      (PFIntPolyMuPosF ar (pos ** dir))
+      (PFIntPolyMuDirF ar (pos ** dir))
+
+PFIntPolyMuFPF' : PFIntArena -> Type
+PFIntPolyMuFPF' ar =
+  Subset0 PolyFunc $ \p => PFIntPolyRel ar (pfPos p) (pfDir {p})
+
+PFIntPolyMuFPos' : (ar : PFIntArena) -> Type
+PFIntPolyMuFPos' ar = (p : PFIntPolyMuFPF' ar ** fst $ fst0 p)
+
+PFIntPolyMuFDir' : (ar : PFIntArena) -> PFIntPolyMuFPos' ar -> Type
+PFIntPolyMuFDir' ar (Element0 (pos ** dir) rel ** i) = dir i
+
+PFIntPolyMuF' : PFIntArena -> PolyFunc
+PFIntPolyMuF' ar = (PFIntPolyMuFPos' ar ** PFIntPolyMuFDir' ar)
+
 mutual
   partial
   data PFIntPolyMuPos : PFIntArena -> Type where
