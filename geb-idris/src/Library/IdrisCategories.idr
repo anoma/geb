@@ -270,7 +270,18 @@ Contravariant SliceObj where
   contramap = (|>)
 
 public export
+sliceObjSigmaFMap : {a, b : Type} -> (a -> b) -> SliceObj a -> SliceObj b
+sliceObjSigmaFMap {a} {b} f sla eb =
+  (preb : Subset0 a (\ea => f ea = eb) ** sla $ fst0 preb)
+
+public export
+sliceObjPiFMap : {a, b : Type} -> (a -> b) -> SliceObj a -> SliceObj b
+sliceObjPiFMap {a} {b} f sla eb =
+  (preb : Subset0 a (\ea => f ea = eb)) -> sla $ fst0 preb
+
+public export
 Functor SliceObj where
+  -- Like `sliceObjSigmaFMap`, but with zero usages on `a` and `b`.
   map {a} {b} f sla eb = Exists0 a $ \ea => (sla ea, f ea = eb)
 
 public export
