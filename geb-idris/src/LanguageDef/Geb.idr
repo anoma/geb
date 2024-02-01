@@ -111,19 +111,8 @@ data PolyInitRel : PolyFunc -> Type where
 PolyRelMu' : ArenaArena -> PolyFunc -> Type
 PolyRelMu' ar = PolyFreeRel' ar PolyInitRel
 
-data PolyFreeRel : ArenaArena -> SliceEndofunctor PolyFunc where
-  PFRv : {ar : ArenaArena} ->
-    (pro : PolyFunc -> Type) ->
-    {0 p : PolyFunc} -> pro p -> PolyFreeRel ar pro p
-  PFRc : {ar : ArenaArena} ->
-    (pro : PolyFunc -> Type) ->
-    (0 p : PolyFunc) -> PolyFreeRel ar pro p -> PolyFreeRel ar pro (ar p)
-
-PolyRelMu : ArenaArena -> PolyFunc -> Type
-PolyRelMu ar = PolyFreeRel ar PolyInitRel
-
 PolyFuncMu : ArenaArena -> Type
-PolyFuncMu ar = Subset0 PolyFunc $ PolyRelMu ar
+PolyFuncMu ar = Subset0 PolyFunc $ PolyRelMu' ar
 
 PolyFuncMuFst : ArenaArena -> Type
 PolyFuncMuFst ar = (p : PolyFuncMu ar ** fst $ fst0 p)
@@ -163,7 +152,7 @@ PFIntPolyMuF : (p : PFIntArena) -> ArenaArena
 PFIntPolyMuF ar p = (InterpPFIntPolyPos ar p ** InterpPFIntPolyDir ar p)
 
 PFIntPolyRel : PFIntArena -> PolyFunc -> Type
-PFIntPolyRel ar = PolyRelMu (PFIntPolyMuF ar)
+PFIntPolyRel ar = PolyRelMu' (PFIntPolyMuF ar)
 
 PFIntPolyMuFPF : PFIntArena -> Type
 PFIntPolyMuFPF ar = PolyFuncMu (PFIntPolyMuF ar)
