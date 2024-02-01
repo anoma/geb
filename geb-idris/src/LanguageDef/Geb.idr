@@ -18,6 +18,10 @@ import LanguageDef.FinCat
 --------------------------------------
 --------------------------------------
 
+------------------------------
+---- Dependent-arena form ----
+------------------------------
+
 public export
 data ReachableBasePos :
     {0 a : Type} -> SliceObj a where
@@ -50,6 +54,27 @@ ReachableFreeM {a} f = SPFFreeM {a} (ReachableBase {a} f)
 public export
 ReachableFreeF : {a : Type} -> (a -> a) -> SliceEndofunctor a
 ReachableFreeF {a} f = SlicePolyFree {a} (ReachableBase {a} f)
+
+---------------------
+---- W-type form ----
+---------------------
+
+0 ReachableBaseW : {a : Type} -> (a -> a) -> WTypeFunc a a
+ReachableBaseW {a} f = MkWTF a a f (id {a}) (id {a})
+
+0 ReachableBaseToW : {a : Type} -> (f : a -> a) -> {sl : SliceObj a} ->
+  SliceMorphism {a}
+    (ReachableBaseF {a} f sl)
+    (InterpWTF (ReachableBaseW {a} f) sl)
+ReachableBaseToW {a} f {sl} ea (RPos ea ** d) =
+  (Element0 ea Refl ** \(Element0 ea Refl) => d (RDir ea))
+
+0 ReachableBaseFromW : {a : Type} -> (f : a -> a) -> {sl : SliceObj a} ->
+  SliceMorphism {a}
+    (InterpWTF (ReachableBaseW {a} f) sl)
+    (ReachableBaseF {a} f sl)
+ReachableBaseFromW {a} f {sl} ea (Element0 ea Refl ** d) =
+  (RPos ea ** \(RDir ea) => d $ Element0 ea Refl)
 
 ---------------------
 ---------------------
