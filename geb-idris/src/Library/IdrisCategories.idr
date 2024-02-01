@@ -270,6 +270,10 @@ Contravariant SliceObj where
   contramap = (|>)
 
 public export
+Functor SliceObj where
+  map {a} {b} f sla eb = Exists0 a $ \ea => (sla ea, f ea = eb)
+
+public export
 FinSliceObj : Nat -> Type
 FinSliceObj = SliceObj . Fin
 
