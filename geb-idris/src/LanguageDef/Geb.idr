@@ -72,6 +72,14 @@ ReachableSl : {a : Type} -> (a -> a) -> SliceObj (SliceObj a)
 ReachableSl {a} f init = Subset0 a (ReachableFreeF {a} f init)
 
 public export
+ReachableF : {a : Type} -> (a -> a) -> SliceFunctor a Unit
+ReachableF {a} f init () = ReachableSl {a} f init
+
+public export
+ReachableFid : {a : Type} -> SliceFunctor a Unit
+ReachableFid {a} = ReachableF {a} (id {a})
+
+public export
 ReachableMu : {a : Type} -> SliceFunctor a (a -> a)
 ReachableMu {a} = flip (ReachableSl {a})
 
