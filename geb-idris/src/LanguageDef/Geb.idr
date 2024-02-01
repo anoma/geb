@@ -97,25 +97,24 @@ ReachableBaseFromW {a} f {sl} ea (Element0 ea Refl ** d) =
 ArenaArena : Type
 ArenaArena = PolyFunc -> PolyFunc
 
-data PolyFreeRelPos : PolyFunc -> Type where
-  PFRPc : (0 p : PolyFunc) -> PolyFreeRelPos p
+PolyFreeRelPos : PolyFunc -> Type
+PolyFreeRelPos = ReachableBasePos {a=PolyFunc}
 
-data PolyFreeRelDir : Sigma {a=PolyFunc} PolyFreeRelPos -> Type where
-  PFRDc : (0 p : PolyFunc) -> PolyFreeRelDir (p ** PFRPc p)
+PolyFreeRelDir : Sigma {a=PolyFunc} PolyFreeRelPos -> Type
+PolyFreeRelDir = ReachableBaseDir {a=PolyFunc}
 
 PolyFreeRelAssign : ArenaArena ->
   Sigma {a=(Sigma {a=PolyFunc} PolyFreeRelPos)} PolyFreeRelDir -> PolyFunc
-PolyFreeRelAssign ar
-  (((pos ** dir) ** PFRPc (pos ** dir)) ** PFRDc (pos ** dir)) = ar (pos ** dir)
+PolyFreeRelAssign = ReachableBaseAssign {a=PolyFunc}
 
 PolyRelSPF : ArenaArena -> SlicePolyEndoFunc PolyFunc
-PolyRelSPF ar = (PolyFreeRelPos ** PolyFreeRelDir ** PolyFreeRelAssign ar)
+PolyRelSPF = ReachableBase {a=PolyFunc}
 
 PolyFreeRelSPF : ArenaArena -> SlicePolyEndoFunc PolyFunc
-PolyFreeRelSPF ar = SPFFreeM (PolyRelSPF ar)
+PolyFreeRelSPF = ReachableFreeM {a=PolyFunc}
 
 PolyFreeRel : ArenaArena -> SliceEndofunctor PolyFunc
-PolyFreeRel ar = SlicePolyFree (PolyRelSPF ar)
+PolyFreeRel = ReachableFreeF {a=PolyFunc}
 
 data PolyInitRel : PolyFunc -> Type where
   PFRi : PolyInitRel (Void ** \v => void v)
