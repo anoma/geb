@@ -12,6 +12,45 @@ import LanguageDef.FinCat
 
 %default total
 
+--------------------------------------
+--------------------------------------
+---- Reachability through W-types ----
+--------------------------------------
+--------------------------------------
+
+public export
+data ReachableBasePos :
+    {0 a : Type} -> SliceObj a where
+  RPos : {0 a : Type} -> (0 ea : a) -> ReachableBasePos {a} ea
+
+public export
+data ReachableBaseDir :
+    {0 a : Type} -> SliceObj (Sigma {a} $ ReachableBasePos {a}) where
+  RDir : {0 a : Type} -> (0 ea : a) -> ReachableBaseDir {a} (ea ** RPos ea)
+
+public export
+ReachableAssign :
+  {0 a : Type} -> (a -> a) ->
+  Sigma {a=(Sigma {a} $ ReachableBasePos {a})} (ReachableBaseDir {a}) -> a
+ReachableAssign {a} f ((ea ** RPos ea) ** RDir ea) = f ea
+
+public export
+ReachableBase : {0 a : Type} -> (a -> a) -> SlicePolyEndoFunc a
+ReachableBase {a} f =
+  (ReachableBasePos {a} ** ReachableBaseDir {a} ** ReachableAssign {a} f)
+
+public export
+ReachableBaseF : {a : Type} -> (a -> a) -> SliceEndofunctor a
+ReachableBaseF {a} f = InterpSPFunc {a} (ReachableBase {a} f)
+
+public export
+ReachableFreeM : {a : Type} -> (a -> a) -> SlicePolyEndoFunc a
+ReachableFreeM {a} f = SPFFreeM {a} (ReachableBase {a} f)
+
+public export
+ReachableFreeF : {a : Type} -> (a -> a) -> SliceEndofunctor a
+ReachableFreeF {a} f = SlicePolyFree {a} (ReachableBase {a} f)
+
 ---------------------
 ---------------------
 ---- Free arenas ----
