@@ -1346,15 +1346,15 @@ public export
   (objmap : c -> Type) -> Type
 IntPreshfMapSig c mor = IntCopreshfMapSig c (IntOpCatMor c mor)
 
--- The signature of a natural transformation between presheaves.
-public export
-0 IntPreshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
-IntPreshfNTSig c pobj qobj = (0 x : c) -> pobj x -> qobj x
-
 -- The signature of a natural transformation between copresheaves.
 public export
 0 IntCopreshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
-IntCopreshfNTSig = IntPreshfNTSig
+IntCopreshfNTSig c pobj qobj = (0 x : c) -> pobj x -> qobj x
+
+-- The signature of a natural transformation between presheaves.
+public export
+0 IntPreshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
+IntPreshfNTSig = IntCopreshfNTSig
 
 -- The naturality condition of a natural transformation between presheaves.
 public export
