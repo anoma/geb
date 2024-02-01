@@ -48,12 +48,24 @@ ReachableBaseF : {a : Type} -> (a -> a) -> SliceEndofunctor a
 ReachableBaseF {a} f = InterpSPFunc {a} (ReachableBase {a} f)
 
 public export
+ReachableBaseFMap : {a : Type} -> (f : a -> a) ->
+  {sa, sa' : SliceObj a} ->
+  SliceMorphism sa sa' ->
+  SliceMorphism (ReachableBaseF {a} f sa) (ReachableBaseF {a} f sa')
+ReachableBaseFMap {a} f {sa} {sa'} =
+  InterpSPFMap {a} {b=a} (ReachableBase {a} f)
+
+public export
 ReachableFreeM : {a : Type} -> (a -> a) -> SlicePolyEndoFunc a
 ReachableFreeM {a} f = SPFFreeM {a} (ReachableBase {a} f)
 
 public export
 ReachableFreeF : {a : Type} -> (a -> a) -> SliceEndofunctor a
 ReachableFreeF {a} f = SlicePolyFree {a} (ReachableBase {a} f)
+
+public export
+ReachableEval : {a : Type} -> (f : a -> a) -> SPFMeval (ReachableBase {a} f)
+ReachableEval {a} f = spfmEval {a} (ReachableBase {a} f)
 
 ---------------------
 ---- W-type form ----
