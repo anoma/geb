@@ -33,15 +33,15 @@ data ReachableBaseDir :
   RDir : {0 a : Type} -> (0 ea : a) -> ReachableBaseDir {a} (ea ** RPos ea)
 
 public export
-ReachableAssign :
+ReachableBaseAssign :
   {0 a : Type} -> (a -> a) ->
   Sigma {a=(Sigma {a} $ ReachableBasePos {a})} (ReachableBaseDir {a}) -> a
-ReachableAssign {a} f ((ea ** RPos ea) ** RDir ea) = f ea
+ReachableBaseAssign {a} f ((ea ** RPos ea) ** RDir ea) = f ea
 
 public export
 ReachableBase : {0 a : Type} -> (a -> a) -> SlicePolyEndoFunc a
 ReachableBase {a} f =
-  (ReachableBasePos {a} ** ReachableBaseDir {a} ** ReachableAssign {a} f)
+  (ReachableBasePos {a} ** ReachableBaseDir {a} ** ReachableBaseAssign {a} f)
 
 public export
 ReachableBaseF : {a : Type} -> (a -> a) -> SliceEndofunctor a
