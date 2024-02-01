@@ -67,6 +67,14 @@ public export
 ReachableEval : {a : Type} -> (f : a -> a) -> SPFMeval (ReachableBase {a} f)
 ReachableEval {a} f = spfmEval {a} (ReachableBase {a} f)
 
+public export
+ReachableSl : {a : Type} -> (a -> a) -> SliceObj (SliceObj a)
+ReachableSl {a} f init = Subset0 a (ReachableFreeF {a} f init)
+
+public export
+ReachableMu : {a : Type} -> SliceFunctor a (a -> a)
+ReachableMu {a} = flip (ReachableSl {a})
+
 ---------------------
 ---- W-type form ----
 ---------------------
@@ -123,7 +131,7 @@ PolyRelMu : ArenaArena -> PolyFunc -> Type
 PolyRelMu ar = PolyFreeRel ar PolyInitRel
 
 PolyFuncMu : ArenaArena -> Type
-PolyFuncMu ar = Subset0 PolyFunc $ PolyRelMu ar
+PolyFuncMu = ReachableMu {a=PolyFunc} PolyInitRel
 
 PolyFuncMuFst : ArenaArena -> Type
 PolyFuncMuFst ar = (p : PolyFuncMu ar ** fst $ fst0 p)
