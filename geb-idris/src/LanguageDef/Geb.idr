@@ -125,7 +125,7 @@ PolyFreeRel : ArenaArena -> SliceEndofunctor PolyFunc
 PolyFreeRel = ReachableFreeF {a=PolyFunc}
 
 data PolyInitRel : PolyFunc -> Type where
-  PFRi : PolyInitRel (Void ** \v => void v)
+  PFRi : PolyInitRel PFInitialArena
 
 PolyRelMu : ArenaArena -> PolyFunc -> Type
 PolyRelMu ar = PolyFreeRel ar PolyInitRel
