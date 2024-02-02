@@ -81,6 +81,9 @@ public export
 ReachableEval : {a : Type} -> (f : a -> a) -> SPFMeval (ReachableBase {a} f)
 ReachableEval {a} f = spfmEval {a} (ReachableBase {a} f)
 
+-- `ReachableSl` {a} f init` is the subset of `a` which is reachable from
+-- the subset `Subset0 a init` of `a` by any finite number of applications of
+-- `f`.
 public export
 ReachableSl : {a : Type} -> (a -> a) -> SliceObj (SliceObj a)
 ReachableSl {a} f init = Subset0 a (ReachableFreeF {a} f init)
@@ -155,18 +158,31 @@ PolyRelMu ar = PolyFreeRel ar PolyInitRel
 PolyFuncMu : ArenaArena -> Type
 PolyFuncMu = ReachableMu {a=PolyFunc} PolyInitRel
 
+-- A term of `PolyFuncMuFst` is a term of any type `pos` such that
+-- `(pos ** dir) : PolyFunc` is reachable from `PFInitialArena` via
+-- a finite number of applications of `ar`.
 PolyFuncMuFst : ArenaArena -> Type
 PolyFuncMuFst ar = (p : PolyFuncMu ar ** fst $ fst0 p)
 
+-- A term of `PolyFuncMuSnd` is a term of any type `dir i` such that
+-- `(pos ** dir) : PolyFunc` is reachable from `PFInitialArena` via
+-- a finite number of applications of `ar` and `i` is a term of `pos`.
 PolyFuncMuSnd : (ar : ArenaArena) -> PolyFuncMuFst ar -> Type
 PolyFuncMuSnd ar (Element0 (pos ** dir) rel ** i) = dir i
 
-PolyFuncMuPF : ArenaArena -> PolyFunc
-PolyFuncMuPF ar = MkDPair (PolyFuncMuFst ar) (PolyFuncMuSnd ar)
-
+-- A term of `PolyFuncMuSigma` is a dependent pair of a term `i : pos` and
+-- a term of `dir i` where `(pos ** dir) : PolyFunc` is reachable from
+-- `PFInitialArena` via a finite number of applications of `ar` and `i` is a
+-- term of `pos`.
 PolyFuncMuSigma : ArenaArena -> Type
 PolyFuncMuSigma ar = DPair (PolyFuncMuFst ar) (PolyFuncMuSnd ar)
 
+
+-- A term of `PolyFuncMuPF` is itself a polynomial functor, whose position-set
+-- is the set of reachable positions, and whose direction-set is the dependent
+-- set of reachable directions corresponding to those positions.
+PolyFuncMuPF : ArenaArena -> PolyFunc
+PolyFuncMuPF ar = MkDPair (PolyFuncMuFst ar) (PolyFuncMuSnd ar)
 ------------------------------------------
 ------------------------------------------
 ---- Internal polynomial endofunctors ----
