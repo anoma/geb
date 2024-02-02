@@ -20,11 +20,27 @@ data DCtxIter : PolyFunc -> Type where
   DCtxNil : {0 p : PolyFunc} -> DCtxIter p
   DCtxCons : {0 p : PolyFunc} -> (i : pfPos p) -> pfDir {p} i -> DCtxIter p
 
-data DTypeIter : (p : PolyFunc) -> DCtxIter p -> Type where
+data DTypeIter : (p : PolyFunc) -> SliceObj (DCtxIter p) where
   DTypeBase : {0 p : PolyFunc} -> (ctx : DCtxIter p) -> DTypeIter p ctx
   DTypePi : {0 p : PolyFunc} -> (ctx : DCtxIter p) ->
     Pi {a=(pfPDir p)} (\(i ** d) => DTypeIter p $ DCtxCons {p} i d) ->
     DTypeIter p ctx
+
+data DTypeIterFPos : (p : PolyFunc) -> SliceObj (DCtxIter p) where
+  DTIPbase : {0 p : PolyFunc} -> (ctx : DCtxIter p) -> DTypeIterFPos p ctx
+  DTIPpi : {0 p : PolyFunc} -> (ctx : DCtxIter p) -> DTypeIterFPos p ctx
+
+DTypeIterFDir : (p : PolyFunc) -> SliceObj (Sigma (DTypeIterFPos p))
+DTypeIterFDir p (ctx ** DTIPbase ctx) = Void
+DTypeIterFDir p (ctx ** DTIPpi ctx) = pfPDir p
+
+DTypeIterFAssign : (p : PolyFunc) -> Sigma (DTypeIterFDir p) -> DCtxIter p
+DTypeIterFAssign (pos ** dir) ((ctx ** (DTIPbase ctx)) ** d) = void d
+DTypeIterFAssign (pos ** dir) ((ctx ** (DTIPpi ctx)) ** d) =
+  DCtxCons {p=(pos ** dir)} (fst d) (snd d)
+
+DTypeIterF : (p : PolyFunc) -> SlicePolyEndoFunc (DCtxIter p)
+DTypeIterF p = (DTypeIterFPos p ** DTypeIterFDir p ** DTypeIterFAssign p)
 
 DCtxTypeIter : ArenaArena
 DCtxTypeIter p = (DCtxIter p ** DTypeIter p)
