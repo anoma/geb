@@ -256,10 +256,6 @@ public export
 btC1P00btb : BinTreeMu (FPFatom BCDOfpf)
 btC1P00btb = MkFPFbounded BCDOfpf btC1P00bt
 
-public export
-btC1P00 : BTbcdObj
-btC1P00 = ?btC1P00_hole -- MkFPFn BCDOfpf btC1P00bt
-
 --------------------
 --------------------
 ---- BTMPolyDep ----
