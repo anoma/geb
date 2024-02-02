@@ -177,12 +177,12 @@ PolyFuncMuSnd ar (Element0 (pos ** dir) rel ** i) = dir i
 PolyFuncMuSigma : ArenaArena -> Type
 PolyFuncMuSigma ar = DPair (PolyFuncMuFst ar) (PolyFuncMuSnd ar)
 
-
 -- A term of `PolyFuncMuPF` is itself a polynomial functor, whose position-set
 -- is the set of reachable positions, and whose direction-set is the dependent
 -- set of reachable directions corresponding to those positions.
 PolyFuncMuPF : ArenaArena -> PolyFunc
 PolyFuncMuPF ar = MkDPair (PolyFuncMuFst ar) (PolyFuncMuSnd ar)
+
 ------------------------------------------
 ------------------------------------------
 ---- Internal polynomial endofunctors ----
