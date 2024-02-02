@@ -10,6 +10,34 @@ import LanguageDef.ProgFinSet
 
 %default total
 
+----------------------
+----------------------
+---- Reachability ----
+----------------------
+----------------------
+
+data DCtxIter : PolyFunc -> Type where
+  DCtxNil : {0 p : PolyFunc} -> DCtxIter p
+  DCtxCons : {0 p : PolyFunc} -> (i : pfPos p) -> pfDir {p} i -> DCtxIter p
+
+data DTypeIter : (p : PolyFunc) -> DCtxIter p -> Type where
+  DTypeBase : {0 p : PolyFunc} -> (ctx : DCtxIter p) -> DTypeIter p ctx
+  DTypePi : {0 p : PolyFunc} -> (ctx : DCtxIter p) ->
+    Pi {a=(pfPDir p)} (\(i ** d) => DTypeIter p $ DCtxCons {p} i d) ->
+    DTypeIter p ctx
+
+DCtxTypeIter : ArenaArena
+DCtxTypeIter p = (DCtxIter p ** DTypeIter p)
+
+DCtxMu : Type
+DCtxMu = PolyFuncMu DCtxTypeIter
+
+---------------------------------------------------------
+---------------------------------------------------------
+---- Experiments with slice categories of `PolyFunc` ----
+---------------------------------------------------------
+---------------------------------------------------------
+
 -- A polynomial slice operation maps a slice object to `Type` as a sum
 -- of representables.
 PSliceOp : (a : Type) -> Type

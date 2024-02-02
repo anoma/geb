@@ -127,6 +127,7 @@ ReachableBaseFromW {a} f {sl} ea (Element0 ea Refl ** d) =
 ---------------------
 ---------------------
 
+public export
 ArenaArena : Type
 ArenaArena = PolyFunc -> PolyFunc
 
@@ -146,27 +147,33 @@ PolyRelSPF = ReachableBase {a=PolyFunc}
 PolyFreeRelSPF : ArenaArena -> SlicePolyEndoFunc PolyFunc
 PolyFreeRelSPF = ReachableFreeM {a=PolyFunc}
 
+public export
 PolyFreeRel : ArenaArena -> SliceEndofunctor PolyFunc
 PolyFreeRel = ReachableFreeF {a=PolyFunc}
 
+public export
 data PolyInitRel : PolyFunc -> Type where
   PFRi : PolyInitRel PFInitialArena
 
+public export
 PolyRelMu : ArenaArena -> PolyFunc -> Type
 PolyRelMu ar = PolyFreeRel ar PolyInitRel
 
+public export
 PolyFuncMu : ArenaArena -> Type
 PolyFuncMu = ReachableMu {a=PolyFunc} PolyInitRel
 
 -- A term of `PolyFuncMuFst` is a term of any type `pos` such that
 -- `(pos ** dir) : PolyFunc` is reachable from `PFInitialArena` via
 -- a finite number of applications of `ar`.
+public export
 PolyFuncMuFst : ArenaArena -> Type
 PolyFuncMuFst ar = (p : PolyFuncMu ar ** fst $ fst0 p)
 
 -- A term of `PolyFuncMuSnd` is a term of any type `dir i` such that
 -- `(pos ** dir) : PolyFunc` is reachable from `PFInitialArena` via
 -- a finite number of applications of `ar` and `i` is a term of `pos`.
+public export
 PolyFuncMuSnd : (ar : ArenaArena) -> PolyFuncMuFst ar -> Type
 PolyFuncMuSnd ar (Element0 (pos ** dir) rel ** i) = dir i
 
@@ -174,12 +181,14 @@ PolyFuncMuSnd ar (Element0 (pos ** dir) rel ** i) = dir i
 -- a term of `dir i` where `(pos ** dir) : PolyFunc` is reachable from
 -- `PFInitialArena` via a finite number of applications of `ar` and `i` is a
 -- term of `pos`.
+public export
 PolyFuncMuSigma : ArenaArena -> Type
 PolyFuncMuSigma ar = DPair (PolyFuncMuFst ar) (PolyFuncMuSnd ar)
 
 -- A term of `PolyFuncMuPF` is itself a polynomial functor, whose position-set
 -- is the set of reachable positions, and whose direction-set is the dependent
 -- set of reachable directions corresponding to those positions.
+public export
 PolyFuncMuPF : ArenaArena -> PolyFunc
 PolyFuncMuPF ar = MkDPair (PolyFuncMuFst ar) (PolyFuncMuSnd ar)
 
