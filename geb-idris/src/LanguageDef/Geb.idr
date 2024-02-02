@@ -43,6 +43,13 @@ ReachableBase : {0 a : Type} -> (a -> a) -> SlicePolyEndoFunc a
 ReachableBase {a} f =
   (ReachableBasePos {a} ** ReachableBaseDir {a} ** ReachableBaseAssign {a} f)
 
+-- If `F : SliceObj a` and `f : a -> a`, and for any `ea : a` we interpret
+-- `F(ea)` as a type of proofs of reachability of `ea`, then
+-- `ReachableBaseF {a} f F (f ea)` is the type of proofs of reachability of
+-- `f ea` via single applications of `f` to elements of `a` which can be
+-- proven reachable by `F {a} f`.  `ReachableBaseF {a} f` is polynomial --
+-- it is the interpretation of `ReachableBase {a} f`, which is a W-type
+-- (expressed in dependent-type form, `SlicePolyEndoFunc`).
 public export
 ReachableBaseF : {a : Type} -> (a -> a) -> SliceEndofunctor a
 ReachableBaseF {a} f = InterpSPFunc {a} (ReachableBase {a} f)
@@ -59,10 +66,17 @@ public export
 ReachableFreeM : {a : Type} -> (a -> a) -> SlicePolyEndoFunc a
 ReachableFreeM {a} f = SPFFreeM {a} (ReachableBase {a} f)
 
+-- Under the same interpretation as `ReachableBaseF`,
+-- `ReachableFreeF {a} f F ea` is the type of proofs of reachability of
+-- elements of `a` via any finite number of applications of `f`.  Like
+-- `ReachableBaseF`, it is polynomial -- it is the free monad of
+-- `ReachableBaseF`.
 public export
 ReachableFreeF : {a : Type} -> (a -> a) -> SliceEndofunctor a
 ReachableFreeF {a} f = SlicePolyFree {a} (ReachableBase {a} f)
 
+-- The universal `eval` morphism of a free monad (in this case,
+-- `ReachableFreeF`).
 public export
 ReachableEval : {a : Type} -> (f : a -> a) -> SPFMeval (ReachableBase {a} f)
 ReachableEval {a} f = spfmEval {a} (ReachableBase {a} f)
