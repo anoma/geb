@@ -1365,6 +1365,18 @@ DiCoYonedaLemmaR p {isP} =
 -----------------------------------------------
 -----------------------------------------------
 
+-- This is the signature of the object-map component of a (covariant)
+-- copresheaf on an internal category.
+public export
+IntCopreshfSig : Type -> Type
+IntCopreshfSig = SliceObj
+
+-- This is the signature of the object-map component of a (contravariant)
+-- presheaf on an internal category.
+public export
+IntPreshfSig : Type -> Type
+IntPreshfSig = IntCopreshfSig
+
 -- Suppose that `c` is a type of objects of a category internal to `Type`,
 -- and `mor` is a type dependent on pairs of terms of `c` (we could also
 -- express it dually as a `Type` together with morphisms `dom` and `cod` to
@@ -1375,30 +1387,31 @@ DiCoYonedaLemmaR p {isP} =
 -- simply `c -> Type`.)
 public export
 0 IntCopreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (objmap : c -> Type) -> Type
+  (objmap : IntCopreshfSig c) -> Type
 IntCopreshfMapSig c mor objmap =
   (0 x, y : c) -> mor x y -> objmap x -> objmap y
 
 -- As `IntCopreshfMapSig`, but for a (contravariant) presheaf.
 public export
 0 IntPreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (objmap : c -> Type) -> Type
+  (objmap : IntPreshfSig c) -> Type
 IntPreshfMapSig c mor = IntCopreshfMapSig c (IntOpCatMor c mor)
 
 -- The signature of a natural transformation between copresheaves.
 public export
-0 IntCopreshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
+0 IntCopreshfNTSig : (0 c : Type) -> (0 pobj, qobj : IntCopreshfSig c) -> Type
 IntCopreshfNTSig c pobj qobj = (0 x : c) -> pobj x -> qobj x
 
 -- The signature of a natural transformation between presheaves.
 public export
-0 IntPreshfNTSig : (0 c : Type) -> (0 pobj, qobj : c -> Type) -> Type
+0 IntPreshfNTSig : (0 c : Type) -> (0 pobj, qobj : IntPreshfSig c) -> Type
 IntPreshfNTSig = IntCopreshfNTSig
 
 -- The naturality condition of a natural transformation between copresheaves.
 public export
 0 IntCopreshfNTNaturality :
-  (c : Type) -> (cmor : IntDifunctorSig c) -> (0 pobj, qobj : c -> Type) ->
+  (c : Type) -> (cmor : IntDifunctorSig c) ->
+  (0 pobj, qobj : IntCopreshfSig c) ->
   IntCopreshfMapSig c cmor pobj -> IntCopreshfMapSig c cmor qobj ->
   IntCopreshfNTSig c pobj qobj -> Type
 IntCopreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
@@ -1410,7 +1423,8 @@ IntCopreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
 -- The naturality condition of a natural transformation between presheaves.
 public export
 0 IntPreshfNTNaturality :
-  (c : Type) -> (cmor : IntDifunctorSig c) -> (0 pobj, qobj : c -> Type) ->
+  (c : Type) -> (cmor : IntDifunctorSig c) ->
+  (0 pobj, qobj : IntPreshfSig c) ->
   IntPreshfMapSig c cmor pobj -> IntPreshfMapSig c cmor qobj ->
   IntPreshfNTSig c pobj qobj -> Type
 IntPreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
@@ -1422,13 +1436,13 @@ IntPreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
 -- The object-map component of the (contravariant) Yoneda embedding of
 -- `op(c)` into the category of the (covariant) copresheaves on `c`.
 IntCopreshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  c -> (c -> Type)
+  c -> (IntCopreshfSig c)
 IntCopreshfYonedaEmbedObj c mor = mor
 
 -- The object-map component of the (covariant) Yoneda embedding of
 -- `c` into the category of the (contravariant) presheaves on `c`.
 IntPreshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
-  c -> (c -> Type)
+  c -> (IntPreshfSig c)
 IntPreshfYonedaEmbedObj c mor = flip mor
 
 -- The morphism-map component of the (contravariant) Yoneda embedding of
