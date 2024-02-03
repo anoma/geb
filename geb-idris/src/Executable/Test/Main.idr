@@ -5,6 +5,7 @@ import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
 import Library.Test.IdrisAlgebraTest
 import Library.Test.CategoryTheoryTest
+import LanguageDef.Test.DisliceCatTest
 import LanguageDef.Test.QuiverTest
 import LanguageDef.Test.MLQuivCatTest
 import LanguageDef.Test.MLQuivUnivTest
@@ -72,6 +73,7 @@ totalTests = do
   LanguageDef.Test.MLQuivCatTest.mlQuivCatTest
   LanguageDef.Test.MLQuivUnivTest.mlQuivUnivTest
   LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
+  LanguageDef.Test.DisliceCatTest.disliceCatTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()

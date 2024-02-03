@@ -9,6 +9,7 @@ modules =
     , Library.Test.IdrisUtilsTest
     , Library.Test.IdrisCategoriesTest
     , Library.Test.CategoryTheoryTest
+    , LanguageDef.DisliceCat
     , LanguageDef.Quiver
     , LanguageDef.MLQuivCat
     , LanguageDef.MLQuivUniv
@@ -34,6 +35,7 @@ modules =
     , LanguageDef.ComputationalEffects
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
+    , LanguageDef.Test.DisliceCatTest
     , LanguageDef.Test.QuiverTest
     , LanguageDef.Test.MLQuivCatTest
     , LanguageDef.Test.MLQuivUnivTest
