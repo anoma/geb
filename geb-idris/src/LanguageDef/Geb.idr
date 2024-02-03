@@ -2431,6 +2431,21 @@ data PProfCatDiagElemMor :
       (x ** i ** (comp x y (contra i) mcontra mxy, mcovar))
       (y ** i ** (mcontra, comp (covar i) x y mxy mcovar))
 
+------------------------------------------
+------------------------------------------
+---- Metalanguage polynomial functors ----
+------------------------------------------
+------------------------------------------
+
+0 MLDifunctorSig : Type
+MLDifunctorSig = IntDifunctorSig Type
+
+MLPolyFObj : Type
+MLPolyFObj = PolyFunc
+
+PFCopreshfSig : Type
+PFCopreshfSig = IntCopreshfSig PolyFunc
+
 -----------------------
 -----------------------
 ---- Apply functor ----
@@ -2440,7 +2455,7 @@ data PProfCatDiagElemMor :
 pfApplyArena : Type -> PolyFunc -> PolyFunc
 pfApplyArena x p = pfCompositionArena p (PFConstArena x)
 
-PFApplyType : Type -> PolyFunc -> Type
+PFApplyType : Type -> PFCopreshfSig
 PFApplyType x p = pfPos (pfApplyArena x p)
 
 pfApplyIsConst : (x : Type) -> (p : PolyFunc) ->
@@ -2454,18 +2469,6 @@ pfApplyToInterp x p = id
 pfApplyFromInterp : (x : Type) -> (p : PolyFunc) ->
   InterpPolyFunc p x -> PFApplyType x p
 pfApplyFromInterp x p = id
-
-------------------------------------------
-------------------------------------------
----- Metalanguage polynomial functors ----
-------------------------------------------
-------------------------------------------
-
-0 MLDifunctorSig : Type
-MLDifunctorSig = IntDifunctorSig Type
-
-MLPolyFObj : Type
-MLPolyFObj = PolyFunc
 
 --------------------------------
 --------------------------------
