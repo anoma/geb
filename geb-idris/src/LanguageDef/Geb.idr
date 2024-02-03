@@ -192,30 +192,6 @@ public export
 PolyFuncMuPF : ArenaArena -> PolyFunc
 PolyFuncMuPF ar = MkDPair (PolyFuncMuFst ar) (PolyFuncMuSnd ar)
 
------------------------
------------------------
----- Apply functor ----
------------------------
------------------------
-
-pfApplyArena : Type -> PolyFunc -> PolyFunc
-pfApplyArena x p = pfCompositionArena p (PFConstArena x)
-
-PFApplyType : Type -> PolyFunc -> Type
-PFApplyType x p = pfPos (pfApplyArena x p)
-
-pfApplyIsConst : (x : Type) -> (p : PolyFunc) ->
-  (i : PFApplyType x p) -> pfDir {p=(pfApplyArena x p)} i -> Void
-pfApplyIsConst x p i (qd ** v) = void v
-
-pfApplyToInterp : (x : Type) -> (p : PolyFunc) ->
-  PFApplyType x p -> InterpPolyFunc p x
-pfApplyToInterp x p = id
-
-pfApplyFromInterp : (x : Type) -> (p : PolyFunc) ->
-  InterpPolyFunc p x -> PFApplyType x p
-pfApplyFromInterp x p = id
-
 ------------------------------------------
 ------------------------------------------
 ---- Internal polynomial endofunctors ----
@@ -2440,6 +2416,30 @@ data PProfCatDiagElemMor :
     PProfCatDiagElemMor c mor comp (pos ** (contra, covar))
       (x ** i ** (comp x y (contra i) mcontra mxy, mcovar))
       (y ** i ** (mcontra, comp (covar i) x y mxy mcovar))
+
+-----------------------
+-----------------------
+---- Apply functor ----
+-----------------------
+-----------------------
+
+pfApplyArena : Type -> PolyFunc -> PolyFunc
+pfApplyArena x p = pfCompositionArena p (PFConstArena x)
+
+PFApplyType : Type -> PolyFunc -> Type
+PFApplyType x p = pfPos (pfApplyArena x p)
+
+pfApplyIsConst : (x : Type) -> (p : PolyFunc) ->
+  (i : PFApplyType x p) -> pfDir {p=(pfApplyArena x p)} i -> Void
+pfApplyIsConst x p i (qd ** v) = void v
+
+pfApplyToInterp : (x : Type) -> (p : PolyFunc) ->
+  PFApplyType x p -> InterpPolyFunc p x
+pfApplyToInterp x p = id
+
+pfApplyFromInterp : (x : Type) -> (p : PolyFunc) ->
+  InterpPolyFunc p x -> PFApplyType x p
+pfApplyFromInterp x p = id
 
 ------------------------------------------
 ------------------------------------------
