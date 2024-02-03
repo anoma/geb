@@ -2489,12 +2489,12 @@ pfApplyFromInterp x p = id
 ---- Polynomial double-Yoneda embedding ----
 --------------------------------------------
 
-PolyCopreshfYoEmbedObjMap : Type -> PFCopreshfSig
-PolyCopreshfYoEmbedObjMap = PFApplyType
+PolyCopreshfYoEmbedObjObjMap : Type -> PFCopreshfSig
+PolyCopreshfYoEmbedObjObjMap = PFApplyType
 
-PolyCopreshfYoEmbedFMap :
-  (x : Type) -> PFCopreshfMapSig (PolyCopreshfYoEmbedObjMap x)
-PolyCopreshfYoEmbedFMap x p q alpha = InterpPolyNT {p} {q} alpha x
+PolyCopreshfYoEmbedObjFMap :
+  (x : Type) -> PFCopreshfMapSig (PolyCopreshfYoEmbedObjObjMap x)
+PolyCopreshfYoEmbedObjFMap x p q alpha = InterpPolyNT {p} {q} alpha x
 
 ------------------------------------------------------
 ------------------------------------------------------
