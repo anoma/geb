@@ -2441,6 +2441,38 @@ data PProfCatDiagElemMor :
       (x ** i ** (comp x y (contra i) mcontra mxy, mcovar))
       (y ** i ** (mcontra, comp (covar i) x y mxy mcovar))
 
+------------------------------------------
+------------------------------------------
+---- Metalanguage polynomial functors ----
+------------------------------------------
+------------------------------------------
+
+0 MLDifunctorSig : Type
+MLDifunctorSig = IntDifunctorSig Type
+
+MLPolyFObj : Type
+MLPolyFObj = PolyFunc
+
+--------------------------------
+--------------------------------
+---- Polynomial (co-)Yoneda ----
+--------------------------------
+--------------------------------
+
+--------------------------------------------
+---- Polynomial double-Yoneda embedding ----
+--------------------------------------------
+
+PFCoprshfObj : Type
+PFCoprshfObj = PolyFunc -> Type
+
+PolyDoubleYoEmbedObj : Type -> PolyFunc -> Type
+PolyDoubleYoEmbedObj = PFApplyType
+
+PolyDoubleYoEmbedFMap : {0 a, b : Type} ->
+  (a -> b) -> (p : PolyFunc) -> PFApplyType a p -> PFApplyType b p
+PolyDoubleYoEmbedFMap {a} {b} f p = InterpPFMap {a} {b} p f
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Polynomial functors over polynomial functors ----
