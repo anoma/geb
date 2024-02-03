@@ -2455,6 +2455,9 @@ PFCopreshfSig = IntCopreshfSig PolyFunc
 0 PFCopreshfMapSig : PFCopreshfSig -> Type
 PFCopreshfMapSig = IntCopreshfMapSig PolyFunc MLPolyFMor
 
+0 PFCopreshfNTSig : (0 alpha, beta : PFCopreshfSig) -> Type
+PFCopreshfNTSig = IntCopreshfNTSig PolyFunc
+
 -----------------------
 -----------------------
 ---- Apply functor ----
@@ -2495,6 +2498,13 @@ PolyCopreshfYoEmbedObjObjMap = PFApplyType
 PolyCopreshfYoEmbedObjFMap :
   (x : Type) -> PFCopreshfMapSig (PolyCopreshfYoEmbedObjObjMap x)
 PolyCopreshfYoEmbedObjFMap x p q alpha = InterpPolyNT {p} {q} alpha x
+
+0 PolyCopreshfYoEmbedMor :
+  (a, b : Type) -> (a -> b) ->
+  PFCopreshfNTSig
+    (PolyCopreshfYoEmbedObjObjMap a)
+    (PolyCopreshfYoEmbedObjObjMap b)
+PolyCopreshfYoEmbedMor x y f p = InterpPFMap {a=x} {b=y} p f
 
 ------------------------------------------------------
 ------------------------------------------------------
