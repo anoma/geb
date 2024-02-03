@@ -2443,8 +2443,17 @@ MLDifunctorSig = IntDifunctorSig Type
 MLPolyFObj : Type
 MLPolyFObj = PolyFunc
 
+0 MLPolyDifunctorSig : Type
+MLPolyDifunctorSig = IntDifunctorSig MLPolyFObj
+
+MLPolyFMor : MLPolyDifunctorSig
+MLPolyFMor = PolyNatTrans
+
 PFCopreshfSig : Type
 PFCopreshfSig = IntCopreshfSig PolyFunc
+
+0 PFCopreshfMapSig : PFCopreshfSig -> Type
+PFCopreshfMapSig = IntCopreshfMapSig PolyFunc MLPolyFMor
 
 -----------------------
 -----------------------
@@ -2480,15 +2489,12 @@ pfApplyFromInterp x p = id
 ---- Polynomial double-Yoneda embedding ----
 --------------------------------------------
 
-PFCoprshfObj : Type
-PFCoprshfObj = PolyFunc -> Type
+PolyCopreshfYoEmbedObjMap : Type -> PFCopreshfSig
+PolyCopreshfYoEmbedObjMap = PFApplyType
 
-PolyDoubleYoEmbedObj : Type -> PolyFunc -> Type
-PolyDoubleYoEmbedObj = PFApplyType
-
-PolyDoubleYoEmbedFMap : {0 a, b : Type} ->
-  (a -> b) -> (p : PolyFunc) -> PFApplyType a p -> PFApplyType b p
-PolyDoubleYoEmbedFMap {a} {b} f p = InterpPFMap {a} {b} p f
+PolyCopreshfYoEmbedFMap :
+  (x : Type) -> PFCopreshfMapSig (PolyCopreshfYoEmbedObjMap x)
+PolyCopreshfYoEmbedFMap x p q alpha = InterpPolyNT {p} {q} alpha x
 
 ------------------------------------------------------
 ------------------------------------------------------
