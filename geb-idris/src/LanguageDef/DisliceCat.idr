@@ -31,6 +31,19 @@ record CDisliceObj (cat : CDisliceCat) where
       (cdsoFact2 . cdsoFact1)
       (cdscProj cat)
 
+public export
+record CDisliceMorph {0 cat : CDisliceCat} (dom, cod : CDisliceObj cat) where
+  constructor CDSM
+  cdsmTot : cdsoTot dom -> cdsoTot cod
+  cdsmEq1 :
+    ExtEq {a=(cdscCobase cat)} {b=(cdsoTot cod)}
+      (cdsoFact1 cod)
+      (cdsmTot . cdsoFact1 dom)
+  cdsmEq2 :
+    ExtEq {a=(cdsoTot dom)} {b=(cdscBase cat)}
+      (cdsoFact2 dom)
+      (cdsoFact2 cod . cdsmTot)
+
 ---------------------
 ---- Arena-style ----
 ---------------------
