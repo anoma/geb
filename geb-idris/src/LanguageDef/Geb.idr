@@ -7914,3 +7914,19 @@ data MLContravarCatElemMor : {0 f : Type -> Type} ->
         (fcm {a=(mlcObj (mldcCod mdata))} {b=(mldcDomObj mdata)}
           (mldcMor mdata) (mlcEl (mldcCod mdata))))
       (mldcCod mdata)
+
+--------------------------------------------------
+--------------------------------------------------
+---- Experiments with impredicative encodings ----
+--------------------------------------------------
+--------------------------------------------------
+
+ImpredCoprod : Type -> Type -> Type
+ImpredCoprod x y = (z : Type) -> (x -> z, y -> z) -> z
+
+CoprodFromImpred : (x, y : Type) -> ImpredCoprod x y -> Either x y
+CoprodFromImpred x y ic = ic (Either x y) (Left, Right)
+
+CoprodToImpred : (x, y : Type) -> Either x y -> ImpredCoprod x y
+CoprodToImpred x y (Left ex) z (f, g) = f ex
+CoprodToImpred x y (Right ey) z (f, g) = g ey
