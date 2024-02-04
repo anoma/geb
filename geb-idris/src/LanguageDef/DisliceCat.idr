@@ -52,13 +52,21 @@ public export
 record ADisliceCat where
   constructor ADSC
   adscBase : Type
-  cdscCobase : SliceObj adscBase
+  adscCobase : SliceObj adscBase
 
 public export
 record ADisliceObj (cat : ADisliceCat) where
   constructor ADSO
   adscTot : SliceObj (adscBase cat)
-  adscInj : SliceMorphism {a=(adscBase cat)} (cdscCobase cat) adscTot
+  adscInj : SliceMorphism {a=(adscBase cat)} (adscCobase cat) adscTot
+
+public export
+record ADisliceMorph {0 cat : ADisliceCat} (dom, cod : ADisliceObj cat) where
+  constructor ADSM
+  adsmMor : SliceMorphism {a=(adscBase cat)} (adscTot dom) (adscTot cod)
+  adsmEq :
+    (j : adscBase cat) -> (i : adscCobase cat j) ->
+    adsmMor j (adscInj dom j i) = adscInj cod j i
 
 ---------------------------------------
 ---- Categorial-arena translations ----
