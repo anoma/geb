@@ -65,8 +65,10 @@ record ADisliceMorph {0 cat : ADisliceCat} (dom, cod : ADisliceObj cat) where
   constructor ADSM
   adsmMor : SliceMorphism {a=(adscBase cat)} (adscTot dom) (adscTot cod)
   adsmEq :
-    (j : adscBase cat) -> (i : adscCobase cat j) ->
-    adsmMor j (adscInj dom j i) = adscInj cod j i
+    (j : adscBase cat) ->
+    ExtEq {a=(adscCobase cat j)} {b=(adscTot cod j)}
+      (adsmMor j . adscInj dom j)
+      (adscInj cod j)
 
 ---------------------------------------
 ---- Categorial-arena translations ----
