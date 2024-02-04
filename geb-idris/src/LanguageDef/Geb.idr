@@ -7921,6 +7921,10 @@ data MLContravarCatElemMor : {0 f : Type -> Type} ->
 --------------------------------------------------
 --------------------------------------------------
 
+-------------------------------------------------
+---- Coproducts through universal properties ----
+-------------------------------------------------
+
 ImpredCoprodDom : Type -> Type -> PolyFunc
 ImpredCoprodDom x y = pfProductArena (PFHomArena x) (PFHomArena y)
 
