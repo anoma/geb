@@ -7921,12 +7921,51 @@ data MLContravarCatElemMor : {0 f : Type -> Type} ->
 --------------------------------------------------
 --------------------------------------------------
 
+ImpredCoprodDom : Type -> Type -> PolyFunc
+ImpredCoprodDom x y = pfProductArena (PFHomArena x) (PFHomArena y)
+
+ImpredCoprodCodom : Type -> Type -> PolyFunc
+ImpredCoprodCodom _ _ = PFIdentityArena
+
 ImpredCoprod : Type -> Type -> Type
-ImpredCoprod x y = (z : Type) -> (x -> z, y -> z) -> z
+ImpredCoprod x y = PolyNatTrans (ImpredCoprodDom x y) (ImpredCoprodCodom x y)
+
+impredInjL : {x, y : Type} -> x -> ImpredCoprod x y
+impredInjL {x} {y} ex = (\_ => () ** \((), ()), () => Left ex)
+
+impredInjR : {x, y : Type} -> y -> ImpredCoprod x y
+impredInjR {x} {y} ey = (\_ => () ** \((), ()), () => Right ey)
 
 CoprodFromImpred : (x, y : Type) -> ImpredCoprod x y -> Either x y
-CoprodFromImpred x y ic = ic (Either x y) (Left, Right)
+CoprodFromImpred x y (onpos ** ondir) = ondir ((), ()) ()
 
 CoprodToImpred : (x, y : Type) -> Either x y -> ImpredCoprod x y
-CoprodToImpred x y (Left ex) z (f, g) = f ex
-CoprodToImpred x y (Right ey) z (f, g) = g ey
+CoprodToImpred x y = eitherElim (impredInjL {x} {y}) (impredInjR {x} {y})
+
+impredCase : {x, y, z : Type} -> (x -> z, y -> z) -> (ImpredCoprod x y -> z)
+impredCase {x} {y} {z} (f, g) ic = eitherElim f g $ CoprodFromImpred x y ic
+
+impredLAdj : {x, y, z : Type} -> (ImpredCoprod x y -> z) -> (x -> z, y -> z)
+impredLAdj {x} {y} {z} f = (f . impredInjL {x} {y}, f . impredInjR {x} {y})
+
+CoprodToFromImpredId : (x, y : Type) -> (exy : Either x y) ->
+  CoprodFromImpred x y (CoprodToImpred x y exy) = exy
+CoprodToFromImpredId x y (Left ex) = Refl
+CoprodToFromImpredId x y (Right ey) = Refl
+
+CoprodFromToImpredId : (x, y : Type) -> (ic : ImpredCoprod x y) ->
+  CPFNatTransEq (ImpredCoprodDom x y) (ImpredCoprodCodom x y)
+    (CoprodToImpred x y (CoprodFromImpred x y ic))
+    ic
+CoprodFromToImpredId x y (onpos ** ondir) with
+    (onpos ((), ()), ondir ((), ()) ()) proof eq
+  CoprodFromToImpredId x y (onpos ** ondir) | ((), Left ex) =
+    rewrite sndEq eq in
+    Evidence0
+      (\((), ()) => rewrite fstEq eq in Refl)
+      (\((), ()), () => sndEq eq)
+  CoprodFromToImpredId x y (onpos ** ondir) | ((), Right ey) =
+    rewrite sndEq eq in
+    Evidence0
+      (\((), ()) => rewrite fstEq eq in Refl)
+      (\((), ()), () => sndEq eq)
