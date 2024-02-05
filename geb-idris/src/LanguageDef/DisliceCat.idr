@@ -144,11 +144,24 @@ DsmoCtoA {cat=cat@(CDSC base cobase proj)} {dom=dom@(CDSO dtot df1 df2 deq)}
   cmo@(CDSMO ccod cmor) =
     ADSMO (SliceFromCSlice ccod) (SliceFromCSliceMorph (dtot ** df2) ccod cmor)
 
+DsmCtoAo : {0 cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
+  (cmor : CDisliceMorph {cat} dom cod) ->
+  ADisliceMorph {cat=(DscCtoA cat)}
+    (DsoCtoA {cat} dom)
+    (ADSMOCod
+      (DsoCtoA {cat} dom)
+      (DsmoCtoA {cat} {dom} {cod} $ CDSMtoCDSMO cmor))
+DsmCtoAo {cat} {dom} {cod} cmor =
+  ADSM {cat=(DscCtoA cat)} {dom=(DsoCtoA {cat} dom)}
+    $ DsmoCtoA {cod} $ CDSMtoCDSMO cmor
+
 DsmCtoA : {0 cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
   CDisliceMorph {cat} dom cod ->
-  ADisliceMorph {cat=(DscCtoA cat)} (DsoCtoA {cat} dom) (DsoCtoA {cat} cod)
-DsmCtoA {cat=cat@(CDSC base cobase proj)}
-  {dom=dom@(CDSO dtot df1 df2 deq)} {cod=cod@(CDSO ctot cf1 cf2 ceq)}
+  ADisliceMorph {cat=(DscCtoA cat)}
+    (DsoCtoA {cat} dom)
+    (DsoCtoA {cat} cod)
+DsmCtoA {cat=(CDSC base cobase proj)}
+  {dom=(CDSO dtot df1 df2 deq)} {cod=(CDSO ctot cf1 cf2 ceq)}
   cmor@(CDSM tot meq1 meq2) =
     ?DsmCtoA_hole
 
