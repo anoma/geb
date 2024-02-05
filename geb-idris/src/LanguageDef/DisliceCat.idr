@@ -61,14 +61,19 @@ record ADisliceObj (cat : ADisliceCat) where
   adscInj : SliceMorphism {a=(adscBase cat)} (adscCobase cat) adscTot
 
 public export
-record ADisliceMorph {0 cat : ADisliceCat} (dom, cod : ADisliceObj cat) where
-  constructor ADSM
-  adsmMor : SliceMorphism {a=(adscBase cat)} (adscTot dom) (adscTot cod)
-  adsmEq :
-    (j : adscBase cat) ->
-    ExtEq {a=(adscCobase cat j)} {b=(adscTot cod j)}
-      (adsmMor j . adscInj dom j)
-      (adscInj cod j)
+record ADisliceMorphOut {0 cat : ADisliceCat} (dom : ADisliceObj cat) where
+  constructor ADSMO
+  adsmoCod : SliceObj (adscBase cat)
+  adsmoMor : SliceMorphism {a=(adscBase cat)} (adscTot dom) adsmoCod
+
+public export
+data ADisliceMorph : {0 cat : ADisliceCat} ->
+    (dom, cod : ADisliceObj cat) -> Type where
+  ADSM : {0 cat : ADisliceCat} -> {0 dom : ADisliceObj cat} ->
+    (adsmo : ADisliceMorphOut dom) ->
+    ADisliceMorph {cat}
+      dom
+      (ADSO (adsmoCod adsmo) $ sliceComp (adsmoMor adsmo) (adscInj dom))
 
 ---------------------------------------
 ---- Categorial-arena translations ----
