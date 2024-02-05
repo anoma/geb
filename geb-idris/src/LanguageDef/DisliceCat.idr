@@ -99,8 +99,7 @@ record ADisliceMorphOut {0 cat : ADisliceCat} (dom : ADisliceObj cat) where
 export
 ADSMOCod : {cat : ADisliceCat} -> (dom : ADisliceObj cat) ->
   ADisliceMorphOut {cat} dom -> ADisliceObj cat
-ADSMOCod {cat} dom adsmo =
-  (ADSO (adsmoCod adsmo) $ sliceComp (adsmoMor adsmo) (adsoInj dom))
+ADSMOCod {cat} (ADSO tot inj) (ADSMO cod mor) = ADSO cod $ sliceComp mor inj
 
 public export
 data ADisliceMorph : {0 cat : ADisliceCat} ->
@@ -108,6 +107,13 @@ data ADisliceMorph : {0 cat : ADisliceCat} ->
   ADSM : {0 cat : ADisliceCat} -> {0 dom : ADisliceObj cat} ->
     (adsmo : ADisliceMorphOut dom) ->
     ADisliceMorph {cat} dom (ADSMOCod {cat} dom adsmo)
+  ADSMrew : {0 cat : ADisliceCat} -> {0 dom : ADisliceObj cat} ->
+    (codtot : SliceObj $ adscBase cat) ->
+    (codinj, codinj' :
+      SliceMorphism {a=(adscBase cat)} (adscCobase cat) codtot) ->
+    (0 _ : (eb : adscBase cat) -> ExtEq (codinj eb) (codinj' eb)) ->
+    ADisliceMorph {cat} dom (ADSO codtot codinj) ->
+    ADisliceMorph {cat} dom (ADSO codtot codinj')
 
 ---------------------------------------
 ---- Categorial-arena translations ----
@@ -141,8 +147,11 @@ DsmoCtoA : {0 cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
   CDisliceMorphOut {cat} dom ->
   ADisliceMorphOut {cat=(DscCtoA cat)} (DsoCtoA {cat} dom)
 DsmoCtoA {cat=cat@(CDSC base cobase proj)} {dom=dom@(CDSO dtot df1 df2 deq)}
-  cmo@(CDSMO ccod cmor) =
-    ADSMO (SliceFromCSlice ccod) (SliceFromCSliceMorph (dtot ** df2) ccod cmor)
+  (CDSMO (ccod ** cproj) (Element0 mtot meq)) =
+    ADSMO
+      (\eb => Subset0 ccod $ \ecc => cproj ecc = eb)
+      (\eb, (Element0 ed deq) =>
+        Element0 (mtot ed) $ trans (sym $ meq ed) $ deq)
 
 DsmCtoAo : {0 cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
   (cmor : CDisliceMorph {cat} dom cod) ->
@@ -154,6 +163,18 @@ DsmCtoAo : {0 cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
 DsmCtoAo {cat} {dom} {cod} cmor =
   ADSM {cat=(DscCtoA cat)} {dom=(DsoCtoA {cat} dom)}
     $ DsmoCtoA {cod} $ CDSMtoCDSMO cmor
+
+DsmAtoAfromC : {0 cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
+  (cmor : CDisliceMorph {cat} dom cod) ->
+  ADisliceMorph {cat=(DscCtoA cat)}
+    (ADSMOCod
+      (DsoCtoA {cat} dom)
+      (DsmoCtoA {cat} {dom} {cod} $ CDSMtoCDSMO cmor))
+    (DsoCtoA {cat} cod)
+DsmAtoAfromC {cat=(CDSC base cobase proj)}
+  {dom=(CDSO dtot df1 df2 deq)} {cod=(CDSO ctot cf1 cf2 ceq)}
+  (CDSM tot meq1 meq2) =
+    ?DsmAtoAfromC_hole
 
 DsmCtoA : {0 cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
   CDisliceMorph {cat} dom cod ->
@@ -174,3 +195,10 @@ DsmAtoC {cat=(ADSC base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO _ _)}
       (\(eb ** ed) => (eb ** mor eb ed))
       (\(eb ** ed) => Refl)
       (\(eb ** ed) => Refl)
+DsmAtoC {cat=(ADSC base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO _ _)}
+  (ADSMrew codtot codinj codinj' eq mor) =
+    let (CDSM tot eq1 eq2) = DsmAtoC mor in
+    CDSM
+      tot
+      (\(eb ** ec) => trans (rewrite sym (eq eb ec) in Refl) $ eq1 (eb ** ec))
+      eq2
