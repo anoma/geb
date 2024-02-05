@@ -32,17 +32,39 @@ record CDisliceObj (cat : CDisliceCat) where
       (cdscProj cat)
 
 public export
+record CDisliceMorphOut {0 cat : CDisliceCat} (dom : CDisliceObj cat) where
+  constructor CDSMO
+  cdsmoCod : CSliceObj (cdscBase cat)
+  cdsmoMor :
+    CSliceMorphism {c=(cdscBase cat)} (cdsoTot dom ** cdsoFact2 dom) cdsmoCod
+
+export
+CDSMOCod : {0 cat : CDisliceCat} -> (dom : CDisliceObj cat) ->
+  CDisliceMorphOut {cat} dom -> CDisliceObj cat
+CDSMOCod {cat}
+  (CDSO dtot fact1 fact2 deq) (CDSMO (ctot ** cproj) (Element0 mor ceq)) =
+    CDSO ctot (mor . fact1) cproj $ \ec => trans (sym $ ceq $ fact1 ec) (deq ec)
+
+public export
 record CDisliceMorph {0 cat : CDisliceCat} (dom, cod : CDisliceObj cat) where
   constructor CDSM
   cdsmTot : cdsoTot dom -> cdsoTot cod
-  cdsmEq1 :
+  0 cdsmEq1 :
     ExtEq {a=(cdscCobase cat)} {b=(cdsoTot cod)}
       (cdsoFact1 cod)
       (cdsmTot . cdsoFact1 dom)
-  cdsmEq2 :
+  0 cdsmEq2 :
     ExtEq {a=(cdsoTot dom)} {b=(cdscBase cat)}
       (cdsoFact2 dom)
       (cdsoFact2 cod . cdsmTot)
+
+export
+CDSMOtoCDSM : {0 cat : CDisliceCat} -> {dom : CDisliceObj cat} ->
+  (cdsmo : CDisliceMorphOut {cat} dom) ->
+  CDisliceMorph {cat} dom (CDSMOCod {cat} dom cdsmo)
+CDSMOtoCDSM {cat} {dom=(CDSO dtot dfact1 fact2 deq)}
+  (CDSMO (ctot ** cproj) (Element0 mor ceq)) =
+    CDSM mor (\_ => Refl) ceq
 
 ---------------------
 ---- Arena-style ----
@@ -57,14 +79,14 @@ record ADisliceCat where
 public export
 record ADisliceObj (cat : ADisliceCat) where
   constructor ADSO
-  adscTot : SliceObj (adscBase cat)
-  adscInj : SliceMorphism {a=(adscBase cat)} (adscCobase cat) adscTot
+  adsoTot : SliceObj (adscBase cat)
+  adsoInj : SliceMorphism {a=(adscBase cat)} (adscCobase cat) adsoTot
 
 public export
 record ADisliceMorphOut {0 cat : ADisliceCat} (dom : ADisliceObj cat) where
   constructor ADSMO
   adsmoCod : SliceObj (adscBase cat)
-  adsmoMor : SliceMorphism {a=(adscBase cat)} (adscTot dom) adsmoCod
+  adsmoMor : SliceMorphism {a=(adscBase cat)} (adsoTot dom) adsmoCod
 
 public export
 data ADisliceMorph : {0 cat : ADisliceCat} ->
@@ -73,7 +95,7 @@ data ADisliceMorph : {0 cat : ADisliceCat} ->
     (adsmo : ADisliceMorphOut dom) ->
     ADisliceMorph {cat}
       dom
-      (ADSO (adsmoCod adsmo) $ sliceComp (adsmoMor adsmo) (adscInj dom))
+      (ADSO (adsmoCod adsmo) $ sliceComp (adsmoMor adsmo) (adsoInj dom))
 
 ---------------------------------------
 ---- Categorial-arena translations ----
