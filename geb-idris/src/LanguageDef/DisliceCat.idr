@@ -88,14 +88,18 @@ record ADisliceMorphOut {0 cat : ADisliceCat} (dom : ADisliceObj cat) where
   adsmoCod : SliceObj (adscBase cat)
   adsmoMor : SliceMorphism {a=(adscBase cat)} (adsoTot dom) adsmoCod
 
+export
+ADSMOCod : {cat : ADisliceCat} -> (dom : ADisliceObj cat) ->
+  ADisliceMorphOut {cat} dom -> ADisliceObj cat
+ADSMOCod {cat} dom adsmo =
+  (ADSO (adsmoCod adsmo) $ sliceComp (adsmoMor adsmo) (adsoInj dom))
+
 public export
 data ADisliceMorph : {0 cat : ADisliceCat} ->
     (dom, cod : ADisliceObj cat) -> Type where
   ADSM : {0 cat : ADisliceCat} -> {0 dom : ADisliceObj cat} ->
     (adsmo : ADisliceMorphOut dom) ->
-    ADisliceMorph {cat}
-      dom
-      (ADSO (adsmoCod adsmo) $ sliceComp (adsmoMor adsmo) (adsoInj dom))
+    ADisliceMorph {cat} dom (ADSMOCod {cat} dom adsmo)
 
 ---------------------------------------
 ---- Categorial-arena translations ----
