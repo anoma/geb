@@ -291,7 +291,8 @@ exfalsoTF : {0 a : Type} -> (0 tf : True = False) -> a
 exfalsoTF Refl impossible
 
 public export
-uip : {0 a : Type} -> {0 x, x' : a} -> {eq, eq' : x = x'} -> eq = eq'
+uip : {0 a, a' : Type} -> {0 x : a} -> {0 x' : a'} ->
+  {eq, eq' : x = x'} -> eq = eq'
 uip {eq=Refl} {eq'=Refl} = Refl
 
 public export
