@@ -210,3 +210,9 @@ export
 ADSLbc : {b, b' : Type} -> {cb : SliceObj b} ->
   (m : b' -> b) -> ADSLomap (ADSC b cb) (ADSC b' (cb . m))
 ADSLbc {b} {b'} {cb} m (ADSO tot inj) = ADSO (tot . m) (\eb' => inj $ m eb')
+
+export
+ADSLcbc : {b : Type} -> {cb, cb' : SliceObj b} ->
+  SliceMorphism {a=b} cb' cb -> ADSLomap (ADSC b cb) (ADSC b cb')
+ADSLcbc {b} {cb} {cb'} m (ADSO tot inj) =
+  ADSO tot (\eb, ecb' => inj eb $ m eb ecb')
