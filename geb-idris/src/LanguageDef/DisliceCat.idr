@@ -199,16 +199,14 @@ DsmCtoA {cat=(CDSC base cobase proj)}
 DsmAtoC : {0 cat : ADisliceCat} -> {0 dom, cod : ADisliceObj cat} ->
   ADisliceMorph {cat} dom cod ->
   CDisliceMorph {cat=(DscAtoC cat)} (DsoAtoC {cat} dom) (DsoAtoC {cat} cod)
-DsmAtoC {cat=(ADSC base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO _ _)}
-  (ADSM $ ADSMO cod mor) =
-    CDSM
-      (\(eb ** ed) => (eb ** mor eb ed))
-      (\(eb ** ed) => Refl)
-      (\(eb ** ed) => Refl)
-DsmAtoC {cat=(ADSC base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO _ _)}
-  (ADSMrew codtot codinj codinj' eq mor) =
-    let (CDSM tot eq1 eq2) = DsmAtoC mor in
-    CDSM
-      tot
-      (\(eb ** ec) => trans (rewrite sym (eq eb ec) in Refl) $ eq1 (eb ** ec))
-      eq2
+DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSM $ ADSMO cod mor) =
+  CDSM
+    (\(eb ** ed) => (eb ** mor eb ed))
+    (\(eb ** ed) => Refl)
+    (\(eb ** ed) => Refl)
+DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSMrew codtot codinj codinj' eq mor) =
+  let (CDSM tot eq1 eq2) = DsmAtoC mor in
+  CDSM
+    tot
+    (\(eb ** ec) => trans (rewrite sym (eq eb ec) in Refl) $ eq1 (eb ** ec))
+    eq2
