@@ -224,3 +224,13 @@ ADSLdc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
   ADSLomap (ADSC b cb) (ADSC b' cb')
 ADSLdc {b} {b'} {cb} {cb'} mb mc =
   ADSLcbc {b=b'} {cb=(cb . mb)} {cb'} mc . ADSLbc {b} {b'} {cb} mb
+
+export
+ADSLsigma : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
+  ADSLomap
+    (ADSC (Sigma {a=b} p) cb)
+    (ADSC b $ \eb => Sigma {a=(p eb)} $ DPair.curry cb eb)
+ADSLsigma {b} p {cb} (ADSO tot inj) =
+  ADSO
+    (\eb => Sigma {a=(p eb)} $ DPair.curry tot eb)
+    (\eb, (ep ** ecb) => (ep ** inj (eb ** ep) ecb))
