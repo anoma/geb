@@ -179,22 +179,23 @@ DsmCtoA : {cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
   ADisliceMorph {cat=(DscCtoA cat)}
     (DsoCtoA {cat} dom)
     (DsoCtoA {cat} cod)
-DsmCtoA {cat=(CDSC base cobase proj)}
-  {dom=(CDSO dtot df1 df2 deq)} {cod=(CDSO ctot cf1 cf2 ceq)}
-  (CDSM tot meq1 meq2) =
-    ADSMrew
-      {cat=(DscCtoA $ CDSC base cobase proj)}
-      {dom=(DsoCtoA {cat=(CDSC base cobase proj)} $ CDSO dtot df1 df2 deq)}
-      (\eb => Subset0 ctot (\ecc => cf2 ecc = eb))
-      ?DsmCtoA_hole_1
-      ?DsmCtoA_hole_2
-      (\eb, (Element0 ecc eceq) =>
-        s0Eq12 (sym $ meq1 ecc) $ rewrite (sym $ meq1 ecc) in uip)
-      (DsmCtoAo
-        {cat=(CDSC base cobase proj)}
-        {dom=(CDSO dtot df1 df2 deq)}
-        {cod=(CDSO ctot cf1 cf2 ceq)}
-        (CDSM tot meq1 meq2))
+DsmCtoA {cat} {dom} {cod} cmor =
+  ADSMrew
+    {cat=(DscCtoA cat)} {dom=(DsoCtoA {cat} dom)}
+    (\eb : cdscBase cat =>
+      Subset0 (cdsoTot cod) (\ecc : cdsoTot cod => cdsoFact2 cod ecc = eb))
+    (\eb, ec =>
+      Element0
+        (cdsmTot cmor $ cdsoFact1 dom $ fst0 ec)
+        $ ?DsmCtoA_hole_1)
+    (\eb, ec =>
+      Element0
+        (cdsoFact1 cod $ fst0 ec)
+        $ ?DsmCtoA_hole_2)
+    (\eb, ecc =>
+      s0Eq12 (sym $ cdsmEq1 cmor $ fst0 ecc)
+        $ rewrite (sym $ cdsmEq1 cmor $ fst0 ecc) in uip)
+    (DsmCtoAo {cat} {dom} {cod} cmor)
 
 DsmAtoC : {0 cat : ADisliceCat} -> {0 dom, cod : ADisliceObj cat} ->
   ADisliceMorph {cat} dom cod ->
