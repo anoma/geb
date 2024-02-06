@@ -216,3 +216,11 @@ ADSLcbc : {b : Type} -> {cb, cb' : SliceObj b} ->
   SliceMorphism {a=b} cb' cb -> ADSLomap (ADSC b cb) (ADSC b cb')
 ADSLcbc {b} {cb} {cb'} m (ADSO tot inj) =
   ADSO tot (\eb, ecb' => inj eb $ m eb ecb')
+
+-- Dichange: simultaneous base and cobase change.
+export
+ADSLdc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  (mb : b' -> b) -> SliceMorphism {a=b'} cb' (cb . mb) ->
+  ADSLomap (ADSC b cb) (ADSC b' cb')
+ADSLdc {b} {b'} {cb} {cb'} mb mc =
+  ADSLcbc {b=b'} {cb=(cb . mb)} {cb'} mc . ADSLbc {b} {b'} {cb} mb
