@@ -187,11 +187,15 @@ DsmCtoA {cat} {dom} {cod} cmor =
     (\eb, ec =>
       Element0
         (cdsmTot cmor $ cdsoFact1 dom $ fst0 ec)
-        $ ?DsmCtoA_hole_1)
+        $ trans
+          (sym
+            (snd0 (cdsmoMor (CDSMtoCDSMO cmor))
+            (fst0 (adsoInj (DsoCtoA dom) eb ec))))
+          (snd0 (adsoInj (DsoCtoA dom) eb ec)))
     (\eb, ec =>
       Element0
         (cdsoFact1 cod $ fst0 ec)
-        $ ?DsmCtoA_hole_2)
+        $ trans (cdsoEq cod $ fst0 ec) $ snd0 ec)
     (\eb, ecc =>
       s0Eq12 (sym $ cdsmEq1 cmor $ fst0 ecc)
         $ rewrite (sym $ cdsmEq1 cmor $ fst0 ecc) in uip)
