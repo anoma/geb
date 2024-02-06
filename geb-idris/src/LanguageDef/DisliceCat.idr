@@ -71,10 +71,14 @@ record ADisliceCat where
   adscCobase : SliceObj adscBase
 
 public export
+ADSOinj : (cat : ADisliceCat) -> SliceObj (adscBase $ cat) -> Type
+ADSOinj cat tot = SliceMorphism {a=(adscBase cat)} (adscCobase cat) tot
+
+public export
 record ADisliceObj (cat : ADisliceCat) where
   constructor ADSO
   adsoTot : SliceObj (adscBase cat)
-  adsoInj : SliceMorphism {a=(adscBase cat)} (adscCobase cat) adsoTot
+  adsoInj : ADSOinj cat adsoTot
 
 export
 ADSMinj : {cat : ADisliceCat} ->
