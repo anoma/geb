@@ -183,3 +183,30 @@ DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSM mor inj {eq}) =
     (\(eb ** ed) => (eb ** mor eb ed))
     (\(eb ** ed) => rewrite eq eb ed in Refl)
     (\(eb ** ed) => Refl)
+
+--------------------------
+--------------------------
+---- Dislice functors ----
+--------------------------
+--------------------------
+
+public export
+ADSLomap : ADisliceCat -> ADisliceCat -> Type
+ADSLomap c d = ADisliceObj c -> ADisliceObj d
+
+public export
+ADSLfmap : {c, d : ADisliceCat} -> ADSLomap c d -> Type
+ADSLfmap {c} {d} omap =
+  (x, y : ADisliceObj c) ->
+  ADisliceMorph {cat=c} x y -> ADisliceMorph {cat=d} (omap x) (omap y)
+
+public export
+record ADSLfunc (c, d : ADisliceCat) where
+  constructor ADSLf
+  adslO : ADSLomap c d
+  adslF : ADSLfmap {c} {d} adslO
+
+export
+ADSLbc : {b, b' : Type} -> {cb : SliceObj b} ->
+  (m : b' -> b) -> ADSLomap (ADSC b cb) (ADSC b' (cb . m))
+ADSLbc {b} {b'} {cb} m (ADSO tot inj) = ADSO (tot . m) (\eb' => inj $ m eb')
