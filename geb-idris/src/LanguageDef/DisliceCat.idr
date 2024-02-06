@@ -88,7 +88,7 @@ export
 ADSMinj : {cat : ADisliceCat} ->
   (dom : ADisliceObj cat) -> (cod : SliceObj $ adscBase cat) ->
   SliceMorphism {a=(adscBase cat)} (adsoTot dom) cod ->
-  SliceMorphism {a=(adscBase cat)} (adscCobase cat) cod
+  ADSOinj cat cod
 ADSMinj {cat} dom cod mor =
   sliceComp {x=(adscCobase cat)} {y=(adsoTot dom)} {z=cod} mor (adsoInj dom)
 
@@ -97,9 +97,9 @@ data ADisliceMorph : {0 cat : ADisliceCat} ->
     (dom, cod : ADisliceObj cat) -> Type where
   ADSM : {0 cat : ADisliceCat} ->
     {0 dom : ADisliceObj cat} ->
-    {codtot : SliceObj $ adscBase cat} ->
+    {codtot : ASliceBase cat} ->
     (mor : SliceMorphism {a=(adscBase cat)} (adsoTot dom) codtot) ->
-    (codinj : SliceMorphism {a=(adscBase cat)} (adscCobase cat) codtot) ->
+    (codinj : ADSOinj cat codtot) ->
     {auto 0 eq : SliceExtEq codinj (ADSMinj dom codtot mor)} ->
     ADisliceMorph {cat} dom (ADSO codtot codinj)
 
