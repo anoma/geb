@@ -100,8 +100,14 @@ record ADisliceMorphOut {0 cat : ADisliceCat} (dom : ADisliceObj cat) where
 export
 ADSMOCod : {cat : ADisliceCat} -> (dom : ADisliceObj cat) ->
   ADisliceMorphOut {cat} dom -> ADisliceObj cat
-ADSMOCod {cat} dom cod =
-  ADSO (adsmoCod cod) $ sliceComp (adsmoMor cod) $ adsoInj dom
+ADSMOCod {cat} dom mor =
+  ADSO (adsmoCod mor) $
+    sliceComp
+      {x=(adscCobase cat)}
+      {y=(adsoTot dom)}
+      {z=(adsmoCod mor)}
+      (adsmoMor mor)
+      (adsoInj dom)
 
 public export
 data ADisliceMorph : {0 cat : ADisliceCat} ->
