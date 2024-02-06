@@ -32,24 +32,6 @@ record CDisliceObj (cat : CDisliceCat) where
       (cdscProj cat)
 
 public export
-record CDisliceMorphOut {0 cat : CDisliceCat} (dom : CDisliceObj cat) where
-  constructor CDSMO
-  cdsmoCod : CSliceObj (cdscBase cat)
-  cdsmoMor :
-    CSliceMorphism {c=(cdscBase cat)} (cdsoTot dom ** cdsoFact2 dom) cdsmoCod
-
-export
-CDSMOCod : {0 cat : CDisliceCat} -> (dom : CDisliceObj cat) ->
-  CDisliceMorphOut {cat} dom -> CDisliceObj cat
-CDSMOCod {cat} dom mor =
-  CDSO
-    (fst $ cdsmoCod mor)
-    (fst0 (cdsmoMor mor) . cdsoFact1 dom)
-    (snd $ cdsmoCod mor)
-    $ \ec =>
-      trans (sym $ (snd0 $ cdsmoMor mor) $ cdsoFact1 dom ec) (cdsoEq dom ec)
-
-public export
 record CDisliceMorph {0 cat : CDisliceCat} (dom, cod : CDisliceObj cat) where
   constructor CDSM
   cdsmTot : cdsoTot dom -> cdsoTot cod
@@ -61,19 +43,6 @@ record CDisliceMorph {0 cat : CDisliceCat} (dom, cod : CDisliceObj cat) where
     ExtEq {a=(cdsoTot dom)} {b=(cdscBase cat)}
       (cdsoFact2 dom)
       (cdsoFact2 cod . cdsmTot)
-
-export
-CDSMOtoCDSM : {0 cat : CDisliceCat} -> {dom : CDisliceObj cat} ->
-  (cdsmo : CDisliceMorphOut {cat} dom) ->
-  CDisliceMorph {cat} dom (CDSMOCod {cat} dom cdsmo)
-CDSMOtoCDSM {cat} {dom} mor =
-  CDSM (fst0 $ cdsmoMor mor) (\_ => Refl) (snd0 $ cdsmoMor mor)
-
-export
-CDSMtoCDSMO : {0 cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
-  CDisliceMorph {cat} dom cod -> CDisliceMorphOut {cat} dom
-CDSMtoCDSMO {cat} {dom} {cod} mor =
-  CDSMO (cdsoTot cod ** cdsoFact2 cod) $ Element0 (cdsmTot mor) (cdsmEq2 mor)
 
 ---------------------
 ---- Arena-style ----
@@ -164,9 +133,20 @@ DsmCtoA : {cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
   ADisliceMorph {cat=(DscCtoA cat)}
     (DsoCtoA {cat} dom)
     (DsoCtoA {cat} cod)
-DsmCtoA {cat} {dom} {cod} cmor =
-  ?DsmCtoA_hole
-  -- adsmComp (DsmAoToAfromC cmor) (DsmCtoAo cmor)
+DsmCtoA
+  {cat=(CDSC base cobase proj)}
+  {dom=(CDSO dtot df1 df2 deq)}
+  {cod=(CDSO ctot cf1 cf2 ceq)}
+  (CDSM mtot meq1 meq2) =
+    ADSM
+      {cat=(DscCtoA (CDSC base cobase proj))}
+      {dom=(DsoCtoA {cat=(CDSC base cobase proj)} (CDSO dtot df1 df2 deq))}
+      {codtot=(\eb => PreImage {a=ctot} {b=base} cf2 eb)}
+      (\eb, (Element0 ed deq) =>
+        Element0 (mtot ed) $ trans (sym $ meq2 ed) deq)
+      (\eb, ecb =>
+        Element0 (cf1 $ fst0 ecb) $ trans (ceq $ fst0 ecb) $ snd0 ecb)
+      {eq=(\eb, (Element0 ecb cbeq) => rewrite meq1 ecb in s0Eq12 Refl uip)}
 
 DsmAtoC : {0 cat : ADisliceCat} -> {0 dom, cod : ADisliceObj cat} ->
   ADisliceMorph {cat} dom cod ->
