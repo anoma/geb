@@ -25,9 +25,13 @@ DAbase : (da : DiArena) -> SliceObj (daPos da)
 DAbase da = adscBase . daCat da
 
 public export
+DAtot : {da : DiArena} -> {i : daPos da} -> SliceObj (DAobj da i)
+DAtot {da} {i} = Sigma {a=(DAbase da i)} . adsoTot {cat=(daCat da i)}
+
+public export
 data InterpDAf : DiArena -> Type -> Type where
-  DAf : {0 da : DiArena} -> (i : daPos da) -> (obj : DAobj da i) ->
-    InterpDAf da (Sigma {a=(DAbase da i)} $ adsoTot {cat=(daCat da i)} obj)
+  DAf : {0 da : DiArena} ->
+    (i : daPos da) -> (obj : DAobj da i) -> InterpDAf da (DAtot {da} {i} obj)
 
 public export
 idaPos : {0 da : DiArena} -> {0 x : Type} -> InterpDAf da x -> daPos da
