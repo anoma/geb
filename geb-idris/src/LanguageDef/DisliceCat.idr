@@ -91,40 +91,41 @@ record ADisliceObj (cat : ADisliceCat) where
   adsoTot : SliceObj (adscBase cat)
   adsoInj : SliceMorphism {a=(adscBase cat)} (adscCobase cat) adsoTot
 
-public export
-record ADisliceMorphOut {0 cat : ADisliceCat} (dom : ADisliceObj cat) where
-  constructor ADSMO
-  adsmoCod : SliceObj (adscBase cat)
-  adsmoMor : SliceMorphism {a=(adscBase cat)} (adsoTot dom) adsmoCod
-
 export
-ADSMOCod : {cat : ADisliceCat} -> (dom : ADisliceObj cat) ->
-  ADisliceMorphOut {cat} dom -> ADisliceObj cat
-ADSMOCod {cat} dom mor =
-  ADSO (adsmoCod mor) $
-    sliceComp
-      {x=(adscCobase cat)}
-      {y=(adsoTot dom)}
-      {z=(adsmoCod mor)}
-      (adsmoMor mor)
-      (adsoInj dom)
+ADSMinj : {cat : ADisliceCat} ->
+  (dom : ADisliceObj cat) -> (cod : SliceObj $ adscBase cat) ->
+  SliceMorphism {a=(adscBase cat)} (adsoTot dom) cod ->
+  SliceMorphism {a=(adscBase cat)} (adscCobase cat) cod
+ADSMinj {cat} dom cod mor =
+  sliceComp {x=(adscCobase cat)} {y=(adsoTot dom)} {z=cod} mor (adsoInj dom)
 
 public export
 data ADisliceMorph : {0 cat : ADisliceCat} ->
     (dom, cod : ADisliceObj cat) -> Type where
-  ADSM : {0 cat : ADisliceCat} -> {0 dom : ADisliceObj cat} ->
-    (adsmo : ADisliceMorphOut dom) ->
-    ADisliceMorph {cat} dom (ADSMOCod {cat} dom adsmo)
-  ADSMrew : {0 cat : ADisliceCat} -> {0 dom : ADisliceObj cat} ->
-    (codtot : SliceObj $ adscBase cat) ->
-    (codinj, codinj' :
-      SliceMorphism {a=(adscBase cat)} (adscCobase cat) codtot) ->
-    (0 reweq :
-      (eb : adscBase cat) ->
-        ExtEq {a=(adscCobase cat eb)} {b=(codtot eb)}
-          (codinj eb) (codinj' eb)) ->
-    ADisliceMorph {cat} dom (ADSO codtot codinj) ->
-    ADisliceMorph {cat} dom (ADSO codtot codinj')
+  ADSM : {0 cat : ADisliceCat} ->
+    {0 dom : ADisliceObj cat} ->
+    {codtot : SliceObj $ adscBase cat} ->
+    (mor : SliceMorphism {a=(adscBase cat)} (adsoTot dom) codtot) ->
+    (codinj : SliceMorphism {a=(adscBase cat)} (adscCobase cat) codtot) ->
+    {auto 0 eq : SliceExtEq codinj (ADSMinj dom codtot mor)} ->
+    ADisliceMorph {cat} dom (ADSO codtot codinj)
+
+public export
+adsmId : {0 cat : ADisliceCat} ->
+  (x : ADisliceObj cat) -> ADisliceMorph {cat} x x
+adsmId {cat} x@(ADSO tot inj) = ADSM {dom=x} (\_ => id) inj {eq=(\_, _ => Refl)}
+
+public export
+adsmComp : {cat : ADisliceCat} -> {x, y, z : ADisliceObj cat} ->
+  ADisliceMorph {cat} y z ->
+  ADisliceMorph {cat} x y ->
+  ADisliceMorph {cat} x z
+adsmComp
+  {cat=(ADSC base cobase)}
+  {x=(ADSO xtot xinj)} {y=(ADSO ytot _)} {z=(ADSO ztot _)}
+  (ADSM dmor dinj {eq=deq}) (ADSM cmor cinj {eq=ceq}) =
+    ADSM (sliceComp dmor cmor) dinj
+      {eq=(\eb, ec => trans (deq eb ec) $ cong (dmor eb) $ ceq eb ec)}
 
 ---------------------------------------
 ---- Categorial-arena translations ----
@@ -158,66 +159,20 @@ DsoAtoC {cat} obj =
     DPair.fst
     (\(eb ** ec) => Refl)
 
-DsmoCtoA : {0 cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
-  CDisliceMorphOut {cat} dom ->
-  ADisliceMorphOut {cat=(DscCtoA cat)} (DsoCtoA {cat} dom)
-DsmoCtoA {cat} {dom} mor =
-  ADSMO
-    (\eb =>
-      Subset0 (fst $ cdsmoCod mor) $ \ecc => snd (cdsmoCod mor) ecc = eb)
-    (\eb, ed =>
-      Element0 (fst0 (cdsmoMor mor) $ fst0 ed)
-        $ trans (sym $ snd0 (cdsmoMor mor) $ fst0 ed) $ snd0 ed)
-
-DsmCtoAo : {0 cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
-  (cmor : CDisliceMorph {cat} dom cod) ->
-  ADisliceMorph {cat=(DscCtoA cat)}
-    (DsoCtoA {cat} dom)
-    (ADSMOCod
-      (DsoCtoA {cat} dom)
-      (DsmoCtoA {cat} {dom} {cod} $ CDSMtoCDSMO cmor))
-DsmCtoAo {cat} {dom} {cod} cmor =
-  ADSM {cat=(DscCtoA cat)} {dom=(DsoCtoA {cat} dom)}
-    $ DsmoCtoA {cod} $ CDSMtoCDSMO cmor
-
 DsmCtoA : {cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
   CDisliceMorph {cat} dom cod ->
   ADisliceMorph {cat=(DscCtoA cat)}
     (DsoCtoA {cat} dom)
     (DsoCtoA {cat} cod)
 DsmCtoA {cat} {dom} {cod} cmor =
-  ADSMrew
-    {cat=(DscCtoA cat)} {dom=(DsoCtoA {cat} dom)}
-    (\eb : cdscBase cat =>
-      Subset0 (cdsoTot cod) (\ecc : cdsoTot cod => cdsoFact2 cod ecc = eb))
-    (\eb, ec =>
-      Element0
-        (cdsmTot cmor $ cdsoFact1 dom $ fst0 ec)
-        $ trans
-          (sym
-            (snd0 (cdsmoMor (CDSMtoCDSMO cmor))
-            (fst0 (adsoInj (DsoCtoA dom) eb ec))))
-          (snd0 (adsoInj (DsoCtoA dom) eb ec)))
-    (\eb, ec =>
-      Element0
-        (cdsoFact1 cod $ fst0 ec)
-        $ trans (cdsoEq cod $ fst0 ec) $ snd0 ec)
-    (\eb, ecc =>
-      s0Eq12 (sym $ cdsmEq1 cmor $ fst0 ecc)
-        $ rewrite (sym $ cdsmEq1 cmor $ fst0 ecc) in uip)
-    (DsmCtoAo {cat} {dom} {cod} cmor)
+  ?DsmCtoA_hole
+  -- adsmComp (DsmAoToAfromC cmor) (DsmCtoAo cmor)
 
 DsmAtoC : {0 cat : ADisliceCat} -> {0 dom, cod : ADisliceObj cat} ->
   ADisliceMorph {cat} dom cod ->
   CDisliceMorph {cat=(DscAtoC cat)} (DsoAtoC {cat} dom) (DsoAtoC {cat} cod)
-DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSM $ ADSMO cod mor) =
+DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSM mor inj {eq}) =
   CDSM
     (\(eb ** ed) => (eb ** mor eb ed))
+    (\(eb ** ed) => rewrite eq eb ed in Refl)
     (\(eb ** ed) => Refl)
-    (\(eb ** ed) => Refl)
-DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSMrew codtot codinj codinj' eq mor) =
-  let (CDSM tot eq1 eq2) = DsmAtoC mor in
-  CDSM
-    tot
-    (\(eb ** ec) => trans (rewrite sym (eq eb ec) in Refl) $ eq1 (eb ** ec))
-    eq2
