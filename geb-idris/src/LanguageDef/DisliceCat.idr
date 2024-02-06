@@ -234,3 +234,13 @@ ADSLsigma {b} p {cb} (ADSO tot inj) =
   ADSO
     (\eb => Sigma {a=(p eb)} $ DPair.curry tot eb)
     (\eb, (ep ** ecb) => (ep ** inj (eb ** ep) ecb))
+
+export
+ADSLpi : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
+  ADSLomap
+    (ADSC (Sigma {a=b} p) cb)
+    (ADSC b $ \eb => Pi {a=(p eb)} $ DPair.curry cb eb)
+ADSLpi {b} p {cb} (ADSO tot inj) =
+  ADSO
+    (\eb => Pi {a=(p eb)} $ DPair.curry tot eb)
+    (\eb, pi, ep => inj (eb ** ep) $ pi ep)
