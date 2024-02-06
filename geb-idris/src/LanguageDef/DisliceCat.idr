@@ -44,6 +44,22 @@ record CDisliceMorph {0 cat : CDisliceCat} (dom, cod : CDisliceObj cat) where
       (cdsoFact2 dom)
       (cdsoFact2 cod . cdsmTot)
 
+public export
+cdsmId : {0 cat : CDisliceCat} ->
+  (x : CDisliceObj cat) -> CDisliceMorph {cat} x x
+cdsmId {cat} x = CDSM id (\_ => Refl) (\_ => Refl)
+
+public export
+cdsmComp : {cat : CDisliceCat} -> {x, y, z : CDisliceObj cat} ->
+  CDisliceMorph {cat} y z ->
+  CDisliceMorph {cat} x y ->
+  CDisliceMorph {cat} x z
+cdsmComp (CDSM gtot geq1 geq2) (CDSM ftot feq1 feq2) =
+  CDSM
+    (gtot . ftot)
+    (\ecb => trans (geq1 ecb) $ cong gtot $ feq1 ecb)
+    (\et => trans (feq2 et) $ geq2 $ ftot et)
+
 ---------------------
 ---- Arena-style ----
 ---------------------
