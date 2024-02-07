@@ -42,6 +42,8 @@ record InterpDAf (da : ADiArena) (x : Type) where
       (DAcobase da idafPos)
       (SliceFromCSlice (x ** idafProj))
 
+-- An object of the category of elements of `InterpDAF da` is
+-- a dislice object.
 export
 IDAfobj : {da : ADiArena} -> {x : Type} ->
   (e : InterpDAf da x) -> DAobj da (idafPos e)
