@@ -42,6 +42,11 @@ record InterpDAf (da : ADiArena) (x : Type) where
       (DAcobase da idafPos)
       (SliceFromCSlice (x ** idafProj))
 
+export
+IDAfobj : {da : ADiArena} -> {x : Type} ->
+  (e : InterpDAf da x) -> DAobj da (idafPos e)
+IDAfobj {da} {x} (IDAf pos proj dir) = ADSO (SliceFromCSlice (x ** proj)) dir
+
 ------------------------------------------------------------------
 ------------------------------------------------------------------
 ---- Dependent (dislice) dipolynomial functors and difunctors ----
