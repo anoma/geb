@@ -2030,7 +2030,9 @@ PFDirCatElemMor {p=(pos ** dir)} x y = x = y
 
 -- An object of the category of elements of a polynomial functor
 -- which is the exponential object of two polynomial functors is
--- a dialgebra for those two functors.
+-- a dialgebra for those two functors.  (Furthermore, the object part
+-- of the dialgebra is the same object of `Type` as the object
+-- underlying the given object of the category of elements.)
 export
 PolyExpToDialg : (p, q : PolyFunc) ->
   MLPolyCatElemObj (pfHomObj p q) ->
