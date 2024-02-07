@@ -3,6 +3,8 @@ module LanguageDef.DiPolyFunc
 import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.DisliceCat
+import LanguageDef.PolyCat
+import LanguageDef.Geb
 
 ---------------------------------------------------
 ---------------------------------------------------
@@ -101,3 +103,25 @@ ADSLpi {b} p {cb} (ADSO tot inj) =
   ADSO
     (\eb => Pi {a=(p eb)} $ DPair.curry tot eb)
     (\eb, pi, ep => inj (eb ** ep) $ pi ep)
+
+--------------------------------------------------
+--------------------------------------------------
+---- Polynomial profunctors as curried arenas ----
+--------------------------------------------------
+--------------------------------------------------
+
+record PolyProAr where
+  constructor PPA
+  ppPos : Type -> Type
+  ppContramap : (0 x, y : Type) -> (y -> x) -> ppPos x -> ppPos y
+  ppDir : NaturalTransformation ppPos (const Type)
+  ppNaturality :
+    (0 x, y : Type) -> (0 m : y -> x) ->
+    ExtEq {a=(ppPos x)} {b=Type} (ppDir x) (ppDir y . ppContramap x y m)
+
+InterpPPA : PolyProAr -> ProfunctorSig
+InterpPPA (PPA pos cmap dir nat) x y = (i : pos x ** dir x i -> y)
+
+InterpPPAdimap : (ppa : PolyProAr) -> TypeDimapSig (InterpPPA ppa)
+InterpPPAdimap (PPA pos cmap dir nat) s t a b mas mtb (i ** d) =
+  (cmap s a mas i ** replace {p=(ContravarHomFunc b)} (nat s a mas i) $ mtb . d)
