@@ -2024,6 +2024,25 @@ PFDirCatElemMor : {p : PolyFunc} ->
   PFDirCatElemObj p -> PFDirCatElemObj p -> Type
 PFDirCatElemMor {p=(pos ** dir)} x y = x = y
 
+--------------------
+---- Dialgebras ----
+--------------------
+
+-- An object of the category of elements of a polynomial functor
+-- which is the exponential object of two polynomial functors is
+-- a dialgebra for those two functors.
+export
+PolyExpToDialg : (p, q : PolyFunc) ->
+  MLPolyCatElemObj (pfHomObj p q) ->
+  (x : Type ** Dialgebra (InterpPolyFunc p) (InterpPolyFunc q) x)
+PolyExpToDialg (ppos ** pdir) (qpos ** qdir) (x ** (i ** d)) =
+  (x ** \(pi ** pd) => (fst (i pi) ** \qdi => ret pi pd qdi))
+  where
+    ret : (pi : ppos) -> (pdir pi -> x) -> qdir (fst $ i pi) -> x
+    ret pi pd qdi with (snd (i pi) qdi) proof eq
+      ret pi pd qdi | Left () = d (pi ** (qdi ** rewrite eq in ()))
+      ret pi pd qdi | Right pdi = pd pdi
+
 --------------------------------------------------------------------
 --------------------------------------------------------------------
 ---- Dirichlet presheaves enriched over polynomial copresheaves ----
