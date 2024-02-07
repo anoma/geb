@@ -7970,8 +7970,8 @@ CoprodToImpred x y = eitherElim (impredInjL {x} {y}) (impredInjR {x} {y})
 impredCase : {x, y, z : Type} -> (x -> z, y -> z) -> (ImpredCoprod x y -> z)
 impredCase {x} {y} {z} (f, g) ic = eitherElim f g $ CoprodFromImpred x y ic
 
-impredLAdj : {x, y, z : Type} -> (ImpredCoprod x y -> z) -> (x -> z, y -> z)
-impredLAdj {x} {y} {z} f = (f . impredInjL {x} {y}, f . impredInjR {x} {y})
+impredCopLAdj : {x, y, z : Type} -> (ImpredCoprod x y -> z) -> (x -> z, y -> z)
+impredCopLAdj {x} {y} {z} f = (f . impredInjL {x} {y}, f . impredInjR {x} {y})
 
 CoprodToFromImpredId : (x, y : Type) -> (exy : Either x y) ->
   CoprodFromImpred x y (CoprodToImpred x y exy) = exy
@@ -7994,3 +7994,37 @@ CoprodFromToImpredId x y (onpos ** ondir) with
     Evidence0
       (\((), ()) => rewrite fstEq eq in Refl)
       (\((), ()), () => sndEq eq)
+
+-----------------------------------------------
+---- Products through universal properties ----
+-----------------------------------------------
+
+ImpredProdDom : Type -> Type -> PolyFunc
+ImpredProdDom x y = pfCoproductArena (PFHomArena x) (PFHomArena y)
+
+ImpredProdCodom : Type -> Type -> PolyFunc
+ImpredProdCodom _ _ = PFIdentityArena
+
+ImpredProd : Type -> Type -> Type
+ImpredProd x y = PolyNatTrans (ImpredProdDom x y) (ImpredProdCodom x y)
+
+impredProj1 : {x, y : Type} -> ImpredProd x y -> x
+impredProj1 {x} {y} (onpos ** ondir) = ondir (Left ()) ()
+
+impredProj2 : {x, y : Type} -> ImpredProd x y -> y
+impredProj2 {x} {y} (onpos ** ondir) = ondir (Right ()) ()
+
+ProdFromImpred : (x, y : Type) -> ImpredProd x y -> Pair x y
+ProdFromImpred x y alpha = (impredProj1 alpha, impredProj2 alpha)
+
+ProdToImpred : (x, y : Type) -> Pair x y -> ImpredProd x y
+ProdToImpred x y (ex, ey) =
+  (\_ => () ** \i, () => case i of Left () => ex ; Right () => ey)
+
+impredBi : {x, y, z : Type} -> (x -> y, x -> z) -> (x -> ImpredProd y z)
+impredBi {x} {y} {z} (f, g) ic =
+  (\_ => () ** \d, () => case d of Left () => f ic ; Right () => g ic)
+
+impredProdRAdj : {x, y, z : Type} -> (x -> ImpredProd y z) -> (x -> y, x -> z)
+impredProdRAdj {x} {y} {z} ic =
+  (\ex => snd (ic ex) (Left ()) (), \ex => snd (ic ex) (Right ()) ())
