@@ -1790,16 +1790,16 @@ CPFSliceMorph p (q ** qp) (r ** rp) =
 -- determined by a dependent on-directions function, which for each position of
 -- the polynomial functor which comprises the object component of the slice
 -- object maps the represented object to the direction-set at that position.
-PFCovarRepSliceObj : PolyFunc -> Type -> Type
-PFCovarRepSliceObj p x =
+PFCovarRepSliceObj : Type -> Type
+PFCovarRepSliceObj x =
   (spos : Type ** sdir : spos -> Type ** (i : spos) -> x -> sdir i)
 
 -- A Dirichlet functor sliced over a contravariant representable
 -- functor is a Dirichlet functor together with a Dirichlet natural
 -- transformation from that functor to the arena whose position-set is
 -- `Unit` and whose direction-set at its one position is the represented object.
-DFContravarRepSliceObj : PolyFunc -> Type -> Type
-DFContravarRepSliceObj p x =
+DFContravarRepSliceObj : Type -> Type
+DFContravarRepSliceObj x =
   (spos : Type ** sdir : spos -> Type ** (i : spos) -> sdir i -> x)
 
 -- The signature of the `erase` operation of a polynomial comonad, which
