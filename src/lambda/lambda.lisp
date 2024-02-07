@@ -38,8 +38,8 @@ from the left starting with 0."
 (defgeneric ann-term1 (ctx tterm)
   (:documentation
    "Given a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] objects with
-[SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] occurences replaced by [FUN-TYPE][class]
-and an [STLC][type] similarly replacing type occurences of the hom object
+[SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] occurrences replaced by [FUN-TYPE][class]
+and an [STLC][type] similarly replacing type occurrences of the hom object
 to [FUN-TYPE][class], provides the [TTYPE][generic-function] accessor to all
 subterms as well as the term itself, using [FUN-TYPE][class]. Once again,
 note  that it is important for the context and term to be giving as
@@ -69,12 +69,12 @@ LAMBDA> (ttype (term (ann-term1 (lambda (list so1 so0) (index 0)))))
 s-1
 ```
 
-as we count indeces from the left of the context while appending new types to
+as we count indices from the left of the context while appending new types to
 the context on the left as well. For more info check [LAMB][class]"))
 
 
 (defmethod ann-term1 (ctx (tterm <stlc>))
-  ;; cahce check
+  ;; cache check
   (if (ttype tterm)
       tterm
       (match-of stlc tterm
@@ -158,7 +158,7 @@ the context on the left as well. For more info check [LAMB][class]"))
 ;; to one containing actual hom-objects
 (defun fun-to-hom (t1)
   "Given a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] whose subobjects might have a
-[FUN-TYPE][class] occurence replaces all occurences of [FUN-TYPE][class] with a
+[FUN-TYPE][class] occurrence replaces all occurrences of [FUN-TYPE][class] with a
 suitable [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], hence giving a pure
 [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
 
@@ -179,7 +179,7 @@ LAMBDA> (fun-to-hom (fun-type geb-bool:bool geb-bool:bool))
 (defun ann-term2 (tterm)
   "Given an [STLC][type] term with a [TTYPE][generic-function] accessor from
 [ANN-TERM1][generic-function] - i.e. including possible [FUN-TYPE][class]
-occurences - re-annotates the term and its subterms with actual
+occurrences - re-annotates the term and its subterms with actual
 [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] objects."
   (match-of stlc tterm
     ((absurd tcod term)    (absurd (fun-to-hom tcod)
@@ -224,8 +224,8 @@ occurences - re-annotates the term and its subterms with actual
 
 (defun annotated-term (ctx term)
   "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
-with occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by
-[FUN-TYPE][class] and an [STLC][type] term with similarly replaced occurences
+with occurrences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by
+[FUN-TYPE][class] and an [STLC][type] term with similarly replaced occurrences
 of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], provides an [STLC][type] with all
 subterms typed, i.e. providing the [TTYPE][generic-function] accessor,
 which is a pure [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]"
@@ -237,18 +237,18 @@ which is a pure [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]"
 
 (defun type-of-term-w-fun (ctx tterm)
   "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
-occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class]
-and an [STLC][type] term with similarly replaced occurences of
+occurrences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class]
+and an [STLC][type] term with similarly replaced occurrences of
 [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], gives out a type of the whole term with
-occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class]."
+occurrences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class]."
   (ttype (ann-term1 ctx tterm)))
 
 ;; Actual type info
 
 (defun type-of-term (ctx tterm)
   "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
-occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class]
-and an [STLC][type] term with similarly replaced occurences of
+occurrences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class]
+and an [STLC][type] term with similarly replaced occurrences of
 [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], provides the type of the whole term,
 which is a pure [SUBSTOBJ][type]."
   (fun-to-hom (type-of-term-w-fun ctx tterm)))
@@ -258,9 +258,9 @@ which is a pure [SUBSTOBJ][type]."
 (defgeneric well-defp (ctx tterm)
   (:documentation
    "Given a context consisting of a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]
-with occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by
+with occurrences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by
 [FUN-TYPE][class] and an [STLC][type] term with similarly replaced
-occurences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], checks that the term
+occurrences of [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ], checks that the term
 is well-defined in the context based on structural rules of simply
 typed lambda calculus. returns the t if it is, otherwise returning
 nil"))
@@ -352,7 +352,7 @@ nil"))
         (t                        (errorp (term tterm)))))
 
 (defun dispatch (tterm)
-  "A dispatch refering the class of a term to its function"
+  "A dispatch referring the class of a term to its function"
   (typecase tterm
     (absurd #'absurd)
     (unit   #'unit)
@@ -376,7 +376,7 @@ nil"))
     (modulo  #'modulo)))
 
 (defun dispatch-arith (tterm)
-  "A dispatch refering the class of an arithmetic term
+  "A dispatch referring the class of an arithmetic term
 to its corresponding operation"
   (typecase tterm
     (plus #'+)
@@ -388,7 +388,7 @@ to its corresponding operation"
     (modulo #'mod)))
 
 (defun index-excess (tterm)
-  "Checks all indeces occuring in a term which will be substituted.
+  "Checks all indices occurring in a term which will be substituted.
 If position exceeds n, adds depth to the index. Necessary for
 beta-substitution of indices which point outside of the app term"
   (labels ((rec (n tterm)
@@ -509,7 +509,7 @@ of the list."
                   (delist (rtm tterm)))))))
 
 (defun sub (ind term-to-replace sub-in)
-  "Substitutes the occurence of index (ind) inside of the top
+  "Substitutes the occurrence of index (ind) inside of the top
 subterms of sub-on by term-to-replace. We mark replaced terms by
 listing them"
   (typecase sub-in
@@ -563,7 +563,7 @@ listing them"
               (sub ind term-to-replace (rtm sub-in))))))
 
 (defun reducer (tterm)
-  "Reduces a given Lambda term by applying explict beta-reduction
+  "Reduces a given Lambda term by applying explicit beta-reduction
 when possible alongside arithmetic simplification. We assume that the
 lambda and app terms are  1-argument"
   (typecase tterm

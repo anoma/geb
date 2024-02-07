@@ -1399,7 +1399,7 @@ mutual
     Mev : (a, b : IdxObj) -> IdxMorph (IP (IH a b) a) b -- counit
     Mcu : IdxMorph (IP a b) c -> IdxMorph a (IH b c) -- left adjunct
 
-    -- Polynomial modular arithemetic
+    -- Polynomial modular arithmetic
     Mninj : (m, n : Nat) ->
       {auto 0 m_ok : Not (m = 0)} -> {auto 0 n_ok : Not (n = 0)} ->
       IdxMorph (IN m) (IN n)

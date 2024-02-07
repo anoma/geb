@@ -8,7 +8,7 @@ unit types as well as coproduct, product, and function types."))
 
 (deftype stlc ()
   "Type of untyped terms of [STLC][type]. Each class of a term has a slot for a type,
-which can be filled by auxillary functions or by user. Types are
+which can be filled by auxiliary functions or by user. Types are
 represented as [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]."
   '(or absurd unit left right case-on pair fst snd lamb app index err
     plus times minus divide bit-choice lamb-eq lamb-lt modulo))
@@ -123,7 +123,7 @@ where we can include optional type information by
 (left rty term :ttype ttype)
 ```
 
-The indended semantics are as follows: [RTY][generic-function] should
+The intended semantics are as follows: [RTY][generic-function] should
 be a type (and hence a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]) and specify the
 right part of the coproduct of the type [TTYPE][generic-function] of
 the entire term. The term (and hence an [STLC][type]) we are injecting
@@ -166,7 +166,7 @@ where we can include optional type information by
 (right lty term :ttype ttype)
 ```
 
-The indended semantics are as follows: [LTY] should be a type (and
+The intended semantics are as follows: [LTY] should be a type (and
 hence a [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]) and specify the left part of
 the coproduct of the type [TTYPE] of the entire term. The term (and
 hence an [STLC][type]) we are injecting is [TERM].
@@ -198,7 +198,7 @@ $$\\Gamma \\dashv \\text{(right lty term) : (coprod lty (ttype term))}$$
           :accessor ttype
           :documentation ""))
   (:documentation
-   "A term of an arbutrary type provided by casing on a coproduct term. The
+   "A term of an arbitrary type provided by casing on a coproduct term. The
 formal grammar of [CASE-ON][class] is
 
 ```lisp
@@ -261,7 +261,7 @@ The intended semantics are as follows: [LTM] is a term (and hence an
 producing. [RTM] is a term (hence also [STLC][type])of the right part
 of the product.
 
-The grammar corresponds to the introdcution rule of the pair type. Given
+The grammar corresponds to the introduction rule of the pair type. Given
 $$\\Gamma \\vdash \\text{ltm : (mcar (ttype (pair ltm rtm)))}$$ and
 $$\\Gamma \\vdash \\text{rtm : (mcadr (ttype (pair ltm rtm)))}$$ we have
 $$\\Gamma \\vdash \\text{(pair ltm rtm) : (ttype (pair ltm rtm))}$$
@@ -293,7 +293,7 @@ where we can possibly include type information by
 (fst term :ttype ttype)
 ```
 
-The indended semantics are as follows: [TERM][generic-function] is a
+The intended semantics are as follows: [TERM][generic-function] is a
 term (and hence an [STLC][type]) of a product type, to whose left part
 we are projecting to.
 
@@ -326,7 +326,7 @@ where we can possibly include type information by
 (snd term :ttype ttype)
 ```
 
-The indended semantics are as follows: [TERM][generic-function] is a
+The intended semantics are as follows: [TERM][generic-function] is a
 term (and hence an [STLC][type]) of a product type, to whose right
 part we are projecting to.
 
@@ -367,7 +367,7 @@ where we can possibly include type information by
 (lamb tdom term :ttype ttype)
 ```
 
-The intended semnatics are: [TDOM][generic-function] is a list of types (and
+The intended semantics are: [TDOM][generic-function] is a list of types (and
 hence a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ]) whose iterative product of
 components form the domain of the function type. [TERM][generic-function]
 is a term (and hence an [STLC][type]) of the codomain of the function type
@@ -379,7 +379,7 @@ $$\\Gamma \\vdash \\text{tdom : Type}$$ and
 $$\\Gamma, \\text{tdom} \\vdash \\text{term : (ttype term)}$$ we have
 $$\\Gamma \\vdash \\text{(lamb tdom term) : (so-hom-obj tdom (ttype term))}$$
 
-For a list of length n, this coreesponds to the iterated lambda type, e.g.
+For a list of length n, this corresponds to the iterated lambda type, e.g.
 
 ```lisp
 (lamb (list so1 so0) (index 0))
@@ -407,10 +407,10 @@ LAMBDA> (ttype (term (lamb (list so1 so0)) (index 0)))
 s-1
 ```
 
-So the counting of indeces starts with the leftmost argument for
+So the counting of indices starts with the leftmost argument for
 computational reasons. In practice, typing of [LAMB][class] corresponds with
 taking a list of arguments provided to a lambda term, making it a context
-in that order and then counting the index of the varibale. Type-theoretically,
+in that order and then counting the index of the variable. Type-theoretically,
 
 $$\\Gamma \\vdash \\lambda \\Delta (index i)$$
 $$\\Delta, \\Gamma \\vdash (index i)$$
@@ -718,7 +718,7 @@ our type-check, as both numbers ought to be of exact same bit-width."))
 and gives true if they are equal and false otherwise. Note that for the usual
 Vamp-IR code interpretations, that means that we associate true with left input
 into bool and false with the right. Appropriately, in Vamp-IR the first branch
-will be associated with the 0 input and teh second branch with 1."))
+will be associated with the 0 input and the second branch with 1."))
 
 (defun lamb-eq (ltm rtm &key (ttype nil))
   (values
@@ -739,7 +739,7 @@ will be associated with the 0 input and teh second branch with 1."))
 and gives true if ltm is less than rtm and false otherwise. Note that for the usual
 Vamp-IR code interpretations, that means that we associate true with left input
 into bool and false with the right. Appropriately, in Vamp-IR the first branch
-will be associated with the 0 input and teh second branch with 1."))
+will be associated with the 0 input and the second branch with 1."))
 
 (defun lamb-lt (ltm rtm &key (ttype nil))
   (values

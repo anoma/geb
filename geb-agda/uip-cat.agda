@@ -15,7 +15,7 @@ module uip-cat where
   cat-struct l1 l2 ObjC =                                                              -- Class of objects 
                 (Σ[ HomC ∶ (ObjC → ObjC → Type l2) ]                                 -- Class of morphisms 
                 (Σ[ _∘C_ ∶ ({A B C : ObjC} → (HomC B C) → (HomC A B) → (HomC A C)) ]  -- Composition operation
-                (Σ[ i ∶ ((A : ObjC) → (HomC A A)) ]                                   -- Choice of idenities  
+                (Σ[ i ∶ ((A : ObjC) → (HomC A A)) ]                                   -- Choice of identities  
                 (((A B : ObjC) (f : HomC A B) (g : HomC B A)
                 → ( (i A) ∘C g ≡ g) × ( f ∘C (i A) ≡ f)) ×
                 ((A B C D : ObjC) → (f : HomC A B) → (g : HomC B C) → (h : HomC C D) → (h ∘C (g ∘C f) ≡ (h ∘C g) ∘C f ) )))))

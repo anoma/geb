@@ -99,7 +99,7 @@
     (comp
      (bitc:compose (to-bitc (mcar obj))
                    (to-bitc (mcadr obj))))
-    ;; This should never occure, but if it does, it produces a
+    ;; This should never occur, but if it does, it produces a
     ;; constant morphism onto an all 0s list
     (init
      (let* ((list (zero-list (bitwidth (mcar obj))))
@@ -272,7 +272,7 @@ with"
            (composition (to-seqn x)
                         (drop-width (cdr (width cpr)) y))))
       (cond ((< lengthleft lengthright)
-             ;; branch on the left counts the first entries of an occuring and drops the rest
+             ;; branch on the left counts the first entries of an occurring and drops the rest
              ;; then injects it into the smaller bit sizes if necessary
              ;; (max(a1, b1),,,.,(max (an, bn),..., max(0, bm))) -> (a1,...,an,0)
              ;; -> (a1,....,an)

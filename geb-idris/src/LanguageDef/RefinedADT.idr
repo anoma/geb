@@ -2386,7 +2386,7 @@ PathF vEq carrier =
 -- might represent any of several different concepts, the type is indexed
 -- by a type of atoms which classify which concept a given term represents.
 -- This makes `GebTerm` a type family; it's effectively simulating a
--- definition by a large mutual recursion, but using an index intead of many
+-- definition by a large mutual recursion, but using an index instead of many
 -- different Idris types allows us to interpret Geb in Idris by interpreting
 -- just that one type.  I find it less confusing and more convenient than a big
 -- mutual recursion.
@@ -2538,7 +2538,7 @@ data FreeEquivF : Type -> Type -> Type where
   -- and `y` is a claim that there is a _decidable_ equality between the two
   -- which can be decided when the term is validated (typechecked).
   EqRefl : a -> a -> FreeEquivF a carrier
-  -- Given a term of `carrier`, which represents an equivalence bewteen
+  -- Given a term of `carrier`, which represents an equivalence between
   -- terms `x` and `y` of `a`, `EqSym` represents an equivalence between
   -- `y` and `x`.
   EqSym : a -> a -> carrier -> FreeEquivF a carrier
@@ -2615,8 +2615,8 @@ data RewritableTermF : Type -> Type where
 -- may exhibit free equalities, objects may as well, unlike in traditional
 -- category theory.  The typechecking of morphisms must respect a carrier
 -- free equivalence on _objects_, because an equivalence of objects may allow a
--- composition which would not have been allowed by intensional equality
--- (meaning that the domain of the following morphism was not intensionally
+-- composition which would not have been allowed by intentional equality
+-- (meaning that the domain of the following morphism was not intentionally
 -- equal to the codomain of the preceding morphism).
 public export
 data MorphismF : Type -> Type -> Type where
@@ -2654,7 +2654,7 @@ Bifunctor MorphismF where
   bimap f _ (IdentityF v) = IdentityF $ f v
   bimap f g (ComposeF s i t q p) = ComposeF (f s) (f i) (f t) (g q) (g p)
 
--- Free categories produce a free equivalence on morphisms, correpsonding to
+-- Free categories produce a free equivalence on morphisms, corresponding to
 -- the identity and associativity laws.
 public export
 data MorphismEqF : Type -> Type where

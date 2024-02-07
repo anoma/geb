@@ -19,7 +19,7 @@
        (not (obj-equalp (make-instance 'subclass-test) so1))))
 
 ;; Note that here we are testing object equality without
-;; considering intensional aspects. E.g. initial morphism
+;; considering intentional aspects. E.g. initial morphism
 ;; !: so0 -> so0 is different from id : 0 -> 0
 (define-test equalp-substmorph :parent geb-mixins
   (obj-equalp (init so1) (init so1))

@@ -60,7 +60,7 @@ calling me"
 
 (defmethod to-cat (context (tterm <stlc>))
   "Compiles a checked term in said context to a Geb morphism. If the term has
-an instance of an erorr term, wraps it in a Maybe monad, otherwise, compiles
+an instance of an error term, wraps it in a Maybe monad, otherwise, compiles
 according to the term model interpretation of STLC"
   (if (errorp tterm)
       (to-cat-err context tterm)
@@ -93,7 +93,7 @@ In this version, the choice is that of 24-bits.")
 (def int *int*)
 
 (defmethod to-cat-err (context (tterm <stlc>))
-  "Wrapps compilation in a maybe monad. The inductive hypothesis is:
+  "Wraps compilation in a maybe monad. The inductive hypothesis is:
 term TTERM with type TTYPE in context A1....An gets interpreted as a
 morphism of type A1 x ... x An x so1 -> 1 + TTYPE"
   (labels ((rec (context tterm)
@@ -212,7 +212,7 @@ morphism of type A1 x ... x An x so1 -> 1 + TTYPE"
 (defmethod to-cat-cor (context (tterm <stlc>))
   "Compiles a checked term in an appropriate context into the
 morphism of the GEB category. In detail, it takes a context and a term with
-following restrictions: Terms come from [STLC][type]  with occurences of
+following restrictions: Terms come from [STLC][type] with occurrences of
 [SO-HOM-OBJ][GEB.COMMON:SO-HOM-OBJ] replaced by [FUN-TYPE][class] and should
 come without the slow of [TTYPE][generic-function] accessor filled for any of
 the subterms. Context should be a list of [SUBSTOBJ][GEB.SPEC:SUBSTOBJ] with
@@ -246,7 +246,7 @@ LAMBDA> (ttype (term (ann-term1 nil (lamb (list so1 so0) (index 0)))))
 s-1
 ```
 
-as we count indeces from the left of the context while appending new types to
+as we count indices from the left of the context while appending new types to
 the context on the left as well. For more info check [LAMB][class]
 
 Finally, note that the compilation uncurries the final morphism. That is,

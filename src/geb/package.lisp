@@ -14,7 +14,7 @@
 (in-package #:geb.main)
 
 (pax:defsection @geb-utility (:title "Utility")
-  "Various utility functions ontop of @GEB-CATEGORIES"
+  "Various utility functions on top of @GEB-CATEGORIES"
   (pair-to-list      function)
   (same-type-to-list function)
   (cleave            function)
@@ -34,7 +34,7 @@
   (uncurry           function)
   (text-name         generic-function)
 
-  "These utilities are ontop of [CAT-OBJ]"
+  "These utilities are on top of [CAT-OBJ]"
   (maybe             (method () (<substobj>)))
   (maybe             (method () (<natobj>))))
 
@@ -103,7 +103,7 @@ into other categorical data structures."
    (:mix #:geb.main #:geb.spec #:serapeum #:common-lisp)
    (:shadow :false :true :not :and :or)
    (:export
-    :bool :fasle :true :not :and :or
+    :bool :false :true :not :and :or
     #:@geb-bool)))
 
 (in-package #:geb-bool)

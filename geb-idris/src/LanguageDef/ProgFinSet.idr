@@ -342,7 +342,7 @@ bcdObjTermCata : {0 a : Type} ->
   BCDObjTermAlg a -> BicartDistTerm -> BicartDistObj -> a
 bcdObjTermCata = pfProductCata {p=BicartDistTermF} {q=BicartDistObjF}
 
--- Type-checking for terms against objects (determing whether a given general
+-- Type-checking for terms against objects (determining whether a given general
 -- term is a term of a given object).
 public export
 BicartDistTermCheckAlg : PFProductBoolAlg BicartDistTermF BicartDistObjF

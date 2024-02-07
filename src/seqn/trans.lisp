@@ -154,7 +154,7 @@ inputs and then feed them as entries to compiled MCAR"
              constraints))
 
 (defmethod to-vampir ((obj parallel-seq) inputs constraints)
-  "Compile MCAR and MCADR and then apppend the tuples"
+  "Compile MCAR and MCADR and then append the tuples"
   (let* ((mcar (mcar obj))
          (mcadr (mcadr obj))
          (lmcar (length (dom mcar))))
@@ -169,7 +169,7 @@ inputs and then feed them as entries to compiled MCAR"
 (defmethod to-vampir ((obj fork-seq) inputs constraints)
   "Given a tuple (x1,...,xn) copies it twice"
   (declare (ignore constraints))
-  ;; Since we feed in wires, simply ask for its list of wires and appent
+  ;; Since we feed in wires, simply ask for its list of wires and append
   (append inputs inputs))
 
 (defmethod to-vampir ((obj drop-nil) inputs constraints)
