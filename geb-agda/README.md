@@ -27,7 +27,7 @@ where `Fin n` is defined by pattern-matching:
     Fin (succ zero) = 𝟙
     Fin (succ (succ n)) = (Fin (succ n)) + 𝟙
 
-Hence we define a finite set as a type alongisde a proof that it is equivalent to some finite type. Interpreting MLTT in **Set**, equivalences manifest as bijections while `Σ[ n : ℕ ] Fin n` as $\omega$. We do not care for (-1)-truncating the equivalence proofs since up to (1-categorical) equivalence this will serve the exact same purpose.
+Hence we define a finite set as a type alongside a proof that it is equivalent to some finite type. Interpreting MLTT in **Set**, equivalences manifest as bijections while `Σ[ n : ℕ ] Fin n` as $\omega$. We do not care for (-1)-truncating the equivalence proofs since up to (1-categorical) equivalence this will serve the exact same purpose.
 
 We make these into objects of a category by making morphisms the $\Pi$-types between underlying types.
 
@@ -36,7 +36,7 @@ We make these into objects of a category by making morphisms the $\Pi$-types bet
 Morω : (n m : ℕ) → Type lzero
 Morω n m = Fin n → Fin m
 ```
-- `ObjGebCat` and `MorGebCat` mimic the core constructions of the Idris Geb code while making it more readable by getting rid of one of the constructors. In paticular, we establish `ObjGebCat` without using `Subst`.
+- `ObjGebCat` and `MorGebCat` mimic the core constructions of the Idris Geb code while making it more readable by getting rid of one of the constructors. In particular, we establish `ObjGebCat` without using `Subst`.
 
 Note this indeed forms category data after adding appropriate axioms, e.g. :
 

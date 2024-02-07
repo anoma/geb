@@ -43,7 +43,7 @@ X -f-> Y --> Y -g-> Z
 
 Notice that in the pair case, we have a note and a shared node to
 place down, where as in both of the [MERGE-NOTE][class] examples, the
-Note at the end is not pre-pended by any special information"
+Note at the end is not prepended by any special information"
   `(or node-note squash-note))
 
 (defclass node-note ()

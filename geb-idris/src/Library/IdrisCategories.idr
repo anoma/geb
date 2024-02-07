@@ -748,7 +748,7 @@ public export
 ComposeFObj : ObjectF -> ObjectF -> ObjectF
 ComposeFObj = (.)
 
--- The functor category also has horizonal composition.
+-- The functor category also has horizontal composition.
 public export
 ComposeFH : {f, g, h, j : ObjectF} -> Functor g =>
   MorphismF g j -> MorphismF f h -> MorphismF (ComposeT g f) (ComposeT j h)
@@ -7603,7 +7603,7 @@ data RefinedSubst0TypeF : Subst0TypeArrow -> Type where
 --------------------------------------------------------------------
 
 -- This algebra interprets the constructors of the substitution-0 category
--- as functors in the Idris type system.  This is posible because those
+-- as functors in the Idris type system.  This is possible because those
 -- functors themselves form a category, and there is a faithful functor
 -- from the substitution-0 category to that functor category.  (In other
 -- words, the functor category contains an initial object, a terminal object,
