@@ -254,7 +254,7 @@ interpCovPSSfmap c d pss sc sc' m ed (i ** di) = (i ** sliceComp {a=c} m di)
 
 record PSnt (c, d : Type) (p, q : PSS c d) where
   constructor MkPSNT
-  psntOnPos : (ed : d) -> (i : pssPos p ed) -> pssPos q ed
+  psntOnPos : SliceMorphism {a=d} (pssPos p) (pssPos q)
   psntOnDir : (ed : d) -> (i : pssPos p ed) ->
     SliceMorphism {a=c} (pssDir q ed (psntOnPos ed i)) (pssDir p ed i)
 
