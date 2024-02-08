@@ -116,21 +116,10 @@ record PolyProAr where
   ppContra : SliceObj ppPos
   ppCovar : SliceObj ppPos
 
-PPADirichConst : Type -> PolyFunc
-PPADirichConst x = (x ** \_ => Unit)
-
-PPAposDF : PolyProAr -> PolyFunc
-PPAposDF (PPA pos contra covar) = (pos ** contra)
-
-PPAdnt : (ppa : PolyProAr) ->
-  DirichNatTrans (PPAposDF ppa) (PPADirichConst Type)
-PPAdnt (PPA pos contra covar) = (covar ** \_, _ => ())
-
 InterpPPA : PolyProAr -> ProfunctorSig
-InterpPPA ppa@(PPA pos contra covar) x y =
-  (i : InterpDirichFunc (pos ** contra) x **
-   fst (InterpDirichNT {p=(PPAposDF ppa)} {q=(PPADirichConst Type)} (PPAdnt ppa) x i) -> y)
+InterpPPA (PPA pos contra covar) x y =
+  (i : pos ** (x -> contra i, covar i -> y))
 
 InterpPPAdimap : (ppa : PolyProAr) -> TypeDimapSig (InterpPPA ppa)
-InterpPPAdimap (PPA pos contra covar) s t a b mas mtb ((i ** d) ** d') =
-  ((i ** d . mas) ** mtb . d')
+InterpPPAdimap (PPA pos contra covar) s t a b mas mtb (i ** (dx, dy)) =
+  (i ** (dx . mas, mtb . dy))
