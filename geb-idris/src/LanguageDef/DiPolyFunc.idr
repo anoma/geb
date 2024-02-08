@@ -219,6 +219,28 @@ ppaCowedgeRight : (ppa : PolyProAr) -> PPASumP ppa -> PPACoendBase ppa
 ppaCowedgeRight (PPA pos contra covar) ((a, b) ** (mba, (i ** (dcont, dcov)))) =
   (a ** i ** (dcont, mba . dcov))
 
+-- Again viewing a polynomial endoprofunctor on `Type` as a slice functor
+-- from `Fin(2)` to `Fin(1)` but with different variances, we can define
+-- natural transformations in the style of slice natural transformations.
+record PPAnt (p, q : PolyProAr) where
+  constructor MkPPAnt
+  ppaOnPos : ppPos p -> ppPos q
+  ppaOnContra : (i : ppPos p) -> ppContra p i -> ppContra q (ppaOnPos i)
+  ppaOnCovar : (i : ppPos p) -> ppCovar q (ppaOnPos i) -> ppCovar p i
+
+-- Modulo coequalization, we could view the hom-profunctor as a polynomial
+-- functor whose position-set is `Type` and whose direction-slice-objects
+-- are both `id`.  Then we can ask what natural transformations to the
+-- hom-profunctor look like.
+PHomProf : PolyProAr
+PHomProf = PPA Type id id
+
+record PPAntToHom (p : PolyProAr) where
+  constructor NTtoHP
+  pthOnPos : SliceObj (ppPos p)
+  pthOnContra : SliceMorphism {a=(ppPos p)} (ppContra p) pthOnPos
+  pthOnCovar : SliceMorphism {a=(ppPos p)} pthOnPos (ppCovar p)
+
 --------------------------------------------------
 --------------------------------------------------
 ---- Experiments with natural transformations ----
