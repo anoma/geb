@@ -192,17 +192,11 @@ ppaWedgeRight (PPA pos contra covar) eb a b f with (eb a)
 public export
 PPAEnd : PolyProAr -> Type
 PPAEnd ppa@(PPA pos contra covar) =
-  (ebi : Type -> pos **
-   ebcont : (x : Type) -> x -> contra (ebi x) **
-   ebcov : (x : Type) -> covar (ebi x) -> x **
+  (ebi : pos **
+   ebcont : (x : Type) -> x -> contra ebi **
+   ebcov : (x : Type) -> covar ebi -> x **
    (a, b : Type) -> (f : a -> b) ->
-    (eqi : ebi b = ebi a ** {- so `ebi` must be const, which makes sense for parametricity -}
-     ExtEq (ebcont b . f) (ebcont a)))
-  {-
-  (eb : (x : Type) -> (i : pos ** (x -> contra i, covar i -> x)) **
-   (a, b : Type) -> (f : a -> b) ->
-   ppaWedgeLeft ppa eb a b f = ppaWedgeRight ppa eb a b f)
-   -}
+    (ExtEq (ebcont b . f) (ebcont a), ExtEq (ebcov b) (f . ebcov a)))
 
 --------------------------------------------------
 --------------------------------------------------
