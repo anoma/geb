@@ -168,6 +168,34 @@ InterpPPAdimap : (ppa : PolyProAr) -> TypeDimapSig (InterpPPA ppa)
 InterpPPAdimap (PPA pos contra covar) s t a b mas mtb (i ** (dx, dy)) =
   (i ** (dx . mas, mtb . dy))
 
+PPAEndBase : PolyProAr -> Type
+PPAEndBase ppa = (x : Type) -> InterpPPA ppa x x
+-- (x : Type) -> (i : pos ** (x -> contra i, covar i -> x))
+
+public export
+PPAProdP : PolyProAr -> Type
+PPAProdP ppa = (a, b : Type) -> (a -> b) -> InterpPPA ppa a b
+-- (a, b : Type) -> (a -> b) -> (i : pos ** (a -> contra i, covar i -> b))
+
+public export
+ppaWedgeLeft : (ppa : PolyProAr) -> PPAEndBase ppa -> PPAProdP ppa
+ppaWedgeLeft (PPA pos contra covar) eb a b f with (eb b)
+  ppaWedgeLeft (PPA pos contra covar) eb a b f | (i ** (dx, dy)) =
+    (i ** (dx . f, dy))
+
+public export
+ppaWedgeRight : (ppa : PolyProAr) -> PPAEndBase ppa -> PPAProdP ppa
+ppaWedgeRight (PPA pos contra covar) eb a b f with (eb a)
+  ppaWedgeRight (PPA pos contra covar) eb a b f | (i ** (dx, dy)) =
+    (i ** (dx, f . dy))
+
+public export
+PPAEnd : PolyProAr -> Type
+PPAEnd ppa@(PPA pos contra covar) =
+  (eb : (x : Type) -> (i : pos ** (x -> contra i, covar i -> x)) **
+   (a, b : Type) -> (f : a -> b) ->
+   ppaWedgeLeft ppa eb a b f = ppaWedgeRight ppa eb a b f)
+
 --------------------------------------------------
 --------------------------------------------------
 ---- Experiments with natural transformations ----
