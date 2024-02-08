@@ -235,6 +235,9 @@ record PPAnt (p, q : PolyProAr) where
 PHomProf : PolyProAr
 PHomProf = PPA Type id id
 
+-- Note that this structure resembles a category of elements itself,
+-- if we imagine `InterpPPA` as a functor into the slice category of
+-- `Type` over the positions of `p`.`
 record PPAntToHom (p : PolyProAr) where
   constructor NTtoHP
   pthOnPos : SliceObj (ppPos p)
