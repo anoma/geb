@@ -243,15 +243,24 @@ record PSS (c, d : Type) where
   pssPos : SliceObj d
   pssDir : (ed : d) -> pssPos ed -> SliceObj c
 
-interpCovPSS : (c, d : Type) -> PSS c d -> SliceObj c -> SliceObj d
-interpCovPSS c d pss slc eld =
+InterpCovPSS : (c, d : Type) -> PSS c d -> SliceObj c -> SliceObj d
+InterpCovPSS c d pss slc eld =
   (i : pssPos pss eld ** SliceMorphism {a=c} (pssDir pss eld i) slc)
+
+interpCovPSSfmap : (c, d : Type) -> (pss : PSS c d) -> (sc, sc' : SliceObj c) ->
+  SliceMorphism {a=c} sc sc' ->
+  SliceMorphism {a=d} (InterpCovPSS c d pss sc) (InterpCovPSS c d pss sc')
+interpCovPSSfmap c d pss sc sc' m ed (i ** di) = (i ** sliceComp {a=c} m di)
 
 record PSnt (c, d : Type) (p, q : PSS c d) where
   constructor MkPSNT
-  psntOnPosFst : (ed : d) -> pssPos p ed -> d -- Sigma {a=d} (pssPos q)
-  psntOnPosSnd : (ed : d) -> (i : pssPos p ed) -> pssPos q $ psntOnPosFst ed i
+  psntOnPos : (ed : d) -> (i : pssPos p ed) -> pssPos q ed
   psntOnDir : (ed : d) -> (i : pssPos p ed) ->
-    let pdir = pssDir p ed i in
-    let qdir = pssDir q (psntOnPosFst ed i) (psntOnPosSnd ed i) in
-    SliceMorphism {a=c} qdir pdir
+    SliceMorphism {a=c} (pssDir q ed (psntOnPos ed i)) (pssDir p ed i)
+
+InterpPSnt : (c, d : Type) -> (p, q : PSS c d) -> PSnt c d p q ->
+  (sc : SliceObj c) ->
+  SliceMorphism {a=d} (InterpCovPSS c d p sc) (InterpCovPSS c d q sc)
+InterpPSnt c d (MkPSS ppos pdir) (MkPSS qpos qdir) (MkPSNT op od)
+  sc ed (i ** pdi) =
+    (op ed i ** \ec, qdi => pdi ec $ od ed i ec qdi)
