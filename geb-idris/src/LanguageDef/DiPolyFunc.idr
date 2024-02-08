@@ -210,34 +210,6 @@ InterpPPAdimap (PPA pos contra covar) s t a b mas mtb (i ** (dx, dy)) =
 -- `SliceMorphism(sum(d)(rep(q[_])), sum(d)(rep(p[_])))`, where the morphism
 -- is still in the slice category over `c`, between `d`-indexed set-coproducts
 -- of objects of the slice category over `c`.
-
--- rep from Slice(c) to Type
-record STrep (c : Type) where
-  constructor MkST
-  pstRep : SliceObj c
-
--- covar interp
-interpCovST : (c : Type) -> STrep c -> SliceObj c -> Type
-interpCovST c (MkST rep) slc = SliceMorphism rep slc
-
--- sum of reps from Slice(c) to Type
-record PSTrep (c : Type) where
-  constructor MkPST
-  pstPos : Type
-  pstDir : pstPos -> STrep c
-
-interpCovPST : (c : Type) -> PSTrep c -> SliceObj c -> Type
-interpCovPST c (MkPST pos dir) slc =
-  (i : pos ** SliceMorphism (pstRep $ dir i) slc)
-
--- product over `d` of sum of reps from Slice(c) to Type
-PPSTrep : (c, d : Type) -> Type
-PPSTrep c d = d -> PSTrep c
-
-interpCovPPST : (c, d : Type) -> PPSTrep c d -> SliceObj c -> SliceObj d
-interpCovPPST c d ppst slc eld = interpCovPST c (ppst eld) slc
-
--- distribute PPSTrep from product of sums into sum of products
 record PSS (c, d : Type) where
   constructor MkPSS
   pssPos : SliceObj d
