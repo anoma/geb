@@ -110,16 +110,60 @@ ADSLpi {b} p {cb} (ADSO tot inj) =
 --------------------------------------------------
 --------------------------------------------------
 
+-- If we consider `ADiArena`s where `pos : Type` is `Type` itself,
+-- then, given that `ADiArena` actually has effectively the same
+-- signature as `PolyFunc`, then we are considering arenas of type
+-- `Type -> PolyFunc`.  If we absorb the type parameter into the
+-- structure, we obtain a position functor and a natural transformation
+-- from that functor to the constant functor which returns `Type`
+-- itself.
+--
+-- In order to obtain a profunctor, it turns out that we must make
+-- the position functor contravariant, i.e. into a functor not
+-- `Type -> Type`, but `op(Type) -> Type`.
+--
+-- However, that definition by itself requires multiple pieces of
+-- other attendant definitions and proof content:  the position
+-- functor requires a `contramap`, which must be proven to obey the
+-- functor laws, and the natural transformation requires a proof of
+-- the naturality condition.
+--
+-- Furthermore, it is unclear in that definition whether we should
+-- consider the resulting profunctor "polynomial", in particular because
+-- there is no constraint on the contravariant position functor.
+--
+-- Thus, we can take a further step and require that the position functor
+-- be _Dirichlet_ -- a "contravariant polynomial functor".  This provides
+-- an implicit `contramap` which is guaranteed to obey the functor laws,
+-- and furthermore provides a notion of Dirichlet natural transformation
+-- which is guaranteed to obey the naturality condition.
+--
+-- It also allows a reduction of some components of the structure,
+-- for example to eliminate functions to `Unit`, which are redundant
+-- as they can only be the unique morphism to the terminal object.
+--
+-- Once such reductions are performed, it results in the `PolyProAr`
+-- structure below.  This structure specializes to polynomial functors
+-- when all the `ppContra`s are `Unit`, and to Dirichlet functors when
+-- all the `ppCovar`s are `Void`.  It also corresponds to the notion
+-- of a slice polynomial functor where the domain is `Fin(2)` and the
+-- codomain is `Fin(1)`, which is isomorphic to just `Type` -- in
+-- effect, an uncurried form of the signature of an endoprofunctor on
+-- `Type`, i.e. `(Type, Type) -> Type` -- but interpreted so that the
+-- first parameter is contravariant.
+public export
 record PolyProAr where
   constructor PPA
   ppPos : Type
   ppContra : SliceObj ppPos
   ppCovar : SliceObj ppPos
 
+export
 InterpPPA : PolyProAr -> ProfunctorSig
 InterpPPA (PPA pos contra covar) x y =
   (i : pos ** (x -> contra i, covar i -> y))
 
+export
 InterpPPAdimap : (ppa : PolyProAr) -> TypeDimapSig (InterpPPA ppa)
 InterpPPAdimap (PPA pos contra covar) s t a b mas mtb (i ** (dx, dy)) =
   (i ** (dx . mas, mtb . dy))
