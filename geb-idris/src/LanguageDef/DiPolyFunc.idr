@@ -118,8 +118,8 @@ record PolyProAr where
 
 InterpPPA : PolyProAr -> ProfunctorSig
 InterpPPA (PPA pos contra covar) x y =
-  (i : pos ** (x -> contra i, covar i -> y, x -> y))
+  (i : pos ** (x -> contra i, covar i -> y))
 
 InterpPPAdimap : (ppa : PolyProAr) -> TypeDimapSig (InterpPPA ppa)
-InterpPPAdimap (PPA pos contra covar) s t a b mas mtb (i ** (dx, dy, mxy)) =
-  (i ** (dx . mas, mtb . dy, mtb . mxy . mas))
+InterpPPAdimap (PPA pos contra covar) s t a b mas mtb (i ** (dx, dy)) =
+  (i ** (dx . mas, mtb . dy))
