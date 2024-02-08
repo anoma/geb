@@ -112,16 +112,25 @@ ADSLpi {b} p {cb} (ADSO tot inj) =
 
 record PolyProAr where
   constructor PPA
-  ppPos : Type -> Type
-  ppContramap : (0 x, y : Type) -> (y -> x) -> ppPos x -> ppPos y
-  ppDir : NaturalTransformation ppPos (const Type)
-  ppNaturality :
-    (0 x, y : Type) -> (0 m : y -> x) ->
-    ExtEq {a=(ppPos x)} {b=Type} (ppDir x) (ppDir y . ppContramap x y m)
+  ppPos : Type
+  ppContra : SliceObj ppPos
+  ppCovar : SliceObj ppPos
+
+PPADirichConst : Type -> PolyFunc
+PPADirichConst x = (x ** \_ => Unit)
+
+PPAposDF : PolyProAr -> PolyFunc
+PPAposDF (PPA pos contra covar) = (pos ** contra)
+
+PPAdnt : (ppa : PolyProAr) ->
+  DirichNatTrans (PPAposDF ppa) (PPADirichConst Type)
+PPAdnt (PPA pos contra covar) = (covar ** \_, _ => ())
 
 InterpPPA : PolyProAr -> ProfunctorSig
-InterpPPA (PPA pos cmap dir nat) x y = (i : pos x ** dir x i -> y)
+InterpPPA ppa@(PPA pos contra covar) x y =
+  (i : InterpDirichFunc (pos ** contra) x **
+   fst (InterpDirichNT {p=(PPAposDF ppa)} {q=(PPADirichConst Type)} (PPAdnt ppa) x i) -> y)
 
 InterpPPAdimap : (ppa : PolyProAr) -> TypeDimapSig (InterpPPA ppa)
-InterpPPAdimap (PPA pos cmap dir nat) s t a b mas mtb (i ** d) =
-  (cmap s a mas i ** replace {p=(ContravarHomFunc b)} (nat s a mas i) $ mtb . d)
+InterpPPAdimap (PPA pos contra covar) s t a b mas mtb ((i ** d) ** d') =
+  ((i ** d . mas) ** mtb . d')
