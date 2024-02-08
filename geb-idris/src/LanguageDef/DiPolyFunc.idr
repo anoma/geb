@@ -167,3 +167,91 @@ export
 InterpPPAdimap : (ppa : PolyProAr) -> TypeDimapSig (InterpPPA ppa)
 InterpPPAdimap (PPA pos contra covar) s t a b mas mtb (i ** (dx, dy)) =
   (i ** (dx . mas, mtb . dy))
+
+--------------------------------------------------
+--------------------------------------------------
+---- Experiments with natural transformations ----
+--------------------------------------------------
+--------------------------------------------------
+
+-- A natural transformation between covariant representable functors `p, q` of
+-- the form `SliceObj c -> Type` is, by the Yoneda lemma, determined by a
+-- morphism in the opposite direction between their representing objects --
+-- so, `SliceMorphism(rep(q), rep(p))`.
+--
+-- If `q` is a _sum_ of representable functors (but `p` is still representable),
+-- then a natural transformation from `p` to `q` is a natural transformation
+-- into a sum, which, in the case of polynomial functors, amounts to a choice
+-- of a single one of the representing objects of the functors of which `q`
+-- is a sum.  So for `q` as a sum over `qpos` of representables, a natural
+-- transformation from a representable `p` is takes the form
+-- `(qi : qpos ** SliceMorphism (q[qi], rep(p)))`.
+--
+-- If `p` is _also_ a sum of representables, then a natural transformation
+-- from `p` to `q` is a natural transformation _from_ a sum, which is a
+-- product of natural transformations.  Thus such a transformation takes the
+-- form `(pi : ppos) -> (qi : qpos ** SliceMorphism(q[qi], p[pi]))`.
+-- We can factor this into
+-- `(onpos : ppos -> qpos ** (pi : ppos) -> SliceMorphism(q[onpos pi], p[pi]))`,
+-- which we might expand to be more explicit as
+-- `(onpos : ppos -> qpos **
+--   (pi : ppos) -> (ec : c) -> q[onpos pi](ec) -> p[pi](ec))`.
+--
+-- Finally, _any_ functor of the form `SliceObj c -> SliceObj d` can be
+-- factored into `d` functors of the form `SliceObj c -> SliceObj d`, and
+-- we know that the category of polynomial functors is closed under products,
+-- so a polynomial natural transformation between functors of the form
+-- `SliceObj(c) -> SliceObj(d)` must be a natural transformation between
+-- products:
+
+-- So if `p` and `q`
+-- of the form `SliceObj c -> SliceObj d` are both products of `d` representable
+-- functors, then a natural transformation between them takes the form
+-- `SliceMorphism(sum(d)(rep(q[_])), sum(d)(rep(p[_])))`, where the morphism
+-- is still in the slice category over `c`, between `d`-indexed set-coproducts
+-- of objects of the slice category over `c`.
+
+-- rep from Slice(c) to Type
+record STrep (c : Type) where
+  constructor MkST
+  pstRep : SliceObj c
+
+-- covar interp
+interpCovST : (c : Type) -> STrep c -> SliceObj c -> Type
+interpCovST c (MkST rep) slc = SliceMorphism rep slc
+
+-- sum of reps from Slice(c) to Type
+record PSTrep (c : Type) where
+  constructor MkPST
+  pstPos : Type
+  pstDir : pstPos -> STrep c
+
+interpCovPST : (c : Type) -> PSTrep c -> SliceObj c -> Type
+interpCovPST c (MkPST pos dir) slc =
+  (i : pos ** SliceMorphism (pstRep $ dir i) slc)
+
+-- product over `d` of sum of reps from Slice(c) to Type
+PPSTrep : (c, d : Type) -> Type
+PPSTrep c d = d -> PSTrep c
+
+interpCovPPST : (c, d : Type) -> PPSTrep c d -> SliceObj c -> SliceObj d
+interpCovPPST c d ppst slc eld = interpCovPST c (ppst eld) slc
+
+-- distribute PPSTrep from product of sums into sum of products
+record PSS (c, d : Type) where
+  constructor MkPSS
+  pssPos : SliceObj d
+  pssDir : (ed : d) -> pssPos ed -> SliceObj c
+
+interpCovPSS : (c, d : Type) -> PSS c d -> SliceObj c -> SliceObj d
+interpCovPSS c d pss slc eld =
+  (i : pssPos pss eld ** SliceMorphism {a=c} (pssDir pss eld i) slc)
+
+record PSnt (c, d : Type) (p, q : PSS c d) where
+  constructor MkPSNT
+  psntOnPosFst : (ed : d) -> pssPos p ed -> d -- Sigma {a=d} (pssPos q)
+  psntOnPosSnd : (ed : d) -> (i : pssPos p ed) -> pssPos q $ psntOnPosFst ed i
+  psntOnDir : (ed : d) -> (i : pssPos p ed) ->
+    let pdir = pssDir p ed i in
+    let qdir = pssDir q (psntOnPosFst ed i) (psntOnPosSnd ed i) in
+    SliceMorphism {a=c} qdir pdir
