@@ -170,24 +170,26 @@ InterpPPAdimap (PPA pos contra covar) s t a b mas mtb (i ** (dx, dy)) =
 
 PPAEndBase : PolyProAr -> Type
 PPAEndBase ppa = (x : Type) -> InterpPPA ppa x x
--- (x : Type) -> (i : pos ** (x -> contra i, covar i -> x))
 
+-- This could be seen as a natural transformation from the hom-profunctor
+-- to `InterpPPA ppa`.  It induces a functor from the category of
+-- elements of the hom-profunctor (which is the twisted-arrow category)
+-- to the category of elements of `InterpPPA`.
 public export
 PPAProdP : PolyProAr -> Type
 PPAProdP ppa = (a, b : Type) -> (a -> b) -> InterpPPA ppa a b
--- (a, b : Type) -> (a -> b) -> (i : pos ** (a -> contra i, covar i -> b))
-
-public export
-ppaWedgeLeft : (ppa : PolyProAr) -> PPAEndBase ppa -> PPAProdP ppa
-ppaWedgeLeft (PPA pos contra covar) eb a b f with (eb b)
-  ppaWedgeLeft (PPA pos contra covar) eb a b f | (i ** (dx, dy)) =
-    (i ** (dx . f, dy))
 
 public export
 ppaWedgeRight : (ppa : PolyProAr) -> PPAEndBase ppa -> PPAProdP ppa
 ppaWedgeRight (PPA pos contra covar) eb a b f with (eb a)
   ppaWedgeRight (PPA pos contra covar) eb a b f | (i ** (dx, dy)) =
     (i ** (dx, f . dy))
+
+public export
+ppaWedgeLeft : (ppa : PolyProAr) -> PPAEndBase ppa -> PPAProdP ppa
+ppaWedgeLeft (PPA pos contra covar) eb a b f with (eb b)
+  ppaWedgeLeft (PPA pos contra covar) eb a b f | (i ** (dx, dy)) =
+    (i ** (dx . f, dy))
 
 public export
 PPAEnd : PolyProAr -> Type
@@ -197,6 +199,25 @@ PPAEnd ppa@(PPA pos contra covar) =
    ebcov : (x : Type) -> covar ebi -> x **
    (a, b : Type) -> (f : a -> b) ->
     (ExtEq (ebcont b . f) (ebcont a), ExtEq (ebcov b) (f . ebcov a)))
+
+-- This may be viewed as an object of the category of diagonal
+-- elements of `InterpPPA ppa`.
+PPACoendBase : PolyProAr -> Type
+PPACoendBase ppa = (x : Type ** InterpPPA ppa x x)
+
+PPASumP : PolyProAr -> Type
+PPASumP ppa =
+  (ab : (Type, Type) ** (snd ab -> fst ab, InterpPPA ppa (fst ab) (snd ab)))
+
+public export
+ppaCowedgeLeft : (ppa : PolyProAr) -> PPASumP ppa -> PPACoendBase ppa
+ppaCowedgeLeft (PPA pos contra covar) ((a, b) ** (mba, (i ** (dcont, dcov)))) =
+  (b ** i ** (dcont . mba, dcov))
+
+public export
+ppaCowedgeRight : (ppa : PolyProAr) -> PPASumP ppa -> PPACoendBase ppa
+ppaCowedgeRight (PPA pos contra covar) ((a, b) ** (mba, (i ** (dcont, dcov)))) =
+  (a ** i ** (dcont, mba . dcov))
 
 --------------------------------------------------
 --------------------------------------------------
