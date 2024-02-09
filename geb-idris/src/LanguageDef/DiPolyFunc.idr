@@ -312,3 +312,55 @@ InterpPSnt : (c, d : Type) -> (p, q : PSS c d) -> PSnt c d p q ->
 InterpPSnt c d (MkPSS ppos pdir) (MkPSS qpos qdir) (MkPSNT op od)
   sc ed (i ** pdi) =
     (op ed i ** \ec, qdi => pdi ec $ od ed i ec qdi)
+
+--------------------------------------
+--------------------------------------
+---- Slice polynomial profunctors ----
+--------------------------------------
+--------------------------------------
+
+-- The data which determine a slice polynomial profunctor from
+-- `(op(Type)/d, Type/c)`, to (enriched over) `Type/v`.
+record SlProAr (d, c, v : Type) where
+  constructor SPA
+  spaPos : SliceObj v
+  spaContra : (ev : v) -> spaPos ev -> SliceObj d
+  spaCovar : (ev : v) -> spaPos ev -> SliceObj c
+
+InterpSPA : (d, c, v : Type) -> SlProAr d c v ->
+  SliceObj d -> SliceObj c -> SliceObj v
+InterpSPA d c v (SPA pos contra covar) sld slc elv =
+  (i : pos elv **
+   (SliceMorphism {a=d} sld (contra elv i),
+    SliceMorphism {a=c} (covar elv i) slc))
+
+spaLmap : (d, c, v : Type) -> (spa : SlProAr d c v) ->
+  (sld, sld' : SliceObj d) -> (slc : SliceObj c) ->
+  SliceMorphism {a=d} sld' sld ->
+  SliceMorphism {a=v}
+    (InterpSPA d c v spa sld slc)
+    (InterpSPA d c v spa sld' slc)
+spaLmap d c v (SPA pos contra covar) sld sld' slc md'd elv
+  (i ** (dd, dc)) =
+    (i ** (sliceComp {a=d} dd md'd, dc))
+
+spaRmap : (d, c, v : Type) -> (spa : SlProAr d c v) ->
+  (sld : SliceObj d) -> (slc, slc' : SliceObj c) ->
+  SliceMorphism {a=c} slc slc' ->
+  SliceMorphism {a=v}
+    (InterpSPA d c v spa sld slc)
+    (InterpSPA d c v spa sld slc')
+spaRmap d c v (SPA pos contra covar) sld slc slc' mcc' elv
+  (i ** (dd, dc)) =
+    (i ** (dd, sliceComp {a=c} mcc' dc))
+
+spaDimap : (d, c, v : Type) -> (spa : SlProAr d c v) ->
+  (sld, sld' : SliceObj d) -> (slc, slc' : SliceObj c) ->
+  SliceMorphism {a=d} sld' sld ->
+  SliceMorphism {a=c} slc slc' ->
+  SliceMorphism {a=v}
+    (InterpSPA d c v spa sld slc)
+    (InterpSPA d c v spa sld' slc')
+spaDimap d c v spa sld sld' slc slc' md'd mcc' elv =
+  spaLmap d c v spa sld sld' slc' md'd elv
+  . spaRmap d c v spa sld slc slc' mcc' elv
