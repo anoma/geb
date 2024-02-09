@@ -402,8 +402,10 @@ peaMapOnDir : (pea : PolyEnrAr) ->
 peaMapOnDir (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
   (ei ** pd) d with (edir ei) proof eeq
     peaMapOnDir (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
-      (ei ** pd) (ed ** (qd ** pcd)) | (pdi ** pdp) with (pd $ replace {p=fst} eeq ed) proof peq
-        peaMapOnDir (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
+      (ei ** pd) (ed ** (qd ** pcd)) | (pdi ** pdp)
+          with (pd $ replace {p=fst} eeq ed) proof peq
+        peaMapOnDir (PEA epos edir) (ppos ** pdir) (qpos ** qdir)
+          (onpos ** ondir)
           (ei ** pd) (ed ** (qd ** pcd)) | (pdi ** pdp) | (pi ** pdd) =
             (replace {p=fst} eeq ed **
              rewrite peq in ondir pi qd **
