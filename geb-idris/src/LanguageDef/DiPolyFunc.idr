@@ -320,47 +320,58 @@ InterpPSnt c d (MkPSS ppos pdir) (MkPSS qpos qdir) (MkPSNT op od)
 --------------------------------------
 
 -- The data which determine a slice polynomial profunctor from
--- `(op(Type)/d, Type/c)`, to (enriched over) `Type/v`.
-record SlProAr (d, c, v : Type) where
+-- `(op(Type)/d, Type/c)`, to (enriched over) `(op(Type)/u, Type/v)`.
+record SlProAr (d, c, u, v : Type) where
   constructor SPA
+  spaOpPos : SliceObj u
   spaPos : SliceObj v
+  spaOpContra : (eu : u) -> spaOpPos eu -> SliceObj d
+  spaOpCovar : (eu : u) -> spaOpPos eu -> SliceObj c
   spaContra : (ev : v) -> spaPos ev -> SliceObj d
   spaCovar : (ev : v) -> spaPos ev -> SliceObj c
 
-InterpSPA : (d, c, v : Type) -> SlProAr d c v ->
+InterpOpSPA : (d, c, u, v : Type) -> SlProAr d c u v ->
+  SliceObj d -> SliceObj c -> SliceObj u
+InterpOpSPA d c u v (SPA oppos pos opcontra opcovar contra covar) sld slc elu =
+  (i : oppos elu) ->
+    Either
+      (SliceMorphism {a=d} (opcontra elu i) sld)
+      (SliceMorphism {a=c} slc (opcovar elu i))
+
+InterpSPA : (d, c, u, v : Type) -> SlProAr d c u v ->
   SliceObj d -> SliceObj c -> SliceObj v
-InterpSPA d c v (SPA pos contra covar) sld slc elv =
+InterpSPA d c u v (SPA oppos pos opcontra opcovar contra covar) sld slc elv =
   (i : pos elv **
    (SliceMorphism {a=d} sld (contra elv i),
     SliceMorphism {a=c} (covar elv i) slc))
 
-spaLmap : (d, c, v : Type) -> (spa : SlProAr d c v) ->
+spaLmap : (d, c, u, v : Type) -> (spa : SlProAr d c u v) ->
   (sld, sld' : SliceObj d) -> (slc : SliceObj c) ->
   SliceMorphism {a=d} sld' sld ->
   SliceMorphism {a=v}
-    (InterpSPA d c v spa sld slc)
-    (InterpSPA d c v spa sld' slc)
-spaLmap d c v (SPA pos contra covar) sld sld' slc md'd elv
-  (i ** (dd, dc)) =
+    (InterpSPA d c u v spa sld slc)
+    (InterpSPA d c u v spa sld' slc)
+spaLmap d c u v (SPA oppos pos opcontra opcovar contra covar)
+  sld sld' slc md'd elv (i ** (dd, dc)) =
     (i ** (sliceComp {a=d} dd md'd, dc))
 
-spaRmap : (d, c, v : Type) -> (spa : SlProAr d c v) ->
+spaRmap : (d, c, u, v : Type) -> (spa : SlProAr d c u v) ->
   (sld : SliceObj d) -> (slc, slc' : SliceObj c) ->
   SliceMorphism {a=c} slc slc' ->
   SliceMorphism {a=v}
-    (InterpSPA d c v spa sld slc)
-    (InterpSPA d c v spa sld slc')
-spaRmap d c v (SPA pos contra covar) sld slc slc' mcc' elv
-  (i ** (dd, dc)) =
+    (InterpSPA d c u v spa sld slc)
+    (InterpSPA d c u v spa sld slc')
+spaRmap d c u v (SPA oppos pos opcontra contra opcovar covar)
+  sld slc slc' mcc' elv (i ** (dd, dc)) =
     (i ** (dd, sliceComp {a=c} mcc' dc))
 
-spaDimap : (d, c, v : Type) -> (spa : SlProAr d c v) ->
+spaDimap : (d, c, u, v : Type) -> (spa : SlProAr d c u v) ->
   (sld, sld' : SliceObj d) -> (slc, slc' : SliceObj c) ->
   SliceMorphism {a=d} sld' sld ->
   SliceMorphism {a=c} slc slc' ->
   SliceMorphism {a=v}
-    (InterpSPA d c v spa sld slc)
-    (InterpSPA d c v spa sld' slc')
-spaDimap d c v spa sld sld' slc slc' md'd mcc' elv =
-  spaLmap d c v spa sld sld' slc' md'd elv
-  . spaRmap d c v spa sld slc slc' mcc' elv
+    (InterpSPA d c u v spa sld slc)
+    (InterpSPA d c u v spa sld' slc')
+spaDimap d c u v spa sld sld' slc slc' md'd mcc' elv =
+  spaLmap d c u v spa sld sld' slc' md'd elv
+  . spaRmap d c u v spa sld slc slc' mcc' elv
