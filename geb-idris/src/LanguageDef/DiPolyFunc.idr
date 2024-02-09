@@ -364,3 +364,53 @@ spaDimap : (d, c, v : Type) -> (spa : SlProAr d c v) ->
 spaDimap d c v spa sld sld' slc slc' md'd mcc' elv =
   spaLmap d c v spa sld sld' slc' md'd elv
   . spaRmap d c v spa sld slc slc' mcc' elv
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Polynomial functors enriched over polynomial functors on `Type` ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+public export
+record PolyEnrAr where
+  constructor PEA
+  peaPos : Type
+  peaDir : peaPos -> PolyFunc
+
+export
+InterpPEA : PolyEnrAr -> PolyFunc -> PolyFunc
+InterpPEA (PEA epos edir) pf =
+  pfSetCoproductArena $ (\i : epos => pfHomObj (edir i) pf)
+
+export
+peaMapOnPos : (pea : PolyEnrAr) ->
+  (p, q : PolyFunc) -> PolyNatTrans p q ->
+  pfPos (InterpPEA pea p) -> pfPos (InterpPEA pea q)
+peaMapOnPos (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
+  (i ** d) with (edir i) proof eq
+    peaMapOnPos (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
+      (i ** d) | (pdi ** pdd) =
+        (i ** \edii => case d (replace {p=fst} eq edii) of
+          (pi ** pd) => (onpos pi ** \qdi => rewrite eq in pd (ondir pi qdi)))
+
+export
+peaMapOnDir : (pea : PolyEnrAr) ->
+  (p, q : PolyFunc) -> (alpha : PolyNatTrans p q) ->
+  (i : pfPos (InterpPEA pea p)) ->
+  pfDir {p=(InterpPEA pea q)} (peaMapOnPos pea p q alpha i) ->
+  pfDir {p=(InterpPEA pea p)} i
+peaMapOnDir (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
+  (ei ** pd) d with (edir ei) proof eeq
+    peaMapOnDir (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
+      (ei ** pd) (ed ** (qd ** pcd)) | (pdi ** pdp) with (pd $ replace {p=fst} eeq ed) proof peq
+        peaMapOnDir (PEA epos edir) (ppos ** pdir) (qpos ** qdir) (onpos ** ondir)
+          (ei ** pd) (ed ** (qd ** pcd)) | (pdi ** pdp) | (pi ** pdd) =
+            (replace {p=fst} eeq ed **
+             rewrite peq in ondir pi qd **
+             rewrite peq in case dpeq2 eeq of Refl => pcd)
+
+export
+peaMap : (pea : PolyEnrAr) ->
+  (p, q : PolyFunc) -> PolyNatTrans p q ->
+  PolyNatTrans (InterpPEA pea p) (InterpPEA pea q)
+peaMap pea p q alpha = (peaMapOnPos pea p q alpha ** peaMapOnDir pea p q alpha)
