@@ -134,6 +134,11 @@ mkDPairInjectiveSndHet :
   f ~=~ g
 mkDPairInjectiveSndHet Refl = Refl
 
+export
+dpeq2 : {0 a : Type} -> {0 b : a -> Type} -> {0 dp, dp' : DPair a b} ->
+  dp = dp' -> snd dp ~=~ snd dp'
+dpeq2 Refl = Refl
+
 public export
 showDP : {0 a : Type} -> {0 p : a -> Type} ->
   (a -> String) -> ((x : a) -> p x -> String) ->
