@@ -1810,9 +1810,8 @@ PFSliceObj'' s = (si : pfPos s) -> PFCovarRepSliceObj (pfDir {p=s} si)
 record PFSliceObj' (s : PolyFunc) where
   constructor PFS
   pfsPos : SliceObj (pfPos s)
-  pfsDir : SliceObj (Sigma {a=(pfPos s)} pfsPos)
-  pfsAssign :
-    (d : pfPDir s) -> (pi : pfsPos (fst d)) -> pfsDir ((fst d) ** pi)
+  pfsDir :
+    (si : pfPos s) -> (pi : pfsPos si) -> (dir : Type ** pfDir {p=s} si -> dir)
 
 -- The signature of the `erase` operation of a polynomial comonad, which
 -- may be viewed as a section of the polynomial functor:  that is, one
