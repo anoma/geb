@@ -7995,6 +7995,20 @@ CoprodFromToImpredId x y (onpos ** ondir) with
       (\((), ()) => rewrite fstEq eq in Refl)
       (\((), ()), () => sndEq eq)
 
+ImpredCoprod' : Type -> Type -> Type
+ImpredCoprod' x y =
+  InterpPolyFunc
+    (pfParProdClosure (ImpredCoprodDom x y) (ImpredCoprodCodom x y))
+    Unit
+
+ImpredCoprodFromPrime : (x, y : Type) -> ImpredCoprod' x y -> ImpredCoprod x y
+ImpredCoprodFromPrime x y (pos ** dir) =
+  (\_ => () ** \((), ()), () => snd $ snd (pos ((), ())) ())
+
+ImpredCoprodToPrime : (x, y : Type) -> ImpredCoprod x y -> ImpredCoprod' x y
+ImpredCoprodToPrime x y (onpos ** ondir) =
+  (\((), ()) => (() ** \() => ((), ondir ((), ()) ())) ** \_ => ())
+
 -----------------------------------------------
 ---- Products through universal properties ----
 -----------------------------------------------
