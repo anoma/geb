@@ -1779,28 +1779,40 @@ CPFSliceMorph p (q ** qp) (r ** rp) =
 ---- Arena/dependent-type-universe-style ----
 ---------------------------------------------
 
--- A polynomial functor sliced over a covariant representable functor,
--- in a dependent-type (arena) style, as opposed to the category-theoretic
--- style using a morphism to the functor being sliced over.
+-- `PFCovarRepSliceObj x` is an object of the category of polynomial
+-- functors sliced over the covariant representable represented by
+-- `x`, i.e. `CovarHom x`, in a dependent-type (arena) style.
 --
--- The natural transformation's on-positions function is the unique (constant)
--- function the the terminal object (`Unit`), since the position-set of a
--- representable functor is the terminal object.  Thus the morphism component
--- of a slice object (which is a polynomial natural transformation) is
--- determined by a dependent on-directions function, which for each position of
--- the polynomial functor which comprises the object component of the slice
--- object maps the represented object to the direction-set at that position.
+-- The position-set of a representable functor is the terminal object, so the
+-- morphism component of a slice object (which in this case is a polynomial
+-- natural transformation) is determined by a dependent on-directions function,
+-- which for each position of the polynomial functor which comprises the object
+-- component of the slice object (i.e. the domain of the morphism component)
+-- maps the represented object to the direction-set at that position.
 PFCovarRepSliceObj : Type -> Type
-PFCovarRepSliceObj x =
-  (spos : Type ** sdir : spos -> Type ** (i : spos) -> x -> sdir i)
+PFCovarRepSliceObj x = (p : PolyFunc ** (i : pfPos p) -> x -> pfDir {p} i)
 
 -- A Dirichlet functor sliced over a contravariant representable
 -- functor is a Dirichlet functor together with a Dirichlet natural
 -- transformation from that functor to the arena whose position-set is
 -- `Unit` and whose direction-set at its one position is the represented object.
 DFContravarRepSliceObj : Type -> Type
-DFContravarRepSliceObj x =
-  (spos : Type ** sdir : spos -> Type ** (i : spos) -> sdir i -> x)
+DFContravarRepSliceObj x = (p : PolyFunc ** (i : pfPos p) -> pfDir {p} i -> x)
+
+-- A slice over a coproduct is a product of slices.  So a slice object over
+-- a polynomial functor is a product of slices over covariant representable
+-- functors.
+PFSliceObj'' : PolyFunc -> Type
+PFSliceObj'' s = (si : pfPos s) -> PFCovarRepSliceObj (pfDir {p=s} si)
+
+-- If we factor out the (dependent) products in the domain of `PFSliceObj''`,
+-- and reorder some parameters, we obtain the following structure:
+record PFSliceObj' (s : PolyFunc) where
+  constructor PFS
+  pfsPos : SliceObj (pfPos s)
+  pfsDir : SliceObj (Sigma {a=(pfPos s)} pfsPos)
+  pfsAssign :
+    (d : pfPDir s) -> (pi : pfsPos (fst d)) -> pfsDir ((fst d) ** pi)
 
 -- The signature of the `erase` operation of a polynomial comonad, which
 -- may be viewed as a section of the polynomial functor:  that is, one
