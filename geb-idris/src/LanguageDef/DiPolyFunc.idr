@@ -345,6 +345,18 @@ InterpSPA d c u v (SPA oppos pos opcontra opcovar contra covar) sld slc elv =
    (SliceMorphism {a=d} sld (contra elv i),
     SliceMorphism {a=c} (covar elv i) slc))
 
+spaOpLmap : (d, c, u, v : Type) -> (spa : SlProAr d c u v) ->
+  (sld, sld' : SliceObj d) -> (slc : SliceObj c) ->
+  SliceMorphism {a=d} sld' sld ->
+  SliceMorphism {a=u}
+    (InterpOpSPA d c u v spa sld' slc)
+    (InterpOpSPA d c u v spa sld slc)
+spaOpLmap d c u v (SPA oppos pos opcontra opcovar contra covar)
+  sld sld' slc md'd elu m =
+    \i : oppos elu => case m i of
+      Left mcontra => Left $ sliceComp {a=d} md'd mcontra
+      Right mcovar => Right mcovar
+
 spaLmap : (d, c, u, v : Type) -> (spa : SlProAr d c u v) ->
   (sld, sld' : SliceObj d) -> (slc : SliceObj c) ->
   SliceMorphism {a=d} sld' sld ->
