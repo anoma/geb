@@ -8053,3 +8053,33 @@ impredBi {x} {y} {z} (f, g) ic =
 impredProdRAdj : {x, y, z : Type} -> (x -> ImpredProd y z) -> (x -> y, x -> z)
 impredProdRAdj {x} {y} {z} ic =
   (\ex => snd (ic ex) (Left ()) (), \ex => snd (ic ex) (Right ()) ())
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+---- Impredicative encodings of universal properties of internal categories ----
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+IntIsInitCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
+IntIsInitCovar c mor i =
+  (z : c) -> mor i z
+
+IntIsInitContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
+IntIsInitContra c mor i =
+  (w, z : c) -> mor w i -> mor w z
+
+IntIsTermCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
+IntIsTermCovar c mor t =
+  (w, z : c) -> mor t w -> mor t z
+
+IntIsTermContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
+IntIsTermContra c mor t =
+  (z : c) -> mor z t
+
+IntIsCoprodContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
+IntIsCoprodContra c mor x y cxy =
+  (w, z : c) -> mor w cxy -> (mor x z, mor y z) -> mor w z
+
+IntIsProdContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
+IntIsProdContra c mor x y pxy =
+  (w, z : c) -> mor w pxy -> Either (mor x z) (mor y z) -> mor w z
