@@ -8082,10 +8082,27 @@ IntIsTermContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
 IntIsTermContra c mor t =
   (w : c) -> mor w t
 
-IntIsCoprodContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
+IntIsCoprodCovar :
+  (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
+IntIsCoprodCovar c mor x y cxy =
+  (z : c) -> (mor x z, mor y z) -> mor cxy z
+
+-- This follows from `IntIsInitCoprodCovar` by post-composition (of the
+-- unique morphism after the given morphisms).  Note that coproducts come
+-- from left adjoints.
+IntIsCoprodContra :
+  (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsCoprodContra c mor x y cxy =
+  -- The following definition could equivalently be expressed as:
+  --  (w, z : c) -> mor w cxy -> Either (mor x z) (mor y z) -> mor w z
   (w, z : c) -> mor w cxy -> (mor x z, mor y z) -> mor w z
+
+IntIsProdCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
+IntIsProdCovar c mor x y pxy =
+  -- The following definition could equivalently be expressed as:
+  --  (w, z : c) -> mor w pxy -> Either (mor x z) (mor y z) -> mor w z
+  (w, z : c) -> mor w pxy -> (mor x z -> mor w z, mor y z -> mor w z)
 
 IntIsProdContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsProdContra c mor x y pxy =
-  (w, z : c) -> mor w pxy -> Either (mor x z) (mor y z) -> mor w z
+  (w : c) -> (mor w x, mor w y) -> mor w pxy
