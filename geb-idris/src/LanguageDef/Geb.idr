@@ -8064,17 +8064,23 @@ IntIsInitCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
 IntIsInitCovar c mor i =
   (z : c) -> mor i z
 
+-- This follows from `IntIsInitCovar` by post-composition (of the unique
+-- morphism after the given morphism).  Note that initial objects come
+-- from left adjoints.
 IntIsInitContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
 IntIsInitContra c mor i =
   (w, z : c) -> mor w i -> mor w z
 
+-- This follows from `IntIsTermContra` by pre-composition (of the unique
+-- morphism before the given morphism).  Note that terminal objects
+-- come from right adjoints.
 IntIsTermCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
 IntIsTermCovar c mor t =
-  (w, z : c) -> mor t w -> mor t z
+  (w, z : c) -> mor t z -> mor w z
 
 IntIsTermContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
 IntIsTermContra c mor t =
-  (z : c) -> mor z t
+  (w : c) -> mor w t
 
 IntIsCoprodContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsCoprodContra c mor x y cxy =
