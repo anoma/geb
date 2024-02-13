@@ -8064,6 +8064,9 @@ IntIsInitCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
 IntIsInitCovar c mor i =
   (z : c) -> mor i z
 
+IntHasInitCovar : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntHasInitCovar c mor = (i : c ** IntIsInitCovar c mor i)
+
 -- This follows from `IntIsInitCovar` by post-composition (of the unique
 -- morphism after the given morphism).  Note that initial objects come
 -- from left adjoints.
