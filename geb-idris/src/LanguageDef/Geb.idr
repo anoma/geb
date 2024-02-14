@@ -8085,27 +8085,37 @@ IntIsTermContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> Type
 IntIsTermContra c mor t =
   (w : c) -> mor w t
 
+IntHasTermContra : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntHasTermContra c mor = (i : c ** IntIsTermContra c mor i)
+
 IntIsCoprodCovar :
   (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsCoprodCovar c mor x y cxy =
   (z : c) -> (mor x z, mor y z) -> mor cxy z
 
--- This follows from `IntIsInitCoprodCovar` by post-composition (of the
+IntHasCoprodCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> Type
+IntHasCoprodCovar c mor x y = (cxy : c ** IntIsCoprodCovar c mor x y cxy)
+
+-- This follows from `IntIsCoprodCovar` by post-composition (of the
 -- unique morphism after the given morphisms).  Note that coproducts come
 -- from left adjoints.
 IntIsCoprodContra :
   (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsCoprodContra c mor x y cxy =
   -- The following definition could equivalently be expressed as:
-  --  (w, z : c) -> mor w cxy -> Either (mor x z) (mor y z) -> mor w z
+  -- (w, z : c) -> mor w cxy -> (mor x z -> mor w z, mor y z -> mor w z)
   (w, z : c) -> mor w cxy -> (mor x z, mor y z) -> mor w z
 
+-- This follows from `IntIsProdContra` by pre-composition (of the unique
+-- morphism before the given morphism).  Note that products come from
+-- right adjoints.
 IntIsProdCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsProdCovar c mor x y pxy =
-  -- The following definition could equivalently be expressed as:
-  --  (w, z : c) -> mor w pxy -> Either (mor x z) (mor y z) -> mor w z
-  (w, z : c) -> mor w pxy -> (mor x z -> mor w z, mor y z -> mor w z)
+  (w, z : c) -> mor pxy z -> (mor w x, mor w y) -> mor w z
 
 IntIsProdContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsProdContra c mor x y pxy =
   (w : c) -> (mor w x, mor w y) -> mor w pxy
+
+IntHasProdContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> Type
+IntHasProdContra c mor x y = (pxy : c ** IntIsProdContra c mor x y pxy)
