@@ -2,6 +2,7 @@ module LanguageDef.InternalCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import LanguageDef.SlicePolyCat
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -1372,3 +1373,51 @@ data DirichCatElemMor :
     DirichCatElemMor c mor comp (pos ** dir)
       (y ** (i ** comp y x (dir i) dm m))
       (x ** (i ** dm))
+
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+---- Slice objects in the category of polynomial endofunctors on `Type` ----
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+public export
+IntPolyCatObj : Type -> Type
+IntPolyCatObj = IntArena
+
+public export
+IntPolyCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntDifunctorSig (IntPolyCatObj c)
+IntPolyCatMor = IntDNTar
+
+public export
+MLPolyCatObj : Type
+MLPolyCatObj = IntPolyCatObj Type
+
+public export
+MLPolyCatMor : MLPolyCatObj -> MLPolyCatObj -> Type
+MLPolyCatMor = IntPolyCatMor Type HomProf
+
+public export
+MLPolyCatElemObj : MLPolyCatObj -> Type
+MLPolyCatElemObj = PolyCatElemObj Type HomProf
+
+public export
+MLPolyCatElemMor : (p : MLPolyCatObj) -> (x, y : MLPolyCatElemObj p) -> Type
+MLPolyCatElemMor = PolyCatElemMor Type HomProf typeComp
+
+public export
+MLDirichCatObj : Type
+MLDirichCatObj = IntDirichCatObj Type
+
+public export
+MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
+MLDirichCatMor = IntDirichCatMor Type HomProf
+
+public export
+MLDirichCatElemObj : MLDirichCatObj -> Type
+MLDirichCatElemObj = DirichCatElemObj Type HomProf
+
+public export
+MLDirichCatElemMor : (ar : MLDirichCatObj) ->
+  MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
+MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
