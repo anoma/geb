@@ -7963,6 +7963,7 @@ ImpredCoprodDom x y = pfProductArena (PFHomArena x) (PFHomArena y)
 ImpredCoprodCodom : Type -> Type -> PolyFunc
 ImpredCoprodCodom _ _ = PFIdentityArena
 
+-- Compare `IntIsCoprodContra`.
 ImpredCoprod : Type -> Type -> Type
 ImpredCoprod x y = PolyNatTrans (ImpredCoprodDom x y) (ImpredCoprodCodom x y)
 
@@ -8054,6 +8055,27 @@ impredProdRAdj : {x, y, z : Type} -> (x -> ImpredProd y z) -> (x -> y, x -> z)
 impredProdRAdj {x} {y} {z} ic =
   (\ex => snd (ic ex) (Left ()) (), \ex => snd (ic ex) (Right ()) ())
 
+ImpredProdDomPar : Type -> Type -> PolyFunc
+ImpredProdDomPar x y = pfParProductArena (PFHomArena x) (PFHomArena y)
+
+ImpredProdCodomPar : Type -> Type -> PolyFunc
+ImpredProdCodomPar _ _ = PFIdentityArena
+
+-- Compare `IntIsProdContra`, as well as `ImpredProd` and `ImpredCoprod`.
+ImpredProdPar : Type -> Type -> Type
+ImpredProdPar x y = PolyNatTrans (ImpredProdDomPar x y) (ImpredProdCodomPar x y)
+
+ImpredProdFromPar : (x, y : Type) -> ImpredProd x y -> ImpredProdPar x y
+ImpredProdFromPar x y (pos ** dir) =
+  (\_ => () ** \((), ()), () => (dir (Left()) (), dir (Right ()) ()))
+
+ImpredProdToPar : (x, y : Type) -> ImpredProdPar x y -> ImpredProd x y
+ImpredProdToPar x y (onpos ** ondir) =
+  (\_ => () ** \eu, () =>
+    case eu of
+      Left () => fst $ ondir ((), ()) ()
+      Right () => snd $ ondir ((), ()) ())
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Impredicative encodings of universal properties of internal categories ----
@@ -8088,6 +8110,7 @@ IntIsTermContra c mor t =
 IntHasTermContra : (c : Type) -> (mor : IntDifunctorSig c) -> Type
 IntHasTermContra c mor = (i : c ** IntIsTermContra c mor i)
 
+-- Compare `ImpredCoprod`.
 IntIsCoprodCovar :
   (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsCoprodCovar c mor x y cxy =
@@ -8113,6 +8136,7 @@ IntIsProdCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsProdCovar c mor x y pxy =
   (w, z : c) -> mor pxy z -> (mor w x, mor w y) -> mor w z
 
+-- Compare `ImpredProdPar`.
 IntIsProdContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsProdContra c mor x y pxy =
   (w : c) -> (mor w x, mor w y) -> mor w pxy
