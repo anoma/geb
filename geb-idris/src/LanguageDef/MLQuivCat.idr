@@ -6,6 +6,7 @@ import LanguageDef.Quiver
 import LanguageDef.PolyCat
 import LanguageDef.Geb
 import LanguageDef.InternalCat
+import LanguageDef.SlicePolyCat
 
 -------------------------------------
 -------------------------------------
