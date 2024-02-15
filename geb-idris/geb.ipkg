@@ -5,10 +5,14 @@ modules =
     , Library.IdrisUtils
     , Library.IdrisCategories
     , Library.CategoryTheory
+    , Library.IdrisAlgebra
     , Test.TestLibrary
     , Library.Test.IdrisUtilsTest
     , Library.Test.IdrisCategoriesTest
     , Library.Test.CategoryTheoryTest
+    , Library.Test.IdrisAlgebraTest
+    , LanguageDef.InternalCat
+    , LanguageDef.SlicePolyCat
     , LanguageDef.DisliceCat
     , LanguageDef.DiPolyFunc
     , LanguageDef.Quiver
@@ -36,6 +40,8 @@ modules =
     , LanguageDef.ComputationalEffects
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
+    , LanguageDef.Test.InternalCatTest
+    , LanguageDef.Test.SlicePolyCatTest
     , LanguageDef.Test.DisliceCatTest
     , LanguageDef.Test.QuiverTest
     , LanguageDef.Test.MLQuivCatTest
