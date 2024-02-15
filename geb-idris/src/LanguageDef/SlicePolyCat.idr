@@ -3,55 +3,12 @@ module LanguageDef.SlicePolyCat
 import Library.IdrisUtils
 import Library.IdrisCategories
 import public LanguageDef.PolyCat
-import public LanguageDef.InternalCat
 
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
 ---- Slice objects in the category of polynomial endofunctors on `Type` ----
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
-
-public export
-IntPolyCatObj : Type -> Type
-IntPolyCatObj = IntArena
-
-public export
-IntPolyCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
-  IntDifunctorSig (IntPolyCatObj c)
-IntPolyCatMor = IntDNTar
-
-public export
-MLPolyCatObj : Type
-MLPolyCatObj = IntPolyCatObj Type
-
-public export
-MLPolyCatMor : MLPolyCatObj -> MLPolyCatObj -> Type
-MLPolyCatMor = IntPolyCatMor Type HomProf
-
-public export
-MLPolyCatElemObj : MLPolyCatObj -> Type
-MLPolyCatElemObj = PolyCatElemObj Type HomProf
-
-public export
-MLPolyCatElemMor : (p : MLPolyCatObj) -> (x, y : MLPolyCatElemObj p) -> Type
-MLPolyCatElemMor = PolyCatElemMor Type HomProf typeComp
-
-public export
-MLDirichCatObj : Type
-MLDirichCatObj = IntDirichCatObj Type
-
-public export
-MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
-MLDirichCatMor = IntDirichCatMor Type HomProf
-
-public export
-MLDirichCatElemObj : MLDirichCatObj -> Type
-MLDirichCatElemObj = DirichCatElemObj Type HomProf
-
-public export
-MLDirichCatElemMor : (ar : MLDirichCatObj) ->
-  MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
-MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
 
 ----------------------------------
 ---- Category-theoretic style ----
@@ -205,9 +162,10 @@ PFSliceOver1 : PFSliceObj PFTerminalArena -> PolyFunc
 PFSliceOver1 psl = PFSliceOverConst {x=Unit} psl ()
 
 PFAppI : {p : PolyFunc} ->
-  (el : MLDirichCatElemObj p) ->
-  PFSliceObj p -> PFSliceObj (PFHomArena $ fst el)
-PFAppI {p=p@(_ ** _)} (ty ** i ** d) =
+  {- these two parameters form an object of the category of elements of `p` -}
+  (ty : Type) -> (el : InterpDirichFunc p ty) ->
+  PFSliceObj p -> PFSliceObj (PFHomArena ty)
+PFAppI {p=p@(_ ** _)} ty (i ** d) =
   PFBaseChange {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
 
 -- By analogy with the application of a `SliceObj x` in `Type` to a term
@@ -222,7 +180,7 @@ PFAppI {p=p@(_ ** _)} (ty ** i ** d) =
 -- to select as the result.
 PFApp1 : {p : PolyFunc} -> pfPos p -> PFSliceObj p -> PolyFunc
 PFApp1 {p=p@(pos ** dir)} i slp =
-  PFSliceOver1 $ PFAppI {p} (Void ** i ** \v => void v) slp
+  PFSliceOver1 $ PFAppI {p} Void (i ** \v => void v) slp
 
 -- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
 -- the same `onpos` component, so we can constrain the slice morphisms as
