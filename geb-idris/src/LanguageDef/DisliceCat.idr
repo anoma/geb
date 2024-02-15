@@ -2,6 +2,7 @@ module LanguageDef.DisliceCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import LanguageDef.InternalCat
 
 --------------------------------------
 --------------------------------------
