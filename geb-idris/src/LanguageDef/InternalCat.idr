@@ -1421,3 +1421,27 @@ public export
 MLDirichCatElemMor : (ar : MLDirichCatObj) ->
   MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
 MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
+
+----------------------------------------------------
+----------------------------------------------------
+---- Slice categories as categories of elements ----
+----------------------------------------------------
+----------------------------------------------------
+
+public export
+ParamCovarHom : ParamPolyFunc Type
+ParamCovarHom = PFHomArena
+
+public export
+PFSliceObj : PolyFunc
+PFSliceObj = ParamPolyFuncToPolyFunc ParamCovarHom
+
+public export
+InterpPFSliceObj : (a : Type) -> InterpPolyFunc PFSliceObj a ->
+  (b : Type ** b -> a)
+InterpPFSliceObj a ((b ** ()) ** m) = (b ** m)
+
+public export
+InterpPFSliceMor : (a, a' : Type) -> InterpPolyFunc PFSliceObj a ->
+  (a -> a') -> InterpPolyFunc PFSliceObj a'
+InterpPFSliceMor a a' ((b ** ()) ** m) m' = ((b ** ()) ** m' . m)
