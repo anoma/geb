@@ -454,8 +454,9 @@ PFDirCatElemMor {p=(pos ** dir)} x y = x = y
 -- underlying the given object of the category of elements.)
 export
 PolyExpToDialg : (p, q : PolyFunc) ->
-  (x : Type) -> InterpPolyFunc (pfHomObj p q) x ->
-  Dialgebra (InterpPolyFunc p) (InterpPolyFunc q) x
+  NaturalTransformation
+    (InterpPolyFunc (pfHomObj p q))
+    (Dialgebra (InterpPolyFunc p) (InterpPolyFunc q))
 PolyExpToDialg (ppos ** pdir) (qpos ** qdir) x (i ** d) (pi ** pd) =
   (fst (i pi) ** \qdi => ret pi pd qdi)
   where
