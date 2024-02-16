@@ -709,6 +709,78 @@ public export
 pfEval : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena (pfHomObj p q) p) q
 pfEval p q = (pfEvalOnPos p q ** pfEvalOnDir p q)
 
+public export
+pfCurryOnPos1 :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  ppos -> qpos -> rpos
+pfCurryOnPos1 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi =
+  onpos (pi, qi)
+
+public export
+pfCurryOnPos2 :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  (pi : ppos) -> (qi : qpos) ->
+  rdir (pfCurryOnPos1 ppos qpos rpos pdir qdir rdir alpha pi qi) ->
+  Either () (qdir qi)
+pfCurryOnPos2 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi rd
+    with (ondir (pi, qi) rd)
+  pfCurryOnPos2 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi rd |
+    Left pd = Left ()
+  pfCurryOnPos2 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi rd |
+    Right qd = Right qd
+
+public export
+pfCurryOnPos :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  ppos -> pfPos (pfHomObj (qpos ** qdir) (rpos ** rdir))
+pfCurryOnPos ppos qpos rpos pdir qdir rdir alpha pi qi =
+  (pfCurryOnPos1 ppos qpos rpos pdir qdir rdir alpha pi qi **
+   pfCurryOnPos2 ppos qpos rpos pdir qdir rdir alpha pi qi)
+
+public export
+pfCurryOnDir :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  (pi : ppos) ->
+  pfDir {p=(pfHomObj (qpos ** qdir) (rpos ** rdir))}
+    (pfCurryOnPos ppos qpos rpos pdir qdir rdir alpha pi) ->
+  pfDir {p=(ppos ** pdir)} pi
+pfCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
+  pi (qi ** rd ** cd) with (ondir (pi, qi) rd) proof eq
+    pfCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
+      pi (qi ** rd ** ()) | Left pd =
+        pd
+    pfCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
+      pi (qi ** rd ** v) | Right qd =
+        void v
+
+public export
+pfCurry : (p, q, r : PolyFunc) ->
+  PolyNatTrans (pfProductArena p q) r ->
+  PolyNatTrans p (pfHomObj q r)
+pfCurry (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) alpha =
+  (pfCurryOnPos ppos qpos rpos pdir qdir rdir alpha **
+   pfCurryOnDir ppos qpos rpos pdir qdir rdir alpha)
+
 -- Formula 4.75 from "Polynomial Functors: A General Theory of Interaction".
 -- See also the section on formula 3.82 below.
 public export
