@@ -860,6 +860,34 @@ public export
 pfMonomialArena : Type -> Type -> PolyFunc
 pfMonomialArena a b = (pfMonomialPos a b ** pfMonomialDir a b)
 
+-- Applying a polynomial functor to a type `a` yields the set of natural
+-- transformations from the covariant representable represented by `a` to
+-- that functor.  Indeed, this is true of any functor -- that's just one
+-- form of the Yoneda lemma.
+--
+-- Thus, the category of elements of a (polynomial, or otherwise) functor is
+-- the category of natural transformations from covariant representables
+-- to that polynomial functor.
+public export
+PolyRepNT : (p : PolyFunc) ->
+  (a : Type) -> InterpPolyFunc p a -> PolyNatTrans (PFHomArena a) p
+PolyRepNT (pos ** dir) a (i ** d) = (\() => i ** \() => d)
+
+-- Equivalent to a natural transformation to the identity functor.
+public export
+PFSection : PolyFunc -> Type
+PFSection p = Pi {a=(pfPos p)} $ pfDir {p}
+
+-- A natural transformation out of a sum is a product of natural
+-- transformations.  Therefore, a natural transformation out of a
+-- polynomial functor is a product of natural transformations out of
+-- covariant representables.
+public export
+PolyRepNTProd : (p, q : PolyFunc) ->
+  PFSection (PolyLKanExt p q) -> PolyNatTrans p q
+PolyRepNTProd (ppos ** pdir) q alpha =
+  (\i => fst (alpha i) ** \i, d => snd (alpha i) d)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Composition of natural transformations ----
