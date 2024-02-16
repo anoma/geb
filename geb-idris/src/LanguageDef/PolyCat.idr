@@ -709,7 +709,7 @@ public export
 pfEval : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena (pfHomObj p q) p) q
 pfEval p q = (pfEvalOnPos p q ** pfEvalOnDir p q)
 
--- Formula 3.78 from "Polynomial Functors: A General Theory of Interaction".
+-- Formula 4.75 from "Polynomial Functors: A General Theory of Interaction".
 -- See also the section on formula 3.82 below.
 public export
 pfParProdClosure : PolyFunc -> PolyFunc -> PolyFunc
@@ -727,11 +727,11 @@ public export
 pfParProdClosureDir : (p, q : PolyFunc) -> pfParProdClosurePos p q -> Type
 pfParProdClosureDir p q = pfDir {p=(pfParProdClosure p q)}
 
--- Formula 3.82 from "Polynomial Functors: A General Theory of Interaction":
+-- Formula 4.79 from "Polynomial Functors: A General Theory of Interaction":
 -- this is isomorphic to `pfParProdClosure` (that isomorphism shows that
 -- `pfParProdClosure` can be used as a way of computing the natural
 -- transformations between polynomial functors as the positions of a polynomial
--- functor).  See the section on formula 3.78 above.
+-- functor).  See the section on formula 4.75 above.
 public export
 pfParProdClosurePosNT : PolyFunc -> PolyFunc -> Type
 pfParProdClosurePosNT = PolyNatTrans
