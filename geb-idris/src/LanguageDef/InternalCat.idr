@@ -1151,6 +1151,9 @@ IntIsCoprodCovar c mor x y cxy =
 IntHasCoprodCovar : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> Type
 IntHasCoprodCovar c mor x y = (cxy : c ** IntIsCoprodCovar c mor x y cxy)
 
+IntHasAllCoprodCovar : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntHasAllCoprodCovar c mor = (x, y : c) -> IntHasCoprodCovar c mor x y
+
 -- This follows from `IntIsCoprodCovar` by post-composition (of the
 -- unique morphism after the given morphisms).  Note that coproducts come
 -- from left adjoints.
@@ -1175,6 +1178,9 @@ IntIsProdContra c mor x y pxy =
 
 IntHasProdContra : (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> Type
 IntHasProdContra c mor x y = (pxy : c ** IntIsProdContra c mor x y pxy)
+
+IntHasAllProdContra : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntHasAllProdContra c mor = (x, y : c) -> IntHasProdContra c mor x y
 
 --------------------------------------
 --------------------------------------
