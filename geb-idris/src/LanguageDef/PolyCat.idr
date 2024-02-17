@@ -960,6 +960,95 @@ PolyRepNTProd : (p, q : PolyFunc) ->
 PolyRepNTProd (ppos ** pdir) q alpha =
   (\i => fst (alpha i) ** \i, d => snd (alpha i) d)
 
+---------------------------------------
+---------------------------------------
+---- Universal morphisms in `Poly` ----
+---------------------------------------
+---------------------------------------
+
+public export
+polyFromInitOnPos : (p : PolyFunc) -> pfPos PFInitialArena -> pfPos p
+polyFromInitOnPos p v = void v
+
+public export
+polyFromInitOnDir : (p : PolyFunc) ->
+  (i : pfPos PFInitialArena) ->
+  pfDir {p} (polyFromInitOnPos p i) -> pfDir {p=PFInitialArena} i
+polyFromInitOnDir p v = void v
+
+public export
+polyFromInit : (p : PolyFunc) -> PolyNatTrans PFInitialArena p
+polyFromInit p = (polyFromInitOnPos p ** polyFromInitOnDir p)
+
+public export
+polyToTermOnPos : (p : PolyFunc) -> pfPos p -> pfPos PFTerminalArena
+polyToTermOnPos p _ = ()
+
+public export
+polyToTermOnDir : (p : PolyFunc) ->
+  (i : pfPos p) ->
+  pfDir {p=PFTerminalArena} (polyToTermOnPos p i) -> pfDir {p} i
+polyToTermOnDir p _ v = void v
+
+public export
+polyToTerm : (p : PolyFunc) -> PolyNatTrans p PFTerminalArena
+polyToTerm p = (polyToTermOnPos p ** polyToTermOnDir p)
+
+public export
+polyInjLOnPos : (p, q : PolyFunc) -> pfPos p -> pfPos (pfCoproductArena p q)
+polyInjLOnPos (ppos ** pdir) (qpos ** qdir) i = Left i
+
+public export
+polyInjLOnDir : (p, q : PolyFunc) ->
+  (i : pfPos p) ->
+  pfDir {p=(pfCoproductArena p q)} (polyInjLOnPos p q i) -> pfDir {p} i
+polyInjLOnDir (ppos ** pdir) (qpos ** qdir) i d = d
+
+public export
+polyInjL : (p, q : PolyFunc) -> PolyNatTrans p (pfCoproductArena p q)
+polyInjL p q = (polyInjLOnPos p q ** polyInjLOnDir p q)
+
+public export
+polyInjROnPos : (p, q : PolyFunc) -> pfPos q -> pfPos (pfCoproductArena p q)
+polyInjROnPos (ppos ** pdir) (qpos ** qdir) i = Right i
+
+public export
+polyInjROnDir : (p, q : PolyFunc) ->
+  (i : pfPos q) ->
+  pfDir {p=(pfCoproductArena p q)} (polyInjROnPos p q i) -> pfDir {p=q} i
+polyInjROnDir (ppos ** pdir) (qpos ** qdir) i d = d
+
+public export
+polyInjR : (p, q : PolyFunc) -> PolyNatTrans q (pfCoproductArena p q)
+polyInjR p q = (polyInjROnPos p q ** polyInjROnDir p q)
+
+public export
+polyCaseOnPos : (p, q, r : PolyFunc) ->
+  PolyNatTrans p r -> PolyNatTrans q r ->
+  pfPos (pfCoproductArena p q) -> pfPos r
+polyCaseOnPos (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pronpos ** prondir) (qronpos ** qrondir) pqi =
+    case pqi of
+      Left pqi => pronpos pqi
+      Right pqi => qronpos pqi
+
+public export
+polyCaseOnDir : (p, q, r : PolyFunc) ->
+  (f : PolyNatTrans p r) -> (g : PolyNatTrans q r) ->
+  (i : pfPos (pfCoproductArena p q)) ->
+  pfDir {p=r} (polyCaseOnPos p q r f g i) -> pfDir {p=(pfCoproductArena p q)} i
+polyCaseOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pronpos ** prondir) (qronpos ** qrondir) (Left pi) rd =
+    prondir pi rd
+polyCaseOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pronpos ** prondir) (qronpos ** qrondir) (Right qi) rd =
+    qrondir qi rd
+
+public export
+polyCase : (p, q, r : PolyFunc) ->
+  PolyNatTrans p r -> PolyNatTrans q r -> PolyNatTrans (pfCoproductArena p q) r
+polyCase p q r f g = (polyCaseOnPos p q r f g ** polyCaseOnDir p q r f g)
+
 ------------------------------------------------
 ------------------------------------------------
 ---- Composition of natural transformations ----
