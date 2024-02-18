@@ -14,6 +14,14 @@ import LanguageDef.Quiver
 ---- Internal to and enriched over `Type` ----
 ----------------------------------------------
 
+public export
+TypeQuivPreshfSig : (v : Type) -> Type
+TypeQuivPreshfSig = SliceObj
+
+public export
+TypeQuivCopreshfSig : (v : Type) -> Type
+TypeQuivCopreshfSig = SliceObj
+
 -- Given a quiver internal to and enriched over `Type` and a slice object
 -- over its vertex object -- the latter of which may be treated as the
 -- object-map component of a functor from the free category on the quiver to
@@ -21,7 +29,8 @@ import LanguageDef.Quiver
 -- it is covariant) -- this is the type of the morphism-map component of such a
 -- contravariant functor (presheaf).
 public export
-TypeQuivPreshfMmap : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
+TypeQuivPreshfMmap : {v : Type} ->
+  TypeQuivV v -> TypeQuivPreshfSig v -> Type
 TypeQuivPreshfMmap {v} q sl =
   (dom, cod : v) -> q (cod, dom) -> sl dom -> sl cod
 
@@ -32,7 +41,8 @@ TypeQuivPreshfMmap {v} q sl =
 -- it is covariant) -- this is the type of the morphism-map component of such a
 -- covariant functor (copresheaf).
 public export
-TypeQuivCopreshfMmap : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
+TypeQuivCopreshfMmap : {v : Type} ->
+  TypeQuivV v -> TypeQuivCopreshfSig v -> Type
 TypeQuivCopreshfMmap {v} q sl =
   (dom, cod : v) -> q (dom, cod) -> sl dom -> sl cod
 
@@ -47,7 +57,8 @@ TypeQuivCopreshfMmap {v} q sl =
 -- it is covariant) -- this is the type of the morphism-map component of such a
 -- contravariant functor (presheaf).
 public export
-FinEnrQuivPreshfMmap : {v : Type} -> FinEnrQuivV v -> SliceObj v -> Type
+FinEnrQuivPreshfMmap : {v : Type} ->
+  FinEnrQuivV v -> TypeQuivPreshfSig v -> Type
 FinEnrQuivPreshfMmap {v} q = TypeQuivPreshfMmap {v} (Fin . q)
 
 -- Given a quiver internal to `Type` but enriched over `FinSet`, and a slice
@@ -57,7 +68,8 @@ FinEnrQuivPreshfMmap {v} q = TypeQuivPreshfMmap {v} (Fin . q)
 -- it is covariant) -- this is the type of the morphism-map component of such a
 -- contravariant functor (presheaf).
 public export
-FinEnrQuivCopreshfMmap : {v : Type} -> FinEnrQuivV v -> SliceObj v -> Type
+FinEnrQuivCopreshfMmap : {v : Type} ->
+  FinEnrQuivV v -> TypeQuivCopreshfSig v -> Type
 FinEnrQuivCopreshfMmap {v} q = TypeQuivCopreshfMmap {v} (Fin . q)
 
 ------------------------------------------------
@@ -89,13 +101,13 @@ FinQuivCopreshfMmap {n} q = TypeQuivCopreshfMmap {v=(Fin n)} (Fin . q)
 public export
 record TQPresheaf (v : Type) (e : TypeQuivV v) where
   constructor TQPre
-  tqpOmap : SliceObj v
+  tqpOmap : TypeQuivPreshfSig v
   tqpFmap : TypeQuivPreshfMmap {v} e tqpOmap
 
 public export
 record TQCopresheaf (v : Type) (e : TypeQuivV v) where
   constructor TQCopre
-  tqcOmap : SliceObj v
+  tqcOmap : TypeQuivCopreshfSig v
   tqcFmap : TypeQuivCopreshfMmap {v} e tqcOmap
 
 -----------------------------------------------------------------
