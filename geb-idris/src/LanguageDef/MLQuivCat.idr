@@ -96,11 +96,11 @@ record TQCopresheaf (v : Type) (e : TypeQuivV v) where
   tqcOmap : SliceObj v
   tqcFmap : TypeQuivCopreshfMmap {v} e tqcOmap
 
--------------------------------------
--------------------------------------
----- Kan extensions from quivers ----
--------------------------------------
--------------------------------------
+-----------------------------------------------
+-----------------------------------------------
+---- Profunctors ("prosheaves") on quivers ----
+-----------------------------------------------
+-----------------------------------------------
 
 public export
 TypeQuivDimapSig : {v : Type} -> TypeQuivV v -> (v -> v -> Type) -> Type
