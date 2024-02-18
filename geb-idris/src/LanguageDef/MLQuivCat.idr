@@ -3,10 +3,6 @@ module LanguageDef.MLQuivCat
 import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.Quiver
-import LanguageDef.PolyCat
-import LanguageDef.Geb
-import LanguageDef.InternalCat
-import LanguageDef.SlicePolyCat
 
 -------------------------------------
 -------------------------------------
@@ -222,57 +218,3 @@ TypeQuivLKanExtBase {v} q slv fm =
 public export
 TypeQuivLKanSumP : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
 TypeQuivLKanSumP {v} q slv = TypeQuivSumP {v} q (TypeQuivKanExtProf {v} slv)
-
-----------------------------
-----------------------------
----- Generalized arenas ----
-----------------------------
-----------------------------
-
---------------------
----- Telescopes ----
---------------------
-
-data MLTelFPos : (tl : Type) -> Type where
-  MLUnitPos : {0 tl : Type} -> MLTelFPos tl
-  MLDPairPos : {0 tl : Type} -> SliceObj tl -> MLTelFPos tl
-
-MLTelFDir : Sigma {a=Type} MLTelFPos -> Type
-MLTelFDir (tl ** MLUnitPos) = Void
-MLTelFDir (tl ** (MLDPairPos {tl} sl)) = Unit
-
-MLTelFAssign : Sigma {a=(Sigma {a=Type} MLTelFPos)} MLTelFDir -> Type
-MLTelFAssign ((tl ** MLUnitPos) ** v) = void v
-MLTelFAssign ((tl ** (MLDPairPos {tl} sl)) ** ()) = Sigma {a=tl} sl
-
-MLTelF : SlicePolyEndoFunc Type
-MLTelF = (MLTelFPos ** MLTelFDir ** MLTelFAssign)
-
-MLTel : Type -> Type
-MLTel = SPFMu MLTelF
-
-MLFreeTel : SliceEndofunctor Type
-MLFreeTel = SlicePolyFree MLTelF
-
-------------------------------------------------
-------------------------------------------------
----- Slice categories of Dirichlet functors ----
-------------------------------------------------
-------------------------------------------------
-
-CDFSliceObj : MLDirichCatObj -> Type
-CDFSliceObj p = (q : MLDirichCatObj ** DirichNatTrans q p)
-
-0 CDFNatTransEq :
-  (p, q : MLDirichCatObj) -> (alpha, beta : DirichNatTrans p q) -> Type
-CDFNatTransEq (ppos ** pdir) (qpos ** qdir)
-  (aonpos ** aondir) (bonpos ** bondir) =
-    Exists0
-      (ExtEq {a=ppos} {b=qpos} aonpos bonpos)
-      $ \onposeq =>
-        (i : ppos) -> (d : pdir i) ->
-        bondir i d = replace {p=qdir} (onposeq i) (aondir i d)
-
-CDFSliceMorph : (p : MLDirichCatObj) -> CDFSliceObj p -> CDFSliceObj p -> Type
-CDFSliceMorph p (q ** qp) (r ** rp) =
-  Subset0 (DirichNatTrans q r) (\qr => CDFNatTransEq q p qp (dntVCatComp rp qr))

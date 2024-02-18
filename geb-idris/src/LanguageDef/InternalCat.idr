@@ -2,7 +2,7 @@ module LanguageDef.InternalCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
-import LanguageDef.SlicePolyCat
+import LanguageDef.PolyCat
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
