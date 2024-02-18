@@ -105,16 +105,20 @@ record TQCopresheaf (v : Type) (e : TypeQuivV v) where
 -----------------------------------------------------------------
 
 public export
-TypeQuivDimapSig : {v : Type} -> TypeQuivV v -> (v -> v -> Type) -> Type
+TypeQuivProshfSig : (v : Type) -> Type
+TypeQuivProshfSig v = v -> v -> Type
+
+public export
+TypeQuivDimapSig : {v : Type} -> TypeQuivV v -> TypeQuivProshfSig v -> Type
 TypeQuivDimapSig {v} q p =
   (a, b, c, d : v) -> q (c, a) -> q (b, d) -> p a b -> p c d
 
 public export
-TypeQuivLmapSig : {v : Type} -> TypeQuivV v -> (v -> v -> Type) -> Type
+TypeQuivLmapSig : {v : Type} -> TypeQuivV v -> TypeQuivProshfSig v -> Type
 TypeQuivLmapSig {v} q p = (a, b, c : v) -> q (b, a) -> p a c -> p b c
 
 public export
-TypeQuivRmapSig : {v : Type} -> TypeQuivV v -> (v -> v -> Type) -> Type
+TypeQuivRmapSig : {v : Type} -> TypeQuivV v -> TypeQuivProshfSig v -> Type
 TypeQuivRmapSig {v} q p = (a, b, c : v) -> q (a, b) -> p c a -> p c b
 
 ---------------------------------
