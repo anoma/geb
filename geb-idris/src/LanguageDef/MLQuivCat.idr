@@ -97,12 +97,10 @@ record TQPresheaf (v : Type) (e : TypeQuivV v) where
   tqpOmap : SliceObj v
   tqpFmap : TypeQuivPreshfMmap {v} e tqpOmap
 
--- A category defined by a presheaf defined by a quiver.
-record TQCat where
-  constructor TQC
-  tqcObj : Type
-  -- tqcRep : Type
-  -- tqcPrshf : tqcObj -> TQPresheaf tqcRep
+record TQCopresheaf (v : Type) (e : TypeQuivV v) where
+  constructor TQCopre
+  tqcOmap : SliceObj v
+  tqcFmap : TypeQuivCopreshfMmap {v} e tqcOmap
 
 --------------------------------------------------
 --------------------------------------------------
