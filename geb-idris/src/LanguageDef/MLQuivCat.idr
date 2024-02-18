@@ -133,20 +133,22 @@ public export
 TypeQuivRmapSig : {v : Type} -> TypeQuivV v -> TypeQuivProshfSig v -> Type
 TypeQuivRmapSig {v} q p = (a, b, c : v) -> q (a, b) -> p c a -> p c b
 
---------------------------------------------------
---------------------------------------------------
----- Functors in free-(co)presheaf categories ----
---------------------------------------------------
---------------------------------------------------
+-------------------------------------------------------
+-------------------------------------------------------
+---- Functors in free-(co)presheaf double category ----
+-------------------------------------------------------
+-------------------------------------------------------
 
--- The object-map component of a functor in a presheaf category.
+-- The object-map component of a functor in the double category of presheaf
+-- categories.
 public export
-TypeQuivPreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
-TypeQuivPreshfFunctor {v} {w} qv qw =
+TypeQuivPreshfDFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
+TypeQuivPreshfDFunctor {v} {w} qv qw =
   TQPresheaf v qv -> TQPresheaf w qw
 
--- The object-map component of a functor in a copresheaf category.
+-- The object-map component of a functor in the double category of copresheaf
+-- categories.
 public export
-TypeQuivCopreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
-TypeQuivCopreshfFunctor {v} {w} qv qw =
+TypeQuivCopreshfDFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
+TypeQuivCopreshfDFunctor {v} {w} qv qw =
   TQCopresheaf v qv -> TQCopresheaf w qw
