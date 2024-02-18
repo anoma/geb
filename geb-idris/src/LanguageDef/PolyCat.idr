@@ -949,9 +949,9 @@ polyCaseOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
     qrondir qi rd
 
 public export
-polyCase : (p, q, r : PolyFunc) ->
+polyCase : {p, q, r : PolyFunc} ->
   PolyNatTrans p r -> PolyNatTrans q r -> PolyNatTrans (pfCoproductArena p q) r
-polyCase p q r f g = (polyCaseOnPos p q r f g ** polyCaseOnDir p q r f g)
+polyCase {p} {q} {r} f g = (polyCaseOnPos p q r f g ** polyCaseOnDir p q r f g)
 
 public export
 polyProj1OnPos : (p, q : PolyFunc) -> pfPos (pfProductArena p q) -> pfPos p
@@ -1005,9 +1005,9 @@ polyPairOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
       Right rd => prondir pi rd
 
 public export
-polyPair : (p, q, r : PolyFunc) ->
+polyPair : {p, q, r : PolyFunc} ->
   PolyNatTrans p q -> PolyNatTrans p r -> PolyNatTrans p (pfProductArena q r)
-polyPair p q r f g = (polyPairOnPos p q r f g ** polyPairOnDir p q r f g)
+polyPair {p} {q} {r} f g = (polyPairOnPos p q r f g ** polyPairOnDir p q r f g)
 
 public export
 pfEvalOnPos :
@@ -1263,6 +1263,22 @@ polyNTConst : (p, q : PolyFunc) -> (qi : pfPos q) -> (pfDir {p=q} qi -> Void) ->
   PolyNatTrans p q
 polyNTConst (ppos ** pdir) (qpos ** qdir) qi qdv =
   (const qi ** \pi, qd => void $ qdv qd)
+
+---------------------------------------
+---------------------------------------
+---- Derived morphisms in PolyFunc ----
+---------------------------------------
+---------------------------------------
+
+public export
+pfUncurry : {p, q, r : PolyFunc} ->
+  PolyNatTrans p (pfHomObj q r) -> PolyNatTrans (pfProductArena p q) r
+pfUncurry {p} {q} {r} f =
+  pntVCatComp {p=(pfProductArena p q)} {q=(pfProductArena (pfHomObj q r) q)}
+    (pfEval q r)
+    (polyPair {p=(pfProductArena p q)}
+      (pntVCatComp {p=(pfProductArena p q)} f (polyProj1 p q))
+      (polyProj2 p q))
 
 ------------------------------
 ------------------------------
