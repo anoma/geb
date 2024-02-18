@@ -96,24 +96,6 @@ record TQCopresheaf (v : Type) (e : TypeQuivV v) where
   tqcOmap : SliceObj v
   tqcFmap : TypeQuivCopreshfMmap {v} e tqcOmap
 
---------------------------------------------------
---------------------------------------------------
----- Functors in free-(co)presheaf categories ----
---------------------------------------------------
---------------------------------------------------
-
--- The object-map component of a functor in a presheaf category.
-public export
-TypeQuivPreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
-TypeQuivPreshfFunctor {v} {w} qv qw =
-  TQPresheaf v qv -> TQPresheaf w qw
-
--- The object-map component of a functor in a copresheaf category.
-public export
-TypeQuivCopreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
-TypeQuivCopreshfFunctor {v} {w} qv qw =
-  TQCopresheaf v qv -> TQCopresheaf w qw
-
 -------------------------------------
 -------------------------------------
 ---- Kan extensions from quivers ----
@@ -132,6 +114,24 @@ TypeQuivLmapSig {v} q p = (a, b, c : v) -> q (b, a) -> p a c -> p b c
 public export
 TypeQuivRmapSig : {v : Type} -> TypeQuivV v -> (v -> v -> Type) -> Type
 TypeQuivRmapSig {v} q p = (a, b, c : v) -> q (a, b) -> p c a -> p c b
+
+--------------------------------------------------
+--------------------------------------------------
+---- Functors in free-(co)presheaf categories ----
+--------------------------------------------------
+--------------------------------------------------
+
+-- The object-map component of a functor in a presheaf category.
+public export
+TypeQuivPreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
+TypeQuivPreshfFunctor {v} {w} qv qw =
+  TQPresheaf v qv -> TQPresheaf w qw
+
+-- The object-map component of a functor in a copresheaf category.
+public export
+TypeQuivCopreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
+TypeQuivCopreshfFunctor {v} {w} qv qw =
+  TQCopresheaf v qv -> TQCopresheaf w qw
 
 ---------------------------------
 ---------------------------------
