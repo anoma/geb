@@ -1280,6 +1280,20 @@ pfUncurry {p} {q} {r} f =
       (pntVCatComp {p=(pfProductArena p q)} f (polyProj1 p q))
       (polyProj2 p q))
 
+public export
+pfProd1LeftElim : {p, q : PolyFunc} ->
+  PolyNatTrans (pfProductArena PFTerminalArena p) q -> PolyNatTrans p q
+pfProd1LeftElim {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) =
+  (onpos . MkPair () **
+   \pi, qd => case ondir ((), pi) qd of Left v => void v ; Right pd => pd)
+
+public export
+pfProdLeftIntro : {p, q, r : PolyFunc} ->
+  PolyNatTrans q r -> PolyNatTrans (pfProductArena p q) r
+pfProdLeftIntro {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
+  (onpos ** ondir) =
+    (onpos . snd ** \(pi, qi), rd => Right $ ondir qi rd)
+
 ------------------------------
 ------------------------------
 ---- Trees on polynomials ----
