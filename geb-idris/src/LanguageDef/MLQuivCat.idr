@@ -150,9 +150,3 @@ public export
 TypeQuivCopreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
 TypeQuivCopreshfFunctor {v} {w} qv qw =
   TQCopresheaf v qv -> TQCopresheaf w qw
-
----------------------------------
----------------------------------
----- Categories from quivers ----
----------------------------------
----------------------------------
