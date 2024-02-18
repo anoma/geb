@@ -1098,10 +1098,10 @@ pfCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
         void v
 
 public export
-pfCurry : (p, q, r : PolyFunc) ->
+pfCurry : {p, q, r : PolyFunc} ->
   PolyNatTrans (pfProductArena p q) r ->
   PolyNatTrans p (pfHomObj q r)
-pfCurry (ppos ** pdir) (qpos ** qdir) (rpos ** rdir) alpha =
+pfCurry {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)} alpha =
   (pfCurryOnPos ppos qpos rpos pdir qdir rdir alpha **
    pfCurryOnDir ppos qpos rpos pdir qdir rdir alpha)
 
