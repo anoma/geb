@@ -954,6 +954,62 @@ polyCase : (p, q, r : PolyFunc) ->
 polyCase p q r f g = (polyCaseOnPos p q r f g ** polyCaseOnDir p q r f g)
 
 public export
+polyProj1OnPos : (p, q : PolyFunc) -> pfPos (pfProductArena p q) -> pfPos p
+polyProj1OnPos (ppos ** pdir) (qpos ** qdir) (pi, qi) = pi
+
+public export
+polyProj1OnDir : (p, q : PolyFunc) ->
+  (i : pfPos (pfProductArena p q)) ->
+  pfDir {p} (polyProj1OnPos p q i) ->
+  pfDir {p=(pfProductArena p q)} i
+polyProj1OnDir (ppos ** pdir) (qpos ** qdir) (pi, qi) d = Left d
+
+public export
+polyProj1 : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena p q) p
+polyProj1 p q = (polyProj1OnPos p q ** polyProj1OnDir p q)
+
+public export
+polyProj2OnPos : (p, q : PolyFunc) -> pfPos (pfProductArena p q) -> pfPos q
+polyProj2OnPos (ppos ** pdir) (qpos ** qdir) (pi, qi) = qi
+
+public export
+polyProj2OnDir : (p, q : PolyFunc) ->
+  (i : pfPos (pfProductArena p q)) ->
+  pfDir {p=q} (polyProj2OnPos p q i) ->
+  pfDir {p=(pfProductArena p q)} i
+polyProj2OnDir (ppos ** pdir) (qpos ** qdir) (pi, qi) d = Right d
+
+public export
+polyProj2 : (p, q : PolyFunc) -> PolyNatTrans (pfProductArena p q) q
+polyProj2 p q = (polyProj2OnPos p q ** polyProj2OnDir p q)
+
+public export
+polyPairOnPos : (p, q, r : PolyFunc) ->
+  PolyNatTrans p q -> PolyNatTrans p r ->
+  pfPos p ->
+  pfPos (pfProductArena q r)
+polyPairOnPos (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pqonpos ** pqondir) (pronpos ** prondir) pi =
+    (pqonpos pi, pronpos pi)
+
+public export
+polyPairOnDir : (p, q, r : PolyFunc) ->
+  (f : PolyNatTrans p q) -> (g : PolyNatTrans p r) ->
+  (pi : pfPos p) ->
+  pfDir {p=(pfProductArena q r)} (polyPairOnPos p q r f g pi) ->
+  pfDir {p} pi
+polyPairOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pqonpos ** pqondir) (pronpos ** prondir) pi qrd =
+    case qrd of
+      Left qd => pqondir pi qd
+      Right rd => prondir pi rd
+
+public export
+polyPair : (p, q, r : PolyFunc) ->
+  PolyNatTrans p q -> PolyNatTrans p r -> PolyNatTrans p (pfProductArena q r)
+polyPair p q r f g = (polyPairOnPos p q r f g ** polyPairOnDir p q r f g)
+
+public export
 pfEvalOnPos :
   (p, q : PolyFunc) ->
   pfPos (pfProductArena (pfHomObj p q) p) -> pfPos q
