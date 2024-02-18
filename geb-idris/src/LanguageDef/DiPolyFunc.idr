@@ -314,6 +314,34 @@ InterpPSnt c d (MkPSS ppos pdir) (MkPSS qpos qdir) (MkPSNT op od)
   sc ed (i ** pdi) =
     (op ed i ** \ec, qdi => pdi ec $ od ed i ec qdi)
 
+-------------------------------------------------------------------------------
+---- Embedding of slice polynomial functors within polynomial endofunctors ----
+-------------------------------------------------------------------------------
+
+public export
+PSStoPos : {dom, cod : Type} -> PSS dom cod -> Type
+PSStoPos {dom} {cod} (MkPSS pos dir) = Pair (Sigma {a=cod} pos) dom
+
+public export
+PSStoDir : {dom, cod : Type} -> (pss : PSS dom cod) ->
+  PSStoPos {dom} {cod} pss -> Type
+PSStoDir {dom} {cod} (MkPSS pos dir) ((i ** ec), ed) = dir i ec ed
+
+public export
+PSStoPoly : {dom, cod : Type} -> PSS dom cod -> PolyFunc
+PSStoPoly {dom} {cod} pss =
+  (PSStoPos {dom} {cod} pss ** PSStoDir {dom} {cod} pss)
+
+public export
+PSSDomSlice : {dom, cod : Type} -> (pss : PSS dom cod) ->
+  MLPolyCatElemObj (PSStoPoly {dom} {cod} pss) -> dom
+PSSDomSlice {dom} {cod} (MkPSS pos dir) (x ** ((ec ** i), ed) ** d) = ed
+
+public export
+PSSCodSlice : {dom, cod : Type} -> (pss : PSS dom cod) ->
+  MLPolyCatElemObj (PSStoPoly {dom} {cod} pss) -> cod
+PSSCodSlice {dom} {cod} (MkPSS pos dir) (x ** ((ec ** i), ed) ** d) = ec
+
 --------------------------------------
 --------------------------------------
 ---- Slice polynomial profunctors ----
