@@ -4,11 +4,11 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.Quiver
 
--------------------------------------
--------------------------------------
----- (Co)presheaves from quivers ----
--------------------------------------
--------------------------------------
+-----------------------------------
+-----------------------------------
+---- (Co)presheaves on quivers ----
+-----------------------------------
+-----------------------------------
 
 ----------------------------------------------
 ---- Internal to and enriched over `Type` ----
@@ -83,12 +83,6 @@ FinQuivPreshfMmap {n} q = TypeQuivPreshfMmap {v=(Fin n)} (Fin . q)
 public export
 FinQuivCopreshfMmap : {n : Nat} -> FinQuivN n -> FinSliceObj n -> Type
 FinQuivCopreshfMmap {n} q = TypeQuivCopreshfMmap {v=(Fin n)} (Fin . q)
-
----------------------------------
----------------------------------
----- Categories from quivers ----
----------------------------------
----------------------------------
 
 -- A presheaf into `Type` from an internal category with object type `v`
 -- and morphism type `e`, defined by a quiver.
@@ -214,3 +208,9 @@ TypeQuivLKanExtBase {v} q slv fm =
 public export
 TypeQuivLKanSumP : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
 TypeQuivLKanSumP {v} q slv = TypeQuivSumP {v} q (TypeQuivKanExtProf {v} slv)
+
+---------------------------------
+---------------------------------
+---- Categories from quivers ----
+---------------------------------
+---------------------------------
