@@ -143,21 +143,3 @@ TypeQuivLKanExtBase {v} q slv fm =
 public export
 TypeQuivLKanSumP : {v : Type} -> TypeQuivV v -> SliceObj v -> Type
 TypeQuivLKanSumP {v} q slv = TypeQuivSumP {v} q (TypeQuivKanExtProf {v} slv)
-
---------------------------------------------------
---------------------------------------------------
----- Functors in free-(co)presheaf categories ----
---------------------------------------------------
---------------------------------------------------
-
--- The object-map component of a functor in a presheaf category.
-public export
-TypeQuivPreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
-TypeQuivPreshfFunctor {v} {w} qv qw =
-  TQPresheaf v qv -> TQPresheaf w qw
-
--- The object-map component of a functor in a copresheaf category.
-public export
-TypeQuivCopreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
-TypeQuivCopreshfFunctor {v} {w} qv qw =
-  TQCopresheaf v qv -> TQCopresheaf w qw
