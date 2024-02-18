@@ -1294,6 +1294,26 @@ pfProdLeftIntro {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
   (onpos ** ondir) =
     (onpos . snd ** \(pi, qi), rd => Right $ ondir qi rd)
 
+----------------------------------------------------------------
+----------------------------------------------------------------
+---- Reflections of natural transformations into `PolyFunc` ----
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+public export
+PFHomTerm : PolyFunc -> PolyFunc -> Type
+PFHomTerm p q = PolyNatTrans PFTerminalArena (pfHomObj p q)
+
+public export
+PFtermAsNT : {p, q : PolyFunc} -> PFHomTerm p q -> PolyNatTrans p q
+PFtermAsNT {p} {q} t =
+  pfProd1LeftElim $ pfUncurry {p=PFTerminalArena} {q=p} {r=q} t
+
+public export
+NTasPFterm : {p, q : PolyFunc} -> PolyNatTrans p q -> PFHomTerm p q
+NTasPFterm {p} {q} f =
+  pfCurry {p=PFTerminalArena} {q=p} {r=q} $ pfProdLeftIntro f
+
 ------------------------------
 ------------------------------
 ---- Trees on polynomials ----
