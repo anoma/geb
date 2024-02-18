@@ -112,15 +112,13 @@ record TQCopresheaf (v : Type) (e : TypeQuivV v) where
 public export
 TypeQuivPreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
 TypeQuivPreshfFunctor {v} {w} qv qw =
-  (slv : SliceObj v ** TypeQuivPreshfMmap {v} qv slv) ->
-  (slw : SliceObj w ** TypeQuivPreshfMmap {v=w} qw slw)
+  TQPresheaf v qv -> TQPresheaf w qw
 
 -- The object-map component of a functor in a copresheaf category.
 public export
 TypeQuivCopreshfFunctor : {v, w : Type} -> TypeQuivV v -> TypeQuivV w -> Type
 TypeQuivCopreshfFunctor {v} {w} qv qw =
-  (slv : SliceObj v ** TypeQuivCopreshfMmap {v} qv slv) ->
-  (slw : SliceObj w ** TypeQuivCopreshfMmap {v=w} qw slw)
+  TQCopresheaf v qv -> TQCopresheaf w qw
 
 -------------------------------------
 -------------------------------------
