@@ -471,6 +471,17 @@ PolyExpElemToDialg : (p, q : PolyFunc) ->
   (x : Type ** Dialgebra (InterpPolyFunc p) (InterpPolyFunc q) x)
 PolyExpElemToDialg p q (x ** pqx) = (x ** PolyExpToDialg p q x pqx)
 
+public export
+PolyHomIdToSection : (p : PolyFunc) ->
+  (x : Type) -> InterpPolyFunc (pfHomObj p PFIdentityArena) x ->
+  PFSection (pfProductArena (PFHomArena x) p)
+PolyHomIdToSection (ppos ** pdir) x (i ** d) ((), pi)
+    with (snd (i pi) ()) proof eq
+  PolyHomIdToSection (ppos ** pdir) x (i ** d) ((), pi) | Left () =
+    Left $ d (pi ** () ** rewrite eq in ())
+  PolyHomIdToSection (ppos ** pdir) x (i ** d) ((), pi) | Right pd =
+    Right pd
+
 --------------------------------------------------------------------
 --------------------------------------------------------------------
 ---- Dirichlet presheaves enriched over polynomial copresheaves ----
