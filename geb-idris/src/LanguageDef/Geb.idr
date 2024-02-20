@@ -6501,3 +6501,21 @@ ImpredProdToPar x y (onpos ** ondir) =
     case eu of
       Left () => fst $ ondir ((), ()) ()
       Right () => snd $ ondir ((), ()) ())
+
+-------------------------------------------------------
+---- Initial algebras through universal properties ----
+-------------------------------------------------------
+
+public export
+ImpredInitAlg : (Type -> Type) -> Type
+ImpredInitAlg f = (a : Type) -> (f a -> a) -> a
+
+public export
+PolyImpredToMu : (p : PolyFunc) ->
+  ImpredInitAlg (InterpPolyFunc p) -> PolyFuncMu p
+PolyImpredToMu p alg = alg (PolyFuncMu p) $ \(i ** d) => InPFM i d
+
+public export
+PolyImpredFromMu : (p : PolyFunc) ->
+  PolyFuncMu p -> ImpredInitAlg (InterpPolyFunc p)
+PolyImpredFromMu p x a alg = pfCata (\i, d => alg (i ** d)) x
