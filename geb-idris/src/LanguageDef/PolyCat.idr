@@ -656,7 +656,7 @@ public export
 pfSetParProductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
 pfSetParProductArena {a} ps = (pfSetParProductPos ps ** pfSetParProductDir ps)
 
--- Formula 4.27 from "Polynomial Functors: A General Theory of Interaction".
+-- Formula 5.27 from "Polynomial Functors: A General Theory of Interaction".
 public export
 pfHomObj : PolyFunc -> PolyFunc -> PolyFunc
 pfHomObj q r =
