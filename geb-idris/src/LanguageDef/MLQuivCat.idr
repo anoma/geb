@@ -133,6 +133,13 @@ public export
 TypeQuivRmapSig : {v : Type} -> TypeQuivV v -> TypeQuivProshfSig v -> Type
 TypeQuivRmapSig {v} q p = (a, b, c : v) -> q (a, b) -> p c a -> p c b
 
+public export
+record TQProsheaf (v : Type) (e : TypeQuivV v) where
+  constructor TQPro
+  tqcOmap : TypeQuivProshfSig v
+  tqcLmap : TypeQuivLmapSig {v} e tqcOmap
+  tqcRmap : TypeQuivRmapSig {v} e tqcOmap
+
 -------------------------------------------------------
 -------------------------------------------------------
 ---- Functors in free-(co)presheaf double category ----
