@@ -6599,14 +6599,8 @@ ImpredTerminalCoalg f =
 public export
 ImpredTCToNu : (f : Type -> Type) -> Anamorphism f ->
   ImpredTerminalCoalg f -> Nu f
-ImpredTCToNu f af alpha = alpha (Nu f) $ \(b ** (coalg, eb)) => af b coalg eb
-
-public export
-ImpredTerminalCoalgFromExist : (f : Type -> Type) ->
-  ImpredTerminalCoalgExist f -> ImpredTerminalCoalg f
-ImpredTerminalCoalgFromExist f (a ** (coalg, ea)) z alpha =
-  alpha (a ** (coalg, ea))
+ImpredTCToNu f af alpha = alpha (Nu f) $ ImpredTCExToNu f af
 
 public export
 ImpredTCFromNu : (f : Type -> Type) -> Nu f -> ImpredTerminalCoalg f
-ImpredTCFromNu f x = ImpredTerminalCoalgFromExist f (ImpredTCExFromNu f x)
+ImpredTCFromNu f x z alpha = alpha (ImpredTCExFromNu f x)
