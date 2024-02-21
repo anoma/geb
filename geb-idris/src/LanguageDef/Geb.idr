@@ -6555,13 +6555,13 @@ PolyImpredNTtoMu p (onpos ** ondir) = ?PolyImpredNTtoMu_hole
 
 public export
 PolyElemCatFunc : PolyFunc -> PolyFunc
-PolyElemCatFunc p = pfHomObj PFIdentityArena p
+PolyElemCatFunc p = pfHomObj PFTerminalArena p
 
 public export
 PolyElemFromFunc : (p : PolyFunc) ->
   MLPolyCatElemObj (PolyElemCatFunc p) -> PolyNatTrans PFIdentityArena p
 PolyElemFromFunc (pos ** dir) (x ** i ** d) =
-  (\_ => fst (i ()) ** \(), di => ())
+  (\() => fst (i ()) ** \(), di => ())
 
 public export
 PolyElemToFunc : (p : PolyFunc) ->
