@@ -368,6 +368,10 @@ PFIdentityArena : PolyFunc
 PFIdentityArena = (PFIdentityPos ** PFIdentityDir)
 
 public export
+PolyElimId : (x : Type) -> InterpPolyFunc PFIdentityArena x -> x
+PolyElimId x (i ** d) = d ()
+
+public export
 PFHomPos : Type -> Type
 PFHomPos _ = Unit
 
@@ -1639,6 +1643,10 @@ PolyFuncFreeMDir p = pfCata {p=(PFTranslate1 p)} $ PolyFuncFreeMDirAlg p
 public export
 PolyFuncFreeM : PolyFunc -> PolyFunc
 PolyFuncFreeM p = (PolyFuncFreeMPos p ** PolyFuncFreeMDir p)
+
+public export
+PolyNTvar : (p : PolyFunc) -> PolyNatTrans PFIdentityArena (PolyFuncFreeM p)
+PolyNTvar (pos ** dir) = (\_ => InPFM (PFVar ()) (\v => void v) ** \_, _ => ())
 
 public export
 InterpPolyFuncFreeM : PolyFunc -> Type -> Type
