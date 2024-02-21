@@ -6583,17 +6583,30 @@ ImpredTerminalCoalgExist : (Type -> Type) -> Type
 ImpredTerminalCoalgExist f = (a : Type ** (Coalgebra f a, a))
 
 public export
+ImpredTCExToNu : (f : Type -> Type) -> Anamorphism f ->
+  ImpredTerminalCoalgExist f -> Nu f
+ImpredTCExToNu f af (a ** (coalg, ea)) = af a coalg ea
+
+public export
+ImpredTCExFromNu : (f : Type -> Type) -> Nu f -> ImpredTerminalCoalgExist f
+ImpredTCExFromNu f x = (Nu f ** (treeSubtree . outCofree, x))
+
+public export
 ImpredTerminalCoalg : (Type -> Type) -> Type
 ImpredTerminalCoalg f =
-  (z : Type) -> NaturalTransformation (Coalgebra f) (ContravarHomFunc z) -> z
+  (z : Type) -> ((b : Type ** (Coalgebra f b, b)) -> z) -> z
+
+public export
+ImpredTCToNu : (f : Type -> Type) -> Anamorphism f ->
+  ImpredTerminalCoalg f -> Nu f
+ImpredTCToNu f af alpha = alpha (Nu f) $ \(b ** (coalg, eb)) => af b coalg eb
 
 public export
 ImpredTerminalCoalgFromExist : (f : Type -> Type) ->
   ImpredTerminalCoalgExist f -> ImpredTerminalCoalg f
-ImpredTerminalCoalgFromExist f (a ** (coalg, ea)) z alpha = alpha a coalg ea
+ImpredTerminalCoalgFromExist f (a ** (coalg, ea)) z alpha =
+  alpha (a ** (coalg, ea))
 
 public export
-ImpredTerminalCoalgToExist : (f : Type -> Type) ->
-  Anamorphism f -> ImpredTerminalCoalg f -> ImpredTerminalCoalgExist f
-ImpredTerminalCoalgToExist f af alpha =
-  (Nu f ** (outNu, alpha (Nu f) af))
+ImpredTCFromNu : (f : Type -> Type) -> Nu f -> ImpredTerminalCoalg f
+ImpredTCFromNu f x = ImpredTerminalCoalgFromExist f (ImpredTCExFromNu f x)
