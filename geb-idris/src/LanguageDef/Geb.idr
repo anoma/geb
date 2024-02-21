@@ -6552,3 +6552,28 @@ ImpredInitAlgFromPoly p (onpos ** ondir) a alg = ?ImpredAlgInitFromPoly_hole
 public export
 PolyImpredNTtoMu : (p : PolyFunc) -> PolyImpredInitAlg p -> PolyFuncMu p
 PolyImpredNTtoMu p (onpos ** ondir) = ?PolyImpredNTtoMu_hole
+
+public export
+PolyElemCatFunc : PolyFunc -> PolyFunc
+PolyElemCatFunc p = pfHomObj PFIdentityArena p
+
+public export
+PolyElemFromFunc : (p : PolyFunc) ->
+  MLPolyCatElemObj (PolyElemCatFunc p) -> PolyNatTrans PFIdentityArena p
+PolyElemFromFunc (pos ** dir) (x ** i ** d) =
+  (\_ => fst (i ()) ** \(), di => ())
+
+public export
+PolyElemToFunc : (p : PolyFunc) ->
+  PolyNatTrans PFIdentityArena p -> MLPolyCatElemObj (PolyElemCatFunc p)
+PolyElemToFunc (pos ** dir) (onpos ** ondir) =
+  (dir (onpos ()) ** \() => (onpos () ** \d => Left ()) **
+   \(() ** qd ** ()) => qd)
+
+public export
+PolyElemToFromFuncId : (p : PolyFunc) ->
+  (alpha : PolyNatTrans PFIdentityArena p) ->
+  CPFNatTransEq PFIdentityArena p
+    (PolyElemFromFunc p (PolyElemToFunc p alpha)) alpha
+PolyElemToFromFuncId (pos ** dir) (onpos ** ondir) =
+  Evidence0 (\() => Refl) $ \(), d => unitUnique (ondir () d) ()
