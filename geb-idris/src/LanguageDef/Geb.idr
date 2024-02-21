@@ -6594,9 +6594,6 @@ ImpredTerminalCoalgFromExist f (a ** (coalg, ea)) z alpha = alpha a coalg ea
 
 public export
 ImpredTerminalCoalgToExist : (f : Type -> Type) ->
-  ImpredTerminalCoalg f -> ImpredTerminalCoalgExist f
-ImpredTerminalCoalgToExist f alpha =
-  (Nu f **
-   (outNu,
-    alpha (Nu f) $ let af : Anamorphism f = ?ImpredTerminalCoalgToExist_hole in
-    af))
+  Anamorphism f -> ImpredTerminalCoalg f -> ImpredTerminalCoalgExist f
+ImpredTerminalCoalgToExist f af alpha =
+  (Nu f ** (outNu, alpha (Nu f) af))
