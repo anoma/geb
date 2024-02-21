@@ -6577,3 +6577,26 @@ PolyElemToFromFuncId : (p : PolyFunc) ->
     (PolyElemFromFunc p (PolyElemToFunc p alpha)) alpha
 PolyElemToFromFuncId (pos ** dir) (onpos ** ondir) =
   Evidence0 (\() => Refl) $ \(), d => unitUnique (ondir () d) ()
+
+public export
+ImpredTerminalCoalgExist : (Type -> Type) -> Type
+ImpredTerminalCoalgExist f = (a : Type ** (Coalgebra f a, a))
+
+public export
+ImpredTerminalCoalg : (Type -> Type) -> Type
+ImpredTerminalCoalg f =
+  (z : Type) -> NaturalTransformation (Coalgebra f) (ContravarHomFunc z) -> z
+
+public export
+ImpredTerminalCoalgFromExist : (f : Type -> Type) ->
+  ImpredTerminalCoalgExist f -> ImpredTerminalCoalg f
+ImpredTerminalCoalgFromExist f (a ** (coalg, ea)) z alpha = alpha a coalg ea
+
+public export
+ImpredTerminalCoalgToExist : (f : Type -> Type) ->
+  ImpredTerminalCoalg f -> ImpredTerminalCoalgExist f
+ImpredTerminalCoalgToExist f alpha =
+  (Nu f **
+   (outNu,
+    alpha (Nu f) $ let af : Anamorphism f = ?ImpredTerminalCoalgToExist_hole in
+    af))
