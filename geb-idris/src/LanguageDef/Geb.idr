@@ -6578,9 +6578,19 @@ PolyElemToFromFuncId : (p : PolyFunc) ->
 PolyElemToFromFuncId (pos ** dir) (onpos ** ondir) =
   Evidence0 (\() => Refl) $ \(), d => unitUnique (ondir () d) ()
 
+-------------------------------------------
+---- Impredicative terminal coalgebras ----
+-------------------------------------------
+
+public export
+SeededCoalgF : (Type -> Type) -> Type -> Type
+SeededCoalgF f = ProductF (Coalgebra f) Prelude.id
+
+-- An object of the category of elements of `SeededCoalgF`.
+-- We shall show that this is ismorphic to `Nu`.
 public export
 ImpredTerminalCoalgExist : (Type -> Type) -> Type
-ImpredTerminalCoalgExist f = (a : Type ** (Coalgebra f a, a))
+ImpredTerminalCoalgExist f = (a : Type ** SeededCoalgF f a)
 
 public export
 ImpredTCExToNu : (f : Type -> Type) -> Anamorphism f ->
@@ -6591,10 +6601,10 @@ public export
 ImpredTCExFromNu : (f : Type -> Type) -> Nu f -> ImpredTerminalCoalgExist f
 ImpredTCExFromNu f x = (Nu f ** (treeSubtree . outCofree, x))
 
+-- Simply the Yoneda embedding of `ImpredTerminalCoalgExist f`.
 public export
 ImpredTerminalCoalg : (Type -> Type) -> Type
-ImpredTerminalCoalg f =
-  (z : Type) -> ((b : Type ** (Coalgebra f b, b)) -> z) -> z
+ImpredTerminalCoalg f = (z : Type) -> (ImpredTerminalCoalgExist f -> z) -> z
 
 public export
 ImpredTCToNu : (f : Type -> Type) -> Anamorphism f ->
