@@ -6519,3 +6519,36 @@ public export
 PolyImpredFromMu : (p : PolyFunc) ->
   PolyFuncMu p -> ImpredInitAlg (InterpPolyFunc p)
 PolyImpredFromMu p x a alg = pfCata (\i, d => alg (i ** d)) x
+
+public export
+ImpredAlgDom : PolyFunc -> PolyFunc
+ImpredAlgDom p = pfHomObj p PFIdentityArena
+
+public export
+ImpredAlgCodom : PolyFunc -> PolyFunc
+ImpredAlgCodom _ = PFIdentityArena
+
+public export
+PolyImpredInitAlg : PolyFunc -> Type
+PolyImpredInitAlg p = PolyNatTrans (ImpredAlgDom p) (ImpredAlgCodom p)
+
+public export
+PolyImpredInitAlgToFreeM : (p : PolyFunc) ->
+  PolyImpredInitAlg p -> PolyNatTrans (ImpredAlgDom p) (PolyFuncFreeM p)
+PolyImpredInitAlgToFreeM p =
+  pntVCatComp {p=(ImpredAlgDom p)} {q=PFIdentityArena} {r=(PolyFuncFreeM p)}
+    (PolyNTvar p)
+
+public export
+PolyFreeMtoImpredInitAlgM : (p : PolyFunc) ->
+  PolyNatTrans (ImpredAlgDom p) (PolyFuncFreeM p) -> PolyImpredInitAlg p
+PolyFreeMtoImpredInitAlgM p alpha = ?PolyFreeMtoImpredInitAlgM_hole
+
+public export
+ImpredInitAlgFromPoly : (p : PolyFunc) ->
+  PolyImpredInitAlg p -> ImpredInitAlg (InterpPolyFunc p)
+ImpredInitAlgFromPoly p (onpos ** ondir) a alg = ?ImpredAlgInitFromPoly_hole
+
+public export
+PolyImpredNTtoMu : (p : PolyFunc) -> PolyImpredInitAlg p -> PolyFuncMu p
+PolyImpredNTtoMu p (onpos ** ondir) = ?PolyImpredNTtoMu_hole
