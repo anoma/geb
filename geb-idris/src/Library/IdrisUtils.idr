@@ -1582,3 +1582,7 @@ maybeLast xs@(_::_) = Just (last xs)
 public export
 applyPure : Applicative f => {0 a, b : Type} -> f (a -> b) -> a -> f b
 applyPure = (|>) pure . (<*>)
+
+public export
+unitUnique : (x, y : Unit) -> x = y
+unitUnique () () = Refl
