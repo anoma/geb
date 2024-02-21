@@ -6604,7 +6604,8 @@ ImpredTCExFromNu f x = (Nu f ** (treeSubtree . outCofree, x))
 -- Simply the Yoneda embedding of `ImpredTerminalCoalgExist f`.
 public export
 ImpredTerminalCoalg : (Type -> Type) -> Type
-ImpredTerminalCoalg f = (z : Type) -> (ImpredTerminalCoalgExist f -> z) -> z
+ImpredTerminalCoalg f =
+  NaturalTransformation (CovarHomFunc (ImpredTerminalCoalgExist f)) Prelude.id
 
 public export
 ImpredTCToNu : (f : Type -> Type) -> Anamorphism f ->
