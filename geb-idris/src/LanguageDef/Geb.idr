@@ -482,6 +482,32 @@ PolyHomIdToSection (ppos ** pdir) x (i ** d) ((), pi)
   PolyHomIdToSection (ppos ** pdir) x (i ** d) ((), pi) | Right pd =
     Right pd
 
+public export
+PolyNTtoCEfuncElem : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> (e : MLPolyCatElemObj p) -> InterpPolyFunc q (fst e)
+PolyNTtoCEfuncElem {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha (x ** e) =
+  InterpPolyNT {p} {q} alpha x e
+
+public export
+PolyNTtoCEfunc : {p, q : PolyFunc} ->
+  PolyNatTrans p q -> MLPolyCatElemObj p -> MLPolyCatElemObj q
+PolyNTtoCEfunc {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha (x ** e) =
+  (x ** PolyNTtoCEfuncElem {p} {q} alpha (x ** e))
+
+public export
+MLToPolyTerminalCatElem : Type -> MLPolyCatElemObj PFTerminalArena
+MLToPolyTerminalCatElem x = (x ** () ** \v => void v)
+
+public export
+MLFromPolyTerminalCatElem : MLPolyCatElemObj PFTerminalArena -> Type
+MLFromPolyTerminalCatElem (x ** () ** v) = x
+
+public export
+PolyPiElem : (p : PolyFunc) ->
+  PolyNatTrans PFTerminalArena p -> Pi {a=Type} (InterpPolyFunc p)
+PolyPiElem p@(pos ** dir) alpha@(onpos ** ondir) x =
+  PolyNTtoCEfuncElem {p=PFTerminalArena} {q=p} alpha $ MLToPolyTerminalCatElem x
+
 --------------------------------------------------------------------
 --------------------------------------------------------------------
 ---- Dirichlet presheaves enriched over polynomial copresheaves ----
