@@ -505,7 +505,7 @@ MLFromPolyTerminalCatElem (x ** () ** v) = x
 public export
 PolyPiElem : (p : PolyFunc) ->
   PolyNatTrans PFTerminalArena p -> Pi {a=Type} (InterpPolyFunc p)
-PolyPiElem p@(pos ** dir) alpha@(onpos ** ondir) x =
+PolyPiElem p@(pos ** dir) alpha x =
   PolyNTtoCEfuncElem {p=PFTerminalArena} {q=p} alpha $ MLToPolyTerminalCatElem x
 
 --------------------------------------------------------------------
