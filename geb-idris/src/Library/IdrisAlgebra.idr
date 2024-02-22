@@ -284,3 +284,75 @@ FreeMonadMorphToFunctorFunctor : {f, g : Type -> Type} ->
 FreeMonadMorphToFunctorFunctor {f} {fm} {g} {feval} {geval}
   (Element0 alpha comm) (a ** m) =
     (a ** FAlgFromFree {f} {fm} $ FAlgToFree geval m . alpha a)
+
+----------------------------------------
+----------------------------------------
+---- Universal properties in `Type` ----
+----------------------------------------
+----------------------------------------
+
+public export
+ElemCatObj : (Type -> Type) -> Type
+ElemCatObj f = Sigma {a=Type} f
+
+public export
+CovarElemCatMor : {f : Type -> Type} -> Functor f ->
+  ElemCatObj f -> ElemCatObj f -> Type
+CovarElemCatMor {f} fm (a ** efa) (b ** efb) =
+  Subset0 (a -> b) (\m => map {f} m efa = efb)
+
+public export
+HasAllOutgoing : {f : Type -> Type} -> Functor f -> ElemCatObj f -> Type
+HasAllOutgoing {f} fm (a ** efa) =
+  (eb : ElemCatObj f) -> CovarElemCatMor fm (a ** efa) eb
+
+public export
+0 AllOutgoingUnique : {f : Type -> Type} ->
+  (fm : Functor f) -> (e : ElemCatObj f) ->
+  (0 _ : HasAllOutgoing {f} fm e) -> Type
+AllOutgoingUnique {f} fm (a ** efa) m =
+  (b : Type) -> (efb : f b) ->
+  (m' : CovarElemCatMor {f} fm (a ** efa) (b ** efb)) ->
+  ExtEq (Subset0.fst0 $ m (b ** efb)) (Subset0.fst0 $ m')
+
+public export
+IsInitialCovarElemCatObj : {f : Type -> Type} ->
+  Functor f -> ElemCatObj f -> Type
+IsInitialCovarElemCatObj {f} fm e =
+  Exists0 (HasAllOutgoing {f} fm e) (AllOutgoingUnique {f} fm e)
+
+public export
+InitCovarElemCatObj : {f : Type -> Type} -> Functor f -> Type
+InitCovarElemCatObj {f} fm =
+  Subset0 (ElemCatObj f) (IsInitialCovarElemCatObj {f} fm)
+
+public export
+ContravarElemCatMor : {f : Type -> Type} -> Contravariant f ->
+  ElemCatObj f -> ElemCatObj f -> Type
+ContravarElemCatMor {f} fm (a ** efa) (b ** efb) =
+  Subset0 (a -> b) (\m => contramap {f} m efb = efa)
+
+public export
+HasAllIncoming : {f : Type -> Type} -> Contravariant f -> ElemCatObj f -> Type
+HasAllIncoming {f} fm (a ** efa) =
+  (eb : ElemCatObj f) -> ContravarElemCatMor fm eb (a ** efa)
+
+public export
+0 AllIncomingUnique : {f : Type -> Type} ->
+  (fm : Contravariant f) -> (e : ElemCatObj f) ->
+  (0 _ : HasAllIncoming {f} fm e) -> Type
+AllIncomingUnique {f} fm (a ** efa) m =
+  (b : Type) -> (efb : f b) ->
+  (m' : ContravarElemCatMor {f} fm (b ** efb) (a ** efa)) ->
+  ExtEq (Subset0.fst0 $ m (b ** efb)) (Subset0.fst0 $ m')
+
+public export
+IsTerminalContravarElemCatObj : {f : Type -> Type} ->
+  Contravariant f -> ElemCatObj f -> Type
+IsTerminalContravarElemCatObj {f} fm e =
+  Exists0 (HasAllIncoming {f} fm e) (AllIncomingUnique {f} fm e)
+
+public export
+TerminalContravarElemCatObj : {f : Type -> Type} -> Contravariant f -> Type
+TerminalContravarElemCatObj {f} fm =
+  Subset0 (ElemCatObj f) (IsTerminalContravarElemCatObj {f} fm)
