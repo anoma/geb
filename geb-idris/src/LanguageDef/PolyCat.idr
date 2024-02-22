@@ -803,8 +803,8 @@ public export
 pfPosChangeArena : (p, q : PolyFunc) -> (pfPos p -> pfPos q) -> PolyFunc
 pfPosChangeArena p q f = (pfPosChangePos p q f ** pfPosChangeDir p q f)
 
--- Formula 5.84 from the "General Theory of Interaction" book (I think).
--- If I'm reading exercise 5.83 correctly, this states that for any
+-- Formula 6.75 from the "General Theory of Interaction" book (I think).
+-- If I'm reading exercise 6.77 correctly, this states that for any
 -- polynomial functor `p`, the functor defined by precompositon with `p`
 -- has a left multiadjoint.  And if I'm further understanding ncatlab's
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint correctly, that
@@ -1108,6 +1108,12 @@ pfCurry : {p, q, r : PolyFunc} ->
 pfCurry {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)} alpha =
   (pfCurryOnPos ppos qpos rpos pdir qdir rdir alpha **
    pfCurryOnDir ppos qpos rpos pdir qdir rdir alpha)
+
+public export
+PolyLKnt : (g, j : PolyFunc) ->
+  PolyNatTrans g (pfCompositionArena (PolyLKanExt g j) j)
+PolyLKnt (gpos ** gdir) (jpos ** jdir) =
+  (\gi => (gi ** \(ji ** jgd) => ji) ** \gi, ((ji ** jgd) ** jd) => jgd jd)
 
 ------------------------------------------------
 ------------------------------------------------
