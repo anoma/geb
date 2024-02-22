@@ -6508,7 +6508,7 @@ ImpredProdToPar x y (onpos ** ondir) =
 
 public export
 ImpredInitAlg : (Type -> Type) -> Type
-ImpredInitAlg f = (a : Type) -> (f a -> a) -> a
+ImpredInitAlg f = NaturalTransformation (Algebra f) Prelude.id
 
 public export
 PolyImpredToMu : (p : PolyFunc) ->
