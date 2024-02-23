@@ -18,6 +18,7 @@ modules =
     , LanguageDef.Quiver
     , LanguageDef.MLQuivCat
     , LanguageDef.MLQuivUniv
+    , LanguageDef.MLQuivPoly
     , LanguageDef.GenPolyFunc
     , LanguageDef.FinCat
     , LanguageDef.BinTree
@@ -46,6 +47,7 @@ modules =
     , LanguageDef.Test.QuiverTest
     , LanguageDef.Test.MLQuivCatTest
     , LanguageDef.Test.MLQuivUnivTest
+    , LanguageDef.Test.MLQuivPolyTest
     , LanguageDef.Test.GenPolyFuncTest
     , LanguageDef.Test.FinCatTest
     , LanguageDef.Test.BinTreeTest
