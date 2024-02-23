@@ -110,35 +110,38 @@ record TQCopresheaf (v : Type) (e : TypeQuivV v) where
   tqcOmap : TypeQuivCopreshfSig v
   tqcFmap : TypeQuivCopreshfMmap {v} e tqcOmap
 
------------------------------------------------------------------
------------------------------------------------------------------
----- Endo-profunctors ("difunctors"/"prosheaves") on quivers ----
------------------------------------------------------------------
------------------------------------------------------------------
+-----------------------------------------------
+-----------------------------------------------
+---- Profunctors on quivers ("prosheaves") ----
+-----------------------------------------------
+-----------------------------------------------
 
 public export
-TypeQuivProshfSig : (v : Type) -> Type
-TypeQuivProshfSig v = v -> v -> Type
+TypeQuivProshfSig : (w, v : Type) -> Type
+TypeQuivProshfSig w v = w -> v -> Type
 
 public export
-TypeQuivDimapSig : {v : Type} -> TypeQuivV v -> TypeQuivProshfSig v -> Type
-TypeQuivDimapSig {v} q p =
-  (a, b, c, d : v) -> q (c, a) -> q (b, d) -> p a b -> p c d
+TypeQuivDimapSig : {w, v : Type} -> TypeQuivV w -> TypeQuivV v ->
+  TypeQuivProshfSig w v -> Type
+TypeQuivDimapSig {w} {v} qw qv p =
+  (a, c : w) -> (b, d : v) -> qw (c, a) -> qv (b, d) -> p a b -> p c d
 
 public export
-TypeQuivLmapSig : {v : Type} -> TypeQuivV v -> TypeQuivProshfSig v -> Type
-TypeQuivLmapSig {v} q p = (a, b, c : v) -> q (b, a) -> p a c -> p b c
+TypeQuivLmapSig : {w, v : Type} -> TypeQuivV w -> TypeQuivProshfSig w v -> Type
+TypeQuivLmapSig {w} {v} qw p = (a, b : w) -> (c : v) ->
+  qw (b, a) -> p a c -> p b c
 
 public export
-TypeQuivRmapSig : {v : Type} -> TypeQuivV v -> TypeQuivProshfSig v -> Type
-TypeQuivRmapSig {v} q p = (a, b, c : v) -> q (a, b) -> p c a -> p c b
+TypeQuivRmapSig : {w, v : Type} -> TypeQuivV v -> TypeQuivProshfSig w v -> Type
+TypeQuivRmapSig {w} {v} qv p = (c : w) -> (a, b : v) ->
+  qv (a, b) -> p c a -> p c b
 
 public export
-record TQProsheaf (v : Type) (e : TypeQuivV v) where
+record TQProsheaf (w, v : Type) (qw : TypeQuivV w) (qv : TypeQuivV v) where
   constructor TQPro
-  tqcOmap : TypeQuivProshfSig v
-  tqcLmap : TypeQuivLmapSig {v} e tqcOmap
-  tqcRmap : TypeQuivRmapSig {v} e tqcOmap
+  tqcOmap : TypeQuivProshfSig w v
+  tqcLmap : TypeQuivLmapSig {w} {v} qw tqcOmap
+  tqcRmap : TypeQuivRmapSig {w} {v} qv tqcOmap
 
 -------------------------------------------------------
 -------------------------------------------------------

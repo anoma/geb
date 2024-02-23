@@ -100,8 +100,8 @@ public export
 TypeQuivKanExtProfDimap :
   {v : Type} -> (q : TypeQuivV v) -> (slv : SliceObj v) ->
   TypeQuivCopreshfMmap {v} q slv ->
-  TypeQuivDimapSig {v} q (TypeQuivKanExtProf {v} slv)
-TypeQuivKanExtProfDimap {v} q slv fm a b c d mca mbd slvb = fm b d mbd slvb
+  TypeQuivDimapSig {w=v} {v} q q (TypeQuivKanExtProf {v} slv)
+TypeQuivKanExtProfDimap {v} q slv fm a b c d mca mbd slvb = fm c d mbd slvb
 
 public export
 TypeQuivKanExtProfLmap :
@@ -115,7 +115,7 @@ TypeQuivKanExtProfRmap :
   {v : Type} -> (q : TypeQuivV v) -> (slv : SliceObj v) ->
   TypeQuivCopreshfMmap {v} q slv ->
   TypeQuivRmapSig {v} q (TypeQuivKanExtProf {v} slv)
-TypeQuivKanExtProfRmap {v} q slv fm a b c mab = fm a b mab
+TypeQuivKanExtProfRmap {v} q slv fm a b c mab = fm b c mab
 
 public export
 TypeQuivRKanExtBase : {v : Type} -> (slv : SliceObj v) -> Type
