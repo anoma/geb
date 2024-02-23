@@ -6415,7 +6415,7 @@ ImpredCoprodDom x y = pfProductArena (PFHomArena x) (PFHomArena y)
 ImpredCoprodCodom : Type -> Type -> PolyFunc
 ImpredCoprodCodom _ _ = PFIdentityArena
 
--- Compare `IntIsCoprodContra`.
+-- Compare `IntIsCoprodCovar`.
 ImpredCoprod : Type -> Type -> Type
 ImpredCoprod x y = PolyNatTrans (ImpredCoprodDom x y) (ImpredCoprodCodom x y)
 
@@ -6517,12 +6517,12 @@ ImpredProdCodomPar _ _ = PFIdentityArena
 ImpredProdPar : Type -> Type -> Type
 ImpredProdPar x y = PolyNatTrans (ImpredProdDomPar x y) (ImpredProdCodomPar x y)
 
-ImpredProdFromPar : (x, y : Type) -> ImpredProd x y -> ImpredProdPar x y
-ImpredProdFromPar x y (pos ** dir) =
+ImpredProdToPar : (x, y : Type) -> ImpredProd x y -> ImpredProdPar x y
+ImpredProdToPar x y (pos ** dir) =
   (\_ => () ** \((), ()), () => (dir (Left()) (), dir (Right ()) ()))
 
-ImpredProdToPar : (x, y : Type) -> ImpredProdPar x y -> ImpredProd x y
-ImpredProdToPar x y (onpos ** ondir) =
+ImpredProdFromPar : (x, y : Type) -> ImpredProdPar x y -> ImpredProd x y
+ImpredProdFromPar x y (onpos ** ondir) =
   (\_ => () ** \eu, () =>
     case eu of
       Left () => fst $ ondir ((), ()) ()
