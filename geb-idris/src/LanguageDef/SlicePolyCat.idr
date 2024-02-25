@@ -5,6 +5,16 @@ import Library.IdrisCategories
 import public LanguageDef.PolyCat
 import public LanguageDef.InternalCat
 
+-----------------------------
+-----------------------------
+---- Utility definitions ----
+-----------------------------
+-----------------------------
+
+public export
+MLArena : Type
+MLArena = IntArena Type
+
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
 ---- Slice categories of polynomial functors (in categorial style) ----
@@ -63,6 +73,44 @@ CDFSliceMorph p (q ** qp) (r ** rp) =
 -- on-positions function of a natural transformation between either of those
 -- types of objects (functors) may be viewed as a fibration of the arena
 -- being sliced over.
+public export
+MlSlArOnPos : MLArena -> Type
+MlSlArOnPos ar = fst ar -> Type
+
+-- Thus, the positions of the slice object's domain can be viewed as
+-- the sum of all the fibers.
+public export
+MlSlArPos : {ar : MLArena} -> MlSlArOnPos ar -> Type
+MlSlArPos {ar} onpos = Sigma {a=(fst ar)} onpos
+
+-- Consequently, the positions of the slice object's domain are a slice
+-- of the sum of the fibers.
+public export
+MlSlArDir : {ar : MLArena} -> MlSlArOnPos ar -> Type
+MlSlArDir {ar} onpos = SliceObj (MlSlArPos onpos)
+
+public export
+record MlSlArDom (ar : MLArena) where
+  constructor MSAdom
+  msaOnPos : MlSlArOnPos ar
+  msaDir : MlSlArDir {ar} msaOnPos
+
+-- When we view the on-positions function as a fibration, the on-directions
+-- function becomes a (slice) morphism between directions of the object being
+-- sliced over (the codomain of a slice object) and slices over the fibers of
+-- the on-positions function.  As usual, the polynomial version goes in the
+-- opposite direction from the on-positions function, while the Dirichlet
+-- version goes in the same direction as the on-positions function.
+
+public export
+MlSlPolyOnDir : {ar : MLArena} -> MlSlArDom ar -> Type
+MlSlPolyOnDir {ar} (MSAdom {ar} onpos dir) =
+  (i : fst ar) -> (j : onpos i) -> dir (i ** j) -> snd ar i
+
+public export
+MlSlDirichOnDir : {ar : MLArena} -> MlSlArDom ar -> Type
+MlSlDirichOnDir {ar} (MSAdom {ar} onpos dir) =
+  (i : fst ar) -> (j : onpos i) -> snd ar i -> dir (i ** j)
 
 ----------------------------------------------
 ----------------------------------------------
