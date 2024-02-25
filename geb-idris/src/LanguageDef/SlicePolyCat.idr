@@ -5,9 +5,11 @@ import Library.IdrisCategories
 import public LanguageDef.PolyCat
 import public LanguageDef.InternalCat
 
-----------------------------------
----- Category-theoretic style ----
-----------------------------------
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+---- Slice categories of polynomial functors (in categorial style) ----
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
 
 CPFSliceObj : PolyFunc -> Type
 CPFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
@@ -95,15 +97,11 @@ public export
 SlArFMap : {c : Type} -> (ar : SlPolyAr c) -> SlPolyArMapSig {c} ar
 SlArFMap {c} = InterpIPFmap (SliceObj c) (SliceMorphism {a=c}) (SlIntComp c)
 
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------
----- Slice objects in the category of polynomial endofunctors on `Type` ----
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------
-
----------------------------------------------
----- Arena/dependent-type-universe-style ----
----------------------------------------------
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---- Slice categories of polynomial functors (in dependent-type style) ----
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
 
 -- `PFCovarRepSliceObj x` is an object of the category of polynomial
 -- functors sliced over the covariant representable represented by
