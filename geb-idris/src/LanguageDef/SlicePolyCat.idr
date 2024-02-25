@@ -5,11 +5,11 @@ import Library.IdrisCategories
 import public LanguageDef.PolyCat
 import public LanguageDef.InternalCat
 
-------------------------------------------------
-------------------------------------------------
----- Slice categories of Dirichlet functors ----
-------------------------------------------------
-------------------------------------------------
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+---- Slice categories of Dirichlet functors (in categorial style) ----
+----------------------------------------------------------------------
+----------------------------------------------------------------------
 
 CDFSliceObj : MLDirichCatObj -> Type
 CDFSliceObj p = (q : MLDirichCatObj ** DirichNatTrans q p)
@@ -27,6 +27,18 @@ CDFNatTransEq (ppos ** pdir) (qpos ** qdir)
 CDFSliceMorph : (p : MLDirichCatObj) -> CDFSliceObj p -> CDFSliceObj p -> Type
 CDFSliceMorph p (q ** qp) (r ** rp) =
   Subset0 (DirichNatTrans q r) (\qr => CDFNatTransEq q p qp (dntVCatComp rp qr))
+
+------------------------------------------------------
+------------------------------------------------------
+---- Slices over arenas (in dependent-type style) ----
+------------------------------------------------------
+------------------------------------------------------
+
+-- The natural transformations of both polynomial and Dirichlet functors have
+-- on-positions functions from the domain to the codomain.  Thus, the
+-- on-positions function of a natural transformation between either of those
+-- types of objects (functors) may be viewed as a fibration of the arena
+-- being sliced over.
 
 ----------------------------------------------
 ----------------------------------------------
