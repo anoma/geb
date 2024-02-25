@@ -112,6 +112,18 @@ MlSlDirichOnDir : {ar : MLArena} -> MlSlArDom ar -> Type
 MlSlDirichOnDir {ar} (MSAdom {ar} onpos dir) =
   (i : fst ar) -> (j : onpos i) -> dir (i ** j) -> snd ar i
 
+public export
+record MlSlPolyObj (ar : MLArena) where
+  constructor MSPobj
+  mspDom : MlSlArDom ar
+  mspOnDir : MlSlPolyOnDir mspDom
+
+public export
+record MlSlDirichObj (ar : MLArena) where
+  constructor MSDobj
+  msdDom : MlSlArDom ar
+  msdOnDir : MlSlDirichOnDir msdDom
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Factorized slice polynomial functors ----
