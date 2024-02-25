@@ -105,12 +105,12 @@ record MlSlArDom (ar : MLArena) where
 public export
 MlSlPolyOnDir : {ar : MLArena} -> MlSlArDom ar -> Type
 MlSlPolyOnDir {ar} (MSAdom {ar} onpos dir) =
-  (i : fst ar) -> (j : onpos i) -> dir (i ** j) -> snd ar i
+  (i : fst ar) -> (j : onpos i) -> snd ar i -> dir (i ** j)
 
 public export
 MlSlDirichOnDir : {ar : MLArena} -> MlSlArDom ar -> Type
 MlSlDirichOnDir {ar} (MSAdom {ar} onpos dir) =
-  (i : fst ar) -> (j : onpos i) -> snd ar i -> dir (i ** j)
+  (i : fst ar) -> (j : onpos i) -> dir (i ** j) -> snd ar i
 
 ----------------------------------------------
 ----------------------------------------------
