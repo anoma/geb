@@ -11,11 +11,12 @@ import public LanguageDef.InternalCat
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
 
-CPFSliceObj : PolyFunc -> Type
-CPFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
+CPFSliceObj : MLPolyCatObj -> Type
+CPFSliceObj p = (q : MLPolyCatObj ** PolyNatTrans q p)
 
 public export
-0 CPFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
+0 CPFNatTransEq :
+  (p, q : MLPolyCatObj) -> (alpha, beta : PolyNatTrans p q) -> Type
 CPFNatTransEq (ppos ** pdir) (qpos ** qdir)
   (aonpos ** aondir) (bonpos ** bondir) =
     Exists0
@@ -24,7 +25,7 @@ CPFNatTransEq (ppos ** pdir) (qpos ** qdir)
         (i : ppos) -> (d : qdir (aonpos i)) ->
         bondir i (replace {p=qdir} (onposeq i) d) = aondir i d
 
-CPFSliceMorph : (p : PolyFunc) -> CPFSliceObj p -> CPFSliceObj p -> Type
+CPFSliceMorph : (p : MLPolyCatObj) -> CPFSliceObj p -> CPFSliceObj p -> Type
 CPFSliceMorph p (q ** qp) (r ** rp) =
   Subset0 (PolyNatTrans q r) (\qr => CPFNatTransEq q p qp (pntVCatComp rp qr))
 
