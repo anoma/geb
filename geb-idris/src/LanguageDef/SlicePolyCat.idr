@@ -5,6 +5,27 @@ import Library.IdrisCategories
 import public LanguageDef.PolyCat
 import public LanguageDef.InternalCat
 
+----------------------------------
+---- Category-theoretic style ----
+----------------------------------
+
+CPFSliceObj : PolyFunc -> Type
+CPFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
+
+public export
+0 CPFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
+CPFNatTransEq (ppos ** pdir) (qpos ** qdir)
+  (aonpos ** aondir) (bonpos ** bondir) =
+    Exists0
+      (ExtEq {a=ppos} {b=qpos} aonpos bonpos)
+      $ \onposeq =>
+        (i : ppos) -> (d : qdir (aonpos i)) ->
+        bondir i (replace {p=qdir} (onposeq i) d) = aondir i d
+
+CPFSliceMorph : (p : PolyFunc) -> CPFSliceObj p -> CPFSliceObj p -> Type
+CPFSliceMorph p (q ** qp) (r ** rp) =
+  Subset0 (PolyNatTrans q r) (\qr => CPFNatTransEq q p qp (pntVCatComp rp qr))
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Slice categories of Dirichlet functors (in categorial style) ----
@@ -79,27 +100,6 @@ SlArFMap {c} = InterpIPFmap (SliceObj c) (SliceMorphism {a=c}) (SlIntComp c)
 ---- Slice objects in the category of polynomial endofunctors on `Type` ----
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
-
-----------------------------------
----- Category-theoretic style ----
-----------------------------------
-
-CPFSliceObj : PolyFunc -> Type
-CPFSliceObj p = (q : PolyFunc ** PolyNatTrans q p)
-
-public export
-0 CPFNatTransEq : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> Type
-CPFNatTransEq (ppos ** pdir) (qpos ** qdir)
-  (aonpos ** aondir) (bonpos ** bondir) =
-    Exists0
-      (ExtEq {a=ppos} {b=qpos} aonpos bonpos)
-      $ \onposeq =>
-        (i : ppos) -> (d : qdir (aonpos i)) ->
-        bondir i (replace {p=qdir} (onposeq i) d) = aondir i d
-
-CPFSliceMorph : (p : PolyFunc) -> CPFSliceObj p -> CPFSliceObj p -> Type
-CPFSliceMorph p (q ** qp) (r ** rp) =
-  Subset0 (PolyNatTrans q r) (\qr => CPFNatTransEq q p qp (pntVCatComp rp qr))
 
 ---------------------------------------------
 ---- Arena/dependent-type-universe-style ----
