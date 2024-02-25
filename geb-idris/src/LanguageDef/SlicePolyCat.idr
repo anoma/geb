@@ -83,46 +83,65 @@ public export
 MlSlArPos : {ar : MLArena} -> MlSlArOnPos ar -> Type
 MlSlArPos {ar} onpos = Sigma {a=(fst ar)} onpos
 
--- Consequently, the positions of the slice object's domain are a slice
+-- Consequently, the directions of the slice object's domain are a slice
 -- of the sum of the fibers.
+--
+-- However, the on-directions part of the projection component of the slice
+-- object will, in the case of Dirichlet functors, also go from the domain
+-- to the object being sliced over.  Thus that too may be viewed as a fibration,
+-- of pairs of the positions of the domain and the directions of the codomain,
+-- where those two share the same position of the codomain.
+--
+-- That view only makes sense in the case of Dirichlet functors, not of
+-- polynomials, because the on-directions part of the projection component of
+-- an object in a polynomial-functor slice category goes in the opposite
+-- direction.
+--
+-- Consequently, we will usually use two different representations for slice
+-- objects in Dirichlet-functor versus polynomial-functor categories -- a
+-- dependent-type style in the Dirichlet case, and a categorial style in the
+-- polynomial case.
 public export
-MlSlArDir : {ar : MLArena} -> MlSlArOnPos ar -> Type
-MlSlArDir {ar} onpos = SliceObj (MlSlArPos onpos)
+MlSlArDir : {ar : MLArena} -> {onpos : MlSlArOnPos ar} ->
+  MlSlArPos {ar} onpos -> Type
+MlSlArDir {ar} {onpos} pos = SliceObj (snd ar $ fst pos)
 
 public export
-record MlSlArDom (ar : MLArena) where
-  constructor MSAdom
-  msaOnPos : MlSlArOnPos ar
-  msaDir : MlSlArDir {ar} msaOnPos
+record MlDirSlObj (ar : MLArena) where
+  constructor MDSobj
+  mdsOnPos : MlSlArOnPos ar
+  mdsDir : Pi {a=(MlSlArPos {ar} mdsOnPos)} $ MlSlArDir {ar} {onpos=mdsOnPos}
 
 -- When we view the on-positions function as a fibration, the on-directions
 -- function becomes a (slice) morphism between directions of the object being
 -- sliced over (the codomain of a slice object) and slices over the fibers of
--- the on-positions function.  As usual, the polynomial version goes in the
--- opposite direction from the on-positions function, while the Dirichlet
--- version goes in the same direction as the on-positions function.
+-- the on-positions function.
+public export
+MlSlDirichOnDir : {ar : MLArena} -> (sl : MlDirSlObj ar) ->
+  (i : MlSlArPos {ar} $ mdsOnPos sl) -> MlSlArDir {ar} {onpos=(mdsOnPos sl)} i
+MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir (i ** j) d
+
+-- As usual, the morphisms of slice categories correspond to natural
+-- transformations which commute with the projections.
+public export
+MlDirSlMorOnPos : {ar : MLArena} -> MlDirSlObj ar -> MlDirSlObj ar -> Type
+MlDirSlMorOnPos {ar=(bpos ** bdir)}
+  (MDSobj donpos ddir) (MDSobj conpos cdir) =
+    SliceMorphism {a=bpos} donpos conpos
 
 public export
-MlSlPolyOnDir : {ar : MLArena} -> MlSlArDom ar -> Type
-MlSlPolyOnDir {ar} (MSAdom {ar} onpos dir) =
-  (i : fst ar) -> (j : onpos i) -> snd ar i -> dir (i ** j)
+MlDirSlMorOnDir : {ar : MLArena} -> (dom, cod : MlDirSlObj ar) ->
+  MlDirSlMorOnPos {ar} dom cod -> Type
+MlDirSlMorOnDir {ar=(bpos ** bdir)}
+  (MDSobj donpos ddir) (MDSobj conpos cdir) onpos =
+    (i : bpos) -> (j : donpos i) -> (d : bdir i) ->
+    ddir (i ** j) d -> cdir (i ** onpos i j) d
 
 public export
-MlSlDirichOnDir : {ar : MLArena} -> MlSlArDom ar -> Type
-MlSlDirichOnDir {ar} (MSAdom {ar} onpos dir) =
-  (i : fst ar) -> (j : onpos i) -> dir (i ** j) -> snd ar i
-
-public export
-record MlSlPolyObj (ar : MLArena) where
-  constructor MSPobj
-  mspDom : MlSlArDom ar
-  mspOnDir : MlSlPolyOnDir mspDom
-
-public export
-record MlSlDirichObj (ar : MLArena) where
-  constructor MSDobj
-  msdDom : MlSlArDom ar
-  msdOnDir : MlSlDirichOnDir msdDom
+record MlDirSlMor {ar : MLArena} (dom, cod : MlDirSlObj ar) where
+  constructor MDSM
+  mdsOnPos : MlDirSlMorOnPos {ar} dom cod
+  mdsOnDir : MlDirSlMorOnDir {ar} dom cod mdsOnPos
 
 ----------------------------------------------
 ----------------------------------------------
