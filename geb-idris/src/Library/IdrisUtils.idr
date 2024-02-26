@@ -119,6 +119,11 @@ dpEq12 : {0 a : Type} -> {0 p : a -> Type} -> {x, y : a} ->
   x = y -> px = py -> MkDPair {p} x px = MkDPair {p} y py
 dpEq12 {a} {p} {x} {y=x} {px} {py=px} Refl Refl = Refl
 
+public export
+dpEqPat : {0 a : Type} -> {0 p : a -> Type} ->
+  {0 dp : DPair a p} -> dp = (fst dp ** snd dp)
+dpEqPat {a} {p} {dp=(_ ** _)} = Refl
+
 export
 mkDPairInjectiveFstHet :
   {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
