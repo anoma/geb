@@ -263,7 +263,9 @@ mlDirSlMorToC {ar=(ppos ** pdir)}
          dmnt
          (Evidence0
             opeq
-            ?mlDirSlMorToC_eq_hole)
+            $ \i : (DPair ppos donpos), d : (DPair (pdir (fst i)) (ddir i)) =>
+            trans (odeq i d)
+              $ case i of (i' ** j') => case d of (d' ** dd') => Refl)
 
 ----------------------------------------------
 ----------------------------------------------
