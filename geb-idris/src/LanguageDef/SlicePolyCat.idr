@@ -68,6 +68,10 @@ CDFSliceMorph p (q ** qp) (r ** rp) =
 ------------------------------------------------------
 ------------------------------------------------------
 
+---------------------------------
+---- Slice object definition ----
+---------------------------------
+
 -- The natural transformations of both polynomial and Dirichlet functors have
 -- on-positions functions from the domain to the codomain.  Thus, the
 -- on-positions function of a natural transformation between either of those
@@ -121,6 +125,10 @@ MlSlDirichOnDir : {ar : MLArena} -> (sl : MlDirSlObj ar) ->
   (i : MlSlArPos {ar} $ mdsOnPos sl) -> MlSlArDir {ar} {onpos=(mdsOnPos sl)} i
 MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir (i ** j) d
 
+-----------------------------------
+---- Slice morphism definition ----
+-----------------------------------
+
 -- As usual, the morphisms of slice categories correspond to natural
 -- transformations which commute with the projections.
 public export
@@ -142,6 +150,24 @@ record MlDirSlMor {ar : MLArena} (dom, cod : MlDirSlObj ar) where
   constructor MDSM
   mdsOnPos : MlDirSlMorOnPos {ar} dom cod
   mdsOnDir : MlDirSlMorOnDir {ar} dom cod mdsOnPos
+
+------------------------------------------------------------------------------
+---- Equivalence of dependent-type and categorial-style objects/morphisms ----
+------------------------------------------------------------------------------
+
+public export
+mlDirSlObjToC : {ar : MLArena} -> MlDirSlObj ar -> CDFSliceObj ar
+mlDirSlObjToC {ar=ar@(bpos ** bdir)} (MDSobj onpos dir) =
+  ((MlSlArPos {ar} onpos ** \i => Sigma $ dir i) **
+   (DPair.fst ** \_ => DPair.fst))
+
+public export
+mlDirSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirSlObj ar
+mlDirSlObjFromC {ar=ar@(bpos ** bdir)} ((slpos ** sldir) ** (onpos ** ondir)) =
+  MDSobj
+    (\i => PreImage onpos i)
+    (\(i ** (Element0 j eq)), bd =>
+      Subset0 (sldir j) $ \sld => ondir j sld = replace {p=bdir} (sym eq) bd)
 
 ----------------------------------------------
 ----------------------------------------------
