@@ -122,16 +122,8 @@ CDFSliceMorph : (p : MLDirichCatObj) -> CDFSliceObj p -> CDFSliceObj p -> Type
 CDFSliceMorph p (q ** qp) (r ** rp) =
   Subset0 (DirichNatTrans q r) (\qr => CDFNatTransEq q p qp (dntVCatComp rp qr))
 
--- In any slice category, we can infer a slice morphism from a slice object
--- and a morphism from any object of the base category to the domain of the
--- slice object, by taking the codomain of the slice morphism to be the given
--- slice object, the domain of the domain of the slice morphism to be the
--- given object of the base category, and the projection of the domain of the
--- slice morphism to be composition of the given morphism followed by the
--- projection of the codomain of the slice morphism.  All slice morphisms
--- take this form, so that can function as an alternate definition of slice
--- morphism, which does not require any explicit proof content (of
--- commutativity).
+-- A convenient (free of proof content) form of `CDFSliceMorph`; see
+-- the comment to `PFSliceMorph` above.
 DFSliceMorph : {0 p : PolyFunc} -> CDFSliceObj p -> Type
 DFSliceMorph {p} (ctot ** alpha) = (dtot : PolyFunc ** DirichNatTrans dtot ctot)
 
