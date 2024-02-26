@@ -267,6 +267,34 @@ mlDirSlMorToC {ar=(ppos ** pdir)}
             trans (odeq i d)
               $ case i of (i' ** j') => case d of (d' ** dd') => Refl)
 
+public export
+mlDirSlMorFromD : {ar : MLArena} -> {cod : CDFSliceObj ar} ->
+  (mor : DFSliceMorph {p=ar} cod) ->
+  MlDirSlMor
+    (mlDirSlObjFromC {ar} $ DFSliceMorphDom {p=ar} {cod} mor)
+    (mlDirSlObjFromC cod)
+mlDirSlMorFromD {ar=(ppos ** pdir)}
+  {cod=((ctot ** cproj) ** (conpos ** condir))}
+  ((mpos ** mdir) ** (monpos ** mondir)) =
+    MDSM
+      (\i, (Element0 j peq) => Element0 (monpos j) peq)
+      (\i, (Element0 j peq), pd, (Element0 md deq) =>
+        Element0 (mondir j md) deq)
+
+public export
+0 mlDirSlMorFromC : {ar : MLArena} -> {dom, cod : CDFSliceObj ar} ->
+  (mor : CDFSliceMorph ar dom cod) ->
+  MlDirSlMor (mlDirSlObjFromC {ar} dom) (mlDirSlObjFromC {ar} cod)
+mlDirSlMorFromC {ar=(ppos ** pdir)}
+  {dom=((dtot ** dproj) ** (donpos ** dondir))}
+  {cod=((ctot ** cproj) ** (conpos ** condir))}
+  (Element0 (monpos ** mondir) (Evidence0 opeq odeq)) =
+    MDSM
+      (\i, (Element0 j peq) => Element0 (monpos j) $ trans (sym $ opeq j) peq)
+      (\i, (Element0 j peq), pd, (Element0 md deq) =>
+        Element0 (mondir j md) $
+          trans (odeq j md) $ rewrite sym (opeq j) in deq)
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Factorized slice polynomial functors ----
