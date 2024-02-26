@@ -39,6 +39,66 @@ CPFSliceMorph : (p : MLPolyCatObj) -> CPFSliceObj p -> CPFSliceObj p -> Type
 CPFSliceMorph p (q ** qp) (r ** rp) =
   Subset0 (PolyNatTrans q r) (\qr => CPFNatTransEq q p qp (pntVCatComp rp qr))
 
+-- In any slice category, we can infer a slice morphism from a slice object
+-- and a morphism from any object of the base category to the domain of the
+-- slice object, by taking the codomain of the slice morphism to be the given
+-- slice object, the domain of the domain of the slice morphism to be the
+-- given object of the base category, and the projection of the domain of the
+-- slice morphism to be composition of the given morphism followed by the
+-- projection of the codomain of the slice morphism.  All slice morphisms
+-- take this form, so that can function as an alternate definition of slice
+-- morphism, which does not require any explicit proof content (of
+-- commutativity).
+PFSliceMorph : {0 p : PolyFunc} -> CPFSliceObj p -> Type
+PFSliceMorph {p} (ctot ** alpha) = (dtot : PolyFunc ** PolyNatTrans dtot ctot)
+
+PFSliceMorphDom : {0 p : PolyFunc} -> {cod : CPFSliceObj p} ->
+  PFSliceMorph {p} cod -> CPFSliceObj p
+PFSliceMorphDom {p} {cod=(ctot ** alpha)} (dtot ** beta) =
+  (dtot ** pntVCatComp alpha beta)
+
+PFSliceMorphToC : {0 p : PolyFunc} -> {cod : CPFSliceObj p} ->
+  (mor : PFSliceMorph {p} cod) ->
+  CPFSliceMorph p (PFSliceMorphDom {p} {cod} mor) cod
+PFSliceMorphToC {p=(ppos ** pdir)} {cod=((ctot ** cproj) ** (conpos ** condir))}
+  ((dtot ** dproj) ** (donpos ** dondir)) =
+    Element0
+      (donpos ** dondir)
+      (Evidence0
+        (\_ => Refl)
+        (\_, _ => Refl))
+
+PFSliceMorphFromC : {0 p : PolyFunc} -> {dom, cod : CPFSliceObj p} ->
+  CPFSliceMorph p dom cod -> PFSliceMorph {p} cod
+PFSliceMorphFromC {p=(ppos ** pdir)} {dom=(dtot ** dproj)} {cod=(ctot ** cproj)}
+  (Element0 alpha nteq) =
+    (dtot ** alpha)
+
+PFSliceMorphFromCDomObjEq : {0 p : PolyFunc} -> {dom, cod : CPFSliceObj p} ->
+  (mor : CPFSliceMorph p dom cod) ->
+  fst (PFSliceMorphDom {p} {cod} (PFSliceMorphFromC {p} {dom} {cod} mor)) =
+  fst dom
+PFSliceMorphFromCDomObjEq {p=(ppos ** pdir)}
+  {dom=(dtot ** dproj)} {cod=(ctot ** cproj)} (Element0 alpha nteq) =
+    Refl
+
+0 PFSliceMorphFromCDomMorEq : {0 p : PolyFunc} ->
+  {dtot, ctot : PolyFunc} ->
+  {dproj : PolyNatTrans dtot p} ->
+  {cproj : PolyNatTrans ctot p} ->
+  (mor : CPFSliceMorph p (dtot ** dproj) (ctot ** cproj)) ->
+  CPFNatTransEq
+    dtot p
+    dproj
+    (replace {p=(flip PolyNatTrans p)}
+      (PFSliceMorphFromCDomObjEq {p} {dom=(dtot ** dproj)} {cod=(ctot ** cproj)}
+       mor)
+     $ snd $ PFSliceMorphDom {p} {cod=(ctot ** cproj)}
+     $ PFSliceMorphFromC {p} {dom=(dtot ** dproj)} {cod=(ctot ** cproj)} mor)
+PFSliceMorphFromCDomMorEq {p=(ppos ** pdir)}
+  {dtot} {dproj} {ctot} {cproj} (Element0 alpha nteq) =
+    nteq
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Slice categories of Dirichlet functors (in categorial style) ----
