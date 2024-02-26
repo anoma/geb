@@ -62,6 +62,66 @@ CDFSliceMorph : (p : MLDirichCatObj) -> CDFSliceObj p -> CDFSliceObj p -> Type
 CDFSliceMorph p (q ** qp) (r ** rp) =
   Subset0 (DirichNatTrans q r) (\qr => CDFNatTransEq q p qp (dntVCatComp rp qr))
 
+-- In any slice category, we can infer a slice morphism from a slice object
+-- and a morphism from any object of the base category to the domain of the
+-- slice object, by taking the codomain of the slice morphism to be the given
+-- slice object, the domain of the domain of the slice morphism to be the
+-- given object of the base category, and the projection of the domain of the
+-- slice morphism to be composition of the given morphism followed by the
+-- projection of the codomain of the slice morphism.  All slice morphisms
+-- take this form, so that can function as an alternate definition of slice
+-- morphism, which does not require any explicit proof content (of
+-- commutativity).
+DFSliceMorph : {0 p : PolyFunc} -> CDFSliceObj p -> Type
+DFSliceMorph {p} (ctot ** alpha) = (dtot : PolyFunc ** DirichNatTrans dtot ctot)
+
+DFSliceMorphDom : {0 p : PolyFunc} -> {cod : CDFSliceObj p} ->
+  DFSliceMorph {p} cod -> CDFSliceObj p
+DFSliceMorphDom {p} {cod=(ctot ** alpha)} (dtot ** beta) =
+  (dtot ** dntVCatComp alpha beta)
+
+DFSliceMorphToC : {0 p : PolyFunc} -> {cod : CDFSliceObj p} ->
+  (mor : DFSliceMorph {p} cod) ->
+  CDFSliceMorph p (DFSliceMorphDom {p} {cod} mor) cod
+DFSliceMorphToC {p=(ppos ** pdir)} {cod=((ctot ** cproj) ** (conpos ** condir))}
+  ((dtot ** dproj) ** (donpos ** dondir)) =
+    Element0
+      (donpos ** dondir)
+      (Evidence0
+        (\_ => Refl)
+        (\_, _ => Refl))
+
+DFSliceMorphFromC : {0 p : PolyFunc} -> {dom, cod : CDFSliceObj p} ->
+  CDFSliceMorph p dom cod -> DFSliceMorph {p} cod
+DFSliceMorphFromC {p=(ppos ** pdir)} {dom=(dtot ** dproj)} {cod=(ctot ** cproj)}
+  (Element0 alpha nteq) =
+    (dtot ** alpha)
+
+DFSliceMorphFromCDomObjEq : {0 p : PolyFunc} -> {dom, cod : CDFSliceObj p} ->
+  (mor : CDFSliceMorph p dom cod) ->
+  fst (DFSliceMorphDom {p} {cod} (DFSliceMorphFromC {p} {dom} {cod} mor)) =
+  fst dom
+DFSliceMorphFromCDomObjEq {p=(ppos ** pdir)}
+  {dom=(dtot ** dproj)} {cod=(ctot ** cproj)} (Element0 alpha nteq) =
+    Refl
+
+0 DFSliceMorphFromCDomMorEq : {0 p : PolyFunc} ->
+  {dtot, ctot : PolyFunc} ->
+  {dproj : DirichNatTrans dtot p} ->
+  {cproj : DirichNatTrans ctot p} ->
+  (mor : CDFSliceMorph p (dtot ** dproj) (ctot ** cproj)) ->
+  CDFNatTransEq
+    dtot p
+    dproj
+    (replace {p=(flip DirichNatTrans p)}
+      (DFSliceMorphFromCDomObjEq {p} {dom=(dtot ** dproj)} {cod=(ctot ** cproj)}
+       mor)
+     $ snd $ DFSliceMorphDom {p} {cod=(ctot ** cproj)}
+     $ DFSliceMorphFromC {p} {dom=(dtot ** dproj)} {cod=(ctot ** cproj)} mor)
+DFSliceMorphFromCDomMorEq {p=(ppos ** pdir)}
+  {dtot} {dproj} {ctot} {cproj} (Element0 alpha nteq) =
+    nteq
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Slices over arenas (in dependent-type style) ----
