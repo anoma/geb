@@ -229,6 +229,42 @@ mlDirSlObjFromC {ar=ar@(bpos ** bdir)} ((slpos ** sldir) ** (onpos ** ondir)) =
     (\(i ** (Element0 j eq)), bd =>
       Subset0 (sldir j) $ \sld => ondir j sld = replace {p=bdir} (sym eq) bd)
 
+public export
+mlDirSlMorToCBase : {ar : MLArena} -> {dom, cod : MlDirSlObj ar} ->
+  MlDirSlMor dom cod ->
+  DirichNatTrans (fst (mlDirSlObjToC dom)) (fst (mlDirSlObjToC cod))
+mlDirSlMorToCBase {ar=(bpos ** bdir)}
+  {dom=(MDSobj donpos ddir)} {cod=(MDSobj conpos cdir)} (MDSM onpos ondir) =
+    (\ij => (fst ij ** onpos (fst ij) (snd ij)) **
+     \(i ** j), (d ** dd) => (d ** ondir i j d dd))
+
+public export
+mlDirSlMorToD : {ar : MLArena} -> {dom, cod : MlDirSlObj ar} ->
+  MlDirSlMor dom cod -> DFSliceMorph {p=ar} (mlDirSlObjToC cod)
+mlDirSlMorToD {ar=ar@(bpos ** bdir)}
+  {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
+  mor@(MDSM onpos ondir) =
+    (fst (mlDirSlObjToC dom) ** mlDirSlMorToCBase {ar} {dom} {cod} mor)
+
+public export
+0 mlDirSlMorToC : {ar : MLArena} -> {dom, cod : MlDirSlObj ar} ->
+  MlDirSlMor dom cod -> CDFSliceMorph ar (mlDirSlObjToC dom) (mlDirSlObjToC cod)
+mlDirSlMorToC {ar=(ppos ** pdir)}
+  {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
+  mor@(MDSM monpos mondir)
+      with
+        (DFSliceMorphToC {p=(ppos ** pdir)} {cod=(mlDirSlObjToC cod)}
+          (mlDirSlMorToD {dom} {cod} mor))
+  mlDirSlMorToC {ar=(ppos ** pdir)}
+    {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
+    mor@(MDSM monpos mondir)
+      | Element0 dmnt@(dmonpos ** dmondir) (Evidence0 opeq odeq) =
+        Element0
+         dmnt
+         (Evidence0
+            opeq
+            ?mlDirSlMorToC_eq_hole)
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Factorized slice polynomial functors ----
