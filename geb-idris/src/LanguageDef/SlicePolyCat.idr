@@ -246,6 +246,19 @@ MlSlDirichOnDir : {ar : MLArena} -> (sl : MlDirSlObj ar) ->
   MlSlDirichDir {ar} {onpos=(mdsOnPos sl)} i
 MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir (i ** j) d
 
+-- In the case of polynomial functors, the directions of the slice object's
+-- domain are slices of its positions only, since its on-directions function
+-- can not be viewed as a fibration of them, and the on-directions function is
+-- correspondingly explicitly a slice morphism (rather than a pi type).
+public export
+MlSlPolyDir : {ar : MLArena} -> {onpos : MlSlArOnPos ar} ->
+  MlSlArPos {ar} onpos -> Type
+MlSlPolyDir {ar} {onpos} pos = SliceObj (onpos $ fst pos)
+
+public export
+MlSlPolyOnDir : {ar : MLArena} -> (onpos : MlSlArOnPos ar) -> Type
+MlSlPolyOnDir {ar=(slpos ** sldir)} onpos = SliceMorphism {a=slpos} sldir onpos
+
 -----------------------------------
 ---- Slice morphism definition ----
 -----------------------------------
