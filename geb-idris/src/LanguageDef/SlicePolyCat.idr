@@ -251,13 +251,21 @@ MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir (i ** j) d
 -- can not be viewed as a fibration of them, and the on-directions function is
 -- correspondingly explicitly a slice morphism (rather than a pi type).
 public export
-MlSlPolyDir : {ar : MLArena} -> {onpos : MlSlArOnPos ar} ->
-  MlSlArPos {ar} onpos -> Type
-MlSlPolyDir {ar} {onpos} pos = SliceObj (onpos $ fst pos)
+MlSlPolyObjDir : (ar : MLArena) -> (onpos : MlSlArOnPos ar) -> Type
+MlSlPolyObjDir ar onpos = SliceObj (Sigma {a=(pfPos ar)} onpos)
 
 public export
-MlSlPolyOnDir : {ar : MLArena} -> (onpos : MlSlArOnPos ar) -> Type
-MlSlPolyOnDir {ar=(slpos ** sldir)} onpos = SliceMorphism {a=slpos} sldir onpos
+MlSlPolyOnDir : {ar : MLArena} -> (onpos : MlSlArOnPos ar) ->
+  MlSlPolyObjDir ar onpos -> Type
+MlSlPolyOnDir {ar=(slpos ** sldir)} onpos dir =
+  (i : slpos) -> (j : onpos i) -> sldir i -> dir (i ** j)
+
+public export
+record MlPolySlObj (ar : MLArena) where
+  constructor MPSobj
+  mpsOnPos : MlSlArOnPos ar
+  mpsDir : MlSlPolyObjDir ar mpsOnPos
+  mpsOnDir : MlSlPolyOnDir {ar} mpsOnPos mpsDir
 
 -----------------------------------
 ---- Slice morphism definition ----
