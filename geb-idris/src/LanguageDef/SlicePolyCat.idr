@@ -253,8 +253,12 @@ MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir (i ** j) d
 ---- Slice morphism definition ----
 -----------------------------------
 
--- As usual, the morphisms of slice categories correspond to natural
--- transformations which commute with the projections.
+-- The morphisms of slice categories correspond to morphisms of the
+-- base category which commute with the projections.  When we take
+-- the dependent-type view in the Dirichlet-functor category, the
+-- commutativity conditions are hidden in the type-checking of dependent
+-- functions.
+
 public export
 MlDirSlMorOnPos : {ar : MLArena} -> MlDirSlObj ar -> MlDirSlObj ar -> Type
 MlDirSlMorOnPos {ar=(bpos ** bdir)}
