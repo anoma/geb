@@ -242,10 +242,8 @@ record MlDirSlObj (ar : MLArena) where
   mdsOnPos : MlSlArOnPos ar
   mdsDir : Pi {a=(MlSlArPos {ar} mdsOnPos)} $ MlSlArDir {ar} {onpos=mdsOnPos}
 
--- When we view the on-positions function as a fibration, the on-directions
--- function becomes a (slice) morphism between directions of the object being
--- sliced over (the codomain of a slice object) and slices over the fibers of
--- the on-positions function.
+-- When we replace the on-positions and on-directions functions with fibrations,
+-- what we might consider to be the on-directions function is a pi type.
 public export
 MlSlDirichOnDir : {ar : MLArena} -> (sl : MlDirSlObj ar) ->
   (i : MlSlArPos {ar} $ mdsOnPos sl) -> MlSlArDir {ar} {onpos=(mdsOnPos sl)} i
