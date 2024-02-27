@@ -551,7 +551,7 @@ data PFSliceMorph' : {pos : Type} -> {dir : pos -> Type} ->
     PFSliceObj (pos ** dir) -> PFSliceObj (pos ** dir) -> Type where
   PFSM' : {pos : Type} -> {dir : pos -> Type} ->
     (dom : PFSliceObjPos (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
-    (ntfam : (i : pos) -> PolyNatTrans (dom i) (fst cod i)) ->
+    (ntfam : PNTFam {pos} {dir} dom cod) ->
     PFSliceMorph' {pos} {dir}
       (dom ** PFSliceMorphDomDir {pos} {dir} dom cod ntfam) cod
 
