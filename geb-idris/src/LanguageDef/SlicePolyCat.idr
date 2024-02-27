@@ -534,42 +534,6 @@ PFApp1 : {p : PolyFunc} -> pfPos p -> PFSliceObj p -> PolyFunc
 PFApp1 {p=p@(pos ** dir)} i slp =
   PFSliceOver1 $ PFAppI {p} Void (i ** \v => void v) slp
 
--- Any morphism in the slice category of `p` out of `(q ** alpha)` will have
--- the same `onpos` component, so we can constrain the slice morphisms as
--- follows.
-data PFSliceMorph'' : {0 p : PolyFunc} ->
-    CPFSliceObj p -> CPFSliceObj p -> Type where
-  PFSM :
-    {0 ppos, qpos, rpos : Type} ->
-    {0 pdir : ppos -> Type} -> {0 qdir : qpos -> Type} ->
-    {0 rdir : rpos -> Type} ->
-    (rponpos : rpos -> ppos) -> (qronpos : qpos -> rpos) ->
-    (rpondir : (i : rpos) -> pdir (rponpos i) -> rdir i) ->
-    (qrondir : (i : qpos) -> rdir (qronpos i) -> qdir i) ->
-    PFSliceMorph'' {p=(ppos ** pdir)}
-      ((qpos ** qdir) **
-       (rponpos . qronpos ** \i, pd => qrondir i $ rpondir (qronpos i) pd))
-      ((rpos ** rdir) **
-       (rponpos ** rpondir))
-
-CPFSliceMorphFromPFS'' : (p : PolyFunc) -> (sp, sq : CPFSliceObj p) ->
-  PFSliceMorph'' {p} sp sq -> CPFSliceMorph p sp sq
-CPFSliceMorphFromPFS'' (ppos ** pdir) ((qpos ** qdir) ** _) ((rpos ** rdir) ** _)
-  (PFSM rpop qrop rpod qrod) =
-    Element0
-      (qrop ** qrod)
-      (Evidence0 (\_ => Refl) $ \qi, pd => Refl)
-
-0 CPFSliceMorphToPFS'' : FunExt -> (p : PolyFunc) -> (sp, sq : CPFSliceObj p) ->
-  CPFSliceMorph p sp sq -> PFSliceMorph'' {p} sp sq
-CPFSliceMorphToPFS'' funext (ppos ** pdir)
-  ((qpos ** qdir) ** (qponpos ** qpondir))
-  ((rpos ** rdir) ** (rponpos ** rpondir))
-  (Element0 (qrop ** qrod) (Evidence0 opeq odeq)) =
-    rewrite funExt opeq in
-    rewrite sym (funExt $ \i : qpos => funExt $ odeq i) in
-    PFSM {pdir} rponpos qrop rpondir qrod
-
 PFSliceMorphDomDir : {pos : Type} -> {dir : pos -> Type} ->
   (dom : PFSliceObjPos (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
   ((i : pos) -> PolyNatTrans (dom i) (fst cod i)) ->
@@ -585,28 +549,6 @@ data PFSliceMorph' : {pos : Type} -> {dir : pos -> Type} ->
     (ntfam : (i : pos) -> PolyNatTrans (dom i) (fst cod i)) ->
     PFSliceMorph' {pos} {dir}
       (dom ** PFSliceMorphDomDir {pos} {dir} dom cod ntfam) cod
-
-0 PFSliceMorphToPFS' :
-  (pos : Type) -> (dir : pos -> Type) ->
-  (sp, sq : CPFSliceObj (pos ** dir)) ->
-  PFSliceMorph'' {p=(pos ** dir)} sp sq ->
-  PFSliceMorph' {pos} {dir}
-    (CPFSliceObjToPFS (pos ** dir) sp) (CPFSliceObjToPFS (pos ** dir) sq)
-PFSliceMorphToPFS' pos dir
-  ((qpos ** qdir) ** (_ ** _))
-  ((rpos ** rdir) ** (_ ** _))
-  (PFSM rpop qrop rpod qrod) =
-    ?PFSliceMorphToPFS'_hole
-
-0 PFSliceMorphFromPFS' :
-  (pos : Type) -> (dir : pos -> Type) ->
-  (dom, cod : PFSliceObj (pos ** dir)) ->
-  PFSliceMorph' {pos} {dir} dom cod ->
-  PFSliceMorph'' {p=(pos ** dir)}
-    (CPFSliceObjFromPFS (pos ** dir) dom) (CPFSliceObjFromPFS (pos ** dir) cod)
-PFSliceMorphFromPFS' _ _ (_ ** _) (_ ** _)
-  (PFSM' {pos} {dir} dompos (codpos ** coddir) ntfam) =
-    ?PFSliceMorphFromPFS'_hole
 
 ----------------------------
 ----------------------------
