@@ -536,9 +536,13 @@ PFApp1 : {p : PolyFunc} -> pfPos p -> PFSliceObj p -> PolyFunc
 PFApp1 {p=p@(pos ** dir)} i slp =
   PFSliceOver1 $ PFAppI {p} Void (i ** \v => void v) slp
 
+PNTFam : {pos : Type} -> {dir : pos -> Type} ->
+  PFSliceObjPos (pos ** dir) -> PFSliceObj (pos ** dir) -> Type
+PNTFam {pos} {dir} dom cod = (i : pos) -> PolyNatTrans (dom i) (fst cod i)
+
 PFSliceMorphDomDir : {pos : Type} -> {dir : pos -> Type} ->
   (dom : PFSliceObjPos (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
-  ((i : pos) -> PolyNatTrans (dom i) (fst cod i)) ->
+  PNTFam {pos} {dir} dom cod ->
   PFSliceObjDir (pos ** dir) dom
 PFSliceMorphDomDir {pos} {dir} dom (codonpos ** codondir) ntfam i d j =
    let (onpos ** ondir) = ntfam i in ondir j $ codondir i d $ onpos j
