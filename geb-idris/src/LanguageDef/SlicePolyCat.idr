@@ -278,24 +278,25 @@ record MlPolySlObj (ar : MLArena) where
 -- functions.
 
 public export
-MlDirSlMorOnPos : {ar : MLArena} -> MlDirichSlObj ar -> MlDirichSlObj ar -> Type
-MlDirSlMorOnPos {ar=(bpos ** bdir)}
+MlDirichSlMorOnPos : {ar : MLArena} ->
+  MlDirichSlObj ar -> MlDirichSlObj ar -> Type
+MlDirichSlMorOnPos {ar=(bpos ** bdir)}
   (MDSobj donpos ddir) (MDSobj conpos cdir) =
     SliceMorphism {a=bpos} donpos conpos
 
 public export
-MlDirSlMorOnDir : {ar : MLArena} -> (dom, cod : MlDirichSlObj ar) ->
-  MlDirSlMorOnPos {ar} dom cod -> Type
-MlDirSlMorOnDir {ar=(bpos ** bdir)}
+MlDirichSlMorOnDir : {ar : MLArena} -> (dom, cod : MlDirichSlObj ar) ->
+  MlDirichSlMorOnPos {ar} dom cod -> Type
+MlDirichSlMorOnDir {ar=(bpos ** bdir)}
   (MDSobj donpos ddir) (MDSobj conpos cdir) onpos =
     (i : bpos) -> (j : donpos i) -> (d : bdir i) ->
     ddir (i ** j) d -> cdir (i ** onpos i j) d
 
 public export
-record MlDirSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
+record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
   constructor MDSM
-  mdsOnPos : MlDirSlMorOnPos {ar} dom cod
-  mdsOnDir : MlDirSlMorOnDir {ar} dom cod mdsOnPos
+  mdsOnPos : MlDirichSlMorOnPos {ar} dom cod
+  mdsOnDir : MlDirichSlMorOnDir {ar} dom cod mdsOnPos
 
 ------------------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style objects/morphisms ----
@@ -317,7 +318,7 @@ mlDirSlObjFromC {ar=ar@(bpos ** bdir)} ((slpos ** sldir) ** (onpos ** ondir)) =
 
 public export
 mlDirSlMorToCBase : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
-  MlDirSlMor dom cod ->
+  MlDirichSlMor dom cod ->
   DirichNatTrans (fst (mlDirSlObjToC dom)) (fst (mlDirSlObjToC cod))
 mlDirSlMorToCBase {ar=(bpos ** bdir)}
   {dom=(MDSobj donpos ddir)} {cod=(MDSobj conpos cdir)} (MDSM onpos ondir) =
@@ -326,7 +327,7 @@ mlDirSlMorToCBase {ar=(bpos ** bdir)}
 
 public export
 mlDirSlMorToD : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
-  MlDirSlMor dom cod -> DFSliceMorph {p=ar} (mlDirSlObjToC cod)
+  MlDirichSlMor dom cod -> DFSliceMorph {p=ar} (mlDirSlObjToC cod)
 mlDirSlMorToD {ar=ar@(bpos ** bdir)}
   {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
   mor@(MDSM onpos ondir) =
@@ -334,7 +335,8 @@ mlDirSlMorToD {ar=ar@(bpos ** bdir)}
 
 public export
 0 mlDirSlMorToC : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
-  MlDirSlMor dom cod -> CDFSliceMorph ar (mlDirSlObjToC dom) (mlDirSlObjToC cod)
+  MlDirichSlMor dom cod ->
+  CDFSliceMorph ar (mlDirSlObjToC dom) (mlDirSlObjToC cod)
 mlDirSlMorToC {ar=(ppos ** pdir)}
   {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
   mor@(MDSM monpos mondir)
@@ -356,7 +358,7 @@ mlDirSlMorToC {ar=(ppos ** pdir)}
 public export
 mlDirSlMorFromD : {ar : MLArena} -> {cod : CDFSliceObj ar} ->
   (mor : DFSliceMorph {p=ar} cod) ->
-  MlDirSlMor
+  MlDirichSlMor
     (mlDirSlObjFromC {ar} $ DFSliceMorphDom {p=ar} {cod} mor)
     (mlDirSlObjFromC cod)
 mlDirSlMorFromD {ar=(ppos ** pdir)}
@@ -370,7 +372,7 @@ mlDirSlMorFromD {ar=(ppos ** pdir)}
 public export
 0 mlDirSlMorFromC : {ar : MLArena} -> {dom, cod : CDFSliceObj ar} ->
   (mor : CDFSliceMorph ar dom cod) ->
-  MlDirSlMor (mlDirSlObjFromC {ar} dom) (mlDirSlObjFromC {ar} cod)
+  MlDirichSlMor (mlDirSlObjFromC {ar} dom) (mlDirSlObjFromC {ar} cod)
 mlDirSlMorFromC {ar=(ppos ** pdir)}
   {dom=((dtot ** dproj) ** (donpos ** dondir))}
   {cod=((ctot ** cproj) ** (conpos ** condir))}
