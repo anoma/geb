@@ -363,40 +363,6 @@ mlDirSlMorFromC {ar=(ppos ** pdir)}
         Element0 (mondir j md) $
           trans (odeq j md) $ rewrite sym (opeq j) in deq)
 
-----------------------------------------------
-----------------------------------------------
----- Factorized slice polynomial functors ----
-----------------------------------------------
-----------------------------------------------
-
--- Because `Cat` has a factorization system -- all functors can be factored
--- into two, via a category of elements of a functor out of the codomain --
--- we could also choose to _define_ a functor as a composite of two functors
--- of that specific form.
-
--- So we begin with a definition of a polynomial (co)presheaf on a slice
--- category.
-public export
-SlPolyAr : Type -> Type
-SlPolyAr c = IntArena (SliceObj c)
-
-public export
-SlIntComp : (c : Type) -> IntCompSig (SliceObj c) (SliceMorphism {a=c})
-SlIntComp c x y z g f = \ela, elx => g ela $ f ela elx
-
-public export
-SlArInterp : {c : Type} -> SlPolyAr c -> SliceObj c -> Type
-SlArInterp {c} = InterpIPFobj (SliceObj c) (SliceMorphism {a=c})
-
-public export
-0 SlPolyArMapSig : {c : Type} -> SlPolyAr c -> Type
-SlPolyArMapSig {c} ar =
-  IntCopreshfMapSig (SliceObj c) (SliceMorphism {a=c}) (SlArInterp {c} ar)
-
-public export
-SlArFMap : {c : Type} -> (ar : SlPolyAr c) -> SlPolyArMapSig {c} ar
-SlArFMap {c} = InterpIPFmap (SliceObj c) (SliceMorphism {a=c}) (SlIntComp c)
-
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Slice categories of polynomial functors (in dependent-type style) ----
@@ -596,3 +562,37 @@ MLTel = SPFMu MLTelF
 
 MLFreeTel : SliceEndofunctor Type
 MLFreeTel = SlicePolyFree MLTelF
+
+----------------------------------------------
+----------------------------------------------
+---- Factorized slice polynomial functors ----
+----------------------------------------------
+----------------------------------------------
+
+-- Because `Cat` has a factorization system -- all functors can be factored
+-- into two, via a category of elements of a functor out of the codomain --
+-- we could also choose to _define_ a functor as a composite of two functors
+-- of that specific form.
+
+-- So we begin with a definition of a polynomial (co)presheaf on a slice
+-- category.
+public export
+SlPolyAr : Type -> Type
+SlPolyAr c = IntArena (SliceObj c)
+
+public export
+SlIntComp : (c : Type) -> IntCompSig (SliceObj c) (SliceMorphism {a=c})
+SlIntComp c x y z g f = \ela, elx => g ela $ f ela elx
+
+public export
+SlArInterp : {c : Type} -> SlPolyAr c -> SliceObj c -> Type
+SlArInterp {c} = InterpIPFobj (SliceObj c) (SliceMorphism {a=c})
+
+public export
+0 SlPolyArMapSig : {c : Type} -> SlPolyAr c -> Type
+SlPolyArMapSig {c} ar =
+  IntCopreshfMapSig (SliceObj c) (SliceMorphism {a=c}) (SlArInterp {c} ar)
+
+public export
+SlArFMap : {c : Type} -> (ar : SlPolyAr c) -> SlPolyArMapSig {c} ar
+SlArFMap {c} = InterpIPFmap (SliceObj c) (SliceMorphism {a=c}) (SlIntComp c)
