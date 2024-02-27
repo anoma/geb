@@ -425,8 +425,11 @@ PFSliceObj'' s = (si : pfPos s) -> PFCovarRepSliceObj (pfDir {p=s} si)
 record PFSliceObj' (s : PolyFunc) where
   constructor PFS
   pfsPos : SliceObj (pfPos s)
-  pfsDir :
-    (si : pfPos s) -> (pi : pfsPos si) -> (dir : Type ** pfDir {p=s} si -> dir)
+  pfsDir : SliceObj (Sigma {a=(pfPos s)} pfsPos)
+  pfsOnDir :
+    SliceMorphism {a=(Sigma {a=(pfPos s)} pfsPos)}
+      (pfDir {p=s} . DPair.fst)
+      pfsDir
 
 -- The dependent-type view of slices in the category of polynomial functors,
 -- which turns the arrows backwards (an object of a slice category "depends"
