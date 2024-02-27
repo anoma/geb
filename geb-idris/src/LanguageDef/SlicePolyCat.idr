@@ -267,13 +267,18 @@ record MlPolySlObj (ar : MLArena) where
   mpsDir : MlSlPolyObjDir ar mpsOnPos
   mpsOnDir : MlSlPolyOnDir {ar} mpsOnPos mpsDir
 
+public export
+MlPolySlPos : {ar : MLArena} -> MlPolySlObj ar -> Type
+MlPolySlPos {ar} p = MlSlArPos {ar} $ mpsOnPos p
+
 -----------------------------------
 ---- Slice morphism definition ----
 -----------------------------------
 
 -- The morphisms of slice categories correspond to morphisms of the
--- base category which commute with the projections.  When we take
--- the dependent-type view in the Dirichlet-functor category, the
+-- base category which commute with the projections.
+
+-- When we take the dependent-type view in the Dirichlet-functor category, the
 -- commutativity conditions are hidden in the type-checking of dependent
 -- functions.
 
