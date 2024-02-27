@@ -226,27 +226,24 @@ MlSlArPos {ar} onpos = Sigma {a=(fst ar)} onpos
 -- polynomials, because the on-directions part of the projection component of
 -- an object in a polynomial-functor slice category goes in the opposite
 -- direction.
---
--- Consequently, we will usually use two different representations for slice
--- objects in Dirichlet-functor versus polynomial-functor categories -- a
--- dependent-type style in the Dirichlet case, and a categorial style in the
--- polynomial case.
 public export
-MlSlArDir : {ar : MLArena} -> {onpos : MlSlArOnPos ar} ->
+MlSlDirichDir : {ar : MLArena} -> {onpos : MlSlArOnPos ar} ->
   MlSlArPos {ar} onpos -> Type
-MlSlArDir {ar} {onpos} pos = SliceObj (snd ar $ fst pos)
+MlSlDirichDir {ar} {onpos} pos = SliceObj (snd ar $ fst pos)
 
 public export
 record MlDirSlObj (ar : MLArena) where
   constructor MDSobj
   mdsOnPos : MlSlArOnPos ar
-  mdsDir : Pi {a=(MlSlArPos {ar} mdsOnPos)} $ MlSlArDir {ar} {onpos=mdsOnPos}
+  mdsDir :
+    Pi {a=(MlSlArPos {ar} mdsOnPos)} $ MlSlDirichDir {ar} {onpos=mdsOnPos}
 
 -- When we replace the on-positions and on-directions functions with fibrations,
 -- what we might consider to be the on-directions function is a pi type.
 public export
 MlSlDirichOnDir : {ar : MLArena} -> (sl : MlDirSlObj ar) ->
-  (i : MlSlArPos {ar} $ mdsOnPos sl) -> MlSlArDir {ar} {onpos=(mdsOnPos sl)} i
+  (i : MlSlArPos {ar} $ mdsOnPos sl) ->
+  MlSlDirichDir {ar} {onpos=(mdsOnPos sl)} i
 MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir (i ** j) d
 
 -----------------------------------
