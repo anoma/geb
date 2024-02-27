@@ -477,6 +477,13 @@ CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
   (\i : ppos => (PreImage onpos i ** \(Element0 j inpre) => qdir j) **
    \i : ppos, d : pdir i, (Element0 j inpre) => ondir j $ rewrite inpre in d)
 
+CPFSliceObjToPFS' : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj' p
+CPFSliceObjToPFS' (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
+  PFS
+    (\i => PreImage onpos i)
+    (\i => qdir $ fst0 $ snd i)
+    (\i, d => ondir (fst0 $ snd i) $ rewrite (snd0 $ snd i) in d)
+
 CPFSliceObjFromPFS : (p : PolyFunc) -> PFSliceObj p -> CPFSliceObj p
 CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
   (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
