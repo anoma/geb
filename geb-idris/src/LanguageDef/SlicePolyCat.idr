@@ -57,6 +57,13 @@ PFSliceMorphDom : {0 p : PolyFunc} -> {cod : CPFSliceObj p} ->
 PFSliceMorphDom {p} {cod=(ctot ** alpha)} (dtot ** beta) =
   (dtot ** pntVCatComp alpha beta)
 
+public export
+data PFSliceMorphDep : {0 p : PolyFunc} -> CPFSliceObj p -> CPFSliceObj p ->
+    Type where
+  PSMD : {0 p : PolyFunc} -> {0 dom, cod : CPFSliceObj p} ->
+    (mor : PFSliceMorph {p} cod) ->
+    PFSliceMorphDep {p} (PFSliceMorphDom {p} {cod} mor) cod
+
 PFSliceMorphToC : {0 p : PolyFunc} -> {cod : CPFSliceObj p} ->
   (mor : PFSliceMorph {p} cod) ->
   CPFSliceMorph p (PFSliceMorphDom {p} {cod} mor) cod
@@ -131,6 +138,13 @@ DFSliceMorphDom : {0 p : PolyFunc} -> {cod : CDFSliceObj p} ->
   DFSliceMorph {p} cod -> CDFSliceObj p
 DFSliceMorphDom {p} {cod=(ctot ** alpha)} (dtot ** beta) =
   (dtot ** dntVCatComp alpha beta)
+
+public export
+data DFSliceMorphDep : {0 p : PolyFunc} -> CDFSliceObj p -> CDFSliceObj p ->
+    Type where
+  DSMD : {0 p : PolyFunc} -> {0 dom, cod : CDFSliceObj p} ->
+    (mor : DFSliceMorph {p} cod) ->
+    DFSliceMorphDep {p} (DFSliceMorphDom {p} {cod} mor) cod
 
 DFSliceMorphToC : {0 p : PolyFunc} -> {cod : CDFSliceObj p} ->
   (mor : DFSliceMorph {p} cod) ->
