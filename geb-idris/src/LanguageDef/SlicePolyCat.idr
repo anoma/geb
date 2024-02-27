@@ -205,13 +205,13 @@ DFSliceMorphFromCDomMorEq {p=(ppos ** pdir)}
 -- being sliced over.
 public export
 MlSlArOnPos : MLArena -> Type
-MlSlArOnPos ar = fst ar -> Type
+MlSlArOnPos ar = pfPos ar -> Type
 
 -- Thus, the positions of the slice object's domain can be viewed as
 -- the sum of all the fibers.
 public export
 MlSlArPos : {ar : MLArena} -> MlSlArOnPos ar -> Type
-MlSlArPos {ar} onpos = Sigma {a=(fst ar)} onpos
+MlSlArPos {ar} onpos = Sigma {a=(pfPos ar)} onpos
 
 -- Consequently, the directions of the slice object's domain are a slice
 -- of the sum of the fibers.
@@ -229,7 +229,7 @@ MlSlArPos {ar} onpos = Sigma {a=(fst ar)} onpos
 public export
 MlSlDirichDir : {ar : MLArena} -> {onpos : MlSlArOnPos ar} ->
   MlSlArPos {ar} onpos -> Type
-MlSlDirichDir {ar} {onpos} pos = SliceObj (snd ar $ fst pos)
+MlSlDirichDir {ar} {onpos} pos = SliceObj (pfDir {p=ar} $ fst pos)
 
 public export
 record MlDirSlObj (ar : MLArena) where
