@@ -403,12 +403,6 @@ record PFSliceObj' (s : PolyFunc) where
   pfsDir :
     (si : pfPos s) -> (pi : pfsPos si) -> (dir : Type ** pfDir {p=s} si -> dir)
 
--- The signature of the `erase` operation of a polynomial comonad, which
--- may be viewed as a section of the polynomial functor:  that is, one
--- direction for each position.
-PFEraseSig : PolyFunc -> Type
-PFEraseSig = flip PolyNatTrans PFIdentityArena
-
 -- The dependent-type view of slices in the category of polynomial functors,
 -- which turns the arrows backwards (an object of a slice category "depends"
 -- on the functor being sliced over, rather than being a functor with a
@@ -442,7 +436,7 @@ PFSliceObjPos : PolyFunc -> Type
 PFSliceObjPos (pos ** dir) = pos -> PolyFunc
 
 PFSliceObjDir : (p : PolyFunc) -> PFSliceObjPos p -> Type
-PFSliceObjDir (pos ** dir) spf = SliceMorphism {a=pos} dir (PFEraseSig . spf)
+PFSliceObjDir (pos ** dir) spf = SliceMorphism {a=pos} dir (PFSection . spf)
 
 PFSliceObjPF : PolyFunc -> PolyFunc
 PFSliceObjPF p = (PFSliceObjPos p ** PFSliceObjDir p)
@@ -453,20 +447,17 @@ PFSliceObj p = pfPDir $ PFSliceObjPF p
 CPFSliceObjToPFS : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj p
 CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
   (\i : ppos => (PreImage onpos i ** \(Element0 j inpre) => qdir j) **
-   \i : ppos, d : pdir i =>
-    (\_ => () ** \(Element0 j inpre), () => ondir j $ rewrite inpre in d))
+   \i : ppos, d : pdir i, (Element0 j inpre) => ondir j $ rewrite inpre in d)
 
 CPFSliceObjFromPFS : (p : PolyFunc) -> PFSliceObj p -> CPFSliceObj p
 CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
   (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
-   (fst ** \(i ** j), d => snd (m i d) j ()))
+   (fst ** \(i ** j), d => m i d j))
 
 PFBaseChange : {p, q : PolyFunc} ->
   DirichNatTrans q p -> PFSliceObj p -> PFSliceObj q
 PFBaseChange {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) (psl ** m) =
-  (psl . onpos **
-   \qi, qd =>
-    (\_ => () ** \pslp, () => snd (m (onpos qi) (ondir qi qd)) pslp ()))
+  (psl . onpos ** \qi, qd, pslp => m (onpos qi) (ondir qi qd) pslp)
 
 PFSliceSigma : (q : PolyFunc) -> {p : PolyFunc} ->
   PolyNatTrans p q -> PFSliceObj p -> PFSliceObj q
@@ -520,9 +511,8 @@ PFSliceMorphDomDir : {pos : Type} -> {dir : pos -> Type} ->
   (dom : PFSliceObjPos (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
   ((i : pos) -> PolyNatTrans (dom i) (fst cod i)) ->
   PFSliceObjDir (pos ** dir) dom
-PFSliceMorphDomDir {pos} {dir} dom (codonpos ** codondir) ntfam i d =
-  (\_ => () **
-   \j, () => snd (ntfam i) j (snd (codondir i d) (fst (ntfam i) j) ()))
+PFSliceMorphDomDir {pos} {dir} dom (codonpos ** codondir) ntfam i d j =
+   let (onpos ** ondir) = ntfam i in ondir j $ codondir i d $ onpos j
 
 data PFSliceMorph' : {pos : Type} -> {dir : pos -> Type} ->
     PFSliceObj (pos ** dir) -> PFSliceObj (pos ** dir) -> Type where
