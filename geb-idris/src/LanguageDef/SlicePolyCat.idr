@@ -252,7 +252,7 @@ MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir (i ** j) d
 -- correspondingly explicitly a slice morphism (rather than a pi type).
 public export
 MlSlPolyObjDir : (ar : MLArena) -> (onpos : MlSlArOnPos ar) -> Type
-MlSlPolyObjDir ar onpos = SliceObj (Sigma {a=(pfPos ar)} onpos)
+MlSlPolyObjDir ar onpos = SliceObj (MlSlArPos {ar} onpos)
 
 public export
 MlSlPolyOnDir : {ar : MLArena} -> (onpos : MlSlArOnPos ar) ->
