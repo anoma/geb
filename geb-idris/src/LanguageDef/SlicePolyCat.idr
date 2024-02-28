@@ -578,6 +578,13 @@ PFAppI' : {p : PolyFunc} ->
 PFAppI' {p=p@(_ ** _)} ty (i ** d) =
   PFBaseChange' {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
 
+InterpPFSliceObj : {p : PolyFunc} ->
+  PFSliceObj' p -> (ty : Type) -> SliceObj $ InterpPolyFunc p ty
+InterpPFSliceObj {p} sl ty el with (CPFSliceObjFromPFS' p sl)
+  InterpPFSliceObj {p} sl ty el | (q ** alpha) =
+    PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc p ty)}
+      (InterpPolyNT alpha ty) el
+
 -- By analogy with the application of a `SliceObj x` in `Type` to a term
 -- of `x`, `PFApp` is a base change from the slice category over `p` to
 -- the slice category over the terminal polynomial functor, which is
