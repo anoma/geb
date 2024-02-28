@@ -252,13 +252,13 @@ MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir (i ** j) d
 -- correspondingly explicitly a slice morphism (rather than a pi type).
 public export
 MlSlPolyObjDir : (ar : MLArena) -> (onpos : MlSlArOnPos ar) -> Type
-MlSlPolyObjDir ar onpos = SliceObj (MlSlArPos {ar} onpos)
+MlSlPolyObjDir ar onpos = Pi {a=(pfPos ar)} (SliceObj . onpos)
 
 public export
 MlSlPolyOnDir : {ar : MLArena} -> (onpos : MlSlArOnPos ar) ->
   MlSlPolyObjDir ar onpos -> Type
 MlSlPolyOnDir {ar=(slpos ** sldir)} onpos dir =
-  (i : slpos) -> (j : onpos i) -> sldir i -> dir (i ** j)
+  (i : slpos) -> (j : onpos i) -> sldir i -> dir i j
 
 public export
 record MlPolySlObj (ar : MLArena) where
@@ -478,7 +478,7 @@ CPFSliceObjToPFS' : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj' p
 CPFSliceObjToPFS' (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
   PFS
     (\i => PreImage onpos i)
-    (\i => qdir $ fst0 $ snd i)
+    (\i, j => qdir $ fst0 j)
     (\i, j, d => ondir (fst0 j) $ rewrite (snd0 j) in d)
 
 CPFSliceObjFromPFS : (p : PolyFunc) -> PFSliceObj p -> CPFSliceObj p
@@ -488,7 +488,7 @@ CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
 
 CPFSliceObjFromPFS' : (p : PolyFunc) -> PFSliceObj' p -> CPFSliceObj p
 CPFSliceObjFromPFS' (ppos ** pdir) (PFS onpos dir ondir) =
-  ((Sigma {a=ppos} onpos ** \(i ** j) => dir (i ** j)) **
+  ((Sigma {a=ppos} onpos ** \(i ** j) => dir i j) **
    (fst ** \(i ** j), d => ondir i j d))
 
 PFBaseChange : {p, q : PolyFunc} ->
@@ -502,7 +502,7 @@ PFBaseChange' {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir)
   (PFS slonpos sldir slondir) =
     PFS
       (slonpos . onpos)
-      (\(i ** j) => sldir (onpos i ** j))
+      (\i, j => sldir (onpos i) j)
       (\i, j, qd => slondir (onpos i) j $ ondir i qd)
 
 PFSliceSigma : (q : PolyFunc) -> {p : PolyFunc} ->
@@ -545,7 +545,7 @@ PFSliceOverConst' {x} (PFS onpos dir ondir) ex =
   -- Put another way, `m` gives us no information, because its type
   -- restricts it to being effectively just the unique morphism out
   -- of the initial object.
-  (onpos ex ** \i => dir (ex ** i)) -- psl ex
+  (onpos ex ** \i => dir ex i)
 
 -- A slice object over the terminal polynomial functor is effectively
 -- just a polynomial functor, just as a slice of `Type` over `Unit` is
