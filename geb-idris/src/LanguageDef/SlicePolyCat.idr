@@ -235,8 +235,7 @@ public export
 record MlDirichSlObj (ar : MLArena) where
   constructor MDSobj
   mdsOnPos : MlSlArOnPos ar
-  mdsDir :
-    Pi {a=(MlSlArPos {ar} mdsOnPos)} $ MlSlDirichDir {ar} {onpos=mdsOnPos}
+  mdsDir : (i : pfPos ar) -> (j : mdsOnPos i) -> pfDir {p=ar} i -> Type
 
 -- When we replace the on-positions and on-directions functions with fibrations,
 -- what we might consider to be the on-directions function is a pi type.
@@ -244,7 +243,7 @@ public export
 MlSlDirichOnDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
   (i : MlSlArPos {ar} $ mdsOnPos sl) ->
   MlSlDirichDir {ar} {onpos=(mdsOnPos sl)} i
-MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir (i ** j) d
+MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir i j d
 
 -- In the case of polynomial functors, the directions of the slice object's
 -- domain are slices of its positions only, since its on-directions function
@@ -295,7 +294,7 @@ MlDirichSlMorOnDir : {ar : MLArena} -> (dom, cod : MlDirichSlObj ar) ->
 MlDirichSlMorOnDir {ar=(bpos ** bdir)}
   (MDSobj donpos ddir) (MDSobj conpos cdir) onpos =
     (i : bpos) -> (j : donpos i) -> (d : bdir i) ->
-    ddir (i ** j) d -> cdir (i ** onpos i j) d
+    ddir i j d -> cdir i (onpos i j) d
 
 public export
 record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
@@ -310,7 +309,7 @@ record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
 public export
 mlDirSlObjToC : {ar : MLArena} -> MlDirichSlObj ar -> CDFSliceObj ar
 mlDirSlObjToC {ar=ar@(bpos ** bdir)} (MDSobj onpos dir) =
-  ((MlSlArPos {ar} onpos ** \i => Sigma $ dir i) **
+  ((MlSlArPos {ar} onpos ** \ij => Sigma $ dir (fst ij) (snd ij)) **
    (DPair.fst ** \_ => DPair.fst))
 
 public export
@@ -318,7 +317,7 @@ mlDirSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirichSlObj ar
 mlDirSlObjFromC {ar=ar@(bpos ** bdir)} ((slpos ** sldir) ** (onpos ** ondir)) =
   MDSobj
     (\i => PreImage onpos i)
-    (\(i ** (Element0 j eq)), bd =>
+    (\i, (Element0 j eq), bd =>
       Subset0 (sldir j) $ \sld => ondir j sld = replace {p=bdir} (sym eq) bd)
 
 public export
@@ -356,9 +355,10 @@ mlDirSlMorToC {ar=(ppos ** pdir)}
          dmnt
          (Evidence0
             opeq
-            $ \i : (DPair ppos donpos), d : (DPair (pdir (fst i)) (ddir i)) =>
-            trans (odeq i d)
-              $ case i of (i' ** j') => case d of (d' ** dd') => Refl)
+            $ \i : (DPair ppos donpos),
+               d : (DPair (pdir (fst i)) (ddir (fst i) (snd i))) =>
+                trans (odeq i d)
+                $ case i of (i' ** j') => case d of (d' ** dd') => Refl)
 
 public export
 mlDirSlMorFromD : {ar : MLArena} -> {cod : CDFSliceObj ar} ->
