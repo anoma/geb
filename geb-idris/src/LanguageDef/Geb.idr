@@ -2857,10 +2857,10 @@ binTreeMaybeCata {atom} {a} {b} =
 public export
 BinTreeAutoBindAlg :
   {0 m : Type -> Type} -> {0 atom, a : Type} ->
-  (alg : atom -> a -> m a) -> (autobind : m a -> (a -> m a) -> m a) ->
+  (alg : atom -> a -> m a) -> (autob : m a -> (a -> m a) -> m a) ->
   BinTreeAlg atom (a -> m a)
-BinTreeAutoBindAlg {m} alg autobind (Left x) ea = alg x ea
-BinTreeAutoBindAlg {m} alg autobind (Right (bt, bt')) ea = autobind (bt ea) bt'
+BinTreeAutoBindAlg {m} alg autob (Left x) ea = alg x ea
+BinTreeAutoBindAlg {m} alg autob (Right (bt, bt')) ea = autob (bt ea) bt'
 
 public export
 BinTreeMonadAutoAlg :
