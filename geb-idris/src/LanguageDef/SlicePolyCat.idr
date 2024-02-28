@@ -424,12 +424,9 @@ PFSliceObj'' s = (si : pfPos s) -> PFCovarRepSliceObj (pfDir {p=s} si)
 -- and reorder some parameters, we obtain the following structure:
 record PFSliceObj' (s : PolyFunc) where
   constructor PFS
-  pfsPos : SliceObj (pfPos s)
-  pfsDir : SliceObj (Sigma {a=(pfPos s)} pfsPos)
-  pfsOnDir :
-    SliceMorphism {a=(Sigma {a=(pfPos s)} pfsPos)}
-      (pfDir {p=s} . DPair.fst)
-      pfsDir
+  pfsPos : MlSlArOnPos s
+  pfsDir : MlSlPolyObjDir s pfsPos
+  pfsOnDir : MlSlPolyOnDir {ar=s} pfsPos pfsDir
 
 -- The dependent-type view of slices in the category of polynomial functors,
 -- which turns the arrows backwards (an object of a slice category "depends"
@@ -482,7 +479,7 @@ CPFSliceObjToPFS' (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
   PFS
     (\i => PreImage onpos i)
     (\i => qdir $ fst0 $ snd i)
-    (\i, d => ondir (fst0 $ snd i) $ rewrite (snd0 $ snd i) in d)
+    (\i, j, d => ondir (fst0 j) $ rewrite (snd0 j) in d)
 
 CPFSliceObjFromPFS : (p : PolyFunc) -> PFSliceObj p -> CPFSliceObj p
 CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
@@ -492,7 +489,7 @@ CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
 CPFSliceObjFromPFS' : (p : PolyFunc) -> PFSliceObj' p -> CPFSliceObj p
 CPFSliceObjFromPFS' (ppos ** pdir) (PFS onpos dir ondir) =
   ((Sigma {a=ppos} onpos ** \(i ** j) => dir (i ** j)) **
-   (fst ** \(i ** j), d => ondir (i ** j) d))
+   (fst ** \(i ** j), d => ondir i j d))
 
 PFBaseChange : {p, q : PolyFunc} ->
   DirichNatTrans q p -> PFSliceObj p -> PFSliceObj q
@@ -506,7 +503,7 @@ PFBaseChange' {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir)
     PFS
       (slonpos . onpos)
       (\(i ** j) => sldir (onpos i ** j))
-      (\(i ** j), qd => slondir (onpos i ** j) $ ondir i qd)
+      (\i, j, qd => slondir (onpos i) j $ ondir i qd)
 
 PFSliceSigma : (q : PolyFunc) -> {p : PolyFunc} ->
   PolyNatTrans p q -> PFSliceObj p -> PFSliceObj q
