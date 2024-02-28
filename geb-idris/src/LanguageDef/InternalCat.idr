@@ -1161,8 +1161,6 @@ IntHasAllCoprodCovar c mor = (x, y : c) -> IntHasCoprodCovar c mor x y
 IntIsCoprodContra :
   (c : Type) -> (mor : IntDifunctorSig c) -> c -> c -> c -> Type
 IntIsCoprodContra c mor x y cxy =
-  -- The following definition could equivalently be expressed as:
-  -- (w, z : c) -> mor w cxy -> (mor x z -> mor w z, mor y z -> mor w z)
   (w, z : c) -> mor w cxy -> (mor x z, mor y z) -> mor w z
 
 -- This follows from `IntIsProdContra` by pre-composition (of the unique
