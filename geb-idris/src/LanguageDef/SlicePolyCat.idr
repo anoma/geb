@@ -319,7 +319,8 @@ MlPolySlMorOnDir : {ar : MLArena} ->
   MlPolySlMorOnPos {ar} dom cod -> Type
 MlPolySlMorOnDir {ar=(bpos ** bdir)}
   dom (MPSobj conpos cdir condir) monpos =
-    (i : bpos) -> (j : fst $ dom i) -> cdir i (monpos i j) -> snd (dom i) j
+    (i : bpos) ->
+      SliceMorphism {a=(fst $ dom i)} (cdir i . monpos i) (snd (dom i))
 
 public export
 MlPolySlMorDomOnDir : {ar : MLArena} ->
