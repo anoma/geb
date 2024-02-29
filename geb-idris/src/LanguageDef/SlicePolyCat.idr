@@ -450,14 +450,6 @@ DFContravarRepSliceObj x = (p : PolyFunc ** (i : pfPos p) -> pfDir {p} i -> x)
 PFSliceObj'' : PolyFunc -> Type
 PFSliceObj'' s = (si : pfPos s) -> PFCovarRepSliceObj (pfDir {p=s} si)
 
--- If we factor out the (dependent) products in the domain of `PFSliceObj''`,
--- and reorder some parameters, we obtain the following structure:
-record PFSliceObj' (s : PolyFunc) where
-  constructor PFS
-  pfsPos : MlSlArOnPos s
-  pfsDir : MlSlPolyObjDir s pfsPos
-  pfsOnDir : MlSlPolyOnDir {ar=s} pfsPos pfsDir
-
 -- The dependent-type view of slices in the category of polynomial functors,
 -- which turns the arrows backwards (an object of a slice category "depends"
 -- on the functor being sliced over, rather than being a functor with a
@@ -504,9 +496,9 @@ CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
   (\i : ppos => (PreImage onpos i ** \(Element0 j inpre) => qdir j) **
    \i : ppos, d : pdir i, (Element0 j inpre) => ondir j $ rewrite inpre in d)
 
-CPFSliceObjToPFS' : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj' p
+CPFSliceObjToPFS' : (p : PolyFunc) -> CPFSliceObj p -> MlPolySlObj p
 CPFSliceObjToPFS' (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
-  PFS
+  MPSobj
     (\i => PreImage onpos i)
     (\i, j => qdir $ fst0 j)
     (\i, j, d => ondir (fst0 j) $ rewrite (snd0 j) in d)
@@ -516,8 +508,8 @@ CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
   (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
    (fst ** \(i ** j), d => m i d j))
 
-CPFSliceObjFromPFS' : (p : PolyFunc) -> PFSliceObj' p -> CPFSliceObj p
-CPFSliceObjFromPFS' (ppos ** pdir) (PFS onpos dir ondir) =
+CPFSliceObjFromPFS' : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
+CPFSliceObjFromPFS' (ppos ** pdir) (MPSobj onpos dir ondir) =
   ((Sigma {a=ppos} onpos ** \(i ** j) => dir i j) **
    (fst ** \(i ** j), d => ondir i j d))
 
@@ -527,10 +519,10 @@ PFBaseChange {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) (psl ** m) =
   (psl . onpos ** \qi, qd, pslp => m (onpos qi) (ondir qi qd) pslp)
 
 PFBaseChange' : {p, q : PolyFunc} ->
-  DirichNatTrans q p -> PFSliceObj' p -> PFSliceObj' q
+  DirichNatTrans q p -> MlPolySlObj p -> MlPolySlObj q
 PFBaseChange' {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir)
-  (PFS slonpos sldir slondir) =
-    PFS
+  (MPSobj slonpos sldir slondir) =
+    MPSobj
       (slonpos . onpos)
       (\i, j => sldir (onpos i) j)
       (\i, j, qd => slondir (onpos i) j $ ondir i qd)
@@ -543,7 +535,7 @@ PFSliceSigma q {p} beta sl with (CPFSliceObjFromPFS p sl)
     CPFSliceObjToPFS q csigma
 
 PFSliceSigma' : (q : PolyFunc) -> {p : PolyFunc} ->
-  PolyNatTrans p q -> PFSliceObj' p -> PFSliceObj' q
+  PolyNatTrans p q -> MlPolySlObj p -> MlPolySlObj q
 PFSliceSigma' q {p} beta sl with (CPFSliceObjFromPFS' p sl)
   PFSliceSigma' q {p} beta sl | (r ** alpha) =
     let csigma = (r ** pntVCatComp beta alpha) in
@@ -565,8 +557,8 @@ PFSliceOverConst {x} (psl ** m) ex =
 
 -- A slice object over a constant functor is effectively a polynomial
 -- functor parameterized over terms of the output type of the constant functor.
-PFSliceOverConst' : {x : Type} -> PFSliceObj' (PFConstArena x) -> x -> PolyFunc
-PFSliceOverConst' {x} (PFS onpos dir ondir) ex =
+PFSliceOverConst' : {x : Type} -> MlPolySlObj (PFConstArena x) -> x -> PolyFunc
+PFSliceOverConst' {x} (MPSobj onpos dir ondir) ex =
   -- The arguments of `m` include a term of type `Void`, so
   -- it is impossible to apply (unless we find such a term, and
   -- hence a contradiction in our metalanguage).  Thus we can and
@@ -586,7 +578,7 @@ PFSliceOver1 psl = PFSliceOverConst {x=Unit} psl ()
 -- A slice object over the terminal polynomial functor is effectively
 -- just a polynomial functor, just as a slice of `Type` over `Unit` is
 -- effectively just a type.
-PFSliceOver1' : PFSliceObj' PFTerminalArena -> PolyFunc
+PFSliceOver1' : MlPolySlObj PFTerminalArena -> PolyFunc
 PFSliceOver1' psl = PFSliceOverConst' {x=Unit} psl ()
 
 PFAppI : {p : PolyFunc} ->
@@ -601,12 +593,12 @@ PFAppI' : {p : PolyFunc} ->
   {- these two parameters form an object of the category of elements of `p`
    - interpreted as a Dirichlet functor -}
   (ty : Type) -> (el : InterpDirichFunc p ty) ->
-  PFSliceObj' p -> PFSliceObj' (PFHomArena ty)
+  MlPolySlObj p -> MlPolySlObj (PFHomArena ty)
 PFAppI' {p=p@(_ ** _)} ty (i ** d) =
   PFBaseChange' {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
 
 InterpPFSliceObj : {p : PolyFunc} ->
-  PFSliceObj' p -> (ty : Type) -> SliceObj $ InterpPolyFunc p ty
+  MlPolySlObj p -> (ty : Type) -> SliceObj $ InterpPolyFunc p ty
 InterpPFSliceObj {p} sl ty el with (CPFSliceObjFromPFS' p sl)
   InterpPFSliceObj {p} sl ty el | (q ** alpha) =
     PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc p ty)}
@@ -636,7 +628,7 @@ PFApp1 {p=p@(pos ** dir)} i slp =
 -- That in turn amounts to simply a choice of position of the functor
 -- being sliced over, which dictates which dependent polynomial functor
 -- to select as the result.
-PFApp1' : {p : PolyFunc} -> pfPos p -> PFSliceObj' p -> PolyFunc
+PFApp1' : {p : PolyFunc} -> pfPos p -> MlPolySlObj p -> PolyFunc
 PFApp1' {p=p@(pos ** dir)} i slp =
   PFSliceOver1' $ PFAppI' {p} Void (i ** \v => void v) slp
 
