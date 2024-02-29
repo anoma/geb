@@ -453,23 +453,76 @@ PFDirCatElemMor {p=(pos ** dir)} x y = x = y
 -- of the dialgebra is the same object of `Type` as the object
 -- underlying the given object of the category of elements.)
 export
+PolyExpToDialgFst : (p, q : PolyFunc) ->
+  (a : Type) ->
+  InterpPolyFunc (pfHomObj p q) a ->
+  InterpPolyFunc p a ->
+  pfPos q
+PolyExpToDialgFst p q x (i ** d) (pi ** pd) =
+  fst (i pi)
+
+export
+PolyExpToDialgSnd : (p, q : PolyFunc) ->
+  (a : Type) ->
+  (dialg : InterpPolyFunc (pfHomObj p q) a) ->
+  (pa : InterpPolyFunc p a) ->
+  pfDir {p=q} (PolyExpToDialgFst p q a dialg pa) ->
+  a
+PolyExpToDialgSnd p q x (i ** d) (pi ** pd) qdi with
+    (snd (i pi) qdi) proof eq
+  PolyExpToDialgSnd p q x (i ** d) (pi ** pd) qdi
+    | Left () =
+      d (pi ** (qdi ** rewrite eq in ()))
+  PolyExpToDialgSnd p q x (i ** d) (pi ** pd) qdi
+    | Right pdi =
+      pd pdi
+
+export
 PolyExpToDialg : (p, q : PolyFunc) ->
   NaturalTransformation
     (InterpPolyFunc (pfHomObj p q))
     (Dialgebra (InterpPolyFunc p) (InterpPolyFunc q))
-PolyExpToDialg (ppos ** pdir) (qpos ** qdir) x (i ** d) (pi ** pd) =
-  (fst (i pi) ** \qdi => ret pi pd qdi)
-  where
-    ret : (pi : ppos) -> (pdir pi -> x) -> qdir (fst $ i pi) -> x
-    ret pi pd qdi with (snd (i pi) qdi) proof eq
-      ret pi pd qdi | Left () = d (pi ** (qdi ** rewrite eq in ()))
-      ret pi pd qdi | Right pdi = pd pdi
+PolyExpToDialg p q x dialg px =
+  (PolyExpToDialgFst p q x dialg px ** PolyExpToDialgSnd p q x dialg px)
 
 export
 PolyExpElemToDialg : (p, q : PolyFunc) ->
   MLPolyCatElemObj (pfHomObj p q) ->
   (x : Type ** Dialgebra (InterpPolyFunc p) (InterpPolyFunc q) x)
 PolyExpElemToDialg p q (x ** pqx) = (x ** PolyExpToDialg p q x pqx)
+
+public export
+IsDialgMorph : (f, g : Type -> Type) -> Functor f -> Functor g ->
+  (a, b : Type) -> Dialgebra f g a -> Dialgebra f g b -> (a -> b) -> Type
+IsDialgMorph f g fm gm a b da db m =
+  ExtEq {a=(f a)} {b=(g b)} (map {f=g} m . da) (db . map {f} m)
+
+export
+PolyExpMorToDialgDirEq : (p, q : PolyFunc) ->
+  (a, b : Type) -> (m : a -> b) ->
+  (dialgpos : pfPos (pfHomObj p q)) ->
+  (dialgdir : pfDir {p=(pfHomObj p q)} dialgpos -> a) ->
+  (i : pfPos p) -> (d : pfDir {p} i -> a) ->
+  (qdi : pfDir {p=q} $ fst $ dialgpos i) ->
+    m (PolyExpToDialgSnd p q a (dialgpos ** dialgdir) (i ** d) qdi) =
+    PolyExpToDialgSnd p q b
+      (InterpPFMap (pfHomObj p q) m (dialgpos ** dialgdir)) (i ** m . d) qdi
+PolyExpMorToDialgDirEq (ppos ** dir) (qpos ** qdir) a b m di dd i d qdi =
+  ?PolyExpMorToDialgDirEqU_hole
+
+export
+PolyExpMorToDialg : FunExt -> (p, q : PolyFunc) ->
+  (a, b : Type) -> (m : a -> b) ->
+  (dialg : InterpPolyFunc (pfHomObj p q) a) ->
+  IsDialgMorph (InterpPolyFunc p) (InterpPolyFunc q)
+    (MkFunctor $ InterpPFMap p) (MkFunctor $ InterpPFMap q)
+    a b
+    (PolyExpToDialg p q a dialg)
+    (PolyExpToDialg p q b $ InterpPFMap (pfHomObj p q) m dialg)
+    m
+PolyExpMorToDialg fext (ppos ** dir) (qpos ** qdir) a b m (di ** dd) (i ** d) =
+  dpEq12 Refl $ funExt $ \qdi =>
+    PolyExpMorToDialgDirEq (ppos ** dir) (qpos ** qdir) a b m di dd i d qdi
 
 public export
 PolyHomIdToSection : (p : PolyFunc) ->
