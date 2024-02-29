@@ -302,6 +302,35 @@ record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
   mdsOnPos : MlDirichSlMorOnPos {ar} dom cod
   mdsOnDir : MlDirichSlMorOnDir {ar} dom cod mdsOnPos
 
+public export
+MlPolySlMorDomData : MLArena -> Type
+MlPolySlMorDomData ar = fst ar -> PolyFunc
+
+public export
+MlPolySlMorOnPos : {ar : MLArena} ->
+  MlPolySlMorDomData ar -> MlPolySlObj ar -> Type
+MlPolySlMorOnPos {ar=(bpos ** bdir)}
+  dom (MPSobj conpos cdir condir) =
+    SliceMorphism {a=bpos} (fst . dom) conpos
+
+public export
+MlPolySlMorOnDir : {ar : MLArena} ->
+  (dom : MlPolySlMorDomData ar) -> (cod : MlPolySlObj ar) ->
+  MlPolySlMorOnPos {ar} dom cod -> Type
+MlPolySlMorOnDir {ar=(bpos ** bdir)}
+  dom (MPSobj conpos cdir condir) monpos =
+    (i : bpos) -> (j : fst $ dom i) -> cdir i (monpos i j) -> snd (dom i) j
+
+public export
+MlPolySlMorDomOnDir : {ar : MLArena} ->
+  (dom : MlPolySlMorDomData ar) -> (cod : MlPolySlObj ar) ->
+  (onpos : MlPolySlMorOnPos {ar} dom cod) ->
+  MlPolySlMorOnDir {ar} dom cod onpos ->
+  MlSlPolyOnDir {ar} (DPair.fst . dom) (\i => DPair.snd (dom i))
+MlPolySlMorDomOnDir {ar=(bpos ** bdir)} dom (MPSobj conpos cdir condir)
+  monpos mondir =
+    \i, j => mondir i j . condir i (monpos i j)
+
 ------------------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style objects/morphisms ----
 ------------------------------------------------------------------------------
