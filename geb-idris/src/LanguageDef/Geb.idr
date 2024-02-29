@@ -507,8 +507,14 @@ PolyExpMorToDialgDirEq : (p, q : PolyFunc) ->
     m (PolyExpToDialgSnd p q a (dialgpos ** dialgdir) (i ** d) qdi) =
     PolyExpToDialgSnd p q b
       (InterpPFMap (pfHomObj p q) m (dialgpos ** dialgdir)) (i ** m . d) qdi
-PolyExpMorToDialgDirEq (ppos ** dir) (qpos ** qdir) a b m di dd i d qdi =
-  ?PolyExpMorToDialgDirEqU_hole
+PolyExpMorToDialgDirEq (ppos ** dir) (qpos ** qdir) a b m di dd i d qdi
+    with (snd (di i) qdi)
+  PolyExpMorToDialgDirEq (ppos ** dir) (qpos ** qdir) a b m di dd i d qdi |
+    Left () =
+      Refl
+  PolyExpMorToDialgDirEq (ppos ** dir) (qpos ** qdir) a b m di dd i d qdi |
+    Right pdi =
+      Refl
 
 export
 PolyExpMorToDialg : FunExt -> (p, q : PolyFunc) ->
