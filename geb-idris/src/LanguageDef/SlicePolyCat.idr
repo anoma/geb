@@ -293,8 +293,8 @@ MlDirichSlMorOnDir : {ar : MLArena} -> (dom, cod : MlDirichSlObj ar) ->
   MlDirichSlMorOnPos {ar} dom cod -> Type
 MlDirichSlMorOnDir {ar=(bpos ** bdir)}
   (MDSobj donpos ddir) (MDSobj conpos cdir) onpos =
-    (i : bpos) -> (j : donpos i) -> (d : bdir i) ->
-    ddir i j d -> cdir i (onpos i j) d
+    (i : bpos) -> (j : donpos i) ->
+    SliceMorphism {a=(bdir i)} (ddir i j) (cdir i $ onpos i j)
 
 public export
 record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
