@@ -205,7 +205,7 @@ DFSliceMorphFromCDomMorEq {p=(ppos ** pdir)}
 -- being sliced over.
 public export
 MlSlArOnPos : MLArena -> Type
-MlSlArOnPos ar = pfPos ar -> Type
+MlSlArOnPos = SliceObj . pfPos
 
 -- Thus, the positions of the slice object's domain can be viewed as
 -- the sum of all the fibers.
