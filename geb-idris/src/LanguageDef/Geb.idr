@@ -25,7 +25,7 @@ import LanguageDef.SlicePolyCat
 ----------------------
 
 -- The endofunctor on `SliceObj c` which takes a subobject of `c` to
--- the subobject of `c` whose terms are reachable by a single applications
+-- the subobject of `c` whose terms consist of single applications
 -- of `f` to terms of the given subobject.
 --
 -- Its initial algebra (least fixed point) is simply the initial object
@@ -33,20 +33,20 @@ import LanguageDef.SlicePolyCat
 -- that has a free monad) is isomorphic to the application of its free monad to
 -- the initial object of `SliceObj c`, which is hence also `const Void`.
 export
-data SliceIterF : {0 c : Type} -> (0 f : c -> c) ->
+data SliceImageF : {0 c : Type} -> (0 f : c -> c) ->
     SliceEndofunctor c where
   SI : {0 c : Type} -> {0 f : c -> c} -> {0 sc : SliceObj c} ->
-    {ec : c} -> sc ec -> SliceIterF {c} f sc (f ec)
+    {ec : c} -> sc ec -> SliceImageF {c} f sc (f ec)
 
 export
 siMap : {0 c : Type} -> {0 f : c -> c} -> {0 sa, sb : SliceObj c} ->
   SliceMorphism {a=c} sa sb ->
-  SliceMorphism {a=c} (SliceIterF {c} f sa) (SliceIterF {c} f sb)
+  SliceMorphism {a=c} (SliceImageF {c} f sa) (SliceImageF {c} f sb)
 siMap {c} {f} {sa} {sb} m (f ec) (SI {ec} esc) = SI {ec} $ m ec esc
 
 export
 SIAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SIAlg {c} {f} = SliceAlg {a=c} (SliceIterF {c} f)
+SIAlg {c} {f} = SliceAlg {a=c} (SliceImageF {c} f)
 
 export
 SIVoidAlg : {c : Type} -> (0 f : c -> c) -> SIAlg f (const Void)
@@ -54,83 +54,83 @@ SIVoidAlg {c} f (f ec) (SI {ec} v) = v
 
 export
 SICoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SICoalg {c} {f} = SliceCoalg {a=c} (SliceIterF {c} f)
+SICoalg {c} {f} = SliceCoalg {a=c} (SliceImageF {c} f)
 
-data SlicePointedIterF : {0 c : Type} -> (0 f : c -> c) ->
+data SlicePointedImageF : {0 c : Type} -> (0 f : c -> c) ->
     SliceObj c -> SliceEndofunctor c where
   SPIv : {0 c : Type} -> {0 f : c -> c} -> {0 sv, sc : SliceObj c} ->
-    {ec : c} -> sv ec -> SlicePointedIterF {c} f sv sc ec
+    {ec : c} -> sv ec -> SlicePointedImageF {c} f sv sc ec
   SPIc : {0 c : Type} -> {0 f : c -> c} -> {0 sv, sc : SliceObj c} ->
-    {ec : c} -> SliceIterF {c} f sc ec -> SlicePointedIterF {c} f sv sc ec
+    {ec : c} -> SliceImageF {c} f sc ec -> SlicePointedImageF {c} f sv sc ec
 
 SIc : {0 c : Type} -> {f : c -> c} -> {0 sv, sc : SliceObj c} ->
-  {ec : c} -> sc ec -> SlicePointedIterF {c} f sv sc (f ec)
+  {ec : c} -> sc ec -> SlicePointedImageF {c} f sv sc (f ec)
 SIc {c} {f} {sv} {sc} {ec} =
   SPIc {c} {f} {sv} {sc} {ec=(f ec)} . SI {c} {f} {sc} {ec}
 
 export
 SPIAlg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SPIAlg {c} f sv = SliceAlg {a=c} (SlicePointedIterF {c} f sv)
+SPIAlg {c} f sv = SliceAlg {a=c} (SlicePointedImageF {c} f sv)
 
 export
 SPICoalg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SPICoalg {c} f sv = SliceCoalg {a=c} (SlicePointedIterF {c} f sv)
+SPICoalg {c} f sv = SliceCoalg {a=c} (SlicePointedImageF {c} f sv)
 
 --------------------
 ---- Free monad ----
 --------------------
 
 -- The free monad comes from a free-forgetful adjunction between `SliceObj c`
--- and the category of `SliceIterF f`-algebras on that category.
+-- and the category of `SliceImageF f`-algebras on that category.
 --
--- (The category of `SliceIterF f`-algebras on that category can be seen
+-- (The category of `SliceImageF f`-algebras on that category can be seen
 -- as the category of elements of `SIAlg f`.)
 --
 -- The left adjoint takes `sc : SliceObj c` to the algebra whose object
--- component is `SliceIterFM f sc` and whose morphism component is
+-- component is `SliceImageFM f sc` and whose morphism component is
 -- `SIin`.  The adjoints are part of the public interface of a universal
 -- property, so we use `public export` here.
 --
 -- The right adjoint is the forgetful functor which simply throws away the
 -- morphism component of the algebra, leaving a `SliceObj c`.
 public export
-data SliceIterFM : {0 c : Type} -> (0 f : c -> c) -> SliceEndofunctor c where
+data SliceImageFM : {0 c : Type} -> (0 f : c -> c) -> SliceEndofunctor c where
   SIin : {0 c : Type} -> {0 f : c -> c} -> {0 sc : SliceObj c} ->
-    SPIAlg {c} f sc (SliceIterFM {c} f sc)
+    SPIAlg {c} f sc (SliceImageFM {c} f sc)
 
 export
 SIFMAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SIFMAlg {c} f = SliceAlg {a=c} (SliceIterFM {c} f)
+SIFMAlg {c} f = SliceAlg {a=c} (SliceImageFM {c} f)
 
 export
 SIFMCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SIFMCoalg {c} f = SliceCoalg {a=c} (SliceIterFM {c} f)
+SIFMCoalg {c} f = SliceCoalg {a=c} (SliceImageFM {c} f)
 
 -- `SIin` is an isomorphism (by Lambek's theorem); this is its inverse.
 export
 SIout : {0 c : Type} -> {0 f : c -> c} -> {0 sc : SliceObj c} ->
-  SPICoalg {c} f sc (SliceIterFM {c} f sc)
+  SPICoalg {c} f sc (SliceImageFM {c} f sc)
 SIout {c} {f} {sc} ec (SIin ec esp) = esp
 
--- The (morphism component of the) free `SliceIterF`-algebra of
--- `SliceIterFM f sc`.
+-- The (morphism component of the) free `SliceImageF`-algebra of
+-- `SliceImageFM f sc`.
 export
 SIcom : {0 c : Type} -> {f : c -> c} -> {0 sc : SliceObj c} ->
-  SIAlg {c} f (SliceIterFM {c} f sc)
+  SIAlg {c} f (SliceImageFM {c} f sc)
 SIcom {c} {f} {sc} ec =
-  SIin {c} {f} {sc} ec . SPIc {c} {f} {sv=sc} {sc=(SliceIterFM f sc)} {ec}
+  SIin {c} {f} {sc} ec . SPIc {c} {f} {sv=sc} {sc=(SliceImageFM f sc)} {ec}
 
 -- The unit of the free-monad adjunction -- a natural transformation of
 -- endofunctors on `SliceObj a`, from the identity endofunctor to
--- `SliceIterFM f`.
+-- `SliceImageFM f`.
 export
 SIvar : {0 c : Type} -> {f : c -> c} -> {0 sc : SliceObj c} ->
-  SliceMorphism {a=c} sc (SliceIterFM {c} f sc)
+  SliceMorphism {a=c} sc (SliceImageFM {c} f sc)
 SIvar {c} {f} {sc} ec t =
-  SIin {c} {f} {sc} ec $ SPIv {c} {f} {sv=sc} {sc=(SliceIterFM f sc)} t
+  SIin {c} {f} {sc} ec $ SPIv {c} {f} {sv=sc} {sc=(SliceImageFM f sc)} t
 
 -- The counit of the free-monad adjunction -- a natural transformation of
--- endofunctors on algebras of `SliceIterF f`, from `SIFMAlg` to the identity
+-- endofunctors on algebras of `SliceImageF f`, from `SIFMAlg` to the identity
 -- endofunctor.
 export
 SIcounit : {c : Type} -> {f : c -> c} -> {sc : SliceObj c} ->
@@ -142,37 +142,37 @@ SIcounit {c} {f} {sc} alg =
 -- the right adjunct:  given an object `sa : SliceObj c` and an algebra
 -- `sb : SliceObj c`/`alg : SIAlg f sb`, the right adjunct takes a morphism
 -- `subst : SliceMorphism {a=c} sa sb` and returns a morphism
--- `SliceIterEval sa sb alg subst : SliceMorphism {a=c} (SliceIterFM f sa) sb`.
+-- `SliceImageEval sa sb alg subst : SliceMorphism {a=c} (SliceImageFM f sa) sb`.
 export
-SliceIterEval : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
+SliceImageEval : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
   (alg : SIAlg f sb) -> (subst : SliceMorphism {a=c} sa sb) ->
-  SliceMorphism {a=c} (SliceIterFM {c} f sa) sb
-SliceIterEval {c} {f} sa sb alg subst ec (SIin ec (SPIv v)) =
+  SliceMorphism {a=c} (SliceImageFM {c} f sa) sb
+SliceImageEval {c} {f} sa sb alg subst ec (SIin ec (SPIv v)) =
   subst ec v
-SliceIterEval {c} {f} sa sb alg subst ec (SIin ec (SPIc t)) =
+SliceImageEval {c} {f} sa sb alg subst ec (SIin ec (SPIc t)) =
   alg ec $ case t of
-    SI {ec=ec'} sec => SI {ec=ec'} $ SliceIterEval sa sb alg subst ec' sec
+    SI {ec=ec'} sec => SI {ec=ec'} $ SliceImageEval sa sb alg subst ec' sec
 
 -- The left adjunct of the free monad, given an object `sa : SliceObj c` and
 -- an algebra `sb : SliceObj c`/`alg : SIAlg f sb`, takes a morphism in
--- `SliceMorphism {a=c} (SliceIterFM f sa) sb` and returns a morphism in
+-- `SliceMorphism {a=c} (SliceImageFM f sa) sb` and returns a morphism in
 -- `subst : SliceMorphism {a=c} sa sb`.
 --
 -- The implementation does not use the morphism component of the algebra,
 -- so we omit it from the signature.
 export
-SliceIterLAdj : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
-  SliceMorphism {a=c} (SliceIterFM {c} f sa) sb ->
+SliceImageLAdj : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
+  SliceMorphism {a=c} (SliceImageFM {c} f sa) sb ->
   SliceMorphism {a=c} sa sb
-SliceIterLAdj {c} {f} sa sb eval ec = eval ec . SIvar {c} {f} {sc=sa} ec
+SliceImageLAdj {c} {f} sa sb eval ec = eval ec . SIvar {c} {f} {sc=sa} ec
 
--- We show that the initial algebra of `SliceIterF f` is the initial object
+-- We show that the initial algebra of `SliceImageF f` is the initial object
 -- of `SliceObj a`.
 export
 SIMuInitial : {c : Type} -> (f : c -> c) ->
-  SliceMorphism {a=c} (SliceIterFM {c} f $ const Void) (const Void)
+  SliceMorphism {a=c} (SliceImageFM {c} f $ const Void) (const Void)
 SIMuInitial {c} f =
-  SliceIterEval {c} {f} (const Void) (const Void) (SIVoidAlg {c} f) (\_ => id)
+  SliceImageEval {c} {f} (const Void) (const Void) (SIVoidAlg {c} f) (\_ => id)
 
 --------------------------------------
 --------------------------------------
