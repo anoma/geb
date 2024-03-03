@@ -59,7 +59,7 @@ SliceIterEval {a} {f} sv sa subst alg ea (SIin ea (SPIv v)) =
   subst ea v
 SliceIterEval {a} {f} sv sa subst alg ea (SIin ea (SPIc c)) =
   alg ea $ case c of
-    SI sea => SI $ SliceIterEval {a} {f} sv sa subst alg _ sea
+    SI {ea=ea'} sea => SI {ea=ea'} $ SliceIterEval sv sa subst alg ea' sea
 
 --------------------------------------
 --------------------------------------
