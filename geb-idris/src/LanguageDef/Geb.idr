@@ -14,6 +14,53 @@ import LanguageDef.SlicePolyCat
 
 %default total
 
+-----------------------------
+-----------------------------
+---- Dependent iteration ----
+-----------------------------
+-----------------------------
+
+export
+data SliceIterF : {0 a : Type} -> (0 f : a -> a) ->
+    SliceEndofunctor a where
+  SI : {0 a : Type} -> {0 f : a -> a} -> {0 sa : SliceObj a} ->
+    {ea : a} -> sa ea -> SliceIterF {a} f sa (f ea)
+
+export
+SIAlg : {a : Type} -> (0 f : a -> a) -> (sa : SliceObj a) -> Type
+SIAlg {a} {f} = SliceAlg {a} (SliceIterF f {a})
+
+data SlicePointedIterF : {0 a : Type} -> (0 f : a -> a) ->
+    SliceObj a -> SliceEndofunctor a where
+  SPIv : {0 a : Type} -> {0 f : a -> a} -> {0 sv, sa : SliceObj a} ->
+    {ea : a} -> sv ea -> SlicePointedIterF {a} f sv sa ea
+  SPIc : {0 a : Type} -> {0 f : a -> a} -> {0 sv, sa : SliceObj a} ->
+    {ea : a} -> SliceIterF {a} f sa ea -> SlicePointedIterF {a} f sv sa ea
+
+SIc : {0 a : Type} -> {f : a -> a} -> {0 sv, sa : SliceObj a} ->
+  {ea : a} -> sa ea -> SlicePointedIterF {a} f sv sa (f ea)
+SIc {a} {f} {sv} {sa} {ea} =
+  SPIc {a} {f} {sv} {sa} {ea=(f ea)} . SI {a} {f} {sa} {ea}
+
+export
+SPIAlg : {a : Type} -> (0 f : a -> a) -> (sv, sa : SliceObj a) -> Type
+SPIAlg {a} f sv = SliceAlg {a} (SlicePointedIterF f {a} sv)
+
+export
+data SliceIterFM : {0 a : Type} -> (0 f : a -> a) -> SliceEndofunctor a where
+  SIin : {0 a : Type} -> {0 f : a -> a} -> {0 sa : SliceObj a} ->
+    SPIAlg {a} f sa (SliceIterFM {a} f sa)
+
+export
+SliceIterEval : {0 a : Type} -> {f : a -> a} -> (sv, sa : SliceObj a) ->
+  SliceMorphism {a} sv sa -> SIAlg f sa ->
+  SliceMorphism {a} (SliceIterFM {a} f sv) sa
+SliceIterEval {a} {f} sv sa subst alg ea (SIin ea (SPIv v)) =
+  subst ea v
+SliceIterEval {a} {f} sv sa subst alg ea (SIin ea (SPIc c)) =
+  alg ea $ case c of
+    SI sea => SI $ SliceIterEval {a} {f} sv sa subst alg _ sea
+
 --------------------------------------
 --------------------------------------
 ---- Reachability through W-types ----
