@@ -54,7 +54,7 @@ SIVoidAlg {c} f (f ec) (SI {ec} v) = v
 
 export
 SICoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SICoalg {c} {f} = SliceAlg {a=c} (SliceIterF {c} f)
+SICoalg {c} {f} = SliceCoalg {a=c} (SliceIterF {c} f)
 
 data SlicePointedIterF : {0 c : Type} -> (0 f : c -> c) ->
     SliceObj c -> SliceEndofunctor c where
@@ -71,6 +71,10 @@ SIc {c} {f} {sv} {sc} {ec} =
 export
 SPIAlg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
 SPIAlg {c} f sv = SliceAlg {a=c} (SlicePointedIterF {c} f sv)
+
+export
+SPICoalg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SPICoalg {c} f sv = SliceCoalg {a=c} (SlicePointedIterF {c} f sv)
 
 --------------------
 ---- Free monad ----
@@ -98,7 +102,18 @@ export
 SIFMAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
 SIFMAlg {c} f = SliceAlg {a=c} (SliceIterFM {c} f)
 
--- The free `SliceIterF`-algebra of `SliceIterFM f sc`.
+export
+SIFMCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
+SIFMCoalg {c} f = SliceCoalg {a=c} (SliceIterFM {c} f)
+
+-- `SIin` is an isomorphism (by Lambek's theorem); this is its inverse.
+export
+SIout : {0 c : Type} -> {0 f : c -> c} -> {0 sc : SliceObj c} ->
+  SPICoalg {c} f sc (SliceIterFM {c} f sc)
+SIout {c} {f} {sc} ec (SIin ec esp) = esp
+
+-- The (morphism component of the) free `SliceIterF`-algebra of
+-- `SliceIterFM f sc`.
 export
 SIcom : {0 c : Type} -> {f : c -> c} -> {0 sc : SliceObj c} ->
   SIAlg {c} f (SliceIterFM {c} f sc)
