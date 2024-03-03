@@ -38,6 +38,13 @@ data SliceImageF : {0 c : Type} -> (0 f : c -> c) ->
   SI : {0 c : Type} -> {0 f : c -> c} -> {0 sc : SliceObj c} ->
     {ec : c} -> sc ec -> SliceImageF {c} f sc (f ec)
 
+-- Rather than making the constructor `SI` explicit, we export an
+-- alias for it viewed as a natural transformation.
+export
+sIm : {0 c : Type} -> {0 f : c -> c} ->
+  SliceNatTrans {x=c} {y=c} (SliceIdF c) (BaseChangeF f . SliceImageF {c} f)
+sIm {c} {f} sc ec = SI {c} {f} {sc} {ec}
+
 export
 siMap : {0 c : Type} -> {0 f : c -> c} -> {0 sa, sb : SliceObj c} ->
   SliceMorphism {a=c} sa sb ->
