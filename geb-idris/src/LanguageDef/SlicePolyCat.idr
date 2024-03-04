@@ -32,21 +32,40 @@ data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
 
 -- Rather than making the constructor `SS` explicit, we export an
 -- alias for it viewed as a natural transformation.
+--
+-- This is the unit of the dependent-sum/base-change adjunction.
 export
-sSm : {0 c, d : Type} -> {0 f : c -> d} ->
+sSin : {0 c, d : Type} -> {0 f : c -> d} ->
   SliceNatTrans {x=c} {y=c} (SliceIdF c) (BaseChangeF f . SliceSigmaF {c} {d} f)
-sSm {c} {d} {f} sc ec = SS {c} {d} {f} {sc} {ec}
+sSin {c} {d} {f} sc ec = SS {c} {d} {f} {sc} {ec}
 
--- The destructor for `SliceSigmaF f sc` is parametrically polymorphic:
--- rather than receiving a witness to a given `ec : c` being in the image
--- of `f` applied to a given slice over `c`, it passes in a handler for _any_
--- such witness.
+-- The counit of the dependent-sum/base-change adjunction.
 export
-sPre : {0 c, d : Type} -> {0 f : c -> d} ->
+sSout : {0 c, d : Type} -> {0 f : c -> d} ->
+  SliceNatTrans {x=d} {y=d} (SliceSigmaF {c} {d} f . BaseChangeF f) (SliceIdF d)
+sSout {c} {d} {f} sd (f ec) (SS {sc=(BaseChangeF f sd)} {ec} sec) = sec
+
+-- This is the right adjunct of the dependent-sum/base-change adjunction.
+--
+-- It constitutes the destructor for `SliceSigmaF f sc`.  As an adjunction,
+-- it is parametrically polymorphic:  rather than receiving a witness to a
+-- given `ec : c` being in the image of `f` applied to a given slice over
+-- `c`, it passes in a handler for _any_ such witness.
+export
+ssElim : {0 c, d : Type} -> {0 f : c -> d} ->
   {0 sa : SliceObj c} -> {sb : SliceObj d} ->
   SliceMorphism {a=c} sa (BaseChangeF f sb) ->
   SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb
-sPre {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} sea) = m ec sea
+ssElim {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} sea) = m ec sea
+
+-- This is the left adjunct of the dependent-sum/base-change adjunction.
+-- It constitutes the constructor for `SliceSigmaF f sc`.
+export
+ssIntro : {0 c, d : Type} -> {f : c -> d} ->
+  {0 sa : SliceObj c} -> {sb : SliceObj d} ->
+  SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb ->
+  SliceMorphism {a=c} sa (BaseChangeF f sb)
+ssIntro {c} {d} {f} {sa} {sb} m ec esa = m (f ec) $ SS {ec} esa
 
 export
 ssMap : {0 c, d : Type} -> {0 f : c -> d} -> {0 sa, sb : SliceObj c} ->
