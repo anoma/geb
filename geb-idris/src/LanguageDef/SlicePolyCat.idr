@@ -11,6 +11,18 @@ import public LanguageDef.InternalCat
 -------------------------------------------------
 -------------------------------------------------
 
+---------------------
+---- Base change ----
+---------------------
+
+-- Because base change is in the middle of an adjoint triple between
+-- dependent sum and dependent product, it can introduced and eliminated
+-- from either side, by the adjuncts defined below with `Sigma` and `Pi`.
+
+export
+bcMap : {0 c, d : Type} -> {f : c -> d} -> SliceFMap (BaseChangeF {a=d} {b=c} f)
+bcMap {c} {d} {f} sa sb m ec = m (f ec)
+
 -----------------------
 ---- Dependent sum ----
 -----------------------
