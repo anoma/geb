@@ -55,13 +55,15 @@ SSComonad {c} {d} f = SliceSigmaF {c} {d} f . BaseChangeF f
 -- Rather than making the constructor `SS` explicit, we export an
 -- alias for it viewed as a natural transformation.
 --
--- This is the unit of the dependent-sum/base-change adjunction.
+-- This is the unit (AKA "pure" or "return") of the dependent-sum/base-change
+-- adjunction.
 export
 sSin : {0 c, d : Type} -> {0 f : c -> d} ->
   SliceNatTrans {x=c} {y=c} (SliceIdF c) (SSMonad {c} {d} f)
 sSin {c} {d} {f} sc ec = SS {c} {d} {f} {sc} {ec}
 
--- The counit of the dependent-sum/base-change adjunction.
+-- The counit (AKA "erase" or "extract") of the dependent-sum/base-change
+-- adjunction.
 export
 sSout : {0 c, d : Type} -> {0 f : c -> d} ->
   SliceNatTrans {x=d} {y=d} (SSComonad {c} {d} f) (SliceIdF d)
