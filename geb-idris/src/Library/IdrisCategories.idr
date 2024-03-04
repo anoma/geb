@@ -464,8 +464,49 @@ ArrowObj : Type
 ArrowObj = (sig : (Type, Type) ** (fst sig -> snd sig))
 
 public export
+SliceFMap : {c, d : Type} -> SliceFunctor c d -> Type
+SliceFMap {c} {d} f =
+  (x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)
+
+public export
 SliceNatTrans : {x, y : Type} -> (f, g : SliceFunctor x y) -> Type
 SliceNatTrans {x} {y} f g = (s : SliceObj x) -> SliceMorphism (f s) (g s)
+
+public export
+SliceNTid : {c, d : Type} -> (f : SliceFunctor c d) -> SliceNatTrans f f
+SliceNTid {c} {d} f a = sliceId (f a)
+
+public export
+SliceNTvcomp : {c, d : Type} -> {f, g, h : SliceFunctor c d} ->
+  SliceNatTrans g h -> SliceNatTrans f g -> SliceNatTrans f h
+SliceNTvcomp {c} {d} {f} {g} {h} beta alpha a =
+  sliceComp {x=(f a)} {y=(g a)} {z=(h a)} (beta a) (alpha a)
+
+public export
+SliceWhiskerLeft : {0 c, d, e : Type} ->
+  {0 g, h : SliceFunctor d e} ->
+  (nu : SliceNatTrans {x=d} {y=e} g h) -> (f : SliceFunctor c d) ->
+  SliceNatTrans {x=c} {y=e} (g . f) (h . f)
+SliceWhiskerLeft {c} {d} {e} {g} {h} nu f a = nu (f a)
+
+public export
+SliceWhiskerRight : {0 c, d, e : Type} ->
+  {f, g : SliceFunctor c d} ->
+  {h : SliceFunctor d e} ->
+  SliceFMap {c=d} {d=e} h -> (nu : SliceNatTrans {x=c} {y=d} f g) ->
+  SliceNatTrans {x=c} {y=e} (h . f) (h . g)
+SliceWhiskerRight {c} {d} {e} {f} {g} {h} hm nu a = hm (f a) (g a) (nu a)
+
+public export
+SliceNThcomp : {c, d, e : Type} ->
+  {f, f' : SliceFunctor c d} -> {g, g' : SliceFunctor d e} ->
+  SliceFMap {c=d} {d=e} g ->
+  SliceNatTrans {x=d} {y=e} g g' -> SliceNatTrans {x=c} {y=d} f f' ->
+  SliceNatTrans {x=c} {y=e} (g . f) (g' . f')
+SliceNThcomp {c} {d} {e} {f} {f'} {g} {g'} gm beta alpha a =
+  sliceComp {a=e} {x=(g (f a))} {y=(g (f' a))} {z=(g' (f' a))}
+    (SliceWhiskerLeft {c} {d} {e} {g} {h=g'} beta f' a)
+    (SliceWhiskerRight {c} {d} {e} {f} {g=f'} {h=g} gm alpha a)
 
 public export
 SliceProduct : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
@@ -502,11 +543,6 @@ sliceApp {c} {x} {y} {z} g f ec ex = g ec ex $ f ec ex
 ---- Applicatives and monads in slice categories of `Type` ----
 ---------------------------------------------------------------
 ---------------------------------------------------------------
-
-public export
-SliceFMap : {c, d : Type} -> SliceFunctor c d -> Type
-SliceFMap {c} {d} f =
-  (x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)
 
 public export
 SlicePure : {c : Type} -> SliceEndofunctor c -> Type
