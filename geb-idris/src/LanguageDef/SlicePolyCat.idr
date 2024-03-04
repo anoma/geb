@@ -15,74 +15,81 @@ import public LanguageDef.InternalCat
 ---- Dependent sum ----
 -----------------------
 
--- The endofunctor on `SliceObj c` which takes a subobject of `c` to
--- the subobject of `c` whose terms consist of single applications
+-- The slice functor from `c` to `d` which takes a subobject of `c` to
+-- the subobject of `d` whose terms consist of single applications
 -- of `f` to terms of the given subobject.
 --
--- Its initial algebra (least fixed point) is simply the initial object
--- of `SliceObj c` (`const Void`); that initial algebra (as with any functor
--- that has a free monad) is isomorphic to the application of its free monad to
--- the initial object of `SliceObj c`, which is hence also `const Void`.
+-- When it is an endofunctor (i.e. `d` is `c`), Its initial algebra
+-- (least fixed point) is simply the initial object of `SliceObj c`
+-- (`const Void`); that initial algebra (as with any functor that has a
+-- free monad) is isomorphic to the application of its free monad to the
+-- initial object of `SliceObj c`, which is hence also `const Void`.
 export
-data SliceSigmaF : {0 c : Type} -> (0 f : c -> c) ->
-    SliceEndofunctor c where
-  SS : {0 c : Type} -> {0 f : c -> c} -> {0 sc : SliceObj c} ->
-    {ec : c} -> sc ec -> SliceSigmaF {c} f sc (f ec)
+data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
+    SliceFunctor c d where
+  SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
+    {ec : c} -> sc ec -> SliceSigmaF {c} {d} f sc (f ec)
 
 -- Rather than making the constructor `SS` explicit, we export an
 -- alias for it viewed as a natural transformation.
 export
-sIm : {0 c : Type} -> {0 f : c -> c} ->
-  SliceNatTrans {x=c} {y=c} (SliceIdF c) (BaseChangeF f . SliceSigmaF {c} f)
-sIm {c} {f} sc ec = SS {c} {f} {sc} {ec}
+sIm : {0 c, d : Type} -> {0 f : c -> d} ->
+  SliceNatTrans {x=c} {y=c} (SliceIdF c) (BaseChangeF f . SliceSigmaF {c} {d} f)
+sIm {c} {d} {f} sc ec = SS {c} {d} {f} {sc} {ec}
 
 -- The destructor for `SliceSigmaF f sc` is parametrically polymorphic:
 -- rather than receiving a witness to a given `ec : c` being in the image
 -- of `f` applied to a given slice over `c`, it passes in a handler for _any_
 -- such witness.
 export
-sPre : {0 c : Type} -> {0 f : c -> c} -> {0 sa, sb : SliceObj c} ->
+sPre : {0 c, d : Type} -> {0 f : c -> d} ->
+  {0 sa : SliceObj c} -> {sb : SliceObj d} ->
   SliceMorphism {a=c} sa (BaseChangeF f sb) ->
-  SliceMorphism {a=c} (SliceSigmaF {c} f sa) sb
-sPre {c} {f} {sa} {sb} m (f ec) (SS {ec} sea) = m ec sea
+  SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb
+sPre {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} sea) = m ec sea
 
 export
-siMap : {0 c : Type} -> {0 f : c -> c} -> {0 sa, sb : SliceObj c} ->
+siMap : {0 c, d : Type} -> {0 f : c -> d} -> {0 sa, sb : SliceObj c} ->
   SliceMorphism {a=c} sa sb ->
-  SliceMorphism {a=c} (SliceSigmaF {c} f sa) (SliceSigmaF {c} f sb)
-siMap {c} {f} {sa} {sb} m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
+  SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) (SliceSigmaF {c} {d} f sb)
+siMap {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
 
 export
 SSAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SSAlg {c} {f} = SliceAlg {a=c} (SliceSigmaF {c} f)
+SSAlg {c} {f} = SliceAlg {a=c} (SliceSigmaF {c} {d=c} f)
 
 export
-SSVoidAlg : {c : Type} -> (0 f : c -> c) -> SSAlg f (const Void)
+SSVoidAlg : {c : Type} -> (0 f : c -> c) -> SSAlg {c} f (const Void)
 SSVoidAlg {c} f (f ec) (SS {ec} v) = v
 
 export
 SSCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SSCoalg {c} {f} = SliceCoalg {a=c} (SliceSigmaF {c} f)
+SSCoalg {c} {f} = SliceCoalg {a=c} (SliceSigmaF {c} {d=c} f)
 
-data SlicePointedSigmaF : {0 c : Type} -> (0 f : c -> c) ->
-    SliceObj c -> SliceEndofunctor c where
-  SPIv : {0 c : Type} -> {0 f : c -> c} -> {0 sv, sc : SliceObj c} ->
-    {ec : c} -> sv ec -> SlicePointedSigmaF {c} f sv sc ec
-  SPIc : {0 c : Type} -> {0 f : c -> c} -> {0 sv, sc : SliceObj c} ->
-    {ec : c} -> SliceSigmaF {c} f sc ec -> SlicePointedSigmaF {c} f sv sc ec
+data SlicePointedSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
+    SliceObj d -> SliceFunctor c d where
+  SPIv : {0 c, d : Type} -> {0 f : c -> d} ->
+    {0 sv : SliceObj d} -> {0 sc : SliceObj c} ->
+    {ed : d} -> sv ed ->
+    SlicePointedSigmaF {c} {d} f sv sc ed
+  SPIc : {0 c, d : Type} -> {0 f : c -> d} ->
+    {0 sv : SliceObj d} -> {0 sc : SliceObj c} ->
+    {ed : d} -> SliceSigmaF {c} {d} f sc ed ->
+    SlicePointedSigmaF {c} {d} f sv sc ed
 
-SSc : {0 c : Type} -> {f : c -> c} -> {0 sv, sc : SliceObj c} ->
-  {ec : c} -> sc ec -> SlicePointedSigmaF {c} f sv sc (f ec)
-SSc {c} {f} {sv} {sc} {ec} =
-  SPIc {c} {f} {sv} {sc} {ec=(f ec)} . SS {c} {f} {sc} {ec}
+SSc : {0 c, d : Type} -> {f : c -> d} ->
+  {0 sv : SliceObj d} -> {0 sc : SliceObj c} ->
+  {ec : c} -> sc ec -> SlicePointedSigmaF {c} {d} f sv sc (f ec)
+SSc {c} {d} {f} {sv} {sc} {ec} =
+  SPIc {c} {d} {f} {sv} {sc} {ed=(f ec)} . SS {c} {f} {sc} {ec}
 
 export
 SPIAlg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SPIAlg {c} f sv = SliceAlg {a=c} (SlicePointedSigmaF {c} f sv)
+SPIAlg {c} f sv = SliceAlg {a=c} (SlicePointedSigmaF {c} {d=c} f sv)
 
 export
 SPICoalg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SPICoalg {c} f sv = SliceCoalg {a=c} (SlicePointedSigmaF {c} f sv)
+SPICoalg {c} f sv = SliceCoalg {a=c} (SlicePointedSigmaF {c} {d=c} f sv)
 
 --------------------
 ---- Free monad ----
@@ -126,7 +133,8 @@ export
 SScom : {0 c : Type} -> {f : c -> c} -> {0 sc : SliceObj c} ->
   SSAlg {c} f (SliceSigmaFM {c} f sc)
 SScom {c} {f} {sc} ec =
-  SSin {c} {f} {sc} ec . SPIc {c} {f} {sv=sc} {sc=(SliceSigmaFM f sc)} {ec}
+  SSin {c} {f} {sc} ec
+  . SPIc {c} {d=c} {f} {sv=sc} {sc=(SliceSigmaFM f sc)} {ed=ec}
 
 -- The unit of the free-monad adjunction -- a natural transformation of
 -- endofunctors on `SliceObj a`, from the identity endofunctor to
