@@ -159,19 +159,19 @@ SScom {c} {f} {sc} ec =
 -- endofunctors on `SliceObj a`, from the identity endofunctor to
 -- `SliceSigmaFM f`.
 export
-SSvar : {0 c : Type} -> {f : c -> c} -> {0 sc : SliceObj c} ->
-  SliceMorphism {a=c} sc (SliceSigmaFM {c} f sc)
-SSvar {c} {f} {sc} ec t =
+SSvar : {0 c : Type} -> {f : c -> c} ->
+  SliceNatTrans (SliceIdF c) (SliceSigmaFM {c} f)
+SSvar {c} {f} sc ec t =
   SSin {c} {f} {sc} ec $ SPIv {c} {f} {sv=sc} {sc=(SliceSigmaFM f sc)} t
 
 -- The counit of the free-monad adjunction -- a natural transformation of
 -- endofunctors on algebras of `SliceSigmaF f`, from `SSFMAlg` to the identity
 -- endofunctor.
 export
-SScounit : {c : Type} -> {f : c -> c} -> {sc : SliceObj c} ->
-  (alg : SSFMAlg {c} f sc) -> SSAlg {c} f sc
-SScounit {c} {f} {sc} alg =
-  sliceComp alg $ sliceComp (SScom {c} {f} {sc}) $ ssMap $ SSvar {c} {f} {sc}
+SSFcounit : {c : Type} -> {f : c -> c} ->
+  SliceMorphism {a=(SliceObj c)} (SSFMAlg {c} f) (SSAlg {c} f)
+SSFcounit {c} {f} sc alg =
+  sliceComp alg $ sliceComp (SScom {c} {f} {sc}) $ ssMap $ SSvar {c} {f} sc
 
 -- `Eval` is a universal morphism of the free monad.  Specifically, it is
 -- the right adjunct:  given an object `sa : SliceObj c` and an algebra
@@ -196,10 +196,10 @@ SliceSigmaEval {c} {f} sa sb alg subst ec (SSin ec (SPIc t)) =
 -- The implementation does not use the morphism component of the algebra,
 -- so we omit it from the signature.
 export
-SliceSigmaLAdj : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
+SliceSigmaFMLAdj : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
   SliceMorphism {a=c} (SliceSigmaFM {c} f sa) sb ->
   SliceMorphism {a=c} sa sb
-SliceSigmaLAdj {c} {f} sa sb eval ec = eval ec . SSvar {c} {f} {sc=sa} ec
+SliceSigmaFMLAdj {c} {f} sa sb eval ec = eval ec . SSvar {c} {f} sa ec
 
 -- We show that the initial algebra of `SliceSigmaF f` is the initial object
 -- of `SliceObj a`.
