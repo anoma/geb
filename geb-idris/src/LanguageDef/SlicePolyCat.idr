@@ -33,9 +33,9 @@ data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
 -- Rather than making the constructor `SS` explicit, we export an
 -- alias for it viewed as a natural transformation.
 export
-sIm : {0 c, d : Type} -> {0 f : c -> d} ->
+sSm : {0 c, d : Type} -> {0 f : c -> d} ->
   SliceNatTrans {x=c} {y=c} (SliceIdF c) (BaseChangeF f . SliceSigmaF {c} {d} f)
-sIm {c} {d} {f} sc ec = SS {c} {d} {f} {sc} {ec}
+sSm {c} {d} {f} sc ec = SS {c} {d} {f} {sc} {ec}
 
 -- The destructor for `SliceSigmaF f sc` is parametrically polymorphic:
 -- rather than receiving a witness to a given `ec : c` being in the image
@@ -49,10 +49,10 @@ sPre : {0 c, d : Type} -> {0 f : c -> d} ->
 sPre {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} sea) = m ec sea
 
 export
-siMap : {0 c, d : Type} -> {0 f : c -> d} -> {0 sa, sb : SliceObj c} ->
+ssMap : {0 c, d : Type} -> {0 f : c -> d} -> {0 sa, sb : SliceObj c} ->
   SliceMorphism {a=c} sa sb ->
   SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) (SliceSigmaF {c} {d} f sb)
-siMap {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
+ssMap {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
 
 export
 SSAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
@@ -152,7 +152,7 @@ export
 SScounit : {c : Type} -> {f : c -> c} -> {sc : SliceObj c} ->
   (alg : SSFMAlg {c} f sc) -> SSAlg {c} f sc
 SScounit {c} {f} {sc} alg =
-  sliceComp alg $ sliceComp (SScom {c} {f} {sc}) $ siMap $ SSvar {c} {f} {sc}
+  sliceComp alg $ sliceComp (SScom {c} {f} {sc}) $ ssMap $ SSvar {c} {f} {sc}
 
 -- `Eval` is a universal morphism of the free monad.  Specifically, it is
 -- the right adjunct:  given an object `sa : SliceObj c` and an algebra
