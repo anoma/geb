@@ -30,19 +30,29 @@ data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
   SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
     {ec : c} -> sc ec -> SliceSigmaF {c} {d} f sc (f ec)
 
+-- The monad of the dependent-sum/base-change adjunction.
+export
+SSMonad : {c, d : Type} -> (f : c -> d) -> SliceEndofunctor c
+SSMonad {c} {d} f = BaseChangeF f . SliceSigmaF {c} {d} f
+
+-- The comonad of the dependent-sum/base-change adjunction.
+export
+SSComonad : {c, d : Type} -> (f : c -> d) -> SliceEndofunctor d
+SSComonad {c} {d} f = SliceSigmaF {c} {d} f . BaseChangeF f
+
 -- Rather than making the constructor `SS` explicit, we export an
 -- alias for it viewed as a natural transformation.
 --
 -- This is the unit of the dependent-sum/base-change adjunction.
 export
 sSin : {0 c, d : Type} -> {0 f : c -> d} ->
-  SliceNatTrans {x=c} {y=c} (SliceIdF c) (BaseChangeF f . SliceSigmaF {c} {d} f)
+  SliceNatTrans {x=c} {y=c} (SliceIdF c) (SSMonad {c} {d} f)
 sSin {c} {d} {f} sc ec = SS {c} {d} {f} {sc} {ec}
 
 -- The counit of the dependent-sum/base-change adjunction.
 export
 sSout : {0 c, d : Type} -> {0 f : c -> d} ->
-  SliceNatTrans {x=d} {y=d} (SliceSigmaF {c} {d} f . BaseChangeF f) (SliceIdF d)
+  SliceNatTrans {x=d} {y=d} (SSComonad {c} {d} f) (SliceIdF d)
 sSout {c} {d} {f} sd (f ec) (SS {sc=(BaseChangeF f sd)} {ec} sec) = sec
 
 -- This is the right adjunct of the dependent-sum/base-change adjunction.
@@ -59,13 +69,12 @@ ssElim : {0 c, d : Type} -> {0 f : c -> d} ->
 ssElim {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} sea) = m ec sea
 
 -- This is the left adjunct of the dependent-sum/base-change adjunction.
--- It constitutes the constructor for `SliceSigmaF f sc`.
 export
-ssIntro : {0 c, d : Type} -> {f : c -> d} ->
+ssLAdj : {0 c, d : Type} -> {f : c -> d} ->
   {0 sa : SliceObj c} -> {sb : SliceObj d} ->
   SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb ->
   SliceMorphism {a=c} sa (BaseChangeF f sb)
-ssIntro {c} {d} {f} {sa} {sb} m ec esa = m (f ec) $ SS {ec} esa
+ssLAdj {c} {d} {f} {sa} {sb} m ec esa = m (f ec) $ SS {ec} esa
 
 export
 ssMap : {0 c, d : Type} -> {0 f : c -> d} -> {0 sa, sb : SliceObj c} ->
