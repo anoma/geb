@@ -45,6 +45,16 @@ sIm : {0 c : Type} -> {0 f : c -> c} ->
   SliceNatTrans {x=c} {y=c} (SliceIdF c) (BaseChangeF f . SliceImageF {c} f)
 sIm {c} {f} sc ec = SI {c} {f} {sc} {ec}
 
+-- The destructor for `SliceImageF f sc` is parametrically polymorphic:
+-- rather than receiving a witness to a given `ec : c` being in the image
+-- of `f` applied to a given slice over `c`, it passes in a handler for _any_
+-- such witness.
+export
+sPre : {0 c : Type} -> {0 f : c -> c} -> {0 sa, sb : SliceObj c} ->
+  SliceMorphism {a=c} sa (BaseChangeF f sb) ->
+  SliceMorphism {a=c} (SliceImageF {c} f sa) sb
+sPre {c} {f} {sa} {sb} m (f ec) (SI {ec} sea) = m ec sea
+
 export
 siMap : {0 c : Type} -> {0 f : c -> c} -> {0 sa, sb : SliceObj c} ->
   SliceMorphism {a=c} sa sb ->
