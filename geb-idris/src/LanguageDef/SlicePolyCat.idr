@@ -91,10 +91,61 @@ ssLAdj : {0 c, d : Type} -> {f : c -> d} ->
 ssLAdj {c} {d} {f} {sa} {sb} m ec esa = m (f ec) $ SS {ec} esa
 
 export
-ssMap : {0 c, d : Type} -> {0 f : c -> d} -> {0 sa, sb : SliceObj c} ->
-  SliceMorphism {a=c} sa sb ->
-  SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) (SliceSigmaF {c} {d} f sb)
-ssMap {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
+ssMap : {0 c, d : Type} -> {0 f : c -> d} -> SliceFMap (SliceSigmaF {c} {d} f)
+ssMap {c} {d} {f} sa sb m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
+
+export
+ssmMap : {0 c, d : Type} -> {f : c -> d} -> SliceFMap (SSMonad {c} {d} f)
+ssmMap {c} {d} {f} sa sb =
+  bcMap (SliceSigmaF f sa) (SliceSigmaF f sb) {f}
+  . ssMap sa sb {f}
+
+export
+sscmMap : {c, d : Type} -> {f : c -> d} -> SliceFMap (SSComonad {c} {d} f)
+sscmMap {c} {d} {f} sa sb =
+  ssMap {f} (BaseChangeF f sa) (BaseChangeF f sb) . bcMap sa sb {f}
+
+-- This is the multiplication (AKA "join") of the dependent-sum/base-change
+-- adjunction.
+--
+-- The multiplication comes from whiskering the counit between the adjuncts.
+export
+sSjoin : {c, d : Type} -> {f : c -> d} ->
+  SliceNatTrans {x=c} {y=c}
+    (SSMonad {c} {d} f . SSMonad {c} {d} f)
+    (SSMonad {c} {d} f)
+sSjoin {c} {d} {f} =
+  SliceWhiskerRight
+    {f=(SSComonad f . SliceSigmaF f)}
+    {g=(SliceSigmaF f)}
+    {h=(BaseChangeF f)}
+    (bcMap {f})
+  $ SliceWhiskerLeft
+    {g=(SSComonad f)}
+    {h=(SliceIdF d)}
+    (sSout {f})
+    (SliceSigmaF f)
+
+-- This is the comultiplication (AKA "duplicate") of the
+-- dependent-sum/base-change adjunction.
+--
+-- The comultiplication comes from whiskering the unit between the adjuncts.
+export
+sSdup : {c, d : Type} -> {f : c -> d} ->
+  SliceNatTrans {x=d} {y=d}
+    (SSComonad {c} {d} f)
+    (SSComonad {c} {d} f . SSComonad {c} {d} f)
+sSdup {c} {d} {f} =
+  SliceWhiskerRight
+    {f=(BaseChangeF f)}
+    {g=(BaseChangeF f . SSComonad f)}
+    {h=(SliceSigmaF f)}
+    (ssMap {f})
+  $ SliceWhiskerLeft
+    {g=(SliceIdF c)}
+    {h=(SSMonad f)}
+    sSin
+    (BaseChangeF f)
 
 export
 SSAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
@@ -194,7 +245,9 @@ export
 SSFcounit : {c : Type} -> {f : c -> c} ->
   SliceMorphism {a=(SliceObj c)} (SSFMAlg {c} f) (SSAlg {c} f)
 SSFcounit {c} {f} sc alg =
-  sliceComp alg $ sliceComp (SScom {c} {f} {sc}) $ ssMap $ SSvar {c} {f} sc
+  sliceComp alg $ sliceComp (SScom {c} {f} {sc})
+  $ ssMap sc (SliceSigmaFM f sc)
+  $ SSvar {c} {f} sc
 
 -- `Eval` is a universal morphism of the free monad.  Specifically, it is
 -- the right adjunct:  given an object `sa : SliceObj c` and an algebra
