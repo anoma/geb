@@ -285,6 +285,37 @@ SSMuInitial : {c : Type} -> (f : c -> c) ->
 SSMuInitial {c} f =
   SliceSigmaEval {c} {f} (const Void) (const Void) (SSVoidAlg {c} f) (\_ => id)
 
+export
+ssfmMap : {c : Type} -> {f : c -> c} -> SliceFMap (SliceSigmaFM {c} f)
+ssfmMap {c} {f} sa sb m =
+  SliceSigmaEval {c} {f} sa (SliceSigmaFM {c} f sb)
+    SScom
+    (sliceComp (SSvar sb) m)
+
+-- The multiplication of the free-monad adjunction, often called "join" --
+-- a natural transformation of endofunctors on `SliceObj a`, from
+-- `SliceSigmaFM f . SliceSigmaFM f` to `SliceSigmaFM f`.
+--
+-- The multiplication comes from whiskering the counit between the adjuncts.
+export
+ssfJoin : {c : Type} -> {f : c -> c} ->
+  SliceNatTrans (SliceSigmaFM {c} f . SliceSigmaFM {c} f) (SliceSigmaFM {c} f)
+ssfJoin {c} {f} sc =
+  SliceSigmaEval {c} {f} (SliceSigmaFM f sc) (SliceSigmaFM f sc)
+    (SScom {f} {sc}) (sliceId $ SliceSigmaFM f sc)
+
+-- The comultiplication (or "duplicate") of the free-monad adjunction -- a
+-- natural transformation of endofunctors on algebras of `SliceSigmaF f`, from
+-- `SSFMAlg` to `SSFMAlg . SliceSigmaFM`.
+--
+-- The comultiplication comes from whiskering the unit between the adjuncts.
+export
+ssfDup : {c : Type} -> {f : c -> c} ->
+  SliceMorphism {a=(SliceObj c)}
+    (SSFMAlg {c} f)
+    (SSFMAlg {c} f . SliceSigmaFM f)
+ssfDup {c} {f} sc falg = ssfJoin {c} {f} sc
+
 -----------------------------
 -----------------------------
 ---- Utility definitions ----
