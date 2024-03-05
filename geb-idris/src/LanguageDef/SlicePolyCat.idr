@@ -257,8 +257,9 @@ SSFcounit {c} {f} sc alg =
 export
 SliceSigmaEval : {0 c : Type} -> {f : c -> c} -> (sb : SliceObj c) ->
   (alg : SSAlg f sb) ->
-  (sa : SliceObj c) -> (subst : SliceMorphism {a=c} sa sb) ->
-  SliceMorphism {a=c} (SliceSigmaFM {c} f sa) sb
+  SliceMorphism {a=(SliceObj c)}
+    (flip (SliceMorphism {a=c}) sb)
+    (flip (SliceMorphism {a=c}) sb . SliceSigmaFM {c} f)
 SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (SPIv v)) =
   subst ec v
 SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (SPIc t)) =
