@@ -255,14 +255,15 @@ SSFcounit {c} {f} sc alg =
 -- `subst : SliceMorphism {a=c} sa sb` and returns a morphism
 -- `SliceSigmaEval sa sb alg subst : SliceMorphism {a=c} (SliceSigmaFM f sa) sb`.
 export
-SliceSigmaEval : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
-  (alg : SSAlg f sb) -> (subst : SliceMorphism {a=c} sa sb) ->
+SliceSigmaEval : {0 c : Type} -> {f : c -> c} -> (sb : SliceObj c) ->
+  (alg : SSAlg f sb) ->
+  (sa : SliceObj c) -> (subst : SliceMorphism {a=c} sa sb) ->
   SliceMorphism {a=c} (SliceSigmaFM {c} f sa) sb
-SliceSigmaEval {c} {f} sa sb alg subst ec (SSin ec (SPIv v)) =
+SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (SPIv v)) =
   subst ec v
-SliceSigmaEval {c} {f} sa sb alg subst ec (SSin ec (SPIc t)) =
+SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (SPIc t)) =
   alg ec $ case t of
-    SS {ec=ec'} sec => SS {ec=ec'} $ SliceSigmaEval sa sb alg subst ec' sec
+    SS {ec=ec'} sec => SS {ec=ec'} $ SliceSigmaEval sb alg sa subst ec' sec
 
 -- The left adjunct of the free monad, given an object `sa : SliceObj c` and
 -- an algebra `sb : SliceObj c`/`alg : SSAlg f sb`, takes a morphism in
@@ -283,13 +284,12 @@ export
 SSMuInitial : {c : Type} -> (f : c -> c) ->
   SliceMorphism {a=c} (SliceSigmaFM {c} f $ const Void) (const Void)
 SSMuInitial {c} f =
-  SliceSigmaEval {c} {f} (const Void) (const Void) (SSVoidAlg {c} f) (\_ => id)
+  SliceSigmaEval {c} {f} (const Void) (SSVoidAlg {c} f) (const Void) (\_ => id)
 
 export
 ssfmMap : {c : Type} -> {f : c -> c} -> SliceFMap (SliceSigmaFM {c} f)
 ssfmMap {c} {f} sa sb m =
-  SliceSigmaEval {c} {f} sa (SliceSigmaFM {c} f sb)
-    SScom
+  SliceSigmaEval {c} {f} (SliceSigmaFM {c} f sb) SScom sa
     (sliceComp (SSvar sb) m)
 
 -- The multiplication of the free-monad adjunction, often called "join" --
@@ -301,8 +301,8 @@ export
 ssfJoin : {c : Type} -> {f : c -> c} ->
   SliceNatTrans (SliceSigmaFM {c} f . SliceSigmaFM {c} f) (SliceSigmaFM {c} f)
 ssfJoin {c} {f} sc =
-  SliceSigmaEval {c} {f} (SliceSigmaFM f sc) (SliceSigmaFM f sc)
-    (SScom {f} {sc}) (sliceId $ SliceSigmaFM f sc)
+  SliceSigmaEval {c} {f} (SliceSigmaFM f sc)
+    (SScom {f} {sc}) (SliceSigmaFM f sc) (sliceId $ SliceSigmaFM f sc)
 
 -- The comultiplication (or "duplicate") of the free-monad adjunction -- a
 -- natural transformation of endofunctors on algebras of `SliceSigmaF f`, from
