@@ -317,6 +317,37 @@ ssfDup : {c : Type} -> {f : c -> c} ->
     (SSFMAlg {c} f . SliceSigmaFM f)
 ssfDup {c} {f} sc falg = ssfJoin {c} {f} sc
 
+------------------------
+---- Cofree comonad ----
+------------------------
+
+-- The cofree comonad comes from a forgetful-cofree adjunction between
+-- `SliceObj c` and the category of `SliceSigmaF f`-coalgebras on that category.
+--
+-- (The category of `SliceSigmaF f`-coalgebras on that category can be seen
+-- as the category of elements of `SSCoalg f`.)
+--
+-- The right adjoint takes `sc : SliceObj c` to the coalgebra whose object
+-- component is `SliceSigmaCFCM f sc` and whose morphism component is
+-- `SCout`.
+--
+-- The left adjoint is the forgetful functor which simply throws away the
+-- morphism component of the coalgebra, leaving a `SliceObj c`.
+--
+-- This is an impredicative implementation which stashes a coalgebra and a
+-- labeling morphism rather than building on the metalanguage's coinductive
+-- (infinite) data types, if it even has them -- thus we do not require a
+-- metalanguage to have them, but instead show how coinductive types (M-types)
+-- can be implemented in terms of inductive types (W-types) and higher-order
+-- functions.
+export
+data SliceSigmaCFCM : {0 c : Type} -> (0 f : c -> c) -> SliceEndofunctor c where
+  SCin : {0 c : Type} -> {0 f : c -> c} ->
+    (sc : SliceObj c) -> SSCoalg f sc -> -- coalgebra
+    SliceMorphism {a=(SliceObj c)}
+      (SliceMorphism {a=c} sc) -- labeling
+      (SliceMorphism {a=c} sc . SliceSigmaCFCM f)
+
 -----------------------------
 -----------------------------
 ---- Utility definitions ----
