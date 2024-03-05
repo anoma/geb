@@ -184,6 +184,21 @@ export
 SPICoalg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
 SPICoalg {c} f sv = SliceCoalg {a=c} (SlicePointedSigmaF {c} {d=c} f sv)
 
+data SliceCopointedSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
+    SliceObj d -> SliceFunctor c d where
+  SCPIl : {0 c, d : Type} -> {0 f : c -> d} ->
+    {0 sl : SliceObj d} -> {0 sc : SliceObj c} ->
+    {ed : d} -> sl ed -> SliceSigmaF {c} {d} f sc ed ->
+    SliceCopointedSigmaF {c} {d} f sl sc ed
+
+export
+SCPIAlg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SCPIAlg {c} f sv = SliceAlg {a=c} (SliceCopointedSigmaF {c} {d=c} f sv)
+
+export
+SCPICoalg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SCPICoalg {c} f sv = SliceCoalg {a=c} (SliceCopointedSigmaF {c} {d=c} f sv)
+
 --------------------
 ---- Free monad ----
 --------------------
@@ -341,12 +356,28 @@ ssfDup {c} {f} sc falg = ssfJoin {c} {f} sc
 -- can be implemented in terms of inductive types (W-types) and higher-order
 -- functions.
 export
-data SliceSigmaCFCM : {0 c : Type} -> (0 f : c -> c) -> SliceEndofunctor c where
+data SliceSigmaCM : {0 c : Type} -> (0 f : c -> c) -> SliceEndofunctor c where
   SCin : {0 c : Type} -> {0 f : c -> c} ->
     (sc : SliceObj c) -> SSCoalg f sc -> -- coalgebra
     SliceMorphism {a=(SliceObj c)}
       (SliceMorphism {a=c} sc) -- labeling
-      (SliceMorphism {a=c} sc . SliceSigmaCFCM f)
+      (SliceMorphism {a=c} sc . SliceSigmaCM f)
+
+export
+SSCMAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
+SSCMAlg {c} f = SliceAlg {a=c} (SliceSigmaCM {c} f)
+
+export
+SSCMCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
+SSCMCoalg {c} f = SliceCoalg {a=c} (SliceSigmaCM {c} f)
+
+export
+SCout : {0 c : Type} -> {0 f : c -> c} -> {0 sl : SliceObj c} ->
+  SCPICoalg {c} f sl (SliceSigmaCM {c} f sl)
+SCout {c} {f} {sl} ec (SCin sc coalg sl ml ec sec) =
+  SCPIl {c} {d=c} {f} {sl} {ed=ec} (ml ec sec)
+  $ case coalg ec sec of
+    SS {ec=ec'} sec' => SS {ec=ec'} $ SCin sc coalg sl ml ec' sec'
 
 -----------------------------
 -----------------------------
