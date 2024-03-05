@@ -6671,6 +6671,10 @@ public export
 SeededCoalgF : (Type -> Type) -> Type -> Type
 SeededCoalgF f = ProductF (Coalgebra f) Prelude.id
 
+public export
+SeededCoalgElim : (Type -> Type) -> Type -> Type
+SeededCoalgElim f z = NaturalTransformation (SeededCoalgF f) (const z)
+
 -- An object of the category of elements of `SeededCoalgF`.
 -- We shall show that this is ismorphic to `Nu`.
 public export
@@ -6689,8 +6693,7 @@ ImpredTCExFromNu f x = (Nu f ** (treeSubtree . outCofree, x))
 -- Simply the Yoneda embedding of `ImpredTerminalCoalgExist f`.
 public export
 ImpredTerminalCoalg : (Type -> Type) -> Type
-ImpredTerminalCoalg f =
-  (z : Type) -> ((a : Type) -> SeededCoalgF f a -> z) -> z
+ImpredTerminalCoalg f = NaturalTransformation (SeededCoalgElim f) Prelude.id
 
 public export
 ImpredTCToNu : (f : Type -> Type) -> Anamorphism f ->
