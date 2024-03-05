@@ -6690,13 +6690,13 @@ ImpredTCExFromNu f x = (Nu f ** (treeSubtree . outCofree, x))
 public export
 ImpredTerminalCoalg : (Type -> Type) -> Type
 ImpredTerminalCoalg f =
-  NaturalTransformation (CovarHomFunc (ImpredTerminalCoalgExist f)) Prelude.id
+  (z : Type) -> ((a : Type) -> SeededCoalgF f a -> z) -> z
 
 public export
 ImpredTCToNu : (f : Type -> Type) -> Anamorphism f ->
   ImpredTerminalCoalg f -> Nu f
-ImpredTCToNu f af alpha = alpha (Nu f) $ ImpredTCExToNu f af
+ImpredTCToNu f af alpha = alpha (Nu f) $ DPair.curry $ ImpredTCExToNu f af
 
 public export
 ImpredTCFromNu : (f : Type -> Type) -> Nu f -> ImpredTerminalCoalg f
-ImpredTCFromNu f x z alpha = alpha (ImpredTCExFromNu f x)
+ImpredTCFromNu f x z alpha = DPair.uncurry alpha (ImpredTCExFromNu f x)
