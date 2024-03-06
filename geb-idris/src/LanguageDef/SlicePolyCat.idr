@@ -680,6 +680,28 @@ imSlRAdj : {c : Type} -> {f : SliceEndofunctor c} ->
   SliceMorphism sa (ImSliceCofree f sl) -> SliceMorphism sa sl
 imSlRAdj {c} {f} fm {sa} {sl} = sliceComp $ imSlLabel fm sl
 
+-- `imSlJoin` is the multiplication of the (impredicative) slice cofree-comonad
+-- adjunction.  That means it is also the multiplication of the monad
+-- arising from the adjunction; as such it is also sometimes called "join".
+--
+-- The multiplication comes from whiskering the counit between the adjuncts.
+imSlJoin : {c : Type} -> {f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  SliceNatTrans (ImSliceCofree f . ImSliceCofree f) (ImSliceCofree f)
+imSlJoin {f} fm sa = imSlLabel {f} fm (ImSliceCofree f sa)
+
+-- `imSlDup` is the comultiplication of the (impredicative) slice cofree-comonad
+-- adjunction.  That means it is also the comultiplication of the comonad
+-- arising from the adjunction; as such it is also sometimes called "duplicate".
+--
+-- The comultiplication comes from whiskering the unit between the adjuncts.
+export
+imSlDup : {c : Type} -> {f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  SliceNatTrans (ImSliceCofree f) (ImSliceCofree f . ImSliceCofree f)
+imSlDup {f} fm sa =
+  imSlUnit {f} {sa=(ImSliceCofree f sa)} (imSlSubtrees {f} {sl=sa} fm)
+
 -----------------------------
 -----------------------------
 ---- Utility definitions ----
