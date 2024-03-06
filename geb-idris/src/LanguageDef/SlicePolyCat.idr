@@ -398,20 +398,6 @@ public export
 CopointedCoalg : (f : Type -> Type) -> Type -> Type -> Type
 CopointedCoalg f a = Coalgebra (CopointedF f a)
 
--- The cofree comonad comes from a forgetful-cofree adjunction between
--- `SliceObj c` (on the left) and the category of
--- `SliceSigmaF f`-coalgebras on that category (on the right).
---
--- (The category of `SliceSigmaF f`-coalgebras on `SliceObj c` can be seen
--- as the category of elements of `SSCoalg {c} f`.)
---
--- The right adjoint takes `sl : SliceObj c` to the coalgebra whose object
--- component is `(Slice)ImCofree f sl` and whose morphism component is
--- `imSubtrees`.
---
--- The left adjoint is the forgetful functor which simply throws away the
--- morphism component of the coalgebra, leaving a `SliceObj c`.
-
 export
 ImCofree : (Type -> Type) -> Type -> Type
 ImCofree f a = ImNu (CopointedF f a)
@@ -582,14 +568,15 @@ SlCopointedCoalg : {c : Type} ->
 SlCopointedCoalg {c} f sa = SliceCoalg (SlCopointedF f sa)
 
 -- The cofree comonad comes from a forgetful-cofree adjunction between
--- `SliceObj c` and the category of `SliceSigmaF f`-coalgebras on that category.
+-- `SliceObj c` (on the left) and the category of
+-- `SliceSigmaF f`-coalgebras on that category (on the right).
 --
--- (The category of `SliceSigmaF f`-coalgebras on that category can be seen
--- as the category of elements of `SSCoalg f`.)
+-- (The category of `SliceSigmaF f`-coalgebras on `SliceObj c` can be seen
+-- as the category of elements of `SSCoalg {c} f`.)
 --
--- The right adjoint takes `sc : SliceObj c` to the coalgebra whose object
--- component is `SliceSigmaCFCM f sc` and whose morphism component is
--- `SCout`.
+-- The right adjoint takes `sl : SliceObj c` to the coalgebra whose object
+-- component is `(Slice)ImCofree f sl` and whose morphism component is
+-- `imSubtrees`.
 --
 -- The left adjoint is the forgetful functor which simply throws away the
 -- morphism component of the coalgebra, leaving a `SliceObj c`.
@@ -601,28 +588,21 @@ SlCopointedCoalg {c} f sa = SliceCoalg (SlCopointedF f sa)
 -- can be implemented in terms of inductive types (W-types) and higher-order
 -- functions.
 export
-data SliceSigmaCM : {0 c : Type} -> (0 f : c -> c) -> SliceEndofunctor c where
-  SCin : {0 c : Type} -> {0 f : c -> c} ->
-    (sc : SliceObj c) -> SSCoalg f sc -> -- coalgebra
-    SliceMorphism {a=(SliceObj c)}
-      (SliceMorphism {a=c} sc) -- labeling
-      (SliceMorphism {a=c} sc . SliceSigmaCM f)
+ImSliceCofree : {0 c : Type} -> SliceEndofunctor c -> SliceEndofunctor c
+ImSliceCofree {c} f sa = ImSliceNu (SlCopointedF f sa)
 
 export
-SSCMAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SSCMAlg {c} f = SliceAlg {a=c} (SliceSigmaCM {c} f)
+ImSlCMAlg : {c : Type} -> (f : SliceEndofunctor c) -> SliceObj c -> Type
+ImSlCMAlg {c} f = SliceAlg {a=c} (ImSliceCofree {c} f)
 
 export
-SSCMCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SSCMCoalg {c} f = SliceCoalg {a=c} (SliceSigmaCM {c} f)
+ImSlCMCoalg : {c : Type} -> (f : SliceEndofunctor c) -> SliceObj c -> Type
+ImSlCMCoalg {c} f = SliceCoalg {a=c} (ImSliceCofree {c} f)
 
 export
-SCout : {0 c : Type} -> {f : c -> c} -> {0 sl : SliceObj c} ->
-  SCPICoalg {c} f sl (SliceSigmaCM {c} f sl)
-SCout {c} {f} {sl} fec (SCin sc coalg sl ml fec sfec) with (coalg fec sfec)
-  SCout {c} {f} {sl} (f ec) (SCin sc coalg sl ml (f ec) sfec) | SS {ec} sec =
-    SCPIl {c} {d=c} {f} {sl} {ed=(f ec)} (ml (f ec) sfec)
-      $ SS {ec} $ SCin sc coalg sl ml ec sec
+imSlSubtrees : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl : SliceObj c} ->
+  SlCopointedCoalg {c} f sl (ImSliceCofree {c} f sl)
+imSlSubtrees = ?imSlSubtrees_hole
 
 -----------------------------
 -----------------------------
