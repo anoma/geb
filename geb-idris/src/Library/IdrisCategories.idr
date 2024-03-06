@@ -1459,9 +1459,9 @@ SliceTrEitherF {a} f sa = SliceTranslateF {a} f sa sa
 
 -- The slice-category version of `ScaleFunctor`.
 public export
-data SliceScaleF : {a : Type} ->
+data SliceScaleF : {0 a : Type} ->
     SliceEndofunctor a -> SliceObj a -> SliceEndofunctor a where
-  InSlS : {a : Type} -> {f : SliceEndofunctor a} -> {0 sv, sa : SliceObj a} ->
+  InSlS : {0 a : Type} -> {f : SliceEndofunctor a} -> {0 sv, sa : SliceObj a} ->
     {ea : a} -> sv ea -> f sa ea -> SliceScaleF {a} f sv sa ea
 
 -- The free monad in a slice category.
