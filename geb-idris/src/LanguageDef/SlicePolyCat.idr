@@ -433,6 +433,7 @@ imCofreeTermCoalgInv : (0 f : Type -> Type) ->
   (l : Type) -> Algebra (CopointedF f l) (ImCofree f l)
 imCofreeTermCoalgInv f fm l = imTermCoalgInv (CopointedF f l) (mapCP {f} fm l)
 
+-- `imLabel` is the counit of the (impredicative) cofree-comonad adjunction.
 export
 imLabel : (f : Type -> Type) ->
   (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
@@ -455,6 +456,13 @@ imTrace : {f : Type -> Type} ->
   {0 a, l : Type} ->
   Coalgebra f a -> (a -> l) -> a -> ImCofree f l
 imTrace {f} {a} {l} = flip $ inCF {f} {l} {a}
+
+-- The unit of the cofree comonad adjunction -- a natural transformation
+-- between endofunctors on the category of F-coalgebras, from the identity
+-- endofunctor to the cofree comonad.
+imUnit : {f : Type -> Type} ->
+  {0 a : Type} -> Coalgebra f a -> Coalgebra (ImCofree f) a
+imUnit {f} {a} coalg = imTrace {f} {a} {l=a} coalg id
 
 -- The right adjunct of the cofree comonad, given an object
 -- `sl : SliceObj c` and a coalgebra `sa : SliceObj c`/`coalg : SSCoalg f sa`,
