@@ -576,7 +576,7 @@ SlCopointedCoalg {c} f sa = SliceCoalg (SlCopointedF f sa)
 --
 -- The right adjoint takes `sl : SliceObj c` to the coalgebra whose object
 -- component is `(Slice)ImCofree f sl` and whose morphism component is
--- `imSubtrees`.
+-- `imSlSubtrees`.
 --
 -- The left adjoint is the forgetful functor which simply throws away the
 -- morphism component of the coalgebra, leaving a `SliceObj c`.
@@ -600,8 +600,13 @@ ImSlCMCoalg : {c : Type} -> (f : SliceEndofunctor c) -> SliceObj c -> Type
 ImSlCMCoalg {c} f = SliceCoalg {a=c} (ImSliceCofree {c} f)
 
 export
-imSlSubtrees : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl : SliceObj c} ->
-  SlCopointedCoalg {c} f sl (ImSliceCofree {c} f sl)
+imSlCofreeTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
+  {0 sl : SliceObj c} -> SlCopointedCoalg {c} f sl (ImSliceCofree {c} f sl)
+imSlCofreeTermCoalg = ?imSlCofreeTermCoalg_hole
+
+export
+imSlSubtrees : {0 c : Type} -> {f : SliceEndofunctor c} ->
+  {0 sl : SliceObj c} -> SliceCoalg {a=c} f (ImSliceCofree {c} f sl)
 imSlSubtrees = ?imSlSubtrees_hole
 
 -----------------------------
