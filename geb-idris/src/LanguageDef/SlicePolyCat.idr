@@ -519,13 +519,6 @@ SSCMCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
 SSCMCoalg {c} f = SliceCoalg {a=c} (SliceSigmaCM {c} f)
 
 export
-SCin' : {0 c : Type} -> {f : c -> c} -> {0 sl : SliceObj c} ->
-  SCPIAlg {c} f sl (SliceSigmaCM {c} f sl)
-SCin' {c} {f} {sl} (f ec) (SCPIl {sc=(SliceSigmaCM f sl)} {sl} {ed=(f ec)} slfc
-  (SS {f} {ec} $ SCin sc coalg sl ml ec sec)) =
-    SCin {c} {f} sc coalg sl ml (f ec) ?SCin'_hole
-
-export
 SCout : {0 c : Type} -> {f : c -> c} -> {0 sl : SliceObj c} ->
   SCPICoalg {c} f sl (SliceSigmaCM {c} f sl)
 SCout {c} {f} {sl} fec (SCin sc coalg sl ml fec sfec) with (coalg fec sfec)
