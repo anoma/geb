@@ -336,6 +336,27 @@ ssfDup {c} {f} sc falg = ssfJoin {c} {f} sc
 ---- Cofree comonad ----
 ------------------------
 
+export
+data ImNu : (Type -> Type) -> Type where
+  ImN : {0 f : Type -> Type} -> (0 a : Type) -> Coalgebra f a -> a -> ImNu f
+
+export
+imUnfold : {0 f : Type -> Type} -> {0 a : Type} -> Coalgebra f a -> a -> ImNu f
+imUnfold {f} {a} coalg ea = ImN {f} a coalg ea
+
+export
+imTermCoalg : (0 f : Type -> Type) ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) -> Coalgebra f (ImNu f)
+imTermCoalg f fm (ImN {f} a coalg ea) =
+  fm a (ImNu f) (imUnfold {f} {a} coalg) (coalg ea)
+
+-- The inverse of `imTermCoalg`, which we know by Lambek's theorem should exist.
+export
+imTermCoalgInv : (0 f : Type -> Type) ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) -> Algebra f (ImNu f)
+imTermCoalgInv f fm efn =
+  ImN {f} (f $ ImNu f) (fm (ImNu f) (f $ ImNu f) $ imTermCoalg f fm) efn
+
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` and the category of `SliceSigmaF f`-coalgebras on that category.
 --
