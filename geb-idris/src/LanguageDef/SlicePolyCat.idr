@@ -515,6 +515,49 @@ imSlTermCoalgInv {c} {f} fm =
   ImSlN {c} {f} {sa=(f $ ImSliceNu f)}
   $ fm (ImSliceNu f) (f $ ImSliceNu f) $ imSlTermCoalg {c} {f} fm
 
+public export
+SlCopointedF : {0 c : Type} ->
+  SliceEndofunctor c -> SliceObj c -> SliceEndofunctor c
+SlCopointedF = SliceScaleF
+
+export
+inSlCP : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl, sa : SliceObj c} ->
+  SliceMorphism {a=c} sa sl -> SliceCoalg f sa ->
+  SliceCoalg (SlCopointedF f sl) sa
+inSlCP {c} {f} {sl} {sa} label coalg ec esa =
+  InSlS {a=c} {f} {sv=sl} {sa} {ea=ec} (label ec esa) (coalg ec esa)
+
+export
+mapSlCP : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  (sl : SliceObj c) ->
+  (0 sa, sb : SliceObj c) -> SliceMorphism {a=c} sa sb ->
+  SliceMorphism {a=c} (SlCopointedF f sl sa) (SlCopointedF f sl sb)
+mapSlCP {c} {f} fm sl sa sb m ec (InSlS {a=c} {f} {sv=sl} {sa} {ea=ec} el efa) =
+  InSlS {a=c} {f} {sv=sl} {sa=sb} el $ fm sa sb m ec efa
+
+public export
+cpSlPoint : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+  {0 sl, sa : SliceObj c} -> SliceMorphism {a=c} (SlCopointedF f sl sa) sl
+cpSlPoint {c} {f} {sl} {sa} ec (InSlS {a=c} {f} {sv=sl} {sa} {ea=ec} el efa) =
+  el
+
+public export
+cpSlTerm : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+  {0 sl, sa : SliceObj c} -> SliceMorphism {a=c} (SlCopointedF f sl sa) (f sa)
+cpSlTerm {c} {f} {sl} {sa} ec (InSlS {a=c} {f} {sv=sl} {sa} {ea=ec} el efa) =
+  efa
+
+public export
+SlCopointedAlg : {c : Type} ->
+  (f : SliceEndofunctor c) -> SliceObj c -> SliceObj c -> Type
+SlCopointedAlg {c} f sa = SliceAlg (SlCopointedF f sa)
+
+public export
+SlCopointedCoalg : {c : Type} ->
+  (f : SliceEndofunctor c) -> SliceObj c -> SliceObj c -> Type
+SlCopointedCoalg {c} f sa = SliceCoalg (SlCopointedF f sa)
+
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` and the category of `SliceSigmaF f`-coalgebras on that category.
 --
