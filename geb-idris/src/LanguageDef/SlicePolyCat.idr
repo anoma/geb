@@ -483,6 +483,20 @@ imRAdj : {f : Type -> Type} ->
   (a -> ImCofree f l) -> a -> l
 imRAdj {f} fm {a} {l} = (.) $ imLabel f fm l
 
+-- The dependent version of `ImNu`, the impredicative terminal coalgebra
+-- of an endofunctor on `SliceObj c`.
+export
+data ImSliceNu : {0 c : Type} -> SliceEndofunctor c -> SliceObj c where
+  ImSlN : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+    {0 sa : SliceObj c} -> SliceCoalg f sa -> (ec : c) -> sa ec ->
+    ImSliceNu {c} f ec
+
+export
+imSlUnfold : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+  {0 sa : SliceObj c} ->
+  SliceCoalg f sa -> SliceMorphism {a=c} sa (ImSliceNu {c} f)
+imSlUnfold = ImSlN
+
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` and the category of `SliceSigmaF f`-coalgebras on that category.
 --
