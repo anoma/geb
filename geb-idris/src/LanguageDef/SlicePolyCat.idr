@@ -642,6 +642,25 @@ imSlSubtrees {c} {f} fm {sl} =
     (cpSlTerm {f} {sl} {sa=(ImSliceCofree f sl)})
     (imSlCofreeTermCoalg fm {sl})
 
+-- `Trace` is a universal morphism of the cofree comonad.  Specifically, it is
+-- the left adjunct:  given an object `sl : SliceObj c` and a coalgebra
+-- `sa : SliceObj c`/`coalg : SSCoalg {c} f sa`, the left adjunct takes a
+-- slice morphism `label : SliceMorphism {a=c} sa sl` and returns a
+-- coalgebra morphism `SliceSigmaTrace coalg label :
+-- SliceMorphism {a=c} sa (SliceSigmaCM f sl)`.
+imSlTrace : {0 c : Type} -> {f : SliceEndofunctor c} ->
+  {0 sa, sl : SliceObj c} ->
+  SliceCoalg f sa -> SliceMorphism sa sl ->
+  SliceMorphism sa (ImSliceCofree f sl)
+imSlTrace {c} {f} {sa} {sl} = flip $ inSlCF {f} {sl} {sa}
+
+-- The unit of the cofree comonad adjunction -- a natural transformation
+-- between endofunctors on the category of F-coalgebras, from the identity
+-- endofunctor to the cofree comonad.
+imSlUnit : {c : Type} -> {f : SliceEndofunctor c} ->
+  {sa : SliceObj c} -> SliceCoalg f sa -> SliceCoalg (ImSliceCofree f) sa
+imSlUnit {c} {f} {sa} coalg = imSlTrace {f} {sa} {sl=sa} coalg (sliceId sa)
+
 -----------------------------
 -----------------------------
 ---- Utility definitions ----
