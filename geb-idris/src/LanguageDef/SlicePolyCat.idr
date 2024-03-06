@@ -599,15 +599,48 @@ export
 ImSlCMCoalg : {c : Type} -> (f : SliceEndofunctor c) -> SliceObj c -> Type
 ImSlCMCoalg {c} f = SliceCoalg {a=c} (ImSliceCofree {c} f)
 
-export
-imSlCofreeTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
-  {0 sl : SliceObj c} -> SlCopointedCoalg {c} f sl (ImSliceCofree {c} f sl)
-imSlCofreeTermCoalg = ?imSlCofreeTermCoalg_hole
+public export
+inSlCF : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl, sa : SliceObj c} ->
+  SliceMorphism {a=c} sa sl -> SliceCoalg f sa ->
+  SliceMorphism {a=c} sa (ImSliceCofree f sl)
+inSlCF label coalg = ImSlN {f=(SlCopointedF f sl)} $ inSlCP {f} label coalg
 
 export
-imSlSubtrees : {0 c : Type} -> {f : SliceEndofunctor c} ->
-  {0 sl : SliceObj c} -> SliceCoalg {a=c} f (ImSliceCofree {c} f sl)
-imSlSubtrees = ?imSlSubtrees_hole
+imSlCofreeTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  {sl : SliceObj c} -> SlCopointedCoalg {c} f sl (ImSliceCofree {c} f sl)
+imSlCofreeTermCoalg fm {sl} =
+  imSlTermCoalg {f=(SlCopointedF f sl)} (mapSlCP {f} fm sl)
+
+export
+imSlCofreeTermCoalgInv : {0 c : Type} -> {f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  {sl : SliceObj c} -> SlCopointedAlg {c} f sl (ImSliceCofree {c} f sl)
+imSlCofreeTermCoalgInv fm {sl} =
+  imSlTermCoalgInv {f=(SlCopointedF f sl)} (mapSlCP {f} fm sl)
+
+-- `imSlLabel` is the counit of the (impredicative) slice cofree-comonad
+-- adjunction.  That means it is also the counit of the comonad arising from
+-- the adjunction; as such it is also sometimes called "erase" or "extract".
+export
+imSlLabel : {c : Type} -> {f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  SliceNatTrans {x=c} {y=c} (ImSliceCofree f) (SliceIdF c)
+imSlLabel {c} {f} fm sl =
+  sliceComp
+    (cpSlPoint {f} {sl} {sa=(ImSliceCofree f sl)})
+    (imSlCofreeTermCoalg fm {sl})
+
+-- `imSlSubtrees` is the morphism component of the right adjoint of
+-- the slice cofree-comonad adjunction.
+export
+imSlSubtrees : {c : Type} -> {f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  {sl : SliceObj c} -> SliceCoalg {a=c} f (ImSliceCofree {c} f sl)
+imSlSubtrees {c} {f} fm {sl} =
+  sliceComp
+    (cpSlTerm {f} {sl} {sa=(ImSliceCofree f sl)})
+    (imSlCofreeTermCoalg fm {sl})
 
 -----------------------------
 -----------------------------
