@@ -370,6 +370,14 @@ mapCP {f} fm l a b m (SFN {f} {l} {a} el efa) =
   SFN {f} {l} {a=b} el $ fm a b m efa
 
 public export
+cpPoint : {0 f : Type -> Type} -> {0 l, a : Type} -> CopointedF f l a -> l
+cpPoint {f} {l} {a} (SFN {f} {l} {a} el efa) = el
+
+public export
+cpTerm : {0 f : Type -> Type} -> {0 l, a : Type} -> CopointedF f l a -> f a
+cpTerm {f} {l} {a} (SFN {f} {l} {a} el efa) = efa
+
+public export
 CopointedAlg : (f : Type -> Type) -> Type -> Type -> Type
 CopointedAlg f a = Algebra (CopointedF f a)
 
@@ -392,6 +400,18 @@ imCofreeTermCoalgInv : (0 f : Type -> Type) ->
   (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
   (l : Type) -> Algebra (CopointedF f l) (ImCofree f l)
 imCofreeTermCoalgInv f fm l = imTermCoalgInv (CopointedF f l) (mapCP {f} fm l)
+
+export
+imLabel : (f : Type -> Type) ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
+  (l : Type) -> ImCofree f l -> l
+imLabel f fm l = cpPoint {f} {l} {a=(ImCofree f l)} . imCofreeTermCoalg f fm l
+
+export
+imSubtrees : (f : Type -> Type) ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
+  (l : Type) -> Coalgebra f (ImCofree f l)
+imSubtrees f fm l = cpTerm {f} {l} {a=(ImCofree f l)} . imCofreeTermCoalg f fm l
 
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` and the category of `SliceSigmaF f`-coalgebras on that category.
