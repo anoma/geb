@@ -497,6 +497,23 @@ imSlUnfold : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
   SliceCoalg f sa -> SliceMorphism {a=c} sa (ImSliceNu {c} f)
 imSlUnfold = ImSlN
 
+export
+imSlTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  SliceCoalg f (ImSliceNu f)
+imSlTermCoalg {f} fm ec (ImSlN {c} {f} {sa} coalg ec esa) =
+  fm sa (ImSliceNu {c} f) (imSlUnfold {c} {f} {sa} coalg) ec (coalg ec esa)
+
+-- The inverse of `imSlTermCoalg`, which we know by Lambek's theorem should
+-- exist.
+export
+imSlTermCoalgInv : {0 c : Type} -> {f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  SliceAlg f (ImSliceNu f)
+imSlTermCoalgInv {c} {f} fm =
+  ImSlN {c} {f} {sa=(f $ ImSliceNu f)}
+  $ fm (ImSliceNu f) (f $ ImSliceNu f) $ imSlTermCoalg {c} {f} fm
+
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` and the category of `SliceSigmaF f`-coalgebras on that category.
 --
