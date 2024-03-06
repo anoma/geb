@@ -435,6 +435,8 @@ imCofreeTermCoalgInv : (0 f : Type -> Type) ->
 imCofreeTermCoalgInv f fm l = imTermCoalgInv (CopointedF f l) (mapCP {f} fm l)
 
 -- `imLabel` is the counit of the (impredicative) cofree-comonad adjunction.
+-- That means it is also the counit of the comonad arising from the adjunction;
+-- as such it is also sometimes called "erase" or "extract".
 export
 imLabel : (f : Type -> Type) ->
   (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
@@ -483,6 +485,17 @@ imRAdj : {f : Type -> Type} ->
   {a, l : Type} ->
   (a -> ImCofree f l) -> a -> l
 imRAdj {f} fm {a} {l} = (.) $ imLabel f fm l
+
+-- `imDup` is the comultiplication of the (impredicative) cofree-comonad
+-- adjunction.  That means it is also the comultiplication of the comonad
+-- arising from the adjunction; as such it is also sometimes called "duplicate".
+--
+-- The comultiplication comes from whiskering the unit between the adjuncts.
+export
+imDup : (f : Type -> Type) ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
+  NaturalTransformation (ImCofree f) (ImCofree f . ImCofree f)
+imDup f fm a = imUnit {f} {a=(ImCofree f a)} (imSubtrees f fm a)
 
 -- The dependent version of `ImNu`, the impredicative terminal coalgebra
 -- of an endofunctor on `SliceObj c`.
