@@ -266,9 +266,10 @@ SSFcounit {c} {f} sc alg =
 
 -- `Eval` is a universal morphism of the free monad.  Specifically, it is
 -- the right adjunct:  given an object `sa : SliceObj c` and an algebra
--- `sb : SliceObj c`/`alg : SSAlg f sb`, the right adjunct takes a morphism
--- `subst : SliceMorphism {a=c} sa sb` and returns a morphism
--- `SliceSigmaEval sa sb alg subst : SliceMorphism {a=c} (SliceSigmaFM f sa) sb`.
+-- `sb : SliceObj c`/`alg : SSAlg f sb`, the right adjunct takes a
+-- slice morphism `subst : SliceMorphism {a=c} sa sb` and returns an
+-- F-algebra morphism `SliceSigmaEval sa sb alg subst :
+-- SliceMorphism {a=c} (SliceSigmaFM f sa) sb`.
 export
 SliceSigmaEval : {0 c : Type} -> {f : c -> c} -> (sb : SliceObj c) ->
   (alg : SSAlg f sb) ->
@@ -282,8 +283,9 @@ SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (SPIc t)) =
     SS {ec=ec'} sec => SS {ec=ec'} $ SliceSigmaEval sb alg sa subst ec' sec
 
 -- The left adjunct of the free monad, given an object `sa : SliceObj c` and
--- an algebra `sb : SliceObj c`/`alg : SSAlg f sb`, takes a morphism in
--- `SliceMorphism {a=c} (SliceSigmaFM f sa) sb` and returns a morphism in
+-- an algebra `sb : SliceObj c`/`alg : SSAlg f sb`, takes an algebra morphism
+-- from the free algebra `SliceSigmaFM f sa` to `sb`, i.e. a morphism of type
+-- `SliceMorphism {a=c} (SliceSigmaFM f sa) sb`, and returns a morphism in
 -- `subst : SliceMorphism {a=c} sa sb`.
 --
 -- The implementation does not use the morphism component of the algebra,
