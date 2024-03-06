@@ -486,6 +486,16 @@ imRAdj : {f : Type -> Type} ->
   (a -> ImCofree f l) -> a -> l
 imRAdj {f} fm {a} {l} = (.) $ imLabel f fm l
 
+-- `imJoin` is the multiplication of the (impredicative) cofree-comonad
+-- adjunction.  That means it is also the multiplication of the monad
+-- arising from the adjunction; as such it is also sometimes called "join".
+--
+-- The multiplication comes from whiskering the counit between the adjuncts.
+imJoin : {f : Type -> Type} ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
+  NaturalTransformation (ImCofree f . ImCofree f) (ImCofree f)
+imJoin {f} fm a = imLabel f fm (ImCofree f a)
+
 -- `imDup` is the comultiplication of the (impredicative) cofree-comonad
 -- adjunction.  That means it is also the comultiplication of the comonad
 -- arising from the adjunction; as such it is also sometimes called "duplicate".
