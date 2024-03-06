@@ -286,11 +286,15 @@ SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (SPIc t)) =
 -- The left adjunct of the free monad, given an object `sa : SliceObj c` and
 -- an algebra `sb : SliceObj c`/`alg : SSAlg f sb`, takes an algebra morphism
 -- from the free algebra `SliceSigmaFM f sa` to `sb`, i.e. a morphism of type
--- `SliceMorphism {a=c} (SliceSigmaFM f sa) sb`, and returns a morphism in
+-- `SliceMorphism {a=c} (SliceSigmaFM f sa) sb`, and returns a morphism
 -- `subst : SliceMorphism {a=c} sa sb`.
 --
 -- The implementation does not use the morphism component of the algebra,
--- so we omit it from the signature.
+-- so we omit it from the signature.  The reason for this is that this is the
+-- left adjunct of a free-forgetful adjunction, and the only use of the
+-- input to the left adjunct in the formula that expresses the left adjunct in
+-- terms of the unit (`SSvar`, in this case) is to apply the right adjoint to
+-- it, and the right adjoint just forgets the morphism component.
 export
 SliceSigmaFMLAdj : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
   SliceMorphism {a=c} (SliceSigmaFM {c} f sa) sb ->
@@ -432,7 +436,7 @@ imCofreeTermCoalgInv f fm l = imTermCoalgInv (CopointedF f l) (mapCP {f} fm l)
 export
 imLabel : (f : Type -> Type) ->
   (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
-  (l : Type) -> ImCofree f l -> l
+  NaturalTransformation (ImCofree f) Prelude.id
 imLabel f fm l = cpPoint {f} {l} {a=(ImCofree f l)} . imCofreeTermCoalg f fm l
 
 export
@@ -448,10 +452,28 @@ imSubtrees f fm l = cpTerm {f} {l} {a=(ImCofree f l)} . imCofreeTermCoalg f fm l
 -- coalgebra morphism `SliceSigmaTrace coalg label :
 -- SliceMorphism {a=c} sa (SliceSigmaCM f sl)`.
 imTrace : {f : Type -> Type} ->
-  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
   {0 a, l : Type} ->
   Coalgebra f a -> (a -> l) -> a -> ImCofree f l
-imTrace {f} fm {a} {l} = flip $ inCF {f} {l} {a}
+imTrace {f} {a} {l} = flip $ inCF {f} {l} {a}
+
+-- The right adjunct of the cofree comonad, given an object
+-- `sl : SliceObj c` and a coalgebra `sa : SliceObj c`/`coalg : SSCoalg f sa`,
+-- takes a coalgebra morphism to the cofree coalgebra `SliceSigmaCM f sl` from
+-- `sa`, i.e. a morphism of type `SliceMorphism {a=c} sa (SliceSigmaCM f sl)`,
+-- and returns a slice morphism `label : SliceMorphism {a=c} sa sl`.
+--
+-- The implementation does not use the morphism component of the coalgebra,
+-- so we omit it from the signature.  The reason for this is that this is the
+-- right adjunct of a free-forgetful adjunction, and the only use of the
+-- input to the right adjunct in the formula that expresses the right adjunct in
+-- terms of the counit (`imLabel`, in this case) is to apply the left adjoint to
+-- it, and the left adjoint just forgets the morphism component.
+export
+imRAdj : {f : Type -> Type} ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
+  {a, l : Type} ->
+  (a -> ImCofree f l) -> a -> l
+imRAdj {f} fm {a} {l} = (.) $ imLabel f fm l
 
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` and the category of `SliceSigmaF f`-coalgebras on that category.
