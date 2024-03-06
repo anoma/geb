@@ -357,6 +357,42 @@ imTermCoalgInv : (0 f : Type -> Type) ->
 imTermCoalgInv f fm efn =
   ImN {f} {a=(f $ ImNu f)} (fm (ImNu f) (f $ ImNu f) $ imTermCoalg f fm) efn
 
+public export
+CopointedF : (Type -> Type) -> Type -> Type -> Type
+CopointedF = ScaleFunctor
+
+export
+mapCP : {0 f : Type -> Type} ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
+  (l : Type) ->
+  (0 a, b : Type) -> (a -> b) -> CopointedF f l a -> CopointedF f l b
+mapCP {f} fm l a b m (SFN {f} {l} {a} el efa) =
+  SFN {f} {l} {a=b} el $ fm a b m efa
+
+public export
+CopointedAlg : (f : Type -> Type) -> Type -> Type -> Type
+CopointedAlg f a = Algebra (CopointedF f a)
+
+public export
+CopointedCoalg : (f : Type -> Type) -> Type -> Type -> Type
+CopointedCoalg f a = Coalgebra (CopointedF f a)
+
+export
+ImCofree : (Type -> Type) -> Type -> Type
+ImCofree f a = ImNu (CopointedF f a)
+
+export
+imCofreeTermCoalg : (f : Type -> Type) ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
+  (l : Type) -> Coalgebra (CopointedF f l) (ImCofree f l)
+imCofreeTermCoalg f fm l = imTermCoalg (CopointedF f l) $ mapCP {f} fm l
+
+export
+imCofreeTermCoalgInv : (0 f : Type -> Type) ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
+  (l : Type) -> Algebra (CopointedF f l) (ImCofree f l)
+imCofreeTermCoalgInv f fm l = imTermCoalgInv (CopointedF f l) (mapCP {f} fm l)
+
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` and the category of `SliceSigmaF f`-coalgebras on that category.
 --
