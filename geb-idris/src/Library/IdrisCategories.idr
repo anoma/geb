@@ -4213,6 +4213,18 @@ public export
 ProductAdjunctFCat : ((Type -> Type), (Type -> Type)) -> Type -> Type
 ProductAdjunctFCat p = ProductF (fst p) (snd p)
 
+-- L a -> b => a -> R b (`L a` and `b` are in the product category)
+-- R f . nu a
+public export
+prodLeftAdjunct : (a, b, b' : Type) -> (a -> b, a -> b') -> (a -> (b, b'))
+prodLeftAdjunct a b b' (f, f') ea = (f ea, f' ea)
+
+-- a -> R b => L a -> b
+-- ep b . L g
+public export
+prodRightAdjunct : (a, b, b' : Type) -> (a -> (b, b')) -> (a -> b, a -> b')
+prodRightAdjunct a b b' g = (fst . g, snd . g)
+
 --------------------
 ---- Coproducts ----
 --------------------
