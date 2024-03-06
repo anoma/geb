@@ -204,9 +204,10 @@ SCPICoalg {c} f sv = SliceCoalg {a=c} (SliceCopointedSigmaF {c} {d=c} f sv)
 --------------------
 
 -- The free monad comes from a free-forgetful adjunction between `SliceObj c`
--- and the category of `SliceSigmaF f`-algebras on that category.
+-- (on the right) and the category of `SliceSigmaF f`-algebras on that category
+-- (on the left).
 --
--- (The category of `SliceSigmaF f`-algebras on that category can be seen
+-- (The category of `SliceSigmaF f`-algebras on `SliceObj c` can be seen
 -- as the category of elements of `SSAlg f`.)
 --
 -- The left adjoint takes `sc : SliceObj c` to the algebra whose object
@@ -364,6 +365,11 @@ CopointedF : (Type -> Type) -> Type -> Type -> Type
 CopointedF = ScaleFunctor
 
 export
+inCP : {f : Type -> Type} -> {0 l, a : Type} ->
+  (a -> l) -> Coalgebra f a -> a -> CopointedF f l a
+inCP {f} {l} {a} label coalg ea = SFN {f} {l} {a} (label ea) (coalg ea)
+
+export
 mapCP : {0 f : Type -> Type} ->
   (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
   (l : Type) ->
@@ -387,9 +393,29 @@ public export
 CopointedCoalg : (f : Type -> Type) -> Type -> Type -> Type
 CopointedCoalg f a = Coalgebra (CopointedF f a)
 
+-- The cofree comonad comes from a forgetful-cofree adjunction between
+-- `SliceObj c` (on the left) and the category of
+-- `SliceSigmaF f`-coalgebras on that category (on the right).
+--
+-- (The category of `SliceSigmaF f`-coalgebras on `SliceObj c` can be seen
+-- as the category of elements of `SSCoalg {c} f`.)
+--
+-- The right adjoint takes `sl : SliceObj c` to the coalgebra whose object
+-- component is `(Slice)ImCofree f sl` and whose morphism component is
+-- `imSubtrees`.
+--
+-- The left adjoint is the forgetful functor which simply throws away the
+-- morphism component of the coalgebra, leaving a `SliceObj c`.
+
 export
 ImCofree : (Type -> Type) -> Type -> Type
 ImCofree f a = ImNu (CopointedF f a)
+
+public export
+inCF : {f : Type -> Type} -> {0 l, a : Type} ->
+  (a -> l) -> Coalgebra f a ->
+  a -> ImCofree f l
+inCF {f} {l} {a} = ImN {f=(CopointedF f l)} {a} .* inCP {f} {l} {a}
 
 export
 imCofreeTermCoalg : (f : Type -> Type) ->
@@ -414,6 +440,18 @@ imSubtrees : (f : Type -> Type) ->
   (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
   (l : Type) -> Coalgebra f (ImCofree f l)
 imSubtrees f fm l = cpTerm {f} {l} {a=(ImCofree f l)} . imCofreeTermCoalg f fm l
+
+-- `Trace` is a universal morphism of the cofree comonad.  Specifically, it is
+-- the left adjunct:  given an object `sl : SliceObj c` and a coalgebra
+-- `sa : SliceObj c`/`coalg : SSCoalg {c} f sa`, the left adjunct takes a
+-- slice morphism `label : SliceMorphism {a=c} sa sl` and returns a
+-- coalgebra morphism `SliceSigmaTrace coalg label :
+-- SliceMorphism {a=c} sa (SliceSigmaCM f sl)`.
+imTrace : {f : Type -> Type} ->
+  (fm : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
+  {0 a, l : Type} ->
+  Coalgebra f a -> (a -> l) -> a -> ImCofree f l
+imTrace {f} fm {a} {l} = flip $ inCF {f} {l} {a}
 
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` and the category of `SliceSigmaF f`-coalgebras on that category.
