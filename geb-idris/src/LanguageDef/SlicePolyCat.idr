@@ -370,7 +370,7 @@ CopointedF = ScaleFunctor
 
 export
 inCP : {f : Type -> Type} -> {0 l, a : Type} ->
-  (a -> l) -> Coalgebra f a -> a -> CopointedF f l a
+  (a -> l) -> Coalgebra f a -> Coalgebra (CopointedF f l) a
 inCP {f} {l} {a} label coalg ea = SFN {f} {l} {a} (label ea) (coalg ea)
 
 export
