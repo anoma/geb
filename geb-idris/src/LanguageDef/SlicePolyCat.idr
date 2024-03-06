@@ -382,7 +382,8 @@ mapCP {f} fm l a b m (SFN {f} {l} {a} el efa) =
   SFN {f} {l} {a=b} el $ fm a b m efa
 
 public export
-cpPoint : {0 f : Type -> Type} -> {0 l, a : Type} -> CopointedF f l a -> l
+cpPoint : {0 f : Type -> Type} -> {0 l, a : Type} ->
+  Algebra (flip (CopointedF f) a) l
 cpPoint {f} {l} {a} (SFN {f} {l} {a} el efa) = el
 
 public export
