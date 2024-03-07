@@ -31,6 +31,10 @@ bcMap {c} {d} {f} sa sb m ec = m (f ec)
 -----------------------
 -----------------------
 
+--------------------
+---- Definition ----
+--------------------
+
 -- The slice functor from `c` to `d` which takes a subobject of `c` to
 -- the subobject of `d` whose terms consist of single applications
 -- of `f` to terms of the given subobject.
@@ -41,10 +45,13 @@ bcMap {c} {d} {f} sa sb m ec = m (f ec)
 -- free monad) is isomorphic to the application of its free monad to the
 -- initial object of `SliceObj c`, which is hence also `const Void`.
 export
-data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
-    SliceFunctor c d where
+data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
   SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
     {ec : c} -> sc ec -> SliceSigmaF {c} {d} f sc (f ec)
+
+-------------------------
+---- Adjunction data ----
+-------------------------
 
 -- The monad of the dependent-sum/base-change adjunction.
 export
