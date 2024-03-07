@@ -167,30 +167,15 @@ SSCoalg {c} {f} = SliceCoalg {a=c} (SliceSigmaF {c} {d=c} f)
 ---- Pointed dependent sums ----
 --------------------------------
 
-data SlicePointedSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
-    SliceObj d -> SliceFunctor c d where
-  SPIv : {0 c, d : Type} -> {0 f : c -> d} ->
-    {0 sv : SliceObj d} -> {0 sc : SliceObj c} ->
-    {ed : d} -> sv ed ->
-    SlicePointedSigmaF {c} {d} f sv sc ed
-  SPIc : {0 c, d : Type} -> {0 f : c -> d} ->
-    {0 sv : SliceObj d} -> {0 sc : SliceObj c} ->
-    {ed : d} -> SliceSigmaF {c} {d} f sc ed ->
-    SlicePointedSigmaF {c} {d} f sv sc ed
+SlicePointedSigmaF : {c, d : Type} -> (f : c -> d) ->
+  SliceObj d -> SliceFunctor c d
+SlicePointedSigmaF {c} {d} f = SlPointedF {c} {d} (SliceSigmaF {c} {d} f)
 
-SSc : {0 c, d : Type} -> {f : c -> d} ->
-  {0 sv : SliceObj d} -> {0 sc : SliceObj c} ->
-  {ec : c} -> sc ec -> SlicePointedSigmaF {c} {d} f sv sc (f ec)
-SSc {c} {d} {f} {sv} {sc} {ec} =
-  SPIc {c} {d} {f} {sv} {sc} {ed=(f ec)} . SS {c} {f} {sc} {ec}
+SPIAlg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SPIAlg {c} f = SlPointedAlg {c} (SliceSigmaF {c} {d=c} f)
 
-export
-SPIAlg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SPIAlg {c} f sv = SliceAlg {a=c} (SlicePointedSigmaF {c} {d=c} f sv)
-
-export
-SPICoalg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SPICoalg {c} f sv = SliceCoalg {a=c} (SlicePointedSigmaF {c} {d=c} f sv)
+SPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SPICoalg {c} f = SlPointedCoalg {c} (SliceSigmaF {c} {d=c} f)
 
 ----------------------------------
 ---- Copointed dependent sums ----
@@ -200,11 +185,9 @@ SliceCopointedSigmaF : {c, d : Type} -> (f : c -> d) ->
   SliceObj d -> SliceFunctor c d
 SliceCopointedSigmaF {c} {d} f = SlCopointedF {c} {d} (SliceSigmaF {c} {d} f)
 
-export
 SCPIAlg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
 SCPIAlg {c} f = SlCopointedAlg {c} (SliceSigmaF {c} {d=c} f)
 
-export
 SCPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
 SCPICoalg {c} f = SlCopointedCoalg {c} (SliceSigmaF {c} {d=c} f)
 
@@ -254,7 +237,7 @@ SScom : {0 c : Type} -> {f : c -> c} -> {0 sc : SliceObj c} ->
   SSAlg {c} f (SliceSigmaFM {c} f sc)
 SScom {c} {f} {sc} ec =
   SSin {c} {f} {sc} ec
-  . SPIc {c} {d=c} {f} {sv=sc} {sc=(SliceSigmaFM f sc)} {ed=ec}
+  . inSlPc {f=(SliceSigmaF f)} {sl=sc} {sa=(SliceSigmaFM f sc)} ec
 
 -- The unit of the free-monad adjunction -- a natural transformation of
 -- endofunctors on `SliceObj a`, from the identity endofunctor to
@@ -263,7 +246,8 @@ export
 SSvar : {0 c : Type} -> {f : c -> c} ->
   SliceNatTrans (SliceIdF c) (SliceSigmaFM {c} f)
 SSvar {c} {f} sc ec t =
-  SSin {c} {f} {sc} ec $ SPIv {c} {f} {sv=sc} {sc=(SliceSigmaFM f sc)} t
+  SSin {c} {f} {sc} ec
+  $ inSlPv {f=(SliceSigmaF f)} {sl=sc} {sa=(SliceSigmaFM f sc)} ec t
 
 -- The counit of the free-monad adjunction -- a natural transformation of
 -- endofunctors on algebras of `SliceSigmaF f`, from `SSFMAlg` to the identity
@@ -288,9 +272,9 @@ SliceSigmaEval : {0 c : Type} -> {f : c -> c} -> (sb : SliceObj c) ->
   SliceMorphism {a=(SliceObj c)}
     (flip (SliceMorphism {a=c}) sb)
     (flip (SliceMorphism {a=c}) sb . SliceSigmaFM {c} f)
-SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (SPIv v)) =
+SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Left v)) =
   subst ec v
-SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (SPIc t)) =
+SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Right t)) =
   alg ec $ case t of
     SS {ec=ec'} sec => SS {ec=ec'} $ SliceSigmaEval sb alg sa subst ec' sec
 
