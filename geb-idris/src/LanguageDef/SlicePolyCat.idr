@@ -283,7 +283,10 @@ scovrFromWTF {c} {d} sa sb () (Element0 () eq ** sbd) =
 --------------------
 
 -- The slice functor from `c` to `d` which consists of a product of `d`
--- representable functors from `SliceObj c`.
+-- representable functors from `SliceObj c`.  Products of representables
+-- are themselves representable (products of covariant representables are
+-- represented by sums, and products of contravariant representables are
+-- represented by products).
 export
 SlicePiF : {c : Type} -> (d -> c -> Type) -> SliceFunctor c d
 SlicePiF sdc sc ed = SliceCovarRepF (sdc ed) {c} sc ()
