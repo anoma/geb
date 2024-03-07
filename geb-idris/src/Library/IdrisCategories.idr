@@ -1601,6 +1601,99 @@ SliceAna : {a : Type} -> SliceEndofunctor a -> Type
 SliceAna {a} f =
   (sa : SliceObj a) -> SliceCoalg f sa -> SliceMorphism {a} sa (SliceNu f)
 
+--------------------------------
+--------------------------------
+---- Pointed slice functors ----
+--------------------------------
+--------------------------------
+
+public export
+SlPointedF : {0 c : Type} ->
+  SliceEndofunctor c -> SliceObj c -> SliceEndofunctor c
+SlPointedF f sl sa = SliceCoproduct sl (f sa)
+
+export
+inSlPv : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl, sa: SliceObj c} ->
+  SliceMorphism {a=c} sl (SlPointedF f sl sa)
+inSlPv {c} {f} {sl} {sa} ec esl = Left esl
+
+export
+inSlPc : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl, sa : SliceObj c} ->
+  SliceMorphism {a=c} (f sa) (SlPointedF f sl sa)
+inSlPc {c} {f} {sl} {sa} ec efa = Right efa
+
+export
+outSlPc : {0 c : Type} -> {f : SliceEndofunctor c} ->
+  {0 sl, sa, sb : SliceObj c} ->
+  SliceMorphism {a=c} sl sb -> SliceMorphism {a=c} (f sa) sb ->
+  SliceMorphism {a=c} (SlPointedF f sl sa) sb
+outSlPc {c} {f} {sl} {sa} {sb} mlb mab ec (Left esl) = mlb ec esl
+outSlPc {c} {f} {sl} {sa} {sb} mlb mab ec (Right efa) = mab ec efa
+
+export
+mapSlP : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  (sl : SliceObj c) ->
+  (0 sa, sb : SliceObj c) -> SliceMorphism {a=c} sa sb ->
+  SliceMorphism {a=c} (SlPointedF f sl sa) (SlPointedF f sl sb)
+mapSlP {c} {f} fm sl sa sb m ec (Left esl) = Left esl
+mapSlP {c} {f} fm sl sa sb m ec (Right efa) = Right $ fm sa sb m ec efa
+
+public export
+SlPointedAlg : {c : Type} ->
+  (f : SliceEndofunctor c) -> SliceObj c -> SliceObj c -> Type
+SlPointedAlg {c} f sa = SliceAlg (SlPointedF f sa)
+
+public export
+SlPointedCoalg : {c : Type} ->
+  (f : SliceEndofunctor c) -> SliceObj c -> SliceObj c -> Type
+SlPointedCoalg {c} f sa = SliceCoalg (SlPointedF f sa)
+
+----------------------------------
+----------------------------------
+---- Copointed slice functors ----
+----------------------------------
+----------------------------------
+
+public export
+SlCopointedF : {0 c : Type} ->
+  SliceEndofunctor c -> SliceObj c -> SliceEndofunctor c
+SlCopointedF f sl sa = SliceProduct sl (f sa)
+
+export
+inSlCP : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl, sa : SliceObj c} ->
+  SliceMorphism {a=c} sa sl -> SliceCoalg f sa ->
+  SliceCoalg (SlCopointedF f sl) sa
+inSlCP {c} {f} {sl} {sa} label coalg ec esa = (label ec esa, coalg ec esa)
+
+export
+mapSlCP : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  (sl : SliceObj c) ->
+  (0 sa, sb : SliceObj c) -> SliceMorphism {a=c} sa sb ->
+  SliceMorphism {a=c} (SlCopointedF f sl sa) (SlCopointedF f sl sb)
+mapSlCP {c} {f} fm sl sa sb m ec (el, efa) = (el, fm sa sb m ec efa)
+
+public export
+cpSlPoint : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+  {0 sl, sa : SliceObj c} -> SliceMorphism {a=c} (SlCopointedF f sl sa) sl
+cpSlPoint {c} {f} {sl} {sa} ec (el, efa) = el
+
+public export
+cpSlTerm : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+  {0 sl, sa : SliceObj c} -> SliceMorphism {a=c} (SlCopointedF f sl sa) (f sa)
+cpSlTerm {c} {f} {sl} {sa} ec (el, efa) = efa
+
+public export
+SlCopointedAlg : {c : Type} ->
+  (f : SliceEndofunctor c) -> SliceObj c -> SliceObj c -> Type
+SlCopointedAlg {c} f sa = SliceAlg (SlCopointedF f sa)
+
+public export
+SlCopointedCoalg : {c : Type} ->
+  (f : SliceEndofunctor c) -> SliceObj c -> SliceObj c -> Type
+SlCopointedCoalg {c} f sa = SliceCoalg (SlCopointedF f sa)
+
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 ---- Slice categories in category-theoretic (versus dependent-type) style ----
