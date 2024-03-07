@@ -1608,46 +1608,49 @@ SliceAna {a} f =
 --------------------------------
 
 public export
-SlPointedF : {0 c : Type} ->
-  SliceEndofunctor c -> SliceObj c -> SliceEndofunctor c
+SlPointedF : {0 c, d : Type} ->
+  SliceFunctor c d -> SliceObj d -> SliceFunctor c d
 SlPointedF f sl sa = SliceCoproduct sl (f sa)
 
 export
-inSlPv : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl, sa: SliceObj c} ->
-  SliceMorphism {a=c} sl (SlPointedF f sl sa)
-inSlPv {c} {f} {sl} {sa} ec esl = Left esl
+inSlPv : {0 c, d : Type} -> {f : SliceFunctor c d} ->
+  {0 sl : SliceObj d} -> {0 sa: SliceObj c} ->
+  SliceMorphism {a=d} sl (SlPointedF f sl sa)
+inSlPv {c} {d} {f} {sl} {sa} ed esl = Left esl
 
 export
-inSlPc : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl, sa : SliceObj c} ->
-  SliceMorphism {a=c} (f sa) (SlPointedF f sl sa)
-inSlPc {c} {f} {sl} {sa} ec efa = Right efa
+inSlPc : {0 c, d : Type} -> {f : SliceFunctor c d} ->
+  {0 sl : SliceObj d} -> {0 sa: SliceObj c} ->
+  SliceMorphism {a=d} (f sa) (SlPointedF f sl sa)
+inSlPc {c} {d} {f} {sl} {sa} ed efa = Right efa
 
 export
-outSlPc : {0 c : Type} -> {f : SliceEndofunctor c} ->
-  {0 sl, sa, sb : SliceObj c} ->
-  SliceMorphism {a=c} sl sb -> SliceMorphism {a=c} (f sa) sb ->
-  SliceMorphism {a=c} (SlPointedF f sl sa) sb
-outSlPc {c} {f} {sl} {sa} {sb} mlb mab ec (Left esl) = mlb ec esl
-outSlPc {c} {f} {sl} {sa} {sb} mlb mab ec (Right efa) = mab ec efa
+outSlPc : {0 c, d : Type} -> {f : SliceFunctor c d} ->
+  {0 sl, sb : SliceObj d} ->
+  {0 sa : SliceObj c} ->
+  SliceMorphism {a=d} sl sb -> SliceMorphism {a=d} (f sa) sb ->
+  SliceMorphism {a=d} (SlPointedF f sl sa) sb
+outSlPc {c} {d} {f} {sl} {sa} {sb} mlb mab ec (Left esl) = mlb ec esl
+outSlPc {c} {d} {f} {sl} {sa} {sb} mlb mab ec (Right efa) = mab ec efa
 
 export
-mapSlP : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+mapSlP : {0 c, d : Type} -> {0 f : SliceFunctor c d} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
-  (sl : SliceObj c) ->
+  (sl : SliceObj d) ->
   (0 sa, sb : SliceObj c) -> SliceMorphism {a=c} sa sb ->
-  SliceMorphism {a=c} (SlPointedF f sl sa) (SlPointedF f sl sb)
-mapSlP {c} {f} fm sl sa sb m ec (Left esl) = Left esl
-mapSlP {c} {f} fm sl sa sb m ec (Right efa) = Right $ fm sa sb m ec efa
+  SliceMorphism {a=d} (SlPointedF f sl sa) (SlPointedF f sl sb)
+mapSlP {c} {d} {f} fm sl sa sb m ec (Left esl) = Left esl
+mapSlP {c} {d} {f} fm sl sa sb m ec (Right efa) = Right $ fm sa sb m ec efa
 
 public export
 SlPointedAlg : {c : Type} ->
   (f : SliceEndofunctor c) -> SliceObj c -> SliceObj c -> Type
-SlPointedAlg {c} f sa = SliceAlg (SlPointedF f sa)
+SlPointedAlg {c} f sa = SliceAlg (SlPointedF f {d=c} sa)
 
 public export
 SlPointedCoalg : {c : Type} ->
   (f : SliceEndofunctor c) -> SliceObj c -> SliceObj c -> Type
-SlPointedCoalg {c} f sa = SliceCoalg (SlPointedF f sa)
+SlPointedCoalg {c} f sa = SliceCoalg (SlPointedF {d=c} f sa)
 
 ----------------------------------
 ----------------------------------
