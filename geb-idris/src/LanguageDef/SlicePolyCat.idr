@@ -247,7 +247,7 @@ SCPICoalg {c} f = SlCopointedCoalg {c} (SliceSigmaF {c} {d=c} f)
 -- The slice functor from `c` to `Type` which is covariantly represented
 -- by the given `SliceObj c`.  (`Type` is isomorphic to `SliceObj Unit`.)
 export
-SliceCovarRepF : {c : Type} -> (sc : SliceObj c) -> SliceObj c -> SliceObj Unit
+SliceCovarRepF : {c : Type} -> (sc : SliceObj c) -> SliceFunctor c Unit
 SliceCovarRepF sa sb () = SliceMorphism sa sb
 
 --------------------------------------------
@@ -256,7 +256,12 @@ SliceCovarRepF sa sb () = SliceMorphism sa sb
 
 0 SCovRasWTF : {c : Type} -> (sc : SliceObj c) -> WTypeFunc c Unit
 SCovRasWTF {c} sc =
-  MkWTF {dom=c} {cod=Unit} Unit (Sigma {a=c} sc) fst (const ()) (id {a=Unit})
+  MkWTF {dom=c} {cod=Unit}
+    Unit
+    (Sigma {a=c} sc)
+    fst
+    (const ())
+    (id {a=Unit})
 
 scovrToWTF : {c, d : Type} -> (sa : SliceObj c) ->
   SliceNatTrans (SliceCovarRepF {c} sa) (InterpWTF $ SCovRasWTF sa)
@@ -266,6 +271,47 @@ scovrFromWTF : {c, d : Type} -> (sa : SliceObj c) ->
   SliceNatTrans (InterpWTF $ SCovRasWTF sa) (SliceCovarRepF {c} sa)
 scovrFromWTF {c} {d} sa sb () (Element0 () eq ** sbd) =
   \ec, sea => sbd $ Element0 (ec ** sea) Refl
+
+---------------------------
+---------------------------
+---- Dependent product ----
+---------------------------
+---------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+-- The slice functor from `c` to `d` which consists of a product of `d`
+-- representable functors from `SliceObj c`.
+export
+SlicePiF : {c : Type} -> (d -> c -> Type) -> SliceFunctor c d
+SlicePiF sdc sc ed = SliceCovarRepF (sdc ed) {c} sc ()
+
+--------------------------------------
+----- Dependent product as W-type ----
+--------------------------------------
+
+0 SPasWTF : {c, d : Type} -> (p : d -> c -> Type) -> WTypeFunc c d
+SPasWTF {c} {d} p =
+  MkWTF {dom=c} {cod=d}
+    d
+    (Sigma {a=(d, c)} (uncurry p))
+    (snd . fst)
+    (fst . fst)
+    (id {a=d})
+
+spToWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
+  SliceNatTrans (SlicePiF {c} {d} p) (InterpWTF $ SPasWTF p)
+spToWTF {c} {d} p sc ed mpsc =
+  (Element0 ed Refl **
+   \(Element0 ((ed', ec') ** pdc) eq) =>
+    mpsc ec' $ replace {p=(flip p ec')} eq pdc)
+
+spFromWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
+  SliceNatTrans (InterpWTF $ SPasWTF p) (SlicePiF {c} {d} p)
+spFromWTF {c} {d} p sc ed (Element0 ed' eq ** mpsc) =
+  \ec, pdc => mpsc (Element0 ((ed, ec) ** pdc) $ sym eq)
 
 --------------------------------------
 --------------------------------------
