@@ -12,7 +12,9 @@ import public LanguageDef.InternalCat
 -------------------------------------------------
 
 ---------------------
+---------------------
 ---- Base change ----
+---------------------
 ---------------------
 
 -- Because base change is in the middle of an adjoint triple between
@@ -24,7 +26,9 @@ bcMap : {0 c, d : Type} -> {f : c -> d} -> SliceFMap (BaseChangeF {a=d} {b=c} f)
 bcMap {c} {d} {f} sa sb m ec = m (f ec)
 
 -----------------------
+-----------------------
 ---- Dependent sum ----
+-----------------------
 -----------------------
 
 -- The slice functor from `c` to `d` which takes a subobject of `c` to
@@ -159,6 +163,10 @@ export
 SSCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
 SSCoalg {c} {f} = SliceCoalg {a=c} (SliceSigmaF {c} {d=c} f)
 
+--------------------------------
+---- Pointed dependent sums ----
+--------------------------------
+
 data SlicePointedSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
     SliceObj d -> SliceFunctor c d where
   SPIv : {0 c, d : Type} -> {0 f : c -> d} ->
@@ -184,6 +192,10 @@ export
 SPICoalg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
 SPICoalg {c} f sv = SliceCoalg {a=c} (SlicePointedSigmaF {c} {d=c} f sv)
 
+----------------------------------
+---- Copointed dependent sums ----
+----------------------------------
+
 data SliceCopointedSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
     SliceObj d -> SliceFunctor c d where
   SCPIl : {0 c, d : Type} -> {0 f : c -> d} ->
@@ -199,9 +211,11 @@ export
 SCPICoalg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
 SCPICoalg {c} f sv = SliceCoalg {a=c} (SliceCopointedSigmaF {c} {d=c} f sv)
 
---------------------
----- Free monad ----
---------------------
+--------------------------------------
+--------------------------------------
+---- Free monad on dependent sums ----
+--------------------------------------
+--------------------------------------
 
 -- The free monad comes from a free-forgetful adjunction between `SliceObj c`
 -- (on the right) and the category of `SliceSigmaF f`-algebras on that category
