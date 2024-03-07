@@ -339,9 +339,11 @@ ssfDup : {c : Type} -> {f : c -> c} ->
     (SSFMAlg {c} f . SliceSigmaFM f)
 ssfDup {c} {f} sc falg = ssfJoin {c} {f} sc
 
-------------------------
----- Cofree comonad ----
-------------------------
+-----------------------------------
+-----------------------------------
+---- Terminal slice coalgebras ----
+-----------------------------------
+-----------------------------------
 
 -- The dependent version of `ImNu`, the impredicative terminal coalgebra
 -- of an endofunctor on `SliceObj c`.
@@ -373,6 +375,12 @@ imSlTermCoalgInv : {0 c : Type} -> {f : SliceEndofunctor c} ->
 imSlTermCoalgInv {c} {f} fm =
   ImSlN {c} {f} {sa=(f $ ImSliceNu f)}
   $ fm (ImSliceNu f) (f $ ImSliceNu f) $ imSlTermCoalg {c} {f} fm
+
+----------------------------------
+----------------------------------
+---- Copointed slice functors ----
+----------------------------------
+----------------------------------
 
 public export
 SlCopointedF : {0 c : Type} ->
@@ -416,6 +424,12 @@ public export
 SlCopointedCoalg : {c : Type} ->
   (f : SliceEndofunctor c) -> SliceObj c -> SliceObj c -> Type
 SlCopointedCoalg {c} f sa = SliceCoalg (SlCopointedF f sa)
+
+------------------------
+------------------------
+---- Cofree comonad ----
+------------------------
+------------------------
 
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` (on the left) and the category of
