@@ -198,6 +198,23 @@ SCPIAlg {c} f = SlCopointedAlg {c} (SliceSigmaF {c} {d=c} f)
 SCPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
 SCPICoalg {c} f = SlCopointedCoalg {c} (SliceSigmaF {c} {d=c} f)
 
+{- XXX
+---------------------------------
+---- Pointed sigma as W-type ----
+---------------------------------
+
+SPSasWTF : {c, d : Type} -> (f : c -> d) -> WTypeFunc c d
+SPSasWTF {c} {d} f =
+  MkWTF {dom=c} {cod=d}
+    (Either c c)
+    (Either c c)
+    (codiag {a=c})
+    id
+    (f . codiag {a=c})
+
+spsTowtf : {c, d : Type} -> {f : c -> d} -> WTypeFunc c d
+-}
+
 --------------------------------------
 --------------------------------------
 ---- Free monad on dependent sums ----
@@ -334,6 +351,8 @@ ssfJoin {c} {f} sc =
 -- `SSFMAlg` to `SSFMAlg . SliceSigmaFM`.
 --
 -- The comultiplication comes from whiskering the unit between the adjuncts.
+-- The algebra parameter is unused because the adjunct forgets the input
+-- algebra.
 export
 ssfDup : {c : Type} -> {f : c -> c} ->
   SliceMorphism {a=(SliceObj c)}
