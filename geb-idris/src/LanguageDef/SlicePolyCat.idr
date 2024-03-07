@@ -196,20 +196,17 @@ SPICoalg {c} f sv = SliceCoalg {a=c} (SlicePointedSigmaF {c} {d=c} f sv)
 ---- Copointed dependent sums ----
 ----------------------------------
 
-data SliceCopointedSigmaF : {0 c, d : Type} -> (0 f : c -> d) ->
-    SliceObj d -> SliceFunctor c d where
-  SCPIl : {0 c, d : Type} -> {0 f : c -> d} ->
-    {0 sl : SliceObj d} -> {0 sc : SliceObj c} ->
-    {ed : d} -> sl ed -> SliceSigmaF {c} {d} f sc ed ->
-    SliceCopointedSigmaF {c} {d} f sl sc ed
+SliceCopointedSigmaF : {c, d : Type} -> (f : c -> d) ->
+  SliceObj d -> SliceFunctor c d
+SliceCopointedSigmaF {c} {d} f = SlCopointedF {c} {d} (SliceSigmaF {c} {d} f)
 
 export
-SCPIAlg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SCPIAlg {c} f sv = SliceAlg {a=c} (SliceCopointedSigmaF {c} {d=c} f sv)
+SCPIAlg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SCPIAlg {c} f = SlCopointedAlg {c} (SliceSigmaF {c} {d=c} f)
 
 export
-SCPICoalg : {c : Type} -> (0 f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SCPICoalg {c} f sv = SliceCoalg {a=c} (SliceCopointedSigmaF {c} {d=c} f sv)
+SCPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SCPICoalg {c} f = SlCopointedCoalg {c} (SliceSigmaF {c} {d=c} f)
 
 --------------------------------------
 --------------------------------------
