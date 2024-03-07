@@ -49,6 +49,24 @@ data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
   SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
     {ec : c} -> sc ec -> SliceSigmaF {c} {d} f sc (f ec)
 
+--------------------------
+----- Sigma as W-type ----
+--------------------------
+
+0 SSasWTF : {c, d : Type} -> (f : c -> d) -> WTypeFunc c d
+SSasWTF {c} {d} f = MkWTF {dom=c} {cod=d} c c id id f
+
+ssToWTF : {c, d : Type} -> (0 f : c -> d) ->
+  SliceNatTrans (SliceSigmaF {c} {d} f) (InterpWTF $ SSasWTF f)
+ssToWTF {c} {d} f sc (f ec) (SS {c} {d} {f} {sc} {ec} sec) =
+  (Element0 ec Refl ** \(Element0 ec' eq) => replace {p=sc} (sym eq) sec)
+
+ssFromWTF : {c, d : Type} -> (0 f : c -> d) ->
+  SliceNatTrans (InterpWTF $ SSasWTF f) (SliceSigmaF {c} {d} f)
+ssFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
+  replace {p=(SliceSigmaF f sc)} eq
+  $ SS {c} {d} {f} {sc} {ec} $ scd (Element0 ec Refl)
+
 -------------------------
 ---- Adjunction data ----
 -------------------------
