@@ -399,14 +399,13 @@ imSlTermCoalgInv {c} {f} fm =
 public export
 SlCopointedF : {0 c : Type} ->
   SliceEndofunctor c -> SliceObj c -> SliceEndofunctor c
-SlCopointedF = SliceScaleF
+SlCopointedF f sl sa = SliceProduct sl (f sa)
 
 export
 inSlCP : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl, sa : SliceObj c} ->
   SliceMorphism {a=c} sa sl -> SliceCoalg f sa ->
   SliceCoalg (SlCopointedF f sl) sa
-inSlCP {c} {f} {sl} {sa} label coalg ec esa =
-  InSlS {a=c} {f} {sv=sl} {sa} {ea=ec} (label ec esa) (coalg ec esa)
+inSlCP {c} {f} {sl} {sa} label coalg ec esa = (label ec esa, coalg ec esa)
 
 export
 mapSlCP : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
@@ -414,20 +413,17 @@ mapSlCP : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
   (sl : SliceObj c) ->
   (0 sa, sb : SliceObj c) -> SliceMorphism {a=c} sa sb ->
   SliceMorphism {a=c} (SlCopointedF f sl sa) (SlCopointedF f sl sb)
-mapSlCP {c} {f} fm sl sa sb m ec (InSlS {a=c} {f} {sv=sl} {sa} {ea=ec} el efa) =
-  InSlS {a=c} {f} {sv=sl} {sa=sb} el $ fm sa sb m ec efa
+mapSlCP {c} {f} fm sl sa sb m ec (el, efa) = (el, fm sa sb m ec efa)
 
 public export
 cpSlPoint : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
   {0 sl, sa : SliceObj c} -> SliceMorphism {a=c} (SlCopointedF f sl sa) sl
-cpSlPoint {c} {f} {sl} {sa} ec (InSlS {a=c} {f} {sv=sl} {sa} {ea=ec} el efa) =
-  el
+cpSlPoint {c} {f} {sl} {sa} ec (el, efa) = el
 
 public export
 cpSlTerm : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
   {0 sl, sa : SliceObj c} -> SliceMorphism {a=c} (SlCopointedF f sl sa) (f sa)
-cpSlTerm {c} {f} {sl} {sa} ec (InSlS {a=c} {f} {sv=sl} {sa} {ea=ec} el efa) =
-  efa
+cpSlTerm {c} {f} {sl} {sa} ec (el, efa) = efa
 
 public export
 SlCopointedAlg : {c : Type} ->
