@@ -265,7 +265,8 @@ SCovRasWTF {c} sc =
 
 scovrToWTF : {c, d : Type} -> (sa : SliceObj c) ->
   SliceNatTrans (SliceCovarRepF {c} sa) (InterpWTF $ SCovRasWTF sa)
-scovrToWTF {c} {d} sa sb () mfsa = (Element0 () Refl ** \(Element0 (ec ** sea) eq) => mfsa ec sea)
+scovrToWTF {c} {d} sa sb () mfsa =
+  (Element0 () Refl ** \(Element0 (ec ** sea) eq) => mfsa ec sea)
 
 scovrFromWTF : {c, d : Type} -> (sa : SliceObj c) ->
   SliceNatTrans (InterpWTF $ SCovRasWTF sa) (SliceCovarRepF {c} sa)
