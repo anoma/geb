@@ -234,6 +234,39 @@ SCPIAlg {c} f = SlCopointedAlg {c} (SliceSigmaF {c} {d=c} f)
 SCPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
 SCPICoalg {c} f = SlCopointedCoalg {c} (SliceSigmaF {c} {d=c} f)
 
+----------------------------------------
+----------------------------------------
+---- Covariant slice representables ----
+----------------------------------------
+----------------------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+-- The slice functor from `c` to `Type` which is covariantly represented
+-- by the given `SliceObj c`.  (`Type` is isomorphic to `SliceObj Unit`.)
+export
+SliceCovarRepF : {c : Type} -> (sc : SliceObj c) -> SliceObj c -> SliceObj Unit
+SliceCovarRepF sa sb () = SliceMorphism sa sb
+
+--------------------------------------------
+----- Covariant representable as W-type ----
+--------------------------------------------
+
+0 SCovRasWTF : {c : Type} -> (sc : SliceObj c) -> WTypeFunc c Unit
+SCovRasWTF {c} sc =
+  MkWTF {dom=c} {cod=Unit} Unit (Sigma {a=c} sc) fst (const ()) (id {a=Unit})
+
+scovrToWTF : {c, d : Type} -> (sa : SliceObj c) ->
+  SliceNatTrans (SliceCovarRepF {c} sa) (InterpWTF $ SCovRasWTF sa)
+scovrToWTF {c} {d} sa sb () mfsa = (Element0 () Refl ** \(Element0 (ec ** sea) eq) => mfsa ec sea)
+
+scovrFromWTF : {c, d : Type} -> (sa : SliceObj c) ->
+  SliceNatTrans (InterpWTF $ SCovRasWTF sa) (SliceCovarRepF {c} sa)
+scovrFromWTF {c} {d} sa sb () (Element0 () eq ** sbd) =
+  \ec, sea => sbd $ Element0 (ec ** sea) Refl
+
 --------------------------------------
 --------------------------------------
 ---- Free monad on dependent sums ----
