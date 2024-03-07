@@ -25,6 +25,24 @@ export
 bcMap : {0 c, d : Type} -> {f : c -> d} -> SliceFMap (BaseChangeF {a=d} {b=c} f)
 bcMap {c} {d} {f} sa sb m ec = m (f ec)
 
+--------------------------------
+----- Base change as W-type ----
+--------------------------------
+
+0 BCasWTF : {c, d : Type} -> (f : d -> c) -> WTypeFunc c d
+BCasWTF {c} {d} f = MkWTF {dom=c} {cod=d} d d f id id
+
+bcToWTF : {c, d : Type} -> (0 f : d -> c) ->
+  SliceNatTrans (BaseChangeF {a=c} {b=d} f) (InterpWTF $ BCasWTF f)
+bcToWTF {c} {d} f sc ed efd =
+  (Element0 ed Refl **
+   \(Element0 ed' eq) => replace {p=(BaseChangeF f sc)} (sym eq) efd)
+
+bcFromWTF : {c, d : Type} -> (0 f : d -> c) ->
+  SliceNatTrans (InterpWTF $ BCasWTF f) (BaseChangeF {a=c} {b=d} f)
+bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
+  replace {p=(BaseChangeF f sc)} eq $ scfd $ Element0 ed' Refl
+
 -----------------------
 -----------------------
 ---- Dependent sum ----
