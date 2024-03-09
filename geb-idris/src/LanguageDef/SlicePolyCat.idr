@@ -472,21 +472,24 @@ ssfDup {c} {f} sc falg = ssfJoin {c} {f} sc
 export
 data ImSliceMu : {0 c : Type} -> SliceEndofunctor c -> SliceObj c where
   ImSlM : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
-    {0 ec : c} -> ((sa : SliceObj c) -> SliceAlg f sa -> sa ec) ->
+    {0 ec : c} ->
+    SliceNatTrans {x=c} {y=Unit}
+      (\sc, () => SliceAlg f sc)
+      (\sc, () => sc ec) ->
     ImSliceMu {c} f ec
 
 export
 imSlCata : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
   {sa : SliceObj c} ->
   SliceAlg f sa -> SliceMorphism {a=c} (ImSliceMu {c} f) sa
-imSlCata {c} {f} {sa} alg ec (ImSlM {c} {f} {ec} mu) = mu sa alg
+imSlCata {c} {f} {sa} alg ec (ImSlM {c} {f} {ec} mu) = mu sa () alg
 
 export
 slMuFromIm : {c : Type} -> (f : SliceEndofunctor c) ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceMorphism (ImSliceMu f) (SliceMu f)
 slMuFromIm {c} f fm ec (ImSlM {c} {f} {ec} mu) =
-  InSlFc {a=c} {f} {ea=ec} $ mu (f $ SliceMu f)
+  InSlFc {a=c} {f} {ea=ec} $ mu (f $ SliceMu f) ()
   $ fm (f $ SliceMu f) (SliceMu f) $ \ec => InSlFc {ea=ec}
 
 export
@@ -497,7 +500,7 @@ slMuToIm : {c : Type} -> (f : SliceEndofunctor c) ->
 slMuToIm {c} f fm fcata ec (InSlF {f} {sa=(const Void)} ec $ InSlV v) = void v
 slMuToIm {c} f fm fcata ec (InSlF {f} {sa=(const Void)} ec $ InSlC t) =
   ImSlM {c} {f} {ec}
-  $ \sa, alg => sliceComp alg (fm (SliceMu f) sa (fcata sa alg)) ec t
+  $ \sa, (), alg => sliceComp alg (fm (SliceMu f) sa (fcata sa alg)) ec t
 
 export
 imSlInitAlg : {c : Type} -> {f : SliceEndofunctor c} ->
