@@ -462,6 +462,61 @@ ssfDup : {c : Type} -> {f : c -> c} ->
     (SSFMAlg {c} f . SliceSigmaFM f)
 ssfDup {c} {f} sc falg = ssfJoin {c} {f} sc
 
+--------------------------------
+--------------------------------
+---- Initial slice algebras ----
+--------------------------------
+--------------------------------
+
+-- The impredicative initial algebra of an endofunctor on `SliceObj c`.
+export
+data ImSliceMu : {0 c : Type} -> SliceEndofunctor c -> SliceObj c where
+  ImSlM : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+    {0 ec : c} -> ((sa : SliceObj c) -> SliceAlg f sa -> sa ec) ->
+    ImSliceMu {c} f ec
+
+export
+imSlCata : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+  {sa : SliceObj c} ->
+  SliceAlg f sa -> SliceMorphism {a=c} (ImSliceMu {c} f) sa
+imSlCata {c} {f} {sa} alg ec (ImSlM {c} {f} {ec} mu) = mu sa alg
+
+export
+slMuFromIm : {c : Type} -> (f : SliceEndofunctor c) ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  SliceMorphism (ImSliceMu f) (SliceMu f)
+slMuFromIm {c} f fm ec (ImSlM {c} {f} {ec} mu) =
+  InSlFc {a=c} {f} {ea=ec} $ mu (f $ SliceMu f)
+  $ fm (f $ SliceMu f) (SliceMu f) $ \ec => InSlFc {ea=ec}
+
+export
+slMuToIm : {c : Type} -> (f : SliceEndofunctor c) ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  SliceCata f ->
+  SliceMorphism (SliceMu f) (ImSliceMu f)
+slMuToIm {c} f fm fcata ec (InSlF {f} {sa=(const Void)} ec $ InSlV v) = void v
+slMuToIm {c} f fm fcata ec (InSlF {f} {sa=(const Void)} ec $ InSlC t) =
+  ImSlM {c} {f} {ec}
+  $ \sa, alg => sliceComp alg (fm (SliceMu f) sa (fcata sa alg)) ec t
+
+export
+imSlInitAlg : {c : Type} -> {f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  SliceCata f ->
+  SliceAlg f (ImSliceMu f)
+imSlInitAlg {f} fm fcata =
+  sliceComp (slMuToIm f fm fcata) $ sliceComp (\ec => InSlFc {ea=ec})
+  $ fm (ImSliceMu f) (SliceMu f) (slMuFromIm f fm)
+
+export
+imSlInitAlgInv : {c : Type} -> {f : SliceEndofunctor c} ->
+  ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
+  SliceCata f ->
+  SliceCoalg f (ImSliceMu f)
+imSlInitAlgInv {f} fm fcata =
+  sliceComp (fm (SliceMu f) (ImSliceMu f) (slMuToIm f fm fcata))
+  $ sliceComp (outSlMu f) (slMuFromIm f fm)
+
 -----------------------------------
 -----------------------------------
 ---- Terminal slice coalgebras ----
