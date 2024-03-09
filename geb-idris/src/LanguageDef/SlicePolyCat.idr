@@ -532,17 +532,17 @@ data ImSliceNu : {0 c : Type} -> SliceEndofunctor c -> SliceObj c where
     ImSliceNu {c} f ec
 
 export
-imSlUnfold : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
+imSlAna : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
   {0 sa : SliceObj c} ->
   SliceCoalg f sa -> SliceMorphism {a=c} sa (ImSliceNu {c} f)
-imSlUnfold = ImSlN
+imSlAna = ImSlN
 
 export
 imSlTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceCoalg f (ImSliceNu f)
 imSlTermCoalg {f} fm ec (ImSlN {c} {f} {sa} coalg ec esa) =
-  fm sa (ImSliceNu {c} f) (imSlUnfold {c} {f} {sa} coalg) ec (coalg ec esa)
+  fm sa (ImSliceNu {c} f) (imSlAna {c} {f} {sa} coalg) ec (coalg ec esa)
 
 -- The inverse of `imSlTermCoalg`, which we know by Lambek's theorem should
 -- exist.
