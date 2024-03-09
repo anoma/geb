@@ -1535,6 +1535,11 @@ public export
 SliceMu : {a : Type} -> SliceEndofunctor a -> SliceObj a
 SliceMu {a} f = SliceFreeM {a} f (const Void)
 
+public export
+outSlMu : {a : Type} -> (f : SliceEndofunctor a) -> SliceCoalg f (SliceMu f)
+outSlMu {a} f ea (InSlF ea $ InSlV v) = void v
+outSlMu {a} f ea (InSlF ea $ InSlC t) = t
+
 -- The type of catamorphisms in slice categories.
 public export
 SliceCata : {a : Type} -> SliceEndofunctor a -> Type
@@ -1600,6 +1605,18 @@ public export
 SliceAna : {a : Type} -> SliceEndofunctor a -> Type
 SliceAna {a} f =
   (sa : SliceObj a) -> SliceCoalg f sa -> SliceMorphism {a} sa (SliceNu f)
+
+-----------------------------
+---- (Co)algebra objects ----
+-----------------------------
+
+export
+SliceAlgObj : {0 c : Type} -> SliceEndofunctor c -> SliceEndofunctor c
+SliceAlgObj {c} f sa = SliceHom (f sa) sa
+
+export
+SliceCoalgObj : {0 c : Type} -> SliceEndofunctor c -> SliceEndofunctor c
+SliceCoalgObj {c} f sa = SliceHom sa (f sa)
 
 --------------------------------
 --------------------------------
