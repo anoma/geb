@@ -5,6 +5,7 @@ import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
 import Library.Test.IdrisAlgebraTest
 import Library.Test.CategoryTheoryTest
+import LanguageDef.Test.SpanCospanTest
 import LanguageDef.Test.InternalCatTest
 import LanguageDef.Test.SlicePolyCatTest
 import LanguageDef.Test.DisliceCatTest
@@ -58,6 +59,7 @@ totalTests = do
   LanguageDef.Test.ComputationalEffectsTest.languageDefComputationalEffectsTest
   LanguageDef.Test.EmbeddedTest.languageDefEmbeddedTest
   Library.Test.CategoryTheoryTest.libraryCategoryTheoryTest
+  LanguageDef.Test.SpanCospanTest.spanCospanTest
   LanguageDef.Test.PolyCatTest.polyCatTest
   LanguageDef.Test.NatPrefixCatTest.natPrefixCatTest
   LanguageDef.Test.PolyProfunctorTest.polyProfunctorTest
