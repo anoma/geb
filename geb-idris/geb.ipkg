@@ -11,6 +11,7 @@ modules =
     , Library.Test.IdrisCategoriesTest
     , Library.Test.CategoryTheoryTest
     , Library.Test.IdrisAlgebraTest
+    , LanguageDef.SpanCospan
     , LanguageDef.InternalCat
     , LanguageDef.SlicePolyCat
     , LanguageDef.DisliceCat
@@ -41,6 +42,7 @@ modules =
     , LanguageDef.ComputationalEffects
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
+    , LanguageDef.Test.SpanCospanTest
     , LanguageDef.Test.InternalCatTest
     , LanguageDef.Test.SlicePolyCatTest
     , LanguageDef.Test.DisliceCatTest
