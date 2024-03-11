@@ -67,3 +67,20 @@ record SpanMorph (dom, cod : SpanObj) where
   spmCodR : spCodR dom -> spCodR cod
   spmDom : (l : spCodL dom) -> (r : spCodR dom) ->
     spDom dom l r -> spDom cod (spmCodL l) (spmCodR r)
+
+-- A cospan is a functor (from the cospan index category), so a morphism
+-- of cospans is a natural transformation.  A morphism of cospans in `Type` (the
+-- base category of the metalanguage), when the cospans themselves are
+-- represented in dependent-type style as above, can be expressed as
+-- metalanguage functions (which are the morphisms of `Type`) between
+-- corresponding objects in the diagram, with the commutativity conditions
+-- being represented by the functions' respecting the dependent-type
+-- relationships.
+public export
+record CospanMorph (dom, cod : CospanObj) where
+  constructor CospanM
+  cospmCod : cospCod dom -> cospCod cod
+  cospmDomL : (ed : cospCod dom) ->
+    cospDomL dom ed -> cospDomL cod (cospmCod ed)
+  cospmDomR : (ed : cospCod dom) ->
+    cospDomR dom ed -> cospDomR cod (cospmCod ed)
