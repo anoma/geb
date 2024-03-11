@@ -84,3 +84,66 @@ record CospanMorph (dom, cod : CospanObj) where
     cospDomL dom ed -> cospDomL cod (cospmCod ed)
   cospmDomR : (ed : cospCod dom) ->
     cospDomR dom ed -> cospDomR cod (cospmCod ed)
+
+---------------------------------------------------------------
+---------------------------------------------------------------
+---- Adjunctions defining pullbacks and pushouts in `Type` ----
+---------------------------------------------------------------
+---------------------------------------------------------------
+
+---------------------------
+---- Diagonal functors ----
+---------------------------
+
+-- The object-map component of the diagonal functor from `Type` to the category
+-- of spans in `Type` (which is the functor category from the span index
+-- category to `Type`).
+--
+-- The diagonal functor sends an object `x` of `Type` to the object of the
+-- functor category `SpanObj` whose objects are all `x`.  Because we have
+-- expressed `SpanObj` in a dependent-type style, we have to represent the
+-- common domain as a type which depends upon pairs of terms of `x` yet is
+-- equivalent to just `x` itself.  We must pare an input of cardinality
+-- `|x|^2` down to one of cardinality `|x|`.
+--
+-- This is possible, in one straightforward way:  treat the type family as
+-- `Void` for all non-diagonal inputs, and `Unit` for all diagonal inputs.
+--
+-- The effect of this on the implicit morphisms which we have represented in
+-- `SpanObj` as type dependencies is to make each morphism the equivalent of the
+-- identity morphism (which makes sense because we have mapped each object of
+-- the span index category to the same object), as required by the definition
+-- of the diagonal functor.
+export
+SpanDiagObj : Type -> SpanObj
+SpanDiagObj x = Span x x (\ex, ex' => ex = ex')
+
+-- The object-map component of the diagonal functor from `Type` to the category
+-- of cospans in `Type` (which is the functor category from the cospan index
+-- category to `Type`).
+--
+-- In this case, dually for what we had to do with `SpanDiagObj`, we must make
+-- the common codomain simply `x`, and make each of the common domains a type
+-- (family) which depends upon terms of `x` yet is equivalent to simply `x`.
+-- This we can do by making each type of the family `Unit`.
+export
+CospanDiagObj : Type -> CospanObj
+CospanDiagObj x = Cospan x (\_ => Unit) (\_ => Unit)
+
+-- The morphism-map component of the diagonal functor from `Type` to the
+-- category of spans in `Type`.
+--
+-- The diagonal functor takes each morphism of `Type` to the identity morphism
+-- in the category of spans (which is sensible because it takes each object of
+-- the span index category to the same object).
+export
+SpanDiagMorph : (0 x, y : Type) ->
+  (x -> y) -> SpanMorph (SpanDiagObj x) (SpanDiagObj y)
+SpanDiagMorph x y f = SpanM f f (\l, r, eqlr => cong f eqlr)
+
+-- The morphism-map component of the diagonal functor from `Type` to the
+-- category of cospans in `Type`, defined dually to `SpanDiagMorph`.
+export
+CospanDiagMorph : (0 x, y : Type) ->
+  (x -> y) -> CospanMorph (CospanDiagObj x) (CospanDiagObj y)
+CospanDiagMorph x y f = CospanM f (\_, _ => ()) (\_, _ => ())
