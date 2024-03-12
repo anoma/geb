@@ -229,14 +229,27 @@ PushoutElimSig : SpanObj -> Type -> Type
 PushoutElimSig = (|>) SpanDiagObj . SpanMorph
 
 export
+PushoutElimMap : (a : SpanObj) -> (0 b, b' : Type) ->
+  (b -> b') -> PushoutElimSig a b -> PushoutElimSig a b'
+PushoutElimMap (Span codl codr dom) b b' m (SpanM mcodl mcodr mdom) =
+  SpanM (m . mcodl) (m . mcodr) (\l, r, d => cong m $ mdom l r d)
+
+export
 PushoutLAdjointObj : SpanObj -> Type
-PushoutLAdjointObj =
-  flip NaturalTransformation (id {a=Type}) . PushoutElimSig
+PushoutLAdjointObj a =
+  Subset0
+    (NaturalTransformation (PushoutElimSig a) (id {a=Type}))
+    (NaturalityCondition (PushoutElimMap a) (\_, _ => id))
 
 export
 PushoutLAdjointMorph : (0 a, a' : SpanObj) ->
   SpanMorph a a' -> PushoutLAdjointObj a -> PushoutLAdjointObj a'
-PushoutLAdjointMorph a a' m b x m' = b x $ spanComp m' m
+PushoutLAdjointMorph (Span codl codr dom) (Span codl' codr' dom')
+  (SpanM mcodl mcodr mdom) (Element0 alpha natural) =
+    Element0
+      (\x, m' => alpha x $ spanComp m' (SpanM mcodl mcodr mdom))
+      (\b, b', mb, m'@(SpanM mcodl' mcodr' mdom') =>
+        natural b b' mb (spanComp m' (SpanM mcodl mcodr mdom)))
 
 -- Note that we could also have defined the left adjoint of the pullback
 -- functor via an existential quantifier rather than a universal one,
@@ -338,13 +351,20 @@ export
 PushoutUnit : (a : SpanObj) -> SpanMorph a (PushoutMonadObj a)
 PushoutUnit (Span codl codr dom) =
   SpanM
-    (\l, x, (SpanM mcodl mcodr mdom) => mcodl l)
-    (\r, x, (SpanM mcodl mcodr mdom) => mcodr r)
+    (\l =>
+      Element0
+        (\x, (SpanM mcodl mcodr mdom) => mcodl l)
+        $ \b, b', m, (SpanM mcodl mcodr mdom) => Refl)
+    (\r =>
+      Element0
+        (\x, (SpanM mcodl mcodr mdom) => mcodr r)
+        $ \b, b', m, (SpanM mcodl mcodr mdom) => Refl)
     (\l, r, ed => ?PushoutUnit_hole)
 
 export
 PushoutCounit : NaturalTransformation PushoutComonadObj (id {a=Type})
-PushoutCounit x b = b x $ spanId $ PushoutRAdjointObj x
+PushoutCounit x (Element0 alpha natural) =
+  alpha x $ spanId $ PushoutRAdjointObj x
 
 export
 PullbackUnit : NaturalTransformation (id {a=Type}) PullbackMonadObj
