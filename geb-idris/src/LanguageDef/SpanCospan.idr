@@ -269,13 +269,41 @@ PushoutMonadObj : SpanObj -> SpanObj
 PushoutMonadObj = PushoutRAdjointObj . PushoutLAdjointObj
 
 export
+PushoutMonadMorph : (a, a' : SpanObj) ->
+  SpanMorph a a' -> SpanMorph (PushoutMonadObj a) (PushoutMonadObj a')
+PushoutMonadMorph a a' m =
+  PushoutRAdjointMorph (PushoutLAdjointObj a) (PushoutLAdjointObj a')
+    (PushoutLAdjointMorph a a' m)
+
+export
 PushoutComonadObj : Type -> Type
 PushoutComonadObj = PushoutLAdjointObj . PushoutRAdjointObj
+
+export
+PushoutComonadMorph : (b, b' : Type) ->
+  (b -> b') -> PushoutComonadObj b -> PushoutComonadObj b'
+PushoutComonadMorph b b' m =
+  PushoutLAdjointMorph (PushoutRAdjointObj b) (PushoutRAdjointObj b')
+    (PushoutRAdjointMorph b b' m)
 
 export
 PullbackMonadObj : Type -> Type
 PullbackMonadObj = PullbackRAdjointObj . PullbackLAdjointObj
 
 export
+PullbackMonadMorph : (a, a' : Type) ->
+  (a -> a') -> PullbackMonadObj a -> PullbackMonadObj a'
+PullbackMonadMorph a a' m =
+  PullbackRAdjointMorph (PullbackLAdjointObj a) (PullbackLAdjointObj a')
+    (PullbackLAdjointMorph a a' m)
+
+export
 PullbackComonadObj : CospanObj -> CospanObj
 PullbackComonadObj = PullbackLAdjointObj . PullbackRAdjointObj
+
+export
+PullbackComonadMorph : (b, b' : CospanObj) ->
+  CospanMorph b b' -> CospanMorph (PullbackComonadObj b) (PullbackComonadObj b')
+PullbackComonadMorph b b' m =
+  PullbackLAdjointMorph (PullbackRAdjointObj b) (PullbackRAdjointObj b')
+    (PullbackRAdjointMorph b b' m)
