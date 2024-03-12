@@ -177,8 +177,9 @@ PushoutElimSig : SpanObj -> Type -> Type
 PushoutElimSig = (|>) SpanDiagObj . SpanMorph
 
 export
-PushoutLAdjointObj : SpanObj -> Type
-PushoutLAdjointObj = flip NaturalTransformation (id {a=Type}) . PushoutElimSig
+PushoutLAdjointObjUniv : SpanObj -> Type
+PushoutLAdjointObjUniv =
+  flip NaturalTransformation (id {a=Type}) . PushoutElimSig
 
 -- To compute the right adjoint of the pullback adjunction -- the pullback
 -- functor -- we reason as follows:  if `R` is the pullback functor, `L` is
@@ -193,3 +194,14 @@ PullbackIntroSig = CospanMorph . CospanDiagObj
 export
 PullbackRAdjointObj : CospanObj -> Type
 PullbackRAdjointObj = Exists {type=Type} . flip PullbackIntroSig
+
+-- Note that we could also have defined the right adjoint of the pullback
+-- functor via a universal quantifier rather than an existential one,
+-- as follows -- note however that the definition is recursive:
+export
+data PullbackRAdjointObjUniv : CospanObj -> Type where
+  PRAO : {0 b : CospanObj} ->
+    NaturalTransformation
+      (flip PullbackIntroSig b)
+      (flip HomProf (PullbackRAdjointObjUniv b)) ->
+    PullbackRAdjointObjUniv b
