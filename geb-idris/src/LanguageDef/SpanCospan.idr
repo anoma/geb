@@ -181,6 +181,14 @@ PushoutLAdjointObj : SpanObj -> Type
 PushoutLAdjointObj =
   flip NaturalTransformation (id {a=Type}) . PushoutElimSig
 
+export
+PushoutLAdjointMorph : (0 a, a' : SpanObj) ->
+  SpanMorph a a' -> PushoutLAdjointObj a -> PushoutLAdjointObj a'
+PushoutLAdjointMorph (Span codl codr dom) (Span codl' codr' dom')
+  (SpanM mcodl mcodr mdom) b x (SpanM mcodl' mcodr' mdom') =
+    b x $ SpanM (mcodl' . mcodl) (mcodr' . mcodr) $
+      \cl, cr, d => mdom' (mcodl cl) (mcodr cr) $ mdom cl cr d
+
 -- Note that we could also have defined the left adjoint of the pullback
 -- functor via an existential quantifier rather than a universal one,
 -- as follows -- note however that the definition is partial, because it is
