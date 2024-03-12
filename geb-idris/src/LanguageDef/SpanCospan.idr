@@ -147,3 +147,40 @@ export
 CospanDiagMorph : (0 x, y : Type) ->
   (x -> y) -> CospanMorph (CospanDiagObj x) (CospanDiagObj y)
 CospanDiagMorph x y f = CospanM f (\_, _ => ()) (\_, _ => ())
+
+-------------------------------------------------------
+---- Pushouts/pullbacks as co(limits) of (co)spans ----
+-------------------------------------------------------
+
+-- The pushout functor from the category of spans to `Type` is left
+-- adjoint to the diagonal functor (pushouts are colimits).
+--
+-- In the pushout-defining functor, therefore,
+-- `SpanDiagObj`/`SpanDiagMorph` is the right adjoint.
+--
+-- The pullback functor from the category of cospans to `Type` is right
+-- adjoint to the diagonal functor (pullbacks are limits).
+--
+-- In the pullback-defining functor, therefore,
+-- `CospanDiagObj`/`CospanDiagMorph` is the left adjoint.
+
+-- To compute the left adjoint of the pushout adjunction -- the pushout
+-- functor -- we reason as follows:  if `L` is the pushout functor, `R` is
+-- the span-diagonal functor, `a` is a span, and `b` is an object of `Type`,
+-- then `L a -> b ~=~ a -> R b`; hence, `L a` must be "that which is eliminated
+-- [to `b`] by an `a -> R b` [which is a `SpanMorph`]".  For it to be possible
+-- to map out (eliminate) the pushout to `b` by an `a -> R b` means that we
+-- must have a natural transformation:  for each `b`, we can get from `a -> R b`
+-- to `b`.  Hence we define:
+export
+PushoutF : SpanObj -> Type
+PushoutF a = NaturalTransformation (SpanMorph a . SpanDiagObj) (id {a=Type})
+
+-- To compute the right adjoint of the pullback adjunction -- the pullback
+-- functor -- we reason as follows:  if `R` is the pullback functor, `L` is
+-- the cospan-diagonal functor, `a` is an object of `Type`, and `b` is a cospan,
+-- then `L a -> b ~=~ a -> R b`; hence, `R b` must be "that which is introduced
+-- [from `a`] by an `L a -> b` [which is a `CospanMorph`]".  Hence we define:
+export
+PullbackF : CospanObj -> Type
+PullbackF b = Exists {type=Type} (flip CospanMorph b . CospanDiagObj)
