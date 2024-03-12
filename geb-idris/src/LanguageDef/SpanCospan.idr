@@ -260,3 +260,22 @@ data PullbackRAdjointObjUniv : CospanObj -> Type where
       (PullbackIntroSig b)
       (flip HomProf (PullbackRAdjointObjUniv b)) ->
     PullbackRAdjointObjUniv b
+
+-- Now that we have defined the adjoints of the pushout and pullback
+-- adjunctions, we can define the monads and comonads by composition.
+
+export
+PushoutMonadObj : SpanObj -> SpanObj
+PushoutMonadObj = PushoutRAdjointObj . PushoutLAdjointObj
+
+export
+PushoutComonadObj : Type -> Type
+PushoutComonadObj = PushoutLAdjointObj . PushoutRAdjointObj
+
+export
+PullbackMonadObj : Type -> Type
+PullbackMonadObj = PullbackRAdjointObj . PullbackLAdjointObj
+
+export
+PullbackComonadObj : CospanObj -> CospanObj
+PullbackComonadObj = PullbackLAdjointObj . PullbackRAdjointObj
