@@ -192,8 +192,8 @@ PullbackIntroSig : Type -> CospanObj -> Type
 PullbackIntroSig = CospanMorph . CospanDiagObj
 
 export
-PullbackRAdjointObj : CospanObj -> Type
-PullbackRAdjointObj = Exists {type=Type} . flip PullbackIntroSig
+PullbackRAdjointObjExist : CospanObj -> Type
+PullbackRAdjointObjExist = Exists {type=Type} . flip PullbackIntroSig
 
 -- Note that we could also have defined the right adjoint of the pullback
 -- functor via a universal quantifier rather than an existential one,
