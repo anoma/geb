@@ -260,7 +260,7 @@ data PushoutLAdjointObjExist : SpanObj -> Type where
 -- define:
 export
 PullbackIntroSig : CospanObj -> Type -> Type
-PullbackIntroSig = (|>) CospanDiagObj . flip CospanMorph
+PullbackIntroSig b a = (a, CospanMorph (CospanDiagObj a) b)
 
 export
 PullbackRAdjointObj : CospanObj -> Type
@@ -269,7 +269,8 @@ PullbackRAdjointObj = Exists {type=Type} . PullbackIntroSig
 export
 PullbackRAdjointMorph : (0 b, b' : CospanObj) ->
   CospanMorph b b' -> PullbackRAdjointObj b -> PullbackRAdjointObj b'
-PullbackRAdjointMorph b b' m (Evidence x m') = Evidence x $ cospanComp m m'
+PullbackRAdjointMorph b b' m (Evidence x (ex, m')) =
+  Evidence x (ex, cospanComp m m')
 
 -- Note that we could also have defined the right adjoint of the pullback
 -- functor via a universal quantifier rather than an existential one,
@@ -347,12 +348,12 @@ PushoutCounit x b = b x $ spanId $ PushoutRAdjointObj x
 
 export
 PullbackUnit : NaturalTransformation (id {a=Type}) PullbackMonadObj
-PullbackUnit x ex = Evidence x $ PullbackLAdjointMorph x x (\_ => ex)
+PullbackUnit x ex = Evidence x (ex, PullbackLAdjointMorph x x id)
 
 export
 PullbackCounit : (a : CospanObj) -> CospanMorph (PullbackComonadObj a) a
 PullbackCounit (Cospan cod doml domr) =
   CospanM
-    (\(Evidence x (CospanM mcod mdoml mdomr)) => ?PullbackCounit_hole_1)
-    (\(Evidence x (CospanM mcod mdoml mdomr)), () => ?PullbackCounit_hole_2)
-    (\(Evidence x (CospanM mcod mdoml mdomr)), () => ?PullbackCounit_hole_3)
+    (\(Evidence x (ex, CospanM mcod mdoml mdomr)) => mcod ex)
+    (\(Evidence x (ex, CospanM mcod mdoml mdomr)), () => mdoml ex ())
+    (\(Evidence x (ex, CospanM mcod mdoml mdomr)), () => mdomr ex ())
