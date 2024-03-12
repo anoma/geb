@@ -202,12 +202,12 @@ data PushoutLAdjointObjExist : SpanObj -> Type where
 -- [from a given `a`] by an `L a -> b` [which is a `CospanMorph`]".  Hence we
 -- define:
 export
-PullbackIntroSig : Type -> CospanObj -> Type
-PullbackIntroSig = CospanMorph . CospanDiagObj
+PullbackIntroSig : CospanObj -> Type -> Type
+PullbackIntroSig = (|>) CospanDiagObj . flip CospanMorph
 
 export
 PullbackRAdjointObj : CospanObj -> Type
-PullbackRAdjointObj = Exists {type=Type} . flip PullbackIntroSig
+PullbackRAdjointObj = Exists {type=Type} . PullbackIntroSig
 
 -- Note that we could also have defined the right adjoint of the pullback
 -- functor via a universal quantifier rather than an existential one,
@@ -217,6 +217,6 @@ export
 data PullbackRAdjointObjUniv : CospanObj -> Type where
   PRAOU : {0 b : CospanObj} ->
     NaturalTransformation
-      (flip PullbackIntroSig b)
+      (PullbackIntroSig b)
       (flip HomProf (PullbackRAdjointObjUniv b)) ->
     PullbackRAdjointObjUniv b
