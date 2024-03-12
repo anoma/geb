@@ -184,11 +184,12 @@ PushoutLAdjoint = flip NaturalTransformation (id {a=Type}) . PushoutElimSig
 -- functor -- we reason as follows:  if `R` is the pullback functor, `L` is
 -- the cospan-diagonal functor, `a` is an object of `Type`, and `b` is a cospan,
 -- then `L a -> b ~=~ a -> R b`; hence, `R b` must be "that which is introduced
--- [from `a`] by an `L a -> b` [which is a `CospanMorph`]".  Hence we define:
+-- [from a given `a`] by an `L a -> b` [which is a `CospanMorph`]".  Hence we
+-- define:
 export
-PullbackRAdj : Type -> CospanObj -> Type
-PullbackRAdj = CospanMorph . CospanDiagObj
+PullbackIntroSig : Type -> CospanObj -> Type
+PullbackIntroSig = CospanMorph . CospanDiagObj
 
 export
-PullbackF : CospanObj -> Type
-PullbackF = Exists {type=Type} . flip PullbackRAdj
+PullbackRAdjoint : CospanObj -> Type
+PullbackRAdjoint = Exists {type=Type} . flip PullbackIntroSig
