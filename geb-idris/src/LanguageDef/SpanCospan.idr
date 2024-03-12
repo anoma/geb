@@ -354,11 +354,11 @@ PushoutUnit fext (Span codl codr dom) =
     (\l =>
       Element0
         (\x, m => spmCodL m l)
-        $ \b, b', m, (SpanM mcodl mcodr mdom) => Refl)
+        $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl)
     (\r =>
       Element0
         (\x, m => spmCodR m r)
-        $ \b, b', m, (SpanM mcodl mcodr mdom) => Refl)
+        $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl)
     (\l, r, ed =>
       s0Eq12
         (funExt $ \x => funExt $ \(SpanM mcodl' mcodr' mdom') => mdom' l r ed)
