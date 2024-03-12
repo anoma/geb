@@ -109,7 +109,10 @@ cospanId (Cospan cod doml domr) = CospanM id (\_ => id) (\_ => id)
 public export
 cospanComp : {0 b, b', b'' : CospanObj} ->
   CospanMorph b' b'' -> CospanMorph b b' -> CospanMorph b b''
-cospanComp {b=(Cospan cod doml domr)} {b'=(Cospan cod' doml' domr')} {b''=(Cospan cod'' doml'' domr'')}
+cospanComp
+  {b=(Cospan cod doml domr)}
+  {b'=(Cospan cod' doml' domr')}
+  {b''=(Cospan cod'' doml'' domr'')}
   (CospanM mcod' mdoml' mdomr') (CospanM mcod mdoml mdomr) =
     CospanM
       (mcod' . mcod)
