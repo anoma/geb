@@ -862,6 +862,17 @@ NaturalTransformation : (Type -> Type) -> (Type -> Type) -> Type
 NaturalTransformation f g = Pi (AppFunctor f g)
 
 public export
+NaturalityCondition : {f, g : Type -> Type} ->
+  (fmap : (0 a, b : Type) -> (a -> b) -> f a -> f b) ->
+  (gmap : (0 a, b : Type) -> (a -> b) -> g a -> g b) ->
+  NaturalTransformation f g -> Type
+NaturalityCondition {f} {g} fm gm alpha =
+  (a, b : Type) -> (m : a -> b) ->
+  ExtEq {a=(f a)} {b=(g b)}
+    (alpha b . fm a b m)
+    (gm a b m . alpha a)
+
+public export
 IdNT : (f : Type -> Type) -> NaturalTransformation f f
 IdNT f a = id {a=(f a)}
 
