@@ -348,18 +348,21 @@ PullbackComonadMorph b b' m =
 -- units and counits of the monads and comonads.
 
 export
-PushoutUnit : (a : SpanObj) -> SpanMorph a (PushoutMonadObj a)
-PushoutUnit (Span codl codr dom) =
+PushoutUnit : FunExt -> (a : SpanObj) -> SpanMorph a (PushoutMonadObj a)
+PushoutUnit fext (Span codl codr dom) =
   SpanM
     (\l =>
       Element0
-        (\x, (SpanM mcodl mcodr mdom) => mcodl l)
+        (\x, m => spmCodL m l)
         $ \b, b', m, (SpanM mcodl mcodr mdom) => Refl)
     (\r =>
       Element0
-        (\x, (SpanM mcodl mcodr mdom) => mcodr r)
+        (\x, m => spmCodR m r)
         $ \b, b', m, (SpanM mcodl mcodr mdom) => Refl)
-    (\l, r, ed => ?PushoutUnit_hole)
+    (\l, r, ed =>
+      s0Eq12
+        (funExt $ \x => funExt $ \(SpanM mcodl' mcodr' mdom') => mdom' l r ed)
+        (?PushoutUnit_hole_uip))
 
 export
 PushoutCounit : NaturalTransformation PushoutComonadObj (id {a=Type})
