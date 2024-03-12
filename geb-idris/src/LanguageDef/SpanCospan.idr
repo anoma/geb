@@ -344,25 +344,28 @@ PullbackComonadMorph b b' m =
   PullbackLAdjointMorph (PullbackRAdjointObj b) (PullbackRAdjointObj b')
     (PullbackRAdjointMorph b b' m)
 
+export
+PushoutLAdjunct : FunExt -> (a : SpanObj) -> (b : Type) ->
+  (PushoutLAdjointObj a -> b) -> SpanMorph a (SpanDiagObj b)
+PushoutLAdjunct fext (Span codl codr dom) b f =
+  SpanM
+    (\l =>
+      f (Element0 (\x, m => spmCodL m l)
+        $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl))
+    (\r =>
+      f (Element0 (\x, m => spmCodR m r)
+        $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl))
+    (\l, r, ed => cong f $
+      s0Eq12
+        (funExt $ \x => funExt $ \(SpanM mcodl' mcodr' mdom') => mdom' l r ed)
+        (?PushoutLAdjunct_hole_uip))
+
 -- We now define the units and counits of the adjunctions, which are also the
 -- units and counits of the monads and comonads.
 
 export
 PushoutUnit : FunExt -> (a : SpanObj) -> SpanMorph a (PushoutMonadObj a)
-PushoutUnit fext (Span codl codr dom) =
-  SpanM
-    (\l =>
-      Element0
-        (\x, m => spmCodL m l)
-        $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl)
-    (\r =>
-      Element0
-        (\x, m => spmCodR m r)
-        $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl)
-    (\l, r, ed =>
-      s0Eq12
-        (funExt $ \x => funExt $ \(SpanM mcodl' mcodr' mdom') => mdom' l r ed)
-        (?PushoutUnit_hole_uip))
+PushoutUnit fext a = PushoutLAdjunct fext a (PushoutLAdjointObj a) id
 
 export
 PushoutCounit : NaturalTransformation PushoutComonadObj (id {a=Type})
