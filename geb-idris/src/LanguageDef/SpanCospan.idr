@@ -177,8 +177,8 @@ PushoutElimSig : SpanObj -> Type -> Type
 PushoutElimSig = (|>) SpanDiagObj . SpanMorph
 
 export
-PushoutLAdjointObjUniv : SpanObj -> Type
-PushoutLAdjointObjUniv =
+PushoutLAdjointObj : SpanObj -> Type
+PushoutLAdjointObj =
   flip NaturalTransformation (id {a=Type}) . PushoutElimSig
 
 -- Note that we could also have defined the left adjoint of the pullback
@@ -206,8 +206,8 @@ PullbackIntroSig : Type -> CospanObj -> Type
 PullbackIntroSig = CospanMorph . CospanDiagObj
 
 export
-PullbackRAdjointObjExist : CospanObj -> Type
-PullbackRAdjointObjExist = Exists {type=Type} . flip PullbackIntroSig
+PullbackRAdjointObj : CospanObj -> Type
+PullbackRAdjointObj = Exists {type=Type} . flip PullbackIntroSig
 
 -- Note that we could also have defined the right adjoint of the pullback
 -- functor via a universal quantifier rather than an existential one,
