@@ -168,17 +168,17 @@ CospanDiagMorph x y f = CospanM f (\_, _ => ()) (\_, _ => ())
 -- functor -- we reason as follows:  if `L` is the pushout functor, `R` is
 -- the span-diagonal functor, `a` is a span, and `b` is an object of `Type`,
 -- then `L a -> b ~=~ a -> R b`; hence, `L a` must be "that which is eliminated
--- [to `b`] by an `a -> R b` [which is a `SpanMorph`]".  For it to be possible
--- to map out (eliminate) the pushout to `b` by an `a -> R b` means that we
--- must have a natural transformation:  for each `b`, we can get from `a -> R b`
--- to `b`.  Hence we define:
+-- [to a given `b`] by an `a -> R b` [which is a `SpanMorph`]".  For it to be
+-- possible to map out (eliminate) the pushout to `b` by an `a -> R b` means
+-- that we must have a natural transformation:  for each `b`, we can get from
+-- `a -> R b` to `b`.  Hence we define:
 export
-PushoutLAdj : SpanObj -> Type -> Type
-PushoutLAdj = (|>) SpanDiagObj . SpanMorph
+PushoutElimSig : SpanObj -> Type -> Type
+PushoutElimSig = (|>) SpanDiagObj . SpanMorph
 
 export
-PushoutF : SpanObj -> Type
-PushoutF = flip NaturalTransformation (id {a=Type}) . PushoutLAdj
+PushoutLAdjoint : SpanObj -> Type
+PushoutLAdjoint = flip NaturalTransformation (id {a=Type}) . PushoutElimSig
 
 -- To compute the right adjoint of the pullback adjunction -- the pullback
 -- functor -- we reason as follows:  if `R` is the pullback functor, `L` is
