@@ -339,7 +339,7 @@ PushoutUnit = ?PushoutUnit_hole
 
 export
 PushoutCounit : NaturalTransformation PushoutComonadObj (id {a=Type})
-PushoutCounit = ?PushoutCounit_hole
+PushoutCounit x b = b x $ spanId $ PushoutRAdjointObj x
 
 export
 PullbackUnit : NaturalTransformation (id {a=Type}) PullbackMonadObj
