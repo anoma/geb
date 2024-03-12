@@ -173,8 +173,12 @@ CospanDiagMorph x y f = CospanM f (\_, _ => ()) (\_, _ => ())
 -- must have a natural transformation:  for each `b`, we can get from `a -> R b`
 -- to `b`.  Hence we define:
 export
+PushoutLAdj : SpanObj -> Type -> Type
+PushoutLAdj = (|>) SpanDiagObj . SpanMorph
+
+export
 PushoutF : SpanObj -> Type
-PushoutF a = NaturalTransformation (SpanMorph a . SpanDiagObj) (id {a=Type})
+PushoutF = flip NaturalTransformation (id {a=Type}) . PushoutLAdj
 
 -- To compute the right adjoint of the pullback adjunction -- the pullback
 -- functor -- we reason as follows:  if `R` is the pullback functor, `L` is
@@ -182,5 +186,9 @@ PushoutF a = NaturalTransformation (SpanMorph a . SpanDiagObj) (id {a=Type})
 -- then `L a -> b ~=~ a -> R b`; hence, `R b` must be "that which is introduced
 -- [from `a`] by an `L a -> b` [which is a `CospanMorph`]".  Hence we define:
 export
+PullbackRAdj : Type -> CospanObj -> Type
+PullbackRAdj = CospanMorph . CospanDiagObj
+
+export
 PullbackF : CospanObj -> Type
-PullbackF b = Exists {type=Type} (flip CospanMorph b . CospanDiagObj)
+PullbackF = Exists {type=Type} . flip PullbackRAdj
