@@ -157,12 +157,30 @@ CospanDiagMorph x y f = CospanM f (\_, _ => ()) (\_, _ => ())
 --
 -- In the pushout-defining functor, therefore,
 -- `SpanDiagObj`/`SpanDiagMorph` is the right adjoint.
---
+
+export
+PushoutRAdjointObj : Type -> SpanObj
+PushoutRAdjointObj = SpanDiagObj
+
+export
+PushoutRAdjointMorph : (0 b, b' : Type) -> (b -> b') ->
+  SpanMorph (PushoutRAdjointObj b) (PushoutRAdjointObj b')
+PushoutRAdjointMorph = SpanDiagMorph
+
 -- The pullback functor from the category of cospans to `Type` is right
 -- adjoint to the diagonal functor (pullbacks are limits).
 --
 -- In the pullback-defining functor, therefore,
 -- `CospanDiagObj`/`CospanDiagMorph` is the left adjoint.
+
+export
+PullbackLAdjointObj : Type -> CospanObj
+PullbackLAdjointObj = CospanDiagObj
+
+export
+PullbackLAdjointMorph : (0 a, a' : Type) -> (a -> a') ->
+  CospanMorph (PullbackLAdjointObj a) (PullbackLAdjointObj a')
+PullbackLAdjointMorph = CospanDiagMorph
 
 -- To compute the left adjoint of the pushout adjunction -- the pushout
 -- functor -- we reason as follows:  if `L` is the pushout functor, `R` is
