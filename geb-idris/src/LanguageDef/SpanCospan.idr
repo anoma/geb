@@ -335,7 +335,11 @@ PullbackComonadMorph b b' m =
 
 export
 PushoutUnit : (a : SpanObj) -> SpanMorph a (PushoutMonadObj a)
-PushoutUnit = ?PushoutUnit_hole
+PushoutUnit (Span codl codr dom) =
+  SpanM
+    (\l, x, (SpanM mcodl mcodr mdom) => mcodl l)
+    (\r, x, (SpanM mcodl mcodr mdom) => mcodr r)
+    (\l, r, ed => ?PushoutUnit_hole)
 
 export
 PushoutCounit : NaturalTransformation PushoutComonadObj (id {a=Type})
@@ -347,4 +351,8 @@ PullbackUnit x ex = Evidence x $ PullbackLAdjointMorph x x (\_ => ex)
 
 export
 PullbackCounit : (a : CospanObj) -> CospanMorph (PullbackComonadObj a) a
-PullbackCounit = ?PullbackCounit_hole
+PullbackCounit (Cospan cod doml domr) =
+  CospanM
+    (\(Evidence x (CospanM mcod mdoml mdomr)) => ?PullbackCounit_hole_1)
+    (\(Evidence x (CospanM mcod mdoml mdomr)), () => ?PullbackCounit_hole_2)
+    (\(Evidence x (CospanM mcod mdoml mdomr)), () => ?PullbackCounit_hole_3)
