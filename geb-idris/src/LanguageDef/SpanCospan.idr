@@ -220,6 +220,17 @@ export
 PullbackRAdjointObj : CospanObj -> Type
 PullbackRAdjointObj = Exists {type=Type} . PullbackIntroSig
 
+export
+PullbackRAdjointMorph : (0 b, b' : CospanObj) ->
+  CospanMorph b b' -> PullbackRAdjointObj b -> PullbackRAdjointObj b'
+PullbackRAdjointMorph (Cospan cod doml domr) (Cospan cod' doml' domr') (CospanM mcod mdoml mdomr)
+  (Evidence x (CospanM mcod' mdoml' mdomr')) =
+    Evidence x
+    $ CospanM
+      (mcod . mcod')
+      (\ed, () => mdoml (mcod' ed) $ mdoml' ed ())
+      (\ed, () => mdomr (mcod' ed) $ mdomr' ed ())
+
 -- Note that we could also have defined the right adjoint of the pullback
 -- functor via a universal quantifier rather than an existential one,
 -- as follows -- note however that the definition is recursive, so for
