@@ -68,6 +68,23 @@ record SpanMorph (dom, cod : SpanObj) where
   spmDom : (l : spCodL dom) -> (r : spCodR dom) ->
     spDom dom l r -> spDom cod (spmCodL l) (spmCodR r)
 
+public export
+spanId : (0 a : SpanObj) -> SpanMorph a a
+spanId (Span codl codr dom) = SpanM id id (\_, _ => id)
+
+public export
+spanComp : {0 a, a', a'' : SpanObj} ->
+  SpanMorph a' a'' -> SpanMorph a a' -> SpanMorph a a''
+spanComp
+  {a=(Span codl codr dom)}
+  {a'=(Span codl' codr' dom')}
+  {a''=(Span codl'' codr'' dom'')}
+  (SpanM mcodl' mcodr' mdom') (SpanM mcodl mcodr mdom) =
+    SpanM
+      (mcodl' . mcodl)
+      (mcodr' . mcodr)
+      $ \l, r, d => mdom' (mcodl l) (mcodr r) $ mdom l r d
+
 -- A cospan is a functor (from the cospan index category), so a morphism
 -- of cospans is a natural transformation.  A morphism of cospans in `Type` (the
 -- base category of the metalanguage), when the cospans themselves are
@@ -84,6 +101,20 @@ record CospanMorph (dom, cod : CospanObj) where
     cospDomL dom ed -> cospDomL cod (cospmCod ed)
   cospmDomR : (ed : cospCod dom) ->
     cospDomR dom ed -> cospDomR cod (cospmCod ed)
+
+export
+cospanId : (0 b : CospanObj) -> CospanMorph b b
+cospanId (Cospan cod doml domr) = CospanM id (\_ => id) (\_ => id)
+
+public export
+cospanComp : {0 b, b', b'' : CospanObj} ->
+  CospanMorph b' b'' -> CospanMorph b b' -> CospanMorph b b''
+cospanComp {b=(Cospan cod doml domr)} {b'=(Cospan cod' doml' domr')} {b''=(Cospan cod'' doml'' domr'')}
+  (CospanM mcod' mdoml' mdomr') (CospanM mcod mdoml mdomr) =
+    CospanM
+      (mcod' . mcod)
+      (\ed, ed' => mdoml' (mcod ed) $ mdoml ed ed')
+      (\ed, ed' => mdomr' (mcod ed) $ mdomr ed ed')
 
 ---------------------------------------------------------------
 ---------------------------------------------------------------
@@ -202,13 +233,7 @@ PushoutLAdjointObj =
 export
 PushoutLAdjointMorph : (0 a, a' : SpanObj) ->
   SpanMorph a a' -> PushoutLAdjointObj a -> PushoutLAdjointObj a'
-PushoutLAdjointMorph (Span codl codr dom) (Span codl' codr' dom')
-  (SpanM mcodl mcodr mdom) b x (SpanM mcodl' mcodr' mdom') =
-    b x
-    $ SpanM
-      (mcodl' . mcodl)
-      (mcodr' . mcodr)
-      $ \cl, cr, d => mdom' (mcodl cl) (mcodr cr) $ mdom cl cr d
+PushoutLAdjointMorph a a' m b x m' = b x $ spanComp m' m
 
 -- Note that we could also have defined the left adjoint of the pullback
 -- functor via an existential quantifier rather than a universal one,
@@ -241,13 +266,7 @@ PullbackRAdjointObj = Exists {type=Type} . PullbackIntroSig
 export
 PullbackRAdjointMorph : (0 b, b' : CospanObj) ->
   CospanMorph b b' -> PullbackRAdjointObj b -> PullbackRAdjointObj b'
-PullbackRAdjointMorph (Cospan cod doml domr) (Cospan cod' doml' domr') (CospanM mcod mdoml mdomr)
-  (Evidence x (CospanM mcod' mdoml' mdomr')) =
-    Evidence x
-    $ CospanM
-      (mcod . mcod')
-      (\ed, () => mdoml (mcod' ed) $ mdoml' ed ())
-      (\ed, () => mdomr (mcod' ed) $ mdomr' ed ())
+PullbackRAdjointMorph b b' m (Evidence x m') = Evidence x $ cospanComp m m'
 
 -- Note that we could also have defined the right adjoint of the pullback
 -- functor via a universal quantifier rather than an existential one,
@@ -307,3 +326,22 @@ PullbackComonadMorph : (b, b' : CospanObj) ->
 PullbackComonadMorph b b' m =
   PullbackLAdjointMorph (PullbackRAdjointObj b) (PullbackRAdjointObj b')
     (PullbackRAdjointMorph b b' m)
+
+-- We now define the units and counits of the adjunctions, which are also the
+-- units and counits of the monads and comonads.
+
+export
+PushoutUnit : (a : SpanObj) -> SpanMorph a (PushoutMonadObj a)
+PushoutUnit = ?PushoutUnit_hole
+
+export
+PushoutCounit : NaturalTransformation PushoutComonadObj (id {a=Type})
+PushoutCounit = ?PushoutCounit_hole
+
+export
+PullbackUnit : NaturalTransformation (id {a=Type}) PullbackMonadObj
+PullbackUnit x ex = Evidence x $ CospanDiagMorph x x id
+
+export
+PullbackCounit : (a : CospanObj) -> CospanMorph (PullbackComonadObj a) a
+PullbackCounit = ?PullbackCounit_hole
