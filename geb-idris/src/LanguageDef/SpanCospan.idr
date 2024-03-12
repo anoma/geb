@@ -343,7 +343,7 @@ PushoutCounit = ?PushoutCounit_hole
 
 export
 PullbackUnit : NaturalTransformation (id {a=Type}) PullbackMonadObj
-PullbackUnit x ex = Evidence x $ PullbackLAdjointMorph x x id
+PullbackUnit x ex = Evidence x $ PullbackLAdjointMorph x x (\_ => ex)
 
 export
 PullbackCounit : (a : CospanObj) -> CospanMorph (PullbackComonadObj a) a
