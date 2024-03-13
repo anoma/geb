@@ -297,6 +297,29 @@ data PullbackRAdjointObjUniv : CospanObj -> Type where
       (flip HomProf (PullbackRAdjointObjUniv b)) ->
     PullbackRAdjointObjUniv b
 
+-- Next we define the adjuncts.
+
+export
+PushoutLAdjunct : FunExt -> (a : SpanObj) -> (b : Type) ->
+  (PushoutLAdjointObj a -> b) -> SpanMorph a (SpanDiagObj b)
+PushoutLAdjunct fext (Span codl codr dom) b f =
+  SpanM
+    (\l =>
+      f (Element0 (\x, m => spmCodL m l)
+        $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl))
+    (\r =>
+      f (Element0 (\x, m => spmCodR m r)
+        $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl))
+    (\l, r, ed => cong f $
+      s0Eq12
+        (funExt $ \x => funExt $ \(SpanM mcodl' mcodr' mdom') => mdom' l r ed)
+        (?PushoutLAdjunct_hole_uip))
+
+export
+PushoutRAdjunct : (a : SpanObj) -> (b : Type) ->
+  SpanMorph a (SpanDiagObj b) -> PushoutLAdjointObj a -> b
+PushoutRAdjunct a b m (Element0 alpha natural) = alpha b m
+
 -- Now that we have defined the adjoints of the pushout and pullback
 -- adjunctions, we can define the monads and comonads by composition.
 
@@ -343,29 +366,6 @@ PullbackComonadMorph : (b, b' : CospanObj) ->
 PullbackComonadMorph b b' m =
   PullbackLAdjointMorph (PullbackRAdjointObj b) (PullbackRAdjointObj b')
     (PullbackRAdjointMorph b b' m)
-
--- Next we define the adjuncts.
-
-export
-PushoutLAdjunct : FunExt -> (a : SpanObj) -> (b : Type) ->
-  (PushoutLAdjointObj a -> b) -> SpanMorph a (SpanDiagObj b)
-PushoutLAdjunct fext (Span codl codr dom) b f =
-  SpanM
-    (\l =>
-      f (Element0 (\x, m => spmCodL m l)
-        $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl))
-    (\r =>
-      f (Element0 (\x, m => spmCodR m r)
-        $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl))
-    (\l, r, ed => cong f $
-      s0Eq12
-        (funExt $ \x => funExt $ \(SpanM mcodl' mcodr' mdom') => mdom' l r ed)
-        (?PushoutLAdjunct_hole_uip))
-
-export
-PushoutRAdjunct : (a : SpanObj) -> (b : Type) ->
-  SpanMorph a (SpanDiagObj b) -> PushoutLAdjointObj a -> b
-PushoutRAdjunct a b m (Element0 alpha natural) = alpha b m
 
 -- We now define the units and counits of the adjunctions, which are also the
 -- units and counits of the monads and comonads.
