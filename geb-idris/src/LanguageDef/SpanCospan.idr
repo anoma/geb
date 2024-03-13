@@ -382,7 +382,9 @@ PullbackComonadMorph b b' m =
     (PullbackRAdjointMorph b b' m)
 
 -- We now define the units and counits of the adjunctions, which are also the
--- units and counits of the monads and comonads.
+-- units and counits of the monads and comonads.  (The units are sometimes
+-- also known as "pure" or "return", and the counits are sometimes known as
+-- "erase" or "extract".)
 
 export
 PushoutUnit : FunExt -> (a : SpanObj) -> SpanMorph a (PushoutMonadObj a)
@@ -401,3 +403,6 @@ PullbackUnit x =
 export
 PullbackCounit : (a : CospanObj) -> CospanMorph (PullbackComonadObj a) a
 PullbackCounit x = PullbackRAdjunct (PullbackRAdjointObj x) x id
+
+-- Now we define the other monad and comonad natural transformations:
+-- the multiplications (joins) and comultiplications (duplicates).
