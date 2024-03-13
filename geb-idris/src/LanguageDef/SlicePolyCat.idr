@@ -923,7 +923,8 @@ public export
 record MlDirichSlObj (ar : MLArena) where
   constructor MDSobj
   mdsOnPos : MlSlArOnPos ar
-  mdsDir : (i : pfPos ar) -> (j : mdsOnPos i) -> pfDir {p=ar} i -> Type
+  mdsDir : (i : pfPos ar) -> (j : mdsOnPos i) ->
+    MlSlDirichDir {ar} {onpos=mdsOnPos} (i ** j)
 
 -- When we replace the on-positions and on-directions functions with fibrations,
 -- what we might consider to be the on-directions function is a pi type.
