@@ -951,7 +951,7 @@ MlPolySlPos {ar} p = MlSlArPos {ar} $ mpsOnPos p
 
 public export
 mlDirSlObjTotPos : {ar : MLArena} -> MlDirichSlObj ar -> Type
-mlDirSlObjTotPos {ar} sl = Sigma {a=(pfPos ar)} $ mdsOnPos sl
+mlDirSlObjTotPos {ar} sl = MlSlArPos {ar} $ mdsOnPos sl
 
 public export
 mlDirSlObjTotDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
