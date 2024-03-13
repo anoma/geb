@@ -926,15 +926,16 @@ record MlDirichSlObj (ar : MLArena) where
 
 -- In the case of polynomial functors, the directions of the slice object's
 -- domain are slices of its positions only, since its on-directions function
--- can not be viewed as a fibration of them, and the on-directions function is
--- correspondingly explicitly a slice morphism (rather than a pi type).
+-- can not be viewed as a fibration of them, and we therefore require an
+-- explicit on-directions function (rather than making it implicit as a
+-- fibration in the definition of the type of directions).
 public export
-MlSlPolyObjDir : (ar : MLArena) -> (onpos : MlSlArProjOnPos ar) -> Type
-MlSlPolyObjDir ar onpos = Pi {a=(pfPos ar)} (SliceObj . onpos)
+MlPolySlDir : (ar : MLArena) -> MlSlArProjOnPos ar -> Type
+MlPolySlDir ar onpos = Pi {a=(pfPos ar)} (SliceObj . onpos)
 
 public export
 MlSlPolyOnDir : {ar : MLArena} -> (onpos : MlSlArProjOnPos ar) ->
-  MlSlPolyObjDir ar onpos -> Type
+  MlPolySlDir ar onpos -> Type
 MlSlPolyOnDir {ar=(slpos ** sldir)} onpos dir =
   (i : slpos) -> (j : onpos i) -> sldir i -> dir i j
 
@@ -942,7 +943,7 @@ public export
 record MlPolySlObj (ar : MLArena) where
   constructor MPSobj
   mpsOnPos : MlSlArProjOnPos ar
-  mpsDir : MlSlPolyObjDir ar mpsOnPos
+  mpsDir : MlPolySlDir ar mpsOnPos
   mpsOnDir : MlSlPolyOnDir {ar} mpsOnPos mpsDir
 
 public export
