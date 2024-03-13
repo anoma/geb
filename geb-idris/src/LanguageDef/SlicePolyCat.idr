@@ -934,9 +934,9 @@ MlPolySlDir : (ar : MLArena) -> MlSlArProjOnPos ar -> Type
 MlPolySlDir ar onpos = (i : pfPos ar) -> onpos i -> Type
 
 public export
-MlSlPolyOnDir : {ar : MLArena} ->
+MlPolySlOnDir : {ar : MLArena} ->
   (onpos : MlSlArProjOnPos ar) -> MlPolySlDir ar onpos -> Type
-MlSlPolyOnDir {ar} onpos dir =
+MlPolySlOnDir {ar} onpos dir =
   (i : pfPos ar) -> (j : onpos i) -> pfDir {p=ar} i -> dir i j
 
 public export
@@ -944,7 +944,7 @@ record MlPolySlObj (ar : MLArena) where
   constructor MPSobj
   mpsOnPos : MlSlArProjOnPos ar
   mpsDir : MlPolySlDir ar mpsOnPos
-  mpsOnDir : MlSlPolyOnDir {ar} mpsOnPos mpsDir
+  mpsOnDir : MlPolySlOnDir {ar} mpsOnPos mpsDir
 
 --------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style objects ----
@@ -1048,7 +1048,7 @@ mlPolySlDirFromC {ar} sl i j = snd (fst sl) $ fst0 j
 
 public export
 mlPolySlOnDirFromC : {ar : MLArena} -> (sl : CPFSliceObj ar) ->
-  MlSlPolyOnDir {ar} (mlPolySlOnPosFromC {ar} sl) (mlPolySlDirFromC {ar} sl)
+  MlPolySlOnDir {ar} (mlPolySlOnPosFromC {ar} sl) (mlPolySlDirFromC {ar} sl)
 mlPolySlOnDirFromC {ar} sl i j d = snd (snd sl) (fst0 j) $ rewrite (snd0 j) in d
 
 public export
@@ -1116,7 +1116,7 @@ MlPolySlMorDomOnDir : {ar : MLArena} ->
   (dom : MlPolySlMorDomData ar) -> (cod : MlPolySlObj ar) ->
   (onpos : MlPolySlMorOnPos {ar} dom cod) ->
   MlPolySlMorOnDir {ar} dom cod onpos ->
-  MlSlPolyOnDir {ar} (DPair.fst . dom) (\i => DPair.snd (dom i))
+  MlPolySlOnDir {ar} (DPair.fst . dom) (\i => DPair.snd (dom i))
 MlPolySlMorDomOnDir {ar=(bpos ** bdir)} dom (MPSobj conpos cdir condir)
   monpos mondir =
     \i, j => mondir i j . condir i (monpos i j)
