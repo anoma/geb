@@ -1062,6 +1062,20 @@ mlDirSlObjFromC {ar=ar@(bpos ** bdir)} ((slpos ** sldir) ** (onpos ** ondir)) =
       Subset0 (sldir j) $ \sld => ondir j sld = replace {p=bdir} (sym eq) bd)
 
 public export
+mlPolySlObjToC : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
+mlPolySlObjToC (ppos ** pdir) (MPSobj onpos dir ondir) =
+  ((Sigma {a=ppos} onpos ** \(i ** j) => dir i j) **
+   (fst ** \(i ** j), d => ondir i j d))
+
+public export
+mlPolySlObjFromC : (p : PolyFunc) -> CPFSliceObj p -> MlPolySlObj p
+mlPolySlObjFromC (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
+  MPSobj
+    (\i => PreImage onpos i)
+    (\i, j => qdir $ fst0 j)
+    (\i, j, d => ondir (fst0 j) $ rewrite (snd0 j) in d)
+
+public export
 mlDirSlMorToCBase : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
   MlDirichSlMor dom cod ->
   DirichNatTrans (fst (mlDirSlObjToC dom)) (fst (mlDirSlObjToC cod))
@@ -1207,22 +1221,10 @@ CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
   (\i : ppos => (PreImage onpos i ** \(Element0 j inpre) => qdir j) **
    \i : ppos, d : pdir i, (Element0 j inpre) => ondir j $ rewrite inpre in d)
 
-mlPolySlObjFromC : (p : PolyFunc) -> CPFSliceObj p -> MlPolySlObj p
-mlPolySlObjFromC (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
-  MPSobj
-    (\i => PreImage onpos i)
-    (\i, j => qdir $ fst0 j)
-    (\i, j, d => ondir (fst0 j) $ rewrite (snd0 j) in d)
-
 CPFSliceObjFromPFS : (p : PolyFunc) -> PFSliceObj p -> CPFSliceObj p
 CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
   (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
    (fst ** \(i ** j), d => m i d j))
-
-mlPolySlObjToC : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
-mlPolySlObjToC (ppos ** pdir) (MPSobj onpos dir ondir) =
-  ((Sigma {a=ppos} onpos ** \(i ** j) => dir i j) **
-   (fst ** \(i ** j), d => ondir i j d))
 
 PFBaseChange : {p, q : PolyFunc} ->
   DirichNatTrans q p -> PFSliceObj p -> PFSliceObj q
