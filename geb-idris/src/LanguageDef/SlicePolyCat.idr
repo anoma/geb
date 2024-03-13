@@ -931,13 +931,13 @@ record MlDirichSlObj (ar : MLArena) where
 -- fibration in the definition of the type of directions).
 public export
 MlPolySlDir : (ar : MLArena) -> MlSlArProjOnPos ar -> Type
-MlPolySlDir ar onpos = Pi {a=(pfPos ar)} (SliceObj . onpos)
+MlPolySlDir ar onpos = (i : pfPos ar) -> onpos i -> Type
 
 public export
-MlSlPolyOnDir : {ar : MLArena} -> (onpos : MlSlArProjOnPos ar) ->
-  MlPolySlDir ar onpos -> Type
-MlSlPolyOnDir {ar=(slpos ** sldir)} onpos dir =
-  (i : slpos) -> (j : onpos i) -> sldir i -> dir i j
+MlSlPolyOnDir : {ar : MLArena} ->
+  (onpos : MlSlArProjOnPos ar) -> MlPolySlDir ar onpos -> Type
+MlSlPolyOnDir {ar} onpos dir =
+  (i : pfPos ar) -> (j : onpos i) -> pfDir {p=ar} i -> dir i j
 
 public export
 record MlPolySlObj (ar : MLArena) where
