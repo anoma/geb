@@ -344,6 +344,8 @@ PullbackComonadMorph b b' m =
   PullbackLAdjointMorph (PullbackRAdjointObj b) (PullbackRAdjointObj b')
     (PullbackRAdjointMorph b b' m)
 
+-- Next we define the adjuncts.
+
 export
 PushoutLAdjunct : FunExt -> (a : SpanObj) -> (b : Type) ->
   (PushoutLAdjointObj a -> b) -> SpanMorph a (SpanDiagObj b)
