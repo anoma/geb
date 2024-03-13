@@ -898,8 +898,8 @@ MlSlArOnPos = SliceObj . pfPos
 -- Thus, the positions of the slice object's domain can be viewed as
 -- the sum of all the fibers.
 public export
-MlSlArPos : {ar : MLArena} -> MlSlArOnPos ar -> Type
-MlSlArPos {ar} onpos = Sigma {a=(pfPos ar)} onpos
+MlSlArTotPos : {ar : MLArena} -> MlSlArOnPos ar -> Type
+MlSlArTotPos {ar} onpos = Sigma {a=(pfPos ar)} onpos
 
 -- Consequently, the directions of the slice object's domain are a slice
 -- of the sum of the fibers.
@@ -943,7 +943,7 @@ record MlPolySlObj (ar : MLArena) where
 
 public export
 MlPolySlPos : {ar : MLArena} -> MlPolySlObj ar -> Type
-MlPolySlPos {ar} p = MlSlArPos {ar} $ mpsOnPos p
+MlPolySlPos {ar} p = MlSlArTotPos {ar} $ mpsOnPos p
 
 --------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style objects ----
@@ -951,7 +951,7 @@ MlPolySlPos {ar} p = MlSlArPos {ar} $ mpsOnPos p
 
 public export
 mlDirSlObjTotPos : {ar : MLArena} -> MlDirichSlObj ar -> Type
-mlDirSlObjTotPos {ar} sl = MlSlArPos {ar} $ mdsOnPos sl
+mlDirSlObjTotPos {ar} sl = MlSlArTotPos {ar} $ mdsOnPos sl
 
 public export
 mlDirSlObjTotDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
