@@ -1002,13 +1002,18 @@ mlDirSlObjFromC {ar} sl =
   MDSobj (mlDirSlOnPosFromC {ar} sl) (mlDirSlDirFromC {ar} sl)
 
 public export
-MlPolySlObjTotPos : {ar : MLArena} -> MlPolySlObj ar -> Type
-MlPolySlObjTotPos {ar} p = MlSlArTotPos {ar} $ mpsOnPos p
+mlPolySlObjTotPos : {ar : MLArena} -> MlPolySlObj ar -> Type
+mlPolySlObjTotPos {ar} p = MlSlArTotPos {ar} $ mpsOnPos p
 
 public export
-mlPolySlObjToC : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
-mlPolySlObjToC (ppos ** pdir) (MPSobj onpos dir ondir) =
-  ((Sigma {a=ppos} onpos ** \(i ** j) => dir i j) **
+mlPolySlObjTotDir : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  mlPolySlObjTotPos {ar} sl -> Type
+mlPolySlObjTotDir {ar} sl ij = mpsDir sl (fst ij) (snd ij)
+
+public export
+mlPolySlObjToC : (ar : PolyFunc) -> MlPolySlObj ar -> CPFSliceObj ar
+mlPolySlObjToC ar sl@(MPSobj onpos dir ondir) =
+  ((mlPolySlObjTotPos {ar} sl ** mlPolySlObjTotDir {ar} sl) **
    (fst ** \(i ** j), d => ondir i j d))
 
 public export
