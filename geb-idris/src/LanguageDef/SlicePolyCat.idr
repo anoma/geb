@@ -1038,12 +1038,26 @@ mlPolySlObjToC ar sl@(MPSobj onpos dir ondir) =
   (mlPolySlObjTot {ar} sl ** mlPolySlObjProj {ar} sl)
 
 public export
+mlPolySlOnPosFromC : {ar : MLArena} -> CPFSliceObj ar -> MlSlArProjOnPos ar
+mlPolySlOnPosFromC {ar} sl i = PreImage (fst $ snd sl) i
+
+public export
+mlPolySlDirFromC : {ar : MLArena} -> (sl : CPFSliceObj ar) ->
+  MlPolySlDir ar (mlPolySlOnPosFromC {ar} sl)
+mlPolySlDirFromC {ar} sl i j = snd (fst sl) $ fst0 j
+
+public export
+mlPolySlOnDirFromC : {ar : MLArena} -> (sl : CPFSliceObj ar) ->
+  MlSlPolyOnDir {ar} (mlPolySlOnPosFromC {ar} sl) (mlPolySlDirFromC {ar} sl)
+mlPolySlOnDirFromC {ar} sl i j d = snd (snd sl) (fst0 j) $ rewrite (snd0 j) in d
+
+public export
 mlPolySlObjFromC : (p : PolyFunc) -> CPFSliceObj p -> MlPolySlObj p
-mlPolySlObjFromC (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
+mlPolySlObjFromC ar sl =
   MPSobj
-    (\i => PreImage onpos i)
-    (\i, j => qdir $ fst0 j)
-    (\i, j, d => ondir (fst0 j) $ rewrite (snd0 j) in d)
+    (mlPolySlOnPosFromC {ar} sl)
+    (mlPolySlDirFromC {ar} sl)
+    (mlPolySlOnDirFromC {ar} sl)
 
 -----------------------------------
 ---- Slice morphism definition ----
