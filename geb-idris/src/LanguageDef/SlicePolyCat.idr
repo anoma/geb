@@ -939,13 +939,13 @@ MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir i j d
 -- correspondingly explicitly a slice morphism (rather than a pi type).
 public export
 MlSlPolyObjDir : (ar : MLArena) -> (onpos : MlSlArOnPos ar) -> Type
-MlSlPolyObjDir ar onpos = Pi {a=(pfPos ar)} (SliceObj . onpos)
+MlSlPolyObjDir ar onpos = SliceObj $ Sigma {a=(pfPos ar)} onpos
 
 public export
 MlSlPolyOnDir : {ar : MLArena} -> (onpos : MlSlArOnPos ar) ->
   MlSlPolyObjDir ar onpos -> Type
 MlSlPolyOnDir {ar=(slpos ** sldir)} onpos dir =
-  (i : slpos) -> (j : onpos i) -> sldir i -> dir i j
+  (i : slpos) -> (j : onpos i) -> sldir i -> dir (i ** j)
 
 public export
 record MlPolySlObj (ar : MLArena) where
@@ -1008,14 +1008,14 @@ MlPolySlMorOnDir : {ar : MLArena} ->
 MlPolySlMorOnDir {ar=(bpos ** bdir)}
   dom (MPSobj conpos cdir condir) monpos =
     (i : bpos) ->
-      SliceMorphism {a=(fst $ dom i)} (cdir i . monpos i) (snd (dom i))
+      SliceMorphism {a=(fst $ dom i)} (curry cdir i . monpos i) (snd (dom i))
 
 public export
 MlPolySlMorDomOnDir : {ar : MLArena} ->
   (dom : MlPolySlMorDomData ar) -> (cod : MlPolySlObj ar) ->
   (onpos : MlPolySlMorOnPos {ar} dom cod) ->
   MlPolySlMorOnDir {ar} dom cod onpos ->
-  MlSlPolyOnDir {ar} (DPair.fst . dom) (\i => DPair.snd (dom i))
+  MlSlPolyOnDir {ar} (DPair.fst . dom) (\i => snd (dom $ fst i) $ snd i)
 MlPolySlMorDomOnDir {ar=(bpos ** bdir)} dom (MPSobj conpos cdir condir)
   monpos mondir =
     \i, j => mondir i j . condir i (monpos i j)
@@ -1034,7 +1034,7 @@ MlPolySlMorDom {ar=(bpos ** bdir)} {cod=(MPSobj conpos cdir condir)}
   (MPSMD domdata monpos mondir) =
     MPSobj
       (fst . domdata)
-      (\i => snd (domdata i))
+      (\i => snd (domdata $ fst i) $ snd i)
       (\i, j, d => mondir i j $ condir i (monpos i j) d)
 
 public export
@@ -1064,7 +1064,7 @@ mlDirSlObjFromC {ar=ar@(bpos ** bdir)} ((slpos ** sldir) ** (onpos ** ondir)) =
 public export
 mlPolySlObjToC : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
 mlPolySlObjToC (ppos ** pdir) (MPSobj onpos dir ondir) =
-  ((Sigma {a=ppos} onpos ** \(i ** j) => dir i j) **
+  ((Sigma {a=ppos} onpos ** \(i ** j) => dir (i ** j)) **
    (fst ** \(i ** j), d => ondir i j d))
 
 public export
@@ -1072,7 +1072,7 @@ mlPolySlObjFromC : (p : PolyFunc) -> CPFSliceObj p -> MlPolySlObj p
 mlPolySlObjFromC (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
   MPSobj
     (\i => PreImage onpos i)
-    (\i, j => qdir $ fst0 j)
+    (\ij => qdir $ fst0 $ snd ij)
     (\i, j, d => ondir (fst0 j) $ rewrite (snd0 j) in d)
 
 public export
@@ -1237,7 +1237,7 @@ PFBaseChange' {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir)
   (MPSobj slonpos sldir slondir) =
     MPSobj
       (slonpos . onpos)
-      (\i, j => sldir (onpos i) j)
+      (\ij => sldir (onpos (fst ij) ** snd ij))
       (\i, j, qd => slondir (onpos i) j $ ondir i qd)
 
 PFSliceSigma : (q : PolyFunc) -> {p : PolyFunc} ->
@@ -1280,7 +1280,7 @@ PFSliceOverConst' {x} (MPSobj onpos dir ondir) ex =
   -- Put another way, `m` gives us no information, because its type
   -- restricts it to being effectively just the unique morphism out
   -- of the initial object.
-  (onpos ex ** \i => dir ex i)
+  (onpos ex ** \i => dir (ex ** i))
 
 -- A slice object over the terminal polynomial functor is effectively
 -- just a polynomial functor, just as a slice of `Type` over `Unit` is
