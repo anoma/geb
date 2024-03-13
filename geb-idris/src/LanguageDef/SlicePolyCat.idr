@@ -915,24 +915,10 @@ MlSlArPos {ar} onpos = Sigma {a=(pfPos ar)} onpos
 -- an object in a polynomial-functor slice category goes in the opposite
 -- direction.
 public export
-MlSlDirichDir : {ar : MLArena} -> {onpos : MlSlArOnPos ar} ->
-  MlSlArPos {ar} onpos -> Type
-MlSlDirichDir {ar} {onpos} pos = SliceObj (pfDir {p=ar} $ fst pos)
-
-public export
 record MlDirichSlObj (ar : MLArena) where
   constructor MDSobj
   mdsOnPos : MlSlArOnPos ar
-  mdsDir : (i : pfPos ar) -> (j : mdsOnPos i) ->
-    MlSlDirichDir {ar} {onpos=mdsOnPos} (i ** j)
-
--- When we replace the on-positions and on-directions functions with fibrations,
--- what we might consider to be the on-directions function is a pi type.
-public export
-MlSlDirichOnDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
-  (i : MlSlArPos {ar} $ mdsOnPos sl) ->
-  MlSlDirichDir {ar} {onpos=(mdsOnPos sl)} i
-MlSlDirichOnDir {ar} (MDSobj onpos dir) (i ** j) d = dir i j d
+  mdsDir : (i : pfPos ar) -> mdsOnPos i -> pfDir {p=ar} i -> Type
 
 -- In the case of polynomial functors, the directions of the slice object's
 -- domain are slices of its positions only, since its on-directions function
