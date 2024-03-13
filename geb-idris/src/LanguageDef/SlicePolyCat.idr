@@ -892,13 +892,13 @@ DFSliceMorphFromCDomMorEq {p=(ppos ** pdir)}
 -- types of objects (functors) may be viewed as a fibration of the arena
 -- being sliced over.
 public export
-MlSlArOnPos : MLArena -> Type
-MlSlArOnPos = SliceObj . pfPos
+MlSlArProjOnPos : MLArena -> Type
+MlSlArProjOnPos = SliceObj . pfPos
 
 -- Thus, the positions of the slice object's domain can be viewed as
 -- the sum of all the fibers.
 public export
-MlSlArTotPos : {ar : MLArena} -> MlSlArOnPos ar -> Type
+MlSlArTotPos : {ar : MLArena} -> MlSlArProjOnPos ar -> Type
 MlSlArTotPos {ar} onpos = Sigma {a=(pfPos ar)} onpos
 
 -- Consequently, the directions of the slice object's domain are a slice
@@ -917,7 +917,7 @@ MlSlArTotPos {ar} onpos = Sigma {a=(pfPos ar)} onpos
 public export
 record MlDirichSlObj (ar : MLArena) where
   constructor MDSobj
-  mdsOnPos : MlSlArOnPos ar
+  mdsOnPos : MlSlArProjOnPos ar
   mdsDir : (i : pfPos ar) -> mdsOnPos i -> pfDir {p=ar} i -> Type
 
 -- In the case of polynomial functors, the directions of the slice object's
@@ -925,11 +925,11 @@ record MlDirichSlObj (ar : MLArena) where
 -- can not be viewed as a fibration of them, and the on-directions function is
 -- correspondingly explicitly a slice morphism (rather than a pi type).
 public export
-MlSlPolyObjDir : (ar : MLArena) -> (onpos : MlSlArOnPos ar) -> Type
+MlSlPolyObjDir : (ar : MLArena) -> (onpos : MlSlArProjOnPos ar) -> Type
 MlSlPolyObjDir ar onpos = Pi {a=(pfPos ar)} (SliceObj . onpos)
 
 public export
-MlSlPolyOnDir : {ar : MLArena} -> (onpos : MlSlArOnPos ar) ->
+MlSlPolyOnDir : {ar : MLArena} -> (onpos : MlSlArProjOnPos ar) ->
   MlSlPolyObjDir ar onpos -> Type
 MlSlPolyOnDir {ar=(slpos ** sldir)} onpos dir =
   (i : slpos) -> (j : onpos i) -> sldir i -> dir i j
@@ -937,7 +937,7 @@ MlSlPolyOnDir {ar=(slpos ** sldir)} onpos dir =
 public export
 record MlPolySlObj (ar : MLArena) where
   constructor MPSobj
-  mpsOnPos : MlSlArOnPos ar
+  mpsOnPos : MlSlArProjOnPos ar
   mpsDir : MlSlPolyObjDir ar mpsOnPos
   mpsOnDir : MlSlPolyOnDir {ar} mpsOnPos mpsDir
 
