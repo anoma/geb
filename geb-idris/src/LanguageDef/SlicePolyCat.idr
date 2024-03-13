@@ -1011,10 +1011,31 @@ mlPolySlObjTotDir : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
 mlPolySlObjTotDir {ar} sl ij = mpsDir sl (fst ij) (snd ij)
 
 public export
+mlPolySlObjTot : {ar : MLArena} -> MlPolySlObj ar -> MLArena
+mlPolySlObjTot {ar} sl =
+  (mlPolySlObjTotPos {ar} sl ** mlPolySlObjTotDir {ar} sl)
+
+public export
+mlPolySlObjProjOnPos : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  mlPolySlObjTotPos sl -> pfPos ar
+mlPolySlObjProjOnPos {ar} sl = DPair.fst
+
+public export
+mlPolySlObjProjOnDir : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  (i : mlPolySlObjTotPos sl) ->
+  pfDir {p=ar} (mlPolySlObjProjOnPos sl i) -> mlPolySlObjTotDir {ar} sl i
+mlPolySlObjProjOnDir {ar} sl ij d = mpsOnDir sl (fst ij) (snd ij) d
+
+public export
+mlPolySlObjProj : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  PolyNatTrans (mlPolySlObjTot {ar} sl) ar
+mlPolySlObjProj {ar} sl =
+  (mlPolySlObjProjOnPos {ar} sl ** mlPolySlObjProjOnDir {ar} sl)
+
+public export
 mlPolySlObjToC : (ar : PolyFunc) -> MlPolySlObj ar -> CPFSliceObj ar
 mlPolySlObjToC ar sl@(MPSobj onpos dir ondir) =
-  ((mlPolySlObjTotPos {ar} sl ** mlPolySlObjTotDir {ar} sl) **
-   (fst ** \(i ** j), d => ondir i j d))
+  (mlPolySlObjTot {ar} sl ** mlPolySlObjProj {ar} sl)
 
 public export
 mlPolySlObjFromC : (p : PolyFunc) -> CPFSliceObj p -> MlPolySlObj p
