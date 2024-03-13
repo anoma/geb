@@ -170,8 +170,9 @@ PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
 
 public export
 DirichNatTrans : PolyFunc -> PolyFunc -> Type
-DirichNatTrans (ppos ** pdir) (qpos ** qdir) =
-  (onPos : ppos -> qpos ** SliceMorphism pdir (qdir . onPos))
+DirichNatTrans p q =
+  (onPos : pfPos p -> pfPos q **
+   SliceMorphism (pfDir {p}) (pfDir {p=q} . onPos))
 
 public export
 dntOnPos : {0 p, q : PolyFunc} -> DirichNatTrans p q ->
