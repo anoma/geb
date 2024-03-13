@@ -320,6 +320,20 @@ PushoutRAdjunct : (a : SpanObj) -> (b : Type) ->
   SpanMorph a (SpanDiagObj b) -> PushoutLAdjointObj a -> b
 PushoutRAdjunct a b m (Element0 alpha natural) = alpha b m
 
+export
+PullbackLAdjunct : (a : Type) -> (b : CospanObj) ->
+  CospanMorph (CospanDiagObj a) b -> a -> PullbackRAdjointObj b
+PullbackLAdjunct a b m ea = ?PullbackLAdjunct_hole
+
+export
+PullbackRAdjunct : (a : Type) -> (b : CospanObj) ->
+  (a -> PullbackRAdjointObj b) -> CospanMorph (CospanDiagObj a) b
+PullbackRAdjunct a (Cospan cod doml domr) m =
+  CospanM
+    (\ea => cospmCod (snd (snd $ m ea)) (fst (snd $ m ea)))
+    (\ea, () => cospmDomL (snd (snd $ m ea)) (fst (snd $ m ea)) ())
+    (\ea, () => cospmDomR (snd (snd $ m ea)) (fst (snd $ m ea)) ())
+
 -- Now that we have defined the adjoints of the pushout and pullback
 -- adjunctions, we can define the monads and comonads by composition.
 
@@ -385,8 +399,4 @@ PullbackUnit x ex = Evidence x (ex, PullbackLAdjointMorph x x id)
 
 export
 PullbackCounit : (a : CospanObj) -> CospanMorph (PullbackComonadObj a) a
-PullbackCounit (Cospan cod doml domr) =
-  CospanM
-    (\(Evidence x (ex, CospanM mcod mdoml mdomr)) => mcod ex)
-    (\(Evidence x (ex, CospanM mcod mdoml mdomr)), () => mdoml ex ())
-    (\(Evidence x (ex, CospanM mcod mdoml mdomr)), () => mdomr ex ())
+PullbackCounit x = PullbackRAdjunct (PullbackRAdjointObj x) x id
