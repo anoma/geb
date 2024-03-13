@@ -989,12 +989,24 @@ mlDirSlOnPosFromC : {ar : MLArena} -> CDFSliceObj ar -> MlSlArProjOnPos ar
 mlDirSlOnPosFromC {ar} sl i = PreImage (fst $ snd sl) i
 
 public export
+mlDirSlDirFromCBase : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
+  MlDirichSlDir ar (mlDirSlOnPosFromC {ar} sl)
+mlDirSlDirFromCBase {ar} sl i j bd = snd (fst sl) (fst0 j)
+
+public export
+mlDirSlDirFromCProp : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
+  (i : pfPos ar) -> (j : mlDirSlOnPosFromC {ar} sl i) ->
+  (bd : pfDir {p=ar} i) -> SliceObj (mlDirSlDirFromCBase {ar} sl i j bd)
+mlDirSlDirFromCProp {ar} sl i j bd sld =
+  snd (snd sl) (fst0 j) sld = replace {p=(pfDir {p=ar})} (sym $ snd0 j) bd
+
+public export
 mlDirSlDirFromC : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
   MlDirichSlDir ar (mlDirSlOnPosFromC {ar} sl)
 mlDirSlDirFromC {ar} sl i j bd =
-  Subset0 (snd (fst sl) (fst0 j)) $
-    \sld =>
-      snd (snd sl) (fst0 j) sld = replace {p=(pfDir {p=ar})} (sym $ snd0 j) bd
+  Subset0
+    (mlDirSlDirFromCBase {ar} sl i j bd)
+    (mlDirSlDirFromCProp {ar} sl i j bd)
 
 public export
 mlDirSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirichSlObj ar
