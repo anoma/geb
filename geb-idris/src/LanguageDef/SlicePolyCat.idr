@@ -989,12 +989,21 @@ mlDirSlObjToC : {ar : MLArena} -> MlDirichSlObj ar -> CDFSliceObj ar
 mlDirSlObjToC {ar} sl = (mlDirSlObjTot {ar} sl ** mlDirSlObjProj {ar} sl)
 
 public export
+mlDirSlOnPosFromC : {ar : MLArena} -> CDFSliceObj ar -> MlSlArProjOnPos ar
+mlDirSlOnPosFromC {ar} sl i = PreImage (fst $ snd sl) i
+
+public export
+mlDirSlDirFromC : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
+  MlDirichSlDir ar (mlDirSlOnPosFromC {ar} sl)
+mlDirSlDirFromC {ar} sl i j bd =
+  Subset0 (snd (fst sl) (fst0 j)) $
+    \sld =>
+      snd (snd sl) (fst0 j) sld = replace {p=(pfDir {p=ar})} (sym $ snd0 j) bd
+
+public export
 mlDirSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirichSlObj ar
-mlDirSlObjFromC {ar=ar@(bpos ** bdir)} ((slpos ** sldir) ** (onpos ** ondir)) =
-  MDSobj
-    (\i => PreImage onpos i)
-    (\i, (Element0 j eq), bd =>
-      Subset0 (sldir j) $ \sld => ondir j sld = replace {p=bdir} (sym eq) bd)
+mlDirSlObjFromC {ar} sl =
+  MDSobj (mlDirSlOnPosFromC {ar} sl) (mlDirSlDirFromC {ar} sl)
 
 public export
 mlPolySlObjToC : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
