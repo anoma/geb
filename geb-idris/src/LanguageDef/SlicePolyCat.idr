@@ -1207,8 +1207,8 @@ CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
   (\i : ppos => (PreImage onpos i ** \(Element0 j inpre) => qdir j) **
    \i : ppos, d : pdir i, (Element0 j inpre) => ondir j $ rewrite inpre in d)
 
-CPFSliceObjToPFS' : (p : PolyFunc) -> CPFSliceObj p -> MlPolySlObj p
-CPFSliceObjToPFS' (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
+mlPolySlObjFromC : (p : PolyFunc) -> CPFSliceObj p -> MlPolySlObj p
+mlPolySlObjFromC (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
   MPSobj
     (\i => PreImage onpos i)
     (\i, j => qdir $ fst0 j)
@@ -1219,8 +1219,8 @@ CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
   (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
    (fst ** \(i ** j), d => m i d j))
 
-CPFSliceObjFromPFS' : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
-CPFSliceObjFromPFS' (ppos ** pdir) (MPSobj onpos dir ondir) =
+mlPolySlObjToC : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
+mlPolySlObjToC (ppos ** pdir) (MPSobj onpos dir ondir) =
   ((Sigma {a=ppos} onpos ** \(i ** j) => dir i j) **
    (fst ** \(i ** j), d => ondir i j d))
 
@@ -1247,10 +1247,10 @@ PFSliceSigma q {p} beta sl with (CPFSliceObjFromPFS p sl)
 
 PFSliceSigma' : (q : PolyFunc) -> {p : PolyFunc} ->
   PolyNatTrans p q -> MlPolySlObj p -> MlPolySlObj q
-PFSliceSigma' q {p} beta sl with (CPFSliceObjFromPFS' p sl)
+PFSliceSigma' q {p} beta sl with (mlPolySlObjToC p sl)
   PFSliceSigma' q {p} beta sl | (r ** alpha) =
     let csigma = (r ** pntVCatComp beta alpha) in
-    CPFSliceObjToPFS' q csigma
+    mlPolySlObjFromC q csigma
 
 -- A slice object over a constant functor is effectively a polynomial
 -- functor parameterized over terms of the output type of the constant functor.
@@ -1310,7 +1310,7 @@ PFAppI' {p=p@(_ ** _)} ty (i ** d) =
 
 InterpPFSliceObj : {p : PolyFunc} ->
   MlPolySlObj p -> (ty : Type) -> SliceObj $ InterpPolyFunc p ty
-InterpPFSliceObj {p} sl ty el with (CPFSliceObjFromPFS' p sl)
+InterpPFSliceObj {p} sl ty el with (mlPolySlObjToC p sl)
   InterpPFSliceObj {p} sl ty el | (q ** alpha) =
     PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc p ty)}
       (InterpPolyNT alpha ty) el
