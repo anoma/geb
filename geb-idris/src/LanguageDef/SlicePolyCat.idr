@@ -1085,17 +1085,17 @@ mlPolySlObjFromC ar sl =
 public export
 MlDirichSlMorOnPos : {ar : MLArena} ->
   MlDirichSlObj ar -> MlDirichSlObj ar -> Type
-MlDirichSlMorOnPos {ar=(bpos ** bdir)}
-  (MDSobj donpos ddir) (MDSobj conpos cdir) =
-    SliceMorphism {a=bpos} donpos conpos
+MlDirichSlMorOnPos {ar} dom cod =
+  SliceMorphism {a=(pfPos ar)} (mdsOnPos dom) (mdsOnPos cod)
 
 public export
 MlDirichSlMorOnDir : {ar : MLArena} -> (dom, cod : MlDirichSlObj ar) ->
   MlDirichSlMorOnPos {ar} dom cod -> Type
-MlDirichSlMorOnDir {ar=(bpos ** bdir)}
-  (MDSobj donpos ddir) (MDSobj conpos cdir) onpos =
-    (i : bpos) -> (j : donpos i) ->
-      SliceMorphism {a=(bdir i)} (ddir i j) (cdir i $ onpos i j)
+MlDirichSlMorOnDir {ar} dom cod onpos =
+  (i : pfPos ar) -> (j : mdsOnPos dom i) ->
+    SliceMorphism {a=(pfDir {p=ar} i)}
+      (mdsDir dom i j)
+      (mdsDir cod i $ onpos i j)
 
 public export
 record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
