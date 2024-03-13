@@ -964,10 +964,38 @@ MlPolySlPos {ar} p = MlSlArPos {ar} $ mpsOnPos p
 --------------------------------------------------------------------
 
 public export
+mlDirSlObjTotPos : {ar : MLArena} -> MlDirichSlObj ar -> Type
+mlDirSlObjTotPos {ar} sl = Sigma {a=(pfPos ar)} $ mdsOnPos sl
+
+public export
+mlDirSlObjTotDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  mlDirSlObjTotPos {ar} sl -> Type
+mlDirSlObjTotDir {ar} sl ij = Sigma $ mdsDir sl (fst ij) (snd ij)
+
+public export
+mlDirSlObjTot : {ar : MLArena} -> MlDirichSlObj ar -> MLArena
+mlDirSlObjTot {ar} sl = (mlDirSlObjTotPos {ar} sl ** mlDirSlObjTotDir {ar} sl)
+
+public export
+mlDirSlObjProjOnPos : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  mlDirSlObjTotPos sl -> pfPos ar
+mlDirSlObjProjOnPos {ar} sl = DPair.fst
+
+public export
+mlDirSlObjProjOnDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  (i : mlDirSlObjTotPos sl) ->
+  mlDirSlObjTotDir {ar} sl i -> pfDir {p=ar} (mlDirSlObjProjOnPos sl i)
+mlDirSlObjProjOnDir {ar} sl _ = DPair.fst
+
+public export
+mlDirSlObjProj : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  DirichNatTrans (mlDirSlObjTot {ar} sl) ar
+mlDirSlObjProj {ar} sl =
+  (mlDirSlObjProjOnPos {ar} sl ** mlDirSlObjProjOnDir {ar} sl)
+
+public export
 mlDirSlObjToC : {ar : MLArena} -> MlDirichSlObj ar -> CDFSliceObj ar
-mlDirSlObjToC {ar=ar@(bpos ** bdir)} (MDSobj onpos dir) =
-  ((MlSlArPos {ar} onpos ** \ij => Sigma $ dir (fst ij) (snd ij)) **
-   (DPair.fst ** \_ => DPair.fst))
+mlDirSlObjToC {ar} sl = (mlDirSlObjTot {ar} sl ** mlDirSlObjProj {ar} sl)
 
 public export
 mlDirSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirichSlObj ar
