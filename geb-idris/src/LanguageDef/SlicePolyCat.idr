@@ -946,10 +946,6 @@ record MlPolySlObj (ar : MLArena) where
   mpsDir : MlPolySlDir ar mpsOnPos
   mpsOnDir : MlSlPolyOnDir {ar} mpsOnPos mpsDir
 
-public export
-MlPolySlPos : {ar : MLArena} -> MlPolySlObj ar -> Type
-MlPolySlPos {ar} p = MlSlArTotPos {ar} $ mpsOnPos p
-
 --------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style objects ----
 --------------------------------------------------------------------
@@ -1004,6 +1000,10 @@ public export
 mlDirSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirichSlObj ar
 mlDirSlObjFromC {ar} sl =
   MDSobj (mlDirSlOnPosFromC {ar} sl) (mlDirSlDirFromC {ar} sl)
+
+public export
+MlPolySlObjTotPos : {ar : MLArena} -> MlPolySlObj ar -> Type
+MlPolySlObjTotPos {ar} p = MlSlArTotPos {ar} $ mpsOnPos p
 
 public export
 mlPolySlObjToC : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
