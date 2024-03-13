@@ -995,25 +995,53 @@ MlPolySlMorDomData : MLArena -> Type
 MlPolySlMorDomData ar = fst ar -> PolyFunc
 
 public export
-MlPolySlMorOnPos : {ar : MLArena} -> MlPolySlObj ar -> MlPolySlObj ar -> Type
+MlPolySlMorOnPos : {ar : MLArena} ->
+  MlPolySlMorDomData ar -> MlPolySlObj ar -> Type
 MlPolySlMorOnPos {ar=(bpos ** bdir)}
-  (MPSobj donpos ddir dondir) (MPSobj conpos cdir condir) =
-    SliceMorphism {a=bpos} donpos conpos
+  dom (MPSobj conpos cdir condir) =
+    SliceMorphism {a=bpos} (fst . dom) conpos
 
 public export
-MlPolySlMorOnDir : {ar : MLArena} -> (dom, cod : MlPolySlObj ar) ->
+MlPolySlMorOnDir : {ar : MLArena} ->
+  (dom : MlPolySlMorDomData ar) -> (cod : MlPolySlObj ar) ->
   MlPolySlMorOnPos {ar} dom cod -> Type
 MlPolySlMorOnDir {ar=(bpos ** bdir)}
-  (MPSobj donpos ddir dondir) (MPSobj conpos cdir condir) monpos =
-    (i : bpos) -> (j : donpos i) -> (d : bdir i) ->
-    Subset0 (cdir i (monpos i j)) (Equal $ condir i (monpos i j) d) ->
-    Subset0 (ddir i j) (Equal $ dondir i j d)
+  dom (MPSobj conpos cdir condir) monpos =
+    (i : bpos) ->
+      SliceMorphism {a=(fst $ dom i)} (cdir i . monpos i) (snd (dom i))
 
 public export
-record MlPolySlMor {ar : MLArena} (dom, cod : MlPolySlObj ar) where
+MlPolySlMorDomOnDir : {ar : MLArena} ->
+  (dom : MlPolySlMorDomData ar) -> (cod : MlPolySlObj ar) ->
+  (onpos : MlPolySlMorOnPos {ar} dom cod) ->
+  MlPolySlMorOnDir {ar} dom cod onpos ->
+  MlSlPolyOnDir {ar} (DPair.fst . dom) (\i => DPair.snd (dom i))
+MlPolySlMorDomOnDir {ar=(bpos ** bdir)} dom (MPSobj conpos cdir condir)
+  monpos mondir =
+    \i, j => mondir i j . condir i (monpos i j)
+
+public export
+record MlPolySlMorData {ar : MLArena} (cod : MlPolySlObj ar) where
   constructor MPSMD
-  mdsOnPos : MlPolySlMorOnPos {ar} dom cod
-  mdsOnDir : MlPolySlMorOnDir {ar} dom cod mdsOnPos
+  mdsDomData : MlPolySlMorDomData ar
+  mdsOnPos : MlPolySlMorOnPos {ar} mdsDomData cod
+  mdsOnDir : MlPolySlMorOnDir {ar} mdsDomData cod mdsOnPos
+
+public export
+MlPolySlMorDom : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
+  MlPolySlMorData {ar} cod -> MlPolySlObj ar
+MlPolySlMorDom {ar=(bpos ** bdir)} {cod=(MPSobj conpos cdir condir)}
+  (MPSMD domdata monpos mondir) =
+    MPSobj
+      (fst . domdata)
+      (\i => snd (domdata i))
+      (\i, j, d => mondir i j $ condir i (monpos i j) d)
+
+public export
+data MlPolySlMor : {ar : MLArena} -> (dom, cod : MlPolySlObj ar) -> Type where
+  MPSM : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+    (mordata : MlPolySlMorData {ar} cod) ->
+    MlPolySlMor {ar} (MlPolySlMorDom {ar} {cod} mordata) cod
 
 ------------------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style objects/morphisms ----
