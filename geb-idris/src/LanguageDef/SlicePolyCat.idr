@@ -959,6 +959,38 @@ public export
 MlPolySlPos : {ar : MLArena} -> MlPolySlObj ar -> Type
 MlPolySlPos {ar} p = MlSlArPos {ar} $ mpsOnPos p
 
+--------------------------------------------------------------------
+---- Equivalence of dependent-type and categorial-style objects ----
+--------------------------------------------------------------------
+
+public export
+mlDirSlObjToC : {ar : MLArena} -> MlDirichSlObj ar -> CDFSliceObj ar
+mlDirSlObjToC {ar=ar@(bpos ** bdir)} (MDSobj onpos dir) =
+  ((MlSlArPos {ar} onpos ** \ij => Sigma $ dir (fst ij) (snd ij)) **
+   (DPair.fst ** \_ => DPair.fst))
+
+public export
+mlDirSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirichSlObj ar
+mlDirSlObjFromC {ar=ar@(bpos ** bdir)} ((slpos ** sldir) ** (onpos ** ondir)) =
+  MDSobj
+    (\i => PreImage onpos i)
+    (\i, (Element0 j eq), bd =>
+      Subset0 (sldir j) $ \sld => ondir j sld = replace {p=bdir} (sym eq) bd)
+
+public export
+mlPolySlObjToC : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
+mlPolySlObjToC (ppos ** pdir) (MPSobj onpos dir ondir) =
+  ((Sigma {a=ppos} onpos ** \(i ** j) => dir i j) **
+   (fst ** \(i ** j), d => ondir i j d))
+
+public export
+mlPolySlObjFromC : (p : PolyFunc) -> CPFSliceObj p -> MlPolySlObj p
+mlPolySlObjFromC (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
+  MPSobj
+    (\i => PreImage onpos i)
+    (\i, j => qdir $ fst0 j)
+    (\i, j, d => ondir (fst0 j) $ rewrite (snd0 j) in d)
+
 -----------------------------------
 ---- Slice morphism definition ----
 -----------------------------------
@@ -1044,37 +1076,9 @@ data MlPolySlMor : {ar : MLArena} -> (dom, cod : MlPolySlObj ar) -> Type where
     (mordata : MlPolySlMorData {ar} cod) ->
     MlPolySlMor {ar} (MlPolySlMorDom {ar} {cod} mordata) cod
 
-------------------------------------------------------------------------------
----- Equivalence of dependent-type and categorial-style objects/morphisms ----
-------------------------------------------------------------------------------
-
-public export
-mlDirSlObjToC : {ar : MLArena} -> MlDirichSlObj ar -> CDFSliceObj ar
-mlDirSlObjToC {ar=ar@(bpos ** bdir)} (MDSobj onpos dir) =
-  ((MlSlArPos {ar} onpos ** \ij => Sigma $ dir (fst ij) (snd ij)) **
-   (DPair.fst ** \_ => DPair.fst))
-
-public export
-mlDirSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirichSlObj ar
-mlDirSlObjFromC {ar=ar@(bpos ** bdir)} ((slpos ** sldir) ** (onpos ** ondir)) =
-  MDSobj
-    (\i => PreImage onpos i)
-    (\i, (Element0 j eq), bd =>
-      Subset0 (sldir j) $ \sld => ondir j sld = replace {p=bdir} (sym eq) bd)
-
-public export
-mlPolySlObjToC : (p : PolyFunc) -> MlPolySlObj p -> CPFSliceObj p
-mlPolySlObjToC (ppos ** pdir) (MPSobj onpos dir ondir) =
-  ((Sigma {a=ppos} onpos ** \(i ** j) => dir i j) **
-   (fst ** \(i ** j), d => ondir i j d))
-
-public export
-mlPolySlObjFromC : (p : PolyFunc) -> CPFSliceObj p -> MlPolySlObj p
-mlPolySlObjFromC (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
-  MPSobj
-    (\i => PreImage onpos i)
-    (\i, j => qdir $ fst0 j)
-    (\i, j, d => ondir (fst0 j) $ rewrite (snd0 j) in d)
+----------------------------------------------------------------------
+---- Equivalence of dependent-type and categorial-style morphisms ----
+----------------------------------------------------------------------
 
 public export
 mlDirSlMorToCBase : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
