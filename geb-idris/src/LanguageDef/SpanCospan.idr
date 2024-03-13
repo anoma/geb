@@ -323,7 +323,7 @@ PushoutRAdjunct a b m (Element0 alpha natural) = alpha b m
 export
 PullbackLAdjunct : (a : Type) -> (b : CospanObj) ->
   CospanMorph (CospanDiagObj a) b -> a -> PullbackRAdjointObj b
-PullbackLAdjunct a b m ea = ?PullbackLAdjunct_hole
+PullbackLAdjunct a b m ea = Evidence a (ea, m)
 
 export
 PullbackRAdjunct : (a : Type) -> (b : CospanObj) ->
@@ -395,7 +395,8 @@ PushoutCounit x =
 
 export
 PullbackUnit : NaturalTransformation (id {a=Type}) PullbackMonadObj
-PullbackUnit x ex = Evidence x (ex, PullbackLAdjointMorph x x id)
+PullbackUnit x =
+  PullbackLAdjunct x (PullbackLAdjointObj x) (cospanId $ PullbackLAdjointObj x)
 
 export
 PullbackCounit : (a : CospanObj) -> CospanMorph (PullbackComonadObj a) a
