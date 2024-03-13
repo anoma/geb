@@ -374,8 +374,8 @@ PushoutUnit fext a = PushoutLAdjunct fext a (PushoutLAdjointObj a) id
 
 export
 PushoutCounit : NaturalTransformation PushoutComonadObj (id {a=Type})
-PushoutCounit x (Element0 alpha natural) =
-  alpha x $ spanId $ PushoutRAdjointObj x
+PushoutCounit x =
+  PushoutRAdjunct (PushoutRAdjointObj x) x (spanId $ PushoutRAdjointObj x)
 
 export
 PullbackUnit : NaturalTransformation (id {a=Type}) PullbackMonadObj
