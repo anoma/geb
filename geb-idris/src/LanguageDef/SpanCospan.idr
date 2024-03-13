@@ -406,3 +406,23 @@ PullbackCounit x = PullbackRAdjunct (PullbackRAdjointObj x) x id
 
 -- Now we define the other monad and comonad natural transformations:
 -- the multiplications (joins) and comultiplications (duplicates).
+
+export
+pushoutJoin : (a : SpanObj) ->
+  SpanMorph (PushoutMonadObj $ PushoutMonadObj a) (PushoutMonadObj a)
+pushoutJoin (Span codl codr dom) = ?pushoutJoin_hole
+
+export
+pushoutDup : (b : Type) ->
+  PushoutComonadObj b -> PushoutComonadObj (PushoutComonadObj b)
+pushoutDup b b' = ?pushoutDup_hole
+
+export
+pullbackJoin : (a : Type) ->
+  PullbackMonadObj (PullbackMonadObj a) -> PullbackMonadObj a
+pullbackJoin a = ?pullbackJoin_jole
+
+export
+pullbackDup : (b : CospanObj) ->
+  CospanMorph (PullbackComonadObj b) (PullbackComonadObj $ PullbackComonadObj b)
+pullbackDup (Cospan cod doml domr) = ?pullbackDup_hole
