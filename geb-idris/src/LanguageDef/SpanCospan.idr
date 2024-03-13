@@ -360,6 +360,11 @@ PushoutLAdjunct fext (Span codl codr dom) b f =
         (funExt $ \x => funExt $ \(SpanM mcodl' mcodr' mdom') => mdom' l r ed)
         (?PushoutLAdjunct_hole_uip))
 
+export
+PushoutRAdjunct : (a : SpanObj) -> (b : Type) ->
+  SpanMorph a (SpanDiagObj b) -> PushoutLAdjointObj a -> b
+PushoutRAdjunct a b m (Element0 alpha natural) = alpha b m
+
 -- We now define the units and counits of the adjunctions, which are also the
 -- units and counits of the monads and comonads.
 
