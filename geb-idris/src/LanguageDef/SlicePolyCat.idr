@@ -1236,11 +1236,17 @@ mlPolySlMorTot {ar} {dom} {cod} =
   mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)} . mlPolySlMorToSlOfSl {ar}
 
 public export
+mlPolySlMorProj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  (m : MlPolySlMor {ar} dom cod) ->
+  PolyNatTrans (mlPolySlMorTot {ar} {dom} {cod} m) (mlPolySlObjTot {ar} cod)
+mlPolySlMorProj {ar} {dom} {cod} m =
+  mlPolySlObjProj {ar=(mlPolySlObjTot {ar} cod)} $ mlPolySlMorToSlOfSl {ar} m
+
+public export
 mlPolySlMorToP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor dom cod -> PFSliceMorph {p=ar} (mlPolySlObjToC ar cod)
-mlPolySlMorToP {ar} {cod=cod@(MPSobj cpos cdir condir)} (MPSM m) =
-  (mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)} m **
-   mlPolySlObjProj {ar=(mlPolySlObjTot {ar} cod)} m)
+mlPolySlMorToP {ar} {cod=cod@(MPSobj cpos cdir condir)} m =
+  (mlPolySlMorTot {ar} {dom} {cod} m ** mlPolySlMorProj {ar} {dom} {cod} m)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
