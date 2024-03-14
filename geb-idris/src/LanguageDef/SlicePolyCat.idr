@@ -1237,7 +1237,7 @@ mlPolySlMorToCBaseOnDir : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   pfDir {p=(fst (mlPolySlObjToC ar cod))}
     (mlPolySlMorToCBaseOnPos {ar} {dom} {cod} m i) ->
   pfDir {p=(fst (mlPolySlObjToC ar dom))} i
-mlPolySlMorToCBaseOnDir {cod=(MPSobj cpos cdir condir)} (MPSM m) (i ** j ** k) d =
+mlPolySlMorToCBaseOnDir {cod=(MPSobj _ _ _)} (MPSM m) (i ** j ** k) d =
   (d, mpsOnDir m (i ** j) k d)
 
 public export
