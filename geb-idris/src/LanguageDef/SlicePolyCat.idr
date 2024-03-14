@@ -1236,33 +1236,6 @@ mlPolySlMorTot {ar} {dom} {cod} =
   mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)} . mlPolySlMorToSlOfSl {ar}
 
 public export
-mlPolySlMorToCBaseOnPos : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  MlPolySlMor dom cod ->
-  pfPos (fst (mlPolySlObjToC ar dom)) -> pfPos (fst (mlPolySlObjToC ar cod))
-mlPolySlMorToCBaseOnPos {cod=(MPSobj cpos cdir condir)} (MPSM m) (i ** j ** k) =
-  (i ** j)
-
-public export
-mlPolySlMorToCBaseOnDir : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  (m : MlPolySlMor dom cod) ->
-  (i : pfPos (fst (mlPolySlObjToC ar dom))) ->
-  pfDir {p=(fst (mlPolySlObjToC ar cod))}
-    (mlPolySlMorToCBaseOnPos {ar} {dom} {cod} m i) ->
-  pfDir {p=(fst (mlPolySlObjToC ar dom))} i
-mlPolySlMorToCBaseOnDir {cod=(MPSobj _ _ _)} (MPSM m) (i ** j ** k) d =
-  (d, mpsOnDir m (i ** j) k d)
-
-public export
-mlPolySlMorToCBase : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  MlPolySlMor dom cod ->
-  PolyNatTrans (fst (mlPolySlObjToC ar dom)) (fst (mlPolySlObjToC ar cod))
-mlPolySlMorToCBase {ar} {cod=cod@(MPSobj _ cdir condir)} (MPSM m) =
-  (mlPolySlMorToCBaseOnPos {dom=(MlPolySlFromSlOfSl cod m)} {cod}
-    (MPSM {dom} m) **
-   mlPolySlMorToCBaseOnDir {dom=(MlPolySlFromSlOfSl cod m)} {cod}
-    (MPSM {dom} m))
-
-public export
 mlPolySlMorToP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor dom cod -> PFSliceMorph {p=ar} (mlPolySlObjToC ar cod)
 mlPolySlMorToP {ar} {cod=cod@(MPSobj cpos cdir condir)} (MPSM m) =
