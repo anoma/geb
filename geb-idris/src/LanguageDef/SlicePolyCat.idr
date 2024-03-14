@@ -1142,14 +1142,14 @@ MlPolySlFromSlOfSl {ar} sl slsl =
 public export
 data MlPolySlMor :
     {ar : MLArena} -> (dom, cod : MlPolySlObj ar) -> Type where
-  MPSM : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MPSM : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
     (slsl : MlPolySlOfSl {ar} cod) ->
     MlPolySlMor {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
 
 public export
 mlPolySlMorToSlOfSl : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor {ar} dom cod -> MlPolySlOfSl {ar} cod
-mlPolySlMorToSlOfSl (MPSM slsl) = slsl
+mlPolySlMorToSlOfSl {ar} {cod} (MPSM {ar} {cod} slsl) = slsl
 
 ----------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style morphisms ----
@@ -1247,6 +1247,23 @@ mlPolySlMorToP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor dom cod -> PFSliceMorph {p=ar} (mlPolySlObjToC ar cod)
 mlPolySlMorToP {ar} {cod=cod@(MPSobj cpos cdir condir)} m =
   (mlPolySlMorTot {ar} {dom} {cod} m ** mlPolySlMorProj {ar} {dom} {cod} m)
+
+public export
+mlPolySlOfSlFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
+  PFSliceMorph {p=ar} (mlPolySlObjToC ar cod) -> MlPolySlOfSl {ar} cod
+mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
+  MPSobj
+    (mlPolySlOnPosFromC {ar=(mlPolySlObjTot {ar} cod)} m)
+    (mlPolySlDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
+    (mlPolySlOnDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
+
+public export
+mlPolySlMorFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
+  (m : PFSliceMorph {p=ar} (mlPolySlObjToC ar cod)) ->
+  MlPolySlMor {ar}
+    (MlPolySlFromSlOfSl {ar} cod $ mlPolySlOfSlFromP {ar} {cod} m)
+    cod
+mlPolySlMorFromP {ar} {cod} m = MPSM {ar} {cod} $ mlPolySlOfSlFromP {ar} {cod} m
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
