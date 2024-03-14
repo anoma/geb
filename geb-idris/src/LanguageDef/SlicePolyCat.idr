@@ -1140,11 +1140,16 @@ MlPolySlFromSlOfSl {ar} sl slsl =
     (MlPolySlOnDirFromSlOfSl {ar} sl slsl)
 
 public export
-data MlPolySlMorFromSlOfSl :
+data MlPolySlMor :
     {ar : MLArena} -> (dom, cod : MlPolySlObj ar) -> Type where
-  MPSMS : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MPSM : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
     (slsl : MlPolySlOfSl {ar} cod) ->
-    MlPolySlMorFromSlOfSl {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
+    MlPolySlMor {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
+
+public export
+mlPolySlMorToSlOfSl : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor {ar} dom cod -> MlPolySlOfSl {ar} cod
+mlPolySlMorToSlOfSl (MPSM slsl) = slsl
 
 ----------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style morphisms ----
@@ -1217,6 +1222,14 @@ mlDirSlMorFromC {ar=(ppos ** pdir)}
       (\i, (Element0 j peq), pd, (Element0 md deq) =>
         Element0 (mondir j md) $
           trans (odeq j md) $ rewrite sym (opeq j) in deq)
+
+public export
+mlPolySlMorToCBase : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor dom cod ->
+  PolyNatTrans (fst (mlPolySlObjToC ar dom)) (fst (mlPolySlObjToC ar cod))
+mlPolySlMorToCBase {cod=(MPSobj cpos cdir condir)} (MPSM m) =
+  (\(i ** j ** k) => (i ** j) **
+   \(i ** j ** k), d => (d, mpsOnDir m (i ** j) k d))
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
