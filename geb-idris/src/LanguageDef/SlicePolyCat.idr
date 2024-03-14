@@ -1245,10 +1245,10 @@ mlPolySlMorToCBase : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor dom cod ->
   PolyNatTrans (fst (mlPolySlObjToC ar dom)) (fst (mlPolySlObjToC ar cod))
 mlPolySlMorToCBase {ar} {cod=cod@(MPSobj _ cdir condir)} (MPSM m) =
-    (mlPolySlMorToCBaseOnPos {dom=(MlPolySlFromSlOfSl cod m)} {cod}
-      (MPSM {dom} m) **
-     mlPolySlMorToCBaseOnDir {dom=(MlPolySlFromSlOfSl cod m)} {cod}
-      (MPSM {dom} m))
+  (mlPolySlMorToCBaseOnPos {dom=(MlPolySlFromSlOfSl cod m)} {cod}
+    (MPSM {dom} m) **
+   mlPolySlMorToCBaseOnDir {dom=(MlPolySlFromSlOfSl cod m)} {cod}
+    (MPSM {dom} m))
 
 public export
 mlPolySlMorToP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
