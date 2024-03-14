@@ -1104,6 +1104,49 @@ record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
   mdsmOnDir : MlDirichSlMorOnDir {ar} dom cod mdsmOnPos
 
 public export
+MlPolySlOfSl : {ar : MLArena} -> MlPolySlObj ar -> Type
+MlPolySlOfSl {ar} sl = MlPolySlObj $ mlPolySlObjTot {ar} sl
+
+public export
+MlPolySlPosFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  MlPolySlOfSl {ar} sl -> MlSlArProjOnPos ar
+MlPolySlPosFromSlOfSl {ar} sl slsl i =
+  DPair (mpsOnPos sl i) $ DPair.curry (mpsOnPos slsl) i
+
+public export
+MlPolySlDirFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  (slsl : MlPolySlOfSl {ar} sl) ->
+  MlPolySlDir ar (MlPolySlPosFromSlOfSl {ar} sl slsl)
+MlPolySlDirFromSlOfSl {ar} sl slsl i jk =
+  (mpsDir sl i (fst jk), mpsDir slsl (i ** fst jk) (snd jk))
+
+public export
+MlPolySlOnDirFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  (slsl : MlPolySlOfSl {ar} sl) ->
+  MlPolySlOnDir {ar}
+    (MlPolySlPosFromSlOfSl {ar} sl slsl)
+    (MlPolySlDirFromSlOfSl {ar} sl slsl)
+MlPolySlOnDirFromSlOfSl {ar} sl slsl i jk bd =
+  let sldir = mpsOnDir sl i (fst jk) bd in
+  (sldir, mpsOnDir slsl (i ** fst jk) (snd jk) sldir)
+
+public export
+MlPolySlFromSlOfSl : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  MlPolySlOfSl {ar} sl -> MlPolySlObj ar
+MlPolySlFromSlOfSl {ar} sl slsl =
+  MPSobj
+    (MlPolySlPosFromSlOfSl {ar} sl slsl)
+    (MlPolySlDirFromSlOfSl {ar} sl slsl)
+    (MlPolySlOnDirFromSlOfSl {ar} sl slsl)
+
+public export
+data MlPolySlMorFromSlOfSl :
+    {ar : MLArena} -> (dom, cod : MlPolySlObj ar) -> Type where
+  MPSMS : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+    (slsl : MlPolySlOfSl {ar} cod) ->
+    MlPolySlMorFromSlOfSl {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
+
+public export
 MlPolySlMorDomData : MLArena -> Type
 MlPolySlMorDomData ar = fst ar -> PolyFunc
 
