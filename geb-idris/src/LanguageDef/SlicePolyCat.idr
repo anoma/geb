@@ -1141,7 +1141,7 @@ MlPolySlFromSlOfSl {ar} sl slsl =
 
 public export
 data MlPolySlMor :
-    {ar : MLArena} -> (dom, cod : MlPolySlObj ar) -> Type where
+    {ar : MLArena} -> MlPolySlObj ar -> MlPolySlObj ar -> Type where
   MPSM : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
     (slsl : MlPolySlOfSl {ar} cod) ->
     MlPolySlMor {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
@@ -1233,19 +1233,20 @@ public export
 mlPolySlMorTot : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor {ar} dom cod -> PolyFunc
 mlPolySlMorTot {ar} {dom} {cod} =
-  mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)} . mlPolySlMorToSlOfSl {ar}
+  mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)} . mlPolySlMorToSlOfSl {dom} {ar}
 
 public export
 mlPolySlMorProj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   (m : MlPolySlMor {ar} dom cod) ->
   PolyNatTrans (mlPolySlMorTot {ar} {dom} {cod} m) (mlPolySlObjTot {ar} cod)
 mlPolySlMorProj {ar} {dom} {cod} m =
-  mlPolySlObjProj {ar=(mlPolySlObjTot {ar} cod)} $ mlPolySlMorToSlOfSl {ar} m
+  mlPolySlObjProj {ar=(mlPolySlObjTot {ar} cod)} $
+    mlPolySlMorToSlOfSl {dom} {ar} m
 
 public export
 mlPolySlMorToP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor dom cod -> PFSliceMorph {p=ar} (mlPolySlObjToC ar cod)
-mlPolySlMorToP {ar} {cod=cod@(MPSobj cpos cdir condir)} m =
+mlPolySlMorToP {ar} {dom} {cod=cod@(MPSobj cpos cdir condir)} m =
   (mlPolySlMorTot {ar} {dom} {cod} m ** mlPolySlMorProj {ar} {dom} {cod} m)
 
 public export
@@ -1264,6 +1265,17 @@ mlPolySlMorFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
     (MlPolySlFromSlOfSl {ar} cod $ mlPolySlOfSlFromP {ar} {cod} m)
     cod
 mlPolySlMorFromP {ar} {cod} m = MPSM {ar} {cod} $ mlPolySlOfSlFromP {ar} {cod} m
+
+public export
+mlPolySlMorToCP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  (m : MlPolySlMor dom cod) ->
+  CPFSliceMorph ar
+    (PFSliceMorphDom {p=ar} {cod=(mlPolySlObjToC ar cod)} $
+      mlPolySlMorToP {ar} {dom} {cod} m)
+    (mlPolySlObjToC ar cod)
+mlPolySlMorToCP {ar} {dom=dom@(MPSobj _ _ _)} {cod=cod@(MPSobj _ _ _)} m =
+  PFSliceMorphToC {p=ar} {cod=(mlPolySlObjToC ar cod)} $
+    mlPolySlMorToP {ar} {dom} {cod} m
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
