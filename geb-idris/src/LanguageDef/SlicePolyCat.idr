@@ -1100,8 +1100,8 @@ MlDirichSlMorOnDir {ar} dom cod onpos =
 public export
 record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
   constructor MDSM
-  mdsOnPos : MlDirichSlMorOnPos {ar} dom cod
-  mdsOnDir : MlDirichSlMorOnDir {ar} dom cod mdsOnPos
+  mdsmOnPos : MlDirichSlMorOnPos {ar} dom cod
+  mdsmOnDir : MlDirichSlMorOnDir {ar} dom cod mdsmOnPos
 
 public export
 MlPolySlMorDomData : MLArena -> Type
