@@ -1136,9 +1136,9 @@ MlPolySlMorDomOnDir {ar=(bpos ** bdir)} dom (MPSobj conpos cdir condir)
 public export
 record MlPolySlMorData {ar : MLArena} (cod : MlPolySlObj ar) where
   constructor MPSMD
-  mdsDomData : MlPolySlMorDomData ar
-  mdsOnPos : MlPolySlMorOnPos {ar} mdsDomData cod
-  mdsOnDir : MlPolySlMorOnDir {ar} mdsDomData cod mdsOnPos
+  mpsmDomData : MlPolySlMorDomData ar
+  mpsmOnPos : MlPolySlMorOnPos {ar} mpsmDomData cod
+  mpsmOnDir : MlPolySlMorOnDir {ar} mpsmDomData cod mpsmOnPos
 
 public export
 MlPolySlMorDom : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
