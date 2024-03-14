@@ -1277,6 +1277,20 @@ mlPolySlMorToCP {ar} {dom=dom@(MPSobj _ _ _)} {cod=cod@(MPSobj _ _ _)} m =
   PFSliceMorphToC {p=ar} {cod=(mlPolySlObjToC ar cod)} $
     mlPolySlMorToP {ar} {dom} {cod} m
 
+public export
+0 mlPolySlMorFromCP : {ar : MLArena} ->
+  {dom : CPFSliceObj ar} -> {cod : MlPolySlObj ar} ->
+  (m : CPFSliceMorph ar dom (mlPolySlObjToC ar cod)) ->
+  MlPolySlMor {ar}
+    (MlPolySlFromSlOfSl {ar} cod $ mlPolySlOfSlFromP {ar} {cod} $
+      PFSliceMorphFromC {p=ar} {dom} {cod=(mlPolySlObjToC ar cod)} m)
+    cod
+mlPolySlMorFromCP {ar=ar@(_ ** _)}
+  {dom=dom@((_ ** _) ** (_ ** _))} {cod=cod@(MPSobj _ _ _)}
+  m@(Element0 (_ ** _) (Evidence0 _ _)) =
+    mlPolySlMorFromP {ar} {cod} $
+      PFSliceMorphFromC {p=ar} {dom} {cod=(mlPolySlObjToC ar cod)} m
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Slice categories of polynomial functors (in dependent-type style) ----
