@@ -1224,6 +1224,18 @@ mlDirSlMorFromC {ar=(ppos ** pdir)}
           trans (odeq j md) $ rewrite sym (opeq j) in deq)
 
 public export
+mlPolySlMorToObj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor {ar} dom cod -> MlPolySlObj ar
+mlPolySlMorToObj {ar} {dom} {cod} =
+  MlPolySlFromSlOfSl {ar} cod . mlPolySlMorToSlOfSl {ar}
+
+public export
+mlPolySlMorTot : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor {ar} dom cod -> PolyFunc
+mlPolySlMorTot {ar} {dom} {cod} =
+  mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)} . mlPolySlMorToSlOfSl {ar}
+
+public export
 mlPolySlMorToCBaseOnPos : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor dom cod ->
   pfPos (fst (mlPolySlObjToC ar dom)) -> pfPos (fst (mlPolySlObjToC ar cod))
