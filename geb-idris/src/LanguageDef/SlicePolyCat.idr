@@ -1140,6 +1140,15 @@ MlPolySlFromSlOfSl {ar} sl slsl =
     (MlPolySlOnDirFromSlOfSl {ar} sl slsl)
 
 public export
+mlPolySlOfSlFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
+  PFSliceMorph {p=ar} (mlPolySlObjToC ar cod) -> MlPolySlOfSl {ar} cod
+mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
+  MPSobj
+    (mlPolySlOnPosFromC {ar=(mlPolySlObjTot {ar} cod)} m)
+    (mlPolySlDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
+    (mlPolySlOnDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
+
+public export
 MlPolySlMorOnPos : {ar : MLArena} ->
   MlPolySlObj ar -> MlPolySlObj ar -> Type
 MlPolySlMorOnPos {ar} dom cod =
@@ -1402,15 +1411,6 @@ MlPolySlMor'ToSlOfSl {ar} {dom} {cod} m =
   mlPolySlObjFromC
     (mlPolySlObjTot {ar} cod)
     (mlPolySlObjTot {ar} dom ** mlPolySlMor'NT m)
-
-public export
-mlPolySlOfSlFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
-  PFSliceMorph {p=ar} (mlPolySlObjToC ar cod) -> MlPolySlOfSl {ar} cod
-mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
-  MPSobj
-    (mlPolySlOnPosFromC {ar=(mlPolySlObjTot {ar} cod)} m)
-    (mlPolySlDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
-    (mlPolySlOnDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
