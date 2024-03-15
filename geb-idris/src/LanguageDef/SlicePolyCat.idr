@@ -1146,16 +1146,16 @@ MlPolySlMorOnPos {ar} dom cod =
   SliceMorphism {a=(pfPos ar)} (mpsOnPos dom) (mpsOnPos cod)
 
 public export
-MlPolySlMorDir : {ar : MLArena} -> (dom, cod : MlPolySlObj ar) ->
+MlPolySlMorOnDir : {ar : MLArena} -> (dom, cod : MlPolySlObj ar) ->
   MlPolySlMorOnPos {ar} dom cod -> Type
-MlPolySlMorDir {ar} dom cod monpos =
+MlPolySlMorOnDir {ar} dom cod monpos =
   (i : pfPos ar) -> (j : mpsOnPos dom i) ->
   mpsDir cod i (monpos i j) -> mpsDir dom i j
 
 public export
 0 MlPolySlMorOnDirCommutes : {ar : MLArena} -> (dom, cod : MlPolySlObj ar) ->
   (onpos : MlPolySlMorOnPos {ar} dom cod) ->
-  MlPolySlMorDir {ar} dom cod onpos -> Type
+  MlPolySlMorOnDir {ar} dom cod onpos -> Type
 MlPolySlMorOnDirCommutes {ar} dom cod monpos mdir =
   (i : pfPos ar) -> (j : mpsOnPos dom i) -> (bd : pfDir {p=ar} i) ->
   mdir i j (mpsOnDir cod i (monpos i j) bd) = mpsOnDir dom i j bd
@@ -1164,8 +1164,8 @@ public export
 record MlPolySlMor' {ar : MLArena} (dom, cod : MlPolySlObj ar) where
   constructor MPSM'
   mpsmOnPos : MlPolySlMorOnPos {ar} dom cod
-  mpsmDir : MlPolySlMorDir {ar} dom cod mpsmOnPos
-  mpsmOnDirCommutes : MlPolySlMorOnDirCommutes {ar} dom cod mpsmOnPos mpsmDir
+  mpsmOnDir : MlPolySlMorOnDir {ar} dom cod mpsmOnPos
+  mpsmOnDirCommutes : MlPolySlMorOnDirCommutes {ar} dom cod mpsmOnPos mpsmOnDir
 
 export
 MlPolySlMor'FromSlOfSl : {ar : MLArena} ->
@@ -1371,10 +1371,10 @@ mlPolySlMorComp : {ar : MLArena} -> {p, q, r : MlPolySlObj ar} ->
 mlPolySlMorComp {ar} {p} {q} {r} m' m =
   MPSM'
     (sliceComp (mpsmOnPos m') (mpsmOnPos m))
-    (\i, j, rd => mpsmDir m i j $ mpsmDir m' i (mpsmOnPos m i j) rd)
+    (\i, j, rd => mpsmOnDir m i j $ mpsmOnDir m' i (mpsmOnPos m i j) rd)
     (\i, j, bd =>
       trans
-        (cong (mpsmDir m i j) $ mpsmOnDirCommutes m' i (mpsmOnPos m i j) bd)
+        (cong (mpsmOnDir m i j) $ mpsmOnDirCommutes m' i (mpsmOnPos m i j) bd)
         (mpsmOnDirCommutes m i j bd))
 
 ---------------------------------------------------------------------------
