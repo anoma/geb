@@ -1337,6 +1337,25 @@ mlPolySlMor'NT {ar} {dom} {cod} m =
   (mlPolySlMor'OnPos {ar} {dom} {cod} m ** mlPolySlMor'OnDir {ar} {dom} {cod} m)
 
 public export
+0 mlPolySlMorToC : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor' {ar} dom cod ->
+  CPFSliceMorph ar (mlPolySlObjToC ar dom) (mlPolySlObjToC ar cod)
+mlPolySlMorToC {ar=ar@(bpos ** bdir)}
+  {dom=dom@(MPSobj dpos ddir dondir)} {cod=cod@(MPSobj cpos cdir condir)}
+  m@(MPSM' monpos mondir mondirc) =
+    Element0
+      (mlPolySlMor'NT {ar} {dom} {cod} m)
+      (Evidence0
+        (\_ => Refl)
+        (\ij, bd => mondirc (fst ij) (snd ij) bd))
+
+public export
+0 mlPolySlMorFromC : {ar : MLArena} -> {dom, cod : CPFSliceObj ar} ->
+  CPFSliceMorph ar dom cod ->
+  MlPolySlMor' {ar} (mlPolySlObjFromC ar dom) (mlPolySlObjFromC ar cod)
+mlPolySlMorFromC = ?mlPolySlMorFromC_hole
+
+public export
 mlPolySlMorProj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   (m : MlPolySlMor {ar} dom cod) ->
   PolyNatTrans (mlPolySlMorTot {ar} {dom} {cod} m) (mlPolySlObjTot {ar} cod)
