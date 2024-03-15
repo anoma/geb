@@ -1356,6 +1356,27 @@ mlDirSlMorComp {ar} {p} {q} {r} m' m =
     (\i, j, bd, md =>
       mdsmOnDir m' i (mdsmOnPos m i j) bd $ mdsmOnDir m i j bd md)
 
+export
+mlPolySlMorId : {ar : MLArena} -> (p : MlPolySlObj ar) ->
+  MlPolySlMor' {ar} p p
+mlPolySlMorId {ar} p =
+  MPSM'
+    (sliceId {a=(pfPos ar)} $ mpsOnPos p)
+    (\i => sliceId {a=(mpsOnPos p i)} (mpsDir p i))
+    (\i, j, bd => Refl)
+
+export
+mlPolySlMorComp : {ar : MLArena} -> {p, q, r : MlPolySlObj ar} ->
+  MlPolySlMor' {ar} q r -> MlPolySlMor' {ar} p q -> MlPolySlMor' {ar} p r
+mlPolySlMorComp {ar} {p} {q} {r} m' m =
+  MPSM'
+    (sliceComp (mpsmOnPos m') (mpsmOnPos m))
+    (\i, j, rd => mpsmDir m i j $ mpsmDir m' i (mpsmOnPos m i j) rd)
+    (\i, j, bd =>
+      trans
+        (cong (mpsmDir m i j) $ mpsmOnDirCommutes m' i (mpsmOnPos m i j) bd)
+        (mpsmOnDirCommutes m i j bd))
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Slice categories of polynomial functors (in dependent-type style) ----
