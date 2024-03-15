@@ -1119,6 +1119,45 @@ mlPolySlOfSlFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
 mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
   mlPolySlObjFromC (mlPolySlObjTot {ar} cod) m
 
+---------------------------------------------------------------------
+---- Slice objects in terms of parameterized polynomial functors ----
+---------------------------------------------------------------------
+
+-- One way of viewing a polynomial-functor slice object is as a family of
+-- polynomial functors parameterized over the positions of the functor
+-- being sliced over, together with a section of each functor in the family
+-- for each direction of the corresponding position of the functor being
+-- sliced over.
+
+public export
+PosParamPolyFunc : PolyFunc -> Type
+PosParamPolyFunc = ParamPolyFunc . pfPos
+
+public export
+ParamPFSection : (p : PolyFunc) -> PosParamPolyFunc p -> Type
+ParamPFSection p spf = SliceMorphism {a=(pfPos p)} (pfDir {p}) (PFSection . spf)
+
+export
+mlPolySlObjToPPF : {ar : MLArena} -> MlPolySlObj ar -> PosParamPolyFunc ar
+mlPolySlObjToPPF {ar} sl i = (mpsOnPos sl i ** mpsDir sl i)
+
+export
+mlPolySlObjToPPFsect : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
+  ParamPFSection ar (mlPolySlObjToPPF {ar} sl)
+mlPolySlObjToPPFsect {ar} sl i bd j = mpsOnDir sl i j bd
+
+export
+mlPolySlObjFromPPFsect : {ar : MLArena} ->
+  (ppf : PosParamPolyFunc ar) -> ParamPFSection ar ppf -> MlPolySlObj ar
+mlPolySlObjFromPPFsect {ar=(bpos ** bdir)} ppf sect =
+  MPSobj (fst . ppf) (\i => snd $ ppf i) (\i, j, bd => sect i bd j)
+
+PFSliceObjPF : PolyFunc -> PolyFunc
+PFSliceObjPF p = (PosParamPolyFunc p ** ParamPFSection p)
+
+PFSliceObj : PolyFunc -> Type
+PFSliceObj p = pfPDir $ PFSliceObjPF p
+
 -----------------------------------
 ---- Slice morphism definition ----
 -----------------------------------
@@ -1431,17 +1470,6 @@ mlPolySlMorTot {ar} {dom} {cod} =
 -- There is also an intuitive interpretation of this split:  the pointed
 -- (constrained) directions are _parameters_ to the dependent functors, while
 -- the unconstrained directions are _arguments_.
-PosParamPolyFunc : PolyFunc -> Type
-PosParamPolyFunc = ParamPolyFunc . pfPos
-
-ParamPFSection : (p : PolyFunc) -> PosParamPolyFunc p -> Type
-ParamPFSection p spf = SliceMorphism {a=(pfPos p)} (pfDir {p}) (PFSection . spf)
-
-PFSliceObjPF : PolyFunc -> PolyFunc
-PFSliceObjPF p = (PosParamPolyFunc p ** ParamPFSection p)
-
-PFSliceObj : PolyFunc -> Type
-PFSliceObj p = pfPDir $ PFSliceObjPF p
 
 CPFSliceObjToPFS : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj p
 CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
