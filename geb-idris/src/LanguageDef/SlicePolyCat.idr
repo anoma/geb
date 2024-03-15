@@ -1576,14 +1576,6 @@ PFSliceOverConst' {x} (MPSobj onpos dir ondir) ex =
 PFSliceOver1' : MlPolySlObj PFTerminalArena -> PolyFunc
 PFSliceOver1' psl = PFSliceOverConst' {x=Unit} psl ()
 
-PFAppI : {p : PolyFunc} ->
-  {- these two parameters form an object of the category of elements of `p`
-   - interpreted as a Dirichlet functor -}
-  (ty : Type) -> (el : InterpDirichFunc p ty) ->
-  PFSliceObj p -> PFSliceObj (PFHomArena ty)
-PFAppI {p=p@(_ ** _)} ty (i ** d) =
-  PFBaseChange {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
-
 PFAppI' : {p : PolyFunc} ->
   {- these two parameters form an object of the category of elements of `p`
    - interpreted as a Dirichlet functor -}
