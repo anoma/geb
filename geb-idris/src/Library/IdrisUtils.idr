@@ -140,6 +140,11 @@ mkDPairInjectiveSndHet :
 mkDPairInjectiveSndHet Refl = Refl
 
 export
+dpeq1 : {0 a : Type} -> {0 b : a -> Type} -> {0 dp, dp' : DPair a b} ->
+  dp = dp' -> fst dp = fst dp'
+dpeq1 Refl = Refl
+
+export
 dpeq2 : {0 a : Type} -> {0 b : a -> Type} -> {0 dp, dp' : DPair a b} ->
   dp = dp' -> snd dp ~=~ snd dp'
 dpeq2 Refl = Refl
