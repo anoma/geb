@@ -1294,18 +1294,6 @@ mlDirichSlMorFromCD {ar=(ppos ** pdir)}
           trans (odeq j md) $ rewrite sym (opeq j) in deq)
 
 public export
-data MlPolySlMor :
-    {ar : MLArena} -> MlPolySlObj ar -> MlPolySlObj ar -> Type where
-  MPSM : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
-    (slsl : MlPolySlOfSl {ar} cod) ->
-    MlPolySlMor {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
-
-public export
-mlPolySlMorToSlOfSl : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  MlPolySlMor {ar} dom cod -> MlPolySlOfSl {ar} cod
-mlPolySlMorToSlOfSl {ar} {cod} (MPSM {ar} {cod} slsl) = slsl
-
-public export
 mlPolySlMor'OnPos : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor' {ar} dom cod ->
   mlPolySlObjTotPos {ar} dom -> mlPolySlObjTotPos {ar} cod
