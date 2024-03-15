@@ -1172,13 +1172,17 @@ export
 MlPolySlMor'FromSlOfSl : {ar : MLArena} ->
   (cod : MlPolySlObj ar) -> (slsl : MlPolySlOfSl {ar} cod) ->
   MlPolySlMor' {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
-MlPolySlMor'FromSlOfSl = ?MlPolySlMor'FromSlOfSl_hole
+MlPolySlMor'FromSlOfSl {ar=(_ ** _)} (MPSobj _ _ _) slsl =
+  MPSM'
+    (\i, jk => fst jk)
+    (\i, jk, cd => (cd, mpsOnDir slsl (i ** fst jk) (snd jk) cd))
+    (\i, jk, cd => Refl)
 
 export
 MlPolySlMor'ToSlOfSl : {ar : MLArena} ->
   {dom, cod : MlPolySlObj ar} -> MlPolySlMor' {ar} dom cod ->
   MlPolySlOfSl {ar} cod
-MlPolySlMor'ToSlOfSl = ?MlPolySlMor'ToSlOfSl_hole
+MlPolySlMor'ToSlOfSl {ar} {dom} {cod} m = ?MlPolySlMor'ToSlOfSl_hole
 
 public export
 data MlPolySlMor :
