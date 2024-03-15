@@ -1384,14 +1384,6 @@ mlPolySlMor'FromP {ar} {cod} m =
   mlPolySlMor'FromCP {ar} {dom=(PFSliceMorphDom {p=ar} m)} {cod}
   $ PFSliceMorphToC {p=ar} {cod} m
 
-public export
-mlPolySlMorProj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  (m : MlPolySlMor {ar} dom cod) ->
-  PolyNatTrans (mlPolySlMorTot {ar} {dom} {cod} m) (mlPolySlObjTot {ar} cod)
-mlPolySlMorProj {ar} {dom} {cod} m =
-  mlPolySlObjProj {ar=(mlPolySlObjTot {ar} cod)} $
-    mlPolySlMorToSlOfSl {dom} {ar} m
-
 ------------------------------------------------------------------
 ---- Translation between slice morphisms and slices-of-slices ----
 ------------------------------------------------------------------
