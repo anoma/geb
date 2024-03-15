@@ -1353,7 +1353,15 @@ public export
 0 mlPolySlMorFromC : {ar : MLArena} -> {dom, cod : CPFSliceObj ar} ->
   CPFSliceMorph ar dom cod ->
   MlPolySlMor' {ar} (mlPolySlObjFromC ar dom) (mlPolySlObjFromC ar cod)
-mlPolySlMorFromC = ?mlPolySlMorFromC_hole
+mlPolySlMorFromC {ar=(bpos ** bdir)}
+  {dom=dom@((dpos ** ddir) ** (donpos ** dondir))}
+  {cod=cod@((cpos ** cdir) ** (conpos ** condir))}
+  m@(Element0 (monpos ** mondir) (Evidence0 opeq odeq)) =
+    MPSM'
+      (\i, (Element0 j poseq) =>
+        Element0 (monpos j) $ trans (sym (opeq j)) poseq)
+      (\i, (Element0 j poseq), cd => mondir j cd)
+      (\i, (Element0 j poseq), bd => odeq j $ rewrite poseq in bd)
 
 public export
 mlPolySlMorProj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
