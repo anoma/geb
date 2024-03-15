@@ -1306,18 +1306,6 @@ mlPolySlMorToSlOfSl : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
 mlPolySlMorToSlOfSl {ar} {cod} (MPSM {ar} {cod} slsl) = slsl
 
 public export
-mlPolySlMorToObj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  MlPolySlMor {ar} dom cod -> MlPolySlObj ar
-mlPolySlMorToObj {ar} {dom} {cod} =
-  MlPolySlFromSlOfSl {ar} cod . mlPolySlMorToSlOfSl {ar}
-
-public export
-mlPolySlMorTot : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  MlPolySlMor {ar} dom cod -> PolyFunc
-mlPolySlMorTot {ar} {dom} {cod} =
-  mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)} . mlPolySlMorToSlOfSl {dom} {ar}
-
-public export
 mlPolySlMor'OnPos : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor' {ar} dom cod ->
   mlPolySlObjTotPos {ar} dom -> mlPolySlObjTotPos {ar} cod
@@ -1406,6 +1394,19 @@ MlPolySlMor'ToSlOfSl {ar} {dom} {cod} m =
   mlPolySlObjFromC
     (mlPolySlObjTot {ar} cod)
     (mlPolySlObjTot {ar} dom ** mlPolySlMor'NT m)
+
+public export
+mlPolySlMorToObj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor' {ar} dom cod -> MlPolySlObj ar
+mlPolySlMorToObj {ar} {dom} {cod} =
+  MlPolySlFromSlOfSl {ar} cod . MlPolySlMor'ToSlOfSl {ar}
+
+public export
+mlPolySlMorTot : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor' {ar} dom cod -> PolyFunc
+mlPolySlMorTot {ar} {dom} {cod} =
+  mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)}
+  . MlPolySlMor'ToSlOfSl {dom} {ar}
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
