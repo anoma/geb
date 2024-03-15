@@ -1162,6 +1162,13 @@ MlPolySlMorOnDirCommutes {ar=(bpos ** bdir)}
     mdir i j (condir i (monpos i j) bd) = dondir i j bd
 
 public export
+record MlPolySlMor' {ar : MLArena} (dom, cod : MlPolySlObj ar) where
+  constructor MPSM'
+  mpsmOnPos : MlPolySlMorOnPos {ar} dom cod
+  mpsmDir : MlPolySlMorDir {ar} dom cod mpsmOnPos
+  mpsmOnDirCommutes : MlPolySlMorOnDirCommutes {ar} dom cod mpsmOnPos mpsmDir
+
+public export
 data MlPolySlMor :
     {ar : MLArena} -> MlPolySlObj ar -> MlPolySlObj ar -> Type where
   MPSM : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
