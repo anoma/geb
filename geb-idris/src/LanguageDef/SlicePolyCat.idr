@@ -1364,6 +1364,25 @@ mlPolySlMorFromC {ar=(bpos ** bdir)}
       (\i, (Element0 j poseq), bd => odeq j $ rewrite poseq in bd)
 
 public export
+0 mlPolySlMor'ToCP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor' {ar} dom cod ->
+  PFSliceMorph {p=ar} (mlPolySlObjToC ar cod)
+mlPolySlMor'ToCP {ar} {dom} {cod} =
+  PFSliceMorphFromC {p=ar}
+    {dom=(mlPolySlObjToC ar dom)} {cod=(mlPolySlObjToC ar cod)}
+  . mlPolySlMorToC {ar} {dom} {cod}
+
+public export
+0 mlPolySlMor'FromCP : {ar : MLArena} -> {cod : CPFSliceObj ar} ->
+  (m : PFSliceMorph {p=ar} cod) ->
+  MlPolySlMor' {ar}
+    (mlPolySlObjFromC ar $ PFSliceMorphDom {p=ar} {cod} m)
+    (mlPolySlObjFromC ar cod)
+mlPolySlMor'FromCP {ar} {cod} m =
+  mlPolySlMorFromC {ar} {dom=(PFSliceMorphDom {p=ar} m)} {cod}
+  $ PFSliceMorphToC {p=ar} {cod} m
+
+public export
 mlPolySlMorProj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   (m : MlPolySlMor {ar} dom cod) ->
   PolyNatTrans (mlPolySlMorTot {ar} {dom} {cod} m) (mlPolySlObjTot {ar} cod)
