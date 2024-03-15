@@ -1434,11 +1434,11 @@ mlPolySlMorTot {ar} {dom} {cod} =
 PosParamPolyFunc : PolyFunc -> Type
 PosParamPolyFunc = ParamPolyFunc . pfPos
 
-PFSliceObjDir : (p : PolyFunc) -> PosParamPolyFunc p -> Type
-PFSliceObjDir p spf = SliceMorphism {a=(pfPos p)} (pfDir {p}) (PFSection . spf)
+ParamPFSection : (p : PolyFunc) -> PosParamPolyFunc p -> Type
+ParamPFSection p spf = SliceMorphism {a=(pfPos p)} (pfDir {p}) (PFSection . spf)
 
 PFSliceObjPF : PolyFunc -> PolyFunc
-PFSliceObjPF p = (PosParamPolyFunc p ** PFSliceObjDir p)
+PFSliceObjPF p = (PosParamPolyFunc p ** ParamPFSection p)
 
 PFSliceObj : PolyFunc -> Type
 PFSliceObj p = pfPDir $ PFSliceObjPF p
@@ -1579,7 +1579,7 @@ PNTFam {pos} {dir} dom cod = (i : pos) -> PolyNatTrans (dom i) (fst cod i)
 PFSliceMorphDomDir : {pos : Type} -> {dir : pos -> Type} ->
   (dom : PosParamPolyFunc (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
   PNTFam {pos} {dir} dom cod ->
-  PFSliceObjDir (pos ** dir) dom
+  ParamPFSection (pos ** dir) dom
 PFSliceMorphDomDir {pos} {dir} dom (codonpos ** codondir) ntfam i d j =
    let (onpos ** ondir) = ntfam i in ondir j $ codondir i d $ onpos j
 
