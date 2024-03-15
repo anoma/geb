@@ -1381,12 +1381,6 @@ mlPolySlMorProj {ar} {dom} {cod} m =
     mlPolySlMorToSlOfSl {dom} {ar} m
 
 public export
-mlPolySlMorToP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  MlPolySlMor dom cod -> PFSliceMorph {p=ar} (mlPolySlObjToC ar cod)
-mlPolySlMorToP {ar} {dom} {cod=cod@(MPSobj cpos cdir condir)} m =
-  (mlPolySlMorTot {ar} {dom} {cod} m ** mlPolySlMorProj {ar} {dom} {cod} m)
-
-public export
 mlPolySlOfSlFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
   PFSliceMorph {p=ar} (mlPolySlObjToC ar cod) -> MlPolySlOfSl {ar} cod
 mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
@@ -1394,14 +1388,6 @@ mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
     (mlPolySlOnPosFromC {ar=(mlPolySlObjTot {ar} cod)} m)
     (mlPolySlDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
     (mlPolySlOnDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
-
-public export
-mlPolySlMorFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
-  (m : PFSliceMorph {p=ar} (mlPolySlObjToC ar cod)) ->
-  MlPolySlMor {ar}
-    (MlPolySlFromSlOfSl {ar} cod $ mlPolySlOfSlFromP {ar} {cod} m)
-    cod
-mlPolySlMorFromP {ar} {cod} m = MPSM {ar} {cod} $ mlPolySlOfSlFromP {ar} {cod} m
 
 ------------------------------------------------------------------
 ---- Translation between slice morphisms and slices-of-slices ----
