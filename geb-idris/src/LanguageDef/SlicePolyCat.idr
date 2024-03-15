@@ -1403,31 +1403,6 @@ mlPolySlMorFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
     cod
 mlPolySlMorFromP {ar} {cod} m = MPSM {ar} {cod} $ mlPolySlOfSlFromP {ar} {cod} m
 
-public export
-mlPolySlMorToCP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  (m : MlPolySlMor dom cod) ->
-  CPFSliceMorph ar
-    (PFSliceMorphDom {p=ar} {cod=(mlPolySlObjToC ar cod)} $
-      mlPolySlMorToP {ar} {dom} {cod} m)
-    (mlPolySlObjToC ar cod)
-mlPolySlMorToCP {ar} {dom=dom@(MPSobj _ _ _)} {cod=cod@(MPSobj _ _ _)} m =
-  PFSliceMorphToC {p=ar} {cod=(mlPolySlObjToC ar cod)} $
-    mlPolySlMorToP {ar} {dom} {cod} m
-
-public export
-0 mlPolySlMorFromCP : {ar : MLArena} ->
-  {dom : CPFSliceObj ar} -> {cod : MlPolySlObj ar} ->
-  (m : CPFSliceMorph ar dom (mlPolySlObjToC ar cod)) ->
-  MlPolySlMor {ar}
-    (MlPolySlFromSlOfSl {ar} cod $ mlPolySlOfSlFromP {ar} {cod} $
-      PFSliceMorphFromC {p=ar} {dom} {cod=(mlPolySlObjToC ar cod)} m)
-    cod
-mlPolySlMorFromCP {ar=ar@(_ ** _)}
-  {dom=dom@((_ ** _) ** (_ ** _))} {cod=cod@(MPSobj _ _ _)}
-  m@(Element0 (_ ** _) (Evidence0 _ _)) =
-    mlPolySlMorFromP {ar} {cod} $
-      PFSliceMorphFromC {p=ar} {dom} {cod=(mlPolySlObjToC ar cod)} m
-
 ------------------------------------------------------------------
 ---- Translation between slice morphisms and slices-of-slices ----
 ------------------------------------------------------------------
