@@ -1167,16 +1167,6 @@ record MlPolySlMor' {ar : MLArena} (dom, cod : MlPolySlObj ar) where
   mpsmOnDir : MlPolySlMorOnDir {ar} dom cod mpsmOnPos
   mpsmOnDirCommutes : MlPolySlMorOnDirCommutes {ar} dom cod mpsmOnPos mpsmOnDir
 
-export
-MlPolySlMor'FromSlOfSl : {ar : MLArena} ->
-  (cod : MlPolySlObj ar) -> (slsl : MlPolySlOfSl {ar} cod) ->
-  MlPolySlMor' {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
-MlPolySlMor'FromSlOfSl {ar=(_ ** _)} (MPSobj _ _ _) slsl =
-  MPSM'
-    (\i, jk => fst jk)
-    (\i, jk, cd => (cd, mpsOnDir slsl (i ** fst jk) (snd jk) cd))
-    (\i, jk, cd => Refl)
-
 ------------------------------------------------------------------------
 ---- Categorial operations in polynomial/Dirichlet slice categories ----
 ------------------------------------------------------------------------
@@ -1437,6 +1427,16 @@ mlPolySlMorFromCP {ar=ar@(_ ** _)}
   m@(Element0 (_ ** _) (Evidence0 _ _)) =
     mlPolySlMorFromP {ar} {cod} $
       PFSliceMorphFromC {p=ar} {dom} {cod=(mlPolySlObjToC ar cod)} m
+
+export
+MlPolySlMor'FromSlOfSl : {ar : MLArena} ->
+  (cod : MlPolySlObj ar) -> (slsl : MlPolySlOfSl {ar} cod) ->
+  MlPolySlMor' {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
+MlPolySlMor'FromSlOfSl {ar=(_ ** _)} (MPSobj _ _ _) slsl =
+  MPSM'
+    (\i, jk => fst jk)
+    (\i, jk, cd => (cd, mpsOnDir slsl (i ** fst jk) (snd jk) cd))
+    (\i, jk, cd => Refl)
 
 export
 MlPolySlMor'ToSlOfSl : {ar : MLArena} ->
