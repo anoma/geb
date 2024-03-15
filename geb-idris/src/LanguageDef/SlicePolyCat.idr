@@ -1123,8 +1123,22 @@ mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
 ---- Slice objects in terms of parameterized polynomial functors ----
 ---------------------------------------------------------------------
 
--- One way of viewing a polynomial-functor slice object is as a family of
--- polynomial functors parameterized over the positions of the functor
+-- The dependent-type view of slices in the category of polynomial functors,
+-- which turns the arrows backwards (an object of a slice category "depends"
+-- on the functor being sliced over, rather than being a functor with a
+-- natural transformation to the functor being sliced over), induces a mapping
+-- of positions of the functor being sliced over to polynomial functors.
+-- Furthermore, for each such position, it induces a mapping of the directions
+-- of the functor being sliced over at that position to directions of the
+-- dependent polynomial functors for _each_ position of those functors.
+--
+-- Thus, the dependent polynomial functors may be viewed as pointed -- each
+-- of them, at each of its own positions, must have directions available to
+-- which to map the directions of the functor being sliced over (unless that
+-- functor has no directions at the corresponding position).
+
+-- To summarize, one way of viewing a polynomial-functor slice object is as a
+-- family of polynomial functors parameterized over the positions of the functor
 -- being sliced over, together with a section of each functor in the family
 -- for each direction of the corresponding position of the functor being
 -- sliced over.
@@ -1443,36 +1457,6 @@ mlPolySlMorTot {ar} {dom} {cod} =
 ---- Slice categories of polynomial functors (in dependent-type style) ----
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
-
--- The dependent-type view of slices in the category of polynomial functors,
--- which turns the arrows backwards (an object of a slice category "depends"
--- on the functor being sliced over, rather than being a functor with a
--- natural transformation to the functor being sliced over), induces a mapping
--- of positions of the functor being sliced over to polynomial functors.
--- Furthermore, for each such position, it induces a mapping of the directions
--- of the functor being sliced over at that position to directions of the
--- dependent polynomial functors for _each_ position of those functors.
---
--- Thus, the dependent polynomial functors may be viewed as pointed -- each
--- of them, at each of its own positions, must have directions available to
--- which to map the directions of the functor being sliced over (unless that
--- functor has no directions at the corresponding position).  In the
--- dependent-type view, therefore, we can separate the directions of the
--- dependent functors into two:  those which are mapped to by directions of
--- the functor being sliced over, whose targets within slice morphisms
--- (which are natural transformations between dependent polynomial functors)
--- are constrained by the commutativity requirement on directions of the
--- functor being sliced over to specific targets in the codomain of the
--- natural transformation underlying the slice morphism, and those whose
--- mappings under that natural transformation are unconstrained.  A practical
--- value of this split is that it avoids having to include an explicit
--- equality in the definition of the natural transformation underlying a
--- slice morphism -- the parts of it constrained by the equality are simply
--- not defined; we _define_ only the unconstrained part of the transformation.
---
--- There is also an intuitive interpretation of this split:  the pointed
--- (constrained) directions are _parameters_ to the dependent functors, while
--- the unconstrained directions are _arguments_.
 
 CPFSliceObjToPFS : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj p
 CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
