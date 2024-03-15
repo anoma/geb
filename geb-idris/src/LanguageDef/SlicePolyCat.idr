@@ -1461,12 +1461,31 @@ mlPolySlMorTot {ar} {dom} {cod} =
 -- This interprets a slice object in the category of polynomial functors
 -- as a slice object of the category of elements of the base functor.
 export
-InterpMlPolySlObj : {p : PolyFunc} ->
-  MlPolySlObj p -> (ty : Type) -> SliceObj $ InterpPolyFunc p ty
-InterpMlPolySlObj {p} sl ty el with (mlPolySlObjToC p sl)
-  InterpMlPolySlObj {p} sl ty el | (q ** alpha) =
-    PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc p ty)}
+InterpMlPolySlObj : {ar : PolyFunc} ->
+  MlPolySlObj ar -> (ty : Type) -> SliceObj $ InterpPolyFunc ar ty
+InterpMlPolySlObj {ar} sl ty el with (mlPolySlObjToC ar sl)
+  InterpMlPolySlObj {ar} sl ty el | (q ** alpha) =
+    PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc ar ty)}
       (InterpPolyNT alpha ty) el
+
+-- This interprets a slice morphism in the category of polynomial functors
+-- as a family of functors dependent on the category of elements of the
+-- base functor.
+export
+InterpMlPolySlMor : FunExt -> {ar : PolyFunc} ->
+  {dom, cod : MlPolySlObj ar} -> MlPolySlMor dom cod ->
+  (ty : Type) -> (el : InterpPolyFunc ar ty) ->
+  InterpMlPolySlObj {ar} dom ty el ->
+  InterpMlPolySlObj {ar} cod ty el
+InterpMlPolySlMor fext {ar=(bpos ** bdir)}
+  {dom=(MPSobj dpos ddir dondir)} {cod=(MPSobj cpos cdir condir)}
+  (MPSM monpos mondir mondircomm) ty el (Element0 (i ** dd) eleq) =
+    Element0
+      ((fst i ** monpos (fst i) (snd i)) **
+       \cd => dd $ mondir (fst i) (snd i) cd)
+      $ trans
+        (dpEq12 Refl $ funExt $ \bd => cong dd $ mondircomm (fst i) (snd i) bd)
+        eleq
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
