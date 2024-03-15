@@ -1140,6 +1140,28 @@ MlPolySlFromSlOfSl {ar} sl slsl =
     (MlPolySlOnDirFromSlOfSl {ar} sl slsl)
 
 public export
+MlPolySlMorOnPos : {ar : MLArena} ->
+  MlPolySlObj ar -> MlPolySlObj ar -> Type
+MlPolySlMorOnPos {ar} dom cod =
+  SliceMorphism {a=(pfPos ar)} (mpsOnPos dom) (mpsOnPos cod)
+
+public export
+MlPolySlMorDir : {ar : MLArena} -> (dom, cod : MlPolySlObj ar) ->
+  MlPolySlMorOnPos {ar} dom cod -> Type
+MlPolySlMorDir {ar=(bpos ** bdir)}
+  (MPSobj dpos ddir dondir) (MPSobj cpos cdir condir) monpos =
+    (i : bpos) -> (j : dpos i) -> cdir i (monpos i j) -> ddir i j
+
+public export
+0 MlPolySlMorOnDirCommutes : {ar : MLArena} -> (dom, cod : MlPolySlObj ar) ->
+  (onpos : MlPolySlMorOnPos {ar} dom cod) ->
+  MlPolySlMorDir {ar} dom cod onpos -> Type
+MlPolySlMorOnDirCommutes {ar=(bpos ** bdir)}
+  (MPSobj dpos ddir dondir) (MPSobj cpos cdir condir) monpos mdir =
+    (i : bpos) -> (j : dpos i) -> (bd : bdir i) ->
+    mdir i j (condir i (monpos i j) bd) = dondir i j bd
+
+public export
 data MlPolySlMor :
     {ar : MLArena} -> MlPolySlObj ar -> MlPolySlObj ar -> Type where
   MPSM : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
