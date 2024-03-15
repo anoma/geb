@@ -1291,6 +1291,27 @@ mlPolySlMorFromCP {ar=ar@(_ ** _)}
     mlPolySlMorFromP {ar} {cod} $
       PFSliceMorphFromC {p=ar} {dom} {cod=(mlPolySlObjToC ar cod)} m
 
+------------------------------------------------------------------------
+---- Categorial operations in polynomial/Dirichlet slice categories ----
+------------------------------------------------------------------------
+
+export
+mlDirSlMorId : {ar : MLArena} -> (p : MlDirichSlObj ar) ->
+  MlDirichSlMor {ar} p p
+mlDirSlMorId {ar} p =
+  MDSM
+    (sliceId $ mdsOnPos p)
+    (\i, j => sliceId $ mdsDir p i j)
+
+export
+mlDirSlMorComp : {ar : MLArena} -> {p, q, r : MlDirichSlObj ar} ->
+  MlDirichSlMor {ar} q r -> MlDirichSlMor {ar} p q -> MlDirichSlMor {ar} p r
+mlDirSlMorComp {ar} {p} {q} {r} m' m =
+  MDSM
+    (sliceComp (mdsmOnPos m') (mdsmOnPos m))
+    (\i, j, bd, md =>
+      mdsmOnDir m' i (mdsmOnPos m i j) bd $ mdsmOnDir m i j bd md)
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Slice categories of polynomial functors (in dependent-type style) ----
