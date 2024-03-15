@@ -1534,20 +1534,6 @@ CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
   (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
    (fst ** \(i ** j), d => m i d j))
 
-PFBaseChange : {p, q : PolyFunc} ->
-  DirichNatTrans q p -> PFSliceObj p -> PFSliceObj q
-PFBaseChange {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) (psl ** m) =
-  (psl . onpos ** \qi, qd, pslp => m (onpos qi) (ondir qi qd) pslp)
-
-PFBaseChange' : {p, q : PolyFunc} ->
-  DirichNatTrans q p -> MlPolySlObj p -> MlPolySlObj q
-PFBaseChange' {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir)
-  (MPSobj slonpos sldir slondir) =
-    MPSobj
-      (slonpos . onpos)
-      (\i, j => sldir (onpos i) j)
-      (\i, j, qd => slondir (onpos i) j $ ondir i qd)
-
 PFSliceSigma' : (q : PolyFunc) -> {p : PolyFunc} ->
   PolyNatTrans p q -> MlPolySlObj p -> MlPolySlObj q
 PFSliceSigma' q {p} beta sl with (mlPolySlObjToC p sl)
@@ -1582,7 +1568,7 @@ PFAppI' : {p : PolyFunc} ->
   (ty : Type) -> (el : InterpDirichFunc p ty) ->
   MlPolySlObj p -> MlPolySlObj (PFHomArena ty)
 PFAppI' {p=p@(_ ** _)} ty (i ** d) =
-  PFBaseChange' {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
+  mlPolySlBaseChange {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
 
 InterpPFSliceObj : {p : PolyFunc} ->
   MlPolySlObj p -> (ty : Type) -> SliceObj $ InterpPolyFunc p ty
