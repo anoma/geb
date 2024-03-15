@@ -1177,24 +1177,6 @@ MlPolySlMor'FromSlOfSl {ar=(_ ** _)} (MPSobj _ _ _) slsl =
     (\i, jk, cd => (cd, mpsOnDir slsl (i ** fst jk) (snd jk) cd))
     (\i, jk, cd => Refl)
 
-export
-MlPolySlMor'ToSlOfSl : {ar : MLArena} ->
-  {dom, cod : MlPolySlObj ar} -> MlPolySlMor' {ar} dom cod ->
-  MlPolySlOfSl {ar} cod
-MlPolySlMor'ToSlOfSl {ar} {dom} {cod} m = ?MlPolySlMor'ToSlOfSl_hole
-
-public export
-data MlPolySlMor :
-    {ar : MLArena} -> MlPolySlObj ar -> MlPolySlObj ar -> Type where
-  MPSM : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
-    (slsl : MlPolySlOfSl {ar} cod) ->
-    MlPolySlMor {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
-
-public export
-mlPolySlMorToSlOfSl : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
-  MlPolySlMor {ar} dom cod -> MlPolySlOfSl {ar} cod
-mlPolySlMorToSlOfSl {ar} {cod} (MPSM {ar} {cod} slsl) = slsl
-
 ------------------------------------------------------------------------
 ---- Categorial operations in polynomial/Dirichlet slice categories ----
 ------------------------------------------------------------------------
@@ -1310,6 +1292,18 @@ mlDirSlMorFromC {ar=(ppos ** pdir)}
           trans (odeq j md) $ rewrite sym (opeq j) in deq)
 
 public export
+data MlPolySlMor :
+    {ar : MLArena} -> MlPolySlObj ar -> MlPolySlObj ar -> Type where
+  MPSM : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
+    (slsl : MlPolySlOfSl {ar} cod) ->
+    MlPolySlMor {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
+
+public export
+mlPolySlMorToSlOfSl : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor {ar} dom cod -> MlPolySlOfSl {ar} cod
+mlPolySlMorToSlOfSl {ar} {cod} (MPSM {ar} {cod} slsl) = slsl
+
+public export
 mlPolySlMorToObj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor {ar} dom cod -> MlPolySlObj ar
 mlPolySlMorToObj {ar} {dom} {cod} =
@@ -1376,6 +1370,12 @@ mlPolySlMorFromCP {ar=ar@(_ ** _)}
   m@(Element0 (_ ** _) (Evidence0 _ _)) =
     mlPolySlMorFromP {ar} {cod} $
       PFSliceMorphFromC {p=ar} {dom} {cod=(mlPolySlObjToC ar cod)} m
+
+export
+MlPolySlMor'ToSlOfSl : {ar : MLArena} ->
+  {dom, cod : MlPolySlObj ar} -> MlPolySlMor' {ar} dom cod ->
+  MlPolySlOfSl {ar} cod
+MlPolySlMor'ToSlOfSl {ar} {dom} {cod} m = ?MlPolySlMor'ToSlOfSl_hole
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
