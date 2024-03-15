@@ -1524,12 +1524,20 @@ mlDirichSlBaseChangeMap {p} {q} (ntonpos ** ntondir)
       (\qp, dp => monpos (ntonpos qp) dp)
       (\qp, dp, qd, dd => mondir (ntonpos qp) dp (ntondir qp qd) dd)
 
+-------------------------------
+---- Sigma (dependent sum) ----
+-------------------------------
+
 MLPolySlSigma : (q : PolyFunc) -> {p : PolyFunc} ->
   PolyNatTrans p q -> MlPolySlObj p -> MlPolySlObj q
 MLPolySlSigma q {p} beta sl with (mlPolySlObjToC p sl)
   MLPolySlSigma q {p} beta sl | (r ** alpha) =
     let csigma = (r ** pntVCatComp beta alpha) in
     mlPolySlObjFromC q csigma
+
+-------------------------------------------------------------
+---- Polynomial-functor slice category utility functions ----
+-------------------------------------------------------------
 
 -- A slice object over a constant functor is effectively a polynomial
 -- functor parameterized over terms of the output type of the constant functor.
