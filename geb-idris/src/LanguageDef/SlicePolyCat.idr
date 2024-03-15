@@ -1115,10 +1115,7 @@ public export
 mlPolySlOfSlFromP : {ar : MLArena} -> {cod : MlPolySlObj ar} ->
   PFSliceMorph {p=ar} (mlPolySlObjToC ar cod) -> MlPolySlOfSl {ar} cod
 mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
-  MPSobj
-    (mlPolySlOnPosFromC {ar=(mlPolySlObjTot {ar} cod)} m)
-    (mlPolySlDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
-    (mlPolySlOnDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
+  mlPolySlObjFromC (mlPolySlObjTot {ar} cod) m
 
 -----------------------------------
 ---- Slice morphism definition ----
