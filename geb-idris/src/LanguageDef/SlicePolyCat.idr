@@ -1168,6 +1168,18 @@ record MlPolySlMor' {ar : MLArena} (dom, cod : MlPolySlObj ar) where
   mpsmDir : MlPolySlMorDir {ar} dom cod mpsmOnPos
   mpsmOnDirCommutes : MlPolySlMorOnDirCommutes {ar} dom cod mpsmOnPos mpsmDir
 
+export
+MlPolySlMor'FromSlOfSl : {ar : MLArena} ->
+  (cod : MlPolySlObj ar) -> (slsl : MlPolySlOfSl {ar} cod) ->
+  MlPolySlMor' {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
+MlPolySlMor'FromSlOfSl = ?MlPolySlMor'FromSlOfSl_hole
+
+export
+MlPolySlMor'ToSlOfSl : {ar : MLArena} ->
+  {dom, cod : MlPolySlObj ar} -> MlPolySlMor' {ar} dom cod ->
+  MlPolySlOfSl {ar} cod
+MlPolySlMor'ToSlOfSl = ?MlPolySlMor'ToSlOfSl_hole
+
 public export
 data MlPolySlMor :
     {ar : MLArena} -> MlPolySlObj ar -> MlPolySlObj ar -> Type where
