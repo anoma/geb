@@ -1431,14 +1431,14 @@ mlPolySlMorTot {ar} {dom} {cod} =
 -- There is also an intuitive interpretation of this split:  the pointed
 -- (constrained) directions are _parameters_ to the dependent functors, while
 -- the unconstrained directions are _arguments_.
-PFSliceObjPos : PolyFunc -> Type
-PFSliceObjPos = ParamPolyFunc . pfPos
+PosParamPolyFunc : PolyFunc -> Type
+PosParamPolyFunc = ParamPolyFunc . pfPos
 
-PFSliceObjDir : (p : PolyFunc) -> PFSliceObjPos p -> Type
+PFSliceObjDir : (p : PolyFunc) -> PosParamPolyFunc p -> Type
 PFSliceObjDir p spf = SliceMorphism {a=(pfPos p)} (pfDir {p}) (PFSection . spf)
 
 PFSliceObjPF : PolyFunc -> PolyFunc
-PFSliceObjPF p = (PFSliceObjPos p ** PFSliceObjDir p)
+PFSliceObjPF p = (PosParamPolyFunc p ** PFSliceObjDir p)
 
 PFSliceObj : PolyFunc -> Type
 PFSliceObj p = pfPDir $ PFSliceObjPF p
@@ -1573,11 +1573,11 @@ PFApp1' {p=p@(pos ** dir)} i slp =
   PFSliceOver1' $ PFAppI' {p} Void (i ** \v => void v) slp
 
 PNTFam : {pos : Type} -> {dir : pos -> Type} ->
-  PFSliceObjPos (pos ** dir) -> PFSliceObj (pos ** dir) -> Type
+  PosParamPolyFunc (pos ** dir) -> PFSliceObj (pos ** dir) -> Type
 PNTFam {pos} {dir} dom cod = (i : pos) -> PolyNatTrans (dom i) (fst cod i)
 
 PFSliceMorphDomDir : {pos : Type} -> {dir : pos -> Type} ->
-  (dom : PFSliceObjPos (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
+  (dom : PosParamPolyFunc (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
   PNTFam {pos} {dir} dom cod ->
   PFSliceObjDir (pos ** dir) dom
 PFSliceMorphDomDir {pos} {dir} dom (codonpos ** codondir) ntfam i d j =
@@ -1586,7 +1586,7 @@ PFSliceMorphDomDir {pos} {dir} dom (codonpos ** codondir) ntfam i d j =
 data PFSliceMorph' : {pos : Type} -> {dir : pos -> Type} ->
     PFSliceObj (pos ** dir) -> PFSliceObj (pos ** dir) -> Type where
   PFSM' : {pos : Type} -> {dir : pos -> Type} ->
-    (dom : PFSliceObjPos (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
+    (dom : PosParamPolyFunc (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
     (ntfam : PNTFam {pos} {dir} dom cod) ->
     PFSliceMorph' {pos} {dir}
       (dom ** PFSliceMorphDomDir {pos} {dir} dom cod ntfam) cod
