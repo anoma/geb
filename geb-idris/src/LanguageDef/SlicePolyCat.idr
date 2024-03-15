@@ -1428,6 +1428,10 @@ mlPolySlMorFromCP {ar=ar@(_ ** _)}
     mlPolySlMorFromP {ar} {cod} $
       PFSliceMorphFromC {p=ar} {dom} {cod=(mlPolySlObjToC ar cod)} m
 
+------------------------------------------------------------------
+---- Translation between slice morphisms and slices-of-slices ----
+------------------------------------------------------------------
+
 export
 MlPolySlMor'FromSlOfSl : {ar : MLArena} ->
   (cod : MlPolySlObj ar) -> (slsl : MlPolySlOfSl {ar} cod) ->
