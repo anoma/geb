@@ -1231,16 +1231,16 @@ mlDirSlMorToD {ar=ar@(bpos ** bdir)}
     (fst (mlDirSlObjToC dom) ** mlDirSlMorToCBase {ar} {dom} {cod} mor)
 
 public export
-0 mlDirSlMorToC : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
+0 mlDirSlMorToCD : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
   MlDirichSlMor dom cod ->
   CDFSliceMorph ar (mlDirSlObjToC dom) (mlDirSlObjToC cod)
-mlDirSlMorToC {ar=(ppos ** pdir)}
+mlDirSlMorToCD {ar=(ppos ** pdir)}
   {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
   mor@(MDSM monpos mondir)
       with
         (DFSliceMorphToC {p=(ppos ** pdir)} {cod=(mlDirSlObjToC cod)}
           (mlDirSlMorToD {dom} {cod} mor))
-  mlDirSlMorToC {ar=(ppos ** pdir)}
+  mlDirSlMorToCD {ar=(ppos ** pdir)}
     {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
     mor@(MDSM monpos mondir)
       | Element0 dmnt@(dmonpos ** dmondir) (Evidence0 opeq odeq) =
@@ -1268,10 +1268,10 @@ mlDirSlMorFromD {ar=(ppos ** pdir)}
         Element0 (mondir j md) deq)
 
 public export
-0 mlDirSlMorFromC : {ar : MLArena} -> {dom, cod : CDFSliceObj ar} ->
+0 mlDirSlMorFromCD : {ar : MLArena} -> {dom, cod : CDFSliceObj ar} ->
   (mor : CDFSliceMorph ar dom cod) ->
   MlDirichSlMor (mlDirSlObjFromC {ar} dom) (mlDirSlObjFromC {ar} cod)
-mlDirSlMorFromC {ar=(ppos ** pdir)}
+mlDirSlMorFromCD {ar=(ppos ** pdir)}
   {dom=((dtot ** dproj) ** (donpos ** dondir))}
   {cod=((ctot ** cproj) ** (conpos ** condir))}
   (Element0 (monpos ** mondir) (Evidence0 opeq odeq)) =
@@ -1327,10 +1327,10 @@ mlPolySlMor'NT {ar} {dom} {cod} m =
   (mlPolySlMor'OnPos {ar} {dom} {cod} m ** mlPolySlMor'OnDir {ar} {dom} {cod} m)
 
 public export
-0 mlPolySlMorToC : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+0 mlPolySlMor'ToCP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor' {ar} dom cod ->
   CPFSliceMorph ar (mlPolySlObjToC ar dom) (mlPolySlObjToC ar cod)
-mlPolySlMorToC {ar=ar@(bpos ** bdir)}
+mlPolySlMor'ToCP {ar=ar@(bpos ** bdir)}
   {dom=dom@(MPSobj dpos ddir dondir)} {cod=cod@(MPSobj cpos cdir condir)}
   m@(MPSM' monpos mondir mondirc) =
     Element0
@@ -1340,10 +1340,10 @@ mlPolySlMorToC {ar=ar@(bpos ** bdir)}
         (\ij, bd => mondirc (fst ij) (snd ij) bd))
 
 public export
-0 mlPolySlMorFromC : {ar : MLArena} -> {dom, cod : CPFSliceObj ar} ->
+0 mlPolySlMor'FromCP : {ar : MLArena} -> {dom, cod : CPFSliceObj ar} ->
   CPFSliceMorph ar dom cod ->
   MlPolySlMor' {ar} (mlPolySlObjFromC ar dom) (mlPolySlObjFromC ar cod)
-mlPolySlMorFromC {ar=(bpos ** bdir)}
+mlPolySlMor'FromCP {ar=(bpos ** bdir)}
   {dom=dom@((dpos ** ddir) ** (donpos ** dondir))}
   {cod=cod@((cpos ** cdir) ** (conpos ** condir))}
   m@(Element0 (monpos ** mondir) (Evidence0 opeq odeq)) =
@@ -1354,22 +1354,22 @@ mlPolySlMorFromC {ar=(bpos ** bdir)}
       (\i, (Element0 j poseq), bd => odeq j $ rewrite poseq in bd)
 
 public export
-0 mlPolySlMor'ToCP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+0 mlPolySlMor'ToP : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor' {ar} dom cod ->
   PFSliceMorph {p=ar} (mlPolySlObjToC ar cod)
-mlPolySlMor'ToCP {ar} {dom} {cod} =
+mlPolySlMor'ToP {ar} {dom} {cod} =
   PFSliceMorphFromC {p=ar}
     {dom=(mlPolySlObjToC ar dom)} {cod=(mlPolySlObjToC ar cod)}
-  . mlPolySlMorToC {ar} {dom} {cod}
+  . mlPolySlMor'ToCP {ar} {dom} {cod}
 
 public export
-0 mlPolySlMor'FromCP : {ar : MLArena} -> {cod : CPFSliceObj ar} ->
+0 mlPolySlMor'FromP : {ar : MLArena} -> {cod : CPFSliceObj ar} ->
   (m : PFSliceMorph {p=ar} cod) ->
   MlPolySlMor' {ar}
     (mlPolySlObjFromC ar $ PFSliceMorphDom {p=ar} {cod} m)
     (mlPolySlObjFromC ar cod)
-mlPolySlMor'FromCP {ar} {cod} m =
-  mlPolySlMorFromC {ar} {dom=(PFSliceMorphDom {p=ar} m)} {cod}
+mlPolySlMor'FromP {ar} {cod} m =
+  mlPolySlMor'FromCP {ar} {dom=(PFSliceMorphDom {p=ar} m)} {cod}
   $ PFSliceMorphToC {p=ar} {cod} m
 
 public export
