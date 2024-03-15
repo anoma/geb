@@ -1071,37 +1071,9 @@ mlPolySlObjFromC ar sl =
     (mlPolySlDirFromC {ar} sl)
     (mlPolySlOnDirFromC {ar} sl)
 
------------------------------------
----- Slice morphism definition ----
------------------------------------
-
--- The morphisms of slice categories correspond to morphisms of the
--- base category which commute with the projections.
-
--- When we take the dependent-type view in the Dirichlet-functor category, the
--- commutativity conditions are hidden in the type-checking of dependent
--- functions.
-
-public export
-MlDirichSlMorOnPos : {ar : MLArena} ->
-  MlDirichSlObj ar -> MlDirichSlObj ar -> Type
-MlDirichSlMorOnPos {ar} dom cod =
-  SliceMorphism {a=(pfPos ar)} (mdsOnPos dom) (mdsOnPos cod)
-
-public export
-MlDirichSlMorOnDir : {ar : MLArena} -> (dom, cod : MlDirichSlObj ar) ->
-  MlDirichSlMorOnPos {ar} dom cod -> Type
-MlDirichSlMorOnDir {ar} dom cod onpos =
-  (i : pfPos ar) -> (j : mdsOnPos dom i) ->
-    SliceMorphism {a=(pfDir {p=ar} i)}
-      (mdsDir dom i j)
-      (mdsDir cod i $ onpos i j)
-
-public export
-record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
-  constructor MDSM
-  mdsmOnPos : MlDirichSlMorOnPos {ar} dom cod
-  mdsmOnDir : MlDirichSlMorOnDir {ar} dom cod mdsmOnPos
+-------------------------------------------------
+---- Slices of slices of polynomial functors ----
+-------------------------------------------------
 
 public export
 MlPolySlOfSl : {ar : MLArena} -> MlPolySlObj ar -> Type
@@ -1147,6 +1119,38 @@ mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
     (mlPolySlOnPosFromC {ar=(mlPolySlObjTot {ar} cod)} m)
     (mlPolySlDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
     (mlPolySlOnDirFromC {ar=(mlPolySlObjTot {ar} cod)} m)
+
+-----------------------------------
+---- Slice morphism definition ----
+-----------------------------------
+
+-- The morphisms of slice categories correspond to morphisms of the
+-- base category which commute with the projections.
+
+-- When we take the dependent-type view in the Dirichlet-functor category, the
+-- commutativity conditions are hidden in the type-checking of dependent
+-- functions.
+
+public export
+MlDirichSlMorOnPos : {ar : MLArena} ->
+  MlDirichSlObj ar -> MlDirichSlObj ar -> Type
+MlDirichSlMorOnPos {ar} dom cod =
+  SliceMorphism {a=(pfPos ar)} (mdsOnPos dom) (mdsOnPos cod)
+
+public export
+MlDirichSlMorOnDir : {ar : MLArena} -> (dom, cod : MlDirichSlObj ar) ->
+  MlDirichSlMorOnPos {ar} dom cod -> Type
+MlDirichSlMorOnDir {ar} dom cod onpos =
+  (i : pfPos ar) -> (j : mdsOnPos dom i) ->
+    SliceMorphism {a=(pfDir {p=ar} i)}
+      (mdsDir dom i j)
+      (mdsDir cod i $ onpos i j)
+
+public export
+record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
+  constructor MDSM
+  mdsmOnPos : MlDirichSlMorOnPos {ar} dom cod
+  mdsmOnDir : MlDirichSlMorOnDir {ar} dom cod mdsmOnPos
 
 public export
 MlPolySlMorOnPos : {ar : MLArena} ->
