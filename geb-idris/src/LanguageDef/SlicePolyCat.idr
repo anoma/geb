@@ -1533,9 +1533,9 @@ PFSliceSigma' q {p} beta sl with (mlPolySlObjToC p sl)
 
 -- A slice object over a constant functor is effectively a polynomial
 -- functor parameterized over terms of the output type of the constant functor.
-PFSliceOverConst' : {x : Type} -> MlPolySlObj (PFConstArena x) ->
+mlPolySliceOverConst : {x : Type} -> MlPolySlObj (PFConstArena x) ->
   ParamPolyFunc x
-PFSliceOverConst' {x} (MPSobj onpos dir ondir) ex =
+mlPolySliceOverConst {x} (MPSobj onpos dir ondir) ex =
   -- The arguments of `ondir` include a term of type `Void`, so
   -- it is impossible to apply (unless we find such a term, and
   -- hence a contradiction in our metalanguage).  Thus we can and
@@ -1549,21 +1549,21 @@ PFSliceOverConst' {x} (MPSobj onpos dir ondir) ex =
 -- A slice object over the terminal polynomial functor is effectively
 -- just a polynomial functor, just as a slice of `Type` over `Unit` is
 -- effectively just a type.
-PFSliceOver1' : MlPolySlObj PFTerminalArena -> PolyFunc
-PFSliceOver1' psl = PFSliceOverConst' {x=Unit} psl ()
+mlPolySliceOver1 : MlPolySlObj PFTerminalArena -> PolyFunc
+mlPolySliceOver1 psl = mlPolySliceOverConst {x=Unit} psl ()
 
-PFAppI' : {p : PolyFunc} ->
+mlPolyAppI : {p : PolyFunc} ->
   {- these two parameters form an object of the category of elements of `p`
    - interpreted as a Dirichlet functor -}
   (ty : Type) -> (el : InterpDirichFunc p ty) ->
   MlPolySlObj p -> MlPolySlObj (PFHomArena ty)
-PFAppI' {p=p@(_ ** _)} ty (i ** d) =
+mlPolyAppI {p=p@(_ ** _)} ty (i ** d) =
   mlPolySlBaseChange {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
 
-InterpPFSliceObj : {p : PolyFunc} ->
+InterpMlPolySlObj : {p : PolyFunc} ->
   MlPolySlObj p -> (ty : Type) -> SliceObj $ InterpPolyFunc p ty
-InterpPFSliceObj {p} sl ty el with (mlPolySlObjToC p sl)
-  InterpPFSliceObj {p} sl ty el | (q ** alpha) =
+InterpMlPolySlObj {p} sl ty el with (mlPolySlObjToC p sl)
+  InterpMlPolySlObj {p} sl ty el | (q ** alpha) =
     PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc p ty)}
       (InterpPolyNT alpha ty) el
 
@@ -1577,9 +1577,9 @@ InterpPFSliceObj {p} sl ty el with (mlPolySlObjToC p sl)
 -- That in turn amounts to simply a choice of position of the functor
 -- being sliced over, which dictates which dependent polynomial functor
 -- to select as the result.
-PFApp1' : {p : PolyFunc} -> pfPos p -> MlPolySlObj p -> PolyFunc
-PFApp1' {p=p@(pos ** dir)} i slp =
-  PFSliceOver1' $ PFAppI' {p} Void (i ** \v => void v) slp
+mlPolyApp1 : {p : PolyFunc} -> pfPos p -> MlPolySlObj p -> PolyFunc
+mlPolyApp1 {p=p@(pos ** dir)} i slp =
+  mlPolySliceOver1 $ mlPolyAppI {p} Void (i ** \v => void v) slp
 
 ----------------------------
 ----------------------------
