@@ -951,67 +951,69 @@ record MlPolySlObj (ar : MLArena) where
 --------------------------------------------------------------------
 
 public export
-mlDirSlObjTotPos : {ar : MLArena} -> MlDirichSlObj ar -> Type
-mlDirSlObjTotPos {ar} sl = MlSlArTotPos {ar} $ mdsOnPos sl
+mlDirichSlObjTotPos : {ar : MLArena} -> MlDirichSlObj ar -> Type
+mlDirichSlObjTotPos {ar} sl = MlSlArTotPos {ar} $ mdsOnPos sl
 
 public export
-mlDirSlObjTotDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
-  mlDirSlObjTotPos {ar} sl -> Type
-mlDirSlObjTotDir {ar} sl ij = Sigma $ mdsDir sl (fst ij) (snd ij)
+mlDirichSlObjTotDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  mlDirichSlObjTotPos {ar} sl -> Type
+mlDirichSlObjTotDir {ar} sl ij = Sigma $ mdsDir sl (fst ij) (snd ij)
 
 public export
-mlDirSlObjTot : {ar : MLArena} -> MlDirichSlObj ar -> MLArena
-mlDirSlObjTot {ar} sl = (mlDirSlObjTotPos {ar} sl ** mlDirSlObjTotDir {ar} sl)
+mlDirichSlObjTot : {ar : MLArena} -> MlDirichSlObj ar -> MLArena
+mlDirichSlObjTot {ar} sl =
+  (mlDirichSlObjTotPos {ar} sl ** mlDirichSlObjTotDir {ar} sl)
 
 public export
-mlDirSlObjProjOnPos : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
-  mlDirSlObjTotPos sl -> pfPos ar
-mlDirSlObjProjOnPos {ar} sl = DPair.fst
+mlDirichSlObjProjOnPos : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  mlDirichSlObjTotPos sl -> pfPos ar
+mlDirichSlObjProjOnPos {ar} sl = DPair.fst
 
 public export
-mlDirSlObjProjOnDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
-  (i : mlDirSlObjTotPos sl) ->
-  mlDirSlObjTotDir {ar} sl i -> pfDir {p=ar} (mlDirSlObjProjOnPos sl i)
-mlDirSlObjProjOnDir {ar} sl _ = DPair.fst
+mlDirichSlObjProjOnDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  (i : mlDirichSlObjTotPos sl) ->
+  mlDirichSlObjTotDir {ar} sl i -> pfDir {p=ar} (mlDirichSlObjProjOnPos sl i)
+mlDirichSlObjProjOnDir {ar} sl _ = DPair.fst
 
 public export
-mlDirSlObjProj : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
-  DirichNatTrans (mlDirSlObjTot {ar} sl) ar
-mlDirSlObjProj {ar} sl =
-  (mlDirSlObjProjOnPos {ar} sl ** mlDirSlObjProjOnDir {ar} sl)
+mlDirichSlObjProj : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
+  DirichNatTrans (mlDirichSlObjTot {ar} sl) ar
+mlDirichSlObjProj {ar} sl =
+  (mlDirichSlObjProjOnPos {ar} sl ** mlDirichSlObjProjOnDir {ar} sl)
 
 public export
-mlDirSlObjToC : {ar : MLArena} -> MlDirichSlObj ar -> CDFSliceObj ar
-mlDirSlObjToC {ar} sl = (mlDirSlObjTot {ar} sl ** mlDirSlObjProj {ar} sl)
+mlDirichSlObjToC : {ar : MLArena} -> MlDirichSlObj ar -> CDFSliceObj ar
+mlDirichSlObjToC {ar} sl =
+  (mlDirichSlObjTot {ar} sl ** mlDirichSlObjProj {ar} sl)
 
 public export
-mlDirSlOnPosFromC : {ar : MLArena} -> CDFSliceObj ar -> MlSlArProjOnPos ar
-mlDirSlOnPosFromC {ar} sl i = PreImage (fst $ snd sl) i
+mlDirichSlOnPosFromC : {ar : MLArena} -> CDFSliceObj ar -> MlSlArProjOnPos ar
+mlDirichSlOnPosFromC {ar} sl i = PreImage (fst $ snd sl) i
 
 public export
-mlDirSlDirFromCBase : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
-  MlDirichSlDir ar (mlDirSlOnPosFromC {ar} sl)
-mlDirSlDirFromCBase {ar} sl i j bd = snd (fst sl) (fst0 j)
+mlDirichSlDirFromCBase : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
+  MlDirichSlDir ar (mlDirichSlOnPosFromC {ar} sl)
+mlDirichSlDirFromCBase {ar} sl i j bd = snd (fst sl) (fst0 j)
 
 public export
-mlDirSlDirFromCProp : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
-  (i : pfPos ar) -> (j : mlDirSlOnPosFromC {ar} sl i) ->
-  (bd : pfDir {p=ar} i) -> SliceObj (mlDirSlDirFromCBase {ar} sl i j bd)
-mlDirSlDirFromCProp {ar} sl i j bd sld =
+mlDirichSlDirFromCProp : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
+  (i : pfPos ar) -> (j : mlDirichSlOnPosFromC {ar} sl i) ->
+  (bd : pfDir {p=ar} i) -> SliceObj (mlDirichSlDirFromCBase {ar} sl i j bd)
+mlDirichSlDirFromCProp {ar} sl i j bd sld =
   snd (snd sl) (fst0 j) sld = replace {p=(pfDir {p=ar})} (sym $ snd0 j) bd
 
 public export
-mlDirSlDirFromC : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
-  MlDirichSlDir ar (mlDirSlOnPosFromC {ar} sl)
-mlDirSlDirFromC {ar} sl i j bd =
+mlDirichSlDirFromC : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
+  MlDirichSlDir ar (mlDirichSlOnPosFromC {ar} sl)
+mlDirichSlDirFromC {ar} sl i j bd =
   Subset0
-    (mlDirSlDirFromCBase {ar} sl i j bd)
-    (mlDirSlDirFromCProp {ar} sl i j bd)
+    (mlDirichSlDirFromCBase {ar} sl i j bd)
+    (mlDirichSlDirFromCProp {ar} sl i j bd)
 
 public export
-mlDirSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirichSlObj ar
-mlDirSlObjFromC {ar} sl =
-  MDSobj (mlDirSlOnPosFromC {ar} sl) (mlDirSlDirFromC {ar} sl)
+mlDirichSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirichSlObj ar
+mlDirichSlObjFromC {ar} sl =
+  MDSobj (mlDirichSlOnPosFromC {ar} sl) (mlDirichSlDirFromC {ar} sl)
 
 public export
 mlPolySlObjTotPos : {ar : MLArena} -> MlPolySlObj ar -> Type
@@ -1182,17 +1184,17 @@ record MlPolySlMor' {ar : MLArena} (dom, cod : MlPolySlObj ar) where
 ------------------------------------------------------------------------
 
 export
-mlDirSlMorId : {ar : MLArena} -> (p : MlDirichSlObj ar) ->
+mlDirichSlMorId : {ar : MLArena} -> (p : MlDirichSlObj ar) ->
   MlDirichSlMor {ar} p p
-mlDirSlMorId {ar} p =
+mlDirichSlMorId {ar} p =
   MDSM
     (sliceId $ mdsOnPos p)
     (\i, j => sliceId $ mdsDir p i j)
 
 export
-mlDirSlMorComp : {ar : MLArena} -> {p, q, r : MlDirichSlObj ar} ->
+mlDirichSlMorComp : {ar : MLArena} -> {p, q, r : MlDirichSlObj ar} ->
   MlDirichSlMor {ar} q r -> MlDirichSlMor {ar} p q -> MlDirichSlMor {ar} p r
-mlDirSlMorComp {ar} {p} {q} {r} m' m =
+mlDirichSlMorComp {ar} {p} {q} {r} m' m =
   MDSM
     (sliceComp (mdsmOnPos m') (mdsmOnPos m))
     (\i, j, bd, md =>
@@ -1224,33 +1226,33 @@ mlPolySlMorComp {ar} {p} {q} {r} m' m =
 ----------------------------------------------------------------------
 
 public export
-mlDirSlMorToCBase : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
+mlDirichSlMorToCBase : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
   MlDirichSlMor dom cod ->
-  DirichNatTrans (fst (mlDirSlObjToC dom)) (fst (mlDirSlObjToC cod))
-mlDirSlMorToCBase {ar=(bpos ** bdir)}
+  DirichNatTrans (fst (mlDirichSlObjToC dom)) (fst (mlDirichSlObjToC cod))
+mlDirichSlMorToCBase {ar=(bpos ** bdir)}
   {dom=(MDSobj donpos ddir)} {cod=(MDSobj conpos cdir)} (MDSM onpos ondir) =
     (\ij => (fst ij ** onpos (fst ij) (snd ij)) **
      \(i ** j), (d ** dd) => (d ** ondir i j d dd))
 
 public export
-mlDirSlMorToD : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
-  MlDirichSlMor dom cod -> DFSliceMorph {p=ar} (mlDirSlObjToC cod)
-mlDirSlMorToD {ar=ar@(bpos ** bdir)}
+mlDirichSlMorToD : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
+  MlDirichSlMor dom cod -> DFSliceMorph {p=ar} (mlDirichSlObjToC cod)
+mlDirichSlMorToD {ar=ar@(bpos ** bdir)}
   {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
   mor@(MDSM onpos ondir) =
-    (fst (mlDirSlObjToC dom) ** mlDirSlMorToCBase {ar} {dom} {cod} mor)
+    (fst (mlDirichSlObjToC dom) ** mlDirichSlMorToCBase {ar} {dom} {cod} mor)
 
 public export
-0 mlDirSlMorToCD : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
+0 mlDirichSlMorToCD : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
   MlDirichSlMor dom cod ->
-  CDFSliceMorph ar (mlDirSlObjToC dom) (mlDirSlObjToC cod)
-mlDirSlMorToCD {ar=(ppos ** pdir)}
+  CDFSliceMorph ar (mlDirichSlObjToC dom) (mlDirichSlObjToC cod)
+mlDirichSlMorToCD {ar=(ppos ** pdir)}
   {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
   mor@(MDSM monpos mondir)
       with
-        (DFSliceMorphToC {p=(ppos ** pdir)} {cod=(mlDirSlObjToC cod)}
-          (mlDirSlMorToD {dom} {cod} mor))
-  mlDirSlMorToCD {ar=(ppos ** pdir)}
+        (DFSliceMorphToC {p=(ppos ** pdir)} {cod=(mlDirichSlObjToC cod)}
+          (mlDirichSlMorToD {dom} {cod} mor))
+  mlDirichSlMorToCD {ar=(ppos ** pdir)}
     {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
     mor@(MDSM monpos mondir)
       | Element0 dmnt@(dmonpos ** dmondir) (Evidence0 opeq odeq) =
@@ -1264,12 +1266,12 @@ mlDirSlMorToCD {ar=(ppos ** pdir)}
                 $ case i of (i' ** j') => case d of (d' ** dd') => Refl)
 
 public export
-mlDirSlMorFromD : {ar : MLArena} -> {cod : CDFSliceObj ar} ->
+mlDirichSlMorFromD : {ar : MLArena} -> {cod : CDFSliceObj ar} ->
   (mor : DFSliceMorph {p=ar} cod) ->
   MlDirichSlMor
-    (mlDirSlObjFromC {ar} $ DFSliceMorphDom {p=ar} {cod} mor)
-    (mlDirSlObjFromC cod)
-mlDirSlMorFromD {ar=(ppos ** pdir)}
+    (mlDirichSlObjFromC {ar} $ DFSliceMorphDom {p=ar} {cod} mor)
+    (mlDirichSlObjFromC cod)
+mlDirichSlMorFromD {ar=(ppos ** pdir)}
   {cod=((ctot ** cproj) ** (conpos ** condir))}
   ((mpos ** mdir) ** (monpos ** mondir)) =
     MDSM
@@ -1278,10 +1280,10 @@ mlDirSlMorFromD {ar=(ppos ** pdir)}
         Element0 (mondir j md) deq)
 
 public export
-0 mlDirSlMorFromCD : {ar : MLArena} -> {dom, cod : CDFSliceObj ar} ->
+0 mlDirichSlMorFromCD : {ar : MLArena} -> {dom, cod : CDFSliceObj ar} ->
   (mor : CDFSliceMorph ar dom cod) ->
-  MlDirichSlMor (mlDirSlObjFromC {ar} dom) (mlDirSlObjFromC {ar} cod)
-mlDirSlMorFromCD {ar=(ppos ** pdir)}
+  MlDirichSlMor (mlDirichSlObjFromC {ar} dom) (mlDirichSlObjFromC {ar} cod)
+mlDirichSlMorFromCD {ar=(ppos ** pdir)}
   {dom=((dtot ** dproj) ** (donpos ** dondir))}
   {cod=((ctot ** cproj) ** (conpos ** condir))}
   (Element0 (monpos ** mondir) (Evidence0 opeq odeq)) =
