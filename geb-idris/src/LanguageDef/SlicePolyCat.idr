@@ -1459,7 +1459,8 @@ mlPolySlMorTot {ar} {dom} {cod} =
 ------------------------------------------------------------------------
 
 -- This interprets a slice object in the category of Dirichlet functors
--- as a slice object of the category of elements of the base functor.
+-- as an object in the slice category of `Type` over the type of objects
+-- of the category of elements of the base functor.
 export
 InterpMlDirichSlObj : {ar : PolyFunc} ->
   MlDirichSlObj ar -> (ty : Type) -> SliceObj $ InterpDirichFunc ar ty
@@ -1468,9 +1469,9 @@ InterpMlDirichSlObj {ar} sl ty el with (mlDirichSlObjToC {ar} sl)
     PreImage {a=(InterpDirichFunc q ty)} {b=(InterpDirichFunc ar ty)}
       (InterpDirichNT alpha ty) el
 
--- This interprets a slice morphism in the category of Dirichlet functors
--- as a family of functors dependent on the category of elements of the
--- base functor.
+-- This interprets a morphism in the category of Dirichlet functors
+-- as a morphism in the slice category of `Type` over the type of objects
+-- of the category of elements of the base functor.
 export
 InterpMlDirichSlMor : FunExt -> {ar : PolyFunc} ->
   {dom, cod : MlDirichSlObj ar} -> MlDirichSlMor dom cod ->
@@ -1486,7 +1487,8 @@ InterpMlDirichSlMor fext {ar=(bpos ** bdir)}
       eleq
 
 -- This interprets a slice object in the category of polynomial functors
--- as a slice object of the category of elements of the base functor.
+-- as an object in the slice category of `Type` over the type of objects
+-- of the category of elements of the base functor.
 export
 InterpMlPolySlObj : {ar : PolyFunc} ->
   MlPolySlObj ar -> (ty : Type) -> SliceObj $ InterpPolyFunc ar ty
@@ -1495,9 +1497,9 @@ InterpMlPolySlObj {ar} sl ty el with (mlPolySlObjToC ar sl)
     PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc ar ty)}
       (InterpPolyNT alpha ty) el
 
--- This interprets a slice morphism in the category of polynomial functors
--- as a family of functors dependent on the category of elements of the
--- base functor.
+-- This interprets a morphism in the category of polynomial functors
+-- as a morphism in the slice category of `Type` over the type of objects
+-- of the category of elements of the base functor.
 export
 InterpMlPolySlMor : FunExt -> {ar : PolyFunc} ->
   {dom, cod : MlPolySlObj ar} -> MlPolySlMor dom cod ->
