@@ -1442,7 +1442,10 @@ export
 MlPolySlMor'ToSlOfSl : {ar : MLArena} ->
   {dom, cod : MlPolySlObj ar} -> MlPolySlMor' {ar} dom cod ->
   MlPolySlOfSl {ar} cod
-MlPolySlMor'ToSlOfSl {ar} {dom} {cod} m = ?MlPolySlMor'ToSlOfSl_hole
+MlPolySlMor'ToSlOfSl {ar} {dom} {cod} m =
+  mlPolySlObjFromC
+    (mlPolySlObjTot {ar} cod)
+    (mlPolySlObjTot {ar} dom ** mlPolySlMor'NT m)
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
