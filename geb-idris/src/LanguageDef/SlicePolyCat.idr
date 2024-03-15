@@ -1458,6 +1458,39 @@ mlPolySlMorTot {ar} {dom} {cod} =
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 
+export
+0 MlPolySlFunc : MLArena -> MLArena -> Type
+MlPolySlFunc p q = MlPolySlObj p -> MlPolySlObj q
+
+export
+0 MlPolySlFMap : {ar, ar' : MLArena} -> MlPolySlFunc ar ar' -> Type
+MlPolySlFMap {ar} {ar'} f =
+  (0 sl, sl' : MlPolySlObj ar) ->
+  MlPolySlMor {ar} sl sl' -> MlPolySlMor {ar=ar'} (f sl) (f sl')
+
+-- When we express slice objects over a polynomial functor as fibrations
+-- rather than total-space objects with projection morphisms, we can perform
+-- base changes by specifying the data not of a polynomial natural
+-- transformation, but of a Dirichlet natural transformation.
+export
+mlPolySlBaseChange : {p, q : PolyFunc} ->
+  DirichNatTrans q p -> MlPolySlFunc p q
+mlPolySlBaseChange {p} {q} (onpos ** ondir) (MPSobj slonpos sldir slondir) =
+  MPSobj
+    (slonpos . onpos)
+    (\i => sldir $ onpos i)
+    (\i, j, qd => slondir (onpos i) j $ ondir i qd)
+
+export
+mlPolySlBaseChangeMap : {p, q : PolyFunc} -> (nt : DirichNatTrans q p) ->
+  MlPolySlFMap {ar=p} {ar'=q} (mlPolySlBaseChange {p} {q} nt)
+mlPolySlBaseChangeMap {p} {q} (ntonpos ** ntondir)
+  (MPSobj dpos ddir dondir) (MPSobj cpos cdir condir) m =
+    MPSM
+      (\qp => mpsmOnPos m (ntonpos qp))
+      (\qp, dp, cd => mpsmOnDir m (ntonpos qp) dp cd)
+      (\qp, dp, bd => mpsmOnDirCommutes m (ntonpos qp) dp (ntondir qp bd))
+
 CPFSliceObjToPFS : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj p
 CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
   (\i : ppos => (PreImage onpos i ** \(Element0 j inpre) => qdir j) **
