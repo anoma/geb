@@ -1458,6 +1458,20 @@ mlPolySlMorTot {ar} {dom} {cod} =
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 
+------------------------------------------------------
+---- Polynomial-functor slice functor definitions ----
+------------------------------------------------------
+
+export
+0 MlDirichSlFunc : MLArena -> MLArena -> Type
+MlDirichSlFunc p q = MlDirichSlObj p -> MlDirichSlObj q
+
+export
+0 MlDirichSlFMap : {ar, ar' : MLArena} -> MlDirichSlFunc ar ar' -> Type
+MlDirichSlFMap {ar} {ar'} f =
+  (0 sl, sl' : MlDirichSlObj ar) ->
+  MlDirichSlMor {ar} sl sl' -> MlDirichSlMor {ar=ar'} (f sl) (f sl')
+
 export
 0 MlPolySlFunc : MLArena -> MLArena -> Type
 MlPolySlFunc p q = MlPolySlObj p -> MlPolySlObj q
@@ -1467,6 +1481,10 @@ export
 MlPolySlFMap {ar} {ar'} f =
   (0 sl, sl' : MlPolySlObj ar) ->
   MlPolySlMor {ar} sl sl' -> MlPolySlMor {ar=ar'} (f sl) (f sl')
+
+---------------------
+---- Base change ----
+---------------------
 
 -- When we express slice objects over a polynomial functor as fibrations
 -- rather than total-space objects with projection morphisms, we can perform
@@ -1490,6 +1508,21 @@ mlPolySlBaseChangeMap {p} {q} (ntonpos ** ntondir)
       (\qp => mpsmOnPos m (ntonpos qp))
       (\qp, dp, cd => mpsmOnDir m (ntonpos qp) dp cd)
       (\qp, dp, bd => mpsmOnDirCommutes m (ntonpos qp) dp (ntondir qp bd))
+
+export
+mlDirichSlBaseChange : {p, q : PolyFunc} ->
+  DirichNatTrans q p -> MlDirichSlFunc p q
+mlDirichSlBaseChange {p} {q} (onpos ** ondir) (MDSobj slpos sldir) =
+  MDSobj (slpos . onpos) (\qp, sp, qd => sldir (onpos qp) sp $ ondir qp qd)
+
+export
+mlDirichSlBaseChangeMap : {p, q : PolyFunc} -> (nt : DirichNatTrans q p) ->
+  MlDirichSlFMap {ar=p} {ar'=q} (mlDirichSlBaseChange {p} {q} nt)
+mlDirichSlBaseChangeMap {p} {q} (ntonpos ** ntondir)
+  (MDSobj dpos ddir) (MDSobj cpos cdir) (MDSM monpos mondir) =
+    MDSM
+      (\qp, dp => monpos (ntonpos qp) dp)
+      (\qp, dp, qd, dd => mondir (ntonpos qp) dp (ntondir qp qd) dd)
 
 CPFSliceObjToPFS : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj p
 CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
