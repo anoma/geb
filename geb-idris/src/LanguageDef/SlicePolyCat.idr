@@ -1548,13 +1548,6 @@ PFBaseChange' {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir)
       (\i, j => sldir (onpos i) j)
       (\i, j, qd => slondir (onpos i) j $ ondir i qd)
 
-PFSliceSigma : (q : PolyFunc) -> {p : PolyFunc} ->
-  PolyNatTrans p q -> PFSliceObj p -> PFSliceObj q
-PFSliceSigma q {p} beta sl with (CPFSliceObjFromPFS p sl)
-  PFSliceSigma q {p} beta sl | (r ** alpha) =
-    let csigma = (r ** pntVCatComp beta alpha) in
-    CPFSliceObjToPFS q csigma
-
 PFSliceSigma' : (q : PolyFunc) -> {p : PolyFunc} ->
   PolyNatTrans p q -> MlPolySlObj p -> MlPolySlObj q
 PFSliceSigma' q {p} beta sl with (mlPolySlObjToC p sl)
@@ -1564,37 +1557,18 @@ PFSliceSigma' q {p} beta sl with (mlPolySlObjToC p sl)
 
 -- A slice object over a constant functor is effectively a polynomial
 -- functor parameterized over terms of the output type of the constant functor.
-PFSliceOverConst : {x : Type} -> PFSliceObj (PFConstArena x) -> x -> PolyFunc
-PFSliceOverConst {x} (psl ** m) ex =
-  -- The arguments of `m` include a term of type `Void`, so
-  -- it is impossible to apply (unless we find such a term, and
-  -- hence a contradiction in our metalanguage).  Thus we can and
-  -- must ignore it.
-  --
-  -- Put another way, `m` gives us no information, because its type
-  -- restricts it to being effectively just the unique morphism out
-  -- of the initial object.
-  psl ex
-
--- A slice object over a constant functor is effectively a polynomial
--- functor parameterized over terms of the output type of the constant functor.
-PFSliceOverConst' : {x : Type} -> MlPolySlObj (PFConstArena x) -> x -> PolyFunc
+PFSliceOverConst' : {x : Type} -> MlPolySlObj (PFConstArena x) ->
+  ParamPolyFunc x
 PFSliceOverConst' {x} (MPSobj onpos dir ondir) ex =
-  -- The arguments of `m` include a term of type `Void`, so
+  -- The arguments of `ondir` include a term of type `Void`, so
   -- it is impossible to apply (unless we find such a term, and
   -- hence a contradiction in our metalanguage).  Thus we can and
   -- must ignore it.
   --
-  -- Put another way, `m` gives us no information, because its type
+  -- Put another way, `ondir` gives us no information, because its type
   -- restricts it to being effectively just the unique morphism out
   -- of the initial object.
   (onpos ex ** \i => dir ex i)
-
--- A slice object over the terminal polynomial functor is effectively
--- just a polynomial functor, just as a slice of `Type` over `Unit` is
--- effectively just a type.
-PFSliceOver1 : PFSliceObj PFTerminalArena -> PolyFunc
-PFSliceOver1 psl = PFSliceOverConst {x=Unit} psl ()
 
 -- A slice object over the terminal polynomial functor is effectively
 -- just a polynomial functor, just as a slice of `Type` over `Unit` is
@@ -1624,20 +1598,6 @@ InterpPFSliceObj {p} sl ty el with (mlPolySlObjToC p sl)
   InterpPFSliceObj {p} sl ty el | (q ** alpha) =
     PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc p ty)}
       (InterpPolyNT alpha ty) el
-
--- By analogy with the application of a `SliceObj x` in `Type` to a term
--- of `x`, `PFApp` is a base change from the slice category over `p` to
--- the slice category over the terminal polynomial functor, which is
--- effectively just the category of polynomial endofunctors on `Type`.
--- Such a base change requires a Dirichlet (not polynomial!) natural
--- transformation from the terminal polynomial functor (which is just
--- a single position with no directions) to the functor being sliced over.
--- That in turn amounts to simply a choice of position of the functor
--- being sliced over, which dictates which dependent polynomial functor
--- to select as the result.
-PFApp1 : {p : PolyFunc} -> pfPos p -> PFSliceObj p -> PolyFunc
-PFApp1 {p=p@(pos ** dir)} i slp =
-  PFSliceOver1 $ PFAppI {p} Void (i ** \v => void v) slp
 
 -- By analogy with the application of a `SliceObj x` in `Type` to a term
 -- of `x`, `PFApp` is a base change from the slice category over `p` to
