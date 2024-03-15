@@ -1613,25 +1613,6 @@ PFApp1' : {p : PolyFunc} -> pfPos p -> MlPolySlObj p -> PolyFunc
 PFApp1' {p=p@(pos ** dir)} i slp =
   PFSliceOver1' $ PFAppI' {p} Void (i ** \v => void v) slp
 
-PNTFam : {pos : Type} -> {dir : pos -> Type} ->
-  PosParamPolyFunc (pos ** dir) -> PFSliceObj (pos ** dir) -> Type
-PNTFam {pos} {dir} dom cod = (i : pos) -> PolyNatTrans (dom i) (fst cod i)
-
-PFSliceMorphDomDir : {pos : Type} -> {dir : pos -> Type} ->
-  (dom : PosParamPolyFunc (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
-  PNTFam {pos} {dir} dom cod ->
-  ParamPFSection (pos ** dir) dom
-PFSliceMorphDomDir {pos} {dir} dom (codonpos ** codondir) ntfam i d j =
-   let (onpos ** ondir) = ntfam i in ondir j $ codondir i d $ onpos j
-
-data PFSliceMorph' : {pos : Type} -> {dir : pos -> Type} ->
-    PFSliceObj (pos ** dir) -> PFSliceObj (pos ** dir) -> Type where
-  PFSM' : {pos : Type} -> {dir : pos -> Type} ->
-    (dom : PosParamPolyFunc (pos ** dir)) -> (cod : PFSliceObj (pos ** dir)) ->
-    (ntfam : PNTFam {pos} {dir} dom cod) ->
-    PFSliceMorph' {pos} {dir}
-      (dom ** PFSliceMorphDomDir {pos} {dir} dom cod ntfam) cod
-
 ----------------------------
 ----------------------------
 ---- Generalized arenas ----
