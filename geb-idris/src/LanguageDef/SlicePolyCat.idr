@@ -1458,6 +1458,9 @@ mlPolySlMorTot {ar} {dom} {cod} =
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
+-- This interprets a slice object in the category of polynomial functors
+-- as a slice object of the category of elements of the base functor.
+export
 InterpMlPolySlObj : {p : PolyFunc} ->
   MlPolySlObj p -> (ty : Type) -> SliceObj $ InterpPolyFunc p ty
 InterpMlPolySlObj {p} sl ty el with (mlPolySlObjToC p sl)
