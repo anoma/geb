@@ -1148,18 +1148,17 @@ MlPolySlMorOnPos {ar} dom cod =
 public export
 MlPolySlMorDir : {ar : MLArena} -> (dom, cod : MlPolySlObj ar) ->
   MlPolySlMorOnPos {ar} dom cod -> Type
-MlPolySlMorDir {ar=(bpos ** bdir)}
-  (MPSobj dpos ddir dondir) (MPSobj cpos cdir condir) monpos =
-    (i : bpos) -> (j : dpos i) -> cdir i (monpos i j) -> ddir i j
+MlPolySlMorDir {ar} dom cod monpos =
+  (i : pfPos ar) -> (j : mpsOnPos dom i) ->
+  mpsDir cod i (monpos i j) -> mpsDir dom i j
 
 public export
 0 MlPolySlMorOnDirCommutes : {ar : MLArena} -> (dom, cod : MlPolySlObj ar) ->
   (onpos : MlPolySlMorOnPos {ar} dom cod) ->
   MlPolySlMorDir {ar} dom cod onpos -> Type
-MlPolySlMorOnDirCommutes {ar=(bpos ** bdir)}
-  (MPSobj dpos ddir dondir) (MPSobj cpos cdir condir) monpos mdir =
-    (i : bpos) -> (j : dpos i) -> (bd : bdir i) ->
-    mdir i j (condir i (monpos i j) bd) = dondir i j bd
+MlPolySlMorOnDirCommutes {ar} dom cod monpos mdir =
+  (i : pfPos ar) -> (j : mpsOnPos dom i) -> (bd : pfDir {p=ar} i) ->
+  mdir i j (mpsOnDir cod i (monpos i j) bd) = mpsOnDir dom i j bd
 
 public export
 record MlPolySlMor' {ar : MLArena} (dom, cod : MlPolySlObj ar) where
