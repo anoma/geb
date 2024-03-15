@@ -1524,16 +1524,6 @@ mlDirichSlBaseChangeMap {p} {q} (ntonpos ** ntondir)
       (\qp, dp => monpos (ntonpos qp) dp)
       (\qp, dp, qd, dd => mondir (ntonpos qp) dp (ntondir qp qd) dd)
 
-CPFSliceObjToPFS : (p : PolyFunc) -> CPFSliceObj p -> PFSliceObj p
-CPFSliceObjToPFS (ppos ** pdir) ((qpos ** qdir) ** (onpos ** ondir)) =
-  (\i : ppos => (PreImage onpos i ** \(Element0 j inpre) => qdir j) **
-   \i : ppos, d : pdir i, (Element0 j inpre) => ondir j $ rewrite inpre in d)
-
-CPFSliceObjFromPFS : (p : PolyFunc) -> PFSliceObj p -> CPFSliceObj p
-CPFSliceObjFromPFS (ppos ** pdir) (psl ** m) =
-  (((i : ppos ** fst (psl i)) ** \(i ** j) => snd (psl i) j) **
-   (fst ** \(i ** j), d => m i d j))
-
 PFSliceSigma' : (q : PolyFunc) -> {p : PolyFunc} ->
   PolyNatTrans p q -> MlPolySlObj p -> MlPolySlObj q
 PFSliceSigma' q {p} beta sl with (mlPolySlObjToC p sl)
