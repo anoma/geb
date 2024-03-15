@@ -1316,6 +1316,27 @@ mlPolySlMorTot {ar} {dom} {cod} =
   mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)} . mlPolySlMorToSlOfSl {dom} {ar}
 
 public export
+mlPolySlMor'OnPos : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor' {ar} dom cod ->
+  mlPolySlObjTotPos {ar} dom -> mlPolySlObjTotPos {ar} cod
+mlPolySlMor'OnPos {ar} {dom} {cod} m i = (fst i ** mpsmOnPos m (fst i) (snd i))
+
+public export
+mlPolySlMor'OnDir : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  (m : MlPolySlMor' {ar} dom cod) ->
+  (i : mlPolySlObjTotPos {ar} dom) ->
+  mlPolySlObjTotDir {ar} cod (mlPolySlMor'OnPos {ar} {dom} {cod} m i) ->
+  mlPolySlObjTotDir {ar} dom i
+mlPolySlMor'OnDir {ar} {dom} {cod} m i = mpsmOnDir m (fst i) (snd i)
+
+public export
+mlPolySlMor'NT : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
+  MlPolySlMor' {ar} dom cod ->
+  PolyNatTrans (mlPolySlObjTot {ar} dom) (mlPolySlObjTot {ar} cod)
+mlPolySlMor'NT {ar} {dom} {cod} m =
+  (mlPolySlMor'OnPos {ar} {dom} {cod} m ** mlPolySlMor'OnDir {ar} {dom} {cod} m)
+
+public export
 mlPolySlMorProj : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   (m : MlPolySlMor {ar} dom cod) ->
   PolyNatTrans (mlPolySlMorTot {ar} {dom} {cod} m) (mlPolySlObjTot {ar} cod)
