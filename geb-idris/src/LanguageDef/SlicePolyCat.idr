@@ -1432,10 +1432,10 @@ mlPolySlMorTot {ar} {dom} {cod} =
 -- (constrained) directions are _parameters_ to the dependent functors, while
 -- the unconstrained directions are _arguments_.
 PFSliceObjPos : PolyFunc -> Type
-PFSliceObjPos (pos ** dir) = pos -> PolyFunc
+PFSliceObjPos = ParamPolyFunc . pfPos
 
 PFSliceObjDir : (p : PolyFunc) -> PFSliceObjPos p -> Type
-PFSliceObjDir (pos ** dir) spf = SliceMorphism {a=pos} dir (PFSection . spf)
+PFSliceObjDir p spf = SliceMorphism {a=(pfPos p)} (pfDir {p}) (PFSection . spf)
 
 PFSliceObjPF : PolyFunc -> PolyFunc
 PFSliceObjPF p = (PFSliceObjPos p ** PFSliceObjDir p)
