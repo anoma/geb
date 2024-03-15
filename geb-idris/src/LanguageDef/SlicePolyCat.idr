@@ -1195,6 +1195,48 @@ mlPolySlMorToSlOfSl : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
   MlPolySlMor {ar} dom cod -> MlPolySlOfSl {ar} cod
 mlPolySlMorToSlOfSl {ar} {cod} (MPSM {ar} {cod} slsl) = slsl
 
+------------------------------------------------------------------------
+---- Categorial operations in polynomial/Dirichlet slice categories ----
+------------------------------------------------------------------------
+
+export
+mlDirSlMorId : {ar : MLArena} -> (p : MlDirichSlObj ar) ->
+  MlDirichSlMor {ar} p p
+mlDirSlMorId {ar} p =
+  MDSM
+    (sliceId $ mdsOnPos p)
+    (\i, j => sliceId $ mdsDir p i j)
+
+export
+mlDirSlMorComp : {ar : MLArena} -> {p, q, r : MlDirichSlObj ar} ->
+  MlDirichSlMor {ar} q r -> MlDirichSlMor {ar} p q -> MlDirichSlMor {ar} p r
+mlDirSlMorComp {ar} {p} {q} {r} m' m =
+  MDSM
+    (sliceComp (mdsmOnPos m') (mdsmOnPos m))
+    (\i, j, bd, md =>
+      mdsmOnDir m' i (mdsmOnPos m i j) bd $ mdsmOnDir m i j bd md)
+
+export
+mlPolySlMorId : {ar : MLArena} -> (p : MlPolySlObj ar) ->
+  MlPolySlMor' {ar} p p
+mlPolySlMorId {ar} p =
+  MPSM'
+    (sliceId {a=(pfPos ar)} $ mpsOnPos p)
+    (\i => sliceId {a=(mpsOnPos p i)} (mpsDir p i))
+    (\i, j, bd => Refl)
+
+export
+mlPolySlMorComp : {ar : MLArena} -> {p, q, r : MlPolySlObj ar} ->
+  MlPolySlMor' {ar} q r -> MlPolySlMor' {ar} p q -> MlPolySlMor' {ar} p r
+mlPolySlMorComp {ar} {p} {q} {r} m' m =
+  MPSM'
+    (sliceComp (mpsmOnPos m') (mpsmOnPos m))
+    (\i, j, rd => mpsmOnDir m i j $ mpsmOnDir m' i (mpsmOnPos m i j) rd)
+    (\i, j, bd =>
+      trans
+        (cong (mpsmOnDir m i j) $ mpsmOnDirCommutes m' i (mpsmOnPos m i j) bd)
+        (mpsmOnDirCommutes m i j bd))
+
 ----------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style morphisms ----
 ----------------------------------------------------------------------
@@ -1334,48 +1376,6 @@ mlPolySlMorFromCP {ar=ar@(_ ** _)}
   m@(Element0 (_ ** _) (Evidence0 _ _)) =
     mlPolySlMorFromP {ar} {cod} $
       PFSliceMorphFromC {p=ar} {dom} {cod=(mlPolySlObjToC ar cod)} m
-
-------------------------------------------------------------------------
----- Categorial operations in polynomial/Dirichlet slice categories ----
-------------------------------------------------------------------------
-
-export
-mlDirSlMorId : {ar : MLArena} -> (p : MlDirichSlObj ar) ->
-  MlDirichSlMor {ar} p p
-mlDirSlMorId {ar} p =
-  MDSM
-    (sliceId $ mdsOnPos p)
-    (\i, j => sliceId $ mdsDir p i j)
-
-export
-mlDirSlMorComp : {ar : MLArena} -> {p, q, r : MlDirichSlObj ar} ->
-  MlDirichSlMor {ar} q r -> MlDirichSlMor {ar} p q -> MlDirichSlMor {ar} p r
-mlDirSlMorComp {ar} {p} {q} {r} m' m =
-  MDSM
-    (sliceComp (mdsmOnPos m') (mdsmOnPos m))
-    (\i, j, bd, md =>
-      mdsmOnDir m' i (mdsmOnPos m i j) bd $ mdsmOnDir m i j bd md)
-
-export
-mlPolySlMorId : {ar : MLArena} -> (p : MlPolySlObj ar) ->
-  MlPolySlMor' {ar} p p
-mlPolySlMorId {ar} p =
-  MPSM'
-    (sliceId {a=(pfPos ar)} $ mpsOnPos p)
-    (\i => sliceId {a=(mpsOnPos p i)} (mpsDir p i))
-    (\i, j, bd => Refl)
-
-export
-mlPolySlMorComp : {ar : MLArena} -> {p, q, r : MlPolySlObj ar} ->
-  MlPolySlMor' {ar} q r -> MlPolySlMor' {ar} p q -> MlPolySlMor' {ar} p r
-mlPolySlMorComp {ar} {p} {q} {r} m' m =
-  MPSM'
-    (sliceComp (mpsmOnPos m') (mpsmOnPos m))
-    (\i, j, rd => mpsmOnDir m i j $ mpsmOnDir m' i (mpsmOnPos m i j) rd)
-    (\i, j, bd =>
-      trans
-        (cong (mpsmOnDir m i j) $ mpsmOnDirCommutes m' i (mpsmOnPos m i j) bd)
-        (mpsmOnDirCommutes m i j bd))
 
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
