@@ -1452,6 +1452,19 @@ mlPolySlMorTot {ar} {dom} {cod} =
   mlPolySlObjTot {ar=(mlPolySlObjTot {ar} cod)}
   . MlPolySlMorToSlOfSl {dom} {ar}
 
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Interpretation of polynomial/Dirichlet slice objects/morphisms ----
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+InterpMlPolySlObj : {p : PolyFunc} ->
+  MlPolySlObj p -> (ty : Type) -> SliceObj $ InterpPolyFunc p ty
+InterpMlPolySlObj {p} sl ty el with (mlPolySlObjToC p sl)
+  InterpMlPolySlObj {p} sl ty el | (q ** alpha) =
+    PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc p ty)}
+      (InterpPolyNT alpha ty) el
+
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---- Slice categories of polynomial functors (in dependent-type style) ----
@@ -1567,13 +1580,6 @@ mlPolyAppI : {p : PolyFunc} ->
   MlPolySlObj p -> MlPolySlObj (PFHomArena ty)
 mlPolyAppI {p=p@(_ ** _)} ty (i ** d) =
   mlPolySlBaseChange {p} {q=(PFHomArena ty)} (\() => i ** \() => d)
-
-InterpMlPolySlObj : {p : PolyFunc} ->
-  MlPolySlObj p -> (ty : Type) -> SliceObj $ InterpPolyFunc p ty
-InterpMlPolySlObj {p} sl ty el with (mlPolySlObjToC p sl)
-  InterpMlPolySlObj {p} sl ty el | (q ** alpha) =
-    PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc p ty)}
-      (InterpPolyNT alpha ty) el
 
 -- By analogy with the application of a `SliceObj x` in `Type` to a term
 -- of `x`, `PFApp` is a base change from the slice category over `p` to
