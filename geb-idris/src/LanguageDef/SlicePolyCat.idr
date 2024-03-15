@@ -1152,6 +1152,9 @@ mlPolySlObjFromPPFsect : {ar : MLArena} ->
 mlPolySlObjFromPPFsect {ar=(bpos ** bdir)} ppf sect =
   MPSobj (fst . ppf) (\i => snd $ ppf i) (\i, j, bd => sect i bd j)
 
+-- Using this formulation, we can characterize a polynomial-functor slice
+-- object as represented by the directions of a particular polynomial functor.
+
 PFSliceObjPF : PolyFunc -> PolyFunc
 PFSliceObjPF p = (PosParamPolyFunc p ** ParamPFSection p)
 
