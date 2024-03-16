@@ -957,7 +957,8 @@ mlDirichSlObjTotPos {ar} sl = MlSlArTotPos {ar} $ mdsOnPos sl
 public export
 mlDirichSlObjTotDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
   mlDirichSlObjTotPos {ar} sl -> Type
-mlDirichSlObjTotDir {ar} sl ij = Sigma $ mdsDir sl (fst ij) (snd ij)
+mlDirichSlObjTotDir {ar} sl ij =
+  Sigma {a=(pfDir {p=ar} $ fst ij)} $ mdsDir sl (fst ij) (snd ij)
 
 public export
 mlDirichSlObjTot : {ar : MLArena} -> MlDirichSlObj ar -> MLArena
