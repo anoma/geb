@@ -1162,9 +1162,9 @@ mlPolySlObjToPPFsect : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
 mlPolySlObjToPPFsect {ar} sl i bd j = mpsOnDir sl i j bd
 
 export
-mlPolySlObjFromPPFsect : {ar : MLArena} ->
+mlPolySlObjFromPPFandSections : {ar : MLArena} ->
   (ppf : PosParamPolyFunc ar) -> ParamPFSection ar ppf -> MlPolySlObj ar
-mlPolySlObjFromPPFsect {ar=(bpos ** bdir)} ppf sect =
+mlPolySlObjFromPPFandSections {ar=(bpos ** bdir)} ppf sect =
   MPSobj (fst . ppf) (\i => snd $ ppf i) (\i, j, bd => sect i bd j)
 
 -- Using this formulation, we can characterize a polynomial-functor slice
