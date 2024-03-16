@@ -1464,27 +1464,22 @@ mlPolySlMorTot {ar} {dom} {cod} =
 export
 InterpMlDirichSlObj : {ar : PolyFunc} ->
   MlDirichSlObj ar -> (ty : Type) -> SliceObj $ InterpDirichFunc ar ty
-InterpMlDirichSlObj {ar} sl ty el with (mlDirichSlObjToC {ar} sl)
-  InterpMlDirichSlObj {ar} sl ty el | (q ** alpha) =
-    PreImage {a=(InterpDirichFunc q ty)} {b=(InterpDirichFunc ar ty)}
-      (InterpDirichNT alpha ty) el
+InterpMlDirichSlObj {ar=(bpos ** bdir)} (MDSobj slpos sldir) ty (i ** bd) =
+  (j : slpos i ** Pi {a=ty} $ sldir i j . bd)
 
 -- This interprets a morphism in the category of Dirichlet functors
 -- as a morphism in the slice category of `Type` over the type of objects
 -- of the category of elements of the base functor.
 export
-InterpMlDirichSlMor : FunExt -> {ar : PolyFunc} ->
+InterpMlDirichSlMor : {ar : PolyFunc} ->
   {dom, cod : MlDirichSlObj ar} -> MlDirichSlMor dom cod ->
   (ty : Type) -> (el : InterpDirichFunc ar ty) ->
   InterpMlDirichSlObj {ar} dom ty el ->
   InterpMlDirichSlObj {ar} cod ty el
-InterpMlDirichSlMor fext {ar=(bpos ** bdir)}
+InterpMlDirichSlMor {ar=(bpos ** bdir)}
   {dom=(MDSobj dpos ddir)} {cod=(MDSobj cpos cdir)}
-  (MDSM monpos mondir) ty (elbp ** eld) (Element0 ((bp ** dp) ** dd) eleq) =
-    Element0
-      ((bp ** monpos bp dp) **
-       \el' => (fst (dd el') ** mondir bp dp (fst $ dd el') $ snd $ dd el'))
-      eleq
+  (MDSM monpos mondir) ty (i ** bd) (j ** dd) =
+    (monpos i j ** \elty => mondir i j (bd elty) $ dd elty)
 
 -- This interprets a slice object in the category of polynomial functors
 -- as an object in the slice category of `Type` over the type of objects
