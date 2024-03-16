@@ -1147,13 +1147,13 @@ public export
 PosParamPolyFunc : PolyFunc -> Type
 PosParamPolyFunc = ParamPolyFunc . pfPos
 
-public export
-ParamPFSection : (p : PolyFunc) -> PosParamPolyFunc p -> Type
-ParamPFSection p spf = SliceMorphism {a=(pfPos p)} (pfDir {p}) (PFSection . spf)
-
 export
 mlPolySlObjToPPF : {ar : MLArena} -> MlPolySlObj ar -> PosParamPolyFunc ar
 mlPolySlObjToPPF {ar} sl i = (mpsOnPos sl i ** mpsDir sl i)
+
+public export
+ParamPFSection : (p : PolyFunc) -> PosParamPolyFunc p -> Type
+ParamPFSection p spf = SliceMorphism {a=(pfPos p)} (pfDir {p}) (PFSection . spf)
 
 export
 mlPolySlObjToPPFsect : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
