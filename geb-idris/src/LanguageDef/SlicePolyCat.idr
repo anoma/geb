@@ -1149,6 +1149,16 @@ PosParamPolyFunc : PolyFunc -> Type
 PosParamPolyFunc = ParamPolyFunc . pfPos
 
 export
+mlDirichSlObjToPPF : {ar : MLArena} -> MlDirichSlObj ar -> PosParamPolyFunc ar
+mlDirichSlObjToPPF {ar=(bpos ** bdir)} (MDSobj slpos sldir) i =
+  ((bdir i, slpos i) ** \(bd, j) => sldir i j bd)
+
+export
+mlDirichSlObjFromPPF : {ar : MLArena} -> PosParamPolyFunc ar -> MlDirichSlObj ar
+mlDirichSlObjFromPPF {ar=(bpos ** bdir)} ppf =
+  MDSobj (\i => bdir i -> fst $ ppf i) (\i, sld, bd => snd (ppf i) $ sld bd)
+
+export
 mlPolySlObjToPPF : {ar : MLArena} -> MlPolySlObj ar -> PosParamPolyFunc ar
 mlPolySlObjToPPF {ar} sl i = (mpsOnPos sl i ** mpsDir sl i)
 
