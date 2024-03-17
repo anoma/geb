@@ -1550,7 +1550,12 @@ InterpMlPolySlObjFMap : {bpos : Type} -> {bdir : bpos -> Type} ->
   MLPolyCatElemMor (bpos ** bdir) dom cod ->
   InterpMlPolySlObjF {ar=(bpos ** bdir)} sl dom ->
   InterpMlPolySlObjF {ar=(bpos ** bdir)} sl cod
-InterpMlPolySlObjFMap = ?InterpMlPolySlObjFMap_hole
+InterpMlPolySlObjFMap {bpos} {bdir} (MPSobj slpos sldir slondir)
+  (dty ** i ** sldty) (cty ** _ ** _) (PCEM _ _ _ _ _ _ _ mm) =
+    \(Element0 ((j ** k) ** sldi) eq) =>
+      Element0
+        ((j ** k) ** mm . sldi)
+        $ case eq of Refl => Refl
 
 export
 InterpMlPolySlObjFMapAr : {ar : PolyFunc} ->
