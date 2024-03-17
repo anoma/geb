@@ -57,7 +57,7 @@ bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
 -- the subobject of `d` whose terms consist of single applications
 -- of `f` to terms of the given subobject.
 --
--- When it is an endofunctor (i.e. `d` is `c`), Its initial algebra
+-- When it is an endofunctor (i.e. `d` is `c`), its initial algebra
 -- (least fixed point) is simply the initial object of `SliceObj c`
 -- (`const Void`); that initial algebra (as with any functor that has a
 -- free monad) is isomorphic to the application of its free monad to the
