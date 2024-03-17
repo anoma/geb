@@ -1478,6 +1478,12 @@ InterpMlDirichSlObj : {ar : PolyFunc} ->
 InterpMlDirichSlObj {ar=(_ ** _)} (MDSobj slpos sldir) ty (i ** bd) =
   (j : slpos i ** Pi {a=ty} $ sldir i j . bd)
 
+export
+InterpMlDirichSlObjF : {ar : PolyFunc} ->
+  MlDirichSlObj ar -> MLDirichCatElemObj ar -> Type
+InterpMlDirichSlObjF {ar=ar@(_ ** _)} sl (ty ** el) =
+  InterpMlDirichSlObj {ar} sl ty el
+
 -- This interprets a morphism in the category of Dirichlet functors
 -- as a morphism in the category of presheaves over the category of elements
 -- of the base functor.
@@ -1508,6 +1514,12 @@ InterpMlPolySlObj {ar} sl ty el with (mlPolySlObjToC ar sl)
   InterpMlPolySlObj {ar} sl ty el | (q ** alpha) =
     PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc ar ty)}
       (InterpPolyNT alpha ty) el
+
+export
+InterpMlPolySlObjF : {ar : PolyFunc} ->
+  MlPolySlObj ar -> MLPolyCatElemObj ar -> Type
+InterpMlPolySlObjF {ar=ar@(_ ** _)} sl (ty ** el) =
+  InterpMlPolySlObj {ar} sl ty el
 
 -- This interprets a morphism in the category of polynomial functors
 -- as a morphism in the category of copresheaves over the category of elements
