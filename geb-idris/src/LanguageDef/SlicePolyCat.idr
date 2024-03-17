@@ -1508,7 +1508,7 @@ InterpMlDirichSlObjFMapAr {ar=(bpos ** bdir)} =
 
 -- This interprets a morphism in the category of Dirichlet functors
 -- as a morphism in the category of presheaves over the category of elements
--- of the base functor.
+-- of the base functor (the latter is a natural transformation).
 --
 -- We may view this as the morphism component of a functor, whose object
 -- component is `InterpMlDirichSlObj`, from the slice category of Dirichlet
@@ -1569,7 +1569,7 @@ InterpMlPolySlObjFMapAr {ar=(bpos ** bdir)} =
 
 -- This interprets a morphism in the category of polynomial functors
 -- as a morphism in the category of copresheaves over the category of elements
--- of the base functor.
+-- of the base functor (the latter is a natural transformation).
 --
 -- We may view this as the morphism component of a functor, whose object
 -- component is `InterpMlPolySlObj`, from the slice category of polynomial
