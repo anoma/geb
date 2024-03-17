@@ -1471,7 +1471,7 @@ mlPolySlMorTot {ar} {dom} {cod} =
 
 -- This interprets a slice object in the category of Dirichlet functors
 -- as an object in the category of presheaves over the category of elements
--- of elements of the base functor.
+-- of the base functor.
 export
 InterpMlDirichSlObj : {ar : PolyFunc} ->
   MlDirichSlObj ar -> (ty : Type) -> SliceObj $ InterpDirichFunc ar ty
@@ -1483,6 +1483,28 @@ InterpMlDirichSlObjF : {ar : PolyFunc} ->
   MlDirichSlObj ar -> MLDirichCatElemObj ar -> Type
 InterpMlDirichSlObjF {ar=ar@(_ ** _)} sl (ty ** el) =
   InterpMlDirichSlObj {ar} sl ty el
+
+export
+InterpMlDirichSlObjFMap : {bpos : Type} -> {bdir : bpos -> Type} ->
+  (sl : MlDirichSlObj (bpos ** bdir)) ->
+  (dom, cod : MLDirichCatElemObj (bpos ** bdir)) ->
+  -- The functor is contravariant, hence the `cod dom` rather than `dom cod`.
+  MLDirichCatElemMor (bpos ** bdir) cod dom ->
+  InterpMlDirichSlObjF {ar=(bpos ** bdir)} sl dom ->
+  InterpMlDirichSlObjF {ar=(bpos ** bdir)} sl cod
+InterpMlDirichSlObjFMap {bpos} {bdir} (MDSobj slpos sldir)
+  (dty ** i ** sldty) (cty ** _ ** _) (DCEM _ _ _ _ _ _ _ mm) =
+    \(j ** sld) => (j ** \ec => sld $ mm ec)
+
+export
+InterpMlDirichSlObjFMapAr : {ar : PolyFunc} ->
+  (sl : MlDirichSlObj ar) ->
+  (dom, cod : MLDirichCatElemObj ar) ->
+  MLDirichCatElemMor ar cod dom ->
+  InterpMlDirichSlObjF {ar} sl dom ->
+  InterpMlDirichSlObjF {ar} sl cod
+InterpMlDirichSlObjFMapAr {ar=(bpos ** bdir)} =
+  InterpMlDirichSlObjFMap {bpos} {bdir}
 
 -- This interprets a morphism in the category of Dirichlet functors
 -- as a morphism in the category of presheaves over the category of elements
@@ -1506,7 +1528,7 @@ InterpMlDirichSlMor {ar=(bpos ** bdir)}
 
 -- This interprets a slice object in the category of polynomial functors
 -- as an object in the category of presheaves over the category of elements
--- of elements of the base functor.
+-- of the base functor.
 export
 InterpMlPolySlObj : {ar : PolyFunc} ->
   MlPolySlObj ar -> (ty : Type) -> SliceObj $ InterpPolyFunc ar ty
@@ -1520,6 +1542,25 @@ InterpMlPolySlObjF : {ar : PolyFunc} ->
   MlPolySlObj ar -> MLPolyCatElemObj ar -> Type
 InterpMlPolySlObjF {ar=ar@(_ ** _)} sl (ty ** el) =
   InterpMlPolySlObj {ar} sl ty el
+
+export
+InterpMlPolySlObjFMap : {bpos : Type} -> {bdir : bpos -> Type} ->
+  (sl : MlPolySlObj (bpos ** bdir)) ->
+  (dom, cod : MLPolyCatElemObj (bpos ** bdir)) ->
+  MLPolyCatElemMor (bpos ** bdir) dom cod ->
+  InterpMlPolySlObjF {ar=(bpos ** bdir)} sl dom ->
+  InterpMlPolySlObjF {ar=(bpos ** bdir)} sl cod
+InterpMlPolySlObjFMap = ?InterpMlPolySlObjFMap_hole
+
+export
+InterpMlPolySlObjFMapAr : {ar : PolyFunc} ->
+  (sl : MlPolySlObj ar) ->
+  (dom, cod : MLPolyCatElemObj ar) ->
+  MLPolyCatElemMor ar dom cod ->
+  InterpMlPolySlObjF {ar} sl dom ->
+  InterpMlPolySlObjF {ar} sl cod
+InterpMlPolySlObjFMapAr {ar=(bpos ** bdir)} =
+  InterpMlPolySlObjFMap {bpos} {bdir}
 
 -- This interprets a morphism in the category of polynomial functors
 -- as a morphism in the category of copresheaves over the category of elements
