@@ -1512,6 +1512,11 @@ InterpMlPolySlObj {ar} sl ty el with (mlPolySlObjToC ar sl)
 -- This interprets a morphism in the category of polynomial functors
 -- as a morphism in the slice category of `Type` over the type of objects
 -- of the category of elements of the base functor.
+--
+-- We may view this as the morphism component of a functor, whose object
+-- component is `InterpMlPolySlObj`, from the slice category of polynomial
+-- functors over `ar` to the slice category of `Type` over the type of
+-- objects of the category of elements of the base functor.
 export
 InterpMlPolySlMor : FunExt -> {ar : PolyFunc} ->
   {dom, cod : MlPolySlObj ar} -> MlPolySlMor dom cod ->
