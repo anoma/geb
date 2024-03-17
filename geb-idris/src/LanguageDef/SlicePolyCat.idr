@@ -1475,12 +1475,17 @@ mlPolySlMorTot {ar} {dom} {cod} =
 export
 InterpMlDirichSlObj : {ar : PolyFunc} ->
   MlDirichSlObj ar -> (ty : Type) -> SliceObj $ InterpDirichFunc ar ty
-InterpMlDirichSlObj {ar=(bpos ** bdir)} (MDSobj slpos sldir) ty (i ** bd) =
-  (elty : ty) -> (j : slpos i ** sldir i j $ bd elty)
+InterpMlDirichSlObj {ar=(_ ** _)} (MDSobj slpos sldir) ty (i ** bd) =
+  (j : slpos i ** Pi {a=ty} $ sldir i j . bd)
 
 -- This interprets a morphism in the category of Dirichlet functors
 -- as a morphism in the slice category of `Type` over the type of objects
 -- of the category of elements of the base functor.
+--
+-- We may view this as the morphism component of a functor, whose object
+-- component is `InterpMlDirichSlObj`, from the slice category of Dirichlet
+-- functors over `ar` to the slice category of `Type` over the type of
+-- objects of the category of elements of the base functor.
 export
 InterpMlDirichSlMor : {ar : PolyFunc} ->
   {dom, cod : MlDirichSlObj ar} -> MlDirichSlMor dom cod ->
@@ -1490,9 +1495,8 @@ InterpMlDirichSlMor : {ar : PolyFunc} ->
 InterpMlDirichSlMor {ar=(bpos ** bdir)}
   {dom=(MDSobj dpos ddir)} {cod=(MDSobj cpos cdir)}
   (MDSM monpos mondir) ty (i ** bd) dpd =
-    \elty : ty =>
-      (monpos i (fst $ dpd elty) **
-       mondir i (fst $ dpd elty) (bd elty) $ snd $ dpd elty)
+    (monpos i (fst dpd) **
+     \elty => mondir i (fst dpd) (bd elty) $ snd dpd elty)
 
 -- This interprets a slice object in the category of polynomial functors
 -- as an object in the slice category of `Type` over the type of objects
