@@ -67,6 +67,10 @@ data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
   SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
     {ec : c} -> sc ec -> SliceSigmaF {c} {d} f sc (f ec)
 
+export
+ssMap : {0 c, d : Type} -> {0 f : c -> d} -> SliceFMap (SliceSigmaF {c} {d} f)
+ssMap {c} {d} {f} sa sb m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
+
 --------------------------
 ----- Sigma as W-type ----
 --------------------------
@@ -136,10 +140,6 @@ ssLAdj : {0 c, d : Type} -> {f : c -> d} ->
   SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb ->
   SliceMorphism {a=c} sa (BaseChangeF f sb)
 ssLAdj {c} {d} {f} {sa} {sb} m ec esa = m (f ec) $ SS {ec} esa
-
-export
-ssMap : {0 c, d : Type} -> {0 f : c -> d} -> SliceFMap (SliceSigmaF {c} {d} f)
-ssMap {c} {d} {f} sa sb m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
 
 export
 ssmMap : {0 c, d : Type} -> {f : c -> d} -> SliceFMap (SSMonad {c} {d} f)
