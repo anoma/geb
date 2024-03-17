@@ -1510,12 +1510,12 @@ InterpMlPolySlObj {ar} sl ty el with (mlPolySlObjToC ar sl)
       (InterpPolyNT alpha ty) el
 
 -- This interprets a morphism in the category of polynomial functors
--- as a morphism in the category of presheaves over the category of elements
+-- as a morphism in the category of copresheaves over the category of elements
 -- of the base functor.
 --
 -- We may view this as the morphism component of a functor, whose object
 -- component is `InterpMlPolySlObj`, from the slice category of polynomial
--- functors over `ar` to the category of presheaves over the category of
+-- functors over `ar` to the category of copresheaves over the category of
 -- elements of `ar`.
 export
 InterpMlPolySlMor : FunExt -> {ar : PolyFunc} ->
