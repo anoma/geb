@@ -1469,7 +1469,7 @@ mlPolySlMorTot {ar} {dom} {cod} =
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
--- This interprets a slice object in the category of Dirichlet functors
+-- This interprets an object in a slice category of Dirichlet functors
 -- as an object in the category of presheaves over the category of elements
 -- of the base functor.
 export
@@ -1506,9 +1506,13 @@ InterpMlDirichSlObjFMapAr : {ar : PolyFunc} ->
 InterpMlDirichSlObjFMapAr {ar=(bpos ** bdir)} =
   InterpMlDirichSlObjFMap {bpos} {bdir}
 
--- This interprets a morphism in the category of Dirichlet functors
+-- This interprets a morphism in a slice category of Dirichlet functors
 -- as a morphism in the category of presheaves over the category of elements
 -- of the base functor (the latter is a natural transformation).
+--
+-- This implements a proof, in the particular case of Dirichlet functors,
+-- that a slice category over a presheaf `p` is a presheaf over the category
+-- of elements of `p`.
 --
 -- We may view this as the morphism component of a functor, whose object
 -- component is `InterpMlDirichSlObj`, from the slice category of Dirichlet
@@ -1526,7 +1530,7 @@ InterpMlDirichSlMor {ar=(bpos ** bdir)}
     (monpos i (fst dpd) **
      \elty => mondir i (fst dpd) (bd elty) $ snd dpd elty)
 
--- This interprets a slice object in the category of polynomial functors
+-- This interprets an object in a slice category of polynomial functors
 -- as an object in the category of presheaves over the category of elements
 -- of the base functor.
 export
@@ -1567,9 +1571,13 @@ InterpMlPolySlObjFMapAr : {ar : PolyFunc} ->
 InterpMlPolySlObjFMapAr {ar=(bpos ** bdir)} =
   InterpMlPolySlObjFMap {bpos} {bdir}
 
--- This interprets a morphism in the category of polynomial functors
+-- This interprets a morphism in a slice category of polynomial functors
 -- as a morphism in the category of copresheaves over the category of elements
 -- of the base functor (the latter is a natural transformation).
+--
+-- This implements a proof, in the particular case of polynomial functors,
+-- that a slice category over a copresheaf `p` is a copresheaf over the category
+-- of elements of `p`.
 --
 -- We may view this as the morphism component of a functor, whose object
 -- component is `InterpMlPolySlObj`, from the slice category of polynomial
