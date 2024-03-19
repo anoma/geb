@@ -150,7 +150,7 @@ cospanComp
 -- of the diagonal functor.
 export
 SpanDiagObj : Type -> SpanObj
-SpanDiagObj x = Span x x (\ex, ex' => ex = ex')
+SpanDiagObj x = Span x x (\ex, ex' => FunExt -> ex = ex')
 
 -- The object-map component of the diagonal functor from `Type` to the category
 -- of cospans in `Type` (which is the functor category from the cospan index
@@ -173,7 +173,7 @@ CospanDiagObj x = Cospan x (\_ => Unit) (\_ => Unit)
 export
 SpanDiagMorph : (0 x, y : Type) ->
   (x -> y) -> SpanMorph (SpanDiagObj x) (SpanDiagObj y)
-SpanDiagMorph x y f = SpanM f f (\l, r, eqlr => cong f eqlr)
+SpanDiagMorph x y f = SpanM f f (\l, r, eqlr, fext => cong f $ eqlr fext)
 
 -- The morphism-map component of the diagonal functor from `Type` to the
 -- category of cospans in `Type`, defined dually to `SpanDiagMorph`.
@@ -232,7 +232,7 @@ export
 PushoutElimMap : (a : SpanObj) -> (0 b, b' : Type) ->
   (b -> b') -> PushoutElimSig a b -> PushoutElimSig a b'
 PushoutElimMap (Span codl codr dom) b b' m (SpanM mcodl mcodr mdom) =
-  SpanM (m . mcodl) (m . mcodr) (\l, r, d => cong m $ mdom l r d)
+  SpanM (m . mcodl) (m . mcodr) (\l, r, d, fext => cong m $ mdom l r d fext)
 
 export
 PushoutLAdjointObj : SpanObj -> Type
@@ -300,9 +300,9 @@ data PullbackRAdjointObjUniv : CospanObj -> Type where
 -- Next we define the adjuncts.
 
 export
-PushoutLAdjunct : FunExt -> (a : SpanObj) -> (b : Type) ->
+PushoutLAdjunct : (a : SpanObj) -> (b : Type) ->
   (PushoutLAdjointObj a -> b) -> SpanMorph a (SpanDiagObj b)
-PushoutLAdjunct fext (Span codl codr dom) b f =
+PushoutLAdjunct (Span codl codr dom) b f =
   SpanM
     (\l =>
       f (Element0 (\x, m => spmCodL m l)
@@ -310,9 +310,10 @@ PushoutLAdjunct fext (Span codl codr dom) b f =
     (\r =>
       f (Element0 (\x, m => spmCodR m r)
         $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl))
-    (\l, r, ed => cong f $
+    (\l, r, ed, fext => cong f $
       s0Eq12
-        (funExt $ \x => funExt $ \(SpanM mcodl' mcodr' mdom') => mdom' l r ed)
+        (funExt $
+          \x => funExt $ \(SpanM mcodl' mcodr' mdom') => mdom' l r ed fext)
         (?PushoutLAdjunct_hole_uip))
 
 export
@@ -387,8 +388,8 @@ PullbackComonadMorph b b' m =
 -- "erase" or "extract".)
 
 export
-PushoutUnit : FunExt -> (a : SpanObj) -> SpanMorph a (PushoutMonadObj a)
-PushoutUnit fext a = PushoutLAdjunct fext a (PushoutLAdjointObj a) id
+PushoutUnit : (a : SpanObj) -> SpanMorph a (PushoutMonadObj a)
+PushoutUnit a = PushoutLAdjunct a (PushoutLAdjointObj a) id
 
 export
 PushoutCounit : NaturalTransformation PushoutComonadObj (id {a=Type})
