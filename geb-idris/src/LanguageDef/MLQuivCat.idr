@@ -4,6 +4,45 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.Quiver
 
+-------------------------------
+-------------------------------
+---- Quivers as a category ----
+-------------------------------
+-------------------------------
+
+public export
+record TQuivObj where
+  constructor TQO
+  tqV : Type
+  tqE : TypeQuivV tqV
+
+public export
+TQVP : TQuivObj -> Type
+TQVP = ProductMonad . tqV
+
+public export
+record TQuivMorph (dom, cod : TQuivObj) where
+  constructor TQM
+  tqmV : tqV dom -> tqV cod
+  tqmE : SliceMorphism {a=(TQVP dom)} (tqE dom) (tqE cod . mapHom tqmV)
+
+export
+TQMvmap : {0 dom, cod : TQuivObj} -> TQuivMorph dom cod -> TQVP dom -> TQVP cod
+TQMvmap {dom} {cod} = mapHom . tqmV
+
+public export
+tqId : (q : TQuivObj) -> TQuivMorph q q
+tqId q = TQM id (\vp => case vp of (_, _) => id)
+
+public export
+tqComp : {q, r, s : TQuivObj} ->
+  TQuivMorph r s -> TQuivMorph q r -> TQuivMorph q s
+tqComp {q} {r} {s} m' m =
+  TQM
+    (tqmV m' . tqmV m)
+    (\qp => case qp of
+      (qv, qv') => tqmE m' (TQMvmap m (qv, qv')) . tqmE m (qv, qv'))
+
 -----------------------------------
 -----------------------------------
 ---- (Co)presheaves on quivers ----
