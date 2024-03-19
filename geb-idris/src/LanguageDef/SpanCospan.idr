@@ -313,8 +313,8 @@ PushoutLAdjunct s@(Span codl codr dom) b f =
     (\l, r, ed, fext =>
       let
         feq :
-          ((\x, m : SpanMorph s (SpanDiagObj x) => spmCodL m l) =
-           (\x, m : SpanMorph s (SpanDiagObj x) => spmCodR m r)) =
+          ((\x : Type, m : SpanMorph s (SpanDiagObj x) => spmCodL m l) =
+           (\x : Type, m : SpanMorph s (SpanDiagObj x) => spmCodR m r)) =
           funExt $ \x => funExt $ \(SpanM mcodl mcodr mdom) => mdom l r ed fext
       in
       rewrite feq in
