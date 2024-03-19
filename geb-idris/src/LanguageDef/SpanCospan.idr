@@ -302,7 +302,7 @@ data PullbackRAdjointObjUniv : CospanObj -> Type where
 export
 PushoutLAdjunct : (a : SpanObj) -> (b : Type) ->
   (PushoutLAdjointObj a -> b) -> SpanMorph a (SpanDiagObj b)
-PushoutLAdjunct (Span codl codr dom) b f =
+PushoutLAdjunct s@(Span codl codr dom) b f =
   SpanM
     (\l =>
       f (Element0 (\x, m => spmCodL m l)
@@ -310,11 +310,18 @@ PushoutLAdjunct (Span codl codr dom) b f =
     (\r =>
       f (Element0 (\x, m => spmCodR m r)
         $ \b, b', m, sm => case sm of SpanM mcodl mcodr mdom => Refl))
-    (\l, r, ed, fext => cong f $
-      s0Eq12
-        (funExt $
-          \x => funExt $ \(SpanM mcodl' mcodr' mdom') => mdom' l r ed fext)
-        (?PushoutLAdjunct_hole_uip))
+    (\l, r, ed, fext =>
+      let
+        feq :
+          ((\x, m : SpanMorph s (SpanDiagObj x) => spmCodL m l) =
+           (\x, m : SpanMorph s (SpanDiagObj x) => spmCodR m r)) =
+          funExt $ \x => funExt $ \(SpanM mcodl mcodr mdom) => mdom l r ed fext
+      in
+      rewrite feq in
+      cong f $
+      s0Eq12 Refl
+        (funExt $ \b => funExt $ \b' => funExt $ \m => funExt $
+          \(SpanM _ _ _) => uip))
 
 export
 PushoutRAdjunct : (a : SpanObj) -> (b : Type) ->
