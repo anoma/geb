@@ -423,7 +423,16 @@ pushoutJoin (Span codl codr dom) = ?pushoutJoin_hole
 export
 pushoutDup : (b : Type) ->
   PushoutComonadObj b -> PushoutComonadObj (PushoutComonadObj b)
-pushoutDup b b' = ?pushoutDup_hole
+pushoutDup b cmo@(Element0 alpha anat) =
+  Element0
+    (\a, m => spmCodL m cmo)
+    (\a, a', ma, sm =>
+      let
+        mcodl = spmCodL sm
+        mcodr = spmCodR sm
+        mdom = spmDom sm
+      in
+      ?pushoutDup_hole)
 
 export
 pullbackJoin : (a : Type) ->
