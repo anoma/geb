@@ -418,7 +418,11 @@ PullbackCounit x = PullbackRAdjunct (PullbackRAdjointObj x) x id
 export
 pushoutJoin : (a : SpanObj) ->
   SpanMorph (PushoutMonadObj $ PushoutMonadObj a) (PushoutMonadObj a)
-pushoutJoin (Span codl codr dom) = ?pushoutJoin_hole
+pushoutJoin (Span codl codr dom) =
+  SpanM
+    (\(Element0 l lnat) => ?pushoutJoin_hole_codl)
+    (\(Element0 r rnat) => ?pushoutJoin_hole_codr)
+    ?pushoutJoin_hole_dom
 
 export
 pushoutDup : (b : Type) ->
