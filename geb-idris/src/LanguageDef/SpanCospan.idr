@@ -428,9 +428,23 @@ pushoutDup b b' = ?pushoutDup_hole
 export
 pullbackJoin : (a : Type) ->
   PullbackMonadObj (PullbackMonadObj a) -> PullbackMonadObj a
-pullbackJoin a = ?pullbackJoin_jole
+pullbackJoin a (Evidence x (ex, m)) =
+  Evidence x
+    (ex,
+     CospanM
+      (\eb =>
+        let mc = cospmCod m eb in (cospmCod $ snd $ snd mc) $ fst $ snd mc)
+      (\_, _ => ())
+      (\_, _ => ()))
 
 export
 pullbackDup : (b : CospanObj) ->
   CospanMorph (PullbackComonadObj b) (PullbackComonadObj $ PullbackComonadObj b)
-pullbackDup (Cospan cod doml domr) = ?pullbackDup_hole
+pullbackDup (Cospan cod doml domr) =
+  CospanM
+    (\pb =>
+      Evidence
+        (fst pb)
+        (fst $ snd pb, CospanM (\ea' => pb) (\_, _ => ()) (\_, _ => ())))
+    (\_, _ => ())
+    (\_, _ => ())
