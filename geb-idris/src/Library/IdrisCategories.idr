@@ -5684,6 +5684,10 @@ public export
 EndoDialgebra : (Type -> Type) -> Type -> Type
 EndoDialgebra f = Dialgebra f f
 
+public export
+(Contravariant f, Functor g) => Functor (Dialgebra f g) where
+  map {f} {g} {a} {b} m alg = map {f=g} m . alg . contramap {f} m
+
 -- We can always derive a dialgebra from a proalgebra, simply by composition.
 -- We may not be able to go the other direction, however, so a proalgebra is
 -- in that sense more powerful.  By the same token, the _notion_ of proalgebra
