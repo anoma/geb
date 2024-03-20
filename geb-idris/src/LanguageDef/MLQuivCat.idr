@@ -182,6 +182,15 @@ record TQProsheaf (w, v : Type) (qw : TypeQuivV w) (qv : TypeQuivV v) where
   tqcLmap : TypeQuivLmapSig {w} {v} qw tqcOmap
   tqcRmap : TypeQuivRmapSig {w} {v} qv tqcOmap
 
+public export
+record TQCollage {dobj, cobj : Type}
+    {dmor : TypeQuivV dobj} {cmor : TypeQuivV cobj}
+    (dmap : TQPresheaf dobj dmor) (cmap : TQCopresheaf cobj cmor) where
+  constructor TQC
+  tqcHetOmap : dobj -> cobj -> Type
+  tqcHetFmap : (s : dobj) -> (t : cobj) -> tqcHetOmap s t ->
+    tqpOmap dmap s -> tqcOmap cmap t
+
 -------------------------------------------------------
 -------------------------------------------------------
 ---- Functors in free-(co)presheaf double category ----
