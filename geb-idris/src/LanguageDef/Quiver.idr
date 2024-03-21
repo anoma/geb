@@ -128,3 +128,30 @@ FinEnrQuivComp {v} q = TypeCQuivComp {v} (Fin . q)
 public export
 FinQuivComp : {n : Nat} -> FinQuivN n -> Type
 FinQuivComp {n} = FinEnrQuivComp {v=(Fin n)}
+
+----------------------
+---- "Proquivers" ----
+----------------------
+
+-- What we shall call a "proquiver" is a quiver of the shape which underlies
+-- a profunctor, as a quiver is the shape which underlies a category.  The
+-- shape of a proquiver is that of the collage (or "cograph") of a
+-- profunctor, which allows a profunctor to be viewed as a pair of categories
+-- with morphisms in one direction between them.
+
+-- An enriched proquiver internal to a category which is itself internal to
+-- `Type` is one whose two edge-objects are drawn from some arbitrary categories
+-- internal to `Type` (possibly `Type` itself, which is self-enriched), and
+-- whose two vertex objects come from some other arbitrary categories internal
+-- to `Type` (again possibly `Type` itself), and whose het-object is drawn from
+-- some arbitrary category internal to type.  A
+-- `ProquivVE {vb} {vb'} vp vp' v v' w w' e e' h` is one whose vertex
+-- categories' objects are indexed by `vb` and `vb`' and are of the form
+-- `vb v` or `vb' v'` for some `v : vb` or `v' : vb'`, whose specific
+-- vertex-objects are `v` and `v'`, whose edge-objects are drawn from `e` and
+-- `e'`, and whose het-objects are drawn from `h`.
+public export
+ProquivVE : {0 vb, vb' : Type} -> SliceObj vb -> SliceObj vb' -> vb -> vb' ->
+  Type -> Type -> Type -> Type
+ProquivVE {vb} {vb'} vp vp' v v' e e' h =
+  (QuivVE {vb} vp v e, QuivVE {vb=vb'} vp' v' e', (vp v, vp' v') -> h)
