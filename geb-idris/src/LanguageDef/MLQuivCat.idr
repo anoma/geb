@@ -233,3 +233,55 @@ InterpMLCdimap : (mlc : MLCollage) ->
     InterpMLC mlc s t -> InterpMLC mlc a b
 InterpMLCdimap mlc s t a b mas mtb =
   InterpMLClmap mlc s b a mas . InterpMLCrmap mlc s t b mtb
+
+public export
+record MLCNatTrans (p, q : MLCollage) where
+  constructor MLNT
+  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
+  mpOnDom :
+    (i : mlcHetIdx p) -> mlcDom p i ->
+      mlcDom q (mpOnIdx i)
+  mpOnCod :
+    (i : mlcHetIdx p) -> mlcCod q (mpOnIdx i) ->
+      mlcCod p i
+
+public export
+record MLCParaNT (p, q : MLCollage) where
+  constructor MLPNT
+  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
+  mpOnDom :
+    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcDom p i ->
+      mlcDom q (mpOnIdx i)
+  mpOnCod :
+    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcCod q (mpOnIdx i) ->
+      mlcCod p i
+
+export
+InterpMLCnt : {0 p, q : MLCollage} -> MLCNatTrans p q ->
+  (0 x, y : Type) -> InterpMLC p x y -> InterpMLC q x y
+InterpMLCnt {p} {q} (MLNT oni ond onc) x y (i ** (dd, dc)) =
+  (oni i ** (ond i . dd, dc . onc i))
+
+export
+0 InterpMLCisNatural : {0 p, q : MLCollage} -> (mlnt : MLCNatTrans p q) ->
+  (0 s, t, a, b : Type) ->
+  (mas : a -> s) -> (mtb : t -> b) ->
+  ExtEq {a=(InterpMLC p s t)} {b=(InterpMLC q a b)}
+    (InterpMLCdimap q s t a b mas mtb . InterpMLCnt {p} {q} mlnt s t)
+    (InterpMLCnt {p} {q} mlnt a b . InterpMLCdimap p s t a b mas mtb)
+InterpMLCisNatural = ?InterpMLCisNatural_hole
+
+export
+InterpMLCpara : {0 p, q : MLCollage} -> MLCParaNT p q ->
+  (0 x : Type) -> InterpMLC p x x -> InterpMLC q x x
+InterpMLCpara {p} {q} (MLPNT oni ond onc) x (i ** (dd, dc)) =
+  (oni i ** (ond i (dd . dc) . dd, dc . onc i (dd . dc)))
+
+export
+0 InterpMLCisPara : {0 p, q : MLCollage} -> (mlpnt : MLCParaNT p q) ->
+  (i0, i1 : Type) -> (i2 : i0 -> i1) ->
+  (d0 : InterpMLC p i0 i0) -> (d1 : InterpMLC p i1 i1) ->
+  (InterpMLClmap p i1 i1 i0 i2 d1 = InterpMLCrmap p i0 i0 i1 i2 d0) ->
+  (InterpMLClmap q i1 i1 i0 i2 (InterpMLCpara {p} {q} mlpnt i1 d1) =
+   InterpMLCrmap q i0 i0 i1 i2 (InterpMLCpara {p} {q} mlpnt i0 d0))
+InterpMLCisPara = ?InterpMLCisPara_hole
