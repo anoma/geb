@@ -196,3 +196,30 @@ record TQDiCollage (v : Type) (q : TypeDiquivV v) where
   tqdcCat : TQPresheaf v (dqQuiv q)
   tqdcHet : (s, t : v) -> dqHet q (s, t) ->
     tqpOmap tqdcCat s -> tqpOmap tqdcCat t
+
+----------------------------------------------------
+----------------------------------------------------
+---- Metalanguage difunctors as figure-collages ----
+----------------------------------------------------
+----------------------------------------------------
+
+public export
+record MLCollage where
+  constructor MLC
+  mlcHetIdx : Type
+  mlcDom : SliceObj mlcHetIdx
+  mlcCod : SliceObj mlcHetIdx
+
+export
+InterpMLC : MLCollage -> ProfunctorSig
+InterpMLC (MLC h d c) x y = (i : h ** (x -> d i, c i -> y))
+
+export
+InterpMLClmap : (mlc : MLCollage) ->
+  (0 s, t, a : Type) -> (a -> s) -> InterpMLC mlc s t -> InterpMLC mlc a t
+InterpMLClmap (MLC h d c) s t a mas (i ** (msd, mct)) = (i ** (msd . mas, mct))
+
+export
+InterpMLCrmap : (mlc : MLCollage) ->
+  (0 s, t, b : Type) -> (t -> b) -> InterpMLC mlc s t -> InterpMLC mlc s b
+InterpMLCrmap (MLC h d c) s t b mtb (i ** (msd, mct)) = (i ** (msd, mtb . mct))
