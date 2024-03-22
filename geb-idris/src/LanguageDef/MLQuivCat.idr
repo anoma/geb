@@ -196,9 +196,3 @@ record TQDiCollage (v : Type) (q : TypeDiquivV v) where
   tqdcCat : TQPresheaf v (dqQuiv q)
   tqdcHet : (s, t : v) -> dqHet q (s, t) ->
     tqpOmap tqdcCat s -> tqpOmap tqdcCat t
-
--------------------------------------------------------
--------------------------------------------------------
----- Functors in free-(co)presheaf double category ----
--------------------------------------------------------
--------------------------------------------------------
