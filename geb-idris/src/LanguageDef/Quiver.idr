@@ -167,9 +167,9 @@ public export
 EnrProquivVE : Type -> Type -> Type -> Type -> Type -> Type
 EnrProquivVE = ProquivVE {vb=Type} {vb'=Type} id id
 
--- A proquiver internal to and enriched over `Type` is one whose vertex objects
--- and edge-objects are drawn from `Type`, the core category of the
+-- A proquiver internal to and enriched over `Type` is one whose vertex objects,
+-- edge-objects, and het-object are drawn from `Type`, the core category of the
 -- metalanguage.
 public export
-TypeProquivV : Type -> Type -> Type -> Type
-TypeProquivV v v' = EnrProquivVE v v' Type Type
+TypeProquivV : Type -> Type -> Type
+TypeProquivV v v' = EnrProquivVE v v' Type Type Type
