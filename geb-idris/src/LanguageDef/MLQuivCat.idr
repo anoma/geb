@@ -183,13 +183,12 @@ record TQProsheaf (w, v : Type) (qw : TypeQuivV w) (qv : TypeQuivV v) where
   tqcRmap : TypeQuivRmapSig {w} {v} qv tqcOmap
 
 public export
-record TQCollage {dobj, cobj : Type}
-    {dmor : TypeQuivV dobj} {cmor : TypeQuivV cobj}
-    (dmap : TQPresheaf dobj dmor) (cmap : TQCopresheaf cobj cmor) where
+record TQCollage (w, v : Type) (q : TypeProquivV w v) where
   constructor TQC
-  tqcHetOmap : dobj -> cobj -> Type
-  tqcHetFmap : (s : dobj) -> (t : cobj) -> tqcHetOmap s t ->
-    tqpOmap dmap s -> tqcOmap cmap t
+  tqcContra : TQPresheaf w (prqContra q)
+  tqcCovar : TQCopresheaf v (prqCovar q)
+  tqcHet : (s : w) -> (t : v) -> prqHet q (s, t) ->
+    tqpOmap tqcContra s -> tqcOmap tqcCovar t
 
 -------------------------------------------------------
 -------------------------------------------------------
