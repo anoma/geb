@@ -212,17 +212,20 @@ record MLCollage where
 
 export
 InterpMLC : MLCollage -> ProfunctorSig
-InterpMLC (MLC h d c) x y = (i : h ** (x -> d i, c i -> y))
+InterpMLC mlc x y =
+  (i : mlcHetIdx mlc ** (x -> mlcDom mlc i, mlcCod mlc i -> y))
 
 export
 InterpMLClmap : (mlc : MLCollage) ->
   (0 s, t, a : Type) -> (a -> s) -> InterpMLC mlc s t -> InterpMLC mlc a t
-InterpMLClmap (MLC h d c) s t a mas (i ** (msd, mct)) = (i ** (msd . mas, mct))
+InterpMLClmap mlc s t a mas pst =
+  (fst pst ** (fst (snd pst) . mas, snd (snd pst)))
 
 export
 InterpMLCrmap : (mlc : MLCollage) ->
   (0 s, t, b : Type) -> (t -> b) -> InterpMLC mlc s t -> InterpMLC mlc s b
-InterpMLCrmap (MLC h d c) s t b mtb (i ** (msd, mct)) = (i ** (msd, mtb . mct))
+InterpMLCrmap mlc s t b mtb pst =
+  (fst pst ** (fst (snd pst), mtb . snd (snd pst)))
 
 export
 InterpMLCdimap : (mlc : MLCollage) ->
