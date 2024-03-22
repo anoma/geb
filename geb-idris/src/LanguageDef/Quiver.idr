@@ -145,13 +145,31 @@ FinQuivComp {n} = FinEnrQuivComp {v=(Fin n)}
 -- whose two vertex objects come from some other arbitrary categories internal
 -- to `Type` (again possibly `Type` itself), and whose het-object is drawn from
 -- some arbitrary category internal to type.  A
--- `ProquivVE {vb} {vb'} vp vp' v v' w w' e e' h` is one whose vertex
+-- `ProquivVE {vb} {vb'} vp vp' v v' e e' h` is one whose vertex
 -- categories' objects are indexed by `vb` and `vb`' and are of the form
 -- `vb v` or `vb' v'` for some `v : vb` or `v' : vb'`, whose specific
 -- vertex-objects are `v` and `v'`, whose edge-objects are drawn from `e` and
 -- `e'`, and whose het-objects are drawn from `h`.
 public export
-ProquivVE : {0 vb, vb' : Type} -> SliceObj vb -> SliceObj vb' -> vb -> vb' ->
-  Type -> Type -> Type -> Type
-ProquivVE {vb} {vb'} vp vp' v v' e e' h =
-  (QuivVE {vb} vp v e, QuivVE {vb=vb'} vp' v' e', (vp v, vp' v') -> h)
+record ProquivVE {0 vb, vb' : Type} (vp : SliceObj vb) (vp' : SliceObj vb')
+    (v : vb) (v' : vb') (e, e', h : Type) where
+  constructor Proquiv
+  prqContra : QuivVE {vb} vp v e
+  prqCovar : QuivVE {vb=vb'} vp' v' e'
+  prqHet : (vp v, vp' v') -> h
+
+-- An enriched proquiver internal to `Type` is one whose edge-objects are drawn
+-- from arbitrary categories internal to `Type` (possibly `Type` itself,
+-- which is self-enriched), and whose vertex objects come from `Type` itself.
+-- The five `Type` parameters are two vertex objects, two edge types, and one
+-- het-type.
+public export
+EnrProquivVE : Type -> Type -> Type -> Type -> Type -> Type
+EnrProquivVE = ProquivVE {vb=Type} {vb'=Type} id id
+
+-- A proquiver internal to and enriched over `Type` is one whose vertex objects
+-- and edge-objects are drawn from `Type`, the core category of the
+-- metalanguage.
+public export
+TypeProquivV : Type -> Type -> Type -> Type
+TypeProquivV v v' = EnrProquivVE v v' Type Type
