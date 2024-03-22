@@ -223,3 +223,10 @@ export
 InterpMLCrmap : (mlc : MLCollage) ->
   (0 s, t, b : Type) -> (t -> b) -> InterpMLC mlc s t -> InterpMLC mlc s b
 InterpMLCrmap (MLC h d c) s t b mtb (i ** (msd, mct)) = (i ** (msd, mtb . mct))
+
+export
+InterpMLCdimap : (mlc : MLCollage) ->
+  (0 s, t, a, b : Type) -> (a -> s) -> (t -> b) ->
+    InterpMLC mlc s t -> InterpMLC mlc a b
+InterpMLCdimap mlc s t a b mas mtb =
+  InterpMLClmap mlc s b a mas . InterpMLCrmap mlc s t b mtb
