@@ -182,8 +182,8 @@ TypeProquivV v v' = EnrProquivVE v v' Type Type Type
 public export
 record DiquivVE {0 vb : Type} (vp : SliceObj vb) (v : vb) (e, h : Type) where
   constructor Diqquiv
-  prqQuiv : QuivVE {vb} vp v e
-  prqHet : (vp v, vp v) -> h
+  dqQuiv : QuivVE {vb} vp v e
+  dqHet : (vp v, vp v) -> h
 
 public export
 EnrDiquivVE : Type -> Type -> Type -> Type

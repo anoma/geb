@@ -190,6 +190,13 @@ record TQCollage (w, v : Type) (q : TypeProquivV w v) where
   tqcHet : (s : w) -> (t : v) -> prqHet q (s, t) ->
     tqpOmap tqcContra s -> tqcOmap tqcCovar t
 
+public export
+record TQDiCollage (v : Type) (q : TypeDiquivV v) where
+  constructor TQDC
+  tqdcCat : TQPresheaf v (dqQuiv q)
+  tqdcHet : (s, t : v) -> dqHet q (s, t) ->
+    tqpOmap tqdcCat s -> tqpOmap tqdcCat t
+
 -------------------------------------------------------
 -------------------------------------------------------
 ---- Functors in free-(co)presheaf double category ----
