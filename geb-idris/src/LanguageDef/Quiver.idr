@@ -173,3 +173,22 @@ EnrProquivVE = ProquivVE {vb=Type} {vb'=Type} id id
 public export
 TypeProquivV : Type -> Type -> Type
 TypeProquivV v v' = EnrProquivVE v v' Type Type Type
+
+-------------------
+---- Diquivers ----
+-------------------
+
+-- A diquiver is a symmetric proquiver -- one whose two quivers are the same.
+public export
+record DiquivVE {0 vb : Type} (vp : SliceObj vb) (v : vb) (e, h : Type) where
+  constructor Diqquiv
+  prqQuiv : QuivVE {vb} vp v e
+  prqHet : (vp v, vp v) -> h
+
+public export
+EnrDiquivVE : Type -> Type -> Type -> Type
+EnrDiquivVE = DiquivVE {vb=Type} id
+
+public export
+TypeDiquivV : Type -> Type
+TypeDiquivV v = EnrDiquivVE v Type Type
