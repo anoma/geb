@@ -786,36 +786,6 @@ record PDAcoend (ar : PolyDiAr) where
   pdacElem : InterpPDA ar pdacObj pdacObj
 
 public export
-IntHetArena : (c : Type) -> (mor : IntDifunctorSig c) -> IntEndoProAr c -> Type
-IntHetArena c mor (pos ** (contra, covar)) =
-  (i : pos) -> mor (covar i) (contra i)
-
-public export
-IntDiArena : (c : Type) -> (mor : IntDifunctorSig c) -> Type
-IntDiArena c mor = DPair (IntEndoProAr c) (IntHetArena c mor)
-
-public export
-InterpDiArBase : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : IntCompSig c mor) -> IntDiArena c mor -> c -> Type
-InterpDiArBase c mor comp (ar ** het) x = InterpIEPPobj c mor ar x x
-
-public export
-InterpDiArCond : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : IntCompSig c mor) -> (ar : IntDiArena c mor) -> (x : c) ->
-  InterpDiArBase c mor comp ar x -> Type
-InterpDiArCond c mor comp
-  ((pos ** (contra, covar)) ** het) x (i ** (mxi, mjx)) =
-    comp (covar i) x (contra i) mxi mjx = het i
-
-public export
-InterpDiAr : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (comp : IntCompSig c mor) -> IntDiArena c mor -> c -> Type
-InterpDiAr c mor comp ar x =
-  Subset0
-    (InterpDiArBase c mor comp ar x)
-    (InterpDiArCond c mor comp ar x)
-
-public export
 IntPDiNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEndoProAr c -> IntEndoProAr c -> Type
 IntPDiNTar c mor (ppos ** (pcontra, pcovar)) (qpos ** (qcontra, qcovar)) =
@@ -904,6 +874,36 @@ intPDiNTvcomp c mor comp
         comp (rcovar (bonpos (aonpos i))) (qcovar (aonpos i)) (pcovar i)
           (acovar i)
           (bcovar (aonpos i))))
+
+public export
+IntHetArena : (c : Type) -> (mor : IntDifunctorSig c) -> IntEndoProAr c -> Type
+IntHetArena c mor (pos ** (contra, covar)) =
+  (i : pos) -> mor (covar i) (contra i)
+
+public export
+IntDiArena : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntDiArena c mor = DPair (IntEndoProAr c) (IntHetArena c mor)
+
+public export
+InterpDiArBase : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) -> IntDiArena c mor -> c -> Type
+InterpDiArBase c mor comp (ar ** het) x = InterpIEPPobj c mor ar x x
+
+public export
+InterpDiArCond : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) -> (ar : IntDiArena c mor) -> (x : c) ->
+  InterpDiArBase c mor comp ar x -> Type
+InterpDiArCond c mor comp
+  ((pos ** (contra, covar)) ** het) x (i ** (mxi, mjx)) =
+    comp (covar i) x (contra i) mxi mjx = het i
+
+public export
+InterpDiAr : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) -> IntDiArena c mor -> c -> Type
+InterpDiAr c mor comp ar x =
+  Subset0
+    (InterpDiArBase c mor comp ar x)
+    (InterpDiArCond c mor comp ar x)
 
 ------------------------------------------------------
 ---- Profunctor categories of (diagonal) elements ----
