@@ -269,7 +269,9 @@ export
   ExtEq {a=(InterpMLC p s t)} {b=(InterpMLC q a b)}
     (InterpMLCdimap q s t a b mas mtb . InterpMLCnt {p} {q} mlnt s t)
     (InterpMLCnt {p} {q} mlnt a b . InterpMLCdimap p s t a b mas mtb)
-InterpMLCisNatural = ?InterpMLCisNatural_hole
+InterpMLCisNatural {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
+  (MLNT onidx ondom oncod) s t a b mas mtb (pi ** (spd, pct)) =
+    dpEq12 Refl $ pairEqCong Refl Refl
 
 export
 InterpMLCpara : {0 p, q : MLCollage} -> MLCParaNT p q ->
