@@ -196,3 +196,85 @@ record TQDiCollage (v : Type) (q : TypeDiquivV v) where
   tqdcCat : TQPresheaf v (dqQuiv q)
   tqdcHet : (s, t : v) -> dqHet q (s, t) ->
     tqpOmap tqdcCat s -> tqpOmap tqdcCat t
+
+----------------------------------------------------
+----------------------------------------------------
+---- Metalanguage difunctors as figure-collages ----
+----------------------------------------------------
+----------------------------------------------------
+
+public export
+record MLCollage where
+  constructor MLC
+  mlcHetIdx : Type
+  mlcDom : SliceObj mlcHetIdx
+  mlcCod : SliceObj mlcHetIdx
+
+export
+InterpMLC : MLCollage -> ProfunctorSig
+InterpMLC mlc x y =
+  (i : mlcHetIdx mlc ** (x -> mlcDom mlc i, mlcCod mlc i -> y))
+
+export
+InterpMLClmap : (mlc : MLCollage) ->
+  (0 s, t, a : Type) -> (a -> s) -> InterpMLC mlc s t -> InterpMLC mlc a t
+InterpMLClmap mlc s t a mas pst =
+  (fst pst ** (fst (snd pst) . mas, snd (snd pst)))
+
+export
+InterpMLCrmap : (mlc : MLCollage) ->
+  (0 s, t, b : Type) -> (t -> b) -> InterpMLC mlc s t -> InterpMLC mlc s b
+InterpMLCrmap mlc s t b mtb pst =
+  (fst pst ** (fst (snd pst), mtb . snd (snd pst)))
+
+export
+InterpMLCdimap : (mlc : MLCollage) ->
+  (0 s, t, a, b : Type) -> (a -> s) -> (t -> b) ->
+    InterpMLC mlc s t -> InterpMLC mlc a b
+InterpMLCdimap mlc s t a b mas mtb =
+  InterpMLClmap mlc s b a mas . InterpMLCrmap mlc s t b mtb
+
+public export
+record MLCNatTrans (p, q : MLCollage) where
+  constructor MLNT
+  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
+  mpOnDom :
+    (i : mlcHetIdx p) -> mlcDom p i ->
+      mlcDom q (mpOnIdx i)
+  mpOnCod :
+    (i : mlcHetIdx p) -> mlcCod q (mpOnIdx i) ->
+      mlcCod p i
+
+public export
+record MLCParaNT (p, q : MLCollage) where
+  constructor MLPNT
+  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
+  mpOnDom :
+    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcDom p i ->
+      mlcDom q (mpOnIdx i)
+  mpOnCod :
+    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcCod q (mpOnIdx i) ->
+      mlcCod p i
+
+export
+InterpMLCnt : {0 p, q : MLCollage} -> MLCNatTrans p q ->
+  (0 x, y : Type) -> InterpMLC p x y -> InterpMLC q x y
+InterpMLCnt {p} {q} (MLNT oni ond onc) x y (i ** (dd, dc)) =
+  (oni i ** (ond i . dd, dc . onc i))
+
+export
+0 InterpMLCisNatural : {0 p, q : MLCollage} -> (mlnt : MLCNatTrans p q) ->
+  (0 s, t, a, b : Type) ->
+  (mas : a -> s) -> (mtb : t -> b) ->
+  ExtEq {a=(InterpMLC p s t)} {b=(InterpMLC q a b)}
+    (InterpMLCdimap q s t a b mas mtb . InterpMLCnt {p} {q} mlnt s t)
+    (InterpMLCnt {p} {q} mlnt a b . InterpMLCdimap p s t a b mas mtb)
+InterpMLCisNatural {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
+  (MLNT onidx ondom oncod) s t a b mas mtb (pi ** (spd, pct)) =
+    dpEq12 Refl $ pairEqCong Refl Refl
+
+export
+InterpMLCpara : {0 p, q : MLCollage} -> MLCParaNT p q ->
+  (0 x : Type) -> InterpMLC p x x -> InterpMLC q x x
+InterpMLCpara {p} {q} (MLPNT oni ond onc) x (i ** (dd, dc)) =
+  (oni i ** (ond i (dd . dc) . dd, dc . onc i (dd . dc)))
