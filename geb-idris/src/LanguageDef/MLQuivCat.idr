@@ -286,4 +286,9 @@ export
   (InterpMLClmap p i1 i1 i0 i2 d1 = InterpMLCrmap p i0 i0 i1 i2 d0) ->
   (InterpMLClmap q i1 i1 i0 i2 (InterpMLCpara {p} {q} mlpnt i1 d1) =
    InterpMLCrmap q i0 i0 i1 i2 (InterpMLCpara {p} {q} mlpnt i0 d0))
-InterpMLCisPara = ?InterpMLCisPara_hole
+InterpMLCisPara {p=(MLC ph pd pc)} {q=(MLC qh qd qc)} (MLPNT onidx ondom oncod)
+  i0 i1 i2 (pi0 ** (i0d0, c0i0)) (pi1 ** (i1d1, c1i1)) cond =
+    case mkDPairInjectiveFstHet cond of
+      Refl => case mkDPairInjectiveSndHet cond of
+        Refl => dpEq12 Refl
+          $ pairEqCong Refl Refl
