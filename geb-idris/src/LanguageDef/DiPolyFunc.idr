@@ -32,25 +32,33 @@ DAcobase : (da : ADiArena) -> (i : daPos da) -> SliceObj (DAbase da i)
 DAcobase da i = adscCobase (daCat da i)
 
 public export
-DAtot : {da : ADiArena} -> {i : daPos da} -> SliceObj (DAobj da i)
-DAtot {da} {i} = Sigma {a=(DAbase da i)} . adsoTot {cat=(daCat da i)}
+DAtot : {da : ADiArena} -> {i : daPos da} -> DAobj da i ->
+  SliceObj (DAbase da i)
+DAtot {da} {i} = adsoTot {cat=(daCat da i)}
 
 public export
-record InterpDAf (da : ADiArena) (x : Type) where
-  constructor IDAf
-  idafPos : daPos da
-  idafProj : x -> DAbase da idafPos
-  idafDir :
-    SliceMorphism {a=(DAbase da idafPos)}
-      (DAcobase da idafPos)
-      (SliceFromCSlice (x ** idafProj))
+DAsigma : {da : ADiArena} -> {i : daPos da} -> SliceObj (DAobj da i)
+DAsigma {da} {i} = Sigma {a=(DAbase da i)} . DAtot {da} {i}
 
--- An object of the category of elements of `InterpDAF da` is
--- a dislice object.
+public export
+DAinj : {da : ADiArena} -> {i : daPos da} -> (x : DAobj da i) ->
+  SliceMorphism {a=(DAbase da i)} (DAcobase da i) (DAtot {da} {i} x)
+DAinj {da} {i} = adsoInj {cat=(daCat da i)}
+
+public export
+data InterpDAf : ADiArena -> Type -> Type where
+  IDAf :
+    {0 da : ADiArena} -> (i : daPos da) -> (obj : DAobj da i) ->
+    InterpDAf da (DAsigma {da} {i} obj)
+
+export
+IDAfpos : {da : ADiArena} -> {x : Type} -> (e : InterpDAf da x) -> daPos da
+IDAfpos {da} (IDAf {da} i obj) = i
+
 export
 IDAfobj : {da : ADiArena} -> {x : Type} ->
-  (e : InterpDAf da x) -> DAobj da (idafPos e)
-IDAfobj {da} {x} (IDAf pos proj dir) = ADSO (SliceFromCSlice (x ** proj)) dir
+  (e : InterpDAf da x) -> DAobj da (IDAfpos e)
+IDAfobj {da} (IDAf {da} i obj) = obj
 
 ------------------------------------------------------------------
 ------------------------------------------------------------------
