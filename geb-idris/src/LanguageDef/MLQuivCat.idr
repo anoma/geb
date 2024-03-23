@@ -278,12 +278,3 @@ InterpMLCpara : {0 p, q : MLCollage} -> MLCParaNT p q ->
   (0 x : Type) -> InterpMLC p x x -> InterpMLC q x x
 InterpMLCpara {p} {q} (MLPNT oni ond onc) x (i ** (dd, dc)) =
   (oni i ** (ond i (dd . dc) . dd, dc . onc i (dd . dc)))
-
-export
-0 InterpMLCisPara : {0 p, q : MLCollage} -> (mlpnt : MLCParaNT p q) ->
-  (i0, i1 : Type) -> (i2 : i0 -> i1) ->
-  (d0 : InterpMLC p i0 i0) -> (d1 : InterpMLC p i1 i1) ->
-  (InterpMLClmap p i1 i1 i0 i2 d1 = InterpMLCrmap p i0 i0 i1 i2 d0) ->
-  (InterpMLClmap q i1 i1 i0 i2 (InterpMLCpara {p} {q} mlpnt i1 d1) =
-   InterpMLCrmap q i0 i0 i1 i2 (InterpMLCpara {p} {q} mlpnt i0 d0))
-InterpMLCisPara = ?InterpMLCisPara_hole
