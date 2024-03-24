@@ -293,6 +293,19 @@ InterpMLCisPara {p=(MLC ph pd pc)} {q=(MLC qh qd qc)} (MLPNT onidx ondom oncod)
         Refl => dpEq12 Refl
           $ pairEqCong Refl Refl
 
+-- We represent the hom-profunctor with simply one position (index) per
+-- morphism.
+export
+MlcHomProfId : MLCollage
+MlcHomProfId =
+  MLC (dom : Type ** cod : Type ** dom -> cod) fst (\i => fst $ snd i)
+
+InterpToIdMLC : (x, y : Type) -> (x -> y) -> InterpMLC MlcHomProfId x y
+InterpToIdMLC x y m = ((x ** y ** m) ** (id, id))
+
+InterpFromIdMLC : (x, y : Type) -> InterpMLC MlcHomProfId x y -> x -> y
+InterpFromIdMLC x y ((i ** j ** mij) ** (mxi, mjy)) = mjy . mij . mxi
+
 export
 mlcComp : MLCollage -> MLCollage -> MLCollage
 mlcComp (MLC qh qd qc) (MLC ph pd pc) =
