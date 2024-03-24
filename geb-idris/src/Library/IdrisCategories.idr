@@ -226,6 +226,42 @@ InternalNTFromContravarHom : {obj : Type} ->
 InternalNTFromContravarHom {obj} hom =
   SliceMorphism {a=obj} . InternalContravarHom hom
 
+------------------------------------------------------------
+------------------------------------------------------------
+---- Yoneda-lemma forms in standard categories (`SCat`) ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+----------------------------------------
+---- Standard-category Yoneda lemma ----
+----------------------------------------
+
+public export
+SCCovarHomYonedaR :
+  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  InternalNTFromCovarHom {obj=sc.scObj} sc.scHom a f -> f a
+SCCovarHomYonedaR sc a f alpha = alpha a $ sc.scId a
+
+public export
+SCCovarHomYonedaL : (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f a -> f b) ->
+  f a -> InternalNTFromCovarHom {obj=sc.scObj} sc.scHom a f
+SCCovarHomYonedaL sc a f fmap fa b mab = fmap a b mab fa
+
+public export
+SCContravarHomYonedaR :
+  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f -> f a
+SCContravarHomYonedaR sc a f alpha = alpha a $ sc.scId a
+
+public export
+SCContravarHomYonedaL :
+  (sc : SCat) -> (a : sc.scObj) -> (f : SliceObj sc.scObj) ->
+  -- f is contravariant
+  (fmap : (a, b : sc.scObj) -> sc.scHom (a, b) -> f b -> f a) ->
+  f a -> InternalNTFromContravarHom {obj=sc.scObj} sc.scHom a f
+SCContravarHomYonedaL sc a f fmap fa b mba = fmap b a mba fa
+
 -----------------------
 -----------------------
 ---- Pointed types ----
