@@ -19,6 +19,7 @@ modules =
     , LanguageDef.Quiver
     , LanguageDef.MLQuivCat
     , LanguageDef.MLQuivUniv
+    , LanguageDef.ProfCollage
     , LanguageDef.MLQuivPoly
     , LanguageDef.GenPolyFunc
     , LanguageDef.FinCat
@@ -49,6 +50,7 @@ modules =
     , LanguageDef.Test.QuiverTest
     , LanguageDef.Test.MLQuivCatTest
     , LanguageDef.Test.MLQuivUnivTest
+    , LanguageDef.Test.ProfCollageTest
     , LanguageDef.Test.MLQuivPolyTest
     , LanguageDef.Test.GenPolyFuncTest
     , LanguageDef.Test.FinCatTest
