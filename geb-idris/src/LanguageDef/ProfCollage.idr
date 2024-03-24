@@ -208,14 +208,22 @@ mlcPNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
 export
 mlcNTwhiskerL : {0 q, r : MLCollage} -> MLCNatTrans q r -> (0 p : MLCollage) ->
   MLCNatTrans (mlcComp q p) (mlcComp r p)
-mlcNTwhiskerL {q} {r} alpha p =
-  ?mlcNTwhiskerL_hole
+mlcNTwhiskerL {q=(MLC qh qd qc)} {r=(MLC rh rd rc)}
+  (MLNT onidx ondom oncod) (MLC ph pd pc) =
+    MLNT
+      (\(qi ** pi ** qcpd) => (onidx qi ** pi ** qcpd . oncod qi))
+      (\(qi ** pi ** qcpd) => ondom qi)
+      (\(qi ** pi ** qcpd) => id)
 
 export
 mlcNTwhiskerR : {0 p, q : MLCollage} -> MLCNatTrans p q -> (0 r : MLCollage) ->
   MLCNatTrans (mlcComp r p) (mlcComp r q)
-mlcNTwhiskerR {p} {q} alpha r =
-  ?mlcNTwhiskerR_hole
+mlcNTwhiskerR {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
+  (MLNT onidx ondom oncod) (MLC rh rd rc) =
+    MLNT
+      (\(ri ** pi ** rcpd) => (ri ** onidx pi ** ondom pi . rcpd))
+      (\(ri ** pi ** rcpd) => id)
+      (\(ri ** pi ** rcpd) => oncod pi)
 
 export
 mlcNThcomp : {0 p, p', q, q' : MLCollage} ->
