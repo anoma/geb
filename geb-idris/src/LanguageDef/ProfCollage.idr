@@ -170,10 +170,6 @@ mlcNTid : (mlc : MLCollage) -> MLCNatTrans mlc mlc
 mlcNTid mlc = MLNT id (\_ => id) (\_ => id)
 
 export
-mlcPNTid : (mlc : MLCollage) -> MLCParaNT mlc mlc
-mlcPNTid mlc = MLPNT id (\_, _ => id) (\_, _ => id)
-
-export
 mlcNTvcomp : {0 r, q, p : MLCollage} -> MLCNatTrans q r -> MLCNatTrans p q ->
   MLCNatTrans p r
 mlcNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
@@ -186,6 +182,10 @@ mlcNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
 --------------------------------------------------------------------------------
 ---- Category of metalanguage difunctors with paranatural transformations ----
 --------------------------------------------------------------------------------
+
+export
+mlcPNTid : (mlc : MLCollage) -> MLCParaNT mlc mlc
+mlcPNTid mlc = MLPNT id (\_, _ => id) (\_, _ => id)
 
 export
 mlcPNTvcomp : {0 r, q, p : MLCollage} -> MLCParaNT q r -> MLCParaNT p q ->
