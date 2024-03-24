@@ -238,14 +238,22 @@ mlcNThcomp {p} {p'} {q} {q'} beta alpha =
 export
 mlcPNTwhiskerL : {0 q, r : MLCollage} -> MLCParaNT q r -> (0 p : MLCollage) ->
   MLCParaNT (mlcComp q p) (mlcComp r p)
-mlcPNTwhiskerL {q} {r} alpha p =
-  ?mlcPNTwhiskerL_hole
+mlcPNTwhiskerL {q=(MLC qh qd qc)} {r=(MLC rh rd rc)}
+  (MLPNT onidx ondom oncod) (MLC ph pd pc) =
+    MLPNT
+      (\(qi ** pi ** qcpd) => (onidx qi ** pi ** qcpd . oncod qi ?mlcPNTwhiskerL_hole_onidx))
+      (\(qi ** pi ** qcpd), pcqd, qdi => ondom qi ?mlcPNTwhiskerL_hole_ondom qdi)
+      (\(qi ** pi ** qcpd), pcqd => id)
 
 export
 mlcPNTwhiskerR : {0 p, q : MLCollage} -> MLCParaNT p q -> (0 r : MLCollage) ->
   MLCParaNT (mlcComp r p) (mlcComp r q)
-mlcPNTwhiskerR {p} {q} alpha r =
-  ?mlcPNTwhiskerR_hole
+mlcPNTwhiskerR {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
+  (MLPNT onidx ondom oncod) (MLC rh rd rc) =
+    MLPNT
+      (\(ri ** pi ** rcpd) => (ri ** onidx pi ** ondom pi ?mlcPNTwhiskerR_hole_onidx . rcpd))
+      (\(ri ** pi ** rcpd), pcrd => id)
+      (\(ri ** pi ** rcpd), pcrd, qci => oncod pi ?mlcPNTwhiskerR_hole_oncod qci)
 
 export
 mlcPNThcomp : {0 p, p', q, q' : MLCollage} ->
