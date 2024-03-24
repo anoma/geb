@@ -203,6 +203,10 @@ record TQDiCollage (v : Type) (q : TypeDiquivV v) where
 ---------------------------------------------
 ---------------------------------------------
 
+---------------------------------------------------------
+---- Definition of metalanguage difunctor as collage ----
+---------------------------------------------------------
+
 public export
 record MLCollage where
   constructor MLC
@@ -234,6 +238,10 @@ InterpMLCdimap : (mlc : MLCollage) ->
 InterpMLCdimap mlc s t a b mas mtb =
   InterpMLClmap mlc s b a mas . InterpMLCrmap mlc s t b mtb
 
+-----------------------------------------------------------------
+---- Natural transformations between metalanguage difunctors ----
+-----------------------------------------------------------------
+
 public export
 record MLCNatTrans (p, q : MLCollage) where
   constructor MLNT
@@ -261,6 +269,10 @@ export
 InterpMLCisNatural {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
   (MLNT onidx ondom oncod) s t a b mas mtb (pi ** (spd, pct)) =
     dpEq12 Refl $ pairEqCong Refl Refl
+
+---------------------------------------------------------------------
+---- Paranatural transformations between metalanguage difunctors ----
+---------------------------------------------------------------------
 
 public export
 record MLCParaNT (p, q : MLCollage) where
@@ -293,6 +305,14 @@ InterpMLCisPara {p=(MLC ph pd pc)} {q=(MLC qh qd qc)} (MLPNT onidx ondom oncod)
         Refl => dpEq12 Refl
           $ pairEqCong Refl Refl
 
+-------------------------------------------
+---- Monoid of metalanguage difunctors ----
+-------------------------------------------
+
+-- Metalanguage difunctors form a monoid -- a one-object category, with
+-- the difunctors as morphisms -- whose identity is the hom-profunctor, and
+-- whose composition is the usual composition of profunctors.
+
 -- We represent the hom-profunctor with simply one position (index) per
 -- morphism.
 export
@@ -306,6 +326,8 @@ InterpToIdMLC x y m = ((x ** y ** m) ** (id, id))
 InterpFromIdMLC : (x, y : Type) -> InterpMLC MlcHomProfId x y -> x -> y
 InterpFromIdMLC x y ((i ** j ** mij) ** (mxi, mjy)) = mjy . mij . mxi
 
+-- Composition of difunctors can be expressed in the form of a composition
+-- of collages.
 export
 mlcComp : MLCollage -> MLCollage -> MLCollage
 mlcComp (MLC qh qd qc) (MLC ph pd pc) =
@@ -327,3 +349,12 @@ InterpFromComposeMLC : (q, p : MLCollage) -> (x, y : Type) ->
 InterpFromComposeMLC (MLC qh qd qc) (MLC ph pd pc) x y
   ((qi ** pi ** qcpd) ** (xqd, pcy)) =
     (pd pi ** ((qi ** (xqd, qcpd)), (pi ** (id, pcy))))
+
+--------------------------------------------------------------------------------
+---- Category of metalanguage difunctors with (para)natural transformations ----
+--------------------------------------------------------------------------------
+
+-- In addition to the monoid of metalanguage difunctors, where the difunctors
+-- are morphisms, there are also categories where the difunctors are objects.
+-- In one such category, the natural transformations are the morphisms; in
+-- another such category, the paranatural transformations are the morphisms.
