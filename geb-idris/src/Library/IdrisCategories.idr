@@ -142,6 +142,46 @@ record SCat where
       (scComp {a} {b=c} {c=d} h (scComp {a} {b} {c} g f))
       (scComp {a} {b} {c=d} (scComp {a=b} {b=c} {c=d} h g) f)
 
+-------------------------------------
+-------------------------------------
+---- Slice objects and morphisms ----
+-------------------------------------
+-------------------------------------
+
+-- Objects of the slice category `Type` over `a`.
+-- If we treat `a` as a discrete category, then we could also view
+-- a slice object over `a` as a functor from `a` to `Type`.
+public export
+SliceObj : Type -> Type
+SliceObj a = a -> Type
+
+public export
+Contravariant SliceObj where
+  contramap = (|>)
+
+-- If we view `a` as a discrete category, and slice objects of it as
+-- functors from `a` to `Type`, then this type can also be viewed as
+-- a natural transformation.
+public export
+SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
+SliceMorphism {a} s s' = (x : a) -> s x -> s' x
+
+public export
+sliceId : {a : Type} -> (sl : SliceObj a) -> SliceMorphism {a} sl sl
+sliceId {a} sl = \_, x => x
+
+public export
+sliceComp : {a : Type} -> {x, y, z : SliceObj a} ->
+  SliceMorphism {a} y z ->
+  SliceMorphism {a} x y ->
+  SliceMorphism {a} x z
+sliceComp {a} {x} {y} {z} g f = \ela, elx => g ela $ f ela elx
+
+public export
+SliceExtEq : {a : Type} -> {s, s' : SliceObj a} ->
+  (f, g : SliceMorphism {a} s s') -> Type
+SliceExtEq {a} {s} {s'} f g = (e : a) -> ExtEq (f e) (g e)
+
 -----------------------
 -----------------------
 ---- Pointed types ----
@@ -282,17 +322,6 @@ public export
 TypeHomObj : Type -> Type -> Type
 TypeHomObj a b = a -> b
 
--- Objects of the slice category `Type` over `a`.
--- If we treat `a` as a discrete category, then we could also view
--- a slice object over `a` as a functor from `a` to `Type`.
-public export
-SliceObj : Type -> Type
-SliceObj a = a -> Type
-
-public export
-Contravariant SliceObj where
-  contramap = (|>)
-
 public export
 sliceObjSigmaFMap : {a, b : Type} -> (a -> b) -> SliceObj a -> SliceObj b
 sliceObjSigmaFMap {a} {b} f sla eb =
@@ -425,29 +454,6 @@ biapp h f g x = h (f x) (g x)
 public export
 SliceHom : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
 SliceHom = biapp $ \x, y => x -> y
-
--- If we view `a` as a discrete category, and slice objects of it as
--- functors from `a` to `Type`, then this type can also be viewed as
--- a natural transformation.
-public export
-SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
-SliceMorphism {a} s s' = Pi {a} $ SliceHom s s'
-
-public export
-sliceId : {a : Type} -> (sl : SliceObj a) -> SliceMorphism {a} sl sl
-sliceId {a} sl = \_, x => x
-
-public export
-sliceComp : {a : Type} -> {x, y, z : SliceObj a} ->
-  SliceMorphism {a} y z ->
-  SliceMorphism {a} x y ->
-  SliceMorphism {a} x z
-sliceComp {a} {x} {y} {z} g f = \ela, elx => g ela $ f ela elx
-
-public export
-SliceExtEq : {a : Type} -> {s, s' : SliceObj a} ->
-  (f, g : SliceMorphism {a} s s') -> Type
-SliceExtEq {a} {s} {s'} f g = (e : a) -> ExtEq (f e) (g e)
 
 public export
 SliceFunctorMap : {x, y : Type} -> (f : SliceFunctor x y) -> Type
