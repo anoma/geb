@@ -294,8 +294,8 @@ InterpMLCisPara {p=(MLC ph pd pc)} {q=(MLC qh qd qc)} (MLPNT onidx ondom oncod)
           $ pairEqCong Refl Refl
 
 export
-composeMLC : MLCollage -> MLCollage -> MLCollage
-composeMLC (MLC qh qd qc) (MLC ph pd pc) =
+mlcComp : MLCollage -> MLCollage -> MLCollage
+mlcComp (MLC qh qd qc) (MLC ph pd pc) =
   MLC
     (qi : qh ** pi : ph ** qc qi -> pd pi)
     (\(qi ** pi ** qcpd) => qd qi)
@@ -303,13 +303,13 @@ composeMLC (MLC qh qd qc) (MLC ph pd pc) =
 
 InterpToComposeMLC : (q, p : MLCollage) -> (x, y : Type) ->
   EndoProfCompose (InterpMLC q) (InterpMLC p) x y ->
-  InterpMLC (composeMLC q p) x y
+  InterpMLC (mlcComp q p) x y
 InterpToComposeMLC (MLC qh qd qc) (MLC ph pd pc) x y
   (b ** ((qi ** (xqd, qcb)), (pi ** (bpd, pcy)))) =
     ((qi ** pi ** bpd . qcb) ** (xqd, pcy))
 
 InterpFromComposeMLC : (q, p : MLCollage) -> (x, y : Type) ->
-  InterpMLC (composeMLC q p) x y ->
+  InterpMLC (mlcComp q p) x y ->
   EndoProfCompose (InterpMLC q) (InterpMLC p) x y
 InterpFromComposeMLC (MLC qh qd qc) (MLC ph pd pc) x y
   ((qi ** pi ** qcpd) ** (xqd, pcy)) =
