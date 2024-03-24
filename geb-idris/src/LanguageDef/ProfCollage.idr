@@ -190,11 +190,11 @@ record MLCParaNT (p, q : MLCollage) where
   constructor MLPNT
   mpOnIdx : mlcHetIdx p -> mlcHetIdx q
   mpOnContra :
-    (i : mlcHetIdx p) -> (mlcCovar p i -> mlcContra p i) -> mlcContra p i ->
-      mlcContra q (mpOnIdx i)
+    (i : mlcHetIdx p) -> (mlcCovar p i -> mlcContra p i) ->
+      mlcContra p i -> mlcContra q (mpOnIdx i)
   mpOnCovar :
-    (i : mlcHetIdx p) -> (mlcCovar p i -> mlcContra p i) -> mlcCovar q (mpOnIdx i) ->
-      mlcCovar p i
+    (i : mlcHetIdx p) -> (mlcCovar p i -> mlcContra p i) ->
+      mlcCovar q (mpOnIdx i) -> mlcCovar p i
 
 export
 InterpMLCpara : {0 p, q : MLCollage} -> MLCParaNT p q ->
@@ -209,8 +209,9 @@ export
   (InterpMLClmap p i1 i1 i0 i2 d1 = InterpMLCrmap p i0 i0 i1 i2 d0) ->
   (InterpMLClmap q i1 i1 i0 i2 (InterpMLCpara {p} {q} mlpnt i1 d1) =
    InterpMLCrmap q i0 i0 i1 i2 (InterpMLCpara {p} {q} mlpnt i0 d0))
-InterpMLCisPara {p=(MLC ph pd pc)} {q=(MLC qh qd qc)} (MLPNT onidx oncontra oncovar)
-  i0 i1 i2 (pi0 ** (i0d0, c0i0)) (pi1 ** (i1d1, c1i1)) cond =
+InterpMLCisPara {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
+  (MLPNT onidx oncontra oncovar) i0 i1 i2
+  (pi0 ** (i0d0, c0i0)) (pi1 ** (i1d1, c1i1)) cond =
     case mkDPairInjectiveFstHet cond of
       Refl => case mkDPairInjectiveSndHet cond of
         Refl => dpEq12 Refl
@@ -236,8 +237,10 @@ mlcPNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
     in
     MLPNT
       (onidxqr . onidxpq)
-      (\pi, pcd, pdi => oncontraqr (onidxpq pi) (qcd pi pcd) (oncontrapq pi pcd pdi))
-      (\pi, pcd, rci => oncovarpq pi pcd (oncovarqr (onidxpq pi) (qcd pi pcd) rci))
+      (\pi, pcd, pdi =>
+        oncontraqr (onidxpq pi) (qcd pi pcd) (oncontrapq pi pcd pdi))
+      (\pi, pcd, rci =>
+        oncovarpq pi pcd (oncovarqr (onidxpq pi) (qcd pi pcd) rci))
 
 ----------------------------------------------------------------------------
 ---- Two-categorical structure of paranatural difunctor transformations ----
@@ -252,9 +255,12 @@ mlcPNTwhiskerL : {0 q, r : MLCollage} -> MLCParaNT q r -> (0 p : MLCollage) ->
 mlcPNTwhiskerL {q=(MLC qh qd qc)} {r=(MLC rh rd rc)}
   (MLPNT onidx oncontra oncovar) (MLC ph pd pc) =
     MLPNT
-      (\(qi ** pi ** qcpd) => (onidx qi ** pi ** qcpd . oncovar qi ?mlcPNTwhiskerL_hole_onidx))
-      (\(qi ** pi ** qcpd), pcqd, qdi => oncontra qi ?mlcPNTwhiskerL_hole_oncontra qdi)
-      (\(qi ** pi ** qcpd), pcqd => id)
+      (\(qi ** pi ** qcpd) =>
+        (onidx qi ** pi ** qcpd . oncovar qi ?mlcPNTwhiskerL_hole_onidx))
+      (\(qi ** pi ** qcpd), pcqd, qdi =>
+        oncontra qi ?mlcPNTwhiskerL_hole_oncontra qdi)
+      (\(qi ** pi ** qcpd), pcqd =>
+        id)
 
 export
 mlcPNTwhiskerR : {0 p, q : MLCollage} -> MLCParaNT p q -> (0 r : MLCollage) ->
@@ -262,9 +268,12 @@ mlcPNTwhiskerR : {0 p, q : MLCollage} -> MLCParaNT p q -> (0 r : MLCollage) ->
 mlcPNTwhiskerR {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
   (MLPNT onidx oncontra oncovar) (MLC rh rd rc) =
     MLPNT
-      (\(ri ** pi ** rcpd) => (ri ** onidx pi ** oncontra pi ?mlcPNTwhiskerR_hole_onidx . rcpd))
-      (\(ri ** pi ** rcpd), pcrd => id)
-      (\(ri ** pi ** rcpd), pcrd, qci => oncovar pi ?mlcPNTwhiskerR_hole_oncovar qci)
+      (\(ri ** pi ** rcpd) =>
+        (ri ** onidx pi ** oncontra pi ?mlcPNTwhiskerR_hole_onidx . rcpd))
+      (\(ri ** pi ** rcpd), pcrd =>
+        id)
+      (\(ri ** pi ** rcpd), pcrd, qci =>
+        oncovar pi ?mlcPNTwhiskerR_hole_oncovar qci)
 
 export
 mlcPNThcomp : {0 p, p', q, q' : MLCollage} ->
