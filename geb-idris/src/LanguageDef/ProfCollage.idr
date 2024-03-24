@@ -76,41 +76,6 @@ InterpMLCisNatural {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
   (MLNT onidx ondom oncod) s t a b mas mtb (pi ** (spd, pct)) =
     dpEq12 Refl $ pairEqCong Refl Refl
 
----------------------------------------------------------------------
----- Paranatural transformations between metalanguage difunctors ----
----------------------------------------------------------------------
-
-public export
-record MLCParaNT (p, q : MLCollage) where
-  constructor MLPNT
-  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
-  mpOnDom :
-    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcDom p i ->
-      mlcDom q (mpOnIdx i)
-  mpOnCod :
-    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcCod q (mpOnIdx i) ->
-      mlcCod p i
-
-export
-InterpMLCpara : {0 p, q : MLCollage} -> MLCParaNT p q ->
-  (0 x : Type) -> InterpMLC p x x -> InterpMLC q x x
-InterpMLCpara {p} {q} (MLPNT oni ond onc) x (i ** (dd, dc)) =
-  (oni i ** (ond i (dd . dc) . dd, dc . onc i (dd . dc)))
-
-export
-0 InterpMLCisPara : {0 p, q : MLCollage} -> (mlpnt : MLCParaNT p q) ->
-  (i0, i1 : Type) -> (i2 : i0 -> i1) ->
-  (d0 : InterpMLC p i0 i0) -> (d1 : InterpMLC p i1 i1) ->
-  (InterpMLClmap p i1 i1 i0 i2 d1 = InterpMLCrmap p i0 i0 i1 i2 d0) ->
-  (InterpMLClmap q i1 i1 i0 i2 (InterpMLCpara {p} {q} mlpnt i1 d1) =
-   InterpMLCrmap q i0 i0 i1 i2 (InterpMLCpara {p} {q} mlpnt i0 d0))
-InterpMLCisPara {p=(MLC ph pd pc)} {q=(MLC qh qd qc)} (MLPNT onidx ondom oncod)
-  i0 i1 i2 (pi0 ** (i0d0, c0i0)) (pi1 ** (i1d1, c1i1)) cond =
-    case mkDPairInjectiveFstHet cond of
-      Refl => case mkDPairInjectiveSndHet cond of
-        Refl => dpEq12 Refl
-          $ pairEqCong Refl Refl
-
 -------------------------------------------
 ---- Monoid of metalanguage difunctors ----
 -------------------------------------------
@@ -179,29 +144,6 @@ mlcNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
       (\pi, pdi => ondomqr (onidxpq pi) (ondompq pi pdi))
       (\pi, rci => oncodpq pi (oncodqr (onidxpq pi) rci))
 
---------------------------------------------------------------------------------
----- Category of metalanguage difunctors with paranatural transformations ----
---------------------------------------------------------------------------------
-
-export
-mlcPNTid : (mlc : MLCollage) -> MLCParaNT mlc mlc
-mlcPNTid mlc = MLPNT id (\_, _ => id) (\_, _ => id)
-
-export
-mlcPNTvcomp : {0 r, q, p : MLCollage} -> MLCParaNT q r -> MLCParaNT p q ->
-  MLCParaNT p r
-mlcPNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
-  (MLPNT onidxqr ondomqr oncodqr) (MLPNT onidxpq ondompq oncodpq) =
-    let
-      qcd :
-        ((pi : ph) -> (pc pi -> pd pi) -> qc (onidxpq pi) -> qd (onidxpq pi)) =
-          \pi, pcd, qci => ondompq pi pcd (pcd $ oncodpq pi pcd qci)
-    in
-    MLPNT
-      (onidxqr . onidxpq)
-      (\pi, pcd, pdi => ondomqr (onidxpq pi) (qcd pi pcd) (ondompq pi pcd pdi))
-      (\pi, pcd, rci => oncodpq pi pcd (oncodqr (onidxpq pi) (qcd pi pcd) rci))
-
 ------------------------------------------------------------------------
 ---- Two-categorical structure of natural difunctor transformations ----
 ------------------------------------------------------------------------
@@ -238,6 +180,64 @@ mlcNThcomp {p} {p'} {q} {q'} beta alpha =
   mlcNTvcomp
     (mlcNTwhiskerL {q} {r=q'} beta p')
     (mlcNTwhiskerR {p} {q=p'} alpha q)
+
+---------------------------------------------------------------------
+---- Paranatural transformations between metalanguage difunctors ----
+---------------------------------------------------------------------
+
+public export
+record MLCParaNT (p, q : MLCollage) where
+  constructor MLPNT
+  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
+  mpOnDom :
+    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcDom p i ->
+      mlcDom q (mpOnIdx i)
+  mpOnCod :
+    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcCod q (mpOnIdx i) ->
+      mlcCod p i
+
+export
+InterpMLCpara : {0 p, q : MLCollage} -> MLCParaNT p q ->
+  (0 x : Type) -> InterpMLC p x x -> InterpMLC q x x
+InterpMLCpara {p} {q} (MLPNT oni ond onc) x (i ** (dd, dc)) =
+  (oni i ** (ond i (dd . dc) . dd, dc . onc i (dd . dc)))
+
+export
+0 InterpMLCisPara : {0 p, q : MLCollage} -> (mlpnt : MLCParaNT p q) ->
+  (i0, i1 : Type) -> (i2 : i0 -> i1) ->
+  (d0 : InterpMLC p i0 i0) -> (d1 : InterpMLC p i1 i1) ->
+  (InterpMLClmap p i1 i1 i0 i2 d1 = InterpMLCrmap p i0 i0 i1 i2 d0) ->
+  (InterpMLClmap q i1 i1 i0 i2 (InterpMLCpara {p} {q} mlpnt i1 d1) =
+   InterpMLCrmap q i0 i0 i1 i2 (InterpMLCpara {p} {q} mlpnt i0 d0))
+InterpMLCisPara {p=(MLC ph pd pc)} {q=(MLC qh qd qc)} (MLPNT onidx ondom oncod)
+  i0 i1 i2 (pi0 ** (i0d0, c0i0)) (pi1 ** (i1d1, c1i1)) cond =
+    case mkDPairInjectiveFstHet cond of
+      Refl => case mkDPairInjectiveSndHet cond of
+        Refl => dpEq12 Refl
+          $ pairEqCong Refl Refl
+
+--------------------------------------------------------------------------------
+---- Category of metalanguage difunctors with paranatural transformations ----
+--------------------------------------------------------------------------------
+
+export
+mlcPNTid : (mlc : MLCollage) -> MLCParaNT mlc mlc
+mlcPNTid mlc = MLPNT id (\_, _ => id) (\_, _ => id)
+
+export
+mlcPNTvcomp : {0 r, q, p : MLCollage} -> MLCParaNT q r -> MLCParaNT p q ->
+  MLCParaNT p r
+mlcPNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
+  (MLPNT onidxqr ondomqr oncodqr) (MLPNT onidxpq ondompq oncodpq) =
+    let
+      qcd :
+        ((pi : ph) -> (pc pi -> pd pi) -> qc (onidxpq pi) -> qd (onidxpq pi)) =
+          \pi, pcd, qci => ondompq pi pcd (pcd $ oncodpq pi pcd qci)
+    in
+    MLPNT
+      (onidxqr . onidxpq)
+      (\pi, pcd, pdi => ondomqr (onidxpq pi) (qcd pi pcd) (ondompq pi pcd pdi))
+      (\pi, pcd, rci => oncodpq pi pcd (oncodqr (onidxpq pi) (qcd pi pcd) rci))
 
 ----------------------------------------------------------------------------
 ---- Two-categorical structure of paranatural difunctor transformations ----
