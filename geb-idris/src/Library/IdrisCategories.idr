@@ -196,6 +196,36 @@ public export
 HomSlice : Type -> Type
 HomSlice = SliceObj . SignatureT
 
+--------------------------------------
+--------------------------------------
+---- Hom-objects and hom-functors ----
+--------------------------------------
+--------------------------------------
+
+public export
+InternalCovarHom : HomSlice obj -> obj -> SliceObj obj
+InternalCovarHom hom = hom .* MkPair
+
+public export
+InternalContravarHom : HomSlice obj -> obj -> SliceObj obj
+InternalContravarHom = flip . InternalCovarHom
+
+public export
+HomUncurry : (obj -> obj -> Type) -> HomSlice obj
+HomUncurry hom (x, y) = hom x y
+
+public export
+InternalNTFromCovarHom : {obj : Type} ->
+  (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
+InternalNTFromCovarHom {obj} hom =
+  SliceMorphism {a=obj} . InternalCovarHom hom
+
+public export
+InternalNTFromContravarHom : {obj : Type} ->
+  (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
+InternalNTFromContravarHom {obj} hom =
+  SliceMorphism {a=obj} . InternalContravarHom hom
+
 -----------------------
 -----------------------
 ---- Pointed types ----
