@@ -156,9 +156,9 @@ InterpFromComposeMLC (MLC qh qd qc) (MLC ph pd pc) x y
   ((qi ** pi ** qcpd) ** (xqd, pcy)) =
     (pd pi ** ((qi ** (xqd, qcpd)), (pi ** (id, pcy))))
 
---------------------------------------------------------------------------------
----- Category of metalanguage difunctors with (para)natural transformations ----
---------------------------------------------------------------------------------
+--------------------------------------------------------------------------
+---- Category of metalanguage difunctors with natural transformations ----
+--------------------------------------------------------------------------
 
 -- In addition to the monoid of metalanguage difunctors, where the difunctors
 -- are morphisms, there are also categories where the difunctors are objects.
@@ -183,6 +183,10 @@ mlcNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
       (\pi, pdi => ondomqr (onidxpq pi) (ondompq pi pdi))
       (\pi, rci => oncodpq pi (oncodqr (onidxpq pi) rci))
 
+--------------------------------------------------------------------------------
+---- Category of metalanguage difunctors with paranatural transformations ----
+--------------------------------------------------------------------------------
+
 export
 mlcPNTvcomp : {0 r, q, p : MLCollage} -> MLCParaNT q r -> MLCParaNT p q ->
   MLCParaNT p r
@@ -198,12 +202,12 @@ mlcPNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
       (\pi, pcd, pdi => ondomqr (onidxpq pi) (qcd pi pcd) (ondompq pi pcd pdi))
       (\pi, pcd, rci => oncodpq pi pcd (oncodqr (onidxpq pi) (qcd pi pcd) rci))
 
-------------------------------------------------------------------------------
----- Two-categorical structure of (para)natural difunctor transformations ----
-------------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Two-categorical structure of natural difunctor transformations ----
+------------------------------------------------------------------------
 
--- The (para)natural transformations of difunctors form a two-category:
--- (para)natural transformations have horizontal composition and whiskering.
+-- The natural transformations of difunctors form a two-category:
+-- natural transformations have horizontal composition and whiskering.
 
 export
 mlcNTwhiskerL : {0 q, r : MLCollage} -> MLCNatTrans q r -> (0 p : MLCollage) ->
@@ -234,6 +238,13 @@ mlcNThcomp {p} {p'} {q} {q'} beta alpha =
   mlcNTvcomp
     (mlcNTwhiskerL {q} {r=q'} beta p')
     (mlcNTwhiskerR {p} {q=p'} alpha q)
+
+----------------------------------------------------------------------------
+---- Two-categorical structure of paranatural difunctor transformations ----
+----------------------------------------------------------------------------
+
+-- The paranatural transformations of difunctors form a two-category:
+-- paranatural transformations have horizontal composition and whiskering.
 
 export
 mlcPNTwhiskerL : {0 q, r : MLCollage} -> MLCParaNT q r -> (0 p : MLCollage) ->
