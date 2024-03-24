@@ -17,6 +17,14 @@ import public LanguageDef.InternalCat
 ---------------------
 ---------------------
 
+-- This definition of `BaseChangeF` is the same as the one in `IdrisCategories`.
+-- I'm duplicating it here just to make it explicit in the same module as the
+-- adjunctions on either side of it.
+%hide Library.IdrisCategories.BaseChangeF
+export
+BaseChangeF : {a, b : Type} -> (b -> a) -> SliceFunctor a b
+BaseChangeF f sla = sla . f
+
 -- Because base change is in the middle of an adjoint triple between
 -- dependent sum and dependent product, it can introduced and eliminated
 -- from either side, by the adjuncts defined below with `Sigma` and `Pi`.
