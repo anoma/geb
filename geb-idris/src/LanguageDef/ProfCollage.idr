@@ -204,3 +204,47 @@ mlcPNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
 
 -- The (para)natural transformations of difunctors form a two-category:
 -- (para)natural transformations have horizontal composition and whiskering.
+
+export
+mlcNTwhiskerL : {0 q, r : MLCollage} -> MLCNatTrans q r -> (0 p : MLCollage) ->
+  MLCNatTrans (mlcComp q p) (mlcComp r p)
+mlcNTwhiskerL {q} {r} alpha p =
+  ?mlcNTwhiskerL_hole
+
+export
+mlcNTwhiskerR : {0 p, q : MLCollage} -> MLCNatTrans p q -> (0 r : MLCollage) ->
+  MLCNatTrans (mlcComp r p) (mlcComp r q)
+mlcNTwhiskerR {p} {q} alpha r =
+  ?mlcNTwhiskerR_hole
+
+export
+mlcNThcomp : {0 p, p', q, q' : MLCollage} ->
+  MLCNatTrans q q' ->
+  MLCNatTrans p p' ->
+  MLCNatTrans (mlcComp q p) (mlcComp q' p')
+mlcNThcomp {p} {p'} {q} {q'} beta alpha =
+  mlcNTvcomp
+    (mlcNTwhiskerL {q} {r=q'} beta p')
+    (mlcNTwhiskerR {p} {q=p'} alpha q)
+
+export
+mlcPNTwhiskerL : {0 q, r : MLCollage} -> MLCParaNT q r -> (0 p : MLCollage) ->
+  MLCParaNT (mlcComp q p) (mlcComp r p)
+mlcPNTwhiskerL {q} {r} alpha p =
+  ?mlcPNTwhiskerL_hole
+
+export
+mlcPNTwhiskerR : {0 p, q : MLCollage} -> MLCParaNT p q -> (0 r : MLCollage) ->
+  MLCParaNT (mlcComp r p) (mlcComp r q)
+mlcPNTwhiskerR {p} {q} alpha r =
+  ?mlcPNTwhiskerR_hole
+
+export
+mlcPNThcomp : {0 p, p', q, q' : MLCollage} ->
+  MLCParaNT q q' ->
+  MLCParaNT p p' ->
+  MLCParaNT (mlcComp q p) (mlcComp q' p')
+mlcPNThcomp {p} {p'} {q} {q'} beta alpha =
+  mlcPNTvcomp
+    (mlcPNTwhiskerL {q} {r=q'} beta p')
+    (mlcPNTwhiskerR {p} {q=p'} alpha q)
