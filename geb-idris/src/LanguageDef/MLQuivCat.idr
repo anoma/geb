@@ -245,17 +245,6 @@ record MLCNatTrans (p, q : MLCollage) where
     (i : mlcHetIdx p) -> mlcCod q (mpOnIdx i) ->
       mlcCod p i
 
-public export
-record MLCParaNT (p, q : MLCollage) where
-  constructor MLPNT
-  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
-  mpOnDom :
-    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcDom p i ->
-      mlcDom q (mpOnIdx i)
-  mpOnCod :
-    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcCod q (mpOnIdx i) ->
-      mlcCod p i
-
 export
 InterpMLCnt : {0 p, q : MLCollage} -> MLCNatTrans p q ->
   (0 x, y : Type) -> InterpMLC p x y -> InterpMLC q x y
@@ -272,6 +261,17 @@ export
 InterpMLCisNatural {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
   (MLNT onidx ondom oncod) s t a b mas mtb (pi ** (spd, pct)) =
     dpEq12 Refl $ pairEqCong Refl Refl
+
+public export
+record MLCParaNT (p, q : MLCollage) where
+  constructor MLPNT
+  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
+  mpOnDom :
+    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcDom p i ->
+      mlcDom q (mpOnIdx i)
+  mpOnCod :
+    (i : mlcHetIdx p) -> (mlcCod p i -> mlcDom p i) -> mlcCod q (mpOnIdx i) ->
+      mlcCod p i
 
 export
 InterpMLCpara : {0 p, q : MLCollage} -> MLCParaNT p q ->
