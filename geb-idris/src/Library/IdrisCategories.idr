@@ -182,6 +182,20 @@ SliceExtEq : {a : Type} -> {s, s' : SliceObj a} ->
   (f, g : SliceMorphism {a} s s') -> Type
 SliceExtEq {a} {s} {s'} f g = (e : a) -> ExtEq (f e) (g e)
 
+--------------------
+--------------------
+---- Signatures ----
+--------------------
+--------------------
+
+public export
+SignatureT : Type -> Type
+SignatureT x = (x, x)
+
+public export
+HomSlice : Type -> Type
+HomSlice = SliceObj . SignatureT
+
 -----------------------
 -----------------------
 ---- Pointed types ----
