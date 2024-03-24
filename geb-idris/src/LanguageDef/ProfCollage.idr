@@ -164,3 +164,33 @@ InterpFromComposeMLC (MLC qh qd qc) (MLC ph pd pc) x y
 -- are morphisms, there are also categories where the difunctors are objects.
 -- In one such category, the natural transformations are the morphisms; in
 -- another such category, the paranatural transformations are the morphisms.
+
+export
+mlcNTid : (mlc : MLCollage) -> MLCNatTrans mlc mlc
+mlcNTid mlc = MLNT id (\_ => id) (\_ => id)
+
+export
+mlcPNTid : (mlc : MLCollage) -> MLCParaNT mlc mlc
+mlcPNTid mlc = MLPNT id (\_, _ => id) (\_, _ => id)
+
+export
+mlcPNTcomp : {0 r, q, p : MLCollage} -> MLCParaNT q r -> MLCParaNT p q ->
+  MLCParaNT p r
+mlcPNTcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
+  (MLPNT onidxqr ondomqr oncodqr) (MLPNT onidxpq ondompq oncodpq) =
+    let
+      qcd :
+        ((pi : ph) -> (pc pi -> pd pi) -> qc (onidxpq pi) -> qd (onidxpq pi)) =
+          \pi, pcd, qci => ondompq pi pcd (pcd $ oncodpq pi pcd qci)
+    in
+    MLPNT
+      (onidxqr . onidxpq)
+      (\pi, pcd, pdi => ondomqr (onidxpq pi) (qcd pi pcd) (ondompq pi pcd pdi))
+      (\pi, pcd, rci => oncodpq pi pcd (oncodqr (onidxpq pi) (qcd pi pcd) rci))
+
+------------------------------------------------------------------------------
+---- Two-categorical structure of (para)natural difunctor transformations ----
+------------------------------------------------------------------------------
+
+-- The (para)natural transformations of difunctors form a two-category:
+-- (para)natural transformations have horizontal composition and whiskering.
