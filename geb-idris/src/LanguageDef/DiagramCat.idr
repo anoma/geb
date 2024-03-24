@@ -360,30 +360,6 @@ CopresheafNTExtEq : {obj : Type} -> {f, g : InternalCopresheaf obj} ->
   (alpha, beta : InternalCopresheafNT f g) -> Type
 CopresheafNTExtEq {obj} {f} {g} = SliceExtEq {a=obj} {s=f} {s'=g}
 
-public export
-InternalCovarHom : HomSlice obj -> obj -> SliceObj obj
-InternalCovarHom hom = hom .* MkPair
-
-public export
-InternalContravarHom : HomSlice obj -> obj -> SliceObj obj
-InternalContravarHom = flip . InternalCovarHom
-
-public export
-HomUncurry : (obj -> obj -> Type) -> HomSlice obj
-HomUncurry hom (x, y) = hom x y
-
-public export
-InternalNTFromCovarHom : {obj : Type} ->
-  (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
-InternalNTFromCovarHom {obj} hom =
-  SliceMorphism {a=obj} . InternalCovarHom hom
-
-public export
-InternalNTFromContravarHom : {obj : Type} ->
-  (hom : HomSlice obj) -> obj -> SliceObj obj -> Type
-InternalNTFromContravarHom {obj} hom =
-  SliceMorphism {a=obj} . InternalContravarHom hom
-
 ------------------------------------------------------------
 ------------------------------------------------------------
 ---- Yoneda-lemma forms in standard categories (`SCat`) ----
