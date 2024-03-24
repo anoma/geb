@@ -333,7 +333,7 @@ telNtoNDirich {n} (tsn ** tsndep) tn =
 
 public export
 SignatureT : Type -> Type
-SignatureT = ProductMonad
+SignatureT x = (x, x)
 
 public export
 HomSlice : Type -> Type
