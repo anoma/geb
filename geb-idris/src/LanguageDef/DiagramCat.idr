@@ -331,14 +331,6 @@ telNtoNDirich {n} (tsn ** tsndep) tn =
 ----------------------------------------
 ----------------------------------------
 
-public export
-SignatureT : Type -> Type
-SignatureT x = (x, x)
-
-public export
-HomSlice : Type -> Type
-HomSlice = SliceObj . SignatureT
-
 -- The domain of the type of dependent signature-respecting relations on
 -- morphisms over a given type of objects.
 public export
