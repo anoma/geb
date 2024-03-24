@@ -174,6 +174,16 @@ mlcPNTid : (mlc : MLCollage) -> MLCParaNT mlc mlc
 mlcPNTid mlc = MLPNT id (\_, _ => id) (\_, _ => id)
 
 export
+mlcNTcomp : {0 r, q, p : MLCollage} -> MLCNatTrans q r -> MLCNatTrans p q ->
+  MLCNatTrans p r
+mlcNTcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
+  (MLNT onidxqr ondomqr oncodqr) (MLNT onidxpq ondompq oncodpq) =
+    MLNT
+      (onidxqr . onidxpq)
+      (\pi, pdi => ondomqr (onidxpq pi) (ondompq pi pdi))
+      (\pi, rci => oncodpq pi (oncodqr (onidxpq pi) rci))
+
+export
 mlcPNTcomp : {0 r, q, p : MLCollage} -> MLCParaNT q r -> MLCParaNT p q ->
   MLCParaNT p r
 mlcPNTcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
