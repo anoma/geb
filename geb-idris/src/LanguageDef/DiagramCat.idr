@@ -392,30 +392,6 @@ InternalNTFromContravarHom : {obj : Type} ->
 InternalNTFromContravarHom {obj} hom =
   SliceMorphism {a=obj} . InternalContravarHom hom
 
----------------------------------------------------------------
----------------------------------------------------------------
----- Standard (Mac Lane / Eilenberg) internal categories ----
----------------------------------------------------------------
----------------------------------------------------------------
-
-public export
-record SCat where
-  constructor SC
-  scObj : Type
-  scHom : HomSlice scObj
-  scId : (a : scObj) -> scHom (a, a)
-  scComp : {a, b, c : scObj} -> scHom (b, c) -> scHom (a, b) -> scHom (a, c)
-  scEq : (sig : SignatureT scObj) -> EqRel (scHom sig)
-  0 scIdL : {0 a, b : scObj} -> (f : scHom (a, b)) ->
-    (scEq (a, b)).eqRel f (scComp {a} {b} {c=b} (scId b) f)
-  0 scIdR : {0 a, b : scObj} -> (f : scHom (a, b)) ->
-    (scEq (a, b)).eqRel f (scComp {a} {b=a} {c=b} f (scId a))
-  0 scIdAssoc : {0 a, b, c, d : scObj} ->
-    (f : scHom (a, b)) -> (g : scHom (b, c)) -> (h : scHom (c, d)) ->
-    (scEq (a, d)).eqRel
-      (scComp {a} {b=c} {c=d} h (scComp {a} {b} {c} g f))
-      (scComp {a} {b} {c=d} (scComp {a=b} {b=c} {c=d} h g) f)
-
 ------------------------------------------------------------
 ------------------------------------------------------------
 ---- Yoneda-lemma forms in standard categories (`SCat`) ----
