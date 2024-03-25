@@ -394,32 +394,29 @@ InterpPDFisPara {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
         Refl => case ipdfEqCod cond of
           Refl => rewrite ipdfEqMorph cond in Refl
 
-{- XXX
 --------------------------------------------------------------------------------
 ---- Category of metalanguage difunctors with paranatural transformations ----
 --------------------------------------------------------------------------------
 
 export
-pdfPNTid : (pdf : PolyDifunc) -> PolyDiNT pdf pdf
-pdfPNTid pdf = PDNT id (\_, _ => id) (\_, _ => id)
+pdNTid : (pdf : PolyDifunc) -> PolyDiNT pdf pdf
+pdNTid pdf = PDNT id (\_ => id) (\_ => id) (\pi, fext => Refl)
 
 export
-pdfPNTvcomp : {0 r, q, p : PolyDifunc} -> PolyDiNT q r -> PolyDiNT p q ->
+pdNTvcomp : {0 r, q, p : PolyDifunc} -> PolyDiNT q r -> PolyDiNT p q ->
   PolyDiNT p r
-pdfPNTvcomp {r=(PDF rh rd rc)} {q=(PDF qh qd qc)} {p=(PDF ph pd pc)}
-  (PDNT onidxqr oncontraqr oncovarqr) (PDNT onidxpq oncontrapq oncovarpq) =
-    let
-      qcd :
-        ((pi : ph) -> (pc pi -> pd pi) -> qc (onidxpq pi) -> qd (onidxpq pi)) =
-          \pi, pcd, qci => oncontrapq pi pcd (pcd $ oncovarpq pi pcd qci)
-    in
+pdNTvcomp {r=(PDF rp rd rc rm)} {q=(PDF qp qd qc qm)} {p=(PDF pp pd pc pm)}
+  (PDNT oniqr ondomqr oncodqr qrcomm) (PDNT onipq ondompq oncodpq pqcomm) =
     PDNT
-      (onidxqr . onidxpq)
-      (\pi, pcd, pdi =>
-        oncontraqr (onidxpq pi) (qcd pi pcd) (oncontrapq pi pcd pdi))
-      (\pi, pcd, rci =>
-        oncovarpq pi pcd (oncovarqr (onidxpq pi) (qcd pi pcd) rci))
+      (oniqr . onipq)
+      (\pi, pdi => ondomqr (onipq pi) $ ondompq pi pdi)
+      (\pi, rci => oncodpq pi $ oncodqr (onipq pi) rci)
+      (\pi, fext =>
+        trans
+          (funExt $ \ex => cong (oncodpq pi) $ fcong (qrcomm (onipq pi) fext))
+          (pqcomm pi fext))
 
+{- XXX
 ----------------------------------------------------------------------------
 ---- Two-categorical structure of paranatural difunctor transformations ----
 ----------------------------------------------------------------------------
@@ -428,39 +425,39 @@ pdfPNTvcomp {r=(PDF rh rd rc)} {q=(PDF qh qd qc)} {p=(PDF ph pd pc)}
 -- paranatural transformations have horizontal composition and whiskering.
 
 export
-pdfPNTwhiskerL : {0 q, r : PolyDifunc} -> PolyDiNT q r -> (0 p : PolyDifunc) ->
+pdNTwhiskerL : {0 q, r : PolyDifunc} -> PolyDiNT q r -> (0 p : PolyDifunc) ->
   PolyDiNT (pdfComp q p) (pdfComp r p)
-pdfPNTwhiskerL {q=(PDF qh qd qc)} {r=(PDF rh rd rc)}
+pdNTwhiskerL {q=(PDF qh qd qc)} {r=(PDF rh rd rc)}
   (PDNT onidx oncontra oncovar) (PDF ph pd pc) =
     PDNT
       (\(qi ** pi ** qcpd) =>
-        (onidx qi ** pi ** qcpd . oncovar qi pdfPNTwhiskerL_hole_onidx))
+        (onidx qi ** pi ** qcpd . oncovar qi pdNTwhiskerL_hole_onidx))
       (\(qi ** pi ** qcpd), pcqd, qdi =>
-        oncontra qi pdfPNTwhiskerL_hole_oncontra qdi)
+        oncontra qi pdNTwhiskerL_hole_oncontra qdi)
       (\(qi ** pi ** qcpd), pcqd =>
         id)
 
 export
-pdfPNTwhiskerR : {0 p, q : PolyDifunc} -> PolyDiNT p q -> (0 r : PolyDifunc) ->
+pdNTwhiskerR : {0 p, q : PolyDifunc} -> PolyDiNT p q -> (0 r : PolyDifunc) ->
   PolyDiNT (pdfComp r p) (pdfComp r q)
-pdfPNTwhiskerR {p=(PDF ph pd pc)} {q=(PDF qh qd qc)}
+pdNTwhiskerR {p=(PDF ph pd pc)} {q=(PDF qh qd qc)}
   (PDNT onidx oncontra oncovar) (PDF rh rd rc) =
     PDNT
       (\(ri ** pi ** rcpd) =>
-        (ri ** onidx pi ** oncontra pi pdfPNTwhiskerR_hole_onidx . rcpd))
+        (ri ** onidx pi ** oncontra pi pdNTwhiskerR_hole_onidx . rcpd))
       (\(ri ** pi ** rcpd), pcrd =>
         id)
       (\(ri ** pi ** rcpd), pcrd, qci =>
-        oncovar pi pdfPNTwhiskerR_hole_oncovar qci)
+        oncovar pi pdNTwhiskerR_hole_oncovar qci)
 
 export
-pdfPNThcomp : {0 p, p', q, q' : PolyDifunc} ->
+pdNThcomp : {0 p, p', q, q' : PolyDifunc} ->
   PolyDiNT q q' ->
   PolyDiNT p p' ->
   PolyDiNT (pdfComp q p) (pdfComp q' p')
-pdfPNThcomp {p} {p'} {q} {q'} beta alpha =
-  pdfPNTvcomp
-    (pdfPNTwhiskerL {q} {r=q'} beta p')
-    (pdfPNTwhiskerR {p} {q=p'} alpha q)
+pdNThcomp {p} {p'} {q} {q'} beta alpha =
+  pdNTvcomp
+    (pdNTwhiskerL {q} {r=q'} beta p')
+    (pdNTwhiskerR {p} {q=p'} alpha q)
 
   -}
