@@ -344,22 +344,26 @@ InterpPDNT {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
                 $ ntcomm pi fext)
           $ pcomm fext)
 
-{- XXX
 export
-0 InterpPDFisPara : {0 p, q : PolyDifunc} -> (mlpnt : PolyDiNT p q) ->
+0 InterpPDFisStrong : {0 p, q : PolyDifunc} -> (pdnt : PolyDiNT p q) ->
   (i0, i1 : Type) -> (i2 : i0 -> i1) ->
   (d0 : InterpPDF p i0 i0) -> (d1 : InterpPDF p i1 i1) ->
   (InterpPDFlmap p i1 i1 i0 i2 d1 = InterpPDFrmap p i0 i0 i1 i2 d0) ->
-  (InterpPDFlmap q i1 i1 i0 i2 (InterpPDNT {p} {q} mlpnt i1 d1) =
-   InterpPDFrmap q i0 i0 i1 i2 (InterpPDNT {p} {q} mlpnt i0 d0))
-InterpPDFisPara {p=(PDF ph pd pc)} {q=(PDF qh qd qc)}
-  (PDNT onidx oncontra oncovar) i0 i1 i2
+  (InterpPDFlmap q i1 i1 i0 i2 (InterpPDNT {p} {q} pdnt i1 d1) =
+   InterpPDFrmap q i0 i0 i1 i2 (InterpPDNT {p} {q} pdnt i0 d0))
+InterpPDFisStrong {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
+  (PDNT onidx ondom oncod ntcomm) i0 i1 i2
+  (IPDF pi0 mi0pd mpci0 mi0i0 pcomm) (IPDF pi1 mi1pd mpci1 mi1i1 qcomm) cond =
+    ?InterpPDFisStrong_hole
+  {- XXX
   (pi0 ** (i0d0, c0i0)) (pi1 ** (i1d1, c1i1)) cond =
     case mkDPairInjectiveFstHet cond of
       Refl => case mkDPairInjectiveSndHet cond of
         Refl => dpEq12 Refl
           $ pairEqCong Refl Refl
+          -}
 
+{- XXX
 --------------------------------------------------------------------------------
 ---- Category of metalanguage difunctors with paranatural transformations ----
 --------------------------------------------------------------------------------
