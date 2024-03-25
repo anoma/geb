@@ -416,48 +416,39 @@ pdNTvcomp {r=(PDF rp rd rc rm)} {q=(PDF qp qd qc qm)} {p=(PDF pp pd pc pm)}
           (funExt $ \ex => cong (oncodpq pi) $ fcong (qrcomm (onipq pi) fext))
           (pqcomm pi fext))
 
-{- XXX
-----------------------------------------------------------------------------
----- Two-categorical structure of paranatural difunctor transformations ----
-----------------------------------------------------------------------------
+--------------------------------------------------------------------
+---- Two-categorical structure of polydinatural transformations ----
+--------------------------------------------------------------------
 
--- The paranatural transformations of difunctors form a two-category:
--- paranatural transformations have horizontal composition and whiskering.
+-- The polydinatural transformations of difunctors form a two-category:
+-- polydinatural transformations have horizontal composition and whiskering.
 
 export
-pdNTwhiskerL : {0 q, r : PolyDifunc} -> PolyDiNT q r -> (0 p : PolyDifunc) ->
+pdNTwhiskerL : {0 q, r : PolyDifunc} -> PolyDiNT q r -> (p : PolyDifunc) ->
   PolyDiNT (pdfComp q p) (pdfComp r p)
-pdNTwhiskerL {q=(PDF qh qd qc)} {r=(PDF rh rd rc)}
-  (PDNT onidx oncontra oncovar) (PDF ph pd pc) =
+pdNTwhiskerL {q=(PDF qp qd qc qm)} {r=(PDF rp rd rc rm)}
+  (PDNT oni ond onc comm) (PDF pp pd pc pm) =
     PDNT
-      (\(qi ** pi ** qcpd) =>
-        (onidx qi ** pi ** qcpd . oncovar qi pdNTwhiskerL_hole_onidx))
-      (\(qi ** pi ** qcpd), pcqd, qdi =>
-        oncontra qi pdNTwhiskerL_hole_oncontra qdi)
-      (\(qi ** pi ** qcpd), pcqd =>
-        id)
+      (\(qi ** pi ** qcpd) => (oni qi ** pi ** qcpd . onc qi))
+      (\(qi ** pi ** qcpd) => ond qi)
+      (\(qi ** pi ** qcpd) => id)
+      (\(qi ** pi ** qcpd), fext =>
+        funExt $ \ex => cong (pm pi) $ cong qcpd $ fcong (comm qi fext))
 
 export
-pdNTwhiskerR : {0 p, q : PolyDifunc} -> PolyDiNT p q -> (0 r : PolyDifunc) ->
+pdNTwhiskerR : {0 p, q : PolyDifunc} -> PolyDiNT p q -> (r : PolyDifunc) ->
   PolyDiNT (pdfComp r p) (pdfComp r q)
-pdNTwhiskerR {p=(PDF ph pd pc)} {q=(PDF qh qd qc)}
-  (PDNT onidx oncontra oncovar) (PDF rh rd rc) =
+pdNTwhiskerR {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
+  (PDNT oni ond onc comm) (PDF rp rd rc rm) =
     PDNT
-      (\(ri ** pi ** rcpd) =>
-        (ri ** onidx pi ** oncontra pi pdNTwhiskerR_hole_onidx . rcpd))
-      (\(ri ** pi ** rcpd), pcrd =>
-        id)
-      (\(ri ** pi ** rcpd), pcrd, qci =>
-        oncovar pi pdNTwhiskerR_hole_oncovar qci)
+      (\(ri ** pi ** rcpd) => (ri ** oni pi ** ond pi . rcpd))
+      (\(ri ** pi ** rcpd) => id)
+      (\(ri ** pi ** rcpd) => onc pi)
+      (\(ri ** pi ** rcpd), fext =>
+        funExt $ \ex => fcong (comm pi fext))
 
 export
-pdNThcomp : {0 p, p', q, q' : PolyDifunc} ->
-  PolyDiNT q q' ->
-  PolyDiNT p p' ->
-  PolyDiNT (pdfComp q p) (pdfComp q' p')
+pdNThcomp : {0 p, q' : PolyDifunc} -> {p', q : PolyDifunc} ->
+  PolyDiNT q q' -> PolyDiNT p p' -> PolyDiNT (pdfComp q p) (pdfComp q' p')
 pdNThcomp {p} {p'} {q} {q'} beta alpha =
-  pdNTvcomp
-    (pdNTwhiskerL {q} {r=q'} beta p')
-    (pdNTwhiskerR {p} {q=p'} alpha q)
-
-  -}
+  pdNTvcomp (pdNTwhiskerL {q} {r=q'} beta p') (pdNTwhiskerR {p} {q=p'} alpha q)
