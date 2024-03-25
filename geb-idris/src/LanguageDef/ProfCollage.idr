@@ -239,7 +239,53 @@ InterpPDFdimap : (pdf : PolyDifunc) ->
 InterpPDFdimap pdf s t a b mas mtb =
   InterpPDFlmap pdf s b a mas . InterpPDFrmap pdf s t b mtb
 
+----------------------------------
+---- Monoid of polydifunctors ----
+----------------------------------
+
+-- Polydifunctors form a monoid -- a one-object category, with
+-- the polydifunctors as morphisms -- whose identity is the hom-profunctor,
+-- and whose composition is the usual composition of profunctors.
+
+-- We represent the hom-profunctor with simply one position (index) per
+-- morphism.
+
 {-
+export
+PdfHomProfId : PolyDifunc
+PdfHomProfId =
+  PDF (dom : Type ** cod : Type ** dom -> cod) fst (\i => fst $ snd i)
+
+InterpToIdPDF : (x, y : Type) -> (x -> y) -> InterpPDF PdfHomProfId x y
+InterpToIdPDF x y m = ((x ** y ** m) ** (id, id))
+
+InterpFromIdPDF : (x, y : Type) -> InterpPDF PdfHomProfId x y -> x -> y
+InterpFromIdPDF x y ((i ** j ** mij) ** (mxi, mjy)) = mjy . mij . mxi
+
+-- Composition of difunctors can be expressed in the form of a composition
+-- of collages.
+export
+pdfComp : PolyDifunc -> PolyDifunc -> PolyDifunc
+pdfComp (PDF qh qd qc) (PDF ph pd pc) =
+  PDF
+    (qi : qh ** pi : ph ** qc qi -> pd pi)
+    (\(qi ** pi ** qcpd) => qd qi)
+    (\(qi ** pi ** qcpd) => pc pi)
+
+InterpToComposePDF : (q, p : PolyDifunc) -> (x, y : Type) ->
+  EndoProfCompose (InterpPDF q) (InterpPDF p) x y ->
+  InterpPDF (pdfComp q p) x y
+InterpToComposePDF (PDF qh qd qc) (PDF ph pd pc) x y
+  (b ** ((qi ** (xqd, qcb)), (pi ** (bpd, pcy)))) =
+    ((qi ** pi ** bpd . qcb) ** (xqd, pcy))
+
+InterpFromComposePDF : (q, p : PolyDifunc) -> (x, y : Type) ->
+  InterpPDF (pdfComp q p) x y ->
+  EndoProfCompose (InterpPDF q) (InterpPDF p) x y
+InterpFromComposePDF (PDF qh qd qc) (PDF ph pd pc) x y
+  ((qi ** pi ** qcpd) ** (xqd, pcy)) =
+    (pd pi ** ((qi ** (xqd, qcpd)), (pi ** (id, pcy))))
+
 ---------------------------------------------------------------------
 ---- Paranatural transformations between metalanguage difunctors ----
 ---------------------------------------------------------------------
