@@ -44,38 +44,6 @@ InterpMLCdimap : (mlc : MLCollage) ->
 InterpMLCdimap mlc s t a b mas mtb =
   InterpMLClmap mlc s b a mas . InterpMLCrmap mlc s t b mtb
 
------------------------------------------------------------------
----- Natural transformations between metalanguage difunctors ----
------------------------------------------------------------------
-
-public export
-record MLCNatTrans (p, q : MLCollage) where
-  constructor MLNT
-  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
-  mpOnContra :
-    (i : mlcHetIdx p) -> mlcContra p i ->
-      mlcContra q (mpOnIdx i)
-  mpOnCovar :
-    (i : mlcHetIdx p) -> mlcCovar q (mpOnIdx i) ->
-      mlcCovar p i
-
-export
-InterpMLCnt : {0 p, q : MLCollage} -> MLCNatTrans p q ->
-  (0 x, y : Type) -> InterpMLC p x y -> InterpMLC q x y
-InterpMLCnt {p} {q} (MLNT oni ond onc) x y (i ** (dd, dc)) =
-  (oni i ** (ond i . dd, dc . onc i))
-
-export
-0 InterpMLCisNatural : {0 p, q : MLCollage} -> (mlnt : MLCNatTrans p q) ->
-  (0 s, t, a, b : Type) ->
-  (mas : a -> s) -> (mtb : t -> b) ->
-  ExtEq {a=(InterpMLC p s t)} {b=(InterpMLC q a b)}
-    (InterpMLCdimap q s t a b mas mtb . InterpMLCnt {p} {q} mlnt s t)
-    (InterpMLCnt {p} {q} mlnt a b . InterpMLCdimap p s t a b mas mtb)
-InterpMLCisNatural {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
-  (MLNT onidx oncontra oncovar) s t a b mas mtb (pi ** (spd, pct)) =
-    dpEq12 Refl $ pairEqCong Refl Refl
-
 -------------------------------------------
 ---- Monoid of metalanguage difunctors ----
 -------------------------------------------
@@ -120,6 +88,38 @@ InterpFromComposeMLC : (q, p : MLCollage) -> (x, y : Type) ->
 InterpFromComposeMLC (MLC qh qd qc) (MLC ph pd pc) x y
   ((qi ** pi ** qcpd) ** (xqd, pcy)) =
     (pd pi ** ((qi ** (xqd, qcpd)), (pi ** (id, pcy))))
+
+-----------------------------------------------------------------
+---- Natural transformations between metalanguage difunctors ----
+-----------------------------------------------------------------
+
+public export
+record MLCNatTrans (p, q : MLCollage) where
+  constructor MLNT
+  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
+  mpOnContra :
+    (i : mlcHetIdx p) -> mlcContra p i ->
+      mlcContra q (mpOnIdx i)
+  mpOnCovar :
+    (i : mlcHetIdx p) -> mlcCovar q (mpOnIdx i) ->
+      mlcCovar p i
+
+export
+InterpMLCnt : {0 p, q : MLCollage} -> MLCNatTrans p q ->
+  (0 x, y : Type) -> InterpMLC p x y -> InterpMLC q x y
+InterpMLCnt {p} {q} (MLNT oni ond onc) x y (i ** (dd, dc)) =
+  (oni i ** (ond i . dd, dc . onc i))
+
+export
+0 InterpMLCisNatural : {0 p, q : MLCollage} -> (mlnt : MLCNatTrans p q) ->
+  (0 s, t, a, b : Type) ->
+  (mas : a -> s) -> (mtb : t -> b) ->
+  ExtEq {a=(InterpMLC p s t)} {b=(InterpMLC q a b)}
+    (InterpMLCdimap q s t a b mas mtb . InterpMLCnt {p} {q} mlnt s t)
+    (InterpMLCnt {p} {q} mlnt a b . InterpMLCdimap p s t a b mas mtb)
+InterpMLCisNatural {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
+  (MLNT onidx oncontra oncovar) s t a b mas mtb (pi ** (spd, pct)) =
+    dpEq12 Refl $ pairEqCong Refl Refl
 
 --------------------------------------------------------------------------
 ---- Category of metalanguage difunctors with natural transformations ----
