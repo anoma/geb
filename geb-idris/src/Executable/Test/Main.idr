@@ -79,7 +79,7 @@ totalTests = do
   LanguageDef.Test.QuiverTest.quiverTest
   LanguageDef.Test.MLQuivCatTest.mlQuivCatTest
   LanguageDef.Test.MLQuivUnivTest.mlQuivUnivTest
-  LanguageDef.Test.PolyDifuncTest.PolyDifuncTest
+  LanguageDef.Test.PolyDifuncTest.polyDifuncTest
   LanguageDef.Test.MLQuivPolyTest.mlQuivPolyTest
   LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
   LanguageDef.Test.DisliceCatTest.disliceCatTest

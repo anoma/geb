@@ -12,8 +12,8 @@ import LanguageDef.PolyDifunc
 ----------------------------------
 
 export
-PolyDifuncTest : IO ()
-PolyDifuncTest = do
+polyDifuncTest : IO ()
+polyDifuncTest = do
   putStrLn ""
   putStrLn "======================"
   putStrLn "Begin PolyDifuncTest:"
