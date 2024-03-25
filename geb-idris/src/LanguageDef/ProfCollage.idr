@@ -217,6 +217,41 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   ipdfMorph : x -> y
   0 ipdfComm : FunExt -> (ipdfCod . pdfMorph pdf ipdfPos . ipdfDom = ipdfMorph)
 
+0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
+  {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
+  ip = iq -> ipdfPos ip ~=~ ipdfPos iq
+ipdfEqPos {p} {q} {x} {y}
+  {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
+    case eq of Refl => Refl
+
+0 ipdfEqDom : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
+  {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
+  ip = iq -> ipdfDom ip ~=~ ipdfDom iq
+ipdfEqDom {p} {q} {x} {y}
+  {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
+    case eq of Refl => Refl
+
+0 ipdfEqCod : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
+  {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
+  ip = iq -> ipdfCod ip ~=~ ipdfCod iq
+ipdfEqCod {p} {q} {x} {y}
+  {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
+    case eq of Refl => Refl
+
+0 ipdfEqMorph : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
+  {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
+  ip = iq -> ipdfMorph ip ~=~ ipdfMorph iq
+ipdfEqMorph {p} {q} {x} {y}
+  {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
+    case eq of Refl => Refl
+
+0 ipdfEqComm : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
+  {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
+  ip = iq -> ipdfComm ip ~=~ ipdfComm iq
+ipdfEqComm {p} {q} {x} {y}
+  {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
+    case eq of Refl => Refl
+
 export
 InterpPDFlmap : (pdf : PolyDifunc) ->
   (0 s, t, a : Type) -> (a -> s) -> InterpPDF pdf s t -> InterpPDF pdf a t
@@ -345,23 +380,19 @@ InterpPDNT {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
           $ pcomm fext)
 
 export
-0 InterpPDFisStrong : {0 p, q : PolyDifunc} -> (pdnt : PolyDiNT p q) ->
+0 InterpPDFisPara : {0 p, q : PolyDifunc} -> (pdnt : PolyDiNT p q) ->
   (i0, i1 : Type) -> (i2 : i0 -> i1) ->
   (d0 : InterpPDF p i0 i0) -> (d1 : InterpPDF p i1 i1) ->
   (InterpPDFlmap p i1 i1 i0 i2 d1 = InterpPDFrmap p i0 i0 i1 i2 d0) ->
   (InterpPDFlmap q i1 i1 i0 i2 (InterpPDNT {p} {q} pdnt i1 d1) =
    InterpPDFrmap q i0 i0 i1 i2 (InterpPDNT {p} {q} pdnt i0 d0))
-InterpPDFisStrong {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
+InterpPDFisPara {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
   (PDNT onidx ondom oncod ntcomm) i0 i1 i2
   (IPDF pi0 mi0pd mpci0 mi0i0 pcomm) (IPDF pi1 mi1pd mpci1 mi1i1 qcomm) cond =
-    ?InterpPDFisStrong_hole
-  {- XXX
-  (pi0 ** (i0d0, c0i0)) (pi1 ** (i1d1, c1i1)) cond =
-    case mkDPairInjectiveFstHet cond of
-      Refl => case mkDPairInjectiveSndHet cond of
-        Refl => dpEq12 Refl
-          $ pairEqCong Refl Refl
-          -}
+    case ipdfEqPos cond of
+      Refl => case ipdfEqDom cond of
+        Refl => case ipdfEqCod cond of
+          Refl => rewrite ipdfEqMorph cond in Refl
 
 {- XXX
 --------------------------------------------------------------------------------
