@@ -199,7 +199,7 @@ record PolyDifunc where
   pdfPos : Type
   pdfDom : SliceObj pdfPos
   pdfCod : SliceObj pdfPos
-  0 pdfMorph : (i : pdfPos) -> pdfDom i -> pdfCod i
+  pdfMorph : (i : pdfPos) -> pdfDom i -> pdfCod i
 
 export
 record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
