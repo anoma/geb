@@ -272,31 +272,38 @@ InterpFromIdPDF x y (IPDF (i ** j ** mij) mxi mjy mxy comm) =
   let 0 eqm : (FunExt -> mjy . mij . mxi = mxy) = comm in
   mxy
 
-{-
--- Composition of difunctors can be expressed in the form of a composition
--- of collages.
+-- The arena form of polydifunctors is closed under composition.
 export
 pdfComp : PolyDifunc -> PolyDifunc -> PolyDifunc
-pdfComp (PDF qh qd qc) (PDF ph pd pc) =
+pdfComp (PDF qp qd qc qm) (PDF pp pd pc pm) =
   PDF
-    (qi : qh ** pi : ph ** qc qi -> pd pi)
+    (qi : qp ** pi : pp ** qc qi -> pd pi)
     (\(qi ** pi ** qcpd) => qd qi)
     (\(qi ** pi ** qcpd) => pc pi)
+    (\(qi ** pi ** qcpd), qdi => pm pi $ qcpd $ qm qi qdi)
 
 InterpToComposePDF : (q, p : PolyDifunc) -> (x, y : Type) ->
   EndoProfCompose (InterpPDF q) (InterpPDF p) x y ->
   InterpPDF (pdfComp q p) x y
-InterpToComposePDF (PDF qh qd qc) (PDF ph pd pc) x y
-  (b ** ((qi ** (xqd, qcb)), (pi ** (bpd, pcy)))) =
-    ((qi ** pi ** bpd . qcb) ** (xqd, pcy))
+InterpToComposePDF (PDF qp qd qc qm) (PDF pp pd pc pm) x y
+  (b ** (IPDF qi mxqd mqcb mxb qcomm, IPDF pi mbpd mpcy mby pcomm)) =
+    IPDF
+      (qi ** pi ** mbpd . mqcb)
+      mxqd
+      mpcy
+      (mby . mxb)
+      (\fext => rewrite sym (qcomm fext) in rewrite sym (pcomm fext) in Refl)
 
 InterpFromComposePDF : (q, p : PolyDifunc) -> (x, y : Type) ->
   InterpPDF (pdfComp q p) x y ->
   EndoProfCompose (InterpPDF q) (InterpPDF p) x y
-InterpFromComposePDF (PDF qh qd qc) (PDF ph pd pc) x y
-  ((qi ** pi ** qcpd) ** (xqd, pcy)) =
-    (pd pi ** ((qi ** (xqd, qcpd)), (pi ** (id, pcy))))
+InterpFromComposePDF (PDF qp qd qc qm) (PDF pp pd pc pm) x y
+  (IPDF (qi ** pi ** qcpd) mxqd mpcy mxy comm) =
+    (pd pi **
+      (IPDF qi mxqd qcpd (qcpd . qm qi . mxqd) $ \_ => Refl,
+      (IPDF pi id mpcy (mpcy . pm pi) $ \_ => Refl)))
 
+{-
 ---------------------------------------------------------------------
 ---- Paranatural transformations between metalanguage difunctors ----
 ---------------------------------------------------------------------
