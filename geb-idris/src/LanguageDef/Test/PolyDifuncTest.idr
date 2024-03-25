@@ -1,7 +1,7 @@
-module LanguageDef.Test.ProfCollageTest
+module LanguageDef.Test.PolyDifuncTest
 
 import Test.TestLibrary
-import LanguageDef.ProfCollage
+import LanguageDef.PolyDifunc
 
 %default total
 
@@ -12,14 +12,14 @@ import LanguageDef.ProfCollage
 ----------------------------------
 
 export
-profCollageTest : IO ()
-profCollageTest = do
+PolyDifuncTest : IO ()
+PolyDifuncTest = do
   putStrLn ""
   putStrLn "======================"
-  putStrLn "Begin ProfCollageTest:"
+  putStrLn "Begin PolyDifuncTest:"
   putStrLn "----------------------"
   putStrLn ""
   putStrLn "--------------------"
-  putStrLn "End ProfCollageTest."
+  putStrLn "End PolyDifuncTest."
   putStrLn "===================="
   pure ()
