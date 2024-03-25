@@ -247,21 +247,32 @@ InterpPDFdimap pdf s t a b mas mtb =
 -- the polydifunctors as morphisms -- whose identity is the hom-profunctor,
 -- and whose composition is the usual composition of profunctors.
 
--- We represent the hom-profunctor with simply one position (index) per
--- morphism.
+-- We represent the hom-profunctor, which is the identity of the monoid of
+-- polydifunctors, with one position per morphism of `Type`.
 
-{-
 export
 PdfHomProfId : PolyDifunc
 PdfHomProfId =
-  PDF (dom : Type ** cod : Type ** dom -> cod) fst (\i => fst $ snd i)
+  PDF
+    (dom : Type ** cod : Type ** dom -> cod)
+    fst
+    (\i => fst $ snd i)
+    (\i => snd $ snd i)
 
 InterpToIdPDF : (x, y : Type) -> (x -> y) -> InterpPDF PdfHomProfId x y
-InterpToIdPDF x y m = ((x ** y ** m) ** (id, id))
+InterpToIdPDF x y m = IPDF (x ** y ** m) id id m (\_ => Refl)
 
 InterpFromIdPDF : (x, y : Type) -> InterpPDF PdfHomProfId x y -> x -> y
-InterpFromIdPDF x y ((i ** j ** mij) ** (mxi, mjy)) = mjy . mij . mxi
+InterpFromIdPDF x y (IPDF (i ** j ** mij) mxi mjy mxy comm) =
+  -- There are two ways of getting from `x` to `y` -- `mxy` and
+  -- `mjy . mij . mxi`. But `comm` shows them to be equal.
+  -- We make that explicit here to make sure, and to document, that
+  -- `mjy`, `mij`, and `mxi` are not "unused", but rather are an
+  -- alternative to the `mxy` which we do use.
+  let 0 eqm : (FunExt -> mjy . mij . mxi = mxy) = comm in
+  mxy
 
+{-
 -- Composition of difunctors can be expressed in the form of a composition
 -- of collages.
 export
