@@ -72,8 +72,8 @@ mlcComp : MLCollage -> MLCollage -> MLCollage
 mlcComp (MLC qh qd qc) (MLC ph pd pc) =
   MLC
     (qi : qh ** pi : ph ** qc qi -> pd pi)
-    (\(qi ** pi ** qcpd) => qd qi)
-    (\(qi ** pi ** qcpd) => pc pi)
+    (\(qi ** pi ** qcpd) => qd qi) -- XXX note qcpd is never used anywhere!
+    (\(qi ** pi ** qcpd) => pc pi) -- XXX note qcpd is never used anywhere!
 
 InterpToComposeMLC : (q, p : MLCollage) -> (x, y : Type) ->
   EndoProfCompose (InterpMLC q) (InterpMLC p) x y ->
