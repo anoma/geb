@@ -1,4 +1,4 @@
-module LanguageDef.ProfCollage
+module LanguageDef.PolyDifunc
 
 import Library.IdrisUtils
 import Library.IdrisCategories
