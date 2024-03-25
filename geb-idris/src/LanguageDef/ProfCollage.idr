@@ -181,36 +181,95 @@ mlcNThcomp {p} {p'} {q} {q'} beta alpha =
     (mlcNTwhiskerL {q} {r=q'} beta p')
     (mlcNTwhiskerR {p} {q=p'} alpha q)
 
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+---- Polydifunctors subject to polydinatural transformations ----
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+-------------------------------------
+---- Arena form of polydifunctor ----
+-------------------------------------
+
+-- The positions of a polydifunctor map not to objects of `Type`
+-- but to morphisms.
+public export
+record PolyDifunc where
+  constructor PDF
+  pdfPos : Type
+  pdfDom : SliceObj pdfPos
+  pdfCod : SliceObj pdfPos
+  0 pdfMorph : (i : pdfPos) -> pdfDom i -> pdfCod i
+
+export
+record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
+  constructor IPDF
+  ipdfPos : pdfPos pdf
+  ipdfDom : x -> pdfDom pdf ipdfPos
+  ipdfCod : pdfCod pdf ipdfPos -> y
+  ipdfMorph : x -> y
+  0 ipdfComm : FunExt -> (ipdfCod . pdfMorph pdf ipdfPos . ipdfDom = ipdfMorph)
+
+export
+InterpPDFlmap : (pdf : PolyDifunc) ->
+  (0 s, t, a : Type) -> (a -> s) -> InterpPDF pdf s t -> InterpPDF pdf a t
+InterpPDFlmap (PDF pos dom cod morph) s t a mas (IPDF i msd mit mst comm) =
+  IPDF
+    i
+    (msd . mas)
+    mit
+    (mst . mas)
+    (\fext => funExt $ \_ => rewrite sym (comm fext) in Refl)
+
+export
+InterpPDFrmap : (pdf : PolyDifunc) ->
+  (0 s, t, b : Type) -> (t -> b) -> InterpPDF pdf s t -> InterpPDF pdf s b
+InterpPDFrmap (PDF pos dom cod morph) s t b mtb (IPDF i msd mct mst comm) =
+  IPDF
+    i
+    msd
+    (mtb . mct)
+    (mtb . mst)
+    (\fext => funExt $ \_ => rewrite sym (comm fext) in Refl)
+
+export
+InterpPDFdimap : (pdf : PolyDifunc) ->
+  (0 s, t, a, b : Type) -> (a -> s) -> (t -> b) ->
+    InterpPDF pdf s t -> InterpPDF pdf a b
+InterpPDFdimap pdf s t a b mas mtb =
+  InterpPDFlmap pdf s b a mas . InterpPDFrmap pdf s t b mtb
+
+{-
 ---------------------------------------------------------------------
 ---- Paranatural transformations between metalanguage difunctors ----
 ---------------------------------------------------------------------
 
 public export
-record MLCParaNT (p, q : MLCollage) where
-  constructor MLPNT
-  mpOnIdx : mlcHetIdx p -> mlcHetIdx q
+record PDFParaNT (p, q : PolyDifunc) where
+  constructor PDNT
+  mpOnIdx : pdfHetIdx p -> pdfHetIdx q
   mpOnContra :
-    (i : mlcHetIdx p) -> (mlcCovar p i -> mlcContra p i) ->
-      mlcContra p i -> mlcContra q (mpOnIdx i)
+    (i : pdfHetIdx p) -> (pdfCovar p i -> pdfContra p i) ->
+      pdfContra p i -> pdfContra q (mpOnIdx i)
   mpOnCovar :
-    (i : mlcHetIdx p) -> (mlcCovar p i -> mlcContra p i) ->
-      mlcCovar q (mpOnIdx i) -> mlcCovar p i
+    (i : pdfHetIdx p) -> (pdfCovar p i -> pdfContra p i) ->
+      pdfCovar q (mpOnIdx i) -> pdfCovar p i
 
 export
-InterpMLCpara : {0 p, q : MLCollage} -> MLCParaNT p q ->
-  (0 x : Type) -> InterpMLC p x x -> InterpMLC q x x
-InterpMLCpara {p} {q} (MLPNT oni ond onc) x (i ** (dd, dc)) =
+InterpPDFpara : {0 p, q : PolyDifunc} -> PDFParaNT p q ->
+  (0 x : Type) -> InterpPDF p x x -> InterpPDF q x x
+InterpPDFpara {p} {q} (PDNT oni ond onc) x (i ** (dd, dc)) =
   (oni i ** (ond i (dd . dc) . dd, dc . onc i (dd . dc)))
 
 export
-0 InterpMLCisPara : {0 p, q : MLCollage} -> (mlpnt : MLCParaNT p q) ->
+0 InterpPDFisPara : {0 p, q : PolyDifunc} -> (mlpnt : PDFParaNT p q) ->
   (i0, i1 : Type) -> (i2 : i0 -> i1) ->
-  (d0 : InterpMLC p i0 i0) -> (d1 : InterpMLC p i1 i1) ->
-  (InterpMLClmap p i1 i1 i0 i2 d1 = InterpMLCrmap p i0 i0 i1 i2 d0) ->
-  (InterpMLClmap q i1 i1 i0 i2 (InterpMLCpara {p} {q} mlpnt i1 d1) =
-   InterpMLCrmap q i0 i0 i1 i2 (InterpMLCpara {p} {q} mlpnt i0 d0))
-InterpMLCisPara {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
-  (MLPNT onidx oncontra oncovar) i0 i1 i2
+  (d0 : InterpPDF p i0 i0) -> (d1 : InterpPDF p i1 i1) ->
+  (InterpPDFlmap p i1 i1 i0 i2 d1 = InterpPDFrmap p i0 i0 i1 i2 d0) ->
+  (InterpPDFlmap q i1 i1 i0 i2 (InterpPDFpara {p} {q} mlpnt i1 d1) =
+   InterpPDFrmap q i0 i0 i1 i2 (InterpPDFpara {p} {q} mlpnt i0 d0))
+InterpPDFisPara {p=(PDF ph pd pc)} {q=(PDF qh qd qc)}
+  (PDNT onidx oncontra oncovar) i0 i1 i2
   (pi0 ** (i0d0, c0i0)) (pi1 ** (i1d1, c1i1)) cond =
     case mkDPairInjectiveFstHet cond of
       Refl => case mkDPairInjectiveSndHet cond of
@@ -222,20 +281,20 @@ InterpMLCisPara {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
 --------------------------------------------------------------------------------
 
 export
-mlcPNTid : (mlc : MLCollage) -> MLCParaNT mlc mlc
-mlcPNTid mlc = MLPNT id (\_, _ => id) (\_, _ => id)
+pdfPNTid : (pdf : PolyDifunc) -> PDFParaNT pdf pdf
+pdfPNTid pdf = PDNT id (\_, _ => id) (\_, _ => id)
 
 export
-mlcPNTvcomp : {0 r, q, p : MLCollage} -> MLCParaNT q r -> MLCParaNT p q ->
-  MLCParaNT p r
-mlcPNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
-  (MLPNT onidxqr oncontraqr oncovarqr) (MLPNT onidxpq oncontrapq oncovarpq) =
+pdfPNTvcomp : {0 r, q, p : PolyDifunc} -> PDFParaNT q r -> PDFParaNT p q ->
+  PDFParaNT p r
+pdfPNTvcomp {r=(PDF rh rd rc)} {q=(PDF qh qd qc)} {p=(PDF ph pd pc)}
+  (PDNT onidxqr oncontraqr oncovarqr) (PDNT onidxpq oncontrapq oncovarpq) =
     let
       qcd :
         ((pi : ph) -> (pc pi -> pd pi) -> qc (onidxpq pi) -> qd (onidxpq pi)) =
           \pi, pcd, qci => oncontrapq pi pcd (pcd $ oncovarpq pi pcd qci)
     in
-    MLPNT
+    PDNT
       (onidxqr . onidxpq)
       (\pi, pcd, pdi =>
         oncontraqr (onidxpq pi) (qcd pi pcd) (oncontrapq pi pcd pdi))
@@ -250,37 +309,39 @@ mlcPNTvcomp {r=(MLC rh rd rc)} {q=(MLC qh qd qc)} {p=(MLC ph pd pc)}
 -- paranatural transformations have horizontal composition and whiskering.
 
 export
-mlcPNTwhiskerL : {0 q, r : MLCollage} -> MLCParaNT q r -> (0 p : MLCollage) ->
-  MLCParaNT (mlcComp q p) (mlcComp r p)
-mlcPNTwhiskerL {q=(MLC qh qd qc)} {r=(MLC rh rd rc)}
-  (MLPNT onidx oncontra oncovar) (MLC ph pd pc) =
-    MLPNT
+pdfPNTwhiskerL : {0 q, r : PolyDifunc} -> PDFParaNT q r -> (0 p : PolyDifunc) ->
+  PDFParaNT (pdfComp q p) (pdfComp r p)
+pdfPNTwhiskerL {q=(PDF qh qd qc)} {r=(PDF rh rd rc)}
+  (PDNT onidx oncontra oncovar) (PDF ph pd pc) =
+    PDNT
       (\(qi ** pi ** qcpd) =>
-        (onidx qi ** pi ** qcpd . oncovar qi ?mlcPNTwhiskerL_hole_onidx))
+        (onidx qi ** pi ** qcpd . oncovar qi pdfPNTwhiskerL_hole_onidx))
       (\(qi ** pi ** qcpd), pcqd, qdi =>
-        oncontra qi ?mlcPNTwhiskerL_hole_oncontra qdi)
+        oncontra qi pdfPNTwhiskerL_hole_oncontra qdi)
       (\(qi ** pi ** qcpd), pcqd =>
         id)
 
 export
-mlcPNTwhiskerR : {0 p, q : MLCollage} -> MLCParaNT p q -> (0 r : MLCollage) ->
-  MLCParaNT (mlcComp r p) (mlcComp r q)
-mlcPNTwhiskerR {p=(MLC ph pd pc)} {q=(MLC qh qd qc)}
-  (MLPNT onidx oncontra oncovar) (MLC rh rd rc) =
-    MLPNT
+pdfPNTwhiskerR : {0 p, q : PolyDifunc} -> PDFParaNT p q -> (0 r : PolyDifunc) ->
+  PDFParaNT (pdfComp r p) (pdfComp r q)
+pdfPNTwhiskerR {p=(PDF ph pd pc)} {q=(PDF qh qd qc)}
+  (PDNT onidx oncontra oncovar) (PDF rh rd rc) =
+    PDNT
       (\(ri ** pi ** rcpd) =>
-        (ri ** onidx pi ** oncontra pi ?mlcPNTwhiskerR_hole_onidx . rcpd))
+        (ri ** onidx pi ** oncontra pi pdfPNTwhiskerR_hole_onidx . rcpd))
       (\(ri ** pi ** rcpd), pcrd =>
         id)
       (\(ri ** pi ** rcpd), pcrd, qci =>
-        oncovar pi ?mlcPNTwhiskerR_hole_oncovar qci)
+        oncovar pi pdfPNTwhiskerR_hole_oncovar qci)
 
 export
-mlcPNThcomp : {0 p, p', q, q' : MLCollage} ->
-  MLCParaNT q q' ->
-  MLCParaNT p p' ->
-  MLCParaNT (mlcComp q p) (mlcComp q' p')
-mlcPNThcomp {p} {p'} {q} {q'} beta alpha =
-  mlcPNTvcomp
-    (mlcPNTwhiskerL {q} {r=q'} beta p')
-    (mlcPNTwhiskerR {p} {q=p'} alpha q)
+pdfPNThcomp : {0 p, p', q, q' : PolyDifunc} ->
+  PDFParaNT q q' ->
+  PDFParaNT p p' ->
+  PDFParaNT (pdfComp q p) (pdfComp q' p')
+pdfPNThcomp {p} {p'} {q} {q'} beta alpha =
+  pdfPNTvcomp
+    (pdfPNTwhiskerL {q} {r=q'} beta p')
+    (pdfPNTwhiskerR {p} {q=p'} alpha q)
+
+  -}
