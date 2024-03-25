@@ -191,8 +191,10 @@ mlcNThcomp {p} {p'} {q} {q'} beta alpha =
 ---- Arena form of polydifunctor ----
 -------------------------------------
 
--- The positions of a polydifunctor map not to objects of `Type`
--- but to morphisms.
+-- The positions of a polydifunctor map not to directions which are not
+-- objects of `Type`, but morphisms (of `Type`).  In light of the
+-- interpretation below, we can view these morphisms as objects of the
+-- twisted arrow category of `Type`.
 public export
 record PolyDifunc where
   constructor PDF
@@ -201,6 +203,11 @@ record PolyDifunc where
   pdfCod : SliceObj pdfPos
   pdfMorph : (i : pdfPos) -> pdfDom i -> pdfCod i
 
+-- The interpretation of a polydifunctor treats its inputs and outputs
+-- as a domain and codomain, and comprises a choice of morphism from
+-- domain and codomain, a choice of position of the polydifunctor, and
+-- a twisted-arrow morphism from the chosen morphism to the corresponding
+-- direction of the polydifunctor.
 export
 record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   constructor IPDF
@@ -303,7 +310,6 @@ InterpFromComposePDF (PDF qp qd qc qm) (PDF pp pd pc pm) x y
       (IPDF qi mxqd qcpd (qcpd . qm qi . mxqd) $ \_ => Refl,
       (IPDF pi id mpcy (mpcy . pm pi) $ \_ => Refl)))
 
-{-
 ---------------------------------------------------------------------
 ---- Paranatural transformations between metalanguage difunctors ----
 ---------------------------------------------------------------------
@@ -311,20 +317,34 @@ InterpFromComposePDF (PDF qp qd qc qm) (PDF pp pd pc pm) x y
 public export
 record PDFParaNT (p, q : PolyDifunc) where
   constructor PDNT
-  mpOnIdx : pdfHetIdx p -> pdfHetIdx q
-  mpOnContra :
-    (i : pdfHetIdx p) -> (pdfCovar p i -> pdfContra p i) ->
-      pdfContra p i -> pdfContra q (mpOnIdx i)
-  mpOnCovar :
-    (i : pdfHetIdx p) -> (pdfCovar p i -> pdfContra p i) ->
-      pdfCovar q (mpOnIdx i) -> pdfCovar p i
+  pdntOnIdx : pdfPos p -> pdfPos q
+  pdntOnDom : (i : pdfPos p) -> pdfDom p i -> pdfDom q (pdntOnIdx i)
+  pdntOnCod : (i : pdfPos p) -> pdfCod q (pdntOnIdx i) -> pdfCod p i
+  pdntComm : (i : pdfPos p) -> FunExt ->
+    (pdntOnCod i . pdfMorph q (pdntOnIdx i) . pdntOnDom i = pdfMorph p i)
 
 export
 InterpPDFpara : {0 p, q : PolyDifunc} -> PDFParaNT p q ->
   (0 x : Type) -> InterpPDF p x x -> InterpPDF q x x
-InterpPDFpara {p} {q} (PDNT oni ond onc) x (i ** (dd, dc)) =
-  (oni i ** (ond i (dd . dc) . dd, dc . onc i (dd . dc)))
+InterpPDFpara {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
+  (PDNT oni ond onc ntcomm) x (IPDF pi mxpd mpcx mxx pcomm) =
+    IPDF
+      (oni pi)
+      (ond pi . mxpd)
+      (mpcx . onc pi)
+      mxx
+      (\fext =>
+        trans
+          (funExt $ \ex =>
+            cong mpcx $
+              fcong
+                {f=(onc pi . qm (oni pi) . ond pi)}
+                {g=(pm pi)}
+                {x=(mxpd ex)}
+                $ ntcomm pi fext)
+          $ pcomm fext)
 
+{- XXX
 export
 0 InterpPDFisPara : {0 p, q : PolyDifunc} -> (mlpnt : PDFParaNT p q) ->
   (i0, i1 : Type) -> (i2 : i0 -> i1) ->
