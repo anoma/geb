@@ -310,12 +310,12 @@ InterpFromComposePDF (PDF qp qd qc qm) (PDF pp pd pc pm) x y
       (IPDF qi mxqd qcpd (qcpd . qm qi . mxqd) $ \_ => Refl,
       (IPDF pi id mpcy (mpcy . pm pi) $ \_ => Refl)))
 
----------------------------------------------------------------------
----- Paranatural transformations between metalanguage difunctors ----
----------------------------------------------------------------------
+-----------------------------------------------------------------------
+---- Polydinatural transformations between metalanguage difunctors ----
+-----------------------------------------------------------------------
 
 public export
-record PDFParaNT (p, q : PolyDifunc) where
+record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
   pdntOnIdx : pdfPos p -> pdfPos q
   pdntOnDom : (i : pdfPos p) -> pdfDom p i -> pdfDom q (pdntOnIdx i)
@@ -324,9 +324,9 @@ record PDFParaNT (p, q : PolyDifunc) where
     (pdntOnCod i . pdfMorph q (pdntOnIdx i) . pdntOnDom i = pdfMorph p i)
 
 export
-InterpPDFpara : {0 p, q : PolyDifunc} -> PDFParaNT p q ->
+InterpPDNT : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
   (0 x : Type) -> InterpPDF p x x -> InterpPDF q x x
-InterpPDFpara {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
+InterpPDNT {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
   (PDNT oni ond onc ntcomm) x (IPDF pi mxpd mpcx mxx pcomm) =
     IPDF
       (oni pi)
@@ -346,12 +346,12 @@ InterpPDFpara {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
 
 {- XXX
 export
-0 InterpPDFisPara : {0 p, q : PolyDifunc} -> (mlpnt : PDFParaNT p q) ->
+0 InterpPDFisPara : {0 p, q : PolyDifunc} -> (mlpnt : PolyDiNT p q) ->
   (i0, i1 : Type) -> (i2 : i0 -> i1) ->
   (d0 : InterpPDF p i0 i0) -> (d1 : InterpPDF p i1 i1) ->
   (InterpPDFlmap p i1 i1 i0 i2 d1 = InterpPDFrmap p i0 i0 i1 i2 d0) ->
-  (InterpPDFlmap q i1 i1 i0 i2 (InterpPDFpara {p} {q} mlpnt i1 d1) =
-   InterpPDFrmap q i0 i0 i1 i2 (InterpPDFpara {p} {q} mlpnt i0 d0))
+  (InterpPDFlmap q i1 i1 i0 i2 (InterpPDNT {p} {q} mlpnt i1 d1) =
+   InterpPDFrmap q i0 i0 i1 i2 (InterpPDNT {p} {q} mlpnt i0 d0))
 InterpPDFisPara {p=(PDF ph pd pc)} {q=(PDF qh qd qc)}
   (PDNT onidx oncontra oncovar) i0 i1 i2
   (pi0 ** (i0d0, c0i0)) (pi1 ** (i1d1, c1i1)) cond =
@@ -365,12 +365,12 @@ InterpPDFisPara {p=(PDF ph pd pc)} {q=(PDF qh qd qc)}
 --------------------------------------------------------------------------------
 
 export
-pdfPNTid : (pdf : PolyDifunc) -> PDFParaNT pdf pdf
+pdfPNTid : (pdf : PolyDifunc) -> PolyDiNT pdf pdf
 pdfPNTid pdf = PDNT id (\_, _ => id) (\_, _ => id)
 
 export
-pdfPNTvcomp : {0 r, q, p : PolyDifunc} -> PDFParaNT q r -> PDFParaNT p q ->
-  PDFParaNT p r
+pdfPNTvcomp : {0 r, q, p : PolyDifunc} -> PolyDiNT q r -> PolyDiNT p q ->
+  PolyDiNT p r
 pdfPNTvcomp {r=(PDF rh rd rc)} {q=(PDF qh qd qc)} {p=(PDF ph pd pc)}
   (PDNT onidxqr oncontraqr oncovarqr) (PDNT onidxpq oncontrapq oncovarpq) =
     let
@@ -393,8 +393,8 @@ pdfPNTvcomp {r=(PDF rh rd rc)} {q=(PDF qh qd qc)} {p=(PDF ph pd pc)}
 -- paranatural transformations have horizontal composition and whiskering.
 
 export
-pdfPNTwhiskerL : {0 q, r : PolyDifunc} -> PDFParaNT q r -> (0 p : PolyDifunc) ->
-  PDFParaNT (pdfComp q p) (pdfComp r p)
+pdfPNTwhiskerL : {0 q, r : PolyDifunc} -> PolyDiNT q r -> (0 p : PolyDifunc) ->
+  PolyDiNT (pdfComp q p) (pdfComp r p)
 pdfPNTwhiskerL {q=(PDF qh qd qc)} {r=(PDF rh rd rc)}
   (PDNT onidx oncontra oncovar) (PDF ph pd pc) =
     PDNT
@@ -406,8 +406,8 @@ pdfPNTwhiskerL {q=(PDF qh qd qc)} {r=(PDF rh rd rc)}
         id)
 
 export
-pdfPNTwhiskerR : {0 p, q : PolyDifunc} -> PDFParaNT p q -> (0 r : PolyDifunc) ->
-  PDFParaNT (pdfComp r p) (pdfComp r q)
+pdfPNTwhiskerR : {0 p, q : PolyDifunc} -> PolyDiNT p q -> (0 r : PolyDifunc) ->
+  PolyDiNT (pdfComp r p) (pdfComp r q)
 pdfPNTwhiskerR {p=(PDF ph pd pc)} {q=(PDF qh qd qc)}
   (PDNT onidx oncontra oncovar) (PDF rh rd rc) =
     PDNT
@@ -420,9 +420,9 @@ pdfPNTwhiskerR {p=(PDF ph pd pc)} {q=(PDF qh qd qc)}
 
 export
 pdfPNThcomp : {0 p, p', q, q' : PolyDifunc} ->
-  PDFParaNT q q' ->
-  PDFParaNT p p' ->
-  PDFParaNT (pdfComp q p) (pdfComp q' p')
+  PolyDiNT q q' ->
+  PolyDiNT p p' ->
+  PolyDiNT (pdfComp q p) (pdfComp q' p')
 pdfPNThcomp {p} {p'} {q} {q'} beta alpha =
   pdfPNTvcomp
     (pdfPNTwhiskerL {q} {r=q'} beta p')
