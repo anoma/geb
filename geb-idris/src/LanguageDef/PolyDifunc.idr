@@ -190,9 +190,9 @@ PdfCovarRep : Type -> PolyDifunc
 PdfCovarRep dom =
   PDF
     (cod : Type ** dom -> cod)
-    fst
     (\_ => dom)
-    ?PdfCovarRep_hole
+    (\_ => dom)
+    (\_ => id)
 
 InterpToCovarRepPDF : (dom, y : Type) ->
   (dom -> y) -> InterpPDF (PdfCovarRep dom) Void y
