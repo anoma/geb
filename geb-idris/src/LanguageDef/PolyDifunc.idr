@@ -30,9 +30,9 @@ record PolyDifunc where
 
 -- The interpretation of a polydifunctor treats its inputs and outputs
 -- as a domain and codomain, and comprises a choice of morphism from
--- domain and codomain, a choice of position of the polydifunctor, and
--- a twisted-arrow morphism from the chosen morphism to the corresponding
--- direction of the polydifunctor.
+-- domain to codomain, a choice of position of the polydifunctor, and
+-- a twisted-arrow morphism from the corresponding direction of the
+-- polydifunctor to the chosen morphism.
 export
 record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   constructor IPDF
