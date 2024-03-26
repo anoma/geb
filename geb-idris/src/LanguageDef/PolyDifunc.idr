@@ -167,6 +167,28 @@ InterpFromComposePDF (PDF qp qd qc qm) (PDF pp pd pc pm) x y
       (IPDF qi mxqd qcpd (qcpd . qm qi . mxqd) $ \_ => Refl,
       (IPDF pi id mpcy (mpcy . pm pi) $ \_ => Refl)))
 
+------------------------
+---- Representables ----
+------------------------
+
+-- Polynomial difunctors include both the covariant and contravariant
+-- representables.  (Together with their having all coproducts, this
+-- means that they subsume both polynomial and Dirichlet functors.)
+
+export
+PdfCovarRep : Type -> PolyDifunc
+PdfCovarRep dom =
+  PDF
+    (cod : Type ** dom -> cod)
+    fst
+    (\_ => dom)
+    ?PdfCovarRep_hole
+
+InterpToCovarRepPDF : (dom, y : Type) ->
+  (dom -> y) -> InterpPDF (PdfCovarRep dom) Void y
+InterpToCovarRepPDF dom y m =
+  IPDF (y ** m) (\v => void v) m (\v => void v) (\fext => funExt $ \v => void v)
+
 -----------------------------------------------------------------------
 ---- Polydinatural transformations between metalanguage difunctors ----
 -----------------------------------------------------------------------
