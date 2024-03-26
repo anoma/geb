@@ -15,8 +15,11 @@ import Library.IdrisCategories
 
 -- The positions of a polydifunctor map not to directions which are not
 -- objects of `Type`, but morphisms (of `Type`).  In light of the
--- interpretation below, we can view these morphisms as objects of the
--- twisted arrow category of `Type`.
+-- interpretation below, we can view these morphisms as the heteromorphisms
+-- of a difunctor on `Type`, and also as the objects of the twisted-arrow
+-- category on `Type`.  (Thus far they could also be objects of the arrow
+-- category, but the interpretation below uses twisted-arrow morphisms,
+-- not arrow morphisms.)
 public export
 record PolyDifunc where
   constructor PDF
