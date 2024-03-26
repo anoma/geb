@@ -199,6 +199,10 @@ InterpToCovarRepPDF : (dom, y : Type) ->
 InterpToCovarRepPDF dom y m =
   IPDF (y ** m) (\v => void v) m (\v => void v) (\fext => funExt $ \v => void v)
 
+InterpFromCovarRepPDF : (dom, y : Type) ->
+  InterpPDF (PdfCovarRep dom) Void y -> (dom -> y)
+InterpFromCovarRepPDF dom y (IPDF i d c m comm) = c
+
 -----------------------------------------------------------------------
 ---- Polydinatural transformations between metalanguage difunctors ----
 -----------------------------------------------------------------------
