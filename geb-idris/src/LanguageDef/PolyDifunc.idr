@@ -210,6 +210,11 @@ InterpFromCovarRepPDF : (dom, x, y : Type) ->
   InterpPDF (PdfCovarRep dom) x y -> (dom -> y)
 InterpFromCovarRepPDF dom x y (IPDF i d c m comm) = c
 
+export
+InferFromCovarRepPDF : (dom, x, y : Type) ->
+  InterpPDF (PdfCovarRep dom) x y -> (x -> dom)
+InferFromCovarRepPDF dom x y (IPDF i d c m comm) = d
+
 -----------------------------------------------------------------------
 ---- Polydinatural transformations between metalanguage difunctors ----
 -----------------------------------------------------------------------
