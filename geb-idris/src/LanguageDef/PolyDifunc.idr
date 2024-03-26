@@ -194,11 +194,18 @@ PdfCovarRep dom =
     (\_ => dom)
     (\_ => id)
 
-InterpToCovarRepPDF : (dom, y : Type) ->
-  (dom -> y) -> InterpPDF (PdfCovarRep dom) Void y
-InterpToCovarRepPDF dom y m =
-  IPDF (y ** m) (\v => void v) m (\v => void v) (\fext => funExt $ \v => void v)
+export
+InterpToCovarRepPDF : (dom, x, y : Type) ->
+  (x -> dom) -> (dom -> y) -> InterpPDF (PdfCovarRep dom) x y
+InterpToCovarRepPDF dom x y mxd mdy =
+  IPDF (y ** mdy) mxd mdy (mdy . mxd) (\_ => Refl)
 
+export
+InterpToCovarRepPDFv : (dom, y : Type) ->
+  (dom -> y) -> InterpPDF (PdfCovarRep dom) Void y
+InterpToCovarRepPDFv dom y = InterpToCovarRepPDF dom Void y (\v => void v)
+
+export
 InterpFromCovarRepPDF : (dom, x, y : Type) ->
   InterpPDF (PdfCovarRep dom) x y -> (dom -> y)
 InterpFromCovarRepPDF dom x y (IPDF i d c m comm) = c
