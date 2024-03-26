@@ -33,6 +33,12 @@ record PolyDifunc where
 -- domain to codomain, a choice of position of the polydifunctor, and
 -- a twisted-arrow morphism from the corresponding direction of the
 -- polydifunctor to the chosen morphism.
+--
+-- The difference between this and a general difunctor is the twisted-arrow
+-- morphism:  without that, this would just determine a general profunctor
+-- by its collage.  The twisted-arrow morphism constrains the profunctor
+-- so that it only contains elements that can be "diagonalized" by the
+-- morphism.
 export
 record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   constructor IPDF
@@ -197,6 +203,12 @@ InterpToCovarRepPDF dom y m =
 ---- Polydinatural transformations between metalanguage difunctors ----
 -----------------------------------------------------------------------
 
+-- A polydinatural transformation comprises an on-positions function from
+-- the positions (collage objects) of the domain polydifunctor to those of
+-- the codomain polydifunctor, and for each position, a twisted-arrow
+-- morphism between the collage objects from the one at the output of the
+-- on-positions function in the codomain polydifunctor to the one at the
+-- input of the on-positions in the domain polydifunctor.
 public export
 record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
