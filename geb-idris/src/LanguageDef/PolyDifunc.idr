@@ -215,6 +215,36 @@ InferFromCovarRepPDF : (dom, x, y : Type) ->
   InterpPDF (PdfCovarRep dom) x y -> (x -> dom)
 InferFromCovarRepPDF dom x y (IPDF i d c m comm) = d
 
+export
+PdfContravarRep : Type -> PolyDifunc
+PdfContravarRep cod =
+  PDF
+    (dom : Type ** dom -> cod)
+    (\_ => cod)
+    (\_ => cod)
+    (\_ => id)
+
+export
+InterpToContravarRepPDF : (cod, x, y : Type) ->
+  (cod -> y) -> (x -> cod) -> InterpPDF (PdfContravarRep cod) x y
+InterpToContravarRepPDF cod x y mcy mxc =
+  IPDF (x ** mxc) mxc mcy (mcy . mxc) (\_ => Refl)
+
+export
+InterpToContravarRepPDFu : (cod, x : Type) ->
+  (x -> cod) -> InterpPDF (PdfContravarRep cod) x Unit
+InterpToContravarRepPDFu cod x = InterpToContravarRepPDF cod x Unit (\_ => ())
+
+export
+InterpFromContravarRepPDF : (cod, x, y : Type) ->
+  InterpPDF (PdfContravarRep cod) x y -> (x -> cod)
+InterpFromContravarRepPDF cod x y (IPDF i d c m comm) = d
+
+export
+InferFromContravarRepPDF : (cod, x, y : Type) ->
+  InterpPDF (PdfContravarRep cod) x y -> (cod -> y)
+InferFromContravarRepPDF cod x y (IPDF i d c m comm) = c
+
 -----------------------------------------------------------------------
 ---- Polydinatural transformations between metalanguage difunctors ----
 -----------------------------------------------------------------------
