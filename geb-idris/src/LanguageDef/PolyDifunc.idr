@@ -21,9 +21,9 @@ public export
 record PolyDifunc where
   constructor PDF
   pdfPos : Type
-  pdfDom : SliceObj pdfPos
-  pdfCod : SliceObj pdfPos
-  pdfMorph : (i : pdfPos) -> pdfDom i -> pdfCod i
+  pdfHetDom : SliceObj pdfPos
+  pdfHetCod : SliceObj pdfPos
+  pdfMorph : (i : pdfPos) -> pdfHetDom i -> pdfHetCod i
 
 -- The interpretation of a polydifunctor treats its inputs and outputs
 -- as a domain and codomain, and comprises a choice of morphism from
@@ -34,10 +34,11 @@ export
 record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   constructor IPDF
   ipdfPos : pdfPos pdf
-  ipdfDom : x -> pdfDom pdf ipdfPos
-  ipdfCod : pdfCod pdf ipdfPos -> y
+  ipdfHetDom : x -> pdfHetDom pdf ipdfPos
+  ipdfHetCod : pdfHetCod pdf ipdfPos -> y
   ipdfMorph : x -> y
-  0 ipdfComm : FunExt -> (ipdfCod . pdfMorph pdf ipdfPos . ipdfDom = ipdfMorph)
+  0 ipdfComm :
+    FunExt -> (ipdfHetCod . pdfMorph pdf ipdfPos . ipdfHetDom = ipdfMorph)
 
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
@@ -48,14 +49,14 @@ ipdfEqPos {p} {q} {x} {y}
 
 0 ipdfEqDom : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfDom ip ~=~ ipdfDom iq
+  ip = iq -> ipdfHetDom ip ~=~ ipdfHetDom iq
 ipdfEqDom {p} {q} {x} {y}
   {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
     case eq of Refl => Refl
 
 0 ipdfEqCod : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfCod ip ~=~ ipdfCod iq
+  ip = iq -> ipdfHetCod ip ~=~ ipdfHetCod iq
 ipdfEqCod {p} {q} {x} {y}
   {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
     case eq of Refl => Refl
@@ -197,8 +198,8 @@ public export
 record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
   pdntOnIdx : pdfPos p -> pdfPos q
-  pdntOnDom : (i : pdfPos p) -> pdfDom p i -> pdfDom q (pdntOnIdx i)
-  pdntOnCod : (i : pdfPos p) -> pdfCod q (pdntOnIdx i) -> pdfCod p i
+  pdntOnDom : (i : pdfPos p) -> pdfHetDom p i -> pdfHetDom q (pdntOnIdx i)
+  pdntOnCod : (i : pdfPos p) -> pdfHetCod q (pdntOnIdx i) -> pdfHetCod p i
   pdntComm : (i : pdfPos p) -> FunExt ->
     (pdntOnCod i . pdfMorph q (pdntOnIdx i) . pdntOnDom i = pdfMorph p i)
 
