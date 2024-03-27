@@ -574,6 +574,30 @@ public export
 IntDiYonedaEmbedObj : (0 c : Type) ->
   (mor : IntDifunctorSig c) -> c -> c -> IntDifunctorSig c
 IntDiYonedaEmbedObj c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
+                       --  d  c  c' d'     c' -> c    d -> d'
+                       --  i  j  x  y       x -> j    i -> y
+                       --  i0 -> i1 / i -> j  &   j0 -> j1 / x -> y
+
+---  i0/I/d  j0/x/c' j1/y/d'  i1/J/c
+-- 1)  --------------------------> (part of graph object in arena)
+-- 2)          ------->            (part of graph object in interpretation)
+-- 3)          ------------------> (part of di-Yoneda embedding in interpretation)
+-- 4)  --------------->            (part of di-Yoneda embedding in interpretation)
+                       -- cob ba            x' : j0 -> j1 (x -> y)
+-- When x==y, #2 becomes an automorphism, and it becomes possible to compose
+-- #3 . #2 . #4 and assert that that equals #1.
+-- This is not a graph because the objects have a d->c rather than a c->d
+-- (together with a c'->d').  If we flipped the argument order, then the
+-- di-Yoneda morphisms would become cross-category.  It's not a cograph either,
+-- for the same reason (there are morphisms going in both directions).  That's
+-- what makes it dependent on being a difunctor (an _endo_-profunctor as
+-- opposed to just any profunctor).
+--
+-- To make general profunctors, we can use the existing stuff in `PolyDifunc`,
+-- and to make difunctors suited to paranatural transformations, we can use
+-- the arrangement of morphisms above.  That arrangement ensures that we can
+-- always turn "x"s into "y"s, and thereby define difunctors such as that
+-- of wild groups with the likes of associativity included.
 
 -- Embed `OpProd(c)` into `Type`.
 public export
