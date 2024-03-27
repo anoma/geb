@@ -216,6 +216,20 @@ InferFromCovarRepPDF : (dom, x, y : Type) ->
 InferFromCovarRepPDF dom x y (IPDF i d c m comm) = d
 
 export
+CovarPDFid : PolyDifunc
+CovarPDFid = PdfCovarRep Unit
+
+export
+InterpToCovarPDFid : (x, y : Type) ->
+  y -> InterpPDF CovarPDFid x y
+InterpToCovarPDFid x y ey = InterpToCovarRepPDF Unit x y (\_ => ()) (\() => ey)
+
+export
+InterpFromCovarPDFid : (x, y : Type) ->
+  InterpPDF CovarPDFid x y -> y
+InterpFromCovarPDFid x y ey = InterpFromCovarRepPDF Unit x y ey ()
+
+export
 PdfContravarRep : Type -> PolyDifunc
 PdfContravarRep cod =
   PDF
