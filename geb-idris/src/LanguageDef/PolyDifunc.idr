@@ -23,10 +23,10 @@ import Library.IdrisCategories
 public export
 record PolyDifunc where
   constructor PDF
-  pdfHetIdx : Type
-  pdfHetDom : SliceObj pdfHetIdx
-  pdfHetCod : SliceObj pdfHetIdx
-  pdfHetMor : (i : pdfHetIdx) -> pdfHetDom i -> pdfHetCod i
+  pdfPos : Type
+  pdfCobase : SliceObj pdfPos
+  pdfBase : SliceObj pdfPos
+  pdfHetMor : (i : pdfPos) -> pdfCobase i -> pdfBase i
 
 -- The interpretation of a polydifunctor treats its inputs and outputs
 -- as a domain and codomain, and comprises a choice of morphism from
@@ -42,30 +42,30 @@ record PolyDifunc where
 export
 record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   constructor IPDF
-  ipdfHetIdx : pdfHetIdx pdf
-  ipdfHetDom : x -> pdfHetDom pdf ipdfHetIdx
-  ipdfHetCod : pdfHetCod pdf ipdfHetIdx -> y
+  ipdfPos : pdfPos pdf
+  ipdfCobase : x -> pdfCobase pdf ipdfPos
+  ipdfBase : pdfBase pdf ipdfPos -> y
   ipdfHetMor : x -> y
   0 ipdfComm :
-    FunExt -> (ipdfHetCod . pdfHetMor pdf ipdfHetIdx . ipdfHetDom = ipdfHetMor)
+    FunExt -> (ipdfBase . pdfHetMor pdf ipdfPos . ipdfCobase = ipdfHetMor)
 
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfHetIdx ip ~=~ ipdfHetIdx iq
+  ip = iq -> ipdfPos ip ~=~ ipdfPos iq
 ipdfEqPos {p} {q} {x} {y}
   {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
     case eq of Refl => Refl
 
 0 ipdfEqDom : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfHetDom ip ~=~ ipdfHetDom iq
+  ip = iq -> ipdfCobase ip ~=~ ipdfCobase iq
 ipdfEqDom {p} {q} {x} {y}
   {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
     case eq of Refl => Refl
 
 0 ipdfEqCod : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfHetCod ip ~=~ ipdfHetCod iq
+  ip = iq -> ipdfBase ip ~=~ ipdfBase iq
 ipdfEqCod {p} {q} {x} {y}
   {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
     case eq of Refl => Refl
@@ -272,10 +272,10 @@ InferFromContravarRepPDF cod x y (IPDF i d c m comm) = c
 public export
 record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
-  pdntOnIdx : pdfHetIdx p -> pdfHetIdx q
-  pdntOnDom : (i : pdfHetIdx p) -> pdfHetDom p i -> pdfHetDom q (pdntOnIdx i)
-  pdntOnCod : (i : pdfHetIdx p) -> pdfHetCod q (pdntOnIdx i) -> pdfHetCod p i
-  pdntComm : (i : pdfHetIdx p) -> FunExt ->
+  pdntOnIdx : pdfPos p -> pdfPos q
+  pdntOnDom : (i : pdfPos p) -> pdfCobase p i -> pdfCobase q (pdntOnIdx i)
+  pdntOnCod : (i : pdfPos p) -> pdfBase q (pdntOnIdx i) -> pdfBase p i
+  pdntComm : (i : pdfPos p) -> FunExt ->
     (pdntOnCod i . pdfHetMor q (pdntOnIdx i) . pdntOnDom i = pdfHetMor p i)
 
 export
