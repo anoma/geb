@@ -272,11 +272,11 @@ InferFromContravarRepPDF cod x y (IPDF i d c m comm) = c
 public export
 record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
-  pdntOnIdx : pdfPos p -> pdfPos q
-  pdntOnDom : (i : pdfPos p) -> pdfCobase p i -> pdfCobase q (pdntOnIdx i)
-  pdntOnCod : (i : pdfPos p) -> pdfBase q (pdntOnIdx i) -> pdfBase p i
+  pdntOnPos : pdfPos p -> pdfPos q
+  pdntOnCobase : (i : pdfPos p) -> pdfCobase p i -> pdfCobase q (pdntOnPos i)
+  pdntOnBase : (i : pdfPos p) -> pdfBase q (pdntOnPos i) -> pdfBase p i
   pdntComm : (i : pdfPos p) -> FunExt ->
-    (pdntOnCod i . pdfHetMor q (pdntOnIdx i) . pdntOnDom i = pdfHetMor p i)
+    (pdntOnBase i . pdfHetMor q (pdntOnPos i) . pdntOnCobase i = pdfHetMor p i)
 
 export
 InterpPDNT : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
