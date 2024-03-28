@@ -24,9 +24,9 @@ public export
 record PolyDifunc where
   constructor PDF
   pdfPos : Type
-  pdfCobase : SliceObj pdfPos
   pdfBase : SliceObj pdfPos
-  pdfHetMor : (i : pdfPos) -> pdfCobase i -> pdfBase i
+  pdfCobase : SliceObj pdfPos
+  pdfHetMor : (i : pdfPos) -> pdfBase i -> pdfCobase i
 
 -- The interpretation of a polydifunctor treats its inputs and outputs
 -- as a domain and codomain, and comprises a choice of morphism from
@@ -43,11 +43,11 @@ export
 record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   constructor IPDF
   ipdfPos : pdfPos pdf
-  ipdfCobase : x -> pdfCobase pdf ipdfPos
-  ipdfBase : pdfBase pdf ipdfPos -> y
+  ipdfBase : x -> pdfBase pdf ipdfPos
+  ipdfCobase : pdfCobase pdf ipdfPos -> y
   ipdfHetMor : x -> y
   0 ipdfComm :
-    FunExt -> (ipdfBase . pdfHetMor pdf ipdfPos . ipdfCobase = ipdfHetMor)
+    FunExt -> (ipdfCobase . pdfHetMor pdf ipdfPos . ipdfBase = ipdfHetMor)
 
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
@@ -58,14 +58,14 @@ ipdfEqPos {p} {q} {x} {y}
 
 0 ipdfEqDom : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfCobase ip ~=~ ipdfCobase iq
+  ip = iq -> ipdfBase ip ~=~ ipdfBase iq
 ipdfEqDom {p} {q} {x} {y}
   {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
     case eq of Refl => Refl
 
 0 ipdfEqCod : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfBase ip ~=~ ipdfBase iq
+  ip = iq -> ipdfCobase ip ~=~ ipdfCobase iq
 ipdfEqCod {p} {q} {x} {y}
   {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
     case eq of Refl => Refl
@@ -273,10 +273,10 @@ public export
 record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
   pdntOnPos : pdfPos p -> pdfPos q
-  pdntOnCobase : (i : pdfPos p) -> pdfCobase p i -> pdfCobase q (pdntOnPos i)
-  pdntOnBase : (i : pdfPos p) -> pdfBase q (pdntOnPos i) -> pdfBase p i
+  pdntOnBase : (i : pdfPos p) -> pdfBase p i -> pdfBase q (pdntOnPos i)
+  pdntOnCobase : (i : pdfPos p) -> pdfCobase q (pdntOnPos i) -> pdfCobase p i
   pdntComm : (i : pdfPos p) -> FunExt ->
-    (pdntOnBase i . pdfHetMor q (pdntOnPos i) . pdntOnCobase i = pdfHetMor p i)
+    (pdntOnCobase i . pdfHetMor q (pdntOnPos i) . pdntOnBase i = pdfHetMor p i)
 
 export
 InterpPDNT : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
