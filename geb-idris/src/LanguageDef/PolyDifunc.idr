@@ -43,11 +43,11 @@ export
 record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   constructor IPDF
   ipdfPos : pdfPos pdf
-  ipdfCovarMor : x -> pdfCovarObj pdf ipdfPos
-  ipdfContraMor : pdfContraObj pdf ipdfPos -> y
+  ipdfContraMor : x -> pdfCovarObj pdf ipdfPos
+  ipdfCovarMor : pdfContraObj pdf ipdfPos -> y
   ipdfProj : x -> y
   0 ipdfComm :
-    FunExt -> (ipdfContraMor . pdfProj pdf ipdfPos . ipdfCovarMor = ipdfProj)
+    FunExt -> (ipdfCovarMor . pdfProj pdf ipdfPos . ipdfContraMor = ipdfProj)
 
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
@@ -58,14 +58,14 @@ ipdfEqPos {p} {q} {x} {y}
 
 0 ipdfEqDom : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfCovarMor ip ~=~ ipdfCovarMor iq
+  ip = iq -> ipdfContraMor ip ~=~ ipdfContraMor iq
 ipdfEqDom {p} {q} {x} {y}
   {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
     case eq of Refl => Refl
 
 0 ipdfEqCod : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfContraMor ip ~=~ ipdfContraMor iq
+  ip = iq -> ipdfCovarMor ip ~=~ ipdfCovarMor iq
 ipdfEqCod {p} {q} {x} {y}
   {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
     case eq of Refl => Refl
