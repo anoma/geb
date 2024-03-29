@@ -722,12 +722,12 @@ public export
 IntDiYonedaLemmaNT : (c : Type) -> (mor, p : IntDifunctorSig c) ->
   IntDifunctorSig c
 IntDiYonedaLemmaNT c mor p i j =
-  IntDiNTSig c (flip (IntDiYonedaEmbedObj c mor) i j) p
+  IntDiNTSig c (IntDiYonedaEmbedObj c mor i j) (flip p)
 
 -- This shows that for a given difunctor `p` on `c`,
--- `IntDiYonedaLemmaNT c mor p` is itself a difunctor (whose value for any
--- `(s, t)` in `opProd(c)` is an object (in `Type`) of paranatural
--- transformations).  That makes it sensible to speak of paranatural
+-- `IntDiYonedaLemmaNT c mor p` is itself an argument-flipped difunctor
+-- (whose value for any `(s, t)` in `opProd(c)` is an object (in `Type`) of
+-- paranatural transformations).  That makes it sensible to speak of paranatural
 -- transformations between `IntDiYonedaLemmaNT c mor p` and `p`, and
 -- the diYoneda lemma exhibits a specific pair of such paranatural
 -- transformations, one in each direction, which are inverses to each other.
@@ -735,7 +735,7 @@ public export
 IntDiYonedaLemmaNTDimap : (0 c : Type) ->
   (0 mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (0 p : IntDifunctorSig c) ->
-  IntEndoDimapSig c mor (IntDiYonedaLemmaNT c mor p)
+  IntEndoDimapSig c mor (flip (IntDiYonedaLemmaNT c mor p))
 IntDiYonedaLemmaNTDimap c mor comp p s t a b mas mtb embed i (mia, mbi) =
   embed i (comp i a s mas mia, comp t b i mbi mtb)
 
@@ -938,7 +938,7 @@ DiYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
 DiYonedaLemmaNT = IntDiYonedaLemmaNT Type HomProf
 
 public export
-DiYonedaLemmaNTPro : Profunctor (DiYonedaLemmaNT p)
+DiYonedaLemmaNTPro : Profunctor (flip $ DiYonedaLemmaNT p)
 DiYonedaLemmaNTPro {p} = MkProfunctor $
   IntDiYonedaLemmaNTDimap Type HomProf typeComp p _ _ _ _
 
