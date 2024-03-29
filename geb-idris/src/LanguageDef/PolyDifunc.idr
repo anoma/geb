@@ -47,7 +47,8 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   ipdfCovarMor : pdfContraObj pdf ipdfPos -> y
   ipdfContramap : x -> y
   0 ipdfComm :
-    FunExt -> (ipdfCovarMor . pdfContramap pdf ipdfPos . ipdfContraMor = ipdfContramap)
+    FunExt ->
+    (ipdfCovarMor . pdfContramap pdf ipdfPos . ipdfContraMor = ipdfContramap)
 
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
@@ -273,10 +274,13 @@ public export
 record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
   pdntOnPos : pdfPos p -> pdfPos q
-  pdntOnBase : (i : pdfPos p) -> pdfCovarObj p i -> pdfCovarObj q (pdntOnPos i)
-  pdntOnCobase : (i : pdfPos p) -> pdfContraObj q (pdntOnPos i) -> pdfContraObj p i
+  pdntOnBase :
+    (i : pdfPos p) -> pdfCovarObj p i -> pdfCovarObj q (pdntOnPos i)
+  pdntOnCobase :
+    (i : pdfPos p) -> pdfContraObj q (pdntOnPos i) -> pdfContraObj p i
   pdntComm : (i : pdfPos p) -> FunExt ->
-    (pdntOnCobase i . pdfContramap q (pdntOnPos i) . pdntOnBase i = pdfContramap p i)
+    (pdntOnCobase i . pdfContramap q (pdntOnPos i) . pdntOnBase i =
+     pdfContramap p i)
 
 export
 InterpPDNT : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
