@@ -731,6 +731,12 @@ IntDiYonedaLemmaNT c mor p i j =
 -- transformations between `IntDiYonedaLemmaNT c mor p` and `p`, and
 -- the diYoneda lemma exhibits a specific pair of such paranatural
 -- transformations, one in each direction, which are inverses to each other.
+--
+-- That the arguments to `IntDiYonedaLemmaNT` need to be flipped to make it
+-- into a difunctor -- that is, that it's covariant in the _first_ argument
+-- and contravariant in the _second_ -- makes it a _presheaf_ on `op(c) x c`,
+-- as opposed to the usual ordering of profunctor arguments which would be a
+-- _copresheaf_ on `op(c) x c`.
 public export
 IntDiYonedaLemmaNTDimap : (0 c : Type) ->
   (0 mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
