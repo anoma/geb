@@ -85,6 +85,20 @@ TypeQuivCopreshfMmap : {v : Type} ->
 TypeQuivCopreshfMmap {v} q sl =
   (dom, cod : v) -> q (dom, cod) -> sl dom -> sl cod
 
+-- A presheaf into `Type` from an internal category with object type `v`
+-- and morphism type `e`, defined by a quiver.
+public export
+record TQPresheaf (v : Type) (e : TypeQuivV v) where
+  constructor TQPre
+  tqpOmap : TypeQuivPreshfSig v
+  tqpFmap : TypeQuivPreshfMmap {v} e tqpOmap
+
+public export
+record TQCopresheaf (v : Type) (e : TypeQuivV v) where
+  constructor TQCopre
+  tqcOmap : TypeQuivCopreshfSig v
+  tqcFmap : TypeQuivCopreshfMmap {v} e tqcOmap
+
 --------------------------------
 ---- Enriched over `FinSet` ----
 --------------------------------
@@ -134,20 +148,6 @@ FinQuivPreshfMmap {n} q = TypeQuivPreshfMmap {v=(Fin n)} (Fin . q)
 public export
 FinQuivCopreshfMmap : {n : Nat} -> FinQuivN n -> FinSliceObj n -> Type
 FinQuivCopreshfMmap {n} q = TypeQuivCopreshfMmap {v=(Fin n)} (Fin . q)
-
--- A presheaf into `Type` from an internal category with object type `v`
--- and morphism type `e`, defined by a quiver.
-public export
-record TQPresheaf (v : Type) (e : TypeQuivV v) where
-  constructor TQPre
-  tqpOmap : TypeQuivPreshfSig v
-  tqpFmap : TypeQuivPreshfMmap {v} e tqpOmap
-
-public export
-record TQCopresheaf (v : Type) (e : TypeQuivV v) where
-  constructor TQCopre
-  tqcOmap : TypeQuivCopreshfSig v
-  tqcFmap : TypeQuivCopreshfMmap {v} e tqcOmap
 
 -----------------------------------------------
 -----------------------------------------------
