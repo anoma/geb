@@ -155,6 +155,10 @@ FinQuivCopreshfMmap {n} q = TypeQuivCopreshfMmap {v=(Fin n)} (Fin . q)
 -----------------------------------------------
 -----------------------------------------------
 
+----------------------------------------
+---- (Co)-presheaf-style definition ----
+----------------------------------------
+
 public export
 TypeQuivProshfSig : (w, v : Type) -> Type
 TypeQuivProshfSig w v = w -> v -> Type
@@ -181,6 +185,10 @@ record TQProsheaf (w, v : Type) (qw : TypeQuivV w) (qv : TypeQuivV v) where
   tqcOmap : TypeQuivProshfSig w v
   tqcLmap : TypeQuivLmapSig {w} {v} qw tqcOmap
   tqcRmap : TypeQuivRmapSig {w} {v} qv tqcOmap
+
+----------------------------------
+---- Collage-style definition ----
+----------------------------------
 
 public export
 record TQCollage (w, v : Type) (q : TypeProquivV w v) where
