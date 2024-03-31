@@ -101,6 +101,27 @@ ssFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
 ---- Adjunction data ----
 -------------------------
 
+-- This is the right adjunct of the dependent-sum/base-change adjunction.
+--
+-- It constitutes the destructor for `SliceSigmaF f sc`.  As an adjunction,
+-- it is parametrically polymorphic:  rather than receiving a witness to a
+-- given `ec : c` being in the image of `f` applied to a given slice over
+-- `c`, it passes in a handler for _any_ such witness.
+export
+ssElim : {0 c, d : Type} -> {0 f : c -> d} ->
+  {0 sa : SliceObj c} -> {sb : SliceObj d} ->
+  SliceMorphism {a=c} sa (BaseChangeF f sb) ->
+  SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb
+ssElim {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} sea) = m ec sea
+
+-- This is the left adjunct of the dependent-sum/base-change adjunction.
+export
+ssLAdj : {0 c, d : Type} -> {f : c -> d} ->
+  {0 sa : SliceObj c} -> {sb : SliceObj d} ->
+  SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb ->
+  SliceMorphism {a=c} sa (BaseChangeF f sb)
+ssLAdj {c} {d} {f} {sa} {sb} m ec esa = m (f ec) $ SS {ec} esa
+
 -- The monad of the dependent-sum/base-change adjunction.
 export
 SSMonad : {c, d : Type} -> (f : c -> d) -> SliceEndofunctor c
@@ -127,27 +148,6 @@ export
 sSout : {0 c, d : Type} -> {0 f : c -> d} ->
   SliceNatTrans {x=d} {y=d} (SSComonad {c} {d} f) (SliceIdF d)
 sSout {c} {d} {f} sd (f ec) (SS {sc=(BaseChangeF f sd)} {ec} sec) = sec
-
--- This is the right adjunct of the dependent-sum/base-change adjunction.
---
--- It constitutes the destructor for `SliceSigmaF f sc`.  As an adjunction,
--- it is parametrically polymorphic:  rather than receiving a witness to a
--- given `ec : c` being in the image of `f` applied to a given slice over
--- `c`, it passes in a handler for _any_ such witness.
-export
-ssElim : {0 c, d : Type} -> {0 f : c -> d} ->
-  {0 sa : SliceObj c} -> {sb : SliceObj d} ->
-  SliceMorphism {a=c} sa (BaseChangeF f sb) ->
-  SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb
-ssElim {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} sea) = m ec sea
-
--- This is the left adjunct of the dependent-sum/base-change adjunction.
-export
-ssLAdj : {0 c, d : Type} -> {f : c -> d} ->
-  {0 sa : SliceObj c} -> {sb : SliceObj d} ->
-  SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb ->
-  SliceMorphism {a=c} sa (BaseChangeF f sb)
-ssLAdj {c} {d} {f} {sa} {sb} m ec esa = m (f ec) $ SS {ec} esa
 
 export
 ssmMap : {0 c, d : Type} -> {f : c -> d} -> SliceFMap (SSMonad {c} {d} f)
