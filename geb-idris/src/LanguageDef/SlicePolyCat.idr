@@ -162,17 +162,6 @@ sSout : {0 c, d : Type} -> {0 f : c -> d} ->
   SliceNatTrans {x=d} {y=d} (SSComonad {c} {d} f) (SliceIdF d)
 sSout {c} {d} {f} sd (f ec) (SS {sc=(BaseChangeF f sd)} {ec} sec) = sec
 
-export
-ssmMap : {0 c, d : Type} -> {f : c -> d} -> SliceFMap (SSMonad {c} {d} f)
-ssmMap {c} {d} {f} sa sb =
-  bcMap (SliceSigmaF f sa) (SliceSigmaF f sb) {f}
-  . ssMap sa sb {f}
-
-export
-sscmMap : {c, d : Type} -> {f : c -> d} -> SliceFMap (SSComonad {c} {d} f)
-sscmMap {c} {d} {f} sa sb =
-  ssMap {f} (BaseChangeF f sa) (BaseChangeF f sb) . bcMap sa sb {f}
-
 -- This is the multiplication (AKA "join") of the dependent-sum/base-change
 -- adjunction.
 --
