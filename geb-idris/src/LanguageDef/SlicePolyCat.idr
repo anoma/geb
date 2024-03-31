@@ -70,6 +70,9 @@ bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
 -- (`const Void`); that initial algebra (as with any functor that has a
 -- free monad) is isomorphic to the application of its free monad to the
 -- initial object of `SliceObj c`, which is hence also `const Void`.
+--
+-- This is the left adjoint of the dependent-sum/base-change adjunction.
+-- (The right adjoint is base change.)
 export
 data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
   SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
@@ -127,10 +130,20 @@ export
 SSMonad : {c, d : Type} -> (f : c -> d) -> SliceEndofunctor c
 SSMonad {c} {d} f = BaseChangeF f . SliceSigmaF {c} {d} f
 
+export
+ssMonadMap : {c, d : Type} -> (f : c -> d) -> SliceFMap (SSMonad {c} {d} f)
+ssMonadMap {c} {d} f x y =
+  bcMap {c} {d} {f} (SliceSigmaF f x) (SliceSigmaF f y) . ssMap {c} {d} {f} x y
+
 -- The comonad of the dependent-sum/base-change adjunction.
 export
 SSComonad : {c, d : Type} -> (f : c -> d) -> SliceEndofunctor d
 SSComonad {c} {d} f = SliceSigmaF {c} {d} f . BaseChangeF f
+
+export
+ssComonadMap : {c, d : Type} -> (f : c -> d) -> SliceFMap (SSComonad {c} {d} f)
+ssComonadMap {c} {d} f x y =
+  ssMap {c} {d} {f} (BaseChangeF f x) (BaseChangeF f y) . bcMap {c} {d} {f} x y
 
 -- Rather than making the constructor `SS` explicit, we export an
 -- alias for it viewed as a natural transformation.
