@@ -35,7 +35,7 @@ bcMap {c} {d} {f} sa sb m ec = m (f ec)
 
 -- This version of `BaseChangeF` uses a slice object rather than a morphism
 -- between base objects, like the dependent-type-style definitions of
--- `SliceSigmaF` and `SlicePiF` below.
+-- `SliceFibSigmaF` and `SlicePiF` below.
 export
 SliceBCF : {c : Type} -> (sl : SliceObj c) -> SliceFunctor c (Sigma {a=c} sl)
 SliceBCF {c} sl = BaseChangeF {c} {d=(Sigma {a=c} sl)} DPair.fst
@@ -86,7 +86,7 @@ SliceDepSigmaF {c} sl sls ec =
   --  (esc : sl ec ** sls $ (ec ** esc))
   Sigma {a=(sl ec)} (BaseChangeF (MkDPair ec) sls)
 
--- This is the category-theory-style version of `SliceSigmaF`, based on
+-- This is the category-theory-style version of `SliceFibSigmaF`, based on
 -- fibrations.
 --
 -- One way of viewing it is as the slice functor from `c` to `d` which takes a
@@ -99,12 +99,14 @@ SliceDepSigmaF {c} sl sls ec =
 -- free monad) is isomorphic to the application of its free monad to the
 -- initial object of `SliceObj c`, which is hence also `const Void`.
 export
-data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
+data SliceFibSigmaF :
+    {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
   SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
-    {ec : c} -> sc ec -> SliceSigmaF {c} {d} f sc (f ec)
+    {ec : c} -> sc ec -> SliceFibSigmaF {c} {d} f sc (f ec)
 
 export
-ssMap : {0 c, d : Type} -> {0 f : c -> d} -> SliceFMap (SliceSigmaF {c} {d} f)
+ssMap : {0 c, d : Type} -> {0 f : c -> d} ->
+  SliceFMap (SliceFibSigmaF {c} {d} f)
 ssMap {c} {d} {f} sa sb m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
 
 --------------------------
@@ -115,14 +117,14 @@ ssMap {c} {d} {f} sa sb m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
 SSasWTF {c} {d} f = MkWTF {dom=c} {cod=d} c c id id f
 
 ssToWTF : {c, d : Type} -> (0 f : c -> d) ->
-  SliceNatTrans (SliceSigmaF {c} {d} f) (InterpWTF $ SSasWTF f)
+  SliceNatTrans (SliceFibSigmaF {c} {d} f) (InterpWTF $ SSasWTF f)
 ssToWTF {c} {d} f sc (f ec) (SS {c} {d} {f} {sc} {ec} sec) =
   (Element0 ec Refl ** \(Element0 ec' eq) => replace {p=sc} (sym eq) sec)
 
 ssFromWTF : {c, d : Type} -> (0 f : c -> d) ->
-  SliceNatTrans (InterpWTF $ SSasWTF f) (SliceSigmaF {c} {d} f)
+  SliceNatTrans (InterpWTF $ SSasWTF f) (SliceFibSigmaF {c} {d} f)
 ssFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
-  replace {p=(SliceSigmaF f sc)} eq
+  replace {p=(SliceFibSigmaF f sc)} eq
   $ SS {c} {d} {f} {sc} {ec} $ scd (Element0 ec Refl)
 
 -------------------------
@@ -131,7 +133,7 @@ ssFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
 
 -- This is the right adjunct of the dependent-sum/base-change adjunction.
 --
--- It constitutes the destructor for `SliceSigmaF f sc`.  As an adjunction,
+-- It constitutes the destructor for `SliceFibSigmaF f sc`.  As an adjunction,
 -- it is parametrically polymorphic:  rather than receiving a witness to a
 -- given `ec : c` being in the image of `f` applied to a given slice over
 -- `c`, it passes in a handler for _any_ such witness.
@@ -139,31 +141,32 @@ export
 ssElim : {0 c, d : Type} -> {0 f : c -> d} ->
   {0 sa : SliceObj c} -> {sb : SliceObj d} ->
   SliceMorphism {a=c} sa (BaseChangeF f sb) ->
-  SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb
+  SliceMorphism {a=d} (SliceFibSigmaF {c} {d} f sa) sb
 ssElim {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} sea) = m ec sea
 
 -- This is the left adjunct of the dependent-sum/base-change adjunction.
 export
 ssLAdj : {0 c, d : Type} -> {f : c -> d} ->
   {0 sa : SliceObj c} -> {sb : SliceObj d} ->
-  SliceMorphism {a=d} (SliceSigmaF {c} {d} f sa) sb ->
+  SliceMorphism {a=d} (SliceFibSigmaF {c} {d} f sa) sb ->
   SliceMorphism {a=c} sa (BaseChangeF f sb)
 ssLAdj {c} {d} {f} {sa} {sb} m ec esa = m (f ec) $ SS {ec} esa
 
 -- The monad of the dependent-sum/base-change adjunction.
 export
 SSMonad : {c, d : Type} -> (f : c -> d) -> SliceEndofunctor c
-SSMonad {c} {d} f = BaseChangeF f . SliceSigmaF {c} {d} f
+SSMonad {c} {d} f = BaseChangeF f . SliceFibSigmaF {c} {d} f
 
 export
 ssMonadMap : {c, d : Type} -> (f : c -> d) -> SliceFMap (SSMonad {c} {d} f)
 ssMonadMap {c} {d} f x y =
-  bcMap {c=d} {d=c} {f} (SliceSigmaF f x) (SliceSigmaF f y) . ssMap {c} {d} {f} x y
+  bcMap {c=d} {d=c} {f} (SliceFibSigmaF f x) (SliceFibSigmaF f y)
+  . ssMap {c} {d} {f} x y
 
 -- The comonad of the dependent-sum/base-change adjunction.
 export
 SSComonad : {c, d : Type} -> (f : c -> d) -> SliceEndofunctor d
-SSComonad {c} {d} f = SliceSigmaF {c} {d} f . BaseChangeF f
+SSComonad {c} {d} f = SliceFibSigmaF {c} {d} f . BaseChangeF f
 
 export
 ssComonadMap : {c, d : Type} -> (f : c -> d) -> SliceFMap (SSComonad {c} {d} f)
@@ -199,15 +202,15 @@ sSjoin : {c, d : Type} -> {f : c -> d} ->
     (SSMonad {c} {d} f)
 sSjoin {c} {d} {f} =
   SliceWhiskerRight
-    {f=(SSComonad f . SliceSigmaF f)}
-    {g=(SliceSigmaF f)}
+    {f=(SSComonad f . SliceFibSigmaF f)}
+    {g=(SliceFibSigmaF f)}
     {h=(BaseChangeF f)}
     (bcMap {f})
   $ SliceWhiskerLeft
     {g=(SSComonad f)}
     {h=(SliceIdF d)}
     (sSout {f})
-    (SliceSigmaF f)
+    (SliceFibSigmaF f)
 
 -- This is the comultiplication (AKA "duplicate") of the
 -- dependent-sum/base-change adjunction.
@@ -222,7 +225,7 @@ sSdup {c} {d} {f} =
   SliceWhiskerRight
     {f=(BaseChangeF f)}
     {g=(BaseChangeF f . SSComonad f)}
-    {h=(SliceSigmaF f)}
+    {h=(SliceFibSigmaF f)}
     (ssMap {f})
   $ SliceWhiskerLeft
     {g=(SliceIdF c)}
@@ -232,7 +235,7 @@ sSdup {c} {d} {f} =
 
 export
 SSAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SSAlg {c} {f} = SliceAlg {a=c} (SliceSigmaF {c} {d=c} f)
+SSAlg {c} {f} = SliceAlg {a=c} (SliceFibSigmaF {c} {d=c} f)
 
 export
 SSVoidAlg : {c : Type} -> (0 f : c -> c) -> SSAlg {c} f (const Void)
@@ -240,7 +243,7 @@ SSVoidAlg {c} f (f ec) (SS {ec} v) = v
 
 export
 SSCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SSCoalg {c} {f} = SliceCoalg {a=c} (SliceSigmaF {c} {d=c} f)
+SSCoalg {c} {f} = SliceCoalg {a=c} (SliceFibSigmaF {c} {d=c} f)
 
 ---------------------------
 ---------------------------
@@ -371,79 +374,80 @@ imSlInitAlgInv {f} fm fcata =
 
 SlicePointedSigmaF : {c, d : Type} -> (f : c -> d) ->
   SliceObj d -> SliceFunctor c d
-SlicePointedSigmaF {c} {d} f = SlPointedF {c} {d} (SliceSigmaF {c} {d} f)
+SlicePointedSigmaF {c} {d} f = SlPointedF {c} {d} (SliceFibSigmaF {c} {d} f)
 
 SPIAlg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SPIAlg {c} f = SlPointedAlg {c} (SliceSigmaF {c} {d=c} f)
+SPIAlg {c} f = SlPointedAlg {c} (SliceFibSigmaF {c} {d=c} f)
 
 SPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SPICoalg {c} f = SlPointedCoalg {c} (SliceSigmaF {c} {d=c} f)
+SPICoalg {c} f = SlPointedCoalg {c} (SliceFibSigmaF {c} {d=c} f)
 
 -------------------------
 ---- Adjunction data ----
 -------------------------
 
 -- The free monad comes from a free-forgetful adjunction between `SliceObj c`
--- (on the right) and the category of `SliceSigmaF f`-algebras on that category
--- (on the left).
+-- (on the right) and the category of `SliceFibSigmaF f`-algebras on that
+-- category (on the left).
 --
--- (The category of `SliceSigmaF f`-algebras on `SliceObj c` can be seen
+-- (The category of `SliceFibSigmaF f`-algebras on `SliceObj c` can be seen
 -- as the category of elements of `SSAlg f`.)
 --
 -- The left adjoint takes `sc : SliceObj c` to the algebra whose object
--- component is `SliceSigmaFM f sc` and whose morphism component is
+-- component is `SliceFibSigmaFM f sc` and whose morphism component is
 -- `SSin`.  The adjoints are part of the public interface of a universal
 -- property, so we use `public export` here.
 --
 -- The right adjoint is the forgetful functor which simply throws away the
 -- morphism component of the algebra, leaving a `SliceObj c`.
 public export
-data SliceSigmaFM : {0 c : Type} -> (0 f : c -> c) -> SliceEndofunctor c where
+data SliceFibSigmaFM : {0 c : Type} ->
+    (0 f : c -> c) -> SliceEndofunctor c where
   SSin : {0 c : Type} -> {0 f : c -> c} -> {0 sc : SliceObj c} ->
-    SPIAlg {c} f sc (SliceSigmaFM {c} f sc)
+    SPIAlg {c} f sc (SliceFibSigmaFM {c} f sc)
 
 export
 SSFMAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SSFMAlg {c} f = SliceAlg {a=c} (SliceSigmaFM {c} f)
+SSFMAlg {c} f = SliceAlg {a=c} (SliceFibSigmaFM {c} f)
 
 export
 SSFMCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
-SSFMCoalg {c} f = SliceCoalg {a=c} (SliceSigmaFM {c} f)
+SSFMCoalg {c} f = SliceCoalg {a=c} (SliceFibSigmaFM {c} f)
 
 -- `SSin` is an isomorphism (by Lambek's theorem); this is its inverse.
 export
 SSout : {0 c : Type} -> {0 f : c -> c} -> {0 sc : SliceObj c} ->
-  SPICoalg {c} f sc (SliceSigmaFM {c} f sc)
+  SPICoalg {c} f sc (SliceFibSigmaFM {c} f sc)
 SSout {c} {f} {sc} ec (SSin ec esp) = esp
 
--- The (morphism component of the) free `SliceSigmaF`-algebra of
--- `SliceSigmaFM f sc`.
+-- The (morphism component of the) free `SliceFibSigmaF`-algebra of
+-- `SliceFibSigmaFM f sc`.
 export
 SScom : {0 c : Type} -> {f : c -> c} -> {0 sc : SliceObj c} ->
-  SSAlg {c} f (SliceSigmaFM {c} f sc)
+  SSAlg {c} f (SliceFibSigmaFM {c} f sc)
 SScom {c} {f} {sc} ec =
   SSin {c} {f} {sc} ec
-  . inSlPc {f=(SliceSigmaF f)} {sl=sc} {sa=(SliceSigmaFM f sc)} ec
+  . inSlPc {f=(SliceFibSigmaF f)} {sl=sc} {sa=(SliceFibSigmaFM f sc)} ec
 
 -- The unit of the free-monad adjunction -- a natural transformation of
 -- endofunctors on `SliceObj a`, from the identity endofunctor to
--- `SliceSigmaFM f`.
+-- `SliceFibSigmaFM f`.
 export
 SSvar : {0 c : Type} -> {f : c -> c} ->
-  SliceNatTrans (SliceIdF c) (SliceSigmaFM {c} f)
+  SliceNatTrans (SliceIdF c) (SliceFibSigmaFM {c} f)
 SSvar {c} {f} sc ec t =
   SSin {c} {f} {sc} ec
-  $ inSlPv {f=(SliceSigmaF f)} {sl=sc} {sa=(SliceSigmaFM f sc)} ec t
+  $ inSlPv {f=(SliceFibSigmaF f)} {sl=sc} {sa=(SliceFibSigmaFM f sc)} ec t
 
 -- The counit of the free-monad adjunction -- a natural transformation of
--- endofunctors on algebras of `SliceSigmaF f`, from `SSFMAlg` to the identity
--- endofunctor.
+-- endofunctors on algebras of `SliceFibSigmaF f`, from `SSFMAlg` to the
+-- identity endofunctor.
 export
 SSFcounit : {c : Type} -> {f : c -> c} ->
   SliceMorphism {a=(SliceObj c)} (SSFMAlg {c} f) (SSAlg {c} f)
 SSFcounit {c} {f} sc alg =
   sliceComp alg $ sliceComp (SScom {c} {f} {sc})
-  $ ssMap sc (SliceSigmaFM f sc)
+  $ ssMap sc (SliceFibSigmaFM f sc)
   $ SSvar {c} {f} sc
 
 -- `Eval` is a universal morphism of the free monad.  Specifically, it is
@@ -451,13 +455,13 @@ SSFcounit {c} {f} sc alg =
 -- `sb : SliceObj c`/`alg : SSAlg f sb`, the right adjunct takes a
 -- slice morphism `subst : SliceMorphism {a=c} sa sb` and returns an
 -- F-algebra morphism `SliceSigmaEval sa sb alg subst :
--- SliceMorphism {a=c} (SliceSigmaFM f sa) sb`.
+-- SliceMorphism {a=c} (SliceFibSigmaFM f sa) sb`.
 export
 SliceSigmaEval : {0 c : Type} -> {f : c -> c} -> (sb : SliceObj c) ->
   (alg : SSAlg f sb) ->
   SliceMorphism {a=(SliceObj c)}
     (flip (SliceMorphism {a=c}) sb)
-    (flip (SliceMorphism {a=c}) sb . SliceSigmaFM {c} f)
+    (flip (SliceMorphism {a=c}) sb . SliceFibSigmaFM {c} f)
 SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Left v)) =
   subst ec v
 SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Right t)) =
@@ -466,8 +470,8 @@ SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Right t)) =
 
 -- The left adjunct of the free monad, given an object `sa : SliceObj c` and
 -- an algebra `sb : SliceObj c`/`alg : SSAlg f sb`, takes an algebra morphism
--- from the free algebra `SliceSigmaFM f sa` to `sb`, i.e. a morphism of type
--- `SliceMorphism {a=c} (SliceSigmaFM f sa) sb`, and returns a morphism
+-- from the free algebra `SliceFibSigmaFM f sa` to `sb`, i.e. a morphism of type
+-- `SliceMorphism {a=c} (SliceFibSigmaFM f sa) sb`, and returns a morphism
 -- `subst : SliceMorphism {a=c} sa sb`.
 --
 -- The implementation does not use the morphism component of the algebra,
@@ -477,40 +481,42 @@ SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Right t)) =
 -- terms of the unit (`SSvar`, in this case) is to apply the right adjoint to
 -- it, and the right adjoint just forgets the morphism component.
 export
-SliceSigmaFMLAdj : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
-  SliceMorphism {a=c} (SliceSigmaFM {c} f sa) sb ->
+SliceFibSigmaFMLAdj : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
+  SliceMorphism {a=c} (SliceFibSigmaFM {c} f sa) sb ->
   SliceMorphism {a=c} sa sb
-SliceSigmaFMLAdj {c} {f} sa sb eval ec = eval ec . SSvar {c} {f} sa ec
+SliceFibSigmaFMLAdj {c} {f} sa sb eval ec = eval ec . SSvar {c} {f} sa ec
 
--- We show that the initial algebra of `SliceSigmaF f` is the initial object
+-- We show that the initial algebra of `SliceFibSigmaF f` is the initial object
 -- of `SliceObj a`.
 export
 SSMuInitial : {c : Type} -> (f : c -> c) ->
-  SliceMorphism {a=c} (SliceSigmaFM {c} f $ const Void) (const Void)
+  SliceMorphism {a=c} (SliceFibSigmaFM {c} f $ const Void) (const Void)
 SSMuInitial {c} f =
   SliceSigmaEval {c} {f} (const Void) (SSVoidAlg {c} f) (const Void) (\_ => id)
 
 export
-ssfmMap : {c : Type} -> {f : c -> c} -> SliceFMap (SliceSigmaFM {c} f)
+ssfmMap : {c : Type} -> {f : c -> c} -> SliceFMap (SliceFibSigmaFM {c} f)
 ssfmMap {c} {f} sa sb m =
-  SliceSigmaEval {c} {f} (SliceSigmaFM {c} f sb) SScom sa
+  SliceSigmaEval {c} {f} (SliceFibSigmaFM {c} f sb) SScom sa
     (sliceComp (SSvar sb) m)
 
 -- The multiplication of the free-monad adjunction, often called "join" --
 -- a natural transformation of endofunctors on `SliceObj a`, from
--- `SliceSigmaFM f . SliceSigmaFM f` to `SliceSigmaFM f`.
+-- `SliceFibSigmaFM f . SliceFibSigmaFM f` to `SliceFibSigmaFM f`.
 --
 -- The multiplication comes from whiskering the counit between the adjuncts.
 export
 ssfJoin : {c : Type} -> {f : c -> c} ->
-  SliceNatTrans (SliceSigmaFM {c} f . SliceSigmaFM {c} f) (SliceSigmaFM {c} f)
+  SliceNatTrans
+    (SliceFibSigmaFM {c} f . SliceFibSigmaFM {c} f)
+    (SliceFibSigmaFM {c} f)
 ssfJoin {c} {f} sc =
-  SliceSigmaEval {c} {f} (SliceSigmaFM f sc)
-    (SScom {f} {sc}) (SliceSigmaFM f sc) (sliceId $ SliceSigmaFM f sc)
+  SliceSigmaEval {c} {f} (SliceFibSigmaFM f sc)
+    (SScom {f} {sc}) (SliceFibSigmaFM f sc) (sliceId $ SliceFibSigmaFM f sc)
 
 -- The comultiplication (or "duplicate") of the free-monad adjunction -- a
--- natural transformation of endofunctors on algebras of `SliceSigmaF f`, from
--- `SSFMAlg` to `SSFMAlg . SliceSigmaFM`.
+-- natural transformation of endofunctors on algebras of `SliceFibSigmaF f`,
+-- from `SSFMAlg` to `SSFMAlg . SliceFibSigmaFM`.
 --
 -- The comultiplication comes from whiskering the unit between the adjuncts.
 -- The algebra parameter is unused because the adjunct forgets the input
@@ -519,7 +525,7 @@ export
 ssfDup : {c : Type} -> {f : c -> c} ->
   SliceMorphism {a=(SliceObj c)}
     (SSFMAlg {c} f)
-    (SSFMAlg {c} f . SliceSigmaFM f)
+    (SSFMAlg {c} f . SliceFibSigmaFM f)
 ssfDup {c} {f} sc falg = ssfJoin {c} {f} sc
 
 -----------------------------------
@@ -571,13 +577,13 @@ imSlTermCoalgInv {c} {f} fm =
 
 SliceCopointedSigmaF : {c, d : Type} -> (f : c -> d) ->
   SliceObj d -> SliceFunctor c d
-SliceCopointedSigmaF {c} {d} f = SlCopointedF {c} {d} (SliceSigmaF {c} {d} f)
+SliceCopointedSigmaF {c} {d} f = SlCopointedF {c} {d} (SliceFibSigmaF {c} {d} f)
 
 SCPIAlg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SCPIAlg {c} f = SlCopointedAlg {c} (SliceSigmaF {c} {d=c} f)
+SCPIAlg {c} f = SlCopointedAlg {c} (SliceFibSigmaF {c} {d=c} f)
 
 SCPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SCPICoalg {c} f = SlCopointedCoalg {c} (SliceSigmaF {c} {d=c} f)
+SCPICoalg {c} f = SlCopointedCoalg {c} (SliceFibSigmaF {c} {d=c} f)
 
 -------------------------
 ---- Adjunction data ----
@@ -585,9 +591,9 @@ SCPICoalg {c} f = SlCopointedCoalg {c} (SliceSigmaF {c} {d=c} f)
 
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` (on the left) and the category of
--- `SliceSigmaF f`-coalgebras on that category (on the right).
+-- `SliceFibSigmaF f`-coalgebras on that category (on the right).
 --
--- (The category of `SliceSigmaF f`-coalgebras on `SliceObj c` can be seen
+-- (The category of `SliceFibSigmaF f`-coalgebras on `SliceObj c` can be seen
 -- as the category of elements of `SSCoalg {c} f`.)
 --
 -- The right adjoint takes `sl : SliceObj c` to the coalgebra whose object
