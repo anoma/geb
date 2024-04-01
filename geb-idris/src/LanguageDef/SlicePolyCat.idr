@@ -424,6 +424,22 @@ spComonadMap : {c : Type} -> (sl : SliceObj c) -> SliceFMap (SPComonad {c} sl)
 spComonadMap {c} sl x y =
   sbcMap (SlicePiF sl x) (SlicePiF sl y) . spMap {c} {sl} x y
 
+-- This is the unit (AKA "pure" or "return") of the
+-- dependent-product/base-change adjunction.
+export
+spUnit : {0 c : Type} -> {0 sl : SliceObj c} ->
+  SliceNatTrans {x=c} {y=c} (SliceIdF c) (SPMonad {c} sl)
+spUnit {c} {sl} sc ec esc esl = esc
+
+-- This is the counit (AKA "erase" or "extract") of the
+-- dependent-product/base-change adjunction.
+export
+spCounit : {0 c : Type} -> {0 sl : SliceObj c} ->
+  SliceNatTrans {x=(Sigma sl)} {y=(Sigma sl)}
+    (SPComonad {c} sl)
+    (SliceIdF $ Sigma sl)
+spCounit {c} {sl} sc esl pisc = replace {p=sc} (sym dpEqPat) $ pisc $ snd esl
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
