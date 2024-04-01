@@ -98,7 +98,6 @@ SliceDepSigmaF {c} sl sls ec =
 -- (`const Void`); that initial algebra (as with any functor that has a
 -- free monad) is isomorphic to the application of its free monad to the
 -- initial object of `SliceObj c`, which is hence also `const Void`.
---
 export
 data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
   SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
