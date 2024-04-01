@@ -97,6 +97,14 @@ export
 ssMap : {0 c, d : Type} -> {0 f : c -> d} -> SliceFMap (SliceSigmaF {c} {d} f)
 ssMap {c} {d} {f} sa sb m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
 
+-- For convenient expression within a dependently-typed metalanguage, we
+-- express this by default in terms of dependent types rather than fibrations,
+-- which are the more category-theoretic style.
+export
+SliceDepSigmaF : {0 c : Type} ->
+  (0 sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
+SliceDepSigmaF {c} sl = SliceSigmaF {c=(Sigma {a=c} sl)} {d=c} DPair.fst
+
 --------------------------
 ----- Sigma as W-type ----
 --------------------------
@@ -231,15 +239,6 @@ SSVoidAlg {c} f (f ec) (SS {ec} v) = v
 export
 SSCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
 SSCoalg {c} {f} = SliceCoalg {a=c} (SliceSigmaF {c} {d=c} f)
-
--------------------------------------------------
----- Dependent sum (sigma) from slice object ----
--------------------------------------------------
-
-export
-SliceDepSigmaF : {0 c : Type} ->
-  (0 sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
-SliceDepSigmaF {c} sl = SliceSigmaF {c=(Sigma {a=c} sl)} {d=c} DPair.fst
 
 ---------------------------
 ---------------------------
