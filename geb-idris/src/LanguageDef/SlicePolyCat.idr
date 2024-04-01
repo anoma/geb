@@ -55,6 +55,9 @@ bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
 ---- Base change from slice object ----
 ---------------------------------------
 
+-- One way of viewing this formulation of base change from a dependent-type
+-- perspective is that it makes a slice object into a type family, where the
+-- index of each type is included as part of the signature of the family.
 export
 SliceDepBCF : {c : Type} -> (sl : SliceObj c) -> SliceFunctor c (Sigma {a=c} sl)
 SliceDepBCF {c} sl = BaseChangeF {a=c} {b=(Sigma {a=c} sl)} DPair.fst
@@ -232,6 +235,41 @@ export
 SliceDepSigmaF : {0 c : Type} ->
   (0 sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
 SliceDepSigmaF {c} sl = SliceSigmaF {c=(Sigma {a=c} sl)} {d=c} DPair.fst
+
+---------------------------
+---------------------------
+---- Dependent product ----
+---------------------------
+---------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+-- The slice functor from `c` to `d` which takes a type family indexed by `c`
+-- to a type of sections indexed by `d`, where the type at a given term
+-- of `d` is the type of sections indexed by terms of `c` in the preimage of
+-- that term of `d` under the given morphism.
+--
+-- In particular, if `d` is `Unit`, then this takes a type family indexed by `c`
+-- to the type of its sections indexed by `c` -- that is, a slice object `sc`
+-- over `c` is mapped by this functor to the type of `Type` (equivalent to a
+-- slice over `Unit`) of choices of terms, for each `ec : c`, of `sc ec`.
+--
+-- This is the right adjoint of the dependent-product/base-change adjunction.
+-- (The left adjoint is base change.)
+export
+SlicePiF : {c : Type} -> {0 d : Type} -> (0 f : c -> d) -> SliceFunctor c d
+SlicePiF {c} {d} f sc ed =
+  -- An explicit way of spelling this out would be:
+  --  (ep : PreImage {a=c} {b=d} f ed) -> sc $ fst0 ep
+  Pi {a=(PreImage f ed)} (BaseChangeF fst0 sc)
+
+export
+spMap : {c : Type} -> {0 d : Type} -> {0 f : c -> d} ->
+  SliceFMap (SlicePiF {c} {d} f)
+spMap {c} {d} {f} sca scb mab ed mca ec =
+  mab (fst0 ec) $ mca $ Element0 (fst0 ec) $ snd0 ec
 
 --------------------------------
 --------------------------------
