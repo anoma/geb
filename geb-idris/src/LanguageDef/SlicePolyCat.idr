@@ -378,6 +378,23 @@ spFromWTF : {c : Type} -> (sl : SliceObj c) ->
 spFromWTF {c} sc ssc ec (Element0 ec' eqc ** pisc) esc =
   pisc $ Element0 (ec ** esc) $ sym eqc
 
+-------------------------
+---- Adjunction data ----
+-------------------------
+
+-- This is the left adjunct of the dependent-product/base-change adjunction.
+--
+-- It constitutes the constructor for `SliceSigmaF f sc`.  As an adjunction,
+-- it is parametrically polymorphic:  rather than receiving a witness to a
+-- given `ec : c` being in the image of `f` applied to a given slice over
+-- `c`, it passes in a handler for _any_ such witness.
+export
+spIntro : {0 c : Type} -> {0 sl : SliceObj c} ->
+  {0 sa : SliceObj c} -> {sb : SliceObj (Sigma sl)} ->
+  SliceMorphism {a=(Sigma sl)} (SliceBCF sl sa) sb ->
+  SliceMorphism {a=c} sa (SlicePiF sl sb)
+spIntro {c} {sl} {sa} {sb} m ec esa esl = m (ec ** esl) esa
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
