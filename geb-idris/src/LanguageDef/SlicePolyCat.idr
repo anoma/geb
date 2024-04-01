@@ -86,6 +86,11 @@ SliceSigmaF {c} sl sls ec =
   --  (esc : sl ec ** sls $ (ec ** esc))
   Sigma {a=(sl ec)} (BaseChangeF (MkDPair ec) sls)
 
+export
+ssMap : {c : Type} -> {0 sl : SliceObj c} -> SliceFMap (SliceSigmaF {c} sl)
+ssMap {c} {sl} slsa slsb mab ec esla =
+  (fst esla ** mab (ec ** fst esla) $ snd esla)
+
 -- This is the category-theory-style version of `SliceFibSigmaF`, based on
 -- fibrations.
 --
