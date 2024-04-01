@@ -149,6 +149,22 @@ sfsFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
   replace {p=(SliceFibSigmaF f sc)} eq
   $ (Element0 ec Refl ** scd $ Element0 ec Refl)
 
+0 SSasWTF : {c : Type} -> (sl : SliceObj c) -> WTypeFunc (Sigma sl) c
+SSasWTF {c} sl =
+  MkWTF {dom=(Sigma sl)} {cod=c} (Sigma sl) (Sigma sl) id id DPair.fst
+
+ssToWTF : {c : Type} -> (sl : SliceObj c) ->
+  SliceNatTrans (SliceSigmaF {c} sl) (InterpWTF $ SSasWTF sl)
+ssToWTF {c} sl sc ec esc =
+  (Element0 (ec ** fst esc) Refl **
+   \ec' => replace {p=sc} (sym $ snd0 ec') $ snd esc)
+
+ssFromWTF : {c : Type} -> (sl : SliceObj c) ->
+  SliceNatTrans (InterpWTF $ SSasWTF sl) (SliceSigmaF {c} sl)
+ssFromWTF {c} sc ssc ec (Element0 esc eq ** pisc) =
+  rewrite sym eq in
+  (snd esc ** replace {p=ssc} dpEqPat $ pisc $ Element0 esc Refl)
+
 -------------------------
 ---- Adjunction data ----
 -------------------------
