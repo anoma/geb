@@ -440,6 +440,27 @@ spCounit : {0 c : Type} -> {0 sl : SliceObj c} ->
     (SliceIdF $ Sigma sl)
 spCounit {c} {sl} sc esl pisc = replace {p=sc} (sym dpEqPat) $ pisc $ snd esl
 
+-- This is the multiplication (AKA "join") of the dependent-product/base-change
+-- adjunction.
+--
+-- The multiplication comes from whiskering the counit between the adjuncts.
+export
+sPjoin : {c : Type} -> {sl : SliceObj c} ->
+  SliceNatTrans {x=c} {y=c}
+    (SPMonad {c} sl . SPMonad {c} sl)
+    (SPMonad {c} sl)
+sPjoin {c} {sl} =
+  SliceWhiskerRight
+    {f=(SPComonad sl . SliceBCF sl)}
+    {g=(SliceBCF sl)}
+    {h=(SlicePiF sl)}
+    (spMap {sl})
+  $ SliceWhiskerLeft
+    {g=(SPComonad sl)}
+    {h=(SliceIdF $ Sigma sl)}
+    (spCounit {sl})
+    (SliceBCF sl)
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
