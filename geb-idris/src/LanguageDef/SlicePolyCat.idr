@@ -150,8 +150,7 @@ sfsFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
   $ (Element0 ec Refl ** scd $ Element0 ec Refl)
 
 0 SSasWTF : {c : Type} -> (sl : SliceObj c) -> WTypeFunc (Sigma sl) c
-SSasWTF {c} sl =
-  MkWTF {dom=(Sigma sl)} {cod=c} (Sigma sl) (Sigma sl) id id DPair.fst
+SSasWTF {c} sl = SFSasWTF {c=(Sigma sl)} {d=c} DPair.fst
 
 ssToWTF : {c : Type} -> (sl : SliceObj c) ->
   SliceNatTrans (SliceSigmaF {c} sl) (InterpWTF $ SSasWTF sl)
@@ -347,6 +346,37 @@ sfpMap {c} {d} {f} sca scb =
     {f=(\ed => fst0 $ snd ed)}
     sca
     scb
+
+-----------------------
+----- Pi as W-type ----
+-----------------------
+
+0 SPSasWTF : {c, d : Type} -> (f : c -> d) -> WTypeFunc c d
+SPSasWTF {c} {d} f = MkWTF {dom=c} {cod=d} d c id f id
+
+spsToWTF : {c, d : Type} -> (0 f : c -> d) ->
+  SliceNatTrans (SliceFibPiF {c} {d} f) (InterpWTF $ SPSasWTF f)
+spsToWTF {c} {d} f sc ed pisc = (Element0 ed Refl ** pisc)
+
+spsFromWTF : {c, d : Type} -> (0 f : c -> d) ->
+  SliceNatTrans (InterpWTF $ SPSasWTF f) (SliceFibPiF {c} {d} f)
+spsFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
+  replace {p=(SliceFibPiF f sc)} eq scd
+
+0 SPasWTF : {c : Type} -> (sl : SliceObj c) -> WTypeFunc (Sigma sl) c
+SPasWTF {c} sl = SPSasWTF {c=(Sigma sl)} {d=c} DPair.fst
+
+spToWTF : {c : Type} -> (sl : SliceObj c) ->
+  SliceNatTrans (SlicePiF {c} sl) (InterpWTF $ SPasWTF sl)
+spToWTF {c} sc ssc ec pisc =
+  (Element0 ec Refl **
+   \(Element0 (ec' ** esc') eqc) =>
+    rewrite eqc in pisc $ rewrite sym eqc in esc')
+
+spFromWTF : {c : Type} -> (sl : SliceObj c) ->
+  SliceNatTrans (InterpWTF $ SPasWTF sl) (SlicePiF {c} sl)
+spFromWTF {c} sc ssc ec (Element0 ec' eqc ** pisc) esc =
+  pisc $ Element0 (ec ** esc) $ sym eqc
 
 --------------------------------
 --------------------------------
@@ -826,8 +856,8 @@ SliceDepPiF sdc sc ed = SliceCovarRepF (sdc ed) {c} sc ()
 ----- Dependent product as W-type ----
 --------------------------------------
 
-0 SPasWTF : {c, d : Type} -> (p : d -> c -> Type) -> WTypeFunc c d
-SPasWTF {c} {d} p =
+0 SDPasWTF : {c, d : Type} -> (p : d -> c -> Type) -> WTypeFunc c d
+SDPasWTF {c} {d} p =
   MkWTF {dom=c} {cod=d}
     d
     (Sigma {a=(d, c)} (uncurry p))
@@ -835,16 +865,16 @@ SPasWTF {c} {d} p =
     (fst . fst)
     (id {a=d})
 
-spToWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
-  SliceNatTrans (SliceDepPiF {c} {d} p) (InterpWTF $ SPasWTF p)
-spToWTF {c} {d} p sc ed mpsc =
+spdToWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
+  SliceNatTrans (SliceDepPiF {c} {d} p) (InterpWTF $ SDPasWTF p)
+spdToWTF {c} {d} p sc ed mpsc =
   (Element0 ed Refl **
    \(Element0 ((ed', ec') ** pdc) eq) =>
     mpsc ec' $ replace {p=(flip p ec')} eq pdc)
 
-spFromWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
-  SliceNatTrans (InterpWTF $ SPasWTF p) (SliceDepPiF {c} {d} p)
-spFromWTF {c} {d} p sc ed (Element0 ed' eq ** mpsc) =
+spdFromWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
+  SliceNatTrans (InterpWTF $ SDPasWTF p) (SliceDepPiF {c} {d} p)
+spdFromWTF {c} {d} p sc ed (Element0 ed' eq ** mpsc) =
   \ec, pdc => mpsc (Element0 ((ed, ec) ** pdc) $ sym eq)
 
 -----------------------------
