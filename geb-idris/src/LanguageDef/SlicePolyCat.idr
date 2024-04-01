@@ -22,15 +22,15 @@ import public LanguageDef.InternalCat
 -- adjunctions on either side of it.
 %hide Library.IdrisCategories.BaseChangeF
 export
-BaseChangeF : {a, b : Type} -> (b -> a) -> SliceFunctor a b
-BaseChangeF f sla = sla . f
+BaseChangeF : {c, d : Type} -> (d -> c) -> SliceFunctor c d
+BaseChangeF {c} {d} f slc = slc . f
 
 -- Because base change is in the middle of an adjoint triple between
 -- dependent sum and dependent product, it can introduced and eliminated
 -- from either side, by the adjuncts defined below with `Sigma` and `Pi`.
 
 export
-bcMap : {0 c, d : Type} -> {f : c -> d} -> SliceFMap (BaseChangeF {a=d} {b=c} f)
+bcMap : {0 c, d : Type} -> {f : d -> c} -> SliceFMap (BaseChangeF {c} {d} f)
 bcMap {c} {d} {f} sa sb m ec = m (f ec)
 
 --------------------------------
@@ -41,13 +41,13 @@ bcMap {c} {d} {f} sa sb m ec = m (f ec)
 BCasWTF {c} {d} f = MkWTF {dom=c} {cod=d} d d f id id
 
 bcToWTF : {c, d : Type} -> (0 f : d -> c) ->
-  SliceNatTrans (BaseChangeF {a=c} {b=d} f) (InterpWTF $ BCasWTF f)
+  SliceNatTrans (BaseChangeF {c} {d} f) (InterpWTF $ BCasWTF f)
 bcToWTF {c} {d} f sc ed efd =
   (Element0 ed Refl **
    \(Element0 ed' eq) => replace {p=(BaseChangeF f sc)} (sym eq) efd)
 
 bcFromWTF : {c, d : Type} -> (0 f : d -> c) ->
-  SliceNatTrans (InterpWTF $ BCasWTF f) (BaseChangeF {a=c} {b=d} f)
+  SliceNatTrans (InterpWTF $ BCasWTF f) (BaseChangeF {c} {d} f)
 bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
   replace {p=(BaseChangeF f sc)} eq $ scfd $ Element0 ed' Refl
 
@@ -60,7 +60,7 @@ bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
 -- index of each type is included as part of the signature of the family.
 export
 SliceDepBCF : {c : Type} -> (sl : SliceObj c) -> SliceFunctor c (Sigma {a=c} sl)
-SliceDepBCF {c} sl = BaseChangeF {a=c} {b=(Sigma {a=c} sl)} DPair.fst
+SliceDepBCF {c} sl = BaseChangeF {c} {d=(Sigma {a=c} sl)} DPair.fst
 
 -----------------------
 -----------------------
@@ -148,7 +148,7 @@ SSMonad {c} {d} f = BaseChangeF f . SliceSigmaF {c} {d} f
 export
 ssMonadMap : {c, d : Type} -> (f : c -> d) -> SliceFMap (SSMonad {c} {d} f)
 ssMonadMap {c} {d} f x y =
-  bcMap {c} {d} {f} (SliceSigmaF f x) (SliceSigmaF f y) . ssMap {c} {d} {f} x y
+  bcMap {c=d} {d=c} {f} (SliceSigmaF f x) (SliceSigmaF f y) . ssMap {c} {d} {f} x y
 
 -- The comonad of the dependent-sum/base-change adjunction.
 export
@@ -158,7 +158,8 @@ SSComonad {c} {d} f = SliceSigmaF {c} {d} f . BaseChangeF f
 export
 ssComonadMap : {c, d : Type} -> (f : c -> d) -> SliceFMap (SSComonad {c} {d} f)
 ssComonadMap {c} {d} f x y =
-  ssMap {c} {d} {f} (BaseChangeF f x) (BaseChangeF f y) . bcMap {c} {d} {f} x y
+  ssMap {c} {d} {f} (BaseChangeF f x) (BaseChangeF f y)
+  . bcMap {c=d} {d=c} {f} x y
 
 -- Rather than making the constructor `SS` explicit, we export an
 -- alias for it viewed as a natural transformation.
@@ -280,17 +281,29 @@ spMap {c} {sl} slsa slsb mab ec pia eslc = mab (ec ** eslc) $ pia eslc
 -- This is the category-theory-style version of `SlicePiF`, based on
 -- fibrations.
 export
-SliceFibPiF : {c : Type} -> {0 d : Type} -> (0 f : c -> d) -> SliceFunctor c d
-SliceFibPiF {c} {d} f sc ed =
+SliceFibPiF : {c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d
+SliceFibPiF {c} {d} f =
   -- An explicit way of spelling this out would be:
   --  (ep : PreImage {a=c} {b=d} f ed) -> sc $ fst0 ep
-  Pi {a=(PreImage f ed)} (BaseChangeF fst0 sc)
+  SlicePiF {c=d} (\ed => PreImage {a=c} {b=d} f ed)
+  . BaseChangeF
+      {c}
+      {d=(Sigma {a=d} $ \ed => PreImage {a=c} {b=d} f ed)}
+      (\ed => fst0 $ snd ed)
 
 export
-sfpMap : {c : Type} -> {0 d : Type} -> {0 f : c -> d} ->
+sfpMap : {c, d : Type} -> {0 f : c -> d} ->
   SliceFMap (SliceFibPiF {c} {d} f)
-sfpMap {c} {d} {f} sca scb mab ed mca ec =
-  mab (fst0 ec) $ mca $ Element0 (fst0 ec) $ snd0 ec
+sfpMap {c} {d} {f} sca scb =
+  spMap {c=d} {sl=(\ed => PreImage {a=c} {b=d} f ed)}
+    (\edc => sca $ fst0 $ snd edc)
+    (\edc => scb $ fst0 $ snd edc)
+  . bcMap
+    {c}
+    {d=(Sigma {a=d} $ \ed => PreImage {a=c} {b=d} f ed)}
+    {f=(\ed => fst0 $ snd ed)}
+    sca
+    scb
 
 --------------------------------
 --------------------------------
