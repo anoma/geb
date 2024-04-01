@@ -62,17 +62,6 @@ bcFromWTF : {c, d : Type} -> (0 f : d -> c) ->
 bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
   replace {p=(BaseChangeF f sc)} eq $ scfd $ Element0 ed' Refl
 
----------------------------------------
----- Base change from slice object ----
----------------------------------------
-
--- One way of viewing this formulation of base change from a dependent-type
--- perspective is that it makes a slice object into a type family, where the
--- index of each type is included as part of the signature of the family.
-export
-SliceDepBCF : {c : Type} -> (sl : SliceObj c) -> SliceFunctor c (Sigma {a=c} sl)
-SliceDepBCF {c} sl = BaseChangeF {c} {d=(Sigma {a=c} sl)} DPair.fst
-
 -----------------------
 -----------------------
 ---- Dependent sum ----
