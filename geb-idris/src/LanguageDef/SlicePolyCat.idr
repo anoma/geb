@@ -461,6 +461,27 @@ sPjoin {c} {sl} =
     (spCounit {sl})
     (SliceBCF sl)
 
+-- This is the comultiplication (AKA "duplicate") of the
+-- dependent-product/base-change adjunction.
+--
+-- The comultiplication comes from whiskering the unit between the adjuncts.
+export
+sPdup : {c : Type} -> {sl : SliceObj c} ->
+  SliceNatTrans {x=(Sigma sl)} {y=(Sigma sl)}
+    (SPComonad {c} sl)
+    (SPComonad {c} sl . SPComonad {c} sl)
+sPdup {c} {sl} =
+  SliceWhiskerRight
+    {f=(SlicePiF sl)}
+    {g=(SlicePiF sl . SPComonad sl)}
+    {h=(SliceBCF sl)}
+    (sbcMap {sl})
+  $ SliceWhiskerLeft
+    {g=(SliceIdF c)}
+    {h=(SPMonad sl)}
+    spUnit
+    (SlicePiF sl)
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
