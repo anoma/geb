@@ -79,9 +79,9 @@ bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
 -- express this by default in terms of dependent types rather than fibrations,
 -- which are the more category-theoretic style.
 export
-SliceDepSigmaF : {c : Type} ->
+SliceSigmaF : {c : Type} ->
   (sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
-SliceDepSigmaF {c} sl sls ec =
+SliceSigmaF {c} sl sls ec =
   -- An explicit way of spelling this out would be:
   --  (esc : sl ec ** sls $ (ec ** esc))
   Sigma {a=(sl ec)} (BaseChangeF (MkDPair ec) sls)
