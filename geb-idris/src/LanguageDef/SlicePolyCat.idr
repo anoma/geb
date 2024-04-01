@@ -72,16 +72,6 @@ bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
 ---- Definition ----
 --------------------
 
--- The slice functor from `c` to `d` which takes a subobject of `c` to
--- the subobject of `d` whose terms consist of single applications
--- of `f` to terms of the given subobject.
---
--- When it is an endofunctor (i.e. `d` is `c`), its initial algebra
--- (least fixed point) is simply the initial object of `SliceObj c`
--- (`const Void`); that initial algebra (as with any functor that has a
--- free monad) is isomorphic to the application of its free monad to the
--- initial object of `SliceObj c`, which is hence also `const Void`.
---
 -- This is the left adjoint of the dependent-sum/base-change adjunction.
 -- (The right adjoint is base change.)
 --
@@ -98,6 +88,17 @@ SliceDepSigmaF {c} sl sls ec =
 
 -- This is the category-theory-style version of `SliceSigmaF`, based on
 -- fibrations.
+--
+-- One way of viewing it is as the slice functor from `c` to `d` which takes a
+-- subobject of `c` to the subobject of `d` whose terms consist of single
+-- applications of `f` to terms of the given subobject.
+--
+-- When it is an endofunctor (i.e. `d` is `c`), its initial algebra
+-- (least fixed point) is simply the initial object of `SliceObj c`
+-- (`const Void`); that initial algebra (as with any functor that has a
+-- free monad) is isomorphic to the application of its free monad to the
+-- initial object of `SliceObj c`, which is hence also `const Void`.
+--
 export
 data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
   SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
