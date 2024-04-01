@@ -665,9 +665,9 @@ scovrFromWTF {c} {d} sa sb () (Element0 () eq ** sbd) =
 ---------------------------
 ---------------------------
 
---------------------
----- Definition ----
---------------------
+---------------------------------------------
+---- Dependent product from slice object ----
+---------------------------------------------
 
 -- The slice functor from `c` to `d` which consists of a product of `d`
 -- representable functors from `SliceObj c`.  Products of representables
