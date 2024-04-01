@@ -33,6 +33,17 @@ export
 bcMap : {0 c, d : Type} -> {f : d -> c} -> SliceFMap (BaseChangeF {c} {d} f)
 bcMap {c} {d} {f} sa sb m ec = m (f ec)
 
+-- This version of `BaseChangeF` uses a slice object rather than a morphism
+-- between base objects, like the dependent-type-style definitions of
+-- `SliceSigmaF` and `SlicePiF` below.
+export
+SliceBCF : {c : Type} -> (sl : SliceObj c) -> SliceFunctor c (Sigma {a=c} sl)
+SliceBCF {c} sl = BaseChangeF {c} {d=(Sigma {a=c} sl)} DPair.fst
+
+export
+sbcMap : {0 c : Type} -> {sl : SliceObj c} -> SliceFMap (SliceBCF {c} sl)
+sbcMap {c} {sl} sa sb = bcMap {c} {d=(Sigma {a=c} sl)} {f=DPair.fst} sa sb
+
 --------------------------------
 ----- Base change as W-type ----
 --------------------------------
