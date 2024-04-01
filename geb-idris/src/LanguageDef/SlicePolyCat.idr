@@ -89,6 +89,16 @@ bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
 -- express this by default in terms of dependent types rather than fibrations,
 -- which are the more category-theoretic style.
 export
+SliceDepSigmaF : {c : Type} ->
+  (sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
+SliceDepSigmaF {c} sl sls ec =
+  -- An explicit way of spelling this out would be:
+  --  (esc : sl ec ** sls $ (ec ** esc))
+  Sigma {a=(sl ec)} (BaseChangeF (MkDPair ec) sls)
+
+-- This is the category-theory-style version of `SliceSigmaF`, based on
+-- fibrations.
+export
 data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
   SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
     {ec : c} -> sc ec -> SliceSigmaF {c} {d} f sc (f ec)
@@ -96,14 +106,6 @@ data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
 export
 ssMap : {0 c, d : Type} -> {0 f : c -> d} -> SliceFMap (SliceSigmaF {c} {d} f)
 ssMap {c} {d} {f} sa sb m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
-
--- For convenient expression within a dependently-typed metalanguage, we
--- express this by default in terms of dependent types rather than fibrations,
--- which are the more category-theoretic style.
-export
-SliceDepSigmaF : {0 c : Type} ->
-  (0 sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
-SliceDepSigmaF {c} sl = SliceSigmaF {c=(Sigma {a=c} sl)} {d=c} DPair.fst
 
 --------------------------
 ----- Sigma as W-type ----
