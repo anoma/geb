@@ -217,34 +217,6 @@ SSCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
 SSCoalg {c} {f} = SliceCoalg {a=c} (SliceSigmaF {c} {d=c} f)
 
 --------------------------------
----- Pointed dependent sums ----
---------------------------------
-
-SlicePointedSigmaF : {c, d : Type} -> (f : c -> d) ->
-  SliceObj d -> SliceFunctor c d
-SlicePointedSigmaF {c} {d} f = SlPointedF {c} {d} (SliceSigmaF {c} {d} f)
-
-SPIAlg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SPIAlg {c} f = SlPointedAlg {c} (SliceSigmaF {c} {d=c} f)
-
-SPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SPICoalg {c} f = SlPointedCoalg {c} (SliceSigmaF {c} {d=c} f)
-
-----------------------------------
----- Copointed dependent sums ----
-----------------------------------
-
-SliceCopointedSigmaF : {c, d : Type} -> (f : c -> d) ->
-  SliceObj d -> SliceFunctor c d
-SliceCopointedSigmaF {c} {d} f = SlCopointedF {c} {d} (SliceSigmaF {c} {d} f)
-
-SCPIAlg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SCPIAlg {c} f = SlCopointedAlg {c} (SliceSigmaF {c} {d=c} f)
-
-SCPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
-SCPICoalg {c} f = SlCopointedCoalg {c} (SliceSigmaF {c} {d=c} f)
-
---------------------------------
 --------------------------------
 ---- Initial slice algebras ----
 --------------------------------
@@ -339,6 +311,24 @@ imSlTermCoalgInv {c} {f} fm =
 ---- Cofree comonad ----
 ------------------------
 ------------------------
+
+----------------------------------
+---- Copointed dependent sums ----
+----------------------------------
+
+SliceCopointedSigmaF : {c, d : Type} -> (f : c -> d) ->
+  SliceObj d -> SliceFunctor c d
+SliceCopointedSigmaF {c} {d} f = SlCopointedF {c} {d} (SliceSigmaF {c} {d} f)
+
+SCPIAlg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SCPIAlg {c} f = SlCopointedAlg {c} (SliceSigmaF {c} {d=c} f)
+
+SCPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SCPICoalg {c} f = SlCopointedCoalg {c} (SliceSigmaF {c} {d=c} f)
+
+-------------------------
+---- Adjunction data ----
+-------------------------
 
 -- The cofree comonad comes from a forgetful-cofree adjunction between
 -- `SliceObj c` (on the left) and the category of
@@ -480,6 +470,24 @@ imSlDup {f} fm sa =
 ---- Free monad on dependent sums ----
 --------------------------------------
 --------------------------------------
+
+--------------------------------
+---- Pointed dependent sums ----
+--------------------------------
+
+SlicePointedSigmaF : {c, d : Type} -> (f : c -> d) ->
+  SliceObj d -> SliceFunctor c d
+SlicePointedSigmaF {c} {d} f = SlPointedF {c} {d} (SliceSigmaF {c} {d} f)
+
+SPIAlg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SPIAlg {c} f = SlPointedAlg {c} (SliceSigmaF {c} {d=c} f)
+
+SPICoalg : {c : Type} -> (f : c -> c) -> (sv, sc : SliceObj c) -> Type
+SPICoalg {c} f = SlPointedCoalg {c} (SliceSigmaF {c} {d=c} f)
+
+-------------------------
+---- Adjunction data ----
+-------------------------
 
 -- The free monad comes from a free-forgetful adjunction between `SliceObj c`
 -- (on the right) and the category of `SliceSigmaF f`-algebras on that category
