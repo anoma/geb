@@ -105,9 +105,9 @@ data SliceFibSigmaF :
     {ec : c} -> sc ec -> SliceFibSigmaF {c} {d} f sc (f ec)
 
 export
-ssMap : {0 c, d : Type} -> {0 f : c -> d} ->
+sfsMap : {0 c, d : Type} -> {0 f : c -> d} ->
   SliceFMap (SliceFibSigmaF {c} {d} f)
-ssMap {c} {d} {f} sa sb m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
+sfsMap {c} {d} {f} sa sb m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
 
 --------------------------
 ----- Sigma as W-type ----
@@ -161,7 +161,7 @@ export
 ssMonadMap : {c, d : Type} -> (f : c -> d) -> SliceFMap (SSMonad {c} {d} f)
 ssMonadMap {c} {d} f x y =
   bcMap {c=d} {d=c} {f} (SliceFibSigmaF f x) (SliceFibSigmaF f y)
-  . ssMap {c} {d} {f} x y
+  . sfsMap {c} {d} {f} x y
 
 -- The comonad of the dependent-sum/base-change adjunction.
 export
@@ -171,7 +171,7 @@ SSComonad {c} {d} f = SliceFibSigmaF {c} {d} f . BaseChangeF f
 export
 ssComonadMap : {c, d : Type} -> (f : c -> d) -> SliceFMap (SSComonad {c} {d} f)
 ssComonadMap {c} {d} f x y =
-  ssMap {c} {d} {f} (BaseChangeF f x) (BaseChangeF f y)
+  sfsMap {c} {d} {f} (BaseChangeF f x) (BaseChangeF f y)
   . bcMap {c=d} {d=c} {f} x y
 
 -- Rather than making the constructor `SS` explicit, we export an
@@ -226,7 +226,7 @@ sSdup {c} {d} {f} =
     {f=(BaseChangeF f)}
     {g=(BaseChangeF f . SSComonad f)}
     {h=(SliceFibSigmaF f)}
-    (ssMap {f})
+    (sfsMap {f})
   $ SliceWhiskerLeft
     {g=(SliceIdF c)}
     {h=(SSMonad f)}
@@ -447,7 +447,7 @@ SSFcounit : {c : Type} -> {f : c -> c} ->
   SliceMorphism {a=(SliceObj c)} (SSFMAlg {c} f) (SSAlg {c} f)
 SSFcounit {c} {f} sc alg =
   sliceComp alg $ sliceComp (SScom {c} {f} {sc})
-  $ ssMap sc (SliceFibSigmaFM f sc)
+  $ sfsMap sc (SliceFibSigmaFM f sc)
   $ SSvar {c} {f} sc
 
 -- `Eval` is a universal morphism of the free monad.  Specifically, it is
