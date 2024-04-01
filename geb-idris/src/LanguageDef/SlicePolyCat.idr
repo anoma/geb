@@ -384,7 +384,7 @@ spFromWTF {c} sc ssc ec (Element0 ec' eqc ** pisc) esc =
 
 -- This is the left adjunct of the dependent-product/base-change adjunction.
 --
--- It constitutes the constructor for `SliceSigmaF f sc`.  As an adjunction,
+-- It constitutes the constructor for `SlicePiF f sc`.  As an adjunction,
 -- it is parametrically polymorphic:  rather than receiving a witness to a
 -- given `ec : c` being in the image of `f` applied to a given slice over
 -- `c`, it passes in a handler for _any_ such witness.
