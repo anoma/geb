@@ -51,6 +51,14 @@ bcFromWTF : {c, d : Type} -> (0 f : d -> c) ->
 bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
   replace {p=(BaseChangeF f sc)} eq $ scfd $ Element0 ed' Refl
 
+---------------------------------------
+---- Base change from slice object ----
+---------------------------------------
+
+export
+SliceDepBCF : {c : Type} -> (sl : SliceObj c) -> SliceFunctor c (Sigma {a=c} sl)
+SliceDepBCF {c} sl = BaseChangeF {a=c} {b=(Sigma {a=c} sl)} DPair.fst
+
 -----------------------
 -----------------------
 ---- Dependent sum ----
@@ -215,6 +223,15 @@ SSVoidAlg {c} f (f ec) (SS {ec} v) = v
 export
 SSCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
 SSCoalg {c} {f} = SliceCoalg {a=c} (SliceSigmaF {c} {d=c} f)
+
+-------------------------------------------------
+---- Dependent sum (sigma) from slice object ----
+-------------------------------------------------
+
+export
+SliceDepSigmaF : {0 c : Type} ->
+  (0 sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
+SliceDepSigmaF {c} sl = SliceSigmaF {c=(Sigma {a=c} sl)} {d=c} DPair.fst
 
 --------------------------------
 --------------------------------
