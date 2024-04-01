@@ -675,8 +675,8 @@ scovrFromWTF {c} {d} sa sb () (Element0 () eq ** sbd) =
 -- represented by sums, and products of contravariant representables are
 -- represented by products).
 export
-SlicePiF : {c : Type} -> (d -> c -> Type) -> SliceFunctor c d
-SlicePiF sdc sc ed = SliceCovarRepF (sdc ed) {c} sc ()
+SliceDepPiF : {c : Type} -> (d -> c -> Type) -> SliceFunctor c d
+SliceDepPiF sdc sc ed = SliceCovarRepF (sdc ed) {c} sc ()
 
 --------------------------------------
 ----- Dependent product as W-type ----
@@ -692,14 +692,14 @@ SPasWTF {c} {d} p =
     (id {a=d})
 
 spToWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
-  SliceNatTrans (SlicePiF {c} {d} p) (InterpWTF $ SPasWTF p)
+  SliceNatTrans (SliceDepPiF {c} {d} p) (InterpWTF $ SPasWTF p)
 spToWTF {c} {d} p sc ed mpsc =
   (Element0 ed Refl **
    \(Element0 ((ed', ec') ** pdc) eq) =>
     mpsc ec' $ replace {p=(flip p ec')} eq pdc)
 
 spFromWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
-  SliceNatTrans (InterpWTF $ SPasWTF p) (SlicePiF {c} {d} p)
+  SliceNatTrans (InterpWTF $ SPasWTF p) (SliceDepPiF {c} {d} p)
 spFromWTF {c} {d} p sc ed (Element0 ed' eq ** mpsc) =
   \ec, pdc => mpsc (Element0 ((ed, ec) ** pdc) $ sym eq)
 
