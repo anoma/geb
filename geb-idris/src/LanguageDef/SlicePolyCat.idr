@@ -104,15 +104,29 @@ ssMap {c} {sl} slsa slsb mab ec esla =
 -- free monad) is isomorphic to the application of its free monad to the
 -- initial object of `SliceObj c`, which is hence also `const Void`.
 export
-data SliceFibSigmaF :
-    {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
-  SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
-    {ec : c} -> sc ec -> SliceFibSigmaF {c} {d} f sc (f ec)
+SliceFibSigmaF : {c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d
+SliceFibSigmaF {c} {d} f =
+  -- An explicit way of spelling this out would be:
+  -- \sc : SliceObj c, ed : d => (ep : PreImage {a=c} {b=d} f ed ** sc $ fst0 ep)
+  SliceSigmaF {c=d} (\ed => PreImage {a=c} {b=d} f ed)
+  . BaseChangeF
+      {c}
+      {d=(Sigma {a=d} $ \ed => PreImage {a=c} {b=d} f ed)}
+      (\ed => fst0 $ snd ed)
 
 export
-sfsMap : {0 c, d : Type} -> {0 f : c -> d} ->
+sfsMap : {c, d : Type} -> {0 f : c -> d} ->
   SliceFMap (SliceFibSigmaF {c} {d} f)
-sfsMap {c} {d} {f} sa sb m (f ec) (SS {ec} esc) = SS {ec} $ m ec esc
+sfsMap {c} {d} {f} sca scb =
+  ssMap {c=d} {sl=(\ed => PreImage {a=c} {b=d} f ed)}
+    (\edc => sca $ fst0 $ snd edc)
+    (\edc => scb $ fst0 $ snd edc)
+  . bcMap
+    {c}
+    {d=(Sigma {a=d} $ \ed => PreImage {a=c} {b=d} f ed)}
+    {f=(\ed => fst0 $ snd ed)}
+    sca
+    scb
 
 --------------------------
 ----- Sigma as W-type ----
@@ -123,14 +137,14 @@ SSasWTF {c} {d} f = MkWTF {dom=c} {cod=d} c c id id f
 
 ssToWTF : {c, d : Type} -> (0 f : c -> d) ->
   SliceNatTrans (SliceFibSigmaF {c} {d} f) (InterpWTF $ SSasWTF f)
-ssToWTF {c} {d} f sc (f ec) (SS {c} {d} {f} {sc} {ec} sec) =
-  (Element0 ec Refl ** \(Element0 ec' eq) => replace {p=sc} (sym eq) sec)
+ssToWTF {c} {d} f sc ed esc =
+  (fst esc ** \ec' => replace {p=sc} (sym $ snd0 ec') $ snd esc)
 
 ssFromWTF : {c, d : Type} -> (0 f : c -> d) ->
   SliceNatTrans (InterpWTF $ SSasWTF f) (SliceFibSigmaF {c} {d} f)
 ssFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
   replace {p=(SliceFibSigmaF f sc)} eq
-  $ SS {c} {d} {f} {sc} {ec} $ scd (Element0 ec Refl)
+  $ (Element0 ec Refl ** scd $ Element0 ec Refl)
 
 -------------------------
 ---- Adjunction data ----
@@ -147,7 +161,8 @@ ssElim : {0 c, d : Type} -> {0 f : c -> d} ->
   {0 sa : SliceObj c} -> {sb : SliceObj d} ->
   SliceMorphism {a=c} sa (BaseChangeF f sb) ->
   SliceMorphism {a=d} (SliceFibSigmaF {c} {d} f sa) sb
-ssElim {c} {d} {f} {sa} {sb} m (f ec) (SS {ec} sea) = m ec sea
+ssElim {c} {d} {f} {sa} {sb} m ed esa =
+  replace {p=sb} (snd0 $ fst esa) $ m (fst0 $ fst esa) $ snd esa
 
 -- This is the left adjunct of the dependent-sum/base-change adjunction.
 export
@@ -155,7 +170,7 @@ ssLAdj : {0 c, d : Type} -> {f : c -> d} ->
   {0 sa : SliceObj c} -> {sb : SliceObj d} ->
   SliceMorphism {a=d} (SliceFibSigmaF {c} {d} f sa) sb ->
   SliceMorphism {a=c} sa (BaseChangeF f sb)
-ssLAdj {c} {d} {f} {sa} {sb} m ec esa = m (f ec) $ SS {ec} esa
+ssLAdj {c} {d} {f} {sa} {sb} m ec esa = m (f ec) (Element0 ec Refl ** esa)
 
 -- The monad of the dependent-sum/base-change adjunction.
 export
@@ -187,14 +202,14 @@ ssComonadMap {c} {d} f x y =
 export
 sSin : {0 c, d : Type} -> {0 f : c -> d} ->
   SliceNatTrans {x=c} {y=c} (SliceIdF c) (SSMonad {c} {d} f)
-sSin {c} {d} {f} sc ec = SS {c} {d} {f} {sc} {ec}
+sSin {c} {d} {f} sc ec esc = (Element0 ec Refl ** esc)
 
 -- The counit (AKA "erase" or "extract") of the dependent-sum/base-change
 -- adjunction.
 export
 sSout : {0 c, d : Type} -> {0 f : c -> d} ->
   SliceNatTrans {x=d} {y=d} (SSComonad {c} {d} f) (SliceIdF d)
-sSout {c} {d} {f} sd (f ec) (SS {sc=(BaseChangeF f sd)} {ec} sec) = sec
+sSout {c} {d} {f} sd ed esd = replace {p=sd} (snd0 $ fst esd) $ snd esd
 
 -- This is the multiplication (AKA "join") of the dependent-sum/base-change
 -- adjunction.
@@ -244,7 +259,7 @@ SSAlg {c} {f} = SliceAlg {a=c} (SliceFibSigmaF {c} {d=c} f)
 
 export
 SSVoidAlg : {c : Type} -> (0 f : c -> c) -> SSAlg {c} f (const Void)
-SSVoidAlg {c} f (f ec) (SS {ec} v) = v
+SSVoidAlg {c} f ec evc = void $ snd evc
 
 export
 SSCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
@@ -428,7 +443,7 @@ SSout {c} {f} {sc} ec (SSin ec esp) = esp
 -- The (morphism component of the) free `SliceFibSigmaF`-algebra of
 -- `SliceFibSigmaFM f sc`.
 export
-SScom : {0 c : Type} -> {f : c -> c} -> {0 sc : SliceObj c} ->
+SScom : {c : Type} -> {f : c -> c} -> {0 sc : SliceObj c} ->
   SSAlg {c} f (SliceFibSigmaFM {c} f sc)
 SScom {c} {f} {sc} ec =
   SSin {c} {f} {sc} ec
@@ -438,7 +453,7 @@ SScom {c} {f} {sc} ec =
 -- endofunctors on `SliceObj a`, from the identity endofunctor to
 -- `SliceFibSigmaFM f`.
 export
-SSvar : {0 c : Type} -> {f : c -> c} ->
+SSvar : {c : Type} -> {f : c -> c} ->
   SliceNatTrans (SliceIdF c) (SliceFibSigmaFM {c} f)
 SSvar {c} {f} sc ec t =
   SSin {c} {f} {sc} ec
@@ -471,7 +486,8 @@ SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Left v)) =
   subst ec v
 SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Right t)) =
   alg ec $ case t of
-    SS {ec=ec'} sec => SS {ec=ec'} $ SliceSigmaEval sb alg sa subst ec' sec
+    (Element0 ec' eqc ** fmec) =>
+      (Element0 ec' eqc ** SliceSigmaEval sb alg sa subst ec' fmec)
 
 -- The left adjunct of the free monad, given an object `sa : SliceObj c` and
 -- an algebra `sb : SliceObj c`/`alg : SSAlg f sb`, takes an algebra morphism
@@ -486,7 +502,7 @@ SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Right t)) =
 -- terms of the unit (`SSvar`, in this case) is to apply the right adjoint to
 -- it, and the right adjoint just forgets the morphism component.
 export
-SliceFibSigmaFMLAdj : {0 c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
+SliceFibSigmaFMLAdj : {c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
   SliceMorphism {a=c} (SliceFibSigmaFM {c} f sa) sb ->
   SliceMorphism {a=c} sa sb
 SliceFibSigmaFMLAdj {c} {f} sa sb eval ec = eval ec . SSvar {c} {f} sa ec
