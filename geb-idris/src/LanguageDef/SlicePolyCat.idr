@@ -395,6 +395,35 @@ spIntro : {0 c : Type} -> {0 sl : SliceObj c} ->
   SliceMorphism {a=c} sa (SlicePiF sl sb)
 spIntro {c} {sl} {sa} {sb} m ec esa esl = m (ec ** esl) esa
 
+-- This is the right adjunct of the dependent-product/base-change adjunction.
+export
+spRAdj : {0 c : Type} -> {0 sl : SliceObj c} ->
+  {0 sa : SliceObj c} -> {sb : SliceObj (Sigma sl)} ->
+  SliceMorphism {a=c} sa (SlicePiF sl sb) ->
+  SliceMorphism {a=(Sigma sl)} (SliceBCF sl sa) sb
+spRAdj {c} {sl} {sa} {sb} m esl esa =
+  replace {p=sb} (sym dpEqPat) $ m (fst esl) esa (snd esl)
+
+-- The monad of the dependent-product/base-change adjunction.
+export
+SPMonad : {c : Type} -> (sl : SliceObj c) -> SliceEndofunctor c
+SPMonad {c} sl = SlicePiF {c} sl . SliceBCF {c} sl
+
+export
+spMonadMap : {c : Type} -> (sl : SliceObj c) -> SliceFMap (SPMonad {c} sl)
+spMonadMap {c} sl x y =
+  spMap {c} {sl} (SliceBCF sl x) (SliceBCF sl y) . sbcMap {c} {sl} x y
+
+-- The comonad of the dependent-product/base-change adjunction.
+export
+SPComonad : {c : Type} -> (sl : SliceObj c) -> SliceEndofunctor (Sigma sl)
+SPComonad {c} sl = SliceBCF {c} sl . SlicePiF {c} sl
+
+export
+spComonadMap : {c : Type} -> (sl : SliceObj c) -> SliceFMap (SPComonad {c} sl)
+spComonadMap {c} sl x y =
+  sbcMap (SlicePiF sl x) (SlicePiF sl y) . spMap {c} {sl} x y
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
