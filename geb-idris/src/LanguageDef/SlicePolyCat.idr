@@ -294,16 +294,6 @@ SSCoalg {c} {f} = SliceCoalg {a=c} (SliceFibSigmaF {c} {d=c} f)
 ---- Definition ----
 --------------------
 
--- The slice functor from `c` to `d` which takes a type family indexed by `c`
--- to a type of sections indexed by `d`, where the type at a given term
--- of `d` is the type of sections indexed by terms of `c` in the preimage of
--- that term of `d` under the given morphism.
---
--- In particular, if `d` is `Unit`, then this takes a type family indexed by `c`
--- to the type of its sections indexed by `c` -- that is, a slice object `sc`
--- over `c` is mapped by this functor to the type of `Type` (equivalent to a
--- slice over `Unit`) of choices of terms, for each `ec : c`, of `sc ec`.
---
 -- This is the right adjoint of the dependent-product/base-change adjunction.
 -- (The left adjoint is base change.)
 --
@@ -321,6 +311,16 @@ export
 spMap : {c : Type} -> {0 sl : SliceObj c} -> SliceFMap (SlicePiF {c} sl)
 spMap {c} {sl} slsa slsb mab ec pia eslc = mab (ec ** eslc) $ pia eslc
 
+-- The slice functor from `c` to `d` which takes a type family indexed by `c`
+-- to a type of sections indexed by `d`, where the type at a given term
+-- of `d` is the type of sections indexed by terms of `c` in the preimage of
+-- that term of `d` under the given morphism.
+--
+-- In particular, if `d` is `Unit`, then this takes a type family indexed by `c`
+-- to the type of its sections indexed by `c` -- that is, a slice object `sc`
+-- over `c` is mapped by this functor to the type of `Type` (equivalent to a
+-- slice over `Unit`) of choices of terms, for each `ec : c`, of `sc ec`.
+--
 -- This is the category-theory-style version of `SlicePiF`, based on
 -- fibrations.
 export
