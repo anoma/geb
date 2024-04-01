@@ -36,6 +36,9 @@ bcMap {c} {d} {f} sa sb m ec = m (f ec)
 -- This version of `BaseChangeF` uses a slice object rather than a morphism
 -- between base objects, like the dependent-type-style definitions of
 -- `SliceFibSigmaF` and `SlicePiF` below.
+--
+-- It could be viewed as pairing up each type of a type family with a type
+-- family dependent upon _that_ type.
 export
 SliceBCF : {c : Type} -> (sl : SliceObj c) -> SliceFunctor c (Sigma {a=c} sl)
 SliceBCF {c} sl = BaseChangeF {c} {d=(Sigma {a=c} sl)} DPair.fst
@@ -132,17 +135,17 @@ sfsMap {c} {d} {f} sca scb =
 ----- Sigma as W-type ----
 --------------------------
 
-0 SSasWTF : {c, d : Type} -> (f : c -> d) -> WTypeFunc c d
-SSasWTF {c} {d} f = MkWTF {dom=c} {cod=d} c c id id f
+0 SFSasWTF : {c, d : Type} -> (f : c -> d) -> WTypeFunc c d
+SFSasWTF {c} {d} f = MkWTF {dom=c} {cod=d} c c id id f
 
-ssToWTF : {c, d : Type} -> (0 f : c -> d) ->
-  SliceNatTrans (SliceFibSigmaF {c} {d} f) (InterpWTF $ SSasWTF f)
-ssToWTF {c} {d} f sc ed esc =
+sfsToWTF : {c, d : Type} -> (0 f : c -> d) ->
+  SliceNatTrans (SliceFibSigmaF {c} {d} f) (InterpWTF $ SFSasWTF f)
+sfsToWTF {c} {d} f sc ed esc =
   (fst esc ** \ec' => replace {p=sc} (sym $ snd0 ec') $ snd esc)
 
-ssFromWTF : {c, d : Type} -> (0 f : c -> d) ->
-  SliceNatTrans (InterpWTF $ SSasWTF f) (SliceFibSigmaF {c} {d} f)
-ssFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
+sfsFromWTF : {c, d : Type} -> (0 f : c -> d) ->
+  SliceNatTrans (InterpWTF $ SFSasWTF f) (SliceFibSigmaF {c} {d} f)
+sfsFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
   replace {p=(SliceFibSigmaF f sc)} eq
   $ (Element0 ec Refl ** scd $ Element0 ec Refl)
 
