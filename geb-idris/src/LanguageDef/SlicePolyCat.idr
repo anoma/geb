@@ -258,17 +258,24 @@ SliceDepSigmaF {c} sl = SliceSigmaF {c=(Sigma {a=c} sl)} {d=c} DPair.fst
 --
 -- This is the right adjoint of the dependent-product/base-change adjunction.
 -- (The left adjoint is base change.)
+--
+-- For convenient expression within a dependently-typed metalanguage, we
+-- express this by default in terms of dependent types rather than fibrations,
+-- which are the more category-theoretic style.
+
+-- This is the category-theory-style version of `SlicePiF`, based on
+-- fibrations.
 export
-SlicePiF : {c : Type} -> {0 d : Type} -> (0 f : c -> d) -> SliceFunctor c d
-SlicePiF {c} {d} f sc ed =
+SliceFibPiF : {c : Type} -> {0 d : Type} -> (0 f : c -> d) -> SliceFunctor c d
+SliceFibPiF {c} {d} f sc ed =
   -- An explicit way of spelling this out would be:
   --  (ep : PreImage {a=c} {b=d} f ed) -> sc $ fst0 ep
   Pi {a=(PreImage f ed)} (BaseChangeF fst0 sc)
 
 export
-spMap : {c : Type} -> {0 d : Type} -> {0 f : c -> d} ->
-  SliceFMap (SlicePiF {c} {d} f)
-spMap {c} {d} {f} sca scb mab ed mca ec =
+sfpMap : {c : Type} -> {0 d : Type} -> {0 f : c -> d} ->
+  SliceFMap (SliceFibPiF {c} {d} f)
+sfpMap {c} {d} {f} sca scb mab ed mca ec =
   mab (fst0 ec) $ mca $ Element0 (fst0 ec) $ snd0 ec
 
 --------------------------------
