@@ -84,6 +84,10 @@ SliceDepBCF {c} sl = BaseChangeF {a=c} {b=(Sigma {a=c} sl)} DPair.fst
 --
 -- This is the left adjoint of the dependent-sum/base-change adjunction.
 -- (The right adjoint is base change.)
+--
+-- For convenient expression within a dependently-typed metalanguage, we
+-- express this by default in terms of dependent types rather than fibrations,
+-- which are the more category-theoretic style.
 export
 data SliceSigmaF : {0 c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d where
   SS : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
@@ -262,6 +266,16 @@ SliceDepSigmaF {c} sl = SliceSigmaF {c=(Sigma {a=c} sl)} {d=c} DPair.fst
 -- For convenient expression within a dependently-typed metalanguage, we
 -- express this by default in terms of dependent types rather than fibrations,
 -- which are the more category-theoretic style.
+export
+SlicePiF : {c : Type} -> (sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
+SlicePiF {c} sl sls ec =
+  -- An explicit way of spelling this out would be:
+  --  (esc : sl ec) -> sls $ (ec ** esc)
+  Pi {a=(sl ec)} (BaseChangeF (MkDPair ec) sls)
+
+export
+spMap : {c : Type} -> {0 sl : SliceObj c} -> SliceFMap (SlicePiF {c} sl)
+spMap {c} {sl} slsa slsb mab ec pia eslc = mab (ec ** eslc) $ pia eslc
 
 -- This is the category-theory-style version of `SlicePiF`, based on
 -- fibrations.
