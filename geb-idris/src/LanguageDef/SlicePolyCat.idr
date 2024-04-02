@@ -502,9 +502,11 @@ SliceFibSigmaPiFL {c} {d} {e} g f =
 -- This is the left adjoint of the dependent-sum/dependent-product adjunction,
 -- in dependent-type style.
 export
-SliceSigmaPiFL : {c, e : Type} -> SliceObj (c, e) -> SliceFunctor c e
-SliceSigmaPiFL {c} {e} sl =
-  SliceFibSigmaPiFL {c} {d=(Sigma {a=(c, e)} sl)} {e} (snd . fst) (fst . fst)
+SliceSigmaPiFL : {c : Type} -> {e : SliceObj c} ->
+  (d : SliceObj (Sigma {a=c} e)) -> SliceFunctor c (Sigma {a=c} e)
+SliceSigmaPiFL {c} {e} d =
+  SliceSigmaF {c=(Sigma {a=c} e)} d
+  . SliceBCF {c=(Sigma {a=c} e)} d . SliceBCF {c} e
 
 --------------------------------
 --------------------------------
