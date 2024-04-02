@@ -641,6 +641,26 @@ SliceSBCPlDup : {c : Type} -> {sl : SliceObj c} ->
     (SliceSBCPlComonad {c} {sl} . SliceSBCPlComonad {c} {sl})
 SliceSBCPlDup {c} {sl} sla slb esla = (fst esla ** \_ => esla)
 
+-- This is the multiplication (AKA "join") of the right induced adjoint pair
+-- of the dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrJoin : {c : Type} -> {sl : SliceObj c} ->
+  SliceNatTrans {x=c} {y=c}
+    (SliceSBCPrMonad {c} {sl} . SliceSBCPrMonad {c} {sl})
+    (SliceSBCPrMonad {c} {sl})
+SliceSBCPrJoin {c} {sl} sla slb slab eslb =
+  let (esl' ** slab') = slab eslb in slab' esl'
+
+-- This is the comultiplication (AKA "duplicate") of the right induced adjoint
+-- pair of the dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrDup : {c : Type} -> {sl : SliceObj c} ->
+  SliceNatTrans {x=c} {y=c}
+    (SliceSBCPrComonad {c} {sl})
+    (SliceSBCPrComonad {c} {sl} . SliceSBCPrComonad {c} {sl})
+SliceSBCPrDup {c} {sl} sla slb eslb =
+  (fst eslb ** \eslb' => (eslb' ** snd eslb))
+
 --------------------------------------------------
 --------------------------------------------------
 ---- Sigma/base-change/pi composed adjunction ----
