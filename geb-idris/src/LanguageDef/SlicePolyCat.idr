@@ -604,6 +604,24 @@ SliceSBCPlCounit : {c : Type} -> {sl : SliceObj c} ->
 SliceSBCPlCounit {c} {sl} sla slb slab =
   replace {p=sla} (sym dpEqPat) (snd slab $ snd slb)
 
+-- This is the unit (AKA "pure" or "return") of the right induced adjoint pair
+-- of the dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrUnit : {c : Type} -> {sl : SliceObj c} ->
+  SliceNatTrans {x=c} {y=c}
+    (SliceIdF c)
+    (SliceSBCPrMonad {c} {sl})
+SliceSBCPrUnit {c} {sl} sla slb esla eslb = (eslb ** esla)
+
+-- This is the counit (AKA "erase" or "extract") of the right induced adjoint
+-- pair of the dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrCounit : {c : Type} -> {sl : SliceObj c} ->
+  SliceNatTrans {x=c} {y=c}
+    (SliceSBCPrComonad {c} {sl})
+    (SliceIdF c)
+SliceSBCPrCounit {c} {sl} sla slb slab = snd slab (fst slab)
+
 --------------------------------------------------
 --------------------------------------------------
 ---- Sigma/base-change/pi composed adjunction ----
