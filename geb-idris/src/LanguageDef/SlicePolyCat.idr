@@ -511,12 +511,22 @@ SliceSBCPlL : {c : Type} -> {sl : SliceObj c} ->
   SliceEndofunctor (Sigma {a=c} sl)
 SliceSBCPlL {c} {sl} = SSMonad {c} sl
 
+export
+sliceSBCPlLmap : {c : Type} -> {sl : SliceObj c} ->
+  SliceFMap (SliceSBCPlL {c} {sl})
+sliceSBCPlLmap {c} {sl} = ssMonadMap sl
+
 -- This is the right adjoint of the left induced adjoint pair of the
 -- dependent-sum/base-change/dependent-product adjoint triple.
 export
 SliceSBCPlR : {c : Type} -> {sl : SliceObj c} ->
   SliceEndofunctor (Sigma {a=c} sl)
 SliceSBCPlR {c} {sl} = SPComonad {c} sl
+
+export
+sliceSBCPlRmap : {c : Type} -> {sl : SliceObj c} ->
+  SliceFMap (SliceSBCPlR {c} {sl})
+sliceSBCPlRmap {c} {sl} = spComonadMap sl
 
 -- This is the left adjoint of the right induced adjoint pair of the
 -- dependent-sum/base-change/dependent-product adjoint triple.
@@ -525,12 +535,22 @@ SliceSBCPrL : {c : Type} -> {sl : SliceObj c} ->
   SliceEndofunctor c
 SliceSBCPrL {c} {sl} = SSComonad {c} sl
 
+export
+sliceSBCPrLmap : {c : Type} -> {sl : SliceObj c} ->
+  SliceFMap (SliceSBCPrL {c} {sl})
+sliceSBCPrLmap {c} {sl} = ssComonadMap sl
+
 -- This is the right adjoint of the right induced adjoint pair of the
 -- dependent-sum/base-change/dependent-product adjoint triple.
 export
 SliceSBCPrR : {c : Type} -> {sl : SliceObj c} ->
   SliceEndofunctor c
 SliceSBCPrR {c} {sl} = SPMonad {c} sl
+
+export
+sliceSBCPrRmap : {c : Type} -> {sl : SliceObj c} ->
+  SliceFMap (SliceSBCPrR {c} {sl})
+sliceSBCPrRmap {c} {sl} = spMonadMap sl
 
 -- This is the monad of the left induced adjoint pair of the
 -- dependent-sum/base-change/dependent-product adjoint triple.
@@ -660,6 +680,54 @@ SliceSBCPrDup : {c : Type} -> {sl : SliceObj c} ->
     (SliceSBCPrComonad {c} {sl} . SliceSBCPrComonad {c} {sl})
 SliceSBCPrDup {c} {sl} sla slb eslb =
   (fst eslb ** \eslb' => (eslb' ** snd eslb))
+
+-- This is the left adjunct of the left induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPlLAdj : {c : Type} -> {sl : SliceObj c} ->
+  (sa, sb : SliceObj $ Sigma {a=c} sl) ->
+  SliceMorphism {a=(Sigma {a=c} sl)} (SliceSBCPlL {c} {sl} sa) sb ->
+  SliceMorphism {a=(Sigma {a=c} sl)} sa (SliceSBCPlR {c} {sl} sb)
+SliceSBCPlLAdj {c} {sl} sa sb m =
+  sliceComp
+    (sliceSBCPlRmap (SliceSBCPlL {c} {sl} sa) sb m)
+    (SliceSBCPlUnit sa)
+
+-- This is the right adjunct of the left induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPlRAdj : {c : Type} -> {sl : SliceObj c} ->
+  (sa, sb : SliceObj $ Sigma {a=c} sl) ->
+  SliceMorphism {a=(Sigma {a=c} sl)} sa (SliceSBCPlR {c} {sl} sb) ->
+  SliceMorphism {a=(Sigma {a=c} sl)} (SliceSBCPlL {c} {sl} sa) sb
+SliceSBCPlRAdj {c} {sl} sa sb m =
+  sliceComp
+    (SliceSBCPlCounit sb)
+    (sliceSBCPlLmap sa (SliceSBCPlR {c} {sl} sb) m)
+
+-- This is the left adjunct of the right induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrLAdj : {c : Type} -> {sl : SliceObj c} ->
+  (sa, sb : SliceObj c) ->
+  SliceMorphism {a=c} (SliceSBCPrL {c} {sl} sa) sb ->
+  SliceMorphism {a=c} sa (SliceSBCPrR {c} {sl} sb)
+SliceSBCPrLAdj {c} {sl} sa sb m =
+  sliceComp
+    (sliceSBCPrRmap (SliceSBCPrL {c} {sl} sa) sb m)
+    (SliceSBCPrUnit sa)
+
+-- This is the right adjunct of the right induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrRAdj : {c : Type} -> {sl : SliceObj c} ->
+  (sa, sb : SliceObj c) ->
+  SliceMorphism {a=c} sa (SliceSBCPrR {c} {sl} sb) ->
+  SliceMorphism {a=c} (SliceSBCPrL {c} {sl} sa) sb
+SliceSBCPrRAdj {c} {sl} sa sb m =
+  sliceComp
+    (SliceSBCPrCounit sb)
+    (sliceSBCPrLmap sa (SliceSBCPrR {c} {sl} sb) m)
 
 --------------------------------------------------
 --------------------------------------------------
