@@ -532,6 +532,58 @@ SliceSBCPrR : {c : Type} -> {sl : SliceObj c} ->
   SliceEndofunctor c
 SliceSBCPrR {c} {sl} = SPMonad {c} sl
 
+-- This is the monad of the left induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPlMonad : {c : Type} -> {sl : SliceObj c} ->
+  SliceEndofunctor (Sigma {a=c} sl)
+SliceSBCPlMonad {c} {sl} = SliceSBCPlR {c} {sl} . SliceSBCPlL {c} {sl}
+
+export
+sliceSBCPlMonadMap : {c : Type} -> {sl : SliceObj c} ->
+  SliceFMap (SliceSBCPlMonad {c} {sl})
+sliceSBCPlMonadMap {c} {sl} x y =
+  spComonadMap sl (SSMonad sl x) (SSMonad sl y) . ssMonadMap sl x y
+
+-- This is the comonad of the left induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPlComonad : {c : Type} -> {sl : SliceObj c} ->
+  SliceEndofunctor (Sigma {a=c} sl)
+SliceSBCPlComonad {c} {sl} = SliceSBCPlL {c} {sl} . SliceSBCPlR {c} {sl}
+
+export
+sliceSBCPlComonadMap : {c : Type} -> {sl : SliceObj c} ->
+  SliceFMap (SliceSBCPlComonad {c} {sl})
+sliceSBCPlComonadMap {c} {sl} x y =
+  ssMonadMap sl (SPComonad sl x) (SPComonad sl y) . spComonadMap sl x y
+
+-- This is the monad of the right induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrMonad : {c : Type} -> {sl : SliceObj c} ->
+  SliceEndofunctor c
+SliceSBCPrMonad {c} {sl} = SliceSBCPrR {c} {sl} . SliceSBCPrL {c} {sl}
+
+export
+sliceSBCPrMonadMap : {c : Type} -> {sl : SliceObj c} ->
+  SliceFMap (SliceSBCPrMonad {c} {sl})
+sliceSBCPrMonadMap {c} {sl} x y =
+  spMonadMap sl (SSComonad sl x) (SSComonad sl y) . ssComonadMap sl x y
+
+-- This is the comonad of the right induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrComonad : {c : Type} -> {sl : SliceObj c} ->
+  SliceEndofunctor c
+SliceSBCPrComonad {c} {sl} = SliceSBCPrL {c} {sl} . SliceSBCPrR {c} {sl}
+
+export
+sliceSBCPrComonadMap : {c : Type} -> {sl : SliceObj c} ->
+  SliceFMap (SliceSBCPrComonad {c} {sl})
+sliceSBCPrComonadMap {c} {sl} x y =
+  ssComonadMap sl (SPMonad sl x) (SPMonad sl y) . spMonadMap sl x y
+
 --------------------------------------------------
 --------------------------------------------------
 ---- Sigma/base-change/pi composed adjunction ----
