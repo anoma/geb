@@ -508,6 +508,23 @@ SliceSigmaPiFL {c} {e} d =
   SliceSigmaF {c=(Sigma {a=c} e)} d
   . SliceBCF {c=(Sigma {a=c} e)} d . SliceBCF {c} e
 
+-- This is the right adjoint of the dependent-sum/dependent-product adjunction,
+-- in category-theoretic style.
+export
+SliceFibSigmaPiFR : {c, d, e : Type} -> (d -> e) -> (d -> c) ->
+  SliceFunctor c e
+SliceFibSigmaPiFR {c} {d} {e} g f =
+  SliceFibPiF {c=d} {d=e} g . BaseChangeF {c} {d} f
+
+-- This is the right adjoint of the dependent-sum/dependent-product adjunction,
+-- in dependent-type style.
+export
+SliceSigmaPiFR : {c : Type} -> {e : SliceObj c} ->
+  (d : SliceObj (Sigma {a=c} e)) -> SliceFunctor c (Sigma {a=c} e)
+SliceSigmaPiFR {c} {e} d =
+  SlicePiF {c=(Sigma {a=c} e)} d
+  . SliceBCF {c=(Sigma {a=c} e)} d . SliceBCF {c} e
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
