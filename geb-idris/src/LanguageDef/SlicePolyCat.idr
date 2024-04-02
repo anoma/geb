@@ -534,9 +534,9 @@ SliceFibSigmaPiFR {c} {d} {e} g f =
   SliceFibPiF {c=d} {d=e} g . BaseChangeF {c} {d} f
 
 export
-sfpsrMap : {c, d, e : Type} -> (g : d -> e) -> (f : d -> c) ->
+sfsprMap : {c, d, e : Type} -> (g : d -> e) -> (f : d -> c) ->
   SliceFMap (SliceFibSigmaPiFR {c} {d} {e} g f)
-sfpsrMap {c} {d} {e} g f x y =
+sfsprMap {c} {d} {e} g f x y =
   sfpMap {c=d} {d=e} {f=g} (BaseChangeF f x) (BaseChangeF f y)
   . bcMap {c} {d} {f} x y
 
