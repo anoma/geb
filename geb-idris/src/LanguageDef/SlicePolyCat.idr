@@ -532,8 +532,18 @@ SliceSBCPrR : {c : Type} -> {sl : SliceObj c} ->
   SliceEndofunctor c
 SliceSBCPrR {c} {sl} = SPMonad {c} sl
 
--- This is the left adjoint of the dependent-sum/dependent-product adjunction,
--- in category-theoretic style.
+--------------------------------------------------
+--------------------------------------------------
+---- Sigma/base-change/pi composed adjunction ----
+--------------------------------------------------
+--------------------------------------------------
+
+-- Besides forming an adjoint triple, dependent-sum/base-change and
+-- base-change/dependent-product can be composed across three (potentially)
+-- different slice categories.
+
+-- This is the left adjoint of the composed
+-- dependent-sum/dependent-product adjunction, in category-theoretic style.
 export
 SliceFibSigmaPiFL : {c, d, e : Type} -> (d -> e) -> (d -> c) ->
   SliceFunctor c e
@@ -547,8 +557,8 @@ sfsplMap {c} {d} {e} g f x y =
   sfsMap {c=d} {d=e} {f=g} (BaseChangeF f x) (BaseChangeF f y)
   . bcMap {c} {d} {f} x y
 
--- This is the left adjoint of the dependent-sum/dependent-product adjunction,
--- in dependent-type style.
+-- This is the left adjoint of the composed
+-- dependent-sum/dependent-product adjunction, in dependent-type style.
 export
 SliceSigmaPiFL : {c : Type} -> {e : SliceObj c} ->
   (d : SliceObj (Sigma {a=c} e)) -> SliceFunctor c (Sigma {a=c} e)
@@ -566,8 +576,8 @@ ssplMap {c} {e} d x y =
   . sbcMap {c=(Sigma {a=c} e)} {sl=d} (BaseChangeF fst x) (BaseChangeF fst y)
   . sbcMap {c} {sl=e} x y
 
--- This is the right adjoint of the dependent-sum/dependent-product adjunction,
--- in category-theoretic style.
+-- This is the right adjoint of the composed
+-- dependent-sum/dependent-product adjunction, in category-theoretic style.
 export
 SliceFibSigmaPiFR : {c, d, e : Type} -> (d -> e) -> (d -> c) ->
   SliceFunctor c e
@@ -581,8 +591,8 @@ sfsprMap {c} {d} {e} g f x y =
   sfpMap {c=d} {d=e} {f=g} (BaseChangeF f x) (BaseChangeF f y)
   . bcMap {c} {d} {f} x y
 
--- This is the right adjoint of the dependent-sum/dependent-product adjunction,
--- in dependent-type style.
+-- This is the right adjoint of the composed
+-- dependent-sum/dependent-product adjunction, in dependent-type style.
 export
 SliceSigmaPiFR : {c : Type} -> {e : SliceObj c} ->
   (d : SliceObj (Sigma {a=c} e)) -> SliceFunctor c (Sigma {a=c} e)
