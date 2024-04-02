@@ -515,6 +515,16 @@ SliceSigmaPiFL {c} {e} d =
   SliceSigmaF {c=(Sigma {a=c} e)} d
   . SliceBCF {c=(Sigma {a=c} e)} d . SliceBCF {c} e
 
+export
+ssplMap : {c : Type} -> {e : SliceObj c} ->
+  (d : SliceObj (Sigma {a=c} e)) -> SliceFMap (SliceSigmaPiFL {c} {e} d)
+ssplMap {c} {e} d x y =
+  ssMap {c=(Sigma {a=c} e)} {sl=d}
+    (\eced => x $ fst $ fst eced)
+    (\eced => y $ fst $ fst eced)
+  . sbcMap {c=(Sigma {a=c} e)} {sl=d} (BaseChangeF fst x) (BaseChangeF fst y)
+  . sbcMap {c} {sl=e} x y
+
 -- This is the right adjoint of the dependent-sum/dependent-product adjunction,
 -- in category-theoretic style.
 export
@@ -538,6 +548,16 @@ SliceSigmaPiFR : {c : Type} -> {e : SliceObj c} ->
 SliceSigmaPiFR {c} {e} d =
   SlicePiF {c=(Sigma {a=c} e)} d
   . SliceBCF {c=(Sigma {a=c} e)} d . SliceBCF {c} e
+
+export
+ssprMap : {c : Type} -> {e : SliceObj c} ->
+  (d : SliceObj (Sigma {a=c} e)) -> SliceFMap (SliceSigmaPiFR {c} {e} d)
+ssprMap {c} {e} d x y =
+  spMap {c=(Sigma {a=c} e)} {sl=d}
+    (\eced => x $ fst $ fst eced)
+    (\eced => y $ fst $ fst eced)
+  . sbcMap {c=(Sigma {a=c} e)} {sl=d} (BaseChangeF fst x) (BaseChangeF fst y)
+  . sbcMap {c} {sl=e} x y
 
 --------------------------------
 --------------------------------
