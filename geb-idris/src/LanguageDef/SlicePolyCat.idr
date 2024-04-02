@@ -499,6 +499,13 @@ SliceFibSigmaPiFL : {c, d, e : Type} -> (d -> e) -> (d -> c) ->
 SliceFibSigmaPiFL {c} {d} {e} g f =
   SliceFibSigmaF {c=d} {d=e} g . BaseChangeF {c} {d} f
 
+export
+sfsplMap : {c, d, e : Type} -> (g : d -> e) -> (f : d -> c) ->
+  SliceFMap (SliceFibSigmaPiFL {c} {d} {e} g f)
+sfsplMap {c} {d} {e} g f x y =
+  sfsMap {c=d} {d=e} {f=g} (BaseChangeF f x) (BaseChangeF f y)
+  . bcMap {c} {d} {f} x y
+
 -- This is the left adjoint of the dependent-sum/dependent-product adjunction,
 -- in dependent-type style.
 export
@@ -515,6 +522,13 @@ SliceFibSigmaPiFR : {c, d, e : Type} -> (d -> e) -> (d -> c) ->
   SliceFunctor c e
 SliceFibSigmaPiFR {c} {d} {e} g f =
   SliceFibPiF {c=d} {d=e} g . BaseChangeF {c} {d} f
+
+export
+sfpsrMap : {c, d, e : Type} -> (g : d -> e) -> (f : d -> c) ->
+  SliceFMap (SliceFibSigmaPiFR {c} {d} {e} g f)
+sfpsrMap {c} {d} {e} g f x y =
+  sfpMap {c=d} {d=e} {f=g} (BaseChangeF f x) (BaseChangeF f y)
+  . bcMap {c} {d} {f} x y
 
 -- This is the right adjoint of the dependent-sum/dependent-product adjunction,
 -- in dependent-type style.
