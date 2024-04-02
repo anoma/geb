@@ -488,8 +488,10 @@ sPdup {c} {sl} =
 ---------------------------------------------
 ---------------------------------------------
 
--- The adjunctions between dependent sum and base change (Sigma) and
--- base change and dependent product (Pi) can be composed.
+-- Dependent sum (sigma), base change, and dependent product (pi) form
+-- an adjoint triple.  See for example:
+--  - https://ncatlab.org/nlab/show/adjoint+triple
+--  - https://ncatlab.org/nlab/show/adjoint+monad
 
 -- This is the left adjoint of the dependent-sum/dependent-product adjunction,
 -- in category-theoretic style.
