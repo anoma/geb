@@ -482,6 +482,30 @@ sPdup {c} {sl} =
     spUnit
     (SlicePiF sl)
 
+------------------------------------------------
+------------------------------------------------
+---- Sigma/base-change/pi triple adjunction ----
+------------------------------------------------
+------------------------------------------------
+
+-- The adjunctions between dependent sum and base change (Sigma) and
+-- base change and dependent product (Pi) can be composed.
+
+-- This is the left adjoint of the dependent-sum/dependent-product adjunction,
+-- in category-theoretic style.
+export
+SliceFibSigmaPiFL : {c, d, e : Type} -> (d -> e) -> (d -> c) ->
+  SliceFunctor c e
+SliceFibSigmaPiFL {c} {d} {e} g f =
+  SliceFibSigmaF {c=d} {d=e} g . BaseChangeF {c} {d} f
+
+-- This is the left adjoint of the dependent-sum/dependent-product adjunction,
+-- in dependent-type style.
+export
+SliceSigmaPiFL : {c, e : Type} -> SliceObj (c, e) -> SliceFunctor c e
+SliceSigmaPiFL {c} {e} sl =
+  SliceFibSigmaPiFL {c} {d=(Sigma {a=(c, e)} sl)} {e} (snd . fst) (fst . fst)
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
