@@ -490,8 +490,47 @@ sPdup {c} {sl} =
 
 -- Dependent sum (sigma), base change, and dependent product (pi) form
 -- an adjoint triple.  See for example:
+--
 --  - https://ncatlab.org/nlab/show/adjoint+triple
 --  - https://ncatlab.org/nlab/show/adjoint+monad
+--
+-- In the dependent-type formulation, the category on the right (the codomain
+-- of the two outer adjoints, hence the domain of base change) is `SliceObj c`
+-- for some `c : Type`, and the category on the left (the domain of the two
+-- outer adjoints, hence the codomain of base change) is
+-- `SliceObject (Sigma {a=c} sl)` for some `sl : SliceObj c`.
+--
+-- The adjoints of the left induced adjoint pair are therefore endofunctors on
+-- `SliceObject (Sigma {a=c} sl)`, whjile the adjoints of the right induced
+-- adjoint pair are endofunctors on `SliceObj c`.
+
+-- This is the left adjoint of the left induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPlL : {c : Type} -> {sl : SliceObj c} ->
+  SliceEndofunctor (Sigma {a=c} sl)
+SliceSBCPlL {c} {sl} = SSMonad {c} sl
+
+-- This is the right adjoint of the left induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPlR : {c : Type} -> {sl : SliceObj c} ->
+  SliceEndofunctor (Sigma {a=c} sl)
+SliceSBCPlR {c} {sl} = SPComonad {c} sl
+
+-- This is the left adjoint of the right induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrL : {c : Type} -> {sl : SliceObj c} ->
+  SliceEndofunctor c
+SliceSBCPrL {c} {sl} = SSComonad {c} sl
+
+-- This is the right adjoint of the right induced adjoint pair of the
+-- dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrR : {c : Type} -> {sl : SliceObj c} ->
+  SliceEndofunctor c
+SliceSBCPrR {c} {sl} = SPMonad {c} sl
 
 -- This is the left adjoint of the dependent-sum/dependent-product adjunction,
 -- in category-theoretic style.
