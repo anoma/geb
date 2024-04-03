@@ -110,7 +110,8 @@ export
 SliceFibSigmaF : {c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d
 SliceFibSigmaF {c} {d} f =
   -- An explicit way of spelling this out would be:
-  -- \sc : SliceObj c, ed : d => (ep : PreImage {a=c} {b=d} f ed ** sc $ fst0 ep)
+  -- \sc : SliceObj c, ed : d =>
+  --  (ep : PreImage {a=c} {b=d} f ed ** sc $ fst0 ep)
   SliceSigmaF {c=d} (\ed => PreImage {a=c} {b=d} f ed)
   . BaseChangeF
       {c}
