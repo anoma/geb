@@ -241,16 +241,16 @@ sSjoin : {c : Type} -> {sl : SliceObj c} ->
     (SSMonad {c} sl . SSMonad {c} sl)
     (SSMonad {c} sl)
 sSjoin {c} {sl} =
-      SliceWhiskerRight
-        {f=(SSComonad sl . SliceSigmaF sl)}
-        {g=(SliceSigmaF sl)}
-        {h=(SliceBCF sl)}
-        (sbcMap {sl})
-      $ SliceWhiskerLeft
-        {g=(SSComonad sl)}
-        {h=(SliceIdF c)}
-        (sSout {sl})
-        (SliceSigmaF sl)
+  SliceWhiskerRight
+    {f=(SSComonad sl . SliceSigmaF sl)}
+    {g=(SliceSigmaF sl)}
+    {h=(SliceBCF sl)}
+    (sbcMap {sl})
+  $ SliceWhiskerLeft
+    {g=(SSComonad sl)}
+    {h=(SliceIdF c)}
+    (sSout {sl})
+    (SliceSigmaF sl)
 
 -- This is the comultiplication (AKA "duplicate") of the
 -- dependent-sum/base-change adjunction.
