@@ -800,6 +800,23 @@ SliceSBCPrDup {c} {sl} =
 --
 --  - https://ncatlab.org/nlab/show/adjoint+monad
 
+-- Specifically, the ("Eilenberg-Moore") category of algebras over the
+-- monad is equivalent to the category of coalgebras over the comonad.
+
+export
+SBCPlAlgToCoalg : {c : Type} -> {sl : SliceObj c} ->
+  (sa : SliceObj $ Sigma {a=c} sl) ->
+  SliceAlg (SliceSBCPlL {c} {sl}) sa -> -- `SliceSBCPlL` is `SSMonad`
+  SliceCoalg (SliceSBCPlR {c} {sl}) sa -- `SliceSBCPlR` is `SPComonad`
+SBCPlAlgToCoalg {c} {sl} sa = SliceSBCPlLAdj {c} {sl} sa sa
+
+export
+SBCPlCoalgToAlg : {c : Type} -> {sl : SliceObj c} ->
+  (sa : SliceObj $ Sigma {a=c} sl) ->
+  SliceCoalg (SliceSBCPlR {c} {sl}) sa -> -- `SliceSBCPlR` is `SPComonad`
+  SliceAlg (SliceSBCPlL {c} {sl}) sa -- `SliceSBCPlL` is `SSMonad`
+SBCPlCoalgToAlg {c} {sl} sa = SliceSBCPlRAdj {c} {sl} sa sa
+
 --------------------------------------------------
 --------------------------------------------------
 ---- Sigma/base-change/pi composed adjunction ----
