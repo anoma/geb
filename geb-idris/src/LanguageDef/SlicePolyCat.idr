@@ -94,7 +94,7 @@ ssMap : {c : Type} -> {0 sl : SliceObj c} -> SliceFMap (SliceSigmaF {c} sl)
 ssMap {c} {sl} slsa slsb mab ec esla =
   (fst esla ** mab (ec ** fst esla) $ snd esla)
 
--- This is the category-theory-style version of `SliceFibSigmaF`, based on
+-- This is the category-theory-style version of `SliceSigmaF`, based on
 -- fibrations.
 --
 -- One way of viewing it is as the slice functor from `c` to `d` which takes a
