@@ -720,8 +720,17 @@ SliceSBCPlJoin : {c : Type} -> {sl : SliceObj c} ->
   SliceNatTrans {x=(Sigma {a=c} sl)} {y=(Sigma {a=c} sl)}
     (SliceSBCPlMonad {c} {sl} . SliceSBCPlMonad {c} {sl})
     (SliceSBCPlMonad {c} {sl})
-SliceSBCPlJoin {c} {sl} sla slb esla eslb =
-  let slab = esla eslb in snd slab $ fst slab
+SliceSBCPlJoin {c} {sl} =
+  SliceWhiskerRight
+    {f=(SliceSBCPlComonad {sl} . SliceSBCPlL {sl})}
+    {g=(SliceSBCPlL {sl})}
+    {h=(SliceSBCPlR {sl})}
+    (sliceSBCPlRmap {c} {sl})
+  $ SliceWhiskerLeft
+    {g=(SliceSBCPlComonad {sl})}
+    {h=(SliceIdF $ Sigma sl)}
+    (SliceSBCPlCounit {c} {sl})
+    (SliceSBCPlL {sl})
 
 -- This is the comultiplication (AKA "duplicate") of the left induced adjoint
 -- pair of the dependent-sum/base-change/dependent-product adjoint triple.
@@ -739,8 +748,17 @@ SliceSBCPrJoin : {c : Type} -> {sl : SliceObj c} ->
   SliceNatTrans {x=c} {y=c}
     (SliceSBCPrMonad {c} {sl} . SliceSBCPrMonad {c} {sl})
     (SliceSBCPrMonad {c} {sl})
-SliceSBCPrJoin {c} {sl} sla slb slab eslb =
-  let (esl' ** slab') = slab eslb in slab' esl'
+SliceSBCPrJoin {c} {sl} =
+  SliceWhiskerRight
+    {f=(SliceSBCPrComonad {sl} . SliceSBCPrL {sl})}
+    {g=(SliceSBCPrL {sl})}
+    {h=(SliceSBCPrR {sl})}
+    (sliceSBCPrRmap {c} {sl})
+  $ SliceWhiskerLeft
+    {g=(SliceSBCPrComonad {sl})}
+    {h=(SliceIdF c)}
+    (SliceSBCPrCounit {c} {sl})
+    (SliceSBCPrL {sl})
 
 -- This is the comultiplication (AKA "duplicate") of the right induced adjoint
 -- pair of the dependent-sum/base-change/dependent-product adjoint triple.
