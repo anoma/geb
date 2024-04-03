@@ -168,28 +168,6 @@ ssFromWTF {c} sc ssc ec (Element0 esc eq ** pisc) =
 ---- Adjunction data ----
 -------------------------
 
--- This is the right adjunct of the dependent-sum/base-change adjunction.
---
--- It constitutes the destructor for `SliceSigmaF f sc`.  As an adjunction,
--- it is parametrically polymorphic:  rather than receiving a witness to a
--- given `ec : c` being in the image of `f` applied to a given slice over
--- `c`, it passes in a handler for _any_ such witness.
-export
-ssElim : {0 c : Type} -> {0 sl : SliceObj c} ->
-  {0 sa : SliceObj (Sigma sl)} -> {sb : SliceObj c} ->
-  SliceMorphism {a=(Sigma sl)} sa (SliceBCF sl sb) ->
-  SliceMorphism {a=c} (SliceSigmaF {c} sl sa) sb
-ssElim {c} {sl} {sa} {sb} m ec esa = m (ec ** fst esa) $ snd esa
-
--- This is the left adjunct of the dependent-sum/base-change adjunction.
-export
-ssLAdj : {0 c : Type} -> {sl : SliceObj c} ->
-  {0 sa : SliceObj (Sigma sl)} -> {sb : SliceObj c} ->
-  SliceMorphism {a=c} (SliceSigmaF {c} sl sa) sb ->
-  SliceMorphism {a=(Sigma sl)} sa (SliceBCF sl sb)
-ssLAdj {c} {sl} {sa} {sb} m ec esa =
-  m (fst ec) (snd ec ** replace {p=sa} dpEqPat esa)
-
 -- The monad of the dependent-sum/base-change adjunction.
 export
 SSMonad : {c : Type} -> (sl : SliceObj c) -> SliceEndofunctor (Sigma sl)
@@ -228,6 +206,28 @@ export
 sSout : {0 c : Type} -> {0 sl : SliceObj c} ->
   SliceNatTrans {x=c} {y=c} (SSComonad {c} sl) (SliceIdF c)
 sSout {c} {sl} sc ec esc = snd esc
+
+-- This is the right adjunct of the dependent-sum/base-change adjunction.
+--
+-- It constitutes the destructor for `SliceSigmaF f sc`.  As an adjunction,
+-- it is parametrically polymorphic:  rather than receiving a witness to a
+-- given `ec : c` being in the image of `f` applied to a given slice over
+-- `c`, it passes in a handler for _any_ such witness.
+export
+ssElim : {0 c : Type} -> {0 sl : SliceObj c} ->
+  {0 sa : SliceObj (Sigma sl)} -> {sb : SliceObj c} ->
+  SliceMorphism {a=(Sigma sl)} sa (SliceBCF sl sb) ->
+  SliceMorphism {a=c} (SliceSigmaF {c} sl sa) sb
+ssElim {c} {sl} {sa} {sb} m ec esa = m (ec ** fst esa) $ snd esa
+
+-- This is the left adjunct of the dependent-sum/base-change adjunction.
+export
+ssLAdj : {0 c : Type} -> {sl : SliceObj c} ->
+  {0 sa : SliceObj (Sigma sl)} -> {sb : SliceObj c} ->
+  SliceMorphism {a=c} (SliceSigmaF {c} sl sa) sb ->
+  SliceMorphism {a=(Sigma sl)} sa (SliceBCF sl sb)
+ssLAdj {c} {sl} {sa} {sb} m ec esa =
+  m (fst ec) (snd ec ** replace {p=sa} dpEqPat esa)
 
 -- This is the multiplication (AKA "join") of the dependent-sum/base-change
 -- adjunction.
