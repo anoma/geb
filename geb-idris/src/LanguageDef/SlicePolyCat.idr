@@ -665,23 +665,31 @@ SliceSBCPrRAdj {c} {sl} sa sb =
 
 -- This is the unit (AKA "pure" or "return") of the left induced adjoint pair
 -- of the dependent-sum/base-change/dependent-product adjoint triple.
+--
+-- The unit can be computed by applying the left adjunct to the
+-- identity morphism.
 export
 SliceSBCPlUnit : {c : Type} -> {sl : SliceObj c} ->
   SliceNatTrans {x=(Sigma {a=c} sl)} {y=(Sigma {a=c} sl)}
     (SliceIdF $ Sigma {a=c} sl)
     (SliceSBCPlMonad {c} {sl})
-SliceSBCPlUnit {c} {sl} sla slb esla eslb =
-  (snd slb ** replace {p=sla} dpEqPat esla)
+SliceSBCPlUnit {c} {sl} sla =
+  SliceSBCPlLAdj {c} {sl} sla (SliceSBCPlL {c} {sl} sla)
+    (sliceId $ SliceSBCPlL {c} {sl} sla)
 
 -- This is the counit (AKA "erase" or "extract") of the left induced adjoint
 -- pair of the dependent-sum/base-change/dependent-product adjoint triple.
+--
+-- The counit can be computed by applying the right adjunct to the
+-- identity morphism.
 export
 SliceSBCPlCounit : {c : Type} -> {sl : SliceObj c} ->
   SliceNatTrans {x=(Sigma {a=c} sl)} {y=(Sigma {a=c} sl)}
     (SliceSBCPlComonad {c} {sl})
     (SliceIdF $ Sigma {a=c} sl)
-SliceSBCPlCounit {c} {sl} sla slb slab =
-  replace {p=sla} (sym dpEqPat) (snd slab $ snd slb)
+SliceSBCPlCounit {c} {sl} sla =
+  SliceSBCPlRAdj {c} {sl} (SliceSBCPlR {c} {sl} sla) sla
+    (sliceId $ SliceSBCPlR {c} {sl} sla)
 
 -- This is the unit (AKA "pure" or "return") of the right induced adjoint pair
 -- of the dependent-sum/base-change/dependent-product adjoint triple.
