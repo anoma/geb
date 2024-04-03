@@ -739,7 +739,17 @@ SliceSBCPlDup : {c : Type} -> {sl : SliceObj c} ->
   SliceNatTrans {x=(Sigma {a=c} sl)} {y=(Sigma {a=c} sl)}
     (SliceSBCPlComonad {c} {sl})
     (SliceSBCPlComonad {c} {sl} . SliceSBCPlComonad {c} {sl})
-SliceSBCPlDup {c} {sl} sla slb esla = (fst esla ** \_ => esla)
+SliceSBCPlDup {c} {sl} =
+  SliceWhiskerRight
+    {f=(SliceSBCPlR {sl})}
+    {g=(SliceSBCPlR {sl} . SliceSBCPlComonad {sl})}
+    {h=(SliceSBCPlL {sl})}
+    (sliceSBCPlLmap {c} {sl})
+  $ SliceWhiskerLeft
+    {g=(SliceIdF $ Sigma sl)}
+    {h=(SliceSBCPlMonad {sl})}
+    (SliceSBCPlUnit {c} {sl})
+    (SliceSBCPlR {sl})
 
 -- This is the multiplication (AKA "join") of the right induced adjoint pair
 -- of the dependent-sum/base-change/dependent-product adjoint triple.
@@ -767,8 +777,17 @@ SliceSBCPrDup : {c : Type} -> {sl : SliceObj c} ->
   SliceNatTrans {x=c} {y=c}
     (SliceSBCPrComonad {c} {sl})
     (SliceSBCPrComonad {c} {sl} . SliceSBCPrComonad {c} {sl})
-SliceSBCPrDup {c} {sl} sla slb eslb =
-  (fst eslb ** \eslb' => (eslb' ** snd eslb))
+SliceSBCPrDup {c} {sl} =
+  SliceWhiskerRight
+    {f=(SliceSBCPrR {sl})}
+    {g=(SliceSBCPrR {sl} . SliceSBCPrComonad {sl})}
+    {h=(SliceSBCPrL {sl})}
+    (sliceSBCPrLmap {c} {sl})
+  $ SliceWhiskerLeft
+    {g=(SliceIdF c)}
+    {h=(SliceSBCPrMonad {sl})}
+    (SliceSBCPrUnit {c} {sl})
+    (SliceSBCPrR {sl})
 
 -----------------------------------------------------------------------------
 ---- Adjoint (co)monad of dependent-sum/dependent-product adjoint triple ----
