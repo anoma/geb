@@ -427,20 +427,21 @@ spCounit {c} {sl} sc ecsl pisc = case ecsl of (ec ** esl) => pisc esl
 -- given `ec : c` being in the image of `f` applied to a given slice over
 -- `c`, it passes in a handler for _any_ such witness.
 export
-spIntro : {0 c : Type} -> {0 sl : SliceObj c} ->
-  {0 sa : SliceObj c} -> {sb : SliceObj (Sigma sl)} ->
+spIntro : {c : Type} -> {sl : SliceObj c} ->
+  {sa : SliceObj c} -> {sb : SliceObj (Sigma sl)} ->
   SliceMorphism {a=(Sigma sl)} (SliceBCF sl sa) sb ->
   SliceMorphism {a=c} sa (SlicePiF sl sb)
-spIntro {c} {sl} {sa} {sb} m ec esa esl = m (ec ** esl) esa
+spIntro {c} {sl} {sa} {sb} m =
+  sliceComp (spMap (SliceBCF sl sa) sb m) (spUnit sa)
 
 -- This is the right adjunct of the dependent-product/base-change adjunction.
 export
-spRAdj : {0 c : Type} -> {0 sl : SliceObj c} ->
-  {0 sa : SliceObj c} -> {sb : SliceObj (Sigma sl)} ->
+spRAdj : {c : Type} -> {sl : SliceObj c} ->
+  {sa : SliceObj c} -> {sb : SliceObj (Sigma sl)} ->
   SliceMorphism {a=c} sa (SlicePiF sl sb) ->
   SliceMorphism {a=(Sigma sl)} (SliceBCF sl sa) sb
-spRAdj {c} {sl} {sa} {sb} m esl esa =
-  replace {p=sb} (sym dpEqPat) $ m (fst esl) esa (snd esl)
+spRAdj {c} {sl} {sa} {sb} m =
+  sliceComp (spCounit sb) (sbcMap sa (SlicePiF sl sb) m)
 
 -- This is the multiplication (AKA "join") of the dependent-product/base-change
 -- adjunction.
