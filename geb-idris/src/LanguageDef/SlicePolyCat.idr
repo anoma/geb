@@ -642,45 +642,6 @@ SliceSBCPrCounit : {c : Type} -> {sl : SliceObj c} ->
     (SliceIdF c)
 SliceSBCPrCounit {c} {sl} sla slb slab = snd slab (fst slab)
 
--- This is the multiplication (AKA "join") of the left induced adjoint pair
--- of the dependent-sum/base-change/dependent-product adjoint triple.
-export
-SliceSBCPlJoin : {c : Type} -> {sl : SliceObj c} ->
-  SliceNatTrans {x=(Sigma {a=c} sl)} {y=(Sigma {a=c} sl)}
-    (SliceSBCPlMonad {c} {sl} . SliceSBCPlMonad {c} {sl})
-    (SliceSBCPlMonad {c} {sl})
-SliceSBCPlJoin {c} {sl} sla slb esla eslb =
-  let slab = esla eslb in snd slab $ fst slab
-
--- This is the comultiplication (AKA "duplicate") of the left induced adjoint
--- pair of the dependent-sum/base-change/dependent-product adjoint triple.
-export
-SliceSBCPlDup : {c : Type} -> {sl : SliceObj c} ->
-  SliceNatTrans {x=(Sigma {a=c} sl)} {y=(Sigma {a=c} sl)}
-    (SliceSBCPlComonad {c} {sl})
-    (SliceSBCPlComonad {c} {sl} . SliceSBCPlComonad {c} {sl})
-SliceSBCPlDup {c} {sl} sla slb esla = (fst esla ** \_ => esla)
-
--- This is the multiplication (AKA "join") of the right induced adjoint pair
--- of the dependent-sum/base-change/dependent-product adjoint triple.
-export
-SliceSBCPrJoin : {c : Type} -> {sl : SliceObj c} ->
-  SliceNatTrans {x=c} {y=c}
-    (SliceSBCPrMonad {c} {sl} . SliceSBCPrMonad {c} {sl})
-    (SliceSBCPrMonad {c} {sl})
-SliceSBCPrJoin {c} {sl} sla slb slab eslb =
-  let (esl' ** slab') = slab eslb in slab' esl'
-
--- This is the comultiplication (AKA "duplicate") of the right induced adjoint
--- pair of the dependent-sum/base-change/dependent-product adjoint triple.
-export
-SliceSBCPrDup : {c : Type} -> {sl : SliceObj c} ->
-  SliceNatTrans {x=c} {y=c}
-    (SliceSBCPrComonad {c} {sl})
-    (SliceSBCPrComonad {c} {sl} . SliceSBCPrComonad {c} {sl})
-SliceSBCPrDup {c} {sl} sla slb eslb =
-  (fst eslb ** \eslb' => (eslb' ** snd eslb))
-
 -- This is the left adjunct of the left induced adjoint pair of the
 -- dependent-sum/base-change/dependent-product adjoint triple.
 export
@@ -728,6 +689,45 @@ SliceSBCPrRAdj {c} {sl} sa sb m =
   sliceComp
     (SliceSBCPrCounit sb)
     (sliceSBCPrLmap sa (SliceSBCPrR {c} {sl} sb) m)
+
+-- This is the multiplication (AKA "join") of the left induced adjoint pair
+-- of the dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPlJoin : {c : Type} -> {sl : SliceObj c} ->
+  SliceNatTrans {x=(Sigma {a=c} sl)} {y=(Sigma {a=c} sl)}
+    (SliceSBCPlMonad {c} {sl} . SliceSBCPlMonad {c} {sl})
+    (SliceSBCPlMonad {c} {sl})
+SliceSBCPlJoin {c} {sl} sla slb esla eslb =
+  let slab = esla eslb in snd slab $ fst slab
+
+-- This is the comultiplication (AKA "duplicate") of the left induced adjoint
+-- pair of the dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPlDup : {c : Type} -> {sl : SliceObj c} ->
+  SliceNatTrans {x=(Sigma {a=c} sl)} {y=(Sigma {a=c} sl)}
+    (SliceSBCPlComonad {c} {sl})
+    (SliceSBCPlComonad {c} {sl} . SliceSBCPlComonad {c} {sl})
+SliceSBCPlDup {c} {sl} sla slb esla = (fst esla ** \_ => esla)
+
+-- This is the multiplication (AKA "join") of the right induced adjoint pair
+-- of the dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrJoin : {c : Type} -> {sl : SliceObj c} ->
+  SliceNatTrans {x=c} {y=c}
+    (SliceSBCPrMonad {c} {sl} . SliceSBCPrMonad {c} {sl})
+    (SliceSBCPrMonad {c} {sl})
+SliceSBCPrJoin {c} {sl} sla slb slab eslb =
+  let (esl' ** slab') = slab eslb in slab' esl'
+
+-- This is the comultiplication (AKA "duplicate") of the right induced adjoint
+-- pair of the dependent-sum/base-change/dependent-product adjoint triple.
+export
+SliceSBCPrDup : {c : Type} -> {sl : SliceObj c} ->
+  SliceNatTrans {x=c} {y=c}
+    (SliceSBCPrComonad {c} {sl})
+    (SliceSBCPrComonad {c} {sl} . SliceSBCPrComonad {c} {sl})
+SliceSBCPrDup {c} {sl} sla slb eslb =
+  (fst eslb ** \eslb' => (eslb' ** snd eslb))
 
 --------------------------------------------------
 --------------------------------------------------
