@@ -199,7 +199,7 @@ sSin : {0 c : Type} -> {0 sl : SliceObj c} ->
   SliceNatTrans {x=(Sigma sl)} {y=(Sigma sl)}
     (SliceIdF $ Sigma sl)
     (SSMonad {c} sl)
-sSin {c} {sl} sc ec esc = (snd ec ** replace {p=sc} dpEqPat esc)
+sSin {c} {sl} sc ecsl esc = case ecsl of (ec ** esl) => (esl ** esc)
 
 -- The counit (AKA "erase" or "extract") of the dependent-sum/base-change
 -- adjunction.
@@ -215,20 +215,21 @@ sSout {c} {sl} sc ec esc = snd esc
 -- given `ec : c` being in the image of `f` applied to a given slice over
 -- `c`, it passes in a handler for _any_ such witness.
 export
-ssElim : {0 c : Type} -> {0 sl : SliceObj c} ->
-  {0 sa : SliceObj (Sigma sl)} -> {sb : SliceObj c} ->
+ssElim : {c : Type} -> {sl : SliceObj c} ->
+  {sa : SliceObj (Sigma sl)} -> {sb : SliceObj c} ->
   SliceMorphism {a=(Sigma sl)} sa (SliceBCF sl sb) ->
   SliceMorphism {a=c} (SliceSigmaF {c} sl sa) sb
-ssElim {c} {sl} {sa} {sb} m ec esa = m (ec ** fst esa) $ snd esa
+ssElim {c} {sl} {sa} {sb} m =
+  sliceComp (sSout sb) (ssMap sa (SliceBCF {c} sl sb) m)
 
 -- This is the left adjunct of the dependent-sum/base-change adjunction.
 export
-ssLAdj : {0 c : Type} -> {sl : SliceObj c} ->
-  {0 sa : SliceObj (Sigma sl)} -> {sb : SliceObj c} ->
+ssLAdj : {c : Type} -> {sl : SliceObj c} ->
+  {sa : SliceObj (Sigma sl)} -> {sb : SliceObj c} ->
   SliceMorphism {a=c} (SliceSigmaF {c} sl sa) sb ->
   SliceMorphism {a=(Sigma sl)} sa (SliceBCF sl sb)
-ssLAdj {c} {sl} {sa} {sb} m ec esa =
-  m (fst ec) (snd ec ** replace {p=sa} dpEqPat esa)
+ssLAdj {c} {sl} {sa} {sb} m =
+  sliceComp (sbcMap (SliceSigmaF {c} sl sa) sb m) (sSin sa)
 
 -- This is the multiplication (AKA "join") of the dependent-sum/base-change
 -- adjunction.
