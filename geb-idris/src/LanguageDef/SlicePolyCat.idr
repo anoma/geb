@@ -646,15 +646,27 @@ SliceSBCPrCounit {c} {sl} sla slb slab = snd slab (fst slab)
 
 -- This is the left adjunct of the left induced adjoint pair of the
 -- dependent-sum/base-change/dependent-product adjoint triple.
+--
+-- The adjuncts of an adjoint pair which is induced by an adjoint triple can
+-- be computed as a composition of adjuncts of the two separate
+-- adjunctions which form the adjoint triple.
+--
+-- To spell out the hom-set isomorphism, of which the adjuncts are the
+-- two directions, in this particular instance:
+--
+--     lL sa -> sb == (BC . Sigma) a -> sb
+--  == BC (Sigma sa) -> sb
+--  == Sigma sa -> Pi sb
+--  == sa -> BC (Pi sb)
+--  == sa -> (BC . Pi) sb == sa -> lR sb
 export
 SliceSBCPlLAdj : {c : Type} -> {sl : SliceObj c} ->
   (sa, sb : SliceObj $ Sigma {a=c} sl) ->
   SliceMorphism {a=(Sigma {a=c} sl)} (SliceSBCPlL {c} {sl} sa) sb ->
   SliceMorphism {a=(Sigma {a=c} sl)} sa (SliceSBCPlR {c} {sl} sb)
-SliceSBCPlLAdj {c} {sl} sa sb m =
-  sliceComp
-    (sliceSBCPlRmap (SliceSBCPlL {c} {sl} sa) sb m)
-    (SliceSBCPlUnit sa)
+SliceSBCPlLAdj {c} {sl} sa sb =
+  ssLAdj {sl} {sa} {sb=(SlicePiF sl sb)}
+  . spIntro {sl} {sa=(SliceSigmaF sl sa)} {sb}
 
 -- This is the right adjunct of the left induced adjoint pair of the
 -- dependent-sum/base-change/dependent-product adjoint triple.
@@ -663,10 +675,9 @@ SliceSBCPlRAdj : {c : Type} -> {sl : SliceObj c} ->
   (sa, sb : SliceObj $ Sigma {a=c} sl) ->
   SliceMorphism {a=(Sigma {a=c} sl)} sa (SliceSBCPlR {c} {sl} sb) ->
   SliceMorphism {a=(Sigma {a=c} sl)} (SliceSBCPlL {c} {sl} sa) sb
-SliceSBCPlRAdj {c} {sl} sa sb m =
-  sliceComp
-    (SliceSBCPlCounit sb)
-    (sliceSBCPlLmap sa (SliceSBCPlR {c} {sl} sb) m)
+SliceSBCPlRAdj {c} {sl} sa sb =
+  spRAdj {sl} {sa=(SliceSigmaF sl sa)} {sb}
+  . ssElim {sl} {sa} {sb=(SlicePiF sl sb)}
 
 -- This is the left adjunct of the right induced adjoint pair of the
 -- dependent-sum/base-change/dependent-product adjoint triple.
