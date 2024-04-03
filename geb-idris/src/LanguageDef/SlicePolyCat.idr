@@ -895,21 +895,21 @@ sfsprMap {c} {d} {e} g f x y =
 -- This is the right adjoint of the composed
 -- dependent-sum/dependent-product adjunction, in dependent-type style.
 export
-SliceSigmaPiFR : {c : Type} -> {e : SliceObj c} ->
-  (d : SliceObj (Sigma {a=c} e)) -> SliceFunctor c (Sigma {a=c} e)
+SliceSigmaPiFR : {c, e : Type} ->
+  (d : SliceObj (c, e)) -> SliceFunctor c e
 SliceSigmaPiFR {c} {e} d =
-  SlicePiF {c=(Sigma {a=c} e)} d
-  . SliceBCF {c=(Sigma {a=c} e)} d . SliceBCF {c} e
+  SlicePiF (Sigma {a=c} . flip (curry d))
+  . BaseChangeF {c} {d=(Sigma {a=e} $ Sigma {a=c} . flip (curry d))}
+    (\eecd => fst $ snd eecd)
 
 export
-ssprMap : {c : Type} -> {e : SliceObj c} ->
-  (d : SliceObj (Sigma {a=c} e)) -> SliceFMap (SliceSigmaPiFR {c} {e} d)
+ssprMap : {c, e : Type} ->
+  (d : SliceObj (c, e)) -> SliceFMap (SliceSigmaPiFR {c} {e} d)
 ssprMap {c} {e} d x y =
-  spMap {c=(Sigma {a=c} e)} {sl=d}
-    (BaseChangeF (fst . fst) x)
-    (BaseChangeF (fst . fst) y)
-  . sbcMap {c=(Sigma {a=c} e)} {sl=d} (BaseChangeF fst x) (BaseChangeF fst y)
-  . sbcMap {c} {sl=e} x y
+  spMap {sl=(Sigma {a=c} . flip (curry d))}
+    (\eecd => x $ fst $ snd $ eecd)
+    (\eecd => y $ fst $ snd $ eecd)
+  . bcMap x y
 
 --------------------------------
 --------------------------------
