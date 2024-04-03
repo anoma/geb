@@ -698,7 +698,9 @@ SliceSBCPrUnit : {c : Type} -> {sl : SliceObj c} ->
   SliceNatTrans {x=c} {y=c}
     (SliceIdF c)
     (SliceSBCPrMonad {c} {sl})
-SliceSBCPrUnit {c} {sl} sla slb esla eslb = (eslb ** esla)
+SliceSBCPrUnit {c} {sl} sla =
+  SliceSBCPrLAdj {c} {sl} sla (SliceSBCPrL {c} {sl} sla)
+    (sliceId $ SliceSBCPrL {c} {sl} sla)
 
 -- This is the counit (AKA "erase" or "extract") of the right induced adjoint
 -- pair of the dependent-sum/base-change/dependent-product adjoint triple.
@@ -707,7 +709,9 @@ SliceSBCPrCounit : {c : Type} -> {sl : SliceObj c} ->
   SliceNatTrans {x=c} {y=c}
     (SliceSBCPrComonad {c} {sl})
     (SliceIdF c)
-SliceSBCPrCounit {c} {sl} sla slb slab = snd slab (fst slab)
+SliceSBCPrCounit {c} {sl} sla =
+  SliceSBCPrRAdj {c} {sl} (SliceSBCPrR {c} {sl} sla) sla
+    (sliceId $ SliceSBCPrR {c} {sl} sla)
 
 -- This is the multiplication (AKA "join") of the left induced adjoint pair
 -- of the dependent-sum/base-change/dependent-product adjoint triple.
