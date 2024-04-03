@@ -846,35 +846,35 @@ SBCPrCoalgToAlg {c} {sl} sa = SliceSBCPrRAdj {c} {sl} sa sa
 -- This is the left adjoint of the composed
 -- dependent-sum/dependent-product adjunction, in category-theoretic style.
 export
-SliceFibSigmaPiFL : {c, d, e : Type} -> (d -> e) -> (d -> c) ->
-  SliceFunctor c e
+SliceFibSigmaPiFL : {c, d, e : Type} -> (d -> c) -> (d -> e) ->
+  SliceFunctor e c
 SliceFibSigmaPiFL {c} {d} {e} g f =
-  SliceFibSigmaF {c=d} {d=e} g . BaseChangeF {c} {d} f
+  SliceFibSigmaF {c=d} {d=c} g . BaseChangeF {c=e} {d} f
 
 export
-sfsplMap : {c, d, e : Type} -> (g : d -> e) -> (f : d -> c) ->
+sfsplMap : {c, d, e : Type} -> (g : d -> c) -> (f : d -> e) ->
   SliceFMap (SliceFibSigmaPiFL {c} {d} {e} g f)
 sfsplMap {c} {d} {e} g f x y =
-  sfsMap {c=d} {d=e} {f=g} (BaseChangeF f x) (BaseChangeF f y)
-  . bcMap {c} {d} {f} x y
+  sfsMap {c=d} {d=c} {f=g} (BaseChangeF f x) (BaseChangeF f y)
+  . bcMap {c=e} {d} {f} x y
 
 -- This is the left adjoint of the composed
 -- dependent-sum/dependent-product adjunction, in dependent-type style.
 export
 SliceSigmaPiFL : {c, e : Type} ->
-  (d : SliceObj (c, e)) -> SliceFunctor c e
+  (d : SliceObj (c, e)) -> SliceFunctor e c
 SliceSigmaPiFL {c} {e} d =
-  SliceSigmaF (Sigma {a=c} . flip (curry d))
-  . BaseChangeF {c} {d=(Sigma {a=e} $ Sigma {a=c} . flip (curry d))}
-    (\eecd => fst $ snd eecd)
+  SliceSigmaF (Sigma {a=e} . curry d)
+  . BaseChangeF {c=e} {d=(Sigma {a=c} $ Sigma {a=e} . curry d)}
+    (\eced => fst $ snd eced)
 
 export
 ssplMap : {c, e : Type} ->
   (d : SliceObj (c, e)) -> SliceFMap (SliceSigmaPiFL {c} {e} d)
 ssplMap {c} {e} d x y =
-  ssMap {sl=(Sigma {a=c} . flip (curry d))}
-    (\eecd => x $ fst $ snd $ eecd)
-    (\eecd => y $ fst $ snd $ eecd)
+  ssMap {sl=(Sigma {a=e} . curry d)}
+    (\eced => x $ fst $ snd $ eced)
+    (\eced => y $ fst $ snd $ eced)
   . bcMap x y
 
 -- This is the right adjoint of the composed
