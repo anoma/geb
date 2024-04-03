@@ -789,12 +789,14 @@ SliceSBCPrDup {c} {sl} =
     (SliceSBCPrUnit {c} {sl})
     (SliceSBCPrR {sl})
 
------------------------------------------------------------------------------
----- Adjoint (co)monad of dependent-sum/dependent-product adjoint triple ----
------------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- (Co)algebras of dependent-sum/dependent-product adjoint triple ----
+------------------------------------------------------------------------
 
--- Adjoint triples, such as dependent-sum/base-change/dependent-product,
--- induce adjoint (co)monads.  See for example:
+-- Adjoint (co)monads, such as those induced by adjoint triples (such as
+-- the dependent-sum/base-change/dependent-product adjoint triple, which is
+-- implemented in the previous section), have additional properties relating
+-- their (co)algebras.  See for example:
 --
 --  - https://ncatlab.org/nlab/show/adjoint+monad
 
