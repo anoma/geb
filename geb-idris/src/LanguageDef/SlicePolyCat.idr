@@ -418,7 +418,7 @@ spCounit : {0 c : Type} -> {0 sl : SliceObj c} ->
   SliceNatTrans {x=(Sigma sl)} {y=(Sigma sl)}
     (SPComonad {c} sl)
     (SliceIdF $ Sigma sl)
-spCounit {c} {sl} sc esl pisc = replace {p=sc} (sym dpEqPat) $ pisc $ snd esl
+spCounit {c} {sl} sc ecsl pisc = case ecsl of (ec ** esl) => pisc esl
 
 -- This is the left adjunct of the dependent-product/base-change adjunction.
 --
