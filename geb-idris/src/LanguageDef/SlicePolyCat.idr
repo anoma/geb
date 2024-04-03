@@ -492,7 +492,6 @@ sPdup {c} {sl} =
 -- an adjoint triple.  See for example:
 --
 --  - https://ncatlab.org/nlab/show/adjoint+triple
---  - https://ncatlab.org/nlab/show/adjoint+monad
 --
 -- In the dependent-type formulation, the category on the right (the codomain
 -- of the two outer adjoints, hence the domain of base change) is `SliceObj c`
@@ -729,6 +728,15 @@ SliceSBCPrDup : {c : Type} -> {sl : SliceObj c} ->
 SliceSBCPrDup {c} {sl} sla slb eslb =
   (fst eslb ** \eslb' => (eslb' ** snd eslb))
 
+-----------------------------------------------------------------------------
+---- Adjoint (co)monad of dependent-sum/dependent-product adjoint triple ----
+-----------------------------------------------------------------------------
+
+-- Adjoint triples, such as dependent-sum/base-change/dependent-product,
+-- induce adjoint (co)monads.  See for example:
+--
+--  - https://ncatlab.org/nlab/show/adjoint+monad
+
 --------------------------------------------------
 --------------------------------------------------
 ---- Sigma/base-change/pi composed adjunction ----
@@ -737,7 +745,9 @@ SliceSBCPrDup {c} {sl} sla slb eslb =
 
 -- Besides forming an adjoint triple, dependent-sum/base-change and
 -- base-change/dependent-product can be composed across three (potentially)
--- different slice categories.
+-- different slice categories.  See for example:
+--
+--  - https://en.wikipedia.org/wiki/Adjoint_functors#Composition
 
 -- This is the left adjoint of the composed
 -- dependent-sum/dependent-product adjunction, in category-theoretic style.
