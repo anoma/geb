@@ -503,7 +503,7 @@ sPdup {c} {sl} =
 -- `SliceObject (Sigma {a=c} sl)` for some `sl : SliceObj c`.
 --
 -- The adjoints of the left induced adjoint pair are therefore endofunctors on
--- `SliceObject (Sigma {a=c} sl)`, whjile the adjoints of the right induced
+-- `SliceObject (Sigma {a=c} sl)`, while the adjoints of the right induced
 -- adjoint pair are endofunctors on `SliceObj c`.
 
 -- This is the left adjoint of the left induced adjoint pair of the
