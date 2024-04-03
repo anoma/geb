@@ -382,28 +382,6 @@ spFromWTF {c} sc ssc ec (Element0 ec' eqc ** pisc) esc =
 ---- Adjunction data ----
 -------------------------
 
--- This is the left adjunct of the dependent-product/base-change adjunction.
---
--- It constitutes the constructor for `SlicePiF f sc`.  As an adjunction,
--- it is parametrically polymorphic:  rather than receiving a witness to a
--- given `ec : c` being in the image of `f` applied to a given slice over
--- `c`, it passes in a handler for _any_ such witness.
-export
-spIntro : {0 c : Type} -> {0 sl : SliceObj c} ->
-  {0 sa : SliceObj c} -> {sb : SliceObj (Sigma sl)} ->
-  SliceMorphism {a=(Sigma sl)} (SliceBCF sl sa) sb ->
-  SliceMorphism {a=c} sa (SlicePiF sl sb)
-spIntro {c} {sl} {sa} {sb} m ec esa esl = m (ec ** esl) esa
-
--- This is the right adjunct of the dependent-product/base-change adjunction.
-export
-spRAdj : {0 c : Type} -> {0 sl : SliceObj c} ->
-  {0 sa : SliceObj c} -> {sb : SliceObj (Sigma sl)} ->
-  SliceMorphism {a=c} sa (SlicePiF sl sb) ->
-  SliceMorphism {a=(Sigma sl)} (SliceBCF sl sa) sb
-spRAdj {c} {sl} {sa} {sb} m esl esa =
-  replace {p=sb} (sym dpEqPat) $ m (fst esl) esa (snd esl)
-
 -- The monad of the dependent-product/base-change adjunction.
 export
 SPMonad : {c : Type} -> (sl : SliceObj c) -> SliceEndofunctor c
@@ -439,6 +417,28 @@ spCounit : {0 c : Type} -> {0 sl : SliceObj c} ->
     (SPComonad {c} sl)
     (SliceIdF $ Sigma sl)
 spCounit {c} {sl} sc esl pisc = replace {p=sc} (sym dpEqPat) $ pisc $ snd esl
+
+-- This is the left adjunct of the dependent-product/base-change adjunction.
+--
+-- It constitutes the constructor for `SlicePiF f sc`.  As an adjunction,
+-- it is parametrically polymorphic:  rather than receiving a witness to a
+-- given `ec : c` being in the image of `f` applied to a given slice over
+-- `c`, it passes in a handler for _any_ such witness.
+export
+spIntro : {0 c : Type} -> {0 sl : SliceObj c} ->
+  {0 sa : SliceObj c} -> {sb : SliceObj (Sigma sl)} ->
+  SliceMorphism {a=(Sigma sl)} (SliceBCF sl sa) sb ->
+  SliceMorphism {a=c} sa (SlicePiF sl sb)
+spIntro {c} {sl} {sa} {sb} m ec esa esl = m (ec ** esl) esa
+
+-- This is the right adjunct of the dependent-product/base-change adjunction.
+export
+spRAdj : {0 c : Type} -> {0 sl : SliceObj c} ->
+  {0 sa : SliceObj c} -> {sb : SliceObj (Sigma sl)} ->
+  SliceMorphism {a=c} sa (SlicePiF sl sb) ->
+  SliceMorphism {a=(Sigma sl)} (SliceBCF sl sa) sb
+spRAdj {c} {sl} {sa} {sb} m esl esa =
+  replace {p=sb} (sym dpEqPat) $ m (fst esl) esa (snd esl)
 
 -- This is the multiplication (AKA "join") of the dependent-product/base-change
 -- adjunction.
