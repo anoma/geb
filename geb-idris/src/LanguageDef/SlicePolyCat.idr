@@ -686,10 +686,9 @@ SliceSBCPrLAdj : {c : Type} -> {sl : SliceObj c} ->
   (sa, sb : SliceObj c) ->
   SliceMorphism {a=c} (SliceSBCPrL {c} {sl} sa) sb ->
   SliceMorphism {a=c} sa (SliceSBCPrR {c} {sl} sb)
-SliceSBCPrLAdj {c} {sl} sa sb m =
-  sliceComp
-    (sliceSBCPrRmap (SliceSBCPrL {c} {sl} sa) sb m)
-    (SliceSBCPrUnit sa)
+SliceSBCPrLAdj {c} {sl} sa sb =
+  spIntro {sl} {sa} {sb=(SliceBCF sl sb)}
+  . ssLAdj {sl} {sa=(SliceBCF sl sa)} {sb}
 
 -- This is the right adjunct of the right induced adjoint pair of the
 -- dependent-sum/base-change/dependent-product adjoint triple.
@@ -698,10 +697,9 @@ SliceSBCPrRAdj : {c : Type} -> {sl : SliceObj c} ->
   (sa, sb : SliceObj c) ->
   SliceMorphism {a=c} sa (SliceSBCPrR {c} {sl} sb) ->
   SliceMorphism {a=c} (SliceSBCPrL {c} {sl} sa) sb
-SliceSBCPrRAdj {c} {sl} sa sb m =
-  sliceComp
-    (SliceSBCPrCounit sb)
-    (sliceSBCPrLmap sa (SliceSBCPrR {c} {sl} sb) m)
+SliceSBCPrRAdj {c} {sl} sa sb =
+  ssElim {sl} {sa=(SliceBCF sl sa)} {sb}
+  . spRAdj {sl} {sa} {sb=(SliceBCF sl sb)}
 
 -- This is the multiplication (AKA "join") of the left induced adjoint pair
 -- of the dependent-sum/base-change/dependent-product adjoint triple.
