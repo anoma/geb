@@ -6399,12 +6399,12 @@ composePoly : Polynomial -> Polynomial -> Polynomial
 composePoly (Element0 q qvalid) (Element0 p pvalid) =
   Element0 (composePolyShape q p) (composePreservesValid qvalid pvalid)
 
-infixr 1 <|
+export infixr 1 <|
 public export
 (<|) : Polynomial -> Polynomial -> Polynomial
 (<|) = composePoly
 
-infixr 1 |>
+export infixr 1 |>
 public export
 (|>) : Polynomial -> Polynomial -> Polynomial
 (|>) = flip (<|)
@@ -6993,8 +6993,8 @@ PolyOp = InitialColimit PolyOpF
 --------------------------------------------------------------
 --------------------------------------------------------------
 
-infixr 8 !!+
-infixr 9 !!*
+export infixr 8 !!+
+export infixr 9 !!*
 
 public export
 data SubstObjF : Type -> Type where
@@ -7037,8 +7037,8 @@ public export
 data SubstObjMu : Type where
   InSO : SubstObjF SubstObjMu -> SubstObjMu
 
-infixr 8 !+
-infixr 9 !*
+export infixr 8 !+
+export infixr 9 !*
 
 public export
 Subst0 : SubstObjMu
@@ -7316,7 +7316,7 @@ substObjNormalize = substObjRemoveOne . substObjRemoveZero
 ---- Multiplication by a constant (via addition) ----
 -----------------------------------------------------
 
-infix 10 !:*
+export infix 10 !:*
 public export
 (!:*) : Nat -> SubstObjMu -> SubstObjMu
 n !:* p = foldrNatNoUnit ((!+) p) Subst0 p n
@@ -7325,7 +7325,7 @@ n !:* p = foldrNatNoUnit ((!+) p) Subst0 p n
 ---- Multiplicative exponentiation ----
 ---------------------------------------
 
-infix 10 !*^
+export infix 10 !*^
 public export
 (!*^) : SubstObjMu -> Nat -> SubstObjMu
 p !*^ n = foldrNatNoUnit ((!*) p) Subst1 p n
@@ -7428,7 +7428,7 @@ SubstMorph' = SubstTerm .* SubstHomObj'
 ---- Universal morphisms ----
 -----------------------------
 
-infixr 1 <!
+export infixr 1 <!
 public export
 data SubstMorph : SubstObjMu -> SubstObjMu -> Type where
   SMId : (x : SubstObjMu) -> SubstMorph x x
@@ -7642,12 +7642,12 @@ SubstHomObj (InSO (x !!+ y)) z = SubstHomObj x z !* SubstHomObj y z
 SubstHomObj (InSO (x !!* y)) z = SubstHomObj x (SubstHomObj y z)
 SubstHomObj (InSO (SOn n {nz})) z = SubstHomObjAlgN n nz z
 
-infixr 10 !->
+export infixr 10 !->
 public export
 (!->) : SubstObjMu -> SubstObjMu -> SubstObjMu
 (!->) = SubstHomObj
 
-infix 10 !^
+export infix 10 !^
 public export
 (!^) : SubstObjMu -> SubstObjMu -> SubstObjMu
 (!^) = flip SubstHomObj
