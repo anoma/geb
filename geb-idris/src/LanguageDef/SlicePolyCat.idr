@@ -911,6 +911,26 @@ ssprMap {c} {e} d x y =
     (\eecd => y $ fst $ snd $ eecd)
   . bcMap x y
 
+-- The monad of the composed dependent-sum/dependent-product adjunction.
+export
+SSPMonad : {c, e : Type} -> (d : SliceObj (c, e)) -> SliceEndofunctor e
+SSPMonad {c} {e} d = SliceSigmaPiFR {c} {e} d . SliceSigmaPiFL {c} {e} d
+
+-- The comonad of the composed dependent-sum/dependent-product adjunction.
+export
+SSPComonad : {c, e : Type} -> (d : SliceObj (c, e)) -> SliceEndofunctor c
+SSPComonad {c} {e} d = SliceSigmaPiFL {c} {e} d . SliceSigmaPiFR {c} {e} d
+
+-- The unit of the composed dependent-sum/dependent-product adjunction.
+sspUnit : {c, e : Type} -> (d : SliceObj (c, e)) ->
+  SliceNatTrans {x=e} {y=e} (SliceIdF e) (SSPMonad {c} {e} d)
+sspUnit {c} {e} d sc ee esc ecd = ((ee ** snd ecd) ** esc)
+
+-- The counit of the composed dependent-sum/dependent-product adjunction.
+sspCounit : {c, e : Type} -> (d : SliceObj (c, e)) ->
+  SliceNatTrans {x=c} {y=c} (SSPComonad {c} {e} d) (SliceIdF c)
+sspCounit {c} {e} d sc ec pisc = snd pisc (ec ** snd $ fst pisc)
+
 -- The left adjunct of the composed dependent-sum/dependent-product adjunction.
 export
 SliceSigmaPiFLAdj : {c, e : Type} -> (d : SliceObj (c, e)) ->
