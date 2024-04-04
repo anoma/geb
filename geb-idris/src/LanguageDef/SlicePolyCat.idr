@@ -618,8 +618,8 @@ sliceSBCPrComonadMap {c} {sl} x y =
 --
 --     lL sa -> sb == (BC . Sigma) a -> sb
 --  == BC (Sigma sa) -> sb
---  == Sigma sa -> Pi sb
---  == sa -> BC (Pi sb)
+--  == Sigma sa -> Pi sb (BC/Pi left adjunct)
+--  == sa -> BC (Pi sb) (Sigma/Pi left adjunct)
 --  == sa -> (BC . Pi) sb == sa -> lR sb
 export
 SliceSBCPlLAdj : {c : Type} -> {sl : SliceObj c} ->
