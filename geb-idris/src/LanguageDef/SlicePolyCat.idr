@@ -946,6 +946,15 @@ sspCounit {c} {e} d =
     ?sspCounit_hole
 
 -- The left adjunct of the composed dependent-sum/dependent-product adjunction.
+--
+-- To spell out the hom-set isomorphism, of which the adjuncts are the
+-- two directions, in this particular instance:
+--
+--     L sa -> sb == (Sigma . BC) a -> sb
+--  == Sigma (BC sa) -> sb
+--  == BC sa -> BC sb (Sigma/BC left adjunct)
+--  == sa -> Pi (BC sb) (BC/Pi left adjunct)
+--  == sa -> (Pi . BC) sb == sa -> R sb
 export
 SliceSigmaPiFLAdj : {c, e : Type} -> (d : SliceObj (c, e)) ->
   (sa : SliceObj e) -> (sb : SliceObj c) ->
@@ -957,6 +966,15 @@ SliceSigmaPiFLAdj {c} {e} d sa sb m =
     (sspUnit {c} {e} d sa)
 
 -- The right adjunct of the composed dependent-sum/dependent-product adjunction.
+--
+-- To spell out the hom-set isomorphism, of which the adjuncts are the
+-- two directions, in this particular instance:
+--
+--     sa -> R sb == sa -> (Pi . BC)
+--  == sa -> Pi (BC sb)
+--  == BC sa -> BC sb (BC/Pi right adjunct)
+--  == Sigma (BC sa) -> sb (Sigma/BC left adjunct)
+--  == (Sigma . BC) sa -> sb == L sa -> sb
 export
 SliceSigmaPiFRAdj : {c, e : Type} -> (d : SliceObj (c, e)) ->
   (sa : SliceObj e) -> (sb : SliceObj c) ->
