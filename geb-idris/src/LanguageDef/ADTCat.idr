@@ -2230,8 +2230,8 @@ SubstMorphPosDep sig pos = ?SubstMorphPosDep_hole
 ---- Functor which generates polynomial functors (not using PolyFunc) ----
 --------------------------------------------------------------------------
 
-infixr 8 $$+
-infixr 9 $$*
+export infixr 8 $$+
+export infixr 9 $$*
 
 public export
 data PolyF : Type -> Type where
@@ -2294,8 +2294,8 @@ public export
 data PolyNu : Type where
   InPLabel : Inf (PolyF PolyNu) -> PolyNu
 
-infixr 8 $+
-infixr 9 $*
+export infixr 8 $+
+export infixr 9 $*
 
 public export
 PolyI : PolyMu
@@ -2778,7 +2778,7 @@ PolyComposeAlg PF1 _ = Poly1
 PolyComposeAlg (p $$+ q) r = p r $+ q r
 PolyComposeAlg (p $$* q) r = p r $* q r
 
-infixr 2 $.
+export infixr 2 $.
 public export
 ($.) : PolyMu -> PolyMu -> PolyMu
 ($.) = metaPolyPairAdjCata PolyComposeAlg
@@ -2787,7 +2787,7 @@ public export
 ---- Multiplication by a constant (via addition) ----
 -----------------------------------------------------
 
-infix 10 $:*
+export infix 10 $:*
 public export
 ($:*) : Nat -> PolyMu -> PolyMu
 n $:* p = foldrNatNoUnit (($+) p) Poly0 p n
@@ -2796,7 +2796,7 @@ n $:* p = foldrNatNoUnit (($+) p) Poly0 p n
 ---- Multiplicative exponentiation ----
 ---------------------------------------
 
-infix 10 $*^
+export infix 10 $*^
 public export
 ($*^) : PolyMu -> Nat -> PolyMu
 p $*^ n = foldrNatNoUnit (($*) p) Poly1 p n
@@ -2805,7 +2805,7 @@ p $*^ n = foldrNatNoUnit (($*) p) Poly1 p n
 ---- Compositional exponentiation (iteration) ----
 --------------------------------------------------
 
-infix 10 $.^
+export infix 10 $.^
 public export
 ($.^) : PolyMu -> Nat -> PolyMu
 p $.^ n = foldrNatNoUnit (($.) p) PolyI p n
@@ -3285,7 +3285,7 @@ public export
 ($>) : ADTTerm -> ADTTerm
 ($>) t = InADTT (ADTRight t)
 
-infixr 12 $$
+export infixr 12 $$
 public export
 ($$) : ADTTerm -> ADTTerm -> ADTTerm
 t $$ t' = InADTT (ADTPair t t')
