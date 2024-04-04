@@ -55,7 +55,7 @@ public export
 InterpFI1c : FinIndIndF1Constr -> PolyFunc -> Type
 InterpFI1c c p =
   (i : Vect (f1cNDir1 c) (pfPos p) **
-   HVect {k=(f1cNDir2 c)} $ map (pfDir {p} . flip index i) $ f1cAssign c)
+   HVect {n=(f1cNDir2 c)} $ map (pfDir {p} . flip index i) $ f1cAssign c)
 
 public export
 record FinIndIndF1 where
