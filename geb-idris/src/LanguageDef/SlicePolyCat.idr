@@ -1043,7 +1043,7 @@ SPFDbase {dom} {cod} = Sigma {a=cod} . spfdPos
 -- a parametric right adjoint.
 export
 SPFDradj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceFunctor dom (Sigma {a=cod} $ spfdPos spfd)
+  SliceFunctor dom (SPFDbase {dom} {cod} spfd)
 SPFDradj {dom} {cod} spfd =
   SliceSigmaPiFR {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
     $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
