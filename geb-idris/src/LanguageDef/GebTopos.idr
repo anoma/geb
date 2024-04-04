@@ -2482,7 +2482,7 @@ InterpTF {nty} tf sl ity =
   (i : Fin (tfnumCtor tf ity) **
    let ct = tfCtor tf ity i in
    (FinV {len=ct.numConst} ct.cconst,
-    HVect {k=ct.numDir} $ map sl ct.cdir))
+    HVect {n=ct.numDir} $ map sl ct.cdir))
 
 public export
 showITF : {0 nty : Nat} ->
