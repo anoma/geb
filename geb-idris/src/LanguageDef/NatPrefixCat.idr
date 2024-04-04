@@ -274,13 +274,13 @@ metaToBNCToBNC f (Element0 k _) = metaToNatToBNC {n} f k
 
 -- Object-language representation of polynomial morphisms.
 
-prefix 11 #|
-infixr 8 #+
-infix 8 #-
-infixr 9 #*
-infix 9 #/
-infix 9 #%
-infixr 2 #.
+export prefix 11 #|
+export infixr 8 #+
+export infix 8 #-
+export infixr 9 #*
+export infix 9 #/
+export infix 9 #%
+export infixr 2 #.
 
 public export
 data BNCPolyM : Type where
@@ -402,7 +402,7 @@ powerAcc : BNCPolyM -> Nat -> BNCPolyM -> BNCPolyM
 powerAcc p Z acc = acc
 powerAcc p (S n) acc = powerAcc p n (p #* acc)
 
-infixl 10 #^
+export infixl 10 #^
 public export
 (#^) : BNCPolyM -> Nat -> BNCPolyM
 (#^) p n = powerAcc p n P1
