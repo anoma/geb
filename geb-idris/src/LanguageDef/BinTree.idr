@@ -43,18 +43,18 @@ public export
 Bifunctor BinTreeF where
   bimap = (|>) (mapHom {f=Pair}) . bimap {f=Either}
 
-prefix 11 $$!
+export prefix 11 $$!
 public export
 ($$!) : {0 atom, ty : Type} -> atom -> BinTreeF atom ty
 ($$!) = Left
 
-infixr 10 $$>
+export infixr 10 $$>
 public export
 ($$>) : {0 atom, ty : Type} -> (ty, ty) -> BinTreeF atom ty
 ($$>) = Right
 
 %hide LanguageDef.ADTCat.infixr.($$*)
-infixr 10 $$*
+export infixr 10 $$*
 public export
 ($$*) : {0 atom, ty : Type} -> ty -> ty -> BinTreeF atom ty
 ($$*) = ($$>) .* MkPair
@@ -86,30 +86,30 @@ public export
 ProdFMAlg : Type -> Type
 ProdFMAlg = Algebra ProdFM
 
-prefix 11 $!
+export prefix 11 $!
 public export
 ($!) : {0 atom : Type} -> atom -> BinTreeMu atom
 ($!) = InBTm . ($$!)
 
-infixr 10 $>
+export infixr 10 $>
 public export
 ($>) : {0 atom : Type} -> ProdAlg (BinTreeMu atom)
 ($>) = InBTm . ($$>)
 
 %hide LanguageDef.ADTCat.infixr.($*)
-infixr 10 $*
+export infixr 10 $*
 public export
 ($*) : {0 atom : Type} -> BinTreeMu atom -> BinTreeMu atom -> BinTreeMu atom
 ($*) = InBTm .* ($$*)
 
-prefix 11 $:
+export prefix 11 $:
 public export
 ($:) : {0 atom : Type} ->
   (l : List (BinTreeMu atom)) -> {auto 0 ne : NonEmpty l} -> BinTreeMu atom
 ($:) {atom} (x :: []) {ne=IsNonEmpty} = x
 ($:) {atom} (x :: xs@(x' :: xs')) {ne=IsNonEmpty} = x $* $: xs
 
-prefix 11 $:!
+export prefix 11 $:!
 public export
 ($:!) : {0 atom : Type} ->
   (l : List atom) -> {auto 0 ne : NonEmpty l} -> BinTreeMu atom
@@ -327,7 +327,7 @@ InBTv : {0 atom, a : Type} -> a -> BinTreeFM atom a
 InBTv {atom} {a} =
   InBTm {atom=(Either a atom)} . BTFt {atom} {a} {x=(BinTreeFM atom a)}
 
-prefix 11 $!<
+export prefix 11 $!<
 public export
 ($!<) : {0 atom, a : Type} -> a -> BinTreeFM atom a
 ($!<) = InBTv
@@ -337,7 +337,7 @@ public export
 InBTa : {0 atom, a : Type} -> atom -> BinTreeFM atom a
 InBTa {atom} {a} = ($!) {atom=(Either a atom)} . Right
 
-prefix 11 $!>
+export prefix 11 $!>
 public export
 ($!>) : {0 atom, a : Type} -> atom -> BinTreeFM atom a
 ($!>) = InBTa

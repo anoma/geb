@@ -1115,7 +1115,7 @@ public export
 -- The representable endofunctor represented by a given object -- in the
 -- endofunctor category, that is, by some endofunctor, which implicitly
 -- means that endofunctor applied to the terminal object.
-prefix 11 :>:
+export prefix 11 :>:
 public export
 (:>:) : FreeS0EF v -> FreeS0EF v
 (:>:) a = inFC $ Subst0EndoCovarRep a
@@ -1129,7 +1129,7 @@ public export
 
 -- The sum of two endofunctors.  (In particular, any sum of representables
 -- is a polynomial; so, therefore, is any sum of polynomials.)
-infixl 7 :+:
+export infixl 7 :+:
 public export
 (:+:) : FreeS0EF v -> FreeS0EF v -> FreeS0EF v
 a :+: b = inFC $ Subst0EndoSum a b
