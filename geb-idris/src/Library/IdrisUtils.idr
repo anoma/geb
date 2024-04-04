@@ -7,12 +7,12 @@ import public Data.List
 import public Data.List.Equalities
 import public Data.List.Reverse
 import public Data.List.Quantifiers
+import public Data.Vect.Quantifiers
 import public Data.Nat
 import public Data.Nat.Order.Properties
 import public Data.Nat.Division
 import public Data.Vect
 import public Data.Vect.Properties.Foldr
-import public Data.HVect
 import public Data.Fin
 import public Data.Fin.Order
 import public Data.DPair
@@ -36,17 +36,17 @@ import public Syntax.PreorderReasoning
 
 %default total
 
-infixr 1 |>
+export infixr 1 |>
 public export
 (|>) : {0 a, b, c : Type} -> (a -> b) -> (b -> c) -> (a -> c)
 (|>) = flip (.)
 
-infixr 1 .*
+export infixr 1 .*
 public export
 (.*) : {0 a, b, c, d : Type} -> (c -> d) -> (a -> b -> c) -> (a -> b -> d)
 (.*) = (.) . (.)
 
-infixr 1 .**
+export infixr 1 .**
 public export
 (.**) : {0 a, b, c, d, e : Type} ->
   (d -> e) -> (a -> b -> c -> d) -> (a -> b -> c -> e)
@@ -651,10 +651,7 @@ public export
 showHV : {0 n : Nat} -> {0 a : Type} ->
   (sl : a -> Type) -> (sh : (x : a) -> sl x -> String) ->
   (v : Vect n a) -> (hv : HVect (map sl v)) -> String
-showHV {n} {a} sl sh v =
-  show where
-    Shows n (map sl v) where
-      shows = showHVv {n} {a} sl sh v
+showHV {n} {a} sl sh v hv = show $ showHVv {n} {a} sl sh v hv
 
 public export
 hvDecEq : {0 n : Nat} -> {0 a : Type} ->
@@ -678,7 +675,7 @@ hvMap {n=(S n)} (t :: ts) (t' :: ts') f (x :: hv) =
 
 public export
 HMatrix : {0 k : Nat} -> Vect k Nat -> Vect k Type -> Type
-HMatrix {k} ns tys = HVect {k} $ map (uncurry Vect) $ zip ns tys
+HMatrix {k} ns tys = HVect {n=k} $ map (uncurry Vect) $ zip ns tys
 
 public export
 hmindex : {0 k : Nat} -> {ns : Vect k Nat} -> {tys : Vect k Type} ->
@@ -1370,7 +1367,7 @@ FSlice ft = ftType ft -> Type
 -- A dependent list indexed by terms of a finite type.
 public export
 FHList : (ft : FinType) -> FTITyVect ft -> Type
-FHList ft tys = HVect {k=(ftSize ft)} tys
+FHList ft tys = HVect {n=(ftSize ft)} tys
 
 public export
 ListContains : {a : Type} -> List a -> a -> Type
