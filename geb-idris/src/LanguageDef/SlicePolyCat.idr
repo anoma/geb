@@ -955,6 +955,44 @@ SliceSigmaPiFRAdj {c} {e} d sa sb m =
     (sspCounit {c} {e} d sb)
     (ssplMap {c} {e} d sa (SliceSigmaPiFR {c} {e} d sb) m)
 
+-- The multiplication (AKA "join") of the composed
+-- dependent-sum/dependent-product adjunction.
+export
+SliceSigmaPiFJoin : {c, e : Type} -> {d : SliceObj (c, e)} ->
+  SliceNatTrans {x=e} {y=e}
+    (SSPMonad {c} {e} d . SSPMonad {c} {e} d)
+    (SSPMonad {c} {e} d)
+SliceSigmaPiFJoin {c} {e} {d} =
+  SliceWhiskerRight
+    {f=(SSPComonad {c} {e} d . SliceSigmaPiFL {c} {e} d)}
+    {g=(SliceSigmaPiFL {c} {e} d)}
+    {h=(SliceSigmaPiFR {c} {e} d)}
+    (ssprMap {c} {e} d)
+  $ SliceWhiskerLeft
+    {g=(SSPComonad {c} {e} d)}
+    {h=(SliceIdF c)}
+    (sspCounit {c} {e} d)
+    (SliceSigmaPiFL {c} {e} d)
+
+-- The comultiplication (AKA "duplicate") of the composed
+-- dependent-sum/dependent-product adjunction.
+export
+SliceSigmaPiFDup : {c, e : Type} -> {d : SliceObj (c, e)} ->
+  SliceNatTrans {x=c} {y=c}
+    (SSPComonad {c} {e} d)
+    (SSPComonad {c} {e} d . SSPComonad {c} {e} d)
+SliceSigmaPiFDup {c} {e} {d} =
+  SliceWhiskerRight
+    {f=(SliceSigmaPiFR {c} {e} d)}
+    {g=(SliceSigmaPiFR {c} {e} d . SSPComonad {c} {e} d)}
+    {h=(SliceSigmaPiFL {c} {e} d)}
+    (ssplMap {c} {e} d)
+  $ SliceWhiskerLeft
+    {g=(SliceIdF e)}
+    {h=(SSPMonad {c} {e} d)}
+    (sspUnit {c} {e} d)
+    (SliceSigmaPiFR {c} {e} d)
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
