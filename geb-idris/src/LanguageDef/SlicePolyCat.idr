@@ -1020,14 +1020,34 @@ SliceSigmaPiFDup {c} {e} {d} =
 -- A polynomial functor on slice categories may be described as a parametric
 -- right adjoint whose right-adjoint component is `SliceSigmaPiFR` (which
 -- has the left adjoint `SliceSigmaPiFL`) and whose following dependent-sum
--- component is `SliceSigmaF`.
+-- component is `SliceSigmaF`.  `dir and `pos`, the parameters to those
+-- two functors,  must be such that the functors can be composed.
+public export
+record SPFData (0 dom, cod : Type) where
+  constructor SPFD
+  spfdPos : SliceObj cod
+  spfdDir : dom -> (ec : cod) -> SliceObj (spfdPos ec)
+
+-- The right-adjoint component of a polynomial functor expressed as
+-- a parametric right adjoint.
 export
-SlicePolyF : {dom, cod : Type} ->
-  (pos : SliceObj cod) -> (dir : SliceObj (dom, Sigma {a=cod} pos)) ->
-  SliceFunctor dom cod
-SlicePolyF {dom} {cod} pos dir =
-  SliceSigmaF {c=cod} pos .
-  SliceSigmaPiFR {c=dom} {e=(Sigma pos)} dir
+SPFDradj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFunctor dom (Sigma {a=cod} $ spfdPos spfd)
+SPFDradj {dom} {cod} spfd =
+  SliceSigmaPiFR {c=dom} {e=(Sigma {a=cod} $ spfdPos spfd)}
+    $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
+
+-- The dependent-sum component of a polynomial functor expressed as
+-- a parametric right adjoint.
+SPFDsigma : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFunctor (Sigma {a=cod} $ spfdPos spfd) cod
+SPFDsigma {dom} {cod} spfd = SliceSigmaF {c=cod} (spfdPos spfd)
+
+export
+InterpSPFD : {dom, cod : Type} ->
+  SPFData dom cod -> SliceFunctor dom cod
+InterpSPFD {dom} {cod} spfd =
+  SPFDsigma {dom} {cod} spfd . SPFDradj {dom} {cod} spfd
 
 --------------------------------
 --------------------------------
