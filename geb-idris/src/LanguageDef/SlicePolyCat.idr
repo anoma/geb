@@ -922,11 +922,13 @@ SSPComonad : {c, e : Type} -> (d : SliceObj (c, e)) -> SliceEndofunctor c
 SSPComonad {c} {e} d = SliceSigmaPiFL {c} {e} d . SliceSigmaPiFR {c} {e} d
 
 -- The unit of the composed dependent-sum/dependent-product adjunction.
+export
 sspUnit : {c, e : Type} -> (d : SliceObj (c, e)) ->
   SliceNatTrans {x=e} {y=e} (SliceIdF e) (SSPMonad {c} {e} d)
 sspUnit {c} {e} d sc ee esc ecd = ((ee ** snd ecd) ** esc)
 
 -- The counit of the composed dependent-sum/dependent-product adjunction.
+export
 sspCounit : {c, e : Type} -> (d : SliceObj (c, e)) ->
   SliceNatTrans {x=c} {y=c} (SSPComonad {c} {e} d) (SliceIdF c)
 sspCounit {c} {e} d sc ec pisc = snd pisc (ec ** snd $ fst pisc)
