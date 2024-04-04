@@ -1048,6 +1048,15 @@ SPFDradj {dom} {cod} spfd =
   SliceSigmaPiFR {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
     $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
 
+-- The left adjoint of the right-adjoint component of a polynomial functor
+-- expressed as a parametric right adjoint.
+export
+SPFDladj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFunctor (SPFDbase {dom} {cod} spfd) dom
+SPFDladj {dom} {cod} spfd =
+  SliceSigmaPiFL {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
+    $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
+
 -- The dependent-sum component of a polynomial functor expressed as
 -- a parametric right adjoint.
 export
@@ -1060,6 +1069,18 @@ InterpSPFD : {dom, cod : Type} ->
   SPFData dom cod -> SliceFunctor dom cod
 InterpSPFD {dom} {cod} spfd =
   SPFDsigma {dom} {cod} spfd . SPFDradj {dom} {cod} spfd
+
+-- As a parametric right adjoint, a polynomial functor has a left multi-adjoint.
+export
+SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  SliceMorphism {a=cod}
+    b
+    (InterpSPFD {dom} {cod} spfd $ SPFDladj {dom} {cod} spfd
+     $ \(ec ** ep) => Subset0 (b ec) $ \eb => i ec eb = ep)
+SPFDlmadj {dom} {cod} (SPFD pos dir) b i ec eb =
+  (i ec eb **
+   \(ed ** dd) => (((ec ** i ec eb) ** dd) ** Element0 eb Refl))
 
 --------------------------------
 --------------------------------
