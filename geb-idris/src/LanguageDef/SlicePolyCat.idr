@@ -1011,6 +1011,24 @@ SliceSigmaPiFDup {c} {e} {d} =
     (sspUnit {c} {e} d)
     (SliceSigmaPiFR {c} {e} d)
 
+-------------------------------------------
+-------------------------------------------
+---- General slice polynomial functors ----
+-------------------------------------------
+-------------------------------------------
+
+-- A polynomial functor on slice categories may be described as a parametric
+-- right adjoint whose right-adjoint component is `SliceSigmaPiFR` (which
+-- has the left adjoint `SliceSigmaPiFL`) and whose following dependent-sum
+-- component is `SliceSigmaF`.
+export
+SlicePolyF : {dom, cod : Type} ->
+  (pos : SliceObj cod) -> (dir : SliceObj (dom, Sigma {a=cod} pos)) ->
+  SliceFunctor dom cod
+SlicePolyF {dom} {cod} pos dir =
+  SliceSigmaF {c=cod} pos .
+  SliceSigmaPiFR {c=dom} {e=(Sigma pos)} dir
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
