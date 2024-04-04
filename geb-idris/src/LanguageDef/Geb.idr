@@ -2417,13 +2417,13 @@ public export
 cdPipe : (cd : CatData) -> cdPipeSig cd
 cdPipe cd x y z = flip (cdComp cd x y z)
 
-infixr 1 <#
+export infixr 1 <#
 public export
 (<#) : {cd : CatData} -> {x, y, z : cdObj cd} ->
   cdHom cd (y, z) -> cdHom cd (x, y) -> cdHom cd (x, z)
 (<#) {cd} {x} {y} {z} = cdComp cd x y z
 
-infixr 1 |>
+export infixr 1 |>
 public export
 (#>) : {cd : CatData} -> {x, y, z : cdObj cd} ->
   cdHom cd (x, y) -> cdHom cd (y, z) -> cdHom cd (x, z)
@@ -2516,13 +2516,13 @@ public export
 lcPipe : (lc : LawfulCat) -> lcPipeSig lc
 lcPipe lc x y z = flip (lcComp lc x y z)
 
-infixr 1 <!
+export infixr 1 <!
 public export
 (<!) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
   lcHom lc (y, z) -> lcHom lc (x, y) -> lcHom lc (x, z)
 (<!) {lc} {x} {y} {z} = lcComp lc x y z
 
-infixr 1 !>
+export infixr 1 !>
 public export
 (!>) : {lc : LawfulCat} -> {x, y, z : lcObj lc} ->
   lcHom lc (x, y) -> lcHom lc (y, z) -> lcHom lc (x, z)
@@ -3435,7 +3435,7 @@ DAGieTV tsf = finFToVect $ DAGincSet tsf
 
 public export
 DAGedgeSet : TopoSortedFin -> Type
-DAGedgeSet tsf = HVect {k=(tsfVert tsf)} (DAGieTV tsf)
+DAGedgeSet tsf = HVect {n=(tsfVert tsf)} (DAGieTV tsf)
 
 public export
 record FinDAG where
@@ -5369,7 +5369,7 @@ GenPi {dom} {cod} f sld elc = (eld : PreImage f elc) -> sld $ fst0 eld
 public export
 DiscPi : {pos : Type} -> (nfield : pos -> Nat) ->
   SliceFunctor (Sigma {a=pos} (Fin . nfield)) pos
-DiscPi {pos} nfield sld i = HVect {k=(nfield i)} $ finFToVect $ sld . MkDPair i
+DiscPi {pos} nfield sld i = HVect {n=(nfield i)} $ finFToVect $ sld . MkDPair i
 
 public export
 record DiscSlicePolyFunc (dom, cod : Type) where
@@ -5463,7 +5463,7 @@ public export
 DiscOpFactorize : {pos : Type} -> (nfield : pos -> Nat) ->
   SliceFunctor (DiscOpFactorization {pos} nfield) pos
 DiscOpFactorize {pos} nfield sld i =
-  HVect {k=(nfield i)} $ finFToVect $ sld . MkDPair i
+  HVect {n=(nfield i)} $ finFToVect $ sld . MkDPair i
 
 ---------------------------
 ---------------------------
@@ -5743,7 +5743,7 @@ SortInterpretationFromSl {n} = finFToVect {n} {a=Type}
 public export
 SortMorphism : {s : Nat} ->
   SortInterpretation s -> SortInterpretation s -> Type
-SortMorphism {s} sl sl' = HVect {k=s} $ map (uncurry HomProf) $ zip sl sl'
+SortMorphism {s} sl sl' = HVect {n=s} $ map (uncurry HomProf) $ zip sl sl'
 
 public export
 SortMorphismToSl : {s : Nat} -> {sl, sl' : SortInterpretation s} ->
@@ -5785,7 +5785,7 @@ public export
 InterpRawOpProd : {s, a : Nat} ->
   (op : RawOp s a) -> SortInterpretation s -> Type
 InterpRawOpProd {s} {a} op sorts =
-  HVect {k=a} $ RawOpDir {s} {a} op sorts
+  HVect {n=a} $ RawOpDir {s} {a} op sorts
 
 public export
 InterpRawOpProdSl : {s, a : Nat} ->
