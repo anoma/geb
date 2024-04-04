@@ -939,10 +939,10 @@ SliceSigmaPiFLAdj : {c, e : Type} -> (d : SliceObj (c, e)) ->
   (sa : SliceObj e) -> (sb : SliceObj c) ->
   SliceMorphism {a=c} (SliceSigmaPiFL d sa) sb ->
   SliceMorphism {a=e} sa (SliceSigmaPiFR d sb)
-SliceSigmaPiFLAdj {c} {e} d sa sb m ee esa ecd =
-  ssLAdj
-    {sl=(Sigma {a=e} . curry d)} {sa=(\ee => sa $ fst $ snd ee)} {sb}
-    m (fst ecd ** ee ** snd ecd) esa
+SliceSigmaPiFLAdj {c} {e} d sa sb m =
+  sliceComp
+    (ssprMap {c} {e} d (SliceSigmaPiFL {c} {e} d sa) sb m)
+    (sspUnit {c} {e} d sa)
 
 -- The right adjunct of the composed dependent-sum/dependent-product adjunction.
 export
@@ -950,10 +950,10 @@ SliceSigmaPiFRAdj : {c, e : Type} -> (d : SliceObj (c, e)) ->
   (sa : SliceObj e) -> (sb : SliceObj c) ->
   SliceMorphism {a=e} sa (SliceSigmaPiFR d sb) ->
   SliceMorphism {a=c} (SliceSigmaPiFL d sa) sb
-SliceSigmaPiFRAdj {c} {e} d sa sb m ec ecdsa =
-  spRAdj
-    {sl=(Sigma {a=c} . flip (curry d))} {sa} {sb=(\eecd => sb $ fst $ snd eecd)}
-    m (fst (fst ecdsa) ** ec ** snd (fst ecdsa)) (snd ecdsa)
+SliceSigmaPiFRAdj {c} {e} d sa sb m =
+  sliceComp
+    (sspCounit {c} {e} d sb)
+    (ssplMap {c} {e} d sa (SliceSigmaPiFR {c} {e} d sb) m)
 
 --------------------------------
 --------------------------------
