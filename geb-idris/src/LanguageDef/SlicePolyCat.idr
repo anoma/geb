@@ -925,25 +925,13 @@ SSPComonad {c} {e} d = SliceSigmaPiFL {c} {e} d . SliceSigmaPiFR {c} {e} d
 export
 sspUnit : {c, e : Type} -> (d : SliceObj (c, e)) ->
   SliceNatTrans {x=e} {y=e} (SliceIdF e) (SSPMonad {c} {e} d)
-sspUnit {c} {e} d =
-  SliceNTvcomp
-    {f=(SliceIdF e)}
-    {g=(SPMonad {c=e} (Sigma {a=c} . flip (curry d)))}
-    {h=(SSPMonad {c} {e} d)}
-    ?sspUnit_hole
-    spUnit
+sspUnit {c} {e} d sc ee esc ecd = ((ee ** snd ecd) ** esc)
 
 -- The counit of the composed dependent-sum/dependent-product adjunction.
 export
 sspCounit : {c, e : Type} -> (d : SliceObj (c, e)) ->
   SliceNatTrans {x=c} {y=c} (SSPComonad {c} {e} d) (SliceIdF c)
-sspCounit {c} {e} d =
-  SliceNTvcomp
-    {f=(SSPComonad {c} {e} d)}
-    {g=(SSComonad {c} (Sigma {a=e} . curry d))}
-    {h=(SliceIdF c)}
-    sSout
-    ?sspCounit_hole
+sspCounit {c} {e} d sc ec pisc = snd pisc (ec ** snd $ fst pisc)
 
 -- The left adjunct of the composed dependent-sum/dependent-product adjunction.
 --
