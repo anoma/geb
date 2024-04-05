@@ -1048,6 +1048,13 @@ SPFDradj {dom} {cod} spfd =
   SliceSigmaPiFR {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
     $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
 
+export
+SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDradj {dom} {cod} spfd)
+SPFDradjMap {dom} {cod} spfd =
+  ssprMap {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
+    $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
+
 -- The left adjoint of the right-adjoint component of a polynomial functor
 -- expressed as a parametric right adjoint.
 export
@@ -1064,6 +1071,11 @@ SPFDsigma : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor (SPFDbase {dom} {cod} spfd) cod
 SPFDsigma {dom} {cod} spfd = SliceSigmaF {c=cod} (spfdPos spfd)
 
+export
+SPFDsigmaMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDsigma {dom} {cod} spfd)
+SPFDsigmaMap {dom} {cod} spfd = ssMap {c=cod} {sl=(spfdPos spfd)}
+
 -- We call the interpretation of an `SPFData` as a slice polynomial functor
 -- `SPFDR` because, as we shall see below, the slice polynomial functor may
 -- be viewed as a right multi-adjoint.  Hence the `SPFData` may be viewed
@@ -1073,6 +1085,13 @@ SPFDR : {dom, cod : Type} ->
   SPFData dom cod -> SliceFunctor dom cod
 SPFDR {dom} {cod} spfd =
   SPFDsigma {dom} {cod} spfd . SPFDradj {dom} {cod} spfd
+
+export
+SPFDRmap : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> SliceFMap (SPFDR {dom} {cod} spfd)
+SPFDRmap {dom} {cod} spfd x y =
+  SPFDsigmaMap {dom} {cod} spfd (SPFDradj spfd x) (SPFDradj spfd y)
+  . SPFDradjMap {dom} {cod} spfd x y
 
 -- The index of the family of morphisms comprising the units of a
 -- polynomial functor viewed as a parametric right adjoint.
