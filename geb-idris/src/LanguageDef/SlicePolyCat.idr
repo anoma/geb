@@ -1150,6 +1150,28 @@ SPFDfactR {dom} {cod} spfd a b i ec eb =
     (((ec ** SPFDfactPos {dom} {cod} spfd a b i ec eb) ** snd dd) **
      Element0 eb Refl))
 
+export
+SPFDfactL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=dom}
+    (SPFDL {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i))
+    a
+SPFDfactL {dom} {cod} spfd a b i = ?SPFDfactL_hole
+
+export
+SPFDfactLlift : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=cod}
+    (SPFDlmuc {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i))
+    (SPFDR {dom} {cod} spfd a)
+SPFDfactLlift {dom} {cod} spfd a b i =
+  SPFDRmap spfd
+    (SPFDL {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i))
+    a
+    (SPFDfactL {dom} {cod} spfd a b i)
+
 -- This corresponds to the left-to-right direction of the isomorphism
 -- described in Theorem 2.4 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .
