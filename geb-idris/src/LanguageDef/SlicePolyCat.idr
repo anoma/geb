@@ -1137,7 +1137,12 @@ SPFDmultiRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDmultiRAdj {dom} {cod} spfd x y i m = ?SPFDmultiRAdj_hole
 
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
--- (so it is itself a right multi-adjoint).
+-- (so it is itself a right multi-adjoint).  This is the unit of the
+-- slice-polynomial-functor multi-adjunction; its existence is listed as the
+-- "Property" of a parametric right adjoint that it has a left multi-adjoint
+-- at https://ncatlab.org/nlab/show/parametric+right+adjoint#properties .
+-- We define it here in the generic way in which the unit of an adjunction
+-- can be defined as the left adjunct applied to the identity morphism.
 export
 SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
