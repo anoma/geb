@@ -1131,7 +1131,9 @@ SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} x (spfdPos spfd)) ->
   SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x i) y ->
   SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y)
-SPFDmultiLAdj {dom} {cod} spfd x y i m = ?SPFDmultiLAdj_hole
+SPFDmultiLAdj {dom} {cod} spfd x y i m ec ex =
+  (i ec ex **
+   \dd => m (fst dd) (((ec ** i ec ex) ** snd dd) ** Element0 ex Refl))
 
 -- This is the "right multi-adjunct" of the multi-adjunction defined by a
 -- slice polynomial functor (`SPFDmultiLAdj` is the left multi-adjunct").
