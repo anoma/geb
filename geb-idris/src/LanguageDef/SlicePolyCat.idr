@@ -1070,6 +1070,13 @@ InterpSPFD : {dom, cod : Type} ->
 InterpSPFD {dom} {cod} spfd =
   SPFDsigma {dom} {cod} spfd . SPFDradj {dom} {cod} spfd
 
+export
+SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  SliceObj dom
+SPFDunitIdx {dom} {cod} spfd b =
+  SPFDladj {dom} {cod} spfd . resliceByMor {c=cod} {a=(spfdPos spfd)} {b}
+
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.
 export
@@ -1077,9 +1084,7 @@ SPFDlmuc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceObj cod
 SPFDlmuc {dom} {cod} spfd b =
-  InterpSPFD {dom} {cod} spfd
-  . SPFDladj {dom} {cod} spfd
-  . resliceByMor {c=cod} {a=(spfdPos spfd)} {b}
+  InterpSPFD {dom} {cod} spfd . SPFDunitIdx {dom} {cod} spfd b
 
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint.
 export
