@@ -1157,7 +1157,10 @@ SPFDfactL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceMorphism {a=dom}
     (SPFDL {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i))
     a
-SPFDfactL {dom} {cod} spfd a b i = ?SPFDfactL_hole
+SPFDfactL {dom} {cod} spfd a b i ed ecdb =
+  case ecdb of
+    ((ec ** dd) ** Element0 eb eqc) =>
+      snd (i (fst ec) eb) (ed ** rewrite eqc in dd)
 
 export
 SPFDfactLlift : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
