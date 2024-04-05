@@ -1175,6 +1175,19 @@ SPFDfactLlift {dom} {cod} spfd a b i =
     a
     (SPFDfactL {dom} {cod} spfd a b i)
 
+export
+SPFDfactCorrect : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  FunExt ->
+  (sliceComp
+    (SPFDfactLlift {dom} {cod} spfd a b i)
+    (SPFDfactR {dom} {cod} spfd a b i)) =
+      i
+SPFDfactCorrect {dom} {cod} spfd a b i fext =
+  funExt $ \ec => funExt $ \eb =>
+    trans (dpEq12 Refl $ funExt $ \(ed ** dd) => Refl) $ sym dpEqPat
+
 -- This corresponds to the left-to-right direction of the isomorphism
 -- described in Theorem 2.4 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .
