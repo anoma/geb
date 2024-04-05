@@ -1064,10 +1064,14 @@ SPFDsigma : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor (SPFDbase {dom} {cod} spfd) cod
 SPFDsigma {dom} {cod} spfd = SliceSigmaF {c=cod} (spfdPos spfd)
 
+-- We call the interpretation of an `SPFData` as a slice polynomial functor
+-- `SPFDR` because, as we shall see below, the slice polynomial functor may
+-- be viewed as a right multi-adjoint.  Hence the `SPFData` may be viewed
+-- as defining a multi-adjunction.
 export
-InterpSPFD : {dom, cod : Type} ->
+SPFDR : {dom, cod : Type} ->
   SPFData dom cod -> SliceFunctor dom cod
-InterpSPFD {dom} {cod} spfd =
+SPFDR {dom} {cod} spfd =
   SPFDsigma {dom} {cod} spfd . SPFDradj {dom} {cod} spfd
 
 -- The index of the family of morphisms comprising the units of a
@@ -1083,11 +1087,14 @@ SPFDunitIdx {dom} {cod} spfd b = resliceByMor {c=cod} {a=(spfdPos spfd)} {b}
 -- family of units.  This corresponds to what is called `L(x, i)` (here
 -- `x` is called `b`) in
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .
+-- We might call it the "left multi-adjoint" of the multi-adjunction defined
+-- by a slice polynomial functor (the polynomial functor itself is the
+-- right multi-adjoint).
 export
-SPFDladjIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceObj dom
-SPFDladjIdx {dom} {cod} spfd b i =
+SPFDL {dom} {cod} spfd b i =
   SPFDladj {dom} {cod} spfd $ SPFDunitIdx {dom} {cod} spfd b i
 
 -- The codomain of the unit of the left multi-adjoint of a slice
@@ -1097,15 +1104,44 @@ SPFDlmuc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceObj cod
 SPFDlmuc {dom} {cod} spfd b =
-  InterpSPFD {dom} {cod} spfd . SPFDladjIdx {dom} {cod} spfd b
+  SPFDR {dom} {cod} spfd . SPFDL {dom} {cod} spfd b
 
--- As a parametric right adjoint, a polynomial functor has a left multi-adjoint.
+-- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
+-- (so it is itself a right multi-adjoint).
 export
 SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceMorphism {a=cod} b (SPFDlmuc {dom} {cod} spfd b i)
 SPFDlmadj {dom} {cod} spfd b i ec eb =
   (i ec eb ** \dd => (((ec ** i ec eb) ** snd dd) ** Element0 eb Refl))
+
+-- This corresponds to the left-to-right direction of the isomorphism
+-- described in Theorem 2.4 at
+-- https://ncatlab.org/nlab/show/multi-adjoint#definition .
+-- It is the analogue of the left adjunct of a slice polynomial functor
+-- viewed as a multi-adjoint (which it is by virtue of being a parametric
+-- right adjoint, and of every slice category of `Type` having a terminal
+-- object, namely the identity morphism in the category-theoretic view, or
+-- `const Unit` in the dependent-type view).  So we might call it the
+-- "left multi-adjunct" of the multi-adjunction defined by a slice polynomial
+-- functor.
+export
+SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x : SliceObj cod) -> (y : SliceObj dom) ->
+  (i : SliceMorphism {a=cod} x (spfdPos spfd)) ->
+  SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x i) y ->
+  SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y)
+SPFDmultiLAdj {dom} {cod} spfd x y i m = ?SPFDmultiLAdj_hole
+
+-- This is the "right multi-adjunct" of the multi-adjunction defined by a
+-- slice polynomial functor (`SPFDmultiLAdj` is the left multi-adjunct").
+export
+SPFDmultiRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x : SliceObj cod) -> (y : SliceObj dom) ->
+  (i : SliceMorphism {a=cod} x (spfdPos spfd)) ->
+  SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y) ->
+  SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x i) y
+SPFDmultiRAdj {dom} {cod} spfd x y i m = ?SPFDmultiRAdj_hole
 
 --------------------------------
 --------------------------------
