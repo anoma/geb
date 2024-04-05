@@ -1106,15 +1106,6 @@ SPFDlmuc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDlmuc {dom} {cod} spfd b =
   SPFDR {dom} {cod} spfd . SPFDL {dom} {cod} spfd b
 
--- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
--- (so it is itself a right multi-adjoint).
-export
-SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
-  SliceMorphism {a=cod} b (SPFDlmuc {dom} {cod} spfd b i)
-SPFDlmadj {dom} {cod} spfd b i ec eb =
-  (i ec eb ** \dd => (((ec ** i ec eb) ** snd dd) ** Element0 eb Refl))
-
 -- This corresponds to the left-to-right direction of the isomorphism
 -- described in Theorem 2.4 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .
@@ -1144,6 +1135,15 @@ SPFDmultiRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y) ->
   SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x i) y
 SPFDmultiRAdj {dom} {cod} spfd x y i m = ?SPFDmultiRAdj_hole
+
+-- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
+-- (so it is itself a right multi-adjoint).
+export
+SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  SliceMorphism {a=cod} b (SPFDlmuc {dom} {cod} spfd b i)
+SPFDlmadj {dom} {cod} spfd b i ec eb =
+  (i ec eb ** \dd => (((ec ** i ec eb) ** snd dd) ** Element0 eb Refl))
 
 --------------------------------
 --------------------------------
