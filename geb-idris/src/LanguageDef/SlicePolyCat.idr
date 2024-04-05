@@ -1106,6 +1106,31 @@ SPFDlmuc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDlmuc {dom} {cod} spfd b =
   SPFDR {dom} {cod} spfd . SPFDL {dom} {cod} spfd b
 
+-- The "unique composite" `b -> SPFDR a -> SPFDR 1` induced by given
+-- morphism `b -> SPFDR a`, as described at
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#properties .
+export
+SPFDfactPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=cod} b (spfdPos spfd)
+SPFDfactPos {dom} {cod} spfd a b i ec eb = fst $ i ec eb
+
+-- The generic factorization of a morphism through a slice polynomial
+-- functor (which always exists for any parametric right adjoint).
+export
+SPFDfactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=cod}
+    b
+    (SPFDlmuc {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i))
+SPFDfactR {dom} {cod} spfd a b i ec eb =
+  (SPFDfactPos {dom} {cod} spfd a b i ec eb **
+   \dd =>
+    (((ec ** SPFDfactPos {dom} {cod} spfd a b i ec eb) ** snd dd) **
+     Element0 eb Refl))
+
 -- This corresponds to the left-to-right direction of the isomorphism
 -- described in Theorem 2.4 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .
