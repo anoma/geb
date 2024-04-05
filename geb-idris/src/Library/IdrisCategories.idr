@@ -661,6 +661,13 @@ sliceApp : {0 c : Type} -> {0 x, y, z : SliceObj c} ->
   SliceMorphism x z
 sliceApp {c} {x} {y} {z} g f ec ex = g ec ex $ f ec ex
 
+export
+resliceByMor : {0 c : Type} ->
+  {a, b : SliceObj c} -> (i : SliceMorphism {a=c} b a) ->
+  SliceObj (Sigma {a=c} a)
+resliceByMor {c} {a} {b} i ecp =
+  Subset0 (b $ fst ecp) $ \eb => i (fst ecp) eb = snd ecp
+
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 ---- Applicatives and monads in slice categories of `Type` ----
