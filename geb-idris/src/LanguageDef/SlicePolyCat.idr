@@ -1070,12 +1070,25 @@ InterpSPFD : {dom, cod : Type} ->
 InterpSPFD {dom} {cod} spfd =
   SPFDsigma {dom} {cod} spfd . SPFDradj {dom} {cod} spfd
 
+-- The index of the family of morphisms comprising the units of a
+-- polynomial functor viewed as a parametric right adjoint.
 export
 SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  SliceObj (SPFDbase {dom} {cod} spfd)
+SPFDunitIdx {dom} {cod} spfd b = resliceByMor {c=cod} {a=(spfdPos spfd)} {b}
+
+-- The composition of the left-adjoint component of a polynomial functor
+-- viewed as a parametric right adjoint with the index functor of the
+-- family of units.  This corresponds to what is called `L(x, i)` (here
+-- `x` is called `b`) in
+-- https://ncatlab.org/nlab/show/multi-adjoint#definition .
+export
+SPFDladjIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceObj dom
-SPFDunitIdx {dom} {cod} spfd b =
-  SPFDladj {dom} {cod} spfd . resliceByMor {c=cod} {a=(spfdPos spfd)} {b}
+SPFDladjIdx {dom} {cod} spfd b i =
+  SPFDladj {dom} {cod} spfd $ SPFDunitIdx {dom} {cod} spfd b i
 
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.
@@ -1084,7 +1097,7 @@ SPFDlmuc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceObj cod
 SPFDlmuc {dom} {cod} spfd b =
-  InterpSPFD {dom} {cod} spfd . SPFDunitIdx {dom} {cod} spfd b
+  InterpSPFD {dom} {cod} spfd . SPFDladjIdx {dom} {cod} spfd b
 
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint.
 export
