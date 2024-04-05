@@ -1142,8 +1142,12 @@ export
 SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceMorphism {a=cod} b (SPFDlmuc {dom} {cod} spfd b i)
-SPFDlmadj {dom} {cod} spfd b i ec eb =
-  (i ec eb ** \dd => (((ec ** i ec eb) ** snd dd) ** Element0 eb Refl))
+SPFDlmadj {dom} {cod} spfd b i =
+  SPFDmultiLAdj {dom} {cod} spfd
+    b
+    (SPFDL {dom} {cod} spfd b i)
+    i
+    (sliceId {a=dom} $ SPFDL {dom} {cod} spfd b i)
 
 --------------------------------
 --------------------------------
