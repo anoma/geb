@@ -1024,7 +1024,9 @@ SliceSigmaPiFDup {c} {e} {d} =
 -- two functors,  must be such that the functors can be composed.
 -- See for example:
 --  - https://ncatlab.org/nlab/show/parametric+right+adjoint
---
+-- (Recall that `SliceSigmaPiFR` is a base change followed by a `SlicePiF`,
+-- while `SliceSigmaPiFL` is a base change followed by a `SliceSigmaF`.)
+
 -- This is the dependent (slice) analogue of an arena (`PolyFunc`,
 -- AKA `MLArena`).
 public export
