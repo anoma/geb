@@ -1064,6 +1064,13 @@ SPFDladj {dom} {cod} spfd =
   SliceSigmaPiFL {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
     $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
 
+export
+SPFDladjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDladj {dom} {cod} spfd)
+SPFDladjMap {dom} {cod} spfd =
+  ssplMap {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
+    $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
+
 -- The dependent-sum component of a polynomial functor expressed as
 -- a parametric right adjoint.
 export
@@ -1100,6 +1107,13 @@ SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceObj (SPFDbase {dom} {cod} spfd)
 SPFDunitIdx {dom} {cod} spfd b = resliceByMor {c=cod} {a=(spfdPos spfd)} {b}
+
+export
+SPFDunitIdxEl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  Type
+SPFDunitIdxEl {dom} {cod} spfd b i =
+  Sigma {a=(SPFDbase {dom} {cod} spfd)} $ SPFDunitIdx {dom} {cod} spfd b i
 
 -- The composition of the left-adjoint component of a polynomial functor
 -- viewed as a parametric right adjoint with the index functor of the
@@ -1143,6 +1157,50 @@ SPFDfactPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDfactPos {dom} {cod} spfd a b i =
   sliceComp {a=cod} (SPFDfactPosL {dom} {cod} spfd a b i) i
 
+export
+SPFDfactDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  (ec : cod) -> b ec -> SliceObj dom
+SPFDfactDir {dom} {cod} spfd a b i ec eb ed =
+   spfdDir spfd ed ec (SPFDfactPos {dom} {cod} spfd a b i ec eb)
+
+export
+SPFDfactRDom : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  (ec : cod) -> SliceObj (b ec)
+SPFDfactRDom {dom} {cod} spfd a b i ec eb =
+  Sigma {a=dom} $ SPFDfactDir {dom} {cod} spfd a b i ec eb
+
+export
+SPFDfactRidxCod : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  (ec : cod) -> (eb : b ec) -> SPFDbase {dom} {cod} spfd
+SPFDfactRidxCod {dom} {cod} spfd a b i ec eb =
+  (ec ** SPFDfactPos {dom} {cod} spfd a b i ec eb)
+
+export
+SPFDfactRidx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  (ec : cod) -> (eb : b ec) ->
+  SPFDunitIdx {dom} {cod} spfd b
+    (SPFDfactPos {dom} {cod} spfd a b i)
+    (SPFDfactRidxCod {dom} {cod} spfd a b i ec eb)
+SPFDfactRidx {dom} {cod} spfd a b i ec eb = Element0 eb Refl
+
+export
+SPFDfactRdir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  (ec : cod) -> (eb : b ec) ->
+  SPFDunitIdxEl {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i)
+SPFDfactRdir {dom} {cod} spfd a b i ec eb =
+  (SPFDfactRidxCod {dom} {cod} spfd a b i ec eb **
+   SPFDfactRidx {dom} {cod} spfd a b i ec eb)
+
 -- The generic factorization of a morphism through a slice polynomial
 -- functor (which always exists for any parametric right adjoint).
 export
@@ -1154,8 +1212,8 @@ SPFDfactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     (SPFDlmuc {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i))
 SPFDfactR {dom} {cod} spfd a b i ec eb =
   (SPFDfactPos {dom} {cod} spfd a b i ec eb **
-   \dd =>
-    (((ec ** SPFDfactPos {dom} {cod} spfd a b i ec eb) ** snd dd) **
+   \dd : SPFDfactRDom {dom} {cod} spfd a b i ec eb =>
+    ((SPFDfactRidxCod {dom} {cod} spfd a b i ec eb ** snd dd) **
      Element0 eb Refl))
 
 export
