@@ -1158,6 +1158,14 @@ SPFDfactPos {dom} {cod} spfd a b i =
   sliceComp {a=cod} (SPFDfactPosL {dom} {cod} spfd a b i) i
 
 export
+SPFDlmucPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  SliceObj cod
+SPFDlmucPos {dom} {cod} spfd a b i =
+  SPFDlmuc {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i)
+
+export
 SPFDfactDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
@@ -1207,9 +1215,7 @@ export
 SPFDfactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
-  SliceMorphism {a=cod}
-    b
-    (SPFDlmuc {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i))
+  SliceMorphism {a=cod} b (SPFDlmucPos {dom} {cod} spfd a b i)
 SPFDfactR {dom} {cod} spfd a b i ec eb =
   (SPFDfactPos {dom} {cod} spfd a b i ec eb **
    \dd : SPFDfactRDom {dom} {cod} spfd a b i ec eb =>
