@@ -1274,7 +1274,7 @@ SPFDfactCorrect : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (sliceComp
     (SPFDfactLlift {dom} {cod} spfd a b i)
     (SPFDfactR {dom} {cod} spfd a b i)) =
-      i
+  i
 SPFDfactCorrect {dom} {cod} spfd a b i fext =
   funExt $ \ec => funExt $ \eb =>
     trans (dpEq12 Refl $ funExt $ \(ed ** dd) => Refl) $ sym dpEqPat
