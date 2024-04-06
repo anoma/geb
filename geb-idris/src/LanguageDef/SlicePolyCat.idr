@@ -1035,6 +1035,22 @@ record SPFData (0 dom, cod : Type) where
   spfdPos : SliceObj cod
   spfdDir : dom -> (ec : cod) -> SliceObj (spfdPos ec)
 
+-- The slice-object argument to `SliceSigmaPiFR` which generates the
+-- dependent right-adjoint component of a polynomial functor expressed as
+-- a parametric right adjoint.
+export
+SPFDradjSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> SliceObj (dom, spfdPos spfd ec)
+SPFDradjSl {dom} {cod} spfd ec edp = spfdDir spfd (fst edp) ec (snd edp)
+
+-- The dependent right-adjoint component of a polynomial functor expressed as
+-- a parametric right adjoint.
+export
+SPFDradjDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> SliceFunctor dom (spfdPos spfd ec)
+SPFDradjDep {dom} {cod} spfd ec =
+  SliceSigmaPiFR {c=dom} {e=(spfdPos spfd ec)} $ SPFDradjSl {dom} {cod} spfd ec
+
 -- The base object of the intermediate slice category in the factorization
 -- of a (slice) polynomial functor as a parametric right adjoint.
 export
