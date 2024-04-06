@@ -662,11 +662,23 @@ sliceApp : {0 c : Type} -> {0 x, y, z : SliceObj c} ->
 sliceApp {c} {x} {y} {z} g f ec ex = g ec ex $ f ec ex
 
 public export
+0 SliceFiber : {0 c : Type} ->
+  {a, b : SliceObj c} -> (i : SliceMorphism {a=c} b a) ->
+  SliceMorphism {a=c} a (SliceObj . b)
+SliceFiber {c} {a} {b} i ec ea eb = (i ec eb = ea)
+
+public export
+sliceFiberByMor : {0 c : Type} ->
+  {a, b : SliceObj c} -> (i : SliceMorphism {a=c} b a) ->
+  (ec : c) -> SliceObj (a ec) -- SliceObj (Sigma {a=c} a)
+sliceFiberByMor {c} {a} {b} i ec ea =
+  Subset0 (b ec) $ SliceFiber {c} {a} {b} i ec ea
+
+public export
 resliceByMor : {0 c : Type} ->
   {a, b : SliceObj c} -> (i : SliceMorphism {a=c} b a) ->
   SliceObj (Sigma {a=c} a)
-resliceByMor {c} {a} {b} i ecp =
-  Subset0 (b $ fst ecp) $ \eb => i (fst ecp) eb = snd ecp
+resliceByMor {c} {a} {b} i ecp = sliceFiberByMor i (fst ecp) (snd ecp)
 
 ---------------------------------------------------------------
 ---------------------------------------------------------------
