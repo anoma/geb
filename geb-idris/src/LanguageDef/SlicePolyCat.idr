@@ -1125,7 +1125,14 @@ SPFDlmuc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDlmuc {dom} {cod} spfd b =
   SPFDR {dom} {cod} spfd . SPFDL {dom} {cod} spfd b
 
--- The "unique composite" `b -> SPFDR a -> SPFDR 1` induced by given
+export
+SPFDfactPosL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  SliceMorphism {a=cod} (SPFDR {dom} {cod} spfd a) (spfdPos spfd)
+SPFDfactPosL {dom} {cod} spfd a b i ec epmda = fst epmda
+
+-- The "unique composite" `b -> SPFDR a -> SPFDR 1` induced by a given
 -- morphism `b -> SPFDR a`, as described at
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#properties .
 export
@@ -1133,7 +1140,8 @@ SPFDfactPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
   SliceMorphism {a=cod} b (spfdPos spfd)
-SPFDfactPos {dom} {cod} spfd a b i ec eb = fst $ i ec eb
+SPFDfactPos {dom} {cod} spfd a b i =
+  sliceComp {a=cod} (SPFDfactPosL {dom} {cod} spfd a b i) i
 
 -- The generic factorization of a morphism through a slice polynomial
 -- functor (which always exists for any parametric right adjoint).
