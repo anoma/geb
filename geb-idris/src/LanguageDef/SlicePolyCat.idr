@@ -1083,6 +1083,19 @@ SPFDsigmaMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDsigma {dom} {cod} spfd)
 SPFDsigmaMap {dom} {cod} spfd = ssMap {c=cod} {sl=(spfdPos spfd)}
 
+-- The dependent-sum component of a polynomial functor expressed as
+-- a parametric right adjoint is itself a _left_ adjoint, to a base
+-- change.  This is that base change, the right adjoint to `SPFDsigma`.
+export
+SPFDsigmaRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFunctor cod (SPFDbase {dom} {cod} spfd)
+SPFDsigmaRAdj {dom} {cod} spfd = SliceBCF {c=cod} (spfdPos spfd)
+
+export
+SPFDsigmaRAdjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDsigmaRAdj {dom} {cod} spfd)
+SPFDsigmaRAdjMap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
+
 -- We call the interpretation of an `SPFData` as a slice polynomial functor
 -- `SPFDR` because, as we shall see below, the slice polynomial functor may
 -- be viewed as a right multi-adjoint.  Hence the `SPFData` may be viewed
