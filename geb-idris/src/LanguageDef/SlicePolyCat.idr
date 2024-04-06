@@ -1181,8 +1181,8 @@ SPFDlmucPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
   SliceObj cod
-SPFDlmucPos {dom} {cod} spfd a b i =
-  SPFDlmuc {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i)
+SPFDlmucPos {dom} {cod} spfd a b =
+  SPFDlmuc {dom} {cod} spfd b . SPFDfactPos {dom} {cod} spfd a b
 
 export
 SPFDfactDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
