@@ -1037,7 +1037,8 @@ record SPFData (0 dom, cod : Type) where
 
 -- The slice-object argument to `SliceSigmaPiFR` which generates the
 -- dependent right-adjoint component of a polynomial functor expressed as
--- a parametric right adjoint.
+-- a parametric right adjoint.  It is simply a rearrangement of the
+-- parameters of `spfdDir`.
 export
 SPFDradjSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceObj (dom, spfdPos spfd ec)
@@ -1051,6 +1052,12 @@ SPFDradjDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDradjDep {dom} {cod} spfd ec =
   SliceSigmaPiFR {c=dom} {e=(spfdPos spfd ec)} $ SPFDradjSl {dom} {cod} spfd ec
 
+export
+SPFDradjDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> SliceFMap (SPFDradjDep {dom} {cod} spfd ec)
+SPFDradjDepMap {dom} {cod} spfd ec =
+  ssprMap {c=dom} {e=(spfdPos spfd ec)} $ SPFDradjSl {dom} {cod} spfd ec
+
 -- The base object of the intermediate slice category in the factorization
 -- of a (slice) polynomial functor as a parametric right adjoint.
 export
@@ -1062,16 +1069,14 @@ SPFDbase {dom} {cod} = Sigma {a=cod} . spfdPos
 export
 SPFDradj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor dom (SPFDbase {dom} {cod} spfd)
-SPFDradj {dom} {cod} spfd =
-  SliceSigmaPiFR {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
-    $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
+SPFDradj {dom} {cod} spfd sd ecp =
+  SPFDradjDep {dom} {cod} spfd (fst ecp) sd (snd ecp)
 
 export
 SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDradj {dom} {cod} spfd)
-SPFDradjMap {dom} {cod} spfd =
-  ssprMap {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
-    $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
+SPFDradjMap {dom} {cod} spfd x y m ecp =
+  SPFDradjDepMap {dom} {cod} spfd (fst ecp) x y m (snd ecp)
 
 -- The left adjoint of the right-adjoint component of a polynomial functor
 -- expressed as a parametric right adjoint.
