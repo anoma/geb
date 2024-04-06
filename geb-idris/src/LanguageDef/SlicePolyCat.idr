@@ -1102,6 +1102,11 @@ SPFDsigmaRAdjMap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 -- `SPFDR` because, as we shall see below, the slice polynomial functor may
 -- be viewed as a right multi-adjoint.  Hence the `SPFData` may be viewed
 -- as defining a multi-adjunction.
+--
+-- Note that this constitutes the composition of a _left_ adjoint after
+-- a _right_ adjoint, so while it is comprised of adjoints, they go in
+-- opposite directions, so the composite is not (necessarily) itself an
+-- adjoint.  (But it is a parametric right adjoint, hence a multi-adjoint.)
 export
 SPFDR : {dom, cod : Type} ->
   SPFData dom cod -> SliceFunctor dom cod
