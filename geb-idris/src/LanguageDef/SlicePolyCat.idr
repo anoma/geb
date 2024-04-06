@@ -1141,17 +1141,38 @@ SPFDRmap {dom} {cod} spfd x y =
   SPFDsigmaMap {dom} {cod} spfd (SPFDradj spfd x) (SPFDradj spfd y)
   . SPFDradjMap {dom} {cod} spfd x y
 
+export
+0 SPFDunitFiber : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (ec : cod) -> spfdPos spfd ec -> SliceObj (b ec)
+SPFDunitFiber {dom} {cod} spfd b i ec ep eb =
+  SliceFiber {c=cod} {a=(spfdPos spfd)} {b} i ec ep eb -- i ec eb = ep
+
+export
+SPFDunitFibration : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (ec : cod) -> SliceObj (spfdPos spfd ec)
+SPFDunitFibration {dom} {cod} spfd b i ec ep =
+  -- Subset0 (b ec) $ SPFDunitFiber {dom} {cod} spfd b i ec ep
+  sliceFiberByMor {c=cod} {a=(spfdPos spfd)} {b} i ec ep
+
 -- The index of the family of morphisms comprising the units of a
 -- polynomial functor viewed as a parametric right adjoint.
 -- Note that this has a signature like that of `SPFDsigmaRAdj` (the right
 -- adjoint of the dependent-sum component of the polynomial functor)
 -- but with the addition of the `i : SliceMorphism b (spfdPos spfd)`
 -- component.
+--
+-- We are using the morphism `i` as a fibration, so effectively we are
+-- treating it together with its domain `b` as a slice object (in the
+-- slice category of `Type` over `cod`) of `spfdPos spfd`.
 export
 SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceObj (SPFDbase {dom} {cod} spfd)
-SPFDunitIdx {dom} {cod} spfd b = resliceByMor {c=cod} {a=(spfdPos spfd)} {b}
+SPFDunitIdx {dom} {cod} spfd b i ecp =
+  -- SPFDunitFibration {dom} {cod} spfd b i (fst ecp) (snd ecp)
+  resliceByMor {c=cod} {a=(spfdPos spfd)} {b} i ecp
 
 export
 SPFDunitIdxEl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
