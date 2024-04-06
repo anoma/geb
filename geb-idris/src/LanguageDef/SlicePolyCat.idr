@@ -1040,9 +1040,9 @@ record SPFData (0 dom, cod : Type) where
 -- a parametric right adjoint.  It is simply a rearrangement of the
 -- parameters of `spfdDir`.
 export
-SPFDmulAdjSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDradjSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceObj (dom, spfdPos spfd ec)
-SPFDmulAdjSl {dom} {cod} spfd ec edp = spfdDir spfd (fst edp) ec (snd edp)
+SPFDradjSl {dom} {cod} spfd ec edp = spfdDir spfd (fst edp) ec (snd edp)
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
 -- a parametric right adjoint.
@@ -1050,13 +1050,13 @@ export
 SPFDradjDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceFunctor dom (spfdPos spfd ec)
 SPFDradjDep {dom} {cod} spfd ec =
-  SliceSigmaPiFR {c=dom} {e=(spfdPos spfd ec)} $ SPFDmulAdjSl {dom} {cod} spfd ec
+  SliceSigmaPiFR {c=dom} {e=(spfdPos spfd ec)} $ SPFDradjSl {dom} {cod} spfd ec
 
 export
 SPFDradjDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceFMap (SPFDradjDep {dom} {cod} spfd ec)
 SPFDradjDepMap {dom} {cod} spfd ec =
-  ssprMap {c=dom} {e=(spfdPos spfd ec)} $ SPFDmulAdjSl {dom} {cod} spfd ec
+  ssprMap {c=dom} {e=(spfdPos spfd ec)} $ SPFDradjSl {dom} {cod} spfd ec
 
 -- The base object of the intermediate slice category in the factorization
 -- of a (slice) polynomial functor as a parametric right adjoint.
@@ -1077,13 +1077,6 @@ SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDradj {dom} {cod} spfd)
 SPFDradjMap {dom} {cod} spfd x y m ecp =
   SPFDradjDepMap {dom} {cod} spfd (fst ecp) x y m (snd ecp)
-
-export
-SPFDladjDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (ec : cod) -> SliceFunctor (spfdPos spfd ec) dom
-SPFDladjDep {dom} {cod} spfd ec =
-  SliceSigmaPiFL {c=dom} {e=(spfdPos spfd ec)}
-    $ SPFDmulAdjSl {dom} {cod} spfd ec
 
 -- The left adjoint of the right-adjoint component of a polynomial functor
 -- expressed as a parametric right adjoint.
