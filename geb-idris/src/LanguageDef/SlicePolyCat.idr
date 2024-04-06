@@ -1122,6 +1122,10 @@ SPFDRmap {dom} {cod} spfd x y =
 
 -- The index of the family of morphisms comprising the units of a
 -- polynomial functor viewed as a parametric right adjoint.
+-- Note that this has a signature like that of `SPFDsigmaRAdj` (the right
+-- adjoint of the dependent-sum component of the polynomial functor)
+-- but with the addition of the `i : SliceMorphism b (spfdPos spfd)`
+-- component.
 export
 SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
@@ -1135,10 +1139,10 @@ SPFDunitIdxEl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDunitIdxEl {dom} {cod} spfd b i =
   Sigma {a=(SPFDbase {dom} {cod} spfd)} $ SPFDunitIdx {dom} {cod} spfd b i
 
--- The composition of the left-adjoint component of a polynomial functor
--- viewed as a parametric right adjoint with the index functor of the
--- family of units.  This corresponds to what is called `L(x, i)` (here
--- `x` is called `b`) in
+-- The composition of the left adjoint of the right-adjoint component of a
+-- polynomial functor viewed as a parametric right adjoint with the index
+-- functor of the family of units.  This corresponds to what is called `L(x, i)`
+-- (here `x` is called `b`) in
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .
 -- We might call it the "left multi-adjoint" of the multi-adjunction defined
 -- by a slice polynomial functor (the polynomial functor itself is the
