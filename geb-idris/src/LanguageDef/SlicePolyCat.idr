@@ -1165,6 +1165,24 @@ SPFDsigmaRAdjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDsigmaRAdj {dom} {cod} spfd)
 SPFDsigmaRAdjMap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 
+export
+SPFDRdep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> SliceObj dom -> Type
+SPFDRdep {dom} {cod} spfd ec =
+  SPFDsigmaDep {dom} {cod} spfd ec . flip (SPFDradjPos {dom} {cod} spfd ec)
+
+export
+SPFDRdepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> {0 a, b : SliceObj dom} ->
+  SliceMorphism {a=dom} a b ->
+  SPFDRdep {dom} {cod} spfd ec a ->
+  SPFDRdep {dom} {cod} spfd ec b
+SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab =
+  SPFDsigmaDepMap {dom} {cod} spfd ec
+    {a=(flip (SPFDradjPos {dom} {cod} spfd ec) a)}
+    {b=(flip (SPFDradjPos {dom} {cod} spfd ec) b)}
+    $ \ep => SPFDradjPosMap {dom} {cod} spfd ec ep mab
+
 -- We call the interpretation of an `SPFData` as a slice polynomial functor
 -- `SPFDR` because, as we shall see below, the slice polynomial functor may
 -- be viewed as a right multi-adjoint.  Hence the `SPFData` may be viewed
@@ -1177,15 +1195,13 @@ SPFDsigmaRAdjMap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 export
 SPFDR : {dom, cod : Type} ->
   SPFData dom cod -> SliceFunctor dom cod
-SPFDR {dom} {cod} spfd =
-  SPFDsigma {dom} {cod} spfd . SPFDradj {dom} {cod} spfd
+SPFDR {dom} {cod} spfd = flip $ SPFDRdep {dom} {cod} spfd
 
 export
 SPFDRmap : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceFMap (SPFDR {dom} {cod} spfd)
-SPFDRmap {dom} {cod} spfd x y =
-  SPFDsigmaMap {dom} {cod} spfd (SPFDradj spfd x) (SPFDradj spfd y)
-  . SPFDradjMap {dom} {cod} spfd x y
+SPFDRmap {dom} {cod} spfd a b mab ec =
+  SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab
 
 export
 SPFDRfib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
