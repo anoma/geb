@@ -1204,13 +1204,6 @@ SPFDRmap {dom} {cod} spfd a b mab ec =
   SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab
 
 export
-SPFDRfib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
-  (ec : cod) -> SliceFunctor dom (b ec)
-SPFDRfib {dom} {cod} spfd b i ec a eb =
-  SPFDradjDep {dom} {cod} spfd ec a (i ec eb)
-
-export
 0 SPFDunitFiber : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   (ec : cod) -> spfdPos spfd ec -> SliceObj (b ec)
@@ -1265,14 +1258,21 @@ SPFDL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDL {dom} {cod} spfd b i =
   SPFDladj {dom} {cod} spfd $ SPFDunitIdx {dom} {cod} spfd b i
 
+export
+SPFDlmucDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  SliceObj dom -> SliceObj cod
+SPFDlmucDep {dom} {cod} spfd b i a ec =
+  SPFDRdep {dom} {cod} spfd ec $ SPFDL {dom} {cod} spfd b i
+
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.
 export
 SPFDlmuc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceObj cod
-SPFDlmuc {dom} {cod} spfd b =
-  SPFDR {dom} {cod} spfd . SPFDL {dom} {cod} spfd b
+SPFDlmuc {dom} {cod} spfd b i =
+  SPFDlmucDep {dom} {cod} spfd b i (SPFDL {dom} {cod} spfd b i)
 
 export
 SPFDfactPosL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
