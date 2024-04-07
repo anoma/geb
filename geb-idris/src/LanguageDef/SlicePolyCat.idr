@@ -1043,7 +1043,7 @@ spfdDirFlip : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
 spfdDirFlip {dom} {cod} spfd ec ep ed = spfdDir spfd ed ec ep
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
--- a position-dependent representable presheaf on slice objects of the domain.
+-- a position-dependent representable copresheaf on slice objects of the domain.
 export
 SPFDradjPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceObj dom -> Type
