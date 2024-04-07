@@ -1107,24 +1107,25 @@ SPFDladjMap {dom} {cod} spfd =
     $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
 
 -- The dependent-sum component of a polynomial functor expressed as
+-- a codomain-parameterized presheaf on slice objects over positions.
+export
+SPFDsigmaDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> SliceObj (spfdPos spfd ec) -> Type
+SPFDsigmaDep {dom} {cod} spfd ec = Sigma {a=(spfdPos spfd ec)}
+
+-- The dependent-sum component of a polynomial functor expressed as
 -- a parametric right adjoint.
 export
 SPFDsigma : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor (SPFDbase {dom} {cod} spfd) cod
-SPFDsigma {dom} {cod} spfd = SliceSigmaF {c=cod} (spfdPos spfd)
+SPFDsigma {dom} {cod} spfd bsl ec =
+  -- SliceSigmaF {c=cod} (spfdPos spfd) bsl ec
+  SPFDsigmaDep {dom} {cod} spfd ec (curry bsl ec)
 
 export
 SPFDsigmaMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDsigma {dom} {cod} spfd)
 SPFDsigmaMap {dom} {cod} spfd = ssMap {c=cod} {sl=(spfdPos spfd)}
-
--- The dependent-sum component of a polynomial functor expressed as
--- a parametric right adjoint, with its parameters reordered to make it
--- a codomain-dependent slice object over slices over the base.
-export
-SPFDsigmaSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  cod -> SliceObj (SliceObj (SPFDbase {dom} {cod} spfd))
-SPFDsigmaSl {dom} {cod} spfd = flip $ SPFDsigma {dom} {cod} spfd
 
 export
 SPFDsigmaFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
