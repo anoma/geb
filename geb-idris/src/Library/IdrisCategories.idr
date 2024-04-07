@@ -670,7 +670,7 @@ SliceFiber {c} {a} {b} i ec ea eb = (i ec eb = ea)
 public export
 sliceFiberByMor : {0 c : Type} ->
   {a, b : SliceObj c} -> (i : SliceMorphism {a=c} b a) ->
-  (ec : c) -> SliceObj (a ec) -- SliceObj (Sigma {a=c} a)
+  (ec : c) -> SliceObj (a ec)
 sliceFiberByMor {c} {a} {b} i ec ea =
   Subset0 (b ec) $ SliceFiber {c} {a} {b} i ec ea
 
@@ -679,6 +679,19 @@ resliceByMor : {0 c : Type} ->
   {a, b : SliceObj c} -> (i : SliceMorphism {a=c} b a) ->
   SliceObj (Sigma {a=c} a)
 resliceByMor {c} {a} {b} i ecp = sliceFiberByMor i (fst ecp) (snd ecp)
+
+public export
+0 SlSliceToSlice : {0 c : Type} -> {a : SliceObj c} ->
+  SliceObj (Sigma {a=c} a) -> SliceObj c
+SlSliceToSlice {c} {a} sl ec = Sigma {a=(a ec)} (curry sl ec)
+
+public export
+0 slSliceToMor : {0 c : Type} -> {a : SliceObj c} ->
+  (sl : SliceObj (Sigma {a=c} a)) ->
+  SliceMorphism {a=c} (SlSliceToSlice {a} {c} sl) a
+slSliceToMor {c} {a} sl ec = DPair.fst
+
+---------------------------------------------------------------
 
 ---------------------------------------------------------------
 ---------------------------------------------------------------
