@@ -1040,9 +1040,9 @@ record SPFData (0 dom, cod : Type) where
 -- a parametric right adjoint.  It is simply a rearrangement of the
 -- parameters of `spfdDir`.
 export
-SPFDradjSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDdirSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceObj (dom, spfdPos spfd ec)
-SPFDradjSl {dom} {cod} spfd ec edp = spfdDir spfd (fst edp) ec (snd edp)
+SPFDdirSl {dom} {cod} spfd ec edp = spfdDir spfd (fst edp) ec (snd edp)
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
 -- a parametric right adjoint.
@@ -1050,20 +1050,13 @@ export
 SPFDradjDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceFunctor dom (spfdPos spfd ec)
 SPFDradjDep {dom} {cod} spfd ec =
-  SliceSigmaPiFR {c=dom} {e=(spfdPos spfd ec)} $ SPFDradjSl {dom} {cod} spfd ec
+  SliceSigmaPiFR {c=dom} {e=(spfdPos spfd ec)} $ SPFDdirSl {dom} {cod} spfd ec
 
 export
 SPFDradjDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceFMap (SPFDradjDep {dom} {cod} spfd ec)
 SPFDradjDepMap {dom} {cod} spfd ec =
-  ssprMap {c=dom} {e=(spfdPos spfd ec)} $ SPFDradjSl {dom} {cod} spfd ec
-
-export
-SPFDRadjFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
-  (ec : cod) -> SliceFunctor dom (b ec)
-SPFDRadjFib {dom} {cod} spfd b i ec a eb =
-  SPFDradjDep {dom} {cod} spfd ec a (i ec eb)
+  ssprMap {c=dom} {e=(spfdPos spfd ec)} $ SPFDdirSl {dom} {cod} spfd ec
 
 -- The base object of the intermediate slice category in the factorization
 -- of a (slice) polynomial functor as a parametric right adjoint.
@@ -1084,6 +1077,18 @@ SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDradj {dom} {cod} spfd)
 SPFDradjMap {dom} {cod} spfd x y m ecp =
   SPFDradjDepMap {dom} {cod} spfd (fst ecp) x y m (snd ecp)
+
+export
+SPFDRadjSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (sl : SliceObj $ SPFDbase spfd) ->
+  SliceFunctor dom (Sigma {a=(SPFDbase spfd)} sl)
+SPFDRadjSl {dom} {cod} spfd sl a esl = SPFDradj {dom} {cod} spfd a (fst esl)
+
+export
+SPFDRadjFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  SliceFunctor dom (Sigma {a=(SPFDbase spfd)} $ resliceByMor i)
+SPFDRadjFib {dom} {cod} spfd b i = SPFDRadjSl {dom} {cod} spfd (resliceByMor i)
 
 -- The left adjoint of the right-adjoint component of a polynomial functor
 -- expressed as a parametric right adjoint.
@@ -1128,7 +1133,7 @@ SPFDsigmaFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDsigmaFib {dom} {cod} spfd b i ec bsl =
   SliceSigmaF {c=(dom, spfdPos spfd ec)}
     (\ep => Subset0 (b ec) $ \eb => i ec eb = snd ep)
-    (SPFDradjSl spfd ec . DPair.fst)
+    (SPFDdirSl spfd ec . DPair.fst)
 
 -- The dependent-sum component of a polynomial functor expressed as
 -- a parametric right adjoint is itself a _left_ adjoint, to a base
