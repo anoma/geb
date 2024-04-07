@@ -1413,26 +1413,27 @@ SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDmultiLAdj {dom} {cod} spfd x y i m ec ex =
   (i ec ex ** \ed, dd => m ed (((ec ** i ec ex) ** dd) ** Element0 ex Refl))
 
+-- This is the "right multi-adjunct" of the multi-adjunction defined by a
+-- slice polynomial functor (`SPFDmultiLAdj` is the left multi-adjunct").
 export
-SPFDmultiRAdjFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiRAdjMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
-  (fib : SliceMorphism {a=cod} x (spfdPos spfd)) ->
-  ((ec : cod) -> (ex : x ec) ->
-   SPFDradjPos {dom} {cod} spfd ec (fib ec ex) y) ->
-  SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x fib) y
-SPFDmultiRAdjFib {dom} {cod} spfd x y fib m ed dp =
-  case dp of
-    (((ec ** ep) ** dp) ** Element0 ex fibp) => m ec ex ed $ rewrite fibp in dp
+  (m : SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y)) ->
+  SliceMorphism {a=dom}
+    (SPFDL {dom} {cod} spfd x $ SPFDfactPos {dom} {cod} spfd y x m) y
+SPFDmultiRAdjMor {dom} {cod} spfd x y m = SPFDfactL {dom} {cod} spfd y x m
 
 -- This is the "right multi-adjunct" of the multi-adjunction defined by a
 -- slice polynomial functor (`SPFDmultiLAdj` is the left multi-adjunct").
 export
 SPFDmultiRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
-  (fib : SliceMorphism {a=cod} x (spfdPos spfd)) ->
   SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y) ->
-  SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x fib) y
-SPFDmultiRAdj {dom} {cod} spfd x y fib m ed dp = ?SPFDmultiRAdj_hole
+  (fib : SliceMorphism {a=cod} x (spfdPos spfd) **
+   SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x fib) y)
+SPFDmultiRAdj {dom} {cod} spfd x y m =
+  (SPFDfactPos {dom} {cod} spfd y x m **
+   SPFDmultiRAdjMor {dom} {cod} spfd x y m)
 
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
 -- (so it is itself a right multi-adjoint).  This is the unit of the
