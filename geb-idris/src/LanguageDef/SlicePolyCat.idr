@@ -1049,6 +1049,15 @@ SPFDradjPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceObj dom -> Type
 SPFDradjPos {dom} {cod} spfd ec = SliceMorphism {a=dom} . spfdDirFlip spfd ec
 
+export
+SPFDradjPosMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> (ep : spfdPos spfd ec) -> {0 a, b : SliceObj dom} ->
+  SliceMorphism {a=dom} a b ->
+  SPFDradjPos {dom} {cod} spfd ec ep a ->
+  SPFDradjPos {dom} {cod} spfd ec ep b
+SPFDradjPosMap {dom} {cod} spfd ec ep {a} {b} mab dm ed dp =
+  mab ed $ dm ed dp
+
 -- The slice-object argument to `SliceSigmaPiFR` which generates the
 -- dependent right-adjoint component of a polynomial functor expressed as
 -- a parametric right adjoint.  It is simply another rearrangement of the
@@ -1063,14 +1072,18 @@ SPFDdirSl {dom} {cod} spfd ec edp = spfdDir spfd (fst edp) ec (snd edp)
 export
 SPFDradjDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceFunctor dom (spfdPos spfd ec)
-SPFDradjDep {dom} {cod} spfd ec =
-  SliceSigmaPiFR {c=dom} {e=(spfdPos spfd ec)} $ SPFDdirSl {dom} {cod} spfd ec
+SPFDradjDep {dom} {cod} spfd ec sd ep =
+  -- SliceSigmaPiFR {c=dom} {e=(spfdPos spfd ec)}
+  --  (SPFDdirSl {dom} {cod} spfd ec) sd ep
+  SPFDradjPos {dom} {cod} spfd ec ep sd
 
 export
 SPFDradjDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceFMap (SPFDradjDep {dom} {cod} spfd ec)
-SPFDradjDepMap {dom} {cod} spfd ec =
-  ssprMap {c=dom} {e=(spfdPos spfd ec)} $ SPFDdirSl {dom} {cod} spfd ec
+SPFDradjDepMap {dom} {cod} spfd ec a b mab ep =
+  -- ssprMap {c=dom} {e=(spfdPos spfd ec)} (SPFDdirSl {dom} {cod} spfd ec)
+  --  a b mab ep
+  SPFDradjPosMap {dom} {cod} spfd ec ep {a} {b} mab
 
 -- The base object of the intermediate slice category in the factorization
 -- of a (slice) polynomial functor as a parametric right adjoint.
@@ -1348,9 +1361,7 @@ SPFDfactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceMorphism {a=cod} b (SPFDlmucPos {dom} {cod} spfd a b i)
 SPFDfactR {dom} {cod} spfd a b i ec eb =
   (SPFDfactPos {dom} {cod} spfd a b i ec eb **
-   \dd : SPFDfactRDom {dom} {cod} spfd a b i ec eb =>
-    ((SPFDfactRidxCod {dom} {cod} spfd a b i ec eb ** snd dd) **
-     Element0 eb Refl))
+   \ed, db => (((ec ** fst $ i ec eb) ** db) ** Element0 eb Refl))
 
 export
 SPFDfactL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1362,7 +1373,7 @@ SPFDfactL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDfactL {dom} {cod} spfd a b i ed ecdb =
   case ecdb of
     ((ec ** dd) ** Element0 eb eqc) =>
-      snd (i (fst ec) eb) (ed ** rewrite eqc in dd)
+      snd (i (fst ec) eb) ed $ rewrite eqc in dd
 
 export
 SPFDfactLlift : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1388,7 +1399,7 @@ SPFDfactCorrect : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   i
 SPFDfactCorrect {dom} {cod} spfd a b i fext =
   funExt $ \ec => funExt $ \eb =>
-    trans (dpEq12 Refl $ funExt $ \(ed ** dd) => Refl) $ sym dpEqPat
+    trans (dpEq12 Refl $ funExt $ \ed => funExt $ \dd => Refl) $ sym dpEqPat
 
 -- This corresponds to the left-to-right direction of the isomorphism
 -- described in Theorem 2.4 at
@@ -1407,18 +1418,17 @@ SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x i) y ->
   SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y)
 SPFDmultiLAdj {dom} {cod} spfd x y i m ec ex =
-  (i ec ex **
-   \dd => m (fst dd) (((ec ** i ec ex) ** snd dd) ** Element0 ex Refl))
+  (i ec ex ** \ed, dd => m ed (((ec ** i ec ex) ** dd) ** Element0 ex Refl))
 
 -- This is the "right multi-adjunct" of the multi-adjunction defined by a
 -- slice polynomial functor (`SPFDmultiLAdj` is the left multi-adjunct").
 export
 SPFDmultiRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
-  (i : SliceMorphism {a=cod} x (spfdPos spfd)) ->
+  (fib : SliceMorphism {a=cod} x (spfdPos spfd)) ->
   SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y) ->
-  SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x i) y
-SPFDmultiRAdj {dom} {cod} spfd x y i m = ?SPFDmultiRAdj_hole
+  SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x fib) y
+SPFDmultiRAdj {dom} {cod} spfd x y fib m = ?SPFDmultiRAdj_hole
 
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
 -- (so it is itself a right multi-adjoint).  This is the unit of the
