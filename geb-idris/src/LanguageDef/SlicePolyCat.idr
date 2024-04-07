@@ -1114,6 +1114,17 @@ SPFDsigmaDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDsigmaDep {dom} {cod} spfd ec = Sigma {a=(spfdPos spfd ec)}
 
 -- The dependent-sum component of a polynomial functor expressed as
+-- a codomain-parameterized presheaf on slice objects over positions.
+export
+SPFDsigmaDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> {0 a, b : SliceObj $ spfdPos spfd ec} ->
+  SliceMorphism {a=(spfdPos spfd ec)} a b ->
+  SPFDsigmaDep {dom} {cod} spfd ec a ->
+  SPFDsigmaDep {dom} {cod} spfd ec b
+SPFDsigmaDepMap {dom} {cod} spfd ec {a} {b} m esa =
+  (fst esa ** m (fst esa) (snd esa))
+
+-- The dependent-sum component of a polynomial functor expressed as
 -- a parametric right adjoint.
 export
 SPFDsigma : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1125,7 +1136,10 @@ SPFDsigma {dom} {cod} spfd bsl ec =
 export
 SPFDsigmaMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDsigma {dom} {cod} spfd)
-SPFDsigmaMap {dom} {cod} spfd = ssMap {c=cod} {sl=(spfdPos spfd)}
+SPFDsigmaMap {dom} {cod} spfd a b m ec =
+  -- ssMap {c=cod} {sl=(spfdPos spfd)} a b m ec
+  SPFDsigmaDepMap {dom} {cod} spfd ec {a=(curry a ec)} {b=(curry b ec)}
+    $ \ep => m (ec ** ep)
 
 export
 SPFDsigmaFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
