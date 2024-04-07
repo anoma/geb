@@ -1166,6 +1166,13 @@ SPFDRmap {dom} {cod} spfd x y =
   . SPFDradjMap {dom} {cod} spfd x y
 
 export
+SPFDRfib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (ec : cod) -> SliceFunctor dom (b ec)
+SPFDRfib {dom} {cod} spfd b i ec a eb =
+  SPFDradjDep {dom} {cod} spfd ec a (i ec eb)
+
+export
 0 SPFDunitFiber : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   (ec : cod) -> spfdPos spfd ec -> SliceObj (b ec)
