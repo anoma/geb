@@ -1236,13 +1236,6 @@ SPFDunitIdx {dom} {cod} spfd b i ecp =
   -- SPFDunitFibration {dom} {cod} spfd b i (fst ecp) (snd ecp)
   resliceByMor {c=cod} {a=(spfdPos spfd)} {b} i ecp
 
-export
-SPFDunitIdxEl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
-  Type
-SPFDunitIdxEl {dom} {cod} spfd b i =
-  Sigma {a=(SPFDbase {dom} {cod} spfd)} $ SPFDunitIdx {dom} {cod} spfd b i
-
 -- The composition of the left adjoint of the right-adjoint component of a
 -- polynomial functor viewed as a parametric right adjoint with the index
 -- functor of the family of units.  This corresponds to what is called `L(x, i)`
@@ -1264,6 +1257,12 @@ SPFDlmucDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj dom -> SliceObj cod
 SPFDlmucDep {dom} {cod} spfd b i a ec =
   SPFDRdep {dom} {cod} spfd ec $ SPFDL {dom} {cod} spfd b i
+
+export
+SPFDlmucCopr : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  cod -> SliceObj dom -> Type
+SPFDlmucCopr {dom} {cod} spfd b i = flip $ SPFDlmucDep {dom} {cod} spfd b i
 
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.
@@ -1338,10 +1337,10 @@ SPFDfactRdir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) ->
-  SPFDunitIdxEl {dom} {cod} spfd b (SPFDfactPos {dom} {cod} spfd a b i)
-SPFDfactRdir {dom} {cod} spfd a b i ec eb =
-  (SPFDfactRidxCod {dom} {cod} spfd a b i ec eb **
-   SPFDfactRidx {dom} {cod} spfd a b i ec eb)
+  SliceMorphism {a=dom}
+    (spfdDirFlip spfd ec $ SPFDfactPos {dom} {cod} spfd a b i ec eb)
+    a
+SPFDfactRdir {dom} {cod} spfd a b i ec eb = snd (i ec eb)
 
 -- The generic factorization of a morphism through a slice polynomial
 -- functor (which always exists for any parametric right adjoint).
