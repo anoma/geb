@@ -1351,7 +1351,10 @@ SPFDfactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceMorphism {a=cod} b (SPFDlmucPos {dom} {cod} spfd a b i)
 SPFDfactR {dom} {cod} spfd a b i ec eb =
   (SPFDfactPos {dom} {cod} spfd a b i ec eb **
-   \ed, db => (((ec ** fst $ i ec eb) ** db) ** Element0 eb Refl))
+   \ed : dom,
+    db : spfdDirFlip spfd ec (SPFDfactPos {dom} {cod} spfd a b i ec eb) ed =>
+      ((SPFDfactRidxCod {dom} {cod} spfd a b i ec eb ** db) **
+       SPFDfactRidx {dom} {cod} spfd a b i ec eb))
 
 export
 SPFDfactL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
