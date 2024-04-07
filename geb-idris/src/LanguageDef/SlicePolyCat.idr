@@ -1035,9 +1035,23 @@ record SPFData (0 dom, cod : Type) where
   spfdPos : SliceObj cod
   spfdDir : dom -> (ec : cod) -> SliceObj (spfdPos ec)
 
+-- Simply a rearrangement of the parameters of `spfdDir`, which can be
+-- more clear or convenient in different orders depending on usage.
+export
+spfdDirFlip : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> spfdPos spfd ec -> SliceObj dom
+spfdDirFlip {dom} {cod} spfd ec ep ed = spfdDir spfd ed ec ep
+
+-- The dependent right-adjoint component of a polynomial functor expressed as
+-- a position-dependent parametric right adjoint.
+export
+SPFDradjPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> spfdPos spfd ec -> SliceObj dom -> Type
+SPFDradjPos {dom} {cod} spfd ec = SliceMorphism {a=dom} . spfdDirFlip spfd ec
+
 -- The slice-object argument to `SliceSigmaPiFR` which generates the
 -- dependent right-adjoint component of a polynomial functor expressed as
--- a parametric right adjoint.  It is simply a rearrangement of the
+-- a parametric right adjoint.  It is simply another rearrangement of the
 -- parameters of `spfdDir`.
 export
 SPFDdirSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
