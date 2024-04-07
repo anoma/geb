@@ -1060,15 +1060,6 @@ SPFDradjPos {dom} {cod} spfd ec ep sd =
   --  SliceMorphism {a=dom} (spfdDirFlip spfd ec ep) sd
   Pi {a=dom} (SPFDradjProf {dom} {cod} spfd ec ep sd)
 
-export
-SPFDradjPosMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (ec : cod) -> (ep : spfdPos spfd ec) -> {0 a, b : SliceObj dom} ->
-  SliceMorphism {a=dom} a b ->
-  SPFDradjPos {dom} {cod} spfd ec ep a ->
-  SPFDradjPos {dom} {cod} spfd ec ep b
-SPFDradjPosMap {dom} {cod} spfd ec ep {a} {b} mab dm ed dp =
-  mab ed $ dm ed dp
-
 -- The dependent right-adjoint component of a polynomial functor expressed as
 -- a parametric right adjoint.
 export
@@ -1077,10 +1068,20 @@ SPFDradjDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDradjDep {dom} {cod} spfd ec sd ep = SPFDradjPos {dom} {cod} spfd ec ep sd
 
 export
+SPFDradjPosMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  {0 a, b : SliceObj dom} -> SliceMorphism {a=dom} a b ->
+  (ec : cod) ->
+  SliceMorphism {a=(spfdPos spfd ec)}
+    (SPFDradjDep {dom} {cod} spfd ec a)
+    (SPFDradjDep {dom} {cod} spfd ec b)
+SPFDradjPosMap {dom} {cod} spfd {a} {b} mab ec ep dm ed dp =
+  mab ed $ dm ed dp
+
+export
 SPFDradjDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceFMap (SPFDradjDep {dom} {cod} spfd ec)
-SPFDradjDepMap {dom} {cod} spfd ec a b mab ep =
-  SPFDradjPosMap {dom} {cod} spfd ec ep {a} {b} mab
+SPFDradjDepMap {dom} {cod} spfd ec a b mab =
+  SPFDradjPosMap {dom} {cod} spfd {a} {b} mab ec
 
 -- The base object of the intermediate slice category in the factorization
 -- of a (slice) polynomial functor as a parametric right adjoint.
@@ -1192,7 +1193,7 @@ SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab =
   SPFDsigmaDepMap {dom} {cod} spfd ec
     {a=(flip (SPFDradjPos {dom} {cod} spfd ec) a)}
     {b=(flip (SPFDradjPos {dom} {cod} spfd ec) b)}
-    $ \ep => SPFDradjPosMap {dom} {cod} spfd ec ep mab
+    $ SPFDradjPosMap {dom} {cod} spfd {a} {b} mab ec
 
 -- We call the interpretation of an `SPFData` as a slice polynomial functor
 -- `SPFDR` because, as we shall see below, the slice polynomial functor may
