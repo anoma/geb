@@ -1011,6 +1011,16 @@ SliceSigmaPiFDup {c} {e} {d} =
     (sspUnit {c} {e} d)
     (SliceSigmaPiFR {c} {e} d)
 
+---------------------------------------
+---------------------------------------
+---- Dependent (slice) profunctors ----
+---------------------------------------
+---------------------------------------
+
+export
+SliceHomProf : {0 c : Type} -> SliceObj c -> SliceObj c -> SliceObj c
+SliceHomProf {c} x y ec = HomProf (x ec) (y ec)
+
 -------------------------------------------
 -------------------------------------------
 ---- General slice polynomial functors ----
@@ -1052,7 +1062,7 @@ export
 SPFDradjProf : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   dom -> (ec : cod) -> spfdPos spfd ec -> SliceObj dom -> Type
 SPFDradjProf {dom} {cod} spfd ed ec ep sd =
-  HomProf (spfdDirFlip spfd ec ep ed) (sd ed)
+  SliceHomProf (spfdDirFlip spfd ec ep) sd ed
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
 -- a position-dependent endofunctor on the slice category over the domain.
