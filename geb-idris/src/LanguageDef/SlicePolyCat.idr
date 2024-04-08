@@ -1443,6 +1443,13 @@ SPFDmultiRcat : {dom, cod : Type} -> (spfd : SPFData dom cod) -> Type
 SPFDmultiRcat {dom} {cod} =
   Sigma {a=(SliceObj cod)} . SPFDposFib {dom} {cod}
 
+export
+SPFDmultiAdjL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x : SliceObj cod) -> (y : SliceObj dom) -> Type
+SPFDmultiAdjL {dom} {cod} spfd x y =
+  Sigma {a=(SPFDposFib spfd x)}
+  $ flip (SliceMorphism {a=dom}) y . SPFDL {dom} {cod} spfd x
+
 -- The left multi-adjoint of the hom-set description of a multi-adjunction
 -- described in Theorem 2.4 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .
@@ -1489,8 +1496,7 @@ export
 SPFDmultiRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
   SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y) ->
-  (fib : SPFDposFib spfd x **
-   SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x fib) y)
+  SPFDmultiAdjL {dom} {cod} spfd x y
 SPFDmultiRAdj {dom} {cod} spfd x y m =
   (SPFDfactPos {dom} {cod} spfd y x m **
    SPFDmultiRAdjMor {dom} {cod} spfd x y m)
