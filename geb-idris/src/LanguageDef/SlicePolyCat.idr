@@ -1434,19 +1434,29 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
   funExt $ \ec => funExt $ \eb =>
     trans (dpEq12 Refl $ funExt $ \ed => funExt $ \dd => Refl) $ sym dpEqPat
 
+export
+SPFDmultiRcatMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceObj cod -> Type
+SPFDmultiRcatMor {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
+
+export
+SPFDmultiRcat : {dom, cod : Type} -> (spfd : SPFData dom cod) -> Type
+SPFDmultiRcat {dom} {cod} =
+  Sigma {a=(SliceObj cod)} . SPFDmultiRcatMor {dom} {cod}
+
 -- The left multi-adjoint of the hom-set description of a multi-adjunction
 -- described in Theorem 2.4 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .
 export
 SPFDmultiL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (x : SliceObj cod ** SliceMorphism {a=cod} x (spfdPos spfd)) ->
-  SliceObj dom
+  SPFDmultiRcat {dom} {cod} spfd -> SliceObj dom
 SPFDmultiL {dom} {cod} spfd fibcod =
   SPFDL {dom} {cod} spfd (fst fibcod) (snd fibcod)
 
 -- This corresponds to the left-to-right direction of the isomorphism
--- described in Theorem 2.4 at
--- https://ncatlab.org/nlab/show/multi-adjoint#definition .
+-- which defines the hom-set description of a multi-adjunction as formulated
+-- in Theorem 2.4 at https://ncatlab.org/nlab/show/multi-adjoint#definition .
+--
 -- It is the analogue of the left adjunct of a slice polynomial functor
 -- viewed as a multi-adjoint (which it is by virtue of being a parametric
 -- right adjoint, and of every slice category of `Type` having a terminal
@@ -1456,16 +1466,17 @@ SPFDmultiL {dom} {cod} spfd fibcod =
 -- functor.
 export
 SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (x : SliceObj cod) -> (i : SliceMorphism {a=cod} x (spfdPos spfd)) ->
-  (y : SliceObj dom) ->
-  SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x i) y ->
-  SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y)
-SPFDmultiLAdj {dom} {cod} spfd x i y m ec ex =
-  (i ec ex ** \ed, dd => m ed (((ec ** i ec ex) ** dd) ** Element0 ex Refl))
+  (x : SPFDmultiRcat {dom} {cod} spfd) -> (y : SliceObj dom) ->
+  SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd (fst x) (snd x)) y ->
+  SliceMorphism {a=cod} (fst x) (SPFDR {dom} {cod} spfd y)
+SPFDmultiLAdj {dom} {cod} spfd x y m ec ex =
+  (snd x ec ex **
+   \ed, dd => m ed (((ec ** snd x ec ex) ** dd) ** Element0 ex Refl))
 
 -- This is the morphism component of the "right multi-adjunct" of the
 -- multi-adjunction defined by a slice polynomial functor (`SPFDmultiLAdj` is
--- the left multi-adjunct").
+-- the left multi-adjunct").  (The fibration component is
+-- `SPFDfactPos`.)
 export
 SPFDmultiRAdjMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
@@ -1494,14 +1505,13 @@ SPFDmultiRAdj {dom} {cod} spfd x y m =
 -- can be defined as the left adjunct applied to the identity morphism.
 export
 SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
-  SliceMorphism {a=cod} b (SPFDlmuc {dom} {cod} spfd b i)
-SPFDlmadj {dom} {cod} spfd b i =
+  (b : SPFDmultiRcat {dom} {cod} spfd) ->
+  SliceMorphism {a=cod} (fst b) (SPFDlmuc {dom} {cod} spfd (fst b) (snd b))
+SPFDlmadj {dom} {cod} spfd b =
   SPFDmultiLAdj {dom} {cod} spfd
     b
-    i
-    (SPFDL {dom} {cod} spfd b i)
-    (sliceId {a=dom} $ SPFDL {dom} {cod} spfd b i)
+    (SPFDmultiL {dom} {cod} spfd b)
+    (sliceId {a=dom} $ SPFDL {dom} {cod} spfd (fst b) (snd b))
 
 --------------------------------
 --------------------------------
