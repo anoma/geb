@@ -1564,6 +1564,18 @@ SPFDasWTF {dom} {cod} spfd =
     (snd . fst)
     fst
 
+0 spfdToWTF : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceNatTrans (SPFDR spfd) (InterpWTF $ SPFDasWTF spfd)
+spfdToWTF {dom} {cod} spfd sd ec (ep ** dm) =
+  (Element0 (ec ** ep) Refl **
+   \(Element0 ((ed, (ec ** ep)) ** dp) Refl) => dm ed dp)
+
+0 spfdFromWTF : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceNatTrans (InterpWTF $ SPFDasWTF spfd) (SPFDR spfd)
+spfdFromWTF {dom} {cod} spfd sd ec
+  (Element0 (ec ** ep) Refl ** dm) =
+    (ep ** \ed, dp => dm (Element0 ((ed, (ec ** ep)) ** dp) Refl))
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
