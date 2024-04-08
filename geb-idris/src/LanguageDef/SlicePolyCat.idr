@@ -1097,6 +1097,10 @@ export
 SPFDbase : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDbase {dom} {cod} = Sigma {a=cod} . spfdPos
 
+export
+SPFDposFib : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
+SPFDposFib {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
+
 -- The right-adjoint component of a polynomial functor expressed as
 -- a parametric right adjoint.
 export
@@ -1123,7 +1127,7 @@ SPFDRadjSl {dom} {cod} spfd sl = SliceBCF sl . SPFDradj {dom} {cod} spfd
 -- the position object.
 export
 SPFDRadjFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceFunctor dom (Sigma {a=(SPFDbase spfd)} $ resliceByMor i)
 SPFDRadjFib {dom} {cod} spfd b i =
   SPFDRadjSl {dom} {cod} spfd (resliceByMor {b} i)
@@ -1233,14 +1237,14 @@ SPFDRmap {dom} {cod} spfd a b mab ec =
 
 export
 0 SPFDunitFiber : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   (ec : cod) -> spfdPos spfd ec -> SliceObj (b ec)
 SPFDunitFiber {dom} {cod} spfd b i ec ep eb =
   SliceFiber {c=cod} {a=(spfdPos spfd)} {b} i ec ep eb -- i ec eb = ep
 
 export
 SPFDunitFibration : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   (ec : cod) -> SliceObj (spfdPos spfd ec)
 SPFDunitFibration {dom} {cod} spfd b i ec ep =
   -- Subset0 (b ec) $ SPFDunitFiber {dom} {cod} spfd b i ec ep
@@ -1250,7 +1254,7 @@ SPFDunitFibration {dom} {cod} spfd b i ec ep =
 -- polynomial functor viewed as a parametric right adjoint.
 -- Note that this has a signature like that of `SPFDsigmaRAdj` (the right
 -- adjoint of the dependent-sum component of the polynomial functor)
--- but with the addition of the `i : SliceMorphism b (spfdPos spfd)`
+-- but with the addition of the `i : SPFDposFib spfd b`
 -- component.
 --
 -- We are using the morphism `i` as a fibration, so effectively we are
@@ -1258,7 +1262,7 @@ SPFDunitFibration {dom} {cod} spfd b i ec ep =
 -- slice category of `Type` over `cod`) of `spfdPos spfd`.
 export
 SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj (SPFDbase {dom} {cod} spfd)
 SPFDunitIdx {dom} {cod} spfd b i ecp =
   -- SPFDunitFibration {dom} {cod} spfd b i (fst ecp) (snd ecp)
@@ -1274,21 +1278,21 @@ SPFDunitIdx {dom} {cod} spfd b i ecp =
 -- right multi-adjoint).
 export
 SPFDL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj dom
 SPFDL {dom} {cod} spfd b i =
   SPFDladj {dom} {cod} spfd $ SPFDunitIdx {dom} {cod} spfd b i
 
 export
 SPFDlmucDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj dom -> SliceObj cod
 SPFDlmucDep {dom} {cod} spfd b i a ec =
   SPFDRdep {dom} {cod} spfd ec $ SPFDL {dom} {cod} spfd b i
 
 export
 SPFDlmucCopr : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   cod -> SliceObj dom -> Type
 SPFDlmucCopr {dom} {cod} spfd b i = flip $ SPFDlmucDep {dom} {cod} spfd b i
 
@@ -1296,7 +1300,7 @@ SPFDlmucCopr {dom} {cod} spfd b i = flip $ SPFDlmucDep {dom} {cod} spfd b i
 -- polynomial functor.
 export
 SPFDlmuc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
+  (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj cod
 SPFDlmuc {dom} {cod} spfd b i =
   SPFDlmucDep {dom} {cod} spfd b i (SPFDL {dom} {cod} spfd b i)
@@ -1314,7 +1318,7 @@ export
 SPFDfactPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
-  SliceMorphism {a=cod} b (spfdPos spfd)
+  SPFDposFib spfd b
 SPFDfactPos {dom} {cod} spfd a b =
   sliceComp {a=cod} (SPFDfactPosL {dom} {cod} spfd a b)
 
@@ -1435,14 +1439,9 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
     trans (dpEq12 Refl $ funExt $ \ed => funExt $ \dd => Refl) $ sym dpEqPat
 
 export
-SPFDmultiRcatMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceObj cod -> Type
-SPFDmultiRcatMor {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
-
-export
 SPFDmultiRcat : {dom, cod : Type} -> (spfd : SPFData dom cod) -> Type
 SPFDmultiRcat {dom} {cod} =
-  Sigma {a=(SliceObj cod)} . SPFDmultiRcatMor {dom} {cod}
+  Sigma {a=(SliceObj cod)} . SPFDposFib {dom} {cod}
 
 -- The left multi-adjoint of the hom-set description of a multi-adjunction
 -- described in Theorem 2.4 at
@@ -1467,7 +1466,7 @@ SPFDmultiL {dom} {cod} spfd fibcod =
 export
 SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SPFDmultiRcat {dom} {cod} spfd) -> (y : SliceObj dom) ->
-  SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd (fst x) (snd x)) y ->
+  SliceMorphism {a=dom} (SPFDmultiL {dom} {cod} spfd x) y ->
   SliceMorphism {a=cod} (fst x) (SPFDR {dom} {cod} spfd y)
 SPFDmultiLAdj {dom} {cod} spfd x y m ec ex =
   (snd x ec ex **
@@ -1490,7 +1489,7 @@ export
 SPFDmultiRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
   SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y) ->
-  (fib : SliceMorphism {a=cod} x (spfdPos spfd) **
+  (fib : SPFDposFib spfd x **
    SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x fib) y)
 SPFDmultiRAdj {dom} {cod} spfd x y m =
   (SPFDfactPos {dom} {cod} spfd y x m **
