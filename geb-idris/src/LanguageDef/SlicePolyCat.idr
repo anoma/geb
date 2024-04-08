@@ -1047,12 +1047,20 @@ spfdDirFlip : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
 spfdDirFlip {dom} {cod} spfd ec ep ed = spfdDir spfd ed ec ep
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
+-- a position-dependent profunctor.
+export
+SPFDradjProf : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  dom -> (ec : cod) -> spfdPos spfd ec -> SliceObj dom -> Type
+SPFDradjProf {dom} {cod} spfd ed ec ep sd =
+  HomProf (spfdDirFlip spfd ec ep ed) (sd ed)
+
+-- The dependent right-adjoint component of a polynomial functor expressed as
 -- a position-dependent endofunctor on the slice category over the domain.
 export
 SPFDradjEndo : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceEndofunctor dom
 SPFDradjEndo {dom} {cod} spfd ec ep sd ed =
-  HomProf (spfdDirFlip spfd ec ep ed) (sd ed)
+  SPFDradjProf {dom} {cod} spfd ed ec ep sd
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
 -- a position-dependent representable copresheaf on slice objects of the domain.
@@ -1100,6 +1108,15 @@ SPFDbase {dom} {cod} = Sigma {a=cod} . spfdPos
 export
 SPFDposFib : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDposFib {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
+
+-- The dependent right-adjoint component of a polynomial functor expressed as
+-- a position-dependent endofunctor on the slice category over the domain,
+-- and in terms of `SPFDbase`.
+export
+SPFDradjEndoBase : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDbase {dom} {cod} spfd -> SliceEndofunctor dom
+SPFDradjEndoBase {dom} {cod} spfd ecp =
+  SPFDradjEndo {dom} {cod} spfd (fst ecp) (snd ecp)
 
 -- The right-adjoint component of a polynomial functor expressed as
 -- a parametric right adjoint.
