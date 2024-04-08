@@ -1017,6 +1017,10 @@ SliceSigmaPiFDup {c} {e} {d} =
 -------------------------------------------
 -------------------------------------------
 
+--------------------
+---- Definition ----
+--------------------
+
 -- A polynomial functor on slice categories may be described as a parametric
 -- right adjoint whose right-adjoint component is `SliceSigmaPiFR` (which
 -- has the left adjoint `SliceSigmaPiFL`) and whose following dependent-sum
@@ -1043,11 +1047,11 @@ spfdDirFlip : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
 spfdDirFlip {dom} {cod} spfd ec ep ed = spfdDir spfd ed ec ep
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
--- a position-dependent representable copresheaf on slice objects of the domain.
+-- a position-dependent endofunctor on the slice category over the domain.
 export
-SPFDradjProf : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDradjEndo : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceEndofunctor dom
-SPFDradjProf {dom} {cod} spfd ec ep sd ed =
+SPFDradjEndo {dom} {cod} spfd ec ep sd ed =
   HomProf (spfdDirFlip spfd ec ep ed) (sd ed)
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
@@ -1058,10 +1062,13 @@ SPFDradjPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDradjPos {dom} {cod} spfd ec ep sd =
   -- Equivalent to:
   --  SliceMorphism {a=dom} (spfdDirFlip spfd ec ep) sd
-  Pi {a=dom} (SPFDradjProf {dom} {cod} spfd ec ep sd)
+  Pi {a=dom} (SPFDradjEndo {dom} {cod} spfd ec ep sd)
 
--- The dependent right-adjoint component of a polynomial functor expressed as
--- a parametric right adjoint.
+-- The dependent right-adjoint component of a polynomial functor expressed in
+-- the usual formulation of a parametric right adjoint as a functor from the
+-- domain to the slice category over the object given by applying the functor
+-- to the terminal object, which in the case of a polynomial functor is the
+-- object of positions.
 export
 SPFDradjDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceFunctor dom (spfdPos spfd ec)
@@ -1085,6 +1092,7 @@ SPFDradjDepMap {dom} {cod} spfd ec a b mab =
 
 -- The base object of the intermediate slice category in the factorization
 -- of a (slice) polynomial functor as a parametric right adjoint.
+-- This is `T1` in the ncat page on parametric right adjoints.
 export
 SPFDbase : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDbase {dom} {cod} = Sigma {a=cod} . spfdPos
@@ -1103,17 +1111,22 @@ SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDradjMap {dom} {cod} spfd x y m ecp =
   SPFDradjDepMap {dom} {cod} spfd (fst ecp) x y m (snd ecp)
 
+-- Fibrate the right adjoint by a dependent-type-style slice object over
+-- the position object.
 export
 SPFDRadjSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (sl : SliceObj $ SPFDbase spfd) ->
   SliceFunctor dom (Sigma {a=(SPFDbase spfd)} sl)
-SPFDRadjSl {dom} {cod} spfd sl a esl = SPFDradj {dom} {cod} spfd a (fst esl)
+SPFDRadjSl {dom} {cod} spfd sl = SliceBCF sl . SPFDradj {dom} {cod} spfd
 
+-- Fibrate the right adjoint by a category-theory-style slice object over
+-- the position object.
 export
 SPFDRadjFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SliceMorphism {a=cod} b (spfdPos spfd)) ->
   SliceFunctor dom (Sigma {a=(SPFDbase spfd)} $ resliceByMor i)
-SPFDRadjFib {dom} {cod} spfd b i = SPFDRadjSl {dom} {cod} spfd (resliceByMor i)
+SPFDRadjFib {dom} {cod} spfd b i =
+  SPFDRadjSl {dom} {cod} spfd (resliceByMor {b} i)
 
 -- The left adjoint of the right-adjoint component of a polynomial functor
 -- expressed as a parametric right adjoint.
@@ -1177,6 +1190,9 @@ SPFDsigmaRAdjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDsigmaRAdj {dom} {cod} spfd)
 SPFDsigmaRAdjMap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 
+-- The composition of the dependent-sum component after the right-adjoint
+-- component yields the interpretation of a polynomial functor as a
+-- parametric right adjoint.
 export
 SPFDRdep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceObj dom -> Type
@@ -1289,7 +1305,7 @@ export
 SPFDfactPosL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   SliceMorphism {a=cod} (SPFDR {dom} {cod} spfd a) (spfdPos spfd)
-SPFDfactPosL {dom} {cod} spfd a b ec epmda = fst epmda
+SPFDfactPosL {dom} {cod} spfd a b ec = DPair.fst
 
 -- The "unique composite" `b -> SPFDR a -> SPFDR 1` induced by a given
 -- morphism `b -> SPFDR a`, as described at
@@ -1348,11 +1364,17 @@ export
 SPFDfactRdir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
+  (ec : cod) -> b ec -> SliceObj dom
+SPFDfactRdir {dom} {cod} spfd a b i ec eb =
+  spfdDirFlip spfd ec $ SPFDfactPos {dom} {cod} spfd a b i ec eb
+
+export
+SPFDfactRdirApp : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj dom) -> (b : SliceObj cod) ->
+  (i : SliceMorphism {a=cod} b (SPFDR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) ->
-  SliceMorphism {a=dom}
-    (spfdDirFlip spfd ec $ SPFDfactPos {dom} {cod} spfd a b i ec eb)
-    a
-SPFDfactRdir {dom} {cod} spfd a b i ec eb = snd (i ec eb)
+  SliceMorphism {a=dom} (SPFDfactRdir {dom} {cod} spfd a b i ec eb) a
+SPFDfactRdirApp {dom} {cod} spfd a b i ec eb = snd (i ec eb)
 
 -- The generic factorization of a morphism through a slice polynomial
 -- functor (which always exists for any parametric right adjoint).
@@ -1364,7 +1386,7 @@ SPFDfactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDfactR {dom} {cod} spfd a b i ec eb =
   (SPFDfactPos {dom} {cod} spfd a b i ec eb **
    \ed : dom,
-    db : spfdDirFlip spfd ec (SPFDfactPos {dom} {cod} spfd a b i ec eb) ed =>
+    db : SPFDfactRdir {dom} {cod} spfd a b i ec eb ed =>
       ((SPFDfactRidxCod {dom} {cod} spfd a b i ec eb ** db) **
        SPFDfactRidx {dom} {cod} spfd a b i ec eb))
 
