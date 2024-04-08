@@ -1516,7 +1516,7 @@ SPFDlmadj {dom} {cod} spfd b =
   SPFDmultiLAdj {dom} {cod} spfd
     b
     (SPFDmultiL {dom} {cod} spfd b)
-    (sliceId {a=dom} $ SPFDL {dom} {cod} spfd (fst b) (snd b))
+    (sliceId {a=dom} $ SPFDmultiL {dom} {cod} spfd b)
 
 --------------------------------
 --------------------------------
