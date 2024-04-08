@@ -1112,6 +1112,16 @@ SPFDbase : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDbase {dom} {cod} = Sigma {a=cod} . spfdPos
 
 export
+SPFDdirBase : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDdirBase {dom} {cod} spfd = (dom, SPFDbase spfd)
+
+export
+SPFDdirTot : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDdirTot {dom} {cod} spfd =
+  (edcp : SPFDdirBase spfd **
+   spfdDir spfd (fst edcp) (fst $ snd edcp) (snd $ snd edcp))
+
+export
 SPFDposFib : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDposFib {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
 
@@ -1540,6 +1550,19 @@ SPFDlmadj {dom} {cod} spfd b =
     b
     (SPFDmultiL {dom} {cod} spfd b)
     (sliceId {a=dom} $ SPFDmultiL {dom} {cod} spfd b)
+
+-----------------------------------------------------------
+---- Slice polynomials (in PRA formulation) as W-types ----
+-----------------------------------------------------------
+
+0 SPFDasWTF : {0 dom, cod : Type} -> SPFData dom cod -> WTypeFunc dom cod
+SPFDasWTF {dom} {cod} spfd =
+  MkWTF {dom} {cod}
+    (SPFDbase spfd)
+    (SPFDdirTot spfd)
+    (fst . fst)
+    (snd . fst)
+    fst
 
 --------------------------------
 --------------------------------
