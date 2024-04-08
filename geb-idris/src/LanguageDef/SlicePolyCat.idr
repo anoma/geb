@@ -1434,6 +1434,16 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
   funExt $ \ec => funExt $ \eb =>
     trans (dpEq12 Refl $ funExt $ \ed => funExt $ \dd => Refl) $ sym dpEqPat
 
+-- The left multi-adjoint of the hom-set description of a multi-adjunction
+-- described in Theorem 2.4 at
+-- https://ncatlab.org/nlab/show/multi-adjoint#definition .
+export
+SPFDmultiL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x : SliceObj cod ** SliceMorphism {a=cod} x (spfdPos spfd)) ->
+  SliceObj dom
+SPFDmultiL {dom} {cod} spfd fibcod =
+  SPFDL {dom} {cod} spfd (fst fibcod) (snd fibcod)
+
 -- This corresponds to the left-to-right direction of the isomorphism
 -- described in Theorem 2.4 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .
@@ -1446,21 +1456,21 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
 -- functor.
 export
 SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (x : SliceObj cod) -> (y : SliceObj dom) ->
-  (i : SliceMorphism {a=cod} x (spfdPos spfd)) ->
+  (x : SliceObj cod) -> (i : SliceMorphism {a=cod} x (spfdPos spfd)) ->
+  (y : SliceObj dom) ->
   SliceMorphism {a=dom} (SPFDL {dom} {cod} spfd x i) y ->
   SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y)
-SPFDmultiLAdj {dom} {cod} spfd x y i m ec ex =
+SPFDmultiLAdj {dom} {cod} spfd x i y m ec ex =
   (i ec ex ** \ed, dd => m ed (((ec ** i ec ex) ** dd) ** Element0 ex Refl))
 
--- This is the "right multi-adjunct" of the multi-adjunction defined by a
--- slice polynomial functor (`SPFDmultiLAdj` is the left multi-adjunct").
+-- This is the morphism component of the "right multi-adjunct" of the
+-- multi-adjunction defined by a slice polynomial functor (`SPFDmultiLAdj` is
+-- the left multi-adjunct").
 export
 SPFDmultiRAdjMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
   (m : SliceMorphism {a=cod} x (SPFDR {dom} {cod} spfd y)) ->
-  SliceMorphism {a=dom}
-    (SPFDL {dom} {cod} spfd x $ SPFDfactPos {dom} {cod} spfd y x m) y
+  SliceMorphism {a=dom} (SPFDlPos {dom} {cod} spfd y x m) y
 SPFDmultiRAdjMor {dom} {cod} spfd x y m = SPFDfactL {dom} {cod} spfd y x m
 
 -- This is the "right multi-adjunct" of the multi-adjunction defined by a
@@ -1489,8 +1499,8 @@ SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDlmadj {dom} {cod} spfd b i =
   SPFDmultiLAdj {dom} {cod} spfd
     b
-    (SPFDL {dom} {cod} spfd b i)
     i
+    (SPFDL {dom} {cod} spfd b i)
     (sliceId {a=dom} $ SPFDL {dom} {cod} spfd b i)
 
 --------------------------------
