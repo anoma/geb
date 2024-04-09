@@ -1341,6 +1341,10 @@ SPFDRmap {dom} {cod} spfd a b mab ec =
 -- We can define a functor in the opposite direction to `SPFDR` by composition
 -- of the adjuncts going in the opposite direction.  Like `SPFDR`, this functor
 -- is the composition of a left adjoint after a right adjoint.
+--
+-- Note that this functor is comprised of base changes
+-- (`SliceBCF`/`BaseChangeF`) and dependent sums (`SliceSigmaF`)
+-- only (in particular, `SlicePiF` is not involved).
 export
 SPFDRladj : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor cod dom
 SPFDRladj {dom} {cod} spfd = SPFDladj spfd . SPFDsigmaRAdj spfd
@@ -1652,6 +1656,46 @@ spfdToWTF {dom} {cod} spfd sd ec (ep ** dm) =
 spfdFromWTF {dom} {cod} spfd sd ec
   (Element0 (ec ** ep) Refl ** dm) =
     (ep ** \ed, dp => dm (Element0 ((ed, (ec ** ep)) ** dp) Refl))
+
+------------------------------------------------
+---- W-types as PRA-style slice polynomials ----
+------------------------------------------------
+
+-- Above we showed that any `SPFData` can be converted to a W-type;
+-- now we show the converse, thus completing the demonstration that PRA-style
+-- slice polynomials are equivalent to W-types.
+--
+-- In particular, because we have also already showed that `SliceBCF`,
+-- `SliceSigmaF`, and `SlicePiF` can all be interpreted as W-types, this
+-- shows that all of those three functors, for all parameters, are subsumed
+-- by PRA-style slice polynomials.
+--
+-- Also, because we have exhibited the functor in the opposite direction
+-- (composed of the opposing adjuncts) of a slice polynomial functor as a
+-- composition of a combination of `SliceSigmaF` and `SliceBCF` (`SlicePiF` is
+-- not required), this also allows us to conclude that the functor in the
+-- opposite direction is a slice polynomial functor.
+
+0 WTFasSPFD : {0 dom, cod : Type} -> WTypeFunc dom cod -> SPFData dom cod
+WTFasSPFD {dom} {cod} (MkWTF pos dir f g h) =
+  SPFD
+    (\ec => Subset0 pos $ \ep => h ep = ec)
+    (\ed, ec, (Element0 ep ecpeq) =>
+      Subset0 dir $ \dd => (f dd = ed, g dd = ep))
+
+0 wtfToSPFD : {0 dom, cod : Type} -> (wtf : WTypeFunc dom cod) ->
+  SliceNatTrans (InterpWTF wtf) (InterpSPFData $ WTFasSPFD wtf)
+wtfToSPFD {dom} {cod} (MkWTF pos dir f g h) sd ec (Element0 ep codeq ** dm) =
+  (Element0 ep codeq **
+   \ed, (Element0 dd (domeq, poseq)) =>
+    rewrite sym domeq in dm $ Element0 dd poseq)
+
+0 wtfFromSPFD : {0 dom, cod : Type} -> (wtf : WTypeFunc dom cod) ->
+  SliceNatTrans (InterpSPFData $ WTFasSPFD wtf) (InterpWTF wtf)
+wtfFromSPFD {dom} {cod} (MkWTF pos dir f g h) sd ec
+  (Element0 ep codeq ** dm) =
+    (Element0 ep codeq **
+     \(Element0 dd poseq) => dm (f dd) $ Element0 dd (Refl, poseq))
 
 --------------------------------
 --------------------------------
