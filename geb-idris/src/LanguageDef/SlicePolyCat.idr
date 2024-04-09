@@ -1338,6 +1338,13 @@ SPFDRmap : {dom, cod : Type} ->
 SPFDRmap {dom} {cod} spfd a b mab ec =
   SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab
 
+-- We can define a functor in the opposite direction to `SPFDR` by composition
+-- of the adjuncts going in the opposite direction.  Like `SPFDR`, this functor
+-- is the composition of a left adjoint after a right adjoint.
+export
+SPFDRladj : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor cod dom
+SPFDRladj {dom} {cod} spfd = SPFDladj spfd . SPFDsigmaRAdj spfd
+
 export
 0 SPFDunitFiber : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
