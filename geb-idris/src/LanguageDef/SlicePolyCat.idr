@@ -172,7 +172,7 @@ ssFromWTF {c} sc ssc ec (Element0 esc eq ** pisc) =
 -- The monad of the dependent-sum/base-change adjunction.
 export
 SSMonad : {c : Type} -> (sl : SliceObj c) -> SliceEndofunctor (Sigma sl)
-SSMonad {c} sl = SliceBCF sl . SliceSigmaF {c} sl
+SSMonad {c} sl = SliceBCF {c} sl . SliceSigmaF {c} sl
 
 export
 ssMonadMap : {c : Type} -> (sl : SliceObj c) -> SliceFMap (SSMonad {c} sl)
