@@ -1262,6 +1262,23 @@ SPFDsigmaMap {dom} {cod} spfd a b m ec =
   SPFDsigmaDepMap {dom} {cod} spfd ec {a=(curry a ec)} {b=(curry b ec)}
     $ \ep => m (ec ** ep)
 
+-- We show explicitly that `SPFDsigma` is equivalent to
+-- `SliceSigmaF`.
+export
+SPFDsigmaAsSS : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceNatTrans {x=(SPFDbase spfd)} {y=cod}
+    (SPFDsigma {dom} {cod} spfd)
+    (SliceSigmaF {c=cod} $ spfdPos spfd)
+SPFDsigmaAsSS {dom} {cod} (SPFD pos dir) scp ec eps = eps
+
+export
+SSasSPFDsigma : {0 cod : Type} -> (ss : SliceObj cod) ->
+  SliceNatTrans {x=(Sigma {a=cod} ss)} {y=cod}
+    (SliceSigmaF {c=cod} ss)
+    (SPFDsigma {dom=(Sigma {a=cod} ss)} {cod}
+     $ SPFD ss $ \ecs, ec, ess => ss ec)
+SSasSPFDsigma {cod} ss scs ec ess = ess
+
 -- The dependent-sum component of a polynomial functor expressed as
 -- a parametric right adjoint is itself a _left_ adjoint, to a base
 -- change.  This is that base change, the right adjoint to `SPFDsigma`.
@@ -1308,7 +1325,7 @@ SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab =
 export
 SPFDR : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor dom cod
 SPFDR {dom} {cod} spfd = flip $ SPFDRdep {dom} {cod} spfd
---
+
 -- `SPFDR` is the "standard" form of interpretation of a dependent (slice)
 -- polynomial functor (W-type), so we give it an alias which reflects that.
 export
