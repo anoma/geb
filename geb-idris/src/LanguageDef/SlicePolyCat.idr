@@ -1208,6 +1208,27 @@ SPFDladjMap {dom} {cod} spfd =
   ssplMap {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
     $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
 
+-- We show that the left adjoint of the dependent right-adjoint component of a
+-- polynomial functor expressed as a parametric right adjoint is equivalent to
+-- `SliceSigmaPiFL` with particular parameters.  (Of course, we _defined_ it
+-- as such, so this is trivial.)
+export
+SPFDasSSPL : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceNatTrans {x=(SPFDbase spfd)} {y=dom}
+    (SPFDladj {dom} {cod} spfd)
+    (SliceSigmaPiFL {c=dom} {e=(SPFDbase spfd)} $ SPFDtoSSPR spfd)
+SPFDasSSPL {dom} {cod} (SPFD pos dir) sd ed (((ec ** ep) ** dd) ** sdd) =
+  (((ec ** ep) ** dd) ** sdd)
+
+export
+SSPLasSPFD : {0 dom, cod : Type} -> (sspl : SliceObj (dom, cod)) ->
+  SliceNatTrans {x=cod} {y=dom}
+    (SliceSigmaPiFL {c=dom} {e=cod} sspl)
+    (SPFDladj {dom} {cod} (SSPRtoSPFD {dom} {cod} sspl)
+     . (\sc, (ec ** ()) => sc ec))
+SSPLasSPFD {dom} {cod} sspl sc ed ((ec ** esdc) ** esc) =
+  (((ec ** ()) ** esdc) ** esc)
+
 -- The dependent-sum component of a polynomial functor expressed as
 -- a codomain-parameterized copresheaf on slice objects over positions.
 export
