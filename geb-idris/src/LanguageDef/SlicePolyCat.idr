@@ -1567,11 +1567,26 @@ SPFDmultiAdjL {dom} {cod} spfd x y =
 -- The left multi-adjoint of the hom-set description of a multi-adjunction
 -- described in Theorem 2.4 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .
+-- (The right multi-adjoint is the polynomial functor itself, `SPFDR`.)
 export
 SPFDmultiL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiRcat {dom} {cod} spfd -> SliceObj dom
 SPFDmultiL {dom} {cod} spfd fibcod =
   SPFDL {dom} {cod} spfd (fst fibcod) (snd fibcod)
+
+-- The polynomial functor represented by an `SPFData`, viewed as a functor not
+-- only from `SliceObj dom` to `SliceObj cod` but from `SliceObj dom` to
+-- `SPFDmultiRcat {dom} {cod} spfd`, which is a `SliceObj cod` together with
+-- a fibration of it -- equivalently, a `y : SliceObj cod` together with a
+-- `SliceObj (Sigma {a=cod} y)`.
+--
+-- The fibration, in this case, is the one induced by `spfdPos spfd`.
+-- What this means is that we are viewing the codomain as being further sliced
+-- over the positions of `spfd`.
+export
+SPFDmultiR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceObj dom -> SPFDmultiRcat {dom} {cod} spfd
+SPFDmultiR {dom} {cod} spfd sd = (SPFDR {dom} {cod} spfd sd ** \_ => DPair.fst)
 
 -- This corresponds to the left-to-right direction of the isomorphism
 -- which defines the hom-set description of a multi-adjunction as formulated
