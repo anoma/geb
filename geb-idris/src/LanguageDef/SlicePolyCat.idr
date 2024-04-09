@@ -1148,6 +1148,33 @@ SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDradjMap {dom} {cod} spfd x y m ecp =
   SPFDradjDepMap {dom} {cod} spfd (fst ecp) x y m (snd ecp)
 
+-- We show that the dependent right-adjoint component of a polynomial functor
+-- expressed as a parametric right adjoint is equivalent to `SliceSigmaPiFR`
+-- with particular parameters.
+export
+SPFDtoSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceObj (dom, SPFDbase {dom} {cod} spfd)
+SPFDtoSSPR {dom} {cod} (SPFD pos dir) (ed, (ec ** ep)) = dir ed ec ep
+
+export
+SSPRtoSPFD : {dom, cod : Type} -> SliceObj (dom, cod) -> SPFData dom cod
+SSPRtoSPFD {dom} {cod} sspr = SPFD (const Unit) $ \ed, ec, () => sspr (ed, ec)
+
+export
+SPFDasSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceNatTrans {x=dom} {y=(SPFDbase spfd)}
+    (SPFDradj {dom} {cod} spfd)
+    (SliceSigmaPiFR {c=dom} {e=(SPFDbase spfd)} $ SPFDtoSSPR spfd)
+SPFDasSSPR {dom} {cod} (SPFD pos dir) sd (ec ** ep) radj (ed ** dd) = radj ed dd
+
+export
+SSPRasSPFD : {0 dom, cod : Type} -> (sspr : SliceObj (dom, cod)) ->
+  SliceNatTrans {x=dom} {y=cod}
+    (SliceSigmaPiFR {c=dom} {e=cod} sspr)
+    ((\sc, ec => sc (ec ** ()))
+     . SPFDradj {dom} {cod} (SSPRtoSPFD {dom} {cod} sspr))
+SSPRasSPFD {dom} {cod} sspr sd ec sdc ed esdc = sdc (ed ** esdc)
+
 -- Fibrate the right adjoint by a dependent-type-style slice object over
 -- the position object.
 export
@@ -1258,9 +1285,14 @@ SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab =
 -- opposite directions, so the composite is not (necessarily) itself an
 -- adjoint.  (But it is a parametric right adjoint, hence a multi-adjoint.)
 export
-SPFDR : {dom, cod : Type} ->
-  SPFData dom cod -> SliceFunctor dom cod
+SPFDR : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor dom cod
 SPFDR {dom} {cod} spfd = flip $ SPFDRdep {dom} {cod} spfd
+--
+-- `SPFDR` is the "standard" form of interpretation of a dependent (slice)
+-- polynomial functor (W-type), so we give it an alias which reflects that.
+export
+InterpSPFData : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor dom cod
+InterpSPFData = SPFDR
 
 export
 SPFDRmap : {dom, cod : Type} ->
@@ -1565,13 +1597,13 @@ SPFDasWTF {dom} {cod} spfd =
     fst
 
 0 spfdToWTF : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceNatTrans (SPFDR spfd) (InterpWTF $ SPFDasWTF spfd)
+  SliceNatTrans (InterpSPFData spfd) (InterpWTF $ SPFDasWTF spfd)
 spfdToWTF {dom} {cod} spfd sd ec (ep ** dm) =
   (Element0 (ec ** ep) Refl **
    \(Element0 ((ed, (ec ** ep)) ** dp) Refl) => dm ed dp)
 
 0 spfdFromWTF : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceNatTrans (InterpWTF $ SPFDasWTF spfd) (SPFDR spfd)
+  SliceNatTrans (InterpWTF $ SPFDasWTF spfd) (InterpSPFData spfd)
 spfdFromWTF {dom} {cod} spfd sd ec
   (Element0 (ec ** ep) Refl ** dm) =
     (ep ** \ed, dp => dm (Element0 ((ed, (ec ** ep)) ** dp) Refl))
