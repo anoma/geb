@@ -67,7 +67,7 @@ ADSLsigma : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
 ADSLsigma {b} p {cb} (ADSO tot inj) =
   ADSO
     (\eb => Sigma {a=(p eb)} $ DPair.curry tot eb)
-    (\eb, (ep ** ecb) => (ep ** inj (eb ** ep) ecb))
+    (\eb, epcb => (fst epcb ** inj (eb ** fst epcb) (snd epcb)))
 
 export
 ADSLsigmaMap : {b : Type} ->
@@ -75,9 +75,9 @@ ADSLsigmaMap : {b : Type} ->
   ADSLfmap (ADSLsigma {b} p {cb})
 ADSLsigmaMap {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
   ADSM
-    ?ADSLsigmaMap_hole_mor
-    ?ADSLsigmaMap_hole_inj
-    {eq=(?ADSLsigmaMap_hole_eq)}
+    (\eb, ept => (fst ept ** mor (eb ** fst ept) (snd ept)))
+    (\eb, epcb => (fst epcb ** inj' (eb ** fst epcb) (snd epcb)))
+    {eq=(\eb, epcb => dpEq12 Refl $ eq (eb ** fst epcb) (snd epcb))}
 
 export
 ADSLpi : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
@@ -90,14 +90,14 @@ ADSLpi {b} p {cb} (ADSO tot inj) =
     (\eb, pi, ep => inj (eb ** ep) $ pi ep)
 
 export
-ADSLpiMap : {b : Type} ->
+ADSLpiMap : FunExt -> {b : Type} ->
   (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
   ADSLfmap (ADSLpi {b} p {cb})
-ADSLpiMap {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+ADSLpiMap fext {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
   ADSM
-    ?ADSLpiMap_hole_mor
-    ?ADSLpiMap_hole_inj
-    {eq=(?ADSLpiMap_hole_eq)}
+    (\eb, pitot, ep => mor (eb ** ep) $ pitot ep)
+    (\eb, picb, ep => inj' (eb ** ep) $ picb ep)
+    {eq=(\eb, picb => funExt $ \ep => eq (eb ** ep) $ picb ep)}
 
 ---------------------------------------------------
 ---------------------------------------------------
