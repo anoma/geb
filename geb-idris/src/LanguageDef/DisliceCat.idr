@@ -89,7 +89,7 @@ public export
 ADSbaseMor : {cat : ADisliceCat} -> ADisliceObj cat -> ASliceBase cat -> Type
 ADSbaseMor {cat} = SliceMorphism {a=(adscBase cat)} . adsoTot
 
-export
+public export
 ADSMinj : {cat : ADisliceCat} ->
   (dom : ADisliceObj cat) -> (cod : SliceObj $ adscBase cat) ->
   ADSbaseMor dom cod -> ADSOinj cat cod
