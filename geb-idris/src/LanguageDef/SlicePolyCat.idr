@@ -1658,7 +1658,8 @@ SPFDlmadj {dom} {cod} spfd b =
 export
 SPFDmonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor cod
-SPFDmonad {dom} {cod} spfd = SPFDR {dom} {cod} spfd . SPFDRladj {dom} {cod} spfd
+SPFDmonad {dom} {cod} spfd =
+  SPFDR {dom} {cod} spfd . SPFDRladj {dom} {cod} spfd
 
 export
 SPFDmonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1672,7 +1673,7 @@ export
 SPFDcomonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor dom
 SPFDcomonad {dom} {cod} spfd =
-  SPFDRladj {dom} {cod} spfd .  SPFDR {dom} {cod} spfd
+  SPFDRladj {dom} {cod} spfd . SPFDR {dom} {cod} spfd
 
 export
 SPFDcomonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
