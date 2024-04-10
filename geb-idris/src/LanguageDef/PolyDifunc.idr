@@ -26,7 +26,7 @@ record PolyDifunc where
   pdfPos : Type
   pdfCobase : SliceObj pdfPos
   pdfBase : SliceObj pdfPos
-  pdfContramap : (i : pdfPos) -> pdfCobase i -> pdfBase i
+  pdfProj : (i : pdfPos) -> pdfCobase i -> pdfBase i
 
 -- The interpretation of a polydifunctor treats its inputs and outputs
 -- as a domain and codomain, and comprises a choice of morphism from
@@ -45,10 +45,10 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   ipdfPos : pdfPos pdf
   ipdfContraMor : x -> pdfCobase pdf ipdfPos
   ipdfCovarMor : pdfBase pdf ipdfPos -> y
-  ipdfContramap : x -> y
+  ipdfProj : x -> y
   0 ipdfComm :
     FunExt ->
-    (ipdfCovarMor . pdfContramap pdf ipdfPos . ipdfContraMor = ipdfContramap)
+    (ipdfCovarMor . pdfProj pdf ipdfPos . ipdfContraMor = ipdfProj)
 
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
@@ -73,7 +73,7 @@ ipdfEqCod {p} {q} {x} {y}
 
 0 ipdfEqMorph : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfContramap ip ~=~ ipdfContramap iq
+  ip = iq -> ipdfProj ip ~=~ ipdfProj iq
 ipdfEqMorph {p} {q} {x} {y}
   {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
     case eq of Refl => Refl
@@ -279,8 +279,8 @@ record PolyDiNT (p, q : PolyDifunc) where
   pdntOnBase :
     (i : pdfPos p) -> pdfBase q (pdntOnPos i) -> pdfBase p i
   pdntComm : (i : pdfPos p) -> FunExt ->
-    (pdntOnBase i . pdfContramap q (pdntOnPos i) . pdntOnCobase i =
-     pdfContramap p i)
+    (pdntOnBase i . pdfProj q (pdntOnPos i) . pdntOnCobase i =
+     pdfProj p i)
 
 export
 InterpPDNT : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
