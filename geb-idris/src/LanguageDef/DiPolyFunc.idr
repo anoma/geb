@@ -80,10 +80,22 @@ ADSLbc : {b, b' : Type} -> {cb : SliceObj b} ->
 ADSLbc {b} {b'} {cb} m (ADSO tot inj) = ADSO (tot . m) (\eb' => inj $ m eb')
 
 export
+ADSLbcMap : {b, b' : Type} -> {cb : SliceObj b} ->
+  (m : b' -> b) -> ADSLfmap (ADSLbc {b} {b'} {cb} m)
+ADSLbcMap {b} {b'} {cb} m (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+  ADSM (\eb' => mor (m eb')) (\eb' => inj' (m eb')) {eq=(\eb' => eq $ m eb')}
+
+export
 ADSLcbc : {b : Type} -> {cb, cb' : SliceObj b} ->
   SliceMorphism {a=b} cb' cb -> ADSLomap (ADSC b cb) (ADSC b cb')
 ADSLcbc {b} {cb} {cb'} m (ADSO tot inj) =
   ADSO tot (\eb, ecb' => inj eb $ m eb ecb')
+
+export
+ADSLcbcMap : {b : Type} -> {cb, cb' : SliceObj b} ->
+  (m : SliceMorphism {a=b} cb' cb) -> ADSLfmap (ADSLcbc {b} {cb} {cb'} m)
+ADSLcbcMap {b} {cb} {cb'} m (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+  ADSM mor (\eb => inj' eb . m eb) {eq=(\eb, ecb' => eq eb (m eb ecb'))}
 
 -- Dichange: simultaneous base and cobase change.
 export
@@ -92,6 +104,15 @@ ADSLdc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
   ADSLomap (ADSC b cb) (ADSC b' cb')
 ADSLdc {b} {b'} {cb} {cb'} mb mc =
   ADSLcbc {b=b'} {cb=(cb . mb)} {cb'} mc . ADSLbc {b} {b'} {cb} mb
+
+-- Dichange: simultaneous base and cobase change.
+export
+ADSLdcMap : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  (mb : b' -> b) -> (mc : SliceMorphism {a=b'} cb' (cb . mb)) ->
+  ADSLfmap (ADSLdc {b} {b'} {cb} {cb'} mb mc)
+ADSLdcMap {b} {b'} {cb} {cb'} mb mc x y =
+  ADSLcbcMap {b=b'} {cb=(cb . mb)} {cb'} mc (ADSLbc mb x) (ADSLbc mb y)
+  . ADSLbcMap {b} {b'} {cb} mb x y
 
 export
 ADSLsigma : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
