@@ -6,59 +6,6 @@ import LanguageDef.DisliceCat
 import LanguageDef.PolyCat
 import LanguageDef.InternalCat
 
----------------------------------------------------
----------------------------------------------------
----- Dipolynomial functors from dislice arenas ----
----------------------------------------------------
----------------------------------------------------
-
-public export
-record ADiArena where
-  constructor DiAr
-  daPos : Type
-  daCat : daPos -> ADisliceCat
-
-public export
-DAobj : (da : ADiArena) -> SliceObj (daPos da)
-DAobj da = ADisliceObj . daCat da
-
-public export
-DAbase : (da : ADiArena) -> SliceObj (daPos da)
-DAbase da = adscBase . daCat da
-
-public export
-DAcobase : (da : ADiArena) -> (i : daPos da) -> SliceObj (DAbase da i)
-DAcobase da i = adscCobase (daCat da i)
-
-public export
-DAtot : {da : ADiArena} -> {i : daPos da} -> DAobj da i ->
-  SliceObj (DAbase da i)
-DAtot {da} {i} = adsoTot {cat=(daCat da i)}
-
-public export
-DAsigma : {da : ADiArena} -> {i : daPos da} -> SliceObj (DAobj da i)
-DAsigma {da} {i} = Sigma {a=(DAbase da i)} . DAtot {da} {i}
-
-public export
-DAinj : {da : ADiArena} -> {i : daPos da} -> (x : DAobj da i) ->
-  SliceMorphism {a=(DAbase da i)} (DAcobase da i) (DAtot {da} {i} x)
-DAinj {da} {i} = adsoInj {cat=(daCat da i)}
-
-public export
-data InterpDAf : ADiArena -> Type -> Type where
-  IDAf :
-    {0 da : ADiArena} -> (i : daPos da) -> (obj : DAobj da i) ->
-    InterpDAf da (DAsigma {da} {i} obj)
-
-export
-IDAfpos : {da : ADiArena} -> {x : Type} -> (e : InterpDAf da x) -> daPos da
-IDAfpos {da} (IDAf {da} i obj) = i
-
-export
-IDAfobj : {da : ADiArena} -> {x : Type} ->
-  (e : InterpDAf da x) -> DAobj da (IDAfpos e)
-IDAfobj {da} (IDAf {da} i obj) = obj
-
 ------------------------------------------------------------------
 ------------------------------------------------------------------
 ---- Dependent (dislice) dipolynomial functors and difunctors ----
@@ -132,6 +79,59 @@ ADSLpi {b} p {cb} (ADSO tot inj) =
   ADSO
     (\eb => Pi {a=(p eb)} $ DPair.curry tot eb)
     (\eb, pi, ep => inj (eb ** ep) $ pi ep)
+
+---------------------------------------------------
+---------------------------------------------------
+---- Dipolynomial functors from dislice arenas ----
+---------------------------------------------------
+---------------------------------------------------
+
+public export
+record ADiArena where
+  constructor DiAr
+  daPos : Type
+  daCat : daPos -> ADisliceCat
+
+public export
+DAobj : (da : ADiArena) -> SliceObj (daPos da)
+DAobj da = ADisliceObj . daCat da
+
+public export
+DAbase : (da : ADiArena) -> SliceObj (daPos da)
+DAbase da = adscBase . daCat da
+
+public export
+DAcobase : (da : ADiArena) -> (i : daPos da) -> SliceObj (DAbase da i)
+DAcobase da i = adscCobase (daCat da i)
+
+public export
+DAtot : {da : ADiArena} -> {i : daPos da} -> DAobj da i ->
+  SliceObj (DAbase da i)
+DAtot {da} {i} = adsoTot {cat=(daCat da i)}
+
+public export
+DAsigma : {da : ADiArena} -> {i : daPos da} -> SliceObj (DAobj da i)
+DAsigma {da} {i} = Sigma {a=(DAbase da i)} . DAtot {da} {i}
+
+public export
+DAinj : {da : ADiArena} -> {i : daPos da} -> (x : DAobj da i) ->
+  SliceMorphism {a=(DAbase da i)} (DAcobase da i) (DAtot {da} {i} x)
+DAinj {da} {i} = adsoInj {cat=(daCat da i)}
+
+public export
+data InterpDAf : ADiArena -> Type -> Type where
+  IDAf :
+    {0 da : ADiArena} -> (i : daPos da) -> (obj : DAobj da i) ->
+    InterpDAf da (DAsigma {da} {i} obj)
+
+export
+IDAfpos : {da : ADiArena} -> {x : Type} -> (e : InterpDAf da x) -> daPos da
+IDAfpos {da} (IDAf {da} i obj) = i
+
+export
+IDAfobj : {da : ADiArena} -> {x : Type} ->
+  (e : InterpDAf da x) -> DAobj da (IDAfpos e)
+IDAfobj {da} (IDAf {da} i obj) = obj
 
 --------------------------------------------------
 --------------------------------------------------
