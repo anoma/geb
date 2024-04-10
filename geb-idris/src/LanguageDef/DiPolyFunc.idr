@@ -51,7 +51,6 @@ ADSLdc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
 ADSLdc {b} {b'} {cb} {cb'} mb mc =
   ADSLcbc {b=b'} {cb=(cb . mb)} {cb'} mc . ADSLbc {b} {b'} {cb} mb
 
--- Dichange: simultaneous base and cobase change.
 export
 ADSLdcMap : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
   (mb : b' -> b) -> (mc : SliceMorphism {a=b'} cb' (cb . mb)) ->
