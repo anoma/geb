@@ -26,7 +26,7 @@ record PolyDifunc where
   pdfPos : Type
   pdfCobase : SliceObj pdfPos
   pdfBase : SliceObj pdfPos
-  pdfProj : (i : pdfPos) -> pdfCobase i -> pdfBase i
+  pdfProj : SliceMorphism {a=pdfPos} pdfCobase pdfBase
 
 -- The interpretation of a polydifunctor treats its inputs and outputs
 -- as a domain and codomain, and comprises a choice of morphism from
