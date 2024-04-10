@@ -70,6 +70,16 @@ ADSLsigma {b} p {cb} (ADSO tot inj) =
     (\eb, (ep ** ecb) => (ep ** inj (eb ** ep) ecb))
 
 export
+ADSLsigmaMap : {b : Type} ->
+  (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
+  ADSLfmap (ADSLsigma {b} p {cb})
+ADSLsigmaMap {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+  ADSM
+    ?ADSLsigmaMap_hole_mor
+    ?ADSLsigmaMap_hole_inj
+    {eq=(?ADSLsigmaMap_hole_eq)}
+
+export
 ADSLpi : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
   ADSLomap
     (ADSC (Sigma {a=b} p) cb)
@@ -78,6 +88,16 @@ ADSLpi {b} p {cb} (ADSO tot inj) =
   ADSO
     (\eb => Pi {a=(p eb)} $ DPair.curry tot eb)
     (\eb, pi, ep => inj (eb ** ep) $ pi ep)
+
+export
+ADSLpiMap : {b : Type} ->
+  (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
+  ADSLfmap (ADSLpi {b} p {cb})
+ADSLpiMap {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+  ADSM
+    ?ADSLpiMap_hole_mor
+    ?ADSLpiMap_hole_inj
+    {eq=(?ADSLpiMap_hole_eq)}
 
 ---------------------------------------------------
 ---------------------------------------------------
