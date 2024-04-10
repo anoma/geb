@@ -24,9 +24,9 @@ public export
 record PolyDifunc where
   constructor PDF
   pdfPos : Type
-  pdfCovarObj : SliceObj pdfPos
-  pdfContraObj : SliceObj pdfPos
-  pdfContramap : (i : pdfPos) -> pdfCovarObj i -> pdfContraObj i
+  pdfCobase : SliceObj pdfPos
+  pdfBase : SliceObj pdfPos
+  pdfContramap : (i : pdfPos) -> pdfCobase i -> pdfBase i
 
 -- The interpretation of a polydifunctor treats its inputs and outputs
 -- as a domain and codomain, and comprises a choice of morphism from
@@ -43,8 +43,8 @@ export
 record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
   constructor IPDF
   ipdfPos : pdfPos pdf
-  ipdfContraMor : x -> pdfCovarObj pdf ipdfPos
-  ipdfCovarMor : pdfContraObj pdf ipdfPos -> y
+  ipdfContraMor : x -> pdfCobase pdf ipdfPos
+  ipdfCovarMor : pdfBase pdf ipdfPos -> y
   ipdfContramap : x -> y
   0 ipdfComm :
     FunExt ->
@@ -275,9 +275,9 @@ record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
   pdntOnPos : pdfPos p -> pdfPos q
   pdntOnBase :
-    (i : pdfPos p) -> pdfCovarObj p i -> pdfCovarObj q (pdntOnPos i)
+    (i : pdfPos p) -> pdfCobase p i -> pdfCobase q (pdntOnPos i)
   pdntOnCobase :
-    (i : pdfPos p) -> pdfContraObj q (pdntOnPos i) -> pdfContraObj p i
+    (i : pdfPos p) -> pdfBase q (pdntOnPos i) -> pdfBase p i
   pdntComm : (i : pdfPos p) -> FunExt ->
     (pdntOnCobase i . pdfContramap q (pdntOnPos i) . pdntOnBase i =
      pdfContramap p i)
