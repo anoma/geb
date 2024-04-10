@@ -2,6 +2,8 @@ module LanguageDef.PolyDifunc
 
 import Library.IdrisUtils
 import Library.IdrisCategories
+import LanguageDef.DisliceCat
+import LanguageDef.DiPolyFunc
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
@@ -27,6 +29,12 @@ record PolyDifunc where
   pdfCobase : SliceObj pdfPos
   pdfBase : SliceObj pdfPos
   pdfProj : SliceMorphism {a=pdfPos} pdfCobase pdfBase
+
+public export
+record PolyDifunc' where
+  constructor PDF'
+  pdf'Pos : Type
+  pdf'Dir : pdf'Pos -> ADisliceCat
 
 -- The interpretation of a polydifunctor treats its inputs and outputs
 -- as a domain and codomain, and comprises a choice of morphism from
