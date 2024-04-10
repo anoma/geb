@@ -1339,7 +1339,7 @@ SPFDRmap {dom} {cod} spfd a b mab ec =
   SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab
 
 -- We can define a functor in the opposite direction to `SPFDR` by composition
--- of the adjuncts going in the opposite direction.  Like `SPFDR`, this functor
+-- of the adjoints going in the opposite direction.  Like `SPFDR`, this functor
 -- is the composition of a left adjoint after a right adjoint.
 --
 -- Note that this functor is comprised of base changes
@@ -1348,6 +1348,13 @@ SPFDRmap {dom} {cod} spfd a b mab ec =
 export
 SPFDRladj : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor cod dom
 SPFDRladj {dom} {cod} spfd = SPFDladj spfd . SPFDsigmaRAdj spfd
+
+export
+SPFDRladjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDRladj spfd)
+SPFDRladjMap {dom} {cod} spfd x y =
+  SPFDladjMap spfd (SPFDsigmaRAdj spfd x) (SPFDsigmaRAdj spfd y)
+  . SPFDsigmaRAdjMap spfd x y
 
 export
 0 SPFDunitFiber : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1646,6 +1653,19 @@ SPFDlmadj {dom} {cod} spfd b =
     b
     (SPFDmultiL {dom} {cod} spfd b)
     (sliceId {a=dom} $ SPFDmultiL {dom} {cod} spfd b)
+
+-- The monad of the polynomial-functor-as-PRA multi-adjunction.
+export
+SPFDmonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceEndofunctor cod
+SPFDmonad {dom} {cod} spfd = SPFDR {dom} {cod} spfd . SPFDRladj {dom} {cod} spfd
+
+export
+SPFDmonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDmonad {dom} {cod} spfd)
+SPFDmonadMap {dom} {cod} spfd x y =
+  SPFDRmap spfd (SPFDRladj spfd x) (SPFDRladj spfd y)
+  . SPFDRladjMap spfd x y
 
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
