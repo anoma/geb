@@ -4,7 +4,6 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.DisliceCat
 import LanguageDef.PolyCat
-import LanguageDef.Geb
 import LanguageDef.InternalCat
 
 ---------------------------------------------------
@@ -194,7 +193,8 @@ InterpPPA (PPA pos contra covar) x y =
   (i : pos ** (x -> contra i, covar i -> y))
 
 export
-InterpPPAdimap : (ppa : PolyProAr) -> TypeDimapSig (InterpPPA ppa)
+InterpPPAdimap : (ppa : PolyProAr) -> (0 s, t, a, b : Type) ->
+  (a -> s) -> (t -> b) -> InterpPPA ppa s t -> InterpPPA ppa a b
 InterpPPAdimap (PPA pos contra covar) s t a b mas mtb (i ** (dx, dy)) =
   (i ** (dx . mas, mtb . dy))
 
