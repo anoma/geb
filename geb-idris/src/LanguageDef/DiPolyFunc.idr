@@ -4,6 +4,7 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.DisliceCat
 import LanguageDef.PolyCat
+import LanguageDef.SlicePolyCat
 import LanguageDef.InternalCat
 
 ------------------------------------------------------------------
@@ -77,13 +78,9 @@ ADSLdcFunc {b} {b'} {cb} {cb'} mb mc = ADSLf (ADSLdc mb mc) (ADSLdcMap mb mc)
 
 export
 ADSLsigma : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
-  ADSLomap
-    (ADSC (Sigma {a=b} p) cb)
-    (ADSC b $ \eb => Sigma {a=(p eb)} $ DPair.curry cb eb)
+  ADSLomap (ADSC (Sigma {a=b} p) cb) (ADSC b $ SliceSigmaF {c=b} p cb)
 ADSLsigma {b} p {cb} (ADSO tot inj) =
-  ADSO
-    (\eb => Sigma {a=(p eb)} $ DPair.curry tot eb)
-    (\eb, epcb => (fst epcb ** inj (eb ** fst epcb) (snd epcb)))
+  ADSO (SliceSigmaF {c=b} p tot) (ssMap {c=b} {sl=p} cb tot inj)
 
 export
 ADSLsigmaMap : {b : Type} ->
@@ -91,9 +88,9 @@ ADSLsigmaMap : {b : Type} ->
   ADSLfmap (ADSLsigma {b} p {cb})
 ADSLsigmaMap {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
   ADSM
-    (\eb, ept => (fst ept ** mor (eb ** fst ept) (snd ept)))
-    (\eb, epcb => (fst epcb ** inj' (eb ** fst epcb) (snd epcb)))
-    {eq=(\eb, epcb => dpEq12 Refl $ eq (eb ** fst epcb) (snd epcb))}
+    (ssMap {c=b} {sl=p} tot tot' mor)
+    (ssMap {c=b} {sl=p} cb tot' inj')
+    {eq=(\eb, (ep ** ecb) => dpEq12 Refl $ eq (eb ** ep) ecb)}
 
 export
 ADSLsigmaFunc : {b : Type} ->
@@ -105,13 +102,9 @@ ADSLsigmaFunc {b} p cb = ADSLf (ADSLsigma {b} p {cb}) (ADSLsigmaMap {b} p {cb})
 
 export
 ADSLpi : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
-  ADSLomap
-    (ADSC (Sigma {a=b} p) cb)
-    (ADSC b $ \eb => Pi {a=(p eb)} $ DPair.curry cb eb)
+  ADSLomap (ADSC (Sigma {a=b} p) cb) (ADSC b $ SlicePiF {c=b} p cb)
 ADSLpi {b} p {cb} (ADSO tot inj) =
-  ADSO
-    (\eb => Pi {a=(p eb)} $ DPair.curry tot eb)
-    (\eb, pi, ep => inj (eb ** ep) $ pi ep)
+  ADSO (SlicePiF {c=b} p tot) (spMap {c=b} {sl=p} cb tot inj)
 
 export
 ADSLpiMap : FunExt -> {b : Type} ->
@@ -119,8 +112,8 @@ ADSLpiMap : FunExt -> {b : Type} ->
   ADSLfmap (ADSLpi {b} p {cb})
 ADSLpiMap fext {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
   ADSM
-    (\eb, pitot, ep => mor (eb ** ep) $ pitot ep)
-    (\eb, picb, ep => inj' (eb ** ep) $ picb ep)
+    (spMap {c=b} {sl=p} tot tot' mor)
+    (spMap {c=b} {sl=p} cb tot' inj')
     {eq=(\eb, picb => funExt $ \ep => eq (eb ** ep) $ picb ep)}
 
 export

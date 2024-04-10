@@ -21,7 +21,7 @@ import public LanguageDef.InternalCat
 -- I'm duplicating it here just to make it explicit in the same module as the
 -- adjunctions on either side of it.
 %hide Library.IdrisCategories.BaseChangeF
-export
+public export
 BaseChangeF : {c, d : Type} -> (d -> c) -> SliceFunctor c d
 BaseChangeF {c} {d} f slc = slc . f
 
@@ -29,7 +29,7 @@ BaseChangeF {c} {d} f slc = slc . f
 -- dependent sum and dependent product, it can introduced and eliminated
 -- from either side, by the adjuncts defined below with `Sigma` and `Pi`.
 
-export
+public export
 bcMap : {0 c, d : Type} -> {f : d -> c} -> SliceFMap (BaseChangeF {c} {d} f)
 bcMap {c} {d} {f} sa sb m ec = m (f ec)
 
@@ -81,7 +81,7 @@ bcFromWTF {c} {d} f sc ed (Element0 ed' eq ** scfd) =
 -- For convenient expression within a dependently-typed metalanguage, we
 -- express this by default in terms of dependent types rather than fibrations,
 -- which are the more category-theoretic style.
-export
+public export
 SliceSigmaF : {c : Type} ->
   (sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
 SliceSigmaF {c} sl sls ec =
@@ -89,7 +89,7 @@ SliceSigmaF {c} sl sls ec =
   --  (esc : sl ec ** sls $ (ec ** esc))
   Sigma {a=(sl ec)} (BaseChangeF (MkDPair ec) sls)
 
-export
+public export
 ssMap : {c : Type} -> {0 sl : SliceObj c} -> SliceFMap (SliceSigmaF {c} sl)
 ssMap {c} {sl} slsa slsb mab ec esla =
   (fst esla ** mab (ec ** fst esla) $ snd esla)
@@ -301,14 +301,14 @@ SSCoalg {c} {f} = SliceCoalg {a=c} (SliceFibSigmaF {c} {d=c} f)
 -- For convenient expression within a dependently-typed metalanguage, we
 -- express this by default in terms of dependent types rather than fibrations,
 -- which are the more category-theoretic style.
-export
+public export
 SlicePiF : {c : Type} -> (sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
 SlicePiF {c} sl sls ec =
   -- An explicit way of spelling this out would be:
   --  (esc : sl ec) -> sls $ (ec ** esc)
   Pi {a=(sl ec)} (BaseChangeF (MkDPair ec) sls)
 
-export
+public export
 spMap : {c : Type} -> {0 sl : SliceObj c} -> SliceFMap (SlicePiF {c} sl)
 spMap {c} {sl} slsa slsb mab ec pia eslc = mab (ec ** eslc) $ pia eslc
 
