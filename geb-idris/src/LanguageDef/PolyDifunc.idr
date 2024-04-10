@@ -274,12 +274,12 @@ public export
 record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
   pdntOnPos : pdfPos p -> pdfPos q
-  pdntOnBase :
-    (i : pdfPos p) -> pdfCobase p i -> pdfCobase q (pdntOnPos i)
   pdntOnCobase :
+    (i : pdfPos p) -> pdfCobase p i -> pdfCobase q (pdntOnPos i)
+  pdntOnBase :
     (i : pdfPos p) -> pdfBase q (pdntOnPos i) -> pdfBase p i
   pdntComm : (i : pdfPos p) -> FunExt ->
-    (pdntOnCobase i . pdfContramap q (pdntOnPos i) . pdntOnBase i =
+    (pdntOnBase i . pdfContramap q (pdntOnPos i) . pdntOnCobase i =
      pdfContramap p i)
 
 export
