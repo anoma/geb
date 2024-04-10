@@ -95,9 +95,7 @@ ADSLsigmaMap {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
 export
 ADSLsigmaFunc : {b : Type} ->
   (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
-  ADSLfunc
-    (ADSC (Sigma {a=b} p) cb)
-    (ADSC b $ \eb => Sigma {a=(p eb)} $ DPair.curry cb eb)
+  ADSLfunc (ADSC (Sigma {a=b} p) cb) (ADSC b $ SliceSigmaF {c=b} p cb)
 ADSLsigmaFunc {b} p cb = ADSLf (ADSLsigma {b} p {cb}) (ADSLsigmaMap {b} p {cb})
 
 export
@@ -119,9 +117,7 @@ ADSLpiMap fext {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
 export
 ADSLpiFunc : FunExt -> {b : Type} ->
   (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
-  ADSLfunc
-    (ADSC (Sigma {a=b} p) cb)
-    (ADSC b $ \eb => Pi {a=(p eb)} $ DPair.curry cb eb)
+  ADSLfunc (ADSC (Sigma {a=b} p) cb) (ADSC b $ SlicePiF {c=b} p cb)
 ADSLpiFunc fext {b} p cb = ADSLf (ADSLpi {b} p {cb}) (ADSLpiMap fext {b} p {cb})
 
 ---------------------------------------------------
