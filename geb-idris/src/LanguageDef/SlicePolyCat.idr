@@ -1667,6 +1667,20 @@ SPFDmonadMap {dom} {cod} spfd x y =
   SPFDRmap spfd (SPFDRladj spfd x) (SPFDRladj spfd y)
   . SPFDRladjMap spfd x y
 
+-- The comonad of the polynomial-functor-as-PRA multi-adjunction.
+export
+SPFDcomonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceEndofunctor dom
+SPFDcomonad {dom} {cod} spfd =
+  SPFDRladj {dom} {cod} spfd .  SPFDR {dom} {cod} spfd
+
+export
+SPFDcomonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDcomonad {dom} {cod} spfd)
+SPFDcomonadMap {dom} {cod} spfd x y =
+  SPFDRladjMap spfd (SPFDR spfd x) (SPFDR spfd y)
+  . SPFDRmap spfd x y
+
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
 -----------------------------------------------------------
