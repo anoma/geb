@@ -86,13 +86,13 @@ record ADisliceObj (cat : ADisliceCat) where
   adsoInj : ADSOinj cat adsoTot
 
 public export
-ADSmor : {cat : ADisliceCat} -> ADisliceObj cat -> ASliceBase cat -> Type
-ADSmor {cat} = SliceMorphism {a=(adscBase cat)} . adsoTot
+ADSbaseMor : {cat : ADisliceCat} -> ADisliceObj cat -> ASliceBase cat -> Type
+ADSbaseMor {cat} = SliceMorphism {a=(adscBase cat)} . adsoTot
 
 export
 ADSMinj : {cat : ADisliceCat} ->
   (dom : ADisliceObj cat) -> (cod : SliceObj $ adscBase cat) ->
-  ADSmor dom cod -> ADSOinj cat cod
+  ADSbaseMor dom cod -> ADSOinj cat cod
 ADSMinj {cat} dom cod mor =
   sliceComp {x=(adscCobase cat)} {y=(adsoTot dom)} {z=cod} mor (adsoInj dom)
 
@@ -102,7 +102,7 @@ data ADisliceMorph : {0 cat : ADisliceCat} ->
   ADSM : {0 cat : ADisliceCat} ->
     {0 dom : ADisliceObj cat} ->
     {codtot : ASliceBase cat} ->
-    (mor : ADSmor dom codtot) ->
+    (mor : ADSbaseMor dom codtot) ->
     (codinj : ADSOinj cat codtot) ->
     {auto 0 eq : SliceExtEq codinj (ADSMinj dom codtot mor)} ->
     ADisliceMorph {cat} dom (ADSO codtot codinj)
@@ -123,6 +123,14 @@ adsmComp
   (ADSM dmor dinj {eq=deq}) (ADSM cmor cinj {eq=ceq}) =
     ADSM (sliceComp dmor cmor) dinj
       {eq=(\eb, ec => trans (deq eb ec) $ cong (dmor eb) $ ceq eb ec)}
+
+public export
+ADSMr : {cat : ADisliceCat} -> {dom : ADisliceObj cat} ->
+  (codtot : ASliceBase cat) ->
+  (mor : ADSbaseMor dom codtot) ->
+  ADisliceMorph {cat} dom (ADSO codtot (ADSMinj dom codtot mor))
+ADSMr {cat} {dom} codtot mor =
+  ADSM {cat} {dom} {codtot} mor (ADSMinj dom codtot mor) {eq=(\_, _ => Refl)}
 
 ---------------------------------------
 ---- Categorial-arena translations ----
