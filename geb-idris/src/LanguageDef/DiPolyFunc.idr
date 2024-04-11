@@ -50,6 +50,33 @@ CDSLbcFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
   CDSLfunc (CDSC b cb proj) (CDSC b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
 CDSLbcFunc {b} {b'} {cb} {proj} m = CDSLf (CDSLbc m) (CDSLbcMap m)
 
+export
+CDSLcbc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
+  CSliceMorphism {c=b} (cb' ** proj') (cb ** proj) ->
+  CDSLomap (CDSC b cb proj) (CDSC b cb' proj')
+CDSLcbc {b} {cb} {cb'} {proj} {proj'}
+  (Element0 mcb mcomm) (CDSO tot f1 f2 fcomm) =
+    CDSO
+      tot
+      (f1 . mcb)
+      f2
+      (\ecb' => trans (fcomm $ mcb ecb') $ sym $ mcomm ecb')
+
+export
+CDSLcbcMap : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
+  (m : CSliceMorphism {c=b} (cb' ** proj') (cb ** proj)) ->
+  CDSLfmap (CDSLcbc {b} {cb} {cb'} {proj} {proj'} m)
+CDSLcbcMap {b} {cb} {cb'} {proj} {proj'}
+  (Element0 mcb mcomm) (CDSO xtot xf1 xf2 xfcomm) (CDSO ytot yf1 yf2 yfcomm)
+  (CDSM mtot meq1 meq2) =
+    CDSM mtot (\ecb' => meq1 $ mcb ecb') meq2
+
+export
+CDSLcbcFunc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
+  (m : CSliceMorphism {c=b} (cb' ** proj') (cb ** proj)) ->
+  CDSLfunc (CDSC b cb proj) (CDSC b cb' proj')
+CDSLcbcFunc {b} {cb} {cb'} {proj} {proj'} m = CDSLf (CDSLcbc m) (CDSLcbcMap m)
+
 ----------------------------------------------
 ---- Dependent-type style (`ADisliceCat`) ----
 ----------------------------------------------
