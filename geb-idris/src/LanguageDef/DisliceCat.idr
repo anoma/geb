@@ -335,3 +335,35 @@ export
 DsfCtoA : {c, d : CDisliceCat} ->
   CDSLfunc c d -> ADSLfunc (DscCtoA c) (DscCtoA d)
 DsfCtoA {c} {d} (CDSLf omap fmap) = ADSLf (DsomCtoA omap) (DsfmCtoA omap fmap)
+
+export
+DsmCtoAf : (c, d : ADisliceCat) ->
+  (x, y : CDisliceObj (DscAtoC c)) ->
+  CDisliceMorph x y -> ADisliceMorph (DsoAfromC {cat=c} x) (DsoAfromC {cat=c} y)
+DsmCtoAf (ADSC cb ccb) (ADSC db dcb)
+  (CDSO xtot xf1 xf2 xeq) (CDSO ytot yf1 yf2 yeq)
+  (CDSM mtot meq1 meq2) =
+    ADSM
+      {codtot=(\ecb => PreImage {a=ytot} yf2 ecb)}
+      (\ecb, (Element0 ext xeq2) =>
+        Element0 (mtot ext) $ trans (sym $ meq2 ext) xeq2)
+      (\ecb, eccb => Element0 (yf1 (ecb ** eccb)) $ yeq (ecb ** eccb))
+      {eq=(\ecb, eccb => s0Eq12 (meq1 (ecb ** eccb)) $
+        uipHet
+          {eq=(yeq (ecb ** eccb))}
+          {eq'=(trans (sym (meq2 (xf1 (ecb ** eccb)))) (xeq (ecb ** eccb)))}
+          {eq''=(cong yf2 $ meq1 (ecb ** eccb))})}
+
+export
+DsfmAtoC : {c, d : ADisliceCat} ->
+  (omap : ADSLomap c d) ->
+  ADSLfmap {c} {d} omap ->
+  CDSLfmap {c=(DscAtoC c)} {d=(DscAtoC d)} (DsomAtoC omap)
+DsfmAtoC {c} {d} omap fmap x y =
+  DsmAtoC . fmap (DsoAfromC x) (DsoAfromC y) . DsmAfromC . DsmAtoC
+    . DsmCtoAf c d x y
+
+export
+DsfAtoC : {c, d : ADisliceCat} ->
+  ADSLfunc c d -> CDSLfunc (DscAtoC c) (DscAtoC d)
+DsfAtoC {c} {d} (ADSLf omap fmap) = CDSLf (DsomAtoC omap) (DsfmAtoC omap fmap)
