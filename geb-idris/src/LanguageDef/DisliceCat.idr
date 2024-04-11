@@ -151,7 +151,8 @@ DscAtoC : ADisliceCat -> CDisliceCat
 DscAtoC cat =
   CDSC (adscBase cat) (Sigma {a=(adscBase cat)} $ adscCobase cat) DPair.fst
 
-DsoCtoA : {0 cat : CDisliceCat} -> CDisliceObj cat -> ADisliceObj (DscCtoA cat)
+DsoCtoA : {0 cat : CDisliceCat} ->
+  CDisliceObj cat -> ADisliceObj (DscCtoA cat)
 DsoCtoA {cat} obj =
   ADSO
     (\eb => PreImage {a=(cdsoTot obj)} {b=(cdscBase cat)} (cdsoFact2 obj) eb)
@@ -160,6 +161,15 @@ DsoCtoA {cat} obj =
         (cdsoFact1 obj $ fst0 ecc)
         $ trans (cdsoEq obj $ fst0 ecc) $ snd0 ecc)
 
+0 DsoCfromA : {cat : CDisliceCat} ->
+  ADisliceObj (DscCtoA cat) -> CDisliceObj cat
+DsoCfromA {cat=(CDSC base cobase proj)} (ADSO tot inj) =
+  CDSO
+    (Sigma {a=base} tot)
+    (\ecb => (proj ecb ** inj (proj ecb) (Element0 ecb Refl)))
+    DPair.fst
+    (\_ => Refl)
+
 DsoAtoC : {cat : ADisliceCat} -> ADisliceObj cat -> CDisliceObj (DscAtoC cat)
 DsoAtoC {cat} obj =
   CDSO
@@ -167,6 +177,12 @@ DsoAtoC {cat} obj =
     (\(eb ** ec) => (eb ** adsoInj obj eb ec))
     DPair.fst
     (\(eb ** ec) => Refl)
+
+DsoAfromC : {cat : ADisliceCat} -> CDisliceObj (DscAtoC cat) -> ADisliceObj cat
+DsoAfromC {cat=(ADSC base cobase)} (CDSO tot fact1 fact2 eq) =
+  ADSO
+    (\eb => Subset0 tot $ \et => fact2 et = eb)
+    (\eb, ecb => Element0 (fact1 (eb ** ecb)) $ eq (eb ** ecb))
 
 DsmCtoA : {cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
   CDisliceMorph {cat} dom cod ->
@@ -188,6 +204,23 @@ DsmCtoA
         Element0 (cf1 $ fst0 ecb) $ trans (ceq $ fst0 ecb) $ snd0 ecb)
       {eq=(\eb, (Element0 ecb cbeq) => rewrite meq1 ecb in s0Eq12 Refl uip)}
 
+DsmCfromA : {cat : CDisliceCat} -> {dom, cod : CDisliceObj cat} ->
+  ADisliceMorph {cat=(DscCtoA cat)}
+    (DsoCtoA {cat} dom)
+    (DsoCtoA {cat} cod) ->
+  CDisliceMorph {cat} dom cod
+DsmCfromA {cat=(CDSC base cobase proj)}
+  {dom=(CDSO dtot df1 df2 deq)} {cod=(CDSO ctot cf1 cf2 ceq)}
+  (ADSM mor _ {eq=injeq}) =
+    CDSM
+      (\edt => fst0 $ mor (df2 edt) $ Element0 edt Refl)
+      (\ecb =>
+        trans
+          (s0Eq1 (injeq (proj ecb) (Element0 ecb Refl)))
+          $ rewrite sym (deq ecb) in cong (Subset0.fst0 . mor (df2 $ df1 ecb))
+          $ s0Eq12 Refl uip)
+      (\edt => sym $ snd0 (mor (df2 edt) (Element0 edt Refl)))
+
 DsmAtoC : {0 cat : ADisliceCat} -> {0 dom, cod : ADisliceObj cat} ->
   ADisliceMorph {cat} dom cod ->
   CDisliceMorph {cat=(DscAtoC cat)} (DsoAtoC {cat} dom) (DsoAtoC {cat} cod)
@@ -196,6 +229,16 @@ DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSM mor inj {eq}) =
     (\(eb ** ed) => (eb ** mor eb ed))
     (\(eb ** ed) => rewrite eq eb ed in Refl)
     (\(eb ** ed) => Refl)
+
+0 DsmAfromC : {0 cat : ADisliceCat} -> {0 dom, cod : ADisliceObj cat} ->
+  CDisliceMorph {cat=(DscAtoC cat)} (DsoAtoC {cat} dom) (DsoAtoC {cat} cod) ->
+  ADisliceMorph {cat} dom cod
+DsmAfromC {cat=(ADSC base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO ctot cinj)}
+  (CDSM mtot meq1 meq2) =
+    ADSM
+      (\eb, edt => rewrite meq2 (eb ** edt) in snd (mtot (eb ** edt)))
+      cinj
+      {eq=(\eb, ecb => rewrite sym (meq1 (eb ** ecb)) in Refl)}
 
 --------------------------
 --------------------------
