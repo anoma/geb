@@ -19,7 +19,7 @@ record CDisliceCat where
   constructor CDSC
   cdscBase : Type
   cdscCobase : Type
-  0 cdscProj : cdscCobase -> cdscBase
+  cdscProj : cdscCobase -> cdscBase
 
 public export
 record CDisliceObj (cat : CDisliceCat) where
@@ -161,7 +161,7 @@ DsoCtoA {cat} obj =
         (cdsoFact1 obj $ fst0 ecc)
         $ trans (cdsoEq obj $ fst0 ecc) $ snd0 ecc)
 
-0 DsoCfromA : {cat : CDisliceCat} ->
+DsoCfromA : {cat : CDisliceCat} ->
   ADisliceObj (DscCtoA cat) -> CDisliceObj cat
 DsoCfromA {cat=(CDSC base cobase proj)} (ADSO tot inj) =
   CDSO
@@ -230,7 +230,7 @@ DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSM mor inj {eq}) =
     (\(eb ** ed) => rewrite eq eb ed in Refl)
     (\(eb ** ed) => Refl)
 
-0 DsmAfromC : {0 cat : ADisliceCat} -> {0 dom, cod : ADisliceObj cat} ->
+DsmAfromC : {0 cat : ADisliceCat} -> {dom, cod : ADisliceObj cat} ->
   CDisliceMorph {cat=(DscAtoC cat)} (DsoAtoC {cat} dom) (DsoAtoC {cat} cod) ->
   ADisliceMorph {cat} dom cod
 DsmAfromC {cat=(ADSC base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO ctot cinj)}
@@ -265,6 +265,26 @@ record CDSLfunc (c, d : CDisliceCat) where
 public export
 ADSLomap : ADisliceCat -> ADisliceCat -> Type
 ADSLomap c d = ADisliceObj c -> ADisliceObj d
+
+export
+DsomCtoA : {c, d : CDisliceCat} ->
+  CDSLomap c d -> ADSLomap (DscCtoA c) (DscCtoA d)
+DsomCtoA {c} {d} omap = DsoCtoA . omap . DsoCfromA
+
+export
+DsomCfromA : {c, d : CDisliceCat} ->
+  ADSLomap (DscCtoA c) (DscCtoA d) -> CDSLomap c d
+DsomCfromA {c} {d} omap = DsoCfromA . omap . DsoCtoA
+
+export
+DsomAtoC : {c, d : ADisliceCat} ->
+  ADSLomap c d -> CDSLomap (DscAtoC c) (DscAtoC d)
+DsomAtoC {c} {d} omap = DsoAtoC . omap . DsoAfromC
+
+export
+DsomAfromC : {c, d : ADisliceCat} ->
+  CDSLomap (DscAtoC c) (DscAtoC d) -> ADSLomap c d
+DsomAfromC {c} {d} omap = DsoAfromC . omap . DsoAtoC
 
 public export
 ADSLfmap : {c, d : ADisliceCat} -> ADSLomap c d -> Type
