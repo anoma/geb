@@ -76,6 +76,10 @@ ASliceBase : ADisliceCat -> Type
 ASliceBase = SliceObj . adscBase
 
 public export
+adscCotot : ADisliceCat -> Type
+adscCotot cat = Sigma {a=(adscBase cat)} (adscCobase cat)
+
+public export
 ADSOinj : (cat : ADisliceCat) -> ASliceBase cat -> Type
 ADSOinj cat = SliceMorphism {a=(adscBase cat)} (adscCobase cat)
 
