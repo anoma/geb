@@ -266,6 +266,18 @@ public export
 ADSLomap : ADisliceCat -> ADisliceCat -> Type
 ADSLomap c d = ADisliceObj c -> ADisliceObj d
 
+public export
+ADSLfmap : {c, d : ADisliceCat} -> ADSLomap c d -> Type
+ADSLfmap {c} {d} omap =
+  (x, y : ADisliceObj c) ->
+  ADisliceMorph {cat=c} x y -> ADisliceMorph {cat=d} (omap x) (omap y)
+
+public export
+record ADSLfunc (c, d : ADisliceCat) where
+  constructor ADSLf
+  adslO : ADSLomap c d
+  adslF : ADSLfmap {c} {d} adslO
+
 export
 DsomCtoA : {c, d : CDisliceCat} ->
   CDSLomap c d -> ADSLomap (DscCtoA c) (DscCtoA d)
@@ -285,15 +297,3 @@ export
 DsomAfromC : {c, d : ADisliceCat} ->
   CDSLomap (DscAtoC c) (DscAtoC d) -> ADSLomap c d
 DsomAfromC {c} {d} omap = DsoAfromC . omap . DsoAtoC
-
-public export
-ADSLfmap : {c, d : ADisliceCat} -> ADSLomap c d -> Type
-ADSLfmap {c} {d} omap =
-  (x, y : ADisliceObj c) ->
-  ADisliceMorph {cat=c} x y -> ADisliceMorph {cat=d} (omap x) (omap y)
-
-public export
-record ADSLfunc (c, d : ADisliceCat) where
-  constructor ADSLf
-  adslO : ADSLomap c d
-  adslF : ADSLfmap {c} {d} adslO
