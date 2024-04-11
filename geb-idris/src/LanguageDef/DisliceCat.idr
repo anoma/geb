@@ -355,6 +355,20 @@ DsfCtoA : {c, d : CDisliceCat} ->
 DsfCtoA {c} {d} (CDSLf omap fmap) = ADSLf (DsomCtoA omap) (DsfmCtoA omap fmap)
 
 export
+DsfmCfromA : {c, d : CDisliceCat} ->
+  (omap : ADSLomap (DscCtoA c) (DscCtoA d)) ->
+  ADSLfmap {c=(DscCtoA c)} {d=(DscCtoA d)} omap ->
+  CDSLfmap {c} {d} (DsomCfromA omap)
+DsfmCfromA {c} {d} omap fmap x y =
+  ?DsfmCfromA_hole
+
+export
+DsfCfromA : {c, d : CDisliceCat} ->
+  ADSLfunc (DscCtoA c) (DscCtoA d) -> CDSLfunc c d
+DsfCfromA {c} {d} (ADSLf omap fmap) =
+  CDSLf (DsomCfromA omap) (DsfmCfromA omap fmap)
+
+export
 DsfmAtoC : {c, d : ADisliceCat} ->
   (omap : ADSLomap c d) ->
   ADSLfmap {c} {d} omap ->
@@ -367,3 +381,17 @@ export
 DsfAtoC : {c, d : ADisliceCat} ->
   ADSLfunc c d -> CDSLfunc (DscAtoC c) (DscAtoC d)
 DsfAtoC {c} {d} (ADSLf omap fmap) = CDSLf (DsomAtoC omap) (DsfmAtoC omap fmap)
+
+export
+DsfmAfromC : {c, d : ADisliceCat} ->
+  (omap : CDSLomap (DscAtoC c) (DscAtoC d)) ->
+  CDSLfmap {c=(DscAtoC c)} {d=(DscAtoC d)} omap ->
+  ADSLfmap {c} {d} (DsomAfromC omap)
+DsfmAfromC {c} {d} omap fmap x y =
+  ?DsfmAfromC_hole
+
+export
+DsfAfromC : {c, d : ADisliceCat} ->
+  CDSLfunc (DscAtoC c) (DscAtoC d) -> ADSLfunc c d
+DsfAfromC {c} {d} (CDSLf omap fmap) =
+  ADSLf (DsomAfromC omap) (DsfmAfromC omap fmap)
