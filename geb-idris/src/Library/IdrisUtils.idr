@@ -321,6 +321,12 @@ uip : {0 a, a' : Type} -> {0 x : a} -> {0 x' : a'} ->
 uip {eq=Refl} {eq'=Refl} = Refl
 
 public export
+uipHet : {0 a, a' : Type} -> {0 x, y : a} -> {0 x', y' : a'} ->
+  {eq : x = y} -> {eq' : x' = y'} -> {eq'' : x = x'} -> eq ~=~ eq'
+uipHet {a} {a'=a} {x} {y=x} {x'=x} {y'=x} {eq=Refl} {eq'=Refl} {eq''=Refl} =
+  Refl
+
+public export
 lteTolt : {m, n : Nat} -> LTE m n -> Not (m = n) -> LT m n
 lteTolt {m=0} {n=Z} LTEZero neq = void $ neq Refl
 lteTolt {m=0} {n=(S n)} LTEZero neq = LTESucc LTEZero
