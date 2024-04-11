@@ -58,6 +58,14 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
     FunExt ->
     (ipdfCovarMor . pdfProj pdf ipdfPos . ipdfContraMor = ipdfProj)
 
+export
+record InterpPDF' (pdf : PolyDifunc') (x, y : Type) where
+  constructor IPDF'
+  ipdf'Pos : pdf'Pos pdf
+  ipdf'BaseMor : x -> adscBase (pdf'Dir pdf ipdf'Pos)
+  ipdf'CobaseMor : adscCotot (pdf'Dir pdf ipdf'Pos) -> y
+  ipdf'Proj : x -> y
+
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
   {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
   ip = iq -> ipdfPos ip ~=~ ipdfPos iq
@@ -105,6 +113,16 @@ InterpPDFlmap (PDF pos dom cod morph) s t a mas (IPDF i msd mit mst comm) =
     (\fext => funExt $ \_ => rewrite sym (comm fext) in Refl)
 
 export
+InterpPDF'lmap : (pdf : PolyDifunc') ->
+  (0 s, t, a : Type) -> (a -> s) -> InterpPDF' pdf s t -> InterpPDF' pdf a t
+InterpPDF'lmap (PDF' pos dir) s t a mas (IPDF' i bm cm proj) =
+  IPDF'
+    i
+    (bm . mas)
+    cm
+    (proj . mas)
+
+export
 InterpPDFrmap : (pdf : PolyDifunc) ->
   (0 s, t, b : Type) -> (t -> b) -> InterpPDF pdf s t -> InterpPDF pdf s b
 InterpPDFrmap (PDF pos dom cod morph) s t b mtb (IPDF i msd mct mst comm) =
@@ -116,11 +134,28 @@ InterpPDFrmap (PDF pos dom cod morph) s t b mtb (IPDF i msd mct mst comm) =
     (\fext => funExt $ \_ => rewrite sym (comm fext) in Refl)
 
 export
+InterpPDF'rmap : (pdf : PolyDifunc') ->
+  (0 s, t, b : Type) -> (t -> b) -> InterpPDF' pdf s t -> InterpPDF' pdf s b
+InterpPDF'rmap (PDF' pos dir) s t a mtb (IPDF' i bm cm proj) =
+  IPDF'
+    i
+    bm
+    (mtb . cm)
+    (mtb . proj)
+
+export
 InterpPDFdimap : (pdf : PolyDifunc) ->
   (0 s, t, a, b : Type) -> (a -> s) -> (t -> b) ->
     InterpPDF pdf s t -> InterpPDF pdf a b
 InterpPDFdimap pdf s t a b mas mtb =
   InterpPDFlmap pdf s b a mas . InterpPDFrmap pdf s t b mtb
+
+export
+InterpPDF'dimap : (pdf : PolyDifunc') ->
+  (0 s, t, a, b : Type) -> (a -> s) -> (t -> b) ->
+    InterpPDF' pdf s t -> InterpPDF' pdf a b
+InterpPDF'dimap pdf s t a b mas mtb =
+  InterpPDF'lmap pdf s b a mas . InterpPDF'rmap pdf s t b mtb
 
 ----------------------------------
 ---- Monoid of polydifunctors ----
@@ -154,6 +189,18 @@ InterpFromIdPDF x y (IPDF (i ** j ** mij) mxi mjy mxy comm) =
   -- alternative to the `mxy` which we do use.
   let 0 eqm : (FunExt -> mjy . mij . mxi = mxy) = comm in
   mxy
+
+export
+PdfHomProfId' : PolyDifunc'
+PdfHomProfId' = PDF' Unit (\() => ADSC Unit (const Void))
+
+export
+InterpToIdPDF' : (x, y : Type) -> (x -> y) -> InterpPDF' PdfHomProfId' x y
+InterpToIdPDF' x y m = IPDF' () (\_ => ()) (\uv => void $ snd uv) m
+
+export
+InterpFromIdPDF' : (x, y : Type) -> InterpPDF' PdfHomProfId' x y -> x -> y
+InterpFromIdPDF' x y (IPDF' () bm cm proj) = proj
 
 -- The arena form of polydifunctors is closed under composition.
 export
