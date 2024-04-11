@@ -214,6 +214,16 @@ Show type => Show (Subset0 type dep) where
   show = show . fst0
 
 public export
+s0Eq1 : {0 a : Type} -> {0 p : a -> Type} -> {s0, s0' : Subset0 a p} ->
+  (0 _ : s0 = s0') -> fst0 s0 = fst0 s0'
+s0Eq1 {a} {p} Refl = Refl
+
+public export
+s0Eq2 : {0 a : Type} -> {0 p : a -> Type} -> {s0, s0' : Subset0 a p} ->
+  (0 _ : s0 = s0') -> snd0 s0 ~=~ snd0 s0'
+s0Eq2 {a} {p} Refl = Refl
+
+public export
 s0Eq12 : {0 a : Type} -> {0 p : a -> Type} -> {x, y : a} ->
   {0 px : p x} -> {0 py : p y} ->
   x = y -> px = py ->
