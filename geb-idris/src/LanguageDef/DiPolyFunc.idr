@@ -17,6 +17,39 @@ import LanguageDef.InternalCat
 ---- Categorial-style (`CDisliceCat`) ----
 ------------------------------------------
 
+export
+CDSLbc : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b' -> b) ->
+  CDSLomap (CDSC b cb proj) (CDSC b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
+CDSLbc {b} {b'} {proj} m (CDSO tot f1 f2 comm) =
+  CDSO
+    (Pullback f2 m)
+    (\(Element0 (ecb, eb') eqpm) =>
+      Element0 (f1 ecb, eb') $ trans (comm ecb) eqpm)
+    (pbProj2 {f=f2} {g=m})
+    (\(Element0 (ecb, eb') eqpm) => Refl)
+
+export
+CDSLbcMap : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b' -> b) ->
+  CDSLfmap (CDSLbc {b} {b'} {proj} m)
+CDSLbcMap {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) (CDSO tot' f1' f2' comm')
+  (CDSM mtot meq1 meq2) =
+    CDSM
+      (\(Element0 (et, eb') eqf2m) =>
+        Element0 (mtot et, eb') $ trans (sym $ meq2 et) eqf2m)
+      (\(Element0 (ecb, eb') eqpm) =>
+        s0Eq12
+          (rewrite meq1 ecb in Refl)
+          (rewrite meq1 ecb in uip))
+      (\(Element0 (et, eb') eqf2m) => Refl)
+
+export
+CDSLbcFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b' -> b) ->
+  CDSLfunc (CDSC b cb proj) (CDSC b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
+CDSLbcFunc {b} {b'} {cb} {proj} m = CDSLf (CDSLbc m) (CDSLbcMap m)
+
 ----------------------------------------------
 ---- Dependent-type style (`ADisliceCat`) ----
 ----------------------------------------------
