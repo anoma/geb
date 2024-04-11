@@ -247,6 +247,22 @@ DsmAfromC {cat=(ADSC base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO ctot cinj)}
 --------------------------
 
 public export
+CDSLomap : CDisliceCat -> CDisliceCat -> Type
+CDSLomap c d = CDisliceObj c -> CDisliceObj d
+
+public export
+CDSLfmap : {c, d : CDisliceCat} -> CDSLomap c d -> Type
+CDSLfmap {c} {d} omap =
+  (x, y : CDisliceObj c) ->
+  CDisliceMorph {cat=c} x y -> CDisliceMorph {cat=d} (omap x) (omap y)
+
+public export
+record CDSLfunc (c, d : CDisliceCat) where
+  constructor CDSLf
+  cdslO : CDSLomap c d
+  cdslF : CDSLfmap {c} {d} cdslO
+
+public export
 ADSLomap : ADisliceCat -> ADisliceCat -> Type
 ADSLomap c d = ADisliceObj c -> ADisliceObj d
 
