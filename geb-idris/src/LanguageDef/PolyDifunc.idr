@@ -34,7 +34,7 @@ public export
 record PolyDifunc' where
   constructor PDF'
   pdf'Pos : Type
-  pdf'Dir : pdf'Pos -> ADisliceCat
+  pdf'Dir : pdf'Pos -> CDisliceCat
 
 -- The interpretation of a polydifunctor treats its inputs and outputs
 -- as a domain and codomain, and comprises a choice of morphism from
@@ -62,8 +62,8 @@ export
 record InterpPDF' (pdf : PolyDifunc') (x, y : Type) where
   constructor IPDF'
   ipdf'Pos : pdf'Pos pdf
-  ipdf'BaseMor : x -> adscBase (pdf'Dir pdf ipdf'Pos)
-  ipdf'CobaseMor : adscCotot (pdf'Dir pdf ipdf'Pos) -> y
+  ipdf'BaseMor : x -> cdscBase (pdf'Dir pdf ipdf'Pos)
+  ipdf'CobaseMor : cdscCobase (pdf'Dir pdf ipdf'Pos) -> y
   ipdf'Proj : x -> y
 
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
@@ -192,11 +192,11 @@ InterpFromIdPDF x y (IPDF (i ** j ** mij) mxi mjy mxy comm) =
 
 export
 PdfHomProfId' : PolyDifunc'
-PdfHomProfId' = PDF' Unit (\() => ADSC Unit (const Void))
+PdfHomProfId' = PDF' Unit (\() => CDSC Unit Void (\v => void v))
 
 export
 InterpToIdPDF' : (x, y : Type) -> (x -> y) -> InterpPDF' PdfHomProfId' x y
-InterpToIdPDF' x y m = IPDF' () (\_ => ()) (\uv => void $ snd uv) m
+InterpToIdPDF' x y m = IPDF' () (\_ => ()) (\v => void v) m
 
 export
 InterpFromIdPDF' : (x, y : Type) -> InterpPDF' PdfHomProfId' x y -> x -> y
