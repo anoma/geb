@@ -311,10 +311,10 @@ DsomAfromC : {c, d : ADisliceCat} ->
 DsomAfromC {c} {d} omap = DsoAfromC . omap . DsoAtoC
 
 export
-DsfmCtoAm : (c, d : CDisliceCat) ->
+DsmAtoCf : (c, d : CDisliceCat) ->
   (x, y : ADisliceObj (DscCtoA c)) ->
   ADisliceMorph x y -> CDisliceMorph (DsoCfromA {cat=c} x) (DsoCfromA {cat=c} y)
-DsfmCtoAm (CDSC cb ccb cproj) (CDSC db dcb dproj)
+DsmAtoCf (CDSC cb ccb cproj) (CDSC db dcb dproj)
   (ADSO xtot xinj) (ADSO codtot minj)
   (ADSM {codtot} mor minj {eq}) =
     CDSM
@@ -329,4 +329,9 @@ DsfmCtoA : {c, d : CDisliceCat} ->
   ADSLfmap {c=(DscCtoA c)} {d=(DscCtoA d)} (DsomCtoA omap)
 DsfmCtoA {c} {d} omap fmap x y =
   DsmCtoA . fmap (DsoCfromA x) (DsoCfromA y) . DsmCfromA . DsmCtoA
-  . DsfmCtoAm c d x y
+  . DsmAtoCf c d x y
+
+export
+DsfCtoA : {c, d : CDisliceCat} ->
+  CDSLfunc c d -> ADSLfunc (DscCtoA c) (DscCtoA d)
+DsfCtoA {c} {d} (CDSLf omap fmap) = ADSLf (DsomCtoA omap) (DsfmCtoA omap fmap)
