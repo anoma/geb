@@ -141,6 +141,10 @@ DAbase : (da : ADiArena) -> SliceObj (daPos da)
 DAbase da = adscBase . daCat da
 
 public export
+DAcoTot : (da : ADiArena) -> SliceObj (daPos da)
+DAcoTot da = adscCotot . daCat da
+
+public export
 DAcobase : (da : ADiArena) -> (i : daPos da) -> SliceObj (DAbase da i)
 DAcobase da i = adscCobase (daCat da i)
 
