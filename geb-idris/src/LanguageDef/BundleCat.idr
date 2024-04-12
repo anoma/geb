@@ -169,6 +169,20 @@ BcmAfromC {dom} {cod} (CBM mbase (Element0 mtot mcomm)) =
 ---------------------------------------------
 
 export
+BcmAtoDirich : {0 dom, cod : ABundleObj} ->
+  ABundleMor dom cod -> DirichNatTrans (BcoAtoDirich dom) (BcoAtoDirich cod)
+BcmAtoDirich {dom=(ABO dbase dcobase)} {cod=(ABO cbase ccobase)}
+  (ABM mbase mcobase) =
+    (mbase ** mcobase)
+
+export
+BcmAfromDirich : {0 dom, cod : ABundleObj} ->
+  DirichNatTrans (BcoAtoDirich dom) (BcoAtoDirich cod) -> ABundleMor dom cod
+BcmAfromDirich {dom=(ABO dbase dcobase)} {cod=(ABO cbase ccobase)}
+  (mbase ** mcobase) =
+    ABM mbase mcobase
+
+export
 BcmDirichToA : {0 dom, cod : PolyFunc} ->
   DirichNatTrans dom cod -> ABundleMor (BcoDirichToA dom) (BcoDirichToA cod)
 BcmDirichToA {dom=(dpos ** ddir)} {cod=(cpos ** cdir)} (onpos ** ondir) =
@@ -180,6 +194,16 @@ BcmDirichFromA : {0 dom, cod : PolyFunc} ->
   DirichNatTrans dom cod
 BcmDirichFromA {dom=(dpos ** ddir)} {cod=(cpos ** cdir)} (ABM base cobase) =
   (base ** cobase)
+
+export
+BcmCtoDirich : {0 dom, cod : CBundleObj} ->
+  CBundleMor dom cod -> DirichNatTrans (BcoCtoDirich dom) (BcoCtoDirich cod)
+BcmCtoDirich = BcmAtoDirich . BcmCtoA
+
+export
+BcmCfromDirich : {dom, cod : CBundleObj} ->
+  DirichNatTrans (BcoCtoDirich dom) (BcoCtoDirich cod) -> CBundleMor dom cod
+BcmCfromDirich = BcmCfromA . BcmAfromDirich
 
 export
 BcmDirichToC : {0 dom, cod : PolyFunc} ->
