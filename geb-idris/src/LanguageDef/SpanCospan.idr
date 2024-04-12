@@ -416,7 +416,7 @@ PullbackCounit x = PullbackRAdjunct (PullbackRAdjointObj x) x id
 -- the multiplications (joins) and comultiplications (duplicates).
 
 export
-pushoutJoin : (a : SpanObj) ->
+0 pushoutJoin : (a : SpanObj) ->
   SpanMorph (PushoutMonadObj $ PushoutMonadObj a) (PushoutMonadObj a)
 pushoutJoin (Span codl codr dom) =
   SpanM
@@ -425,7 +425,7 @@ pushoutJoin (Span codl codr dom) =
     ?pushoutJoin_hole_dom
 
 export
-pushoutDup : (b : Type) ->
+0 pushoutDup : (b : Type) ->
   PushoutComonadObj b -> PushoutComonadObj (PushoutComonadObj b)
 pushoutDup b cmo@(Element0 alpha anat) =
   Element0
