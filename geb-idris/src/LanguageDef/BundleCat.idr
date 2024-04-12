@@ -53,14 +53,14 @@ record CBundleObj where
 
 public export
 BcoCtoA : CBundleObj -> ABundleObj
-BcoCtoA cat =
-  ABO (cbTot cat) $
-    \ea => PreImage {a=(cbBase cat)} {b=(cbTot cat)} (cbProj cat) ea
+BcoCtoA cb =
+  ABO (cbTot cb) $
+    \ea => PreImage {a=(cbBase cb)} {b=(cbTot cb)} (cbProj cb) ea
 
 public export
 BcoAtoC : ABundleObj -> CBundleObj
-BcoAtoC cat =
-  CBO (abBase cat) (Sigma {a=(abBase cat)} $ abCobase cat) DPair.fst
+BcoAtoC ab =
+  CBO (abBase ab) (Sigma {a=(abBase ab)} $ abCobase ab) DPair.fst
 
 ---------------------------------------------
 ---- Equivalence with Dirichlet functors ----
