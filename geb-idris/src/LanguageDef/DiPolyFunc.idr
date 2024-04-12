@@ -21,7 +21,7 @@ export
 CDSLbc : {b, b', cb : Type} -> {proj : cb -> b} ->
   (m : b' -> b) ->
   CDSLomap (CBO b cb proj) (CBO b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
-CDSLbc {b} {b'} {proj} m (CDSO tot f1 f2 comm) =
+CDSLbc {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
   CDSO
     (Pullback f2 m)
     (\(Element0 (ecb, eb') eqpm) =>
@@ -105,6 +105,38 @@ CDSLdcFunc : {b, b', cb, cb' : Type} ->
   CBundleMor (CBO b' cb' proj') (CBO b cb proj) ->
   CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
 CDSLdcFunc mb = CDSLf (CDSLdc mb) (CDSLdcMap mb)
+
+export
+CDSLsigma : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  CDSLomap (CBO b cb proj) (CBO b' cb (m . proj))
+CDSLsigma {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
+  CDSO
+    (fst $ CSSigma {c=b} {d=b'} m (tot ** f2))
+    f1
+    (snd $ CSSigma {c=b} {d=b'} m (tot ** f2))
+    (\ecb => cong m $ comm ecb)
+
+export
+CDSLsigmaMap : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  CDSLfmap (CDSLsigma {proj} m)
+CDSLsigmaMap {b} {b'} {cb} {proj}
+  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2) =
+    CDSM
+      (fst0
+       $ csSigmaMap {c=b} {d=b'} {f=m} (xtot ** xf2) (ytot ** yf2)
+       $ Element0 mtot meq2)
+      meq1
+      (snd0
+       $ csSigmaMap {c=b} {d=b'} {f=m} (xtot ** xf2) (ytot ** yf2)
+       $ Element0 mtot meq2)
+
+export
+CDSLsigmaFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  CDSLfunc (CBO b cb proj) (CBO b' cb (m . proj))
+CDSLsigmaFunc m = CDSLf (CDSLsigma m) (CDSLsigmaMap m)
 
 ----------------------------------------------
 ---- Dependent-type style (`ABundleObj`) ----
