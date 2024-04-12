@@ -513,7 +513,7 @@ pfEqualizerPos (ppos ** pdir) (qpos ** qdir)
     Equalizer aonpos bonpos
 
 public export
-pfEqualizerDir : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) ->
+0 pfEqualizerDir : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) ->
   pfEqualizerPos p q alpha beta -> Type
 pfEqualizerDir (ppos ** pdir) (qpos ** qdir)
   (aonpos ** aondir) (bonpos ** bondir) (Element0 i eq) =
@@ -524,7 +524,8 @@ pfEqualizerDir (ppos ** pdir) (qpos ** qdir)
     ?pfEqualizerDir_hole
 
 public export
-pfEqualizer : (p, q : PolyFunc) -> (alpha, beta : PolyNatTrans p q) -> PolyFunc
+0 pfEqualizer : (p, q : PolyFunc) ->
+  (alpha, beta : PolyNatTrans p q) -> PolyFunc
 pfEqualizer p q alpha beta =
   (pfEqualizerPos p q alpha beta ** pfEqualizerDir p q alpha beta)
 
@@ -2024,7 +2025,7 @@ PPathPredGenPosT pred j (PPPath {i} pp di j) =
   Pair (PPathPredGenPosT pred i pp) (pred i pp di = Just j)
 
 public export
-PPathPredGenPosDec : {p : PolyFunc} ->
+0 PPathPredGenPosDec : {p : PolyFunc} ->
   (dirDec : (i' : pfPos p) -> (di', di'' : pfDir {p} i') -> Dec (di' = di'')) ->
   (pred : PPathPred p) -> (i : pfPos p) -> (pp : PPathPos p i) ->
   Dec (PPathPredGenPosT {p} pred i pp)
@@ -2035,7 +2036,7 @@ PPathPredGenPosDec {p} dirDec pred j (PPPath {i} pp di j) =
   ?PPathPredGenPosDec_hole_path
 
 public export
-PPathPredGenPosDecPred : {p : PolyFunc} ->
+0 PPathPredGenPosDecPred : {p : PolyFunc} ->
   (dirDec : (i' : pfPos p) -> (di', di'' : pfDir {p} i') -> Dec (di' = di'')) ->
   (pred : PPathPred p) -> (i : pfPos p) -> (pp : PPathPos p i) ->
   Bool
@@ -2068,21 +2069,21 @@ PPathPredNotGen : {p : PolyFunc} -> PPathPred p -> PPath p -> Type
 PPathPredNotGen {p} pred pp = Not $ PPathPredGen {p} pred pp
 
 public export
-PPathPredGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
+0 PPathPredGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
 PPathPredGenCorrect {p} pred =
   (i : pfPos p) -> (ppi : PPathPos p i) ->
   PPathPredGenPos {p} pred i ppi -> (di : pfDir {p} i) ->
   IsJustTrue (pred i ppi di)
 
 public export
-PPathPredNotGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
+0 PPathPredNotGenCorrect : {p : PolyFunc} -> PPathPred p -> Type
 PPathPredNotGenCorrect {p} pred =
   (i : pfPos p) -> (ppi : PPathPos p i) ->
   PPathPredNotGenPos {p} pred i ppi -> (di : pfDir {p} i) ->
   IsNothingTrue (pred i ppi di)
 
 public export
-PPathPredCorrect : {p : PolyFunc} -> PPathPred p -> Type
+0 PPathPredCorrect : {p : PolyFunc} -> PPathPred p -> Type
 PPathPredCorrect {p} pred =
   (PPathPredGenCorrect {p} pred, PPathPredNotGenCorrect {p} pred)
 
@@ -2241,19 +2242,19 @@ InterpPolyFuncCofreeCMFromPTree =
   InterpPolyFunc . PolyFuncCofreeCMFromPTreeArena
 
 public export
-PolyFuncCofreeCMPosNuScaleToPTree : {p : PolyFunc} ->
+0 PolyFuncCofreeCMPosNuScaleToPTree : {p : PolyFunc} ->
   PolyFuncCofreeCMPosFromNuScale p -> PolyFuncCofreeCMFromPTreePos p
 PolyFuncCofreeCMPosNuScaleToPTree {p=p@(pos ** dir)} (InPFN (PFNode () i) d) =
   ?PolyFuncCofreeCMPosNuScaleToPTree_hole
 
 public export
-PolyFuncCofreeCMPosPTreeToNuScale : {p : PolyFunc} ->
+0 PolyFuncCofreeCMPosPTreeToNuScale : {p : PolyFunc} ->
   PolyFuncCofreeCMFromPTreePos p -> PolyFuncCofreeCMPosFromNuScale p
 PolyFuncCofreeCMPosPTreeToNuScale {p=p@(pos ** dir)} =
   ?PolyFuncCofreeCMPosPTreeToNuScale_hole
 
 public export
-PolyFuncCofreeCMDirNuScaleToPTree : {p : PolyFunc} ->
+0 PolyFuncCofreeCMDirNuScaleToPTree : {p : PolyFunc} ->
   (i : PolyFuncCofreeCMPosFromNuScale p) ->
   PolyFuncCofreeCMDirFromNuScale p i ->
   PolyFuncCofreeCMFromPTreeDir p (PolyFuncCofreeCMPosNuScaleToPTree i)
@@ -2261,7 +2262,7 @@ PolyFuncCofreeCMDirNuScaleToPTree {p=(pos ** dir)} i di =
   ?PolyFuncCofreeCMDirNuScaleToPTree_hole
 
 public export
-PolyFuncCofreeCMDirPTreeToNuScale : {p : PolyFunc} ->
+0 PolyFuncCofreeCMDirPTreeToNuScale : {p : PolyFunc} ->
   (i : PolyFuncCofreeCMFromPTreePos p) ->
   PolyFuncCofreeCMFromPTreeDir p i ->
   PolyFuncCofreeCMDirFromNuScale p (PolyFuncCofreeCMPosPTreeToNuScale i)
@@ -2489,7 +2490,7 @@ ComonoidToCatId {p=(pos ** dir)}
     Element0 (eOnDir a ()) (ComonoidDupOnDirPosId c holds a)
 
 public export
-ComonoidToCatComp : {p : PolyFunc} ->
+0 ComonoidToCatComp : {p : PolyFunc} ->
   (com : PFComonoid p) -> (holds : PFComonoidCorrect p com) ->
   {a, b, c : ComonoidToCatObj com} ->
   ComonoidToCatMorph com holds b c ->
@@ -2506,7 +2507,7 @@ ComonoidToCatComp {p=(pos ** dir)}
       (trans (?ComonoidToCatComp_hole_codomain_correct) gcod)
 
 public export
-ComonoidToCat : {p : PolyFunc} ->
+0 ComonoidToCat : {p : PolyFunc} ->
   (c : PFComonoid p) -> PFComonoidCorrect p c -> CatSig
 ComonoidToCat c holds =
   MkCatSig
@@ -2517,7 +2518,7 @@ ComonoidToCat c holds =
     (ComonoidToCatComp c holds)
 
 public export
-ComonadToCat : (com : PFComonad) ->
+0 ComonadToCat : (com : PFComonad) ->
   PFComonoidCorrect (fst com) (snd com) -> CatSig
 ComonadToCat (p ** c) holds = ComonoidToCat {p} c holds
 
@@ -2838,7 +2839,7 @@ pfFreeToComposeN (pos ** dir) (S n) =
     ret
 
 public export
-pfFreeFromComposeN : (p : PolyFunc) -> (n : Nat) ->
+0 pfFreeFromComposeN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (pfCompositionPowerArenaS (PolyFuncFreeM p) n)
     (PolyFuncFreeM p)
@@ -2862,13 +2863,13 @@ pfFreeFromComposeN (pos ** dir) (S n) =
         {q=(PolyFuncFreeM (pos ** dir))}
         {r=(pfCompositionPowerArena (PolyFuncFreeM (pos ** dir)) n)}
         {s=(pfCompositionPowerArenaS (PolyFuncFreeM (pos ** dir)) n)}
-        ?from_compose_sS2S_hole
+        from_compose_sS2S_hole
       -}
   in
   ret
 
 public export
-pfFreePolyReturnN : (p : PolyFunc) -> (n : Nat) ->
+0 pfFreePolyReturnN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (PolyFuncFreeM p)
     (PolyFuncFreeM (pfCompositionPowerArenaS p n))
@@ -2876,7 +2877,7 @@ pfFreePolyReturnN p Z = pntId $ PolyFuncFreeM p
 pfFreePolyReturnN p (S n) = ?pfFreePolyReturnN_hole_1
 
 public export
-pfFreePolyJoinN : (p : PolyFunc) -> (n : Nat) ->
+0 pfFreePolyJoinN : (p : PolyFunc) -> (n : Nat) ->
   PolyNatTrans
     (PolyFuncFreeM (pfCompositionPowerArenaS p n))
     (PolyFuncFreeM p)
@@ -2889,7 +2890,7 @@ pfNatTransMN p q m n =
   PolyNatTrans (pfCompositionPowerArenaS p m) (pfCompositionPowerArenaS q n)
 
 public export
-pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
+0 pfFreePolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
   pfNatTransMN p q n n ->
   PolyNatTrans (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreePolyCataN {p} {q} {n} alpha =
@@ -2906,7 +2907,7 @@ pfFreePolyCataN {p} {q} {n} alpha =
       (pfFreePolyReturnN p n))
 
 public export
-pfPolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
+0 pfPolyCataN : {p, q : PolyFunc} -> {n : Nat} ->
   PolyNatTrans
     (pfCompositionPowerArenaS p n)
     (pfCompositionPowerArenaS q n) ->
@@ -2920,7 +2921,7 @@ pfPolyCataN {p} {q} {n} alpha =
   pfFreeMVoidToMu {p=q} . alphaNint . pfMuToFreeMVoid {p}
 
 public export
-pfFreeContCata : {p, q : PolyFunc} ->
+0 pfFreeContCata : {p, q : PolyFunc} ->
   PolyContNT p q ->
   PolyContNT (PolyFuncFreeM p) (PolyFuncFreeM q)
 pfFreeContCata {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} cont x =
@@ -2963,15 +2964,15 @@ pfCofreeIdF = InterpPolyFunc pfCofreeId
 -------------------------
 
 public export
-PFDensityComonoid : (p : PolyFunc) -> PFComonoid (PolyDensityComonad p)
+0 PFDensityComonoid : (p : PolyFunc) -> PFComonoid (PolyDensityComonad p)
 PFDensityComonoid p = ?PFDensityComonoid_hole
 
 public export
-PFDensityComonad : PolyFunc -> PFComonad
+0 PFDensityComonad : PolyFunc -> PFComonad
 PFDensityComonad p = (PolyDensityComonad p ** PFDensityComonoid p)
 
 public export
-PFDensityComonadCorrect : (p : PolyFunc) ->
+0 PFDensityComonadCorrect : (p : PolyFunc) ->
   PFComonoidCorrect (PolyDensityComonad p) (PFDensityComonoid p)
 PFDensityComonadCorrect p = ?PFDensityComonadCorrect_hole
 
@@ -2992,11 +2993,11 @@ pfToCat (ppos ** pdir) =
     (\f, g => g . f)
 
 public export
-densityToCat : PolyFunc -> CatSig
+0 densityToCat : PolyFunc -> CatSig
 densityToCat p = ComonadToCat (PFDensityComonad p) (PFDensityComonadCorrect p)
 
 public export
-pfDensityToCatConsistent : (p : PolyFunc) -> FunExt ->
+0 pfDensityToCatConsistent : (p : PolyFunc) -> FunExt ->
   pfToCat p = densityToCat p
 pfDensityToCatConsistent (ppos ** pdir) funext with
   (PolyDensityComonad (ppos ** pdir)) proof prf
@@ -4766,7 +4767,7 @@ FinTFNewTerm {funext} = finTFNewInd {funext} FinTFNewTrAlg
 public export
 FinExpObjF : (n : Nat) ->
   (FinTFDepth n -> MuFinTF -> MuFinTF) -> FinTFNew (S n) -> MuFinTF -> MuFinTF
-FinExpObjF n morph type cod = ?FinExpObjF_hole
+FinExpObjF n morph type cod = FinExpObjF_hole
 
 public export
 FinNewExpObj : {funext : FunExt} ->
@@ -4791,7 +4792,7 @@ MuFinExpObj {funext} (m ** tm) (n ** tn) = FinNewExpObj {funext} tm tn
 public export
 FinNewMorphF : (n : Nat) ->
   (FinTFDepth n -> MuFinTF -> Type) -> FinTFNew (S n) -> MuFinTF -> Type
-FinNewMorphF n morph type cod = ?FinNewMorphF_hole
+FinNewMorphF n morph type cod = FinNewMorphF_hole
 
 public export
 FinNewMorph : {funext : FunExt} ->
@@ -5180,12 +5181,12 @@ isubstOMorphism : MuISubstO -> MuISubstO -> Type
 isubstOMorphism = isubstOToMeta .* isubstOHomObj
 
 public export
-isubstOEval : (x, y : MuISubstO) ->
+0 isubstOEval : (x, y : MuISubstO) ->
   isubstOMorphism (ISOProduct (isubstOHomObj x y) x) y
 isubstOEval x y = ?isubstOEval_hole
 
 public export
-isubstOCurry : {x, y, z : MuISubstO} ->
+0 isubstOCurry : {x, y, z : MuISubstO} ->
   isubstOMorphism (ISOProduct x y) z -> isubstOMorphism x (isubstOHomObj y z)
 isubstOCurry {x} {y} {z} f = ?isubstOCurry_hole
 
@@ -6204,7 +6205,7 @@ scaleMonPolyShape : PolyTerm -> PolyShape -> PolyShape
 scaleMonPolyShape pt = reverse . scaleMonPolyRev pt
 
 public export
-scalePreservesValid : {0 pt : PolyTerm} -> {0 poly : PolyShape} ->
+0 scalePreservesValid : {0 pt : PolyTerm} -> {0 poly : PolyShape} ->
   ValidPoly poly -> ValidPoly (scaleMonPolyShape pt poly)
 scalePreservesValid {pt} {poly} valid = ?scaleMonPolyShapeCorrect_hole
 
@@ -6238,7 +6239,7 @@ parProdMonPolyShape (Z, c) poly = [(0, c * sumPTCoeff poly)]
 parProdMonPolyShape pt@(S _, _) poly = reverse (parProdMonPolyRev pt poly)
 
 public export
-parProdMonPreservesValid : {0 pt : PolyTerm} -> {0 poly : PolyShape} ->
+0 parProdMonPreservesValid : {0 pt : PolyTerm} -> {0 poly : PolyShape} ->
   ValidPoly poly -> ValidPoly (parProdMonPolyShape pt poly)
 parProdMonPreservesValid {pt} {poly} valid = ?parProdMonPolyShapeCorrect_hole
 
@@ -6311,7 +6312,7 @@ addPolyShape : PolyShape -> PolyShape -> PolyShape
 addPolyShape p q = reverse (addPolyShapeRev p q)
 
 public export
-addPreservesValid : {0 p, q : PolyShape} ->
+0 addPreservesValid : {0 p, q : PolyShape} ->
   ValidPoly p -> ValidPoly q -> ValidPoly (addPolyShape p q)
 addPreservesValid {p} {q} pvalid qvalid = ?addPolyShapeCorrect_hole
 
@@ -6335,7 +6336,7 @@ mulPolyShape : PolyShape -> PolyShape -> PolyShape
 mulPolyShape = addMapPolyShapeList scaleMonPolyShape
 
 public export
-mulPreservesValid : {0 p, q : PolyShape} ->
+0 mulPreservesValid : {0 p, q : PolyShape} ->
   ValidPoly p -> ValidPoly q -> ValidPoly (mulPolyShape p q)
 mulPreservesValid {p} {q} pvalid qvalid = ?mulPolyShapeCorrect_hole
 
@@ -6353,7 +6354,7 @@ parProdPolyShape : PolyShape -> PolyShape -> PolyShape
 parProdPolyShape = addMapPolyShapeList parProdMonPolyShape
 
 public export
-parProdPreservesValid : {0 p, q : PolyShape} ->
+0 parProdPreservesValid : {0 p, q : PolyShape} ->
   ValidPoly p -> ValidPoly q -> ValidPoly (parProdPolyShape p q)
 parProdPreservesValid {p} {q} pvalid qvalid = ?parProdPolyShapeCorrect_hole
 
@@ -6372,7 +6373,7 @@ expNPolyShape Z _ = terminalPolyShape
 expNPolyShape (S n) p = mulPolyShape p (expNPolyShape n p)
 
 public export
-expNPreservesValid : {0 n : Nat} -> {0 poly : PolyShape} ->
+0 expNPreservesValid : {0 n : Nat} -> {0 poly : PolyShape} ->
   ValidPoly poly -> ValidPoly (expNPolyShape n poly)
 expNPreservesValid {n} {poly} valid = ?expNPolyShapeCorrect_hole
 
@@ -6390,7 +6391,7 @@ composePolyShape : PolyShape -> PolyShape -> PolyShape
 composePolyShape = flip (addMapPolyShapeList composeMonPoly)
 
 public export
-composePreservesValid : {0 p, q : PolyShape} ->
+0 composePreservesValid : {0 p, q : PolyShape} ->
   ValidPoly q -> ValidPoly p -> ValidPoly (composePolyShape q p)
 composePreservesValid {p} {q} pvalid qvalid = ?composePolyShapeCorrect_hole
 
@@ -6414,7 +6415,7 @@ iterNPolyShape : Nat -> PolyShape -> PolyShape
 iterNPolyShape n p = foldrNat (composePolyShape p) terminalPolyShape n
 
 public export
-iterNPreservesValid : {0 n : Nat} -> {0 poly : PolyShape} ->
+0 iterNPreservesValid : {0 n : Nat} -> {0 poly : PolyShape} ->
   ValidPoly poly -> ValidPoly (iterNPolyShape n poly)
 iterNPreservesValid {n} {poly} valid = ?iterNPolyShapeCorrect_hole
 
@@ -6494,7 +6495,7 @@ polyInterpRange : Polynomial -> NatRange -> NatRange
 polyInterpRange = psInterpRange . shape
 
 public export
-idPSCorrect : (0 range : NatRange) ->
+0 idPSCorrect : (0 range : NatRange) ->
   psInterpRange PolyCat.idPolyShape range = range
 idPSCorrect (min, max) = ?idPsCorrect_hole
 
@@ -6879,7 +6880,7 @@ record PolyNTShape where
   psOnPos : AugRNM
 
 public export
-validPNTS : Polynomial -> Polynomial -> DecPred PolyNTShape
+0 validPNTS : Polynomial -> Polynomial -> DecPred PolyNTShape
 validPNTS p q nt = ?validate_PNTS_is_correct_hole
 
 public export
@@ -6893,7 +6894,7 @@ PolyNT p q = Refinement {a=PolyNTShape} (validPNTS p q)
 -- hence a term of `AugRNM` -- from `p(r)` to `q(r)`.  (`p(r)` and `q(r)` are
 -- the ranges computed by `psApplyAugRange`.)
 public export
-pntsComponent : PolyShape -> PolyShape -> PolyNTShape -> AugNatRange -> AugRNM
+0 pntsComponent : PolyShape -> PolyShape -> PolyNTShape -> AugNatRange -> AugRNM
 pntsComponent p q alpha range = ?pntsComponent_hole
 
 --------------------------------------
@@ -8803,7 +8804,7 @@ SubstMorphADTSig : Type
 SubstMorphADTSig = (SubstObjMu, SubstObjMu)
 
 public export
-SubstMorphADTPFAlgCheckSig : SubstMorphADTPFAlg (Maybe SubstMorphADTSig)
+0 SubstMorphADTPFAlgCheckSig : SubstMorphADTPFAlg (Maybe SubstMorphADTSig)
 SubstMorphADTPFAlgCheckSig (SMAPFrom0 x) d = Just (Subst0, x)
 SubstMorphADTPFAlgCheckSig SMAPId1 d = Just (Subst1, Subst1)
 SubstMorphADTPFAlgCheckSig (SMAPCopTo1 x y) d = Just (x !+ y, Subst1)
@@ -8860,7 +8861,7 @@ SubstMorphADTAlg : Type -> Type
 SubstMorphADTAlg x = SubstMorphADTF x -> Maybe x
 
 public export
-substMorphADTCata : SubstMorphADTAlg x -> SubstMorphADT -> Maybe x
+0 substMorphADTCata : SubstMorphADTAlg x -> SubstMorphADT -> Maybe x
 substMorphADTCata alg (InSM x) = ?substMorphADTCata_hole
 
 public export
@@ -8886,7 +8887,7 @@ SMADTCheckSigAlg (SMAAssoc x y z (d, c)) =
   if d == (x !* y) !* z then Just (x !* (y !* z), c) else Nothing
 
 public export
-smadtCheckSig : SubstMorphADT -> Maybe (SubstObjMu, SubstObjMu)
+0 smadtCheckSig : SubstMorphADT -> Maybe (SubstObjMu, SubstObjMu)
 smadtCheckSig = substMorphADTCata SMADTCheckSigAlg
 
 ----------------------------------------------------------------------
@@ -9873,7 +9874,7 @@ finSubstEvalMorph x y = snd $ snd $ snd $ FinSubstHomDepthObjEval x y
 ------------------------------------
 
 public export
-FSToBANatMorph : {0 cx, dx, cy, dy : Nat} ->
+0 FSToBANatMorph : {0 cx, dx, cy, dy : Nat} ->
   {0 depth : Nat} -> {dom : FinSubstT cx dx} -> {cod : FinSubstT cy dy} ->
   FinSubstMorph depth dom cod ->
   BNCPolyM
@@ -9902,7 +9903,7 @@ interpFinSubstTerm : {0 c, d : Nat} -> {x : FinSubstT c d} ->
 interpFinSubstTerm {x} = fstCata InterpTrAlg
 
 public export
-interpFinSubstMorph : {0 cx, dx, cy, dy, depth : Nat} ->
+0 interpFinSubstMorph : {0 cx, dx, cy, dy, depth : Nat} ->
   {x : FinSubstT cx dx} -> {y : FinSubstT cy dy} ->
   FinSubstMorph {cx} {dx} {cy} {dy} depth x y ->
   interpFinSubst {c=cx} {d=dx} x ->
