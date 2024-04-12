@@ -17,6 +17,10 @@ import public LanguageDef.BundleCat
 
 -- A dislice category is indexed by a bundle, analogously to how
 -- a slice or coslice category is indexed by an object of the base category.
+-- The dislice category over a bundle may be viewed as the category of
+-- factorizations (into two morphisms, with one intervening object) of
+-- the bundle's projection.
+--
 -- In particular:
 --
 --  - A slice category over `j` is equivalent to a dislice category
