@@ -11,20 +11,6 @@ import LanguageDef.PolyCat
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
 
---------------------------
----- Categorial-style ----
---------------------------
-
--- A bundle is an arrow whose morphisms comprise a (covariant) morphism between
--- codomains together with (covariant) morphisms on fibrations of the domains by
--- the codomain morphisms.
-public export
-record CBundleObj where
-  constructor CBO
-  cbTot : Type
-  cbBase : Type
-  cbProj : cbBase -> cbTot
-
 ---------------------
 ---- Arena-style ----
 ---------------------
@@ -46,6 +32,20 @@ abTot cat = Sigma {a=(abBase cat)} (abCobase cat)
 public export
 ABinj : (cat : ABundleObj) -> ABSliceBase cat -> Type
 ABinj cat = SliceMorphism {a=(abBase cat)} (abCobase cat)
+
+--------------------------
+---- Categorial-style ----
+--------------------------
+
+-- A bundle is an arrow whose morphisms comprise a (covariant) morphism between
+-- codomains together with (covariant) morphisms on fibrations of the domains by
+-- the codomain morphisms.
+public export
+record CBundleObj where
+  constructor CBO
+  cbTot : Type
+  cbBase : Type
+  cbProj : cbBase -> cbTot
 
 ---------------------------------------
 ---- Categorial-arena translations ----
