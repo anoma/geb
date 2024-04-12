@@ -62,8 +62,8 @@ export
 record InterpPDF' (pdf : PolyDifunc') (x, y : Type) where
   constructor IPDF'
   ipdf'Pos : pdf'Pos pdf
-  ipdf'BaseMor : x -> cbTot (pdf'Dir pdf ipdf'Pos)
-  ipdf'CobaseMor : cbBase (pdf'Dir pdf ipdf'Pos) -> y
+  ipdf'BaseMor : x -> cbBase (pdf'Dir pdf ipdf'Pos)
+  ipdf'CobaseMor : cbTot (pdf'Dir pdf ipdf'Pos) -> y
   ipdf'Proj : x -> y
 
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
