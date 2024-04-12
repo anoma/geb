@@ -881,13 +881,13 @@ toIsTrueMaybeNat Nothing Nothing Refl = Refl
 toIsTrueMaybeNat (Just m) (Just m) Refl = equalNatCorrect {m}
 
 public export
-foldAppendExtensional : {0 a : Type} -> {n : Nat} ->
+0 foldAppendExtensional : {0 a : Type} -> {n : Nat} ->
   (l : List a) -> (v : Vect n a) ->
   foldrImpl (::) [] ((++) l) v = l ++ foldrImpl (::) [] (id {a=(List a)}) v
 foldAppendExtensional {a} {n} l v = ?foldAppendExtensional_hole
 
 public export
-foldLengthAppend : {0 a : Type} -> {n : Nat} ->
+0 foldLengthAppend : {0 a : Type} -> {n : Nat} ->
   (l : List a) -> (v : Vect n a) ->
   List.length (foldrImpl (::) [] ((++) l) v) =
     length l + (List.length (foldrImpl (::) [] (id {a=(List a)}) v))
@@ -1268,7 +1268,7 @@ FinUnitDecEncoding : FinDecEncoding Unit 1
 FinUnitDecEncoding = (FinUnitDecoder ** FinUnitEncoder)
 
 public export
-FinSumDecoder : {m, n : Nat} -> {ty, ty' : Type} ->
+0 FinSumDecoder : {m, n : Nat} -> {ty, ty' : Type} ->
   FinDecoder ty m -> FinDecoder ty' n -> FinDecoder (Either ty ty') (m + n)
 FinSumDecoder {m} {n} {ty} {ty'} fde fde' i with (finToNat i) proof prf
   FinSumDecoder {m} {n} {ty} {ty'} fde fde' i | idx with (isLT idx m)
@@ -1280,7 +1280,7 @@ FinSumDecoder {m} {n} {ty} {ty'} fde fde' i with (finToNat i) proof prf
       natToFinLT {n} (minus idx m)
 
 public export
-FinSumEncoder : {m, n : Nat} -> {ty, ty' : Type} ->
+0 FinSumEncoder : {m, n : Nat} -> {ty, ty' : Type} ->
   {dec : FinDecoder ty m} -> {dec' : FinDecoder ty' n} ->
   (enc : FinEncoder {a=ty} {size=m} dec) ->
   (enc' : FinEncoder {a=ty'} {size=n} dec') ->
@@ -1303,7 +1303,7 @@ FinSumEncoder {m} {n} {dec} {dec'} enc enc' (Right e') with (enc' e') proof eqe
            ?finSumEncoder_hole_right_isinv)
 
 public export
-FinSumDecEncoding : {m, n : Nat} -> {ty, ty' : Type} ->
+0 FinSumDecEncoding : {m, n : Nat} -> {ty, ty' : Type} ->
   {dec : FinDecoder ty m} -> {dec' : FinDecoder ty' n} ->
   (enc : FinEncoder {a=ty} {size=m} dec) ->
   (enc' : FinEncoder {a=ty'} {size=n} dec') ->
