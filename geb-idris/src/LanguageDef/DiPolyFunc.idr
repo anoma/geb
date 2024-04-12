@@ -13,6 +13,99 @@ import LanguageDef.InternalCat
 ------------------------------------------------------------------
 ------------------------------------------------------------------
 
+------------------------------------------
+---- Categorial-style (`CBundleObj`) ----
+------------------------------------------
+
+export
+CDSLbc : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b' -> b) ->
+  CDSLomap (CBO b cb proj) (CBO b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
+CDSLbc {b} {b'} {proj} m (CDSO tot f1 f2 comm) =
+  CDSO
+    (Pullback f2 m)
+    (\(Element0 (ecb, eb') eqpm) =>
+      Element0 (f1 ecb, eb') $ trans (comm ecb) eqpm)
+    (pbProj2 {f=f2} {g=m})
+    (\(Element0 (ecb, eb') eqpm) => Refl)
+
+export
+CDSLbcMap : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b' -> b) ->
+  CDSLfmap (CDSLbc {b} {b'} {proj} m)
+CDSLbcMap {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) (CDSO tot' f1' f2' comm')
+  (CDSM mtot meq1 meq2) =
+    CDSM
+      (\(Element0 (et, eb') eqf2m) =>
+        Element0 (mtot et, eb') $ trans (sym $ meq2 et) eqf2m)
+      (\(Element0 (ecb, eb') eqpm) =>
+        s0Eq12
+          (rewrite meq1 ecb in Refl)
+          (rewrite meq1 ecb in uip))
+      (\(Element0 (et, eb') eqf2m) => Refl)
+
+export
+CDSLbcFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b' -> b) ->
+  CDSLfunc (CBO b cb proj) (CBO b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
+CDSLbcFunc {b} {b'} {cb} {proj} m = CDSLf (CDSLbc m) (CDSLbcMap m)
+
+export
+CDSLcbc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
+  CSliceMorphism {c=b} (cb' ** proj') (cb ** proj) ->
+  CDSLomap (CBO b cb proj) (CBO b cb' proj')
+CDSLcbc {b} {cb} {cb'} {proj} {proj'}
+  (Element0 mcb mcomm) (CDSO tot f1 f2 fcomm) =
+    CDSO
+      tot
+      (f1 . mcb)
+      f2
+      (\ecb' => trans (fcomm $ mcb ecb') $ sym $ mcomm ecb')
+
+export
+CDSLcbcMap : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
+  (m : CSliceMorphism {c=b} (cb' ** proj') (cb ** proj)) ->
+  CDSLfmap (CDSLcbc {b} {cb} {cb'} {proj} {proj'} m)
+CDSLcbcMap {b} {cb} {cb'} {proj} {proj'}
+  (Element0 mcb mcomm) (CDSO xtot xf1 xf2 xfcomm) (CDSO ytot yf1 yf2 yfcomm)
+  (CDSM mtot meq1 meq2) =
+    CDSM mtot (\ecb' => meq1 $ mcb ecb') meq2
+
+export
+CDSLcbcFunc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
+  (m : CSliceMorphism {c=b} (cb' ** proj') (cb ** proj)) ->
+  CDSLfunc (CBO b cb proj) (CBO b cb' proj')
+CDSLcbcFunc {b} {cb} {cb'} {proj} {proj'} m = CDSLf (CDSLcbc m) (CDSLcbcMap m)
+
+export
+CDSLdc : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  CBundleMor (CBO b' cb' proj') (CBO b cb proj) ->
+  CDSLomap (CBO b cb proj) (CBO b' cb' proj')
+CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mp) =
+  CDSLcbc {b=b'} {cb=(Pullback proj mb)} {cb'}
+    {proj=(pbProj2 {f=proj} {g=mb})} {proj'} mp
+  . CDSLbc {b} {b'} {cb} {proj} mb
+
+export
+CDSLdcMap : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mb : CBundleMor (CBO b' cb' proj') (CBO b cb proj)) ->
+  CDSLfmap (CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} mb)
+CDSLdcMap {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mcb) x y =
+  CDSLcbcMap {b=b'} {cb=(Pullback proj mb)} {cb'}
+    {proj=(pbProj2 {f=proj} {g=mb})} {proj'}
+    mcb (CDSLbc mb x) (CDSLbc mb y)
+  . CDSLbcMap {b} {b'} {cb} {proj} mb x y
+
+-- Dibase change: simultaneous base and cobase change.  For a dislice category,
+-- this is the analogue of base change to a slice category, or cobase change
+-- to a cobase category.
+export
+CDSLdcFunc : {b, b', cb, cb' : Type} ->
+  {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  CBundleMor (CBO b' cb' proj') (CBO b cb proj) ->
+  CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
+CDSLdcFunc mb = CDSLf (CDSLdc mb) (CDSLdcMap mb)
+
 ----------------------------------------------
 ---- Dependent-type style (`ABundleObj`) ----
 ----------------------------------------------
@@ -117,99 +210,6 @@ ADSLpiFunc : FunExt -> {b : Type} ->
   (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
   ADSLfunc (ABO (Sigma {a=b} p) cb) (ABO b $ SlicePiF {c=b} p cb)
 ADSLpiFunc fext {b} p cb = ADSLf (ADSLpi {b} p {cb}) (ADSLpiMap fext {b} p {cb})
-
-------------------------------------------
----- Categorial-style (`CBundleObj`) ----
-------------------------------------------
-
-export
-CDSLbc : {b, b', cb : Type} -> {proj : cb -> b} ->
-  (m : b' -> b) ->
-  CDSLomap (CBO b cb proj) (CBO b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
-CDSLbc {b} {b'} {proj} m (CDSO tot f1 f2 comm) =
-  CDSO
-    (Pullback f2 m)
-    (\(Element0 (ecb, eb') eqpm) =>
-      Element0 (f1 ecb, eb') $ trans (comm ecb) eqpm)
-    (pbProj2 {f=f2} {g=m})
-    (\(Element0 (ecb, eb') eqpm) => Refl)
-
-export
-CDSLbcMap : {b, b', cb : Type} -> {proj : cb -> b} ->
-  (m : b' -> b) ->
-  CDSLfmap (CDSLbc {b} {b'} {proj} m)
-CDSLbcMap {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) (CDSO tot' f1' f2' comm')
-  (CDSM mtot meq1 meq2) =
-    CDSM
-      (\(Element0 (et, eb') eqf2m) =>
-        Element0 (mtot et, eb') $ trans (sym $ meq2 et) eqf2m)
-      (\(Element0 (ecb, eb') eqpm) =>
-        s0Eq12
-          (rewrite meq1 ecb in Refl)
-          (rewrite meq1 ecb in uip))
-      (\(Element0 (et, eb') eqf2m) => Refl)
-
-export
-CDSLbcFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
-  (m : b' -> b) ->
-  CDSLfunc (CBO b cb proj) (CBO b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
-CDSLbcFunc {b} {b'} {cb} {proj} m = CDSLf (CDSLbc m) (CDSLbcMap m)
-
-export
-CDSLcbc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
-  CSliceMorphism {c=b} (cb' ** proj') (cb ** proj) ->
-  CDSLomap (CBO b cb proj) (CBO b cb' proj')
-CDSLcbc {b} {cb} {cb'} {proj} {proj'}
-  (Element0 mcb mcomm) (CDSO tot f1 f2 fcomm) =
-    CDSO
-      tot
-      (f1 . mcb)
-      f2
-      (\ecb' => trans (fcomm $ mcb ecb') $ sym $ mcomm ecb')
-
-export
-CDSLcbcMap : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
-  (m : CSliceMorphism {c=b} (cb' ** proj') (cb ** proj)) ->
-  CDSLfmap (CDSLcbc {b} {cb} {cb'} {proj} {proj'} m)
-CDSLcbcMap {b} {cb} {cb'} {proj} {proj'}
-  (Element0 mcb mcomm) (CDSO xtot xf1 xf2 xfcomm) (CDSO ytot yf1 yf2 yfcomm)
-  (CDSM mtot meq1 meq2) =
-    CDSM mtot (\ecb' => meq1 $ mcb ecb') meq2
-
-export
-CDSLcbcFunc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
-  (m : CSliceMorphism {c=b} (cb' ** proj') (cb ** proj)) ->
-  CDSLfunc (CBO b cb proj) (CBO b cb' proj')
-CDSLcbcFunc {b} {cb} {cb'} {proj} {proj'} m = CDSLf (CDSLcbc m) (CDSLcbcMap m)
-
-export
-CDSLdc : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
-  CBundleMor (CBO b' cb' proj') (CBO b cb proj) ->
-  CDSLomap (CBO b cb proj) (CBO b' cb' proj')
-CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mp) =
-  CDSLcbc {b=b'} {cb=(Pullback proj mb)} {cb'}
-    {proj=(pbProj2 {f=proj} {g=mb})} {proj'} mp
-  . CDSLbc {b} {b'} {cb} {proj} mb
-
-export
-CDSLdcMap : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
-  (mb : CBundleMor (CBO b' cb' proj') (CBO b cb proj)) ->
-  CDSLfmap (CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} mb)
-CDSLdcMap {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mcb) x y =
-  CDSLcbcMap {b=b'} {cb=(Pullback proj mb)} {cb'}
-    {proj=(pbProj2 {f=proj} {g=mb})} {proj'}
-    mcb (CDSLbc mb x) (CDSLbc mb y)
-  . CDSLbcMap {b} {b'} {cb} {proj} mb x y
-
--- Dibase change: simultaneous base and cobase change.  For a dislice category,
--- this is the analogue of base change to a slice category, or cobase change
--- to a cobase category.
-export
-CDSLdcFunc : {b, b', cb, cb' : Type} ->
-  {proj : cb -> b} -> {proj' : cb' -> b'} ->
-  CBundleMor (CBO b' cb' proj') (CBO b cb proj) ->
-  CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
-CDSLdcFunc mb = CDSLf (CDSLdc mb) (CDSLdcMap mb)
 
 ---------------------------------------------------
 ---------------------------------------------------
