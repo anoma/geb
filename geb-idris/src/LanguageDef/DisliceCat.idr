@@ -108,7 +108,7 @@ adsmComp : {cat : ABundleObj} -> {x, y, z : ADisliceObj cat} ->
   ADisliceMorph {cat} x y ->
   ADisliceMorph {cat} x z
 adsmComp
-  {cat=(ADSC base cobase)}
+  {cat=(ABO base cobase)}
   {x=(ADSO xtot xinj)} {y=(ADSO ytot _)} {z=(ADSO ztot _)}
   (ADSM dmor dinj {eq=deq}) (ADSM cmor cinj {eq=ceq}) =
     ADSM (sliceComp dmor cmor) dinj
@@ -138,7 +138,7 @@ DsoCtoA {cat} obj =
 
 DsoCfromA : {cat : CBundleObj} ->
   ADisliceObj (BcoCtoA cat) -> CDisliceObj cat
-DsoCfromA {cat=(CDSC base cobase proj)} (ADSO tot inj) =
+DsoCfromA {cat=(CBO base cobase proj)} (ADSO tot inj) =
   CDSO
     (Sigma {a=base} tot)
     (\ecb => (proj ecb ** inj (proj ecb) (Element0 ecb Refl)))
@@ -154,7 +154,7 @@ DsoAtoC {cat} obj =
     (\(eb ** ec) => Refl)
 
 DsoAfromC : {cat : ABundleObj} -> CDisliceObj (BcoAtoC cat) -> ADisliceObj cat
-DsoAfromC {cat=(ADSC base cobase)} (CDSO tot fact1 fact2 eq) =
+DsoAfromC {cat=(ABO base cobase)} (CDSO tot fact1 fact2 eq) =
   ADSO
     (\eb => Subset0 tot $ \et => fact2 et = eb)
     (\eb, ecb => Element0 (fact1 (eb ** ecb)) $ eq (eb ** ecb))
@@ -165,13 +165,13 @@ DsmCtoA : {cat : CBundleObj} -> {dom, cod : CDisliceObj cat} ->
     (DsoCtoA {cat} dom)
     (DsoCtoA {cat} cod)
 DsmCtoA
-  {cat=(CDSC base cobase proj)}
+  {cat=(CBO base cobase proj)}
   {dom=(CDSO dtot df1 df2 deq)}
   {cod=(CDSO ctot cf1 cf2 ceq)}
   (CDSM mtot meq1 meq2) =
     ADSM
-      {cat=(BcoCtoA (CDSC base cobase proj))}
-      {dom=(DsoCtoA {cat=(CDSC base cobase proj)} (CDSO dtot df1 df2 deq))}
+      {cat=(BcoCtoA (CBO base cobase proj))}
+      {dom=(DsoCtoA {cat=(CBO base cobase proj)} (CDSO dtot df1 df2 deq))}
       {codtot=(\eb => PreImage {a=ctot} {b=base} cf2 eb)}
       (\eb, (Element0 ed deq) =>
         Element0 (mtot ed) $ trans (sym $ meq2 ed) deq)
@@ -184,7 +184,7 @@ DsmCfromA : {cat : CBundleObj} -> {dom, cod : CDisliceObj cat} ->
     (DsoCtoA {cat} dom)
     (DsoCtoA {cat} cod) ->
   CDisliceMorph {cat} dom cod
-DsmCfromA {cat=(CDSC base cobase proj)}
+DsmCfromA {cat=(CBO base cobase proj)}
   {dom=(CDSO dtot df1 df2 deq)} {cod=(CDSO ctot cf1 cf2 ceq)}
   (ADSM mor _ {eq=injeq}) =
     CDSM
@@ -208,7 +208,7 @@ DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSM mor inj {eq}) =
 DsmAfromC : {0 cat : ABundleObj} -> {dom, cod : ADisliceObj cat} ->
   CDisliceMorph {cat=(BcoAtoC cat)} (DsoAtoC {cat} dom) (DsoAtoC {cat} cod) ->
   ADisliceMorph {cat} dom cod
-DsmAfromC {cat=(ADSC base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO ctot cinj)}
+DsmAfromC {cat=(ABO base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO ctot cinj)}
   (CDSM mtot meq1 meq2) =
     ADSM
       (\eb, edt => rewrite meq2 (eb ** edt) in snd (mtot (eb ** edt)))
@@ -219,7 +219,7 @@ export
 DsmAtoCf : (c, d : CBundleObj) ->
   (x, y : ADisliceObj (BcoCtoA c)) ->
   ADisliceMorph x y -> CDisliceMorph (DsoCfromA {cat=c} x) (DsoCfromA {cat=c} y)
-DsmAtoCf (CDSC cb ccb cproj) (CDSC db dcb dproj)
+DsmAtoCf (CBO cb ccb cproj) (CBO db dcb dproj)
   (ADSO xtot xinj) (ADSO codtot minj)
   (ADSM {codtot} mor minj {eq}) =
     CDSM
@@ -231,7 +231,7 @@ export
 DsmCtoAf : (c, d : ABundleObj) ->
   (x, y : CDisliceObj (BcoAtoC c)) ->
   CDisliceMorph x y -> ADisliceMorph (DsoAfromC {cat=c} x) (DsoAfromC {cat=c} y)
-DsmCtoAf (ADSC cb ccb) (ADSC db dcb)
+DsmCtoAf (ABO cb ccb) (ABO db dcb)
   (CDSO xtot xf1 xf2 xeq) (CDSO ytot yf1 yf2 yeq)
   (CDSM mtot meq1 meq2) =
     ADSM

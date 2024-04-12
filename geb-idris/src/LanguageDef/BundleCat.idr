@@ -20,7 +20,7 @@ import LanguageDef.PolyCat
 -- the codomain morphisms.
 public export
 record CBundleObj where
-  constructor CDSC
+  constructor CBO
   cbTot : Type
   cbBase : Type
   cbProj : cbBase -> cbTot
@@ -31,7 +31,7 @@ record CBundleObj where
 
 public export
 record ABundleObj where
-  constructor ADSC
+  constructor ABO
   abBase : Type
   abCobase : SliceObj abBase
 
@@ -54,10 +54,10 @@ ABinj cat = SliceMorphism {a=(abBase cat)} (abCobase cat)
 public export
 BcoCtoA : CBundleObj -> ABundleObj
 BcoCtoA cat =
-  ADSC (cbTot cat) $
+  ABO (cbTot cat) $
     \ea => PreImage {a=(cbBase cat)} {b=(cbTot cat)} (cbProj cat) ea
 
 public export
 BcoAtoC : ABundleObj -> CBundleObj
 BcoAtoC cat =
-  CDSC (abBase cat) (Sigma {a=(abBase cat)} $ abCobase cat) DPair.fst
+  CBO (abBase cat) (Sigma {a=(abBase cat)} $ abCobase cat) DPair.fst

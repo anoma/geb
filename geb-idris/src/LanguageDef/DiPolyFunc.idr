@@ -20,7 +20,7 @@ import LanguageDef.InternalCat
 export
 CDSLbc : {b, b', cb : Type} -> {proj : cb -> b} ->
   (m : b' -> b) ->
-  CDSLomap (CDSC b cb proj) (CDSC b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
+  CDSLomap (CBO b cb proj) (CBO b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
 CDSLbc {b} {b'} {proj} m (CDSO tot f1 f2 comm) =
   CDSO
     (Pullback f2 m)
@@ -47,13 +47,13 @@ CDSLbcMap {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) (CDSO tot' f1' f2' comm')
 export
 CDSLbcFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
   (m : b' -> b) ->
-  CDSLfunc (CDSC b cb proj) (CDSC b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
+  CDSLfunc (CBO b cb proj) (CBO b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
 CDSLbcFunc {b} {b'} {cb} {proj} m = CDSLf (CDSLbc m) (CDSLbcMap m)
 
 export
 CDSLcbc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
   CSliceMorphism {c=b} (cb' ** proj') (cb ** proj) ->
-  CDSLomap (CDSC b cb proj) (CDSC b cb' proj')
+  CDSLomap (CBO b cb proj) (CBO b cb' proj')
 CDSLcbc {b} {cb} {cb'} {proj} {proj'}
   (Element0 mcb mcomm) (CDSO tot f1 f2 fcomm) =
     CDSO
@@ -74,7 +74,7 @@ CDSLcbcMap {b} {cb} {cb'} {proj} {proj'}
 export
 CDSLcbcFunc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
   (m : CSliceMorphism {c=b} (cb' ** proj') (cb ** proj)) ->
-  CDSLfunc (CDSC b cb proj) (CDSC b cb' proj')
+  CDSLfunc (CBO b cb proj) (CBO b cb' proj')
 CDSLcbcFunc {b} {cb} {cb'} {proj} {proj'} m = CDSLf (CDSLcbc m) (CDSLcbcMap m)
 
 export
@@ -83,7 +83,7 @@ CDSLdc : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
   CSliceMorphism {c=b'}
     (cb' ** proj')
     (Pullback proj mb ** pbProj2 {f=proj} {g=mb}) ->
-  CDSLomap (CDSC b cb proj) (CDSC b' cb' proj')
+  CDSLomap (CBO b cb proj) (CBO b' cb' proj')
 CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} mb mp =
   CDSLcbc {b=b'} {cb=(Pullback proj mb)} {cb'}
     {proj=(pbProj2 {f=proj} {g=mb})} {proj'} mp
@@ -108,7 +108,7 @@ CDSLdcFunc : {b, b', cb, cb' : Type} ->
   CSliceMorphism {c=b'}
     (cb' ** proj')
     (Pullback proj mb ** pbProj2 {f=proj} {g=mb}) ->
-  CDSLfunc (CDSC b cb proj) (CDSC b' cb' proj')
+  CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
 CDSLdcFunc mb mcb = CDSLf (CDSLdc mb mcb) (CDSLdcMap mb mcb)
 
 ----------------------------------------------
@@ -117,7 +117,7 @@ CDSLdcFunc mb mcb = CDSLf (CDSLdc mb mcb) (CDSLdcMap mb mcb)
 
 export
 ADSLbc : {b, b' : Type} -> {cb : SliceObj b} ->
-  (m : b' -> b) -> ADSLomap (ADSC b cb) (ADSC b' (cb . m))
+  (m : b' -> b) -> ADSLomap (ABO b cb) (ABO b' (cb . m))
 ADSLbc {b} {b'} {cb} m (ADSO tot inj) = ADSO (tot . m) (\eb' => inj $ m eb')
 
 export
@@ -128,12 +128,12 @@ ADSLbcMap {b} {b'} {cb} m (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
 
 export
 ADSLbcFunc : {b, b' : Type} -> {cb : SliceObj b} ->
-  (m : b' -> b) -> ADSLfunc (ADSC b cb) (ADSC b' (cb . m))
+  (m : b' -> b) -> ADSLfunc (ABO b cb) (ABO b' (cb . m))
 ADSLbcFunc {b} {b'} {cb} m = ADSLf (ADSLbc m) (ADSLbcMap m)
 
 export
 ADSLcbc : {b : Type} -> {cb, cb' : SliceObj b} ->
-  SliceMorphism {a=b} cb' cb -> ADSLomap (ADSC b cb) (ADSC b cb')
+  SliceMorphism {a=b} cb' cb -> ADSLomap (ABO b cb) (ABO b cb')
 ADSLcbc {b} {cb} {cb'} m (ADSO tot inj) =
   ADSO tot (\eb, ecb' => inj eb $ m eb ecb')
 
@@ -145,14 +145,14 @@ ADSLcbcMap {b} {cb} {cb'} m (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
 
 export
 ADSLcbcFunc : {b : Type} -> {cb, cb' : SliceObj b} ->
-  SliceMorphism {a=b} cb' cb -> ADSLfunc (ADSC b cb) (ADSC b cb')
+  SliceMorphism {a=b} cb' cb -> ADSLfunc (ABO b cb) (ABO b cb')
 ADSLcbcFunc {b} {cb} {cb'} m = ADSLf (ADSLcbc m) (ADSLcbcMap m)
 
 -- Dichange: simultaneous base and cobase change.
 export
 ADSLdc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
   (mb : b' -> b) -> SliceMorphism {a=b'} cb' (cb . mb) ->
-  ADSLomap (ADSC b cb) (ADSC b' cb')
+  ADSLomap (ABO b cb) (ABO b' cb')
 ADSLdc {b} {b'} {cb} {cb'} mb mc =
   ADSLcbc {b=b'} {cb=(cb . mb)} {cb'} mc . ADSLbc {b} {b'} {cb} mb
 
@@ -167,12 +167,12 @@ ADSLdcMap {b} {b'} {cb} {cb'} mb mc x y =
 export
 ADSLdcFunc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
   (mb : b' -> b) -> SliceMorphism {a=b'} cb' (cb . mb) ->
-  ADSLfunc (ADSC b cb) (ADSC b' cb')
+  ADSLfunc (ABO b cb) (ABO b' cb')
 ADSLdcFunc {b} {b'} {cb} {cb'} mb mc = ADSLf (ADSLdc mb mc) (ADSLdcMap mb mc)
 
 export
 ADSLsigma : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
-  ADSLomap (ADSC (Sigma {a=b} p) cb) (ADSC b $ SliceSigmaF {c=b} p cb)
+  ADSLomap (ABO (Sigma {a=b} p) cb) (ABO b $ SliceSigmaF {c=b} p cb)
 ADSLsigma {b} p {cb} (ADSO tot inj) =
   ADSO (SliceSigmaF {c=b} p tot) (ssMap {c=b} {sl=p} cb tot inj)
 
@@ -189,12 +189,12 @@ ADSLsigmaMap {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
 export
 ADSLsigmaFunc : {b : Type} ->
   (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
-  ADSLfunc (ADSC (Sigma {a=b} p) cb) (ADSC b $ SliceSigmaF {c=b} p cb)
+  ADSLfunc (ABO (Sigma {a=b} p) cb) (ABO b $ SliceSigmaF {c=b} p cb)
 ADSLsigmaFunc {b} p cb = ADSLf (ADSLsigma {b} p {cb}) (ADSLsigmaMap {b} p {cb})
 
 export
 ADSLpi : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
-  ADSLomap (ADSC (Sigma {a=b} p) cb) (ADSC b $ SlicePiF {c=b} p cb)
+  ADSLomap (ABO (Sigma {a=b} p) cb) (ABO b $ SlicePiF {c=b} p cb)
 ADSLpi {b} p {cb} (ADSO tot inj) =
   ADSO (SlicePiF {c=b} p tot) (spMap {c=b} {sl=p} cb tot inj)
 
@@ -211,7 +211,7 @@ ADSLpiMap fext {b} p {cb} (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
 export
 ADSLpiFunc : FunExt -> {b : Type} ->
   (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
-  ADSLfunc (ADSC (Sigma {a=b} p) cb) (ADSC b $ SlicePiF {c=b} p cb)
+  ADSLfunc (ABO (Sigma {a=b} p) cb) (ABO b $ SlicePiF {c=b} p cb)
 ADSLpiFunc fext {b} p cb = ADSLf (ADSLpi {b} p {cb}) (ADSLpiMap fext {b} p {cb})
 
 ---------------------------------------------------
