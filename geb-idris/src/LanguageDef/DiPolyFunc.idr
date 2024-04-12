@@ -138,6 +138,34 @@ CDSLsigmaFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
   CDSLfunc (CBO b cb proj) (CBO b' cb (m . proj))
 CDSLsigmaFunc m = CDSLf (CDSLsigma m) (CDSLsigmaMap m)
 
+export
+CDSLcbcSigma :
+  {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mb : b -> b') -> CSliceMorphism {c=b'} (cb' ** proj') (cb ** mb . proj) ->
+  CDSLomap (CBO b cb proj) (CBO b' cb' proj')
+CDSLcbcSigma {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb =
+  CDSLcbc mcb . CDSLsigma {b} {b'} {cb} {proj} mb
+
+export
+CDSLpi : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  CDSLomap
+    (CBO b cb proj)
+    (CBO
+      b'
+      (Subset0 cb (\ecb => (eb : b) -> m eb = m (proj ecb) -> eb = proj ecb))
+      (m . proj . Subset0.fst0))
+CDSLpi {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
+  CDSO
+    (fst $ CSPi {c=b} {d=b'} m (tot ** f2))
+    (\(Element0 ecb cbcond) =>
+      (m (proj ecb) **
+       Element0
+        (\(Element0 (eb', ()) meq) => f1 ecb)
+        $ \(Element0 (eb, ()) feq) => rewrite comm ecb in cbcond eb feq))
+    (snd $ CSPi {c=b} {d=b'} m (tot ** f2))
+    (\(Element0 ecb cbcond) => Refl)
+
 ----------------------------------------------
 ---- Dependent-type style (`ABundleObj`) ----
 ----------------------------------------------
