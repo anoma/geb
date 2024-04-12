@@ -143,6 +143,27 @@ BcmCfromA {dom} {cod} (ABM mbase mcobase) =
         Element0 (fst0 mcb, cbProj dom edt) $ snd0 mcb)
       $ \_ => Refl
 
+export
+BcmAtoC : {0 dom, cod : ABundleObj} ->
+  ABundleMor dom cod -> CBundleMor (BcoAtoC dom) (BcoAtoC cod)
+BcmAtoC {dom} {cod} (ABM mbase mcobase) =
+  CBM
+    mbase
+    $ Element0
+      (\(edb ** edcb) => Element0 ((mbase edb ** mcobase edb edcb), edb) Refl)
+      (\(edb ** edcb) => Refl)
+
+export
+BcmAfromC : {0 dom, cod : ABundleObj} ->
+  CBundleMor (BcoAtoC dom) (BcoAtoC cod) -> ABundleMor dom cod
+BcmAfromC {dom} {cod} (CBM mbase (Element0 mtot mcomm)) =
+  ABM
+    mbase
+    $ \edb, edcb =>
+      rewrite sym $ trans (snd0 (mtot (edb ** edcb))) $ sym $ cong mbase
+        $ mcomm (edb ** edcb) in
+      snd $ fst $ fst0 $ mtot (edb ** edcb)
+
 ---------------------------------------------
 ---- Equivalence with Dirichlet functors ----
 ---------------------------------------------
