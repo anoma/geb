@@ -126,17 +126,6 @@ ADSMr {cat} {dom} codtot mor =
 ---- Categorial-arena translations ----
 ---------------------------------------
 
-export
-DscCtoA : CBundleObj -> ABundleObj
-DscCtoA cat =
-  ADSC (cbTot cat) $
-    \ea => PreImage {a=(cbBase cat)} {b=(cbTot cat)} (cbProj cat) ea
-
-export
-DscAtoC : ABundleObj -> CBundleObj
-DscAtoC cat =
-  CDSC (abBase cat) (Sigma {a=(abBase cat)} $ abCobase cat) DPair.fst
-
 DsoCtoA : {0 cat : CBundleObj} ->
   CDisliceObj cat -> ADisliceObj (DscCtoA cat)
 DsoCtoA {cat} obj =
