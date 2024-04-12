@@ -14,7 +14,7 @@ import LanguageDef.InternalCat
 ------------------------------------------------------------------
 
 ------------------------------------------
----- Categorial-style (`CDisliceCat`) ----
+---- Categorial-style (`CBundleObj`) ----
 ------------------------------------------
 
 export
