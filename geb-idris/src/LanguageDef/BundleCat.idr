@@ -103,6 +103,16 @@ record ABundleMor (dom, cod : ABundleObj) where
 ---- Categorial-style ----
 --------------------------
 
+public export
+record CBundleMor (dom, cod : CBundleObj) where
+  constructor CBM
+  cbmBase : cbTot dom -> cbTot cod
+  cbmTot :
+    CSliceMorphism
+      {c=(cbTot dom)}
+      (cbBase dom ** cbProj dom)
+      (Pullback (cbProj cod) cbmBase ** pbProj2 {f=(cbProj cod)} {g=cbmBase})
+
 ---------------------------------------
 ---- Categorial-arena translations ----
 ---------------------------------------
