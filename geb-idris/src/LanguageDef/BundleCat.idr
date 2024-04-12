@@ -30,19 +30,19 @@ record CBundleObj where
 ---------------------
 
 public export
-record ADisliceCat where
+record ABundleObj where
   constructor ADSC
-  adscBase : Type
-  adscCobase : SliceObj adscBase
+  abBase : Type
+  abCobase : SliceObj abBase
 
 public export
-ASliceBase : ADisliceCat -> Type
-ASliceBase = SliceObj . adscBase
+ABSliceBase : ABundleObj -> Type
+ABSliceBase = SliceObj . abBase
 
 public export
-adscCotot : ADisliceCat -> Type
-adscCotot cat = Sigma {a=(adscBase cat)} (adscCobase cat)
+abTot : ABundleObj -> Type
+abTot cat = Sigma {a=(abBase cat)} (abCobase cat)
 
 public export
-ADSOinj : (cat : ADisliceCat) -> ASliceBase cat -> Type
-ADSOinj cat = SliceMorphism {a=(adscBase cat)} (adscCobase cat)
+ABinj : (cat : ABundleObj) -> ABSliceBase cat -> Type
+ABinj cat = SliceMorphism {a=(abBase cat)} (abCobase cat)

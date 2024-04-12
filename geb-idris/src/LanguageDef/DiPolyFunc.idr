@@ -112,7 +112,7 @@ CDSLdcFunc : {b, b', cb, cb' : Type} ->
 CDSLdcFunc mb mcb = CDSLf (CDSLdc mb mcb) (CDSLdcMap mb mcb)
 
 ----------------------------------------------
----- Dependent-type style (`ADisliceCat`) ----
+---- Dependent-type style (`ABundleObj`) ----
 ----------------------------------------------
 
 export
@@ -224,7 +224,7 @@ public export
 record ADiArena where
   constructor DiAr
   daPos : Type
-  daCat : daPos -> ADisliceCat
+  daCat : daPos -> ABundleObj
 
 public export
 DAobj : (da : ADiArena) -> SliceObj (daPos da)
@@ -232,15 +232,15 @@ DAobj da = ADisliceObj . daCat da
 
 public export
 DAbase : (da : ADiArena) -> SliceObj (daPos da)
-DAbase da = adscBase . daCat da
+DAbase da = abBase . daCat da
 
 public export
 DAcoTot : (da : ADiArena) -> SliceObj (daPos da)
-DAcoTot da = adscCotot . daCat da
+DAcoTot da = abTot . daCat da
 
 public export
 DAcobase : (da : ADiArena) -> (i : daPos da) -> SliceObj (DAbase da i)
-DAcobase da i = adscCobase (daCat da i)
+DAcobase da i = abCobase (daCat da i)
 
 public export
 DAtot : {da : ADiArena} -> {i : daPos da} -> DAobj da i ->
