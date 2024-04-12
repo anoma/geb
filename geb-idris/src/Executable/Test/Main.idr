@@ -9,6 +9,7 @@ import LanguageDef.Test.SpanCospanTest
 import LanguageDef.Test.InternalCatTest
 import LanguageDef.Test.SlicePolyCatTest
 import LanguageDef.Test.DisliceCatTest
+import LanguageDef.Test.BundleCatTest
 import LanguageDef.Test.DiPolyFuncTest
 import LanguageDef.Test.QuiverTest
 import LanguageDef.Test.MLQuivCatTest
@@ -86,6 +87,7 @@ totalTests = do
   LanguageDef.Test.DiPolyFuncTest.diPolyFuncTest
   LanguageDef.Test.InternalCatTest.internalCatTest
   LanguageDef.Test.SlicePolyCatTest.slicePolyCatTest
+  LanguageDef.Test.BundleCatTest.bundleCatTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()
