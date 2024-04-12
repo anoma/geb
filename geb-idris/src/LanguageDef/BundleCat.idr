@@ -61,3 +61,23 @@ public export
 BcoAtoC : ABundleObj -> CBundleObj
 BcoAtoC cat =
   CBO (abBase cat) (Sigma {a=(abBase cat)} $ abCobase cat) DPair.fst
+
+---------------------------------------------
+---- Equivalence with Dirichlet functors ----
+---------------------------------------------
+
+public export
+BcoAtoDirich : ABundleObj -> PolyFunc
+BcoAtoDirich (ABO base cobase) = (base ** cobase)
+
+public export
+BcoCtoDirich : CBundleObj -> PolyFunc
+BcoCtoDirich = BcoAtoDirich . BcoCtoA
+
+public export
+BcoDirichToA : PolyFunc -> ABundleObj
+BcoDirichToA (base ** cobase) = ABO base cobase
+
+public export
+BcoDirichToC : PolyFunc -> CBundleObj
+BcoDirichToC = BcoAtoC . BcoDirichToA
