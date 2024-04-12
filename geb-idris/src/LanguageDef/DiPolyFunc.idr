@@ -96,7 +96,7 @@ CDSLdcMap {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mcb) x y =
     mcb (CDSLbc mb x) (CDSLbc mb y)
   . CDSLbcMap {b} {b'} {cb} {proj} mb x y
 
--- Dichange: simultaneous base and cobase change.  For a dislice category,
+-- Dibase change: simultaneous base and cobase change.  For a dislice category,
 -- this is the analogue of base change to a slice category, or cobase change
 -- to a cobase category.
 export
@@ -143,7 +143,7 @@ ADSLcbcFunc : {b : Type} -> {cb, cb' : SliceObj b} ->
   SliceMorphism {a=b} cb' cb -> ADSLfunc (ABO b cb) (ABO b cb')
 ADSLcbcFunc {b} {cb} {cb'} m = ADSLf (ADSLcbc m) (ADSLcbcMap m)
 
--- Dichange: simultaneous base and cobase change.  For a dislice category,
+-- Dibase change: simultaneous base and cobase change.  For a dislice category,
 -- this is the analogue of base change to a slice category, or cobase change
 -- to a cobase category.
 export
