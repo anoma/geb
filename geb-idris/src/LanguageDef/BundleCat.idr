@@ -46,3 +46,18 @@ abTot cat = Sigma {a=(abBase cat)} (abCobase cat)
 public export
 ABinj : (cat : ABundleObj) -> ABSliceBase cat -> Type
 ABinj cat = SliceMorphism {a=(abBase cat)} (abCobase cat)
+
+---------------------------------------
+---- Categorial-arena translations ----
+---------------------------------------
+
+public export
+DscCtoA : CBundleObj -> ABundleObj
+DscCtoA cat =
+  ADSC (cbTot cat) $
+    \ea => PreImage {a=(cbBase cat)} {b=(cbTot cat)} (cbProj cat) ea
+
+public export
+DscAtoC : ABundleObj -> CBundleObj
+DscAtoC cat =
+  CDSC (abBase cat) (Sigma {a=(abBase cat)} $ abCobase cat) DPair.fst
