@@ -21,6 +21,16 @@ record CDisliceCat where
   cdscCobase : Type
   cdscProj : cdscCobase -> cdscBase
 
+-- A dislice category is indexed by an arrow object, analogously to how
+-- a slice or coslice category is indexed by an object of the base category.
+-- In particular:
+--
+--  - A slice category over `j` is equivalent to a dislice category
+--    over `Void, j, 0j` (where `0j` is the unique function from `Void` to `j`).
+--  - A coslice category under `i` is equivalent to a dislice category
+--   over `i, Unit, i1` (where `i1` is the unique function from `i` to `Unit`).
+--  - A splice category of `i, j` is equivalent to the coproduct category
+--    over all `m : i -> j` of the dislice categories `i, j, m`.
 public export
 record CDisliceObj (cat : CDisliceCat) where
   constructor CDSO
