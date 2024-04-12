@@ -4010,7 +4010,8 @@ CSWTFMu {c} wtf = CSliceFromSlice {c} (SliceWTFMu {c} wtf)
 
 mutual
   public export
-  cswCataTot : {0 c : Type} -> {0 wtf : WTypeEndoFunc c} -> {x : CSliceObj c} ->
+  0 cswCataTot :
+    {0 c : Type} -> {0 wtf : WTypeEndoFunc c} -> {x : CSliceObj c} ->
     CSWPolyAlgMap {c} wtf x -> fst (CSWTFMu {c} wtf) -> fst x
   cswCataTot {c = c} {wtf=(MkWTF pos dir f g h)} {x=(x ** px)}
     (Element0 alg algeq) (elc ** (InWM elc (Element0 (i ** d) eq))) =
@@ -4026,7 +4027,7 @@ mutual
       ?cswCataEq_hole
 
 public export
-cswCata : {0 c : Type} -> {0 wtf : WTypeEndoFunc c} -> {x : CSliceObj c} ->
+0 cswCata : {0 c : Type} -> {0 wtf : WTypeEndoFunc c} -> {x : CSliceObj c} ->
   CSWPolyAlgMap {c} wtf x -> CSliceMorphism {c} (CSWTFMu {c} wtf) x
 cswCata {c} {wtf} {x} alg =
   Element0 (cswCataTot {c} {wtf} {x} alg) (cswCataEq {c} {wtf} {x} alg)
@@ -5586,7 +5587,7 @@ RefinedPolyF {w} {x} {y} {z} fxw predyx predzy =
   . BaseChangeF fxw
 
 public export
-RefinedPolyFPred : {w, x, y, z : Type} ->
+0 RefinedPolyFPred : {w, x, y, z : Type} ->
   (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
   (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) -> DecPred z
 RefinedPolyFPred {w} {x} {y} {z} fxw predyx predzy p q f ez =
@@ -5600,7 +5601,7 @@ RefinedPolyFSignature {w} {x} {y} {z} fxw predyx predzy p q f =
   Refinement {a=z} $ RefinedPolyFPred {w} {x} {y} {z} fxw predyx predzy p q f
 
 public export
-SigmaSigmaRefinedPolyF : {w, x, y, z : Type} ->
+0 SigmaSigmaRefinedPolyF : {w, x, y, z : Type} ->
   (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
   (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
   Sigma p -> Sigma (q . f)
@@ -5609,7 +5610,7 @@ SigmaSigmaRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f (ew ** ep) =
    ?SigmaSigmaRefinedPolyF_hole_eq)
 
 public export
-SigmaPiRefinedPolyF : {w, x, y, z : Type} ->
+0 SigmaPiRefinedPolyF : {w, x, y, z : Type} ->
   (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
   (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
   Sigma p -> Pi (q . f)
@@ -5617,7 +5618,7 @@ SigmaPiRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f (ew ** ep) ew' =
   ?SigmaPiRefinedPolyF_hole_eq
 
 public export
-PiSigmaRefinedPolyF : {w, x, y, z : Type} ->
+0 PiSigmaRefinedPolyF : {w, x, y, z : Type} ->
   (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
   (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
   Pi p -> Sigma (q . f)
@@ -5626,7 +5627,7 @@ PiSigmaRefinedPolyF {w} {x} {y} {z} fxw predyx predzy p q f pip =
    ?PiSigmaRefinedPolyF_hole_eq)
 
 public export
-PiPiRefinedPolyF : {w, x, y, z : Type} ->
+0 PiPiRefinedPolyF : {w, x, y, z : Type} ->
   (fxw : x -> w) -> (predyx : y -> DecPred x) -> (predzy : z -> DecPred y) ->
   (p : SliceObj w) -> (q : SliceObj z) -> (f : w -> z) ->
   Pi p -> Pi (q . f)
@@ -9456,7 +9457,7 @@ NatMorphZThin (SuccF n') (InNatLT _ (NatLTZ $ SuccF _)) = Refl
 NatMorphZThin (SuccF n') (InNatLT _ (NatLTS (m', n') morph')) impossible
 
 public export
-NatMorphSThin :
+0 NatMorphSThin :
   (m, n : NatObj) ->
   (morph : NatLTMorph (m, n)) ->
   ((morph' : NatLTMorph (m, n)) -> morph = morph') ->
@@ -9472,7 +9473,7 @@ NatMorphSThin (InNat (SuccF m)) (InNat $ SuccF n) =
   \x, y, z => ?NatMorphSThin_hole_4
 
 public export
-NatCatThin : (mn : NatObjPair) ->
+0 NatCatThin : (mn : NatObjPair) ->
   (morph, morph' : NatLTMorph mn) -> morph = morph'
 NatCatThin =
   NatMorphInd
@@ -10750,7 +10751,7 @@ depPrefixContraMapFromListsRev {domPos} {codPos} domDir codDir posMap (l :: ls) 
                         Left Refl => case coddir of
                           (codn ** codlt) =>
                             let
-                              morphEq = NatCatThin _ (NatLTMorphToSucc $ NatMorphId posn) poslt
+                              0 morphEq = NatCatThin _ (NatLTMorphToSucc $ NatMorphId posn) poslt
                               codMetaId = NatToMetaId (codDir $ posMap (posn ** NatLTMorphToSucc $ NatMorphId posn))
                               hdmapc = hdmap (codn ** rewrite lenEq in rewrite codMetaId in rewrite morphEq in codlt)
                               domMetaId = NatToMetaId (domDir (posn ** NatLTMorphToSucc $ NatMorphId posn))
@@ -11566,11 +11567,6 @@ record MonoidalCatCorrect
     ExtInverse
       (MetaTensorObjInterpInv monCat a b)
       (MetaTensorObjInterp monCat a b)
-  {-
-  MetaTensorLeftIdCorrect : ?MetaTensorLeftIdCorrect_hole
-  MetaTensorRightIdCorrect : ?MetaTensorRightIdCorrect_hole
-  MetaTensorAssociatorCorrect : ?MetaTensorAssociatorCorrect_hole
-  -}
 
 public export
 CartesianCat : MetaCat -> Type
@@ -11653,7 +11649,7 @@ IdFunctor : (cat : MetaCat) -> MetaFunctor cat cat
 IdFunctor cat = MkMetaFunctor id id
 
 public export
-IdFunctorCorrect : (cat : MetaCat) -> MetaFunctorCorrect (IdFunctor cat)
+0 IdFunctorCorrect : (cat : MetaCat) -> MetaFunctorCorrect (IdFunctor cat)
 IdFunctorCorrect cat = ?IdFunctorCorrect_hole
 
 public export
@@ -11665,7 +11661,7 @@ ComposeFunctor g f = MkMetaFunctor
   (MetaFunctorMorphMap g . MetaFunctorMorphMap f)
 
 public export
-ComposeFunctorCorrect : {catC, catD, catE : MetaCat} ->
+0 ComposeFunctorCorrect : {catC, catD, catE : MetaCat} ->
   (g : MetaFunctor catD catE) -> (f : MetaFunctor catC catD) ->
   MetaFunctorCorrect (ComposeFunctor g f)
 ComposeFunctorCorrect g f = ?ComposeFunctorCorrect_hole
@@ -11735,7 +11731,7 @@ IdNatTrans {catC} f = MkMetaNatTrans $
   \a => MetaFunctorMorphMap f (MetaId catC a)
 
 public export
-IdNatTransCorrect : {catC, catD : MetaCat} -> (f : MetaFunctor catC catD) ->
+0 IdNatTransCorrect : {catC, catD : MetaCat} -> (f : MetaFunctor catC catD) ->
   MetaNatTransCorrect (IdNatTrans f)
 IdNatTransCorrect = ?IdNatTransCorrect_hole
 
@@ -11755,7 +11751,7 @@ VerticalCompose {catC} {catD} {f} {g} {h} beta alpha = MkMetaNatTrans $
     (MetaNTComponent alpha a)
 
 public export
-VerticalComposeCorrect :
+0 VerticalComposeCorrect :
   {catC, catD : MetaCat} ->
   {f, g, h : MetaFunctor catC catD} ->
   (beta : MetaNatTrans g h) -> (alpha : MetaNatTrans f g) ->
@@ -11781,14 +11777,14 @@ HorizontalCompose {catC} {catD} {f} {f'} {g} {g'} beta alpha = MkMetaNatTrans $
       (MetaNTComponent alpha a))
 
 public export
-HorizontalComposeCorrect : {catC, catD, catE : MetaCat} ->
+0 HorizontalComposeCorrect : {catC, catD, catE : MetaCat} ->
   {f, f' : MetaFunctor catC catD} -> {g, g' : MetaFunctor catD catE} ->
   (beta : MetaNatTrans g g') -> (alpha : MetaNatTrans f f') ->
   MetaNatTransCorrect (HorizontalCompose beta alpha)
 HorizontalComposeCorrect = ?HorizontalComposeCorrect_hole
 
 public export
-HorizontalComposeConsistent : {catC, catD, catE : MetaCat} ->
+0 HorizontalComposeConsistent : {catC, catD, catE : MetaCat} ->
   {f, f' : MetaFunctor catC catD} -> {g, g' : MetaFunctor catD catE} ->
   (beta : MetaNatTrans g g') ->
   (alpha : MetaNatTrans f f') ->
@@ -11826,7 +11822,7 @@ WhiskerLeft {catB} {catC} {catD} {f} {g} nu k = MkMetaNatTrans $
   \a => MetaNTComponent nu $ MetaFunctorObjMap k a
 
 public export
-WhiskerLeftCorrect :
+0 WhiskerLeftCorrect :
   {catB, catC, catD : MetaCat} ->
   {f, g : MetaFunctor catC catD} ->
   (nu : MetaNatTrans f g) -> (k : MetaFunctor catB catC) ->
@@ -11841,7 +11837,7 @@ WhiskerRight h nu = MkMetaNatTrans $
   \a => MetaFunctorMorphMap h $ MetaNTComponent nu a
 
 public export
-WhiskerRightCorrect :
+0 WhiskerRightCorrect :
   {catC, catD, catE : MetaCat} ->
   {f, g : MetaFunctor catC catD} ->
   (h : MetaFunctor catD catE) -> (nu : MetaNatTrans f g) ->
@@ -11893,7 +11889,7 @@ IdAdjunction c = MkAdjunction
   (IdNatTransIdF c)
 
 public export
-IdAdjunctionCorrect : (c : MetaCat) -> AdjunctionCorrect (IdAdjunction c)
+0 IdAdjunctionCorrect : (c : MetaCat) -> AdjunctionCorrect (IdAdjunction c)
 IdAdjunctionCorrect = ?IdAdjunctionCorrect_hole
 
 public export
@@ -11912,7 +11908,7 @@ ComposeAdjunction {catC} {catD} {catE} adjr adjl = MkAdjunction
       (WhiskerRight (leftAdjoint adjl) (adjCounit adjr)) (rightAdjoint adjl)))
 
 public export
-ComposeAdjunctionCorrect : {c, d, e : MetaCat} ->
+0 ComposeAdjunctionCorrect : {c, d, e : MetaCat} ->
   (adjr : Adjunction d e) -> (adjl : Adjunction c d) ->
   AdjunctionCorrect (ComposeAdjunction adjr adjl)
 ComposeAdjunctionCorrect {c} {d} {e} adjr adjl = ?ComposeAdjunctionCorrect_hole
@@ -11957,7 +11953,7 @@ MetaFunctorCat catC catD =
     MetaNatTransInterp
 
 public export
-FunctorCatCorrect : {catC, catD : MetaCat} ->
+0 FunctorCatCorrect : {catC, catD : MetaCat} ->
   MetaCatCorrect catC -> MetaCatCorrect catD ->
   MetaCatCorrect (MetaFunctorCat catC catD)
 FunctorCatCorrect {catC} {catD} cC cD = ?FunctorCatCorrect_hole
