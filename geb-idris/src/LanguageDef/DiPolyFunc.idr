@@ -166,6 +166,40 @@ CDSLpi {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
     (snd $ CSPi {c=b} {d=b'} m (tot ** f2))
     (\(Element0 ecb cbcond) => Refl)
 
+export
+CDSLpiMap : FunExt -> {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  CDSLfmap (CDSLpi {b} {b'} {cb} {proj} m)
+CDSLpiMap fext {b} {b'} {cb} {proj}
+  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2) =
+    CDSM
+      (\(eb' ** Element0 mbx mbxeq) =>
+        (eb' **
+         Element0
+          (\(Element0 (eb, ()) ebeq') => mtot $ mbx $ Element0 (eb, ()) ebeq')
+          (\(Element0 (eb, ()) ebeq') =>
+           trans
+            (mbxeq (Element0 (eb, ()) ebeq'))
+            (meq2 $ (mbx (Element0 (eb, ()) ebeq'))))))
+      (\(Element0 ecb cbcond) =>
+        dpEq12
+          Refl
+          $ s0Eq12
+            (funExt $ \(Element0 (eb, ()) ebeq) => meq1 ecb)
+            $ ?CDSLpiMap_hole) -- $ \(Element0 (eb, ()) ebeq) => uip)
+      (\(eb' ** Element0 mbx mbxeq) => Refl)
+
+export
+CDSLpiFunc : FunExt -> {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  CDSLfunc
+    (CBO b cb proj)
+    (CBO
+      b'
+      (Subset0 cb (\ecb => (eb : b) -> m eb = m (proj ecb) -> eb = proj ecb))
+      (m . proj . Subset0.fst0))
+CDSLpiFunc fext m = CDSLf (CDSLpi m) (CDSLpiMap fext m)
+
 ----------------------------------------------
 ---- Dependent-type style (`ABundleObj`) ----
 ----------------------------------------------
