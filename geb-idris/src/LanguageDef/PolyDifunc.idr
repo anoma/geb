@@ -34,7 +34,7 @@ public export
 record PolyDifunc' where
   constructor PDF'
   pdf'Pos : Type
-  pdf'Dir : pdf'Pos -> CDisliceCat
+  pdf'Dir : pdf'Pos -> CBundleObj
 
 -- The interpretation of a polydifunctor treats its inputs and outputs
 -- as a domain and codomain, and comprises a choice of morphism from
@@ -62,8 +62,8 @@ export
 record InterpPDF' (pdf : PolyDifunc') (x, y : Type) where
   constructor IPDF'
   ipdf'Pos : pdf'Pos pdf
-  ipdf'BaseMor : x -> cdscBase (pdf'Dir pdf ipdf'Pos)
-  ipdf'CobaseMor : cdscCobase (pdf'Dir pdf ipdf'Pos) -> y
+  ipdf'BaseMor : x -> cbTot (pdf'Dir pdf ipdf'Pos)
+  ipdf'CobaseMor : cbBase (pdf'Dir pdf ipdf'Pos) -> y
   ipdf'Proj : x -> y
 
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
