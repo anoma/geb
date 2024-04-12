@@ -167,3 +167,26 @@ BcmAfromC {dom} {cod} (CBM mbase (Element0 mtot mcomm)) =
 ---------------------------------------------
 ---- Equivalence with Dirichlet functors ----
 ---------------------------------------------
+
+export
+BcmDirichToA : {0 dom, cod : PolyFunc} ->
+  DirichNatTrans dom cod -> ABundleMor (BcoDirichToA dom) (BcoDirichToA cod)
+BcmDirichToA {dom=(dpos ** ddir)} {cod=(cpos ** cdir)} (onpos ** ondir) =
+  ABM onpos ondir
+
+export
+BcmDirichFromA : {0 dom, cod : PolyFunc} ->
+  ABundleMor (BcoDirichToA dom) (BcoDirichToA cod) ->
+  DirichNatTrans dom cod
+BcmDirichFromA {dom=(dpos ** ddir)} {cod=(cpos ** cdir)} (ABM base cobase) =
+  (base ** cobase)
+
+export
+BcmDirichToC : {0 dom, cod : PolyFunc} ->
+  DirichNatTrans dom cod -> CBundleMor (BcoDirichToC dom) (BcoDirichToC cod)
+BcmDirichToC = BcmAtoC . BcmDirichToA
+
+export
+BcmDirichFromC : {0 dom, cod : PolyFunc} ->
+  CBundleMor (BcoDirichToC dom) (BcoDirichToC cod) -> DirichNatTrans dom cod
+BcmDirichFromC = BcmDirichFromA . BcmAfromC
