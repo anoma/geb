@@ -81,3 +81,9 @@ BcoDirichToA (base ** cobase) = ABO base cobase
 public export
 BcoDirichToC : PolyFunc -> CBundleObj
 BcoDirichToC = BcoAtoC . BcoDirichToA
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Objects of category of bundles (with covariant fiber morphisms) ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
