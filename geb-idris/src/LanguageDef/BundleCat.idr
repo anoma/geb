@@ -117,6 +117,32 @@ record CBundleMor (dom, cod : CBundleObj) where
 ---- Categorial-arena translations ----
 ---------------------------------------
 
+export
+BcmCtoA : {0 dom, cod : CBundleObj} ->
+  CBundleMor dom cod -> ABundleMor (BcoCtoA dom) (BcoCtoA cod)
+BcmCtoA {dom} {cod} (CBM mbase (Element0 mtot mcomm)) =
+  ABM
+    mbase
+    $ \edb, (Element0 edt deq) =>
+        Element0
+          (fst $ fst0 $ mtot edt)
+          $ trans (snd0 $ mtot edt) $ rewrite sym (mcomm edt) in
+            rewrite deq in Refl
+
+export
+BcmCfromA : {dom, cod : CBundleObj} ->
+  ABundleMor (BcoCtoA dom) (BcoCtoA cod) -> CBundleMor dom cod
+BcmCfromA {dom} {cod} (ABM mbase mcobase) =
+  CBM
+    mbase $
+    Element0
+      (\edt =>
+        let
+          mcb = mcobase (cbProj dom edt) $ Element0 edt Refl
+        in
+        Element0 (fst0 mcb, cbProj dom edt) $ snd0 mcb)
+      $ \_ => Refl
+
 ---------------------------------------------
 ---- Equivalence with Dirichlet functors ----
 ---------------------------------------------
