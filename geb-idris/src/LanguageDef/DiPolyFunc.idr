@@ -79,24 +79,18 @@ CDSLcbcFunc {b} {cb} {cb'} {proj} {proj'} m = CDSLf (CDSLcbc m) (CDSLcbcMap m)
 
 export
 CDSLdc : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
-  (mb : b' -> b) ->
-  CSliceMorphism {c=b'}
-    (cb' ** proj')
-    (Pullback proj mb ** pbProj2 {f=proj} {g=mb}) ->
+  CBundleMor (CBO b' cb' proj') (CBO b cb proj) ->
   CDSLomap (CBO b cb proj) (CBO b' cb' proj')
-CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} mb mp =
+CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mp) =
   CDSLcbc {b=b'} {cb=(Pullback proj mb)} {cb'}
     {proj=(pbProj2 {f=proj} {g=mb})} {proj'} mp
   . CDSLbc {b} {b'} {cb} {proj} mb
 
 export
 CDSLdcMap : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
-  (mb : b' -> b) ->
-  (mcb : CSliceMorphism {c=b'}
-    (cb' ** proj')
-    (Pullback proj mb ** pbProj2 {f=proj} {g=mb})) ->
-  CDSLfmap (CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb)
-CDSLdcMap {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb x y =
+  (mb : CBundleMor (CBO b' cb' proj') (CBO b cb proj)) ->
+  CDSLfmap (CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} mb)
+CDSLdcMap {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mcb) x y =
   CDSLcbcMap {b=b'} {cb=(Pullback proj mb)} {cb'}
     {proj=(pbProj2 {f=proj} {g=mb})} {proj'}
     mcb (CDSLbc mb x) (CDSLbc mb y)
@@ -104,12 +98,10 @@ CDSLdcMap {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb x y =
 
 export
 CDSLdcFunc : {b, b', cb, cb' : Type} ->
-  {proj : cb -> b} -> {proj' : cb' -> b'} -> (mb : b' -> b) ->
-  CSliceMorphism {c=b'}
-    (cb' ** proj')
-    (Pullback proj mb ** pbProj2 {f=proj} {g=mb}) ->
+  {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  CBundleMor (CBO b' cb' proj') (CBO b cb proj) ->
   CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
-CDSLdcFunc mb mcb = CDSLf (CDSLdc mb mcb) (CDSLdcMap mb mcb)
+CDSLdcFunc mb = CDSLf (CDSLdc mb) (CDSLdcMap mb)
 
 ----------------------------------------------
 ---- Dependent-type style (`ABundleObj`) ----
