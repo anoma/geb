@@ -77,6 +77,40 @@ CDSLcbcFunc : {b, cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b} ->
   CDSLfunc (CDSC b cb proj) (CDSC b cb' proj')
 CDSLcbcFunc {b} {cb} {cb'} {proj} {proj'} m = CDSLf (CDSLcbc m) (CDSLcbcMap m)
 
+export
+CDSLdc : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mb : b' -> b) ->
+  CSliceMorphism {c=b'}
+    (cb' ** proj')
+    (Pullback proj mb ** pbProj2 {f=proj} {g=mb}) ->
+  CDSLomap (CDSC b cb proj) (CDSC b' cb' proj')
+CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} mb mp =
+  CDSLcbc {b=b'} {cb=(Pullback proj mb)} {cb'}
+    {proj=(pbProj2 {f=proj} {g=mb})} {proj'} mp
+  . CDSLbc {b} {b'} {cb} {proj} mb
+
+export
+CDSLdcMap : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mb : b' -> b) ->
+  (mcb : CSliceMorphism {c=b'}
+    (cb' ** proj')
+    (Pullback proj mb ** pbProj2 {f=proj} {g=mb})) ->
+  CDSLfmap (CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb)
+CDSLdcMap {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb x y =
+  CDSLcbcMap {b=b'} {cb=(Pullback proj mb)} {cb'}
+    {proj=(pbProj2 {f=proj} {g=mb})} {proj'}
+    mcb (CDSLbc mb x) (CDSLbc mb y)
+  . CDSLbcMap {b} {b'} {cb} {proj} mb x y
+
+export
+CDSLdcFunc : {b, b', cb, cb' : Type} ->
+  {proj : cb -> b} -> {proj' : cb' -> b'} -> (mb : b' -> b) ->
+  CSliceMorphism {c=b'}
+    (cb' ** proj')
+    (Pullback proj mb ** pbProj2 {f=proj} {g=mb}) ->
+  CDSLfunc (CDSC b cb proj) (CDSC b' cb' proj')
+CDSLdcFunc mb mcb = CDSLf (CDSLdc mb mcb) (CDSLdcMap mb mcb)
+
 ----------------------------------------------
 ---- Dependent-type style (`ADisliceCat`) ----
 ----------------------------------------------
