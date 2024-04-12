@@ -3,6 +3,7 @@ module LanguageDef.BundleCat
 import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.InternalCat
+import LanguageDef.PolyCat
 
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
