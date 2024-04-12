@@ -192,7 +192,7 @@ InterpFromIdPDF x y (IPDF (i ** j ** mij) mxi mjy mxy comm) =
 
 export
 PdfHomProfId' : PolyDifunc'
-PdfHomProfId' = PDF' Unit (\() => CDSC Unit Void (\v => void v))
+PdfHomProfId' = PDF' Unit (\() => CBO Unit Void (\v => void v))
 
 export
 InterpToIdPDF' : (x, y : Type) -> (x -> y) -> InterpPDF' PdfHomProfId' x y
