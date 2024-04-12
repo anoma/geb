@@ -127,7 +127,7 @@ ADSMr {cat} {dom} codtot mor =
 ---------------------------------------
 
 DsoCtoA : {0 cat : CBundleObj} ->
-  CDisliceObj cat -> ADisliceObj (DscCtoA cat)
+  CDisliceObj cat -> ADisliceObj (BcoCtoA cat)
 DsoCtoA {cat} obj =
   ADSO
     (\eb => PreImage {a=(cdsoTot obj)} {b=(cbTot cat)} (cdsoFact2 obj) eb)
@@ -137,7 +137,7 @@ DsoCtoA {cat} obj =
         $ trans (cdsoEq obj $ fst0 ecc) $ snd0 ecc)
 
 DsoCfromA : {cat : CBundleObj} ->
-  ADisliceObj (DscCtoA cat) -> CDisliceObj cat
+  ADisliceObj (BcoCtoA cat) -> CDisliceObj cat
 DsoCfromA {cat=(CDSC base cobase proj)} (ADSO tot inj) =
   CDSO
     (Sigma {a=base} tot)
@@ -145,7 +145,7 @@ DsoCfromA {cat=(CDSC base cobase proj)} (ADSO tot inj) =
     DPair.fst
     (\_ => Refl)
 
-DsoAtoC : {cat : ABundleObj} -> ADisliceObj cat -> CDisliceObj (DscAtoC cat)
+DsoAtoC : {cat : ABundleObj} -> ADisliceObj cat -> CDisliceObj (BcoAtoC cat)
 DsoAtoC {cat} obj =
   CDSO
     (Sigma {a=(abBase cat)} $ adsoTot obj)
@@ -153,7 +153,7 @@ DsoAtoC {cat} obj =
     DPair.fst
     (\(eb ** ec) => Refl)
 
-DsoAfromC : {cat : ABundleObj} -> CDisliceObj (DscAtoC cat) -> ADisliceObj cat
+DsoAfromC : {cat : ABundleObj} -> CDisliceObj (BcoAtoC cat) -> ADisliceObj cat
 DsoAfromC {cat=(ADSC base cobase)} (CDSO tot fact1 fact2 eq) =
   ADSO
     (\eb => Subset0 tot $ \et => fact2 et = eb)
@@ -161,7 +161,7 @@ DsoAfromC {cat=(ADSC base cobase)} (CDSO tot fact1 fact2 eq) =
 
 DsmCtoA : {cat : CBundleObj} -> {dom, cod : CDisliceObj cat} ->
   CDisliceMorph {cat} dom cod ->
-  ADisliceMorph {cat=(DscCtoA cat)}
+  ADisliceMorph {cat=(BcoCtoA cat)}
     (DsoCtoA {cat} dom)
     (DsoCtoA {cat} cod)
 DsmCtoA
@@ -170,7 +170,7 @@ DsmCtoA
   {cod=(CDSO ctot cf1 cf2 ceq)}
   (CDSM mtot meq1 meq2) =
     ADSM
-      {cat=(DscCtoA (CDSC base cobase proj))}
+      {cat=(BcoCtoA (CDSC base cobase proj))}
       {dom=(DsoCtoA {cat=(CDSC base cobase proj)} (CDSO dtot df1 df2 deq))}
       {codtot=(\eb => PreImage {a=ctot} {b=base} cf2 eb)}
       (\eb, (Element0 ed deq) =>
@@ -180,7 +180,7 @@ DsmCtoA
       {eq=(\eb, (Element0 ecb cbeq) => rewrite meq1 ecb in s0Eq12 Refl uip)}
 
 DsmCfromA : {cat : CBundleObj} -> {dom, cod : CDisliceObj cat} ->
-  ADisliceMorph {cat=(DscCtoA cat)}
+  ADisliceMorph {cat=(BcoCtoA cat)}
     (DsoCtoA {cat} dom)
     (DsoCtoA {cat} cod) ->
   CDisliceMorph {cat} dom cod
@@ -198,7 +198,7 @@ DsmCfromA {cat=(CDSC base cobase proj)}
 
 DsmAtoC : {0 cat : ABundleObj} -> {0 dom, cod : ADisliceObj cat} ->
   ADisliceMorph {cat} dom cod ->
-  CDisliceMorph {cat=(DscAtoC cat)} (DsoAtoC {cat} dom) (DsoAtoC {cat} cod)
+  CDisliceMorph {cat=(BcoAtoC cat)} (DsoAtoC {cat} dom) (DsoAtoC {cat} cod)
 DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSM mor inj {eq}) =
   CDSM
     (\(eb ** ed) => (eb ** mor eb ed))
@@ -206,7 +206,7 @@ DsmAtoC {cat} {dom} {cod=(ADSO _ _)} (ADSM mor inj {eq}) =
     (\(eb ** ed) => Refl)
 
 DsmAfromC : {0 cat : ABundleObj} -> {dom, cod : ADisliceObj cat} ->
-  CDisliceMorph {cat=(DscAtoC cat)} (DsoAtoC {cat} dom) (DsoAtoC {cat} cod) ->
+  CDisliceMorph {cat=(BcoAtoC cat)} (DsoAtoC {cat} dom) (DsoAtoC {cat} cod) ->
   ADisliceMorph {cat} dom cod
 DsmAfromC {cat=(ADSC base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO ctot cinj)}
   (CDSM mtot meq1 meq2) =
@@ -217,7 +217,7 @@ DsmAfromC {cat=(ADSC base cobase)} {dom=(ADSO dtot dinj)} {cod=(ADSO ctot cinj)}
 
 export
 DsmAtoCf : (c, d : CBundleObj) ->
-  (x, y : ADisliceObj (DscCtoA c)) ->
+  (x, y : ADisliceObj (BcoCtoA c)) ->
   ADisliceMorph x y -> CDisliceMorph (DsoCfromA {cat=c} x) (DsoCfromA {cat=c} y)
 DsmAtoCf (CDSC cb ccb cproj) (CDSC db dcb dproj)
   (ADSO xtot xinj) (ADSO codtot minj)
@@ -229,7 +229,7 @@ DsmAtoCf (CDSC cb ccb cproj) (CDSC db dcb dproj)
 
 export
 DsmCtoAf : (c, d : ABundleObj) ->
-  (x, y : CDisliceObj (DscAtoC c)) ->
+  (x, y : CDisliceObj (BcoAtoC c)) ->
   CDisliceMorph x y -> ADisliceMorph (DsoAfromC {cat=c} x) (DsoAfromC {cat=c} y)
 DsmCtoAf (ADSC cb ccb) (ADSC db dcb)
   (CDSO xtot xf1 xf2 xeq) (CDSO ytot yf1 yf2 yeq)
@@ -297,42 +297,42 @@ record ADSLfunc (c, d : ABundleObj) where
 
 export
 DsomCtoA : {c, d : CBundleObj} ->
-  CDSLomap c d -> ADSLomap (DscCtoA c) (DscCtoA d)
+  CDSLomap c d -> ADSLomap (BcoCtoA c) (BcoCtoA d)
 DsomCtoA {c} {d} omap = DsoCtoA . omap . DsoCfromA
 
 export
 DsomCfromA : {c, d : CBundleObj} ->
-  ADSLomap (DscCtoA c) (DscCtoA d) -> CDSLomap c d
+  ADSLomap (BcoCtoA c) (BcoCtoA d) -> CDSLomap c d
 DsomCfromA {c} {d} omap = DsoCfromA . omap . DsoCtoA
 
 export
 DsomAtoC : {c, d : ABundleObj} ->
-  ADSLomap c d -> CDSLomap (DscAtoC c) (DscAtoC d)
+  ADSLomap c d -> CDSLomap (BcoAtoC c) (BcoAtoC d)
 DsomAtoC {c} {d} omap = DsoAtoC . omap . DsoAfromC
 
 export
 DsomAfromC : {c, d : ABundleObj} ->
-  CDSLomap (DscAtoC c) (DscAtoC d) -> ADSLomap c d
+  CDSLomap (BcoAtoC c) (BcoAtoC d) -> ADSLomap c d
 DsomAfromC {c} {d} omap = DsoAfromC . omap . DsoAtoC
 
 export
 DsfmCtoA : {c, d : CBundleObj} ->
   (omap : CDSLomap c d) ->
   CDSLfmap {c} {d} omap ->
-  ADSLfmap {c=(DscCtoA c)} {d=(DscCtoA d)} (DsomCtoA omap)
+  ADSLfmap {c=(BcoCtoA c)} {d=(BcoCtoA d)} (DsomCtoA omap)
 DsfmCtoA {c} {d} omap fmap x y =
   DsmCtoA . fmap (DsoCfromA x) (DsoCfromA y) . DsmCfromA . DsmCtoA
   . DsmAtoCf c d x y
 
 export
 DsfCtoA : {c, d : CBundleObj} ->
-  CDSLfunc c d -> ADSLfunc (DscCtoA c) (DscCtoA d)
+  CDSLfunc c d -> ADSLfunc (BcoCtoA c) (BcoCtoA d)
 DsfCtoA {c} {d} (CDSLf omap fmap) = ADSLf (DsomCtoA omap) (DsfmCtoA omap fmap)
 
 export
 DsfmCfromA : {c, d : CBundleObj} ->
-  (omap : ADSLomap (DscCtoA c) (DscCtoA d)) ->
-  ADSLfmap {c=(DscCtoA c)} {d=(DscCtoA d)} omap ->
+  (omap : ADSLomap (BcoCtoA c) (BcoCtoA d)) ->
+  ADSLfmap {c=(BcoCtoA c)} {d=(BcoCtoA d)} omap ->
   CDSLfmap {c} {d} (DsomCfromA omap)
 DsfmCfromA {c} {d} omap fmap x y m =
   DsmAtoCf d d (omap $ DsoCtoA x) (omap $ DsoCtoA y)
@@ -340,7 +340,7 @@ DsfmCfromA {c} {d} omap fmap x y m =
 
 export
 DsfCfromA : {c, d : CBundleObj} ->
-  ADSLfunc (DscCtoA c) (DscCtoA d) -> CDSLfunc c d
+  ADSLfunc (BcoCtoA c) (BcoCtoA d) -> CDSLfunc c d
 DsfCfromA {c} {d} (ADSLf omap fmap) =
   CDSLf (DsomCfromA omap) (DsfmCfromA omap fmap)
 
@@ -348,20 +348,20 @@ export
 DsfmAtoC : {c, d : ABundleObj} ->
   (omap : ADSLomap c d) ->
   ADSLfmap {c} {d} omap ->
-  CDSLfmap {c=(DscAtoC c)} {d=(DscAtoC d)} (DsomAtoC omap)
+  CDSLfmap {c=(BcoAtoC c)} {d=(BcoAtoC d)} (DsomAtoC omap)
 DsfmAtoC {c} {d} omap fmap x y =
   DsmAtoC . fmap (DsoAfromC x) (DsoAfromC y) . DsmAfromC . DsmAtoC
     . DsmCtoAf c d x y
 
 export
 DsfAtoC : {c, d : ABundleObj} ->
-  ADSLfunc c d -> CDSLfunc (DscAtoC c) (DscAtoC d)
+  ADSLfunc c d -> CDSLfunc (BcoAtoC c) (BcoAtoC d)
 DsfAtoC {c} {d} (ADSLf omap fmap) = CDSLf (DsomAtoC omap) (DsfmAtoC omap fmap)
 
 export
 DsfmAfromC : {c, d : ABundleObj} ->
-  (omap : CDSLomap (DscAtoC c) (DscAtoC d)) ->
-  CDSLfmap {c=(DscAtoC c)} {d=(DscAtoC d)} omap ->
+  (omap : CDSLomap (BcoAtoC c) (BcoAtoC d)) ->
+  CDSLfmap {c=(BcoAtoC c)} {d=(BcoAtoC d)} omap ->
   ADSLfmap {c} {d} (DsomAfromC omap)
 DsfmAfromC {c} {d} omap fmap x y m =
   DsmCtoAf d d (omap $ DsoAtoC x) (omap $ DsoAtoC y)
@@ -369,6 +369,6 @@ DsfmAfromC {c} {d} omap fmap x y m =
 
 export
 DsfAfromC : {c, d : ABundleObj} ->
-  CDSLfunc (DscAtoC c) (DscAtoC d) -> ADSLfunc c d
+  CDSLfunc (BcoAtoC c) (BcoAtoC d) -> ADSLfunc c d
 DsfAfromC {c} {d} (CDSLf omap fmap) =
   ADSLf (DsomAfromC omap) (DsfmAfromC omap fmap)
