@@ -14,6 +14,9 @@ import LanguageDef.InternalCat
 ---- Categorial-style ----
 --------------------------
 
+-- A bundle is an arrow whose morphisms comprise a (covariant) morphism between
+-- codomains together with (covariant) morphisms on fibrations of the domains by
+-- the codomain morphisms.
 public export
 record CBundleObj where
   constructor CDSC
@@ -21,7 +24,7 @@ record CBundleObj where
   cbBase : Type
   cbProj : cbBase -> cbTot
 
--- A dislice category is indexed by an arrow object, analogously to how
+-- A dislice category is indexed by a bundle, analogously to how
 -- a slice or coslice category is indexed by an object of the base category.
 -- In particular:
 --
