@@ -148,24 +148,24 @@ ADSLcbcFunc {b} {cb} {cb'} m = ADSLf (ADSLcbc m) (ADSLcbcMap m)
 -- to a cobase category.
 export
 ADSLdc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
-  (mb : b' -> b) -> SliceMorphism {a=b'} cb' (cb . mb) ->
+  ABundleMor (ABO b' cb') (ABO b cb) ->
   ADSLomap (ABO b cb) (ABO b' cb')
-ADSLdc {b} {b'} {cb} {cb'} mb mc =
+ADSLdc {b} {b'} {cb} {cb'} (ABM mb mc) =
   ADSLcbc {b=b'} {cb=(cb . mb)} {cb'} mc . ADSLbc {b} {b'} {cb} mb
 
 export
 ADSLdcMap : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
-  (mb : b' -> b) -> (mc : SliceMorphism {a=b'} cb' (cb . mb)) ->
-  ADSLfmap (ADSLdc {b} {b'} {cb} {cb'} mb mc)
-ADSLdcMap {b} {b'} {cb} {cb'} mb mc x y =
+  (mb : ABundleMor (ABO b' cb') (ABO b cb)) ->
+  ADSLfmap (ADSLdc {b} {b'} {cb} {cb'} mb)
+ADSLdcMap {b} {b'} {cb} {cb'} (ABM mb mc) x y =
   ADSLcbcMap {b=b'} {cb=(cb . mb)} {cb'} mc (ADSLbc mb x) (ADSLbc mb y)
   . ADSLbcMap {b} {b'} {cb} mb x y
 
 export
 ADSLdcFunc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
-  (mb : b' -> b) -> SliceMorphism {a=b'} cb' (cb . mb) ->
+  (mb : ABundleMor (ABO b' cb') (ABO b cb)) ->
   ADSLfunc (ABO b cb) (ABO b' cb')
-ADSLdcFunc {b} {b'} {cb} {cb'} mb mc = ADSLf (ADSLdc mb mc) (ADSLdcMap mb mc)
+ADSLdcFunc {b} {b'} {cb} {cb'} mb = ADSLf (ADSLdc mb) (ADSLdcMap mb)
 
 export
 ADSLsigma : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
