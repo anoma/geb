@@ -29,10 +29,10 @@ public export
 record CDisliceObj (cat : CBundleObj) where
   constructor CDSO
   cdsoTot : Type
-  cdsoFact1 : cbBase cat -> cdsoTot
-  cdsoFact2 : cdsoTot -> cbTot cat
+  cdsoFact1 : cbTot cat -> cdsoTot
+  cdsoFact2 : cdsoTot -> cbBase cat
   0 cdsoEq :
-    ExtEq {a=(cbBase cat)} {b=cbTot cat}
+    ExtEq {a=(cbTot cat)} {b=cbBase cat}
       (cdsoFact2 . cdsoFact1)
       (cbProj cat)
 
@@ -41,11 +41,11 @@ record CDisliceMorph {0 cat : CBundleObj} (dom, cod : CDisliceObj cat) where
   constructor CDSM
   cdsmTot : cdsoTot dom -> cdsoTot cod
   0 cdsmEq1 :
-    ExtEq {a=(cbBase cat)} {b=(cdsoTot cod)}
+    ExtEq {a=(cbTot cat)} {b=(cdsoTot cod)}
       (cdsoFact1 cod)
       (cdsmTot . cdsoFact1 dom)
   0 cdsmEq2 :
-    ExtEq {a=(cdsoTot dom)} {b=(cbTot cat)}
+    ExtEq {a=(cdsoTot dom)} {b=(cbBase cat)}
       (cdsoFact2 dom)
       (cdsoFact2 cod . cdsmTot)
 
@@ -130,7 +130,7 @@ DsoCtoA : {0 cat : CBundleObj} ->
   CDisliceObj cat -> ADisliceObj (BcoCtoA cat)
 DsoCtoA {cat} obj =
   ADSO
-    (\eb => PreImage {a=(cdsoTot obj)} {b=(cbTot cat)} (cdsoFact2 obj) eb)
+    (\eb => PreImage {a=(cdsoTot obj)} {b=(cbBase cat)} (cdsoFact2 obj) eb)
     (\eb, ecc =>
       Element0
         (cdsoFact1 obj $ fst0 ecc)

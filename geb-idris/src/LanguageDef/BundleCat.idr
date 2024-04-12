@@ -43,9 +43,9 @@ ABinj cat = SliceMorphism {a=(abBase cat)} (abCobase cat)
 public export
 record CBundleObj where
   constructor CBO
-  cbTot : Type
   cbBase : Type
-  cbProj : cbBase -> cbTot
+  cbTot : Type
+  cbProj : cbTot -> cbBase
 
 ---------------------------------------
 ---- Categorial-arena translations ----
@@ -54,8 +54,8 @@ record CBundleObj where
 public export
 BcoCtoA : CBundleObj -> ABundleObj
 BcoCtoA cb =
-  ABO (cbTot cb) $
-    \ea => PreImage {a=(cbBase cb)} {b=(cbTot cb)} (cbProj cb) ea
+  ABO (cbBase cb) $
+    \ea => PreImage {a=(cbTot cb)} {b=(cbBase cb)} (cbProj cb) ea
 
 public export
 BcoAtoC : ABundleObj -> CBundleObj
@@ -106,11 +106,11 @@ record ABundleMor (dom, cod : ABundleObj) where
 public export
 record CBundleMor (dom, cod : CBundleObj) where
   constructor CBM
-  cbmBase : cbTot dom -> cbTot cod
+  cbmBase : cbBase dom -> cbBase cod
   cbmTot :
     CSliceMorphism
-      {c=(cbTot dom)}
-      (cbBase dom ** cbProj dom)
+      {c=(cbBase dom)}
+      (cbTot dom ** cbProj dom)
       (Pullback (cbProj cod) cbmBase ** pbProj2 {f=(cbProj cod)} {g=cbmBase})
 
 ---------------------------------------
