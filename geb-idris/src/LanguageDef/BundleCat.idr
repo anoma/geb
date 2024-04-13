@@ -214,3 +214,36 @@ export
 BcmDirichFromC : {0 dom, cod : PolyFunc} ->
   CBundleMor (BcoDirichToC dom) (BcoDirichToC cod) -> DirichNatTrans dom cod
 BcmDirichFromC = BcmDirichFromA . BcmAfromC
+
+------------------------------------------
+------------------------------------------
+---- Categorical structure on bundles ----
+------------------------------------------
+------------------------------------------
+
+----------------------------------
+---- Identity and composition ----
+----------------------------------
+
+export
+abId : (abo : ABundleObj) -> ABundleMor abo abo
+abId abo@(ABO b cb) =
+  BcmDirichToA {dom=(BcoAtoDirich abo)} {cod=(BcoAtoDirich abo)}
+  $ dntId {p=(BcoAtoDirich abo)}
+
+export
+abComp : {x, y, z : ABundleObj} ->
+  ABundleMor y z -> ABundleMor x y -> ABundleMor x z
+abComp {x=x@(ABO xb xcb)} {y} {z=z@(ABO zb zcb)} g f =
+  BcmDirichToA {dom=(BcoAtoDirich x)} {cod=(BcoAtoDirich z)}
+  $ dntVCatComp {p=(BcoAtoDirich x)} {r=(BcoAtoDirich z)}
+    (BcmAtoDirich g) (BcmAtoDirich f)
+
+export
+cbId : (cbo : CBundleObj) -> CBundleMor cbo cbo
+cbId cbo = BcmCfromA $ abId (BcoCtoA cbo)
+
+export
+cbComp : {x, y, z : CBundleObj} ->
+  CBundleMor y z -> CBundleMor x y -> CBundleMor x z
+cbComp g f = BcmCfromA $ abComp (BcmCtoA g) (BcmCtoA f)
