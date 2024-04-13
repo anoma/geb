@@ -11,11 +11,20 @@ import public LanguageDef.InternalCat
 -----------------
 -----------------
 
+-- This is just an `IntArena` with names.
 public export
 record IntFamObj (c : Type) where
   constructor IFO
   ifoIdx : Type
   ifoObj : ifoIdx -> c
+
+export
+IFOtoArena : {c : Type} -> IntFamObj c -> IntArena c
+IFOtoArena {c} ifo = (ifoIdx ifo ** ifoObj ifo)
+
+export
+IFOfromArena : {c : Type} -> IntArena c -> IntFamObj c
+IFOfromArena {c} ar = IFO (fst ar) (snd ar)
 
 -------------------
 -------------------
