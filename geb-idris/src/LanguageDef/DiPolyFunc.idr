@@ -161,7 +161,7 @@ CDSLpi {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
     (\(Element0 ecb cbcond) =>
       (m (proj ecb) **
        Element0
-        (\(Element0 (eb', ()) meq) => f1 ecb)
+        (\eb => f1 ecb)
         $ \(Element0 (eb, ()) feq) => rewrite comm ecb in cbcond eb feq))
     (snd $ CSPi {c=b} {d=b'} m (tot ** f2))
     (\(Element0 ecb cbcond) => Refl)
@@ -189,10 +189,8 @@ CDSLpiMapEq1 fext {b} {b'} {cb} {proj}
       dpEq12
         Refl
         $ s0Eq12
-          -- {x=(\(Element0 (eb', ()) meq) => yf1 ecb)}
-          -- {y=(\arg => mtot (let Element0 (eb', ()) meq = arg in xf1 ecb))}
-          (funExt $ \(Element0 (eb, ()) ebeq) => meq1 ecb)
-          $ ?CDSLpiMapEq_hole
+          (funExt $ \eb => meq1 ecb)
+          (rewrite meq1 ecb in funExt $ \(Element0 (eb, ()) meq) => uip)
 
 export
 0 CDSLpiMapEq2 : {b, b', cb : Type} -> {proj : cb -> b} ->
