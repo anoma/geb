@@ -114,9 +114,19 @@ fcong : {0 a, b : Type} -> {0 f, g : a -> b} ->
 fcong Refl = Refl
 
 public export
+fcompeq : {0 a, b, c : Type} -> {0 g, g' : b -> c} -> {0 f, f' : a -> b} ->
+  (g ~=~ g') -> (f ~=~ f') -> g . f = g' . f'
+fcompeq Refl Refl = Refl
+
+public export
 fprecompeq : {0 a, b, c : Type} -> {0 f, g : b -> c} -> {0 h : a -> b} ->
   (f ~=~ g) -> f . h = g . h
-fprecompeq Refl = Refl
+fprecompeq eq = fcompeq eq Refl
+
+public export
+fpostcompeq : {0 a, b, c : Type} -> {0 f, g : a -> b} -> {0 h : b -> c} ->
+  (f ~=~ g) -> h . f = h . g
+fpostcompeq eq = fcompeq {g=h} Refl eq
 
 public export
 dpEq12 : {0 a : Type} -> {0 p : a -> Type} -> {x, y : a} ->
