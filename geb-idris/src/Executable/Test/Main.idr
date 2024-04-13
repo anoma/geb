@@ -6,6 +6,7 @@ import Library.Test.IdrisCategoriesTest
 import Library.Test.IdrisAlgebraTest
 import Library.Test.CategoryTheoryTest
 import LanguageDef.Test.IntBundleTest
+import LanguageDef.Test.IntFamCatTest
 import LanguageDef.Test.SpanCospanTest
 import LanguageDef.Test.InternalCatTest
 import LanguageDef.Test.SlicePolyCatTest
@@ -90,6 +91,7 @@ totalTests = do
   LanguageDef.Test.SlicePolyCatTest.slicePolyCatTest
   LanguageDef.Test.BundleCatTest.bundleCatTest
   LanguageDef.Test.IntBundleTest.intBundleTest
+  LanguageDef.Test.IntFamCatTest.intFamCatTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()
