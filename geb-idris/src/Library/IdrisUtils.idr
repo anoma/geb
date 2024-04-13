@@ -226,7 +226,7 @@ s0Eq2 {a} {p} Refl = Refl
 public export
 s0Eq12 : {0 a : Type} -> {0 p : a -> Type} -> {x, y : a} ->
   {0 px : p x} -> {0 py : p y} ->
-  x = y -> px = py ->
+  x = y -> px ~=~ py ->
   Element0 {type=a} {dep=p} x px = Element0 {type=a} {dep=p} y py
 s0Eq12 {a} {p} {x} {y=x} {px} {py=px} Refl Refl = Refl
 
