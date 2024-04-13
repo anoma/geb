@@ -189,6 +189,8 @@ CDSLpiMapEq1 fext {b} {b'} {cb} {proj}
       dpEq12
         Refl
         $ s0Eq12
+          -- {x=(\(Element0 (eb', ()) meq) => yf1 ecb)}
+          -- {y=(\arg => mtot (let Element0 (eb', ()) meq = arg in xf1 ecb))}
           (funExt $ \(Element0 (eb, ()) ebeq) => meq1 ecb)
           $ ?CDSLpiMapEq_hole
 
