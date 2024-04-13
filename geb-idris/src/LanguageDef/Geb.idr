@@ -6699,3 +6699,58 @@ ImpredTCToNu f af alpha = alpha (Nu f) $ DPair.curry $ ImpredTCExToNu f af
 public export
 ImpredTCFromNu : (f : Type -> Type) -> Nu f -> ImpredTerminalCoalg f
 ImpredTCFromNu f x z alpha = DPair.uncurry alpha (ImpredTCExFromNu f x)
+
+--------------------------------------------------------
+--------------------------------------------------------
+---- (Co)slice categories as categories of elements ----
+--------------------------------------------------------
+--------------------------------------------------------
+
+----------------------------
+---- Coslice categories ----
+----------------------------
+
+public export
+InterpCovarHomCoslice : (c : Type) ->
+  MLPolyCatElemObj (PFHomArena c) ->
+  (b : Type ** c -> b)
+InterpCovarHomCoslice c (a ** () ** d) = (a ** d)
+
+------------------------------------------
+---- Two-category of slice categories ----
+------------------------------------------
+
+public export
+ParamCovarHom : ParamPolyFunc Type
+ParamCovarHom = PFHomArena
+
+public export
+PFSliceObj : PolyFunc
+PFSliceObj = ParamPolyFuncToPolyFunc ParamCovarHom
+
+public export
+InterpPFSliceObj : (a : Type) -> InterpPolyFunc PFSliceObj a -> CSliceObj a
+InterpPFSliceObj a ((b ** ()) ** m) = (b ** m)
+
+public export
+InterpPFSliceElemObj : (e : MLPolyCatElemObj PFSliceObj) -> CSliceObj (fst e)
+InterpPFSliceElemObj (a ** ea) = InterpPFSliceObj a ea
+
+public export
+InterpPFSliceMor : (a, a' : Type) -> InterpPolyFunc PFSliceObj a ->
+  (a -> a') -> InterpPolyFunc PFSliceObj a'
+InterpPFSliceMor a a' = flip $ InterpPFMap {a} {b=a'} PFSliceObj
+
+public export
+InterpPFSliceElemSigma : (a, a' : MLPolyCatElemObj PFSliceObj) ->
+  MLPolyCatElemMor PFSliceObj a a' ->
+  CSliceFunctor (fst a) (fst a')
+InterpPFSliceElemSigma (a ** (i ** ()) ** d) (a' ** (i' ** ()) ** d') m =
+  CSSigma $ pcemMor _ _ _ _ _ _ m
+
+public export
+InterpPFSliceElemPi : (a, a' : MLPolyCatElemObj PFSliceObj) ->
+  MLPolyCatElemMor PFSliceObj a a' ->
+  CSliceFunctor (fst a) (fst a')
+InterpPFSliceElemPi (a ** (i ** ()) ** d) (a' ** (i' ** ()) ** d') m =
+  CSPi $ pcemMor _ _ _ _ _ _ m
