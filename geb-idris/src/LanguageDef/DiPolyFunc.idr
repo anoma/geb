@@ -167,27 +167,61 @@ CDSLpi {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
     (\(Element0 ecb cbcond) => Refl)
 
 export
+CDSLpiMapTot : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  (x, y : CDisliceObj (CBO b cb proj)) ->
+  CDisliceMorph x y ->
+  cdsoTot (CDSLpi m x) -> cdsoTot (CDSLpi m y)
+CDSLpiMapTot {b} {b'} {cb} {proj}
+  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2)
+  (eb' ** Element0 mbx mbxeq) =
+    (eb' **
+     Element0
+      (\(Element0 (eb, ()) ebeq') => mtot $ mbx $ Element0 (eb, ()) ebeq')
+      (\(Element0 (eb, ()) ebeq') =>
+        trans
+          (mbxeq (Element0 (eb, ()) ebeq'))
+          (meq2 $ (mbx (Element0 (eb, ()) ebeq')))))
+
+export
+0 CDSLpiMapEq1 : FunExt -> {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  (x, y : CDisliceObj (CBO b cb proj)) ->
+  (mxy : CDisliceMorph x y) ->
+  ExtEq
+    (cdsoFact1 $ CDSLpi m y)
+    (CDSLpiMapTot m x y mxy . cdsoFact1 (CDSLpi m x))
+CDSLpiMapEq1 fext {b} {b'} {cb} {proj}
+  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2)
+  (Element0 ecb cbcond) =
+    dpEq12
+      Refl
+      $ s0Eq12
+        (funExt $ \(Element0 (eb, ()) ebeq) => meq1 ecb)
+        $ ?CDSLpiMap_hole_2 -- $ funExt $ \(Element0 (eb, ()) ebeq) => uip
+
+export
+0 CDSLpiMapEq2 : {b, b', cb : Type} -> {proj : cb -> b} ->
+  (m : b -> b') ->
+  (x, y : CDisliceObj (CBO b cb proj)) ->
+  (mxy : CDisliceMorph x y) ->
+  ExtEq
+    (cdsoFact2 $ CDSLpi m x)
+    (cdsoFact2 (CDSLpi m y) . CDSLpiMapTot m x y mxy)
+CDSLpiMapEq2 {b} {b'} {cb} {proj}
+  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2)
+  (eb' ** Element0 mbx mbxeq) =
+    Refl
+
+export
 CDSLpiMap : FunExt -> {b, b', cb : Type} -> {proj : cb -> b} ->
   (m : b -> b') ->
   CDSLfmap (CDSLpi {b} {b'} {cb} {proj} m)
-CDSLpiMap fext {b} {b'} {cb} {proj}
-  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2) =
-    CDSM
-      (\(eb' ** Element0 mbx mbxeq) =>
-        (eb' **
-         Element0
-          (\(Element0 (eb, ()) ebeq') => mtot $ mbx $ Element0 (eb, ()) ebeq')
-          (\(Element0 (eb, ()) ebeq') =>
-           trans
-            (mbxeq (Element0 (eb, ()) ebeq'))
-            (meq2 $ (mbx (Element0 (eb, ()) ebeq'))))))
-      (\(Element0 ecb cbcond) =>
-        dpEq12
-          Refl
-          $ s0Eq12
-            (funExt $ \(Element0 (eb, ()) ebeq) => meq1 ecb)
-            $ ?CDSLpiMap_hole) -- $ \(Element0 (eb, ()) ebeq) => uip)
-      (\(eb' ** Element0 mbx mbxeq) => Refl)
+CDSLpiMap fext {b} {b'} {cb} {proj} m x y mxy =
+  CDSM
+    (CDSLpiMapTot m x y mxy)
+    (CDSLpiMapEq1 fext m x y mxy)
+    (CDSLpiMapEq2 m x y mxy)
 
 export
 CDSLpiFunc : FunExt -> {b, b', cb : Type} -> {proj : cb -> b} ->
