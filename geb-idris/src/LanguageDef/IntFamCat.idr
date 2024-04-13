@@ -37,6 +37,13 @@ IFOfromArena {c} ar = IFO (fst ar) (snd ar)
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition , which
 -- notes that this category may be viewed as the free cartesian monoidal
 -- category on `c`.
+--
+-- Note also from this definition of morphism that the category of families
+-- is the opposite of the category of polynomial functors.
+--
+-- Also, contrast it with the category of covariant bundles, which is equivalent
+-- to the category of Dirichlet functors -- that category's morphisms are
+-- covariant on both indexes and objects.
 public export
 record IntFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntFamObj c)
     where
