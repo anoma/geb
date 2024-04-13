@@ -13,6 +13,7 @@ modules =
     , Library.Test.IdrisAlgebraTest
     , LanguageDef.SpanCospan
     , LanguageDef.InternalCat
+    , LanguageDef.IntBundle
     , LanguageDef.BundleCat
     , LanguageDef.SlicePolyCat
     , LanguageDef.DisliceCat
@@ -44,6 +45,7 @@ modules =
     , LanguageDef.ComputationalEffects
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
+    , LanguageDef.Test.IntBundleTest
     , LanguageDef.Test.SpanCospanTest
     , LanguageDef.Test.InternalCatTest
     , LanguageDef.Test.BundleCatTest
