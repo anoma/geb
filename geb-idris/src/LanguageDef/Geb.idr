@@ -1422,7 +1422,7 @@ ProfCoYonedaLemmaR p {isP} {a=c} {b=d} (Evidence ab ((mbd, mca), pab)) =
 -- https://math.stackexchange.com/questions/2402394/exponential-of-presheaves.
 
 public export
-IntPreshfHomObjOmap : (c : Type) -> (mor : IntDifunctorSig c) ->
+0 IntPreshfHomObjOmap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (xomap, yomap : c -> Type) ->
   (xfmap : IntPreshfMapSig c mor xomap) ->
   (yfmap : IntPreshfMapSig c mor yomap) ->
@@ -1431,7 +1431,7 @@ IntPreshfHomObjOmap c mor xomap yomap xfmap yfmap a =
   ?IntPreshfHomObjOmap_hole
 
 public export
-IntPreshfHomObjFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
+0 IntPreshfHomObjFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (xomap, yomap : c -> Type) ->
   (xfmap : IntPreshfMapSig c mor xomap) ->
   (yfmap : IntPreshfMapSig c mor yomap) ->
@@ -1546,7 +1546,7 @@ TwistArrEmbedMorph
      \funext => funExt $ \ea' => sym $ comm ea')
 
 public export
-TwistArrEmbedMorphInv : (arr, arr' : TwistArrObj) ->
+0 TwistArrEmbedMorphInv : (arr, arr' : TwistArrObj) ->
   ProfNTMorph
     (TwistArrEmbedObjProf arr)
     (TwistArrEmbedObjProf arr')
@@ -1575,7 +1575,7 @@ TwistArrDiEmbedMorph
     (a ** (mab, id {a}) ** (mbb' . mab, ma'a) ** Refl)
 
 public export
-TwistArrDiEmbedMorphInv : (arr, arr' : TwistArrObj) ->
+0 TwistArrDiEmbedMorphInv : (arr, arr' : TwistArrObj) ->
   ProfDiNTMorph
     (TwistArrDiEmbedObjProf arr)
     (TwistArrDiEmbedObjProf arr')
@@ -1907,7 +1907,7 @@ profapplyNTBase s t a b mas mtb p pdm pst = pdm s t a b mas mtb pst
 -- `ProfCopreshfObj/ParaCopreshfObjFMapSig`).  We now define the morphism-map
 -- component of that embedding (`diapplyNT`).
 public export
-diapplyNTBase : (x, y : Type) -> (x -> y) ->
+0 diapplyNTBase : (x, y : Type) -> (x -> y) ->
   ProfCopreshfMorphBase (diapply x) (diapply y)
 diapplyNTBase x y m p pdm pxx = let pdmxy = pdm x x y y in ?diapplyNTBase_hole
 
@@ -3301,24 +3301,20 @@ data BinTreeFreeM2'' : {0 atom : Type} -> (f2 : PolyBTDep atom) ->
 --------------------------------------
 
 public export
-binTreeEqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
+0 binTreeEqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
   (x, x' : BinTreeMu atom) -> IsTrue (binTreeEq deq x x') -> x = x'
 binTreeEqCorrect deq x x' eq = ?binTreeEqCorrect_hole
 
 public export
-binTreeNeqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
+0 binTreeNeqCorrect : {0 atom : Type} -> (deq : DecEqPred atom) ->
   (x, x' : BinTreeMu atom) -> IsFalse (binTreeEq deq x x') -> Not (x = x')
 binTreeNeqCorrect deq x x' neq = ?binTreeNeqCorrect_hole
 
 public export
-binTreeDecEq : {0 atom : Type} -> DecEqPred atom -> DecEqPred (BinTreeMu atom)
+0 binTreeDecEq : {0 atom : Type} -> DecEqPred atom -> DecEqPred (BinTreeMu atom)
 binTreeDecEq deq x x' with (binTreeEq deq x x') proof prf
   binTreeDecEq deq x x' | True = Yes $ binTreeEqCorrect deq x x' prf
   binTreeDecEq deq x x' | False = No $ binTreeNeqCorrect deq x x' prf
-
-public export
-DecEq atom => DecEq (BinTreeMu atom) where
-  decEq = binTreeDecEq decEq
 
 ------------------------------------------------
 ------------------------------------------------
@@ -3368,7 +3364,7 @@ isFinMatrixBounded n = SliceDecPred $ IsFinMatrixBounded n
 FinMatrix : Nat -> Type
 FinMatrix n = Refinement {a=FinMatrixS} (isFinMatrixBounded n)
 
-InterpFSMP : {n : Nat} -> (p : FinMatrixS) -> (0 _ : FinMatrixBounded n p) ->
+0 InterpFSMP : {n : Nat} -> (p : FinMatrixS) -> (0 _ : FinMatrixBounded n p) ->
   SliceObj (Fin n) -> Type
 InterpFSMP {n} ps bounded sl =
   Subset0 (Nat, List Nat) $
@@ -3377,7 +3373,7 @@ InterpFSMP {n} ps bounded sl =
        InterpFSP {n} (Element0 (index' ps $ natToFinLT i) $
         ?InterpFSMP_hole_pred $ indexAll ?InterpFSMP_hole_elem bounded) sl)
 
-InterpFSM : {n : Nat} ->
+0 InterpFSM : {n : Nat} ->
   (sl : FinMatrix n) -> SliceObj (Fin n) -> Type
 InterpFSM {n} sl = InterpFSMP {n} (fst0 sl) (fromIsYes $ snd0 sl)
 
@@ -3511,7 +3507,7 @@ AListTypeMuSlice : {0 atom : Type} -> AListTypeAlg atom -> AListMuSlice atom
 AListTypeMuSlice {atom} = cataAListF {atom} Void Type (voidF Type)
 
 public export
-AListMuPiAlg : {atom : Type} -> AListTypeAlg atom -> Type
+0 AListMuPiAlg : {atom : Type} -> AListTypeAlg atom -> Type
 AListMuPiAlg = ?AListMuPiAlg_hole
 
 public export
@@ -3537,7 +3533,7 @@ listMuPi' {atom} tyalg nalg calg (InFree (TFC l)) = case l of
     calg x (ListTypeMuSlice tyalg l') $ listMuPi' tyalg nalg calg l'
 
 public export
-listMuSliceCata' : {atom : Type} -> (dom, cod : ListTypeAlg atom) ->
+0 listMuSliceCata' : {atom : Type} -> (dom, cod : ListTypeAlg atom) ->
   SliceMorphism {a=(MuList atom)} (ListTypeMuSlice dom) (ListTypeMuSlice cod)
 listMuSliceCata' {atom} dom cod = ?listMuSliceCata'_hole
 
@@ -3726,14 +3722,14 @@ FinDAGNode ts = Sigma {a=(FinTSLevel ts)} $ FinSortNode ts
 -- to a higher-numbered level in the given topological sort.  The parameter
 -- is the lower-numbered level.
 public export
-FinDAGEdge : (ts : FinTSort) -> FinTSInnerLevel ts -> Type
+0 FinDAGEdge : (ts : FinTSort) -> FinTSInnerLevel ts -> Type
 FinDAGEdge ts lev = ?FinDAGEdge_hole
 
 -- A representation of a finite directed acyclic (multi)graph (DAG) -- a list of
 -- edges each of which points from a lower-numbered level to a higher-numbered
 -- level in the given topological sort.
 public export
-FinDAG' : FinTSort -> Type
+0 FinDAG' : FinTSort -> Type
 FinDAG' = ?FinDAG_hole
 
 ----------------------------------------------------
@@ -6380,7 +6376,7 @@ nAlgToP (x ** (base, ind)) =
    \y => case y of Left () => base ; Right (() ** (() ** ())) => ind base))
 
 public export
-nAlgFromP : NAlgP -> NAlg
+0 nAlgFromP : NAlgP -> NAlg
 nAlgFromP (x ** (((), base) ** ind)) with (snd (base ()) ()) proof eq
   nAlgFromP (x ** (((), base) ** ind)) | Left () =
     (x **
@@ -6625,17 +6621,17 @@ PolyImpredInitAlgToFreeM p =
     (PolyNTvar p)
 
 public export
-PolyFreeMtoImpredInitAlgM : (p : PolyFunc) ->
+0 PolyFreeMtoImpredInitAlgM : (p : PolyFunc) ->
   PolyNatTrans (ImpredAlgDom p) (PolyFuncFreeM p) -> PolyImpredInitAlg p
 PolyFreeMtoImpredInitAlgM p alpha = ?PolyFreeMtoImpredInitAlgM_hole
 
 public export
-ImpredInitAlgFromPoly : (p : PolyFunc) ->
+0 ImpredInitAlgFromPoly : (p : PolyFunc) ->
   PolyImpredInitAlg p -> ImpredInitAlg (InterpPolyFunc p)
 ImpredInitAlgFromPoly p (onpos ** ondir) a alg = ?ImpredAlgInitFromPoly_hole
 
 public export
-PolyImpredNTtoMu : (p : PolyFunc) -> PolyImpredInitAlg p -> PolyFuncMu p
+0 PolyImpredNTtoMu : (p : PolyFunc) -> PolyImpredInitAlg p -> PolyFuncMu p
 PolyImpredNTtoMu p (onpos ** ondir) = ?PolyImpredNTtoMu_hole
 
 public export
