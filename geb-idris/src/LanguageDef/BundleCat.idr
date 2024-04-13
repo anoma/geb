@@ -94,6 +94,10 @@ BcoDirichToC = BcoAtoC . BcoDirichToA
 ---- Arena-style ----
 ---------------------
 
+-- These morphisms make the `ABundleMor` category equivalent to the
+-- category of Dirichlet functors, which, as noted at
+-- https://ncatlab.org/nlab/show/free+coproduct+completion#ViaIndexedSetsOfObjects ,
+-- may also be viewed as the free coproduct completion (here of `Type`).
 public export
 record ABundleMor (dom, cod : ABundleObj) where
   constructor ABM
