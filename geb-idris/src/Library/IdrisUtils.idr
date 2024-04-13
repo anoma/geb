@@ -114,6 +114,11 @@ fcong : {0 a, b : Type} -> {0 f, g : a -> b} ->
 fcong Refl = Refl
 
 public export
+fprecompeq : {0 a, b, c : Type} -> {0 f, g : b -> c} -> {0 h : a -> b} ->
+  (f ~=~ g) -> f . h = g . h
+fprecompeq Refl = Refl
+
+public export
 dpEq12 : {0 a : Type} -> {0 p : a -> Type} -> {x, y : a} ->
   {0 px : p x} -> {0 py : p y} ->
   x = y -> px = py -> MkDPair {p} x px = MkDPair {p} y py
