@@ -118,6 +118,58 @@ public export
 ExtInversePair : {a, b : Type} -> (a -> b, b -> a) -> Type
 ExtInversePair = uncurry ExtInverse
 
+-- Another way in which we use functional extensionality is to describe
+-- the relationship between two functions that they are equal _under_
+-- the assumption of functional extensionality.  Extensionally equal
+-- functions do satisfy this relationship, but so do some functions which are
+-- not extensionally equal -- in particular, higher-order functions whose
+-- equality depends upon the functional extensionality of their _parameters_.
+-- So this is a strictly larger relation than the relation of extensional
+-- equality.  It might be thought of as "recursive" or "deep" extensional
+-- equality.
+
+public export
+FunExtEq : {0 a, a', b, b' : Type} -> (a -> b) -> (a' -> b') -> Type
+FunExtEq f g = FunExt -> f ~=~ g
+
+public export
+FunExtEqRefl : (f : a -> b) -> FunExtEq f f
+FunExtEqRefl _ _ = Refl
+
+public export
+FunExtEqSym : FunExtEq f g -> FunExtEq g f
+FunExtEqSym eq x = sym (eq x)
+
+public export
+FunExtEqTrans : {0 a, a', a'', b , b', b'' : Type} ->
+  {f : a -> b} -> {g : a' -> b'}  -> {h : a'' -> b''} ->
+  FunExtEq f g -> FunExtEq g h -> FunExtEq f h
+FunExtEqTrans {a} {a'} {a''} {b} {b'} {b''} eq eq' fext with (eq fext, eq' fext)
+  FunExtEqTrans {a} {a'=a} {a''=a} {b} {b'=b} {b''=b} eq eq' fext |
+    (Refl, Refl) = Refl
+
+public export
+FunExtEqEquiv : IsEquivalence FunExtEq
+FunExtEqEquiv = MkEquivalence FunExtEqRefl FunExtEqSym FunExtEqTrans
+
+public export
+EqFunctionFunExt : f = g -> FunExtEq f g
+EqFunctionFunExt Refl _ = Refl
+
+public export
+ExtEqFunctionFunExt : ExtEq f g -> FunExtEq f g
+ExtEqFunctionFunExt exteq fext = funExt $ \x => exteq x
+
+public export
+FunExtInverse : {0 a, b : Type} -> (a -> b) -> (b -> a) -> Type
+FunExtInverse {a} {b} f g =
+  (FunExtEq {a=b} {a'=b} {b} {b'=b} (f . g) id,
+   FunExtEq {a} {a'=a} {b=a} {b'=a} (g . f) id)
+
+public export
+FunExtInversePair : {0 a, b : Type} -> (a -> b, b -> a) -> Type
+FunExtInversePair {a} {b} = uncurry $ FunExtInverse {a} {b}
+
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 ---- Standard (Mac Lane / Eilenberg) internal categories ----
