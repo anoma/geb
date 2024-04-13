@@ -42,12 +42,22 @@ ABinj cat = SliceMorphism {a=(abBase cat)} (abCobase cat)
 -- A bundle is an arrow whose morphisms comprise a (covariant) morphism between
 -- codomains together with (covariant) morphisms on fibrations of the domains by
 -- the codomain morphisms.
+--
+-- (This could be implemented in terms of `IntBundleObj`.)
 public export
 record CBundleObj where
   constructor CBO
   cbBase : Type
   cbTot : Type
   cbProj : cbTot -> cbBase
+
+export
+CBOtoIBO : CBundleObj -> IntBundleObj {c=Type} HomProf
+CBOtoIBO cb = IBO (cbTot cb) (cbBase cb) (cbProj cb)
+
+export
+CBOfromIBO : IntBundleObj {c=Type} HomProf -> CBundleObj
+CBOfromIBO ib = CBO (iboCod ib) (iboDom ib) (iboMor ib)
 
 ---------------------------------------
 ---- Categorial-arena translations ----
