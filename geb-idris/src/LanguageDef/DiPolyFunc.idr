@@ -188,17 +188,15 @@ export
   (m : b -> b') ->
   (x, y : CDisliceObj (CBO b cb proj)) ->
   (mxy : CDisliceMorph x y) ->
-  ExtEq
-    (cdsoFact1 $ CDSLpi m y)
-    (CDSLpiMapTot m x y mxy . cdsoFact1 (CDSLpi m x))
+  cdsoFact1 (CDSLpi m y) = CDSLpiMapTot m x y mxy . cdsoFact1 (CDSLpi m x)
 CDSLpiMapEq1 fext {b} {b'} {cb} {proj}
-  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2)
-  (Element0 ecb cbcond) =
-    dpEq12
-      Refl
-      $ s0Eq12
-        (funExt $ \(Element0 (eb, ()) ebeq) => meq1 ecb)
-        $ ?CDSLpiMap_hole_2 -- $ funExt $ \(Element0 (eb, ()) ebeq) => uip
+  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2) =
+    funExt $ \(Element0 ecb cbcond) =>
+      dpEq12
+        Refl
+        $ s0Eq12
+          (funExt $ \(Element0 (eb, ()) ebeq) => meq1 ecb)
+          $ ?CDSLpiMapEq_hole
 
 export
 0 CDSLpiMapEq2 : {b, b', cb : Type} -> {proj : cb -> b} ->
@@ -220,7 +218,7 @@ CDSLpiMap : FunExt -> {b, b', cb : Type} -> {proj : cb -> b} ->
 CDSLpiMap fext {b} {b'} {cb} {proj} m x y mxy =
   CDSM
     (CDSLpiMapTot m x y mxy)
-    (CDSLpiMapEq1 fext m x y mxy)
+    (\_ => fcong $ CDSLpiMapEq1 fext m x y mxy)
     (CDSLpiMapEq2 m x y mxy)
 
 export
