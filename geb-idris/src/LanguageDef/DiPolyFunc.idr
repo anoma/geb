@@ -20,7 +20,12 @@ import LanguageDef.InternalCat
 export
 CDSLbc : {b, b', cb : Type} -> {proj : cb -> b} ->
   (m : b' -> b) ->
-  CDSLomap (CBO b cb proj) (CBO b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
+  CDSLomap
+    (CBO b cb proj)
+    (CBO
+      b'
+      (Pullback {a=cb} {b=b'} {c=b} proj m)
+      (pbProj2 {a=cb} {b=b'} {c=b} {f=proj} {g=m}))
 CDSLbc {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
   CDSO
     (Pullback f2 m)
@@ -47,7 +52,12 @@ CDSLbcMap {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) (CDSO tot' f1' f2' comm')
 export
 CDSLbcFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
   (m : b' -> b) ->
-  CDSLfunc (CBO b cb proj) (CBO b' (Pullback proj m) (pbProj2 {f=proj} {g=m}))
+  CDSLfunc
+    (CBO b cb proj)
+    (CBO
+      b'
+      (Pullback {a=cb} {b=b'} {c=b} proj m)
+      (pbProj2 {a=cb} {b=b'} {c=b} {f=proj} {g=m}))
 CDSLbcFunc {b} {b'} {cb} {proj} m = CDSLf (CDSLbc m) (CDSLbcMap m)
 
 export
@@ -82,9 +92,13 @@ CDSLdc : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
   CBundleMor (CBO b' cb' proj') (CBO b cb proj) ->
   CDSLomap (CBO b cb proj) (CBO b' cb' proj')
 CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mp) =
-  CDSLcbc {b=b'} {cb=(Pullback proj mb)} {cb'}
-    {proj=(pbProj2 {f=proj} {g=mb})} {proj'} mp
-  . CDSLbc {b} {b'} {cb} {proj} mb
+  CDSLcbc
+    {b=b'} {cb=(Pullback proj mb)} {cb'}
+    {proj=(pbProj2 {f=proj} {g=mb})} {proj'}
+    mp
+  . CDSLbc
+    {b} {b'} {cb} {proj}
+    mb
 
 export
 CDSLdcMap : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
@@ -141,7 +155,8 @@ CDSLsigmaFunc m = CDSLf (CDSLsigma m) (CDSLsigmaMap m)
 export
 CDSLcbcSigma :
   {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
-  (mb : b -> b') -> CSliceMorphism {c=b'} (cb' ** proj') (cb ** mb . proj) ->
+  (mb : b -> b') ->
+  CSliceMorphism {c=b'} (cb' ** proj') (CSSigma mb (cb ** proj)) ->
   CDSLomap (CBO b cb proj) (CBO b' cb' proj')
 CDSLcbcSigma {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb =
   CDSLcbc mcb . CDSLsigma {b} {b'} {cb} {proj} mb
