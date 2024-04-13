@@ -175,13 +175,7 @@ CDSLpiMapTot : {b, b', cb : Type} -> {proj : cb -> b} ->
 CDSLpiMapTot {b} {b'} {cb} {proj}
   m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2)
   (eb' ** Element0 mbx mbxeq) =
-    (eb' **
-     Element0
-      (\(Element0 (eb, ()) ebeq') => mtot $ mbx $ Element0 (eb, ()) ebeq')
-      (\(Element0 (eb, ()) ebeq') =>
-        trans
-          (mbxeq (Element0 (eb, ()) ebeq'))
-          (meq2 $ (mbx (Element0 (eb, ()) ebeq')))))
+    (eb' ** Element0 (mtot . mbx) (\eb => trans (mbxeq eb) (meq2 $ mbx eb)))
 
 export
 0 CDSLpiMapEq1 : FunExt -> {b, b', cb : Type} -> {proj : cb -> b} ->
