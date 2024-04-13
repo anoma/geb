@@ -3,7 +3,6 @@ module LanguageDef.InternalCat
 import Library.IdrisUtils
 import Library.IdrisCategories
 import Library.IdrisAlgebra
-import LanguageDef.PolyCat
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
