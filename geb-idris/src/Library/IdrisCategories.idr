@@ -234,6 +234,11 @@ SliceExtEq : {a : Type} -> {s, s' : SliceObj a} ->
   (f, g : SliceMorphism {a} s s') -> Type
 SliceExtEq {a} {s} {s'} f g = (e : a) -> ExtEq (f e) (g e)
 
+public export
+SliceFunExtEq : {a : Type} -> {s, s' : SliceObj a} ->
+  (f, g : SliceMorphism {a} s s') -> Type
+SliceFunExtEq {a} {s} {s'} f g = (e : a) -> FunExtEq (f e) (g e)
+
 --------------------
 --------------------
 ---- Signatures ----
