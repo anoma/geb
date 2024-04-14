@@ -20,19 +20,14 @@ import LanguageDef.InternalCat
 export
 CDSLbc : {b, b', cb : Type} -> {proj : cb -> b} ->
   (m : b' -> b) ->
-  CDSLomap
-    (CBO b cb proj)
-    (CBO
-      b'
-      (Pullback {a=cb} {b=b'} {c=b} proj m)
-      (pbProj2 {a=cb} {b=b'} {c=b} {f=proj} {g=m}))
+  CDSLomap (CBO b cb proj) (cbPullback (CBO b cb proj) m)
 CDSLbc {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
   CDSO
     (Pullback f2 m)
-    (\(Element0 (ecb, eb') eqpm) =>
-      Element0 (f1 ecb, eb') $ trans (comm ecb) eqpm)
+    (\(Element0 (eb', ecb) eqpm) =>
+      Element0 (f1 ecb, eb') $ trans (comm ecb) $ sym eqpm)
     (pbProj2 {f=f2} {g=m})
-    (\(Element0 (ecb, eb') eqpm) => Refl)
+    (\(Element0 (eb', ecb) eqpm) => Refl)
 
 export
 CDSLbcMap : {b, b', cb : Type} -> {proj : cb -> b} ->
@@ -43,7 +38,7 @@ CDSLbcMap {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) (CDSO tot' f1' f2' comm')
     CDSM
       (\(Element0 (et, eb') eqf2m) =>
         Element0 (mtot et, eb') $ trans (sym $ meq2 et) eqf2m)
-      (\(Element0 (ecb, eb') eqpm) =>
+      (\(Element0 (eb', ecb) eqpm) =>
         s0Eq12
           (rewrite meq1 ecb in Refl)
           (rewrite meq1 ecb in uip))
@@ -52,12 +47,7 @@ CDSLbcMap {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) (CDSO tot' f1' f2' comm')
 export
 CDSLbcFunc : {b, b', cb : Type} -> {proj : cb -> b} ->
   (m : b' -> b) ->
-  CDSLfunc
-    (CBO b cb proj)
-    (CBO
-      b'
-      (Pullback {a=cb} {b=b'} {c=b} proj m)
-      (pbProj2 {a=cb} {b=b'} {c=b} {f=proj} {g=m}))
+  CDSLfunc (CBO b cb proj) (cbPullback (CBO b cb proj) m)
 CDSLbcFunc {b} {b'} {cb} {proj} m = CDSLf (CDSLbc m) (CDSLbcMap m)
 
 export
@@ -93,8 +83,8 @@ CDSLdc : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
   CDSLomap (CBO b cb proj) (CBO b' cb' proj')
 CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mp) =
   CDSLcbc
-    {b=b'} {cb=(Pullback proj mb)} {cb'}
-    {proj=(pbProj2 {f=proj} {g=mb})} {proj'}
+    {b=b'} {cb=(Pullback mb proj)} {cb'}
+    {proj=(pbProj1 {f=mb} {g=proj})} {proj'}
     mp
   . CDSLbc
     {b} {b'} {cb} {proj}
@@ -105,8 +95,8 @@ CDSLdcMap : {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} -
   (mb : CBundleMor (CBO b' cb' proj') (CBO b cb proj)) ->
   CDSLfmap (CDSLdc {b} {b'} {cb} {cb'} {proj} {proj'} mb)
 CDSLdcMap {b} {b'} {cb} {cb'} {proj} {proj'} (CBM mb mcb) x y =
-  CDSLcbcMap {b=b'} {cb=(Pullback proj mb)} {cb'}
-    {proj=(pbProj2 {f=proj} {g=mb})} {proj'}
+  CDSLcbcMap {b=b'} {cb=(Pullback mb proj)} {cb'}
+    {proj=(pbProj1 {f=mb} {g=proj})} {proj'}
     mcb (CDSLbc mb x) (CDSLbc mb y)
   . CDSLbcMap {b} {b'} {cb} {proj} mb x y
 
