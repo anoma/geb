@@ -58,8 +58,8 @@ ifmId {c} mor cid obj = IFM id (\i => cid $ ifoObj obj i)
 
 export
 ifmComp : {c : Type} ->
-  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  {0 x, y, z : IntFamObj c} ->
+  (mor : IntDifunctorSig c) -> (comp : IntComp c mor) ->
+  {x, y, z : IntFamObj c} ->
   IntFamMor mor y z ->
   IntFamMor mor x y ->
   IntFamMor mor x z
@@ -78,3 +78,27 @@ ifmComp {c} mor comp {x} {y} {z} g f =
 export
 fcmUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntFamObj c
 fcmUnit {c} mor x = IFO Unit (const x)
+
+-------------------------------------
+-------------------------------------
+---- Metalanguage-slice families ----
+-------------------------------------
+-------------------------------------
+
+export
+SliceFamObj : Type -> Type
+SliceFamObj = IntFamObj . SliceObj
+
+export
+SliceFamMor : {c : Type} -> SliceFamObj c -> SliceFamObj c -> Type
+SliceFamMor {c} = IntFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
+
+export
+slfmId : {c : Type} ->
+  (x : SliceFamObj c) -> SliceFamMor x x
+slfmId {c} = ifmId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
+
+export
+slfmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
+  SliceFamMor y z -> SliceFamMor x y -> SliceFamMor x z
+slfmComp {c} = ifmComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
