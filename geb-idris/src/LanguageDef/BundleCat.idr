@@ -51,13 +51,17 @@ record CBundleObj where
   cbTot : Type
   cbProj : cbTot -> cbBase
 
-export
+public export
 CBOtoIBO : CBundleObj -> IntBundleObj {c=Type} HomProf
 CBOtoIBO cb = IBO (cbTot cb) (cbBase cb) (cbProj cb)
 
-export
+public export
 CBOfromIBO : IntBundleObj {c=Type} HomProf -> CBundleObj
 CBOfromIBO ib = CBO (iboCod ib) (iboDom ib) (iboMor ib)
+
+public export
+CBOsl : (cb : CBundleObj) -> CSliceObj (cbBase cb)
+CBOsl cb = (cbTot cb ** cbProj cb)
 
 ---------------------------------------
 ---- Categorial-arena translations ----
@@ -124,10 +128,9 @@ record CBundleMor (dom, cod : CBundleObj) where
   constructor CBM
   cbmBase : cbBase dom -> cbBase cod
   cbmTot :
-    CSliceMorphism
-      {c=(cbBase dom)}
-      (cbTot dom ** cbProj dom)
-      (Pullback (cbProj cod) cbmBase ** pbProj2 {f=(cbProj cod)} {g=cbmBase})
+    CSliceMorphism {c=(cbBase dom)}
+      (CBOsl dom)
+      (CSBaseChange cbmBase (CBOsl cod))
 
 ---------------------------------------
 ---- Categorial-arena translations ----
@@ -141,8 +144,8 @@ BcmCtoA {dom} {cod} (CBM mbase (Element0 mtot mcomm)) =
     mbase
     $ \edb, (Element0 edt deq) =>
         Element0
-          (fst $ fst0 $ mtot edt)
-          $ trans (snd0 $ mtot edt) $ rewrite sym (mcomm edt) in
+          (snd $ fst0 $ mtot edt)
+          $ trans (sym $ snd0 $ mtot edt) $ rewrite sym (mcomm edt) in
             rewrite deq in Refl
 
 export
@@ -156,7 +159,7 @@ BcmCfromA {dom} {cod} (ABM mbase mcobase) =
         let
           mcb = mcobase (cbProj dom edt) $ Element0 edt Refl
         in
-        Element0 (fst0 mcb, cbProj dom edt) $ snd0 mcb)
+        Element0 (cbProj dom edt, fst0 mcb) $ sym $ snd0 mcb)
       $ \_ => Refl
 
 export
@@ -166,7 +169,7 @@ BcmAtoC {dom} {cod} (ABM mbase mcobase) =
   CBM
     mbase
     $ Element0
-      (\(edb ** edcb) => Element0 ((mbase edb ** mcobase edb edcb), edb) Refl)
+      (\(edb ** edcb) => Element0 (edb, (mbase edb ** mcobase edb edcb)) Refl)
       (\(edb ** edcb) => Refl)
 
 export
@@ -176,9 +179,12 @@ BcmAfromC {dom} {cod} (CBM mbase (Element0 mtot mcomm)) =
   ABM
     mbase
     $ \edb, edcb =>
-      rewrite sym $ trans (snd0 (mtot (edb ** edcb))) $ sym $ cong mbase
-        $ mcomm (edb ** edcb) in
-      snd $ fst $ fst0 $ mtot (edb ** edcb)
+      rewrite
+        trans
+          (cong mbase $ mcomm (edb ** edcb))
+          (snd0 (mtot (edb ** edcb)))
+      in
+      snd $ snd $ fst0 $ mtot (edb ** edcb)
 
 ---------------------------------------------
 ---- Equivalence with Dirichlet functors ----
@@ -263,3 +269,21 @@ export
 cbComp : {x, y, z : CBundleObj} ->
   CBundleMor y z -> CBundleMor x y -> CBundleMor x z
 cbComp g f = BcmCfromA $ abComp (BcmCtoA g) (BcmCtoA f)
+
+----------------------------------------
+----------------------------------------
+---- Universal morphisms on bundles ----
+----------------------------------------
+----------------------------------------
+
+public export
+abPullback : (ab : ABundleObj) -> {b' : Type} ->
+  (b' -> abBase ab) -> ABundleObj
+abPullback ab {b'} m = ABO b' (abCobase ab . m)
+
+public export
+cbPullback : (cb : CBundleObj) -> {b' : Type} ->
+  (b' -> cbBase cb) -> CBundleObj
+cbPullback cbo {b'} m with (CSBaseChange m (CBOsl cbo))
+  cbPullback cbo {b'} m | (cb' ** proj') =
+    CBO b' cb' proj'
