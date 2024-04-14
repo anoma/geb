@@ -24,16 +24,16 @@ import Library.IdrisAlgebra
 -- https://en.wikipedia.org/wiki/Profunctor#Definition and
 -- https://ncatlab.org/nlab/show/profunctor#definition.
 public export
-0 IntProfunctorSig : (0 d, c : Type) -> Type
+IntProfunctorSig : (d, c : Type) -> Type
 IntProfunctorSig d c = d -> c -> Type
 
 public export
-0 IntDifunctorSig : (0 c : Type) -> Type
+IntDifunctorSig : (c : Type) -> Type
 IntDifunctorSig c = IntProfunctorSig c c
 
 public export
-0 IntIdSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) -> Type
-IntIdSig c mor = (0 x : c) -> mor x x
+IntIdSig : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntIdSig c mor = (x : c) -> mor x x
 
 public export
 0 IntCompSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) -> Type
