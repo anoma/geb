@@ -295,7 +295,7 @@ CDSLpiMap fext {b} {p} {cb} pproj {cbbproj} (Element0 cbpproj cbpeq)
           Refl
           $ s0Eq12
             (funExt $ \x => meq1 $ xmap x)
-            (?CDSLpiMap_eq1_hole))
+            (rewrite (funExt meq1) in funExt $ \ep => uip))
       (\(eb ** Element0 ep epeq) => Refl)
 
 export
