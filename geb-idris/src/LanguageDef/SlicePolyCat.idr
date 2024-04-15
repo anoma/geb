@@ -1125,6 +1125,29 @@ export
 SPFDposFib : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDposFib {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
 
+export
+SPFDbaseSl : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDbaseSl {dom} {cod} = SliceObj . SPFDbase {dom} {cod}
+
+export
+SPFDposFibToSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  {sl : SliceObj cod} -> SPFDposFib {dom} {cod} spfd sl ->
+  SPFDbaseSl {dom} {cod} spfd
+SPFDposFibToSl {dom} {cod} {spfd} {sl} =
+  resliceByMor {c=cod} {b=sl} {a=(spfdPos spfd)}
+
+export
+SPFDposSlcobase : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  SPFDbaseSl {dom} {cod} spfd -> SliceObj cod
+SPFDposSlcobase {dom} {cod} {spfd} = SlSliceToSlice {c=cod} {a=(spfdPos spfd)}
+
+export
+SPFDposSltoFib : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  (sl : SPFDbaseSl {dom} {cod} spfd) ->
+  SPFDposFib {dom} {cod} spfd (SPFDposSlcobase {dom} {cod} {spfd} sl)
+SPFDposSltoFib {dom} {cod} {spfd} =
+  slSliceToMor {c=cod} {a=(spfdPos spfd)}
+
 -- The dependent right-adjoint component of a polynomial functor expressed as
 -- a position-dependent endofunctor on the slice category over the domain,
 -- and in terms of `SPFDbase`.
