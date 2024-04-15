@@ -264,23 +264,18 @@ CDSLpi : {b, p, cb : Type} ->
     (CBO p cb $ fst0 cbpproj)
     (CBO
       b
-      (Sigma {a=b} $ SliceFromCSlice
-       $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj))
-      DPair.fst)
+      (fst $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj))
+      (snd $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj)))
 CDSLpi {b} {p} {cb} pproj {cbbproj} (Element0 cbpproj cbpeq)
   (CDSO tot fact1 fact2 comm) =
     CDSO
       (fst $ CSPi {c=p} {d=b} pproj (tot ** fact2))
-      (\(eb ** Element0 (eb' ** Element0 pcb pcbeq) ebeq) =>
+      (\(eb ** Element0 pcb pcbeq) =>
         (eb **
-         Element0
-          (\(Element0 ((ep, ())) pbeq) =>
-           fact1 $ pcb $ Element0 (ep, ()) $ trans pbeq $ sym ebeq)
-          (\(Element0 ((ep, ())) pbeq) =>
-           rewrite comm $ pcb $ Element0 (ep, ()) $ trans pbeq $ sym ebeq in
-           pcbeq $ Element0 (ep, ()) $ trans pbeq $ sym ebeq)))
+         (Element0 (fact1 . pcb)
+          (\ep => trans (pcbeq ep) $ sym $ comm $ pcb $ ep))))
       (snd $ CSPi {c=p} {d=b} pproj (tot ** fact2))
-      (\(eb ** Element0 (eb' ** Element0 pcb pcbeq) ebeq) => Refl)
+      (\(eb ** Element0 ep pcbeq) => Refl)
 
 export
 CDSLpiFunc : FunExt -> {b : Type} ->
