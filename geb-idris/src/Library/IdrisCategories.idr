@@ -738,12 +738,12 @@ resliceByMor : {0 c : Type} ->
 resliceByMor {c} {a} {b} i ecp = sliceFiberByMor i (fst ecp) (snd ecp)
 
 public export
-0 SlSliceToSlice : {0 c : Type} -> {a : SliceObj c} ->
+SlSliceToSlice : {0 c : Type} -> {a : SliceObj c} ->
   SliceObj (Sigma {a=c} a) -> SliceObj c
 SlSliceToSlice {c} {a} sl ec = Sigma {a=(a ec)} (curry sl ec)
 
 public export
-0 slSliceToMor : {0 c : Type} -> {a : SliceObj c} ->
+slSliceToMor : {0 c : Type} -> {a : SliceObj c} ->
   (sl : SliceObj (Sigma {a=c} a)) ->
   SliceMorphism {a=c} (SlSliceToSlice {a} {c} sl) a
 slSliceToMor {c} {a} sl ec = DPair.fst
