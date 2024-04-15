@@ -257,6 +257,32 @@ CDSLcbcSigma {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb =
   CDSLcbc mcb . CDSLsigma {b} {b'} {cb} {proj} mb
 
 export
+CDSLpi : {b, p, cb : Type} ->
+  (pproj : p -> b) -> {cbbproj : cb -> b} ->
+  (cbpproj : CSliceMorphism {c=b} (cb ** cbbproj) (p ** pproj)) ->
+  CDSLomap
+    (CBO p cb $ fst0 cbpproj)
+    (CBO
+      b
+      (Sigma {a=b} $ SliceFromCSlice
+       $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj))
+      DPair.fst)
+CDSLpi {b} {p} {cb} pproj {cbbproj} (Element0 cbpproj cbpeq)
+  (CDSO tot fact1 fact2 comm) =
+    CDSO
+      (fst $ CSPi {c=p} {d=b} pproj (tot ** fact2))
+      (\(eb ** Element0 (eb' ** Element0 pcb pcbeq) ebeq) =>
+        (eb **
+         Element0
+          (\(Element0 ((ep, ())) pbeq) =>
+           fact1 $ pcb $ Element0 (ep, ()) $ trans pbeq $ sym ebeq)
+          (\(Element0 ((ep, ())) pbeq) =>
+           rewrite comm $ pcb $ Element0 (ep, ()) $ trans pbeq $ sym ebeq in
+           pcbeq $ Element0 (ep, ()) $ trans pbeq $ sym ebeq)))
+      (snd $ CSPi {c=p} {d=b} pproj (tot ** fact2))
+      (\(eb ** Element0 (eb' ** Element0 pcb pcbeq) ebeq) => Refl)
+
+export
 CDSLpiFunc : FunExt -> {b : Type} ->
   (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
   CDSLfunc
