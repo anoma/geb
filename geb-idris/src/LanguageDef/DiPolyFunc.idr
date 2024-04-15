@@ -278,12 +278,38 @@ CDSLpi {b} {p} {cb} pproj {cbbproj} (Element0 cbpproj cbpeq)
       (\(eb ** Element0 ep pcbeq) => Refl)
 
 export
-CDSLpiFunc : FunExt -> {b : Type} ->
-  (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
+CDSLpiMap : FunExt -> {b, p, cb : Type} ->
+  (pproj : p -> b) -> {cbbproj : cb -> b} ->
+  (cbpproj : CSliceMorphism {c=b} (cb ** cbbproj) (p ** pproj)) ->
+  CDSLfmap (CDSLpi pproj cbpproj)
+CDSLpiMap fext {b} {p} {cb} pproj {cbbproj} (Element0 cbpproj cbpeq)
+  x@(CDSO xtot xfact1 xfact2 xcomm)
+  y@(CDSO ytot yfact1 yfact2 ycomm)
+  m@(CDSM mtot meq1 meq2) =
+    CDSM
+      (\(eb ** Element0 xmap xmeq) =>
+        (eb **
+         Element0 (mtot . xmap) $ \ep => trans (xmeq ep) (meq2 $ (xmap ep))))
+      (\(eb ** Element0 xmap xmeq) =>
+        dpEq12
+          Refl
+          $ s0Eq12
+            (funExt $ \x => meq1 $ xmap x)
+            (?CDSLpiMap_eq1_hole))
+      (\(eb ** Element0 ep epeq) => Refl)
+
+export
+CDSLpiFunc : FunExt -> {b, p, cb : Type} ->
+  (pproj : p -> b) -> {cbbproj : cb -> b} ->
+  (cbpproj : CSliceMorphism {c=b} (cb ** cbbproj) (p ** pproj)) ->
   CDSLfunc
-    (CBO (Sigma {a=b} p) (Sigma {a=(Sigma {a=b} p)} cb) DPair.fst)
-    (CBO b (Sigma {a=b} $ SlicePiF {c=b} p cb) DPair.fst)
-CDSLpiFunc fext {b} p cb = DsfAtoC $ ADSLpiFunc fext {b} p cb
+    (CBO p cb $ fst0 cbpproj)
+    (CBO
+      b
+      (CSliceObjDomain $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj))
+      (CSliceObjMap $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj)))
+CDSLpiFunc fext pproj cbpproj =
+  CDSLf (CDSLpi pproj cbpproj) (CDSLpiMap fext pproj cbpproj)
 
 ---------------------------------------------------
 ---------------------------------------------------
