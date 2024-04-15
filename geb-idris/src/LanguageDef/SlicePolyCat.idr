@@ -1131,10 +1131,10 @@ SPFDbaseSl {dom} {cod} = SliceObj . SPFDbase {dom} {cod}
 
 export
 SPFDposFibToSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
-  {sl : SliceObj cod} -> SPFDposFib {dom} {cod} spfd sl ->
+  {b : SliceObj cod} -> SPFDposFib {dom} {cod} spfd b ->
   SPFDbaseSl {dom} {cod} spfd
-SPFDposFibToSl {dom} {cod} {spfd} {sl} =
-  resliceByMor {c=cod} {b=sl} {a=(spfdPos spfd)}
+SPFDposFibToSl {dom} {cod} {spfd} {b} =
+  resliceByMor {c=cod} {b} {a=(spfdPos spfd)}
 
 export
 SPFDposSlcobase : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
@@ -1213,7 +1213,7 @@ SPFDRadjFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceFunctor dom (Sigma {a=(SPFDbase spfd)} $ resliceByMor i)
 SPFDRadjFib {dom} {cod} spfd b i =
-  SPFDRadjSl {dom} {cod} spfd (resliceByMor {b} i)
+  SPFDRadjSl {dom} {cod} spfd (SPFDposFibToSl {b} i)
 
 -- The left adjoint of the right-adjoint component of a polynomial functor
 -- expressed as a parametric right adjoint.
@@ -1408,9 +1408,9 @@ export
 SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj (SPFDbase {dom} {cod} spfd)
-SPFDunitIdx {dom} {cod} spfd b i ecp =
+SPFDunitIdx {dom} {cod} spfd b =
   -- SPFDunitFibration {dom} {cod} spfd b i (fst ecp) (snd ecp)
-  resliceByMor {c=cod} {a=(spfdPos spfd)} {b} i ecp
+  SPFDposFibToSl {dom} {cod} {spfd} {b}
 
 -- The composition of the left adjoint of the right-adjoint component of a
 -- polynomial functor viewed as a parametric right adjoint with the index
@@ -1452,7 +1452,7 @@ SPFDlmuc {dom} {cod} spfd b i =
 export
 SPFDfactPosL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
-  SliceMorphism {a=cod} (SPFDR {dom} {cod} spfd a) (spfdPos spfd)
+  SPFDposFib spfd (SPFDR {dom} {cod} spfd a)
 SPFDfactPosL {dom} {cod} spfd a b ec = DPair.fst
 
 -- The "unique composite" `b -> SPFDR a -> SPFDR 1` induced by a given
