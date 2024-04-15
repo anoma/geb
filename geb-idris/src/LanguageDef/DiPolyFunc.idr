@@ -257,84 +257,13 @@ CDSLcbcSigma {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb =
   CDSLcbc mcb . CDSLsigma {b} {b'} {cb} {proj} mb
 
 export
-CDSLpi : {b, b', cb : Type} -> {proj : cb -> b} ->
-  (m : b -> b') ->
-  CDSLomap
-    (CBO b cb proj)
-    (CBO
-      b'
-      (Subset0 cb (\ecb => (eb : b) -> m eb = m (proj ecb) -> eb = proj ecb))
-      (m . proj . Subset0.fst0))
-CDSLpi {b} {b'} {cb} {proj} m (CDSO tot f1 f2 comm) =
-  CDSO
-    (fst $ CSPi {c=b} {d=b'} m (tot ** f2))
-    (\(Element0 ecb cbcond) =>
-      (m (proj ecb) **
-       Element0
-        (\eb => f1 ecb)
-        $ \(Element0 (eb, ()) feq) => rewrite comm ecb in cbcond eb feq))
-    (snd $ CSPi {c=b} {d=b'} m (tot ** f2))
-    (\(Element0 ecb cbcond) => Refl)
-
-export
-CDSLpiMapTot : {b, b', cb : Type} -> {proj : cb -> b} ->
-  (m : b -> b') ->
-  (x, y : CDisliceObj (CBO b cb proj)) ->
-  CDisliceMorph x y ->
-  cdsoTot (CDSLpi m x) -> cdsoTot (CDSLpi m y)
-CDSLpiMapTot {b} {b'} {cb} {proj}
-  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2)
-  (eb' ** Element0 mbx mbxeq) =
-    (eb' ** Element0 (mtot . mbx) (\eb => trans (mbxeq eb) (meq2 $ mbx eb)))
-
-export
-0 CDSLpiMapEq1 : FunExt -> {b, b', cb : Type} -> {proj : cb -> b} ->
-  (m : b -> b') ->
-  (x, y : CDisliceObj (CBO b cb proj)) ->
-  (mxy : CDisliceMorph x y) ->
-  cdsoFact1 (CDSLpi m y) = CDSLpiMapTot m x y mxy . cdsoFact1 (CDSLpi m x)
-CDSLpiMapEq1 fext {b} {b'} {cb} {proj}
-  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2) =
-    funExt $ \(Element0 ecb cbcond) =>
-      dpEq12
-        Refl
-        $ s0Eq12
-          (funExt $ \eb => meq1 ecb)
-          (rewrite meq1 ecb in funExt $ \(Element0 (eb, ()) meq) => uip)
-
-export
-0 CDSLpiMapEq2 : {b, b', cb : Type} -> {proj : cb -> b} ->
-  (m : b -> b') ->
-  (x, y : CDisliceObj (CBO b cb proj)) ->
-  (mxy : CDisliceMorph x y) ->
-  ExtEq
-    (cdsoFact2 $ CDSLpi m x)
-    (cdsoFact2 (CDSLpi m y) . CDSLpiMapTot m x y mxy)
-CDSLpiMapEq2 {b} {b'} {cb} {proj}
-  m (CDSO xtot xf1 xf2 xcomm) (CDSO ytot yf1 yf2 ycomm) (CDSM mtot meq1 meq2)
-  (eb' ** Element0 mbx mbxeq) =
-    Refl
-
-export
-CDSLpiMap : FunExt -> {b, b', cb : Type} -> {proj : cb -> b} ->
-  (m : b -> b') ->
-  CDSLfmap (CDSLpi {b} {b'} {cb} {proj} m)
-CDSLpiMap fext {b} {b'} {cb} {proj} m x y mxy =
-  CDSM
-    (CDSLpiMapTot m x y mxy)
-    (\_ => fcong $ CDSLpiMapEq1 fext m x y mxy)
-    (CDSLpiMapEq2 m x y mxy)
-
-export
-CDSLpiFunc : FunExt -> {b, b', cb : Type} -> {proj : cb -> b} ->
-  (m : b -> b') ->
+CDSLpiFunc : FunExt -> {b : Type} ->
+  (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
   CDSLfunc
-    (CBO b cb proj)
-    (CBO
-      b'
-      (Subset0 cb (\ecb => (eb : b) -> m eb = m (proj ecb) -> eb = proj ecb))
-      (m . proj . Subset0.fst0))
-CDSLpiFunc fext m = CDSLf (CDSLpi m) (CDSLpiMap fext m)
+    (BcoAtoC $ ABO (Sigma {a=b} p) cb)
+    (BcoAtoC $ ABO b $ SlicePiF {c=b} p cb)
+CDSLpiFunc fext {b} p cb =
+  DsfAtoC $ ADSLpiFunc fext {b} p cb
 
 ---------------------------------------------------
 ---------------------------------------------------
