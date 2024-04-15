@@ -3280,12 +3280,8 @@ csPiMap : {0 c, d : Type} -> {0 f : c -> d} ->
 csPiMap {c} {d} {f} (a ** pa) (b ** pb) (Element0 g eqg) =
   Element0
     (\(eld ** Element0 pi eqpi) =>
-      (eld **
-       Element0
-        (\(Element0 (elc, ()) eqf) => g $ pi $ Element0 (elc, ()) eqf)
-        (\(Element0 (elc, ()) eqf) => trans (eqpi $ Element0 (elc, ()) eqf) $
-          eqg $ pi $ Element0 (elc, ()) eqf))) $
-    \(eld ** Element0 pi eqpi) => Refl
+      (eld ** Element0 (g . pi) (\elc => trans (eqpi elc) $ eqg $ pi elc)))
+    (\(eld ** Element0 pi eqpi) => Refl)
 
 -- Introduction rule for pi.
 public export
