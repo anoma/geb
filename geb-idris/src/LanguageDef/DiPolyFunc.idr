@@ -287,16 +287,18 @@ CDSLpiMap fext {b} {p} {cb} pproj {cbbproj} (Element0 cbpproj cbpeq)
   y@(CDSO ytot yfact1 yfact2 ycomm)
   m@(CDSM mtot meq1 meq2) =
     CDSM
-      (\(eb ** Element0 xmap xmeq) =>
-        (eb **
-         Element0 (mtot . xmap) $ \ep => trans (xmeq ep) (meq2 $ (xmap ep))))
+      (fst0
+       $ csPiMap {f=pproj} (xtot ** xfact2) (ytot ** yfact2)
+       $ Element0 mtot meq2)
       (\(eb ** Element0 xmap xmeq) =>
         dpEq12
           Refl
           $ s0Eq12
-            (funExt $ \x => meq1 $ xmap x)
-            (rewrite (funExt meq1) in funExt $ \ep => uip))
-      (\(eb ** Element0 ep epeq) => Refl)
+            (funExt $ \ep => meq1 $ xmap $ ep)
+            $ rewrite funExt meq1 in funExt $ \ep => uip)
+       (snd0
+        $ csPiMap {f=pproj} (xtot ** xfact2) (ytot ** yfact2)
+        $ Element0 mtot meq2)
 
 export
 CDSLpiFunc : FunExt -> {b, p, cb : Type} ->
