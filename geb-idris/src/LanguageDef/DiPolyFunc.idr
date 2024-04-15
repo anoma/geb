@@ -260,10 +260,9 @@ export
 CDSLpiFunc : FunExt -> {b : Type} ->
   (p : SliceObj b) -> (cb : SliceObj (Sigma {a=b} p)) ->
   CDSLfunc
-    (BcoAtoC $ ABO (Sigma {a=b} p) cb)
-    (BcoAtoC $ ABO b $ SlicePiF {c=b} p cb)
-CDSLpiFunc fext {b} p cb =
-  DsfAtoC $ ADSLpiFunc fext {b} p cb
+    (CBO (Sigma {a=b} p) (Sigma {a=(Sigma {a=b} p)} cb) DPair.fst)
+    (CBO b (Sigma {a=b} $ SlicePiF {c=b} p cb) DPair.fst)
+CDSLpiFunc fext {b} p cb = DsfAtoC $ ADSLpiFunc fext {b} p cb
 
 ---------------------------------------------------
 ---------------------------------------------------
