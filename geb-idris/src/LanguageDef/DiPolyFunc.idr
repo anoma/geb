@@ -264,8 +264,8 @@ CDSLpi : {b, p, cb : Type} ->
     (CBO p cb $ fst0 cbpproj)
     (CBO
       b
-      (fst $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj))
-      (snd $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj)))
+      (CSliceObjDomain $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj))
+      (CSliceObjMap $ CSPi {c=p} {d=b} pproj (cb ** fst0 cbpproj)))
 CDSLpi {b} {p} {cb} pproj {cbbproj} (Element0 cbpproj cbpeq)
   (CDSO tot fact1 fact2 comm) =
     CDSO
