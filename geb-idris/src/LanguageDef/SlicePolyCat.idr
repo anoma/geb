@@ -1481,20 +1481,6 @@ SPFDmultiLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDmultiLmap {dom} {cod} spfd b i b' i' m ed ddp =
   (fst ddp ** m (fst $ fst ddp) $ snd ddp)
 
-export
-SPFDmultiMfibDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
-  SliceObj dom -> SliceObj cod
-SPFDmultiMfibDep {dom} {cod} spfd b i a ec =
-  SPFDRdep {dom} {cod} spfd ec $ SPFDmultiL {dom} {cod} spfd b i
-
-export
-SPFDmultiMfibCopr : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
-  cod -> SliceObj dom -> Type
-SPFDmultiMfibCopr {dom} {cod} spfd b i =
-  flip $ SPFDmultiMfibDep {dom} {cod} spfd b i
-
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.  It may be viewed as the fibered version
 -- (as opposed to the slice-object version) of the multi-monad of
