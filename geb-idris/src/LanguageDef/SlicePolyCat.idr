@@ -1128,18 +1128,23 @@ export
 SPFDposContraRep : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDposContraRep {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
 
+export
+SPFDposCSlice : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDposCSlice {dom} {cod} spfd =
+  DPair (SliceObj cod) (SPFDposContraRep {dom} {cod} spfd)
+
 -- Translate from a category-theory-style slice of `spfdPos spfd` --
 -- which is to say, an object of `SliceObj cod` together with a morphism
 -- from that object to `spfdPos spfd` -- to a dependent-type-style slice
 -- of `SPFDbase spfd`.
 export
 SPFDposCSlToBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
-  {b : SliceObj cod} -> SPFDposContraRep {dom} {cod} spfd b ->
+  SPFDposCSlice {dom} {cod} spfd ->
   SPFDbaseSl {dom} {cod} spfd
-SPFDposCSlToBaseSl {dom} {cod} {spfd} {b} =
+SPFDposCSlToBaseSl {dom} {cod} {spfd} csl =
   -- An explicit definition (not using utility routines) would be:
   -- \i, ecp => Subset0 (b $ fst ecp) $ \eb => i (fst ecp) eb = snd ecp
-  resliceByMor {c=cod} {b} {a=(spfdPos spfd)}
+  resliceByMor {c=cod} {b=(fst csl)} {a=(spfdPos spfd)} (snd csl)
 
 -- The slice-object component of the translation from a dependent-type-style
 -- slice of `SPFDbase spfd` to a category-theory-style slice of `spfdPos spfd`.
@@ -1234,9 +1239,11 @@ SPFDRadjSl {dom} {cod} spfd sl = SliceBCF sl . SPFDradj {dom} {cod} spfd
 export
 SPFDRadjFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
-  SliceFunctor dom (Sigma {a=(SPFDbase spfd)} $ SPFDposCSlToBaseSl {spfd} i)
+  SliceFunctor
+    dom
+    (Sigma {a=(SPFDbase spfd)} $ SPFDposCSlToBaseSl {spfd} (b ** i))
 SPFDRadjFib {dom} {cod} spfd b i =
-  SPFDRadjSl {dom} {cod} spfd (SPFDposCSlToBaseSl {b} i)
+  SPFDRadjSl {dom} {cod} spfd (SPFDposCSlToBaseSl (b ** i))
 
 -- The left adjoint of the right-adjoint component of a polynomial functor
 -- expressed as a parametric right adjoint.
@@ -1442,9 +1449,9 @@ export
 SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
   SliceObj (SPFDbase {dom} {cod} spfd)
-SPFDunitIdx {dom} {cod} spfd b =
+SPFDunitIdx {dom} {cod} spfd b i =
   -- SPFDunitFibration {dom} {cod} spfd b i (fst ecp) (snd ecp)
-  SPFDposCSlToBaseSl {dom} {cod} {spfd} {b}
+  SPFDposCSlToBaseSl {dom} {cod} {spfd} (b ** i)
 
 -- This is the left multi-adjoint of `SPFDmultiR`.  It is the functor which
 -- is called `L` both in the "in particular has a left-multi-adjoint"
@@ -1471,8 +1478,8 @@ SPFDmultiLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (0 b : SliceObj cod) -> (0 i : SPFDposContraRep spfd b) ->
   (0 b' : SliceObj cod) -> (0 i' : SPFDposContraRep spfd b') ->
   SliceMorphism {a=(SPFDbase spfd)}
-    (SPFDposCSlToBaseSl {spfd} {b} i)
-    (SPFDposCSlToBaseSl {spfd} {b=b'} i') ->
+    (SPFDposCSlToBaseSl {spfd} (b ** i))
+    (SPFDposCSlToBaseSl {spfd} (b' ** i')) ->
   SliceMorphism {a=dom}
     (SPFDmultiL spfd b i)
     (SPFDmultiL spfd b' i')
@@ -1499,8 +1506,8 @@ SPFDmultiMfibMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
   (b' : SliceObj cod) -> (i' : SPFDposContraRep spfd b') ->
   SliceMorphism {a=(SPFDbase spfd)}
-    (SPFDposCSlToBaseSl {spfd} {b} i)
-    (SPFDposCSlToBaseSl {spfd} {b=b'} i') ->
+    (SPFDposCSlToBaseSl {spfd} (b ** i))
+    (SPFDposCSlToBaseSl {spfd} (b' ** i')) ->
   SliceMorphism {a=cod}
     (SPFDmultiMfib spfd b i)
     (SPFDmultiMfib spfd b' i')
