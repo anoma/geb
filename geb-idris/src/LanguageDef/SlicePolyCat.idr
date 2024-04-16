@@ -1157,6 +1157,8 @@ SPFDposSltoFib : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   (sl : SPFDbaseSl {dom} {cod} spfd) ->
   SPFDposFib {dom} {cod} spfd (SPFDposSlcobase {dom} {cod} {spfd} sl)
 SPFDposSltoFib {dom} {cod} {spfd} =
+  -- An explicit definition (not using utility routines) would be:
+  -- \sl, ec => DPair.fst
   slSliceToMor {c=cod} {a=(spfdPos spfd)}
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
