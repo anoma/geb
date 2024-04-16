@@ -1375,13 +1375,13 @@ InterpSPFDataMap = SPFDmultiRmap
 -- (`SliceBCF`/`BaseChangeF`) and dependent sums (`SliceSigmaF`)
 -- only (in particular, `SlicePiF` is not involved).
 export
-SPFDRladj : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor cod dom
-SPFDRladj {dom} {cod} spfd = SPFDladj spfd . SPFDsigmaRAdj spfd
+SPFDL : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor cod dom
+SPFDL {dom} {cod} spfd = SPFDladj spfd . SPFDsigmaRAdj spfd
 
 export
-SPFDRladjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceFMap (SPFDRladj spfd)
-SPFDRladjMap {dom} {cod} spfd x y =
+SPFDLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDL spfd)
+SPFDLmap {dom} {cod} spfd x y =
   SPFDladjMap spfd (SPFDsigmaRAdj spfd x) (SPFDsigmaRAdj spfd y)
   . SPFDsigmaRAdjMap spfd x y
 
@@ -1689,27 +1689,27 @@ export
 SPFDmonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor cod
 SPFDmonad {dom} {cod} spfd =
-  SPFDmultiR {dom} {cod} spfd . SPFDRladj {dom} {cod} spfd
+  SPFDmultiR {dom} {cod} spfd . SPFDL {dom} {cod} spfd
 
 export
 SPFDmonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDmonad {dom} {cod} spfd)
 SPFDmonadMap {dom} {cod} spfd x y =
-  SPFDmultiRmap spfd (SPFDRladj spfd x) (SPFDRladj spfd y)
-  . SPFDRladjMap spfd x y
+  SPFDmultiRmap spfd (SPFDL spfd x) (SPFDL spfd y)
+  . SPFDLmap spfd x y
 
 -- The comonad of the polynomial-functor-as-PRA multi-adjunction.
 export
 SPFDcomonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor dom
 SPFDcomonad {dom} {cod} spfd =
-  SPFDRladj {dom} {cod} spfd . SPFDmultiR {dom} {cod} spfd
+  SPFDL {dom} {cod} spfd . SPFDmultiR {dom} {cod} spfd
 
 export
 SPFDcomonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDcomonad {dom} {cod} spfd)
 SPFDcomonadMap {dom} {cod} spfd x y =
-  SPFDRladjMap spfd (SPFDmultiR spfd x) (SPFDmultiR spfd y)
+  SPFDLmap spfd (SPFDmultiR spfd x) (SPFDmultiR spfd y)
   . SPFDmultiRmap spfd x y
 
 -----------------------------------------------------------
