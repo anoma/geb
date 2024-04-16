@@ -1361,6 +1361,11 @@ SPFDRmap : {dom, cod : Type} ->
 SPFDRmap {dom} {cod} spfd a b mab ec =
   SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab
 
+export
+InterpSPFDataMap : {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> SliceFMap (InterpSPFData {dom} {cod} spfd)
+InterpSPFDataMap = SPFDRmap
+
 -- We can define a functor in the opposite direction to `SPFDmultiR` by
 -- composition of the adjoints going in the opposite direction.  Like
 -- `SPFDmultiR`, this functor is the composition of a left adjoint after a
