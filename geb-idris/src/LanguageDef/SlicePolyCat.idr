@@ -1127,6 +1127,11 @@ export
 SPFDposContraRep : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDposContraRep {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
 
+export
+SPFDposCSlice : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDposCSlice {dom} {cod} spfd =
+  DPair (SliceObj cod) (SPFDposContraRep {dom} {cod} spfd)
+
 -- For a multi-adjunction induced by a polynomial functor,
 -- `SPFDposContraRep` is the functor is referred to as `I` in theorem 2.4 of
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition (for the
@@ -1138,11 +1143,6 @@ SPFDposContraRep {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
 export
 SPFDmultiIdx : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDmultiIdx = SPFDposContraRep
-
-export
-SPFDposCSlice : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDposCSlice {dom} {cod} spfd =
-  DPair (SliceObj cod) (SPFDposContraRep {dom} {cod} spfd)
 
 -- Translate from a category-theory-style slice of `spfdPos spfd` --
 -- which is to say, an object of `SliceObj cod` together with a morphism
