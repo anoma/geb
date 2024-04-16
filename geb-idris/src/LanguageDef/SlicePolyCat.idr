@@ -1489,6 +1489,17 @@ SPFDmultiLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDmultiLmap {dom} {cod} spfd b i b' i' m ed ddp =
   (fst ddp ** m (fst $ fst ddp) $ snd ddp)
 
+-- A slice object over `cod` together with an accompanying index of
+-- the family of units of the multi-adjunction defined by a polynomial
+-- functor comprises the domain of the uncurried form of the functor
+-- component (`L`) of a multi-adjunction, here called `SPFDmultiL`.
+export
+SPFDmultiLdom : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDmultiLdom spfd =
+  -- This is equivalent to:
+  --  DPair (SliceObj cod) (SPFDmultiIdx {dom} {cod} spfd)
+  SPFDposCSlice spfd
+
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.  It may be viewed as the fibered version
 -- (as opposed to the slice-object version) of the multi-monad of
