@@ -1341,9 +1341,6 @@ SPFDsigmaRmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDsigmaR {dom} {cod} spfd)
 SPFDsigmaRmap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 
--- The composition of the dependent-sum component after the right-adjoint
--- component yields the interpretation of a polynomial functor as a
--- parametric right adjoint.
 export
 SPFDRdep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceObj dom -> Type
@@ -1363,6 +1360,10 @@ SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab =
     {b=(flip (SPFDextCovarDirRep {dom} {cod} spfd ec) b)}
     $ \ep => SPFDextCovarDirRepMap {dom} {cod} spfd ec ep a b mab
 
+-- The composition of the dependent-sum factor after the right-adjoint
+-- factor yields the interpretation of a polynomial functor (explicitly
+-- as a parametric right adjoint).
+--
 -- We call the interpretation of an `SPFData` as a slice polynomial functor
 -- `SPFDmultiR` because, as we shall see below, the slice polynomial functor may
 -- be viewed as a right multi-adjoint.  Hence the `SPFData` may be viewed
@@ -1374,7 +1375,7 @@ SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab =
 -- adjoint.  (But it is a parametric right adjoint, hence a multi-adjoint.)
 export
 SPFDmultiR : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor dom cod
-SPFDmultiR {dom} {cod} spfd = flip $ SPFDRdep {dom} {cod} spfd
+SPFDmultiR {dom} {cod} spfd = SPFDsigma spfd . SPFDradjFact spfd
 
 -- `SPFDmultiR` is the "standard" form of interpretation of a dependent (slice)
 -- polynomial functor (W-type), so we give it an alias which reflects that.
@@ -1385,8 +1386,9 @@ InterpSPFData = SPFDmultiR
 export
 SPFDmultiRmap : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceFMap (SPFDmultiR {dom} {cod} spfd)
-SPFDmultiRmap {dom} {cod} spfd a b mab ec =
-  SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab
+SPFDmultiRmap {dom} {cod} spfd a b =
+  SPFDsigmaMap spfd (SPFDradjFact spfd a) (SPFDradjFact spfd b)
+  . SPFDradjFactMap spfd a b
 
 export
 InterpSPFDataMap : {dom, cod : Type} ->
