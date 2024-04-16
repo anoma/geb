@@ -1142,6 +1142,8 @@ SPFDposFibToSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   {b : SliceObj cod} -> SPFDposFib {dom} {cod} spfd b ->
   SPFDbaseSl {dom} {cod} spfd
 SPFDposFibToSl {dom} {cod} {spfd} {b} =
+  -- An explicit definition (not using utility routines) would be:
+  -- \i, ecp => Subset0 (b $ fst ecp) $ \eb => i (fst ecp) eb = snd ecp
   resliceByMor {c=cod} {b} {a=(spfdPos spfd)}
 
 export
