@@ -1392,9 +1392,10 @@ SPFDmultiRflipMap {dom} {cod} spfd ec {a} {b} mab =
   SPFDmultiRmap {dom} {cod} spfd a b mab ec
 
 -- We can define a functor in the opposite direction to `SPFDmultiR` by
--- composition of the adjoints going in the opposite direction.  Like
--- `SPFDmultiR`, this functor is the composition of a left adjoint after a
--- right adjoint.
+-- composition of the adjoints of its factors.
+--
+-- Like `SPFDmultiR` itself, this functor is the composition of a left adjoint
+-- after a right adjoint.
 --
 -- Note that this functor is comprised of base changes
 -- (`SliceBCF`/`BaseChangeF`) and dependent sums (`SliceSigmaF`)
