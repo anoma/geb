@@ -1219,7 +1219,7 @@ SPFDRadjSl {dom} {cod} spfd sl = SliceBCF sl . SPFDradj {dom} {cod} spfd
 export
 SPFDRadjFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
-  SliceFunctor dom (Sigma {a=(SPFDbase spfd)} $ resliceByMor i)
+  SliceFunctor dom (Sigma {a=(SPFDbase spfd)} $ SPFDposFibToSl {spfd} i)
 SPFDRadjFib {dom} {cod} spfd b i =
   SPFDRadjSl {dom} {cod} spfd (SPFDposFibToSl {b} i)
 
