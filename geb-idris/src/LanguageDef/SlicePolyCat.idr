@@ -1500,6 +1500,12 @@ SPFDmultiLdom spfd =
   --  DPair (SliceObj cod) (SPFDmultiIdx {dom} {cod} spfd)
   SPFDposCSlice spfd
 
+-- The uncurried form of `SPFDmultiL`.
+export
+SPFDmultiLunc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDmultiLdom spfd -> SliceObj dom
+SPFDmultiLunc {dom} {cod} spfd = DPair.uncurry (SPFDmultiL {dom} {cod} spfd)
+
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.  It may be viewed as the fibered version
 -- (as opposed to the slice-object version) of the multi-monad of
