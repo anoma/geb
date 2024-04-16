@@ -1531,7 +1531,7 @@ export
 SPFDfactPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  SliceMorphism {a=cod} b (spfdPos spfd)
+  SPFDposContraRep spfd b
 SPFDfactPos {dom} {cod} spfd a b =
   sliceComp {a=cod} (SPFDfactPosSndFact {dom} {cod} spfd a b)
 
