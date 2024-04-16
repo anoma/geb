@@ -1431,25 +1431,19 @@ SPFDunitFibration {dom} {cod} spfd sl ec ep =
   --    (SPFDunitFiber {dom} {cod} spfd (fst sl) (snd sl) ec ep)
   sliceFiberByMor {c=cod} {a=(spfdPos spfd)} {b=(fst sl)} (snd sl) ec ep
 
--- The index of the family of morphisms comprising the units of a
--- polynomial functor viewed as a parametric right adjoint.
+-- Convert the index of one of the units of the multi-adjoint defined by
+-- a polynomial functor from category-theoretic style
+-- (`SPFDposContraRep`) to dependent-type style (`SliceObj SPFDbase`).
+--
 -- Note that this has a signature like that of `SPFDsigmaR` (the right
 -- adjoint of the dependent-sum component of the polynomial functor)
 -- but with the addition of the `i : SPFDposContraRep spfd b`
 -- component.
---
--- We are using the morphism `i` as a fibration, so effectively we are
--- treating it together with its domain `b` as an object in the
--- slice category of `Type` over `SPFDbase spfd`.  As such, we can
--- view `SPFDunitIdx` as a fibered version of an endofunctor on
--- `SPFDbase spfd`, but we can also view it as a functor from `SliceObj cod`
--- enhanced with a fibration of that slice of the codomain by `spfdPos spfd`
--- to `SliceObj (SPFDbase spfd)`.
 export
-SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDunitIdxToSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
   SliceObj (SPFDbase {dom} {cod} spfd)
-SPFDunitIdx {dom} {cod} spfd b i ecp =
+SPFDunitIdxToSl {dom} {cod} spfd b i ecp =
   -- This is equivalent to:
   --  SPFDunitFibration {dom} {cod} spfd (b ** i) (fst ecp) (snd ecp)
   SPFDposCSlToBaseSl {dom} {cod} {spfd} (b ** i) ecp
@@ -1472,7 +1466,7 @@ SPFDmultiL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
   SliceObj dom
 SPFDmultiL {dom} {cod} spfd b i =
-  SPFDladjFact {dom} {cod} spfd $ SPFDunitIdx {dom} {cod} spfd b i
+  SPFDladjFact {dom} {cod} spfd $ SPFDunitIdxToSl {dom} {cod} spfd b i
 
 export
 SPFDmultiLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1578,7 +1572,7 @@ SPFDfactRidx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) ->
-  SPFDunitIdx {dom} {cod} spfd b
+  SPFDunitIdxToSl {dom} {cod} spfd b
     (SPFDfactPos {dom} {cod} spfd a b i)
     (SPFDfactRidxCod {dom} {cod} spfd a b i ec eb)
 SPFDfactRidx {dom} {cod} spfd a b i ec eb = Element0 eb Refl
