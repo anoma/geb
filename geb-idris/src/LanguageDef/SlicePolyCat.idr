@@ -1306,13 +1306,13 @@ SSasSPFDsigma {cod} ss scs ec ess = ess
 -- a parametric right adjoint is itself a _left_ adjoint, to a base
 -- change.  This is that base change, the right adjoint to `SPFDsigma`.
 export
-SPFDsigmaRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDsigmaR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor cod (SPFDbase {dom} {cod} spfd)
-SPFDsigmaRAdj {dom} {cod} spfd = SliceBCF {c=cod} (spfdPos spfd)
+SPFDsigmaR {dom} {cod} spfd = SliceBCF {c=cod} (spfdPos spfd)
 
 export
 SPFDsigmaRAdjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceFMap (SPFDsigmaRAdj {dom} {cod} spfd)
+  SliceFMap (SPFDsigmaR {dom} {cod} spfd)
 SPFDsigmaRAdjMap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 
 -- The composition of the dependent-sum component after the right-adjoint
@@ -1376,13 +1376,13 @@ InterpSPFDataMap = SPFDmultiRmap
 -- only (in particular, `SlicePiF` is not involved).
 export
 SPFDL : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor cod dom
-SPFDL {dom} {cod} spfd = SPFDladj spfd . SPFDsigmaRAdj spfd
+SPFDL {dom} {cod} spfd = SPFDladj spfd . SPFDsigmaR spfd
 
 export
 SPFDLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDL spfd)
 SPFDLmap {dom} {cod} spfd x y =
-  SPFDladjMap spfd (SPFDsigmaRAdj spfd x) (SPFDsigmaRAdj spfd y)
+  SPFDladjMap spfd (SPFDsigmaR spfd x) (SPFDsigmaR spfd y)
   . SPFDsigmaRAdjMap spfd x y
 
 export
@@ -1402,7 +1402,7 @@ SPFDunitFibration {dom} {cod} spfd b i ec ep =
 
 -- The index of the family of morphisms comprising the units of a
 -- polynomial functor viewed as a parametric right adjoint.
--- Note that this has a signature like that of `SPFDsigmaRAdj` (the right
+-- Note that this has a signature like that of `SPFDsigmaR` (the right
 -- adjoint of the dependent-sum component of the polynomial functor)
 -- but with the addition of the `i : SPFDposFib spfd b`
 -- component.
