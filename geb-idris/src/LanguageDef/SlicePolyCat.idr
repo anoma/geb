@@ -1449,9 +1449,10 @@ export
 SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
   SliceObj (SPFDbase {dom} {cod} spfd)
-SPFDunitIdx {dom} {cod} spfd b i =
-  -- SPFDunitFibration {dom} {cod} spfd b i (fst ecp) (snd ecp)
-  SPFDposCSlToBaseSl {dom} {cod} {spfd} (b ** i)
+SPFDunitIdx {dom} {cod} spfd b i ecp =
+  -- This is equivalent to:
+  --  SPFDunitFibration {dom} {cod} spfd (b ** i) (fst ecp) (snd ecp)
+  SPFDposCSlToBaseSl {dom} {cod} {spfd} (b ** i) ecp
 
 -- This is the left multi-adjoint of `SPFDmultiR`.  It is the functor which
 -- is called `L` both in the "in particular has a left-multi-adjoint"
