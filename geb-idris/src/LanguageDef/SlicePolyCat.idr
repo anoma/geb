@@ -1416,15 +1416,20 @@ export
   (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
   (ec : cod) -> spfdPos spfd ec -> SliceObj (b ec)
 SPFDunitFiber {dom} {cod} spfd b i ec ep eb =
-  SliceFiber {c=cod} {a=(spfdPos spfd)} {b} i ec ep eb -- i ec eb = ep
+  -- This is equivalent to:
+  --  i ec eb = ep
+  SliceFiber {c=cod} {a=(spfdPos spfd)} {b} i ec ep eb
 
 export
 SPFDunitFibration : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
+  SPFDposCSlice spfd ->
   (ec : cod) -> SliceObj (spfdPos spfd ec)
-SPFDunitFibration {dom} {cod} spfd b i ec ep =
-  -- Subset0 (b ec) $ SPFDunitFiber {dom} {cod} spfd b i ec ep
-  sliceFiberByMor {c=cod} {a=(spfdPos spfd)} {b} i ec ep
+SPFDunitFibration {dom} {cod} spfd sl ec ep =
+  -- This is equivalent to:
+  --  Subset0
+  --    (fst sl ec)
+  --    (SPFDunitFiber {dom} {cod} spfd (fst sl) (snd sl) ec ep)
+  sliceFiberByMor {c=cod} {a=(spfdPos spfd)} {b=(fst sl)} (snd sl) ec ep
 
 -- The index of the family of morphisms comprising the units of a
 -- polynomial functor viewed as a parametric right adjoint.
