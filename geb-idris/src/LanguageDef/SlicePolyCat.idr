@@ -1068,31 +1068,14 @@ SPFDextRep {dom} {cod} spfd ec ep sd =
   --  SliceMorphism {a=dom} (spfdDir spfd ec ep) sd
   Pi {a=dom} (SPFDintRep {dom} {cod} spfd ec ep sd)
 
--- The dependent right-adjoint component of a polynomial functor expressed in
--- the usual formulation of a parametric right adjoint as a functor from the
--- domain to the slice category over the object given by applying the functor
--- to the terminal object, which in the case of a polynomial functor is the
--- object of positions.
-export
-SPFDradjDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (ec : cod) -> SliceFunctor dom (spfdPos spfd ec)
-SPFDradjDep {dom} {cod} spfd ec sd ep = SPFDextRep {dom} {cod} spfd ec ep sd
-
 export
 SPFDextRepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  {0 a, b : SliceObj dom} -> SliceMorphism {a=dom} a b ->
-  (ec : cod) ->
-  SliceMorphism {a=(spfdPos spfd ec)}
-    (SPFDradjDep {dom} {cod} spfd ec a)
-    (SPFDradjDep {dom} {cod} spfd ec b)
-SPFDextRepMap {dom} {cod} spfd {a} {b} mab ec ep dm ed dp =
+  (ec : cod) -> (ep : spfdPos spfd ec) ->
+  (0 a, b : SliceObj dom) -> SliceMorphism {a=dom} a b ->
+  SPFDextRep {dom} {cod} spfd ec ep a ->
+  SPFDextRep {dom} {cod} spfd ec ep b
+SPFDextRepMap {dom} {cod} spfd ec ep a b mab dm ed dp =
   mab ed $ dm ed dp
-
-export
-SPFDradjDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (ec : cod) -> SliceFMap (SPFDradjDep {dom} {cod} spfd ec)
-SPFDradjDepMap {dom} {cod} spfd ec a b mab =
-  SPFDextRepMap {dom} {cod} spfd {a} {b} mab ec
 
 -- The base object of the intermediate slice category in the factorization
 -- of a (slice) polynomial functor as a parametric right adjoint.
@@ -1175,14 +1158,13 @@ SPFDintRepBase {dom} {cod} spfd ecp =
 export
 SPFDradj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor dom (SPFDbase {dom} {cod} spfd)
-SPFDradj {dom} {cod} spfd sd ecp =
-  SPFDradjDep {dom} {cod} spfd (fst ecp) sd (snd ecp)
+SPFDradj {dom} {cod} spfd sd ecp = SPFDextRep spfd (fst ecp) (snd ecp) sd
 
 export
 SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDradj {dom} {cod} spfd)
 SPFDradjMap {dom} {cod} spfd x y m ecp =
-  SPFDradjDepMap {dom} {cod} spfd (fst ecp) x y m (snd ecp)
+  SPFDextRepMap spfd (fst ecp) (snd ecp) x y m
 
 -- We show that the dependent right-adjoint component of a polynomial functor
 -- expressed as a parametric right adjoint is equivalent to `SliceSigmaPiFR`
@@ -1347,7 +1329,7 @@ SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab =
   SPFDsigmaDepMap {dom} {cod} spfd ec
     {a=(flip (SPFDextRep {dom} {cod} spfd ec) a)}
     {b=(flip (SPFDextRep {dom} {cod} spfd ec) b)}
-    $ SPFDextRepMap {dom} {cod} spfd {a} {b} mab ec
+    $ \ep => SPFDextRepMap {dom} {cod} spfd ec ep a b mab
 
 -- We call the interpretation of an `SPFData` as a slice polynomial functor
 -- `SPFDmultiR` because, as we shall see below, the slice polynomial functor may
