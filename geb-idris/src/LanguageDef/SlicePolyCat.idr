@@ -1558,12 +1558,19 @@ SPFDfactIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDfactIdx {dom} {cod} spfd a b =
   sliceComp {a=cod} (SPFDfactIdxSndFact {dom} {cod} spfd a b)
 
+-- This is the object of `SliceObj dom` which underlies the intermediate
+-- object of the generic factorization of a morphism with the signature
+-- `b -> SPFDmultiR spfd a`.  It is called `D` at
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
+-- Lifting this via `SPFDmultiR` gives the object of `SliceObj cod` which
+-- comprises the intermediate object of the generic factorization (called
+-- `T D` at the ncatlab page).
 export
-SPFDlPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDgenFactDomObj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceObj dom
-SPFDlPos {dom} {cod} spfd a b =
+SPFDgenFactDomObj {dom} {cod} spfd a b =
   SPFDmultiL {dom} {cod} spfd b . SPFDfactIdx {dom} {cod} spfd a b
 
 export
@@ -1642,7 +1649,7 @@ export
 SPFDfactL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  SliceMorphism {a=dom} (SPFDlPos {dom} {cod} spfd a b i) a
+  SliceMorphism {a=dom} (SPFDgenFactDomObj {dom} {cod} spfd a b i) a
 SPFDfactL {dom} {cod} spfd a b i ed ecdb =
   case ecdb of
     ((ec ** dd) ** Element0 eb eqc) =>
@@ -1657,7 +1664,7 @@ SPFDfactLlift : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     (SPFDmultiR {dom} {cod} spfd a)
 SPFDfactLlift {dom} {cod} spfd a b i =
   SPFDmultiRmap spfd
-    (SPFDlPos {dom} {cod} spfd a b i)
+    (SPFDgenFactDomObj {dom} {cod} spfd a b i)
     a
     (SPFDfactL {dom} {cod} spfd a b i)
 
@@ -1739,7 +1746,7 @@ export
 SPFDpraRAdjMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
   (m : SliceMorphism {a=cod} x (SPFDmultiR {dom} {cod} spfd y)) ->
-  SliceMorphism {a=dom} (SPFDlPos {dom} {cod} spfd y x m) y
+  SliceMorphism {a=dom} (SPFDgenFactDomObj {dom} {cod} spfd y x m) y
 SPFDpraRAdjMor {dom} {cod} spfd x y m = SPFDfactL {dom} {cod} spfd y x m
 
 -- This is the "right multi-adjunct" of the multi-adjunction defined by a
