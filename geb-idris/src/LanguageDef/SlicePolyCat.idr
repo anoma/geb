@@ -1053,6 +1053,12 @@ export
 spfdCPos : {dom, cod : Type} -> SPFData dom cod -> CSliceObj cod
 spfdCPos {dom} {cod} spfd = CSliceFromSlice {c=cod} (spfdPos spfd)
 
+-- Category-theory-style slice object in the slice category of
+-- `Type` over `spfdPos spfd`.
+export
+spfdCPosSl : {dom, cod : Type} -> SPFData dom cod -> Type
+spfdCPosSl {dom} {cod} spfd = CSliceObjOfSliceCat {c=cod} (spfdCPos spfd)
+
 -- The internal (that is, as a slice endofunctor, i.e. an endofunctor
 -- in the "object language") covariant representable functor on the domain of
 -- a slice polynomial functor represented by its object of directions
@@ -1171,7 +1177,7 @@ SPFDbaseSlToPosCSlProj {dom} {cod} {spfd} =
 -- category-theory-style slice of `spfdPos spfd`.
 export
 SPFDbaseSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
-  SPFDbaseSl {dom} {cod} spfd -> CSliceObjOfSliceCat {c=cod} (spfdCPos spfd)
+  SPFDbaseSl {dom} {cod} spfd -> spfdCPosSl spfd
 SPFDbaseSlToPosCSl {spfd} sl =
   (CSliceFromSlice (SPFDbaseSlToPosCSlDom sl) **
    CSMorphFromSlice $ SPFDbaseSlToPosCSlProj {spfd} sl)
@@ -1217,24 +1223,24 @@ SSPRasSPFD : {0 dom, cod : Type} -> (sspr : SliceObj (dom, cod)) ->
      . SPFDradjFact {dom} {cod} (SSPRtoSPFD {dom} {cod} sspr))
 SSPRasSPFD {dom} {cod} sspr sd ec sdc ed esdc = sdc (ed ** esdc)
 
--- Fibrate the right adjoint by a dependent-type-style slice object over
--- the position object.
+-- Fibrate the right-adjoint factor of a polynomial functor by a
+-- dependent-type-style slice object over the position object.
 export
-SPFDRadjSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDradjFactSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (sl : SliceObj $ SPFDbase spfd) ->
   SliceFunctor dom (Sigma {a=(SPFDbase spfd)} sl)
-SPFDRadjSl {dom} {cod} spfd sl = SliceBCF sl . SPFDradjFact {dom} {cod} spfd
+SPFDradjFactSl {dom} {cod} spfd sl = SliceBCF sl . SPFDradjFact {dom} {cod} spfd
 
--- Fibrate the right adjoint by a category-theory-style slice object over
--- the position object.
+-- Fibrate the right-adjoint factor of a polynomial functor by a
+-- category-theory-style slice object over the position object.
 export
-SPFDRadjFib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
+SPFDRadjFactCSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (sl : SPFDposCSlice spfd) ->
   SliceFunctor
     dom
-    (Sigma {a=(SPFDbase spfd)} $ SPFDposCSlToBaseSl {spfd} (b ** i))
-SPFDRadjFib {dom} {cod} spfd b i =
-  SPFDRadjSl {dom} {cod} spfd (SPFDposCSlToBaseSl (b ** i))
+    (Sigma {a=(SPFDbase spfd)} $ SPFDposCSlToBaseSl {spfd} sl)
+SPFDRadjFactCSl {dom} {cod} spfd sl =
+  SPFDradjFactSl {dom} {cod} spfd (SPFDposCSlToBaseSl sl)
 
 -- The left adjoint of the right-adjoint component of a polynomial functor
 -- expressed as a parametric right adjoint.
