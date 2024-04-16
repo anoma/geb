@@ -1147,7 +1147,10 @@ SPFDposFibToSl {dom} {cod} {spfd} {b} =
 export
 SPFDposSlcobase : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDbaseSl {dom} {cod} spfd -> SliceObj cod
-SPFDposSlcobase {dom} {cod} {spfd} = SlSliceToSlice {c=cod} {a=(spfdPos spfd)}
+SPFDposSlcobase {dom} {cod} {spfd} =
+  -- An explicit definition (not using utility routines) would be:
+  --  \sl, ec => Sigma {a=(spfdPos spfd ec)} $ curry sl ec
+  SlSliceToSlice {c=cod} {a=(spfdPos spfd)}
 
 export
 SPFDposSltoFib : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
