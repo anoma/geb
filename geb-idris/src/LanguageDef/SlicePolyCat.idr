@@ -1143,7 +1143,7 @@ SPFDposCSlToBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDbaseSl {dom} {cod} spfd
 SPFDposCSlToBaseSl {dom} {cod} {spfd} csl =
   -- An explicit definition (not using utility routines) would be:
-  -- \i, ecp => Subset0 (b $ fst ecp) $ \eb => i (fst ecp) eb = snd ecp
+  -- \ecp => Subset0 (fst csl $ fst ecp) $ \eb => snd csl (fst ecp) eb = snd ecp
   resliceByMor {c=cod} {b=(fst csl)} {a=(spfdPos spfd)} (snd csl)
 
 -- The slice-object component of the translation from a dependent-type-style
