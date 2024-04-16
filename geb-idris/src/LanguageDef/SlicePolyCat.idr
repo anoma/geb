@@ -1578,8 +1578,8 @@ SPFDmultiMfibPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceObj cod
-SPFDmultiMfibPos {dom} {cod} spfd a b =
-  SPFDmultiMfib {dom} {cod} spfd b . SPFDfactIdx {dom} {cod} spfd a b
+SPFDmultiMfibPos {dom} {cod} spfd a b i =
+  SPFDmultiR {dom} {cod} spfd $ SPFDgenFactDomObj {dom} {cod} spfd a b i
 
 export
 SPFDfactDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
