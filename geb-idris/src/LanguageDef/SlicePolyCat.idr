@@ -1123,16 +1123,21 @@ SPFDdirTot {dom} {cod} spfd =
 
 -- This is the contravariant representable functor on `SliceObj cod`
 -- represented by `spfdPos spfd`.
---
--- This functor is referred to as `I` in theorem 2.4 of
+export
+SPFDposContraRep : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
+SPFDposContraRep {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
+
+-- For a multi-adjunction induced by a polynomial functor,
+-- `SPFDposContraRep` is the functor is referred to as `I` in theorem 2.4 of
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition (for the
 -- multi-adjunction defined by a slice polynomial functof).  It is
 -- referred to as the "index" (in particular, it indexes the
 -- family of units of the multi-adjunction) part of a left multi-adjoint
--- (the functor part is `SPFDmultiL`).
+-- (the functor part is `SPFDmultiL`).  Hence we give it an alias reflecting
+-- its role as an index.
 export
-SPFDposContraRep : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
-SPFDposContraRep {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
+SPFDmultiIdx : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
+SPFDmultiIdx = SPFDposContraRep
 
 export
 SPFDposCSlice : {dom, cod : Type} -> SPFData dom cod -> Type
@@ -1413,7 +1418,7 @@ SPFDLmap {dom} {cod} spfd x y =
 
 export
 0 SPFDunitFiber : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   (ec : cod) -> spfdPos spfd ec -> SliceObj (b ec)
 SPFDunitFiber {dom} {cod} spfd b i ec ep eb =
   -- This is equivalent to:
@@ -1433,17 +1438,17 @@ SPFDunitFibration {dom} {cod} spfd sl ec ep =
 
 -- Convert the index of one of the units of the multi-adjoint defined by
 -- a polynomial functor from category-theoretic style
--- (`SPFDposContraRep`) to dependent-type style (`SliceObj SPFDbase`).
+-- (`SPFDmultiIdx`) to dependent-type style (`SliceObj SPFDbase`).
 --
 -- Note that this has a signature like that of `SPFDdepSumFactR` (the right
 -- adjoint of the dependent-sum component of the polynomial functor)
--- but with the addition of the `i : SPFDposContraRep spfd b`
+-- but with the addition of the `i : SPFDmultiIdx spfd b`
 -- component.  `SPFDdepSumFactR` is the depedent-sum factor of the polynomial
 -- functor, so this may be viewed as a fibered/dependent version of the
 -- dependent-sum factor.
 export
 SPFDunitIdxToSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   SliceObj (SPFDbase {dom} {cod} spfd)
 SPFDunitIdxToSl {dom} {cod} spfd b i ecp =
   -- This is equivalent to:
@@ -1458,7 +1463,7 @@ SPFDunitIdxToSl {dom} {cod} spfd b i ecp =
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition
 -- (and also in Theorem 2.4 in that same section).  (The index component
 -- of the left multi-adjoint, called `I` on the ncatlab page, is here
--- called `SPFDposContraRep`.)
+-- called `SPFDmultiIdx`.)
 --
 -- Note that this is the composition of the left adjoint of the right-adjoint
 -- factor of a polynomial functor after the index functor of the family of
@@ -1466,15 +1471,15 @@ SPFDunitIdxToSl {dom} {cod} spfd b i ecp =
 -- dependent-sum factor of the polynomial functor.
 export
 SPFDmultiL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   SliceObj dom
 SPFDmultiL {dom} {cod} spfd b i =
   SPFDladjFact {dom} {cod} spfd $ SPFDunitIdxToSl {dom} {cod} spfd b i
 
 export
 SPFDmultiLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (0 b : SliceObj cod) -> (0 i : SPFDposContraRep spfd b) ->
-  (0 b' : SliceObj cod) -> (0 i' : SPFDposContraRep spfd b') ->
+  (0 b : SliceObj cod) -> (0 i : SPFDmultiIdx spfd b) ->
+  (0 b' : SliceObj cod) -> (0 i' : SPFDmultiIdx spfd b') ->
   SliceMorphism {a=(SPFDbase spfd)}
     (SPFDposCSlToBaseSl {spfd} (b ** i))
     (SPFDposCSlToBaseSl {spfd} (b' ** i')) ->
@@ -1494,15 +1499,15 @@ SPFDmultiLmap {dom} {cod} spfd b i b' i' m ed ddp =
 -- (so the unit itself has type `b -> TL(b, i)`).
 export
 SPFDmultiMfib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   SliceObj cod
 SPFDmultiMfib {dom} {cod} spfd b i =
   SPFDmultiR spfd $ SPFDmultiL {dom} {cod} spfd b i
 
 export
 SPFDmultiMfibMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
-  (b' : SliceObj cod) -> (i' : SPFDposContraRep spfd b') ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
+  (b' : SliceObj cod) -> (i' : SPFDmultiIdx spfd b') ->
   SliceMorphism {a=(SPFDbase spfd)}
     (SPFDposCSlToBaseSl {spfd} (b ** i))
     (SPFDposCSlToBaseSl {spfd} (b' ** i')) ->
@@ -1519,7 +1524,7 @@ SPFDmultiMfibMap {dom} {cod} spfd b i b' i' =
 export
 SPFDfactPosSndFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
-  SPFDposContraRep spfd (SPFDmultiR {dom} {cod} spfd a)
+  SPFDmultiIdx spfd (SPFDmultiR {dom} {cod} spfd a)
 SPFDfactPosSndFact {dom} {cod} spfd a b ec = DPair.fst
 
 -- The "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1` induced by a given
@@ -1529,7 +1534,7 @@ export
 SPFDfactPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  SPFDposContraRep spfd b
+  SPFDmultiIdx spfd b
 SPFDfactPos {dom} {cod} spfd a b =
   sliceComp {a=cod} (SPFDfactPosSndFact {dom} {cod} spfd a b)
 
@@ -1652,13 +1657,13 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
 export
 SPFDpraRcat : {dom, cod : Type} -> (spfd : SPFData dom cod) -> Type
 SPFDpraRcat {dom} {cod} =
-  Sigma {a=(SliceObj cod)} . SPFDposContraRep {dom} {cod}
+  Sigma {a=(SliceObj cod)} . SPFDmultiIdx {dom} {cod}
 
 export
 SPFDpraAdjL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) -> Type
 SPFDpraAdjL {dom} {cod} spfd x y =
-  Sigma {a=(SPFDposContraRep spfd x)}
+  Sigma {a=(SPFDmultiIdx spfd x)}
   $ flip (SliceMorphism {a=dom}) y . SPFDmultiL {dom} {cod} spfd x
 
 -- The left multi-adjoint of the hom-set description of a multi-adjunction
