@@ -1053,34 +1053,34 @@ record SPFData (0 dom, cod : Type) where
 -- a slice polynomial functor represented by its object of directions
 -- at a given position.
 export
-SPFDintRep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDintCovarDirRep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceEndofunctor dom
-SPFDintRep {dom} {cod} spfd ec ep = SliceHom {a=dom} (spfdDir spfd ec ep)
+SPFDintCovarDirRep {dom} {cod} spfd ec ep = SliceHom {a=dom} (spfdDir spfd ec ep)
 
 export
-SPFDintRepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDintCovarDirRepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> (ep : spfdPos spfd ec) ->
-  SliceFMap (SPFDintRep {dom} {cod} spfd ec ep)
-SPFDintRepMap {dom} {cod} spfd ec ep x y mab ed = (.) (mab ed)
+  SliceFMap (SPFDintCovarDirRep {dom} {cod} spfd ec ep)
+SPFDintCovarDirRepMap {dom} {cod} spfd ec ep x y mab ed = (.) (mab ed)
 
 -- The external (that is, as a copresheaf) covariant representable functor
 -- on the domain of a slice polynomial functor represented by its object
 -- of directions at a given position.
 export
-SPFDextRep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDextCovarDirRep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceObj dom -> Type
-SPFDextRep {dom} {cod} spfd ec ep sd =
+SPFDextCovarDirRep {dom} {cod} spfd ec ep sd =
   -- Equivalent to:
   --  SliceMorphism {a=dom} (spfdDir spfd ec ep) sd
-  Pi {a=dom} (SPFDintRep {dom} {cod} spfd ec ep sd)
+  Pi {a=dom} (SPFDintCovarDirRep {dom} {cod} spfd ec ep sd)
 
 export
-SPFDextRepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDextCovarDirRepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> (ep : spfdPos spfd ec) ->
   (0 a, b : SliceObj dom) -> SliceMorphism {a=dom} a b ->
-  SPFDextRep {dom} {cod} spfd ec ep a ->
-  SPFDextRep {dom} {cod} spfd ec ep b
-SPFDextRepMap {dom} {cod} spfd ec ep a b mab dm ed dp =
+  SPFDextCovarDirRep {dom} {cod} spfd ec ep a ->
+  SPFDextCovarDirRep {dom} {cod} spfd ec ep b
+SPFDextCovarDirRepMap {dom} {cod} spfd ec ep a b mab dm ed dp =
   mab ed $ dm ed dp
 
 -- The base object of the intermediate slice category in the factorization
@@ -1157,23 +1157,23 @@ SPFDposSltoFib {dom} {cod} {spfd} =
 -- a position-dependent endofunctor on the slice category over the domain,
 -- and in terms of `SPFDbase`.
 export
-SPFDintRepBase : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDintCovarDirRepBase : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDbase {dom} {cod} spfd -> SliceEndofunctor dom
-SPFDintRepBase {dom} {cod} spfd ecp =
-  SPFDintRep {dom} {cod} spfd (fst ecp) (snd ecp)
+SPFDintCovarDirRepBase {dom} {cod} spfd ecp =
+  SPFDintCovarDirRep {dom} {cod} spfd (fst ecp) (snd ecp)
 
 -- The right-adjoint component of a polynomial functor expressed as
 -- a parametric right adjoint.
 export
 SPFDradj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor dom (SPFDbase {dom} {cod} spfd)
-SPFDradj {dom} {cod} spfd sd ecp = SPFDextRep spfd (fst ecp) (snd ecp) sd
+SPFDradj {dom} {cod} spfd sd ecp = SPFDextCovarDirRep spfd (fst ecp) (snd ecp) sd
 
 export
 SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDradj {dom} {cod} spfd)
 SPFDradjMap {dom} {cod} spfd x y m ecp =
-  SPFDextRepMap spfd (fst ecp) (snd ecp) x y m
+  SPFDextCovarDirRepMap spfd (fst ecp) (snd ecp) x y m
 
 -- We show that the dependent right-adjoint component of a polynomial functor
 -- expressed as a parametric right adjoint is equivalent to `SliceSigmaPiFR`
@@ -1326,7 +1326,7 @@ export
 SPFDRdep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceObj dom -> Type
 SPFDRdep {dom} {cod} spfd ec =
-  SPFDsigmaDep {dom} {cod} spfd ec . flip (SPFDextRep {dom} {cod} spfd ec)
+  SPFDsigmaDep {dom} {cod} spfd ec . flip (SPFDextCovarDirRep {dom} {cod} spfd ec)
 
 export
 SPFDRdepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1336,9 +1336,9 @@ SPFDRdepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDRdep {dom} {cod} spfd ec b
 SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab =
   SPFDsigmaDepMap {dom} {cod} spfd ec
-    {a=(flip (SPFDextRep {dom} {cod} spfd ec) a)}
-    {b=(flip (SPFDextRep {dom} {cod} spfd ec) b)}
-    $ \ep => SPFDextRepMap {dom} {cod} spfd ec ep a b mab
+    {a=(flip (SPFDextCovarDirRep {dom} {cod} spfd ec) a)}
+    {b=(flip (SPFDextCovarDirRep {dom} {cod} spfd ec) b)}
+    $ \ep => SPFDextCovarDirRepMap {dom} {cod} spfd ec ep a b mab
 
 -- We call the interpretation of an `SPFData` as a slice polynomial functor
 -- `SPFDmultiR` because, as we shall see below, the slice polynomial functor may
