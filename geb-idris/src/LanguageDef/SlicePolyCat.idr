@@ -1113,7 +1113,7 @@ SPFDdirTot {dom} {cod} spfd =
 -- This is the contravariant representable functor on `SliceObj cod`
 -- represented by `spfdPos spfd`.
 --
--- We are going to use it in particular as a fibration of the given object
+-- We are often going to use it in particular as a fibration of the given object
 -- of the slice category over `cod` by `spfdPos spfd` (meaning simply a
 -- (slice morphism from the given object to `spfdPos sfpd`, which we
 -- _treat_ as a fibration).
