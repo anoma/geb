@@ -1539,21 +1539,24 @@ SPFDmultiMfibMap {dom} {cod} spfd b i b' i' =
 -- (see below) -- that is, the part with the signature
 -- `SPFDmultiR a -> SPFDmultiR 1`.  `SPFDmultiR 1` is simply `spfdPos spfd`.
 export
-SPFDfactPosSndFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDfactIdxSndFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   SPFDmultiIdx spfd (SPFDmultiR {dom} {cod} spfd a)
-SPFDfactPosSndFact {dom} {cod} spfd a b ec = DPair.fst
+SPFDfactIdxSndFact {dom} {cod} spfd a b ec = DPair.fst
 
 -- The "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1` induced by a given
 -- morphism `b -> SPFDmultiR a`, as described at
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#properties .
+-- Because `SPFDmultiR 1` is effectively `spfdPos spfd`, this amounts to
+-- a morphism `b -> spfdPos spfd`, which is the index of a unit of the
+-- multi-adjunction.
 export
-SPFDfactPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDfactIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SPFDmultiIdx spfd b
-SPFDfactPos {dom} {cod} spfd a b =
-  sliceComp {a=cod} (SPFDfactPosSndFact {dom} {cod} spfd a b)
+SPFDfactIdx {dom} {cod} spfd a b =
+  sliceComp {a=cod} (SPFDfactIdxSndFact {dom} {cod} spfd a b)
 
 export
 SPFDlPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1561,7 +1564,7 @@ SPFDlPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceObj dom
 SPFDlPos {dom} {cod} spfd a b =
-  SPFDmultiL {dom} {cod} spfd b . SPFDfactPos {dom} {cod} spfd a b
+  SPFDmultiL {dom} {cod} spfd b . SPFDfactIdx {dom} {cod} spfd a b
 
 export
 SPFDmultiMfibPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1569,7 +1572,7 @@ SPFDmultiMfibPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceObj cod
 SPFDmultiMfibPos {dom} {cod} spfd a b =
-  SPFDmultiMfib {dom} {cod} spfd b . SPFDfactPos {dom} {cod} spfd a b
+  SPFDmultiMfib {dom} {cod} spfd b . SPFDfactIdx {dom} {cod} spfd a b
 
 export
 SPFDfactDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1577,7 +1580,7 @@ SPFDfactDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> b ec -> SliceObj dom
 SPFDfactDir {dom} {cod} spfd a b i ec eb =
-   spfdDir spfd ec (SPFDfactPos {dom} {cod} spfd a b i ec eb)
+   spfdDir spfd ec (SPFDfactIdx {dom} {cod} spfd a b i ec eb)
 
 export
 SPFDfactRDom : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1593,7 +1596,7 @@ SPFDfactRidxCod : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) -> SPFDbase {dom} {cod} spfd
 SPFDfactRidxCod {dom} {cod} spfd a b i ec eb =
-  (ec ** SPFDfactPos {dom} {cod} spfd a b i ec eb)
+  (ec ** SPFDfactIdx {dom} {cod} spfd a b i ec eb)
 
 export
 SPFDfactRidx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1601,7 +1604,7 @@ SPFDfactRidx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) ->
   SPFDunitIdxToSl {dom} {cod} spfd b
-    (SPFDfactPos {dom} {cod} spfd a b i)
+    (SPFDfactIdx {dom} {cod} spfd a b i)
     (SPFDfactRidxCod {dom} {cod} spfd a b i ec eb)
 SPFDfactRidx {dom} {cod} spfd a b i ec eb = Element0 eb Refl
 
@@ -1611,7 +1614,7 @@ SPFDfactRdir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> b ec -> SliceObj dom
 SPFDfactRdir {dom} {cod} spfd a b i ec eb =
-  spfdDir spfd ec $ SPFDfactPos {dom} {cod} spfd a b i ec eb
+  spfdDir spfd ec $ SPFDfactIdx {dom} {cod} spfd a b i ec eb
 
 export
 SPFDfactRdirApp : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1629,7 +1632,7 @@ SPFDfactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceMorphism {a=cod} b (SPFDmultiMfibPos {dom} {cod} spfd a b i)
 SPFDfactR {dom} {cod} spfd a b i ec eb =
-  (SPFDfactPos {dom} {cod} spfd a b i ec eb **
+  (SPFDfactIdx {dom} {cod} spfd a b i ec eb **
    \ed : dom,
     db : SPFDfactRdir {dom} {cod} spfd a b i ec eb ed =>
       ((SPFDfactRidxCod {dom} {cod} spfd a b i ec eb ** db) **
@@ -1731,7 +1734,7 @@ SPFDpraLAdj {dom} {cod} spfd x y m ec ex =
 -- This is the morphism component of the "right multi-adjunct" of the
 -- multi-adjunction defined by a slice polynomial functor (`SPFDpraLAdj` is
 -- the left multi-adjunct").  (The fibration component is
--- `SPFDfactPos`.)
+-- `SPFDfactIdx`.)
 export
 SPFDpraRAdjMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
@@ -1747,7 +1750,7 @@ SPFDpraRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceMorphism {a=cod} x (SPFDmultiR {dom} {cod} spfd y) ->
   SPFDpraAdjL {dom} {cod} spfd x y
 SPFDpraRAdj {dom} {cod} spfd x y m =
-  (SPFDfactPos {dom} {cod} spfd y x m **
+  (SPFDfactIdx {dom} {cod} spfd y x m **
    SPFDpraRAdjMor {dom} {cod} spfd x y m)
 
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
