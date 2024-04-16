@@ -1564,7 +1564,8 @@ SPFDfactIdx {dom} {cod} spfd a b =
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
 -- Lifting this via `SPFDmultiR` gives the object of `SliceObj cod` which
 -- comprises the intermediate object of the generic factorization (called
--- `T D` at the ncatlab page).
+-- `T D` at the ncatlab page, since in the case of the slice polynomial
+-- multi-adjunction, `T` is `SPFDmultiR`).
 export
 SPFDgenFactDomObj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
