@@ -1573,12 +1573,14 @@ SPFDgenFactDomObj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDgenFactDomObj {dom} {cod} spfd a b =
   SPFDmultiL {dom} {cod} spfd b . SPFDfactIdx {dom} {cod} spfd a b
 
+-- This is the intermediate object of the generic factorization of the
+-- given morphism `i` (see the comment to `SPFDgenFactDomObj` above).
 export
-SPFDmultiMfibPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDgenFactCodObj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceObj cod
-SPFDmultiMfibPos {dom} {cod} spfd a b i =
+SPFDgenFactCodObj {dom} {cod} spfd a b i =
   SPFDmultiR {dom} {cod} spfd $ SPFDgenFactDomObj {dom} {cod} spfd a b i
 
 export
@@ -1637,7 +1639,7 @@ export
 SPFDfactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  SliceMorphism {a=cod} b (SPFDmultiMfibPos {dom} {cod} spfd a b i)
+  SliceMorphism {a=cod} b (SPFDgenFactCodObj {dom} {cod} spfd a b i)
 SPFDfactR {dom} {cod} spfd a b i ec eb =
   (SPFDfactIdx {dom} {cod} spfd a b i ec eb **
    \ed : dom,
@@ -1660,7 +1662,7 @@ SPFDfactLlift : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceMorphism {a=cod}
-    (SPFDmultiMfibPos {dom} {cod} spfd a b i)
+    (SPFDgenFactCodObj {dom} {cod} spfd a b i)
     (SPFDmultiR {dom} {cod} spfd a)
 SPFDfactLlift {dom} {cod} spfd a b i =
   SPFDmultiRmap spfd
