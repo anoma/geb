@@ -1176,26 +1176,17 @@ SPFDbaseSlToPosCSl {spfd} sl =
   (CSliceFromSlice (SPFDbaseSlToPosCSlDom sl) **
    CSMorphFromSlice $ SPFDbaseSlToPosCSlProj {spfd} sl)
 
--- The dependent right-adjoint component of a polynomial functor expressed as
--- a position-dependent endofunctor on the slice category over the domain,
--- and in terms of `SPFDbase`.
-export
-SPFDintCovarDirRepBase : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDbase {dom} {cod} spfd -> SliceEndofunctor dom
-SPFDintCovarDirRepBase {dom} {cod} spfd ecp =
-  SPFDintCovarDirRep {dom} {cod} spfd (fst ecp) (snd ecp)
-
--- The right-adjoint component of a polynomial functor expressed as
+-- The right-adjoint factor of a polynomial functor expressed as
 -- a parametric right adjoint.
 export
-SPFDradj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDradjFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor dom (SPFDbase {dom} {cod} spfd)
-SPFDradj {dom} {cod} spfd sd ecp =
+SPFDradjFact {dom} {cod} spfd sd ecp =
   SPFDextCovarDirRep spfd (fst ecp) (snd ecp) sd
 
 export
 SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceFMap (SPFDradj {dom} {cod} spfd)
+  SliceFMap (SPFDradjFact {dom} {cod} spfd)
 SPFDradjMap {dom} {cod} spfd x y m ecp =
   SPFDextCovarDirRepMap spfd (fst ecp) (snd ecp) x y m
 
@@ -1214,7 +1205,7 @@ SSPRtoSPFD {dom} {cod} sspr = SPFD (const Unit) $ \ec, (), ed => sspr (ed, ec)
 export
 SPFDasSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceNatTrans {x=dom} {y=(SPFDbase spfd)}
-    (SPFDradj {dom} {cod} spfd)
+    (SPFDradjFact {dom} {cod} spfd)
     (SliceSigmaPiFR {c=dom} {e=(SPFDbase spfd)} $ SPFDtoSSPR spfd)
 SPFDasSSPR {dom} {cod} (SPFD pos dir) sd (ec ** ep) radj (ed ** dd) = radj ed dd
 
@@ -1223,7 +1214,7 @@ SSPRasSPFD : {0 dom, cod : Type} -> (sspr : SliceObj (dom, cod)) ->
   SliceNatTrans {x=dom} {y=cod}
     (SliceSigmaPiFR {c=dom} {e=cod} sspr)
     ((\sc, ec => sc (ec ** ()))
-     . SPFDradj {dom} {cod} (SSPRtoSPFD {dom} {cod} sspr))
+     . SPFDradjFact {dom} {cod} (SSPRtoSPFD {dom} {cod} sspr))
 SSPRasSPFD {dom} {cod} sspr sd ec sdc ed esdc = sdc (ed ** esdc)
 
 -- Fibrate the right adjoint by a dependent-type-style slice object over
@@ -1232,7 +1223,7 @@ export
 SPFDRadjSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (sl : SliceObj $ SPFDbase spfd) ->
   SliceFunctor dom (Sigma {a=(SPFDbase spfd)} sl)
-SPFDRadjSl {dom} {cod} spfd sl = SliceBCF sl . SPFDradj {dom} {cod} spfd
+SPFDRadjSl {dom} {cod} spfd sl = SliceBCF sl . SPFDradjFact {dom} {cod} spfd
 
 -- Fibrate the right adjoint by a category-theory-style slice object over
 -- the position object.
