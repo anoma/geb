@@ -1028,17 +1028,20 @@ SliceSigmaPiFDup {c} {e} {d} =
 --------------------
 
 -- A polynomial functor on slice categories may be described as a parametric
--- right adjoint whose right-adjoint component is `SliceSigmaPiFR` (which
--- has the left adjoint `SliceSigmaPiFL`) and whose following dependent-sum
--- component is `SliceSigmaF`.  `dir and `pos`, the parameters to those
--- two functors,  must be such that the functors can be composed.
+-- right adjoint whose right-adjoint component is a form of `SliceSigmaPiFR`
+-- (which has the left adjoint `SliceSigmaPiFL`) and whose following
+-- dependent-sum component is a form of `SliceSigmaF`.  `dir and `pos`, the
+-- parameters to those two functors,  must be such that the functors can be
+-- composed.
+--
 -- See for example:
 --  - https://ncatlab.org/nlab/show/parametric+right+adjoint
+--
 -- (Recall that `SliceSigmaPiFR` is a base change followed by a `SlicePiF`,
 -- while `SliceSigmaPiFL` is a base change followed by a `SliceSigmaF`.)
 
--- This is the dependent (slice) analogue of an arena (`PolyFunc`,
--- AKA `MLArena`).
+-- This is the dependent (slice) analogue of an arena in `Type` (where
+-- the latter is a `PolyFunc`, AKA `MLArena`).
 public export
 record SPFData (0 dom, cod : Type) where
   constructor SPFD
@@ -1115,6 +1118,11 @@ export
 SPFDdirBase : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDdirBase {dom} {cod} spfd = (dom, SPFDbase spfd)
 
+-- The total space of the domain of the dependent-product component
+-- of the factorization of a polynomial functor into a base change
+-- followed by a dependent product followed by a dependent sum.
+-- (The domain of the dependent-product component is therefore also the
+-- codomain of the base-change component.)
 export
 SPFDdirTot : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDdirTot {dom} {cod} spfd =
