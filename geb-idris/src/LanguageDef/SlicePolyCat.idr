@@ -1185,12 +1185,12 @@ SPFDradjFact {dom} {cod} spfd sd ecp =
   SPFDextCovarDirRep spfd (fst ecp) (snd ecp) sd
 
 export
-SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDradjFactMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDradjFact {dom} {cod} spfd)
-SPFDradjMap {dom} {cod} spfd x y m ecp =
+SPFDradjFactMap {dom} {cod} spfd x y m ecp =
   SPFDextCovarDirRepMap spfd (fst ecp) (snd ecp) x y m
 
--- We show that the dependent right-adjoint component of a polynomial functor
+-- We show that the right-adjoint factor of a polynomial functor
 -- expressed as a parametric right adjoint is equivalent to `SliceSigmaPiFR`
 -- with particular parameters.
 export
