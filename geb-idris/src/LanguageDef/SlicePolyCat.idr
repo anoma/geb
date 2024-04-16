@@ -1461,8 +1461,9 @@ SPFDunitIdxToSl {dom} {cod} spfd b i ecp =
 -- called `SPFDposContraRep`.)
 --
 -- Note that this is the composition of the left adjoint of the right-adjoint
--- component of a polynomial functor after the index functor of the family of
--- units.
+-- factor of a polynomial functor after the index functor of the family of
+-- units, wjhich may be viewed as a fibered/dependent version of the
+-- dependent-sum factor of the polynomial functor.
 export
 SPFDmultiL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
