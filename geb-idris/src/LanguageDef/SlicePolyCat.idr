@@ -1462,6 +1462,19 @@ SPFDmultiL {dom} {cod} spfd b i =
   SPFDladj {dom} {cod} spfd $ SPFDunitIdx {dom} {cod} spfd b i
 
 export
+SPFDmultiLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (0 b : SliceObj cod) -> (0 i : SPFDposFib spfd b) ->
+  (0 b' : SliceObj cod) -> (0 i' : SPFDposFib spfd b') ->
+  SliceMorphism {a=(SPFDbase spfd)}
+    (SPFDposFibToSl {spfd} {b} i)
+    (SPFDposFibToSl {spfd} {b=b'} i') ->
+  SliceMorphism {a=dom}
+    (SPFDmultiL spfd b i)
+    (SPFDmultiL spfd b' i')
+SPFDmultiLmap {dom} {cod} spfd b b' i i' m ed ddp =
+  (fst ddp ** m (fst $ fst ddp) $ snd ddp)
+
+export
 SPFDlmucDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj dom -> SliceObj cod
