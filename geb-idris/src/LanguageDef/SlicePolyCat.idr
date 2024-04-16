@@ -1242,30 +1242,28 @@ SPFDRadjFactCSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDRadjFactCSl {dom} {cod} spfd sl =
   SPFDradjFactSl {dom} {cod} spfd (SPFDposCSlToBaseSl sl)
 
--- The left adjoint of the right-adjoint component of a polynomial functor
--- expressed as a parametric right adjoint.
+-- The left adjoint of the right-adjoint factor of a polynomial functor.
 export
-SPFDladj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDladjFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor (SPFDbase {dom} {cod} spfd) dom
-SPFDladj {dom} {cod} spfd =
+SPFDladjFact {dom} {cod} spfd =
   SliceSigmaPiFL {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
     $ Prelude.uncurry (DPair.uncurry $ spfdDir spfd) . swap
 
 export
-SPFDladjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceFMap (SPFDladj {dom} {cod} spfd)
-SPFDladjMap {dom} {cod} spfd =
+SPFDladjFactMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDladjFact {dom} {cod} spfd)
+SPFDladjFactMap {dom} {cod} spfd =
   ssplMap {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
     $ Prelude.uncurry (DPair.uncurry $ spfdDir spfd) . swap
 
--- We show that the left adjoint of the dependent right-adjoint component of a
--- polynomial functor expressed as a parametric right adjoint is equivalent to
--- `SliceSigmaPiFL` with particular parameters.  (Of course, we _defined_ it
--- as such, so this is trivial.)
+-- We show that the left adjoint of the right-adjoint factor of a
+-- polynomial functor is equivalent to `SliceSigmaPiFL` with particular
+-- parameters.  (Of course, we _defined_ it as such, so this is trivial.)
 export
 SPFDasSSPL : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceNatTrans {x=(SPFDbase spfd)} {y=dom}
-    (SPFDladj {dom} {cod} spfd)
+    (SPFDladjFact {dom} {cod} spfd)
     (SliceSigmaPiFL {c=dom} {e=(SPFDbase spfd)} $ SPFDtoSSPR spfd)
 SPFDasSSPL {dom} {cod} (SPFD pos dir) sd ed (((ec ** ep) ** dd) ** sdd) =
   (((ec ** ep) ** dd) ** sdd)
@@ -1274,12 +1272,12 @@ export
 SSPLasSPFD : {0 dom, cod : Type} -> (sspl : SliceObj (dom, cod)) ->
   SliceNatTrans {x=cod} {y=dom}
     (SliceSigmaPiFL {c=dom} {e=cod} sspl)
-    (SPFDladj {dom} {cod} (SSPRtoSPFD {dom} {cod} sspl)
+    (SPFDladjFact {dom} {cod} (SSPRtoSPFD {dom} {cod} sspl)
      . (\sc, (ec ** ()) => sc ec))
 SSPLasSPFD {dom} {cod} sspl sc ed ((ec ** esdc) ** esc) =
   (((ec ** ()) ** esdc) ** esc)
 
--- The dependent-sum component of a polynomial functor expressed as
+-- The dependent-sum factor of a polynomial functor expressed as
 -- a codomain-parameterized copresheaf on slice objects over positions.
 export
 SPFDsigmaDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1295,31 +1293,32 @@ SPFDsigmaDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDsigmaDepMap {dom} {cod} spfd ec {a} {b} m esa =
   (fst esa ** m (fst esa) (snd esa))
 
--- The dependent-sum component of a polynomial functor expressed as
--- a parametric right adjoint.
+-- The dependent-sum factor of a polynomial functor.
 export
 SPFDsigma : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor (SPFDbase {dom} {cod} spfd) cod
 SPFDsigma {dom} {cod} spfd bsl ec =
-  -- SliceSigmaF {c=cod} (spfdPos spfd) bsl ec
+  -- This is equivalent to:
+  --  SliceSigmaF {c=cod} (spfdPos spfd) bsl ec
   SPFDsigmaDep {dom} {cod} spfd ec (curry bsl ec)
 
 export
 SPFDsigmaMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDsigma {dom} {cod} spfd)
 SPFDsigmaMap {dom} {cod} spfd a b m ec =
-  -- ssMap {c=cod} {sl=(spfdPos spfd)} a b m ec
+  -- This is equivalent to:
+  --  ssMap {c=cod} {sl=(spfdPos spfd)} a b m ec
   SPFDsigmaDepMap {dom} {cod} spfd ec {a=(curry a ec)} {b=(curry b ec)}
     $ \ep => m (ec ** ep)
 
 -- We show explicitly that `SPFDsigma` is equivalent to
--- `SliceSigmaF`.
+-- `SliceSigmaF` (this is trivial).
 export
 SPFDsigmaAsSS : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceNatTrans {x=(SPFDbase spfd)} {y=cod}
     (SPFDsigma {dom} {cod} spfd)
     (SliceSigmaF {c=cod} $ spfdPos spfd)
-SPFDsigmaAsSS {dom} {cod} (SPFD pos dir) scp ec eps = eps
+SPFDsigmaAsSS {dom} {cod} (SPFD pos dir) scp ec = id
 
 export
 SSasSPFDsigma : {0 cod : Type} -> (ss : SliceObj cod) ->
@@ -1327,7 +1326,7 @@ SSasSPFDsigma : {0 cod : Type} -> (ss : SliceObj cod) ->
     (SliceSigmaF {c=cod} ss)
     (SPFDsigma {dom=(Sigma {a=cod} ss)} {cod}
      $ SPFD ss $ \ec, ess, ecs => ss ec)
-SSasSPFDsigma {cod} ss scs ec ess = ess
+SSasSPFDsigma {cod} ss scs ec = id
 
 -- The dependent-sum component of a polynomial functor expressed as
 -- a parametric right adjoint is itself a _left_ adjoint, to a base
@@ -1404,13 +1403,13 @@ InterpSPFDataMap = SPFDmultiRmap
 -- only (in particular, `SlicePiF` is not involved).
 export
 SPFDL : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor cod dom
-SPFDL {dom} {cod} spfd = SPFDladj spfd . SPFDsigmaR spfd
+SPFDL {dom} {cod} spfd = SPFDladjFact spfd . SPFDsigmaR spfd
 
 export
 SPFDLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDL spfd)
 SPFDLmap {dom} {cod} spfd x y =
-  SPFDladjMap spfd (SPFDsigmaR spfd x) (SPFDsigmaR spfd y)
+  SPFDladjFactMap spfd (SPFDsigmaR spfd x) (SPFDsigmaR spfd y)
   . SPFDsigmaRAdjMap spfd x y
 
 export
@@ -1468,7 +1467,7 @@ SPFDmultiL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
   SliceObj dom
 SPFDmultiL {dom} {cod} spfd b i =
-  SPFDladj {dom} {cod} spfd $ SPFDunitIdx {dom} {cod} spfd b i
+  SPFDladjFact {dom} {cod} spfd $ SPFDunitIdx {dom} {cod} spfd b i
 
 export
 SPFDmultiLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
