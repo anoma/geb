@@ -1137,8 +1137,9 @@ SPFDdirTot {dom} {cod} spfd =
 -- This is the functor from `SliceObj cod` to `Type` which is referred
 -- to as `I` in theorem 2.4 of
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition .  It is
--- referred to as the "index" functor (in particular, it indexes the
--- family of units of the multi-adjunction).
+-- referred to as the "index" (in particular, it indexes the
+-- family of units of the multi-adjunction) part of a left multi-adjoint
+-- (the functor part is `SPFDmultiL`).
 export
 SPFDposFib : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDposFib {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
@@ -1433,8 +1434,12 @@ SPFDunitFibration {dom} {cod} spfd b i ec ep =
 -- component.
 --
 -- We are using the morphism `i` as a fibration, so effectively we are
--- treating it together with its domain `b` as a slice object (in the
--- slice category of `Type` over `cod`) of `spfdPos spfd`.
+-- treating it together with its domain `b` as an object in the
+-- slice category of `Type` over `SPFDbase spfd`.  As such, we can
+-- view `SPFDunitIdx` as a fibered version of an endofunctor on
+-- `SPFDbase spfd`, but we can also view it as a functor from `SliceObj cod`
+-- enhanced with a fibration of that slice of the codomain by `spfdPos spfd`
+-- to `SliceObj (SPFDbase spfd)`.
 export
 SPFDunitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
@@ -1449,7 +1454,9 @@ SPFDunitIdx {dom} {cod} spfd b =
 --  https://ncatlab.org/nlab/show/parametric+right+adjoint#properties
 -- and in the definition of a multi-adjunction in Definition 2.1 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition
--- (and also in Theorem 2.4 in that same section).
+-- (and also in Theorem 2.4 in that same section).  (The index component
+-- of the left multi-adjoint, called `I` on the ncatlab page, is here
+-- called `SPFDposFib`.)
 --
 -- Note that this is the composition of the left adjoint of the right-adjoint
 -- component of a polynomial functor after the index functor of the family of
@@ -1475,26 +1482,33 @@ SPFDmultiLmap {dom} {cod} spfd b b' i i' m ed ddp =
   (fst ddp ** m (fst $ fst ddp) $ snd ddp)
 
 export
-SPFDlmucDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiMfibDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj dom -> SliceObj cod
-SPFDlmucDep {dom} {cod} spfd b i a ec =
+SPFDmultiMfibDep {dom} {cod} spfd b i a ec =
   SPFDRdep {dom} {cod} spfd ec $ SPFDmultiL {dom} {cod} spfd b i
 
 export
-SPFDlmucCopr : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiMfibCopr : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   cod -> SliceObj dom -> Type
-SPFDlmucCopr {dom} {cod} spfd b i = flip $ SPFDlmucDep {dom} {cod} spfd b i
+SPFDmultiMfibCopr {dom} {cod} spfd b i =
+  flip $ SPFDmultiMfibDep {dom} {cod} spfd b i
 
 -- The codomain of the unit of the left multi-adjoint of a slice
--- polynomial functor.
+-- polynomial functor.  It may be viewed as the fibered version
+-- (as opposed to the slice-object version) of the multi-monad of
+-- the multi-adjunction induced by a slice polynomial functor.
+--
+-- It comprises the composition called `TL(b, i)` under
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#properties
+-- (so the unit itself has type `b -> TL(b, i)`).
 export
-SPFDlmuc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiMfib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj cod
-SPFDlmuc {dom} {cod} spfd b i =
-  SPFDlmucDep {dom} {cod} spfd b i (SPFDmultiL {dom} {cod} spfd b i)
+SPFDmultiMfib {dom} {cod} spfd b i =
+  SPFDmultiR spfd $ SPFDmultiL {dom} {cod} spfd b i
 
 export
 SPFDfactPosL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1522,12 +1536,12 @@ SPFDlPos {dom} {cod} spfd a b =
   SPFDmultiL {dom} {cod} spfd b . SPFDfactPos {dom} {cod} spfd a b
 
 export
-SPFDlmucPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiMfibPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceObj cod
-SPFDlmucPos {dom} {cod} spfd a b =
-  SPFDlmuc {dom} {cod} spfd b . SPFDfactPos {dom} {cod} spfd a b
+SPFDmultiMfibPos {dom} {cod} spfd a b =
+  SPFDmultiMfib {dom} {cod} spfd b . SPFDfactPos {dom} {cod} spfd a b
 
 export
 SPFDfactDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1585,7 +1599,7 @@ export
 SPFDfactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  SliceMorphism {a=cod} b (SPFDlmucPos {dom} {cod} spfd a b i)
+  SliceMorphism {a=cod} b (SPFDmultiMfibPos {dom} {cod} spfd a b i)
 SPFDfactR {dom} {cod} spfd a b i ec eb =
   (SPFDfactPos {dom} {cod} spfd a b i ec eb **
    \ed : dom,
@@ -1608,7 +1622,7 @@ SPFDfactLlift : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceMorphism {a=cod}
-    (SPFDlmucPos {dom} {cod} spfd a b i)
+    (SPFDmultiMfibPos {dom} {cod} spfd a b i)
     (SPFDmultiR {dom} {cod} spfd a)
 SPFDfactLlift {dom} {cod} spfd a b i =
   SPFDmultiRmap spfd
@@ -1718,7 +1732,7 @@ SPFDpraRAdj {dom} {cod} spfd x y m =
 export
 SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SPFDpraRcat {dom} {cod} spfd) ->
-  SliceMorphism {a=cod} (fst b) (SPFDlmuc {dom} {cod} spfd (fst b) (snd b))
+  SliceMorphism {a=cod} (fst b) (SPFDmultiMfib {dom} {cod} spfd (fst b) (snd b))
 SPFDlmadj {dom} {cod} spfd b =
   SPFDpraLAdj {dom} {cod} spfd
     b
