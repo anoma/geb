@@ -1129,6 +1129,16 @@ SPFDdirTot {dom} {cod} spfd =
   (edcp : SPFDdirBase spfd **
    spfdDir spfd (fst edcp) (fst $ snd edcp) (snd $ snd edcp))
 
+-- A fibration of the given object of the slice category over `cod`
+-- by `spfdPos spfd` -- meaning simply a (slice) morphism from the
+-- given object to `spfdPos sfpd`, but we give it this name because
+-- we are going to use it as a fibration.
+--
+-- This is the functor from `SliceObj cod` to `Type` which is referred
+-- to as `I` in theorem 2.4 of
+-- https://ncatlab.org/nlab/show/multi-adjoint#definition .  It is
+-- referred to as the "index" functor (in particular, it indexes the
+-- family of units of the multi-adjunction).
 export
 SPFDposFib : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDposFib {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
@@ -1433,14 +1443,17 @@ SPFDunitIdx {dom} {cod} spfd b =
   -- SPFDunitFibration {dom} {cod} spfd b i (fst ecp) (snd ecp)
   SPFDposFibToSl {dom} {cod} {spfd} {b}
 
--- The composition of the left adjoint of the right-adjoint component of a
--- polynomial functor viewed as a parametric right adjoint with the index
--- functor of the family of units.  This corresponds to what is called `L(x, i)`
--- (here `x` is called `b`) in
--- https://ncatlab.org/nlab/show/multi-adjoint#definition .
--- We might call it the "left multi-adjoint" of the multi-adjunction defined
--- by a slice polynomial functor (the polynomial functor itself is the
--- right multi-adjoint).
+-- This is the left multi-adjoint of `SPFDmultiR`.  It is the functor which
+-- is called `L` both in the "in particular has a left-multi-adjoint"
+-- "Property" under
+--  https://ncatlab.org/nlab/show/parametric+right+adjoint#properties
+-- and in the definition of a multi-adjunction in Definition 2.1 at
+-- https://ncatlab.org/nlab/show/multi-adjoint#definition
+-- (and also in Theorem 2.4 in that same section).
+--
+-- Note that this is the composition of the left adjoint of the right-adjoint
+-- component of a polynomial functor after the index functor of the family of
+-- units.
 export
 SPFDLfib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
