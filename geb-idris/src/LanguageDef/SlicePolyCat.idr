@@ -1455,10 +1455,10 @@ SPFDunitIdx {dom} {cod} spfd b =
 -- component of a polynomial functor after the index functor of the family of
 -- units.
 export
-SPFDLfib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj dom
-SPFDLfib {dom} {cod} spfd b i =
+SPFDmultiL {dom} {cod} spfd b i =
   SPFDladj {dom} {cod} spfd $ SPFDunitIdx {dom} {cod} spfd b i
 
 export
@@ -1466,7 +1466,7 @@ SPFDlmucDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj dom -> SliceObj cod
 SPFDlmucDep {dom} {cod} spfd b i a ec =
-  SPFDRdep {dom} {cod} spfd ec $ SPFDLfib {dom} {cod} spfd b i
+  SPFDRdep {dom} {cod} spfd ec $ SPFDmultiL {dom} {cod} spfd b i
 
 export
 SPFDlmucCopr : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1481,7 +1481,7 @@ SPFDlmuc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposFib spfd b) ->
   SliceObj cod
 SPFDlmuc {dom} {cod} spfd b i =
-  SPFDlmucDep {dom} {cod} spfd b i (SPFDLfib {dom} {cod} spfd b i)
+  SPFDlmucDep {dom} {cod} spfd b i (SPFDmultiL {dom} {cod} spfd b i)
 
 export
 SPFDfactPosL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1506,7 +1506,7 @@ SPFDlPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SliceObj dom
 SPFDlPos {dom} {cod} spfd a b =
-  SPFDLfib {dom} {cod} spfd b . SPFDfactPos {dom} {cod} spfd a b
+  SPFDmultiL {dom} {cod} spfd b . SPFDfactPos {dom} {cod} spfd a b
 
 export
 SPFDlmucPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1626,7 +1626,7 @@ SPFDpraAdjL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) -> Type
 SPFDpraAdjL {dom} {cod} spfd x y =
   Sigma {a=(SPFDposFib spfd x)}
-  $ flip (SliceMorphism {a=dom}) y . SPFDLfib {dom} {cod} spfd x
+  $ flip (SliceMorphism {a=dom}) y . SPFDmultiL {dom} {cod} spfd x
 
 -- The left multi-adjoint of the hom-set description of a multi-adjunction
 -- described in Theorem 2.4 at
@@ -1636,7 +1636,7 @@ export
 SPFDpraL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDpraRcat {dom} {cod} spfd -> SliceObj dom
 SPFDpraL {dom} {cod} spfd fibcod =
-  SPFDLfib {dom} {cod} spfd (fst fibcod) (snd fibcod)
+  SPFDmultiL {dom} {cod} spfd (fst fibcod) (snd fibcod)
 
 -- The polynomial functor represented by an `SPFData`, viewed as a functor not
 -- only from `SliceObj dom` to `SliceObj cod` but from `SliceObj dom` to
