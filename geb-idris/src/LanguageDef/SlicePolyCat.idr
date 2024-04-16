@@ -1049,20 +1049,11 @@ record SPFData (0 dom, cod : Type) where
   spfdDir : (ec : cod) -> spfdPos ec -> SliceObj dom
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
--- a position-dependent profunctor.
-export
-SPFDradjProf : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  dom -> (ec : cod) -> spfdPos spfd ec -> SliceObj dom -> Type
-SPFDradjProf {dom} {cod} spfd ed ec ep sd =
-  SliceHom (spfdDir spfd ec ep) sd ed
-
--- The dependent right-adjoint component of a polynomial functor expressed as
 -- a position-dependent endofunctor on the slice category over the domain.
 export
 SPFDradjEndo : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceEndofunctor dom
-SPFDradjEndo {dom} {cod} spfd ec ep sd ed =
-  SPFDradjProf {dom} {cod} spfd ed ec ep sd
+SPFDradjEndo {dom} {cod} spfd ec ep = SliceHom (spfdDir spfd ec ep)
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
 -- a position-dependent representable copresheaf on slice objects of the domain.
