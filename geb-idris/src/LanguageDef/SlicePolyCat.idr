@@ -1332,14 +1332,14 @@ SSasSPFDsigma {cod} ss scs ec = id
 -- adjoint, to a base change.  This is that base change, the right
 -- adjoint to `SPFDsigma`.
 export
-SPFDsigmaR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDdepSumFactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor cod (SPFDbase {dom} {cod} spfd)
-SPFDsigmaR {dom} {cod} spfd = SliceBCF {c=cod} (spfdPos spfd)
+SPFDdepSumFactR {dom} {cod} spfd = SliceBCF {c=cod} (spfdPos spfd)
 
 export
-SPFDsigmaRmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceFMap (SPFDsigmaR {dom} {cod} spfd)
-SPFDsigmaRmap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
+SPFDdepSumFactRmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDdepSumFactR {dom} {cod} spfd)
+SPFDdepSumFactRmap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 
 -- The composition of the dependent-sum factor after the right-adjoint
 -- factor yields the interpretation of a polynomial functor (explicitly
@@ -1402,14 +1402,14 @@ SPFDmultiRflipMap {dom} {cod} spfd ec {a} {b} mab =
 -- only (in particular, `SlicePiF` is not involved).
 export
 SPFDL : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor cod dom
-SPFDL {dom} {cod} spfd = SPFDladjFact spfd . SPFDsigmaR spfd
+SPFDL {dom} {cod} spfd = SPFDladjFact spfd . SPFDdepSumFactR spfd
 
 export
 SPFDLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDL spfd)
 SPFDLmap {dom} {cod} spfd x y =
-  SPFDladjFactMap spfd (SPFDsigmaR spfd x) (SPFDsigmaR spfd y)
-  . SPFDsigmaRmap spfd x y
+  SPFDladjFactMap spfd (SPFDdepSumFactR spfd x) (SPFDdepSumFactR spfd y)
+  . SPFDdepSumFactRmap spfd x y
 
 export
 0 SPFDunitFiber : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1435,10 +1435,12 @@ SPFDunitFibration {dom} {cod} spfd sl ec ep =
 -- a polynomial functor from category-theoretic style
 -- (`SPFDposContraRep`) to dependent-type style (`SliceObj SPFDbase`).
 --
--- Note that this has a signature like that of `SPFDsigmaR` (the right
+-- Note that this has a signature like that of `SPFDdepSumFactR` (the right
 -- adjoint of the dependent-sum component of the polynomial functor)
 -- but with the addition of the `i : SPFDposContraRep spfd b`
--- component.
+-- component.  `SPFDdepSumFactR` is the depedent-sum factor of the polynomial
+-- functor, so this may be viewed as a fibered/dependent version of the
+-- dependent-sum factor.
 export
 SPFDunitIdxToSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDposContraRep spfd b) ->
