@@ -1513,11 +1513,16 @@ SPFDmultiMfibMap {dom} {cod} spfd b i b' i' =
   SPFDmultiRmap {dom} {cod} spfd (SPFDmultiL spfd b i) (SPFDmultiL spfd b' i')
   . SPFDmultiLmap {dom} {cod} spfd b i b' i'
 
+-- The second part of the "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1`
+-- (see below) -- that is, the part with the signature
+-- `SPFDmultiR a -> SPFDmultiR 1`.  `SPFDmultiR 1` is simply `spfdPos spfd`.
 export
-SPFDfactPosL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDfactPosSndFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
-  SPFDposContraRep spfd (SPFDmultiR {dom} {cod} spfd a)
-SPFDfactPosL {dom} {cod} spfd a b ec = DPair.fst
+  SliceMorphism {a=cod}
+    (SPFDmultiR {dom} {cod} spfd a)
+    (spfdPos spfd)
+SPFDfactPosSndFact {dom} {cod} spfd a b ec = DPair.fst
 
 -- The "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1` induced by a given
 -- morphism `b -> SPFDmultiR a`, as described at
@@ -1528,7 +1533,7 @@ SPFDfactPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   SPFDposContraRep spfd b
 SPFDfactPos {dom} {cod} spfd a b =
-  sliceComp {a=cod} (SPFDfactPosL {dom} {cod} spfd a b)
+  sliceComp {a=cod} (SPFDfactPosSndFact {dom} {cod} spfd a b)
 
 export
 SPFDlPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
