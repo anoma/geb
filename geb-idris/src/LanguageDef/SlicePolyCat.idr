@@ -1092,6 +1092,10 @@ SPFDbase : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDbase {dom} {cod} = Sigma {a=cod} . spfdPos
 
 export
+SPFDbaseSl : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDbaseSl {dom} {cod} = SliceObj . SPFDbase {dom} {cod}
+
+export
 SPFDdirBase : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDdirBase {dom} {cod} spfd = (dom, SPFDbase spfd)
 
@@ -1123,10 +1127,6 @@ SPFDdirTot {dom} {cod} spfd =
 export
 SPFDposContraRep : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDposContraRep {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
-
-export
-SPFDbaseSl : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDbaseSl {dom} {cod} = SliceObj . SPFDbase {dom} {cod}
 
 export
 SPFDposContraRepToSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
