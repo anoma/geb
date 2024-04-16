@@ -1341,25 +1341,6 @@ SPFDsigmaRmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDsigmaR {dom} {cod} spfd)
 SPFDsigmaRmap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 
-export
-SPFDRdep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (ec : cod) -> SliceObj dom -> Type
-SPFDRdep {dom} {cod} spfd ec =
-  SPFDsigmaDep {dom} {cod} spfd ec
-  . flip (SPFDextCovarDirRep {dom} {cod} spfd ec)
-
-export
-SPFDRdepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (ec : cod) -> {0 a, b : SliceObj dom} ->
-  SliceMorphism {a=dom} a b ->
-  SPFDRdep {dom} {cod} spfd ec a ->
-  SPFDRdep {dom} {cod} spfd ec b
-SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab =
-  SPFDsigmaDepMap {dom} {cod} spfd ec
-    {a=(flip (SPFDextCovarDirRep {dom} {cod} spfd ec) a)}
-    {b=(flip (SPFDextCovarDirRep {dom} {cod} spfd ec) b)}
-    $ \ep => SPFDextCovarDirRepMap {dom} {cod} spfd ec ep a b mab
-
 -- The composition of the dependent-sum factor after the right-adjoint
 -- factor yields the interpretation of a polynomial functor (explicitly
 -- as a parametric right adjoint).
@@ -1394,6 +1375,21 @@ export
 InterpSPFDataMap : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceFMap (InterpSPFData {dom} {cod} spfd)
 InterpSPFDataMap = SPFDmultiRmap
+
+export
+SPFDmultiRflip : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> SliceObj dom -> Type
+SPFDmultiRflip {dom} {cod} spfd ec sd =
+  SPFDmultiR {dom} {cod} spfd sd ec
+
+export
+SPFDmultiRflipMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> {a, b : SliceObj dom} ->
+  SliceMorphism {a=dom} a b ->
+  SPFDmultiR {dom} {cod} spfd a ec ->
+  SPFDmultiR {dom} {cod} spfd b ec
+SPFDmultiRflipMap {dom} {cod} spfd ec {a} {b} mab =
+  SPFDmultiRmap {dom} {cod} spfd a b mab ec
 
 -- We can define a functor in the opposite direction to `SPFDmultiR` by
 -- composition of the adjoints going in the opposite direction.  Like
