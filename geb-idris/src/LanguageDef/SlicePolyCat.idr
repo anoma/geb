@@ -1519,9 +1519,7 @@ SPFDmultiMfibMap {dom} {cod} spfd b i b' i' =
 export
 SPFDfactPosSndFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
-  SliceMorphism {a=cod}
-    (SPFDmultiR {dom} {cod} spfd a)
-    (spfdPos spfd)
+  SPFDposContraRep spfd (SPFDmultiR {dom} {cod} spfd a)
 SPFDfactPosSndFact {dom} {cod} spfd a b ec = DPair.fst
 
 -- The "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1` induced by a given
