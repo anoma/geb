@@ -1057,6 +1057,12 @@ SPFDintRep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceEndofunctor dom
 SPFDintRep {dom} {cod} spfd ec ep = SliceHom {a=dom} (spfdDir spfd ec ep)
 
+export
+SPFDintRepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (ec : cod) -> (ep : spfdPos spfd ec) ->
+  SliceFMap (SPFDintRep {dom} {cod} spfd ec ep)
+SPFDintRepMap {dom} {cod} spfd ec ep x y mab ed = (.) (mab ed)
+
 -- The external (that is, as a copresheaf) covariant representable functor
 -- on the domain of a slice polynomial functor represented by its object
 -- of directions at a given position.
