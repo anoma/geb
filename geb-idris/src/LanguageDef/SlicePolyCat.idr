@@ -1046,14 +1046,7 @@ public export
 record SPFData (0 dom, cod : Type) where
   constructor SPFD
   spfdPos : SliceObj cod
-  spfdDir : dom -> (ec : cod) -> SliceObj (spfdPos ec)
-
--- Simply a rearrangement of the parameters of `spfdDir`, which can be
--- more clear or convenient in different orders depending on usage.
-export
-spfdDirFlip : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (ec : cod) -> spfdPos spfd ec -> SliceObj dom
-spfdDirFlip {dom} {cod} spfd ec ep ed = spfdDir spfd ed ec ep
+  spfdDir : (ec : cod) -> spfdPos ec -> SliceObj dom
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
 -- a position-dependent profunctor.
@@ -1061,7 +1054,7 @@ export
 SPFDradjProf : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   dom -> (ec : cod) -> spfdPos spfd ec -> SliceObj dom -> Type
 SPFDradjProf {dom} {cod} spfd ed ec ep sd =
-  SliceHom (spfdDirFlip spfd ec ep) sd ed
+  SliceHom (spfdDir spfd ec ep) sd ed
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
 -- a position-dependent endofunctor on the slice category over the domain.
@@ -1078,7 +1071,7 @@ SPFDradjPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceObj dom -> Type
 SPFDradjPos {dom} {cod} spfd ec ep sd =
   -- Equivalent to:
-  --  SliceMorphism {a=dom} (spfdDirFlip spfd ec ep) sd
+  --  SliceMorphism {a=dom} (spfdDir spfd ec ep) sd
   Pi {a=dom} (SPFDradjEndo {dom} {cod} spfd ec ep sd)
 
 -- The dependent right-adjoint component of a polynomial functor expressed in
@@ -1127,7 +1120,7 @@ export
 SPFDdirTot : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDdirTot {dom} {cod} spfd =
   (edcp : SPFDdirBase spfd **
-   spfdDir spfd (fst edcp) (fst $ snd edcp) (snd $ snd edcp))
+   spfdDir spfd (fst $ snd edcp) (snd $ snd edcp) (fst edcp))
 
 -- A fibration of the given object of the slice category over `cod`
 -- by `spfdPos spfd` -- meaning simply a (slice) morphism from the
@@ -1203,11 +1196,11 @@ SPFDradjMap {dom} {cod} spfd x y m ecp =
 export
 SPFDtoSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj (dom, SPFDbase {dom} {cod} spfd)
-SPFDtoSSPR {dom} {cod} (SPFD pos dir) (ed, (ec ** ep)) = dir ed ec ep
+SPFDtoSSPR {dom} {cod} (SPFD pos dir) (ed, (ec ** ep)) = dir ec ep ed
 
 export
 SSPRtoSPFD : {dom, cod : Type} -> SliceObj (dom, cod) -> SPFData dom cod
-SSPRtoSPFD {dom} {cod} sspr = SPFD (const Unit) $ \ed, ec, () => sspr (ed, ec)
+SSPRtoSPFD {dom} {cod} sspr = SPFD (const Unit) $ \ec, (), ed => sspr (ed, ec)
 
 export
 SPFDasSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1248,14 +1241,14 @@ SPFDladj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor (SPFDbase {dom} {cod} spfd) dom
 SPFDladj {dom} {cod} spfd =
   SliceSigmaPiFL {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
-    $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
+    $ Prelude.uncurry (DPair.uncurry $ spfdDir spfd) . swap
 
 export
 SPFDladjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDladj {dom} {cod} spfd)
 SPFDladjMap {dom} {cod} spfd =
   ssplMap {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
-    $ Prelude.uncurry (DPair.uncurry . spfdDir spfd)
+    $ Prelude.uncurry (DPair.uncurry $ spfdDir spfd) . swap
 
 -- We show that the left adjoint of the dependent right-adjoint component of a
 -- polynomial functor expressed as a parametric right adjoint is equivalent to
@@ -1325,7 +1318,7 @@ SSasSPFDsigma : {0 cod : Type} -> (ss : SliceObj cod) ->
   SliceNatTrans {x=(Sigma {a=cod} ss)} {y=cod}
     (SliceSigmaF {c=cod} ss)
     (SPFDsigma {dom=(Sigma {a=cod} ss)} {cod}
-     $ SPFD ss $ \ecs, ec, ess => ss ec)
+     $ SPFD ss $ \ec, ess, ecs => ss ec)
 SSasSPFDsigma {cod} ss scs ec ess = ess
 
 -- The dependent-sum component of a polynomial functor expressed as
@@ -1548,8 +1541,8 @@ SPFDfactDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> b ec -> SliceObj dom
-SPFDfactDir {dom} {cod} spfd a b i ec eb ed =
-   spfdDir spfd ed ec (SPFDfactPos {dom} {cod} spfd a b i ec eb)
+SPFDfactDir {dom} {cod} spfd a b i ec eb =
+   spfdDir spfd ec (SPFDfactPos {dom} {cod} spfd a b i ec eb)
 
 export
 SPFDfactRDom : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1583,7 +1576,7 @@ SPFDfactRdir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> b ec -> SliceObj dom
 SPFDfactRdir {dom} {cod} spfd a b i ec eb =
-  spfdDirFlip spfd ec $ SPFDfactPos {dom} {cod} spfd a b i ec eb
+  spfdDir spfd ec $ SPFDfactPos {dom} {cod} spfd a b i ec eb
 
 export
 SPFDfactRdirApp : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1815,7 +1808,7 @@ spfdFromWTF {dom} {cod} spfd sd ec
 WTFasSPFD {dom} {cod} (MkWTF pos dir f g h) =
   SPFD
     (\ec => Subset0 pos $ \ep => h ep = ec)
-    (\ed, ec, (Element0 ep ecpeq) =>
+    (\ec, (Element0 ep ecpeq), ed =>
       Subset0 dir $ \dd => (f dd = ed, g dd = ep))
 
 0 wtfToSPFD : {0 dom, cod : Type} -> (wtf : WTypeFunc dom cod) ->
