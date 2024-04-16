@@ -1356,15 +1356,15 @@ InterpSPFData : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor dom cod
 InterpSPFData = SPFDmultiR
 
 export
-SPFDRmap : {dom, cod : Type} ->
+SPFDmultiRmap : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceFMap (SPFDmultiR {dom} {cod} spfd)
-SPFDRmap {dom} {cod} spfd a b mab ec =
+SPFDmultiRmap {dom} {cod} spfd a b mab ec =
   SPFDRdepMap {dom} {cod} spfd ec {a} {b} mab
 
 export
 InterpSPFDataMap : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceFMap (InterpSPFData {dom} {cod} spfd)
-InterpSPFDataMap = SPFDRmap
+InterpSPFDataMap = SPFDmultiRmap
 
 -- We can define a functor in the opposite direction to `SPFDmultiR` by
 -- composition of the adjoints going in the opposite direction.  Like
@@ -1570,7 +1570,7 @@ SPFDfactLlift : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     (SPFDlmucPos {dom} {cod} spfd a b i)
     (SPFDmultiR {dom} {cod} spfd a)
 SPFDfactLlift {dom} {cod} spfd a b i =
-  SPFDRmap spfd
+  SPFDmultiRmap spfd
     (SPFDlPos {dom} {cod} spfd a b i)
     a
     (SPFDfactL {dom} {cod} spfd a b i)
@@ -1695,7 +1695,7 @@ export
 SPFDmonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDmonad {dom} {cod} spfd)
 SPFDmonadMap {dom} {cod} spfd x y =
-  SPFDRmap spfd (SPFDRladj spfd x) (SPFDRladj spfd y)
+  SPFDmultiRmap spfd (SPFDRladj spfd x) (SPFDRladj spfd y)
   . SPFDRladjMap spfd x y
 
 -- The comonad of the polynomial-functor-as-PRA multi-adjunction.
@@ -1710,7 +1710,7 @@ SPFDcomonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDcomonad {dom} {cod} spfd)
 SPFDcomonadMap {dom} {cod} spfd x y =
   SPFDRladjMap spfd (SPFDmultiR spfd x) (SPFDmultiR spfd y)
-  . SPFDRmap spfd x y
+  . SPFDmultiRmap spfd x y
 
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
