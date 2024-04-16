@@ -1328,18 +1328,18 @@ SSasSPFDsigma : {0 cod : Type} -> (ss : SliceObj cod) ->
      $ SPFD ss $ \ec, ess, ecs => ss ec)
 SSasSPFDsigma {cod} ss scs ec = id
 
--- The dependent-sum component of a polynomial functor expressed as
--- a parametric right adjoint is itself a _left_ adjoint, to a base
--- change.  This is that base change, the right adjoint to `SPFDsigma`.
+-- The dependent-sum factor of a polynomial functor is itself a _left_
+-- adjoint, to a base change.  This is that base change, the right
+-- adjoint to `SPFDsigma`.
 export
 SPFDsigmaR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor cod (SPFDbase {dom} {cod} spfd)
 SPFDsigmaR {dom} {cod} spfd = SliceBCF {c=cod} (spfdPos spfd)
 
 export
-SPFDsigmaRAdjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDsigmaRmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDsigmaR {dom} {cod} spfd)
-SPFDsigmaRAdjMap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
+SPFDsigmaRmap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 
 -- The composition of the dependent-sum component after the right-adjoint
 -- component yields the interpretation of a polynomial functor as a
@@ -1410,7 +1410,7 @@ SPFDLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDL spfd)
 SPFDLmap {dom} {cod} spfd x y =
   SPFDladjFactMap spfd (SPFDsigmaR spfd x) (SPFDsigmaR spfd y)
-  . SPFDsigmaRAdjMap spfd x y
+  . SPFDsigmaRmap spfd x y
 
 export
 0 SPFDunitFiber : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
