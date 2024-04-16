@@ -1149,9 +1149,9 @@ SPFDposCSlToBaseSl {dom} {cod} {spfd} csl =
 -- The slice-object component of the translation from a dependent-type-style
 -- slice of `SPFDbase spfd` to a category-theory-style slice of `spfdPos spfd`.
 export
-SPFDposSlcobase : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+SPFDbaseSlToPosCSlDom : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDbaseSl {dom} {cod} spfd -> SliceObj cod
-SPFDposSlcobase {dom} {cod} {spfd} =
+SPFDbaseSlToPosCSlDom {dom} {cod} {spfd} =
   -- An explicit definition (not using utility routines) would be:
   --  \sl, ec => Sigma {a=(spfdPos spfd ec)} $ curry sl ec
   SlSliceToSlice {c=cod} {a=(spfdPos spfd)}
@@ -1159,10 +1159,10 @@ SPFDposSlcobase {dom} {cod} {spfd} =
 -- The slice-morphism component of the translation from a dependent-type-style
 -- slice of `SPFDbase spfd` to a category-theory-style slice of `spfdPos spfd`.
 export
-SPFDposSltoFib : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+SPFDbaseSlToPosCSlProj : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   (sl : SPFDbaseSl {dom} {cod} spfd) ->
-  SliceMorphism {a=cod} (SPFDposSlcobase {spfd} sl) (spfdPos spfd)
-SPFDposSltoFib {dom} {cod} {spfd} =
+  SliceMorphism {a=cod} (SPFDbaseSlToPosCSlDom {spfd} sl) (spfdPos spfd)
+SPFDbaseSlToPosCSlProj {dom} {cod} {spfd} =
   -- An explicit definition (not using utility routines) would be:
   -- \sl, ec => DPair.fst
   slSliceToMor {c=cod} {a=(spfdPos spfd)}
@@ -1173,8 +1173,8 @@ export
 SPFDbaseSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDbaseSl {dom} {cod} spfd -> CSliceObjOfSliceCat {c=cod} (spfdCPos spfd)
 SPFDbaseSlToPosCSl {spfd} sl =
-  (CSliceFromSlice (SPFDposSlcobase sl) **
-   CSMorphFromSlice $ SPFDposSltoFib {spfd} sl)
+  (CSliceFromSlice (SPFDbaseSlToPosCSlDom sl) **
+   CSMorphFromSlice $ SPFDbaseSlToPosCSlProj {spfd} sl)
 
 -- The dependent right-adjoint component of a polynomial functor expressed as
 -- a position-dependent endofunctor on the slice category over the domain,
