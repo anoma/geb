@@ -1055,7 +1055,8 @@ record SPFData (0 dom, cod : Type) where
 export
 SPFDintCovarDirRep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceEndofunctor dom
-SPFDintCovarDirRep {dom} {cod} spfd ec ep = SliceHom {a=dom} (spfdDir spfd ec ep)
+SPFDintCovarDirRep {dom} {cod} spfd ec ep =
+  SliceHom {a=dom} (spfdDir spfd ec ep)
 
 export
 SPFDintCovarDirRepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1167,7 +1168,8 @@ SPFDintCovarDirRepBase {dom} {cod} spfd ecp =
 export
 SPFDradj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor dom (SPFDbase {dom} {cod} spfd)
-SPFDradj {dom} {cod} spfd sd ecp = SPFDextCovarDirRep spfd (fst ecp) (snd ecp) sd
+SPFDradj {dom} {cod} spfd sd ecp =
+  SPFDextCovarDirRep spfd (fst ecp) (snd ecp) sd
 
 export
 SPFDradjMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1326,7 +1328,8 @@ export
 SPFDRdep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceObj dom -> Type
 SPFDRdep {dom} {cod} spfd ec =
-  SPFDsigmaDep {dom} {cod} spfd ec . flip (SPFDextCovarDirRep {dom} {cod} spfd ec)
+  SPFDsigmaDep {dom} {cod} spfd ec
+  . flip (SPFDextCovarDirRep {dom} {cod} spfd ec)
 
 export
 SPFDRdepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
