@@ -1416,26 +1416,6 @@ SPFDLmap {dom} {cod} spfd x y =
   SPFDladjFactMap spfd (SPFDdepSumFactR spfd x) (SPFDdepSumFactR spfd y)
   . SPFDdepSumFactRmap spfd x y
 
-export
-0 SPFDunitFiber : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
-  (ec : cod) -> spfdPos spfd ec -> SliceObj (b ec)
-SPFDunitFiber {dom} {cod} spfd b i ec ep eb =
-  -- This is equivalent to:
-  --  i ec eb = ep
-  SliceFiber {c=cod} {a=(spfdPos spfd)} {b} i ec ep eb
-
-export
-SPFDunitFibration : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDposCSlice spfd ->
-  (ec : cod) -> SliceObj (spfdPos spfd ec)
-SPFDunitFibration {dom} {cod} spfd sl ec ep =
-  -- This is equivalent to:
-  --  Subset0
-  --    (fst sl ec)
-  --    (SPFDunitFiber {dom} {cod} spfd (fst sl) (snd sl) ec ep)
-  sliceFiberByMor {c=cod} {a=(spfdPos spfd)} {b=(fst sl)} (snd sl) ec ep
-
 -- Convert the index of one of the units of the multi-adjoint defined by
 -- a polynomial functor from category-theoretic style
 -- (`SPFDmultiIdx`) to dependent-type style (`SliceObj SPFDbase`).
@@ -1549,7 +1529,9 @@ SPFDfactIdxSndFact {dom} {cod} spfd a b ec = DPair.fst
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#properties .
 -- Because `SPFDmultiR 1` is effectively `spfdPos spfd`, this amounts to
 -- a morphism `b -> spfdPos spfd`, which is the index of a unit of the
--- multi-adjunction.
+-- multi-adjunction.  We call it `factIdx` because it is the index of the
+-- particular unit which we use in factorizing this specific given
+-- `i : b -> SPFDmultiR a`.
 export
 SPFDfactIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
@@ -1637,12 +1619,12 @@ SPFDgenFactFstDom {dom} {cod} spfd a b i ec eb =
   Sigma {a=dom} $ SPFDgenFactDir {dom} {cod} spfd a b i ec eb
 
 export
-SPFDgenFactFstdirApp : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDgenFactFstDirApp : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
   (ec : cod) -> (eb : b ec) ->
   SliceMorphism {a=dom} (SPFDgenFactFstDir {dom} {cod} spfd a b i ec eb) a
-SPFDgenFactFstdirApp {dom} {cod} spfd a b i ec eb = snd (i ec eb)
+SPFDgenFactFstDirApp {dom} {cod} spfd a b i ec eb = snd (i ec eb)
 
 -- The first component of the generic factorization of a morphism through
 -- a slice polynomial functor (which always exists for any parametric right
