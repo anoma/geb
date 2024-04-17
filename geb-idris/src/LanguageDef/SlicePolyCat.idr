@@ -1773,6 +1773,31 @@ SPFDmultiRAdj {dom} {cod} spfd x y m =
   (SPFDgenFactIdx {dom} {cod} spfd y x m **
    SPFDgenFactSndDomCat {dom} {cod} spfd y x m)
 
+-- The left adjunct of the multi-adjunction defined by a polynomial functor
+-- using the category-of-families formulation.
+export
+SPFDmultiFamLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj cod) -> (b : SliceObj dom) ->
+  SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceFamUnit b) ->
+  SliceMorphism {a=cod} a (SPFDmultiR spfd b)
+SPFDmultiFamLAdj {dom} {cod} spfd a b (IFM midx mobj) ec ea =
+  (midx () ec ea **
+   \ed, dd => mobj () ed (((ec ** midx () ec ea) ** dd) ** Element0 ea Refl))
+
+-- The right adjunct of the multi-adjunction defined by a polynomial functor
+-- using the category-of-families formulation.
+export
+SPFDmultiFamRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (a : SliceObj cod) -> (b : SliceObj dom) ->
+  SliceMorphism {a=cod} a (SPFDmultiR spfd b) ->
+  SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceFamUnit b)
+SPFDmultiFamRAdj {dom} {cod} spfd a b m =
+  IFM
+    (\_, ec, ea => fst $ m ec ea)
+    (\_, ed, dd =>
+      snd (m (fst $ fst $ fst dd) (fst0 $ snd dd)) ed
+        (rewrite snd0 (snd dd) in snd $ fst dd))
+
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
 -- (so it is itself a right multi-adjoint).  This is the unit of the
 -- slice-polynomial-functor multi-adjunction; its existence is listed as the
