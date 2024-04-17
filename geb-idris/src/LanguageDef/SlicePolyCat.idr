@@ -4,6 +4,7 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import public LanguageDef.PolyCat
 import public LanguageDef.InternalCat
+import public LanguageDef.IntFamCat
 
 -------------------------------------------------
 -------------------------------------------------
@@ -1027,6 +1028,10 @@ SliceSigmaPiFDup {c} {e} {d} =
 ---- Definition ----
 --------------------
 
+public export
+0 SPFdirType : (0 dom, cod : Type) -> (0 _ : SliceObj cod) -> Type
+SPFdirType dom cod pos = (ec : cod) -> pos ec -> SliceObj dom
+
 -- A polynomial functor on slice categories may be described as a parametric
 -- right adjoint whose right-adjoint component is a form of `SliceSigmaPiFR`
 -- (which has the left adjoint `SliceSigmaPiFL`) and whose following
@@ -1046,7 +1051,7 @@ public export
 record SPFData (0 dom, cod : Type) where
   constructor SPFD
   spfdPos : SliceObj cod
-  spfdDir : (ec : cod) -> spfdPos ec -> SliceObj dom
+  spfdDir : SPFdirType dom cod spfdPos
 
 -- Category-theory-style `spfdPos`.
 export
@@ -1128,6 +1133,15 @@ SPFDposContraRep : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDposContraRep {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
 
 export
+SPFDposContraRepContramap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SliceObj cod) ->
+  SliceMorphism {a=cod} y x ->
+  SPFDposContraRep {dom} {cod} spfd x ->
+  SPFDposContraRep {dom} {cod} spfd y
+SPFDposContraRepContramap {dom} {cod} spfd x y =
+  flip $ sliceComp {x=y} {y=x} {z=(spfdPos spfd)}
+
+export
 SPFDposCSlice : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDposCSlice {dom} {cod} spfd =
   DPair (SliceObj cod) (SPFDposContraRep {dom} {cod} spfd)
@@ -1143,6 +1157,14 @@ SPFDposCSlice {dom} {cod} spfd =
 export
 SPFDmultiIdx : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDmultiIdx = SPFDposContraRep
+
+export
+SPFDmultiIdxContramap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SliceObj cod) ->
+  SliceMorphism {a=cod} y x ->
+  SPFDmultiIdx {dom} {cod} spfd x ->
+  SPFDmultiIdx {dom} {cod} spfd y
+SPFDmultiIdxContramap = SPFDposContraRepContramap
 
 -- Translate from a category-theory-style slice of `spfdPos spfd` --
 -- which is to say, an object of `SliceObj cod` together with a morphism
@@ -1513,6 +1535,45 @@ SPFDmultiLuncMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     (SPFDmultiLunc spfd m')
 SPFDmultiLuncMap {dom} {cod} spfd m m' =
   SPFDmultiLmap {dom} {cod} spfd (fst m) (snd m) (fst m') (snd m')
+
+-- Another way of viewing a multi-adjunction is as an enhanced form
+-- of hom-set isomorphism using the (parameterized) category of families
+-- (`IntFamObj`/`IntFamMor`) of the left-hand-side category of the
+-- multi-adjunction.  It uses the same right multi-adjoint (`SPFDmultiR`,
+-- in this case), but a different left multi-adjoint whose codomain is
+-- that category of families.  This is the characterization described in
+-- Theorem 2.5 at https://ncatlab.org/nlab/show/multi-adjoint#definition .
+export
+SPFDmultiFamLCatObj : Type -> Type
+SPFDmultiFamLCatObj = SliceFamObj
+
+export
+SPFDmultiFamLCatMor : {lcat : Type} ->
+  SPFDmultiFamLCatObj lcat -> SPFDmultiFamLCatObj lcat -> Type
+SPFDmultiFamLCatMor {lcat} = SliceFamMor
+
+-- The left adjoint of the multi-adjunction using the category-of-families
+-- formulation.
+export
+SPFDmultiFamL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceObj cod -> SPFDmultiFamLCatObj dom
+SPFDmultiFamL {dom} {cod} spfd slc =
+  IFO (SPFDmultiIdx spfd slc) (SPFDmultiL spfd slc)
+
+export
+SPFDmultiFamLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SliceObj cod) ->
+  SliceMorphism {a=cod} x y ->
+  SPFDmultiFamLCatMor {lcat=dom}
+    (SPFDmultiFamL {dom} {cod} spfd x)
+    (SPFDmultiFamL {dom} {cod} spfd y)
+SPFDmultiFamLmap {dom} {cod} spfd x y m =
+  IFM
+    (SPFDmultiIdxContramap spfd y x m)
+    (\i =>
+      SPFDmultiLmap spfd x
+        (SPFDmultiIdxContramap spfd y x m i) y i
+        (\ecp, ex => Element0 (m (fst ecp) (fst0 ex)) (snd0 ex)))
 
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.  It may be viewed as the first projection
