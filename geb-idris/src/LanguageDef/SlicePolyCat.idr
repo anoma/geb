@@ -1729,7 +1729,8 @@ SPFDmultiUnit {dom} {cod} spfd b =
     (SPFDmultiLunc {dom} {cod} spfd b)
     (sliceId {a=dom} $ SPFDmultiLunc {dom} {cod} spfd b)
 
--- The monad of the polynomial-functor-as-PRA multi-adjunction.
+-- The monad (not the "multi-" version) of the polynomial-functor
+-- multi-adjunction.
 export
 SPFDmonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor cod
@@ -1743,7 +1744,8 @@ SPFDmonadMap {dom} {cod} spfd x y =
   SPFDmultiRmap spfd (SPFDL spfd x) (SPFDL spfd y)
   . SPFDLmap spfd x y
 
--- The comonad of the polynomial-functor-as-PRA multi-adjunction.
+-- The comonad (not the "multi-" version) of the polynomial-functor
+-- multi-adjunction.
 export
 SPFDcomonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor dom
