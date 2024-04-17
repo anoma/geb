@@ -1844,8 +1844,9 @@ SPFDmonadMap {dom} {cod} spfd x y =
   SPFDmultiRmap spfd (SPFDL spfd x) (SPFDL spfd y)
   . SPFDLmap spfd x y
 
--- The comonad (not the "multi-" version) of the polynomial-functor
--- multi-adjunction.
+-- The comonad of the polynomial-functor multi-adjunction.
+-- (There is no "multi" version of the comonad of a multi-adjunction
+-- of this variance.)
 export
 SPFDcomonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor dom
