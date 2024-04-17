@@ -1626,11 +1626,6 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
     trans (dpEq12 Refl $ funExt $ \ed => funExt $ \dd => Refl) $ sym dpEqPat
 
 export
-SPFDpraRcat : {dom, cod : Type} -> (spfd : SPFData dom cod) -> Type
-SPFDpraRcat {dom} {cod} =
-  Sigma {a=(SliceObj cod)} . SPFDmultiIdx {dom} {cod}
-
-export
 SPFDpraAdjL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) -> Type
 SPFDpraAdjL {dom} {cod} spfd x y =
@@ -1643,13 +1638,13 @@ SPFDpraAdjL {dom} {cod} spfd x y =
 -- (The right multi-adjoint is the polynomial functor itself, `SPFDmultiR`.)
 export
 SPFDpraL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDpraRcat {dom} {cod} spfd -> SliceObj dom
+  SPFDmultiLdom {dom} {cod} spfd -> SliceObj dom
 SPFDpraL {dom} {cod} spfd fibcod =
   SPFDmultiL {dom} {cod} spfd (fst fibcod) (snd fibcod)
 
 -- The polynomial functor represented by an `SPFData`, viewed as a functor not
 -- only from `SliceObj dom` to `SliceObj cod` but from `SliceObj dom` to
--- `SPFDpraRcat {dom} {cod} spfd`, which is a `SliceObj cod` together with
+-- `SPFDmultiLdom {dom} {cod} spfd`, which is a `SliceObj cod` together with
 -- a fibration of it -- equivalently, a `y : SliceObj cod` together with a
 -- `SliceObj (Sigma {a=cod} y)`.
 --
@@ -1658,7 +1653,7 @@ SPFDpraL {dom} {cod} spfd fibcod =
 -- over the positions of `spfd`.
 export
 SPFDpraR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceObj dom -> SPFDpraRcat {dom} {cod} spfd
+  SliceObj dom -> SPFDmultiLdom {dom} {cod} spfd
 SPFDpraR {dom} {cod} spfd sd =
   (SPFDmultiR {dom} {cod} spfd sd ** \_ => DPair.fst)
 
@@ -1675,7 +1670,7 @@ SPFDpraR {dom} {cod} spfd sd =
 -- functor.
 export
 SPFDpraLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (x : SPFDpraRcat {dom} {cod} spfd) -> (y : SliceObj dom) ->
+  (x : SPFDmultiLdom {dom} {cod} spfd) -> (y : SliceObj dom) ->
   SliceMorphism {a=dom} (SPFDpraL {dom} {cod} spfd x) y ->
   SliceMorphism {a=cod} (fst x) (SPFDmultiR {dom} {cod} spfd y)
 SPFDpraLAdj {dom} {cod} spfd x y m ec ex =
@@ -1714,7 +1709,7 @@ SPFDpraRAdj {dom} {cod} spfd x y m =
 -- can be defined as the left adjunct applied to the identity morphism.
 export
 SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SPFDpraRcat {dom} {cod} spfd) ->
+  (b : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=cod} (fst b) (SPFDmultiMfib {dom} {cod} spfd (fst b) (snd b))
 SPFDlmadj {dom} {cod} spfd b =
   SPFDpraLAdj {dom} {cod} spfd
