@@ -1576,40 +1576,6 @@ SPFDgenFactCodObj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDgenFactCodObj {dom} {cod} spfd a b i =
   SPFDmultiR {dom} {cod} spfd $ SPFDgenFactDomObj {dom} {cod} spfd a b i
 
-export
-SPFDgenFactFstIdxCod : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (b : SliceObj cod) ->
-  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  (ec : cod) -> (eb : b ec) -> SPFDbase {dom} {cod} spfd
-SPFDgenFactFstIdxCod {dom} {cod} spfd a b i ec eb =
-  (ec ** SPFDgenFactIdx {dom} {cod} spfd a b i ec eb)
-
-export
-SPFDgenFactFstIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (b : SliceObj cod) ->
-  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  (ec : cod) -> (eb : b ec) ->
-  SPFDunitIdxToSl {dom} {cod} spfd b
-    (SPFDgenFactIdx {dom} {cod} spfd a b i)
-    (SPFDgenFactFstIdxCod {dom} {cod} spfd a b i ec eb)
-SPFDgenFactFstIdx {dom} {cod} spfd a b i ec eb = Element0 eb Refl
-
-export
-SPFDgenFactFstDom : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (b : SliceObj cod) ->
-  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  (ec : cod) -> SliceObj (b ec)
-SPFDgenFactFstDom {dom} {cod} spfd a b i ec eb =
-  Sigma {a=dom} $ SPFDgenFactDir {dom} {cod} spfd a b i ec eb
-
-export
-SPFDgenFactDirApp : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (b : SliceObj cod) ->
-  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  (ec : cod) -> (eb : b ec) ->
-  SliceMorphism {a=dom} (SPFDgenFactDir {dom} {cod} spfd a b i ec eb) a
-SPFDgenFactDirApp {dom} {cod} spfd a b i ec eb = snd (i ec eb)
-
 -- The first component of the generic factorization of a morphism through
 -- a slice polynomial functor (which always exists for any parametric right
 -- adjoint).
@@ -1622,8 +1588,8 @@ SPFDgenFactFst {dom} {cod} spfd a b i ec eb =
   (SPFDgenFactIdx {dom} {cod} spfd a b i ec eb **
    \ed : dom,
     db : SPFDgenFactDir {dom} {cod} spfd a b i ec eb ed =>
-      ((SPFDgenFactFstIdxCod {dom} {cod} spfd a b i ec eb ** db) **
-       SPFDgenFactFstIdx {dom} {cod} spfd a b i ec eb))
+      (((ec ** SPFDgenFactIdx {dom} {cod} spfd a b i ec eb) ** db) **
+       Element0 eb Refl))
 
 -- The morphism underlying the second component of the generic factorization of
 -- a morphism through a slice polynomial functor.  By "underlying the second
