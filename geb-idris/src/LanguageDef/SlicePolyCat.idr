@@ -1532,6 +1532,15 @@ SPFDmultiRcat spfd =
   --  DPair (SliceObj cod) (SPFDmultiIdx {dom} {cod} spfd)
   SPFDposCSlice spfd
 
+export
+SPFDmultiRcatMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDmultiRcat {dom} {cod} spfd -> SPFDmultiRcat {dom} {cod} spfd -> Type
+SPFDmultiRcatMor {dom} {cod} spfd rx ry =
+  Subset0
+    (SliceMorphism {a=cod} (fst rx) (fst ry))
+    (\msc =>
+      (ec : cod) -> (ex : fst rx ec) -> snd rx ec ex = snd ry ec (msc ec ex))
+
 -- The uncurried form of `SPFDmultiL`.
 export
 SPFDmultiLunc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1615,6 +1624,18 @@ SPFDmultiMfstMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDmultiMfstMap {dom} {cod} spfd m m' =
   SPFDmultiRmap {dom} {cod} spfd (SPFDmultiLunc spfd m) (SPFDmultiLunc spfd m')
   . SPFDmultiLuncMap {dom} {cod} spfd m m'
+
+export
+SPFDmultiMsnd : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (robj : SPFDmultiRcat {dom} {cod} spfd) ->
+  SPFDmultiIdx spfd (SPFDmultiMfst spfd robj)
+SPFDmultiMsnd {dom} {cod} spfd robj ec = DPair.fst
+
+export
+SPFDmultiMpair : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDmultiRcat {dom} {cod} spfd -> SPFDmultiRcat {dom} {cod} spfd
+SPFDmultiMpair {dom} {cod} spfd robj =
+  (SPFDmultiMfst spfd robj ** SPFDmultiMsnd spfd robj)
 
 -- The second part of the "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1`
 -- (see below) -- that is, the part with the signature
