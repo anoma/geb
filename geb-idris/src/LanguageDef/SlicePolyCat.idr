@@ -1659,16 +1659,25 @@ SPFDpraR {dom} {cod} spfd sd =
 -- "left multi-adjunct" of the multi-adjunction defined by a slice polynomial
 -- functor.
 export
-SPFDmultiLuncAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x : SliceObj cod) -> (y : SliceObj dom) ->
+  (i : SPFDmultiIdx spfd x) ->
+  SliceMorphism {a=dom} (SPFDmultiL {dom} {cod} spfd x i) y ->
+  SliceMorphism {a=cod} x (SPFDmultiR {dom} {cod} spfd y)
+SPFDmultiLAdj {dom} {cod} spfd x y i m ec ex =
+  (i ec ex **
+   \ed, dd => m ed (((ec ** i ec ex) ** dd) ** Element0 ex Refl))
+
+export
+SPFDmultiLAdjUnc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SPFDmultiLdom {dom} {cod} spfd) -> (y : SliceObj dom) ->
   SliceMorphism {a=dom} (SPFDmultiLunc {dom} {cod} spfd x) y ->
   SliceMorphism {a=cod} (fst x) (SPFDmultiR {dom} {cod} spfd y)
-SPFDmultiLuncAdj {dom} {cod} spfd x y m ec ex =
-  (snd x ec ex **
-   \ed, dd => m ed (((ec ** snd x ec ex) ** dd) ** Element0 ex Refl))
+SPFDmultiLAdjUnc {dom} {cod} spfd x y =
+  SPFDmultiLAdj {dom} {cod} spfd (fst x) y (snd x)
 
 -- This is the morphism component of the "right multi-adjunct" of the
--- multi-adjunction defined by a slice polynomial functor (`SPFDmultiLuncAdj` is
+-- multi-adjunction defined by a slice polynomial functor (`SPFDmultiLAdjUnc` is
 -- the left multi-adjunct").  (The fibration component is
 -- `SPFDgenFactIdx`.)
 export
@@ -1680,7 +1689,7 @@ SPFDpraRAdjMor {dom} {cod} spfd x y m =
   SPFDgenFactSndDomCat {dom} {cod} spfd y x m
 
 -- This is the "right multi-adjunct" of the multi-adjunction defined by a
--- slice polynomial functor (`SPFDmultiLuncAdj` is the left multi-adjunct").
+-- slice polynomial functor (`SPFDmultiLAdjUnc` is the left multi-adjunct").
 export
 SPFDpraRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
@@ -1702,7 +1711,7 @@ SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=cod} (fst b) (SPFDmultiMfib {dom} {cod} spfd (fst b) (snd b))
 SPFDlmadj {dom} {cod} spfd b =
-  SPFDmultiLuncAdj {dom} {cod} spfd
+  SPFDmultiLAdjUnc {dom} {cod} spfd
     b
     (SPFDmultiLunc {dom} {cod} spfd b)
     (sliceId {a=dom} $ SPFDmultiLunc {dom} {cod} spfd b)
