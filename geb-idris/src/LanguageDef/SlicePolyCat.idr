@@ -1659,11 +1659,11 @@ SPFDpraR {dom} {cod} spfd sd =
 -- "left multi-adjunct" of the multi-adjunction defined by a slice polynomial
 -- functor.
 export
-SPFDmultiLuncAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SPFDmultiLdom {dom} {cod} spfd) -> (y : SliceObj dom) ->
   SliceMorphism {a=dom} (SPFDmultiLunc {dom} {cod} spfd x) y ->
   SliceMorphism {a=cod} (fst x) (SPFDmultiR {dom} {cod} spfd y)
-SPFDmultiLuncAdj {dom} {cod} spfd x y m ec ex =
+SPFDmultiLAdj {dom} {cod} spfd x y m ec ex =
   (snd x ec ex **
    \ed, dd => m ed (((ec ** snd x ec ex) ** dd) ** Element0 ex Refl))
 
@@ -1702,7 +1702,7 @@ SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=cod} (fst b) (SPFDmultiMfib {dom} {cod} spfd (fst b) (snd b))
 SPFDlmadj {dom} {cod} spfd b =
-  SPFDmultiLuncAdj {dom} {cod} spfd
+  SPFDmultiLAdj {dom} {cod} spfd
     b
     (SPFDmultiLunc {dom} {cod} spfd b)
     (sliceId {a=dom} $ SPFDmultiLunc {dom} {cod} spfd b)
