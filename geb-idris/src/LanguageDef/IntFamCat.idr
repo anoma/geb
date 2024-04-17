@@ -85,24 +85,24 @@ fcmUnit {c} mor x = IFO Unit (const x)
 -------------------------------------
 -------------------------------------
 
-export
+public export
 SliceFamObj : Type -> Type
 SliceFamObj = IntFamObj . SliceObj
 
-export
+public export
 SliceFamMor : {c : Type} -> SliceFamObj c -> SliceFamObj c -> Type
 SliceFamMor {c} = IntFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
-export
+public export
 slfmId : {c : Type} ->
   (x : SliceFamObj c) -> SliceFamMor x x
 slfmId {c} = ifmId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
 
-export
+public export
 slfmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
   SliceFamMor y z -> SliceFamMor x y -> SliceFamMor x z
 slfmComp {c} = ifmComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
 
-export
+public export
 sliceFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
 sliceFamUnit {c} = fcmUnit {c=(SliceObj c)} (SliceMorphism {a=c})
