@@ -1673,6 +1673,17 @@ SPFDmultiAdjHSL {dom} {cod} spfd x y =
   (i : SPFDmultiIdx spfd x **
    SliceMorphism {a=dom} (SPFDmultiL {dom} {cod} spfd x i) y)
 
+-- The right side of the isomorphism which defines the hom-set description of
+-- a multi-adjunction, as formulated in Theorem 2.4 at
+-- at https://ncatlab.org/nlab/show/multi-adjoint#definition .
+-- As such, it is the domain of the right multi-adjunct, and the
+-- codomain of the left multi-adjunct.
+export
+SPFDmultiAdjHSR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceObj cod -> SliceObj dom -> Type
+SPFDmultiAdjHSR {dom} {cod} spfd x y =
+  SliceMorphism {a=cod} x (SPFDmultiR {dom} {cod} spfd y)
+
 -- This corresponds to the left-to-right direction of the isomorphism
 -- which defines the hom-set description of a multi-adjunction as formulated
 -- in Theorem 2.4 at https://ncatlab.org/nlab/show/multi-adjoint#definition .
@@ -1687,8 +1698,7 @@ SPFDmultiAdjHSL {dom} {cod} spfd x y =
 export
 SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
-  SPFDmultiAdjHSL spfd x y ->
-  SliceMorphism {a=cod} x (SPFDmultiR {dom} {cod} spfd y)
+  SPFDmultiAdjHSL spfd x y -> SPFDmultiAdjHSR spfd x y
 SPFDmultiLAdj {dom} {cod} spfd x y m ec ex =
   (fst m ec ex **
    \ed, dd => snd m ed (((ec ** fst m ec ex) ** dd) ** Element0 ex Refl))
