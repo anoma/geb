@@ -1668,6 +1668,7 @@ SPFDmultiLAdj {dom} {cod} spfd x y i m ec ex =
   (i ec ex **
    \ed, dd => m ed (((ec ** i ec ex) ** dd) ** Element0 ex Refl))
 
+-- An uncurried form of `SPFDmultiLAdj`.
 export
 SPFDmultiLAdjUnc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SPFDmultiLdom {dom} {cod} spfd) -> (y : SliceObj dom) ->
