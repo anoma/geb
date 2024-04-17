@@ -719,17 +719,10 @@ sliceApp : {0 c : Type} -> {0 x, y, z : SliceObj c} ->
 sliceApp {c} {x} {y} {z} g f ec ex = g ec ex $ f ec ex
 
 public export
-0 SliceFiber : {0 c : Type} ->
-  {a, b : SliceObj c} -> (i : SliceMorphism {a=c} b a) ->
-  SliceMorphism {a=c} a (SliceObj . b)
-SliceFiber {c} {a} {b} i ec ea eb = (i ec eb = ea)
-
-public export
 sliceFiberByMor : {0 c : Type} ->
   {a, b : SliceObj c} -> (i : SliceMorphism {a=c} b a) ->
   (ec : c) -> SliceObj (a ec)
-sliceFiberByMor {c} {a} {b} i ec ea =
-  Subset0 (b ec) $ SliceFiber {c} {a} {b} i ec ea
+sliceFiberByMor {c} {a} {b} i ec ea = PreImage {a=(b ec)} {b=(a ec)} (i ec) ea
 
 public export
 resliceByMor : {0 c : Type} ->
