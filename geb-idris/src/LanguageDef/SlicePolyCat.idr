@@ -1860,6 +1860,39 @@ SPFDcomonadMap {dom} {cod} spfd x y =
   SPFDLmap spfd (SPFDmultiR spfd x) (SPFDmultiR spfd y)
   . SPFDmultiRmap spfd x y
 
+-- `SPFDladjFact` and `SPFDradjFact` are (ordinary, not multi-)
+-- adjoints, so they induce a monad on `SliceObj (SPFDbase spfd)`.
+export
+SPFDadjFactMonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceEndofunctor (SPFDbase spfd)
+SPFDadjFactMonad spfd = SSPMonad $ SPFDtoSSPR spfd
+
+export
+SPFDadjFactMonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDadjFactMonad spfd)
+SPFDadjFactMonadMap spfd = sspMonadMap $ SPFDtoSSPR spfd
+
+-- This is called the "spectrum" of `SPFDmultiR spfd` by Diers in
+-- https://www.sciencedirect.com/science/article/pii/0022404981900827 and
+-- https://core.ac.uk/download/pdf/82552386.pdf .  It is a presheaf
+-- on `SliceObj cod`.
+export
+SPFDspectrum : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
+SPFDspectrum {dom} {cod} spfd slc =
+  (i : SPFDmultiIdx spfd slc **
+   SliceMorphism {a=cod} slc $ SPFDmultiMfst spfd (slc ** i))
+
+export
+SPFDspectrumMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SliceObj cod) ->
+  SliceMorphism {a=cod} y x ->
+  SPFDspectrum {dom} {cod} spfd x -> SPFDspectrum {dom} {cod} spfd y
+SPFDspectrumMap {dom} {cod} spfd x y myx (mcxp ** mcxd) =
+  (sliceComp {a=cod} mcxp myx **
+   \ec, ey =>
+    (mcxp ec (myx ec ey) **
+     \ed, dd => (((ec ** mcxp ec $ myx ec ey) ** dd) ** Element0 ey Refl)))
+
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
 -----------------------------------------------------------
