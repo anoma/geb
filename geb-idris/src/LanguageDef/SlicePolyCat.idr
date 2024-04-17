@@ -1661,6 +1661,18 @@ SPFDpraR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDpraR {dom} {cod} spfd sd =
   (SPFDmultiR {dom} {cod} spfd sd ** \_ => DPair.fst)
 
+-- The left side of the isomorphism which defines the hom-set description of
+-- a multi-adjunction, as formulated in Theorem 2.4 at
+-- at https://ncatlab.org/nlab/show/multi-adjoint#definition .
+-- As such, it is the domain of the left multi-adjunct, and the
+-- codomain of the right multi-adjunct.
+export
+SPFDmultiAdjHSL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceObj cod -> SliceObj dom -> Type
+SPFDmultiAdjHSL {dom} {cod} spfd x y =
+  (i : SPFDmultiIdx spfd x **
+   SliceMorphism {a=dom} (SPFDmultiL {dom} {cod} spfd x i) y)
+
 -- This corresponds to the left-to-right direction of the isomorphism
 -- which defines the hom-set description of a multi-adjunction as formulated
 -- in Theorem 2.4 at https://ncatlab.org/nlab/show/multi-adjoint#definition .
@@ -1675,12 +1687,11 @@ SPFDpraR {dom} {cod} spfd sd =
 export
 SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
-  (i : SPFDmultiIdx spfd x) ->
-  SliceMorphism {a=dom} (SPFDmultiL {dom} {cod} spfd x i) y ->
+  SPFDmultiAdjHSL spfd x y ->
   SliceMorphism {a=cod} x (SPFDmultiR {dom} {cod} spfd y)
-SPFDmultiLAdj {dom} {cod} spfd x y i m ec ex =
-  (i ec ex **
-   \ed, dd => m ed (((ec ** i ec ex) ** dd) ** Element0 ex Refl))
+SPFDmultiLAdj {dom} {cod} spfd x y m ec ex =
+  (fst m ec ex **
+   \ed, dd => snd m ed (((ec ** fst m ec ex) ** dd) ** Element0 ex Refl))
 
 -- An uncurried form of `SPFDmultiLAdj`.
 export
@@ -1688,8 +1699,8 @@ SPFDmultiLAdjUnc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SPFDmultiLdom {dom} {cod} spfd) -> (y : SliceObj dom) ->
   SliceMorphism {a=dom} (SPFDmultiLunc {dom} {cod} spfd x) y ->
   SliceMorphism {a=cod} (fst x) (SPFDmultiR {dom} {cod} spfd y)
-SPFDmultiLAdjUnc {dom} {cod} spfd x y =
-  SPFDmultiLAdj {dom} {cod} spfd (fst x) y (snd x)
+SPFDmultiLAdjUnc {dom} {cod} spfd x y m =
+  SPFDmultiLAdj {dom} {cod} spfd (fst x) y (snd x ** m)
 
 -- This is the morphism component of the "right multi-adjunct" of the
 -- multi-adjunction defined by a slice polynomial functor (`SPFDmultiLAdjUnc` is
