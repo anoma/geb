@@ -917,10 +917,24 @@ export
 SSPMonad : {c, e : Type} -> (d : SliceObj (c, e)) -> SliceEndofunctor e
 SSPMonad {c} {e} d = SliceSigmaPiFR {c} {e} d . SliceSigmaPiFL {c} {e} d
 
+export
+sspMonadMap : {c, e : Type} -> (d : SliceObj (c, e)) ->
+  SliceFMap (SSPMonad {c} {e} d)
+sspMonadMap {c} {e} d x y =
+  ssprMap {c} {e} d (SliceSigmaPiFL d x) (SliceSigmaPiFL d y)
+  . ssplMap {c} {e} d x y
+
 -- The comonad of the composed dependent-sum/dependent-product adjunction.
 export
 SSPComonad : {c, e : Type} -> (d : SliceObj (c, e)) -> SliceEndofunctor c
 SSPComonad {c} {e} d = SliceSigmaPiFL {c} {e} d . SliceSigmaPiFR {c} {e} d
+
+export
+sspComonadMap : {c, e : Type} -> (d : SliceObj (c, e)) ->
+  SliceFMap (SSPComonad {c} {e} d)
+sspComonadMap {c} {e} d x y =
+  ssplMap {c} {e} d (SliceSigmaPiFR d x) (SliceSigmaPiFR d y)
+  . ssprMap {c} {e} d x y
 
 -- The unit of the composed dependent-sum/dependent-product adjunction.
 export
