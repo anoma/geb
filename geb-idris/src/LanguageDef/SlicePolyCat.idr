@@ -1500,6 +1500,18 @@ SPFDmultiLunc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdom spfd -> SliceObj dom
 SPFDmultiLunc {dom} {cod} spfd = DPair.uncurry (SPFDmultiL {dom} {cod} spfd)
 
+export
+SPFDmultiLuncMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (m, m' : SPFDmultiLdom spfd) ->
+  SliceMorphism {a=(SPFDbase spfd)}
+    (SPFDposCSlToBaseSl {spfd} m)
+    (SPFDposCSlToBaseSl {spfd} m') ->
+  SliceMorphism {a=dom}
+    (SPFDmultiLunc spfd m)
+    (SPFDmultiLunc spfd m')
+SPFDmultiLuncMap {dom} {cod} spfd m m' =
+  SPFDmultiLmap {dom} {cod} spfd (fst m) (snd m) (fst m') (snd m')
+
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.  It may be viewed as the fibered version
 -- (as opposed to the slice-object version) of the multi-monad of
@@ -1510,24 +1522,22 @@ SPFDmultiLunc {dom} {cod} spfd = DPair.uncurry (SPFDmultiL {dom} {cod} spfd)
 -- (so the unit itself has type `b -> TL(b, i)`).
 export
 SPFDmultiMfib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
-  SliceObj cod
-SPFDmultiMfib {dom} {cod} spfd b i =
-  SPFDmultiR spfd $ SPFDmultiL {dom} {cod} spfd b i
+  SPFDmultiLdom {dom} {cod} spfd -> SliceObj cod
+SPFDmultiMfib {dom} {cod} spfd =
+  SPFDmultiR {dom} {cod} spfd . SPFDmultiLunc {dom} {cod} spfd
 
 export
 SPFDmultiMfibMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
-  (b' : SliceObj cod) -> (i' : SPFDmultiIdx spfd b') ->
+  (m, m' : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=(SPFDbase spfd)}
-    (SPFDposCSlToBaseSl {spfd} (b ** i))
-    (SPFDposCSlToBaseSl {spfd} (b' ** i')) ->
+    (SPFDposCSlToBaseSl {spfd} m)
+    (SPFDposCSlToBaseSl {spfd} m') ->
   SliceMorphism {a=cod}
-    (SPFDmultiMfib spfd b i)
-    (SPFDmultiMfib spfd b' i')
-SPFDmultiMfibMap {dom} {cod} spfd b i b' i' =
-  SPFDmultiRmap {dom} {cod} spfd (SPFDmultiL spfd b i) (SPFDmultiL spfd b' i')
-  . SPFDmultiLmap {dom} {cod} spfd b i b' i'
+    (SPFDmultiMfib spfd m)
+    (SPFDmultiMfib spfd m')
+SPFDmultiMfibMap {dom} {cod} spfd m m' =
+  SPFDmultiRmap {dom} {cod} spfd (SPFDmultiLunc spfd m) (SPFDmultiLunc spfd m')
+  . SPFDmultiLuncMap {dom} {cod} spfd m m'
 
 -- The second part of the "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1`
 -- (see below) -- that is, the part with the signature
@@ -1710,7 +1720,7 @@ SPFDmultiRAdj {dom} {cod} spfd x y m =
 export
 SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SPFDmultiLdom {dom} {cod} spfd) ->
-  SliceMorphism {a=cod} (fst b) (SPFDmultiMfib {dom} {cod} spfd (fst b) (snd b))
+  SliceMorphism {a=cod} (fst b) (SPFDmultiMfib {dom} {cod} spfd b)
 SPFDlmadj {dom} {cod} spfd b =
   SPFDmultiLAdjUnc {dom} {cod} spfd
     b
