@@ -1515,29 +1515,29 @@ SPFDmultiLuncMap {dom} {cod} spfd m m' =
   SPFDmultiLmap {dom} {cod} spfd (fst m) (snd m) (fst m') (snd m')
 
 -- The codomain of the unit of the left multi-adjoint of a slice
--- polynomial functor.  It may be viewed as the fibered version
--- (as opposed to the slice-object version) of the multi-monad of
--- the multi-adjunction induced by a slice polynomial functor.
+-- polynomial functor.  It may be viewed as the first projection
+-- of the multi-monad of the multi-adjunction induced by a slice
+-- polynomial functor.
 --
 -- It comprises the composition called `TL(b, i)` under
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#properties
 -- (so the unit itself has type `b -> TL(b, i)`).
 export
-SPFDmultiMfib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiMfst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiRcat {dom} {cod} spfd -> SliceObj cod
-SPFDmultiMfib {dom} {cod} spfd =
+SPFDmultiMfst {dom} {cod} spfd =
   SPFDmultiR {dom} {cod} spfd . SPFDmultiLunc {dom} {cod} spfd
 
 export
-SPFDmultiMfibMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiMfstMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (m, m' : SPFDmultiRcat {dom} {cod} spfd) ->
   SliceMorphism {a=(SPFDbase spfd)}
     (SPFDposCSlToBaseSl {spfd} m)
     (SPFDposCSlToBaseSl {spfd} m') ->
   SliceMorphism {a=cod}
-    (SPFDmultiMfib spfd m)
-    (SPFDmultiMfib spfd m')
-SPFDmultiMfibMap {dom} {cod} spfd m m' =
+    (SPFDmultiMfst spfd m)
+    (SPFDmultiMfst spfd m')
+SPFDmultiMfstMap {dom} {cod} spfd m m' =
   SPFDmultiRmap {dom} {cod} spfd (SPFDmultiLunc spfd m) (SPFDmultiLunc spfd m')
   . SPFDmultiLuncMap {dom} {cod} spfd m m'
 
@@ -1722,7 +1722,7 @@ SPFDmultiRAdj {dom} {cod} spfd x y m =
 export
 SPFDmultiUnit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SPFDmultiRcat {dom} {cod} spfd) ->
-  SliceMorphism {a=cod} (fst b) (SPFDmultiMfib {dom} {cod} spfd b)
+  SliceMorphism {a=cod} (fst b) (SPFDmultiMfst {dom} {cod} spfd b)
 SPFDmultiUnit {dom} {cod} spfd b =
   SPFDmultiLAdjUnc {dom} {cod} spfd
     b
