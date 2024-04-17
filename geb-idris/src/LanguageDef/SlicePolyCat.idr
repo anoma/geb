@@ -1486,10 +1486,12 @@ SPFDmultiLpair {dom} {cod} spfd =
 -- A slice object over `cod` together with an accompanying index of
 -- the family of units of the multi-adjunction defined by a polynomial
 -- functor comprises the domain of the uncurried form of the functor
--- component (`L`) of a multi-adjunction, here called `SPFDmultiL`.
+-- component (`L`) of a multi-adjunction, below called `SPFDmultiLunc`.
+-- As such, it may be considered as a form of the right-hand category
+-- of the adjunction (an enhanced version of `SliceObj cod`).
 export
-SPFDmultiLdom : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDmultiLdom spfd =
+SPFDmultiRcat : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDmultiRcat spfd =
   -- This is equivalent to:
   --  DPair (SliceObj cod) (SPFDmultiIdx {dom} {cod} spfd)
   SPFDposCSlice spfd
@@ -1497,12 +1499,12 @@ SPFDmultiLdom spfd =
 -- The uncurried form of `SPFDmultiL`.
 export
 SPFDmultiLunc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiLdom spfd -> SliceObj dom
+  SPFDmultiRcat spfd -> SliceObj dom
 SPFDmultiLunc {dom} {cod} spfd = DPair.uncurry (SPFDmultiL {dom} {cod} spfd)
 
 export
 SPFDmultiLuncMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (m, m' : SPFDmultiLdom spfd) ->
+  (m, m' : SPFDmultiRcat spfd) ->
   SliceMorphism {a=(SPFDbase spfd)}
     (SPFDposCSlToBaseSl {spfd} m)
     (SPFDposCSlToBaseSl {spfd} m') ->
@@ -1522,13 +1524,13 @@ SPFDmultiLuncMap {dom} {cod} spfd m m' =
 -- (so the unit itself has type `b -> TL(b, i)`).
 export
 SPFDmultiMfib : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiLdom {dom} {cod} spfd -> SliceObj cod
+  SPFDmultiRcat {dom} {cod} spfd -> SliceObj cod
 SPFDmultiMfib {dom} {cod} spfd =
   SPFDmultiR {dom} {cod} spfd . SPFDmultiLunc {dom} {cod} spfd
 
 export
 SPFDmultiMfibMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (m, m' : SPFDmultiLdom {dom} {cod} spfd) ->
+  (m, m' : SPFDmultiRcat {dom} {cod} spfd) ->
   SliceMorphism {a=(SPFDbase spfd)}
     (SPFDposCSlToBaseSl {spfd} m)
     (SPFDposCSlToBaseSl {spfd} m') ->
@@ -1694,7 +1696,7 @@ SPFDmultiLAdj {dom} {cod} spfd x y m ec ex =
 -- An uncurried form of `SPFDmultiLAdj`.
 export
 SPFDmultiLAdjUnc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (x : SPFDmultiLdom {dom} {cod} spfd) -> (y : SliceObj dom) ->
+  (x : SPFDmultiRcat {dom} {cod} spfd) -> (y : SliceObj dom) ->
   SliceMorphism {a=dom} (SPFDmultiLunc {dom} {cod} spfd x) y ->
   SliceMorphism {a=cod} (fst x) (SPFDmultiR {dom} {cod} spfd y)
 SPFDmultiLAdjUnc {dom} {cod} spfd x y m =
@@ -1719,7 +1721,7 @@ SPFDmultiRAdj {dom} {cod} spfd x y m =
 -- can be defined as the left adjunct applied to the identity morphism.
 export
 SPFDmultiUnit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SPFDmultiLdom {dom} {cod} spfd) ->
+  (b : SPFDmultiRcat {dom} {cod} spfd) ->
   SliceMorphism {a=cod} (fst b) (SPFDmultiMfib {dom} {cod} spfd b)
 SPFDmultiUnit {dom} {cod} spfd b =
   SPFDmultiLAdjUnc {dom} {cod} spfd
