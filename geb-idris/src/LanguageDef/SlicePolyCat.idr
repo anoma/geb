@@ -1637,6 +1637,19 @@ SPFDmultiMpair : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDmultiMpair {dom} {cod} spfd robj =
   (SPFDmultiMfst spfd robj ** SPFDmultiMsnd spfd robj)
 
+export
+SPFDmultiMpairMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SPFDmultiRcat {dom} {cod} spfd) ->
+  SPFDmultiRcatMor spfd x y ->
+  SPFDmultiRcatMor spfd (SPFDmultiMpair spfd x) (SPFDmultiMpair spfd y)
+SPFDmultiMpairMap {dom} {cod} spfd rx@(slx ** mpx) ry@(sly ** mpy)
+  (Element0 mxy mcomm) =
+    Element0
+      (SPFDmultiMfstMap spfd rx ry
+       $ \(ec ** ep), (Element0 ex peq) =>
+        Element0 (mxy ec ex) $ trans (sym $ mcomm ec ex) peq)
+      $ \ec, dm => Refl
+
 -- The second part of the "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1`
 -- (see below) -- that is, the part with the signature
 -- `SPFDmultiR a -> SPFDmultiR 1`.  `SPFDmultiR 1` is simply `spfdPos spfd`.
