@@ -1893,6 +1893,20 @@ SPFDspectrumMap {dom} {cod} spfd x y myx (mcxp ** mcxd) =
     (mcxp ec (myx ec ey) **
      \ed, dd => (((ec ** mcxp ec $ myx ec ey) ** dd) ** Element0 ey Refl)))
 
+-- The category of elements of the spectrum of a polynomial functor.
+export
+SPFDspecCatElemObj : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDspecCatElemObj {dom} {cod} spfd =
+  Sigma {a=(SliceObj cod)} $ SPFDspectrum {dom} {cod} spfd
+
+export
+SPFDspecCatElemMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDspecCatElemObj spfd -> SPFDspecCatElemObj spfd -> Type
+SPFDspecCatElemMor {dom} {cod} spfd x y =
+  Subset0
+    (SliceMorphism {a=cod} (fst x) (fst y))
+    (\mxy => FunExt -> SPFDspectrumMap spfd (fst y) (fst x) mxy (snd y) = snd x)
+
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
 -----------------------------------------------------------
