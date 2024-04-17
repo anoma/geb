@@ -51,12 +51,12 @@ record IntFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntFamObj c)
   ifmOnIdx : ifoIdx cod -> ifoIdx dom -- Contravariant on indexes
   ifmOnObj : (i : ifoIdx cod) -> mor (ifoObj dom (ifmOnIdx i)) (ifoObj cod i)
 
-export
+public export
 ifmId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
   (obj : IntFamObj c) -> IntFamMor mor obj obj
 ifmId {c} mor cid obj = IFM id (\i => cid $ ifoObj obj i)
 
-export
+public export
 ifmComp : {c : Type} ->
   (mor : IntDifunctorSig c) -> (comp : IntComp c mor) ->
   {x, y, z : IntFamObj c} ->
@@ -75,7 +75,7 @@ ifmComp {c} mor comp {x} {y} {z} g f =
         (ifmOnObj f $ ifmOnIdx g i))
 
 -- The unit of the free cartesian monoidal category monad.
-export
+public export
 fcmUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntFamObj c
 fcmUnit {c} mor x = IFO Unit (const x)
 
