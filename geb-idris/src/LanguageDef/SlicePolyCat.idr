@@ -1163,7 +1163,7 @@ SPFDposCSlice {dom} {cod} spfd =
 -- For a multi-adjunction induced by a polynomial functor,
 -- `SPFDposContraRep` is the functor is referred to as `I` in theorem 2.4 of
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition (for the
--- multi-adjunction defined by a slice polynomial functof).  It is
+-- multi-adjunction defined by a slice polynomial functor).  It is
 -- referred to as the "index" (in particular, it indexes the
 -- family of units of the multi-adjunction) part of a left multi-adjoint
 -- (the functor part is `SPFDmultiL`).  Hence we give it an alias reflecting
@@ -1483,7 +1483,7 @@ SPFDunitIdxToSl {dom} {cod} spfd b i ecp =
 --
 -- Note that this is the composition of the left adjoint of the right-adjoint
 -- factor of a polynomial functor after the index functor of the family of
--- units, wjhich may be viewed as a fibered/dependent version of the
+-- units, which may be viewed as a fibered/dependent version of the
 -- dependent-sum factor of the polynomial functor.
 export
 SPFDmultiL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
