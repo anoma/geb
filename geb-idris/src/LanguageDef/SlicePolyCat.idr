@@ -1632,16 +1632,6 @@ SPFDpraAdjL {dom} {cod} spfd x y =
   Sigma {a=(SPFDmultiIdx spfd x)}
   $ flip (SliceMorphism {a=dom}) y . SPFDmultiL {dom} {cod} spfd x
 
--- The left multi-adjoint of the hom-set description of a multi-adjunction
--- described in Theorem 2.4 at
--- https://ncatlab.org/nlab/show/multi-adjoint#definition .
--- (The right multi-adjoint is the polynomial functor itself, `SPFDmultiR`.)
-export
-SPFDpraL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiLdom {dom} {cod} spfd -> SliceObj dom
-SPFDpraL {dom} {cod} spfd fibcod =
-  SPFDmultiL {dom} {cod} spfd (fst fibcod) (snd fibcod)
-
 -- The polynomial functor represented by an `SPFData`, viewed as a functor not
 -- only from `SliceObj dom` to `SliceObj cod` but from `SliceObj dom` to
 -- `SPFDmultiLdom {dom} {cod} spfd`, which is a `SliceObj cod` together with
@@ -1669,16 +1659,16 @@ SPFDpraR {dom} {cod} spfd sd =
 -- "left multi-adjunct" of the multi-adjunction defined by a slice polynomial
 -- functor.
 export
-SPFDpraLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiLuncAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SPFDmultiLdom {dom} {cod} spfd) -> (y : SliceObj dom) ->
-  SliceMorphism {a=dom} (SPFDpraL {dom} {cod} spfd x) y ->
+  SliceMorphism {a=dom} (SPFDmultiLunc {dom} {cod} spfd x) y ->
   SliceMorphism {a=cod} (fst x) (SPFDmultiR {dom} {cod} spfd y)
-SPFDpraLAdj {dom} {cod} spfd x y m ec ex =
+SPFDmultiLuncAdj {dom} {cod} spfd x y m ec ex =
   (snd x ec ex **
    \ed, dd => m ed (((ec ** snd x ec ex) ** dd) ** Element0 ex Refl))
 
 -- This is the morphism component of the "right multi-adjunct" of the
--- multi-adjunction defined by a slice polynomial functor (`SPFDpraLAdj` is
+-- multi-adjunction defined by a slice polynomial functor (`SPFDmultiLuncAdj` is
 -- the left multi-adjunct").  (The fibration component is
 -- `SPFDgenFactIdx`.)
 export
@@ -1690,7 +1680,7 @@ SPFDpraRAdjMor {dom} {cod} spfd x y m =
   SPFDgenFactSndDomCat {dom} {cod} spfd y x m
 
 -- This is the "right multi-adjunct" of the multi-adjunction defined by a
--- slice polynomial functor (`SPFDpraLAdj` is the left multi-adjunct").
+-- slice polynomial functor (`SPFDmultiLuncAdj` is the left multi-adjunct").
 export
 SPFDpraRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
@@ -1712,10 +1702,10 @@ SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=cod} (fst b) (SPFDmultiMfib {dom} {cod} spfd (fst b) (snd b))
 SPFDlmadj {dom} {cod} spfd b =
-  SPFDpraLAdj {dom} {cod} spfd
+  SPFDmultiLuncAdj {dom} {cod} spfd
     b
-    (SPFDpraL {dom} {cod} spfd b)
-    (sliceId {a=dom} $ SPFDpraL {dom} {cod} spfd b)
+    (SPFDmultiLunc {dom} {cod} spfd b)
+    (sliceId {a=dom} $ SPFDmultiLunc {dom} {cod} spfd b)
 
 -- The monad of the polynomial-functor-as-PRA multi-adjunction.
 export
