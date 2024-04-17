@@ -102,3 +102,7 @@ export
 slfmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
   SliceFamMor y z -> SliceFamMor x y -> SliceFamMor x z
 slfmComp {c} = ifmComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
+
+export
+sliceFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
+sliceFamUnit {c} = fcmUnit {c=(SliceObj c)} (SliceMorphism {a=c})
