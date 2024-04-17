@@ -1873,6 +1873,18 @@ SPFDadjFactMonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDadjFactMonad spfd)
 SPFDadjFactMonadMap spfd = sspMonadMap $ SPFDtoSSPR spfd
 
+-- `SPFDladjFact` and `SPFDradjFact` are (ordinary, not multi-)
+-- adjoints, so they induce a comonad on `SliceObj (SPFDbase spfd)`.
+export
+SPFDadjFactComonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceEndofunctor dom
+SPFDadjFactComonad spfd = SSPComonad $ SPFDtoSSPR spfd
+
+export
+SPFDadjFactComonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDadjFactComonad spfd)
+SPFDadjFactComonadMap spfd = sspComonadMap $ SPFDtoSSPR spfd
+
 -- This is called the "spectrum" of `SPFDmultiR spfd` by Diers in
 -- https://www.sciencedirect.com/science/article/pii/0022404981900827 and
 -- https://core.ac.uk/download/pdf/82552386.pdf .  It is a presheaf
