@@ -1829,34 +1829,35 @@ SPFDmultiUnitFst {dom} {cod} spfd b =
     (SPFDmultiLunc {dom} {cod} spfd b)
     (sliceId {a=dom} $ SPFDmultiLunc {dom} {cod} spfd b)
 
--- The monad (not the "multi-" version) of the polynomial-functor
--- multi-adjunction.
+-- This is `R . L` for the polynomial-functor multi-adjunction,
+-- but note that these `R` and `L` are _multi_-adjoints, not
+-- ordinary adjoints, so this is not necessarily a monad.
 export
-SPFDmonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDrl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor cod
-SPFDmonad {dom} {cod} spfd =
+SPFDrl {dom} {cod} spfd =
   SPFDmultiR {dom} {cod} spfd . SPFDL {dom} {cod} spfd
 
 export
-SPFDmonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceFMap (SPFDmonad {dom} {cod} spfd)
-SPFDmonadMap {dom} {cod} spfd x y =
+SPFDrlMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDrl {dom} {cod} spfd)
+SPFDrlMap {dom} {cod} spfd x y =
   SPFDmultiRmap spfd (SPFDL spfd x) (SPFDL spfd y)
   . SPFDLmap spfd x y
 
--- The comonad of the polynomial-functor multi-adjunction.
--- (There is no "multi" version of the comonad of a multi-adjunction
--- of this variance.)
+-- This is `L . R` for the polynomial-functor multi-adjunction,
+-- but note that these `L` and `R` are _multi_-adjoints, not
+-- ordinary adjoints, so this is not necessarily a comonad.
 export
-SPFDcomonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDlr : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor dom
-SPFDcomonad {dom} {cod} spfd =
+SPFDlr {dom} {cod} spfd =
   SPFDL {dom} {cod} spfd . SPFDmultiR {dom} {cod} spfd
 
 export
-SPFDcomonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceFMap (SPFDcomonad {dom} {cod} spfd)
-SPFDcomonadMap {dom} {cod} spfd x y =
+SPFDlrMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceFMap (SPFDlr {dom} {cod} spfd)
+SPFDlrMap {dom} {cod} spfd x y =
   SPFDLmap spfd (SPFDmultiR spfd x) (SPFDmultiR spfd y)
   . SPFDmultiRmap spfd x y
 
