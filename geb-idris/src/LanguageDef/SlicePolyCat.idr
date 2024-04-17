@@ -1540,16 +1540,6 @@ SPFDgenFactIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDgenFactIdx {dom} {cod} spfd a b =
   sliceComp {a=cod} (SPFDgenFactIdxSndFact {dom} {cod} spfd a b)
 
--- The type of directions of a polynomial functor for the position
--- used to index the unit which is used to factor the given morphism `i`.
-export
-SPFDgenFactDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (a : SliceObj dom) -> (b : SliceObj cod) ->
-  (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
-  (ec : cod) -> b ec -> SliceObj dom
-SPFDgenFactDir {dom} {cod} spfd a b i ec eb =
-   spfdDir spfd ec (SPFDgenFactIdx {dom} {cod} spfd a b i ec eb)
-
 -- This is the object of `SliceObj dom` which underlies the intermediate
 -- object of the generic factorization of a morphism with the signature
 -- `b -> SPFDmultiR spfd a`.  It is called `D` at
@@ -1587,7 +1577,7 @@ SPFDgenFactFst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDgenFactFst {dom} {cod} spfd a b i ec eb =
   (SPFDgenFactIdx {dom} {cod} spfd a b i ec eb **
    \ed : dom,
-    db : SPFDgenFactDir {dom} {cod} spfd a b i ec eb ed =>
+    db : spfdDir spfd ec (SPFDgenFactIdx {dom} {cod} spfd a b i ec eb) ed =>
       (((ec ** SPFDgenFactIdx {dom} {cod} spfd a b i ec eb) ** db) **
        Element0 eb Refl))
 
