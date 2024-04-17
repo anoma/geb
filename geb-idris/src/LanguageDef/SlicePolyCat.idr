@@ -1718,10 +1718,10 @@ SPFDmultiRAdj {dom} {cod} spfd x y m =
 -- We define it here in the generic way in which the unit of an adjunction
 -- can be defined as the left adjunct applied to the identity morphism.
 export
-SPFDlmadj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDmultiUnit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=cod} (fst b) (SPFDmultiMfib {dom} {cod} spfd b)
-SPFDlmadj {dom} {cod} spfd b =
+SPFDmultiUnit {dom} {cod} spfd b =
   SPFDmultiLAdjUnc {dom} {cod} spfd
     b
     (SPFDmultiLunc {dom} {cod} spfd b)
