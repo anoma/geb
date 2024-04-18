@@ -1238,9 +1238,8 @@ SPFDcPosSlToBaseSl {spfd} =
 export
 SPFDbaseSlToCPosSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDbaseSl {dom} {cod} spfd -> spfdCPosSl spfd
-SPFDbaseSlToCPosSl {spfd} sl =
-  (CSliceFromSlice (SPFDbaseSlToCPosSlDom sl) **
-   CSMorphFromSlice $ SPFDbaseSlToCPosSlProj {spfd} sl)
+SPFDbaseSlToCPosSl {spfd} =
+  CSliceObjOverSigmaToObjOfSliceCat {x=(spfdCPos spfd)} . CSliceFromSlice
 
 export
 SPFDcPosSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
