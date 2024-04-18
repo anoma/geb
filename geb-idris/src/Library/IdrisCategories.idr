@@ -3201,7 +3201,7 @@ CSPreImage {c} {d} = (|>) (CSGObj {c}) . CSBaseChange {c} {d}
 -- Sigma, also known as dependent sum.
 public export
 CSSigma : {0 c, d : Type} -> (c -> d) -> CSliceFunctor c d
-CSSigma {c} {d} f (x ** px) = (x ** f . px)
+CSSigma {c} {d} f csl = (fst csl ** f . snd csl)
 
 public export
 CSGSigma : {0 c : Type} -> CSliceObj c -> Type
@@ -3481,9 +3481,8 @@ CSliceOverProdSubcatObj {c} (x ** px) =
 public export
 CSliceObjOfSliceCatToSliceObjOverSigma : {c : Type} -> {x : CSliceObj c} ->
   CSliceObjOfSliceCat {c} x -> CSliceObjOverSigma {c} x
-CSliceObjOfSliceCatToSliceObjOverSigma {c} {x=(x ** pxc)}
-  ((y ** pyc) ** Element0 pyx comm) =
-    (y ** pyx)
+CSliceObjOfSliceCatToSliceObjOverSigma {c} {x} csl =
+  (fst (fst csl) ** fst0 (snd csl))
 
 public export
 CSliceObjOverSigmaToSliceOverProdSubcatObj : {c : Type} -> {x : CSliceObj c} ->
@@ -3570,6 +3569,13 @@ CSPullbackFromSigmaSliceProd {c} {x=(x ** px)} {y=(y ** py)} {z=(z ** pz)}
           fgcomm)
       (\(Element0 (elx, ely) fgcomm) =>
         sym $ fcomm elx)
+
+public export
+CSliceOfSliceCatToSliceOverSigma : {c : Type} -> {x : SliceObj c} ->
+  CSliceObjOfSliceCat {c} (CSliceFromSlice x) -> SliceObj (Sigma {a=c} x)
+CSliceOfSliceCatToSliceOverSigma {c} {x} =
+  SliceFromCSlice {c=(Sigma {a=c} x)}
+  . CSliceObjOfSliceCatToSliceObjOverSigma {c} {x=(CSliceFromSlice x)}
 
 -----------------------------------------------
 ---- Higher categories of slice categories ----
