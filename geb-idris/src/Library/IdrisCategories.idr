@@ -746,6 +746,12 @@ CSliceOfSlice : {c : Type} -> SliceObj c -> Type
 CSliceOfSlice {c} sl = (tot : SliceObj c ** SliceMorphism {a=c} tot sl)
 
 public export
+CSliceOfSliceToSliceOfSigma : {c : Type} -> {sl : SliceObj c} ->
+  CSliceOfSlice {c} sl -> SliceObj (Sigma {a=c} sl)
+CSliceOfSliceToSliceOfSigma {c} {sl} csl =
+  resliceByMor {c} {a=sl} {b=(fst csl)} (snd csl)
+
+public export
 SliceOfSigmaToCSliceOfSlice : {c : Type} -> {sl : SliceObj c} ->
   SliceObj (Sigma {a=c} sl) -> CSliceOfSlice {c} sl
 SliceOfSigmaToCSliceOfSlice {c} {sl} ssl =
