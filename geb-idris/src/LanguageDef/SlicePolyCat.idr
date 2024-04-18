@@ -1180,6 +1180,13 @@ SPFDmultiIdxContramap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiIdx {dom} {cod} spfd y
 SPFDmultiIdxContramap = SPFDposContraRepContramap
 
+-- Here we define translations amongst `SPFDbaseSl` (a dependent-type-style
+-- slice of `SPFDbase spfd`), `SPFDposCSlice` (a combination of dependent-type
+-- style and category-theory style, comprising a slice of the codomain
+-- together with a slice morphism from that slice to `spfdPos spfd`), and
+-- `spfdCPosSl` (a category-theory-style slice object in the slice category of
+-- `Type` over `spfdPos spfd`.
+
 -- Translate from a category-theory-style slice of `spfdPos spfd` --
 -- which is to say, an object of `SliceObj cod` together with a morphism
 -- from that object to `spfdPos spfd` -- to a dependent-type-style slice
@@ -1214,6 +1221,19 @@ SPFDbaseSlToCPosSlProj {dom} {cod} {spfd} =
   -- \sl, ec => DPair.fst
   slSliceToMor {c=cod} {a=(spfdPos spfd)}
 
+export
+SPFDbaseSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  SPFDbaseSl {dom} {cod} spfd ->
+  SPFDposCSlice {dom} {cod} spfd
+SPFDbaseSlToPosCSl {spfd} bsl =
+  (SPFDbaseSlToCPosSlDom bsl ** SPFDbaseSlToCPosSlProj {dom} {cod} {spfd} bsl)
+
+export
+SPFDcPosSlToBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  spfdCPosSl spfd -> SPFDbaseSl {dom} {cod} spfd
+SPFDcPosSlToBaseSl {spfd} =
+  SliceFromCSlice . CSliceObjOfSliceCatToSliceObjOverSigma {x=(spfdCPos spfd)}
+
 -- Translate from a dependent-type-style slice of `SPFDbase spfd` to a
 -- category-theory-style slice of `spfdPos spfd`.
 export
@@ -1222,6 +1242,18 @@ SPFDbaseSlToCPosSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
 SPFDbaseSlToCPosSl {spfd} sl =
   (CSliceFromSlice (SPFDbaseSlToCPosSlDom sl) **
    CSMorphFromSlice $ SPFDbaseSlToCPosSlProj {spfd} sl)
+
+export
+SPFDcPosSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  spfdCPosSl spfd -> SPFDposCSlice {dom} {cod} spfd
+SPFDcPosSlToPosCSl {dom} {cod} {spfd} =
+  SPFDbaseSlToPosCSl {spfd} .  SPFDcPosSlToBaseSl {spfd}
+
+export
+SPFDposCSlToCPosSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
+  SPFDposCSlice {dom} {cod} spfd -> spfdCPosSl spfd
+SPFDposCSlToCPosSl {dom} {cod} {spfd} =
+  SPFDbaseSlToCPosSl {spfd} . SPFDposCSlToBaseSl {dom} {cod} {spfd}
 
 -- The right-adjoint factor of a polynomial functor expressed as
 -- a parametric right adjoint.
