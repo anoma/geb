@@ -1159,30 +1159,6 @@ SPFDposCSlice : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDposCSlice {dom} {cod} spfd =
   DPair (SliceObj cod) (SPFDposContraRep {dom} {cod} spfd)
 
--- For a multi-adjunction induced by a polynomial functor,
--- `SPFDposContraRep` is the functor is referred to as `I` in theorem 2.4 of
--- https://ncatlab.org/nlab/show/multi-adjoint#definition (for the
--- multi-adjunction defined by a slice polynomial functor).  It is
--- referred to as the "index" (in particular, it indexes the
--- family of units of the multi-adjunction) part of a left multi-adjoint
--- (the functor part is `SPFDmultiL`).  Hence we give it an alias reflecting
--- its role as an index.
---
--- This functor is simply the contravariant representable functor of the
--- position, so the index of a unit for a particular slice of the codomain
--- is a (slice) morphism from that slice to the slice object of positions.
-export
-SPFDmultiIdx : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
-SPFDmultiIdx = SPFDposContraRep
-
-export
-SPFDmultiIdxContramap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (x, y : SliceObj cod) ->
-  SliceMorphism {a=cod} y x ->
-  SPFDmultiIdx {dom} {cod} spfd x ->
-  SPFDmultiIdx {dom} {cod} spfd y
-SPFDmultiIdxContramap = SPFDposContraRepContramap
-
 -- Here we define translations amongst `SPFDbaseSl` (a dependent-type-style
 -- slice of `SPFDbase spfd`), `SPFDposCSlice` (a combination of dependent-type
 -- style and category-theory style, comprising a slice of the codomain
@@ -1459,6 +1435,30 @@ SPFDLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDLmap {dom} {cod} spfd x y =
   SPFDladjFactMap spfd (SPFDdepSumFactR spfd x) (SPFDdepSumFactR spfd y)
   . SPFDdepSumFactRmap spfd x y
+
+-- For a multi-adjunction induced by a polynomial functor,
+-- `SPFDposContraRep` is the functor is referred to as `I` in theorem 2.4 of
+-- https://ncatlab.org/nlab/show/multi-adjoint#definition (for the
+-- multi-adjunction defined by a slice polynomial functor).  It is
+-- referred to as the "index" (in particular, it indexes the
+-- family of units of the multi-adjunction) part of a left multi-adjoint
+-- (the functor part is `SPFDmultiL`).  Hence we give it an alias reflecting
+-- its role as an index.
+--
+-- This functor is simply the contravariant representable functor of the
+-- position, so the index of a unit for a particular slice of the codomain
+-- is a (slice) morphism from that slice to the slice object of positions.
+export
+SPFDmultiIdx : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
+SPFDmultiIdx = SPFDposContraRep
+
+export
+SPFDmultiIdxContramap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SliceObj cod) ->
+  SliceMorphism {a=cod} y x ->
+  SPFDmultiIdx {dom} {cod} spfd x ->
+  SPFDmultiIdx {dom} {cod} spfd y
+SPFDmultiIdxContramap = SPFDposContraRepContramap
 
 -- Convert the index of one of the units of the multi-adjoint defined by
 -- a polynomial functor from category-theoretic style
