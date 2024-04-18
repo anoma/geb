@@ -1215,20 +1215,17 @@ SPFDcPosSlToBaseSl {dom} {cod} {spfd} =
 export
 SPFDbaseSlToCPosSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDbaseSl {dom} {cod} spfd -> spfdCPosSl spfd
-SPFDbaseSlToCPosSl {spfd} =
-  CSliceObjOverSigmaToObjOfSliceCat {x=(spfdCPos spfd)} . CSliceFromSlice
+SPFDbaseSlToCPosSl = SliceObjOverSigmaToObjOfSliceCat
 
 export
 SPFDcPosSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   spfdCPosSl spfd -> SPFDposCSlice {dom} {cod} spfd
-SPFDcPosSlToPosCSl {dom} {cod} {spfd} =
-  SPFDbaseSlToPosCSl {spfd} .  SPFDcPosSlToBaseSl {spfd}
+SPFDcPosSlToPosCSl = CSliceOfSliceCatToCSliceOfSlice
 
 export
 SPFDposCSlToCPosSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDposCSlice {dom} {cod} spfd -> spfdCPosSl spfd
-SPFDposCSlToCPosSl {dom} {cod} {spfd} =
-  SPFDbaseSlToCPosSl {spfd} . SPFDposCSlToBaseSl {dom} {cod} {spfd}
+SPFDposCSlToCPosSl = CSliceOfSliceToCSliceOfSliceCat
 
 -- The right-adjoint factor of a polynomial functor expressed as
 -- a parametric right adjoint.
