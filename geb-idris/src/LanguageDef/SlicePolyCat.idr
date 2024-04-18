@@ -1157,8 +1157,7 @@ SPFDposContraRepContramap {dom} {cod} spfd x y =
 
 export
 SPFDposCSlice : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDposCSlice {dom} {cod} spfd =
-  DPair (SliceObj cod) (SPFDposContraRep {dom} {cod} spfd)
+SPFDposCSlice {dom} {cod} spfd = CSliceOfSlice {c=cod} (spfdPos spfd)
 
 -- Here we define translations amongst `SPFDbaseSl` (a dependent-type-style
 -- slice of `SPFDbase spfd`), `SPFDposCSlice` (a combination of dependent-type
