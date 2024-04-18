@@ -287,3 +287,19 @@ cbPullback : (cb : CBundleObj) -> {b' : Type} ->
 cbPullback cbo {b'} m with (CSBaseChange m (CBOsl cbo))
   cbPullback cbo {b'} m | (cb' ** proj') =
     CBO b' cb' proj'
+
+-------------------------------
+-------------------------------
+---- Parameterized bundles ----
+-------------------------------
+-------------------------------
+
+public export
+PBundleObj : Type -> Type
+PBundleObj x = x -> ABundleObj
+
+public export
+record PBundleMor {x, y : Type} (dom : PBundleObj x) (cod : PBundleObj y) where
+  constructor PBM
+  pbmOnParam : x -> y
+  pbmOnBundle : (ex : x) -> ABundleMor (dom ex) (cod $ pbmOnParam ex)
