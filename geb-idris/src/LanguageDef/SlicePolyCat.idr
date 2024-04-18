@@ -1340,28 +1340,28 @@ SPFDsigmaDepMap {dom} {cod} spfd ec {a} {b} m esa =
 
 -- The dependent-sum factor of a polynomial functor.
 export
-SPFDsigma : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDsigmaFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor (SPFDbase {dom} {cod} spfd) cod
-SPFDsigma {dom} {cod} spfd bsl ec =
+SPFDsigmaFact {dom} {cod} spfd bsl ec =
   -- This is equivalent to:
   --  SliceSigmaF {c=cod} (spfdPos spfd) bsl ec
   SPFDsigmaDep {dom} {cod} spfd ec (curry bsl ec)
 
 export
 SPFDsigmaMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceFMap (SPFDsigma {dom} {cod} spfd)
+  SliceFMap (SPFDsigmaFact {dom} {cod} spfd)
 SPFDsigmaMap {dom} {cod} spfd a b m ec =
   -- This is equivalent to:
   --  ssMap {c=cod} {sl=(spfdPos spfd)} a b m ec
   SPFDsigmaDepMap {dom} {cod} spfd ec {a=(curry a ec)} {b=(curry b ec)}
     $ \ep => m (ec ** ep)
 
--- We show explicitly that `SPFDsigma` is equivalent to
+-- We show explicitly that `SPFDsigmaFact` is equivalent to
 -- `SliceSigmaF` (this is trivial).
 export
 SPFDsigmaAsSS : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceNatTrans {x=(SPFDbase spfd)} {y=cod}
-    (SPFDsigma {dom} {cod} spfd)
+    (SPFDsigmaFact {dom} {cod} spfd)
     (SliceSigmaF {c=cod} $ spfdPos spfd)
 SPFDsigmaAsSS {dom} {cod} (SPFD pos dir) scp ec = id
 
@@ -1369,13 +1369,13 @@ export
 SSasSPFDsigma : {0 cod : Type} -> (ss : SliceObj cod) ->
   SliceNatTrans {x=(Sigma {a=cod} ss)} {y=cod}
     (SliceSigmaF {c=cod} ss)
-    (SPFDsigma {dom=(Sigma {a=cod} ss)} {cod}
+    (SPFDsigmaFact {dom=(Sigma {a=cod} ss)} {cod}
      $ SPFD ss $ \ec, ess, ecs => ss ec)
 SSasSPFDsigma {cod} ss scs ec = id
 
 -- The dependent-sum factor of a polynomial functor is itself a _left_
 -- adjoint, to a base change.  This is that base change, the right
--- adjoint to `SPFDsigma`.
+-- adjoint to `SPFDsigmaFact`.
 export
 SPFDdepSumFactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor cod (SPFDbase {dom} {cod} spfd)
@@ -1401,7 +1401,7 @@ SPFDdepSumFactRmap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 -- adjoint.  (But it is a parametric right adjoint, hence a multi-adjoint.)
 export
 SPFDmultiR : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor dom cod
-SPFDmultiR {dom} {cod} spfd = SPFDsigma spfd . SPFDradjFact spfd
+SPFDmultiR {dom} {cod} spfd = SPFDsigmaFact spfd . SPFDradjFact spfd
 
 -- `SPFDmultiR` is the "standard" form of interpretation of a dependent (slice)
 -- polynomial functor (W-type), so we give it an alias which reflects that.
