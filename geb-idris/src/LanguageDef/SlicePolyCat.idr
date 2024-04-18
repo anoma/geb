@@ -1537,12 +1537,19 @@ export
 SPFDmultiRcat : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDmultiRcat = SPFDposCSlice
 
+-- But we may take another view of the structure (`SPFDposCSlice`) that
+-- we have dubbed `SPFDmultiRcat`: as we have seen above, it is
+-- equivalent to a slice of `SPFDbase`.  That is the view that we adopt
+-- here, as it gives the morphisms a simpler, dependent-type-style form.
+export
+SPFDmultiRcatSl : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDmultiRcatSl = SPFDbaseSl
+
 -- The inverse of `SPFDunitIdxToSl`, converting a slice of the
 -- base object to a unit index.
 export
 SPFDbaseSlToUnitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceObj (SPFDbase {dom} {cod} spfd) ->
-  SPFDmultiRcat spfd
+  SPFDmultiRcatSl spfd -> SPFDmultiRcat spfd
 SPFDbaseSlToUnitIdx spfd = SPFDbaseSlToPosCSl {spfd}
 
 export
@@ -1553,6 +1560,11 @@ SPFDmultiRcatMor {dom} {cod} spfd rx ry =
     (SliceMorphism {a=cod} (fst rx) (fst ry))
     (\msc =>
       (ec : cod) -> (ex : fst rx ec) -> snd rx ec ex = snd ry ec (msc ec ex))
+
+export
+SPFDmultiRcatSlMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDmultiRcatSl {dom} {cod} spfd -> SPFDmultiRcatSl {dom} {cod} spfd -> Type
+SPFDmultiRcatSlMor {dom} {cod} spfd = SliceMorphism {a=(SPFDbase spfd)}
 
 export
 SPFDmultiRcatToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1577,6 +1589,21 @@ SPFDmultiLuncMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     (SPFDmultiLunc spfd m')
 SPFDmultiLuncMap {dom} {cod} spfd m m' =
   SPFDmultiLmap {dom} {cod} spfd (fst m) (snd m) (fst m') (snd m')
+
+-- The slice form of `SPFDmultiL`.
+export
+SPFDmultiLsl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDmultiRcatSl spfd -> SliceObj dom
+SPFDmultiLsl = SPFDladjFact
+
+export
+SPFDmultiLslMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (m, m' : SPFDmultiRcatSl spfd) ->
+  SliceMorphism {a=(SPFDbase spfd)} m m' ->
+  SliceMorphism {a=dom}
+    (SPFDmultiLsl spfd m)
+    (SPFDmultiLsl spfd m')
+SPFDmultiLslMap = SPFDladjFactMap
 
 -- Another way of viewing a multi-adjunction is as an enhanced form
 -- of hom-set isomorphism using the (parameterized) category of families
