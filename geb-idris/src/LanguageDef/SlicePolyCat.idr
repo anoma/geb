@@ -1535,10 +1535,7 @@ SPFDmultiLpair {dom} {cod} spfd =
 -- of the adjunction (an enhanced version of `SliceObj cod`).
 export
 SPFDmultiRcat : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDmultiRcat spfd =
-  -- This is equivalent to:
-  --  DPair (SliceObj cod) (SPFDmultiIdx {dom} {cod} spfd)
-  SPFDposCSlice spfd
+SPFDmultiRcat = SPFDposCSlice
 
 -- The inverse of `SPFDunitIdxToSl`, converting a slice of the
 -- base object to a unit index.
