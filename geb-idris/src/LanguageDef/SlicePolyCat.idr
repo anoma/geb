@@ -1199,33 +1199,12 @@ SPFDposCSlToBaseSl {dom} {cod} {spfd} csl =
   -- \ecp => Subset0 (fst csl $ fst ecp) $ \eb => snd csl (fst ecp) eb = snd ecp
   resliceByMor {c=cod} {b=(fst csl)} {a=(spfdPos spfd)} (snd csl)
 
--- The slice-object component of the translation from a dependent-type-style
--- slice of `SPFDbase spfd` to a category-theory-style slice of `spfdPos spfd`.
-export
-SPFDbaseSlToCPosSlDom : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
-  SPFDbaseSl {dom} {cod} spfd -> SliceObj cod
-SPFDbaseSlToCPosSlDom {dom} {cod} {spfd} =
-  -- An explicit definition (not using utility routines) would be:
-  --  \sl, ec => Sigma {a=(spfdPos spfd ec)} $ curry sl ec
-  SlSliceToSlice {c=cod} {a=(spfdPos spfd)}
-
--- The slice-morphism component of the translation from a dependent-type-style
--- slice of `SPFDbase spfd` to a category-theory-style slice of `spfdPos spfd`.
-export
-SPFDbaseSlToCPosSlProj : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
-  (sl : SPFDbaseSl {dom} {cod} spfd) ->
-  SliceMorphism {a=cod} (SPFDbaseSlToCPosSlDom {spfd} sl) (spfdPos spfd)
-SPFDbaseSlToCPosSlProj {dom} {cod} {spfd} =
-  -- An explicit definition (not using utility routines) would be:
-  -- \sl, ec => DPair.fst
-  slSliceToMor {c=cod} {a=(spfdPos spfd)}
-
 export
 SPFDbaseSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDbaseSl {dom} {cod} spfd ->
   SPFDposCSlice {dom} {cod} spfd
-SPFDbaseSlToPosCSl {spfd} bsl =
-  (SPFDbaseSlToCPosSlDom bsl ** SPFDbaseSlToCPosSlProj {dom} {cod} {spfd} bsl)
+SPFDbaseSlToPosCSl {spfd} =
+  SliceOfSigmaToCSliceOfSlice {c=cod} {sl=(spfdPos spfd)}
 
 export
 SPFDcPosSlToBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
