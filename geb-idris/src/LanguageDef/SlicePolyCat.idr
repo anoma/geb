@@ -1167,6 +1167,10 @@ SPFDposCSlice {dom} {cod} spfd =
 -- family of units of the multi-adjunction) part of a left multi-adjoint
 -- (the functor part is `SPFDmultiL`).  Hence we give it an alias reflecting
 -- its role as an index.
+--
+-- This functor is simply the contravariant representable functor of the
+-- position, so the index of a unit for a particular slice of the codomain
+-- is a (slice) morphism from that slice to the slice object of positions.
 export
 SPFDmultiIdx : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDmultiIdx = SPFDposContraRep
@@ -1470,10 +1474,8 @@ export
 SPFDunitIdxToSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   SliceObj (SPFDbase {dom} {cod} spfd)
-SPFDunitIdxToSl {dom} {cod} spfd b i ecp =
-  -- This is equivalent to:
-  --  SPFDunitFibration {dom} {cod} spfd (b ** i) (fst ecp) (snd ecp)
-  SPFDposCSlToBaseSl {dom} {cod} {spfd} (b ** i) ecp
+SPFDunitIdxToSl {dom} {cod} spfd b i =
+  SPFDposCSlToBaseSl {dom} {cod} {spfd} (b ** i)
 
 -- This is the left multi-adjoint of `SPFDmultiR`.  It is the functor which
 -- is called `L` both in the "in particular has a left-multi-adjoint"
@@ -1498,16 +1500,18 @@ SPFDmultiL {dom} {cod} spfd b i =
 
 export
 SPFDmultiLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (0 b : SliceObj cod) -> (0 i : SPFDmultiIdx spfd b) ->
-  (0 b' : SliceObj cod) -> (0 i' : SPFDmultiIdx spfd b') ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
+  (b' : SliceObj cod) -> (i' : SPFDmultiIdx spfd b') ->
   SliceMorphism {a=(SPFDbase spfd)}
     (SPFDposCSlToBaseSl {spfd} (b ** i))
     (SPFDposCSlToBaseSl {spfd} (b' ** i')) ->
   SliceMorphism {a=dom}
     (SPFDmultiL spfd b i)
     (SPFDmultiL spfd b' i')
-SPFDmultiLmap {dom} {cod} spfd b i b' i' m ed ddp =
-  (fst ddp ** m (fst $ fst ddp) $ snd ddp)
+SPFDmultiLmap {dom} {cod} spfd b i b' i' =
+  SPFDladjFactMap spfd
+    (SPFDposCSlToBaseSl (b ** i))
+    (SPFDposCSlToBaseSl (b' ** i'))
 
 -- The type of the two components of a left multi-adjoint together --
 -- index and (dependent) functor.
