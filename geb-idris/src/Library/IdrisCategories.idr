@@ -3577,6 +3577,27 @@ CSliceOfSliceCatToSliceOverSigma {c} {x} =
   SliceFromCSlice {c=(Sigma {a=c} x)}
   . CSliceObjOfSliceCatToSliceObjOverSigma {c} {x=(CSliceFromSlice x)}
 
+public export
+SliceObjOverSigmaToObjOfSliceCat : {c : Type} -> {x : SliceObj c} ->
+  SliceObj (Sigma {a=c} x) -> CSliceObjOfSliceCat {c} (CSliceFromSlice x)
+SliceObjOverSigmaToObjOfSliceCat {c} {x} =
+  CSliceObjOverSigmaToObjOfSliceCat {x=(CSliceFromSlice x)}
+  . CSliceFromSlice {c=(Sigma {a=c} x)}
+
+public export
+CSliceOfSliceToCSliceOfSliceCat : {c : Type} -> {x : SliceObj c} ->
+  CSliceOfSlice {c} x -> CSliceObjOfSliceCat {c} (CSliceFromSlice x)
+CSliceOfSliceToCSliceOfSliceCat {c} {x} =
+  SliceObjOverSigmaToObjOfSliceCat {c} {x}
+  . CSliceOfSliceToSliceOfSigma {c} {sl=x}
+
+public export
+CSliceOfSliceCatToCSliceOfSlice : {c : Type} -> {x : SliceObj c} ->
+  CSliceObjOfSliceCat {c} (CSliceFromSlice x) -> CSliceOfSlice {c} x
+CSliceOfSliceCatToCSliceOfSlice {c} {x} =
+  SliceOfSigmaToCSliceOfSlice {c} {sl=x}
+  . CSliceOfSliceCatToSliceOverSigma {c} {x}
+
 -----------------------------------------------
 ---- Higher categories of slice categories ----
 -----------------------------------------------
