@@ -1207,8 +1207,8 @@ SPFDbaseSlToPosCSl {spfd} =
 export
 SPFDcPosSlToBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   spfdCPosSl spfd -> SPFDbaseSl {dom} {cod} spfd
-SPFDcPosSlToBaseSl {spfd} =
-  SliceFromCSlice . CSliceObjOfSliceCatToSliceObjOverSigma {x=(spfdCPos spfd)}
+SPFDcPosSlToBaseSl {dom} {cod} {spfd} =
+  CSliceOfSliceCatToSliceOverSigma {c=cod} {x=(spfdPos spfd)}
 
 -- Translate from a dependent-type-style slice of `SPFDbase spfd` to a
 -- category-theory-style slice of `spfdPos spfd`.
