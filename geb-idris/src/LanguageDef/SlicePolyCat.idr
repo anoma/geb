@@ -1541,6 +1541,12 @@ SPFDmultiRcatMor {dom} {cod} spfd rx ry =
     (\msc =>
       (ec : cod) -> (ex : fst rx ec) -> snd rx ec ex = snd ry ec (msc ec ex))
 
+export
+SPFDmultiRcatToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDmultiRcat spfd ->
+  SliceObj (SPFDbase {dom} {cod} spfd)
+SPFDmultiRcatToBaseSl spfd robj = SPFDunitIdxToSl spfd (fst robj) (snd robj)
+
 -- The uncurried form of `SPFDmultiL`.
 export
 SPFDmultiLunc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
