@@ -741,6 +741,16 @@ slSliceToMor : {0 c : Type} -> {a : SliceObj c} ->
   SliceMorphism {a=c} (SlSliceToSlice {a} {c} sl) a
 slSliceToMor {c} {a} sl ec = DPair.fst
 
+public export
+CSliceOfSlice : {c : Type} -> SliceObj c -> Type
+CSliceOfSlice {c} sl = (tot : SliceObj c ** SliceMorphism {a=c} tot sl)
+
+public export
+SliceOfSigmaToCSliceOfSlice : {c : Type} -> {sl : SliceObj c} ->
+  SliceObj (Sigma {a=c} sl) -> CSliceOfSlice {c} sl
+SliceOfSigmaToCSliceOfSlice {c} {sl} ssl =
+  (SlSliceToSlice ssl ** slSliceToMor ssl)
+
 ---------------------------------------------------------------
 
 ---------------------------------------------------------------
