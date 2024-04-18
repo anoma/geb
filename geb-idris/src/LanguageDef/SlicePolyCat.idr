@@ -1194,10 +1194,8 @@ export
 SPFDposCSlToBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDposCSlice {dom} {cod} spfd ->
   SPFDbaseSl {dom} {cod} spfd
-SPFDposCSlToBaseSl {dom} {cod} {spfd} csl =
-  -- An explicit definition (not using utility routines) would be:
-  -- \ecp => Subset0 (fst csl $ fst ecp) $ \eb => snd csl (fst ecp) eb = snd ecp
-  resliceByMor {c=cod} {b=(fst csl)} {a=(spfdPos spfd)} (snd csl)
+SPFDposCSlToBaseSl {dom} {cod} {spfd} =
+  CSliceOfSliceToSliceOfSigma {c=cod} {sl=(spfdPos spfd)}
 
 export
 SPFDbaseSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
