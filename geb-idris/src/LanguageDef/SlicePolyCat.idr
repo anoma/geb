@@ -1540,6 +1540,14 @@ SPFDmultiRcat spfd =
   --  DPair (SliceObj cod) (SPFDmultiIdx {dom} {cod} spfd)
   SPFDposCSlice spfd
 
+-- The inverse of `SPFDunitIdxToSl`, converting a slice of the
+-- base object to a unit index.
+export
+SPFDbaseSlToUnitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceObj (SPFDbase {dom} {cod} spfd) ->
+  SPFDmultiRcat spfd
+SPFDbaseSlToUnitIdx spfd = SPFDbaseSlToPosCSl {spfd}
+
 export
 SPFDmultiRcatMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiRcat {dom} {cod} spfd -> SPFDmultiRcat {dom} {cod} spfd -> Type
