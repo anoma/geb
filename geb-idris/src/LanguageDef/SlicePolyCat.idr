@@ -1111,8 +1111,7 @@ SPFDextCovarDirRepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (0 a, b : SliceObj dom) -> SliceMorphism {a=dom} a b ->
   SPFDextCovarDirRep {dom} {cod} spfd ec ep a ->
   SPFDextCovarDirRep {dom} {cod} spfd ec ep b
-SPFDextCovarDirRepMap {dom} {cod} spfd ec ep a b mab dm ed dp =
-  mab ed $ dm ed dp
+SPFDextCovarDirRepMap {dom} {cod} spfd ec ep a b mab dm ed = mab ed . dm ed
 
 -- The base object of the intermediate slice category in the factorization
 -- of a (slice) polynomial functor as a parametric right adjoint.
