@@ -3482,6 +3482,29 @@ CSliceOverProdSubcatToSliceObjOfSliceCat {c} {x=(x ** px)}
   (Element0 (y ** py) ycomm) =
     ((y ** fst . py) ** Element0 (snd . py) ycomm)
 
+public export
+CSliceObjOverSigmaToObjOfSliceCat : {c : Type} -> {x : CSliceObj c} ->
+  CSliceObjOverSigma {c} x ->
+  CSliceObjOfSliceCat {c} x
+CSliceObjOverSigmaToObjOfSliceCat =
+  CSliceOverProdSubcatToSliceObjOfSliceCat
+  .  CSliceObjOverSigmaToSliceOverProdSubcatObj
+
+public export
+CSliceObjOverProdSubcatObjToObjOverSigma : {c : Type} -> {x : CSliceObj c} ->
+  CSliceOverProdSubcatObj {c} x ->
+  CSliceObjOverSigma {c} x
+CSliceObjOverProdSubcatObjToObjOverSigma =
+  CSliceObjOfSliceCatToSliceObjOverSigma
+  . CSliceOverProdSubcatToSliceObjOfSliceCat
+
+public export
+CSliceOfSliceCatToSliceOverProdSubcat : {c : Type} -> {x : CSliceObj c} ->
+  CSliceObjOfSliceCat {c} x -> CSliceOverProdSubcatObj {c} x
+CSliceOfSliceCatToSliceOverProdSubcat =
+  CSliceObjOverSigmaToSliceOverProdSubcatObj
+  .  CSliceObjOfSliceCatToSliceObjOverSigma
+
 -- Relatedly, there is also an alternative way of looking at pullbacks: a
 -- pullback in a slice category (including a slice category over the terminal
 -- object, which is equivalent to simply `Type` itself) may be viewed as
