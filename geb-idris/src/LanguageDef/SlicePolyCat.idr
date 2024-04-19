@@ -1539,53 +1539,53 @@ SPFDmultiLpair {dom} {cod} spfd =
 -- this refers specifically to `L` as defined in Theorem 2.4 on the
 -- ncatlab "multi-adjoint" page.
 export
-SPFDmultiRcat : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDmultiRcat = SPFDposCSlice
+SPFDmultiLdom : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDmultiLdom = SPFDposCSlice
 
 -- But we may take another view of the structure (`SPFDposCSlice`) that
--- we have dubbed `SPFDmultiRcat`: as we have seen above, it is
+-- we have dubbed `SPFDmultiLdom`: as we have seen above, it is
 -- equivalent to a slice of `SPFDbase`.  That is the view that we adopt
 -- here, as it gives the morphisms a simpler, dependent-type-style form.
 export
-SPFDmultiRcatSl : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDmultiRcatSl = SPFDbaseSl
+SPFDmultiLdomSl : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDmultiLdomSl = SPFDbaseSl
 
 -- The inverse of `SPFDunitIdxToSl`, converting a slice of the
 -- base object to a unit index.
 export
 SPFDbaseSlToUnitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiRcatSl spfd -> SPFDmultiRcat spfd
+  SPFDmultiLdomSl spfd -> SPFDmultiLdom spfd
 SPFDbaseSlToUnitIdx spfd = SPFDbaseSlToPosCSl {spfd}
 
 export
-SPFDmultiRcatMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiRcat {dom} {cod} spfd -> SPFDmultiRcat {dom} {cod} spfd -> Type
-SPFDmultiRcatMor {dom} {cod} spfd rx ry =
+SPFDmultiLdomMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDmultiLdom {dom} {cod} spfd -> SPFDmultiLdom {dom} {cod} spfd -> Type
+SPFDmultiLdomMor {dom} {cod} spfd rx ry =
   Subset0
     (SliceMorphism {a=cod} (fst rx) (fst ry))
     (\msc =>
       (ec : cod) -> (ex : fst rx ec) -> snd rx ec ex = snd ry ec (msc ec ex))
 
 export
-SPFDmultiRcatSlMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiRcatSl {dom} {cod} spfd -> SPFDmultiRcatSl {dom} {cod} spfd -> Type
-SPFDmultiRcatSlMor {dom} {cod} spfd = SliceMorphism {a=(SPFDbase spfd)}
+SPFDmultiLdomSlMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDmultiLdomSl {dom} {cod} spfd -> SPFDmultiLdomSl {dom} {cod} spfd -> Type
+SPFDmultiLdomSlMor {dom} {cod} spfd = SliceMorphism {a=(SPFDbase spfd)}
 
 export
-SPFDmultiRcatToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiRcat spfd ->
+SPFDmultiLdomToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDmultiLdom spfd ->
   SliceObj (SPFDbase {dom} {cod} spfd)
-SPFDmultiRcatToBaseSl spfd robj = SPFDunitIdxToSl spfd (fst robj) (snd robj)
+SPFDmultiLdomToBaseSl spfd robj = SPFDunitIdxToSl spfd (fst robj) (snd robj)
 
 -- The uncurried form of `SPFDmultiL`.
 export
 SPFDmultiLunc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiRcat spfd -> SliceObj dom
+  SPFDmultiLdom spfd -> SliceObj dom
 SPFDmultiLunc {dom} {cod} spfd = DPair.uncurry (SPFDmultiL {dom} {cod} spfd)
 
 export
 SPFDmultiLuncMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (m, m' : SPFDmultiRcat spfd) ->
+  (m, m' : SPFDmultiLdom spfd) ->
   SliceMorphism {a=(SPFDbase spfd)}
     (SPFDposCSlToBaseSl {spfd} m)
     (SPFDposCSlToBaseSl {spfd} m') ->
@@ -1598,12 +1598,12 @@ SPFDmultiLuncMap {dom} {cod} spfd m m' =
 -- The slice form of `SPFDmultiL`.
 export
 SPFDmultiLsl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiRcatSl spfd -> SliceObj dom
+  SPFDmultiLdomSl spfd -> SliceObj dom
 SPFDmultiLsl = SPFDladjFact
 
 export
 SPFDmultiLslMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (m, m' : SPFDmultiRcatSl spfd) ->
+  (m, m' : SPFDmultiLdomSl spfd) ->
   SliceMorphism {a=(SPFDbase spfd)} m m' ->
   SliceMorphism {a=dom}
     (SPFDmultiLsl spfd m)
@@ -1659,13 +1659,13 @@ SPFDmultiFamLmap {dom} {cod} spfd x y m =
 -- (so the unit itself has type `b -> TL(b, i)`).
 export
 SPFDmultiMfst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiRcat {dom} {cod} spfd -> SliceObj cod
+  SPFDmultiLdom {dom} {cod} spfd -> SliceObj cod
 SPFDmultiMfst {dom} {cod} spfd =
   SPFDmultiR {dom} {cod} spfd . SPFDmultiLunc {dom} {cod} spfd
 
 export
 SPFDmultiMfstMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (m, m' : SPFDmultiRcat {dom} {cod} spfd) ->
+  (m, m' : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=(SPFDbase spfd)}
     (SPFDposCSlToBaseSl {spfd} m)
     (SPFDposCSlToBaseSl {spfd} m') ->
@@ -1678,21 +1678,21 @@ SPFDmultiMfstMap {dom} {cod} spfd m m' =
 
 export
 SPFDmultiMsnd : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (robj : SPFDmultiRcat {dom} {cod} spfd) ->
+  (robj : SPFDmultiLdom {dom} {cod} spfd) ->
   SPFDmultiIdx spfd (SPFDmultiMfst spfd robj)
 SPFDmultiMsnd {dom} {cod} spfd robj ec = DPair.fst
 
 export
 SPFDmultiMpair : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiRcat {dom} {cod} spfd -> SPFDmultiRcat {dom} {cod} spfd
+  SPFDmultiLdom {dom} {cod} spfd -> SPFDmultiLdom {dom} {cod} spfd
 SPFDmultiMpair {dom} {cod} spfd robj =
   (SPFDmultiMfst spfd robj ** SPFDmultiMsnd spfd robj)
 
 export
 SPFDmultiMpairMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (x, y : SPFDmultiRcat {dom} {cod} spfd) ->
-  SPFDmultiRcatMor spfd x y ->
-  SPFDmultiRcatMor spfd (SPFDmultiMpair spfd x) (SPFDmultiMpair spfd y)
+  (x, y : SPFDmultiLdom {dom} {cod} spfd) ->
+  SPFDmultiLdomMor spfd x y ->
+  SPFDmultiLdomMor spfd (SPFDmultiMpair spfd x) (SPFDmultiMpair spfd y)
 SPFDmultiMpairMap {dom} {cod} spfd rx@(slx ** mpx) ry@(sly ** mpy)
   (Element0 mxy mcomm) =
     Element0
@@ -1856,7 +1856,7 @@ SPFDmultiLAdj {dom} {cod} spfd x y m ec ex =
 -- An uncurried form of `SPFDmultiLAdj`.
 export
 SPFDmultiLAdjUnc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (x : SPFDmultiRcat {dom} {cod} spfd) -> (y : SliceObj dom) ->
+  (x : SPFDmultiLdom {dom} {cod} spfd) -> (y : SliceObj dom) ->
   SliceMorphism {a=dom} (SPFDmultiLunc {dom} {cod} spfd x) y ->
   SliceMorphism {a=cod} (fst x) (SPFDmultiR {dom} {cod} spfd y)
 SPFDmultiLAdjUnc {dom} {cod} spfd x y m =
@@ -1906,7 +1906,7 @@ SPFDmultiFamRAdj {dom} {cod} spfd a b m =
 -- can be defined as the left adjunct applied to the identity morphism.
 export
 SPFDmultiUnitFst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SPFDmultiRcat {dom} {cod} spfd) ->
+  (b : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=cod} (fst b) (SPFDmultiMfst {dom} {cod} spfd b)
 SPFDmultiUnitFst {dom} {cod} spfd b =
   SPFDmultiLAdjUnc {dom} {cod} spfd
@@ -2010,7 +2010,7 @@ SPFDspecCEobjToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDspecCatElemObj {dom} {cod} spfd ->
   SliceObj (SPFDbase spfd)
 SPFDspecCEobjToBaseSl {dom} {cod} spfd (slc ** (uidx ** u)) =
-  SPFDmultiRcatToBaseSl spfd (slc ** uidx)
+  SPFDmultiLdomToBaseSl spfd (slc ** uidx)
 
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
