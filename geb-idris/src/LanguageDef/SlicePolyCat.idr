@@ -1515,6 +1515,9 @@ SPFDmultiLmap {dom} {cod} spfd b i b' i' =
 
 -- The type of the two components of a left multi-adjoint together --
 -- index and (dependent) functor.
+--
+-- (Note that, on the ncatlab "multi-adjoint" page, this is the
+-- "Theorem 2.4" version of the definition.)
 export
 MultiLpair : (dom, cod : Type) -> Type
 MultiLpair dom cod =
@@ -1532,7 +1535,9 @@ SPFDmultiLpair {dom} {cod} spfd =
 -- functor comprises the domain of the uncurried form of the functor
 -- component (`L`) of a multi-adjunction, below called `SPFDmultiLunc`.
 -- As such, it may be considered as a form of the right-hand category
--- of the adjunction (an enhanced version of `SliceObj cod`).
+-- of the adjunction (an enhanced version of `SliceObj cod`).  Again,
+-- this refers specifically to `L` as defined in Theorem 2.4 on the
+-- ncatlab "multi-adjoint" page.
 export
 SPFDmultiRcat : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDmultiRcat = SPFDposCSlice
