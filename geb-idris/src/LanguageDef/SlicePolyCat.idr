@@ -1561,10 +1561,9 @@ export
 SPFDmultiLdomMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdom {dom} {cod} spfd -> SPFDmultiLdom {dom} {cod} spfd -> Type
 SPFDmultiLdomMor {dom} {cod} spfd rx ry =
-  Subset0
-    (SliceMorphism {a=cod} (fst rx) (fst ry))
-    (\msc =>
-      (ec : cod) -> (ex : fst rx ec) -> snd rx ec ex = snd ry ec (msc ec ex))
+  SliceMorphism {a=(SPFDbase spfd)}
+    (SPFDposCSlToBaseSl {spfd} rx)
+    (SPFDposCSlToBaseSl {spfd} ry)
 
 export
 SPFDmultiLdomSlMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1693,13 +1692,11 @@ SPFDmultiMpairMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SPFDmultiLdom {dom} {cod} spfd) ->
   SPFDmultiLdomMor spfd x y ->
   SPFDmultiLdomMor spfd (SPFDmultiMpair spfd x) (SPFDmultiMpair spfd y)
-SPFDmultiMpairMap {dom} {cod} spfd rx@(slx ** mpx) ry@(sly ** mpy)
-  (Element0 mxy mcomm) =
+SPFDmultiMpairMap {dom} {cod} spfd rx ry
+  mxy ecp (Element0 epdm epeq) =
     Element0
-      (SPFDmultiMfstMap spfd rx ry
-       $ \(ec ** ep), (Element0 ex peq) =>
-        Element0 (mxy ec ex) $ trans (sym $ mcomm ec ex) peq)
-      $ \ec, dm => Refl
+      (fst epdm ** snd $ SPFDmultiMfstMap spfd rx ry mxy (fst ecp) epdm)
+      epeq
 
 -- The second part of the "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1`
 -- (see below) -- that is, the part with the signature
