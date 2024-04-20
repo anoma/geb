@@ -1593,21 +1593,6 @@ SPFDmultiLuncMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDmultiLuncMap {dom} {cod} spfd m m' =
   SPFDmultiLmap {dom} {cod} spfd (fst m) (snd m) (fst m') (snd m')
 
--- The slice form of `SPFDmultiL`.
-export
-SPFDmultiLsl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiLdomSl spfd -> SliceObj dom
-SPFDmultiLsl = SPFDladjFact
-
-export
-SPFDmultiLslMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (m, m' : SPFDmultiLdomSl spfd) ->
-  SliceMorphism {a=(SPFDbase spfd)} m m' ->
-  SliceMorphism {a=dom}
-    (SPFDmultiLsl spfd m)
-    (SPFDmultiLsl spfd m')
-SPFDmultiLslMap = SPFDladjFactMap
-
 -- Another way of viewing a multi-adjunction is as an enhanced form
 -- of hom-set isomorphism using the (parameterized) category of families
 -- (`IntFamObj`/`IntFamMor`) of the left-hand-side category of the
