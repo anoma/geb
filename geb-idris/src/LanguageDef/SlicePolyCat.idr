@@ -1629,7 +1629,7 @@ SPFDmultiFamLmap {dom} {cod} spfd x y m =
     (\i =>
       SPFDmultiLmap spfd x
         (SPFDmultiIdxContramap spfd y x m i) y i
-        (\ecp, ex => Element0 (m (fst ecp) (fst0 ex)) (snd0 ex)))
+        (\ecp => s0Bimap (m $ fst ecp) $ \ea => id))
 
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.  It may be viewed as the first projection
