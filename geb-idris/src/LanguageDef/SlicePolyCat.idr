@@ -1315,8 +1315,7 @@ SPFDsigmaDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceMorphism {a=(spfdPos spfd ec)} a b ->
   SPFDsigmaDep {dom} {cod} spfd ec a ->
   SPFDsigmaDep {dom} {cod} spfd ec b
-SPFDsigmaDepMap {dom} {cod} spfd ec {a} {b} m esa =
-  (fst esa ** m (fst esa) (snd esa))
+SPFDsigmaDepMap {dom} {cod} spfd ec {a} {b} = dpMapSnd {p=a} {q=b}
 
 -- The dependent-sum factor of a polynomial functor.
 export
