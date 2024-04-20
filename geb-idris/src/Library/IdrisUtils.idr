@@ -275,6 +275,20 @@ record Exists0 (0 type : Type) (0 this : (0 _ : type) -> Type) where
   0 snd0 : this fst0
 
 public export
+e0Bimap : {0 a, b : Type} ->
+  {0 p : (0 _ : a) -> Type} -> {0 q : (0 _ : b) -> Type} ->
+  (0 f : a -> b) -> (0 _ : (0 ea : a) -> p ea -> q (f ea)) ->
+  Exists0 a p -> Exists0 b q
+e0Bimap {a} {b} {p} {q} f m eap =
+  Evidence0 (f (fst0 eap)) (m (fst0 eap) (snd0 eap))
+
+public export
+e0MapSnd : {0 a : Type} ->
+  {0 p : (0 _ : a) -> Type} -> {0 q : (0 _ : a) -> Type} ->
+  (0 _ : (0 ea : a) -> p ea -> q ea) -> Exists0 a p -> Exists0 a q
+e0MapSnd {a} {p} {q} = e0Bimap {a} {b=a} {p} {q} (id {a})
+
+public export
 exists0inj1 :
   {0 type, type' : Type} ->
   {0 this : (0 _ : type) -> Type} ->
