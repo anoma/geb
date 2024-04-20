@@ -1675,11 +1675,11 @@ SPFDmultiMpairMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SPFDmultiLdom {dom} {cod} spfd) ->
   SPFDmultiLdomMor spfd x y ->
   SPFDmultiLdomMor spfd (SPFDmultiMpair spfd x) (SPFDmultiMpair spfd y)
-SPFDmultiMpairMap {dom} {cod} spfd rx ry
-  mxy ecp (Element0 epdm epeq) =
-    Element0
-      (fst epdm ** snd $ SPFDmultiMfstMap spfd rx ry mxy (fst ecp) epdm)
-      epeq
+SPFDmultiMpairMap {dom} {cod} spfd rx ry mxy ecp =
+  s0Bimap
+    (dpMapSnd $
+      \ep, dm => snd $ SPFDmultiMfstMap spfd rx ry mxy (fst ecp) (ep ** dm))
+    (\_ => id)
 
 -- The second part of the "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1`
 -- (see below) -- that is, the part with the signature
