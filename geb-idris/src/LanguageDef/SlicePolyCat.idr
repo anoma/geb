@@ -1760,8 +1760,8 @@ SPFDgenFactSndDomCat : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceMorphism {a=dom} (SPFDgenFactDomObj {dom} {cod} spfd a b i) a
 SPFDgenFactSndDomCat {dom} {cod} spfd a b i ed ecdb =
   case ecdb of
-    ((ec ** dd) ** Element0 eb eqc) =>
-      snd (i (fst ec) eb) ed $ rewrite eqc in dd
+    (((ec ** ep) ** dd) ** Element0 eb eqp) =>
+      snd (i ec eb) ed $ rewrite eqp in dd
 
 -- The second component of the generic factorization of a morphism through
 -- a slice polynomial functor.
