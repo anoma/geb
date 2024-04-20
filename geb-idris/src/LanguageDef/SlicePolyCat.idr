@@ -1572,8 +1572,7 @@ SPFDmultiLdomSlMor {dom} {cod} spfd = SliceMorphism {a=(SPFDbase spfd)}
 
 export
 SPFDmultiLdomToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDmultiLdom spfd ->
-  SliceObj (SPFDbase {dom} {cod} spfd)
+  SPFDmultiLdom spfd -> SPFDmultiLdomSl spfd
 SPFDmultiLdomToBaseSl spfd robj = SPFDunitIdxToSl spfd (fst robj) (snd robj)
 
 -- The uncurried form of `SPFDmultiL`.
