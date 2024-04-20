@@ -129,6 +129,16 @@ fpostcompeq : {0 a, b, c : Type} -> {0 f, g : a -> b} -> {0 h : b -> c} ->
 fpostcompeq eq = fcompeq {g=h} Refl eq
 
 public export
+dpBimap : {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
+  (f : a -> b) -> ((ea : a) -> p ea -> q (f ea)) -> DPair a p -> DPair b q
+dpBimap {a} {b} {p} {q} f m eap = (f (fst eap) ** m (fst eap) (snd eap))
+
+public export
+dpMapSnd : {0 a : Type} -> {0 p : a -> Type} -> {0 q : a -> Type} ->
+  ((ea : a) -> p ea -> q ea) -> DPair a p -> DPair a q
+dpMapSnd {a} {p} {q} = dpBimap {a} {b=a} {p} {q} (id {a})
+
+public export
 dpEq12 : {0 a : Type} -> {0 p : a -> Type} -> {x, y : a} ->
   {0 px : p x} -> {0 py : p y} ->
   x = y -> px = py -> MkDPair {p} x px = MkDPair {p} y py
@@ -215,6 +225,17 @@ public export
 bimap : (f : a -> b) -> (0 _ : forall x. p x -> q (f x)) ->
   Subset0 a p -> Subset0 b q
 bimap f g (Element0 x y) = Element0 (f x) (g y)
+
+public export
+s0Bimap : {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
+  (f : a -> b) -> ((ea : a) -> p ea -> q (f ea)) -> Subset0 a p -> Subset0 b q
+s0Bimap {a} {b} {p} {q} f m eap =
+  Element0 (f (fst0 eap)) (m (fst0 eap) (snd0 eap))
+
+public export
+s0MapSnd : {0 a : Type} -> {0 p : a -> Type} -> {0 q : a -> Type} ->
+  ((ea : a) -> p ea -> q ea) -> Subset0 a p -> Subset0 a q
+s0MapSnd {a} {p} {q} = s0Bimap {a} {b=a} {p} {q} (id {a})
 
 public export
 Eq type => Eq (Subset0 type dep) where
