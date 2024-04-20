@@ -1544,8 +1544,8 @@ SPFDmultiLdom = SPFDposCSlice
 
 -- But we may take another view of the structure (`SPFDposCSlice`) that
 -- we have dubbed `SPFDmultiLdom`: as we have seen above, it is
--- equivalent to a slice of `SPFDbase`.  That is the view that we adopt
--- here, as it gives the morphisms a simpler, dependent-type-style form.
+-- equivalent to a slice of `SPFDbase`.  In some cases, that view
+-- gives the morphisms a simpler, dependent-type-style form.
 export
 SPFDmultiLdomSl : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDmultiLdomSl = SPFDbaseSl
