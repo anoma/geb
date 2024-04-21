@@ -1914,11 +1914,8 @@ SPFDmultiFamRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiAdjHSR spfd a b ->
   SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceFamUnit b)
 SPFDmultiFamRAdj {dom} {cod} spfd a b m =
-  IFM
-    (\_, ec, ea => fst $ m ec ea)
-    (\_, ed, dd =>
-      snd (m (fst $ fst $ fst dd) (fst0 $ snd dd)) ed
-        (rewrite snd0 (snd dd) in snd $ fst dd))
+  let (midx ** mobj) = SPFDmultiRAdj spfd a b m in
+  IFM (\() => midx) (\() => mobj)
 
 -- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
 -- (so it is itself a right multi-adjoint).  This is the unit of the
