@@ -2014,6 +2014,9 @@ SPFDspecCatElemMor {dom} {cod} spfd x y =
     (SliceMorphism {a=cod} (fst x) (fst y))
     (\mxy => FunExt -> SPFDspectrumMap spfd (fst y) (fst x) mxy (snd y) = snd x)
 
+-- Next we show that `SPFDspecCatElemObj`/`SPFDspecCatElemMor` is equivalent
+-- to `SPFDmultiDomSl`/`SPFDmultiDomSlMor`.
+
 export
 SPFDspecCEobjToSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDspecCatElemObj {dom} {cod} spfd ->
@@ -2025,6 +2028,54 @@ SPFDspecCEobjFromSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdomSl spfd ->
   SPFDspecCatElemObj {dom} {cod} spfd
 SPFDspecCEobjFromSl = SPFDbaseSlToUnitIdx
+
+export
+SPFDspecCEmorToSl : FunExt -> {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SPFDspecCatElemObj {dom} {cod} spfd) ->
+  SPFDspecCatElemMor {dom} {cod} spfd x y ->
+  SPFDmultiLdomSlMor {dom} {cod} spfd
+    (SPFDspecCEobjToSl spfd x)
+    (SPFDspecCEobjToSl spfd y)
+SPFDspecCEmorToSl fext spfd (_ ** _) (_ ** _) m ecp =
+  s0Bimap
+    (fst0 m $ fst ecp)
+    $ \ex, xeq => trans (rewrite sym (snd0 m fext) in Refl) xeq
+
+export
+SPFDspecCEmorFromSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SPFDspecCatElemObj {dom} {cod} spfd) ->
+  SPFDmultiLdomSlMor {dom} {cod} spfd
+    (SPFDspecCEobjToSl spfd x)
+    (SPFDspecCEobjToSl spfd y) ->
+  SPFDspecCatElemMor {dom} {cod} spfd x y
+SPFDspecCEmorFromSl spfd (slx ** px) (sly ** py) m =
+  Element0
+    (\ec, ex => fst0 $ m (ec ** px ec ex) $ Element0 ex Refl)
+    (\fext => funExt $ \ec => funExt $ \ex =>
+      snd0 $ m (ec ** px ec ex) $ Element0 ex Refl)
+
+export
+SPFDslToSpecCEmor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SPFDmultiLdomSl {dom} {cod} spfd) ->
+  SPFDmultiLdomSlMor {dom} {cod} spfd x y ->
+  SPFDspecCatElemMor {dom} {cod} spfd
+    (SPFDspecCEobjFromSl spfd x)
+    (SPFDspecCEobjFromSl spfd y)
+SPFDslToSpecCEmor {dom} {cod} spfd x y m =
+  Element0
+    (\ec, (ep ** ex) => (ep ** m (ec ** ep) ex))
+    (\fext => funExt $ \ec => funExt $ \(ep ** ex) => Refl)
+
+export
+SPFDslFromSpecCEmor : FunExt -> {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SPFDmultiLdomSl {dom} {cod} spfd) ->
+  SPFDspecCatElemMor {dom} {cod} spfd
+    (SPFDspecCEobjFromSl spfd x)
+    (SPFDspecCEobjFromSl spfd y) ->
+  SPFDmultiLdomSlMor {dom} {cod} spfd x y
+SPFDslFromSpecCEmor fext {dom} {cod} spfd x y (Element0 m meq) (ec ** ep) ex =
+  rewrite sym (fcongdep {x=(ep ** ex)} (fcongdep {x=ec} (meq fext))) in
+  snd $ m ec (ep ** ex)
 
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----

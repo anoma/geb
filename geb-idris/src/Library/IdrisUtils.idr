@@ -114,6 +114,11 @@ fcong : {0 a, b : Type} -> {0 f, g : a -> b} ->
 fcong Refl = Refl
 
 public export
+fcongdep : {0 a : Type} -> {0 b : a -> Type} -> {0 f, g : (ea : a) -> b ea} ->
+  (f ~=~ g) -> {x : a} -> f x = g x
+fcongdep Refl = Refl
+
+public export
 fcompeq : {0 a, b, c : Type} -> {0 g, g' : b -> c} -> {0 f, f' : a -> b} ->
   (g ~=~ g') -> (f ~=~ f') -> g . f = g' . f'
 fcompeq Refl Refl = Refl
