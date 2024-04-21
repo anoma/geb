@@ -1996,29 +1996,11 @@ SPFDspectrum {dom} {cod} spfd slc =
   (i : SPFDmultiIdx spfd slc **
    SliceMorphism {a=cod} slc $ SPFDmultiMfst spfd (slc ** i))
 
-export
-SPFDspectrumMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (x, y : SliceObj cod) ->
-  SliceMorphism {a=cod} y x ->
-  SPFDspectrum {dom} {cod} spfd x -> SPFDspectrum {dom} {cod} spfd y
-SPFDspectrumMap {dom} {cod} spfd x y myx (mcxp ** mcxd) =
-  (sliceComp {a=cod} mcxp myx **
-   \ec, ey =>
-    (mcxp ec (myx ec ey) ** SPFDpraUnitDir spfd y (sliceComp mcxp myx) ec ey))
-
 -- The category of elements of the spectrum of a polynomial functor.
 export
 SPFDspecCatElemObj : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDspecCatElemObj {dom} {cod} spfd =
   Sigma {a=(SliceObj cod)} $ SPFDspectrum {dom} {cod} spfd
-
-export
-SPFDspecCatElemMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SPFDspecCatElemObj spfd -> SPFDspecCatElemObj spfd -> Type
-SPFDspecCatElemMor {dom} {cod} spfd x y =
-  Subset0
-    (SliceMorphism {a=cod} (fst x) (fst y))
-    (\mxy => FunExt -> SPFDspectrumMap spfd (fst y) (fst x) mxy (snd y) = snd x)
 
 export
 SPFDspecCEobjToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
