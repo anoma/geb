@@ -1911,7 +1911,7 @@ SPFDmultiFamLAdj {dom} {cod} spfd a b (IFM midx mobj) =
 export
 SPFDmultiFamRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj cod) -> (b : SliceObj dom) ->
-  SliceMorphism {a=cod} a (SPFDmultiR spfd b) ->
+  SPFDmultiAdjHSR spfd a b ->
   SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceFamUnit b)
 SPFDmultiFamRAdj {dom} {cod} spfd a b m =
   IFM
