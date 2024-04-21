@@ -1836,6 +1836,19 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
   funExt $ \ec => funExt $ \eb =>
     trans (dpEq12 Refl $ funExt $ \ed => funExt $ \dd => Refl) $ sym dpEqPat
 
+-- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
+-- (so it is itself a right multi-adjoint).  This is the unit of the
+-- slice-polynomial-functor multi-adjunction; its existence is listed as the
+-- "Property" of a parametric right adjoint that it has a left multi-adjoint
+-- at https://ncatlab.org/nlab/show/parametric+right+adjoint#properties .
+-- We define it here in the generic way in which the unit of an adjunction
+-- can be defined as the left adjunct applied to the identity morphism.
+export
+SPFDmultiUnitFst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SPFDmultiLdom {dom} {cod} spfd) ->
+  SliceMorphism {a=cod} (fst b) (SPFDmultiMfst {dom} {cod} spfd b)
+SPFDmultiUnitFst {dom} {cod} spfd b = SPFDpraUnit spfd (fst b) (snd b)
+
 -- The left side of the isomorphism which defines the hom-set description of
 -- a multi-adjunction, as formulated in Theorem 2.4 at
 -- at https://ncatlab.org/nlab/show/multi-adjoint#definition .
@@ -1916,19 +1929,6 @@ SPFDmultiFamRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDmultiFamRAdj {dom} {cod} spfd a b m =
   let (midx ** mobj) = SPFDmultiRAdj spfd a b m in
   IFM (\() => midx) (\() => mobj)
-
--- As a parametric right adjoint, a polynomial functor has a left multi-adjoint
--- (so it is itself a right multi-adjoint).  This is the unit of the
--- slice-polynomial-functor multi-adjunction; its existence is listed as the
--- "Property" of a parametric right adjoint that it has a left multi-adjoint
--- at https://ncatlab.org/nlab/show/parametric+right+adjoint#properties .
--- We define it here in the generic way in which the unit of an adjunction
--- can be defined as the left adjunct applied to the identity morphism.
-export
-SPFDmultiUnitFst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  (b : SPFDmultiLdom {dom} {cod} spfd) ->
-  SliceMorphism {a=cod} (fst b) (SPFDmultiMfst {dom} {cod} spfd b)
-SPFDmultiUnitFst {dom} {cod} spfd b = SPFDpraUnit spfd (fst b) (snd b)
 
 -- This is `R . L` for the polynomial-functor multi-adjunction,
 -- but note that these `R` and `L` are _multi_-adjoints, not
