@@ -1643,7 +1643,7 @@ SPFDmultiLuncMap {dom} {cod} spfd m m' =
 
 -- Another way of viewing a multi-adjunction is as an enhanced form
 -- of hom-set isomorphism using the (parameterized) category of families
--- (`IntFamObj`/`IntFamMor`) of the left-hand-side category of the
+-- (`IntFamObj`/`IntUFamMor`) of the left-hand-side category of the
 -- multi-adjunction.  It uses the same right multi-adjoint (`SPFDmultiR`,
 -- in this case), but a different left multi-adjoint whose codomain is
 -- that category of families.  This is the characterization described in
@@ -1655,7 +1655,7 @@ SPFDmultiFamLCatObj = SliceFamObj
 export
 SPFDmultiFamLCatMor : {lcat : Type} ->
   SPFDmultiFamLCatObj lcat -> SPFDmultiFamLCatObj lcat -> Type
-SPFDmultiFamLCatMor {lcat} = SliceFamMor
+SPFDmultiFamLCatMor {lcat} = SliceUFamMor
 
 -- The left adjoint of the multi-adjunction using the category-of-families
 -- formulation.
@@ -1914,7 +1914,7 @@ SPFDmultiRAdj {dom} {cod} spfd x y m =
 export
 SPFDmultiFamLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj cod) -> (b : SliceObj dom) ->
-  SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceFamUnit b) ->
+  SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceUFamUnit b) ->
   SPFDmultiAdjHSR spfd a b
 SPFDmultiFamLAdj {dom} {cod} spfd a b (IFM midx mobj) =
   SPFDmultiLAdj {dom} {cod} spfd a b (midx () ** mobj ())
@@ -1925,7 +1925,7 @@ export
 SPFDmultiFamRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj cod) -> (b : SliceObj dom) ->
   SPFDmultiAdjHSR spfd a b ->
-  SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceFamUnit b)
+  SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceUFamUnit b)
 SPFDmultiFamRAdj {dom} {cod} spfd a b m =
   let (midx ** mobj) = SPFDmultiRAdj spfd a b m in
   IFM (\() => midx) (\() => mobj)

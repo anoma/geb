@@ -45,7 +45,7 @@ IFOfromArena {c} ar = IFO (fst ar) (snd ar)
 -- to the category of Dirichlet functors -- that category's morphisms are
 -- covariant on both indexes and objects.
 public export
-record IntFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntFamObj c)
+record IntUFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntFamObj c)
     where
   constructor IFM
   ifmOnIdx : ifoIdx cod -> ifoIdx dom -- Contravariant on indexes
@@ -53,16 +53,16 @@ record IntFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntFamObj c)
 
 public export
 ifmId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
-  (obj : IntFamObj c) -> IntFamMor mor obj obj
+  (obj : IntFamObj c) -> IntUFamMor mor obj obj
 ifmId {c} mor cid obj = IFM id (\i => cid $ ifoObj obj i)
 
 public export
 ifmComp : {c : Type} ->
   (mor : IntDifunctorSig c) -> (comp : IntComp c mor) ->
   {x, y, z : IntFamObj c} ->
-  IntFamMor mor y z ->
-  IntFamMor mor x y ->
-  IntFamMor mor x z
+  IntUFamMor mor y z ->
+  IntUFamMor mor x y ->
+  IntUFamMor mor x z
 ifmComp {c} mor comp {x} {y} {z} g f =
   IFM
     (ifmOnIdx f . ifmOnIdx g)
@@ -90,19 +90,19 @@ SliceFamObj : Type -> Type
 SliceFamObj = IntFamObj . SliceObj
 
 public export
-SliceFamMor : {c : Type} -> SliceFamObj c -> SliceFamObj c -> Type
-SliceFamMor {c} = IntFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
+SliceUFamMor : {c : Type} -> SliceFamObj c -> SliceFamObj c -> Type
+SliceUFamMor {c} = IntUFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
 slfmId : {c : Type} ->
-  (x : SliceFamObj c) -> SliceFamMor x x
+  (x : SliceFamObj c) -> SliceUFamMor x x
 slfmId {c} = ifmId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
 
 public export
 slfmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
-  SliceFamMor y z -> SliceFamMor x y -> SliceFamMor x z
+  SliceUFamMor y z -> SliceUFamMor x y -> SliceUFamMor x z
 slfmComp {c} = ifmComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
 
 public export
-sliceFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
-sliceFamUnit {c} = fcmUnit {c=(SliceObj c)} (SliceMorphism {a=c})
+sliceUFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
+sliceUFamUnit {c} = fcmUnit {c=(SliceObj c)} (SliceMorphism {a=c})
