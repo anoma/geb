@@ -1928,11 +1928,7 @@ export
 SPFDmultiUnitFst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=cod} (fst b) (SPFDmultiMfst {dom} {cod} spfd b)
-SPFDmultiUnitFst {dom} {cod} spfd b =
-  SPFDmultiLAdjUnc {dom} {cod} spfd
-    b
-    (SPFDmultiLunc {dom} {cod} spfd b)
-    (sliceId {a=dom} $ SPFDmultiLunc {dom} {cod} spfd b)
+SPFDmultiUnitFst {dom} {cod} spfd b = SPFDpraUnit spfd (fst b) (snd b)
 
 -- This is `R . L` for the polynomial-functor multi-adjunction,
 -- but note that these `R` and `L` are _multi_-adjoints, not
