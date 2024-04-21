@@ -1874,9 +1874,8 @@ export
 SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
   SPFDmultiAdjHSL spfd x y -> SPFDmultiAdjHSR spfd x y
-SPFDmultiLAdj {dom} {cod} spfd x y m ec ex =
-  (fst m ec ex **
-   \ed, dd => snd m ed (((ec ** fst m ec ex) ** dd) ** Element0 ex Refl))
+SPFDmultiLAdj {dom} {cod} spfd x y m ec =
+  dpMapSnd (\ep => sliceComp {a=dom} (snd m)) . SPFDpraUnit spfd x (fst m) ec
 
 -- An uncurried form of `SPFDmultiLAdj`.
 export
