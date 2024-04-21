@@ -1903,9 +1903,8 @@ SPFDmultiFamLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj cod) -> (b : SliceObj dom) ->
   SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceFamUnit b) ->
   SPFDmultiAdjHSR spfd a b
-SPFDmultiFamLAdj {dom} {cod} spfd a b (IFM midx mobj) ec ea =
-  (midx () ec ea **
-   \ed, dd => mobj () ed (((ec ** midx () ec ea) ** dd) ** Element0 ea Refl))
+SPFDmultiFamLAdj {dom} {cod} spfd a b (IFM midx mobj) =
+  SPFDmultiLAdj {dom} {cod} spfd a b (midx () ** mobj ())
 
 -- The right adjunct of the multi-adjunction defined by a polynomial functor
 -- using the category-of-families formulation.
