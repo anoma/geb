@@ -2004,8 +2004,7 @@ SPFDspectrumMap = SPFDmultiIdxContramap
 -- The category of elements of the spectrum of a polynomial functor.
 export
 SPFDspecCatElemObj : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDspecCatElemObj {dom} {cod} spfd =
-  Sigma {a=(SliceObj cod)} $ SPFDspectrum {dom} {cod} spfd
+SPFDspecCatElemObj = SPFDmultiLdom
 
 export
 SPFDspecCatElemMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
