@@ -2015,10 +2015,16 @@ SPFDspecCatElemMor {dom} {cod} spfd x y =
     (\mxy => FunExt -> SPFDspectrumMap spfd (fst y) (fst x) mxy (snd y) = snd x)
 
 export
-SPFDspecCEobjToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDspecCEobjToSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDspecCatElemObj {dom} {cod} spfd ->
-  SliceObj (SPFDbase spfd)
-SPFDspecCEobjToBaseSl = SPFDmultiLdomToBaseSl
+  SPFDmultiLdomSl spfd
+SPFDspecCEobjToSl = SPFDmultiLdomToBaseSl
+
+export
+SPFDspecCEobjFromSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDmultiLdomSl spfd ->
+  SPFDspecCatElemObj {dom} {cod} spfd
+SPFDspecCEobjFromSl = SPFDbaseSlToUnitIdx
 
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
