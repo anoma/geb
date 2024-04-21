@@ -1227,7 +1227,8 @@ SPFDradjFactMap {dom} {cod} spfd x y m ecp =
 export
 SPFDtoSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj (dom, SPFDbase {dom} {cod} spfd)
-SPFDtoSSPR {dom} {cod} (SPFD pos dir) (ed, (ec ** ep)) = dir ec ep ed
+SPFDtoSSPR {dom} {cod} spfd edcp =
+  spfdDir spfd (fst $ snd edcp) (snd $ snd edcp) (fst edcp)
 
 export
 SSPRtoSPFD : {dom, cod : Type} -> SliceObj (dom, cod) -> SPFData dom cod
@@ -2076,6 +2077,28 @@ SPFDslFromSpecCEmor : FunExt -> {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDslFromSpecCEmor fext {dom} {cod} spfd x y (Element0 m meq) (ec ** ep) ex =
   rewrite sym (fcongdep {x=(ep ** ex)} (fcongdep {x=ec} (meq fext))) in
   snd $ m ec (ep ** ex)
+
+-- Because `multiLdomSl` is `SliceObj (SPFDbase)`, we now know that
+-- the monad `SPFDadjFactMonad` is a multi-monad -- that is, a monad
+-- on the category of elements of a presheaf, with the presheaf in this
+-- case being `SPFDspectrum`.
+
+export
+SPFDspecUnit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (bsl : SPFDbaseSl spfd) ->
+  SliceMorphism {a=(SPFDbase spfd)} bsl (SPFDadjFactMonad spfd bsl)
+SPFDspecUnit {dom} {cod} spfd bsl (ec ** ep) ex (ed ** dd) =
+  (((ec ** ep) ** dd) ** ex)
+
+export
+SPFDspecJoin : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (bsl : SPFDbaseSl spfd) ->
+  SliceMorphism {a=(SPFDbase spfd)}
+    (SPFDadjFactMonad spfd $ SPFDadjFactMonad spfd bsl)
+    (SPFDadjFactMonad spfd bsl)
+SPFDspecJoin {dom} {cod} spfd bsl ecp dm edd with (dm edd)
+  SPFDspecJoin {dom} {cod} spfd bsl ecp dm edd | dm' =
+    snd dm' (fst edd ** snd $ fst dm')
 
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
