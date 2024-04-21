@@ -2004,8 +2004,7 @@ SPFDspectrumMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDspectrumMap {dom} {cod} spfd x y myx (mcxp ** mcxd) =
   (sliceComp {a=cod} mcxp myx **
    \ec, ey =>
-    (mcxp ec (myx ec ey) **
-     \ed, dd => (((ec ** mcxp ec $ myx ec ey) ** dd) ** Element0 ey Refl)))
+    (mcxp ec (myx ec ey) ** SPFDpraUnitDir spfd y (sliceComp mcxp myx) ec ey))
 
 -- The category of elements of the spectrum of a polynomial functor.
 export
