@@ -32,10 +32,6 @@ IFOfromArena {c} ar = IFO (fst ar) (snd ar)
 -------------------
 -------------------
 
-----------------------------
----- Universal families ----
-----------------------------
-
 -- Morphisms of the category of families of objects from a given category.
 -- See for example the definition preceding Theorem 2.5 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition , which
@@ -82,52 +78,6 @@ ifmComp {c} mor comp {x} {y} {z} g f =
 public export
 fcmUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntFamObj c
 fcmUnit {c} mor x = IFO Unit (const x)
-
-------------------------------
----- Existential families ----
-------------------------------
-
--- Whereas the universal families above may be thought of as comprised
--- of products, the existential families below may be thought of as
--- comprised of coproducts.
---
--- Note also from this definition of morphism that the category of
--- existential families is the opposite of the category of Dirichlet functors.
---
--- Also, contrast it with the category of contravariant bundles, which is
--- equivalent to the category of polynomial functors -- that category's
--- morphisms are also contravariant on objects, but are covariant on indexes.
-
-public export
-record IntEFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntFamObj c)
-    where
-  constructor IEFM
-  -- Contravariant on both indexes and objects
-  iefmOnIdx : ifoIdx cod -> ifoIdx dom
-  iefmOnObj : (i : ifoIdx cod) -> mor (ifoObj cod i) (ifoObj dom (iefmOnIdx i))
-
-public export
-iefmId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
-  (obj : IntFamObj c) -> IntEFamMor mor obj obj
-iefmId {c} mor cid obj = IEFM id (\i => cid $ ifoObj obj i)
-
-public export
-iefmComp : {c : Type} ->
-  (mor : IntDifunctorSig c) -> (comp : IntComp c mor) ->
-  {x, y, z : IntFamObj c} ->
-  IntEFamMor mor y z ->
-  IntEFamMor mor x y ->
-  IntEFamMor mor x z
-iefmComp {c} mor comp {x} {y} {z} g f =
-  IEFM
-    (iefmOnIdx f . iefmOnIdx g)
-    (\i =>
-      comp
-        (ifoObj z i)
-        (ifoObj y $ iefmOnIdx g i)
-        (ifoObj x $ iefmOnIdx f $ iefmOnIdx g i)
-        (iefmOnObj f $ iefmOnIdx g i)
-        (iefmOnObj g i))
 
 -------------------------------
 -------------------------------
