@@ -1992,9 +1992,14 @@ SPFDadjFactComonadMap spfd = sspComonadMap $ SPFDtoSSPR spfd
 -- on `SliceObj cod`.
 export
 SPFDspectrum : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
-SPFDspectrum {dom} {cod} spfd slc =
-  (i : SPFDmultiIdx spfd slc **
-   SliceMorphism {a=cod} slc $ SPFDmultiMfst spfd (slc ** i))
+SPFDspectrum = SPFDmultiIdx
+
+export
+SPFDspectrumMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x, y : SliceObj cod) ->
+  SliceMorphism {a=cod} y x ->
+  SPFDspectrum spfd x -> SPFDspectrum spfd y
+SPFDspectrumMap = SPFDmultiIdxContramap
 
 -- The category of elements of the spectrum of a polynomial functor.
 export
@@ -2006,8 +2011,7 @@ export
 SPFDspecCEobjToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDspecCatElemObj {dom} {cod} spfd ->
   SliceObj (SPFDbase spfd)
-SPFDspecCEobjToBaseSl {dom} {cod} spfd (slc ** (uidx ** u)) =
-  SPFDmultiLdomToBaseSl spfd (slc ** uidx)
+SPFDspecCEobjToBaseSl = SPFDmultiLdomToBaseSl
 
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
