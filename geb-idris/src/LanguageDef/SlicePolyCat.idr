@@ -1512,6 +1512,55 @@ SPFDmultiLmap {dom} {cod} spfd b i b' i' =
     (SPFDposCSlToBaseSl (b ** i))
     (SPFDposCSlToBaseSl (b' ** i'))
 
+export
+SPFDmultiRL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) -> SliceObj cod
+SPFDmultiRL {dom} {cod} spfd b =
+  SPFDmultiR {dom} {cod} spfd . SPFDmultiL {dom} {cod} spfd b
+
+export
+SPFDmultiRLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
+  (b' : SliceObj cod) -> (i' : SPFDmultiIdx spfd b') ->
+  SliceMorphism {a=(SPFDbase spfd)}
+    (SPFDposCSlToBaseSl {spfd} (b ** i))
+    (SPFDposCSlToBaseSl {spfd} (b' ** i')) ->
+  SliceMorphism {a=cod}
+    (SPFDmultiRL spfd b i)
+    (SPFDmultiRL spfd b' i')
+SPFDmultiRLmap {dom} {cod} spfd b i b' i' =
+  SPFDmultiRmap spfd (SPFDmultiL spfd b i) (SPFDmultiL spfd b' i')
+  . SPFDmultiLmap spfd b i b' i'
+
+export
+SPFDpraUnitPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
+  (ec : cod) -> b ec -> spfdPos spfd ec
+SPFDpraUnitPos {dom} {cod} spfd b i ec eb = i ec eb
+
+-- This messy type signature represents nothing more than a
+-- rearrangement of parameters, factored out simply to allow
+-- for a type signature to show what's going on.
+export
+SPFDpraUnitDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
+  (ec : cod) -> (eb : b ec) -> (ed : dom) ->
+  (dd : spfdDir spfd ec (SPFDpraUnitPos spfd b i ec eb) ed) ->
+  Sigma
+    {a=(Sigma {a=(SPFDbase spfd)}
+      (\ecp' => spfdDir spfd (fst ecp') (snd ecp') ed))}
+    (\ecpd' => Subset0 (b (fst (fst ecpd')))
+      $ \eb' => SPFDpraUnitPos spfd b i (fst (fst ecpd')) eb' = snd (fst ecpd'))
+SPFDpraUnitDir {dom} {cod} spfd b i ec eb ed dd =
+  (((ec ** SPFDpraUnitPos spfd b i ec eb) ** dd) ** Element0 eb Refl)
+
+export
+SPFDpraUnit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
+  SliceMorphism {a=cod} b (SPFDmultiRL spfd b i)
+SPFDpraUnit {dom} {cod} spfd b i ec eb =
+  (SPFDpraUnitPos spfd b i ec eb ** SPFDpraUnitDir spfd b i ec eb)
+
 -- The type of the two components of a left multi-adjoint together --
 -- index and (dependent) functor.
 --
