@@ -2008,6 +2008,14 @@ SPFDspecCatElemObj {dom} {cod} spfd =
   Sigma {a=(SliceObj cod)} $ SPFDspectrum {dom} {cod} spfd
 
 export
+SPFDspecCatElemMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDspecCatElemObj spfd -> SPFDspecCatElemObj spfd -> Type
+SPFDspecCatElemMor {dom} {cod} spfd x y =
+  Subset0
+    (SliceMorphism {a=cod} (fst x) (fst y))
+    (\mxy => FunExt -> SPFDspectrumMap spfd (fst y) (fst x) mxy (snd y) = snd x)
+
+export
 SPFDspecCEobjToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDspecCatElemObj {dom} {cod} spfd ->
   SliceObj (SPFDbase spfd)
