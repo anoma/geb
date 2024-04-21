@@ -79,11 +79,63 @@ public export
 fcmUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntFamObj c
 fcmUnit {c} mor x = IFO Unit (const x)
 
+-------------------------------
+-------------------------------
+---- Metalanguage families ----
+-------------------------------
+-------------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+public export
+MLFamObj : Type
+MLFamObj = IntFamObj Type
+
+public export
+MLUFamMor : MLFamObj -> MLFamObj -> Type
+MLUFamMor = IntUFamMor $ HomProf
+
+public export
+mlfmId : (x : MLFamObj) -> MLUFamMor x x
+mlfmId = ifmId HomProf typeId
+
+public export
+mlfmComp : {x, y, z : MLFamObj} ->
+  MLUFamMor y z -> MLUFamMor x y -> MLUFamMor x z
+mlfmComp = ifmComp HomProf (\_, _, _ => (.))
+
+public export
+mliceUFamUnit : Type -> MLFamObj
+mliceUFamUnit = fcmUnit HomProf
+
+------------------------
+---- Interpretation ----
+------------------------
+
+-- In a category with products, such as `Type`, we can interpret an
+-- `IntFamObj` as a product with morphisms restricted to factorizations
+-- into morphisms on indexes and morphisms on components.
+
+export
+InterpMLFamObj : MLFamObj -> Type
+InterpMLFamObj ifo = Pi {a=(ifoIdx ifo)} $ ifoObj ifo
+
+export
+InterpMLUFamMorph : {0 x, y : MLFamObj} ->
+  MLUFamMor x y -> InterpMLFamObj x -> InterpMLFamObj y
+InterpMLUFamMorph {x} {y} m pix iy = ifmOnObj m iy $ pix $ ifmOnIdx m iy
+
 -------------------------------------
 -------------------------------------
 ---- Metalanguage-slice families ----
 -------------------------------------
 -------------------------------------
+
+--------------------
+---- Definition ----
+--------------------
 
 public export
 SliceFamObj : Type -> Type
