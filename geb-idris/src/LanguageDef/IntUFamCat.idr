@@ -13,17 +13,17 @@ import public LanguageDef.InternalCat
 
 -- This is just an `IntArena` with names.
 public export
-record IntFamObj (c : Type) where
+record IntUFamObj (c : Type) where
   constructor IFO
   ifoIdx : Type
   ifoObj : ifoIdx -> c
 
 export
-IFOtoArena : {c : Type} -> IntFamObj c -> IntArena c
+IFOtoArena : {c : Type} -> IntUFamObj c -> IntArena c
 IFOtoArena {c} ifo = (ifoIdx ifo ** ifoObj ifo)
 
 export
-IFOfromArena : {c : Type} -> IntArena c -> IntFamObj c
+IFOfromArena : {c : Type} -> IntArena c -> IntUFamObj c
 IFOfromArena {c} ar = IFO (fst ar) (snd ar)
 
 -------------------
@@ -45,7 +45,7 @@ IFOfromArena {c} ar = IFO (fst ar) (snd ar)
 -- to the category of Dirichlet functors -- that category's morphisms are
 -- covariant on both indexes and objects.
 public export
-record IntUFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntFamObj c)
+record IntUFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntUFamObj c)
     where
   constructor IFUM
   ifumOnIdx : ifoIdx cod -> ifoIdx dom -- Contravariant on indexes
@@ -53,13 +53,13 @@ record IntUFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntFamObj c)
 
 public export
 ifumId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
-  (obj : IntFamObj c) -> IntUFamMor mor obj obj
+  (obj : IntUFamObj c) -> IntUFamMor mor obj obj
 ifumId {c} mor cid obj = IFUM id (\i => cid $ ifoObj obj i)
 
 public export
 ifumComp : {c : Type} ->
   (mor : IntDifunctorSig c) -> (comp : IntComp c mor) ->
-  {x, y, z : IntFamObj c} ->
+  {x, y, z : IntUFamObj c} ->
   IntUFamMor mor y z ->
   IntUFamMor mor x y ->
   IntUFamMor mor x z
@@ -76,7 +76,7 @@ ifumComp {c} mor comp {x} {y} {z} g f =
 
 -- The unit of the free cartesian monoidal category monad.
 public export
-fcmUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntFamObj c
+fcmUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntUFamObj c
 fcmUnit {c} mor x = IFO Unit (const x)
 
 -------------------------------
@@ -90,24 +90,24 @@ fcmUnit {c} mor x = IFO Unit (const x)
 --------------------
 
 public export
-MLFamObj : Type
-MLFamObj = IntFamObj Type
+MLUFamObj : Type
+MLUFamObj = IntUFamObj Type
 
 public export
-MLUFamMor : MLFamObj -> MLFamObj -> Type
+MLUFamMor : MLUFamObj -> MLUFamObj -> Type
 MLUFamMor = IntUFamMor $ HomProf
 
 public export
-mlfmId : (x : MLFamObj) -> MLUFamMor x x
+mlfmId : (x : MLUFamObj) -> MLUFamMor x x
 mlfmId = ifumId HomProf typeId
 
 public export
-mlfmComp : {x, y, z : MLFamObj} ->
+mlfmComp : {x, y, z : MLUFamObj} ->
   MLUFamMor y z -> MLUFamMor x y -> MLUFamMor x z
 mlfmComp = ifumComp HomProf (\_, _, _ => (.))
 
 public export
-mliceUFamUnit : Type -> MLFamObj
+mliceUFamUnit : Type -> MLUFamObj
 mliceUFamUnit = fcmUnit HomProf
 
 ------------------------
@@ -115,16 +115,16 @@ mliceUFamUnit = fcmUnit HomProf
 ------------------------
 
 -- In a category with products, such as `Type`, we can interpret an
--- `IntFamObj` as a product with morphisms restricted to factorizations
+-- `IntUFamObj` as a product with morphisms restricted to factorizations
 -- into morphisms on indexes and morphisms on components.
 
 export
-InterpMLFamObj : MLFamObj -> Type
-InterpMLFamObj ifo = Pi {a=(ifoIdx ifo)} $ ifoObj ifo
+InterpMLUFamObj : MLUFamObj -> Type
+InterpMLUFamObj ifo = Pi {a=(ifoIdx ifo)} $ ifoObj ifo
 
 export
-InterpMLUFamMorph : {0 x, y : MLFamObj} ->
-  MLUFamMor x y -> InterpMLFamObj x -> InterpMLFamObj y
+InterpMLUFamMorph : {0 x, y : MLUFamObj} ->
+  MLUFamMor x y -> InterpMLUFamObj x -> InterpMLUFamObj y
 InterpMLUFamMorph {x} {y} m pix iy = ifumOnObj m iy $ pix $ ifumOnIdx m iy
 
 -------------------------------------
@@ -139,7 +139,7 @@ InterpMLUFamMorph {x} {y} m pix iy = ifumOnObj m iy $ pix $ ifumOnIdx m iy
 
 public export
 SliceFamObj : Type -> Type
-SliceFamObj = IntFamObj . SliceObj
+SliceFamObj = IntUFamObj . SliceObj
 
 public export
 SliceUFamMor : {c : Type} -> SliceFamObj c -> SliceFamObj c -> Type
@@ -153,7 +153,8 @@ slufmId {c} = ifumId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
 public export
 slufmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
   SliceUFamMor y z -> SliceUFamMor x y -> SliceUFamMor x z
-slufmComp {c} = ifumComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
+slufmComp {c} =
+  ifumComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
 
 public export
 sliceUFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
