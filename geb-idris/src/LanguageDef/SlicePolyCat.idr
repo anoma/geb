@@ -2090,7 +2090,9 @@ SPFDslFromSpecCEmor fext {dom} {cod} spfd x y (Element0 m meq) (ec ** ep) ex =
 export
 SPFDspecUnit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (bsl : SPFDbaseSl spfd) ->
-  SliceMorphism {a=(SPFDbase spfd)} bsl (SPFDadjFactMonad spfd bsl)
+  SliceMorphism {a=(SPFDbase spfd)}
+    bsl
+    (SPFDadjFactMonad spfd bsl)
 SPFDspecUnit {dom} {cod} spfd bsl ecp ex ed dd = ((ecp ** dd) ** ex)
 
 export
