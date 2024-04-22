@@ -2105,6 +2105,24 @@ SPFDspecJoin {dom} {cod} spfd bsl ecp dm ed dd with (dm ed dd)
   SPFDspecJoin {dom} {cod} spfd bsl ecp dm ed dd | dm' =
     snd dm' ed $ snd $ fst dm'
 
+export
+SPFDspecCounit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x : SliceObj dom) ->
+  SliceMorphism {a=dom}
+    (SPFDadjFactComonad spfd x)
+    x
+SPFDspecCounit {dom} {cod} spfd x ed ecdm = snd ecdm ed $ snd $ fst ecdm
+
+export
+SPFDspecDup : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x : SliceObj dom) ->
+  SliceMorphism {a=dom}
+    (SPFDadjFactComonad spfd x)
+    (SPFDadjFactComonad spfd $ SPFDadjFactComonad spfd x)
+SPFDspecDup {dom} {cod} spfd x ed ecpdm =
+  case ecpdm of
+    ((ecp ** dd) ** dm) => ((ecp ** dd) ** \ed', dd' => ((ecp ** dd') ** dm))
+
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
 -----------------------------------------------------------
