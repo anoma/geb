@@ -35,15 +35,19 @@ public export
 ABinj : (cat : ABundleObj) -> ABSliceBase cat -> Type
 ABinj cat = SliceMorphism {a=(abBase cat)} (abCobase cat)
 
------------------------------
------------------------------
----- Utility definitions ----
------------------------------
------------------------------
+-- `ABundleObj` is just a metalanguage arena with names.
 
 public export
 MLArena : Type
 MLArena = IntArena Type
+
+export
+BcoAtoArena : {c : Type} -> ABundleObj -> MLArena
+BcoAtoArena {c} ab = (abBase ab ** abCobase ab)
+
+export
+BcoAfromArena : {c : Type} -> MLArena -> ABundleObj
+BcoAfromArena {c} ar = ABO (fst ar) (snd ar)
 
 --------------------------
 ---- Categorial-style ----
