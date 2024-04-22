@@ -4,6 +4,7 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.InternalCat
 import LanguageDef.IntUFamCat
+import LanguageDef.IntEFamCat
 import LanguageDef.IntBundle
 import LanguageDef.PolyCat
 
