@@ -28,7 +28,9 @@ import public LanguageDef.BundleCat
 --  - A coslice category under `i` is equivalent to a dislice category
 --   over `i, Unit, i1` (where `i1` is the unique morphism from `i` to `Unit`).
 --  - A splice category of `i, j` is equivalent to the coproduct category
---    over all `m : i -> j` of the dislice categories `i, j, m`.
+--    over all `m : i -> j` of the dislice categories `i, j, m`.  (So the
+--    individual dislice categories are the connected components of the
+--    splice category.)
 public export
 record CDisliceObj (cat : CBundleObj) where
   constructor CDSO
