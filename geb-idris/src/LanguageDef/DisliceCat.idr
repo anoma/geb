@@ -297,9 +297,9 @@ record ADSLfunc (c, d : ABundleObj) where
   adslO : ADSLomap c d
   adslF : ADSLfmap {c} {d} adslO
 
---------------------------------------------------------------
----- Translations between `CBundleObj` and `ABundleObj` ----
---------------------------------------------------------------
+--------------------------------------------------------
+---- Translations between `CDSLfunc` and `ADSLfunc` ----
+--------------------------------------------------------
 
 export
 DsomCtoA : {c, d : CBundleObj} ->
