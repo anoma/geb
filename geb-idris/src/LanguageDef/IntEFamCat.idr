@@ -99,8 +99,8 @@ mlEFamUnit = fccUnit HomProf
 ---- Interpretation ----
 ------------------------
 
--- In a category with products, such as `Type`, we can interpret an
--- `IntEFamObj` as a product with morphisms restricted to factorizations
+-- In a category with coproducts, such as `Type`, we can interpret an
+-- `IntEFamObj` as a coproduct with morphisms restricted to factorizations
 -- into morphisms on indexes and morphisms on components.
 
 export
