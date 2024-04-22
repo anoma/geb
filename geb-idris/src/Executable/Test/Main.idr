@@ -12,7 +12,7 @@ import LanguageDef.Test.InternalCatTest
 import LanguageDef.Test.SlicePolyCatTest
 import LanguageDef.Test.DisliceCatTest
 import LanguageDef.Test.BundleCatTest
-import LanguageDef.Test.DiPolyFuncTest
+import LanguageDef.Test.DislicePolyCatTest
 import LanguageDef.Test.QuiverTest
 import LanguageDef.Test.MLQuivCatTest
 import LanguageDef.Test.MLQuivUnivTest
@@ -86,7 +86,7 @@ totalTests = do
   LanguageDef.Test.MLQuivPolyTest.mlQuivPolyTest
   LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
   LanguageDef.Test.DisliceCatTest.disliceCatTest
-  LanguageDef.Test.DiPolyFuncTest.diPolyFuncTest
+  LanguageDef.Test.DislicePolyCatTest.dislicePolyCatTest
   LanguageDef.Test.InternalCatTest.internalCatTest
   LanguageDef.Test.SlicePolyCatTest.slicePolyCatTest
   LanguageDef.Test.BundleCatTest.bundleCatTest

@@ -1,4 +1,4 @@
-module LanguageDef.DiPolyFunc
+module LanguageDef.DislicePolyCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories

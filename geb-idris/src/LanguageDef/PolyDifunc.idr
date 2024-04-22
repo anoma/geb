@@ -3,7 +3,7 @@ module LanguageDef.PolyDifunc
 import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.DisliceCat
-import public LanguageDef.DiPolyFunc
+import public LanguageDef.DislicePolyCat
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
