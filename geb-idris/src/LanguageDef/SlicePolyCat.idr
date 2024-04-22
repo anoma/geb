@@ -1915,7 +1915,7 @@ SPFDmultiRAdj {dom} {cod} spfd x y m =
 export
 SPFDmultiFamLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj cod) -> (b : SliceObj dom) ->
-  SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceUFamUnit b) ->
+  SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (slUFamUnit b) ->
   SPFDmultiAdjHSR spfd a b
 SPFDmultiFamLAdj {dom} {cod} spfd a b (IFUM midx mobj) =
   SPFDmultiLAdj {dom} {cod} spfd a b (midx () ** mobj ())
@@ -1926,7 +1926,7 @@ export
 SPFDmultiFamRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj cod) -> (b : SliceObj dom) ->
   SPFDmultiAdjHSR spfd a b ->
-  SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceUFamUnit b)
+  SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (slUFamUnit b)
 SPFDmultiFamRAdj {dom} {cod} spfd a b m =
   let (midx ** mobj) = SPFDmultiRAdj spfd a b m in
   IFUM (\() => midx) (\() => mobj)
