@@ -18,7 +18,7 @@ modules =
     , LanguageDef.BundleCat
     , LanguageDef.SlicePolyCat
     , LanguageDef.DisliceCat
-    , LanguageDef.DiPolyFunc
+    , LanguageDef.DislicePolyCat
     , LanguageDef.Quiver
     , LanguageDef.MLQuivCat
     , LanguageDef.MLQuivUniv
