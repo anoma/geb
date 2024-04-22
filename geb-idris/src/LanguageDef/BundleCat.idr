@@ -35,6 +35,16 @@ public export
 ABinj : (cat : ABundleObj) -> ABSliceBase cat -> Type
 ABinj cat = SliceMorphism {a=(abBase cat)} (abCobase cat)
 
+-----------------------------
+-----------------------------
+---- Utility definitions ----
+-----------------------------
+-----------------------------
+
+public export
+MLArena : Type
+MLArena = IntArena Type
+
 --------------------------
 ---- Categorial-style ----
 --------------------------
