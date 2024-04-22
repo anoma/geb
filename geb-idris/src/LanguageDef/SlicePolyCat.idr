@@ -1982,12 +1982,14 @@ SPFDadjFactMonadMap spfd x y =
 export
 SPFDadjFactComonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor dom
-SPFDadjFactComonad spfd = SSPComonad $ SPFDtoSSPR spfd
+SPFDadjFactComonad spfd = SPFDladjFact spfd . SPFDradjFact spfd
 
 export
 SPFDadjFactComonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDadjFactComonad spfd)
-SPFDadjFactComonadMap spfd = sspComonadMap $ SPFDtoSSPR spfd
+SPFDadjFactComonadMap spfd x y =
+  SPFDladjFactMap spfd (SPFDradjFact spfd x) (SPFDradjFact spfd y)
+  . SPFDradjFactMap spfd x y
 
 -- This is called the "spectrum" of `SPFDmultiR spfd` by Diers in
 -- https://www.sciencedirect.com/science/article/pii/0022404981900827 and
