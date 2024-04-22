@@ -4,13 +4,71 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import Library.IdrisAlgebra
 import public LanguageDef.InternalCat
-import public LanguageDef.BundleCat
 
-------------------------------------------------------------------
-------------------------------------------------------------------
----- Metalanguage interpretation of free coproduct completion ----
-------------------------------------------------------------------
-------------------------------------------------------------------
+-----------------
+-----------------
+---- Objects ----
+-----------------
+-----------------
+
+-- The objects of the category of existential families (AKA the
+-- free coproduct completion) of a given category are the same
+-- as those of the category of universal families (`IntEFamObj`);
+-- it's in the morphisms that the two differ.  The structure
+-- is also the same as that of an internal arena (`IntArena`).
+
+public export
+IntEFamObj : Type -> Type
+IntEFamObj = IntArena
+
+-------------------
+-------------------
+---- Morphisms ----
+-------------------
+-------------------
+
+-- The free coproduct completion of a category has the same morphisms as (and
+-- hence is equivalent to) the category of Dirichlet functors on the category;
+-- we just interpret them differently.
+
+public export
+IntEFamMor : {c : Type} -> IntDifunctorSig c ->
+  IntEFamObj c -> IntEFamObj c -> Type
+IntEFamMor {c} = IntDirichCatMor c
+
+public export
+ifemId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
+  (obj : IntEFamObj c) -> IntEFamMor mor obj obj
+ifemId {c} mor cid (pos ** dir) = (id ** \ep => cid $ dir ep)
+
+public export
+ifemComp : {c : Type} ->
+  (mor : IntDifunctorSig c) -> (comp : IntComp c mor) ->
+  {x, y, z : IntEFamObj c} ->
+  IntEFamMor mor y z ->
+  IntEFamMor mor x y ->
+  IntEFamMor mor x z
+ifemComp {c} mor comp {x=(xpos ** xdir)} {y=(ypos ** ydir)} {z=(zpos ** zdir)}
+  (gonpos ** gondir) (fonpos ** fondir) =
+    (gonpos . fonpos **
+     \exp =>
+      comp
+        (xdir exp)
+        (ydir $ fonpos exp)
+        (zdir $ gonpos $ fonpos exp)
+        (gondir $ fonpos exp)
+        (fondir exp))
+
+-- The unit of the free coproduct completion monad.
+public export
+fccUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntEFamObj c
+fccUnit {c} mor x = (Unit ** const x)
+
+-------------------------------
+-------------------------------
+---- Metalanguage families ----
+-------------------------------
+-------------------------------
 
 --------------------
 ---- Definition ----
@@ -18,38 +76,71 @@ import public LanguageDef.BundleCat
 
 public export
 MLEFamObj : Type
-MLEFamObj = ABundleObj
+MLEFamObj = IntEFamObj Type
 
 public export
 MLEFamMor : MLEFamObj -> MLEFamObj -> Type
-MLEFamMor = ABundleMor
+MLEFamMor = IntEFamMor $ HomProf
 
 public export
 mlfmId : (x : MLEFamObj) -> MLEFamMor x x
-mlfmId = abId
+mlfmId = ifemId HomProf typeId
 
 public export
 mlfmComp : {x, y, z : MLEFamObj} ->
   MLEFamMor y z -> MLEFamMor x y -> MLEFamMor x z
-mlfmComp = abComp
+mlfmComp = ifemComp HomProf (\_, _, _ => (.))
 
 public export
-mliceEFamUnit : Type -> MLEFamObj
-mliceEFamUnit = BcoDirichToA . PFHomArena
+mlEFamUnit : Type -> MLEFamObj
+mlEFamUnit = fccUnit HomProf
 
 ------------------------
 ---- Interpretation ----
 ------------------------
 
 -- In a category with products, such as `Type`, we can interpret an
--- `IntFamObj` as a product with morphisms restricted to factorizations
+-- `IntEFamObj` as a product with morphisms restricted to factorizations
 -- into morphisms on indexes and morphisms on components.
 
 export
 InterpMLEFamObj : MLEFamObj -> Type
-InterpMLEFamObj = abTot
+InterpMLEFamObj ifo = Sigma {a=(fst ifo)} $ snd ifo
 
 export
 InterpMLEFamMorph : {0 x, y : MLEFamObj} ->
   MLEFamMor x y -> InterpMLEFamObj x -> InterpMLEFamObj y
-InterpMLEFamMorph m = dpBimap (abmBase m) (abmCobase m)
+InterpMLEFamMorph {x=(xpos ** xdir)} {y=(ypos ** ydir)} (onpos ** ondir) =
+  dpBimap onpos ondir
+
+-------------------------------------
+-------------------------------------
+---- Metalanguage-slice families ----
+-------------------------------------
+-------------------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+public export
+SliceFamObj : Type -> Type
+SliceFamObj = IntEFamObj . SliceObj
+
+public export
+SliceEFamMor : {c : Type} -> SliceFamObj c -> SliceFamObj c -> Type
+SliceEFamMor {c} = IntEFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
+
+public export
+slefmId : {c : Type} ->
+  (x : SliceFamObj c) -> SliceEFamMor x x
+slefmId {c} = ifemId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
+
+public export
+slefmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
+  SliceEFamMor y z -> SliceEFamMor x y -> SliceEFamMor x z
+slefmComp {c} = ifemComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
+
+public export
+slEFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
+slEFamUnit {c} = fccUnit {c=(SliceObj c)} (SliceMorphism {a=c})
