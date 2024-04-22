@@ -47,14 +47,14 @@ IFOfromArena {c} ar = IFO (fst ar) (snd ar)
 public export
 record IntUFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntFamObj c)
     where
-  constructor IFM
+  constructor IFUM
   ifmOnIdx : ifoIdx cod -> ifoIdx dom -- Contravariant on indexes
   ifmOnObj : (i : ifoIdx cod) -> mor (ifoObj dom (ifmOnIdx i)) (ifoObj cod i)
 
 public export
 ifmId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
   (obj : IntFamObj c) -> IntUFamMor mor obj obj
-ifmId {c} mor cid obj = IFM id (\i => cid $ ifoObj obj i)
+ifmId {c} mor cid obj = IFUM id (\i => cid $ ifoObj obj i)
 
 public export
 ifmComp : {c : Type} ->
@@ -64,7 +64,7 @@ ifmComp : {c : Type} ->
   IntUFamMor mor x y ->
   IntUFamMor mor x z
 ifmComp {c} mor comp {x} {y} {z} g f =
-  IFM
+  IFUM
     (ifmOnIdx f . ifmOnIdx g)
     (\i =>
       comp

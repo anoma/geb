@@ -1674,7 +1674,7 @@ SPFDmultiFamLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     (SPFDmultiFamL {dom} {cod} spfd x)
     (SPFDmultiFamL {dom} {cod} spfd y)
 SPFDmultiFamLmap {dom} {cod} spfd x y m =
-  IFM
+  IFUM
     (SPFDmultiIdxContramap spfd y x m)
     (\i =>
       SPFDmultiLmap spfd x
@@ -1917,7 +1917,7 @@ SPFDmultiFamLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj cod) -> (b : SliceObj dom) ->
   SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceUFamUnit b) ->
   SPFDmultiAdjHSR spfd a b
-SPFDmultiFamLAdj {dom} {cod} spfd a b (IFM midx mobj) =
+SPFDmultiFamLAdj {dom} {cod} spfd a b (IFUM midx mobj) =
   SPFDmultiLAdj {dom} {cod} spfd a b (midx () ** mobj ())
 
 -- The right adjunct of the multi-adjunction defined by a polynomial functor
@@ -1929,7 +1929,7 @@ SPFDmultiFamRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (sliceUFamUnit b)
 SPFDmultiFamRAdj {dom} {cod} spfd a b m =
   let (midx ** mobj) = SPFDmultiRAdj spfd a b m in
-  IFM (\() => midx) (\() => mobj)
+  IFUM (\() => midx) (\() => mobj)
 
 -- This is `R . L` for the polynomial-functor multi-adjunction,
 -- but note that these `R` and `L` are _multi_-adjoints, not
