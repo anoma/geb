@@ -1968,12 +1968,14 @@ SPFDlrMap {dom} {cod} spfd x y =
 export
 SPFDadjFactMonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor (SPFDbase spfd)
-SPFDadjFactMonad spfd = SSPMonad $ SPFDtoSSPR spfd
+SPFDadjFactMonad spfd = SPFDradjFact spfd . SPFDladjFact spfd
 
 export
 SPFDadjFactMonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDadjFactMonad spfd)
-SPFDadjFactMonadMap spfd = sspMonadMap $ SPFDtoSSPR spfd
+SPFDadjFactMonadMap spfd x y =
+  SPFDradjFactMap spfd (SPFDladjFact spfd x) (SPFDladjFact spfd y)
+  . SPFDladjFactMap spfd x y
 
 -- `SPFDladjFact` and `SPFDradjFact` are (ordinary, not multi-)
 -- adjoints, so they induce a comonad on `SliceObj (SPFDbase spfd)`.
@@ -2087,8 +2089,7 @@ export
 SPFDspecUnit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (bsl : SPFDbaseSl spfd) ->
   SliceMorphism {a=(SPFDbase spfd)} bsl (SPFDadjFactMonad spfd bsl)
-SPFDspecUnit {dom} {cod} spfd bsl (ec ** ep) ex (ed ** dd) =
-  (((ec ** ep) ** dd) ** ex)
+SPFDspecUnit {dom} {cod} spfd bsl ecp ex ed dd = ((ecp ** dd) ** ex)
 
 export
 SPFDspecJoin : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -2096,9 +2097,9 @@ SPFDspecJoin : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceMorphism {a=(SPFDbase spfd)}
     (SPFDadjFactMonad spfd $ SPFDadjFactMonad spfd bsl)
     (SPFDadjFactMonad spfd bsl)
-SPFDspecJoin {dom} {cod} spfd bsl ecp dm edd with (dm edd)
-  SPFDspecJoin {dom} {cod} spfd bsl ecp dm edd | dm' =
-    snd dm' (fst edd ** snd $ fst dm')
+SPFDspecJoin {dom} {cod} spfd bsl ecp dm ed dd with (dm ed dd)
+  SPFDspecJoin {dom} {cod} spfd bsl ecp dm ed dd | dm' =
+    snd dm' ed $ snd $ fst dm'
 
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
