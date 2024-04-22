@@ -107,8 +107,8 @@ mlfmComp : {x, y, z : MLUFamObj} ->
 mlfmComp = ifumComp HomProf (\_, _, _ => (.))
 
 public export
-mliceUFamUnit : Type -> MLUFamObj
-mliceUFamUnit = fcmUnit HomProf
+mluFamUnit : Type -> MLUFamObj
+mluFamUnit = fcmUnit HomProf
 
 ------------------------
 ---- Interpretation ----
@@ -157,5 +157,5 @@ slufmComp {c} =
   ifumComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
 
 public export
-sliceUFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
-sliceUFamUnit {c} = fcmUnit {c=(SliceObj c)} (SliceMorphism {a=c})
+slUFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
+slUFamUnit {c} = fcmUnit {c=(SliceObj c)} (SliceMorphism {a=c})
