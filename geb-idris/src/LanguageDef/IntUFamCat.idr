@@ -159,3 +159,17 @@ slufmComp {c} =
 public export
 slUFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
 slUFamUnit {c} = fcmUnit {c=(SliceObj c)} (SliceMorphism {a=c})
+
+-- `InterpSLUFamObj` and `InterpSLUFamMor` comprise a functor from
+-- `SliceFamObj c` to `SliceObj c` (for any `c : Type`).
+
+export
+InterpSLUFamObj : {c : Type} -> SliceFamObj c -> SliceObj c
+InterpSLUFamObj {c} x = Pi {a=(ifoIdx x)} . flip (ifoObj x)
+
+export
+InterpSLUFamMor : {c : Type} -> {0 x, y : SliceFamObj c} ->
+  SliceUFamMor {c} x y ->
+  SliceMorphism {a=c} (InterpSLUFamObj x) (InterpSLUFamObj y)
+InterpSLUFamMor {c} {x} {y} m ec pix eiy =
+  ifumOnObj m eiy ec $ pix $ ifumOnIdx m eiy
