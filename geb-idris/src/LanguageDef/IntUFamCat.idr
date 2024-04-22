@@ -146,14 +146,14 @@ SliceUFamMor : {c : Type} -> SliceFamObj c -> SliceFamObj c -> Type
 SliceUFamMor {c} = IntUFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
-slfmId : {c : Type} ->
+slufmId : {c : Type} ->
   (x : SliceFamObj c) -> SliceUFamMor x x
-slfmId {c} = ifumId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
+slufmId {c} = ifumId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
 
 public export
-slfmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
+slufmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
   SliceUFamMor y z -> SliceUFamMor x y -> SliceUFamMor x z
-slfmComp {c} = ifumComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
+slufmComp {c} = ifumComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
 
 public export
 sliceUFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
