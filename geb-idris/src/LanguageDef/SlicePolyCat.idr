@@ -2664,16 +2664,6 @@ spdFromWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
 spdFromWTF {c} {d} p sc ed (Element0 ed' eq ** mpsc) =
   \ec, pdc => mpsc (Element0 ((ed, ec) ** pdc) $ sym eq)
 
------------------------------
------------------------------
----- Utility definitions ----
------------------------------
------------------------------
-
-public export
-MLArena : Type
-MLArena = IntArena Type
-
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
 ---- Slice categories of polynomial functors (in categorial style) ----
