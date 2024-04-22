@@ -1,4 +1,4 @@
-module LanguageDef.IntFamCat
+module LanguageDef.IntUFamCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
