@@ -3,7 +3,7 @@ module LanguageDef.DisliceCat
 import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.InternalCat
-import public LanguageDef.BundleCat
+import public LanguageDef.MLBundleCat
 
 --------------------------------------
 --------------------------------------

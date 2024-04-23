@@ -5,7 +5,7 @@ import Library.IdrisCategories
 import public LanguageDef.PolyCat
 import public LanguageDef.InternalCat
 import public LanguageDef.IntUFamCat
-import public LanguageDef.BundleCat
+import public LanguageDef.MLBundleCat
 
 ------------------------------------------------------
 ------------------------------------------------------
