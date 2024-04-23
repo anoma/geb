@@ -79,11 +79,11 @@ public export
 fcmUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntUFamObj c
 fcmUnit {c} mor x = IFO Unit (const x)
 
----------------------------
----------------------------
----- Element families -----
----------------------------
----------------------------
+-------------------------------------
+-------------------------------------
+---- Element universal families -----
+-------------------------------------
+-------------------------------------
 
 -- Given categories `c` and `d`, a presheaf `f` on `c`, and a functor
 -- to `d` from the category of elements of `f`, we can form a functor
