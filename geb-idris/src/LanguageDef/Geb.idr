@@ -998,7 +998,7 @@ PFCopreshfSig = IntCopreshfSig PolyFunc
 0 PFCopreshfMapSig : PFCopreshfSig -> Type
 PFCopreshfMapSig = IntCopreshfMapSig PolyFunc MLPolyFMor
 
-0 PFCopreshfNTSig : (0 alpha, beta : PFCopreshfSig) -> Type
+0 PFCopreshfNTSig : (alpha, beta : PFCopreshfSig) -> Type
 PFCopreshfNTSig = IntCopreshfNTSig PolyFunc
 
 -----------------------
@@ -1324,7 +1324,7 @@ public export
 IntProfYonedaEmbedDimap : (0 d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   (dcomp : IntCompSig d dmor) -> (ccomp : IntCompSig c cmor) ->
-  (0 s : d) -> (0 t : c) ->
+  (s : d) -> (t : c) ->
   IntDimapSig d c dmor cmor (IntProfYonedaEmbed d c dmor cmor s t)
 IntProfYonedaEmbedDimap d c dmor cmor dcomp ccomp s t a b i j
   dmia cmbj (dmas, cmtb) = (dcomp i a s dmas dmia, ccomp t b j cmbj cmtb)
