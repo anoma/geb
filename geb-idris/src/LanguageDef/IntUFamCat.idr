@@ -118,6 +118,51 @@ IntElemUFamFMap : {c, d : Type} ->
 IntElemUFamFMap {c} {d} cmor dmor f fcm g gm x y mxy =
   IFUM (fcm y x mxy) (\efy => gm x y efy mxy)
 
+------------------------------------------
+------------------------------------------
+---- Universal families as presheaves ----
+------------------------------------------
+------------------------------------------
+
+public export
+InterpUFamPreshfOMap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntUFamObj c -> IntPreshfSig c
+InterpUFamPreshfOMap c mor (IFO idx obj) a = Pi {a=idx} $ mor a . obj
+
+public export
+InterpUFamPreshfFMap :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (x : IntUFamObj c) -> IntPreshfMapSig c mor (InterpUFamPreshfOMap c mor x)
+InterpUFamPreshfFMap c mor comp (IFO idx obj) xobj yobj myx pix =
+  \ei : idx => comp yobj xobj (obj ei) (pix ei) myx
+
+public export
+InterpUFamPreshfNT :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (x, y : IntUFamObj c) -> (m : IntUFamMor {c} mor x y) ->
+  IntPreshfNTSig c (InterpUFamPreshfOMap c mor x) (InterpUFamPreshfOMap c mor y)
+InterpUFamPreshfNT c mor comp
+  (IFO xidx xobj) (IFO yidx yobj) (IFUM midx mobj) cobj pix =
+    \eyi : yidx =>
+     comp cobj (xobj $ midx eyi) (yobj eyi) (mobj eyi) $ pix $ midx eyi
+
+public export
+InterpUFamPreshfNaturality : FunExt ->
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (assoc : IntAssocSig c mor comp) ->
+  (x, y : IntUFamObj c) -> (m : IntUFamMor {c} mor x y) ->
+  IntPreshfNTNaturality c mor
+    (InterpUFamPreshfOMap c mor x)
+    (InterpUFamPreshfOMap c mor y)
+    (InterpUFamPreshfFMap c mor comp x)
+    (InterpUFamPreshfFMap c mor comp y)
+    (InterpUFamPreshfNT c mor comp x y m)
+InterpUFamPreshfNaturality fext c mor comp assoc
+  (IFO xidx xobj) (IFO yidx yobj) (IFUM midx mobj) a b mba pix =
+    funExt $
+      \eyi =>
+        assoc b a (xobj $ midx eyi) (yobj eyi) (mobj eyi) (pix $ midx eyi) mba
+
 -------------------------------
 -------------------------------
 ---- Metalanguage families ----
