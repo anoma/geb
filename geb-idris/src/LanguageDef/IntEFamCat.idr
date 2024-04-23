@@ -29,7 +29,8 @@ IntEFamObj = IntArena
 
 -- The free coproduct completion of a category has the same morphisms as (and
 -- hence is equivalent to) the category of Dirichlet functors on the category;
--- we just interpret them differently.
+-- we just interpret them differently (meaning, herein we will define a functor
+-- from them to `Type`, rather than to `Type -> Type`).
 
 public export
 IntEFamMor : {c : Type} -> IntDifunctorSig c ->
@@ -144,3 +145,17 @@ slefmComp {c} = ifemComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {
 public export
 slEFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
 slEFamUnit {c} = fccUnit {c=(SliceObj c)} (SliceMorphism {a=c})
+
+-- `InterpSLEFamObj` and `InterpSLEFamMor` comprise a functor from
+-- `SliceFamObj c` to `SliceObj c` (for any `c : Type`).
+
+export
+InterpSLEFamObj : {c : Type} -> SliceFamObj c -> SliceObj c
+InterpSLEFamObj {c} (xpos ** xdir) = Sigma {a=xpos} . flip xdir
+
+export
+InterpSLEFamMor : {c : Type} -> {0 x, y : SliceFamObj c} ->
+  SliceEFamMor {c} x y ->
+  SliceMorphism {a=c} (InterpSLEFamObj x) (InterpSLEFamObj y)
+InterpSLEFamMor {c} {x=(xpos ** xdir)} {y=(ypos ** ydir)} (onpos ** ondir) ec =
+  dpBimap onpos (\exp => ondir exp ec)
