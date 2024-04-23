@@ -85,12 +85,12 @@ IntElemEFamMor {c} {d} dmor f g x y =
   IntEFamMor {c=d} dmor (f x ** g x) (f y ** g y)
 
 public export
-IntElemEFamObj : {c, d : Type} -> (f : IntCopreshfSig c) ->
+IntElemEFamOMap : {c, d : Type} -> (f : IntCopreshfSig c) ->
   ((cobj : c) -> f cobj -> d) -> (c -> IntEFamObj d)
-IntElemEFamObj {c} {d} f g cobj = (f cobj ** g cobj)
+IntElemEFamOMap {c} {d} f g cobj = (f cobj ** g cobj)
 
 public export
-IntElemEFamMap : {c, d : Type} ->
+IntElemEFamFMap : {c, d : Type} ->
   (cmor : IntDifunctorSig c) -> (dmor : IntDifunctorSig d) ->
   (f : IntCopreshfSig c) -> (fm : IntCopreshfMapSig c cmor f) ->
   (g : (cobj : c) -> f cobj -> d) ->
@@ -99,9 +99,9 @@ IntElemEFamMap : {c, d : Type} ->
     (mxy : cmor x y) -> dmor (g x efx) (g y $ fm x y mxy efx)) ->
   (x, y : c) -> cmor x y ->
   IntEFamMor {c=d} dmor
-    (IntElemEFamObj {c} {d} f g x)
-    (IntElemEFamObj {c} {d} f g y)
-IntElemEFamMap {c} {d} cmor dmor f fm g gm x y mxy =
+    (IntElemEFamOMap {c} {d} f g x)
+    (IntElemEFamOMap {c} {d} f g y)
+IntElemEFamFMap {c} {d} cmor dmor f fm g gm x y mxy =
   (fm x y mxy ** \efy => gm x y efy mxy)
 
 -------------------------------
