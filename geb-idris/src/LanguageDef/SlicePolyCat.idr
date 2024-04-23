@@ -1663,8 +1663,9 @@ SPFDmultiFamLCatMor {lcat} = SliceUFamMor
 export
 SPFDmultiFamL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj cod -> SPFDmultiFamLCatObj dom
-SPFDmultiFamL {dom} {cod} spfd slc =
-  IFO (SPFDmultiIdx spfd slc) (SPFDmultiL spfd slc)
+SPFDmultiFamL {dom} {cod} spfd =
+  IntElemUFamObj {c=(SliceObj cod)} {d=(SliceObj dom)}
+    (SPFDmultiIdx spfd) (SPFDmultiL spfd)
 
 export
 SPFDmultiFamLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
@@ -1673,13 +1674,16 @@ SPFDmultiFamLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiFamLCatMor {lcat=dom}
     (SPFDmultiFamL {dom} {cod} spfd x)
     (SPFDmultiFamL {dom} {cod} spfd y)
-SPFDmultiFamLmap {dom} {cod} spfd x y m =
-  IFUM
-    (SPFDmultiIdxContramap spfd y x m)
-    (\i =>
-      SPFDmultiLmap spfd x
-        (SPFDmultiIdxContramap spfd y x m i) y i
-        (\ecp => s0Bimap (m $ fst ecp) $ \ea => id))
+SPFDmultiFamLmap {dom} {cod} spfd =
+  IntElemUFamMap {c=(SliceObj cod)} {d=(SliceObj dom)}
+    (SliceMorphism {a=cod})
+    (SliceMorphism {a=dom})
+    (SPFDmultiIdx spfd)
+    (SPFDmultiIdxContramap spfd)
+    (SPFDmultiL spfd)
+    (\x, y, myp, mxy =>
+     SPFDmultiLmap spfd x (sliceComp {a=cod} myp mxy) y myp
+      $ \(ec ** ep) => s0Bimap (mxy ec) $ \ex, Refl => Refl)
 
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.  It may be viewed as the first projection
