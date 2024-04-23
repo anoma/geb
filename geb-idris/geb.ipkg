@@ -16,7 +16,7 @@ modules =
     , LanguageDef.IntBundle
     , LanguageDef.IntUFamCat
     , LanguageDef.IntEFamCat
-    , LanguageDef.BundleCat
+    , LanguageDef.MLBundleCat
     , LanguageDef.SlicePolyCat
     , LanguageDef.DisliceCat
     , LanguageDef.DislicePolyCat
@@ -52,7 +52,7 @@ modules =
     , LanguageDef.Test.IntEFamCatTest
     , LanguageDef.Test.SpanCospanTest
     , LanguageDef.Test.InternalCatTest
-    , LanguageDef.Test.BundleCatTest
+    , LanguageDef.Test.MLBundleCatTest
     , LanguageDef.Test.SlicePolyCatTest
     , LanguageDef.Test.DisliceCatTest
     , LanguageDef.Test.QuiverTest
