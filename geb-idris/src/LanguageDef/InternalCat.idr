@@ -1054,7 +1054,7 @@ public export
   IntCopreshfMapSig c cmor pobj -> IntCopreshfMapSig c cmor qobj ->
   IntCopreshfNTSig c pobj qobj -> Type
 IntCopreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
-  (0 x, y : c) -> (0 m : cmor x y) ->
+  (x, y : c) -> (m : cmor x y) ->
   ExtEq {a=(pobj x)} {b=(qobj y)}
     (qmap x y m . alpha x)
     (alpha y . pmap x y m)
@@ -1067,7 +1067,7 @@ public export
   IntPreshfMapSig c cmor pobj -> IntPreshfMapSig c cmor qobj ->
   IntPreshfNTSig c pobj qobj -> Type
 IntPreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
-  (0 x, y : c) -> (0 m : cmor y x) ->
+  (x, y : c) -> (m : cmor y x) ->
   ExtEq {a=(pobj x)} {b=(qobj y)}
     (qmap x y m . alpha x)
     (alpha y . pmap x y m)
