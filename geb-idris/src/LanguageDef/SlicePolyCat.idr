@@ -1682,7 +1682,7 @@ SPFDmultiFamLmap {dom} {cod} spfd =
     (SPFDmultiIdxContramap spfd)
     (SPFDmultiL spfd)
     (\x, y, myp, mxy =>
-     SPFDmultiLmap spfd x (sliceComp {a=cod} myp mxy) y myp
+     SPFDmultiLmap spfd x (SPFDmultiIdxContramap spfd y x mxy myp) y myp
       $ \(ec ** ep) => s0Bimap (mxy ec) $ \ex, Refl => Refl)
 
 -- The codomain of the unit of the left multi-adjoint of a slice
