@@ -99,12 +99,12 @@ IntElemUFamMor {c} {d} dmor f g x y =
   IntUFamMor {c=d} dmor (IFO (f x) (g x)) (IFO (f y) (g y))
 
 public export
-IntElemUFamObj : {c, d : Type} -> (f : IntPreshfSig c) ->
+IntElemUFamOMap : {c, d : Type} -> (f : IntPreshfSig c) ->
   ((cobj : c) -> f cobj -> d) -> (c -> IntUFamObj d)
-IntElemUFamObj {c} {d} f g cobj = IFO (f cobj) (g cobj)
+IntElemUFamOMap {c} {d} f g cobj = IFO (f cobj) (g cobj)
 
 public export
-IntElemUFamMap : {c, d : Type} ->
+IntElemUFamFMap : {c, d : Type} ->
   (cmor : IntDifunctorSig c) -> (dmor : IntDifunctorSig d) ->
   (f : IntPreshfSig c) -> (fcm : IntPreshfMapSig c cmor f) ->
   (g : (cobj : c) -> f cobj -> d) ->
@@ -113,9 +113,9 @@ IntElemUFamMap : {c, d : Type} ->
     (mxy : cmor x y) -> dmor (g x $ fcm y x mxy efy) (g y efy)) ->
   (x, y : c) -> cmor x y ->
   IntUFamMor {c=d} dmor
-    (IntElemUFamObj {c} {d} f g x)
-    (IntElemUFamObj {c} {d} f g y)
-IntElemUFamMap {c} {d} cmor dmor f fcm g gm x y mxy =
+    (IntElemUFamOMap {c} {d} f g x)
+    (IntElemUFamOMap {c} {d} f g y)
+IntElemUFamFMap {c} {d} cmor dmor f fcm g gm x y mxy =
   IFUM (fcm y x mxy) (\efy => gm x y efy mxy)
 
 -------------------------------
