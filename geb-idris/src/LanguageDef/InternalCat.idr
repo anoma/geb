@@ -1242,11 +1242,11 @@ IA {c} = MkDPair {a=Type} {p=(ContravarHomFunc c)}
 
 public export
 iaIdx : {0 c : Type} -> IntArena c -> Type
-iaIdx {c} = fst
+iaIdx {c} = DPair.fst {a=Type} {p=(ContravarHomFunc c)}
 
 public export
 iaObj : {0 c : Type} -> (ar : IntArena c) -> iaIdx {c} ar -> c
-iaObj {c} = snd
+iaObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 
 public export
 InterpIPFobj : (c : Type) -> (mor : IntDifunctorSig c) ->
