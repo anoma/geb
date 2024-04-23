@@ -1,4 +1,4 @@
-module LanguageDef.IntBundle
+module LanguageDef.IntBundleCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
