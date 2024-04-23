@@ -90,11 +90,6 @@ fcmUnit {c} mor x = IFO Unit (const x)
 -- from `c` to `IntUFamObj d`.
 
 public export
-IntElemUFamObj : {c, d : Type} -> (f : IntPreshfSig c) ->
-  ((cobj : c) -> f cobj -> d) -> (c -> IntUFamObj d)
-IntElemUFamObj {c} {d} f g cobj = IFO (f cobj) (g cobj)
-
-public export
 IntElemUFamMor : {c, d : Type} ->
   (dmor : IntDifunctorSig d) ->
   (f : IntPreshfSig c) ->
@@ -102,6 +97,11 @@ IntElemUFamMor : {c, d : Type} ->
   c -> c -> Type
 IntElemUFamMor {c} {d} dmor f g x y =
   IntUFamMor {c=d} dmor (IFO (f x) (g x)) (IFO (f y) (g y))
+
+public export
+IntElemUFamObj : {c, d : Type} -> (f : IntPreshfSig c) ->
+  ((cobj : c) -> f cobj -> d) -> (c -> IntUFamObj d)
+IntElemUFamObj {c} {d} f g cobj = IFO (f cobj) (g cobj)
 
 public export
 IntElemUFamMap : {c, d : Type} ->
