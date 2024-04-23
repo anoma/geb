@@ -1237,6 +1237,18 @@ IntArena : (c : Type) -> Type
 IntArena c = CSliceObj c
 
 public export
+IA : {0 c : Type} -> (idx : Type) -> (idx -> c) -> IntArena c
+IA {c} = MkDPair {a=Type} {p=(ContravarHomFunc c)}
+
+public export
+iaIdx : {0 c : Type} -> IntArena c -> Type
+iaIdx {c} = fst
+
+public export
+iaObj : {0 c : Type} -> (ar : IntArena c) -> iaIdx {c} ar -> c
+iaObj {c} = snd
+
+public export
 InterpIPFobj : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> c -> Type
 InterpIPFobj c mor (pos ** dir) a = (i : pos ** mor (dir i) a)
