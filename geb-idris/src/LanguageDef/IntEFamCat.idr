@@ -76,11 +76,6 @@ fccUnit {c} mor x = (Unit ** const x)
 -- from `c` to `IntEFamObj d`.
 
 public export
-IntElemEFamObj : {c, d : Type} -> (f : IntCopreshfSig c) ->
-  ((cobj : c) -> f cobj -> d) -> (c -> IntEFamObj d)
-IntElemEFamObj {c} {d} f g cobj = (f cobj ** g cobj)
-
-public export
 IntElemEFamMor : {c, d : Type} ->
   (dmor : IntDifunctorSig d) ->
   (f : IntCopreshfSig c) ->
@@ -88,6 +83,11 @@ IntElemEFamMor : {c, d : Type} ->
   c -> c -> Type
 IntElemEFamMor {c} {d} dmor f g x y =
   IntEFamMor {c=d} dmor (f x ** g x) (f y ** g y)
+
+public export
+IntElemEFamObj : {c, d : Type} -> (f : IntCopreshfSig c) ->
+  ((cobj : c) -> f cobj -> d) -> (c -> IntEFamObj d)
+IntElemEFamObj {c} {d} f g cobj = (f cobj ** g cobj)
 
 public export
 IntElemEFamMap : {c, d : Type} ->
