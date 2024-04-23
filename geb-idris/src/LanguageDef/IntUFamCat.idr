@@ -79,6 +79,45 @@ public export
 fcmUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntUFamObj c
 fcmUnit {c} mor x = IFO Unit (const x)
 
+---------------------------
+---------------------------
+---- Element families -----
+---------------------------
+---------------------------
+
+-- Given categories `c` and `d`, a presheaf `f` on `c`, and a functor
+-- to `d` from the category of elements of `f`, we can form a functor
+-- from `c` to `IntUFamObj d`.
+
+public export
+IntElemUFamObj : {c, d : Type} -> (f : IntPreshfSig c) ->
+  ((cobj : c) -> f cobj -> d) -> (c -> IntUFamObj d)
+IntElemUFamObj {c} {d} f g cobj = IFO (f cobj) (g cobj)
+
+public export
+IntElemUFamMor : {c, d : Type} ->
+  (dmor : IntDifunctorSig d) ->
+  (f : IntPreshfSig c) ->
+  (g : (cobj : c) -> f cobj -> d) ->
+  c -> c -> Type
+IntElemUFamMor {c} {d} dmor f g x y =
+  IntUFamMor {c=d} dmor (IFO (f x) (g x)) (IFO (f y) (g y))
+
+public export
+IntElemUFamMap : {c, d : Type} ->
+  (cmor : IntDifunctorSig c) -> (dmor : IntDifunctorSig d) ->
+  (f : IntPreshfSig c) -> (fcm : IntPreshfMapSig c cmor f) ->
+  (g : (cobj : c) -> f cobj -> d) ->
+  (gm :
+    (x : c) -> (y : c) -> (efy : f y) ->
+    (mxy : cmor x y) -> dmor (g x $ fcm y x mxy efy) (g y efy)) ->
+  (x, y : c) -> cmor x y ->
+  IntUFamMor {c=d} dmor
+    (IntElemUFamObj {c} {d} f g x)
+    (IntElemUFamObj {c} {d} f g y)
+IntElemUFamMap {c} {d} cmor dmor f fcm g gm x y mxy =
+  IFUM (fcm y x mxy) (\efy => gm x y efy mxy)
+
 -------------------------------
 -------------------------------
 ---- Metalanguage families ----
