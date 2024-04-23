@@ -36,8 +36,8 @@ IntIdSig : (c : Type) -> (mor : IntDifunctorSig c) -> Type
 IntIdSig c mor = (x : c) -> mor x x
 
 public export
-0 IntCompSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) -> Type
-IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
+IntCompSig : (c : Type) -> (mor : IntDifunctorSig c) -> Type
+IntCompSig c mor = (x, y, z : c) -> mor y z -> mor x y -> mor x z
 
 public export
 IntComp : (c : Type) -> (mor : IntDifunctorSig c) -> Type
@@ -69,7 +69,7 @@ public export
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   IntProfunctorSig d c -> Type
 IntDimapSig d c dmor cmor p =
-  (0 s : d) -> (0 t : c) -> (0 a : d) -> (0 b : c) ->
+  (s : d) -> (t : c) -> (a : d) -> (b : c) ->
   dmor a s -> cmor t b -> p s t -> p a b
 
 public export
@@ -78,14 +78,14 @@ public export
 IntEndoDimapSig c mor = IntDimapSig c c mor mor
 
 public export
-0 IntLmapSig : (0 d, c : Type) ->
+0 IntLmapSig : (d, c : Type) ->
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   IntProfunctorSig d c -> Type
 IntLmapSig d c dmor cmor p =
-  (0 s : d) -> (0 t : c) -> (0 a : d) -> dmor a s -> p s t -> p a t
+  (s : d) -> (t : c) -> (a : d) -> dmor a s -> p s t -> p a t
 
 public export
-0 IntEndoLmapSig : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
+0 IntEndoLmapSig : (c : Type) -> (cmor : IntDifunctorSig c) ->
   IntDifunctorSig c -> Type
 IntEndoLmapSig c cmor = IntLmapSig c c cmor cmor
 
@@ -109,7 +109,7 @@ public export
   (0 dmor : IntDifunctorSig d) -> (0 cmor : IntDifunctorSig c) ->
   IntProfunctorSig d c -> Type
 IntRmapSig d c dmor cmor p =
-  (0 s : d) -> (0 t : c) -> (0 b : c) -> cmor t b -> p s t -> p s b
+  (s : d) -> (t : c) -> (b : c) -> cmor t b -> p s t -> p s b
 
 public export
 0 IntEndoRmapSig : (0 c : Type) -> (0 cmor : IntDifunctorSig c) ->
@@ -283,13 +283,13 @@ IntParaNTcomp c mor p q r plm prm qlm qrm rlm rrm beta bcond alpha acond
 --------------------------------------------
 
 public export
-0 IntProfNTSig : (0 d, c : Type) ->
-  (0 p, q : IntProfunctorSig d c) -> Type
-IntProfNTSig d c p q = (0 x : d) -> (0 y : c) -> p x y -> q x y
+0 IntProfNTSig : (d, c : Type) ->
+  (p, q : IntProfunctorSig d c) -> Type
+IntProfNTSig d c p q = (x : d) -> (y : c) -> p x y -> q x y
 
 public export
-0 IntEndoProfNTSig : (0 c : Type) ->
-  (0 p, q : IntDifunctorSig c) -> Type
+0 IntEndoProfNTSig : (c : Type) ->
+  (p, q : IntDifunctorSig c) -> Type
 IntEndoProfNTSig c = IntProfNTSig c c
 
 public export
@@ -390,7 +390,7 @@ constEndoDimap c mor = constDimap c c mor mor
 -----------------------------
 
 public export
-0 IntGenEndBase : (d, c : Type) -> (0 p : IntProfunctorSig d c) -> Type
+0 IntGenEndBase : (d, c : Type) -> (p : IntProfunctorSig d c) -> Type
 IntGenEndBase d c = IntProfNTSig d c (terminalProf d c)
 
 public export
@@ -458,15 +458,15 @@ IntDiCompDiDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
 IntDiCompDiDimap c mor = IntProCompDiDimap c c c mor mor mor
 
 public export
-IntProComp : (0 c, d, e : Type) ->
+IntProComp : (c, d, e : Type) ->
   (q : IntProfunctorSig e d) ->
   (p : IntProfunctorSig d c) ->
   IntProfunctorSig e c
 IntProComp c d e q p i j =
-  Exists {type=d} $ \x : d => IntProCompDi c d e q p i j x x
+  DPair d $ \x : d => IntProCompDi c d e q p i j x x
 
 public export
-IntProCompDimap : (0 c, d, e : Type) ->
+IntProCompDimap : (c, d, e : Type) ->
   (cmor : IntDifunctorSig c) ->
   (dmor : IntDifunctorSig d) ->
   (emor : IntDifunctorSig e) ->
@@ -474,17 +474,17 @@ IntProCompDimap : (0 c, d, e : Type) ->
   (qlm : IntLmapSig e d emor dmor q) -> (prm : IntRmapSig d c dmor cmor p) ->
   IntDimapSig e c emor cmor (IntProComp c d e q p)
 IntProCompDimap c d e cmor dmor emor q p qlm prm s t a b emas cmtb
-  (Evidence i (pit, qsi)) =
-    Evidence i (prm i t b cmtb pit, qlm s i a emas qsi)
+  (i ** (pit, qsi)) =
+    (i ** (prm i t b cmtb pit, qlm s i a emas qsi))
 
 public export
-IntDiComp : (0 c : Type) ->
+IntDiComp : (c : Type) ->
   (q, p : IntDifunctorSig c) ->
   IntDifunctorSig c
 IntDiComp c = IntProComp c c c
 
 public export
-IntDiCompDimap : (0 c : Type) ->
+IntDiCompDimap : (c : Type) ->
   (cmor : IntDifunctorSig c) ->
   (q, p : IntDifunctorSig c) ->
   (qlm : IntEndoLmapSig c cmor q) -> (prm : IntEndoRmapSig c cmor p) ->
@@ -501,8 +501,8 @@ public export
   IntProfNTSig e d q r ->
   (p : IntProfunctorSig d c) ->
   IntProfNTSig e c (IntProComp c d e q p) (IntProComp c d e r p)
-IntProfNTwhiskerL e d c q r nu p s t (Evidence i (pit, qsi)) =
-  Evidence i (pit, nu s i qsi)
+IntProfNTwhiskerL e d c q r nu p s t (i ** (pit, qsi)) =
+  (i ** (pit, nu s i qsi))
 
 public export
 0 IntProfNTwhiskerR : (0 e, d, c : Type) ->
@@ -510,8 +510,8 @@ public export
   (r : IntProfunctorSig e d) ->
   IntProfNTSig d c p q ->
   IntProfNTSig e c (IntProComp c d e r p) (IntProComp c d e r q)
-IntProfNTwhiskerR e d c p q r nu s t (Evidence i (pit, rsi)) =
-  Evidence i (nu i t pit, rsi)
+IntProfNTwhiskerR e d c p q r nu s t (i ** (pit, rsi)) =
+  (i ** (nu i t pit, rsi))
 
 public export
 0 IntProfNThComp : (0 e, d, c : Type) ->
@@ -529,27 +529,27 @@ IntProfNThComp e d c p p' q q' beta alpha s t =
 --------------------------------------------------------
 
 public export
-IntOpCatMor : (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig c
+IntOpCatMor : (c : Type) -> IntDifunctorSig c -> IntDifunctorSig c
 IntOpCatMor c cmor = flip cmor
 
 public export
-IntProdCatMor : (0 c, d : Type) ->
+IntProdCatMor : (c, d : Type) ->
   IntDifunctorSig c -> IntDifunctorSig d -> IntDifunctorSig (c, d)
 IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
 
 public export
-IntEndoProdCatMor : (0 c : Type) ->
+IntEndoProdCatMor : (c : Type) ->
   IntDifunctorSig c -> IntDifunctorSig (c, c)
 IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
 
 public export
-IntOpProdCatMor : (0 d, c : Type) ->
+IntOpProdCatMor : (d, c : Type) ->
   IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
 IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (IntOpCatMor d dmor) cmor
 
 public export
 IntEndoOpProdCatMor :
-  (0 c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
+  (c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
 IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
 
 --------------------------------------------------------
@@ -574,7 +574,7 @@ IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
 -- `op(c) -> c -> Type` -- and whose morphisms are paranatural
 -- transformations.
 public export
-IntDiYonedaEmbedObj : (0 c : Type) ->
+IntDiYonedaEmbedObj : (c : Type) ->
   (mor : IntDifunctorSig c) -> c -> c -> IntDifunctorSig c
 IntDiYonedaEmbedObj c mor i0 i1 j0 j1 = (mor j0 i1, mor i0 j1)
                        --  d  c  c' d'     c' -> c    d -> d'
@@ -612,21 +612,21 @@ IntDiYonedaFullEmbedObj c mor i0 i1 =
 -- We now show that for a given `(s, t)` in `opProd(c)`, the diYoneda
 -- embedding `IntDiYonedaEmbedObj c mor s t` is a difunctor on `c`.
 public export
-IntDiYonedaEmbedLmap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+IntDiYonedaEmbedLmap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
-  (0 s, t : c) -> IntEndoLmapSig c mor (IntDiYonedaEmbedObj c mor s t)
+  (s, t : c) -> IntEndoLmapSig c mor (IntDiYonedaEmbedObj c mor s t)
 IntDiYonedaEmbedLmap c mor comp s t a b i cmia (cmat, cmsb) =
   (comp i a t cmat cmia, cmsb)
 
 public export
-IntDiYonedaEmbedRmap : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+IntDiYonedaEmbedRmap : (c : Type) -> (0 mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
-  (0 s, t : c) -> IntEndoRmapSig c mor (IntDiYonedaEmbedObj c mor s t)
+  (s, t : c) -> IntEndoRmapSig c mor (IntDiYonedaEmbedObj c mor s t)
 IntDiYonedaEmbedRmap c mor comp s t a b j cmbj (cmat, cmsb) =
   (cmat, comp s b j cmbj cmsb)
 
 public export
-IntDiYonedaEmbedDimap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntDiYonedaEmbedDimap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (s, t : c) -> IntEndoDimapSig c mor (IntDiYonedaEmbedObj c mor s t)
 IntDiYonedaEmbedDimap c mor comp s t =
@@ -635,7 +635,7 @@ IntDiYonedaEmbedDimap c mor comp s t =
     (IntDiYonedaEmbedRmap c mor comp s t)
 
 public export
-IntDiYonedaEmbedMorphNT : (0 c : Type) ->
+IntDiYonedaEmbedMorphNT : (c : Type) ->
   (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (s, t, a, b : c) ->
   IntEndoOpProdCatMor c mor (s, t) (a, b) ->
@@ -650,7 +650,7 @@ IntDiYonedaEmbedMorphNT c mor comp s t a b (mas, mtb) i j (mit, msj) =
 -- so the morphism-map component takes morphisms of `opProd(c)` to
 -- paranatural transformations.
 public export
-IntDiYonedaEmbedMorph : (0 c : Type) ->
+IntDiYonedaEmbedMorph : (c : Type) ->
   (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (s, t, a, b : c) ->
   IntEndoOpProdCatMor c mor (s, t) (a, b) ->
@@ -772,10 +772,10 @@ IntDiYonedaLemmaR c mor cid p i embed = embed i (cid i, cid i)
 -- of representables (the density theorem asserts that such a representation
 -- exists for every presheaf).
 public export
-IntDiCoYonedaLemmaCoendBase : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntDiCoYonedaLemmaCoendBase : (c : Type) -> (mor : IntDifunctorSig c) ->
   (p : IntDifunctorSig c) -> IntDifunctorSig c
 IntDiCoYonedaLemmaCoendBase c mor p i j =
-  Exists {type=(c, c)} $ \xy =>
+  DPair (c, c) $ \xy =>
     (IntDiYonedaEmbedObj c mor i j (fst xy) (snd xy), flip p (fst xy) (snd xy))
 
 -- This shows that for a given difunctor `p` on `c`,
@@ -791,8 +791,8 @@ IntDiYonedaLemmaCoendBaseDimap : (0 c : Type) ->
   (0 p : IntDifunctorSig c) ->
   IntEndoDimapSig c mor (IntDiCoYonedaLemmaCoendBase c mor p)
 IntDiYonedaLemmaCoendBaseDimap c mor comp p s t a b mas mtb
-  (Evidence ij ((mit, msj), pji)) =
-    Evidence ij ((comp (fst ij) t b mtb mit, comp a s (snd ij) msj mas), pji)
+  (ij ** ((mit, msj), pji)) =
+    (ij ** ((comp (fst ij) t b mtb mit, comp a s (snd ij) msj mas), pji))
 
 -- One direction of the paranatural isomorphism asserted by the
 -- di-co-Yoneda lemma.
@@ -801,7 +801,7 @@ IntDiCoYonedaLemmaL : (0 c : Type) ->
   (0 mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
   (0 p : IntDifunctorSig c) ->
   IntDiNTSig c p (IntDiCoYonedaLemmaCoendBase c mor p)
-IntDiCoYonedaLemmaL c mor cid p i pii = Evidence (i, i) ((cid i, cid i), pii)
+IntDiCoYonedaLemmaL c mor cid p i pii = ((i, i) ** ((cid i, cid i), pii))
 
 -- The other direction of the paranatural isomorphism asserted by the
 -- di-co-Yoneda lemma.
@@ -810,7 +810,7 @@ IntDiCoYonedaLemmaR : (0 c : Type) ->
   (0 mor : IntDifunctorSig c) ->
   (0 p : IntDifunctorSig c) -> (pdm : IntEndoDimapSig c mor p) ->
   IntDiNTSig c (IntDiCoYonedaLemmaCoendBase c mor p) p
-IntDiCoYonedaLemmaR c mor p pdm x (Evidence ij ((mix, mxj), pji)) =
+IntDiCoYonedaLemmaR c mor p pdm x (ij ** ((mix, mxj), pji)) =
   pdm (snd ij) (fst ij) x x mxj mix pji
 
 --------------------------------------------------
@@ -946,10 +946,13 @@ public export
 DiYonedaLemmaNT : ProfunctorSig -> ProfunctorSig
 DiYonedaLemmaNT = IntDiYonedaLemmaNT Type HomProf
 
+{-
+ - The current usages don't work out to define this.
 public export
 DiYonedaLemmaNTPro : Profunctor (flip $ DiYonedaLemmaNT p)
 DiYonedaLemmaNTPro {p} = MkProfunctor $
   IntDiYonedaLemmaNTDimap Type HomProf typeComp p _ _ _ _
+ -}
 
 -- One direction of the paranatural isomorphism asserted by the
 -- diYoneda lemma on `(op(Type), Type)`.
@@ -973,9 +976,12 @@ public export
 DiCoYonedaLemmaCoend : ProfunctorSig -> ProfunctorSig
 DiCoYonedaLemmaCoend = IntDiCoYonedaLemmaCoendBase Type HomProf
 
+{-
+ - The current usages don't work out to define this.
 public export
 Profunctor (DiCoYonedaLemmaCoend p) where
   dimap {p} = IntDiYonedaLemmaCoendBaseDimap Type HomProf typeComp p _ _ _ _
+ -}
 
 -- One direction of the paranatural isomorphism asserted by the
 -- di-co-Yoneda lemma on `(op(Type), Type)`.
@@ -1022,7 +1028,7 @@ public export
 0 IntCopreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
   (objmap : IntCopreshfSig c) -> Type
 IntCopreshfMapSig c mor objmap =
-  (0 x, y : c) -> mor x y -> objmap x -> objmap y
+  (x, y : c) -> mor x y -> objmap x -> objmap y
 
 -- As `IntCopreshfMapSig`, but for a (contravariant) presheaf.
 public export
@@ -1032,12 +1038,12 @@ IntPreshfMapSig c mor = IntCopreshfMapSig c (IntOpCatMor c mor)
 
 -- The signature of a natural transformation between copresheaves.
 public export
-0 IntCopreshfNTSig : (0 c : Type) -> (0 pobj, qobj : IntCopreshfSig c) -> Type
-IntCopreshfNTSig c pobj qobj = (0 x : c) -> pobj x -> qobj x
+0 IntCopreshfNTSig : (c : Type) -> (pobj, qobj : IntCopreshfSig c) -> Type
+IntCopreshfNTSig c pobj qobj = (x : c) -> pobj x -> qobj x
 
 -- The signature of a natural transformation between presheaves.
 public export
-0 IntPreshfNTSig : (0 c : Type) -> (0 pobj, qobj : IntPreshfSig c) -> Type
+0 IntPreshfNTSig : (c : Type) -> (pobj, qobj : IntPreshfSig c) -> Type
 IntPreshfNTSig = IntCopreshfNTSig
 
 -- The naturality condition of a natural transformation between copresheaves.
@@ -1099,7 +1105,7 @@ IntPreshfYonedaEmbedObjFMap c mor comp a x y = flip $ comp y x a
 -- The morphism-map component of the (contravariant) Yoneda embedding itself --
 -- that is, the embedding of a _morphism_ into the morphisms of the
 -- (covariant) copresheaves on `c`, which are natural transformations.
-IntCopreshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntCopreshfYonedaEmbedMor : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (a, b : c) -> mor b a ->
   IntCopreshfNTSig c
@@ -1110,7 +1116,7 @@ IntCopreshfYonedaEmbedMor c mor comp a b mba x max = comp b a x max mba
 -- The morphism-map component of the (covariant) Yoneda embedding itself --
 -- that is, the embedding of a _morphism_ into the morphisms of the
 -- (contravariant) presheaves on `c`, which are natural transformations.
-IntPreshfYonedaEmbedMor : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntPreshfYonedaEmbedMor : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (a, b : c) -> mor a b ->
   IntPreshfNTSig c
