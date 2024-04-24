@@ -190,7 +190,7 @@ mlEFamUnit = fccUnit HomProf
 
 export
 InterpMLEFamObj : MLEFamObj -> Type
-InterpMLEFamObj ifo = Sigma {a=(fst ifo)} $ snd ifo
+InterpMLEFamObj ifuo = Sigma {a=(fst ifuo)} $ snd ifuo
 
 export
 InterpMLEFamMorph : {0 x, y : MLEFamObj} ->

@@ -17,16 +17,16 @@ IntUFamObj : Type -> Type
 IntUFamObj = IntArena
 
 public export
-IFO : {0 c : Type} -> (idx : Type) -> (idx -> c) -> IntUFamObj c
-IFO {c} idx obj = (idx ** obj)
+IFUO : {0 c : Type} -> (idx : Type) -> (idx -> c) -> IntUFamObj c
+IFUO {c} idx obj = (idx ** obj)
 
 public export
-ifoIdx : {0 c : Type} -> IntUFamObj c -> Type
-ifoIdx {c} = DPair.fst {a=Type} {p=(ContravarHomFunc c)}
+ifuoIdx : {0 c : Type} -> IntUFamObj c -> Type
+ifuoIdx {c} = DPair.fst {a=Type} {p=(ContravarHomFunc c)}
 
 public export
-ifoObj : {0 c : Type} -> (uf : IntUFamObj c) -> ifoIdx {c} uf -> c
-ifoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
+ifuoObj : {0 c : Type} -> (uf : IntUFamObj c) -> ifuoIdx {c} uf -> c
+ifuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 
 -------------------
 -------------------
@@ -50,13 +50,13 @@ public export
 record IntUFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntUFamObj c)
     where
   constructor IFUM
-  ifumOnIdx : ifoIdx cod -> ifoIdx dom -- Contravariant on indexes
-  ifumOnObj : (i : ifoIdx cod) -> mor (ifoObj dom (ifumOnIdx i)) (ifoObj cod i)
+  ifumOnIdx : ifuoIdx cod -> ifuoIdx dom -- Contravariant on indexes
+  ifumOnObj : (i : ifuoIdx cod) -> mor (ifuoObj dom (ifumOnIdx i)) (ifuoObj cod i)
 
 public export
 ifumId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
   (obj : IntUFamObj c) -> IntUFamMor mor obj obj
-ifumId {c} mor cid obj = IFUM id (\i => cid $ ifoObj obj i)
+ifumId {c} mor cid obj = IFUM id (\i => cid $ ifuoObj obj i)
 
 public export
 ifumComp : {c : Type} ->
@@ -70,16 +70,16 @@ ifumComp {c} mor comp {x} {y} {z} g f =
     (ifumOnIdx f . ifumOnIdx g)
     (\i =>
       comp
-        (ifoObj x $ ifumOnIdx f $ ifumOnIdx g i)
-        (ifoObj y $ ifumOnIdx g i)
-        (ifoObj z i)
+        (ifuoObj x $ ifumOnIdx f $ ifumOnIdx g i)
+        (ifuoObj y $ ifumOnIdx g i)
+        (ifuoObj z i)
         (ifumOnObj g i)
         (ifumOnObj f $ ifumOnIdx g i))
 
 -- The unit of the free cartesian monoidal category monad.
 public export
 fcmUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntUFamObj c
-fcmUnit {c} mor x = IFO Unit (const x)
+fcmUnit {c} mor x = IFUO Unit (const x)
 
 -------------------------------------
 -------------------------------------
@@ -98,12 +98,12 @@ IntElemUFamMor : {c, d : Type} ->
   (g : (cobj : c) -> f cobj -> d) ->
   c -> c -> Type
 IntElemUFamMor {c} {d} dmor f g x y =
-  IntUFamMor {c=d} dmor (IFO (f x) (g x)) (IFO (f y) (g y))
+  IntUFamMor {c=d} dmor (IFUO (f x) (g x)) (IFUO (f y) (g y))
 
 public export
 IntElemUFamOMap : {c, d : Type} -> (f : IntPreshfSig c) ->
   ((cobj : c) -> f cobj -> d) -> (c -> IntUFamObj d)
-IntElemUFamOMap {c} {d} f g cobj = IFO (f cobj) (g cobj)
+IntElemUFamOMap {c} {d} f g cobj = IFUO (f cobj) (g cobj)
 
 public export
 IntElemUFamFMap : {c, d : Type} ->
@@ -206,7 +206,7 @@ mluFamUnit = fcmUnit HomProf
 
 export
 InterpMLUFamObj : MLUFamObj -> Type
-InterpMLUFamObj ifo = Pi {a=(ifoIdx ifo)} $ ifoObj ifo
+InterpMLUFamObj ifuo = Pi {a=(ifuoIdx ifuo)} $ ifuoObj ifuo
 
 export
 InterpMLUFamMorph : {0 x, y : MLUFamObj} ->
@@ -251,7 +251,7 @@ slUFamUnit {c} = fcmUnit {c=(SliceObj c)} (SliceMorphism {a=c})
 
 export
 InterpSLUFamObj : {c : Type} -> SliceFamObj c -> SliceObj c
-InterpSLUFamObj {c} x = Pi {a=(ifoIdx x)} . flip (ifoObj x)
+InterpSLUFamObj {c} x = Pi {a=(ifuoIdx x)} . flip (ifuoObj x)
 
 export
 InterpSLUFamMor : {c : Type} -> {0 x, y : SliceFamObj c} ->
