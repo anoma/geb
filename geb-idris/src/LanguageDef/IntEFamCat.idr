@@ -147,24 +147,46 @@ IntElemEFamFMap {c} {d} cmor dmor f fm g gm x y mxy =
 public export
 InterpEFamPreshfOMap : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEFamObj c -> IntPreshfSig c
-InterpEFamPreshfOMap c mor (idx ** obj) a = Sigma {a=idx} $ mor a . obj
+InterpEFamPreshfOMap c mor x a = Sigma {a=(ifeoIdx x)} $ mor a . ifeoObj x
+
+export
+IntEFamPreshfOMapIsInterpDirichObj : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (x : IntEFamObj c) -> (y : c) ->
+  InterpEFamPreshfOMap c mor x y = InterpIDFobj c mor x y
+IntEFamPreshfOMapIsInterpDirichObj c mor (xidx ** xobj) y = Refl
 
 public export
 InterpEFamPreshfFMap :
   (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  (x : IntEFamObj c) -> IntPreshfMapSig c mor (InterpEFamPreshfOMap c mor x)
-InterpEFamPreshfFMap c mor comp (idx ** obj) xobj yobj myx =
-  dpMapSnd $ \ei, mxi => comp yobj xobj (obj ei) mxi myx
+  (a : IntEFamObj c) -> IntPreshfMapSig c mor (InterpEFamPreshfOMap c mor a)
+InterpEFamPreshfFMap c mor comp a xobj yobj myx =
+  dpMapSnd $ \ei, mxi => comp yobj xobj (ifeoObj a ei) mxi myx
+
+export
+IntEFamPreshfFMapIsInterpDirichMap : FunExt ->
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (a : IntEFamObj c) -> (x, y : c) -> (m : mor y x) ->
+  InterpEFamPreshfFMap c mor comp a x y m = InterpIDFmap c mor comp a x y m
+IntEFamPreshfFMapIsInterpDirichMap fext c mor comp a x y m = funExt $ \_ => Refl
 
 public export
 InterpEFamPreshfNT :
   (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (x, y : IntEFamObj c) -> (m : IntEFamMor {c} mor x y) ->
   IntPreshfNTSig c (InterpEFamPreshfOMap c mor x) (InterpEFamPreshfOMap c mor y)
-InterpEFamPreshfNT c mor comp
-  (xidx ** xobj) (yidx ** yobj) (midx ** mobj) cobj =
-    dpBimap midx
-      $ \exi, mcx => comp cobj (xobj exi) (yobj $ midx exi) (mobj exi) mcx
+InterpEFamPreshfNT c mor comp x y m cobj =
+  dpBimap (ifemOnIdx {mor} m)
+    $ \exi, mcx =>
+      comp cobj (ifeoObj x exi) (ifeoObj y $ ifemOnIdx {mor} m exi)
+        (ifemOnObj {mor} m exi)
+        mcx
+
+public export
+IntEFamPreshfNTisInterpDirichNT : FunExt ->
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (x, y : IntEFamObj c) -> (m : IntEFamMor {c} mor x y) -> (cobj : c) ->
+  InterpEFamPreshfNT c mor comp x y m cobj = InterpIDnt c mor comp x y m cobj
+IntEFamPreshfNTisInterpDirichNT c mor comp x y m cobj fext = funExt $ \_ => Refl
 
 public export
 InterpEFamPreshfNaturality :
