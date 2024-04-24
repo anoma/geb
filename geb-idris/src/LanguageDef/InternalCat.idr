@@ -1226,6 +1226,38 @@ public export
   (alpha : TerminalPreshfNTSig f g) -> Type
 TerminalPreshfNTNaturality = IntPreshfNTNaturality TerminalCatObj TerminalCatMor
 
+-- The category of presheaves over the terminal category is equivalent to
+-- simply `Type`.
+public export
+TPreToType : TerminalPreshfSig -> Type
+TPreToType p = p ()
+
+public export
+TPreFromType : Type -> TerminalPreshfSig
+TPreFromType ty = const ty
+
+public export
+TPreUniqueMapSig : (0 x : TerminalPreshfSig) -> TerminalPreshfMapSig x
+TPreUniqueMapSig x () () () = id
+
+public export
+TPreNTtoType : (0 f, g : TerminalPreshfSig) -> TerminalPreshfNTSig f g ->
+  TPreToType f -> TPreToType g
+TPreNTtoType f g alpha = alpha ()
+
+public export
+TypeToTPreNT : (0 x, y : Type) -> (x -> y) ->
+  TerminalPreshfNTSig (TPreFromType x) (TPreFromType y)
+TypeToTPreNT x y f () = f
+
+public export
+TypeToTPreNTnaturality : (0 x, y : Type) -> (f : x -> y) ->
+  TerminalPreshfNTNaturality
+    (TPreFromType x) (TPreFromType y)
+    (TPreUniqueMapSig $ TPreFromType x) (TPreUniqueMapSig $ TPreFromType y)
+    (TypeToTPreNT x y f)
+TypeToTPreNTnaturality x y f () () () _ = Refl
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Impredicative encodings of universal properties of internal categories ----
