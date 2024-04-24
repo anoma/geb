@@ -14,7 +14,7 @@ import public LanguageDef.IntArena
 
 -- The objects of the category of existential families (AKA the
 -- free coproduct completion) of a given category are the same
--- as those of the category of universal families (`IntEFamObj`);
+-- as those of the category of universal families (`IntUFamObj`);
 -- it's in the morphisms that the two differ.  The structure
 -- is also the same as that of an internal arena (`IntArena`).
 
