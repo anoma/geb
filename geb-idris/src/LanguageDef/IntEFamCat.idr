@@ -99,11 +99,11 @@ public export
 fccUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntEFamObj c
 fccUnit {c} mor x = (Unit ** const x)
 
----------------------------
----------------------------
----- Element families -----
----------------------------
----------------------------
+---------------------------------------
+---------------------------------------
+---- Element existential families -----
+---------------------------------------
+---------------------------------------
 
 -- Given categories `c` and `d`, a copresheaf `f` on `c`, and a functor
 -- to `d` from the category of elements of `f`, we can form a functor
