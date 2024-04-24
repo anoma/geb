@@ -1921,7 +1921,7 @@ SPFDmultiFamLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj cod) -> (b : SliceObj dom) ->
   SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (slUFamUnit b) ->
   SPFDmultiAdjHSR spfd a b
-SPFDmultiFamLAdj {dom} {cod} spfd a b (IFUM midx mobj) =
+SPFDmultiFamLAdj {dom} {cod} spfd a b (midx ** mobj) =
   SPFDmultiLAdj {dom} {cod} spfd a b (midx () ** mobj ())
 
 -- The right adjunct of the multi-adjunction defined by a polynomial functor
@@ -1933,7 +1933,13 @@ SPFDmultiFamRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (slUFamUnit b)
 SPFDmultiFamRAdj {dom} {cod} spfd a b m =
   let (midx ** mobj) = SPFDmultiRAdj spfd a b m in
-  IFUM (\() => midx) (\() => mobj)
+  IFUM
+    {c=(SliceObj dom)}
+    {mor=(SliceMorphism {a=dom})}
+    {dom=(SPFDmultiFamL spfd a)}
+    {cod=(slUFamUnit b)}
+    (\() => midx)
+    (\() => mobj)
 
 -- This is `R . L` for the polynomial-functor multi-adjunction,
 -- but note that these `R` and `L` are _multi_-adjoints, not
