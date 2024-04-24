@@ -12,20 +12,21 @@ import public LanguageDef.IntArena
 -----------------
 -----------------
 
--- This is just an `IntArena` with names.
 public export
-record IntUFamObj (c : Type) where
-  constructor IFO
-  ifoIdx : Type
-  ifoObj : ifoIdx -> c
+IntUFamObj : Type -> Type
+IntUFamObj = IntArena
 
-export
-IFOtoArena : {c : Type} -> IntUFamObj c -> IntArena c
-IFOtoArena {c} ifo = (ifoIdx ifo ** ifoObj ifo)
+public export
+IFO : {0 c : Type} -> (idx : Type) -> (idx -> c) -> IntUFamObj c
+IFO {c} idx obj = (idx ** obj)
 
-export
-IFOfromArena : {c : Type} -> IntArena c -> IntUFamObj c
-IFOfromArena {c} ar = IFO (fst ar) (snd ar)
+public export
+ifoIdx : {0 c : Type} -> IntUFamObj c -> Type
+ifoIdx {c} = DPair.fst {a=Type} {p=(ContravarHomFunc c)}
+
+public export
+ifoObj : {0 c : Type} -> (uf : IntUFamObj c) -> ifoIdx {c} uf -> c
+ifoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 
 -------------------
 -------------------
@@ -128,13 +129,13 @@ IntElemUFamFMap {c} {d} cmor dmor f fcm g gm x y mxy =
 public export
 InterpUFamPreshfOMap : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntUFamObj c -> IntPreshfSig c
-InterpUFamPreshfOMap c mor (IFO idx obj) a = Pi {a=idx} $ mor a . obj
+InterpUFamPreshfOMap c mor (idx ** obj) a = Pi {a=idx} $ mor a . obj
 
 public export
 InterpUFamPreshfFMap :
   (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   (x : IntUFamObj c) -> IntPreshfMapSig c mor (InterpUFamPreshfOMap c mor x)
-InterpUFamPreshfFMap c mor comp (IFO idx obj) xobj yobj myx pix =
+InterpUFamPreshfFMap c mor comp (idx ** obj) xobj yobj myx pix =
   \ei : idx => comp yobj xobj (obj ei) (pix ei) myx
 
 public export
@@ -143,7 +144,7 @@ InterpUFamPreshfNT :
   (x, y : IntUFamObj c) -> (m : IntUFamMor {c} mor x y) ->
   IntPreshfNTSig c (InterpUFamPreshfOMap c mor x) (InterpUFamPreshfOMap c mor y)
 InterpUFamPreshfNT c mor comp
-  (IFO xidx xobj) (IFO yidx yobj) (IFUM midx mobj) cobj pix =
+  (xidx ** xobj) (yidx ** yobj) (IFUM midx mobj) cobj pix =
     \eyi : yidx =>
      comp cobj (xobj $ midx eyi) (yobj eyi) (mobj eyi) $ pix $ midx eyi
 
@@ -159,7 +160,7 @@ InterpUFamPreshfNaturality : FunExt ->
     (InterpUFamPreshfFMap c mor comp y)
     (InterpUFamPreshfNT c mor comp x y m)
 InterpUFamPreshfNaturality fext c mor comp assoc
-  (IFO xidx xobj) (IFO yidx yobj) (IFUM midx mobj) a b mba pix =
+  (xidx ** xobj) (yidx ** yobj) (IFUM midx mobj) a b mba pix =
     funExt $
       \eyi =>
         assoc b a (xobj $ midx eyi) (yobj eyi) (mobj eyi) (pix $ midx eyi) mba
