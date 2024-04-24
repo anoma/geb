@@ -1202,6 +1202,30 @@ IntPreshfYonedaEmbedMorInv : (0 c : Type) -> (mor : IntDifunctorSig c) ->
   mor a b
 IntPreshfYonedaEmbedMorInv c mor cid a b alpha = alpha a (cid a)
 
+------------------------------------------------
+------------------------------------------------
+---- (Co)presheaves over various categories ----
+------------------------------------------------
+------------------------------------------------
+
+public export
+TerminalPreshfSig : Type
+TerminalPreshfSig = IntPreshfSig TerminalCatObj
+
+public export
+0 TerminalPreshfMapSig : TerminalPreshfSig -> Type
+TerminalPreshfMapSig = IntPreshfMapSig TerminalCatObj TerminalCatMor
+
+public export
+0 TerminalPreshfNTSig : (f, g : TerminalPreshfSig) -> Type
+TerminalPreshfNTSig = IntPreshfNTSig TerminalCatObj
+
+public export
+0 TerminalPreshfNTNaturality : (0 f, g : TerminalPreshfSig) ->
+  (fcm : TerminalPreshfMapSig f) -> (gcm : TerminalPreshfMapSig g) ->
+  (alpha : TerminalPreshfNTSig f g) -> Type
+TerminalPreshfNTNaturality = IntPreshfNTNaturality TerminalCatObj TerminalCatMor
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- Impredicative encodings of universal properties of internal categories ----
