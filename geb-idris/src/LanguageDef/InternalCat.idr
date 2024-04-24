@@ -813,6 +813,31 @@ IntDiCoYonedaLemmaR : (0 c : Type) ->
 IntDiCoYonedaLemmaR c mor p pdm x (ij ** ((mix, mxj), pji)) =
   pdm (snd ij) (fst ij) x x mxj mix pji
 
+-----------------------------
+-----------------------------
+---- Discrete categories ----
+-----------------------------
+-----------------------------
+
+public export
+DiscreteCatObj : Type -> Type
+DiscreteCatObj = id
+
+public export
+DiscreteCatMor : {0 obj : Type} ->
+  DiscreteCatObj obj -> DiscreteCatObj obj -> Type
+DiscreteCatMor {obj} _ _ = Unit
+
+public export
+DiscreteId : {0 obj : Type} ->
+  IntIdSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
+DiscreteId {obj} _ = ()
+
+public export
+DiscreteComp : {0 obj : Type} ->
+  IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
+DiscreteComp _ _ _ _ _ = ()
+
 ---------------------------
 ---------------------------
 ---- Terminal category ----
