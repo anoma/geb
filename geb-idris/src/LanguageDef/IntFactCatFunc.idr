@@ -1,4 +1,4 @@
-module LanguageDef.IntBundleCat
+module LanguageDef.IntFactCatFunc
 
 import Library.IdrisUtils
 import Library.IdrisCategories
@@ -8,16 +8,4 @@ import public LanguageDef.IntUFamCat
 import public LanguageDef.IntEFamCat
 import public LanguageDef.IntUCofamCat
 import public LanguageDef.IntECofamCat
-
------------------
------------------
----- Objects ----
------------------
------------------
-
-public export
-record IntBundleObj {c : Type} (mor : IntDifunctorSig c) where
-  constructor IBO
-  iboDom : c
-  iboCod : c
-  iboMor : mor iboDom iboCod
+import public LanguageDef.IntFactCat
