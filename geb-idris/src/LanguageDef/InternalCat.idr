@@ -1259,6 +1259,43 @@ public export
 DiscretePreshfNTNaturality {obj} =
   IntPreshfNTNaturality (DiscreteCatObj obj) (DiscreteCatMor {obj})
 
+-- The category of presheaves over a discrete category with objects
+-- drawn from `c` is equivalent to `SliceObj c`.
+public export
+DiscPreToSl : {0 obj : Type} -> DiscretePreshfSig obj -> SliceObj obj
+DiscPreToSl {obj} = id
+
+public export
+DiscPreFromSl : {0 obj : Type} -> SliceObj obj -> DiscretePreshfSig obj
+DiscPreFromSl {obj} = id
+
+public export
+DiscPreUniqueMapSig : {0 obj : Type} -> (0 f : DiscretePreshfSig obj) ->
+  DiscretePreshfMapSig {obj} f
+DiscPreUniqueMapSig f x x (DCid x) = id
+
+public export
+DiscPreNTtoSl : {0 obj : Type} ->
+  (0 f, g : DiscretePreshfSig obj) -> DiscretePreshfNTSig {obj} f g ->
+  SliceMorphism {a=obj} (DiscPreToSl {obj} f) (DiscPreToSl {obj} g)
+DiscPreNTtoSl {obj} f g = id
+
+public export
+SlToDiscPreNT : {0 obj : Type} -> (0 x, y : SliceObj obj) ->
+  SliceMorphism {a=obj} x y ->
+  DiscretePreshfNTSig {obj} (DiscPreFromSl {obj} x) (DiscPreFromSl {obj} y)
+SlToDiscPreNT {obj} x y = id
+
+public export
+SlToDiscPreNTnaturality : {0 obj : Type} -> (0 x, y : SliceObj obj) ->
+  (f : SliceMorphism {a=obj} x y) ->
+  DiscretePreshfNTNaturality {obj}
+    (DiscPreFromSl {obj} x) (DiscPreFromSl {obj} y)
+    (DiscPreUniqueMapSig {obj} $ DiscPreFromSl {obj} x)
+    (DiscPreUniqueMapSig {obj} $ DiscPreFromSl {obj} y)
+    (SlToDiscPreNT {obj} x y f)
+SlToDiscPreNTnaturality {obj} x y f a a (DCid a) ex = Refl
+
 -----------------------------------------------------------
 ---- Over the terminal category (equivalent to `Type`) ----
 -----------------------------------------------------------
