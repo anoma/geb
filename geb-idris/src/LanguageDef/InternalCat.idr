@@ -1233,6 +1233,36 @@ IntPreshfYonedaEmbedMorInv c mor cid a b alpha = alpha a (cid a)
 ------------------------------------------------
 ------------------------------------------------
 
+---------------------------------------------------------------
+---- Over a discrete category (equivalent to `SliceObj c`) ----
+---------------------------------------------------------------
+
+public export
+DiscretePreshfSig : Type -> Type
+DiscretePreshfSig obj = IntPreshfSig $ DiscreteCatObj obj
+
+public export
+0 DiscretePreshfMapSig : {0 obj : Type} -> DiscretePreshfSig obj -> Type
+DiscretePreshfMapSig {obj} =
+  IntPreshfMapSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
+
+public export
+0 DiscretePreshfNTSig : {0 obj : Type} -> (f, g : DiscretePreshfSig obj) -> Type
+DiscretePreshfNTSig {obj} = IntPreshfNTSig (DiscreteCatObj obj)
+
+public export
+0 DiscretePreshfNTNaturality : {0 obj : Type} ->
+  (0 f, g : DiscretePreshfSig obj) ->
+  (fcm : DiscretePreshfMapSig {obj} f) ->
+  (gcm : DiscretePreshfMapSig {obj} g) ->
+  (alpha : DiscretePreshfNTSig {obj} f g) -> Type
+DiscretePreshfNTNaturality {obj} =
+  IntPreshfNTNaturality (DiscreteCatObj obj) (DiscreteCatMor {obj})
+
+-----------------------------------------------------------
+---- Over the terminal category (equivalent to `Type`) ----
+-----------------------------------------------------------
+
 public export
 TerminalPreshfSig : Type
 TerminalPreshfSig = IntPreshfSig TerminalCatObj
