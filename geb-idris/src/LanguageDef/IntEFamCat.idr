@@ -27,12 +27,12 @@ IFEO : {0 c : Type} -> (idx : Type) -> (idx -> c) -> IntEFamObj c
 IFEO {c} idx obj = (idx ** obj)
 
 public export
-ifuoIdx : {0 c : Type} -> IntEFamObj c -> Type
-ifuoIdx {c} = DPair.fst {a=Type} {p=(ContravarHomFunc c)}
+ifeoIdx : {0 c : Type} -> IntEFamObj c -> Type
+ifeoIdx {c} = DPair.fst {a=Type} {p=(ContravarHomFunc c)}
 
 public export
-ifuoObj : {0 c : Type} -> (uf : IntEFamObj c) -> ifuoIdx {c} uf -> c
-ifuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
+ifeoObj : {0 c : Type} -> (ef : IntEFamObj c) -> ifeoIdx {c} ef -> c
+ifeoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 
 -------------------
 -------------------
@@ -49,6 +49,27 @@ public export
 IntEFamMor : {c : Type} -> IntDifunctorSig c ->
   IntEFamObj c -> IntEFamObj c -> Type
 IntEFamMor {c} = IntDirichCatMor c
+
+public export
+IFEM : {c : Type} -> {mor : IntDifunctorSig c} -> {dom, cod : IntEFamObj c} ->
+  (onidx : ifeoIdx dom -> ifeoIdx cod) ->
+  (onobj : (di : ifeoIdx dom) ->
+    mor (ifeoObj dom di) (ifeoObj cod (onidx di))) ->
+  IntEFamMor {c} mor dom cod
+IFEM {c} {mor} {dom} {cod} onidx onobj = (onidx ** onobj)
+
+public export
+ifemOnIdx : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {dom, cod : IntEFamObj c} -> IntEFamMor {c} mor dom cod ->
+  (ifeoIdx dom -> ifeoIdx cod)
+ifemOnIdx = DPair.fst
+
+public export
+ifemOnObj : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {dom, cod : IntEFamObj c} -> (m : IntEFamMor {c} mor dom cod) ->
+  (di : ifeoIdx dom) ->
+  mor (ifeoObj dom di) (ifeoObj cod $ ifemOnIdx {mor} {dom} {cod} m di)
+ifemOnObj = DPair.snd
 
 public export
 ifemId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
