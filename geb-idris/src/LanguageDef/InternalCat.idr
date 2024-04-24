@@ -846,19 +846,19 @@ DiscreteComp _ _ _ _ _ = ()
 
 public export
 TerminalCatObj : Type
-TerminalCatObj = Unit
+TerminalCatObj = DiscreteCatObj Unit
 
 public export
 TerminalCatMor : TerminalCatObj -> TerminalCatObj -> Type
-TerminalCatMor _ _ = Unit
+TerminalCatMor = DiscreteCatMor {obj=Unit}
 
 public export
 TerminalId : IntIdSig TerminalCatObj TerminalCatMor
-TerminalId _ = ()
+TerminalId = DiscreteId {obj=Unit}
 
 public export
 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
-TerminalComp _ _ _ _ _ = ()
+TerminalComp = DiscreteComp {obj=Unit}
 
 ------------------------------------
 ------------------------------------
