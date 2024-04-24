@@ -75,8 +75,8 @@ InterpIPnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
 public export
 IntDNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> IntArena c -> Type
-IntDNTar c mor (ppos ** pdir) (qpos ** qdir) =
-  (onpos : ppos -> qpos ** (i : ppos) -> mor (pdir i) (qdir (onpos i)))
+IntDNTar c mor p q =
+  (onpos : fst p -> fst q ** (i : fst p) -> mor (snd p i) (snd q (onpos i)))
 
 public export
 InterpIDnt : (c : Type) -> (mor : IntDifunctorSig c) ->
