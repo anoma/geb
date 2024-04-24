@@ -845,6 +845,24 @@ TypeProfDimap : {0 p : ProfunctorSig} ->
   Profunctor p -> IntEndoDimapSig TypeObj TypeMor p
 TypeProfDimap {p} isP = TypeDimap {p} (dimap {f=p})
 
+---------------------------------------
+---------------------------------------
+---- Metalanguage slice categories ----
+---------------------------------------
+---------------------------------------
+
+public export
+SliceMor : (c : Type) -> SliceObj c -> SliceObj c -> Type
+SliceMor c = SliceMorphism {a=c}
+
+public export
+SliceId : (c : Type) -> IntIdSig (SliceObj c) (SliceMor c)
+SliceId c = sliceId {a=c}
+
+public export
+SliceComp : (c : Type) -> IntCompSig (SliceObj c) (SliceMor c)
+SliceComp c x y z = sliceComp {a=c} {x} {y} {z}
+
 --------------------------------------------------
 --------------------------------------------------
 ---- (Para-)natural transformations on `Type` ----
