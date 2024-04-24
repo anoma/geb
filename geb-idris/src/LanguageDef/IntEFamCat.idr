@@ -22,6 +22,18 @@ public export
 IntEFamObj : Type -> Type
 IntEFamObj = IntArena
 
+public export
+IFEO : {0 c : Type} -> (idx : Type) -> (idx -> c) -> IntEFamObj c
+IFEO {c} idx obj = (idx ** obj)
+
+public export
+ifuoIdx : {0 c : Type} -> IntEFamObj c -> Type
+ifuoIdx {c} = DPair.fst {a=Type} {p=(ContravarHomFunc c)}
+
+public export
+ifuoObj : {0 c : Type} -> (uf : IntEFamObj c) -> ifuoIdx {c} uf -> c
+ifuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
+
 -------------------
 -------------------
 ---- Morphisms ----
