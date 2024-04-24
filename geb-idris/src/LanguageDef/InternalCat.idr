@@ -813,6 +813,28 @@ IntDiCoYonedaLemmaR : (0 c : Type) ->
 IntDiCoYonedaLemmaR c mor p pdm x (ij ** ((mix, mxj), pji)) =
   pdm (snd ij) (fst ij) x x mxj mix pji
 
+---------------------------
+---------------------------
+---- Terminal category ----
+---------------------------
+---------------------------
+
+public export
+TerminalCatObj : Type
+TerminalCatObj = Unit
+
+public export
+TerminalCatMor : TerminalCatObj -> TerminalCatObj -> Type
+TerminalCatMor _ _ = Unit
+
+public export
+TerminalId : IntIdSig TerminalCatObj TerminalCatMor
+TerminalId _ = ()
+
+public export
+TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
+TerminalComp _ _ _ _ _ = ()
+
 ------------------------------------
 ------------------------------------
 ---- Metalanguage base category ----
