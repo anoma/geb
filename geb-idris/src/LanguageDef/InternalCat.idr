@@ -813,6 +813,38 @@ IntDiCoYonedaLemmaR : (0 c : Type) ->
 IntDiCoYonedaLemmaR c mor p pdm x (ij ** ((mix, mxj), pji)) =
   pdm (snd ij) (fst ij) x x mxj mix pji
 
+------------------------------------
+------------------------------------
+---- Metalanguage base category ----
+------------------------------------
+------------------------------------
+
+public export
+TypeObj : Type
+TypeObj = Type
+
+public export
+TypeMor : TypeObj -> TypeObj -> Type
+TypeMor = HomProf
+
+public export
+typeId : IntIdSig TypeObj TypeMor
+typeId _ = Prelude.id
+
+public export
+typeComp : IntCompSig TypeObj TypeMor
+typeComp _ _ _ = (.)
+
+public export
+TypeDimap : {0 p : ProfunctorSig} ->
+  DimapSig p -> IntEndoDimapSig TypeObj TypeMor p
+TypeDimap {p} dm _ _ _ _ = dm
+
+public export
+TypeProfDimap : {0 p : ProfunctorSig} ->
+  Profunctor p -> IntEndoDimapSig TypeObj TypeMor p
+TypeProfDimap {p} isP = TypeDimap {p} (dimap {f=p})
+
 --------------------------------------------------
 --------------------------------------------------
 ---- (Para-)natural transformations on `Type` ----
@@ -914,24 +946,6 @@ IntDiCoYonedaLemmaR c mor p pdm x (ij ** ((mix, mxj), pji)) =
 public export
 DiYonedaEmbed : Type -> Type -> ProfunctorSig
 DiYonedaEmbed = IntDiYonedaEmbedObj Type HomProf
-
-public export
-typeId : IntIdSig Type HomProf
-typeId _ = Prelude.id
-
-public export
-typeComp : IntCompSig Type HomProf
-typeComp _ _ _ = (.)
-
-public export
-TypeDimap : {0 p : ProfunctorSig} ->
-  DimapSig p -> IntEndoDimapSig Type HomProf p
-TypeDimap {p} dm _ _ _ _ = dm
-
-public export
-TypeProfDimap : {0 p : ProfunctorSig} ->
-  Profunctor p -> IntEndoDimapSig Type HomProf p
-TypeProfDimap {p} isP = TypeDimap {p} (dimap {f=p})
 
 public export
 0 DiYonedaEmbedProf : (i, j : Type) -> Profunctor (DiYonedaEmbed i j)
