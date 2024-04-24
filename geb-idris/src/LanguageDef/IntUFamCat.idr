@@ -47,16 +47,37 @@ ifuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -- to the category of Dirichlet functors -- that category's morphisms are
 -- covariant on both indexes and objects.
 public export
-record IntUFamMor {c : Type} (mor : IntDifunctorSig c) (dom, cod : IntUFamObj c)
-    where
-  constructor IFUM
-  ifumOnIdx : ifuoIdx cod -> ifuoIdx dom -- Contravariant on indexes
-  ifumOnObj : (i : ifuoIdx cod) -> mor (ifuoObj dom (ifumOnIdx i)) (ifuoObj cod i)
+IntUFamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntUFamObj c) -> Type
+IntUFamMor {c} mor dom cod =
+  (onidx : ifuoIdx cod -> ifuoIdx dom **
+   (ci : ifuoIdx cod) -> mor (ifuoObj dom $ onidx ci) (ifuoObj cod ci))
+
+public export
+IFUM : {c : Type} -> {mor : IntDifunctorSig c} -> {dom, cod : IntUFamObj c} ->
+  (onidx : ifuoIdx cod -> ifuoIdx dom) ->
+  (onobj : (ci : ifuoIdx cod) ->
+    mor (ifuoObj dom $ onidx ci) (ifuoObj cod ci)) ->
+  IntUFamMor {c} mor dom cod
+IFUM {c} {mor} {dom} {cod} onidx onobj = (onidx ** onobj)
+
+public export
+ifumOnIdx : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {dom, cod : IntUFamObj c} -> IntUFamMor {c} mor dom cod ->
+  (ifuoIdx cod -> ifuoIdx dom)
+ifumOnIdx = DPair.fst
+
+public export
+ifumOnObj : {c : Type} -> {mor : IntDifunctorSig c} ->
+  {dom, cod : IntUFamObj c} -> (m : IntUFamMor {c} mor dom cod) ->
+  (ci : ifuoIdx cod) ->
+  mor (ifuoObj dom $ ifumOnIdx {mor} {dom} {cod} m ci) (ifuoObj cod ci)
+ifumOnObj = DPair.snd
 
 public export
 ifumId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
   (obj : IntUFamObj c) -> IntUFamMor mor obj obj
-ifumId {c} mor cid obj = IFUM id (\i => cid $ ifuoObj obj i)
+ifumId {c} mor cid obj = IFUM {mor} id (\i => cid $ ifuoObj obj i)
 
 public export
 ifumComp : {c : Type} ->
@@ -66,15 +87,15 @@ ifumComp : {c : Type} ->
   IntUFamMor mor x y ->
   IntUFamMor mor x z
 ifumComp {c} mor comp {x} {y} {z} g f =
-  IFUM
-    (ifumOnIdx f . ifumOnIdx g)
+  IFUM {mor}
+    (ifumOnIdx {mor} f . ifumOnIdx {mor} g)
     (\i =>
       comp
-        (ifuoObj x $ ifumOnIdx f $ ifumOnIdx g i)
-        (ifuoObj y $ ifumOnIdx g i)
+        (ifuoObj x $ ifumOnIdx {mor} f $ ifumOnIdx {mor} g i)
+        (ifuoObj y $ ifumOnIdx {mor} g i)
         (ifuoObj z i)
-        (ifumOnObj g i)
-        (ifumOnObj f $ ifumOnIdx g i))
+        (ifumOnObj {mor} g i)
+        (ifumOnObj {mor} f $ ifumOnIdx {mor} g i))
 
 -- The unit of the free cartesian monoidal category monad.
 public export
@@ -118,7 +139,8 @@ IntElemUFamFMap : {c, d : Type} ->
     (IntElemUFamOMap {c} {d} f g x)
     (IntElemUFamOMap {c} {d} f g y)
 IntElemUFamFMap {c} {d} cmor dmor f fcm g gm x y mxy =
-  IFUM (fcm y x mxy) (\efy => gm x y efy mxy)
+  IFUM {mor=dmor} {dom=(IntElemUFamOMap f g x)} {cod=(IntElemUFamOMap f g y)}
+    (fcm y x mxy) (\efy => gm x y efy mxy)
 
 ------------------------------------------
 ------------------------------------------
@@ -144,7 +166,7 @@ InterpUFamPreshfNT :
   (x, y : IntUFamObj c) -> (m : IntUFamMor {c} mor x y) ->
   IntPreshfNTSig c (InterpUFamPreshfOMap c mor x) (InterpUFamPreshfOMap c mor y)
 InterpUFamPreshfNT c mor comp
-  (xidx ** xobj) (yidx ** yobj) (IFUM midx mobj) cobj pix =
+  (xidx ** xobj) (yidx ** yobj) (midx ** mobj) cobj pix =
     \eyi : yidx =>
      comp cobj (xobj $ midx eyi) (yobj eyi) (mobj eyi) $ pix $ midx eyi
 
@@ -160,7 +182,7 @@ InterpUFamPreshfNaturality : FunExt ->
     (InterpUFamPreshfFMap c mor comp y)
     (InterpUFamPreshfNT c mor comp x y m)
 InterpUFamPreshfNaturality fext c mor comp assoc
-  (xidx ** xobj) (yidx ** yobj) (IFUM midx mobj) a b mba pix =
+  (xidx ** xobj) (yidx ** yobj) (midx ** mobj) a b mba pix =
     funExt $
       \eyi =>
         assoc b a (xobj $ midx eyi) (yobj eyi) (mobj eyi) (pix $ midx eyi) mba
@@ -209,9 +231,10 @@ InterpMLUFamObj : MLUFamObj -> Type
 InterpMLUFamObj ifuo = Pi {a=(ifuoIdx ifuo)} $ ifuoObj ifuo
 
 export
-InterpMLUFamMorph : {0 x, y : MLUFamObj} ->
+InterpMLUFamMorph : {x, y : MLUFamObj} ->
   MLUFamMor x y -> InterpMLUFamObj x -> InterpMLUFamObj y
-InterpMLUFamMorph {x} {y} m pix iy = ifumOnObj m iy $ pix $ ifumOnIdx m iy
+InterpMLUFamMorph {x} {y} m pix iy =
+  ifumOnObj {mor=HomProf} m iy $ pix $ ifumOnIdx {mor=HomProf} m iy
 
 -------------------------------------
 -------------------------------------
@@ -254,8 +277,10 @@ InterpSLUFamObj : {c : Type} -> SliceFamObj c -> SliceObj c
 InterpSLUFamObj {c} x = Pi {a=(ifuoIdx x)} . flip (ifuoObj x)
 
 export
-InterpSLUFamMor : {c : Type} -> {0 x, y : SliceFamObj c} ->
+InterpSLUFamMor : {c : Type} -> {x, y : SliceFamObj c} ->
   SliceUFamMor {c} x y ->
   SliceMorphism {a=c} (InterpSLUFamObj x) (InterpSLUFamObj y)
 InterpSLUFamMor {c} {x} {y} m ec pix eiy =
-  ifumOnObj m eiy ec $ pix $ ifumOnIdx m eiy
+  ifumOnObj {mor=SliceMorphism} m eiy ec
+  $ pix
+  $ ifumOnIdx {mor=SliceMorphism} m eiy
