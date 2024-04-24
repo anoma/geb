@@ -144,6 +144,9 @@ IntElemEFamFMap {c} {d} cmor dmor f fm g gm x y mxy =
 --------------------------------------------
 --------------------------------------------
 
+-- Existential families can be interpreted as presheaves, in which
+-- form they are precisely the Dirichlet functors.
+
 public export
 InterpEFamPreshfOMap : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEFamObj c -> IntPreshfSig c
