@@ -824,19 +824,19 @@ DiscreteCatObj : Type -> Type
 DiscreteCatObj = id
 
 public export
-DiscreteCatMor : {0 obj : Type} ->
-  DiscreteCatObj obj -> DiscreteCatObj obj -> Type
-DiscreteCatMor {obj} _ _ = Unit
+data DiscreteCatMor : {0 obj : Type} ->
+    DiscreteCatObj obj -> DiscreteCatObj obj -> Type where
+  DCid : {0 obj : Type} -> (x : obj) -> DiscreteCatMor {obj} x x
 
 public export
 DiscreteId : {0 obj : Type} ->
   IntIdSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
-DiscreteId {obj} _ = ()
+DiscreteId {obj} x = DCid x
 
 public export
 DiscreteComp : {0 obj : Type} ->
   IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
-DiscreteComp _ _ _ _ _ = ()
+DiscreteComp a a a (DCid a) (DCid a) = DCid a
 
 ---------------------------
 ---------------------------
@@ -1293,7 +1293,7 @@ TPreFromType ty = const ty
 
 public export
 TPreUniqueMapSig : (0 x : TerminalPreshfSig) -> TerminalPreshfMapSig x
-TPreUniqueMapSig x () () () = id
+TPreUniqueMapSig x () () (DCid ()) = id
 
 public export
 TPreNTtoType : (0 f, g : TerminalPreshfSig) -> TerminalPreshfNTSig f g ->
@@ -1311,7 +1311,7 @@ TypeToTPreNTnaturality : (0 x, y : Type) -> (f : x -> y) ->
     (TPreFromType x) (TPreFromType y)
     (TPreUniqueMapSig $ TPreFromType x) (TPreUniqueMapSig $ TPreFromType y)
     (TypeToTPreNT x y f)
-TypeToTPreNTnaturality x y f () () () _ = Refl
+TypeToTPreNTnaturality x y f () () (DCid ()) ex = Refl
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
