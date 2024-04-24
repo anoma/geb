@@ -48,14 +48,14 @@ InterpIPFmap c mor comp (pos ** dir) x y m (i ** dm) =
 public export
 InterpIDFobj : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> c -> Type
-InterpIDFobj c mor (pos ** dir) a = (i : pos ** mor a (dir i))
+InterpIDFobj c mor ar a = (i : fst ar ** mor a (snd ar i))
 
 public export
 InterpIDFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (ar : IntArena c) -> IntPreshfMapSig c mor (InterpIDFobj c mor ar)
-InterpIDFmap c mor comp (pos ** dir) x y m (i ** dm) =
-  (i ** comp y x (dir i) dm m)
+InterpIDFmap c mor comp ar x y m idm =
+  (fst idm ** comp y x (snd ar $ fst idm) (snd idm) m)
 
 public export
 IntPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
@@ -83,9 +83,11 @@ InterpIDnt : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (p, q : IntArena c) -> IntDNTar c mor p q ->
   IntPreshfNTSig c (InterpIDFobj c mor p) (InterpIDFobj c mor q)
-InterpIDnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
-  (i ** dm) =
-    (onpos i ** comp x (pdir i) (qdir (onpos i)) (ondir i) dm)
+InterpIDnt c mor comp p q alpha x idm =
+  (fst alpha (fst idm) **
+   comp x (snd p $ fst idm) (snd q (fst alpha $ fst idm))
+    (snd alpha $ fst idm)
+    (snd idm))
 
 -------------------------------------
 -------------------------------------
