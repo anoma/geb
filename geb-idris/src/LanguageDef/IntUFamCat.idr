@@ -228,14 +228,13 @@ mluFamUnit = fcmUnit HomProf
 
 export
 InterpMLUFamObj : MLUFamObj -> Type
-InterpMLUFamObj ifuo =
-  InterpUFamPreshfOMap Type HomProf ifuo Unit
+InterpMLUFamObj ifuo = Pi {a=(ifuoIdx ifuo)} $ ifuoObj ifuo
 
 export
 InterpMLUFamMorph : {x, y : MLUFamObj} ->
   MLUFamMor x y -> InterpMLUFamObj x -> InterpMLUFamObj y
-InterpMLUFamMorph {x} {y} m =
-  InterpUFamPreshfNT Type HomProf typeComp x y m Unit
+InterpMLUFamMorph {x} {y} m pix iy =
+  ifumOnObj {mor=HomProf} m iy $ pix $ ifumOnIdx {mor=HomProf} m iy
 
 -----------------------------------------------
 -----------------------------------------------
