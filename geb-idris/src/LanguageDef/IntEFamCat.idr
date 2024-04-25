@@ -48,7 +48,15 @@ ifeoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 public export
 IntEFamMor : {c : Type} -> IntDifunctorSig c ->
   IntEFamObj c -> IntEFamObj c -> Type
-IntEFamMor {c} = IntDirichCatMor c
+IntEFamMor {c} mor dom cod =
+  (onidx : ifeoIdx dom -> ifeoIdx cod **
+   (di : ifeoIdx dom) -> mor (ifeoObj dom di) (ifeoObj cod $ onidx di))
+
+export
+IntEFamIsDirichFunc : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntEFamObj c) ->
+  IntEFamMor {c} mor dom cod = IntDirichCatMor c mor dom cod
+IntEFamIsDirichFunc {c} mor dom cod = Refl
 
 public export
 IFEM : {c : Type} -> {mor : IntDifunctorSig c} -> {dom, cod : IntEFamObj c} ->
