@@ -214,9 +214,9 @@ mlfmComp = icfumComp HomProf (\_, _, _ => (.))
 ---- Interpretation ----
 ------------------------
 
--- `InterpSLUCofamObj` and `InterpSLUCofamMor` comprise a functor from
--- `MLUComfamObj` to `op(Type)` (note that a coproduct in `Type` becomes
--- a product in `op(Type)`).
+-- `InterpMLUCofamObj` and `InterpMLUCofamMor` comprise a functor from
+-- `MLUComfamObj` to `op(Type)` (note that a product in `Type` becomes
+-- a coproduct in `op(Type)`).
 
 export
 InterpMLUCofamObj : MLUCofamObj -> Type
