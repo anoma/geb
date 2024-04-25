@@ -219,3 +219,47 @@ InterpECofamCopreshfNaturality c mor comp assoc
   (xidx ** xobj) (yidx ** yobj) (midx ** mobj) a b mab (exi ** mxa) =
     dpEq12 Refl
       $ sym $ assoc (yobj (midx exi)) (xobj exi) a b mab mxa (mobj exi)
+
+---------------------------------------------
+---------------------------------------------
+---- Metalanguage existential cofamilies ----
+---------------------------------------------
+---------------------------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+public export
+MLECofamObj : Type
+MLECofamObj = IntECofamObj Type
+
+public export
+MLECofamMor : MLECofamObj -> MLECofamObj -> Type
+MLECofamMor = IntECofamMor $ HomProf
+
+public export
+mlfmId : (x : MLECofamObj) -> MLECofamMor x x
+mlfmId = icfemId HomProf typeId
+
+public export
+mlfmComp : {x, y, z : MLECofamObj} ->
+  MLECofamMor y z -> MLECofamMor x y -> MLECofamMor x z
+mlfmComp = icfemComp HomProf (\_, _, _ => (.))
+
+------------------------
+---- Interpretation ----
+------------------------
+
+-- `InterpMLECofamObj` and `InterpMLECofamMor` comprise a functor from
+-- `MLEComfamObj` to `op(Type)` (note that a coproduct in `Type` becomes
+-- a product in `op(Type)`).
+
+export
+InterpMLECofamObj : MLECofamObj -> Type
+InterpMLECofamObj icfeo = Pi {a=(icfeoIdx icfeo)} $ icfeoObj icfeo
+
+export
+InterpMLECofamMorph : {x, y : MLECofamObj} ->
+  MLECofamMor x y -> InterpMLECofamObj y -> InterpMLECofamObj x
+InterpMLECofamMorph {x} {y} m piy eix = snd m eix $ piy $ fst m eix
