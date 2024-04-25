@@ -263,3 +263,45 @@ export
 InterpMLECofamMorph : {x, y : MLECofamObj} ->
   MLECofamMor x y -> InterpMLECofamObj y -> InterpMLECofamObj x
 InterpMLECofamMorph {x} {y} m piy eix = snd m eix $ piy $ fst m eix
+
+---------------------------------------------------
+---------------------------------------------------
+---- Metalanguage-slice existential cofamilies ----
+---------------------------------------------------
+---------------------------------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+public export
+SliceCofamObj : Type -> Type
+SliceCofamObj = IntECofamObj . SliceObj
+
+public export
+SliceECofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
+SliceECofamMor {c} = IntECofamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
+
+public export
+slufmId : {c : Type} ->
+  (x : SliceCofamObj c) -> SliceECofamMor x x
+slufmId {c} = icfemId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
+
+public export
+slufmComp : {c : Type} -> {x, y, z : SliceCofamObj c} ->
+  SliceECofamMor y z -> SliceECofamMor x y -> SliceECofamMor x z
+slufmComp {c} =
+  icfemComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
+
+-- `InterpSLECofamObj` and `InterpSLECofamMor` comprise a functor from
+-- `SliceCofamObj c` to `op(SliceObj c)` (for any `c : Type`).
+
+export
+InterpSLECofamObj : {c : Type} -> SliceCofamObj c -> SliceObj c
+InterpSLECofamObj {c} x = Pi {a=(icfeoIdx x)} . flip (icfeoObj x)
+
+export
+InterpSLECofamMor : {c : Type} -> {x, y : SliceCofamObj c} ->
+  SliceECofamMor {c} x y ->
+  SliceMorphism {a=c} (InterpSLECofamObj y) (InterpSLECofamObj x)
+InterpSLECofamMor {c} {x} {y} m ec piy eix = snd m eix ec $ piy $ fst m eix
