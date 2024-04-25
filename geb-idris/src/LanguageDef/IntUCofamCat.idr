@@ -96,11 +96,11 @@ icfumComp {c} mor comp {x} {y} {z} =
     (\_, _, _ => ifemComp {c} mor comp)
     x y z
 
------------------------------------------
------------------------------------------
----- Element existential cofamilies -----
------------------------------------------
------------------------------------------
+---------------------------------------
+---------------------------------------
+---- Element universal cofamilies -----
+---------------------------------------
+---------------------------------------
 
 -- Given categories `c` and `d`, a presheaf `f` on `c`, and a functor
 -- to `op(d)` from the category of elements of `f`, we can form a functor
