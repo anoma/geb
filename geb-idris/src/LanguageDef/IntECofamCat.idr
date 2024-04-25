@@ -143,3 +143,79 @@ IntElemECofamFMap : {c, d : Type} ->
     (IntElemECofamOMap {c} {d} f g y)
 IntElemECofamFMap {c} {d} cmor dmor f fm g gm x y mxy =
   (fm x y mxy ** \efy => gm x y efy mxy)
+
+------------------------------------------------
+------------------------------------------------
+---- Existential cofamilies as copresheaves ----
+------------------------------------------------
+------------------------------------------------
+
+-- Existential cofamilies can be interpreted as copresheaves, in which
+-- form they are precisely the polynomial functors.
+
+public export
+InterpECofamCopreshfOMap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntECofamObj c -> IntCopreshfSig c
+InterpECofamCopreshfOMap c mor x a =
+  Sigma {a=(icfeoIdx x)} $ flip mor a . icfeoObj x
+
+export
+IntECofamCopreshfOMapIsInterpPolyObj : (c : Type) ->
+  (mor : IntDifunctorSig c) ->
+  (x : IntECofamObj c) -> (y : c) ->
+  InterpECofamCopreshfOMap c mor x y = InterpIPFobj c mor x y
+IntECofamCopreshfOMapIsInterpPolyObj c mor (xidx ** xobj) y = Refl
+
+public export
+InterpECofamCopreshfFMap :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (a : IntECofamObj c) ->
+  IntCopreshfMapSig c mor (InterpECofamCopreshfOMap c mor a)
+InterpECofamCopreshfFMap c mor comp a xobj yobj myx =
+  dpMapSnd $ \ei, mxi => comp (icfeoObj a ei) xobj yobj myx mxi
+
+export
+IntECofamCopreshfFMapIsInterpPolyMap : FunExt ->
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (a : IntECofamObj c) -> (x, y : c) -> (m : mor x y) ->
+  InterpECofamCopreshfFMap c mor comp a x y m = InterpIPFmap c mor comp a x y m
+IntECofamCopreshfFMapIsInterpPolyMap fext c mor comp a x y m =
+  funExt $ \_ => Refl
+
+public export
+InterpECofamCopreshfNT :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (x, y : IntECofamObj c) -> (m : IntECofamMor {c} mor x y) ->
+  IntCopreshfNTSig c
+    (InterpECofamCopreshfOMap c mor x)
+    (InterpECofamCopreshfOMap c mor y)
+InterpECofamCopreshfNT c mor comp x y m cobj =
+  dpBimap (icfemOnIdx {mor} m)
+    $ \exi, mcx =>
+      comp (icfeoObj y $ icfemOnIdx {mor} m exi) (icfeoObj x exi) cobj
+        mcx
+        (icfemOnObj {mor} m exi)
+
+public export
+IntECofamCopreshfNTisInterpPolyNT : FunExt ->
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (x, y : IntECofamObj c) -> (m : IntECofamMor {c} mor x y) -> (cobj : c) ->
+  InterpECofamCopreshfNT c mor comp x y m cobj = InterpIPnt c mor comp x y m cobj
+IntECofamCopreshfNTisInterpPolyNT c mor comp x y m cobj fext =
+  funExt $ \_ => Refl
+
+public export
+InterpECofamCopreshfNaturality :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (assoc : IntAssocSig c mor comp) ->
+  (x, y : IntECofamObj c) -> (m : IntECofamMor {c} mor x y) ->
+  IntCopreshfNTNaturality c mor
+    (InterpECofamCopreshfOMap c mor x)
+    (InterpECofamCopreshfOMap c mor y)
+    (InterpECofamCopreshfFMap c mor comp x)
+    (InterpECofamCopreshfFMap c mor comp y)
+    (InterpECofamCopreshfNT c mor comp x y m)
+InterpECofamCopreshfNaturality c mor comp assoc
+  (xidx ** xobj) (yidx ** yobj) (midx ** mobj) a b mab (exi ** mxa) =
+    dpEq12 Refl
+      $ sym $ assoc (yobj (midx exi)) (xobj exi) a b mab mxa (mobj exi)
