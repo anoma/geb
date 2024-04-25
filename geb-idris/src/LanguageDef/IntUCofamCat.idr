@@ -51,7 +51,8 @@ IntUCofamMor {c} mor dom cod =
 export
 IntUCofamIsOpEFam : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUCofamObj c) ->
-  IntUCofamMor {c} mor dom cod = IntEFamMor {c} mor cod dom
+  IntUCofamMor {c} mor dom cod =
+  IntOpCatMor (IntEFamObj c) (IntEFamMor {c} mor) dom cod
 IntUCofamIsOpEFam {c} mor dom cod = Refl
 
 public export
