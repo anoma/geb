@@ -104,3 +104,42 @@ icfemComp {c} mor comp {x} {y} {z} =
     (IntUFamMor {c} mor)
     (\_, _, _ => ifumComp {c} mor comp)
     x y z
+
+-----------------------------------------
+-----------------------------------------
+---- Element existential cofamilies -----
+-----------------------------------------
+-----------------------------------------
+
+-- Given categories `c` and `d`, a copresheaf `f` on `c`, and a functor
+-- to `op(d)` from the category of elements of `f`, we can form a functor
+-- from `c` to `IntECofamObj d`.
+
+public export
+IntElemECofamMor : {c, d : Type} ->
+  (dmor : IntDifunctorSig d) ->
+  (f : IntCopreshfSig c) ->
+  (g : (cobj : c) -> f cobj -> d) ->
+  c -> c -> Type
+IntElemECofamMor {c} {d} dmor f g x y =
+  IntECofamMor {c=d} dmor (f x ** g x) (f y ** g y)
+
+public export
+IntElemECofamOMap : {c, d : Type} -> (f : IntCopreshfSig c) ->
+  ((cobj : c) -> f cobj -> d) -> (c -> IntECofamObj d)
+IntElemECofamOMap {c} {d} f g cobj = (f cobj ** g cobj)
+
+public export
+IntElemECofamFMap : {c, d : Type} ->
+  (cmor : IntDifunctorSig c) -> (dmor : IntDifunctorSig d) ->
+  (f : IntCopreshfSig c) -> (fm : IntCopreshfMapSig c cmor f) ->
+  (g : (cobj : c) -> f cobj -> d) ->
+  (gm :
+    (x : c) -> (y : c) -> (efx : f x) ->
+    (mxy : cmor x y) -> dmor (g y $ fm x y mxy efx) (g x efx)) ->
+  (x, y : c) -> cmor x y ->
+  IntECofamMor {c=d} dmor
+    (IntElemECofamOMap {c} {d} f g x)
+    (IntElemECofamOMap {c} {d} f g y)
+IntElemECofamFMap {c} {d} cmor dmor f fm g gm x y mxy =
+  (fm x y mxy ** \efy => gm x y efy mxy)
