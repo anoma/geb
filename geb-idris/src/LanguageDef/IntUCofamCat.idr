@@ -182,3 +182,48 @@ InterpUCofamCopreshfNaturality fext c mor comp assoc
           mab
           (pix $ midx eyi)
           (mobj eyi)
+
+-------------------------------------------
+-------------------------------------------
+---- Metalanguage universal cofamilies ----
+-------------------------------------------
+-------------------------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+public export
+MLUCofamObj : Type
+MLUCofamObj = IntUCofamObj Type
+
+public export
+MLUCofamMor : MLUCofamObj -> MLUCofamObj -> Type
+MLUCofamMor = IntUCofamMor $ HomProf
+
+public export
+mlfmId : (x : MLUCofamObj) -> MLUCofamMor x x
+mlfmId = icfumId HomProf typeId
+
+public export
+mlfmComp : {x, y, z : MLUCofamObj} ->
+  MLUCofamMor y z -> MLUCofamMor x y -> MLUCofamMor x z
+mlfmComp = icfumComp HomProf (\_, _, _ => (.))
+
+------------------------
+---- Interpretation ----
+------------------------
+
+-- In a category with products, such as `Type`, we can interpret an
+-- `IntUCofamObj` as a product in the opposite category of `Type` --
+-- which becomes a coproduct in `Type` -- with morphisms restricted to
+-- factorizations into morphisms on indexes and morphisms on components.
+
+export
+InterpMLUCofamObj : MLUCofamObj -> Type
+InterpMLUCofamObj icfuo = Sigma {a=(icfuoIdx icfuo)} $ icfuoObj icfuo
+
+export
+InterpMLUCofamMorph : {x, y : MLUCofamObj} ->
+  MLUCofamMor y x -> InterpMLUCofamObj x -> InterpMLUCofamObj y
+InterpMLUCofamMorph {x} {y} m = dpBimap (fst m) (snd m)
