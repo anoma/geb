@@ -36,14 +36,14 @@ iaObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 public export
 InterpIPFobj : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> c -> Type
-InterpIPFobj c mor (pos ** dir) a = (i : pos ** mor (dir i) a)
+InterpIPFobj c mor ar a = (i : fst ar ** mor (snd ar i) a)
 
 public export
 InterpIPFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (ar : IntArena c) -> IntCopreshfMapSig c mor (InterpIPFobj c mor ar)
-InterpIPFmap c mor comp (pos ** dir) x y m (i ** dm) =
-  (i ** comp (dir i) x y m dm)
+InterpIPFmap c mor comp ar x y m idm =
+  (fst idm ** comp (snd ar $ fst idm) x y m $ snd idm)
 
 public export
 InterpIDFobj : (c : Type) -> (mor : IntDifunctorSig c) ->
@@ -60,17 +60,19 @@ InterpIDFmap c mor comp ar x y m idm =
 public export
 IntPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> IntArena c -> Type
-IntPNTar c mor (ppos ** pdir) (qpos ** qdir) =
-  (onpos : ppos -> qpos ** (i : ppos) -> mor (qdir (onpos i)) (pdir i))
+IntPNTar c mor p q =
+  (onpos : fst p -> fst q ** (i : fst p) -> mor (snd q (onpos i)) (snd p i))
 
 public export
 InterpIPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
   (comp : IntCompSig c mor) ->
   (p, q : IntArena c) -> IntPNTar c mor p q ->
   IntCopreshfNTSig c (InterpIPFobj c mor p) (InterpIPFobj c mor q)
-InterpIPnt c mor comp (ppos ** pdir) (qpos ** qdir) (onpos ** ondir) x
-  (i ** dm) =
-    (onpos i ** comp (qdir (onpos i)) (pdir i) x dm (ondir i))
+InterpIPnt c mor comp p q alpha x idm =
+  (fst alpha (fst idm) **
+   comp (snd q (fst alpha $ fst idm)) (snd p $ fst idm) x
+    (snd idm)
+    (snd alpha $ fst idm))
 
 public export
 IntDNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
@@ -239,7 +241,7 @@ IntPolyCatObj = IntArena
 public export
 IntPolyCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntDifunctorSig (IntPolyCatObj c)
-IntPolyCatMor = IntDNTar
+IntPolyCatMor = IntPNTar
 
 public export
 MLPolyCatObj : Type
