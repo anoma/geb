@@ -215,8 +215,8 @@ mlfmComp = icfumComp HomProf (\_, _, _ => (.))
 ------------------------
 
 -- `InterpSLUCofamObj` and `InterpSLUCofamMor` comprise a functor from
--- `MLUComfamObj` to `op(Type)` (note that a product in `op(Type)` becomes
--- a coproduct in `Type`).
+-- `MLUComfamObj` to `op(Type)` (note that a coproduct in `Type` becomes
+-- a product in `op(Type)`).
 
 export
 InterpMLUCofamObj : MLUCofamObj -> Type
@@ -257,7 +257,7 @@ slufmComp {c} =
   icfumComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
 
 -- `InterpSLUCofamObj` and `InterpSLUCofamMor` comprise a functor from
--- `op(SliceCofamObj c)` to `SliceObj c` (for any `c : Type`).
+-- `SliceCofamObj c` to `op(SliceObj c)` (for any `c : Type`).
 
 export
 InterpSLUCofamObj : {c : Type} -> SliceCofamObj c -> SliceObj c
@@ -265,6 +265,6 @@ InterpSLUCofamObj {c} x = Sigma {a=(icfuoIdx x)} . flip (icfuoObj x)
 
 export
 InterpSLUCofamMor : {c : Type} -> {x, y : SliceCofamObj c} ->
-  SliceUCofamMor {c} y x ->
-  SliceMorphism {a=c} (InterpSLUCofamObj x) (InterpSLUCofamObj y)
+  SliceUCofamMor {c} x y ->
+  SliceMorphism {a=c} (InterpSLUCofamObj y) (InterpSLUCofamObj x)
 InterpSLUCofamMor {c} {x} {y} m ec = dpBimap (fst m) (\ix => snd m ix ec)
