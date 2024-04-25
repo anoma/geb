@@ -245,6 +245,7 @@ mlEFamUnit = fccUnit HomProf
 -- In a category with coproducts, such as `Type`, we can interpret an
 -- `IntEFamObj` as a coproduct with morphisms restricted to factorizations
 -- into morphisms on indexes and morphisms on components.
+-- This interpretation takes the form of a functor from `MLEFamObj` to `Type`.
 
 export
 InterpMLEFamObj : MLEFamObj -> Type

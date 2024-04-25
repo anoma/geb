@@ -214,10 +214,9 @@ mlfmComp = icfumComp HomProf (\_, _, _ => (.))
 ---- Interpretation ----
 ------------------------
 
--- In a category with products, such as `Type`, we can interpret an
--- `IntUCofamObj` as a product in the opposite category of `Type` --
--- which becomes a coproduct in `Type` -- with morphisms restricted to
--- factorizations into morphisms on indexes and morphisms on components.
+-- `InterpSLUCofamObj` and `InterpSLUCofamMor` comprise a functor from
+-- `MLUComfamObj` to `op(Type)` (note that a product in `op(Type)` becomes
+-- a coproduct in `Type`).
 
 export
 InterpMLUCofamObj : MLUCofamObj -> Type
@@ -225,7 +224,7 @@ InterpMLUCofamObj icfuo = Sigma {a=(icfuoIdx icfuo)} $ icfuoObj icfuo
 
 export
 InterpMLUCofamMorph : {x, y : MLUCofamObj} ->
-  MLUCofamMor y x -> InterpMLUCofamObj x -> InterpMLUCofamObj y
+  MLUCofamMor x y -> InterpMLUCofamObj y -> InterpMLUCofamObj x
 InterpMLUCofamMorph {x} {y} m = dpBimap (fst m) (snd m)
 
 -------------------------------------------------
