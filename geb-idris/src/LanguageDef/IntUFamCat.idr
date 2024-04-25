@@ -168,7 +168,7 @@ InterpUFamPreshfNT :
 InterpUFamPreshfNT c mor comp
   (xidx ** xobj) (yidx ** yobj) (midx ** mobj) cobj pix =
     \eyi : yidx =>
-     comp cobj (xobj $ midx eyi) (yobj eyi) (mobj eyi) $ pix $ midx eyi
+     comp cobj (xobj $ midx eyi) (yobj eyi) (mobj eyi) (pix $ midx eyi)
 
 public export
 InterpUFamPreshfNaturality : FunExt ->
