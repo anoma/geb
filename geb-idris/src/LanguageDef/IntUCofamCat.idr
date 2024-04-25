@@ -227,3 +227,45 @@ export
 InterpMLUCofamMorph : {x, y : MLUCofamObj} ->
   MLUCofamMor y x -> InterpMLUCofamObj x -> InterpMLUCofamObj y
 InterpMLUCofamMorph {x} {y} m = dpBimap (fst m) (snd m)
+
+-------------------------------------------------
+-------------------------------------------------
+---- Metalanguage-slice universal cofamilies ----
+-------------------------------------------------
+-------------------------------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+public export
+SliceCofamObj : Type -> Type
+SliceCofamObj = IntUCofamObj . SliceObj
+
+public export
+SliceUCofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
+SliceUCofamMor {c} = IntUCofamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
+
+public export
+slufmId : {c : Type} ->
+  (x : SliceCofamObj c) -> SliceUCofamMor x x
+slufmId {c} = icfumId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
+
+public export
+slufmComp : {c : Type} -> {x, y, z : SliceCofamObj c} ->
+  SliceUCofamMor y z -> SliceUCofamMor x y -> SliceUCofamMor x z
+slufmComp {c} =
+  icfumComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
+
+-- `InterpSLUCofamObj` and `InterpSLUCofamMor` comprise a functor from
+-- `op(SliceCofamObj c)` to `SliceObj c` (for any `c : Type`).
+
+export
+InterpSLUCofamObj : {c : Type} -> SliceCofamObj c -> SliceObj c
+InterpSLUCofamObj {c} x = Sigma {a=(icfuoIdx x)} . flip (icfuoObj x)
+
+export
+InterpSLUCofamMor : {c : Type} -> {x, y : SliceCofamObj c} ->
+  SliceUCofamMor {c} y x ->
+  SliceMorphism {a=c} (InterpSLUCofamObj x) (InterpSLUCofamObj y)
+InterpSLUCofamMor {c} {x} {y} m ec = dpBimap (fst m) (\ix => snd m ix ec)
