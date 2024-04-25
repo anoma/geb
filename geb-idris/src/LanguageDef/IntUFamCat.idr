@@ -225,6 +225,7 @@ mluFamUnit = fcmUnit HomProf
 -- In a category with products, such as `Type`, we can interpret an
 -- `IntUFamObj` as a product with morphisms restricted to factorizations
 -- into morphisms on indexes and morphisms on components.
+-- This interpretation takes the form of a functor from `MLUFamObj` to `Type`.
 
 export
 InterpMLUFamObj : MLUFamObj -> Type
