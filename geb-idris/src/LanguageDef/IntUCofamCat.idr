@@ -134,3 +134,51 @@ IntElemUCofamFMap : {c, d : Type} ->
     (IntElemUCofamOMap {c} {d} f g y)
 IntElemUCofamFMap {c} {d} cmor dmor f fm g gm x y mxy =
   (fm y x mxy ** \efy => gm x y efy mxy)
+
+----------------------------------------------
+----------------------------------------------
+---- Universal cofamilies as copresheaves ----
+----------------------------------------------
+----------------------------------------------
+
+public export
+InterpUCofamCopreshfOMap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntUCofamObj c -> IntCopreshfSig c
+InterpUCofamCopreshfOMap c mor (idx ** obj) a = Pi {a=idx} $ flip mor a . obj
+
+public export
+InterpUCofamCopreshfFMap :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (x : IntUCofamObj c) -> IntCopreshfMapSig c mor (InterpUCofamCopreshfOMap c mor x)
+InterpUCofamCopreshfFMap c mor comp (idx ** obj) xobj yobj mxy pix =
+  \ei : idx => comp (obj ei) xobj yobj mxy (pix ei)
+
+public export
+InterpUCofamCopreshfNT :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (x, y : IntUCofamObj c) -> (m : IntUCofamMor {c} mor x y) ->
+  IntCopreshfNTSig c (InterpUCofamCopreshfOMap c mor x) (InterpUCofamCopreshfOMap c mor y)
+InterpUCofamCopreshfNT c mor comp
+  (xidx ** xobj) (yidx ** yobj) (midx ** mobj) cobj pix =
+    \eyi : yidx =>
+     comp (yobj eyi) (xobj $ midx eyi) cobj (pix $ midx eyi) (mobj eyi)
+
+public export
+InterpUCofamCopreshfNaturality : FunExt ->
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (assoc : IntAssocSig c mor comp) ->
+  (x, y : IntUCofamObj c) -> (m : IntUCofamMor {c} mor x y) ->
+  IntCopreshfNTNaturality c mor
+    (InterpUCofamCopreshfOMap c mor x)
+    (InterpUCofamCopreshfOMap c mor y)
+    (InterpUCofamCopreshfFMap c mor comp x)
+    (InterpUCofamCopreshfFMap c mor comp y)
+    (InterpUCofamCopreshfNT c mor comp x y m)
+InterpUCofamCopreshfNaturality fext c mor comp assoc
+  (xidx ** xobj) (yidx ** yobj) (midx ** mobj) a b mab pix =
+    funExt $
+      \eyi =>
+        sym $ assoc (yobj eyi) (xobj $ midx eyi) a b
+          mab
+          (pix $ midx eyi)
+          (mobj eyi)
