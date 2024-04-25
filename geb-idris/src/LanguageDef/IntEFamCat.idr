@@ -248,14 +248,13 @@ mlEFamUnit = fccUnit HomProf
 
 export
 InterpMLEFamObj : MLEFamObj -> Type
-InterpMLEFamObj ifeo =
-  InterpEFamPreshfOMap Type HomProf ifeo Unit
+InterpMLEFamObj ifuo = Sigma {a=(fst ifuo)} $ snd ifuo
 
 export
-InterpMLEFamMorph : {x, y : MLEFamObj} ->
+InterpMLEFamMorph : {0 x, y : MLEFamObj} ->
   MLEFamMor x y -> InterpMLEFamObj x -> InterpMLEFamObj y
-InterpMLEFamMorph {x} {y} m =
-  InterpEFamPreshfNT Type HomProf typeComp x y m Unit
+InterpMLEFamMorph {x=(xpos ** xdir)} {y=(ypos ** ydir)} (onpos ** ondir) =
+  dpBimap onpos ondir
 
 -------------------------------------------------
 -------------------------------------------------
