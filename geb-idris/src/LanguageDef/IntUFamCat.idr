@@ -34,8 +34,8 @@ ifuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -------------------
 -------------------
 
--- Morphisms of the category of families of objects from a given category.
--- See for example the definition preceding Theorem 2.5 at
+-- Morphisms of the category of universal families of objects from a given
+-- category.  See for example the definition preceding Theorem 2.5 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition , which
 -- notes that this category may be viewed as the free cartesian monoidal
 -- category on `c`.
