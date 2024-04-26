@@ -5,6 +5,7 @@ import Library.IdrisCategories
 import Library.IdrisAlgebra
 import public LanguageDef.InternalCat
 import public LanguageDef.IntArena
+import public LanguageDef.IntUFamCat
 import public LanguageDef.IntEFamCat
 
 -----------------
@@ -54,6 +55,14 @@ IntUCofamIsOpEFam : {c : Type} -> (mor : IntDifunctorSig c) ->
   IntUCofamMor {c} mor dom cod =
   IntOpCatMor (IntEFamObj c) (IntEFamMor {c} mor) dom cod
 IntUCofamIsOpEFam {c} mor dom cod = Refl
+
+-- Another way of viewing a universal cofamily is as a universal
+-- family on an opposite category.
+export
+IntUCofamIsUFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntUCofamObj c) ->
+  IntUCofamMor {c} mor dom cod = IntUFamMor {c} (IntOpCatMor c mor) dom cod
+IntUCofamIsUFamOp {c} mor dom cod = Refl
 
 public export
 icfum : {c : Type} -> {mor : IntDifunctorSig c} -> {dom, cod : IntUCofamObj c} ->

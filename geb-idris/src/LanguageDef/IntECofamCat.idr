@@ -6,6 +6,7 @@ import Library.IdrisAlgebra
 import public LanguageDef.InternalCat
 import public LanguageDef.IntArena
 import public LanguageDef.IntUFamCat
+import public LanguageDef.IntEFamCat
 
 -----------------
 -----------------
@@ -56,6 +57,14 @@ IntECofamIsOpUFam : {c : Type} -> (mor : IntDifunctorSig c) ->
   IntECofamMor {c} mor dom cod =
   IntOpCatMor (IntUFamObj c) (IntUFamMor {c} mor) dom cod
 IntECofamIsOpUFam {c} mor dom cod = Refl
+
+-- Another way of viewing an existential cofamily is as an existential
+-- family on an opposite category.
+export
+IntECofamIsEFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntECofamObj c) ->
+  IntECofamMor {c} mor dom cod = IntEFamMor {c} (IntOpCatMor c mor) dom cod
+IntECofamIsEFamOp {c} mor dom cod = Refl
 
 public export
 IntPolyCatObj : Type -> Type
