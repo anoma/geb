@@ -102,11 +102,6 @@ ifemComp {c} mor comp {x=(xpos ** xdir)} {y=(ypos ** ydir)} {z=(zpos ** zdir)}
         (gondir $ fonpos exp)
         (fondir exp))
 
--- The unit of the free coproduct completion monad.
-public export
-fccUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntEFamObj c
-fccUnit {c} mor x = (Unit ** const x)
-
 ---------------------------------------
 ---------------------------------------
 ---- Element existential families -----
@@ -242,10 +237,6 @@ mlfmComp : {x, y, z : MLEFamObj} ->
   MLEFamMor y z -> MLEFamMor x y -> MLEFamMor x z
 mlfmComp = ifemComp HomProf (\_, _, _ => (.))
 
-public export
-mlEFamUnit : Type -> MLEFamObj
-mlEFamUnit = fccUnit HomProf
-
 ------------------------
 ---- Interpretation ----
 ------------------------
@@ -292,10 +283,6 @@ public export
 slefmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
   SliceEFamMor y z -> SliceEFamMor x y -> SliceEFamMor x z
 slefmComp {c} = ifemComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
-
-public export
-slEFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
-slEFamUnit {c} = fccUnit {c=(SliceObj c)} (SliceMorphism {a=c})
 
 -- `InterpSLEFamObj` and `InterpSLEFamMor` comprise a functor from
 -- `SliceFamObj c` to `SliceObj c` (for any `c : Type`).
