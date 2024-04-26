@@ -252,17 +252,17 @@ mlfmComp = icfemComp HomProf (\_, _, _ => (.))
 ------------------------
 
 -- `InterpMLECofamObj` and `InterpMLECofamMor` comprise a functor from
--- `MLEComfamObj` to `op(Type)` (note that a coproduct in `Type` becomes
--- a product in `op(Type)`).
+-- `MLEComfamObj` to `op(Type)`.  It is the opposite functor of
+-- `InterpMLUFamObj`/`InterpMLUFamMor`.
 
 export
-InterpMLECofamObj : MLECofamObj -> Type
-InterpMLECofamObj icfeo = Pi {a=(icfeoIdx icfeo)} $ icfeoObj icfeo
+InterpMLECofamObj : MLECofamObj -> OpTypeObj
+InterpMLECofamObj = InterpMLUFamObj
 
 export
 InterpMLECofamMorph : {x, y : MLECofamObj} ->
-  MLECofamMor x y -> InterpMLECofamObj y -> InterpMLECofamObj x
-InterpMLECofamMorph {x} {y} m piy eix = snd m eix $ piy $ fst m eix
+  MLECofamMor x y -> OpTypeMor (InterpMLECofamObj x) (InterpMLECofamObj y)
+InterpMLECofamMorph = InterpMLUFamMorph
 
 ---------------------------------------------------
 ---------------------------------------------------

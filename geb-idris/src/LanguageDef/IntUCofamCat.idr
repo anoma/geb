@@ -215,17 +215,17 @@ mlfmComp = icfumComp HomProf (\_, _, _ => (.))
 ------------------------
 
 -- `InterpMLUCofamObj` and `InterpMLUCofamMor` comprise a functor from
--- `MLUComfamObj` to `op(Type)` (note that a product in `Type` becomes
--- a coproduct in `op(Type)`).
+-- `MLUComfamObj` to `op(Type)`.  It is the opposite functor of
+-- `InterpMLEFamObj`/`InterpMLEFamMor`.
 
 export
-InterpMLUCofamObj : MLUCofamObj -> Type
-InterpMLUCofamObj icfuo = Sigma {a=(icfuoIdx icfuo)} $ icfuoObj icfuo
+InterpMLUCofamObj : MLUCofamObj -> OpTypeObj
+InterpMLUCofamObj = InterpMLEFamObj
 
 export
 InterpMLUCofamMorph : {x, y : MLUCofamObj} ->
-  MLUCofamMor x y -> InterpMLUCofamObj y -> InterpMLUCofamObj x
-InterpMLUCofamMorph {x} {y} m = dpBimap (fst m) (snd m)
+  MLUCofamMor x y -> OpTypeMor (InterpMLUCofamObj x) (InterpMLUCofamObj y)
+InterpMLUCofamMorph = InterpMLEFamMorph
 
 -------------------------------------------------
 -------------------------------------------------
