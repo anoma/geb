@@ -111,6 +111,10 @@ fcmUnit {c} mor x = IFUO Unit (const x)
 -- Given categories `c` and `d`, a presheaf `f` on `c`, and a functor
 -- to `d` from the category of elements of `f`, we can form a functor
 -- from `c` to `IntUFamObj d`.
+--
+-- Note that those inputs comprise precisely the data which define a
+-- left multi-adjoint (see Theorem 2.4 at
+-- https://ncatlab.org/nlab/show/multi-adjoint#definition ).
 
 public export
 IntElemUFamMor : {c, d : Type} ->
@@ -135,9 +139,7 @@ IntElemUFamFMap : {c, d : Type} ->
     (x : c) -> (y : c) -> (efy : f y) ->
     (mxy : cmor x y) -> dmor (g x $ fcm y x mxy efy) (g y efy)) ->
   (x, y : c) -> cmor x y ->
-  IntUFamMor {c=d} dmor
-    (IntElemUFamOMap {c} {d} f g x)
-    (IntElemUFamOMap {c} {d} f g y)
+  IntElemUFamMor {c} {d} dmor f g x y
 IntElemUFamFMap {c} {d} cmor dmor f fcm g gm x y mxy =
   IFUM {mor=dmor} {dom=(IntElemUFamOMap f g x)} {cod=(IntElemUFamOMap f g y)}
     (fcm y x mxy) (\efy => gm x y efy mxy)

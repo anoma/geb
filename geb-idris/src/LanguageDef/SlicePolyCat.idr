@@ -1556,6 +1556,15 @@ SPFDpraUnit {dom} {cod} spfd b i ec eb =
 --
 -- (Note that, on the ncatlab "multi-adjoint" page, this is the
 -- "Theorem 2.4" version of the definition.)
+--
+-- One viewpoint on this structure is that it consists of:
+--  - A presheaf on `SliceObj cod` (the index)
+--  - A functor from the category of elements of the index to
+--    `SliceObj dom` (or equivalently, a copresheaf on the product category
+--    of the category of elements of the index with `dom` viewed as
+--    a discrete category)
+-- Note that those comprise precisely the inputs to `IntElemUFamOMap`/
+-- `IntElemUFamFMap`.
 export
 MultiLpair : (dom, cod : Type) -> Type
 MultiLpair dom cod =
