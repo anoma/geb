@@ -138,9 +138,7 @@ IntElemEFamFMap : {c, d : Type} ->
     (x : c) -> (y : c) -> (efx : f x) ->
     (mxy : cmor x y) -> dmor (g x efx) (g y $ fm x y mxy efx)) ->
   (x, y : c) -> cmor x y ->
-  IntEFamMor {c=d} dmor
-    (IntElemEFamOMap {c} {d} f g x)
-    (IntElemEFamOMap {c} {d} f g y)
+  IntElemEFamMor {c} {d} dmor f g x y
 IntElemEFamFMap {c} {d} cmor dmor f fm g gm x y mxy =
   (fm x y mxy ** \efy => gm x y efy mxy)
 

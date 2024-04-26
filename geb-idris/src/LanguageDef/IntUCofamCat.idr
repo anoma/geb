@@ -129,9 +129,7 @@ IntElemUCofamFMap : {c, d : Type} ->
     (x : c) -> (y : c) -> (efy : f y) ->
     (mxy : cmor x y) -> dmor (g y efy) (g x $ fcm y x mxy efy)) ->
   (x, y : c) -> cmor x y ->
-  IntUCofamMor {c=d} dmor
-    (IntElemUCofamOMap {c} {d} f g x)
-    (IntElemUCofamOMap {c} {d} f g y)
+  IntElemUCofamMor {c} {d} dmor f g x y
 IntElemUCofamFMap {c} {d} cmor dmor f fm g gm x y mxy =
   (fm y x mxy ** \efy => gm x y efy mxy)
 
