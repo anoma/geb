@@ -2,9 +2,9 @@ module LanguageDef.MLBundleCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories
-import LanguageDef.InternalCat
-import LanguageDef.IntEFamCat
-import LanguageDef.IntBundleCat
+import public LanguageDef.InternalCat
+import public LanguageDef.IntEFamCat
+import public LanguageDef.IntBundleCat
 import public LanguageDef.PolyCat
 
 ------------------------------------------------------------------
@@ -18,10 +18,16 @@ import public LanguageDef.PolyCat
 ---------------------
 
 public export
-record ABundleObj where
-  constructor ABO
-  abBase : Type
-  abCobase : SliceObj abBase
+ABundleObj : Type
+ABundleObj = IntEFamObj Type
+
+public export
+abBase : ABundleObj -> Type
+abBase = ifeoIdx {c=Type}
+
+public export
+abCobase : (ab : ABundleObj) -> SliceObj (abBase ab)
+abCobase = ifeoObj {c=Type}
 
 public export
 ABSliceBase : ABundleObj -> Type
@@ -47,7 +53,7 @@ BcoAtoArena {c} ab = (abBase ab ** abCobase ab)
 
 export
 BcoAfromArena : {c : Type} -> MLArena -> ABundleObj
-BcoAfromArena {c} ar = ABO (fst ar) (snd ar)
+BcoAfromArena {c} ar = (fst ar ** snd ar)
 
 --------------------------
 ---- Categorial-style ----
@@ -84,8 +90,8 @@ CBOsl cb = (cbTot cb ** cbProj cb)
 public export
 BcoCtoA : CBundleObj -> ABundleObj
 BcoCtoA cb =
-  ABO (cbBase cb) $
-    \ea => PreImage {a=(cbTot cb)} {b=(cbBase cb)} (cbProj cb) ea
+  (cbBase cb **
+    \ea => PreImage {a=(cbTot cb)} {b=(cbBase cb)} (cbProj cb) ea)
 
 public export
 BcoAtoC : ABundleObj -> CBundleObj
@@ -98,7 +104,7 @@ BcoAtoC ab =
 
 public export
 BcoAtoDirich : ABundleObj -> PolyFunc
-BcoAtoDirich (ABO base cobase) = (base ** cobase)
+BcoAtoDirich = id
 
 public export
 BcoCtoDirich : CBundleObj -> PolyFunc
@@ -106,7 +112,7 @@ BcoCtoDirich = BcoAtoDirich . BcoCtoA
 
 public export
 BcoDirichToA : PolyFunc -> ABundleObj
-BcoDirichToA (base ** cobase) = ABO base cobase
+BcoDirichToA = id
 
 public export
 BcoDirichToC : PolyFunc -> CBundleObj
@@ -208,14 +214,14 @@ BcmAfromC {dom} {cod} (CBM mbase (Element0 mtot mcomm)) =
 export
 BcmAtoDirich : {0 dom, cod : ABundleObj} ->
   ABundleMor dom cod -> DirichNatTrans (BcoAtoDirich dom) (BcoAtoDirich cod)
-BcmAtoDirich {dom=(ABO dbase dcobase)} {cod=(ABO cbase ccobase)}
+BcmAtoDirich {dom=(dbase ** dcobase)} {cod=(cbase ** ccobase)}
   (ABM mbase mcobase) =
     (mbase ** mcobase)
 
 export
 BcmAfromDirich : {0 dom, cod : ABundleObj} ->
   DirichNatTrans (BcoAtoDirich dom) (BcoAtoDirich cod) -> ABundleMor dom cod
-BcmAfromDirich {dom=(ABO dbase dcobase)} {cod=(ABO cbase ccobase)}
+BcmAfromDirich {dom=(dbase ** dcobase)} {cod=(cbase ** ccobase)}
   (mbase ** mcobase) =
     ABM mbase mcobase
 
@@ -264,14 +270,14 @@ BcmDirichFromC = BcmDirichFromA . BcmAfromC
 
 export
 abId : (abo : ABundleObj) -> ABundleMor abo abo
-abId abo@(ABO b cb) =
+abId abo@(b ** cb) =
   BcmDirichToA {dom=(BcoAtoDirich abo)} {cod=(BcoAtoDirich abo)}
   $ dntId {p=(BcoAtoDirich abo)}
 
 export
 abComp : {x, y, z : ABundleObj} ->
   ABundleMor y z -> ABundleMor x y -> ABundleMor x z
-abComp {x=x@(ABO xb xcb)} {y} {z=z@(ABO zb zcb)} g f =
+abComp {x=x@(xb ** xcb)} {y} {z=z@(zb ** zcb)} g f =
   BcmDirichToA {dom=(BcoAtoDirich x)} {cod=(BcoAtoDirich z)}
   $ dntVCatComp {p=(BcoAtoDirich x)} {r=(BcoAtoDirich z)}
     (BcmAtoDirich g) (BcmAtoDirich f)
@@ -294,7 +300,7 @@ cbComp g f = BcmCfromA $ abComp (BcmCtoA g) (BcmCtoA f)
 public export
 abPullback : (ab : ABundleObj) -> {b' : Type} ->
   (b' -> abBase ab) -> ABundleObj
-abPullback ab {b'} m = ABO b' (abCobase ab . m)
+abPullback ab {b'} m = (b' ** abCobase ab . m)
 
 public export
 cbPullback : (cb : CBundleObj) -> {b' : Type} ->
