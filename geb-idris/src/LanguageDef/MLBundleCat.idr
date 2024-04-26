@@ -135,10 +135,19 @@ BcoDirichToC = BcoAtoC . BcoDirichToA
 -- Another equivalent formation is that of "existential families"
 -- (`IntEFamCat`).
 public export
-record ABundleMor (dom, cod : ABundleObj) where
-  constructor ABM
-  abmBase : abBase dom -> abBase cod
-  abmCobase : ABinj dom (BaseChangeF abmBase $ abCobase cod)
+ABundleMor : (dom, cod : ABundleObj) -> Type
+ABundleMor = IntEFamMor {c=Type} HomProf
+
+public export
+abmBase : {dom, cod : ABundleObj} ->
+  ABundleMor dom cod -> abBase dom -> abBase cod
+abmBase = ifemOnIdx {c=Type} {mor=HomProf}
+
+public export
+abmCobase : {dom, cod : ABundleObj} ->
+  (ab : ABundleMor dom cod) ->
+  ABinj dom (BaseChangeF (abmBase {dom} {cod} ab) $ abCobase cod)
+abmCobase = ifemOnObj {c=Type} {mor=HomProf}
 
 --------------------------
 ---- Categorial-style ----
@@ -161,18 +170,17 @@ export
 BcmCtoA : {0 dom, cod : CBundleObj} ->
   CBundleMor dom cod -> ABundleMor (BcoCtoA dom) (BcoCtoA cod)
 BcmCtoA {dom} {cod} (CBM mbase (Element0 mtot mcomm)) =
-  ABM
-    mbase
-    $ \edb, (Element0 edt deq) =>
-        Element0
-          (snd $ fst0 $ mtot edt)
-          $ trans (sym $ snd0 $ mtot edt) $ rewrite sym (mcomm edt) in
-            rewrite deq in Refl
+  (mbase **
+   \edb, (Element0 edt deq) =>
+    Element0
+      (snd $ fst0 $ mtot edt)
+       $ trans (sym $ snd0 $ mtot edt) $ rewrite sym (mcomm edt) in
+       rewrite deq in Refl)
 
 export
 BcmCfromA : {dom, cod : CBundleObj} ->
   ABundleMor (BcoCtoA dom) (BcoCtoA cod) -> CBundleMor dom cod
-BcmCfromA {dom} {cod} (ABM mbase mcobase) =
+BcmCfromA {dom} {cod} (mbase ** mcobase) =
   CBM
     mbase $
     Element0
@@ -186,7 +194,7 @@ BcmCfromA {dom} {cod} (ABM mbase mcobase) =
 export
 BcmAtoC : {0 dom, cod : ABundleObj} ->
   ABundleMor dom cod -> CBundleMor (BcoAtoC dom) (BcoAtoC cod)
-BcmAtoC {dom} {cod} (ABM mbase mcobase) =
+BcmAtoC {dom} {cod} (mbase ** mcobase) =
   CBM
     mbase
     $ Element0
@@ -197,15 +205,14 @@ export
 BcmAfromC : {0 dom, cod : ABundleObj} ->
   CBundleMor (BcoAtoC dom) (BcoAtoC cod) -> ABundleMor dom cod
 BcmAfromC {dom} {cod} (CBM mbase (Element0 mtot mcomm)) =
-  ABM
-    mbase
-    $ \edb, edcb =>
-      rewrite
-        trans
-          (cong mbase $ mcomm (edb ** edcb))
-          (snd0 (mtot (edb ** edcb)))
-      in
-      snd $ snd $ fst0 $ mtot (edb ** edcb)
+  (mbase **
+   \edb, edcb =>
+    rewrite
+      trans
+        (cong mbase $ mcomm (edb ** edcb))
+        (snd0 (mtot (edb ** edcb)))
+    in
+    snd $ snd $ fst0 $ mtot (edb ** edcb))
 
 ---------------------------------------------
 ---- Equivalence with Dirichlet functors ----
@@ -215,7 +222,7 @@ export
 BcmAtoDirich : {0 dom, cod : ABundleObj} ->
   ABundleMor dom cod -> DirichNatTrans (BcoAtoDirich dom) (BcoAtoDirich cod)
 BcmAtoDirich {dom=(dbase ** dcobase)} {cod=(cbase ** ccobase)}
-  (ABM mbase mcobase) =
+  (mbase ** mcobase) =
     (mbase ** mcobase)
 
 export
@@ -223,30 +230,33 @@ BcmAfromDirich : {0 dom, cod : ABundleObj} ->
   DirichNatTrans (BcoAtoDirich dom) (BcoAtoDirich cod) -> ABundleMor dom cod
 BcmAfromDirich {dom=(dbase ** dcobase)} {cod=(cbase ** ccobase)}
   (mbase ** mcobase) =
-    ABM mbase mcobase
+    (mbase ** mcobase)
 
 export
 BcmDirichToA : {0 dom, cod : PolyFunc} ->
   DirichNatTrans dom cod -> ABundleMor (BcoDirichToA dom) (BcoDirichToA cod)
 BcmDirichToA {dom=(dpos ** ddir)} {cod=(cpos ** cdir)} (onpos ** ondir) =
-  ABM onpos ondir
+  (onpos ** ondir)
 
 export
 BcmDirichFromA : {0 dom, cod : PolyFunc} ->
   ABundleMor (BcoDirichToA dom) (BcoDirichToA cod) ->
   DirichNatTrans dom cod
-BcmDirichFromA {dom=(dpos ** ddir)} {cod=(cpos ** cdir)} (ABM base cobase) =
+BcmDirichFromA {dom=(dpos ** ddir)} {cod=(cpos ** cdir)} (base ** cobase) =
   (base ** cobase)
 
 export
 BcmCtoDirich : {0 dom, cod : CBundleObj} ->
   CBundleMor dom cod -> DirichNatTrans (BcoCtoDirich dom) (BcoCtoDirich cod)
-BcmCtoDirich = BcmAtoDirich . BcmCtoA
+BcmCtoDirich {dom} {cod} =
+  BcmAtoDirich {dom=(BcoCtoDirich dom)} {cod=(BcoCtoDirich cod)}
+  . BcmCtoA {dom} {cod}
 
 export
 BcmCfromDirich : {dom, cod : CBundleObj} ->
   DirichNatTrans (BcoCtoDirich dom) (BcoCtoDirich cod) -> CBundleMor dom cod
-BcmCfromDirich = BcmCfromA . BcmAfromDirich
+BcmCfromDirich {dom} {cod} =
+  BcmCfromA . BcmAfromDirich {dom=(BcoCtoDirich dom)} {cod=(BcoCtoDirich cod)}
 
 export
 BcmDirichToC : {0 dom, cod : PolyFunc} ->
@@ -280,7 +290,7 @@ abComp : {x, y, z : ABundleObj} ->
 abComp {x=x@(xb ** xcb)} {y} {z=z@(zb ** zcb)} g f =
   BcmDirichToA {dom=(BcoAtoDirich x)} {cod=(BcoAtoDirich z)}
   $ dntVCatComp {p=(BcoAtoDirich x)} {r=(BcoAtoDirich z)}
-    (BcmAtoDirich g) (BcmAtoDirich f)
+    (BcmAtoDirich {cod=z} g) (BcmAtoDirich {dom=x} f)
 
 export
 cbId : (cbo : CBundleObj) -> CBundleMor cbo cbo
@@ -289,7 +299,9 @@ cbId cbo = BcmCfromA $ abId (BcoCtoA cbo)
 export
 cbComp : {x, y, z : CBundleObj} ->
   CBundleMor y z -> CBundleMor x y -> CBundleMor x z
-cbComp g f = BcmCfromA $ abComp (BcmCtoA g) (BcmCtoA f)
+cbComp {x} {y} {z} g f =
+  BcmCfromA $
+  abComp {x=(BcoCtoA x)} {y=(BcoCtoA y)} {z=(BcoCtoA z)} (BcmCtoA g) (BcmCtoA f)
 
 ----------------------------------------
 ----------------------------------------
