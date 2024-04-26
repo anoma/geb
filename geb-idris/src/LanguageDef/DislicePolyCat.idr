@@ -57,14 +57,14 @@ export
 ADSLdc : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
   ABundleMor (b' ** cb') (b ** cb) ->
   ADSLomap (b ** cb) (b' ** cb')
-ADSLdc {b} {b'} {cb} {cb'} (ABM mb mc) =
+ADSLdc {b} {b'} {cb} {cb'} (mb ** mc) =
   ADSLcbc {b=b'} {cb=(cb . mb)} {cb'} mc . ADSLbc {b} {b'} {cb} mb
 
 export
 ADSLdcMap : {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
   (mb : ABundleMor (b' ** cb') (b ** cb)) ->
   ADSLfmap (ADSLdc {b} {b'} {cb} {cb'} mb)
-ADSLdcMap {b} {b'} {cb} {cb'} (ABM mb mc) x y =
+ADSLdcMap {b} {b'} {cb} {cb'} (mb ** mc) x y =
   ADSLcbcMap {b=b'} {cb=(cb . mb)} {cb'} mc (ADSLbc mb x) (ADSLbc mb y)
   . ADSLbcMap {b} {b'} {cb} mb x y
 
