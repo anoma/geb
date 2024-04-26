@@ -934,6 +934,28 @@ TypeProfDimap : {0 p : ProfunctorSig} ->
   Profunctor p -> IntEndoDimapSig TypeObj TypeMor p
 TypeProfDimap {p} isP = TypeDimap {p} (dimap {f=p})
 
+------------------------------------------------
+------------------------------------------------
+---- Opposite of metalanguage base category ----
+------------------------------------------------
+------------------------------------------------
+
+public export
+OpTypeObj : Type
+OpTypeObj = Type
+
+public export
+OpTypeMor : OpTypeObj -> OpTypeObj -> Type
+OpTypeMor = IntOpCatMor Type HomProf
+
+public export
+opTypeId : IntIdSig OpTypeObj OpTypeMor
+opTypeId = IntOpCatId Type HomProf typeId
+
+public export
+opTypeComp : IntCompSig OpTypeObj OpTypeMor
+opTypeComp = IntOpCatComp Type HomProf typeComp
+
 ---------------------------------------
 ---------------------------------------
 ---- Metalanguage slice categories ----
