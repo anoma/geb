@@ -248,37 +248,37 @@ InterpMLUFamMorph {x} {y} m pix iy =
 --------------------
 
 public export
-SliceFamObj : Type -> Type
-SliceFamObj = IntUFamObj . SliceObj
+SliceUFamObj : Type -> Type
+SliceUFamObj = IntUFamObj . SliceObj
 
 public export
-SliceUFamMor : {c : Type} -> SliceFamObj c -> SliceFamObj c -> Type
+SliceUFamMor : {c : Type} -> SliceUFamObj c -> SliceUFamObj c -> Type
 SliceUFamMor {c} = IntUFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
 slufmId : {c : Type} ->
-  (x : SliceFamObj c) -> SliceUFamMor x x
+  (x : SliceUFamObj c) -> SliceUFamMor x x
 slufmId {c} = ifumId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
 
 public export
-slufmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
+slufmComp : {c : Type} -> {x, y, z : SliceUFamObj c} ->
   SliceUFamMor y z -> SliceUFamMor x y -> SliceUFamMor x z
 slufmComp {c} =
   ifumComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
 
 public export
-slUFamUnit : {c : Type} -> SliceObj c -> SliceFamObj c
+slUFamUnit : {c : Type} -> SliceObj c -> SliceUFamObj c
 slUFamUnit {c} = fcmUnit {c=(SliceObj c)} (SliceMorphism {a=c})
 
 -- `InterpSLUFamObj` and `InterpSLUFamMor` comprise a functor from
--- `SliceFamObj c` to `SliceObj c` (for any `c : Type`).
+-- `SliceUFamObj c` to `SliceObj c` (for any `c : Type`).
 
 export
-InterpSLUFamObj : {c : Type} -> SliceFamObj c -> SliceObj c
+InterpSLUFamObj : {c : Type} -> SliceUFamObj c -> SliceObj c
 InterpSLUFamObj {c} x = Pi {a=(ifuoIdx x)} . flip (ifuoObj x)
 
 export
-InterpSLUFamMor : {c : Type} -> {x, y : SliceFamObj c} ->
+InterpSLUFamMor : {c : Type} -> {x, y : SliceUFamObj c} ->
   SliceUFamMor {c} x y ->
   SliceMorphism {a=c} (InterpSLUFamObj x) (InterpSLUFamObj y)
 InterpSLUFamMor {c} {x} {y} m ec pix eiy =
