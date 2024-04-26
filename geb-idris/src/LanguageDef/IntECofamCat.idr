@@ -48,7 +48,8 @@ IntECofamMor {c} mor dom cod =
 
 -- Note that this category is the opposite category of
 -- the category of universal families (AKA the free cartesian monoidal
--- category).
+-- category).  It is also equivalent to the category of polynomial
+-- functors (coproducts of representable copresheaves).
 export
 IntECofamIsOpUFam : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntECofamObj c) ->
@@ -56,13 +57,14 @@ IntECofamIsOpUFam : {c : Type} -> (mor : IntDifunctorSig c) ->
   IntOpCatMor (IntUFamObj c) (IntUFamMor {c} mor) dom cod
 IntECofamIsOpUFam {c} mor dom cod = Refl
 
--- Note that this category is equivalent to the category of polynomial
--- functors (coproducts of representable copresheaves).
-export
-IntECofamIsPolyFunc : {c : Type} -> (mor : IntDifunctorSig c) ->
-  (dom, cod : IntECofamObj c) ->
-  IntECofamMor {c} mor dom cod = IntPolyCatMor c mor dom cod
-IntECofamIsPolyFunc {c} mor dom cod = Refl
+public export
+IntPolyCatObj : Type -> Type
+IntPolyCatObj = IntArena
+
+public export
+IntPolyCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntDifunctorSig (IntPolyCatObj c)
+IntPolyCatMor c = IntECofamMor {c}
 
 public export
 icfem : {c : Type} -> {mor : IntDifunctorSig c} -> {dom, cod : IntECofamObj c} ->
@@ -159,12 +161,10 @@ InterpECofamCopreshfOMap : (c : Type) -> (mor : IntDifunctorSig c) ->
 InterpECofamCopreshfOMap c mor x a =
   Sigma {a=(icfeoIdx x)} $ flip mor a . icfeoObj x
 
-export
-IntECofamCopreshfOMapIsInterpPolyObj : (c : Type) ->
-  (mor : IntDifunctorSig c) ->
-  (x : IntECofamObj c) -> (y : c) ->
-  InterpECofamCopreshfOMap c mor x y = InterpIPFobj c mor x y
-IntECofamCopreshfOMapIsInterpPolyObj c mor (xidx ** xobj) y = Refl
+public export
+InterpIPFobj : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> c -> Type
+InterpIPFobj = InterpECofamCopreshfOMap
 
 public export
 InterpECofamCopreshfFMap :
@@ -174,13 +174,11 @@ InterpECofamCopreshfFMap :
 InterpECofamCopreshfFMap c mor comp a xobj yobj myx =
   dpMapSnd $ \ei, mxi => comp (icfeoObj a ei) xobj yobj myx mxi
 
-export
-IntECofamCopreshfFMapIsInterpPolyMap : FunExt ->
-  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  (a : IntECofamObj c) -> (x, y : c) -> (m : mor x y) ->
-  InterpECofamCopreshfFMap c mor comp a x y m = InterpIPFmap c mor comp a x y m
-IntECofamCopreshfFMapIsInterpPolyMap fext c mor comp a x y m =
-  funExt $ \_ => Refl
+public export
+InterpIPFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntArena c) -> IntCopreshfMapSig c mor (InterpIPFobj c mor ar)
+InterpIPFmap = InterpECofamCopreshfFMap
 
 public export
 InterpECofamCopreshfNT :
@@ -197,12 +195,16 @@ InterpECofamCopreshfNT c mor comp x y m cobj =
         (icfemOnObj {mor} m exi)
 
 public export
-IntECofamCopreshfNTisInterpPolyNT : FunExt ->
-  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  (x, y : IntECofamObj c) -> (m : IntECofamMor {c} mor x y) -> (cobj : c) ->
-  InterpECofamCopreshfNT c mor comp x y m cobj = InterpIPnt c mor comp x y m cobj
-IntECofamCopreshfNTisInterpPolyNT c mor comp x y m cobj fext =
-  funExt $ \_ => Refl
+IntPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> IntArena c -> Type
+IntPNTar c = IntECofamMor {c}
+
+public export
+InterpIPnt : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntArena c) -> IntPNTar c mor p q ->
+  IntCopreshfNTSig c (InterpIPFobj c mor p) (InterpIPFobj c mor q)
+InterpIPnt = InterpECofamCopreshfNT
 
 public export
 InterpECofamCopreshfNaturality :
@@ -306,3 +308,91 @@ InterpSLECofamMor : {c : Type} -> {x, y : SliceCofamObj c} ->
   SliceECofamMor {c} x y ->
   OpSliceMor c (InterpSLECofamObj x) (InterpSLECofamObj y)
 InterpSLECofamMor {c} {x} {y} = InterpSLUFamMor {c} {x=y} {y=x}
+
+-------------------------------------------
+-------------------------------------------
+---- Polynomial categories of elements ----
+-------------------------------------------
+-------------------------------------------
+
+public export
+PolyCatElemObj : (c : Type) -> (mor : IntDifunctorSig c) -> IntArena c -> Type
+PolyCatElemObj c mor p = (x : c ** InterpIPFobj c mor p x)
+
+-- Unfolding the definition of a morphism in the category of elements
+-- specifically of a polynomial endofunctor on `Type` yields the following:
+--
+--  - A position `i` of the polynomial functor
+--  - A pair of types `x`, `y`
+--  - An assignment of the directions of `p` at `i` to `x` (together with the
+--    type `x`, this can be viewed as an object of the coslice category of
+--    the direction-set)
+--  - A morphism in `Type` (a function) from `x` to `y`
+--
+-- One way of looking at all of that together is, if we view a polynomial
+-- functor `p` as representing open terms of a data structure, then a morphism
+-- of its category of elements is a closed term with elements of `x`
+-- substituted for its variables (comprising the type `x` which we then view
+-- as a type of variables together with the choice of a position and and
+-- assignment of its directions to `x`), together with a function from `x`
+-- to `y`, which uniquely determines a closed term with elements of `y`
+-- substituted for its variables, by mapping the elements of `x` in the
+-- closed term with the chosen function to elements of `y`, while preserving the
+-- structure of the term.
+--
+-- Because of that unique determination, we do not need explicitly to choose
+-- the element component of the codomain object, as in the general definition
+-- of the category of elements -- the choice of both components of the domain
+-- object together with a morphism from its underlying object to some other
+-- object of `Type` between them uniquely determine the one codomain object to which there
+-- is a corresponding morphism in the category of elements.
+public export
+data PolyCatElemMor :
+    (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+    (p : IntArena c) ->
+    PolyCatElemObj c mor p -> PolyCatElemObj c mor p -> Type where
+  PCEM : {c : Type} -> {mor : IntDifunctorSig c} ->
+    (comp : IntCompSig c mor) ->
+    -- `pos` and `dir` together form an `IntArena c`.
+    (pos : Type) -> (dir : pos -> c) ->
+    -- `i` and `dm` comprise a term of `InterpIPFobj c mor (pos ** dir) x`;
+    -- `x` and `dm` together comprise an object of the coslice category
+    -- of `dir i`.  `x`, `i`, and `dm` all together comprise an object of
+    -- the category of elements of `(pos ** dir)`.
+    (x : c) -> (i : pos) -> (dm : mor (dir i) x) ->
+    -- `y` and `m` together form an object of the coslice category of `x`.
+    (y : c) -> (m : mor x y) ->
+    PolyCatElemMor c mor comp (pos ** dir)
+      (x ** (i ** dm))
+      (y ** (i ** comp (dir i) x y m dm))
+
+public export
+pcemMor :
+  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (p : IntArena c) ->
+  (x, y : PolyCatElemObj c mor p) ->
+  PolyCatElemMor c mor comp p x y ->
+  mor (fst x) (fst y)
+pcemMor _ _ _ _ _ _ (PCEM _ _ _ _ _ _ _ m) = m
+
+---------------------------------------------------------------------
+---------------------------------------------------------------------
+---- Categories of elements of polynomial endofunctors on `Type` ----
+---------------------------------------------------------------------
+---------------------------------------------------------------------
+
+public export
+MLPolyCatObj : Type
+MLPolyCatObj = IntPolyCatObj Type
+
+public export
+MLPolyCatMor : MLPolyCatObj -> MLPolyCatObj -> Type
+MLPolyCatMor = IntPolyCatMor Type HomProf
+
+public export
+MLPolyCatElemObj : MLPolyCatObj -> Type
+MLPolyCatElemObj = PolyCatElemObj Type HomProf
+
+public export
+MLPolyCatElemMor : (p : MLPolyCatObj) -> (x, y : MLPolyCatElemObj p) -> Type
+MLPolyCatElemMor = PolyCatElemMor Type HomProf typeComp

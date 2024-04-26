@@ -52,11 +52,14 @@ IntEFamMor {c} mor dom cod =
   (onidx : ifeoIdx dom -> ifeoIdx cod **
    (di : ifeoIdx dom) -> mor (ifeoObj dom di) (ifeoObj cod $ onidx di))
 
-export
-IntEFamIsDirichFunc : {c : Type} -> (mor : IntDifunctorSig c) ->
-  (dom, cod : IntEFamObj c) ->
-  IntEFamMor {c} mor dom cod = IntDirichCatMor c mor dom cod
-IntEFamIsDirichFunc {c} mor dom cod = Refl
+public export
+IntDirichCatObj : Type -> Type
+IntDirichCatObj = IntArena
+
+public export
+IntDirichCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntDifunctorSig (IntDirichCatObj c)
+IntDirichCatMor c = IntEFamMor {c}
 
 public export
 IFEM : {c : Type} -> {mor : IntDifunctorSig c} -> {dom, cod : IntEFamObj c} ->
@@ -151,15 +154,19 @@ IntElemEFamFMap {c} {d} cmor dmor f fm g gm x y mxy =
 -- form they are precisely the Dirichlet functors.
 
 public export
+IntDNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> IntArena c -> Type
+IntDNTar c = IntEFamMor {c}
+
+public export
 InterpEFamPreshfOMap : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntEFamObj c -> IntPreshfSig c
 InterpEFamPreshfOMap c mor x a = Sigma {a=(ifeoIdx x)} $ mor a . ifeoObj x
 
-export
-IntEFamPreshfOMapIsInterpDirichObj : (c : Type) -> (mor : IntDifunctorSig c) ->
-  (x : IntEFamObj c) -> (y : c) ->
-  InterpEFamPreshfOMap c mor x y = InterpIDFobj c mor x y
-IntEFamPreshfOMapIsInterpDirichObj c mor (xidx ** xobj) y = Refl
+public export
+InterpIDFobj : (c : Type) -> (mor : IntDifunctorSig c) ->
+  IntArena c -> c -> Type
+InterpIDFobj c = InterpEFamPreshfOMap {c}
 
 public export
 InterpEFamPreshfFMap :
@@ -168,12 +175,11 @@ InterpEFamPreshfFMap :
 InterpEFamPreshfFMap c mor comp a xobj yobj myx =
   dpMapSnd $ \ei, mxi => comp yobj xobj (ifeoObj a ei) mxi myx
 
-export
-IntEFamPreshfFMapIsInterpDirichMap : FunExt ->
-  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  (a : IntEFamObj c) -> (x, y : c) -> (m : mor y x) ->
-  InterpEFamPreshfFMap c mor comp a x y m = InterpIDFmap c mor comp a x y m
-IntEFamPreshfFMapIsInterpDirichMap fext c mor comp a x y m = funExt $ \_ => Refl
+public export
+InterpIDFmap : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (ar : IntArena c) -> IntPreshfMapSig c mor (InterpIDFobj c mor ar)
+InterpIDFmap = InterpEFamPreshfFMap
 
 public export
 InterpEFamPreshfNT :
@@ -188,11 +194,11 @@ InterpEFamPreshfNT c mor comp x y m cobj =
         mcx
 
 public export
-IntEFamPreshfNTisInterpDirichNT : FunExt ->
-  (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  (x, y : IntEFamObj c) -> (m : IntEFamMor {c} mor x y) -> (cobj : c) ->
-  InterpEFamPreshfNT c mor comp x y m cobj = InterpIDnt c mor comp x y m cobj
-IntEFamPreshfNTisInterpDirichNT c mor comp x y m cobj fext = funExt $ \_ => Refl
+InterpIDnt : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (comp : IntCompSig c mor) ->
+  (p, q : IntArena c) -> IntDNTar c mor p q ->
+  IntPreshfNTSig c (InterpIDFobj c mor p) (InterpIDFobj c mor q)
+InterpIDnt = InterpEFamPreshfNT
 
 public export
 InterpEFamPreshfNaturality :
@@ -267,33 +273,124 @@ InterpMLEFamMorph {x=(xpos ** xdir)} {y=(ypos ** ydir)} (onpos ** ondir) =
 --------------------
 
 public export
-SliceFamObj : Type -> Type
-SliceFamObj = IntEFamObj . SliceObj
+SliceEFamObj : Type -> Type
+SliceEFamObj = IntEFamObj . SliceObj
 
 public export
-SliceEFamMor : {c : Type} -> SliceFamObj c -> SliceFamObj c -> Type
+SliceEFamMor : {c : Type} -> SliceEFamObj c -> SliceEFamObj c -> Type
 SliceEFamMor {c} = IntEFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
 slefmId : {c : Type} ->
-  (x : SliceFamObj c) -> SliceEFamMor x x
+  (x : SliceEFamObj c) -> SliceEFamMor x x
 slefmId {c} = ifemId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
 
 public export
-slefmComp : {c : Type} -> {x, y, z : SliceFamObj c} ->
+slefmComp : {c : Type} -> {x, y, z : SliceEFamObj c} ->
   SliceEFamMor y z -> SliceEFamMor x y -> SliceEFamMor x z
 slefmComp {c} = ifemComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
 
 -- `InterpSLEFamObj` and `InterpSLEFamMor` comprise a functor from
--- `SliceFamObj c` to `SliceObj c` (for any `c : Type`).
+-- `SliceEFamObj c` to `SliceObj c` (for any `c : Type`).
 
 export
-InterpSLEFamObj : {c : Type} -> SliceFamObj c -> SliceObj c
+InterpSLEFamObj : {c : Type} -> SliceEFamObj c -> SliceObj c
 InterpSLEFamObj {c} (xpos ** xdir) = Sigma {a=xpos} . flip xdir
 
 export
-InterpSLEFamMor : {c : Type} -> {0 x, y : SliceFamObj c} ->
+InterpSLEFamMor : {c : Type} -> {0 x, y : SliceEFamObj c} ->
   SliceEFamMor {c} x y ->
   SliceMorphism {a=c} (InterpSLEFamObj x) (InterpSLEFamObj y)
 InterpSLEFamMor {c} {x=(xpos ** xdir)} {y=(ypos ** ydir)} (onpos ** ondir) ec =
   dpBimap onpos (\exp => ondir exp ec)
+
+-------------------------------------
+-------------------------------------
+---- Dirichlet-functor embedding ----
+-------------------------------------
+-------------------------------------
+
+-- We can embed a category `c/mor` into its category of Dirichlet functors
+-- (sums of representable presheaves) with natural transformations.
+public export
+IntDirichEmbedObj : (c : Type) -> (a : c) -> IntDirichCatObj c
+IntDirichEmbedObj c a = (() ** (\_ : Unit => a))
+
+-- Note that we can _not_ embed a category into its category of polynomial
+-- functors (sums of representable copresheaves) with natural transformations,
+-- because trying to define this with `IntPNTar` substituted for `IntDNTar`
+-- would require us to define a morphism in the opposite direction from `m`.
+-- There is no guarantee that such a morphism exists in `c/mor`.
+public export
+IntDirichEmbedMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (a, b : c) ->
+  mor a b ->
+  IntDirichCatMor c mor (IntDirichEmbedObj c a) (IntDirichEmbedObj c b)
+IntDirichEmbedMor c mor a b m = ((\_ : Unit => ()) ** (\_ : Unit => m))
+
+-- The inverse of the embedding of a category into its category of
+-- Dirichlet functors.  The existence of this inverse shows that
+-- the embedding is full and faithful.
+public export
+IntDirichEmbedMorInv : (c : Type) -> (mor : IntDifunctorSig c) ->
+  (a, b : c) ->
+  IntDirichCatMor c mor (IntDirichEmbedObj c a) (IntDirichEmbedObj c b) ->
+  mor a b
+IntDirichEmbedMorInv c mor a b (pos ** dir) =
+  -- Note that `pos` has type `Unit -> Unit`, so there is only one thing
+  -- it can be, which is the identity on `Unit` (equivalently, the constant
+  -- function returning `()`).
+  dir ()
+
+------------------------------------------
+------------------------------------------
+---- Dirichlet categories of elements ----
+------------------------------------------
+------------------------------------------
+
+public export
+DirichCatElemObj : (c : Type) -> (mor : IntDifunctorSig c) -> IntArena c -> Type
+DirichCatElemObj c mor p = (x : c ** InterpIDFobj c mor p x)
+
+public export
+data DirichCatElemMor :
+    (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+    (p : IntArena c) ->
+    DirichCatElemObj c mor p -> DirichCatElemObj c mor p -> Type where
+  DCEM : {c : Type} -> {mor : IntDifunctorSig c} ->
+    (comp : IntCompSig c mor) ->
+    -- `pos` and `dir` together form an `IntArena c`.
+    (pos : Type) -> (dir : pos -> c) ->
+    -- `i` and `dm` comprise a term of `InterpIDFobj c mor (pos ** dir) x`;
+    -- `x` and `dm` together comprise an object of the slice category
+    -- of `dir i`.  `x`, `i`, and `dm` all together comprise an object of
+    -- the category of elements of `(pos ** dir)`.
+    (x : c) -> (i : pos) -> (dm : mor x (dir i)) ->
+    -- `y` and `m` together form an object of the slice category of `x`.
+    (y : c) -> (m : mor y x) ->
+    DirichCatElemMor c mor comp (pos ** dir)
+      (y ** (i ** comp y x (dir i) dm m))
+      (x ** (i ** dm))
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+---- Categories of elements of Dirichlet endofunctors on `Type` ----
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+
+public export
+MLDirichCatObj : Type
+MLDirichCatObj = IntDirichCatObj Type
+
+public export
+MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
+MLDirichCatMor = IntDirichCatMor Type HomProf
+
+public export
+MLDirichCatElemObj : MLDirichCatObj -> Type
+MLDirichCatElemObj = DirichCatElemObj Type HomProf
+
+public export
+MLDirichCatElemMor : (ar : MLDirichCatObj) ->
+  MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
+MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
