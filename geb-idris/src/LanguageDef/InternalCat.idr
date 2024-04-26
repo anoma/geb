@@ -974,6 +974,27 @@ public export
 SliceComp : (c : Type) -> IntCompSig (SliceObj c) (SliceMor c)
 SliceComp c x y z = sliceComp {a=c} {x} {y} {z}
 
+------------------------------------------
+------------------------------------------
+---- Metalanguage op-slice categories ----
+------------------------------------------
+------------------------------------------
+
+public export
+OpSliceObj : Type -> Type
+OpSliceObj = SliceObj
+
+public export
+OpSliceMor : (c : Type) -> OpSliceObj c -> OpSliceObj c -> Type
+OpSliceMor c = IntOpCatMor (SliceObj c) (SliceMor c)
+
+OpSliceId : (c : Type) -> IntIdSig (OpSliceObj c) (OpSliceMor c)
+OpSliceId c = IntOpCatId (SliceObj c) (SliceMor c) (SliceId c)
+
+public export
+OpSliceComp : (c : Type) -> IntCompSig (OpSliceObj c) (OpSliceMor c)
+OpSliceComp c = IntOpCatComp (SliceObj c) (SliceMor c) (SliceComp c)
+
 --------------------------------------------------
 --------------------------------------------------
 ---- (Para-)natural transformations on `Type` ----
