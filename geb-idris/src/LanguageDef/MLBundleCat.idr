@@ -327,7 +327,7 @@ PBundleObj : Type -> Type
 PBundleObj x = x -> ABundleObj
 
 public export
-record PBundleMor {x, y : Type} (dom : PBundleObj x) (cod : PBundleObj y) where
-  constructor PBM
-  pbmOnParam : x -> y
-  pbmOnBundle : (ex : x) -> ABundleMor (dom ex) (cod $ pbmOnParam ex)
+PBundleMor : {x, y : Type} ->
+  (dom : PBundleObj x) -> (cod : PBundleObj y) -> Type
+PBundleMor {x} {y} dom cod =
+  IntEFamMor {c=ABundleObj} ABundleMor (x ** dom) (y ** cod)
