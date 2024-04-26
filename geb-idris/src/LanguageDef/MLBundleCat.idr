@@ -131,7 +131,9 @@ record ABundleMor (dom, cod : ABundleObj) where
   constructor ABM
   abmBase : abBase dom -> abBase cod
   abmCobase :
-    SliceMorphism {a=(abBase dom)} (abCobase dom) (abCobase cod . abmBase)
+    SliceMorphism {a=(abBase dom)}
+      (abCobase dom)
+      (BaseChangeF abmBase $ abCobase cod)
 
 --------------------------
 ---- Categorial-style ----
