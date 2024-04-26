@@ -126,6 +126,8 @@ BcoDirichToC = BcoAtoC . BcoDirichToA
 -- category of Dirichlet functors, which, as noted at
 -- https://ncatlab.org/nlab/show/free+coproduct+completion#ViaIndexedSetsOfObjects ,
 -- may also be viewed as the free coproduct completion (here of `Type`).
+-- Another equivalent formation is that of "existential families"
+-- (`IntEFamCat`).
 public export
 record ABundleMor (dom, cod : ABundleObj) where
   constructor ABM
