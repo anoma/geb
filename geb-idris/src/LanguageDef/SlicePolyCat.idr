@@ -1133,17 +1133,6 @@ export
 SPFDdirBase : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDdirBase {dom} {cod} spfd = (dom, SPFDbase spfd)
 
--- The total space of the domain of the dependent-product component
--- of the factorization of a polynomial functor into a base change
--- followed by a dependent product followed by a dependent sum.
--- (The domain of the dependent-product component is therefore also the
--- codomain of the base-change component.)
-export
-SPFDdirTot : {dom, cod : Type} -> SPFData dom cod -> Type
-SPFDdirTot {dom} {cod} spfd =
-  (edcp : SPFDdirBase spfd **
-   spfdDir spfd (fst $ snd edcp) (snd $ snd edcp) (fst edcp))
-
 -- This is the contravariant representable functor on `SliceObj cod`
 -- represented by `spfdPos spfd`.
 export
@@ -2140,6 +2129,17 @@ SPFDspecDup {dom} {cod} spfd x ed ecpdm =
 -----------------------------------------------------------
 ---- Slice polynomials (in PRA formulation) as W-types ----
 -----------------------------------------------------------
+
+-- The total space of the domain of the dependent-product component
+-- of the factorization of a polynomial functor into a base change
+-- followed by a dependent product followed by a dependent sum.
+-- (The domain of the dependent-product component is therefore also the
+-- codomain of the base-change component.)
+export
+SPFDdirTot : {dom, cod : Type} -> SPFData dom cod -> Type
+SPFDdirTot {dom} {cod} spfd =
+  (edcp : SPFDdirBase spfd **
+   spfdDir spfd (fst $ snd edcp) (snd $ snd edcp) (fst edcp))
 
 0 SPFDasWTF : {0 dom, cod : Type} -> SPFData dom cod -> WTypeFunc dom cod
 SPFDasWTF {dom} {cod} spfd =
