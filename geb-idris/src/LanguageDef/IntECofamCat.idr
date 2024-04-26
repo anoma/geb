@@ -251,9 +251,9 @@ mlfmComp = icfemComp HomProf (\_, _, _ => (.))
 ---- Interpretation ----
 ------------------------
 
--- `InterpMLECofamObj` and `InterpMLECofamMor` comprise a functor from
+-- `InterpMLECofamObj` and `InterpMLECofamMorph` comprise a functor from
 -- `MLEComfamObj` to `op(Type)`.  It is the opposite functor of
--- `InterpMLUFamObj`/`InterpMLUFamMor`.
+-- `InterpMLUFamObj`/`InterpMLUFamMorph`.
 
 export
 InterpMLECofamObj : MLECofamObj -> OpTypeObj
@@ -262,7 +262,7 @@ InterpMLECofamObj = InterpMLUFamObj
 export
 InterpMLECofamMorph : {x, y : MLECofamObj} ->
   MLECofamMor x y -> OpTypeMor (InterpMLECofamObj x) (InterpMLECofamObj y)
-InterpMLECofamMorph = InterpMLUFamMorph
+InterpMLECofamMorph {x} {y} = InterpMLUFamMorph {x=y} {y=x}
 
 ---------------------------------------------------
 ---------------------------------------------------
@@ -294,14 +294,15 @@ slufmComp {c} =
   icfemComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
 
 -- `InterpSLECofamObj` and `InterpSLECofamMor` comprise a functor from
--- `SliceCofamObj c` to `op(SliceObj c)` (for any `c : Type`).
+-- `SliceCofamObj c` to `op(SliceObj c)` (for any `c : Type`).  It is the
+-- opposite functor of `InterpSLUFamObj`/`InterpSLEUamMor`.
 
 export
-InterpSLECofamObj : {c : Type} -> SliceCofamObj c -> SliceObj c
-InterpSLECofamObj {c} x = Pi {a=(icfeoIdx x)} . flip (icfeoObj x)
+InterpSLECofamObj : {c : Type} -> SliceCofamObj c -> OpSliceObj c
+InterpSLECofamObj {c} = InterpSLUFamObj {c}
 
 export
 InterpSLECofamMor : {c : Type} -> {x, y : SliceCofamObj c} ->
   SliceECofamMor {c} x y ->
-  SliceMorphism {a=c} (InterpSLECofamObj y) (InterpSLECofamObj x)
-InterpSLECofamMor {c} {x} {y} m ec piy eix = snd m eix ec $ piy $ fst m eix
+  OpSliceMor c (InterpSLECofamObj x) (InterpSLECofamObj y)
+InterpSLECofamMor {c} {x} {y} = InterpSLUFamMor {c} {x=y} {y=x}

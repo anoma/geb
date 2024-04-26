@@ -214,9 +214,9 @@ mlfmComp = icfumComp HomProf (\_, _, _ => (.))
 ---- Interpretation ----
 ------------------------
 
--- `InterpMLUCofamObj` and `InterpMLUCofamMor` comprise a functor from
+-- `InterpMLUCofamObj` and `InterpMLUCofamMorph` comprise a functor from
 -- `MLUComfamObj` to `op(Type)`.  It is the opposite functor of
--- `InterpMLEFamObj`/`InterpMLEFamMor`.
+-- `InterpMLEFamObj`/`InterpMLEFamMorph`.
 
 export
 InterpMLUCofamObj : MLUCofamObj -> OpTypeObj
@@ -225,7 +225,7 @@ InterpMLUCofamObj = InterpMLEFamObj
 export
 InterpMLUCofamMorph : {x, y : MLUCofamObj} ->
   MLUCofamMor x y -> OpTypeMor (InterpMLUCofamObj x) (InterpMLUCofamObj y)
-InterpMLUCofamMorph = InterpMLEFamMorph
+InterpMLUCofamMorph {x} {y} = InterpMLEFamMorph {x=y} {y=x}
 
 -------------------------------------------------
 -------------------------------------------------
@@ -243,28 +243,28 @@ SliceCofamObj = IntUCofamObj . SliceObj
 
 public export
 SliceUCofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
-SliceUCofamMor {c} = IntUCofamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
+SliceUCofamMor {c} = IntUCofamMor {c=(SliceObj c)} $ SliceMor c
 
 public export
 slufmId : {c : Type} ->
   (x : SliceCofamObj c) -> SliceUCofamMor x x
-slufmId {c} = icfumId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
+slufmId {c} = icfumId {c=(SliceObj c)} (SliceMor c) (SliceId c)
 
 public export
 slufmComp : {c : Type} -> {x, y, z : SliceCofamObj c} ->
   SliceUCofamMor y z -> SliceUCofamMor x y -> SliceUCofamMor x z
-slufmComp {c} =
-  icfumComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
+slufmComp {c} = icfumComp {c=(SliceObj c)} (SliceMor c) (SliceComp c)
 
 -- `InterpSLUCofamObj` and `InterpSLUCofamMor` comprise a functor from
--- `SliceCofamObj c` to `op(SliceObj c)` (for any `c : Type`).
+-- `SliceCofamObj c` to `op(SliceObj c)` (for any `c : Type`).  It is the
+-- opposite functor of `InterpSLEFamObj`/`InterpSLEFamMor`.
 
 export
-InterpSLUCofamObj : {c : Type} -> SliceCofamObj c -> SliceObj c
-InterpSLUCofamObj {c} x = Sigma {a=(icfuoIdx x)} . flip (icfuoObj x)
+InterpSLUCofamObj : {c : Type} -> SliceCofamObj c -> OpSliceObj c
+InterpSLUCofamObj {c} = InterpSLEFamObj {c}
 
 export
 InterpSLUCofamMor : {c : Type} -> {x, y : SliceCofamObj c} ->
   SliceUCofamMor {c} x y ->
-  SliceMorphism {a=c} (InterpSLUCofamObj y) (InterpSLUCofamObj x)
-InterpSLUCofamMor {c} {x} {y} m ec = dpBimap (fst m) (\ix => snd m ix ec)
+  OpSliceMor c (InterpSLUCofamObj x) (InterpSLUCofamObj y)
+InterpSLUCofamMor {c} {x} {y} = InterpSLEFamMor {c} {x=y} {y=x}
