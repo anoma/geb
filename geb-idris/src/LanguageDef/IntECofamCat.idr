@@ -351,8 +351,8 @@ PolyCatElemObj c mor p = (x : c ** InterpIPFobj c mor p x)
 -- the element component of the codomain object, as in the general definition
 -- of the category of elements -- the choice of both components of the domain
 -- object together with a morphism from its underlying object to some other
--- object of `Type` between them uniquely determine the one codomain object to which there
--- is a corresponding morphism in the category of elements.
+-- object of `Type` between them uniquely determine the one codomain object to
+-- which there is a corresponding morphism in the category of elements.
 public export
 data PolyCatElemMor :
     (c : Type) -> (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
