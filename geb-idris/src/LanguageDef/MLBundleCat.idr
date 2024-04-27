@@ -5,6 +5,7 @@ import Library.IdrisCategories
 import public LanguageDef.InternalCat
 import public LanguageDef.IntEFamCat
 import public LanguageDef.IntBundleCat
+import public LanguageDef.IntParamCat
 import public LanguageDef.PolyCat
 
 ------------------------------------------------------------------
@@ -315,19 +316,3 @@ cbPullback : (cb : CBundleObj) -> {b' : Type} ->
 cbPullback cbo {b'} m with (CSBaseChange m (CBOsl cbo))
   cbPullback cbo {b'} m | (cb' ** proj') =
     CBO b' cb' proj'
-
--------------------------------
--------------------------------
----- Parameterized bundles ----
--------------------------------
--------------------------------
-
-public export
-PBundleObj : Type -> Type
-PBundleObj x = x -> ABundleObj
-
-public export
-PBundleMor : {x, y : Type} ->
-  (dom : PBundleObj x) -> (cod : PBundleObj y) -> Type
-PBundleMor {x} {y} dom cod =
-  IntEFamMor {c=ABundleObj} ABundleMor (x ** dom) (y ** cod)
