@@ -49,8 +49,7 @@ IntECofamMor {c} mor dom cod =
 
 -- Note that this category is the opposite category of
 -- the category of universal families (AKA the free cartesian monoidal
--- category).  It is also equivalent to the category of polynomial
--- functors (coproducts of representable copresheaves).
+-- category).
 export
 IntECofamIsOpUFam : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntECofamObj c) ->
@@ -70,6 +69,8 @@ public export
 IntPolyCatObj : Type -> Type
 IntPolyCatObj = IntArena
 
+-- Another way of viewing an existential cofamily is as a category
+-- of polynomial functors (coproducts of representable copresheaves).
 public export
 IntPolyCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntDifunctorSig (IntPolyCatObj c)
