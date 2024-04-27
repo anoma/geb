@@ -8,6 +8,7 @@ import Library.Test.CategoryTheoryTest
 import LanguageDef.Test.IntBundleCatTest
 import LanguageDef.Test.IntUFamCatTest
 import LanguageDef.Test.IntEFamCatTest
+import LanguageDef.Test.IntParamCatTest
 import LanguageDef.Test.SpanCospanTest
 import LanguageDef.Test.InternalCatTest
 import LanguageDef.Test.SlicePolyCatTest
@@ -94,6 +95,7 @@ totalTests = do
   LanguageDef.Test.IntBundleCatTest.intBundleCatTest
   LanguageDef.Test.IntUFamCatTest.intUFamCatTest
   LanguageDef.Test.IntEFamCatTest.intEFamCatTest
+  LanguageDef.Test.IntParamCatTest.intParamCatTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()

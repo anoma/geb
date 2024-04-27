@@ -17,6 +17,7 @@ modules =
     , LanguageDef.IntBundleCat
     , LanguageDef.IntUFamCat
     , LanguageDef.IntEFamCat
+    , LanguageDef.IntParamCat
     , LanguageDef.IntUCofamCat
     , LanguageDef.IntECofamCat
     , LanguageDef.IntFactCat
@@ -56,6 +57,7 @@ modules =
     , LanguageDef.Test.IntBundleCatTest
     , LanguageDef.Test.IntUFamCatTest
     , LanguageDef.Test.IntEFamCatTest
+    , LanguageDef.Test.IntParamCatTest
     , LanguageDef.Test.IntUCofamCatTest
     , LanguageDef.Test.IntECofamCatTest
     , LanguageDef.Test.IntFactCatTest
