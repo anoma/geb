@@ -124,6 +124,13 @@ ifemComp {c} mor comp {x=(xpos ** xdir)} {y=(ypos ** ydir)} {z=(zpos ** zdir)}
 -- Given categories `c` and `d`, a copresheaf `f` on `c`, and a functor
 -- from the category of elements of `f` to `d`, we can form a functor
 -- from `c` to `IntEFamObj d`.
+--
+-- Note that we could dualize the notion of "left multi-adjoint"
+-- (and hence "parametric right adjoint") to "right multi-adjoint"
+-- (and hence "parametric left adjoint") by treating the inputs
+-- here as the data which define a right multi-adjoint, analogously
+-- to how we may treat the inputs to `IntElemUFamOMap`/`IntElemUFamFMap`
+-- as defining a left multi-adjoint.
 
 public export
 IntElemEFamOMap : {c, d : Type} -> (f : IntCopreshfSig c) ->
