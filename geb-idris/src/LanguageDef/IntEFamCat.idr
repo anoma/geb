@@ -126,15 +126,6 @@ ifemComp {c} mor comp {x=(xpos ** xdir)} {y=(ypos ** ydir)} {z=(zpos ** zdir)}
 -- from `c` to `IntEFamObj d`.
 
 public export
-IntElemEFamMor : {c, d : Type} ->
-  (dmor : IntDifunctorSig d) ->
-  (f : IntCopreshfSig c) ->
-  (g : (cobj : c) -> f cobj -> d) ->
-  c -> c -> Type
-IntElemEFamMor {c} {d} dmor f g x y =
-  IntEFamMor {c=d} dmor (f x ** g x) (f y ** g y)
-
-public export
 IntElemEFamOMap : {c, d : Type} -> (f : IntCopreshfSig c) ->
   ((cobj : c) -> f cobj -> d) -> (c -> IntEFamObj d)
 IntElemEFamOMap {c} {d} f g cobj = (f cobj ** g cobj)
@@ -147,8 +138,11 @@ IntElemEFamFMap : {c, d : Type} ->
   (gm :
     (x : c) -> (y : c) -> (efx : f x) ->
     (mxy : cmor x y) -> dmor (g x efx) (g y $ fm x y mxy efx)) ->
-  (x, y : c) -> cmor x y ->
-  IntElemEFamMor {c} {d} dmor f g x y
+  (x, y : c) ->
+  cmor x y ->
+  IntEFamMor {c=d} dmor
+    (IntElemEFamOMap {c} {d} f g x)
+    (IntElemEFamOMap {c} {d} f g y)
 IntElemEFamFMap {c} {d} cmor dmor f fm g gm x y mxy =
   (fm x y mxy ** \efy => gm x y efy mxy)
 
