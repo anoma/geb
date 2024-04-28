@@ -116,15 +116,6 @@ icfumComp {c} mor comp {x} {y} {z} =
 -- from `c` to `IntUCofamObj d`.
 
 public export
-IntElemUCofamMor : {c, d : Type} ->
-  (dmor : IntDifunctorSig d) ->
-  (f : IntPreshfSig c) ->
-  (g : (cobj : c) -> f cobj -> d) ->
-  c -> c -> Type
-IntElemUCofamMor {c} {d} dmor f g x y =
-  IntUCofamMor {c=d} dmor (f x ** g x) (f y ** g y)
-
-public export
 IntElemUCofamOMap : {c, d : Type} -> (f : IntPreshfSig c) ->
   ((cobj : c) -> f cobj -> d) -> (c -> IntUCofamObj d)
 IntElemUCofamOMap {c} {d} f g cobj = (f cobj ** g cobj)
@@ -137,8 +128,11 @@ IntElemUCofamFMap : {c, d : Type} ->
   (gm :
     (x : c) -> (y : c) -> (efy : f y) ->
     (mxy : cmor x y) -> dmor (g y efy) (g x $ fcm y x mxy efy)) ->
-  (x, y : c) -> cmor x y ->
-  IntElemUCofamMor {c} {d} dmor f g x y
+  (x, y : c) ->
+  cmor x y ->
+  IntUCofamMor {c=d} dmor
+    (IntElemUCofamOMap {c} {d} f g x)
+    (IntElemUCofamOMap {c} {d} f g y)
 IntElemUCofamFMap {c} {d} cmor dmor f fm g gm x y mxy =
   (fm y x mxy ** \efy => gm x y efy mxy)
 

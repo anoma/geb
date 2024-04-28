@@ -133,15 +133,6 @@ fcmUnit {c} mor x = IFUO Unit (const x)
 -- formulation of "left multi-adjoint" to the Theorem 2.5 formulation.
 
 public export
-IntElemUFamMor : {c, d : Type} ->
-  (dmor : IntDifunctorSig d) ->
-  (f : IntPreshfSig c) ->
-  (g : (cobj : c) -> f cobj -> d) ->
-  c -> c -> Type
-IntElemUFamMor {c} {d} dmor f g x y =
-  IntUFamMor {c=d} dmor (IFUO (f x) (g x)) (IFUO (f y) (g y))
-
-public export
 IntElemUFamOMap : {c, d : Type} -> (f : IntPreshfSig c) ->
   ((cobj : c) -> f cobj -> d) -> (c -> IntUFamObj d)
 IntElemUFamOMap {c} {d} f g cobj = IFUO (f cobj) (g cobj)
@@ -154,8 +145,11 @@ IntElemUFamFMap : {c, d : Type} ->
   (gm :
     (x : c) -> (y : c) -> (efy : f y) ->
     (mxy : cmor x y) -> dmor (g x $ fcm y x mxy efy) (g y efy)) ->
-  (x, y : c) -> cmor x y ->
-  IntElemUFamMor {c} {d} dmor f g x y
+  (x, y : c) ->
+  cmor x y ->
+  IntUFamMor {c=d} dmor
+    (IntElemUFamOMap {c} {d} f g x)
+    (IntElemUFamOMap {c} {d} f g y)
 IntElemUFamFMap {c} {d} cmor dmor f fcm g gm x y mxy =
   IFUM {mor=dmor} {dom=(IntElemUFamOMap f g x)} {cod=(IntElemUFamOMap f g y)}
     (fcm y x mxy) (\efy => gm x y efy mxy)
