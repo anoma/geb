@@ -125,17 +125,17 @@ public export
 IntAdjRMapSig {c} {d} cmor dmor = IntFMapSig {c=d} {d=c} dmor cmor
 
 public export
-0 IntLAdjunctSig : {0 c, d : Type} ->
+0 IntAdjLAdjunctSig : {0 c, d : Type} ->
   IntMorSig c -> IntMorSig d ->
   (l : c -> d) -> (r : d -> c) -> Type
-IntLAdjunctSig {c} {d} cmor dmor l r =
+IntAdjLAdjunctSig {c} {d} cmor dmor l r =
   (a : c) -> (b : d) -> dmor (l a) b -> cmor a (r b)
 
 public export
-0 IntRAdjunctSig : {0 c, d : Type} ->
+0 IntAdjRAdjunctSig : {0 c, d : Type} ->
   IntMorSig c -> IntMorSig d ->
   (l : c -> d) -> (r : d -> c) -> Type
-IntRAdjunctSig {c} {d} cmor dmor l r =
+IntAdjRAdjunctSig {c} {d} cmor dmor l r =
   (a : c) -> (b : d) -> cmor a (r b) -> dmor (l a) b
 
 public export
@@ -207,7 +207,7 @@ IntAdjUnitFromLAdjunct : {0 c, d : Type} ->
   (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   (did : IntIdSig d dmor) ->
   (l : c -> d) -> (r : d -> c) ->
-  IntLAdjunctSig {c} {d} cmor dmor l r ->
+  IntAdjLAdjunctSig {c} {d} cmor dmor l r ->
   IntAdjUnitSig {c} {d} cmor l r
 IntAdjUnitFromLAdjunct {c} {d} cmor dmor did l r ladj a =
   ladj a (l a) (did $ l a)
@@ -217,7 +217,7 @@ IntAdjCounitFromRAdjunct : {0 c, d : Type} ->
   (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   (cid : IntIdSig c cmor) ->
   (l : c -> d) -> (r : d -> c) ->
-  IntRAdjunctSig {c} {d} cmor dmor l r ->
+  IntAdjRAdjunctSig {c} {d} cmor dmor l r ->
   IntAdjCounitSig {c} {d} dmor l r
 IntAdjCounitFromRAdjunct {c} {d} cmor dmor cid l r radj b =
   radj (r b) b (cid $ r b)
