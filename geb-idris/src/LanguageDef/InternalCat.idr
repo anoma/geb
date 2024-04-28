@@ -15,15 +15,39 @@ public export
 IntMorSig c = c -> c -> Type
 
 public export
+0 IntCompSig : (c : Type) -> (mor : IntMorSig c) -> Type
+IntCompSig c mor = (x, y, z : c) -> mor y z -> mor x y -> mor x z
+
+public export
 0 IntFMapSig : {0 c, d : Type} -> (0 _ : IntMorSig c) -> (0 _ : IntMorSig d) ->
   (c -> d) -> Type
 IntFMapSig {c} {d} cmor dmor omap =
   (0 x, y : c) -> cmor x y -> dmor (omap x) (omap y)
 
 public export
+intFmapComp : {0 c, d, e : Type} ->
+  {0 cmor : IntMorSig c} -> {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
+  {0 g : d -> e} -> {0 f : c -> d} ->
+  IntFMapSig {c=d} {d=e} dmor emor g ->
+  IntFMapSig {c} {d} cmor dmor f ->
+  IntFMapSig {c} {d=e} cmor emor (g . f)
+intFmapComp {c} {d} {e} {cmor} {dmor} {emor} {g} {f} gm fm x y =
+  gm (f x) (f y) . fm x y
+
+public export
 0 IntNTSig : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
   (f, g : c -> d) -> Type
-IntNTSig {c} {d} {dmor} f g = (0 x : c) -> dmor (f x) (g x)
+IntNTSig {c} {d} {dmor} f g = (x : c) -> dmor (f x) (g x)
+
+public export
+intNTvcomp : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
+  IntCompSig d dmor ->
+  {f, g, h : c -> d} ->
+  IntNTSig {c} {d} {dmor} g h ->
+  IntNTSig {c} {d} {dmor} f g ->
+  IntNTSig {c} {d} {dmor} f h
+intNTvcomp {c} {d} {dmor} dcomp {f} {g} {h} beta alpha x =
+  dcomp (f x) (g x) (h x) (beta x) (alpha x)
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -55,10 +79,6 @@ IntDifunctorSig c = IntProfunctorSig c c
 public export
 IntIdSig : (c : Type) -> (mor : IntDifunctorSig c) -> Type
 IntIdSig c mor = (x : c) -> mor x x
-
-public export
-IntCompSig : (c : Type) -> (mor : IntDifunctorSig c) -> Type
-IntCompSig c mor = (x, y, z : c) -> mor y z -> mor x y -> mor x z
 
 public export
 IntComp : (c : Type) -> (mor : IntDifunctorSig c) -> Type
