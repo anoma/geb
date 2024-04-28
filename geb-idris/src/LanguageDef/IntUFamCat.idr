@@ -120,7 +120,7 @@ fcmUnit {c} mor x = IFUO Unit (const x)
 -------------------------------------
 
 -- Given categories `c` and `d`, a presheaf `f` on `c`, and a functor
--- to `d` from the category of elements of `f`, we can form a functor
+-- from the category of elements of `f` to `d`, we can form a functor
 -- from `c` to `IntUFamObj d`.
 --
 -- Note that those inputs comprise precisely the data which define a

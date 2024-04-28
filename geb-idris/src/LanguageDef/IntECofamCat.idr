@@ -124,7 +124,7 @@ icfemComp {c} mor comp {x} {y} {z} =
 -----------------------------------------
 
 -- Given categories `c` and `d`, a copresheaf `f` on `c`, and a functor
--- to `op(d)` from the category of elements of `f`, we can form a functor
+-- from the category of elements of `f` to `op(d)`, we can form a functor
 -- from `c` to `IntECofamObj d`.
 
 public export

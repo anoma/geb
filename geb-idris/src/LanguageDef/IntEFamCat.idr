@@ -122,7 +122,7 @@ ifemComp {c} mor comp {x=(xpos ** xdir)} {y=(ypos ** ydir)} {z=(zpos ** zdir)}
 ---------------------------------------
 
 -- Given categories `c` and `d`, a copresheaf `f` on `c`, and a functor
--- to `d` from the category of elements of `f`, we can form a functor
+-- from the category of elements of `f` to `d`, we can form a functor
 -- from `c` to `IntEFamObj d`.
 
 public export
