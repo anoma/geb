@@ -191,6 +191,16 @@ IntAdjComultSig {c} {d} dmor l r =
   IntComultSig {c=d} dmor (IntAdjComonad {c} {d} l r)
 
 public export
+IntAdjUnitFromLAdjunct : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (did : IntIdSig d dmor) ->
+  (l : c -> d) -> (r : d -> c) ->
+  IntLAdjunctSig {c} {d} cmor dmor l r ->
+  IntAdjUnitSig {c} {d} cmor l r
+IntAdjUnitFromLAdjunct {c} {d} cmor dmor did l r ladj a =
+  ladj a (l a) (did $ l a)
+
+public export
 IntAdjCounitFromRAdjunct : {0 c, d : Type} ->
   (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   (cid : IntIdSig c cmor) ->
