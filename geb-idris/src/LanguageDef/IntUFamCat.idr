@@ -124,8 +124,13 @@ fcmUnit {c} mor x = IFUO Unit (const x)
 -- from `c` to `IntUFamObj d`.
 --
 -- Note that those inputs comprise precisely the data which define a
--- left multi-adjoint (see Theorem 2.4 at
--- https://ncatlab.org/nlab/show/multi-adjoint#definition ).
+-- left multi-adjoint in the formulation of Theorem 2.4 at
+-- https://ncatlab.org/nlab/show/multi-adjoint#definition --
+-- `f` and `g` here are what are there called `I` and `L`.
+--
+-- The output functor is the one called `K` in Theorem 2.5 on the same
+-- page.  So we might view this functor as translating from the Theorem 2.4
+-- formulation of "left multi-adjoint" to the Theorem 2.5 formulation.
 
 public export
 IntElemUFamMor : {c, d : Type} ->
