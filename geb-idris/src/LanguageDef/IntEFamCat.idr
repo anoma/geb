@@ -40,6 +40,17 @@ ifeoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -------------------
 -------------------
 
+public export
+IntEFamIdxMor : {c : Type} -> IntDifunctorSig c ->
+  IntEFamObj c -> IntEFamObj c -> Type
+IntEFamIdxMor {c} mor dom cod = ifeoIdx dom -> ifeoIdx cod
+
+public export
+IntEFamObjMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntEFamObj c) -> IntEFamIdxMor {c} mor dom cod -> Type
+IntEFamObjMor {c} mor dom cod imor =
+   (di : ifeoIdx dom) -> mor (ifeoObj dom di) (ifeoObj cod $ imor di)
+
 -- The free coproduct completion of a category has the same morphisms as (and
 -- hence is equivalent to) the category of Dirichlet functors on the category;
 -- we just interpret them differently (meaning, herein we will define a functor
@@ -49,8 +60,7 @@ public export
 IntEFamMor : {c : Type} -> IntDifunctorSig c ->
   IntEFamObj c -> IntEFamObj c -> Type
 IntEFamMor {c} mor dom cod =
-  (onidx : ifeoIdx dom -> ifeoIdx cod **
-   (di : ifeoIdx dom) -> mor (ifeoObj dom di) (ifeoObj cod $ onidx di))
+  Sigma {a=(IntEFamIdxMor {c} mor dom cod)} $ IntEFamObjMor {c} mor dom cod
 
 public export
 IntDirichCatObj : Type -> Type
