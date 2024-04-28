@@ -210,6 +210,46 @@ IntAdjCounitFromRAdjunct : {0 c, d : Type} ->
 IntAdjCounitFromRAdjunct {c} {d} cmor dmor cid l r radj b =
   radj (r b) b (cid $ r b)
 
+public export
+IntAdjMultFromCounit : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (did : IntIdSig d dmor) ->
+  (l : c -> d) -> (r : d -> c) ->
+  IntFMapSig {c=d} {d=c} dmor cmor r ->
+  IntAdjCounitSig {c} {d} dmor l r ->
+  IntAdjMultSig {c} {d} cmor l r
+IntAdjMultFromCounit {c} {d} cmor dmor did l r rm counit =
+  intNTwhiskerR {c} {d} {e=c} {dmor} {emor=cmor}
+    {f=(IntAdjComonad {c} {d} l r . l)}
+    {g=l}
+    {h=r}
+    rm
+  $ intNTwhiskerL {c} {d} {e=d} {emor=dmor}
+    {g=(IntAdjComonad {c} {d} l r)}
+    {h=(Prelude.id {a=d})}
+    counit
+    l
+
+public export
+IntAdjComultFromUnit : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (cid : IntIdSig c cmor) ->
+  (l : c -> d) -> (r : d -> c) ->
+  IntFMapSig {c} {d} cmor dmor l ->
+  IntAdjUnitSig {c} {d} cmor l r ->
+  IntAdjComultSig {c} {d} dmor l r
+IntAdjComultFromUnit {c} {d} cmor dmor cid l r lm unit =
+  intNTwhiskerR {c=d} {d=c} {e=d} {dmor=cmor} {emor=dmor}
+    {f=r}
+    {g=(r . IntAdjComonad {c} {d} l r)}
+    {h=l}
+    lm
+  $ intNTwhiskerL {c=d} {d=c} {e=c} {emor=cmor}
+    {g=(Prelude.id {a=c})}
+    {h=(IntAdjMonad {c} {d} l r)}
+    unit
+    r
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Internal pro-/di-functors and (para-)natural transformations ----
