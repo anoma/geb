@@ -93,6 +93,22 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
     (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha x)
 
 public export
+0 IntUnitSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
+IntUnitSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} id t
+
+public export
+0 IntCounitSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
+IntCounitSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} t id
+
+public export
+0 IntMultSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
+IntMultSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} (t . t) t
+
+public export
+0 IntComultSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
+IntComultSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} t (t . t)
+
+public export
 0 IntLAdjunctSig : {0 c, d : Type} ->
   IntMorSig c -> IntMorSig d ->
   (l : c -> d) -> (r : d -> c) -> Type
@@ -145,6 +161,30 @@ IntAdjComonadMap : {0 c, d : Type} ->
   IntAdjComonadSig {c} {d} dmor l r
 IntAdjComonadMap {c} {d} cmor dmor l r =
   intFmapComp {c=d} {d=c} {e=d} {cmor=dmor} {dmor=cmor} {emor=dmor} {g=l} {f=r}
+
+public export
+0 IntAdjUnitSig : {0 c, d : Type} -> (cmor : IntMorSig c) ->
+  (l : c -> d) -> (r : d -> c) -> Type
+IntAdjUnitSig {c} {d} cmor l r =
+  IntUnitSig cmor (IntAdjMonad {c} {d} l r)
+
+public export
+0 IntAdjCounitSig : {0 c, d : Type} -> (dmor : IntMorSig d) ->
+  (l : c -> d) -> (r : d -> c) -> Type
+IntAdjCounitSig {c} {d} dmor l r =
+  IntCounitSig {c=d} dmor (IntAdjComonad {c} {d} l r)
+
+public export
+0 IntAdjMultSig : {0 c, d : Type} -> (cmor : IntMorSig c) ->
+  (l : c -> d) -> (r : d -> c) -> Type
+IntAdjMultSig {c} {d} cmor l r =
+  IntMultSig cmor (IntAdjMonad {c} {d} l r)
+
+public export
+0 IntAdjComultSig : {0 c, d : Type} -> (dmor : IntMorSig d) ->
+  (l : c -> d) -> (r : d -> c) -> Type
+IntAdjComultSig {c} {d} dmor l r =
+  IntComultSig {c=d} dmor (IntAdjComonad {c} {d} l r)
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
