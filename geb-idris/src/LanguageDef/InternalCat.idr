@@ -25,6 +25,11 @@ IntFMapSig {c} {d} cmor dmor omap =
   (0 x, y : c) -> cmor x y -> dmor (omap x) (omap y)
 
 public export
+0 IntEndoFMapSig : {0 c : Type} -> (0 _ : IntMorSig c) ->
+  (c -> c) -> Type
+IntEndoFMapSig {c} cmor = IntFMapSig {c} {d=c} cmor cmor
+
+public export
 intFmapComp : {0 c, d, e : Type} ->
   {0 cmor : IntMorSig c} -> {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
   {0 g : d -> e} -> {0 f : c -> d} ->
@@ -86,6 +91,48 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
     (g' $ f' x)
     (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f' x)
     (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha x)
+
+public export
+0 IntLAdjunctSig : {0 c, d : Type} ->
+  IntMorSig c -> IntMorSig d ->
+  (l : c -> d) -> (r : d -> c) -> Type
+IntLAdjunctSig {c} {d} cmor dmor l r =
+  (a : c) -> (b : d) -> dmor (l a) b -> cmor a (r b)
+
+public export
+0 IntRAdjunctSig : {0 c, d : Type} ->
+  IntMorSig c -> IntMorSig d ->
+  (l : c -> d) -> (r : d -> c) -> Type
+IntRAdjunctSig {c} {d} cmor dmor l r =
+  (a : c) -> (b : d) -> cmor a (r b) -> dmor (l a) b
+
+public export
+IntAdjMonad : {0 c, d : Type} -> (l : c -> d) -> (r : d -> c) -> c -> c
+IntAdjMonad {c} {d} l r = r . l
+
+public export
+IntAdjMonadMap : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (l : c -> d) -> (r : d -> c) ->
+  IntFMapSig {c} {d} cmor dmor l ->
+  IntFMapSig {c=d} {d=c} dmor cmor r ->
+  IntEndoFMapSig {c} cmor (IntAdjMonad {c} {d} l r)
+IntAdjMonadMap {c} {d} cmor dmor l r =
+  flip $ intFmapComp {c} {d} {e=c} {cmor} {dmor} {emor=cmor} {g=r} {f=l}
+
+public export
+IntAdjComonad : {0 c, d : Type} -> (l : c -> d) -> (r : d -> c) -> d -> d
+IntAdjComonad {c} {d} l r = l . r
+
+public export
+IntAdjComonadMap : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (l : c -> d) -> (r : d -> c) ->
+  IntFMapSig {c} {d} cmor dmor l ->
+  IntFMapSig {c=d} {d=c} dmor cmor r ->
+  IntEndoFMapSig {c=d} dmor (IntAdjComonad {c} {d} l r)
+IntAdjComonadMap {c} {d} cmor dmor l r =
+  intFmapComp {c=d} {d=c} {e=d} {cmor=dmor} {dmor=cmor} {emor=dmor} {g=l} {f=r}
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
