@@ -49,6 +49,44 @@ intNTvcomp : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
 intNTvcomp {c} {d} {dmor} dcomp {f} {g} {h} beta alpha x =
   dcomp (f x) (g x) (h x) (beta x) (alpha x)
 
+public export
+intNTwhiskerL : {0 c, d, e : Type} ->
+  {0 emor : IntMorSig e} ->
+  {g, h : d -> e} ->
+  IntNTSig {c=d} {d=e} {dmor=emor} g h ->
+  (f : c -> d) ->
+  IntNTSig {c} {d=e} {dmor=emor} (g . f) (h . f)
+intNTwhiskerL {c} {d} {e} {emor} {g} {h} alpha f x = alpha (f x)
+
+public export
+intNTwhiskerR : {0 c, d, e : Type} ->
+  {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
+  {f, g : c -> d} ->
+  {h : d -> e} ->
+  IntFMapSig {c=d} {d=e} dmor emor h ->
+  IntNTSig {c} {d} {dmor} f g ->
+  IntNTSig {c} {d=e} {dmor=emor} (h . f) (h . g)
+intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g} {h} hm nu x =
+  hm (f x) (g x) (nu x)
+
+public export
+intNThcomp : {0 c, d, e : Type} ->
+  {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
+  IntCompSig e emor ->
+  {f, f' : c -> d} ->
+  {g, g' : d -> e} ->
+  IntFMapSig {c=d} {d=e} dmor emor g ->
+  IntNTSig {c=d} {d=e} {dmor=emor} g g' ->
+  IntNTSig {c} {d} {dmor} f f' ->
+  IntNTSig {c} {d=e} {dmor=emor} (g . f) (g' . f')
+intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
+  ecomp
+    (g $ f x)
+    (g $ f' x)
+    (g' $ f' x)
+    (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f' x)
+    (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha x)
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Internal pro-/di-functors and (para-)natural transformations ----
