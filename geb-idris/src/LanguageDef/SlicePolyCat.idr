@@ -1503,6 +1503,17 @@ SPFDmultiLmap {dom} {cod} spfd b i b' i' =
     (SPFDposCSlToBaseSl (b' ** i'))
 
 export
+SPFDmultiLmapEl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  (x : SliceObj cod) -> (y : SliceObj cod) ->
+  (efy : SPFDmultiIdx spfd y) -> (mxy : SliceMorphism {a=cod} x y) ->
+  SliceMorphism {a=dom}
+    (SPFDmultiL spfd x $ SPFDmultiIdxContramap spfd y x mxy efy)
+    (SPFDmultiL spfd y efy)
+SPFDmultiLmapEl {dom} {cod} spfd x y efy mxy =
+  SPFDmultiLmap spfd x (SPFDmultiIdxContramap spfd y x mxy efy) y efy
+    $ \(ec ** ep) => s0Bimap (mxy ec) $ \ex, Refl => Refl
+
+export
 SPFDmultiRL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) -> SliceObj cod
 SPFDmultiRL {dom} {cod} spfd b =
@@ -1679,9 +1690,7 @@ SPFDmultiFamLmap {dom} {cod} spfd =
     (SPFDmultiIdx spfd)
     (SPFDmultiIdxContramap spfd)
     (SPFDmultiL spfd)
-    (\x, y, myp, mxy =>
-     SPFDmultiLmap spfd x (SPFDmultiIdxContramap spfd y x mxy myp) y myp
-      $ \(ec ** ep) => s0Bimap (mxy ec) $ \ex, Refl => Refl)
+    (SPFDmultiLmapEl spfd)
 
 -- The codomain of the unit of the left multi-adjoint of a slice
 -- polynomial functor.  It may be viewed as the first projection
