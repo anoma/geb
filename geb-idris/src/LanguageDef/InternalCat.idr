@@ -4,6 +4,27 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import Library.IdrisAlgebra
 
+--------------------------------------
+--------------------------------------
+---- Internal category signatures ----
+--------------------------------------
+--------------------------------------
+
+public export
+0 IntMorSig : Type -> Type
+IntMorSig c = c -> c -> Type
+
+public export
+0 IntFMapSig : {0 c, d : Type} -> (0 _ : IntMorSig c) -> (0 _ : IntMorSig d) ->
+  (c -> d) -> Type
+IntFMapSig {c} {d} cmor dmor omap =
+  (0 x, y : c) -> cmor x y -> dmor (omap x) (omap y)
+
+public export
+0 IntNTSig : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
+  (f, g : c -> d) -> Type
+IntNTSig {c} {d} {dmor} f g = (0 x : c) -> dmor (f x) (g x)
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Internal pro-/di-functors and (para-)natural transformations ----
