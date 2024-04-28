@@ -15,6 +15,10 @@ public export
 IntMorSig c = c -> c -> Type
 
 public export
+0 IntIdSig : (c : Type) -> (mor : IntMorSig c) -> Type
+IntIdSig c mor = (x : c) -> mor x x
+
+public export
 0 IntCompSig : (c : Type) -> (mor : IntMorSig c) -> Type
 IntCompSig c mor = (x, y, z : c) -> mor y z -> mor x y -> mor x z
 
@@ -186,6 +190,16 @@ public export
 IntAdjComultSig {c} {d} dmor l r =
   IntComultSig {c=d} dmor (IntAdjComonad {c} {d} l r)
 
+public export
+IntAdjCounitFromRAdjunct : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (cid : IntIdSig c cmor) ->
+  (l : c -> d) -> (r : d -> c) ->
+  IntRAdjunctSig {c} {d} cmor dmor l r ->
+  IntAdjCounitSig {c} {d} dmor l r
+IntAdjCounitFromRAdjunct {c} {d} cmor dmor cid l r radj b =
+  radj (r b) b (cid $ r b)
+
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ---- Internal pro-/di-functors and (para-)natural transformations ----
@@ -212,10 +226,6 @@ IntProfunctorSig d c = d -> c -> Type
 public export
 IntDifunctorSig : (c : Type) -> Type
 IntDifunctorSig c = IntProfunctorSig c c
-
-public export
-IntIdSig : (c : Type) -> (mor : IntDifunctorSig c) -> Type
-IntIdSig c mor = (x : c) -> mor x x
 
 public export
 IntComp : (c : Type) -> (mor : IntDifunctorSig c) -> Type
