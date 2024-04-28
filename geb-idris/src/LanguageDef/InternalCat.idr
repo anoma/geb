@@ -111,12 +111,18 @@ IntAdjMonad : {0 c, d : Type} -> (l : c -> d) -> (r : d -> c) -> c -> c
 IntAdjMonad {c} {d} l r = r . l
 
 public export
+0 IntAdjMonadSig : {0 c, d : Type} -> (cmor : IntMorSig c) ->
+  (l : c -> d) -> (r : d -> c) -> Type
+IntAdjMonadSig {c} {d} cmor l r =
+  IntEndoFMapSig {c} cmor (IntAdjMonad {c} {d} l r)
+
+public export
 IntAdjMonadMap : {0 c, d : Type} ->
   (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   (l : c -> d) -> (r : d -> c) ->
   IntFMapSig {c} {d} cmor dmor l ->
   IntFMapSig {c=d} {d=c} dmor cmor r ->
-  IntEndoFMapSig {c} cmor (IntAdjMonad {c} {d} l r)
+  IntAdjMonadSig {c} {d} cmor l r
 IntAdjMonadMap {c} {d} cmor dmor l r =
   flip $ intFmapComp {c} {d} {e=c} {cmor} {dmor} {emor=cmor} {g=r} {f=l}
 
@@ -125,12 +131,18 @@ IntAdjComonad : {0 c, d : Type} -> (l : c -> d) -> (r : d -> c) -> d -> d
 IntAdjComonad {c} {d} l r = l . r
 
 public export
+0 IntAdjComonadSig : {0 c, d : Type} -> (dmor : IntMorSig d) ->
+  (l : c -> d) -> (r : d -> c) -> Type
+IntAdjComonadSig {c} {d} dmor l r =
+  IntEndoFMapSig {c=d} dmor (IntAdjComonad {c} {d} l r)
+
+public export
 IntAdjComonadMap : {0 c, d : Type} ->
   (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   (l : c -> d) -> (r : d -> c) ->
   IntFMapSig {c} {d} cmor dmor l ->
   IntFMapSig {c=d} {d=c} dmor cmor r ->
-  IntEndoFMapSig {c=d} dmor (IntAdjComonad {c} {d} l r)
+  IntAdjComonadSig {c} {d} dmor l r
 IntAdjComonadMap {c} {d} cmor dmor l r =
   intFmapComp {c=d} {d=c} {e=d} {cmor=dmor} {dmor=cmor} {emor=dmor} {g=l} {f=r}
 
