@@ -41,12 +41,12 @@ ifeoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -------------------
 
 public export
-IntEFamIdxMor : {c : Type} -> IntDifunctorSig c ->
+0 IntEFamIdxMor : {c : Type} -> IntDifunctorSig c ->
   IntEFamObj c -> IntEFamObj c -> Type
 IntEFamIdxMor {c} mor dom cod = ifeoIdx dom -> ifeoIdx cod
 
 public export
-IntEFamObjMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+0 IntEFamObjMor : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntEFamObj c) -> IntEFamIdxMor {c} mor dom cod -> Type
 IntEFamObjMor {c} mor dom cod imor =
    (di : ifeoIdx dom) -> mor (ifeoObj dom di) (ifeoObj cod $ imor di)
@@ -57,7 +57,7 @@ IntEFamObjMor {c} mor dom cod imor =
 -- from them to `Type`, rather than to `Type -> Type`).
 
 public export
-IntEFamMor : {c : Type} -> IntDifunctorSig c ->
+0 IntEFamMor : {c : Type} -> IntDifunctorSig c ->
   IntEFamObj c -> IntEFamObj c -> Type
 IntEFamMor {c} mor dom cod =
   Sigma {a=(IntEFamIdxMor {c} mor dom cod)} $ IntEFamObjMor {c} mor dom cod
@@ -67,7 +67,7 @@ IntDirichCatObj : Type -> Type
 IntDirichCatObj = IntArena
 
 public export
-IntDirichCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+0 IntDirichCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntDifunctorSig (IntDirichCatObj c)
 IntDirichCatMor c = IntEFamMor {c}
 
@@ -163,7 +163,7 @@ IntElemEFamFMap {c} {d} cmor dmor f fm g gm x y mxy =
 -- form they are precisely the Dirichlet functors.
 
 public export
-IntDNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+0 IntDNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> IntArena c -> Type
 IntDNTar c = IntEFamMor {c}
 
@@ -240,7 +240,7 @@ MLEFamObj : Type
 MLEFamObj = IntEFamObj Type
 
 public export
-MLEFamMor : MLEFamObj -> MLEFamObj -> Type
+0 MLEFamMor : MLEFamObj -> MLEFamObj -> Type
 MLEFamMor = IntEFamMor $ HomProf
 
 public export
@@ -286,7 +286,7 @@ SliceEFamObj : Type -> Type
 SliceEFamObj = IntEFamObj . SliceObj
 
 public export
-SliceEFamMor : {c : Type} -> SliceEFamObj c -> SliceEFamObj c -> Type
+0 SliceEFamMor : {c : Type} -> SliceEFamObj c -> SliceEFamObj c -> Type
 SliceEFamMor {c} = IntEFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
@@ -392,7 +392,7 @@ MLDirichCatObj : Type
 MLDirichCatObj = IntDirichCatObj Type
 
 public export
-MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
+0 MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
 MLDirichCatMor = IntDirichCatMor Type HomProf
 
 public export
