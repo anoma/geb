@@ -51,12 +51,12 @@ IntCellSig obj vmor hmor =
   vmor x0 y0 -> vmor x1 y1 -> hmor x0 x1 -> hmor y0 y1 -> Type
 
 public export
-0 IntVCompSig : {0 obj : Type} ->
+0 IntDVCompSig : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
   (0 vcomp : IntCompSig obj vmor) ->
   (0 cell : IntCellSig obj vmor hmor) ->
   Type
-IntVCompSig {obj} {vmor} {hmor} vcomp cell =
+IntDVCompSig {obj} {vmor} {hmor} vcomp cell =
   {0 x0, x1, y0, y1, z0, z1 : obj} ->
   (0 vmxy0 : vmor x0 y0) -> (0 vmxy1 : vmor x1 y1) ->
   (0 vmyz0 : vmor y0 z0) -> (0 vmyz1 : vmor y1 z1) ->
@@ -69,12 +69,12 @@ IntVCompSig {obj} {vmor} {hmor} vcomp cell =
     (vcomp x0 y0 z0 vmyz0 vmxy0) (vcomp x1 y1 z1 vmyz1 vmxy1) hmx hmz
 
 public export
-0 IntHCompSig : {0 obj : Type} ->
+0 IntHDCompSig : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
   (0 hcomp : IntCompSig obj hmor) ->
   (0 cell : IntCellSig obj vmor hmor) ->
   Type
-IntHCompSig {obj} {vmor} {hmor} hcomp cell =
+IntHDCompSig {obj} {vmor} {hmor} hcomp cell =
   {0 x0, x1, x2, y0, y1, y2 : obj} ->
   (0 vmxy0 : vmor x0 y0) -> (0 vmxy1 : vmor x1 y1) -> (0 vmxy2 : vmor x2 y2) ->
   (0 hmx01 : hmor x0 x1) -> (0 hmx12 : hmor x1 x2) ->
