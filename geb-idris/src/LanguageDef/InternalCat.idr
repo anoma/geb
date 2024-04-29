@@ -26,133 +26,6 @@ public export
 0 IntCompSig : (c : Type) -> (mor : IntMorSig c) -> Type
 IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
 
----------------------------------
----------------------------------
----- Core general categories ----
----------------------------------
----------------------------------
-
------------------------------
----- Opposite categories ----
------------------------------
-
-public export
-0 IntOpCatMor : (0 c : Type) -> IntMorSig c -> IntMorSig c
-IntOpCatMor c cmor = flip cmor
-
-public export
-0 IntOpCatId : (0 c : Type) -> (0 cmor : IntMorSig c) ->
-  IntIdSig c cmor -> IntIdSig c (IntOpCatMor c cmor)
-IntOpCatId c cmor cid = cid
-
-public export
-0 IntOpCatComp : (0 c : Type) -> (0 cmor : IntMorSig c) ->
-  IntCompSig c cmor -> IntCompSig c (IntOpCatMor c cmor)
-IntOpCatComp c cmor comp x y z mzy myx = comp z y x myx mzy
-
-----------------------------
----- Product categories ----
-----------------------------
-
-public export
-0 IntProdCatMor : (0 c, d : Type) ->
-  IntMorSig c -> IntMorSig d -> IntMorSig (c, d)
-IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
-
-public export
-0 IntEndoProdCatMor : (0 c : Type) ->
-  IntMorSig c -> IntMorSig (c, c)
-IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
-
-public export
-0 IntProdCatId : (0 c, d : Type) ->
-  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
-  IntIdSig c cmor -> IntIdSig d dmor ->
-  IntIdSig (c, d) (IntProdCatMor c d cmor dmor)
-IntProdCatId c d cmor dmor cid did (cobj, dobj) = (cid cobj, did dobj)
-
-public export
-0 IntProdCatComp : (0 c, d : Type) ->
-  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
-  IntCompSig c cmor -> IntCompSig d dmor ->
-  IntCompSig (c, d) (IntProdCatMor c d cmor dmor)
-IntProdCatComp c d cmor dmor ccomp dcomp (cx, dx) (cy, dy) (cz, dz)
-  (cmyz, dmyz) (cmxy, dmxy) =
-    (ccomp cx cy cz cmyz cmxy, dcomp dx dy dz dmyz dmxy)
-
--------------------------------------
----- Opposite-product categories ----
--------------------------------------
-
-public export
-0 IntOpProdCatMor : (0 d, c : Type) ->
-  IntMorSig d -> IntMorSig c -> IntMorSig (d, c)
-IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (IntOpCatMor d dmor) cmor
-
-public export
-0 IntEndoOpProdCatMor :
-  (0 c : Type) -> IntMorSig c -> IntMorSig (c, c)
-IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
-
-public export
-0 IntOpProdCatId : (0 d, c : Type) ->
-  (dmor : IntMorSig d) -> (cmor : IntMorSig c) ->
-  IntIdSig d dmor -> IntIdSig c cmor ->
-  IntIdSig (d, c) (IntOpProdCatMor d c dmor cmor)
-IntOpProdCatId d c dmor cmor = IntProdCatId d c (IntOpCatMor d dmor) cmor
-
-public export
-0 IntOpProdCatComp : (0 d, c : Type) ->
-  (dmor : IntMorSig d) -> (cmor : IntMorSig c) ->
-  IntCompSig d dmor -> IntCompSig c cmor ->
-  IntCompSig (d, c) (IntOpProdCatMor d c dmor cmor)
-IntOpProdCatComp d c dmor cmor dcomp ccomp (dx, cx) (dy, cy) (dz, cz)
-  (dmzy, cmyz) (dmyx, cmxy) =
-    (dcomp dz dy dx dmyx dmzy, ccomp cx cy cz cmyz cmxy)
-
------------------------------
----- Discrete categories ----
------------------------------
-
-public export
-DiscreteCatObj : Type -> Type
-DiscreteCatObj = id
-
-public export
-data DiscreteCatMor : {0 obj : Type} ->
-    DiscreteCatObj obj -> DiscreteCatObj obj -> Type where
-  DCid : {0 obj : Type} -> (0 x : obj) -> DiscreteCatMor {obj} x x
-
-public export
-0 DiscreteId : {0 obj : Type} ->
-  IntIdSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
-DiscreteId {obj} x = DCid x
-
-public export
-0 DiscreteComp : {0 obj : Type} ->
-  IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
-DiscreteComp _ _ _ x y = case (x, y) of (DCid a, DCid a) => DCid a
-
----------------------------
----- Terminal category ----
----------------------------
-
-public export
-TerminalCatObj : Type
-TerminalCatObj = DiscreteCatObj Unit
-
-public export
-0 TerminalCatMor : TerminalCatObj -> TerminalCatObj -> Type
-TerminalCatMor = DiscreteCatMor {obj=Unit}
-
-public export
-0 TerminalId : IntIdSig TerminalCatObj TerminalCatMor
-TerminalId = DiscreteId {obj=Unit}
-
-public export
-0 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
-TerminalComp = DiscreteComp {obj=Unit}
-
 ------------------
 ---- Functors ----
 ------------------
@@ -452,6 +325,133 @@ IntAdjComultFromUnit {c} {d} cmor dmor cid l r lm unit =
     {h=(IntAdjMonad {c} {d} l r)}
     unit
     r
+
+---------------------------------
+---------------------------------
+---- Core general categories ----
+---------------------------------
+---------------------------------
+
+-----------------------------
+---- Opposite categories ----
+-----------------------------
+
+public export
+0 IntOpCatMor : (0 c : Type) -> IntMorSig c -> IntMorSig c
+IntOpCatMor c cmor = flip cmor
+
+public export
+0 IntOpCatId : (0 c : Type) -> (0 cmor : IntMorSig c) ->
+  IntIdSig c cmor -> IntIdSig c (IntOpCatMor c cmor)
+IntOpCatId c cmor cid = cid
+
+public export
+0 IntOpCatComp : (0 c : Type) -> (0 cmor : IntMorSig c) ->
+  IntCompSig c cmor -> IntCompSig c (IntOpCatMor c cmor)
+IntOpCatComp c cmor comp x y z mzy myx = comp z y x myx mzy
+
+----------------------------
+---- Product categories ----
+----------------------------
+
+public export
+0 IntProdCatMor : (0 c, d : Type) ->
+  IntMorSig c -> IntMorSig d -> IntMorSig (c, d)
+IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
+
+public export
+0 IntEndoProdCatMor : (0 c : Type) ->
+  IntMorSig c -> IntMorSig (c, c)
+IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
+
+public export
+0 IntProdCatId : (0 c, d : Type) ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  IntIdSig c cmor -> IntIdSig d dmor ->
+  IntIdSig (c, d) (IntProdCatMor c d cmor dmor)
+IntProdCatId c d cmor dmor cid did (cobj, dobj) = (cid cobj, did dobj)
+
+public export
+0 IntProdCatComp : (0 c, d : Type) ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  IntCompSig c cmor -> IntCompSig d dmor ->
+  IntCompSig (c, d) (IntProdCatMor c d cmor dmor)
+IntProdCatComp c d cmor dmor ccomp dcomp (cx, dx) (cy, dy) (cz, dz)
+  (cmyz, dmyz) (cmxy, dmxy) =
+    (ccomp cx cy cz cmyz cmxy, dcomp dx dy dz dmyz dmxy)
+
+-------------------------------------
+---- Opposite-product categories ----
+-------------------------------------
+
+public export
+0 IntOpProdCatMor : (0 d, c : Type) ->
+  IntMorSig d -> IntMorSig c -> IntMorSig (d, c)
+IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (IntOpCatMor d dmor) cmor
+
+public export
+0 IntEndoOpProdCatMor :
+  (0 c : Type) -> IntMorSig c -> IntMorSig (c, c)
+IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
+
+public export
+0 IntOpProdCatId : (0 d, c : Type) ->
+  (dmor : IntMorSig d) -> (cmor : IntMorSig c) ->
+  IntIdSig d dmor -> IntIdSig c cmor ->
+  IntIdSig (d, c) (IntOpProdCatMor d c dmor cmor)
+IntOpProdCatId d c dmor cmor = IntProdCatId d c (IntOpCatMor d dmor) cmor
+
+public export
+0 IntOpProdCatComp : (0 d, c : Type) ->
+  (dmor : IntMorSig d) -> (cmor : IntMorSig c) ->
+  IntCompSig d dmor -> IntCompSig c cmor ->
+  IntCompSig (d, c) (IntOpProdCatMor d c dmor cmor)
+IntOpProdCatComp d c dmor cmor dcomp ccomp (dx, cx) (dy, cy) (dz, cz)
+  (dmzy, cmyz) (dmyx, cmxy) =
+    (dcomp dz dy dx dmyx dmzy, ccomp cx cy cz cmyz cmxy)
+
+-----------------------------
+---- Discrete categories ----
+-----------------------------
+
+public export
+DiscreteCatObj : Type -> Type
+DiscreteCatObj = id
+
+public export
+data DiscreteCatMor : {0 obj : Type} ->
+    DiscreteCatObj obj -> DiscreteCatObj obj -> Type where
+  DCid : {0 obj : Type} -> (0 x : obj) -> DiscreteCatMor {obj} x x
+
+public export
+0 DiscreteId : {0 obj : Type} ->
+  IntIdSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
+DiscreteId {obj} x = DCid x
+
+public export
+0 DiscreteComp : {0 obj : Type} ->
+  IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
+DiscreteComp _ _ _ x y = case (x, y) of (DCid a, DCid a) => DCid a
+
+---------------------------
+---- Terminal category ----
+---------------------------
+
+public export
+TerminalCatObj : Type
+TerminalCatObj = DiscreteCatObj Unit
+
+public export
+0 TerminalCatMor : TerminalCatObj -> TerminalCatObj -> Type
+TerminalCatMor = DiscreteCatMor {obj=Unit}
+
+public export
+0 TerminalId : IntIdSig TerminalCatObj TerminalCatMor
+TerminalId = DiscreteId {obj=Unit}
+
+public export
+0 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
+TerminalComp = DiscreteComp {obj=Unit}
 
 ---------------------------------
 ---------------------------------
