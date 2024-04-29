@@ -159,6 +159,61 @@ public export
 0 typeComp : IntCompSig TypeObj TypeMor
 typeComp _ _ _ = (.)
 
+------------------------------------------------
+---- Opposite of metalanguage base category ----
+------------------------------------------------
+
+public export
+OpTypeObj : Type
+OpTypeObj = Type
+
+public export
+0 OpTypeMor : OpTypeObj -> OpTypeObj -> Type
+OpTypeMor = IntOpCatMor Type HomProf
+
+public export
+0 opTypeId : IntIdSig OpTypeObj OpTypeMor
+opTypeId = IntOpCatId Type HomProf typeId
+
+public export
+0 opTypeComp : IntCompSig OpTypeObj OpTypeMor
+opTypeComp = IntOpCatComp Type HomProf typeComp
+
+---------------------------------------
+---- Metalanguage slice categories ----
+---------------------------------------
+
+public export
+0 SliceMor : (c : Type) -> SliceObj c -> SliceObj c -> Type
+SliceMor c x y = (ec : c) -> x ec -> y ec
+
+public export
+0 SliceId : (0 c : Type) -> IntIdSig (SliceObj c) (SliceMor c)
+SliceId _ _ _ = id
+
+public export
+0 SliceComp : (0 c : Type) -> IntCompSig (SliceObj c) (SliceMor c)
+SliceComp c x y z = \g, f => \ec => g ec . f ec
+
+------------------------------------------
+---- Metalanguage op-slice categories ----
+------------------------------------------
+
+public export
+OpSliceObj : Type -> Type
+OpSliceObj = SliceObj
+
+public export
+0 OpSliceMor : (c : Type) -> OpSliceObj c -> OpSliceObj c -> Type
+OpSliceMor c = IntOpCatMor (SliceObj c) (SliceMor c)
+
+0 OpSliceId : (c : Type) -> IntIdSig (OpSliceObj c) (OpSliceMor c)
+OpSliceId c = IntOpCatId (SliceObj c) (SliceMor c) (SliceId c)
+
+public export
+0 OpSliceComp : (c : Type) -> IntCompSig (OpSliceObj c) (OpSliceMor c)
+OpSliceComp c = IntOpCatComp (SliceObj c) (SliceMor c) (SliceComp c)
+
 ------------------
 ---- Functors ----
 ------------------
@@ -1245,61 +1300,6 @@ public export
 TypeProfDimap : {0 p : ProfunctorSig} ->
   Profunctor p -> IntEndoDimapSig TypeObj TypeMor p
 TypeProfDimap {p} isP = TypeDimap {p} (dimap {f=p})
-
-------------------------------------------------
----- Opposite of metalanguage base category ----
-------------------------------------------------
-
-public export
-OpTypeObj : Type
-OpTypeObj = Type
-
-public export
-0 OpTypeMor : OpTypeObj -> OpTypeObj -> Type
-OpTypeMor = IntOpCatMor Type HomProf
-
-public export
-0 opTypeId : IntIdSig OpTypeObj OpTypeMor
-opTypeId = IntOpCatId Type HomProf typeId
-
-public export
-0 opTypeComp : IntCompSig OpTypeObj OpTypeMor
-opTypeComp = IntOpCatComp Type HomProf typeComp
-
----------------------------------------
----- Metalanguage slice categories ----
----------------------------------------
-
-public export
-0 SliceMor : (c : Type) -> SliceObj c -> SliceObj c -> Type
-SliceMor c x y = (ec : c) -> x ec -> y ec
-
-public export
-0 SliceId : (0 c : Type) -> IntIdSig (SliceObj c) (SliceMor c)
-SliceId _ _ _ = id
-
-public export
-0 SliceComp : (0 c : Type) -> IntCompSig (SliceObj c) (SliceMor c)
-SliceComp c x y z = \g, f => \ec => g ec . f ec
-
-------------------------------------------
----- Metalanguage op-slice categories ----
-------------------------------------------
-
-public export
-OpSliceObj : Type -> Type
-OpSliceObj = SliceObj
-
-public export
-0 OpSliceMor : (c : Type) -> OpSliceObj c -> OpSliceObj c -> Type
-OpSliceMor c = IntOpCatMor (SliceObj c) (SliceMor c)
-
-0 OpSliceId : (c : Type) -> IntIdSig (OpSliceObj c) (OpSliceMor c)
-OpSliceId c = IntOpCatId (SliceObj c) (SliceMor c) (SliceId c)
-
-public export
-0 OpSliceComp : (c : Type) -> IntCompSig (OpSliceObj c) (OpSliceMor c)
-OpSliceComp c = IntOpCatComp (SliceObj c) (SliceMor c) (SliceComp c)
 
 --------------------------------------------------
 --------------------------------------------------
