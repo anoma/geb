@@ -48,7 +48,7 @@ ifuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -- to the category of Dirichlet functors -- that category's morphisms are
 -- covariant on both indexes and objects.
 public export
-IntUFamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+0 IntUFamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUFamObj c) -> Type
 IntUFamMor {c} mor dom cod =
   (onidx : ifuoIdx cod -> ifuoIdx dom **
@@ -58,7 +58,7 @@ IntUFamMor {c} mor dom cod =
 -- is equivalent to the opposite category of the category of existential
 -- families of `op(c)`.
 export
-IntUFamIsOpEFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
+0 IntUFamIsOpEFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUFamObj c) ->
   IntUFamMor {c} mor dom cod =
   IntOpCatMor (IntEFamObj c) (IntEFamMor {c} $ IntOpCatMor c mor) dom cod
@@ -215,7 +215,7 @@ MLUFamObj : Type
 MLUFamObj = IntUFamObj Type
 
 public export
-MLUFamMor : MLUFamObj -> MLUFamObj -> Type
+0 MLUFamMor : MLUFamObj -> MLUFamObj -> Type
 MLUFamMor = IntUFamMor $ HomProf
 
 public export
@@ -265,7 +265,7 @@ SliceUFamObj : Type -> Type
 SliceUFamObj = IntUFamObj . SliceObj
 
 public export
-SliceUFamMor : {c : Type} -> SliceUFamObj c -> SliceUFamObj c -> Type
+0 SliceUFamMor : {c : Type} -> SliceUFamObj c -> SliceUFamObj c -> Type
 SliceUFamMor {c} = IntUFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export

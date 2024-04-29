@@ -41,7 +41,7 @@ icfeoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -- from the opposite of `c`; see `IntEFamCat` for the notion of "existential
 -- family".)
 public export
-IntECofamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+0 IntECofamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntECofamObj c) -> Type
 IntECofamMor {c} mor dom cod =
   (onidx : icfeoIdx dom -> icfeoIdx cod **
@@ -51,7 +51,7 @@ IntECofamMor {c} mor dom cod =
 -- the category of universal families (AKA the free cartesian monoidal
 -- category).
 export
-IntECofamIsOpUFam : {c : Type} -> (mor : IntDifunctorSig c) ->
+0 IntECofamIsOpUFam : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntECofamObj c) ->
   IntECofamMor {c} mor dom cod =
   IntOpCatMor (IntUFamObj c) (IntUFamMor {c} mor) dom cod
@@ -60,7 +60,7 @@ IntECofamIsOpUFam {c} mor dom cod = Refl
 -- Another way of viewing an existential cofamily is as an existential
 -- family on an opposite category.
 export
-IntECofamIsEFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
+0 IntECofamIsEFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntECofamObj c) ->
   IntECofamMor {c} mor dom cod = IntEFamMor {c} (IntOpCatMor c mor) dom cod
 IntECofamIsEFamOp {c} mor dom cod = Refl
@@ -72,7 +72,7 @@ IntPolyCatObj = IntArena
 -- Another way of viewing an existential cofamily is as a category
 -- of polynomial functors (coproducts of representable copresheaves).
 public export
-IntPolyCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+0 IntPolyCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntDifunctorSig (IntPolyCatObj c)
 IntPolyCatMor c = IntECofamMor {c}
 
@@ -197,7 +197,7 @@ InterpECofamCopreshfNT c mor comp x y m cobj =
         (icfemOnObj {mor} m exi)
 
 public export
-IntPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+0 IntPNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> IntArena c -> Type
 IntPNTar c = IntECofamMor {c}
 
@@ -239,7 +239,7 @@ MLECofamObj : Type
 MLECofamObj = IntECofamObj Type
 
 public export
-MLECofamMor : MLECofamObj -> MLECofamObj -> Type
+0 MLECofamMor : MLECofamObj -> MLECofamObj -> Type
 MLECofamMor = IntECofamMor $ HomProf
 
 public export
@@ -283,7 +283,7 @@ SliceCofamObj : Type -> Type
 SliceCofamObj = IntECofamObj . SliceObj
 
 public export
-SliceECofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
+0 SliceECofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
 SliceECofamMor {c} = IntECofamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
@@ -388,7 +388,7 @@ MLPolyCatObj : Type
 MLPolyCatObj = IntPolyCatObj Type
 
 public export
-MLPolyCatMor : MLPolyCatObj -> MLPolyCatObj -> Type
+0 MLPolyCatMor : MLPolyCatObj -> MLPolyCatObj -> Type
 MLPolyCatMor = IntPolyCatMor Type HomProf
 
 public export
