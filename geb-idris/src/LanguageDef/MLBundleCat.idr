@@ -280,11 +280,11 @@ BcmDirichFromC = BcmDirichFromA . BcmAfromC
 ----------------------------------
 
 export
-abId : (abo : ABundleObj) -> ABundleMor abo abo
+abId : (0 abo : ABundleObj) -> ABundleMor abo abo
 abId = ifemId {c=TypeObj} TypeMor typeId
 
 export
-abComp : {x, y, z : ABundleObj} ->
+abComp : {0 x, y, z : ABundleObj} ->
   ABundleMor y z -> ABundleMor x y -> ABundleMor x z
 abComp = ifemComp {c=TypeObj} TypeMor typeComp
 

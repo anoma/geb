@@ -94,13 +94,13 @@ ifemOnObj = DPair.snd
 
 public export
 ifemId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
-  (obj : IntEFamObj c) -> IntEFamMor mor obj obj
+  (0 obj : IntEFamObj c) -> IntEFamMor mor obj obj
 ifemId {c} mor cid (pos ** dir) = (id ** \ep => cid $ dir ep)
 
 public export
-ifemComp : {c : Type} ->
-  (mor : IntDifunctorSig c) -> (comp : IntComp c mor) ->
-  {x, y, z : IntEFamObj c} ->
+ifemComp : {0 c : Type} ->
+  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  {0 x, y, z : IntEFamObj c} ->
   IntEFamMor mor y z ->
   IntEFamMor mor x y ->
   IntEFamMor mor x z
@@ -244,7 +244,7 @@ MLEFamMor : MLEFamObj -> MLEFamObj -> Type
 MLEFamMor = IntEFamMor $ HomProf
 
 public export
-mlfmId : (x : MLEFamObj) -> MLEFamMor x x
+mlfmId : (0 x : MLEFamObj) -> MLEFamMor x x
 mlfmId = ifemId HomProf typeId
 
 public export
@@ -291,13 +291,13 @@ SliceEFamMor {c} = IntEFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
 slefmId : {c : Type} ->
-  (x : SliceEFamObj c) -> SliceEFamMor x x
-slefmId {c} = ifemId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
+  (0 x : SliceEFamObj c) -> SliceEFamMor x x
+slefmId {c} = ifemId {c=(SliceObj c)} (SliceMorphism {a=c}) (SliceId c)
 
 public export
-slefmComp : {c : Type} -> {x, y, z : SliceEFamObj c} ->
+slefmComp : {c : Type} -> {0 x, y, z : SliceEFamObj c} ->
   SliceEFamMor y z -> SliceEFamMor x y -> SliceEFamMor x z
-slefmComp {c} = ifemComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
+slefmComp {c} = ifemComp (SliceMor c) $ \x, y, z => SliceComp c x y z
 
 -- `InterpSLEFamObj` and `InterpSLEFamMor` comprise a functor from
 -- `SliceEFamObj c` to `SliceObj c` (for any `c : Type`).

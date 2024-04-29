@@ -16,11 +16,11 @@ IntMorSig c = c -> c -> Type
 
 public export
 0 IntIdSig : (c : Type) -> (mor : IntMorSig c) -> Type
-IntIdSig c mor = (x : c) -> mor x x
+IntIdSig c mor = (0 x : c) -> mor x x
 
 public export
 0 IntCompSig : (c : Type) -> (mor : IntMorSig c) -> Type
-IntCompSig c mor = (x, y, z : c) -> mor y z -> mor x y -> mor x z
+IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
 
 public export
 0 IntFMapSig : {0 c, d : Type} -> (0 _ : IntMorSig c) -> (0 _ : IntMorSig d) ->
@@ -46,7 +46,7 @@ intFmapComp {c} {d} {e} {cmor} {dmor} {emor} {g} {f} gm fm x y =
 public export
 0 IntNTSig : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
   (f, g : c -> d) -> Type
-IntNTSig {c} {d} {dmor} f g = (x : c) -> dmor (f x) (g x)
+IntNTSig {c} {d} {dmor} f g = (0 x : c) -> dmor (f x) (g x)
 
 public export
 intNTvcomp : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
@@ -129,14 +129,14 @@ public export
   IntMorSig c -> IntMorSig d ->
   (l : c -> d) -> (r : d -> c) -> Type
 IntAdjLAdjunctSig {c} {d} cmor dmor l r =
-  (a : c) -> (b : d) -> dmor (l a) b -> cmor a (r b)
+  (0 a : c) -> (0 b : d) -> dmor (l a) b -> cmor a (r b)
 
 public export
 0 IntAdjRAdjunctSig : {0 c, d : Type} ->
   IntMorSig c -> IntMorSig d ->
   (l : c -> d) -> (r : d -> c) -> Type
 IntAdjRAdjunctSig {c} {d} cmor dmor l r =
-  (a : c) -> (b : d) -> cmor a (r b) -> dmor (l a) b
+  (0 a : c) -> (0 b : d) -> cmor a (r b) -> dmor (l a) b
 
 public export
 IntAdjMonad : {0 c, d : Type} -> (l : c -> d) -> (r : d -> c) -> c -> c
@@ -261,6 +261,50 @@ IntAdjComultFromUnit {c} {d} cmor dmor cid l r lm unit =
     {h=(IntAdjMonad {c} {d} l r)}
     unit
     r
+
+public export
+IntAdjLAdjunctFromRMapAndUnit : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (ccomp : IntCompSig c cmor) ->
+  (l : c -> d) -> (r : d -> c) ->
+  IntAdjRMapSig {c} {d} cmor dmor r ->
+  IntAdjUnitSig {c} {d} cmor l r ->
+  IntAdjLAdjunctSig {c} {d} cmor dmor l r
+IntAdjLAdjunctFromRMapAndUnit cmor dmor ccomp l r rm unit a b mdlab =
+  ccomp a (r (l a)) (r b) (rm (l a) b mdlab) (unit a)
+
+public export
+IntAdjRAdjunctFromLMapAndCounit : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (dcomp : IntCompSig d dmor) ->
+  (l : c -> d) -> (r : d -> c) ->
+  IntAdjLMapSig {c} {d} cmor dmor l ->
+  IntAdjCounitSig {c} {d} dmor l r ->
+  IntAdjRAdjunctSig {c} {d} cmor dmor l r
+IntAdjRAdjunctFromLMapAndCounit cmor dmor dcomp l r lm counit a b mcrab =
+  dcomp (l a) (l (r b)) b (counit b) (lm a (r b) mcrab)
+
+public export
+IntAdjLMapFromRAdjunctAndUnit : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (ccomp : IntCompSig c cmor) ->
+  (l : c -> d) -> (r : d -> c) ->
+  IntAdjRAdjunctSig {c} {d} cmor dmor l r ->
+  IntAdjUnitSig {c} {d} cmor l r ->
+  IntAdjLMapSig {c} {d} cmor dmor l
+IntAdjLMapFromRAdjunctAndUnit cmor dmor ccomp l r radj unit x y cmxy =
+  radj x (l y) $ ccomp x y (r (l y)) (unit y) cmxy
+
+public export
+IntAdjRMapFromLAdjunctAndCounit : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (dcomp : IntCompSig d dmor) ->
+  (l : c -> d) -> (r : d -> c) ->
+  IntAdjLAdjunctSig {c} {d} cmor dmor l r ->
+  IntAdjCounitSig {c} {d} dmor l r ->
+  IntAdjRMapSig {c} {d} cmor dmor r
+IntAdjRMapFromLAdjunctAndCounit cmor dmor dcomp l r ladj counit x y dmxy =
+  ladj (r x) y $ dcomp (l (r x)) x y dmxy (counit x)
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
@@ -783,12 +827,12 @@ IntOpCatMor : (c : Type) -> IntDifunctorSig c -> IntDifunctorSig c
 IntOpCatMor c cmor = flip cmor
 
 public export
-IntOpCatId : (c : Type) -> (cmor : IntDifunctorSig c) ->
+IntOpCatId : (c : Type) -> (0 cmor : IntDifunctorSig c) ->
   IntIdSig c cmor -> IntIdSig c (IntOpCatMor c cmor)
 IntOpCatId c cmor cid = cid
 
 public export
-IntOpCatComp : (c : Type) -> (cmor : IntDifunctorSig c) ->
+IntOpCatComp : (c : Type) -> (0 cmor : IntDifunctorSig c) ->
   IntCompSig c cmor -> IntCompSig c (IntOpCatMor c cmor)
 IntOpCatComp c cmor comp x y z mzy myx = comp z y x myx mzy
 
@@ -1118,7 +1162,7 @@ DiscreteCatObj = id
 public export
 data DiscreteCatMor : {0 obj : Type} ->
     DiscreteCatObj obj -> DiscreteCatObj obj -> Type where
-  DCid : {0 obj : Type} -> (x : obj) -> DiscreteCatMor {obj} x x
+  DCid : {0 obj : Type} -> (0 x : obj) -> DiscreteCatMor {obj} x x
 
 public export
 DiscreteId : {0 obj : Type} ->
@@ -1214,15 +1258,15 @@ opTypeComp = IntOpCatComp Type HomProf typeComp
 
 public export
 SliceMor : (c : Type) -> SliceObj c -> SliceObj c -> Type
-SliceMor c = SliceMorphism {a=c}
+SliceMor c x y = (ec : c) -> x ec -> y ec
 
 public export
-SliceId : (c : Type) -> IntIdSig (SliceObj c) (SliceMor c)
-SliceId c = sliceId {a=c}
+SliceId : (0 c : Type) -> IntIdSig (SliceObj c) (SliceMor c)
+SliceId _ _ _ = id
 
 public export
-SliceComp : (c : Type) -> IntCompSig (SliceObj c) (SliceMor c)
-SliceComp c x y z = sliceComp {a=c} {x} {y} {z}
+SliceComp : (0 c : Type) -> IntCompSig (SliceObj c) (SliceMor c)
+SliceComp c x y z = \g, f => \ec => g ec . f ec
 
 ------------------------------------------
 ------------------------------------------
