@@ -41,7 +41,7 @@ icfuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -- from the opposite of `c`; see `IntUFamCat` for the notion of "universal
 -- family".)
 public export
-IntUCofamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+0 IntUCofamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUCofamObj c) -> Type
 IntUCofamMor {c} mor dom cod =
   (onidx : icfuoIdx cod -> icfuoIdx dom **
@@ -50,7 +50,7 @@ IntUCofamMor {c} mor dom cod =
 -- Note that this category is the opposite category of
 -- the category of existential families (AKA Dirichlet functors).
 export
-IntUCofamIsOpEFam : {c : Type} -> (mor : IntDifunctorSig c) ->
+0 IntUCofamIsOpEFam : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUCofamObj c) ->
   IntUCofamMor {c} mor dom cod =
   IntOpCatMor (IntEFamObj c) (IntEFamMor {c} mor) dom cod
@@ -59,7 +59,7 @@ IntUCofamIsOpEFam {c} mor dom cod = Refl
 -- Another way of viewing a universal cofamily is as a universal
 -- family on an opposite category.
 export
-IntUCofamIsUFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
+0 IntUCofamIsUFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUCofamObj c) ->
   IntUCofamMor {c} mor dom cod = IntUFamMor {c} (IntOpCatMor c mor) dom cod
 IntUCofamIsUFamOp {c} mor dom cod = Refl
@@ -199,7 +199,7 @@ MLUCofamObj : Type
 MLUCofamObj = IntUCofamObj Type
 
 public export
-MLUCofamMor : MLUCofamObj -> MLUCofamObj -> Type
+0 MLUCofamMor : MLUCofamObj -> MLUCofamObj -> Type
 MLUCofamMor = IntUCofamMor $ HomProf
 
 public export
@@ -243,7 +243,7 @@ SliceCofamObj : Type -> Type
 SliceCofamObj = IntUCofamObj . SliceObj
 
 public export
-SliceUCofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
+0 SliceUCofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
 SliceUCofamMor {c} = IntUCofamMor {c=(SliceObj c)} $ SliceMor c
 
 public export
