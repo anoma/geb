@@ -843,39 +843,39 @@ IntProfNThComp e d c p p' q q' beta alpha s t =
 --------------------------------------------------------
 
 public export
-IntOpCatMor : (c : Type) -> IntDifunctorSig c -> IntDifunctorSig c
+IntOpCatMor : (c : Type) -> IntMorSig c -> IntMorSig c
 IntOpCatMor c cmor = flip cmor
 
 public export
-IntOpCatId : (c : Type) -> (0 cmor : IntDifunctorSig c) ->
+IntOpCatId : (c : Type) -> (0 cmor : IntMorSig c) ->
   IntIdSig c cmor -> IntIdSig c (IntOpCatMor c cmor)
 IntOpCatId c cmor cid = cid
 
 public export
-IntOpCatComp : (c : Type) -> (0 cmor : IntDifunctorSig c) ->
+IntOpCatComp : (c : Type) -> (0 cmor : IntMorSig c) ->
   IntCompSig c cmor -> IntCompSig c (IntOpCatMor c cmor)
 IntOpCatComp c cmor comp x y z mzy myx = comp z y x myx mzy
 
 public export
 IntProdCatMor : (c, d : Type) ->
-  IntDifunctorSig c -> IntDifunctorSig d -> IntDifunctorSig (c, d)
+  IntMorSig c -> IntMorSig d -> IntMorSig (c, d)
 IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
 
 public export
 IntEndoProdCatMor : (c : Type) ->
-  IntDifunctorSig c -> IntDifunctorSig (c, c)
+  IntMorSig c -> IntMorSig (c, c)
 IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
 
 public export
 IntProdCatId : (c, d : Type) ->
-  (cmor : IntDifunctorSig c) -> (dmor : IntDifunctorSig d) ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   IntIdSig c cmor -> IntIdSig d dmor ->
   IntIdSig (c, d) (IntProdCatMor c d cmor dmor)
 IntProdCatId c d cmor dmor cid did (cobj, dobj) = (cid cobj, did dobj)
 
 public export
 IntProdCatComp : (c, d : Type) ->
-  (cmor : IntDifunctorSig c) -> (dmor : IntDifunctorSig d) ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   IntCompSig c cmor -> IntCompSig d dmor ->
   IntCompSig (c, d) (IntProdCatMor c d cmor dmor)
 IntProdCatComp c d cmor dmor ccomp dcomp (cx, dx) (cy, dy) (cz, dz)
@@ -884,24 +884,24 @@ IntProdCatComp c d cmor dmor ccomp dcomp (cx, dx) (cy, dy) (cz, dz)
 
 public export
 IntOpProdCatMor : (d, c : Type) ->
-  IntDifunctorSig d -> IntDifunctorSig c -> IntDifunctorSig (d, c)
+  IntMorSig d -> IntMorSig c -> IntMorSig (d, c)
 IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (IntOpCatMor d dmor) cmor
 
 public export
 IntEndoOpProdCatMor :
-  (c : Type) -> IntDifunctorSig c -> IntDifunctorSig (c, c)
+  (c : Type) -> IntMorSig c -> IntMorSig (c, c)
 IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
 
 public export
 IntOpProdCatId : (d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dmor : IntMorSig d) -> (cmor : IntMorSig c) ->
   IntIdSig d dmor -> IntIdSig c cmor ->
   IntIdSig (d, c) (IntOpProdCatMor d c dmor cmor)
 IntOpProdCatId d c dmor cmor = IntProdCatId d c (IntOpCatMor d dmor) cmor
 
 public export
 IntOpProdCatComp : (d, c : Type) ->
-  (dmor : IntDifunctorSig d) -> (cmor : IntDifunctorSig c) ->
+  (dmor : IntMorSig d) -> (cmor : IntMorSig c) ->
   IntCompSig d dmor -> IntCompSig c cmor ->
   IntCompSig (d, c) (IntOpProdCatMor d c dmor cmor)
 IntOpProdCatComp d c dmor cmor dcomp ccomp (dx, cx) (dy, cy) (dz, cz)

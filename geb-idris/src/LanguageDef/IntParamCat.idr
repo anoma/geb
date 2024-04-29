@@ -21,8 +21,8 @@ PBundleObj : Type -> Type
 PBundleObj x = x -> IntEFamObj TypeObj
 
 public export
-PBundleMor : {x, y : Type} ->
-  (dom : PBundleObj x) -> (cod : PBundleObj y) -> Type
+0 PBundleMor : {0 x, y : Type} ->
+  (0 dom : PBundleObj x) -> (0 cod : PBundleObj y) -> Type
 PBundleMor {x} {y} dom cod =
   IntEFamMor {c=(IntEFamObj TypeObj)} (IntEFamMor {c=TypeObj} TypeMor)
     (x ** dom)
