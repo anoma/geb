@@ -96,6 +96,69 @@ IntOpProdCatComp d c dmor cmor dcomp ccomp (dx, cx) (dy, cy) (dz, cz)
   (dmzy, cmyz) (dmyx, cmxy) =
     (dcomp dz dy dx dmyx dmzy, ccomp cx cy cz cmyz cmxy)
 
+-----------------------------
+---- Discrete categories ----
+-----------------------------
+
+public export
+DiscreteCatObj : Type -> Type
+DiscreteCatObj = id
+
+public export
+data DiscreteCatMor : {0 obj : Type} ->
+    DiscreteCatObj obj -> DiscreteCatObj obj -> Type where
+  DCid : {0 obj : Type} -> (0 x : obj) -> DiscreteCatMor {obj} x x
+
+public export
+0 DiscreteId : {0 obj : Type} ->
+  IntIdSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
+DiscreteId {obj} x = DCid x
+
+public export
+0 DiscreteComp : {0 obj : Type} ->
+  IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
+DiscreteComp _ _ _ x y = case (x, y) of (DCid a, DCid a) => DCid a
+
+---------------------------
+---- Terminal category ----
+---------------------------
+
+public export
+TerminalCatObj : Type
+TerminalCatObj = DiscreteCatObj Unit
+
+public export
+0 TerminalCatMor : TerminalCatObj -> TerminalCatObj -> Type
+TerminalCatMor = DiscreteCatMor {obj=Unit}
+
+public export
+0 TerminalId : IntIdSig TerminalCatObj TerminalCatMor
+TerminalId = DiscreteId {obj=Unit}
+
+public export
+0 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
+TerminalComp = DiscreteComp {obj=Unit}
+
+------------------------------------
+---- Metalanguage base category ----
+------------------------------------
+
+public export
+TypeObj : Type
+TypeObj = Type
+
+public export
+0 TypeMor : TypeObj -> TypeObj -> Type
+TypeMor = HomProf
+
+public export
+0 typeId : IntIdSig TypeObj TypeMor
+typeId _ = Prelude.id
+
+public export
+0 typeComp : IntCompSig TypeObj TypeMor
+typeComp _ _ _ = (.)
+
 ------------------
 ---- Functors ----
 ------------------
@@ -1168,69 +1231,6 @@ IntDiCoYonedaLemmaR : (0 c : Type) ->
   IntDiNTSig c (IntDiCoYonedaLemmaCoendBase c mor p) p
 IntDiCoYonedaLemmaR c mor p pdm x (ij ** ((mix, mxj), pji)) =
   pdm (snd ij) (fst ij) x x mxj mix pji
-
------------------------------
----- Discrete categories ----
------------------------------
-
-public export
-DiscreteCatObj : Type -> Type
-DiscreteCatObj = id
-
-public export
-data DiscreteCatMor : {0 obj : Type} ->
-    DiscreteCatObj obj -> DiscreteCatObj obj -> Type where
-  DCid : {0 obj : Type} -> (0 x : obj) -> DiscreteCatMor {obj} x x
-
-public export
-0 DiscreteId : {0 obj : Type} ->
-  IntIdSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
-DiscreteId {obj} x = DCid x
-
-public export
-0 DiscreteComp : {0 obj : Type} ->
-  IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
-DiscreteComp _ _ _ x y = case (x, y) of (DCid a, DCid a) => DCid a
-
----------------------------
----- Terminal category ----
----------------------------
-
-public export
-TerminalCatObj : Type
-TerminalCatObj = DiscreteCatObj Unit
-
-public export
-0 TerminalCatMor : TerminalCatObj -> TerminalCatObj -> Type
-TerminalCatMor = DiscreteCatMor {obj=Unit}
-
-public export
-0 TerminalId : IntIdSig TerminalCatObj TerminalCatMor
-TerminalId = DiscreteId {obj=Unit}
-
-public export
-0 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
-TerminalComp = DiscreteComp {obj=Unit}
-
-------------------------------------
----- Metalanguage base category ----
-------------------------------------
-
-public export
-TypeObj : Type
-TypeObj = Type
-
-public export
-0 TypeMor : TypeObj -> TypeObj -> Type
-TypeMor = HomProf
-
-public export
-0 typeId : IntIdSig TypeObj TypeMor
-typeId _ = Prelude.id
-
-public export
-0 typeComp : IntCompSig TypeObj TypeMor
-typeComp _ _ _ = (.)
 
 --------------------------------------------
 ---- Metalanguage profunctor signatures ----
