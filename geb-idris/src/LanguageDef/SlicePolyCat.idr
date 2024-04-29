@@ -1657,7 +1657,7 @@ SPFDmultiFamLCatObj : Type -> Type
 SPFDmultiFamLCatObj = SliceUFamObj
 
 export
-SPFDmultiFamLCatMor : {lcat : Type} ->
+0 SPFDmultiFamLCatMor : {lcat : Type} ->
   SPFDmultiFamLCatObj lcat -> SPFDmultiFamLCatObj lcat -> Type
 SPFDmultiFamLCatMor {lcat} = SliceUFamMor
 

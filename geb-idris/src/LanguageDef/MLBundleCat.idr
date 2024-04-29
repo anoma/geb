@@ -136,7 +136,7 @@ BcoDirichToC = BcoAtoC . BcoDirichToA
 -- Another equivalent formation is that of "existential families"
 -- (`IntEFamCat`).
 public export
-ABundleMor : (dom, cod : ABundleObj) -> Type
+0 ABundleMor : (dom, cod : ABundleObj) -> Type
 ABundleMor = IntEFamMor {c=Type} HomProf
 
 public export
