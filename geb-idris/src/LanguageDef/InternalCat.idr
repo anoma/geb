@@ -48,7 +48,8 @@ public export
 0 IntVCompSig : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
   (0 vcomp : IntCompSig obj vmor) ->
-  (0 cell : IntCellSig obj vmor hmor) -> Type
+  (0 cell : IntCellSig obj vmor hmor) ->
+  Type
 IntVCompSig {obj} {vmor} {hmor} vcomp cell =
   {0 x0, x1, y0, y1, z0, z1 : obj} ->
   (0 vmxy0 : vmor x0 y0) -> (0 vmxy1 : vmor x1 y1) ->
