@@ -13,7 +13,7 @@ import public LanguageDef.IntEFamCat
 -----------------
 
 public export
-record IntBundleObj {c : Type} (mor : IntDifunctorSig c) where
+record IntBundleObj {0 c : Type} (0 mor : IntDifunctorSig c) where
   constructor IBO
   iboDom : c
   iboCod : c
