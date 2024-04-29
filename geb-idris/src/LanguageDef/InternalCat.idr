@@ -142,16 +142,40 @@ public export
 IntUnitSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} id t
 
 public export
+intIdMonadUnit : {0 c : Type} ->
+  (cmor : IntMorSig c) -> (cid : IntIdSig c cmor) ->
+  IntUnitSig {c} cmor (IntIdFunctor c)
+intIdMonadUnit {c} cmor cid = cid
+
+public export
 0 IntCounitSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
 IntCounitSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} t id
+
+public export
+intIdComonadCounit : {0 c : Type} ->
+  (cmor : IntMorSig c) -> (cid : IntIdSig c cmor) ->
+  IntCounitSig {c} cmor (IntIdFunctor c)
+intIdComonadCounit {c} cmor cid = cid
 
 public export
 0 IntMultSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
 IntMultSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} (t . t) t
 
 public export
+intIdMonadMult : {0 c : Type} ->
+  (cmor : IntMorSig c) -> (cid : IntIdSig c cmor) ->
+  IntMultSig {c} cmor (IntIdFunctor c)
+intIdMonadMult {c} cmor cid = cid
+
+public export
 0 IntComultSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
 IntComultSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} t (t . t)
+
+public export
+intIdComonadComult : {0 c : Type} ->
+  (cmor : IntMorSig c) -> (cid : IntIdSig c cmor) ->
+  IntComultSig {c} cmor (IntIdFunctor c)
+intIdComonadComult {c} cmor cid = cid
 
 ---------------------
 ---------------------
