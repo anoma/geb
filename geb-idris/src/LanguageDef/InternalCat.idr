@@ -1185,12 +1185,12 @@ data DiscreteCatMor : {0 obj : Type} ->
   DCid : {0 obj : Type} -> (0 x : obj) -> DiscreteCatMor {obj} x x
 
 public export
-DiscreteId : {0 obj : Type} ->
+0 DiscreteId : {0 obj : Type} ->
   IntIdSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
 DiscreteId {obj} x = DCid x
 
 public export
-DiscreteComp : {0 obj : Type} ->
+0 DiscreteComp : {0 obj : Type} ->
   IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
 DiscreteComp a a a (DCid a) (DCid a) = DCid a
 
@@ -1205,15 +1205,15 @@ TerminalCatObj : Type
 TerminalCatObj = DiscreteCatObj Unit
 
 public export
-TerminalCatMor : TerminalCatObj -> TerminalCatObj -> Type
+0 TerminalCatMor : TerminalCatObj -> TerminalCatObj -> Type
 TerminalCatMor = DiscreteCatMor {obj=Unit}
 
 public export
-TerminalId : IntIdSig TerminalCatObj TerminalCatMor
+0 TerminalId : IntIdSig TerminalCatObj TerminalCatMor
 TerminalId = DiscreteId {obj=Unit}
 
 public export
-TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
+0 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
 TerminalComp = DiscreteComp {obj=Unit}
 
 ------------------------------------
@@ -1277,15 +1277,15 @@ opTypeComp = IntOpCatComp Type HomProf typeComp
 ---------------------------------------
 
 public export
-SliceMor : (c : Type) -> SliceObj c -> SliceObj c -> Type
+0 SliceMor : (c : Type) -> SliceObj c -> SliceObj c -> Type
 SliceMor c x y = (ec : c) -> x ec -> y ec
 
 public export
-SliceId : (0 c : Type) -> IntIdSig (SliceObj c) (SliceMor c)
+0 SliceId : (0 c : Type) -> IntIdSig (SliceObj c) (SliceMor c)
 SliceId _ _ _ = id
 
 public export
-SliceComp : (0 c : Type) -> IntCompSig (SliceObj c) (SliceMor c)
+0 SliceComp : (0 c : Type) -> IntCompSig (SliceObj c) (SliceMor c)
 SliceComp c x y z = \g, f => \ec => g ec . f ec
 
 ------------------------------------------
