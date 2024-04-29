@@ -98,13 +98,13 @@ icfemOnObj : {c : Type} -> {mor : IntDifunctorSig c} ->
 icfemOnObj = DPair.snd
 
 public export
-icfemId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
+0 icfemId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
   (0 obj : IntECofamObj c) -> IntECofamMor mor obj obj
 icfemId {c} mor cid =
   IntOpCatId (IntUFamObj c) (IntUFamMor {c} mor) (ifumId {c} mor cid)
 
 public export
-icfemComp : {c : Type} ->
+0 icfemComp : {c : Type} ->
   (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
   {0 x, y, z : IntECofamObj c} ->
   IntECofamMor mor y z ->
@@ -243,11 +243,11 @@ public export
 MLECofamMor = IntECofamMor $ HomProf
 
 public export
-mlfmId : (0 x : MLECofamObj) -> MLECofamMor x x
+0 mlfmId : (0 x : MLECofamObj) -> MLECofamMor x x
 mlfmId = icfemId HomProf typeId
 
 public export
-mlfmComp : {0 x, y, z : MLECofamObj} ->
+0 mlfmComp : {0 x, y, z : MLECofamObj} ->
   MLECofamMor y z -> MLECofamMor x y -> MLECofamMor x z
 mlfmComp = icfemComp HomProf (\_, _, _ => (.))
 
@@ -287,12 +287,12 @@ public export
 SliceECofamMor {c} = IntECofamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
-slufmId : {c : Type} ->
+0 slufmId : {c : Type} ->
   (0 x : SliceCofamObj c) -> SliceECofamMor x x
 slufmId {c} = icfemId {c=(SliceObj c)} (SliceMorphism {a=c}) (SliceId c)
 
 public export
-slufmComp : {c : Type} -> {0 x, y, z : SliceCofamObj c} ->
+0 slufmComp : {c : Type} -> {0 x, y, z : SliceCofamObj c} ->
   SliceECofamMor y z -> SliceECofamMor x y -> SliceECofamMor x z
 slufmComp {c} =
   icfemComp (SliceMor c) $ \x, y, z => SliceComp c x y z
