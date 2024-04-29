@@ -10,6 +10,10 @@ import Library.IdrisAlgebra
 --------------------------------------
 --------------------------------------
 
+------------------------------------------
+---- Morphisms, identity, composition ----
+------------------------------------------
+
 public export
 0 IntMorSig : Type -> Type
 IntMorSig c = c -> c -> Type
@@ -21,6 +25,10 @@ IntIdSig c mor = (0 x : c) -> mor x x
 public export
 0 IntCompSig : (c : Type) -> (mor : IntMorSig c) -> Type
 IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
+
+------------------
+---- Functors ----
+------------------
 
 public export
 0 IntFMapSig : {0 c, d : Type} -> (0 _ : IntMorSig c) -> (0 _ : IntMorSig d) ->
@@ -42,6 +50,10 @@ intFmapComp : {0 c, d, e : Type} ->
   IntFMapSig {c} {d=e} cmor emor (g . f)
 intFmapComp {c} {d} {e} {cmor} {dmor} {emor} {g} {f} gm fm x y =
   gm (f x) (f y) . fm x y
+
+---------------------------------
+---- Natural transformations ----
+---------------------------------
 
 public export
 0 IntNTSig : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
@@ -96,6 +108,10 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
     (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f' x)
     (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha x)
 
+-----------------------------
+---- Monads and comonads ----
+-----------------------------
+
 public export
 0 IntUnitSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
 IntUnitSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} id t
@@ -111,6 +127,10 @@ IntMultSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} (t . t) t
 public export
 0 IntComultSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
 IntComultSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} t (t . t)
+
+---------------------
+---- Adjunctions ----
+---------------------
 
 public export
 0 IntAdjLMapSig : {0 c, d : Type} ->
