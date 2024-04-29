@@ -165,19 +165,19 @@ typeComp _ _ _ = (.)
 
 public export
 OpTypeObj : Type
-OpTypeObj = Type
+OpTypeObj = TypeObj
 
 public export
 0 OpTypeMor : OpTypeObj -> OpTypeObj -> Type
-OpTypeMor = IntOpCatMor Type HomProf
+OpTypeMor = IntOpCatMor TypeObj TypeMor
 
 public export
 0 opTypeId : IntIdSig OpTypeObj OpTypeMor
-opTypeId = IntOpCatId Type HomProf typeId
+opTypeId = IntOpCatId TypeObj TypeMor typeId
 
 public export
 0 opTypeComp : IntCompSig OpTypeObj OpTypeMor
-opTypeComp = IntOpCatComp Type HomProf typeComp
+opTypeComp = IntOpCatComp TypeObj TypeMor typeComp
 
 ---------------------------------------
 ---- Metalanguage slice categories ----
