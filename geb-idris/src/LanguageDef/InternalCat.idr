@@ -1238,6 +1238,10 @@ public export
 0 typeComp : IntCompSig TypeObj TypeMor
 typeComp _ _ _ = (.)
 
+--------------------------------------------
+---- Metalanguage profunctor signatures ----
+--------------------------------------------
+
 public export
 TypeDimap : {0 p : ProfunctorSig} ->
   DimapSig p -> IntEndoDimapSig TypeObj TypeMor p
