@@ -845,38 +845,38 @@ IntProfNThComp e d c p p' q q' beta alpha s t =
 -----------------------------------------
 
 public export
-IntOpCatMor : (c : Type) -> IntMorSig c -> IntMorSig c
+0 IntOpCatMor : (0 c : Type) -> IntMorSig c -> IntMorSig c
 IntOpCatMor c cmor = flip cmor
 
 public export
-IntOpCatId : (c : Type) -> (0 cmor : IntMorSig c) ->
+0 IntOpCatId : (0 c : Type) -> (0 cmor : IntMorSig c) ->
   IntIdSig c cmor -> IntIdSig c (IntOpCatMor c cmor)
 IntOpCatId c cmor cid = cid
 
 public export
-IntOpCatComp : (c : Type) -> (0 cmor : IntMorSig c) ->
+0 IntOpCatComp : (0 c : Type) -> (0 cmor : IntMorSig c) ->
   IntCompSig c cmor -> IntCompSig c (IntOpCatMor c cmor)
 IntOpCatComp c cmor comp x y z mzy myx = comp z y x myx mzy
 
 public export
-IntProdCatMor : (c, d : Type) ->
+0 IntProdCatMor : (0 c, d : Type) ->
   IntMorSig c -> IntMorSig d -> IntMorSig (c, d)
 IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
 
 public export
-IntEndoProdCatMor : (c : Type) ->
+0 IntEndoProdCatMor : (0 c : Type) ->
   IntMorSig c -> IntMorSig (c, c)
 IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
 
 public export
-IntProdCatId : (c, d : Type) ->
+0 IntProdCatId : (0 c, d : Type) ->
   (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   IntIdSig c cmor -> IntIdSig d dmor ->
   IntIdSig (c, d) (IntProdCatMor c d cmor dmor)
 IntProdCatId c d cmor dmor cid did (cobj, dobj) = (cid cobj, did dobj)
 
 public export
-IntProdCatComp : (c, d : Type) ->
+0 IntProdCatComp : (0 c, d : Type) ->
   (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   IntCompSig c cmor -> IntCompSig d dmor ->
   IntCompSig (c, d) (IntProdCatMor c d cmor dmor)
@@ -885,24 +885,24 @@ IntProdCatComp c d cmor dmor ccomp dcomp (cx, dx) (cy, dy) (cz, dz)
     (ccomp cx cy cz cmyz cmxy, dcomp dx dy dz dmyz dmxy)
 
 public export
-IntOpProdCatMor : (d, c : Type) ->
+0 IntOpProdCatMor : (0 d, c : Type) ->
   IntMorSig d -> IntMorSig c -> IntMorSig (d, c)
 IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (IntOpCatMor d dmor) cmor
 
 public export
-IntEndoOpProdCatMor :
-  (c : Type) -> IntMorSig c -> IntMorSig (c, c)
+0 IntEndoOpProdCatMor :
+  (0 c : Type) -> IntMorSig c -> IntMorSig (c, c)
 IntEndoOpProdCatMor c mor = IntOpProdCatMor c c mor mor
 
 public export
-IntOpProdCatId : (d, c : Type) ->
+0 IntOpProdCatId : (0 d, c : Type) ->
   (dmor : IntMorSig d) -> (cmor : IntMorSig c) ->
   IntIdSig d dmor -> IntIdSig c cmor ->
   IntIdSig (d, c) (IntOpProdCatMor d c dmor cmor)
 IntOpProdCatId d c dmor cmor = IntProdCatId d c (IntOpCatMor d dmor) cmor
 
 public export
-IntOpProdCatComp : (d, c : Type) ->
+0 IntOpProdCatComp : (0 d, c : Type) ->
   (dmor : IntMorSig d) -> (cmor : IntMorSig c) ->
   IntCompSig d dmor -> IntCompSig c cmor ->
   IntCompSig (d, c) (IntOpProdCatMor d c dmor cmor)
@@ -1261,15 +1261,15 @@ OpTypeObj : Type
 OpTypeObj = Type
 
 public export
-OpTypeMor : OpTypeObj -> OpTypeObj -> Type
+0 OpTypeMor : OpTypeObj -> OpTypeObj -> Type
 OpTypeMor = IntOpCatMor Type HomProf
 
 public export
-opTypeId : IntIdSig OpTypeObj OpTypeMor
+0 opTypeId : IntIdSig OpTypeObj OpTypeMor
 opTypeId = IntOpCatId Type HomProf typeId
 
 public export
-opTypeComp : IntCompSig OpTypeObj OpTypeMor
+0 opTypeComp : IntCompSig OpTypeObj OpTypeMor
 opTypeComp = IntOpCatComp Type HomProf typeComp
 
 ---------------------------------------
@@ -1301,14 +1301,14 @@ OpSliceObj : Type -> Type
 OpSliceObj = SliceObj
 
 public export
-OpSliceMor : (c : Type) -> OpSliceObj c -> OpSliceObj c -> Type
+0 OpSliceMor : (c : Type) -> OpSliceObj c -> OpSliceObj c -> Type
 OpSliceMor c = IntOpCatMor (SliceObj c) (SliceMor c)
 
-OpSliceId : (c : Type) -> IntIdSig (OpSliceObj c) (OpSliceMor c)
+0 OpSliceId : (c : Type) -> IntIdSig (OpSliceObj c) (OpSliceMor c)
 OpSliceId c = IntOpCatId (SliceObj c) (SliceMor c) (SliceId c)
 
 public export
-OpSliceComp : (c : Type) -> IntCompSig (OpSliceObj c) (OpSliceMor c)
+0 OpSliceComp : (c : Type) -> IntCompSig (OpSliceObj c) (OpSliceMor c)
 OpSliceComp c = IntOpCatComp (SliceObj c) (SliceMor c) (SliceComp c)
 
 --------------------------------------------------
