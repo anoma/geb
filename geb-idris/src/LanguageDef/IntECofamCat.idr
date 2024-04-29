@@ -396,5 +396,5 @@ MLPolyCatElemObj : MLPolyCatObj -> Type
 MLPolyCatElemObj = PolyCatElemObj Type HomProf
 
 public export
-MLPolyCatElemMor : (p : MLPolyCatObj) -> (x, y : MLPolyCatElemObj p) -> Type
+0 MLPolyCatElemMor : (p : MLPolyCatObj) -> (x, y : MLPolyCatElemObj p) -> Type
 MLPolyCatElemMor = PolyCatElemMor Type HomProf typeComp

@@ -244,11 +244,11 @@ public export
 MLEFamMor = IntEFamMor $ HomProf
 
 public export
-mlfmId : (0 x : MLEFamObj) -> MLEFamMor x x
+0 mlfmId : (0 x : MLEFamObj) -> MLEFamMor x x
 mlfmId = ifemId HomProf typeId
 
 public export
-mlfmComp : {x, y, z : MLEFamObj} ->
+0 mlfmComp : {x, y, z : MLEFamObj} ->
   MLEFamMor y z -> MLEFamMor x y -> MLEFamMor x z
 mlfmComp = ifemComp HomProf (\_, _, _ => (.))
 
@@ -290,12 +290,12 @@ public export
 SliceEFamMor {c} = IntEFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
-slefmId : {c : Type} ->
+0 slefmId : {c : Type} ->
   (0 x : SliceEFamObj c) -> SliceEFamMor x x
 slefmId {c} = ifemId {c=(SliceObj c)} (SliceMorphism {a=c}) (SliceId c)
 
 public export
-slefmComp : {c : Type} -> {0 x, y, z : SliceEFamObj c} ->
+0 slefmComp : {c : Type} -> {0 x, y, z : SliceEFamObj c} ->
   SliceEFamMor y z -> SliceEFamMor x y -> SliceEFamMor x z
 slefmComp {c} = ifemComp (SliceMor c) $ \x, y, z => SliceComp c x y z
 
@@ -400,6 +400,6 @@ MLDirichCatElemObj : MLDirichCatObj -> Type
 MLDirichCatElemObj = DirichCatElemObj Type HomProf
 
 public export
-MLDirichCatElemMor : (ar : MLDirichCatObj) ->
+0 MLDirichCatElemMor : (ar : MLDirichCatObj) ->
   MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
 MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp

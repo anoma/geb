@@ -1190,7 +1190,7 @@ DiscreteId {obj} x = DCid x
 public export
 0 DiscreteComp : {0 obj : Type} ->
   IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
-DiscreteComp a a a (DCid a) (DCid a) = DCid a
+DiscreteComp _ _ _ x y = case (x, y) of (DCid a, DCid a) => DCid a
 
 ---------------------------
 ---- Terminal category ----
