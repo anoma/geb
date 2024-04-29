@@ -26,6 +26,14 @@ public export
 0 IntCompSig : (c : Type) -> (mor : IntMorSig c) -> Type
 IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
 
+public export
+record IntCatSig where
+  constructor ICat
+  icObj : Type
+  icMor : IntMorSig icObj
+  icId : IntIdSig icObj icMor
+  icComp : IntCompSig icObj icMor
+
 ------------------
 ---- Functors ----
 ------------------
