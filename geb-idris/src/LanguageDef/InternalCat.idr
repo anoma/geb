@@ -62,6 +62,24 @@ IntVCompSig {obj} {vmor} {hmor} vcomp cell =
   cell x0 x1 z0 z1
     (vcomp x0 y0 z0 vmyz0 vmxy0) (vcomp x1 y1 z1 vmyz1 vmxy1) hmx hmz
 
+public export
+0 IntHCompSig : {0 obj : Type} ->
+  {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
+  (0 hcomp : IntCompSig obj hmor) ->
+  (0 cell : IntCellSig obj vmor hmor) ->
+  Type
+IntHCompSig {obj} {vmor} {hmor} hcomp cell =
+  {0 x0, x1, x2, y0, y1, y2 : obj} ->
+  (0 vmxy0 : vmor x0 y0) -> (0 vmxy1 : vmor x1 y1) -> (0 vmxy2 : vmor x2 y2) ->
+  (0 hmx01 : hmor x0 x1) -> (0 hmx12 : hmor x1 x2) ->
+  (0 hmy01 : hmor y0 y1) -> (0 hmy12 : hmor y1 y2) ->
+  cell x0 x1 y0 y1
+    vmxy0 vmxy1 hmx01 hmy01 ->
+  cell x1 x2 y1 y2
+    vmxy1 vmxy2 hmx12 hmy12 ->
+  cell x0 x2 y0 y2
+    vmxy0 vmxy2 (hcomp x0 x1 x2 hmx12 hmx01) (hcomp y0 y1 y2 hmy12 hmy01)
+
 ------------------
 ------------------
 ---- Functors ----
