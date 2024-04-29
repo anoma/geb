@@ -32,9 +32,9 @@ IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
 ---------------------------------
 ---------------------------------
 
------------------------------------------
----- Opposite and product categories ----
------------------------------------------
+-----------------------------
+---- Opposite categories ----
+-----------------------------
 
 public export
 0 IntOpCatMor : (0 c : Type) -> IntMorSig c -> IntMorSig c
@@ -49,6 +49,10 @@ public export
 0 IntOpCatComp : (0 c : Type) -> (0 cmor : IntMorSig c) ->
   IntCompSig c cmor -> IntCompSig c (IntOpCatMor c cmor)
 IntOpCatComp c cmor comp x y z mzy myx = comp z y x myx mzy
+
+----------------------------
+---- Product categories ----
+----------------------------
 
 public export
 0 IntProdCatMor : (0 c, d : Type) ->
@@ -75,6 +79,10 @@ public export
 IntProdCatComp c d cmor dmor ccomp dcomp (cx, dx) (cy, dy) (cz, dz)
   (cmyz, dmyz) (cmxy, dmxy) =
     (ccomp cx cy cz cmyz cmxy, dcomp dx dy dz dmyz dmxy)
+
+-------------------------------------
+---- Opposite-product categories ----
+-------------------------------------
 
 public export
 0 IntOpProdCatMor : (0 d, c : Type) ->
