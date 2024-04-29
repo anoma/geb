@@ -26,6 +26,12 @@ public export
 0 IntCompSig : (c : Type) -> (mor : IntMorSig c) -> Type
 IntCompSig c mor = (0 x, y, z : c) -> mor y z -> mor x y -> mor x z
 
+---------------------------------
+---------------------------------
+---- Core general categories ----
+---------------------------------
+---------------------------------
+
 -----------------------------------------
 ---- Opposite and product categories ----
 -----------------------------------------
