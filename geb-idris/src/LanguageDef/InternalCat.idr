@@ -223,6 +223,50 @@ IntAdjComultSig {c} {d} dmor l r =
   IntComultSig {c=d} dmor (IntAdjComonad {c} {d} l r)
 
 public export
+IntAdjLAdjunctFromRMapAndUnit : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (ccomp : IntCompSig c cmor) ->
+  (0 l : c -> d) -> (0 r : d -> c) ->
+  IntAdjRMapSig {c} {d} cmor dmor r ->
+  IntAdjUnitSig {c} {d} cmor l r ->
+  IntAdjLAdjunctSig {c} {d} cmor dmor l r
+IntAdjLAdjunctFromRMapAndUnit cmor dmor ccomp l r rm unit a b mdlab =
+  ccomp a (r (l a)) (r b) (rm (l a) b mdlab) (unit a)
+
+public export
+IntAdjRAdjunctFromLMapAndCounit : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (dcomp : IntCompSig d dmor) ->
+  (0 l : c -> d) -> (0 r : d -> c) ->
+  IntAdjLMapSig {c} {d} cmor dmor l ->
+  IntAdjCounitSig {c} {d} dmor l r ->
+  IntAdjRAdjunctSig {c} {d} cmor dmor l r
+IntAdjRAdjunctFromLMapAndCounit cmor dmor dcomp l r lm counit a b mcrab =
+  dcomp (l a) (l (r b)) b (counit b) (lm a (r b) mcrab)
+
+public export
+IntAdjLMapFromRAdjunctAndUnit : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (ccomp : IntCompSig c cmor) ->
+  (0 l : c -> d) -> (0 r : d -> c) ->
+  IntAdjRAdjunctSig {c} {d} cmor dmor l r ->
+  IntAdjUnitSig {c} {d} cmor l r ->
+  IntAdjLMapSig {c} {d} cmor dmor l
+IntAdjLMapFromRAdjunctAndUnit cmor dmor ccomp l r radj unit x y cmxy =
+  radj x (l y) $ ccomp x y (r (l y)) (unit y) cmxy
+
+public export
+IntAdjRMapFromLAdjunctAndCounit : {0 c, d : Type} ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  (dcomp : IntCompSig d dmor) ->
+  (0 l : c -> d) -> (0 r : d -> c) ->
+  IntAdjLAdjunctSig {c} {d} cmor dmor l r ->
+  IntAdjCounitSig {c} {d} dmor l r ->
+  IntAdjRMapSig {c} {d} cmor dmor r
+IntAdjRMapFromLAdjunctAndCounit cmor dmor dcomp l r ladj counit x y dmxy =
+  ladj (r x) y $ dcomp (l (r x)) x y dmxy (counit x)
+
+public export
 IntAdjUnitFromLAdjunct : {0 c, d : Type} ->
   (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   (did : IntIdSig d dmor) ->
@@ -281,50 +325,6 @@ IntAdjComultFromUnit {c} {d} cmor dmor cid l r lm unit =
     {h=(IntAdjMonad {c} {d} l r)}
     unit
     r
-
-public export
-IntAdjLAdjunctFromRMapAndUnit : {0 c, d : Type} ->
-  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
-  (ccomp : IntCompSig c cmor) ->
-  (0 l : c -> d) -> (0 r : d -> c) ->
-  IntAdjRMapSig {c} {d} cmor dmor r ->
-  IntAdjUnitSig {c} {d} cmor l r ->
-  IntAdjLAdjunctSig {c} {d} cmor dmor l r
-IntAdjLAdjunctFromRMapAndUnit cmor dmor ccomp l r rm unit a b mdlab =
-  ccomp a (r (l a)) (r b) (rm (l a) b mdlab) (unit a)
-
-public export
-IntAdjRAdjunctFromLMapAndCounit : {0 c, d : Type} ->
-  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
-  (dcomp : IntCompSig d dmor) ->
-  (0 l : c -> d) -> (0 r : d -> c) ->
-  IntAdjLMapSig {c} {d} cmor dmor l ->
-  IntAdjCounitSig {c} {d} dmor l r ->
-  IntAdjRAdjunctSig {c} {d} cmor dmor l r
-IntAdjRAdjunctFromLMapAndCounit cmor dmor dcomp l r lm counit a b mcrab =
-  dcomp (l a) (l (r b)) b (counit b) (lm a (r b) mcrab)
-
-public export
-IntAdjLMapFromRAdjunctAndUnit : {0 c, d : Type} ->
-  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
-  (ccomp : IntCompSig c cmor) ->
-  (0 l : c -> d) -> (0 r : d -> c) ->
-  IntAdjRAdjunctSig {c} {d} cmor dmor l r ->
-  IntAdjUnitSig {c} {d} cmor l r ->
-  IntAdjLMapSig {c} {d} cmor dmor l
-IntAdjLMapFromRAdjunctAndUnit cmor dmor ccomp l r radj unit x y cmxy =
-  radj x (l y) $ ccomp x y (r (l y)) (unit y) cmxy
-
-public export
-IntAdjRMapFromLAdjunctAndCounit : {0 c, d : Type} ->
-  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
-  (dcomp : IntCompSig d dmor) ->
-  (0 l : c -> d) -> (0 r : d -> c) ->
-  IntAdjLAdjunctSig {c} {d} cmor dmor l r ->
-  IntAdjCounitSig {c} {d} dmor l r ->
-  IntAdjRMapSig {c} {d} cmor dmor r
-IntAdjRMapFromLAdjunctAndCounit cmor dmor dcomp l r ladj counit x y dmxy =
-  ladj (r x) y $ dcomp (l (r x)) x y dmxy (counit x)
 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
