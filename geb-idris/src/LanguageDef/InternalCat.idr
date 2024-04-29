@@ -373,6 +373,26 @@ public export
   IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
 DiscreteComp _ _ _ x y = case (x, y) of (DCid a, DCid a) => DCid a
 
+--------------------------
+---- Initial category ----
+--------------------------
+
+public export
+InitialCatObj : Type
+InitialCatObj = DiscreteCatObj Void
+
+public export
+0 InitialCatMor : InitialCatObj -> InitialCatObj -> Type
+InitialCatMor = DiscreteCatMor {obj=Void}
+
+public export
+0 InitialId : IntIdSig InitialCatObj InitialCatMor
+InitialId = DiscreteId {obj=Void}
+
+public export
+0 InitialComp : IntCompSig InitialCatObj InitialCatMor
+InitialComp = DiscreteComp {obj=Void}
+
 ---------------------------
 ---- Terminal category ----
 ---------------------------
