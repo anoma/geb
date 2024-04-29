@@ -1170,9 +1170,7 @@ IntDiCoYonedaLemmaR c mor p pdm x (ij ** ((mix, mxj), pji)) =
   pdm (snd ij) (fst ij) x x mxj mix pji
 
 -----------------------------
------------------------------
 ---- Discrete categories ----
------------------------------
 -----------------------------
 
 public export
@@ -1195,9 +1193,7 @@ public export
 DiscreteComp a a a (DCid a) (DCid a) = DCid a
 
 ---------------------------
----------------------------
 ---- Terminal category ----
----------------------------
 ---------------------------
 
 public export
@@ -1217,9 +1213,7 @@ public export
 TerminalComp = DiscreteComp {obj=Unit}
 
 ------------------------------------
-------------------------------------
 ---- Metalanguage base category ----
-------------------------------------
 ------------------------------------
 
 public export
@@ -1253,9 +1247,7 @@ TypeProfDimap : {0 p : ProfunctorSig} ->
 TypeProfDimap {p} isP = TypeDimap {p} (dimap {f=p})
 
 ------------------------------------------------
-------------------------------------------------
 ---- Opposite of metalanguage base category ----
-------------------------------------------------
 ------------------------------------------------
 
 public export
@@ -1275,9 +1267,7 @@ public export
 opTypeComp = IntOpCatComp Type HomProf typeComp
 
 ---------------------------------------
----------------------------------------
 ---- Metalanguage slice categories ----
----------------------------------------
 ---------------------------------------
 
 public export
@@ -1293,9 +1283,7 @@ public export
 SliceComp c x y z = \g, f => \ec => g ec . f ec
 
 ------------------------------------------
-------------------------------------------
 ---- Metalanguage op-slice categories ----
-------------------------------------------
 ------------------------------------------
 
 public export
