@@ -37,6 +37,10 @@ record IntCatSig where
 ------------------
 
 public export
+0 IntIdFunctor : (0 c : Type) -> c -> c
+IntIdFunctor c = Prelude.id {a=c}
+
+public export
 0 IntFMapSig : {0 c, d : Type} -> (0 _ : IntMorSig c) -> (0 _ : IntMorSig d) ->
   (c -> d) -> Type
 IntFMapSig {c} {d} cmor dmor omap =
@@ -46,6 +50,11 @@ public export
 0 IntEndoFMapSig : {0 c : Type} -> (0 _ : IntMorSig c) ->
   (c -> c) -> Type
 IntEndoFMapSig {c} cmor = IntFMapSig {c} {d=c} cmor cmor
+
+public export
+0 intFMapId : {0 c : Type} -> (0 cmor : IntMorSig c) ->
+  IntFMapSig {c} {d=c} cmor cmor (IntIdFunctor c)
+intFMapId {c} cmor x y = Prelude.id {a=(cmor x y)}
 
 public export
 intFmapComp : {0 c, d, e : Type} ->
@@ -67,6 +76,12 @@ public export
 0 IntNTSig : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
   (f, g : c -> d) -> Type
 IntNTSig {c} {d} {dmor} f g = (0 x : c) -> dmor (f x) (g x)
+
+public export
+0 intNTid : {0 c : Type} ->
+  (0 cmor : IntMorSig c) -> (0 cid : IntIdSig c cmor) ->
+  IntNTSig {c} {d=c} {dmor=cmor} (IntIdFunctor c) (IntIdFunctor c)
+intNTid {c} cmor cid x = cid x
 
 public export
 intNTvcomp : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
@@ -314,7 +329,7 @@ IntAdjMultFromCounit {c} {d} cmor dmor did l r rm counit =
     rm
   $ intNTwhiskerL {c} {d} {e=d} {emor=dmor}
     {g=(IntAdjComonad {c} {d} l r)}
-    {h=(Prelude.id {a=d})}
+    {h=(IntIdFunctor d)}
     counit
     l
 
@@ -333,7 +348,7 @@ IntAdjComultFromUnit {c} {d} cmor dmor cid l r lm unit =
     {h=l}
     lm
   $ intNTwhiskerL {c=d} {d=c} {e=c} {emor=cmor}
-    {g=(Prelude.id {a=c})}
+    {g=(IntIdFunctor c)}
     {h=(IntAdjMonad {c} {d} l r)}
     unit
     r
