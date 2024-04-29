@@ -36,6 +36,10 @@ record IntCatSig where
 ------------------------
 ------------------------
 
+public export
+0 Int2MorphSig : (0 obj : Type) -> (0 mor : IntMorSig obj) -> Type
+Int2MorphSig obj mor = (0 x, y : obj) -> (0 f, g : mor x y) -> Type
+
 ---------------------------
 ---------------------------
 ---- Double categories ----
@@ -48,7 +52,18 @@ public export
   Type
 IntCellSig obj vmor hmor =
   (0 x0, x1, y0, y1 : obj) ->
-  vmor x0 y0 -> vmor x1 y1 -> hmor x0 x1 -> hmor y0 y1 -> Type
+  (0 _ : vmor x0 y0) -> (0 _ : vmor x1 y1) ->
+  (0 _ : hmor x0 x1) -> (0 _ : hmor y0 y1) ->
+  Type
+
+public export
+0 IntCellTo2Sig : {0 obj : Type} ->
+  {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
+  IntIdSig obj vmor ->
+  (0 cell : IntCellSig obj vmor hmor) ->
+  Int2MorphSig obj hmor
+IntCellTo2Sig {obj} {vmor} {hmor} vid cell x y =
+  cell x y x y (vid x) (vid y)
 
 public export
 0 IntDVCompSig : {0 obj : Type} ->
@@ -61,10 +76,10 @@ IntDVCompSig {obj} {vmor} {hmor} vcomp cell =
   (0 vmxy0 : vmor x0 y0) -> (0 vmxy1 : vmor x1 y1) ->
   (0 vmyz0 : vmor y0 z0) -> (0 vmyz1 : vmor y1 z1) ->
   (0 hmx : hmor x0 x1) -> (0 hmy : hmor y0 y1) -> (0 hmz : hmor z0 z1) ->
-  cell y0 y1 z0 z1
-    vmyz0 vmyz1 hmy hmz ->
-  cell x0 x1 y0 y1
-    vmxy0 vmxy1 hmx hmy ->
+  (0 _ : cell y0 y1 z0 z1
+    vmyz0 vmyz1 hmy hmz) ->
+  (0 _ : cell x0 x1 y0 y1
+    vmxy0 vmxy1 hmx hmy) ->
   cell x0 x1 z0 z1
     (vcomp x0 y0 z0 vmyz0 vmxy0) (vcomp x1 y1 z1 vmyz1 vmxy1) hmx hmz
 
@@ -79,10 +94,10 @@ IntHDCompSig {obj} {vmor} {hmor} hcomp cell =
   (0 vmxy0 : vmor x0 y0) -> (0 vmxy1 : vmor x1 y1) -> (0 vmxy2 : vmor x2 y2) ->
   (0 hmx01 : hmor x0 x1) -> (0 hmx12 : hmor x1 x2) ->
   (0 hmy01 : hmor y0 y1) -> (0 hmy12 : hmor y1 y2) ->
-  cell x0 x1 y0 y1
-    vmxy0 vmxy1 hmx01 hmy01 ->
-  cell x1 x2 y1 y2
-    vmxy1 vmxy2 hmx12 hmy12 ->
+  (0 _ : cell x0 x1 y0 y1
+    vmxy0 vmxy1 hmx01 hmy01) ->
+  (0 _ : cell x1 x2 y1 y2
+    vmxy1 vmxy2 hmx12 hmy12) ->
   cell x0 x2 y0 y2
     vmxy0 vmxy2 (hcomp x0 x1 x2 hmx12 hmx01) (hcomp y0 y1 y2 hmy12 hmy01)
 
