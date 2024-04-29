@@ -150,6 +150,36 @@ IntCellHCompSig {obj} {vmor} {hmor} hcomp cell =
     vmxy0 vmxy2 (hcomp x0 x1 x2 hmx12 hmx01) (hcomp y0 y1 y2 hmy12 hmy01)
 
 public export
+0 IntCellTo2MorSig : {0 obj : Type} ->
+  {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
+  {0 vcomp : IntCompSig obj vmor} ->
+  (0 cell : IntCellSig obj vmor hmor) ->
+  (0 vid : IntIdSig obj vmor) ->
+  Type
+IntCellTo2MorSig {obj} {vmor} {hmor} {vcomp} cell vid =
+  (0 x, y : obj) -> (0 f, g : hmor x y) ->
+  cell x y x y
+    (vcomp x x x (vid x) (vid x))
+    (vcomp y y y (vid y) (vid y))
+    f g ->
+  cell x y x y
+    (vid x)
+    (vid y)
+    f g
+
+public export
+0 IntCellTo2VComp : {0 obj : Type} ->
+  {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
+  {0 vcomp : IntCompSig obj vmor} ->
+  {0 cell : IntCellSig obj vmor hmor} ->
+  (0 vid : IntIdSig obj vmor) ->
+  (0 c2m : IntCellTo2MorSig {obj} {vmor} {hmor} {vcomp} cell vid) ->
+  (0 _ : IntCellVCompSig {obj} {vmor} {hmor} vcomp cell) ->
+  Int2VCompSig {obj} {mor=hmor} (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
+IntCellTo2VComp vid c2m cvcomp f g h beta alpha =
+  c2m x y f h $ cvcomp (vid x) (vid y) (vid x) (vid y) f g h beta alpha
+
+public export
 0 IntCellTo2HComp : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
   {0 hcomp : IntCompSig obj hmor} ->
