@@ -74,6 +74,19 @@ Int2HCompSig {obj} {mor} comp mor2 =
   (0 f, f' : mor x y) -> (0 g, g' : mor y z) ->
   mor2 y z g g' -> mor2 x y f f' -> mor2 x z (comp x y z g f) (comp x y z g' f')
 
+public export
+record Int2CatSig where
+  constructor I2Cat
+  i2c1 : IntCatSig
+  0 i2c2Mor :
+    Int2MorphSig (icObj i2c1) (icMor i2c1)
+  0 i2c2Id :
+    Int2IdSig {obj=(icObj i2c1)} {mor=(icMor i2c1)} i2c2Mor
+  0 i2cVcomp :
+    Int2VCompSig {obj=(icObj i2c1)} {mor=(icMor i2c1)} i2c2Mor
+  0 i2cHcomp :
+    Int2HCompSig {obj=(icObj i2c1)} {mor=(icMor i2c1)} (icComp i2c1) i2c2Mor
+
 ---------------------------
 ---------------------------
 ---- Double categories ----
