@@ -280,20 +280,20 @@ BcmDirichFromC = BcmDirichFromA . BcmAfromC
 ----------------------------------
 
 export
-abId : (0 abo : ABundleObj) -> ABundleMor abo abo
+0 abId : (0 abo : ABundleObj) -> ABundleMor abo abo
 abId = ifemId {c=TypeObj} TypeMor typeId
 
 export
-abComp : {0 x, y, z : ABundleObj} ->
+0 abComp : {0 x, y, z : ABundleObj} ->
   ABundleMor y z -> ABundleMor x y -> ABundleMor x z
 abComp = ifemComp {c=TypeObj} TypeMor typeComp
 
 export
-cbId : (cbo : CBundleObj) -> CBundleMor cbo cbo
+0 cbId : (cbo : CBundleObj) -> CBundleMor cbo cbo
 cbId cbo = BcmCfromA $ abId (BcoCtoA cbo)
 
 export
-cbComp : {x, y, z : CBundleObj} ->
+0 cbComp : {x, y, z : CBundleObj} ->
   CBundleMor y z -> CBundleMor x y -> CBundleMor x z
 cbComp {x} {y} {z} g f =
   BcmCfromA $

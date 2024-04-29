@@ -6742,14 +6742,14 @@ InterpPFSliceMor : (a, a' : Type) -> InterpPolyFunc PFSliceObj a ->
 InterpPFSliceMor a a' = flip $ InterpPFMap {a} {b=a'} PFSliceObj
 
 public export
-InterpPFSliceElemSigma : (a, a' : MLPolyCatElemObj PFSliceObj) ->
+0 InterpPFSliceElemSigma : (a, a' : MLPolyCatElemObj PFSliceObj) ->
   MLPolyCatElemMor PFSliceObj a a' ->
   CSliceFunctor (fst a) (fst a')
 InterpPFSliceElemSigma (a ** (i ** ()) ** d) (a' ** (i' ** ()) ** d') m =
   CSSigma $ pcemMor _ _ _ _ _ _ m
 
 public export
-InterpPFSliceElemPi : (a, a' : MLPolyCatElemObj PFSliceObj) ->
+0 InterpPFSliceElemPi : (a, a' : MLPolyCatElemObj PFSliceObj) ->
   MLPolyCatElemMor PFSliceObj a a' ->
   CSliceFunctor (fst a) (fst a')
 InterpPFSliceElemPi (a ** (i ** ()) ** d) (a' ** (i' ** ()) ** d') m =

@@ -219,11 +219,11 @@ public export
 MLUFamMor = IntUFamMor $ HomProf
 
 public export
-mlfmId : (0 x : MLUFamObj) -> MLUFamMor x x
+0 mlfmId : (0 x : MLUFamObj) -> MLUFamMor x x
 mlfmId = ifumId HomProf typeId
 
 public export
-mlfmComp : {x, y, z : MLUFamObj} ->
+0 mlfmComp : {x, y, z : MLUFamObj} ->
   MLUFamMor y z -> MLUFamMor x y -> MLUFamMor x z
 mlfmComp = ifumComp HomProf (\_, _, _ => (.))
 
@@ -269,12 +269,12 @@ public export
 SliceUFamMor {c} = IntUFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
-slufmId : {c : Type} ->
+0 slufmId : {c : Type} ->
   (0 x : SliceUFamObj c) -> SliceUFamMor x x
 slufmId {c} = ifumId {c=(SliceObj c)} (SliceMorphism {a=c}) (SliceId c)
 
 public export
-slufmComp : {c : Type} -> {x, y, z : SliceUFamObj c} ->
+0 slufmComp : {c : Type} -> {x, y, z : SliceUFamObj c} ->
   SliceUFamMor y z -> SliceUFamMor x y -> SliceUFamMor x z
 slufmComp {c} =
   ifumComp (SliceMor c) $ \x, y, z => SliceComp c x y z
