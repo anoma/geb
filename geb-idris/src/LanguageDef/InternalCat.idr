@@ -26,9 +26,22 @@ public export
 record IntCatSig where
   constructor ICat
   icObj : Type
-  icMor : IntMorSig icObj
-  icId : IntIdSig icObj icMor
-  icComp : IntCompSig icObj icMor
+  0 icMor : IntMorSig icObj
+  0 icId : IntIdSig icObj icMor
+  0 icComp : IntCompSig icObj icMor
+
+-----------------
+-----------------
+---- Bundles ----
+-----------------
+-----------------
+
+public export
+record IntBundleObj {0 c : Type} (0 mor : IntMorSig c) where
+  constructor IBO
+  iboDom : c
+  iboCod : c
+  iboMor : mor iboDom iboCod
 
 ------------------------
 ------------------------
