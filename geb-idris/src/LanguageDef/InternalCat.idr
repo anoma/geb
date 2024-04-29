@@ -418,30 +418,39 @@ TerminalComp = DiscreteComp {obj=Unit}
 ----------------------------
 
 public export
+IntProdCatObj : Type -> Type -> Type
+IntProdCatObj c d = (c, d)
+
+public export
 0 IntProdCatMor : (0 c, d : Type) ->
-  IntMorSig c -> IntMorSig d -> IntMorSig (c, d)
-IntProdCatMor c d cmor dmor (a, b) (a', b') = (cmor a a', dmor b b')
+  IntMorSig c -> IntMorSig d -> IntMorSig (IntProdCatObj c d)
+IntProdCatMor c d cmor dmor ab ab' =
+  (cmor (fst ab) (fst ab'), dmor (snd ab) (snd ab'))
+
+public export
+IntEndoProdCatObj : Type -> Type
+IntEndoProdCatObj c = IntProdCatObj c c
 
 public export
 0 IntEndoProdCatMor : (0 c : Type) ->
-  IntMorSig c -> IntMorSig (c, c)
+  IntMorSig c -> IntMorSig (IntEndoProdCatObj c)
 IntEndoProdCatMor c mor = IntProdCatMor c c mor mor
 
 public export
 0 IntProdCatId : (0 c, d : Type) ->
   (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   IntIdSig c cmor -> IntIdSig d dmor ->
-  IntIdSig (c, d) (IntProdCatMor c d cmor dmor)
-IntProdCatId c d cmor dmor cid did (cobj, dobj) = (cid cobj, did dobj)
+  IntIdSig (IntProdCatObj c d) (IntProdCatMor c d cmor dmor)
+IntProdCatId c d cmor dmor cid did cdobj = (cid $ fst cdobj, did $ snd cdobj)
 
 public export
 0 IntProdCatComp : (0 c, d : Type) ->
   (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
   IntCompSig c cmor -> IntCompSig d dmor ->
-  IntCompSig (c, d) (IntProdCatMor c d cmor dmor)
-IntProdCatComp c d cmor dmor ccomp dcomp (cx, dx) (cy, dy) (cz, dz)
-  (cmyz, dmyz) (cmxy, dmxy) =
-    (ccomp cx cy cz cmyz cmxy, dcomp dx dy dz dmyz dmxy)
+  IntCompSig (IntProdCatObj c d) (IntProdCatMor c d cmor dmor)
+IntProdCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy =
+  (ccomp (fst cdx) (fst cdy) (fst cdz) (fst cdmyz) (fst cdmxy),
+   dcomp (snd cdx) (snd cdy) (snd cdz) (snd cdmyz) (snd cdmxy))
 
 -------------------------------------
 ---- Opposite-product categories ----
