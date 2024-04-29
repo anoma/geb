@@ -838,9 +838,11 @@ IntProfNThComp e d c p p' q q' beta alpha s t =
   IntProfNTwhiskerL e d c q q' beta p' s t .
   IntProfNTwhiskerR e d c p p' q alpha s t
 
---------------------------------------------------------
----- Profunctors in opposite and product categories ----
---------------------------------------------------------
+-----------------------------------------
+-----------------------------------------
+---- Opposite and product categories ----
+-----------------------------------------
+-----------------------------------------
 
 public export
 IntOpCatMor : (c : Type) -> IntMorSig c -> IntMorSig c
