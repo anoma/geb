@@ -40,6 +40,11 @@ public export
 0 Int2MorphSig : (0 obj : Type) -> (0 mor : IntMorSig obj) -> Type
 Int2MorphSig obj mor = (0 x, y : obj) -> (0 f, g : mor x y) -> Type
 
+public export
+0 Int2IdSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
+  (0 _ : Int2MorphSig obj mor) -> Type
+Int2IdSig {obj} {mor} mor2 = (0 x, y : obj) -> (0 f : mor x y) -> mor2 x y f f
+
 ---------------------------
 ---------------------------
 ---- Double categories ----
@@ -73,6 +78,15 @@ public export
   Type
 IntCellIdSig {obj} {vmor} {hmor} vid cell =
   (0 x, y : obj) -> (0 f : hmor x y) -> cell x y x y (vid x) (vid y) f f
+
+public export
+0 IntCellTo2Id : {0 obj : Type} ->
+  {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
+  {vid : IntIdSig obj vmor} ->
+  {0 cell : IntCellSig obj vmor hmor} ->
+  IntCellIdSig {obj} {vmor} {hmor} vid cell ->
+  Int2IdSig {obj} {mor=hmor} (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
+IntCellTo2Id {obj} {vmor} {hmor} {vid} {cell} = id
 
 public export
 IntCellVHId : {0 obj : Type} ->
