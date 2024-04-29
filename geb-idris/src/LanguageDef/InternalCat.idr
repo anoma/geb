@@ -4,15 +4,11 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import Library.IdrisAlgebra
 
---------------------------------------
---------------------------------------
----- Internal category signatures ----
---------------------------------------
---------------------------------------
-
-------------------------------------------
----- Morphisms, identity, composition ----
-------------------------------------------
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Internal category signatures (morphisms, identity, composition) ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 public export
 0 IntMorSig : Type -> Type
@@ -35,7 +31,9 @@ record IntCatSig where
   icComp : IntCompSig icObj icMor
 
 ------------------
+------------------
 ---- Functors ----
+------------------
 ------------------
 
 public export
@@ -60,7 +58,9 @@ intFmapComp {c} {d} {e} {cmor} {dmor} {emor} {g} {f} gm fm x y =
   gm (f x) (f y) . fm x y
 
 ---------------------------------
+---------------------------------
 ---- Natural transformations ----
+---------------------------------
 ---------------------------------
 
 public export
@@ -117,7 +117,9 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
     (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha x)
 
 -----------------------------
+-----------------------------
 ---- Monads and comonads ----
+-----------------------------
 -----------------------------
 
 public export
@@ -137,7 +139,9 @@ public export
 IntComultSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} t (t . t)
 
 ---------------------
+---------------------
 ---- Adjunctions ----
+---------------------
 ---------------------
 
 public export
