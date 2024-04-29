@@ -30,6 +30,37 @@ record IntCatSig where
   icId : IntIdSig icObj icMor
   icComp : IntCompSig icObj icMor
 
+---------------------------
+---------------------------
+---- n-fold categories ----
+---------------------------
+---------------------------
+
+public export
+0 IntCellSig : (0 obj : Type) ->
+  (0 vmor : IntMorSig obj) -> (0 hmor : IntMorSig obj) ->
+  Type
+IntCellSig obj vmor hmor =
+  (0 x0, x1, y0, y1 : obj) ->
+  vmor x0 y0 -> vmor x1 y1 -> hmor x0 x1 -> hmor y0 y1 -> Type
+
+public export
+0 IntVCompSig : {0 obj : Type} ->
+  {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
+  (0 vcomp : IntCompSig obj vmor) ->
+  (0 cell : IntCellSig obj vmor hmor) -> Type
+IntVCompSig {obj} {vmor} {hmor} vcomp cell =
+  {0 x0, x1, y0, y1, z0, z1 : obj} ->
+  (0 vmxy0 : vmor x0 y0) -> (0 vmxy1 : vmor x1 y1) ->
+  (0 vmyz0 : vmor y0 z0) -> (0 vmyz1 : vmor y1 z1) ->
+  (0 hmx : hmor x0 x1) -> (0 hmy : hmor y0 y1) -> (0 hmz : hmor z0 z1) ->
+  cell y0 y1 z0 z1
+    vmyz0 vmyz1 hmy hmz ->
+  cell x0 x1 y0 y1
+    vmxy0 vmxy1 hmx hmy ->
+  cell x0 x1 z0 z1
+    (vcomp x0 y0 z0 vmyz0 vmxy0) (vcomp x1 y1 z1 vmyz1 vmxy1) hmx hmz
+
 ------------------
 ------------------
 ---- Functors ----
