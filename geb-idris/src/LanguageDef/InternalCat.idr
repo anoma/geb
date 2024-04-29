@@ -1227,15 +1227,15 @@ TypeObj : Type
 TypeObj = Type
 
 public export
-TypeMor : TypeObj -> TypeObj -> Type
+0 TypeMor : TypeObj -> TypeObj -> Type
 TypeMor = HomProf
 
 public export
-typeId : IntIdSig TypeObj TypeMor
+0 typeId : IntIdSig TypeObj TypeMor
 typeId _ = Prelude.id
 
 public export
-typeComp : IntCompSig TypeObj TypeMor
+0 typeComp : IntCompSig TypeObj TypeMor
 typeComp _ _ _ = (.)
 
 public export
@@ -1442,7 +1442,7 @@ DiYonedaLemmaL p {isP} = IntDiYonedaLemmaL Type HomProf p (TypeProfDimap isP)
 -- The other direction of the paranatural isomorphism asserted by the
 -- diYoneda lemma on `(op(Type), Type)`.
 public export
-DiYonedaLemmaR : (0 p : ProfunctorSig) ->
+0 DiYonedaLemmaR : (0 p : ProfunctorSig) ->
   ProfDiNT (DiYonedaLemmaNT p) p
 DiYonedaLemmaR = IntDiYonedaLemmaR Type HomProf typeId
 
@@ -1464,7 +1464,7 @@ Profunctor (DiCoYonedaLemmaCoend p) where
 -- One direction of the paranatural isomorphism asserted by the
 -- di-co-Yoneda lemma on `(op(Type), Type)`.
 public export
-DiCoYonedaLemmaL : (0 p : ProfunctorSig) ->
+0 DiCoYonedaLemmaL : (0 p : ProfunctorSig) ->
   ProfDiNT p (DiCoYonedaLemmaCoend p)
 DiCoYonedaLemmaL = IntDiCoYonedaLemmaL Type HomProf typeId
 
