@@ -413,6 +413,74 @@ public export
 0 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
 TerminalComp = DiscreteComp {obj=Unit}
 
+------------------------------
+---- Coproduct categories ----
+------------------------------
+
+public export
+IntCoprodCatObj : Type -> Type -> Type
+IntCoprodCatObj c d = Either c d
+
+public export
+0 IntCoprodCatMor : (0 c, d : Type) ->
+  IntMorSig c -> IntMorSig d -> IntMorSig (IntCoprodCatObj c d)
+IntCoprodCatMor c d cmor dmor ab ab' =
+  case (ab, ab') of
+    (Left a, Left a') => cmor a a'
+    (Right b, Right b') => dmor b b'
+    _ => Void
+
+public export
+IntEndoCoprodCatObj : Type -> Type
+IntEndoCoprodCatObj c = IntCoprodCatObj c c
+
+public export
+0 IntEndoCoprodCatMor : (0 c : Type) ->
+  IntMorSig c -> IntMorSig (IntEndoCoprodCatObj c)
+IntEndoCoprodCatMor c mor = IntCoprodCatMor c c mor mor
+
+public export
+0 IntCoprodCatId : (0 c, d : Type) ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  IntIdSig c cmor -> IntIdSig d dmor ->
+  IntIdSig (IntCoprodCatObj c d) (IntCoprodCatMor c d cmor dmor)
+IntCoprodCatId c d cmor dmor cid did cdobj =
+  case cdobj of
+    Left cobj => cid cobj
+    Right dobj => did dobj
+
+public export
+0 IntCoprodCatComp : (0 c, d : Type) ->
+  (cmor : IntMorSig c) -> (dmor : IntMorSig d) ->
+  IntCompSig c cmor -> IntCompSig d dmor ->
+  IntCompSig (IntCoprodCatObj c d) (IntCoprodCatMor c d cmor dmor)
+IntCoprodCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy
+    with (cdx, cdy, cdz) proof objsig
+  IntCoprodCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy
+    | (Left cx, Left cy, Left cz) =
+      case objsig of Refl => ccomp cx cy cz cdmyz cdmxy
+  IntCoprodCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy
+    | (Left _, Left _, Right _) =
+      case objsig of Refl => void cdmyz
+  IntCoprodCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy
+    | (Left _, Right _, Left _) =
+      case objsig of Refl => void cdmyz
+  IntCoprodCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy
+    | (Left _, Right _, Right _) =
+      case objsig of Refl => void cdmxy
+  IntCoprodCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy
+    | (Right _, Left _, Left _) =
+      case objsig of Refl => void cdmxy
+  IntCoprodCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy
+    | (Right _, Left _, Right _) =
+      case objsig of Refl => void cdmyz
+  IntCoprodCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy
+    | (Right _, Right _, Left _) =
+      case objsig of Refl => void cdmyz
+  IntCoprodCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy
+    | (Right dx, Right dy, Right dz) =
+      case objsig of Refl => dcomp dx dy dz cdmyz cdmxy
+
 ----------------------------
 ---- Product categories ----
 ----------------------------
