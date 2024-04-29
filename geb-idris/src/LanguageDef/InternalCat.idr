@@ -41,6 +41,10 @@ public export
 IntIdFunctor c = Prelude.id {a=c}
 
 public export
+0 IntFunctorComp : (0 c, d, e : Type) -> (d -> e) -> (c -> d) -> c -> e
+IntFunctorComp c d e = (.)
+
+public export
 0 IntFMapSig : {0 c, d : Type} -> (0 _ : IntMorSig c) -> (0 _ : IntMorSig d) ->
   (c -> d) -> Type
 IntFMapSig {c} {d} cmor dmor omap =
@@ -62,7 +66,7 @@ intFmapComp : {0 c, d, e : Type} ->
   {0 g : d -> e} -> {0 f : c -> d} ->
   IntFMapSig {c=d} {d=e} dmor emor g ->
   IntFMapSig {c} {d} cmor dmor f ->
-  IntFMapSig {c} {d=e} cmor emor (g . f)
+  IntFMapSig {c} {d=e} cmor emor (IntFunctorComp c d e g f)
 intFmapComp {c} {d} {e} {cmor} {dmor} {emor} {g} {f} gm fm x y =
   gm (f x) (f y) . fm x y
 
@@ -99,7 +103,9 @@ intNTwhiskerL : {0 c, d, e : Type} ->
   {0 g, h : d -> e} ->
   IntNTSig {c=d} {d=e} {dmor=emor} g h ->
   (0 f : c -> d) ->
-  IntNTSig {c} {d=e} {dmor=emor} (g . f) (h . f)
+  IntNTSig {c} {d=e} {dmor=emor}
+    (IntFunctorComp c d e g f)
+    (IntFunctorComp c d e h f)
 intNTwhiskerL {c} {d} {e} {emor} {g} {h} alpha f x = alpha (f x)
 
 public export
@@ -109,7 +115,9 @@ intNTwhiskerR : {0 c, d, e : Type} ->
   {0 h : d -> e} ->
   IntFMapSig {c=d} {d=e} dmor emor h ->
   IntNTSig {c} {d} {dmor} f g ->
-  IntNTSig {c} {d=e} {dmor=emor} (h . f) (h . g)
+  IntNTSig {c} {d=e} {dmor=emor}
+    (IntFunctorComp c d e h f)
+    (IntFunctorComp c d e h g)
 intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g} {h} hm nu x =
   hm (f x) (g x) (nu x)
 
@@ -122,7 +130,9 @@ intNThcomp : {0 c, d, e : Type} ->
   IntFMapSig {c=d} {d=e} dmor emor g ->
   IntNTSig {c=d} {d=e} {dmor=emor} g g' ->
   IntNTSig {c} {d} {dmor} f f' ->
-  IntNTSig {c} {d=e} {dmor=emor} (g . f) (g' . f')
+  IntNTSig {c} {d=e} {dmor=emor}
+    (IntFunctorComp c d e g f)
+    (IntFunctorComp c d e g' f')
 intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
   ecomp
     (g $ f x)
@@ -159,7 +169,8 @@ intIdComonadCounit {c} cmor cid = cid
 
 public export
 0 IntMultSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
-IntMultSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} (t . t) t
+IntMultSig {c} cmor t =
+  IntNTSig {c} {d=c} {dmor=cmor} (IntFunctorComp c c c t t) t
 
 public export
 intIdMonadMult : {0 c : Type} ->
@@ -169,7 +180,8 @@ intIdMonadMult {c} cmor cid = cid
 
 public export
 0 IntComultSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
-IntComultSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} t (t . t)
+IntComultSig {c} cmor t =
+  IntNTSig {c} {d=c} {dmor=cmor} t (IntFunctorComp c c c t t)
 
 public export
 intIdComonadComult : {0 c : Type} ->
@@ -210,8 +222,8 @@ IntAdjRAdjunctSig {c} {d} cmor dmor l r =
   (0 a : c) -> (0 b : d) -> cmor a (r b) -> dmor (l a) b
 
 public export
-IntAdjMonad : {0 c, d : Type} -> (l : c -> d) -> (r : d -> c) -> c -> c
-IntAdjMonad {c} {d} l r = r . l
+0 IntAdjMonad : {0 c, d : Type} -> (l : c -> d) -> (r : d -> c) -> c -> c
+IntAdjMonad {c} {d} l r = IntFunctorComp c d c r l
 
 public export
 0 IntAdjMonadSig : {0 c, d : Type} -> (cmor : IntMorSig c) ->
@@ -230,8 +242,8 @@ IntAdjMonadMap {c} {d} cmor dmor l r =
   flip $ intFmapComp {c} {d} {e=c} {cmor} {dmor} {emor=cmor} {g=r} {f=l}
 
 public export
-IntAdjComonad : {0 c, d : Type} -> (l : c -> d) -> (r : d -> c) -> d -> d
-IntAdjComonad {c} {d} l r = l . r
+0 IntAdjComonad : {0 c, d : Type} -> (l : c -> d) -> (r : d -> c) -> d -> d
+IntAdjComonad {c} {d} l r = IntFunctorComp d c d l r
 
 public export
 0 IntAdjComonadSig : {0 c, d : Type} -> (dmor : IntMorSig d) ->
@@ -347,7 +359,7 @@ IntAdjMultFromCounit : {0 c, d : Type} ->
   IntAdjMultSig {c} {d} cmor l r
 IntAdjMultFromCounit {c} {d} cmor dmor did l r rm counit =
   intNTwhiskerR {c} {d} {e=c} {dmor} {emor=cmor}
-    {f=(IntAdjComonad {c} {d} l r . l)}
+    {f=(IntFunctorComp c d d (IntAdjComonad {c} {d} l r) l)}
     {g=l}
     {h=r}
     rm
@@ -368,7 +380,7 @@ IntAdjComultFromUnit : {0 c, d : Type} ->
 IntAdjComultFromUnit {c} {d} cmor dmor cid l r lm unit =
   intNTwhiskerR {c=d} {d=c} {e=d} {dmor=cmor} {emor=dmor}
     {f=r}
-    {g=(r . IntAdjComonad {c} {d} l r)}
+    {g=(IntFunctorComp d d c r (IntAdjComonad {c} {d} l r))}
     {h=l}
     lm
   $ intNTwhiskerL {c=d} {d=c} {e=c} {emor=cmor}
