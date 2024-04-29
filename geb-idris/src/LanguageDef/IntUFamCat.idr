@@ -65,7 +65,8 @@ IntUFamIsOpEFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
 IntUFamIsOpEFamOp {c} mor dom cod = Refl
 
 public export
-IFUM : {c : Type} -> {mor : IntDifunctorSig c} -> {dom, cod : IntUFamObj c} ->
+IFUM :
+  {c : Type} -> {0 mor : IntDifunctorSig c} -> {0 dom, cod : IntUFamObj c} ->
   (onidx : ifuoIdx cod -> ifuoIdx dom) ->
   (onobj : (ci : ifuoIdx cod) ->
     mor (ifuoObj dom $ onidx ci) (ifuoObj cod ci)) ->
@@ -74,26 +75,26 @@ IFUM {c} {mor} {dom} {cod} onidx onobj = (onidx ** onobj)
 
 public export
 ifumOnIdx : {c : Type} -> {mor : IntDifunctorSig c} ->
-  {dom, cod : IntUFamObj c} -> IntUFamMor {c} mor dom cod ->
+  {0 dom, cod : IntUFamObj c} -> IntUFamMor {c} mor dom cod ->
   (ifuoIdx cod -> ifuoIdx dom)
 ifumOnIdx = DPair.fst
 
 public export
 ifumOnObj : {c : Type} -> {mor : IntDifunctorSig c} ->
-  {dom, cod : IntUFamObj c} -> (m : IntUFamMor {c} mor dom cod) ->
+  {0 dom, cod : IntUFamObj c} -> (m : IntUFamMor {c} mor dom cod) ->
   (ci : ifuoIdx cod) ->
   mor (ifuoObj dom $ ifumOnIdx {mor} {dom} {cod} m ci) (ifuoObj cod ci)
 ifumOnObj = DPair.snd
 
 public export
 ifumId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
-  (obj : IntUFamObj c) -> IntUFamMor mor obj obj
+  (0 obj : IntUFamObj c) -> IntUFamMor mor obj obj
 ifumId {c} mor cid obj = IFUM {mor} id (\i => cid $ ifuoObj obj i)
 
 public export
 ifumComp : {c : Type} ->
-  (mor : IntDifunctorSig c) -> (comp : IntComp c mor) ->
-  {x, y, z : IntUFamObj c} ->
+  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  {0 x, y, z : IntUFamObj c} ->
   IntUFamMor mor y z ->
   IntUFamMor mor x y ->
   IntUFamMor mor x z
@@ -218,7 +219,7 @@ MLUFamMor : MLUFamObj -> MLUFamObj -> Type
 MLUFamMor = IntUFamMor $ HomProf
 
 public export
-mlfmId : (x : MLUFamObj) -> MLUFamMor x x
+mlfmId : (0 x : MLUFamObj) -> MLUFamMor x x
 mlfmId = ifumId HomProf typeId
 
 public export
@@ -269,14 +270,14 @@ SliceUFamMor {c} = IntUFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
 slufmId : {c : Type} ->
-  (x : SliceUFamObj c) -> SliceUFamMor x x
-slufmId {c} = ifumId {c=(SliceObj c)} (SliceMorphism {a=c}) sliceId
+  (0 x : SliceUFamObj c) -> SliceUFamMor x x
+slufmId {c} = ifumId {c=(SliceObj c)} (SliceMorphism {a=c}) (SliceId c)
 
 public export
 slufmComp : {c : Type} -> {x, y, z : SliceUFamObj c} ->
   SliceUFamMor y z -> SliceUFamMor x y -> SliceUFamMor x z
 slufmComp {c} =
-  ifumComp (SliceMorphism {a=c}) $ \x, y, z => sliceComp {x} {y} {z}
+  ifumComp (SliceMor c) $ \x, y, z => SliceComp c x y z
 
 public export
 slUFamUnit : {c : Type} -> SliceObj c -> SliceUFamObj c
