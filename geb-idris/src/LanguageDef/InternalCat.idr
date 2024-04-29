@@ -350,6 +350,49 @@ public export
   IntCompSig c cmor -> IntCompSig c (IntOpCatMor c cmor)
 IntOpCatComp c cmor comp x y z mzy myx = comp z y x myx mzy
 
+-----------------------------
+---- Discrete categories ----
+-----------------------------
+
+public export
+DiscreteCatObj : Type -> Type
+DiscreteCatObj = id
+
+public export
+data DiscreteCatMor : {0 obj : Type} ->
+    DiscreteCatObj obj -> DiscreteCatObj obj -> Type where
+  DCid : {0 obj : Type} -> (0 x : obj) -> DiscreteCatMor {obj} x x
+
+public export
+0 DiscreteId : {0 obj : Type} ->
+  IntIdSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
+DiscreteId {obj} x = DCid x
+
+public export
+0 DiscreteComp : {0 obj : Type} ->
+  IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
+DiscreteComp _ _ _ x y = case (x, y) of (DCid a, DCid a) => DCid a
+
+---------------------------
+---- Terminal category ----
+---------------------------
+
+public export
+TerminalCatObj : Type
+TerminalCatObj = DiscreteCatObj Unit
+
+public export
+0 TerminalCatMor : TerminalCatObj -> TerminalCatObj -> Type
+TerminalCatMor = DiscreteCatMor {obj=Unit}
+
+public export
+0 TerminalId : IntIdSig TerminalCatObj TerminalCatMor
+TerminalId = DiscreteId {obj=Unit}
+
+public export
+0 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
+TerminalComp = DiscreteComp {obj=Unit}
+
 ----------------------------
 ---- Product categories ----
 ----------------------------
@@ -409,49 +452,6 @@ public export
 IntOpProdCatComp d c dmor cmor dcomp ccomp (dx, cx) (dy, cy) (dz, cz)
   (dmzy, cmyz) (dmyx, cmxy) =
     (dcomp dz dy dx dmyx dmzy, ccomp cx cy cz cmyz cmxy)
-
------------------------------
----- Discrete categories ----
------------------------------
-
-public export
-DiscreteCatObj : Type -> Type
-DiscreteCatObj = id
-
-public export
-data DiscreteCatMor : {0 obj : Type} ->
-    DiscreteCatObj obj -> DiscreteCatObj obj -> Type where
-  DCid : {0 obj : Type} -> (0 x : obj) -> DiscreteCatMor {obj} x x
-
-public export
-0 DiscreteId : {0 obj : Type} ->
-  IntIdSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
-DiscreteId {obj} x = DCid x
-
-public export
-0 DiscreteComp : {0 obj : Type} ->
-  IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
-DiscreteComp _ _ _ x y = case (x, y) of (DCid a, DCid a) => DCid a
-
----------------------------
----- Terminal category ----
----------------------------
-
-public export
-TerminalCatObj : Type
-TerminalCatObj = DiscreteCatObj Unit
-
-public export
-0 TerminalCatMor : TerminalCatObj -> TerminalCatObj -> Type
-TerminalCatMor = DiscreteCatMor {obj=Unit}
-
-public export
-0 TerminalId : IntIdSig TerminalCatObj TerminalCatMor
-TerminalId = DiscreteId {obj=Unit}
-
-public export
-0 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
-TerminalComp = DiscreteComp {obj=Unit}
 
 ---------------------------------
 ---------------------------------
