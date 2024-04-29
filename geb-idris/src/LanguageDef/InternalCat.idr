@@ -30,6 +30,12 @@ record IntCatSig where
   icId : IntIdSig icObj icMor
   icComp : IntCompSig icObj icMor
 
+------------------------
+------------------------
+---- Two-categories ----
+------------------------
+------------------------
+
 ---------------------------
 ---------------------------
 ---- Double categories ----
