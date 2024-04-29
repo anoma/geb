@@ -110,12 +110,6 @@ IntOpProdCatComp d c dmor cmor dcomp ccomp (dx, cx) (dy, cy) (dz, cz)
   (dmzy, cmyz) (dmyx, cmxy) =
     (dcomp dz dy dx dmyx dmzy, ccomp cx cy cz cmyz cmxy)
 
----------------------------------
----------------------------------
----- Metalanguage categories ----
----------------------------------
----------------------------------
-
 -----------------------------
 ---- Discrete categories ----
 -----------------------------
@@ -158,6 +152,12 @@ TerminalId = DiscreteId {obj=Unit}
 public export
 0 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
 TerminalComp = DiscreteComp {obj=Unit}
+
+---------------------------------
+---------------------------------
+---- Metalanguage categories ----
+---------------------------------
+---------------------------------
 
 ------------------------------------
 ---- Metalanguage base category ----
