@@ -169,7 +169,7 @@ public export
 0 Int2VCompSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
   (0 mor2 : Int2MorphSig obj mor) -> Type
 Int2VCompSig {obj} {mor} mor2 =
-  {0 x, y : obj} -> (0 f, g, h : mor x y) ->
+  (0 x, y : obj) -> (0 f, g, h : mor x y) ->
   mor2 x y g h -> mor2 x y f g -> mor2 x y f h
 
 public export
@@ -177,7 +177,7 @@ public export
   (0 comp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
   Type
 Int2HCompSig {obj} {mor} comp mor2 =
-  {0 x, y, z : obj} ->
+  (0 x, y, z : obj) ->
   (0 f, f' : mor x y) -> (0 g, g' : mor y z) ->
   mor2 y z g g' -> mor2 x y f f' -> mor2 x z (comp x y z g f) (comp x y z g' f')
 
@@ -214,7 +214,7 @@ i2c2Id c2 x y = micsId (i2Cv c2 x y)
 public export
 0 i2c2Vcomp : (0 c2 : Int2CatSig) ->
   Int2VCompSig {obj=(i2ChObj c2)} {mor=(i2ChMor c2)} (i2c2Mor c2)
-i2c2Vcomp c2 {x} {y} f g = micsComp (i2Cv c2 x y) f g
+i2c2Vcomp c2 x y f g = micsComp (i2Cv c2 x y) f g
 
 -- For any pair of objects of the category underlying a 2-category, there
 -- is a category of 2-morphisms among 1-morphisms between the two given objects.
@@ -340,8 +340,9 @@ public export
 IntFunctor2CatSig {idx} cat =
   I2Cat
     (IntFunctorHCatSig {idx} cat)
-    ?IntFunctor2CatSig_hole_vcats
-    ?IntFunctor2CatSig_hole_hcomp
+    (\dom, cod => IntOmapCatSig (cat dom) (cat cod) ifOmap)
+    (\x, y, z, f, f', g, g', beta, alpha =>
+     ?IntFunctor2CatSig_hole_hcomp)
 
 -- The category of all categories in particular is a two-category.
 public export
@@ -463,7 +464,7 @@ public export
   (0 c2m : IntCellTo2MorSig {obj} {vmor} {hmor} vcomp cell vid) ->
   (0 _ : IntCellVCompSig {obj} {vmor} {hmor} vcomp cell) ->
   Int2VCompSig {obj} {mor=hmor} (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
-IntCellTo2VComp vid vcomp c2m cvcomp f g h beta alpha =
+IntCellTo2VComp vid vcomp c2m cvcomp x y f g h beta alpha =
   c2m x y f h $ cvcomp (vid x) (vid y) (vid x) (vid y) f g h beta alpha
 
 public export
@@ -475,7 +476,7 @@ public export
   (0 _ : IntCellHCompSig {obj} {vmor} {hmor} hcomp cell) ->
   Int2HCompSig {obj} {mor=hmor}
     hcomp (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
-IntCellTo2HComp {obj} {vmor} {hmor} {hcomp} vid cell chcomp f f' g g' =
+IntCellTo2HComp {obj} {vmor} {hmor} {hcomp} vid cell chcomp x y z f f' g g' =
   chcomp (vid x) (vid y) (vid z) f g f' g'
 
 public export
@@ -533,7 +534,7 @@ idc2mics idc dom cod =
     (\f, g, h, beta, alpha =>
       IntCellTo2VComp
         (idcVid idc) (idcVcomp idc) (idcC2m idc) (idcCvcomp idc)
-        f g h beta alpha)
+        dom cod f g h beta alpha)
 
 public export
 0 idc2cat : IntDblCatSig -> Int2CatSig
