@@ -313,10 +313,40 @@ IntOmapCatSig dom cod {obj} omap =
 IntFunctorOmapCatSig dom cod =
   ICat (icObj dom -> icObj cod) $ IntOmapCatSig dom cod id
 
+-- Given a pair of categories, we can form a "functor category",
+-- whose objects are the functors from one to the other and whose
+-- morphisms are the natural transformations among those functors.
 public export
 0 IntFunctorCatSig : IntCatSig -> IntCatSig -> IntCatSig
 IntFunctorCatSig dom cod =
   ICat (IntFunctorSig dom cod) $ IntOmapCatSig dom cod ifOmap
+
+-- Given a collection of categories, we can form a two-category from all
+-- the functor categories on pairs of categories in the collection.
+
+public export
+0 IntFunctorHCatSig : {0 idx : Type} -> (idx -> IntCatSig) -> IntCatSig
+IntFunctorHCatSig {idx} cat =
+  ICat
+    idx
+  $ MICS
+    (\x, y => IntFunctorSig (cat x) (cat y))
+  $ ICS
+    (\x => IntFunctorSigId $ cat x)
+    (\x, y, z => IntFunctorSigComp (cat x) (cat y) (cat z))
+
+public export
+0 IntFunctor2CatSig : {0 idx : Type} -> (idx -> IntCatSig) -> Int2CatSig
+IntFunctor2CatSig {idx} cat =
+  I2Cat
+    (IntFunctorHCatSig {idx} cat)
+    ?IntFunctor2CatSig_hole_vcats
+    ?IntFunctor2CatSig_hole_hcomp
+
+-- The category of all categories in particular is a two-category.
+public export
+0 IntCat2Cat : Int2CatSig
+IntCat2Cat = IntFunctor2CatSig {idx=IntCatSig} id
 
 ---------------------------
 ---------------------------
