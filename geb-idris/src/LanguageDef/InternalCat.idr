@@ -380,6 +380,14 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
     (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f' x)
     (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha x)
 
+0 IntOmapCatSig : IntCatSig -> IntCatSig -> IntCatSig
+IntOmapCatSig dom cod =
+  ICat
+    (icObj dom -> icObj cod)
+    (\f, g => IntNTSig (icMor cod) f g)
+    (\f => intNTid (icMor cod) (icId cod) f)
+    (\f, g, h => intNTvcomp {f} {g} {h} (icComp cod))
+
 public export
 0 IntFunctorCatSig : IntCatSig -> IntCatSig -> IntCatSig
 IntFunctorCatSig dom cod =
