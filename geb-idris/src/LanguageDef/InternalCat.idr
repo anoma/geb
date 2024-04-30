@@ -142,6 +142,12 @@ IntCatCat =
     IntFunctorSigId
     IntFunctorSigComp
 
+-- A category parameterized over a category is a functor from that category
+-- to the category of categories.
+public export
+IntParamCat : IntCatSig -> Type
+IntParamCat cat = IntFunctorSig cat IntCatCat
+
 ------------------------
 ------------------------
 ---- Two-categories ----
