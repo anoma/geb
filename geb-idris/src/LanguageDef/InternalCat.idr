@@ -185,14 +185,36 @@ public export
 record Int2CatSig where
   constructor I2Cat
   i2Ch : IntCatSig
-  0 i2c2Mor :
-    Int2MorphSig (icObj i2Ch) (icMor i2Ch)
-  0 i2c2Id :
-    Int2IdSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)} i2c2Mor
-  0 i2cVcomp :
-    Int2VCompSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)} i2c2Mor
+  i2Cv : (0 dom, cod : icObj i2Ch) -> MorIdCompSig (icMor i2Ch dom cod)
   0 i2cHcomp :
-    Int2HCompSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)} (icComp i2Ch) i2c2Mor
+    Int2HCompSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)}
+      (icComp i2Ch) (\x, y, f, g => micsMor (i2Cv x y) f g)
+
+public export
+0 i2ChObj : (0 c2 : Int2CatSig) -> Type
+i2ChObj c2 = icObj $ i2Ch c2
+
+public export
+0 i2ChMor : (0 c2 : Int2CatSig) -> (dom, cod : i2ChObj c2) -> Type
+i2ChMor c2 = icMor $ i2Ch c2
+
+public export
+0 i2CvObj : (0 c2 : Int2CatSig) -> (0 dom, cod : i2ChObj c2) -> Type
+i2CvObj c2 dom cod = icMor (i2Ch c2) dom cod
+
+public export
+0 i2c2Mor : (0 c2 : Int2CatSig) -> Int2MorphSig (i2ChObj c2) (i2ChMor c2)
+i2c2Mor c2 x y f g = micsMor (i2Cv c2 x y) f g
+
+public export
+0 i2c2Id : (0 c2 : Int2CatSig) ->
+  Int2IdSig {obj=(i2ChObj c2)} {mor=(i2ChMor c2)} (i2c2Mor c2)
+i2c2Id c2 x y = micsId (i2Cv c2 x y)
+
+public export
+0 i2c2Vcomp : (0 c2 : Int2CatSig) ->
+  Int2VCompSig {obj=(i2ChObj c2)} {mor=(i2ChMor c2)} (i2c2Mor c2)
+i2c2Vcomp c2 {x} {y} f g = micsComp (i2Cv c2 x y) f g
 
 -- For any pair of objects of the category underlying a 2-category, there
 -- is a category of 2-morphisms among 1-morphisms between the two given objects.
@@ -202,10 +224,10 @@ i2cvc c2 dom cod =
   ICat
     (icMor (i2Ch c2) dom cod)
     $ MICS
-      (\f, g => i2c2Mor c2 dom cod f g)
+      (\f, g => micsMor (i2Cv c2 dom cod) f g)
     $ ICS
-      (i2c2Id c2 dom cod)
-      (i2cVcomp c2 {x=dom} {y=cod})
+      (micsId $ i2Cv c2 dom cod)
+      (micsComp $ i2Cv c2 dom cod)
 
 ---------------------------------
 ---------------------------------
@@ -472,13 +494,13 @@ idcHcomp idc = icComp (idcHcat idc)
 
 public export
 0 idc2cat : IntDblCatSig -> Int2CatSig
-idc2cat idc =
-  I2Cat
-    (idcHcat idc)
-    (IntCellTo2Sig (idcVid idc) (idcCell idc))
-    (IntCellTo2Id (idcVid idc) (idcCell idc) (idcCid idc))
-    (IntCellTo2VComp (idcVid idc) (idcVcomp idc) (idcC2m idc) (idcCvcomp idc))
-    (IntCellTo2HComp (idcVid idc) (idcCell idc) (idcChcomp idc))
+idc2cat idc = ?idc2cat_hole
+  -- XXX I2Cat
+    -- (idcHcat idc)
+    -- (IntCellTo2Sig (idcVid idc) (idcCell idc))
+    -- (IntCellTo2Id (idcVid idc) (idcCell idc) (idcCid idc))
+    -- (IntCellTo2VComp (idcVid idc) (idcVcomp idc) (idcC2m idc) (idcCvcomp idc))
+    -- (IntCellTo2HComp (idcVid idc) (idcCell idc) (idcChcomp idc))
 
 -----------------------------
 -----------------------------
