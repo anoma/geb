@@ -29,19 +29,38 @@ record IdCompSig (obj : Type) (mor : IntMorSig obj) where
   0 icsComp : IntCompSig obj mor
 
 public export
+record MorIdCompSig (obj : Type) where
+  constructor MICS
+  0 micsMor : IntMorSig obj
+  0 micsICS : IdCompSig obj micsMor
+
+public export
+0 micsId : (obj : Type) ->
+  (mics : MorIdCompSig obj) -> IntIdSig obj (micsMor mics)
+micsId obj mics = icsId $ micsICS mics
+
+public export
+0 micsComp : (obj : Type) ->
+  (mics : MorIdCompSig obj) -> IntCompSig obj (micsMor mics)
+micsComp obj mics = icsComp $ micsICS mics
+
+public export
 record IntCatSig where
   constructor ICat
   icObj : Type
-  0 icMor : IntMorSig icObj
-  0 icICS : IdCompSig icObj icMor
+  0 icMICS : MorIdCompSig icObj
+
+public export
+0 icMor : (cat : IntCatSig) -> IntMorSig (icObj cat)
+icMor cat = micsMor $ icMICS cat
 
 public export
 0 icId : (cat : IntCatSig) -> IntIdSig (icObj cat) (icMor cat)
-icId cat = icsId $ icICS cat
+icId cat = micsId (icObj cat) $ icMICS cat
 
 public export
 0 icComp : (cat : IntCatSig) -> IntCompSig (icObj cat) (icMor cat)
-icComp cat = icsComp $ icICS cat
+icComp cat = micsComp (icObj cat) $ icMICS cat
 
 -----------------
 -----------------
@@ -107,7 +126,8 @@ public export
 i2cvc c2 dom cod =
   ICat
     (icMor (i2c1 c2) dom cod)
-    (\f, g => i2c2Mor c2 dom cod f g)
+    $ MICS
+      (\f, g => i2c2Mor c2 dom cod f g)
     $ ICS
       (i2c2Id c2 dom cod)
       (i2cVcomp c2 {x=dom} {y=cod})
@@ -260,11 +280,13 @@ record IntDblCatSig where
 
 public export
 0 idcVcat : IntDblCatSig -> IntCatSig
-idcVcat idc = ICat (idcObj idc) (idcVmor idc) $ ICS (idcVid idc) (idcVcomp idc)
+idcVcat idc =
+  ICat (idcObj idc) $ MICS (idcVmor idc) $ ICS (idcVid idc) (idcVcomp idc)
 
 public export
 0 idcHcat : IntDblCatSig -> IntCatSig
-idcHcat idc = ICat (idcObj idc) (idcHmor idc) $ ICS (idcHid idc) (idcHcomp idc)
+idcHcat idc =
+  ICat (idcObj idc) $ MICS (idcHmor idc) $ ICS (idcHid idc) (idcHcomp idc)
 
 public export
 0 idc2cat : IntDblCatSig -> Int2CatSig
@@ -398,7 +420,8 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
 IntOmapCatSig dom cod =
   ICat
     (icObj dom -> icObj cod)
-    (\f, g => IntNTSig (icMor cod) f g)
+    $ MICS
+      (\f, g => IntNTSig (icMor cod) f g)
     $ ICS
       (\f => intNTid (icMor cod) (icId cod) f)
       (\f, g, h => intNTvcomp {f} {g} {h} (icComp cod))
@@ -408,7 +431,8 @@ public export
 IntFunctorCatSig dom cod =
   ICat
     (IntFunctorSig dom cod)
-    (\f, g => IntNTSig (icMor cod) (ifOmap f) (ifOmap g))
+    $ MICS
+      (\f, g => IntNTSig (icMor cod) (ifOmap f) (ifOmap g))
     $ ICS
       (\f => intNTid (icMor cod) (icId cod) (ifOmap f))
       (\f, g, h =>
