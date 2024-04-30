@@ -103,11 +103,44 @@ intFmapComp {c} {d} {e} {cmor} {dmor} {emor} {g} {f} gm fm x y =
   gm (f x) (f y) . fm x y
 
 public export
-record IntFunctorSig (0 dom, cod : IntCatSig) where
+record IntFunctorSig (dom, cod : IntCatSig) where
   constructor IFunctor
   0 ifOmap : icObj dom -> icObj cod
   0 ifMmap :
     IntFMapSig {c=(icObj dom)} {d=(icObj cod)} (icMor dom) (icMor cod) ifOmap
+
+--------------------------------
+--------------------------------
+---- Category of categories ----
+--------------------------------
+--------------------------------
+
+public export
+IntFunctorSigId : IntIdSig IntCatSig IntFunctorSig
+IntFunctorSigId cat =
+  IFunctor (IntIdFunctor $ icObj cat) (intFMapId $ icMor cat)
+
+public export
+IntFunctorSigComp : IntCompSig IntCatSig IntFunctorSig
+IntFunctorSigComp c d e g f =
+  IFunctor
+    (IntFunctorComp (icObj c) (icObj d) (icObj e) (ifOmap g) (ifOmap f))
+    (intFmapComp
+      {cmor=(icMor c)}
+      {dmor=(icMor d)}
+      {emor=(icMor e)}
+      (ifMmap g) (ifMmap f))
+
+public export
+IntCatCat : IntCatSig
+IntCatCat =
+  ICat
+    IntCatSig
+  $ MICS
+    IntFunctorSig
+  $ ICS
+    IntFunctorSigId
+    IntFunctorSigComp
 
 ------------------------
 ------------------------
