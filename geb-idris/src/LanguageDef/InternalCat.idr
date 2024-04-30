@@ -493,14 +493,25 @@ public export
 idcHcomp idc = icComp (idcHcat idc)
 
 public export
+0 idc2mics : (idc : IntDblCatSig) -> (0 dom, cod : idcObj idc) ->
+  MorIdCompSig (idcHmor idc dom cod)
+idc2mics idc dom cod =
+  MICS
+    (\f, g => IntCellTo2Sig (idcVid idc) (idcCell idc) dom cod f g)
+  $ ICS
+    (IntCellTo2Id (idcVid idc) (idcCell idc) (idcCid idc) dom cod)
+    (\f, g, h, beta, alpha =>
+      IntCellTo2VComp
+        (idcVid idc) (idcVcomp idc) (idcC2m idc) (idcCvcomp idc)
+        f g h beta alpha)
+
+public export
 0 idc2cat : IntDblCatSig -> Int2CatSig
-idc2cat idc = ?idc2cat_hole
-  -- XXX I2Cat
-    -- (idcHcat idc)
-    -- (IntCellTo2Sig (idcVid idc) (idcCell idc))
-    -- (IntCellTo2Id (idcVid idc) (idcCell idc) (idcCid idc))
-    -- (IntCellTo2VComp (idcVid idc) (idcVcomp idc) (idcC2m idc) (idcCvcomp idc))
-    -- (IntCellTo2HComp (idcVid idc) (idcCell idc) (idcChcomp idc))
+idc2cat idc =
+  I2Cat
+    (idcHcat idc)
+    (idc2mics idc)
+    (IntCellTo2HComp (idcVid idc) (idcCell idc) (idcChcomp idc))
 
 -----------------------------
 -----------------------------
