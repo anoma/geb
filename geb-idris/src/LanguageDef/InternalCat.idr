@@ -184,23 +184,23 @@ Int2HCompSig {obj} {mor} comp mor2 =
 public export
 record Int2CatSig where
   constructor I2Cat
-  i2c1 : IntCatSig
+  i2Ch : IntCatSig
   0 i2c2Mor :
-    Int2MorphSig (icObj i2c1) (icMor i2c1)
+    Int2MorphSig (icObj i2Ch) (icMor i2Ch)
   0 i2c2Id :
-    Int2IdSig {obj=(icObj i2c1)} {mor=(icMor i2c1)} i2c2Mor
+    Int2IdSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)} i2c2Mor
   0 i2cVcomp :
-    Int2VCompSig {obj=(icObj i2c1)} {mor=(icMor i2c1)} i2c2Mor
+    Int2VCompSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)} i2c2Mor
   0 i2cHcomp :
-    Int2HCompSig {obj=(icObj i2c1)} {mor=(icMor i2c1)} (icComp i2c1) i2c2Mor
+    Int2HCompSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)} (icComp i2Ch) i2c2Mor
 
 -- For any pair of objects of the category underlying a 2-category, there
 -- is a category of 2-morphisms among 1-morphisms between the two given objects.
 public export
-0 i2cvc : (0 c2 : Int2CatSig) -> (0 dom, cod : icObj (i2c1 c2)) -> IntCatSig
+0 i2cvc : (0 c2 : Int2CatSig) -> (0 dom, cod : icObj (i2Ch c2)) -> IntCatSig
 i2cvc c2 dom cod =
   ICat
-    (icMor (i2c1 c2) dom cod)
+    (icMor (i2Ch c2) dom cod)
     $ MICS
       (\f, g => i2c2Mor c2 dom cod f g)
     $ ICS
