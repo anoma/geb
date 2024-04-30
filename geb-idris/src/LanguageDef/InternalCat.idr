@@ -62,6 +62,53 @@ public export
 0 icComp : (cat : IntCatSig) -> IntCompSig (icObj cat) (icMor cat)
 icComp cat = micsComp {obj=(icObj cat)} $ icMICS cat
 
+------------------
+------------------
+---- Functors ----
+------------------
+------------------
+
+public export
+0 IntIdFunctor : (0 c : Type) -> c -> c
+IntIdFunctor c = Prelude.id {a=c}
+
+public export
+0 IntFunctorComp : (0 c, d, e : Type) -> (d -> e) -> (c -> d) -> c -> e
+IntFunctorComp c d e = (.)
+
+public export
+0 IntFMapSig : {0 c, d : Type} -> (0 _ : IntMorSig c) -> (0 _ : IntMorSig d) ->
+  (c -> d) -> Type
+IntFMapSig {c} {d} cmor dmor omap =
+  (0 x, y : c) -> cmor x y -> dmor (omap x) (omap y)
+
+public export
+0 IntEndoFMapSig : {0 c : Type} -> (0 _ : IntMorSig c) ->
+  (c -> c) -> Type
+IntEndoFMapSig {c} cmor = IntFMapSig {c} {d=c} cmor cmor
+
+public export
+0 intFMapId : {0 c : Type} -> (0 cmor : IntMorSig c) ->
+  IntFMapSig {c} {d=c} cmor cmor (IntIdFunctor c)
+intFMapId {c} cmor x y = Prelude.id {a=(cmor x y)}
+
+public export
+intFmapComp : {0 c, d, e : Type} ->
+  {0 cmor : IntMorSig c} -> {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
+  {0 g : d -> e} -> {0 f : c -> d} ->
+  IntFMapSig {c=d} {d=e} dmor emor g ->
+  IntFMapSig {c} {d} cmor dmor f ->
+  IntFMapSig {c} {d=e} cmor emor (IntFunctorComp c d e g f)
+intFmapComp {c} {d} {e} {cmor} {dmor} {emor} {g} {f} gm fm x y =
+  gm (f x) (f y) . fm x y
+
+public export
+record IntFunctorSig (0 dom, cod : IntCatSig) where
+  constructor IFunctor
+  0 ifOmap : icObj dom -> icObj cod
+  0 ifMmap :
+    IntFMapSig {c=(icObj dom)} {d=(icObj cod)} (icMor dom) (icMor cod) ifOmap
+
 ------------------------
 ------------------------
 ---- Two-categories ----
@@ -302,53 +349,6 @@ idc2cat idc =
     (IntCellTo2Id (idcVid idc) (idcCell idc) (idcCid idc))
     (IntCellTo2VComp (idcVid idc) (idcVcomp idc) (idcC2m idc) (idcCvcomp idc))
     (IntCellTo2HComp (idcVid idc) (idcCell idc) (idcChcomp idc))
-
-------------------
-------------------
----- Functors ----
-------------------
-------------------
-
-public export
-0 IntIdFunctor : (0 c : Type) -> c -> c
-IntIdFunctor c = Prelude.id {a=c}
-
-public export
-0 IntFunctorComp : (0 c, d, e : Type) -> (d -> e) -> (c -> d) -> c -> e
-IntFunctorComp c d e = (.)
-
-public export
-0 IntFMapSig : {0 c, d : Type} -> (0 _ : IntMorSig c) -> (0 _ : IntMorSig d) ->
-  (c -> d) -> Type
-IntFMapSig {c} {d} cmor dmor omap =
-  (0 x, y : c) -> cmor x y -> dmor (omap x) (omap y)
-
-public export
-0 IntEndoFMapSig : {0 c : Type} -> (0 _ : IntMorSig c) ->
-  (c -> c) -> Type
-IntEndoFMapSig {c} cmor = IntFMapSig {c} {d=c} cmor cmor
-
-public export
-0 intFMapId : {0 c : Type} -> (0 cmor : IntMorSig c) ->
-  IntFMapSig {c} {d=c} cmor cmor (IntIdFunctor c)
-intFMapId {c} cmor x y = Prelude.id {a=(cmor x y)}
-
-public export
-intFmapComp : {0 c, d, e : Type} ->
-  {0 cmor : IntMorSig c} -> {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
-  {0 g : d -> e} -> {0 f : c -> d} ->
-  IntFMapSig {c=d} {d=e} dmor emor g ->
-  IntFMapSig {c} {d} cmor dmor f ->
-  IntFMapSig {c} {d=e} cmor emor (IntFunctorComp c d e g f)
-intFmapComp {c} {d} {e} {cmor} {dmor} {emor} {g} {f} gm fm x y =
-  gm (f x) (f y) . fm x y
-
-public export
-record IntFunctorSig (0 dom, cod : IntCatSig) where
-  constructor IFunctor
-  0 ifOmap : icObj dom -> icObj cod
-  0 ifMmap :
-    IntFMapSig {c=(icObj dom)} {d=(icObj cod)} (icMor dom) (icMor cod) ifOmap
 
 ---------------------------------
 ---------------------------------
