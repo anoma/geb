@@ -403,27 +403,23 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
     (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f' x)
     (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha x)
 
-0 IntOmapCatSig : IntCatSig -> IntCatSig -> IntCatSig
-IntOmapCatSig dom cod =
-  ICat
-    (icObj dom -> icObj cod)
-    $ MICS
-      (\f, g => IntNTSig (icMor cod) f g)
-    $ ICS
-      (\f => intNTid (icMor cod) (icId cod) f)
-      (\f, g, h => intNTvcomp {f} {g} {h} (icComp cod))
+0 IntOmapCatSig : (dom, cod : IntCatSig) ->
+  {obj : Type} -> (obj -> icObj dom -> icObj cod) -> MorIdCompSig obj
+IntOmapCatSig dom cod {obj} omap =
+  MICS
+    (\f, g => IntNTSig (icMor cod) (omap f) (omap g))
+  $ ICS
+    (\f => intNTid (icMor cod) (icId cod) (omap f))
+    (\f, g, h => intNTvcomp {f=(omap f)} {g=(omap g)} {h=(omap h)} (icComp cod))
+
+0 IntFunctorOmapCatSig : IntCatSig -> IntCatSig -> IntCatSig
+IntFunctorOmapCatSig dom cod =
+  ICat (icObj dom -> icObj cod) $ IntOmapCatSig dom cod id
 
 public export
 0 IntFunctorCatSig : IntCatSig -> IntCatSig -> IntCatSig
 IntFunctorCatSig dom cod =
-  ICat
-    (IntFunctorSig dom cod)
-    $ MICS
-      (\f, g => IntNTSig (icMor cod) (ifOmap f) (ifOmap g))
-    $ ICS
-      (\f => intNTid (icMor cod) (icId cod) (ifOmap f))
-      (\f, g, h =>
-        intNTvcomp {f=(ifOmap f)} {g=(ifOmap g)} {h=(ifOmap h)} (icComp cod))
+  ICat (IntFunctorSig dom cod) $ IntOmapCatSig dom cod ifOmap
 
 -----------------------------
 -----------------------------
