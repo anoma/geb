@@ -268,6 +268,13 @@ intFmapComp : {0 c, d, e : Type} ->
 intFmapComp {c} {d} {e} {cmor} {dmor} {emor} {g} {f} gm fm x y =
   gm (f x) (f y) . fm x y
 
+public export
+record IntFunctorSig (0 dom, cod : IntCatSig) where
+  constructor IFunctor
+  0 ifOmap : icObj dom -> icObj cod
+  0 ifMmap :
+    IntFMapSig {c=(icObj dom)} {d=(icObj cod)} (icMor dom) (icMor cod) ifOmap
+
 ---------------------------------
 ---------------------------------
 ---- Natural transformations ----
