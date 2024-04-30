@@ -143,7 +143,9 @@ IntCatCat =
     IntFunctorSigComp
 
 -- A category parameterized over a category is a functor from that category
--- to the category of categories.
+-- to the category of categories.  To be explicit, this means that to each
+-- object of the category we assign a category, and to each morphism of the
+-- category we assign a functor.
 public export
 IntParamCat : IntCatSig -> Type
 IntParamCat cat = IntFunctorSig cat IntCatCat
