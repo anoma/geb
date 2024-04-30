@@ -336,13 +336,26 @@ IntFunctorHCatSig {idx} cat =
     (\x, y, z => IntFunctorSigComp (cat x) (cat y) (cat z))
 
 public export
+0 IntFunctor2HCompSig : {0 idx : Type} -> (cat : idx -> IntCatSig) ->
+  Int2HCompSig
+    {obj=(icObj $ IntFunctorHCatSig {idx} cat)}
+    {mor=(icMor $ IntFunctorHCatSig {idx} cat)}
+    (icComp $ IntFunctorHCatSig {idx} cat)
+    (\c, d, f, g => IntNTSig (icMor $ cat d) (ifOmap f) (ifOmap g))
+IntFunctor2HCompSig {idx} cat c d e f f' g g' =
+  intNThcomp
+    {dmor=(icMor $ cat d)} {emor=(icMor $ cat e)}
+    {f=(ifOmap f)} {g=(ifOmap g)} {f'=(ifOmap f')} {g'=(ifOmap g')}
+    (icComp $ cat e)
+    (ifMmap g)
+
+public export
 0 IntFunctor2CatSig : {0 idx : Type} -> (idx -> IntCatSig) -> Int2CatSig
 IntFunctor2CatSig {idx} cat =
   I2Cat
     (IntFunctorHCatSig {idx} cat)
     (\dom, cod => IntOmapCatSig (cat dom) (cat cod) ifOmap)
-    (\x, y, z, f, f', g, g', beta, alpha =>
-     ?IntFunctor2CatSig_hole_hcomp)
+    (IntFunctor2HCompSig {idx} cat)
 
 -- The category of all categories in particular is a two-category.
 public export
