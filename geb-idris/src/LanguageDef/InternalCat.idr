@@ -224,10 +224,10 @@ i2cvc c2 dom cod =
   ICat
     (icMor (i2Ch c2) dom cod)
     $ MICS
-      (\f, g => micsMor (i2Cv c2 dom cod) f g)
+      (\f, g => i2c2Mor c2 dom cod f g)
     $ ICS
-      (micsId $ i2Cv c2 dom cod)
-      (micsComp $ i2Cv c2 dom cod)
+      (i2c2Id c2 dom cod)
+      (i2c2Vcomp c2 dom cod)
 
 ---------------------------------
 ---------------------------------
