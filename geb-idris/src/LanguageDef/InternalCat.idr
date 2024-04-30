@@ -62,19 +62,6 @@ public export
 0 icComp : (cat : IntCatSig) -> IntCompSig (icObj cat) (icMor cat)
 icComp cat = micsComp (icObj cat) $ icMICS cat
 
------------------
------------------
----- Bundles ----
------------------
------------------
-
-public export
-record IntBundleObj {0 c : Type} (0 mor : IntMorSig c) where
-  constructor IBO
-  iboDom : c
-  iboCod : c
-  iboMor : mor iboDom iboCod
-
 ------------------------
 ------------------------
 ---- Two-categories ----
