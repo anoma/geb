@@ -135,11 +135,11 @@ IntCellIdSig {obj} {vmor} {hmor} vid cell =
 public export
 0 IntCellTo2Id : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
-  {0 vid : IntIdSig obj vmor} ->
-  {0 cell : IntCellSig obj vmor hmor} ->
+  (0 vid : IntIdSig obj vmor) ->
+  (0 cell : IntCellSig obj vmor hmor) ->
   IntCellIdSig {obj} {vmor} {hmor} vid cell ->
   Int2IdSig {obj} {mor=hmor} (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
-IntCellTo2Id {obj} {vmor} {hmor} {vid} {cell} = id
+IntCellTo2Id {obj} {vmor} {hmor} vid cell = id
 
 public export
 IntCellVHId : {0 obj : Type} ->
@@ -189,11 +189,11 @@ IntCellHCompSig {obj} {vmor} {hmor} hcomp cell =
 public export
 0 IntCellTo2MorSig : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
-  {0 vcomp : IntCompSig obj vmor} ->
+  (0 vcomp : IntCompSig obj vmor) ->
   (0 cell : IntCellSig obj vmor hmor) ->
   (0 vid : IntIdSig obj vmor) ->
   Type
-IntCellTo2MorSig {obj} {vmor} {hmor} {vcomp} cell vid =
+IntCellTo2MorSig {obj} {vmor} {hmor} vcomp cell vid =
   (0 x, y : obj) -> (0 f, g : hmor x y) ->
   cell x y x y
     (vcomp x x x (vid x) (vid x))
@@ -207,26 +207,60 @@ IntCellTo2MorSig {obj} {vmor} {hmor} {vcomp} cell vid =
 public export
 0 IntCellTo2VComp : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
-  {0 vcomp : IntCompSig obj vmor} ->
   {0 cell : IntCellSig obj vmor hmor} ->
   (0 vid : IntIdSig obj vmor) ->
-  (0 c2m : IntCellTo2MorSig {obj} {vmor} {hmor} {vcomp} cell vid) ->
+  (0 vcomp : IntCompSig obj vmor) ->
+  (0 c2m : IntCellTo2MorSig {obj} {vmor} {hmor} vcomp cell vid) ->
   (0 _ : IntCellVCompSig {obj} {vmor} {hmor} vcomp cell) ->
   Int2VCompSig {obj} {mor=hmor} (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
-IntCellTo2VComp vid c2m cvcomp f g h beta alpha =
+IntCellTo2VComp vid vcomp c2m cvcomp f g h beta alpha =
   c2m x y f h $ cvcomp (vid x) (vid y) (vid x) (vid y) f g h beta alpha
 
 public export
 0 IntCellTo2HComp : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
   {0 hcomp : IntCompSig obj hmor} ->
-  {0 cell : IntCellSig obj vmor hmor} ->
   (0 vid : IntIdSig obj vmor) ->
+  (0 cell : IntCellSig obj vmor hmor) ->
   (0 _ : IntCellHCompSig {obj} {vmor} {hmor} hcomp cell) ->
   Int2HCompSig {obj} {mor=hmor}
     hcomp (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
-IntCellTo2HComp {obj} {vmor} {hmor} {hcomp} {cell} vid chcomp f f' g g' =
+IntCellTo2HComp {obj} {vmor} {hmor} {hcomp} vid cell chcomp f f' g g' =
   chcomp (vid x) (vid y) (vid z) f g f' g'
+
+public export
+record IntDblCatSig where
+  constructor IDCat
+  idcObj : Type
+  idcVmor : IntMorSig idcObj
+  idcVid : IntIdSig idcObj idcVmor
+  idcVcomp : IntCompSig idcObj idcVmor
+  idcHmor : IntMorSig idcObj
+  idcHid : IntIdSig idcObj idcHmor
+  idcHcomp : IntCompSig idcObj idcHmor
+  idcCell : IntCellSig idcObj idcVmor idcHmor
+  idcCid : IntCellIdSig idcVid idcCell
+  idcCvcomp : IntCellVCompSig idcVcomp idcCell
+  idcChcomp : IntCellHCompSig idcHcomp idcCell
+  idcC2m : IntCellTo2MorSig idcVcomp idcCell idcVid
+
+public export
+0 idcVcat : IntDblCatSig -> IntCatSig
+idcVcat idc = ICat (idcObj idc) (idcVmor idc) (idcVid idc) (idcVcomp idc)
+
+public export
+0 idcHcat : IntDblCatSig -> IntCatSig
+idcHcat idc = ICat (idcObj idc) (idcHmor idc) (idcHid idc) (idcHcomp idc)
+
+public export
+0 idc2cat : IntDblCatSig -> Int2CatSig
+idc2cat idc =
+  I2Cat
+    (idcHcat idc)
+    (IntCellTo2Sig (idcVid idc) (idcCell idc))
+    (IntCellTo2Id (idcVid idc) (idcCell idc) (idcCid idc))
+    (IntCellTo2VComp (idcVid idc) (idcVcomp idc) (idcC2m idc) (idcCvcomp idc))
+    (IntCellTo2HComp (idcVid idc) (idcCell idc) (idcChcomp idc))
 
 ------------------
 ------------------
