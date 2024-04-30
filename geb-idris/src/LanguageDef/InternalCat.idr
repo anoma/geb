@@ -316,23 +316,23 @@ record IntFunctorSig (0 dom, cod : IntCatSig) where
 ---------------------------------
 
 public export
-0 IntNTSig : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
+0 IntNTSig : {0 c, d : Type} -> (0 dmor : IntMorSig d) ->
   (f, g : c -> d) -> Type
-IntNTSig {c} {d} {dmor} f g = (0 x : c) -> dmor (f x) (g x)
+IntNTSig {c} {d} dmor f g = (0 x : c) -> dmor (f x) (g x)
 
 public export
-0 intNTid : {0 c : Type} ->
-  (0 cmor : IntMorSig c) -> (0 cid : IntIdSig c cmor) ->
-  IntNTSig {c} {d=c} {dmor=cmor} (IntIdFunctor c) (IntIdFunctor c)
-intNTid {c} cmor cid x = cid x
+0 intNTid : {0 c, d : Type} -> (0 dmor : IntMorSig d) ->
+  (0 _ : IntIdSig d dmor) ->
+  (0 f : c -> d) -> IntNTSig {c} {d} dmor f f
+intNTid {c} {d} dmor did f x = did $ f x
 
 public export
 intNTvcomp : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
   IntCompSig d dmor ->
   {0 f, g, h : c -> d} ->
-  IntNTSig {c} {d} {dmor} g h ->
-  IntNTSig {c} {d} {dmor} f g ->
-  IntNTSig {c} {d} {dmor} f h
+  IntNTSig {c} {d} dmor g h ->
+  IntNTSig {c} {d} dmor f g ->
+  IntNTSig {c} {d} dmor f h
 intNTvcomp {c} {d} {dmor} dcomp {f} {g} {h} beta alpha x =
   dcomp (f x) (g x) (h x) (beta x) (alpha x)
 
@@ -340,9 +340,9 @@ public export
 intNTwhiskerL : {0 c, d, e : Type} ->
   {0 emor : IntMorSig e} ->
   {0 g, h : d -> e} ->
-  IntNTSig {c=d} {d=e} {dmor=emor} g h ->
+  IntNTSig {c=d} {d=e} emor g h ->
   (0 f : c -> d) ->
-  IntNTSig {c} {d=e} {dmor=emor}
+  IntNTSig {c} {d=e} emor
     (IntFunctorComp c d e g f)
     (IntFunctorComp c d e h f)
 intNTwhiskerL {c} {d} {e} {emor} {g} {h} alpha f x = alpha (f x)
@@ -353,8 +353,8 @@ intNTwhiskerR : {0 c, d, e : Type} ->
   {0 f, g : c -> d} ->
   {0 h : d -> e} ->
   IntFMapSig {c=d} {d=e} dmor emor h ->
-  IntNTSig {c} {d} {dmor} f g ->
-  IntNTSig {c} {d=e} {dmor=emor}
+  IntNTSig {c} {d} dmor f g ->
+  IntNTSig {c} {d=e} emor
     (IntFunctorComp c d e h f)
     (IntFunctorComp c d e h g)
 intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g} {h} hm nu x =
@@ -367,9 +367,9 @@ intNThcomp : {0 c, d, e : Type} ->
   {0 f, f' : c -> d} ->
   {0 g, g' : d -> e} ->
   IntFMapSig {c=d} {d=e} dmor emor g ->
-  IntNTSig {c=d} {d=e} {dmor=emor} g g' ->
-  IntNTSig {c} {d} {dmor} f f' ->
-  IntNTSig {c} {d=e} {dmor=emor}
+  IntNTSig {c=d} {d=e} emor g g' ->
+  IntNTSig {c} {d} dmor f f' ->
+  IntNTSig {c} {d=e} emor
     (IntFunctorComp c d e g f)
     (IntFunctorComp c d e g' f')
 intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
@@ -388,7 +388,7 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
 
 public export
 0 IntUnitSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
-IntUnitSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} id t
+IntUnitSig {c} cmor t = IntNTSig {c} {d=c} cmor id t
 
 public export
 intIdMonadUnit : {0 c : Type} ->
@@ -398,7 +398,7 @@ intIdMonadUnit {c} cmor cid = cid
 
 public export
 0 IntCounitSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
-IntCounitSig {c} cmor t = IntNTSig {c} {d=c} {dmor=cmor} t id
+IntCounitSig {c} cmor t = IntNTSig {c} {d=c} cmor t id
 
 public export
 intIdComonadCounit : {0 c : Type} ->
@@ -409,7 +409,7 @@ intIdComonadCounit {c} cmor cid = cid
 public export
 0 IntMultSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
 IntMultSig {c} cmor t =
-  IntNTSig {c} {d=c} {dmor=cmor} (IntFunctorComp c c c t t) t
+  IntNTSig {c} {d=c} cmor (IntFunctorComp c c c t t) t
 
 public export
 intIdMonadMult : {0 c : Type} ->
@@ -420,7 +420,7 @@ intIdMonadMult {c} cmor cid = cid
 public export
 0 IntComultSig : {0 c : Type} -> (cmor : IntMorSig c) -> (t : c -> c) -> Type
 IntComultSig {c} cmor t =
-  IntNTSig {c} {d=c} {dmor=cmor} t (IntFunctorComp c c c t t)
+  IntNTSig {c} {d=c} cmor t (IntFunctorComp c c c t t)
 
 public export
 intIdComonadComult : {0 c : Type} ->
