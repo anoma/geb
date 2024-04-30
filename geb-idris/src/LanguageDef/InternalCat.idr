@@ -35,14 +35,14 @@ record MorIdCompSig (obj : Type) where
   0 micsICS : IdCompSig obj micsMor
 
 public export
-0 micsId : (obj : Type) ->
+0 micsId : {obj : Type} ->
   (mics : MorIdCompSig obj) -> IntIdSig obj (micsMor mics)
-micsId obj mics = icsId $ micsICS mics
+micsId {obj} mics = icsId $ micsICS mics
 
 public export
-0 micsComp : (obj : Type) ->
+0 micsComp : {obj : Type} ->
   (mics : MorIdCompSig obj) -> IntCompSig obj (micsMor mics)
-micsComp obj mics = icsComp $ micsICS mics
+micsComp {obj} mics = icsComp $ micsICS mics
 
 public export
 record IntCatSig where
@@ -56,11 +56,11 @@ icMor cat = micsMor $ icMICS cat
 
 public export
 0 icId : (cat : IntCatSig) -> IntIdSig (icObj cat) (icMor cat)
-icId cat = micsId (icObj cat) $ icMICS cat
+icId cat = micsId {obj=(icObj cat)} $ icMICS cat
 
 public export
 0 icComp : (cat : IntCatSig) -> IntCompSig (icObj cat) (icMor cat)
-icComp cat = micsComp (icObj cat) $ icMICS cat
+icComp cat = micsComp {obj=(icObj cat)} $ icMICS cat
 
 ------------------------
 ------------------------
@@ -253,27 +253,45 @@ public export
 record IntDblCatSig where
   constructor IDCat
   idcObj : Type
-  idcVmor : IntMorSig idcObj
-  idcVid : IntIdSig idcObj idcVmor
-  idcVcomp : IntCompSig idcObj idcVmor
-  idcHmor : IntMorSig idcObj
-  idcHid : IntIdSig idcObj idcHmor
-  idcHcomp : IntCompSig idcObj idcHmor
-  idcCell : IntCellSig idcObj idcVmor idcHmor
-  idcCid : IntCellIdSig idcVid idcCell
-  idcCvcomp : IntCellVCompSig idcVcomp idcCell
-  idcChcomp : IntCellHCompSig idcHcomp idcCell
-  idcC2m : IntCellTo2MorSig idcVcomp idcCell idcVid
+  idcVmics : MorIdCompSig idcObj
+  idcHmics : MorIdCompSig idcObj
+  idcCell : IntCellSig idcObj (micsMor idcVmics) (micsMor idcHmics)
+  idcCid : IntCellIdSig (micsId idcVmics) idcCell
+  idcCvcomp : IntCellVCompSig (micsComp idcVmics) idcCell
+  idcChcomp : IntCellHCompSig (micsComp idcHmics) idcCell
+  idcC2m : IntCellTo2MorSig (micsComp idcVmics) idcCell (micsId idcVmics)
 
 public export
 0 idcVcat : IntDblCatSig -> IntCatSig
-idcVcat idc =
-  ICat (idcObj idc) $ MICS (idcVmor idc) $ ICS (idcVid idc) (idcVcomp idc)
+idcVcat idc = ICat (idcObj idc) (idcVmics idc)
+
+public export
+0 idcVmor : (idc : IntDblCatSig) -> IntMorSig (idcObj idc)
+idcVmor idc = icMor (idcVcat idc)
+
+public export
+0 idcVid : (idc : IntDblCatSig) -> IntIdSig (idcObj idc) (idcVmor idc)
+idcVid idc = icId (idcVcat idc)
+
+public export
+0 idcVcomp : (idc : IntDblCatSig) -> IntCompSig (idcObj idc) (idcVmor idc)
+idcVcomp idc = icComp (idcVcat idc)
 
 public export
 0 idcHcat : IntDblCatSig -> IntCatSig
-idcHcat idc =
-  ICat (idcObj idc) $ MICS (idcHmor idc) $ ICS (idcHid idc) (idcHcomp idc)
+idcHcat idc = ICat (idcObj idc) (idcHmics idc)
+
+public export
+0 idcHmor : (idc : IntDblCatSig) -> IntMorSig (idcObj idc)
+idcHmor idc = icMor (idcHcat idc)
+
+public export
+0 idcHid : (idc : IntDblCatSig) -> IntIdSig (idcObj idc) (idcHmor idc)
+idcHid idc = icId (idcHcat idc)
+
+public export
+0 idcHcomp : (idc : IntDblCatSig) -> IntCompSig (idcObj idc) (idcHmor idc)
+idcHcomp idc = icComp (idcHcat idc)
 
 public export
 0 idc2cat : IntDblCatSig -> Int2CatSig
