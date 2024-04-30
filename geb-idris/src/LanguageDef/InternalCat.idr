@@ -380,6 +380,16 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
     (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f' x)
     (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha x)
 
+public export
+0 IntFunctorCatSig : IntCatSig -> IntCatSig -> IntCatSig
+IntFunctorCatSig dom cod =
+  ICat
+    (IntFunctorSig dom cod)
+    (\f, g => IntNTSig (icMor cod) (ifOmap f) (ifOmap g))
+    (\f => intNTid (icMor cod) (icId cod) (ifOmap f))
+    (\f, g, h =>
+      intNTvcomp {f=(ifOmap f)} {g=(ifOmap g)} {h=(ifOmap h)} (icComp cod))
+
 -----------------------------
 -----------------------------
 ---- Monads and comonads ----
