@@ -87,6 +87,17 @@ record Int2CatSig where
   0 i2cHcomp :
     Int2HCompSig {obj=(icObj i2c1)} {mor=(icMor i2c1)} (icComp i2c1) i2c2Mor
 
+-- For any pair of objects of the category underlying a 2-category, there
+-- is a category of 2-morphisms among 1-morphisms between the two given objects.
+public export
+0 i2cvc : (0 c2 : Int2CatSig) -> (0 dom, cod : icObj (i2c1 c2)) -> IntCatSig
+i2cvc c2 dom cod =
+  ICat
+    (icMor (i2c1 c2) dom cod)
+    (\f, g => i2c2Mor c2 dom cod f g)
+    (i2c2Id c2 dom cod)
+    (i2cVcomp c2 {x=dom} {y=cod})
+
 ---------------------------
 ---------------------------
 ---- Double categories ----
