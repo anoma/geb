@@ -434,9 +434,8 @@ public export
   (dmor : IntMorSig d) -> (cmor : IntMorSig c) ->
   IntCompSig d dmor -> IntCompSig c cmor ->
   IntCompSig (d, c) (IntOpProdCatMor d c dmor cmor)
-IntOpProdCatComp d c dmor cmor dcomp ccomp (dx, cx) (dy, cy) (dz, cz)
-  (dmzy, cmyz) (dmyx, cmxy) =
-    (dcomp dz dy dx dmyx dmzy, ccomp cx cy cz cmyz cmxy)
+IntOpProdCatComp d c dmor cmor dcomp ccomp =
+  IntProdCatComp d c (IntOpCatMor d dmor) cmor (IntOpCatComp d dmor dcomp) ccomp
 
 public export
 IntOpProdCat : IntCatSig -> IntCatSig -> IntCatSig
