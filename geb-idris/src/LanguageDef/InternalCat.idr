@@ -161,6 +161,10 @@ IntParamCat cat = IntFunctorSig cat IntCatCat
 -----------------------------
 
 public export
+IntOpCatObj : Type -> Type
+IntOpCatObj = id
+
+public export
 0 IntOpCatMor : (0 c : Type) -> IntMorSig c -> IntMorSig c
 IntOpCatMor c cmor = flip cmor
 
@@ -173,6 +177,17 @@ public export
 0 IntOpCatComp : (0 c : Type) -> (0 cmor : IntMorSig c) ->
   IntCompSig c cmor -> IntCompSig c (IntOpCatMor c cmor)
 IntOpCatComp c cmor comp x y z mzy myx = comp z y x myx mzy
+
+public export
+IntOpCat : IntCatSig -> IntCatSig
+IntOpCat c =
+  ICat
+    (icObj c)
+  $ MICS
+    (IntOpCatMor (icObj c) (icMor c))
+  $ ICS
+    (IntOpCatId (icObj c) (icMor c) (icId c))
+    (IntOpCatComp (icObj c) (icMor c) (icComp c))
 
 -----------------------------
 ---- Discrete categories ----
@@ -197,6 +212,17 @@ public export
   IntCompSig (DiscreteCatObj obj) (DiscreteCatMor {obj})
 DiscreteComp _ _ _ x y = case (x, y) of (DCid a, DCid a) => DCid a
 
+public export
+DiscreteCat : Type -> IntCatSig
+DiscreteCat c =
+  ICat
+    (DiscreteCatObj c)
+  $ MICS
+    (DiscreteCatMor {obj=c})
+  $ ICS
+    (DiscreteId {obj=c})
+    (DiscreteComp {obj=c})
+
 --------------------------
 ---- Initial category ----
 --------------------------
@@ -217,6 +243,10 @@ public export
 0 InitialComp : IntCompSig InitialCatObj InitialCatMor
 InitialComp = DiscreteComp {obj=Void}
 
+public export
+InitialCat : IntCatSig
+InitialCat = DiscreteCat Void
+
 ---------------------------
 ---- Terminal category ----
 ---------------------------
@@ -236,6 +266,10 @@ TerminalId = DiscreteId {obj=Unit}
 public export
 0 TerminalComp : IntCompSig TerminalCatObj TerminalCatMor
 TerminalComp = DiscreteComp {obj=Unit}
+
+public export
+TerminalCat : IntCatSig
+TerminalCat = DiscreteCat Unit
 
 ------------------------------
 ---- Coproduct categories ----
@@ -305,6 +339,19 @@ IntCoprodCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy
     | (Right dx, Right dy, Right dz) =
       case objsig of Refl => dcomp dx dy dz cdmyz cdmxy
 
+public export
+IntCoprodCat : IntCatSig -> IntCatSig -> IntCatSig
+IntCoprodCat c d =
+  ICat
+    (IntCoprodCatObj (icObj c) (icObj d))
+  $ MICS
+    (IntCoprodCatMor (icObj c) (icObj d) (icMor c) (icMor d))
+  $ ICS
+    (IntCoprodCatId
+      (icObj c) (icObj d) (icMor c) (icMor d) (icId c) (icId d))
+    (IntCoprodCatComp
+      (icObj c) (icObj d) (icMor c) (icMor d) (icComp c) (icComp d))
+
 ----------------------------
 ---- Product categories ----
 ----------------------------
@@ -344,9 +391,26 @@ IntProdCatComp c d cmor dmor ccomp dcomp cdx cdy cdz cdmyz cdmxy =
   (ccomp (fst cdx) (fst cdy) (fst cdz) (fst cdmyz) (fst cdmxy),
    dcomp (snd cdx) (snd cdy) (snd cdz) (snd cdmyz) (snd cdmxy))
 
+public export
+IntProdCat : IntCatSig -> IntCatSig -> IntCatSig
+IntProdCat c d =
+  ICat
+    (IntProdCatObj (icObj c) (icObj d))
+  $ MICS
+    (IntProdCatMor (icObj c) (icObj d) (icMor c) (icMor d))
+  $ ICS
+    (IntProdCatId
+      (icObj c) (icObj d) (icMor c) (icMor d) (icId c) (icId d))
+    (IntProdCatComp
+      (icObj c) (icObj d) (icMor c) (icMor d) (icComp c) (icComp d))
+
 -------------------------------------
 ---- Opposite-product categories ----
 -------------------------------------
+
+public export
+IntOpProdCatObj : Type -> Type -> Type
+IntOpProdCatObj d c = IntProdCatObj (IntOpCatObj d) (IntOpCatObj c)
 
 public export
 0 IntOpProdCatMor : (0 d, c : Type) ->
@@ -373,6 +437,19 @@ public export
 IntOpProdCatComp d c dmor cmor dcomp ccomp (dx, cx) (dy, cy) (dz, cz)
   (dmzy, cmyz) (dmyx, cmxy) =
     (dcomp dz dy dx dmyx dmzy, ccomp cx cy cz cmyz cmxy)
+
+public export
+IntOpProdCat : IntCatSig -> IntCatSig -> IntCatSig
+IntOpProdCat d c =
+  ICat
+    (IntOpProdCatObj (icObj d) (icObj c))
+  $ MICS
+    (IntOpProdCatMor (icObj d) (icObj c) (icMor d) (icMor c))
+  $ ICS
+    (IntOpProdCatId
+      (icObj d) (icObj c) (icMor d) (icMor c) (icId d) (icId c))
+    (IntOpProdCatComp
+      (icObj d) (icObj c) (icMor d) (icMor c) (icComp d) (icComp c))
 
 ---------------------------------
 ---------------------------------
