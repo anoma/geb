@@ -189,10 +189,10 @@ Int2VCompSig {obj} {mor} mor2 =
   (0 x, y : obj) -> Int2VCompParamSig {obj} {mor} x y (mor2 x y)
 
 public export
-0 Int2HCompSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
+0 Int2HCompParamSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
   (0 comp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
   IntMorSig obj
-Int2HCompSig {obj} {mor} comp mor2 dom cod =
+Int2HCompParamSig {obj} {mor} comp mor2 dom cod =
   (0 mid : obj) ->
   (0 f, f' : mor dom mid) -> (0 g, g' : mor mid cod) ->
   mor2 mid cod g g' -> mor2 dom mid f f' ->
@@ -204,7 +204,7 @@ record Int2CatSig where
   i2Ch : IntCatSig
   i2Cv : (0 dom, cod : icObj i2Ch) -> MorIdCompSig (icMor i2Ch dom cod)
   0 i2cHcomp : (0 dom, cod : icObj i2Ch) ->
-    Int2HCompSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)}
+    Int2HCompParamSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)}
       (icComp i2Ch) (\x, y, f, g => micsMor (i2Cv x y) f g) dom cod
 
 public export
@@ -355,7 +355,7 @@ IntFunctorHCatSig {idx} cat =
 public export
 0 IntFunctor2HCompSig : {0 idx : Type} -> (cat : idx -> IntCatSig) ->
   (0 dom, cod : icObj $ IntFunctorHCatSig {idx} cat) ->
-  Int2HCompSig
+  Int2HCompParamSig
     {obj=(icObj $ IntFunctorHCatSig {idx} cat)}
     {mor=(icMor $ IntFunctorHCatSig {idx} cat)}
     (icComp $ IntFunctorHCatSig {idx} cat)
@@ -507,7 +507,7 @@ public export
   (0 cell : IntCellSig obj vmor hmor) ->
   (0 _ : IntCellHCompSig {obj} {vmor} {hmor} hcomp cell) ->
   (0 dom, cod : obj) ->
-  Int2HCompSig {obj} {mor=hmor}
+  Int2HCompParamSig {obj} {mor=hmor}
     hcomp (IntCellTo2Sig {obj} {vmor} {hmor} vid cell) dom cod
 IntCellTo2HComp {obj} {vmor} {hmor} {hcomp} vid cell chcomp x z y f f' g g' =
   chcomp (vid x) (vid y) (vid z) f g f' g'
