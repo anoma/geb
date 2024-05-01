@@ -176,10 +176,11 @@ public export
 0 Int2HCompSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
   (0 comp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
   obj -> obj -> Type
-Int2HCompSig {obj} {mor} comp mor2 x z =
-  (0 y : obj) ->
-  (0 f, f' : mor x y) -> (0 g, g' : mor y z) ->
-  mor2 y z g g' -> mor2 x y f f' -> mor2 x z (comp x y z g f) (comp x y z g' f')
+Int2HCompSig {obj} {mor} comp mor2 dom cod =
+  (0 mid : obj) ->
+  (0 f, f' : mor dom mid) -> (0 g, g' : mor mid cod) ->
+  mor2 mid cod g g' -> mor2 dom mid f f' ->
+  mor2 dom cod (comp dom mid cod g f) (comp dom mid cod g' f')
 
 public export
 record Int2CatSig where
