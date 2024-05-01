@@ -175,9 +175,9 @@ Int2VCompSig {obj} {mor} mor2 =
 public export
 0 Int2HCompSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
   (0 comp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
-  Type
-Int2HCompSig {obj} {mor} comp mor2 =
-  (0 x, y, z : obj) ->
+  obj -> obj -> Type
+Int2HCompSig {obj} {mor} comp mor2 x z =
+  (0 y : obj) ->
   (0 f, f' : mor x y) -> (0 g, g' : mor y z) ->
   mor2 y z g g' -> mor2 x y f f' -> mor2 x z (comp x y z g f) (comp x y z g' f')
 
@@ -186,9 +186,9 @@ record Int2CatSig where
   constructor I2Cat
   i2Ch : IntCatSig
   i2Cv : (0 dom, cod : icObj i2Ch) -> MorIdCompSig (icMor i2Ch dom cod)
-  0 i2cHcomp :
+  0 i2cHcomp : (0 dom, cod : icObj i2Ch) ->
     Int2HCompSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)}
-      (icComp i2Ch) (\x, y, f, g => micsMor (i2Cv x y) f g)
+      (icComp i2Ch) (\x, y, f, g => micsMor (i2Cv x y) f g) dom cod
 
 public export
 0 i2ChObj : (0 c2 : Int2CatSig) -> Type
@@ -337,12 +337,14 @@ IntFunctorHCatSig {idx} cat =
 
 public export
 0 IntFunctor2HCompSig : {0 idx : Type} -> (cat : idx -> IntCatSig) ->
+  (0 dom, cod : icObj $ IntFunctorHCatSig {idx} cat) ->
   Int2HCompSig
     {obj=(icObj $ IntFunctorHCatSig {idx} cat)}
     {mor=(icMor $ IntFunctorHCatSig {idx} cat)}
     (icComp $ IntFunctorHCatSig {idx} cat)
     (\c, d, f, g => IntNTSig (icMor $ cat d) (ifOmap f) (ifOmap g))
-IntFunctor2HCompSig {idx} cat c d e f f' g g' =
+    dom cod
+IntFunctor2HCompSig {idx} cat c e d f f' g g' =
   intNThcomp
     {dmor=(icMor $ cat d)} {emor=(icMor $ cat e)}
     {f=(ifOmap f)} {g=(ifOmap g)} {f'=(ifOmap f')} {g'=(ifOmap g')}
@@ -487,9 +489,10 @@ public export
   (0 vid : IntIdSig obj vmor) ->
   (0 cell : IntCellSig obj vmor hmor) ->
   (0 _ : IntCellHCompSig {obj} {vmor} {hmor} hcomp cell) ->
+  (0 dom, cod : obj) ->
   Int2HCompSig {obj} {mor=hmor}
-    hcomp (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
-IntCellTo2HComp {obj} {vmor} {hmor} {hcomp} vid cell chcomp x y z f f' g g' =
+    hcomp (IntCellTo2Sig {obj} {vmor} {hmor} vid cell) dom cod
+IntCellTo2HComp {obj} {vmor} {hmor} {hcomp} vid cell chcomp x z y f f' g g' =
   chcomp (vid x) (vid y) (vid z) f g f' g'
 
 public export
