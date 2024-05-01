@@ -708,6 +708,23 @@ Int2HCompSig {obj} {mor} comp mor2 =
   (0 dom, cod : obj) -> Int2HCompParamSig {obj} {mor} comp mor2 dom cod
 
 public export
+0 Int2HCompFromWhiskers : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
+  (0 hcomp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
+  Int2WhiskerLSig {obj} {mor} hcomp mor2 ->
+  Int2WhiskerRSig {obj} {mor} hcomp mor2 ->
+  Int2VCompSig {obj} {mor} mor2 ->
+  Int2HCompSig {obj} {mor} hcomp mor2
+Int2HCompFromWhiskers {obj} {mor} hcomp mor2 wl wr vcomp dom cod mid f f' g g'
+  beta alpha =
+    vcomp
+      dom cod
+      (hcomp dom mid cod g f)
+      (hcomp dom mid cod g f')
+      (hcomp dom mid cod g' f')
+      (wl dom mid f' cod g g' beta)
+      (wr mid cod g dom f f' alpha)
+
+public export
 record Int2CatSig where
   constructor I2Cat
   i2Ch : IntCatSig
