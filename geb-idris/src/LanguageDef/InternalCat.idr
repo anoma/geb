@@ -157,20 +157,36 @@ IntParamCat cat = IntFunctorSig cat IntCatCat
 ------------------------
 
 public export
+0 Int2MorphParamSig : (0 obj : Type) -> (0 mor : IntMorSig obj) -> IntMorSig obj
+Int2MorphParamSig obj mor x y = (0 f, g : mor x y) -> Type
+
+public export
 0 Int2MorphSig : (0 obj : Type) -> (0 mor : IntMorSig obj) -> Type
-Int2MorphSig obj mor = (0 x, y : obj) -> (0 f, g : mor x y) -> Type
+Int2MorphSig obj mor = (0 x, y : obj) -> Int2MorphParamSig obj mor x y
+
+public export
+0 Int2IdParamSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
+  (0 x, y : obj) -> (0 _ : Int2MorphParamSig obj mor x y) -> Type
+Int2IdParamSig {obj} {mor} x y mor2 = (0 f : mor x y) -> mor2 f f
 
 public export
 0 Int2IdSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
   (0 _ : Int2MorphSig obj mor) -> Type
-Int2IdSig {obj} {mor} mor2 = (0 x, y : obj) -> (0 f : mor x y) -> mor2 x y f f
+Int2IdSig {obj} {mor} mor2 =
+  (0 x, y : obj) -> Int2IdParamSig {obj} {mor} x y (mor2 x y)
+
+public export
+0 Int2VCompParamSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
+  (0 x, y : obj) ->
+  (0 mor2 : Int2MorphParamSig obj mor x y) -> Type
+Int2VCompParamSig {obj} {mor} x y mor2 =
+  (0 f, g, h : mor x y) -> mor2 g h -> mor2 f g -> mor2 f h
 
 public export
 0 Int2VCompSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
   (0 mor2 : Int2MorphSig obj mor) -> Type
 Int2VCompSig {obj} {mor} mor2 =
-  (0 x, y : obj) -> (0 f, g, h : mor x y) ->
-  mor2 x y g h -> mor2 x y f g -> mor2 x y f h
+  (0 x, y : obj) -> Int2VCompParamSig {obj} {mor} x y (mor2 x y)
 
 public export
 0 Int2HCompSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
