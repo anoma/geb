@@ -659,6 +659,38 @@ Int2VCompSig {obj} {mor} mor2 =
   (0 x, y : obj) -> Int2VCompParamSig {obj} {mor} x y (mor2 x y)
 
 public export
+0 Int2WhiskerLParamSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
+  (0 comp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
+  (x, y : obj) -> mor x y -> Type
+Int2WhiskerLParamSig {obj} {mor} comp mor2 x y f =
+  (0 z : obj) -> (0 g, g' : mor y z) ->
+  mor2 y z g g' -> mor2 x z (comp x y z g f) (comp x y z g' f)
+
+public export
+0 Int2WhiskerLSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
+  (0 comp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
+  Type
+Int2WhiskerLSig {obj} {mor} comp mor2 =
+  (0 x, y : obj) -> (f : mor x y) ->
+  Int2WhiskerLParamSig {obj} {mor} comp mor2 x y f
+
+public export
+0 Int2WhiskerRParamSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
+  (0 comp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
+  (y, z : obj) -> mor y z -> Type
+Int2WhiskerRParamSig {obj} {mor} comp mor2 y z g =
+  (0 x : obj) -> (0 f, f' : mor x y) ->
+  mor2 x y f f' -> mor2 x z (comp x y z g f) (comp x y z g f')
+
+public export
+0 Int2WhiskerRSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
+  (0 comp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
+  Type
+Int2WhiskerRSig {obj} {mor} comp mor2 =
+  (0 y, z : obj) -> (g : mor y z) ->
+  Int2WhiskerRParamSig {obj} {mor} comp mor2 y z g
+
+public export
 0 Int2HCompParamSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
   (0 comp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
   IntMorSig obj
