@@ -191,7 +191,7 @@ Int2VCompSig {obj} {mor} mor2 =
 public export
 0 Int2HCompSig : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
   (0 comp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
-  obj -> obj -> Type
+  IntMorSig obj
 Int2HCompSig {obj} {mor} comp mor2 dom cod =
   (0 mid : obj) ->
   (0 f, f' : mor dom mid) -> (0 g, g' : mor mid cod) ->
