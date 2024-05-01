@@ -594,13 +594,10 @@ intNThcomp : {0 c, d, e : Type} ->
   IntNTSig {c} {d=e} emor
     (IntFunctorComp c d e g f)
     (IntFunctorComp c d e g' f')
-intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha x =
-  ecomp
-    (g $ f x)
-    (g $ f' x)
-    (g' $ f' x)
-    (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f' x)
-    (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha x)
+intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha =
+  intNTvcomp {c} {d=e} {dmor=emor} ecomp {f=(g . f)} {g=(g . f')} {h=(g' . f')}
+    (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f')
+    (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha)
 
 0 IntOmapCatSig : (dom, cod : IntCatSig) ->
   {obj : Type} -> (obj -> icObj dom -> icObj cod) -> MorIdCompSig obj
