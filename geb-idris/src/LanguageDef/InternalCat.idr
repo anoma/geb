@@ -225,6 +225,19 @@ public export
 GlobalRightWhiskerHomStruct ic ghs =
   (0 c, d, e : icObj ic) -> RightWhiskerHomStruct ic c d e (ghs c e) (ghs c d)
 
+public export
+0 WhiskerPairHomStruct : (0 ic : IntCatSig) -> (c, d, e : icObj ic) ->
+  HomStruct ic c e -> HomStruct ic c d -> HomStruct ic d e -> Type
+WhiskerPairHomStruct ic c d e hsce hscd hsde =
+  (LeftWhiskerHomStruct ic c d e hsce hsde,
+   RightWhiskerHomStruct ic c d e hsce hscd)
+
+public export
+0 GlobalWhiskerPairHomStruct : (0 ic : IntCatSig) -> GlobalHomStruct ic -> Type
+GlobalWhiskerPairHomStruct ic ghs =
+  (0 c, d, e : icObj ic) ->
+  WhiskerPairHomStruct ic c d e (ghs c e) (ghs c d) (ghs d e)
+
 -------------------------------------------
 -------------------------------------------
 ---- Category-parameterized categories ----
