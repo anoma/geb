@@ -225,19 +225,19 @@ public export
 GlobalRightWhiskerHomStruct ic ghs =
   (0 c, d, e : icObj ic) -> RightWhiskerHomStruct ic c d e (ghs c e) (ghs c d)
 
-----------------------------------
-----------------------------------
----- Parameterized categories ----
-----------------------------------
-----------------------------------
+-------------------------------------------
+-------------------------------------------
+---- Category-parameterized categories ----
+-------------------------------------------
+-------------------------------------------
 
 -- A category parameterized over a category is a functor from that category
 -- (which we call the "index" category) to the category of categories.  To
 -- be explicit, this means that to each object of the index category we assign
 -- a category, and to each morphism of the index category we assign a functor.
 public export
-IntParamCat : IntCatSig -> Type
-IntParamCat cat = IntFunctorSig cat IntCatCat
+IntCParamCat : IntCatSig -> Type
+IntCParamCat cat = IntFunctorSig cat IntCatCat
 
 ---------------------------------
 ---------------------------------
