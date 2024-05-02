@@ -142,6 +142,67 @@ IntCatCat =
     IntFunctorSigId
     IntFunctorSigComp
 
+-----------------------------
+-----------------------------
+---- Structured hom-sets ----
+-----------------------------
+-----------------------------
+
+-----------------------------------------
+---- Local and global hom-structures ----
+-----------------------------------------
+
+-- A structure on a hom-set of a category is the imposition of a
+-- categorical structure on that hom-set.
+public export
+0 HomStruct : (0 c : IntCatSig) -> IntMorSig (icObj c)
+HomStruct c x y = MorIdCompSig $ icMor c x y
+
+-- A global hom-set structure is the imposition of a (categorical)
+-- structure on every hom-set of a category.
+public export
+0 GlobalHomStruct : IntCatSig -> Type
+GlobalHomStruct c = (0 x, y : icObj c) -> HomStruct c x y
+
+-- By itself, imposing a global hom-set structure on a category only
+-- defines a collection of non-interacting categories which happen to
+-- be indexed by pairs of objects of some other category, and each
+-- of whose morphisms happens to correspond to a morphism of that
+-- indexing category.
+--
+-- Adding distinctiveness (from simply collections of categories)
+-- to hom-set structures involves defining interactions among them
+-- which correspond in some way to the structure of the indexing category.
+-- So we now define some such interactions.
+
+--------------------
+---- Whiskering ----
+--------------------
+
+-- One form of further structure that we can impose on top of a
+-- hom-set structure is a whisker structure.  To have a whisker
+-- structure on a particular morphism (of the indexing category) means
+-- that that morphism induces a mapping across hom-set structures which
+-- follows the composition of the indexing category.  We can define
+-- such a structure for either precomposition or postcomposition, which
+-- we call "left" and "right" whiskering.
+
+public export
+0 LeftWhiskerMorphStruct : (0 ic : IntCatSig) -> (c, d, e : icObj ic) ->
+  icMor ic c d -> HomStruct ic c e -> HomStruct ic d e -> Type
+LeftWhiskerMorphStruct ic c d e f hsce hsde =
+  (0 g, g' : icMor ic d e) ->
+  micsMor hsde g g' ->
+  micsMor hsce (icComp ic c d e g f) (icComp ic c d e g' f)
+
+public export
+0 RightWhiskerMorphStruct : (0 ic : IntCatSig) -> (c, d, e : icObj ic) ->
+  icMor ic d e -> HomStruct ic c e -> HomStruct ic c d -> Type
+RightWhiskerMorphStruct ic c d e g hsce hscd =
+  (0 f, f' : icMor ic c d) ->
+  micsMor hscd f f' ->
+  micsMor hsce (icComp ic c d e g f) (icComp ic c d e g f')
+
 ----------------------------------
 ----------------------------------
 ---- Parameterized categories ----
