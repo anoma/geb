@@ -142,6 +142,12 @@ IntCatCat =
     IntFunctorSigId
     IntFunctorSigComp
 
+----------------------------------
+----------------------------------
+---- Parameterized categories ----
+----------------------------------
+----------------------------------
+
 -- A category parameterized over a category is a functor from that category
 -- (which we call the "index" category) to the category of categories.  To
 -- be explicit, this means that to each object of the index category we assign
