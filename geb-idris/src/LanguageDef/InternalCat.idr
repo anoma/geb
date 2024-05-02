@@ -152,6 +152,95 @@ IntParamCat cat = IntFunctorSig cat IntCatCat
 
 ---------------------------------
 ---------------------------------
+---- Natural transformations ----
+---------------------------------
+---------------------------------
+
+public export
+0 IntNTSig : {0 c, d : Type} -> (0 dmor : IntMorSig d) ->
+  (f, g : c -> d) -> Type
+IntNTSig {c} {d} dmor f g = (0 x : c) -> dmor (f x) (g x)
+
+public export
+0 intNTid : {0 c, d : Type} -> (0 dmor : IntMorSig d) ->
+  (0 _ : IntIdSig d dmor) ->
+  (0 f : c -> d) -> IntNTSig {c} {d} dmor f f
+intNTid {c} {d} dmor did f x = did $ f x
+
+public export
+intNTvcomp : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
+  IntCompSig d dmor ->
+  {0 f, g, h : c -> d} ->
+  IntNTSig {c} {d} dmor g h ->
+  IntNTSig {c} {d} dmor f g ->
+  IntNTSig {c} {d} dmor f h
+intNTvcomp {c} {d} {dmor} dcomp {f} {g} {h} beta alpha x =
+  dcomp (f x) (g x) (h x) (beta x) (alpha x)
+
+public export
+intNTwhiskerL : {0 c, d, e : Type} ->
+  {0 emor : IntMorSig e} ->
+  {0 g, h : d -> e} ->
+  IntNTSig {c=d} {d=e} emor g h ->
+  (0 f : c -> d) ->
+  IntNTSig {c} {d=e} emor
+    (IntFunctorComp c d e g f)
+    (IntFunctorComp c d e h f)
+intNTwhiskerL {c} {d} {e} {emor} {g} {h} alpha f x = alpha (f x)
+
+public export
+intNTwhiskerR : {0 c, d, e : Type} ->
+  {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
+  {0 f, g : c -> d} ->
+  {0 h : d -> e} ->
+  IntFMapSig {c=d} {d=e} dmor emor h ->
+  IntNTSig {c} {d} dmor f g ->
+  IntNTSig {c} {d=e} emor
+    (IntFunctorComp c d e h f)
+    (IntFunctorComp c d e h g)
+intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g} {h} hm nu x =
+  hm (f x) (g x) (nu x)
+
+public export
+intNThcomp : {0 c, d, e : Type} ->
+  {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
+  IntCompSig e emor ->
+  {0 f, f' : c -> d} ->
+  {0 g, g' : d -> e} ->
+  IntFMapSig {c=d} {d=e} dmor emor g ->
+  IntNTSig {c=d} {d=e} emor g g' ->
+  IntNTSig {c} {d} dmor f f' ->
+  IntNTSig {c} {d=e} emor
+    (IntFunctorComp c d e g f)
+    (IntFunctorComp c d e g' f')
+intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha =
+  intNTvcomp {c} {d=e} {dmor=emor} ecomp {f=(g . f)} {g=(g . f')} {h=(g' . f')}
+    (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f')
+    (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha)
+
+0 IntOmapCatSig : (dom, cod : IntCatSig) ->
+  {obj : Type} -> (obj -> icObj dom -> icObj cod) -> MorIdCompSig obj
+IntOmapCatSig dom cod {obj} omap =
+  MICS
+    (\f, g => IntNTSig (icMor cod) (omap f) (omap g))
+  $ ICS
+    (\f => intNTid (icMor cod) (icId cod) (omap f))
+    (\f, g, h => intNTvcomp {f=(omap f)} {g=(omap g)} {h=(omap h)} (icComp cod))
+
+0 IntFunctorOmapCatSig : IntCatSig -> IntCatSig -> IntCatSig
+IntFunctorOmapCatSig dom cod =
+  ICat (icObj dom -> icObj cod) $ IntOmapCatSig dom cod id
+
+-- Given a pair of categories, we can form a "functor category",
+-- whose objects are the functors from one to the other and whose
+-- morphisms are the natural transformations among those functors.
+public export
+0 IntFunctorCatSig : IntCatSig -> IntCatSig -> IntCatSig
+IntFunctorCatSig dom cod =
+  ICat (IntFunctorSig dom cod) $ IntOmapCatSig dom cod ifOmap
+
+---------------------------------
+---------------------------------
 ---- Core general categories ----
 ---------------------------------
 ---------------------------------
@@ -558,95 +647,6 @@ OpSliceComp c = IntOpCatComp (SliceObj c) (SliceMor c) (SliceComp c)
 public export
 OpSliceCat : Type -> IntCatSig
 OpSliceCat c = IntOpCat (SliceCat c)
-
----------------------------------
----------------------------------
----- Natural transformations ----
----------------------------------
----------------------------------
-
-public export
-0 IntNTSig : {0 c, d : Type} -> (0 dmor : IntMorSig d) ->
-  (f, g : c -> d) -> Type
-IntNTSig {c} {d} dmor f g = (0 x : c) -> dmor (f x) (g x)
-
-public export
-0 intNTid : {0 c, d : Type} -> (0 dmor : IntMorSig d) ->
-  (0 _ : IntIdSig d dmor) ->
-  (0 f : c -> d) -> IntNTSig {c} {d} dmor f f
-intNTid {c} {d} dmor did f x = did $ f x
-
-public export
-intNTvcomp : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
-  IntCompSig d dmor ->
-  {0 f, g, h : c -> d} ->
-  IntNTSig {c} {d} dmor g h ->
-  IntNTSig {c} {d} dmor f g ->
-  IntNTSig {c} {d} dmor f h
-intNTvcomp {c} {d} {dmor} dcomp {f} {g} {h} beta alpha x =
-  dcomp (f x) (g x) (h x) (beta x) (alpha x)
-
-public export
-intNTwhiskerL : {0 c, d, e : Type} ->
-  {0 emor : IntMorSig e} ->
-  {0 g, h : d -> e} ->
-  IntNTSig {c=d} {d=e} emor g h ->
-  (0 f : c -> d) ->
-  IntNTSig {c} {d=e} emor
-    (IntFunctorComp c d e g f)
-    (IntFunctorComp c d e h f)
-intNTwhiskerL {c} {d} {e} {emor} {g} {h} alpha f x = alpha (f x)
-
-public export
-intNTwhiskerR : {0 c, d, e : Type} ->
-  {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
-  {0 f, g : c -> d} ->
-  {0 h : d -> e} ->
-  IntFMapSig {c=d} {d=e} dmor emor h ->
-  IntNTSig {c} {d} dmor f g ->
-  IntNTSig {c} {d=e} emor
-    (IntFunctorComp c d e h f)
-    (IntFunctorComp c d e h g)
-intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g} {h} hm nu x =
-  hm (f x) (g x) (nu x)
-
-public export
-intNThcomp : {0 c, d, e : Type} ->
-  {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
-  IntCompSig e emor ->
-  {0 f, f' : c -> d} ->
-  {0 g, g' : d -> e} ->
-  IntFMapSig {c=d} {d=e} dmor emor g ->
-  IntNTSig {c=d} {d=e} emor g g' ->
-  IntNTSig {c} {d} dmor f f' ->
-  IntNTSig {c} {d=e} emor
-    (IntFunctorComp c d e g f)
-    (IntFunctorComp c d e g' f')
-intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha =
-  intNTvcomp {c} {d=e} {dmor=emor} ecomp {f=(g . f)} {g=(g . f')} {h=(g' . f')}
-    (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f')
-    (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha)
-
-0 IntOmapCatSig : (dom, cod : IntCatSig) ->
-  {obj : Type} -> (obj -> icObj dom -> icObj cod) -> MorIdCompSig obj
-IntOmapCatSig dom cod {obj} omap =
-  MICS
-    (\f, g => IntNTSig (icMor cod) (omap f) (omap g))
-  $ ICS
-    (\f => intNTid (icMor cod) (icId cod) (omap f))
-    (\f, g, h => intNTvcomp {f=(omap f)} {g=(omap g)} {h=(omap h)} (icComp cod))
-
-0 IntFunctorOmapCatSig : IntCatSig -> IntCatSig -> IntCatSig
-IntFunctorOmapCatSig dom cod =
-  ICat (icObj dom -> icObj cod) $ IntOmapCatSig dom cod id
-
--- Given a pair of categories, we can form a "functor category",
--- whose objects are the functors from one to the other and whose
--- morphisms are the natural transformations among those functors.
-public export
-0 IntFunctorCatSig : IntCatSig -> IntCatSig -> IntCatSig
-IntFunctorCatSig dom cod =
-  ICat (IntFunctorSig dom cod) $ IntOmapCatSig dom cod ifOmap
 
 ------------------------
 ------------------------
