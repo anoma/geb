@@ -812,8 +812,13 @@ public export
     {mor=(icMor $ IntFunctorHCatSig {idx} cat)}
     (icComp $ IntFunctorHCatSig {idx} cat)
     (\c, d, f, g => IntNTSig (icMor $ cat d) (ifOmap f) (ifOmap g))
-IntFunctor2WhiskerLSig {idx} cat c e d f f' g g' =
-  ?IntFunctor2WhiskerLSig_hole
+IntFunctor2WhiskerLSig {idx} cat x y f z g g' alpha =
+  intNTwhiskerL
+    {c=(icObj $ cat x)} {d=(icObj $ cat y)} {e=(icObj $ cat z)}
+    {emor=(icMor $ cat z)}
+    {g=(ifOmap g)} {h=(ifOmap g')}
+    alpha
+    (ifOmap f)
 
 public export
 0 IntFunctor2WhiskerRSig : {0 idx : Type} -> (cat : idx -> IntCatSig) ->
@@ -822,8 +827,14 @@ public export
     {mor=(icMor $ IntFunctorHCatSig {idx} cat)}
     (icComp $ IntFunctorHCatSig {idx} cat)
     (\c, d, f, g => IntNTSig (icMor $ cat d) (ifOmap f) (ifOmap g))
-IntFunctor2WhiskerRSig {idx} cat c e d f f' g g' =
-  ?IntFunctor2WhiskerRSig_hole
+IntFunctor2WhiskerRSig {idx} cat y z g x f f' alpha =
+  intNTwhiskerR
+    {c=(icObj $ cat x)} {d=(icObj $ cat y)} {e=(icObj $ cat z)}
+    {dmor=(icMor $ cat y)} {emor=(icMor $ cat z)}
+    {f=(ifOmap f)} {g=(ifOmap f')}
+    {h=(ifOmap g)}
+    (ifMmap g)
+    alpha
 
 public export
 0 IntFunctor2HCompSig : {0 idx : Type} -> (cat : idx -> IntCatSig) ->
