@@ -203,6 +203,9 @@ RightWhiskerMorphStruct ic c d e hsce hscd g =
   micsMor hscd f f' ->
   micsMor hsce (icComp ic c d e g f) (icComp ic c d e g f')
 
+-- We may further define notions that _all_ morphisms in a given hom-set
+-- may be left- or right-whiskered.
+
 public export
 0 LeftWhiskerHomStruct : (0 ic : IntCatSig) -> (c, d, e : icObj ic) ->
   HomStruct ic c e -> HomStruct ic d e -> Type
@@ -215,6 +218,9 @@ public export
 RightWhiskerHomStruct ic c d e hsce hscd =
   (0 g : icMor ic d e) -> RightWhiskerMorphStruct ic c d e hsce hscd g
 
+-- We may further define notions that all morphisms in _all_ hom-sets
+-- maybe left- or right-whiskered.
+
 public export
 0 GlobalLeftWhiskerHomStruct : (0 ic : IntCatSig) -> GlobalHomStruct ic -> Type
 GlobalLeftWhiskerHomStruct ic ghs =
@@ -224,6 +230,9 @@ public export
 0 GlobalRightWhiskerHomStruct : (0 ic : IntCatSig) -> GlobalHomStruct ic -> Type
 GlobalRightWhiskerHomStruct ic ghs =
   (0 c, d, e : icObj ic) -> RightWhiskerHomStruct ic c d e (ghs c e) (ghs c d)
+
+-- We may also define notions of having both left _and_ right whisker
+-- structures.
 
 public export
 0 WhiskerPairHomStruct : (0 ic : IntCatSig) -> (c, d, e : icObj ic) ->
