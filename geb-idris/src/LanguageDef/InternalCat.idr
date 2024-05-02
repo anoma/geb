@@ -467,6 +467,17 @@ public export
 0 typeComp : IntCompSig TypeObj TypeMor
 typeComp _ _ _ = (.)
 
+public export
+TypeCat : IntCatSig
+TypeCat =
+  ICat
+    TypeObj
+  $ MICS
+    TypeMor
+  $ ICS
+    typeId
+    typeComp
+
 ------------------------------------------------
 ---- Opposite of metalanguage base category ----
 ------------------------------------------------
@@ -487,6 +498,17 @@ public export
 0 opTypeComp : IntCompSig OpTypeObj OpTypeMor
 opTypeComp = IntOpCatComp TypeObj TypeMor typeComp
 
+public export
+OpTypeCat : IntCatSig
+OpTypeCat =
+  ICat
+    OpTypeObj
+  $ MICS
+    OpTypeMor
+  $ ICS
+    opTypeId
+    opTypeComp
+
 ---------------------------------------
 ---- Metalanguage slice categories ----
 ---------------------------------------
@@ -502,6 +524,17 @@ SliceId _ _ _ = id
 public export
 0 SliceComp : (0 c : Type) -> IntCompSig (SliceObj c) (SliceMor c)
 SliceComp c x y z = \g, f => \ec => g ec . f ec
+
+public export
+SliceCat : Type -> IntCatSig
+SliceCat c =
+  ICat
+    (SliceObj c)
+  $ MICS
+    (SliceMor c)
+  $ ICS
+    (SliceId c)
+    (SliceComp c)
 
 ------------------------------------------
 ---- Metalanguage op-slice categories ----
@@ -521,6 +554,10 @@ OpSliceId c = IntOpCatId (SliceObj c) (SliceMor c) (SliceId c)
 public export
 0 OpSliceComp : (c : Type) -> IntCompSig (OpSliceObj c) (OpSliceMor c)
 OpSliceComp c = IntOpCatComp (SliceObj c) (SliceMor c) (SliceComp c)
+
+public export
+OpSliceCat : Type -> IntCatSig
+OpSliceCat c = IntOpCat (SliceCat c)
 
 ---------------------------------
 ---------------------------------
