@@ -988,11 +988,12 @@ public export
   {0 hcomp : IntCompSig obj hmor} ->
   (0 vid : IntIdSig obj vmor) ->
   (0 cell : IntCellSig obj vmor hmor) ->
+  (0 cid : IntCellIdSig {obj} {vmor} {hmor} vid cell) ->
   (0 _ : IntCellHCompSig {obj} {vmor} {hmor} hcomp cell) ->
   Int2WhiskerLSig {obj} {mor=hmor}
     hcomp (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
-IntCellTo2WhiskerL {obj} {vmor} {hmor} {hcomp} vid cell chcomp x z y f f' g g' =
-  ?IntCellTo2WhiskerL_hole
+IntCellTo2WhiskerL {vmor} {hmor} {hcomp} vid cell cid chcomp x y f z g g' =
+  flip (chcomp (vid x) (vid y) (vid z) f g f g') $ cid x y f
 
 public export
 0 IntCellTo2WhiskerR : {0 obj : Type} ->
@@ -1000,11 +1001,12 @@ public export
   {0 hcomp : IntCompSig obj hmor} ->
   (0 vid : IntIdSig obj vmor) ->
   (0 cell : IntCellSig obj vmor hmor) ->
+  (0 cid : IntCellIdSig {obj} {vmor} {hmor} vid cell) ->
   (0 _ : IntCellHCompSig {obj} {vmor} {hmor} hcomp cell) ->
   Int2WhiskerRSig {obj} {mor=hmor}
     hcomp (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
-IntCellTo2WhiskerR {obj} {vmor} {hmor} {hcomp} vid cell chcomp x z y f f' g g' =
-  ?IntCellTo2WhiskerR_hole
+IntCellTo2WhiskerR {vmor} {hmor} {hcomp} vid cell cid chcomp y z g x f f' =
+  chcomp (vid x) (vid y) (vid z) f g f' g $ cid y z g
 
 public export
 0 IntCellTo2HComp : {0 obj : Type} ->
@@ -1081,8 +1083,8 @@ idc2cat idc =
   I2Cat
     (idcHcat idc)
     (idc2mics idc)
-    (IntCellTo2WhiskerL (idcVid idc) (idcCell idc) (idcChcomp idc))
-    (IntCellTo2WhiskerR (idcVid idc) (idcCell idc) (idcChcomp idc))
+    (IntCellTo2WhiskerL (idcVid idc) (idcCell idc) (idcCid idc) (idcChcomp idc))
+    (IntCellTo2WhiskerR (idcVid idc) (idcCell idc) (idcCid idc) (idcChcomp idc))
 
 -----------------------------
 -----------------------------
