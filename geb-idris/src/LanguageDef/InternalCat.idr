@@ -189,16 +189,16 @@ GlobalHomStruct c = (0 x, y : icObj c) -> HomStruct c x y
 
 public export
 0 LeftWhiskerMorphStruct : (0 ic : IntCatSig) -> (c, d, e : icObj ic) ->
-  icMor ic c d -> HomStruct ic c e -> HomStruct ic d e -> Type
-LeftWhiskerMorphStruct ic c d e f hsce hsde =
+  HomStruct ic c e -> HomStruct ic d e -> icMor ic c d -> Type
+LeftWhiskerMorphStruct ic c d e hsce hsde f =
   (0 g, g' : icMor ic d e) ->
   micsMor hsde g g' ->
   micsMor hsce (icComp ic c d e g f) (icComp ic c d e g' f)
 
 public export
 0 RightWhiskerMorphStruct : (0 ic : IntCatSig) -> (c, d, e : icObj ic) ->
-  icMor ic d e -> HomStruct ic c e -> HomStruct ic c d -> Type
-RightWhiskerMorphStruct ic c d e g hsce hscd =
+  HomStruct ic c e -> HomStruct ic c d -> icMor ic d e -> Type
+RightWhiskerMorphStruct ic c d e hsce hscd g =
   (0 f, f' : icMor ic c d) ->
   micsMor hscd f f' ->
   micsMor hsce (icComp ic c d e g f) (icComp ic c d e g f')
