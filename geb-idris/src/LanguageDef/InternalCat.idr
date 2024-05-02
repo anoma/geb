@@ -439,16 +439,7 @@ IntOpProdCatComp d c dmor cmor dcomp ccomp =
 
 public export
 IntOpProdCat : IntCatSig -> IntCatSig -> IntCatSig
-IntOpProdCat d c =
-  ICat
-    (IntOpProdCatObj (icObj d) (icObj c))
-  $ MICS
-    (IntOpProdCatMor (icObj d) (icObj c) (icMor d) (icMor c))
-  $ ICS
-    (IntOpProdCatId
-      (icObj d) (icObj c) (icMor d) (icMor c) (icId d) (icId c))
-    (IntOpProdCatComp
-      (icObj d) (icObj c) (icMor d) (icMor c) (icComp d) (icComp c))
+IntOpProdCat d c = IntProdCat (IntOpCat d) c
 
 ---------------------------------
 ---------------------------------
