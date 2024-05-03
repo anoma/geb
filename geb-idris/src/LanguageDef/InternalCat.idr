@@ -400,6 +400,35 @@ intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g} {h} hm nu x =
   hm (f x) (g x) (nu x)
 
 public export
+0 FunctorCatWhiskerL :
+  GlobalLeftWhiskerHomStruct IntCatCat FunctorCatHomStruct
+FunctorCatWhiskerL c d e f g g' alpha =
+  intNTwhiskerL
+    {c=(icObj c)} {d=(icObj d)} {e=(icObj e)}
+    {emor=(icMor e)}
+    {g=(ifOmap g)} {h=(ifOmap g')}
+    alpha (ifOmap f)
+
+public export
+0 FunctorCatWhiskerR :
+  GlobalRightWhiskerHomStruct IntCatCat FunctorCatHomStruct
+FunctorCatWhiskerR c d e g f f' beta =
+  intNTwhiskerR
+    {c=(icObj c)} {d=(icObj d)} {e=(icObj e)}
+    {dmor=(icMor d)} {emor=(icMor e)}
+    {f=(ifOmap f)} {g=(ifOmap f')} {h=(ifOmap g)}
+    (ifMmap g) beta
+
+public export
+0 FunctorCatWhiskerPair :
+  GlobalWhiskerPairHomStruct IntCatCat FunctorCatHomStruct
+FunctorCatWhiskerPair c d e =
+  (FunctorCatWhiskerL c d e, FunctorCatWhiskerR c d e)
+
+-- Because we have both directions of whiskering structure on the category
+-- of categories, we can compose then to impose a horizontal composition.
+
+public export
 intNThcomp : {0 c, d, e : Type} ->
   {0 dmor : IntMorSig d} -> {0 emor : IntMorSig e} ->
   IntCompSig e emor ->
@@ -415,6 +444,17 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha =
   intNTvcomp {c} {d=e} {dmor=emor} ecomp {f=(g . f)} {g=(g . f')} {h=(g' . f')}
     (intNTwhiskerL {c} {d} {e} {emor} {g} {h=g'} beta f')
     (intNTwhiskerR {c} {d} {e} {dmor} {emor} {f} {g=f'} {h=g} gm alpha)
+
+public export
+0 FunctorCatHcomp :
+  GlobalHcompHomStruct IntCatCat FunctorCatHomStruct
+FunctorCatHcomp c d e f f' g g' beta alpha =
+  intNThcomp
+    {c=(icObj c)} {d=(icObj d)} {e=(icObj e)}
+    {dmor=(icMor d)} {emor=(icMor e)}
+    (icComp e)
+    {f=(ifOmap f)} {f'=(ifOmap f')} {g=(ifOmap g)} {g'=(ifOmap g')}
+    (ifMmap g) beta alpha
 
 ---------------------------------
 ---------------------------------
