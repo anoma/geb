@@ -373,6 +373,8 @@ public export
 0 FunctorCatHomStruct : GlobalHomStruct IntCatCat
 FunctorCatHomStruct c d = icMICS $ IntFunctorCatSig c d
 
+-- We can also whisker natural transformations.
+
 public export
 intNTwhiskerL : {0 c, d, e : Type} ->
   {0 emor : IntMorSig e} ->
