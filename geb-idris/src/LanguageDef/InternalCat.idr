@@ -1081,8 +1081,8 @@ IntFunctor2CatSig {idx} cat =
   I2Cat
     (IntFunctorHCatSig {idx} cat)
     (\dom, cod => IntOmapCatSig (cat dom) (cat cod) ifOmap)
-    ?if2cs_hole_wl
-    ?if2cs_hole_wr
+    (\c, d, e => FunctorCatWhiskerL (cat c) (cat d) (cat e))
+    (\c, d, e => FunctorCatWhiskerR (cat c) (cat d) (cat e))
 
 -- The category of all categories in particular is a two-category.
 public export
