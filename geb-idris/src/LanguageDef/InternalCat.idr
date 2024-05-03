@@ -434,7 +434,7 @@ FunctorCatWhiskerPair c d e =
   (FunctorCatWhiskerL c d e, FunctorCatWhiskerR c d e)
 
 -- Because we have both directions of whiskering structure on the category
--- of categories, we can compose then to impose a horizontal composition.
+-- of categories, we can compose them to impose a horizontal composition.
 
 public export
 intNThcomp : {0 c, d, e : Type} ->
