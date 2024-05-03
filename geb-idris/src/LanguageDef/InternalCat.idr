@@ -219,7 +219,7 @@ RightWhiskerHomStruct ic c d e hsce hscd =
   (0 g : icMor ic d e) -> RightWhiskerMorphStruct ic c d e hsce hscd g
 
 -- We may further define notions that all morphisms in _all_ hom-sets
--- maybe left- or right-whiskered.
+-- may be left- or right-whiskered.
 
 public export
 0 GlobalLeftWhiskerHomStruct : (0 ic : IntCatSig) -> GlobalHomStruct ic -> Type
