@@ -247,6 +247,59 @@ GlobalWhiskerPairHomStruct ic ghs =
   (0 c, d, e : icObj ic) ->
   WhiskerPairHomStruct ic c d e (ghs c e) (ghs c d) (ghs d e)
 
+--------------------------------
+---- Horizontal composition ----
+--------------------------------
+
+-- Another form of further structure that we can impose on top of a
+-- hom-set structure is a horizontal composition structure.
+--
+-- When there is a horizontal composition, we refer to the composition
+-- of the hom-set structure as "vertical composition".
+
+public export
+0 HcompHomStruct : (0 ic : IntCatSig) -> (c, d, e : icObj ic) ->
+  HomStruct ic c e -> HomStruct ic c d -> HomStruct ic d e -> Type
+HcompHomStruct ic c d e hsce hscd hsde =
+  (0 f, f' : icMor ic c d) -> (0 g, g' : icMor ic d e) ->
+  (0 beta : micsMor hsde g g') -> (0 alpha : micsMor hscd f f') ->
+  micsMor hsce (icComp ic c d e g f) (icComp ic c d e g' f')
+
+public export
+0 GlobalHcompHomStruct : (0 ic : IntCatSig) -> GlobalHomStruct ic -> Type
+GlobalHcompHomStruct ic ghs =
+  (c, d, e : icObj ic) ->
+  HcompHomStruct ic c d e (ghs c e) (ghs c d) (ghs d e)
+
+-- When we have both left- and right-whiskering structures, we can define
+-- a horizontal-composition structure by composing whiskering operations.
+-- Note that we could do so in two different ways -- left then right, or
+-- right then left.  Thus, in order for this definition to be unambiguous,
+-- the whiskering operations with compatible type signatures must always
+-- commute.
+public export
+0 HcompFromWhiskers : (0 ic : IntCatSig) ->
+  (c, d, e : icObj ic) ->
+  (hsce : HomStruct ic c e) ->
+  (hscd : HomStruct ic c d) ->
+  (hsde : HomStruct ic d e) ->
+  WhiskerPairHomStruct ic c d e hsce hscd hsde ->
+  HcompHomStruct ic c d e hsce hscd hsde
+HcompFromWhiskers ic c d e hsce hscd hsde wphs f f' g g' beta alpha =
+  micsComp hsce
+    (icComp ic c d e g f)
+    (icComp ic c d e g f')
+    (icComp ic c d e g' f')
+    (fst wphs f' g g' beta)
+    (snd wphs g f f' alpha)
+
+public export
+0 GlobalHcompFromWhiskers : (0 ic : IntCatSig) -> (ghs : GlobalHomStruct ic) ->
+  GlobalWhiskerPairHomStruct ic ghs ->
+  GlobalHcompHomStruct ic ghs
+GlobalHcompFromWhiskers ic ghs wphs c d e =
+  HcompFromWhiskers ic c d e (ghs c e) (ghs c d) (ghs d e) (wphs c d e)
+
 -------------------------------------------
 -------------------------------------------
 ---- Category-parameterized categories ----
