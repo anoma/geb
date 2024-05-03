@@ -365,6 +365,14 @@ public export
 IntFunctorCatSig dom cod =
   ICat (IntFunctorSig dom cod) $ IntOmapCatSig dom cod ifOmap
 
+-- The functor category (whose morphisms are natural transformations)
+-- imposes a categorical structure on the set of functors between a pair
+-- of categories.  In particular this means it imposes a global hom-struct
+-- on the category of categories.
+public export
+0 FunctorCatHomStruct : GlobalHomStruct IntCatCat
+FunctorCatHomStruct c d = icMICS $ IntFunctorCatSig c d
+
 public export
 intNTwhiskerL : {0 c, d, e : Type} ->
   {0 emor : IntMorSig e} ->
