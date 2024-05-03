@@ -1308,8 +1308,14 @@ idc2cat idc =
   I2Cat
     (idcHcat idc)
     (idc2mics idc)
-    ?idc2cat_hole_whiskerl -- (IntCellTo2WhiskerL (idcVid idc) (idcCell idc) (idcCid idc) (idcChcomp idc))
-    ?idc2cat_hole_whiskerr -- (IntCellTo2WhiskerR (idcVid idc) (idcCell idc) (idcCid idc) (idcChcomp idc))
+    (\c, d, e, f =>
+      IntCellTo2WhiskerL
+        (idcVid idc) (idcCell idc) (idcCid idc) (idcChcomp idc)
+        c d f e)
+    (\c, d, e, f =>
+      IntCellTo2WhiskerR
+        (idcVid idc) (idcCell idc) (idcCid idc) (idcChcomp idc)
+        d e f c)
 
 -----------------------------
 -----------------------------
