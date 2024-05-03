@@ -247,6 +247,14 @@ GlobalWhiskerPairHomStruct ic ghs =
   (0 c, d, e : icObj ic) ->
   WhiskerPairHomStruct ic c d e (ghs c e) (ghs c d) (ghs d e)
 
+public export
+0 MkGlobalWhiskerPairHomStruct : (0 ic : IntCatSig) ->
+  (ghs : GlobalHomStruct ic) ->
+  GlobalLeftWhiskerHomStruct ic ghs ->
+  GlobalRightWhiskerHomStruct ic ghs ->
+  GlobalWhiskerPairHomStruct ic ghs
+MkGlobalWhiskerPairHomStruct ic ghs wl wr c d e = (wl c d e, wr c d e)
+
 --------------------------------
 ---- Horizontal composition ----
 --------------------------------
@@ -871,6 +879,16 @@ OpSliceCat c = IntOpCat (SliceCat c)
 ------------------------
 ------------------------
 
+-- We call a category with whiskering in both directions -- from which we
+-- can derive a horizontal composition -- a two-category.
+public export
+record Int2CatSig where
+  constructor I2Cat
+  i2c1 : IntCatSig
+  i2Chs : GlobalHomStruct i2c1
+  i2Cwl : GlobalLeftWhiskerHomStruct i2c1 i2Chs
+  i2Cwr : GlobalRightWhiskerHomStruct i2c1 i2Chs
+
 public export
 0 Int2MorphParamSig : (0 obj : Type) -> (0 mor : IntMorSig obj) -> IntMorSig obj
 Int2MorphParamSig obj mor x y = (0 f, g : mor x y) -> Type
@@ -953,91 +971,53 @@ Int2HCompSig {obj} {mor} comp mor2 =
   (0 dom, cod : obj) -> Int2HCompParamSig {obj} {mor} comp mor2 dom cod
 
 public export
-0 Int2HCompFromWhiskers : {0 obj : Type} -> {0 mor : IntMorSig obj} ->
-  (0 hcomp : IntCompSig obj mor) -> (0 mor2 : Int2MorphSig obj mor) ->
-  Int2WhiskerLSig {obj} {mor} hcomp mor2 ->
-  Int2WhiskerRSig {obj} {mor} hcomp mor2 ->
-  Int2VCompSig {obj} {mor} mor2 ->
-  Int2HCompSig {obj} {mor} hcomp mor2
-Int2HCompFromWhiskers {obj} {mor} hcomp mor2 wl wr vcomp dom cod mid f f' g g'
-  beta alpha =
-    vcomp
-      dom cod
-      (hcomp dom mid cod g f)
-      (hcomp dom mid cod g f')
-      (hcomp dom mid cod g' f')
-      (wl dom mid f' cod g g' beta)
-      (wr mid cod g dom f f' alpha)
+0 i2c1Obj : (0 c2 : Int2CatSig) -> Type
+i2c1Obj c2 = icObj $ i2c1 c2
 
 public export
-record Int2CatSig where
-  constructor I2Cat
-  i2Ch : IntCatSig
-  i2Cv : (0 dom, cod : icObj i2Ch) -> MorIdCompSig (icMor i2Ch dom cod)
-  0 i2Cwl :
-    Int2WhiskerLSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)}
-      (icComp i2Ch) (\x, y, f, g => micsMor (i2Cv x y) f g)
-  0 i2Cwr :
-    Int2WhiskerRSig {obj=(icObj i2Ch)} {mor=(icMor i2Ch)}
-      (icComp i2Ch) (\x, y, f, g => micsMor (i2Cv x y) f g)
+0 i2c1Mor : (0 c2 : Int2CatSig) -> (dom, cod : i2c1Obj c2) -> Type
+i2c1Mor c2 = icMor $ i2c1 c2
 
 public export
-0 i2ChObj : (0 c2 : Int2CatSig) -> Type
-i2ChObj c2 = icObj $ i2Ch c2
+0 i2c1Id : (0 c2 : Int2CatSig) -> IntIdSig (i2c1Obj c2) (i2c1Mor c2)
+i2c1Id c2 = icId $ i2c1 c2
 
 public export
-0 i2ChMor : (0 c2 : Int2CatSig) -> (dom, cod : i2ChObj c2) -> Type
-i2ChMor c2 = icMor $ i2Ch c2
+0 i2c1Comp : (0 c2 : Int2CatSig) -> IntCompSig (i2c1Obj c2) (i2c1Mor c2)
+i2c1Comp c2 = icComp $ i2c1 c2
 
 public export
-0 i2C1Id : (0 c2 : Int2CatSig) -> IntIdSig (i2ChObj c2) (i2ChMor c2)
-i2C1Id c2 = icId $ i2Ch c2
+0 i2c2Obj : (0 c2 : Int2CatSig) -> (0 dom, cod : i2c1Obj c2) -> Type
+i2c2Obj c2 dom cod = i2c1Mor c2 dom cod
 
 public export
-0 i2C1Comp : (0 c2 : Int2CatSig) -> IntCompSig (i2ChObj c2) (i2ChMor c2)
-i2C1Comp c2 = icComp $ i2Ch c2
-
-public export
-0 i2CvObj : (0 c2 : Int2CatSig) -> (0 dom, cod : i2ChObj c2) -> Type
-i2CvObj c2 dom cod = icMor (i2Ch c2) dom cod
-
-public export
-0 i2c2Mor : (0 c2 : Int2CatSig) -> Int2MorphSig (i2ChObj c2) (i2ChMor c2)
-i2c2Mor c2 x y f g = micsMor (i2Cv c2 x y) f g
+0 i2c2Mor : (0 c2 : Int2CatSig) -> Int2MorphSig (i2c1Obj c2) (i2c1Mor c2)
+i2c2Mor c2 x y f g = micsMor (i2Chs c2 x y) f g
 
 public export
 0 i2c2Id : (0 c2 : Int2CatSig) ->
-  Int2IdSig {obj=(i2ChObj c2)} {mor=(i2ChMor c2)} (i2c2Mor c2)
-i2c2Id c2 x y = micsId (i2Cv c2 x y)
+  Int2IdSig {obj=(i2c1Obj c2)} {mor=(i2c1Mor c2)} (i2c2Mor c2)
+i2c2Id c2 x y = micsId (i2Chs c2 x y)
 
 public export
 0 i2c2Vcomp : (0 c2 : Int2CatSig) ->
-  Int2VCompSig {obj=(i2ChObj c2)} {mor=(i2ChMor c2)} (i2c2Mor c2)
-i2c2Vcomp c2 x y f g = micsComp (i2Cv c2 x y) f g
+  Int2VCompSig {obj=(i2c1Obj c2)} {mor=(i2c1Mor c2)} (i2c2Mor c2)
+i2c2Vcomp c2 x y f g = micsComp (i2Chs c2 x y) f g
 
 -- For any pair of objects of the category underlying a 2-category, there
 -- is a category of 2-morphisms among 1-morphisms between the two given objects.
 public export
-0 i2cvc : (0 c2 : Int2CatSig) -> (0 dom, cod : icObj (i2Ch c2)) -> IntCatSig
-i2cvc c2 dom cod =
-  ICat
-    (icMor (i2Ch c2) dom cod)
-    $ MICS
-      (\f, g => i2c2Mor c2 dom cod f g)
-    $ ICS
-      (i2c2Id c2 dom cod)
-      (i2c2Vcomp c2 dom cod)
+0 i2cvc : (0 c2 : Int2CatSig) -> (0 dom, cod : icObj (i2c1 c2)) -> IntCatSig
+i2cvc c2 dom cod = ICat (i2c2Obj c2 dom cod) (i2Chs c2 dom cod)
 
 public export
-0 i2cHcomp : (c2 : Int2CatSig) ->
-  Int2HCompSig {obj=(i2ChObj c2)} {mor=(i2ChMor c2)}
-    (icComp $ i2Ch c2) (\x, y, f, g => micsMor (i2Cv c2 x y) f g)
-i2cHcomp c2 =
-  Int2HCompFromWhiskers
-    (i2C1Comp c2) (i2c2Mor c2) (i2Cwl c2) (i2Cwr c2) (i2c2Vcomp c2)
+0 i2Cwp : (c2 : Int2CatSig) -> GlobalWhiskerPairHomStruct (i2c1 c2) (i2Chs c2)
+i2Cwp c2 =
+  MkGlobalWhiskerPairHomStruct (i2c1 c2) (i2Chs c2) (i2Cwl c2) (i2Cwr c2)
 
--- Given a collection of categories, we can form a two-category from all
--- the functor categories on pairs of categories in the collection.
+public export
+0 i2cHcomp : (c2 : Int2CatSig) -> GlobalHcompHomStruct (i2c1 c2) (i2Chs c2)
+i2cHcomp c2 = GlobalHcompFromWhiskers (i2c1 c2) (i2Chs c2) $ i2Cwp c2
 
 public export
 0 IntFunctorHCatSig : {0 idx : Type} -> (idx -> IntCatSig) -> IntCatSig
@@ -1101,8 +1081,8 @@ IntFunctor2CatSig {idx} cat =
   I2Cat
     (IntFunctorHCatSig {idx} cat)
     (\dom, cod => IntOmapCatSig (cat dom) (cat cod) ifOmap)
-    (IntFunctor2WhiskerLSig {idx} cat)
-    (IntFunctor2WhiskerRSig {idx} cat)
+    ?if2cs_hole_wl
+    ?if2cs_hole_wr
 
 -- The category of all categories in particular is a two-category.
 public export
@@ -1328,8 +1308,8 @@ idc2cat idc =
   I2Cat
     (idcHcat idc)
     (idc2mics idc)
-    (IntCellTo2WhiskerL (idcVid idc) (idcCell idc) (idcCid idc) (idcChcomp idc))
-    (IntCellTo2WhiskerR (idcVid idc) (idcCell idc) (idcCid idc) (idcChcomp idc))
+    ?idc2cat_hole_whiskerl -- (IntCellTo2WhiskerL (idcVid idc) (idcCell idc) (idcCid idc) (idcChcomp idc))
+    ?idc2cat_hole_whiskerr -- (IntCellTo2WhiskerR (idcVid idc) (idcCell idc) (idcCid idc) (idcChcomp idc))
 
 -----------------------------
 -----------------------------
