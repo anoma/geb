@@ -320,6 +320,9 @@ IntCParamCat cat = IntFunctorSig cat IntCatCat
 ---------------------------------
 ---------------------------------
 
+-- For every pair of categories, we may define a category of
+-- natural transformations between the functors between them.
+
 public export
 0 IntNTSig : {0 c, d : Type} -> (0 dmor : IntMorSig d) ->
   (f, g : c -> d) -> Type
