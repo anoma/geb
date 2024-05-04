@@ -882,12 +882,31 @@ OpSliceCat c = IntOpCat (SliceCat c)
 -- We call a category with whiskering in both directions -- from which we
 -- can derive a horizontal composition -- a two-category.
 public export
+record Int2CatStruct (c1 : IntCatSig) where
+  constructor I2CS
+  i2Cshs : GlobalHomStruct c1
+  i2Cswl : GlobalLeftWhiskerHomStruct c1 i2Cshs
+  i2Cswr : GlobalRightWhiskerHomStruct c1 i2Cshs
+
+-- We call a category with whiskering in both directions -- from which we
+-- can derive a horizontal composition -- a two-category.
+public export
 record Int2CatSig where
   constructor I2Cat
   i2c1 : IntCatSig
-  i2Chs : GlobalHomStruct i2c1
-  i2Cwl : GlobalLeftWhiskerHomStruct i2c1 i2Chs
-  i2Cwr : GlobalRightWhiskerHomStruct i2c1 i2Chs
+  i2c2cs : Int2CatStruct i2c1
+
+public export
+i2Chs : (c2 : Int2CatSig) -> GlobalHomStruct (i2c1 c2)
+i2Chs c2 = i2Cshs (i2c2cs c2)
+
+public export
+i2Cwl : (c2 : Int2CatSig) -> GlobalLeftWhiskerHomStruct (i2c1 c2) (i2Chs c2)
+i2Cwl c2 = i2Cswl (i2c2cs c2)
+
+public export
+i2Cwr : (c2 : Int2CatSig) -> GlobalRightWhiskerHomStruct (i2c1 c2) (i2Chs c2)
+i2Cwr c2 = i2Cswr (i2c2cs c2)
 
 public export
 0 Int2MorphParamSig : (0 obj : Type) -> (0 mor : IntMorSig obj) -> IntMorSig obj
@@ -1080,6 +1099,7 @@ public export
 IntFunctor2CatSig {idx} cat =
   I2Cat
     (IntFunctorHCatSig {idx} cat)
+  $ I2CS
     (\dom, cod => IntOmapCatSig (cat dom) (cat cod) ifOmap)
     (\c, d, e => FunctorCatWhiskerL (cat c) (cat d) (cat e))
     (\c, d, e => FunctorCatWhiskerR (cat c) (cat d) (cat e))
@@ -1307,6 +1327,7 @@ public export
 idc2cat idc =
   I2Cat
     (idcHcat idc)
+  $ I2CS
     (idc2mics idc)
     (\c, d, e, f =>
       IntCellTo2WhiskerL
