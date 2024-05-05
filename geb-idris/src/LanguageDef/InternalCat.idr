@@ -1154,10 +1154,11 @@ public export
 0 cieFamCompObj : {0 c : IntCatSig} -> (x, y, z : CIEFamObj c) ->
   (g : CIEFamMor {c} y z) -> (f : CIEFamMor {c} x y) ->
   CIEFamObjMor {c} x z (cieFamCompPos {c} x y z g f)
-cieFamCompObj {c} (CIAr xpos xdir) (CIAr ypos ydir) (CIAr zpos zdir) (g ** beta) (f ** alpha) =
+cieFamCompObj {c} x y z (g ** beta) (f ** alpha) =
   intNTvcomp {dmor=(icMor c)} (icComp c)
     (intNTwhiskerL {emor=(icMor c)}
-      {g=(ifOmap ydir)} {h=(ifOmap $ IntFunctorSigComp ypos zpos c zdir g)}
+      {g=(ifOmap $ caDir y)}
+      {h=(ifOmap $ IntFunctorSigComp (caPos y) (caPos z) c (caDir z) g)}
       beta (ifOmap f))
     alpha
 
