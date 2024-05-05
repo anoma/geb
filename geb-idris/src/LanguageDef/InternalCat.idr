@@ -157,8 +157,8 @@ IntCatCat =
 -- so we give it a name to reflect that, and we can define different
 -- categories of such arenas with different sets of morphisms.
 public export
-IntCatArena : IntCatSig -> Type
-IntCatArena cat = IntFunctorSig cat IntCatCat
+CatArena : IntCatSig -> Type
+CatArena cat = IntFunctorSig cat IntCatCat
 
 -----------------------------
 -----------------------------
