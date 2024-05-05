@@ -142,6 +142,20 @@ IntCatCat =
     IntFunctorSigId
     IntFunctorSigComp
 
+-------------------------------------------
+-------------------------------------------
+---- Category-parameterized categories ----
+-------------------------------------------
+-------------------------------------------
+
+-- A category parameterized over a category is a functor from that category
+-- (which we call the "index" category) to the category of categories.  To
+-- be explicit, this means that to each object of the index category we assign
+-- a category, and to each morphism of the index category we assign a functor.
+public export
+IntCParamCat : IntCatSig -> Type
+IntCParamCat cat = IntFunctorSig cat IntCatCat
+
 -----------------------------
 -----------------------------
 ---- Structured hom-sets ----
@@ -307,20 +321,6 @@ public export
   GlobalHcompHomStruct ic ghs
 GlobalHcompFromWhiskers ic ghs wphs c d e =
   HcompFromWhiskers ic c d e (ghs c e) (ghs c d) (ghs d e) (wphs c d e)
-
--------------------------------------------
--------------------------------------------
----- Category-parameterized categories ----
--------------------------------------------
--------------------------------------------
-
--- A category parameterized over a category is a functor from that category
--- (which we call the "index" category) to the category of categories.  To
--- be explicit, this means that to each object of the index category we assign
--- a category, and to each morphism of the index category we assign a functor.
-public export
-IntCParamCat : IntCatSig -> Type
-IntCParamCat cat = IntFunctorSig cat IntCatCat
 
 ---------------------------------
 ---------------------------------
