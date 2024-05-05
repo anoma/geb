@@ -152,13 +152,18 @@ IntCatCat =
 -- (which we call the "index" category) to the category of categories.  To
 -- be explicit, this means that to each object of the index category we assign
 -- a category, and to each morphism of the index category we assign a functor.
---
--- We may think of a category-parameterized category as an arena in `Cat`,
--- so we give it a name to reflect that, and we can define different
--- categories of such arenas with different sets of morphisms.
 public export
-CatArena : IntCatSig -> Type
-CatArena cat = IntFunctorSig cat IntCatCat
+IntCParamCat : IntCatSig -> Type
+IntCParamCat cat = IntFunctorSig cat IntCatCat
+
+-- Using category-parameterized categories, we may define a notion of an
+-- arena in `Cat`, analogous to the arenas in `Type` which can be used to
+-- define (for example) polynomial functors and Dirichlet functors.
+public export
+record CatArena where
+  constructor CatAr
+  caPos : IntCatSig
+  caDir : IntCParamCat caPos
 
 -----------------------------
 -----------------------------
