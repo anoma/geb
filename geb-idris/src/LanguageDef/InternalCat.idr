@@ -142,37 +142,6 @@ IntCatCat =
     IntFunctorSigId
     IntFunctorSigComp
 
------------------------------------
------------------------------------
----- Category-indexed families ----
------------------------------------
------------------------------------
-
-public export
-record CIArena (c : IntCatSig) where
-  constructor CIAr
-  caPos : IntCatSig
-  caDir : IntFunctorSig caPos c
-
--------------------------------------------
--------------------------------------------
----- Category-parameterized categories ----
--------------------------------------------
--------------------------------------------
-
--- A category parameterized over a category is a functor from that category
--- (which we call the "index" category) to the category of categories.  To
--- be explicit, this means that to each object of the index category we assign
--- a category, and to each morphism of the index category we assign a functor.
-public export
-IntCParamCat : IntCatSig -> Type
-IntCParamCat cat = IntFunctorSig cat IntCatCat
-
--- An arena internal to `Cat`.
-public export
-CatArena : Type
-CatArena = CIArena IntCatCat
-
 -----------------------------
 -----------------------------
 ---- Structured hom-sets ----
@@ -480,6 +449,61 @@ FunctorCatHcomp c d e f f' g g' beta alpha =
     (icComp e)
     {f=(ifOmap f)} {f'=(ifOmap f')} {g=(ifOmap g)} {g'=(ifOmap g')}
     (ifMmap g) beta alpha
+
+-----------------------------------
+-----------------------------------
+---- Category-indexed families ----
+-----------------------------------
+-----------------------------------
+
+---------------------------------
+---- Category-indexed arenas ----
+---------------------------------
+
+public export
+record CIArena (c : IntCatSig) where
+  constructor CIAr
+  caPos : IntCatSig
+  caDir : IntFunctorSig caPos c
+
+--------------------------------------------------------------------
+---- Category-indexed existential families (Dirichlet functors) ----
+--------------------------------------------------------------------
+
+public export
+CIEFamObj : IntCatSig -> Type
+CIEFamObj = CIArena
+
+public export
+CIEFamPosMor : {0 c : IntCatSig} -> IntMorSig (CIEFamObj c)
+CIEFamPosMor {c} i j = IntFunctorSig (caPos i) (caPos j)
+
+public export
+0 CIEFamObjMor : {0 c : IntCatSig} ->
+  (dom, cod : CIEFamObj c) -> CIEFamPosMor {c} dom cod -> Type
+CIEFamObjMor {c} dom cod onpos =
+  IntNTSig {c=(icObj $ caPos dom)} {d=(icObj c)} (icMor c)
+    (ifOmap $ caDir dom)
+    (ifOmap $ IntFunctorSigComp (caPos dom) (caPos cod) c (caDir cod) onpos)
+
+-------------------------------------------
+-------------------------------------------
+---- Category-parameterized categories ----
+-------------------------------------------
+-------------------------------------------
+
+-- A category parameterized over a category is a functor from that category
+-- (which we call the "index" category) to the category of categories.  To
+-- be explicit, this means that to each object of the index category we assign
+-- a category, and to each morphism of the index category we assign a functor.
+public export
+IntCParamCat : IntCatSig -> Type
+IntCParamCat cat = IntFunctorSig cat IntCatCat
+
+-- An arena internal to `Cat`.
+public export
+CatArena : Type
+CatArena = CIArena IntCatCat
 
 ---------------------------------
 ---------------------------------
