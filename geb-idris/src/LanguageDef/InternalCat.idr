@@ -1067,20 +1067,6 @@ IntFunctor2WhiskerRSig {idx} cat y z g x f f' alpha =
     alpha
 
 public export
-0 IntFunctor2HCompSig : {0 idx : Type} -> (cat : idx -> IntCatSig) ->
-  Int2HCompSig
-    {obj=(icObj $ IntFunctorHCatSig {idx} cat)}
-    {mor=(icMor $ IntFunctorHCatSig {idx} cat)}
-    (icComp $ IntFunctorHCatSig {idx} cat)
-    (\c, d, f, g => IntNTSig (icMor $ cat d) (ifOmap f) (ifOmap g))
-IntFunctor2HCompSig {idx} cat c e d f f' g g' =
-  intNThcomp
-    {dmor=(icMor $ cat d)} {emor=(icMor $ cat e)}
-    {f=(ifOmap f)} {g=(ifOmap g)} {f'=(ifOmap f')} {g'=(ifOmap g')}
-    (icComp $ cat e)
-    (ifMmap g)
-
-public export
 0 IntFunctor2CatSig : {0 idx : Type} -> (idx -> IntCatSig) -> Int2CatSig
 IntFunctor2CatSig {idx} cat =
   I2Cat
@@ -1094,6 +1080,20 @@ IntFunctor2CatSig {idx} cat =
 public export
 0 IntCat2Cat : Int2CatSig
 IntCat2Cat = IntFunctor2CatSig {idx=IntCatSig} id
+
+public export
+0 IntFunctor2HCompSig : {0 idx : Type} -> (cat : idx -> IntCatSig) ->
+  Int2HCompSig
+    {obj=(icObj $ IntFunctorHCatSig {idx} cat)}
+    {mor=(icMor $ IntFunctorHCatSig {idx} cat)}
+    (icComp $ IntFunctorHCatSig {idx} cat)
+    (\c, d, f, g => IntNTSig (icMor $ cat d) (ifOmap f) (ifOmap g))
+IntFunctor2HCompSig {idx} cat c e d f f' g g' =
+  intNThcomp
+    {dmor=(icMor $ cat d)} {emor=(icMor $ cat e)}
+    {f=(ifOmap f)} {g=(ifOmap g)} {f'=(ifOmap f')} {g'=(ifOmap g')}
+    (icComp $ cat e)
+    (ifMmap g)
 
 -----------------------------------
 -----------------------------------
