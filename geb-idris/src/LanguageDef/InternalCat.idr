@@ -165,6 +165,11 @@ record CIArena (c : IntCatSig) where
   caPos : IntCatSig
   caDir : IntFunctorSig caPos c
 
+-- An arena internal to `Cat`.
+public export
+CatArena : Type
+CatArena = CIArena IntCatCat
+
 -----------------------------
 -----------------------------
 ---- Structured hom-sets ----
