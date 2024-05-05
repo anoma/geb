@@ -1126,6 +1126,46 @@ CIEFamObjMor {c} dom cod onpos =
     (ifOmap $ caDir dom)
     (ifOmap $ IntFunctorSigComp (caPos dom) (caPos cod) c (caDir cod) onpos)
 
+public export
+0 CIEFamMor : {0 c : IntCatSig} -> IntMorSig (CIEFamObj c)
+CIEFamMor {c} i j = DPair (CIEFamPosMor {c} i j) (CIEFamObjMor {c} i j)
+
+public export
+0 cieFamIdPos : {0 c : IntCatSig} -> (x : CIEFamObj c) -> CIEFamPosMor {c} x x
+cieFamIdPos {c} x = IntFunctorSigId (caPos x)
+
+public export
+0 cieFamIdObj : {0 c : IntCatSig} ->
+  (x : CIEFamObj c) -> CIEFamObjMor {c} x x (cieFamIdPos {c} x)
+cieFamIdObj {c} x =
+  intNTid {c=(icObj $ caPos x)} (icMor c) (icId c) (ifOmap $ caDir x)
+
+public export
+0 cieFamId : {0 c : IntCatSig} -> IntIdSig (CIEFamObj c) (CIEFamMor {c})
+cieFamId {c} x = (cieFamIdPos {c} x ** cieFamIdObj {c} x)
+
+public export
+0 cieFamCompPos : {0 c : IntCatSig} -> (x, y, z : CIEFamObj c) ->
+  CIEFamMor {c} y z -> CIEFamMor {c} x y -> CIEFamPosMor {c} x z
+cieFamCompPos {c} x y z g f =
+  IntFunctorSigComp (caPos x) (caPos y) (caPos z) (fst g) (fst f)
+
+public export
+0 cieFamCompObj : {0 c : IntCatSig} -> (x, y, z : CIEFamObj c) ->
+  (g : CIEFamMor {c} y z) -> (f : CIEFamMor {c} x y) ->
+  CIEFamObjMor {c} x z (cieFamCompPos {c} x y z g f)
+cieFamCompObj {c} (CIAr xpos xdir) (CIAr ypos ydir) (CIAr zpos zdir) (g ** beta) (f ** alpha) =
+  intNTvcomp {dmor=(icMor c)} (icComp c)
+    (intNTwhiskerL {emor=(icMor c)}
+      {g=(ifOmap ydir)} {h=(ifOmap $ IntFunctorSigComp ypos zpos c zdir g)}
+      beta (ifOmap f))
+    alpha
+
+public export
+0 cieFamComp : {0 c : IntCatSig} -> IntCompSig (CIEFamObj c) (CIEFamMor {c})
+cieFamComp {c} x y z g f =
+  (cieFamCompPos {c} x y z g f ** cieFamCompObj {c} x y z g f)
+
 -------------------------------------------
 -------------------------------------------
 ---- Category-parameterized categories ----
