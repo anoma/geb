@@ -1154,13 +1154,14 @@ public export
 0 cieFamCompObj : {0 c : IntCatSig} -> (x, y, z : CIEFamObj c) ->
   (g : CIEFamMor {c} y z) -> (f : CIEFamMor {c} x y) ->
   CIEFamObjMor {c} x z (cieFamCompPos {c} x y z g f)
-cieFamCompObj {c} x y z (g ** beta) (f ** alpha) =
+cieFamCompObj {c} x y z beta alpha =
   intNTvcomp {dmor=(icMor c)} (icComp c)
     (intNTwhiskerL {emor=(icMor c)}
       {g=(ifOmap $ caDir y)}
-      {h=(ifOmap $ IntFunctorSigComp (caPos y) (caPos z) c (caDir z) g)}
-      beta (ifOmap f))
-    alpha
+      {h=
+        (ifOmap $ IntFunctorSigComp (caPos y) (caPos z) c (caDir z) (fst beta))}
+      (snd beta) (ifOmap $ fst alpha))
+    (snd alpha)
 
 public export
 0 cieFamComp : {0 c : IntCatSig} -> IntCompSig (CIEFamObj c) (CIEFamMor {c})
