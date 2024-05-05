@@ -142,6 +142,18 @@ IntCatCat =
     IntFunctorSigId
     IntFunctorSigComp
 
+---------------------------------
+---------------------------------
+---- Category-indexed arenas ----
+---------------------------------
+---------------------------------
+
+public export
+record CIArena (c : IntCatSig) where
+  constructor CIAr
+  caPos : IntCatSig
+  caDir : IntFunctorSig caPos c
+
 -------------------------------------------
 -------------------------------------------
 ---- Category-parameterized categories ----
@@ -155,15 +167,6 @@ IntCatCat =
 public export
 IntCParamCat : IntCatSig -> Type
 IntCParamCat cat = IntFunctorSig cat IntCatCat
-
--- Using category-parameterized categories, we may define a notion of an
--- arena in `Cat`, analogous to the arenas in `Type` which can be used to
--- define (for example) polynomial functors and Dirichlet functors.
-public export
-record CIArena (c : IntCatSig) where
-  constructor CIAr
-  caPos : IntCatSig
-  caDir : IntFunctorSig caPos c
 
 -- An arena internal to `Cat`.
 public export
