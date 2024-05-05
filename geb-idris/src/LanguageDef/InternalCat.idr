@@ -160,10 +160,10 @@ IntCParamCat cat = IntFunctorSig cat IntCatCat
 -- arena in `Cat`, analogous to the arenas in `Type` which can be used to
 -- define (for example) polynomial functors and Dirichlet functors.
 public export
-record CatArena where
-  constructor CatAr
+record CIArena (c : IntCatSig) where
+  constructor CIAr
   caPos : IntCatSig
-  caDir : IntCParamCat caPos
+  caDir : IntFunctorSig caPos c
 
 -----------------------------
 -----------------------------
