@@ -443,12 +443,11 @@ public export
 0 FunctorCatHcomp :
   GlobalHcompHomStruct IntCatCat FunctorCatHomStruct
 FunctorCatHcomp c d e f f' g g' beta alpha =
-  intNThcomp
-    {c=(icObj c)} {d=(icObj d)} {e=(icObj e)}
-    {dmor=(icMor d)} {emor=(icMor e)}
-    (icComp e)
-    {f=(ifOmap f)} {f'=(ifOmap f')} {g=(ifOmap g)} {g'=(ifOmap g')}
-    (ifMmap g) beta alpha
+  GlobalHcompFromWhiskers
+    IntCatCat
+    FunctorCatHomStruct
+    FunctorCatWhiskerPair
+    c d e f f' g g' beta alpha
 
 ---------------------------------
 ---------------------------------
