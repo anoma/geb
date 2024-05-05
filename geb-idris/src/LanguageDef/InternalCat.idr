@@ -1088,12 +1088,12 @@ public export
     {mor=(icMor $ IntFunctorHCatSig {idx} cat)}
     (icComp $ IntFunctorHCatSig {idx} cat)
     (\c, d, f, g => IntNTSig (icMor $ cat d) (ifOmap f) (ifOmap g))
-IntFunctor2HCompSig {idx} cat c e d f f' g g' =
-  intNThcomp
-    {dmor=(icMor $ cat d)} {emor=(icMor $ cat e)}
-    {f=(ifOmap f)} {g=(ifOmap g)} {f'=(ifOmap f')} {g'=(ifOmap g')}
-    (icComp $ cat e)
-    (ifMmap g)
+IntFunctor2HCompSig {idx} cat c e d f f' g g' beta alpha =
+  GlobalHcompFromWhiskers
+    (IntFunctorHCatSig {idx} cat)
+    (\dom, cod => IntOmapCatSig (cat dom) (cat cod) ifOmap)
+    (i2Cwp $ IntFunctor2CatSig {idx} cat)
+    c d e f f' g g' beta alpha
 
 -----------------------------------
 -----------------------------------
