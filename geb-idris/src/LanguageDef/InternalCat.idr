@@ -907,19 +907,19 @@ record Int2CatStruct (cv : IntCatSig) where
 public export
 record Int2CatSig where
   constructor I2Cat
-  i2c1 : IntCatSig
-  i2c2cs : Int2CatStruct i2c1
+  i2cv : IntCatSig
+  i2c2cs : Int2CatStruct i2cv
 
 public export
-i2Chs : (c2 : Int2CatSig) -> GlobalHomStruct (i2c1 c2)
+i2Chs : (c2 : Int2CatSig) -> GlobalHomStruct (i2cv c2)
 i2Chs c2 = i2Cshs (i2c2cs c2)
 
 public export
-i2Cwl : (c2 : Int2CatSig) -> GlobalLeftWhiskerHomStruct (i2c1 c2) (i2Chs c2)
+i2Cwl : (c2 : Int2CatSig) -> GlobalLeftWhiskerHomStruct (i2cv c2) (i2Chs c2)
 i2Cwl c2 = i2Cswl (i2c2cs c2)
 
 public export
-i2Cwr : (c2 : Int2CatSig) -> GlobalRightWhiskerHomStruct (i2c1 c2) (i2Chs c2)
+i2Cwr : (c2 : Int2CatSig) -> GlobalRightWhiskerHomStruct (i2cv c2) (i2Chs c2)
 i2Cwr c2 = i2Cswr (i2c2cs c2)
 
 public export
@@ -1005,19 +1005,19 @@ Int2HCompSig {obj} {mor} comp mor2 =
 
 public export
 0 i2c1Obj : (0 c2 : Int2CatSig) -> Type
-i2c1Obj c2 = icObj $ i2c1 c2
+i2c1Obj c2 = icObj $ i2cv c2
 
 public export
 0 i2c1Mor : (0 c2 : Int2CatSig) -> (dom, cod : i2c1Obj c2) -> Type
-i2c1Mor c2 = icMor $ i2c1 c2
+i2c1Mor c2 = icMor $ i2cv c2
 
 public export
 0 i2c1Id : (0 c2 : Int2CatSig) -> IntIdSig (i2c1Obj c2) (i2c1Mor c2)
-i2c1Id c2 = icId $ i2c1 c2
+i2c1Id c2 = icId $ i2cv c2
 
 public export
 0 i2c1Comp : (0 c2 : Int2CatSig) -> IntCompSig (i2c1Obj c2) (i2c1Mor c2)
-i2c1Comp c2 = icComp $ i2c1 c2
+i2c1Comp c2 = icComp $ i2cv c2
 
 public export
 0 i2c2Obj : (0 c2 : Int2CatSig) -> (0 dom, cod : i2c1Obj c2) -> Type
@@ -1040,17 +1040,17 @@ i2c2Vcomp c2 x y f g = micsComp (i2Chs c2 x y) f g
 -- For any pair of objects of the category underlying a 2-category, there
 -- is a category of 2-morphisms among 1-morphisms between the two given objects.
 public export
-0 i2cvc : (0 c2 : Int2CatSig) -> (0 dom, cod : icObj (i2c1 c2)) -> IntCatSig
+0 i2cvc : (0 c2 : Int2CatSig) -> (0 dom, cod : icObj (i2cv c2)) -> IntCatSig
 i2cvc c2 dom cod = ICat (i2c2Obj c2 dom cod) (i2Chs c2 dom cod)
 
 public export
-0 i2Cwp : (c2 : Int2CatSig) -> GlobalWhiskerPairHomStruct (i2c1 c2) (i2Chs c2)
+0 i2Cwp : (c2 : Int2CatSig) -> GlobalWhiskerPairHomStruct (i2cv c2) (i2Chs c2)
 i2Cwp c2 =
-  MkGlobalWhiskerPairHomStruct (i2c1 c2) (i2Chs c2) (i2Cwl c2) (i2Cwr c2)
+  MkGlobalWhiskerPairHomStruct (i2cv c2) (i2Chs c2) (i2Cwl c2) (i2Cwr c2)
 
 public export
-0 i2cHcomp : (c2 : Int2CatSig) -> GlobalHcompHomStruct (i2c1 c2) (i2Chs c2)
-i2cHcomp c2 = GlobalHcompFromWhiskers (i2c1 c2) (i2Chs c2) $ i2Cwp c2
+0 i2cHcomp : (c2 : Int2CatSig) -> GlobalHcompHomStruct (i2cv c2) (i2Chs c2)
+i2cHcomp c2 = GlobalHcompFromWhiskers (i2cv c2) (i2Chs c2) $ i2Cwp c2
 
 public export
 0 IntFunctorHCatSig : {0 idx : Type} -> (idx -> IntCatSig) -> IntCatSig
