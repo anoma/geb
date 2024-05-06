@@ -1049,8 +1049,8 @@ i2Cwp c2 =
   MkGlobalWhiskerPairHomStruct (i2c1 c2) (i2Chs c2) (i2Cwl c2) (i2Cwr c2)
 
 public export
-0 i2cHcomp : (c2 : Int2CatSig) -> GlobalHcompHomStruct (i2c1 c2) (i2Chs c2)
-i2cHcomp c2 = GlobalHcompFromWhiskers (i2c1 c2) (i2Chs c2) $ i2Cwp c2
+0 i2c2Hcomp : (c2 : Int2CatSig) -> GlobalHcompHomStruct (i2c1 c2) (i2Chs c2)
+i2c2Hcomp c2 = GlobalHcompFromWhiskers (i2c1 c2) (i2Chs c2) $ i2Cwp c2
 
 public export
 0 IntFunctorHCatSig : {0 idx : Type} -> (idx -> IntCatSig) -> IntCatSig
@@ -1117,7 +1117,7 @@ public export
     (icComp $ IntFunctorHCatSig {idx} cat)
     (\c, d, f, g => IntNTSig (icMor $ cat d) (ifOmap f) (ifOmap g))
 IntFunctor2HCompSig {idx} cat c d e f f' g g' beta alpha =
-  (i2cHcomp $ IntFunctor2CatSig {idx} cat) c e d f f' g g' beta alpha
+  (i2c2Hcomp $ IntFunctor2CatSig {idx} cat) c e d f f' g g' beta alpha
 
 -----------------------------------
 -----------------------------------
