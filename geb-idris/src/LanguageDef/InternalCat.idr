@@ -1168,6 +1168,56 @@ public export
 cieFamComp {c} x y z g f =
   (cieFamCompPos {c} x y z g f ** cieFamCompObj {c} x y z g f)
 
+-----------------------------------------------------------------------
+---- Category-indexed existential cofamilies (polynomial functors) ----
+-----------------------------------------------------------------------
+
+public export
+CIECofamObj : IntCatSig -> Type
+CIECofamObj = CIEFamObj . IntOpCat
+
+public export
+0 CIECofamPosMor : {0 c : IntCatSig} -> IntMorSig (CIECofamObj c)
+CIECofamPosMor {c} = CIEFamPosMor {c=(IntOpCat c)}
+
+public export
+0 CIECofamObjMor : {0 c : IntCatSig} ->
+  (dom, cod : CIECofamObj c) -> CIECofamPosMor {c} dom cod -> Type
+CIECofamObjMor {c} = CIEFamObjMor {c=(IntOpCat c)}
+
+public export
+0 CIECofamMor : {0 c : IntCatSig} -> IntMorSig (CIECofamObj c)
+CIECofamMor {c} = CIEFamMor {c=(IntOpCat c)}
+
+public export
+0 cieCofamIdPos : {0 c : IntCatSig} ->
+  (x : CIECofamObj c) -> CIECofamPosMor {c} x x
+cieCofamIdPos {c} = cieFamIdPos {c=(IntOpCat c)}
+
+public export
+0 cieCofamIdObj : {0 c : IntCatSig} ->
+  (x : CIECofamObj c) -> CIECofamObjMor {c} x x (cieCofamIdPos {c} x)
+cieCofamIdObj {c} = cieFamIdObj {c=(IntOpCat c)}
+
+public export
+0 cieCofamId : {0 c : IntCatSig} -> IntIdSig (CIECofamObj c) (CIECofamMor {c})
+cieCofamId {c} = cieFamId {c=(IntOpCat c)}
+
+public export
+0 cieCofamCompPos : {0 c : IntCatSig} -> (x, y, z : CIECofamObj c) ->
+  CIECofamMor {c} y z -> CIECofamMor {c} x y -> CIECofamPosMor {c} x z
+cieCofamCompPos {c} = cieFamCompPos {c=(IntOpCat c)}
+
+public export
+0 cieCofamCompObj : {0 c : IntCatSig} -> (x, y, z : CIECofamObj c) ->
+  (g : CIECofamMor {c} y z) -> (f : CIECofamMor {c} x y) ->
+  CIECofamObjMor {c} x z (cieCofamCompPos {c} x y z g f)
+cieCofamCompObj {c} = cieFamCompObj {c=(IntOpCat c)}
+
+public export
+0 cieCofamComp : {0 c : IntCatSig} -> IntCompSig (CIECofamObj c) (CIECofamMor {c})
+cieCofamComp {c} = cieFamComp {c=(IntOpCat c)}
+
 -------------------------------------------
 -------------------------------------------
 ---- Category-parameterized categories ----
