@@ -1215,7 +1215,8 @@ public export
 cieCofamCompObj {c} = cieFamCompObj {c=(IntOpCat c)}
 
 public export
-0 cieCofamComp : {0 c : IntCatSig} -> IntCompSig (CIECofamObj c) (CIECofamMor {c})
+0 cieCofamComp : {0 c : IntCatSig} ->
+  IntCompSig (CIECofamObj c) (CIECofamMor {c})
 cieCofamComp {c} = cieFamComp {c=(IntOpCat c)}
 
 -------------------------------------------
