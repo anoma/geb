@@ -4,6 +4,7 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import Library.IdrisAlgebra
 import public LanguageDef.InternalCat
+import public LanguageDef.InternalProfunctor
 import public LanguageDef.IntArena
 
 -----------------
