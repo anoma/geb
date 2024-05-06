@@ -89,6 +89,7 @@ totalTests = do
   LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
   LanguageDef.Test.DisliceCatTest.disliceCatTest
   LanguageDef.Test.DislicePolyCatTest.dislicePolyCatTest
+  LanguageDef.Test.InternalProfunctortest.internalProfunctorTest
   LanguageDef.Test.InternalCatTest.internalCatTest
   LanguageDef.Test.SlicePolyCatTest.slicePolyCatTest
   LanguageDef.Test.MLBundleCatTest.mlBundleCatTest
