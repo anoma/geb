@@ -1312,6 +1312,57 @@ public export
 ciuFamComp {c} x y z g f =
   (ciuFamCompPos {c} x y z g f ** ciuFamCompObj {c} x y z g f)
 
+-----------------------------------------------
+---- Category-indexed universal cofamilies ----
+-----------------------------------------------
+
+public export
+CIUCofamObj : IntCatSig -> Type
+CIUCofamObj = CIUFamObj . IntOpCat
+
+public export
+0 CIUCofamPosMor : {0 c : IntCatSig} -> IntMorSig (CIUCofamObj c)
+CIUCofamPosMor {c} = CIUFamPosMor {c=(IntOpCat c)}
+
+public export
+0 CIUCofamObjMor : {0 c : IntCatSig} ->
+  (dom, cod : CIUCofamObj c) -> CIUCofamPosMor {c} dom cod -> Type
+CIUCofamObjMor {c} = CIUFamObjMor {c=(IntOpCat c)}
+
+public export
+0 CIUCofamMor : {0 c : IntCatSig} -> IntMorSig (CIUCofamObj c)
+CIUCofamMor {c} = CIUFamMor {c=(IntOpCat c)}
+
+public export
+0 ciuCofamIdPos : {0 c : IntCatSig} ->
+  (x : CIUCofamObj c) -> CIUCofamPosMor {c} x x
+ciuCofamIdPos {c} = ciuFamIdPos {c=(IntOpCat c)}
+
+public export
+0 ciuCofamIdObj : {0 c : IntCatSig} ->
+  (x : CIUCofamObj c) -> CIUCofamObjMor {c} x x (ciuCofamIdPos {c} x)
+ciuCofamIdObj {c} = ciuFamIdObj {c=(IntOpCat c)}
+
+public export
+0 ciuCofamId : {0 c : IntCatSig} -> IntIdSig (CIUCofamObj c) (CIUCofamMor {c})
+ciuCofamId {c} = ciuFamId {c=(IntOpCat c)}
+
+public export
+0 ciuCofamCompPos : {0 c : IntCatSig} -> (x, y, z : CIUCofamObj c) ->
+  CIUCofamMor {c} y z -> CIUCofamMor {c} x y -> CIUCofamPosMor {c} x z
+ciuCofamCompPos {c} = ciuFamCompPos {c=(IntOpCat c)}
+
+public export
+0 ciuCofamCompObj : {0 c : IntCatSig} -> (x, y, z : CIUCofamObj c) ->
+  (g : CIUCofamMor {c} y z) -> (f : CIUCofamMor {c} x y) ->
+  CIUCofamObjMor {c} x z (ciuCofamCompPos {c} x y z g f)
+ciuCofamCompObj {c} = ciuFamCompObj {c=(IntOpCat c)}
+
+public export
+0 ciuCofamComp : {0 c : IntCatSig} ->
+  IntCompSig (CIUCofamObj c) (CIUCofamMor {c})
+ciuCofamComp {c} = ciuFamComp {c=(IntOpCat c)}
+
 -------------------------------------------
 -------------------------------------------
 ---- Category-parameterized categories ----
