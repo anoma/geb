@@ -164,16 +164,69 @@ public export
 0 GlobalHomStruct : IntCatSig -> Type
 GlobalHomStruct c = (0 x, y : icObj c) -> HomStruct c x y
 
--- By itself, imposing a global hom-set structure on a category only
--- defines a collection of non-interacting categories which happen to
--- be indexed by pairs of objects of some other category, and each
--- of whose morphisms happens to correspond to a morphism of that
--- indexing category.
---
--- Adding distinctiveness (from simply collections of categories)
--- to hom-set structures involves defining interactions among them
--- which correspond in some way to the structure of the indexing category.
--- So we now define some such interactions.
+-- By itself, imposing a global hom-set structure defines a category
+-- whose objects are the morphisms of the underlying category, but
+-- which only has 2-morphisms (i.e. morphisms between (1-)morphisms) between
+-- 1-morphisms (i.e. morphisms of the underlying category) which have the same
+-- domain and codomain in the underlying category.  In other words, that
+-- category can be divided into zero or more connected components per pair of
+-- objects of the underlying category.
+
+public export
+ghsObj : {0 c : IntCatSig} -> GlobalHomStruct c -> Type
+ghsObj {c} ghs =
+  Exists0 (ProductMonad $ icObj c) (\xy => icMor c (fst xy) (snd xy))
+
+public export
+data GHSmor : {0 c : IntCatSig} ->
+    (ghs : GlobalHomStruct c) -> IntMorSig (ghsObj {c} ghs) where
+  Gh2m : {0 c : IntCatSig} -> {0 ghs : GlobalHomStruct c} ->
+    {0 x, y : icObj c} -> {f, g : icMor c x y} ->
+    micsMor {obj=(icMor c x y)} (ghs x y) f g ->
+    GHSmor {c} ghs (Evidence0 (x, y) f) (Evidence0 (x, y) g)
+
+public export
+0 ghsId : {0 c : IntCatSig} ->
+ (ghs : GlobalHomStruct c) -> IntIdSig (ghsObj {c} ghs) (GHSmor {c} ghs)
+ghsId {c} ghs m = case m of
+  Evidence0 (x, y) f =>
+    Gh2m {c} {ghs} {x} {y} {f} {g=f} $ micsId {obj=(icMor c x y)} (ghs x y) f
+
+public export
+0 ghsComp : {0 c : IntCatSig} ->
+  (ghs : GlobalHomStruct c) -> IntCompSig (ghsObj {c} ghs) (GHSmor {c} ghs)
+ghsComp {c} ghs m'' m' m beta alpha with (m'', m', m, beta, alpha)
+  ghsComp {c} ghs _ _ _ beta alpha |
+    (Evidence0 (w, x) f,
+     Evidence0 (x', y) g,
+     Evidence0 (y', z) h,
+     Gh2m {c} {ghs} {x=x''} {y=y''} {f=g'} {g=h'} bm,
+     Gh2m {c} {ghs} {x=x''} {y=y''} {f=f'} {g=g'} am) =
+      Gh2m $ micsComp {obj=(icMor c x'' y'')} (ghs x'' y'') f' g' h' bm am
+
+public export
+ghsICS : {0 c : IntCatSig} ->
+  (ghs : GlobalHomStruct c) -> IdCompSig (ghsObj {c} ghs) (GHSmor {c} ghs)
+ghsICS {c} ghs =
+  ICS
+    {obj=(ghsObj {c} ghs)}
+    {mor=(GHSmor {c} ghs)}
+    (ghsId {c} ghs)
+    (ghsComp {c} ghs)
+
+public export
+ghsMICS : {0 c : IntCatSig} ->
+  (ghs : GlobalHomStruct c) -> MorIdCompSig (ghsObj {c} ghs)
+ghsMICS {c} ghs = MICS {obj=(ghsObj {c} ghs)} (GHSmor {c} ghs) (ghsICS {c} ghs)
+
+public export
+ghsCat : {0 c : IntCatSig} -> GlobalHomStruct c -> IntCatSig
+ghsCat {c} ghs = ICat (ghsObj {c} ghs) (ghsMICS {c} ghs)
+
+-- Adding further structure to hom-set structures means defining 2-morphisms
+-- whose domain and codomain, which are 1-morphisms, might potentially differ
+-- in their own domains and/or codomains (which are objects of the underlying
+-- category).  So we now define some such examples of further structure.
 
 --------------------
 ---- Whiskering ----
