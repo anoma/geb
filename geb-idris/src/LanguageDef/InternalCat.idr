@@ -498,6 +498,14 @@ IntOpFunctor : {0 c, d : IntCatSig} ->
 IntOpFunctor {c} {d} f = IFunctor (ifOmap f) (\x, y => ifMmap f y x)
 
 public export
+IntOpFunctorSigComp : (0 c, d, e : IntCatSig) ->
+  IntOpFunctorSig d e ->
+  IntOpFunctorSig c d ->
+  IntOpFunctorSig c e
+IntOpFunctorSigComp c d e =
+  IntFunctorSigComp (IntOpCat c) (IntOpCat d) (IntOpCat e)
+
+public export
 0 IntOpNTSig : {0 c, d : Type} -> (0 dmor : IntMorSig d) ->
   (f, g : c -> d) -> Type
 IntOpNTSig {c} {d} dmor = IntNTSig {c} {d} (IntOpCatMor d dmor)
@@ -1239,6 +1247,70 @@ public export
 0 cieCofamComp : {0 c : IntCatSig} ->
   IntCompSig (CIECofamObj c) (CIECofamMor {c})
 cieCofamComp {c} = cieFamComp {c=(IntOpCat c)}
+
+---------------------------------------------
+---- Category-indexed universal families ----
+---------------------------------------------
+
+public export
+CIUFamObj : IntCatSig -> Type
+CIUFamObj = CIArena
+
+public export
+CIUFamPosMor : {0 c : IntCatSig} -> IntMorSig (CIUFamObj c)
+CIUFamPosMor {c} i j = IntFunctorSig (caPos j) (caPos i)
+
+public export
+0 CIUFamObjMor : {0 c : IntCatSig} ->
+  (dom, cod : CIUFamObj c) -> CIUFamPosMor {c} dom cod -> Type
+CIUFamObjMor {c} dom cod onpos =
+  IntNTSig {c=(icObj $ caPos cod)} {d=(icObj c)}
+    (icMor c)
+    (ifOmap $ IntFunctorSigComp (caPos cod) (caPos dom) c (caDir dom) onpos)
+    (ifOmap $ caDir cod)
+
+public export
+0 CIUFamMor : {0 c : IntCatSig} -> IntMorSig (CIUFamObj c)
+CIUFamMor {c} i j = DPair (CIUFamPosMor {c} i j) (CIUFamObjMor {c} i j)
+
+public export
+0 ciuFamIdPos : {0 c : IntCatSig} -> (x : CIUFamObj c) -> CIUFamPosMor {c} x x
+ciuFamIdPos {c} x = IntFunctorSigId (caPos x)
+
+public export
+0 ciuFamIdObj : {0 c : IntCatSig} ->
+  (x : CIUFamObj c) -> CIUFamObjMor {c} x x (ciuFamIdPos {c} x)
+ciuFamIdObj {c} x =
+  intNTid {c=(icObj $ caPos x)} (icMor c) (icId c) (ifOmap $ caDir x)
+
+public export
+0 ciuFamId : {0 c : IntCatSig} -> IntIdSig (CIUFamObj c) (CIUFamMor {c})
+ciuFamId {c} x = (ciuFamIdPos {c} x ** ciuFamIdObj {c} x)
+
+public export
+0 ciuFamCompPos : {0 c : IntCatSig} -> (x, y, z : CIUFamObj c) ->
+  CIUFamMor {c} y z -> CIUFamMor {c} x y -> CIUFamPosMor {c} x z
+ciuFamCompPos {c} x y z g f =
+  IntFunctorSigComp (caPos z) (caPos y) (caPos x) (fst f) (fst g)
+
+public export
+0 ciuFamCompObj : {0 c : IntCatSig} -> (x, y, z : CIUFamObj c) ->
+  (g : CIUFamMor {c} y z) -> (f : CIUFamMor {c} x y) ->
+  CIUFamObjMor {c} x z (ciuFamCompPos {c} x y z g f)
+ciuFamCompObj {c} x y z beta alpha =
+  intNTvcomp {dmor=(icMor c)} (icComp c)
+    (snd beta)
+    (intNTwhiskerL {emor=(icMor c)}
+      {g=
+        (ifOmap
+         $ IntFunctorSigComp (caPos y) (caPos x) c (caDir x) (fst alpha))}
+      {h=(ifOmap $ caDir y)}
+      (snd alpha) (ifOmap $ fst beta))
+
+public export
+0 ciuFamComp : {0 c : IntCatSig} -> IntCompSig (CIUFamObj c) (CIUFamMor {c})
+ciuFamComp {c} x y z g f =
+  (ciuFamCompPos {c} x y z g f ** ciuFamCompObj {c} x y z g f)
 
 -------------------------------------------
 -------------------------------------------
