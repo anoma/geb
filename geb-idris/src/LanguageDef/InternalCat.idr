@@ -907,19 +907,19 @@ record Int2CatStruct (cv : IntCatSig) where
 public export
 record Int2CatSig where
   constructor I2Cat
-  i2cv : IntCatSig
-  i2c2cs : Int2CatStruct i2cv
+  i2c1 : IntCatSig
+  i2c2cs : Int2CatStruct i2c1
 
 public export
-i2Chs : (c2 : Int2CatSig) -> GlobalHomStruct (i2cv c2)
+i2Chs : (c2 : Int2CatSig) -> GlobalHomStruct (i2c1 c2)
 i2Chs c2 = i2Cshs (i2c2cs c2)
 
 public export
-i2Cwl : (c2 : Int2CatSig) -> GlobalLeftWhiskerHomStruct (i2cv c2) (i2Chs c2)
+i2Cwl : (c2 : Int2CatSig) -> GlobalLeftWhiskerHomStruct (i2c1 c2) (i2Chs c2)
 i2Cwl c2 = i2Cswl (i2c2cs c2)
 
 public export
-i2Cwr : (c2 : Int2CatSig) -> GlobalRightWhiskerHomStruct (i2cv c2) (i2Chs c2)
+i2Cwr : (c2 : Int2CatSig) -> GlobalRightWhiskerHomStruct (i2c1 c2) (i2Chs c2)
 i2Cwr c2 = i2Cswr (i2c2cs c2)
 
 public export
@@ -1004,53 +1004,53 @@ Int2HCompSig {obj} {mor} comp mor2 =
   (0 dom, cod : obj) -> Int2HCompParamSig {obj} {mor} comp mor2 dom cod
 
 public export
-0 i2cvObj : (0 c2 : Int2CatSig) -> Type
-i2cvObj c2 = icObj $ i2cv c2
+0 i2c1Obj : (0 c2 : Int2CatSig) -> Type
+i2c1Obj c2 = icObj $ i2c1 c2
 
 public export
-0 i2cvMor : (0 c2 : Int2CatSig) -> (dom, cod : i2cvObj c2) -> Type
-i2cvMor c2 = icMor $ i2cv c2
+0 i2c1Mor : (0 c2 : Int2CatSig) -> (dom, cod : i2c1Obj c2) -> Type
+i2c1Mor c2 = icMor $ i2c1 c2
 
 public export
-0 i2cvId : (0 c2 : Int2CatSig) -> IntIdSig (i2cvObj c2) (i2cvMor c2)
-i2cvId c2 = icId $ i2cv c2
+0 i2c1Id : (0 c2 : Int2CatSig) -> IntIdSig (i2c1Obj c2) (i2c1Mor c2)
+i2c1Id c2 = icId $ i2c1 c2
 
 public export
-0 i2cvComp : (0 c2 : Int2CatSig) -> IntCompSig (i2cvObj c2) (i2cvMor c2)
-i2cvComp c2 = icComp $ i2cv c2
+0 i2c1comp : (0 c2 : Int2CatSig) -> IntCompSig (i2c1Obj c2) (i2c1Mor c2)
+i2c1comp c2 = icComp $ i2c1 c2
 
 public export
-0 i2c2Obj : (0 c2 : Int2CatSig) -> (0 dom, cod : i2cvObj c2) -> Type
-i2c2Obj c2 dom cod = i2cvMor c2 dom cod
+0 i2c2Obj : (0 c2 : Int2CatSig) -> (0 dom, cod : i2c1Obj c2) -> Type
+i2c2Obj c2 dom cod = i2c1Mor c2 dom cod
 
 public export
-0 i2c2Mor : (0 c2 : Int2CatSig) -> Int2MorphSig (i2cvObj c2) (i2cvMor c2)
+0 i2c2Mor : (0 c2 : Int2CatSig) -> Int2MorphSig (i2c1Obj c2) (i2c1Mor c2)
 i2c2Mor c2 x y f g = micsMor (i2Chs c2 x y) f g
 
 public export
 0 i2c2Id : (0 c2 : Int2CatSig) ->
-  Int2IdSig {obj=(i2cvObj c2)} {mor=(i2cvMor c2)} (i2c2Mor c2)
+  Int2IdSig {obj=(i2c1Obj c2)} {mor=(i2c1Mor c2)} (i2c2Mor c2)
 i2c2Id c2 x y = micsId (i2Chs c2 x y)
 
 public export
 0 i2c2Vcomp : (0 c2 : Int2CatSig) ->
-  Int2VCompSig {obj=(i2cvObj c2)} {mor=(i2cvMor c2)} (i2c2Mor c2)
+  Int2VCompSig {obj=(i2c1Obj c2)} {mor=(i2c1Mor c2)} (i2c2Mor c2)
 i2c2Vcomp c2 x y f g = micsComp (i2Chs c2 x y) f g
 
 -- For any pair of objects of the category underlying a 2-category, there
 -- is a category of 2-morphisms among 1-morphisms between the two given objects.
 public export
-0 i2cvc : (0 c2 : Int2CatSig) -> (0 dom, cod : icObj (i2cv c2)) -> IntCatSig
-i2cvc c2 dom cod = ICat (i2c2Obj c2 dom cod) (i2Chs c2 dom cod)
+0 i2c1c : (0 c2 : Int2CatSig) -> (0 dom, cod : icObj (i2c1 c2)) -> IntCatSig
+i2c1c c2 dom cod = ICat (i2c2Obj c2 dom cod) (i2Chs c2 dom cod)
 
 public export
-0 i2Cwp : (c2 : Int2CatSig) -> GlobalWhiskerPairHomStruct (i2cv c2) (i2Chs c2)
+0 i2Cwp : (c2 : Int2CatSig) -> GlobalWhiskerPairHomStruct (i2c1 c2) (i2Chs c2)
 i2Cwp c2 =
-  MkGlobalWhiskerPairHomStruct (i2cv c2) (i2Chs c2) (i2Cwl c2) (i2Cwr c2)
+  MkGlobalWhiskerPairHomStruct (i2c1 c2) (i2Chs c2) (i2Cwl c2) (i2Cwr c2)
 
 public export
-0 i2cHcomp : (c2 : Int2CatSig) -> GlobalHcompHomStruct (i2cv c2) (i2Chs c2)
-i2cHcomp c2 = GlobalHcompFromWhiskers (i2cv c2) (i2Chs c2) $ i2Cwp c2
+0 i2cHcomp : (c2 : Int2CatSig) -> GlobalHcompHomStruct (i2c1 c2) (i2Chs c2)
+i2cHcomp c2 = GlobalHcompFromWhiskers (i2c1 c2) (i2Chs c2) $ i2Cwp c2
 
 public export
 0 IntFunctorHCatSig : {0 idx : Type} -> (idx -> IntCatSig) -> IntCatSig
