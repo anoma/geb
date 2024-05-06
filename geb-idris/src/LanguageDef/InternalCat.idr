@@ -488,6 +488,27 @@ IntOpCat c =
     (IntOpCatId (icObj c) (icMor c) (icId c))
     (IntOpCatComp (icObj c) (icMor c) (icComp c))
 
+public export
+IntOpFunctorSig : IntCatSig -> IntCatSig -> Type
+IntOpFunctorSig c d = IntFunctorSig (IntOpCat c) (IntOpCat d)
+
+public export
+IntOpFunctor : {0 c, d : IntCatSig} ->
+  IntFunctorSig c d -> IntFunctorSig (IntOpCat c) (IntOpCat d)
+IntOpFunctor {c} {d} f = IFunctor (ifOmap f) (\x, y => ifMmap f y x)
+
+public export
+0 IntOpNTSig : {0 c, d : Type} -> (0 dmor : IntMorSig d) ->
+  (f, g : c -> d) -> Type
+IntOpNTSig {c} {d} dmor = IntNTSig {c} {d} (IntOpCatMor d dmor)
+
+public export
+0 IntOpNT : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
+  {f, g : c -> d} ->
+  IntNTSig {c} {d} dmor g f ->
+  IntOpNTSig {c} {d} dmor f g
+IntOpNT {c} {d} {dmor} {f} {g} = id
+
 -----------------------------
 ---- Discrete categories ----
 -----------------------------
