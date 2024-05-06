@@ -1004,37 +1004,37 @@ Int2HCompSig {obj} {mor} comp mor2 =
   (0 dom, cod : obj) -> Int2HCompParamSig {obj} {mor} comp mor2 dom cod
 
 public export
-0 i2c1Obj : (0 c2 : Int2CatSig) -> Type
-i2c1Obj c2 = icObj $ i2cv c2
+0 i2cvObj : (0 c2 : Int2CatSig) -> Type
+i2cvObj c2 = icObj $ i2cv c2
 
 public export
-0 i2c1Mor : (0 c2 : Int2CatSig) -> (dom, cod : i2c1Obj c2) -> Type
-i2c1Mor c2 = icMor $ i2cv c2
+0 i2cvMor : (0 c2 : Int2CatSig) -> (dom, cod : i2cvObj c2) -> Type
+i2cvMor c2 = icMor $ i2cv c2
 
 public export
-0 i2c1Id : (0 c2 : Int2CatSig) -> IntIdSig (i2c1Obj c2) (i2c1Mor c2)
-i2c1Id c2 = icId $ i2cv c2
+0 i2cvId : (0 c2 : Int2CatSig) -> IntIdSig (i2cvObj c2) (i2cvMor c2)
+i2cvId c2 = icId $ i2cv c2
 
 public export
-0 i2c1Comp : (0 c2 : Int2CatSig) -> IntCompSig (i2c1Obj c2) (i2c1Mor c2)
-i2c1Comp c2 = icComp $ i2cv c2
+0 i2cvComp : (0 c2 : Int2CatSig) -> IntCompSig (i2cvObj c2) (i2cvMor c2)
+i2cvComp c2 = icComp $ i2cv c2
 
 public export
-0 i2c2Obj : (0 c2 : Int2CatSig) -> (0 dom, cod : i2c1Obj c2) -> Type
-i2c2Obj c2 dom cod = i2c1Mor c2 dom cod
+0 i2c2Obj : (0 c2 : Int2CatSig) -> (0 dom, cod : i2cvObj c2) -> Type
+i2c2Obj c2 dom cod = i2cvMor c2 dom cod
 
 public export
-0 i2c2Mor : (0 c2 : Int2CatSig) -> Int2MorphSig (i2c1Obj c2) (i2c1Mor c2)
+0 i2c2Mor : (0 c2 : Int2CatSig) -> Int2MorphSig (i2cvObj c2) (i2cvMor c2)
 i2c2Mor c2 x y f g = micsMor (i2Chs c2 x y) f g
 
 public export
 0 i2c2Id : (0 c2 : Int2CatSig) ->
-  Int2IdSig {obj=(i2c1Obj c2)} {mor=(i2c1Mor c2)} (i2c2Mor c2)
+  Int2IdSig {obj=(i2cvObj c2)} {mor=(i2cvMor c2)} (i2c2Mor c2)
 i2c2Id c2 x y = micsId (i2Chs c2 x y)
 
 public export
 0 i2c2Vcomp : (0 c2 : Int2CatSig) ->
-  Int2VCompSig {obj=(i2c1Obj c2)} {mor=(i2c1Mor c2)} (i2c2Mor c2)
+  Int2VCompSig {obj=(i2cvObj c2)} {mor=(i2cvMor c2)} (i2c2Mor c2)
 i2c2Vcomp c2 x y f g = micsComp (i2Chs c2 x y) f g
 
 -- For any pair of objects of the category underlying a 2-category, there
