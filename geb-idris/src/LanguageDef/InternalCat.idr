@@ -896,11 +896,11 @@ OpSliceCat c = IntOpCat (SliceCat c)
 -- We call a category with whiskering in both directions -- from which we
 -- can derive a horizontal composition -- a two-category.
 public export
-record Int2CatStruct (cv : IntCatSig) where
+record Int2CatStruct (c1 : IntCatSig) where
   constructor I2CS
-  i2Cshs : GlobalHomStruct cv
-  i2Cswl : GlobalLeftWhiskerHomStruct cv i2Cshs
-  i2Cswr : GlobalRightWhiskerHomStruct cv i2Cshs
+  i2Cshs : GlobalHomStruct c1
+  i2Cswl : GlobalLeftWhiskerHomStruct c1 i2Cshs
+  i2Cswr : GlobalRightWhiskerHomStruct c1 i2Cshs
 
 -- We call a category with whiskering in both directions -- from which we
 -- can derive a horizontal composition -- a two-category.
