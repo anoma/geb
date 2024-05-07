@@ -1454,12 +1454,12 @@ IntCellSig obj vmor hmor =
   Type
 
 public export
-0 IntCellTo2Sig : {0 obj : Type} ->
+0 IntCellToH2Sig : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
   (0 _ : IntIdSig obj vmor) ->
   (0 cell : IntCellSig obj vmor hmor) ->
   Int2MorphSig obj hmor
-IntCellTo2Sig {obj} {vmor} {hmor} vid cell x y =
+IntCellToH2Sig {obj} {vmor} {hmor} vid cell x y =
   cell x y x y (vid x) (vid y)
 
 public export
@@ -1472,13 +1472,13 @@ IntCellIdSig {obj} {vmor} {hmor} vid cell =
   (0 x, y : obj) -> (0 f : hmor x y) -> cell x y x y (vid x) (vid y) f f
 
 public export
-0 IntCellTo2Id : {0 obj : Type} ->
+0 IntCellToH2Id : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
   (0 vid : IntIdSig obj vmor) ->
   (0 cell : IntCellSig obj vmor hmor) ->
   IntCellIdSig {obj} {vmor} {hmor} vid cell ->
-  Int2IdSig {obj} {mor=hmor} (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
-IntCellTo2Id {obj} {vmor} {hmor} vid cell = id
+  Int2IdSig {obj} {mor=hmor} (IntCellToH2Sig {obj} {vmor} {hmor} vid cell)
+IntCellToH2Id {obj} {vmor} {hmor} vid cell = id
 
 public export
 IntCellVHId : {0 obj : Type} ->
@@ -1551,7 +1551,7 @@ public export
   (0 vcomp : IntCompSig obj vmor) ->
   (0 c2m : IntCellTo2MorSig {obj} {vmor} {hmor} vcomp cell vid) ->
   (0 _ : IntCellVCompSig {obj} {vmor} {hmor} vcomp cell) ->
-  Int2VCompSig {obj} {mor=hmor} (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
+  Int2VCompSig {obj} {mor=hmor} (IntCellToH2Sig {obj} {vmor} {hmor} vid cell)
 IntCellTo2VComp vid vcomp c2m cvcomp x y f g h beta alpha =
   c2m x y f h $ cvcomp (vid x) (vid y) (vid x) (vid y) f g h beta alpha
 
@@ -1564,7 +1564,7 @@ public export
   (0 cid : IntCellIdSig {obj} {vmor} {hmor} vid cell) ->
   (0 _ : IntCellHCompSig {obj} {vmor} {hmor} hcomp cell) ->
   Int2WhiskerLSig {obj} {mor=hmor}
-    hcomp (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
+    hcomp (IntCellToH2Sig {obj} {vmor} {hmor} vid cell)
 IntCellTo2WhiskerL {vmor} {hmor} {hcomp} vid cell cid chcomp x y f z g g' =
   flip (chcomp (vid x) (vid y) (vid z) f g f g') $ cid x y f
 
@@ -1577,7 +1577,7 @@ public export
   (0 cid : IntCellIdSig {obj} {vmor} {hmor} vid cell) ->
   (0 _ : IntCellHCompSig {obj} {vmor} {hmor} hcomp cell) ->
   Int2WhiskerRSig {obj} {mor=hmor}
-    hcomp (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
+    hcomp (IntCellToH2Sig {obj} {vmor} {hmor} vid cell)
 IntCellTo2WhiskerR {vmor} {hmor} {hcomp} vid cell cid chcomp y z g x f f' =
   chcomp (vid x) (vid y) (vid z) f g f' g $ cid y z g
 
@@ -1589,7 +1589,7 @@ public export
   (0 cell : IntCellSig obj vmor hmor) ->
   (0 _ : IntCellHCompSig {obj} {vmor} {hmor} hcomp cell) ->
   Int2HCompSig {obj} {mor=hmor}
-    hcomp (IntCellTo2Sig {obj} {vmor} {hmor} vid cell)
+    hcomp (IntCellToH2Sig {obj} {vmor} {hmor} vid cell)
 IntCellTo2HComp {obj} {vmor} {hmor} {hcomp} vid cell chcomp x z y f f' g g' =
   chcomp (vid x) (vid y) (vid z) f g f' g'
 
@@ -1642,9 +1642,9 @@ public export
   MorIdCompSig (idcHmor idc dom cod)
 idc2mics idc dom cod =
   MICS
-    (\f, g => IntCellTo2Sig (idcVid idc) (idcCell idc) dom cod f g)
+    (\f, g => IntCellToH2Sig (idcVid idc) (idcCell idc) dom cod f g)
   $ ICS
-    (IntCellTo2Id (idcVid idc) (idcCell idc) (idcCid idc) dom cod)
+    (IntCellToH2Id (idcVid idc) (idcCell idc) (idcCid idc) dom cod)
     (\f, g, h, beta, alpha =>
       IntCellTo2VComp
         (idcVid idc) (idcVcomp idc) (idcC2m idc) (idcCvcomp idc)
