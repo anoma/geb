@@ -288,11 +288,12 @@ GlobalRightWhiskerHomStruct ic ghs =
 -- structures.
 
 public export
-0 WhiskerPairHomStruct : (0 ic : IntCatSig) -> (c, d, e : icObj ic) ->
-  HomStruct ic c e -> HomStruct ic c d -> HomStruct ic d e -> Type
-WhiskerPairHomStruct ic c d e hsce hscd hsde =
-  (LeftWhiskerHomStruct ic c d e hsce hsde,
-   RightWhiskerHomStruct ic c d e hsce hscd)
+record WhiskerPairHomStruct (0 ic : IntCatSig) (c, d, e : icObj ic)
+  (hsce : HomStruct ic c e) (hscd : HomStruct ic c d) (hsde : HomStruct ic d e)
+  where
+    constructor WPHS
+    wphsL : LeftWhiskerHomStruct ic c d e hsce hsde
+    wphsR : RightWhiskerHomStruct ic c d e hsce hscd
 
 public export
 0 GlobalWhiskerPairHomStruct : (0 ic : IntCatSig) -> GlobalHomStruct ic -> Type
@@ -306,7 +307,7 @@ public export
   GlobalLeftWhiskerHomStruct ic ghs ->
   GlobalRightWhiskerHomStruct ic ghs ->
   GlobalWhiskerPairHomStruct ic ghs
-MkGlobalWhiskerPairHomStruct ic ghs wl wr c d e = (wl c d e, wr c d e)
+MkGlobalWhiskerPairHomStruct ic ghs wl wr c d e = WPHS (wl c d e) (wr c d e)
 
 --------------------------------
 ---- Horizontal composition ----
@@ -351,8 +352,8 @@ HcompFromWhiskers ic c d e hsce hscd hsde wphs f f' g g' beta alpha =
     (icComp ic c d e g f)
     (icComp ic c d e g f')
     (icComp ic c d e g' f')
-    (fst wphs f' g g' beta)
-    (snd wphs g f f' alpha)
+    (wphsL wphs f' g g' beta)
+    (wphsR wphs g f f' alpha)
 
 public export
 0 GlobalHcompFromWhiskers : (0 ic : IntCatSig) -> (ghs : GlobalHomStruct ic) ->
@@ -470,7 +471,7 @@ public export
 0 FunctorCatWhiskerPair :
   GlobalWhiskerPairHomStruct IntCatCat FunctorCatHomStruct
 FunctorCatWhiskerPair c d e =
-  (FunctorCatWhiskerL c d e, FunctorCatWhiskerR c d e)
+  WPHS (FunctorCatWhiskerL c d e) (FunctorCatWhiskerR c d e)
 
 -- Because we have both directions of whiskering structure on the category
 -- of categories, we can compose them to impose a horizontal composition.
