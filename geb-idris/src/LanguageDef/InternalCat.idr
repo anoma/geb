@@ -1454,6 +1454,15 @@ IntCellSig obj vmor hmor =
   Type
 
 public export
+0 IntCellToV2Sig : {0 obj : Type} ->
+  {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
+  (0 _ : IntIdSig obj hmor) ->
+  (0 cell : IntCellSig obj vmor hmor) ->
+  Int2MorphSig obj vmor
+IntCellToV2Sig {obj} {vmor} {hmor} hid cell x y g f =
+  cell x x y y g f (hid x) (hid y)
+
+public export
 0 IntCellToH2Sig : {0 obj : Type} ->
   {0 vmor : IntMorSig obj} -> {0 hmor : IntMorSig obj} ->
   (0 _ : IntIdSig obj vmor) ->
