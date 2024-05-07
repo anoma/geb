@@ -946,35 +946,6 @@ OpSliceCat c = IntOpCat (SliceCat c)
 ------------------------
 ------------------------
 
--- We call a category with whiskering in both directions -- from which we
--- can derive a horizontal composition -- a two-category.
-public export
-record Int2CatStruct (c1 : IntCatSig) where
-  constructor I2CS
-  i2Cshs : GlobalHomStruct c1
-  i2Cswl : GlobalLeftWhiskerHomStruct c1 i2Cshs
-  i2Cswr : GlobalRightWhiskerHomStruct c1 i2Cshs
-
--- We call a category with whiskering in both directions -- from which we
--- can derive a horizontal composition -- a two-category.
-public export
-record Int2CatSig where
-  constructor I2Cat
-  i2c1 : IntCatSig
-  i2c2cs : Int2CatStruct i2c1
-
-public export
-i2Chs : (c2 : Int2CatSig) -> GlobalHomStruct (i2c1 c2)
-i2Chs c2 = i2Cshs (i2c2cs c2)
-
-public export
-i2Cwl : (c2 : Int2CatSig) -> GlobalLeftWhiskerHomStruct (i2c1 c2) (i2Chs c2)
-i2Cwl c2 = i2Cswl (i2c2cs c2)
-
-public export
-i2Cwr : (c2 : Int2CatSig) -> GlobalRightWhiskerHomStruct (i2c1 c2) (i2Chs c2)
-i2Cwr c2 = i2Cswr (i2c2cs c2)
-
 public export
 0 Int2MorphParamSig : (0 obj : Type) -> (0 mor : IntMorSig obj) -> IntMorSig obj
 Int2MorphParamSig obj mor x y = (0 f, g : mor x y) -> Type
@@ -1055,6 +1026,35 @@ public export
   Type
 Int2HCompSig {obj} {mor} comp mor2 =
   (0 dom, cod : obj) -> Int2HCompParamSig {obj} {mor} comp mor2 dom cod
+
+-- We call a category with whiskering in both directions -- from which we
+-- can derive a horizontal composition -- a two-category.
+public export
+record Int2CatStruct (c1 : IntCatSig) where
+  constructor I2CS
+  i2Cshs : GlobalHomStruct c1
+  i2Cswl : GlobalLeftWhiskerHomStruct c1 i2Cshs
+  i2Cswr : GlobalRightWhiskerHomStruct c1 i2Cshs
+
+-- We call a category with whiskering in both directions -- from which we
+-- can derive a horizontal composition -- a two-category.
+public export
+record Int2CatSig where
+  constructor I2Cat
+  i2c1 : IntCatSig
+  i2c2cs : Int2CatStruct i2c1
+
+public export
+i2Chs : (c2 : Int2CatSig) -> GlobalHomStruct (i2c1 c2)
+i2Chs c2 = i2Cshs (i2c2cs c2)
+
+public export
+i2Cwl : (c2 : Int2CatSig) -> GlobalLeftWhiskerHomStruct (i2c1 c2) (i2Chs c2)
+i2Cwl c2 = i2Cswl (i2c2cs c2)
+
+public export
+i2Cwr : (c2 : Int2CatSig) -> GlobalRightWhiskerHomStruct (i2c1 c2) (i2Chs c2)
+i2Cwr c2 = i2Cswr (i2c2cs c2)
 
 public export
 0 i2c1Obj : (0 c2 : Int2CatSig) -> Type
