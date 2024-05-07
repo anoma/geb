@@ -1430,7 +1430,8 @@ public export
 IntCParamCat : IntCatSig -> Type
 IntCParamCat cat = IntFunctorSig cat IntCatCat
 
--- An arena internal to `Cat`.
+-- An arena internal to `Cat`.  This is equivalent to a dependent pair
+-- of a category and `IntCParamCat`.
 public export
 CatArena : Type
 CatArena = CIArena IntCatCat
