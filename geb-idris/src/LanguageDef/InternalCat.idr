@@ -562,7 +562,7 @@ IntOpFunctorSigComp c d e =
 public export
 0 IntOpNTSig : {0 c, d : Type} -> (0 dmor : IntMorSig d) ->
   (f, g : c -> d) -> Type
-IntOpNTSig {c} {d} dmor = IntNTSig {c} {d} (IntOpCatMor d dmor)
+IntOpNTSig {c} {d} dmor = flip $ IntNTSig {c} {d} dmor
 
 public export
 0 IntOpNT : {0 c, d : Type} -> {0 dmor : IntMorSig d} ->
