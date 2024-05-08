@@ -1684,3 +1684,42 @@ IntAdjComultFromUnit {c} {d} cmor dmor cid l r lm unit =
     {h=(IntAdjMonad {c} {d} l r)}
     unit
     r
+
+public export
+record IntAdjointsSig (c, d : IntCatSig) where
+  constructor IAdjoints
+  iaL : IntFunctorSig c d
+  iaR : IntFunctorSig d c
+
+public export
+record IntAdjunctsSig {c, d : IntCatSig} (lr : IntAdjointsSig c d) where
+  constructor IAdjuncts
+  iaLAdj :
+    IntAdjLAdjunctSig (icMor c) (icMor d) (ifOmap $ iaL lr) (ifOmap $ iaR lr)
+  iaRAdj :
+    IntAdjRAdjunctSig (icMor c) (icMor d) (ifOmap $ iaL lr) (ifOmap $ iaR lr)
+
+public export
+record IntUnitsSig {c, d : IntCatSig} (lr : IntAdjointsSig c d) where
+  constructor IUnits
+  iuUnit : IntAdjUnitSig (icMor c) (ifOmap $ iaL lr) (ifOmap $ iaR lr)
+  iuCounit : IntAdjCounitSig (icMor d) (ifOmap $ iaL lr) (ifOmap $ iaR lr)
+
+public export
+record IntMultsSig {c, d : IntCatSig} (lr : IntAdjointsSig c d) where
+  constructor IMults
+  imMult : IntAdjMultSig (icMor c) (ifOmap $ iaL lr) (ifOmap $ iaR lr)
+  imComult : IntAdjComultSig (icMor d) (ifOmap $ iaL lr) (ifOmap $ iaR lr)
+
+public export
+record IntAdjunctionData {c, d : IntCatSig} (adjs : IntAdjointsSig c d) where
+  constructor IAdjData
+  iadAdjuncts : IntAdjunctsSig adjs
+  iadUnits : IntUnitsSig adjs
+  iadMults : IntMultsSig adjs
+
+public export
+record IntAdjunctionSig (c, d : IntCatSig) where
+  constructor IAdjunction
+  iaAdjoints : IntAdjointsSig c d
+  iaData : IntAdjunctionData {c} {d} iaAdjoints
