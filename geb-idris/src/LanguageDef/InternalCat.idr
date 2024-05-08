@@ -1311,17 +1311,17 @@ CIUFamObj : IntCatSig -> Type
 CIUFamObj = CIArena
 
 public export
-CIUFamPosMor : {0 c : IntCatSig} -> IntMorSig (CIUFamObj c)
-CIUFamPosMor {c} i j = IntFunctorSig (caPos j) (caPos i)
+0 CIUFamPosMor : {0 c : IntCatSig} -> IntMorSig (CIUFamObj c)
+CIUFamPosMor {c} = IntOpCatMor (CIEFamObj c) $ CIEFamPosMor {c}
 
 public export
 0 CIUFamObjMor : {0 c : IntCatSig} ->
   (dom, cod : CIUFamObj c) -> CIUFamPosMor {c} dom cod -> Type
 CIUFamObjMor {c} dom cod onpos =
-  IntNTSig {c=(icObj $ caPos cod)} {d=(icObj c)}
+  IntOpNTSig {c=(icObj $ caPos cod)} {d=(icObj c)}
     (icMor c)
-    (ifOmap $ IntFunctorSigComp (caPos cod) (caPos dom) c (caDir dom) onpos)
     (ifOmap $ caDir cod)
+    (ifOmap $ IntFunctorSigComp (caPos cod) (caPos dom) c (caDir dom) onpos)
 
 public export
 0 CIUFamMor : {0 c : IntCatSig} -> IntMorSig (CIUFamObj c)
