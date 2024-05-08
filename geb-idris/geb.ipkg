@@ -13,6 +13,7 @@ modules =
     , Library.Test.IdrisAlgebraTest
     , LanguageDef.SpanCospan
     , LanguageDef.InternalCat
+    , LanguageDef.InternalHigherCat
     , LanguageDef.InternalProfunctor
     , LanguageDef.IntArena
     , LanguageDef.IntBundleCat
@@ -65,6 +66,7 @@ modules =
     , LanguageDef.Test.IntFactCatFuncTest
     , LanguageDef.Test.SpanCospanTest
     , LanguageDef.Test.InternalCatTest
+    , LanguageDef.Test.InternalHigherCatTest
     , LanguageDef.Test.InternalProfunctorTest
     , LanguageDef.Test.MLBundleCatTest
     , LanguageDef.Test.SlicePolyCatTest
