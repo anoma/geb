@@ -1692,6 +1692,24 @@ record IntAdjointsSig (c, d : IntCatSig) where
   iaR : IntFunctorSig d c
 
 public export
+0 iaLOmap : {0 c, d : IntCatSig} -> IntAdjointsSig c d -> icObj c -> icObj d
+iaLOmap = ifOmap . iaL
+
+public export
+0 iaLFmap : {0 c, d : IntCatSig} -> (adjs : IntAdjointsSig c d) ->
+  IntFMapSig (icMor c) (icMor d) (iaLOmap adjs)
+iaLFmap adjs = ifMmap $ iaL adjs
+
+public export
+0 iaROmap : {0 c, d : IntCatSig} -> IntAdjointsSig c d -> icObj d -> icObj c
+iaROmap = ifOmap . iaR
+
+public export
+0 iaRFmap : {0 c, d : IntCatSig} -> (adjs : IntAdjointsSig c d) ->
+  IntFMapSig (icMor d) (icMor c) (iaROmap adjs)
+iaRFmap adjs = ifMmap $ iaR adjs
+
+public export
 record IntAdjunctsSig {c, d : IntCatSig} (lr : IntAdjointsSig c d) where
   constructor IAdjuncts
   iaLAdj :
@@ -1717,6 +1735,18 @@ record IntAdjunctionData {c, d : IntCatSig} (adjs : IntAdjointsSig c d) where
   iadAdjuncts : IntAdjunctsSig adjs
   iadUnits : IntUnitsSig adjs
   iadMults : IntMultsSig adjs
+
+public export
+iadLAdj : {0 c, d : IntCatSig} -> {adjs : IntAdjointsSig c d} ->
+  IntAdjunctionData {c} {d} adjs ->
+  IntAdjLAdjunctSig (icMor c) (icMor d) (iaLOmap adjs) (iaROmap adjs)
+iadLAdj = iaLAdj . iadAdjuncts
+
+public export
+iadRAdj : {0 c, d : IntCatSig} -> {adjs : IntAdjointsSig c d} ->
+  IntAdjunctionData {c} {d} adjs ->
+  IntAdjRAdjunctSig (icMor c) (icMor d) (iaLOmap adjs) (iaROmap adjs)
+iadRAdj = iaRAdj . iadAdjuncts
 
 public export
 record IntAdjunctionSig (c, d : IntCatSig) where
