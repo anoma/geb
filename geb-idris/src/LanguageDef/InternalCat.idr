@@ -1749,6 +1749,30 @@ iadRAdj : {0 c, d : IntCatSig} -> {adjs : IntAdjointsSig c d} ->
 iadRAdj = iaRAdj . iadAdjuncts
 
 public export
+iadUnit : {0 c, d : IntCatSig} -> {adjs : IntAdjointsSig c d} ->
+  IntAdjunctionData {c} {d} adjs ->
+  IntAdjUnitSig (icMor c) (iaLOmap adjs) (iaROmap adjs)
+iadUnit = iuUnit . iadUnits
+
+public export
+iadCounit : {0 c, d : IntCatSig} -> {adjs : IntAdjointsSig c d} ->
+  IntAdjunctionData {c} {d} adjs ->
+  IntAdjCounitSig (icMor d) (iaLOmap adjs) (iaROmap adjs)
+iadCounit = iuCounit . iadUnits
+
+public export
+iadMult : {0 c, d : IntCatSig} -> {adjs : IntAdjointsSig c d} ->
+  IntAdjunctionData {c} {d} adjs ->
+  IntAdjMultSig (icMor c) (iaLOmap adjs) (iaROmap adjs)
+iadMult = imMult . iadMults
+
+public export
+iadComult : {0 c, d : IntCatSig} -> {adjs : IntAdjointsSig c d} ->
+  IntAdjunctionData {c} {d} adjs ->
+  IntAdjComultSig (icMor d) (iaLOmap adjs) (iaROmap adjs)
+iadComult = imComult . iadMults
+
+public export
 record IntAdjunctionSig (c, d : IntCatSig) where
   constructor IAdjunction
   iaAdjoints : IntAdjointsSig c d
