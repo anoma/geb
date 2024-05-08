@@ -11,6 +11,7 @@ import LanguageDef.Test.IntEFamCatTest
 import LanguageDef.Test.IntParamCatTest
 import LanguageDef.Test.SpanCospanTest
 import LanguageDef.Test.InternalCatTest
+import LanguageDef.Test.InternalHigherCatTest
 import LanguageDef.Test.InternalProfunctorTest
 import LanguageDef.Test.SlicePolyCatTest
 import LanguageDef.Test.DisliceCatTest
@@ -92,6 +93,7 @@ totalTests = do
   LanguageDef.Test.DislicePolyCatTest.dislicePolyCatTest
   LanguageDef.Test.InternalProfunctorTest.internalProfunctorTest
   LanguageDef.Test.InternalCatTest.internalCatTest
+  LanguageDef.Test.InternalHigherCatTest.internalHigherCatTest
   LanguageDef.Test.SlicePolyCatTest.slicePolyCatTest
   LanguageDef.Test.MLBundleCatTest.mlBundleCatTest
   LanguageDef.Test.IntBundleCatTest.intBundleCatTest
