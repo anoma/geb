@@ -1829,3 +1829,40 @@ iasComult : {0 c, d : IntCatSig} ->
   (adj : IntAdjunctionSig c d) ->
   IntAdjComultSig (icMor d) (iasLOmap adj) (iasROmap adj)
 iasComult adj = iadComult $ iaData adj
+
+public export
+0 IntAdjunctsFromUnits : {0 c, d : IntCatSig} -> (adjs : IntAdjointsSig c d) ->
+  (units : IntUnitsSig adjs) -> IntAdjunctsSig adjs
+IntAdjunctsFromUnits {c} {d} adjs units =
+  IAdjuncts
+    (IntAdjLAdjunctFromRMapAndUnit (icMor c) (icMor d) (icComp c)
+      (iaLOmap adjs) (iaROmap adjs) (iaRFmap adjs) (iuUnit units))
+    (IntAdjRAdjunctFromLMapAndCounit (icMor c) (icMor d) (icComp d)
+      (iaLOmap adjs) (iaROmap adjs) (iaLFmap adjs) (iuCounit units))
+
+public export
+0 IntMultsFromUnits : {0 c, d : IntCatSig} -> (adjs : IntAdjointsSig c d) ->
+  (units : IntUnitsSig adjs) -> IntMultsSig adjs
+IntMultsFromUnits {c} {d} adjs units =
+  IMults
+    (IntAdjMultFromCounit (icMor c) (icMor d) (icId d) (iaLOmap adjs)
+      (iaROmap adjs) (iaRFmap adjs) (iuCounit units))
+    (IntAdjComultFromUnit (icMor c) (icMor d) (icId c) (iaLOmap adjs)
+      (iaROmap adjs) (iaLFmap adjs) (iuUnit units))
+
+public export
+0 IntAdjunctionDataFromUnits : {0 c, d : IntCatSig} ->
+  (adjs : IntAdjointsSig c d) -> IntUnitsSig adjs ->
+  IntAdjunctionData adjs
+IntAdjunctionDataFromUnits {c} {d} adjs units =
+  IAdjData
+    (IntAdjunctsFromUnits adjs units)
+    units
+    (IntMultsFromUnits adjs units)
+
+public export
+0 IntAdjunctionFromUnits : {0 c, d : IntCatSig} ->
+  (adjs : IntAdjointsSig c d) -> IntUnitsSig adjs ->
+  IntAdjunctionSig c d
+IntAdjunctionFromUnits {c} {d} adjs units =
+  IAdjunction adjs (IntAdjunctionDataFromUnits adjs units)
