@@ -1777,3 +1777,55 @@ record IntAdjunctionSig (c, d : IntCatSig) where
   constructor IAdjunction
   iaAdjoints : IntAdjointsSig c d
   iaData : IntAdjunctionData {c} {d} iaAdjoints
+
+public export
+iasL : {0 c, d : IntCatSig} -> IntAdjunctionSig c d -> IntFunctorSig c d
+iasL = iaL . iaAdjoints
+
+public export
+0 iasLOmap : {0 c, d : IntCatSig} -> IntAdjunctionSig c d -> icObj c -> icObj d
+iasLOmap = ifOmap . iasL
+
+public export
+iasR : {0 c, d : IntCatSig} -> IntAdjunctionSig c d -> IntFunctorSig d c
+iasR = iaR . iaAdjoints
+
+public export
+0 iasROmap : {0 c, d : IntCatSig} -> IntAdjunctionSig c d -> icObj d -> icObj c
+iasROmap = ifOmap . iasR
+
+public export
+iasLAdj : {0 c, d : IntCatSig} ->
+  (adj : IntAdjunctionSig c d) ->
+  IntAdjLAdjunctSig (icMor c) (icMor d) (iasLOmap adj) (iasROmap adj)
+iasLAdj adj = iadLAdj $ iaData adj
+
+public export
+iasRAdj : {0 c, d : IntCatSig} ->
+  (adj : IntAdjunctionSig c d) ->
+  IntAdjRAdjunctSig (icMor c) (icMor d) (iasLOmap adj) (iasROmap adj)
+iasRAdj adj = iadRAdj $ iaData adj
+
+public export
+iasUnit : {0 c, d : IntCatSig} ->
+  (adj : IntAdjunctionSig c d) ->
+  IntAdjUnitSig (icMor c) (iasLOmap adj) (iasROmap adj)
+iasUnit adj = iadUnit $ iaData adj
+
+public export
+iasCounit : {0 c, d : IntCatSig} ->
+  (adj : IntAdjunctionSig c d) ->
+  IntAdjCounitSig (icMor d) (iasLOmap adj) (iasROmap adj)
+iasCounit adj = iadCounit $ iaData adj
+
+public export
+iasMult : {0 c, d : IntCatSig} ->
+  (adj : IntAdjunctionSig c d) ->
+  IntAdjMultSig (icMor c) (iasLOmap adj) (iasROmap adj)
+iasMult adj = iadMult $ iaData adj
+
+public export
+iasComult : {0 c, d : IntCatSig} ->
+  (adj : IntAdjunctionSig c d) ->
+  IntAdjComultSig (icMor d) (iasLOmap adj) (iasROmap adj)
+iasComult adj = iadComult $ iaData adj
