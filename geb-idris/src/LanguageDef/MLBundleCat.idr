@@ -73,12 +73,12 @@ record CBundleObj where
   cbProj : cbTot -> cbBase
 
 public export
-CBOtoIBO : CBundleObj -> IntBundleObj {c=Type} HomProf
-CBOtoIBO cb = IBO (cbTot cb) (cbBase cb) (cbProj cb)
+CBOtoIBO : CBundleObj -> IntBundle {c=Type} HomProf
+CBOtoIBO cb = IBundle (cbTot cb) (cbBase cb) (cbProj cb)
 
 public export
-CBOfromIBO : IntBundleObj {c=Type} HomProf -> CBundleObj
-CBOfromIBO ib = CBO (iboCod ib) (iboDom ib) (iboMor ib)
+CBOfromIBO : IntBundle {c=Type} HomProf -> CBundleObj
+CBOfromIBO ib = CBO (ibCod ib) (ibDom ib) (ibMor ib)
 
 public export
 CBOsl : (cb : CBundleObj) -> CSliceObj (cbBase cb)
