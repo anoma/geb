@@ -19,15 +19,15 @@ IntUCofamObj : Type -> Type
 IntUCofamObj = IntArena
 
 public export
-ICFUO : {0 c : Type} -> (idx : Type) -> (idx -> c) -> IntUCofamObj c
+ICFUO : {c : Type} -> (idx : Type) -> (idx -> c) -> IntUCofamObj c
 ICFUO {c} idx obj = (idx ** obj)
 
 public export
-icfuoIdx : {0 c : Type} -> IntUCofamObj c -> Type
+icfuoIdx : {c : Type} -> IntUCofamObj c -> Type
 icfuoIdx {c} = DPair.fst {a=Type} {p=(ContravarHomFunc c)}
 
 public export
-icfuoObj : {0 c : Type} -> (uf : IntUCofamObj c) -> icfuoIdx {c} uf -> c
+icfuoObj : {c : Type} -> (uf : IntUCofamObj c) -> icfuoIdx {c} uf -> c
 icfuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 
 -------------------
@@ -41,7 +41,7 @@ icfuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -- from the opposite of `c`; see `IntUFamCat` for the notion of "universal
 -- family".)
 public export
-0 IntUCofamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+IntUCofamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUCofamObj c) -> Type
 IntUCofamMor {c} mor dom cod =
   (onidx : icfuoIdx cod -> icfuoIdx dom **
@@ -50,7 +50,7 @@ IntUCofamMor {c} mor dom cod =
 -- Note that this category is the opposite category of
 -- the category of existential families (AKA Dirichlet functors).
 export
-0 IntUCofamIsOpEFam : {c : Type} -> (mor : IntDifunctorSig c) ->
+IntUCofamIsOpEFam : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUCofamObj c) ->
   IntUCofamMor {c} mor dom cod =
   IntOpCatMor (IntEFamObj c) (IntEFamMor {c} mor) dom cod
@@ -59,7 +59,7 @@ IntUCofamIsOpEFam {c} mor dom cod = Refl
 -- Another way of viewing a universal cofamily is as a universal
 -- family on an opposite category.
 export
-0 IntUCofamIsUFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
+IntUCofamIsUFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUCofamObj c) ->
   IntUCofamMor {c} mor dom cod = IntUFamMor {c} (IntOpCatMor c mor) dom cod
 IntUCofamIsUFamOp {c} mor dom cod = Refl
@@ -86,15 +86,15 @@ icfumOnObj : {c : Type} -> {mor : IntDifunctorSig c} ->
 icfumOnObj = DPair.snd
 
 public export
-0 icfumId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
-  (0 obj : IntUCofamObj c) -> IntUCofamMor mor obj obj
+icfumId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
+  (obj : IntUCofamObj c) -> IntUCofamMor mor obj obj
 icfumId {c} mor cid =
   IntOpCatId (IntEFamObj c) (IntEFamMor {c} mor) (ifemId {c} mor cid)
 
 public export
-0 icfumComp : {c : Type} ->
+icfumComp : {c : Type} ->
   (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  {0 x, y, z : IntUCofamObj c} ->
+  {x, y, z : IntUCofamObj c} ->
   IntUCofamMor mor y z ->
   IntUCofamMor mor x y ->
   IntUCofamMor mor x z
@@ -199,15 +199,15 @@ MLUCofamObj : Type
 MLUCofamObj = IntUCofamObj Type
 
 public export
-0 MLUCofamMor : MLUCofamObj -> MLUCofamObj -> Type
+MLUCofamMor : MLUCofamObj -> MLUCofamObj -> Type
 MLUCofamMor = IntUCofamMor $ HomProf
 
 public export
-0 mlfmId : (0 x : MLUCofamObj) -> MLUCofamMor x x
+mlfmId : (x : MLUCofamObj) -> MLUCofamMor x x
 mlfmId = icfumId HomProf typeId
 
 public export
-0 mlfmComp : {x, y, z : MLUCofamObj} ->
+mlfmComp : {x, y, z : MLUCofamObj} ->
   MLUCofamMor y z -> MLUCofamMor x y -> MLUCofamMor x z
 mlfmComp = icfumComp HomProf (\_, _, _ => (.))
 
@@ -243,16 +243,16 @@ SliceCofamObj : Type -> Type
 SliceCofamObj = IntUCofamObj . SliceObj
 
 public export
-0 SliceUCofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
+SliceUCofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
 SliceUCofamMor {c} = IntUCofamMor {c=(SliceObj c)} $ SliceMor c
 
 public export
-0 slufmId : {c : Type} ->
-  (0 x : SliceCofamObj c) -> SliceUCofamMor x x
+slufmId : {c : Type} ->
+  (x : SliceCofamObj c) -> SliceUCofamMor x x
 slufmId {c} = icfumId {c=(SliceObj c)} (SliceMor c) (SliceId c)
 
 public export
-0 slufmComp : {c : Type} -> {x, y, z : SliceCofamObj c} ->
+slufmComp : {c : Type} -> {x, y, z : SliceCofamObj c} ->
   SliceUCofamMor y z -> SliceUCofamMor x y -> SliceUCofamMor x z
 slufmComp {c} = icfumComp {c=(SliceObj c)} (SliceMor c) (SliceComp c)
 
