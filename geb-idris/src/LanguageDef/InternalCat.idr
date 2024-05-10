@@ -968,18 +968,17 @@ IntCopreshfSig c = IntOMapSig c TypeObj
 
 public export
 0 IntPreshfSig : Type -> Type
-IntPreshfSig = IntCopreshfSig
+IntPreshfSig c = IntOMapSig (IntOpCatObj c) TypeObj
 
 public export
 0 IntCopreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
   (objmap : IntCopreshfSig c) -> Type
-IntCopreshfMapSig c mor objmap =
-  (x, y : c) -> mor x y -> objmap x -> objmap y
+IntCopreshfMapSig c mor = IntFMapSig mor TypeMor
 
 public export
 0 IntPreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
   (objmap : IntPreshfSig c) -> Type
-IntPreshfMapSig c mor = IntCopreshfMapSig c (IntOpCatMor c mor)
+IntPreshfMapSig c mor = IntCopreshfMapSig (IntOpCatObj c) (IntOpCatMor c mor)
 
 public export
 0 IntCopreshfNTSig : (c : Type) -> (pobj, qobj : IntCopreshfSig c) -> Type
