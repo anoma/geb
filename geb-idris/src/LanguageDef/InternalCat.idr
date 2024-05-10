@@ -69,11 +69,11 @@ icComp cat = micsComp {obj=(icObj cat)} $ icMICS cat
 -----------------
 
 public export
-record IntBundleObj {0 c : Type} (0 mor : IntMorSig c) where
-  constructor IBO
-  iboDom : c
-  iboCod : c
-  iboMor : mor iboDom iboCod
+record IntBundle {0 c : Type} (0 mor : IntMorSig c) where
+  constructor IBundle
+  ibDom : c
+  ibCod : c
+  ibMor : mor ibDom ibCod
 
 ------------------
 ------------------
