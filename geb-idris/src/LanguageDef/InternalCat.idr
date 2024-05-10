@@ -955,6 +955,10 @@ OpSliceCat : Type -> IntCatSig
 OpSliceCat c = IntOpCat (SliceCat c)
 
 ------------------------
+---- (Co)presheaves ----
+------------------------
+
+------------------------
 ------------------------
 ---- Two-categories ----
 ------------------------
