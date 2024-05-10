@@ -1082,11 +1082,17 @@ CopreCatElemObj : {c : Type} -> {mor : IntMorSig c} ->
 CopreCatElemObj {c} {mor} = CopreSigCatElemObj {c} . icprOmap
 
 public export
-data CopreCatElemMor : {c : Type} -> {mor : IntMorSig c} ->
-    {p : IntCopreshfObj {c} mor} -> IntMorSig (CopreCatElemObj {c} p) where
-  CElMor : {c : Type} -> {mor : IntMorSig c} -> {p : IntCopreshfObj {c} mor} ->
-    {x : c} -> (ex : icprOmap p x) -> {y : c} -> (mxy : mor x y) ->
-    CopreCatElemMor {c} {p} (x ** ex) (y ** icprFmap p x y mxy ex)
+record CopreCatElemMor {c : Type} {mor : IntMorSig c}
+    {p : IntCopreshfObj {c} mor} (dom, cod : CopreCatElemObj {c} p) where
+  constructor CElMor
+  cemMor : mor (fst dom) (fst cod)
+  cemEq : FunExt -> icprFmap p (fst dom) (fst cod) cemMor (snd dom) = snd cod
+
+public export
+CElMorC : {c : Type} -> {mor : IntMorSig c} -> {p : IntCopreshfObj {c} mor} ->
+  {x : c} -> (ex : icprOmap p x) -> {y : c} -> (mxy : mor x y) ->
+  CopreCatElemMor {c} {p} (x ** ex) (y ** icprFmap p x y mxy ex)
+CElMorC {c} {mor} {p} {x} ex {y} mxy = CElMor mxy $ \_ => Refl
 
 ------------------------
 ------------------------
