@@ -986,14 +986,14 @@ IntPreshfSig = IntCopreshfSig
 -- morphisms are included in `mor`.  (The signature of the object map is
 -- simply `c -> Type`.)
 public export
-0 IntCopreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
+0 IntCopreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
   (objmap : IntCopreshfSig c) -> Type
 IntCopreshfMapSig c mor objmap =
   (x, y : c) -> mor x y -> objmap x -> objmap y
 
 -- As `IntCopreshfMapSig`, but for a (contravariant) presheaf.
 public export
-0 IntPreshfMapSig : (c : Type) -> (mor : IntDifunctorSig c) ->
+0 IntPreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
   (objmap : IntPreshfSig c) -> Type
 IntPreshfMapSig c mor = IntCopreshfMapSig c (IntOpCatMor c mor)
 
@@ -1010,7 +1010,7 @@ IntPreshfNTSig = IntCopreshfNTSig
 -- The naturality condition of a natural transformation between copresheaves.
 public export
 0 IntCopreshfNTNaturality :
-  (c : Type) -> (cmor : IntDifunctorSig c) ->
+  (c : Type) -> (cmor : IntMorSig c) ->
   (0 pobj, qobj : IntCopreshfSig c) ->
   IntCopreshfMapSig c cmor pobj -> IntCopreshfMapSig c cmor qobj ->
   IntCopreshfNTSig c pobj qobj -> Type
@@ -1023,7 +1023,7 @@ IntCopreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
 -- The naturality condition of a natural transformation between presheaves.
 public export
 0 IntPreshfNTNaturality :
-  (c : Type) -> (cmor : IntDifunctorSig c) ->
+  (c : Type) -> (cmor : IntMorSig c) ->
   (0 pobj, qobj : IntPreshfSig c) ->
   IntPreshfMapSig c cmor pobj -> IntPreshfMapSig c cmor qobj ->
   IntPreshfNTSig c pobj qobj -> Type
@@ -1035,13 +1035,13 @@ IntPreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
 
 -- The object-map component of the (contravariant) Yoneda embedding of
 -- `op(c)` into the category of the (covariant) copresheaves on `c`.
-IntCopreshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntCopreshfYonedaEmbedObj : (0 c : Type) -> (mor : IntMorSig c) ->
   c -> (IntCopreshfSig c)
 IntCopreshfYonedaEmbedObj c mor = mor
 
 -- The object-map component of the (covariant) Yoneda embedding of
 -- `c` into the category of the (contravariant) presheaves on `c`.
-IntPreshfYonedaEmbedObj : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntPreshfYonedaEmbedObj : (0 c : Type) -> (mor : IntMorSig c) ->
   c -> (IntPreshfSig c)
 IntPreshfYonedaEmbedObj c mor = flip mor
 
@@ -1049,7 +1049,7 @@ IntPreshfYonedaEmbedObj c mor = flip mor
 -- an object of `op(c)` into the category of the (covariant) copresheaves on `c`
 -- (since the embedding of that object is a functor, it has a morphism-map
 -- component as well as an object-map component).
-IntCopreshfYonedaEmbedObjFMap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntCopreshfYonedaEmbedObjFMap : (0 c : Type) -> (mor : IntMorSig c) ->
   (comp : IntCompSig c mor) ->
   (a : c) -> IntCopreshfMapSig c mor (IntCopreshfYonedaEmbedObj c mor a)
 IntCopreshfYonedaEmbedObjFMap c mor comp a x y = comp a x y
@@ -1058,7 +1058,7 @@ IntCopreshfYonedaEmbedObjFMap c mor comp a x y = comp a x y
 -- an object of `c` into the category of the (contravariant) presheaves on `c`
 -- (since the embedding of that object is a functor, it has a morphism-map
 -- component as well as an object-map component).
-IntPreshfYonedaEmbedObjFMap : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntPreshfYonedaEmbedObjFMap : (0 c : Type) -> (mor : IntMorSig c) ->
   (comp : IntCompSig c mor) ->
   (a : c) -> IntPreshfMapSig c mor (IntPreshfYonedaEmbedObj c mor a)
 IntPreshfYonedaEmbedObjFMap c mor comp a x y = flip $ comp y x a
@@ -1066,7 +1066,7 @@ IntPreshfYonedaEmbedObjFMap c mor comp a x y = flip $ comp y x a
 -- The morphism-map component of the (contravariant) Yoneda embedding itself --
 -- that is, the embedding of a _morphism_ into the morphisms of the
 -- (covariant) copresheaves on `c`, which are natural transformations.
-IntCopreshfYonedaEmbedMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+IntCopreshfYonedaEmbedMor : (c : Type) -> (mor : IntMorSig c) ->
   (comp : IntCompSig c mor) ->
   (a, b : c) -> mor b a ->
   IntCopreshfNTSig c
@@ -1077,7 +1077,7 @@ IntCopreshfYonedaEmbedMor c mor comp a b mba x max = comp b a x max mba
 -- The morphism-map component of the (covariant) Yoneda embedding itself --
 -- that is, the embedding of a _morphism_ into the morphisms of the
 -- (contravariant) presheaves on `c`, which are natural transformations.
-IntPreshfYonedaEmbedMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+IntPreshfYonedaEmbedMor : (c : Type) -> (mor : IntMorSig c) ->
   (comp : IntCompSig c mor) ->
   (a, b : c) -> mor a b ->
   IntPreshfNTSig c
@@ -1088,7 +1088,7 @@ IntPreshfYonedaEmbedMor c mor comp a b mab x mxa = comp x a b mab mxa
 -- The inverse of the morphism-map component of the (contravariant) Yoneda
 -- embedding.  The existence of this inverse shows that the embedding
 -- is fully faithful.
-IntCopreshfYonedaEmbedMorInv : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntCopreshfYonedaEmbedMorInv : (0 c : Type) -> (mor : IntMorSig c) ->
   (cid : IntIdSig c mor) ->
   (a, b : c) ->
   IntCopreshfNTSig c
@@ -1100,7 +1100,7 @@ IntCopreshfYonedaEmbedMorInv c mor cid a b alpha = alpha a (cid a)
 -- The inverse of the morphism-map component of the (covariant) Yoneda
 -- embedding.  The existence of this inverse shows that the embedding
 -- is fully faithful.
-IntPreshfYonedaEmbedMorInv : (0 c : Type) -> (mor : IntDifunctorSig c) ->
+IntPreshfYonedaEmbedMorInv : (0 c : Type) -> (mor : IntMorSig c) ->
   (cid : IntIdSig c mor) ->
   (a, b : c) ->
   IntPreshfNTSig c
