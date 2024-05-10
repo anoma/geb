@@ -24,15 +24,15 @@ IntEFamObj : Type -> Type
 IntEFamObj = IntArena
 
 public export
-IFEO : {0 c : Type} -> (idx : Type) -> (idx -> c) -> IntEFamObj c
+IFEO : {c : Type} -> (idx : Type) -> (idx -> c) -> IntEFamObj c
 IFEO {c} idx obj = (idx ** obj)
 
 public export
-ifeoIdx : {0 c : Type} -> IntEFamObj c -> Type
+ifeoIdx : {c : Type} -> IntEFamObj c -> Type
 ifeoIdx {c} = DPair.fst {a=Type} {p=(ContravarHomFunc c)}
 
 public export
-ifeoObj : {0 c : Type} -> (ef : IntEFamObj c) -> ifeoIdx {c} ef -> c
+ifeoObj : {c : Type} -> (ef : IntEFamObj c) -> ifeoIdx {c} ef -> c
 ifeoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 
 -------------------
@@ -42,12 +42,12 @@ ifeoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -------------------
 
 public export
-0 IntEFamIdxMor : {c : Type} -> IntDifunctorSig c ->
+IntEFamIdxMor : {c : Type} -> IntDifunctorSig c ->
   IntEFamObj c -> IntEFamObj c -> Type
 IntEFamIdxMor {c} mor dom cod = ifeoIdx dom -> ifeoIdx cod
 
 public export
-0 IntEFamObjMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+IntEFamObjMor : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntEFamObj c) -> IntEFamIdxMor {c} mor dom cod -> Type
 IntEFamObjMor {c} mor dom cod imor =
    (di : ifeoIdx dom) -> mor (ifeoObj dom di) (ifeoObj cod $ imor di)
@@ -58,7 +58,7 @@ IntEFamObjMor {c} mor dom cod imor =
 -- from them to `Type`, rather than to `Type -> Type`).
 
 public export
-0 IntEFamMor : {c : Type} -> IntDifunctorSig c ->
+IntEFamMor : {c : Type} -> IntDifunctorSig c ->
   IntEFamObj c -> IntEFamObj c -> Type
 IntEFamMor {c} mor dom cod =
   Sigma {a=(IntEFamIdxMor {c} mor dom cod)} $ IntEFamObjMor {c} mor dom cod
@@ -68,7 +68,7 @@ IntDirichCatObj : Type -> Type
 IntDirichCatObj = IntArena
 
 public export
-0 IntDirichCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
+IntDirichCatMor : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntDifunctorSig (IntDirichCatObj c)
 IntDirichCatMor c = IntEFamMor {c}
 
@@ -95,13 +95,13 @@ ifemOnObj = DPair.snd
 
 public export
 ifemId : {c : Type} -> (mor : IntDifunctorSig c) -> (cid : IntIdSig c mor) ->
-  (0 obj : IntEFamObj c) -> IntEFamMor mor obj obj
+  (obj : IntEFamObj c) -> IntEFamMor mor obj obj
 ifemId {c} mor cid (pos ** dir) = (id ** \ep => cid $ dir ep)
 
 public export
-ifemComp : {0 c : Type} ->
+ifemComp : {c : Type} ->
   (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
-  {0 x, y, z : IntEFamObj c} ->
+  {x, y, z : IntEFamObj c} ->
   IntEFamMor mor y z ->
   IntEFamMor mor x y ->
   IntEFamMor mor x z
@@ -164,7 +164,7 @@ IntElemEFamFMap {c} {d} cmor dmor f fm g gm x y mxy =
 -- form they are precisely the Dirichlet functors.
 
 public export
-0 IntDNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
+IntDNTar : (c : Type) -> (mor : IntDifunctorSig c) ->
   IntArena c -> IntArena c -> Type
 IntDNTar c = IntEFamMor {c}
 
@@ -241,15 +241,15 @@ MLEFamObj : Type
 MLEFamObj = IntEFamObj Type
 
 public export
-0 MLEFamMor : MLEFamObj -> MLEFamObj -> Type
+MLEFamMor : MLEFamObj -> MLEFamObj -> Type
 MLEFamMor = IntEFamMor $ HomProf
 
 public export
-0 mlfmId : (0 x : MLEFamObj) -> MLEFamMor x x
+mlfmId : (x : MLEFamObj) -> MLEFamMor x x
 mlfmId = ifemId HomProf typeId
 
 public export
-0 mlfmComp : {x, y, z : MLEFamObj} ->
+mlfmComp : {x, y, z : MLEFamObj} ->
   MLEFamMor y z -> MLEFamMor x y -> MLEFamMor x z
 mlfmComp = ifemComp HomProf (\_, _, _ => (.))
 
@@ -267,7 +267,7 @@ InterpMLEFamObj : MLEFamObj -> Type
 InterpMLEFamObj ifuo = Sigma {a=(fst ifuo)} $ snd ifuo
 
 export
-InterpMLEFamMorph : {0 x, y : MLEFamObj} ->
+InterpMLEFamMorph : {x, y : MLEFamObj} ->
   MLEFamMor x y -> InterpMLEFamObj x -> InterpMLEFamObj y
 InterpMLEFamMorph {x=(xpos ** xdir)} {y=(ypos ** ydir)} (onpos ** ondir) =
   dpBimap onpos ondir
@@ -287,16 +287,16 @@ SliceEFamObj : Type -> Type
 SliceEFamObj = IntEFamObj . SliceObj
 
 public export
-0 SliceEFamMor : {c : Type} -> SliceEFamObj c -> SliceEFamObj c -> Type
+SliceEFamMor : {c : Type} -> SliceEFamObj c -> SliceEFamObj c -> Type
 SliceEFamMor {c} = IntEFamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
-0 slefmId : {c : Type} ->
-  (0 x : SliceEFamObj c) -> SliceEFamMor x x
+slefmId : {c : Type} ->
+  (x : SliceEFamObj c) -> SliceEFamMor x x
 slefmId {c} = ifemId {c=(SliceObj c)} (SliceMorphism {a=c}) (SliceId c)
 
 public export
-0 slefmComp : {c : Type} -> {0 x, y, z : SliceEFamObj c} ->
+slefmComp : {c : Type} -> {x, y, z : SliceEFamObj c} ->
   SliceEFamMor y z -> SliceEFamMor x y -> SliceEFamMor x z
 slefmComp {c} = ifemComp (SliceMor c) $ \x, y, z => SliceComp c x y z
 
@@ -308,7 +308,7 @@ InterpSLEFamObj : {c : Type} -> SliceEFamObj c -> SliceObj c
 InterpSLEFamObj {c} (xpos ** xdir) = Sigma {a=xpos} . flip xdir
 
 export
-InterpSLEFamMor : {c : Type} -> {0 x, y : SliceEFamObj c} ->
+InterpSLEFamMor : {c : Type} -> {x, y : SliceEFamObj c} ->
   SliceEFamMor {c} x y ->
   SliceMorphism {a=c} (InterpSLEFamObj x) (InterpSLEFamObj y)
 InterpSLEFamMor {c} {x=(xpos ** xdir)} {y=(ypos ** ydir)} (onpos ** ondir) ec =
@@ -393,7 +393,7 @@ MLDirichCatObj : Type
 MLDirichCatObj = IntDirichCatObj Type
 
 public export
-0 MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
+MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
 MLDirichCatMor = IntDirichCatMor Type HomProf
 
 public export
@@ -401,6 +401,6 @@ MLDirichCatElemObj : MLDirichCatObj -> Type
 MLDirichCatElemObj = DirichCatElemObj Type HomProf
 
 public export
-0 MLDirichCatElemMor : (ar : MLDirichCatObj) ->
+MLDirichCatElemMor : (ar : MLDirichCatObj) ->
   MLDirichCatElemObj ar -> MLDirichCatElemObj ar -> Type
 MLDirichCatElemMor = DirichCatElemMor Type HomProf typeComp
