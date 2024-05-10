@@ -8,7 +8,7 @@ import public LanguageDef.IntEFamCat
 
 -----------------
 -----------------
----- Objects ----
+---- Bundles ----
 -----------------
 -----------------
 
