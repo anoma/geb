@@ -16,7 +16,7 @@ modules =
     , LanguageDef.InternalHigherCat
     , LanguageDef.InternalProfunctor
     , LanguageDef.IntArena
-    , LanguageDef.IntBundleCat
+    , LanguageDef.IntTwistedArrowCat
     , LanguageDef.IntUFamCat
     , LanguageDef.IntEFamCat
     , LanguageDef.IntParamCat
@@ -56,7 +56,7 @@ modules =
     , LanguageDef.Embedded
     , LanguageDef.FullLanguageDef
     , LanguageDef.Test.IntArenaTest
-    , LanguageDef.Test.IntBundleCatTest
+    , LanguageDef.Test.IntTwistedArrowCatTest
     , LanguageDef.Test.IntUFamCatTest
     , LanguageDef.Test.IntEFamCatTest
     , LanguageDef.Test.IntParamCatTest

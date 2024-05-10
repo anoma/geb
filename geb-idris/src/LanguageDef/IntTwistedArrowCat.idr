@@ -1,4 +1,4 @@
-module LanguageDef.IntBundleCat
+module LanguageDef.IntTwistedArrowCat
 
 import Library.IdrisUtils
 import Library.IdrisCategories

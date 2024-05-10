@@ -5,7 +5,7 @@ import Library.Test.IdrisUtilsTest
 import Library.Test.IdrisCategoriesTest
 import Library.Test.IdrisAlgebraTest
 import Library.Test.CategoryTheoryTest
-import LanguageDef.Test.IntBundleCatTest
+import LanguageDef.Test.IntTwistedArrowCatTest
 import LanguageDef.Test.IntUFamCatTest
 import LanguageDef.Test.IntEFamCatTest
 import LanguageDef.Test.IntParamCatTest
@@ -96,7 +96,7 @@ totalTests = do
   LanguageDef.Test.InternalHigherCatTest.internalHigherCatTest
   LanguageDef.Test.SlicePolyCatTest.slicePolyCatTest
   LanguageDef.Test.MLBundleCatTest.mlBundleCatTest
-  LanguageDef.Test.IntBundleCatTest.intBundleCatTest
+  LanguageDef.Test.IntTwistedArrowCatTest.intTwistedArrowCatTest
   LanguageDef.Test.IntUFamCatTest.intUFamCatTest
   LanguageDef.Test.IntEFamCatTest.intEFamCatTest
   LanguageDef.Test.IntParamCatTest.intParamCatTest
