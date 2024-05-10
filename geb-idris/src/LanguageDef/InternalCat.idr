@@ -1068,6 +1068,26 @@ IntPreshfCat {c} mor =
     (IntPreshfId {c} {mor})
     (IntPreshfComp {c} {mor})
 
+--------------------------------
+---- Categories of elements ----
+--------------------------------
+
+public export
+CopreSigCatElemObj : {c : Type} -> IntCopreshfSig c -> Type
+CopreSigCatElemObj {c} = Sigma {a=c}
+
+public export
+CopreCatElemObj : {c : Type} -> {mor : IntMorSig c} ->
+  IntCopreshfObj {c} mor -> Type
+CopreCatElemObj {c} {mor} = CopreSigCatElemObj {c} . icprOmap
+
+public export
+data CopreCatElemMor : {c : Type} -> {mor : IntMorSig c} ->
+    {p : IntCopreshfObj {c} mor} -> IntMorSig (CopreCatElemObj {c} p) where
+  CElMor : {c : Type} -> {mor : IntMorSig c} -> {p : IntCopreshfObj {c} mor} ->
+    {x : c} -> (ex : icprOmap p x) -> {y : c} -> (mxy : mor x y) ->
+    CopreCatElemMor {c} {p} (x ** ex) (y ** icprFmap p x y mxy ex)
+
 ------------------------
 ------------------------
 ---- Two-categories ----
