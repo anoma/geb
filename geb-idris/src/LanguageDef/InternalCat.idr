@@ -958,6 +958,48 @@ OpSliceCat c = IntOpCat (SliceCat c)
 ---- (Co)presheaves ----
 ------------------------
 
+-- This is the signature of the object-map component of a (covariant)
+-- copresheaf on an internal category.
+public export
+IntCopreshfSig : Type -> Type
+IntCopreshfSig = SliceObj
+
+-- This is the signature of the object-map component of a (contravariant)
+-- presheaf on an internal category.
+public export
+IntPreshfSig : Type -> Type
+IntPreshfSig = IntCopreshfSig
+
+-- Suppose that `c` is a type of objects of a category internal to `Type`,
+-- and `mor` is a type dependent on pairs of terms of `c` (we could also
+-- express it dually as a `Type` together with morphisms `dom` and `cod` to
+-- `c`), which we interpret as _some_ morphisms of the category but not
+-- necessarily all.  Then this is the signature of the morphism-map component
+-- of a (covariant) copresheaf on the category, as specified by whichever
+-- morphisms are included in `mor`.  (The signature of the object map is
+-- simply `c -> Type`.)
+public export
+0 IntCopreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
+  (objmap : IntCopreshfSig c) -> Type
+IntCopreshfMapSig c mor objmap =
+  (x, y : c) -> mor x y -> objmap x -> objmap y
+
+-- As `IntCopreshfMapSig`, but for a (contravariant) presheaf.
+public export
+0 IntPreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
+  (objmap : IntPreshfSig c) -> Type
+IntPreshfMapSig c mor = IntCopreshfMapSig c (IntOpCatMor c mor)
+
+-- The signature of a natural transformation between copresheaves.
+public export
+0 IntCopreshfNTSig : (c : Type) -> (pobj, qobj : IntCopreshfSig c) -> Type
+IntCopreshfNTSig c pobj qobj = (x : c) -> pobj x -> qobj x
+
+-- The signature of a natural transformation between presheaves.
+public export
+0 IntPreshfNTSig : (c : Type) -> (pobj, qobj : IntPreshfSig c) -> Type
+IntPreshfNTSig = IntCopreshfNTSig
+
 ------------------------
 ------------------------
 ---- Two-categories ----
