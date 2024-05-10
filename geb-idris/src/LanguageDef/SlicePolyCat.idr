@@ -1671,7 +1671,7 @@ SPFDmultiFamL {dom} {cod} spfd =
     (SPFDmultiIdx spfd) (SPFDmultiL spfd)
 
 export
-SPFDmultiFamLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+0 SPFDmultiFamLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SliceObj cod) ->
   SliceMorphism {a=cod} x y ->
   SPFDmultiFamLCatMor {lcat=dom}
@@ -1682,7 +1682,7 @@ SPFDmultiFamLmap {dom} {cod} spfd =
     (SliceMorphism {a=cod})
     (SliceMorphism {a=dom})
     (SPFDmultiIdx spfd)
-    (SPFDmultiIdxContramap spfd)
+    (\x, y => SPFDmultiIdxContramap spfd x y)
     (SPFDmultiL spfd)
     (SPFDmultiLmapEl spfd)
 
