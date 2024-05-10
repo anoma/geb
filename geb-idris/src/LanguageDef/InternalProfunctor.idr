@@ -1078,7 +1078,7 @@ IntPreshfYonedaEmbedMorInv c mor cid a b alpha = alpha a (cid a)
 ---------------------------------------------------------------
 
 public export
-DiscretePreshfSig : Type -> Type
+0 DiscretePreshfSig : Type -> Type
 DiscretePreshfSig obj = IntPreshfSig $ DiscreteCatObj obj
 
 public export
@@ -1141,7 +1141,7 @@ SlToDiscPreNTnaturality {obj} x y f a a (DCid a) ex = Refl
 -----------------------------------------------------------
 
 public export
-TerminalPreshfSig : Type
+0 TerminalPreshfSig : Type
 TerminalPreshfSig = IntPreshfSig TerminalCatObj
 
 public export
