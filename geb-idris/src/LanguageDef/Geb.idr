@@ -992,7 +992,7 @@ MLPolyDifunctorSig = IntDifunctorSig MLPolyFObj
 MLPolyFMor : MLPolyDifunctorSig
 MLPolyFMor = PolyNatTrans
 
-PFCopreshfSig : Type
+0 PFCopreshfSig : Type
 PFCopreshfSig = IntCopreshfSig PolyFunc
 
 0 PFCopreshfMapSig : PFCopreshfSig -> Type

@@ -90,8 +90,12 @@ public export
 IntFunctorComp c d e = (.)
 
 public export
+0 IntOMapSig : (0 c, d : Type) -> Type
+IntOMapSig c d = HomProf c d
+
+public export
 0 IntFMapSig : {0 c, d : Type} -> (0 _ : IntMorSig c) -> (0 _ : IntMorSig d) ->
-  (c -> d) -> Type
+  IntOMapSig c d -> Type
 IntFMapSig {c} {d} cmor dmor omap =
   (0 x, y : c) -> cmor x y -> dmor (omap x) (omap y)
 
@@ -959,11 +963,11 @@ OpSliceCat c = IntOpCat (SliceCat c)
 ------------------------
 
 public export
-IntCopreshfSig : Type -> Type
-IntCopreshfSig = SliceObj
+0 IntCopreshfSig : Type -> Type
+IntCopreshfSig c = IntOMapSig c TypeObj
 
 public export
-IntPreshfSig : Type -> Type
+0 IntPreshfSig : Type -> Type
 IntPreshfSig = IntCopreshfSig
 
 public export
