@@ -1061,7 +1061,7 @@ record IntCopreshfObj {c : Type}
 
 public export
 record IntCopreshfMor {c : Type} {mor : IntMorSig c}
-    (cid : IntIdSig c mor) (comp : IntCompSig c mor)
+    {cid : IntIdSig c mor} {comp : IntCompSig c mor}
     (p, q : IntCopreshfObj {c} mor cid comp) where
   constructor ICopreM
   icprNT : IntCopreshfNTSig c (icprOmap p) (icprOmap q)
@@ -1071,19 +1071,19 @@ record IntCopreshfMor {c : Type} {mor : IntMorSig c}
 
 public export
 IntCopreshfId : {c : Type} ->
-  {mor : IntMorSig c} -> (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   IntIdSig
     (IntCopreshfObj {c} mor cid comp)
-    (IntCopreshfMor {c} {mor} cid comp)
-IntCopreshfId {c} {mor} cid comp x = ICopreM (\_ => id) (\_, _, _, _ => Refl)
+    (IntCopreshfMor {c} {mor} {cid} {comp})
+IntCopreshfId {c} {mor} {cid} {comp} x = ICopreM (\_ => id) (\_, _, _, _ => Refl)
 
 public export
 IntCopreshfComp : {c : Type} ->
-  {mor : IntMorSig c} -> (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   IntCompSig
     (IntCopreshfObj {c} mor cid comp)
-    (IntCopreshfMor {c} {mor} cid comp)
-IntCopreshfComp {c} {mor} cid comp p q r m' m =
+    (IntCopreshfMor {c} {mor} {cid} {comp})
+IntCopreshfComp {c} {mor} {cid} {comp} p q r m' m =
   ICopreM
     (SliceComp c (icprOmap p) (icprOmap q) (icprOmap r) (icprNT m') (icprNT m))
     (\x, y, f, el =>
@@ -1098,10 +1098,10 @@ IntCopreshfCat {c} mor cid comp =
   ICat
     (IntCopreshfObj {c} mor cid comp)
   $ MICS
-    (IntCopreshfMor {c} {mor} cid comp)
+    (IntCopreshfMor {c} {mor} {cid} {comp})
   $ ICS
-    (IntCopreshfId {c} {mor} cid comp)
-    (IntCopreshfComp {c} {mor} cid comp)
+    (IntCopreshfId {c} {mor} {cid} {comp})
+    (IntCopreshfComp {c} {mor} {cid} {comp})
 
 public export
 IntPreshfObj : {c : Type} -> (mor : IntMorSig c) ->
