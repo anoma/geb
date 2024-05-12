@@ -812,6 +812,10 @@ IntOpProdCatObj : Type -> Type -> Type
 IntOpProdCatObj d c = IntProdCatObj (IntOpCatObj d) (IntOpCatObj c)
 
 public export
+IntEndoOpProdCatObj : Type -> Type
+IntEndoOpProdCatObj c = IntOpProdCatObj c c
+
+public export
 IntOpProdCatMor : (d, c : Type) ->
   IntMorSig d -> IntMorSig c -> IntMorSig (d, c)
 IntOpProdCatMor d c dmor cmor = IntProdCatMor d c (IntOpCatMor d dmor) cmor
@@ -829,6 +833,11 @@ IntOpProdCatId : (d, c : Type) ->
 IntOpProdCatId d c dmor cmor = IntProdCatId d c (IntOpCatMor d dmor) cmor
 
 public export
+IntEndoOpProdCatId : (c : Type) -> (cmor : IntMorSig c) ->
+  IntIdSig c cmor -> IntIdSig (c, c) (IntEndoOpProdCatMor c cmor)
+IntEndoOpProdCatId c cmor cid = IntOpProdCatId c c cmor cmor cid cid
+
+public export
 IntOpProdCatComp : (d, c : Type) ->
   (dmor : IntMorSig d) -> (cmor : IntMorSig c) ->
   IntCompSig d dmor -> IntCompSig c cmor ->
@@ -837,8 +846,17 @@ IntOpProdCatComp d c dmor cmor dcomp ccomp =
   IntProdCatComp d c (IntOpCatMor d dmor) cmor (IntOpCatComp d dmor dcomp) ccomp
 
 public export
+IntEndoOpProdCatComp : (c : Type) -> (cmor : IntMorSig c) ->
+  IntCompSig c cmor -> IntCompSig (c, c) (IntEndoOpProdCatMor c cmor)
+IntEndoOpProdCatComp c cmor cid = IntOpProdCatComp c c cmor cmor cid cid
+
+public export
 IntOpProdCat : IntCatSig -> IntCatSig -> IntCatSig
 IntOpProdCat d c = IntProdCat (IntOpCat d) c
+
+public export
+IntEndoOpProdCat : IntCatSig -> IntCatSig
+IntEndoOpProdCat c = IntOpProdCat c c
 
 ---------------------------------
 ---------------------------------
