@@ -1241,6 +1241,19 @@ CopreCatElemComp {c} {mor} cid comp {p=p@(ICopre omap fmap fid fcomp)}
         (sym $ icprFcomp p x y z gm fm ex)
       $ trans (rewrite feq fext in Refl) (geq fext))
 
+public export
+IntCopreCatElem : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  IntCopreshfObj {c} mor cid comp -> IntCatSig
+IntCopreCatElem {c} {mor} {cid} {comp} p =
+  ICat
+    (CopreCatElemObj {c} {mor} p)
+  $ MICS
+    (CopreCatElemMor {c} {mor} {p})
+  $ ICS
+    (CopreCatElemId {c} {mor} {cid} {comp} {p})
+    (CopreCatElemComp {c} {mor} {cid} {comp} {p})
+
 ------------------------
 ------------------------
 ---- Two-categories ----
