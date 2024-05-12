@@ -1060,11 +1060,14 @@ record IntCopreshfObj {c : Type}
   icprFcomp : IntCopreshfMapComp {c} {mor} comp {objmap=icprOmap} icprFmap
 
 public export
-IntCopreshfMor : {c : Type} ->
-  {mor : IntMorSig c} -> (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
-  IntMorSig (IntCopreshfObj {c} mor cid comp)
-IntCopreshfMor {c} {mor} cid comp p q =
-  IntCopreshfNTSig c (icprOmap p) (icprOmap q)
+record IntCopreshfMor {c : Type} {mor : IntMorSig c}
+    (cid : IntIdSig c mor) (comp : IntCompSig c mor)
+    (p, q : IntCopreshfObj {c} mor cid comp) where
+  constructor ICopreM
+  icprNT : IntCopreshfNTSig c (icprOmap p) (icprOmap q)
+  icprNatural :
+    IntCopreshfNTNaturality c mor (icprOmap p) (icprOmap q)
+      (icprFmap p) (icprFmap q) icprNT
 
 public export
 IntCopreshfId : {c : Type} ->
@@ -1072,7 +1075,7 @@ IntCopreshfId : {c : Type} ->
   IntIdSig
     (IntCopreshfObj {c} mor cid comp)
     (IntCopreshfMor {c} {mor} cid comp)
-IntCopreshfId {c} {mor} cid comp = \_, _ => id
+IntCopreshfId {c} {mor} cid comp x = ICopreM (\_ => id) (\_, _, _, _ => Refl)
 
 public export
 IntCopreshfComp : {c : Type} ->
@@ -1080,8 +1083,13 @@ IntCopreshfComp : {c : Type} ->
   IntCompSig
     (IntCopreshfObj {c} mor cid comp)
     (IntCopreshfMor {c} {mor} cid comp)
-IntCopreshfComp {c} {mor} cid comp x y z =
-  SliceComp c (icprOmap x) (icprOmap y) (icprOmap z)
+IntCopreshfComp {c} {mor} cid comp p q r m' m =
+  ICopreM
+    (SliceComp c (icprOmap p) (icprOmap q) (icprOmap r) (icprNT m') (icprNT m))
+    (\x, y, f, el =>
+      trans
+        (icprNatural m' x y f (icprNT m x el))
+        (cong (icprNT m' y) $ icprNatural m x y f el))
 
 public export
 IntCopreshfCat : {c : Type} -> (mor : IntMorSig c) ->
@@ -1168,13 +1176,18 @@ iprFcomp {c} {mor} {cid} {comp} =
     {comp=(IntOpCatComp c mor comp)}
 
 public export
-IntPreshfMor : {c : Type} ->
-  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
-  IntMorSig (IntPreshfObj {c} mor cid comp)
-IntPreshfMor {c} {mor} {cid} {comp} p q =
-  IntPreshfNTSig c
-    (iprOmap {c} {mor} {cid} {comp} p)
-    (iprOmap {c} {mor} {cid} {comp} q)
+record IntPreshfMor {c : Type} {mor : IntMorSig c}
+    (cid : IntIdSig c mor) (comp : IntCompSig c mor)
+    (p, q : IntPreshfObj {c} mor cid comp) where
+  constructor IPreM
+  iprNT :
+    IntPreshfNTSig c
+      (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} q)
+  iprNatural :
+    IntPreshfNTNaturality c mor
+      (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} q)
+      (iprFmap {c} {mor} {cid} {comp} p) (iprFmap {c} {mor} {cid} {comp} q)
+      iprNT
 
 public export
 IntPreshfId : {c : Type} ->
@@ -1182,12 +1195,8 @@ IntPreshfId : {c : Type} ->
   IntIdSig
     (IntPreshfObj {c} mor cid comp)
     (IntPreshfMor {c} {mor} {cid} {comp})
-IntPreshfId {c} {mor} {cid} {comp} =
-  IntCopreshfId
-    {c=(IntOpCatObj c)}
-    {mor=(IntOpCatMor c mor)}
-    {cid=(IntOpCatId c mor cid)}
-    {comp=(IntOpCatComp c mor comp)}
+IntPreshfId {c} {mor} {cid} {comp} p =
+  IPreM (\_ => id) (\_, _, _, _ => Refl)
 
 public export
 IntPreshfComp : {c : Type} ->
@@ -1195,12 +1204,13 @@ IntPreshfComp : {c : Type} ->
   IntCompSig
     (IntPreshfObj {c} mor cid comp)
     (IntPreshfMor {c} {mor} {cid} {comp})
-IntPreshfComp {c} {mor} {cid} {comp} =
-  IntCopreshfComp
-    {c=(IntOpCatObj c)}
-    {mor=(IntOpCatMor c mor)}
-    {cid=(IntOpCatId c mor cid)}
-    {comp=(IntOpCatComp c mor comp)}
+IntPreshfComp {c} {mor} {cid} {comp} p q r m' m =
+  IPreM
+    (SliceComp c (iprOmap p) (iprOmap q) (iprOmap r) (iprNT m') (iprNT m))
+    (\x, y, f, el =>
+      trans
+        (iprNatural m' x y f (iprNT m x el))
+        (cong (iprNT m' y) $ iprNatural m x y f el))
 
 public export
 IntPreshfCat : {c : Type} -> (mor : IntMorSig c) ->
