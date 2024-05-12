@@ -1232,14 +1232,14 @@ CopreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
   {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   {p : IntCopreshfObj {c} mor cid comp} ->
   IntCompSig (CopreCatElemObj {c} {mor} p) (CopreCatElemMor {c} {mor} {p})
-CopreCatElemComp {c} {mor} {cid} {comp} {p=p@(ICopre omap fmap fid fcomp)}
-  (x ** ex) (y ** ey) (z ** ez) myz@(CElMor gm geq) mxy@(CElMor fm feq) =
-    CElMor
-      (comp x y z gm fm)
-      (\fext =>
-       trans
-        (sym $ icprFcomp p x y z gm fm ex)
-      $ trans (rewrite feq fext in Refl) (geq fext))
+CopreCatElemComp {c} {mor} {cid} {comp} {p} x y z myz mxy =
+  CElMor
+    (comp (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy))
+    (\fext =>
+     trans
+      (sym $
+        icprFcomp p (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy) (snd x))
+    $ trans (rewrite cemEq mxy fext in Refl) (cemEq myz fext))
 
 public export
 IntCopreCatElem : {c : Type} -> {mor : IntMorSig c} ->
