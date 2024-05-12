@@ -1310,16 +1310,67 @@ PreCatElemObj {c} {mor} {cid} {comp} =
     {comp=(IntOpCatComp c mor comp)}
 
 public export
-record PreCatElemMor {c : Type}
-    {mor : IntMorSig c} {cid : IntIdSig c mor} {comp : IntCompSig c mor}
-    {p : IntPreshfObj {c} mor cid comp}
-    (dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p)
-    where
-  constructor PElMor
-  pemMor : mor (fst dom) (fst cod)
-  pemEq : FunExt ->
-    iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom) pemMor (snd cod) =
-      snd dom
+PreCatElemMor : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntPreshfObj {c} mor cid comp} ->
+  (dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p) -> Type
+PreCatElemMor {c} {mor} {cid} {comp} {p} =
+  flip $ CopreCatElemMor
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+    {p}
+
+public export
+PElMor : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntPreshfObj {c} mor cid comp} ->
+  {dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p} ->
+  (f : mor (fst dom) (fst cod)) ->
+  (FunExt ->
+    iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom) f (snd cod) = snd dom)
+  -> PreCatElemMor {c} {mor} {cid} {comp} {p} dom cod
+PElMor {c} {mor} {cid} {comp} {p} {dom} {cod} =
+  CElMor
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+    {p}
+
+public export
+pemMor : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntPreshfObj {c} mor cid comp} ->
+  {dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p} ->
+  PreCatElemMor {c} {mor} {cid} {comp} {p} dom cod ->
+  mor (fst dom) (fst cod)
+pemMor {c} {mor} {cid} {comp} {p} {dom} {cod} =
+  cemMor
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+    {p}
+
+public export
+pemEq : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntPreshfObj {c} mor cid comp} ->
+  {dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p} ->
+  (f : PreCatElemMor {c} {mor} {cid} {comp} {p} dom cod) ->
+  FunExt ->
+  iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom)
+    (pemMor {c} {mor} {cid} {comp} {p} {dom} {cod} f) (snd cod)
+  = snd dom
+pemEq {c} {mor} {cid} {comp} {p} {dom} {cod} =
+  cemEq
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+    {p}
 
 public export
 PElMorC : {c : Type} ->
@@ -1354,9 +1405,11 @@ PreCatElemComp {c} {mor} {cid} {comp} {p} x y z myz mxy =
     (comp (fst x) (fst y) (fst z) (pemMor myz) (pemMor mxy))
     (\fext =>
       trans
-        (rewrite sym (pemEq myz fext) in sym
-         (iprFcomp p (fst z) (fst y) (fst x) (pemMor mxy) (pemMor myz) (snd z)))
-      (pemEq mxy fext))
+        (trans
+         (sym $
+          iprFcomp p (fst z) (fst y) (fst x) (pemMor mxy) (pemMor myz) (snd z))
+          $ cong (iprFmap p (fst y) (fst x) (pemMor mxy)) $ pemEq myz fext)
+        (pemEq mxy fext))
 
 public export
 IntPreCatElem : {c : Type} -> {mor : IntMorSig c} ->
