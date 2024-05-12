@@ -1254,6 +1254,87 @@ IntCopreCatElem {c} {mor} {cid} {comp} p =
     (CopreCatElemId {c} {mor} {cid} {comp} {p})
     (CopreCatElemComp {c} {mor} {cid} {comp} {p})
 
+----------------------------------------------
+---- Contravariant categories of elements ----
+----------------------------------------------
+
+public export
+PreSigCatElemObj : {c : Type} -> IntPreshfSig c -> Type
+PreSigCatElemObj {c} = Sigma {a=c}
+
+public export
+PreCatElemObj : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  IntPreshfObj {c} mor cid comp -> Type
+PreCatElemObj {c} {mor} {cid} {comp} =
+  CopreCatElemObj
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+
+public export
+record PreCatElemMor {c : Type}
+    {mor : IntMorSig c} {cid : IntIdSig c mor} {comp : IntCompSig c mor}
+    {p : IntPreshfObj {c} mor cid comp}
+    (dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p)
+    where
+  constructor PElMor
+  pemMor : mor (fst dom) (fst cod)
+  pemEq : FunExt ->
+    iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom) pemMor (snd cod) =
+      snd dom
+
+public export
+PElMorC : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntPreshfObj {c} mor cid comp} ->
+  {y : c} -> (ey : iprOmap {c} {cid} {mor} {comp} p y) ->
+  {x : c} -> (mxy : mor x y) ->
+  PreCatElemMor {c} {mor} {cid} {comp} {p}
+    (x ** iprFmap {c} {cid} {mor} {comp} p y x mxy ey)
+    (y ** ey)
+PElMorC {c} {mor} {cid} {comp} {p} {y} ey {x} mxy = PElMor mxy $ \_ => Refl
+
+public export
+PreCatElemId : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntPreshfObj {c} mor cid comp} ->
+  IntIdSig
+    (PreCatElemObj {c} {mor} {cid} {comp} p)
+    (PreCatElemMor {c} {mor} {cid} {comp} {p})
+PreCatElemId {c} {mor} {cid} {comp} {p} ex =
+  PElMor (cid $ fst ex) $ \_ => iprFid p (fst ex) (snd ex)
+
+public export
+PreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntPreshfObj {c} mor cid comp} ->
+  IntCompSig
+    (PreCatElemObj {c} {mor} {cid} {comp} p)
+    (PreCatElemMor {c} {mor} {cid} {comp} {p})
+PreCatElemComp {c} {mor} {cid} {comp} {p} x y z myz mxy =
+  PElMor {c} {mor} {cid} {comp} {p}
+    (comp (fst x) (fst y) (fst z) (pemMor myz) (pemMor mxy))
+    (\fext =>
+      trans
+        (rewrite sym (pemEq myz fext) in sym
+         (iprFcomp p (fst z) (fst y) (fst x) (pemMor mxy) (pemMor myz) (snd z)))
+      (pemEq mxy fext))
+
+public export
+IntPreCatElem : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  IntPreshfObj {c} mor cid comp -> IntCatSig
+IntPreCatElem {c} {mor} {cid} {comp} p =
+  ICat
+    (PreCatElemObj {c} {mor} p)
+  $ MICS
+    (PreCatElemMor {c} {mor} {p})
+  $ ICS
+    (PreCatElemId {c} {mor} {cid} {comp} {p})
+    (PreCatElemComp {c} {mor} {cid} {comp} {p})
+
 ------------------------
 ------------------------
 ---- Two-categories ----
