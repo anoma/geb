@@ -1229,10 +1229,10 @@ CopreCatElemId {c} {mor} {cid} {comp} {p} ex =
 
 public export
 CopreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
-  (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   {p : IntCopreshfObj {c} mor cid comp} ->
   IntCompSig (CopreCatElemObj {c} {mor} p) (CopreCatElemMor {c} {mor} {p})
-CopreCatElemComp {c} {mor} cid comp {p=p@(ICopre omap fmap fid fcomp)}
+CopreCatElemComp {c} {mor} {cid} {comp} {p=p@(ICopre omap fmap fid fcomp)}
   (x ** ex) (y ** ey) (z ** ez) myz@(CElMor gm geq) mxy@(CElMor fm feq) =
     CElMor
       (comp x y z gm fm)
