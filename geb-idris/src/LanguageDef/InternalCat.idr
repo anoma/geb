@@ -1188,9 +1188,9 @@ IntPreshfCat {c} mor cid comp =
     (IntPreshfId {c} {mor} {cid} {comp})
     (IntPreshfComp {c} {mor} {cid} {comp})
 
---------------------------------
----- Categories of elements ----
---------------------------------
+------------------------------------------
+---- Covariant categories of elements ----
+------------------------------------------
 
 public export
 CopreSigCatElemObj : {c : Type} -> IntCopreshfSig c -> Type
