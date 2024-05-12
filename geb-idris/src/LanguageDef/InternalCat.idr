@@ -980,7 +980,18 @@ public export
   {c : Type} -> {mor : IntMorSig c} -> (cid : IntIdSig c mor) ->
   {objmap : IntCopreshfSig c} -> IntCopreshfMapSig c mor objmap -> Type
 IntCopreshfMapId {c} {mor} cid {objmap} fmap =
-  (x : c) -> ExtEq (fmap x x $ cid x) (id {a=(objmap x)})
+  (x : c) ->
+  ExtEq {a=(objmap x)} {b=(objmap x)} (fmap x x $ cid x) (id {a=(objmap x)})
+
+public export
+0 IntCopreshfMapComp :
+  {c : Type} -> {mor : IntMorSig c} -> (comp : IntCompSig c mor) ->
+  {objmap : IntCopreshfSig c} -> IntCopreshfMapSig c mor objmap -> Type
+IntCopreshfMapComp {c} {mor} comp {objmap} fmap =
+  (x, y, z : c) -> (myz : mor y z) -> (mxy : mor x y) ->
+    ExtEq {a=(objmap x)} {b=(objmap z)}
+      (fmap y z myz . fmap x y mxy)
+      (fmap x z $ comp x y z myz mxy)
 
 public export
 IntPreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
@@ -995,6 +1006,16 @@ IntPreshfMapId {c} {mor} cid {objmap} cfmap =
   (x : c) -> ExtEq (cfmap x x $ cid x) (id {a=(objmap x)})
 
 public export
+0 IntPreshfMapComp :
+  {c : Type} -> {mor : IntMorSig c} -> (comp : IntCompSig c mor) ->
+  {objmap : IntPreshfSig c} -> IntPreshfMapSig c mor objmap -> Type
+IntPreshfMapComp {c} {mor} comp {objmap} cfmap =
+  (x, y, z : c) -> (mzy : mor z y) -> (myx : mor y x) ->
+    ExtEq {a=(objmap x)} {b=(objmap z)}
+      (cfmap y z mzy . cfmap x y myx)
+      (cfmap x z $ comp z y x myx mzy)
+
+public export
 IntCopreshfNTSig : (c : Type) -> (pobj, qobj : IntCopreshfSig c) -> Type
 IntCopreshfNTSig c pobj qobj = SliceMor c pobj qobj
 
@@ -1003,111 +1024,169 @@ IntPreshfNTSig : (c : Type) -> (pobj, qobj : IntPreshfSig c) -> Type
 IntPreshfNTSig c = IntCopreshfNTSig (IntOpCatObj c)
 
 public export
-record IntCopreshfObj {c : Type} (mor : IntMorSig c) (cid : IntIdSig c mor)
+record IntCopreshfObj {c : Type}
+    (mor : IntMorSig c) (cid : IntIdSig c mor) (comp : IntCompSig c mor)
     where
   constructor ICopre
   icprOmap : IntCopreshfSig c
   icprFmap : IntCopreshfMapSig c mor icprOmap
   icprFid : IntCopreshfMapId {c} {mor} cid {objmap=icprOmap} icprFmap
+  icprFcomp : IntCopreshfMapComp {c} {mor} comp {objmap=icprOmap} icprFmap
 
 public export
-IntCopreshfMor : {c : Type} -> {mor : IntMorSig c} -> (cid : IntIdSig c mor) ->
-  IntMorSig (IntCopreshfObj {c} mor cid)
-IntCopreshfMor {c} {mor} cid p q = IntCopreshfNTSig c (icprOmap p) (icprOmap q)
+IntCopreshfMor : {c : Type} ->
+  {mor : IntMorSig c} -> (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  IntMorSig (IntCopreshfObj {c} mor cid comp)
+IntCopreshfMor {c} {mor} cid comp p q =
+  IntCopreshfNTSig c (icprOmap p) (icprOmap q)
 
 public export
-IntCopreshfId : {c : Type} -> {mor : IntMorSig c} -> (cid : IntIdSig c mor) ->
-  IntIdSig (IntCopreshfObj {c} mor cid) (IntCopreshfMor {c} {mor} cid)
-IntCopreshfId {c} {mor} cid = \_, _ => id
+IntCopreshfId : {c : Type} ->
+  {mor : IntMorSig c} -> (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  IntIdSig
+    (IntCopreshfObj {c} mor cid comp)
+    (IntCopreshfMor {c} {mor} cid comp)
+IntCopreshfId {c} {mor} cid comp = \_, _ => id
 
 public export
-IntCopreshfComp : {c : Type} -> {mor : IntMorSig c} -> (cid : IntIdSig c mor) ->
-  IntCompSig (IntCopreshfObj {c} mor cid) (IntCopreshfMor {c} {mor} cid)
-IntCopreshfComp {c} {mor} cid x y z =
+IntCopreshfComp : {c : Type} ->
+  {mor : IntMorSig c} -> (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  IntCompSig
+    (IntCopreshfObj {c} mor cid comp)
+    (IntCopreshfMor {c} {mor} cid comp)
+IntCopreshfComp {c} {mor} cid comp x y z =
   SliceComp c (icprOmap x) (icprOmap y) (icprOmap z)
 
 public export
 IntCopreshfCat : {c : Type} -> (mor : IntMorSig c) ->
-  IntIdSig c mor -> IntCatSig
-IntCopreshfCat {c} mor cid =
+  IntIdSig c mor -> IntCompSig c mor -> IntCatSig
+IntCopreshfCat {c} mor cid comp =
   ICat
-    (IntCopreshfObj {c} mor cid)
+    (IntCopreshfObj {c} mor cid comp)
   $ MICS
-    (IntCopreshfMor {c} {mor} cid)
+    (IntCopreshfMor {c} {mor} cid comp)
   $ ICS
-    (IntCopreshfId {c} {mor} cid)
-    (IntCopreshfComp {c} {mor} cid)
+    (IntCopreshfId {c} {mor} cid comp)
+    (IntCopreshfComp {c} {mor} cid comp)
 
 public export
-IntPreshfObj : {c : Type} -> (mor : IntMorSig c) -> IntIdSig c mor -> Type
-IntPreshfObj {c} mor cid =
-  IntCopreshfObj {c=(IntOpCatObj c)} (IntOpCatMor c mor) (IntOpCatId c mor cid)
+IntPreshfObj : {c : Type} -> (mor : IntMorSig c) ->
+  IntIdSig c mor -> IntCompSig c mor -> Type
+IntPreshfObj {c} mor cid comp =
+  IntCopreshfObj {c=(IntOpCatObj c)}
+    (IntOpCatMor c mor) (IntOpCatId c mor cid) (IntOpCatComp c mor comp)
 
 public export
-IPre : {c : Type} -> {mor : IntMorSig c} -> {cid : IntIdSig c mor} ->
+IPre : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   (omap : IntPreshfSig c) -> (cfmap : IntPreshfMapSig c mor omap) ->
   IntPreshfMapId {c} {mor} cid {objmap=omap} cfmap ->
-  IntPreshfObj {c} mor cid
-IPre {c} {mor} {cid} =
+  IntPreshfMapComp {c} {mor} comp {objmap=omap} cfmap ->
+  IntPreshfObj {c} mor cid comp
+IPre {c} {mor} {cid} {comp} =
   ICopre
     {c=(IntOpCatObj c)}
     {mor=(IntOpCatMor c mor)}
     {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
-iprOmap : {c : Type} -> {mor : IntMorSig c} -> {cid : IntIdSig c mor} ->
-  IntPreshfObj {c} mor cid -> IntPreshfSig c
-iprOmap {c} {mor} {cid} = icprOmap {c=(IntOpCatObj c)} {mor=(IntOpCatMor c mor)}
+iprOmap : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  IntPreshfObj {c} mor cid comp -> IntPreshfSig c
+iprOmap {c} {mor} {cid} {comp} =
+  icprOmap
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
-iprFmap : {c : Type} -> {mor : IntMorSig c} -> {cid : IntIdSig c mor} ->
-  (p : IntPreshfObj {c} mor cid) ->
-  IntPreshfMapSig c mor (iprOmap {c} {mor} p)
-iprFmap {c} {mor} {cid} = icprFmap {c=(IntOpCatObj c)} {mor=(IntOpCatMor c mor)}
+iprFmap : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p : IntPreshfObj {c} mor cid comp) ->
+  IntPreshfMapSig c mor (iprOmap {c} {mor} {cid} {comp} p)
+iprFmap {c} {mor} {cid} {comp} =
+  icprFmap
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
-iprFid : {c : Type} -> {mor : IntMorSig c} -> {cid : IntIdSig c mor} ->
-  (p : IntPreshfObj {c} mor cid) ->
-  IntPreshfMapId cid {objmap=(iprOmap {c} {mor} p)} (iprFmap {c} {mor} p)
-iprFid {c} {mor} {cid} =
+iprFid : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p : IntPreshfObj {c} mor cid comp) ->
+  IntPreshfMapId cid
+    {objmap=(iprOmap {c} {mor} {cid} {comp} p)}
+    (iprFmap {c} {mor} {cid} {comp} p)
+iprFid {c} {mor} {cid} {comp} =
   icprFid
     {c=(IntOpCatObj c)}
     {mor=(IntOpCatMor c mor)}
     {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
-IntPreshfMor : {c : Type} -> {mor : IntMorSig c} -> {cid : IntIdSig c mor} ->
-  IntMorSig (IntPreshfObj {c} mor cid)
-IntPreshfMor {c} {mor} {cid} p q = IntPreshfNTSig c (icprOmap p) (icprOmap q)
+iprFcomp : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p : IntPreshfObj {c} mor cid comp) ->
+  IntPreshfMapComp comp
+    {objmap=(iprOmap {c} {mor} {cid} {comp} p)}
+    (iprFmap {c} {mor} {cid} {comp} p)
+iprFcomp {c} {mor} {cid} {comp} =
+  icprFcomp
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
-IntPreshfId : {c : Type} -> {mor : IntMorSig c} -> {cid : IntIdSig c mor} ->
-  IntIdSig (IntPreshfObj {c} mor cid) (IntPreshfMor {c} {mor} {cid})
-IntPreshfId {c} {mor} {cid} =
+IntPreshfMor : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  IntMorSig (IntPreshfObj {c} mor cid comp)
+IntPreshfMor {c} {mor} {cid} {comp} p q =
+  IntPreshfNTSig c
+    (iprOmap {c} {mor} {cid} {comp} p)
+    (iprOmap {c} {mor} {cid} {comp} q)
+
+public export
+IntPreshfId : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  IntIdSig
+    (IntPreshfObj {c} mor cid comp)
+    (IntPreshfMor {c} {mor} {cid} {comp})
+IntPreshfId {c} {mor} {cid} {comp} =
   IntCopreshfId
     {c=(IntOpCatObj c)}
     {mor=(IntOpCatMor c mor)}
     {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
-IntPreshfComp : {c : Type} -> {mor : IntMorSig c} -> {cid : IntIdSig c mor} ->
-  IntCompSig (IntPreshfObj {c} mor cid) (IntPreshfMor {c} {mor} {cid})
-IntPreshfComp {c} {mor} {cid} =
+IntPreshfComp : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  IntCompSig
+    (IntPreshfObj {c} mor cid comp)
+    (IntPreshfMor {c} {mor} {cid} {comp})
+IntPreshfComp {c} {mor} {cid} {comp} =
   IntCopreshfComp
     {c=(IntOpCatObj c)}
     {mor=(IntOpCatMor c mor)}
     {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
-IntPreshfCat : {c : Type} -> (mor : IntMorSig c) -> IntIdSig c mor -> IntCatSig
-IntPreshfCat {c} mor cid =
+IntPreshfCat : {c : Type} -> (mor : IntMorSig c) ->
+  IntIdSig c mor -> IntCompSig c mor -> IntCatSig
+IntPreshfCat {c} mor cid comp =
   ICat
-    (IntPreshfObj {c} mor cid)
+    (IntPreshfObj {c} mor cid comp)
   $ MICS
-    (IntPreshfMor {c} {mor} {cid})
+    (IntPreshfMor {c} {mor} {cid} {comp})
   $ ICS
-    (IntPreshfId {c} {mor} {cid})
-    (IntPreshfComp {c} {mor} {cid})
+    (IntPreshfId {c} {mor} {cid} {comp})
+    (IntPreshfComp {c} {mor} {cid} {comp})
 
 --------------------------------
 ---- Categories of elements ----
@@ -1118,30 +1197,49 @@ CopreSigCatElemObj : {c : Type} -> IntCopreshfSig c -> Type
 CopreSigCatElemObj {c} = Sigma {a=c}
 
 public export
-CopreCatElemObj : {c : Type} -> {mor : IntMorSig c} -> {cid : IntIdSig c mor} ->
-  IntCopreshfObj {c} mor cid -> Type
-CopreCatElemObj {c} {mor} {cid} = CopreSigCatElemObj {c} . icprOmap
+CopreCatElemObj : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  IntCopreshfObj {c} mor cid comp -> Type
+CopreCatElemObj {c} {mor} {cid} {comp} = CopreSigCatElemObj {c} . icprOmap
 
 public export
-record CopreCatElemMor {c : Type} {mor : IntMorSig c} {cid : IntIdSig c mor}
-    {p : IntCopreshfObj {c} mor cid} (dom, cod : CopreCatElemObj {c} p) where
+record CopreCatElemMor {c : Type}
+    {mor : IntMorSig c} {cid : IntIdSig c mor} {comp : IntCompSig c mor}
+    {p : IntCopreshfObj {c} mor cid comp} (dom, cod : CopreCatElemObj {c} p)
+    where
   constructor CElMor
   cemMor : mor (fst dom) (fst cod)
   cemEq : FunExt -> icprFmap p (fst dom) (fst cod) cemMor (snd dom) = snd cod
 
 public export
-CElMorC : {c : Type} -> {mor : IntMorSig c} -> {cid : IntIdSig c mor} ->
-  {p : IntCopreshfObj {c} mor cid} ->
+CElMorC : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntCopreshfObj {c} mor cid comp} ->
   {x : c} -> (ex : icprOmap p x) -> {y : c} -> (mxy : mor x y) ->
   CopreCatElemMor {c} {p} (x ** ex) (y ** icprFmap p x y mxy ex)
-CElMorC {c} {mor} {cid} {p} {x} ex {y} mxy = CElMor mxy $ \_ => Refl
+CElMorC {c} {mor} {cid} {comp} {p} {x} ex {y} mxy = CElMor mxy $ \_ => Refl
 
 public export
-CopreCatElemId : {c : Type} -> {mor : IntMorSig c} -> (cid : IntIdSig c mor) ->
-  {p : IntCopreshfObj {c} mor cid} ->
+CopreCatElemId : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntCopreshfObj {c} mor cid comp} ->
   IntIdSig (CopreCatElemObj {c} {mor} p) (CopreCatElemMor {c} {mor} {p})
-CopreCatElemId {c} {mor} cid {p} ex =
+CopreCatElemId {c} {mor} {cid} {comp} {p} ex =
   CElMor (cid $ fst ex) $ \_ => icprFid p (fst ex) (snd ex)
+
+public export
+CopreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
+  (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  {p : IntCopreshfObj {c} mor cid comp} ->
+  IntCompSig (CopreCatElemObj {c} {mor} p) (CopreCatElemMor {c} {mor} {p})
+CopreCatElemComp {c} {mor} cid comp {p=p@(ICopre omap fmap fid fcomp)}
+  (x ** ex) (y ** ey) (z ** ez) myz@(CElMor gm geq) mxy@(CElMor fm feq) =
+    CElMor
+      (comp x y z gm fm)
+      (\fext =>
+       trans
+        (sym $ icprFcomp p x y z gm fm ex)
+      $ trans (rewrite feq fext in Refl) (geq fext))
 
 ------------------------
 ------------------------
