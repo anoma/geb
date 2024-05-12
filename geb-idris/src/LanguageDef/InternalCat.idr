@@ -1019,9 +1019,35 @@ public export
 IntCopreshfNTSig : (c : Type) -> (pobj, qobj : IntCopreshfSig c) -> Type
 IntCopreshfNTSig c pobj qobj = SliceMor c pobj qobj
 
+-- The naturality condition of a natural transformation between copresheaves.
+public export
+0 IntCopreshfNTNaturality :
+  (c : Type) -> (cmor : IntMorSig c) ->
+  (0 pobj, qobj : IntCopreshfSig c) ->
+  IntCopreshfMapSig c cmor pobj -> IntCopreshfMapSig c cmor qobj ->
+  IntCopreshfNTSig c pobj qobj -> Type
+IntCopreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
+  (x, y : c) -> (m : cmor x y) ->
+  ExtEq {a=(pobj x)} {b=(qobj y)}
+    (qmap x y m . alpha x)
+    (alpha y . pmap x y m)
+
 public export
 IntPreshfNTSig : (c : Type) -> (pobj, qobj : IntPreshfSig c) -> Type
 IntPreshfNTSig c = IntCopreshfNTSig (IntOpCatObj c)
+
+-- The naturality condition of a natural transformation between presheaves.
+public export
+0 IntPreshfNTNaturality :
+  (c : Type) -> (cmor : IntMorSig c) ->
+  (0 pobj, qobj : IntPreshfSig c) ->
+  IntPreshfMapSig c cmor pobj -> IntPreshfMapSig c cmor qobj ->
+  IntPreshfNTSig c pobj qobj -> Type
+IntPreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
+  (x, y : c) -> (m : cmor y x) ->
+  ExtEq {a=(pobj x)} {b=(qobj y)}
+    (qmap x y m . alpha x)
+    (alpha y . pmap x y m)
 
 public export
 record IntCopreshfObj {c : Type}
