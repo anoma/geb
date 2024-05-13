@@ -927,6 +927,37 @@ OpTypeCat =
     opTypeId
     opTypeComp
 
+---------------------------------------------------
+---- Metalanguage base category with quotients ----
+---------------------------------------------------
+
+public export
+QTypeObj : Type
+QTypeObj = QType
+
+public export
+QTypeMor : QTypeObj -> QTypeObj -> Type
+QTypeMor = QMorph
+
+public export
+qTypeId : IntIdSig QTypeObj QTypeMor
+qTypeId = qmId
+
+public export
+qTypeComp : IntCompSig QTypeObj QTypeMor
+qTypeComp a b c = qmComp {a} {b} {c}
+
+public export
+QTypeCat : IntCatSig
+QTypeCat =
+  ICat
+    QTypeObj
+  $ MICS
+    QTypeMor
+  $ ICS
+    qTypeId
+    qTypeComp
+
 ---------------------------------------
 ---- Metalanguage slice categories ----
 ---------------------------------------
