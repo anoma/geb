@@ -36,6 +36,10 @@ public export
 QRelEquivI x = snd (QRel x)
 
 public export
+QTypeFromType : Type -> QType
+QTypeFromType x = Element0 x (EqPrEquivRel x)
+
+public export
 QFunc : QType -> QType -> Type
 QFunc x y = QBase x -> QBase y
 
@@ -56,6 +60,10 @@ public export
   (f : QMorph x y) -> QPres x y (QMorphBase {x} {y} f)
 QMorphPres = snd0
 
+public export
+QMorphFromMorph : {0 x, y : Type} ->
+  (x -> y) -> QMorph (QTypeFromType x) (QTypeFromType y)
+QMorphFromMorph {x} {y} f = Element0 f $ \ex, ex', xeq => cong f xeq
 
 -----------------------------------------
 ---- Self-internalization of `QType` ----
@@ -109,6 +117,11 @@ public export
 QMExtEq {x} {y} (f, g) =
   PrERelBiPres {a=(QBase x)} {b=(QBase y)}
     (QMorphBase f) (QMorphBase g) (QBaseRel x) (QBaseRel y)
+
+-- Simply a curried `QMExtEq`.
+public export
+0 QMExtEqC : {0 x, y : QType} -> RelationOn (QMorph x y)
+QMExtEqC {x} {y} = curry (QMExtEq {x} {y})
 
 -- `QMExtEq` is an equivalence relation.
 public export
