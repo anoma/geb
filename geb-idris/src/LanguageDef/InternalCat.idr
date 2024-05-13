@@ -1017,8 +1017,16 @@ IntCopreshfSig : Type -> Type
 IntCopreshfSig c = IntOMapSig c TypeObj
 
 public export
+IntQCopreshfSig : Type -> Type
+IntQCopreshfSig c = IntOMapSig c QTypeObj
+
+public export
 IntPreshfSig : Type -> Type
 IntPreshfSig = IntCopreshfSig . IntOpCatObj
+
+public export
+IntQPreshfSig : Type -> Type
+IntQPreshfSig = IntQCopreshfSig . IntOpCatObj
 
 public export
 IntCopreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
@@ -1026,21 +1034,26 @@ IntCopreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
 IntCopreshfMapSig c mor = IntFMapSig mor TypeMor
 
 public export
+IntQCopreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
+  (objmap : IntQCopreshfSig c) -> Type
+IntQCopreshfMapSig c mor = IntFMapSig mor QTypeMor
+
+public export
 0 IntCopreshfMapId :
   {c : Type} -> {mor : IntMorSig c} -> (cid : IntIdSig c mor) ->
-  {objmap : IntCopreshfSig c} -> IntCopreshfMapSig c mor objmap -> Type
+  {objmap : IntQCopreshfSig c} -> IntQCopreshfMapSig c mor objmap -> Type
 IntCopreshfMapId {c} {mor} cid {objmap} fmap =
   (x : c) ->
-  ExtEq {a=(objmap x)} {b=(objmap x)} (fmap x x $ cid x) (id {a=(objmap x)})
+  QMExtEqC {x=(objmap x)} {y=(objmap x)} (fmap x x $ cid x) (qTypeId (objmap x))
 
 public export
 0 IntCopreshfMapComp :
   {c : Type} -> {mor : IntMorSig c} -> (comp : IntCompSig c mor) ->
-  {objmap : IntCopreshfSig c} -> IntCopreshfMapSig c mor objmap -> Type
+  {objmap : IntQCopreshfSig c} -> IntQCopreshfMapSig c mor objmap -> Type
 IntCopreshfMapComp {c} {mor} comp {objmap} fmap =
   (x, y, z : c) -> (myz : mor y z) -> (mxy : mor x y) ->
-    ExtEq {a=(objmap x)} {b=(objmap z)}
-      (fmap y z myz . fmap x y mxy)
+    QMExtEqC {x=(objmap x)} {y=(objmap z)}
+      (qmComp (fmap y z myz) (fmap x y mxy))
       (fmap x z $ comp x y z myz mxy)
 
 public export
@@ -1049,25 +1062,37 @@ IntPreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
 IntPreshfMapSig c mor = IntCopreshfMapSig (IntOpCatObj c) (IntOpCatMor c mor)
 
 public export
+IntQPreshfMapSig : (c : Type) -> (mor : IntMorSig c) ->
+  (objmap : IntQPreshfSig c) -> Type
+IntQPreshfMapSig c mor = IntQCopreshfMapSig (IntOpCatObj c) (IntOpCatMor c mor)
+
+public export
 0 IntPreshfMapId :
   {c : Type} -> {mor : IntMorSig c} -> (cid : IntIdSig c mor) ->
-  {objmap : IntPreshfSig c} -> IntPreshfMapSig c mor objmap -> Type
+  {objmap : IntQPreshfSig c} -> IntQPreshfMapSig c mor objmap -> Type
 IntPreshfMapId {c} {mor} cid {objmap} cfmap =
-  (x : c) -> ExtEq (cfmap x x $ cid x) (id {a=(objmap x)})
+  (x : c) ->
+  QMExtEqC {x=(objmap x)} {y=(objmap x)}
+    (cfmap x x $ cid x)
+    (qTypeId (objmap x))
 
 public export
 0 IntPreshfMapComp :
   {c : Type} -> {mor : IntMorSig c} -> (comp : IntCompSig c mor) ->
-  {objmap : IntPreshfSig c} -> IntPreshfMapSig c mor objmap -> Type
+  {objmap : IntQPreshfSig c} -> IntQPreshfMapSig c mor objmap -> Type
 IntPreshfMapComp {c} {mor} comp {objmap} cfmap =
   (x, y, z : c) -> (mzy : mor z y) -> (myx : mor y x) ->
-    ExtEq {a=(objmap x)} {b=(objmap z)}
-      (cfmap y z mzy . cfmap x y myx)
+    QMExtEqC {x=(objmap x)} {y=(objmap z)}
+      (qmComp (cfmap y z mzy) (cfmap x y myx))
       (cfmap x z $ comp z y x myx mzy)
 
 public export
 IntCopreshfNTSig : (c : Type) -> (pobj, qobj : IntCopreshfSig c) -> Type
 IntCopreshfNTSig c pobj qobj = SliceMor c pobj qobj
+
+public export
+IntQCopreshfNTSig : (c : Type) -> (pobj, qobj : IntQCopreshfSig c) -> Type
+IntQCopreshfNTSig c pobj qobj = (ec : c) -> QMorph (pobj ec) (qobj ec)
 
 -- The naturality condition of a natural transformation between copresheaves.
 public export
@@ -1083,8 +1108,24 @@ IntCopreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
     (alpha y . pmap x y m)
 
 public export
+0 IntQCopreshfNTNaturality :
+  (c : Type) -> (cmor : IntMorSig c) ->
+  (0 pobj, qobj : IntQCopreshfSig c) ->
+  IntQCopreshfMapSig c cmor pobj -> IntQCopreshfMapSig c cmor qobj ->
+  IntQCopreshfNTSig c pobj qobj -> Type
+IntQCopreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
+  (x, y : c) -> (m : cmor x y) ->
+  QMExtEqC {x=(pobj x)} {y=(qobj y)}
+    (qmComp (qmap x y m) (alpha x))
+    (qmComp (alpha y) (pmap x y m))
+
+public export
 IntPreshfNTSig : (c : Type) -> (pobj, qobj : IntPreshfSig c) -> Type
 IntPreshfNTSig c = IntCopreshfNTSig (IntOpCatObj c)
+
+public export
+IntQPreshfNTSig : (c : Type) -> (pobj, qobj : IntQPreshfSig c) -> Type
+IntQPreshfNTSig c = IntQCopreshfNTSig (IntOpCatObj c)
 
 -- The naturality condition of a natural transformation between presheaves.
 public export
@@ -1100,12 +1141,24 @@ IntPreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
     (alpha y . pmap x y m)
 
 public export
+0 IntQPreshfNTNaturality :
+  (c : Type) -> (cmor : IntMorSig c) ->
+  (0 pobj, qobj : IntQPreshfSig c) ->
+  IntQPreshfMapSig c cmor pobj -> IntQPreshfMapSig c cmor qobj ->
+  IntQPreshfNTSig c pobj qobj -> Type
+IntQPreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
+  (x, y : c) -> (m : cmor y x) ->
+  QMExtEqC {x=(pobj x)} {y=(qobj y)}
+    (qmComp (qmap x y m) (alpha x))
+    (qmComp (alpha y) (pmap x y m))
+
+public export
 record IntCopreshfObj {c : Type}
     (mor : IntMorSig c) (cid : IntIdSig c mor) (comp : IntCompSig c mor)
     where
   constructor ICopre
-  icprOmap : IntCopreshfSig c
-  icprFmap : IntCopreshfMapSig c mor icprOmap
+  icprOmap : IntQCopreshfSig c
+  icprFmap : IntQCopreshfMapSig c mor icprOmap
   icprFid : IntCopreshfMapId {c} {mor} cid {objmap=icprOmap} icprFmap
   icprFcomp : IntCopreshfMapComp {c} {mor} comp {objmap=icprOmap} icprFmap
 
@@ -1114,9 +1167,9 @@ record IntCopreshfMor {c : Type} {mor : IntMorSig c}
     {cid : IntIdSig c mor} {comp : IntCompSig c mor}
     (p, q : IntCopreshfObj {c} mor cid comp) where
   constructor ICopreM
-  icprNT : IntCopreshfNTSig c (icprOmap p) (icprOmap q)
-  icprNatural :
-    IntCopreshfNTNaturality c mor (icprOmap p) (icprOmap q)
+  icprNT : IntQCopreshfNTSig c (icprOmap p) (icprOmap q)
+  0 icprNatural :
+    IntQCopreshfNTNaturality c mor (icprOmap p) (icprOmap q)
       (icprFmap p) (icprFmap q) icprNT
 
 public export
@@ -1125,7 +1178,10 @@ IntCopreshfId : {c : Type} ->
   IntIdSig
     (IntCopreshfObj {c} mor cid comp)
     (IntCopreshfMor {c} {mor} {cid} {comp})
-IntCopreshfId {c} {mor} {cid} {comp} x = ICopreM (\_ => id) (\_, _, _, _ => Refl)
+IntCopreshfId {c} {mor} {cid} {comp} x =
+  ICopreM
+    (\ec => qmId $ icprOmap x ec)
+    (\a, b, mab, i => QMExtEqEquivI (_, _) (PrErefl $ icprFmap x a b mab) i)
 
 public export
 IntCopreshfComp : {c : Type} ->
@@ -1135,11 +1191,11 @@ IntCopreshfComp : {c : Type} ->
     (IntCopreshfMor {c} {mor} {cid} {comp})
 IntCopreshfComp {c} {mor} {cid} {comp} p q r m' m =
   ICopreM
-    (SliceComp c (icprOmap p) (icprOmap q) (icprOmap r) (icprNT m') (icprNT m))
-    (\x, y, f, el =>
-      trans
-        (icprNatural m' x y f (icprNT m x el))
-        (cong (icprNT m' y) $ icprNatural m x y f el))
+    (\ec => qmComp (icprNT m' ec) (icprNT m ec))
+    (\x, y, f, epx, epx', rpx => ?ICopreshfComp_hole)
+      -- trans
+        -- (icprNatural m' x y f (icprNT m x el))
+        -- (cong (icprNT m' y) $ icprNatural m x y f el)
 
 public export
 IntCopreshfCat : {c : Type} -> (mor : IntMorSig c) ->
@@ -1163,7 +1219,7 @@ IntPreshfObj {c} mor cid comp =
 public export
 IPre : {c : Type} ->
   {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
-  (omap : IntPreshfSig c) -> (cfmap : IntPreshfMapSig c mor omap) ->
+  (omap : IntQPreshfSig c) -> (cfmap : IntQPreshfMapSig c mor omap) ->
   IntPreshfMapId {c} {mor} cid {objmap=omap} cfmap ->
   IntPreshfMapComp {c} {mor} comp {objmap=omap} cfmap ->
   IntPreshfObj {c} mor cid comp
@@ -1177,7 +1233,7 @@ IPre {c} {mor} {cid} {comp} =
 public export
 iprOmap : {c : Type} ->
   {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
-  IntPreshfObj {c} mor cid comp -> IntPreshfSig c
+  IntPreshfObj {c} mor cid comp -> IntQPreshfSig c
 iprOmap {c} {mor} {cid} {comp} =
   icprOmap
     {c=(IntOpCatObj c)}
@@ -1189,7 +1245,7 @@ public export
 iprFmap : {c : Type} ->
   {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   (p : IntPreshfObj {c} mor cid comp) ->
-  IntPreshfMapSig c mor (iprOmap {c} {mor} {cid} {comp} p)
+  IntQPreshfMapSig c mor (iprOmap {c} {mor} {cid} {comp} p)
 iprFmap {c} {mor} {cid} {comp} =
   icprFmap
     {c=(IntOpCatObj c)}
@@ -1231,10 +1287,10 @@ record IntPreshfMor {c : Type} {mor : IntMorSig c}
     (p, q : IntPreshfObj {c} mor cid comp) where
   constructor IPreM
   iprNT :
-    IntPreshfNTSig c
+    IntQPreshfNTSig c
       (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} q)
-  iprNatural :
-    IntPreshfNTNaturality c mor
+  0 iprNatural :
+    IntQPreshfNTNaturality c mor
       (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} q)
       (iprFmap {c} {mor} {cid} {comp} p) (iprFmap {c} {mor} {cid} {comp} q)
       iprNT
@@ -1245,8 +1301,10 @@ IntPreshfId : {c : Type} ->
   IntIdSig
     (IntPreshfObj {c} mor cid comp)
     (IntPreshfMor {c} {mor} {cid} {comp})
-IntPreshfId {c} {mor} {cid} {comp} p =
-  IPreM (\_ => id) (\_, _, _, _ => Refl)
+IntPreshfId {c} {mor} {cid} {comp} x =
+  IPreM
+    (\ec => qmId $ icprOmap x ec)
+    (\a, b, mab, i => QMExtEqEquivI (_, _) (PrErefl $ icprFmap x a b mab) i)
 
 public export
 IntPreshfComp : {c : Type} ->
@@ -1256,11 +1314,11 @@ IntPreshfComp : {c : Type} ->
     (IntPreshfMor {c} {mor} {cid} {comp})
 IntPreshfComp {c} {mor} {cid} {comp} p q r m' m =
   IPreM
-    (SliceComp c (iprOmap p) (iprOmap q) (iprOmap r) (iprNT m') (iprNT m))
-    (\x, y, f, el =>
-      trans
-        (iprNatural m' x y f (iprNT m x el))
-        (cong (iprNT m' y) $ iprNatural m x y f el))
+    (\ec => qmComp (iprNT m' ec) (iprNT m ec))
+    (\x, y, f, epx, epx', rpx => ?IPreshfComp_hole)
+--      trans
+--        (iprNatural m' x y f (iprNT m x el))
+--        (cong (iprNT m' y) $ iprNatural m x y f el))
 
 public export
 IntPreshfCat : {c : Type} -> (mor : IntMorSig c) ->
@@ -1279,8 +1337,8 @@ IntPreshfCat {c} mor cid comp =
 ------------------------------------------
 
 public export
-CopreSigCatElemObj : {c : Type} -> IntCopreshfSig c -> Type
-CopreSigCatElemObj {c} = Sigma {a=c}
+CopreSigCatElemObj : {c : Type} -> IntQCopreshfSig c -> Type
+CopreSigCatElemObj {c} p = Sigma {a=c} (QBase . p)
 
 public export
 CopreCatElemObj : {c : Type} ->
@@ -1295,15 +1353,24 @@ record CopreCatElemMor {c : Type}
     where
   constructor CElMor
   cemMor : mor (fst dom) (fst cod)
-  cemEq : FunExt -> icprFmap p (fst dom) (fst cod) cemMor (snd dom) = snd cod
+  0 cemEq :
+    QBaseRel (icprOmap p $ fst cod)
+      (QMorphBase {x=(icprOmap p $ fst dom)} {y=(icprOmap p $ fst cod)}
+        (icprFmap p (fst dom) (fst cod) cemMor) (snd dom),
+       snd cod)
 
 public export
 CElMorC : {c : Type} ->
   {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   {p : IntCopreshfObj {c} mor cid comp} ->
-  {x : c} -> (ex : icprOmap p x) -> {y : c} -> (mxy : mor x y) ->
-  CopreCatElemMor {c} {p} (x ** ex) (y ** icprFmap p x y mxy ex)
-CElMorC {c} {mor} {cid} {comp} {p} {x} ex {y} mxy = CElMor mxy $ \_ => Refl
+  {x : c} -> (ex : QBase $ icprOmap p x) -> {y : c} -> (mxy : mor x y) ->
+  CopreCatElemMor {c} {p}
+    (x ** ex)
+    (y **
+     QMorphBase {x=(icprOmap p x)} {y=(icprOmap p y)} (icprFmap p x y mxy) ex)
+CElMorC {c} {mor} {cid} {comp} {p} {x} ex {y} mxy =
+  CElMor mxy $
+    PrEquivRefl (QRel $ icprOmap p y) (QMorphBase (icprFmap p x y mxy) ex)
 
 public export
 CopreCatElemId : {c : Type} ->
@@ -1311,7 +1378,8 @@ CopreCatElemId : {c : Type} ->
   {p : IntCopreshfObj {c} mor cid comp} ->
   IntIdSig (CopreCatElemObj {c} {mor} p) (CopreCatElemMor {c} {mor} {p})
 CopreCatElemId {c} {mor} {cid} {comp} {p} ex =
-  CElMor (cid $ fst ex) $ \_ => icprFid p (fst ex) (snd ex)
+  CElMor (cid $ fst ex) $
+    let fid = icprFid p (fst ex) (snd ex) in ?CopreCatElemId_hole
 
 public export
 CopreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
@@ -1321,11 +1389,14 @@ CopreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
 CopreCatElemComp {c} {mor} {cid} {comp} {p} x y z myz mxy =
   CElMor
     (comp (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy))
+    ?CopreCatElemComp_hole
+    {-
     (\fext =>
      trans
       (sym $
         icprFcomp p (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy) (snd x))
     $ trans (rewrite cemEq mxy fext in Refl) (cemEq myz fext))
+    -}
 
 public export
 IntCopreCatElem : {c : Type} -> {mor : IntMorSig c} ->
@@ -1345,8 +1416,8 @@ IntCopreCatElem {c} {mor} {cid} {comp} p =
 ----------------------------------------------
 
 public export
-PreSigCatElemObj : {c : Type} -> IntPreshfSig c -> Type
-PreSigCatElemObj {c} = Sigma {a=c}
+PreSigCatElemObj : {c : Type} -> IntQPreshfSig c -> Type
+PreSigCatElemObj {c} p = Sigma {a=c} (QBase . p)
 
 public export
 PreCatElemObj : {c : Type} ->
@@ -1378,8 +1449,10 @@ PElMor : {c : Type} ->
   {p : IntPreshfObj {c} mor cid comp} ->
   {dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p} ->
   (f : mor (fst dom) (fst cod)) ->
-  (FunExt ->
-    iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom) f (snd cod) = snd dom)
+  (0 _ : QBaseRel (icprOmap p $ fst dom)
+    (QMorphBase {x=(icprOmap p $ fst cod)} {y=(icprOmap p $ fst dom)}
+      (iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom) f) (snd cod),
+     snd dom))
   -> PreCatElemMor {c} {mor} {cid} {comp} {p} dom cod
 PElMor {c} {mor} {cid} {comp} {p} {dom} {cod} =
   CElMor
@@ -1388,6 +1461,8 @@ PElMor {c} {mor} {cid} {comp} {p} {dom} {cod} =
     {cid=(IntOpCatId c mor cid)}
     {comp=(IntOpCatComp c mor comp)}
     {p}
+    {cod=dom}
+    {dom=cod}
 
 public export
 pemMor : {c : Type} ->
@@ -1405,15 +1480,17 @@ pemMor {c} {mor} {cid} {comp} {p} {dom} {cod} =
     {p}
 
 public export
-pemEq : {c : Type} ->
+0 pemEq : {c : Type} ->
   {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   {p : IntPreshfObj {c} mor cid comp} ->
   {dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p} ->
   (f : PreCatElemMor {c} {mor} {cid} {comp} {p} dom cod) ->
-  FunExt ->
-  iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom)
-    (pemMor {c} {mor} {cid} {comp} {p} {dom} {cod} f) (snd cod)
-  = snd dom
+  QBaseRel (icprOmap p $ fst dom)
+    (QMorphBase {x=(icprOmap p $ fst cod)} {y=(icprOmap p $ fst dom)}
+      (iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom)
+        $ pemMor {c} {mor} {cid} {comp} {p} {dom} {cod} f)
+      $ snd cod,
+     snd dom)
 pemEq {c} {mor} {cid} {comp} {p} {dom} {cod} =
   cemEq
     {c=(IntOpCatObj c)}
@@ -1426,12 +1503,16 @@ public export
 PElMorC : {c : Type} ->
   {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   {p : IntPreshfObj {c} mor cid comp} ->
-  {y : c} -> (ey : iprOmap {c} {cid} {mor} {comp} p y) ->
+  {y : c} -> (ey : QBase $ iprOmap {c} {cid} {mor} {comp} p y) ->
   {x : c} -> (mxy : mor x y) ->
   PreCatElemMor {c} {mor} {cid} {comp} {p}
-    (x ** iprFmap {c} {cid} {mor} {comp} p y x mxy ey)
+    (x **
+     QMorphBase {x=(icprOmap p y)} {y=(icprOmap p x)}
+      (iprFmap {c} {cid} {mor} {comp} p y x mxy) ey)
     (y ** ey)
-PElMorC {c} {mor} {cid} {comp} {p} {y} ey {x} mxy = PElMor mxy $ \_ => Refl
+PElMorC {c} {mor} {cid} {comp} {p} {y} ey {x} mxy =
+  PElMor mxy $
+    PrEquivRefl (QRel $ iprOmap p x) (QMorphBase (iprFmap p y x mxy) ey)
 
 public export
 PreCatElemId : {c : Type} ->
@@ -1441,7 +1522,8 @@ PreCatElemId : {c : Type} ->
     (PreCatElemObj {c} {mor} {cid} {comp} p)
     (PreCatElemMor {c} {mor} {cid} {comp} {p})
 PreCatElemId {c} {mor} {cid} {comp} {p} ex =
-  PElMor (cid $ fst ex) $ \_ => iprFid p (fst ex) (snd ex)
+  PElMor (cid $ fst ex)
+  $ let fid = iprFid p (fst ex) (snd ex) in ?PreCatElemId_hole
 
 public export
 PreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
@@ -1453,6 +1535,8 @@ PreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
 PreCatElemComp {c} {mor} {cid} {comp} {p} x y z myz mxy =
   PElMor {c} {mor} {cid} {comp} {p}
     (comp (fst x) (fst y) (fst z) (pemMor myz) (pemMor mxy))
+    ?PreCatElemComp_hole
+    {-
     (\fext =>
       trans
         (trans
@@ -1460,6 +1544,7 @@ PreCatElemComp {c} {mor} {cid} {comp} {p} x y z myz mxy =
           iprFcomp p (fst z) (fst y) (fst x) (pemMor mxy) (pemMor myz) (snd z))
           $ cong (iprFmap p (fst y) (fst x) (pemMor mxy)) $ pemEq myz fext)
         (pemEq mxy fext))
+        -}
 
 public export
 IntPreCatElem : {c : Type} -> {mor : IntMorSig c} ->
@@ -1482,17 +1567,17 @@ IntPreCatElem {c} {mor} {cid} {comp} p =
 
 public export
 IntHomProfOmap : {c : Type} -> (mor : IntMorSig c) ->
-  IntCopreshfSig (IntEndoOpProdCatObj c)
-IntHomProfOmap {c} = uncurry
+  IntQCopreshfSig (IntEndoOpProdCatObj c)
+IntHomProfOmap {c} mor ecp = QTypeFromType $ uncurry mor ecp
 
 public export
 IntHomProfFmap : {c : Type} -> {mor : IntMorSig c} -> IntCompSig c mor ->
-  IntCopreshfMapSig
+  IntQCopreshfMapSig
     (IntEndoOpProdCatObj c)
     (IntEndoOpProdCatMor c mor)
     (IntHomProfOmap {c} mor)
-IntHomProfFmap {c} {mor} comp (s, t) (a, b) (mas, mtb) mst =
-  comp a t b mtb $ comp a s t mst mas
+IntHomProfFmap {c} {mor} comp (s, t) (a, b) (mas, mtb) =
+  QMorphFromMorph $ \mst => comp a t b mtb $ comp a s t mst mas
 
 public export
 0 IntHomProfMapIdT : {c : Type} -> {mor : IntMorSig c} ->
