@@ -9,6 +9,7 @@ import LanguageDef.Test.IntTwistedArrowCatTest
 import LanguageDef.Test.IntUFamCatTest
 import LanguageDef.Test.IntEFamCatTest
 import LanguageDef.Test.IntParamCatTest
+import LanguageDef.Test.QTypeTest
 import LanguageDef.Test.SpanCospanTest
 import LanguageDef.Test.InternalCatTest
 import LanguageDef.Test.InternalHigherCatTest
@@ -100,6 +101,7 @@ totalTests = do
   LanguageDef.Test.IntUFamCatTest.intUFamCatTest
   LanguageDef.Test.IntEFamCatTest.intEFamCatTest
   LanguageDef.Test.IntParamCatTest.intParamCatTest
+  LanguageDef.Test.QTypeTest.qtypeTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()
