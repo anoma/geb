@@ -1442,6 +1442,63 @@ IntPreCatElem {c} {mor} {cid} {comp} p =
     (PreCatElemId {c} {mor} {cid} {comp} {p})
     (PreCatElemComp {c} {mor} {cid} {comp} {p})
 
+----------------------------------------
+----------------------------------------
+---- Hom-profunctor as (co)presheaf ----
+----------------------------------------
+----------------------------------------
+
+public export
+IntHomProfOmap : {c : Type} -> (mor : IntMorSig c) ->
+  IntCopreshfSig (IntEndoOpProdCatObj c)
+IntHomProfOmap {c} = uncurry
+
+public export
+IntHomProfFmap : {c : Type} -> {mor : IntMorSig c} -> IntCompSig c mor ->
+  IntCopreshfMapSig
+    (IntEndoOpProdCatObj c)
+    (IntEndoOpProdCatMor c mor)
+    (IntHomProfOmap {c} mor)
+IntHomProfFmap {c} {mor} comp (s, t) (a, b) (mas, mtb) mst =
+  comp a t b mtb $ comp a s t mst mas
+
+public export
+0 IntHomProfMapIdT : {c : Type} -> {mor : IntMorSig c} ->
+  (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  Type
+IntHomProfMapIdT {c} {mor} cid comp =
+  IntCopreshfMapId
+    {c=(IntEndoOpProdCatObj c)}
+    {mor=(IntEndoOpProdCatMor c mor)}
+    (IntEndoOpProdCatId c mor cid)
+    (IntHomProfFmap {c} {mor} comp)
+
+public export
+0 IntHomProfMapCompT : {c : Type} -> {mor : IntMorSig c} ->
+  (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  Type
+IntHomProfMapCompT {c} {mor} cid comp =
+  IntCopreshfMapComp
+    {c=(IntEndoOpProdCatObj c)}
+    {mor=(IntEndoOpProdCatMor c mor)}
+    (IntEndoOpProdCatComp c mor comp)
+    (IntHomProfFmap {c} {mor} comp)
+
+public export
+IntHomProfObj : {c : Type} -> {mor : IntMorSig c} ->
+  (cid : IntIdSig c mor) -> (comp : IntCompSig c mor) ->
+  IntHomProfMapIdT {c} {mor} cid comp ->
+  IntHomProfMapCompT {c} {mor} cid comp ->
+  IntCopreshfObj
+    {c=(IntEndoOpProdCatObj c)}
+    (IntEndoOpProdCatMor c mor)
+    (IntEndoOpProdCatId c mor cid)
+    (IntEndoOpProdCatComp c mor comp)
+IntHomProfObj {c} {mor} cid comp =
+  ICopre
+    (IntHomProfOmap {c} mor)
+    (IntHomProfFmap {c} {mor} comp)
+
 ------------------------
 ------------------------
 ---- Two-categories ----
