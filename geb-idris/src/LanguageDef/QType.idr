@@ -36,6 +36,21 @@ public export
 QRelEquivI x = snd (QRel x)
 
 public export
+0 QRrefl : {0 x : QType} -> {0 ex : QBase x} -> QBaseRel x (ex, ex)
+QRrefl {x} {ex} = QRelEquivI x (ex, ex) (PrErefl ex)
+
+public export
+0 QRsym : {0 x : QType} -> {0 ex, ex' : QBase x} ->
+  QBaseRel x (ex, ex') -> QBaseRel x (ex', ex)
+QRsym {x} {ex} {ex'} r = QRelEquivI x (ex', ex) (PrEsym ex ex' r)
+
+public export
+0 QRtrans : {0 x : QType} -> {0 ex, ex', ex'' : QBase x} ->
+  QBaseRel x (ex', ex'') -> QBaseRel x (ex, ex') -> QBaseRel x (ex, ex'')
+QRtrans {x} {ex} {ex'} r r' =
+  QRelEquivI x (ex, ex'') (PrEtrans ex ex' ex'' r r')
+
+public export
 QTypeFromType : Type -> QType
 QTypeFromType x = Element0 x (EqPrEquivRel x)
 
