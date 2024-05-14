@@ -1181,7 +1181,7 @@ IntCopreshfId : {c : Type} ->
 IntCopreshfId {c} {mor} {cid} {comp} x =
   ICopreM
     (\ec => qmId $ icprOmap x ec)
-    (\a, b, mab, i => QMExtEqEquivI (_, _) (PrErefl $ icprFmap x a b mab) i)
+    (\a, b, mab => QMorphPres (icprFmap x a b mab))
 
 public export
 IntCopreshfCompNT : {c : Type} ->
@@ -1341,7 +1341,7 @@ public export
     (iprFmap {c} {mor} {cid} {comp} p) (iprFmap {c} {mor} {cid} {comp} p)
     (IntPreshfIdNT {c} {mor} {cid} {comp} p)
 IntPreshfIdNatural {c} {mor} {cid} {comp} p x y m =
-  QMExtEqEquivI (_, _) (PrErefl $ iprFmap {c} {mor} {cid} {comp} p x y m)
+  QMorphPres (icprFmap p x y m)
 
 public export
 IntPreshfId : {c : Type} ->
