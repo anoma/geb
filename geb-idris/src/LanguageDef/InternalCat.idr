@@ -1461,21 +1461,53 @@ CopreCatElemId {c} {mor} {cid} {comp} {p} ex =
   $ PrEquivRefl (QRel $ icprOmap p (fst ex)) (snd ex)
 
 public export
+CopreCatElemCompMor : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntCopreshfObj {c} mor cid comp} ->
+  (x, y, z : CopreCatElemObj {c} {mor} p) ->
+  CopreCatElemMor {c} {mor} {p} y z ->
+  CopreCatElemMor {c} {mor} {p} x y ->
+  mor (fst x) (fst z)
+CopreCatElemCompMor {c} {mor} {cid} {comp} {p} x y z myz mxy =
+  comp (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy)
+
+public export
+CopreCatElemCompEq : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntCopreshfObj {c} mor cid comp} ->
+  (x, y, z : CopreCatElemObj {c} {mor} p) ->
+  (myz : CopreCatElemMor {c} {mor} {p} y z) ->
+  (mxy : CopreCatElemMor {c} {mor} {p} x y) ->
+  QBaseRel (icprOmap p $ fst z)
+    (QMorphBase {x=(icprOmap p $ fst x)} {y=(icprOmap p $ fst z)}
+      (icprFmap p (fst x) (fst z)
+       $ CopreCatElemCompMor {p} x y z myz mxy)
+      (snd x),
+     snd z)
+CopreCatElemCompEq {c} {mor} {cid} {comp} {p} x y z myz mxy =
+  let
+    comp = icprFcomp p (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy)
+    0 cxy = cemEq mxy
+    0 cyz = cemEq myz
+  in
+  {-
+  (\fext =>
+   trans
+    (sym $
+      icprFcomp p (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy) (snd x))
+  $ trans (rewrite cemEq mxy fext in Refl) (cemEq myz fext))
+  -}
+  ?CopreCatElemCompEq_hole
+
+public export
 CopreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
   {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   {p : IntCopreshfObj {c} mor cid comp} ->
   IntCompSig (CopreCatElemObj {c} {mor} p) (CopreCatElemMor {c} {mor} {p})
 CopreCatElemComp {c} {mor} {cid} {comp} {p} x y z myz mxy =
   CElMor
-    (comp (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy))
-    ?CopreCatElemComp_hole
-    {-
-    (\fext =>
-     trans
-      (sym $
-        icprFcomp p (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy) (snd x))
-    $ trans (rewrite cemEq mxy fext in Refl) (cemEq myz fext))
-    -}
+    (CopreCatElemCompMor {c} {mor} {cid} {comp} {p} x y z myz mxy)
+    (CopreCatElemCompEq {c} {mor} {cid} {comp} {p} x y z myz mxy)
 
 public export
 IntCopreCatElem : {c : Type} -> {mor : IntMorSig c} ->
