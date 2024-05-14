@@ -1184,6 +1184,37 @@ IntCopreshfId {c} {mor} {cid} {comp} x =
     (\a, b, mab, i => QMExtEqEquivI (_, _) (PrErefl $ icprFmap x a b mab) i)
 
 public export
+IntCopreshfCompNT : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p, q, r : IntCopreshfObj {c} mor cid comp) ->
+  IntCopreshfMor {c} {mor} {cid} {comp} q r ->
+  IntCopreshfMor {c} {mor} {cid} {comp} p q ->
+  IntQCopreshfNTSig c (icprOmap p) (icprOmap r)
+IntCopreshfCompNT {c} {mor} {cid} {comp} p q r m' m ec =
+  qmComp (icprNT m' ec) (icprNT m ec)
+
+public export
+0 IntCopreshfCompNatural : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p, q, r : IntCopreshfObj {c} mor cid comp) ->
+  (m' : IntCopreshfMor {c} {mor} {cid} {comp} q r) ->
+  (m : IntCopreshfMor {c} {mor} {cid} {comp} p q) ->
+  IntQCopreshfNTNaturality c mor
+    (icprOmap p) (icprOmap r)
+    (icprFmap p) (icprFmap r)
+    (IntCopreshfCompNT {c} {mor} {cid} {comp} p q r m' m)
+IntCopreshfCompNatural {c} {mor} {cid} {comp} p q r m' m x y f epx epx' rpx =
+  QRtrans
+    (QMorphPres
+      (icprNT m' y)
+      (QMorphBase (icprFmap q x y f) $ QMorphBase (icprNT m x) epx')
+      (QMorphBase (icprNT m y) $ QMorphBase (icprFmap p x y f) epx')
+      (icprNatural m x y f epx' epx' $ QRrefl {x=(icprOmap p x)} {ex=epx'}))
+    (icprNatural m' x y f
+      (QMorphBase (icprNT m x) epx) (QMorphBase (icprNT m x) epx')
+      $ QMorphPres (icprNT m x) epx epx' rpx)
+
+public export
 IntCopreshfComp : {c : Type} ->
   {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   IntCompSig
@@ -1191,11 +1222,8 @@ IntCopreshfComp : {c : Type} ->
     (IntCopreshfMor {c} {mor} {cid} {comp})
 IntCopreshfComp {c} {mor} {cid} {comp} p q r m' m =
   ICopreM
-    (\ec => qmComp (icprNT m' ec) (icprNT m ec))
-    (\x, y, f, epx, epx', rpx => ?ICopreshfComp_hole)
-      -- trans
-        -- (icprNatural m' x y f (icprNT m x el))
-        -- (cong (icprNT m' y) $ icprNatural m x y f el)
+    (IntCopreshfCompNT {c} {mor} {cid} {comp} p q r m' m)
+    (IntCopreshfCompNatural {c} {mor} {cid} {comp} p q r m' m)
 
 public export
 IntCopreshfCat : {c : Type} -> (mor : IntMorSig c) ->
