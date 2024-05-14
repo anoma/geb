@@ -1456,8 +1456,9 @@ CopreCatElemId : {c : Type} ->
   {p : IntCopreshfObj {c} mor cid comp} ->
   IntIdSig (CopreCatElemObj {c} {mor} p) (CopreCatElemMor {c} {mor} {p})
 CopreCatElemId {c} {mor} {cid} {comp} {p} ex =
-  CElMor (cid $ fst ex) $
-    let fid = icprFid p (fst ex) (snd ex) in ?CopreCatElemId_hole
+  CElMor (cid $ fst ex)
+  $ icprFid p (fst ex) (snd ex) (snd ex)
+  $ PrEquivRefl (QRel $ icprOmap p (fst ex)) (snd ex)
 
 public export
 CopreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
