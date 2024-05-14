@@ -1636,25 +1636,55 @@ PreCatElemId {c} {mor} {cid} {comp} {p} ex =
   $ PrEquivRefl (QRel $ iprOmap p (fst ex)) (snd ex)
 
 public export
+PreCatElemCompMor : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntPreshfObj {c} mor cid comp} ->
+  (x, y, z : PreCatElemObj {c} {mor} {cid} {comp} p) ->
+  PreCatElemMor {c} {mor} {cid} {comp} {p} y z ->
+  PreCatElemMor {c} {mor} {cid} {comp} {p} x y ->
+  mor (fst x) (fst z)
+PreCatElemCompMor {c} {mor} {cid} {comp} {p} x y z myz mxy =
+  comp (fst x) (fst y) (fst z) (pemMor myz) (pemMor mxy)
+
+public export
+0 PreCatElemCompEq : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntPreshfObj {c} mor cid comp} ->
+  (x, y, z : PreCatElemObj {c} {mor} {cid} {comp} p) ->
+  (myz : PreCatElemMor {c} {mor} {cid} {comp} {p} z y) ->
+  (mxy : PreCatElemMor {c} {mor} {cid} {comp} {p} y x) ->
+  QBaseRel (iprOmap {c} {mor} {cid} {comp} p $ fst z)
+    (QMorphBase
+      {x=(iprOmap {cid} {comp} p $ fst x)}
+      {y=(iprOmap {cid} {comp} p $ fst z)}
+      (iprFmap {c} {mor} {cid} {comp} p (fst x) (fst z)
+       $ PreCatElemCompMor {c} {mor} {cid} {comp} {p} z y x mxy myz)
+      (snd x),
+     snd z)
+PreCatElemCompEq {c} {mor} {cid} {comp} {p} x y z myz mxy =
+  QRtrans
+    (pemEq myz)
+  $ QRtrans
+    (QMorphPres
+      (iprFmap p (fst y) (fst z) (pemMor myz))
+      (QMorphBase (iprFmap p (fst x) (fst y) (pemMor mxy)) (snd x))
+      (snd y)
+      (pemEq mxy))
+  $ QRsym
+    (iprFcomp p (fst x) (fst y) (fst z) (pemMor myz) (pemMor mxy)
+      (snd x) (snd x) QRrefl)
+
+public export
 PreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
   {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   {p : IntPreshfObj {c} mor cid comp} ->
   IntCompSig
     (PreCatElemObj {c} {mor} {cid} {comp} p)
     (PreCatElemMor {c} {mor} {cid} {comp} {p})
-PreCatElemComp {c} {mor} {cid} {comp} {p} x y z myz mxy =
-  PElMor {c} {mor} {cid} {comp} {p}
-    (comp (fst x) (fst y) (fst z) (pemMor myz) (pemMor mxy))
-    ?PreCatElemComp_hole
-    {-
-    (\fext =>
-      trans
-        (trans
-         (sym $
-          iprFcomp p (fst z) (fst y) (fst x) (pemMor mxy) (pemMor myz) (snd z))
-          $ cong (iprFmap p (fst y) (fst x) (pemMor mxy)) $ pemEq myz fext)
-        (pemEq mxy fext))
-        -}
+PreCatElemComp {c} {mor} {cid} {comp} {p} x y z mzy myx =
+  PElMor
+    (PreCatElemCompMor {c} {mor} {cid} {comp} {p} x y z mzy myx)
+    (PreCatElemCompEq {c} {mor} {cid} {comp} {p} z y x myx mzy)
 
 public export
 IntPreCatElem : {c : Type} -> {mor : IntMorSig c} ->
