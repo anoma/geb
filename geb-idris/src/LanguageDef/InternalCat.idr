@@ -1173,6 +1173,26 @@ record IntCopreshfMor {c : Type} {mor : IntMorSig c}
       (icprFmap p) (icprFmap q) icprNT
 
 public export
+IntCopreshfIdNT : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p : IntCopreshfObj {c} mor cid comp) ->
+  IntQCopreshfNTSig c
+    (icprOmap {c} {mor} {cid} {comp} p)
+    (icprOmap {c} {mor} {cid} {comp} p)
+IntCopreshfIdNT {c} {mor} {cid} {comp} x ec = qmId $ icprOmap x ec
+
+public export
+0 IntCopreshfIdNatural : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p : IntCopreshfObj {c} mor cid comp) ->
+  IntQCopreshfNTNaturality c mor
+    (icprOmap {c} {mor} {cid} {comp} p) (icprOmap {c} {mor} {cid} {comp} p)
+    (icprFmap {c} {mor} {cid} {comp} p) (icprFmap {c} {mor} {cid} {comp} p)
+    (IntCopreshfIdNT {c} {mor} {cid} {comp} p)
+IntCopreshfIdNatural {c} {mor} {cid} {comp} p x y m =
+  QMorphPres (icprFmap p x y m)
+
+public export
 IntCopreshfId : {c : Type} ->
   {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   IntIdSig
@@ -1180,8 +1200,8 @@ IntCopreshfId : {c : Type} ->
     (IntCopreshfMor {c} {mor} {cid} {comp})
 IntCopreshfId {c} {mor} {cid} {comp} x =
   ICopreM
-    (\ec => qmId $ icprOmap x ec)
-    (\a, b, mab => QMorphPres (icprFmap x a b mab))
+    (IntCopreshfIdNT {c} {mor} {cid} {comp} x)
+    (IntCopreshfIdNatural {c} {mor} {cid} {comp} x)
 
 public export
 IntCopreshfCompNT : {c : Type} ->
