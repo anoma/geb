@@ -1506,12 +1506,8 @@ public export
   (x, y, z : CopreCatElemObj {c} {mor} p) ->
   (myz : CopreCatElemMor {c} {mor} {p} y z) ->
   (mxy : CopreCatElemMor {c} {mor} {p} x y) ->
-  QBaseRel (icprOmap p $ fst z)
-    (QMorphBase {x=(icprOmap p $ fst x)} {y=(icprOmap p $ fst z)}
-      (icprFmap p (fst x) (fst z)
-       $ CopreCatElemCompMor {p} x y z myz mxy)
-      (snd x),
-     snd z)
+  CopreCatElemEq {c} {mor} {cid} {comp} {p} x z
+    $ CopreCatElemCompMor {p} x y z myz mxy
 CopreCatElemCompEq {c} {mor} {cid} {comp} {p} x y z myz mxy =
   QRtrans
     (cemEq myz)
@@ -1688,14 +1684,8 @@ public export
   (x, y, z : PreCatElemObj {c} {mor} {cid} {comp} p) ->
   (myz : PreCatElemMor {c} {mor} {cid} {comp} {p} z y) ->
   (mxy : PreCatElemMor {c} {mor} {cid} {comp} {p} y x) ->
-  QBaseRel (iprOmap {c} {mor} {cid} {comp} p $ fst z)
-    (QMorphBase
-      {x=(iprOmap {cid} {comp} p $ fst x)}
-      {y=(iprOmap {cid} {comp} p $ fst z)}
-      (iprFmap {c} {mor} {cid} {comp} p (fst x) (fst z)
-       $ PreCatElemCompMor {c} {mor} {cid} {comp} {p} z y x mxy myz)
-      (snd x),
-     snd z)
+  PreCatElemEq {c} {mor} {cid} {comp} {p} z x
+    $ PreCatElemCompMor {c} {mor} {cid} {comp} {p} z y x mxy myz
 PreCatElemCompEq {c} {mor} {cid} {comp} {p} x y z myz mxy =
   QRtrans
     (pemEq myz)
