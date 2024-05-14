@@ -1311,7 +1311,7 @@ iprFcomp {c} {mor} {cid} {comp} =
 
 public export
 record IntPreshfMor {c : Type} {mor : IntMorSig c}
-    (cid : IntIdSig c mor) (comp : IntCompSig c mor)
+    {cid : IntIdSig c mor} {comp : IntCompSig c mor}
     (p, q : IntPreshfObj {c} mor cid comp) where
   constructor IPreM
   iprNT :
@@ -1324,6 +1324,26 @@ record IntPreshfMor {c : Type} {mor : IntMorSig c}
       iprNT
 
 public export
+IntPreshfIdNT : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p : IntPreshfObj {c} mor cid comp) ->
+  IntQPreshfNTSig c
+    (iprOmap {c} {mor} {cid} {comp} p)
+    (iprOmap {c} {mor} {cid} {comp} p)
+IntPreshfIdNT {c} {mor} {cid} {comp} x ec = qmId $ iprOmap x ec
+
+public export
+0 IntPreshfIdNatural : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p : IntPreshfObj {c} mor cid comp) ->
+  IntQPreshfNTNaturality c mor
+    (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} p)
+    (iprFmap {c} {mor} {cid} {comp} p) (iprFmap {c} {mor} {cid} {comp} p)
+    (IntPreshfIdNT {c} {mor} {cid} {comp} p)
+IntPreshfIdNatural {c} {mor} {cid} {comp} p x y m =
+  QMExtEqEquivI (_, _) (PrErefl $ iprFmap {c} {mor} {cid} {comp} p x y m)
+
+public export
 IntPreshfId : {c : Type} ->
   {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   IntIdSig
@@ -1331,8 +1351,41 @@ IntPreshfId : {c : Type} ->
     (IntPreshfMor {c} {mor} {cid} {comp})
 IntPreshfId {c} {mor} {cid} {comp} x =
   IPreM
-    (\ec => qmId $ icprOmap x ec)
-    (\a, b, mab, i => QMExtEqEquivI (_, _) (PrErefl $ icprFmap x a b mab) i)
+    (IntPreshfIdNT {c} {mor} {cid} {comp} x)
+    (IntPreshfIdNatural {c} {mor} {cid} {comp} x)
+
+public export
+IntPreshfCompNT : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p, q, r : IntPreshfObj {c} mor cid comp) ->
+  IntPreshfMor {c} {mor} {cid} {comp} q r ->
+  IntPreshfMor {c} {mor} {cid} {comp} p q ->
+  IntQPreshfNTSig c
+    (iprOmap {c} {mor} {cid} {comp} p)
+    (iprOmap {c} {mor} {cid} {comp} r)
+IntPreshfCompNT {c} {mor} {cid} {comp} p q r m' m ec =
+  qmComp (iprNT m' ec) (iprNT m ec)
+
+public export
+0 IntPreshfCompNatural : {c : Type} ->
+  {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p, q, r : IntPreshfObj {c} mor cid comp) ->
+  (m' : IntPreshfMor {c} {mor} {cid} {comp} q r) ->
+  (m : IntPreshfMor {c} {mor} {cid} {comp} p q) ->
+  IntQPreshfNTNaturality c mor
+    (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} r)
+    (iprFmap {c} {mor} {cid} {comp} p) (iprFmap {c} {mor} {cid} {comp} r)
+    (IntPreshfCompNT {c} {mor} {cid} {comp} p q r m' m)
+IntPreshfCompNatural {c} {mor} {cid} {comp} p q r m' m x y f epx epx' rpx =
+  QRtrans
+    (QMorphPres
+      (iprNT m' y)
+      (QMorphBase (iprFmap q x y f) $ QMorphBase (iprNT m x) epx')
+      (QMorphBase (iprNT m y) $ QMorphBase (iprFmap p x y f) epx')
+      (iprNatural m x y f epx' epx' $ QRrefl {x=(iprOmap p x)} {ex=epx'}))
+    (iprNatural m' x y f
+      (QMorphBase (iprNT m x) epx) (QMorphBase (iprNT m x) epx')
+      $ QMorphPres (iprNT m x) epx epx' rpx)
 
 public export
 IntPreshfComp : {c : Type} ->
@@ -1342,11 +1395,8 @@ IntPreshfComp : {c : Type} ->
     (IntPreshfMor {c} {mor} {cid} {comp})
 IntPreshfComp {c} {mor} {cid} {comp} p q r m' m =
   IPreM
-    (\ec => qmComp (iprNT m' ec) (iprNT m ec))
-    (\x, y, f, epx, epx', rpx => ?IPreshfComp_hole)
---      trans
---        (iprNatural m' x y f (iprNT m x el))
---        (cong (iprNT m' y) $ iprNatural m x y f el))
+    (IntPreshfCompNT {c} {mor} {cid} {comp} p q r m' m)
+    (IntPreshfCompNatural {c} {mor} {cid} {comp} p q r m' m)
 
 public export
 IntPreshfCat : {c : Type} -> (mor : IntMorSig c) ->
