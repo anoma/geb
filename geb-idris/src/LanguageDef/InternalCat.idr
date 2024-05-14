@@ -1485,16 +1485,6 @@ public export
       (snd x),
      snd z)
 CopreCatElemCompEq {c} {mor} {cid} {comp} {p} x y z myz mxy =
-  let
-    comp = icprFcomp p (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy)
-  in
-  {-
-  (\fext =>
-   trans
-    (sym $
-      icprFcomp p (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy) (snd x))
-  $ trans (rewrite cemEq mxy fext in Refl) (cemEq myz fext))
-  -}
   QRtrans
     (cemEq myz)
   $ QRtrans
@@ -1503,7 +1493,9 @@ CopreCatElemCompEq {c} {mor} {cid} {comp} {p} x y z myz mxy =
       (QMorphBase (icprFmap p (fst x) (fst y) (cemMor mxy)) (snd x))
       (snd y)
       (cemEq mxy))
-    ?CopreCatElemCompEq_hole_5
+  $ QRsym
+    (icprFcomp p (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy)
+      (snd x) (snd x) QRrefl)
 
 public export
 CopreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
