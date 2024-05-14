@@ -1472,7 +1472,7 @@ CopreCatElemCompMor {c} {mor} {cid} {comp} {p} x y z myz mxy =
   comp (fst x) (fst y) (fst z) (cemMor myz) (cemMor mxy)
 
 public export
-CopreCatElemCompEq : {c : Type} -> {mor : IntMorSig c} ->
+0 CopreCatElemCompEq : {c : Type} -> {mor : IntMorSig c} ->
   {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   {p : IntCopreshfObj {c} mor cid comp} ->
   (x, y, z : CopreCatElemObj {c} {mor} p) ->
