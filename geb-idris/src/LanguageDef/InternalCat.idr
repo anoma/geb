@@ -1602,7 +1602,8 @@ PreCatElemId : {c : Type} ->
     (PreCatElemMor {c} {mor} {cid} {comp} {p})
 PreCatElemId {c} {mor} {cid} {comp} {p} ex =
   PElMor (cid $ fst ex)
-  $ let fid = iprFid p (fst ex) (snd ex) in ?PreCatElemId_hole
+  $ iprFid p (fst ex) (snd ex) (snd ex)
+  $ PrEquivRefl (QRel $ iprOmap p (fst ex)) (snd ex)
 
 public export
 PreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
