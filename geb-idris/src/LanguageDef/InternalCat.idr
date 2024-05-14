@@ -1445,17 +1445,25 @@ CopreCatElemObj : {c : Type} ->
 CopreCatElemObj {c} {mor} {cid} {comp} = CopreSigCatElemObj {c} . icprOmap
 
 public export
+0 CopreCatElemEq : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntCopreshfObj {c} mor cid comp} ->
+  (dom, cod : CopreCatElemObj {c} p) ->
+  mor (fst dom) (fst cod) -> Type
+CopreCatElemEq {c} {mor} {cid} {comp} {p} dom cod m =
+  QBaseRel (icprOmap p $ fst cod)
+    (QMorphBase {x=(icprOmap p $ fst dom)} {y=(icprOmap p $ fst cod)}
+      (icprFmap p (fst dom) (fst cod) m) (snd dom),
+     snd cod)
+
+public export
 record CopreCatElemMor {c : Type}
     {mor : IntMorSig c} {cid : IntIdSig c mor} {comp : IntCompSig c mor}
     {p : IntCopreshfObj {c} mor cid comp} (dom, cod : CopreCatElemObj {c} p)
     where
   constructor CElMor
   cemMor : mor (fst dom) (fst cod)
-  0 cemEq :
-    QBaseRel (icprOmap p $ fst cod)
-      (QMorphBase {x=(icprOmap p $ fst dom)} {y=(icprOmap p $ fst cod)}
-        (icprFmap p (fst dom) (fst cod) cemMor) (snd dom),
-       snd cod)
+  0 cemEq : CopreCatElemEq {c} {mor} {cid} {comp} {p} dom cod cemMor
 
 public export
 CElMorC : {c : Type} ->
@@ -1560,6 +1568,20 @@ PreCatElemObj {c} {mor} {cid} {comp} =
     {comp=(IntOpCatComp c mor comp)}
 
 public export
+0 PreCatElemEq : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p : IntPreshfObj {c} mor cid comp} ->
+  (dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p) ->
+  mor (fst dom) (fst cod) -> Type
+PreCatElemEq {c} {mor} {cid} {comp} {p} dom cod m =
+  QBaseRel (iprOmap p $ fst dom)
+    (QMorphBase
+      {x=(iprOmap {c} {mor} {cid} {comp} p $ fst cod)}
+      {y=(iprOmap {c} {mor} {cid} {comp} p $ fst dom)}
+      (iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom) m) (snd cod),
+     snd dom)
+
+public export
 PreCatElemMor : {c : Type} ->
   {mor : IntMorSig c} -> {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   {p : IntPreshfObj {c} mor cid comp} ->
@@ -1578,11 +1600,8 @@ PElMor : {c : Type} ->
   {p : IntPreshfObj {c} mor cid comp} ->
   {dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p} ->
   (f : mor (fst dom) (fst cod)) ->
-  (0 _ : QBaseRel (icprOmap p $ fst dom)
-    (QMorphBase {x=(icprOmap p $ fst cod)} {y=(icprOmap p $ fst dom)}
-      (iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom) f) (snd cod),
-     snd dom))
-  -> PreCatElemMor {c} {mor} {cid} {comp} {p} dom cod
+  (0 _ : PreCatElemEq {c} {mor} {cid} {comp} {p} dom cod f) ->
+  PreCatElemMor {c} {mor} {cid} {comp} {p} dom cod
 PElMor {c} {mor} {cid} {comp} {p} {dom} {cod} =
   CElMor
     {c=(IntOpCatObj c)}
@@ -1614,12 +1633,8 @@ public export
   {p : IntPreshfObj {c} mor cid comp} ->
   {dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p} ->
   (f : PreCatElemMor {c} {mor} {cid} {comp} {p} dom cod) ->
-  QBaseRel (icprOmap p $ fst dom)
-    (QMorphBase {x=(icprOmap p $ fst cod)} {y=(icprOmap p $ fst dom)}
-      (iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom)
-        $ pemMor {c} {mor} {cid} {comp} {p} {dom} {cod} f)
-      $ snd cod,
-     snd dom)
+  PreCatElemEq {c} {mor} {cid} {comp} {p} dom cod
+    (pemMor {c} {mor} {cid} {comp} {p} {dom} {cod} f)
 pemEq {c} {mor} {cid} {comp} {p} {dom} {cod} =
   cemEq
     {c=(IntOpCatObj c)}
