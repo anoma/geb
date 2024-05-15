@@ -1781,6 +1781,32 @@ IntHomProfObj {c} {mor} cid comp =
     (IntHomProfOmap {c} mor)
     (IntHomProfFmap {c} {mor} comp)
 
+--------------------------------
+--------------------------------
+---- Twisted-arrow category ----
+--------------------------------
+--------------------------------
+
+-- The twisted-arrow category is the category of elements of the hom-profunctor.
+public export
+TwArrCat : (c : IntCatSig) ->
+  IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c) ->
+  IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c) ->
+  IntCatSig
+TwArrCat c mapId mapComp =
+  IntCopreCatElem
+    {c=(IntEndoOpProdCatObj $ icObj c)}
+    {mor=(IntEndoOpProdCatMor (icObj c) (icMor c))}
+    {cid=(IntEndoOpProdCatId (icObj c) (icMor c) (icId c))}
+    {comp=(IntEndoOpProdCatComp (icObj c) (icMor c) (icComp c))}
+  $ IntHomProfObj
+    {c=(icObj c)}
+    {mor=(icMor c)}
+    (icId c)
+    (icComp c)
+    mapId
+    mapComp
+
 ------------------------
 ------------------------
 ---- Two-categories ----
