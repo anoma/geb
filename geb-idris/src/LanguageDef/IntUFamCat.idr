@@ -109,6 +109,17 @@ ifumComp {c} mor comp {x} {y} {z} g f =
         (ifumOnObj {mor} g i)
         (ifumOnObj {mor} f $ ifumOnIdx {mor} g i))
 
+public export
+UFamCatSig : IntCatSig -> IntCatSig
+UFamCatSig c =
+  ICat
+    (IntUFamObj $ icObj c)
+  $ MICS
+    (IntUFamMor {c=(icObj c)} $ icMor c)
+  $ ICS
+    (ifumId {c=(icObj c)} (icMor c) (icId c))
+    (\x, y, z => ifumComp {c=(icObj c)} (icMor c) (icComp c) {x} {y} {z})
+
 -- The unit of the free cartesian monoidal category monad.
 public export
 fcmUnit : {c : Type} -> (mor : IntDifunctorSig c) -> c -> IntUFamObj c
