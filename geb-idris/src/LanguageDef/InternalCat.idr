@@ -2117,6 +2117,17 @@ cieFamComp : {c : IntCatSig} -> IntCompSig (CIEFamObj c) (CIEFamMor {c})
 cieFamComp {c} x y z g f =
   (cieFamCompPos {c} x y z g f ** cieFamCompObj {c} x y z g f)
 
+public export
+CIEFamCat : IntCatSig -> IntCatSig
+CIEFamCat c =
+  ICat
+    (CIEFamObj c)
+  $ MICS
+    (CIEFamMor {c})
+  $ ICS
+    (cieFamId {c})
+    (cieFamComp {c})
+
 -----------------------------------------------------------------------
 ---- Category-indexed existential cofamilies (polynomial functors) ----
 -----------------------------------------------------------------------
@@ -2167,6 +2178,17 @@ public export
 cieCofamComp : {c : IntCatSig} ->
   IntCompSig (CIECofamObj c) (CIECofamMor {c})
 cieCofamComp {c} = cieFamComp {c=(IntOpCat c)}
+
+public export
+CIECofamCat : IntCatSig -> IntCatSig
+CIECofamCat c =
+  ICat
+    (CIECofamObj c)
+  $ MICS
+    (CIECofamMor {c})
+  $ ICS
+    (cieCofamId {c})
+    (cieCofamComp {c})
 
 ---------------------------------------------
 ---- Category-indexed universal families ----
@@ -2232,6 +2254,17 @@ ciuFamComp : {c : IntCatSig} -> IntCompSig (CIUFamObj c) (CIUFamMor {c})
 ciuFamComp {c} x y z g f =
   (ciuFamCompPos {c} x y z g f ** ciuFamCompObj {c} x y z g f)
 
+public export
+CIUFamCat : IntCatSig -> IntCatSig
+CIUFamCat c =
+  ICat
+    (CIUFamObj c)
+  $ MICS
+    (CIUFamMor {c})
+  $ ICS
+    (ciuFamId {c})
+    (ciuFamComp {c})
+
 -----------------------------------------------
 ---- Category-indexed universal cofamilies ----
 -----------------------------------------------
@@ -2282,6 +2315,17 @@ public export
 ciuCofamComp : {c : IntCatSig} ->
   IntCompSig (CIUCofamObj c) (CIUCofamMor {c})
 ciuCofamComp {c} = ciuFamComp {c=(IntOpCat c)}
+
+public export
+CIUCofamCat : IntCatSig -> IntCatSig
+CIUCofamCat c =
+  ICat
+    (CIUCofamObj c)
+  $ MICS
+    (CIUCofamMor {c})
+  $ ICS
+    (ciuCofamId {c})
+    (ciuCofamComp {c})
 
 -------------------------------------------
 -------------------------------------------
