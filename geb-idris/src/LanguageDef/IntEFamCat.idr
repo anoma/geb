@@ -116,6 +116,17 @@ ifemComp {c} mor comp {x=(xpos ** xdir)} {y=(ypos ** ydir)} {z=(zpos ** zdir)}
         (gondir $ fonpos exp)
         (fondir exp))
 
+public export
+EFamCatSig : IntCatSig -> IntCatSig
+EFamCatSig c =
+  ICat
+    (IntEFamObj $ icObj c)
+  $ MICS
+    (IntEFamMor {c=(icObj c)} $ icMor c)
+  $ ICS
+    (ifemId {c=(icObj c)} (icMor c) (icId c))
+    (\x, y, z => ifemComp {c=(icObj c)} (icMor c) (icComp c) {x} {y} {z})
+
 ---------------------------------------
 ---------------------------------------
 ---- Element existential families -----

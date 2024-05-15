@@ -105,6 +105,17 @@ icfumComp {c} mor comp {x} {y} {z} =
     (\_, _, _ => ifemComp {c} mor comp)
     x y z
 
+public export
+UCofamCatSig : IntCatSig -> IntCatSig
+UCofamCatSig c =
+  ICat
+    (IntUCofamObj $ icObj c)
+  $ MICS
+    (IntUCofamMor {c=(icObj c)} $ icMor c)
+  $ ICS
+    (icfumId {c=(icObj c)} (icMor c) (icId c))
+    (\x, y, z => icfumComp {c=(icObj c)} (icMor c) (icComp c) {x} {y} {z})
+
 ---------------------------------------
 ---------------------------------------
 ---- Element universal cofamilies -----

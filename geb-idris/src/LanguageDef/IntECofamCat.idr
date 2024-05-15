@@ -117,6 +117,17 @@ icfemComp {c} mor comp {x} {y} {z} =
     (\_, _, _ => ifumComp {c} mor comp)
     x y z
 
+public export
+ECofamCatSig : IntCatSig -> IntCatSig
+ECofamCatSig c =
+  ICat
+    (IntECofamObj $ icObj c)
+  $ MICS
+    (IntECofamMor {c=(icObj c)} $ icMor c)
+  $ ICS
+    (icfemId {c=(icObj c)} (icMor c) (icId c))
+    (\x, y, z => icfemComp {c=(icObj c)} (icMor c) (icComp c) {x} {y} {z})
+
 -----------------------------------------
 -----------------------------------------
 ---- Element existential cofamilies -----
