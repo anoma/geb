@@ -13,7 +13,7 @@ import public LanguageDef.IntECofamCat
 -------------------------------------
 
 -- The disheaf category of a category is the category of existential
--- cofamilies (AKA polynomial functors) on its twisted-arrow category.
+-- families (AKA polynomial functors) on its twisted-arrow category.
 
 public export
 IntDisheafCat : (c : IntCatSig) ->
@@ -61,3 +61,17 @@ IntDisheafId c mapId mapComp = icId $ IntDisheafCat c mapId mapComp
 ---- Disheaf composition product ----
 -------------------------------------
 -------------------------------------
+
+public export
+IntDisheafInterp : {c : IntCatSig} ->
+  (mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  (mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  IntDisheafObj c mapId mapComp ->
+  (x, y : icObj c) -> icMor c x y -> QType
+IntDisheafInterp {c} mapId mapComp p x y f =
+  QTypeFromType
+  $ InterpECofamCopreshfOMap
+    (TwArrObj c mapId mapComp) (TwArrMor c mapId mapComp)
+    p ((x, y) ** f)

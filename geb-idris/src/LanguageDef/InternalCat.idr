@@ -1807,6 +1807,40 @@ TwArrCat c mapId mapComp =
     mapId
     mapComp
 
+public export
+TwArrObj : (c : IntCatSig) ->
+  IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c) ->
+  IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c) ->
+  Type
+TwArrObj c mapId mapComp = icObj $ TwArrCat c mapId mapComp
+
+public export
+TwArrMor : (c : IntCatSig) ->
+  (mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  (mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  IntMorSig (TwArrObj c mapId mapComp)
+TwArrMor c mapId mapComp = icMor $ TwArrCat c mapId mapComp
+
+public export
+TwArrId : (c : IntCatSig) ->
+  (mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  (mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  IntIdSig (TwArrObj c mapId mapComp) (TwArrMor c mapId mapComp)
+TwArrId c mapId mapComp = icId $ TwArrCat c mapId mapComp
+
+public export
+TwArrComp : (c : IntCatSig) ->
+  (mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  (mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  IntCompSig (TwArrObj c mapId mapComp) (TwArrMor c mapId mapComp)
+TwArrComp c mapId mapComp = icComp $ TwArrCat c mapId mapComp
+
 ------------------------
 ------------------------
 ---- Two-categories ----
