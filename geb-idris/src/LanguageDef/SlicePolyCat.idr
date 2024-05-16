@@ -57,6 +57,7 @@ sbcMap {c} {sl} sa sb = bcMap {c} {d=(Sigma {a=c} sl)} {f=DPair.fst} sa sb
 ----- Base change as W-type ----
 --------------------------------
 
+public export
 0 BCasWTF : {c, d : Type} -> (f : d -> c) -> WTypeFunc c d
 BCasWTF {c} {d} f = MkWTF {dom=c} {cod=d} d d f id id
 
@@ -142,6 +143,7 @@ sfsMap {c} {d} {f} sca scb =
 ----- Sigma as W-type ----
 --------------------------
 
+public export
 0 SFSasWTF : {c, d : Type} -> (f : c -> d) -> WTypeFunc c d
 SFSasWTF {c} {d} f = MkWTF {dom=c} {cod=d} c c id id f
 
@@ -359,6 +361,7 @@ sfpMap {c} {d} {f} sca scb =
 ----- Pi as W-type ----
 -----------------------
 
+public export
 0 SPSasWTF : {c, d : Type} -> (f : c -> d) -> WTypeFunc c d
 SPSasWTF {c} {d} f = MkWTF {dom=c} {cod=d} d c id f id
 
