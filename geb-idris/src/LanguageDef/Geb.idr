@@ -117,8 +117,9 @@ ReachableMu {a} = flip (ReachableSl {a})
 ---- W-type form ----
 ---------------------
 
+-- `ReachableBase` is just a specification of `BaseChangeF`.
 0 ReachableBaseW : {a : Type} -> (a -> a) -> WTypeFunc a a
-ReachableBaseW {a} f = MkWTF a a f (id {a}) (id {a})
+ReachableBaseW {a} = BCasWTF {c=a} {d=a}
 
 0 ReachableBaseToW : {a : Type} -> (f : a -> a) -> {sl : SliceObj a} ->
   SliceMorphism {a}
