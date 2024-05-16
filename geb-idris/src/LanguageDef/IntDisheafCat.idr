@@ -75,3 +75,41 @@ IntDisheafInterp {c} mapId mapComp p x y f =
   $ InterpECofamCopreshfOMap
     (TwArrObj c mapId mapComp) (TwArrMor c mapId mapComp)
     p ((x, y) ** f)
+
+-- The identity of the composition product on disheaves, which is analogous
+-- to that on profunctors.
+public export
+IntDisheafMonUnit : {c : IntCatSig} ->
+  (mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  (mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  IntDisheafObj c mapId mapComp
+IntDisheafMonUnit {c} mapId mapComp = (TwArrObj c mapId mapComp ** id)
+
+public export
+IntDisheafMonProd : {c : IntCatSig} ->
+  (mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  (mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  IntDisheafObj c mapId mapComp ->
+  IntDisheafObj c mapId mapComp ->
+  IntDisheafObj c mapId mapComp
+IntDisheafMonProd {c} mapId mapComp q p =
+  ((qpi : (fst q, fst p) **
+   icMor c (snd $ fst $ snd q (fst qpi)) (fst $ fst $ snd p (snd qpi))) **
+   \((qi, pi) ** qcpd) =>
+    ((fst $ fst $ snd q qi,
+      snd $ fst $ snd p pi) **
+     icComp c
+      (fst $ fst $ snd q qi) (fst $ fst $ snd p pi) (snd $ fst $ snd p pi)
+      (replace {p=(uncurry $ icMor c)}
+        (pairFstSnd (DPair.fst $ DPair.snd p pi))
+        (snd $ snd p pi)) $
+     icComp c
+      (fst $ fst $ snd q qi) (snd $ fst $ snd q qi) (fst $ fst $ snd p pi)
+      qcpd
+      (replace {p=(uncurry $ icMor c)}
+        (pairFstSnd (DPair.fst $ DPair.snd q qi))
+        (snd $ snd q qi))))
