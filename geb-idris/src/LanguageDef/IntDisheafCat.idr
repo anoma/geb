@@ -88,6 +88,17 @@ IntDisheafMonUnit : {c : IntCatSig} ->
 IntDisheafMonUnit {c} mapId mapComp = (TwArrObj c mapId mapComp ** id)
 
 public export
+IntDisheafMonProdPosMor : {c : IntCatSig} ->
+  (mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  (mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  (q, p : IntDisheafObj c mapId mapComp) ->
+  fst q -> fst p -> Type
+IntDisheafMonProdPosMor {c} mapId mapComp q p qi pi =
+   icMor c (snd $ fst $ snd q qi) (fst $ fst $ snd p pi)
+
+public export
 IntDisheafMonProd : {c : IntCatSig} ->
   (mapId :
     IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
@@ -98,7 +109,7 @@ IntDisheafMonProd : {c : IntCatSig} ->
   IntDisheafObj c mapId mapComp
 IntDisheafMonProd {c} mapId mapComp q p =
   ((qpi : (fst q, fst p) **
-   icMor c (snd $ fst $ snd q (fst qpi)) (fst $ fst $ snd p (snd qpi))) **
+    IntDisheafMonProdPosMor {c} mapId mapComp q p (fst qpi) (snd qpi)) **
    \((qi, pi) ** qcpd) =>
     ((fst $ fst $ snd q qi,
       snd $ fst $ snd p pi) **
