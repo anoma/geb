@@ -236,6 +236,9 @@ PushoutElimMap : (a : SpanObj) -> (0 b, b' : Type) ->
 PushoutElimMap (Span codl codr dom) b b' m (SpanM mcodl mcodr mdom) =
   SpanM (m . mcodl) (m . mcodr) (\l, r, d, fext => cong m $ mdom l r d fext)
 
+-- Note that this natural transformation is precisely the right Kan extension
+-- of the identity along `R` (`SpanDiagObj`).  See
+-- https://en.wikipedia.org/wiki/Kan_extension#Adjoints_as_Kan_extensions .
 export
 PushoutLAdjointObj : SpanObj -> Type
 PushoutLAdjointObj a =
@@ -278,7 +281,8 @@ PullbackIntroSig : CospanObj -> Type -> Type
 PullbackIntroSig a b = (b, CospanMorph (CospanDiagObj b) a)
 
 -- Note that this is precisely the left Kan extension of the identity
--- along `L` (`CospanDiagObj`).
+-- along `L` (`CospanDiagObj`).  See again
+-- https://en.wikipedia.org/wiki/Kan_extension#Adjoints_as_Kan_extensions .
 export
 PullbackRAdjointObj : CospanObj -> Type
 PullbackRAdjointObj a = Exists {type=Type} $ PullbackIntroSig a
