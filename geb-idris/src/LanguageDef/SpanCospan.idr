@@ -223,7 +223,9 @@ PullbackLAdjointMorph = CospanDiagMorph
 -- [to a given `b`] by an `a -> R b` [which is a `SpanMorph`]".  For it to be
 -- possible to map out (eliminate) the pushout to `b` by an `a -> R b` means
 -- that we must have a natural transformation:  for each `b`, we can get from
--- `a -> R b` to `b`.  Hence we define:
+-- `a -> R b` to `b`.  (Note that that that natural transformation is
+-- precisely the right Kan extension of the identity along `R`.)  Hence
+-- we define:
 export
 PushoutElimSig : SpanObj -> Type -> Type
 PushoutElimSig = (|>) SpanDiagObj . SpanMorph
@@ -273,11 +275,13 @@ data PushoutLAdjointObjExist : SpanObj -> Type where
 -- define:
 export
 PullbackIntroSig : CospanObj -> Type -> Type
-PullbackIntroSig b a = (a, CospanMorph (CospanDiagObj a) b)
+PullbackIntroSig a b = (b, CospanMorph (CospanDiagObj b) a)
 
+-- Note that this is precisely the left Kan extension of the identity
+-- along `L` (`CospanDiagObj`).
 export
 PullbackRAdjointObj : CospanObj -> Type
-PullbackRAdjointObj = Exists {type=Type} . PullbackIntroSig
+PullbackRAdjointObj a = Exists {type=Type} $ PullbackIntroSig a
 
 export
 PullbackRAdjointMorph : (0 b, b' : CospanObj) ->
