@@ -63,6 +63,27 @@ public export
 icComp : (cat : IntCatSig) -> IntCompSig (icObj cat) (icMor cat)
 icComp cat = micsComp {obj=(icObj cat)} $ icMICS cat
 
+public export
+0 IntIdLSig : (0 c : Type) -> (0 mor : IntMorSig c) ->
+  (comp : IntCompSig c mor) -> IntIdSig c mor -> Type
+IntIdLSig c mor comp cid =
+  (0 x, y : c) -> (m : mor x y) -> comp x x y m (cid x) = m
+
+public export
+0 IntIdRSig : (0 c : Type) -> (0 mor : IntMorSig c) ->
+  (comp : IntCompSig c mor) -> IntIdSig c mor -> Type
+IntIdRSig c mor comp cid =
+  (0 x, y : c) -> (m : mor x y) -> comp x y y (cid y) m = m
+
+public export
+0 IntAssocSig : (0 c : Type) ->
+  (mor : IntMorSig c) -> (comp : IntCompSig c mor) ->
+  Type
+IntAssocSig c mor comp =
+  (w, x, y, z : c) ->
+  (h : mor y z) -> (g : mor x y) -> (f : mor w x) ->
+  comp w x z (comp x y z h g) f = comp w y z h (comp w x y g f)
+
 -----------------
 -----------------
 ---- Bundles ----
