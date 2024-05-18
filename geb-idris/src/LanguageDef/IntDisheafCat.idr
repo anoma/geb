@@ -72,6 +72,20 @@ IntDisheafFromProfunctorSig : {c : IntCatSig} ->
 IntDisheafFromProfunctorSig {c} p x y m = p x y
 
 public export
+IntDisheafMapBaseSig : {c : IntCatSig} -> IntDisheafSig c -> Type
+IntDisheafMapBaseSig {c} p =
+  (s, t : icObj c) -> (mst : icMor c s t) ->
+  (a, b : icObj c) -> (mas : icMor c a s) -> (mtb : icMor c t b) ->
+  fst0 (p s t mst) ->
+  fst0
+    (p a b $
+      icComp c a t b
+        mtb
+      $ icComp c a s t
+        mst
+        mas)
+
+public export
 IntDisheafMapSig : {c : IntCatSig} -> IntDisheafSig c -> Type
 IntDisheafMapSig {c} p =
   (s, t : icObj c) -> (mst : icMor c s t) ->
@@ -94,17 +108,50 @@ IntDisheafFromDimapSig {c} p dm s t mst a b mas mtb = dm s t a b mas mtb
 
 public export
 IntDisheafInterp : {c : IntCatSig} ->
-  (mapId :
-    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
-  (mapComp :
-    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
   IntDisheafObj c mapId mapComp ->
   IntDisheafSig c
-IntDisheafInterp {c} mapId mapComp p x y f =
+IntDisheafInterp {c} {mapId} {mapComp} p x y f =
   QTypeFromType
   $ InterpECofamCopreshfOMap
     (TwArrObj c mapId mapComp) (TwArrMor c mapId mapComp)
     p ((x, y) ** f)
+
+public export
+IntDisheafInterpMapBase : {c : IntCatSig} ->
+  (assoc : IntAssocSig (icObj c) (icMor c) (icComp c)) ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  (p : IntDisheafObj c mapId mapComp) ->
+  IntDisheafMapBaseSig {c} (IntDisheafInterp {c} {mapId} {mapComp} p)
+IntDisheafInterpMapBase {c} assoc {mapId} {mapComp} (pidx ** pobj)
+    s t mst a b mas mtb (i ** CElMor cm ceq) with (pobj i) proof peq
+  IntDisheafInterpMapBase {c} assoc {mapId} {mapComp} (pidx ** pobj)
+    s t mst a b mas mtb (i ** CElMor (msu, mvt) ceq) | ((u, v) ** muv) =
+      (i **
+       rewrite peq in
+       CElMor
+        (icComp c a s u msu mas, icComp c v t b mtb mvt)
+        $ rewrite sym ceq in
+          ?IntDisheafInterpMapBase_hole)
+
+public export
+IntDisheafInterpMap : {c : IntCatSig} ->
+  (assoc : IntAssocSig (icObj c) (icMor c) (icComp c)) ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  (p : IntDisheafObj c mapId mapComp) ->
+  IntDisheafMapSig {c} (IntDisheafInterp {c} {mapId} {mapComp} p)
+IntDisheafInterpMap {c} assoc {mapId} {mapComp} p s t mst a b mas mtb =
+  QMorphFromMorph $
+    IntDisheafInterpMapBase {c} assoc {mapId} {mapComp} p s t mst a b mas mtb
 
 -- The identity of the composition product on disheaves, which is analogous
 -- to that on profunctors.
