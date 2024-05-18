@@ -67,6 +67,32 @@ IntDisheafSig : IntCatSig -> Type
 IntDisheafSig c = (x, y : icObj c) -> icMor c x y -> QType
 
 public export
+IntDisheafFromProfunctorSig : {c : IntCatSig} ->
+  (icObj c -> icObj c -> QType) -> IntDisheafSig c
+IntDisheafFromProfunctorSig {c} p x y m = p x y
+
+public export
+IntDisheafMapSig : {c : IntCatSig} -> IntDisheafSig c -> Type
+IntDisheafMapSig {c} p =
+  (s, t : icObj c) -> (mst : icMor c s t) ->
+  (a, b : icObj c) -> (mas : icMor c a s) -> (mtb : icMor c t b) ->
+  QMorph
+    (p s t mst)
+    (p a b $
+      icComp c a t b
+        mtb
+      $ icComp c a s t
+        mst
+        mas)
+
+public export
+IntDisheafFromDimapSig : {c : IntCatSig} -> (p : icObj c -> icObj c -> QType) ->
+  ((s, t, a, b : icObj c) -> icMor c a s -> icMor c t b ->
+   QMorph (p s t) (p a b)) ->
+  IntDisheafMapSig {c} (IntDisheafFromProfunctorSig {c} p)
+IntDisheafFromDimapSig {c} p dm s t mst a b mas mtb = dm s t a b mas mtb
+
+public export
 IntDisheafInterp : {c : IntCatSig} ->
   (mapId :
     IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
