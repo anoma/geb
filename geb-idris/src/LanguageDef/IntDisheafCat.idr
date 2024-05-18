@@ -63,13 +63,17 @@ IntDisheafId c mapId mapComp = icId $ IntDisheafCat c mapId mapComp
 -------------------------------------
 
 public export
+IntDisheafSig : IntCatSig -> Type
+IntDisheafSig c = (x, y : icObj c) -> icMor c x y -> QType
+
+public export
 IntDisheafInterp : {c : IntCatSig} ->
   (mapId :
     IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
   (mapComp :
     IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
   IntDisheafObj c mapId mapComp ->
-  (x, y : icObj c) -> icMor c x y -> QType
+  IntDisheafSig c
 IntDisheafInterp {c} mapId mapComp p x y f =
   QTypeFromType
   $ InterpECofamCopreshfOMap
