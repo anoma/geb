@@ -37,20 +37,20 @@ IntComp : (c : Type) -> (mor : IntDifunctorSig c) -> Type
 IntComp c mor = (x, y, z : c) -> mor y z -> mor x y -> mor x z
 
 public export
-0 IntIdLSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+0 IntIdLSig : (0 c : Type) -> (0 mor : IntMorSig c) ->
   (comp : IntCompSig c mor) -> IntIdSig c mor -> Type
 IntIdLSig c mor comp cid =
   (0 x, y : c) -> (m : mor x y) -> comp x x y m (cid x) = m
 
 public export
-0 IntIdRSig : (0 c : Type) -> (0 mor : IntDifunctorSig c) ->
+0 IntIdRSig : (0 c : Type) -> (0 mor : IntMorSig c) ->
   (comp : IntCompSig c mor) -> IntIdSig c mor -> Type
 IntIdRSig c mor comp cid =
   (0 x, y : c) -> (m : mor x y) -> comp x y y (cid y) m = m
 
 public export
 0 IntAssocSig : (0 c : Type) ->
-  (mor : IntDifunctorSig c) -> (comp : IntCompSig c mor) ->
+  (mor : IntMorSig c) -> (comp : IntCompSig c mor) ->
   Type
 IntAssocSig c mor comp =
   (w, x, y, z : c) ->
