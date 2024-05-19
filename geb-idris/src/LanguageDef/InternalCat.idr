@@ -1701,9 +1701,12 @@ PElMorC : {c : Type} ->
      QMorphBase {x=(icprOmap p y)} {y=(icprOmap p x)}
       (iprFmap {c} {cid} {mor} {comp} p y x mxy) ey)
     (y ** ey)
-PElMorC {c} {mor} {cid} {comp} {p} {y} ey {x} mxy =
-  PElMor mxy $
-    PrEquivRefl (QRel $ iprOmap p x) (QMorphBase (iprFmap p y x mxy) ey)
+PElMorC {c} {mor} {cid} {comp} =
+  CElMorC
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
 PreCatElemId : {c : Type} ->
@@ -1712,10 +1715,12 @@ PreCatElemId : {c : Type} ->
   IntIdSig
     (PreCatElemObj {c} {mor} {cid} {comp} p)
     (PreCatElemMor {c} {mor} {cid} {comp} {p})
-PreCatElemId {c} {mor} {cid} {comp} {p} ex =
-  PElMor (cid $ fst ex)
-  $ iprFid p (fst ex) (snd ex) (snd ex)
-  $ PrEquivRefl (QRel $ iprOmap p (fst ex)) (snd ex)
+PreCatElemId {c} {mor} {cid} {comp} =
+  CopreCatElemId
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
 PreCatElemCompMor : {c : Type} -> {mor : IntMorSig c} ->
@@ -1725,8 +1730,15 @@ PreCatElemCompMor : {c : Type} -> {mor : IntMorSig c} ->
   PreCatElemMor {c} {mor} {cid} {comp} {p} y z ->
   PreCatElemMor {c} {mor} {cid} {comp} {p} x y ->
   mor (fst x) (fst z)
-PreCatElemCompMor {c} {mor} {cid} {comp} {p} x y z myz mxy =
-  comp (fst x) (fst y) (fst z) (pemMor myz) (pemMor mxy)
+PreCatElemCompMor {c} {mor} {cid} {comp} {p} {x} {y} {z} =
+  flip $ CopreCatElemCompMor
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+    {x=z}
+    {y}
+    {z=x}
 
 public export
 0 PreCatElemCompEq : {c : Type} -> {mor : IntMorSig c} ->
@@ -1737,18 +1749,12 @@ public export
   (mxy : PreCatElemMor {c} {mor} {cid} {comp} {p} y x) ->
   PreCatElemEq {c} {mor} {cid} {comp} {p} z x
     $ PreCatElemCompMor {c} {mor} {cid} {comp} {p} z y x mxy myz
-PreCatElemCompEq {c} {mor} {cid} {comp} {p} x y z myz mxy =
-  QRtrans
-    (pemEq myz)
-  $ QRtrans
-    (QMorphPres
-      (iprFmap p (fst y) (fst z) (pemMor myz))
-      (QMorphBase (iprFmap p (fst x) (fst y) (pemMor mxy)) (snd x))
-      (snd y)
-      (pemEq mxy))
-  $ QRsym
-    (iprFcomp p (fst x) (fst y) (fst z) (pemMor myz) (pemMor mxy)
-      (snd x) (snd x) QRrefl)
+PreCatElemCompEq {c} {mor} {cid} {comp} {p} =
+  CopreCatElemCompEq
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
 PreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
@@ -1757,23 +1763,24 @@ PreCatElemComp : {c : Type} -> {mor : IntMorSig c} ->
   IntCompSig
     (PreCatElemObj {c} {mor} {cid} {comp} p)
     (PreCatElemMor {c} {mor} {cid} {comp} {p})
-PreCatElemComp {c} {mor} {cid} {comp} {p} x y z mzy myx =
-  PElMor
-    (PreCatElemCompMor {c} {mor} {cid} {comp} {p} x y z mzy myx)
-    (PreCatElemCompEq {c} {mor} {cid} {comp} {p} z y x myx mzy)
+PreCatElemComp {c} {mor} {cid} {comp} {p} x y z =
+   flip $ CopreCatElemComp
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+    z y x
 
 public export
 IntPreCatElem : {c : Type} -> {mor : IntMorSig c} ->
   {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
   IntPreshfObj {c} mor cid comp -> IntCatSig
-IntPreCatElem {c} {mor} {cid} {comp} p =
-  ICat
-    (PreCatElemObj {c} {mor} p)
-  $ MICS
-    (PreCatElemMor {c} {mor} {p})
-  $ ICS
-    (PreCatElemId {c} {mor} {cid} {comp} {p})
-    (PreCatElemComp {c} {mor} {cid} {comp} {p})
+IntPreCatElem {c} {mor} {cid} {comp} =
+  IntCopreCatElem
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 ----------------------------------------
 ----------------------------------------
