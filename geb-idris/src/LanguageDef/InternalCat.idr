@@ -514,12 +514,11 @@ intNThcomp {c} {d} {e} {dmor} {emor} ecomp {f} {f'} {g} {g'} gm beta alpha =
 public export
 FunctorCatHcomp :
   GlobalHcompHomStruct IntCatCat FunctorCatHomStruct
-FunctorCatHcomp c d e f f' g g' beta alpha =
+FunctorCatHcomp =
   GlobalHcompFromWhiskers
     IntCatCat
     FunctorCatHomStruct
     FunctorCatWhiskerPair
-    c d e f f' g g' beta alpha
 
 ---------------------------------
 ---------------------------------
@@ -1070,21 +1069,21 @@ public export
 0 IntPreshfMapId :
   {c : Type} -> {mor : IntMorSig c} -> (cid : IntIdSig c mor) ->
   {objmap : IntQPreshfSig c} -> IntQPreshfMapSig c mor objmap -> Type
-IntPreshfMapId {c} {mor} cid {objmap} cfmap =
-  (x : c) ->
-  QMExtEqC {x=(objmap x)} {y=(objmap x)}
-    (cfmap x x $ cid x)
-    (qTypeId (objmap x))
+IntPreshfMapId {c} {mor} cid =
+  IntCopreshfMapId
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    (IntOpCatId c mor cid)
 
 public export
 0 IntPreshfMapComp :
   {c : Type} -> {mor : IntMorSig c} -> (comp : IntCompSig c mor) ->
   {objmap : IntQPreshfSig c} -> IntQPreshfMapSig c mor objmap -> Type
-IntPreshfMapComp {c} {mor} comp {objmap} cfmap =
-  (x, y, z : c) -> (mzy : mor z y) -> (myx : mor y x) ->
-    QMExtEqC {x=(objmap x)} {y=(objmap z)}
-      (qmComp (cfmap y z mzy) (cfmap x y myx))
-      (cfmap x z $ comp z y x myx mzy)
+IntPreshfMapComp {c} {mor} comp =
+  IntCopreshfMapComp
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    (IntOpCatComp c mor comp)
 
 public export
 IntCopreshfNTSig : (c : Type) -> (pobj, qobj : IntCopreshfSig c) -> Type
