@@ -1543,7 +1543,7 @@ IntCopreCatElem {c} {mor} {cid} {comp} p =
 
 public export
 PreSigCatElemObj : {c : Type} -> IntQPreshfSig c -> Type
-PreSigCatElemObj {c} p = Sigma {a=c} (QBase . p)
+PreSigCatElemObj {c} = CopreSigCatElemObj {c=(IntOpCatObj c)}
 
 public export
 PreCatElemObj : {c : Type} ->
@@ -1562,13 +1562,14 @@ public export
   {p : IntPreshfObj {c} mor cid comp} ->
   (dom, cod : PreCatElemObj {c} {mor} {cid} {comp} p) ->
   mor (fst dom) (fst cod) -> Type
-PreCatElemEq {c} {mor} {cid} {comp} {p} dom cod m =
-  QBaseRel (iprOmap p $ fst dom)
-    (QMorphBase
-      {x=(iprOmap {c} {mor} {cid} {comp} p $ fst cod)}
-      {y=(iprOmap {c} {mor} {cid} {comp} p $ fst dom)}
-      (iprFmap {c} {mor} {cid} {comp} p (fst cod) (fst dom) m) (snd cod),
-     snd dom)
+PreCatElemEq {c} {mor} {cid} {comp} dom cod =
+  CopreCatElemEq
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+    cod
+    dom
 
 public export
 PreCatElemMor : {c : Type} ->
