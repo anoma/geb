@@ -174,26 +174,26 @@ IntDisheafMonUnit {c} mapId mapComp = (TwArrObj c mapId mapComp ** id)
 
 public export
 IntDisheafMonProdPosMor : {c : IntCatSig} ->
-  (mapId :
-    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
-  (mapComp :
-    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
   (q, p : IntDisheafObj c mapId mapComp) ->
   fst q -> fst p -> Type
-IntDisheafMonProdPosMor {c} mapId mapComp q p qi pi =
+IntDisheafMonProdPosMor {c} {mapId} {mapComp} q p qi pi =
    icMor c (snd $ fst $ snd q qi) (fst $ fst $ snd p pi)
 
 public export
 IntDisheafMonProdDir : {c : IntCatSig} ->
-  (mapId :
-    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
-  (mapComp :
-    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
   (q, p : IntDisheafObj c mapId mapComp) ->
   (qi : fst q) -> (pi : fst p) ->
-  IntDisheafMonProdPosMor {c} mapId mapComp q p qi pi ->
+  IntDisheafMonProdPosMor {c} {mapId} {mapComp} q p qi pi ->
   TwArrObj c mapId mapComp
-IntDisheafMonProdDir {c} mapId mapComp q p qi pi qcpd =
+IntDisheafMonProdDir {c} {mapId} {mapComp} q p qi pi qcpd =
   ((fst $ fst $ snd q qi, snd $ fst $ snd p pi) **
    icComp c
     (fst $ fst $ snd q qi) (fst $ fst $ snd p pi) (snd $ fst $ snd p pi)
@@ -209,16 +209,16 @@ IntDisheafMonProdDir {c} mapId mapComp q p qi pi qcpd =
 
 public export
 IntDisheafMonProd : {c : IntCatSig} ->
-  (mapId :
-    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
-  (mapComp :
-    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
   IntDisheafObj c mapId mapComp ->
   IntDisheafObj c mapId mapComp ->
   IntDisheafObj c mapId mapComp
-IntDisheafMonProd {c} mapId mapComp q p =
+IntDisheafMonProd {c} {mapId} {mapComp} q p =
   ((qpi : (fst q, fst p) **
-    IntDisheafMonProdPosMor {c} mapId mapComp q p (fst qpi) (snd qpi)) **
+    IntDisheafMonProdPosMor {c} {mapId} {mapComp} q p (fst qpi) (snd qpi)) **
    \qpim =>
-    IntDisheafMonProdDir {c} mapId mapComp q p
+    IntDisheafMonProdDir {c} {mapId} {mapComp} q p
       (fst $ fst qpim) (snd $ fst qpim) (snd qpim))
