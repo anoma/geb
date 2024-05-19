@@ -138,7 +138,15 @@ IntDisheafInterpMapBase {c} assoc {mapId} {mapComp} (pidx ** pobj)
        CElMor
         (icComp c a s u msu mas, icComp c v t b mtb mvt)
         $ rewrite sym ceq in
-          ?IntDisheafInterpMapBase_hole)
+          trans
+            (assoc _ _ _ _
+              mtb
+              mvt
+              (icComp c _ _ _ muv (icComp c _ _ _ msu mas)))
+          $ cong (icComp c _ _ _ mtb)
+          $ trans
+            (cong (icComp c _ _ _ mvt) $ sym $ assoc _ _ _ _ muv msu mas)
+            $ sym $ assoc _ _ _ _ mvt (icComp c _ _ _ muv msu) mas)
 
 public export
 IntDisheafInterpMap : {c : IntCatSig} ->
