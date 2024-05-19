@@ -1323,18 +1323,64 @@ iprFcomp {c} {mor} {cid} {comp} =
     {comp=(IntOpCatComp c mor comp)}
 
 public export
-record IntPreshfMor {c : Type} {mor : IntMorSig c}
-    {cid : IntIdSig c mor} {comp : IntCompSig c mor}
-    (p, q : IntPreshfObj {c} mor cid comp) where
-  constructor IPreM
-  iprNT :
-    IntQPreshfNTSig c
-      (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} q)
-  0 iprNatural :
-    IntQPreshfNTNaturality c mor
-      (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} q)
-      (iprFmap {c} {mor} {cid} {comp} p) (iprFmap {c} {mor} {cid} {comp} q)
-      iprNT
+IntPreshfMor : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  (p, q : IntPreshfObj {c} mor cid comp) ->
+  Type
+IntPreshfMor {c} {mor} {cid} {comp} =
+  IntCopreshfMor
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+
+public export
+IPreM : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p, q : IntPreshfObj {c} mor cid comp} ->
+  (nt : IntQPreshfNTSig c
+    (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} q)) ->
+  (0 _ : IntQPreshfNTNaturality c mor
+    (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} q)
+    (iprFmap {c} {mor} {cid} {comp} p) (iprFmap {c} {mor} {cid} {comp} q)
+    nt) ->
+  IntPreshfMor {c} {mor} {cid} {comp} p q
+IPreM {c} {mor} {cid} {comp} =
+  ICopreM
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+
+public export
+iprNT : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p, q : IntPreshfObj {c} mor cid comp} ->
+  IntPreshfMor {c} {mor} {cid} {comp} p q ->
+  IntQPreshfNTSig c
+    (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} q)
+iprNT {c} {mor} {cid} {comp} =
+  icprNT
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
+
+public export
+0 iprNatural : {c : Type} -> {mor : IntMorSig c} ->
+  {cid : IntIdSig c mor} -> {comp : IntCompSig c mor} ->
+  {p, q : IntPreshfObj {c} mor cid comp} ->
+  (m : IntPreshfMor {c} {mor} {cid} {comp} p q) ->
+  IntQPreshfNTNaturality c mor
+    (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} q)
+    (iprFmap {c} {mor} {cid} {comp} p) (iprFmap {c} {mor} {cid} {comp} q)
+    (iprNT {c} {mor} {cid} {comp} {p} {q} m)
+iprNatural {c} {mor} {cid} {comp} =
+  icprNatural
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
 IntPreshfIdNT : {c : Type} ->
