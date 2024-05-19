@@ -1389,7 +1389,12 @@ IntPreshfIdNT : {c : Type} ->
   IntQPreshfNTSig c
     (iprOmap {c} {mor} {cid} {comp} p)
     (iprOmap {c} {mor} {cid} {comp} p)
-IntPreshfIdNT {c} {mor} {cid} {comp} x ec = qmId $ iprOmap x ec
+IntPreshfIdNT {c} {mor} {cid} {comp} =
+  IntCopreshfIdNT
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
 0 IntPreshfIdNatural : {c : Type} ->
@@ -1399,8 +1404,12 @@ public export
     (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} p)
     (iprFmap {c} {mor} {cid} {comp} p) (iprFmap {c} {mor} {cid} {comp} p)
     (IntPreshfIdNT {c} {mor} {cid} {comp} p)
-IntPreshfIdNatural {c} {mor} {cid} {comp} p x y m =
-  QMorphPres (icprFmap p x y m)
+IntPreshfIdNatural {c} {mor} {cid} {comp} =
+  IntCopreshfIdNatural
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
 IntPreshfId : {c : Type} ->
@@ -1408,10 +1417,12 @@ IntPreshfId : {c : Type} ->
   IntIdSig
     (IntPreshfObj {c} mor cid comp)
     (IntPreshfMor {c} {mor} {cid} {comp})
-IntPreshfId {c} {mor} {cid} {comp} x =
-  IPreM
-    (IntPreshfIdNT {c} {mor} {cid} {comp} x)
-    (IntPreshfIdNatural {c} {mor} {cid} {comp} x)
+IntPreshfId {c} {mor} {cid} {comp} =
+  IntCopreshfId
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
 IntPreshfCompNT : {c : Type} ->
@@ -1422,8 +1433,12 @@ IntPreshfCompNT : {c : Type} ->
   IntQPreshfNTSig c
     (iprOmap {c} {mor} {cid} {comp} p)
     (iprOmap {c} {mor} {cid} {comp} r)
-IntPreshfCompNT {c} {mor} {cid} {comp} p q r m' m ec =
-  qmComp (iprNT m' ec) (iprNT m ec)
+IntPreshfCompNT {c} {mor} {cid} {comp} =
+  IntCopreshfCompNT
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
 0 IntPreshfCompNatural : {c : Type} ->
@@ -1435,16 +1450,12 @@ public export
     (iprOmap {c} {mor} {cid} {comp} p) (iprOmap {c} {mor} {cid} {comp} r)
     (iprFmap {c} {mor} {cid} {comp} p) (iprFmap {c} {mor} {cid} {comp} r)
     (IntPreshfCompNT {c} {mor} {cid} {comp} p q r m' m)
-IntPreshfCompNatural {c} {mor} {cid} {comp} p q r m' m x y f epx epx' rpx =
-  QRtrans
-    (QMorphPres
-      (iprNT m' y)
-      (QMorphBase (iprFmap q x y f) $ QMorphBase (iprNT m x) epx')
-      (QMorphBase (iprNT m y) $ QMorphBase (iprFmap p x y f) epx')
-      (iprNatural m x y f epx' epx' $ QRrefl {x=(iprOmap p x)} {ex=epx'}))
-    (iprNatural m' x y f
-      (QMorphBase (iprNT m x) epx) (QMorphBase (iprNT m x) epx')
-      $ QMorphPres (iprNT m x) epx epx' rpx)
+IntPreshfCompNatural {c} {mor} {cid} {comp} =
+  IntCopreshfCompNatural
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
 IntPreshfComp : {c : Type} ->
@@ -1452,22 +1463,22 @@ IntPreshfComp : {c : Type} ->
   IntCompSig
     (IntPreshfObj {c} mor cid comp)
     (IntPreshfMor {c} {mor} {cid} {comp})
-IntPreshfComp {c} {mor} {cid} {comp} p q r m' m =
-  IPreM
-    (IntPreshfCompNT {c} {mor} {cid} {comp} p q r m' m)
-    (IntPreshfCompNatural {c} {mor} {cid} {comp} p q r m' m)
+IntPreshfComp {c} {mor} {cid} {comp} =
+  IntCopreshfComp
+    {c=(IntOpCatObj c)}
+    {mor=(IntOpCatMor c mor)}
+    {cid=(IntOpCatId c mor cid)}
+    {comp=(IntOpCatComp c mor comp)}
 
 public export
 IntPreshfCat : {c : Type} -> (mor : IntMorSig c) ->
   IntIdSig c mor -> IntCompSig c mor -> IntCatSig
 IntPreshfCat {c} mor cid comp =
-  ICat
-    (IntPreshfObj {c} mor cid comp)
-  $ MICS
-    (IntPreshfMor {c} {mor} {cid} {comp})
-  $ ICS
-    (IntPreshfId {c} {mor} {cid} {comp})
-    (IntPreshfComp {c} {mor} {cid} {comp})
+  IntCopreshfCat
+    {c=(IntOpCatObj c)}
+    (IntOpCatMor c mor)
+    (IntOpCatId c mor cid)
+    (IntOpCatComp c mor comp)
 
 ------------------------------------------
 ---- Covariant categories of elements ----
