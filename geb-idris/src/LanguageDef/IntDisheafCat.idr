@@ -39,15 +39,6 @@ IntDisheafMor : (c : IntCatSig) ->
 IntDisheafMor c mapId mapComp = icMor $ IntDisheafCat c mapId mapComp
 
 public export
-IntDisheafComp : (c : IntCatSig) ->
-  (mapId :
-    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
-  (mapComp :
-    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
-  IntCompSig (IntDisheafObj c mapId mapComp) (IntDisheafMor c mapId mapComp)
-IntDisheafComp c mapId mapComp = icComp $ IntDisheafCat c mapId mapComp
-
-public export
 IntDisheafId : (c : IntCatSig) ->
   (mapId :
     IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
@@ -55,6 +46,15 @@ IntDisheafId : (c : IntCatSig) ->
     IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
   IntIdSig (IntDisheafObj c mapId mapComp) (IntDisheafMor c mapId mapComp)
 IntDisheafId c mapId mapComp = icId $ IntDisheafCat c mapId mapComp
+
+public export
+IntDisheafComp : (c : IntCatSig) ->
+  (mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  (mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)) ->
+  IntCompSig (IntDisheafObj c mapId mapComp) (IntDisheafMor c mapId mapComp)
+IntDisheafComp c mapId mapComp = icComp $ IntDisheafCat c mapId mapComp
 
 -------------------------------------
 -------------------------------------
