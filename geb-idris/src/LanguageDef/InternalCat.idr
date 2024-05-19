@@ -1133,11 +1133,8 @@ public export
   (0 pobj, qobj : IntPreshfSig c) ->
   IntPreshfMapSig c cmor pobj -> IntPreshfMapSig c cmor qobj ->
   IntPreshfNTSig c pobj qobj -> Type
-IntPreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
-  (x, y : c) -> (m : cmor y x) ->
-  ExtEq {a=(pobj x)} {b=(qobj y)}
-    (qmap x y m . alpha x)
-    (alpha y . pmap x y m)
+IntPreshfNTNaturality c cmor =
+  IntCopreshfNTNaturality (IntOpCatObj c) (IntOpCatMor c cmor)
 
 public export
 0 IntQPreshfNTNaturality :
@@ -1145,11 +1142,8 @@ public export
   (0 pobj, qobj : IntQPreshfSig c) ->
   IntQPreshfMapSig c cmor pobj -> IntQPreshfMapSig c cmor qobj ->
   IntQPreshfNTSig c pobj qobj -> Type
-IntQPreshfNTNaturality c cmor pobj qobj pmap qmap alpha =
-  (x, y : c) -> (m : cmor y x) ->
-  QMExtEqC {x=(pobj x)} {y=(qobj y)}
-    (qmComp (qmap x y m) (alpha x))
-    (qmComp (alpha y) (pmap x y m))
+IntQPreshfNTNaturality c cmor =
+  IntQCopreshfNTNaturality (IntOpCatObj c) (IntOpCatMor c cmor)
 
 public export
 record IntCopreshfObj {c : Type}
