@@ -217,3 +217,18 @@ IntDisheafMonProd {c} {mapId} {mapComp} q p =
    \qpim =>
     IntDisheafMonProdDir {c} {mapId} {mapComp} q p
       (fst $ fst qpim) (snd $ fst qpim) (snd qpim))
+
+-- The composition monoid on disheaves.
+public export
+IntDisheafCompMon : (c : IntCatSig) ->
+  IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c) ->
+  IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c) ->
+  IntCatSig
+IntDisheafCompMon c mapId mapComp =
+  ICat
+    Unit
+  $ MICS
+    (\_, _ => IntDisheafObj c mapId mapComp)
+  $ ICS
+    (\_ => IntDisheafMonUnit {c} mapId mapComp)
+    (\_, _, _ => IntDisheafMonProd {c} {mapId} {mapComp})
