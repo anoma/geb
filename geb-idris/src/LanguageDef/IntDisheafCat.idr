@@ -251,6 +251,39 @@ IntDisheafPrecompOmap {c} {mapId} {mapComp} =
   flip $ IntDisheafMonProd {c} {mapId} {mapComp}
 
 public export
+IntDisheafPrecompFmapOnIdx : {c : IntCatSig} ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  (p : IntDisheafObj c mapId mapComp) ->
+  (q, r : IntDisheafObj c mapId mapComp) ->
+  (m : IntDisheafMor c mapId mapComp q r) ->
+  (qi : icfeoIdx q) -> (pi : icfeoIdx p) ->
+  icMor c (snd $ fst $ snd q qi) (fst $ fst $ snd p pi) ->
+  icMor c (snd $ fst $ snd r $ fst m qi) (fst $ fst $ snd p pi)
+IntDisheafPrecompFmapOnIdx {c} {mapId} {mapComp} p q r
+  (onidx ** onobj) qi pi qcpd =
+    icComp c _ _ _ qcpd (snd $ cemMor $ onobj qi)
+
+public export
+IntDisheafPrecompFmapOnObjMor : {c : IntCatSig} ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  (p : IntDisheafObj c mapId mapComp) ->
+  (q, r : IntDisheafObj c mapId mapComp) ->
+  (m : IntDisheafMor c mapId mapComp q r) ->
+  (qi : icfeoIdx q) -> (pi : icfeoIdx p) ->
+  icMor c (snd $ fst $ snd q qi) (fst $ fst $ snd p pi) ->
+  (icMor c (fst $ fst $ snd q qi) (fst (fst $ snd r $ fst m qi)),
+   icMor c (snd $ fst $ snd p pi) (snd $ fst $ snd p pi))
+IntDisheafPrecompFmapOnObjMor {c} {mapId} {mapComp} p q r
+  (onidx ** onobj) qi pi qcpd =
+    (fst $ cemMor $ onobj qi, icId c $ snd $ fst $ snd p pi)
+
+public export
 IntDisheafPrecompFmap : {c : IntCatSig} ->
   {mapId :
     IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
@@ -263,11 +296,12 @@ IntDisheafPrecompFmap : {c : IntCatSig} ->
     (IntDisheafPrecompOmap {c} {mapId} {mapComp} p)
 IntDisheafPrecompFmap {c} {mapId} {mapComp} p q r (onidx ** onobj) =
   (\((qi, pi) ** qcpd) =>
-    ((onidx qi, pi) ** icComp c _ _ _ qcpd (snd $ cemMor $ onobj qi)) **
+    ((onidx qi, pi) **
+     IntDisheafPrecompFmapOnIdx p q r (onidx ** onobj) qi pi qcpd) **
    \((qi, pi) ** qcpd) =>
-    let (qdrd, rcqc) = cemMor (onobj qi) in
     CElMor
-      (qdrd, icId c $ snd $ fst $ snd p pi)
+      (IntDisheafPrecompFmapOnObjMor {c} {mapId} {mapComp} p q r
+        (onidx ** onobj) qi pi qcpd)
       ?IntDisheafPrecompFmap_hole_eq)
 
 -----------------------------------------------------
