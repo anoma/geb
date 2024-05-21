@@ -95,6 +95,10 @@ IntOMapSig : (c, d : Type) -> Type
 IntOMapSig c d = HomProf c d
 
 public export
+IntEndoOMapSig : Type -> Type
+IntEndoOMapSig c = IntOMapSig c c
+
+public export
 IntFMapSig : {c, d : Type} -> (_ : IntMorSig c) -> (_ : IntMorSig d) ->
   IntOMapSig c d -> Type
 IntFMapSig {c} {d} cmor dmor omap =
