@@ -232,3 +232,77 @@ IntDisheafCompMon c mapId mapComp =
   $ ICS
     (\_ => IntDisheafMonUnit {c} mapId mapComp)
     (\_, _, _ => IntDisheafMonProd {c} {mapId} {mapComp})
+
+----------------------------------------------------
+----------------------------------------------------
+---- Precomposition functor in disheaf category ----
+----------------------------------------------------
+----------------------------------------------------
+
+public export
+IntDisheafPrecompOmap : {c : IntCatSig} ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  IntDisheafObj c mapId mapComp ->
+  IntEndoOMapSig (IntDisheafObj c mapId mapComp)
+IntDisheafPrecompOmap {c} {mapId} {mapComp} =
+  flip $ IntDisheafMonProd {c} {mapId} {mapComp}
+
+public export
+IntDisheafPrecompFmap : {c : IntCatSig} ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  (p : IntDisheafObj c mapId mapComp) ->
+  IntEndoFMapSig
+    {c=(IntDisheafObj c mapId mapComp)}
+    (IntDisheafMor c mapId mapComp)
+    (IntDisheafPrecompOmap {c} {mapId} {mapComp} p)
+IntDisheafPrecompFmap {c} {mapId} {mapComp} p q r (onidx ** onobj) =
+  (\((qi, pi) ** qcpd) =>
+    ((onidx qi, pi) ** icComp c _ _ _ qcpd (snd $ cemMor $ onobj qi)) **
+   \((qi, pi) ** qcpd) =>
+    let (qdrd, rcqc) = cemMor (onobj qi) in
+    CElMor
+      (qdrd, icId c $ snd $ fst $ snd p pi)
+      ?IntDisheafPrecompFmap_hole_eq)
+
+-----------------------------------------------------
+-----------------------------------------------------
+---- Postcomposition functor in disheaf category ----
+-----------------------------------------------------
+-----------------------------------------------------
+
+public export
+IntDisheafPostcompOmap : {c : IntCatSig} ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  IntDisheafObj c mapId mapComp ->
+  IntEndoOMapSig (IntDisheafObj c mapId mapComp)
+IntDisheafPostcompOmap {c} {mapId} {mapComp} =
+  IntDisheafMonProd {c} {mapId} {mapComp}
+
+public export
+IntDisheafPostcompFmap : {c : IntCatSig} ->
+  {mapId :
+    IntHomProfMapIdT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  {mapComp :
+    IntHomProfMapCompT {c=(icObj c)} {mor=(icMor c)} (icId c) (icComp c)} ->
+  (p : IntDisheafObj c mapId mapComp) ->
+  IntEndoFMapSig
+    {c=(IntDisheafObj c mapId mapComp)}
+    (IntDisheafMor c mapId mapComp)
+    (IntDisheafPostcompOmap {c} {mapId} {mapComp} p)
+IntDisheafPostcompFmap {c} {mapId} {mapComp} p q r (onidx ** onobj) =
+  (\((pi, qi) ** pcqd) =>
+    ((pi, onidx qi) ** icComp c _ _ _ (fst $ cemMor $ onobj qi) pcqd) **
+   \((pi, qi) ** pcqd) =>
+    let (qdrd, rcqc) = cemMor (onobj qi) in
+    CElMor
+      (icId c $ fst $ fst $ snd p pi, rcqc)
+      ?IntDisheafPostcompFmap_hole_eq)
