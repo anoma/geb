@@ -56,11 +56,11 @@ IntDisheafComp : (c : IntCatSig) ->
   IntCompSig (IntDisheafObj c mapId mapComp) (IntDisheafMor c mapId mapComp)
 IntDisheafComp c mapId mapComp = icComp $ IntDisheafCat c mapId mapComp
 
--------------------------------------
--------------------------------------
----- Disheaf composition product ----
--------------------------------------
--------------------------------------
+--------------------------------------------------------
+--------------------------------------------------------
+---- Interpretation of disheaf objects into `QType` ----
+--------------------------------------------------------
+--------------------------------------------------------
 
 public export
 IntDisheafSig : IntCatSig -> Type
@@ -149,6 +149,12 @@ IntDisheafInterpMap : {c : IntCatSig} ->
 IntDisheafInterpMap {c} {mapId} {mapComp} p s t mst a b mas mtb =
   QMorphFromMorph $
     IntDisheafInterpMapBase {c} {mapId} {mapComp} p s t mst a b mas mtb
+
+-------------------------------------
+-------------------------------------
+---- Disheaf composition product ----
+-------------------------------------
+-------------------------------------
 
 -- The identity of the composition product on disheaves, which is analogous
 -- to that on profunctors.
