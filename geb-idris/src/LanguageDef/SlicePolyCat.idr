@@ -2232,6 +2232,13 @@ SlicePrecompF : {a, b, c : Type} ->
 SlicePrecompF {a} {b} {c} =
   flip $ (.) {a=(SliceObj a)} {b=(SliceObj c)} {c=(SliceObj b)}
 
+public export
+slicePrecompFmap : {a, b, c : Type} -> (f : SliceFunctor a c) ->
+  (g, h : SliceFunctor c b) ->
+  SliceNatTrans {x=c} {y=b} g h ->
+  SliceNatTrans {x=a} {y=b} (SlicePrecompF f g) (SlicePrecompF f h)
+slicePrecompFmap {a} {b} {c} f g h alpha = SliceWhiskerLeft {g} {h} alpha f
+
 -- The left Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
 public export
