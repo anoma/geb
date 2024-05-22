@@ -746,8 +746,8 @@ pfLeftCoclosure : (q, p : PolyFunc) -> PolyFunc
 pfLeftCoclosure q p = (pfLeftCoclosurePos q p ** pfLeftCoclosureDir q p)
 
 public export
-PolyLKanExt : (g, j : PolyFunc) -> PolyFunc
-PolyLKanExt = flip pfLeftCoclosure
+PolyLKanExt : (j, g : PolyFunc) -> PolyFunc
+PolyLKanExt = pfLeftCoclosure
 
 public export
 PolyDensityComonad : PolyFunc -> PolyFunc
@@ -866,7 +866,7 @@ PFSection p = Pi {a=(pfPos p)} $ pfDir {p}
 -- covariant representables.
 public export
 PolyRepNTProd : (p, q : PolyFunc) ->
-  PFSection (PolyLKanExt p q) -> PolyNatTrans p q
+  PFSection (PolyLKanExt q p) -> PolyNatTrans p q
 PolyRepNTProd (ppos ** pdir) q alpha =
   (\i => fst (alpha i) ** \i, d => snd (alpha i) d)
 
@@ -1113,7 +1113,7 @@ pfCurry {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)} alpha =
 
 public export
 PolyLKnt : (g, j : PolyFunc) ->
-  PolyNatTrans g (pfCompositionArena (PolyLKanExt g j) j)
+  PolyNatTrans g (pfCompositionArena (PolyLKanExt j g) j)
 PolyLKnt (gpos ** gdir) (jpos ** jdir) =
   (\gi => (gi ** \(ji ** jgd) => ji) ** \gi, ((ji ** jgd) ** jd) => jgd jd)
 
@@ -3016,15 +3016,15 @@ pfDensityToCatConsistent (ppos ** pdir) funext with
 
 public export
 InterpPolyLKan : (p, q : PolyFunc) -> (a : Type) ->
-  InterpPolyFunc (PolyLKanExt p q) a ->
-  LKanExt (InterpPolyFunc p) (InterpPolyFunc q) a
+  InterpPolyFunc (PolyLKanExt q p) a ->
+  LKanExt (InterpPolyFunc q) (InterpPolyFunc p) a
 InterpPolyLKan (ppos ** pdir) (qpos ** qdir) a (i ** f) =
   (pdir i ** (f, (i ** id)))
 
 public export
 InterpLKanPoly : (p, q : PolyFunc) -> (a : Type) ->
-  LKanExt (InterpPolyFunc p) (InterpPolyFunc q) a ->
-  InterpPolyFunc (PolyLKanExt p q) a
+  LKanExt (InterpPolyFunc q) (InterpPolyFunc p) a ->
+  InterpPolyFunc (PolyLKanExt q p) a
 InterpLKanPoly (ppos ** pdir) (qpos ** qdir) a (b ** (f, (i ** d))) =
   (i ** \(qi ** qpd) => f (qi ** d . qpd))
 

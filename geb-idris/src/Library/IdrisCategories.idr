@@ -7389,14 +7389,11 @@ Functor f => Profunctor (FunctorExp f) where
   dimap mca mbd coalg = map {f} mbd . coalg . mca
 
 -- The right Kan extension of `g` along `j` (sometimes written `g/j`).
--- (Note that the Haskell standard libraries reverse the parameters.
--- "First parameter along second parameter" sounds easier to remember
--- to me, but I could be wrong.)
--- (Note that `RKanExt g j a` can be read as the set of natural transformations
+-- (Note that `RKanExt j g a` can be read as the set of natural transformations
 -- from `FunctorExp j a` to `g`.)
 public export
-RKanExt : (g, j : Type -> Type) -> Type -> Type
-RKanExt g j = flip NaturalTransformation g . FunctorExp j
+RKanExt : (j, g : Type -> Type) -> Type -> Type
+RKanExt j g = flip NaturalTransformation g . FunctorExp j
 
 -- Note that `ExpFunctor j a` can be read as
 -- `ContravarHomFunc a . j`.
@@ -7409,12 +7406,9 @@ Functor f => Profunctor (flip $ ExpFunctor f) where
   dimap mca mbd alg = mbd . alg . map {f} mca
 
 -- The left Kan extension of `g` along `j`.
--- (Note that the Haskell standard libraries reverse the parameters.
--- "First parameter along second parameter" sounds easier to remember
--- to me, but I could be wrong.)
 public export
-LKanExt : (g, j : Type -> Type) -> Type -> Type
-LKanExt g j a = (b : Type ** (ExpFunctor j a b, g b))
+LKanExt : (j, g : Type -> Type) -> Type -> Type
+LKanExt j g a = (b : Type ** (ExpFunctor j a b, g b))
 
 ---------------------------------------
 ---------------------------------------
@@ -7429,7 +7423,7 @@ LKanExt g j a = (b : Type ** (ExpFunctor j a b, g b))
 public export
 record Yo (f : Type -> Type) (a : Type) where
   constructor MkYo
-  YoEmbed : RKanExt f Prelude.id a
+  YoEmbed : RKanExt Prelude.id f a
 
 public export
 fromYo : {f : Type -> Type} -> {a : Type} -> Yo f a -> f a
@@ -7463,9 +7457,9 @@ Contravariant (ContraYo f) where
 public export
 record CoYo (f : Type -> Type) (r : Type) where
   constructor MkCoYo
-  CoYoEmbed : LKanExt f Prelude.id r -- `f` covariant
-           -- LKanExt g j a = (b : Type ** (j b -> a, g b))
-           -- LKanExt f Prelude.id r = (b : Type ** (b -> r, f b))
+  CoYoEmbed : LKanExt Prelude.id f r -- `f` covariant
+           -- LKanExt j g a = (b : Type ** (j b -> a, g b))
+           -- LKanExt Prelude.id f r = (b : Type ** (b -> r, f b))
 
 public export
 fromCoYo : Functor f => CoYo f b -> f b
@@ -8057,7 +8051,7 @@ reset : Monad m => {a : Type} -> Codensity m a -> Codensity m a
 reset = lift {m} {t=Codensity} . lowerCodensity {f=m}
 
 public export
-shift : Monad m => {a : Type} -> RKanExt (Codensity m) m a -> Codensity m a
+shift : Monad m => {a : Type} -> RKanExt m (Codensity m) a -> Codensity m a
 shift {a} f = MkCodensity $ \y => lowerCodensity . f y
 
 public export
