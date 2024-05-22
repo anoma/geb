@@ -11,37 +11,6 @@ import public LanguageDef.IntEFamCat
 import public LanguageDef.IntECofamCat
 import public LanguageDef.MLBundleCat
 
----------------------------------
----------------------------------
------ (Slice) Kan extensions ----
----------------------------------
----------------------------------
-
--- An explicit name for the precomposition functors across slice categories,
--- partly for use as the intermediate functor in the triple adjunction of
--- left-Kan-extension |- precomposition |- right-Kan-extension.
-public export
-SlicePrecompF : {a, b, c : Type} ->
-  SliceFunctor a c -> SliceFunctor c b -> SliceFunctor a b
-SlicePrecompF {a} {b} {c} =
-  flip $ (.) {a=(SliceObj a)} {b=(SliceObj c)} {c=(SliceObj b)}
-
--- The left Kan extension of `f` (the second parameter) along
--- `g` (the first parameter).
-public export
-SliceLKanExt : {a, b, c : Type} ->
-  SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceLKanExt {a} {b} {c} g f sc eb =
-  (sa : SliceObj a ** (SliceMorphism (g sa) sc, f sa eb))
-
--- The right Kan extension of `f` (the second parameter) along
--- `g` (the first parameter).
-public export
-SliceRKanExt : {a, b, c : Type} ->
-  SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceRKanExt {a} {b} {c} g f sc eb =
-  (sa : SliceObj a) -> SliceMorphism sc (g sa) -> f sa eb
-
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Polynomial functors between slice categories ----
@@ -2247,6 +2216,37 @@ wtfFromSPFD {dom} {cod} (MkWTF pos dir f g h) sd ec
   (Element0 ep codeq ** dm) =
     (Element0 ep codeq **
      \(Element0 dd poseq) => dm (f dd) $ Element0 dd (Refl, poseq))
+
+---------------------------------
+---------------------------------
+----- (Slice) Kan extensions ----
+---------------------------------
+---------------------------------
+
+-- An explicit name for the precomposition functors across slice categories,
+-- partly for use as the intermediate functor in the triple adjunction of
+-- left-Kan-extension |- precomposition |- right-Kan-extension.
+public export
+SlicePrecompF : {a, b, c : Type} ->
+  SliceFunctor a c -> SliceFunctor c b -> SliceFunctor a b
+SlicePrecompF {a} {b} {c} =
+  flip $ (.) {a=(SliceObj a)} {b=(SliceObj c)} {c=(SliceObj b)}
+
+-- The left Kan extension of `f` (the second parameter) along
+-- `g` (the first parameter).
+public export
+SliceLKanExt : {a, b, c : Type} ->
+  SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
+SliceLKanExt {a} {b} {c} g f sc eb =
+  (sa : SliceObj a ** (SliceMorphism (g sa) sc, f sa eb))
+
+-- The right Kan extension of `f` (the second parameter) along
+-- `g` (the first parameter).
+public export
+SliceRKanExt : {a, b, c : Type} ->
+  SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
+SliceRKanExt {a} {b} {c} g f sc eb =
+  (sa : SliceObj a) -> SliceMorphism sc (g sa) -> f sa eb
 
 --------------------------------
 --------------------------------
