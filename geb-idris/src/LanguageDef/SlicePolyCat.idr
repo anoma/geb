@@ -2234,10 +2234,10 @@ SlicePrecompF {a} {b} {c} =
 
 public export
 slicePrecompFmap : {a, b, c : Type} -> (f : SliceFunctor a c) ->
-  (g, h : SliceFunctor c b) ->
+  {g, h : SliceFunctor c b} ->
   SliceNatTrans {x=c} {y=b} g h ->
   SliceNatTrans {x=a} {y=b} (SlicePrecompF f g) (SlicePrecompF f h)
-slicePrecompFmap {a} {b} {c} f g h alpha = SliceWhiskerLeft {g} {h} alpha f
+slicePrecompFmap {a} {b} {c} f {g} {h} alpha = SliceWhiskerLeft {g} {h} alpha f
 
 -- The left Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
@@ -2246,6 +2246,15 @@ SliceLKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
 SliceLKanExt {a} {b} {c} g f sc eb =
   (sa : SliceObj a ** (SliceMorphism (g sa) sc, f sa eb))
+
+public export
+sliceLKanExtFmap : {a, b, c : Type} ->
+  (g : SliceFunctor a c) ->
+  {f, h : SliceFunctor a b} ->
+  SliceNatTrans {x=a} {y=b} f h ->
+  SliceNatTrans {x=c} {y=b} (SliceLKanExt g f) (SliceLKanExt g h)
+sliceLKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb (sa ** (m, efb)) =
+  (sa ** (m, alpha sa eb efb))
 
 -- Equating `SliceObj Void` with the terminal category, we can use and
 -- simplify the left-Kan-extension formula to define the colimit of a
@@ -2263,6 +2272,15 @@ SliceRKanExt {a} {b} {c} g f sc eb =
   SliceNatTrans {x=a} {y=Unit}
     (flip $ \() => SliceMorphism sc . g)
     (flip $ \() => flip f eb)
+
+public export
+sliceRKanExtFmap : {a, b, c : Type} ->
+  (g : SliceFunctor a c) ->
+  {f, h : SliceFunctor a b} ->
+  SliceNatTrans {x=a} {y=b} f h ->
+  SliceNatTrans {x=c} {y=b} (SliceRKanExt g f) (SliceRKanExt g h)
+sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa () =
+  alpha sa eb . pi sa ()
 
 -- Again equating `SliceObj Void` with the terminal category, we can use and
 -- simplify the right-Kan-extension formula to define the limit of a
