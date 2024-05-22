@@ -2246,7 +2246,9 @@ public export
 SliceRKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
 SliceRKanExt {a} {b} {c} g f sc eb =
-  (sa : SliceObj a) -> SliceMorphism sc (g sa) -> f sa eb
+  SliceNatTrans {x=a} {y=Unit}
+    (flip $ \() => SliceMorphism sc . g)
+    (flip $ \() => flip f eb)
 
 --------------------------------
 --------------------------------
