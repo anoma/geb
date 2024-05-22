@@ -2289,6 +2289,12 @@ public export
 SliceFLimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
 SliceFLimit {a} {b} f = Pi {a=(SliceObj a)} . flip f
 
+----------------------------------
+----------------------------------
+---- Slice-functor (co)limits ----
+----------------------------------
+----------------------------------
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
