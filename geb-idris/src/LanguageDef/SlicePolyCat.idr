@@ -2256,13 +2256,6 @@ sliceLKanExtFmap : {a, b, c : Type} ->
 sliceLKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb (sa ** (m, efb)) =
   (sa ** (m, alpha sa eb efb))
 
--- Equating `SliceObj Void` with the terminal category, we can use and
--- simplify the left-Kan-extension formula to define the colimit of a
--- slice functor.
-public export
-SliceFColimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
-SliceFColimit {a} {b} f = Sigma {a=(SliceObj a)} . flip f
-
 -- The right Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
 public export
@@ -2282,18 +2275,25 @@ sliceRKanExtFmap : {a, b, c : Type} ->
 sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa () =
   alpha sa eb . pi sa ()
 
+----------------------------------
+----------------------------------
+---- Slice-functor (co)limits ----
+----------------------------------
+----------------------------------
+
+-- Equating `SliceObj Void` with the terminal category, we can use and
+-- simplify the left-Kan-extension formula to define the colimit of a
+-- slice functor.
+public export
+SliceFColimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
+SliceFColimit {a} {b} f = Sigma {a=(SliceObj a)} . flip f
+
 -- Again equating `SliceObj Void` with the terminal category, we can use and
 -- simplify the right-Kan-extension formula to define the limit of a
 -- slice functor.
 public export
 SliceFLimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
 SliceFLimit {a} {b} f = Pi {a=(SliceObj a)} . flip f
-
-----------------------------------
-----------------------------------
----- Slice-functor (co)limits ----
-----------------------------------
-----------------------------------
 
 --------------------------------
 --------------------------------
