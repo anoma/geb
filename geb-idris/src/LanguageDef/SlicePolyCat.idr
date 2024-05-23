@@ -2246,12 +2246,24 @@ public export
 SliceFColimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
 SliceFColimit {a} {b} f = Sigma {a=(SliceObj a)} . flip f
 
+public export
+sliceFColimitMap : {a, b : Type} -> (f, g : SliceFunctor a b) ->
+  SliceNatTrans {x=a} {y=b} f g ->
+  SliceMorphism {a=b} (SliceFColimit f) (SliceFColimit g)
+sliceFColimitMap {a} {b} f g alpha eb (sa ** efab) = (sa ** alpha sa eb efab)
+
 -- Again equating `SliceObj Void` with the terminal category, we can use and
 -- simplify the right-Kan-extension formula to define the limit of a
 -- slice functor.
 public export
 SliceFLimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
 SliceFLimit {a} {b} f = Pi {a=(SliceObj a)} . flip f
+
+public export
+sliceFLimitMap : {a, b : Type} -> (f, g : SliceFunctor a b) ->
+  SliceNatTrans {x=a} {y=b} f g ->
+  SliceMorphism {a=b} (SliceFLimit f) (SliceFLimit g)
+sliceFLimitMap {a} {b} f g alpha eb pi sa = alpha sa eb $ pi sa
 
 ---------------------------------
 ---------------------------------
