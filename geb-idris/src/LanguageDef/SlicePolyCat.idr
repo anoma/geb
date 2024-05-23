@@ -2289,13 +2289,19 @@ slicePrecompFmap : {a, b, c : Type} -> (f : SliceFunctor a c) ->
   SliceNatTrans {x=a} {y=b} (SlicePrecompF f g) (SlicePrecompF f h)
 slicePrecompFmap {a} {b} {c} f {g} {h} alpha = SliceWhiskerLeft {g} {h} alpha f
 
+-- The functor whose colimit is the left Kan extension.
+public export
+SliceLKanExtF : {a, b, c : Type} ->
+  SliceFunctor a c -> SliceFunctor a b -> SliceObj c -> SliceFunctor a b
+SliceLKanExtF {a} {b} {c} g f sc sa eb = (SliceMorphism (g sa) sc, f sa eb)
+
 -- The left Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
 public export
 SliceLKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceLKanExt {a} {b} {c} g f sc =
-  SliceFColimit {a} {b} $ \sa, eb => (SliceMorphism (g sa) sc, f sa eb)
+SliceLKanExt {a} {b} {c} g f =
+  SliceFColimit {a} {b} . SliceLKanExtF {a} {b} {c} g f
 
 public export
 sliceLKanExtFmap : {a, b, c : Type} ->
@@ -2306,13 +2312,19 @@ sliceLKanExtFmap : {a, b, c : Type} ->
 sliceLKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb (sa ** (m, efb)) =
   (sa ** (m, alpha sa eb efb))
 
+-- The functor whose limit is the right Kan extension.
+public export
+SliceRKanExtF : {a, b, c : Type} ->
+  SliceFunctor a c -> SliceFunctor a b -> SliceObj c -> SliceFunctor a b
+SliceRKanExtF {a} {b} {c} g f sc sa eb = SliceMorphism sc (g sa) -> f sa eb
+
 -- The right Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
 public export
 SliceRKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceRKanExt {a} {b} {c} g f sc =
-  SliceFLimit {a} {b} $ \sa, eb => SliceMorphism sc (g sa) -> f sa eb
+SliceRKanExt {a} {b} {c} g f =
+  SliceFLimit {a} {b} . SliceRKanExtF {a} {b} {c} g f
 
 public export
 sliceRKanExtFmap : {a, b, c : Type} ->
