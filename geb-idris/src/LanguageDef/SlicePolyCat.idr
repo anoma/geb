@@ -2227,8 +2227,10 @@ wtfFromSPFD {dom} {cod} (MkWTF pos dir f g h) sd ec
 -- category from the slice category over `a` to the slice catgory over `b`.
 -- This is in particular the functor whose adjoints generate limits and
 -- colimits in the slice category over `b` of diagrams indexed by the slice
--- category over `a` (i.e., limits and colimits of functors from the slice
--- category over `a` to the slice category over `b`).
+-- category over `a` (AKA limits and colimits of functors from the slice
+-- category over `a` to the slice category over `b`).  This means that it is
+-- the intermediate functor in the triple adjunction of
+-- colimit |- diagonal |- limit.
 public export
 SliceDiagF : {a, b : Type} -> SliceObj b -> SliceFunctor a b
 SliceDiagF {a} {b} sb sa eb = sb eb
