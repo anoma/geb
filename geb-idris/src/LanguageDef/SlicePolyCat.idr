@@ -2309,8 +2309,8 @@ sliceLKanExtFmap : {a, b, c : Type} ->
   {f, h : SliceFunctor a b} ->
   SliceNatTrans {x=a} {y=b} f h ->
   SliceNatTrans {x=c} {y=b} (SliceLKanExt g f) (SliceLKanExt g h)
-sliceLKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb (sa ** (m, efb)) =
-  (sa ** (m, alpha sa eb efb))
+sliceLKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb lk =
+  (fst lk ** (fst $ snd lk, alpha (fst lk) eb $ snd $ snd lk))
 
 -- The functor whose limit is the right Kan extension.
 public export
