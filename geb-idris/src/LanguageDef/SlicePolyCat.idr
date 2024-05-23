@@ -2294,8 +2294,8 @@ slicePrecompFmap {a} {b} {c} f {g} {h} alpha = SliceWhiskerLeft {g} {h} alpha f
 public export
 SliceLKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceLKanExt {a} {b} {c} g f sc eb =
-  (sa : SliceObj a ** (SliceMorphism (g sa) sc, f sa eb))
+SliceLKanExt {a} {b} {c} g f sc =
+  SliceFColimit {a} {b} $ \sa, eb => (SliceMorphism (g sa) sc, f sa eb)
 
 public export
 sliceLKanExtFmap : {a, b, c : Type} ->
@@ -2311,10 +2311,8 @@ sliceLKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb (sa ** (m, efb)) =
 public export
 SliceRKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceRKanExt {a} {b} {c} g f sc eb =
-  SliceNatTrans {x=a} {y=Unit}
-    (flip $ \() => SliceMorphism sc . g)
-    (flip $ \() => flip f eb)
+SliceRKanExt {a} {b} {c} g f sc =
+  SliceFLimit {a} {b} $ \sa, eb => SliceMorphism sc (g sa) -> f sa eb
 
 public export
 sliceRKanExtFmap : {a, b, c : Type} ->
@@ -2322,8 +2320,8 @@ sliceRKanExtFmap : {a, b, c : Type} ->
   {f, h : SliceFunctor a b} ->
   SliceNatTrans {x=a} {y=b} f h ->
   SliceNatTrans {x=c} {y=b} (SliceRKanExt g f) (SliceRKanExt g h)
-sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa () =
-  alpha sa eb . pi sa ()
+sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa =
+  alpha sa eb . pi sa
 
 --------------------------------
 --------------------------------
