@@ -2217,6 +2217,26 @@ wtfFromSPFD {dom} {cod} (MkWTF pos dir f g h) sd ec
     (Element0 ep codeq **
      \(Element0 dd poseq) => dm (f dd) $ Element0 dd (Refl, poseq))
 
+----------------------------------
+----------------------------------
+---- Slice-functor (co)limits ----
+----------------------------------
+----------------------------------
+
+-- Equating `SliceObj Void` with the terminal category, we can use and
+-- simplify the left-Kan-extension formula to define the colimit of a
+-- slice functor.
+public export
+SliceFColimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
+SliceFColimit {a} {b} f = Sigma {a=(SliceObj a)} . flip f
+
+-- Again equating `SliceObj Void` with the terminal category, we can use and
+-- simplify the right-Kan-extension formula to define the limit of a
+-- slice functor.
+public export
+SliceFLimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
+SliceFLimit {a} {b} f = Pi {a=(SliceObj a)} . flip f
+
 ---------------------------------
 ---------------------------------
 ----- (Slice) Kan extensions ----
@@ -2274,26 +2294,6 @@ sliceRKanExtFmap : {a, b, c : Type} ->
   SliceNatTrans {x=c} {y=b} (SliceRKanExt g f) (SliceRKanExt g h)
 sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa () =
   alpha sa eb . pi sa ()
-
-----------------------------------
-----------------------------------
----- Slice-functor (co)limits ----
-----------------------------------
-----------------------------------
-
--- Equating `SliceObj Void` with the terminal category, we can use and
--- simplify the left-Kan-extension formula to define the colimit of a
--- slice functor.
-public export
-SliceFColimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
-SliceFColimit {a} {b} f = Sigma {a=(SliceObj a)} . flip f
-
--- Again equating `SliceObj Void` with the terminal category, we can use and
--- simplify the right-Kan-extension formula to define the limit of a
--- slice functor.
-public export
-SliceFLimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
-SliceFLimit {a} {b} f = Pi {a=(SliceObj a)} . flip f
 
 --------------------------------
 --------------------------------
