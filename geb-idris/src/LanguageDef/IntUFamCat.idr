@@ -323,7 +323,7 @@ SLUFamToProdObj {c} ufo = uncurry $ DPair.snd ufo
 
 export
 SlProdBaseChange : {a, b, c : Type} -> (b -> a) -> SliceFunctor (a, c) (b, c)
-SlProdBaseChange {a} {b} {c} m slac ebc = slac (m $ fst ebc, snd ebc)
+SlProdBaseChange = BaseChangeF . mapFst
 
 export
 SLUFamToProdMor : {c: Type} ->
@@ -333,4 +333,4 @@ SLUFamToProdMor : {c: Type} ->
     (SlProdBaseChange (ifumOnIdx {dom=ufo} {cod=ufo'} {mor=(SliceMor c)} mor) $
       SLUFamToProdObj ufo)
     (SLUFamToProdObj ufo')
-SLUFamToProdMor mor eac esla = case eac of (ea, ec) => snd mor ea ec esla
+SLUFamToProdMor mor eac = case eac of (ea, ec) => snd mor ea ec
