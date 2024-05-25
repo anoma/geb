@@ -693,6 +693,10 @@ SliceProduct : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
 SliceProduct = biapp Pair
 
 public export
+SlProdBaseChange : {a, b, c : Type} -> (b -> a) -> SliceFunctor (a, c) (b, c)
+SlProdBaseChange = BaseChangeF . mapFst
+
+public export
 SliceCoproduct : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
 SliceCoproduct = biapp Either
 
