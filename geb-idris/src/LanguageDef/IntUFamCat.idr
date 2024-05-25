@@ -330,6 +330,7 @@ SLUFamToProdMor : {c: Type} ->
   {ufo, ufo' : SliceUFamObj c} ->
   (mor : SliceUFamMor {c} ufo ufo') ->
   SliceMor (ifuoIdx ufo', c)
-    (SlProdBaseChange (ifumOnIdx {dom=ufo} {cod=ufo'} {mor=(SliceMor c)} mor) $ SLUFamToProdObj ufo)
+    (SlProdBaseChange (ifumOnIdx {dom=ufo} {cod=ufo'} {mor=(SliceMor c)} mor) $
+      SLUFamToProdObj ufo)
     (SLUFamToProdObj ufo')
 SLUFamToProdMor mor eac esla = case eac of (ea, ec) => snd mor ea ec esla
