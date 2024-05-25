@@ -290,34 +290,34 @@ InterpMLECofamMorph {x} {y} = InterpMLUFamMorph {x=y} {y=x}
 --------------------
 
 public export
-SliceCofamObj : Type -> Type
-SliceCofamObj = IntECofamObj . SliceObj
+SliceECofamObj : Type -> Type
+SliceECofamObj = IntECofamObj . SliceObj
 
 public export
-SliceECofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
+SliceECofamMor : {c : Type} -> SliceECofamObj c -> SliceECofamObj c -> Type
 SliceECofamMor {c} = IntECofamMor {c=(SliceObj c)} $ SliceMorphism {a=c}
 
 public export
 slufmId : {c : Type} ->
-  (x : SliceCofamObj c) -> SliceECofamMor x x
+  (x : SliceECofamObj c) -> SliceECofamMor x x
 slufmId {c} = icfemId {c=(SliceObj c)} (SliceMorphism {a=c}) (SliceId c)
 
 public export
-slufmComp : {c : Type} -> {x, y, z : SliceCofamObj c} ->
+slufmComp : {c : Type} -> {x, y, z : SliceECofamObj c} ->
   SliceECofamMor y z -> SliceECofamMor x y -> SliceECofamMor x z
 slufmComp {c} =
   icfemComp (SliceMor c) $ \x, y, z => SliceComp c x y z
 
 -- `InterpSLECofamObj` and `InterpSLECofamMor` comprise a functor from
--- `SliceCofamObj c` to `op(SliceObj c)` (for any `c : Type`).  It is the
+-- `SliceECofamObj c` to `op(SliceObj c)` (for any `c : Type`).  It is the
 -- opposite functor of `InterpSLUFamObj`/`InterpSLEUFamMor`.
 
 export
-InterpSLECofamObj : {c : Type} -> SliceCofamObj c -> OpSliceObj c
+InterpSLECofamObj : {c : Type} -> SliceECofamObj c -> OpSliceObj c
 InterpSLECofamObj {c} = InterpSLUFamObj {c}
 
 export
-InterpSLECofamMor : {c : Type} -> {x, y : SliceCofamObj c} ->
+InterpSLECofamMor : {c : Type} -> {x, y : SliceECofamObj c} ->
   SliceECofamMor {c} x y ->
   OpSliceMor c (InterpSLECofamObj x) (InterpSLECofamObj y)
 InterpSLECofamMor {c} {x} {y} = InterpSLUFamMor {c} {x=y} {y=x}
