@@ -317,12 +317,12 @@ InterpSLUFamMor {c} {x} {y} m ec pix eiy =
 ------------------------------------------------------------
 
 export
-SLUFamToProdObj : {c: Type} ->
+SLUFamToProdObj : {c : Type} ->
   (ufo : SliceUFamObj c) -> SliceObj (ifuoIdx ufo, c)
 SLUFamToProdObj {c} ufo = uncurry $ DPair.snd ufo
 
 export
-SLUProdObjToFam : {a, c: Type} -> SliceObj (a, c) -> SliceUFamObj c
+SLUProdObjToFam : {a, c : Type} -> SliceObj (a, c) -> SliceUFamObj c
 SLUProdObjToFam {a} {c} sl = (a ** curry sl)
 
 export
@@ -330,7 +330,7 @@ SlProdBaseChange : {a, b, c : Type} -> (b -> a) -> SliceFunctor (a, c) (b, c)
 SlProdBaseChange = BaseChangeF . mapFst
 
 export
-SLUFamToProdMor : {c: Type} ->
+SLUFamToProdMor : {c : Type} ->
   {ufo, ufo' : SliceUFamObj c} ->
   (mor : SliceUFamMor {c} ufo ufo') ->
   SliceMor (ifuoIdx ufo', c)
