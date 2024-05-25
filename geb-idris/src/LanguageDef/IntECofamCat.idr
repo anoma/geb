@@ -310,7 +310,7 @@ slufmComp {c} =
 
 -- `InterpSLECofamObj` and `InterpSLECofamMor` comprise a functor from
 -- `SliceCofamObj c` to `op(SliceObj c)` (for any `c : Type`).  It is the
--- opposite functor of `InterpSLUFamObj`/`InterpSLEUamMor`.
+-- opposite functor of `InterpSLUFamObj`/`InterpSLEUFamMor`.
 
 export
 InterpSLECofamObj : {c : Type} -> SliceCofamObj c -> OpSliceObj c

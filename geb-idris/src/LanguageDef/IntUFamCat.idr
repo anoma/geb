@@ -309,3 +309,27 @@ InterpSLUFamMor {c} {x} {y} m ec pix eiy =
   ifumOnObj {mor=SliceMorphism} m eiy ec
   $ pix
   $ ifumOnIdx {mor=SliceMorphism} m eiy
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Universal families of slices as slices of products ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+export
+SLUFamToProdObj : {c: Type} ->
+  (ufo : SliceUFamObj c) -> SliceObj (ifuoIdx ufo, c)
+SLUFamToProdObj {c} ufo = uncurry $ DPair.snd ufo
+
+export
+SlProdBaseChange : {a, b, c : Type} -> (b -> a) -> SliceFunctor (a, c) (b, c)
+SlProdBaseChange {a} {b} {c} m slac ebc = slac (m $ fst ebc, snd ebc)
+
+export
+SLUFamToProdMor : {c: Type} ->
+  {ufo, ufo' : SliceUFamObj c} ->
+  (mor : SliceUFamMor {c} ufo ufo') ->
+  SliceMor (ifuoIdx ufo', c)
+    (SlProdBaseChange (ifumOnIdx {dom=ufo} {cod=ufo'} {mor=(SliceMor c)} mor) $ SLUFamToProdObj ufo)
+    (SLUFamToProdObj ufo')
+SLUFamToProdMor mor eac esla = case eac of (ea, ec) => snd mor ea ec esla
