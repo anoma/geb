@@ -322,6 +322,10 @@ SLUFamToProdObj : {c: Type} ->
 SLUFamToProdObj {c} ufo = uncurry $ DPair.snd ufo
 
 export
+SLUProdObjToFam : {a, c: Type} -> SliceObj (a, c) -> SliceUFamObj c
+SLUProdObjToFam {a} {c} sl = (a ** curry sl)
+
+export
 SlProdBaseChange : {a, b, c : Type} -> (b -> a) -> SliceFunctor (a, c) (b, c)
 SlProdBaseChange = BaseChangeF . mapFst
 
@@ -334,3 +338,9 @@ SLUFamToProdMor : {c: Type} ->
       SLUFamToProdObj ufo)
     (SLUFamToProdObj ufo')
 SLUFamToProdMor mor eac = case eac of (ea, ec) => snd mor ea ec
+
+export
+SLUProdMorToFam : {a, c : Type} -> {sl, sl' : SliceObj (a, c)} ->
+  SliceMor (a, c) sl sl' ->
+  SliceUFamMor {c} (SLUProdObjToFam sl) (SLUProdObjToFam sl')
+SLUProdMorToFam {a} {c} {sl} {sl'} mor = (id ** \ea, ec => mor (ea, ec))
