@@ -250,33 +250,64 @@ InterpMLUCofamMorph {x} {y} = InterpMLEFamMorph {x=y} {y=x}
 --------------------
 
 public export
-SliceCofamObj : Type -> Type
-SliceCofamObj = IntUCofamObj . SliceObj
+SliceUCofamObj : Type -> Type
+SliceUCofamObj = IntUCofamObj . SliceObj
 
 public export
-SliceUCofamMor : {c : Type} -> SliceCofamObj c -> SliceCofamObj c -> Type
+SliceUCofamMor : {c : Type} -> SliceUCofamObj c -> SliceUCofamObj c -> Type
 SliceUCofamMor {c} = IntUCofamMor {c=(SliceObj c)} $ SliceMor c
 
 public export
 slufmId : {c : Type} ->
-  (x : SliceCofamObj c) -> SliceUCofamMor x x
+  (x : SliceUCofamObj c) -> SliceUCofamMor x x
 slufmId {c} = icfumId {c=(SliceObj c)} (SliceMor c) (SliceId c)
 
 public export
-slufmComp : {c : Type} -> {x, y, z : SliceCofamObj c} ->
+slufmComp : {c : Type} -> {x, y, z : SliceUCofamObj c} ->
   SliceUCofamMor y z -> SliceUCofamMor x y -> SliceUCofamMor x z
 slufmComp {c} = icfumComp {c=(SliceObj c)} (SliceMor c) (SliceComp c)
 
 -- `InterpSLUCofamObj` and `InterpSLUCofamMor` comprise a functor from
--- `SliceCofamObj c` to `op(SliceObj c)` (for any `c : Type`).  It is the
+-- `SliceUCofamObj c` to `op(SliceObj c)` (for any `c : Type`).  It is the
 -- opposite functor of `InterpSLEFamObj`/`InterpSLEFamMor`.
 
 export
-InterpSLUCofamObj : {c : Type} -> SliceCofamObj c -> OpSliceObj c
+InterpSLUCofamObj : {c : Type} -> SliceUCofamObj c -> OpSliceObj c
 InterpSLUCofamObj {c} = InterpSLEFamObj {c}
 
 export
-InterpSLUCofamMor : {c : Type} -> {x, y : SliceCofamObj c} ->
+InterpSLUCofamMor : {c : Type} -> {x, y : SliceUCofamObj c} ->
   SliceUCofamMor {c} x y ->
   OpSliceMor c (InterpSLUCofamObj x) (InterpSLUCofamObj y)
 InterpSLUCofamMor {c} {x} {y} = InterpSLEFamMor {c} {x=y} {y=x}
+
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+---- Universal cofamilies of slices as op-slices of products ----
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+
+export
+SLUCofamToProdObj : {c : Type} ->
+  (ufo : SliceUCofamObj c) -> OpSliceObj (icfuoIdx ufo, c)
+SLUCofamToProdObj {c} ufo = uncurry $ DPair.snd ufo
+
+export
+SLUProdObjToCofam : {a, c : Type} -> OpSliceObj (a, c) -> SliceUCofamObj c
+SLUProdObjToCofam {a} {c} sl = (a ** curry sl)
+
+export
+SLUCofamToProdMor : {c : Type} ->
+  {ufo, ufo' : SliceUCofamObj c} ->
+  (mor : SliceUCofamMor {c} ufo ufo') ->
+  OpSliceMor (icfuoIdx ufo', c)
+    (SlProdBaseChange (icfumOnIdx {dom=ufo} {cod=ufo'} {mor=(SliceMor c)} mor) $
+      SLUCofamToProdObj ufo)
+    (SLUCofamToProdObj ufo')
+SLUCofamToProdMor mor eic = case eic of (ei, ec) => snd mor ei ec
+
+export
+SLUProdMorToCofam : {a, c : Type} -> {sl, sl' : OpSliceObj (a, c)} ->
+  OpSliceMor (a, c) sl sl' ->
+  SliceUCofamMor {c} (SLUProdObjToCofam sl) (SLUProdObjToCofam sl')
+SLUProdMorToCofam {a} {c} {sl} {sl'} mor = (id ** \ea, ec => mor (ea, ec))
