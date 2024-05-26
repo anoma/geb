@@ -2315,6 +2315,26 @@ SliceFLimitAdjRMap : (a, b : Type) ->
     (SliceMor b) (SliceNatTrans {x=a} {y=b}) (SliceFLimitAdjR a b)
 SliceFLimitAdjRMap a b = sliceFLimitMap {a} {b}
 
+public export
+SliceFColimitMonad : (a, b : Type) -> SliceFunctor a b -> SliceFunctor a b
+SliceFColimitMonad a b = IntAdjMonad {c=(SliceFunctor a b)} {d=(SliceObj b)}
+  (SliceFColimitAdjL a b) (SliceFColimitAdjR a b)
+
+public export
+SliceFColimitComonad : (a, b : Type) -> SliceEndofunctor b
+SliceFColimitComonad a b = IntAdjComonad {c=(SliceFunctor a b)} {d=(SliceObj b)}
+  (SliceFColimitAdjL a b) (SliceFColimitAdjR a b)
+
+public export
+SliceFLimitMonad : (a, b : Type) -> SliceEndofunctor b
+SliceFLimitMonad a b = IntAdjMonad {c=(SliceObj b)} {d=(SliceFunctor a b)}
+  (SliceFLimitAdjL a b) (SliceFLimitAdjR a b)
+
+public export
+SliceFLimitComonad : (a, b : Type) -> SliceFunctor a b -> SliceFunctor a b
+SliceFLimitComonad a b = IntAdjComonad {c=(SliceObj b)} {d=(SliceFunctor a b)}
+  (SliceFLimitAdjL a b) (SliceFLimitAdjR a b)
+
 ---------------------------------
 ---------------------------------
 ----- (Slice) Kan extensions ----
