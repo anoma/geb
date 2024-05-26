@@ -2335,6 +2335,30 @@ SliceFLimitComonad : (a, b : Type) -> SliceFunctor a b -> SliceFunctor a b
 SliceFLimitComonad a b = IntAdjComonad {c=(SliceObj b)} {d=(SliceFunctor a b)}
   (SliceFLimitAdjL a b) (SliceFLimitAdjR a b)
 
+public export
+SliceFColimitUnit : (a, b : Type) ->
+  IntAdjUnitSig {c=(SliceFunctor a b)} {d=(SliceObj b)}
+    (SliceNatTrans {x=a} {y=b}) (SliceFColimitAdjL a b) (SliceFColimitAdjR a b)
+SliceFColimitUnit a b fab sa eb ef = (sa ** ef)
+
+public export
+SliceFColimitCounit : (a, b : Type) ->
+  IntAdjCounitSig {c=(SliceFunctor a b)} {d=(SliceObj b)}
+    (SliceMor b) (SliceFColimitAdjL a b) (SliceFColimitAdjR a b)
+SliceFColimitCounit a b sb eb = DPair.snd
+
+public export
+SliceFLimitUnit : (a, b : Type) ->
+  IntAdjUnitSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
+    (SliceMor b) (SliceFLimitAdjL a b) (SliceFLimitAdjR a b)
+SliceFLimitUnit a b sb eb esx sa = esx
+
+public export
+SliceFLimitCounit : (a, b : Type) ->
+  IntAdjCounitSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
+    (SliceNatTrans {x=a} {y=b}) (SliceFLimitAdjL a b) (SliceFLimitAdjR a b)
+SliceFLimitCounit a b fab sa eb fpi = fpi sa
+
 ---------------------------------
 ---------------------------------
 ----- (Slice) Kan extensions ----
