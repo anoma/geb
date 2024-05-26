@@ -414,6 +414,7 @@ intNTvcomp : {c, d : Type} -> {dmor : IntMorSig d} ->
 intNTvcomp {c} {d} {dmor} dcomp {f} {g} {h} beta alpha x =
   dcomp (f x) (g x) (h x) (beta x) (alpha x)
 
+public export
 IntOmapCatSig : (dom, cod : IntCatSig) ->
   {obj : Type} -> (obj -> icObj dom -> icObj cod) -> MorIdCompSig obj
 IntOmapCatSig dom cod {obj} omap =
@@ -423,6 +424,7 @@ IntOmapCatSig dom cod {obj} omap =
     (\f => intNTid (icMor cod) (icId cod) (omap f))
     (\f, g, h => intNTvcomp {f=(omap f)} {g=(omap g)} {h=(omap h)} (icComp cod))
 
+public export
 IntFunctorOmapCatSig : IntCatSig -> IntCatSig -> IntCatSig
 IntFunctorOmapCatSig dom cod =
   ICat (icObj dom -> icObj cod) $ IntOmapCatSig dom cod id
