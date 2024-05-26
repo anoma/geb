@@ -2137,6 +2137,24 @@ IntFunctor2HCompSig {idx} cat c d e f f' g g' beta alpha =
 
 -----------------------------------
 -----------------------------------
+---- Metalanguage 2-categories ----
+-----------------------------------
+-----------------------------------
+
+-----------------------------------------------
+---- Metalanguage slice-functor categories ----
+-----------------------------------------------
+
+public export
+SliceFuncCat : Type -> Type -> IntCatSig
+SliceFuncCat x y = IntFunctorCatSig (SliceCat x) (SliceCat y)
+
+public export
+SliceFunc2Cat : Int2CatSig
+SliceFunc2Cat = IntFunctor2CatSig {idx=Type} SliceCat
+
+-----------------------------------
+-----------------------------------
 ---- Category-indexed families ----
 -----------------------------------
 -----------------------------------
