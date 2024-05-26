@@ -2223,6 +2223,10 @@ wtfFromSPFD {dom} {cod} (MkWTF pos dir f g h) sd ec
 ----------------------------------
 ----------------------------------
 
+---------------------
+---- Definitions ----
+---------------------
+
 -- The diagonal slice functor, from the slice category over `b` to the functor
 -- category from the slice category over `a` to the slice catgory over `b`.
 -- This is in particular the functor whose adjoints generate limits and
@@ -2266,6 +2270,50 @@ sliceFLimitMap : {a, b : Type} -> (f, g : SliceFunctor a b) ->
   SliceNatTrans {x=a} {y=b} f g ->
   SliceMorphism {a=b} (SliceFLimit f) (SliceFLimit g)
 sliceFLimitMap {a} {b} f g alpha eb pi sa = alpha sa eb $ pi sa
+
+---------------------
+---- Adjunctions ----
+---------------------
+
+public export
+SliceFColimitAdjL : (a, b : Type) -> SliceFunctor a b -> SliceObj b
+SliceFColimitAdjL a b = SliceFColimit {a} {b}
+
+public export
+SliceFColimitAdjLMap : (a, b : Type) ->
+  IntAdjLMapSig {c=(SliceFunctor a b)} {d=(SliceObj b)}
+    (SliceNatTrans {x=a} {y=b}) (SliceMor b) (SliceFColimitAdjL a b)
+SliceFColimitAdjLMap a b = sliceFColimitMap {a} {b}
+
+public export
+SliceFColimitAdjR : (a, b : Type) -> SliceObj b -> SliceFunctor a b
+SliceFColimitAdjR a b = SliceDiagF {a} {b}
+
+public export
+SliceFColimitAdjRMap : (a, b : Type) ->
+  IntAdjRMapSig {c=(SliceFunctor a b)} {d=(SliceObj b)}
+    (SliceNatTrans {x=a} {y=b}) (SliceMor b) (SliceFColimitAdjR a b)
+SliceFColimitAdjRMap a b = sliceDiagFmap {a} {b}
+
+public export
+SliceFLimitAdjL : (a, b : Type) -> SliceObj b -> SliceFunctor a b
+SliceFLimitAdjL a b = SliceDiagF {a} {b}
+
+public export
+SliceFLimitAdjLMap : (a, b : Type) ->
+  IntAdjLMapSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
+    (SliceMor b) (SliceNatTrans {x=a} {y=b}) (SliceFLimitAdjL a b)
+SliceFLimitAdjLMap a b = sliceDiagFmap {a} {b}
+
+public export
+SliceFLimitAdjR : (a, b : Type) -> SliceFunctor a b -> SliceObj b
+SliceFLimitAdjR a b = SliceFLimit {a} {b}
+
+public export
+SliceFLimitAdjRMap : (a, b : Type) ->
+  IntAdjRMapSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
+    (SliceMor b) (SliceNatTrans {x=a} {y=b}) (SliceFLimitAdjR a b)
+SliceFLimitAdjRMap a b = sliceFLimitMap {a} {b}
 
 ---------------------------------
 ---------------------------------
