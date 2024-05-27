@@ -2452,25 +2452,33 @@ SlicePrecompF {a} {b} {c} =
   flip $ (.) {a=(SliceObj a)} {b=(SliceObj c)} {c=(SliceObj b)}
 
 public export
+SlicePrecompFmor : {a, b, c : Type} ->
+  (g : SliceFunctor a c) -> (f : SliceFunctor c b) ->
+  (gm : SliceFMap g) -> (fm : SliceFMap f) ->
+  SliceFMap (SlicePrecompF g f)
+SlicePrecompFmor {a} {b} {c} g f gm fm x y = fm (g x) (g y) . gm x y
+
+public export
 slicePrecompFmap : {a, b, c : Type} -> (f : SliceFunctor a c) ->
   {g, h : SliceFunctor c b} ->
   SliceNatTrans {x=c} {y=b} g h ->
   SliceNatTrans {x=a} {y=b} (SlicePrecompF f g) (SlicePrecompF f h)
 slicePrecompFmap {a} {b} {c} f {g} {h} alpha = SliceWhiskerLeft {g} {h} alpha f
 
--- The functor whose colimit is the left Kan extension.
-public export
-SliceLKanExtF : {a, b, c : Type} ->
-  SliceFunctor a c -> SliceFunctor a b -> SliceObj c -> SliceFunctor a b
-SliceLKanExtF {a} {b} {c} g f sc sa eb = (SliceMorphism (g sa) sc, f sa eb)
-
 -- The left Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
 public export
 SliceLKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceLKanExt {a} {b} {c} g f =
-  SliceFColimit {a} {b} . SliceLKanExtF {a} {b} {c} g f
+SliceLKanExt {a} {b} {c} g f sc eb =
+  (sa : SliceObj a ** (SliceMorphism (g sa) sc, f sa eb))
+
+public export
+SliceLKanExtMor : {a, b, c : Type} ->
+  (g : SliceFunctor a c) -> (f : SliceFunctor a b) ->
+  SliceFMap (SliceLKanExt g f)
+SliceLKanExtMor {a} {b} {c} g f x y mxy eb =
+  dpMapSnd $ \sa => mapFst $ sliceComp {a=c} mxy
 
 public export
 sliceLKanExtFmap : {a, b, c : Type} ->
@@ -2481,19 +2489,22 @@ sliceLKanExtFmap : {a, b, c : Type} ->
 sliceLKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb =
   dpMapSnd $ \sa => mapSnd $ alpha sa eb
 
--- The functor whose limit is the right Kan extension.
-public export
-SliceRKanExtF : {a, b, c : Type} ->
-  SliceFunctor a c -> SliceFunctor a b -> SliceObj c -> SliceFunctor a b
-SliceRKanExtF {a} {b} {c} g f sc sa eb = SliceMorphism sc (g sa) -> f sa eb
-
 -- The right Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
 public export
 SliceRKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceRKanExt {a} {b} {c} g f =
-  SliceFLimit {a} {b} . SliceRKanExtF {a} {b} {c} g f
+SliceRKanExt {a} {b} {c} g f sc eb =
+  SliceNatTrans {x=a} {y=Unit}
+    (flip $ \_ => SliceMorphism sc . g)
+    (flip $ \_ => flip f eb)
+
+public export
+SliceRKanExtMor : {a, b, c : Type} ->
+  (g : SliceFunctor a c) -> (f : SliceFunctor a b) ->
+  SliceFMap (SliceRKanExt g f)
+SliceRKanExtMor {a} {b} {c} g f sc y mxy eb rk sa u myg =
+  case u of () => rk sa () $ sliceComp {a=c} myg mxy
 
 public export
 sliceRKanExtFmap : {a, b, c : Type} ->
@@ -2501,8 +2512,8 @@ sliceRKanExtFmap : {a, b, c : Type} ->
   {f, h : SliceFunctor a b} ->
   SliceNatTrans {x=a} {y=b} f h ->
   SliceNatTrans {x=c} {y=b} (SliceRKanExt g f) (SliceRKanExt g h)
-sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa =
-  alpha sa eb . pi sa
+sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa u =
+  case u of () => alpha sa eb . pi sa ()
 
 --------------------------------
 --------------------------------
