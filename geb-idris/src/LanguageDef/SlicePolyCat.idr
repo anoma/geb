@@ -2467,6 +2467,18 @@ slicePrecompFmap : {a, b, c : Type} -> (f : SliceFunctor a c) ->
   SliceNatTrans {x=a} {y=b} (SlicePrecompF f g) (SlicePrecompF f h)
 slicePrecompFmap {a} {b} {c} f {g} {h} alpha = SliceWhiskerLeft {g} {h} alpha f
 
+public export
+SlicePrecompFSig : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntFunctorSig (SliceFuncCat c b) (SliceFuncCat a b)
+SlicePrecompFSig a b c f fm =
+  IFunctor
+    (\g =>
+      IFunctor
+        (SlicePrecompF f (ifOmap g))
+        (SlicePrecompFmor f (ifOmap g) fm (ifMmap g)))
+    (\g, h => slicePrecompFmap {a} {b} f {g=(ifOmap g)} {h=(ifOmap h)})
+
 -- The left Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
 public export
