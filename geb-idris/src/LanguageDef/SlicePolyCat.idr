@@ -2250,6 +2250,14 @@ sliceDiagFmap : {a, b : Type} -> (sb, sb' : SliceObj b) ->
   SliceNatTrans {x=a} {y=b} (SliceDiagF sb) (SliceDiagF sb')
 sliceDiagFmap {a} {b} sb sb' m sa eb esb = m eb esb
 
+public export
+SliceDiagFSig : (a, b : Type) ->
+  IntFunctorSig (SliceCat b) (SliceFuncCat a b)
+SliceDiagFSig a b =
+  IFunctor
+    (\sb => IFunctor (SliceDiagF {a} {b} sb) (SliceDiagFmor {a} {b} sb))
+    (sliceDiagFmap {a} {b})
+
 -- Equating `SliceObj Void` with the terminal category, we can use and
 -- simplify the left-Kan-extension formula to define the colimit of a
 -- slice functor.
@@ -2311,10 +2319,7 @@ SliceFColimitAdjRMap a b = sliceDiagFmap {a} {b}
 public export
 SliceFColimitAdjRFSig : (a, b : Type) ->
   IntFunctorSig (SliceCat b) (SliceFuncCat a b)
-SliceFColimitAdjRFSig a b =
-  IFunctor
-    (\sb => IFunctor (SliceFColimitAdjR a b sb) (SliceDiagFmor {a} {b} sb))
-    (SliceFColimitAdjRMap a b)
+SliceFColimitAdjRFSig = SliceDiagFSig
 
 public export
 SliceFLimitAdjL : (a, b : Type) -> SliceObj b -> SliceFunctor a b
@@ -2329,10 +2334,7 @@ SliceFLimitAdjLMap a b = sliceDiagFmap {a} {b}
 public export
 SliceFLimitAdjLFSig : (a, b : Type) ->
   IntFunctorSig (SliceCat b) (SliceFuncCat a b)
-SliceFLimitAdjLFSig a b =
-  IFunctor
-    (\sb => IFunctor (SliceFLimitAdjL a b sb) (SliceDiagFmor {a} {b} sb))
-    (SliceFLimitAdjLMap a b)
+SliceFLimitAdjLFSig = SliceDiagFSig
 
 public export
 SliceFLimitAdjR : (a, b : Type) -> SliceFunctor a b -> SliceObj b
