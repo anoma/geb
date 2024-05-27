@@ -2245,28 +2245,22 @@ SliceDiagFmor : {a, b : Type} -> (sb : SliceObj b) -> SliceFMap (SliceDiagF sb)
 SliceDiagFmor {a} {b} sb x y mxy = SliceId b sb
 
 public export
-sliceDiagFmap : {a, b : Type} -> (sb, sb' : SliceObj b) ->
-  SliceMorphism {a=b} sb sb' ->
-  SliceNatTrans {x=a} {y=b} (SliceDiagF sb) (SliceDiagF sb')
-sliceDiagFmap {a} {b} sb sb' m sa eb esb = m eb esb
-
-public export
 SliceDiagFSigOmap : (a, b : Type) -> SliceObj b -> icObj (SliceFuncCat a b)
 SliceDiagFSigOmap a b sb =
   IFunctor (SliceDiagF {a} {b} sb) (SliceDiagFmor {a} {b} sb)
 
 public export
-SliceDiagFSig : (a, b : Type) ->
-  icObj (IntFunctorCatSig (SliceCat b) (SliceFuncCat a b))
-SliceDiagFSig a b = IFunctor (SliceDiagFSigOmap a b) (sliceDiagFmap {a} {b})
-
-public export
-SliceDiagFSigMap : (a, b : Type) ->
+sliceDiagFmap : {a, b : Type} ->
   IntFMapSig
     (icMor $ SliceCat b)
     (icMor $ SliceFuncCat a b)
     (SliceDiagFSigOmap a b)
-SliceDiagFSigMap a b sb sb' msb sa = msb
+sliceDiagFmap {a} {b} sb sb' m sa = m
+
+public export
+SliceDiagFSig : (a, b : Type) ->
+  icObj (IntFunctorCatSig (SliceCat b) (SliceFuncCat a b))
+SliceDiagFSig a b = IFunctor (SliceDiagFSigOmap a b) (sliceDiagFmap {a} {b})
 
 -- Equating `SliceObj Void` with the terminal category, we can use and
 -- simplify the left-Kan-extension formula to define the colimit of a
