@@ -2408,6 +2408,22 @@ SliceFLimitAdjoints : (a, b : Type) ->
 SliceFLimitAdjoints a b =
   IAdjoints (SliceFLimitAdjLFSig a b) (SliceFLimitAdjRFSig a b)
 
+public export
+SliceFColimitUnits : (a, b : Type) ->
+  IntUnitsSig (SliceFColimitAdjoints a b)
+SliceFColimitUnits a b =
+  IUnits
+    (\f => SliceFColimitUnit a b $ ifOmap f)
+    (SliceFColimitCounit a b)
+
+public export
+SliceFLimitUnits : (a, b : Type) ->
+  IntUnitsSig (SliceFLimitAdjoints a b)
+SliceFLimitUnits a b =
+  IUnits
+    (SliceFLimitUnit a b)
+    (\f => SliceFLimitCounit a b $ ifOmap f)
+
 ---------------------------------
 ---------------------------------
 ----- (Slice) Kan extensions ----
