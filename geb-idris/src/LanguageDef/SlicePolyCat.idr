@@ -2251,12 +2251,22 @@ sliceDiagFmap : {a, b : Type} -> (sb, sb' : SliceObj b) ->
 sliceDiagFmap {a} {b} sb sb' m sa eb esb = m eb esb
 
 public export
+SliceDiagFSigOmap : (a, b : Type) -> SliceObj b -> icObj (SliceFuncCat a b)
+SliceDiagFSigOmap a b sb =
+  IFunctor (SliceDiagF {a} {b} sb) (SliceDiagFmor {a} {b} sb)
+
+public export
 SliceDiagFSig : (a, b : Type) ->
   IntFunctorSig (SliceCat b) (SliceFuncCat a b)
-SliceDiagFSig a b =
-  IFunctor
-    (\sb => IFunctor (SliceDiagF {a} {b} sb) (SliceDiagFmor {a} {b} sb))
-    (sliceDiagFmap {a} {b})
+SliceDiagFSig a b = IFunctor (SliceDiagFSigOmap a b) (sliceDiagFmap {a} {b})
+
+public export
+SliceDiagFSigMap : (a, b : Type) -> (sb, sb' : SliceObj b) ->
+  SliceMorphism {a=b} sb sb' ->
+  icMor (SliceFuncCat a b)
+    (SliceDiagFSigOmap a b sb)
+    (SliceDiagFSigOmap a b sb')
+SliceDiagFSigMap a b sb sb' msb sa = msb
 
 -- Equating `SliceObj Void` with the terminal category, we can use and
 -- simplify the left-Kan-extension formula to define the colimit of a
