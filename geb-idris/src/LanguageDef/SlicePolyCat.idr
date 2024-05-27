@@ -2257,12 +2257,13 @@ SliceDiagFSigOmap a b sb =
 
 public export
 SliceDiagFSig : (a, b : Type) ->
-  IntFunctorSig (SliceCat b) (SliceFuncCat a b)
+  icObj (IntFunctorCatSig (SliceCat b) (SliceFuncCat a b))
 SliceDiagFSig a b = IFunctor (SliceDiagFSigOmap a b) (sliceDiagFmap {a} {b})
 
 public export
-SliceDiagFSigMap : (a, b : Type) -> (sb, sb' : SliceObj b) ->
-  SliceMorphism {a=b} sb sb' ->
+SliceDiagFSigMap : (a, b : Type) ->
+  (sb, sb' : SliceObj b) ->
+  icMor (SliceCat b) sb sb' ->
   icMor (SliceFuncCat a b)
     (SliceDiagFSigOmap a b sb)
     (SliceDiagFSigOmap a b sb')
