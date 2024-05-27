@@ -2261,7 +2261,7 @@ public export
 sliceFColimitMap : {a, b : Type} -> (f, g : SliceFunctor a b) ->
   SliceNatTrans {x=a} {y=b} f g ->
   SliceMorphism {a=b} (SliceFColimit f) (SliceFColimit g)
-sliceFColimitMap {a} {b} f g alpha eb (sa ** efab) = (sa ** alpha sa eb efab)
+sliceFColimitMap {a} {b} f g alpha eb = dpMapSnd $ \sa => alpha sa eb
 
 -- Again equating `SliceObj Void` with the terminal category, we can use and
 -- simplify the right-Kan-extension formula to define the limit of a
