@@ -2424,6 +2424,18 @@ SliceFLimitUnits a b =
     (SliceFLimitUnit a b)
     (\f => SliceFLimitCounit a b $ ifOmap f)
 
+public export
+SliceFColimitAdj : (a, b : Type) ->
+  IntAdjunctionSig (SliceFuncCat a b) (SliceCat b)
+SliceFColimitAdj a b =
+  IntAdjunctionFromUnits (SliceFColimitAdjoints a b) (SliceFColimitUnits a b)
+
+public export
+SliceFLimitAdj : (a, b : Type) ->
+  IntAdjunctionSig (SliceCat b) (SliceFuncCat a b)
+SliceFLimitAdj a b =
+  IntAdjunctionFromUnits (SliceFLimitAdjoints a b) (SliceFLimitUnits a b)
+
 ---------------------------------
 ---------------------------------
 ----- (Slice) Kan extensions ----
