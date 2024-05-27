@@ -2262,11 +2262,10 @@ SliceDiagFSig a b = IFunctor (SliceDiagFSigOmap a b) (sliceDiagFmap {a} {b})
 
 public export
 SliceDiagFSigMap : (a, b : Type) ->
-  (sb, sb' : SliceObj b) ->
-  icMor (SliceCat b) sb sb' ->
-  icMor (SliceFuncCat a b)
-    (SliceDiagFSigOmap a b sb)
-    (SliceDiagFSigOmap a b sb')
+  IntFMapSig
+    (icMor $ SliceCat b)
+    (icMor $ SliceFuncCat a b)
+    (SliceDiagFSigOmap a b)
 SliceDiagFSigMap a b sb sb' msb sa = msb
 
 -- Equating `SliceObj Void` with the terminal category, we can use and
