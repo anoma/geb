@@ -2239,6 +2239,11 @@ public export
 SliceDiagF : {a, b : Type} -> SliceObj b -> SliceFunctor a b
 SliceDiagF {a} {b} sb sa eb = sb eb
 
+-- This is the morphism component of the diagonal functor.
+public export
+SliceDiagFmor : {a, b : Type} -> (sb : SliceObj b) -> SliceFMap (SliceDiagF sb)
+SliceDiagFmor {a} {b} sb x y mxy = SliceId b sb
+
 public export
 sliceDiagFmap : {a, b : Type} -> (sb, sb' : SliceObj b) ->
   SliceMorphism {a=b} sb sb' ->
@@ -2286,6 +2291,14 @@ SliceFColimitAdjLMap : (a, b : Type) ->
 SliceFColimitAdjLMap a b = sliceFColimitMap {a} {b}
 
 public export
+SliceFColimitAdjLFSig : (a, b : Type) ->
+  IntFunctorSig (SliceFuncCat a b) (SliceCat b)
+SliceFColimitAdjLFSig a b =
+  IFunctor
+    (SliceFColimitAdjL a b . ifOmap)
+    (\f, g => SliceFColimitAdjLMap a b (ifOmap f) (ifOmap g))
+
+public export
 SliceFColimitAdjR : (a, b : Type) -> SliceObj b -> SliceFunctor a b
 SliceFColimitAdjR a b = SliceDiagF {a} {b}
 
@@ -2294,6 +2307,14 @@ SliceFColimitAdjRMap : (a, b : Type) ->
   IntAdjRMapSig {c=(SliceFunctor a b)} {d=(SliceObj b)}
     (SliceNatTrans {x=a} {y=b}) (SliceMor b) (SliceFColimitAdjR a b)
 SliceFColimitAdjRMap a b = sliceDiagFmap {a} {b}
+
+public export
+SliceFColimitAdjRFSig : (a, b : Type) ->
+  IntFunctorSig (SliceCat b) (SliceFuncCat a b)
+SliceFColimitAdjRFSig a b =
+  IFunctor
+    (\sb => IFunctor (SliceFColimitAdjR a b sb) (SliceDiagFmor {a} {b} sb))
+    (SliceFColimitAdjRMap a b)
 
 public export
 SliceFLimitAdjL : (a, b : Type) -> SliceObj b -> SliceFunctor a b
@@ -2306,6 +2327,14 @@ SliceFLimitAdjLMap : (a, b : Type) ->
 SliceFLimitAdjLMap a b = sliceDiagFmap {a} {b}
 
 public export
+SliceFLimitAdjLFSig : (a, b : Type) ->
+  IntFunctorSig (SliceCat b) (SliceFuncCat a b)
+SliceFLimitAdjLFSig a b =
+  IFunctor
+    (\sb => IFunctor (SliceFLimitAdjL a b sb) (SliceDiagFmor {a} {b} sb))
+    (SliceFLimitAdjLMap a b)
+
+public export
 SliceFLimitAdjR : (a, b : Type) -> SliceFunctor a b -> SliceObj b
 SliceFLimitAdjR a b = SliceFLimit {a} {b}
 
@@ -2314,6 +2343,14 @@ SliceFLimitAdjRMap : (a, b : Type) ->
   IntAdjRMapSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
     (SliceMor b) (SliceNatTrans {x=a} {y=b}) (SliceFLimitAdjR a b)
 SliceFLimitAdjRMap a b = sliceFLimitMap {a} {b}
+
+public export
+SliceFLimitAdjRFSig : (a, b : Type) ->
+  IntFunctorSig (SliceFuncCat a b) (SliceCat b)
+SliceFLimitAdjRFSig a b =
+  IFunctor
+    (SliceFLimitAdjR a b . ifOmap)
+    (\f, g => SliceFLimitAdjRMap a b (ifOmap f) (ifOmap g))
 
 public export
 SliceFColimitMonad : (a, b : Type) -> SliceFunctor a b -> SliceFunctor a b
@@ -2358,6 +2395,18 @@ SliceFLimitCounit : (a, b : Type) ->
   IntAdjCounitSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
     (SliceNatTrans {x=a} {y=b}) (SliceFLimitAdjL a b) (SliceFLimitAdjR a b)
 SliceFLimitCounit a b fab sa eb fpi = fpi sa
+
+public export
+SliceFColimitAdjoints : (a, b : Type) ->
+  IntAdjointsSig (SliceFuncCat a b) (SliceCat b)
+SliceFColimitAdjoints a b =
+  IAdjoints (SliceFColimitAdjLFSig a b) (SliceFColimitAdjRFSig a b)
+
+public export
+SliceFLimitAdjoints : (a, b : Type) ->
+  IntAdjointsSig (SliceCat b) (SliceFuncCat a b)
+SliceFLimitAdjoints a b =
+  IAdjoints (SliceFLimitAdjLFSig a b) (SliceFLimitAdjRFSig a b)
 
 ---------------------------------
 ---------------------------------
