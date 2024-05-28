@@ -2217,6 +2217,135 @@ wtfFromSPFD {dom} {cod} (MkWTF pos dir f g h) sd ec
     (Element0 ep codeq **
      \(Element0 dd poseq) => dm (f dd) $ Element0 dd (Refl, poseq))
 
+---------------------------------
+---------------------------------
+----- (Slice) Kan extensions ----
+---------------------------------
+---------------------------------
+
+-- An explicit name for the precomposition functors across slice categories,
+-- partly for use as the intermediate functor in the triple adjunction of
+-- left-Kan-extension |- precomposition |- right-Kan-extension.
+public export
+SlicePrecompF : {a, b, c : Type} ->
+  SliceFunctor a c -> SliceFunctor c b -> SliceFunctor a b
+SlicePrecompF {a} {b} {c} =
+  flip $ (.) {a=(SliceObj a)} {b=(SliceObj c)} {c=(SliceObj b)}
+
+public export
+SlicePrecompFmor : {a, b, c : Type} ->
+  (g : SliceFunctor a c) -> (f : SliceFunctor c b) ->
+  (gm : SliceFMap g) -> (fm : SliceFMap f) ->
+  SliceFMap (SlicePrecompF g f)
+SlicePrecompFmor {a} {b} {c} g f gm fm x y = fm (g x) (g y) . gm x y
+
+public export
+SlicePrecompFSigOmap : (a, b, c : Type) ->
+  (f : SliceFunctor a c) -> (fm : SliceFMap f) ->
+  icObj (SliceFuncCat c b) -> icObj (SliceFuncCat a b)
+SlicePrecompFSigOmap a b c f fm g =
+  IFunctor
+    (SlicePrecompF f (ifOmap g))
+    (SlicePrecompFmor f (ifOmap g) fm (ifMmap g))
+
+public export
+slicePrecompFmap : {a, b, c : Type} -> (f : SliceFunctor a c) ->
+  {g, h : SliceFunctor c b} ->
+  SliceNatTrans {x=c} {y=b} g h ->
+  SliceNatTrans {x=a} {y=b} (SlicePrecompF f g) (SlicePrecompF f h)
+slicePrecompFmap {a} {b} {c} f {g} {h} alpha = SliceWhiskerLeft {g} {h} alpha f
+
+public export
+SlicePrecompFSig : (a, b, c : Type) ->
+  (f : SliceFunctor a c) -> (fm : SliceFMap f) ->
+  IntFunctorSig (SliceFuncCat c b) (SliceFuncCat a b)
+SlicePrecompFSig a b c f fm =
+  IFunctor
+    (SlicePrecompFSigOmap a b c f fm)
+    (\g, h => slicePrecompFmap {a} {b} f {g=(ifOmap g)} {h=(ifOmap h)})
+
+-- The left Kan extension of `f` (the second parameter) along
+-- `g` (the first parameter).
+public export
+SliceLKanExt : {a, b, c : Type} ->
+  SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
+SliceLKanExt {a} {b} {c} g f sc eb =
+  (sa : SliceObj a ** (SliceMorphism (g sa) sc, f sa eb))
+
+public export
+SliceLKanExtMor : {a, b, c : Type} ->
+  (g : SliceFunctor a c) -> (f : SliceFunctor a b) ->
+  SliceFMap (SliceLKanExt g f)
+SliceLKanExtMor {a} {b} {c} g f x y mxy eb =
+  dpMapSnd $ \sa => mapFst $ sliceComp {a=c} mxy
+
+public export
+SliceLKanExtSigOmap : (a, b, c : Type) ->
+  (g : SliceFunctor a c) ->
+  icObj (SliceFuncCat a b) -> icObj (SliceFuncCat c b)
+SliceLKanExtSigOmap a b c g f =
+  IFunctor (SliceLKanExt g (ifOmap f)) (SliceLKanExtMor g (ifOmap f))
+
+public export
+sliceLKanExtFmap : {a, b, c : Type} ->
+  (g : SliceFunctor a c) ->
+  {f, h : SliceFunctor a b} ->
+  SliceNatTrans {x=a} {y=b} f h ->
+  SliceNatTrans {x=c} {y=b} (SliceLKanExt g f) (SliceLKanExt g h)
+sliceLKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb =
+  dpMapSnd $ \sa => mapSnd $ alpha sa eb
+
+public export
+SliceLKanExtSig : (a, b, c : Type) ->
+  (g : SliceFunctor a c) ->
+  IntFunctorSig (SliceFuncCat a b) (SliceFuncCat c b)
+SliceLKanExtSig a b c g =
+  IFunctor
+    (SliceLKanExtSigOmap a b c g)
+    (\f, h => sliceLKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
+
+-- The right Kan extension of `f` (the second parameter) along
+-- `g` (the first parameter).
+public export
+SliceRKanExt : {a, b, c : Type} ->
+  SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
+SliceRKanExt {a} {b} {c} g f sc eb =
+  SliceNatTrans {x=a} {y=Unit}
+    (flip $ \_ => SliceMorphism sc . g)
+    (flip $ \_ => flip f eb)
+
+public export
+SliceRKanExtMor : {a, b, c : Type} ->
+  (g : SliceFunctor a c) -> (f : SliceFunctor a b) ->
+  SliceFMap (SliceRKanExt g f)
+SliceRKanExtMor {a} {b} {c} g f sc y mxy eb rk sa u myg =
+  case u of () => rk sa () $ sliceComp {a=c} myg mxy
+
+public export
+SliceRKanExtSigOmap : (a, b, c : Type) ->
+  (g : SliceFunctor a c) ->
+  icObj (SliceFuncCat a b) -> icObj (SliceFuncCat c b)
+SliceRKanExtSigOmap a b c g f =
+  IFunctor (SliceRKanExt g (ifOmap f)) (SliceRKanExtMor g (ifOmap f))
+
+public export
+sliceRKanExtFmap : {a, b, c : Type} ->
+  (g : SliceFunctor a c) ->
+  {f, h : SliceFunctor a b} ->
+  SliceNatTrans {x=a} {y=b} f h ->
+  SliceNatTrans {x=c} {y=b} (SliceRKanExt g f) (SliceRKanExt g h)
+sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa u =
+  case u of () => alpha sa eb . pi sa ()
+
+public export
+SliceRKanExtSig : (a, b, c : Type) ->
+  (g : SliceFunctor a c) ->
+  IntFunctorSig (SliceFuncCat a b) (SliceFuncCat c b)
+SliceRKanExtSig a b c g =
+  IFunctor
+    (SliceRKanExtSigOmap a b c g)
+    (\f, h => sliceRKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
+
 ----------------------------------
 ----------------------------------
 ---- Slice-functor (co)limits ----
@@ -2441,135 +2570,6 @@ SliceFLimitAdj : (a, b : Type) ->
   IntAdjunctionSig (SliceCat b) (SliceFuncCat a b)
 SliceFLimitAdj a b =
   IntAdjunctionFromUnits (SliceFLimitAdjoints a b) (SliceFLimitUnits a b)
-
----------------------------------
----------------------------------
------ (Slice) Kan extensions ----
----------------------------------
----------------------------------
-
--- An explicit name for the precomposition functors across slice categories,
--- partly for use as the intermediate functor in the triple adjunction of
--- left-Kan-extension |- precomposition |- right-Kan-extension.
-public export
-SlicePrecompF : {a, b, c : Type} ->
-  SliceFunctor a c -> SliceFunctor c b -> SliceFunctor a b
-SlicePrecompF {a} {b} {c} =
-  flip $ (.) {a=(SliceObj a)} {b=(SliceObj c)} {c=(SliceObj b)}
-
-public export
-SlicePrecompFmor : {a, b, c : Type} ->
-  (g : SliceFunctor a c) -> (f : SliceFunctor c b) ->
-  (gm : SliceFMap g) -> (fm : SliceFMap f) ->
-  SliceFMap (SlicePrecompF g f)
-SlicePrecompFmor {a} {b} {c} g f gm fm x y = fm (g x) (g y) . gm x y
-
-public export
-SlicePrecompFSigOmap : (a, b, c : Type) ->
-  (f : SliceFunctor a c) -> (fm : SliceFMap f) ->
-  icObj (SliceFuncCat c b) -> icObj (SliceFuncCat a b)
-SlicePrecompFSigOmap a b c f fm g =
-  IFunctor
-    (SlicePrecompF f (ifOmap g))
-    (SlicePrecompFmor f (ifOmap g) fm (ifMmap g))
-
-public export
-slicePrecompFmap : {a, b, c : Type} -> (f : SliceFunctor a c) ->
-  {g, h : SliceFunctor c b} ->
-  SliceNatTrans {x=c} {y=b} g h ->
-  SliceNatTrans {x=a} {y=b} (SlicePrecompF f g) (SlicePrecompF f h)
-slicePrecompFmap {a} {b} {c} f {g} {h} alpha = SliceWhiskerLeft {g} {h} alpha f
-
-public export
-SlicePrecompFSig : (a, b, c : Type) ->
-  (f : SliceFunctor a c) -> (fm : SliceFMap f) ->
-  IntFunctorSig (SliceFuncCat c b) (SliceFuncCat a b)
-SlicePrecompFSig a b c f fm =
-  IFunctor
-    (SlicePrecompFSigOmap a b c f fm)
-    (\g, h => slicePrecompFmap {a} {b} f {g=(ifOmap g)} {h=(ifOmap h)})
-
--- The left Kan extension of `f` (the second parameter) along
--- `g` (the first parameter).
-public export
-SliceLKanExt : {a, b, c : Type} ->
-  SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceLKanExt {a} {b} {c} g f sc eb =
-  (sa : SliceObj a ** (SliceMorphism (g sa) sc, f sa eb))
-
-public export
-SliceLKanExtMor : {a, b, c : Type} ->
-  (g : SliceFunctor a c) -> (f : SliceFunctor a b) ->
-  SliceFMap (SliceLKanExt g f)
-SliceLKanExtMor {a} {b} {c} g f x y mxy eb =
-  dpMapSnd $ \sa => mapFst $ sliceComp {a=c} mxy
-
-public export
-SliceLKanExtSigOmap : (a, b, c : Type) ->
-  (g : SliceFunctor a c) ->
-  icObj (SliceFuncCat a b) -> icObj (SliceFuncCat c b)
-SliceLKanExtSigOmap a b c g f =
-  IFunctor (SliceLKanExt g (ifOmap f)) (SliceLKanExtMor g (ifOmap f))
-
-public export
-sliceLKanExtFmap : {a, b, c : Type} ->
-  (g : SliceFunctor a c) ->
-  {f, h : SliceFunctor a b} ->
-  SliceNatTrans {x=a} {y=b} f h ->
-  SliceNatTrans {x=c} {y=b} (SliceLKanExt g f) (SliceLKanExt g h)
-sliceLKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb =
-  dpMapSnd $ \sa => mapSnd $ alpha sa eb
-
-public export
-SliceLKanExtSig : (a, b, c : Type) ->
-  (g : SliceFunctor a c) ->
-  IntFunctorSig (SliceFuncCat a b) (SliceFuncCat c b)
-SliceLKanExtSig a b c g =
-  IFunctor
-    (SliceLKanExtSigOmap a b c g)
-    (\f, h => sliceLKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
-
--- The right Kan extension of `f` (the second parameter) along
--- `g` (the first parameter).
-public export
-SliceRKanExt : {a, b, c : Type} ->
-  SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceRKanExt {a} {b} {c} g f sc eb =
-  SliceNatTrans {x=a} {y=Unit}
-    (flip $ \_ => SliceMorphism sc . g)
-    (flip $ \_ => flip f eb)
-
-public export
-SliceRKanExtMor : {a, b, c : Type} ->
-  (g : SliceFunctor a c) -> (f : SliceFunctor a b) ->
-  SliceFMap (SliceRKanExt g f)
-SliceRKanExtMor {a} {b} {c} g f sc y mxy eb rk sa u myg =
-  case u of () => rk sa () $ sliceComp {a=c} myg mxy
-
-public export
-SliceRKanExtSigOmap : (a, b, c : Type) ->
-  (g : SliceFunctor a c) ->
-  icObj (SliceFuncCat a b) -> icObj (SliceFuncCat c b)
-SliceRKanExtSigOmap a b c g f =
-  IFunctor (SliceRKanExt g (ifOmap f)) (SliceRKanExtMor g (ifOmap f))
-
-public export
-sliceRKanExtFmap : {a, b, c : Type} ->
-  (g : SliceFunctor a c) ->
-  {f, h : SliceFunctor a b} ->
-  SliceNatTrans {x=a} {y=b} f h ->
-  SliceNatTrans {x=c} {y=b} (SliceRKanExt g f) (SliceRKanExt g h)
-sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa u =
-  case u of () => alpha sa eb . pi sa ()
-
-public export
-SliceRKanExtSig : (a, b, c : Type) ->
-  (g : SliceFunctor a c) ->
-  IntFunctorSig (SliceFuncCat a b) (SliceFuncCat c b)
-SliceRKanExtSig a b c g =
-  IFunctor
-    (SliceRKanExtSigOmap a b c g)
-    (\f, h => sliceRKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
 --------------------------------
 --------------------------------
