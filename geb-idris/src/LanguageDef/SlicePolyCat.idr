@@ -2396,26 +2396,32 @@ SliceDiagFSig a b = IFunctor (SliceDiagFSigOmap a b) (sliceDiagFmap {a} {b})
 -- slice functor.
 public export
 SliceFColimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
-SliceFColimit {a} {b} f = Sigma {a=(SliceObj a)} . flip f
+SliceFColimit {a} {b} f =
+  SliceLKanExt {a} {b} {c=Void} (const $ voidF Type) f (voidF Type)
 
 public export
 sliceFColimitMap : {a, b : Type} -> (f, g : SliceFunctor a b) ->
   SliceNatTrans {x=a} {y=b} f g ->
   SliceMorphism {a=b} (SliceFColimit f) (SliceFColimit g)
-sliceFColimitMap {a} {b} f g alpha eb = dpMapSnd $ \sa => alpha sa eb
+sliceFColimitMap {a} {b} f g alpha =
+  sliceLKanExtFmap {a} {b} {c=Void}
+    (const $ voidF Type) {f} {h=g} alpha (voidF Type)
 
 -- Again equating `SliceObj Void` with the terminal category, we can use and
 -- simplify the right-Kan-extension formula to define the limit of a
 -- slice functor.
 public export
 SliceFLimit : {a, b : Type} -> SliceFunctor a b -> SliceObj b
-SliceFLimit {a} {b} f = Pi {a=(SliceObj a)} . flip f
+SliceFLimit {a} {b} f =
+  SliceRKanExt {a} {b} {c=Void} (const $ voidF Type) f (voidF Type)
 
 public export
 sliceFLimitMap : {a, b : Type} -> (f, g : SliceFunctor a b) ->
   SliceNatTrans {x=a} {y=b} f g ->
   SliceMorphism {a=b} (SliceFLimit f) (SliceFLimit g)
-sliceFLimitMap {a} {b} f g alpha eb pi sa = alpha sa eb $ pi sa
+sliceFLimitMap {a} {b} f g alpha =
+  sliceRKanExtFmap {a} {b} {c=Void}
+    (const $ voidF Type) {f} {h=g} alpha (voidF Type)
 
 ---------------------
 ---- Adjunctions ----
@@ -2511,25 +2517,25 @@ public export
 SliceFColimitUnit : (a, b : Type) ->
   IntAdjUnitSig {c=(SliceFunctor a b)} {d=(SliceObj b)}
     (SliceNatTrans {x=a} {y=b}) (SliceFColimitAdjL a b) (SliceFColimitAdjR a b)
-SliceFColimitUnit a b fab sa eb ef = (sa ** ef)
+SliceFColimitUnit a b fab sa eb ef = (sa ** (\v => void v, ef))
 
 public export
 SliceFColimitCounit : (a, b : Type) ->
   IntAdjCounitSig {c=(SliceFunctor a b)} {d=(SliceObj b)}
     (SliceMor b) (SliceFColimitAdjL a b) (SliceFColimitAdjR a b)
-SliceFColimitCounit a b sb eb = DPair.snd
+SliceFColimitCounit a b sb eb = snd . DPair.snd
 
 public export
 SliceFLimitUnit : (a, b : Type) ->
   IntAdjUnitSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
     (SliceMor b) (SliceFLimitAdjL a b) (SliceFLimitAdjR a b)
-SliceFLimitUnit a b sb eb esx sa = esx
+SliceFLimitUnit a b sb eb esx sa u v = esx
 
 public export
 SliceFLimitCounit : (a, b : Type) ->
   IntAdjCounitSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
     (SliceNatTrans {x=a} {y=b}) (SliceFLimitAdjL a b) (SliceFLimitAdjR a b)
-SliceFLimitCounit a b fab sa eb fpi = fpi sa
+SliceFLimitCounit a b fab sa eb fpi = fpi sa () $ \v => void v
 
 public export
 SliceFColimitAdjoints : (a, b : Type) ->
