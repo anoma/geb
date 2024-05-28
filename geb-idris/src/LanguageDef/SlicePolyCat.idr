@@ -2505,6 +2505,13 @@ SliceLKanExtMor {a} {b} {c} g f x y mxy eb =
   dpMapSnd $ \sa => mapFst $ sliceComp {a=c} mxy
 
 public export
+SliceLKanExtSigOmap : (a, b, c : Type) ->
+  (g : SliceFunctor a c) ->
+  icObj (SliceFuncCat a b) -> icObj (SliceFuncCat c b)
+SliceLKanExtSigOmap a b c g f =
+  IFunctor (SliceLKanExt g (ifOmap f)) (SliceLKanExtMor g (ifOmap f))
+
+public export
 sliceLKanExtFmap : {a, b, c : Type} ->
   (g : SliceFunctor a c) ->
   {f, h : SliceFunctor a b} ->
@@ -2512,6 +2519,15 @@ sliceLKanExtFmap : {a, b, c : Type} ->
   SliceNatTrans {x=c} {y=b} (SliceLKanExt g f) (SliceLKanExt g h)
 sliceLKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb =
   dpMapSnd $ \sa => mapSnd $ alpha sa eb
+
+public export
+SliceLKanExtSig : (a, b, c : Type) ->
+  (g : SliceFunctor a c) ->
+  IntFunctorSig (SliceFuncCat a b) (SliceFuncCat c b)
+SliceLKanExtSig a b c g =
+  IFunctor
+    (SliceLKanExtSigOmap a b c g)
+    (\f, h => sliceLKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
 -- The right Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
@@ -2531,6 +2547,13 @@ SliceRKanExtMor {a} {b} {c} g f sc y mxy eb rk sa u myg =
   case u of () => rk sa () $ sliceComp {a=c} myg mxy
 
 public export
+SliceRKanExtSigOmap : (a, b, c : Type) ->
+  (g : SliceFunctor a c) ->
+  icObj (SliceFuncCat a b) -> icObj (SliceFuncCat c b)
+SliceRKanExtSigOmap a b c g f =
+  IFunctor (SliceRKanExt g (ifOmap f)) (SliceRKanExtMor g (ifOmap f))
+
+public export
 sliceRKanExtFmap : {a, b, c : Type} ->
   (g : SliceFunctor a c) ->
   {f, h : SliceFunctor a b} ->
@@ -2538,6 +2561,15 @@ sliceRKanExtFmap : {a, b, c : Type} ->
   SliceNatTrans {x=c} {y=b} (SliceRKanExt g f) (SliceRKanExt g h)
 sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa u =
   case u of () => alpha sa eb . pi sa ()
+
+public export
+SliceRKanExtSig : (a, b, c : Type) ->
+  (g : SliceFunctor a c) ->
+  IntFunctorSig (SliceFuncCat a b) (SliceFuncCat c b)
+SliceRKanExtSig a b c g =
+  IFunctor
+    (SliceRKanExtSigOmap a b c g)
+    (\f, h => sliceRKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
 --------------------------------
 --------------------------------
