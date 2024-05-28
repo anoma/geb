@@ -2494,8 +2494,8 @@ SlicePrecompFSig a b c f fm =
 public export
 SliceLKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceLKanExt {a} {b} {c} g f sc =
-  SliceFColimit $ \sa, eb => (SliceMorphism (g sa) sc, f sa eb)
+SliceLKanExt {a} {b} {c} g f sc eb =
+  (sa : SliceObj a ** (SliceMorphism (g sa) sc, f sa eb))
 
 public export
 SliceLKanExtMor : {a, b, c : Type} ->
@@ -2534,15 +2534,17 @@ SliceLKanExtSig a b c g =
 public export
 SliceRKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
-SliceRKanExt {a} {b} {c} g f sc =
-  SliceFLimit $ \sa, eb => SliceMor c sc (g sa) -> f sa eb
+SliceRKanExt {a} {b} {c} g f sc eb =
+  SliceNatTrans {x=a} {y=Unit}
+    (flip $ \_ => SliceMorphism sc . g)
+    (flip $ \_ => flip f eb)
 
 public export
 SliceRKanExtMor : {a, b, c : Type} ->
   (g : SliceFunctor a c) -> (f : SliceFunctor a b) ->
   SliceFMap (SliceRKanExt g f)
-SliceRKanExtMor {a} {b} {c} g f sc y mxy eb rk sa myg =
-  rk sa $ sliceComp {a=c} myg mxy
+SliceRKanExtMor {a} {b} {c} g f sc y mxy eb rk sa u myg =
+  case u of () => rk sa () $ sliceComp {a=c} myg mxy
 
 public export
 SliceRKanExtSigOmap : (a, b, c : Type) ->
@@ -2557,8 +2559,8 @@ sliceRKanExtFmap : {a, b, c : Type} ->
   {f, h : SliceFunctor a b} ->
   SliceNatTrans {x=a} {y=b} f h ->
   SliceNatTrans {x=c} {y=b} (SliceRKanExt g f) (SliceRKanExt g h)
-sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa =
-  alpha sa eb . pi sa
+sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa u =
+  case u of () => alpha sa eb . pi sa ()
 
 public export
 SliceRKanExtSig : (a, b, c : Type) ->
