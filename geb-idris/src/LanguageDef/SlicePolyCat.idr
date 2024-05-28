@@ -2465,6 +2465,15 @@ SlicePrecompFmor : {a, b, c : Type} ->
 SlicePrecompFmor {a} {b} {c} g f gm fm x y = fm (g x) (g y) . gm x y
 
 public export
+SlicePrecompFSigOmap : (a, b, c : Type) ->
+  (f : SliceFunctor a c) -> (fm : SliceFMap f) ->
+  icObj (SliceFuncCat c b) -> icObj (SliceFuncCat a b)
+SlicePrecompFSigOmap a b c f fm g =
+  IFunctor
+    (SlicePrecompF f (ifOmap g))
+    (SlicePrecompFmor f (ifOmap g) fm (ifMmap g))
+
+public export
 slicePrecompFmap : {a, b, c : Type} -> (f : SliceFunctor a c) ->
   {g, h : SliceFunctor c b} ->
   SliceNatTrans {x=c} {y=b} g h ->
@@ -2473,14 +2482,11 @@ slicePrecompFmap {a} {b} {c} f {g} {h} alpha = SliceWhiskerLeft {g} {h} alpha f
 
 public export
 SlicePrecompFSig : (a, b, c : Type) ->
-  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  (f : SliceFunctor a c) -> (fm : SliceFMap f) ->
   IntFunctorSig (SliceFuncCat c b) (SliceFuncCat a b)
 SlicePrecompFSig a b c f fm =
   IFunctor
-    (\g =>
-      IFunctor
-        (SlicePrecompF f (ifOmap g))
-        (SlicePrecompFmor f (ifOmap g) fm (ifMmap g)))
+    (SlicePrecompFSigOmap a b c f fm)
     (\g, h => slicePrecompFmap {a} {b} f {g=(ifOmap g)} {h=(ifOmap h)})
 
 -- The left Kan extension of `f` (the second parameter) along
