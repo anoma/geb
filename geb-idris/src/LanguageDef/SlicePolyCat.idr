@@ -2310,16 +2310,18 @@ public export
 SliceRKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
 SliceRKanExt {a} {b} {c} g f sc eb =
-  SliceNatTrans {x=a} {y=Unit}
-    (flip $ \_ => SliceMorphism sc . g)
-    (flip $ \_ => flip f eb)
+  -- Conceptually the definition below is equivalent to:
+  --  SliceNatTrans {x=a} {y=Unit}
+  --    (flip $ \_ => SliceMorphism sc . g)
+  --    (flip $ \_ => flip f eb)
+  (sa : SliceObj a) -> SliceMor c sc (g sa) -> f sa eb
 
 public export
 SliceRKanExtMor : {a, b, c : Type} ->
   (g : SliceFunctor a c) -> (f : SliceFunctor a b) ->
   SliceFMap (SliceRKanExt g f)
-SliceRKanExtMor {a} {b} {c} g f sc y mxy eb rk sa u myg =
-  case u of () => rk sa () $ sliceComp {a=c} myg mxy
+SliceRKanExtMor {a} {b} {c} g f sc y mxy eb rk sa myg =
+  rk sa $ sliceComp {a=c} myg mxy
 
 public export
 SliceRKanExtSigOmap : (a, b, c : Type) ->
@@ -2334,8 +2336,8 @@ sliceRKanExtFmap : {a, b, c : Type} ->
   {f, h : SliceFunctor a b} ->
   SliceNatTrans {x=a} {y=b} f h ->
   SliceNatTrans {x=c} {y=b} (SliceRKanExt g f) (SliceRKanExt g h)
-sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa u =
-  case u of () => alpha sa eb . pi sa ()
+sliceRKanExtFmap {a} {b} {c} g {f} {h} alpha sc eb pi sa =
+  alpha sa eb . pi sa
 
 public export
 SliceRKanExtSig : (a, b, c : Type) ->
@@ -2529,13 +2531,13 @@ public export
 SliceFLimitUnit : (a, b : Type) ->
   IntAdjUnitSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
     (SliceMor b) (SliceFLimitAdjL a b) (SliceFLimitAdjR a b)
-SliceFLimitUnit a b sb eb esx sa u v = esx
+SliceFLimitUnit a b sb eb esx sa v = esx
 
 public export
 SliceFLimitCounit : (a, b : Type) ->
   IntAdjCounitSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
     (SliceNatTrans {x=a} {y=b}) (SliceFLimitAdjL a b) (SliceFLimitAdjR a b)
-SliceFLimitCounit a b fab sa eb fpi = fpi sa () $ \v => void v
+SliceFLimitCounit a b fab sa eb fpi = fpi sa $ \v => void v
 
 public export
 SliceFColimitAdjoints : (a, b : Type) ->
