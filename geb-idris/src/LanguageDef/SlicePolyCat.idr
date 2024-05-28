@@ -2270,7 +2270,7 @@ public export
 SliceLKanExt : {a, b, c : Type} ->
   SliceFunctor a c -> SliceFunctor a b -> SliceFunctor c b
 SliceLKanExt {a} {b} {c} g f sc eb =
-  (sa : SliceObj a ** (SliceMorphism (g sa) sc, f sa eb))
+  (sa : SliceObj a ** (Pi {a=c} $ SliceHom (g sa) sc, f sa eb))
 
 public export
 SliceLKanExtMor : {a, b, c : Type} ->
@@ -2314,7 +2314,7 @@ SliceRKanExt {a} {b} {c} g f sc eb =
   --  SliceNatTrans {x=a} {y=Unit}
   --    (flip $ \_ => SliceMorphism sc . g)
   --    (flip $ \_ => flip f eb)
-  (sa : SliceObj a) -> SliceMor c sc (g sa) -> f sa eb
+  (sa : SliceObj a) -> Pi {a=c} (SliceHom sc (g sa)) -> f sa eb
 
 public export
 SliceRKanExtMor : {a, b, c : Type} ->
