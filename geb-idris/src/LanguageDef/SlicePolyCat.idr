@@ -2368,7 +2368,7 @@ SliceRKanExtSig a b c g =
 -- colimit |- diagonal |- limit.
 public export
 SliceDiagF : {a, b : Type} -> SliceObj b -> SliceFunctor a b
-SliceDiagF {a} {b} sb sa eb = sb eb
+SliceDiagF {a} {b} sb sa = sb
 
 -- This is the morphism component of the diagonal functor.
 public export
