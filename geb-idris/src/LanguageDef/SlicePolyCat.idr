@@ -2223,9 +2223,9 @@ wtfFromSPFD {dom} {cod} (MkWTF pos dir f g h) sd ec
 ----------------------------------
 ----------------------------------
 
----------------------
----- Definitions ----
----------------------
+------------------------------------------------
+---- Definitions of triply-adjoint functors ----
+------------------------------------------------
 
 -- The diagonal slice functor, from the slice category over `b` to the functor
 -- category from the slice category over `a` to the slice catgory over `b`.
