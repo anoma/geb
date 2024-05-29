@@ -1391,3 +1391,7 @@ zipLen f [] [] Refl = []
 zipLen f [] (x :: xs) Refl impossible
 zipLen f (x :: xs) [] Refl impossible
 zipLen f (x :: xs) (y :: ys) eq = f x y :: zipLen f xs ys (injective eq)
+
+public export
+nzUnique : {n : Nat} -> (nz, nz' : NonZero n) -> nz = nz'
+nzUnique {n=(S n)} SIsNonZero SIsNonZero = Refl
