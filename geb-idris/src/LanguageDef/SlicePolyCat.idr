@@ -2644,6 +2644,55 @@ SliceRKanExtSig a b c g =
     (SliceRKanExtSigOmap a b c g)
     (\f, h => sliceRKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
+----------------------------
+----------------------------
+----- (Slice) Kan lifts ----
+----------------------------
+----------------------------
+
+-- An explicit name for the postcomposition functors across slice categories,
+-- partly for use as the intermediate functor in the triple adjunction of
+-- left-Kan-lift |- postcomposition |- right-Kan-lift.
+public export
+SlicePostcompF : {a, b, c : Type} ->
+  SliceFunctor c a -> SliceFunctor b c -> SliceFunctor b a
+SlicePostcompF {a} {b} {c} =
+  (.) {a=(SliceObj b)} {b=(SliceObj c)} {c=(SliceObj a)}
+
+public export
+SlicePostcompFmor : {a, b, c : Type} ->
+  (g : SliceFunctor c a) -> (f : SliceFunctor b c) ->
+  (gm : SliceFMap g) -> (fm : SliceFMap f) ->
+  SliceFMap (SlicePostcompF g f)
+SlicePostcompFmor {a} {b} {c} g f gm fm x y = gm (f x) (f y) . fm x y
+
+public export
+SlicePostcompFSigOmap : (a, b, c : Type) ->
+  (f : SliceFunctor c a) -> (fm : SliceFMap f) ->
+  icObj (SliceFuncCat b c) -> icObj (SliceFuncCat b a)
+SlicePostcompFSigOmap a b c f fm g =
+  IFunctor
+    (SlicePostcompF f (ifOmap g))
+    (SlicePostcompFmor f (ifOmap g) fm (ifMmap g))
+
+public export
+slicePostcompFmap : {a, b, c : Type} ->
+  {f : SliceFunctor c a} -> (fm : SliceFMap f) ->
+  {g, h : SliceFunctor b c} ->
+  SliceNatTrans {x=b} {y=c} g h ->
+  SliceNatTrans {x=b} {y=a} (SlicePostcompF f g) (SlicePostcompF f h)
+slicePostcompFmap {a} {b} {c} {f} fm {g} {h} =
+  SliceWhiskerRight {f=g} {g=h} {h=f} fm
+
+public export
+SlicePostcompFSig : (a, b, c : Type) ->
+  (f : SliceFunctor c a) -> (fm : SliceFMap f) ->
+  IntFunctorSig (SliceFuncCat b c) (SliceFuncCat b a)
+SlicePostcompFSig a b c f fm =
+  IFunctor
+    (SlicePostcompFSigOmap a b c f fm)
+    (\g, h => slicePostcompFmap {a} {b} {f} fm {g=(ifOmap g)} {h=(ifOmap h)})
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
