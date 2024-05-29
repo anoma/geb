@@ -2545,8 +2545,8 @@ public export
 SliceRKanExtMor : {a, b, c : Type} ->
   (g : SliceFunctor a c) -> (f : SliceFunctor a b) ->
   SliceFMap (SliceRKanExt g f)
-SliceRKanExtMor {a} {b} {c} g f sc y mxy eb rk sa myg =
-  rk sa $ sliceComp {a=c} myg mxy
+SliceRKanExtMor {a} {b} {c} g f sc y mxy eb rk sa =
+  flip (sliceComp {a=c}) mxy |> rk sa
 
 public export
 SliceRKanExtSigOmap : (a, b, c : Type) ->
