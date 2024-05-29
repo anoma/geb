@@ -2275,6 +2275,14 @@ sliceFColimitMap : {a, b : Type} -> (f, g : SliceFunctor a b) ->
   SliceMorphism {a=b} (SliceFColimit f) (SliceFColimit g)
 sliceFColimitMap {a} {b} f g alpha eb = dpMapSnd $ \sa => alpha sa eb
 
+public export
+SliceFColimitFSig : (a, b : Type) ->
+  icObj (IntFunctorCatSig (SliceFuncCat a b) (SliceCat b))
+SliceFColimitFSig a b =
+  IFunctor
+    (SliceFColimit {a} {b} . ifOmap)
+    (\f, g => sliceFColimitMap {a} {b} (ifOmap f) (ifOmap g))
+
 -- Again equating `SliceObj Void` with the terminal category, we can use and
 -- simplify the right-Kan-extension formula to define the limit of a
 -- slice functor.
@@ -2287,6 +2295,14 @@ sliceFLimitMap : {a, b : Type} -> (f, g : SliceFunctor a b) ->
   SliceNatTrans {x=a} {y=b} f g ->
   SliceMorphism {a=b} (SliceFLimit f) (SliceFLimit g)
 sliceFLimitMap {a} {b} f g alpha eb pi sa = alpha sa eb $ pi sa
+
+public export
+SliceFLimitFSig : (a, b : Type) ->
+  icObj (IntFunctorCatSig (SliceFuncCat a b) (SliceCat b))
+SliceFLimitFSig a b =
+  IFunctor
+    (SliceFLimit {a} {b} . ifOmap)
+    (\f, g => sliceFLimitMap {a} {b} (ifOmap f) (ifOmap g))
 
 ---------------------
 ---- Adjunctions ----
@@ -2305,10 +2321,7 @@ SliceFColimitAdjLMap a b = sliceFColimitMap {a} {b}
 public export
 SliceFColimitAdjLFSig : (a, b : Type) ->
   IntFunctorSig (SliceFuncCat a b) (SliceCat b)
-SliceFColimitAdjLFSig a b =
-  IFunctor
-    (SliceFColimitAdjL a b . ifOmap)
-    (\f, g => SliceFColimitAdjLMap a b (ifOmap f) (ifOmap g))
+SliceFColimitAdjLFSig = SliceFColimitFSig
 
 public export
 SliceFColimitAdjR : (a, b : Type) -> SliceObj b -> SliceFunctor a b
@@ -2353,10 +2366,7 @@ SliceFLimitAdjRMap a b = sliceFLimitMap {a} {b}
 public export
 SliceFLimitAdjRFSig : (a, b : Type) ->
   IntFunctorSig (SliceFuncCat a b) (SliceCat b)
-SliceFLimitAdjRFSig a b =
-  IFunctor
-    (SliceFLimitAdjR a b . ifOmap)
-    (\f, g => SliceFLimitAdjRMap a b (ifOmap f) (ifOmap g))
+SliceFLimitAdjRFSig = SliceFLimitFSig
 
 public export
 SliceFColimitMonad : (a, b : Type) -> SliceFunctor a b -> SliceFunctor a b
