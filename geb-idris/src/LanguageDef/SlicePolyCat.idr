@@ -2442,6 +2442,77 @@ SliceFLimitAdj : (a, b : Type) ->
 SliceFLimitAdj a b =
   IntAdjunctionFromUnits (SliceFLimitAdjoints a b) (SliceFLimitUnits a b)
 
+-------------------------------------------------------------------
+---- Computed adjunction data (introduction/elimination rules) ----
+-------------------------------------------------------------------
+
+public export
+sliceFColimitAdjLAdj : {a, b : Type} ->
+  (fa : SliceFunctor a b) -> (fm : SliceFMap fa) -> (sb : SliceObj b) ->
+  SliceMor b (SliceFColimit fa) sb ->
+  SliceNatTrans {x=a} {y=b} fa (SliceDiagF {a} {b} sb)
+sliceFColimitAdjLAdj {a} {b} fa fm =
+  iasLAdj (SliceFColimitAdj a b) (IFunctor fa fm)
+
+public export
+sliceFColimitAdjRAdj : {a, b : Type} ->
+  (fa : SliceFunctor a b) -> (fm : SliceFMap fa) -> (sb : SliceObj b) ->
+  SliceNatTrans {x=a} {y=b} fa (SliceDiagF {a} {b} sb) ->
+  SliceMor b (SliceFColimit fa) sb
+sliceFColimitAdjRAdj {a} {b} fa fm =
+  iasRAdj (SliceFColimitAdj a b) (IFunctor fa fm)
+
+public export
+sliceFColimitAdjMult : {a, b : Type} ->
+  (fa : SliceFunctor a b) -> (fm : SliceFMap fa) ->
+  SliceNatTrans {x=a} {y=b}
+    (SliceFColimitMonad a b (SliceFColimitMonad a b fa))
+    (SliceFColimitMonad a b fa)
+sliceFColimitAdjMult {a} {b} fa fm =
+  iasMult (SliceFColimitAdj a b) (IFunctor fa fm)
+
+public export
+sliceFColimitAdjComult : {a, b : Type} ->
+  (sb : SliceObj b) ->
+  SliceMorphism {a=b}
+    (SliceFColimitComonad a b sb)
+    (SliceFColimitComonad a b (SliceFColimitComonad a b sb))
+sliceFColimitAdjComult {a} {b} =
+  iasComult (SliceFColimitAdj a b)
+
+public export
+sliceFLimitAdjLAdj : {a, b : Type} ->
+  (sa : SliceObj b) -> (fb : SliceFunctor a b) -> (fm : SliceFMap fb) ->
+  SliceNatTrans {x=a} {y=b} (SliceDiagF {a} {b} sa) fb ->
+  SliceMor b sa (SliceFLimit fb)
+sliceFLimitAdjLAdj {a} {b} sa fb fm =
+  iasLAdj (SliceFLimitAdj a b) sa (IFunctor fb fm)
+
+public export
+sliceFLimitAdjRAdj : {a, b : Type} ->
+  (sa : SliceObj b) -> (fb : SliceFunctor a b) -> (fm : SliceFMap fb) ->
+  SliceMor b sa (SliceFLimit fb) ->
+  SliceNatTrans {x=a} {y=b} (SliceDiagF {a} {b} sa) fb
+sliceFLimitAdjRAdj {a} {b} sa fb fm =
+  iasRAdj (SliceFLimitAdj a b) sa (IFunctor fb fm)
+
+public export
+sliceFLimitAdjMult : {a, b : Type} ->
+  SliceNatTrans {x=b} {y=b}
+    (SliceFLimitMonad a b . SliceFLimitMonad a b)
+    (SliceFLimitMonad a b)
+sliceFLimitAdjMult {a} {b} =
+  iasMult (SliceFLimitAdj a b)
+
+public export
+sliceFLimitAdjComult : {a, b : Type} ->
+  (fb : SliceFunctor a b) -> (fm : SliceFMap fb) ->
+  SliceNatTrans {x=a} {y=b}
+    (SliceFLimitComonad a b fb)
+    (SliceFLimitComonad a b (SliceFLimitComonad a b fb))
+sliceFLimitAdjComult {a} {b} fb fm =
+  iasComult (SliceFLimitAdj a b) (IFunctor fb fm)
+
 ---------------------------------
 ---------------------------------
 ----- (Slice) Kan extensions ----
