@@ -2519,6 +2519,10 @@ sliceFLimitAdjComult {a} {b} fb fm =
 ---------------------------------
 ---------------------------------
 
+------------------------------------------------
+---- Definitions of triply-adjoint functors ----
+------------------------------------------------
+
 -- An explicit name for the precomposition functors across slice categories,
 -- partly for use as the intermediate functor in the triple adjunction of
 -- left-Kan-extension |- precomposition |- right-Kan-extension.
@@ -2649,6 +2653,10 @@ SliceRKanExtSig a b c g =
 ----- (Slice) Kan lifts ----
 ----------------------------
 ----------------------------
+
+------------------------------------------------
+---- Definitions of triply-adjoint functors ----
+------------------------------------------------
 
 -- An explicit name for the postcomposition functors across slice categories,
 -- partly for use as the intermediate functor in the triple adjunction of
