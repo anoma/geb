@@ -2152,6 +2152,14 @@ SliceFuncCat : Type -> Type -> IntCatSig
 SliceFuncCat x y = IntFunctorCatSig (SliceCat x) (SliceCat y)
 
 public export
+SliceFuncSig : Type -> Type -> Type
+SliceFuncSig x y = icObj $ SliceFuncCat x y
+
+public export
+SliceNTSig : {x, y : Type} -> SliceFuncSig x y -> SliceFuncSig x y -> Type
+SliceNTSig {x} {y} = icMor (SliceFuncCat x y)
+
+public export
 SliceFunc2Cat : Int2CatSig
 SliceFunc2Cat = IntFunctor2CatSig {idx=Type} SliceCat
 
