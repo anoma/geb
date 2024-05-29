@@ -2752,6 +2752,47 @@ SliceLKanLiftSig a b c g =
     (SliceLKanLiftSigOmap a b c g)
     (\f, h => sliceLKanLiftFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
+-- The right Kan lift (AKA "rift") of `f` (the second parameter) along
+-- `g` (the first parameter).
+public export
+SliceRKanLift : {a, b, c : Type} ->
+  SliceFunctor c a -> SliceFunctor b a -> SliceFunctor b c
+SliceRKanLift {a} {b} {c} g f sb ec =
+  (h : SliceFunctor b c ** hm : SliceFMap h **
+   (SliceNatTrans {x=b} {y=a} (g . h) f, h sb ec))
+
+public export
+SliceRKanLiftMor : {a, b, c : Type} ->
+  (g : SliceFunctor c a) -> (f : SliceFunctor b a) ->
+  SliceFMap (SliceRKanLift g f)
+SliceRKanLiftMor {a} {b} {c} g f x y mxy ec =
+  dpMapSnd (\h => dpMapSnd $ \hm => mapSnd $ hm x y mxy ec)
+
+public export
+SliceRKanLiftSigOmap : (a, b, c : Type) ->
+  (g : SliceFunctor c a) ->
+  icObj (SliceFuncCat b a) -> icObj (SliceFuncCat b c)
+SliceRKanLiftSigOmap a b c g f =
+  IFunctor (SliceRKanLift g (ifOmap f)) (SliceRKanLiftMor g (ifOmap f))
+
+public export
+sliceRKanLiftFmap : {a, b, c : Type} ->
+  (g : SliceFunctor c a) ->
+  {f, h : SliceFunctor b a} ->
+  SliceNatTrans {x=b} {y=a} f h ->
+  SliceNatTrans {x=b} {y=c} (SliceRKanLift g f) (SliceRKanLift g h)
+sliceRKanLiftFmap {a} {b} {c} g {f} {h} alpha sb ec =
+  dpMapSnd $ \j => dpMapSnd $ \jm => mapFst $ SliceNTvcomp alpha
+
+public export
+SliceRKanLiftSig : (a, b, c : Type) ->
+  (g : SliceFunctor c a) ->
+  IntFunctorSig (SliceFuncCat b a) (SliceFuncCat b c)
+SliceRKanLiftSig a b c g =
+  IFunctor
+    (SliceRKanLiftSigOmap a b c g)
+    (\f, h => sliceRKanLiftFmap g {f=(ifOmap f)} {h=(ifOmap h)})
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
