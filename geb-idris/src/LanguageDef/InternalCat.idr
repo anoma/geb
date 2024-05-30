@@ -2756,6 +2756,34 @@ iaRFmap : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
 iaRFmap adjs = ifMmap $ iaR adjs
 
 public export
+iaMonad : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
+  icObj c -> icObj c
+iaMonad {d} {c} adjs = IntAdjMonad (iaLOmap adjs) (iaROmap adjs)
+
+public export
+iaMonadMap : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
+  IntEndoFMapSig (icMor c) (iaMonad adjs)
+iaMonadMap {d} {c} adjs =
+  IntAdjMonadMap
+    (icMor d) (icMor c)
+    (iaLOmap adjs) (iaROmap adjs)
+    (iaLFmap adjs) (iaRFmap adjs)
+
+public export
+iaComonad : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
+  icObj d -> icObj d
+iaComonad {d} {c} adjs = IntAdjComonad (iaLOmap adjs) (iaROmap adjs)
+
+public export
+iaComonadMap : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
+  IntEndoFMapSig (icMor d) (iaComonad adjs)
+iaComonadMap {d} {c} adjs =
+  IntAdjComonadMap
+    (icMor d) (icMor c)
+    (iaLOmap adjs) (iaROmap adjs)
+    (iaLFmap adjs) (iaRFmap adjs)
+
+public export
 record IntAdjunctsSig {d, c : IntCatSig} (lr : IntAdjointsSig d c) where
   constructor IAdjuncts
   iaLAdj :
