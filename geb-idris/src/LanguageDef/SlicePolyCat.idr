@@ -2619,7 +2619,7 @@ SliceLKanExtAdjUnitInputs : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
   IntAdjUnitInputs (SliceFuncCat c b) (SliceFuncCat a b)
 SliceLKanExtAdjUnitInputs a b c g gm =
-  IAdjIn
+  IAdjUIn
     (IAdjoints
       (SliceLKanExtSig a b c g)
       (SlicePrecompFSig a b c g gm))
@@ -2687,7 +2687,7 @@ SliceRKanExtAdjUnitInputs : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
   IntAdjUnitInputs (SliceFuncCat a b) (SliceFuncCat c b)
 SliceRKanExtAdjUnitInputs a b c g gm =
-  IAdjIn
+  IAdjUIn
     (IAdjoints
       (SlicePrecompFSig a b c g gm)
       (SliceRKanExtSig a b c g))
