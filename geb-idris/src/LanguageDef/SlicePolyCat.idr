@@ -2615,10 +2615,10 @@ SliceLKanExtSig a b c g =
     (\f, h => sliceLKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
 public export
-SliceLKanExtAdjInputs : (a, b, c : Type) ->
+SliceLKanExtAdjUnitInputs : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
-  IntAdjInputs (SliceFuncCat c b) (SliceFuncCat a b)
-SliceLKanExtAdjInputs a b c g gm =
+  IntAdjUnitInputs (SliceFuncCat c b) (SliceFuncCat a b)
+SliceLKanExtAdjUnitInputs a b c g gm =
   IAdjIn
     (IAdjoints
       (SliceLKanExtSig a b c g)
@@ -2633,10 +2633,10 @@ SliceLKanExtAdjunctionSig : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
   IntAdjunctionSig (SliceFuncCat c b) (SliceFuncCat a b)
 SliceLKanExtAdjunctionSig a b c g gm =
-  IntAdjunctionFromInputs
+  IntAdjunctionFromUnitInputs
     {d=(SliceFuncCat c b)}
     {c=(SliceFuncCat a b)}
-    (SliceLKanExtAdjInputs a b c g gm)
+    (SliceLKanExtAdjUnitInputs a b c g gm)
 
 -- The right Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
@@ -2683,10 +2683,10 @@ SliceRKanExtSig a b c g =
     (\f, h => sliceRKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
 public export
-SliceRKanExtAdjInputs : (a, b, c : Type) ->
+SliceRKanExtAdjUnitInputs : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
-  IntAdjInputs (SliceFuncCat a b) (SliceFuncCat c b)
-SliceRKanExtAdjInputs a b c g gm =
+  IntAdjUnitInputs (SliceFuncCat a b) (SliceFuncCat c b)
+SliceRKanExtAdjUnitInputs a b c g gm =
   IAdjIn
     (IAdjoints
       (SlicePrecompFSig a b c g gm)
@@ -2700,10 +2700,10 @@ SliceRKanExtAdjunctionSig : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
   IntAdjunctionSig (SliceFuncCat a b) (SliceFuncCat c b)
 SliceRKanExtAdjunctionSig a b c g gm =
-  IntAdjunctionFromInputs
+  IntAdjunctionFromUnitInputs
     {d=(SliceFuncCat a b)}
     {c=(SliceFuncCat c b)}
-    (SliceRKanExtAdjInputs a b c g gm)
+    (SliceRKanExtAdjUnitInputs a b c g gm)
 
 ----------------------------
 ----------------------------
