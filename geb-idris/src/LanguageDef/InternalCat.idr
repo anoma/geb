@@ -2525,6 +2525,10 @@ intIdComonadComult {c} cmor cid = cid
 ---------------------
 ---------------------
 
+---------------------
+---- Definitions ----
+---------------------
+
 public export
 IntAdjLMapSig : {d, c : Type} ->
   IntMorSig d -> IntMorSig c ->
@@ -2614,6 +2618,10 @@ IntAdjComultSig : {d, c : Type} -> (dmor : IntMorSig d) ->
   (l : c -> d) -> (r : d -> c) -> Type
 IntAdjComultSig {d} {c} dmor l r =
   IntComultSig {c=d} dmor (IntAdjComonad {d} {c} l r)
+
+----------------------------------------
+---- Computation of adjunction data ----
+----------------------------------------
 
 public export
 IntAdjLAdjunctFromRMapAndUnit : {d, c : Type} ->
@@ -2719,6 +2727,10 @@ IntAdjComultFromUnit {d} {c} dmor cmor cid l r lm unit =
     unit
     r
 
+-----------------------------------------------------------------------
+---- Convenience records and functions for adjunction computations ----
+-----------------------------------------------------------------------
+
 public export
 record IntAdjointsSig (d, c : IntCatSig) where
   constructor IAdjoints
@@ -2821,12 +2833,22 @@ iasLOmap : {d, c : IntCatSig} -> IntAdjunctionSig d c -> icObj c -> icObj d
 iasLOmap = ifOmap . iasL
 
 public export
+iasLFmap : {d, c : IntCatSig} -> (adj : IntAdjunctionSig d c) ->
+  IntFMapSig (icMor c) (icMor d) (iasLOmap adj)
+iasLFmap adj = ifMmap $ iasL adj
+
+public export
 iasR : {d, c : IntCatSig} -> IntAdjunctionSig d c -> IntFunctorSig d c
 iasR = iaR . iaAdjoints
 
 public export
 iasROmap : {d, c : IntCatSig} -> IntAdjunctionSig d c -> icObj d -> icObj c
 iasROmap = ifOmap . iasR
+
+public export
+iasRFmap : {d, c : IntCatSig} -> (adj : IntAdjunctionSig d c) ->
+  IntFMapSig (icMor d) (icMor c) (iasROmap adj)
+iasRFmap adj = ifMmap $ iasR adj
 
 public export
 iasLAdj : {d, c : IntCatSig} ->
@@ -2957,3 +2979,31 @@ IntAdjunctionFromAdjunctInputs : {d, c : IntCatSig} ->
   IntAdjAdjunctInputs d c -> IntAdjunctionSig d c
 IntAdjunctionFromAdjunctInputs {d} {c} inputs =
   IntAdjunctionFromAdjuncts (iaaiFunctors inputs) (iaaiAdjuncts inputs)
+
+------------------------------------
+---- Composition of adjunctions ----
+------------------------------------
+
+public export
+intAdjCompLeftAdjoint : {e, d, c : IntCatSig} ->
+  IntAdjunctionSig d c -> IntAdjunctionSig e d -> icObj c -> icObj e
+intAdjCompLeftAdjoint {e} {d} {c} adc aed = iasLOmap aed . iasLOmap adc
+
+public export
+intAdjCompRightAdjoint : {e, d, c : IntCatSig} ->
+  IntAdjunctionSig d c -> IntAdjunctionSig e d -> icObj e -> icObj c
+intAdjCompRightAdjoint {e} {d} {c} adc aed = iasROmap adc . iasROmap aed
+
+public export
+intAdjCompLeftAdjMap : {e, d, c : IntCatSig} ->
+  (adc : IntAdjunctionSig d c) -> (aed : IntAdjunctionSig e d) ->
+  IntFMapSig (icMor c) (icMor e) (intAdjCompLeftAdjoint adc aed)
+intAdjCompLeftAdjMap {e} {d} {c} adc aed =
+  intFmapComp {emor=(icMor e)} (iasLFmap aed) (iasLFmap adc)
+
+public export
+intAdjCompRightAdjMap : {e, d, c : IntCatSig} ->
+  (adc : IntAdjunctionSig d c) -> (aed : IntAdjunctionSig e d) ->
+  IntFMapSig (icMor e) (icMor c) (intAdjCompRightAdjoint adc aed)
+intAdjCompRightAdjMap {e} {d} {c} adc aed =
+  intFmapComp {emor=(icMor c)} (iasRFmap adc) (iasRFmap aed)
