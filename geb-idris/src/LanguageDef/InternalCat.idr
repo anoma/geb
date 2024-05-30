@@ -2875,6 +2875,16 @@ IntAdjunctsFromUnits {c} {d} adjs units =
       (iaLOmap adjs) (iaROmap adjs) (iaLFmap adjs) (iuCounit units))
 
 public export
+IntUnitsFromAdjuncts : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
+  (adjuncts : IntAdjunctsSig adjs) -> IntUnitsSig adjs
+IntUnitsFromAdjuncts {d} {c} adjs adjuncts =
+  IUnits
+    (IntAdjUnitFromLAdjunct (icMor c) (icMor d) (icId d)
+      (iaLOmap adjs) (iaROmap adjs) (iaLAdj adjuncts))
+    (IntAdjCounitFromRAdjunct (icMor c) (icMor d) (icId c)
+      (iaLOmap adjs) (iaROmap adjs) (iaRAdj adjuncts))
+
+public export
 IntMultsFromUnits : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
   (units : IntUnitsSig adjs) -> IntMultsSig adjs
 IntMultsFromUnits {c} {d} adjs units =
@@ -2883,6 +2893,12 @@ IntMultsFromUnits {c} {d} adjs units =
       (iaROmap adjs) (iaRFmap adjs) (iuCounit units))
     (IntAdjComultFromUnit (icMor c) (icMor d) (icId c) (iaLOmap adjs)
       (iaROmap adjs) (iaLFmap adjs) (iuUnit units))
+
+public export
+IntMultsFromAdjuncts : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
+  (adjuncts : IntAdjunctsSig adjs) -> IntMultsSig adjs
+IntMultsFromAdjuncts {c} {d} adjs =
+  IntMultsFromUnits {d} {c} adjs . IntUnitsFromAdjuncts adjs
 
 public export
 IntAdjunctionDataFromUnits : {d, c : IntCatSig} ->
@@ -2903,12 +2919,41 @@ IntAdjunctionFromUnits {c} {d} adjs units =
 
 public export
 record IntAdjUnitInputs (d, c : IntCatSig) where
-  constructor IAdjIn
-  iaiFunctors : IntAdjointsSig d c
-  iaiUnits : IntUnitsSig iaiFunctors
+  constructor IAdjUIn
+  iauiFunctors : IntAdjointsSig d c
+  iauiUnits : IntUnitsSig iauiFunctors
 
 public export
 IntAdjunctionFromUnitInputs : {d, c : IntCatSig} ->
   IntAdjUnitInputs d c -> IntAdjunctionSig d c
 IntAdjunctionFromUnitInputs {d} {c} inputs =
-  IntAdjunctionFromUnits (iaiFunctors inputs) (iaiUnits inputs)
+  IntAdjunctionFromUnits (iauiFunctors inputs) (iauiUnits inputs)
+
+public export
+IntAdjunctionDataFromAdjuncts : {d, c : IntCatSig} ->
+  (adjs : IntAdjointsSig d c) -> IntAdjunctsSig adjs ->
+  IntAdjunctionData adjs
+IntAdjunctionDataFromAdjuncts {c} {d} adjs adjuncts =
+  IAdjData
+    adjuncts
+    (IntUnitsFromAdjuncts adjs adjuncts)
+    (IntMultsFromAdjuncts adjs adjuncts)
+
+public export
+IntAdjunctionFromAdjuncts : {d, c : IntCatSig} ->
+  (adjs : IntAdjointsSig d c) -> IntAdjunctsSig adjs ->
+  IntAdjunctionSig d c
+IntAdjunctionFromAdjuncts {c} {d} adjs adjuncts =
+  IAdjunction adjs (IntAdjunctionDataFromAdjuncts adjs adjuncts)
+
+public export
+record IntAdjAdjunctInputs (d, c : IntCatSig) where
+  constructor IAdjAIn
+  iaaiFunctors : IntAdjointsSig d c
+  iaaiAdjuncts : IntAdjunctsSig iaaiFunctors
+
+public export
+IntAdjunctionFromAdjunctInputs : {d, c : IntCatSig} ->
+  IntAdjAdjunctInputs d c -> IntAdjunctionSig d c
+IntAdjunctionFromAdjunctInputs {d} {c} inputs =
+  IntAdjunctionFromAdjuncts (iaaiFunctors inputs) (iaaiAdjuncts inputs)
