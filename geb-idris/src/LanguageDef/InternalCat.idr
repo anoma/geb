@@ -2902,13 +2902,13 @@ IntAdjunctionFromUnits {c} {d} adjs units =
   IAdjunction adjs (IntAdjunctionDataFromUnits adjs units)
 
 public export
-record IntAdjInputs (d, c : IntCatSig) where
+record IntAdjUnitInputs (d, c : IntCatSig) where
   constructor IAdjIn
   iaiFunctors : IntAdjointsSig d c
   iaiUnits : IntUnitsSig iaiFunctors
 
 public export
-IntAdjunctionFromInputs : {d, c : IntCatSig} ->
-  IntAdjInputs d c -> IntAdjunctionSig d c
-IntAdjunctionFromInputs {d} {c} inputs =
+IntAdjunctionFromUnitInputs : {d, c : IntCatSig} ->
+  IntAdjUnitInputs d c -> IntAdjunctionSig d c
+IntAdjunctionFromUnitInputs {d} {c} inputs =
   IntAdjunctionFromUnits (iaiFunctors inputs) (iaiUnits inputs)
