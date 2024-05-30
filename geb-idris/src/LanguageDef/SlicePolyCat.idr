@@ -2683,10 +2683,10 @@ SliceRKanExtSig a b c g =
     (\f, h => sliceRKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
 public export
-SliceRKanAdjInputs : (a, b, c : Type) ->
+SliceRKanExtAdjInputs : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
   IntAdjInputs (SliceFuncCat a b) (SliceFuncCat c b)
-SliceRKanAdjInputs a b c g gm =
+SliceRKanExtAdjInputs a b c g gm =
   IAdjIn
     (IAdjoints
       (SlicePrecompFSig a b c g gm)
@@ -2696,14 +2696,14 @@ SliceRKanAdjInputs a b c g gm =
       (\f, sa, eb, rk => rk sa $ SliceId c $ g sa))
 
 public export
-SliceRKanAdjunctionSig : (a, b, c : Type) ->
+SliceRKanExtAdjunctionSig : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
   IntAdjunctionSig (SliceFuncCat a b) (SliceFuncCat c b)
-SliceRKanAdjunctionSig a b c g gm =
+SliceRKanExtAdjunctionSig a b c g gm =
   IntAdjunctionFromInputs
     {d=(SliceFuncCat a b)}
     {c=(SliceFuncCat c b)}
-    (SliceRKanAdjInputs a b c g gm)
+    (SliceRKanExtAdjInputs a b c g gm)
 
 ----------------------------
 ----------------------------
