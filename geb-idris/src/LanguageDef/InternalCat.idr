@@ -3007,3 +3007,21 @@ intAdjCompRightAdjMap : {e, d, c : IntCatSig} ->
   IntFMapSig (icMor e) (icMor c) (intAdjCompRightAdjoint adc aed)
 intAdjCompRightAdjMap {e} {d} {c} adc aed =
   intFmapComp {emor=(icMor c)} (iasRFmap adc) (iasRFmap aed)
+
+public export
+intAdjCompLeftAdjunct : {e, d, c : IntCatSig} ->
+  (adc : IntAdjunctionSig d c) -> (aed : IntAdjunctionSig e d) ->
+  IntAdjLAdjunctSig (icMor e) (icMor c)
+    (intAdjCompLeftAdjoint adc aed)
+    (intAdjCompRightAdjoint adc aed)
+intAdjCompLeftAdjunct {e} {d} {c} adc aed a b =
+  iasLAdj adc a (iasROmap aed b) . iasLAdj aed (iasLOmap adc a) b
+
+public export
+intAdjCompRightAdjunct : {e, d, c : IntCatSig} ->
+  (adc : IntAdjunctionSig d c) -> (aed : IntAdjunctionSig e d) ->
+  IntAdjRAdjunctSig (icMor e) (icMor c)
+    (intAdjCompLeftAdjoint adc aed)
+    (intAdjCompRightAdjoint adc aed)
+intAdjCompRightAdjunct {e} {d} {c} adc aed a b =
+  iasRAdj aed (iasLOmap adc a) b . iasRAdj adc a (iasROmap aed b)
