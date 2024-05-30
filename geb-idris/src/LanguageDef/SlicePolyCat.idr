@@ -2658,6 +2658,29 @@ SliceRKanExtSig a b c g =
     (SliceRKanExtSigOmap a b c g)
     (\f, h => sliceRKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
+public export
+SliceRKanAdjInputs : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntAdjInputs (SliceFuncCat a b) (SliceFuncCat c b)
+SliceRKanAdjInputs a b c g gm =
+  IAdjIn
+    (IAdjoints
+      (SlicePrecompFSig a b c g gm)
+      (SliceRKanExtSig a b c g))
+    (IUnits
+      (\f, sc, eb, efb, sa, rk => ifMmap f sc (g sa) rk eb efb)
+      (\f, sa, eb, rk => rk sa $ SliceId c $ g sa))
+
+public export
+SliceRKanAdjunctionSig : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntAdjunctionSig (SliceFuncCat a b) (SliceFuncCat c b)
+SliceRKanAdjunctionSig a b c g gm =
+  IntAdjunctionFromInputs
+    {d=(SliceFuncCat a b)}
+    {c=(SliceFuncCat c b)}
+    (SliceRKanAdjInputs a b c g gm)
+
 ----------------------------
 ----------------------------
 ----- (Slice) Kan lifts ----
