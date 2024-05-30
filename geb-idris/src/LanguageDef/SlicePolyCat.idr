@@ -2614,6 +2614,30 @@ SliceLKanExtSig a b c g =
     (SliceLKanExtSigOmap a b c g)
     (\f, h => sliceLKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
+public export
+SliceLKanExtAdjInputs : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntAdjInputs (SliceFuncCat c b) (SliceFuncCat a b)
+SliceLKanExtAdjInputs a b c g gm =
+  IAdjIn
+    (IAdjoints
+      (SliceLKanExtSig a b c g)
+      (SlicePrecompFSig a b c g gm))
+    (IUnits
+      (\f, sa, eb, efb => (sa ** (SliceId c (g sa), efb)))
+      (\f, sc, eb, lk =>
+        ifMmap f (g $ fst lk) sc (fst $ snd lk) eb $ snd $ snd lk))
+
+public export
+SliceLKanExtAdjunctionSig : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntAdjunctionSig (SliceFuncCat c b) (SliceFuncCat a b)
+SliceLKanExtAdjunctionSig a b c g gm =
+  IntAdjunctionFromInputs
+    {d=(SliceFuncCat c b)}
+    {c=(SliceFuncCat a b)}
+    (SliceLKanExtAdjInputs a b c g gm)
+
 -- The right Kan extension of `f` (the second parameter) along
 -- `g` (the first parameter).
 public export
