@@ -2414,13 +2414,13 @@ SliceFLimitCounit a b fab sa eb fpi = fpi sa
 
 public export
 SliceFColimitAdjoints : (a, b : Type) ->
-  IntAdjointsSig (SliceFuncCat a b) (SliceCat b)
+  IntAdjointsSig (SliceCat b) (SliceFuncCat a b)
 SliceFColimitAdjoints a b =
   IAdjoints (SliceFColimitAdjLFSig a b) (SliceFColimitAdjRFSig a b)
 
 public export
 SliceFLimitAdjoints : (a, b : Type) ->
-  IntAdjointsSig (SliceCat b) (SliceFuncCat a b)
+  IntAdjointsSig (SliceFuncCat a b) (SliceCat b)
 SliceFLimitAdjoints a b =
   IAdjoints (SliceFLimitAdjLFSig a b) (SliceFLimitAdjRFSig a b)
 
@@ -2442,13 +2442,13 @@ SliceFLimitUnits a b =
 
 public export
 SliceFColimitAdj : (a, b : Type) ->
-  IntAdjunctionSig (SliceFuncCat a b) (SliceCat b)
+  IntAdjunctionSig (SliceCat b) (SliceFuncCat a b)
 SliceFColimitAdj a b =
   IntAdjunctionFromUnits (SliceFColimitAdjoints a b) (SliceFColimitUnits a b)
 
 public export
 SliceFLimitAdj : (a, b : Type) ->
-  IntAdjunctionSig (SliceCat b) (SliceFuncCat a b)
+  IntAdjunctionSig (SliceFuncCat a b) (SliceCat b)
 SliceFLimitAdj a b =
   IntAdjunctionFromUnits (SliceFLimitAdjoints a b) (SliceFLimitUnits a b)
 
