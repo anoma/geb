@@ -2315,7 +2315,7 @@ SliceFColimitAdjL a b = SliceFColimit {a} {b}
 public export
 SliceFColimitAdjLMap : (a, b : Type) ->
   IntAdjLMapSig {c=(SliceFunctor a b)} {d=(SliceObj b)}
-    (SliceNatTrans {x=a} {y=b}) (SliceMor b) (SliceFColimitAdjL a b)
+    (SliceMor b) (SliceNatTrans {x=a} {y=b}) (SliceFColimitAdjL a b)
 SliceFColimitAdjLMap a b = sliceFColimitMap {a} {b}
 
 public export
@@ -2330,7 +2330,7 @@ SliceFColimitAdjR a b = SliceDiagF {a} {b}
 public export
 SliceFColimitAdjRMap : (a, b : Type) ->
   IntAdjRMapSig {c=(SliceFunctor a b)} {d=(SliceObj b)}
-    (SliceNatTrans {x=a} {y=b}) (SliceMor b) (SliceFColimitAdjR a b)
+    (SliceMor b) (SliceNatTrans {x=a} {y=b}) (SliceFColimitAdjR a b)
 SliceFColimitAdjRMap a b = sliceDiagFmap {a} {b}
 
 public export
@@ -2345,7 +2345,7 @@ SliceFLimitAdjL a b = SliceDiagF {a} {b}
 public export
 SliceFLimitAdjLMap : (a, b : Type) ->
   IntAdjLMapSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
-    (SliceMor b) (SliceNatTrans {x=a} {y=b}) (SliceFLimitAdjL a b)
+    (SliceNatTrans {x=a} {y=b}) (SliceMor b) (SliceFLimitAdjL a b)
 SliceFLimitAdjLMap a b = sliceDiagFmap {a} {b}
 
 public export
@@ -2360,7 +2360,7 @@ SliceFLimitAdjR a b = SliceFLimit {a} {b}
 public export
 SliceFLimitAdjRMap : (a, b : Type) ->
   IntAdjRMapSig {c=(SliceObj b)} {d=(SliceFunctor a b)}
-    (SliceMor b) (SliceNatTrans {x=a} {y=b}) (SliceFLimitAdjR a b)
+    (SliceNatTrans {x=a} {y=b}) (SliceMor b) (SliceFLimitAdjR a b)
 SliceFLimitAdjRMap a b = sliceFLimitMap {a} {b}
 
 public export
