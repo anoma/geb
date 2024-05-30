@@ -3025,3 +3025,21 @@ intAdjCompRightAdjunct : {e, d, c : IntCatSig} ->
     (intAdjCompRightAdjoint adc aed)
 intAdjCompRightAdjunct {e} {d} {c} adc aed a b =
   iasRAdj aed (iasLOmap adc a) b . iasRAdj adc a (iasROmap aed b)
+
+public export
+intAdjunctionSigCompose : {e, d, c : IntCatSig} ->
+  IntAdjunctionSig d c -> IntAdjunctionSig e d ->
+  IntAdjunctionSig e c
+intAdjunctionSigCompose {e} {d} {c} adc aed =
+  IntAdjunctionFromAdjunctInputs {d=e} {c} $
+    IAdjAIn
+      (IAdjoints
+        (IFunctor
+          (intAdjCompLeftAdjoint adc aed)
+          (intAdjCompLeftAdjMap adc aed))
+        (IFunctor
+          (intAdjCompRightAdjoint adc aed)
+          (intAdjCompRightAdjMap adc aed)))
+      (IAdjuncts
+        (intAdjCompLeftAdjunct adc aed)
+        (intAdjCompRightAdjunct adc aed))
