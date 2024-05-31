@@ -28,6 +28,7 @@ modules =
     , LanguageDef.IntFactCatFunc
     , LanguageDef.MLBundleCat
     , LanguageDef.SlicePolyCat
+    , LanguageDef.SliceFuncCat
     , LanguageDef.DisliceCat
     , LanguageDef.DislicePolyCat
     , LanguageDef.Quiver
@@ -74,6 +75,7 @@ modules =
     , LanguageDef.Test.InternalProfunctorTest
     , LanguageDef.Test.MLBundleCatTest
     , LanguageDef.Test.SlicePolyCatTest
+    , LanguageDef.Test.SliceFuncCatTest
     , LanguageDef.Test.DisliceCatTest
     , LanguageDef.Test.QuiverTest
     , LanguageDef.Test.MLQuivCatTest
