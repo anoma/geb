@@ -54,13 +54,13 @@ record SPFData (0 dom, cod : Type) where
   spfdDir : SPFdirType dom cod spfdPos
 
 -- Category-theory-style `spfdPos`.
-export
+public export
 spfdCPos : {dom, cod : Type} -> SPFData dom cod -> CSliceObj cod
 spfdCPos {dom} {cod} spfd = CSliceFromSlice {c=cod} (spfdPos spfd)
 
 -- Category-theory-style slice object in the slice category of
 -- `Type` over `spfdPos spfd`.
-export
+public export
 spfdCPosSl : {dom, cod : Type} -> SPFData dom cod -> Type
 spfdCPosSl {dom} {cod} spfd = CSliceObjOfSliceCat {c=cod} (spfdCPos spfd)
 
@@ -68,13 +68,13 @@ spfdCPosSl {dom} {cod} spfd = CSliceObjOfSliceCat {c=cod} (spfdCPos spfd)
 -- in the "object language") covariant representable functor on the domain of
 -- a slice polynomial functor represented by its object of directions
 -- at a given position.
-export
+public export
 SPFDintCovarDirRep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceEndofunctor dom
 SPFDintCovarDirRep {dom} {cod} spfd ec ep =
   SliceHom {a=dom} (spfdDir spfd ec ep)
 
-export
+public export
 SPFDintCovarDirRepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> (ep : spfdPos spfd ec) ->
   SliceFMap (SPFDintCovarDirRep {dom} {cod} spfd ec ep)
@@ -83,7 +83,7 @@ SPFDintCovarDirRepMap {dom} {cod} spfd ec ep x y mab ed = (.) (mab ed)
 -- The external (that is, as a copresheaf) covariant representable functor
 -- on the domain of a slice polynomial functor represented by its object
 -- of directions at a given position.
-export
+public export
 SPFDextCovarDirRep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> spfdPos spfd ec -> SliceObj dom -> Type
 SPFDextCovarDirRep {dom} {cod} spfd ec ep sd =
@@ -91,7 +91,7 @@ SPFDextCovarDirRep {dom} {cod} spfd ec ep sd =
   --  SliceMorphism {a=dom} (spfdDir spfd ec ep) sd
   Pi {a=dom} (SPFDintCovarDirRep {dom} {cod} spfd ec ep sd)
 
-export
+public export
 SPFDextCovarDirRepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> (ep : spfdPos spfd ec) ->
   (0 a, b : SliceObj dom) -> SliceMorphism {a=dom} a b ->
@@ -102,21 +102,21 @@ SPFDextCovarDirRepMap {dom} {cod} spfd ec ep a b mab dm ed = mab ed . dm ed
 -- The base object of the intermediate slice category in the factorization
 -- of a (slice) polynomial functor as a parametric right adjoint.
 -- This is `T1` in the ncat page on parametric right adjoints.
-export
+public export
 SPFDbase : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDbase {dom} {cod} = Sigma {a=cod} . spfdPos
 
-export
+public export
 SPFDbaseSl : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDbaseSl {dom} {cod} = SliceObj . SPFDbase {dom} {cod}
 
 -- This is the contravariant representable functor on `SliceObj cod`
 -- represented by `spfdPos spfd`.
-export
+public export
 SPFDposContraRep : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDposContraRep {dom} {cod} spfd = flip (SliceMorphism {a=cod}) (spfdPos spfd)
 
-export
+public export
 SPFDposContraRepContramap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SliceObj cod) ->
   SliceMorphism {a=cod} y x ->
@@ -125,7 +125,7 @@ SPFDposContraRepContramap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDposContraRepContramap {dom} {cod} spfd x y =
   flip $ sliceComp {x=y} {y=x} {z=(spfdPos spfd)}
 
-export
+public export
 SPFDposCSlice : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDposCSlice {dom} {cod} spfd = CSliceOfSlice {c=cod} (spfdPos spfd)
 
@@ -140,21 +140,21 @@ SPFDposCSlice {dom} {cod} spfd = CSliceOfSlice {c=cod} (spfdPos spfd)
 -- which is to say, an object of `SliceObj cod` together with a morphism
 -- from that object to `spfdPos spfd` -- to a dependent-type-style slice
 -- of `SPFDbase spfd`.
-export
+public export
 SPFDposCSlToBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDposCSlice {dom} {cod} spfd ->
   SPFDbaseSl {dom} {cod} spfd
 SPFDposCSlToBaseSl {dom} {cod} {spfd} =
   CSliceOfSliceToSliceOfSigma {c=cod} {sl=(spfdPos spfd)}
 
-export
+public export
 SPFDbaseSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDbaseSl {dom} {cod} spfd ->
   SPFDposCSlice {dom} {cod} spfd
 SPFDbaseSlToPosCSl {spfd} =
   SliceOfSigmaToCSliceOfSlice {c=cod} {sl=(spfdPos spfd)}
 
-export
+public export
 SPFDcPosSlToBaseSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   spfdCPosSl spfd -> SPFDbaseSl {dom} {cod} spfd
 SPFDcPosSlToBaseSl {dom} {cod} {spfd} =
@@ -162,30 +162,30 @@ SPFDcPosSlToBaseSl {dom} {cod} {spfd} =
 
 -- Translate from a dependent-type-style slice of `SPFDbase spfd` to a
 -- category-theory-style slice of `spfdPos spfd`.
-export
+public export
 SPFDbaseSlToCPosSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDbaseSl {dom} {cod} spfd -> spfdCPosSl spfd
 SPFDbaseSlToCPosSl = SliceObjOverSigmaToObjOfSliceCat
 
-export
+public export
 SPFDcPosSlToPosCSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   spfdCPosSl spfd -> SPFDposCSlice {dom} {cod} spfd
 SPFDcPosSlToPosCSl = CSliceOfSliceCatToCSliceOfSlice
 
-export
+public export
 SPFDposCSlToCPosSl : {dom, cod : Type} -> {spfd : SPFData dom cod} ->
   SPFDposCSlice {dom} {cod} spfd -> spfdCPosSl spfd
 SPFDposCSlToCPosSl = CSliceOfSliceToCSliceOfSliceCat
 
 -- The right-adjoint factor of a polynomial functor expressed as
 -- a parametric right adjoint.
-export
+public export
 SPFDradjFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor dom (SPFDbase {dom} {cod} spfd)
 SPFDradjFact {dom} {cod} spfd sd ecp =
   SPFDextCovarDirRep spfd (fst ecp) (snd ecp) sd
 
-export
+public export
 SPFDradjFactMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDradjFact {dom} {cod} spfd)
 SPFDradjFactMap {dom} {cod} spfd x y m ecp =
@@ -194,24 +194,24 @@ SPFDradjFactMap {dom} {cod} spfd x y m ecp =
 -- We show that the right-adjoint factor of a polynomial functor
 -- expressed as a parametric right adjoint is equivalent to `SliceSigmaPiFR`
 -- with particular parameters.
-export
+public export
 SPFDtoSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj (dom, SPFDbase {dom} {cod} spfd)
 SPFDtoSSPR {dom} {cod} spfd edcp =
   spfdDir spfd (fst $ snd edcp) (snd $ snd edcp) (fst edcp)
 
-export
+public export
 SSPRtoSPFD : {dom, cod : Type} -> SliceObj (dom, cod) -> SPFData dom cod
 SSPRtoSPFD {dom} {cod} sspr = SPFD (const Unit) $ \ec, (), ed => sspr (ed, ec)
 
-export
+public export
 SPFDasSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceNatTrans {x=dom} {y=(SPFDbase spfd)}
     (SPFDradjFact {dom} {cod} spfd)
     (SliceSigmaPiFR {c=dom} {e=(SPFDbase spfd)} $ SPFDtoSSPR spfd)
 SPFDasSSPR {dom} {cod} (SPFD pos dir) sd (ec ** ep) radj (ed ** dd) = radj ed dd
 
-export
+public export
 SSPRasSPFD : {0 dom, cod : Type} -> (sspr : SliceObj (dom, cod)) ->
   SliceNatTrans {x=dom} {y=cod}
     (SliceSigmaPiFR {c=dom} {e=cod} sspr)
@@ -221,7 +221,7 @@ SSPRasSPFD {dom} {cod} sspr sd ec sdc ed esdc = sdc (ed ** esdc)
 
 -- Fibrate the right-adjoint factor of a polynomial functor by a
 -- dependent-type-style slice object over the position object.
-export
+public export
 SPFDradjFactSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (sl : SliceObj $ SPFDbase spfd) ->
   SliceFunctor dom (Sigma {a=(SPFDbase spfd)} sl)
@@ -229,7 +229,7 @@ SPFDradjFactSl {dom} {cod} spfd sl = SliceBCF sl . SPFDradjFact {dom} {cod} spfd
 
 -- Fibrate the right-adjoint factor of a polynomial functor by a
 -- category-theory-style slice object over the position object.
-export
+public export
 SPFDRadjFactCSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (sl : SPFDposCSlice spfd) ->
   SliceFunctor
@@ -239,14 +239,14 @@ SPFDRadjFactCSl {dom} {cod} spfd sl =
   SPFDradjFactSl {dom} {cod} spfd (SPFDposCSlToBaseSl sl)
 
 -- The left adjoint of the right-adjoint factor of a polynomial functor.
-export
+public export
 SPFDladjFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor (SPFDbase {dom} {cod} spfd) dom
 SPFDladjFact {dom} {cod} spfd =
   SliceSigmaPiFL {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
     $ Prelude.uncurry (DPair.uncurry $ spfdDir spfd) . swap
 
-export
+public export
 SPFDladjFactMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDladjFact {dom} {cod} spfd)
 SPFDladjFactMap {dom} {cod} spfd =
@@ -256,7 +256,7 @@ SPFDladjFactMap {dom} {cod} spfd =
 -- We show that the left adjoint of the right-adjoint factor of a
 -- polynomial functor is equivalent to `SliceSigmaPiFL` with particular
 -- parameters.  (Of course, we _defined_ it as such, so this is trivial.)
-export
+public export
 SPFDasSSPL : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceNatTrans {x=(SPFDbase spfd)} {y=dom}
     (SPFDladjFact {dom} {cod} spfd)
@@ -264,7 +264,7 @@ SPFDasSSPL : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDasSSPL {dom} {cod} (SPFD pos dir) sd ed (((ec ** ep) ** dd) ** sdd) =
   (((ec ** ep) ** dd) ** sdd)
 
-export
+public export
 SSPLasSPFD : {0 dom, cod : Type} -> (sspl : SliceObj (dom, cod)) ->
   SliceNatTrans {x=cod} {y=dom}
     (SliceSigmaPiFL {c=dom} {e=cod} sspl)
@@ -275,12 +275,12 @@ SSPLasSPFD {dom} {cod} sspl sc ed ((ec ** esdc) ** esc) =
 
 -- The dependent-sum factor of a polynomial functor expressed as
 -- a codomain-parameterized copresheaf on slice objects over positions.
-export
+public export
 SPFDsigmaDep : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceObj (spfdPos spfd ec) -> Type
 SPFDsigmaDep {dom} {cod} spfd ec = Sigma {a=(spfdPos spfd ec)}
 
-export
+public export
 SPFDsigmaDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> {0 a, b : SliceObj $ spfdPos spfd ec} ->
   SliceMorphism {a=(spfdPos spfd ec)} a b ->
@@ -289,7 +289,7 @@ SPFDsigmaDepMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDsigmaDepMap {dom} {cod} spfd ec {a} {b} = dpMapSnd {p=a} {q=b}
 
 -- The dependent-sum factor of a polynomial functor.
-export
+public export
 SPFDsigmaFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor (SPFDbase {dom} {cod} spfd) cod
 SPFDsigmaFact {dom} {cod} spfd bsl ec =
@@ -297,7 +297,7 @@ SPFDsigmaFact {dom} {cod} spfd bsl ec =
   --  SliceSigmaF {c=cod} (spfdPos spfd) bsl ec
   SPFDsigmaDep {dom} {cod} spfd ec (curry bsl ec)
 
-export
+public export
 SPFDsigmaMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDsigmaFact {dom} {cod} spfd)
 SPFDsigmaMap {dom} {cod} spfd a b m ec =
@@ -308,14 +308,14 @@ SPFDsigmaMap {dom} {cod} spfd a b m ec =
 
 -- We show explicitly that `SPFDsigmaFact` is equivalent to
 -- `SliceSigmaF` (this is trivial).
-export
+public export
 SPFDsigmaAsSS : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceNatTrans {x=(SPFDbase spfd)} {y=cod}
     (SPFDsigmaFact {dom} {cod} spfd)
     (SliceSigmaF {c=cod} $ spfdPos spfd)
 SPFDsigmaAsSS {dom} {cod} (SPFD pos dir) scp ec = id
 
-export
+public export
 SSasSPFDsigma : {0 cod : Type} -> (ss : SliceObj cod) ->
   SliceNatTrans {x=(Sigma {a=cod} ss)} {y=cod}
     (SliceSigmaF {c=cod} ss)
@@ -326,12 +326,12 @@ SSasSPFDsigma {cod} ss scs ec = id
 -- The dependent-sum factor of a polynomial functor is itself a _left_
 -- adjoint, to a base change.  This is that base change, the right
 -- adjoint to `SPFDsigmaFact`.
-export
+public export
 SPFDdepSumFactR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor cod (SPFDbase {dom} {cod} spfd)
 SPFDdepSumFactR {dom} {cod} spfd = SliceBCF {c=cod} (spfdPos spfd)
 
-export
+public export
 SPFDdepSumFactRmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDdepSumFactR {dom} {cod} spfd)
 SPFDdepSumFactRmap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
@@ -349,35 +349,35 @@ SPFDdepSumFactRmap {dom} {cod} spfd = sbcMap {c=cod} {sl=(spfdPos spfd)}
 -- a _right_ adjoint, so while it is comprised of adjoints, they go in
 -- opposite directions, so the composite is not (necessarily) itself an
 -- adjoint.  (But it is a parametric right adjoint, hence a multi-adjoint.)
-export
+public export
 SPFDmultiR : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor dom cod
 SPFDmultiR {dom} {cod} spfd = SPFDsigmaFact spfd . SPFDradjFact spfd
 
 -- `SPFDmultiR` is the "standard" form of interpretation of a dependent (slice)
 -- polynomial functor (W-type), so we give it an alias which reflects that.
-export
+public export
 InterpSPFData : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor dom cod
 InterpSPFData = SPFDmultiR
 
-export
+public export
 SPFDmultiRmap : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceFMap (SPFDmultiR {dom} {cod} spfd)
 SPFDmultiRmap {dom} {cod} spfd a b =
   SPFDsigmaMap spfd (SPFDradjFact spfd a) (SPFDradjFact spfd b)
   . SPFDradjFactMap spfd a b
 
-export
+public export
 InterpSPFDataMap : {dom, cod : Type} ->
   (spfd : SPFData dom cod) -> SliceFMap (InterpSPFData {dom} {cod} spfd)
 InterpSPFDataMap = SPFDmultiRmap
 
-export
+public export
 SPFDmultiRflip : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceObj dom -> Type
 SPFDmultiRflip {dom} {cod} spfd ec sd =
   SPFDmultiR {dom} {cod} spfd sd ec
 
-export
+public export
 SPFDmultiRflipMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> {a, b : SliceObj dom} ->
   SliceMorphism {a=dom} a b ->
@@ -395,11 +395,11 @@ SPFDmultiRflipMap {dom} {cod} spfd ec {a} {b} mab =
 -- Note that this functor is comprised of base changes
 -- (`SliceBCF`/`BaseChangeF`) and dependent sums (`SliceSigmaF`)
 -- only (in particular, `SlicePiF` is not involved).
-export
+public export
 SPFDL : {dom, cod : Type} -> SPFData dom cod -> SliceFunctor cod dom
 SPFDL {dom} {cod} spfd = SPFDladjFact spfd . SPFDdepSumFactR spfd
 
-export
+public export
 SPFDLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDL spfd)
 SPFDLmap {dom} {cod} spfd x y =
@@ -418,11 +418,11 @@ SPFDLmap {dom} {cod} spfd x y =
 -- This functor is simply the contravariant representable functor of the
 -- position, so the index of a unit for a particular slice of the codomain
 -- is a (slice) morphism from that slice to the slice object of positions.
-export
+public export
 SPFDmultiIdx : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDmultiIdx = SPFDposContraRep
 
-export
+public export
 SPFDmultiIdxContramap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SliceObj cod) ->
   SliceMorphism {a=cod} y x ->
@@ -440,7 +440,7 @@ SPFDmultiIdxContramap = SPFDposContraRepContramap
 -- component.  `SPFDdepSumFactR` is the depedent-sum factor of the polynomial
 -- functor, so this may be viewed as a fibered/dependent version of the
 -- dependent-sum factor.
-export
+public export
 SPFDunitIdxToSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   SliceObj (SPFDbase {dom} {cod} spfd)
@@ -461,14 +461,14 @@ SPFDunitIdxToSl {dom} {cod} spfd b i =
 -- factor of a polynomial functor after the index functor of the family of
 -- units, which may be viewed as a fibered/dependent version of the
 -- dependent-sum factor of the polynomial functor.
-export
+public export
 SPFDmultiL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   SliceObj dom
 SPFDmultiL {dom} {cod} spfd b i =
   SPFDladjFact {dom} {cod} spfd $ SPFDunitIdxToSl {dom} {cod} spfd b i
 
-export
+public export
 SPFDmultiLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   (b' : SliceObj cod) -> (i' : SPFDmultiIdx spfd b') ->
@@ -483,7 +483,7 @@ SPFDmultiLmap {dom} {cod} spfd b i b' i' =
     (SPFDposCSlToBaseSl (b ** i))
     (SPFDposCSlToBaseSl (b' ** i'))
 
-export
+public export
 SPFDmultiLmapEl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj cod) ->
   (efy : SPFDmultiIdx spfd y) -> (mxy : SliceMorphism {a=cod} x y) ->
@@ -494,13 +494,13 @@ SPFDmultiLmapEl {dom} {cod} spfd x y efy mxy =
   SPFDmultiLmap spfd x (SPFDmultiIdxContramap spfd y x mxy efy) y efy
     $ \(ec ** ep) => s0Bimap (mxy ec) $ \ex, Refl => Refl
 
-export
+public export
 SPFDmultiRL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) -> SliceObj cod
 SPFDmultiRL {dom} {cod} spfd b =
   SPFDmultiR {dom} {cod} spfd . SPFDmultiL {dom} {cod} spfd b
 
-export
+public export
 SPFDmultiRLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   (b' : SliceObj cod) -> (i' : SPFDmultiIdx spfd b') ->
@@ -514,7 +514,7 @@ SPFDmultiRLmap {dom} {cod} spfd b i b' i' =
   SPFDmultiRmap spfd (SPFDmultiL spfd b i) (SPFDmultiL spfd b' i')
   . SPFDmultiLmap spfd b i b' i'
 
-export
+public export
 SPFDpraUnitPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   (ec : cod) -> b ec -> spfdPos spfd ec
@@ -523,7 +523,7 @@ SPFDpraUnitPos {dom} {cod} spfd b i ec eb = i ec eb
 -- This messy type signature represents nothing more than a
 -- rearrangement of parameters, factored out simply to allow
 -- for a type signature to show what's going on.
-export
+public export
 SPFDpraUnitDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   (ec : cod) -> (eb : b ec) -> (ed : dom) ->
@@ -536,7 +536,7 @@ SPFDpraUnitDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDpraUnitDir {dom} {cod} spfd b i ec eb ed dd =
   (((ec ** SPFDpraUnitPos spfd b i ec eb) ** dd) ** Element0 eb Refl)
 
-export
+public export
 SPFDpraUnit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SliceObj cod) -> (i : SPFDmultiIdx spfd b) ->
   SliceMorphism {a=cod} b (SPFDmultiRL spfd b i)
@@ -557,14 +557,14 @@ SPFDpraUnit {dom} {cod} spfd b i ec eb =
 --    a discrete category)
 -- Note that those comprise precisely the inputs to `IntElemUFamOMap`/
 -- `IntElemUFamFMap`.
-export
+public export
 MultiLpair : (dom, cod : Type) -> Type
 MultiLpair dom cod =
   (i : SliceObj cod -> Type ** (x : SliceObj cod) -> i x -> SliceObj dom)
 
 -- The two components of the left multi-adjoint of the multi-adjunction
 -- defined by a polynomial functor.
-export
+public export
 SPFDmultiLpair : {dom, cod : Type} -> SPFData dom cod -> MultiLpair dom cod
 SPFDmultiLpair {dom} {cod} spfd =
   (SPFDmultiIdx {dom} {cod} spfd ** SPFDmultiL {dom} {cod} spfd)
@@ -577,7 +577,7 @@ SPFDmultiLpair {dom} {cod} spfd =
 -- of the adjunction (an enhanced version of `SliceObj cod`).  Again,
 -- this refers specifically to `L` as defined in Theorem 2.4 on the
 -- ncatlab "multi-adjoint" page.
-export
+public export
 SPFDmultiLdom : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDmultiLdom = SPFDposCSlice
 
@@ -585,18 +585,18 @@ SPFDmultiLdom = SPFDposCSlice
 -- we have dubbed `SPFDmultiLdom`: as we have seen above, it is
 -- equivalent to a slice of `SPFDbase`.  In some cases, that view
 -- gives the morphisms a simpler, dependent-type-style form.
-export
+public export
 SPFDmultiLdomSl : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDmultiLdomSl = SPFDbaseSl
 
 -- The inverse of `SPFDunitIdxToSl`, converting a slice of the
 -- base object to a unit index.
-export
+public export
 SPFDbaseSlToUnitIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdomSl spfd -> SPFDmultiLdom spfd
 SPFDbaseSlToUnitIdx spfd = SPFDbaseSlToPosCSl {spfd}
 
-export
+public export
 SPFDmultiLdomMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdom {dom} {cod} spfd -> SPFDmultiLdom {dom} {cod} spfd -> Type
 SPFDmultiLdomMor {dom} {cod} spfd rx ry =
@@ -604,23 +604,23 @@ SPFDmultiLdomMor {dom} {cod} spfd rx ry =
     (SPFDposCSlToBaseSl {spfd} rx)
     (SPFDposCSlToBaseSl {spfd} ry)
 
-export
+public export
 SPFDmultiLdomSlMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdomSl {dom} {cod} spfd -> SPFDmultiLdomSl {dom} {cod} spfd -> Type
 SPFDmultiLdomSlMor {dom} {cod} spfd = SliceMorphism {a=(SPFDbase spfd)}
 
-export
+public export
 SPFDmultiLdomToBaseSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdom spfd -> SPFDmultiLdomSl spfd
 SPFDmultiLdomToBaseSl spfd robj = SPFDunitIdxToSl spfd (fst robj) (snd robj)
 
 -- The uncurried form of `SPFDmultiL`.
-export
+public export
 SPFDmultiLunc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdom spfd -> SliceObj dom
 SPFDmultiLunc {dom} {cod} spfd = DPair.uncurry (SPFDmultiL {dom} {cod} spfd)
 
-export
+public export
 SPFDmultiLuncMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (m, m' : SPFDmultiLdom spfd) ->
   SliceMorphism {a=(SPFDbase spfd)}
@@ -639,25 +639,25 @@ SPFDmultiLuncMap {dom} {cod} spfd m m' =
 -- in this case), but a different left multi-adjoint whose codomain is
 -- that category of families.  This is the characterization described in
 -- Theorem 2.5 at https://ncatlab.org/nlab/show/multi-adjoint#definition .
-export
+public export
 SPFDmultiFamLCatObj : Type -> Type
 SPFDmultiFamLCatObj = SliceUFamObj
 
-export
+public export
 0 SPFDmultiFamLCatMor : {lcat : Type} ->
   SPFDmultiFamLCatObj lcat -> SPFDmultiFamLCatObj lcat -> Type
 SPFDmultiFamLCatMor {lcat} = SliceUFamMor
 
 -- The left adjoint of the multi-adjunction using the category-of-families
 -- formulation.
-export
+public export
 SPFDmultiFamL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj cod -> SPFDmultiFamLCatObj dom
 SPFDmultiFamL {dom} {cod} spfd =
   IntElemUFamOMap {c=(SliceObj cod)} {d=(SliceObj dom)}
     (SPFDmultiIdx spfd) (SPFDmultiL spfd)
 
-export
+public export
 0 SPFDmultiFamLmap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SliceObj cod) ->
   SliceMorphism {a=cod} x y ->
@@ -681,13 +681,13 @@ SPFDmultiFamLmap {dom} {cod} spfd =
 -- It comprises the composition called `TL(b, i)` under
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#properties
 -- (so the unit itself has type `b -> TL(b, i)`).
-export
+public export
 SPFDmultiMfst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdom {dom} {cod} spfd -> SliceObj cod
 SPFDmultiMfst {dom} {cod} spfd =
   SPFDmultiR {dom} {cod} spfd . SPFDmultiLunc {dom} {cod} spfd
 
-export
+public export
 SPFDmultiMfstMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (m, m' : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=(SPFDbase spfd)}
@@ -700,19 +700,19 @@ SPFDmultiMfstMap {dom} {cod} spfd m m' =
   SPFDmultiRmap {dom} {cod} spfd (SPFDmultiLunc spfd m) (SPFDmultiLunc spfd m')
   . SPFDmultiLuncMap {dom} {cod} spfd m m'
 
-export
+public export
 SPFDmultiMsnd : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (robj : SPFDmultiLdom {dom} {cod} spfd) ->
   SPFDmultiIdx spfd (SPFDmultiMfst spfd robj)
 SPFDmultiMsnd {dom} {cod} spfd robj ec = DPair.fst
 
-export
+public export
 SPFDmultiMpair : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdom {dom} {cod} spfd -> SPFDmultiLdom {dom} {cod} spfd
 SPFDmultiMpair {dom} {cod} spfd robj =
   (SPFDmultiMfst spfd robj ** SPFDmultiMsnd spfd robj)
 
-export
+public export
 SPFDmultiMpairMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SPFDmultiLdom {dom} {cod} spfd) ->
   SPFDmultiLdomMor spfd x y ->
@@ -726,7 +726,7 @@ SPFDmultiMpairMap {dom} {cod} spfd rx ry mxy ecp =
 -- The second part of the "unique composite" `b -> SPFDmultiR a -> SPFDmultiR 1`
 -- (see below) -- that is, the part with the signature
 -- `SPFDmultiR a -> SPFDmultiR 1`.  `SPFDmultiR 1` is simply `spfdPos spfd`.
-export
+public export
 SPFDgenFactIdxSndFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   SPFDmultiIdx spfd (SPFDmultiR {dom} {cod} spfd a)
@@ -740,7 +740,7 @@ SPFDgenFactIdxSndFact {dom} {cod} spfd a b ec = DPair.fst
 -- multi-adjunction.  We call it `factIdx` because it is the index of the
 -- particular unit which we use in factorizing this specific given
 -- `i : b -> SPFDmultiR a`.
-export
+public export
 SPFDgenFactIdx : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
@@ -756,7 +756,7 @@ SPFDgenFactIdx {dom} {cod} spfd a b =
 -- comprises the intermediate object of the generic factorization (called
 -- `T D` at the ncatlab page, since in the case of the slice polynomial
 -- multi-adjunction, `T` is `SPFDmultiR`).
-export
+public export
 SPFDgenFactDomObj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
@@ -766,7 +766,7 @@ SPFDgenFactDomObj {dom} {cod} spfd a b =
 
 -- This is the intermediate object of the generic factorization of the
 -- given morphism `i` (see the comment to `SPFDgenFactDomObj` above).
-export
+public export
 SPFDgenFactCodObj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
@@ -777,7 +777,7 @@ SPFDgenFactCodObj {dom} {cod} spfd a b i =
 -- The first component of the generic factorization of a morphism through
 -- a slice polynomial functor (which always exists for any parametric right
 -- adjoint).
-export
+public export
 SPFDgenFactFst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (m : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
@@ -791,7 +791,7 @@ SPFDgenFactFst {dom} {cod} spfd a b m =
 -- the second component.  This morphism lies in the domain category
 -- (`SliceObj dom`); the lifted version lies in the codomain category
 -- (`SliceObj cod`).
-export
+public export
 SPFDgenFactSndDomCat : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
@@ -803,7 +803,7 @@ SPFDgenFactSndDomCat {dom} {cod} spfd a b i ed ecdb =
 
 -- The second component of the generic factorization of a morphism through
 -- a slice polynomial functor.
-export
+public export
 SPFDgenFactSnd : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
@@ -816,7 +816,7 @@ SPFDgenFactSnd {dom} {cod} spfd a b i =
     a
     (SPFDgenFactSndDomCat {dom} {cod} spfd a b i)
 
-export
+public export
 SPFDfactCorrect : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj dom) -> (b : SliceObj cod) ->
   (i : SliceMorphism {a=cod} b (SPFDmultiR {dom} {cod} spfd a)) ->
@@ -836,7 +836,7 @@ SPFDfactCorrect {dom} {cod} spfd a b i fext =
 -- at https://ncatlab.org/nlab/show/parametric+right+adjoint#properties .
 -- We define it here in the generic way in which the unit of an adjunction
 -- can be defined as the left adjunct applied to the identity morphism.
-export
+public export
 SPFDmultiUnitFst : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (b : SPFDmultiLdom {dom} {cod} spfd) ->
   SliceMorphism {a=cod} (fst b) (SPFDmultiMfst {dom} {cod} spfd b)
@@ -847,7 +847,7 @@ SPFDmultiUnitFst {dom} {cod} spfd b = SPFDpraUnit spfd (fst b) (snd b)
 -- at https://ncatlab.org/nlab/show/multi-adjoint#definition .
 -- As such, it is the domain of the left multi-adjunct, and the
 -- codomain of the right multi-adjunct.
-export
+public export
 SPFDmultiAdjHSL : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj cod -> SliceObj dom -> Type
 SPFDmultiAdjHSL {dom} {cod} spfd x y =
@@ -859,7 +859,7 @@ SPFDmultiAdjHSL {dom} {cod} spfd x y =
 -- at https://ncatlab.org/nlab/show/multi-adjoint#definition .
 -- As such, it is the domain of the right multi-adjunct, and the
 -- codomain of the left multi-adjunct.
-export
+public export
 SPFDmultiAdjHSR : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceObj cod -> SliceObj dom -> Type
 SPFDmultiAdjHSR {dom} {cod} spfd x y =
@@ -876,7 +876,7 @@ SPFDmultiAdjHSR {dom} {cod} spfd x y =
 -- `const Unit` in the dependent-type view).  So we might call it the
 -- "left multi-adjunct" of the multi-adjunction defined by a slice polynomial
 -- functor.
-export
+public export
 SPFDmultiLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
   SPFDmultiAdjHSL spfd x y -> SPFDmultiAdjHSR spfd x y
@@ -884,7 +884,7 @@ SPFDmultiLAdj {dom} {cod} spfd x y m ec =
   dpMapSnd (\ep => sliceComp {a=dom} (snd m)) . SPFDpraUnit spfd x (fst m) ec
 
 -- An uncurried form of `SPFDmultiLAdj`.
-export
+public export
 SPFDmultiLAdjUnc : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SPFDmultiLdom {dom} {cod} spfd) -> (y : SliceObj dom) ->
   SliceMorphism {a=dom} (SPFDmultiLunc {dom} {cod} spfd x) y ->
@@ -894,7 +894,7 @@ SPFDmultiLAdjUnc {dom} {cod} spfd x y m =
 
 -- This is the right multi-adjunct of the multi-adjunction defined by a slice
 -- polynomial functor (the inverse of `SPFDmultiLAdj` above.)
-export
+public export
 SPFDmultiRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj cod) -> (y : SliceObj dom) ->
   SPFDmultiAdjHSR spfd x y -> SPFDmultiAdjHSL spfd x y
@@ -904,7 +904,7 @@ SPFDmultiRAdj {dom} {cod} spfd x y m =
 
 -- The left adjunct of the multi-adjunction defined by a polynomial functor
 -- using the category-of-families formulation.
-export
+public export
 SPFDmultiFamLAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj cod) -> (b : SliceObj dom) ->
   SPFDmultiFamLCatMor {lcat=dom} (SPFDmultiFamL spfd a) (slUFamUnit b) ->
@@ -914,7 +914,7 @@ SPFDmultiFamLAdj {dom} {cod} spfd a b (midx ** mobj) =
 
 -- The right adjunct of the multi-adjunction defined by a polynomial functor
 -- using the category-of-families formulation.
-export
+public export
 SPFDmultiFamRAdj : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (a : SliceObj cod) -> (b : SliceObj dom) ->
   SPFDmultiAdjHSR spfd a b ->
@@ -932,13 +932,13 @@ SPFDmultiFamRAdj {dom} {cod} spfd a b m =
 -- This is `R . L` for the polynomial-functor multi-adjunction,
 -- but note that these `R` and `L` are _multi_-adjoints, not
 -- ordinary adjoints, so this is not necessarily a monad.
-export
+public export
 SPFDrl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor cod
 SPFDrl {dom} {cod} spfd =
   SPFDmultiR {dom} {cod} spfd . SPFDL {dom} {cod} spfd
 
-export
+public export
 SPFDrlMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDrl {dom} {cod} spfd)
 SPFDrlMap {dom} {cod} spfd x y =
@@ -948,13 +948,13 @@ SPFDrlMap {dom} {cod} spfd x y =
 -- This is `L . R` for the polynomial-functor multi-adjunction,
 -- but note that these `L` and `R` are _multi_-adjoints, not
 -- ordinary adjoints, so this is not necessarily a comonad.
-export
+public export
 SPFDlr : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor dom
 SPFDlr {dom} {cod} spfd =
   SPFDL {dom} {cod} spfd . SPFDmultiR {dom} {cod} spfd
 
-export
+public export
 SPFDlrMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDlr {dom} {cod} spfd)
 SPFDlrMap {dom} {cod} spfd x y =
@@ -963,12 +963,12 @@ SPFDlrMap {dom} {cod} spfd x y =
 
 -- `SPFDladjFact` and `SPFDradjFact` are (ordinary, not multi-)
 -- adjoints, so they induce a monad on `SliceObj (SPFDbase spfd)`.
-export
+public export
 SPFDadjFactMonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor (SPFDbase spfd)
 SPFDadjFactMonad spfd = SPFDradjFact spfd . SPFDladjFact spfd
 
-export
+public export
 SPFDadjFactMonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDadjFactMonad spfd)
 SPFDadjFactMonadMap spfd x y =
@@ -977,12 +977,12 @@ SPFDadjFactMonadMap spfd x y =
 
 -- `SPFDladjFact` and `SPFDradjFact` are (ordinary, not multi-)
 -- adjoints, so they induce a comonad on `SliceObj (SPFDbase spfd)`.
-export
+public export
 SPFDadjFactComonad : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceEndofunctor dom
 SPFDadjFactComonad spfd = SPFDladjFact spfd . SPFDradjFact spfd
 
-export
+public export
 SPFDadjFactComonadMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDadjFactComonad spfd)
 SPFDadjFactComonadMap spfd x y =
@@ -993,11 +993,11 @@ SPFDadjFactComonadMap spfd x y =
 -- https://www.sciencedirect.com/science/article/pii/0022404981900827 and
 -- https://core.ac.uk/download/pdf/82552386.pdf .  It is a presheaf
 -- on `SliceObj cod`.
-export
+public export
 SPFDspectrum : {dom, cod : Type} -> SPFData dom cod -> SliceObj cod -> Type
 SPFDspectrum = SPFDmultiIdx
 
-export
+public export
 SPFDspectrumMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SliceObj cod) ->
   SliceMorphism {a=cod} y x ->
@@ -1005,11 +1005,11 @@ SPFDspectrumMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
 SPFDspectrumMap = SPFDmultiIdxContramap
 
 -- The category of elements of the spectrum of a polynomial functor.
-export
+public export
 SPFDspecCatElemObj : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDspecCatElemObj = SPFDmultiLdom
 
-export
+public export
 SPFDspecCatElemMor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDspecCatElemObj spfd -> SPFDspecCatElemObj spfd -> Type
 SPFDspecCatElemMor {dom} {cod} spfd x y =
@@ -1020,19 +1020,19 @@ SPFDspecCatElemMor {dom} {cod} spfd x y =
 -- Next we show that `SPFDspecCatElemObj`/`SPFDspecCatElemMor` is equivalent
 -- to `SPFDmultiDomSl`/`SPFDmultiDomSlMor`.
 
-export
+public export
 SPFDspecCEobjToSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDspecCatElemObj {dom} {cod} spfd ->
   SPFDmultiLdomSl spfd
 SPFDspecCEobjToSl = SPFDmultiLdomToBaseSl
 
-export
+public export
 SPFDspecCEobjFromSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SPFDmultiLdomSl spfd ->
   SPFDspecCatElemObj {dom} {cod} spfd
 SPFDspecCEobjFromSl = SPFDbaseSlToUnitIdx
 
-export
+public export
 SPFDspecCEmorToSl : FunExt -> {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SPFDspecCatElemObj {dom} {cod} spfd) ->
   SPFDspecCatElemMor {dom} {cod} spfd x y ->
@@ -1044,7 +1044,7 @@ SPFDspecCEmorToSl fext spfd (_ ** _) (_ ** _) m ecp =
     (fst0 m $ fst ecp)
     $ \ex, xeq => trans (rewrite sym (snd0 m fext) in Refl) xeq
 
-export
+public export
 SPFDspecCEmorFromSl : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SPFDspecCatElemObj {dom} {cod} spfd) ->
   SPFDmultiLdomSlMor {dom} {cod} spfd
@@ -1057,7 +1057,7 @@ SPFDspecCEmorFromSl spfd (slx ** px) (sly ** py) m =
     (\fext => funExt $ \ec => funExt $ \ex =>
       snd0 $ m (ec ** px ec ex) $ Element0 ex Refl)
 
-export
+public export
 SPFDslToSpecCEmor : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SPFDmultiLdomSl {dom} {cod} spfd) ->
   SPFDmultiLdomSlMor {dom} {cod} spfd x y ->
@@ -1069,7 +1069,7 @@ SPFDslToSpecCEmor {dom} {cod} spfd x y m =
     (\ec, (ep ** ex) => (ep ** m (ec ** ep) ex))
     (\fext => funExt $ \ec => funExt $ \(ep ** ex) => Refl)
 
-export
+public export
 SPFDslFromSpecCEmor : FunExt -> {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x, y : SPFDmultiLdomSl {dom} {cod} spfd) ->
   SPFDspecCatElemMor {dom} {cod} spfd
@@ -1085,7 +1085,7 @@ SPFDslFromSpecCEmor fext {dom} {cod} spfd x y (Element0 m meq) (ec ** ep) ex =
 -- on the category of elements of a presheaf, with the presheaf in this
 -- case being `SPFDspectrum`.
 
-export
+public export
 SPFDspecUnit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (bsl : SPFDbaseSl spfd) ->
   SliceMorphism {a=(SPFDbase spfd)}
@@ -1093,7 +1093,7 @@ SPFDspecUnit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     (SPFDadjFactMonad spfd bsl)
 SPFDspecUnit {dom} {cod} spfd bsl ecp ex ed dd = ((ecp ** dd) ** ex)
 
-export
+public export
 SPFDspecJoin : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (bsl : SPFDbaseSl spfd) ->
   SliceMorphism {a=(SPFDbase spfd)}
@@ -1103,7 +1103,7 @@ SPFDspecJoin {dom} {cod} spfd bsl ecp dm ed dd with (dm ed dd)
   SPFDspecJoin {dom} {cod} spfd bsl ecp dm ed dd | dm' =
     snd dm' ed $ snd $ fst dm'
 
-export
+public export
 SPFDspecCounit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj dom) ->
   SliceMorphism {a=dom}
@@ -1111,7 +1111,7 @@ SPFDspecCounit : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
     x
 SPFDspecCounit {dom} {cod} spfd x ed ecdm = snd ecdm ed $ snd $ fst ecdm
 
-export
+public export
 SPFDspecDup : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (x : SliceObj dom) ->
   SliceMorphism {a=dom}
@@ -1125,7 +1125,7 @@ SPFDspecDup {dom} {cod} spfd x ed ecpdm =
 ---- Slice polynomials (in PRA formulation) as W-types ----
 -----------------------------------------------------------
 
-export
+public export
 SPFDdirBase : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDdirBase {dom} {cod} spfd = (dom, SPFDbase spfd)
 
@@ -1134,7 +1134,7 @@ SPFDdirBase {dom} {cod} spfd = (dom, SPFDbase spfd)
 -- followed by a dependent product followed by a dependent sum.
 -- (The domain of the dependent-product component is therefore also the
 -- codomain of the base-change component.)
-export
+public export
 SPFDdirTot : {dom, cod : Type} -> SPFData dom cod -> Type
 SPFDdirTot {dom} {cod} spfd =
   (edcp : SPFDdirBase spfd **
@@ -1831,18 +1831,18 @@ SliceRKanLiftSig a b c g =
 --------------------------------
 
 -- The impredicative initial algebra of an endofunctor on `SliceObj c`.
-export
+public export
 ImSliceMu : {c : Type} -> SliceEndofunctor c -> SliceObj c
 ImSliceMu {c} f ec =
   SliceNatTrans {x=c} {y=Unit} (\sc, () => SliceAlg f sc) (\sc, () => sc ec)
 
-export
+public export
 imSlCata : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
   {sa : SliceObj c} ->
   SliceAlg f sa -> SliceMorphism {a=c} (ImSliceMu {c} f) sa
 imSlCata {c} {f} {sa} alg ec mu = mu sa () alg
 
-export
+public export
 slMuFromIm : {c : Type} -> (f : SliceEndofunctor c) ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceMorphism (ImSliceMu f) (SliceMu f)
@@ -1850,7 +1850,7 @@ slMuFromIm {c} f fm ec mu =
   InSlFc {a=c} {f} {ea=ec} $ mu (f $ SliceMu f) ()
   $ fm (f $ SliceMu f) (SliceMu f) $ \ec => InSlFc {ea=ec}
 
-export
+public export
 slMuToIm : {c : Type} -> (f : SliceEndofunctor c) ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceCata f ->
@@ -1859,7 +1859,7 @@ slMuToIm {c} f fm fcata ec (InSlF {f} {sa=(const Void)} ec $ InSlV v) = void v
 slMuToIm {c} f fm fcata ec (InSlF {f} {sa=(const Void)} ec $ InSlC t) =
   \sa, (), alg => sliceComp alg (fm (SliceMu f) sa (fcata sa alg)) ec t
 
-export
+public export
 imSlInitAlg : {c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceCata f ->
@@ -1868,7 +1868,7 @@ imSlInitAlg {f} fm fcata =
   sliceComp (slMuToIm f fm fcata) $ sliceComp (\ec => InSlFc {ea=ec})
   $ fm (ImSliceMu f) (SliceMu f) (slMuFromIm f fm)
 
-export
+public export
 imSlInitAlgInv : {c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceCata f ->
@@ -1921,23 +1921,23 @@ data SliceSigmaFM : {0 c : Type} ->
   SSin : {0 c : Type} -> {0 f : c -> c} -> {0 sc : SliceObj c} ->
     SPIAlg {c} f sc (SliceSigmaFM {c} f sc)
 
-export
+public export
 SSFMAlg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
 SSFMAlg {c} f = SliceAlg {a=c} (SliceSigmaFM {c} f)
 
-export
+public export
 SSFMCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
 SSFMCoalg {c} f = SliceCoalg {a=c} (SliceSigmaFM {c} f)
 
 -- `SSin` is an isomorphism (by Lambek's theorem); this is its inverse.
-export
+public export
 SSout : {0 c : Type} -> {0 f : c -> c} -> {0 sc : SliceObj c} ->
   SPICoalg {c} f sc (SliceSigmaFM {c} f sc)
 SSout {c} {f} {sc} ec (SSin ec esp) = esp
 
 -- The (morphism component of the) free `SliceSigmaF`-algebra of
 -- `SliceSigmaFM f sc`.
-export
+public export
 SScom : {c : Type} -> {f : c -> c} -> {0 sc : SliceObj c} ->
   SSAlg {c} f (SliceSigmaFM {c} f sc)
 SScom {c} {f} {sc} ec =
@@ -1947,7 +1947,7 @@ SScom {c} {f} {sc} ec =
 -- The unit of the free-monad adjunction -- a natural transformation of
 -- endofunctors on `SliceObj a`, from the identity endofunctor to
 -- `SliceSigmaFM f`.
-export
+public export
 SSvar : {c : Type} -> {f : c -> c} ->
   SliceNatTrans (SliceIdF c) (SliceSigmaFM {c} f)
 SSvar {c} {f} sc ec t =
@@ -1957,7 +1957,7 @@ SSvar {c} {f} sc ec t =
 -- The counit of the free-monad adjunction -- a natural transformation of
 -- endofunctors on algebras of `SliceSigmaF f`, from `SSFMAlg` to the
 -- identity endofunctor.
-export
+public export
 SSFcounit : {c : Type} -> {f : c -> c} ->
   SliceMorphism {a=(SliceObj c)} (SSFMAlg {c} f) (SSAlg {c} f)
 SSFcounit {c} {f} sc alg =
@@ -1971,7 +1971,7 @@ SSFcounit {c} {f} sc alg =
 -- slice morphism `subst : SliceMorphism {a=c} sa sb` and returns an
 -- F-algebra morphism `SliceSigmaEval sa sb alg subst :
 -- SliceMorphism {a=c} (SliceSigmaFM f sa) sb`.
-export
+public export
 SliceSigmaEval : {0 c : Type} -> {f : c -> c} -> (sb : SliceObj c) ->
   (alg : SSAlg f sb) ->
   SliceMorphism {a=(SliceObj c)}
@@ -1996,7 +1996,7 @@ SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Right t)) =
 -- input to the left adjunct in the formula that expresses the left adjunct in
 -- terms of the unit (`SSvar`, in this case) is to apply the right adjoint to
 -- it, and the right adjoint just forgets the morphism component.
-export
+public export
 SliceSigmaFMLAdj : {c : Type} -> {f : c -> c} -> (sa, sb : SliceObj c) ->
   SliceMorphism {a=c} (SliceSigmaFM {c} f sa) sb ->
   SliceMorphism {a=c} sa sb
@@ -2004,13 +2004,13 @@ SliceSigmaFMLAdj {c} {f} sa sb eval ec = eval ec . SSvar {c} {f} sa ec
 
 -- We show that the initial algebra of `SliceSigmaF f` is the initial object
 -- of `SliceObj a`.
-export
+public export
 SSMuInitial : {c : Type} -> (f : c -> c) ->
   SliceMorphism {a=c} (SliceSigmaFM {c} f $ const Void) (const Void)
 SSMuInitial {c} f =
   SliceSigmaEval {c} {f} (const Void) (SSVoidAlg {c} f) (const Void) (\_ => id)
 
-export
+public export
 ssfmMap : {c : Type} -> {f : c -> c} -> SliceFMap (SliceSigmaFM {c} f)
 ssfmMap {c} {f} sa sb m =
   SliceSigmaEval {c} {f} (SliceSigmaFM {c} f sb) SScom sa
@@ -2021,7 +2021,7 @@ ssfmMap {c} {f} sa sb m =
 -- `SliceSigmaFM f . SliceSigmaFM f` to `SliceSigmaFM f`.
 --
 -- The multiplication comes from whiskering the counit between the adjuncts.
-export
+public export
 ssfJoin : {c : Type} -> {f : c -> c} ->
   SliceNatTrans
     (SliceSigmaFM {c} f . SliceSigmaFM {c} f)
@@ -2037,7 +2037,7 @@ ssfJoin {c} {f} sc =
 -- The comultiplication comes from whiskering the unit between the adjuncts.
 -- The algebra parameter is unused because the adjunct forgets the input
 -- algebra.
-export
+public export
 ssfDup : {c : Type} -> {f : c -> c} ->
   SliceMorphism {a=(SliceObj c)}
     (SSFMAlg {c} f)
@@ -2052,19 +2052,19 @@ ssfDup {c} {f} sc falg = ssfJoin {c} {f} sc
 
 -- The dependent version of `ImNu`, the impredicative terminal coalgebra
 -- of an endofunctor on `SliceObj c`.
-export
+public export
 data ImSliceNu : {0 c : Type} -> SliceEndofunctor c -> SliceObj c where
   ImSlN : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
     {0 sa : SliceObj c} -> SliceCoalg f sa -> (ec : c) -> sa ec ->
     ImSliceNu {c} f ec
 
-export
+public export
 imSlAna : {0 c : Type} -> {0 f : SliceEndofunctor c} ->
   {0 sa : SliceObj c} ->
   SliceCoalg f sa -> SliceMorphism {a=c} sa (ImSliceNu {c} f)
 imSlAna = ImSlN
 
-export
+public export
 imSlTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceCoalg f (ImSliceNu f)
@@ -2073,7 +2073,7 @@ imSlTermCoalg {f} fm ec (ImSlN {c} {f} {sa} coalg ec esa) =
 
 -- The inverse of `imSlTermCoalg`, which we know by Lambek's theorem should
 -- exist.
-export
+public export
 imSlTermCoalgInv : {0 c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceAlg f (ImSliceNu f)
@@ -2125,15 +2125,15 @@ SCPICoalg {c} f = SlCopointedCoalg {c} (SliceFibSigmaF {c} {d=c} f)
 -- metalanguage to have them, but instead show how coinductive types (M-types)
 -- can be implemented in terms of inductive types (W-types) and higher-order
 -- functions.
-export
+public export
 ImSliceCofree : {0 c : Type} -> SliceEndofunctor c -> SliceEndofunctor c
 ImSliceCofree {c} f sa = ImSliceNu (SlCopointedF f sa)
 
-export
+public export
 ImSlCMAlg : {c : Type} -> (f : SliceEndofunctor c) -> SliceObj c -> Type
 ImSlCMAlg {c} f = SliceAlg {a=c} (ImSliceCofree {c} f)
 
-export
+public export
 ImSlCMCoalg : {c : Type} -> (f : SliceEndofunctor c) -> SliceObj c -> Type
 ImSlCMCoalg {c} f = SliceCoalg {a=c} (ImSliceCofree {c} f)
 
@@ -2143,14 +2143,14 @@ inSlCF : {0 c : Type} -> {f : SliceEndofunctor c} -> {0 sl, sa : SliceObj c} ->
   SliceMorphism {a=c} sa (ImSliceCofree f sl)
 inSlCF label coalg = ImSlN {f=(SlCopointedF f sl)} $ inSlCP {f} label coalg
 
-export
+public export
 imSlCofreeTermCoalg : {0 c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   {sl : SliceObj c} -> SlCopointedCoalg {c} f sl (ImSliceCofree {c} f sl)
 imSlCofreeTermCoalg fm {sl} =
   imSlTermCoalg {f=(SlCopointedF f sl)} (mapSlCP {f} fm sl)
 
-export
+public export
 imSlCofreeTermCoalgInv : {0 c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   {sl : SliceObj c} -> SlCopointedAlg {c} f sl (ImSliceCofree {c} f sl)
@@ -2160,7 +2160,7 @@ imSlCofreeTermCoalgInv fm {sl} =
 -- `imSlLabel` is the counit of the (impredicative) slice cofree-comonad
 -- adjunction.  That means it is also the counit of the comonad arising from
 -- the adjunction; as such it is also sometimes called "erase" or "extract".
-export
+public export
 imSlLabel : {c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceNatTrans {x=c} {y=c} (ImSliceCofree f) (SliceIdF c)
@@ -2171,7 +2171,7 @@ imSlLabel {c} {f} fm sl =
 
 -- `imSlSubtrees` is the morphism component of the right adjoint of
 -- the slice cofree-comonad adjunction.
-export
+public export
 imSlSubtrees : {c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   {sl : SliceObj c} -> SliceCoalg {a=c} f (ImSliceCofree {c} f sl)
@@ -2211,7 +2211,7 @@ imSlUnit {c} {f} {sa} coalg = imSlTrace {f} {sa} {sl=sa} coalg (sliceId sa)
 -- input to the right adjunct in the formula that expresses the right adjunct in
 -- terms of the counit (`imSlLabel`, in this case) is to apply the left adjoint
 -- to it, and the left adjoint just forgets the morphism component.
-export
+public export
 imSlRAdj : {c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   {sa, sl : SliceObj c} ->
@@ -2233,7 +2233,7 @@ imSlJoin {f} fm sa = imSlLabel {f} fm (ImSliceCofree f sa)
 -- arising from the adjunction; as such it is also sometimes called "duplicate".
 --
 -- The comultiplication comes from whiskering the unit between the adjuncts.
-export
+public export
 imSlDup : {c : Type} -> {f : SliceEndofunctor c} ->
   ((0 x, y : SliceObj c) -> SliceMorphism x y -> SliceMorphism (f x) (f y)) ->
   SliceNatTrans (ImSliceCofree f) (ImSliceCofree f . ImSliceCofree f)
@@ -2252,7 +2252,7 @@ imSlDup {f} fm sa =
 
 -- The slice functor from `c` to `Type` which is covariantly represented
 -- by the given `SliceObj c`.  (`Type` is isomorphic to `SliceObj Unit`.)
-export
+public export
 SliceCovarRepF : {c : Type} -> (sc : SliceObj c) -> SliceFunctor c Unit
 SliceCovarRepF sa sb () = SliceMorphism sa sb
 
@@ -2294,7 +2294,7 @@ scovrFromWTF {c} {d} sa sb () (Element0 () eq ** sbd) =
 -- are themselves representable (products of covariant representables are
 -- represented by sums, and products of contravariant representables are
 -- represented by products).
-export
+public export
 SliceDepPiF : {c : Type} -> (d -> c -> Type) -> SliceFunctor c d
 SliceDepPiF sdc sc ed = SliceCovarRepF (sdc ed) {c} sc ()
 
@@ -2768,17 +2768,17 @@ public export
 PosParamPolyFunc : PolyFunc -> Type
 PosParamPolyFunc = ParamPolyFunc . pfPos
 
-export
+public export
 mlDirichSlObjToPPF : {ar : MLArena} -> MlDirichSlObj ar -> PosParamPolyFunc ar
 mlDirichSlObjToPPF {ar=(bpos ** bdir)} (MDSobj slpos sldir) i =
   ((bdir i, slpos i) ** \(bd, j) => sldir i j bd)
 
-export
+public export
 mlDirichSlObjFromPPF : {ar : MLArena} -> PosParamPolyFunc ar -> MlDirichSlObj ar
 mlDirichSlObjFromPPF {ar=(bpos ** bdir)} ppf =
   MDSobj (\i => bdir i -> fst $ ppf i) (\i, sld, bd => snd (ppf i) $ sld bd)
 
-export
+public export
 mlPolySlObjToPPF : {ar : MLArena} -> MlPolySlObj ar -> PosParamPolyFunc ar
 mlPolySlObjToPPF {ar} sl i = (mpsOnPos sl i ** mpsDir sl i)
 
@@ -2786,12 +2786,12 @@ public export
 ParamPFSection : (p : PolyFunc) -> PosParamPolyFunc p -> Type
 ParamPFSection p spf = SliceMorphism {a=(pfPos p)} (pfDir {p}) (PFSection . spf)
 
-export
+public export
 mlPolySlObjToPPFsect : {ar : MLArena} -> (sl : MlPolySlObj ar) ->
   ParamPFSection ar (mlPolySlObjToPPF {ar} sl)
 mlPolySlObjToPPFsect {ar} sl i bd j = mpsOnDir sl i j bd
 
-export
+public export
 mlPolySlObjFromPPFandSections : {ar : MLArena} ->
   (ppf : PosParamPolyFunc ar) -> ParamPFSection ar ppf -> MlPolySlObj ar
 mlPolySlObjFromPPFandSections {ar=(bpos ** bdir)} ppf sect =
@@ -2870,7 +2870,7 @@ record MlPolySlMor {ar : MLArena} (dom, cod : MlPolySlObj ar) where
 ---- Categorial operations in polynomial/Dirichlet slice categories ----
 ------------------------------------------------------------------------
 
-export
+public export
 mlDirichSlMorId : {ar : MLArena} -> (p : MlDirichSlObj ar) ->
   MlDirichSlMor {ar} p p
 mlDirichSlMorId {ar} p =
@@ -2878,7 +2878,7 @@ mlDirichSlMorId {ar} p =
     (sliceId $ mdsOnPos p)
     (\i, j => sliceId $ mdsDir p i j)
 
-export
+public export
 mlDirichSlMorComp : {ar : MLArena} -> {p, q, r : MlDirichSlObj ar} ->
   MlDirichSlMor {ar} q r -> MlDirichSlMor {ar} p q -> MlDirichSlMor {ar} p r
 mlDirichSlMorComp {ar} {p} {q} {r} m' m =
@@ -2887,7 +2887,7 @@ mlDirichSlMorComp {ar} {p} {q} {r} m' m =
     (\i, j, bd, md =>
       mdsmOnDir m' i (mdsmOnPos m i j) bd $ mdsmOnDir m i j bd md)
 
-export
+public export
 mlPolySlMorId : {ar : MLArena} -> (p : MlPolySlObj ar) ->
   MlPolySlMor {ar} p p
 mlPolySlMorId {ar} p =
@@ -2896,7 +2896,7 @@ mlPolySlMorId {ar} p =
     (\i => sliceId {a=(mpsOnPos p i)} (mpsDir p i))
     (\i, j, bd => Refl)
 
-export
+public export
 mlPolySlMorComp : {ar : MLArena} -> {p, q, r : MlPolySlObj ar} ->
   MlPolySlMor {ar} q r -> MlPolySlMor {ar} p q -> MlPolySlMor {ar} p r
 mlPolySlMorComp {ar} {p} {q} {r} m' m =
@@ -3051,7 +3051,7 @@ mlPolySlMorFromP {ar} {cod} m =
 ---- Translation between slice morphisms and slices-of-slices ----
 ------------------------------------------------------------------
 
-export
+public export
 MlPolySlMorFromSlOfSl : {ar : MLArena} ->
   (cod : MlPolySlObj ar) -> (slsl : MlPolySlOfSl {ar} cod) ->
   MlPolySlMor {ar} (MlPolySlFromSlOfSl {ar} cod slsl) cod
@@ -3061,7 +3061,7 @@ MlPolySlMorFromSlOfSl {ar=(_ ** _)} (MPSobj _ _ _) slsl =
     (\i, jk, cd => (cd, mpsOnDir slsl (i ** fst jk) (snd jk) cd))
     (\i, jk, cd => Refl)
 
-export
+public export
 MlPolySlMorToSlOfSl : {ar : MLArena} ->
   {dom, cod : MlPolySlObj ar} -> MlPolySlMor {ar} dom cod ->
   MlPolySlOfSl {ar} cod
@@ -3092,19 +3092,19 @@ mlPolySlMorTot {ar} {dom} {cod} =
 -- This interprets an object in a slice category of Dirichlet functors
 -- as an object in the category of presheaves over the category of elements
 -- of the base functor.
-export
+public export
 InterpMlDirichSlObj : {ar : PolyFunc} ->
   MlDirichSlObj ar -> (ty : Type) -> SliceObj $ InterpDirichFunc ar ty
 InterpMlDirichSlObj {ar=(_ ** _)} (MDSobj slpos sldir) ty (i ** bd) =
   (j : slpos i ** Pi {a=ty} $ sldir i j . bd)
 
-export
+public export
 InterpMlDirichSlObjF : {ar : PolyFunc} ->
   MlDirichSlObj ar -> MLDirichCatElemObj ar -> Type
 InterpMlDirichSlObjF {ar=ar@(_ ** _)} sl (ty ** el) =
   InterpMlDirichSlObj {ar} sl ty el
 
-export
+public export
 InterpMlDirichSlObjFMap : {bpos : Type} -> {bdir : bpos -> Type} ->
   (sl : MlDirichSlObj (bpos ** bdir)) ->
   (dom, cod : MLDirichCatElemObj (bpos ** bdir)) ->
@@ -3116,7 +3116,7 @@ InterpMlDirichSlObjFMap {bpos} {bdir} (MDSobj slpos sldir)
   (dty ** i ** sldty) (cty ** _ ** _) (DCEM _ _ _ _ _ _ _ mm) =
     \(j ** sld) => (j ** \ec => sld $ mm ec)
 
-export
+public export
 InterpMlDirichSlObjFMapAr : {ar : PolyFunc} ->
   (sl : MlDirichSlObj ar) ->
   (dom, cod : MLDirichCatElemObj ar) ->
@@ -3138,7 +3138,7 @@ InterpMlDirichSlObjFMapAr {ar=(bpos ** bdir)} =
 -- component is `InterpMlDirichSlObj`, from the slice category of Dirichlet
 -- functors over `ar` to the category of presheaves over the category of
 -- elements of `ar`.
-export
+public export
 InterpMlDirichSlMor : {ar : PolyFunc} ->
   {dom, cod : MlDirichSlObj ar} -> MlDirichSlMor dom cod ->
   (ty : Type) -> (el : InterpDirichFunc ar ty) ->
@@ -3153,7 +3153,7 @@ InterpMlDirichSlMor {ar=(bpos ** bdir)}
 -- This interprets an object in a slice category of polynomial functors
 -- as an object in the category of presheaves over the category of elements
 -- of the base functor.
-export
+public export
 InterpMlPolySlObj : {ar : PolyFunc} ->
   MlPolySlObj ar -> (ty : Type) -> SliceObj $ InterpPolyFunc ar ty
 InterpMlPolySlObj {ar} sl ty el with (mlPolySlObjToC ar sl)
@@ -3161,13 +3161,13 @@ InterpMlPolySlObj {ar} sl ty el with (mlPolySlObjToC ar sl)
     PreImage {a=(InterpPolyFunc q ty)} {b=(InterpPolyFunc ar ty)}
       (InterpPolyNT alpha ty) el
 
-export
+public export
 InterpMlPolySlObjF : {ar : PolyFunc} ->
   MlPolySlObj ar -> MLPolyCatElemObj ar -> Type
 InterpMlPolySlObjF {ar=ar@(_ ** _)} sl (ty ** el) =
   InterpMlPolySlObj {ar} sl ty el
 
-export
+public export
 InterpMlPolySlObjFMap : {bpos : Type} -> {bdir : bpos -> Type} ->
   (sl : MlPolySlObj (bpos ** bdir)) ->
   (dom, cod : MLPolyCatElemObj (bpos ** bdir)) ->
@@ -3181,7 +3181,7 @@ InterpMlPolySlObjFMap {bpos} {bdir} (MPSobj slpos sldir slondir)
         ((j ** k) ** mm . sldi)
         $ case eq of Refl => Refl
 
-export
+public export
 InterpMlPolySlObjFMapAr : {ar : PolyFunc} ->
   (sl : MlPolySlObj ar) ->
   (dom, cod : MLPolyCatElemObj ar) ->
@@ -3203,7 +3203,7 @@ InterpMlPolySlObjFMapAr {ar=(bpos ** bdir)} =
 -- component is `InterpMlPolySlObj`, from the slice category of polynomial
 -- functors over `ar` to the category of copresheaves over the category of
 -- elements of `ar`.
-export
+public export
 InterpMlPolySlMor : FunExt -> {ar : PolyFunc} ->
   {dom, cod : MlPolySlObj ar} -> MlPolySlMor dom cod ->
   (ty : Type) -> (el : InterpPolyFunc ar ty) ->
@@ -3229,21 +3229,21 @@ InterpMlPolySlMor fext {ar=(bpos ** bdir)}
 ---- Polynomial-functor slice functor definitions ----
 ------------------------------------------------------
 
-export
+public export
 0 MlDirichSlFunc : MLArena -> MLArena -> Type
 MlDirichSlFunc p q = MlDirichSlObj p -> MlDirichSlObj q
 
-export
+public export
 0 MlDirichSlFMap : {ar, ar' : MLArena} -> MlDirichSlFunc ar ar' -> Type
 MlDirichSlFMap {ar} {ar'} f =
   (0 sl, sl' : MlDirichSlObj ar) ->
   MlDirichSlMor {ar} sl sl' -> MlDirichSlMor {ar=ar'} (f sl) (f sl')
 
-export
+public export
 0 MlPolySlFunc : MLArena -> MLArena -> Type
 MlPolySlFunc p q = MlPolySlObj p -> MlPolySlObj q
 
-export
+public export
 0 MlPolySlFMap : {ar, ar' : MLArena} -> MlPolySlFunc ar ar' -> Type
 MlPolySlFMap {ar} {ar'} f =
   (0 sl, sl' : MlPolySlObj ar) ->
@@ -3257,7 +3257,7 @@ MlPolySlFMap {ar} {ar'} f =
 -- rather than total-space objects with projection morphisms, we can perform
 -- base changes by specifying the data not of a polynomial natural
 -- transformation, but of a Dirichlet natural transformation.
-export
+public export
 mlPolySlBaseChange : {p, q : PolyFunc} ->
   DirichNatTrans q p -> MlPolySlFunc p q
 mlPolySlBaseChange {p} {q} (onpos ** ondir) (MPSobj slonpos sldir slondir) =
@@ -3266,7 +3266,7 @@ mlPolySlBaseChange {p} {q} (onpos ** ondir) (MPSobj slonpos sldir slondir) =
     (\i => sldir $ onpos i)
     (\i, j, qd => slondir (onpos i) j $ ondir i qd)
 
-export
+public export
 mlPolySlBaseChangeMap : {p, q : PolyFunc} -> (nt : DirichNatTrans q p) ->
   MlPolySlFMap {ar=p} {ar'=q} (mlPolySlBaseChange {p} {q} nt)
 mlPolySlBaseChangeMap {p} {q} (ntonpos ** ntondir)
@@ -3276,13 +3276,13 @@ mlPolySlBaseChangeMap {p} {q} (ntonpos ** ntondir)
       (\qp, dp, cd => mpsmOnDir m (ntonpos qp) dp cd)
       (\qp, dp, bd => mpsmOnDirCommutes m (ntonpos qp) dp (ntondir qp bd))
 
-export
+public export
 mlDirichSlBaseChange : {p, q : PolyFunc} ->
   DirichNatTrans q p -> MlDirichSlFunc p q
 mlDirichSlBaseChange {p} {q} (onpos ** ondir) (MDSobj slpos sldir) =
   MDSobj (slpos . onpos) (\qp, sp, qd => sldir (onpos qp) sp $ ondir qp qd)
 
-export
+public export
 mlDirichSlBaseChangeMap : {p, q : PolyFunc} -> (nt : DirichNatTrans q p) ->
   MlDirichSlFMap {ar=p} {ar'=q} (mlDirichSlBaseChange {p} {q} nt)
 mlDirichSlBaseChangeMap {p} {q} (ntonpos ** ntondir)
