@@ -3341,7 +3341,7 @@ itaCMCoalgToAlg {c} {d} ita x = iasRAdj (itaCMAdjunction ita) x x
 
 public export
 CongNTLSig : {d, c : IntCatSig} ->
-  IntAdjunctionSig d c -> IntAdjunctionSig d c -> Type
+  IntMorSig (IntAdjunctionSig d c)
 CongNTLSig {d} {c} adj1 adj2 =
   IntNTSig {c=(icObj c)} {d=(icObj d)} (icMor d)
     (ifOmap $ iasL adj1)
