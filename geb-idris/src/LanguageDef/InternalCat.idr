@@ -3151,14 +3151,14 @@ record ITASig (c, d : IntCatSig) where
 public export
 record ITAUnitInputs (c, d : IntCatSig) where
   constructor ITAUIn
-  itaiLUnits : IntAdjUnitInputs d c
-  itaiRUnits : IntAdjUnitInputs c d
+  itauiFunctors : IntTripleAdjointsSig c d
+  itauiUnits : ITAUnitsSig itauiFunctors
 
 public export
 record ITAAdjunctInputs (c, d : IntCatSig) where
   constructor ITAAIn
-  itaiLAdjuncts : IntAdjAdjunctInputs d c
-  itaiRAdjuncts : IntAdjAdjunctInputs c d
+  itaaiFunctors : IntTripleAdjointsSig c d
+  itaaiAdjuncts : ITAAdjunctsSig itaaiFunctors
 
 public export
 ITADataFromUnits : {c, d : IntCatSig} ->
@@ -3191,3 +3191,15 @@ ITAFromAdjuncts : {c, d : IntCatSig} ->
   (adjs : IntTripleAdjointsSig c d) -> ITAAdjunctsSig adjs -> ITASig c d
 ITAFromAdjuncts {c} {d} adjs adjuncts =
   ITA adjs (ITADataFromAdjuncts adjs adjuncts)
+
+public export
+ITAFromUnitInputs : {c, d : IntCatSig} ->
+  ITAUnitInputs c d -> ITASig c d
+ITAFromUnitInputs {c} {d} inputs =
+  ITAFromUnits (itauiFunctors inputs) (itauiUnits inputs)
+
+public export
+ITAFromAdjunctInputs : {c, d : IntCatSig} ->
+  ITAAdjunctInputs c d -> ITASig c d
+ITAFromAdjunctInputs {c} {d} inputs =
+  ITAFromAdjuncts (itaaiFunctors inputs) (itaaiAdjuncts inputs)
