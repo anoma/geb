@@ -3247,9 +3247,16 @@ itaMCAdjuncts {c} {d} ita =
       . iadRAdj (itaLData $ itaData ita) a (ifOmap (itaH $ itaAdjoints ita) b))
 
 public export
+itaMCData : {c, d : IntCatSig} ->
+  (ita : ITASig c d) -> IntAdjunctionData (itaMCAdjoints ita)
+itaMCData {c} {d} ita =
+  IntAdjunctionDataFromAdjuncts (itaMCAdjoints ita) (itaMCAdjuncts ita)
+
+public export
 itaMCAdjunction : {c, d : IntCatSig} ->
   ITASig c d -> IntAdjunctionSig c c
-itaMCAdjunction {c} {d} ita = ?itaMCAdjunction_hole
+itaMCAdjunction {c} {d} ita =
+  IntAdjunctionFromAdjuncts (itaMCAdjoints ita) (itaMCAdjuncts ita)
 
 -- The composed endo-adjunction on the outer category, with a
 -- comonad left adjoint to a monad.
@@ -3274,6 +3281,13 @@ itaCMAdjuncts {c} {d} ita =
       . iadRAdj (itaRData $ itaData ita) a (ifOmap (itaG $ itaAdjoints ita) b))
 
 public export
+itaCMData : {c, d : IntCatSig} ->
+  (ita : ITASig c d) -> IntAdjunctionData (itaCMAdjoints ita)
+itaCMData {c} {d} ita =
+  IntAdjunctionDataFromAdjuncts (itaCMAdjoints ita) (itaCMAdjuncts ita)
+
+public export
 itaCMAdjunction : {c, d : IntCatSig} ->
   ITASig c d -> IntAdjunctionSig d d
-itaCMAdjunction {c} {d} ita = ?itaCMAdjunction_hole
+itaCMAdjunction {c} {d} ita =
+  IntAdjunctionFromAdjuncts (itaCMAdjoints ita) (itaCMAdjuncts ita)
