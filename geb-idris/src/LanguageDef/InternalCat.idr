@@ -2879,6 +2879,24 @@ iasRFmap : {d, c : IntCatSig} -> (adj : IntAdjunctionSig d c) ->
 iasRFmap adj = ifMmap $ iasR adj
 
 public export
+iasMonad : {d, c : IntCatSig} -> IntAdjunctionSig d c -> icObj c -> icObj c
+iasMonad = iaMonad . iaAdjoints
+
+public export
+iasMonadMap : {d, c : IntCatSig} -> (adj : IntAdjunctionSig d c) ->
+  IntEndoFMapSig (icMor c) (iasMonad adj)
+iasMonadMap adj = iaMonadMap $ iaAdjoints adj
+
+public export
+iasComonad : {d, c : IntCatSig} -> IntAdjunctionSig d c -> icObj d -> icObj d
+iasComonad = iaComonad . iaAdjoints
+
+public export
+iasComonadMap : {d, c : IntCatSig} -> (adj : IntAdjunctionSig d c) ->
+  IntEndoFMapSig (icMor d) (iasComonad adj)
+iasComonadMap adj = iaComonadMap $ iaAdjoints adj
+
+public export
 iasLAdj : {d, c : IntCatSig} ->
   (adj : IntAdjunctionSig d c) ->
   IntAdjLAdjunctSig (icMor d) (icMor c) (iasLOmap adj) (iasROmap adj)
