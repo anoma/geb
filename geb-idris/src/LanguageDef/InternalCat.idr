@@ -3338,3 +3338,63 @@ itaCMCoalgToAlg {c} {d} ita x = iasRAdj (itaCMAdjunction ita) x x
 -------------------------------------------
 ---- Conjugate natural transformations ----
 -------------------------------------------
+
+public export
+CongNTLSig : {d, c : IntCatSig} ->
+  IntAdjunctionSig d c -> IntAdjunctionSig d c -> Type
+CongNTLSig {d} {c} adj1 adj2 =
+  IntNTSig {c=(icObj c)} {d=(icObj d)} (icMor d)
+    (ifOmap $ iasL adj1)
+    (ifOmap $ iasL adj2)
+
+public export
+CongNTRSig : {d, c : IntCatSig} -> IntMorSig (IntAdjunctionSig d c)
+CongNTRSig {d} {c} adj1 adj2 =
+  IntNTSig {c=(icObj d)} {d=(icObj c)} (icMor c)
+    (ifOmap $ iasR adj2)
+    (ifOmap $ iasR adj1)
+
+public export
+record CongNTSig {d, c : IntCatSig} (dom, cod : IntAdjunctionSig d c) where
+  constructor CongNT
+  cntL : CongNTLSig dom cod
+  cntR : CongNTRSig dom cod
+
+public export
+congNTidL : {d, c : IntCatSig} ->
+  (adj : IntAdjunctionSig d c) -> CongNTLSig adj adj
+congNTidL {d} {c} adj =
+  intNTid {c=(icObj c)} {d=(icObj d)} (icMor d) (icId d) (iasLOmap adj)
+
+public export
+congNTidR : {d, c : IntCatSig} ->
+  (adj : IntAdjunctionSig d c) -> CongNTRSig adj adj
+congNTidR {d} {c} adj =
+  intNTid {c=(icObj d)} {d=(icObj c)} (icMor c) (icId c) (iasROmap adj)
+
+public export
+congNTid : {d, c : IntCatSig} ->
+  IntIdSig (IntAdjunctionSig d c) (CongNTSig {d} {c})
+congNTid {d} {c} adj = CongNT (congNTidL adj) (congNTidR adj)
+
+public export
+congNTcompL : {d, c : IntCatSig} ->
+  (adj, adj', adj'' : IntAdjunctionSig d c) ->
+  CongNTLSig adj' adj'' -> CongNTLSig adj adj' -> CongNTLSig adj adj''
+congNTcompL {d} {c} adj adj' adj'' =
+  intNTvcomp {c=(icObj c)} {d=(icObj d)} {dmor=(icMor d)} (icComp d)
+
+public export
+congNTcompR : {d, c : IntCatSig} ->
+  (adj, adj', adj'' : IntAdjunctionSig d c) ->
+  CongNTRSig adj' adj'' -> CongNTRSig adj adj' -> CongNTRSig adj adj''
+congNTcompR {d} {c} adj adj' adj'' =
+  flip $ intNTvcomp {c=(icObj d)} {d=(icObj c)} {dmor=(icMor c)} (icComp c)
+
+public export
+congNTcomp : {d, c : IntCatSig} ->
+  IntCompSig (IntAdjunctionSig d c) (CongNTSig {d} {c})
+congNTcomp {d} {c} adj adj' adj'' beta alpha =
+  CongNT
+    (congNTcompL adj adj' adj'' (cntL beta) (cntL alpha))
+    (congNTcompR adj adj' adj'' (cntR beta) (cntR alpha))
