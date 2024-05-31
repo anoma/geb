@@ -3402,9 +3402,41 @@ congNTcomp {d} {c} adj adj' adj'' beta alpha =
 public export
 congNTLtoR : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
   CongNTLSig {d} {c} dom cod -> CongNTRSig {d} {c} dom cod
-congNTLtoR {d} {c} dom cod ntl = ?congNTLtoR_hole
+congNTLtoR
+  {d=(ICat dobj $ MICS dmor $ ICS did dcomp)}
+  {c=(ICat cobj $ MICS cmor $ ICS cid ccomp)}
+  (IAdjunction
+    (IAdjoints (IFunctor l lmap) (IFunctor r rmap))
+    (IAdjData
+      (IAdjuncts ladj radj)
+      (IUnits unit counit)
+      (IMults mults comults)))
+  (IAdjunction
+    (IAdjoints (IFunctor l' lmap') (IFunctor r' rmap'))
+    (IAdjData
+      (IAdjuncts ladj' radj')
+      (IUnits unit' counit')
+      (IMults mults' comults')))
+  ntl =
+    ?congNTLtoR_hole
 
 public export
 congNTRtoL : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
   CongNTRSig {d} {c} dom cod -> CongNTLSig {d} {c} dom cod
-congNTRtoL {d} {c} dom cod ntl = ?congNTRtoL_hole
+congNTRtoL
+  {d=(ICat dobj $ MICS dmor $ ICS did dcomp)}
+  {c=(ICat cobj $ MICS cmor $ ICS cid ccomp)}
+  (IAdjunction
+    (IAdjoints (IFunctor l lmap) (IFunctor r rmap))
+    (IAdjData
+      (IAdjuncts ladj radj)
+      (IUnits unit counit)
+      (IMults mults comults)))
+  (IAdjunction
+    (IAdjoints (IFunctor l' lmap') (IFunctor r' rmap'))
+    (IAdjData
+      (IAdjuncts ladj' radj')
+      (IUnits unit' counit')
+      (IMults mults' comults')))
+  ntl =
+    ?congNTRtoL_hole
