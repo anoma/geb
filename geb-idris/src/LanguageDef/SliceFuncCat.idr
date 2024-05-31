@@ -1256,6 +1256,31 @@ SliceFLimitAdj : (a, b : Type) ->
 SliceFLimitAdj a b =
   IntAdjunctionFromUnits (SliceFLimitAdjoints a b) (SliceFLimitUnits a b)
 
+public export
+SliceFLimitColimitTripleAdjoints : (a, b : Type) ->
+  IntTripleAdjointsSig (SliceFuncCat a b) (SliceCat b)
+SliceFLimitColimitTripleAdjoints a b =
+  ITripleAdjoints
+    (SliceFColimitFSig a b)
+    (SliceDiagFSig a b)
+    (SliceFLimitFSig a b)
+
+public export
+SliceFLimitTripleUnitsSig : (a, b : Type) ->
+  ITAUnitsSig (SliceFLimitColimitTripleAdjoints a b)
+SliceFLimitTripleUnitsSig a b =
+  ITUnits
+    (SliceFColimitUnits a b)
+    (SliceFLimitUnits a b)
+
+public export
+SliceFLimitTripleAdjunctionSig : (a, b : Type) ->
+  ITASig (SliceFuncCat a b) (SliceCat b)
+SliceFLimitTripleAdjunctionSig a b =
+  ITAFromUnits
+    (SliceFLimitColimitTripleAdjoints a b)
+    (SliceFLimitTripleUnitsSig a b)
+
 -------------------------------------------------------------------
 ---- Computed adjunction data (introduction/elimination rules) ----
 -------------------------------------------------------------------

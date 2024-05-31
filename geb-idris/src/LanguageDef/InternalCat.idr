@@ -3134,6 +3134,7 @@ intAdjunctionSigCompose {e} {d} {c} adc aed =
 -- `c` is the "inner" category, `d` the "outer" one.
 -- The two adjunctions are F |- G : C -> D and
 -- G |- H : D -> C.
+public export
 record IntTripleAdjointsSig (c, d : IntCatSig) where
   constructor ITripleAdjoints
   itaF : IntFunctorSig c d
