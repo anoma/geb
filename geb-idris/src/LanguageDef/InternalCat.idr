@@ -3089,3 +3089,36 @@ intAdjunctionSigCompose {e} {d} {c} adc aed =
       (IAdjuncts
         (intAdjCompLeftAdjunct adc aed)
         (intAdjCompRightAdjunct adc aed))
+
+----------------------------
+---- Triple adjunctions ----
+----------------------------
+
+-- For a triple adjunction F |- G |- H : C -> D as in
+-- https://ncatlab.org/nlab/show/adjoint+triple .
+--
+-- `c` is the "inner" category, `d` the "outer" one.
+-- The two adjunctions are F |- G : C -> D and
+-- G |- H : D -> C.
+record IntTripleAdjointsSig (c, d : IntCatSig) where
+  constructor ITripleAdjoints
+  itaF : IntFunctorSig c d
+  itaG : IntFunctorSig d c
+  itaH : IntFunctorSig c d
+
+public export
+itaLAdjAdjoints : {c, d : IntCatSig} ->
+  IntTripleAdjointsSig c d -> IntAdjointsSig d c
+itaLAdjAdjoints ita = IAdjoints (itaF ita) (itaG ita)
+
+public export
+itaRAdjAdjoints : {c, d : IntCatSig} ->
+  IntTripleAdjointsSig c d -> IntAdjointsSig c d
+itaRAdjAdjoints ita = IAdjoints (itaG ita) (itaH ita)
+
+public export
+record IntTripleAdjunction {c, d : IntCatSig}
+    (ita : IntTripleAdjointsSig c d) where
+  constructor ITripleAdj
+  itaL : IntAdjunctionData {d} {c} (itaLAdjAdjoints ita)
+  itaR : IntAdjunctionData {d=c} {c=d} (itaRAdjAdjoints ita)
