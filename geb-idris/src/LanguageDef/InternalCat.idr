@@ -3305,3 +3305,31 @@ itaCMAdjunction : {c, d : IntCatSig} ->
   ITASig c d -> IntAdjunctionSig d d
 itaCMAdjunction {c} {d} ita =
   IntAdjunctionFromAdjuncts (itaCMAdjoints ita) (itaCMAdjuncts ita)
+
+public export
+itaMCAlgToCoalg : {c, d : IntCatSig} ->
+  (ita : ITASig c d) -> (x : icObj c) ->
+  IntFAlg {c} (ifOmap $ iaL $ itaMCAdjoints ita) x ->
+  IntFCoalg {c} (ifOmap $ iaR $ itaMCAdjoints ita) x
+itaMCAlgToCoalg {c} {d} ita x = iasLAdj (itaMCAdjunction ita) x x
+
+public export
+itaMCCoalgToAlg : {c, d : IntCatSig} ->
+  (ita : ITASig c d) -> (x : icObj c) ->
+  IntFCoalg {c} (ifOmap $ iaR $ itaMCAdjoints ita) x ->
+  IntFAlg {c} (ifOmap $ iaL $ itaMCAdjoints ita) x
+itaMCCoalgToAlg {c} {d} ita x = iasRAdj (itaMCAdjunction ita) x x
+
+public export
+itaCMAlgToCoalg : {c, d : IntCatSig} ->
+  (ita : ITASig c d) -> (x : icObj d) ->
+  IntFAlg {c=d} (ifOmap $ iaL $ itaCMAdjoints ita) x ->
+  IntFCoalg {c=d} (ifOmap $ iaR $ itaCMAdjoints ita) x
+itaCMAlgToCoalg {c} {d} ita x = iasLAdj (itaCMAdjunction ita) x x
+
+public export
+itaCMCoalgToAlg : {c, d : IntCatSig} ->
+  (ita : ITASig c d) -> (x : icObj d) ->
+  IntFCoalg {c=d} (ifOmap $ iaR $ itaCMAdjoints ita) x ->
+  IntFAlg {c=d} (ifOmap $ iaL $ itaCMAdjoints ita) x
+itaCMCoalgToAlg {c} {d} ita x = iasRAdj (itaCMAdjunction ita) x x
