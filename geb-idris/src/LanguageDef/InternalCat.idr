@@ -2770,6 +2770,11 @@ iaMonadMap {d} {c} adjs =
     (iaLFmap adjs) (iaRFmap adjs)
 
 public export
+iaMonadSig : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
+  IntFunctorSig c c
+iaMonadSig {d} {c} adjs = IFunctor (iaMonad adjs) (iaMonadMap adjs)
+
+public export
 iaComonad : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
   icObj d -> icObj d
 iaComonad {d} {c} adjs = IntAdjComonad (iaLOmap adjs) (iaROmap adjs)
@@ -2782,6 +2787,11 @@ iaComonadMap {d} {c} adjs =
     (icMor d) (icMor c)
     (iaLOmap adjs) (iaROmap adjs)
     (iaLFmap adjs) (iaRFmap adjs)
+
+public export
+iaComonadSig : {d, c : IntCatSig} -> (adjs : IntAdjointsSig d c) ->
+  IntFunctorSig d d
+iaComonadSig {d} {c} adjs = IFunctor (iaComonad adjs) (iaComonadMap adjs)
 
 public export
 record IntAdjunctsSig {d, c : IntCatSig} (lr : IntAdjointsSig d c) where
@@ -2888,6 +2898,11 @@ iasMonadMap : {d, c : IntCatSig} -> (adj : IntAdjunctionSig d c) ->
 iasMonadMap adj = iaMonadMap $ iaAdjoints adj
 
 public export
+iasMonadSig : {d, c : IntCatSig} -> (adj : IntAdjunctionSig d c) ->
+  IntFunctorSig c c
+iasMonadSig adj = IFunctor (iasMonad adj) (iasMonadMap adj)
+
+public export
 iasComonad : {d, c : IntCatSig} -> IntAdjunctionSig d c -> icObj d -> icObj d
 iasComonad = iaComonad . iaAdjoints
 
@@ -2895,6 +2910,11 @@ public export
 iasComonadMap : {d, c : IntCatSig} -> (adj : IntAdjunctionSig d c) ->
   IntEndoFMapSig (icMor d) (iasComonad adj)
 iasComonadMap adj = iaComonadMap $ iaAdjoints adj
+
+public export
+iasComonadSig : {d, c : IntCatSig} -> (adj : IntAdjunctionSig d c) ->
+  IntFunctorSig d d
+iasComonadSig adj = IFunctor (iasComonad adj) (iasComonadMap adj)
 
 public export
 iasLAdj : {d, c : IntCatSig} ->
@@ -3139,8 +3159,8 @@ public export
 record ITAAdjunctionData {c, d : IntCatSig}
     (ita : IntTripleAdjointsSig c d) where
   constructor ITAData
-  itaLUnits : IntAdjunctionData (itaLAdjAdjoints ita)
-  itaRUnits : IntAdjunctionData (itaRAdjAdjoints ita)
+  itaLData : IntAdjunctionData (itaLAdjAdjoints ita)
+  itaRData : IntAdjunctionData (itaRAdjAdjoints ita)
 
 public export
 record ITASig (c, d : IntCatSig) where
@@ -3203,3 +3223,57 @@ ITAFromAdjunctInputs : {c, d : IntCatSig} ->
   ITAAdjunctInputs c d -> ITASig c d
 ITAFromAdjunctInputs {c} {d} inputs =
   ITAFromAdjuncts (itaaiFunctors inputs) (itaaiAdjuncts inputs)
+
+-- The composed endo-adjunction on the inner category, with a
+-- monad left adjoint to a comonad.
+
+public export
+itaMCAdjoints : {c, d : IntCatSig} -> ITASig c d -> IntAdjointsSig c c
+itaMCAdjoints {c} {d} ita =
+  IAdjoints
+    (iaMonadSig $ itaLAdjAdjoints $ itaAdjoints ita)
+    (iaComonadSig $ itaRAdjAdjoints $ itaAdjoints ita)
+
+public export
+itaMCAdjuncts : {c, d : IntCatSig} ->
+  (ita : ITASig c d) -> IntAdjunctsSig (itaMCAdjoints ita)
+itaMCAdjuncts {c} {d} ita =
+  IAdjuncts
+    (\a, b =>
+      iadLAdj (itaLData $ itaData ita) a (ifOmap (itaH $ itaAdjoints ita) b)
+      . iadLAdj (itaRData $ itaData ita) (ifOmap (itaF $ itaAdjoints ita) a) b)
+    (\a, b =>
+      iadRAdj (itaRData $ itaData ita) (ifOmap (itaF $ itaAdjoints ita) a) b
+      . iadRAdj (itaLData $ itaData ita) a (ifOmap (itaH $ itaAdjoints ita) b))
+
+public export
+itaMCAdjunction : {c, d : IntCatSig} ->
+  ITASig c d -> IntAdjunctionSig c c
+itaMCAdjunction {c} {d} ita = ?itaMCAdjunction_hole
+
+-- The composed endo-adjunction on the outer category, with a
+-- comonad left adjoint to a monad.
+
+public export
+itaCMAdjoints : {c, d : IntCatSig} -> ITASig c d -> IntAdjointsSig d d
+itaCMAdjoints {c} {d} ita =
+  IAdjoints
+    (iaComonadSig $ itaLAdjAdjoints $ itaAdjoints ita)
+    (iaMonadSig $ itaRAdjAdjoints $ itaAdjoints ita)
+
+public export
+itaCMAdjuncts : {c, d : IntCatSig} ->
+  (ita : ITASig c d) -> IntAdjunctsSig (itaCMAdjoints ita)
+itaCMAdjuncts {c} {d} ita =
+  IAdjuncts
+    (\a, b =>
+      iadLAdj (itaRData $ itaData ita) a (ifOmap (itaG $ itaAdjoints ita) b)
+      . iadLAdj (itaLData $ itaData ita) (ifOmap (itaG $ itaAdjoints ita) a) b)
+    (\a, b =>
+      iadRAdj (itaLData $ itaData ita) (ifOmap (itaG $ itaAdjoints ita) a) b
+      . iadRAdj (itaRData $ itaData ita) a (ifOmap (itaG $ itaAdjoints ita) b))
+
+public export
+itaCMAdjunction : {c, d : IntCatSig} ->
+  ITASig c d -> IntAdjunctionSig d d
+itaCMAdjunction {c} {d} ita = ?itaCMAdjunction_hole
