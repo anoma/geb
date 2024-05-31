@@ -3398,3 +3398,13 @@ congNTcomp {d} {c} adj adj' adj'' beta alpha =
   CongNT
     (congNTcompL adj adj' adj'' (cntL beta) (cntL alpha))
     (congNTcompR adj adj' adj'' (cntR beta) (cntR alpha))
+
+public export
+congNTLtoR : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
+  CongNTLSig {d} {c} dom cod -> CongNTRSig {d} {c} dom cod
+congNTLtoR {d} {c} dom cod ntl = ?congNTLtoR_hole
+
+public export
+congNTRtoL : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
+  CongNTRSig {d} {c} dom cod -> CongNTLSig {d} {c} dom cod
+congNTRtoL {d} {c} dom cod ntl = ?congNTRtoL_hole
