@@ -1444,18 +1444,32 @@ SliceLKanExtSig a b c g =
     (\f, h => sliceLKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
 public export
+SliceLKanExtAdjoints : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntAdjointsSig (SliceFuncCat c b) (SliceFuncCat a b)
+SliceLKanExtAdjoints a b c g gm =
+  IAdjoints
+    (SliceLKanExtSig a b c g)
+    (SlicePrecompFSig a b c g gm)
+
+public export
+SliceLKanExtAdjUnits : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntUnitsSig (SliceLKanExtAdjoints a b c g gm)
+SliceLKanExtAdjUnits a b c g gm =
+  IUnits
+    (\f, sa, eb, efb => (sa ** (SliceId c (g sa), efb)))
+    (\f, sc, eb, lk =>
+      ifMmap f (g $ fst lk) sc (fst $ snd lk) eb $ snd $ snd lk)
+
+public export
 SliceLKanExtAdjUnitInputs : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
   IntAdjUnitInputs (SliceFuncCat c b) (SliceFuncCat a b)
 SliceLKanExtAdjUnitInputs a b c g gm =
   IAdjUIn
-    (IAdjoints
-      (SliceLKanExtSig a b c g)
-      (SlicePrecompFSig a b c g gm))
-    (IUnits
-      (\f, sa, eb, efb => (sa ** (SliceId c (g sa), efb)))
-      (\f, sc, eb, lk =>
-        ifMmap f (g $ fst lk) sc (fst $ snd lk) eb $ snd $ snd lk))
+    (SliceLKanExtAdjoints a b c g gm)
+    (SliceLKanExtAdjUnits a b c g gm)
 
 public export
 SliceLKanExtAdjunctionSig : (a, b, c : Type) ->
@@ -1512,17 +1526,31 @@ SliceRKanExtSig a b c g =
     (\f, h => sliceRKanExtFmap g {f=(ifOmap f)} {h=(ifOmap h)})
 
 public export
+SliceRKanExtAdjoints : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntAdjointsSig (SliceFuncCat a b) (SliceFuncCat c b)
+SliceRKanExtAdjoints a b c g gm =
+  IAdjoints
+    (SlicePrecompFSig a b c g gm)
+    (SliceRKanExtSig a b c g)
+
+public export
+SliceRKanExtAdjUnits : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntUnitsSig (SliceRKanExtAdjoints a b c g gm)
+SliceRKanExtAdjUnits a b c g gm =
+  IUnits
+    (\f, sc, eb, efb, sa, rk => ifMmap f sc (g sa) rk eb efb)
+    (\f, sa, eb, rk => rk sa $ SliceId c $ g sa)
+
+public export
 SliceRKanExtAdjUnitInputs : (a, b, c : Type) ->
   (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
   IntAdjUnitInputs (SliceFuncCat a b) (SliceFuncCat c b)
 SliceRKanExtAdjUnitInputs a b c g gm =
   IAdjUIn
-    (IAdjoints
-      (SlicePrecompFSig a b c g gm)
-      (SliceRKanExtSig a b c g))
-    (IUnits
-      (\f, sc, eb, efb, sa, rk => ifMmap f sc (g sa) rk eb efb)
-      (\f, sa, eb, rk => rk sa $ SliceId c $ g sa))
+    (SliceRKanExtAdjoints a b c g gm)
+    (SliceRKanExtAdjUnits a b c g gm)
 
 public export
 SliceRKanExtAdjunctionSig : (a, b, c : Type) ->
@@ -1533,6 +1561,34 @@ SliceRKanExtAdjunctionSig a b c g gm =
     {d=(SliceFuncCat a b)}
     {c=(SliceFuncCat c b)}
     (SliceRKanExtAdjUnitInputs a b c g gm)
+
+public export
+SliceKanExtTripleAdjoints : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  IntTripleAdjointsSig (SliceFuncCat a b) (SliceFuncCat c b)
+SliceKanExtTripleAdjoints a b c g gm =
+  ITripleAdjoints
+    (SliceLKanExtSig a b c g)
+    (SlicePrecompFSig a b c g gm)
+    (SliceRKanExtSig a b c g)
+
+public export
+SliceKanExtTripleUnitsSig : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  ITAUnitsSig (SliceKanExtTripleAdjoints a b c g gm)
+SliceKanExtTripleUnitsSig a b c g gm =
+  ITUnits
+    (SliceLKanExtAdjUnits a b c g gm)
+    (SliceRKanExtAdjUnits a b c g gm)
+
+public export
+SliceKanExtTripleAdjunctionSig : (a, b, c : Type) ->
+  (g : SliceFunctor a c) -> (gm : SliceFMap g) ->
+  ITASig (SliceFuncCat a b) (SliceFuncCat c b)
+SliceKanExtTripleAdjunctionSig a b c g gm=
+  ITAFromUnits
+    (SliceKanExtTripleAdjoints a b c g gm)
+    (SliceKanExtTripleUnitsSig a b c g gm)
 
 ----------------------------
 ----------------------------
