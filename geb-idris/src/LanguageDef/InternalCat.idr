@@ -164,6 +164,20 @@ IntCatCat =
     IntFunctorSigId
     IntFunctorSigComp
 
+----------------------
+----------------------
+---- (Co)algebras ----
+----------------------
+----------------------
+
+public export
+IntFAlg : {c : IntCatSig} -> IntEndoOMapSig (icObj c) -> icObj c -> Type
+IntFAlg {c} f x = icMor c (f x) x
+
+public export
+IntFCoalg : {c : IntCatSig} -> IntEndoOMapSig (icObj c) -> icObj c -> Type
+IntFCoalg {c} f x = icMor c x (f x)
+
 -----------------------------
 -----------------------------
 ---- Structured hom-sets ----
