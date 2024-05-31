@@ -3132,8 +3132,8 @@ record ITAUnitsSig {c, d : IntCatSig} (ita : IntTripleAdjointsSig c d) where
 public export
 record ITAAdjunctsSig {c, d : IntCatSig} (ita : IntTripleAdjointsSig c d) where
   constructor ITAdjuncts
-  itaLUnits : IntAdjunctsSig (itaLAdjAdjoints ita)
-  itaRUnits : IntAdjunctsSig (itaRAdjAdjoints ita)
+  itaLAdjuncts : IntAdjunctsSig (itaLAdjAdjoints ita)
+  itaRAdjuncts : IntAdjunctsSig (itaRAdjAdjoints ita)
 
 public export
 record ITAAdjunctionData {c, d : IntCatSig}
@@ -3143,13 +3143,51 @@ record ITAAdjunctionData {c, d : IntCatSig}
   itaRUnits : IntAdjunctionData (itaRAdjAdjoints ita)
 
 public export
+record ITASig (c, d : IntCatSig) where
+  constructor ITA
+  itaAdjoints : IntTripleAdjointsSig c d
+  itaData : ITAAdjunctionData {c} {d} itaAdjoints
+
+public export
 record ITAUnitInputs (c, d : IntCatSig) where
   constructor ITAUIn
-  itaLUnits : IntAdjUnitInputs d c
-  itaRUnits : IntAdjUnitInputs c d
+  itaiLUnits : IntAdjUnitInputs d c
+  itaiRUnits : IntAdjUnitInputs c d
 
 public export
 record ITAAdjunctInputs (c, d : IntCatSig) where
   constructor ITAAIn
-  itaLAdjuncts : IntAdjAdjunctInputs d c
-  itaRAdjuncts : IntAdjAdjunctInputs c d
+  itaiLAdjuncts : IntAdjAdjunctInputs d c
+  itaiRAdjuncts : IntAdjAdjunctInputs c d
+
+public export
+ITADataFromUnits : {c, d : IntCatSig} ->
+  (adjs : IntTripleAdjointsSig c d) -> ITAUnitsSig adjs ->
+  ITAAdjunctionData adjs
+ITADataFromUnits {c} {d} adjs units =
+  ITAData
+    (IntAdjunctionDataFromUnits (itaLAdjAdjoints adjs) (itaLUnits units))
+    (IntAdjunctionDataFromUnits (itaRAdjAdjoints adjs) (itaRUnits units))
+
+public export
+ITAFromUnits : {c, d : IntCatSig} ->
+  (adjs : IntTripleAdjointsSig c d) -> ITAUnitsSig adjs -> ITASig c d
+ITAFromUnits {c} {d} adjs units =
+  ITA adjs (ITADataFromUnits adjs units)
+
+public export
+ITADataFromAdjuncts : {c, d : IntCatSig} ->
+  (adjs : IntTripleAdjointsSig c d) -> ITAAdjunctsSig adjs ->
+  ITAAdjunctionData adjs
+ITADataFromAdjuncts {c} {d} adjs adjuncts =
+  ITAData
+    (IntAdjunctionDataFromAdjuncts
+      (itaLAdjAdjoints adjs) (itaLAdjuncts adjuncts))
+    (IntAdjunctionDataFromAdjuncts
+      (itaRAdjAdjoints adjs) (itaRAdjuncts adjuncts))
+
+public export
+ITAFromAdjuncts : {c, d : IntCatSig} ->
+  (adjs : IntTripleAdjointsSig c d) -> ITAAdjunctsSig adjs -> ITASig c d
+ITAFromAdjuncts {c} {d} adjs adjuncts =
+  ITA adjs (ITADataFromAdjuncts adjs adjuncts)
