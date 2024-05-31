@@ -3122,3 +3122,34 @@ record IntTripleAdjunction {c, d : IntCatSig}
   constructor ITripleAdj
   itaL : IntAdjunctionData {d} {c} (itaLAdjAdjoints ita)
   itaR : IntAdjunctionData {d=c} {c=d} (itaRAdjAdjoints ita)
+
+public export
+record ITAUnitsSig {c, d : IntCatSig} (ita : IntTripleAdjointsSig c d) where
+  constructor ITUnits
+  itaLUnits : IntUnitsSig (itaLAdjAdjoints ita)
+  itaRUnits : IntUnitsSig (itaRAdjAdjoints ita)
+
+public export
+record ITAAdjunctsSig {c, d : IntCatSig} (ita : IntTripleAdjointsSig c d) where
+  constructor ITAdjuncts
+  itaLUnits : IntAdjunctsSig (itaLAdjAdjoints ita)
+  itaRUnits : IntAdjunctsSig (itaRAdjAdjoints ita)
+
+public export
+record ITAAdjunctionData {c, d : IntCatSig}
+    (ita : IntTripleAdjointsSig c d) where
+  constructor ITAData
+  itaLUnits : IntAdjunctionData (itaLAdjAdjoints ita)
+  itaRUnits : IntAdjunctionData (itaRAdjAdjoints ita)
+
+public export
+record ITAUnitInputs (c, d : IntCatSig) where
+  constructor ITAUIn
+  itaLUnits : IntAdjUnitInputs d c
+  itaRUnits : IntAdjUnitInputs c d
+
+public export
+record ITAAdjunctInputs (c, d : IntCatSig) where
+  constructor ITAAIn
+  itaLAdjuncts : IntAdjAdjunctInputs d c
+  itaRAdjuncts : IntAdjAdjunctInputs c d
