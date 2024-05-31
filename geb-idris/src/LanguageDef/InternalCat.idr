@@ -3333,3 +3333,7 @@ itaCMCoalgToAlg : {c, d : IntCatSig} ->
   IntFCoalg {c=d} (ifOmap $ iaR $ itaCMAdjoints ita) x ->
   IntFAlg {c=d} (ifOmap $ iaL $ itaCMAdjoints ita) x
 itaCMCoalgToAlg {c} {d} ita x = iasRAdj (itaCMAdjunction ita) x x
+
+-------------------------------------------
+---- Conjugate natural transformations ----
+-------------------------------------------
