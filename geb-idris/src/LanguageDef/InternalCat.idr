@@ -3402,41 +3402,23 @@ congNTcomp {d} {c} adj adj' adj'' beta alpha =
 public export
 congNTLtoR : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
   CongNTLSig {d} {c} dom cod -> CongNTRSig {d} {c} dom cod
-congNTLtoR
-  {d=(ICat dobj $ MICS dmor $ ICS did dcomp)}
-  {c=(ICat cobj $ MICS cmor $ ICS cid ccomp)}
-  (IAdjunction
-    (IAdjoints (IFunctor l lmap) (IFunctor r rmap))
-    (IAdjData
-      (IAdjuncts ladj radj)
-      (IUnits unit counit)
-      (IMults mults comults)))
-  (IAdjunction
-    (IAdjoints (IFunctor l' lmap') (IFunctor r' rmap'))
-    (IAdjData
-      (IAdjuncts ladj' radj')
-      (IUnits unit' counit')
-      (IMults mults' comults')))
-  ntl x =
-    ladj (r' x) x $ dcomp (l (r' x)) (l' (r' x)) x (counit' x) (ntl (r' x))
+congNTLtoR {d} {c} dom cod ntl x =
+  iasLAdj dom (iasROmap cod x) x $
+    icComp d
+      (iasLOmap dom (iasROmap cod x))
+      (iasLOmap cod (iasROmap cod x))
+      x
+      (iasCounit cod x)
+      (ntl (iasROmap cod x))
 
 public export
 congNTRtoL : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
   CongNTRSig {d} {c} dom cod -> CongNTLSig {d} {c} dom cod
-congNTRtoL
-  {d=(ICat dobj $ MICS dmor $ ICS did dcomp)}
-  {c=(ICat cobj $ MICS cmor $ ICS cid ccomp)}
-  (IAdjunction
-    (IAdjoints (IFunctor l lmap) (IFunctor r rmap))
-    (IAdjData
-      (IAdjuncts ladj radj)
-      (IUnits unit counit)
-      (IMults mults comults)))
-  (IAdjunction
-    (IAdjoints (IFunctor l' lmap') (IFunctor r' rmap'))
-    (IAdjData
-      (IAdjuncts ladj' radj')
-      (IUnits unit' counit')
-      (IMults mults' comults')))
-  ntr x =
-    radj x (l' x) $ ccomp x (r' (l' x)) (r (l' x)) (ntr (l' x)) (unit' x)
+congNTRtoL {d} {c} dom cod ntr x =
+  iasRAdj dom x (iasLOmap cod x) $
+    icComp c
+      x
+      (iasROmap cod (iasLOmap cod x))
+      (iasROmap dom (iasLOmap cod x))
+      (ntr (iasLOmap cod x))
+      (iasUnit cod x)
