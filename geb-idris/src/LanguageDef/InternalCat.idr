@@ -3417,8 +3417,8 @@ congNTLtoR
       (IAdjuncts ladj' radj')
       (IUnits unit' counit')
       (IMults mults' comults')))
-  ntl =
-    ?congNTLtoR_hole
+  ntl x =
+    ladj (r' x) x $ dcomp (l (r' x)) (l' (r' x)) x (counit' x) (ntl (r' x))
 
 public export
 congNTRtoL : {d, c : IntCatSig} -> (dom, cod : IntAdjunctionSig d c) ->
@@ -3438,5 +3438,5 @@ congNTRtoL
       (IAdjuncts ladj' radj')
       (IUnits unit' counit')
       (IMults mults' comults')))
-  ntl =
-    ?congNTRtoL_hole
+  ntr x =
+    radj x (l' x) $ ccomp x (r' (l' x)) (r (l' x)) (ntr (l' x)) (unit' x)
