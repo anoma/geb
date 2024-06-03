@@ -48,7 +48,7 @@ SPFdirType dom cod pos = (ec : cod) -> pos ec -> SliceObj dom
 -- This is the dependent (slice) analogue of an arena in `Type` (where
 -- the latter is a `PolyFunc`, AKA `MLArena`).
 public export
-record SPFData (0 dom, cod : Type) where
+record SPFData (dom, cod : Type) where
   constructor SPFD
   spfdPos : SliceObj cod
   spfdDir : SPFdirType dom cod spfdPos
@@ -1206,6 +1206,52 @@ wtfFromSPFD {dom} {cod} (MkWTF pos dir f g h) sd ec
 ---- Composition of slice polynomial functors ----
 --------------------------------------------------
 -------------------------------------------------
+
+-- The category whose objects are those of `Type` and whose
+-- morphisms are polynomial functors between the slice categories over
+-- the corresponding objects.  (This may be seen as a two-category whose
+-- objects are slice categories and whose 1-cells are slice polynomial
+-- functors; the 2-cells are the natural transformations defined below.)
+
+public export
+SPFDidPos : (x : Type) -> SliceObj x
+SPFDidPos x ex = Unit
+
+public export
+SPFDidDir : (x : Type) -> SPFdirType x x (SPFDidPos x)
+SPFDidDir x ex eu ex' = Unit
+
+public export
+SPFDid : (x : Type) -> SPFData x x
+SPFDid x = SPFD (SPFDidPos x) (SPFDidDir x)
+
+public export
+SPFDcompPos : {x, y, z : Type} ->
+  SPFData y z -> SPFData x y -> SliceObj z
+SPFDcompPos {x} {y} {z} g f ez = ?SPFDcompPos_hole
+
+public export
+SPFDcompDir : {x, y, z : Type} ->
+  (g : SPFData y z) -> (f : SPFData x y) ->
+  SPFdirType x z (SPFDcompPos {x} {y} {z} g f)
+SPFDcompDir {x} {y} {z} g f = ?SPFDcompDir_hole
+
+public export
+SPFDcomp : (x, y, z : Type) ->
+  SPFData y z -> SPFData x y -> SPFData x z
+SPFDcomp x y z g f =
+  SPFD (SPFDcompPos {x} {y} {z} g f) (SPFDcompDir {x} {y} {z} g f)
+
+public export
+SPFDfcat : IntCatSig
+SPFDfcat =
+  ICat
+    Type
+  $ MICS
+    SPFData
+  $ ICS
+    SPFDid
+    SPFDcomp
 
 --------------------------------------------------
 -------------------------------------------------
