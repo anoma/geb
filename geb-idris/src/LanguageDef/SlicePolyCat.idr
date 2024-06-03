@@ -1612,6 +1612,22 @@ InterpSPFDfromPi : {x, y : Type} -> (f : x -> y) ->
 InterpSPFDfromPi {x} {y} f sx ey pix =
   (ey ** \ex, eq => pix $ Element0 ex $ eq Refl)
 
+----------------------------------------
+----------------------------------------
+---- Compositions with base changes ----
+----------------------------------------
+----------------------------------------
+
+-- Precompose a base change before a slice polynomial.
+public export
+spfdPrecompBC : {x, y, z : Type} -> (y -> x) -> SPFData y z -> SPFData x z
+spfdPrecompBC {x} {y} {z} f = flip (SPFDcomp x y z) (SPFDbc f)
+
+-- Postcompose a base change after a slice polynomial.
+public export
+spfdPostcompBC : {x, y, z : Type} -> (z -> y) -> SPFData x y -> SPFData x z
+spfdPostcompBC {x} {y} {z} f = (SPFDcomp x y z) (SPFDbc f)
+
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 ---- Slice polynomial double-categorical structure (cells) ----
