@@ -1266,6 +1266,17 @@ SPFDcomp {dom} {cod} f g h beta alpha =
     (SPFDcompPos f g h (spmOnPos beta) (spmOnPos alpha))
     (SPFDcompDir f g h beta alpha)
 
+public export
+SPFDcat : Type -> Type -> IntCatSig
+SPFDcat dom cod =
+  ICat
+    (SPFData dom cod)
+  $ MICS
+    (SPFDmor {dom} {cod})
+  $ ICS
+    (SPFDid {dom} {cod})
+    (SPFDcomp {dom} {cod})
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
