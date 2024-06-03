@@ -1287,6 +1287,32 @@ SPFDcat dom cod =
     (SPNTid {dom} {cod})
     (SPNTvcomp {dom} {cod})
 
+--------------------------------------------------------------------
+---- Interpretation of slice polynomial natural transformations ----
+--------------------------------------------------------------------
+
+public export
+InterpSPFntOnPos : {dom, cod : Type} -> (f, g : SPFData dom cod) ->
+  SPFnt f g -> SliceMorphism {a=cod} (spfdPos f) (spfdPos g)
+InterpSPFntOnPos f g = spOnPos {f} {g}
+
+public export
+InterpSPFntOnDir : {dom, cod : Type} -> (f, g : SPFData dom cod) ->
+  (alpha : SPFnt f g) ->
+  (sd : SliceObj dom) -> (ec : cod) -> (ep : spfdPos f ec) ->
+  SliceMorphism {a=dom} (spfdDir f ec ep) sd ->
+  SliceMorphism {a=dom} (spfdDir g ec $ spOnPos alpha ec ep) sd
+InterpSPFntOnDir f g alpha sd ec ep = flip sliceComp (spOnDir alpha ec ep)
+
+public export
+InterpSPFnt : {dom, cod : Type} -> (f, g : SPFData dom cod) ->
+  SPFnt f g ->
+  SliceNatTrans {x=dom} {y=cod} (InterpSPFData f) (InterpSPFData g)
+InterpSPFnt {dom} {cod} f g alpha sd ec =
+  dpBimap
+    (spOnPos alpha ec)
+    (InterpSPFntOnDir f g alpha sd ec)
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
