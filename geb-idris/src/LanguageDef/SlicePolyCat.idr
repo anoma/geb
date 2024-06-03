@@ -1642,5 +1642,9 @@ spfdDichange {s} {t} {a} {b} mas mtb =
 ---------------------------------------------------------------
 
 public export
-SPFcell : {w, w', z, z' : Type} -> SPFData w w' -> SPFData z z' -> Type
-SPFcell {w} {w'} {z} {z'} f g = ?SPFcell_hole
+record SPFcell {w, w', z, z' : Type} (f : SPFData w z) (g : SPFData w' z') where
+  constructor SPFC
+  spfcBCl : w -> w'
+  spfcBCr : z -> z'
+  spfcNT :
+    SPFnt {dom=w'} {cod=z} (spfdPrecompBC spfcBCl f) (spfdPostcompBC spfcBCr g)
