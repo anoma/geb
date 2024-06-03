@@ -1302,11 +1302,11 @@ InterpSPFtoComp : {x, y, z : Type} ->
   SliceNatTrans
     (InterpSPFData $ SPFDcomp x y z g f)
     (InterpSPFData g . InterpSPFData f)
-InterpSPFtoComp {x} {y} {z} g f sx ez ((egp ** gdfp) ** dm) =
-  (egp **
+InterpSPFtoComp {x} {y} {z} g f sx ez ei =
+  (fst (fst ei) **
    \ey, egd =>
-    (gdfp ey egd **
-     \ex, efd => dm ex ((ey ** egd) ** efd)))
+    (snd (fst ei) ey egd **
+     \ex, efd => snd ei ex ((ey ** egd) ** efd)))
 
 public export
 InterpSPFfromComp : {x, y, z : Type} ->
@@ -1314,10 +1314,10 @@ InterpSPFfromComp : {x, y, z : Type} ->
   SliceNatTrans
     (InterpSPFData g . InterpSPFData f)
     (InterpSPFData $ SPFDcomp x y z g f)
-InterpSPFfromComp {x} {y} {z} g f sx ez (egp ** gdm) =
-  ((egp **
-    \ey, egd => fst $ gdm ey egd) **
-   \ex, ((ey ** egd) ** efd) => snd (gdm ey egd) ex efd)
+InterpSPFfromComp {x} {y} {z} g f sx ez ei =
+  ((fst ei **
+    \ey, egd => fst $ snd ei ey egd) **
+   \ex, dd => snd (snd ei (fst $ fst dd) (snd $ fst dd)) ex $ snd dd)
 
 --------------------------------------------------
 -------------------------------------------------
@@ -1431,7 +1431,7 @@ InterpSPFntId : {dom, cod : Type} ->
   SliceExtEq {a=cod} {s=(InterpSPFData f x)} {s'=(InterpSPFData f x)}
     (InterpSPFnt f f (SPNTid f) x)
     (SliceId cod $ InterpSPFData f x)
-InterpSPFntId {dom} {cod} f sd ec (ep ** dm) = Refl
+InterpSPFntId {dom} {cod} f sd ec epdm = case epdm of (ep ** dm) => Refl
 
 public export
 InterpSPFntComp : {dom, cod : Type} ->
@@ -1442,7 +1442,8 @@ InterpSPFntComp : {dom, cod : Type} ->
   SliceExtEq {a=cod} {s=(InterpSPFData f x)} {s'=(InterpSPFData h x)}
     (InterpSPFnt f h (SPNTvcomp f g h beta alpha) x)
     (sliceComp (InterpSPFnt g h beta x) (InterpSPFnt f g alpha x))
-InterpSPFntComp {dom} {cod} f g h beta alpha x ec (ep ** dm) = Refl
+InterpSPFntComp {dom} {cod} f g h beta alpha x ec epdm =
+  case epdm of (ep ** dm) => Refl
 
 ----------------------------------------------------------------
 ----------------------------------------------------------------
