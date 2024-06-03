@@ -1296,6 +1296,29 @@ InterpSPFfromId : (x : Type) ->
   SliceNatTrans (Prelude.id {a=(SliceObj x)}) (InterpSPFData $ SPFDid x)
 InterpSPFfromId x sx ex ei = (() ** \ex', xeq => replace {p=sx} xeq ei)
 
+public export
+InterpSPFtoComp : {x, y, z : Type} ->
+  (g : SPFData y z) -> (f : SPFData x y) ->
+  SliceNatTrans
+    (InterpSPFData $ SPFDcomp x y z g f)
+    (InterpSPFData g . InterpSPFData f)
+InterpSPFtoComp {x} {y} {z} g f sx ez ((egp ** gdfp) ** dm) =
+  (egp **
+   \ey, egd =>
+    (gdfp ey egd **
+     \ex, efd => dm ex ((ey ** egd) ** efd)))
+
+public export
+InterpSPFfromComp : {x, y, z : Type} ->
+  (g : SPFData y z) -> (f : SPFData x y) ->
+  SliceNatTrans
+    (InterpSPFData g . InterpSPFData f)
+    (InterpSPFData $ SPFDcomp x y z g f)
+InterpSPFfromComp {x} {y} {z} g f sx ez (egp ** gdm) =
+  ((egp **
+    \ey, egd => fst $ gdm ey egd) **
+   \ex, ((ey ** egd) ** efd) => snd (gdm ey egd) ex efd)
+
 --------------------------------------------------
 -------------------------------------------------
 ---- Categories of slice polynomial functors ----
