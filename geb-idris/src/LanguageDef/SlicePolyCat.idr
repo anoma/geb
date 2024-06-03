@@ -1219,7 +1219,7 @@ SPFDidPos x ex = Unit
 
 public export
 SPFDidDir : (x : Type) -> SPFdirType x x (SPFDidPos x)
-SPFDidDir x ex eu ex' = ex = ex'
+SPFDidDir x ex eu ex' = case eu of () => ex = ex'
 
 public export
 SPFDid : (x : Type) -> SPFData x x
