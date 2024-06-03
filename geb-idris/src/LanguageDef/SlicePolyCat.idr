@@ -1598,19 +1598,18 @@ InterpSPFDfromSigma {x} {y} f sx ey ei =
 
 public export
 SPFDpi : {x, y : Type} -> (x -> y) -> SPFData x y
-SPFDpi {x} {y} f = SPFD (\_ => y) (\ep, ey, ex => ep = ey -> f ex = ey)
+SPFDpi {x} {y} f = SPFD (\_ => Unit) (\ep, u, ex => case u of () => f ex = ep)
 
 public export
-InterpSPFDtoPi : {x, y : Type} -> (f : x -> y) ->
+0 InterpSPFDtoPi : {x, y : Type} -> (f : x -> y) ->
   SliceNatTrans {x} {y} (InterpSPFData $ SPFDpi f) (SliceFibPiF f)
 InterpSPFDtoPi {x} {y} f sx ey ei ex =
-  snd ei (fst0 ex) $ \eq => trans (snd0 ex) eq
+  case ei of (() ** dm) => dm (fst0 ex) (snd0 ex)
 
 public export
 InterpSPFDfromPi : {x, y : Type} -> (f : x -> y) ->
   SliceNatTrans {x} {y} (SliceFibPiF f) (InterpSPFData $ SPFDpi f)
-InterpSPFDfromPi {x} {y} f sx ey pix =
-  (ey ** \ex, eq => pix $ Element0 ex $ eq Refl)
+InterpSPFDfromPi {x} {y} f sx ey pix = (() ** \ex, eq => pix $ Element0 ex eq)
 
 ----------------------------------------
 ----------------------------------------
