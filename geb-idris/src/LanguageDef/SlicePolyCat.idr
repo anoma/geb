@@ -1487,8 +1487,8 @@ SPNThcomp : {c, d, e : Type} ->
   SPFnt {dom=c} {cod=e} (SPFDcomp c d e g f) (SPFDcomp c d e g' f')
 SPNThcomp {c} {d} {e} {f} {f'} {g} {g'} beta alpha =
   SPNTvcomp (SPFDcomp c d e g f) (SPFDcomp c d e g f') (SPFDcomp c d e g' f')
-    (SPNTwhiskerL beta f')
-    (SPNTwhiskerR g alpha)
+    (SPNTwhiskerL {g} {h=g'} beta f')
+    (SPNTwhiskerR {f} {g=f'} g alpha)
 
 -------------------------------------
 ---- Interpretation of whiskering ---
