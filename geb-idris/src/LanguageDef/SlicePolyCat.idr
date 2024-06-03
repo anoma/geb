@@ -1452,20 +1452,27 @@ InterpSPFntComp {dom} {cod} f g h beta alpha x ec (ep ** dm) = Refl
 
 public export
 SPNTwhiskerL : {c, d, e : Type} ->
-  {0 g, h : SPFData d e} ->
+  {g, h : SPFData d e} ->
   SPFnt {dom=d} {cod=e} g h -> (f : SPFData c d) ->
   SPFnt {dom=c} {cod=e} (SPFDcomp c d e g f) (SPFDcomp c d e h f)
-SPNTwhiskerL {c} {d} {e} {g} {h} nu f =
-  ?SPNTwhiskerL_hole
+SPNTwhiskerL {c} {d} {e} {g} {h} (SPFDm onpos ondir) f =
+  SPFDm
+    (\ee, (ep ** dm) =>
+      (onpos ee ep ** sliceComp {a=d} dm (ondir ee ep)))
+    (\ee, (ep ** dm), ec, ((ed ** hd) ** fd) =>
+      ((ed ** ondir ee ep ed hd) ** fd))
 
 public export
 SPNTwhiskerR : {c, d, e : Type} ->
-  {0 f, g : SPFData c d} ->
+  {f, g : SPFData c d} ->
   (h : SPFData d e) ->
   SPFnt {dom=c} {cod=d} f g ->
   SPFnt {dom=c} {cod=e} (SPFDcomp c d e h f) (SPFDcomp c d e h g)
-SPNTwhiskerR {c} {d} {e} {f} {g} h nu =
-  ?SPNTwhiskerR_hole
+SPNTwhiskerR {c} {d} {e} {f} {g} h (SPFDm onpos ondir) =
+  SPFDm
+    (\ee, (ep ** dm) => (ep ** sliceComp onpos dm))
+    (\ee, (ep ** dm), ec, ((ed ** hd) ** gd) =>
+      ((ed ** hd) ** ondir ed (dm ed hd) ec gd))
 
 public export
 SPNThcomp : {c, d, e : Type} ->
