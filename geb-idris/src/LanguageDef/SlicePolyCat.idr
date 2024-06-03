@@ -1444,6 +1444,90 @@ InterpSPFntComp : {dom, cod : Type} ->
     (sliceComp (InterpSPFnt g h beta x) (InterpSPFnt f g alpha x))
 InterpSPFntComp {dom} {cod} f g h beta alpha x ec (ep ** dm) = Refl
 
+----------------------------------------------------------------
+----------------------------------------------------------------
+---- Slice polynomial whiskering and horizontal composition ----
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+public export
+SPNTwhiskerL : {c, d, e : Type} ->
+  {0 g, h : SPFData d e} ->
+  SPFnt {dom=d} {cod=e} g h -> (f : SPFData c d) ->
+  SPFnt {dom=c} {cod=e} (SPFDcomp c d e g f) (SPFDcomp c d e h f)
+SPNTwhiskerL {c} {d} {e} {g} {h} nu f =
+  ?SPNTwhiskerL_hole
+
+public export
+SPNTwhiskerR : {c, d, e : Type} ->
+  {0 f, g : SPFData c d} ->
+  (h : SPFData d e) ->
+  SPFnt {dom=c} {cod=d} f g ->
+  SPFnt {dom=c} {cod=e} (SPFDcomp c d e h f) (SPFDcomp c d e h g)
+SPNTwhiskerR {c} {d} {e} {f} {g} h nu =
+  ?SPNTwhiskerR_hole
+
+public export
+SPNThcomp : {c, d, e : Type} ->
+  {0 f, f' : SPFData c d} ->
+  {0 g, g' : SPFData d e} ->
+  SPFnt {dom=d} {cod=e} g g' -> SPFnt {dom=c} {cod=d} f f' ->
+  SPFnt {dom=c} {cod=e} (SPFDcomp c d e g f) (SPFDcomp c d e g' f')
+SPNThcomp {c} {d} {e} {f} {g} h nu =
+  ?SPNThcomp_hole
+
+-------------------------------------
+---- Interpretation of whiskering ---
+-------------------------------------
+
+public export
+InterpSPFntWhiskerL : {c, d, e : Type} ->
+  (g, h : SPFData d e) ->
+  (nu : SPFnt {dom=d} {cod=e} g h) -> (f : SPFData c d) ->
+  (x : SliceObj c) ->
+  SliceExtEq {a=e}
+    {s=(InterpSPFData g $ InterpSPFData f x)}
+    {s'=(InterpSPFData h $ InterpSPFData f x)}
+    (sliceComp
+      (sliceComp
+        (InterpSPFtoComp h f x)
+        (InterpSPFnt {dom=c} {cod=e} (SPFDcomp c d e g f) (SPFDcomp c d e h f)
+          (SPNTwhiskerL {g} {h} nu f) x))
+     $ InterpSPFfromComp g f x)
+    (SliceWhiskerLeft {c} {d} {e}
+      {g=(InterpSPFData {dom=d} {cod=e} g)}
+      {h=(InterpSPFData {dom=d} {cod=e} h)}
+      (InterpSPFnt {dom=d} {cod=e} g h nu)
+      (InterpSPFData {dom=c} {cod=d} f)
+      x)
+InterpSPFntWhiskerL {c} {d} {e} g h nu f x =
+  ?InterpSPFntWhiskerL_hole
+
+public export
+InterpSPFntWhiskerR : {c, d, e : Type} ->
+  (f, g : SPFData c d) ->
+  (h : SPFData d e) ->
+  (nu : SPFnt {dom=c} {cod=d} f g) ->
+  (x : SliceObj c) ->
+  SliceExtEq {a=e}
+    {s=(InterpSPFData h $ InterpSPFData f x)}
+    {s'=(InterpSPFData h $ InterpSPFData g x)}
+    (sliceComp
+      (sliceComp
+        (InterpSPFtoComp h g x)
+        (InterpSPFnt {dom=c} {cod=e} (SPFDcomp c d e h f) (SPFDcomp c d e h g)
+          (SPNTwhiskerR {f} {g} h nu) x))
+     $ InterpSPFfromComp h f x)
+    (SliceWhiskerRight {c} {d} {e}
+      {f=(InterpSPFData {dom=c} {cod=d} f)}
+      {g=(InterpSPFData {dom=c} {cod=d} g)}
+      {h=(InterpSPFData {dom=d} {cod=e} h)}
+      (InterpSPFDataMap {dom=d} {cod=e} h)
+      (InterpSPFnt {dom=c} {cod=d} f g nu)
+      x)
+InterpSPFntWhiskerR {c} {d} {e} f g h nu x =
+  ?InterpSPFntWhiskerR_hole
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
