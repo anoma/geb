@@ -1628,6 +1628,13 @@ public export
 spfdPostcompBC : {x, y, z : Type} -> (z -> y) -> SPFData x y -> SPFData x z
 spfdPostcompBC {x} {y} {z} f = (SPFDcomp x y z) (SPFDbc f)
 
+-- "Dichange" -- pre- and post- compose a slice polynomial with base changes.
+public export
+spfdDichange : {s, t, a, b : Type} ->
+  (a -> s) -> (t -> b) -> SPFData a b -> SPFData s t
+spfdDichange {s} {t} {a} {b} mas mtb =
+  spfdPrecompBC {x=s} {y=a} {z=t} mas . spfdPostcompBC {x=a} {y=b} {z=t} mtb
+
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 ---- Slice polynomial double-categorical structure (cells) ----
