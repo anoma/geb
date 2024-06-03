@@ -1239,32 +1239,32 @@ SPFDid : {dom, cod : Type} -> IntIdSig (SPFData dom cod) (SPFDmor {dom} {cod})
 SPFDid spfd = SPFDm (SPFDidPos spfd) (SPFDidDir spfd)
 
 public export
-SPFDcompPos : {dom, cod : Type} ->
+SPFDvcompPos : {dom, cod : Type} ->
   (f, g, h : SPFData dom cod) ->
   SPFDposMor {dom} {cod} g h ->
   SPFDposMor {dom} {cod} f g ->
   SPFDposMor {dom} {cod} f h
-SPFDcompPos f g h opgh opfg = sliceComp {a=cod} opgh opfg
+SPFDvcompPos f g h opgh opfg = sliceComp {a=cod} opgh opfg
 
 public export
-SPFDcompDir : {dom, cod : Type} ->
+SPFDvcompDir : {dom, cod : Type} ->
   (f, g, h : SPFData dom cod) ->
   (beta : SPFDmor {dom} {cod} g h) ->
   (alpha : SPFDmor {dom} {cod} f g) ->
   SPFDdirMor {dom} {cod} f h
-    (SPFDcompPos f g h (spmOnPos beta) (spmOnPos alpha))
-SPFDcompDir f g h beta alpha ec ep =
+    (SPFDvcompPos f g h (spmOnPos beta) (spmOnPos alpha))
+SPFDvcompDir f g h beta alpha ec ep =
   sliceComp {a=dom}
     (spmOnDir alpha ec ep)
     (spmOnDir beta ec $ spmOnPos alpha ec ep)
 
 public export
-SPFDcomp : {dom, cod : Type} ->
+SPFDvcomp : {dom, cod : Type} ->
   IntCompSig (SPFData dom cod) (SPFDmor {dom} {cod})
-SPFDcomp {dom} {cod} f g h beta alpha =
+SPFDvcomp {dom} {cod} f g h beta alpha =
   SPFDm
-    (SPFDcompPos f g h (spmOnPos beta) (spmOnPos alpha))
-    (SPFDcompDir f g h beta alpha)
+    (SPFDvcompPos f g h (spmOnPos beta) (spmOnPos alpha))
+    (SPFDvcompDir f g h beta alpha)
 
 public export
 SPFDcat : Type -> Type -> IntCatSig
@@ -1275,7 +1275,7 @@ SPFDcat dom cod =
     (SPFDmor {dom} {cod})
   $ ICS
     (SPFDid {dom} {cod})
-    (SPFDcomp {dom} {cod})
+    (SPFDvcomp {dom} {cod})
 
 --------------------------------
 --------------------------------
