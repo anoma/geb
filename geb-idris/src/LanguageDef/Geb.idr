@@ -5553,6 +5553,89 @@ data MLContravarCatElemMor : {0 f : Type -> Type} ->
           (mldcMor mdata) (mlcEl (mldcCod mdata))))
       (mldcCod mdata)
 
+----------------------------------------
+----------------------------------------
+---- Covariant slice representables ----
+----------------------------------------
+----------------------------------------
+
+--------------------
+---- Definition ----
+--------------------
+
+-- The slice functor from `c` to `Type` which is covariantly represented
+-- by the given `SliceObj c`.  (`Type` is isomorphic to `SliceObj Unit`.)
+public export
+SliceCovarRepF : {c : Type} -> (sc : SliceObj c) -> SliceFunctor c Unit
+SliceCovarRepF sa sb () = SliceMorphism sa sb
+
+--------------------------------------------
+----- Covariant representable as W-type ----
+--------------------------------------------
+
+0 SCovRasWTF : {c : Type} -> (sc : SliceObj c) -> WTypeFunc c Unit
+SCovRasWTF {c} sc =
+  MkWTF {dom=c} {cod=Unit}
+    Unit
+    (Sigma {a=c} sc)
+    fst
+    (const ())
+    (id {a=Unit})
+
+scovrToWTF : {c, d : Type} -> (sa : SliceObj c) ->
+  SliceNatTrans (SliceCovarRepF {c} sa) (InterpWTF $ SCovRasWTF sa)
+scovrToWTF {c} {d} sa sb () mfsa =
+  (Element0 () Refl ** \(Element0 (ec ** sea) eq) => mfsa ec sea)
+
+scovrFromWTF : {c, d : Type} -> (sa : SliceObj c) ->
+  SliceNatTrans (InterpWTF $ SCovRasWTF sa) (SliceCovarRepF {c} sa)
+scovrFromWTF {c} {d} sa sb () (Element0 () eq ** sbd) =
+  \ec, sea => sbd $ Element0 (ec ** sea) Refl
+
+---------------------------
+---------------------------
+---- Dependent product ----
+---------------------------
+---------------------------
+
+---------------------------------------------
+---- Dependent product from slice object ----
+---------------------------------------------
+
+-- The slice functor from `c` to `d` which consists of a product of `d`
+-- representable functors from `SliceObj c`.  Products of representables
+-- are themselves representable (products of covariant representables are
+-- represented by sums, and products of contravariant representables are
+-- represented by products).
+public export
+SliceDepPiF : {c : Type} -> (d -> c -> Type) -> SliceFunctor c d
+SliceDepPiF sdc sc ed = SliceCovarRepF (sdc ed) {c} sc ()
+
+--------------------------------------
+----- Dependent product as W-type ----
+--------------------------------------
+
+0 SDPasWTF : {c, d : Type} -> (p : d -> c -> Type) -> WTypeFunc c d
+SDPasWTF {c} {d} p =
+  MkWTF {dom=c} {cod=d}
+    d
+    (Sigma {a=(d, c)} (uncurry p))
+    (snd . fst)
+    (fst . fst)
+    (id {a=d})
+
+spdToWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
+  SliceNatTrans (SliceDepPiF {c} {d} p) (InterpWTF $ SDPasWTF p)
+spdToWTF {c} {d} p sc ed mpsc =
+  (Element0 ed Refl **
+   \(Element0 ((ed', ec') ** pdc) eq) =>
+    mpsc ec' $ replace {p=(flip p ec')} eq pdc)
+
+spdFromWTF : {c, d : Type} -> (0 p : d -> c -> Type)->
+  SliceNatTrans (InterpWTF $ SDPasWTF p) (SliceDepPiF {c} {d} p)
+spdFromWTF {c} {d} p sc ed (Element0 ed' eq ** mpsc) =
+  \ec, pdc => mpsc (Element0 ((ed, ec) ** pdc) $ sym eq)
+
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
 ---- Slice categories of polynomial functors (in categorial style) ----
