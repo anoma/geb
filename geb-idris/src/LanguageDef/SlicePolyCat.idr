@@ -1219,7 +1219,7 @@ SPFDidPos x ex = Unit
 
 public export
 SPFDidDir : (x : Type) -> SPFdirType x x (SPFDidPos x)
-SPFDidDir x ex eu ex' = Unit
+SPFDidDir x ex eu ex' = ex = ex'
 
 public export
 SPFDid : (x : Type) -> SPFData x x
@@ -1282,6 +1282,20 @@ SPFDfcat =
     SPFDid
     SPFDcomp
 
+----------------------------------------------------
+---- Interpretation of identity and composition ----
+----------------------------------------------------
+
+public export
+InterpSPFtoId : (x : Type) ->
+  SliceNatTrans (InterpSPFData $ SPFDid x) (Prelude.id {a=(SliceObj x)})
+InterpSPFtoId x sx ex ei = case ei of (() ** d) => d ex Refl
+
+public export
+InterpSPFfromId : (x : Type) ->
+  SliceNatTrans (Prelude.id {a=(SliceObj x)}) (InterpSPFData $ SPFDid x)
+InterpSPFfromId x sx ex ei = (() ** \ex', xeq => replace {p=sx} xeq ei)
+
 --------------------------------------------------
 -------------------------------------------------
 ---- Categories of slice polynomial functors ----
@@ -1329,7 +1343,7 @@ SPNTvcompPos : {dom, cod : Type} ->
   SPFntPos {dom} {cod} g h ->
   SPFntPos {dom} {cod} f g ->
   SPFntPos {dom} {cod} f h
-SPNTvcompPos f g h opgh opfg = sliceComp {a=cod} opgh opfg
+SPNTvcompPos f g h = sliceComp {a=cod}
 
 public export
 SPNTvcompDir : {dom, cod : Type} ->
