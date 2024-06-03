@@ -1572,6 +1572,46 @@ InterpSPFDfromBC : {x, y : Type} -> (f : y -> x) ->
   SliceNatTrans {x} {y} (BaseChangeF f) (InterpSPFData $ SPFDbc f)
 InterpSPFDfromBC {x} {y} f sx ey ei = (() ** \ex, eq => replace {p=sx} eq ei)
 
+---------------
+---- Sigma ----
+---------------
+
+public export
+SPFDsigma : {x, y : Type} -> (x -> y) -> SPFData x y
+SPFDsigma {x} {y} f =
+  SPFD (\ey => PreImage {a=x} {b=y} f ey) (\ey, ep, ex => fst0 ep = ex)
+
+public export
+InterpSPFDtoSigma : {x, y : Type} -> (f : x -> y) ->
+  SliceNatTrans {x} {y} (InterpSPFData $ SPFDsigma f) (SliceFibSigmaF f)
+InterpSPFDtoSigma {x} {y} f sx ey ei = (fst ei ** snd ei (fst0 $ fst ei) Refl)
+
+public export
+InterpSPFDfromSigma : {x, y : Type} -> (f : x -> y) ->
+  SliceNatTrans {x} {y} (SliceFibSigmaF f) (InterpSPFData $ SPFDsigma f)
+InterpSPFDfromSigma {x} {y} f sx ey ei =
+  (fst ei ** \ex, eq => replace {p=sx} eq $ snd ei)
+
+------------
+---- Pi ----
+------------
+
+public export
+SPFDpi : {x, y : Type} -> (x -> y) -> SPFData x y
+SPFDpi {x} {y} f = SPFD (\_ => y) (\ep, ey, ex => ep = ey -> f ex = ey)
+
+public export
+InterpSPFDtoPi : {x, y : Type} -> (f : x -> y) ->
+  SliceNatTrans {x} {y} (InterpSPFData $ SPFDpi f) (SliceFibPiF f)
+InterpSPFDtoPi {x} {y} f sx ey ei ex =
+  snd ei (fst0 ex) $ \eq => trans (snd0 ex) eq
+
+public export
+InterpSPFDfromPi : {x, y : Type} -> (f : x -> y) ->
+  SliceNatTrans {x} {y} (SliceFibPiF f) (InterpSPFData $ SPFDpi f)
+InterpSPFDfromPi {x} {y} f sx ey pix =
+  (ey ** \ex, eq => pix $ Element0 ex $ eq Refl)
+
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 ---- Slice polynomial double-categorical structure (cells) ----
