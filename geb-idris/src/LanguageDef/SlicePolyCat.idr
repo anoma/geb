@@ -1495,7 +1495,8 @@ SPNThcomp {c} {d} {e} {f} {f'} {g} {g'} beta alpha =
 -------------------------------------
 
 public export
-InterpSPFntWhiskerL : {c, d, e : Type} ->
+InterpSPFntWhiskerL : FunExt ->
+  {c, d, e : Type} ->
   (g, h : SPFData d e) ->
   (nu : SPFnt {dom=d} {cod=e} g h) -> (f : SPFData c d) ->
   (x : SliceObj c) ->
@@ -1514,11 +1515,13 @@ InterpSPFntWhiskerL : {c, d, e : Type} ->
       (InterpSPFnt {dom=d} {cod=e} g h nu)
       (InterpSPFData {dom=c} {cod=d} f)
       x)
-InterpSPFntWhiskerL {c} {d} {e} g h nu f x ee epdm =
-  ?InterpSPFntWhiskerL_hole
+InterpSPFntWhiskerL fext {c} {d} {e} g h nu f x ee epdm =
+  dpEq12 Refl $ funExt $ \ed => funExt $ \hd =>
+    sym $ dpEqPat {dp=(snd epdm ed (spOnDir nu ee (fst epdm) ed hd))}
 
 public export
-InterpSPFntWhiskerR : {c, d, e : Type} ->
+InterpSPFntWhiskerR : FunExt ->
+  {c, d, e : Type} ->
   (f, g : SPFData c d) ->
   (h : SPFData d e) ->
   (nu : SPFnt {dom=c} {cod=d} f g) ->
@@ -1539,8 +1542,8 @@ InterpSPFntWhiskerR : {c, d, e : Type} ->
       (InterpSPFDataMap {dom=d} {cod=e} h)
       (InterpSPFnt {dom=c} {cod=d} f g nu)
       x)
-InterpSPFntWhiskerR {c} {d} {e} f g h nu x =
-  ?InterpSPFntWhiskerR_hole
+InterpSPFntWhiskerR fext {c} {d} {e} f g h nu x ee epdm =
+  dpEq12 Refl $ funExt $ \ed => funExt $ \hd => Refl
 
 --------------------------------
 --------------------------------
