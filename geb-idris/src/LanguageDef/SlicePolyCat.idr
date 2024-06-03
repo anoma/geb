@@ -1431,7 +1431,7 @@ InterpSPFntId : {dom, cod : Type} ->
   SliceExtEq {a=cod} {s=(InterpSPFData f x)} {s'=(InterpSPFData f x)}
     (InterpSPFnt f f (SPNTid f) x)
     (SliceId cod $ InterpSPFData f x)
-InterpSPFntId {dom} {cod} f sd ec (ep ** dm) = dpEq12 Refl Refl
+InterpSPFntId {dom} {cod} f sd ec (ep ** dm) = Refl
 
 public export
 InterpSPFntComp : {dom, cod : Type} ->
@@ -1442,8 +1442,7 @@ InterpSPFntComp : {dom, cod : Type} ->
   SliceExtEq {a=cod} {s=(InterpSPFData f x)} {s'=(InterpSPFData h x)}
     (InterpSPFnt f h (SPNTvcomp f g h beta alpha) x)
     (sliceComp (InterpSPFnt g h beta x) (InterpSPFnt f g alpha x))
-InterpSPFntComp {dom} {cod} f g h beta alpha x ec (ep ** dm) =
-  dpEq12 Refl Refl
+InterpSPFntComp {dom} {cod} f g h beta alpha x ec (ep ** dm) = Refl
 
 --------------------------------
 --------------------------------
