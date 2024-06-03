@@ -1456,13 +1456,14 @@ SPNTwhiskerL : {c, d, e : Type} ->
   {g, h : SPFData d e} ->
   SPFnt {dom=d} {cod=e} g h -> (f : SPFData c d) ->
   SPFnt {dom=c} {cod=e} (SPFDcomp c d e g f) (SPFDcomp c d e h f)
-SPNTwhiskerL {c} {d} {e} {g} {h} (SPFDm onpos ondir) f =
+SPNTwhiskerL {c} {d} {e} {g} {h} spfd f =
   SPFDm
     (\ee, epdm =>
-      (onpos ee (fst epdm) ** sliceComp {a=d} (snd epdm) (ondir ee $ fst epdm)))
+      (spOnPos spfd ee (fst epdm) **
+       sliceComp {a=d} (snd epdm) (spOnDir spfd ee $ fst epdm)))
     (\ee, epdm, ec, fd =>
       ((fst (fst fd) **
-       ondir ee (fst epdm) (fst $ fst fd) (snd $ fst fd)) ** snd fd))
+       spOnDir spfd ee (fst epdm) (fst $ fst fd) (snd $ fst fd)) ** snd fd))
 
 public export
 SPNTwhiskerR : {c, d, e : Type} ->
@@ -1470,12 +1471,12 @@ SPNTwhiskerR : {c, d, e : Type} ->
   (h : SPFData d e) ->
   SPFnt {dom=c} {cod=d} f g ->
   SPFnt {dom=c} {cod=e} (SPFDcomp c d e h f) (SPFDcomp c d e h g)
-SPNTwhiskerR {c} {d} {e} {f} {g} h (SPFDm onpos ondir) =
+SPNTwhiskerR {c} {d} {e} {f} {g} h spfd =
   SPFDm
-    (\ee, epdm => (fst epdm ** sliceComp onpos $ snd epdm))
+    (\ee, epdm => (fst epdm ** sliceComp (spOnPos spfd) $ snd epdm))
     (\ee, epdm, ec, gd =>
       (fst gd **
-       ondir (fst $ fst gd) (snd epdm (fst $ fst gd) (snd $ fst gd)) ec
+       spOnDir spfd (fst $ fst gd) (snd epdm (fst $ fst gd) (snd $ fst gd)) ec
         (snd gd)))
 
 public export
