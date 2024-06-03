@@ -1247,14 +1247,16 @@ public export
 SPFDcompDirFst : {x, y, z : Type} ->
   (g : SPFData y z) -> (f : SPFData x y) ->
   SPFdirType x z (SPFDcompPos {x} {y} {z} g f)
-SPFDcompDirFst {x} {y} {z} g f ez ep ex = ?SPFDcompDirFst_hole
+SPFDcompDirFst {x} {y} {z} g f ez ep ex =
+  Sigma {a=y} $ spfdDir g ez (fst ep)
 
 public export
 SPFDcompDirSnd : {x, y, z : Type} ->
   (g : SPFData y z) -> (f : SPFData x y) ->
   (ez : z) -> (ep : SPFDcompPos g f ez) -> (ex : x) ->
   SPFDcompDirFst g f ez ep ex -> Type
-SPFDcompDirSnd {x} {y} {z} g f ez ep ex = ?SPFDcompDirSnd_hole
+SPFDcompDirSnd {x} {y} {z} g f ez ep ex ecd =
+  spfdDir f (fst ecd) (snd ep (fst ecd) (snd ecd)) ex
 
 public export
 SPFDcompDir : {x, y, z : Type} ->
