@@ -1425,6 +1425,14 @@ InterpSPFnt {dom} {cod} f g alpha sd ec =
     (spOnPos alpha ec)
     (InterpSPFntOnDir f g alpha sd ec)
 
+public export
+InterpSPFntId : {dom, cod : Type} ->
+  (f : SPFData dom cod) -> (x : SliceObj dom) ->
+  SliceExtEq {s=(InterpSPFData f x)} {s'=(InterpSPFData f x)}
+    (InterpSPFnt f f (SPNTid f) x)
+    (SliceId cod $ InterpSPFData f x)
+InterpSPFntId {dom} {cod} f sd ec (ep ** dm) = dpEq12 Refl Refl
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
