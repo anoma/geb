@@ -12,6 +12,9 @@ import public LanguageDef.IntEFamCat
 import public LanguageDef.IntECofamCat
 import public LanguageDef.MLBundleCat
 
+-- In favor of the (identical) one from `SliceFuncCat`.
+%hide Library.IdrisCategories.BaseChangeF
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Polynomial functors between slice categories ----
@@ -1544,3 +1547,37 @@ InterpSPFntWhiskerR : FunExt ->
       x)
 InterpSPFntWhiskerR fext {c} {d} {e} f g h nu x ee epdm =
   dpEq12 Refl $ funExt $ \ed => funExt $ \hd => Refl
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+---- Components of slice polynomials (base change, sigma, pi) as SPFData ----
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+---------------------
+---- Base change ----
+---------------------
+
+public export
+SPFDbc : {x, y : Type} -> (y -> x) -> SPFData x y
+SPFDbc {x} {y} f = SPFD (\_ => Unit) (\ey, eu, ex => case eu of () => f ey = ex)
+
+public export
+InterpSPFDtoBC : {x, y : Type} -> (f : y -> x) ->
+  SliceNatTrans {x} {y} (InterpSPFData $ SPFDbc f) (BaseChangeF f)
+InterpSPFDtoBC {x} {y} f sx ey ei = case ei of (() ** dm) => dm (f ey) Refl
+
+public export
+InterpSPFDfromBC : {x, y : Type} -> (f : y -> x) ->
+  SliceNatTrans {x} {y} (BaseChangeF f) (InterpSPFData $ SPFDbc f)
+InterpSPFDfromBC {x} {y} f sx ey ei = (() ** \ex, eq => replace {p=sx} eq ei)
+
+---------------------------------------------------------------
+---------------------------------------------------------------
+---- Slice polynomial double-categorical structure (cells) ----
+---------------------------------------------------------------
+---------------------------------------------------------------
+
+public export
+SPFcell : {w, w', z, z' : Type} -> SPFData w w' -> SPFData z z' -> Type
+SPFcell {w} {w'} {z} {z'} f g = ?SPFcell_hole
