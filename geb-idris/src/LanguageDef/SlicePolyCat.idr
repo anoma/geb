@@ -1469,12 +1469,14 @@ SPNTwhiskerR {c} {d} {e} {f} {g} h nu =
 
 public export
 SPNThcomp : {c, d, e : Type} ->
-  {0 f, f' : SPFData c d} ->
-  {0 g, g' : SPFData d e} ->
+  {f, f' : SPFData c d} ->
+  {g, g' : SPFData d e} ->
   SPFnt {dom=d} {cod=e} g g' -> SPFnt {dom=c} {cod=d} f f' ->
   SPFnt {dom=c} {cod=e} (SPFDcomp c d e g f) (SPFDcomp c d e g' f')
-SPNThcomp {c} {d} {e} {f} {g} h nu =
-  ?SPNThcomp_hole
+SPNThcomp {c} {d} {e} {f} {f'} {g} {g'} beta alpha =
+  SPNTvcomp (SPFDcomp c d e g f) (SPFDcomp c d e g f') (SPFDcomp c d e g' f')
+    (SPNTwhiskerL beta f')
+    (SPNTwhiskerR g alpha)
 
 -------------------------------------
 ---- Interpretation of whiskering ---
