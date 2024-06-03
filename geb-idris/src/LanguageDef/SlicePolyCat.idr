@@ -1226,15 +1226,42 @@ SPFDid : (x : Type) -> SPFData x x
 SPFDid x = SPFD (SPFDidPos x) (SPFDidDir x)
 
 public export
+SPFDcompPosFst : {x, y, z : Type} ->
+  SPFData y z -> SPFData x y -> SliceObj z
+SPFDcompPosFst {x} {y} {z} g f = spfdPos g
+
+public export
+SPFDcompPosSnd : {x, y, z : Type} ->
+  (g : SPFData y z) -> (f : SPFData x y) ->
+  (ez : z) -> SPFDcompPosFst g f ez -> Type
+SPFDcompPosSnd {x} {y} {z} g f ez egp =
+  SliceMorphism {a=y} (spfdDir g ez egp) (spfdPos f)
+
+public export
 SPFDcompPos : {x, y, z : Type} ->
   SPFData y z -> SPFData x y -> SliceObj z
-SPFDcompPos {x} {y} {z} g f ez = ?SPFDcompPos_hole
+SPFDcompPos {x} {y} {z} g f ez =
+  Sigma {a=(SPFDcompPosFst g f ez)} $ SPFDcompPosSnd g f ez
+
+public export
+SPFDcompDirFst : {x, y, z : Type} ->
+  (g : SPFData y z) -> (f : SPFData x y) ->
+  SPFdirType x z (SPFDcompPos {x} {y} {z} g f)
+SPFDcompDirFst {x} {y} {z} g f ez ep ex = ?SPFDcompDirFst_hole
+
+public export
+SPFDcompDirSnd : {x, y, z : Type} ->
+  (g : SPFData y z) -> (f : SPFData x y) ->
+  (ez : z) -> (ep : SPFDcompPos g f ez) -> (ex : x) ->
+  SPFDcompDirFst g f ez ep ex -> Type
+SPFDcompDirSnd {x} {y} {z} g f ez ep ex = ?SPFDcompDirSnd_hole
 
 public export
 SPFDcompDir : {x, y, z : Type} ->
   (g : SPFData y z) -> (f : SPFData x y) ->
   SPFdirType x z (SPFDcompPos {x} {y} {z} g f)
-SPFDcompDir {x} {y} {z} g f = ?SPFDcompDir_hole
+SPFDcompDir {x} {y} {z} g f ez ep ex =
+  Sigma {a=(SPFDcompDirFst g f ez ep ex)} $ SPFDcompDirSnd g f ez ep ex
 
 public export
 SPFDcomp : (x, y, z : Type) ->
