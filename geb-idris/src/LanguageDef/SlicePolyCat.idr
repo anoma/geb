@@ -1201,6 +1201,71 @@ wtfFromSPFD {dom} {cod} (MkWTF pos dir f g h) sd ec
     (Element0 ep codeq **
      \(Element0 dd poseq) => dm (f dd) $ Element0 dd (Refl, poseq))
 
+-------------------------------------------------
+-------------------------------------------------
+---- Categories of slice polynomial functors ----
+-------------------------------------------------
+-------------------------------------------------
+
+public export
+SPFDposMor : {dom, cod : Type} -> IntMorSig (SPFData dom cod)
+SPFDposMor {dom} {cod} f g = SliceMorphism {a=cod} (spfdPos f) (spfdPos g)
+
+public export
+SPFDdirMor : {dom, cod : Type} ->
+  (f, g : SPFData dom cod) -> SPFDposMor f g -> Type
+SPFDdirMor {dom} {cod} f g onpos =
+  (ec : cod) -> (ep : spfdPos f ec) ->
+  SliceMorphism {a=dom} (spfdDir g ec $ onpos ec ep) (spfdDir f ec ep)
+
+public export
+record SPFDmor {dom, cod : Type} (f, g : SPFData dom cod) where
+  constructor SPFDm
+  spmOnPos : SPFDposMor {dom} {cod} f g
+  spmOnDir : SPFDdirMor {dom} {cod} f g spmOnPos
+
+public export
+SPFDidPos : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDposMor {dom} {cod} spfd spfd
+SPFDidPos spfd = sliceId {a=cod} (spfdPos spfd)
+
+public export
+SPFDidDir : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SPFDdirMor {dom} {cod} spfd spfd (SPFDidPos spfd)
+SPFDidDir spfd ec ep = sliceId {a=dom} (spfdDir spfd ec ep)
+
+public export
+SPFDid : {dom, cod : Type} -> IntIdSig (SPFData dom cod) (SPFDmor {dom} {cod})
+SPFDid spfd = SPFDm (SPFDidPos spfd) (SPFDidDir spfd)
+
+public export
+SPFDcompPos : {dom, cod : Type} ->
+  (f, g, h : SPFData dom cod) ->
+  SPFDposMor {dom} {cod} g h ->
+  SPFDposMor {dom} {cod} f g ->
+  SPFDposMor {dom} {cod} f h
+SPFDcompPos f g h opgh opfg = sliceComp {a=cod} opgh opfg
+
+public export
+SPFDcompDir : {dom, cod : Type} ->
+  (f, g, h : SPFData dom cod) ->
+  (beta : SPFDmor {dom} {cod} g h) ->
+  (alpha : SPFDmor {dom} {cod} f g) ->
+  SPFDdirMor {dom} {cod} f h
+    (SPFDcompPos f g h (spmOnPos beta) (spmOnPos alpha))
+SPFDcompDir f g h beta alpha ec ep =
+  sliceComp {a=dom}
+    (spmOnDir alpha ec ep)
+    (spmOnDir beta ec $ spmOnPos alpha ec ep)
+
+public export
+SPFDcomp : {dom, cod : Type} ->
+  IntCompSig (SPFData dom cod) (SPFDmor {dom} {cod})
+SPFDcomp {dom} {cod} f g h beta alpha =
+  SPFDm
+    (SPFDcompPos f g h (spmOnPos beta) (spmOnPos alpha))
+    (SPFDcompDir f g h beta alpha)
+
 --------------------------------
 --------------------------------
 ---- Initial slice algebras ----
