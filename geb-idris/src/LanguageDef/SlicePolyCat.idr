@@ -1824,5 +1824,13 @@ spfcHcomp : {w, w', x, x', z, z' : Type} ->
 spfcHcomp {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
   beta alpha =
     SPFDm
-      ?spfcHcomp_onpos
+      (\ez', epdm => case epdm of
+        (ez ** (ezeq, (ep ** dm))) =>
+          (spOnPos beta ez' (ez ** (ezeq, ep)) **
+           \ex', egd' =>
+            let
+              (ex ** (exeq, efd')) =
+                spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd'
+            in
+            spOnPos alpha ex' (ex ** (exeq, dm ex efd'))))
       ?spfcHcomp_ondir
