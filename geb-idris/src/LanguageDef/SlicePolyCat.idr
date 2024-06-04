@@ -1648,6 +1648,9 @@ data SPFcell : {w, w', z, z' : Type} ->
   SPFC : {w, w', z, z' : Type} ->
     {bcl : w -> w'} -> {bcr : z -> z'} ->
     {f : SPFData w z} -> {g : SPFData w' z'} ->
+    (onpos : (ez : z) -> spfdPos f ez -> spfdPos g $ bcr ez) ->
+    (ondir : (ez : z) -> (epf : spfdPos f ez) -> (epg : spfdPos g $ bcr ez) ->
+      (ew : w) -> spfdDir g (bcr ez) epg (bcl ew) -> spfdDir f ez epf ew) ->
     SPFcell {w} {w'} {z} {z'} bcl bcr f g
 
 public export
