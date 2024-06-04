@@ -1658,6 +1658,27 @@ spfdDichange : {s, t, a, b : Type} ->
 spfdDichange {s} {t} {a} {b} mas mtb =
   spfdPrecompBC {x=s} {y=a} {z=t} mas . spfdPostcompBC {x=a} {y=b} {z=t} mtb
 
+-- Postcomposition with base change is the same as what we have
+-- called pulling back along position.
+
+public export
+spfdPostcompBCtoPullbackPos : {x, y, z : Type} ->
+  (mzy : z -> y) -> (f : SPFData x y) ->
+  SPFnt {dom=x} {cod=z} (spfdPostcompBC mzy f) (spfPullbackPos mzy f)
+spfdPostcompBCtoPullbackPos {x} {y} {z} mzy f =
+  SPFDm
+    (\ez, epdm => snd epdm (mzy ez) Refl)
+    (\ez, epdm, ex, efd => ((mzy ez ** Refl) ** efd))
+
+public export
+spfdPostcompBCfromPullbackPos : {x, y, z : Type} ->
+  (mzy : z -> y) -> (f : SPFData x y) ->
+  SPFnt {dom=x} {cod=z} (spfPullbackPos mzy f) (spfdPostcompBC mzy f)
+spfdPostcompBCfromPullbackPos {x} {y} {z} mzy f =
+  SPFDm
+    (\ez, ep => (() ** \ey, eq => replace {p=(spfdPos f)} eq ep))
+    (\ez, ep, ex, efd => rewrite (snd $ fst efd) in snd efd)
+
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 ---- Slice polynomial double-categorical structure (cells) ----
