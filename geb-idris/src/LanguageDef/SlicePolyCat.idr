@@ -1831,6 +1831,21 @@ spfcHcompPos {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
                 $ spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd')
 
 public export
+spfcHcompDir : {w, w', x, x', z, z' : Type} ->
+  {bcw : w -> w'} -> {bcx : x -> x'} -> {bcz : z -> z'} ->
+  {f : SPFData w x} -> {f' : SPFData x z} ->
+  {g : SPFData w' x'} -> {g' : SPFData x' z'} ->
+  (beta : SPFcell {w=x} {w'=x'} {z} {z'} bcx bcz f' g') ->
+  (alpha : SPFcell {w} {w'} {z=x} {z'=x'} bcw bcx f g) ->
+  SPFntDir {dom=w'} {cod=z'}
+    (spfPushout bcw bcz $ SPFDcomp w x z f' f)
+    (SPFDcomp w' x' z' g' g)
+    (spfcHcompPos {bcw} {bcx} {bcz} {f} {f'} {g} {g'} beta alpha)
+spfcHcompDir {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
+  beta alpha ez' (ez ** (ezeq, (ep ** dm))) ew' ((ex' ** egd') ** egd) =
+    ?spfcHcompDir_hole
+
+public export
 spfcHcomp : {w, w', x, x', z, z' : Type} ->
   {bcw : w -> w'} -> {bcx : x -> x'} -> {bcz : z -> z'} ->
   {f : SPFData w x} -> {f' : SPFData x z} ->
@@ -1846,6 +1861,4 @@ spfcHcomp {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
   beta alpha =
     SPFDm
       (spfcHcompPos beta alpha)
-      (\ez', (ez ** (ezeq, (ep ** dm))), ew', ((ex' ** egd') ** egd) =>
-        case spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd' of
-          (ex ** (exeq, efd')) => ?spfcHcomp_ondir)
+      (spfcHcompDir beta alpha)
