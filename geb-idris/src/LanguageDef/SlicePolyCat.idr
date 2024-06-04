@@ -1641,17 +1641,20 @@ spfdDichange {s} {t} {a} {b} mas mtb =
 ---------------------------------------------------------------
 
 public export
-data SPFcell : {w, w', z, z' : Type} ->
-    (bcl : w -> w') -> (bcr : z -> z') ->
-    (f : SPFData w z) -> (g : SPFData w' z') ->
-    Type where
-  SPFC : {w, w', z, z' : Type} ->
-    {bcl : w -> w'} -> {bcr : z -> z'} ->
-    {f : SPFData w z} -> {g : SPFData w' z'} ->
-    (onpos : (ez : z) -> spfdPos f ez -> spfdPos g $ bcr ez) ->
-    (ondir : (ez : z) -> (epf : spfdPos f ez) -> (epg : spfdPos g $ bcr ez) ->
-      (ew : w) -> spfdDir g (bcr ez) epg (bcl ew) -> spfdDir f ez epf ew) ->
-    SPFcell {w} {w'} {z} {z'} bcl bcr f g
+spfPullback : {w, x, y, z : Type} ->
+  (w -> x) -> (z -> y) -> SPFData x y -> SPFData w z
+spfPullback {x} {y} {z} mwx mzy f =
+  SPFD
+    (BaseChangeF mzy $ spfdPos f)
+    (\ez, ep, ew => spfdDir f (mzy ez) ep (mwx ew))
+
+public export
+SPFcell : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : SPFData w z) -> (g : SPFData w' z') ->
+  Type
+SPFcell {w} {w'} {z} {z'} bcl bcr f g =
+  SPFnt {dom=w} {cod=z} f (spfPullback {w} {x=w'} {y=z'} {z} bcl bcr g)
 
 public export
 spfcId : {w, z : Type} -> (f : SPFData w z) ->
