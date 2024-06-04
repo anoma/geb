@@ -1362,6 +1362,12 @@ spfPushoutDir {w} {x} {y} mxw f =
     (spfdPos f)
     (\ey, ep, ew => (ex : x ** (mxw ex = ew, spfdDir f ey ep ex)))
 
+public export
+spfPushout : {w, x, y, z : Type} ->
+  (x -> w) -> (y -> z) -> SPFData x y -> SPFData w z
+spfPushout {w} {x} {y} {z} mxw myz =
+  spfPushoutDir {w} {x} {y=z} mxw . spfPushoutPos {x} {y} {z} myz
+
 --------------------------------------------------
 -------------------------------------------------
 ---- Categories of slice polynomial functors ----
