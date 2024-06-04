@@ -1346,6 +1346,14 @@ spfPullback : {w, x, y, z : Type} ->
 spfPullback {w} {x} {y} {z} mwx mzy =
   spfPullbackDir {w} {x} {y=z} mwx . spfPullbackPos {x} {y} {z} mzy
 
+public export
+spfPushoutPos : {x, y, z : Type} ->
+  (y -> z) -> SPFData x y -> SPFData x z
+spfPushoutPos {x} {y} {z} myz f =
+  SPFD
+    (\ez => (ey : y ** (myz ey = ez, spfdPos f ey)))
+    (\ez, ep, ex => spfdDir f (fst ep) (snd $ snd ep) ex)
+
 --------------------------------------------------
 -------------------------------------------------
 ---- Categories of slice polynomial functors ----
@@ -1658,6 +1666,11 @@ spfdDichange : {s, t, a, b : Type} ->
 spfdDichange {s} {t} {a} {b} mas mtb =
   spfdPrecompBC {x=s} {y=a} {z=t} mas . spfdPostcompBC {x=a} {y=b} {z=t} mtb
 
+-- Postcompose a sigma after a slice polynomial.
+public export
+spfdPostcompSigma : {x, y, z : Type} -> (y -> z) -> SPFData x y -> SPFData x z
+spfdPostcompSigma {x} {y} {z} f = (SPFDcomp x y z) (SPFDsigma f)
+
 -- Postcomposition with base change is the same as what we have
 -- called pulling back along position.
 
@@ -1678,6 +1691,30 @@ spfdPostcompBCfromPullbackPos {x} {y} {z} mzy f =
   SPFDm
     (\ez, ep => (() ** \ey, eq => replace {p=(spfdPos f)} eq ep))
     (\ez, ep, ex, efd => rewrite (snd $ fst efd) in snd efd)
+
+-- Postcomposition with sigma is the same as what we have
+-- called pushing out along position.
+
+public export
+0 spfdPostcompSigmaToPushoutPos : {x, y, z : Type} ->
+  (myz : y -> z) -> (f : SPFData x y) ->
+  SPFnt {dom=x} {cod=z} (spfdPostcompSigma myz f) (spfPushoutPos myz f)
+spfdPostcompSigmaToPushoutPos {x} {y} {z} myz f =
+  SPFDm
+    (\ez, epdm =>
+      (fst0 (fst epdm) ** (snd0 (fst epdm), snd epdm (fst0 $ fst epdm) Refl)))
+    (\ez, epdm, ex, efd => ((fst0 (fst epdm) ** Refl) ** efd))
+
+public export
+spfdPostcompSigmaFromPushoutPos : {x, y, z : Type} ->
+  (myz : y -> z) -> (f : SPFData x y) ->
+  SPFnt {dom=x} {cod=z} (spfPushoutPos myz f) (spfdPostcompSigma myz f)
+spfdPostcompSigmaFromPushoutPos {x} {y} {z} myz f =
+  SPFDm
+    (\ez, ep =>
+      (Element0 (fst ep) (fst $ snd ep) **
+       \ey', eq => replace {p=(spfdPos f)} eq $ snd $ snd ep))
+    (\ez, ep, ex, efd => rewrite snd (fst efd) in snd efd)
 
 ---------------------------------------------------------------
 ---------------------------------------------------------------
