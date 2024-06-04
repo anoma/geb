@@ -1751,7 +1751,11 @@ spfcVcomp : {w, w', w'', z, z', z'' : Type} ->
   SPFcell {w} {w'=w''} {z} {z'=z''} (bcl' . bcl) (bcr' . bcr) f h
 spfcVcomp {w} {w'} {w''} {z} {z'} {z''} {bcl} {bcl'} {bcr} {bcr'} {f} {g} {h}
   beta alpha =
-    ?spfcVcomp_hole
+    SPFDm
+      (sliceComp {a=z} (\ez => spOnPos beta (bcr ez)) (spOnPos alpha))
+      (\ez, ep, ew, ehd =>
+        spOnDir alpha ez ep ew
+        $ spOnDir beta (bcr ez) (spOnPos alpha ez ep) (bcl ew) ehd)
 
 public export
 spfcHcomp : {w, w', x, x', z, z' : Type} ->
