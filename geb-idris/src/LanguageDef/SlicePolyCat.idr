@@ -1664,11 +1664,32 @@ spfcVcomp {w} {w'} {w''} {z} {z'} {z''} f g h beta alpha =
   ?spfcVcomp_hole
 
 public export
+spfcWhiskerL : {w, w', x, x', z : Type} ->
+  (g : SPFData w x) -> (h : SPFData w' x') ->
+  SPFcell {w} {w'} {z=x} {z'=x'} g h ->
+  (f : SPFData x z) ->
+  SPFcell {w} {w'} {z} {z'=x'} (SPFDcomp w x z f g) h
+spfcWhiskerL {w} {w'} {x} {x'} {z} g h beta f =
+  ?spfcWhiskerL_hole
+
+public export
+spfcWhiskerR : {w, w', x, x', z' : Type} ->
+  (f : SPFData w x) -> (g : SPFData w' x') ->
+  SPFcell {w} {w'} {z=x} {z'=x'} f g ->
+  (h : SPFData x' z') ->
+  SPFcell {w} {w'} {z=x} {z'} f (SPFDcomp w' x' z' h g)
+spfcWhiskerR {w} {w'} {x} {x'} {z'} f g beta h =
+  ?spfcWhiskerR_hole
+
+public export
 spfcHcomp : {w, w', x, x', z, z' : Type} ->
   (f : SPFData w x) -> (f' : SPFData x z) ->
   (g : SPFData w' x') -> (g' : SPFData x' z') ->
-  SPFcell f' g' ->
-  SPFcell f g ->
+  SPFcell f' g' -> SPFcell f g ->
   SPFcell (SPFDcomp w x z f' f) (SPFDcomp w' x' z' g' g)
 spfcHcomp {w} {w'} {x} {x'} {z} {z'} f f' g g' beta alpha =
-  ?spfcHcomp_hole
+  spfcWhiskerL
+    f
+    (SPFDcomp w' x' z' g' g)
+    (spfcWhiskerR f g alpha g')
+    f'
