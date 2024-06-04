@@ -1671,6 +1671,11 @@ public export
 spfdPostcompSigma : {x, y, z : Type} -> (y -> z) -> SPFData x y -> SPFData x z
 spfdPostcompSigma {x} {y} {z} f = (SPFDcomp x y z) (SPFDsigma f)
 
+-- Postcompose a pi after a slice polynomial.
+public export
+spfdPostcompPi : {x, y, z : Type} -> (y -> z) -> SPFData x y -> SPFData x z
+spfdPostcompPi {x} {y} {z} f = (SPFDcomp x y z) (SPFDpi f)
+
 -- Postcomposition with base change is the same as what we have
 -- called pulling back along position.
 
