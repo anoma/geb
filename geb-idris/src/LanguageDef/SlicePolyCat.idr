@@ -1560,7 +1560,7 @@ InterpSPFntWhiskerR fext {c} {d} {e} f g h nu x ee epdm =
 
 public export
 SPFDbc : {x, y : Type} -> (y -> x) -> SPFData x y
-SPFDbc {x} {y} f = SPFD (\_ => Unit) (\ey, eu, ex => case eu of () => f ey = ex)
+SPFDbc {x} {y} f = SPFD (\_ => Unit) (\ey, eunit, ex => f ey = ex)
 
 public export
 InterpSPFDtoBC : {x, y : Type} -> (f : y -> x) ->
@@ -1598,7 +1598,7 @@ InterpSPFDfromSigma {x} {y} f sx ey ei =
 
 public export
 SPFDpi : {x, y : Type} -> (x -> y) -> SPFData x y
-SPFDpi {x} {y} f = SPFD (\_ => Unit) (\ey, u, ex => case u of () => f ex = ey)
+SPFDpi {x} {y} f = SPFD (\_ => Unit) (\ey, eunit, ex => f ex = ey)
 
 public export
 0 InterpSPFDtoPi : {x, y : Type} -> (f : x -> y) ->
@@ -1654,7 +1654,4 @@ spfcId f =
   SPFC id id
     $ SPFDm
       (\ez, ep => (() ** \ez', eq => replace {p=(spfdPos f)} eq $ fst ep))
-      $ \ez, ep, ew, ed =>
-        ((ew ** rewrite snd (fst ed) in snd ed)
-         ** rewrite unitUnique (snd ep ew (rewrite snd (fst ed) in snd ed)) ()
-            in Refl)
+      $ \ez, ep, ew, ed => ((ew ** rewrite snd (fst ed) in snd ed) ** Refl)
