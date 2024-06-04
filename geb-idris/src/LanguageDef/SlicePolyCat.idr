@@ -1647,3 +1647,14 @@ record SPFcell {w, w', z, z' : Type} (f : SPFData w z) (g : SPFData w' z') where
   spfcBCr : z -> z'
   spfcNT :
     SPFnt {dom=w'} {cod=z} (spfdPrecompBC spfcBCl f) (spfdPostcompBC spfcBCr g)
+
+public export
+spfcId : {w, z : Type} -> (f : SPFData w z) -> SPFcell {w} {w'=w} {z} {z'=z} f f
+spfcId f =
+  SPFC id id
+    $ SPFDm
+      (\ez, ep => (() ** \ez', eq => replace {p=(spfdPos f)} eq $ fst ep))
+      $ \ez, ep, ew, ed =>
+        ((ew ** rewrite snd (fst ed) in snd ed)
+         ** rewrite unitUnique (snd ep ew (rewrite snd (fst ed) in snd ed)) ()
+            in Refl)
