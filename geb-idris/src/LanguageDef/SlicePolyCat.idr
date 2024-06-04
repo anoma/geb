@@ -1827,12 +1827,11 @@ spfcHcomp {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
       (\ez', epdm => case epdm of
         (ez ** (ezeq, (ep ** dm))) =>
           (spOnPos beta ez' (ez ** (ezeq, ep)) **
-           \ex', egd' => case spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd' of
-            (ex ** (exeq, efd')) =>
-              spOnPos alpha ex' (ex ** (exeq, dm ex efd'))))
-      (\ez', epdm, ew', egd => case epdm of
-        (ez ** (ezeq, (ep ** dm))) =>
-          case egd of
-            ((ex' ** egd') ** egd) =>
-              case spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd' of
-                (ex ** (exeq, efd')) => ?spfcHcomp_ondir)
+           \ex', egd' =>
+              spOnPos alpha ex'
+                $ dpMapSnd
+                  (\ex => mapSnd $ dm ex)
+                  $ spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd'))
+      (\ez', (ez ** (ezeq, (ep ** dm))), ew', ((ex' ** egd') ** egd) =>
+        case spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd' of
+          (ex ** (exeq, efd')) => ?spfcHcomp_ondir)
