@@ -1354,6 +1354,14 @@ spfPushoutPos {x} {y} {z} myz f =
     (\ez => (ey : y ** (myz ey = ez, spfdPos f ey)))
     (\ez, ep, ex => spfdDir f (fst ep) (snd $ snd ep) ex)
 
+public export
+spfPushoutDir : {w, x, y : Type} ->
+  (x -> w) -> SPFData x y -> SPFData w y
+spfPushoutDir {w} {x} {y} mxw f =
+  SPFD
+    (spfdPos f)
+    (\ey, ep, ew => (ex : x ** (mxw ex = ew, spfdDir f ey ep ex)))
+
 --------------------------------------------------
 -------------------------------------------------
 ---- Categories of slice polynomial functors ----
@@ -1720,6 +1728,28 @@ spfdPostcompSigmaFromPushoutPos {x} {y} {z} myz f =
       (Element0 (fst ep) (fst $ snd ep) **
        \ey', eq => replace {p=(spfdPos f)} eq $ snd $ snd ep))
     (\ez, ep, ex, efd => rewrite snd (fst efd) in snd efd)
+
+-- Precomposition with base change is the same as what we have
+-- called pushing out along direction.
+
+public export
+0 spfdPrecompBCToPushoutDir : {x, y, z : Type} ->
+  (myx : y -> x) -> (f : SPFData y z) ->
+  SPFnt {dom=x} {cod=z} (spfdPrecompBC myx f) (spfPushoutDir myx f)
+spfdPrecompBCToPushoutDir {x} {y} {z} myx f =
+  SPFDm
+    (\ez, epTermMorph => fst epTermMorph)
+    (\ez, ep, ex, eyeqef =>
+      ((fst eyeqef ** snd $ snd eyeqef) ** fst $ snd eyeqef))
+
+public export
+spfdPrecompBCFromPushoutDir : {x, y, z : Type} ->
+  (myx : y -> x) -> (f : SPFData y z) ->
+  SPFnt {dom=x} {cod=z} (spfPushoutDir myx f) (spfdPrecompBC myx f)
+spfdPrecompBCFromPushoutDir {x} {y} {z} my f =
+  SPFDm
+    (\ez, ep => (ep ** \_, _ => ()))
+    (\ez, ep, ex, efd => (fst (fst efd) ** (snd efd, snd (fst efd))))
 
 ---------------------------------------------------------------
 ---------------------------------------------------------------
