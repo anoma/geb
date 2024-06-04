@@ -1598,7 +1598,7 @@ InterpSPFDfromSigma {x} {y} f sx ey ei =
 
 public export
 SPFDpi : {x, y : Type} -> (x -> y) -> SPFData x y
-SPFDpi {x} {y} f = SPFD (\_ => Unit) (\ep, u, ex => case u of () => f ex = ep)
+SPFDpi {x} {y} f = SPFD (\_ => Unit) (\ey, u, ex => case u of () => f ex = ey)
 
 public export
 0 InterpSPFDtoPi : {x, y : Type} -> (f : x -> y) ->
