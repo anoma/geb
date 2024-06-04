@@ -1666,27 +1666,29 @@ spfcVcomp {w} {w'} {w''} {z} {z'} {z''} f g h beta alpha =
   SPFC
     (spfcBCl beta . spfcBCl alpha)
     (spfcBCr beta . spfcBCr alpha)
-  $ let ntb = spfcNT beta in
-    let nta = spfcNT alpha in
-    ?spfVcomp_nt_hole
+  $ let ntb : SPFnt (spfdPrecompBC (spfcBCl beta) g) (spfdPostcompBC (spfcBCr beta) h) = spfcNT {f=g} {g=h} beta in
+    let nta : SPFnt (spfdPrecompBC (spfcBCl alpha) f) (spfdPostcompBC (spfcBCr alpha) g) = spfcNT {f} {g} alpha in
+    let ntc : SPFnt (spfdPrecompBC (spfcBCl beta . spfcBCl alpha) f) (spfdPostcompBC (spfcBCr beta . spfcBCr alpha) h) =
+      ?ntc_hole in
+    ntc
 
 public export
-spfcWhiskerL : {w, w', x, x', z : Type} ->
+spfcHwhiskerL : {w, w', x, x', z : Type} ->
   (g : SPFData w x) -> (h : SPFData w' x') ->
   SPFcell {w} {w'} {z=x} {z'=x'} g h ->
   (f : SPFData x z) ->
   SPFcell {w} {w'} {z} {z'=x'} (SPFDcomp w x z f g) h
-spfcWhiskerL {w} {w'} {x} {x'} {z} g h beta f =
-  ?spfcWhiskerL_hole
+spfcHwhiskerL {w} {w'} {x} {x'} {z} g h beta f =
+  ?spfcHwhiskerL_hole
 
 public export
-spfcWhiskerR : {w, w', x, x', z' : Type} ->
+spfcHwhiskerR : {w, w', x, x', z' : Type} ->
   (f : SPFData w x) -> (g : SPFData w' x') ->
   SPFcell {w} {w'} {z=x} {z'=x'} f g ->
   (h : SPFData x' z') ->
   SPFcell {w} {w'} {z=x} {z'} f (SPFDcomp w' x' z' h g)
-spfcWhiskerR {w} {w'} {x} {x'} {z'} f g beta h =
-  ?spfcWhiskerR_hole
+spfcHwhiskerR {w} {w'} {x} {x'} {z'} f g beta h =
+  ?spfcHwhiskerR_hole
 
 public export
 spfcHcomp : {w, w', x, x', z, z' : Type} ->
@@ -1698,8 +1700,8 @@ spfcHcomp : {w, w', x, x', z, z' : Type} ->
     (SPFDcomp w x z f' f)
     (SPFDcomp w' x' z' g' g)
 spfcHcomp {w} {w'} {x} {x'} {z} {z'} f f' g g' beta alpha =
-  spfcWhiskerL
+  spfcHwhiskerL
     f
     (SPFDcomp w' x' z' g' g)
-    (spfcWhiskerR f g alpha g')
+    (spfcHwhiskerR f g alpha g')
     f'
