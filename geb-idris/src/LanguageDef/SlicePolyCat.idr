@@ -1769,13 +1769,15 @@ SPFcell : {w, w', z, z' : Type} ->
   (f : SPFData w z) -> (g : SPFData w' z') ->
   Type
 SPFcell {w} {w'} {z} {z'} bcl bcr f g =
-  SPFnt {dom=w'} {cod=z} (spfPushoutDir bcl f) (spfPullbackPos bcr g)
+  SPFnt {dom=w'} {cod=z'} (spfPushout bcl bcr f) g
 
 public export
 spfcId : {w, z : Type} -> (f : SPFData w z) ->
   SPFcell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f f
 spfcId {w} {z} f =
-  SPFDm (SliceId z $ spfdPos f) (\ez, ep, ew, efd => (ew ** (Refl, efd)))
+  SPFDm
+    (\ez, ep => replace {p=(spfdPos f)} (fst $ snd ep) $ snd $ snd ep)
+    (\ez, ep, ew, efd => (ew ** (Refl, rewrite fst (snd ep) in efd)))
 
 public export
 spfcVcomp : {w, w', w'', z, z', z'' : Type} ->
@@ -1788,11 +1790,24 @@ spfcVcomp : {w, w', w'', z, z', z'' : Type} ->
 spfcVcomp {w} {w'} {w''} {z} {z'} {z''} {bcl} {bcl'} {bcr} {bcr'} {f} {g} {h}
   beta alpha =
     SPFDm
-      (sliceComp {a=z} (\ez => spOnPos beta (bcr ez)) (spOnPos alpha))
-      (\ez, ep, ew'', ehd =>
-        case spOnDir beta (bcr ez) (spOnPos alpha ez ep) ew'' ehd of
-          (ew' ** (eweq', egd)) => case spOnDir alpha ez ep ew' egd of
-            (ew ** (eweq, efd)) => (ew ** (trans (cong bcl' eweq) eweq', efd)))
+      (\ez'', ep =>
+        spOnPos beta ez''
+          (bcr (fst ep) **
+           (fst (snd ep),
+            spOnPos alpha (bcr $ fst ep) (fst ep ** (Refl, snd $ snd ep)))))
+      (\ez'', ep, ew'', epdm =>
+        let
+          (ew' ** (eweq', egd)) = spOnDir beta ez''
+            (bcr (fst ep) **
+             (fst (snd ep),
+              spOnPos alpha (bcr $ fst ep) (fst ep ** (Refl, snd $ snd ep))))
+             ew''
+             epdm
+          (ew ** (eweq, efd)) =
+            spOnDir alpha (bcr $ fst ep)
+              (fst ep ** (Refl, snd $ snd ep)) ew' egd
+        in
+        (ew ** (trans (cong bcl' $ eweq) eweq', efd)))
 
 public export
 spfcHcomp : {w, w', x, x', z, z' : Type} ->
@@ -1808,4 +1823,6 @@ spfcHcomp : {w, w', x, x', z, z' : Type} ->
     (SPFDcomp w' x' z' g' g)
 spfcHcomp {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
   beta alpha =
-    ?spfcHcomp_hole
+    SPFDm
+      ?spfcHcomp_onpos
+      ?spfcHcomp_ondir
