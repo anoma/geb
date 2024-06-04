@@ -1769,13 +1769,13 @@ SPFcell : {w, w', z, z' : Type} ->
   (f : SPFData w z) -> (g : SPFData w' z') ->
   Type
 SPFcell {w} {w'} {z} {z'} bcl bcr f g =
-  SPFnt {dom=w} {cod=z} f (spfPullback {w} {x=w'} {y=z'} {z} bcl bcr g)
+  SPFnt {dom=w'} {cod=z} (spfPushoutDir bcl f) (spfPullbackPos bcr g)
 
 public export
 spfcId : {w, z : Type} -> (f : SPFData w z) ->
   SPFcell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f f
 spfcId {w} {z} f =
-  SPFDm (SliceId z $ spfdPos f) (\ec, ep => SliceId w $ spfdDir f ec ep)
+  SPFDm (SliceId z $ spfdPos f) (\ez, ep, ew, efd => (ew ** (Refl, efd)))
 
 public export
 spfcVcomp : {w, w', w'', z, z', z'' : Type} ->
@@ -1789,9 +1789,10 @@ spfcVcomp {w} {w'} {w''} {z} {z'} {z''} {bcl} {bcl'} {bcr} {bcr'} {f} {g} {h}
   beta alpha =
     SPFDm
       (sliceComp {a=z} (\ez => spOnPos beta (bcr ez)) (spOnPos alpha))
-      (\ez, ep, ew, ehd =>
-        spOnDir alpha ez ep ew
-        $ spOnDir beta (bcr ez) (spOnPos alpha ez ep) (bcl ew) ehd)
+      (\ez, ep, ew'', ehd =>
+        case spOnDir beta (bcr ez) (spOnPos alpha ez ep) ew'' ehd of
+          (ew' ** (eweq', egd)) => case spOnDir alpha ez ep ew' egd of
+            (ew ** (eweq, efd)) => (ew ** (trans (cong bcl' eweq) eweq', efd)))
 
 public export
 spfcHcomp : {w, w', x, x', z, z' : Type} ->
