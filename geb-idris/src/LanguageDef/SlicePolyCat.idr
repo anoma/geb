@@ -1675,7 +1675,8 @@ SPFcell {w} {w'} {z} {z'} bcl bcr f g =
 public export
 spfcId : {w, z : Type} -> (f : SPFData w z) ->
   SPFcell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f f
-spfcId {w} {z} f = ?spfcId_hole
+spfcId {w} {z} f =
+  SPFDm (SliceId z $ spfdPos f) (\ec, ep => SliceId w $ spfdDir f ec ep)
 
 public export
 spfcVcomp : {w, w', w'', z, z', z'' : Type} ->
