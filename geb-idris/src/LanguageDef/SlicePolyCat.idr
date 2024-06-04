@@ -1655,3 +1655,20 @@ spfcId f =
     $ SPFDm
       (\ez, ep => (() ** \ez', eq => replace {p=(spfdPos f)} eq $ fst ep))
       $ \ez, ep, ew, ed => ((ew ** rewrite snd (fst ed) in snd ed) ** Refl)
+
+public export
+spfcVcomp : {w, w', w'', z, z', z'' : Type} ->
+  (f : SPFData w z) -> (g : SPFData w' z') -> (h : SPFData w'' z'') ->
+  SPFcell g h -> SPFcell f g -> SPFcell f h
+spfcVcomp {w} {w'} {w''} {z} {z'} {z''} f g h beta alpha =
+  ?spfcVcomp_hole
+
+public export
+spfcHcomp : {w, w', x, x', z, z' : Type} ->
+  (f : SPFData w x) -> (f' : SPFData x z) ->
+  (g : SPFData w' x') -> (g' : SPFData x' z') ->
+  SPFcell f' g' ->
+  SPFcell f g ->
+  SPFcell (SPFDcomp w x z f' f) (SPFDcomp w' x' z' g' g)
+spfcHcomp {w} {w'} {x} {x'} {z} {z'} f f' g g' beta alpha =
+  ?spfcHcomp_hole
