@@ -1810,6 +1810,27 @@ spfcVcomp {w} {w'} {w''} {z} {z'} {z''} {bcl} {bcl'} {bcr} {bcr'} {f} {g} {h}
         (ew ** (trans (cong bcl' $ eweq) eweq', efd)))
 
 public export
+spfcHcompPos : {w, w', x, x', z, z' : Type} ->
+  {bcw : w -> w'} -> {bcx : x -> x'} -> {bcz : z -> z'} ->
+  {f : SPFData w x} -> {f' : SPFData x z} ->
+  {g : SPFData w' x'} -> {g' : SPFData x' z'} ->
+  SPFcell {w=x} {w'=x'} {z} {z'} bcx bcz f' g' ->
+  SPFcell {w} {w'} {z=x} {z'=x'} bcw bcx f g ->
+  SPFntPos {dom=w'} {cod=z'}
+    (spfPushout bcw bcz $ SPFDcomp w x z f' f)
+    (SPFDcomp w' x' z' g' g)
+spfcHcompPos {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
+  beta alpha ez' epdm =
+    case epdm of
+      (ez ** (ezeq, (ep ** dm))) =>
+        (spOnPos beta ez' (ez ** (ezeq, ep)) **
+         \ex', egd' =>
+            spOnPos alpha ex'
+              $ dpMapSnd
+                (\ex => mapSnd $ dm ex)
+                $ spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd')
+
+public export
 spfcHcomp : {w, w', x, x', z, z' : Type} ->
   {bcw : w -> w'} -> {bcx : x -> x'} -> {bcz : z -> z'} ->
   {f : SPFData w x} -> {f' : SPFData x z} ->
@@ -1824,14 +1845,7 @@ spfcHcomp : {w, w', x, x', z, z' : Type} ->
 spfcHcomp {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
   beta alpha =
     SPFDm
-      (\ez', epdm => case epdm of
-        (ez ** (ezeq, (ep ** dm))) =>
-          (spOnPos beta ez' (ez ** (ezeq, ep)) **
-           \ex', egd' =>
-              spOnPos alpha ex'
-                $ dpMapSnd
-                  (\ex => mapSnd $ dm ex)
-                  $ spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd'))
+      (spfcHcompPos beta alpha)
       (\ez', (ez ** (ezeq, (ep ** dm))), ew', ((ex' ** egd') ** egd) =>
         case spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd' of
           (ex ** (exeq, efd')) => ?spfcHcomp_ondir)
