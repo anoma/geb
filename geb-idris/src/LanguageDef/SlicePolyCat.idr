@@ -1322,6 +1322,30 @@ InterpSPFfromComp {x} {y} {z} g f sx ez ei =
     \ey, egd => fst $ snd ei ey egd) **
    \ex, dd => snd (snd ei (fst $ fst dd) (snd $ fst dd)) ex $ snd dd)
 
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+---- Slice polynomial functor pullbacks along base-category morphisms ----
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+
+public export
+spfPullbackPos : {x, y, z : Type} ->
+  (z -> y) -> SPFData x y -> SPFData x z
+spfPullbackPos {x} {y} {z} mzy f =
+  SPFD (BaseChangeF mzy $ spfdPos f) (\ez => spfdDir f (mzy ez))
+
+public export
+spfPullbackDir : {w, x, y : Type} ->
+  (w -> x) -> SPFData x y -> SPFData w y
+spfPullbackDir {w} {x} {y} mwx f =
+  SPFD (spfdPos f) (\ez, ep => spfdDir f ez ep . mwx)
+
+public export
+spfPullback : {w, x, y, z : Type} ->
+  (w -> x) -> (z -> y) -> SPFData x y -> SPFData w z
+spfPullback {w} {x} {y} {z} mwx mzy =
+  spfPullbackDir {w} {x} {y=z} mwx . spfPullbackPos {x} {y} {z} mzy
+
 --------------------------------------------------
 -------------------------------------------------
 ---- Categories of slice polynomial functors ----
@@ -1639,14 +1663,6 @@ spfdDichange {s} {t} {a} {b} mas mtb =
 ---- Slice polynomial double-categorical structure (cells) ----
 ---------------------------------------------------------------
 ---------------------------------------------------------------
-
-public export
-spfPullback : {w, x, y, z : Type} ->
-  (w -> x) -> (z -> y) -> SPFData x y -> SPFData w z
-spfPullback {x} {y} {z} mwx mzy f =
-  SPFD
-    (BaseChangeF mzy $ spfdPos f)
-    (\ez, ep, ew => spfdDir f (mzy ez) ep (mwx ew))
 
 public export
 SPFcell : {w, w', z, z' : Type} ->
