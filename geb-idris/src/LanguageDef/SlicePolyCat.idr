@@ -1641,67 +1641,44 @@ spfdDichange {s} {t} {a} {b} mas mtb =
 ---------------------------------------------------------------
 
 public export
-record SPFcell {w, w', z, z' : Type} (f : SPFData w z) (g : SPFData w' z') where
-  constructor SPFC
-  spfcBCl : w -> w'
-  spfcBCr : z -> z'
-  spfcNT :
-    SPFnt {dom=w'} {cod=z} (spfdPrecompBC spfcBCl f) (spfdPostcompBC spfcBCr g)
+data SPFcell : {w, w', z, z' : Type} ->
+    (bcl : w -> w') -> (bcr : z -> z') ->
+    (f : SPFData w z) -> (g : SPFData w' z') ->
+    Type where
+  SPFC : {w, w', z, z' : Type} ->
+    {bcl : w -> w'} -> {bcr : z -> z'} ->
+    {f : SPFData w z} -> {g : SPFData w' z'} ->
+    SPFcell {w} {w'} {z} {z'} bcl bcr f g
 
 public export
-spfcId : {w, z : Type} -> (f : SPFData w z) -> SPFcell {w} {w'=w} {z} {z'=z} f f
-spfcId f =
-  SPFC id id
-    $ SPFDm
-      (\ez, ep => (() ** \ez', eq => replace {p=(spfdPos f)} eq $ fst ep))
-      $ \ez, ep, ew, ed => ((ew ** rewrite snd (fst ed) in snd ed) ** Refl)
+spfcId : {w, z : Type} -> (f : SPFData w z) ->
+  SPFcell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f f
+spfcId {w} {z} f = ?spfcId_hole
 
 public export
 spfcVcomp : {w, w', w'', z, z', z'' : Type} ->
-  (f : SPFData w z) -> (g : SPFData w' z') -> (h : SPFData w'' z'') ->
-  SPFcell {w=w'} {w'=w''} {z=z'} {z'=z''} g h ->
-  SPFcell {w} {w'} {z} {z'} f g ->
-  SPFcell {w} {w'=w''} {z} {z'=z''} f h
-spfcVcomp {w} {w'} {w''} {z} {z'} {z''} f g h beta alpha =
-  SPFC
-    (spfcBCl beta . spfcBCl alpha)
-    (spfcBCr beta . spfcBCr alpha)
-  $ let ntb : SPFnt (spfdPrecompBC (spfcBCl beta) g) (spfdPostcompBC (spfcBCr beta) h) = spfcNT {f=g} {g=h} beta in
-    let nta : SPFnt (spfdPrecompBC (spfcBCl alpha) f) (spfdPostcompBC (spfcBCr alpha) g) = spfcNT {f} {g} alpha in
-    let ntc : SPFnt (spfdPrecompBC (spfcBCl beta . spfcBCl alpha) f) (spfdPostcompBC (spfcBCr beta . spfcBCr alpha) h) =
-      ?ntc_hole in
-    ntc
-
-public export
-spfcHwhiskerL : {w, w', x, x', z : Type} ->
-  (g : SPFData w x) -> (h : SPFData w' x') ->
-  SPFcell {w} {w'} {z=x} {z'=x'} g h ->
-  (f : SPFData x z) ->
-  SPFcell {w} {w'} {z} {z'=x'} (SPFDcomp w x z f g) h
-spfcHwhiskerL {w} {w'} {x} {x'} {z} g h beta f =
-  ?spfcHwhiskerL_hole
-
-public export
-spfcHwhiskerR : {w, w', x, x', z' : Type} ->
-  (f : SPFData w x) -> (g : SPFData w' x') ->
-  SPFcell {w} {w'} {z=x} {z'=x'} f g ->
-  (h : SPFData x' z') ->
-  SPFcell {w} {w'} {z=x} {z'} f (SPFDcomp w' x' z' h g)
-spfcHwhiskerR {w} {w'} {x} {x'} {z'} f g beta h =
-  ?spfcHwhiskerR_hole
+  {bcl : w -> w'} -> {bcl' : w' -> w''} ->
+  {bcr : z -> z'} -> {bcr' : z' -> z''} ->
+  {f : SPFData w z} -> {g : SPFData w' z'} -> {h : SPFData w'' z''} ->
+  SPFcell {w=w'} {w'=w''} {z=z'} {z'=z''} bcl' bcr' g h ->
+  SPFcell {w} {w'} {z} {z'} bcl bcr f g ->
+  SPFcell {w} {w'=w''} {z} {z'=z''} (bcl' . bcl) (bcr' . bcr) f h
+spfcVcomp {w} {w'} {w''} {z} {z'} {z''} {bcl} {bcl'} {bcr} {bcr'} {f} {g} {h}
+  beta alpha =
+    ?spfcVcomp_hole
 
 public export
 spfcHcomp : {w, w', x, x', z, z' : Type} ->
-  (f : SPFData w x) -> (f' : SPFData x z) ->
-  (g : SPFData w' x') -> (g' : SPFData x' z') ->
-  SPFcell {w=x} {w'=x'} {z} {z'} f' g' ->
-  SPFcell {w} {w'} {z=x} {z'=x'} f g ->
+  {bcw : w -> w'} -> {bcx : x -> x'} -> {bcz : z -> z'} ->
+  {f : SPFData w x} -> {f' : SPFData x z} ->
+  {g : SPFData w' x'} -> {g' : SPFData x' z'} ->
+  SPFcell {w=x} {w'=x'} {z} {z'} bcx bcz f' g' ->
+  SPFcell {w} {w'} {z=x} {z'=x'} bcw bcx f g ->
   SPFcell {w} {w'} {z} {z'}
+    bcw
+    bcz
     (SPFDcomp w x z f' f)
     (SPFDcomp w' x' z' g' g)
-spfcHcomp {w} {w'} {x} {x'} {z} {z'} f f' g g' beta alpha =
-  spfcHwhiskerL
-    f
-    (SPFDcomp w' x' z' g' g)
-    (spfcHwhiskerR f g alpha g')
-    f'
+spfcHcomp {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
+  beta alpha =
+    ?spfcHcomp_hole
