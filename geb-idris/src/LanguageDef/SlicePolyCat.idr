@@ -1771,12 +1771,23 @@ SPFcell {w} {w'} {z} {z'} bcl bcr f g =
   SPFnt {dom=w'} {cod=z'} (spfPushout bcl bcr f) g
 
 public export
-spfcId : {w, z : Type} -> (f : SPFData w z) ->
+spfcVid : {w, z : Type} -> (f : SPFData w z) ->
   SPFcell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f f
-spfcId {w} {z} f =
+spfcVid {w} {z} f =
   SPFDm
     (\ez, ep => replace {p=(spfdPos f)} (fst $ snd ep) $ snd $ snd ep)
     (\ez, ep, ew, efd => (ew ** (Refl, rewrite fst (snd ep) in efd)))
+
+public export
+spfcHid : {w, w' : Type} -> (bcw : w -> w') ->
+  SPFcell {w} {w'} {z=w} {z'=w'} bcw bcw (SPFDid w) (SPFDid w')
+spfcHid {w} {w'} bcw =
+  SPFDm
+    (\_, _ => ())
+    (\ew', ep, ew'', ew'eq =>
+      (fst ep **
+       (trans (fst $ snd ep) ew'eq,
+        rewrite sym (unitUnique () (snd $ snd ep)) in Refl)))
 
 public export
 spfcVcomp : {w, w', w'', z, z', z'' : Type} ->
