@@ -136,4 +136,6 @@ SPFDLimitCounit : (a, b : Type) ->
   IntAdjCounitSig {c=(SliceObj b)} {d=(SPFData a b)}
     (SPFnt {dom=a} {cod=b}) (SPFDdiagF a b) (SPFDLimit {a} {b})
 SPFDLimitCounit a b (SPFD pos dir) =
-  SPFDm (\eb, sa => ?SPFDLimitCounit_hole_onpos) ?SPFDLimitCounit_hole_ondir
+  SPFDm
+    (\eb, sa => fst $ sa $ \ea => Void)
+    (\eb, ep => snd $ ep $ \ea => Void)
