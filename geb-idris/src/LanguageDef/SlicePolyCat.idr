@@ -1897,8 +1897,8 @@ SPFDblCatCell : IntCellSig Type TypeMor SPFData
 SPFDblCatCell x0 x1 y0 y1 = SPFcell {w=x0} {w'=y0} {z=x1} {z'=y1}
 
 public export
-SPFDblCatId : IntCellIdSig InternalCat.typeId SPFDblCatCell
-SPFDblCatId x y = spfcVid {w=x} {z=y}
+SPFDblCatVId : IntCellVIdSig InternalCat.typeId SPFDblCatCell
+SPFDblCatVId x y = spfcVid {w=x} {z=y}
 
 public export
 SPFDblCatVcomp : IntCellVCompSig InternalCat.typeComp SPFDblCatCell
@@ -1927,7 +1927,7 @@ SPFDoubleCat =
     TypeMICS
     SPFDfmics
     SPFDblCatCell
-    SPFDblCatId
+    SPFDblCatVId
     SPFDblCatVcomp
     SPFDblCatHcomp
     SPFDblCatCellTo2Mor
