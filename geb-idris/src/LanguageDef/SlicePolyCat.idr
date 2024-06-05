@@ -1536,6 +1536,22 @@ SPNThcomp {c} {d} {e} {f} {f'} {g} {g'} beta alpha =
     (SPNTwhiskerL {g} {h=g'} beta f')
     (SPNTwhiskerR {f} {g=f'} g alpha)
 
+public export
+SPFDwls : GlobalLeftWhiskerHomStruct SPFDfcat SPFDhs
+SPFDwls c d e f g h nu = SPNTwhiskerL {g} {h} nu f
+
+public export
+SPFDwrs : GlobalRightWhiskerHomStruct SPFDfcat SPFDhs
+SPFDwrs c d e h f g nu = SPNTwhiskerR {f} {g} h nu
+
+public export
+SPFDwps : GlobalWhiskerPairHomStruct SPFDfcat SPFDhs
+SPFDwps = MkGlobalWhiskerPairHomStruct SPFDfcat SPFDhs SPFDwls SPFDwrs
+
+public export
+SPFDhcs : GlobalHcompHomStruct SPFDfcat SPFDhs
+SPFDhcs = GlobalHcompFromWhiskers SPFDfcat SPFDhs SPFDwps
+
 -------------------------------------
 ---- Interpretation of whiskering ---
 -------------------------------------
