@@ -1437,15 +1437,13 @@ SPNTvcomp {dom} {cod} f g h beta alpha =
     (SPNTvcompDir f g h beta alpha)
 
 public export
+SPFDmics : (dom, cod : Type) -> MorIdCompSig (SPFData dom cod)
+SPFDmics dom cod =
+  MICS (SPFnt {dom} {cod}) $ ICS (SPNTid {dom} {cod}) (SPNTvcomp {dom} {cod})
+
+public export
 SPFDcat : Type -> Type -> IntCatSig
-SPFDcat dom cod =
-  ICat
-    (SPFData dom cod)
-  $ MICS
-    (SPFnt {dom} {cod})
-  $ ICS
-    (SPNTid {dom} {cod})
-    (SPNTvcomp {dom} {cod})
+SPFDcat dom cod = ICat (SPFData dom cod) (SPFDmics dom cod)
 
 --------------------------------------------------------------------
 ---- Interpretation of slice polynomial natural transformations ----
