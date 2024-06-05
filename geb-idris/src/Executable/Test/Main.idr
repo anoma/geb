@@ -17,6 +17,9 @@ import LanguageDef.Test.InternalHigherCatTest
 import LanguageDef.Test.InternalProfunctorTest
 import LanguageDef.Test.SlicePolyCatTest
 import LanguageDef.Test.SliceFuncCatTest
+import LanguageDef.Test.SlPolyImpredTest
+import LanguageDef.Test.SlPolyIntCatTest
+import LanguageDef.Test.SlicePolyUMorphTest
 import LanguageDef.Test.DisliceCatTest
 import LanguageDef.Test.MLBundleCatTest
 import LanguageDef.Test.DislicePolyCatTest
@@ -99,6 +102,9 @@ totalTests = do
   LanguageDef.Test.InternalHigherCatTest.internalHigherCatTest
   LanguageDef.Test.SlicePolyCatTest.slicePolyCatTest
   LanguageDef.Test.SliceFuncCatTest.sliceFuncCatTest
+  LanguageDef.Test.SlicePolyUMorphTest.slicePolyUMorphTest
+  LanguageDef.Test.SlPolyImpredTest.slPolyImpredTest
+  LanguageDef.Test.SlPolyIntCatTest.slPolyIntCatTest
   LanguageDef.Test.MLBundleCatTest.mlBundleCatTest
   LanguageDef.Test.IntTwistedArrowCatTest.intTwistedArrowCatTest
   LanguageDef.Test.IntUFamCatTest.intUFamCatTest

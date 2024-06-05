@@ -12,6 +12,7 @@ import LanguageDef.FinCat
 import LanguageDef.InternalCat
 import LanguageDef.SlicePolyCat
 import LanguageDef.QType
+import LanguageDef.MLBundleCat
 
 %default total
 

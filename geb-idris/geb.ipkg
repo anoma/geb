@@ -29,6 +29,9 @@ modules =
     , LanguageDef.MLBundleCat
     , LanguageDef.SlicePolyCat
     , LanguageDef.SliceFuncCat
+    , LanguageDef.SlPolyIntCat
+    , LanguageDef.SlPolyImpred
+    , LanguageDef.SlicePolyUMorph
     , LanguageDef.DisliceCat
     , LanguageDef.DislicePolyCat
     , LanguageDef.Quiver
@@ -76,6 +79,9 @@ modules =
     , LanguageDef.Test.MLBundleCatTest
     , LanguageDef.Test.SlicePolyCatTest
     , LanguageDef.Test.SliceFuncCatTest
+    , LanguageDef.Test.SlPolyIntCatTest
+    , LanguageDef.Test.SlPolyImpredTest
+    , LanguageDef.Test.SlicePolyUMorphTest
     , LanguageDef.Test.DisliceCatTest
     , LanguageDef.Test.QuiverTest
     , LanguageDef.Test.MLQuivCatTest
