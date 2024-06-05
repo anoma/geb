@@ -53,3 +53,21 @@ spfdDiagFmap {a} {b} sb sb' m = SPFDm m (\_, _, _, v => void v)
 public export
 SPFDdiagFSig : (a, b : Type) -> IntFunctorSig (SliceCat b) (SPFDcat a b)
 SPFDdiagFSig a b = IFunctor (SPFDdiagF a b) (spfdDiagFmap {a} {b})
+
+public export
+SPFDColimit : {a, b : Type} -> SPFData a b -> SliceObj b
+SPFDColimit {a} {b} = SliceFColimit {a} {b} . InterpSPFData {dom=a} {cod=b}
+
+public export
+spfdColimitMap : {a, b : Type} -> (f, g : SPFData a b) ->
+  SPFnt {dom=a} {cod=b} f g ->
+  SliceMorphism {a=b} (SPFDColimit f) (SPFDColimit g)
+spfdColimitMap {a} {b} f g alpha =
+  sliceFColimitMap {a} {b}
+    (InterpSPFData f)
+    (InterpSPFData g)
+    (InterpSPFnt f g alpha)
+
+public export
+SPFDColimitFSig : (a, b : Type) -> IntFunctorSig (SPFDcat a b) (SliceCat b)
+SPFDColimitFSig a b = IFunctor (SPFDColimit {a} {b}) (spfdColimitMap {a} {b})
