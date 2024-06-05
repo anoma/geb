@@ -1552,6 +1552,10 @@ public export
 SPFDhcs : GlobalHcompHomStruct SPFDfcat SPFDhs
 SPFDhcs = GlobalHcompFromWhiskers SPFDfcat SPFDhs SPFDwps
 
+public export
+SPFD2cat : Int2CatSig
+SPFD2cat = I2Cat SPFDfcat $ I2CS SPFDhs SPFDwls SPFDwrs
+
 -------------------------------------
 ---- Interpretation of whiskering ---
 -------------------------------------
