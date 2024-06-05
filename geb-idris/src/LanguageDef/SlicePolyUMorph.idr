@@ -71,3 +71,21 @@ spfdColimitMap {a} {b} f g alpha =
 public export
 SPFDColimitFSig : (a, b : Type) -> IntFunctorSig (SPFDcat a b) (SliceCat b)
 SPFDColimitFSig a b = IFunctor (SPFDColimit {a} {b}) (spfdColimitMap {a} {b})
+
+public export
+SPFDLimit : {a, b : Type} -> SPFData a b -> SliceObj b
+SPFDLimit {a} {b} = SliceFLimit {a} {b} . InterpSPFData {dom=a} {cod=b}
+
+public export
+spfdLimitMap : {a, b : Type} -> (f, g : SPFData a b) ->
+  SPFnt {dom=a} {cod=b} f g ->
+  SliceMorphism {a=b} (SPFDLimit f) (SPFDLimit g)
+spfdLimitMap {a} {b} f g alpha =
+  sliceFLimitMap {a} {b}
+    (InterpSPFData f)
+    (InterpSPFData g)
+    (InterpSPFnt f g alpha)
+
+public export
+SPFDLimitFSig : (a, b : Type) -> IntFunctorSig (SPFDcat a b) (SliceCat b)
+SPFDLimitFSig a b = IFunctor (SPFDLimit {a} {b}) (spfdLimitMap {a} {b})
