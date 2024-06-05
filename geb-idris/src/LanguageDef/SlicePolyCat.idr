@@ -1820,15 +1820,13 @@ spfcHcompPos : {w, w', x, x', z, z' : Type} ->
     (spfPushout bcw bcz $ SPFDcomp w x z f' f)
     (SPFDcomp w' x' z' g' g)
 spfcHcompPos {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
-  beta alpha ez' epdm =
-    case epdm of
-      (ez ** (ezeq, (ep ** dm))) =>
-        (spOnPos beta ez' (ez ** (ezeq, ep)) **
-         \ex', egd' =>
-            spOnPos alpha ex'
-              $ dpMapSnd
-                (\ex => mapSnd $ dm ex)
-                $ spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd')
+  beta alpha ez' (ez ** (ezeq, (ep ** dm))) =
+    (spOnPos beta ez' (ez ** (ezeq, ep)) **
+     \ex', egd' =>
+        spOnPos alpha ex'
+          $ dpMapSnd
+            (\ex => mapSnd $ dm ex)
+            $ spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd')
 
 public export
 spfcHcompDir : {w, w', x, x', z, z' : Type} ->
@@ -1842,8 +1840,14 @@ spfcHcompDir : {w, w', x, x', z, z' : Type} ->
     (SPFDcomp w' x' z' g' g)
     (spfcHcompPos {bcw} {bcx} {bcz} {f} {f'} {g} {g'} beta alpha)
 spfcHcompDir {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
-  beta alpha ez' (ez ** (ezeq, (ep ** dm))) ew' ((ex' ** egd') ** egd) =
-    ?spfcHcompDir_hole
+    beta alpha ez' (ez ** (ezeq, (ep ** dm))) ew' ((ex' ** egd') ** egd)
+    with (spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd') proof direq
+  spfcHcompDir {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
+      beta alpha ez' (ez ** (ezeq, (ep ** dm))) ew' ((ex' ** egd') ** egd)
+        | (ex ** (exeq, efd')) =
+          dpMapSnd
+            (\ew => mapSnd $ \efd => ((ex ** efd') ** efd))
+            $ spOnDir alpha ex' (ex ** (exeq, dm ex efd')) ew' egd
 
 public export
 spfcHcomp : {w, w', x, x', z, z' : Type} ->
