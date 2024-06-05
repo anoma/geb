@@ -109,3 +109,18 @@ public export
 SPFDLimitComonad : (a, b : Type) -> SPFData a b -> SPFData a b
 SPFDLimitComonad a b = IntAdjComonad {c=(SliceObj b)} {d=(SPFData a b)}
   (SPFDdiagF a b) (SPFDLimit {a} {b})
+
+public export
+SPFDColimitUnit : (a, b : Type) ->
+  IntAdjUnitSig {c=(SPFData a b)} {d=(SliceObj b)}
+    (SPFnt {dom=a} {cod=b}) (SPFDColimit {a} {b}) (SPFDdiagF a b)
+SPFDColimitUnit a b f =
+  SPFDm
+    (\eb, ep => (spfdDir f eb ep ** ep ** \ea, efd => efd))
+    (\_, _, _, v => void v)
+
+public export
+SPFDColimitCounit : (a, b : Type) ->
+  IntAdjCounitSig {c=(SPFData a b)} {d=(SliceObj b)}
+    (SliceMor b) (SPFDColimit {a} {b}) (SPFDdiagF a b)
+SPFDColimitCounit a b x eb ex = DPair.fst $ DPair.snd ex
