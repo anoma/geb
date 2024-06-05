@@ -47,13 +47,9 @@ SPFDdiagFromSDF {a} {b} sb sa eb esb = (esb ** \_, v => void v)
 
 public export
 spfdDiagFmap : {a, b : Type} ->
-  IntFMapSig
-    (icMor $ SliceCat b)
-    (icMor $ SPFDcat a b)
-    (SPFDdiagF a b)
+  IntFMapSig (SliceMor b) (SPFnt {dom=a} {cod=b}) (SPFDdiagF a b)
 spfdDiagFmap {a} {b} sb sb' m = SPFDm m (\_, _, _, v => void v)
 
 public export
-SPFDdiagFSig : (a, b : Type) ->
-  icObj (IntFunctorCatSig (SliceCat b) (SPFDcat a b))
+SPFDdiagFSig : (a, b : Type) -> IntFunctorSig (SliceCat b) (SPFDcat a b)
 SPFDdiagFSig a b = IFunctor (SPFDdiagF a b) (spfdDiagFmap {a} {b})
