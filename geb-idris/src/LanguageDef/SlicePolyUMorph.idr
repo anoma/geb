@@ -124,3 +124,16 @@ SPFDColimitCounit : (a, b : Type) ->
   IntAdjCounitSig {c=(SPFData a b)} {d=(SliceObj b)}
     (SliceMor b) (SPFDColimit {a} {b}) (SPFDdiagF a b)
 SPFDColimitCounit a b x eb ex = DPair.fst $ DPair.snd ex
+
+public export
+SPFDLimitUnit : (a, b : Type) ->
+  IntAdjUnitSig {c=(SliceObj b)} {d=(SPFData a b)}
+    (SliceMor b) (SPFDdiagF a b) (SPFDLimit {a} {b})
+SPFDLimitUnit a b sb eb esb sa = (esb ** \_, v => void v)
+
+public export
+SPFDLimitCounit : (a, b : Type) ->
+  IntAdjCounitSig {c=(SliceObj b)} {d=(SPFData a b)}
+    (SPFnt {dom=a} {cod=b}) (SPFDdiagF a b) (SPFDLimit {a} {b})
+SPFDLimitCounit a b (SPFD pos dir) =
+  SPFDm (\eb, sa => ?SPFDLimitCounit_hole_onpos) ?SPFDLimitCounit_hole_ondir
