@@ -1891,3 +1891,43 @@ spfcHcomp {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
     SPFDm
       (spfcHcompPos beta alpha)
       (spfcHcompDir beta alpha)
+
+public export
+SPFDblCatCell : IntCellSig Type TypeMor SPFData
+SPFDblCatCell x0 x1 y0 y1 = SPFcell {w=x0} {w'=y0} {z=x1} {z'=y1}
+
+public export
+SPFDblCatId : IntCellIdSig InternalCat.typeId SPFDblCatCell
+SPFDblCatId x y = spfcVid {w=x} {z=y}
+
+public export
+SPFDblCatVcomp : IntCellVCompSig InternalCat.typeComp SPFDblCatCell
+SPFDblCatVcomp vmxy0 vmxy1 vmyz0 vmyz1 hmx hmy hmz =
+  spfcVcomp
+    {bcl=vmxy0} {bcl'=vmyz0} {bcr=vmxy1} {bcr'=vmyz1}
+    {f=hmx} {g=hmy} {h=hmz}
+
+public export
+SPFDblCatHcomp : IntCellHCompSig SPFDcomp SPFDblCatCell
+SPFDblCatHcomp vmxy0 vmxy1 vmxy2 hmx01 hmx12 hmy01 hmy12 =
+  spfcHcomp
+    {bcw=vmxy0} {bcx=vmxy1} {bcz=vmxy2}
+    {f=hmx01} {f'=hmx12} {g=hmy01} {g'=hmy12}
+
+public export
+SPFDblCatCellTo2Mor :
+  IntCellTo2MorSig InternalCat.typeComp SPFDblCatCell InternalCat.typeId
+SPFDblCatCellTo2Mor x y f g = Prelude.id
+
+public export
+SPFDoubleCat : IntDblCatSig
+SPFDoubleCat =
+  IDCat
+    Type
+    TypeMICS
+    SPFDfmics
+    SPFDblCatCell
+    SPFDblCatId
+    SPFDblCatVcomp
+    SPFDblCatHcomp
+    SPFDblCatCellTo2Mor
