@@ -1274,15 +1274,12 @@ SPFDcomp x y z g f =
   SPFD (SPFDcompPos {x} {y} {z} g f) (SPFDcompDir {x} {y} {z} g f)
 
 public export
+SPFDfmics : MorIdCompSig Type
+SPFDfmics = MICS SPFData $ ICS SPFDid SPFDcomp
+
+public export
 SPFDfcat : IntCatSig
-SPFDfcat =
-  ICat
-    Type
-  $ MICS
-    SPFData
-  $ ICS
-    SPFDid
-    SPFDcomp
+SPFDfcat = ICat Type SPFDfmics
 
 ----------------------------------------------------
 ---- Interpretation of identity and composition ----
