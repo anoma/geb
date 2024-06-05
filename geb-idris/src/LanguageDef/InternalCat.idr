@@ -905,15 +905,12 @@ typeComp : IntCompSig TypeObj TypeMor
 typeComp _ _ _ = (.)
 
 public export
+TypeMICS : MorIdCompSig TypeObj
+TypeMICS = MICS TypeMor $ ICS typeId typeComp
+
+public export
 TypeCat : IntCatSig
-TypeCat =
-  ICat
-    TypeObj
-  $ MICS
-    TypeMor
-  $ ICS
-    typeId
-    typeComp
+TypeCat = ICat TypeObj TypeMICS
 
 ------------------------------------------------
 ---- Opposite of metalanguage base category ----
