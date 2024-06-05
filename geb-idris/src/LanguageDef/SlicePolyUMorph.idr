@@ -139,3 +139,62 @@ SPFDLimitCounit a b (SPFD pos dir) =
   SPFDm
     (\eb, sa => fst $ sa $ \ea => Void)
     (\eb, ep => snd $ ep $ \ea => Void)
+
+public export
+SPFDColimitAdjoints : (a, b : Type) ->
+  IntAdjointsSig (SliceCat b) (SPFDcat a b)
+SPFDColimitAdjoints a b =
+  IAdjoints (SPFDColimitFSig a b) (SPFDdiagFSig a b)
+
+public export
+SPFDLimitAdjoints : (a, b : Type) ->
+  IntAdjointsSig (SPFDcat a b) (SliceCat b)
+SPFDLimitAdjoints a b =
+  IAdjoints (SPFDdiagFSig a b) (SPFDLimitFSig a b)
+
+public export
+SPFDColimitUnits : (a, b : Type) ->
+  IntUnitsSig (SPFDColimitAdjoints a b)
+SPFDColimitUnits a b = IUnits (SPFDColimitUnit a b) (SPFDColimitCounit a b)
+
+public export
+SPFDLimitUnits : (a, b : Type) ->
+  IntUnitsSig (SPFDLimitAdjoints a b)
+SPFDLimitUnits a b = IUnits (SPFDLimitUnit a b) (SPFDLimitCounit a b)
+
+public export
+SPFDColimitAdj : (a, b : Type) ->
+  IntAdjunctionSig (SliceCat b) (SPFDcat a b)
+SPFDColimitAdj a b =
+  IntAdjunctionFromUnits (SPFDColimitAdjoints a b) (SPFDColimitUnits a b)
+
+public export
+SPFDLimitAdj : (a, b : Type) ->
+  IntAdjunctionSig (SPFDcat a b) (SliceCat b)
+SPFDLimitAdj a b =
+  IntAdjunctionFromUnits (SPFDLimitAdjoints a b) (SPFDLimitUnits a b)
+
+public export
+SPFDLimitColimitTripleAdjoints : (a, b : Type) ->
+  IntTripleAdjointsSig (SPFDcat a b) (SliceCat b)
+SPFDLimitColimitTripleAdjoints a b =
+  ITripleAdjoints
+    (SPFDColimitFSig a b)
+    (SPFDdiagFSig a b)
+    (SPFDLimitFSig a b)
+
+public export
+SPFDLimitTripleUnitsSig : (a, b : Type) ->
+  ITAUnitsSig (SPFDLimitColimitTripleAdjoints a b)
+SPFDLimitTripleUnitsSig a b =
+  ITUnits
+    (SPFDColimitUnits a b)
+    (SPFDLimitUnits a b)
+
+public export
+SPFDLimitTripleAdjunctionSig : (a, b : Type) ->
+  ITASig (SPFDcat a b) (SliceCat b)
+SPFDLimitTripleAdjunctionSig a b =
+  ITAFromUnits
+    (SPFDLimitColimitTripleAdjoints a b)
+    (SPFDLimitTripleUnitsSig a b)
