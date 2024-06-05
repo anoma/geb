@@ -89,3 +89,23 @@ spfdLimitMap {a} {b} f g alpha =
 public export
 SPFDLimitFSig : (a, b : Type) -> IntFunctorSig (SPFDcat a b) (SliceCat b)
 SPFDLimitFSig a b = IFunctor (SPFDLimit {a} {b}) (spfdLimitMap {a} {b})
+
+public export
+SPFDColimitMonad : (a, b : Type) -> SPFData a b -> SPFData a b
+SPFDColimitMonad a b = IntAdjMonad {c=(SPFData a b)} {d=(SliceObj b)}
+  (SPFDColimit {a} {b}) (SPFDdiagF a b)
+
+public export
+SPFDColimitComonad : (a, b : Type) -> SliceEndofunctor b
+SPFDColimitComonad a b = IntAdjComonad {c=(SPFData a b)} {d=(SliceObj b)}
+  (SPFDColimit {a} {b}) (SPFDdiagF a b)
+
+public export
+SPFDLimitMonad : (a, b : Type) -> SliceEndofunctor b
+SPFDLimitMonad a b = IntAdjMonad {c=(SliceObj b)} {d=(SPFData a b)}
+  (SPFDdiagF a b) (SPFDLimit {a} {b})
+
+public export
+SPFDLimitComonad : (a, b : Type) -> SPFData a b -> SPFData a b
+SPFDLimitComonad a b = IntAdjComonad {c=(SliceObj b)} {d=(SPFData a b)}
+  (SPFDdiagF a b) (SPFDLimit {a} {b})
