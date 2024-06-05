@@ -10,7 +10,6 @@ import public LanguageDef.IntUFamCat
 import public LanguageDef.IntUCofamCat
 import public LanguageDef.IntEFamCat
 import public LanguageDef.IntECofamCat
-import public LanguageDef.MLBundleCat
 
 -- In favor of the (identical) one from `SliceFuncCat`.
 %hide Library.IdrisCategories.BaseChangeF
