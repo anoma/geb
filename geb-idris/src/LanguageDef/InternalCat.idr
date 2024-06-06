@@ -984,7 +984,7 @@ SliceMor c x y = (ec : c) -> x ec -> y ec
 
 public export
 SliceId : (c : Type) -> IntIdSig (SliceObj c) (SliceMor c)
-SliceId _ _ _ = id
+SliceId = \_, _, _ => id
 
 public export
 SliceComp : (c : Type) -> IntCompSig (SliceObj c) (SliceMor c)

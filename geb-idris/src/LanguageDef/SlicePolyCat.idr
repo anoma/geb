@@ -374,6 +374,14 @@ InterpSPFDataMap : {dom, cod : Type} ->
 InterpSPFDataMap = SPFDmultiRmap
 
 public export
+InterpSPFDataMapId : FunExt -> {dom, cod : Type} ->
+  (spfd : SPFData dom cod) -> (x : SliceObj dom) ->
+    (InterpSPFDataMap {dom} {cod} spfd x x $ SliceId dom x) =
+    (SliceId cod $ InterpSPFData {dom} {cod} spfd x)
+InterpSPFDataMapId fext {dom} {cod} spfd x =
+  funExt $ \ec => funExt $ \(ep ** dm) => dpEq12 Refl $ funExt $ \ed => Refl
+
+public export
 SPFDmultiRflip : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   (ec : cod) -> SliceObj dom -> Type
 SPFDmultiRflip {dom} {cod} spfd ec sd =
@@ -1947,10 +1955,27 @@ SPFelemCatObj : {dom, cod : Type} -> SliceObj (SPFData dom cod)
 SPFelemCatObj {dom} {cod} = Sigma {a=(SliceObj dom)} . SPFelem {dom} {cod}
 
 public export
-data SPFelemCatMor : {dom, cod : Type} ->
-    (f : SPFData dom cod) -> IntMorSig (SPFelemCatObj {dom} {cod} f) where
-  SPelM : {dom, cod : Type} -> {f : SPFData dom cod} -> {x, y : SliceObj dom} ->
-    (el : SPFelem {dom} {cod} f x) -> (m : SliceMorphism {a=dom} x y) ->
-    SPFelemCatMor {dom} {cod} f
-      (x ** el)
-      (y ** \ec => InterpSPFDataMap f x y m ec (el ec))
+record SPFelemCatMor {dom, cod : Type}
+    (f : SPFData dom cod) (elx, ely : SPFelemCatObj {dom} {cod} f) where
+  constructor SPelM
+  spelM : SliceMorphism {a=dom} (fst elx) (fst ely)
+  spelEq : FunExt ->
+    (snd ely) =
+    (\ec => InterpSPFDataMap f (fst elx) (fst ely) spelM ec (DPair.snd elx ec))
+
+public export
+SPelMc : {dom, cod : Type} -> {f : SPFData dom cod} -> {x, y : SliceObj dom} ->
+  (el : SPFelem {dom} {cod} f x) -> (m : SliceMorphism {a=dom} x y) ->
+  SPFelemCatMor {dom} {cod}
+    f (x ** el) (y ** \ec => InterpSPFDataMap f x y m ec (el ec))
+SPelMc {dom} {cod} {f} {x} {y} el m = SPelM m $ \fext => funExt $ \ec => Refl
+
+public export
+SPFelemCatId : {dom, cod : Type} -> (f : SPFData dom cod) ->
+  IntIdSig (SPFelemCatObj {dom} {cod} f) (SPFelemCatMor {dom} {cod} f)
+SPFelemCatId {dom} {cod} f el =
+  case el of
+    (x ** e) =>
+      SPelM (SliceId dom x) $ \fext =>
+        funExt $ \ec => rewrite (dpEqPat {dp=(e ec)}) in
+          dpEq12 Refl $ funExt $ \ed => Refl
