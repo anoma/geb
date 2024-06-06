@@ -1909,6 +1909,10 @@ SPFDblCatVId : IntCellVIdSig InternalCat.typeId SPFDblCatCell
 SPFDblCatVId x y = spfcVid {w=x} {z=y}
 
 public export
+SPFDblCatHId : IntCellHIdSig SPFDid SPFDblCatCell
+SPFDblCatHId x y = spfcHid {w=x} {w'=y}
+
+public export
 SPFDblCatVcomp : IntCellVCompSig InternalCat.typeComp SPFDblCatCell
 SPFDblCatVcomp vmxy0 vmxy1 vmyz0 vmyz1 hmx hmy hmz =
   spfcVcomp
@@ -1936,6 +1940,7 @@ SPFDoubleCat =
     SPFDfmics
     SPFDblCatCell
     SPFDblCatVId
+    SPFDblCatHId
     SPFDblCatVcomp
     SPFDblCatHcomp
     SPFDblCatCellTo2Mor
