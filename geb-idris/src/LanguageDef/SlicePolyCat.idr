@@ -1988,8 +1988,18 @@ SPFelemCatId {dom} {cod} f el =
 public export
 SPFelemCatComp : {dom, cod : Type} -> (f : SPFData dom cod) ->
   IntCompSig (SPFelemCatObj {dom} {cod} f) (SPFelemCatMor {dom} {cod} f)
-SPFelemCatComp {dom} {cod} f =
-  ?SPFelemCatComp_hole
+SPFelemCatComp {dom} {cod} f (sx ** elx) (sy ** ely) (sz ** elz)
+  (SPelM m' meq') (SPelM m meq) =
+    SPelM
+      (sliceComp {a=dom} m' m)
+      (\fext => funExt $ \ez => rewrite (dpEqPat {dp=(elz ez)}) in
+        dpEq12
+          (rewrite fcongdep {x=ez} (meq' fext) in
+           rewrite fcongdep {x=ez} (meq fext) in
+           Refl)
+          (rewrite fcongdep {x=ez} (meq' fext) in
+           rewrite fcongdep {x=ez} (meq fext) in
+           funExt $ \ed => Refl))
 
 public export
 SPFelemCatICS : {dom, cod : Type} -> (f : SPFData dom cod) ->
