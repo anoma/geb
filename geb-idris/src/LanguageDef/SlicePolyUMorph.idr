@@ -15,12 +15,19 @@ import public LanguageDef.SlicePolyCat
 -- slice polynomial functors with fixed domain and codomain, where
 -- the universal morphisms are natural transformations.
 
--------------------------
----- Limits/colimits ----
--------------------------
+------------------------------------------------
+------------------------------------------------
+---- Limits/colimits of polynomial functors ----
+------------------------------------------------
+------------------------------------------------
 
 -- Limits and colimits are right and left adjoints respectively to
 -- diagonal functors, forming an adjoint triple.
+--
+-- The following are not limits and colimits within categories of
+-- polynomial functors.  Rather, they are limits and colimits within
+-- slice categories, but specifically of slice-polynomial _diagrams_
+-- (recall that diagrams are simply functors).
 
 public export
 SPFDdiagF : (a, b : Type) -> SliceObj b -> SPFData a b
