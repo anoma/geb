@@ -5,15 +5,21 @@ import Library.IdrisCategories
 import public LanguageDef.InternalCat
 import public LanguageDef.SlicePolyCat
 
---------------------------------------------------
---------------------------------------------------
----- Universal slice polynomial one-morphisms ----
---------------------------------------------------
---------------------------------------------------
+------------------------------------------------
+------------------------------------------------
+---- Universal slice polynomial 2-morphisms ----
+------------------------------------------------
+------------------------------------------------
 
--- Here we define universal objects in the individual categories of
--- slice polynomial functors with fixed domain and codomain, where
--- the universal morphisms are natural transformations.
+-- Here we define universal objects in the category of all slice
+-- polynomial functors, where the universal morphisms are
+-- 2-morphisms, also known as cells.
+--
+-- Note that a universal object in the category of slice polynomial
+-- functors between some fixed domain and codomain slice categories
+-- is a special case of a universal object in the category of all
+-- slice polynomial functors, where the vertical sides of the cell
+-- are both identities.
 
 ------------------------------------------------
 ------------------------------------------------
