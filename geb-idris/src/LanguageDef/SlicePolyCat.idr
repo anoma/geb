@@ -1979,3 +1979,23 @@ SPFelemCatId {dom} {cod} f el =
       SPelM (SliceId dom x) $ \fext =>
         funExt $ \ec => rewrite (dpEqPat {dp=(e ec)}) in
           dpEq12 Refl $ funExt $ \ed => Refl
+
+public export
+SPFelemCatComp : {dom, cod : Type} -> (f : SPFData dom cod) ->
+  IntCompSig (SPFelemCatObj {dom} {cod} f) (SPFelemCatMor {dom} {cod} f)
+SPFelemCatComp {dom} {cod} f =
+  ?SPFelemCatComp_hole
+
+public export
+SPFelemCatICS : {dom, cod : Type} -> (f : SPFData dom cod) ->
+  IdCompSig (SPFelemCatObj f) (SPFelemCatMor f)
+SPFelemCatICS f = ICS (SPFelemCatId f) (SPFelemCatComp f)
+
+public export
+SPFelemCatMICS : {dom, cod : Type} -> (f : SPFData dom cod) ->
+  MorIdCompSig (SPFelemCatObj f)
+SPFelemCatMICS f = MICS (SPFelemCatMor f) (SPFelemCatICS f)
+
+public export
+SPFelemCat : {dom, cod : Type} -> (f : SPFData dom cod) -> IntCatSig
+SPFelemCat f = ICat (SPFelemCatObj f) (SPFelemCatMICS f)
