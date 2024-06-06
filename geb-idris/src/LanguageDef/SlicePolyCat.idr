@@ -1931,3 +1931,26 @@ SPFDoubleCat =
     SPFDblCatVcomp
     SPFDblCatHcomp
     SPFDblCatCellTo2Mor
+
+---------------------------------------------
+---------------------------------------------
+---- Natural transformations as functors ----
+---------------------------------------------
+---------------------------------------------
+
+public export
+SPFelem : {dom, cod : Type} -> SPFData dom cod -> SliceObj dom -> Type
+SPFelem {dom} {cod} spfd = Pi {a=cod} . InterpSPFData spfd
+
+public export
+SPFelemCatObj : {dom, cod : Type} -> SliceObj (SPFData dom cod)
+SPFelemCatObj {dom} {cod} = Sigma {a=(SliceObj dom)} . SPFelem {dom} {cod}
+
+public export
+data SPFelemCatMor : {dom, cod : Type} ->
+    (f : SPFData dom cod) -> IntMorSig (SPFelemCatObj {dom} {cod} f) where
+  SPelM : {dom, cod : Type} -> {f : SPFData dom cod} -> {x, y : SliceObj dom} ->
+    (el : SPFelem {dom} {cod} f x) -> (m : SliceMorphism {a=dom} x y) ->
+    SPFelemCatMor {dom} {cod} f
+      (x ** el)
+      (y ** \ec => InterpSPFDataMap f x y m ec (el ec))
