@@ -2218,6 +2218,15 @@ IntCellVIdSig {obj} {vmor} {hmor} vid cell =
   (x, y : obj) -> (f : hmor x y) -> cell x y x y (vid x) (vid y) f f
 
 public export
+IntCellHIdSig : {obj : Type} ->
+  {vmor : IntMorSig obj} -> {hmor : IntMorSig obj} ->
+  (hid : IntIdSig obj hmor) ->
+  IntCellSig obj vmor hmor ->
+  Type
+IntCellHIdSig {obj} {vmor} {hmor} hid cell =
+  (x, y : obj) -> (f : vmor x y) -> cell x x y y f f (hid x) (hid y)
+
+public export
 IntCellToH2Id : {obj : Type} ->
   {vmor : IntMorSig obj} -> {hmor : IntMorSig obj} ->
   (vid : IntIdSig obj vmor) ->
@@ -2347,6 +2356,7 @@ record IntDblCatSig where
   idcHmics : MorIdCompSig idcObj
   idcCell : IntCellSig idcObj (micsMor idcVmics) (micsMor idcHmics)
   idcCvid : IntCellVIdSig (micsId idcVmics) idcCell
+  idcChid : IntCellHIdSig (micsId idcHmics) idcCell
   idcCvcomp : IntCellVCompSig (micsComp idcVmics) idcCell
   idcChcomp : IntCellHCompSig (micsComp idcHmics) idcCell
   idcC2m : IntCellTo2MorSig (micsComp idcVmics) idcCell (micsId idcVmics)
