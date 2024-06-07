@@ -1382,20 +1382,27 @@ spfPushout {w} {x} {y} {z} mxw myz =
 ---- Natural transformations as morphisms ----
 ----------------------------------------------
 
+-- A type together with an element of that type.
 public export
-SPFntCodPos : {cod : Type} -> cod -> (dom : Type) -> IntMorSig (SPFData dom cod)
-SPFntCodPos {cod} ec dom f g = spfdPos f ec -> spfdPos g ec
+TyEl : Type
+TyEl = Sigma {a=Type} Prelude.id
+
+public export
+SPFntCodPos : (tyel : TyEl) ->
+  (dom : Type) -> IntMorSig (SPFData dom $ fst tyel)
+SPFntCodPos tyel dom f g = spfdPos f (snd tyel) -> spfdPos g (snd tyel)
 
 public export
 SPFntCodDir : {cod : Type} -> (ec : cod) ->
-  (dom : Type) -> (f, g : SPFData dom cod) -> SPFntCodPos ec dom f g -> Type
+  (dom : Type) -> (f, g : SPFData dom cod) ->
+  SPFntCodPos (cod ** ec) dom f g -> Type
 SPFntCodDir {cod} ec dom f g onpos =
   (ep : spfdPos f ec) ->
   SliceMorphism {a=dom} (spfdDir g ec $ onpos ep) (spfdDir f ec ep)
 
 public export
 SPFntPos : {dom, cod : Type} -> IntMorSig (SPFData dom cod)
-SPFntPos {dom} {cod} f g = Pi {a=cod} $ \ec => SPFntCodPos {cod} ec dom f g
+SPFntPos {dom} {cod} f g = Pi {a=cod} $ \ec => SPFntCodPos (cod ** ec) dom f g
 
 public export
 SPFntDir : {dom, cod : Type} ->
