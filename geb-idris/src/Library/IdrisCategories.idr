@@ -211,12 +211,20 @@ public export
 Contravariant SliceObj where
   contramap = (|>)
 
+public export
+biapp : {0 a, b, c, d : Type} -> (b -> c -> d) -> (a -> b) -> (a -> c) -> a -> d
+biapp h f g x = h (f x) (g x)
+
+public export
+SliceHom : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
+SliceHom = biapp $ \x, y => x -> y
+
 -- If we view `a` as a discrete category, and slice objects of it as
 -- functors from `a` to `Type`, then this type can also be viewed as
 -- a natural transformation.
 public export
 SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
-SliceMorphism {a} s s' = (x : a) -> s x -> s' x
+SliceMorphism {a} s s' = (x : a) -> SliceHom {a} s s' x
 
 public export
 sliceId : {a : Type} -> (sl : SliceObj a) -> SliceMorphism {a} sl sl
@@ -596,14 +604,6 @@ SigmaToPair (x ** y) = (x, y)
 public export
 PairToSigma : {0 a, b : Type} -> (a, b) -> (Sigma {a} (const b))
 PairToSigma (x, y) = (x ** y)
-
-public export
-biapp : {0 a, b, c, d : Type} -> (b -> c -> d) -> (a -> b) -> (a -> c) -> a -> d
-biapp h f g x = h (f x) (g x)
-
-public export
-SliceHom : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
-SliceHom = biapp $ \x, y => x -> y
 
 public export
 SliceFunctorMap : {x, y : Type} -> (f : SliceFunctor x y) -> Type
