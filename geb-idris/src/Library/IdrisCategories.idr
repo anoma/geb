@@ -219,12 +219,32 @@ public export
 SliceHom : {0 a : Type} -> SliceObj a -> SliceObj a -> SliceObj a
 SliceHom = biapp $ \x, y => x -> y
 
+-- A special case of `DepProdF` where `b` is the terminal object and
+-- `f` is the unique morphism into it.  A slice object over the terminal
+-- object is isomorphic to its domain, so the slice category of a category
+-- over its terminal object is isomorphic to the category itself.
+-- That is, `SliceObj ()` is effectively just `Type`.
+--
+-- Note that another way of looking at this type is as a natural transformation
+-- from the polynomial endofunctor which represents the slice object to the
+-- identity endofunctor.
+public export
+Pi : {a : Type} -> SliceObj a -> Type
+Pi {a} p = (x : a) -> p x
+
+-- We can view this as the total space of a bundle represented by
+-- a slice object.  It is a special case of `DepCoprodF` where `b` is
+-- the terminal object and `f` is the unique morphism into it.
+public export
+Sigma : {a : Type} -> SliceObj a -> Type
+Sigma {a} p = (x : a ** p x)
+
 -- If we view `a` as a discrete category, and slice objects of it as
 -- functors from `a` to `Type`, then this type can also be viewed as
 -- a natural transformation.
 public export
 SliceMorphism : {a : Type} -> SliceObj a -> SliceObj a -> Type
-SliceMorphism {a} s s' = (x : a) -> SliceHom {a} s s' x
+SliceMorphism {a} s s' = Pi {a} $ SliceHom {a} s s'
 
 public export
 sliceId : {a : Type} -> (sl : SliceObj a) -> SliceMorphism {a} sl sl
@@ -572,26 +592,6 @@ WidePullback3 : {a, b, c : Type} -> {0 d : Type} ->
   (0 _ : a -> d) -> (0 _ : b -> d) -> (0 _ : c -> d) -> Type
 WidePullback3 {a} {b} {c} {d} f g h =
   WideEqualizer3 {a=(a, b, c)} {b=d} (f . fst) (g . fst . snd) (h . snd . snd)
-
--- A special case of `DepProdF` where `b` is the terminal object and
--- `f` is the unique morphism into it.  A slice object over the terminal
--- object is isomorphic to its domain, so the slice category of a category
--- over its terminal object is isomorphic to the category itself.
--- That is, `SliceObj ()` is effectively just `Type`.
---
--- Note that another way of looking at this type is as a natural transformation
--- from the polynomial endofunctor which represents the slice object to the
--- identity endofunctor.
-public export
-Pi : {a : Type} -> SliceObj a -> Type
-Pi {a} p = (x : a) -> p x
-
--- We can view this as the total space of a bundle represented by
--- a slice object.  It is a special case of `DepCoprodF` where `b` is
--- the terminal object and `f` is the unique morphism into it.
-public export
-Sigma : {a : Type} -> SliceObj a -> Type
-Sigma {a} p = (x : a ** p x)
 
 public export
 Slice2Obj : {a : Type} -> SliceObj a -> Type
