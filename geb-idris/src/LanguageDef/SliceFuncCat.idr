@@ -873,6 +873,20 @@ ssplMap {c} {e} d x y =
     (\eced => y $ fst $ snd $ eced)
   . bcMap x y
 
+-- Here we illustrate a corollary of the adjoint functor theorem:  the
+-- left adjoint (`SliceSigmaPiFL`) of a covariant representable
+-- (`SliceSigmaPiFR`) takes a family of `e` singletons to the existential
+-- family of `e` represented objects (which in this case are of type
+-- `SliceObj c`).  So `SliceCat e` is functioning as an enriching category
+-- here, and `SliceCat c` is functioning as the domain of an enriched
+-- copresheaf.
+public export
+ssplSingletonsToRepresented : {c, e : Type} -> (d : e -> SliceObj c) ->
+  SliceMorphism {a=c}
+    (SliceSigmaPiFL {c} {e} (uncurry $ flip d) (\ee => Unit))
+    (Sigma {a=e} . flip d)
+ssplSingletonsToRepresented {c} {e} d ec = DPair.fst
+
 -- This is the right adjoint of the composed
 -- dependent-sum/dependent-product adjunction, in category-theoretic style.
 public export
