@@ -3310,6 +3310,18 @@ IntAdjunctionFromAdjunctInputs {d} {c} inputs =
 ------------------------------------
 
 public export
+IntIdAdjunctionSigId : (c : IntCatSig) -> IntAdjunctionSig c c
+IntIdAdjunctionSigId c =
+  IntAdjunctionFromAdjunctInputs {d=c} {c} $
+    IAdjAIn
+      (IAdjoints
+        (IntFunctorSigId c)
+        (IntFunctorSigId c))
+      (IAdjuncts
+        (\a, b => id)
+        (\a, b => id))
+
+public export
 intAdjCompLeftAdjoint : {e, d, c : IntCatSig} ->
   IntAdjunctionSig d c -> IntAdjunctionSig e d -> icObj c -> icObj e
 intAdjCompLeftAdjoint {e} {d} {c} adc aed = iasLOmap aed . iasLOmap adc
@@ -3368,6 +3380,18 @@ intAdjunctionSigCompose {e} {d} {c} adc aed =
       (IAdjuncts
         (intAdjCompLeftAdjunct adc aed)
         (intAdjCompRightAdjunct adc aed))
+
+-- The two-category of adjunctions in the two-category `Cat`.
+public export
+IntAdjunctionCat : IntCatSig
+IntAdjunctionCat =
+  ICat
+    IntCatSig
+  $ MICS
+    IntAdjunctionSig
+  $ ICS
+    IntIdAdjunctionSigId
+    (\e, d, c => intAdjunctionSigCompose {e} {d} {c})
 
 ----------------------------
 ---- Triple adjunctions ----
