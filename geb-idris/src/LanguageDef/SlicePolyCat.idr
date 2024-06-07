@@ -1387,15 +1387,15 @@ SPFntCodPos : {cod : Type} -> cod -> (dom : Type) -> IntMorSig (SPFData dom cod)
 SPFntCodPos {cod} ec dom f g = spfdPos f ec -> spfdPos g ec
 
 public export
-SPFntPos : {dom, cod : Type} -> IntMorSig (SPFData dom cod)
-SPFntPos {dom} {cod} f g = Pi {a=cod} $ \ec => SPFntCodPos {cod} ec dom f g
-
-public export
 SPFntCodDir : {cod : Type} -> (ec : cod) ->
   (dom : Type) -> (f, g : SPFData dom cod) -> SPFntCodPos ec dom f g -> Type
 SPFntCodDir {cod} ec dom f g onpos =
   (ep : spfdPos f ec) ->
   SliceMorphism {a=dom} (spfdDir g ec $ onpos ep) (spfdDir f ec ep)
+
+public export
+SPFntPos : {dom, cod : Type} -> IntMorSig (SPFData dom cod)
+SPFntPos {dom} {cod} f g = Pi {a=cod} $ \ec => SPFntCodPos {cod} ec dom f g
 
 public export
 SPFntDir : {dom, cod : Type} ->
