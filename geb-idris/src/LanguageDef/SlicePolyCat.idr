@@ -1386,16 +1386,16 @@ spfPushout {w} {x} {y} {z} mxw myz =
 -- This is an object of the category of elements of the identity
 -- endofunctor on `Type`.
 public export
-TyEl : Type
-TyEl = Sigma {a=Type} Prelude.id
+TyElObj : Type
+TyElObj = Sigma {a=Type} Prelude.id
 
 public export
-SPFntCodPos : (tyel : TyEl) ->
+SPFntCodPos : (tyel : TyElObj) ->
   (dom : Type) -> IntMorSig (SPFData dom $ fst tyel)
 SPFntCodPos tyel dom f g = spfdPos f (snd tyel) -> spfdPos g (snd tyel)
 
 public export
-SPFntCodDir : (tyel : TyEl) ->
+SPFntCodDir : (tyel : TyElObj) ->
   (dom : Type) -> (f, g : SPFData dom $ fst tyel) ->
   SPFntCodPos tyel dom f g -> Type
 SPFntCodDir tyel dom f g onpos =
