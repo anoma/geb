@@ -1383,6 +1383,8 @@ spfPushout {w} {x} {y} {z} mxw myz =
 ----------------------------------------------
 
 -- A type together with an element of that type.
+-- This is an object of the category of elements of the identity
+-- endofunctor on `Type`.
 public export
 TyEl : Type
 TyEl = Sigma {a=Type} Prelude.id
