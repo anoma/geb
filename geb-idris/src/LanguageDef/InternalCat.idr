@@ -3667,3 +3667,14 @@ congNTRtoL {d} {c} dom cod ntr x =
       (iasROmap dom (iasLOmap cod x))
       (ntr (iasLOmap cod x))
       (iasUnit cod x)
+
+public export
+CongNTCat : IntCatSig -> IntCatSig -> IntCatSig
+CongNTCat d c =
+  ICat
+    (IntAdjunctionSig d c)
+  $ MICS
+    (CongNTSig {d} {c})
+  $ ICS
+    (congNTid {d} {c})
+    (congNTcomp {d} {c})
