@@ -791,7 +791,7 @@ public export
 pfDayConvArena : (m : Type -> Type -> Type) -> PolyFunc -> PolyFunc -> PolyFunc
 pfDayConvArena m p q = (pfDayConvPos p q ** pfDayConvDir m p q)
 
--- Formula 5.81 from the "General Theory of Interaction" book.
+-- Formula 6.75 from the "General Theory of Interaction" book.
 public export
 pfPosChangePos : (p, q : PolyFunc) -> (pfPos p -> pfPos q) -> Type
 pfPosChangePos p q f = (i : pfPos p ** pfDir {p=q} $ f i)
@@ -807,11 +807,11 @@ pfPosChangeArena p q f = (pfPosChangePos p q f ** pfPosChangeDir p q f)
 
 -- Formula 6.75 from the "General Theory of Interaction" book (I think).
 -- If I'm reading exercise 6.77 correctly, this states that for any
--- polynomial functor `p`, the functor defined by precomposition with `p`
+-- polynomial functor `p`, the functor defined by postcomposition with `p`
 -- has a left multiadjoint.  And if I'm further understanding ncatlab's
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint correctly, that
--- in turn also means that that precomposition functor is itself a
--- parametric right adjoint.
+-- in turn also means that that postcomposition functor is itself a
+-- parametric right adjoint (i.e., is polynomial).
 public export
 pfHomToCompArena : PolyFunc -> PolyFunc -> PolyFunc -> PolyFunc
 pfHomToCompArena p q r =
