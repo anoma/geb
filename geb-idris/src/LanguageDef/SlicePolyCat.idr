@@ -1393,12 +1393,14 @@ SPFntCodPos : (tyel : TyEl) ->
 SPFntCodPos tyel dom f g = spfdPos f (snd tyel) -> spfdPos g (snd tyel)
 
 public export
-SPFntCodDir : {cod : Type} -> (ec : cod) ->
-  (dom : Type) -> (f, g : SPFData dom cod) ->
-  SPFntCodPos (cod ** ec) dom f g -> Type
-SPFntCodDir {cod} ec dom f g onpos =
-  (ep : spfdPos f ec) ->
-  SliceMorphism {a=dom} (spfdDir g ec $ onpos ep) (spfdDir f ec ep)
+SPFntCodDir : (tyel : TyEl) ->
+  (dom : Type) -> (f, g : SPFData dom $ fst tyel) ->
+  SPFntCodPos tyel dom f g -> Type
+SPFntCodDir tyel dom f g onpos =
+  (ep : spfdPos f $ snd tyel) ->
+  SliceMorphism {a=dom}
+    (spfdDir g (snd tyel)$ onpos ep)
+    (spfdDir f (snd tyel) ep)
 
 public export
 SPFntPos : {dom, cod : Type} -> IntMorSig (SPFData dom cod)
@@ -1408,7 +1410,7 @@ public export
 SPFntDir : {dom, cod : Type} ->
   (f, g : SPFData dom cod) -> SPFntPos f g -> Type
 SPFntDir {dom} {cod} f g onpos =
-  Pi {a=cod} $ \ec => SPFntCodDir {cod} ec dom f g (onpos ec)
+  Pi {a=cod} $ \ec => SPFntCodDir (cod ** ec) dom f g (onpos ec)
 
 public export
 record SPFnt {dom, cod : Type} (f, g : SPFData dom cod) where
