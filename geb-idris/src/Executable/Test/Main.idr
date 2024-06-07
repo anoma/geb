@@ -21,6 +21,7 @@ import LanguageDef.Test.SlPolyImpredTest
 import LanguageDef.Test.SlPolyIntCatTest
 import LanguageDef.Test.SlicePolyUMorphTest
 import LanguageDef.Test.SlicePolyDialgTest
+import LanguageDef.Test.HigherPolyCatTest
 import LanguageDef.Test.DisliceCatTest
 import LanguageDef.Test.MLBundleCatTest
 import LanguageDef.Test.DislicePolyCatTest
@@ -113,6 +114,7 @@ totalTests = do
   LanguageDef.Test.IntEFamCatTest.intEFamCatTest
   LanguageDef.Test.IntParamCatTest.intParamCatTest
   LanguageDef.Test.IntDisheafCatTest.intDisheafCatTest
+  LanguageDef.Test.HigherPolyCatTest.higherPolyCatTest
   LanguageDef.Test.QTypeTest.qtypeTest
 
 export

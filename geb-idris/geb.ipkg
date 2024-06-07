@@ -32,6 +32,7 @@ modules =
     , LanguageDef.SlPolyIntCat
     , LanguageDef.SlPolyImpred
     , LanguageDef.SlicePolyDialg
+    , LanguageDef.HigherPolyCat
     , LanguageDef.SlicePolyUMorph
     , LanguageDef.DisliceCat
     , LanguageDef.DislicePolyCat
@@ -91,6 +92,7 @@ modules =
     , LanguageDef.Test.PolyDifuncTest
     , LanguageDef.Test.MLQuivPolyTest
     , LanguageDef.Test.GenPolyFuncTest
+    , LanguageDef.Test.HigherPolyCatTest
     , LanguageDef.Test.FinCatTest
     , LanguageDef.Test.BinTreeTest
     , LanguageDef.Test.GebTest
