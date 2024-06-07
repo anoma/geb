@@ -1401,7 +1401,7 @@ public export
 SPFntDir : {dom, cod : Type} ->
   (f, g : SPFData dom cod) -> SPFntPos f g -> Type
 SPFntDir {dom} {cod} f g onpos =
-  (ec : cod) -> SPFntCodDir {cod} ec dom f g (onpos ec)
+  Pi {a=cod} $ \ec => SPFntCodDir {cod} ec dom f g (onpos ec)
 
 public export
 record SPFnt {dom, cod : Type} (f, g : SPFData dom cod) where
