@@ -1383,15 +1383,25 @@ spfPushout {w} {x} {y} {z} mxw myz =
 ----------------------------------------------
 
 public export
+SPFntCodPos : {dom, cod : Type} -> cod -> IntMorSig (SPFData dom cod)
+SPFntCodPos {dom} {cod} ec f g = spfdPos f ec -> spfdPos g ec
+
+public export
 SPFntPos : {dom, cod : Type} -> IntMorSig (SPFData dom cod)
-SPFntPos {dom} {cod} f g = SliceMorphism {a=cod} (spfdPos f) (spfdPos g)
+SPFntPos {dom} {cod} f g = Pi {a=cod} $ \ec => SPFntCodPos {dom} {cod} ec f g
+
+public export
+SPFntCodDir : {dom, cod : Type} ->
+  (ec : cod) -> (f, g : SPFData dom cod) -> SPFntCodPos ec f g -> Type
+SPFntCodDir {dom} {cod} ec f g onpos =
+  (ep : spfdPos f ec) ->
+  SliceMorphism {a=dom} (spfdDir g ec $ onpos ep) (spfdDir f ec ep)
 
 public export
 SPFntDir : {dom, cod : Type} ->
   (f, g : SPFData dom cod) -> SPFntPos f g -> Type
 SPFntDir {dom} {cod} f g onpos =
-  (ec : cod) -> (ep : spfdPos f ec) ->
-  SliceMorphism {a=dom} (spfdDir g ec $ onpos ec ep) (spfdDir f ec ep)
+  (ec : cod) -> SPFntCodDir {dom} {cod} ec f g (onpos ec)
 
 public export
 record SPFnt {dom, cod : Type} (f, g : SPFData dom cod) where
