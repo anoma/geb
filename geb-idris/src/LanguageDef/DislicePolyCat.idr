@@ -711,3 +711,12 @@ peaMap : (pea : PolyEnrAr) ->
   (p, q : PolyFunc) -> PolyNatTrans p q ->
   PolyNatTrans (InterpPEA pea p) (InterpPEA pea q)
 peaMap pea p q alpha = (peaMapOnPos pea p q alpha ** peaMapOnDir pea p q alpha)
+
+public export
+HomToCompPEA : PolyFunc -> PolyFunc -> PolyEnrAr
+HomToCompPEA p q = PEA (pfPos p -> pfPos q) (pfPosChangeArena p q)
+
+public export
+0 HomToCompPEAcorrect : (p, q, r : PolyFunc) ->
+  InterpPEA (HomToCompPEA p q) r = pfHomToCompArena p q r
+HomToCompPEAcorrect p q r = Refl
