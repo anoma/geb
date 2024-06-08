@@ -11,6 +11,8 @@ import public LanguageDef.IntUCofamCat
 import public LanguageDef.IntEFamCat
 import public LanguageDef.IntECofamCat
 
+%default total
+
 -- In favor of the (identical) one from `SliceFuncCat`.
 %hide Library.IdrisCategories.BaseChangeF
 

@@ -15,6 +15,8 @@ import LanguageDef.QType
 import LanguageDef.MLBundleCat
 
 %default total
+%hide Prelude.(|>)
+%hide Prelude.Ops.infixl.(|>)
 
 ---------------------------------
 ---------------------------------

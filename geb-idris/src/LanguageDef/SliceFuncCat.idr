@@ -4,6 +4,11 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import public LanguageDef.InternalCat
 
+%default total
+
+%hide Prelude.(|>)
+%hide Prelude.Ops.infixl.(|>)
+
 ---------------------
 ---------------------
 ---- Base change ----
