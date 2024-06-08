@@ -36,6 +36,8 @@ import public Syntax.PreorderReasoning
 
 %default total
 
+%hide Prelude.(|>)
+
 export infixr 1 |>
 public export
 (|>) : {0 a, b, c : Type} -> (a -> b) -> (b -> c) -> (a -> c)

@@ -4,6 +4,8 @@ import Library.IdrisUtils
 
 %default total
 
+%hide Prelude.(|>)
+
 -------------------------------
 -------------------------------
 ---- Equivalence relations ----
