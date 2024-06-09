@@ -10,6 +10,8 @@ import public LanguageDef.IntUFamCat
 import public LanguageDef.IntUCofamCat
 import public LanguageDef.IntEFamCat
 import public LanguageDef.IntECofamCat
+import public LanguageDef.HelixCat
+import public LanguageDef.RopeCat
 
 %default total
 

@@ -18,6 +18,8 @@ import LanguageDef.Test.InternalProfunctorTest
 import LanguageDef.Test.SlicePolyCatTest
 import LanguageDef.Test.GenSlicePolyCatTest
 import LanguageDef.Test.SliceFuncCatTest
+import LanguageDef.Test.HelixCatTest
+import LanguageDef.Test.RopeCatTest
 import LanguageDef.Test.SlPolyImpredTest
 import LanguageDef.Test.SlPolyIntCatTest
 import LanguageDef.Test.SlicePolyUMorphTest
@@ -118,6 +120,8 @@ totalTests = do
   LanguageDef.Test.IntDisheafCatTest.intDisheafCatTest
   LanguageDef.Test.HigherPolyCatTest.higherPolyCatTest
   LanguageDef.Test.QTypeTest.qtypeTest
+  LanguageDef.Test.HelixCatTest.helixCatTest
+  LanguageDef.Test.RopeCatTest.ropeCatTest
 
 export
 partial potentiallyNonTerminatingTests : IO ()
