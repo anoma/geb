@@ -28,7 +28,6 @@ modules =
     , LanguageDef.IntFactCatFunc
     , LanguageDef.MLBundleCat
     , LanguageDef.SlicePolyCat
-    , LanguageDef.GenSlicePolyCat
     , LanguageDef.SliceFuncCat
     , LanguageDef.HelixCat
     , LanguageDef.RopeCat
@@ -83,7 +82,6 @@ modules =
     , LanguageDef.Test.InternalProfunctorTest
     , LanguageDef.Test.MLBundleCatTest
     , LanguageDef.Test.SlicePolyCatTest
-    , LanguageDef.Test.GenSlicePolyCatTest
     , LanguageDef.Test.SliceFuncCatTest
     , LanguageDef.Test.HelixCatTest
     , LanguageDef.Test.RopeCatTest
