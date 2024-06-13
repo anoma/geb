@@ -30,132 +30,90 @@ record PolyDifunc where
   pdfBase : SliceObj pdfPos
   pdfProj : SliceMorphism {a=pdfPos} pdfCobase pdfBase
 
-public export
-record PolyDifunc' where
-  constructor PDF'
-  pdf'Pos : Type
-  pdf'Dir : pdf'Pos -> CBundleObj
-
--- The interpretation of a polydifunctor treats its inputs and outputs
--- as a domain and codomain, and comprises a choice of morphism from
--- domain to codomain, a choice of position of the polydifunctor, and
--- a twisted-arrow morphism from the corresponding direction of the
--- polydifunctor to the chosen morphism.
+-- The interpretation of a polydifunctor takes an object of the
+-- twisted arrow category (of `Type`) and, as with polynomial
+-- functors on other categories, comprises a choice of one of the
+-- directions of the difunctor together with a (twisted-arrow)
+-- morphism from that direction to the (twisted-arrow) object
+-- that the functor is being applied to.
 --
 -- The difference between this and a general difunctor is the twisted-arrow
 -- morphism:  without that, this would just determine a general profunctor
 -- by its collage.  The twisted-arrow morphism constrains the profunctor
 -- so that it only contains elements that can be "diagonalized" by the
 -- morphism.
-export
-record InterpPDF (pdf : PolyDifunc) (x, y : Type) where
+public export
+record InterpPDF (pdf : PolyDifunc) (x, y : Type) (m : x -> y) where
   constructor IPDF
   ipdfPos : pdfPos pdf
   ipdfContraMor : x -> pdfCobase pdf ipdfPos
   ipdfCovarMor : pdfBase pdf ipdfPos -> y
-  ipdfProj : x -> y
   0 ipdfComm :
-    FunExt ->
-    (ipdfCovarMor . pdfProj pdf ipdfPos . ipdfContraMor = ipdfProj)
+    FunExtEq (ipdfCovarMor . pdfProj pdf ipdfPos . ipdfContraMor) m
+
+public export
+IPDFc : {pdf : PolyDifunc} -> {x, y : Type} ->
+  (i : pdfPos pdf) ->
+  (cnm : x -> pdfCobase pdf i) -> (cvm : pdfBase pdf i -> y) ->
+  InterpPDF pdf x y (cvm . pdfProj pdf i . cnm)
+IPDFc {pdf} {x} {y} i cnm cvm = IPDF i cnm cvm $ \fext => Refl
 
 export
-record InterpPDF' (pdf : PolyDifunc') (x, y : Type) where
-  constructor IPDF'
-  ipdf'Pos : pdf'Pos pdf
-  ipdf'BaseMor : x -> cbBase (pdf'Dir pdf ipdf'Pos)
-  ipdf'CobaseMor : cbTot (pdf'Dir pdf ipdf'Pos) -> y
-  ipdf'Proj : x -> y
-
-0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
-  {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
+0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} -> {0 m : x -> y} ->
+  {ip : InterpPDF p x y m} -> {iq : InterpPDF q x y m} ->
   ip = iq -> ipdfPos ip ~=~ ipdfPos iq
-ipdfEqPos {p} {q} {x} {y}
-  {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
+ipdfEqPos {p} {q} {x} {y} {m}
+  {ip=(IPDF pi mxpd mpcy pcomm)} {iq=(IPDF qi mxqd mqcy qcomm)} eq =
     case eq of Refl => Refl
 
-0 ipdfEqDom : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
-  {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
+export
+0 ipdfEqDom : {0 p, q : PolyDifunc} -> {0 x, y : Type} -> {0 m : x -> y} ->
+  {ip : InterpPDF p x y m} -> {iq : InterpPDF q x y m} ->
   ip = iq -> ipdfContraMor ip ~=~ ipdfContraMor iq
-ipdfEqDom {p} {q} {x} {y}
-  {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
+ipdfEqDom {p} {q} {x} {y} {m}
+  {ip=(IPDF pi mxpd mpcy pcomm)} {iq=(IPDF qi mxqd mqcy qcomm)} eq =
     case eq of Refl => Refl
 
-0 ipdfEqCod : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
-  {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
+export
+0 ipdfEqCod : {0 p, q : PolyDifunc} -> {0 x, y : Type} -> {0 m : x -> y} ->
+  {ip : InterpPDF p x y m} -> {iq : InterpPDF q x y m} ->
   ip = iq -> ipdfCovarMor ip ~=~ ipdfCovarMor iq
-ipdfEqCod {p} {q} {x} {y}
-  {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
+ipdfEqCod {p} {q} {x} {y} {m}
+  {ip=(IPDF pi mxpd mpcy pcomm)} {iq=(IPDF qi mxqd mqcy qcomm)} eq =
     case eq of Refl => Refl
 
-0 ipdfEqMorph : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
-  {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
-  ip = iq -> ipdfProj ip ~=~ ipdfProj iq
-ipdfEqMorph {p} {q} {x} {y}
-  {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
-    case eq of Refl => Refl
-
-0 ipdfEqComm : {0 p, q : PolyDifunc} -> {0 x, y : Type} ->
-  {ip : InterpPDF p x y} -> {iq : InterpPDF q x y} ->
+export
+0 ipdfEqComm : {0 p, q : PolyDifunc} -> {0 x, y : Type} -> {0 m : x -> y} ->
+  {ip : InterpPDF p x y m} -> {iq : InterpPDF q x y m} ->
   ip = iq -> ipdfComm ip ~=~ ipdfComm iq
-ipdfEqComm {p} {q} {x} {y}
-  {ip=(IPDF pi mxpd mpcy pmxy pm)} {iq=(IPDF qi mxqd mqcy qmxy qm)} eq =
+ipdfEqComm {p} {q} {x} {y} {m}
+  {ip=(IPDF pi mxpd mpcy pcomm)} {iq=(IPDF qi mxqd mqcy qcomm)} eq =
     case eq of Refl => Refl
 
 export
 InterpPDFlmap : (pdf : PolyDifunc) ->
-  (0 s, t, a : Type) -> (a -> s) -> InterpPDF pdf s t -> InterpPDF pdf a t
-InterpPDFlmap (PDF pos dom cod morph) s t a mas (IPDF i msd mit mst comm) =
-  IPDF
-    i
-    (msd . mas)
-    mit
-    (mst . mas)
-    (\fext => funExt $ \_ => rewrite sym (comm fext) in Refl)
-
-export
-InterpPDF'lmap : (pdf : PolyDifunc') ->
-  (0 s, t, a : Type) -> (a -> s) -> InterpPDF' pdf s t -> InterpPDF' pdf a t
-InterpPDF'lmap (PDF' pos dir) s t a mas (IPDF' i bm cm proj) =
-  IPDF'
-    i
-    (bm . mas)
-    cm
-    (proj . mas)
+  (0 s, t, a : Type) -> (mst : s -> t) -> (mas : a -> s) ->
+  InterpPDF pdf s t mst -> InterpPDF pdf a t (mst . mas)
+InterpPDFlmap (PDF pos dom cod proj) s t a mst mas (IPDF i msi mit comm) =
+  IPDF i (msi . mas) mit
+    $ \fext => funExt $ \ea => fcong {x=(mas ea)} (comm fext)
 
 export
 InterpPDFrmap : (pdf : PolyDifunc) ->
-  (0 s, t, b : Type) -> (t -> b) -> InterpPDF pdf s t -> InterpPDF pdf s b
-InterpPDFrmap (PDF pos dom cod morph) s t b mtb (IPDF i msd mct mst comm) =
-  IPDF
-    i
-    msd
-    (mtb . mct)
-    (mtb . mst)
-    (\fext => funExt $ \_ => rewrite sym (comm fext) in Refl)
-
-export
-InterpPDF'rmap : (pdf : PolyDifunc') ->
-  (0 s, t, b : Type) -> (t -> b) -> InterpPDF' pdf s t -> InterpPDF' pdf s b
-InterpPDF'rmap (PDF' pos dir) s t a mtb (IPDF' i bm cm proj) =
-  IPDF'
-    i
-    bm
-    (mtb . cm)
-    (mtb . proj)
+  (0 s, t, b : Type) -> (mst : s -> t) -> (mtb : t -> b) ->
+  InterpPDF pdf s t mst -> InterpPDF pdf s b (mtb . mst)
+InterpPDFrmap (PDF pos dom cod proj) s t b mst mtb (IPDF i msi mit comm) =
+  IPDF i msi (mtb . mit)
+    $ \fext => funExt $ \es => cong mtb $ fcong {x=es} (comm fext)
 
 export
 InterpPDFdimap : (pdf : PolyDifunc) ->
-  (0 s, t, a, b : Type) -> (a -> s) -> (t -> b) ->
-    InterpPDF pdf s t -> InterpPDF pdf a b
-InterpPDFdimap pdf s t a b mas mtb =
-  InterpPDFlmap pdf s b a mas . InterpPDFrmap pdf s t b mtb
+  (0 s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
+  InterpPDF pdf s t mst -> InterpPDF pdf a b (mtb . mst . mas)
+InterpPDFdimap pdf s t a b mst mas mtb =
+  InterpPDFlmap pdf s b a (mtb . mst) mas . InterpPDFrmap pdf s t b mst mtb
 
-export
-InterpPDF'dimap : (pdf : PolyDifunc') ->
-  (0 s, t, a, b : Type) -> (a -> s) -> (t -> b) ->
-    InterpPDF' pdf s t -> InterpPDF' pdf a b
-InterpPDF'dimap pdf s t a b mas mtb =
-  InterpPDF'lmap pdf s b a mas . InterpPDF'rmap pdf s t b mtb
+{- XXX
 
 ----------------------------------
 ---- Monoid of polydifunctors ----
@@ -431,3 +389,5 @@ pdNThcomp : {0 p, q' : PolyDifunc} -> {p', q : PolyDifunc} ->
   PolyDiNT q q' -> PolyDiNT p p' -> PolyDiNT (pdfComp q p) (pdfComp q' p')
 pdNThcomp {p} {p'} {q} {q'} beta alpha =
   pdNTvcomp (pdNTwhiskerL {q} {r=q'} beta p') (pdNTwhiskerR {p} {q=p'} alpha q)
+
+-}
