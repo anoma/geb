@@ -192,6 +192,7 @@ PDFinterpComposeToComposeInterp (PDF qp qd qc qm) (PDF pp pd pc pm) x z mxz
       IPDF pi Prelude.id mpcz (\fext => Refl)))
 
 {- XXX
+XXX replace representables w/polynomial and Dirichlet
 ------------------------
 ---- Representables ----
 ------------------------
@@ -273,6 +274,7 @@ export
 InferFromContravarRepPDF : (cod, x, y : Type) ->
   InterpPDF (PdfContravarRep cod) x y -> (cod -> y)
 InferFromContravarRepPDF cod x y (IPDF i d c m comm) = c
+XXX -}
 
 -----------------------------------------------------------------------
 ---- Polydinatural transformations between metalanguage difunctors ----
@@ -296,9 +298,10 @@ record PolyDiNT (p, q : PolyDifunc) where
     (pdntOnBase i . pdfProj q (pdntOnPos i) . pdntOnCobase i =
      pdfProj p i)
 
+{- XXX
 export
 InterpPDNT : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
-  (0 x : Type) -> InterpPDF p x x -> InterpPDF q x x
+  (0 x : Type) -> InterpPDF p x x Prelude.id -> InterpPDF q x x Prelude.id
 InterpPDNT {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
   (PDNT oni ond onc ntcomm) x (IPDF pi mxpd mpcx mxx pcomm) =
     IPDF
@@ -331,6 +334,7 @@ InterpPDFisPara {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
       Refl => case ipdfEqDom cond of
         Refl => case ipdfEqCod cond of
           Refl => rewrite ipdfEqMorph cond in Refl
+XXX -}
 
 --------------------------------------------------------------------------------
 ---- Category of metalanguage difunctors with paranatural transformations ----
@@ -390,5 +394,3 @@ pdNThcomp : {0 p, q' : PolyDifunc} -> {p', q : PolyDifunc} ->
   PolyDiNT q q' -> PolyDiNT p p' -> PolyDiNT (pdfComp q p) (pdfComp q' p')
 pdNThcomp {p} {p'} {q} {q'} beta alpha =
   pdNTvcomp (pdNTwhiskerL {q} {r=q'} beta p') (pdNTwhiskerR {p} {q=p'} alpha q)
-
--}
