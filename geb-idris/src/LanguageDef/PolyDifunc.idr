@@ -161,21 +161,27 @@ pdfComp (PDF qp qd qc qm) (PDF pp pd pc pm) =
     (\(qi ** pi ** qcpd) => pc pi)
     (\(qi ** pi ** qcpd), qdi => pm pi $ qcpd $ qm qi qdi)
 
-{- XXX
 export
-InterpToComposePDF : (q, p : PolyDifunc) -> (x, y : Type) ->
-  EndoProfCompose (InterpPDF q) (InterpPDF p) x y ->
-  InterpPDF (pdfComp q p) x y
-InterpToComposePDF (PDF qp qd qc qm) (PDF pp pd pc pm) x y
-  (b ** (IPDF qi mxqd mqcb mxb qcomm, IPDF pi mbpd mpcy mby pcomm)) =
+PDFcomposeInterpToInterpCompose :
+  (q, p : PolyDifunc) -> (x, z : Type) -> (mxz : x -> z) ->
+  TwArrCoprCompose (InterpPDF q) (InterpPDF p) x z mxz ->
+  InterpPDF (pdfComp q p) x z mxz
+PDFcomposeInterpToInterpCompose (PDF qp qd qc qm) (PDF pp pd pc pm) x z mxz
+  (y **
+   (mxy, myz) **
+   (comm, IPDF qi mxqd mqcy qcomm, IPDF pi mypd mpcz pcomm)) =
     IPDF
-      (qi ** pi ** mbpd . mqcb)
+      (qi ** pi ** mypd . mqcy)
       mxqd
-      mpcy
-      (mby . mxb)
-      (\fext => rewrite sym (qcomm fext) in rewrite sym (pcomm fext) in Refl)
+      mpcz
+      (\fext => funExt $ \ex =>
+        trans
+          (rewrite fcong {x=ex} (qcomm fext) in fcong {x=(mxy ex)} (pcomm fext))
+          (fcong {x=ex} (comm fext)))
 
-InterpFromComposePDF : (q, p : PolyDifunc) -> (x, y : Type) ->
+{- XXX
+PDFinterpComposeToComposeInterp :
+  (q, p : PolyDifunc) -> (x, y : Type) -> (m : x -> y) ->
   InterpPDF (pdfComp q p) x y ->
   EndoProfCompose (InterpPDF q) (InterpPDF p) x y
 InterpFromComposePDF (PDF qp qd qc qm) (PDF pp pd pc pm) x y
