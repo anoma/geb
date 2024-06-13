@@ -90,7 +90,7 @@ ipdfEqComm {p} {q} {x} {y} {m}
   {ip=(IPDF pi mxpd mpcy pcomm)} {iq=(IPDF qi mxqd mqcy qcomm)} eq =
     case eq of Refl => Refl
 
-export
+public export
 InterpPDFlmap : (pdf : PolyDifunc) ->
   (0 s, t, a : Type) -> (mst : s -> t) -> (mas : a -> s) ->
   InterpPDF pdf s t mst -> InterpPDF pdf a t (mst . mas)
@@ -98,7 +98,7 @@ InterpPDFlmap (PDF pos dom cod proj) s t a mst mas (IPDF i msi mit comm) =
   IPDF i (msi . mas) mit
     $ \fext => funExt $ \ea => fcong {x=(mas ea)} (comm fext)
 
-export
+public export
 InterpPDFrmap : (pdf : PolyDifunc) ->
   (0 s, t, b : Type) -> (mst : s -> t) -> (mtb : t -> b) ->
   InterpPDF pdf s t mst -> InterpPDF pdf s b (mtb . mst)
@@ -106,14 +106,12 @@ InterpPDFrmap (PDF pos dom cod proj) s t b mst mtb (IPDF i msi mit comm) =
   IPDF i msi (mtb . mit)
     $ \fext => funExt $ \es => cong mtb $ fcong {x=es} (comm fext)
 
-export
+public export
 InterpPDFdimap : (pdf : PolyDifunc) ->
   (0 s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
   InterpPDF pdf s t mst -> InterpPDF pdf a b (mtb . mst . mas)
 InterpPDFdimap pdf s t a b mst mas mtb =
   InterpPDFlmap pdf s b a (mtb . mst) mas . InterpPDFrmap pdf s t b mst mtb
-
-{- XXX
 
 ----------------------------------
 ---- Monoid of polydifunctors ----
@@ -121,47 +119,40 @@ InterpPDFdimap pdf s t a b mst mas mtb =
 
 -- Polydifunctors form a monoid -- a one-object category, with
 -- the polydifunctors as morphisms -- whose identity is the hom-profunctor,
--- and whose composition is the usual composition of profunctors.
+-- and whose composition resembles that of profunctors, but with the
+-- additional morphism (since the objects are twisted arrows rather than
+-- just objects of `op(Type) x Type`) to compose.
 
 -- We represent the hom-profunctor, which is the identity of the monoid of
 -- polydifunctors, with one position per morphism of `Type`.
 
-export
+public export
 PdfHomProfId : PolyDifunc
 PdfHomProfId =
   PDF
     (dom : Type ** cod : Type ** dom -> cod)
-    fst
+    (\i => fst i)
     (\i => fst $ snd i)
     (\i => snd $ snd i)
 
-InterpToIdPDF : (x, y : Type) -> (x -> y) -> InterpPDF PdfHomProfId x y
-InterpToIdPDF x y m = IPDF (x ** y ** m) id id m (\_ => Refl)
+export
+InterpToIdPDF : (x, y : Type) -> (m : x -> y) -> InterpPDF PdfHomProfId x y m
+InterpToIdPDF x y m = IPDF (x ** y ** m) id id $ \fext => Refl
 
-InterpFromIdPDF : (x, y : Type) -> InterpPDF PdfHomProfId x y -> x -> y
-InterpFromIdPDF x y (IPDF (i ** j ** mij) mxi mjy mxy comm) =
+export
+InterpFromIdPDF : (x, y : Type) -> (m : x -> y) ->
+  InterpPDF PdfHomProfId x y m -> x -> y
+InterpFromIdPDF x y mxy (IPDF (i ** j ** mij) mxi mjy comm) =
   -- There are two ways of getting from `x` to `y` -- `mxy` and
   -- `mjy . mij . mxi`. But `comm` shows them to be equal.
   -- We make that explicit here to make sure, and to document, that
   -- `mjy`, `mij`, and `mxi` are not "unused", but rather are an
   -- alternative to the `mxy` which we do use.
-  let 0 eqm : (FunExt -> mjy . mij . mxi = mxy) = comm in
+  let 0 eqm : (FunExtEq (mjy . mij . mxi) mxy) = comm in
   mxy
 
-export
-PdfHomProfId' : PolyDifunc'
-PdfHomProfId' = PDF' Unit (\() => CBO Unit Void (\v => void v))
-
-export
-InterpToIdPDF' : (x, y : Type) -> (x -> y) -> InterpPDF' PdfHomProfId' x y
-InterpToIdPDF' x y m = IPDF' () (\_ => ()) (\v => void v) m
-
-export
-InterpFromIdPDF' : (x, y : Type) -> InterpPDF' PdfHomProfId' x y -> x -> y
-InterpFromIdPDF' x y (IPDF' () bm cm proj) = proj
-
 -- The arena form of polydifunctors is closed under composition.
-export
+public export
 pdfComp : PolyDifunc -> PolyDifunc -> PolyDifunc
 pdfComp (PDF qp qd qc qm) (PDF pp pd pc pm) =
   PDF
@@ -170,6 +161,8 @@ pdfComp (PDF qp qd qc qm) (PDF pp pd pc pm) =
     (\(qi ** pi ** qcpd) => pc pi)
     (\(qi ** pi ** qcpd), qdi => pm pi $ qcpd $ qm qi qdi)
 
+{- XXX
+export
 InterpToComposePDF : (q, p : PolyDifunc) -> (x, y : Type) ->
   EndoProfCompose (InterpPDF q) (InterpPDF p) x y ->
   InterpPDF (pdfComp q p) x y
