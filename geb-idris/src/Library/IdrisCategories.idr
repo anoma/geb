@@ -1552,6 +1552,39 @@ public export
 ProfConstAlg : ProfunctorSig -> Type -> Type
 ProfConstAlg p x = p x x
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+---- (`Type`-enriched) copresheaves on the twisted-arrow category of `Type` ----
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+public export
+TwArrCoprSig : Type
+TwArrCoprSig = (x, y : Type) -> (x -> y) -> Type
+
+public export
+TwArrCoprDimapSig : TwArrCoprSig -> Type
+TwArrCoprDimapSig p =
+  (s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
+  p s t mst -> p a b (mtb . mst . mas)
+
+public export
+TwArrCoprCompose : TwArrCoprSig -> TwArrCoprSig -> TwArrCoprSig
+TwArrCoprCompose q p x z mxz =
+  (y : Type ** mp : (x -> y, y -> z) **
+   (FunExtEq (snd mp . fst mp) mxz, q x y (fst mp), p y z (snd mp)))
+
+public export
+TwArrCoprComposeDimap : (q, p : TwArrCoprSig) ->
+  TwArrCoprDimapSig q -> TwArrCoprDimapSig p ->
+  TwArrCoprDimapSig (TwArrCoprCompose q p)
+TwArrCoprComposeDimap q p qdm pdm s t a b mst mas mtb
+  (y ** (msy, myt) ** (comm, qsy, pyt)) =
+    (y ** (msy . mas, mtb . myt) **
+     (\fext => funExt $ \ea => cong mtb $ fcong {x=(mas ea)} $ comm fext,
+      qdm s y a y msy mas id qsy,
+      pdm y t y b myt id mtb pyt))
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
