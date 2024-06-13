@@ -179,17 +179,19 @@ PDFcomposeInterpToInterpCompose (PDF qp qd qc qm) (PDF pp pd pc pm) x z mxz
           (rewrite fcong {x=ex} (qcomm fext) in fcong {x=(mxy ex)} (pcomm fext))
           (fcong {x=ex} (comm fext)))
 
-{- XXX
-PDFinterpComposeToComposeInterp :
-  (q, p : PolyDifunc) -> (x, y : Type) -> (m : x -> y) ->
-  InterpPDF (pdfComp q p) x y ->
-  EndoProfCompose (InterpPDF q) (InterpPDF p) x y
-InterpFromComposePDF (PDF qp qd qc qm) (PDF pp pd pc pm) x y
-  (IPDF (qi ** pi ** qcpd) mxqd mpcy mxy comm) =
+0 PDFinterpComposeToComposeInterp :
+  (q, p : PolyDifunc) -> (x, z : Type) -> (mxz : x -> z) ->
+  InterpPDF (pdfComp q p) x z mxz ->
+  TwArrCoprCompose (InterpPDF q) (InterpPDF p) x z mxz
+PDFinterpComposeToComposeInterp (PDF qp qd qc qm) (PDF pp pd pc pm) x z mxz
+  (IPDF (qi ** pi ** mqcpd) mxqd mpcz comm) =
     (pd pi **
-      (IPDF qi mxqd qcpd (qcpd . qm qi . mxqd) $ \_ => Refl,
-      (IPDF pi id mpcy (mpcy . pm pi) $ \_ => Refl)))
+     (mqcpd . qm qi . mxqd, mpcz . pm pi) **
+     (comm,
+      IPDF qi mxqd mqcpd (\fext => Refl),
+      IPDF pi Prelude.id mpcz (\fext => Refl)))
 
+{- XXX
 ------------------------
 ---- Representables ----
 ------------------------
