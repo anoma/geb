@@ -24,6 +24,14 @@ twarDom : (twar : TwistArrAr) -> SliceObj (twarCod twar)
 twarDom = DPair.snd
 
 public export
+TwistArrMor : IntMorSig TwistArrAr
+TwistArrMor tx ty =
+  (onpos : twarCod tx -> twarCod ty **
+   SliceMorphism {a=(twarCod tx)}
+    (BaseChangeF onpos $ twarDom ty)
+    (twarDom tx))
+
+public export
 record TwistPolyFunc where
   constructor TwPF
   tpfPos : Type
@@ -41,11 +49,20 @@ public export
 record InterpTPF (tpf : TwistPolyFunc) (twar : TwistArrAr) where
   constructor ITPF
   itpfPos : tpfPos tpf
-  itpfBC : tpfCod tpf itpfPos -> twarCod twar
-  itpfSM :
-    SliceMorphism {a=(tpfCod tpf itpfPos)}
-      (BaseChangeF itpfBC $ twarDom twar)
-      (tpfDom tpf itpfPos)
+  itpfDir : TwistArrMor (tpfAr tpf itpfPos) twar
+
+public export
+itpfBC : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
+  (itpf : InterpTPF tpf twar) -> tpfCod tpf (itpfPos itpf) -> twarCod twar
+itpfBC {tpf} {twar} itpf = DPair.fst (itpfDir itpf)
+
+public export
+itpfSM : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
+  (itpf : InterpTPF tpf twar) ->
+  SliceMorphism {a=(tpfCod tpf $ itpfPos itpf)}
+    (BaseChangeF (itpfBC {tpf} {twar} itpf) $ twarDom twar)
+    (tpfDom tpf $ itpfPos itpf)
+itpfSM {tpf} {twar} itpf = DPair.snd (itpfDir itpf)
 
 public export
 record TwistNT (p, q : TwistPolyFunc) where
