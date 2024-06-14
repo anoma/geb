@@ -28,6 +28,18 @@ record InterpTPF (tpf : TwistPolyFunc) (y : Type) (x : SliceObj y) where
       (BaseChangeF itpfBC x)
       (tpfTot tpf itpfPos)
 
+public export
+record TwistNT (p, q : TwistPolyFunc) where
+  constructor TwNT
+  twntOnPos : tpfPos p -> tpfPos q
+  twntOnBase :
+    (i : tpfPos p) -> tpfBase p i -> tpfBase q (twntOnPos i)
+  twntOnCobase :
+    (i : tpfPos p) ->
+      SliceMorphism {a=(tpfBase p i)}
+        (\epbi => tpfTot q (twntOnPos i) $ twntOnBase i epbi)
+        (tpfTot p i)
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Polydifunctors subject to polydinatural transformations ----
