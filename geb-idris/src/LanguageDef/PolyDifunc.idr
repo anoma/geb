@@ -19,13 +19,13 @@ record TwistPolyFunc where
   tpfTot : Pi {a=tpfPos} $ SliceObj . tpfBase
 
 public export
-record InterpTPF (tpf : TwistPolyFunc) (x : Type) (y : SliceObj x) where
+record InterpTPF (tpf : TwistPolyFunc) (y : Type) (x : SliceObj y) where
   constructor ITPF
   itpfPos : tpfPos tpf
-  itpfBC : tpfBase tpf itpfPos -> x
+  itpfBC : tpfBase tpf itpfPos -> y
   itpfSM :
     SliceMorphism {a=(tpfBase tpf itpfPos)}
-      (BaseChangeF itpfBC y)
+      (BaseChangeF itpfBC x)
       (tpfTot tpf itpfPos)
 
 public export
