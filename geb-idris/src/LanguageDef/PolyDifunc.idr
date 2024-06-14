@@ -298,17 +298,15 @@ record PolyDiNT (p, q : PolyDifunc) where
     (pdntOnBase i . pdfProj q (pdntOnPos i) . pdntOnCobase i =
      pdfProj p i)
 
-{- XXX
 export
 InterpPDNT : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
   (0 x : Type) -> InterpPDF p x x Prelude.id -> InterpPDF q x x Prelude.id
 InterpPDNT {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
-  (PDNT oni ond onc ntcomm) x (IPDF pi mxpd mpcx mxx pcomm) =
+  (PDNT oni ond onc ntcomm) x (IPDF pi mxpd mpcx pcomm) =
     IPDF
       (oni pi)
       (ond pi . mxpd)
       (mpcx . onc pi)
-      mxx
       (\fext =>
         trans
           (funExt $ \ex =>
@@ -320,6 +318,7 @@ InterpPDNT {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
                 $ ntcomm pi fext)
           $ pcomm fext)
 
+{- XXX
 export
 0 InterpPDFisPara : {0 p, q : PolyDifunc} -> (pdnt : PolyDiNT p q) ->
   (i0, i1 : Type) -> (i2 : i0 -> i1) ->
@@ -334,7 +333,7 @@ InterpPDFisPara {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
       Refl => case ipdfEqDom cond of
         Refl => case ipdfEqCod cond of
           Refl => rewrite ipdfEqMorph cond in Refl
-XXX -}
+ XXX -}
 
 --------------------------------------------------------------------------------
 ---- Category of metalanguage difunctors with paranatural transformations ----
