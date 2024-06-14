@@ -65,15 +65,26 @@ public export
 record TwistNT (p, q : TwistPolyFunc) where
   constructor TwNT
   twntOnPos : tpfPos p -> tpfPos q
-  twntOnBase :
-    SliceMorphism {a=(tpfPos p)}
-      (tpfCod p)
-      (BaseChangeF twntOnPos (tpfCod q))
-  twntOnTot :
-    (i : tpfPos p) ->
-      SliceMorphism {a=(tpfCod p i)}
-        (BaseChangeF (twntOnBase i) (tpfDom q (twntOnPos i)))
-        (tpfDom p i)
+  twntOnDir : (i : tpfPos p) ->
+    (onBase : tpfCod p i -> tpfCod q (twntOnPos i) **
+     SliceMorphism {a=(tpfCod p i)}
+      (BaseChangeF onBase (tpfDom q (twntOnPos i)))
+      (tpfDom p i))
+
+public export
+twntOnBase : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
+  SliceMorphism {a=(tpfPos p)}
+    (tpfCod p)
+    (BaseChangeF (twntOnPos twnt) (tpfCod q))
+twntOnBase {p} {q} twnt i = DPair.fst (twntOnDir twnt i)
+
+public export
+twntOnTot : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
+  (i : tpfPos p) ->
+    SliceMorphism {a=(tpfCod p i)}
+      (BaseChangeF (twntOnBase twnt i) (tpfDom q (twntOnPos twnt i)))
+      (tpfDom p i)
+twntOnTot {p} {q} twnt i = DPair.snd (twntOnDir twnt i)
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
