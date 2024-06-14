@@ -61,7 +61,7 @@ IPDFc {pdf} {x} {y} i cnm cvm = IPDF i cnm cvm $ \fext => Refl
 export
 0 ipdfEqPos : {0 p, q : PolyDifunc} -> {0 x, y : Type} -> {0 m : x -> y} ->
   {ip : InterpPDF p x y m} -> {iq : InterpPDF q x y m} ->
-  ip = iq -> ipdfPos ip ~=~ ipdfPos iq
+  ip ~=~ iq -> ipdfPos ip ~=~ ipdfPos iq
 ipdfEqPos {p} {q} {x} {y} {m}
   {ip=(IPDF pi mxpd mpcy pcomm)} {iq=(IPDF qi mxqd mqcy qcomm)} eq =
     case eq of Refl => Refl
@@ -69,7 +69,7 @@ ipdfEqPos {p} {q} {x} {y} {m}
 export
 0 ipdfEqDom : {0 p, q : PolyDifunc} -> {0 x, y : Type} -> {0 m : x -> y} ->
   {ip : InterpPDF p x y m} -> {iq : InterpPDF q x y m} ->
-  ip = iq -> ipdfContraMor ip ~=~ ipdfContraMor iq
+  ip ~=~ iq -> ipdfContraMor ip ~=~ ipdfContraMor iq
 ipdfEqDom {p} {q} {x} {y} {m}
   {ip=(IPDF pi mxpd mpcy pcomm)} {iq=(IPDF qi mxqd mqcy qcomm)} eq =
     case eq of Refl => Refl
@@ -77,7 +77,7 @@ ipdfEqDom {p} {q} {x} {y} {m}
 export
 0 ipdfEqCod : {0 p, q : PolyDifunc} -> {0 x, y : Type} -> {0 m : x -> y} ->
   {ip : InterpPDF p x y m} -> {iq : InterpPDF q x y m} ->
-  ip = iq -> ipdfCovarMor ip ~=~ ipdfCovarMor iq
+  ip ~=~ iq -> ipdfCovarMor ip ~=~ ipdfCovarMor iq
 ipdfEqCod {p} {q} {x} {y} {m}
   {ip=(IPDF pi mxpd mpcy pcomm)} {iq=(IPDF qi mxqd mqcy qcomm)} eq =
     case eq of Refl => Refl
@@ -85,10 +85,25 @@ ipdfEqCod {p} {q} {x} {y} {m}
 export
 0 ipdfEqComm : {0 p, q : PolyDifunc} -> {0 x, y : Type} -> {0 m : x -> y} ->
   {ip : InterpPDF p x y m} -> {iq : InterpPDF q x y m} ->
-  ip = iq -> ipdfComm ip ~=~ ipdfComm iq
+  ip ~=~ iq -> ipdfComm ip ~=~ ipdfComm iq
 ipdfEqComm {p} {q} {x} {y} {m}
   {ip=(IPDF pi mxpd mpcy pcomm)} {iq=(IPDF qi mxqd mqcy qcomm)} eq =
     case eq of Refl => Refl
+
+export
+0 ipdfUip : FunExt ->
+  {0 p : PolyDifunc} ->
+  {0 x, y : Type} -> {0 m : x -> y} ->
+  {ip, iq : InterpPDF p x y m} ->
+  ipdfPos ip ~=~ ipdfPos iq ->
+  ipdfContraMor ip ~=~ ipdfContraMor iq ->
+  ipdfCovarMor ip ~=~ ipdfCovarMor iq ->
+  ip = iq
+ipdfUip fext {p=(PDF pp pd pc pm)} {x} {y} {m}
+  {ip=(IPDF pi mxpd mpcy pcomm)} {iq=(IPDF _ _ _ qcomm)}
+    Refl Refl Refl =
+      let eqComm : (pcomm = qcomm) = (funExt $ \fext' => uip) in
+      case eqComm of Refl => Refl
 
 public export
 InterpPDFlmap : (pdf : PolyDifunc) ->
@@ -318,22 +333,23 @@ InterpPDNT {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
                 $ ntcomm pi fext)
           $ pcomm fext)
 
-{- XXX
 export
-0 InterpPDFisPara : {0 p, q : PolyDifunc} -> (pdnt : PolyDiNT p q) ->
+0 InterpPDFisPara : FunExt ->
+  {0 p, q : PolyDifunc} -> (pdnt : PolyDiNT p q) ->
   (i0, i1 : Type) -> (i2 : i0 -> i1) ->
-  (d0 : InterpPDF p i0 i0) -> (d1 : InterpPDF p i1 i1) ->
-  (InterpPDFlmap p i1 i1 i0 i2 d1 = InterpPDFrmap p i0 i0 i1 i2 d0) ->
-  (InterpPDFlmap q i1 i1 i0 i2 (InterpPDNT {p} {q} pdnt i1 d1) =
-   InterpPDFrmap q i0 i0 i1 i2 (InterpPDNT {p} {q} pdnt i0 d0))
-InterpPDFisPara {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
-  (PDNT onidx ondom oncod ntcomm) i0 i1 i2
-  (IPDF pi0 mi0pd mpci0 mi0i0 pcomm) (IPDF pi1 mi1pd mpci1 mi1i1 qcomm) cond =
+  (d0 : InterpPDF p i0 i0 Prelude.id) -> (d1 : InterpPDF p i1 i1 Prelude.id) ->
+  (InterpPDFlmap p i1 i1 i0 Prelude.id i2 d1 ~=~
+   InterpPDFrmap p i0 i0 i1 Prelude.id i2 d0) ->
+  (InterpPDFlmap q i1 i1 i0 Prelude.id i2 (InterpPDNT {p} {q} pdnt i1 d1) ~=~
+   InterpPDFrmap q i0 i0 i1 Prelude.id i2 (InterpPDNT {p} {q} pdnt i0 d0))
+InterpPDFisPara fext {p=p@(PDF pp pd pc pm)} {q=q@(PDF qp qd qc qm)}
+  pdnt@(PDNT onidx ondom oncod ntcomm) i0 i1 i2
+  ip@(IPDF pi0 mi0pd mpci0 pcomm) iq@(IPDF pi1 mi1pd mpci1 qcomm) cond =
     case ipdfEqPos cond of
       Refl => case ipdfEqDom cond of
         Refl => case ipdfEqCod cond of
-          Refl => rewrite ipdfEqMorph cond in Refl
- XXX -}
+          Refl =>
+            ipdfUip fext Refl Refl Refl
 
 --------------------------------------------------------------------------------
 ---- Category of metalanguage difunctors with paranatural transformations ----
