@@ -30,22 +30,22 @@ record TwistPolyFunc where
   tpfAr : tpfPos -> TwistArrAr
 
 public export
-tpfBase : (tpf : TwistPolyFunc) -> SliceObj (tpfPos tpf)
-tpfBase tpf = twarCod . tpfAr tpf
+tpfCod : (tpf : TwistPolyFunc) -> SliceObj (tpfPos tpf)
+tpfCod tpf = twarCod . tpfAr tpf
 
 public export
-tpfTot : (tpf : TwistPolyFunc) -> (i : tpfPos tpf) -> SliceObj (tpfBase tpf i)
-tpfTot tpf i = twarDom (tpfAr tpf i)
+tpfDom : (tpf : TwistPolyFunc) -> (i : tpfPos tpf) -> SliceObj (tpfCod tpf i)
+tpfDom tpf i = twarDom (tpfAr tpf i)
 
 public export
 record InterpTPF (tpf : TwistPolyFunc) (y : Type) (x : SliceObj y) where
   constructor ITPF
   itpfPos : tpfPos tpf
-  itpfBC : tpfBase tpf itpfPos -> y
+  itpfBC : tpfCod tpf itpfPos -> y
   itpfSM :
-    SliceMorphism {a=(tpfBase tpf itpfPos)}
+    SliceMorphism {a=(tpfCod tpf itpfPos)}
       (BaseChangeF itpfBC x)
-      (tpfTot tpf itpfPos)
+      (tpfDom tpf itpfPos)
 
 public export
 record TwistNT (p, q : TwistPolyFunc) where
@@ -53,13 +53,13 @@ record TwistNT (p, q : TwistPolyFunc) where
   twntOnPos : tpfPos p -> tpfPos q
   twntOnBase :
     SliceMorphism {a=(tpfPos p)}
-      (tpfBase p)
-      (BaseChangeF twntOnPos (tpfBase q))
+      (tpfCod p)
+      (BaseChangeF twntOnPos (tpfCod q))
   twntOnTot :
     (i : tpfPos p) ->
-      SliceMorphism {a=(tpfBase p i)}
-        (BaseChangeF (twntOnBase i) (tpfTot q (twntOnPos i)))
-        (tpfTot p i)
+      SliceMorphism {a=(tpfCod p i)}
+        (BaseChangeF (twntOnBase i) (tpfDom q (twntOnPos i)))
+        (tpfDom p i)
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
