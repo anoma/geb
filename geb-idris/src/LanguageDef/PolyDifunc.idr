@@ -4,6 +4,7 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.DisliceCat
 import public LanguageDef.DislicePolyCat
+import public LanguageDef.IntECofamCat
 
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
@@ -25,11 +26,7 @@ twarDom = DPair.snd
 
 public export
 TwistArrMor : IntMorSig TwistArrAr
-TwistArrMor tx ty =
-  (onpos : twarCod tx -> twarCod ty **
-   SliceMorphism {a=(twarCod tx)}
-    (BaseChangeF onpos $ twarDom ty)
-    (twarDom tx))
+TwistArrMor = IntECofamMor {c=TypeObj} TypeMor
 
 public export
 record TwistPolyFunc where
