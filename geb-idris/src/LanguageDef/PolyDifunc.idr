@@ -12,11 +12,30 @@ import public LanguageDef.DislicePolyCat
 ----------------------------------------------------------------------------
 
 public export
+TwistArrAr : Type
+TwistArrAr = IntArena Type
+
+public export
+twarCod : TwistArrAr -> Type
+twarCod = DPair.fst
+
+public export
+twarDom : (twar : TwistArrAr) -> SliceObj (twarCod twar)
+twarDom = DPair.snd
+
+public export
 record TwistPolyFunc where
   constructor TwPF
   tpfPos : Type
-  tpfBase : SliceObj tpfPos
-  tpfTot : Pi {a=tpfPos} $ SliceObj . tpfBase
+  tpfAr : tpfPos -> TwistArrAr
+
+public export
+tpfBase : (tpf : TwistPolyFunc) -> SliceObj (tpfPos tpf)
+tpfBase tpf = twarCod . tpfAr tpf
+
+public export
+tpfTot : (tpf : TwistPolyFunc) -> (i : tpfPos tpf) -> SliceObj (tpfBase tpf i)
+tpfTot tpf i = twarDom (tpfAr tpf i)
 
 public export
 record InterpTPF (tpf : TwistPolyFunc) (y : Type) (x : SliceObj y) where
