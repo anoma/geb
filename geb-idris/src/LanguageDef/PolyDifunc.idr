@@ -68,23 +68,32 @@ itpfSM : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
 itpfSM {tpf} {twar} itpf = DPair.snd (itpfDir itpf)
 
 public export
-record TwistNT (p, q : TwistPolyFunc) where
-  constructor TwNT
-  twntOnPos : tpfPos p -> tpfPos q
-  twntOnDir : (i : tpfPos p) -> TwistArrMor (tpfAr p i) (tpfAr q (twntOnPos i))
+TwistNT : IntMorSig TwistPolyFunc
+TwistNT = IntEFamMor {c=TwistArrAr} TwistArrMor
+
+public export
+twntOnPos : {p, q : TwistPolyFunc} -> TwistNT p q -> tpfPos p -> tpfPos q
+twntOnPos {p} {q} = DPair.fst
+
+public export
+twntOnDir : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
+  (i : tpfPos p) -> TwistArrMor (tpfAr p i) (tpfAr q (twntOnPos {p} {q} twnt i))
+twntOnDir {p} {q} = DPair.snd
 
 public export
 twntOnBase : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
   SliceMorphism {a=(tpfPos p)}
     (tpfCod p)
-    (BaseChangeF (twntOnPos twnt) (tpfCod q))
+    (BaseChangeF (twntOnPos {p} {q} twnt) (tpfCod q))
 twntOnBase {p} {q} twnt i = DPair.fst (twntOnDir twnt i)
 
 public export
 twntOnTot : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
   (i : tpfPos p) ->
     SliceMorphism {a=(tpfCod p i)}
-      (BaseChangeF (twntOnBase twnt i) (tpfDom q (twntOnPos twnt i)))
+      (BaseChangeF
+        (twntOnBase {p} {q} twnt i)
+        (tpfDom q (twntOnPos {p} {q} twnt i)))
       (tpfDom p i)
 twntOnTot {p} {q} twnt i = DPair.snd (twntOnDir twnt i)
 
