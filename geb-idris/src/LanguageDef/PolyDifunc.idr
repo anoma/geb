@@ -65,11 +65,7 @@ public export
 record TwistNT (p, q : TwistPolyFunc) where
   constructor TwNT
   twntOnPos : tpfPos p -> tpfPos q
-  twntOnDir : (i : tpfPos p) ->
-    (onBase : tpfCod p i -> tpfCod q (twntOnPos i) **
-     SliceMorphism {a=(tpfCod p i)}
-      (BaseChangeF onBase (tpfDom q (twntOnPos i)))
-      (tpfDom p i))
+  twntOnDir : (i : tpfPos p) -> TwistArrMor (tpfAr p i) (tpfAr q (twntOnPos i))
 
 public export
 twntOnBase : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
