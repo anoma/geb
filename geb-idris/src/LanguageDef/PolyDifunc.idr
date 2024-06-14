@@ -323,7 +323,6 @@ pdNTvcomp {r=(PDF rp rd rc rm)} {q=(PDF qp qd qc qm)} {p=(PDF pp pd pc pm)}
             rewrite snd0 (oncpq pi) pdi in
             cong (onbpq pi) $ snd0 (oncqr $ onipq pi) (fst0 (oncpq pi) pdi)))
 
-{- XXX
 --------------------------------------------------------------------
 ---- Two-categorical structure of polydinatural transformations ----
 --------------------------------------------------------------------
@@ -335,30 +334,28 @@ export
 pdNTwhiskerL : {0 q, r : PolyDifunc} -> PolyDiNT q r -> (p : PolyDifunc) ->
   PolyDiNT (pdfComp q p) (pdfComp r p)
 pdNTwhiskerL {q=(PDF qp qd qc qm)} {r=(PDF rp rd rc rm)}
-  (PDNT oni ond onc comm) (PDF pp pd pc pm) =
+  (PDNT oni onb onc) (PDF pp pd pc pm) =
     PDNT
-      (\(qi ** pi ** qcpd) => (oni qi ** pi ** qcpd . onc qi))
-      (\(qi ** pi ** qcpd) => ond qi)
+      (\(qi ** pi ** qcpd) => (oni qi ** pi ** qcpd . onb qi))
       (\(qi ** pi ** qcpd) => id)
-      (\(qi ** pi ** qcpd), fext =>
-        funExt $ \ex => cong (pm pi) $ cong qcpd $ fcong (comm qi fext))
+      (\(qi ** pi ** qcpd) =>
+        Element0
+          (fst0 $ onc qi)
+          (\qdi => cong (pm pi) $ cong qcpd $ snd0 (onc qi) qdi))
 
 export
 pdNTwhiskerR : {0 p, q : PolyDifunc} -> PolyDiNT p q -> (r : PolyDifunc) ->
   PolyDiNT (pdfComp r p) (pdfComp r q)
 pdNTwhiskerR {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
-  (PDNT oni ond onc comm) (PDF rp rd rc rm) =
+  (PDNT oni onb onc) (PDF rp rd rc rm) =
     PDNT
-      (\(ri ** pi ** rcpd) => (ri ** oni pi ** ond pi . rcpd))
-      (\(ri ** pi ** rcpd) => id)
-      (\(ri ** pi ** rcpd) => onc pi)
-      (\(ri ** pi ** rcpd), fext =>
-        funExt $ \ex => fcong (comm pi fext))
+      (\(ri ** pi ** rcpd) => (ri ** oni pi ** fst0 (onc pi) . rcpd))
+      (\(ri ** pi ** rcpd) => onb pi)
+      (\(ri ** pi ** rcpd) =>
+        Element0 id $ \rdi => snd0 (onc pi) (rcpd (rm ri rdi)))
 
 export
 pdNThcomp : {0 p, q' : PolyDifunc} -> {p', q : PolyDifunc} ->
   PolyDiNT q q' -> PolyDiNT p p' -> PolyDiNT (pdfComp q p) (pdfComp q' p')
 pdNThcomp {p} {p'} {q} {q'} beta alpha =
   pdNTvcomp (pdNTwhiskerL {q} {r=q'} beta p') (pdNTwhiskerR {p} {q=p'} alpha q)
-
--}
