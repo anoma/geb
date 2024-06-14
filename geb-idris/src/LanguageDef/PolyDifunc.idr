@@ -37,7 +37,7 @@ record TwistNT (p, q : TwistPolyFunc) where
   twntOnTot :
     (i : tpfPos p) ->
       SliceMorphism {a=(tpfBase p i)}
-        (\epbi => tpfTot q (twntOnPos i) $ twntOnBase i epbi)
+        (tpfTot q (twntOnPos i) . twntOnBase i)
         (tpfTot p i)
 
 -----------------------------------------------------------------
