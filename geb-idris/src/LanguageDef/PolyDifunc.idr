@@ -256,33 +256,30 @@ public export
 record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
   pdntOnPos : pdfPos p -> pdfPos q
-  pdntOnCobase :
-    (i : pdfPos p) -> pdfCobase p i -> pdfCobase q (pdntOnPos i)
   pdntOnBase :
     (i : pdfPos p) -> pdfBase q (pdntOnPos i) -> pdfBase p i
-  pdntComm : (i : pdfPos p) -> FunExt ->
-    (pdntOnBase i . pdfProj q (pdntOnPos i) . pdntOnCobase i =
-     pdfProj p i)
+  pdntOnCobase :
+    (i : pdfPos p) ->
+      CSliceMorphism {c=(pdfBase p i)}
+        (pdfCobase p i ** pdfProj p i)
+        (pdfCobase q (pdntOnPos i) ** pdntOnBase i . pdfProj q (pdntOnPos i))
+
+export
+InterpPDNTnat : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
+  (x, y : Type) -> (m : x -> y) -> InterpPDF p x y m -> InterpPDF q x y m
+InterpPDNTnat {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
+  (PDNT oni onb onc) x y m (IPDF pi mxpd mpcx pcomm) =
+    IPDF
+      (oni pi)
+      (fst0 (onc pi) . mxpd)
+      (mpcx . onb pi)
+      (\fext => funExt $ \ex =>
+        rewrite sym $ snd0 (onc pi) (mxpd ex) in fcong {x=ex} $ pcomm fext)
 
 export
 InterpPDNT : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
-  (0 x : Type) -> InterpPDF p x x Prelude.id -> InterpPDF q x x Prelude.id
-InterpPDNT {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
-  (PDNT oni ond onc ntcomm) x (IPDF pi mxpd mpcx pcomm) =
-    IPDF
-      (oni pi)
-      (ond pi . mxpd)
-      (mpcx . onc pi)
-      (\fext =>
-        trans
-          (funExt $ \ex =>
-            cong mpcx $
-              fcong
-                {f=(onc pi . qm (oni pi) . ond pi)}
-                {g=(pm pi)}
-                {x=(mxpd ex)}
-                $ ntcomm pi fext)
-          $ pcomm fext)
+  (x : Type) -> InterpPDF p x x Prelude.id -> InterpPDF q x x Prelude.id
+InterpPDNT {p} {q} pdnt x = InterpPDNTnat {p} {q} pdnt x x Prelude.id
 
 export
 0 InterpPDFisPara : FunExt ->
@@ -294,7 +291,7 @@ export
   (InterpPDFlmap q i1 i1 i0 Prelude.id i2 (InterpPDNT {p} {q} pdnt i1 d1) ~=~
    InterpPDFrmap q i0 i0 i1 Prelude.id i2 (InterpPDNT {p} {q} pdnt i0 d0))
 InterpPDFisPara fext {p=p@(PDF pp pd pc pm)} {q=q@(PDF qp qd qc qm)}
-  pdnt@(PDNT onidx ondom oncod ntcomm) i0 i1 i2
+  pdnt@(PDNT onidx onb onc) i0 i1 i2
   ip@(IPDF pi0 mi0pd mpci0 pcomm) iq@(IPDF pi1 mi1pd mpci1 qcomm) cond =
     case ipdfEqPos cond of
       Refl => case ipdfEqDom cond of
@@ -308,22 +305,25 @@ InterpPDFisPara fext {p=p@(PDF pp pd pc pm)} {q=q@(PDF qp qd qc qm)}
 
 export
 pdNTid : (pdf : PolyDifunc) -> PolyDiNT pdf pdf
-pdNTid pdf = PDNT id (\_ => id) (\_ => id) (\pi, fext => Refl)
+pdNTid pdf =
+  PDNT id (\_ => id) (\i => CSliceId (pdfCobase pdf i ** pdfProj pdf i))
 
 export
 pdNTvcomp : {0 r, q, p : PolyDifunc} -> PolyDiNT q r -> PolyDiNT p q ->
   PolyDiNT p r
 pdNTvcomp {r=(PDF rp rd rc rm)} {q=(PDF qp qd qc qm)} {p=(PDF pp pd pc pm)}
-  (PDNT oniqr ondomqr oncodqr qrcomm) (PDNT onipq ondompq oncodpq pqcomm) =
+  (PDNT oniqr onbqr oncqr) (PDNT onipq onbpq oncpq) =
     PDNT
       (oniqr . onipq)
-      (\pi, pdi => ondomqr (onipq pi) $ ondompq pi pdi)
-      (\pi, rci => oncodpq pi $ oncodqr (onipq pi) rci)
-      (\pi, fext =>
-        trans
-          (funExt $ \ex => cong (oncodpq pi) $ fcong (qrcomm (onipq pi) fext))
-          (pqcomm pi fext))
+      (\pi => onbpq pi . onbqr (onipq pi))
+      (\pi =>
+        Element0
+          (fst0 (oncqr $ onipq pi) . fst0 (oncpq pi))
+          (\pdi =>
+            rewrite snd0 (oncpq pi) pdi in
+            cong (onbpq pi) $ snd0 (oncqr $ onipq pi) (fst0 (oncpq pi) pdi)))
 
+{- XXX
 --------------------------------------------------------------------
 ---- Two-categorical structure of polydinatural transformations ----
 --------------------------------------------------------------------
@@ -360,3 +360,5 @@ pdNThcomp : {0 p, q' : PolyDifunc} -> {p', q : PolyDifunc} ->
   PolyDiNT q q' -> PolyDiNT p p' -> PolyDiNT (pdfComp q p) (pdfComp q' p')
 pdNThcomp {p} {p'} {q} {q'} beta alpha =
   pdNTvcomp (pdNTwhiskerL {q} {r=q'} beta p') (pdNTwhiskerR {p} {q=p'} alpha q)
+
+-}
