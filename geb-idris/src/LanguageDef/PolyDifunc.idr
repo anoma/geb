@@ -206,25 +206,17 @@ PDFinterpComposeToComposeInterp (PDF qp qd qc qm) (PDF pp pd pc pm) x z mxz
       IPDF qi mxqd mqcpd (\fext => Refl),
       IPDF pi Prelude.id mpcz (\fext => Refl)))
 
-{- XXX
-XXX replace representables w/polynomial and Dirichlet
-------------------------
----- Representables ----
-------------------------
+---------------------------------------
+---- Polynomial/Dirichlet functors ----
+---------------------------------------
 
--- Polynomial difunctors include both the covariant and contravariant
--- representables.  (Together with their having all coproducts, this
--- means that they subsume both polynomial and Dirichlet functors.)
+-- Twisted polynomials subsume both polynomial and Dirichlet functors.
 
 export
-PdfCovarRep : Type -> PolyDifunc
-PdfCovarRep dom =
-  PDF
-    (cod : Type ** dom -> cod)
-    (\_ => dom)
-    (\_ => dom)
-    (\_ => id)
+PdfFromPoly : PolyFunc -> PolyDifunc
+PdfFromPoly p = PDF (pfPos p) (\_ => Void) (pfDir {p}) (\i, v => void v)
 
+{- XXX
 export
 InterpToCovarRepPDF : (dom, x, y : Type) ->
   (x -> dom) -> (dom -> y) -> InterpPDF (PdfCovarRep dom) x y
@@ -259,16 +251,13 @@ export
 InterpFromCovarPDFid : (x, y : Type) ->
   InterpPDF CovarPDFid x y -> y
 InterpFromCovarPDFid x y ey = InterpFromCovarRepPDF Unit x y ey ()
+-}
 
 export
-PdfContravarRep : Type -> PolyDifunc
-PdfContravarRep cod =
-  PDF
-    (dom : Type ** dom -> cod)
-    (\_ => cod)
-    (\_ => cod)
-    (\_ => id)
+PdfFromDirich : PolyFunc -> PolyDifunc
+PdfFromDirich p = PDF (pfPos p) (pfDir {p}) (\_ => Unit) (\_, _ => ())
 
+{- XXX
 export
 InterpToContravarRepPDF : (cod, x, y : Type) ->
   (cod -> y) -> (x -> cod) -> InterpPDF (PdfContravarRep cod) x y
@@ -289,7 +278,7 @@ export
 InferFromContravarRepPDF : (cod, x, y : Type) ->
   InterpPDF (PdfContravarRep cod) x y -> (cod -> y)
 InferFromContravarRepPDF cod x y (IPDF i d c m comm) = c
-XXX -}
+-}
 
 -----------------------------------------------------------------------
 ---- Polydinatural transformations between metalanguage difunctors ----
