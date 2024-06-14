@@ -29,10 +29,16 @@ TwistArrMor : IntMorSig TwistArrAr
 TwistArrMor = IntECofamMor {c=TypeObj} TypeMor
 
 public export
-record TwistPolyFunc where
-  constructor TwPF
-  tpfPos : Type
-  tpfAr : tpfPos -> TwistArrAr
+TwistPolyFunc : Type
+TwistPolyFunc = IntEFamObj TwistArrAr
+
+public export
+tpfPos : TwistPolyFunc -> Type
+tpfPos = DPair.fst
+
+public export
+tpfAr : (tpf : TwistPolyFunc) -> tpfPos tpf -> TwistArrAr
+tpfAr = DPair.snd
 
 public export
 tpfCod : (tpf : TwistPolyFunc) -> SliceObj (tpfPos tpf)
