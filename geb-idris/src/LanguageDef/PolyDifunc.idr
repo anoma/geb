@@ -14,7 +14,7 @@ import public LanguageDef.IntECofamCat
 
 public export
 TwistArrAr : Type
-TwistArrAr = IntArena Type
+TwistArrAr = IntECofamObj Type
 
 public export
 twarCod : TwistArrAr -> Type
