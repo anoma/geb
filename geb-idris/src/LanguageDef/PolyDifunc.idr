@@ -38,13 +38,13 @@ tpfDom : (tpf : TwistPolyFunc) -> (i : tpfPos tpf) -> SliceObj (tpfCod tpf i)
 tpfDom tpf i = twarDom (tpfAr tpf i)
 
 public export
-record InterpTPF (tpf : TwistPolyFunc) (y : Type) (x : SliceObj y) where
+record InterpTPF (tpf : TwistPolyFunc) (twar : TwistArrAr) where
   constructor ITPF
   itpfPos : tpfPos tpf
-  itpfBC : tpfCod tpf itpfPos -> y
+  itpfBC : tpfCod tpf itpfPos -> twarCod twar
   itpfSM :
     SliceMorphism {a=(tpfCod tpf itpfPos)}
-      (BaseChangeF itpfBC x)
+      (BaseChangeF itpfBC $ twarDom twar)
       (tpfDom tpf itpfPos)
 
 public export
