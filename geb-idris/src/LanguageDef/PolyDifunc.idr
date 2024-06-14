@@ -5,6 +5,29 @@ import Library.IdrisCategories
 import LanguageDef.DisliceCat
 import public LanguageDef.DislicePolyCat
 
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+---- Dependent-type-style poly-difunctor ("twisted polynomial functor") ----
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------:
+
+public export
+record TwistPolyFunc where
+  constructor TwPF
+  tpfPos : Type
+  tpfBase : SliceObj tpfPos
+  tpfTot : Pi {a=tpfPos} $ SliceObj . tpfBase
+
+public export
+record InterpTPF (tpf : TwistPolyFunc) (y : Type) (x : SliceObj y) where
+  constructor ITPF
+  itpfPos : tpfPos tpf
+  itpfBC : tpfBase tpf itpfPos -> y
+  itpfSM :
+    SliceMorphism {a=(tpfBase tpf itpfPos)}
+      (BaseChangeF itpfBC x)
+      (tpfTot tpf itpfPos)
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Polydifunctors subject to polydinatural transformations ----
