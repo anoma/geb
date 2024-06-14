@@ -216,69 +216,31 @@ export
 PdfFromPoly : PolyFunc -> PolyDifunc
 PdfFromPoly p = PDF (pfPos p) (\_ => Void) (pfDir {p}) (\i, v => void v)
 
-{- XXX
 export
-InterpToCovarRepPDF : (dom, x, y : Type) ->
-  (x -> dom) -> (dom -> y) -> InterpPDF (PdfCovarRep dom) x y
-InterpToCovarRepPDF dom x y mxd mdy =
-  IPDF (y ** mdy) mxd mdy (mdy . mxd) (\_ => Refl)
+InterpPdfFromPoly : (p : PolyFunc) -> (y : Type) ->
+  InterpPolyFunc p y -> InterpPDF (PdfFromPoly p) Void y (\v => void v)
+InterpPdfFromPoly (pos ** dir) y (i ** dm) =
+  IPDF i (\v => void v) dm $ \fext => funExt $ \v => void v
 
 export
-InterpToCovarRepPDFv : (dom, y : Type) ->
-  (dom -> y) -> InterpPDF (PdfCovarRep dom) Void y
-InterpToCovarRepPDFv dom y = InterpToCovarRepPDF dom Void y (\v => void v)
-
-export
-InterpFromCovarRepPDF : (dom, x, y : Type) ->
-  InterpPDF (PdfCovarRep dom) x y -> (dom -> y)
-InterpFromCovarRepPDF dom x y (IPDF i d c m comm) = c
-
-export
-InferFromCovarRepPDF : (dom, x, y : Type) ->
-  InterpPDF (PdfCovarRep dom) x y -> (x -> dom)
-InferFromCovarRepPDF dom x y (IPDF i d c m comm) = d
-
-export
-CovarPDFid : PolyDifunc
-CovarPDFid = PdfCovarRep Unit
-
-export
-InterpToCovarPDFid : (x, y : Type) ->
-  y -> InterpPDF CovarPDFid x y
-InterpToCovarPDFid x y ey = InterpToCovarRepPDF Unit x y (\_ => ()) (\() => ey)
-
-export
-InterpFromCovarPDFid : (x, y : Type) ->
-  InterpPDF CovarPDFid x y -> y
-InterpFromCovarPDFid x y ey = InterpFromCovarRepPDF Unit x y ey ()
--}
+InterpPdfToPoly : (p : PolyFunc) -> (y : Type) ->
+  InterpPDF (PdfFromPoly p) Void y (\v => void v) -> InterpPolyFunc p y
+InterpPdfToPoly (pos ** dir) y (IPDF i mx my comm) = (i ** my)
 
 export
 PdfFromDirich : PolyFunc -> PolyDifunc
 PdfFromDirich p = PDF (pfPos p) (pfDir {p}) (\_ => Unit) (\_, _ => ())
 
-{- XXX
 export
-InterpToContravarRepPDF : (cod, x, y : Type) ->
-  (cod -> y) -> (x -> cod) -> InterpPDF (PdfContravarRep cod) x y
-InterpToContravarRepPDF cod x y mcy mxc =
-  IPDF (x ** mxc) mxc mcy (mcy . mxc) (\_ => Refl)
+InterpPdfFromDirich : (p : PolyFunc) -> (x : Type) ->
+  InterpDirichFunc p x -> InterpPDF (PdfFromDirich p) x Unit (\_ => ())
+InterpPdfFromDirich (pos ** dir) x (i ** dm) =
+  IPDF i dm (\_ => ()) $ \fext => funExt $ \_ => Refl
 
 export
-InterpToContravarRepPDFu : (cod, x : Type) ->
-  (x -> cod) -> InterpPDF (PdfContravarRep cod) x Unit
-InterpToContravarRepPDFu cod x = InterpToContravarRepPDF cod x Unit (\_ => ())
-
-export
-InterpFromContravarRepPDF : (cod, x, y : Type) ->
-  InterpPDF (PdfContravarRep cod) x y -> (x -> cod)
-InterpFromContravarRepPDF cod x y (IPDF i d c m comm) = d
-
-export
-InferFromContravarRepPDF : (cod, x, y : Type) ->
-  InterpPDF (PdfContravarRep cod) x y -> (cod -> y)
-InferFromContravarRepPDF cod x y (IPDF i d c m comm) = c
--}
+InterpPdfToDirich : (p : PolyFunc) -> (x : Type) ->
+  InterpPDF (PdfFromDirich p) x Unit (\_ => ()) -> InterpDirichFunc p x
+InterpPdfToDirich (pos ** dir) x (IPDF i mx my comm) = (i ** mx)
 
 -----------------------------------------------------------------------
 ---- Polydinatural transformations between metalanguage difunctors ----
