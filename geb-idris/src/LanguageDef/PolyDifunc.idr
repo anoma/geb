@@ -33,11 +33,13 @@ record TwistNT (p, q : TwistPolyFunc) where
   constructor TwNT
   twntOnPos : tpfPos p -> tpfPos q
   twntOnBase :
-    (i : tpfPos p) -> tpfBase p i -> tpfBase q (twntOnPos i)
+    SliceMorphism {a=(tpfPos p)}
+      (tpfBase p)
+      (BaseChangeF twntOnPos (tpfBase q))
   twntOnTot :
     (i : tpfPos p) ->
       SliceMorphism {a=(tpfBase p i)}
-        (tpfTot q (twntOnPos i) . twntOnBase i)
+        (BaseChangeF (twntOnBase i) (tpfTot q (twntOnPos i)))
         (tpfTot p i)
 
 -----------------------------------------------------------------
