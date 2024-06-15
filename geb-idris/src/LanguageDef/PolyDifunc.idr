@@ -13,34 +13,44 @@ import public LanguageDef.IntECofamCat
 ----------------------------------
 
 public export
-PolyPolyCat : IntCatSig
-PolyPolyCat = ECofamCatSig (ECofamCatSig TypeCat)
+PolyPolyCat : IntCatSig -> IntCatSig
+PolyPolyCat cat = ECofamCatSig (ECofamCatSig cat)
 
 public export
-PolyPolyObj : Type
-PolyPolyObj = icObj PolyPolyCat
+PolyPolyObj : IntCatSig -> Type
+PolyPolyObj cat = icObj (PolyPolyCat cat)
 
 public export
-PolyPolyMor : IntMorSig PolyPolyObj
-PolyPolyMor = icMor PolyPolyCat
+PolyPolyMor : (cat : IntCatSig) -> IntMorSig (PolyPolyObj cat)
+PolyPolyMor cat = icMor (PolyPolyCat cat)
 
 public export
-PolyAppFunc : Type -> PolyPolyObj
-PolyAppFunc a = ((b : Type ** b -> a) ** \ai => (() ** \() => fst ai))
+PolyAppFunc : (cat : IntCatSig) -> icObj cat -> (PolyPolyObj cat)
+PolyAppFunc cat a =
+  ((b : icObj cat ** icMor cat b a) ** \ai => (() ** \() => fst ai))
 
 public export
-PolyAppToInterp : (a : Type) -> (p : PolyFunc) ->
-  InterpECofamCopreshfOMap PolyFunc PolyNatTrans (PolyAppFunc a) p ->
-  InterpPolyFunc p a
-PolyAppToInterp a (pos ** dir) (appPos ** onPos ** onDir) =
-  (onPos () ** \d => snd appPos $ onDir () d)
+PolyAppToInterp : (cat : IntCatSig) ->
+  (a : icObj cat) -> (p : IntECofamObj $ icObj cat) ->
+  InterpECofamCopreshfOMap
+    (IntECofamObj $ icObj cat)
+    (IntECofamMor $ icMor cat)
+    (PolyAppFunc cat a) p ->
+  InterpECofamCopreshfOMap (icObj cat) (icMor cat) p a
+PolyAppToInterp cat a (pos ** dir) (appPos ** onPos ** onDir) =
+  (onPos () **
+   icComp cat (dir $ onPos ()) (fst appPos) a (snd appPos) (onDir ()))
 
 public export
-PolyAppFromInterp : (a : Type) -> (p : PolyFunc) ->
-  InterpPolyFunc p a ->
-  InterpECofamCopreshfOMap PolyFunc PolyNatTrans (PolyAppFunc a) p
-PolyAppFromInterp a (pos ** dir) (i ** dm) =
-  ((dir i ** dm) ** (const i ** \() => id))
+PolyAppFromInterp : (cat : IntCatSig) ->
+  (a : icObj cat) -> (p : IntECofamObj $ icObj cat) ->
+  InterpECofamCopreshfOMap (icObj cat) (icMor cat) p a ->
+  InterpECofamCopreshfOMap
+    (IntECofamObj $ icObj cat)
+    (IntECofamMor $ icMor cat)
+    (PolyAppFunc cat a) p
+PolyAppFromInterp cat a (pos ** dir) (i ** dm) =
+  ((dir i ** dm) ** (const i ** \() => icId cat $ dir i))
 
 ----------------------------------
 ----------------------------------
