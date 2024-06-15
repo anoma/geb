@@ -59,23 +59,43 @@ PolyAppFromInterp cat a (pos ** dir) (i ** dm) =
 ----------------------------------
 
 public export
-record PolyDoubleYo (a, b : Type) where
-  constructor MkPolyDoubleYo
-  PolyDoubleYoEmbed : (p : PolyFunc) -> InterpPolyFunc p a -> InterpPolyFunc p b
+ECofamType : IntCatSig
+ECofamType = ECofamCatSig TypeCat
 
 public export
-Profunctor PolyDoubleYo where
-  dimap mca mbd (MkPolyDoubleYo y) =
-    MkPolyDoubleYo $ \p => InterpPFMap p mbd . y p . InterpPFMap p mca
+ECofamPolyType : IntCatSig
+ECofamPolyType = ECofamCatSig ECofamType
+
+public export
+record PolyDoubleYo (a, b : Type) where
+  constructor MkPolyDoubleYo
+  PolyDoubleYoEmbed :
+    PolyPolyMor TypeCat (PolyAppFunc TypeCat a) (PolyAppFunc TypeCat b)
+
+public export
+PolyDoubleYoDimap : IntEndoDimapSig Type TypeMor PolyDoubleYo
+PolyDoubleYoDimap s t a b mas mtb (MkPolyDoubleYo (onpos ** ondir)) =
+  MkPolyDoubleYo
+    (\(i ** mia) =>
+      (fst (onpos (i ** mas . mia)) ** mtb . snd (onpos (i ** mas . mia))) **
+     \(i ** mia) =>
+      (\() => () **
+       \(), ei =>
+        snd (ondir (i ** mas . mia)) ()
+          (rewrite unitUnique (fst (ondir (i ** mas . mia)) ()) () in ei)))
 
 public export
 toDoubleYo : ProfNT HomProf PolyDoubleYo
-toDoubleYo m = MkPolyDoubleYo $ \p => InterpPFMap p m
+toDoubleYo mab =
+  MkPolyDoubleYo
+    (\(i ** mia) => (i ** mab . mia) ** \(i ** mia) => (\() => () ** \() => id))
 
 public export
 fromDoubleYo : ProfNT PolyDoubleYo HomProf
-fromDoubleYo (MkPolyDoubleYo y) ea =
-  snd (y PFIdentityArena (() ** \() => ea)) ()
+fromDoubleYo (MkPolyDoubleYo (onpos ** ondir)) ea =
+  snd (onpos (a ** id))
+  $ snd (ondir (a ** id)) ()
+  $ rewrite unitUnique (fst (ondir (a ** id)) ()) () in ea
 
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
