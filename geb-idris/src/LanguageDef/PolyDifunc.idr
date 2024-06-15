@@ -26,26 +26,21 @@ PolyPolyMor = icMor PolyPolyCat
 
 public export
 PolyAppFunc : Type -> PolyPolyObj
-PolyAppFunc a =
-  (?PolyAppFunc_hole_pos **
-   \i => (?PolyAppFunc_hole_dir1 ** \d => ?PolyAppFunc_hole_dir2))
+PolyAppFunc a = ((b : Type ** b -> a) ** \ai => (() ** \() => fst ai))
 
 public export
 PolyAppToInterp : (a : Type) -> (p : PolyFunc) ->
   InterpECofamCopreshfOMap PolyFunc PolyNatTrans (PolyAppFunc a) p ->
   InterpPolyFunc p a
 PolyAppToInterp a (pos ** dir) (appPos ** onPos ** onDir) =
-  (?PolyAppToInterp_hole_pos **
-   \d => ?PolyAppToInterp_hole_dir)
+  (onPos () ** \d => snd appPos $ onDir () d)
 
 public export
 PolyAppFromInterp : (a : Type) -> (p : PolyFunc) ->
   InterpPolyFunc p a ->
   InterpECofamCopreshfOMap PolyFunc PolyNatTrans (PolyAppFunc a) p
 PolyAppFromInterp a (pos ** dir) (i ** dm) =
-  (?PolyAppFromInterp_hole_pos **
-   \ai => i **
-   \ai, d => ?PolyAppFromInterp_hole_dir2)
+  ((dir i ** dm) ** (const i ** \() => id))
 
 ----------------------------------
 ----------------------------------
