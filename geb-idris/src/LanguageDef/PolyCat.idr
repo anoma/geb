@@ -805,9 +805,9 @@ public export
 pfPosChangeArena : (p, q : PolyFunc) -> (pfPos p -> pfPos q) -> PolyFunc
 pfPosChangeArena p q f = (pfPosChangePos p q f ** pfPosChangeDir p q f)
 
--- Formula 6.75 from the "General Theory of Interaction" book (I think).
+-- Formula 6.78 from the "General Theory of Interaction" book (I think).
 -- If I'm reading exercise 6.77 correctly, this states that for any
--- polynomial functor `p`, the functor defined by postcomposition with `p`
+-- polynomial functor `q`, the functor defined by postcomposition with `q`
 -- has a left multiadjoint.  And if I'm further understanding ncatlab's
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint correctly, that
 -- in turn also means that that postcomposition functor is itself a
