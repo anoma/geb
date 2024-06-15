@@ -6,6 +6,31 @@ import LanguageDef.DisliceCat
 import public LanguageDef.DislicePolyCat
 import public LanguageDef.IntECofamCat
 
+----------------------------------
+----------------------------------
+---- Polynomial double-Yoneda ----
+----------------------------------
+----------------------------------
+
+public export
+record PolyDoubleYo (a, b : Type) where
+  constructor MkPolyDoubleYo
+  PolyDoubleYoEmbed : (p : PolyFunc) -> InterpPolyFunc p a -> InterpPolyFunc p b
+
+public export
+Profunctor PolyDoubleYo where
+  dimap mca mbd (MkPolyDoubleYo y) =
+    MkPolyDoubleYo $ \p => InterpPFMap p mbd . y p . InterpPFMap p mca
+
+public export
+toDoubleYo : ProfNT HomProf PolyDoubleYo
+toDoubleYo m = MkPolyDoubleYo $ \p => InterpPFMap p m
+
+public export
+fromDoubleYo : ProfNT PolyDoubleYo HomProf
+fromDoubleYo (MkPolyDoubleYo y) ea =
+  snd (y PFIdentityArena (() ** \() => ea)) ()
+
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
 ---- Dependent-type-style poly-difunctor ("twisted polynomial functor") ----
