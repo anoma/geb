@@ -59,6 +59,12 @@ PolyAppFromInterp cat a (pos ** dir) (i ** dm) =
 ----------------------------------
 
 public export
+record PolyDoubleYo (cat : IntCatSig) (a, b : icObj cat) where
+  constructor MkPolyDoubleYo
+  PolyDoubleYoEmbed :
+    PolyPolyMor cat (PolyAppFunc cat a) (PolyAppFunc cat b)
+
+public export
 ECofamType : IntCatSig
 ECofamType = ECofamCatSig TypeCat
 
@@ -67,13 +73,11 @@ ECofamPolyType : IntCatSig
 ECofamPolyType = ECofamCatSig ECofamType
 
 public export
-record PolyDoubleYo (a, b : Type) where
-  constructor MkPolyDoubleYo
-  PolyDoubleYoEmbed :
-    PolyPolyMor TypeCat (PolyAppFunc TypeCat a) (PolyAppFunc TypeCat b)
+PolyTypeDoubleYo : Type -> Type -> Type
+PolyTypeDoubleYo = PolyDoubleYo TypeCat
 
 public export
-PolyDoubleYoDimap : IntEndoDimapSig Type TypeMor PolyDoubleYo
+PolyDoubleYoDimap : IntEndoDimapSig Type TypeMor PolyTypeDoubleYo
 PolyDoubleYoDimap s t a b mas mtb (MkPolyDoubleYo (onpos ** ondir)) =
   MkPolyDoubleYo
     (\(i ** mia) =>
@@ -85,13 +89,13 @@ PolyDoubleYoDimap s t a b mas mtb (MkPolyDoubleYo (onpos ** ondir)) =
           (rewrite unitUnique (fst (ondir (i ** mas . mia)) ()) () in ei)))
 
 public export
-toDoubleYo : ProfNT HomProf PolyDoubleYo
+toDoubleYo : ProfNT HomProf PolyTypeDoubleYo
 toDoubleYo mab =
   MkPolyDoubleYo
     (\(i ** mia) => (i ** mab . mia) ** \(i ** mia) => (\() => () ** \() => id))
 
 public export
-fromDoubleYo : ProfNT PolyDoubleYo HomProf
+fromDoubleYo : ProfNT PolyTypeDoubleYo HomProf
 fromDoubleYo (MkPolyDoubleYo (onpos ** ondir)) ea =
   snd (onpos (a ** id))
   $ snd (ondir (a ** id)) ()
