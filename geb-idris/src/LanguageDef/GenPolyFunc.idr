@@ -19,10 +19,14 @@ import public LanguageDef.IntECofamCat
 -- In favor of the (identical) one from `SliceFuncCat`.
 %hide Library.IdrisCategories.BaseChangeF
 
-----------------------------------
+-----------------------------------------
+-----------------------------------------
+---- Polynomial double-Yoneda lemmas ----
+-----------------------------------------
+-----------------------------------------
+
 ----------------------------------
 ---- Polynomial apply functor ----
-----------------------------------
 ----------------------------------
 
 public export
@@ -74,11 +78,9 @@ PolyAppFromInterp : (cat : IntCatSig) ->
 PolyAppFromInterp cat a (pos ** dir) (i ** dm) =
   ((dir i ** dm) ** (const i ** \() => icId cat $ dir i))
 
-----------------------------------
-----------------------------------
----- Polynomial double-Yoneda ----
-----------------------------------
-----------------------------------
+--------------------------------------------------
+---- Polynomial covariant double-Yoneda lemma ----
+--------------------------------------------------
 
 public export
 record PolyDoubleYo (cat : IntCatSig) (a, b : icObj cat) where
