@@ -127,6 +127,29 @@ PolyDoubleYoDimap cat s t a b mas mtb y =
      PolyDoubleYoDimapOnMor cat s t a b mas mtb y)
 
 public export
+toDoubleYo : (cat : IntCatSig) ->
+  IntEndoProfNTSig (icObj cat) (icMor cat) (PolyDoubleYo cat)
+toDoubleYo cat x y mxy =
+  MkPolyDoubleYo
+    (\(i ** mix) => (i ** icComp cat i x y mxy mix) **
+     \(i ** mix) => (\() => () ** \() => icId cat i))
+
+public export
+fromDoubleYo : (cat : IntCatSig) ->
+  IntEndoProfNTSig (icObj cat) (PolyDoubleYo cat) (icMor cat)
+fromDoubleYo cat x y (MkPolyDoubleYo (onpos ** ondir)) with
+    (ondir (x ** icId cat x))
+  fromDoubleYo cat x y (MkPolyDoubleYo (onpos ** ondir)) |
+      ((od1 ** od2)) with (od2 ())
+    fromDoubleYo cat x y (MkPolyDoubleYo (onpos ** ondir)) |
+        ((od1 ** od2)) | od2u with (od1 ())
+      fromDoubleYo cat x y (MkPolyDoubleYo (onpos ** ondir)) |
+          ((od1 ** od2)) | od2u | () with (onpos (x ** icId cat x))
+        fromDoubleYo cat x y (MkPolyDoubleYo (onpos ** ondir)) |
+          (od1 ** od2) | od2u | () | (op1 ** op2) =
+            icComp cat x op1 y op2 od2u
+
+public export
 ECofamType : IntCatSig
 ECofamType = ECofamCatSig TypeCat
 
@@ -143,17 +166,12 @@ PolyTypeDoubleYoDimap : IntEndoDimapSig Type TypeMor PolyTypeDoubleYo
 PolyTypeDoubleYoDimap = PolyDoubleYoDimap TypeCat
 
 public export
-toDoubleYo : ProfNT HomProf PolyTypeDoubleYo
-toDoubleYo mab =
-  MkPolyDoubleYo
-    (\(i ** mia) => (i ** mab . mia) ** \(i ** mia) => (\() => () ** \() => id))
+toDoubleYoType : ProfNT HomProf PolyTypeDoubleYo
+toDoubleYoType {a} {b} = toDoubleYo TypeCat a b
 
 public export
-fromDoubleYo : ProfNT PolyTypeDoubleYo HomProf
-fromDoubleYo (MkPolyDoubleYo (onpos ** ondir)) ea =
-  snd (onpos (a ** id))
-  $ snd (ondir (a ** id)) ()
-  $ rewrite unitUnique (fst (ondir (a ** id)) ()) () in ea
+fromDoubleYoType : ProfNT PolyTypeDoubleYo HomProf
+fromDoubleYoType {a} {b} = fromDoubleYo TypeCat a b
 
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
