@@ -13,7 +13,7 @@ import public LanguageDef.IntECofamCat
 -------------------------------------
 
 -- The disheaf category of a category is the category of existential
--- families (AKA polynomial functors) on its twisted-arrow category.
+-- cofamilies (AKA polynomial functors) on its twisted-arrow category.
 
 public export
 IntDisheafCat : (c : IntCatSig) ->
