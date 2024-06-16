@@ -1024,6 +1024,21 @@ public export
 OpSliceCat : Type -> IntCatSig
 OpSliceCat c = IntOpCat (SliceCat c)
 
+-----------------------------------------------------------
+---- Monoid of metalanguage twisted-arrow copresheaves ----
+-----------------------------------------------------------
+
+public export
+MetaTwArrCoprCat : IntCatSig
+MetaTwArrCoprCat =
+  ICat
+    Unit
+  $ MICS
+    (\_, _ => TwArrCoprSig)
+  $ ICS
+    (\_ => TwArrCoprId)
+    (\_, _, _ => TwArrCoprCompose)
+
 ------------------------
 ---- (Co)presheaves ----
 ------------------------
