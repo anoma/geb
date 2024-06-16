@@ -1569,6 +1569,10 @@ TwArrCoprDimapSig p =
   p s t mst -> p a b (mtb . mst . mas)
 
 public export
+TwArrCoprId : TwArrCoprSig
+TwArrCoprId x y mxy = Unit
+
+public export
 TwArrCoprCompose : TwArrCoprSig -> TwArrCoprSig -> TwArrCoprSig
 TwArrCoprCompose q p x z mxz =
   (y : Type ** mp : (x -> y, y -> z) **
