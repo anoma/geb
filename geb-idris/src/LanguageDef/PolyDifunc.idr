@@ -21,6 +21,15 @@ PolyPolyObj : IntCatSig -> Type
 PolyPolyObj cat = icObj (PolyPolyCat cat)
 
 public export
+PolyPolyMorOnIdx : (cat : IntCatSig) -> IntMorSig (PolyPolyObj cat)
+PolyPolyMorOnIdx cat = IntECofamMorOnIdx (icMor $ ECofamCatSig cat)
+
+public export
+PolyPolyMorOnMor : (cat : IntCatSig) -> (dom, cod : PolyPolyObj cat) ->
+  PolyPolyMorOnIdx cat dom cod -> Type
+PolyPolyMorOnMor cat = IntECofamMorOnMor (icMor $ ECofamCatSig cat)
+
+public export
 PolyPolyMor : (cat : IntCatSig) -> IntMorSig (PolyPolyObj cat)
 PolyPolyMor cat = icMor (PolyPolyCat cat)
 
@@ -65,6 +74,59 @@ record PolyDoubleYo (cat : IntCatSig) (a, b : icObj cat) where
     PolyPolyMor cat (PolyAppFunc cat a) (PolyAppFunc cat b)
 
 public export
+PolyDoubleYoOnIdx : {cat : IntCatSig} -> {a, b : icObj cat} ->
+  PolyDoubleYo cat a b ->
+  PolyPolyMorOnIdx cat (PolyAppFunc cat a) (PolyAppFunc cat b)
+PolyDoubleYoOnIdx {cat} {a} {b} (MkPolyDoubleYo (onpos ** ondir)) = onpos
+
+public export
+PolyDoubleYoOnMor : {cat : IntCatSig} -> {a, b : icObj cat} ->
+  (y : PolyDoubleYo cat a b) ->
+  PolyPolyMorOnMor cat (PolyAppFunc cat a) (PolyAppFunc cat b)
+    (PolyDoubleYoOnIdx {cat} {a} {b} y)
+PolyDoubleYoOnMor {cat} {a} {b} (MkPolyDoubleYo (onpos ** ondir)) = ondir
+
+public export
+PolyDoubleYoDimapOnIdx : (cat : IntCatSig) ->
+  (s, t, a, b : icObj cat) -> icMor cat a s -> icMor cat t b ->
+  PolyDoubleYo cat s t ->
+  PolyPolyMorOnIdx cat (PolyAppFunc cat a) (PolyAppFunc cat b)
+PolyDoubleYoDimapOnIdx cat s t a b mas mtb (MkPolyDoubleYo (onpos ** ondir))
+  (i ** mia) =
+    case (onpos (i ** icComp cat i a s mas mia)) of
+      (op1 ** op2) => (op1 ** icComp cat op1 t b mtb op2)
+
+public export
+PolyDoubleYoDimapOnMor : (cat : IntCatSig) ->
+  (s, t, a, b : icObj cat) -> (mas : icMor cat a s) -> (mtb : icMor cat t b) ->
+  (y : PolyDoubleYo cat s t) ->
+  PolyPolyMorOnMor cat (PolyAppFunc cat a) (PolyAppFunc cat b)
+    (PolyDoubleYoDimapOnIdx cat s t a b mas mtb y)
+PolyDoubleYoDimapOnMor cat s t a b mas mtb (MkPolyDoubleYo (onpos ** ondir))
+    (i ** mia) with
+    (onpos (i ** icComp cat i a s mas mia),
+     ondir (i ** icComp cat i a s mas mia)) proof odeq
+  PolyDoubleYoDimapOnMor cat s t a b mas mtb (MkPolyDoubleYo (onpos ** ondir))
+    (i ** mia) | ((op1 ** op2), (od1 ** od2)) with (od2 ()) proof ueq
+      PolyDoubleYoDimapOnMor cat s t a b mas mtb
+          (MkPolyDoubleYo (onpos ** ondir)) (i ** mia)
+          | ((op1 ** op2), (od1 ** od2)) | od2u with (od1 ())
+        PolyDoubleYoDimapOnMor cat s t a b mas mtb
+          (MkPolyDoubleYo (onpos ** ondir)) (i ** mia)
+          | ((op1 ** op2), (od1 ** od2)) | od2u | () =
+            (\() => () **
+             \() =>
+              rewrite fstEq odeq in rewrite sym (dpeq1 (fstEq odeq)) in od2u)
+
+public export
+PolyDoubleYoDimap : (cat : IntCatSig) ->
+  IntEndoDimapSig (icObj cat) (icMor cat) (PolyDoubleYo cat)
+PolyDoubleYoDimap cat s t a b mas mtb y =
+  MkPolyDoubleYo
+    (PolyDoubleYoDimapOnIdx cat s t a b mas mtb y **
+     PolyDoubleYoDimapOnMor cat s t a b mas mtb y)
+
+public export
 ECofamType : IntCatSig
 ECofamType = ECofamCatSig TypeCat
 
@@ -77,16 +139,8 @@ PolyTypeDoubleYo : Type -> Type -> Type
 PolyTypeDoubleYo = PolyDoubleYo TypeCat
 
 public export
-PolyDoubleYoDimap : IntEndoDimapSig Type TypeMor PolyTypeDoubleYo
-PolyDoubleYoDimap s t a b mas mtb (MkPolyDoubleYo (onpos ** ondir)) =
-  MkPolyDoubleYo
-    (\(i ** mia) =>
-      (fst (onpos (i ** mas . mia)) ** mtb . snd (onpos (i ** mas . mia))) **
-     \(i ** mia) =>
-      (\() => () **
-       \(), ei =>
-        snd (ondir (i ** mas . mia)) ()
-          (rewrite unitUnique (fst (ondir (i ** mas . mia)) ()) () in ei)))
+PolyTypeDoubleYoDimap : IntEndoDimapSig Type TypeMor PolyTypeDoubleYo
+PolyTypeDoubleYoDimap = PolyDoubleYoDimap TypeCat
 
 public export
 toDoubleYo : ProfNT HomProf PolyTypeDoubleYo

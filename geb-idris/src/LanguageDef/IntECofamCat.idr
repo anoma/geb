@@ -36,6 +36,17 @@ icfeoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -------------------
 -------------------
 
+public export
+IntECofamMorOnIdx : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntECofamObj c) -> Type
+IntECofamMorOnIdx {c} mor dom cod = icfeoIdx dom -> icfeoIdx cod
+
+public export
+IntECofamMorOnMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntECofamObj c) -> IntECofamMorOnIdx {c} mor dom cod -> Type
+IntECofamMorOnMor {c} mor dom cod onidx =
+  (di : icfeoIdx dom) -> mor (icfeoObj cod $ onidx di) (icfeoObj dom di)
+
 -- Morphisms of the category of existential cofamilies of objects from a given
 -- category.  (A "cofamily" of objects from `c` is simply a family of objects
 -- from the opposite of `c`; see `IntEFamCat` for the notion of "existential
@@ -44,8 +55,9 @@ public export
 IntECofamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntECofamObj c) -> Type
 IntECofamMor {c} mor dom cod =
-  (onidx : icfeoIdx dom -> icfeoIdx cod **
-   (di : icfeoIdx dom) -> mor (icfeoObj cod $ onidx di) (icfeoObj dom di))
+  DPair
+    (IntECofamMorOnIdx {c} mor dom cod)
+    (IntECofamMorOnMor {c} mor dom cod)
 
 -- Note that this category is the opposite category of
 -- the category of universal families (AKA the free cartesian monoidal
@@ -305,8 +317,8 @@ slufmId {c} = icfemId {c=(SliceObj c)} (SliceMorphism {a=c}) (SliceId c)
 public export
 slufmComp : {c : Type} -> {x, y, z : SliceECofamObj c} ->
   SliceECofamMor y z -> SliceECofamMor x y -> SliceECofamMor x z
-slufmComp {c} =
-  icfemComp (SliceMor c) $ \x, y, z => SliceComp c x y z
+slufmComp {c} {x} {y} {z} =
+  icfemComp {x} {y} {z} (SliceMorphism {a=c}) $ SliceComp c
 
 -- `InterpSLECofamObj` and `InterpSLECofamMor` comprise a functor from
 -- `SliceECofamObj c` to `op(SliceObj c)` (for any `c : Type`).  It is the
