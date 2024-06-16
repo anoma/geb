@@ -25,9 +25,9 @@ import public LanguageDef.IntECofamCat
 -----------------------------------------
 -----------------------------------------
 
-----------------------------------
----- Polynomial apply functor ----
-----------------------------------
+----------------------------------------
+---- Polynomial-polynomial category ----
+----------------------------------------
 
 public export
 PolyPolyCat : IntCatSig -> IntCatSig
@@ -49,6 +49,10 @@ PolyPolyMorOnMor cat = IntECofamMorOnMor (icMor $ ECofamCatSig cat)
 public export
 PolyPolyMor : (cat : IntCatSig) -> IntMorSig (PolyPolyObj cat)
 PolyPolyMor cat = icMor (PolyPolyCat cat)
+
+----------------------------------
+---- Polynomial apply functor ----
+----------------------------------
 
 public export
 PolyAppFunc : (cat : IntCatSig) -> icObj cat -> (PolyPolyObj cat)
