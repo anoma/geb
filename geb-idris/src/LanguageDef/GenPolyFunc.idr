@@ -168,6 +168,10 @@ fromDoubleYo cat x y (MkPolyDoubleYo (onpos ** ondir)) with
           (od1 ** od2) | od2u | () | (op1 ** op2) =
             icComp cat x op1 y op2 od2u
 
+------------------------------------------------------------
+---- Polynomial covariant double-Yoneda lemma in `Type` ----
+------------------------------------------------------------
+
 public export
 ECofamType : IntCatSig
 ECofamType = ECofamCatSig TypeCat
