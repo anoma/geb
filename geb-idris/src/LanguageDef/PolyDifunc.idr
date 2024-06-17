@@ -18,7 +18,7 @@ import public LanguageDef.GenPolyFunc
 
 public export
 TwistArrAr : Type
-TwistArrAr = IntECofamObj Type
+TwistArrAr = icObj ECofamType
 
 public export
 twarCod : TwistArrAr -> Type
@@ -30,11 +30,11 @@ twarDom = DPair.snd
 
 public export
 TwistArrMor : IntMorSig TwistArrAr
-TwistArrMor = IntECofamMor {c=TypeObj} TypeMor
+TwistArrMor = icMor ECofamType
 
 public export
 TwistPolyFunc : Type
-TwistPolyFunc = IntEFamObj TwistArrAr
+TwistPolyFunc = icObj ECofamPolyType
 
 public export
 tpfPos : TwistPolyFunc -> Type
