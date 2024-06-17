@@ -44,6 +44,7 @@ modules =
     , LanguageDef.PolyDifunc
     , LanguageDef.MLQuivPoly
     , LanguageDef.GenPolyFunc
+    , LanguageDef.PolySliceCat
     , LanguageDef.FinCat
     , LanguageDef.BinTree
     , LanguageDef.Geb
@@ -96,6 +97,7 @@ modules =
     , LanguageDef.Test.PolyDifuncTest
     , LanguageDef.Test.MLQuivPolyTest
     , LanguageDef.Test.GenPolyFuncTest
+    , LanguageDef.Test.PolySliceCatTest
     , LanguageDef.Test.HigherPolyCatTest
     , LanguageDef.Test.FinCatTest
     , LanguageDef.Test.BinTreeTest
