@@ -666,6 +666,12 @@ spaDimap d c v spa sld sld' slc slc' md'd mcc' elv =
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
 
+-- This definition makes it explicit that that the category of elements of a
+-- Dirichlet endofunctor on `Type` is (equivalent to) the (indexed) coproduct
+-- category over the positions of the slice categories over the directions.
+-- (For a polynomial endofunctor on `Type`, the corresponding statement would
+-- hold with "slice" replaced by "coslice".)
+
 public export
 DirichCatElObj : PolyFunc -> Type
 DirichCatElObj p = (i : pfPos p ** SliceObj $ pfDir {p} i)
