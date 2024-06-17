@@ -799,7 +799,7 @@ InterpMlDirichSlMor {ar=(bpos ** bdir)}
      \elty => mondir i (fst dpd) (bd elty) $ snd dpd elty)
 
 -- This interprets an object in a slice category of polynomial functors
--- as an object in the category of presheaves over the category of elements
+-- as an object in the category of copresheaves over the category of elements
 -- of the base functor.
 public export
 InterpMlPolySlObj : {ar : PolyFunc} ->
