@@ -667,6 +667,62 @@ spaDimap d c v spa sld sld' slc slc' md'd mcc' elv =
 -------------------------------------------------------------------------
 
 public export
+DirichCatElObj : PolyFunc -> Type
+DirichCatElObj p = (i : pfPos p ** SliceObj $ pfDir {p} i)
+
+public export
+DirichCatElBaseT : (p : PolyFunc) -> DirichCatElObj p -> Type
+DirichCatElBaseT p el = Sigma {a=(pfDir {p} (fst el))} (snd el)
+
+public export
+DirichCatElPosMor : (p : PolyFunc) -> (i : pfPos p) ->
+  IntMorSig (SliceObj $ pfDir {p} i)
+DirichCatElPosMor p i = SliceMorphism {a=(pfDir {p} i)}
+
+public export
+DirichCatElMorTot : PolyFunc -> Type
+DirichCatElMorTot p =
+  (i : pfPos p **
+   xy : ProductMonad $ SliceObj $ pfDir {p} i **
+   DirichCatElPosMor p i (fst xy) (snd xy))
+
+public export
+DirichCatElMorPos : {p : PolyFunc} -> DirichCatElMorTot p -> pfPos p
+DirichCatElMorPos {p} m = fst m
+
+public export
+DirichCatElMorSig : {p : PolyFunc} ->
+  (m : DirichCatElMorTot p) ->
+  ProductMonad (SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m)
+DirichCatElMorSig {p} m = fst $ snd m
+
+public export
+DirichCatElMorDom : {p : PolyFunc} ->
+  (m : DirichCatElMorTot p) -> SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m
+DirichCatElMorDom {p} m = fst $ DirichCatElMorSig {p} m
+
+public export
+DirichCatElMorCod : {p : PolyFunc} ->
+  (m : DirichCatElMorTot p) -> SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m
+DirichCatElMorCod {p} m = snd $ DirichCatElMorSig {p} m
+
+public export
+DirichCatElMorMor : {p : PolyFunc} ->
+  (m : DirichCatElMorTot p) ->
+  SliceMorphism {a=(pfDir {p} $ DirichCatElMorPos {p} m)}
+    (DirichCatElMorDom {p} m)
+    (DirichCatElMorCod {p} m)
+DirichCatElMorMor {p} m = snd $ snd m
+
+public export
+data DirichCatElMor : (p : PolyFunc) -> IntMorSig (DirichCatElObj p) where
+  DCEM : {p : PolyFunc} ->
+    (m : DirichCatElMorTot p) ->
+    DirichCatElMor p
+      (DirichCatElMorPos {p} m ** DirichCatElMorDom {p} m)
+      (DirichCatElMorPos {p} m ** DirichCatElMorCod {p} m)
+
+public export
 record PolyEnrAr where
   constructor PEA
   peaPos : Type
