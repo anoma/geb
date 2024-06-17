@@ -7,22 +7,6 @@ import public LanguageDef.SlicePolyCat
 
 ------------------------------------------------
 ------------------------------------------------
----- Universal slice polynomial 2-morphisms ----
-------------------------------------------------
-------------------------------------------------
-
--- Here we define universal objects in the category of all slice
--- polynomial functors, where the universal morphisms are
--- 2-morphisms, also known as cells.
---
--- Note that a universal object in the category of slice polynomial
--- functors between some fixed domain and codomain slice categories
--- is a special case of a universal object in the category of all
--- slice polynomial functors, where the vertical sides of the cell
--- are both identities.
-
-------------------------------------------------
-------------------------------------------------
 ---- Limits/colimits of polynomial functors ----
 ------------------------------------------------
 ------------------------------------------------
@@ -211,3 +195,19 @@ SPFDLimitTripleAdjunctionSig a b =
   ITAFromUnits
     (SPFDLimitColimitTripleAdjoints a b)
     (SPFDLimitTripleUnitsSig a b)
+
+------------------------------------------------
+------------------------------------------------
+---- Universal slice polynomial 2-morphisms ----
+------------------------------------------------
+------------------------------------------------
+
+-- Here we define universal objects in the category of all slice
+-- polynomial functors, where the universal morphisms are
+-- 2-morphisms, also known as cells.
+--
+-- Note that a universal object in the category of slice polynomial
+-- functors between some fixed domain and codomain slice categories
+-- is a special case of a universal object in the category of all
+-- slice polynomial functors, where the vertical sides of the cell
+-- are both identities.
