@@ -5641,7 +5641,9 @@ spdFromWTF {c} {d} p sc ed (Element0 ed' eq ** mpsc) =
   \ec, pdc => mpsc (Element0 ((ed, ec) ** pdc) $ sym eq)
 
 ---------------------------------------------------------------------
+---------------------------------------------------------------------
 ---- Slice objects in terms of parameterized polynomial functors ----
+---------------------------------------------------------------------
 ---------------------------------------------------------------------
 
 -- The dependent-type view of slices in the category of polynomial functors,
