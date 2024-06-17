@@ -33,6 +33,7 @@ import LanguageDef.Test.MLQuivUnivTest
 import LanguageDef.Test.PolyDifuncTest
 import LanguageDef.Test.MLQuivPolyTest
 import LanguageDef.Test.GenPolyFuncTest
+import LanguageDef.Test.PolySliceCatTest
 import LanguageDef.Test.FinCatTest
 import LanguageDef.Test.BinTreeTest
 import LanguageDef.Test.GebTest
@@ -99,6 +100,7 @@ totalTests = do
   LanguageDef.Test.PolyDifuncTest.polyDifuncTest
   LanguageDef.Test.MLQuivPolyTest.mlQuivPolyTest
   LanguageDef.Test.GenPolyFuncTest.genPolyFuncTest
+  LanguageDef.Test.PolySliceCatTest.polySliceCatTest
   LanguageDef.Test.DisliceCatTest.disliceCatTest
   LanguageDef.Test.DislicePolyCatTest.dislicePolyCatTest
   LanguageDef.Test.InternalProfunctorTest.internalProfunctorTest
