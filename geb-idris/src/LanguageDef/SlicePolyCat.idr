@@ -10,8 +10,6 @@ import public LanguageDef.IntUFamCat
 import public LanguageDef.IntUCofamCat
 import public LanguageDef.IntEFamCat
 import public LanguageDef.IntECofamCat
-import public LanguageDef.HelixCat
-import public LanguageDef.RopeCat
 
 %default total
 
@@ -34,6 +32,11 @@ import public LanguageDef.RopeCat
 ---- Definition ----
 --------------------
 
+-- At https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms
+-- in the proposition about the "especially nice form" of PRA functors between
+-- presheaf categories, this `SFPdirType` corresponds to what is called the
+-- functor `E_T`, while the `SliceObj cod` which it depends on is the object
+-- `T1`.
 public export
 0 SPFdirType : (0 dom, cod : Type) -> (0 _ : SliceObj cod) -> Type
 SPFdirType dom cod pos = (ec : cod) -> pos ec -> SliceObj dom
