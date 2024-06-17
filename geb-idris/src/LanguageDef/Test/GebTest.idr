@@ -130,8 +130,6 @@ btPolyShape n = [(2, 1), (0, n)]
 -------------------------------------
 -------------------------------------
 
-%hide LanguageDef.ADTCat.infixr.($*)
-
 BTT : Type
 BTT = BinTreeMu Nat
 

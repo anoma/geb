@@ -53,7 +53,6 @@ public export
 ($$>) : {0 atom, ty : Type} -> (ty, ty) -> BinTreeF atom ty
 ($$>) = Right
 
-%hide LanguageDef.ADTCat.infixr.($$*)
 export infixr 10 $$*
 public export
 ($$*) : {0 atom, ty : Type} -> ty -> ty -> BinTreeF atom ty
@@ -96,7 +95,6 @@ public export
 ($>) : {0 atom : Type} -> ProdAlg (BinTreeMu atom)
 ($>) = InBTm . ($$>)
 
-%hide LanguageDef.ADTCat.infixr.($*)
 export infixr 10 $*
 public export
 ($*) : {0 atom : Type} -> BinTreeMu atom -> BinTreeMu atom -> BinTreeMu atom
