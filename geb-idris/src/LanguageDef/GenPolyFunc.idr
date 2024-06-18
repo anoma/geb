@@ -33,7 +33,7 @@ import public LanguageDef.IntDisheafCat
 
 public export
 PolyPolyCat : IntCatSig -> IntCatSig
-PolyPolyCat cat = ECofamCatSig (ECofamCatSig cat)
+PolyPolyCat = ECofamPolyCat
 
 public export
 PolyPolyObj : IntCatSig -> Type
