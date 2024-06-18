@@ -6,6 +6,7 @@ import LanguageDef.DisliceCat
 import public LanguageDef.DislicePolyCat
 import public LanguageDef.IntECofamCat
 import public LanguageDef.GenPolyFunc
+import public LanguageDef.IntDisheafCat
 
 %default total
 %hide Library.IdrisCategories.BaseChangeF
