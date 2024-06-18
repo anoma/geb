@@ -884,8 +884,12 @@ InterpMlPolySlMor fext {ar=(bpos ** bdir)}
 -- hold with "slice" replaced by "coslice".)
 
 public export
+DirichCatElObjPos : (p : PolyFunc) -> pfPos p -> Type
+DirichCatElObjPos p = SliceObj . pfDir {p}
+
+public export
 DirichCatElObj : PolyFunc -> Type
-DirichCatElObj p = (i : pfPos p ** SliceObj $ pfDir {p} i)
+DirichCatElObj p = Sigma {a=(pfPos p)} $ DirichCatElObjPos p
 
 public export
 DirichCatElBaseT : (p : PolyFunc) -> DirichCatElObj p -> Type
