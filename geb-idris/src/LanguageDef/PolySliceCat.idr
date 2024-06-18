@@ -943,9 +943,37 @@ mlPolySlBaseChangeMap {p} {q} (ntonpos ** ntondir)
 ---- Sigma (dependent sum) ----
 -------------------------------
 
+public export
 MLPolySlSigma : (q : PolyFunc) -> {p : PolyFunc} ->
   PolyNatTrans p q -> MlPolySlObj p -> MlPolySlObj q
 MLPolySlSigma q {p} beta sl with (mlPolySlObjToC p sl)
   MLPolySlSigma q {p} beta sl | (r ** alpha) =
     let csigma = (r ** pntVCatComp beta alpha) in
     mlPolySlObjFromC q csigma
+
+----------------------------
+---- General polynomial ----
+----------------------------
+
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms
+-- describes how a PRA functor between presheaf categories is determined
+-- by two pieces of data which it calls `T1` and `E_T`.  It refers to
+-- general presheaf categories over categories it calls `I` and `J`.
+--
+-- Here we are considering PRA functors between slice categories of Dirichlet
+-- functors.  The slice category of Dirichlet functors over a Dirichlet
+-- functor `p` is equivalent to the category of presheaves over its category
+-- of elements.  Hence, we can determine a PRA (polynomial) functor between
+-- slice categories over Dirichlet functors `p` and `q` by specifying `T1`
+-- and `E_T` where `I` is the category of elements of `p` and `J` is the
+-- category of elements of `q`.
+--
+-- `T1` is simply an object of the codomain (specifically, the presheaf over
+-- `J` to which we shall map the terminal presheaf over `I`), so it is an
+-- object of the category of Dirichlet functors sliced over `q` (equivalently,
+-- an object of the category of presheaves over the category of elements of
+-- `q`).
+--
+-- `E_T`, given a `T1`, is a functor from the category of elements of `T1`
+-- (which makes sense because `T1` is itself a presheaf) to the category of
+-- presheaves over `I` (which is the domain of the PRA functor).
