@@ -4,8 +4,8 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import Library.IdrisAlgebra
 import public LanguageDef.InternalCat
+import public LanguageDef.InternalProfunctor
 import public LanguageDef.IntArena
-import public LanguageDef.IntEFamCat
 
 -----------------
 -----------------
@@ -53,16 +53,6 @@ IntUFamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
 IntUFamMor {c} mor dom cod =
   (onidx : ifuoIdx cod -> ifuoIdx dom **
    (ci : ifuoIdx cod) -> mor (ifuoObj dom $ onidx ci) (ifuoObj cod ci))
-
--- The category of universal families of objects from a category `c`
--- is equivalent to the opposite category of the category of existential
--- families of `op(c)`.
-export
-IntUFamIsOpEFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
-  (dom, cod : IntUFamObj c) ->
-  IntUFamMor {c} mor dom cod =
-  IntOpCatMor (IntEFamObj c) (IntEFamMor {c} $ IntOpCatMor c mor) dom cod
-IntUFamIsOpEFamOp {c} mor dom cod = Refl
 
 public export
 IFUM :
