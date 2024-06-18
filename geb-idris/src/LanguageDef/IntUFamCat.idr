@@ -35,6 +35,17 @@ ifuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -------------------
 -------------------
 
+public export
+IntUFamIdxMor : {c : Type} -> IntDifunctorSig c ->
+  IntUFamObj c -> IntUFamObj c -> Type
+IntUFamIdxMor {c} mor dom cod = ifuoIdx cod -> ifuoIdx dom
+
+public export
+IntUFamObjMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntUFamObj c) -> IntUFamIdxMor {c} mor dom cod -> Type
+IntUFamObjMor {c} mor dom cod imor =
+   (ci : ifuoIdx cod) -> mor (ifuoObj dom $ imor ci) (ifuoObj cod ci)
+
 -- Morphisms of the category of universal families of objects from a given
 -- category.  See for example the definition preceding Theorem 2.5 at
 -- https://ncatlab.org/nlab/show/multi-adjoint#definition , which
@@ -51,8 +62,7 @@ public export
 IntUFamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUFamObj c) -> Type
 IntUFamMor {c} mor dom cod =
-  (onidx : ifuoIdx cod -> ifuoIdx dom **
-   (ci : ifuoIdx cod) -> mor (ifuoObj dom $ onidx ci) (ifuoObj cod ci))
+  Sigma {a=(IntUFamIdxMor {c} mor dom cod)} $ IntUFamObjMor {c} mor dom cod
 
 public export
 IFUM :
