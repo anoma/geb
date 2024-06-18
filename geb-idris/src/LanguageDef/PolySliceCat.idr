@@ -963,7 +963,7 @@ data DirichCatElMor : (p : PolyFunc) -> IntMorSig (DirichCatElObj p) where
 -- definition makes sense then it ought to agree with `MlDirichSlObj`.
 public export
 DirichDirichCatElArPos : (p : MLDirichCatObj) -> pfPos p -> Type
-DirichDirichCatElArPos p i = IntDirichCatObj (SliceObj $ pfDir {p} i)
+DirichDirichCatElArPos p i = IntDirichCatObj (DirichCatElObjPos p i)
 
 public export
 DirichDirichCatElAr : MLDirichCatObj -> Type
