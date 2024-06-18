@@ -307,3 +307,9 @@ MLPolySlSigma q {p} beta sl with (mlPolySlObjToC p sl)
 -- `E_T`, given a `T1`, is a functor from the category of elements of `T1`
 -- (which makes sense because `T1` is itself a presheaf) to the category of
 -- presheaves over `I` (which is the domain of the PRA functor).
+
+public export
+0 PRAdirType : (0 dom, cod : MLDirichCatObj) ->
+  (0 pos : MlDirichSlObj cod) -> Type
+PRAdirType dom cod pos = (ty : Type) -> (sl : InterpDirichFunc cod ty) ->
+  InterpMlDirichSlObj {ar=cod} pos ty sl -> MlDirichSlObj dom
