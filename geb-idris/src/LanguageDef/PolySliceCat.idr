@@ -20,113 +20,6 @@ import public LanguageDef.MLBundleCat
 -- In favor of the (identical) one from `SliceFuncCat`.
 %hide Library.IdrisCategories.BaseChangeF
 
-------------------------------------------------------
-------------------------------------------------------
----- Categories of elements of Dirichlet functors ----
-------------------------------------------------------
-------------------------------------------------------
-
--------------------------------
----- Objects and morphisms ----
--------------------------------
-
--- This definition makes it explicit that that the category of elements of a
--- Dirichlet endofunctor on `Type` is (equivalent to) the (indexed) coproduct
--- category over the positions of the slice categories over the directions.
--- (For a polynomial endofunctor on `Type`, the corresponding statement would
--- hold with "slice" replaced by "coslice".)
-
-public export
-DirichCatElObj : PolyFunc -> Type
-DirichCatElObj p = (i : pfPos p ** SliceObj $ pfDir {p} i)
-
-public export
-DirichCatElBaseT : (p : PolyFunc) -> DirichCatElObj p -> Type
-DirichCatElBaseT p el = Sigma {a=(pfDir {p} (fst el))} (snd el)
-
-public export
-DirichCatElPosMor : (p : PolyFunc) -> (i : pfPos p) ->
-  IntMorSig (SliceObj $ pfDir {p} i)
-DirichCatElPosMor p i = SliceMorphism {a=(pfDir {p} i)}
-
-public export
-DirichCatElMorTot : PolyFunc -> Type
-DirichCatElMorTot p =
-  (i : pfPos p **
-   xy : ProductMonad $ SliceObj $ pfDir {p} i **
-   DirichCatElPosMor p i (fst xy) (snd xy))
-
-public export
-DirichCatElMorPos : {p : PolyFunc} -> DirichCatElMorTot p -> pfPos p
-DirichCatElMorPos {p} m = fst m
-
-public export
-DirichCatElMorSig : {p : PolyFunc} ->
-  (m : DirichCatElMorTot p) ->
-  ProductMonad (SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m)
-DirichCatElMorSig {p} m = fst $ snd m
-
-public export
-DirichCatElMorDom : {p : PolyFunc} ->
-  (m : DirichCatElMorTot p) -> SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m
-DirichCatElMorDom {p} m = fst $ DirichCatElMorSig {p} m
-
-public export
-DirichCatElMorCod : {p : PolyFunc} ->
-  (m : DirichCatElMorTot p) -> SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m
-DirichCatElMorCod {p} m = snd $ DirichCatElMorSig {p} m
-
-public export
-DirichCatElMorMor : {p : PolyFunc} ->
-  (m : DirichCatElMorTot p) ->
-  SliceMorphism {a=(pfDir {p} $ DirichCatElMorPos {p} m)}
-    (DirichCatElMorDom {p} m)
-    (DirichCatElMorCod {p} m)
-DirichCatElMorMor {p} m = snd $ snd m
-
-public export
-data DirichCatElMor : (p : PolyFunc) -> IntMorSig (DirichCatElObj p) where
-  DCEM : {p : PolyFunc} ->
-    (m : DirichCatElMorTot p) ->
-    DirichCatElMor p
-      (DirichCatElMorPos {p} m ** DirichCatElMorDom {p} m)
-      (DirichCatElMorPos {p} m ** DirichCatElMorCod {p} m)
-
----------------------------
----- Outgoing functors ----
----------------------------
-
--- Because the category of elements of a Dirichlet functor is a coproduct
--- category, a functor out of it is a product of functors.
---
--- In particular, a _Dirichlet_ functor on the category of elements of
--- a Dirichlet functor is a product of Dirichlet functors on the slice
--- categories of the directions of the base functor.
---
--- Note that another way of looking at a presheaf (of which Dirichlet functors
--- are an example) on the category of elements of a presheaf is as an object
--- of the slice category of presheaves over the base presheaf, so if this
--- definition makes sense then it ought to agree with `MlDirichSlObj`.
-public export
-DirichDirichCatElArPos : (p : MLDirichCatObj) -> pfPos p -> Type
-DirichDirichCatElArPos p i = IntDirichCatObj (SliceObj $ pfDir {p} i)
-
-public export
-DirichDirichCatElAr : MLDirichCatObj -> Type
-DirichDirichCatElAr p = Pi {a=(pfPos p)} $ DirichDirichCatElArPos p
-
-public export
-DirichDirichCatElArMorPos : (b : MLDirichCatObj) -> (i : pfPos b) ->
-  IntMorSig (DirichDirichCatElArPos b i)
-DirichDirichCatElArMorPos b i =
-  IntDirichCatMor (SliceObj $ pfDir {p=b} i) (SliceMorphism {a=(pfDir {p=b} i)})
-
-public export
-DirichDirichCatElArMor : (b : MLDirichCatObj) ->
-  IntMorSig (DirichDirichCatElAr b)
-DirichDirichCatElArMor b p q =
-  (i : pfPos b) -> DirichDirichCatElArMorPos b i (p i) (q i)
-
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
 ---- Slice categories of polynomial functors (in categorial style) ----
@@ -973,3 +866,110 @@ InterpMlPolySlMor fext {ar=(bpos ** bdir)}
       $ trans
         (dpEq12 Refl $ funExt $ \bd => cong dd $ mondircomm (fst i) (snd i) bd)
         eleq
+
+------------------------------------------------------
+------------------------------------------------------
+---- Categories of elements of Dirichlet functors ----
+------------------------------------------------------
+------------------------------------------------------
+
+-------------------------------
+---- Objects and morphisms ----
+-------------------------------
+
+-- This definition makes it explicit that that the category of elements of a
+-- Dirichlet endofunctor on `Type` is (equivalent to) the (indexed) coproduct
+-- category over the positions of the slice categories over the directions.
+-- (For a polynomial endofunctor on `Type`, the corresponding statement would
+-- hold with "slice" replaced by "coslice".)
+
+public export
+DirichCatElObj : PolyFunc -> Type
+DirichCatElObj p = (i : pfPos p ** SliceObj $ pfDir {p} i)
+
+public export
+DirichCatElBaseT : (p : PolyFunc) -> DirichCatElObj p -> Type
+DirichCatElBaseT p el = Sigma {a=(pfDir {p} (fst el))} (snd el)
+
+public export
+DirichCatElPosMor : (p : PolyFunc) -> (i : pfPos p) ->
+  IntMorSig (SliceObj $ pfDir {p} i)
+DirichCatElPosMor p i = SliceMorphism {a=(pfDir {p} i)}
+
+public export
+DirichCatElMorTot : PolyFunc -> Type
+DirichCatElMorTot p =
+  (i : pfPos p **
+   xy : ProductMonad $ SliceObj $ pfDir {p} i **
+   DirichCatElPosMor p i (fst xy) (snd xy))
+
+public export
+DirichCatElMorPos : {p : PolyFunc} -> DirichCatElMorTot p -> pfPos p
+DirichCatElMorPos {p} m = fst m
+
+public export
+DirichCatElMorSig : {p : PolyFunc} ->
+  (m : DirichCatElMorTot p) ->
+  ProductMonad (SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m)
+DirichCatElMorSig {p} m = fst $ snd m
+
+public export
+DirichCatElMorDom : {p : PolyFunc} ->
+  (m : DirichCatElMorTot p) -> SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m
+DirichCatElMorDom {p} m = fst $ DirichCatElMorSig {p} m
+
+public export
+DirichCatElMorCod : {p : PolyFunc} ->
+  (m : DirichCatElMorTot p) -> SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m
+DirichCatElMorCod {p} m = snd $ DirichCatElMorSig {p} m
+
+public export
+DirichCatElMorMor : {p : PolyFunc} ->
+  (m : DirichCatElMorTot p) ->
+  SliceMorphism {a=(pfDir {p} $ DirichCatElMorPos {p} m)}
+    (DirichCatElMorDom {p} m)
+    (DirichCatElMorCod {p} m)
+DirichCatElMorMor {p} m = snd $ snd m
+
+public export
+data DirichCatElMor : (p : PolyFunc) -> IntMorSig (DirichCatElObj p) where
+  DCEM : {p : PolyFunc} ->
+    (m : DirichCatElMorTot p) ->
+    DirichCatElMor p
+      (DirichCatElMorPos {p} m ** DirichCatElMorDom {p} m)
+      (DirichCatElMorPos {p} m ** DirichCatElMorCod {p} m)
+
+---------------------------
+---- Outgoing functors ----
+---------------------------
+
+-- Because the category of elements of a Dirichlet functor is a coproduct
+-- category, a functor out of it is a product of functors.
+--
+-- In particular, a _Dirichlet_ functor on the category of elements of
+-- a Dirichlet functor is a product of Dirichlet functors on the slice
+-- categories of the directions of the base functor.
+--
+-- Note that another way of looking at a presheaf (of which Dirichlet functors
+-- are an example) on the category of elements of a presheaf is as an object
+-- of the slice category of presheaves over the base presheaf, so if this
+-- definition makes sense then it ought to agree with `MlDirichSlObj`.
+public export
+DirichDirichCatElArPos : (p : MLDirichCatObj) -> pfPos p -> Type
+DirichDirichCatElArPos p i = IntDirichCatObj (SliceObj $ pfDir {p} i)
+
+public export
+DirichDirichCatElAr : MLDirichCatObj -> Type
+DirichDirichCatElAr p = Pi {a=(pfPos p)} $ DirichDirichCatElArPos p
+
+public export
+DirichDirichCatElArMorPos : (b : MLDirichCatObj) -> (i : pfPos b) ->
+  IntMorSig (DirichDirichCatElArPos b i)
+DirichDirichCatElArMorPos b i =
+  IntDirichCatMor (SliceObj $ pfDir {p=b} i) (SliceMorphism {a=(pfDir {p=b} i)})
+
+public export
+DirichDirichCatElArMor : (b : MLDirichCatObj) ->
+  IntMorSig (DirichDirichCatElAr b)
+DirichDirichCatElArMor b p q =
+  (i : pfPos b) -> DirichDirichCatElArMorPos b i (p i) (q i)
