@@ -912,19 +912,22 @@ DirichCatElMorPos : {p : PolyFunc} -> DirichCatElMorTot p -> pfPos p
 DirichCatElMorPos {p} m = fst m
 
 public export
+DirichCatElMorBaseObj : {p : PolyFunc} -> DirichCatElMorTot p -> Type
+DirichCatElMorBaseObj {p} = DirichCatElObjPos p . DirichCatElMorPos {p}
+
+public export
 DirichCatElMorSig : {p : PolyFunc} ->
-  (m : DirichCatElMorTot p) ->
-  ProductMonad (SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m)
+  (m : DirichCatElMorTot p) -> ProductMonad (DirichCatElMorBaseObj {p} m)
 DirichCatElMorSig {p} m = fst $ snd m
 
 public export
 DirichCatElMorDom : {p : PolyFunc} ->
-  (m : DirichCatElMorTot p) -> SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m
+  (m : DirichCatElMorTot p) -> DirichCatElMorBaseObj {p} m
 DirichCatElMorDom {p} m = fst $ DirichCatElMorSig {p} m
 
 public export
 DirichCatElMorCod : {p : PolyFunc} ->
-  (m : DirichCatElMorTot p) -> SliceObj $ pfDir {p} $ DirichCatElMorPos {p} m
+  (m : DirichCatElMorTot p) -> DirichCatElMorBaseObj {p} m
 DirichCatElMorCod {p} m = snd $ DirichCatElMorSig {p} m
 
 public export
