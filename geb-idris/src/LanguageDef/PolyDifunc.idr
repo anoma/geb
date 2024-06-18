@@ -11,6 +11,121 @@ import public LanguageDef.IntDisheafCat
 %default total
 %hide Library.IdrisCategories.BaseChangeF
 
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---- Polynomial functors (existential cofamilies) as twisted arrows ----
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+public export
+ECofamType : IntCatSig
+ECofamType = ECofamCatSig TypeCat
+
+public export
+TwistArrArType : Type
+TwistArrArType = TwistArrAr TypeCat
+
+public export
+TwistArrMorType : IntMorSig TwistArrArType
+TwistArrMorType = TwistArrMor TypeCat
+
+public export
+twarCodType : TwistArrArType -> Type
+twarCodType = twarCod {cat=TypeCat}
+
+public export
+twarDomType : (twar : TwistArrArType) -> SliceObj (twarCodType twar)
+twarDomType = twarDom {cat=TypeCat}
+
+public export
+ECofamPolyType : IntCatSig
+ECofamPolyType = ECofamPolyCat TypeCat
+
+public export
+TwistPolyFuncType : Type
+TwistPolyFuncType = TwistPolyFunc TypeCat
+
+public export
+tpfPosType : TwistPolyFuncType -> Type
+tpfPosType = tpfPos {cat=TypeCat}
+
+public export
+tpfArType : (tpf : TwistPolyFuncType) -> tpfPosType tpf -> TwistArrArType
+tpfArType = tpfAr {cat=TypeCat}
+
+public export
+tpfCodType : (tpf : TwistPolyFuncType) -> SliceObj (tpfPosType tpf)
+tpfCodType = tpfCod {cat=TypeCat}
+
+public export
+tpfDomType : (tpf : TwistPolyFuncType) ->
+  (i : tpfPosType tpf) -> SliceObj (tpfCodType tpf i)
+tpfDomType = tpfDom {cat=TypeCat}
+
+public export
+TwistNTType : IntMorSig TwistPolyFuncType
+TwistNTType = TwistNT TypeCat
+
+public export
+InterpTPF : TwistPolyFuncType -> TwistArrArType -> Type
+InterpTPF = InterpECofamCopreshfOMap TwistArrArType TwistArrMorType
+
+public export
+itpfPos : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
+  InterpTPF tpf twar -> tpfPosType tpf
+itpfPos {tpf} {twar} = DPair.fst
+
+public export
+itpfDir : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
+  (itpf : InterpTPF tpf twar) ->
+  TwistArrMorType (tpfArType tpf $ itpfPos {tpf} {twar} itpf) twar
+itpfDir {tpf} {twar} itpf = DPair.snd itpf
+
+public export
+itpfBC : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
+  (itpf : InterpTPF tpf twar) ->
+  tpfCodType tpf (itpfPos {tpf} {twar} itpf) -> twarCodType twar
+itpfBC {tpf} {twar} itpf = DPair.fst (itpfDir itpf)
+
+public export
+itpfSM : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
+  (itpf : InterpTPF tpf twar) ->
+  SliceMorphism {a=(tpfCodType tpf $ itpfPos {tpf} {twar} itpf)}
+    (BaseChangeF (itpfBC {tpf} {twar} itpf) (twarDomType twar))
+    (tpfDomType tpf $ itpfPos {tpf} {twar} itpf)
+itpfSM {tpf} {twar} itpf = DPair.snd (itpfDir itpf)
+
+public export
+twntOnPos : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
+  TwistNT cat p q -> tpfPos {cat} p -> tpfPos {cat} q
+twntOnPos {p} {q} = DPair.fst
+
+public export
+twntOnDir : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
+  (twnt : TwistNT cat p q) ->
+  (i : tpfPos {cat} p) ->
+  TwistArrMor cat
+    (tpfAr {cat} q (twntOnPos {cat} {p} {q} twnt i))
+    (tpfAr {cat} p i)
+twntOnDir {p} {q} = DPair.snd
+
+public export
+twntOnBase : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
+  (twnt : TwistNT cat p q) ->
+  SliceMorphism {a=(tpfPos {cat} p)}
+    (BaseChangeF (twntOnPos {cat} {p} {q} twnt) (tpfCod {cat} q))
+    (tpfCod {cat} p)
+twntOnBase {p} {q} twnt i = DPair.fst (twntOnDir twnt i)
+
+public export
+twntOnTot : {p, q : TwistPolyFuncType} ->
+  (twnt : TwistNTType p q) ->
+  (i : tpfPosType p) ->
+    SliceMorphism {a=(tpfCodType q $ twntOnPos {cat=TypeCat} {p} {q} twnt i)}
+      (BaseChangeF (twntOnBase {cat=TypeCat} {p} {q} twnt i) (tpfDomType p i))
+      (tpfDomType q $ twntOnPos {cat=TypeCat} {p} {q} twnt i)
+twntOnTot {p} {q} twnt i = DPair.snd (twntOnDir {cat=TypeCat} twnt i)
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Polydifunctors subject to polydinatural transformations ----
