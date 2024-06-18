@@ -938,3 +938,14 @@ mlDirichSlBaseChangeMap {p} {q} (ntonpos ** ntondir)
     MDSM
       (\qp, dp => monpos (ntonpos qp) dp)
       (\qp, dp, qd, dd => mondir (ntonpos qp) dp (ntondir qp qd) dd)
+
+-------------------------------
+---- Sigma (dependent sum) ----
+-------------------------------
+
+MLPolySlSigma : (q : PolyFunc) -> {p : PolyFunc} ->
+  PolyNatTrans p q -> MlPolySlObj p -> MlPolySlObj q
+MLPolySlSigma q {p} beta sl with (mlPolySlObjToC p sl)
+  MLPolySlSigma q {p} beta sl | (r ** alpha) =
+    let csigma = (r ** pntVCatComp beta alpha) in
+    mlPolySlObjFromC q csigma

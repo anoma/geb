@@ -5714,17 +5714,6 @@ PFSliceObj p = pfPDir $ PFSliceObjPF p
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 
--------------------------------
----- Sigma (dependent sum) ----
--------------------------------
-
-MLPolySlSigma : (q : PolyFunc) -> {p : PolyFunc} ->
-  PolyNatTrans p q -> MlPolySlObj p -> MlPolySlObj q
-MLPolySlSigma q {p} beta sl with (mlPolySlObjToC p sl)
-  MLPolySlSigma q {p} beta sl | (r ** alpha) =
-    let csigma = (r ** pntVCatComp beta alpha) in
-    mlPolySlObjFromC q csigma
-
 -------------------------------------------------------------
 ---- Polynomial-functor slice category utility functions ----
 -------------------------------------------------------------
