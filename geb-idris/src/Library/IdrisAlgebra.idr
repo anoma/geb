@@ -356,3 +356,27 @@ public export
 TerminalContravarElemCatObj : {f : Type -> Type} -> Contravariant f -> Type
 TerminalContravarElemCatObj {f} fm =
   Subset0 (ElemCatObj f) (IsTerminalContravarElemCatObj {f} fm)
+
+--------------------------------------------
+--------------------------------------------
+---- Dialgebra twisted-arrow copresheaf ----
+--------------------------------------------
+--------------------------------------------
+
+public export
+DialgebraProf : (Type -> Type) -> (Type -> Type) -> ProfunctorSig
+DialgebraProf f g x y = f x -> g y
+
+public export
+DialgebraDimap : (f, g : Type -> Type) -> Functor f -> Functor g ->
+  DimapSig (DialgebraProf f g)
+DialgebraDimap f g fm gm mca mbd dialg = map {f=g} mbd . dialg . map {f} mca
+
+public export
+DialgebraTwF : (Type -> Type) -> (Type -> Type) -> TwArrCoprSig
+DialgebraTwF f g x y mxy = DialgebraProf f g x y
+
+public export
+DialgebraTwMap : (f, g : Type -> Type) -> Functor f -> Functor g ->
+  TwArrCoprDimapSig (DialgebraTwF f g)
+DialgebraTwMap f g fm gm s t a b mst = DialgebraDimap f g fm gm
