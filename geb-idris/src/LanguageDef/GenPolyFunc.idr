@@ -197,6 +197,12 @@ public export
 fromDoubleYoType : ProfNT PolyTypeDoubleYo HomProf
 fromDoubleYoType {a} {b} = fromDoubleYo TypeCat a b
 
+------------------------------------------------------
+------------------------------------------------------
+---- Categories of elements of Dirichlet functors ----
+------------------------------------------------------
+------------------------------------------------------
+
 -- This definition makes it explicit that that the category of elements of a
 -- Dirichlet endofunctor on `Type` is (equivalent to) the (indexed) coproduct
 -- category over the positions of the slice categories over the directions.
