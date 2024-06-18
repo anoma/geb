@@ -43,14 +43,14 @@ ifeoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -------------------
 
 public export
-IntEFamIdxMor : {c : Type} -> IntDifunctorSig c ->
+IntEFamMorOnIdx : {c : Type} -> IntDifunctorSig c ->
   IntEFamObj c -> IntEFamObj c -> Type
-IntEFamIdxMor {c} mor dom cod = ifeoIdx dom -> ifeoIdx cod
+IntEFamMorOnIdx {c} mor dom cod = ifeoIdx dom -> ifeoIdx cod
 
 public export
-IntEFamObjMor : {c : Type} -> (mor : IntDifunctorSig c) ->
-  (dom, cod : IntEFamObj c) -> IntEFamIdxMor {c} mor dom cod -> Type
-IntEFamObjMor {c} mor dom cod imor =
+IntEFamMorOnMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntEFamObj c) -> IntEFamMorOnIdx {c} mor dom cod -> Type
+IntEFamMorOnMor {c} mor dom cod imor =
    (di : ifeoIdx dom) -> mor (ifeoObj dom di) (ifeoObj cod $ imor di)
 
 -- The free coproduct completion of a category has the same morphisms as (and
@@ -62,7 +62,7 @@ public export
 IntEFamMor : {c : Type} -> IntDifunctorSig c ->
   IntEFamObj c -> IntEFamObj c -> Type
 IntEFamMor {c} mor dom cod =
-  Sigma {a=(IntEFamIdxMor {c} mor dom cod)} $ IntEFamObjMor {c} mor dom cod
+  Sigma {a=(IntEFamMorOnIdx {c} mor dom cod)} $ IntEFamMorOnMor {c} mor dom cod
 
 -- The category of universal families of objects from a category `c`
 -- is equivalent to the opposite category of the category of existential
