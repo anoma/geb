@@ -102,6 +102,10 @@ data DirichCatElMor : (p : PolyFunc) -> IntMorSig (DirichCatElObj p) where
 -- In particular, a _Dirichlet_ functor on the category of elements of
 -- a Dirichlet functor is a product of Dirichlet functors on the slice
 -- categories of the directions of the base functor.
+public export
+DirichDirichCatElAr : MLDirichCatObj -> Type
+DirichDirichCatElAr p =
+  (i : pfPos p) -> IntDirichCatObj (SliceObj $ pfDir {p} i)
 
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
