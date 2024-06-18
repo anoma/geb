@@ -102,10 +102,30 @@ data DirichCatElMor : (p : PolyFunc) -> IntMorSig (DirichCatElObj p) where
 -- In particular, a _Dirichlet_ functor on the category of elements of
 -- a Dirichlet functor is a product of Dirichlet functors on the slice
 -- categories of the directions of the base functor.
+--
+-- Note that another way of looking at a presheaf (of which Dirichlet functors
+-- are an example) on the category of elements of a presheaf is as an object
+-- of the slice category of presheaves over the base presheaf, so if this
+-- definition makes sense then it ought to agree with `MlDirichSlObj`.
+public export
+DirichDirichCatElArPos : (p : MLDirichCatObj) -> pfPos p -> Type
+DirichDirichCatElArPos p i = IntDirichCatObj (SliceObj $ pfDir {p} i)
+
 public export
 DirichDirichCatElAr : MLDirichCatObj -> Type
-DirichDirichCatElAr p =
-  (i : pfPos p) -> IntDirichCatObj (SliceObj $ pfDir {p} i)
+DirichDirichCatElAr p = Pi {a=(pfPos p)} $ DirichDirichCatElArPos p
+
+public export
+DirichDirichCatElArMorPos : (b : MLDirichCatObj) -> (i : pfPos b) ->
+  IntMorSig (DirichDirichCatElArPos b i)
+DirichDirichCatElArMorPos b i =
+  IntDirichCatMor (SliceObj $ pfDir {p=b} i) (SliceMorphism {a=(pfDir {p=b} i)})
+
+public export
+DirichDirichCatElArMor : (b : MLDirichCatObj) ->
+  IntMorSig (DirichDirichCatElAr b)
+DirichDirichCatElArMor b p q =
+  (i : pfPos b) -> DirichDirichCatElArMorPos b i (p i) (q i)
 
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
