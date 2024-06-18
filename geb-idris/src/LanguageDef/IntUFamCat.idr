@@ -36,14 +36,14 @@ ifuoObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
 -------------------
 
 public export
-IntUFamIdxMor : {c : Type} -> IntDifunctorSig c ->
+IntUFamMorOnIdx : {c : Type} -> IntDifunctorSig c ->
   IntUFamObj c -> IntUFamObj c -> Type
-IntUFamIdxMor {c} mor dom cod = ifuoIdx cod -> ifuoIdx dom
+IntUFamMorOnIdx {c} mor dom cod = ifuoIdx cod -> ifuoIdx dom
 
 public export
-IntUFamObjMor : {c : Type} -> (mor : IntDifunctorSig c) ->
-  (dom, cod : IntUFamObj c) -> IntUFamIdxMor {c} mor dom cod -> Type
-IntUFamObjMor {c} mor dom cod imor =
+IntUFamMorOnMor : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntUFamObj c) -> IntUFamMorOnIdx {c} mor dom cod -> Type
+IntUFamMorOnMor {c} mor dom cod imor =
    (ci : ifuoIdx cod) -> mor (ifuoObj dom $ imor ci) (ifuoObj cod ci)
 
 -- Morphisms of the category of universal families of objects from a given
@@ -62,7 +62,7 @@ public export
 IntUFamMor : {c : Type} -> (mor : IntDifunctorSig c) ->
   (dom, cod : IntUFamObj c) -> Type
 IntUFamMor {c} mor dom cod =
-  Sigma {a=(IntUFamIdxMor {c} mor dom cod)} $ IntUFamObjMor {c} mor dom cod
+  Sigma {a=(IntUFamMorOnIdx {c} mor dom cod)} $ IntUFamMorOnMor {c} mor dom cod
 
 public export
 IFUM :
