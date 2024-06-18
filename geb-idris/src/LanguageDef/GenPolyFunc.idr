@@ -14,6 +14,7 @@ import public LanguageDef.IntUCofamCat
 import public LanguageDef.IntEFamCat
 import public LanguageDef.IntECofamCat
 import public LanguageDef.PolySliceCat
+import public LanguageDef.IntDisheafCat
 
 %default total
 
@@ -197,14 +198,6 @@ fromDoubleYo cat x y (MkPolyDoubleYo (onpos ** ondir)) with
 ------------------------------------------------------------
 ---- Polynomial covariant double-Yoneda lemma in `Type` ----
 ------------------------------------------------------------
-
-public export
-ECofamType : IntCatSig
-ECofamType = ECofamCatSig TypeCat
-
-public export
-ECofamPolyType : IntCatSig
-ECofamPolyType = ECofamCatSig ECofamType
 
 public export
 PolyTypeDoubleYo : Type -> Type -> Type

@@ -6,6 +6,113 @@ import Library.IdrisAlgebra
 import public LanguageDef.InternalCat
 import public LanguageDef.IntECofamCat
 
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+---- Dependent-type-style poly-difunctor ("twisted polynomial functor") ----
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+public export
+ECofamType : IntCatSig
+ECofamType = ECofamCatSig TypeCat
+
+public export
+ECofamPolyType : IntCatSig
+ECofamPolyType = ECofamCatSig ECofamType
+
+public export
+TwistArrAr : Type
+TwistArrAr = icObj ECofamType
+
+public export
+twarCod : TwistArrAr -> Type
+twarCod = DPair.fst
+
+public export
+twarDom : (twar : TwistArrAr) -> SliceObj (twarCod twar)
+twarDom = DPair.snd
+
+public export
+TwistArrMor : IntMorSig TwistArrAr
+TwistArrMor = icMor ECofamType
+
+public export
+TwistPolyFunc : Type
+TwistPolyFunc = icObj ECofamPolyType
+
+public export
+TwistNT : IntMorSig TwistPolyFunc
+TwistNT = icMor ECofamPolyType
+
+public export
+tpfPos : TwistPolyFunc -> Type
+tpfPos = DPair.fst
+
+public export
+tpfAr : (tpf : TwistPolyFunc) -> tpfPos tpf -> TwistArrAr
+tpfAr = DPair.snd
+
+public export
+tpfCod : (tpf : TwistPolyFunc) -> SliceObj (tpfPos tpf)
+tpfCod tpf = twarCod . tpfAr tpf
+
+public export
+tpfDom : (tpf : TwistPolyFunc) -> (i : tpfPos tpf) -> SliceObj (tpfCod tpf i)
+tpfDom tpf i = twarDom (tpfAr tpf i)
+
+public export
+InterpTPF : TwistPolyFunc -> TwistArrAr -> Type
+InterpTPF = InterpECofamCopreshfOMap TwistArrAr TwistArrMor
+
+public export
+itpfPos : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
+  InterpTPF tpf twar -> tpfPos tpf
+itpfPos {tpf} {twar} = DPair.fst
+
+public export
+itpfDir : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
+  (itpf : InterpTPF tpf twar) ->
+  TwistArrMor (tpfAr tpf $ itpfPos {tpf} {twar} itpf) twar
+itpfDir {tpf} {twar} itpf = DPair.snd itpf
+
+public export
+itpfBC : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
+  (itpf : InterpTPF tpf twar) ->
+  tpfCod tpf (itpfPos {tpf} {twar} itpf) -> twarCod twar
+itpfBC {tpf} {twar} itpf = DPair.fst (itpfDir itpf)
+
+public export
+itpfSM : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
+  (itpf : InterpTPF tpf twar) ->
+  SliceMorphism {a=(tpfCod tpf $ itpfPos {tpf} {twar} itpf)}
+    (BaseChangeF (itpfBC {tpf} {twar} itpf) (twarDom twar))
+    (tpfDom tpf $ itpfPos {tpf} {twar} itpf)
+itpfSM {tpf} {twar} itpf = DPair.snd (itpfDir itpf)
+
+public export
+twntOnPos : {p, q : TwistPolyFunc} -> TwistNT p q -> tpfPos p -> tpfPos q
+twntOnPos {p} {q} = DPair.fst
+
+public export
+twntOnDir : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
+  (i : tpfPos p) -> TwistArrMor (tpfAr q (twntOnPos {p} {q} twnt i)) (tpfAr p i)
+twntOnDir {p} {q} = DPair.snd
+
+public export
+twntOnBase : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
+  SliceMorphism {a=(tpfPos p)}
+    (BaseChangeF (twntOnPos {p} {q} twnt) (tpfCod q))
+    (tpfCod p)
+twntOnBase {p} {q} twnt i = DPair.fst (twntOnDir twnt i)
+
+public export
+twntOnTot : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
+  (i : tpfPos p) ->
+    SliceMorphism {a=(tpfCod q $ twntOnPos {p} {q} twnt i)}
+      (BaseChangeF (twntOnBase {p} {q} twnt i) (tpfDom p i))
+      (tpfDom q $ twntOnPos {p} {q} twnt i)
+twntOnTot {p} {q} twnt i = DPair.snd (twntOnDir twnt i)
+
 -------------------------------------
 -------------------------------------
 ---- Disheaf category definition ----
