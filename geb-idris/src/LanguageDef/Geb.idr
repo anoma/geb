@@ -14,6 +14,7 @@ import LanguageDef.SlicePolyCat
 import LanguageDef.QType
 import LanguageDef.MLBundleCat
 import LanguageDef.PolySliceCat
+import LanguageDef.GenPolyFunc
 
 %default total
 %hide Prelude.(|>)
