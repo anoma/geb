@@ -82,7 +82,7 @@ DirichDirichMor cat = icMor (DirichDirichCat cat)
 ----------------------------------
 
 public export
-PolyAppFunc : (cat : IntCatSig) -> icObj cat -> (PolyPolyObj cat)
+PolyAppFunc : (cat : IntCatSig) -> icObj cat -> PolyPolyObj cat
 PolyAppFunc cat a =
   ((b : icObj cat ** icMor cat b a) ** \ai => (() ** \() => fst ai))
 
