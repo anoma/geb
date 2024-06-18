@@ -26,6 +26,10 @@ import public LanguageDef.MLBundleCat
 ------------------------------------------------------
 ------------------------------------------------------
 
+-------------------------------
+---- Objects and morphisms ----
+-------------------------------
+
 -- This definition makes it explicit that that the category of elements of a
 -- Dirichlet endofunctor on `Type` is (equivalent to) the (indexed) coproduct
 -- category over the positions of the slice categories over the directions.
@@ -87,6 +91,17 @@ data DirichCatElMor : (p : PolyFunc) -> IntMorSig (DirichCatElObj p) where
     DirichCatElMor p
       (DirichCatElMorPos {p} m ** DirichCatElMorDom {p} m)
       (DirichCatElMorPos {p} m ** DirichCatElMorCod {p} m)
+
+---------------------------
+---- Outgoing functors ----
+---------------------------
+
+-- Because the category of elements of a Dirichlet functor is a coproduct
+-- category, a functor out of it is a product of functors.
+--
+-- In particular, a _Dirichlet_ functor on the category of elements of
+-- a Dirichlet functor is a product of Dirichlet functors on the slice
+-- categories of the directions of the base functor.
 
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
