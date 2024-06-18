@@ -13,105 +13,161 @@ import public LanguageDef.IntECofamCat
 ----------------------------------------------------------------------------
 
 public export
+ECofamPolyCat : IntCatSig -> IntCatSig
+ECofamPolyCat cat = ECofamCatSig (ECofamCatSig cat)
+
+public export
+TwistArrAr : IntCatSig -> Type
+TwistArrAr cat = icObj (ECofamCatSig cat)
+
+public export
+twarCod : {cat : IntCatSig} -> TwistArrAr cat -> Type
+twarCod = DPair.fst
+
+public export
+twarDom : {cat : IntCatSig} ->
+  (twar : TwistArrAr cat) -> twarCod {cat} twar -> icObj cat
+twarDom = DPair.snd
+
+public export
+TwistArrMor : (cat : IntCatSig) -> IntMorSig (TwistArrAr cat)
+TwistArrMor cat = icMor (ECofamCatSig cat)
+
+public export
+TwistPolyFunc : IntCatSig -> Type
+TwistPolyFunc cat = icObj (ECofamPolyCat cat)
+
+public export
+TwistNT : (cat : IntCatSig) -> IntMorSig (TwistPolyFunc cat)
+TwistNT cat = icMor (ECofamPolyCat cat)
+
+public export
+tpfPos : {cat : IntCatSig} -> TwistPolyFunc cat -> Type
+tpfPos = DPair.fst
+
+public export
+tpfAr : {cat : IntCatSig} ->
+  (tpf : TwistPolyFunc cat) -> tpfPos {cat} tpf -> TwistArrAr cat
+tpfAr = DPair.snd
+
+public export
+tpfCod : {cat : IntCatSig} -> (tpf : TwistPolyFunc cat) ->
+  SliceObj (tpfPos {cat} tpf)
+tpfCod {cat} tpf = twarCod {cat} . tpfAr {cat} tpf
+
+public export
+tpfDom : {cat : IntCatSig} -> (tpf : TwistPolyFunc cat) ->
+  (i : tpfPos {cat} tpf) -> tpfCod {cat} tpf i -> icObj cat
+tpfDom {cat} tpf i = twarDom {cat} (tpfAr {cat} tpf i)
+
+public export
 ECofamType : IntCatSig
 ECofamType = ECofamCatSig TypeCat
 
 public export
+TwistArrArType : Type
+TwistArrArType = TwistArrAr TypeCat
+
+public export
+TwistArrMorType : IntMorSig TwistArrArType
+TwistArrMorType = TwistArrMor TypeCat
+
+public export
+twarCodType : TwistArrArType -> Type
+twarCodType = twarCod {cat=TypeCat}
+
+public export
+twarDomType : (twar : TwistArrArType) -> SliceObj (twarCodType twar)
+twarDomType = twarDom {cat=TypeCat}
+
+public export
 ECofamPolyType : IntCatSig
-ECofamPolyType = ECofamCatSig ECofamType
+ECofamPolyType = ECofamPolyCat TypeCat
 
 public export
-TwistArrAr : Type
-TwistArrAr = icObj ECofamType
+TwistPolyFuncType : Type
+TwistPolyFuncType = TwistPolyFunc TypeCat
 
 public export
-twarCod : TwistArrAr -> Type
-twarCod = DPair.fst
+tpfPosType : TwistPolyFuncType -> Type
+tpfPosType = tpfPos {cat=TypeCat}
 
 public export
-twarDom : (twar : TwistArrAr) -> SliceObj (twarCod twar)
-twarDom = DPair.snd
+tpfArType : (tpf : TwistPolyFuncType) -> tpfPosType tpf -> TwistArrArType
+tpfArType = tpfAr {cat=TypeCat}
 
 public export
-TwistArrMor : IntMorSig TwistArrAr
-TwistArrMor = icMor ECofamType
+tpfCodType : (tpf : TwistPolyFuncType) -> SliceObj (tpfPosType tpf)
+tpfCodType = tpfCod {cat=TypeCat}
 
 public export
-TwistPolyFunc : Type
-TwistPolyFunc = icObj ECofamPolyType
+tpfDomType : (tpf : TwistPolyFuncType) ->
+  (i : tpfPosType tpf) -> SliceObj (tpfCodType tpf i)
+tpfDomType = tpfDom {cat=TypeCat}
 
 public export
-TwistNT : IntMorSig TwistPolyFunc
-TwistNT = icMor ECofamPolyType
+TwistNTType : IntMorSig TwistPolyFuncType
+TwistNTType = TwistNT TypeCat
 
 public export
-tpfPos : TwistPolyFunc -> Type
-tpfPos = DPair.fst
+InterpTPF : TwistPolyFuncType -> TwistArrArType -> Type
+InterpTPF = InterpECofamCopreshfOMap TwistArrArType TwistArrMorType
 
 public export
-tpfAr : (tpf : TwistPolyFunc) -> tpfPos tpf -> TwistArrAr
-tpfAr = DPair.snd
-
-public export
-tpfCod : (tpf : TwistPolyFunc) -> SliceObj (tpfPos tpf)
-tpfCod tpf = twarCod . tpfAr tpf
-
-public export
-tpfDom : (tpf : TwistPolyFunc) -> (i : tpfPos tpf) -> SliceObj (tpfCod tpf i)
-tpfDom tpf i = twarDom (tpfAr tpf i)
-
-public export
-InterpTPF : TwistPolyFunc -> TwistArrAr -> Type
-InterpTPF = InterpECofamCopreshfOMap TwistArrAr TwistArrMor
-
-public export
-itpfPos : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
-  InterpTPF tpf twar -> tpfPos tpf
+itpfPos : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
+  InterpTPF tpf twar -> tpfPosType tpf
 itpfPos {tpf} {twar} = DPair.fst
 
 public export
-itpfDir : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
+itpfDir : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
   (itpf : InterpTPF tpf twar) ->
-  TwistArrMor (tpfAr tpf $ itpfPos {tpf} {twar} itpf) twar
+  TwistArrMorType (tpfArType tpf $ itpfPos {tpf} {twar} itpf) twar
 itpfDir {tpf} {twar} itpf = DPair.snd itpf
 
 public export
-itpfBC : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
+itpfBC : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
   (itpf : InterpTPF tpf twar) ->
-  tpfCod tpf (itpfPos {tpf} {twar} itpf) -> twarCod twar
+  tpfCodType tpf (itpfPos {tpf} {twar} itpf) -> twarCodType twar
 itpfBC {tpf} {twar} itpf = DPair.fst (itpfDir itpf)
 
 public export
-itpfSM : {tpf : TwistPolyFunc} -> {twar : TwistArrAr} ->
+itpfSM : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
   (itpf : InterpTPF tpf twar) ->
-  SliceMorphism {a=(tpfCod tpf $ itpfPos {tpf} {twar} itpf)}
-    (BaseChangeF (itpfBC {tpf} {twar} itpf) (twarDom twar))
-    (tpfDom tpf $ itpfPos {tpf} {twar} itpf)
+  SliceMorphism {a=(tpfCodType tpf $ itpfPos {tpf} {twar} itpf)}
+    (BaseChangeF (itpfBC {tpf} {twar} itpf) (twarDomType twar))
+    (tpfDomType tpf $ itpfPos {tpf} {twar} itpf)
 itpfSM {tpf} {twar} itpf = DPair.snd (itpfDir itpf)
 
 public export
-twntOnPos : {p, q : TwistPolyFunc} -> TwistNT p q -> tpfPos p -> tpfPos q
+twntOnPos : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
+  TwistNT cat p q -> tpfPos {cat} p -> tpfPos {cat} q
 twntOnPos {p} {q} = DPair.fst
 
 public export
-twntOnDir : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
-  (i : tpfPos p) -> TwistArrMor (tpfAr q (twntOnPos {p} {q} twnt i)) (tpfAr p i)
+twntOnDir : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
+  (twnt : TwistNT cat p q) ->
+  (i : tpfPos {cat} p) ->
+  TwistArrMor cat
+    (tpfAr {cat} q (twntOnPos {cat} {p} {q} twnt i))
+    (tpfAr {cat} p i)
 twntOnDir {p} {q} = DPair.snd
 
 public export
-twntOnBase : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
-  SliceMorphism {a=(tpfPos p)}
-    (BaseChangeF (twntOnPos {p} {q} twnt) (tpfCod q))
-    (tpfCod p)
+twntOnBase : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
+  (twnt : TwistNT cat p q) ->
+  SliceMorphism {a=(tpfPos {cat} p)}
+    (BaseChangeF (twntOnPos {cat} {p} {q} twnt) (tpfCod {cat} q))
+    (tpfCod {cat} p)
 twntOnBase {p} {q} twnt i = DPair.fst (twntOnDir twnt i)
 
 public export
-twntOnTot : {p, q : TwistPolyFunc} -> (twnt : TwistNT p q) ->
-  (i : tpfPos p) ->
-    SliceMorphism {a=(tpfCod q $ twntOnPos {p} {q} twnt i)}
-      (BaseChangeF (twntOnBase {p} {q} twnt i) (tpfDom p i))
-      (tpfDom q $ twntOnPos {p} {q} twnt i)
-twntOnTot {p} {q} twnt i = DPair.snd (twntOnDir twnt i)
+twntOnTot : {p, q : TwistPolyFuncType} ->
+  (twnt : TwistNTType p q) ->
+  (i : tpfPosType p) ->
+    SliceMorphism {a=(tpfCodType q $ twntOnPos {cat=TypeCat} {p} {q} twnt i)}
+      (BaseChangeF (twntOnBase {cat=TypeCat} {p} {q} twnt i) (tpfDomType p i))
+      (tpfDomType q $ twntOnPos {cat=TypeCat} {p} {q} twnt i)
+twntOnTot {p} {q} twnt i = DPair.snd (twntOnDir {cat=TypeCat} twnt i)
 
 -------------------------------------
 -------------------------------------
