@@ -51,6 +51,31 @@ public export
 PolyPolyMor : (cat : IntCatSig) -> IntMorSig (PolyPolyObj cat)
 PolyPolyMor cat = icMor (PolyPolyCat cat)
 
+--------------------------------------
+---- Dirichlet-Dirichlet category ----
+--------------------------------------
+
+public export
+DirichDirichCat : IntCatSig -> IntCatSig
+DirichDirichCat cat = EFamCatSig (EFamCatSig cat)
+
+public export
+DirichDirichObj : IntCatSig -> Type
+DirichDirichObj cat = icObj (DirichDirichCat cat)
+
+public export
+DirichDirichMorOnIdx : (cat : IntCatSig) -> IntMorSig (DirichDirichObj cat)
+DirichDirichMorOnIdx cat = IntEFamMorOnIdx (icMor $ EFamCatSig cat)
+
+public export
+DirichDirichMorOnMor : (cat : IntCatSig) -> (dom, cod : DirichDirichObj cat) ->
+  DirichDirichMorOnIdx cat dom cod -> Type
+DirichDirichMorOnMor cat = IntEFamMorOnMor (icMor $ EFamCatSig cat)
+
+public export
+DirichDirichMor : (cat : IntCatSig) -> IntMorSig (DirichDirichObj cat)
+DirichDirichMor cat = icMor (DirichDirichCat cat)
+
 ----------------------------------
 ---- Polynomial apply functor ----
 ----------------------------------
