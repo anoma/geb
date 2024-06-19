@@ -1597,11 +1597,11 @@ TwArrCoprEmbedDimap p pdm s t a b mst = dimap {f=p}
 
 public export
 TwArrCoprId : TwArrCoprSig
-TwArrCoprId = TwArrCoprEmbedCopreshf Prelude.id
+TwArrCoprId = TwArrCoprEmbedProf HomProf
 
 public export
 TwArrCoprIdMap : TwArrCoprDimapSig TwArrCoprId
-TwArrCoprIdMap = TwArrCoprEmbedCopreshfMap Prelude.id (MkFunctor Prelude.id)
+TwArrCoprIdMap = TwArrCoprEmbedDimap HomProf HomProfProfunctor
 
 public export
 TwArrCoprCompose : TwArrCoprSig -> TwArrCoprSig -> TwArrCoprSig
