@@ -1587,6 +1587,15 @@ TwArrCoprEmbedPreshfMap : (f : Type -> Type) -> Contravariant f ->
 TwArrCoprEmbedPreshfMap f fm s t a b mst mas mtb = contramap {f} mas
 
 public export
+TwArrCoprEmbedProf : (Type -> Type -> Type) -> TwArrCoprSig
+TwArrCoprEmbedProf p x y mxy = p x y
+
+public export
+TwArrCoprEmbedDimap : (p : Type -> Type -> Type) -> Profunctor p ->
+  TwArrCoprDimapSig (TwArrCoprEmbedProf p)
+TwArrCoprEmbedDimap p pdm s t a b mst = dimap {f=p}
+
+public export
 TwArrCoprId : TwArrCoprSig
 TwArrCoprId = TwArrCoprEmbedCopreshf Prelude.id
 
