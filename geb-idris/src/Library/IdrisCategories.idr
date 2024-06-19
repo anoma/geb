@@ -1569,8 +1569,30 @@ TwArrCoprDimapSig p =
   p s t mst -> p a b (mtb . mst . mas)
 
 public export
+TwArrCoprEmbedCopreshf : (Type -> Type) -> TwArrCoprSig
+TwArrCoprEmbedCopreshf f x y mxy = f y
+
+public export
+TwArrCoprEmbedCopreshfMap : (f : Type -> Type) -> Functor f ->
+  TwArrCoprDimapSig (TwArrCoprEmbedCopreshf f)
+TwArrCoprEmbedCopreshfMap f fm s t a b mst mas mtb = map {f} mtb
+
+public export
+TwArrCoprEmbedPreshf : (Type -> Type) -> TwArrCoprSig
+TwArrCoprEmbedPreshf f x y mxy = f x
+
+public export
+TwArrCoprEmbedPreshfMap : (f : Type -> Type) -> Contravariant f ->
+  TwArrCoprDimapSig (TwArrCoprEmbedPreshf f)
+TwArrCoprEmbedPreshfMap f fm s t a b mst mas mtb = contramap {f} mas
+
+public export
 TwArrCoprId : TwArrCoprSig
-TwArrCoprId x y mxy = Unit
+TwArrCoprId = TwArrCoprEmbedCopreshf Prelude.id
+
+public export
+TwArrCoprIdMap : TwArrCoprDimapSig TwArrCoprId
+TwArrCoprIdMap = TwArrCoprEmbedCopreshfMap Prelude.id (MkFunctor Prelude.id)
 
 public export
 TwArrCoprCompose : TwArrCoprSig -> TwArrCoprSig -> TwArrCoprSig
