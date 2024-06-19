@@ -1611,6 +1611,19 @@ TwArrCoprComposeDimap q p qdm pdm s t a b mst mas mtb
       qdm s y a y msy mas id qsy,
       pdm y t y b myt id mtb pyt))
 
+public export
+TwArrNatTrans : TwArrCoprSig -> TwArrCoprSig -> Type
+TwArrNatTrans p q = (x, y : Type) -> (mxy : x -> y) -> p x y mxy -> q x y mxy
+
+public export
+TwArrNatTransId : (p : TwArrCoprSig) -> TwArrNatTrans p p
+TwArrNatTransId p x y mxy = Prelude.id
+
+public export
+TwArrNatTransVcomp : (p, q, r : TwArrCoprSig) ->
+  TwArrNatTrans q r -> TwArrNatTrans p q -> TwArrNatTrans p r
+TwArrNatTransVcomp p q r beta alpha x y mxy = beta x y mxy . alpha x y mxy
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
