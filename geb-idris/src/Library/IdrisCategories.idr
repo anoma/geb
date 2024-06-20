@@ -170,6 +170,11 @@ FunExtInverse {a} {b} f g =
    FunExtEq {a=(a -> a)} {b=(a -> a)} (g . f) id)
 
 public export
+FunExtInverseId :
+  (0 a : Type) -> FunExtInverse {a} {b=a} Prelude.id Prelude.id
+FunExtInverseId a = (\_ => Refl, \_ => Refl)
+
+public export
 FunExtInversePair : {0 a, b : Type} -> (a -> b, b -> a) -> Type
 FunExtInversePair {a} {b} = uncurry $ FunExtInverse {a} {b}
 
@@ -12383,7 +12388,7 @@ mutual
 ------------------------------------------
 
 public export
-mapId : {a : Type} -> (x : a) -> map (Prelude.Basics.id {a}) x = x
+mapId : {a : Type} -> (x : a) -> map {f=IdTF} (Prelude.Basics.id {a}) x = x
 mapId x = Refl
 
 public export
