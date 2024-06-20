@@ -121,7 +121,7 @@ ExtInversePair : {a, b : Type} -> (a -> b, b -> a) -> Type
 ExtInversePair = uncurry ExtInverse
 
 -- Another way in which we use functional extensionality is to describe
--- the relationship between two functions that they are equal _under_
+-- the relationship between two terms that they are equal _under_
 -- the assumption of functional extensionality.  Extensionally equal
 -- functions do satisfy this relationship, but so do some functions which are
 -- not extensionally equal -- in particular, higher-order functions whose
@@ -131,23 +131,23 @@ ExtInversePair = uncurry ExtInverse
 -- equality.
 
 public export
-FunExtEq : {0 a, a', b, b' : Type} -> (a -> b) -> (a' -> b') -> Type
-FunExtEq f g = FunExt -> f ~=~ g
+FunExtEq : {0 a, b : Type} -> a -> b -> Type
+FunExtEq ea eb = FunExt -> ea ~=~ eb
 
 public export
-FunExtEqRefl : (f : a -> b) -> FunExtEq f f
-FunExtEqRefl _ _ = Refl
+FunExtEqRefl : {0 a : Type} -> (ea : a) -> FunExtEq ea ea
+FunExtEqRefl {a} _ _ = Refl
 
 public export
 FunExtEqSym : FunExtEq f g -> FunExtEq g f
 FunExtEqSym eq x = sym (eq x)
 
 public export
-FunExtEqTrans : {0 a, a', a'', b , b', b'' : Type} ->
-  {f : a -> b} -> {g : a' -> b'}  -> {h : a'' -> b''} ->
+FunExtEqTrans : {0 a, a', a'' : Type} ->
+  {f : a} -> {g : a'}  -> {h : a''} ->
   FunExtEq f g -> FunExtEq g h -> FunExtEq f h
-FunExtEqTrans {a} {a'} {a''} {b} {b'} {b''} eq eq' fext with (eq fext, eq' fext)
-  FunExtEqTrans {a} {a'=a} {a''=a} {b} {b'=b} {b''=b} eq eq' fext |
+FunExtEqTrans {a} {a'} {a''} eq eq' fext with (eq fext, eq' fext)
+  FunExtEqTrans {a} {a'=a} {a''=a} eq eq' fext |
     (Refl, Refl) = Refl
 
 public export
@@ -159,14 +159,15 @@ EqFunctionFunExt : f = g -> FunExtEq f g
 EqFunctionFunExt Refl _ = Refl
 
 public export
-ExtEqFunctionFunExt : ExtEq f g -> FunExtEq f g
+ExtEqFunctionFunExt : {0 a, b : Type} -> {0 f, g : a -> b} ->
+  ExtEq f g -> FunExtEq {a=(a -> b)} {b=(a -> b)} f g
 ExtEqFunctionFunExt exteq fext = funExt $ \x => exteq x
 
 public export
 FunExtInverse : {0 a, b : Type} -> (a -> b) -> (b -> a) -> Type
 FunExtInverse {a} {b} f g =
-  (FunExtEq {a=b} {a'=b} {b} {b'=b} (f . g) id,
-   FunExtEq {a} {a'=a} {b=a} {b'=a} (g . f) id)
+  (FunExtEq {a=(b -> b)} {b=(b -> b)} (f . g) id,
+   FunExtEq {a=(a -> a)} {b=(a -> a)} (g . f) id)
 
 public export
 FunExtInversePair : {0 a, b : Type} -> (a -> b, b -> a) -> Type
