@@ -46,6 +46,10 @@ SPDialgEval : {c : Type} -> (dom, cod : SPFData c c) -> SliceObj c -> Type
 SPDialgEval {c} f g x = SPCommaObjMor {a=c} {b=c} {c} f g x x
 
 public export
+SPDialg : {c : Type} -> IntMorSig (SPFData c c)
+SPDialg {c} f g = Sigma {a=(SliceObj c)} $ SPDialgEval {c} f g
+
+public export
 SPAlgEval : {c : Type} -> SPFData c c -> SliceObj c -> Type
 SPAlgEval {c} = flip (SPDialgEval {c}) (SPFDid c)
 
