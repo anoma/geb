@@ -1569,10 +1569,20 @@ TwArrCoprSig : Type
 TwArrCoprSig = (x, y : Type) -> (x -> y) -> Type
 
 public export
+TwArrCoprMapSig : TwArrCoprSig -> Type
+TwArrCoprMapSig p = (a, b : Type) -> (mab : a -> b) -> p a a id -> p b b id
+
+public export
 TwArrCoprDimapSig : TwArrCoprSig -> Type
 TwArrCoprDimapSig p =
   (s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
   p s t mst -> p a b (mtb . mst . mas)
+
+public export
+TwArrContraDimapSig : TwArrCoprSig -> Type
+TwArrContraDimapSig p =
+  (s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
+  p a b (mtb . mst . mas) -> p s t mst
 
 public export
 TwArrCoprEmbedCopreshf : (Type -> Type) -> TwArrCoprSig
