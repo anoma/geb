@@ -1689,6 +1689,12 @@ TwArrCoprCompose q p x z mxz =
    (FunExtEq (snd mp . fst mp) mxz, q x y (fst mp), p y z (snd mp)))
 
 public export
+TwArrPreshfCompose : TwArrPreshfSig -> TwArrPreshfSig -> TwArrPreshfSig
+TwArrPreshfCompose q p x z mzx =
+  (y : Type ** mp : (y -> x, z -> y) **
+   (FunExtEq (fst mp . snd mp) mzx, q x y (fst mp), p y z (snd mp)))
+
+public export
 TwArrCoprComposeDimap : (q, p : TwArrCoprSig) ->
   TwArrCoprDimapSig q -> TwArrCoprDimapSig p ->
   TwArrCoprDimapSig (TwArrCoprCompose q p)
@@ -1698,6 +1704,17 @@ TwArrCoprComposeDimap q p qdm pdm s t a b mst mas mtb
      (\fext => funExt $ \ea => cong mtb $ fcong {x=(mas ea)} $ comm fext,
       qdm s y a y msy mas id qsy,
       pdm y t y b myt id mtb pyt))
+
+public export
+TwArrPreshfComposeContraDimap : (q, p : TwArrPreshfSig) ->
+  TwArrPreshfContraDimapSig q -> TwArrPreshfContraDimapSig p ->
+  TwArrPreshfContraDimapSig (TwArrPreshfCompose q p)
+TwArrPreshfComposeContraDimap q p qdm pdm s t a b mts msa mbt
+  (y ** (mys, mty) ** (comm, qsy, pyt)) =
+    (y ** (msa . mys, mty . mbt) **
+     (\fext => funExt $ \eb => cong msa $ fcong {x=(mbt eb)} $ comm fext,
+      qdm s y a y mys msa id qsy,
+      pdm y t y b mty id mbt pyt))
 
 public export
 TwArrNatTrans : TwArrCoprSig -> TwArrCoprSig -> Type
