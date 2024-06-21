@@ -38,7 +38,7 @@ MlDirichSlFunc p q = MlDirichSlObj p -> MlDirichSlObj q
 public export
 0 MlDirichSlFMap : {ar, ar' : MLArena} -> MlDirichSlFunc ar ar' -> Type
 MlDirichSlFMap {ar} {ar'} f =
-  (0 sl, sl' : MlDirichSlObj ar) ->
+  (sl, sl' : MlDirichSlObj ar) ->
   MlDirichSlMor {ar} sl sl' -> MlDirichSlMor {ar=ar'} (f sl) (f sl')
 
 public export
@@ -48,7 +48,7 @@ MlPolySlFunc p q = MlPolySlObj p -> MlPolySlObj q
 public export
 0 MlPolySlFMap : {ar, ar' : MLArena} -> MlPolySlFunc ar ar' -> Type
 MlPolySlFMap {ar} {ar'} f =
-  (0 sl, sl' : MlPolySlObj ar) ->
+  (sl, sl' : MlPolySlObj ar) ->
   MlPolySlMor {ar} sl sl' -> MlPolySlMor {ar=ar'} (f sl) (f sl')
 
 ---------------------
@@ -123,7 +123,7 @@ mlDirichSlSigmaPiFLMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (MDSobj prodpos proddir) (MDSobj slpos sldir) (MDSobj slpos' sldir')
   (MDSM monpos mondir) =
     MDSM
-      ?mlDirichSlSigmaPiFLMap_hole_onpos
+      (ssplMap prodpos slpos slpos' monpos)
       ?mlDirichSlSigmaPiFLMap_hole_ondir
 
 public export
@@ -145,7 +145,7 @@ mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (MDSobj prodpos proddir) (MDSobj slpos sldir) (MDSobj slpos' sldir')
   (MDSM monpos mondir) =
     MDSM
-      ?mlDirichSlSigmaPiFRMap_hole_onpos
+      (ssprMap prodpos slpos slpos' monpos)
       ?mlDirichSlSigmaPiFRMap_hole_ondir
 
 ----------------------------
