@@ -1816,6 +1816,40 @@ TwPreshfEmbedOpMor :
   TwArrPreshfNatTrans (TwPreshfEmbedOpObjOmap x) (TwPreshfEmbedOpObjOmap y)
 TwPreshfEmbedOpMor x y myx a b mba mxa = mxa . myx
 
+-- Embed an object of the twisted-arrow category of `Type` into the category
+-- of presheaves on the twisted-arrow category of `Type`.  This is the simply
+-- the object-map component of the object-map component of the Yoneda embedding
+-- of the twisted-arrow category of `Type` into its category of presheaves.
+public export
+TwPreshfEmbedArrOmap : (x, y : Type) -> (x -> y) -> TwArrPreshfSig
+TwPreshfEmbedArrOmap x y mxy a b mba =
+  -- A twisted-arrow morphism from mxy to mba.
+  (mp : (b -> x, y -> a) ** FunExtEq (snd mp . mxy . fst mp) mba)
+
+-- The morphism-map component of the object-map component of the Yoneda
+-- embedding of the twisted-arrow category of `Type`.
+public export
+TwPreshfEmbedArrContraDimap : (x, y : Type) -> (mxy : x -> y) ->
+  TwArrPreshfContraDimapSig (TwPreshfEmbedArrOmap x y mxy)
+TwPreshfEmbedArrContraDimap x y mxy s t a b mts msa mbt ((mtx, mys) ** comm) =
+  ((mtx . mbt, msa . mys) **
+   \fext => funExt $ \eb => cong msa $ fcong {x=(mbt eb)} $ comm fext)
+
+-- The morphism-map component of the Yoneda embedding of the twisted-arrow
+-- category of `Type`.
+TwPreshfEmbedArrFmap : (x, y, x', y' : Type) ->
+  (mxy : x -> y) -> (mxy' : x' -> y') ->
+  (twmx : x -> x') -> (twmy : y' -> y) ->
+  (twmcomm : ExtEq (twmy . mxy' . twmx) mxy) ->
+  TwArrPreshfNatTrans
+    (TwPreshfEmbedArrOmap x y mxy)
+    (TwPreshfEmbedArrOmap x' y' mxy')
+TwPreshfEmbedArrFmap x y x' y' mxy mxy' twmx twmy twmcomm a b mba
+  ((mbx, mya) ** mcomm) =
+    ((twmx . mbx, mya . twmy) **
+     \fext => funExt $
+      \eb => rewrite (twmcomm $ mbx eb) in fcong {x=eb} $ mcomm fext)
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
