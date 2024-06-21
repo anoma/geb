@@ -1568,9 +1568,29 @@ public export
 TwArrCoprSig : Type
 TwArrCoprSig = (x, y : Type) -> (x -> y) -> Type
 
+-- A presheaf on a category `C` (enriched over `Type`) is a functor
+-- from `op(C)` to `Type`.  A presheaf on the twisted-arrow category
+-- of a category `C` is therefore a functor from `op(Tw(C))` to `Type`.
+--
+-- However, we have `op(Tw(C)) ~=~ Tw(op(C))`, so a presheaf on the
+-- twisted-arrow category of `C` may equivalently be viewed as a copresheaf
+-- on the twisted-arrow category of `op(C)`.
+--
+-- Thus we express the signature of a presheaf on the twisted-arrow category
+-- of `Type` as a copresheaf on the twisted-arrow category of `op(Type)`.
+public export
+TwArrPreshfSig : Type
+TwArrPreshfSig = (x, y : Type) -> (y -> x) -> Type
+
 public export
 TwArrCoprMapSig : TwArrCoprSig -> Type
-TwArrCoprMapSig p = (a, b : Type) -> (mab : a -> b) -> p a a id -> p b b id
+TwArrCoprMapSig p =
+  (a, b : Type) -> (mab : a -> b) -> p a a id -> p b b id
+
+public export
+TwArrPreshfContramapSig : TwArrPreshfSig -> Type
+TwArrPreshfContramapSig p =
+  (a, b : Type) -> (mba : b -> a) -> p a a id -> p b b id
 
 public export
 TwArrCoprDimapSig : TwArrCoprSig -> Type
@@ -1579,10 +1599,10 @@ TwArrCoprDimapSig p =
   p s t mst -> p a b (mtb . mst . mas)
 
 public export
-TwArrContraDimapSig : TwArrCoprSig -> Type
+TwArrContraDimapSig : TwArrPreshfSig -> Type
 TwArrContraDimapSig p =
-  (s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
-  p a b (mtb . mst . mas) -> p s t mst
+  (s, t, a, b : Type) -> (mts : t -> s) -> (msa : s -> a) -> (mbt : b -> t) ->
+  p s t mts -> p a b (msa . mts . mbt)
 
 public export
 TwArrCoprEmbedCopreshf : (Type -> Type) -> TwArrCoprSig
