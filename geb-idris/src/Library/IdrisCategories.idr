@@ -1895,6 +1895,43 @@ TwPreshfEmbedArrFmap x y x' y' mxy mxy' twmx twmy twmcomm a b mba
      \fext => funExt $
       \eb => rewrite (twmcomm $ mbx eb) in fcong {x=eb} $ mcomm fext)
 
+-- Embed an object of the opposite of the twisted-arrow category of `Type` into
+-- the category of copresheaves on the twisted-arrow category of `Type`.  This
+-- is the simply the object-map component of the object-map component of the
+-- Yoneda embedding of the opposite of the twisted-arrow category of `Type`
+-- into the category of copresheaves on the twisted-arrow category of `Type`.
+public export
+TwCoprEmbedOpArrOmap : (x, y : Type) -> (x -> y) -> TwArrCoprSig
+TwCoprEmbedOpArrOmap x y mxy a b mab =
+  -- A twisted-arrow morphism from mxy to mab (i.e. an op-twisted-arrow
+  -- morphism from mxy to mab).
+  (mp : (a -> x, y -> b) ** FunExtEq (snd mp . mxy . fst mp) mab)
+
+-- The morphism-map component of the object-map component of the Yoneda
+-- embedding of the opposite of the twisted-arrow category of `Type`.
+public export
+TwCoprEmbedOpArrDimap : (x, y : Type) -> (mxy : x -> y) ->
+  TwArrCoprDimapSig (TwCoprEmbedOpArrOmap x y mxy)
+TwCoprEmbedOpArrDimap x y mxy s t a b mst mas mtb ((msx, myt) ** comm) =
+  ((msx . mas, mtb . myt) **
+   \fext => funExt $ \ea => cong mtb $ fcong {x=(mas ea)} $ comm fext)
+
+-- The morphism-map component of the Yoneda embedding of the opposite
+-- of the twisted-arrow category of `Type`.
+public export
+TwCoprEmbedOpArrFmap : (x, y, x', y' : Type) ->
+  (mxy : x -> y) -> (mxy' : x' -> y') ->
+  (twmx : x -> x') -> (twmy : y' -> y) ->
+  (twmcomm : ExtEq (twmy . mxy' . twmx) mxy) ->
+  TwArrCoprNatTrans
+    (TwCoprEmbedOpArrOmap x y mxy)
+    (TwCoprEmbedOpArrOmap x' y' mxy')
+TwCoprEmbedOpArrFmap x y x' y' mxy mxy' twmx twmy twmcomm a b mab
+  ((max, myb) ** mcomm) =
+    ((twmx . max, myb . twmy) **
+     \fext => funExt $
+      \ea => rewrite (twmcomm $ max ea) in fcong {x=ea} $ mcomm fext)
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
