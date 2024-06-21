@@ -1781,6 +1781,24 @@ TwArrPreshfEmbedDimap p pdm s t a b mts =
   flip $ dimap {f=p} {a=t} {b=s} {c=b} {d=a}
 
 public export
+TwArrCoprEmbedProfFMap : (p, q : Type -> Type -> Type) ->
+  Profunctor p -> Profunctor q ->
+  ProfNT p q ->
+  TwArrCoprNatTrans
+    (TwArrCoprEmbedProf p)
+    (TwArrCoprEmbedProf q)
+TwArrCoprEmbedProfFMap p q pdm qdm alpha x y mxy epxy = alpha epxy
+
+public export
+TwArrPreshfEmbedProfFMap : (p, q : Type -> Type -> Type) ->
+  Profunctor p -> Profunctor q ->
+  ProfNT p q ->
+  TwArrPreshfNatTrans
+    (TwArrPreshfEmbedProf p)
+    (TwArrPreshfEmbedProf q)
+TwArrPreshfEmbedProfFMap p q pdm qdm alpha x y myx epyx = alpha epyx
+
+public export
 TwArrCoprId : TwArrCoprSig
 TwArrCoprId = TwArrCoprEmbedProf HomProf
 
