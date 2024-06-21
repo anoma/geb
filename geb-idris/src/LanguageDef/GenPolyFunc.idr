@@ -135,8 +135,8 @@ mlDirichSlSigmaPiFR {p=(ppos ** pdir)} {q=(qpos ** qdir)}
     MDSobj
       (SliceSigmaPiFR prodpos slpos)
       (\qp, slp, qd =>
-        (pp : ppos) -> (slp : slpos pp) -> (prodp : prodpos (pp, qp)) ->
-        (pd : pdir pp) -> (sldir pp slp pd, proddir (pp, qp) prodp (pd, qd)))
+        (pp : ppos) -> (prodp : prodpos (pp, qp)) -> (pd : pdir pp) ->
+        (sldir pp (slp (pp ** prodp)) pd, proddir (pp, qp) prodp (pd, qd)))
 
 public export
 mlDirichSlSigmaPiFRMap : {p, q : PolyFunc} ->
@@ -147,7 +147,8 @@ mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (MDSM monpos mondir) =
     MDSM
       (ssprMap prodpos slpos slpos' monpos)
-      ?mlDirichSlSigmaPiFRMap_hole_ondir
+      (\qp, slp, qd, dirs, pp, prodp, pd =>
+        mapFst (mondir pp (slp (pp ** prodp)) pd) $ dirs pp prodp pd)
 
 ----------------------------
 ---- General polynomial ----
