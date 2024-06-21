@@ -1605,84 +1605,6 @@ TwArrPreshfContraDimapSig p =
   p s t mts -> p a b (msa . mts . mbt)
 
 public export
-TwArrCoprEmbedCopreshf : (Type -> Type) -> TwArrCoprSig
-TwArrCoprEmbedCopreshf f x y mxy = f y
-
--- Embed a copresheaf on `Type` into the category of presheaves on the
--- twisted-arrow category of `Type`.
-public export
-TwArrPreshfEmbedCopreshf : (Type -> Type) -> TwArrPreshfSig
-TwArrPreshfEmbedCopreshf f x y myx = f x
-
-public export
-TwArrCoprEmbedCopreshfMap : (f : Type -> Type) -> Functor f ->
-  TwArrCoprDimapSig (TwArrCoprEmbedCopreshf f)
-TwArrCoprEmbedCopreshfMap f fm s t a b mst mas mtb = map {f} mtb
-
-public export
-TwArrPreshfEmbedCopreshfMap : (f : Type -> Type) -> Functor f ->
-  TwArrPreshfContraDimapSig (TwArrPreshfEmbedCopreshf f)
-TwArrPreshfEmbedCopreshfMap f fm s t a b mts msa mbt = map {f} msa
-
-public export
-TwArrCoprEmbedPreshf : (Type -> Type) -> TwArrCoprSig
-TwArrCoprEmbedPreshf f x y mxy = f x
-
--- Embed a presheaf on `Type` into the category of presheaves on the
--- twisted-arrow category of `Type`.
-public export
-TwArrPreshfEmbedPreshf : (Type -> Type) -> TwArrPreshfSig
-TwArrPreshfEmbedPreshf f x y myx = f y
-
-public export
-TwArrCoprEmbedPreshfMap : (f : Type -> Type) -> Contravariant f ->
-  TwArrCoprDimapSig (TwArrCoprEmbedPreshf f)
-TwArrCoprEmbedPreshfMap f fm s t a b mst mas mtb = contramap {f} mas
-
-public export
-TwArrPreshfEmbedPreshfMap : (f : Type -> Type) -> Contravariant f ->
-  TwArrPreshfContraDimapSig (TwArrPreshfEmbedPreshf f)
-TwArrPreshfEmbedPreshfMap f fm s t a b mts msa mbt = contramap {f} mbt
-
-public export
-TwArrCoprEmbedProf : (Type -> Type -> Type) -> TwArrCoprSig
-TwArrCoprEmbedProf p x y mxy = p x y
-
--- Embed an endoprofunctor (AKA difunctor) on `Type` into the category of
--- presheaves on the twisted-arrow category of `Type`.
-public export
-TwArrPreshfEmbedProf : (Type -> Type -> Type) -> TwArrPreshfSig
-TwArrPreshfEmbedProf p x y myx = p y x
-
-public export
-TwArrCoprEmbedDimap : (p : Type -> Type -> Type) -> Profunctor p ->
-  TwArrCoprDimapSig (TwArrCoprEmbedProf p)
-TwArrCoprEmbedDimap p pdm s t a b mst =
-  dimap {f=p} {a=s} {b=t} {c=a} {d=b}
-
-public export
-TwArrPreshfEmbedDimap : (p : Type -> Type -> Type) -> Profunctor p ->
-  TwArrPreshfContraDimapSig (TwArrPreshfEmbedProf p)
-TwArrPreshfEmbedDimap p pdm s t a b mts =
-  flip $ dimap {f=p} {a=t} {b=s} {c=b} {d=a}
-
-public export
-TwArrCoprId : TwArrCoprSig
-TwArrCoprId = TwArrCoprEmbedProf HomProf
-
-public export
-TwArrPreshfId : TwArrPreshfSig
-TwArrPreshfId = TwArrPreshfEmbedProf HomProf
-
-public export
-TwArrCoprIdMap : TwArrCoprDimapSig TwArrCoprId
-TwArrCoprIdMap = TwArrCoprEmbedDimap HomProf HomProfProfunctor
-
-public export
-TwArrPreshfIdMap : TwArrPreshfContraDimapSig TwArrPreshfId
-TwArrPreshfIdMap = TwArrPreshfEmbedDimap HomProf HomProfProfunctor
-
-public export
 TwArrCoprCompose : TwArrCoprSig -> TwArrCoprSig -> TwArrCoprSig
 TwArrCoprCompose q p x z mxz =
   (y : Type ** mp : (x -> y, y -> z) **
@@ -1759,6 +1681,120 @@ TwArrPreshfNatTransHcomp : (p, p', q, q' : TwArrPreshfSig) ->
 TwArrPreshfNatTransHcomp p p' q q' beta alpha x z mzx
   (y ** (myx, mzy) ** (comm, qxy, pyz)) =
     (y ** (myx, mzy) ** (comm, beta x y myx qxy, alpha y z mzy pyz))
+
+public export
+TwArrCoprEmbedCopreshf : (Type -> Type) -> TwArrCoprSig
+TwArrCoprEmbedCopreshf f x y mxy = f y
+
+-- Embed a copresheaf on `Type` into the category of presheaves on the
+-- twisted-arrow category of `Type`.
+public export
+TwArrPreshfEmbedCopreshf : (Type -> Type) -> TwArrPreshfSig
+TwArrPreshfEmbedCopreshf f x y myx = f x
+
+public export
+TwArrCoprEmbedCopreshfMap : (f : Type -> Type) -> Functor f ->
+  TwArrCoprDimapSig (TwArrCoprEmbedCopreshf f)
+TwArrCoprEmbedCopreshfMap f fm s t a b mst mas mtb = map {f} mtb
+
+public export
+TwArrCoprEmbedCopreshfFMap : (f, g : Type -> Type) ->
+  Functor f -> Functor g ->
+  NaturalTransformation f g ->
+  TwArrCoprNatTrans
+    (TwArrCoprEmbedCopreshf f)
+    (TwArrCoprEmbedCopreshf g)
+TwArrCoprEmbedCopreshfFMap f g fm gm alpha a b mab efb = alpha b efb
+
+public export
+TwArrPreshfEmbedCopreshfMap : (f : Type -> Type) -> Functor f ->
+  TwArrPreshfContraDimapSig (TwArrPreshfEmbedCopreshf f)
+TwArrPreshfEmbedCopreshfMap f fm s t a b mts msa mbt = map {f} msa
+
+public export
+TwArrCoprEmbedPreshf : (Type -> Type) -> TwArrCoprSig
+TwArrCoprEmbedPreshf f x y mxy = f x
+
+-- Embed a presheaf on `Type` into the category of presheaves on the
+-- twisted-arrow category of `Type`.
+public export
+TwArrPreshfEmbedPreshf : (Type -> Type) -> TwArrPreshfSig
+TwArrPreshfEmbedPreshf f x y myx = f y
+
+public export
+TwArrPreshfEmbedCopreshfFMap : (f, g : Type -> Type) ->
+  Functor f -> Functor g ->
+  NaturalTransformation f g ->
+  TwArrPreshfNatTrans
+    (TwArrPreshfEmbedPreshf f)
+    (TwArrPreshfEmbedPreshf g)
+TwArrPreshfEmbedCopreshfFMap f g fm gm alpha a b mba efb = alpha b efb
+
+public export
+TwArrCoprEmbedPreshfMap : (f : Type -> Type) -> Contravariant f ->
+  TwArrCoprDimapSig (TwArrCoprEmbedPreshf f)
+TwArrCoprEmbedPreshfMap f fm s t a b mst mas mtb = contramap {f} mas
+
+public export
+TwArrCoprEmbedPreshfFMap : (f, g : Type -> Type) ->
+  Contravariant f -> Contravariant g ->
+  NaturalTransformation f g ->
+  TwArrCoprNatTrans
+    (TwArrCoprEmbedCopreshf f)
+    (TwArrCoprEmbedCopreshf g)
+TwArrCoprEmbedPreshfFMap f g fcm gcm alpha a b mab efb = alpha b efb
+
+public export
+TwArrPreshfEmbedPreshfMap : (f : Type -> Type) -> Contravariant f ->
+  TwArrPreshfContraDimapSig (TwArrPreshfEmbedPreshf f)
+TwArrPreshfEmbedPreshfMap f fm s t a b mts msa mbt = contramap {f} mbt
+
+public export
+TwArrPreshfEmbedPreshfFMap : (f, g : Type -> Type) ->
+  Contravariant f -> Contravariant g ->
+  NaturalTransformation f g ->
+  TwArrPreshfNatTrans
+    (TwArrPreshfEmbedPreshf f)
+    (TwArrPreshfEmbedPreshf g)
+TwArrPreshfEmbedPreshfFMap f g fcm gcm alpha a b mba efb = alpha b efb
+
+public export
+TwArrCoprEmbedProf : (Type -> Type -> Type) -> TwArrCoprSig
+TwArrCoprEmbedProf p x y mxy = p x y
+
+-- Embed an endoprofunctor (AKA difunctor) on `Type` into the category of
+-- presheaves on the twisted-arrow category of `Type`.
+public export
+TwArrPreshfEmbedProf : (Type -> Type -> Type) -> TwArrPreshfSig
+TwArrPreshfEmbedProf p x y myx = p y x
+
+public export
+TwArrCoprEmbedDimap : (p : Type -> Type -> Type) -> Profunctor p ->
+  TwArrCoprDimapSig (TwArrCoprEmbedProf p)
+TwArrCoprEmbedDimap p pdm s t a b mst =
+  dimap {f=p} {a=s} {b=t} {c=a} {d=b}
+
+public export
+TwArrPreshfEmbedDimap : (p : Type -> Type -> Type) -> Profunctor p ->
+  TwArrPreshfContraDimapSig (TwArrPreshfEmbedProf p)
+TwArrPreshfEmbedDimap p pdm s t a b mts =
+  flip $ dimap {f=p} {a=t} {b=s} {c=b} {d=a}
+
+public export
+TwArrCoprId : TwArrCoprSig
+TwArrCoprId = TwArrCoprEmbedProf HomProf
+
+public export
+TwArrPreshfId : TwArrPreshfSig
+TwArrPreshfId = TwArrPreshfEmbedProf HomProf
+
+public export
+TwArrCoprIdMap : TwArrCoprDimapSig TwArrCoprId
+TwArrCoprIdMap = TwArrCoprEmbedDimap HomProf HomProfProfunctor
+
+public export
+TwArrPreshfIdMap : TwArrPreshfContraDimapSig TwArrPreshfId
+TwArrPreshfIdMap = TwArrPreshfEmbedDimap HomProf HomProfProfunctor
 
 -- Embed an object of `Type` into the category of presheaves on
 -- the twisted-arrow category of `Type`.  This is the object-map component
@@ -1837,6 +1873,7 @@ TwPreshfEmbedArrContraDimap x y mxy s t a b mts msa mbt ((mtx, mys) ** comm) =
 
 -- The morphism-map component of the Yoneda embedding of the twisted-arrow
 -- category of `Type`.
+public export
 TwPreshfEmbedArrFmap : (x, y, x', y' : Type) ->
   (mxy : x -> y) -> (mxy' : x' -> y') ->
   (twmx : x -> x') -> (twmy : y' -> y) ->
