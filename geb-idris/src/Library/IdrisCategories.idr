@@ -1583,16 +1583,6 @@ TwArrPreshfSig : Type
 TwArrPreshfSig = (x, y : Type) -> (y -> x) -> Type
 
 public export
-TwArrCoprMapSig : TwArrCoprSig -> Type
-TwArrCoprMapSig p =
-  (a, b : Type) -> (mab : a -> b) -> p a a id -> p b b id
-
-public export
-TwArrPreshfContramapSig : TwArrPreshfSig -> Type
-TwArrPreshfContramapSig p =
-  (a, b : Type) -> (mba : b -> a) -> p a a id -> p b b id
-
-public export
 TwArrCoprDimapSig : TwArrCoprSig -> Type
 TwArrCoprDimapSig p =
   (s, t, a, b : Type) -> (mst : s -> t) -> (mas : a -> s) -> (mtb : t -> b) ->
