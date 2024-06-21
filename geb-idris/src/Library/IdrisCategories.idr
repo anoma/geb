@@ -1760,6 +1760,62 @@ TwArrPreshfNatTransHcomp p p' q q' beta alpha x z mzx
   (y ** (myx, mzy) ** (comm, qxy, pyz)) =
     (y ** (myx, mzy) ** (comm, beta x y myx qxy, alpha y z mzy pyz))
 
+-- Embed an object of `Type` into the category of presheaves on
+-- the twisted-arrow category of `Type`.  This is the object-map component
+-- of the object-map component of the embedding functor from `Type` to
+-- the category of presheaves on the twisted-arrow category of `Type`,
+-- which composes the embedding of presheaves on `Type` into presheaves
+-- on the twisted-arrow category of `Type` after the Yoneda embedding of
+-- `Type` into presheaves on `Type`.
+public export
+TwPreshfEmbedObjOmap : Type -> TwArrPreshfSig
+TwPreshfEmbedObjOmap x a b mba = b -> x
+
+-- The object-map component of the embedding of an object of `op(Type)` into
+-- the category of presheaves on the twisted-arrow category of `Type`,
+-- which composes the embedding of copresheaves on `Type` into presheaves
+-- on the twisted-arrow category of `Type` after the Yoneda embedding of
+-- `op(Type)` into copresheaves on `Type`.
+public export
+TwPreshfEmbedOpObjOmap : Type -> TwArrPreshfSig
+TwPreshfEmbedOpObjOmap x a b mba = x -> a
+
+-- This is the morphism-map component of the object-map component of the
+-- embedding functor from `Type` to the category of presheaves on the
+-- twisted-arrow category of `Type`.
+public export
+TwPreshfEmbedObjContraDimap :
+  (x : Type) -> TwArrPreshfContraDimapSig (TwPreshfEmbedObjOmap x)
+TwPreshfEmbedObjContraDimap x s t a b mts msa mbt mtx = mtx . mbt
+
+-- This is the morphism-map component of the object-map component of the
+-- embedding functor from `op(Type)` to the category of presheaves on the
+-- twisted-arrow category of `Type`.
+public export
+TwPreshfEmbedOpObjContraDimap :
+  (x : Type) -> TwArrPreshfContraDimapSig (TwPreshfEmbedOpObjOmap x)
+TwPreshfEmbedOpObjContraDimap x s t a b mts msa mbt mxs = msa . mxs
+
+-- The morphism-map component of the embedding functor from `Type` to the
+-- category of presheaves on the twisted-arrow category of `Type` (whose
+-- object-map component is `TwPreshfEmbedObjOmap` /
+-- `TwPreshfEmbedObjContraDimap`).
+public export
+TwPreshfEmbedMor :
+  (x, y : Type) -> (mxy : x -> y) ->
+  TwArrPreshfNatTrans (TwPreshfEmbedObjOmap x) (TwPreshfEmbedObjOmap y)
+TwPreshfEmbedMor x y mxy a b mba mbx = mxy . mbx
+
+-- The morphism-map component of the embedding functor from `op(Type)` to the
+-- category of presheaves on the twisted-arrow category of `Type` (whose
+-- object-map component is `TwPreshfEmbedOpObjOmap` /
+-- `TwPreshfEmbedOpObjContraDimap`).
+public export
+TwPreshfEmbedOpMor :
+  (x, y : Type) -> (myx : y -> x) ->
+  TwArrPreshfNatTrans (TwPreshfEmbedOpObjOmap x) (TwPreshfEmbedOpObjOmap y)
+TwPreshfEmbedOpMor x y myx a b mba mxa = mxa . myx
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
