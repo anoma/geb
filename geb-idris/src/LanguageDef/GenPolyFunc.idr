@@ -105,6 +105,49 @@ MLPolySlSigma q {p} beta sl with (mlPolySlObjToC p sl)
     let csigma = (r ** pntVCatComp beta alpha) in
     mlPolySlObjFromC q csigma
 
+public export
+mlDirichSlSigmaPiFL : {p, q : PolyFunc} ->
+  (d : MlDirichSlObj (pfParProductArena p q)) -> MlDirichSlFunc q p
+mlDirichSlSigmaPiFL {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MDSobj prodpos proddir) (MDSobj slpos sldir) =
+    MDSobj
+      (SliceSigmaPiFL prodpos slpos)
+      (\pp, ((qp ** prodp) ** slp), pd =>
+        (qd : qdir qp ** (sldir qp slp qd, proddir (pp, qp) prodp (pd, qd))))
+
+public export
+mlDirichSlSigmaPiFLMap : {p, q : PolyFunc} ->
+  (d : MlDirichSlObj (pfParProductArena p q)) ->
+  MlDirichSlFMap {ar=q} {ar'=p} (mlDirichSlSigmaPiFL {p} {q} d)
+mlDirichSlSigmaPiFLMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MDSobj prodpos proddir) (MDSobj slpos sldir) (MDSobj slpos' sldir')
+  (MDSM monpos mondir) =
+    MDSM
+      ?mlDirichSlSigmaPiFLMap_hole_onpos
+      ?mlDirichSlSigmaPiFLMap_hole_ondir
+
+public export
+mlDirichSlSigmaPiFR : {p, q : PolyFunc} ->
+  (d : MlDirichSlObj (pfParProductArena p q)) -> MlDirichSlFunc p q
+mlDirichSlSigmaPiFR {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MDSobj prodpos proddir) (MDSobj slpos sldir) =
+    MDSobj
+      (SliceSigmaPiFR prodpos slpos)
+      (\qp, slp, qd =>
+        (pp : ppos) -> (slp : slpos pp) -> (prodp : prodpos (pp, qp)) ->
+        (pd : pdir pp) -> (sldir pp slp pd, proddir (pp, qp) prodp (pd, qd)))
+
+public export
+mlDirichSlSigmaPiFRMap : {p, q : PolyFunc} ->
+  (d : MlDirichSlObj (pfParProductArena p q)) ->
+  MlDirichSlFMap {ar=p} {ar'=q} (mlDirichSlSigmaPiFR {p} {q} d)
+mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
+  (MDSobj prodpos proddir) (MDSobj slpos sldir) (MDSobj slpos' sldir')
+  (MDSM monpos mondir) =
+    MDSM
+      ?mlDirichSlSigmaPiFRMap_hole_onpos
+      ?mlDirichSlSigmaPiFRMap_hole_ondir
+
 ----------------------------
 ---- General polynomial ----
 ----------------------------
