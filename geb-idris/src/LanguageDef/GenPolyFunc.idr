@@ -124,7 +124,8 @@ mlDirichSlSigmaPiFLMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (MDSM monpos mondir) =
     MDSM
       (ssplMap prodpos slpos slpos' monpos)
-      ?mlDirichSlSigmaPiFLMap_hole_ondir
+      (\pp, ((qp ** prodp) ** slp), pd, (qd ** (sld, prodd)) =>
+        (qd ** (mondir qp slp qd sld, prodd)))
 
 public export
 mlDirichSlSigmaPiFR : {p, q : PolyFunc} ->
