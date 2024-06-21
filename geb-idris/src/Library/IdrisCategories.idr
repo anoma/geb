@@ -1717,17 +1717,18 @@ TwArrPreshfComposeContraDimap q p qdm pdm s t a b mts msa mbt
       pdm y t y b mty id mbt pyt))
 
 public export
-TwArrNatTrans : TwArrCoprSig -> TwArrCoprSig -> Type
-TwArrNatTrans p q = (x, y : Type) -> (mxy : x -> y) -> p x y mxy -> q x y mxy
+TwArrCoprNatTrans : TwArrCoprSig -> TwArrCoprSig -> Type
+TwArrCoprNatTrans p q =
+  (x, y : Type) -> (mxy : x -> y) -> p x y mxy -> q x y mxy
 
 public export
-TwArrNatTransId : (p : TwArrCoprSig) -> TwArrNatTrans p p
-TwArrNatTransId p x y mxy = Prelude.id
+TwArrCoprNatTransId : (p : TwArrCoprSig) -> TwArrCoprNatTrans p p
+TwArrCoprNatTransId p x y mxy = Prelude.id
 
 public export
-TwArrNatTransVcomp : (p, q, r : TwArrCoprSig) ->
-  TwArrNatTrans q r -> TwArrNatTrans p q -> TwArrNatTrans p r
-TwArrNatTransVcomp p q r beta alpha x y mxy = beta x y mxy . alpha x y mxy
+TwArrCoprNatTransVcomp : (p, q, r : TwArrCoprSig) ->
+  TwArrCoprNatTrans q r -> TwArrCoprNatTrans p q -> TwArrCoprNatTrans p r
+TwArrCoprNatTransVcomp p q r beta alpha x y mxy = beta x y mxy . alpha x y mxy
 
 -------------------------------------------
 -------------------------------------------
