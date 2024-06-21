@@ -1722,13 +1722,27 @@ TwArrCoprNatTrans p q =
   (x, y : Type) -> (mxy : x -> y) -> p x y mxy -> q x y mxy
 
 public export
+TwArrPreshfNatTrans : TwArrPreshfSig -> TwArrPreshfSig -> Type
+TwArrPreshfNatTrans p q =
+  (x, y : Type) -> (myx : y -> x) -> p x y myx -> q x y myx
+
+public export
 TwArrCoprNatTransId : (p : TwArrCoprSig) -> TwArrCoprNatTrans p p
 TwArrCoprNatTransId p x y mxy = Prelude.id
+
+public export
+TwArrPreshfNatTransId : (p : TwArrPreshfSig) -> TwArrPreshfNatTrans p p
+TwArrPreshfNatTransId p x y myx = Prelude.id
 
 public export
 TwArrCoprNatTransVcomp : (p, q, r : TwArrCoprSig) ->
   TwArrCoprNatTrans q r -> TwArrCoprNatTrans p q -> TwArrCoprNatTrans p r
 TwArrCoprNatTransVcomp p q r beta alpha x y mxy = beta x y mxy . alpha x y mxy
+
+public export
+TwArrPreshfNatTransVcomp : (p, q, r : TwArrPreshfSig) ->
+  TwArrPreshfNatTrans q r -> TwArrPreshfNatTrans p q -> TwArrPreshfNatTrans p r
+TwArrPreshfNatTransVcomp p q r beta alpha x y myx = beta x y myx . alpha x y myx
 
 -------------------------------------------
 -------------------------------------------
