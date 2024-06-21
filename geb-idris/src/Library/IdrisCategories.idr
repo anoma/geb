@@ -1740,6 +1740,14 @@ TwArrCoprNatTransVcomp : (p, q, r : TwArrCoprSig) ->
 TwArrCoprNatTransVcomp p q r beta alpha x y mxy = beta x y mxy . alpha x y mxy
 
 public export
+TwArrCoprNatTransHcomp : (p, p', q, q' : TwArrCoprSig) ->
+  TwArrCoprNatTrans q q' -> TwArrCoprNatTrans p p' ->
+  TwArrCoprNatTrans (TwArrCoprCompose q p) (TwArrCoprCompose q' p')
+TwArrCoprNatTransHcomp p p' q q' beta alpha x z mxz
+  (y ** (mxy, myz) ** (comm, qxy, pyz)) =
+    (y ** (mxy, myz) ** (comm, beta x y mxy qxy, alpha y z myz pyz))
+
+public export
 TwArrPreshfNatTransVcomp : (p, q, r : TwArrPreshfSig) ->
   TwArrPreshfNatTrans q r -> TwArrPreshfNatTrans p q -> TwArrPreshfNatTrans p r
 TwArrPreshfNatTransVcomp p q r beta alpha x y myx = beta x y myx . alpha x y myx
