@@ -1752,6 +1752,14 @@ TwArrPreshfNatTransVcomp : (p, q, r : TwArrPreshfSig) ->
   TwArrPreshfNatTrans q r -> TwArrPreshfNatTrans p q -> TwArrPreshfNatTrans p r
 TwArrPreshfNatTransVcomp p q r beta alpha x y myx = beta x y myx . alpha x y myx
 
+public export
+TwArrPreshfNatTransHcomp : (p, p', q, q' : TwArrPreshfSig) ->
+  TwArrPreshfNatTrans q q' -> TwArrPreshfNatTrans p p' ->
+  TwArrPreshfNatTrans (TwArrPreshfCompose q p) (TwArrPreshfCompose q' p')
+TwArrPreshfNatTransHcomp p p' q q' beta alpha x z mzx
+  (y ** (myx, mzy) ** (comm, qxy, pyz)) =
+    (y ** (myx, mzy) ** (comm, beta x y myx qxy, alpha y z mzy pyz))
+
 -------------------------------------------
 -------------------------------------------
 ---- Dependent polynomial endofunctors ----
