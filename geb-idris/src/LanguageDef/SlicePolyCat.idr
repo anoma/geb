@@ -1351,7 +1351,7 @@ public export
 spfPullbackDir : {w, x, z : Type} ->
   (w -> x) -> SPFData x z -> SPFData w z
 spfPullbackDir {w} {x} {z} mwx f =
-  SPFD (spfdPos f) (\ez, ep => spfdDir f ez ep . mwx)
+  SPFD (spfdPos f) (\ez => BaseChangeF mwx . spfdDir f ez)
 
 public export
 spfPullback : {w, x, y, z : Type} ->
