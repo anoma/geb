@@ -1758,27 +1758,6 @@ public export
 spfdPostcompPi : {x, y, z : Type} -> (y -> z) -> SPFData x y -> SPFData x z
 spfdPostcompPi {x} {y} {z} f = (SPFDcomp x y z) (SPFDpi f)
 
--- Postcomposition with base change is the same as what we have
--- called pulling back along position.
-
-public export
-spfdPostcompBCtoPullbackPos : {x, y, z : Type} ->
-  (mzy : z -> y) -> (f : SPFData x y) ->
-  SPFnt {dom=x} {cod=z} (spfdPostcompBC mzy f) (spfPullbackPos mzy f)
-spfdPostcompBCtoPullbackPos {x} {y} {z} mzy f =
-  SPFDm
-    (\ez, epdm => snd epdm (mzy ez) Refl)
-    (\ez, epdm, ex, efd => ((mzy ez ** Refl) ** efd))
-
-public export
-spfdPostcompBCfromPullbackPos : {x, y, z : Type} ->
-  (mzy : z -> y) -> (f : SPFData x y) ->
-  SPFnt {dom=x} {cod=z} (spfPullbackPos mzy f) (spfdPostcompBC mzy f)
-spfdPostcompBCfromPullbackPos {x} {y} {z} mzy f =
-  SPFDm
-    (\ez, ep => (() ** \ey, eq => replace {p=(spfdPos f)} eq ep))
-    (\ez, ep, ex, efd => rewrite (snd $ fst efd) in snd efd)
-
 -- Postcomposition with sigma is the same as what we have
 -- called pushing out along position.
 
@@ -1802,6 +1781,27 @@ spfdPostcompSigmaFromPushoutPos {x} {y} {z} myz f =
       (Element0 (fst ep) (fst $ snd ep) **
        \ey', eq => replace {p=(spfdPos f)} eq $ snd $ snd ep))
     (\ez, ep, ex, efd => rewrite snd (fst efd) in snd efd)
+
+-- Postcomposition with base change is the same as what we have
+-- called pulling back along position.
+
+public export
+spfdPostcompBCtoPullbackPos : {x, y, z : Type} ->
+  (mzy : z -> y) -> (f : SPFData x y) ->
+  SPFnt {dom=x} {cod=z} (spfdPostcompBC mzy f) (spfPullbackPos mzy f)
+spfdPostcompBCtoPullbackPos {x} {y} {z} mzy f =
+  SPFDm
+    (\ez, epdm => snd epdm (mzy ez) Refl)
+    (\ez, epdm, ex, efd => ((mzy ez ** Refl) ** efd))
+
+public export
+spfdPostcompBCfromPullbackPos : {x, y, z : Type} ->
+  (mzy : z -> y) -> (f : SPFData x y) ->
+  SPFnt {dom=x} {cod=z} (spfPullbackPos mzy f) (spfdPostcompBC mzy f)
+spfdPostcompBCfromPullbackPos {x} {y} {z} mzy f =
+  SPFDm
+    (\ez, ep => (() ** \ey, eq => replace {p=(spfdPos f)} eq ep))
+    (\ez, ep, ex, efd => rewrite (snd $ fst efd) in snd efd)
 
 -- Precomposition with base change is the same as what we have
 -- called pushing out along direction.
