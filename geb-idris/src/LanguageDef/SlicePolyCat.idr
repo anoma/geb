@@ -1997,6 +1997,166 @@ SPFpbDoubleCat =
 ---- Via `spfPushout` ----
 --------------------------
 
+public export
+SPFpoCell : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : SPFData w z) -> (g : SPFData w' z') ->
+  Type
+SPFpoCell {w} {w'} {z} {z'} bcl bcr f g =
+  SPFnt {dom=w'} {cod=z'} (spfPushout bcl bcr f) g
+
+public export
+spocVid : {w, z : Type} -> (f : SPFData w z) ->
+  SPFpoCell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f f
+spocVid {w} {z} f =
+  SPFDm
+    (\ez, ep => replace {p=(spfdPos f)} (snd0 $ fst ep) $ snd ep)
+    (\ez, ep, ew, efd => (Element0 ew Refl ** rewrite snd0 (fst ep) in efd))
+
+public export
+spocHid : {w, w' : Type} -> (bcw : w -> w') ->
+  SPFpoCell {w} {w'} {z=w} {z'=w'} bcw bcw (SPFDid w) (SPFDid w')
+spocHid {w} {w'} bcw =
+  SPFDm
+    (\_, _ => ())
+    (\ew', ep, ew'', ew'eq => case ep of
+      (Element0 ew eweq ** ()) => (Element0 ew (trans eweq ew'eq) ** Refl))
+
+public export
+spocVcomp : {w, w', w'', z, z', z'' : Type} ->
+  {bcl : w -> w'} -> {bcl' : w' -> w''} ->
+  {bcr : z -> z'} -> {bcr' : z' -> z''} ->
+  {f : SPFData w z} -> {g : SPFData w' z'} -> {h : SPFData w'' z''} ->
+  SPFpoCell {w=w'} {w'=w''} {z=z'} {z'=z''} bcl' bcr' g h ->
+  SPFpoCell {w} {w'} {z} {z'} bcl bcr f g ->
+  SPFpoCell {w} {w'=w''} {z} {z'=z''} (bcl' . bcl) (bcr' . bcr) f h
+spocVcomp {w} {w'} {w''} {z} {z'} {z''} {bcl} {bcl'} {bcr} {bcr'} {f} {g} {h}
+  beta alpha =
+    SPFDm
+      (\ez'' =>
+        spOnPos beta ez''
+        . dpBimap
+          (s0Bimap bcr $ \ez => id)
+          (\ez, efp =>
+            spOnPos alpha (bcr $ fst0 ez) (Element0 (fst0 ez) Refl ** efp)))
+      (\ez'', (Element0 ez ezeq ** ep), ew'', epdm =>
+        let
+          (Element0 ew' ew'eq ** egd) = spOnDir beta
+            ez''
+            (Element0 (bcr ez) ezeq **
+             spOnPos alpha (bcr ez) (Element0 ez Refl ** ep))
+             ew''
+             epdm
+          (Element0 ew eweq ** efd) = spOnDir alpha
+            (bcr ez)
+            (Element0 ez Refl ** ep)
+            ew'
+            egd
+        in
+        (Element0 ew (rewrite eweq in ew'eq) ** efd))
+
+public export
+spocHcompPos : {w, w', x, x', z, z' : Type} ->
+  {bcw : w -> w'} -> {bcx : x -> x'} -> {bcz : z -> z'} ->
+  {f : SPFData w x} -> {f' : SPFData x z} ->
+  {g : SPFData w' x'} -> {g' : SPFData x' z'} ->
+  SPFpoCell {w=x} {w'=x'} {z} {z'} bcx bcz f' g' ->
+  SPFpoCell {w} {w'} {z=x} {z'=x'} bcw bcx f g ->
+  SPFntPos {dom=w'} {cod=z'}
+    (spfPushout bcw bcz $ SPFDcomp w x z f' f)
+    (SPFDcomp w' x' z' g' g)
+spocHcompPos {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
+  beta alpha ez' (Element0 ez ezeq ** efp' ** efpdm) =
+    (spOnPos beta ez' (Element0 ez ezeq ** efp') **
+     \ex', egd' =>
+      spOnPos alpha ex'
+        $ dpMapSnd
+          (\ex => efpdm $ fst0 ex)
+          (spOnDir beta ez' (Element0 ez ezeq ** efp') ex' egd'))
+
+public export
+spocHcompDir : {w, w', x, x', z, z' : Type} ->
+  {bcw : w -> w'} -> {bcx : x -> x'} -> {bcz : z -> z'} ->
+  {f : SPFData w x} -> {f' : SPFData x z} ->
+  {g : SPFData w' x'} -> {g' : SPFData x' z'} ->
+  (beta : SPFpoCell {w=x} {w'=x'} {z} {z'} bcx bcz f' g') ->
+  (alpha : SPFpoCell {w} {w'} {z=x} {z'=x'} bcw bcx f g) ->
+  SPFntDir {dom=w'} {cod=z'}
+    (spfPushout bcw bcz $ SPFDcomp w x z f' f)
+    (SPFDcomp w' x' z' g' g)
+    (spocHcompPos {bcw} {bcx} {bcz} {f} {f'} {g} {g'} beta alpha)
+spocHcompDir {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
+    beta alpha ez' (Element0 ez ezeq ** ep ** dm) ew' ((ex' ** egd') ** egd)
+    with (spOnDir beta ez' (Element0 ez ezeq ** ep) ex' egd') proof direq
+  spocHcompDir {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
+    beta alpha ez' (Element0 ez ezeq ** ep ** dm) ew' ((ex' ** egd') ** egd)
+    | (Element0 ex exeq ** efd') =
+      case spOnDir alpha ex' (Element0 ex exeq ** dm ex efd') ew' egd of
+        (ew ** efd) => (ew ** (ex ** efd') ** efd)
+
+public export
+spocHcomp : {w, w', x, x', z, z' : Type} ->
+  {bcw : w -> w'} -> {bcx : x -> x'} -> {bcz : z -> z'} ->
+  {f : SPFData w x} -> {f' : SPFData x z} ->
+  {g : SPFData w' x'} -> {g' : SPFData x' z'} ->
+  SPFpoCell {w=x} {w'=x'} {z} {z'} bcx bcz f' g' ->
+  SPFpoCell {w} {w'} {z=x} {z'=x'} bcw bcx f g ->
+  SPFpoCell {w} {w'} {z} {z'}
+    bcw
+    bcz
+    (SPFDcomp w x z f' f)
+    (SPFDcomp w' x' z' g' g)
+spocHcomp {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
+  beta alpha =
+    SPFDm
+      (spocHcompPos beta alpha)
+      (spocHcompDir beta alpha)
+
+public export
+SPFpoDblCatCell : IntCellSig Type TypeMor SPFData
+SPFpoDblCatCell x0 x1 y0 y1 = SPFpoCell {w=x0} {w'=y0} {z=x1} {z'=y1}
+
+public export
+SPFpoDblCatVId : IntCellVIdSig InternalCat.typeId SPFpoDblCatCell
+SPFpoDblCatVId x y = spocVid {w=x} {z=y}
+
+public export
+SPFpoDblCatHId : IntCellHIdSig SPFDid SPFpoDblCatCell
+SPFpoDblCatHId x y = spocHid {w=x} {w'=y}
+
+public export
+SPFpoDblCatVcomp : IntCellVCompSig InternalCat.typeComp SPFpoDblCatCell
+SPFpoDblCatVcomp vmxy0 vmxy1 vmyz0 vmyz1 hmx hmy hmz =
+  spocVcomp
+    {bcl=vmxy0} {bcl'=vmyz0} {bcr=vmxy1} {bcr'=vmyz1}
+    {f=hmx} {g=hmy} {h=hmz}
+
+public export
+SPFpoDblCatHcomp : IntCellHCompSig SPFDcomp SPFpoDblCatCell
+SPFpoDblCatHcomp vmxy0 vmxy1 vmxy2 hmx01 hmx12 hmy01 hmy12 =
+  spocHcomp
+    {bcw=vmxy0} {bcx=vmxy1} {bcz=vmxy2}
+    {f=hmx01} {f'=hmx12} {g=hmy01} {g'=hmy12}
+
+public export
+SPFpoDblCatCellTo2Mor :
+  IntCellTo2MorSig InternalCat.typeComp SPFpoDblCatCell InternalCat.typeId
+SPFpoDblCatCellTo2Mor x y f g = Prelude.id
+
+public export
+SPFpoDoubleCat : IntDblCatSig
+SPFpoDoubleCat =
+  IDCat
+    Type
+    TypeMICS
+    SPFDfmics
+    SPFpoDblCatCell
+    SPFpoDblCatVId
+    SPFpoDblCatHId
+    SPFpoDblCatVcomp
+    SPFpoDblCatHcomp
+    SPFpoDblCatCellTo2Mor
+
 -----------------------------------------------------------------------
 ---- Equivalence of `spfPullback` and `spfPushout` cell categories ----
 -----------------------------------------------------------------------
