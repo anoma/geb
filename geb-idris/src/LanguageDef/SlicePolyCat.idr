@@ -37,6 +37,8 @@ import public LanguageDef.IntECofamCat
 -- presheaf categories, this `SFPdirType` corresponds to what is called the
 -- functor `E_T`, while the `SliceObj cod` which it depends on is the object
 -- `T1`.
+--
+-- Note that this is equivalent to `SliceObj (Sigma {a=cod} pos, dom)`.
 public export
 0 SPFdirType : (0 dom, cod : Type) -> (0 _ : SliceObj cod) -> Type
 SPFdirType dom cod pos = (ec : cod) -> pos ec -> SliceObj dom
