@@ -127,6 +127,10 @@ mlDirichSlSigmaPiFLMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
       (\pp, ((qp ** prodp) ** slp), pd, (qd ** (sld, prodd)) =>
         (qd ** (mondir qp slp qd sld, prodd)))
 
+--------------------------------
+---- Pi (dependent product) ----
+--------------------------------
+
 public export
 mlDirichSlSigmaPiFR : {p, q : PolyFunc} ->
   (d : MlDirichSlObj (pfParProductArena p q)) -> MlDirichSlFunc p q
