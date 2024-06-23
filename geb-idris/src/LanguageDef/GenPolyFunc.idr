@@ -176,8 +176,11 @@ mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 -- `E_T`, given a `T1`, is a functor from the category of elements of `T1`
 -- (which makes sense because `T1` is itself a presheaf) to the category of
 -- presheaves over `I` (which is the domain of the PRA functor).
-
+--
+-- We can view this as the generalization of `SPFdirType` in `SlicePolyCat`
+-- from slice categories to categories of elements of Dirichlet functors.
 public export
 0 PRAdirType : (0 dom, cod : MLDirichCatObj) ->
   (0 pos : MlDirichSlObj cod) -> Type
-PRAdirType dom cod pos = MlDirichSlOfSl {ar=cod} pos -> MlDirichSlObj dom
+PRAdirType dom cod pos =
+  MlDirichSlObj (pfParProductArena (mlDirichSlObjTot {ar=cod} pos) dom)
