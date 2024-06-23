@@ -1858,15 +1858,15 @@ SPFcell : {w, w', z, z' : Type} ->
   (f : SPFData w z) -> (g : SPFData w' z') ->
   Type
 SPFcell {w} {w'} {z} {z'} bcl bcr f g =
-  SPFnt {dom=w'} {cod=z'} (spfPushout bcl bcr f) g
+  SPFnt {dom=w} {cod=z} (spfPullback bcl bcr g) f
 
 public export
 spfcVid : {w, z : Type} -> (f : SPFData w z) ->
   SPFcell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f f
 spfcVid {w} {z} f =
   SPFDm
-    (\ez, ep => replace {p=(spfdPos f)} (fst $ snd ep) $ snd $ snd ep)
-    (\ez, ep, ew, efd => (ew ** (Refl, rewrite fst (snd ep) in efd)))
+    (\ez, ep => ep)
+    (\ez, ep, ew, efd => efd)
 
 public export
 spfcHid : {w, w' : Type} -> (bcw : w -> w') ->
@@ -1874,10 +1874,7 @@ spfcHid : {w, w' : Type} -> (bcw : w -> w') ->
 spfcHid {w} {w'} bcw =
   SPFDm
     (\_, _ => ())
-    (\ew', ep, ew'', ew'eq =>
-      (fst ep **
-       (trans (fst $ snd ep) ew'eq,
-        rewrite sym (unitUnique () (snd $ snd ep)) in Refl)))
+    (\ew, ep, ew', eweq => case ep of () => cong bcw eweq)
 
 public export
 spfcVcomp : {w, w', w'', z, z', z'' : Type} ->
@@ -1890,24 +1887,11 @@ spfcVcomp : {w, w', w'', z, z', z'' : Type} ->
 spfcVcomp {w} {w'} {w''} {z} {z'} {z''} {bcl} {bcl'} {bcr} {bcr'} {f} {g} {h}
   beta alpha =
     SPFDm
-      (\ez'', ep =>
-        spOnPos beta ez''
-          (bcr (fst ep) **
-           (fst (snd ep),
-            spOnPos alpha (bcr $ fst ep) (fst ep ** (Refl, snd $ snd ep)))))
-      (\ez'', ep, ew'', epdm =>
-        let
-          (ew' ** (eweq', egd)) = spOnDir beta ez''
-            (bcr (fst ep) **
-             (fst (snd ep),
-              spOnPos alpha (bcr $ fst ep) (fst ep ** (Refl, snd $ snd ep))))
-             ew''
-             epdm
-          (ew ** (eweq, efd)) =
-            spOnDir alpha (bcr $ fst ep)
-              (fst ep ** (Refl, snd $ snd ep)) ew' egd
-        in
-        (ew ** (trans (cong bcl' $ eweq) eweq', efd)))
+      (\ez =>
+        spOnPos alpha ez . spOnPos beta (bcr ez))
+      (\ez, ep, ew, epdm =>
+        spOnDir beta (bcr ez) ep (bcl ew)
+        $ spOnDir alpha ez (spOnPos beta (bcr ez) ep) ew epdm)
 
 public export
 spfcHcompPos : {w, w', x, x', z, z' : Type} ->
@@ -1916,17 +1900,14 @@ spfcHcompPos : {w, w', x, x', z, z' : Type} ->
   {g : SPFData w' x'} -> {g' : SPFData x' z'} ->
   SPFcell {w=x} {w'=x'} {z} {z'} bcx bcz f' g' ->
   SPFcell {w} {w'} {z=x} {z'=x'} bcw bcx f g ->
-  SPFntPos {dom=w'} {cod=z'}
-    (spfPushout bcw bcz $ SPFDcomp w x z f' f)
-    (SPFDcomp w' x' z' g' g)
+  SPFntPos {dom=w} {cod=z}
+    (spfPullback bcw bcz $ SPFDcomp w' x' z' g' g)
+    (SPFDcomp w x z f' f)
 spfcHcompPos {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
-  beta alpha ez' (ez ** (ezeq, (ep ** dm))) =
-    (spOnPos beta ez' (ez ** (ezeq, ep)) **
-     \ex', egd' =>
-        spOnPos alpha ex'
-          $ dpMapSnd
-            (\ex => mapSnd $ dm ex)
-            $ spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd')
+  beta alpha ez ep =
+    (spOnPos beta ez (fst ep) **
+     \ex, ef' =>
+      spOnPos alpha ex $ snd ep (bcx ex) $ spOnDir beta ez (fst ep) ex ef')
 
 public export
 spfcHcompDir : {w, w', x, x', z, z' : Type} ->
@@ -1935,19 +1916,21 @@ spfcHcompDir : {w, w', x, x', z, z' : Type} ->
   {g : SPFData w' x'} -> {g' : SPFData x' z'} ->
   (beta : SPFcell {w=x} {w'=x'} {z} {z'} bcx bcz f' g') ->
   (alpha : SPFcell {w} {w'} {z=x} {z'=x'} bcw bcx f g) ->
-  SPFntDir {dom=w'} {cod=z'}
-    (spfPushout bcw bcz $ SPFDcomp w x z f' f)
-    (SPFDcomp w' x' z' g' g)
+  SPFntDir {dom=w} {cod=z}
+    (spfPullback bcw bcz $ SPFDcomp w' x' z' g' g)
+    (SPFDcomp w x z f' f)
     (spfcHcompPos {bcw} {bcx} {bcz} {f} {f'} {g} {g'} beta alpha)
 spfcHcompDir {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
-    beta alpha ez' (ez ** (ezeq, (ep ** dm))) ew' ((ex' ** egd') ** egd)
-    with (spOnDir beta ez' (ez ** (ezeq, ep)) ex' egd') proof direq
+    beta alpha ez ep ew efd with
+      (spOnDir beta ez (fst ep) (fst $ fst efd) (snd $ fst efd)) proof egeq
   spfcHcompDir {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
-      beta alpha ez' (ez ** (ezeq, (ep ** dm))) ew' ((ex' ** egd') ** egd)
-        | (ex ** (exeq, efd')) =
-          dpMapSnd
-            (\ew => mapSnd $ \efd => ((ex ** efd') ** efd))
-            $ spOnDir alpha ex' (ex ** (exeq, dm ex efd')) ew' egd
+    beta alpha ez ep ew efd | egd' =
+      ((bcx (fst $ fst efd) ** egd') **
+       spOnDir alpha
+        (fst $ fst efd)
+        (snd ep (bcx $ fst $ fst efd) egd')
+        ew
+        (rewrite sym egeq in snd efd))
 
 public export
 spfcHcomp : {w, w', x, x', z, z' : Type} ->
