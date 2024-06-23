@@ -1379,6 +1379,28 @@ spfPushout : {w, x, y, z : Type} ->
 spfPushout {w} {x} {y} {z} mwx mzy =
   spfPushoutPos {x} {y} {z} mzy . spfPushoutDir {w} {x} {z} mwx
 
+public export
+spfPiPos : {x, y, z : Type} ->
+  (z -> y) -> SPFData x z -> SPFData x y
+spfPiPos {x} {y} {z} mzy f =
+  SPFD
+    (SliceFibPiF mzy $ spfdPos f)
+    (\ey, ep, ex =>
+      (ez : z) -> (0 ezeq : mzy ez = ey) ->
+      spfdDir f ez (ep $ Element0 ez ezeq) ex)
+
+public export
+spfPiDir : {w, x, z : Type} ->
+  (w -> x) -> SPFData w z -> SPFData x z
+spfPiDir {w} {x} {z} mwx f =
+  SPFD (spfdPos f) (\ez, ep => SliceFibPiF mwx (spfdDir f ez ep))
+
+public export
+spfPi : {w, x, y, z : Type} ->
+  (w -> x) -> (z -> y) -> SPFData w z -> SPFData x y
+spfPi {w} {x} {y} {z} mwx mzy =
+  spfPiPos {x} {y} {z} mzy . spfPiDir {w} {x} {z} mwx
+
 --------------------------------------------------
 -------------------------------------------------
 ---- Categories of slice polynomial functors ----
