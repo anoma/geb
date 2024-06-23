@@ -1348,16 +1348,16 @@ spfPullbackPos {x} {y} {z} mzy f =
   SPFD (BaseChangeF mzy $ spfdPos f) (\ez => spfdDir f (mzy ez))
 
 public export
-spfPullbackDir : {w, x, y : Type} ->
-  (w -> x) -> SPFData x y -> SPFData w y
-spfPullbackDir {w} {x} {y} mwx f =
+spfPullbackDir : {w, x, z : Type} ->
+  (w -> x) -> SPFData x z -> SPFData w z
+spfPullbackDir {w} {x} {z} mwx f =
   SPFD (spfdPos f) (\ez, ep => spfdDir f ez ep . mwx)
 
 public export
 spfPullback : {w, x, y, z : Type} ->
   (w -> x) -> (z -> y) -> SPFData x y -> SPFData w z
 spfPullback {w} {x} {y} {z} mwx mzy =
-  spfPullbackDir {w} {x} {y=z} mwx . spfPullbackPos {x} {y} {z} mzy
+  spfPullbackDir {w} {x} {z} mwx . spfPullbackPos {x} {y} {z} mzy
 
 public export
 spfPushoutPos : {x, y, z : Type} ->
@@ -1368,18 +1368,18 @@ spfPushoutPos {x} {y} {z} mzy f =
     (\ey, ep, ex => spfdDir f (fst ep) (snd $ snd ep) ex)
 
 public export
-spfPushoutDir : {w, x, y : Type} ->
-  (w -> x) -> SPFData w y -> SPFData x y
-spfPushoutDir {w} {x} {y} mwx f =
+spfPushoutDir : {w, x, z : Type} ->
+  (w -> x) -> SPFData w z -> SPFData x z
+spfPushoutDir {w} {x} {z} mwx f =
   SPFD
     (spfdPos f)
-    (\ey, ep, ex => (ew : w ** (mwx ew = ex, spfdDir f ey ep ew)))
+    (\ez, ep, ex => (ew : w ** (mwx ew = ex, spfdDir f ez ep ew)))
 
 public export
 spfPushout : {w, x, y, z : Type} ->
   (w -> x) -> (z -> y) -> SPFData w z -> SPFData x y
 spfPushout {w} {x} {y} {z} mwx mzy =
-  spfPushoutDir {w} {x} {y} mwx . spfPushoutPos {x=w} {y} {z} mzy
+  spfPushoutPos {x} {y} {z} mzy . spfPushoutDir {w} {x} {z} mwx
 
 --------------------------------------------------
 -------------------------------------------------
