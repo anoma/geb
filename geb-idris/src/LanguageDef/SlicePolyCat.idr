@@ -2179,10 +2179,6 @@ SPFpoDoubleCat =
     SPFpoDblCatHcomp
     SPFpoDblCatCellTo2Mor
 
------------------------------------------------------------------------
----- Equivalence of `spfPullback` and `spfPushout` cell categories ----
------------------------------------------------------------------------
-
 -------------------------------------------------
 -------------------------------------------------
 ---- Slice-polynomial categories of elements ----
