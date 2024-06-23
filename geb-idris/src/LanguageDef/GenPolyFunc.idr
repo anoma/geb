@@ -180,5 +180,4 @@ mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 public export
 0 PRAdirType : (0 dom, cod : MLDirichCatObj) ->
   (0 pos : MlDirichSlObj cod) -> Type
-PRAdirType dom cod pos = (ty : Type) -> (sl : InterpDirichFunc cod ty) ->
-  InterpMlDirichSlObj {ar=cod} pos ty sl -> MlDirichSlObj dom
+PRAdirType dom cod pos = MlDirichSlOfSl {ar=cod} pos -> MlDirichSlObj dom
