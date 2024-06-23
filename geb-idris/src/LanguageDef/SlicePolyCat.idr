@@ -1371,9 +1371,7 @@ public export
 spfPushoutDir : {w, x, z : Type} ->
   (w -> x) -> SPFData w z -> SPFData x z
 spfPushoutDir {w} {x} {z} mwx f =
-  SPFD
-    (spfdPos f)
-    (\ez, ep, ex => (ew : w ** (mwx ew = ex, spfdDir f ez ep ew)))
+  SPFD (spfdPos f) (\ez, ep => SliceFibSigmaF mwx (spfdDir f ez ep))
 
 public export
 spfPushout : {w, x, y, z : Type} ->
@@ -1813,8 +1811,7 @@ public export
 spfdPrecompBCToPushoutDir {x} {y} {z} myx f =
   SPFDm
     (\ez, epTermMorph => fst epTermMorph)
-    (\ez, ep, ex, eyeqef =>
-      ((fst eyeqef ** snd $ snd eyeqef) ** fst $ snd eyeqef))
+    (\ez, ep, ex, efd => ((fst0 (fst efd) ** snd efd) ** snd0 $ fst efd))
 
 public export
 spfdPrecompBCFromPushoutDir : {x, y, z : Type} ->
@@ -1823,7 +1820,7 @@ spfdPrecompBCFromPushoutDir : {x, y, z : Type} ->
 spfdPrecompBCFromPushoutDir {x} {y} {z} my f =
   SPFDm
     (\ez, ep => (ep ** \_, _ => ()))
-    (\ez, ep, ex, efd => (fst (fst efd) ** (snd efd, snd (fst efd))))
+    (\ez, ep, ex, efd => (Element0 (fst $ fst efd) (snd efd) ** snd $ fst efd))
 
 -- Precomposition with pi is the same as what we have
 -- called pulling back along direction.
