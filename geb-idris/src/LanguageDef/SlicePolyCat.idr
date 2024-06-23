@@ -1361,25 +1361,25 @@ spfPullback {w} {x} {y} {z} mwx mzy =
 
 public export
 spfPushoutPos : {x, y, z : Type} ->
-  (y -> z) -> SPFData x y -> SPFData x z
-spfPushoutPos {x} {y} {z} myz f =
+  (z -> y) -> SPFData x z -> SPFData x y
+spfPushoutPos {x} {y} {z} mzy f =
   SPFD
-    (\ez => (ey : y ** (myz ey = ez, spfdPos f ey)))
-    (\ez, ep, ex => spfdDir f (fst ep) (snd $ snd ep) ex)
+    (\ey => (ez : z ** (mzy ez = ey, spfdPos f ez)))
+    (\ey, ep, ex => spfdDir f (fst ep) (snd $ snd ep) ex)
 
 public export
 spfPushoutDir : {w, x, y : Type} ->
-  (x -> w) -> SPFData x y -> SPFData w y
-spfPushoutDir {w} {x} {y} mxw f =
+  (w -> x) -> SPFData w y -> SPFData x y
+spfPushoutDir {w} {x} {y} mwx f =
   SPFD
     (spfdPos f)
-    (\ey, ep, ew => (ex : x ** (mxw ex = ew, spfdDir f ey ep ex)))
+    (\ey, ep, ex => (ew : w ** (mwx ew = ex, spfdDir f ey ep ew)))
 
 public export
 spfPushout : {w, x, y, z : Type} ->
-  (x -> w) -> (y -> z) -> SPFData x y -> SPFData w z
-spfPushout {w} {x} {y} {z} mxw myz =
-  spfPushoutDir {w} {x} {y=z} mxw . spfPushoutPos {x} {y} {z} myz
+  (w -> x) -> (z -> y) -> SPFData w z -> SPFData x y
+spfPushout {w} {x} {y} {z} mwx mzy =
+  spfPushoutDir {w} {x} {y} mwx . spfPushoutPos {x=w} {y} {z} mzy
 
 --------------------------------------------------
 -------------------------------------------------
