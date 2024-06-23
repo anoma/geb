@@ -1738,10 +1738,20 @@ spfdDichange : {s, t, a, b : Type} ->
 spfdDichange {s} {t} {a} {b} mas mtb =
   spfdPrecompBC {x=s} {y=a} {z=t} mas . spfdPostcompBC {x=a} {y=b} {z=t} mtb
 
+-- Precompose a sigma before a slice polynomial.
+public export
+spfdPrecompSigma : {x, y, z : Type} -> (x -> y) -> SPFData y z -> SPFData x z
+spfdPrecompSigma {x} {y} {z} f = flip (SPFDcomp x y z) (SPFDsigma f)
+
 -- Postcompose a sigma after a slice polynomial.
 public export
 spfdPostcompSigma : {x, y, z : Type} -> (y -> z) -> SPFData x y -> SPFData x z
 spfdPostcompSigma {x} {y} {z} f = (SPFDcomp x y z) (SPFDsigma f)
+
+-- Precompose a pi before a slice polynomial.
+public export
+spfdPrecompPi : {x, y, z : Type} -> (x -> y) -> SPFData y z -> SPFData x z
+spfdPrecompPi {x} {y} {z} f = flip (SPFDcomp x y z) (SPFDpi f)
 
 -- Postcompose a pi after a slice polynomial.
 public export
@@ -1814,6 +1824,27 @@ spfdPrecompBCFromPushoutDir {x} {y} {z} my f =
   SPFDm
     (\ez, ep => (ep ** \_, _ => ()))
     (\ez, ep, ex, efd => (fst (fst efd) ** (snd efd, snd (fst efd))))
+
+-- Precomposition with pi is the same as what we have
+-- called pulling back along direction.
+
+public export
+0 spfdPrecompPiToPullbackDir : {x, y, z : Type} ->
+  (mxy : x -> y) -> (f : SPFData y z) ->
+  SPFnt {dom=x} {cod=z} (spfdPrecompPi mxy f) (spfPullbackDir mxy f)
+spfdPrecompPiToPullbackDir {x} {y} {z} mxy f =
+  SPFDm
+    (\ez, ep => fst ep)
+    (\ez, ep, ex, efd => ((mxy ex ** efd) ** Refl))
+
+public export
+0 spfdPrecompPiFromPullbackDir : {x, y, z : Type} ->
+  (mxy : x -> y) -> (f : SPFData y z) ->
+  SPFnt {dom=x} {cod=z} (spfPullbackDir mxy f) (spfdPrecompPi mxy f)
+spfdPrecompPiFromPullbackDir {x} {y} {z} mxy f =
+  SPFDm
+    (\ez, efd => (efd ** \_, _ => ()))
+    (\ez, ep, ex, efd => rewrite snd efd in snd (fst efd))
 
 ---------------------------------------------------------------
 ---------------------------------------------------------------
