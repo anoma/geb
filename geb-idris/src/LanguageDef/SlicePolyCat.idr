@@ -1364,8 +1364,8 @@ spfPushoutPos : {x, y, z : Type} ->
   (z -> y) -> SPFData x z -> SPFData x y
 spfPushoutPos {x} {y} {z} mzy f =
   SPFD
-    (\ey => (ez : z ** (mzy ez = ey, spfdPos f ez)))
-    (\ey, ep, ex => spfdDir f (fst ep) (snd $ snd ep) ex)
+    (SliceFibSigmaF mzy $ spfdPos f)
+    (\ey, ep => spfdDir f (fst0 $ fst ep) $ snd ep)
 
 public export
 spfPushoutDir : {w, x, z : Type} ->
@@ -1765,8 +1765,7 @@ public export
   SPFnt {dom=x} {cod=z} (spfdPostcompSigma myz f) (spfPushoutPos myz f)
 spfdPostcompSigmaToPushoutPos {x} {y} {z} myz f =
   SPFDm
-    (\ez, epdm =>
-      (fst0 (fst epdm) ** (snd0 (fst epdm), snd epdm (fst0 $ fst epdm) Refl)))
+    (\ez, epdm => (fst epdm ** snd epdm (fst0 $ fst epdm) Refl))
     (\ez, epdm, ex, efd => ((fst0 (fst epdm) ** Refl) ** efd))
 
 public export
@@ -1775,9 +1774,7 @@ spfdPostcompSigmaFromPushoutPos : {x, y, z : Type} ->
   SPFnt {dom=x} {cod=z} (spfPushoutPos myz f) (spfdPostcompSigma myz f)
 spfdPostcompSigmaFromPushoutPos {x} {y} {z} myz f =
   SPFDm
-    (\ez, ep =>
-      (Element0 (fst ep) (fst $ snd ep) **
-       \ey', eq => replace {p=(spfdPos f)} eq $ snd $ snd ep))
+    (\ez, ep => (fst ep ** \ey, xeq => rewrite sym xeq in snd ep))
     (\ez, ep, ex, efd => rewrite snd (fst efd) in snd efd)
 
 -- Postcomposition with base change is the same as what we have
