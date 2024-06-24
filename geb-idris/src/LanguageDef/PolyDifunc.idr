@@ -172,6 +172,34 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) (m : x -> y) where
   0 ipdfComm :
     FunExtEq (ipdfCovarMor . pdfProj pdf ipdfPos . ipdfContraMor) m
 
+-- A slice over a type together with a `Pi` of that slice.  This amounts
+-- to a type family indexed by `a` together with a section of that family
+-- (i.e., a single term from each type).
+--
+-- Another way of viewing it is as a function out of `a` with a
+-- heterogeneous, client-specified codomain:  the client chooses not
+-- only the codomain, but potentially a different codomain for each
+-- output value.
+--
+-- There is another way of looking at it as well, whence the name:
+-- as a factorization of the identity on `a` into two morphisms.
+-- Here is why we can view it this way:
+--  - A function from `Unit` to a given type `b` can be viewed as simply a
+--    term of `b`
+--  - Hence, for a given `x : SliceObj a`, we may view `Pi {a} x` as a
+--    slice morphism in the slice category over `a` from `const Unit` to `x`
+--  - `const Unit`, as a slice object over `a` (specifically, it is the
+--    terminal object in that category), is, in the category-theoretic
+--    view, the slice object with total space `a` and projection `id(a)`
+--  - Hence, the constraint on a slice morphism that the variable part of
+--    the morphism commutes with the projections is the statement that
+--    the composition of the projection of the slice object `x` after the
+--    variable component of the slice morphism represented by a `Pi {a} x`
+--    is equal to the identity
+public export
+IdFact : Type -> Type
+IdFact a = (x : SliceObj a ** Pi {a} x)
+
 public export
 IPDFc : {pdf : PolyDifunc} -> {x, y : Type} ->
   (i : pdfPos pdf) ->
