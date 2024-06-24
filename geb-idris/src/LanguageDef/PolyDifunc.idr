@@ -202,7 +202,7 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) (m : x -> y) where
 -- out of `a` with a left inverse (which of course points back to `a`).
 public export
 IdFact : Type -> Type
-IdFact a = (x : SliceObj a ** Pi {a} x)
+IdFact a = Sigma {a=(SliceObj a)} (Pi {a})
 
 public export
 IPDFc : {pdf : PolyDifunc} -> {x, y : Type} ->
