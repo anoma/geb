@@ -196,6 +196,10 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) (m : x -> y) where
 --    the composition of the projection of the slice object `x` after the
 --    variable component of the slice morphism represented by a `Pi {a} x`
 --    is equal to the identity
+-- So we can in general view `Pi {a} x` as a factorization of the identity
+-- on `a` _through_ (the total space of) `x`.  Because it's specifically
+-- the identity that we're factoring, we may also view it as a function
+-- out of `a` with a left inverse (which of course points back to `a`).
 public export
 IdFact : Type -> Type
 IdFact a = (x : SliceObj a ** Pi {a} x)
