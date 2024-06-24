@@ -383,7 +383,9 @@ record PolyDiNT (p, q : PolyDifunc) where
     (i : pdfPos p) ->
       CSliceMorphism {c=(pdfBase p i)}
         (pdfCobase p i ** pdfProj p i)
-        (pdfCobase q (pdntOnPos i) ** pdntOnBase i . pdfProj q (pdntOnPos i))
+        (CSSigma {c=(pdfBase q (pdntOnPos i))} {d=(pdfBase p i)}
+          (pdntOnBase i)
+          (pdfCobase q (pdntOnPos i) ** pdfProj q (pdntOnPos i)))
 
 export
 InterpPDNTnat : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
