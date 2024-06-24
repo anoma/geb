@@ -10,6 +10,7 @@ import public LanguageDef.IntDisheafCat
 
 %default total
 %hide Library.IdrisCategories.BaseChangeF
+%hide Prelude.Ops.infixl.(|>)
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
@@ -200,9 +201,24 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) (m : x -> y) where
 -- on `a` _through_ (the total space of) `x`.  Because it's specifically
 -- the identity that we're factoring, we may also view it as a function
 -- out of `a` with a left inverse (which of course points back to `a`).
+--
+-- We call this `IdFactW` because it is a factorization of the identity
+-- using W-types.
 public export
-IdFact : Type -> Type
-IdFact a = Sigma {a=(SliceObj a)} (Pi {a})
+IdFactW : Type -> Type
+IdFactW a = Sigma {a=(SliceObj a)} (Pi {a})
+
+-- The interpretation of a polynomial functor applied to a type is as a
+-- choice of position together with a _surjective_ (hence the `IdFactThrough`
+-- rather than simply "morphism") assigment of directions to the input
+-- type (which we take to be a type of terms).
+--
+-- Thus this will be `void` for input types for which there are no surjective
+-- assignments, in particular those which are larger than the types of
+-- directions -- that would amount to an "unused variable" in the term.
+public export
+InterpDiPolyFunc : MLArena -> Type -> Type
+InterpDiPolyFunc p = Sigma {a=(pfPos p)} . (|>) (pfDir {p}) . flip IdFactThrough
 
 public export
 IPDFc : {pdf : PolyDifunc} -> {x, y : Type} ->
