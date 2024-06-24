@@ -360,20 +360,20 @@ sfpMap {c} {d} {f} sca scb =
 -----------------------
 
 public export
-0 SPSasWTF : {c, d : Type} -> (f : c -> d) -> WTypeFunc c d
-SPSasWTF {c} {d} f = MkWTF {dom=c} {cod=d} d c id f id
+0 SFPasWTF : {c, d : Type} -> (f : c -> d) -> WTypeFunc c d
+SFPasWTF {c} {d} f = MkWTF {dom=c} {cod=d} d c id f id
 
-spsToWTF : {c, d : Type} -> (0 f : c -> d) ->
-  SliceNatTrans (SliceFibPiF {c} {d} f) (InterpWTF $ SPSasWTF f)
-spsToWTF {c} {d} f sc ed pisc = (Element0 ed Refl ** pisc)
+sfpToWTF : {c, d : Type} -> (0 f : c -> d) ->
+  SliceNatTrans (SliceFibPiF {c} {d} f) (InterpWTF $ SFPasWTF f)
+sfpToWTF {c} {d} f sc ed pisc = (Element0 ed Refl ** pisc)
 
-spsFromWTF : {c, d : Type} -> (0 f : c -> d) ->
-  SliceNatTrans (InterpWTF $ SPSasWTF f) (SliceFibPiF {c} {d} f)
-spsFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
+sfpFromWTF : {c, d : Type} -> (0 f : c -> d) ->
+  SliceNatTrans (InterpWTF $ SFPasWTF f) (SliceFibPiF {c} {d} f)
+sfpFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
   replace {p=(SliceFibPiF f sc)} eq scd
 
 0 SPasWTF : {c : Type} -> (sl : SliceObj c) -> WTypeFunc (Sigma sl) c
-SPasWTF {c} sl = SPSasWTF {c=(Sigma sl)} {d=c} DPair.fst
+SPasWTF {c} sl = SFPasWTF {c=(Sigma sl)} {d=c} DPair.fst
 
 spToWTF : {c : Type} -> (sl : SliceObj c) ->
   SliceNatTrans (SlicePiF {c} sl) (InterpWTF $ SPasWTF sl)
