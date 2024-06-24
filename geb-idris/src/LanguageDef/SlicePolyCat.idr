@@ -1365,7 +1365,7 @@ spfPushoutPos : {x, y, z : Type} ->
 spfPushoutPos {x} {y} {z} mzy f =
   SPFD
     (SliceFibSigmaF mzy $ spfdPos f)
-    (\ey, ep => spfdDir f (fst0 $ fst ep) $ snd ep)
+    (\ey, ep => spfdDir f (sfsFst ep) (sfsSnd ep))
 
 public export
 spfPushoutDir : {w, x, z : Type} ->
@@ -1708,13 +1708,15 @@ SPFDsigma {x} {y} f =
 public export
 InterpSPFDtoSigma : {x, y : Type} -> (f : x -> y) ->
   SliceNatTrans {x} {y} (InterpSPFData $ SPFDsigma f) (SliceFibSigmaF f)
-InterpSPFDtoSigma {x} {y} f sx ey ei = (fst ei ** snd ei (fst0 $ fst ei) Refl)
+InterpSPFDtoSigma {x} {y} f sx ey ei =
+  rewrite sym $ snd0 $ fst ei in
+  SFS {sc=sx} (fst0 $ fst ei) (snd ei (fst0 $ fst ei) Refl)
 
 public export
 InterpSPFDfromSigma : {x, y : Type} -> (f : x -> y) ->
   SliceNatTrans {x} {y} (SliceFibSigmaF f) (InterpSPFData $ SPFDsigma f)
 InterpSPFDfromSigma {x} {y} f sx ey ei =
-  (fst ei ** \ex, eq => replace {p=sx} eq $ snd ei)
+  (Element0 (sfsFst ei) (sfsEq ei) ** \ex, eq => replace {p=sx} eq $ sfsSnd ei)
 
 ------------
 ---- Pi ----
@@ -1787,7 +1789,9 @@ public export
   SPFnt {dom=x} {cod=z} (spfdPostcompSigma myz f) (spfPushoutPos myz f)
 spfdPostcompSigmaToPushoutPos {x} {y} {z} myz f =
   SPFDm
-    (\ez, epdm => (fst epdm ** snd epdm (fst0 $ fst epdm) Refl))
+    (\ez, epdm =>
+      rewrite sym $ snd0 $ fst epdm in
+      SFS (fst0 $ fst epdm) (snd epdm (fst0 $ fst epdm) Refl))
     (\ez, epdm, ex, efd => ((fst0 (fst epdm) ** Refl) ** efd))
 
 public export
@@ -1796,7 +1800,9 @@ spfdPostcompSigmaFromPushoutPos : {x, y, z : Type} ->
   SPFnt {dom=x} {cod=z} (spfPushoutPos myz f) (spfdPostcompSigma myz f)
 spfdPostcompSigmaFromPushoutPos {x} {y} {z} myz f =
   SPFDm
-    (\ez, ep => (fst ep ** \ey, xeq => rewrite sym xeq in snd ep))
+    (\ez, ep =>
+      (Element0 (sfsFst ep) (sfsEq ep) **
+       \ey, xeq => rewrite sym xeq in sfsSnd ep))
     (\ez, ep, ex, efd => rewrite snd (fst efd) in snd efd)
 
 -- Postcomposition with base change is the same as what we have
@@ -1830,7 +1836,7 @@ public export
 spfdPrecompBCToPushoutDir {x} {y} {z} myx f =
   SPFDm
     (\ez, epTermMorph => fst epTermMorph)
-    (\ez, ep, ex, efd => ((fst0 (fst efd) ** snd efd) ** snd0 $ fst efd))
+    (\ez, ep, ex, efd => ((sfsFst efd ** sfsSnd efd) ** sfsEq efd))
 
 public export
 spfdPrecompBCFromPushoutDir : {x, y, z : Type} ->
@@ -1839,7 +1845,8 @@ spfdPrecompBCFromPushoutDir : {x, y, z : Type} ->
 spfdPrecompBCFromPushoutDir {x} {y} {z} my f =
   SPFDm
     (\ez, ep => (ep ** \_, _ => ()))
-    (\ez, ep, ex, efd => (Element0 (fst $ fst efd) (snd efd) ** snd $ fst efd))
+    (\ez, ep, ex, efd =>
+      rewrite sym (snd efd) in SFS (fst $ fst efd) $ snd $ fst efd)
 
 -- Precomposition with pi is the same as what we have
 -- called pulling back along direction.
@@ -2032,8 +2039,8 @@ spocVid : {w, z : Type} -> (f : SPFData w z) ->
   SPFpoCell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f f
 spocVid {w} {z} f =
   SPFDm
-    (\ez, ep => replace {p=(spfdPos f)} (snd0 $ fst ep) $ snd ep)
-    (\ez, ep, ew, efd => (Element0 ew Refl ** rewrite snd0 (fst ep) in efd))
+    (\ez, ep => rewrite sym (sfsEq ep) in sfsSnd ep)
+    (\ez, ep, ew, efd => SFS ew $ rewrite sfsEq ep in efd)
 
 public export
 spocHid : {w, w' : Type} -> (bcw : w -> w') ->
@@ -2041,8 +2048,8 @@ spocHid : {w, w' : Type} -> (bcw : w -> w') ->
 spocHid {w} {w'} bcw =
   SPFDm
     (\_, _ => ())
-    (\ew', ep, ew'', ew'eq => case ep of
-      (Element0 ew eweq ** ()) => (Element0 ew (trans eweq ew'eq) ** Refl))
+    (\ew', ep, ew'', ew'eq =>
+      case ep of SFS ew () => rewrite sym ew'eq in SFS ew Refl)
 
 public export
 spocVcomp : {w, w', w'', z, z', z'' : Type} ->
@@ -2055,27 +2062,18 @@ spocVcomp : {w, w', w'', z, z', z'' : Type} ->
 spocVcomp {w} {w'} {w''} {z} {z'} {z''} {bcl} {bcl'} {bcr} {bcr'} {f} {g} {h}
   beta alpha =
     SPFDm
-      (\ez'' =>
-        spOnPos beta ez''
-        . dpBimap
-          (s0Bimap bcr $ \ez => id)
-          (\ez, efp =>
-            spOnPos alpha (bcr $ fst0 ez) (Element0 (fst0 ez) Refl ** efp)))
-      (\ez'', (Element0 ez ezeq ** ep), ew'', epdm =>
+      (\ez'', (SFS ez efp) =>
+        spOnPos beta ez'' $ SFS (bcr ez) $ spOnPos alpha (bcr ez) $ SFS ez efp)
+      (\ez'', (SFS ez efp), ew'', ehd =>
         let
-          (Element0 ew' ew'eq ** egd) = spOnDir beta
-            ez''
-            (Element0 (bcr ez) ezeq **
-             spOnPos alpha (bcr ez) (Element0 ez Refl ** ep))
-             ew''
-             epdm
-          (Element0 ew eweq ** efd) = spOnDir alpha
-            (bcr ez)
-            (Element0 ez Refl ** ep)
-            ew'
-            egd
+          (SFS ew' egd) =
+            spOnDir beta ez''
+              (SFS (bcr ez) (spOnPos alpha (bcr ez) (SFS ez efp))) ew'' ehd
+          (SFS ew efd) =
+            spOnDir alpha (bcr ez)
+              (SFS ez efp) ew' egd
         in
-        (Element0 ew (rewrite eweq in ew'eq) ** efd))
+        SFS {sc=(spfdDir f ez efp)} {f=(bcl' . bcl)} ew efd)
 
 public export
 spocHcompPos : {w, w', x, x', z, z' : Type} ->
@@ -2088,13 +2086,12 @@ spocHcompPos : {w, w', x, x', z, z' : Type} ->
     (spfPushout bcw bcz $ SPFDcomp w x z f' f)
     (SPFDcomp w' x' z' g' g)
 spocHcompPos {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
-  beta alpha ez' (Element0 ez ezeq ** efp' ** efpdm) =
-    (spOnPos beta ez' (Element0 ez ezeq ** efp') **
-     \ex', egd' =>
+  beta alpha _ (SFS ez (efp' ** efpdm)) =
+    (spOnPos beta (bcz ez) (SFS ez efp') **
+     \ex' =>
       spOnPos alpha ex'
-        $ dpMapSnd
-          (\ex => efpdm $ fst0 ex)
-          (spOnDir beta ez' (Element0 ez ezeq ** efp') ex' egd'))
+      . sfsMap (spfdDir f' ez efp') (spfdPos f) efpdm ex'
+      . spOnDir beta (bcz ez) (SFS ez efp') ex')
 
 public export
 spocHcompDir : {w, w', x, x', z, z' : Type} ->
@@ -2108,13 +2105,13 @@ spocHcompDir : {w, w', x, x', z, z' : Type} ->
     (SPFDcomp w' x' z' g' g)
     (spocHcompPos {bcw} {bcx} {bcz} {f} {f'} {g} {g'} beta alpha)
 spocHcompDir {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
-    beta alpha ez' (Element0 ez ezeq ** ep ** dm) ew' ((ex' ** egd') ** egd)
-    with (spOnDir beta ez' (Element0 ez ezeq ** ep) ex' egd') proof direq
+    beta alpha _ (SFS ez (efp' ** efpdm)) ew' ((_ ** egd') ** egd)
+    with (spOnDir beta (bcz ez) (SFS ez efp') _ egd') proof direq
   spocHcompDir {w} {w'} {x} {x'} {z} {z'} {bcw} {bcx} {bcz} {f} {f'} {g} {g'}
-    beta alpha ez' (Element0 ez ezeq ** ep ** dm) ew' ((ex' ** egd') ** egd)
-    | (Element0 ex exeq ** efd') =
-      case spOnDir alpha ex' (Element0 ex exeq ** dm ex efd') ew' egd of
-        (ew ** efd) => (ew ** (ex ** efd') ** efd)
+    beta alpha _ (SFS ez (efp' ** efpdm)) ew' ((_ ** egd') ** egd)
+    | (SFS ex efd') =
+      case spOnDir alpha (bcx ex) (SFS ex $ efpdm ex efd') ew' egd of
+        (SFS ew efd) => SFS ew ((ex ** efd') ** efd)
 
 public export
 spocHcomp : {w, w', x, x', z, z' : Type} ->
