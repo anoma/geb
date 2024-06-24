@@ -178,6 +178,36 @@ public export
 FunExtInversePair : {0 a, b : Type} -> (a -> b, b -> a) -> Type
 FunExtInversePair {a} {b} = uncurry $ FunExtInverse {a} {b}
 
+-- The claim that `g` is (up to functional extensionality) a left inverse
+-- of `f`.
+public export
+0 IsExtLeftInverse : {a, b : Type} -> (f : a -> b) -> (g : b -> a) -> Type
+IsExtLeftInverse {a} {b} f g =
+  FunExtEq {a=(a -> a)} {b=(a -> a)} (g . f) (Prelude.id {a})
+
+-- A left inverse (up to functional extensionality) of the given function.
+public export
+ExtLeftInverse : {a, b : Type} -> (a -> b) -> Type
+ExtLeftInverse {a} {b} f = Subset0 (b -> a) (IsExtLeftInverse f)
+
+-- A factorization of the identity on `a` through `b`.
+-- A constructive _right_ inverse is a function together with a _left_ inverse
+-- of it (hence, it _is_ a right inverse by explicit construction of a proven
+-- (extensional) left inverse).
+--
+-- Note that in particular this means that (the first component of) a term
+-- of this type is surjective.
+public export
+IdFactThrough : (a, b : Type) -> Type
+IdFactThrough a b = DPair (a -> b) $ ExtLeftInverse {a} {b}
+
+-- A factorization of the identity on `a` through any type.
+-- (In particular, it could be the factorization through `a` itself
+-- into `id . id`!)
+public export
+IdFact : Type -> Type
+IdFact a = Exists {type=Type} (IdFactThrough a)
+
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 ---- Standard (Mac Lane / Eilenberg) internal categories ----
