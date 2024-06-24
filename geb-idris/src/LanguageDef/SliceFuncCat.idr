@@ -106,30 +106,35 @@ ssMap {c} {sl} slsa slsb mab ec esla =
 -- free monad) is isomorphic to the application of its free monad to the
 -- initial object of `SliceObj c`, which is hence also `const Void`.
 public export
-SliceFibSigmaF : {c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d
-SliceFibSigmaF {c} {d} f =
+data SliceFibSigmaF : {0 c, d : Type} ->
+    (0 f : c -> d) -> SliceFunctor c d where
   -- An explicit way of spelling this out would be:
   -- \sc : SliceObj c, ed : d =>
   --  (ep : PreImage {a=c} {b=d} f ed ** sc $ fst0 ep)
-  SliceSigmaF {c=d} (\ed => PreImage {a=c} {b=d} f ed)
-  . BaseChangeF
-      {c}
-      {d=(Sigma {a=d} $ \ed => PreImage {a=c} {b=d} f ed)}
-      (\ed => fst0 $ snd ed)
+  SFS : {0 c, d : Type} -> {0 f : c -> d} ->
+    {0 sc : SliceObj c} ->
+    (ec : c) -> sc ec -> SliceFibSigmaF {c} {d} f sc (f ec)
+
+public export
+sfsFst : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
+  {ed : d} -> SliceFibSigmaF {c} {d} f sc ed -> c
+sfsFst {c} {d} {f} {sc} {ed} ssc = case ssc of SFS ec _ => ec
+
+public export
+sfsSnd : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
+  {ed : d} -> (ssc : SliceFibSigmaF {c} {d} f sc ed) -> sc (sfsFst ssc)
+sfsSnd {c} {d} {f} {sc} {ed} ssc = case ssc of SFS _ esc => esc
+
+public export
+sfsEq : {0 c, d : Type} -> {0 f : c -> d} -> {0 sc : SliceObj c} ->
+  {ed : d} -> (ssc : SliceFibSigmaF {c} {d} f sc ed) -> f (sfsFst ssc) = ed
+sfsEq {c} {d} {f} {sc} {ed} ssc = case ssc of SFS ec esc => Refl
 
 public export
 sfsMap : {c, d : Type} -> {0 f : c -> d} ->
   SliceFMap (SliceFibSigmaF {c} {d} f)
-sfsMap {c} {d} {f} sca scb =
-  ssMap {c=d} {sl=(\ed => PreImage {a=c} {b=d} f ed)}
-    (\edc => sca $ fst0 $ snd edc)
-    (\edc => scb $ fst0 $ snd edc)
-  . bcMap
-    {c}
-    {d=(Sigma {a=d} $ \ed => PreImage {a=c} {b=d} f ed)}
-    {f=(\ed => fst0 $ snd ed)}
-    sca
-    scb
+sfsMap {c} {d} {f} sca scb mab eb ssa =
+  case ssa of SFS ea esa => SFS {c} {d} {f} {sc=scb} ea $ mab ea esa
 
 --------------------------
 ----- Sigma as W-type ----
@@ -142,13 +147,13 @@ SFSasWTF {c} {d} f = MkWTF {dom=c} {cod=d} c c id id f
 sfsToWTF : {c, d : Type} -> (0 f : c -> d) ->
   SliceNatTrans (SliceFibSigmaF {c} {d} f) (InterpWTF $ SFSasWTF f)
 sfsToWTF {c} {d} f sc ed esc =
-  (fst esc ** \ec' => replace {p=sc} (sym $ snd0 ec') $ snd esc)
+  (Element0 (sfsFst esc) (sfsEq esc) **
+   \ec' => replace {p=sc} (sym $ snd0 ec') $ sfsSnd esc)
 
 sfsFromWTF : {c, d : Type} -> (0 f : c -> d) ->
   SliceNatTrans (InterpWTF $ SFSasWTF f) (SliceFibSigmaF {c} {d} f)
 sfsFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
-  replace {p=(SliceFibSigmaF f sc)} eq
-  $ (Element0 ec Refl ** scd $ Element0 ec Refl)
+  replace {p=(SliceFibSigmaF f sc)} eq $ SFS ec $ scd $ Element0 ec Refl
 
 0 SSasWTF : {c : Type} -> (sl : SliceObj c) -> WTypeFunc (Sigma sl) c
 SSasWTF {c} sl = SFSasWTF {c=(Sigma sl)} {d=c} DPair.fst
@@ -279,7 +284,7 @@ SSAlg {c} {f} = SliceAlg {a=c} (SliceFibSigmaF {c} {d=c} f)
 
 public export
 SSVoidAlg : {c : Type} -> (0 f : c -> c) -> SSAlg {c} f (const Void)
-SSVoidAlg {c} f ec evc = void $ snd evc
+SSVoidAlg {c} f ec evc = void $ sfsSnd evc
 
 public export
 SSCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
@@ -1901,8 +1906,7 @@ SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Left v)) =
   subst ec v
 SliceSigmaEval {c} {f} sb alg sa subst ec (SSin ec (Right t)) =
   alg ec $ case t of
-    (Element0 ec' eqc ** fmec) =>
-      (Element0 ec' eqc ** SliceSigmaEval sb alg sa subst ec' fmec)
+    SFS ec' fmec => SFS ec' $ SliceSigmaEval sb alg sa subst ec' fmec
 
 -- The left adjunct of the free monad, given an object `sa : SliceObj c` and
 -- an algebra `sb : SliceObj c`/`alg : SSAlg f sb`, takes an algebra morphism
