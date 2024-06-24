@@ -333,6 +333,7 @@ public export
 SliceFibPiF : {c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d
 SliceFibPiF {c} {d} f =
   -- An explicit way of spelling this out would be:
+  -- \sc : SliceObj c, ed : d =>
   --  (ep : PreImage {a=c} {b=d} f ed) -> sc $ fst0 ep
   SlicePiF {c=d} (\ed => PreImage {a=c} {b=d} f ed)
   . BaseChangeF
