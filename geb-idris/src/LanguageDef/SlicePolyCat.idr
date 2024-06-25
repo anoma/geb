@@ -1361,8 +1361,7 @@ spfPiPos {x} {y} {z} mzy f =
   SPFD
     (SliceFibPiF mzy $ spfdPos f)
     (\ey, ep, ex =>
-      (ez : z) -> (0 ezeq : mzy ez = ey) ->
-      spfdDir f ez (ep $ Element0 ez ezeq) ex)
+      (ez : PreImage {a=z} {b=y} mzy ey ** spfdDir f (fst0 ez) (ep ez) ex))
 
 public export
 spfPiDir : {w, x, z : Type} ->
@@ -1800,6 +1799,27 @@ spfdPostcompBCfromPullbackPos {x} {y} {z} mzy f =
   SPFDm
     (\ez, ep => (() ** \ey, eq => replace {p=(spfdPos f)} eq ep))
     (\ez, ep, ex, efd => rewrite (snd $ fst efd) in snd efd)
+
+-- Postcomposition with pi is the same as what we have
+-- called pi along position.
+
+public export
+0 spfdPostcompPiToPiPos : {x, y, z : Type} ->
+  (myz : y -> z) -> (f : SPFData x y) ->
+  SPFnt {dom=x} {cod=z} (spfdPostcompPi myz f) (spfPiPos myz f)
+spfdPostcompPiToPiPos {x} {y} {z} myz f =
+  SPFDm
+    (\ez, efp, ey => snd efp (fst0 ey) (snd0 ey))
+    (\ez, efp, ex, efd => ((fst0 (fst efd) ** snd0 (fst efd)) ** snd efd))
+
+public export
+spfdPostcompPiFromPiPos : {x, y, z : Type} ->
+  (myz : y -> z) -> (f : SPFData x y) ->
+  SPFnt {dom=x} {cod=z} (spfPiPos myz f) (spfdPostcompPi myz f)
+spfdPostcompPiFromPiPos {x} {y} {z} myz f =
+  SPFDm
+    (\ez, efp => (() ** \ey, ezeq => efp $ Element0 ey ezeq))
+    (\ez, efp, ex, efd => (Element0 (fst $ fst efd) (snd $ fst efd) ** snd efd))
 
 -- Precomposition with base change is the same as what we have
 -- called pushing out along direction.
