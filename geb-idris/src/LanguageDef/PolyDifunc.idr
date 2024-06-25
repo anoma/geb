@@ -216,9 +216,14 @@ IdFactW a = Sigma {a=(SliceObj a)} (Pi {a})
 -- Thus this will be `void` for input types for which there are no surjective
 -- assignments, in particular those which are larger than the types of
 -- directions -- that would amount to an "unused variable" in the term.
+--
+-- A surjective assignment of directions to the input type means a
+-- factorization of the identity on the input type through the type
+-- of directions.  The `epi` component is the assignment, while the `mono`
+-- component is a proof that there are no "unused variables".
 public export
 InterpDiPolyFunc : MLArena -> Type -> Type
-InterpDiPolyFunc p = Sigma {a=(pfPos p)} . (|>) (pfDir {p}) . flip IdFactThrough
+InterpDiPolyFunc p = Sigma {a=(pfPos p)} . (|>) (pfDir {p}) . IdFactThrough
 
 public export
 IPDFc : {pdf : PolyDifunc} -> {x, y : Type} ->
