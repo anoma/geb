@@ -206,6 +206,9 @@ fromDoubleYoType {a} {b} = fromDoubleYo TypeCat a b
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
 
+-- I don't think that this is actually the right model -- the
+-- `onCobase` ends up disagreeing with what's defined in `PolyDifunc`.
+
 public export
 ECofamPolyCat : IntCatSig -> IntCatSig
 ECofamPolyCat = PolyPolyCat
