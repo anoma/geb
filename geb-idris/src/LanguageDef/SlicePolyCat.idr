@@ -212,23 +212,20 @@ SPFDtoSSPR {dom} {cod} spfd edcp =
   spfdDir spfd (fst $ snd edcp) (snd $ snd edcp) (fst edcp)
 
 public export
-SSPRtoSPFD : {dom, cod : Type} -> SliceObj (dom, cod) -> SPFData dom cod
-SSPRtoSPFD {dom} {cod} sspr = SPFD (const Unit) $ \ec, (), ed => sspr (ed, ec)
-
-public export
-SPFDasSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
+SPFDradjFactToSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceNatTrans {x=dom} {y=(SPFDbase spfd)}
     (SPFDradjFact {dom} {cod} spfd)
     (SliceSigmaPiFR {c=dom} {e=(SPFDbase spfd)} $ SPFDtoSSPR spfd)
-SPFDasSSPR {dom} {cod} (SPFD pos dir) sd (ec ** ep) radj (ed ** dd) = radj ed dd
+SPFDradjFactToSSPR {dom} {cod} (SPFD pos dir) sd (ec ** ep) radj (ed ** dd) =
+  radj ed dd
 
 public export
-SSPRasSPFD : {0 dom, cod : Type} -> (sspr : SliceObj (dom, cod)) ->
-  SliceNatTrans {x=dom} {y=cod}
-    (SliceSigmaPiFR {c=dom} {e=cod} sspr)
-    ((\sc, ec => sc (ec ** ()))
-     . SPFDradjFact {dom} {cod} (SSPRtoSPFD {dom} {cod} sspr))
-SSPRasSPFD {dom} {cod} sspr sd ec sdc ed esdc = sdc (ed ** esdc)
+SPFDradjFactFromSSPR : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
+  SliceNatTrans {x=dom} {y=(SPFDbase spfd)}
+    (SliceSigmaPiFR {c=dom} {e=(SPFDbase spfd)} $ SPFDtoSSPR spfd)
+    (SPFDradjFact {dom} {cod} spfd)
+SPFDradjFactFromSSPR {dom} {cod} (SPFD pos dir) sd (ec ** ep) radj ed dd =
+  radj (ed ** dd)
 
 -- Fibrate the right-adjoint factor of a polynomial functor by a
 -- dependent-type-style slice object over the position object.
@@ -254,35 +251,13 @@ public export
 SPFDladjFact : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFunctor (SPFDbase {dom} {cod} spfd) dom
 SPFDladjFact {dom} {cod} spfd =
-  SliceSigmaPiFL {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
-    $ Prelude.uncurry (DPair.uncurry $ spfdDir spfd) . swap
+  SliceSigmaPiFL {c=dom} {e=(SPFDbase spfd)} $ SPFDtoSSPR spfd
 
 public export
 SPFDladjFactMap : {dom, cod : Type} -> (spfd : SPFData dom cod) ->
   SliceFMap (SPFDladjFact {dom} {cod} spfd)
 SPFDladjFactMap {dom} {cod} spfd =
-  ssplMap {c=dom} {e=(SPFDbase {dom} {cod} spfd)}
-    $ Prelude.uncurry (DPair.uncurry $ spfdDir spfd) . swap
-
--- We show that the left adjoint of the right-adjoint factor of a
--- polynomial functor is equivalent to `SliceSigmaPiFL` with particular
--- parameters.  (Of course, we _defined_ it as such, so this is trivial.)
-public export
-SPFDasSSPL : {0 dom, cod : Type} -> (spfd : SPFData dom cod) ->
-  SliceNatTrans {x=(SPFDbase spfd)} {y=dom}
-    (SPFDladjFact {dom} {cod} spfd)
-    (SliceSigmaPiFL {c=dom} {e=(SPFDbase spfd)} $ SPFDtoSSPR spfd)
-SPFDasSSPL {dom} {cod} (SPFD pos dir) sd ed (((ec ** ep) ** dd) ** sdd) =
-  (((ec ** ep) ** dd) ** sdd)
-
-public export
-SSPLasSPFD : {0 dom, cod : Type} -> (sspl : SliceObj (dom, cod)) ->
-  SliceNatTrans {x=cod} {y=dom}
-    (SliceSigmaPiFL {c=dom} {e=cod} sspl)
-    (SPFDladjFact {dom} {cod} (SSPRtoSPFD {dom} {cod} sspl)
-     . (\sc, (ec ** ()) => sc ec))
-SSPLasSPFD {dom} {cod} sspl sc ed ((ec ** esdc) ** esc) =
-  (((ec ** ()) ** esdc) ** esc)
+  ssplMap {c=dom} {e=(SPFDbase {dom} {cod} spfd)} $ SPFDtoSSPR spfd
 
 -- The dependent-sum factor of a polynomial functor expressed as
 -- a codomain-parameterized copresheaf on slice objects over positions.

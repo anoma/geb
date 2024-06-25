@@ -183,6 +183,10 @@ mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 --
 -- We can view this as the generalization of `SPFdirType` in `SlicePolyCat`
 -- from slice categories to categories of elements of Dirichlet functors.
+-- It is precisely the parameter that we pass to
+-- `mlDirichSlSigmaPiFL`/`mlDirichSlSigmaPiFR` to produce the right-adjoint
+-- component of the factorization of a PRA functor into a right adjoint
+-- followed by a dependent sum.
 public export
 0 PRAdirType : (0 dom, cod : MLDirichCatObj) ->
   (0 pos : MlDirichSlObj cod) -> Type
