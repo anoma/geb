@@ -185,6 +185,10 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) (m : x -> y) where
     FunExtEq (ipdfCovarMor . pdfProj pdf ipdfPos . ipdfContraMor) m
 
 public export
+InterpPDFdiag : (pdf : PolyDifunc) -> Type -> Type
+InterpPDFdiag pdf x = InterpPDF pdf x x (Prelude.id {a=x})
+
+public export
 IPDFc : {pdf : PolyDifunc} -> {x, y : Type} ->
   (i : pdfPos pdf) ->
   (cnm : x -> pdfCobase pdf i) -> (cvm : pdfBase pdf i -> y) ->
@@ -413,14 +417,14 @@ InterpPDNTnat {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
 
 export
 InterpPDNT : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
-  (x : Type) -> InterpPDF p x x Prelude.id -> InterpPDF q x x Prelude.id
+  (x : Type) -> InterpPDFdiag p x -> InterpPDFdiag q x
 InterpPDNT {p} {q} pdnt x = InterpPDNTnat {p} {q} pdnt x x Prelude.id
 
 export
 0 InterpPDFisPara : FunExt ->
   {0 p, q : PolyDifunc} -> (pdnt : PolyDiNT p q) ->
   (i0, i1 : Type) -> (i2 : i0 -> i1) ->
-  (d0 : InterpPDF p i0 i0 Prelude.id) -> (d1 : InterpPDF p i1 i1 Prelude.id) ->
+  (d0 : InterpPDFdiag p i0) -> (d1 : InterpPDFdiag p i1) ->
   (InterpPDFlmap p i1 i1 i0 Prelude.id i2 d1 ~=~
    InterpPDFrmap p i0 i0 i1 Prelude.id i2 d0) ->
   (InterpPDFlmap q i1 i1 i0 Prelude.id i2 (InterpPDNT {p} {q} pdnt i1 d1) ~=~
