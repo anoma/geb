@@ -3686,6 +3686,16 @@ public export
 CSGSigma : {0 c : Type} -> CSliceObj c -> Type
 CSGSigma {c} = CSliceObjDomain . CSSigma {c} {d=()} (const ())
 
+public export
+CSGSigmaIsDom : {0 c : Type} -> (x : CSliceObj c) ->
+  CSGSigma {c} x -> CSliceObjDomain {c} x
+CSGSigmaIsDom {c} x = Prelude.id {a=(CSliceObjDomain x)}
+
+public export
+CSGDomToCSGSigma : {0 c : Type} -> (x : CSliceObj c) ->
+  CSliceObjDomain {c} x -> CSGSigma {c} x
+CSGDomToCSGSigma {c} x = Prelude.id {a=(CSliceObjDomain x)}
+
 -- Sigma is also known as pushforward.
 public export
 CSPushF : {0 c, d : Type} -> (c -> d) -> CSliceObj c -> CSliceObj d
