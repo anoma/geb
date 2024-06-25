@@ -1874,6 +1874,10 @@ spfdPrecompPiFromPullbackDir {x} {y} {z} mxy f =
 ---- Via `spfPullback` ----
 ---------------------------
 
+-- `spfPullback bcl bcr g` is `BaseChange bcr . g . Pi bcl`, so this
+-- could be seen as a "relaxed" twisted-arrow morphism from `g` to `f`, with
+-- `Pi bcl` and `BaseChange bcr` as the arrows, and the natural transformation
+-- taking the place of strict equality.
 public export
 SPFpbCell : {w, w', z, z' : Type} ->
   (bcl : w -> w') -> (bcr : z -> z') ->
@@ -2021,6 +2025,10 @@ SPFpbDoubleCat =
 ---- Via `spfPushout` ----
 --------------------------
 
+-- `spfPushout bcl bcr f` is `Sigma bcr . f . BaseChange bcl`, so this
+-- could be seen as a "relaxed" twisted-arrow morphism from `f` to `g`,
+-- with `BaseChange bcl` and `Sigma bcr` as arrows, and the natural
+-- transformation taking the place of strict equality.
 public export
 SPFpoCell : {w, w', z, z' : Type} ->
   (bcl : w -> w') -> (bcr : z -> z') ->
