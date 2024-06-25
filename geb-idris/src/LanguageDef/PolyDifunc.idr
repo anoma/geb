@@ -173,6 +173,23 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) (m : x -> y) where
   0 ipdfComm :
     FunExtEq (ipdfCovarMor . pdfProj pdf ipdfPos . ipdfContraMor) m
 
+-- The interpretation of a polynomial functor applied to a type is as a
+-- choice of position together with a _surjective_ (hence the `IdFactThrough`
+-- rather than simply "morphism") assigment of directions to the input
+-- type (which we take to be a type of terms).
+--
+-- Thus this will be `void` for input types for which there are no surjective
+-- assignments, in particular those which are larger than the types of
+-- directions -- that would amount to an "unused variable" in the term.
+--
+-- A surjective assignment of directions to the input type means a
+-- factorization of the identity on the input type through the type
+-- of directions.  The `epi` component is the assignment, while the `mono`
+-- component is a proof that there are no "unused variables".
+public export
+InterpDiPolyFunc : MLArena -> Type -> Type
+InterpDiPolyFunc p = Sigma {a=(pfPos p)} . (|>) (pfDir {p}) . IdFactThrough
+
 -- A slice over a type together with a `Pi` of that slice.  This amounts
 -- to a type family indexed by `a` together with a section of that family
 -- (i.e., a single term from each type).
@@ -207,23 +224,6 @@ record InterpPDF (pdf : PolyDifunc) (x, y : Type) (m : x -> y) where
 public export
 IdFactW : Type -> Type
 IdFactW a = Sigma {a=(SliceObj a)} (Pi {a})
-
--- The interpretation of a polynomial functor applied to a type is as a
--- choice of position together with a _surjective_ (hence the `IdFactThrough`
--- rather than simply "morphism") assigment of directions to the input
--- type (which we take to be a type of terms).
---
--- Thus this will be `void` for input types for which there are no surjective
--- assignments, in particular those which are larger than the types of
--- directions -- that would amount to an "unused variable" in the term.
---
--- A surjective assignment of directions to the input type means a
--- factorization of the identity on the input type through the type
--- of directions.  The `epi` component is the assignment, while the `mono`
--- component is a proof that there are no "unused variables".
-public export
-InterpDiPolyFunc : MLArena -> Type -> Type
-InterpDiPolyFunc p = Sigma {a=(pfPos p)} . (|>) (pfDir {p}) . IdFactThrough
 
 public export
 IPDFc : {pdf : PolyDifunc} -> {x, y : Type} ->
