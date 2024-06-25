@@ -185,21 +185,49 @@ public export
 IsExtLeftInverse {a} {b} f g =
   FunExtEq {a=(a -> a)} {b=(a -> a)} (g . f) (Prelude.id {a})
 
+-- The claim that `g` is (up to functional extensionality) a right inverse
+-- of `f`.
+public export
+0 IsExtRightInverse : {a, b : Type} -> (f : a -> b) -> (g : b -> a) -> Type
+IsExtRightInverse {a} {b} = flip $ IsExtLeftInverse {a=b} {b=a}
+
 -- A left inverse (up to functional extensionality) of the given function.
 public export
 ExtLeftInverse : {a, b : Type} -> (a -> b) -> Type
-ExtLeftInverse {a} {b} f = Subset0 (b -> a) (IsExtLeftInverse f)
+ExtLeftInverse {a} {b} f =
+  Subset0 (b -> a) (IsExtLeftInverse f)
+
+-- A right inverse (up to functional extensionality) of the given function.
+public export
+ExtRightInverse : {a, b : Type} -> (a -> b) -> Type
+ExtRightInverse {a} {b} f = Subset0 (b -> a) (IsExtRightInverse f)
 
 -- A factorization of the identity on `a` through `b`.
--- A constructive _right_ inverse is a function together with a _left_ inverse
--- of it (hence, it _is_ a right inverse by explicit construction of a proven
--- (extensional) left inverse).
 --
--- Note that in particular this means that (the first component of) a term
--- of this type is surjective.
+-- The first component is the _left_ inverse (and is therefore epi,
+-- because it _has_ a right inverse); the second component is the _right_
+-- inverse (and is therefore mono, because it _has_ a left inverse).
 public export
 IdFactThrough : (a, b : Type) -> Type
-IdFactThrough a b = DPair (a -> b) $ ExtLeftInverse {a} {b}
+IdFactThrough a b = DPair (a -> b) $ ExtRightInverse {a} {b}
+
+public export
+idFactEpi : {0 a, b : Type} -> IdFactThrough a b -> a -> b
+idFactEpi {a} {b} = DPair.fst
+
+public export
+idFactMono : {0 a, b : Type} -> IdFactThrough a b -> b -> a
+idFactMono {a} {b} fact = Subset0.fst0 $ DPair.snd fact
+
+public export
+0 idFactIsRightInv : {0 a, b : Type} -> (fact : IdFactThrough a b) ->
+  IsExtRightInverse {a} {b} (idFactEpi fact) (idFactMono fact)
+idFactIsRightInv {a} {b} fact = Subset0.snd0 $ DPair.snd fact
+
+public export
+0 idFactIsLeftInv : {0 a, b : Type} -> (fact : IdFactThrough a b) ->
+  IsExtLeftInverse {a=b} {b=a} (idFactMono fact) (idFactEpi fact)
+idFactIsLeftInv = idFactIsRightInv
 
 -- A factorization of the identity on `a` through any type.
 -- (In particular, it could be the factorization through `a` itself
