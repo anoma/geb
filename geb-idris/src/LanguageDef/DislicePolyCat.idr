@@ -672,6 +672,12 @@ record PolyEnrAr where
   peaPos : Type
   peaDir : peaPos -> PolyFunc
 
+-------------------
+---- Poly-poly ----
+-------------------
+
+-- Interpret a `PolyEnrAr` as a (covariant) polynomial functor on the
+-- category of (covariant) polynomial functors.
 export
 InterpPEA : PolyEnrAr -> PolyFunc -> PolyFunc
 InterpPEA (PEA epos edir) pf =
