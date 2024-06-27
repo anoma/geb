@@ -1112,6 +1112,96 @@ pfCurry {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)} alpha =
    pfCurryOnDir ppos qpos rpos pdir qdir rdir alpha)
 
 public export
+pfParEvalOnPos :
+  (p, q : PolyFunc) ->
+  pfPos (pfParProductArena (pfParProdClosure p q) p) -> pfPos q
+pfParEvalOnPos (ppos ** pdir) (qpos ** qdir) (qpi, pi) = fst $ qpi pi
+
+public export
+pfParEvalOnDir : (p, q : PolyFunc) ->
+  (i : pfPos (pfParProductArena (pfParProdClosure p q) p)) ->
+  pfDir {p=q} (pfParEvalOnPos p q i) ->
+  pfDir {p=(pfParProductArena (pfParProdClosure p q) p)} i
+pfParEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd with
+    (pfParEvalOnPos (ppos ** pdir) (qpos ** qdir) (qpd, pi)) proof eqq
+  pfParEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd | qi with
+      (snd (qpd pi) (replace {p=qdir} (sym eqq) qd)) proof eqp
+    pfParEvalOnDir (ppos ** pdir) (qpos ** qdir) (qpd, pi) qd | qi | ((), pd) =
+      ((pi ** rewrite eqq in qd ** rewrite eqp in Left ()), pd)
+
+public export
+pfParEval : (p, q : PolyFunc) ->
+  PolyNatTrans (pfParProductArena (pfParProdClosure p q) p) q
+pfParEval p q = (pfParEvalOnPos p q ** pfParEvalOnDir p q)
+
+public export
+pfParCurryOnPos1 :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfParProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  ppos -> qpos -> rpos
+pfParCurryOnPos1 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi =
+  onpos (pi, qi)
+
+public export
+pfParCurryOnPos2 :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfParProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  (pi : ppos) -> (qi : qpos) ->
+  rdir (pfParCurryOnPos1 ppos qpos rpos pdir qdir rdir alpha pi qi) ->
+  ((), qdir qi)
+pfParCurryOnPos2 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi rd
+    with (ondir (pi, qi) rd)
+  pfParCurryOnPos2 ppos qpos rpos pdir qdir rdir (onpos ** ondir) pi qi rd |
+    (pd, qd) = ((), qd)
+
+public export
+pfParCurryOnPos :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfParProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  ppos -> pfPos (pfParProdClosure (qpos ** qdir) (rpos ** rdir))
+pfParCurryOnPos ppos qpos rpos pdir qdir rdir alpha pi qi =
+  (pfParCurryOnPos1 ppos qpos rpos pdir qdir rdir alpha pi qi **
+   pfParCurryOnPos2 ppos qpos rpos pdir qdir rdir alpha pi qi)
+
+public export
+pfParCurryOnDir :
+  (ppos, qpos, rpos : Type) ->
+  (pdir : ppos -> Type) ->
+  (qdir : qpos -> Type) ->
+  (rdir : rpos -> Type) ->
+  (alpha : PolyNatTrans
+    (pfParProductArena (ppos ** pdir) (qpos ** qdir)) (rpos ** rdir)) ->
+  (pi : ppos) ->
+  pfDir {p=(pfParProdClosure (qpos ** qdir) (rpos ** rdir))}
+    (pfParCurryOnPos ppos qpos rpos pdir qdir rdir alpha pi) ->
+  pfDir {p=(ppos ** pdir)} pi
+pfParCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
+  pi (qi ** rd ** cd) with (ondir (pi, qi) rd) proof eq
+    pfParCurryOnDir ppos qpos rpos pdir qdir rdir (onpos ** ondir)
+      pi (qi ** rd ** uv) | (pd, qd) =
+        pd
+
+public export
+pfParCurry : {p, q, r : PolyFunc} ->
+  PolyNatTrans (pfParProductArena p q) r ->
+  PolyNatTrans p (pfParProdClosure q r)
+pfParCurry {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)} alpha =
+  (pfParCurryOnPos ppos qpos rpos pdir qdir rdir alpha **
+   pfParCurryOnDir ppos qpos rpos pdir qdir rdir alpha)
+
+public export
 PolyLKnt : (g, j : PolyFunc) ->
   PolyNatTrans g (pfCompositionArena (PolyLKanExt j g) j)
 PolyLKnt (gpos ** gdir) (jpos ** jdir) =
