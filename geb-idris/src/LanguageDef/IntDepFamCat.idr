@@ -87,7 +87,8 @@ IntEDepFamMorOnMor : {c : Type} ->
   (onidx : IntEDepFamMorOnIdx {c} mor sl dom cod) ->
   Type
 IntEDepFamMorOnMor {c} {mor} {sl} {dom} {cod} onidx =
-  ?IntEDepFamMorOnMor_hole
+  (di : idfoIdx dom) -> (dd : sl (idfoObj dom di)) ->
+  mor (snd dom di) (snd cod $ fst onidx di dd)
 
 public export
 IntEDepFamMor : {c : Type} -> (mor : IntDifunctorSig c) -> SliceObj c ->
