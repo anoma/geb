@@ -5,3 +5,4 @@ import Library.IdrisCategories
 import Library.IdrisAlgebra
 import public LanguageDef.InternalCat
 import public LanguageDef.SlicePolyCat
+import public LanguageDef.IntDepFamCat
