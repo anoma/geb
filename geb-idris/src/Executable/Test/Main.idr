@@ -8,6 +8,9 @@ import Library.Test.CategoryTheoryTest
 import LanguageDef.Test.IntTwistedArrowCatTest
 import LanguageDef.Test.IntUFamCatTest
 import LanguageDef.Test.IntEFamCatTest
+import LanguageDef.Test.IntUCofamCatTest
+import LanguageDef.Test.IntECofamCatTest
+import LanguageDef.Test.IntDepFamCatTest
 import LanguageDef.Test.IntParamCatTest
 import LanguageDef.Test.IntDisheafCatTest
 import LanguageDef.Test.QTypeTest
@@ -116,6 +119,9 @@ totalTests = do
   LanguageDef.Test.IntTwistedArrowCatTest.intTwistedArrowCatTest
   LanguageDef.Test.IntUFamCatTest.intUFamCatTest
   LanguageDef.Test.IntEFamCatTest.intEFamCatTest
+  LanguageDef.Test.IntUCofamCatTest.intUCofamCatTest
+  LanguageDef.Test.IntECofamCatTest.intECofamCatTest
+  LanguageDef.Test.IntDepFamCatTest.intDepFamCatTest
   LanguageDef.Test.IntParamCatTest.intParamCatTest
   LanguageDef.Test.IntDisheafCatTest.intDisheafCatTest
   LanguageDef.Test.HigherPolyCatTest.higherPolyCatTest
