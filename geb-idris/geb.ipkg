@@ -24,6 +24,7 @@ modules =
     , LanguageDef.IntDisheafCat
     , LanguageDef.IntUCofamCat
     , LanguageDef.IntECofamCat
+    , LanguageDef.IntDepFamCat
     , LanguageDef.IntFactCat
     , LanguageDef.IntFactCatFunc
     , LanguageDef.MLBundleCat
@@ -75,6 +76,7 @@ modules =
     , LanguageDef.Test.IntDisheafCatTest
     , LanguageDef.Test.IntUCofamCatTest
     , LanguageDef.Test.IntECofamCatTest
+    , LanguageDef.Test.IntDepFamCatTest
     , LanguageDef.Test.IntFactCatTest
     , LanguageDef.Test.IntFactCatFuncTest
     , LanguageDef.Test.SpanCospanTest
