@@ -37,6 +37,31 @@ public export
 PolyPolyMor : (cat : IntCatSig) -> IntMorSig (PolyPolyObj cat)
 PolyPolyMor cat = icMor (PolyPolyCat cat)
 
+--------------------------------------------------------
+---- Polynomial-product (universal family) category ----
+--------------------------------------------------------
+
+public export
+PolyUnivCat : IntCatSig -> IntCatSig
+PolyUnivCat cat = ECofamCatSig (UFamCatSig cat)
+
+public export
+PolyUnivObj : IntCatSig -> Type
+PolyUnivObj cat = icObj (PolyUnivCat cat)
+
+public export
+PolyUnivMorOnIdx : (cat : IntCatSig) -> IntMorSig (PolyUnivObj cat)
+PolyUnivMorOnIdx cat = IntECofamMorOnIdx (icMor $ UFamCatSig cat)
+
+public export
+PolyUnivMorOnMor : (cat : IntCatSig) -> (dom, cod : PolyUnivObj cat) ->
+  PolyUnivMorOnIdx cat dom cod -> Type
+PolyUnivMorOnMor cat = IntECofamMorOnMor (icMor $ UFamCatSig cat)
+
+public export
+PolyUnivMor : (cat : IntCatSig) -> IntMorSig (PolyUnivObj cat)
+PolyUnivMor cat = icMor (PolyUnivCat cat)
+
 --------------------------------------
 ---- Dirichlet-Dirichlet category ----
 --------------------------------------
