@@ -19,6 +19,10 @@ import public LanguageDef.IntDisheafCat
 ----------------------------------------------
 
 public export
+InterpTPF : {cat : IntCatSig} -> TwistPolyFunc cat -> TwistArrAr cat -> Type
+InterpTPF {cat} = InterpECofamCopreshfOMap (TwistArrAr cat) (TwistArrMor cat)
+
+public export
 TwistArrArType : Type
 TwistArrArType = TwistArrAr TypeCat
 
@@ -60,35 +64,38 @@ TwistNTType : IntMorSig TwistPolyFuncType
 TwistNTType = TwistNT TypeCat
 
 public export
-InterpTPF : TwistPolyFuncType -> TwistArrArType -> Type
-InterpTPF = InterpECofamCopreshfOMap TwistArrArType TwistArrMorType
+InterpTPFType : TwistPolyFuncType -> TwistArrArType -> Type
+InterpTPFType = InterpTPF {cat=TypeCat}
 
 public export
-itpfPos : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
-  InterpTPF tpf twar -> tpfPosType tpf
+itpfPos :
+  {cat : IntCatSig} -> {tpf : TwistPolyFunc cat} -> {twar : TwistArrAr cat} ->
+  InterpTPF {cat} tpf twar -> tpfPos {cat} tpf
 itpfPos {tpf} {twar} = DPair.fst
 
 public export
-itpfDir : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
-  (itpf : InterpTPF tpf twar) ->
-  TwistArrMorType (tpfArType tpf $ itpfPos {tpf} {twar} itpf) twar
+itpfDir : {cat : IntCatSig} ->
+  {tpf : TwistPolyFunc cat} -> {twar : TwistArrAr cat} ->
+  (itpf : InterpTPF {cat} tpf twar) ->
+  TwistArrMor cat (tpfAr {cat} tpf $ itpfPos {cat} {tpf} {twar} itpf) twar
 itpfDir {tpf} {twar} itpf = DPair.snd itpf
 
 public export
-itpfOnDom : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
-  (itpf : InterpTPF tpf twar) ->
-  twarDomType twar -> tpfDomType tpf (itpfPos {tpf} {twar} itpf)
+itpfOnDom : {cat : IntCatSig} ->
+  {tpf : TwistPolyFunc cat} -> {twar : TwistArrAr cat} ->
+  (itpf : InterpTPF {cat} tpf twar) ->
+  twarDom {cat} twar -> tpfDom {cat} tpf (itpfPos {cat} {tpf} {twar} itpf)
 itpfOnDom {tpf} {twar} itpf = DPair.fst (itpfDir itpf)
 
 public export
 itpfOnCod : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
-  (itpf : InterpTPF tpf twar) ->
+  (itpf : InterpTPFType tpf twar) ->
   SliceMorphism {a=(twarDomType twar)}
     (BaseChangeF
-      (itpfOnDom {tpf} {twar} itpf)
-      (tpfCodType tpf $ itpfPos {tpf} {twar} itpf))
+      (itpfOnDom {cat=TypeCat} {tpf} {twar} itpf)
+      (tpfCodType tpf $ itpfPos {cat=TypeCat} {tpf} {twar} itpf))
     (twarCodType twar)
-itpfOnCod {tpf} {twar} itpf = DPair.snd (itpfDir itpf)
+itpfOnCod {tpf} {twar} itpf = DPair.snd (itpfDir {cat=TypeCat} itpf)
 
 public export
 twntOnPos : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
