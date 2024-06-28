@@ -303,6 +303,28 @@ itpfOnDom : {cat : IntCatSig} ->
   twarDom {cat} twar -> tpfDom {cat} tpf (itpfPos {cat} {tpf} {twar} itpf)
 itpfOnDom {tpf} {twar} itpf = DPair.fst (itpfDir itpf)
 
+public export
+twntOnPos : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
+  TwistNT cat p q -> tpfPos {cat} p -> tpfPos {cat} q
+twntOnPos {p} {q} = DPair.fst
+
+public export
+twntOnDir : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
+  (twnt : TwistNT cat p q) ->
+  (i : tpfPos {cat} p) ->
+  TwistArrMor cat
+    (tpfAr {cat} q (twntOnPos {cat} {p} {q} twnt i))
+    (tpfAr {cat} p i)
+twntOnDir {p} {q} = DPair.snd
+
+public export
+twntOnContra : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
+  (twnt : TwistNT cat p q) ->
+  SliceMorphism {a=(tpfPos {cat} p)}
+    (tpfDom {cat} p)
+    (BaseChangeF (twntOnPos {cat} {p} {q} twnt) (tpfDom {cat} q))
+twntOnContra {p} {q} twnt i = DPair.fst (twntOnDir twnt i)
+
 -------------------------------------
 -------------------------------------
 ---- Disheaf category definition ----
