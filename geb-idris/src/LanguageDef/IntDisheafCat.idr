@@ -283,6 +283,26 @@ public export
 InterpTPF : {cat : IntCatSig} -> TwistPolyFunc cat -> TwistArrAr cat -> Type
 InterpTPF {cat} = InterpECofamCopreshfOMap (TwistArrAr cat) (TwistArrMor cat)
 
+public export
+itpfPos :
+  {cat : IntCatSig} -> {tpf : TwistPolyFunc cat} -> {twar : TwistArrAr cat} ->
+  InterpTPF {cat} tpf twar -> tpfPos {cat} tpf
+itpfPos {tpf} {twar} = DPair.fst
+
+public export
+itpfDir : {cat : IntCatSig} ->
+  {tpf : TwistPolyFunc cat} -> {twar : TwistArrAr cat} ->
+  (itpf : InterpTPF {cat} tpf twar) ->
+  TwistArrMor cat (tpfAr {cat} tpf $ itpfPos {cat} {tpf} {twar} itpf) twar
+itpfDir {tpf} {twar} itpf = DPair.snd itpf
+
+public export
+itpfOnDom : {cat : IntCatSig} ->
+  {tpf : TwistPolyFunc cat} -> {twar : TwistArrAr cat} ->
+  (itpf : InterpTPF {cat} tpf twar) ->
+  twarDom {cat} twar -> tpfDom {cat} tpf (itpfPos {cat} {tpf} {twar} itpf)
+itpfOnDom {tpf} {twar} itpf = DPair.fst (itpfDir itpf)
+
 -------------------------------------
 -------------------------------------
 ---- Disheaf category definition ----
