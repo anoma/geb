@@ -393,27 +393,29 @@ public export
 record PolyDiNT (p, q : PolyDifunc) where
   constructor PDNT
   pdntOnPos : pdfPos p -> pdfPos q
+  -- Per position, this is a twisted-arrow morphism from `q` to `p`.
   pdntOnBase :
     (i : pdfPos p) -> pdfBase q (pdntOnPos i) -> pdfBase p i
   pdntOnCobase :
+    (i : pdfPos p) -> pdfCobase p i -> pdfCobase q (pdntOnPos i)
+  pdntComm :
     (i : pdfPos p) ->
-      CSliceMorphism {c=(pdfBase p i)}
-        (pdfCobase p i ** pdfProj p i)
-        (CSSigma {c=(pdfBase q (pdntOnPos i))} {d=(pdfBase p i)}
-          (pdntOnBase i)
-          (pdfCobase q (pdntOnPos i) ** pdfProj q (pdntOnPos i)))
+      FunExtEq
+        (pdntOnBase i . pdfProj q (pdntOnPos i) . pdntOnCobase i)
+        (pdfProj p i)
 
 export
 InterpPDNTnat : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
   (x, y : Type) -> (m : x -> y) -> InterpPDF p x y m -> InterpPDF q x y m
 InterpPDNTnat {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
-  (PDNT oni onb onc) x y m (IPDF pi mxpd mpcx pcomm) =
+  (PDNT oni onb onc ntcomm) x y m (IPDF pi mxpd mpcx pcomm) =
     IPDF
       (oni pi)
-      (fst0 (onc pi) . mxpd)
+      (onc pi . mxpd)
       (mpcx . onb pi)
       (\fext => funExt $ \ex =>
-        rewrite sym $ snd0 (onc pi) (mxpd ex) in fcong {x=ex} $ pcomm fext)
+        rewrite fcong {x=(mxpd ex)} $ ntcomm pi fext in
+        fcong {x=ex} $ pcomm fext)
 
 export
 InterpPDNT : {0 p, q : PolyDifunc} -> PolyDiNT p q ->
@@ -430,7 +432,7 @@ export
   (InterpPDFlmap q i1 i1 i0 Prelude.id i2 (InterpPDNT {p} {q} pdnt i1 d1) ~=~
    InterpPDFrmap q i0 i0 i1 Prelude.id i2 (InterpPDNT {p} {q} pdnt i0 d0))
 InterpPDFisPara fext {p=p@(PDF pp pd pc pm)} {q=q@(PDF qp qd qc qm)}
-  pdnt@(PDNT onidx onb onc) i0 i1 i2
+  pdnt@(PDNT onidx onb onc ntcomm) i0 i1 i2
   ip@(IPDF pi0 mi0pd mpci0 pcomm) iq@(IPDF pi1 mi1pd mpci1 qcomm) cond =
     case ipdfEqPos cond of
       Refl => case ipdfEqDom cond of
@@ -445,22 +447,21 @@ InterpPDFisPara fext {p=p@(PDF pp pd pc pm)} {q=q@(PDF qp qd qc qm)}
 export
 pdNTid : (pdf : PolyDifunc) -> PolyDiNT pdf pdf
 pdNTid pdf =
-  PDNT id (\_ => id) (\i => CSliceId (pdfCobase pdf i ** pdfProj pdf i))
+  PDNT id (\_ => id) (\i => id) $ \i, fext => Refl
 
 export
 pdNTvcomp : {0 r, q, p : PolyDifunc} -> PolyDiNT q r -> PolyDiNT p q ->
   PolyDiNT p r
 pdNTvcomp {r=(PDF rp rd rc rm)} {q=(PDF qp qd qc qm)} {p=(PDF pp pd pc pm)}
-  (PDNT oniqr onbqr oncqr) (PDNT onipq onbpq oncpq) =
+  (PDNT oniqr onbqr oncqr qrcomm) (PDNT onipq onbpq oncpq pqcomm) =
     PDNT
       (oniqr . onipq)
       (\pi => onbpq pi . onbqr (onipq pi))
-      (\pi =>
-        Element0
-          (fst0 (oncqr $ onipq pi) . fst0 (oncpq pi))
-          (\pdi =>
-            rewrite snd0 (oncpq pi) pdi in
-            cong (onbpq pi) $ snd0 (oncqr $ onipq pi) (fst0 (oncpq pi) pdi)))
+      (\pi => (oncqr $ onipq pi) . oncpq pi)
+      $ \pi, fext => funExt $ \pd =>
+        trans
+          (rewrite (fcong {x=(oncpq pi pd)} $ qrcomm (onipq pi) fext) in Refl)
+          (fcong {x=pd} $ pqcomm pi fext)
 
 --------------------------------------------------------------------
 ---- Two-categorical structure of polydinatural transformations ----
@@ -473,25 +474,25 @@ export
 pdNTwhiskerL : {0 q, r : PolyDifunc} -> PolyDiNT q r -> (p : PolyDifunc) ->
   PolyDiNT (pdfComp q p) (pdfComp r p)
 pdNTwhiskerL {q=(PDF qp qd qc qm)} {r=(PDF rp rd rc rm)}
-  (PDNT oni onb onc) (PDF pp pd pc pm) =
+  (PDNT oni onb onc ntcomm) (PDF pp pd pc pm) =
     PDNT
       (\(qi ** pi ** qcpd) => (oni qi ** pi ** qcpd . onb qi))
       (\(qi ** pi ** qcpd) => id)
-      (\(qi ** pi ** qcpd) =>
-        Element0
-          (fst0 $ onc qi)
-          (\qdi => cong (pm pi) $ cong qcpd $ snd0 (onc qi) qdi))
+      (\(qi ** pi ** qcpd) => onc qi)
+      (\(qi ** pi ** qcpd), fext =>
+        funExt $ \qd => rewrite fcong {x=qd} (ntcomm qi fext) in Refl)
 
 export
 pdNTwhiskerR : {0 p, q : PolyDifunc} -> PolyDiNT p q -> (r : PolyDifunc) ->
   PolyDiNT (pdfComp r p) (pdfComp r q)
 pdNTwhiskerR {p=(PDF pp pd pc pm)} {q=(PDF qp qd qc qm)}
-  (PDNT oni onb onc) (PDF rp rd rc rm) =
+  (PDNT oni onb onc ntcomm) (PDF rp rd rc rm) =
     PDNT
-      (\(ri ** pi ** rcpd) => (ri ** oni pi ** fst0 (onc pi) . rcpd))
+      (\(ri ** pi ** rcpd) => (ri ** oni pi ** onc pi . rcpd))
       (\(ri ** pi ** rcpd) => onb pi)
-      (\(ri ** pi ** rcpd) =>
-        Element0 id $ \rdi => snd0 (onc pi) (rcpd (rm ri rdi)))
+      (\(ri ** pi ** rcpd) => id)
+      (\(ri ** pi ** rcpd), fext =>
+        funExt $ \rd => fcong $ ntcomm pi fext)
 
 export
 pdNThcomp : {0 p, q' : PolyDifunc} -> {p', q : PolyDifunc} ->
