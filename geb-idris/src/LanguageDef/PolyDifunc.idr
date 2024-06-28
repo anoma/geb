@@ -19,10 +19,6 @@ import public LanguageDef.IntDisheafCat
 ----------------------------------------------
 
 public export
-InterpTPF : {cat : IntCatSig} -> TwistPolyFunc cat -> TwistArrAr cat -> Type
-InterpTPF {cat} = InterpECofamCopreshfOMap (TwistArrAr cat) (TwistArrMor cat)
-
-public export
 TwistArrArType : Type
 TwistArrArType = TwistArrAr TypeCat
 
