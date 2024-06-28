@@ -206,37 +206,34 @@ fromDoubleYoType {a} {b} = fromDoubleYo TypeCat a b
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
 
--- I don't think that this is actually the right model -- the
--- `onCobase` ends up disagreeing with what's defined in `PolyDifunc`.
-
 public export
-ECofamPolyCat : IntCatSig -> IntCatSig
-ECofamPolyCat = PolyPolyCat
+ECofamUFamCat : IntCatSig -> IntCatSig
+ECofamUFamCat = ECofamCatSig . UFamCatSig
 
 public export
 TwistArrAr : IntCatSig -> Type
-TwistArrAr cat = icObj (ECofamCatSig cat)
+TwistArrAr cat = icObj (UFamCatSig cat)
 
 public export
-twarCod : {cat : IntCatSig} -> TwistArrAr cat -> Type
-twarCod = DPair.fst
+twarDom : {cat : IntCatSig} -> TwistArrAr cat -> Type
+twarDom = DPair.fst
 
 public export
-twarDom : {cat : IntCatSig} ->
-  (twar : TwistArrAr cat) -> twarCod {cat} twar -> icObj cat
-twarDom = DPair.snd
+twarCod : {cat : IntCatSig} ->
+  (twar : TwistArrAr cat) -> twarDom {cat} twar -> icObj cat
+twarCod = DPair.snd
 
 public export
 TwistArrMor : (cat : IntCatSig) -> IntMorSig (TwistArrAr cat)
-TwistArrMor cat = icMor (ECofamCatSig cat)
+TwistArrMor cat = icMor (UFamCatSig cat)
 
 public export
 TwistPolyFunc : IntCatSig -> Type
-TwistPolyFunc cat = icObj (ECofamPolyCat cat)
+TwistPolyFunc cat = icObj (ECofamUFamCat cat)
 
 public export
 TwistNT : (cat : IntCatSig) -> IntMorSig (TwistPolyFunc cat)
-TwistNT cat = icMor (ECofamPolyCat cat)
+TwistNT cat = icMor (ECofamUFamCat cat)
 
 public export
 tpfPos : {cat : IntCatSig} -> TwistPolyFunc cat -> Type
@@ -248,14 +245,14 @@ tpfAr : {cat : IntCatSig} ->
 tpfAr = DPair.snd
 
 public export
-tpfCod : {cat : IntCatSig} -> (tpf : TwistPolyFunc cat) ->
+tpfDom : {cat : IntCatSig} -> (tpf : TwistPolyFunc cat) ->
   SliceObj (tpfPos {cat} tpf)
-tpfCod {cat} tpf = twarCod {cat} . tpfAr {cat} tpf
+tpfDom {cat} tpf = twarDom {cat} . tpfAr {cat} tpf
 
 public export
-tpfDom : {cat : IntCatSig} -> (tpf : TwistPolyFunc cat) ->
-  (i : tpfPos {cat} tpf) -> tpfCod {cat} tpf i -> icObj cat
-tpfDom {cat} tpf i = twarDom {cat} (tpfAr {cat} tpf i)
+tpfCod : {cat : IntCatSig} -> (tpf : TwistPolyFunc cat) ->
+  (i : tpfPos {cat} tpf) -> tpfDom {cat} tpf i -> icObj cat
+tpfCod {cat} tpf i = twarCod {cat} (tpfAr {cat} tpf i)
 
 -------------------------------------
 -------------------------------------

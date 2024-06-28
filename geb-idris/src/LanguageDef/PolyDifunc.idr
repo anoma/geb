@@ -12,15 +12,11 @@ import public LanguageDef.IntDisheafCat
 %hide Library.IdrisCategories.BaseChangeF
 %hide Prelude.Ops.infixl.(|>)
 
-------------------------------------------------------------------------
-------------------------------------------------------------------------
----- Polynomial functors (existential cofamilies) as twisted arrows ----
-------------------------------------------------------------------------
-------------------------------------------------------------------------
-
-public export
-ECofamType : IntCatSig
-ECofamType = ECofamCatSig TypeCat
+----------------------------------------------
+----------------------------------------------
+---- Universal families as twisted arrows ----
+----------------------------------------------
+----------------------------------------------
 
 public export
 TwistArrArType : Type
@@ -31,16 +27,12 @@ TwistArrMorType : IntMorSig TwistArrArType
 TwistArrMorType = TwistArrMor TypeCat
 
 public export
-twarCodType : TwistArrArType -> Type
-twarCodType = twarCod {cat=TypeCat}
-
-public export
-twarDomType : (twar : TwistArrArType) -> SliceObj (twarCodType twar)
+twarDomType : TwistArrArType -> Type
 twarDomType = twarDom {cat=TypeCat}
 
 public export
-ECofamPolyType : IntCatSig
-ECofamPolyType = ECofamPolyCat TypeCat
+twarCodType : (twar : TwistArrArType) -> SliceObj (twarDomType twar)
+twarCodType = twarCod {cat=TypeCat}
 
 public export
 TwistPolyFuncType : Type
@@ -55,13 +47,13 @@ tpfArType : (tpf : TwistPolyFuncType) -> tpfPosType tpf -> TwistArrArType
 tpfArType = tpfAr {cat=TypeCat}
 
 public export
-tpfCodType : (tpf : TwistPolyFuncType) -> SliceObj (tpfPosType tpf)
-tpfCodType = tpfCod {cat=TypeCat}
+tpfDomType : (tpf : TwistPolyFuncType) -> SliceObj (tpfPosType tpf)
+tpfDomType = tpfDom {cat=TypeCat}
 
 public export
-tpfDomType : (tpf : TwistPolyFuncType) ->
-  (i : tpfPosType tpf) -> SliceObj (tpfCodType tpf i)
-tpfDomType = tpfDom {cat=TypeCat}
+tpfCodType : (tpf : TwistPolyFuncType) ->
+  (i : tpfPosType tpf) -> SliceObj (tpfDomType tpf i)
+tpfCodType = tpfCod {cat=TypeCat}
 
 public export
 TwistNTType : IntMorSig TwistPolyFuncType
@@ -83,18 +75,20 @@ itpfDir : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
 itpfDir {tpf} {twar} itpf = DPair.snd itpf
 
 public export
-itpfBC : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
+itpfOnDom : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
   (itpf : InterpTPF tpf twar) ->
-  tpfCodType tpf (itpfPos {tpf} {twar} itpf) -> twarCodType twar
-itpfBC {tpf} {twar} itpf = DPair.fst (itpfDir itpf)
+  twarDomType twar -> tpfDomType tpf (itpfPos {tpf} {twar} itpf)
+itpfOnDom {tpf} {twar} itpf = DPair.fst (itpfDir itpf)
 
 public export
-itpfSM : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
+itpfOnCod : {tpf : TwistPolyFuncType} -> {twar : TwistArrArType} ->
   (itpf : InterpTPF tpf twar) ->
-  SliceMorphism {a=(tpfCodType tpf $ itpfPos {tpf} {twar} itpf)}
-    (BaseChangeF (itpfBC {tpf} {twar} itpf) (twarDomType twar))
-    (tpfDomType tpf $ itpfPos {tpf} {twar} itpf)
-itpfSM {tpf} {twar} itpf = DPair.snd (itpfDir itpf)
+  SliceMorphism {a=(twarDomType twar)}
+    (BaseChangeF
+      (itpfOnDom {tpf} {twar} itpf)
+      (tpfCodType tpf $ itpfPos {tpf} {twar} itpf))
+    (twarCodType twar)
+itpfOnCod {tpf} {twar} itpf = DPair.snd (itpfDir itpf)
 
 public export
 twntOnPos : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
@@ -111,21 +105,23 @@ twntOnDir : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
 twntOnDir {p} {q} = DPair.snd
 
 public export
-twntOnBase : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
+twntOnContra : {cat : IntCatSig} -> {p, q : TwistPolyFunc cat} ->
   (twnt : TwistNT cat p q) ->
   SliceMorphism {a=(tpfPos {cat} p)}
-    (BaseChangeF (twntOnPos {cat} {p} {q} twnt) (tpfCod {cat} q))
-    (tpfCod {cat} p)
-twntOnBase {p} {q} twnt i = DPair.fst (twntOnDir twnt i)
+    (tpfDom {cat} p)
+    (BaseChangeF (twntOnPos {cat} {p} {q} twnt) (tpfDom {cat} q))
+twntOnContra {p} {q} twnt i = DPair.fst (twntOnDir twnt i)
 
 public export
-twntOnTot : {p, q : TwistPolyFuncType} ->
+twntOnCovar : {p, q : TwistPolyFuncType} ->
   (twnt : TwistNTType p q) ->
   (i : tpfPosType p) ->
-    SliceMorphism {a=(tpfCodType q $ twntOnPos {cat=TypeCat} {p} {q} twnt i)}
-      (BaseChangeF (twntOnBase {cat=TypeCat} {p} {q} twnt i) (tpfDomType p i))
-      (tpfDomType q $ twntOnPos {cat=TypeCat} {p} {q} twnt i)
-twntOnTot {p} {q} twnt i = DPair.snd (twntOnDir {cat=TypeCat} twnt i)
+    SliceMorphism {a=(tpfDomType p i)}
+      (BaseChangeF
+        (twntOnContra {cat=TypeCat} {p} {q} twnt i)
+          (tpfCodType q $ twntOnPos {cat=TypeCat} {p} {q} twnt i))
+      (tpfCodType p i)
+twntOnCovar {p} {q} twnt i = DPair.snd (twntOnDir {cat=TypeCat} twnt i)
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
