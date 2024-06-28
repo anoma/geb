@@ -279,6 +279,10 @@ tpfCod : {cat : IntCatSig} -> (tpf : TwistPolyFunc cat) ->
   (i : tpfPos {cat} tpf) -> tpfDom {cat} tpf i -> icObj cat
 tpfCod {cat} tpf i = twarCod {cat} (tpfAr {cat} tpf i)
 
+public export
+InterpTPF : {cat : IntCatSig} -> TwistPolyFunc cat -> TwistArrAr cat -> Type
+InterpTPF {cat} = InterpECofamCopreshfOMap (TwistArrAr cat) (TwistArrMor cat)
+
 -------------------------------------
 -------------------------------------
 ---- Disheaf category definition ----
