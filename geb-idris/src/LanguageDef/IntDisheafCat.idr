@@ -284,6 +284,11 @@ InterpTPF : {cat : IntCatSig} -> TwistPolyFunc cat -> TwistArrAr cat -> Type
 InterpTPF {cat} = InterpECofamCopreshfOMap (TwistArrAr cat) (TwistArrMor cat)
 
 public export
+InterpTPFdiag : {cat : IntCatSig} ->
+  (tpf : TwistPolyFunc cat) -> icObj cat -> Type
+InterpTPFdiag {cat} tpf = InterpTPF tpf . IntUFamEmbedObj
+
+public export
 itpfPos :
   {cat : IntCatSig} -> {tpf : TwistPolyFunc cat} -> {twar : TwistArrAr cat} ->
   InterpTPF {cat} tpf twar -> tpfPos {cat} tpf

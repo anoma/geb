@@ -211,6 +211,16 @@ InterpUFamPreshfNaturality fext c mor comp assoc
       \eyi =>
         assoc b a (xobj $ midx eyi) (yobj eyi) (mobj eyi) (pix $ midx eyi) mba
 
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+---- Embedding of a category into its category of universal families ----
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+public export
+IntUFamEmbedObj : {c : Type} -> c -> IntUFamObj c
+IntUFamEmbedObj {c} x = IFUO Unit (\_ => x)
+
 -----------------------------------------
 -----------------------------------------
 ---- Metalanguage universal families ----
