@@ -5366,6 +5366,20 @@ Profunctor p => Profunctor (FreePromonad p) where
     InFPM {p} {a=c} {b=d}
       (i ** (dimap {f=p} mca id pai, dimap {f=(FreePromonad p)} id mbd fpib))
 
+public export
+data CofreeProcomonad : ProfunctorSig -> ProfunctorSig where
+  InFPCM : {0 p : ProfunctorSig} -> {0 a, b : Type} ->
+    p a b -> EndoProfCompose p (CofreeProcomonad p) a b ->
+    CofreeProcomonad p a b
+
+public export
+Profunctor p => Profunctor (CofreeProcomonad p) where
+  dimap {a} {b} {c} {d} mca mbd (InFPCM pab (i ** (pai, fpib))) =
+    InFPCM {p} {a=c} {b=d}
+      (dimap mca mbd pab)
+      (i ** (dimap {f=p} mca id pai,
+       dimap {f=(CofreeProcomonad p)} id mbd fpib))
+
 ----------------------------
 ----------------------------
 ---- Coslice categories ----
