@@ -313,7 +313,7 @@ public export
 AllOutgoingUnique {f} fm (a ** efa) m =
   (b : Type) -> (efb : f b) ->
   (m' : CovarElemCatMor {f} fm (a ** efa) (b ** efb)) ->
-  ExtEq (Subset0.fst0 $ m (b ** efb)) (Subset0.fst0 $ m')
+  FunExtEq (Subset0.fst0 $ m (b ** efb)) (Subset0.fst0 $ m')
 
 public export
 IsInitialCovarElemCatObj : {f : Type -> Type} ->
@@ -344,7 +344,7 @@ public export
 AllIncomingUnique {f} fm (a ** efa) m =
   (b : Type) -> (efb : f b) ->
   (m' : ContravarElemCatMor {f} fm (b ** efb) (a ** efa)) ->
-  ExtEq (Subset0.fst0 $ m (b ** efb)) (Subset0.fst0 $ m')
+  FunExtEq (Subset0.fst0 $ m (b ** efb)) (Subset0.fst0 $ m')
 
 public export
 IsTerminalContravarElemCatObj : {f : Type -> Type} ->
