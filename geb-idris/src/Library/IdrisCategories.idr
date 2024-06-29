@@ -1897,6 +1897,62 @@ public export
 TwArrPreshfIdMap : TwArrPreshfContraDimapSig TwArrPreshfId
 TwArrPreshfIdMap = TwArrPreshfEmbedDimap HomProf HomProfProfunctor
 
+-- Embed an object of `Type` into the category of copresheaves on
+-- the twisted-arrow category of `Type`.  This is the object-map component
+-- of the object-map component of the embedding functor from `Type` to
+-- the category of copresheaves on the twisted-arrow category of `Type`,
+-- which composes the embedding of presheaves on `Type` into copresheaves
+-- on the twisted-arrow category of `Type` after the (contravariant)
+-- Yoneda embedding of `Type` into presheaves on `Type`.
+public export
+TwCoprEmbedObjOmap : Type -> TwArrCoprSig
+TwCoprEmbedObjOmap x a b mab = a -> x
+
+-- The object-map component of the embedding of an object of `op(Type)` into
+-- the category of copresheaves on the twisted-arrow category of `Type`,
+-- which composes the embedding of copresheaves on `Type` into copresheaves
+-- on the twisted-arrow category of `Type` after the Yoneda embedding of
+-- `op(Type)` into copresheaves on `Type`.
+public export
+TwCoprEmbedOpObjOmap : Type -> TwArrCoprSig
+TwCoprEmbedOpObjOmap x a b mab = x -> b
+
+-- This is the morphism-map component of the object-map component of the
+-- embedding functor from `Type` to the category of copresheaves on the
+-- twisted-arrow category of `Type`.
+public export
+TwCoprEmbedObjDimap :
+  (x : Type) -> TwArrCoprDimapSig (TwCoprEmbedObjOmap x)
+TwCoprEmbedObjDimap x s t a b mst mas mtb msx = msx . mas
+
+-- This is the morphism-map component of the object-map component of the
+-- embedding functor from `op(Type)` to the category of copresheaves on the
+-- twisted-arrow category of `Type`.
+public export
+TwCoprEmbedOpObjDimap :
+  (x : Type) -> TwArrCoprDimapSig (TwCoprEmbedOpObjOmap x)
+TwCoprEmbedOpObjDimap x s t a b mst mas mtb mxt = mtb . mxt
+
+-- The morphism-map component of the embedding functor from `Type` to the
+-- category of copresheaves on the twisted-arrow category of `Type` (whose
+-- object-map component is `TwCoprEmbedObjOmap` /
+-- `TwCoprEmbedObjDimap`).
+public export
+TwCoprEmbedMor :
+  (x, y : Type) -> (mxy : x -> y) ->
+  TwArrCoprNatTrans (TwCoprEmbedObjOmap x) (TwCoprEmbedObjOmap y)
+TwCoprEmbedMor x y mxy a b mab max = mxy . max
+
+-- The morphism-map component of the embedding functor from `op(Type)` to the
+-- category of copresheaves on the twisted-arrow category of `Type` (whose
+-- object-map component is `TwCoprEmbedOpObjOmap` /
+-- `TwCoprEmbedOpObjDimap`).
+public export
+TwCoprEmbedOpMor :
+  (x, y : Type) -> (mxy : y -> x) ->
+  TwArrCoprNatTrans (TwCoprEmbedOpObjOmap x) (TwCoprEmbedOpObjOmap y)
+TwCoprEmbedOpMor x y myx a b mab mxb = mxb . myx
+
 -- Embed an object of `Type` into the category of presheaves on
 -- the twisted-arrow category of `Type`.  This is the object-map component
 -- of the object-map component of the embedding functor from `Type` to
