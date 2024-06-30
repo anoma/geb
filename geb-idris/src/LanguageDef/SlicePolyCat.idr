@@ -2298,6 +2298,10 @@ SPFDataFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
 SPFDataFromDep {b} {dom} {cod} spfdd =
   SPFD (uncurry $ spfddPos spfdd) (SPFdirFromDep $ spfddDir spfdd)
 
+-- The signature that this form of SPFD allows us to write makes the domain
+-- and codomain themselves both dependent on a common type (`b`), thus allowing
+-- us to express a _relationship_ between the dependent types of the domain
+-- and codomain.
 public export
 InterpSPFdepData : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFdepData {b} dom cod ->
@@ -2309,3 +2313,18 @@ InterpSPFdepData {b} {dom} {cod} spfdd eb sld ebc =
       Exists {type=(fst ebd = eb)}
       $ \eqb => sld $ replace {p=dom} eqb $ snd ebd)
     (eb ** ebc)
+
+public export
+InterpSPFdepNT : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f, g : SPFdepData {b} dom cod) ->
+  SPFnt (SPFDataFromDep f) (SPFDataFromDep g) ->
+  (eb : b) ->
+  SliceNatTrans {x=(dom eb)} {y=(cod eb)}
+    (InterpSPFdepData f eb)
+    (InterpSPFdepData g eb)
+InterpSPFdepNT {b} {dom} {cod} f g alpha eb sld ec =
+  InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) alpha
+    (\ebd =>
+      Exists {type=(fst ebd = eb)}
+      $ \eqb => sld $ replace {p=dom} eqb $ snd ebd)
+    (eb ** ec)
