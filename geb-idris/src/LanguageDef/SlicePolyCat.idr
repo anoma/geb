@@ -1403,7 +1403,7 @@ SPFntCodDirPos : (tyel : TyElObj) ->
   (onpos : SPFntCodPos tyel dom f g) -> spfdPos f (snd tyel) -> Type
 SPFntCodDirPos tyel dom f g onpos ep =
   SliceMorphism {a=dom}
-    (spfdDir g (snd tyel)$ onpos ep)
+    (spfdDir g (snd tyel) $ onpos ep)
     (spfdDir f (snd tyel) ep)
 
 public export
