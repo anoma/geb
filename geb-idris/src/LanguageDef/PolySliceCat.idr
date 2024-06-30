@@ -270,10 +270,10 @@ MlDirichSlToSPFDD {ar} sl =
   SPFDD (\i, () => pfDir {p=ar} i) (\eb, (), ed, ep => mdsDir sl eb ep ed)
 
 public export
-MlDirichSlFromSPFDD : {b : Type} -> {dom : SliceObj b} ->
-  SPFdepData {b} dom (const Unit) -> MlDirichSlObj (b ** dom)
-MlDirichSlFromSPFDD {b} {dom} spfdd =
-  MDSobj (flip (spfddPos spfdd) ()) $ \eb => spfddDir spfdd eb ()
+MlDirichSlFromSPFDD : (ar : MLArena) ->
+  SPFdepData {b=(pfPos ar)} (pfDir {p=ar}) (const Unit) -> MlDirichSlObj ar
+MlDirichSlFromSPFDD ar spfdd =
+  MDSobj (flip (spfddPos spfdd) ()) $ \ep => spfddDir spfdd ep ()
 
 -- From the above two translations, we can conclude that for `ar : MLArena`
 -- representing a Dirichlet functor, an `MlDirichSlObj ar` -- an object in the
