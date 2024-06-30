@@ -2248,3 +2248,52 @@ SPFelemCatMICS f = MICS (SPFelemCatMor f) (SPFelemCatICS f)
 public export
 SPFelemCat : {dom, cod : Type} -> (f : SPFData dom cod) -> IntCatSig
 SPFelemCat f = ICat (SPFelemCatObj f) (SPFelemCatMICS f)
+
+------------------------------------------------
+------------------------------------------------
+---- Slice-of-slice version of `SPFdirType` ----
+------------------------------------------------
+------------------------------------------------
+
+-- Suppose the following:
+--
+--   - `b : Type`
+--   - `domsl : SliceObj b` where `dom ~=~ Sigma {a=b} domsl`
+--   - `codr : SliceObj b` where `cod ~=~ Sigma {a=b} codr`
+--   - `pos : SliceObj cod`
+--     (~=~ `SliceObj (Sigma {a=b} codr)` ~=~ `(eb : b) -> codr eb -> Type`)
+--
+-- (Note that all `(dom, cod)` pairs can be put in this form:  we can take
+-- `b := Unit`, `domsl := \() => dom`; codr := \() => cod.)
+--
+-- Then we can provide the following interface to `SPFdirType`:
+public export
+0 SPFdepDirType : {0 b : Type} ->
+  (0 domsl, codr : SliceObj b) -> (0 pos : (eb : b) -> codr eb -> Type) -> Type
+SPFdepDirType {b} domsl codr pos =
+  (eb : b) -> (ec : codr eb) -> pos eb ec -> SliceObj (domsl eb)
+
+-- We can convert an `SPFdepDirType` to an `SPFdirType`:
+public export
+data SPFdirFromDep : {0 b : Type} ->
+    {0 domsl, codr : SliceObj b} -> {0 pos : (eb : b) -> codr eb -> Type} ->
+    SPFdepDirType {b} domsl codr pos ->
+    SPFdirType (Sigma {a=b} domsl) (Sigma {a=b} codr) (uncurry pos) where
+  SPFdd : {0 b : Type} ->
+    {0 domsl, codr : SliceObj b} -> {0 pos : (eb : b) -> codr eb -> Type} ->
+    {0 dir : SPFdepDirType {b} domsl codr pos} ->
+    (eb : b) -> (ec : codr eb) -> (ep : pos eb ec) -> (ed : domsl eb) ->
+    dir eb ec ep ed ->
+    SPFdirFromDep {b} {domsl} {codr} {pos} dir (eb ** ec) ep (eb ** ed)
+
+public export
+record SPFdepData {0 b : Type} (dom, cod : SliceObj b) where
+  constructor SPFDD
+  spfddPos : (eb : b) -> cod eb -> Type
+  spfddDir : SPFdepDirType {b} dom cod spfddPos
+
+public export
+SPFDataFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  SPFdepData {b} dom cod -> SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
+SPFDataFromDep {b} {dom} {cod} spfdd =
+  SPFD (uncurry $ spfddPos spfdd) (SPFdirFromDep $ spfddDir spfdd)
