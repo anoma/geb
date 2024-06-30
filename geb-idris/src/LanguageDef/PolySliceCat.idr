@@ -248,6 +248,8 @@ MlSlArTotPos {ar} onpos = Sigma {a=(pfPos ar)} onpos
 -- polynomials, because the on-directions part of the projection component of
 -- an object in a polynomial-functor slice category goes in the opposite
 -- direction.
+--
+-- Thus we can express the directions as follows:
 public export
 MlDirichSlDir : (ar : MLArena) -> MlSlArProjOnPos ar -> Type
 MlDirichSlDir ar onpos = (i : pfPos ar) -> onpos i -> pfDir {p=ar} i -> Type
@@ -257,6 +259,21 @@ record MlDirichSlObj (ar : MLArena) where
   constructor MDSobj
   mdsOnPos : MlSlArProjOnPos ar
   mdsDir : MlDirichSlDir ar mdsOnPos
+
+-- We now show that `MlDirichSlObj` is a (special case of a) signature that
+-- we have developed previously: `SPFdepDirType`.
+public export
+MlDirichSlToSPFDD : {ar : MLArena} ->
+  (sl : MlDirichSlObj ar) ->
+  SPFdepData {b=(pfPos ar)} (mdsOnPos sl) (const Unit)
+MlDirichSlToSPFDD {ar} sl =
+  SPFDD (\i, () => pfDir {p=ar} i) (\eb, (), ed, ep => mdsDir sl eb ep ed)
+
+public export
+MlDirichSlFromSPFDD : {b : Type} -> {dom : SliceObj b} ->
+  SPFdepData {b} dom (const Unit) -> MlDirichSlObj (b ** dom)
+MlDirichSlFromSPFDD {b} {dom} spfdd =
+  MDSobj (flip (spfddPos spfdd) ()) $ \eb => spfddDir spfdd eb ()
 
 -- In the case of polynomial functors, the directions of the slice object's
 -- domain are slices of its positions only, since its on-directions function
