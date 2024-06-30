@@ -34,7 +34,7 @@ import public LanguageDef.IntECofamCat
 
 -- At https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms
 -- in the proposition about the "especially nice form" of PRA functors between
--- presheaf categories, this `SFPdirType` corresponds to what is called the
+-- presheaf categories, this `SPFdirType` corresponds to what is called the
 -- functor `E_T`, while the `SliceObj cod` which it depends on is the object
 -- `T1`.
 --
