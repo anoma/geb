@@ -2297,3 +2297,15 @@ SPFDataFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
   SPFdepData {b} dom cod -> SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
 SPFDataFromDep {b} {dom} {cod} spfdd =
   SPFD (uncurry $ spfddPos spfdd) (SPFdirFromDep $ spfddDir spfdd)
+
+public export
+InterpSPFdepData : {b : Type} -> {dom, cod : SliceObj b} ->
+  SPFdepData {b} dom cod ->
+  SliceMorphism {a=b} (SliceObj . dom) (SliceObj . cod)
+InterpSPFdepData {b} {dom} {cod} spfdd eb sld ebc =
+  InterpSPFData
+    (SPFDataFromDep spfdd)
+    (\ebd =>
+      Exists {type=(fst ebd = eb)}
+      $ \eqb => sld $ replace {p=dom} eqb $ snd ebd)
+    (eb ** ebc)
