@@ -275,6 +275,14 @@ MlDirichSlFromSPFDD : {b : Type} -> {dom : SliceObj b} ->
 MlDirichSlFromSPFDD {b} {dom} spfdd =
   MDSobj (flip (spfddPos spfdd) ()) $ \eb => spfddDir spfdd eb ()
 
+-- From the above two translations, we can conclude that for `ar : MLArena`
+-- representing a Dirichlet functor, an `MlDirichSlObj ar` -- an object in the
+-- slice category of Dirichlet functors over `ar` -- is precisely a polynomial
+-- (parametric right adjoint) functor from the slice category of `Type` over
+-- the directions of `ar` to `Type` itself (which is equivalent to `Type`
+-- sliced over `Unit`), or, put another way, a polynomial copresheaf on the
+-- directions of `ar`.
+
 -- In the case of polynomial functors, the directions of the slice object's
 -- domain are slices of its positions only, since its on-directions function
 -- can not be viewed as a fibration of them, and we therefore require an
