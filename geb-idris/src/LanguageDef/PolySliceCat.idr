@@ -264,10 +264,9 @@ record MlDirichSlObj (ar : MLArena) where
 -- we have developed previously: `SPFdepDirType`.
 public export
 MlDirichSlToSPFDD : {ar : MLArena} ->
-  (sl : MlDirichSlObj ar) ->
-  SPFdepData {b=(pfPos ar)} (mdsOnPos sl) (const Unit)
+  MlDirichSlObj ar -> SPFdepData {b=(pfPos ar)} (pfDir {p=ar}) (const Unit)
 MlDirichSlToSPFDD {ar} sl =
-  SPFDD (\i, () => pfDir {p=ar} i) (\eb, (), ed, ep => mdsDir sl eb ep ed)
+  SPFDD (\i, () => mdsOnPos sl i) (\ei, () => mdsDir sl ei)
 
 public export
 MlDirichSlFromSPFDD : (ar : MLArena) ->
