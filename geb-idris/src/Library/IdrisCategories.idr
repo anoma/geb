@@ -4649,13 +4649,14 @@ record WTypeCell {w, w', z, z' : Type}
     Pullback {a=(wtDir g)} {b=(wtPos f)} {c=(wtPos g)}
       (wtDirSlice g) wtcOnPos ->
     wtDir f
-  0 wtcCommPos : FunExt -> bcr . wtPosSlice f = wtPosSlice g . wtcOnPos
-  0 wtcCommDir : FunExt ->
-      wtDirSlice f . wtcOnDir =
-      pbProj2 {f=(wtDirSlice g)} {g=wtcOnPos}
-  0 wtcCommAssign : FunExt ->
-      bcl . wtAssign f . wtcOnDir =
-      wtAssign g . pbProj1 {f=(wtDirSlice g)} {g=wtcOnPos}
+  0 wtcCommPos :
+    ExtEq (bcr . wtPosSlice f) (wtPosSlice g . wtcOnPos)
+  0 wtcCommDir :
+    ExtEq (wtDirSlice f . wtcOnDir) (pbProj2 {f=(wtDirSlice g)} {g=wtcOnPos})
+  0 wtcCommAssign :
+    ExtEq
+      (bcl . wtAssign f . wtcOnDir)
+      (wtAssign g . pbProj1 {f=(wtDirSlice g)} {g=wtcOnPos})
 
 -----------------------------
 ---- Algebras of W-types ----
