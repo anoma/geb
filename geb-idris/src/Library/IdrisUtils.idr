@@ -181,6 +181,14 @@ dpeq2 : {0 a : Type} -> {0 b : a -> Type} -> {0 dp, dp' : DPair a b} ->
   dp = dp' -> snd dp ~=~ snd dp'
 dpeq2 Refl = Refl
 
+-- A predicate on a dependent pair which only holds when the first
+-- element of the pair matches a given one.
+public export
+MatchingSnd : {0 a : Type} -> {0 b : a -> Type} ->
+  (ea : a) -> (b ea -> Type) -> (DPair a b -> Type)
+MatchingSnd {a} {b} ea sl dp =
+  Exists {type=(fst dp = ea)} $ \eqa => sl $ replace {p=b} eqa $ snd dp
+
 public export
 showDP : {0 a : Type} -> {0 p : a -> Type} ->
   (a -> String) -> ((x : a) -> p x -> String) ->
