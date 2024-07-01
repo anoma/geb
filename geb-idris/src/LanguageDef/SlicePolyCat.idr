@@ -2307,11 +2307,8 @@ InterpSPFdepData : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFdepData {b} dom cod ->
   SliceMorphism {a=b} (SliceObj . dom) (SliceObj . cod)
 InterpSPFdepData {b} {dom} {cod} spfdd eb sld ebc =
-  InterpSPFData
-    (SPFDataFromDep spfdd)
-    (\ebd =>
-      Exists {type=(fst ebd = eb)}
-      $ \eqb => sld $ replace {p=dom} eqb $ snd ebd)
+  InterpSPFData (SPFDataFromDep spfdd)
+    (MatchingSnd eb sld)
     (eb ** ebc)
 
 public export
@@ -2324,7 +2321,5 @@ InterpSPFdepNT : {b : Type} -> {dom, cod : SliceObj b} ->
     (InterpSPFdepData g eb)
 InterpSPFdepNT {b} {dom} {cod} f g alpha eb sld ec =
   InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) alpha
-    (\ebd =>
-      Exists {type=(fst ebd = eb)}
-      $ \eqb => sld $ replace {p=dom} eqb $ snd ebd)
+    (MatchingSnd eb sld)
     (eb ** ec)
