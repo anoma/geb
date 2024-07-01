@@ -2041,7 +2041,7 @@ PFCoalgToCobaseF : {p : PolyFunc} -> {a : Type} -> PFCoalg p a -> PFCobaseF p a
 PFCoalgToCobaseF {p=(pos ** dir)} {a} coalg b f x =
   let (i ** d) = coalg x in (i ** f . d)
 
-{- One direction of 5.71 from "A General Theory of Interaction". -}
+{- One direction of 6.65 from "A General Theory of Interaction". -}
 public export
 PFMonoToCofunc : {p : PolyFunc} -> {a, b : Type} ->
   PolyNatTrans (pfMonomialArena a b) p -> a -> InterpPolyFunc p b
@@ -2053,7 +2053,7 @@ PFMonoToCoalg : {p : PolyFunc} -> {a : Type} ->
   PolyNatTrans (pfMonomialArena a a) p -> PFCoalg p a
 PFMonoToCoalg {p=(pos ** dir)} {a} = PFMonoToCofunc {p=(pos ** dir)} {a} {b=a}
 
-{- The other direction of 5.71 from "A General Theory of Interaction". -}
+{- The other direction of 6.65 from "A General Theory of Interaction". -}
 public export
 PFCofuncToMono : {p : PolyFunc} -> {a, b : Type} ->
   (a -> InterpPolyFunc p b) -> PolyNatTrans (pfMonomialArena a b) p
