@@ -2037,6 +2037,96 @@ SPFpoCell : {w, w', z, z' : Type} ->
 SPFpoCell {w} {w'} {z} {z'} bcl bcr f g =
   SPFnt {dom=w'} {cod=z'} (spfPushout bcl bcr f) g
 
+-- A pushout cell determines a commutative diagram of the double-category form
+-- in https://ncatlab.org/nlab/show/polynomial+functor#the_2category_of_polynomial_functors .
+
+public export
+0 SPFpoCellToWTypePos : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : SPFData w z) -> (g : SPFData w' z') ->
+  SPFpoCell {w} {w'} {z} {z'} bcl bcr f g ->
+  wtPos (SPFDasWTF f) -> wtPos (SPFDasWTF g)
+SPFpoCellToWTypePos {w} {w'} {z} {z'} bcl bcr f g spfc (ez ** efp) =
+  (bcr ez ** spOnPos spfc (bcr ez) $ SFS ez efp)
+
+public export
+0 SPFpoCellToWTypeDir : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : SPFData w z) -> (g : SPFData w' z') ->
+  (spfc : SPFpoCell {w} {w'} {z} {z'} bcl bcr f g) ->
+  Pullback
+    {a=(wtDir $ SPFDasWTF g)}
+    {b=(wtPos $ SPFDasWTF f)}
+    {c=(wtPos $ SPFDasWTF g)}
+    (wtDirSlice $ SPFDasWTF g)
+    (SPFpoCellToWTypePos {w} {w'} {z} {z'} bcl bcr f g spfc) ->
+    wtDir (SPFDasWTF f)
+SPFpoCellToWTypeDir {w} {w'} {z} {z'} bcl bcr f g spfc
+    (Element0 (((ew', (_ ** _)) ** egd), (ez ** efp)) Refl)
+    with (spOnDir spfc (bcr ez) (SFS ez efp) ew' egd)
+  SPFpoCellToWTypeDir {w} {w'} {z} {z'} bcl bcr f g spfc
+    (Element0 (((_, (_ ** _)) ** egd), (ez ** efp)) Refl) | (SFS ew efd) =
+      ((ew, (ez ** efp)) ** efd)
+
+public export
+0 SPFpoCellToWTypeCommPos : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : SPFData w z) -> (g : SPFData w' z') ->
+  (spfc : SPFpoCell {w} {w'} {z} {z'} bcl bcr f g) ->
+  ExtEq
+    (bcr . wtPosSlice (SPFDasWTF f))
+    (wtPosSlice (SPFDasWTF g) . SPFpoCellToWTypePos bcl bcr f g spfc)
+SPFpoCellToWTypeCommPos {w} {w'} {z} {z'} bcl bcr f g spfc (ez ** efp) = Refl
+
+public export
+0 SPFpoCellToWTypeCommDir : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : SPFData w z) -> (g : SPFData w' z') ->
+  (spfc : SPFpoCell {w} {w'} {z} {z'} bcl bcr f g) ->
+  ExtEq
+    (wtDirSlice (SPFDasWTF f) . SPFpoCellToWTypeDir bcl bcr f g spfc)
+    (pbProj2
+      {f=(wtDirSlice $ SPFDasWTF g)}
+      {g=(SPFpoCellToWTypePos bcl bcr f g spfc)})
+SPFpoCellToWTypeCommDir {w} {w'} {z} {z'} bcl bcr f g spfc
+    (Element0 (((ew', (_ ** _)) ** egd), (ez ** efp)) Refl)
+    with (spOnDir spfc (bcr ez) (SFS ez efp) ew' egd)
+  SPFpoCellToWTypeCommDir {w} {w'} {z} {z'} bcl bcr f g spfc
+    (Element0 (((_, (_ ** _)) ** egd), (ez ** efp)) Refl) | SFS ew efd =
+      Refl
+
+public export
+0 SPFpoCellToWTypeCommAssign : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : SPFData w z) -> (g : SPFData w' z') ->
+  (spfc : SPFpoCell {w} {w'} {z} {z'} bcl bcr f g) ->
+  ExtEq
+    (bcl . wtAssign (SPFDasWTF f) . SPFpoCellToWTypeDir bcl bcr f g spfc)
+    (wtAssign (SPFDasWTF g) .
+      pbProj1
+        {f=(wtDirSlice $ SPFDasWTF g)}
+        {g=(SPFpoCellToWTypePos bcl bcr f g spfc)})
+SPFpoCellToWTypeCommAssign {w} {w'} {z} {z'} bcl bcr f g spfc
+    (Element0 (((ew', (_ ** _)) ** egd), (ez ** efp)) Refl)
+    with (spOnDir spfc (bcr ez) (SFS ez efp) ew' egd)
+  SPFpoCellToWTypeCommAssign {w} {w'} {z} {z'} bcl bcr f g spfc
+    (Element0 (((_, (_ ** _)) ** egd), (ez ** efp)) Refl) | SFS ew efd =
+      Refl
+
+public export
+0 SPFpoCellToWType : {w, w', z, z' : Type} ->
+  (bcl : w -> w') -> (bcr : z -> z') ->
+  (f : SPFData w z) -> (g : SPFData w' z') ->
+  SPFpoCell {w} {w'} {z} {z'} bcl bcr f g ->
+  WTypeCell {w} {w'} {z} {z'} bcl bcr (SPFDasWTF f) (SPFDasWTF g)
+SPFpoCellToWType {w} {w'} {z} {z'} bcl bcr f g spfc =
+  WTCell
+    (SPFpoCellToWTypePos bcl bcr f g spfc)
+    (SPFpoCellToWTypeDir bcl bcr f g spfc)
+    (SPFpoCellToWTypeCommPos bcl bcr f g spfc)
+    (SPFpoCellToWTypeCommDir bcl bcr f g spfc)
+    (SPFpoCellToWTypeCommAssign bcl bcr f g spfc)
+
 public export
 spocVid : {w, z : Type} -> (f : SPFData w z) ->
   SPFpoCell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f f
