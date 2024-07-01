@@ -4638,6 +4638,25 @@ InterpWTF {parambase} {posbase} wtf sl ib =
    (d : PreImage {a=(wtDir wtf)} {b=(wtPos wtf)} (wtDirSlice wtf) (fst0 i)) ->
    sl $ wtAssign wtf $ fst0 d)
 
+-- See https://ncatlab.org/nlab/show/polynomial+functor#the_2category_of_polynomial_functors .
+public export
+record WTypeCell {w, w', z, z' : Type}
+    (bcl : w -> w') (bcr : z -> z') (f : WTypeFunc w z) (g : WTypeFunc w' z')
+    where
+  constructor WTCell
+  wtcOnPos : wtPos f -> wtPos g
+  wtcOnDir :
+    Pullback {a=(wtDir g)} {b=(wtPos f)} {c=(wtPos g)}
+      (wtDirSlice g) wtcOnPos ->
+    wtDir f
+  0 wtcCommPos : FunExt -> bcr . wtPosSlice f = wtPosSlice g . wtcOnPos
+  0 wtcCommTop : FunExt ->
+      wtDirSlice f . wtcOnDir =
+      pbProj2 {f=(wtDirSlice g)} {g=wtcOnPos}
+  0 wtcCommDir : FunExt ->
+      bcl . wtAssign f . wtcOnDir =
+      wtAssign g . pbProj1 {f=(wtDirSlice g)} {g=wtcOnPos}
+
 -----------------------------
 ---- Algebras of W-types ----
 -----------------------------
