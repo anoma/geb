@@ -4650,10 +4650,10 @@ record WTypeCell {w, w', z, z' : Type}
       (wtDirSlice g) wtcOnPos ->
     wtDir f
   0 wtcCommPos : FunExt -> bcr . wtPosSlice f = wtPosSlice g . wtcOnPos
-  0 wtcCommTop : FunExt ->
+  0 wtcCommDir : FunExt ->
       wtDirSlice f . wtcOnDir =
       pbProj2 {f=(wtDirSlice g)} {g=wtcOnPos}
-  0 wtcCommDir : FunExt ->
+  0 wtcCommAssign : FunExt ->
       bcl . wtAssign f . wtcOnDir =
       wtAssign g . pbProj1 {f=(wtDirSlice g)} {g=wtcOnPos}
 
