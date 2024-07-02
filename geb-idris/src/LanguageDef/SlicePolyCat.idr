@@ -2434,3 +2434,53 @@ InterpSPFdepNT {b} {dom} {cod} f g alpha eb sld ec =
   InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) (SPFntFromDep alpha)
     (MatchingSnd eb sld)
     (eb ** ec)
+
+public export
+spfDepPushoutPos : {b : Type} -> {x, y, z : SliceObj b} ->
+  (SliceMorphism {a=b} z y) -> SPFdepData x z -> SPFdepData x y
+spfDepPushoutPos {b} {x} {y} {z} mzy f =
+  SPFDD
+    (\eb => SliceFibSigmaF (mzy eb) $ spfddPos f eb)
+    (\eb, ey, ep => spfddDir f eb (sfsFst ep) (sfsSnd ep))
+
+public export
+spfDepPushoutDir : {b : Type} -> {w, x, z : SliceObj b} ->
+  (SliceMorphism {a=b} w x) -> SPFdepData w z -> SPFdepData x z
+spfDepPushoutDir {b} {w} {x} {z} mwx f =
+  SPFDD (spfddPos f) (\eb, ez => SliceFibSigmaF (mwx eb) . spfddDir f eb ez)
+
+public export
+spfDepPushout : {b : Type} -> {w, x, y, z : SliceObj b} ->
+  (SliceMorphism {a=b} w x) -> (SliceMorphism {a=b} z y) ->
+  SPFdepData w z -> SPFdepData x y
+spfDepPushout {b} {w} {x} {y} {z} mwx mzy =
+  spfDepPushoutPos {x} {y} {z} mzy . spfDepPushoutDir {w} {x} {z} mwx
+
+public export
+SPFdepPoCell : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
+  Type
+SPFdepPoCell {w} {w'} {z} {z'} bcl bcr f g =
+  SPFdepNT {dom=w'} {cod=z'} (spfDepPushout bcl bcr f) g
+
+public export
+SPFpoCellFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
+  SPFdepPoCell {w} {w'} {z} {z'} bcl bcr f g ->
+  SPFpoCell
+    {w=(Sigma {a=b} w)}
+    {w'=(Sigma {a=b} w')}
+    {z=(Sigma {a=b} z)}
+    {z'= (Sigma {a=b} z')}
+    (dpMapSnd bcl)
+    (dpMapSnd bcr)
+    (SPFDataFromDep f)
+    (SPFDataFromDep g)
+SPFpoCellFromDep {w} {w'} {z} {z'} bcl bcr f g spfc =
+  SPFDm
+    (\(eb ** ez'), (SFS (eb ** ez) efp) => spdOnPos spfc eb ez' $ SFS ez efp)
+    (\(eb ** ez'), (SFS (eb' ** ez) efp), (eb'' ** ew'), (SPFdd _ _ _ _ egd) =>
+      let (SFS ew efd) = spdOnDir spfc eb' (bcr eb' ez) (SFS ez efp) ew' egd in
+      SFS (eb' ** ew) $ SPFdd eb' ez efp ew efd)
