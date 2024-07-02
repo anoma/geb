@@ -98,12 +98,6 @@ record MLDiArena where
     Pi {a=(pfPos mdaAr)} (SliceObj . pfDir {p=mdaAr})
 
 public export
-MDAassign : MLDiArena -> Type
-MDAassign mda =
-  Pi {a=(pfPos $ mdaAr mda)}
-    (\i => Pi {a=(pfDir {p=(mdaAr mda)} i)} $ mdaPred mda i)
-
-public export
 mdaPos : MLDiArena -> Type
 mdaPos = pfPos . mdaAr
 
@@ -112,44 +106,23 @@ mdaStruct : (mda : MLDiArena) -> SliceObj (mdaPos mda)
 mdaStruct mda = pfDir {p=(mdaAr mda)}
 
 public export
+MDAterm : (mda : MLDiArena) -> SliceObj (mdaPos mda)
+MDAterm mda i = Sigma {a=(mdaStruct mda i)} (mdaPred mda i)
+
+public export
 record MLDiNatTrans (dom, cod : MLDiArena) where
   constructor MLDiNT
-  mdntD :
-    DirichNatTrans (mdaAr dom) (mdaAr cod)
-  mdntP :
-    (assign : MDAassign dom) ->
-    (i : mdaPos dom) -> (d : mdaStruct dom i) ->
-    mdaPred cod (dntOnPos {p=(mdaAr dom)} {q=(mdaAr cod)} mdntD i)
-      (dntOnDir {p=(mdaAr dom)} {q=(mdaAr cod)} mdntD i d) ->
-    mdaPred dom i d
+  mdntOnPos :
+    mdaPos dom -> mdaPos cod
+  mdntOnTerm :
+    SliceMorphism {a=(mdaPos dom)} (MDAterm cod . mdntOnPos) (MDAterm dom)
 
 public export
-record InterpMDA (mda : MLDiArena) (covar : Type) (contra : SliceObj covar)
+record InterpMDA (mda : MLDiArena) (struct : Type) (pred : SliceObj struct)
     where
   constructor IMDA
-  imdaPos :
-    mdaPos mda
-  imdaStruct :
-    covar -> mdaStruct mda imdaPos
-  imdaPred :
-    SliceMorphism {a=covar} (mdaPred mda imdaPos . imdaStruct) contra
-
-public export
-imdaAssign : {mda : MLDiArena} -> {covar : Type} -> {contra : SliceObj covar} ->
-  (assign : MDAassign mda) -> (imda : InterpMDA mda covar contra) ->
-  Pi {a=covar} contra
-imdaAssign {mda} {covar} {contra} assign imda i =
-  imdaPred imda i $ assign (imdaPos imda) (imdaStruct imda i)
-
-public export
-record MDACatElemObj (mda : MLDiArena) where
-  constructor MDACEO
-  mdaElPos :
-    mdaPos mda
-  mdaElStruct :
-    SliceObj (mdaStruct mda mdaElPos)
-  mdaElPred :
-    SliceObj (Sigma {a=(mdaStruct mda mdaElPos)} mdaElStruct)
+  imdaPos : mdaPos mda
+  imdaAssign : MDAterm mda imdaPos -> Sigma {a=struct} pred
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
