@@ -108,11 +108,22 @@ mdaCovar : (mda : MLDiArena) -> SliceObj (mdaPos mda)
 mdaCovar mda = pfDir {p=(mdaAr mda)}
 
 public export
-InterpMLDA : MLDiArena -> (covar : Type) -> (contra : SliceObj covar) -> Type
-InterpMLDA mda covar contra =
-  (i : mdaPos mda **
-   mcovar : covar -> mdaCovar mda i **
-   SliceMorphism {a=covar} (mdaContra mda i . mcovar) contra)
+record InterpMDA (mda : MLDiArena) (covar : Type) (contra : SliceObj covar)
+    where
+  constructor IMDA
+  imdaPos :
+    mdaPos mda
+  imdaCovar :
+    covar -> mdaCovar mda imdaPos
+  imdaContra :
+    SliceMorphism {a=covar} (mdaContra mda imdaPos . imdaCovar) contra
+
+public export
+imdaAssign : {mda : MLDiArena} -> {covar : Type} -> {contra : SliceObj covar} ->
+  (imda : InterpMDA mda covar contra) ->
+  Pi {a=covar} contra
+imdaAssign {mda} {covar} {contra} imda i =
+  imdaContra imda i $ mdaAssign mda (imdaPos imda) (imdaCovar imda i)
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
