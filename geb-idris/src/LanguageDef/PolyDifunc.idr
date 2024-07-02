@@ -84,6 +84,36 @@ twntOnCovar : {p, q : TwistPolyFuncType} ->
       (tpfCodType p i)
 twntOnCovar {p} {q} twnt i = DPair.snd (twntOnDir {cat=TypeCat} twnt i)
 
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+---- Metalanguage twisted-arrow ("di") arenas and polynomial functors ----
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+
+public export
+record MLDiArena where
+  constructor MLDiAr
+  mdaAr : MLArena
+  mdaContra :
+    Pi {a=(pfPos mdaAr)} (SliceObj . pfDir {p=mdaAr})
+  mdaAssign :
+    Pi {a=(pfPos mdaAr)} (\i => Pi {a=(pfDir {p=mdaAr} i)} $ mdaContra i)
+
+public export
+mdaPos : MLDiArena -> Type
+mdaPos = pfPos . mdaAr
+
+public export
+mdaCovar : (mda : MLDiArena) -> SliceObj (mdaPos mda)
+mdaCovar mda = pfDir {p=(mdaAr mda)}
+
+public export
+InterpMLDA : MLDiArena -> (covar : Type) -> (contra : SliceObj covar) -> Type
+InterpMLDA mda covar contra =
+  (i : mdaPos mda **
+   mcovar : covar -> mdaCovar mda i **
+   SliceMorphism {a=covar} (mdaContra mda i . mcovar) contra)
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Polydifunctors subject to polydinatural transformations ----
