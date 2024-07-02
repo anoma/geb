@@ -2419,7 +2419,7 @@ SPFntFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
 SPFntFromDep {b} {dom} {cod} {f} {g} alpha =
   SPFDm
     (\ebc, efp => spdOnPos alpha (fst ebc) (snd ebc) efp)
-    (\(eb ** ec), efp, (eb ** ed), (SPFdd _ _ _ _ dd) =>
+    (\(eb ** ec), efp, (_ ** ed), (SPFdd _ _ _ _ dd) =>
       SPFdd eb ec efp ed $ spdOnDir alpha eb ec efp ed dd)
 
 public export
