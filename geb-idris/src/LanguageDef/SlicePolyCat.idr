@@ -2402,14 +2402,35 @@ InterpSPFdepData {b} {dom} {cod} spfdd eb sld ebc =
     (eb ** ebc)
 
 public export
+record SPFdepNT {0 b : Type} {dom, cod : SliceObj b}
+    (f, g : SPFdepData {b} dom cod) where
+  constructor SPFdnt
+  spdOnPos :
+    (eb : b) -> SliceMorphism {a=(cod eb)} (spfddPos f eb) (spfddPos g eb)
+  spdOnDir : (eb : b) -> (ec : cod eb) ->
+    (ep : spfddPos f eb ec) -> (ed : dom eb) ->
+    spfddDir g eb ec (spdOnPos eb ec ep) ed ->
+    spfddDir f eb ec ep ed
+
+public export
+SPFntFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  {0 f, g : SPFdepData {b} dom cod} ->
+  SPFdepNT {b} f g -> SPFnt (SPFDataFromDep f) (SPFDataFromDep g)
+SPFntFromDep {b} {dom} {cod} {f} {g} alpha =
+  SPFDm
+    (\ebc, efp => spdOnPos alpha (fst ebc) (snd ebc) efp)
+    (\(eb ** ec), efp, (eb ** ed), (SPFdd _ _ _ _ dd) =>
+      SPFdd eb ec efp ed $ spdOnDir alpha eb ec efp ed dd)
+
+public export
 InterpSPFdepNT : {b : Type} -> {dom, cod : SliceObj b} ->
   (f, g : SPFdepData {b} dom cod) ->
-  SPFnt (SPFDataFromDep f) (SPFDataFromDep g) ->
+  SPFdepNT f g ->
   (eb : b) ->
   SliceNatTrans {x=(dom eb)} {y=(cod eb)}
     (InterpSPFdepData f eb)
     (InterpSPFdepData g eb)
 InterpSPFdepNT {b} {dom} {cod} f g alpha eb sld ec =
-  InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) alpha
+  InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) (SPFntFromDep alpha)
     (MatchingSnd eb sld)
     (eb ** ec)
