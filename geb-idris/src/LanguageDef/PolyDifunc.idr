@@ -94,22 +94,22 @@ public export
 record MLDiArena where
   constructor MLDiAr
   mdaAr : MLArena
-  mdaContra :
+  mdaPred :
     Pi {a=(pfPos mdaAr)} (SliceObj . pfDir {p=mdaAr})
 
 public export
 MDAassign : MLDiArena -> Type
 MDAassign mda =
   Pi {a=(pfPos $ mdaAr mda)}
-    (\i => Pi {a=(pfDir {p=(mdaAr mda)} i)} $ mdaContra mda i)
+    (\i => Pi {a=(pfDir {p=(mdaAr mda)} i)} $ mdaPred mda i)
 
 public export
 mdaPos : MLDiArena -> Type
 mdaPos = pfPos . mdaAr
 
 public export
-mdaCovar : (mda : MLDiArena) -> SliceObj (mdaPos mda)
-mdaCovar mda = pfDir {p=(mdaAr mda)}
+mdaStruct : (mda : MLDiArena) -> SliceObj (mdaPos mda)
+mdaStruct mda = pfDir {p=(mdaAr mda)}
 
 public export
 record MLDiNatTrans (dom, cod : MLDiArena) where
@@ -118,10 +118,10 @@ record MLDiNatTrans (dom, cod : MLDiArena) where
     DirichNatTrans (mdaAr dom) (mdaAr cod)
   mdntP :
     (assign : MDAassign dom) ->
-    (i : mdaPos dom) -> (d : mdaCovar dom i) ->
-    mdaContra cod (dntOnPos {p=(mdaAr dom)} {q=(mdaAr cod)} mdntD i)
+    (i : mdaPos dom) -> (d : mdaStruct dom i) ->
+    mdaPred cod (dntOnPos {p=(mdaAr dom)} {q=(mdaAr cod)} mdntD i)
       (dntOnDir {p=(mdaAr dom)} {q=(mdaAr cod)} mdntD i d) ->
-    mdaContra dom i d
+    mdaPred dom i d
 
 public export
 record InterpMDA (mda : MLDiArena) (covar : Type) (contra : SliceObj covar)
@@ -129,27 +129,27 @@ record InterpMDA (mda : MLDiArena) (covar : Type) (contra : SliceObj covar)
   constructor IMDA
   imdaPos :
     mdaPos mda
-  imdaCovar :
-    covar -> mdaCovar mda imdaPos
-  imdaContra :
-    SliceMorphism {a=covar} (mdaContra mda imdaPos . imdaCovar) contra
+  imdaStruct :
+    covar -> mdaStruct mda imdaPos
+  imdaPred :
+    SliceMorphism {a=covar} (mdaPred mda imdaPos . imdaStruct) contra
 
 public export
 imdaAssign : {mda : MLDiArena} -> {covar : Type} -> {contra : SliceObj covar} ->
   (assign : MDAassign mda) -> (imda : InterpMDA mda covar contra) ->
   Pi {a=covar} contra
 imdaAssign {mda} {covar} {contra} assign imda i =
-  imdaContra imda i $ assign (imdaPos imda) (imdaCovar imda i)
+  imdaPred imda i $ assign (imdaPos imda) (imdaStruct imda i)
 
 public export
 record MDACatElemObj (mda : MLDiArena) where
   constructor MDACEO
   mdaElPos :
     mdaPos mda
-  mdaElCovar :
-    SliceObj (mdaCovar mda mdaElPos)
-  mdaElContra :
-    SliceObj (Sigma {a=(mdaCovar mda mdaElPos)} mdaElCovar)
+  mdaElStruct :
+    SliceObj (mdaStruct mda mdaElPos)
+  mdaElPred :
+    SliceObj (Sigma {a=(mdaStruct mda mdaElPos)} mdaElStruct)
 
 -----------------------------------------------------------------
 -----------------------------------------------------------------
