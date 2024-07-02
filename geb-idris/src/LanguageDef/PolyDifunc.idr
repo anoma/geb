@@ -262,6 +262,37 @@ InterpPDFdimap : (pdf : PolyDifunc) ->
 InterpPDFdimap pdf s t a b mst mas mtb =
   InterpPDFlmap pdf s b a (mtb . mst) mas . InterpPDFrmap pdf s t b mst mtb
 
+--------------------------------------------------
+---- Categories of elements of polydifunctors ----
+--------------------------------------------------
+
+public export
+record PDFelemCatObj (pdf : PolyDifunc) where
+  constructor PDFElObj
+  pdfElPos : pdfPos pdf
+  pdfElPred : SliceObj (pdfCobase pdf pdfElPos)
+  pdfElStruct : Type
+  pdfElAssign : pdfBase pdf pdfElPos -> pdfElStruct
+
+public export
+pdfElProj : {pdf : PolyDifunc} -> (el : PDFelemCatObj pdf) ->
+  Sigma {a=(pdfCobase pdf $ pdfElPos el)} (pdfElPred el) -> pdfElStruct el
+pdfElProj {pdf} el = pdfElAssign el . pdfProj pdf (pdfElPos el) . DPair.fst
+
+public export
+data PDFelemCatMor : {pdf : PolyDifunc} -> (dom, cod : PDFelemCatObj pdf) ->
+    Type where
+  PDFElMor : {0 pdf : PolyDifunc} ->
+    {i : pdfPos pdf} ->
+    {dpred, cpred : SliceObj $ pdfCobase pdf i} ->
+    {dstruct, cstruct : Type} ->
+    {dassign : pdfBase pdf i -> dstruct} ->
+    (contra : SliceMorphism {a=(pdfCobase pdf i)} dpred cpred) ->
+    (covar : dstruct -> cstruct) ->
+    PDFelemCatMor {pdf}
+      (PDFElObj i dpred dstruct dassign)
+      (PDFElObj i cpred cstruct (covar . dassign))
+
 ----------------------------------
 ---- Monoid of polydifunctors ----
 ----------------------------------
