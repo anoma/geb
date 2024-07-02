@@ -112,6 +112,18 @@ mdaCovar : (mda : MLDiArena) -> SliceObj (mdaPos mda)
 mdaCovar mda = pfDir {p=(mdaAr mda)}
 
 public export
+record MLDiNatTrans (dom, cod : MLDiArena) where
+  constructor MLDiNT
+  mdntD :
+    DirichNatTrans (mdaAr dom) (mdaAr cod)
+  mdntP :
+    (assign : MDAassign dom) ->
+    (i : mdaPos dom) -> (d : mdaCovar dom i) ->
+    mdaContra cod (dntOnPos {p=(mdaAr dom)} {q=(mdaAr cod)} mdntD i)
+      (dntOnDir {p=(mdaAr dom)} {q=(mdaAr cod)} mdntD i d) ->
+    mdaContra dom i d
+
+public export
 record InterpMDA (mda : MLDiArena) (covar : Type) (contra : SliceObj covar)
     where
   constructor IMDA
