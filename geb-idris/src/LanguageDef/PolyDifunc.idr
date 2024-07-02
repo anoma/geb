@@ -125,6 +125,16 @@ imdaAssign : {mda : MLDiArena} -> {covar : Type} -> {contra : SliceObj covar} ->
 imdaAssign {mda} {covar} {contra} imda i =
   imdaContra imda i $ mdaAssign mda (imdaPos imda) (imdaCovar imda i)
 
+public export
+record MDACatElemObj (mda : MLDiArena) where
+  constructor MDACEO
+  mdaElPos :
+    mdaPos mda
+  mdaElCovar :
+    SliceObj (mdaCovar mda mdaElPos)
+  mdaElContra :
+    SliceObj (Sigma {a=(mdaCovar mda mdaElPos)} mdaElCovar)
+
 -----------------------------------------------------------------
 -----------------------------------------------------------------
 ---- Polydifunctors subject to polydinatural transformations ----
