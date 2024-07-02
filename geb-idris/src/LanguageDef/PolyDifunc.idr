@@ -96,8 +96,12 @@ record MLDiArena where
   mdaAr : MLArena
   mdaContra :
     Pi {a=(pfPos mdaAr)} (SliceObj . pfDir {p=mdaAr})
-  mdaAssign :
-    Pi {a=(pfPos mdaAr)} (\i => Pi {a=(pfDir {p=mdaAr} i)} $ mdaContra i)
+
+public export
+MDAassign : MLDiArena -> Type
+MDAassign mda =
+  Pi {a=(pfPos $ mdaAr mda)}
+    (\i => Pi {a=(pfDir {p=(mdaAr mda)} i)} $ mdaContra mda i)
 
 public export
 mdaPos : MLDiArena -> Type
@@ -120,10 +124,10 @@ record InterpMDA (mda : MLDiArena) (covar : Type) (contra : SliceObj covar)
 
 public export
 imdaAssign : {mda : MLDiArena} -> {covar : Type} -> {contra : SliceObj covar} ->
-  (imda : InterpMDA mda covar contra) ->
+  (assign : MDAassign mda) -> (imda : InterpMDA mda covar contra) ->
   Pi {a=covar} contra
-imdaAssign {mda} {covar} {contra} imda i =
-  imdaContra imda i $ mdaAssign mda (imdaPos imda) (imdaCovar imda i)
+imdaAssign {mda} {covar} {contra} assign imda i =
+  imdaContra imda i $ assign (imdaPos imda) (imdaCovar imda i)
 
 public export
 record MDACatElemObj (mda : MLDiArena) where
