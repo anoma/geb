@@ -153,16 +153,16 @@ PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
 
 public export
 pfBaseChangePos : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> Type
-pfBaseChangePos p {a} f = a
+pfBaseChangePos = arBaseChangePos
 
 public export
 pfBaseChangeDir : (p : PolyFunc) -> {a : Type} -> (f : a -> pfPos p) ->
   pfBaseChangePos p {a} f -> Type
-pfBaseChangeDir (pos ** dir) {a} f i = dir $ f i
+pfBaseChangeDir = arBaseChangeDir
 
 public export
 pfBaseChangeArena : (p : PolyFunc) -> {a : Type} -> (a -> pfPos p) -> PolyFunc
-pfBaseChangeArena p {a} f = (pfBaseChangePos p {a} f ** pfBaseChangeDir p {a} f)
+pfBaseChangeArena = arBaseChangeArena
 
 -- The intermediate polynomial functor in the vertical-Cartesian
 -- factoring of a natural transformation.
@@ -218,68 +218,6 @@ CartFactNatTrans : {0 p, q : PolyFunc} -> (alpha : PolyNatTrans p q) ->
   PolyNatTrans (VertCartFactFunc {p} {q} alpha) q
 CartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
   (CartFactOnPos {p} {q} alpha ** CartFactOnDir {p} {q} alpha)
-
----------------------------------------------------------------------------
----- Vertical-Cartesian factoring of Dirichlet natural transformations ----
----------------------------------------------------------------------------
-
--- The intermediate Dirichlet functor in the vertical-Cartesian
--- factoring of a natural transformation between Dirichlet functors.
-public export
-DirichVertCartFactFunc : {p, q : PolyFunc} -> DirichNatTrans p q -> PolyFunc
-DirichVertCartFactFunc {p} {q} alpha =
-  pfBaseChangeArena q {a=(pfPos p)} (dntOnPos alpha)
-
-public export
-DirichVertCartFactPos : {p, q : PolyFunc} -> DirichNatTrans p q -> Type
-DirichVertCartFactPos {p} {q} alpha =
-  pfPos (DirichVertCartFactFunc {p} {q} alpha)
-
-public export
-DirichVertCartFactDir : {p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  DirichVertCartFactPos {p} {q} alpha -> Type
-DirichVertCartFactDir {p} {q} alpha =
-  pfDir {p=(DirichVertCartFactFunc {p} {q} alpha)}
-
-public export
-DirichVertFactOnPos : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  pfPos p -> DirichVertCartFactPos {p} {q} alpha
-DirichVertFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i = i
-
-public export
-DirichVertFactOnDir :
-  {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) -> (i : pfPos p) ->
-  pfDir {p} i ->
-  DirichVertCartFactDir {p} {q} alpha (DirichVertFactOnPos {p} {q} alpha i)
-DirichVertFactOnDir {p=p@(_ ** _)} {q=q@(_ ** _)} (onPos ** onDir) i j =
-  onDir i j
-
-public export
-DirichVertFactNatTrans : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  DirichNatTrans p (DirichVertCartFactFunc {p} {q} alpha)
-DirichVertFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
-  (DirichVertFactOnPos {p} {q} alpha ** DirichVertFactOnDir {p} {q} alpha)
-
-public export
-DirichCartFactOnPos : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  DirichVertCartFactPos {p} {q} alpha -> pfPos q
-DirichCartFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i =
-  onPos i
-
-public export
-DirichCartFactOnDir :
-  {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  (i : DirichVertCartFactPos {p} {q} alpha) ->
-  DirichVertCartFactDir {p} {q} alpha i ->
-  pfDir {p=q} (DirichCartFactOnPos {p} {q} alpha i)
-DirichCartFactOnDir {p=p@(_ ** _)} {q=q@(_ ** _)} (_ ** _) i j =
-  j
-
-public export
-DirichCartFactNatTrans : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  DirichNatTrans (DirichVertCartFactFunc {p} {q} alpha) q
-DirichCartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
-  (DirichCartFactOnPos {p} {q} alpha ** DirichCartFactOnDir {p} {q} alpha)
 
 -------------------------------------------------
 -------------------------------------------------
