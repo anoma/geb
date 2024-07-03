@@ -8,6 +8,9 @@ import public LanguageDef.IntArena
 
 %default total
 
+-- In favor of the (identical) one from `SliceFuncCat`.
+%hide Library.IdrisCategories.BaseChangeF
+
 -----------------------------
 -----------------------------
 ---- Polynomial functors ----
