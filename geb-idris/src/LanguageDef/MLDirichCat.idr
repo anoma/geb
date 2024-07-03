@@ -568,6 +568,22 @@ record MlDirichSlObj (ar : MLDirichCatObj) where
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
+-----------------------
+---- Representable ----
+-----------------------
+
+public export
+dfRepObjPos : Type -> Type
+dfRepObjPos _ = Unit
+
+public export
+dfRepObjDir : (a : Type) -> dfRepObjPos a -> Type
+dfRepObjDir a _ = a
+
+public export
+dfRepObj : Type -> MLDirichCatObj
+dfRepObj a = (dfRepObjPos a ** dfRepObjDir a)
+
 ----------------------------
 ---- (Parallel) product ----
 ----------------------------
@@ -668,3 +684,61 @@ public export
   (alpha, beta : DirichNatTrans p q) -> MLDirichCatObj
 dfEqualizer {p} {q} alpha beta =
   (dfEqualizerPos {p} {q} alpha beta ** dfEqualizerDir {p} {q} alpha beta)
+
+---------------------
+---- Hom-objects ----
+---------------------
+
+-- We begin with the hom-object from a representable Dirichlet functor to a
+-- general Dirichlet functor.
+
+public export
+dfRepHomObjPos : Type -> MLDirichCatObj -> Type
+dfRepHomObjPos a p = dfPos p
+
+public export
+dfRepHomObjDir : (a : Type) -> (p : MLDirichCatObj) ->
+  dfRepHomObjPos a p -> Type
+dfRepHomObjDir a p i = a -> dfDir p i
+
+public export
+dfRepHomObj : Type -> MLDirichCatObj -> MLDirichCatObj
+dfRepHomObj a p = (dfRepHomObjPos a p ** dfRepHomObjDir a p)
+
+public export
+dfRepEvalPos : (a : Type) -> (p : MLDirichCatObj) ->
+  dfPos (dfParProductArena (dfRepHomObj a p) (dfRepObj a)) ->
+  dfPos p
+dfRepEvalPos a p = Builtin.fst
+
+public export
+dfRepEvalDir : (a : Type) -> (p : MLDirichCatObj) ->
+  (i : dfPos (dfParProductArena (dfRepHomObj a p) (dfRepObj a))) ->
+  dfDir (dfParProductArena (dfRepHomObj a p) (dfRepObj a)) i ->
+  dfDir p (dfRepEvalPos a p i)
+dfRepEvalDir a p i f = fst f $ snd f
+
+public export
+dfRepEval : (a : Type) -> (p : MLDirichCatObj) ->
+  DirichNatTrans (dfParProductArena (dfRepHomObj a p) (dfRepObj a)) p
+dfRepEval a p = (dfRepEvalPos a p ** dfRepEvalDir a p)
+
+public export
+dfRepCurryPos : {a : Type} -> {p, r : MLDirichCatObj} ->
+  DirichNatTrans (dfParProductArena p (dfRepObj a)) r ->
+  dfPos p -> dfPos (dfRepHomObj a r)
+dfRepCurryPos {a} {p} {r} alpha i = fst alpha (i, ())
+
+public export
+dfRepCurryDir : {a : Type} -> {p, r : MLDirichCatObj} ->
+  (alpha : DirichNatTrans (dfParProductArena p (dfRepObj a)) r) ->
+  (i : dfPos p) ->
+  dfDir p i -> dfDir (dfRepHomObj a r) (dfRepCurryPos {a} {p} {r} alpha i)
+dfRepCurryDir {a} {p} {r} alpha i d ea = snd alpha (i, ()) (d, ea)
+
+public export
+dfRepCurry : {a : Type} -> {p, r : MLDirichCatObj} ->
+  DirichNatTrans (dfParProductArena p (dfRepObj a)) r ->
+  DirichNatTrans p (dfRepHomObj a r)
+dfRepCurry {a} {p} {r} alpha =
+  (dfRepCurryPos {a} {p} {r} alpha ** dfRepCurryDir {a} {p} {r} alpha)
