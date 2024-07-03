@@ -14,11 +14,11 @@ import public LanguageDef.IntEFamCat
 
 public export
 dfPos : MLDirichCatObj -> Type
-dfPos = ifeoIdx
+dfPos = DPair.fst
 
 public export
 dfDir : (p : MLDirichCatObj) -> dfPos p -> Type
-dfDir = ifeoObj
+dfDir = DPair.snd
 
 -- Interpret the same data as determine a polynomial functor --
 -- namely, a dependent set, AKA arena -- as a Dirichlet functor
