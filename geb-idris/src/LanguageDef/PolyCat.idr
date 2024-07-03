@@ -1340,12 +1340,6 @@ PFAlgToBaseF : {p : PolyFunc} -> {a : Type} -> PFAlg p a -> PFBaseF p a
 PFAlgToBaseF {p=(pos ** dir)} {a} alg b f (i ** d) = alg i $ \di => f $ d di
 
 public export
-DFMonoToFunc : {p : PolyFunc} -> {a, b : Type} ->
-  DirichNatTrans p (pfMonomialArena a b) -> InterpDirichFunc p a -> b
-DFMonoToFunc {p=(pos ** dir)} {a} {b} (onPos ** onDir) (i ** d) =
-  onDir i $ d $ onPos i
-
-public export
 PFNAlg : PolyFuncN -> Type -> Type
 PFNAlg (pos ** dir) a = (i : pos) -> Vect (dir i) a -> a
 
