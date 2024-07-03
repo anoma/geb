@@ -6,6 +6,7 @@ import public LanguageDef.InternalCat
 import public LanguageDef.IntEFamCat
 import public LanguageDef.IntTwistedArrowCat
 import public LanguageDef.IntParamCat
+import public LanguageDef.IntArena
 import public LanguageDef.PolyCat
 
 ------------------------------------------------------------------
@@ -43,10 +44,6 @@ ABinj : (cat : ABundleObj) -> ABSliceBase cat -> Type
 ABinj cat = SliceMorphism {a=(abBase cat)} (abCobase cat)
 
 -- `ABundleObj` is just a metalanguage arena with names.
-
-public export
-MLArena : Type
-MLArena = IntArena Type
 
 export
 BcoAtoArena : {c : Type} -> ABundleObj -> MLArena

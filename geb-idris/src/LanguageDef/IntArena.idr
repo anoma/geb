@@ -45,3 +45,7 @@ iaIdx {c} = DPair.fst {a=Type} {p=(ContravarHomFunc c)}
 public export
 iaObj : {0 c : Type} -> (ar : IntArena c) -> iaIdx {c} ar -> c
 iaObj {c} = DPair.snd {a=Type} {p=(ContravarHomFunc c)}
+
+public export
+MLArena : Type
+MLArena = IntArena Type
