@@ -5,9 +5,6 @@ import Library.IdrisCategories
 
 %default total
 
--- In favor of the (identical) one from `SliceFuncCat`.
-%hide Library.IdrisCategories.BaseChangeF
-
 -----------------
 -----------------
 ---- Quivers ----

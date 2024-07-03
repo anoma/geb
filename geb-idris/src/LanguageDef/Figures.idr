@@ -8,9 +8,6 @@ import public LanguageDef.DiagramCat
 
 %default total
 
--- In favor of the (identical) one from `SliceFuncCat`.
-%hide Library.IdrisCategories.BaseChangeF
-
 ------------------------------
 ------------------------------
 ---- Metalanguage quivers ----
