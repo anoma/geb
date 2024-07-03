@@ -128,11 +128,11 @@ PFSliceMorphFromCDomMorEq {p=(ppos ** pdir)}
 
 public export
 CDFSliceObj : MLDirichCatObj -> Type
-CDFSliceObj p = (q : MLDirichCatObj ** DirichNatTrans q p)
+CDFSliceObj p = (q : MLDirichCatObj ** MLDirichCatMor q p)
 
 public export
 0 CDFNatTransEq :
-  (p, q : MLDirichCatObj) -> (alpha, beta : DirichNatTrans p q) -> Type
+  (p, q : MLDirichCatObj) -> (alpha, beta : MLDirichCatMor p q) -> Type
 CDFNatTransEq (ppos ** pdir) (qpos ** qdir)
   (aonpos ** aondir) (bonpos ** bondir) =
     Exists0
@@ -144,13 +144,13 @@ CDFNatTransEq (ppos ** pdir) (qpos ** qdir)
 public export
 CDFSliceMorph : (p : MLDirichCatObj) -> CDFSliceObj p -> CDFSliceObj p -> Type
 CDFSliceMorph p (q ** qp) (r ** rp) =
-  Subset0 (DirichNatTrans q r) (\qr => CDFNatTransEq q p qp (dntVCatComp rp qr))
+  Subset0 (MLDirichCatMor q r) (\qr => CDFNatTransEq q p qp (dntVCatComp rp qr))
 
 -- A convenient (free of proof content) form of `CDFSliceMorph`; see
 -- the comment to `PFSliceMorph` above.
 public export
 DFSliceMorph : {0 p : PolyFunc} -> CDFSliceObj p -> Type
-DFSliceMorph {p} (ctot ** alpha) = (dtot : PolyFunc ** DirichNatTrans dtot ctot)
+DFSliceMorph {p} (ctot ** alpha) = (dtot : PolyFunc ** MLDirichCatMor dtot ctot)
 
 public export
 DFSliceMorphDom : {0 p : PolyFunc} -> {cod : CDFSliceObj p} ->
@@ -196,13 +196,13 @@ DFSliceMorphFromCDomObjEq {p=(ppos ** pdir)}
 public export
 0 DFSliceMorphFromCDomMorEq : {0 p : PolyFunc} ->
   {dtot, ctot : PolyFunc} ->
-  {dproj : DirichNatTrans dtot p} ->
-  {cproj : DirichNatTrans ctot p} ->
+  {dproj : MLDirichCatMor dtot p} ->
+  {cproj : MLDirichCatMor ctot p} ->
   (mor : CDFSliceMorph p (dtot ** dproj) (ctot ** cproj)) ->
   CDFNatTransEq
     dtot p
     dproj
-    (replace {p=(flip DirichNatTrans p)}
+    (replace {p=(flip MLDirichCatMor p)}
       (DFSliceMorphFromCDomObjEq {p} {dom=(dtot ** dproj)} {cod=(ctot ** cproj)}
        mor)
      $ snd $ DFSliceMorphDom {p} {cod=(ctot ** cproj)}
@@ -337,7 +337,7 @@ mlDirichSlObjProjOnDir {ar} sl _ = DPair.fst
 
 public export
 mlDirichSlObjProj : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
-  DirichNatTrans (mlDirichSlObjTot {ar} sl) ar
+  MLDirichCatMor (mlDirichSlObjTot {ar} sl) ar
 mlDirichSlObjProj {ar} sl =
   (mlDirichSlObjProjOnPos {ar} sl ** mlDirichSlObjProjOnDir {ar} sl)
 
@@ -624,7 +624,7 @@ mlPolySlMorComp {ar} {p} {q} {r} m' m =
 public export
 mlDirichSlMorToCBase : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
   MlDirichSlMor dom cod ->
-  DirichNatTrans (fst (mlDirichSlObjToC dom)) (fst (mlDirichSlObjToC cod))
+  MLDirichCatMor (fst (mlDirichSlObjToC dom)) (fst (mlDirichSlObjToC cod))
 mlDirichSlMorToCBase {ar=(bpos ** bdir)}
   {dom=(MDSobj donpos ddir)} {cod=(MDSobj conpos cdir)} (MDSM onpos ondir) =
     (\ij => (fst ij ** onpos (fst ij) (snd ij)) **
