@@ -3,6 +3,7 @@ module LanguageDef.IntEFamCat
 import Library.IdrisUtils
 import Library.IdrisCategories
 import Library.IdrisAlgebra
+import public LanguageDef.MLDirichCat
 import public LanguageDef.InternalCat
 import public LanguageDef.InternalProfunctor
 import public LanguageDef.IntArena
@@ -409,14 +410,6 @@ data DirichCatElemMor :
 ---- Categories of elements of Dirichlet endofunctors on `Type` ----
 --------------------------------------------------------------------
 --------------------------------------------------------------------
-
-public export
-MLDirichCatObj : Type
-MLDirichCatObj = IntDirichCatObj Type
-
-public export
-MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
-MLDirichCatMor = IntDirichCatMor Type HomProf
 
 public export
 MLDirichCatElemObj : MLDirichCatObj -> Type
