@@ -216,6 +216,122 @@ DirichVertCartFactIsCorrect fext
   {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) =
     dpEq12 Refl $ funExt $ \i => Refl
 
+------------------------------------------------------
+------------------------------------------------------
+---- Categories of elements of Dirichlet functors ----
+------------------------------------------------------
+------------------------------------------------------
+
+-------------------------------
+---- Objects and morphisms ----
+-------------------------------
+
+-- This definition makes it explicit that that the category of elements of a
+-- Dirichlet endofunctor on `Type` is (equivalent to) the (indexed) coproduct
+-- category over the positions of the slice categories over the directions.
+-- (For a polynomial endofunctor on `Type`, the corresponding statement would
+-- hold with "slice" replaced by "coslice".)
+
+public export
+DirichCatElObjPos : (p : MLDirichCatObj) -> dfPos p -> Type
+DirichCatElObjPos p = SliceObj . dfDir {p}
+
+public export
+DirichCatElObj : MLDirichCatObj -> Type
+DirichCatElObj p = Sigma {a=(dfPos p)} $ DirichCatElObjPos p
+
+public export
+DirichCatElBaseT : (p : MLDirichCatObj) -> DirichCatElObj p -> Type
+DirichCatElBaseT p el = Sigma {a=(dfDir p (fst el))} (snd el)
+
+public export
+DirichCatElPosMor : (p : MLDirichCatObj) -> (i : dfPos p) ->
+  SliceObj (dfDir p i) -> SliceObj (dfDir p i) -> Type
+DirichCatElPosMor p i = SliceMorphism {a=(dfDir p i)}
+
+public export
+DirichCatElMorTot : MLDirichCatObj -> Type
+DirichCatElMorTot p =
+  (i : dfPos p **
+   xy : ProductMonad $ SliceObj $ dfDir p i **
+   DirichCatElPosMor p i (fst xy) (snd xy))
+
+public export
+DirichCatElMorPos : {p : MLDirichCatObj} -> DirichCatElMorTot p -> dfPos p
+DirichCatElMorPos {p} m = fst m
+
+public export
+DirichCatElMorBaseObj : {p : MLDirichCatObj} -> DirichCatElMorTot p -> Type
+DirichCatElMorBaseObj {p} = DirichCatElObjPos p . DirichCatElMorPos {p}
+
+public export
+DirichCatElMorSig : {p : MLDirichCatObj} ->
+  (m : DirichCatElMorTot p) -> ProductMonad (DirichCatElMorBaseObj {p} m)
+DirichCatElMorSig {p} m = fst $ snd m
+
+public export
+DirichCatElMorDom : {p : MLDirichCatObj} ->
+  (m : DirichCatElMorTot p) -> DirichCatElMorBaseObj {p} m
+DirichCatElMorDom {p} m = fst $ DirichCatElMorSig {p} m
+
+public export
+DirichCatElMorCod : {p : MLDirichCatObj} ->
+  (m : DirichCatElMorTot p) -> DirichCatElMorBaseObj {p} m
+DirichCatElMorCod {p} m = snd $ DirichCatElMorSig {p} m
+
+public export
+DirichCatElMorMor : {p : MLDirichCatObj} ->
+  (m : DirichCatElMorTot p) ->
+  SliceMorphism {a=(dfDir p $ DirichCatElMorPos {p} m)}
+    (DirichCatElMorDom {p} m)
+    (DirichCatElMorCod {p} m)
+DirichCatElMorMor {p} m = snd $ snd m
+
+public export
+data DirichCatElMor : (p : MLDirichCatObj) ->
+    DirichCatElObj p -> DirichCatElObj p -> Type where
+  DCEM : {p : MLDirichCatObj} ->
+    (m : DirichCatElMorTot p) ->
+    DirichCatElMor p
+      (DirichCatElMorPos {p} m ** DirichCatElMorDom {p} m)
+      (DirichCatElMorPos {p} m ** DirichCatElMorCod {p} m)
+
+---------------------------
+---- Outgoing functors ----
+---------------------------
+
+-- Because the category of elements of a Dirichlet functor is a coproduct
+-- category, a functor out of it is a product of functors.
+--
+-- In particular, a _Dirichlet_ functor on the category of elements of
+-- a Dirichlet functor is a product of Dirichlet functors on the slice
+-- categories of the directions of the base functor.
+--
+-- Note that another way of looking at a presheaf (of which Dirichlet functors
+-- are an example) on the category of elements of a presheaf is as an object
+-- of the slice category of presheaves over the base presheaf, so if this
+-- definition makes sense then it ought to agree with `MlDirichSlObj`.
+public export
+DirichDirichCatElArPos : (p : MLDirichCatObj) -> dfPos p -> Type
+DirichDirichCatElArPos p i = (pos : Type ** pos -> DirichCatElObjPos p i)
+
+public export
+DirichDirichCatElAr : MLDirichCatObj -> Type
+DirichDirichCatElAr p = Pi {a=(dfPos p)} $ DirichDirichCatElArPos p
+
+public export
+DirichDirichCatElArMorPos : (b : MLDirichCatObj) -> (i : dfPos b) ->
+  DirichDirichCatElArPos b i -> DirichDirichCatElArPos b i -> Type
+DirichDirichCatElArMorPos b i j k =
+  (onpos : fst k -> fst j **
+   (p : fst k) -> SliceMorphism {a=(snd b i)} (snd k p) (snd j $ onpos p))
+
+public export
+DirichDirichCatElArMor : (b : MLDirichCatObj) ->
+  DirichDirichCatElAr b -> DirichDirichCatElAr b -> Type
+DirichDirichCatElArMor b p q =
+  (i : dfPos b) -> DirichDirichCatElArMorPos b i (p i) (q i)
+
 -------------------
 -------------------
 ---- Monomials ----
