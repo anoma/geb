@@ -8,6 +8,9 @@ import public LanguageDef.IntECofamCat
 
 %default total
 
+-- In favor of the (identical) one from `SliceFuncCat`.
+%hide Library.IdrisCategories.BaseChangeF
+
 -----------------------------------------
 -----------------------------------------
 ---- Polynomial double-Yoneda lemmas ----
