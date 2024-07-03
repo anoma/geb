@@ -11,9 +11,6 @@ import public LanguageDef.PolyCat
 
 %default total
 
--- In favor of the (identical) one from `SliceFuncCat`.
-%hide Library.IdrisCategories.BaseChangeF
-
 ------------------------------------------------------------------
 ------------------------------------------------------------------
 ---- Objects of category of covariant fiber bundles of `Type` ----
