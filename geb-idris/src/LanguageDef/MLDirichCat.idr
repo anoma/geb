@@ -88,16 +88,17 @@ dntVCatComp = ifemComp TypeMor typeComp
 ---------------------------------------------------------------------------
 
 public export
-arBaseChangePos : (p : MLArena) -> {a : Type} -> (a -> dfPos p) -> Type
+arBaseChangePos : (p : MLDirichCatObj) -> {a : Type} -> (a -> dfPos p) -> Type
 arBaseChangePos p {a} f = a
 
 public export
-arBaseChangeDir : (p : MLArena) -> {a : Type} -> (f : a -> dfPos p) ->
+arBaseChangeDir : (p : MLDirichCatObj) -> {a : Type} -> (f : a -> dfPos p) ->
   arBaseChangePos p {a} f -> Type
 arBaseChangeDir p {a} f i = dfDir p $ f i
 
 public export
-arBaseChangeArena : (p : MLArena) -> {a : Type} -> (a -> dfPos p) -> MLArena
+arBaseChangeArena : (p : MLDirichCatObj) ->
+  {a : Type} -> (a -> dfPos p) -> MLDirichCatObj
 arBaseChangeArena p {a} f = (arBaseChangePos p {a} f ** arBaseChangeDir p {a} f)
 
 -- The intermediate Dirichlet functor in the vertical-Cartesian
