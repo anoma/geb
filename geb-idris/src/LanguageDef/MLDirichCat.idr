@@ -248,3 +248,30 @@ dirichParPair : {p, q, r : MLDirichCatObj} ->
   DirichNatTrans p (dfParProductArena q r)
 dirichParPair {p} {q} {r} f g =
   (dirichParPairOnPos p q r f g ** dirichParPairOnDir p q r f g)
+
+-------------------
+---- Equalizer ----
+-------------------
+
+public export
+dfEqualizerPos : {p, q : MLDirichCatObj} ->
+  DirichNatTrans p q -> DirichNatTrans p q -> Type
+dfEqualizerPos {p} {q} alpha beta = Equalizer (dntOnPos alpha) (dntOnPos beta)
+
+public export
+0 dfEqualizerDir : {p, q : MLDirichCatObj} ->
+  (alpha, beta : DirichNatTrans p q) ->
+  dfEqualizerPos {p} {q} alpha beta -> Type
+dfEqualizerDir {p} {q} alpha beta el =
+  Equalizer {a=(dfDir p $ fst0 el)} {b=(dfDir q $ dntOnPos alpha $ fst0 el)}
+    (dntOnDir alpha $ fst0 el)
+    (replace
+      {p=(\i' : dfPos q => dfDir p (fst0 el) -> dfDir q i')}
+      (sym $ snd0 el)
+      (dntOnDir beta $ fst0 el))
+
+public export
+0 dfEqualizer : {p, q : MLDirichCatObj} ->
+  (alpha, beta : DirichNatTrans p q) -> MLDirichCatObj
+dfEqualizer {p} {q} alpha beta =
+  (dfEqualizerPos {p} {q} alpha beta ** dfEqualizerDir {p} {q} alpha beta)
