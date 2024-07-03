@@ -29,6 +29,7 @@ import LanguageDef.Test.SlicePolyDialgTest
 import LanguageDef.Test.HigherPolyCatTest
 import LanguageDef.Test.DisliceCatTest
 import LanguageDef.Test.MLBundleCatTest
+import LanguageDef.Test.MLDirichCatTest
 import LanguageDef.Test.DislicePolyCatTest
 import LanguageDef.Test.QuiverTest
 import LanguageDef.Test.MLQuivCatTest
@@ -116,6 +117,7 @@ totalTests = do
   LanguageDef.Test.SlPolyIntCatTest.slPolyIntCatTest
   LanguageDef.Test.SlicePolyDialgTest.slicePolyDialgTest
   LanguageDef.Test.MLBundleCatTest.mlBundleCatTest
+  LanguageDef.Test.MLDirichCatTest.mlDirichCatTest
   LanguageDef.Test.IntTwistedArrowCatTest.intTwistedArrowCatTest
   LanguageDef.Test.IntUFamCatTest.intUFamCatTest
   LanguageDef.Test.IntEFamCatTest.intEFamCatTest

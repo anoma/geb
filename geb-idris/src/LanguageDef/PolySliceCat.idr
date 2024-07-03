@@ -14,6 +14,7 @@ import public LanguageDef.IntUCofamCat
 import public LanguageDef.IntEFamCat
 import public LanguageDef.IntECofamCat
 import public LanguageDef.MLBundleCat
+import public LanguageDef.MLDirichCat
 
 %default total
 
