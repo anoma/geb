@@ -658,6 +658,23 @@ dirichParPair : {p, q, r : MLDirichCatObj} ->
 dirichParPair {p} {q} {r} f g =
   (dirichParPairOnPos p q r f g ** dirichParPairOnDir p q r f g)
 
+--------------------------------------
+---- Set-indexed parallel product ----
+--------------------------------------
+
+public export
+dfSetParProductPos : {a : Type} -> (a -> MLDirichCatObj) -> Type
+dfSetParProductPos {a} ps = (x : a) -> fst $ ps x
+
+public export
+dfSetParProductDir : {a : Type} ->
+  (ps : a -> MLDirichCatObj) -> dfSetParProductPos ps -> Type
+dfSetParProductDir {a} ps fpos = ((x : a) -> snd (ps x) $ fpos x)
+
+public export
+dfSetParProductArena : {a : Type} -> (a -> MLDirichCatObj) -> MLDirichCatObj
+dfSetParProductArena {a} ps = (dfSetParProductPos ps ** dfSetParProductDir ps)
+
 -------------------
 ---- Equalizer ----
 -------------------
