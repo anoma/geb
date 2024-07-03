@@ -511,7 +511,7 @@ pfSetCoproductArena ps = (pfSetCoproductPos ps ** pfSetCoproductDir ps)
 
 public export
 pfSetProductPos : {a : Type} -> (a -> PolyFunc) -> Type
-pfSetProductPos {a} ps = (x : a) -> fst $ ps x
+pfSetProductPos = dfSetParProductPos
 
 public export
 pfSetProductDir : {a : Type} ->
@@ -524,16 +524,16 @@ pfSetProductArena {a} ps = (pfSetProductPos ps ** pfSetProductDir ps)
 
 public export
 pfSetParProductPos : {a : Type} -> (a -> PolyFunc) -> Type
-pfSetParProductPos = pfSetProductPos
+pfSetParProductPos = dfSetParProductPos
 
 public export
 pfSetParProductDir : {a : Type} ->
   (ps : a -> PolyFunc) -> pfSetParProductPos ps -> Type
-pfSetParProductDir {a} ps fpos = ((x : a) -> snd (ps x) $ fpos x)
+pfSetParProductDir = dfSetParProductDir
 
 public export
 pfSetParProductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
-pfSetParProductArena {a} ps = (pfSetParProductPos ps ** pfSetParProductDir ps)
+pfSetParProductArena = dfSetParProductArena
 
 -- Formula 5.27 from "Polynomial Functors: A General Theory of Interaction".
 public export
