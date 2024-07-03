@@ -181,11 +181,11 @@ DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) = Refl
 
 public export
 dfParProductPos : MLDirichCatObj -> MLDirichCatObj -> Type
-dfParProductPos (ppos ** pdir) (qpos ** qdir) = Pair ppos qpos
+dfParProductPos p q = Pair (dfPos p) (dfPos q)
 
 public export
 dfParProductDir : (p, q : MLDirichCatObj) -> dfParProductPos p q -> Type
-dfParProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Pair . bimap pdir qdir
+dfParProductDir p q ipq = Pair (dfDir p $ fst ipq) (dfDir q $ snd ipq)
 
 public export
 dfParProductArena : MLDirichCatObj -> MLDirichCatObj -> MLDirichCatObj
@@ -194,47 +194,44 @@ dfParProductArena p q = (dfParProductPos p q ** dfParProductDir p q)
 public export
 dirichParProj1OnPos : (p, q : MLDirichCatObj) ->
   dfPos (dfParProductArena p q) -> dfPos p
-dirichParProj1OnPos (ppos ** pdir) (qpos ** qdir) (pi, qi) = pi
+dirichParProj1OnPos p q = Builtin.fst
 
 public export
 dirichParProj1OnDir : (p, q : MLDirichCatObj) ->
   (i : dfPos (dfParProductArena p q)) ->
   dfDir (dfParProductArena p q) i ->
   dfDir p (dirichParProj1OnPos p q i)
-dirichParProj1OnDir (ppos ** pdir) (qpos ** qdir) (pi, qi) (pd, qd) = pd
+dirichParProj1OnDir p q i = Builtin.fst
 
 public export
 dirichParProj1 : (p, q : MLDirichCatObj) ->
   DirichNatTrans (dfParProductArena p q) p
-dirichParProj1 p@(ppos ** pdir) q@(qpos ** qdir) =
-  (dirichParProj1OnPos p q ** dirichParProj1OnDir p q)
+dirichParProj1 p q = (dirichParProj1OnPos p q ** dirichParProj1OnDir p q)
 
 public export
 dirichParProj2OnPos : (p, q : MLDirichCatObj) ->
   dfPos (dfParProductArena p q) -> dfPos q
-dirichParProj2OnPos (ppos ** pdir) (qpos ** qdir) (pi, qi) = qi
+dirichParProj2OnPos p q = Builtin.snd
 
 public export
 dirichParProj2OnDir : (p, q : MLDirichCatObj) ->
   (i : dfPos (dfParProductArena p q)) ->
   dfDir (dfParProductArena p q) i ->
   dfDir q (dirichParProj2OnPos p q i)
-dirichParProj2OnDir (ppos ** pdir) (qpos ** qdir) (pi, qi) (pd, qd) = qd
+dirichParProj2OnDir p q i = Builtin.snd
 
 public export
 dirichParProj2 : (p, q : MLDirichCatObj) ->
   DirichNatTrans (dfParProductArena p q) q
-dirichParProj2 p@(ppos ** pdir) q@(qpos ** qdir) =
-  (dirichParProj2OnPos p q ** dirichParProj2OnDir p q)
+dirichParProj2 p q = (dirichParProj2OnPos p q ** dirichParProj2OnDir p q)
 
 public export
 dirichParPairOnPos : (p, q, r : MLDirichCatObj) ->
   DirichNatTrans p q -> DirichNatTrans p r ->
   dfPos p ->
   dfPos (dfParProductArena q r)
-dirichParPairOnPos (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
-  (pqonpos ** pqondir) (pronpos ** prondir) pi =
-    (pqonpos pi, pronpos pi)
+dirichParPairOnPos p q r pq pr pi =
+  MkPair (dntOnPos pq pi) (dntOnPos pr pi)
 
 public export
 dirichParPairOnDir : (p, q, r : MLDirichCatObj) ->
@@ -242,14 +239,12 @@ dirichParPairOnDir : (p, q, r : MLDirichCatObj) ->
   (pi : dfPos p) ->
   dfDir p pi ->
   dfDir (dfParProductArena q r) (dirichParPairOnPos p q r f g pi)
-dirichParPairOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
-  (pqonpos ** pqondir) (pronpos ** prondir) pi pd =
-    (pqondir pi pd, prondir pi pd)
+dirichParPairOnDir p q r pq pr pi pd =
+  MkPair (dntOnDir pq pi pd) (dntOnDir pr pi pd)
 
 public export
 dirichParPair : {p, q, r : MLDirichCatObj} ->
   DirichNatTrans p q -> DirichNatTrans p r ->
   DirichNatTrans p (dfParProductArena q r)
-dirichParPair {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} {r=r@(rpos ** rdir)}
-  f g =
-    (dirichParPairOnPos p q r f g ** dirichParPairOnDir p q r f g)
+dirichParPair {p} {q} {r} f g =
+  (dirichParPairOnPos p q r f g ** dirichParPairOnDir p q r f g)
