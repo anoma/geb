@@ -342,6 +342,56 @@ DFSliceMorphFromCDomMorEq {p=(ppos ** pdir)}
   {dtot} {dproj} {ctot} {cproj} (Element0 alpha nteq) =
     nteq
 
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+---- Slice categories of Dirichlet functors (in dependent-type style) ----
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+
+-----------------
+---- Objects ----
+-----------------
+
+-- The natural transformations of both polynomial and Dirichlet functors have
+-- on-positions functions from the domain to the codomain.  Thus, the
+-- on-positions function of a natural transformation between either of those
+-- types of objects (functors) may be viewed as a fibration of the arena
+-- being sliced over.
+public export
+MlSlArProjOnPos : MLDirichCatObj -> Type
+MlSlArProjOnPos = SliceObj . dfPos
+
+-- Thus, the positions of the slice object's domain can be viewed as
+-- the sum of all the fibers.
+public export
+MlSlArTotPos : {ar : MLDirichCatObj} -> MlSlArProjOnPos ar -> Type
+MlSlArTotPos {ar} onpos = Sigma {a=(dfPos ar)} onpos
+
+-- Consequently, the directions of the slice object's domain are a slice
+-- of the sum of the fibers.
+--
+-- However, the on-directions part of the projection component of the slice
+-- object will, in the case of Dirichlet functors, also go from the domain
+-- to the object being sliced over.  Thus that too may be viewed as a fibration,
+-- of pairs of the positions of the domain and the directions of the codomain,
+-- where those two share the same position of the codomain.
+--
+-- That view only makes sense in the case of Dirichlet functors, not of
+-- polynomials, because the on-directions part of the projection component of
+-- an object in a polynomial-functor slice category goes in the opposite
+-- direction.
+--
+-- Thus we can express the directions as follows:
+public export
+MlDirichSlDir : (ar : MLDirichCatObj) -> MlSlArProjOnPos ar -> Type
+MlDirichSlDir ar onpos = (i : dfPos ar) -> onpos i -> dfDir ar i -> Type
+
+public export
+record MlDirichSlObj (ar : MLDirichCatObj) where
+  constructor MDSobj
+  mdsOnPos : MlSlArProjOnPos ar
+  mdsDir : MlDirichSlDir ar mdsOnPos
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 ---- Universal morphisms in the category of Dirichlet functors on `Type` ----
