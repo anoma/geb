@@ -4,6 +4,7 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.NatPrefixCat
 import public LanguageDef.MLDirichCat
+import public LanguageDef.IntArena
 
 %default total
 
