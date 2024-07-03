@@ -3,6 +3,7 @@ module LanguageDef.PolyCat
 import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.NatPrefixCat
+import LanguageDef.MLDirichCat
 
 %default total
 
