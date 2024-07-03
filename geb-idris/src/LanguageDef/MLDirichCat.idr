@@ -12,8 +12,16 @@ import LanguageDef.QType
 -------------------------------
 
 public export
+MLDirichCatObjPos : Type
+MLDirichCatObjPos = Type
+
+public export
+MLDirichCatObjDir : MLDirichCatObjPos -> Type
+MLDirichCatObjDir = SliceObj
+
+public export
 MLDirichCatObj : Type
-MLDirichCatObj = (pos : Type ** SliceObj pos)
+MLDirichCatObj = Sigma {a=MLDirichCatObjPos} MLDirichCatObjDir
 
 public export
 dfPos : MLDirichCatObj -> Type
@@ -29,7 +37,8 @@ MLDirichCatOnPos p q = dfPos p -> dfPos q
 
 public export
 MLDirichCatOnDir : (p, q : MLDirichCatObj) -> MLDirichCatOnPos p q -> Type
-MLDirichCatOnDir p q onpos = (i : dfPos p) -> dfDir p i -> dfDir q (onpos i)
+MLDirichCatOnDir p q onpos =
+  SliceMorphism {a=(dfPos p)} (dfDir p) (dfDir q . onpos)
 
 public export
 MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
