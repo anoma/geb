@@ -94,7 +94,7 @@ arBaseChangePos p {a} f = a
 public export
 arBaseChangeDir : (p : MLArena) -> {a : Type} -> (f : a -> dfPos p) ->
   arBaseChangePos p {a} f -> Type
-arBaseChangeDir (pos ** dir) {a} f i = dir $ f i
+arBaseChangeDir p {a} f i = dfDir p $ f i
 
 public export
 arBaseChangeArena : (p : MLArena) -> {a : Type} -> (a -> dfPos p) -> MLArena
@@ -123,29 +123,27 @@ public export
 DirichVertFactOnPos : {0 p, q : MLDirichCatObj} ->
   (alpha : DirichNatTrans p q) ->
   dfPos p -> DirichVertCartFactPos {p} {q} alpha
-DirichVertFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i = i
+DirichVertFactOnPos alpha = id
 
 public export
 DirichVertFactOnDir :
   {0 p, q : MLDirichCatObj} -> (alpha : DirichNatTrans p q) ->
   (i : dfPos p) -> dfDir p i ->
   DirichVertCartFactDir {p} {q} alpha (DirichVertFactOnPos {p} {q} alpha i)
-DirichVertFactOnDir {p=p@(_ ** _)} {q=q@(_ ** _)} (onPos ** onDir) i j =
-  onDir i j
+DirichVertFactOnDir = dntOnDir
 
 public export
 DirichVertFactNatTrans : {0 p, q : MLDirichCatObj} ->
   (alpha : DirichNatTrans p q) ->
   DirichNatTrans p (DirichVertCartFactFunc {p} {q} alpha)
-DirichVertFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+DirichVertFactNatTrans {p} {q} alpha =
   (DirichVertFactOnPos {p} {q} alpha ** DirichVertFactOnDir {p} {q} alpha)
 
 public export
 DirichCartFactOnPos : {0 p, q : MLDirichCatObj} ->
   (alpha : DirichNatTrans p q) ->
   DirichVertCartFactPos {p} {q} alpha -> dfPos q
-DirichCartFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i =
-  onPos i
+DirichCartFactOnPos = dntOnPos
 
 public export
 DirichCartFactOnDir :
@@ -153,25 +151,23 @@ DirichCartFactOnDir :
   (i : DirichVertCartFactPos {p} {q} alpha) ->
   DirichVertCartFactDir {p} {q} alpha i ->
   dfDir q (DirichCartFactOnPos {p} {q} alpha i)
-DirichCartFactOnDir {p=p@(_ ** _)} {q=q@(_ ** _)} (_ ** _) i j =
-  j
+DirichCartFactOnDir alpha i = id
 
 public export
 DirichCartFactNatTrans : {0 p, q : MLDirichCatObj} ->
   (alpha : DirichNatTrans p q) ->
   DirichNatTrans (DirichVertCartFactFunc {p} {q} alpha) q
-DirichCartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
+DirichCartFactNatTrans {p} {q} alpha =
   (DirichCartFactOnPos {p} {q} alpha ** DirichCartFactOnDir {p} {q} alpha)
 
 public export
-DirichVertCartFactIsCorrect : {0 p, q : MLDirichCatObj} ->
+0 DirichVertCartFactIsCorrect : {0 p, q : MLDirichCatObj} ->
   (alpha : DirichNatTrans p q) ->
   (dntVCatComp {p} {q=(DirichVertCartFactFunc {p} {q} alpha)} {r=q}
     (DirichCartFactNatTrans {p} {q} alpha)
     (DirichVertFactNatTrans {p} {q} alpha))
   = alpha
-DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) =
-  Refl
+DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) = Refl
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
