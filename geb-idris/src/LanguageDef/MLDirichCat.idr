@@ -5,7 +5,6 @@ import Library.IdrisCategories
 import Library.IdrisAlgebra
 import LanguageDef.QType
 import public LanguageDef.InternalCat
-import public LanguageDef.SliceFuncCat
 
 %default total
 
@@ -244,8 +243,16 @@ DirichCatElObjPos : (p : MLDirichCatObj) -> dfPos p -> Type
 DirichCatElObjPos p = SliceObj . dfDir {p}
 
 public export
+DirichCatElObjPosPair : (p : MLDirichCatObj) -> dfPos p -> Type
+DirichCatElObjPosPair p = ProductMonad . DirichCatElObjPos p
+
+public export
 DirichCatElObj : MLDirichCatObj -> Type
 DirichCatElObj p = Sigma {a=(dfPos p)} $ DirichCatElObjPos p
+
+public export
+DirichCatElObjPair : MLDirichCatObj -> Type
+DirichCatElObjPair = ProductMonad . DirichCatElObj
 
 public export
 DirichCatElBaseT : (p : MLDirichCatObj) -> DirichCatElObj p -> Type
@@ -259,7 +266,7 @@ DirichCatElPosMor p i = SliceMorphism {a=(dfDir p i)}
 public export
 DirichCatElMorTotPos : (p : MLDirichCatObj) -> dfPos p -> Type
 DirichCatElMorTotPos p i =
-  Sigma {a=(ProductMonad $ SliceObj $ dfDir p i)} $
+  Sigma {a=(DirichCatElObjPosPair p i)} $
     \xy => DirichCatElPosMor p i (fst xy) (snd xy)
 
 public export
@@ -275,19 +282,30 @@ DirichCatElMorBaseObj : {p : MLDirichCatObj} -> DirichCatElMorTot p -> Type
 DirichCatElMorBaseObj {p} = DirichCatElObjPos p . DirichCatElMorPos {p}
 
 public export
-DirichCatElMorSig : {p : MLDirichCatObj} ->
-  (m : DirichCatElMorTot p) -> ProductMonad (DirichCatElMorBaseObj {p} m)
-DirichCatElMorSig {p} m = fst $ snd m
+DirichCatElMorBaseObjPair : {p : MLDirichCatObj} -> DirichCatElMorTot p -> Type
+DirichCatElMorBaseObjPair {p} = ProductMonad . DirichCatElMorBaseObj {p}
+
+public export
+DirichCatElMorBaseSig : {p : MLDirichCatObj} ->
+  (m : DirichCatElMorTot p) -> DirichCatElMorBaseObjPair {p} m
+DirichCatElMorBaseSig {p} m = fst $ snd m
 
 public export
 DirichCatElMorDom : {p : MLDirichCatObj} ->
   (m : DirichCatElMorTot p) -> DirichCatElMorBaseObj {p} m
-DirichCatElMorDom {p} m = fst $ DirichCatElMorSig {p} m
+DirichCatElMorDom {p} m = fst $ DirichCatElMorBaseSig {p} m
 
 public export
 DirichCatElMorCod : {p : MLDirichCatObj} ->
   (m : DirichCatElMorTot p) -> DirichCatElMorBaseObj {p} m
-DirichCatElMorCod {p} m = snd $ DirichCatElMorSig {p} m
+DirichCatElMorCod {p} m = snd $ DirichCatElMorBaseSig {p} m
+
+public export
+DirichCatElMorSig : {p : MLDirichCatObj} ->
+  DirichCatElMorTot p -> DirichCatElObjPair p
+DirichCatElMorSig {p} m =
+  ((DirichCatElMorPos m ** DirichCatElMorDom m),
+   (DirichCatElMorPos m ** DirichCatElMorCod m))
 
 public export
 DirichCatElMorMor : {p : MLDirichCatObj} ->
@@ -298,13 +316,11 @@ DirichCatElMorMor : {p : MLDirichCatObj} ->
 DirichCatElMorMor {p} m = snd $ snd m
 
 public export
-data DirichCatElMor : (p : MLDirichCatObj) ->
-    DirichCatElObj p -> DirichCatElObj p -> Type where
-  DCEM : {p : MLDirichCatObj} ->
-    (m : DirichCatElMorTot p) ->
-    DirichCatElMor p
-      (DirichCatElMorPos {p} m ** DirichCatElMorDom {p} m)
-      (DirichCatElMorPos {p} m ** DirichCatElMorCod {p} m)
+DirichCatElMor : {p : MLDirichCatObj} -> IntMorSig (DirichCatElObj p)
+DirichCatElMor {p} elx ely =
+  PreImage {a=(DirichCatElMorTot p)} {b=(DirichCatElObjPair p)}
+    (DirichCatElMorSig {p})
+    (elx, ely)
 
 ---------------------------
 ---- Outgoing functors ----
