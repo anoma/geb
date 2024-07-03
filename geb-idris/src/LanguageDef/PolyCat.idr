@@ -3,7 +3,7 @@ module LanguageDef.PolyCat
 import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.NatPrefixCat
-import LanguageDef.MLDirichCat
+import public LanguageDef.MLDirichCat
 
 %default total
 
@@ -63,24 +63,6 @@ PolyFuncToSlice (pos ** dir) = dir
 public export
 SliceToPolyFunc : {a : Type} -> SliceObj a -> PolyFunc
 SliceToPolyFunc {a} sl = (a ** sl)
-
--- Interpret the same data as determine a polynomial functor --
--- namely, a dependent set, AKA arena -- as a Dirichlet functor
--- (rather than a polynomial functor).  While a polynomial
--- functor is a sum of covariant representables, a Dirichlet
--- functor is a sum of contravariant representables.
-public export
-InterpDirichFunc : PolyFunc -> Type -> Type
-InterpDirichFunc (pos ** dir) x = (i : pos ** (x -> dir i))
-
-public export
-InterpDFMap : (p : PolyFunc) -> {0 a, b : Type} ->
-  (a -> b) -> InterpDirichFunc p b -> InterpDirichFunc p a
-InterpDFMap (_ ** _) m (i ** d) = (i ** d . m)
-
-public export
-(p : PolyFunc) => Contravariant (InterpDirichFunc p) where
-  contramap {p} = InterpDFMap p
 
 --------------------------------------------------------
 ---- Polynomial functors with finite direction-sets ----
@@ -164,34 +146,6 @@ PolyNatTransToSliceMorphism : {0 p, q : PolyFunc} ->
     (PolyFuncToSlice p)
 PolyNatTransToSliceMorphism {p=(_ ** _)} {q=(_ ** qdir)}
   (_ ** ondir) onPosId i sp = ondir i $ replace {p=qdir} (sym (onPosId i)) sp
-
-------------------------------------------------------------
----- Natural transformations on polynomial endofunctors ----
-------------------------------------------------------------
-
-public export
-DirichNatTrans : PolyFunc -> PolyFunc -> Type
-DirichNatTrans p q =
-  (onPos : pfPos p -> pfPos q **
-   SliceMorphism (pfDir {p}) (pfDir {p=q} . onPos))
-
-public export
-dntOnPos : {0 p, q : PolyFunc} -> DirichNatTrans p q ->
-  pfPos p -> pfPos q
-dntOnPos {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onPos
-
-public export
-dntOnDir : {0 p, q : PolyFunc} -> (alpha : DirichNatTrans p q) ->
-  (i : pfPos p) -> pfDir {p} i -> pfDir {p=q} (dntOnPos {p} {q} alpha i)
-dntOnDir {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onDir
-
--- A natural transformation between Dirichlet functors may be viewed as a
--- morphism in the slice category of `Type` over `Type`.
-public export
-InterpDirichNT : {0 p, q : PolyFunc} -> DirichNatTrans p q ->
-  SliceMorphism {a=Type} (InterpDirichFunc p) (InterpDirichFunc q)
-InterpDirichNT {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) a (pi ** pd) =
-  (onPos pi ** onDir pi . pd)
 
 ----------------------------------------------------------------------------
 ---- Vertical-Cartesian factoring of polynomial natural transformations ----
