@@ -42,7 +42,7 @@ MLDirichCatOnDir p q onpos =
 
 public export
 MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
-MLDirichCatMor p q = DPair (MLDirichCatOnPos p q) (MLDirichCatOnDir p q)
+MLDirichCatMor p q = Sigma {a=(MLDirichCatOnPos p q)} (MLDirichCatOnDir p q)
 
 ----------------------------------------------
 ----------------------------------------------
