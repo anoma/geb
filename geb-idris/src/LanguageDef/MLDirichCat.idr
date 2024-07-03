@@ -260,6 +260,11 @@ DirichCatElBaseT : (p : MLDirichCatObj) -> DirichCatElObj p -> Type
 DirichCatElBaseT p el = Sigma {a=(dfDir p (fst el))} (snd el)
 
 public export
+DirichCatElProj : (p : MLDirichCatObj) -> (el : DirichCatElObj p) ->
+  DirichCatElBaseT p el -> dfDir p (fst el)
+DirichCatElProj p el = DPair.fst
+
+public export
 DirichCatElPosMor : (p : MLDirichCatObj) -> (i : dfPos p) ->
   SliceObj (dfDir p i) -> SliceObj (dfDir p i) -> Type
 DirichCatElPosMor p i = SliceMorphism {a=(dfDir p i)}
@@ -322,6 +327,31 @@ DirichCatElMor {p} elx ely =
   PreImage {a=(DirichCatElMorTot p)} {b=(DirichCatElObjPair p)}
     (DirichCatElMorSig {p})
     (elx, ely)
+
+-- A natural transformation induces a functor between categories of elements
+-- which commutes with the projections.
+
+public export
+DirichNTCatElOMap : {p, q : MLDirichCatObj} ->
+  DirichNatTrans p q -> DirichCatElObj p -> DirichCatElObj q
+DirichNTCatElOMap {p} {q} alpha =
+  dpBimap (dntOnPos alpha) $ \pi => SliceFibSigmaF $ dntOnDir alpha pi
+
+public export
+0 DirichNTCatElFMap : {p, q : MLDirichCatObj} ->
+  (alpha : DirichNatTrans p q) ->
+  (x, y : DirichCatElObj p) ->
+  DirichCatElMor {p} x y ->
+  DirichCatElMor {p=q}
+    (DirichNTCatElOMap {p} {q} alpha x)
+    (DirichNTCatElOMap {p} {q} alpha y)
+DirichNTCatElFMap {p} {q} (onpos ** ondir) (pi ** slx) (pi ** sly)
+  (Element0 (pi ** ((slx, sly) ** m)) Refl) =
+    Element0
+      (onpos pi **
+       ((SliceFibSigmaF (ondir pi) slx, SliceFibSigmaF (ondir pi) sly) **
+        sfsMap {f=(ondir pi)} slx sly m))
+      Refl
 
 ---------------------------
 ---- Outgoing functors ----
@@ -527,6 +557,10 @@ record MlDirichSlObj (ar : MLDirichCatObj) where
   constructor MDSobj
   mdsOnPos : MlSlArProjOnPos ar
   mdsDir : MlDirichSlDir ar mdsOnPos
+
+-------------------
+---- Morphisms ----
+-------------------
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
