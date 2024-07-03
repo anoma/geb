@@ -3515,22 +3515,6 @@ InterpDPPFMap : {a, b : Type} -> (dppf : DepParamPolyFunc a b) ->
 InterpDPPFMap {a} {b} dppf {sa} {sa'} m eb (pos ** dir) =
   (pos ** \di => m (fst (snd dppf (eb ** pos))) (dir di))
 
-public export
-InterpDPPFDirich : {a, b : Type} ->
-  DepParamPolyFunc a b -> SliceFunctor a b
-InterpDPPFDirich {a} {b} dppf paramslice posfst =
-  (possnd : fst dppf posfst **
-   paramslice (fst (snd dppf (posfst ** possnd))) ->
-    snd (snd dppf (posfst ** possnd)))
-
-public export
-InterpDPPFDirichMap : {a, b : Type} -> (dppf : DepParamPolyFunc a b) ->
-  {sa, sa' : SliceObj a} ->
-  SliceMorphism sa sa' ->
-  SliceMorphism (InterpDPPFDirich dppf sa') (InterpDPPFDirich dppf sa)
-InterpDPPFDirichMap {a} {b} dppf {sa} {sa'} m eb (pos ** dir) =
-  (pos ** \di => dir $ m (fst (snd dppf (eb ** pos))) di)
-
 ------------------------------
 ---- Slices over PolyFunc ----
 ------------------------------
