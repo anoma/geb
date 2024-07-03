@@ -20,12 +20,12 @@ import public LanguageDef.IntEFamCat
 -- functor is a sum of contravariant representables.
 public export
 InterpDirichFunc : MLDirichCatObj -> Type -> Type
-InterpDirichFunc (pos ** dir) x = (i : pos ** (x -> dir i))
+InterpDirichFunc = InterpIDFobj TypeObj TypeMor
 
 public export
 InterpDFMap : (p : MLDirichCatObj) -> {0 a, b : Type} ->
   (a -> b) -> InterpDirichFunc p b -> InterpDirichFunc p a
-InterpDFMap (_ ** _) m (i ** d) = (i ** d . m)
+InterpDFMap p m = dpMapSnd (\i => (|>) m)
 
 public export
 (p : MLDirichCatObj) => Contravariant (InterpDirichFunc p) where
@@ -44,17 +44,17 @@ DirichNatTrans = MLDirichCatMor
 public export
 dntOnPos : {0 p, q : MLDirichCatObj} -> DirichNatTrans p q ->
   ifeoIdx p -> ifeoIdx q
-dntOnPos {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onPos
+dntOnPos = DPair.fst
 
 public export
 dntOnDir : {0 p, q : MLDirichCatObj} -> (alpha : DirichNatTrans p q) ->
   (i : ifeoIdx p) -> ifeoObj p i -> ifeoObj q (dntOnPos {p} {q} alpha i)
-dntOnDir {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) = onDir
+dntOnDir = DPair.snd
 
 -- A natural transformation between Dirichlet functors may be viewed as a
 -- morphism in the slice category of `Type` over `Type`.
 public export
 InterpDirichNT : {0 p, q : MLDirichCatObj} -> DirichNatTrans p q ->
   SliceMorphism {a=Type} (InterpDirichFunc p) (InterpDirichFunc q)
-InterpDirichNT {p=(_ ** _)} {q=(_ ** _)} (onPos ** onDir) a (pi ** pd) =
-  (onPos pi ** onDir pi . pd)
+InterpDirichNT {p} {q} alpha a =
+  dpBimap (dntOnPos alpha) (\i => (.) $ dntOnDir alpha i)
