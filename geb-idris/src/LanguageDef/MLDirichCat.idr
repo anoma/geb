@@ -169,6 +169,24 @@ public export
   = alpha
 DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) = Refl
 
+-------------------
+-------------------
+---- Monomials ----
+-------------------
+-------------------
+
+public export
+dfMonomialPos : Type -> Type -> Type
+dfMonomialPos a b = a
+
+public export
+dfMonomialDir : (a, b : Type) -> dfMonomialPos a b -> Type
+dfMonomialDir a b i = b
+
+public export
+dfMonomialArena : Type -> Type -> MLDirichCatObj
+dfMonomialArena a b = (dfMonomialPos a b ** dfMonomialDir a b)
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 ---- Universal morphisms in the category of Dirichlet functors on `Type` ----
@@ -275,3 +293,19 @@ public export
   (alpha, beta : DirichNatTrans p q) -> MLDirichCatObj
 dfEqualizer {p} {q} alpha beta =
   (dfEqualizerPos {p} {q} alpha beta ** dfEqualizerDir {p} {q} alpha beta)
+
+-----------------------------------------
+-----------------------------------------
+---- Dirichlet morphism factorization ---
+-----------------------------------------
+-----------------------------------------
+
+{- See `PFMonoToCofunc` and 6.65 from "A General Theory of Interaction". -}
+
+public export
+DFMonoToFunc : {p : MLDirichCatObj} -> {a, b : Type} ->
+  DirichNatTrans p (dfMonomialArena a b) -> InterpDirichFunc p a -> b
+DFMonoToFunc {p} {a} {b} alpha el =
+  dntOnDir {q=(dfMonomialArena a b)} alpha (fst el)
+  $ snd el
+  $ dntOnPos {q=(dfMonomialArena a b)} alpha (fst el)
