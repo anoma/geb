@@ -79,11 +79,9 @@ dntId = ifemId TypeMor typeId
 -- Vertical composition of natural transformations, which is the categorial
 -- composition in the category of Dirichlet functors.
 public export
-dntVCatComp : {0 p, q, r : MLDirichCatObj} ->
+dntVCatComp : {p, q, r : MLDirichCatObj} ->
   DirichNatTrans q r -> DirichNatTrans p q -> DirichNatTrans p r
-dntVCatComp {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
-  (gOnPos ** gOnDir) (fOnPos ** fOnDir) =
-    (gOnPos . fOnPos ** \pi, rd => gOnDir (fOnPos pi) $ fOnDir pi rd)
+dntVCatComp = ifemComp TypeMor typeComp
 
 ---------------------------------------------------------------------------
 ---- Vertical-Cartesian factoring of Dirichlet natural transformations ----
