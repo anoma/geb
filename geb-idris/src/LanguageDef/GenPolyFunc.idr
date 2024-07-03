@@ -21,6 +21,33 @@ import public LanguageDef.IntDisheafCat
 -- In favor of the (identical) one from `SliceFuncCat`.
 %hide Library.IdrisCategories.BaseChangeF
 
+-------------------------------------------------
+-------------------------------------------------
+---- Dirichlet slices as polynomial functors ----
+-------------------------------------------------
+-------------------------------------------------
+
+-- We now show that `MlDirichSlObj` is a (special case of a) signature that
+-- we have developed previously: `SPFdepDirType`.
+public export
+MlDirichSlToSPFDD : {ar : MLArena} ->
+  MlDirichSlObj ar -> SPFdepData {b=(pfPos ar)} (pfDir {p=ar}) (const Unit)
+MlDirichSlToSPFDD {ar} sl =
+  SPFDD (\i, () => mdsOnPos sl i) (\ei, () => mdsDir sl ei)
+
+public export
+MlDirichSlFromSPFDD : (ar : MLArena) ->
+  SPFdepData {b=(pfPos ar)} (pfDir {p=ar}) (const Unit) -> MlDirichSlObj ar
+MlDirichSlFromSPFDD ar spfdd =
+  MDSobj (flip (spfddPos spfdd) ()) $ \ep => spfddDir spfdd ep ()
+
+-- From the above two translations, we can conclude that for `ar : MLArena`
+-- representing a Dirichlet functor, an `MlDirichSlObj ar` -- an object in the
+-- slice category of Dirichlet functors over `ar` -- is precisely a polynomial
+-- (parametric right adjoint) functor from the slice category of `Type` over
+-- the directions of `ar` to `Type` itself (which is equivalent to `Type`
+-- sliced over `Unit`), or, put another way, a polynomial copresheaf on the
+-- directions of `ar`.
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- PRA functors between slice categories of Dirichlet/polynomial functors ----
