@@ -4,13 +4,16 @@ import Library.IdrisUtils
 import Library.IdrisCategories
 import Library.IdrisAlgebra
 import LanguageDef.QType
-import public LanguageDef.IntEFamCat
 
-----------------------------------------------
-----------------------------------------------
----- Interpretation of Dirichlet functors ----
-----------------------------------------------
-----------------------------------------------
+-------------------------------
+-------------------------------
+---- Objects and morphisms ----
+-------------------------------
+-------------------------------
+
+public export
+MLDirichCatObj : Type
+MLDirichCatObj = (pos : Type ** SliceObj pos)
 
 public export
 dfPos : MLDirichCatObj -> Type
@@ -20,6 +23,24 @@ public export
 dfDir : (p : MLDirichCatObj) -> dfPos p -> Type
 dfDir = DPair.snd
 
+public export
+MLDirichCatOnPos : MLDirichCatObj -> MLDirichCatObj -> Type
+MLDirichCatOnPos p q = dfPos p -> dfPos q
+
+public export
+MLDirichCatOnDir : (p, q : MLDirichCatObj) -> MLDirichCatOnPos p q -> Type
+MLDirichCatOnDir p q onpos = (i : dfPos p) -> dfDir p i -> dfDir q (onpos i)
+
+public export
+MLDirichCatMor : MLDirichCatObj -> MLDirichCatObj -> Type
+MLDirichCatMor p q = DPair (MLDirichCatOnPos p q) (MLDirichCatOnDir p q)
+
+----------------------------------------------
+----------------------------------------------
+---- Interpretation of Dirichlet functors ----
+----------------------------------------------
+----------------------------------------------
+
 -- Interpret the same data as determine a polynomial functor --
 -- namely, a dependent set, AKA arena -- as a Dirichlet functor
 -- (rather than a polynomial functor).  While a polynomial
@@ -27,7 +48,7 @@ dfDir = DPair.snd
 -- functor is a sum of contravariant representables.
 public export
 InterpDirichFunc : MLDirichCatObj -> Type -> Type
-InterpDirichFunc = InterpIDFobj TypeObj TypeMor
+InterpDirichFunc p x = (i : dfPos p ** x -> dfDir p i)
 
 public export
 InterpDFMap : (p : MLDirichCatObj) -> {0 a, b : Type} ->
@@ -72,14 +93,30 @@ InterpDirichNT {p} {q} alpha a =
 
 public export
 dntId : (p : MLDirichCatObj) -> DirichNatTrans p p
-dntId = ifemId TypeMor typeId
+dntId p = (id ** \_ => id)
 
 -- Vertical composition of natural transformations, which is the categorial
 -- composition in the category of Dirichlet functors.
 public export
+dntVCatCompOnPos : {p, q, r : MLDirichCatObj} ->
+  DirichNatTrans q r -> DirichNatTrans p q -> MLDirichCatOnPos p r
+dntVCatCompOnPos {p} {q} {r} beta alpha =
+  dntOnPos {p=q} {q=r} beta . dntOnPos {p} {q} alpha
+
+public export
+dntVCatCompOnDir : {p, q, r : MLDirichCatObj} ->
+  (qr : DirichNatTrans q r) -> (pq : DirichNatTrans p q) ->
+  MLDirichCatOnDir p r (dntVCatCompOnPos {p} {q} {r} qr pq)
+dntVCatCompOnDir {p} {q} {r} beta alpha i =
+  dntOnDir {p=q} {q=r} beta (dntOnPos {p} {q} alpha i)
+  . dntOnDir {p} {q} alpha i
+
+public export
 dntVCatComp : {p, q, r : MLDirichCatObj} ->
   DirichNatTrans q r -> DirichNatTrans p q -> DirichNatTrans p r
-dntVCatComp = ifemComp TypeMor typeComp
+dntVCatComp {p} {q} {r} beta alpha =
+  (dntVCatCompOnPos {p} {q} {r} beta alpha **
+   dntVCatCompOnDir {p} {q} {r} beta alpha)
 
 ---------------------------------------------------------------------------
 ---- Vertical-Cartesian factoring of Dirichlet natural transformations ----
@@ -160,13 +197,15 @@ DirichCartFactNatTrans {p} {q} alpha =
   (DirichCartFactOnPos {p} {q} alpha ** DirichCartFactOnDir {p} {q} alpha)
 
 public export
-0 DirichVertCartFactIsCorrect : {0 p, q : MLDirichCatObj} ->
+0 DirichVertCartFactIsCorrect : FunExt -> {0 p, q : MLDirichCatObj} ->
   (alpha : DirichNatTrans p q) ->
   (dntVCatComp {p} {q=(DirichVertCartFactFunc {p} {q} alpha)} {r=q}
     (DirichCartFactNatTrans {p} {q} alpha)
     (DirichVertFactNatTrans {p} {q} alpha))
   = alpha
-DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) = Refl
+DirichVertCartFactIsCorrect fext
+  {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) =
+    dpEq12 Refl $ funExt $ \i => Refl
 
 -------------------
 -------------------
