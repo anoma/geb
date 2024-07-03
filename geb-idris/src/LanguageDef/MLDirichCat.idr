@@ -250,11 +250,14 @@ DirichCatElPosMor : (p : MLDirichCatObj) -> (i : dfPos p) ->
 DirichCatElPosMor p i = SliceMorphism {a=(dfDir p i)}
 
 public export
+DirichCatElMorTotPos : (p : MLDirichCatObj) -> dfPos p -> Type
+DirichCatElMorTotPos p i =
+  Sigma {a=(ProductMonad $ SliceObj $ dfDir p i)} $
+    \xy => DirichCatElPosMor p i (fst xy) (snd xy)
+
+public export
 DirichCatElMorTot : MLDirichCatObj -> Type
-DirichCatElMorTot p =
-  (i : dfPos p **
-   xy : ProductMonad $ SliceObj $ dfDir p i **
-   DirichCatElPosMor p i (fst xy) (snd xy))
+DirichCatElMorTot p = Sigma {a=(dfPos p)} $ DirichCatElMorTotPos p
 
 public export
 DirichCatElMorPos : {p : MLDirichCatObj} -> DirichCatElMorTot p -> dfPos p
