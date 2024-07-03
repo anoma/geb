@@ -239,7 +239,7 @@ elementInjectiveSnd Refl = Refl
 public export
 bimap : (f : a -> b) -> (0 _ : forall x. p x -> q (f x)) ->
   Subset0 a p -> Subset0 b q
-bimap f g (Element0 x y) = Element0 (f x) (g y)
+bimap f g e = Element0 (f $ fst0 e) (g $ snd0 e)
 
 public export
 s0Bimap : {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
