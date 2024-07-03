@@ -234,6 +234,22 @@ public export
 dfMonomialArena : Type -> Type -> MLDirichCatObj
 dfMonomialArena a b = (dfMonomialPos a b ** dfMonomialDir a b)
 
+-----------------------------------------
+-----------------------------------------
+---- Dirichlet morphism factorization ---
+-----------------------------------------
+-----------------------------------------
+
+{- See `PFMonoToCofunc` and 6.65 from "A General Theory of Interaction". -}
+
+public export
+DFMonoToFunc : {p : MLDirichCatObj} -> {a, b : Type} ->
+  DirichNatTrans p (dfMonomialArena a b) -> InterpDirichFunc p a -> b
+DFMonoToFunc {p} {a} {b} alpha el =
+  dntOnDir {q=(dfMonomialArena a b)} alpha (fst el)
+  $ snd el
+  $ dntOnPos {q=(dfMonomialArena a b)} alpha (fst el)
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 ---- Universal morphisms in the category of Dirichlet functors on `Type` ----
@@ -340,19 +356,3 @@ public export
   (alpha, beta : DirichNatTrans p q) -> MLDirichCatObj
 dfEqualizer {p} {q} alpha beta =
   (dfEqualizerPos {p} {q} alpha beta ** dfEqualizerDir {p} {q} alpha beta)
-
------------------------------------------
------------------------------------------
----- Dirichlet morphism factorization ---
------------------------------------------
------------------------------------------
-
-{- See `PFMonoToCofunc` and 6.65 from "A General Theory of Interaction". -}
-
-public export
-DFMonoToFunc : {p : MLDirichCatObj} -> {a, b : Type} ->
-  DirichNatTrans p (dfMonomialArena a b) -> InterpDirichFunc p a -> b
-DFMonoToFunc {p} {a} {b} alpha el =
-  dntOnDir {q=(dfMonomialArena a b)} alpha (fst el)
-  $ snd el
-  $ dntOnPos {q=(dfMonomialArena a b)} alpha (fst el)
