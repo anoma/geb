@@ -149,24 +149,25 @@ CDFSliceMorph p (q ** qp) (r ** rp) =
 -- A convenient (free of proof content) form of `CDFSliceMorph`; see
 -- the comment to `PFSliceMorph` above.
 public export
-DFSliceMorph : {0 p : PolyFunc} -> CDFSliceObj p -> Type
-DFSliceMorph {p} (ctot ** alpha) = (dtot : PolyFunc ** MLDirichCatMor dtot ctot)
+DFSliceMorph : {0 p : MLDirichCatObj} -> CDFSliceObj p -> Type
+DFSliceMorph {p} (ctot ** alpha) =
+  (dtot : MLDirichCatObj ** MLDirichCatMor dtot ctot)
 
 public export
-DFSliceMorphDom : {0 p : PolyFunc} -> {cod : CDFSliceObj p} ->
+DFSliceMorphDom : {0 p : MLDirichCatObj} -> {cod : CDFSliceObj p} ->
   DFSliceMorph {p} cod -> CDFSliceObj p
 DFSliceMorphDom {p} {cod=(ctot ** alpha)} (dtot ** beta) =
   (dtot ** dntVCatComp alpha beta)
 
 public export
-data DFSliceMorphDep : {0 p : PolyFunc} -> CDFSliceObj p -> CDFSliceObj p ->
-    Type where
-  DSMD : {0 p : PolyFunc} -> {0 dom, cod : CDFSliceObj p} ->
+data DFSliceMorphDep : {0 p : MLDirichCatObj} ->
+    CDFSliceObj p -> CDFSliceObj p -> Type where
+  DSMD : {0 p : MLDirichCatObj} -> {0 dom, cod : CDFSliceObj p} ->
     (mor : DFSliceMorph {p} cod) ->
     DFSliceMorphDep {p} (DFSliceMorphDom {p} {cod} mor) cod
 
 public export
-DFSliceMorphToC : {0 p : PolyFunc} -> {cod : CDFSliceObj p} ->
+DFSliceMorphToC : {0 p : MLDirichCatObj} -> {cod : CDFSliceObj p} ->
   (mor : DFSliceMorph {p} cod) ->
   CDFSliceMorph p (DFSliceMorphDom {p} {cod} mor) cod
 DFSliceMorphToC {p=(ppos ** pdir)} {cod=((ctot ** cproj) ** (conpos ** condir))}
@@ -178,15 +179,15 @@ DFSliceMorphToC {p=(ppos ** pdir)} {cod=((ctot ** cproj) ** (conpos ** condir))}
         (\_, _ => Refl))
 
 public export
-DFSliceMorphFromC : {0 p : PolyFunc} -> {dom, cod : CDFSliceObj p} ->
+DFSliceMorphFromC : {0 p : MLDirichCatObj} -> {dom, cod : CDFSliceObj p} ->
   CDFSliceMorph p dom cod -> DFSliceMorph {p} cod
 DFSliceMorphFromC {p=(ppos ** pdir)} {dom=(dtot ** dproj)} {cod=(ctot ** cproj)}
   (Element0 alpha nteq) =
     (dtot ** alpha)
 
 public export
-DFSliceMorphFromCDomObjEq : {0 p : PolyFunc} -> {dom, cod : CDFSliceObj p} ->
-  (mor : CDFSliceMorph p dom cod) ->
+DFSliceMorphFromCDomObjEq : {0 p : MLDirichCatObj} ->
+  {dom, cod : CDFSliceObj p} -> (mor : CDFSliceMorph p dom cod) ->
   fst (DFSliceMorphDom {p} {cod} (DFSliceMorphFromC {p} {dom} {cod} mor)) =
   fst dom
 DFSliceMorphFromCDomObjEq {p=(ppos ** pdir)}
@@ -194,8 +195,8 @@ DFSliceMorphFromCDomObjEq {p=(ppos ** pdir)}
     Refl
 
 public export
-0 DFSliceMorphFromCDomMorEq : {0 p : PolyFunc} ->
-  {dtot, ctot : PolyFunc} ->
+0 DFSliceMorphFromCDomMorEq : {0 p : MLDirichCatObj} ->
+  {dtot, ctot : MLDirichCatObj} ->
   {dproj : MLDirichCatMor dtot p} ->
   {cproj : MLDirichCatMor ctot p} ->
   (mor : CDFSliceMorph p (dtot ** dproj) (ctot ** cproj)) ->
@@ -802,13 +803,13 @@ mlPolySlMorTot {ar} {dom} {cod} =
 -- as an object in the category of presheaves over the category of elements
 -- of the base functor.
 public export
-InterpMlDirichSlObj : {ar : PolyFunc} ->
+InterpMlDirichSlObj : {ar : MLDirichCatObj} ->
   MlDirichSlObj ar -> (ty : Type) -> SliceObj $ InterpDirichFunc ar ty
 InterpMlDirichSlObj {ar=(_ ** _)} (MDSobj slpos sldir) ty (i ** bd) =
   (j : slpos i ** Pi {a=ty} $ sldir i j . bd)
 
 public export
-InterpMlDirichSlObjF : {ar : PolyFunc} ->
+InterpMlDirichSlObjF : {ar : MLDirichCatObj} ->
   MlDirichSlObj ar -> MLDirichCatElemObj ar -> Type
 InterpMlDirichSlObjF {ar=ar@(_ ** _)} sl (ty ** el) =
   InterpMlDirichSlObj {ar} sl ty el
@@ -826,7 +827,7 @@ InterpMlDirichSlObjFMap {bpos} {bdir} (MDSobj slpos sldir)
     \(j ** sld) => (j ** \ec => sld $ mm ec)
 
 public export
-InterpMlDirichSlObjFMapAr : {ar : PolyFunc} ->
+InterpMlDirichSlObjFMapAr : {ar : MLDirichCatObj} ->
   (sl : MlDirichSlObj ar) ->
   (dom, cod : MLDirichCatElemObj ar) ->
   MLDirichCatElemMor ar cod dom ->
@@ -848,7 +849,7 @@ InterpMlDirichSlObjFMapAr {ar=(bpos ** bdir)} =
 -- functors over `ar` to the category of presheaves over the category of
 -- elements of `ar`.
 public export
-InterpMlDirichSlMor : {ar : PolyFunc} ->
+InterpMlDirichSlMor : {ar : MLDirichCatObj} ->
   {dom, cod : MlDirichSlObj ar} -> MlDirichSlMor dom cod ->
   (ty : Type) -> (el : InterpDirichFunc ar ty) ->
   InterpMlDirichSlObj {ar} dom ty el ->
@@ -945,54 +946,54 @@ InterpMlPolySlMor fext {ar=(bpos ** bdir)}
 -- hold with "slice" replaced by "coslice".)
 
 public export
-DirichCatElObjPos : (p : PolyFunc) -> pfPos p -> Type
+DirichCatElObjPos : (p : MLDirichCatObj) -> pfPos p -> Type
 DirichCatElObjPos p = SliceObj . pfDir {p}
 
 public export
-DirichCatElObj : PolyFunc -> Type
+DirichCatElObj : MLDirichCatObj -> Type
 DirichCatElObj p = Sigma {a=(pfPos p)} $ DirichCatElObjPos p
 
 public export
-DirichCatElBaseT : (p : PolyFunc) -> DirichCatElObj p -> Type
+DirichCatElBaseT : (p : MLDirichCatObj) -> DirichCatElObj p -> Type
 DirichCatElBaseT p el = Sigma {a=(pfDir {p} (fst el))} (snd el)
 
 public export
-DirichCatElPosMor : (p : PolyFunc) -> (i : pfPos p) ->
+DirichCatElPosMor : (p : MLDirichCatObj) -> (i : pfPos p) ->
   IntMorSig (SliceObj $ pfDir {p} i)
 DirichCatElPosMor p i = SliceMorphism {a=(pfDir {p} i)}
 
 public export
-DirichCatElMorTot : PolyFunc -> Type
+DirichCatElMorTot : MLDirichCatObj -> Type
 DirichCatElMorTot p =
   (i : pfPos p **
    xy : ProductMonad $ SliceObj $ pfDir {p} i **
    DirichCatElPosMor p i (fst xy) (snd xy))
 
 public export
-DirichCatElMorPos : {p : PolyFunc} -> DirichCatElMorTot p -> pfPos p
+DirichCatElMorPos : {p : MLDirichCatObj} -> DirichCatElMorTot p -> pfPos p
 DirichCatElMorPos {p} m = fst m
 
 public export
-DirichCatElMorBaseObj : {p : PolyFunc} -> DirichCatElMorTot p -> Type
+DirichCatElMorBaseObj : {p : MLDirichCatObj} -> DirichCatElMorTot p -> Type
 DirichCatElMorBaseObj {p} = DirichCatElObjPos p . DirichCatElMorPos {p}
 
 public export
-DirichCatElMorSig : {p : PolyFunc} ->
+DirichCatElMorSig : {p : MLDirichCatObj} ->
   (m : DirichCatElMorTot p) -> ProductMonad (DirichCatElMorBaseObj {p} m)
 DirichCatElMorSig {p} m = fst $ snd m
 
 public export
-DirichCatElMorDom : {p : PolyFunc} ->
+DirichCatElMorDom : {p : MLDirichCatObj} ->
   (m : DirichCatElMorTot p) -> DirichCatElMorBaseObj {p} m
 DirichCatElMorDom {p} m = fst $ DirichCatElMorSig {p} m
 
 public export
-DirichCatElMorCod : {p : PolyFunc} ->
+DirichCatElMorCod : {p : MLDirichCatObj} ->
   (m : DirichCatElMorTot p) -> DirichCatElMorBaseObj {p} m
 DirichCatElMorCod {p} m = snd $ DirichCatElMorSig {p} m
 
 public export
-DirichCatElMorMor : {p : PolyFunc} ->
+DirichCatElMorMor : {p : MLDirichCatObj} ->
   (m : DirichCatElMorTot p) ->
   SliceMorphism {a=(pfDir {p} $ DirichCatElMorPos {p} m)}
     (DirichCatElMorDom {p} m)
@@ -1000,8 +1001,8 @@ DirichCatElMorMor : {p : PolyFunc} ->
 DirichCatElMorMor {p} m = snd $ snd m
 
 public export
-data DirichCatElMor : (p : PolyFunc) -> IntMorSig (DirichCatElObj p) where
-  DCEM : {p : PolyFunc} ->
+data DirichCatElMor : (p : MLDirichCatObj) -> IntMorSig (DirichCatElObj p) where
+  DCEM : {p : MLDirichCatObj} ->
     (m : DirichCatElMorTot p) ->
     DirichCatElMor p
       (DirichCatElMorPos {p} m ** DirichCatElMorDom {p} m)
