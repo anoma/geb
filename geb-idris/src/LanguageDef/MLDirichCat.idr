@@ -9,6 +9,9 @@ import public LanguageDef.SliceFuncCat
 
 %default total
 
+-- In favor of the (identical) one from `SliceFuncCat`.
+%hide Library.IdrisCategories.BaseChangeF
+
 -------------------------------
 -------------------------------
 ---- Objects and morphisms ----
