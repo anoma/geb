@@ -1218,35 +1218,6 @@ VertCartFactIsCorrect : {0 p, q : PolyFunc} ->
 VertCartFactIsCorrect {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) =
   Refl
 
-----------------------------------------------------------
-----------------------------------------------------------
----- Composition of Dirichlet natural transformations ----
-----------------------------------------------------------
-----------------------------------------------------------
-
-public export
-dntId : (p : PolyFunc) -> DirichNatTrans p p
-dntId (pos ** dir) = (id ** \_ => id)
-
--- Vertical composition of natural transformations, which is the categorial
--- composition in the category of Dirichlet functors.
-public export
-dntVCatComp : {0 p, q, r : PolyFunc} ->
-  DirichNatTrans q r -> DirichNatTrans p q -> DirichNatTrans p r
-dntVCatComp {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
-  (gOnPos ** gOnDir) (fOnPos ** fOnDir) =
-    (gOnPos . fOnPos ** \pi, rd => gOnDir (fOnPos pi) $ fOnDir pi rd)
-
-public export
-DirichVertCartFactIsCorrect : {0 p, q : PolyFunc} ->
-  (alpha : DirichNatTrans p q) ->
-  (dntVCatComp {p} {q=(DirichVertCartFactFunc {p} {q} alpha)} {r=q}
-    (DirichCartFactNatTrans {p} {q} alpha)
-    (DirichVertFactNatTrans {p} {q} alpha))
-  = alpha
-DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) =
-  Refl
-
 -----------------------------------------------------------
 -----------------------------------------------------------
 ---- Combinators on polynomial natural transformations ----

@@ -68,10 +68,25 @@ InterpDirichNT : {0 p, q : MLDirichCatObj} -> DirichNatTrans p q ->
 InterpDirichNT {p} {q} alpha a =
   dpBimap (dntOnPos alpha) (\i => (.) $ dntOnDir alpha i)
 
----------------------------------------------------------------------------
+----------------------------------------------------------
+---- Composition of Dirichlet natural transformations ----
+----------------------------------------------------------
+
+public export
+dntId : (p : MLDirichCatObj) -> DirichNatTrans p p
+dntId = ifemId TypeMor typeId
+
+-- Vertical composition of natural transformations, which is the categorial
+-- composition in the category of Dirichlet functors.
+public export
+dntVCatComp : {0 p, q, r : MLDirichCatObj} ->
+  DirichNatTrans q r -> DirichNatTrans p q -> DirichNatTrans p r
+dntVCatComp {p=(ppos ** pdir)} {q=(qpos ** qdir)} {r=(rpos ** rdir)}
+  (gOnPos ** gOnDir) (fOnPos ** fOnDir) =
+    (gOnPos . fOnPos ** \pi, rd => gOnDir (fOnPos pi) $ fOnDir pi rd)
+
 ---------------------------------------------------------------------------
 ---- Vertical-Cartesian factoring of Dirichlet natural transformations ----
----------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 
 public export
@@ -149,6 +164,16 @@ DirichCartFactNatTrans : {0 p, q : MLDirichCatObj} ->
   DirichNatTrans (DirichVertCartFactFunc {p} {q} alpha) q
 DirichCartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
   (DirichCartFactOnPos {p} {q} alpha ** DirichCartFactOnDir {p} {q} alpha)
+
+public export
+DirichVertCartFactIsCorrect : {0 p, q : MLDirichCatObj} ->
+  (alpha : DirichNatTrans p q) ->
+  (dntVCatComp {p} {q=(DirichVertCartFactFunc {p} {q} alpha)} {r=q}
+    (DirichCartFactNatTrans {p} {q} alpha)
+    (DirichVertFactNatTrans {p} {q} alpha))
+  = alpha
+DirichVertCartFactIsCorrect {p=(_ ** _)} {q=(_ ** _)} (_ ** _) =
+  Refl
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
