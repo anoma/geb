@@ -96,9 +96,9 @@ InterpDirichNT : {0 p, q : MLDirichCatObj} -> DirichNatTrans p q ->
 InterpDirichNT {p} {q} alpha a =
   dpBimap (dntOnPos alpha) (\i => (.) $ dntOnDir alpha i)
 
-----------------------------------------------------------
----- Composition of Dirichlet natural transformations ----
-----------------------------------------------------------
+-------------------------------------------------------------------
+---- Vertical composition of Dirichlet natural transformations ----
+-------------------------------------------------------------------
 
 public export
 dntId : (p : MLDirichCatObj) -> DirichNatTrans p p
