@@ -24,6 +24,14 @@ InterpDirichFunc : MLDirichCatObj -> Type -> Type
 InterpDirichFunc = InterpIDFobj TypeObj TypeMor
 
 public export
+dfPos : MLDirichCatObj -> Type
+dfPos = ifeoIdx
+
+public export
+dfDir : (p : MLDirichCatObj) -> dfPos p -> Type
+dfDir = ifeoObj
+
+public export
 InterpDFMap : (p : MLDirichCatObj) -> {0 a, b : Type} ->
   (a -> b) -> InterpDirichFunc p b -> InterpDirichFunc p a
 InterpDFMap p m = dpMapSnd (\i => (|>) m)
@@ -44,12 +52,12 @@ DirichNatTrans = MLDirichCatMor
 
 public export
 dntOnPos : {0 p, q : MLDirichCatObj} -> DirichNatTrans p q ->
-  ifeoIdx p -> ifeoIdx q
+  dfPos p -> dfPos q
 dntOnPos = DPair.fst
 
 public export
 dntOnDir : {0 p, q : MLDirichCatObj} -> (alpha : DirichNatTrans p q) ->
-  (i : ifeoIdx p) -> ifeoObj p i -> ifeoObj q (dntOnPos {p} {q} alpha i)
+  (i : dfPos p) -> dfDir p i -> dfDir q (dntOnPos {p} {q} alpha i)
 dntOnDir = DPair.snd
 
 -- A natural transformation between Dirichlet functors may be viewed as a
@@ -67,16 +75,16 @@ InterpDirichNT {p} {q} alpha a =
 ---------------------------------------------------------------------------
 
 public export
-arBaseChangePos : (p : MLArena) -> {a : Type} -> (a -> ifeoIdx p) -> Type
+arBaseChangePos : (p : MLArena) -> {a : Type} -> (a -> dfPos p) -> Type
 arBaseChangePos p {a} f = a
 
 public export
-arBaseChangeDir : (p : MLArena) -> {a : Type} -> (f : a -> ifeoIdx p) ->
+arBaseChangeDir : (p : MLArena) -> {a : Type} -> (f : a -> dfPos p) ->
   arBaseChangePos p {a} f -> Type
 arBaseChangeDir (pos ** dir) {a} f i = dir $ f i
 
 public export
-arBaseChangeArena : (p : MLArena) -> {a : Type} -> (a -> ifeoIdx p) -> MLArena
+arBaseChangeArena : (p : MLArena) -> {a : Type} -> (a -> dfPos p) -> MLArena
 arBaseChangeArena p {a} f = (arBaseChangePos p {a} f ** arBaseChangeDir p {a} f)
 
 -- The intermediate Dirichlet functor in the vertical-Cartesian
@@ -85,29 +93,29 @@ public export
 DirichVertCartFactFunc : {p, q : MLDirichCatObj} ->
   DirichNatTrans p q -> MLDirichCatObj
 DirichVertCartFactFunc {p} {q} alpha =
-  arBaseChangeArena q {a=(ifeoIdx p)} (dntOnPos alpha)
+  arBaseChangeArena q {a=(dfPos p)} (dntOnPos alpha)
 
 public export
 DirichVertCartFactPos : {p, q : MLDirichCatObj} -> DirichNatTrans p q -> Type
 DirichVertCartFactPos {p} {q} alpha =
-  ifeoIdx (DirichVertCartFactFunc {p} {q} alpha)
+  dfPos (DirichVertCartFactFunc {p} {q} alpha)
 
 public export
 DirichVertCartFactDir : {p, q : MLDirichCatObj} ->
   (alpha : DirichNatTrans p q) -> DirichVertCartFactPos {p} {q} alpha -> Type
 DirichVertCartFactDir {p} {q} alpha =
-  ifeoObj (DirichVertCartFactFunc {p} {q} alpha)
+  dfDir (DirichVertCartFactFunc {p} {q} alpha)
 
 public export
 DirichVertFactOnPos : {0 p, q : MLDirichCatObj} ->
   (alpha : DirichNatTrans p q) ->
-  ifeoIdx p -> DirichVertCartFactPos {p} {q} alpha
+  dfPos p -> DirichVertCartFactPos {p} {q} alpha
 DirichVertFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i = i
 
 public export
 DirichVertFactOnDir :
   {0 p, q : MLDirichCatObj} -> (alpha : DirichNatTrans p q) ->
-  (i : ifeoIdx p) -> ifeoObj p i ->
+  (i : dfPos p) -> dfDir p i ->
   DirichVertCartFactDir {p} {q} alpha (DirichVertFactOnPos {p} {q} alpha i)
 DirichVertFactOnDir {p=p@(_ ** _)} {q=q@(_ ** _)} (onPos ** onDir) i j =
   onDir i j
@@ -122,7 +130,7 @@ DirichVertFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
 public export
 DirichCartFactOnPos : {0 p, q : MLDirichCatObj} ->
   (alpha : DirichNatTrans p q) ->
-  DirichVertCartFactPos {p} {q} alpha -> ifeoIdx q
+  DirichVertCartFactPos {p} {q} alpha -> dfPos q
 DirichCartFactOnPos {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onPos ** onDir) i =
   onPos i
 
@@ -131,7 +139,7 @@ DirichCartFactOnDir :
   {0 p, q : MLDirichCatObj} -> (alpha : DirichNatTrans p q) ->
   (i : DirichVertCartFactPos {p} {q} alpha) ->
   DirichVertCartFactDir {p} {q} alpha i ->
-  ifeoObj q (DirichCartFactOnPos {p} {q} alpha i)
+  dfDir q (DirichCartFactOnPos {p} {q} alpha i)
 DirichCartFactOnDir {p=p@(_ ** _)} {q=q@(_ ** _)} (_ ** _) i j =
   j
 
@@ -141,3 +149,88 @@ DirichCartFactNatTrans : {0 p, q : MLDirichCatObj} ->
   DirichNatTrans (DirichVertCartFactFunc {p} {q} alpha) q
 DirichCartFactNatTrans {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} alpha =
   (DirichCartFactOnPos {p} {q} alpha ** DirichCartFactOnDir {p} {q} alpha)
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+---- Universal morphisms in the category of Dirichlet functors on `Type` ----
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+----------------------------
+---- (Parallel) product ----
+----------------------------
+
+public export
+dfParProductPos : MLDirichCatObj -> MLDirichCatObj -> Type
+dfParProductPos (ppos ** pdir) (qpos ** qdir) = Pair ppos qpos
+
+public export
+dfParProductDir : (p, q : MLDirichCatObj) -> dfParProductPos p q -> Type
+dfParProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Pair . bimap pdir qdir
+
+public export
+dfParProductArena : MLDirichCatObj -> MLDirichCatObj -> MLDirichCatObj
+dfParProductArena p q = (dfParProductPos p q ** dfParProductDir p q)
+
+public export
+dirichParProj1OnPos : (p, q : MLDirichCatObj) ->
+  dfPos (dfParProductArena p q) -> dfPos p
+dirichParProj1OnPos (ppos ** pdir) (qpos ** qdir) (pi, qi) = pi
+
+public export
+dirichParProj1OnDir : (p, q : MLDirichCatObj) ->
+  (i : dfPos (dfParProductArena p q)) ->
+  dfDir (dfParProductArena p q) i ->
+  dfDir p (dirichParProj1OnPos p q i)
+dirichParProj1OnDir (ppos ** pdir) (qpos ** qdir) (pi, qi) (pd, qd) = pd
+
+public export
+dirichParProj1 : (p, q : MLDirichCatObj) ->
+  DirichNatTrans (dfParProductArena p q) p
+dirichParProj1 p@(ppos ** pdir) q@(qpos ** qdir) =
+  (dirichParProj1OnPos p q ** dirichParProj1OnDir p q)
+
+public export
+dirichParProj2OnPos : (p, q : MLDirichCatObj) ->
+  dfPos (dfParProductArena p q) -> dfPos q
+dirichParProj2OnPos (ppos ** pdir) (qpos ** qdir) (pi, qi) = qi
+
+public export
+dirichParProj2OnDir : (p, q : MLDirichCatObj) ->
+  (i : dfPos (dfParProductArena p q)) ->
+  dfDir (dfParProductArena p q) i ->
+  dfDir q (dirichParProj2OnPos p q i)
+dirichParProj2OnDir (ppos ** pdir) (qpos ** qdir) (pi, qi) (pd, qd) = qd
+
+public export
+dirichParProj2 : (p, q : MLDirichCatObj) ->
+  DirichNatTrans (dfParProductArena p q) q
+dirichParProj2 p@(ppos ** pdir) q@(qpos ** qdir) =
+  (dirichParProj2OnPos p q ** dirichParProj2OnDir p q)
+
+public export
+dirichParPairOnPos : (p, q, r : MLDirichCatObj) ->
+  DirichNatTrans p q -> DirichNatTrans p r ->
+  dfPos p ->
+  dfPos (dfParProductArena q r)
+dirichParPairOnPos (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pqonpos ** pqondir) (pronpos ** prondir) pi =
+    (pqonpos pi, pronpos pi)
+
+public export
+dirichParPairOnDir : (p, q, r : MLDirichCatObj) ->
+  (f : DirichNatTrans p q) -> (g : DirichNatTrans p r) ->
+  (pi : dfPos p) ->
+  dfDir p pi ->
+  dfDir (dfParProductArena q r) (dirichParPairOnPos p q r f g pi)
+dirichParPairOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
+  (pqonpos ** pqondir) (pronpos ** prondir) pi pd =
+    (pqondir pi pd, prondir pi pd)
+
+public export
+dirichParPair : {p, q, r : MLDirichCatObj} ->
+  DirichNatTrans p q -> DirichNatTrans p r ->
+  DirichNatTrans p (dfParProductArena q r)
+dirichParPair {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} {r=r@(rpos ** rdir)}
+  f g =
+    (dirichParPairOnPos p q r f g ** dirichParPairOnDir p q r f g)
