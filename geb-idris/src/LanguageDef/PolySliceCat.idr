@@ -154,7 +154,7 @@ DFSliceMorph {p} (ctot ** alpha) =
   (dtot : MLDirichCatObj ** MLDirichCatMor dtot ctot)
 
 public export
-DFSliceMorphDom : {0 p : MLDirichCatObj} -> {cod : CDFSliceObj p} ->
+DFSliceMorphDom : {p : MLDirichCatObj} -> {cod : CDFSliceObj p} ->
   DFSliceMorph {p} cod -> CDFSliceObj p
 DFSliceMorphDom {p} {cod=(ctot ** alpha)} (dtot ** beta) =
   (dtot ** dntVCatComp alpha beta)
