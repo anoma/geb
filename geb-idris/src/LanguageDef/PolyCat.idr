@@ -388,15 +388,15 @@ pfMaybeDir = pfDir {p=pfMaybeArena}
 
 public export
 pfParProductPos : PolyFunc -> PolyFunc -> Type
-pfParProductPos = pfProductPos
+pfParProductPos = dfParProductPos
 
 public export
 pfParProductDir : (p, q : PolyFunc) -> pfParProductPos p q -> Type
-pfParProductDir (ppos ** pdir) (qpos ** qdir) = uncurry Pair . bimap pdir qdir
+pfParProductDir = dfParProductDir
 
 public export
 pfParProductArena : PolyFunc -> PolyFunc -> PolyFunc
-pfParProductArena p q = (pfParProductPos p q ** pfParProductDir p q)
+pfParProductArena = dfParProductArena
 
 public export
 pfEqualizerPos : (p, q : PolyFunc) -> PolyNatTrans p q -> PolyNatTrans p q ->
@@ -1099,66 +1099,6 @@ PolyLKnt : (g, j : PolyFunc) ->
   PolyNatTrans g (pfCompositionArena (PolyLKanExt j g) j)
 PolyLKnt (gpos ** gdir) (jpos ** jdir) =
   (\gi => (gi ** \(ji ** jgd) => ji) ** \gi, ((ji ** jgd) ** jd) => jgd jd)
-
-public export
-polyParProj1OnPos : (p, q : PolyFunc) ->
-  pfPos (pfParProductArena p q) -> pfPos p
-polyParProj1OnPos (ppos ** pdir) (qpos ** qdir) (pi, qi) = pi
-
-public export
-polyParProj1OnDir : (p, q : PolyFunc) ->
-  (i : pfPos (pfParProductArena p q)) ->
-  pfDir {p=(pfParProductArena p q)} i ->
-  pfDir {p} (polyParProj1OnPos p q i)
-polyParProj1OnDir (ppos ** pdir) (qpos ** qdir) (pi, qi) (pd, qd) = pd
-
-public export
-polyParProj1 : (p, q : PolyFunc) -> DirichNatTrans (pfParProductArena p q) p
-polyParProj1 p@(ppos ** pdir) q@(qpos ** qdir) =
-  (polyParProj1OnPos p q ** polyParProj1OnDir p q)
-
-public export
-polyParProj2OnPos : (p, q : PolyFunc) ->
-  pfPos (pfParProductArena p q) -> pfPos q
-polyParProj2OnPos (ppos ** pdir) (qpos ** qdir) (pi, qi) = qi
-
-public export
-polyParProj2OnDir : (p, q : PolyFunc) ->
-  (i : pfPos (pfParProductArena p q)) ->
-  pfDir {p=(pfParProductArena p q)} i ->
-  pfDir {p=q} (polyParProj2OnPos p q i)
-polyParProj2OnDir (ppos ** pdir) (qpos ** qdir) (pi, qi) (pd, qd) = qd
-
-public export
-polyParProj2 : (p, q : PolyFunc) -> DirichNatTrans (pfParProductArena p q) q
-polyParProj2 p@(ppos ** pdir) q@(qpos ** qdir) =
-  (polyParProj2OnPos p q ** polyParProj2OnDir p q)
-
-public export
-polyParPairOnPos : (p, q, r : PolyFunc) ->
-  DirichNatTrans p q -> DirichNatTrans p r ->
-  pfPos p ->
-  pfPos (pfParProductArena q r)
-polyParPairOnPos (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
-  (pqonpos ** pqondir) (pronpos ** prondir) pi =
-    (pqonpos pi, pronpos pi)
-
-public export
-polyParPairOnDir : (p, q, r : PolyFunc) ->
-  (f : DirichNatTrans p q) -> (g : DirichNatTrans p r) ->
-  (pi : pfPos p) ->
-  pfDir {p} pi ->
-  pfDir {p=(pfParProductArena q r)} (polyParPairOnPos p q r f g pi)
-polyParPairOnDir (ppos ** pdir) (qpos ** qdir) (rpos ** rdir)
-  (pqonpos ** pqondir) (pronpos ** prondir) pi pd =
-    (pqondir pi pd, prondir pi pd)
-
-public export
-polyParPair : {p, q, r : PolyFunc} ->
-  DirichNatTrans p q -> DirichNatTrans p r ->
-  DirichNatTrans p (pfParProductArena q r)
-polyParPair {p=p@(ppos ** pdir)} {q=q@(qpos ** qdir)} {r=r@(rpos ** rdir)} f g =
-  (polyParPairOnPos p q r f g ** polyParPairOnDir p q r f g)
 
 ------------------------------------------------
 ------------------------------------------------
