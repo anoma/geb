@@ -12,6 +12,14 @@ import public LanguageDef.IntEFamCat
 ----------------------------------------------
 ----------------------------------------------
 
+public export
+dfPos : MLDirichCatObj -> Type
+dfPos = ifeoIdx
+
+public export
+dfDir : (p : MLDirichCatObj) -> dfPos p -> Type
+dfDir = ifeoObj
+
 -- Interpret the same data as determine a polynomial functor --
 -- namely, a dependent set, AKA arena -- as a Dirichlet functor
 -- (rather than a polynomial functor).  While a polynomial
@@ -20,14 +28,6 @@ import public LanguageDef.IntEFamCat
 public export
 InterpDirichFunc : MLDirichCatObj -> Type -> Type
 InterpDirichFunc = InterpIDFobj TypeObj TypeMor
-
-public export
-dfPos : MLDirichCatObj -> Type
-dfPos = ifeoIdx
-
-public export
-dfDir : (p : MLDirichCatObj) -> dfPos p -> Type
-dfDir = ifeoObj
 
 public export
 InterpDFMap : (p : MLDirichCatObj) -> {0 a, b : Type} ->
