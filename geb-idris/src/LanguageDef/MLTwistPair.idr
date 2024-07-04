@@ -123,4 +123,4 @@ MLTwPcodMor mor = MLTwPpredMor mor . MLTwPdomMor mor . MLTwPstructMor mor
 
 public export
 MLTwPmor : IntMorSig MLTwPobj
-MLTwPmor x y = PreImage {a=MLTwPmorTot} {b=MLTwPobjPair} MLTwPmorSig (x, y)
+MLTwPmor x y = WPreImage {a=MLTwPmorTot} {b=MLTwPobjPair} MLTwPmorSig (x, y)
