@@ -290,9 +290,9 @@ public export
 SSCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
 SSCoalg {c} {f} = SliceCoalg {a=c} (SliceFibSigmaF {c} {d=c} f)
 
---------------------------------------------------------
----- Equalizers as W-types (using `SliceFibSigmaF`) ----
---------------------------------------------------------
+------------------------------------------------------------------------------
+---- Equalizers, preimages, pullbacks as W-types (using `SliceFibSigmaF`) ----
+------------------------------------------------------------------------------
 
 public export
 WDiagElem : {a : Type} -> SliceObj (a, a)
@@ -322,6 +322,21 @@ public export
 EqualizerFromW : {a : Type} -> {0 b : Type} -> {0 f, g : a -> b} ->
   WEqualizer {a} {b} f g -> Equalizer {a} {b} f g
 EqualizerFromW {a} {b} {f} {g} = s0MapSnd $ WEqualizesCorrect {a} {b} {f} {g}
+
+public export
+EqualizerToW : {a : Type} -> {0 b : Type} -> {0 f, g : a -> b} ->
+  Equalizer {a} {b} f g -> WEqualizer {a} {b} f g
+EqualizerToW {a} {b} {f} {g} =
+  s0MapSnd $ \ea, fgeq => rewrite fgeq in SFS (g ea) ()
+
+public export
+WPreImage : {a : Type} -> {0 b : Type} -> (0 _ : a -> b) -> (0 _ : b) -> Type
+WPreImage {a} {b} f elemb = WEqualizer {a} {b} f (const elemb)
+
+public export
+WPullback : {a, b : Type} -> {0 c : Type} ->
+  (0 _ : a -> c) -> (0 _ : b -> c) -> Type
+WPullback {a} {b} {c} f g = WEqualizer {a=(Pair a b)} {b=c} (f . fst) (g . snd)
 
 ---------------------------
 ---------------------------
