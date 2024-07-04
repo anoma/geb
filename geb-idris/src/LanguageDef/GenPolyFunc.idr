@@ -48,6 +48,7 @@ MlDirichSlFromSPFDD ar spfdd =
 -- the directions of `ar` to `Type` itself (which is equivalent to `Type`
 -- sliced over `Unit`), or, put another way, a polynomial copresheaf on the
 -- directions of `ar`.
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 ---- PRA functors between slice categories of Dirichlet/polynomial functors ----
