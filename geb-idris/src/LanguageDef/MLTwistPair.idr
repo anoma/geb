@@ -15,11 +15,11 @@ import public LanguageDef.IntArena
 -- In favor of the (identical) one from `SliceFuncCat`.
 %hide Library.IdrisCategories.BaseChangeF
 
--------------------------------
--------------------------------
----- Objects and morphisms ----
--------------------------------
--------------------------------
+---------------------------------------------------------
+---------------------------------------------------------
+---- Objects and morphisms of `MLTwistPair` category ----
+---------------------------------------------------------
+---------------------------------------------------------
 
 -----------------
 ---- Objects ----
@@ -43,8 +43,18 @@ record MLTwPmorTot where
   mltwDomPred :
     SliceObj mltwCodPred
   mltwDomStruct :
-    SliceObj (Sigma {a=mltwCodPred} mltwDomPred)
+    SliceOfSlice {a=mltwCodPred} mltwDomPred
   mltwCodStruct :
-    SliceObj
-      (Sigma {a=mltwCodPred} $
-        SlSliceToSlice {c=mltwCodPred} {a=mltwDomPred} mltwDomStruct)
+    SliceOfSlice {a=(Sigma {a=mltwCodPred} mltwDomPred)} mltwDomStruct
+
+public export
+MLTwPmorDomPred : MLTwPmorTot -> Type
+MLTwPmorDomPred mor = Sigma {a=(mltwCodPred mor)} (mltwDomPred mor)
+
+public export
+MLTwPmorDomStruct : MLTwPmorTot -> Type
+MLTwPmorDomStruct mor = Sigma {a=(MLTwPmorDomPred mor)} (mltwDomStruct mor)
+
+public export
+MLTwPmorCodStruct : MLTwPmorTot -> Type
+MLTwPmorCodStruct mor = Sigma {a=(MLTwPmorDomStruct mor)} (mltwCodStruct mor)
