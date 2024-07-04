@@ -759,3 +759,60 @@ dfRepCurry : {a : Type} -> {p, r : MLDirichCatObj} ->
   DirichNatTrans p (dfRepHomObj a r)
 dfRepCurry {a} {p} {r} alpha =
   (dfRepCurryPos {a} {p} {r} alpha ** dfRepCurryDir {a} {p} {r} alpha)
+
+-- Now we use the hom-objects from representable Dirichlet functors to
+-- compute the hom-objects between general Dirichlet functors by reasoning
+-- that a natural transformation out of a Dirichlet functor, which is a
+-- coproduct of representables, must be a product of natural transformations
+-- out of representables.
+
+public export
+dfHomObj : MLDirichCatObj -> MLDirichCatObj -> MLDirichCatObj
+dfHomObj p q =
+  dfSetParProductArena {a=(dfPos p)} $ \i => dfRepHomObj (dfDir p i) q
+
+public export
+dfHomObjPos : MLDirichCatObj -> MLDirichCatObj -> Type
+dfHomObjPos p q = dfPos (dfHomObj p q)
+
+public export
+dfHomObjDir : (p, q : MLDirichCatObj) -> dfHomObjPos p q -> Type
+dfHomObjDir p q = dfDir (dfHomObj p q)
+
+public export
+dfEvalPos : (p, q : MLDirichCatObj) ->
+  dfPos (dfParProductArena (dfHomObj p q) p) ->
+  dfPos q
+dfEvalPos p q i = fst i $ snd i
+
+public export
+dfEvalDir : (p, q : MLDirichCatObj) ->
+  (i : dfPos (dfParProductArena (dfHomObj p q) p)) ->
+  dfDir (dfParProductArena (dfHomObj p q) p) i ->
+  dfDir q (dfEvalPos p q i)
+dfEvalDir a p i f = fst f (snd i) $ snd f
+
+public export
+dfEval : (p, q : MLDirichCatObj) ->
+  DirichNatTrans (dfParProductArena (dfHomObj p q) p) q
+dfEval p q = (dfEvalPos p q ** dfEvalDir p q)
+
+public export
+dfCurryPos : {p, q, r : MLDirichCatObj} ->
+  DirichNatTrans (dfParProductArena p q) r ->
+  dfPos p -> dfPos (dfHomObj q r)
+dfCurryPos {p} {q} {r} alpha pi qi = fst alpha (pi, qi)
+
+public export
+dfCurryDir : {p, q, r : MLDirichCatObj} ->
+  (alpha : DirichNatTrans (dfParProductArena p q) r) ->
+  (i : dfPos p) ->
+  dfDir p i -> dfDir (dfHomObj q r) (dfCurryPos {p} {q} {r} alpha i)
+dfCurryDir {p} {q} {r} alpha pi pd qi qd = snd alpha (pi, qi) (pd, qd)
+
+public export
+dfCurry : {p, q, r : MLDirichCatObj} ->
+  DirichNatTrans (dfParProductArena p q) r ->
+  DirichNatTrans p (dfHomObj q r)
+dfCurry {p} {q} {r} alpha =
+  (dfCurryPos {p} {q} {r} alpha ** dfCurryDir {p} {q} {r} alpha)
