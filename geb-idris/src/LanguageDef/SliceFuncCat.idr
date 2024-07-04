@@ -300,42 +300,43 @@ WDiagElem {a} =
   SliceFibSigmaF {c=a} {d=(a, a)} (ProductNTUnit {a}) (SliceObjTerminal a)
 
 public export
-0 WDiagElemEqualizes : {a : Type} -> {ea, ea' : a} ->
+WDiagElemEqualizes : {a : Type} -> {ea, ea' : a} ->
   WDiagElem {a} (ea, ea') -> ea = ea'
 WDiagElemEqualizes {a} {ea} {ea'=ea} (SFS ea ()) = Refl
 
 public export
-0 WEqualizes : {a : Type} -> {0 b : Type} -> (0 f, g : a -> b) -> SliceObj a
+WEqualizes : {a, b : Type} -> (f, g : a -> b) -> SliceObj a
 WEqualizes {a} {b} f g ea = WDiagElem {a=b} (f ea, g ea)
 
 public export
-0 WEqualizesCorrect : {a : Type} -> {0 b : Type} -> {0 f, g : a -> b} ->
+0 WEqualizesCorrect : {a, b : Type} -> {f, g : a -> b} ->
   (ea : a) -> WEqualizes {a} {b} f g ea -> f ea = g ea
 WEqualizesCorrect {a} {b} {f} {g} ea =
   WDiagElemEqualizes {a=b} {ea=(f ea)} {ea'=(g ea)}
 
 public export
-WEqualizer : {a : Type} -> {0 b : Type} -> (0 f, g : a -> b) -> Type
-WEqualizer {a} {b} f g = Subset0 a (WEqualizes {a} {b} f g)
+WEqualizer : {a, b : Type} -> (f, g : a -> b) -> Type
+WEqualizer {a} {b} f g =
+  SliceFibSigmaF {c=a} {d=Unit} (\_ => ()) (WEqualizes {a} {b} f g) ()
 
 public export
-EqualizerFromW : {a : Type} -> {0 b : Type} -> {0 f, g : a -> b} ->
+0 EqualizerFromW : {a, b : Type} -> {f, g : a -> b} ->
   WEqualizer {a} {b} f g -> Equalizer {a} {b} f g
-EqualizerFromW {a} {b} {f} {g} = s0MapSnd $ WEqualizesCorrect {a} {b} {f} {g}
+EqualizerFromW {a} {b} {f} {g} (SFS ea sfs) =
+  Element0 ea $ WEqualizesCorrect {f} {g} ea sfs
 
 public export
-EqualizerToW : {a : Type} -> {0 b : Type} -> {0 f, g : a -> b} ->
+0 EqualizerToW : {a : Type} -> {0 b : Type} -> {0 f, g : a -> b} ->
   Equalizer {a} {b} f g -> WEqualizer {a} {b} f g
-EqualizerToW {a} {b} {f} {g} =
-  s0MapSnd $ \ea, fgeq => rewrite fgeq in SFS (g ea) ()
+EqualizerToW {a} {b} {f} {g} (Element0 ea fgeq) =
+  SFS ea $ rewrite fgeq in SFS (g ea) ()
 
 public export
-WPreImage : {a : Type} -> {0 b : Type} -> (0 _ : a -> b) -> (0 _ : b) -> Type
+WPreImage : {a, b : Type} -> (a -> b) -> b -> Type
 WPreImage {a} {b} f elemb = WEqualizer {a} {b} f (const elemb)
 
 public export
-WPullback : {a, b : Type} -> {0 c : Type} ->
-  (0 _ : a -> c) -> (0 _ : b -> c) -> Type
+WPullback : {a, b, c : Type} -> (a -> c) -> (b -> c) -> Type
 WPullback {a} {b} {c} f g = WEqualizer {a=(Pair a b)} {b=c} (f . fst) (g . snd)
 
 ---------------------------
