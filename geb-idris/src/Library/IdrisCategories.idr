@@ -856,6 +856,20 @@ SlSliceToSlice : {0 c : Type} -> {a : SliceObj c} ->
 SlSliceToSlice {c} {a} sl ec = Sigma {a=(a ec)} (curry sl ec)
 
 public export
+dpAssocLeft :
+  {0 a : Type} -> {0 b : a -> Type} -> {0 c : Sigma {a} b -> Type} ->
+  Sigma {a} (SlSliceToSlice {c=a} {a=b} c) ->
+  Sigma {a=(Sigma {a} b)} c
+dpAssocLeft {a} {b} {c} (ea ** (eb ** ec)) = ((ea ** eb) ** ec)
+
+public export
+dpAssocRight :
+  {0 a : Type} -> {0 b : a -> Type} -> {0 c : Sigma {a} b -> Type} ->
+  Sigma {a=(Sigma {a} b)} c ->
+  Sigma {a} (SlSliceToSlice {c=a} {a=b} c)
+dpAssocRight {a} {b} {c} ((ea ** eb) ** ec) = (ea ** (eb ** ec))
+
+public export
 slSliceToMor : {0 c : Type} -> {a : SliceObj c} ->
   (sl : SliceObj (Sigma {a=c} a)) ->
   SliceMorphism {a=c} (SlSliceToSlice {a} {c} sl) a
