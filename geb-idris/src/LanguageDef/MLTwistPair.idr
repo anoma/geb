@@ -94,11 +94,21 @@ MLTwPmorCod : MLTwPmorTot -> MLTwPobj
 MLTwPmorCod mor = TwPo (mltwCodPred mor) (MLTwPmorCodStructCodPredSl mor)
 
 public export
+MLTwPpredMor : (mor : MLTwPmorTot) ->
+  MLTwPmorDomPred mor -> mltwCodPred mor
+MLTwPpredMor mor = DPair.fst
+
+public export
 MLTwPdomMor : (mor : MLTwPmorTot) ->
   MLTwPmorDomStruct mor -> MLTwPmorDomPred mor
 MLTwPdomMor mor = mltwpMor (MLTwPmorDom mor)
 
 public export
+MLTwPstructMor : (mor : MLTwPmorTot) ->
+  MLTwPmorCodStruct mor -> MLTwPmorDomStruct mor
+MLTwPstructMor mor = DPair.fst
+
+public export
 MLTwPcodMor : (mor : MLTwPmorTot) ->
   MLTwPmorCodStruct mor -> mltwCodPred mor
-MLTwPcodMor mor cs = DPair.fst (DPair.fst (DPair.fst cs))
+MLTwPcodMor mor = MLTwPpredMor mor . MLTwPdomMor mor . MLTwPstructMor mor
