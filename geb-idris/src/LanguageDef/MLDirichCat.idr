@@ -322,11 +322,11 @@ DirichCatElMorMor : {p : MLDirichCatObj} ->
 DirichCatElMorMor {p} m = snd $ snd m
 
 public export
-data DirichCatElMorP :
-    {p : MLDirichCatObj} -> SliceObj (DirichCatElObjPair p) where
-  DCEMP : {p : MLDirichCatObj} ->
-    (mtot : DirichCatElMorTot p) ->
-    DirichCatElMorP {p} (DirichCatElMorSig {p} mtot)
+DirichCatElMorP : {p : MLDirichCatObj} -> SliceObj (DirichCatElObjPair p)
+DirichCatElMorP {p} =
+  SliceFibSigmaF {c=(DirichCatElMorTot p)} {d=(DirichCatElObjPair p)}
+    (DirichCatElMorSig {p})
+    (SliceObjTerminal $ DirichCatElMorTot p)
 
 public export
 DirichCatElMor : {p : MLDirichCatObj} -> IntMorSig (DirichCatElObj p)
@@ -350,11 +350,12 @@ public export
     (DirichNTCatElOMap {p} {q} alpha x)
     (DirichNTCatElOMap {p} {q} alpha y)
 DirichNTCatElFMap {p} {q} (onpos ** ondir) (pi ** slx) (pi ** sly)
-  (DCEMP (pi ** ((slx, sly) ** m))) =
-    DCEMP
+  (SFS (pi ** ((slx, sly) ** m)) ()) =
+    SFS
       (onpos pi **
        ((SliceFibSigmaF (ondir pi) slx, SliceFibSigmaF (ondir pi) sly) **
         sfsMap {f=(ondir pi)} slx sly m))
+      ()
 
 ---------------------------
 ---- Outgoing functors ----
