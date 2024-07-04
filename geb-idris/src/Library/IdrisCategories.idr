@@ -4658,6 +4658,10 @@ record WTypeCell {w, w', z, z' : Type}
       (bcl . wtAssign f . wtcOnDir)
       (wtAssign g . pbProj1 {f=(wtDirSlice g)} {g=wtcOnPos})
 
+public export
+WTypeNT : {w, z : Type} -> WTypeFunc w z -> WTypeFunc w z -> Type
+WTypeNT {w} {z} = WTypeCell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id
+
 -----------------------------
 ---- Algebras of W-types ----
 -----------------------------
