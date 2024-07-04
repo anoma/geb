@@ -300,7 +300,7 @@ WDiagElem {a} =
   SliceFibSigmaF {c=a} {d=(a, a)} (ProductNTUnit {a}) (SliceObjTerminal a)
 
 public export
-WDiagElemEqualizes : {a : Type} -> {ea, ea' : a} ->
+0 WDiagElemEqualizes : {a : Type} -> {ea, ea' : a} ->
   WDiagElem {a} (ea, ea') -> ea = ea'
 WDiagElemEqualizes {a} {ea} {ea'=ea} (SFS ea ()) = Refl
 
