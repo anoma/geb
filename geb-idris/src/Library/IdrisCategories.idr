@@ -823,6 +823,21 @@ sliceApp : {0 c : Type} -> {0 x, y, z : SliceObj c} ->
   SliceMorphism x z
 sliceApp {c} {x} {y} {z} g f ec ex = g ec ex $ f ec ex
 
+-- A slice object over `Sigma` of a given slice object.
+--
+-- Under the equivalence of a slice category of a slice category with a
+-- slice category of the base category, a `SliceOfSigma {a} sl` corresponds
+-- to an object in the slice category over `sl` of the slice category
+-- of `Type` over `a`.
+public export
+SliceOfSlice : {a : Type} -> SliceObj a -> Type
+SliceOfSlice {a} = SliceObj . Sigma {a}
+
+-- `Sigma` of an object in a slice category of a slice category.
+public export
+SliceSigma : {a : Type} -> {sl : SliceObj a} -> SliceOfSlice {a} sl -> Type
+SliceSigma {a} {sl} = Sigma {a=(Sigma {a} sl)}
+
 public export
 sliceFiberByMor : {0 c : Type} ->
   {a, b : SliceObj c} -> (i : SliceMorphism {a=c} b a) ->
