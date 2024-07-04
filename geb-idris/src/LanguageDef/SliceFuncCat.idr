@@ -295,9 +295,12 @@ SSCoalg {c} {f} = SliceCoalg {a=c} (SliceFibSigmaF {c} {d=c} f)
 ------------------------------------------------------------------------------
 
 public export
+WPreImage : {a, b : Type} -> (a -> b) -> SliceObj b
+WPreImage {a} {b} f = SliceFibSigmaF {c=a} {d=b} f (SliceObjTerminal a)
+
+public export
 WDiagElem : {a : Type} -> SliceObj (a, a)
-WDiagElem {a} =
-  SliceFibSigmaF {c=a} {d=(a, a)} (ProductNTUnit {a}) (SliceObjTerminal a)
+WDiagElem {a} = WPreImage {a} {b=(a, a)} (ProductNTUnit {a})
 
 public export
 0 WDiagElemEqualizes : {a : Type} -> {ea, ea' : a} ->
@@ -336,10 +339,6 @@ public export
   Equalizer {a} {b} f g -> WEqualizer {a} {b} f g
 EqualizerToW {a} {b} {f} {g} (Element0 ea fgeq) =
   SFS ea $ rewrite fgeq in SFS (g ea) ()
-
-public export
-WPreImage : {a, b : Type} -> (a -> b) -> b -> Type
-WPreImage {a} {b} f elemb = WEqualizer {a} {b} f (const elemb)
 
 public export
 WPullback : {a, b, c : Type} -> (a -> c) -> (b -> c) -> Type

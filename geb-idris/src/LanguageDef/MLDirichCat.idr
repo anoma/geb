@@ -324,9 +324,8 @@ DirichCatElMorMor {p} m = snd $ snd m
 public export
 DirichCatElMorP : {p : MLDirichCatObj} -> SliceObj (DirichCatElObjPair p)
 DirichCatElMorP {p} =
-  SliceFibSigmaF {c=(DirichCatElMorTot p)} {d=(DirichCatElObjPair p)}
+  WPreImage {a=(DirichCatElMorTot p)} {b=(DirichCatElObjPair p)}
     (DirichCatElMorSig {p})
-    (SliceObjTerminal $ DirichCatElMorTot p)
 
 public export
 DirichCatElMor : {p : MLDirichCatObj} -> IntMorSig (DirichCatElObj p)
