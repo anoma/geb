@@ -243,13 +243,14 @@ bimap f g e = Element0 (f $ fst0 e) (g $ snd0 e)
 
 public export
 s0Bimap : {0 a, b : Type} -> {0 p : a -> Type} -> {0 q : b -> Type} ->
-  (f : a -> b) -> ((ea : a) -> p ea -> q (f ea)) -> Subset0 a p -> Subset0 b q
+  (f : a -> b) -> (0 _ : (ea : a) -> p ea -> q (f ea)) ->
+  Subset0 a p -> Subset0 b q
 s0Bimap {a} {b} {p} {q} f m eap =
   Element0 (f (fst0 eap)) (m (fst0 eap) (snd0 eap))
 
 public export
 s0MapSnd : {0 a : Type} -> {0 p : a -> Type} -> {0 q : a -> Type} ->
-  ((ea : a) -> p ea -> q ea) -> Subset0 a p -> Subset0 a q
+  (0 _ : (ea : a) -> p ea -> q ea) -> Subset0 a p -> Subset0 a q
 s0MapSnd {a} {p} {q} = s0Bimap {a} {b=a} {p} {q} (id {a})
 
 public export
