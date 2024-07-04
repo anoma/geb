@@ -31,6 +31,14 @@ record MLTwPobj where
   mltwPred : Type
   mltwStruct : SliceObj mltwPred
 
+public export
+MLTwPstruct : MLTwPobj -> Type
+MLTwPstruct twp = Sigma {a=(mltwPred twp)} (mltwStruct twp)
+
+public export
+mltwpMor : (twp : MLTwPobj) -> MLTwPstruct twp -> mltwPred twp
+mltwpMor twp = DPair.fst
+
 -------------------
 ---- Morphisms ----
 -------------------
@@ -84,3 +92,13 @@ MLTwPmorDom mor = TwPo (MLTwPmorDomPred mor) (mltwDomStruct mor)
 public export
 MLTwPmorCod : MLTwPmorTot -> MLTwPobj
 MLTwPmorCod mor = TwPo (mltwCodPred mor) (MLTwPmorCodStructCodPredSl mor)
+
+public export
+MLTwPdomMor : (mor : MLTwPmorTot) ->
+  MLTwPmorDomStruct mor -> MLTwPmorDomPred mor
+MLTwPdomMor mor = mltwpMor (MLTwPmorDom mor)
+
+public export
+MLTwPcodMor : (mor : MLTwPmorTot) ->
+  MLTwPmorCodStruct mor -> mltwCodPred mor
+MLTwPcodMor mor cs = DPair.fst (DPair.fst (DPair.fst cs))
