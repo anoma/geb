@@ -65,6 +65,13 @@ MLTwPmorCodStruct : MLTwPmorTot -> Type
 MLTwPmorCodStruct mor = Sigma {a=(MLTwPmorDomStruct mor)} (mltwCodStruct mor)
 
 public export
+MLTwPmorCodStructDomPredSl : (mor : MLTwPmorTot) ->
+  SliceOfSlice {a=(mltwCodPred mor)} (mltwDomPred mor)
+MLTwPmorCodStructDomPredSl mor =
+  SlSliceToSlice {c=(MLTwPmorDomPred mor)} {a=(mltwDomStruct mor)}
+    (mltwCodStruct mor)
+
+public export
 MLTwPmorCodStructCodPredSl : (mor : MLTwPmorTot) -> SliceObj (mltwCodPred mor)
 MLTwPmorCodStructCodPredSl mor =
   SlSliceToSlice {c=(mltwCodPred mor)} {a=(MLTwPmorDomStructCodPredSl mor)}
