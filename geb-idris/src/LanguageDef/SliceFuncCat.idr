@@ -306,13 +306,19 @@ WDiagElemEqualizes {a} {ea} {ea'=ea} (SFS ea ()) = Refl
 
 public export
 WEqualizes : {a, b : Type} -> (f, g : a -> b) -> SliceObj a
-WEqualizes {a} {b} f g ea = WDiagElem {a=b} (f ea, g ea)
+WEqualizes {a} {b} f g =
+  BaseChangeF {c=(b, b)} {d=a} (MkPairF f g) (WDiagElem {a=b})
 
 public export
 0 WEqualizesCorrect : {a, b : Type} -> {f, g : a -> b} ->
   (ea : a) -> WEqualizes {a} {b} f g ea -> f ea = g ea
 WEqualizesCorrect {a} {b} {f} {g} ea =
   WDiagElemEqualizes {a=b} {ea=(f ea)} {ea'=(g ea)}
+
+public export
+0 WEqualizesComplete : {a, b : Type} -> {f, g : a -> b} ->
+  (ea : a) -> f ea = g ea -> WEqualizes {a} {b} f g ea
+WEqualizesComplete {a} {b} {f} {g} ea eq = rewrite eq in SFS (g ea) ()
 
 public export
 WEqualizer : {a, b : Type} -> (f, g : a -> b) -> Type
