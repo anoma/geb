@@ -290,6 +290,39 @@ public export
 SSCoalg : {c : Type} -> (0 f : c -> c) -> (sc : SliceObj c) -> Type
 SSCoalg {c} {f} = SliceCoalg {a=c} (SliceFibSigmaF {c} {d=c} f)
 
+--------------------------------------------------------
+---- Equalizers as W-types (using `SliceFibSigmaF`) ----
+--------------------------------------------------------
+
+public export
+WDiagElem : {a : Type} -> SliceObj (a, a)
+WDiagElem {a} =
+  SliceFibSigmaF {c=a} {d=(a, a)} (ProductNTUnit {a}) (SliceObjTerminal a)
+
+public export
+0 WDiagElemEqualizes : {a : Type} -> {ea, ea' : a} ->
+  WDiagElem {a} (ea, ea') -> ea = ea'
+WDiagElemEqualizes {a} {ea} {ea'=ea} (SFS ea ()) = Refl
+
+public export
+0 WEqualizes : {a : Type} -> {0 b : Type} -> (0 f, g : a -> b) -> SliceObj a
+WEqualizes {a} {b} f g ea = WDiagElem {a=b} (f ea, g ea)
+
+public export
+0 WEqualizesCorrect : {a : Type} -> {0 b : Type} -> {0 f, g : a -> b} ->
+  (ea : a) -> WEqualizes {a} {b} f g ea -> f ea = g ea
+WEqualizesCorrect {a} {b} {f} {g} ea =
+  WDiagElemEqualizes {a=b} {ea=(f ea)} {ea'=(g ea)}
+
+public export
+WEqualizer : {a : Type} -> {0 b : Type} -> (0 f, g : a -> b) -> Type
+WEqualizer {a} {b} f g = Subset0 a (WEqualizes {a} {b} f g)
+
+public export
+EqualizerFromW : {a : Type} -> {0 b : Type} -> {0 f, g : a -> b} ->
+  WEqualizer {a} {b} f g -> Equalizer {a} {b} f g
+EqualizerFromW {a} {b} {f} {g} = s0MapSnd $ WEqualizesCorrect {a} {b} {f} {g}
+
 ---------------------------
 ---------------------------
 ---- Dependent product ----
