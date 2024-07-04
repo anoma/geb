@@ -32,6 +32,10 @@ record MLTwPobj where
   mltwStruct : SliceObj mltwPred
 
 public export
+MLTwPobjPair : Type
+MLTwPobjPair = ProductMonad MLTwPobj
+
+public export
 MLTwPstruct : MLTwPobj -> Type
 MLTwPstruct twp = Sigma {a=(mltwPred twp)} (mltwStruct twp)
 
@@ -94,6 +98,10 @@ MLTwPmorCod : MLTwPmorTot -> MLTwPobj
 MLTwPmorCod mor = TwPo (mltwCodPred mor) (MLTwPmorCodStructCodPredSl mor)
 
 public export
+MLTwPmorSig : MLTwPmorTot -> MLTwPobjPair
+MLTwPmorSig mor = (MLTwPmorDom mor, MLTwPmorCod mor)
+
+public export
 MLTwPpredMor : (mor : MLTwPmorTot) ->
   MLTwPmorDomPred mor -> mltwCodPred mor
 MLTwPpredMor mor = DPair.fst
@@ -112,3 +120,7 @@ public export
 MLTwPcodMor : (mor : MLTwPmorTot) ->
   MLTwPmorCodStruct mor -> mltwCodPred mor
 MLTwPcodMor mor = MLTwPpredMor mor . MLTwPdomMor mor . MLTwPstructMor mor
+
+public export
+MLTwPmor : IntMorSig MLTwPobj
+MLTwPmor x y = PreImage {a=MLTwPmorTot} {b=MLTwPobjPair} MLTwPmorSig (x, y)
