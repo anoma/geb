@@ -429,6 +429,36 @@ pfComposeInterpInv : {q, p : PolyFunc} -> {x : Type} ->
 pfComposeInterpInv {q=(qpos ** qdir)} {p=(ppos ** pdir)} {x} ((qi ** qd) ** d) =
   (qi ** \qdi => (qd qdi ** \pdi => d (qdi ** pdi)))
 
+-- Composing a polynomial functor after a Dirichlet functor yields
+-- a Dirichlet functor.
+
+public export
+pdfCompositionPos : PolyFunc -> MLDirichCatObj -> Type
+pdfCompositionPos q p = (qi : pfPos q ** pfDir {p=q} qi -> pfPos p)
+
+public export
+pdfCompositionDir : (q : PolyFunc) -> (p : MLDirichCatObj) ->
+  pdfCompositionPos q p -> Type
+pdfCompositionDir q p i = (qd : pfDir {p=q} $ fst i) -> pfDir {p} $ snd i qd
+
+public export
+pdfCompositionArena : PolyFunc -> MLDirichCatObj -> PolyFunc
+pdfCompositionArena q p = (pdfCompositionPos q p ** pdfCompositionDir q p)
+
+public export
+pdfComposeInterp : {q : PolyFunc} -> {p : MLDirichCatObj} -> {x : Type} ->
+  InterpPolyFunc q (InterpDirichFunc p x) ->
+  InterpDirichFunc (pdfCompositionArena q p) x
+pdfComposeInterp {q} {p} {x} qidm =
+  ((fst qidm ** fst . snd qidm) ** \ex, qd => snd (snd qidm qd) ex)
+
+public export
+pdfComposeInterpInv : {q : PolyFunc} -> {p : MLDirichCatObj} -> {x : Type} ->
+  InterpDirichFunc (pdfCompositionArena q p) x ->
+  InterpPolyFunc q (InterpDirichFunc p x)
+pdfComposeInterpInv {q} {p} {x} el =
+  (fst $ fst el ** \qd => (snd (fst el) qd ** \ex => snd el ex qd))
+
 public export
 pfDuplicateArena : PolyFunc -> PolyFunc
 pfDuplicateArena p = pfCompositionArena p p
