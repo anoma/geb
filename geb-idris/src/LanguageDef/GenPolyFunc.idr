@@ -219,4 +219,4 @@ public export
 0 PRAdirType : (0 dom, cod : MLDirichCatObj) ->
   (0 pos : MlDirichSlObj cod) -> Type
 PRAdirType dom cod pos =
-  MlDirichSlObj (pfParProductArena (mlDirichSlObjTot {ar=cod} pos) dom)
+  MlDirichSlObj (dfParProductArena (mlDirichSlObjTot {ar=cod} pos) dom)
