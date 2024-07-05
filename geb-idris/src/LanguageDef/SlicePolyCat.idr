@@ -2402,6 +2402,19 @@ InterpSPFdepData {b} {dom} {cod} spfdd eb sld ebc =
     (eb ** ebc)
 
 public export
+InterpSPFdepDataMap : {b : Type} -> {dom, cod : SliceObj b} ->
+  (spfdd : SPFdepData {b} dom cod) ->
+  (eb : b) -> (x, y : SliceObj $ dom eb) ->
+  SliceMorphism {a=(dom eb)} x y ->
+  SliceMorphism {a=(cod eb)}
+    (InterpSPFdepData {b} {dom} {cod} spfdd eb x)
+    (InterpSPFdepData {b} {dom} {cod} spfdd eb y)
+InterpSPFdepDataMap {b} {dom} {cod} spfdd eb x y mxy ec =
+  dpMapSnd $ \ep, dm, ebd, dd =>
+  let (Evidence eqb ex) = dm ebd dd in
+  Evidence eqb $ mxy (rewrite sym eqb in snd ebd) ex
+
+public export
 record SPFdepNT {0 b : Type} {dom, cod : SliceObj b}
     (f, g : SPFdepData {b} dom cod) where
   constructor SPFdnt
