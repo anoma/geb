@@ -220,3 +220,13 @@ public export
   (0 pos : MlDirichSlObj cod) -> Type
 PRAdirType dom cod pos =
   MlDirichSlObj (dfParProductArena (mlDirichSlObjTot {ar=cod} pos) dom)
+
+-- As with `SPFdirType`, we can make a more dependent version of `PRAdirType`.
+public export
+0 PRAdepDirType : {0 b : MLDirichCatObj} ->
+  (0 domsl, codsl : MlDirichSlObj b) -> (0 pos : MlDirichSlOfSl {ar=b} codsl) ->
+  Type
+PRAdepDirType {b} domsl codsl pos =
+  MlDirichSlObj
+  $ mlDirichSlObjTot {ar=b}
+  $ dfSlParProductArena (MlDirichSlFromSlOfSl {ar=b} codsl pos) domsl

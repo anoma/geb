@@ -819,3 +819,29 @@ dfCurry : {p, q, r : MLDirichCatObj} ->
   DirichNatTrans p (dfHomObj q r)
 dfCurry {p} {q} {r} alpha =
   (dfCurryPos {p} {q} {r} alpha ** dfCurryDir {p} {q} {r} alpha)
+
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+---- Universal morphisms in slice categories of Dirichlet functors ----
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+
+public export
+dfSlParProductPos : {b : MLDirichCatObj} ->
+  MlDirichSlObj b -> MlDirichSlObj b -> MlSlArProjOnPos b
+dfSlParProductPos {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir) bi =
+  Pair (ppos bi) (qpos bi)
+
+public export
+dfSlParProductDir : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlDir b (dfSlParProductPos {b} p q)
+dfSlParProductDir {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir) =
+  \bi : bpos, (pi, qi), bd : bdir bi =>
+    Pair (pdir bi pi bd) (qdir bi qi bd)
+
+public export
+dfSlParProductArena : {b : MLDirichCatObj} ->
+  MlDirichSlObj b -> MlDirichSlObj b -> MlDirichSlObj b
+dfSlParProductArena {b} p q =
+  MDSobj (dfSlParProductPos {b} p q) (dfSlParProductDir {b} p q)
