@@ -241,7 +241,7 @@ mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 public export
 PRAbase : (cod : MLDirichCatObj) ->
   (pos : MlDirichSlObj cod) -> MLDirichCatObj
-PRAbase cod pos = mlDirichSlObjTot {ar=cod} pos
+PRAbase cod = mlDirichSlObjTot {ar=cod}
 
 public export
 PRAdirDom : (dom, cod : MLDirichCatObj) ->
@@ -286,11 +286,21 @@ InterpPRAdataFmap {dom} {cod} prad x y =
     y
 
 -- As with `SPFdirType`, we can make a more dependent version of `PRAdirType`.
+
+public export
+PRAdepBase : {b : MLDirichCatObj} -> (codsl : MlDirichSlObj b) ->
+  (pos : MlDirichSlOfSl {ar=b} codsl) -> MlDirichSlObj b
+PRAdepBase {b} codsl pos = MlDirichSlFromSlOfSl {ar=b} codsl pos
+
+public export
+PRAdepDirDom : {b : MLDirichCatObj} -> (domsl, codsl : MlDirichSlObj b) ->
+  (pos : MlDirichSlOfSl {ar=b} codsl) -> MlDirichSlObj b
+PRAdepDirDom {b} domsl codsl pos =
+  dfSlParProductArena domsl (PRAdepBase {b} codsl pos)
+
 public export
 0 PRAdepDirType : {0 b : MLDirichCatObj} ->
   (0 domsl, codsl : MlDirichSlObj b) -> (0 pos : MlDirichSlOfSl {ar=b} codsl) ->
   Type
 PRAdepDirType {b} domsl codsl pos =
-  MlDirichSlObj
-  $ mlDirichSlObjTot {ar=b}
-  $ dfSlParProductArena (MlDirichSlFromSlOfSl {ar=b} codsl pos) domsl
+  MlDirichSlOfSl {ar=b} $ PRAdepDirDom {b} domsl codsl pos
