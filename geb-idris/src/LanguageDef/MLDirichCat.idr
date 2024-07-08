@@ -843,9 +843,9 @@ dfCurry {p} {q} {r} alpha =
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
 
--------------------------------
----- Set-indexed coproduct ----
--------------------------------
+-------------------
+---- Coproduct ----
+-------------------
 
 public export
 dfSlCoproductPos : {b : MLDirichCatObj} ->
@@ -869,9 +869,9 @@ dfSlCoproductArena : {b : MLDirichCatObj} ->
 dfSlCoproductArena {b} p q =
   MDSobj (dfSlCoproductPos {b} p q) (dfSlCoproductDir {b} p q)
 
---------------------------------------
----- Set-indexed parallel product ----
---------------------------------------
+--------------------------
+---- Parallel product ----
+--------------------------
 
 public export
 dfSlParProductPos : {b : MLDirichCatObj} ->
