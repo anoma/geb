@@ -267,7 +267,7 @@ PRADbase {dom} {cod} prad = PRAbase cod $ pradPos prad
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
 public export
 InterpPRAdataOmap : {dom, cod : MLDirichCatObj} ->
-  PRAData dom cod -> MlDirichSlObj dom -> MlDirichSlObj cod
+  PRAData dom cod -> MlDirichSlFunc dom cod
 InterpPRAdataOmap {dom} {cod} prad =
   mlDirichSlSigma {p=cod} (pradPos prad)
   . mlDirichSlSigmaPiFR {p=dom} {q=(PRADbase {dom} {cod} prad)} (pradDir prad)
@@ -275,9 +275,7 @@ InterpPRAdataOmap {dom} {cod} prad =
 public export
 InterpPRAdataFmap : {dom, cod : MLDirichCatObj} ->
   (prad : PRAData dom cod) ->
-  (x, y : MlDirichSlObj dom) ->
-  MlDirichSlMor {ar=dom} x y ->
-  MlDirichSlMor {ar=cod} (InterpPRAdataOmap prad x) (InterpPRAdataOmap prad y)
+  MlDirichSlFMap {ar=dom} {ar'=cod} (InterpPRAdataOmap prad)
 InterpPRAdataFmap {dom} {cod} prad x y =
   mlDirichSlSigmaMap {p=cod} (pradPos prad)
     (mlDirichSlSigmaPiFR (pradDir prad) x)
