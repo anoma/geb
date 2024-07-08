@@ -826,6 +826,10 @@ dfCurry {p} {q} {r} alpha =
 -----------------------------------------------------------------------
 -----------------------------------------------------------------------
 
+--------------------------------------
+---- Set-indexed parallel product ----
+--------------------------------------
+
 public export
 dfSlParProductPos : {b : MLDirichCatObj} ->
   MlDirichSlObj b -> MlDirichSlObj b -> MlSlArProjOnPos b
