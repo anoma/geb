@@ -528,16 +528,16 @@ pfCompositionPowerDir p n = pfDir {p=(pfCompositionPowerArena p n)}
 
 public export
 pfSetCoproductPos : {a : Type} -> (a -> PolyFunc) -> Type
-pfSetCoproductPos {a} ps = DPair a (fst . ps)
+pfSetCoproductPos = dfSetCoproductPos
 
 public export
 pfSetCoproductDir : {a : Type} ->
   (ps : a -> PolyFunc) -> pfSetCoproductPos ps -> Type
-pfSetCoproductDir ps (x ** xpos) = snd (ps x) xpos
+pfSetCoproductDir = dfSetCoproductDir
 
 public export
 pfSetCoproductArena : {a : Type} -> (a -> PolyFunc) -> PolyFunc
-pfSetCoproductArena ps = (pfSetCoproductPos ps ** pfSetCoproductDir ps)
+pfSetCoproductArena = dfSetCoproductArena
 
 public export
 pfSetProductPos : {a : Type} -> (a -> PolyFunc) -> Type

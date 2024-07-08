@@ -661,6 +661,23 @@ dirichParPair : {p, q, r : MLDirichCatObj} ->
 dirichParPair {p} {q} {r} f g =
   (dirichParPairOnPos p q r f g ** dirichParPairOnDir p q r f g)
 
+-------------------------------
+---- Set-indexed coproduct ----
+-------------------------------
+
+public export
+dfSetCoproductPos : {a : Type} -> (a -> MLDirichCatObj) -> Type
+dfSetCoproductPos {a} ps = DPair a (fst . ps)
+
+public export
+dfSetCoproductDir : {a : Type} ->
+  (ps : a -> MLDirichCatObj) -> dfSetCoproductPos ps -> Type
+dfSetCoproductDir ps (x ** xpos) = snd (ps x) xpos
+
+public export
+dfSetCoproductArena : {a : Type} -> (a -> MLDirichCatObj) -> MLDirichCatObj
+dfSetCoproductArena ps = (dfSetCoproductPos ps ** dfSetCoproductDir ps)
+
 --------------------------------------
 ---- Set-indexed parallel product ----
 --------------------------------------
