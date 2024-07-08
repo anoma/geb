@@ -239,14 +239,14 @@ mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 -- component of the factorization of a PRA functor into a right adjoint
 -- followed by a dependent sum.
 public export
-PRAbase : (dom, cod : MLDirichCatObj) ->
+PRAbase : (cod : MLDirichCatObj) ->
   (pos : MlDirichSlObj cod) -> MLDirichCatObj
-PRAbase dom cod pos = mlDirichSlObjTot {ar=cod} pos
+PRAbase cod pos = mlDirichSlObjTot {ar=cod} pos
 
 public export
 PRAdirDom : (dom, cod : MLDirichCatObj) ->
   (pos : MlDirichSlObj cod) -> MLDirichCatObj
-PRAdirDom dom cod pos = dfParProductArena dom (PRAbase dom cod pos)
+PRAdirDom dom cod pos = dfParProductArena dom (PRAbase cod pos)
 
 public export
 0 PRAdirType : (0 dom, cod : MLDirichCatObj) ->
@@ -258,6 +258,34 @@ record PRAData (dom, cod : MLDirichCatObj) where
   constructor SPFD
   pradPos : MlDirichSlObj cod
   pradDir : PRAdirType dom cod pradPos
+
+public export
+PRADbase : {dom, cod : MLDirichCatObj} -> PRAData dom cod -> MLDirichCatObj
+PRADbase {dom} {cod} prad = PRAbase cod $ pradPos prad
+
+-- See the formula for `T` in the `Proposition 2.10` section of
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
+public export
+InterpPRAdataOmap : {dom, cod : MLDirichCatObj} ->
+  PRAData dom cod -> MlDirichSlObj dom -> MlDirichSlObj cod
+InterpPRAdataOmap {dom} {cod} prad =
+  mlDirichSlSigma {p=cod} (pradPos prad)
+  . mlDirichSlSigmaPiFR {p=dom} {q=(PRADbase {dom} {cod} prad)} (pradDir prad)
+
+public export
+InterpPRAdataFmap : {dom, cod : MLDirichCatObj} ->
+  (prad : PRAData dom cod) ->
+  (x, y : MlDirichSlObj dom) ->
+  MlDirichSlMor {ar=dom} x y ->
+  MlDirichSlMor {ar=cod} (InterpPRAdataOmap prad x) (InterpPRAdataOmap prad y)
+InterpPRAdataFmap {dom} {cod} prad x y =
+  mlDirichSlSigmaMap {p=cod} (pradPos prad)
+    (mlDirichSlSigmaPiFR (pradDir prad) x)
+    (mlDirichSlSigmaPiFR (pradDir prad) y)
+  . mlDirichSlSigmaPiFRMap {p=dom} {q=(PRADbase {dom} {cod} prad)}
+    (pradDir prad)
+    x
+    y
 
 -- As with `SPFdirType`, we can make a more dependent version of `PRAdirType`.
 public export
