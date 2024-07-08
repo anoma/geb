@@ -221,6 +221,12 @@ public export
 PRAdirType dom cod pos =
   MlDirichSlObj (dfParProductArena (mlDirichSlObjTot {ar=cod} pos) dom)
 
+public export
+record PRAData (dom, cod : MLDirichCatObj) where
+  constructor SPFD
+  pradPos : MlDirichSlObj cod
+  pradDir : PRAdirType dom cod pradPos
+
 -- As with `SPFdirType`, we can make a more dependent version of `PRAdirType`.
 public export
 0 PRAdepDirType : {0 b : MLDirichCatObj} ->
