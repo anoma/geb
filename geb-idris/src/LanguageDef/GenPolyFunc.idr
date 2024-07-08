@@ -254,39 +254,6 @@ record PRAData (dom, cod : MLDirichCatObj) where
   pradPos : MlDirichSlObj cod
   pradDir : PRAdirType dom cod pradPos
 
-public export
-PRADbase : {dom, cod : MLDirichCatObj} -> PRAData dom cod -> MLDirichCatObj
-PRADbase {dom} {cod} prad = PRAbase dom cod $ pradPos prad
-
-public export
-PRADtoSSPR : {0 dom, cod : MLDirichCatObj} -> (prad : PRAData dom cod) ->
-  MlDirichSlObj (dfParProductArena dom (PRADbase {dom} {cod} prad))
-PRADtoSSPR {dom} {cod} prad = ?PRADtoSSPR_hole
-
-public export
-PRADtoSSPL : {0 dom, cod : MLDirichCatObj} -> (prad : PRAData dom cod) ->
-  MlDirichSlObj (dfParProductArena cod (PRADbase {dom} {cod} prad))
-PRADtoSSPL {dom} {cod} prad = ?PRADtoSSPL_hole
-
--- See the formula for `T` in the `Proposition 2.10` section of
--- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
-public export
-InterpPRAdataOmap : {dom, cod : MLDirichCatObj} ->
-  PRAData dom cod -> MlDirichSlObj dom -> MlDirichSlObj cod
-InterpPRAdataOmap {dom} {cod} prad =
-  mlDirichSlSigmaPiFL {p=cod} {q=(PRADbase {dom} {cod} prad)}
-    (PRADtoSSPL {dom} {cod} prad)
-  . mlDirichSlSigmaPiFR {p=dom} {q=(PRADbase {dom} {cod} prad)}
-    (PRADtoSSPR {dom} {cod} prad)
-
-public export
-InterpPRAdataFmap : {dom, cod : MLDirichCatObj} ->
-  (prad : PRAData dom cod) ->
-  (x, y : MlDirichSlObj dom) ->
-  MlDirichSlMor {ar=dom} x y ->
-  MlDirichSlMor {ar=cod} (InterpPRAdataOmap prad x) (InterpPRAdataOmap prad y)
-InterpPRAdataFmap {dom} {cod} prad x y mxy = ?InterpPRAdataFmap_hole
-
 -- As with `SPFdirType`, we can make a more dependent version of `PRAdirType`.
 public export
 0 PRAdepDirType : {0 b : MLDirichCatObj} ->
