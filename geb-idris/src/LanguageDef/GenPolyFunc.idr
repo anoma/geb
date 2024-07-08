@@ -126,16 +126,16 @@ mlPolySlBaseChangeMap {p} {q} (ntonpos ** ntondir)
 -------------------------------
 
 public export
-MLPolySlSigma : (q : PolyFunc) -> {p : PolyFunc} ->
+MLPolySlFibSigma : (q : PolyFunc) -> {p : PolyFunc} ->
   PolyNatTrans p q -> MlPolySlObj p -> MlPolySlObj q
-MLPolySlSigma q {p} beta sl with (mlPolySlObjToC p sl)
-  MLPolySlSigma q {p} beta sl | (r ** alpha) =
+MLPolySlFibSigma q {p} beta sl with (mlPolySlObjToC p sl)
+  MLPolySlFibSigma q {p} beta sl | (r ** alpha) =
     let csigma = (r ** pntVCatComp beta alpha) in
     mlPolySlObjFromC q csigma
 
 public export
 mlDirichSlSigmaPiFL : {p, q : PolyFunc} ->
-  (d : MlDirichSlObj (pfParProductArena p q)) -> MlDirichSlFunc q p
+  (d : MlDirichSlObj (dfParProductArena p q)) -> MlDirichSlFunc q p
 mlDirichSlSigmaPiFL {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (MDSobj prodpos proddir) (MDSobj slpos sldir) =
     MDSobj
@@ -145,7 +145,7 @@ mlDirichSlSigmaPiFL {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 
 public export
 mlDirichSlSigmaPiFLMap : {p, q : PolyFunc} ->
-  (d : MlDirichSlObj (pfParProductArena p q)) ->
+  (d : MlDirichSlObj (dfParProductArena p q)) ->
   MlDirichSlFMap {ar=q} {ar'=p} (mlDirichSlSigmaPiFL {p} {q} d)
 mlDirichSlSigmaPiFLMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (MDSobj prodpos proddir) (MDSobj slpos sldir) (MDSobj slpos' sldir')
@@ -161,7 +161,7 @@ mlDirichSlSigmaPiFLMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 
 public export
 mlDirichSlSigmaPiFR : {p, q : PolyFunc} ->
-  (d : MlDirichSlObj (pfParProductArena p q)) -> MlDirichSlFunc p q
+  (d : MlDirichSlObj (dfParProductArena p q)) -> MlDirichSlFunc p q
 mlDirichSlSigmaPiFR {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (MDSobj prodpos proddir) (MDSobj slpos sldir) =
     MDSobj
@@ -172,7 +172,7 @@ mlDirichSlSigmaPiFR {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 
 public export
 mlDirichSlSigmaPiFRMap : {p, q : PolyFunc} ->
-  (d : MlDirichSlObj (pfParProductArena p q)) ->
+  (d : MlDirichSlObj (dfParProductArena p q)) ->
   MlDirichSlFMap {ar=p} {ar'=q} (mlDirichSlSigmaPiFR {p} {q} d)
 mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (MDSobj prodpos proddir) (MDSobj slpos sldir) (MDSobj slpos' sldir')
@@ -216,10 +216,14 @@ mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 -- component of the factorization of a PRA functor into a right adjoint
 -- followed by a dependent sum.
 public export
+PRAbase : (dom, cod : MLDirichCatObj) ->
+  (pos : MlDirichSlObj cod) -> MLDirichCatObj
+PRAbase dom cod pos = dfParProductArena (mlDirichSlObjTot {ar=cod} pos) dom
+
+public export
 0 PRAdirType : (0 dom, cod : MLDirichCatObj) ->
   (0 pos : MlDirichSlObj cod) -> Type
-PRAdirType dom cod pos =
-  MlDirichSlObj (dfParProductArena (mlDirichSlObjTot {ar=cod} pos) dom)
+PRAdirType dom cod pos = MlDirichSlObj (PRAbase dom cod pos)
 
 public export
 record PRAData (dom, cod : MLDirichCatObj) where
