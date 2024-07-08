@@ -241,12 +241,17 @@ mlDirichSlSigmaPiFRMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
 public export
 PRAbase : (dom, cod : MLDirichCatObj) ->
   (pos : MlDirichSlObj cod) -> MLDirichCatObj
-PRAbase dom cod pos = dfParProductArena (mlDirichSlObjTot {ar=cod} pos) dom
+PRAbase dom cod pos = mlDirichSlObjTot {ar=cod} pos
+
+public export
+PRAdirDom : (dom, cod : MLDirichCatObj) ->
+  (pos : MlDirichSlObj cod) -> MLDirichCatObj
+PRAdirDom dom cod pos = dfParProductArena (PRAbase dom cod pos) dom
 
 public export
 0 PRAdirType : (0 dom, cod : MLDirichCatObj) ->
   (0 pos : MlDirichSlObj cod) -> Type
-PRAdirType dom cod pos = MlDirichSlObj (PRAbase dom cod pos)
+PRAdirType dom cod pos = MlDirichSlObj (PRAdirDom dom cod pos)
 
 public export
 record PRAData (dom, cod : MLDirichCatObj) where
