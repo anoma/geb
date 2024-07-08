@@ -246,7 +246,7 @@ PRAbase dom cod pos = mlDirichSlObjTot {ar=cod} pos
 public export
 PRAdirDom : (dom, cod : MLDirichCatObj) ->
   (pos : MlDirichSlObj cod) -> MLDirichCatObj
-PRAdirDom dom cod pos = dfParProductArena (PRAbase dom cod pos) dom
+PRAdirDom dom cod pos = dfParProductArena dom (PRAbase dom cod pos)
 
 public export
 0 PRAdirType : (0 dom, cod : MLDirichCatObj) ->
