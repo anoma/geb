@@ -134,7 +134,30 @@ MLPolySlFibSigma q {p} beta sl with (mlPolySlObjToC p sl)
     mlPolySlObjFromC q csigma
 
 public export
-mlDirichSlSigmaPiFL : {p, q : PolyFunc} ->
+mlDirichSlSigma : {p : MLDirichCatObj} ->
+  (sl : MlDirichSlObj p) -> MlDirichSlFunc (mlDirichSlObjTot {ar=p} sl) p
+mlDirichSlSigma {p=(ppos ** pdir)} (MDSobj slpos sldir) (MDSobj totpos totdir) =
+  MDSobj
+    (\pi => Sigma {a=(slpos pi)} $ curry totpos pi)
+    (\pi, pst, pd =>
+      Sigma {a=(sldir pi (fst pst) pd)} $ \sld =>
+        totdir (pi ** fst pst) (snd pst) (pd ** sld))
+
+public export
+mlDirichSlSigmaMap : {p : MLDirichCatObj} ->
+  (sl : MlDirichSlObj p) ->
+  MlDirichSlFMap {ar=(mlDirichSlObjTot {ar=p} sl)} {ar'=p}
+    (mlDirichSlSigma {p} sl)
+mlDirichSlSigmaMap {p=(ppos ** pdir)} (MDSobj slpos sldir)
+  (MDSobj xpos xdir) (MDSobj ypos ydir) (MDSM monpos mdir) =
+    MDSM
+      (\pi, psx =>
+        (fst psx ** monpos (pi ** fst psx) (snd psx)))
+      (\pi, psx, pd, sxd =>
+        (fst sxd ** mdir (pi ** fst psx) (snd psx) (pd ** fst sxd) (snd sxd)))
+
+public export
+mlDirichSlSigmaPiFL : {p, q : MLDirichCatObj} ->
   (d : MlDirichSlObj (dfParProductArena p q)) -> MlDirichSlFunc q p
 mlDirichSlSigmaPiFL {p=(ppos ** pdir)} {q=(qpos ** qdir)}
   (MDSobj prodpos proddir) (MDSobj slpos sldir) =
@@ -144,7 +167,7 @@ mlDirichSlSigmaPiFL {p=(ppos ** pdir)} {q=(qpos ** qdir)}
         (qd : qdir qp ** (sldir qp slp qd, proddir (pp, qp) prodp (pd, qd))))
 
 public export
-mlDirichSlSigmaPiFLMap : {p, q : PolyFunc} ->
+mlDirichSlSigmaPiFLMap : {p, q : MLDirichCatObj} ->
   (d : MlDirichSlObj (dfParProductArena p q)) ->
   MlDirichSlFMap {ar=q} {ar'=p} (mlDirichSlSigmaPiFL {p} {q} d)
 mlDirichSlSigmaPiFLMap {p=(ppos ** pdir)} {q=(qpos ** qdir)}
@@ -230,6 +253,39 @@ record PRAData (dom, cod : MLDirichCatObj) where
   constructor SPFD
   pradPos : MlDirichSlObj cod
   pradDir : PRAdirType dom cod pradPos
+
+public export
+PRADbase : {dom, cod : MLDirichCatObj} -> PRAData dom cod -> MLDirichCatObj
+PRADbase {dom} {cod} prad = PRAbase dom cod $ pradPos prad
+
+public export
+PRADtoSSPR : {0 dom, cod : MLDirichCatObj} -> (prad : PRAData dom cod) ->
+  MlDirichSlObj (dfParProductArena dom (PRADbase {dom} {cod} prad))
+PRADtoSSPR {dom} {cod} prad = ?PRADtoSSPR_hole
+
+public export
+PRADtoSSPL : {0 dom, cod : MLDirichCatObj} -> (prad : PRAData dom cod) ->
+  MlDirichSlObj (dfParProductArena cod (PRADbase {dom} {cod} prad))
+PRADtoSSPL {dom} {cod} prad = ?PRADtoSSPL_hole
+
+-- See the formula for `T` in the `Proposition 2.10` section of
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
+public export
+InterpPRAdataOmap : {dom, cod : MLDirichCatObj} ->
+  PRAData dom cod -> MlDirichSlObj dom -> MlDirichSlObj cod
+InterpPRAdataOmap {dom} {cod} prad =
+  mlDirichSlSigmaPiFL {p=cod} {q=(PRADbase {dom} {cod} prad)}
+    (PRADtoSSPL {dom} {cod} prad)
+  . mlDirichSlSigmaPiFR {p=dom} {q=(PRADbase {dom} {cod} prad)}
+    (PRADtoSSPR {dom} {cod} prad)
+
+public export
+InterpPRAdataFmap : {dom, cod : MLDirichCatObj} ->
+  (prad : PRAData dom cod) ->
+  (x, y : MlDirichSlObj dom) ->
+  MlDirichSlMor {ar=dom} x y ->
+  MlDirichSlMor {ar=cod} (InterpPRAdataOmap prad x) (InterpPRAdataOmap prad y)
+InterpPRAdataFmap {dom} {cod} prad x y mxy = ?InterpPRAdataFmap_hole
 
 -- As with `SPFdirType`, we can make a more dependent version of `PRAdirType`.
 public export
