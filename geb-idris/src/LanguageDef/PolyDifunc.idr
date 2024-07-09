@@ -12,6 +12,52 @@ import public LanguageDef.IntDisheafCat
 %hide Library.IdrisCategories.BaseChangeF
 %hide Prelude.Ops.infixl.(|>)
 
+-------------------------------------------
+-------------------------------------------
+---- Polydifunctors as enriched arenas ----
+-------------------------------------------
+-------------------------------------------
+
+{-
+ - We might view a polydifunctor as a functor from
+ - `Type` to `[op(Type), Type`]`.  As such, we could define it as a parametric
+ - right adjoint from the category of presheaves (into `Type`) over the
+ - terminal category -- which is equivalent to `Type` itself -- to the
+ - category of presheaves over `Type`.  Examining the formula for PRA
+ - functors between presheaf categories at
+ - https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms ,
+ - we set `I := 1` and `J := Type`, and thus determine that the PRA functor
+ - is determined by the following data:
+ -
+ -  - An object `T1` in `[op(J), Type]`, i.e. a presheaf over `Type`,
+ -    which, because we are trying to define a polynomial _difunctor_,
+ -    we treat as a Dirichlet functor
+ -  - A functor `el_op(T1) -> [op(I), Type]`; since `I` is the terminal
+ -    category, this reduces to a functor in `[el_op(T1), Type]`.
+ -    And because that is a presheaf on a category of elements, it is
+ -    equivalently a slice over `T1`.
+ -}
+public export
+record PDiData where
+  constructor PDiD
+  pdiT1 : MLDirichCatObj
+  pdiF : MlDirichSlObj pdiT1
+
+-- We can define a functor from `Type` to the category of Dirichlet
+-- functors by defining a slice functor between the Dirichlet-functor
+-- slice categories over `dfRepVoid` and `dfRepUnit`, because, as explained
+-- in the comments to their definitions, those functors' categories of
+-- elements are (equivalent to) `Type` and the category of Dirichlet functors
+-- on `Type`, respectively.
+public export
+PRAdataFromPDi : PDiData -> PRAData MLDirichCat.dfRepVoid MLDirichCat.dfRepUnit
+PRAdataFromPDi pdid =
+  PRAD
+    (MDSobj (\_ => fst (pdiT1 pdid)) (\_, x, _ => snd (pdiT1 pdid) x))
+    (MDSobj
+      (\el => mdsOnPos (pdiF pdid) $ snd $ snd el)
+      (\_, _, dd => void $ fst dd))
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Universal families as twisted arrows ----
