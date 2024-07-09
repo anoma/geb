@@ -587,6 +587,42 @@ public export
 dfRepObj : Type -> MLDirichCatObj
 dfRepObj a = (dfRepObjPos a ** dfRepObjDir a)
 
+-- The Dirichlet functor represented by `Void` has one position and no
+-- directions.  Because it returns the hom-set from its input to `Void`,
+-- in `Type` it returns `Unit` for any input type isomorphic to `Void`
+-- and `Void` for input type not isomorphic to `Void.`
+--
+-- The category of elements of this functor is equivalent to the terminal
+-- category, because only a choice of the input type `Void` (or something
+-- isomorphic to it) produces a non-empty set to choose an element from, and
+-- in that case it produces only the isomorphism from the input type into
+-- `Void`.
+--
+-- Because the category of elements of this functor is equivalent to the
+-- terminal category, the slice category of Dirichlet functors over it is
+-- equivalent to the category of presheaves on the terminal category, which
+-- in turn is equivalent to simply `Type` itself.
+public export
+dfRepVoid : MLDirichCatObj
+dfRepVoid = dfRepObj Void
+
+-- The Dirichlet functor represented by `Unit` has one position and one
+-- direction.  Because it returns the hom-set from its input to `Unit`,
+-- it returns `Unit` for any input type.
+--
+-- The category of elements of this functor is equivalent to `Type` itself,
+-- because an object or morphism of it is determined precisely by an object
+-- or morphism in `Type`, with the choice of element being uniquely determined
+-- (`Unit` and the identity on `Unit`).
+--
+-- Because the category of elements of this functor is equivalent to
+-- `Type` itself, the slice category of Dirichlet functors over it is
+-- equivalent to the category of (polynomial) presheaves on `Type`, which in
+-- turn is the category of Dirichlet functors on `Type`.
+public export
+dfRepUnit : MLDirichCatObj
+dfRepUnit = dfRepObj Unit
+
 ----------------------------
 ---- (Parallel) product ----
 ----------------------------
