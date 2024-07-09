@@ -980,7 +980,7 @@ public export
 SliceSigmaPiFR : {c, e : Type} ->
   (d : SliceObj (c, e)) -> SliceFunctor c e
 SliceSigmaPiFR {c} {e} d =
-  SlicePiF (Sigma {a=c} . flip (curry d))
+  SlicePiF {c=e} (Sigma {a=c} . flip (curry d))
   . BaseChangeF {c} {d=(Sigma {a=e} $ Sigma {a=c} . flip (curry d))}
     (\eecd => fst $ snd eecd)
 
