@@ -72,6 +72,14 @@ public export
 InterpPDiDataOmap : (pdi : PDiData) -> Type -> Type -> Type
 InterpPDiDataOmap pdi x y = InterpDirichFunc (InterpPDiPRAdataOmap pdi y) x
 
+public export
+InterpPDiDataDimap : (pdi : PDiData) ->
+  IntEndoDimapSig TypeObj TypeMor (InterpPDiDataOmap pdi)
+InterpPDiDataDimap (PDiD (bpos ** bdir) (MDSobj slonpos sldir)) s t a b mas mtb
+  ((bi ** mit) ** msi) =
+    ((bi ** \sli => mtb $ mit (() ** snd sli)) **
+    \ea => (fst (msi $ mas ea) ** \_, _, v => void v))
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Universal families as twisted arrows ----
