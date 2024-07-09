@@ -58,6 +58,20 @@ PRAdataFromPDi pdid =
       (\el => mdsOnPos (pdiF pdid) $ snd $ snd el)
       (\_, _, dd => void $ fst dd))
 
+public export
+InterpPRAdataOmapFromPDi : (pdi : PDiData) ->
+  MlDirichSlFunc MLDirichCat.dfRepVoid MLDirichCat.dfRepUnit
+InterpPRAdataOmapFromPDi = InterpPRAdataOmap . PRAdataFromPDi
+
+public export
+InterpPDiPRAdataOmap : (pdi : PDiData) -> Type -> MLDirichCatObj
+InterpPDiPRAdataOmap pdi =
+  dfSlRepUnitToDirich . InterpPRAdataOmapFromPDi pdi . dfSlTypeToRepVoid
+
+public export
+InterpPDiDataOmap : (pdi : PDiData) -> Type -> Type -> Type
+InterpPDiDataOmap pdi x y = InterpDirichFunc (InterpPDiPRAdataOmap pdi y) x
+
 ----------------------------------------------
 ----------------------------------------------
 ---- Universal families as twisted arrows ----
