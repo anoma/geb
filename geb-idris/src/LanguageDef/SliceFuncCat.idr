@@ -344,6 +344,13 @@ public export
 WPullback : {a, b, c : Type} -> (a -> c) -> (b -> c) -> Type
 WPullback {a} {b} {c} f g = WEqualizer {a=(Pair a b)} {b=c} (f . fst) (g . snd)
 
+public export
+WMatchingSnd : {0 a : Type} -> {0 b : a -> Type} ->
+  (ea : a) -> SliceFunctor (b ea) (DPair a b)
+WMatchingSnd {a} {b} ea sl dp =
+  Exists {type=(WDiagElem (fst dp, ea))} $
+    \eqa => sl $ replace {p=b} (WDiagElemEqualizes eqa) $ snd dp
+
 ---------------------------
 ---------------------------
 ---- Dependent product ----
