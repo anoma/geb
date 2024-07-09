@@ -358,3 +358,17 @@ InterpPRAdepDataOmap {b} {domsl} {codsl} pradd =
     {dom=(mlDirichSlObjTot {ar=b} domsl)}
     {cod=(mlDirichSlObjTot {ar=b} codsl)}
     $ PRAdataFromDep {b} {domsl} {codsl} pradd
+
+public export
+InterpPRAdepDataFmap : {b : MLDirichCatObj} ->
+  {domsl, codsl : MlDirichSlObj b} ->
+  (pradd : PRAdepData {b} domsl codsl) ->
+  MlDirichSlFMap
+    {ar=(mlDirichSlObjTot {ar=b} domsl)}
+    {ar'=(mlDirichSlObjTot {ar=b} codsl)}
+    (InterpPRAdepDataOmap {b} {domsl} {codsl} pradd)
+InterpPRAdepDataFmap {b} {domsl} {codsl} pradd =
+  InterpPRAdataFmap
+    {dom=(mlDirichSlObjTot {ar=b} domsl)}
+    {cod=(mlDirichSlObjTot {ar=b} codsl)}
+    $ PRAdataFromDep {b} {domsl} {codsl} pradd
