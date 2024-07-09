@@ -616,6 +616,14 @@ dfTerminalToRepVoidEl :
   Unit -> (ty : Type ** InterpDirichFunc MLDirichCat.dfRepVoid ty)
 dfTerminalToRepVoidEl u = (Void ** (() ** id))
 
+public export
+dfSlRepVoidToType : MlDirichSlObj MLDirichCat.dfRepVoid -> Type
+dfSlRepVoidToType sl = mdsOnPos sl ()
+
+public export
+dfSlTypeToRepVoid : Type -> MlDirichSlObj MLDirichCat.dfRepVoid
+dfSlTypeToRepVoid ty = MDSobj (\_ => ty) (\_, _, v => void v)
+
 -- The Dirichlet functor represented by `Unit` has one position and one
 -- direction.  Because it returns the hom-set from its input to `Unit`,
 -- it returns `Unit` for any input type.
@@ -642,6 +650,15 @@ public export
 dfTerminalToRepUnitEl :
   Type -> (ty : Type ** InterpDirichFunc MLDirichCat.dfRepUnit ty)
 dfTerminalToRepUnitEl ty = (ty ** (() ** \_ => ()))
+
+public export
+dfSlRepUnitToDirich : MlDirichSlObj MLDirichCat.dfRepUnit -> MLDirichCatObj
+dfSlRepUnitToDirich sl =
+  (mdsOnPos sl () ** \sli => mdsDir sl () sli ())
+
+public export
+dfDirichToSlRepUnit : MLDirichCatObj -> MlDirichSlObj MLDirichCat.dfRepUnit
+dfDirichToSlRepUnit ar = MDSobj (\_ => fst ar) (\_, x, _ => snd ar x)
 
 ----------------------------
 ---- (Parallel) product ----
