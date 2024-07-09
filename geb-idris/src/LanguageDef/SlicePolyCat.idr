@@ -2376,6 +2376,12 @@ data SPFdirFromDep : {0 b : Type} ->
     dir eb ec ep ed ->
     SPFdirFromDep {b} {domsl} {codr} {pos} dir (eb ** ec) ep (eb ** ed)
 
+-- The signature of `SPFdepDirType` allows us to define for each type `b`
+-- a double category of slice polynomial functors whose objects are slice
+-- objects of `Type` over `b`, whose vertical morphisms are slice morphisms
+-- in `Type` over `b`, and whose horizontal morphisms are slice polynomial
+-- functors using the dependent signature.  The cells are defined below as
+-- `SPFdepPoCell`.
 public export
 record SPFdepData {0 b : Type} (dom, cod : SliceObj b) where
   constructor SPFDD
@@ -2392,10 +2398,16 @@ SPFDataFromDep {b} {dom} {cod} spfdd =
 -- and codomain themselves both dependent on a common type (`b`), thus allowing
 -- us to express a _relationship_ between the dependent types of the domain
 -- and codomain.
+--
+-- `InterpSPFdepData` and `InterpSPFdepDataMap` together may be viewed as
+-- the object-map and morphism-map components of a functor from the discrete
+-- category whose objects are the terms of `b` to the category of slice
+-- polynomial functors whose domain and codomain are slices of `dom eb`
+-- and `cod eb` respectively for each `eb : b`.
 public export
 InterpSPFdepData : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFdepData {b} dom cod ->
-  SliceMorphism {a=b} (SliceObj . dom) (SliceObj . cod)
+  (eb : b) -> SliceFunctor (dom eb) (cod eb)
 InterpSPFdepData {b} {dom} {cod} spfdd eb sld ebc =
   InterpSPFData (SPFDataFromDep spfdd)
     (MatchingSnd eb sld)
@@ -2404,11 +2416,7 @@ InterpSPFdepData {b} {dom} {cod} spfdd eb sld ebc =
 public export
 InterpSPFdepDataMap : {b : Type} -> {dom, cod : SliceObj b} ->
   (spfdd : SPFdepData {b} dom cod) ->
-  (eb : b) -> (x, y : SliceObj $ dom eb) ->
-  SliceMorphism {a=(dom eb)} x y ->
-  SliceMorphism {a=(cod eb)}
-    (InterpSPFdepData {b} {dom} {cod} spfdd eb x)
-    (InterpSPFdepData {b} {dom} {cod} spfdd eb y)
+  (eb : b) -> SliceFMap (InterpSPFdepData {b} {dom} {cod} spfdd eb)
 InterpSPFdepDataMap {b} {dom} {cod} spfdd eb x y mxy ec =
   dpMapSnd $ \ep, dm, ebd, dd =>
   let (Evidence eqb ex) = dm ebd dd in
@@ -2469,6 +2477,9 @@ spfDepPushout : {b : Type} -> {w, x, y, z : SliceObj b} ->
 spfDepPushout {b} {w} {x} {y} {z} mwx mzy =
   spfDepPushoutPos {x} {y} {z} mzy . spfDepPushoutDir {w} {x} {z} mwx
 
+-- The cells of the double category of slice polynomial functors whose domain
+-- and codomain are slices of `dom eb` and `cod eb` respectively for each
+-- `eb : b`.
 public export
 SPFdepPoCell : {b : Type} -> {w, w', z, z' : SliceObj b} ->
   (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
