@@ -2413,12 +2413,31 @@ InterpSPFdepData {b} {dom} {cod} spfdd =
     (SPFDataFromDep spfdd)
 
 public export
+InterpSPFdepDataEl : {b : Type} -> {dom, cod : SliceObj b} ->
+  SPFdepData {b} dom cod ->
+  (eb : b) -> SliceFunctor (dom eb) (cod eb)
+InterpSPFdepDataEl {b} {dom} {cod} spfdd eb sld ebc =
+  InterpSPFdepData {b} {dom} {cod} spfdd (MatchingSnd eb sld) (eb ** ebc)
+
+public export
 InterpSPFdepDataMap : {b : Type} -> {dom, cod : SliceObj b} ->
   (spfdd : SPFdepData {b} dom cod) ->
   SliceFMap (InterpSPFdepData {b} {dom} {cod} spfdd)
 InterpSPFdepDataMap {b} {dom} {cod} spfdd =
   InterpSPFDataMap {dom=(Sigma {a=b} dom)} {cod=(Sigma {a=b} cod)}
     (SPFDataFromDep spfdd)
+
+public export
+InterpSPFdepDataMapEl : {b : Type} -> {dom, cod : SliceObj b} ->
+  (spfdd : SPFdepData {b} dom cod) ->
+  (eb : b) -> SliceFMap (InterpSPFdepDataEl {b} {dom} {cod} spfdd eb)
+InterpSPFdepDataMapEl {b} {dom} {cod} spfdd eb x y mxy ec =
+  InterpSPFdepDataMap {b} {dom} {cod} spfdd
+    (MatchingSnd eb x)
+    (MatchingSnd eb y)
+    (\ebd, ex =>
+      Evidence (fst ex) $ mxy (rewrite (sym $ fst ex) in snd ebd) $ snd ex)
+    (eb ** ec)
 
 public export
 record SPFdepNT {0 b : Type} {dom, cod : SliceObj b}
@@ -2450,6 +2469,17 @@ InterpSPFdepNT : {b : Type} -> {dom, cod : SliceObj b} ->
     (InterpSPFdepData g)
 InterpSPFdepNT {b} {dom} {cod} f g alpha =
   InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) (SPFntFromDep alpha)
+
+public export
+InterpSPFdepNTel : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f, g : SPFdepData {b} dom cod) ->
+  SPFdepNT f g ->
+  (eb : b) ->
+  SliceNatTrans {x=(dom eb)} {y=(cod eb)}
+    (InterpSPFdepDataEl f eb)
+    (InterpSPFdepDataEl g eb)
+InterpSPFdepNTel {b} {dom} {cod} f g alpha eb sld ec =
+  InterpSPFdepNT {b} {dom} {cod} f g alpha (MatchingSnd eb sld) (eb ** ec)
 
 public export
 spfDepPushoutPos : {b : Type} -> {x, y, z : SliceObj b} ->
