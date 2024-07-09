@@ -78,7 +78,7 @@ InterpPDiDataDimap : (pdi : PDiData) ->
 InterpPDiDataDimap (PDiD (bpos ** bdir) (MDSobj slonpos sldir)) s t a b mas mtb
   ((bi ** mit) ** msi) =
     ((bi ** \sli => mtb $ mit (() ** snd sli)) **
-    \ea => (fst (msi $ mas ea) ** \_, _, v => void v))
+     \ea => (fst (msi $ mas ea) ** \_, _, v => void v))
 
 -- Note that uses of `mdsDir` have disappeared -- so in this case,
 -- polymorphism requires that the profunctor depend only on a slice
