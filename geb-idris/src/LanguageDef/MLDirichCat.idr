@@ -606,6 +606,16 @@ public export
 dfRepVoid : MLDirichCatObj
 dfRepVoid = dfRepObj Void
 
+public export
+dfRepVoidElToTerminal :
+  (ty : Type) -> InterpDirichFunc MLDirichCat.dfRepVoid ty -> Unit
+dfRepVoidElToTerminal ty d = ()
+
+public export
+dfTerminalToRepVoidEl :
+  Unit -> (ty : Type ** InterpDirichFunc MLDirichCat.dfRepVoid ty)
+dfTerminalToRepVoidEl u = (Void ** (() ** id))
+
 -- The Dirichlet functor represented by `Unit` has one position and one
 -- direction.  Because it returns the hom-set from its input to `Unit`,
 -- it returns `Unit` for any input type.
@@ -622,6 +632,16 @@ dfRepVoid = dfRepObj Void
 public export
 dfRepUnit : MLDirichCatObj
 dfRepUnit = dfRepObj Unit
+
+public export
+dfRepUnitElToTerminal :
+  (ty : Type) -> InterpDirichFunc MLDirichCat.dfRepUnit ty -> Type
+dfRepUnitElToTerminal ty d = ty
+
+public export
+dfTerminalToRepUnitEl :
+  Type -> (ty : Type ** InterpDirichFunc MLDirichCat.dfRepUnit ty)
+dfTerminalToRepUnitEl ty = (ty ** (() ** \_ => ()))
 
 ----------------------------
 ---- (Parallel) product ----
