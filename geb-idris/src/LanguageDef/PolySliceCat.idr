@@ -693,9 +693,10 @@ InterpMlDirichSlObjFMapAr {ar=(bpos ** bdir)} =
 public export
 InterpMlDirichSlMor : {ar : MLDirichCatObj} ->
   {dom, cod : MlDirichSlObj ar} -> MlDirichSlMor dom cod ->
-  (ty : Type) -> (el : InterpDirichFunc ar ty) ->
-  InterpMlDirichSlObj {ar} dom ty el ->
-  InterpMlDirichSlObj {ar} cod ty el
+  (ty : Type) ->
+  SliceMorphism {a=(InterpDirichFunc ar ty)}
+    (InterpMlDirichSlObj {ar} dom ty)
+    (InterpMlDirichSlObj {ar} cod ty)
 InterpMlDirichSlMor {ar=(bpos ** bdir)}
   {dom=(MDSobj dpos ddir)} {cod=(MDSobj cpos cdir)}
   (MDSM monpos mondir) ty (i ** bd) dpd =
