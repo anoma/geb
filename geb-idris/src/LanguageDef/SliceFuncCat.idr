@@ -932,7 +932,7 @@ public export
 SliceSigmaPiFL : {c, e : Type} ->
   (d : SliceObj (c, e)) -> SliceFunctor e c
 SliceSigmaPiFL {c} {e} d =
-  SliceSigmaF (Sigma {a=e} . curry d)
+  SliceSigmaF {c} (Sigma {a=e} . curry d)
   . BaseChangeF {c=e} {d=(Sigma {a=c} $ Sigma {a=e} . curry d)}
     (\eced => fst $ snd eced)
 
