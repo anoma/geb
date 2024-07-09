@@ -255,7 +255,7 @@ PRAdirType dom cod pos = MlDirichSlObj (PRAdirDom dom cod pos)
 
 public export
 record PRAData (dom, cod : MLDirichCatObj) where
-  constructor SPFD
+  constructor PRAD
   pradPos : MlDirichSlObj cod
   pradDir : PRAdirType dom cod pradPos
 
@@ -304,3 +304,57 @@ public export
   Type
 PRAdepDirType {b} domsl codsl pos =
   MlDirichSlOfSl {ar=b} $ PRAdepDirDom {b} domsl codsl pos
+
+public export
+PRAdirFromDep : {0 b : MLDirichCatObj} ->
+  {0 domsl, codsl : MlDirichSlObj b} -> {0 pos : MlDirichSlOfSl {ar=b} codsl} ->
+  PRAdepDirType {b} domsl codsl pos ->
+  PRAdirType (mlDirichSlObjTot {ar=b} domsl) (mlDirichSlObjTot {ar=b} codsl) pos
+PRAdirFromDep {b=(bpos ** bdir)}
+  {domsl=(MDSobj dompos domdir)} {codsl=(MDSobj codpos coddir)}
+  {pos=(MDSobj pospos posdir)}
+  (MDSobj deponpos depdir) =
+    MDSobj
+      (\((bi ** di), ((bi' ** ci) ** pi)) =>
+        Exists {type=(WDiagElem (bi, bi'))} $ \eqb =>
+          deponpos (bi ** (di, rewrite WDiagElemEqualizes eqb in (ci ** pi))))
+      (\((bi ** di), ((bi' ** ci) ** pi)), (Evidence weqb cpi),
+        ((bd ** dd), ((bd' ** cd) ** pd)) =>
+          let 0 eqb = WDiagElemEqualizes weqb in
+          Exists {type=(WDiagElem (bd, rewrite eqb in bd'))} $ \weqd =>
+            let 0 eqd = WDiagElemEqualizes weqd in
+            depdir
+              (bi ** (di, rewrite eqb in (ci ** pi)))
+              cpi
+              (bd ** (dd, rewrite eqb in rewrite eqd in (cd ** pd))))
+
+public export
+record PRAdepData {b : MLDirichCatObj} (domsl, codsl : MlDirichSlObj b) where
+  constructor PRADD
+  praddPos : MlDirichSlOfSl {ar=b} codsl
+  praddDir : PRAdepDirType {b} domsl codsl praddPos
+
+public export
+PRADdepBase : {b : MLDirichCatObj} -> {domsl, codsl : MlDirichSlObj b} ->
+  PRAdepData {b} domsl codsl -> MlDirichSlObj b
+PRADdepBase {b} {domsl} {codsl} pradd = PRAdepBase {b} codsl $ praddPos pradd
+
+public export
+PRAdataFromDep : {b : MLDirichCatObj} -> {domsl, codsl : MlDirichSlObj b} ->
+  PRAdepData {b} domsl codsl ->
+  PRAData (mlDirichSlObjTot {ar=b} domsl) (mlDirichSlObjTot {ar=b} codsl)
+PRAdataFromDep {b} {domsl} {codsl} pradd =
+  PRAD
+    (praddPos pradd)
+    (PRAdirFromDep {b} {domsl} {codsl} {pos=(praddPos pradd)} (praddDir pradd))
+
+public export
+InterpPRAdepDataOmap : {b : MLDirichCatObj} ->
+  {domsl, codsl : MlDirichSlObj b} ->
+  PRAdepData {b} domsl codsl ->
+  MlDirichSlFunc (mlDirichSlObjTot {ar=b} domsl) (mlDirichSlObjTot {ar=b} codsl)
+InterpPRAdepDataOmap {b} {domsl} {codsl} pradd =
+  InterpPRAdataOmap
+    {dom=(mlDirichSlObjTot {ar=b} domsl)}
+    {cod=(mlDirichSlObjTot {ar=b} codsl)}
+    $ PRAdataFromDep {b} {domsl} {codsl} pradd
