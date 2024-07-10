@@ -621,8 +621,8 @@ dfSlRepVoidToType : MlDirichSlObj MLDirichCat.dfRepVoid -> Type
 dfSlRepVoidToType sl = mdsOnPos sl ()
 
 public export
-dfSlTypeToRepVoid : Type -> MlDirichSlObj MLDirichCat.dfRepVoid
-dfSlTypeToRepVoid ty = MDSobj (\_ => ty) (\_, _, v => void v)
+dfTypeToSlRepVoid : Type -> MlDirichSlObj MLDirichCat.dfRepVoid
+dfTypeToSlRepVoid ty = MDSobj (\_ => ty) (\_, _, v => void v)
 
 -- The Dirichlet functor represented by `Unit` has one position and one
 -- direction.  Because it returns the hom-set from its input to `Unit`,
@@ -642,14 +642,14 @@ dfRepUnit : MLDirichCatObj
 dfRepUnit = dfRepObj Unit
 
 public export
-dfRepUnitElToTerminal :
+dfRepUnitElToType :
   (ty : Type) -> InterpDirichFunc MLDirichCat.dfRepUnit ty -> Type
-dfRepUnitElToTerminal ty d = ty
+dfRepUnitElToType ty d = ty
 
 public export
-dfTerminalToRepUnitEl :
+dfTypeToRepUnitEl :
   Type -> (ty : Type ** InterpDirichFunc MLDirichCat.dfRepUnit ty)
-dfTerminalToRepUnitEl ty = (ty ** (() ** \_ => ()))
+dfTypeToRepUnitEl ty = (ty ** (() ** \_ => ()))
 
 public export
 dfSlRepUnitToDirich : MlDirichSlObj MLDirichCat.dfRepUnit -> MLDirichCatObj

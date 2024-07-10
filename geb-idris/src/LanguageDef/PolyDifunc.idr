@@ -66,7 +66,7 @@ InterpPRAdataOmapFromPDi = InterpPRAdataOmap . PRAdataFromPDi
 public export
 InterpPDiPRAdataOmap : (pdi : PDiData) -> Type -> MLDirichCatObj
 InterpPDiPRAdataOmap pdi =
-  dfSlRepUnitToDirich . InterpPRAdataOmapFromPDi pdi . dfSlTypeToRepVoid
+  dfSlRepUnitToDirich . InterpPRAdataOmapFromPDi pdi . dfTypeToSlRepVoid
 
 public export
 InterpPDiDataOmap : (pdi : PDiData) -> Type -> Type -> Type
