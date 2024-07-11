@@ -54,9 +54,9 @@ PDiToParamPolyFuncPos pdid =
 public export
 PDiToParamPolyFuncDir : (pdid : PDiData) -> (x : Type) ->
   PDiToParamPolyFuncPos pdid x -> Type
-PDiToParamPolyFuncDir (PDiD (t1pos ** t1dir) (MDSobj slpos sldir)) x
-  (t1p ** t1dm) =
-    (j : slpos t1p ** Sigma {a=x} $ sldir t1p j . t1dm)
+PDiToParamPolyFuncDir pdid x elt1 =
+  (j : mdsOnPos (pdiF pdid) (fst elt1) **
+   Sigma {a=x} $ mdsDir (pdiF pdid) (fst elt1) j . snd elt1)
 
 public export
 PDiToParamPolyFunc : PDiData -> Type -> PolyFunc
@@ -72,10 +72,8 @@ PDiLmap : (pdid : PDiData) -> (x, x' : Type) -> (x' -> x) ->
   PolyNatTrans
     (PDiToParamPolyFunc pdid x)
     (PDiToParamPolyFunc pdid x')
-PDiLmap (PDiD (t1pos ** t1dir) (MDSobj slpos sldir)) x x' m =
-  (dpMapSnd (\_ => (|>) m) **
-   \(t1p ** t1dm) =>
-    dpMapSnd $ \slp => dpBimap m $ sliceId $ sldir t1p slp . (t1dm . m))
+PDiLmap pdid x x' m =
+  (dpMapSnd (\_ => (|>) m) ** \_ => dpMapSnd $ \_ => dpBimap m $ \_ => id)
 
 public export
 PDiToProfLmap : (pdid : PDiData) ->
