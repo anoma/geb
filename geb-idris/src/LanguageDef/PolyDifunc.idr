@@ -43,6 +43,29 @@ record PDiData where
   pdiT1 : MLDirichCatObj
   pdiF : MlDirichSlObj pdiT1
 
+-- See the formula for `T` in the `Proposition 2.10` section of
+-- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
+
+public export
+PDiToParamPolyFuncPos : PDiData -> Type -> Type
+PDiToParamPolyFuncPos pdid =
+  InterpDirichFunc (pdiT1 pdid)
+
+public export
+PDiToParamPolyFuncDir : (pdid : PDiData) -> (x : Type) ->
+  PDiToParamPolyFuncPos pdid x -> Type
+PDiToParamPolyFuncDir pdid =
+  InterpMlDirichSlObj {ar=(pdiT1 pdid)} (pdiF pdid)
+
+public export
+PDiToParamPolyFunc : PDiData -> Type -> PolyFunc
+PDiToParamPolyFunc pdid x =
+  (PDiToParamPolyFuncPos pdid x ** PDiToParamPolyFuncDir pdid x)
+
+public export
+PDiToProfunctor : PDiData -> Type -> Type -> Type
+PDiToProfunctor = InterpPolyFunc .* PDiToParamPolyFunc
+
 -- We can define a functor from `Type` to the category of Dirichlet
 -- functors by defining a slice functor between the Dirichlet-functor
 -- slice categories over `dfRepVoid` and `dfRepUnit`, because, as explained
