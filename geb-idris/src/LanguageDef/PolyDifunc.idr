@@ -54,8 +54,9 @@ PDiToParamPolyFuncPos pdid =
 public export
 PDiToParamPolyFuncDir : (pdid : PDiData) -> (x : Type) ->
   PDiToParamPolyFuncPos pdid x -> Type
-PDiToParamPolyFuncDir pdid =
-  InterpMlDirichSlObj {ar=(pdiT1 pdid)} (pdiF pdid)
+PDiToParamPolyFuncDir (PDiD (t1pos ** t1dir) (MDSobj slpos sldir)) x
+  (t1p ** t1dm) =
+    (j : slpos t1p ** Sigma {a=x} $ sldir t1p j . t1dm)
 
 public export
 PDiToParamPolyFunc : PDiData -> Type -> PolyFunc
@@ -65,6 +66,35 @@ PDiToParamPolyFunc pdid x =
 public export
 PDiToProfunctor : PDiData -> Type -> Type -> Type
 PDiToProfunctor = InterpPolyFunc .* PDiToParamPolyFunc
+
+public export
+PDiLmap : (pdid : PDiData) -> (x, x' : Type) -> (x' -> x) ->
+  PolyNatTrans
+    (PDiToParamPolyFunc pdid x)
+    (PDiToParamPolyFunc pdid x')
+PDiLmap (PDiD (t1pos ** t1dir) (MDSobj slpos sldir)) x x' m =
+  (dpMapSnd (\_ => (|>) m) **
+   \(t1p ** t1dm) =>
+    dpMapSnd $ \slp => dpBimap m $ sliceId $ sldir t1p slp . (t1dm . m))
+
+public export
+PDiToProfLmap : (pdid : PDiData) ->
+  IntEndoLmapSig TypeObj TypeMor (PDiToProfunctor pdid)
+PDiToProfLmap pdid s t a mas =
+  InterpPolyNT {p=(PDiToParamPolyFunc pdid s)} {q=(PDiToParamPolyFunc pdid a)}
+    (PDiLmap pdid s a mas) t
+
+public export
+PDiToProfRmap : (pdid : PDiData) ->
+  IntEndoRmapSig TypeObj TypeMor (PDiToProfunctor pdid)
+PDiToProfRmap pdid s t b mtb = dpMapSnd $ \_ => (.) mtb
+
+public export
+PDiToProfDimap : (pdid : PDiData) ->
+  IntEndoDimapSig TypeObj TypeMor (PDiToProfunctor pdid)
+PDiToProfDimap pdid =
+  IntEndoDimapFromLRmaps TypeObj TypeMor (PDiToProfunctor pdid)
+    (PDiToProfLmap pdid) (PDiToProfRmap pdid)
 
 -- We can define a functor from `Type` to the category of Dirichlet
 -- functors by defining a slice functor between the Dirichlet-functor
