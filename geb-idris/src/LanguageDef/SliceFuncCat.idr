@@ -334,6 +334,14 @@ WPreDec {a} {b} {deq} {f} {eb} ea = case decEq (f ea) eb of
   No neq => Right neq
 
 public export
+WPreMaybe : {a, b : Type} -> {deq : DecEq b} ->
+  {f : a -> b} -> {eb : b} ->
+  (ea : a) -> Maybe (WPreImage {a} {b} f eb)
+WPreMaybe {a} {b} {deq} {f} {eb} ea = case WPreDec {a} {b} {deq} {f} {eb} ea of
+  Left wp => Just wp
+  Right _ => Nothing
+
+public export
 WDiagElem : {a : Type} -> SliceObj (a, a)
 WDiagElem {a} = WPreImage {a} {b=(a, a)} (ProductNTUnit {a})
 
