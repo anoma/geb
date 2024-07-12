@@ -48,15 +48,31 @@ record PDiData where
 
 public export
 PDiToParamPolyFuncPos : PDiData -> Type -> Type
-PDiToParamPolyFuncPos pdid =
-  InterpDirichFunc (pdiT1 pdid)
+PDiToParamPolyFuncPos pdid = InterpDirichFunc (pdiT1 pdid)
+
+public export
+PDiToParamPolyFuncDirPos : (pdid : PDiData) -> (x : Type) ->
+  PDiToParamPolyFuncPos pdid x -> Type
+PDiToParamPolyFuncDirPos pdid x elt1 = mdsOnPos (pdiF pdid) (fst elt1)
+
+public export
+PDiToParamPolyFuncDirDir : (pdid : PDiData) -> (x : Type) ->
+  (pi : PDiToParamPolyFuncPos pdid x) ->
+  PDiToParamPolyFuncDirPos pdid x pi -> Type
+PDiToParamPolyFuncDirDir pdid x elt1 pi =
+  Sigma {a=x} $ mdsDir (pdiF pdid) (fst elt1) pi . snd elt1
+
+public export
+PDiToParamPolyFuncDirArena : (pdid : PDiData) -> (x : Type) ->
+  PDiToParamPolyFuncPos pdid x -> MLArena
+PDiToParamPolyFuncDirArena pdid x elt1 =
+  (PDiToParamPolyFuncDirPos pdid x elt1 ** PDiToParamPolyFuncDirDir pdid x elt1)
 
 public export
 PDiToParamPolyFuncDir : (pdid : PDiData) -> (x : Type) ->
   PDiToParamPolyFuncPos pdid x -> Type
 PDiToParamPolyFuncDir pdid x elt1 =
-  (j : mdsOnPos (pdiF pdid) (fst elt1) **
-   Sigma {a=x} $ mdsDir (pdiF pdid) (fst elt1) j . snd elt1)
+  pfPDir (PDiToParamPolyFuncDirArena pdid x elt1)
 
 public export
 PDiToParamPolyFunc : PDiData -> Type -> PolyFunc
