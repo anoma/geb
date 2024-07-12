@@ -71,6 +71,20 @@ InterpDirichFunc : MLDirichCatObj -> Type -> Type
 InterpDirichFunc p x = (i : dfPos p ** x -> dfDir p i)
 
 public export
+idfPos : {p : MLDirichCatObj} -> {a : Type} -> InterpDirichFunc p a -> dfPos p
+idfPos = fst
+
+public export
+idfDir : {p : MLDirichCatObj} -> {a : Type} ->
+  (idf : InterpDirichFunc p a) -> a -> dfDir p (idfPos {p} {a} idf)
+idfDir = DPair.snd
+
+public export
+idfSl : {p : MLDirichCatObj} -> {a : Type} ->
+  (idf : InterpDirichFunc p a) -> SliceObj (dfDir p (idfPos {p} {a} idf))
+idfSl {p} {a} idf = SliceFromCSlice {c=(dfDir p (idfPos idf))} (a ** idfDir idf)
+
+public export
 InterpDFMap : (p : MLDirichCatObj) -> {0 a, b : Type} ->
   (a -> b) -> InterpDirichFunc p b -> InterpDirichFunc p a
 InterpDFMap p m = dpMapSnd (\i => (|>) m)
