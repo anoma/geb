@@ -97,6 +97,57 @@ ADSLsigmaFunc : {b : Type} ->
 ADSLsigmaFunc {b} p cb = ADSLf (ADSLsigma {b} p {cb}) (ADSLsigmaMap {b} p {cb})
 
 export
+ADSLfibSigma : {b, b' : Type} -> (p : SliceObj b) -> (mb : b -> b') ->
+  ADSLomap (b ** p) (b' ** SliceFibSigmaF {c=b} mb p)
+ADSLfibSigma {b} {b'} p mb (ADSO tot inj) =
+  ADSO (SliceFibSigmaF mb tot) (sfsMap {f=mb} p tot inj)
+
+export
+ADSLfibSigmaMap : {b, b' : Type} ->
+  (p : SliceObj b) -> (mb : b -> b') ->
+  ADSLfmap (ADSLfibSigma {b} {b'} p mb)
+ADSLfibSigmaMap {b} {b'} p mb
+  (ADSO tot inj) (ADSO tot' inj') (ADSM mor _ {eq}) =
+    ADSM
+      (sfsMap tot tot' mor)
+      (sfsMap p tot' inj')
+      {eq=(\eb', (SFS eb ep) => rewrite eq eb ep in Refl)}
+
+export
+ADSLfibSigmaFunc : {b, b': Type} ->
+  (p : SliceObj b) -> (mb : b -> b') ->
+  ADSLfunc (b ** p) (b' ** SliceFibSigmaF {c=b} mb p)
+ADSLfibSigmaFunc {b} {b'} p mb =
+  ADSLf (ADSLfibSigma {b} {b'} p mb) (ADSLfibSigmaMap {b} {b'} p mb)
+
+export
+ADSLcbcSigma :
+  {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  (mb : b -> b') -> SliceMorphism {a=b'} cb' (SliceFibSigmaF mb cb) ->
+  ADSLomap (b ** cb) (b' ** cb')
+ADSLcbcSigma {b} {b'} {cb} {cb'} mb mcb =
+  ADSLcbc mcb . ADSLfibSigma {b} {b'} cb mb
+
+export
+ADSLcbcSigmaMap :
+  {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  (mb : b -> b') -> (mcb : SliceMorphism {a=b'} cb' (SliceFibSigmaF mb cb)) ->
+  ADSLfmap (ADSLcbcSigma {b} {b'} {cb} {cb'} mb mcb)
+ADSLcbcSigmaMap {b} {b'} {cb} {cb'} mb mcb x y =
+  ADSLcbcMap {cb=(SliceFibSigmaF mb cb)} {cb'} mcb
+      (ADSLfibSigma cb mb x) (ADSLfibSigma cb mb y)
+  . ADSLfibSigmaMap cb mb x y
+
+-- An analogue of `SPFpoCell` -- a twisted-arrow morphism which
+-- induces a functor between dislice categories.
+export
+ADSLcbcSigmaFunc :
+  {b, b' : Type} -> {cb : SliceObj b} -> {cb' : SliceObj b'} ->
+  (mb : b -> b') -> (mcb : SliceMorphism {a=b'} cb' (SliceFibSigmaF mb cb)) ->
+  ADSLfunc (b ** cb) (b' ** cb')
+ADSLcbcSigmaFunc mb mcb = ADSLf (ADSLcbcSigma mb mcb) (ADSLcbcSigmaMap mb mcb)
+
+export
 ADSLpi : {b : Type} -> (p : SliceObj b) -> {cb : SliceObj (Sigma {a=b} p)} ->
   ADSLomap ((Sigma {a=b} p) ** cb) (b ** SlicePiF {c=b} p cb)
 ADSLpi {b} p {cb} (ADSO tot inj) =
