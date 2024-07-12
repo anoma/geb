@@ -49,13 +49,27 @@ PDiPos1 : PDiData -> Type
 PDiPos1 = dfPos . pdiT1
 
 public export
+PDiPos2 : (pdid : PDiData) -> PDiPos1 pdid -> Type
+PDiPos2 pdid = mdsOnPos (pdiF pdid)
+
+public export
 PDiDir1 : (pdid : PDiData) -> PDiPos1 pdid -> Type
 PDiDir1 pdid = dfDir (pdiT1 pdid)
+
+public export
+PDiTot1 : (pdid : PDiData) -> Type
+PDiTot1 = dfTot . pdiT1
 
 public export
 PDiToSPFData : (pdid : PDiData) ->
   SPFdepData {b=(PDiPos1 pdid)} (PDiDir1 pdid) (const Unit)
 PDiToSPFData pdid = MlDirichSlToSPFDD {ar=(pdiT1 pdid)} $ pdiF pdid
+
+public export
+InterpPDiSPF : (pdid : PDiData) ->
+  (i : PDiPos1 pdid) -> PDiPos2 pdid i -> PDiDir1 pdid i -> Type
+InterpPDiSPF pdid i j d =
+  InterpSPFdepDataEl (PDiToSPFData pdid) i (mdsDir (pdiF pdid) i j) ()
 
 -- See the formula for `T` in the `Proposition 2.10` section of
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .

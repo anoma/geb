@@ -39,6 +39,10 @@ dfDir : (p : MLDirichCatObj) -> dfPos p -> Type
 dfDir = DPair.snd
 
 public export
+dfTot : MLDirichCatObj -> Type
+dfTot p = Sigma {a=(dfPos p)} $ dfDir p
+
+public export
 MLDirichCatOnPos : MLDirichCatObj -> MLDirichCatObj -> Type
 MLDirichCatOnPos p q = dfPos p -> dfPos q
 
