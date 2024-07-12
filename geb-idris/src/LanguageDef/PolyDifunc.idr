@@ -3,6 +3,7 @@ module LanguageDef.PolyDifunc
 import Library.IdrisUtils
 import Library.IdrisCategories
 import LanguageDef.DisliceCat
+import public LanguageDef.PolyCat
 import public LanguageDef.DislicePolyCat
 import public LanguageDef.IntECofamCat
 import public LanguageDef.GenPolyFunc
@@ -42,6 +43,19 @@ record PDiData where
   constructor PDiD
   pdiT1 : MLDirichCatObj
   pdiF : MlDirichSlObj pdiT1
+
+public export
+PDiPos1 : PDiData -> Type
+PDiPos1 = dfPos . pdiT1
+
+public export
+PDiDir1 : (pdid : PDiData) -> PDiPos1 pdid -> Type
+PDiDir1 pdid = dfDir (pdiT1 pdid)
+
+public export
+PDiToSPFData : (pdid : PDiData) ->
+  SPFdepData {b=(PDiPos1 pdid)} (PDiDir1 pdid) (const Unit)
+PDiToSPFData pdid = MlDirichSlToSPFDD {ar=(pdiT1 pdid)} $ pdiF pdid
 
 -- See the formula for `T` in the `Proposition 2.10` section of
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
