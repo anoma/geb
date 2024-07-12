@@ -257,6 +257,26 @@ CDSLcbcSigma {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb =
   CDSLcbc mcb . CDSLsigma {b} {b'} {cb} {proj} mb
 
 export
+CDSLcbcSigmaMap :
+  {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mb : b -> b') ->
+  (mcb : CSliceMorphism {c=b'} (cb' ** proj') (CSSigma mb (cb ** proj))) ->
+  CDSLfmap (CDSLcbcSigma {proj} {proj'} mb mcb)
+CDSLcbcSigmaMap {b} {b'} {cb} {cb'} {proj} {proj'} mb mcb x y =
+  CDSLcbcMap {proj=(mb . proj)} mcb (CDSLsigma mb x) (CDSLsigma mb y)
+  . CDSLsigmaMap {proj} mb x y
+
+-- An analogue of `SPFpoCell` -- a twisted-arrow morphism which
+-- induces a functor between dislice categories.
+export
+CDSLcbcSigmaFunc :
+  {b, b', cb, cb' : Type} -> {proj : cb -> b} -> {proj' : cb' -> b'} ->
+  (mb : b -> b') ->
+  CSliceMorphism {c=b'} (cb' ** proj') (CSSigma mb (cb ** proj)) ->
+  CDSLfunc (CBO b cb proj) (CBO b' cb' proj')
+CDSLcbcSigmaFunc mb mcb = CDSLf (CDSLcbcSigma mb mcb) (CDSLcbcSigmaMap mb mcb)
+
+export
 CDSLpi : {b, p, cb : Type} ->
   (pproj : p -> b) -> {cbbproj : cb -> b} ->
   (cbpproj : CSliceMorphism {c=b} (cb ** cbbproj) (p ** pproj)) ->
