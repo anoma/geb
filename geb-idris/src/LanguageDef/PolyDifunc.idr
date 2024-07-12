@@ -77,9 +77,8 @@ PDiToSPFData pdid i = SPFD (\() => PDiPos2 pdid i) (\() => PDiDir2 pdid i)
 
 public export
 InterpPDiSPF : (pdid : PDiData) ->
-  (i : PDiPos1 pdid) -> PDiPos2 pdid i -> Type
-InterpPDiSPF pdid i j =
-  InterpSPFdepDataEl (PDiToSPFdepData pdid) i (mdsDir (pdiF pdid) i j) ()
+  (i : PDiPos1 pdid) -> SliceObj (PDiDir1 pdid i) -> Type
+InterpPDiSPF pdid i sl = InterpSPFdepDataEl (PDiToSPFdepData pdid) i sl ()
 
 -- See the formula for `T` in the `Proposition 2.10` section of
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
