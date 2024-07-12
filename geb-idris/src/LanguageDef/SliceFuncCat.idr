@@ -139,6 +139,7 @@ sfsMap {c} {d} {f} sca scb mab eb ssa =
 -- This is the unit of the dependent-sum/base-change adjunction
 -- in category-theoretic style.  As such it is the constructor for
 -- `SliceFibSigmaF`.
+public export
 sfsIntro : {0 c, d : Type} -> (0 f : c -> d) ->
   SliceNatTrans {x=c} {y=c}
     (SliceIdF c)
@@ -436,6 +437,17 @@ sfpMap {c} {d} {f} sca scb =
     {f=(\ed => fst0 $ snd ed)}
     sca
     scb
+
+-- A form of introduction rule for `SliceFibSigmaF` which uses
+-- `SliceFibPiF`.
+public export
+sfsIntroPi : {0 c, d : Type} -> (0 f : c -> d) ->
+  {sc : SliceObj c} -> {sd : SliceObj d} ->
+  (mdc : SliceMorphism {a=d} sd (\ed => PreImage {a=c} {b=d} f ed)) ->
+  (mdep : Pi {a=d} $ SliceFibPiF f sc) ->
+  SliceMorphism {a=d} sd (SliceFibSigmaF f sc)
+sfsIntroPi {c} {d} f {sc} {sd} mdc mdep ed esd =
+  let med = mdc ed esd in rewrite sym (snd0 med) in SFS (fst0 med) $ mdep ed med
 
 -----------------------
 ----- Pi as W-type ----
