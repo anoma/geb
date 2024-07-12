@@ -321,6 +321,11 @@ WPreImage : {a, b : Type} -> (a -> b) -> SliceObj b
 WPreImage {a} {b} f = SliceFibSigmaF {c=a} {d=b} f (SliceObjTerminal a)
 
 public export
+WPre : {a, b : Type} -> {0 f : a -> b} -> {eb : b} -> (ea : a) ->
+  {eq : f ea = eb} -> WPreImage {a} {b} f eb
+WPre {a} {b} {f} {eb} ea {eq} = rewrite sym eq in SFS ea ()
+
+public export
 WDiagElem : {a : Type} -> SliceObj (a, a)
 WDiagElem {a} = WPreImage {a} {b=(a, a)} (ProductNTUnit {a})
 
