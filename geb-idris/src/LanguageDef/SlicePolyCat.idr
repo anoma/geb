@@ -2403,12 +2403,6 @@ record SPFdepData {0 b : Type} (dom, cod : SliceObj b) where
   spfddPos : (eb : b) -> cod eb -> Type
   spfddDir : SPFdepDirType {b} dom cod spfddPos
 
-public export
-SPFDataFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  SPFdepData {b} dom cod -> SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
-SPFDataFromDep {b} {dom} {cod} spfdd =
-  SPFD (uncurry $ spfddPos spfdd) (SPFdirFromDep $ spfddDir spfdd)
-
 -- Now we see that an `SPFdepData` is simply a `b`-indexed dependent family
 -- of `SPFData`s.
 public export
@@ -2423,6 +2417,15 @@ SPFDepFromDataFam : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
   SPFdepData {b} dom cod
 SPFDepFromDataFam {b} {dom} {cod} fam =
   SPFDD (\eb => spfdPos (fam eb)) (\eb => spfdDir (fam eb))
+
+-- An `SPFdepData` can be compressed to an `SPFData`, although this loses
+-- information compared to the `SPFdepData`/`SPFData`-family formulation
+-- in that it erases the `b`-dependent connection between `dom` and `cod`.
+public export
+SPFDataFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  SPFdepData {b} dom cod -> SPFData (Sigma {a=b} dom) (Sigma {a=b} cod)
+SPFDataFromDep {b} {dom} {cod} spfdd =
+  SPFD (uncurry $ spfddPos spfdd) (SPFdirFromDep $ spfddDir spfdd)
 
 -- The signature that this form of SPFD allows us to write makes the domain
 -- and codomain themselves both dependent on a common type (`b`), thus allowing
