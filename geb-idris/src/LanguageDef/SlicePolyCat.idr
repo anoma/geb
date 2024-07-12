@@ -2576,7 +2576,7 @@ SPFpoCellFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
     {w=(Sigma {a=b} w)}
     {w'=(Sigma {a=b} w')}
     {z=(Sigma {a=b} z)}
-    {z'= (Sigma {a=b} z')}
+    {z'=(Sigma {a=b} z')}
     (dpMapSnd bcl)
     (dpMapSnd bcr)
     (SPFDataFromDep f)
@@ -2587,3 +2587,28 @@ SPFpoCellFromDep {w} {w'} {z} {z'} bcl bcr f g spfc =
     (\(eb ** ez'), (SFS (eb' ** ez) efp), (eb'' ** ew'), (SPFdd _ _ _ _ egd) =>
       let (SFS ew efd) = spdOnDir spfc eb' (bcr eb' ez) (SFS ez efp) ew' egd in
       SFS (eb' ** ew) $ SPFdd eb' ez efp ew efd)
+
+-- As with functors and natural transformations, the dependent cells are
+-- simply `b`-indexed dependent families of cells.
+
+public export
+SPFcellDepFromFam : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
+  SPFdepPoCell bcl bcr f g ->
+  Pi {a=b} (\eb => SPFpoCell {w=(w eb)} {w'=(w' eb)} {z=(z eb)} {z'=(z' eb)}
+    (bcl eb) (bcr eb)
+    (SPFDataFamFromDep f eb)
+    (SPFDataFamFromDep g eb))
+SPFcellDepFromFam {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntFamFromDep
+
+public export
+SPFcellFamFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
+  Pi {a=b} (\eb => SPFpoCell {w=(w eb)} {w'=(w' eb)} {z=(z eb)} {z'=(z' eb)}
+    (bcl eb) (bcr eb)
+    (SPFDataFamFromDep f eb)
+    (SPFDataFamFromDep g eb)) ->
+  SPFdepPoCell bcl bcr f g
+SPFcellFamFromDep {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntDepFromFam
