@@ -31,7 +31,7 @@ import public LanguageDef.IntDisheafCat
 -- we have developed previously: `SPFdepDirType`.
 public export
 MlDirichSlToSPFDD : {ar : MLArena} ->
-  MlDirichSlObj ar -> SPFdepData {b=(pfPos ar)} (pfDir {p=ar}) (const Unit)
+  MlDirichSlObj ar -> SPFdepData {b=(pfPos ar)} (snd ar) (const Unit)
 MlDirichSlToSPFDD {ar} sl =
   SPFDD (\i, () => mdsOnPos sl i) (\ei, () => mdsDir sl ei)
 
