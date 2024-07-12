@@ -2498,6 +2498,30 @@ InterpSPFdepNT : {b : Type} -> {dom, cod : SliceObj b} ->
 InterpSPFdepNT {b} {dom} {cod} f g alpha =
   InterpSPFnt (SPFDataFromDep f) (SPFDataFromDep g) (SPFntFromDep alpha)
 
+-- Now we show that a `b`-dependent slice polynomial natural transformation
+-- is just a `b`-indexed dependent family of slice polynomial natural
+-- transformations.
+
+public export
+SPFntFamFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  {f, g : SPFdepData {b} dom cod} ->
+  SPFdepNT {b} {dom} {cod} f g ->
+  Pi {a=b} (\eb => SPFnt {dom=(dom eb)} {cod=(cod eb)}
+    (SPFDataFamFromDep f eb)
+    (SPFDataFamFromDep g eb))
+SPFntFamFromDep {b} {dom} {cod} {f} {g} alpha eb =
+  SPFDm (spdOnPos alpha eb) (spdOnDir alpha eb)
+
+public export
+SPFntDepFromFam : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  {f, g : SPFdepData {b} dom cod} ->
+  Pi {a=b} (\eb => SPFnt {dom=(dom eb)} {cod=(cod eb)}
+    (SPFDataFamFromDep f eb)
+    (SPFDataFamFromDep g eb)) ->
+  SPFdepNT {b} {dom} {cod} f g
+SPFntDepFromFam {b} {dom} {cod} {f} {g} fam =
+  SPFdnt (\eb => spOnPos (fam eb)) (\eb => spOnDir (fam eb))
+
 public export
 InterpSPFdepNTel : {b : Type} -> {dom, cod : SliceObj b} ->
   (f, g : SPFdepData {b} dom cod) ->
@@ -2509,7 +2533,7 @@ InterpSPFdepNTel : {b : Type} -> {dom, cod : SliceObj b} ->
 InterpSPFdepNTel {b} {dom} {cod} f g alpha eb =
   InterpSPFnt {dom=(dom eb)} {cod=(cod eb)}
     (SPFDataFamFromDep f eb) (SPFDataFamFromDep g eb)
-    (SPFDm (spdOnPos alpha eb) (spdOnDir alpha eb))
+    (SPFntFamFromDep alpha eb)
 
 public export
 spfDepPushoutPos : {b : Type} -> {x, y, z : SliceObj b} ->
