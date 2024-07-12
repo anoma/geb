@@ -76,7 +76,7 @@ PDiToSPFdepData pdid = MlDirichSlToSPFDD {ar=(pdiT1 pdid)} $ pdiF pdid
 public export
 PDiToSPFData : (pdid : PDiData) ->
   (i : PDiPos1 pdid) -> SPFData (PDiDir1 pdid i) Unit
-PDiToSPFData pdid i = SPFD (\() => PDiPos2 pdid i) (\() => PDiDir2 pdid i)
+PDiToSPFData pdid = SPFDataFamFromDep (PDiToSPFdepData pdid)
 
 -- This is the interpretation of the above family of `SPFData`s.
 public export
