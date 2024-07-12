@@ -342,6 +342,11 @@ WPreMaybe {a} {b} {deq} {f} {eb} ea = case WPreDec {a} {b} {deq} {f} {eb} ea of
   Right _ => Nothing
 
 public export
+WSliceFromCSlice : {c : Type} -> CSliceObj c -> SliceObj c
+WSliceFromCSlice {c} x =
+  WPreImage {a=(CSliceObjDomain x)} {b=c} (CSliceObjMap x)
+
+public export
 WDiagElem : {a : Type} -> SliceObj (a, a)
 WDiagElem {a} = WPreImage {a} {b=(a, a)} (ProductNTUnit {a})
 
