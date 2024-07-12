@@ -75,13 +75,17 @@ idfPos : {p : MLDirichCatObj} -> {a : Type} -> InterpDirichFunc p a -> dfPos p
 idfPos = fst
 
 public export
+idfDir : {p : MLDirichCatObj} -> {a : Type} -> InterpDirichFunc p a -> Type
+idfDir {p} {a} idf = dfDir p (idfPos {p} {a} idf)
+
+public export
 idfDirMap : {p : MLDirichCatObj} -> {a : Type} ->
-  (idf : InterpDirichFunc p a) -> a -> dfDir p (idfPos {p} {a} idf)
+  (idf : InterpDirichFunc p a) -> a -> idfDir {p} idf
 idfDirMap = DPair.snd
 
 public export
 idfSl : {p : MLDirichCatObj} -> {a : Type} ->
-  (idf : InterpDirichFunc p a) -> SliceObj (dfDir p (idfPos {p} {a} idf))
+  (idf : InterpDirichFunc p a) -> SliceObj (idfDir {p} idf)
 idfSl {p} {a} idf =
   WSliceFromCSlice {c=(dfDir p (idfPos idf))} (a ** idfDirMap idf)
 
