@@ -1361,7 +1361,7 @@ spfPiPos {x} {y} {z} mzy f =
   SPFD
     (SliceFibPiF mzy $ spfdPos f)
     (\ey, ep, ex =>
-      (ez : PreImage {a=z} {b=y} mzy ey ** spfdDir f (fst0 ez) (ep ez) ex))
+      (ez : WPreImage {a=z} {b=y} mzy ey ** spfdDir f (sfsFst ez) (ep ez) ex))
 
 public export
 spfPiDir : {w, x, z : Type} ->
@@ -1677,20 +1677,21 @@ InterpSPFDfromBC {x} {y} f sx ey ei = (() ** \ex, eq => replace {p=sx} eq ei)
 public export
 SPFDsigma : {x, y : Type} -> (x -> y) -> SPFData x y
 SPFDsigma {x} {y} f =
-  SPFD (\ey => PreImage {a=x} {b=y} f ey) (\ey, ep, ex => fst0 ep = ex)
+  SPFD (\ey => WPreImage {a=x} {b=y} f ey) (\ey, ep, ex => sfsFst ep = ex)
 
 public export
 InterpSPFDtoSigma : {x, y : Type} -> (f : x -> y) ->
   SliceNatTrans {x} {y} (InterpSPFData $ SPFDsigma f) (SliceFibSigmaF f)
 InterpSPFDtoSigma {x} {y} f sx ey ei =
-  rewrite sym $ snd0 $ fst ei in
-  SFS {sc=sx} (fst0 $ fst ei) (snd ei (fst0 $ fst ei) Refl)
+  rewrite sym $ sfsEq $ fst ei in
+  SFS {sc=sx} (sfsFst $ fst ei) (snd ei (sfsFst $ fst ei) Refl)
 
 public export
 InterpSPFDfromSigma : {x, y : Type} -> (f : x -> y) ->
   SliceNatTrans {x} {y} (SliceFibSigmaF f) (InterpSPFData $ SPFDsigma f)
 InterpSPFDfromSigma {x} {y} f sx ey ei =
-  (Element0 (sfsFst ei) (sfsEq ei) ** \ex, eq => replace {p=sx} eq $ sfsSnd ei)
+  rewrite sym (sfsEq ei) in
+  (SFS (sfsFst ei) () ** \ex, eq => rewrite sym eq in sfsSnd ei)
 
 ------------
 ---- Pi ----
@@ -1704,12 +1705,13 @@ public export
 0 InterpSPFDtoPi : {x, y : Type} -> (f : x -> y) ->
   SliceNatTrans {x} {y} (InterpSPFData $ SPFDpi f) (SliceFibPiF f)
 InterpSPFDtoPi {x} {y} f sx ey ei ex =
-  case ei of (() ** dm) => dm (fst0 ex) (snd0 ex)
+  case ei of (() ** dm) => dm (sfsFst ex) (sfsEq ex)
 
 public export
 InterpSPFDfromPi : {x, y : Type} -> (f : x -> y) ->
   SliceNatTrans {x} {y} (SliceFibPiF f) (InterpSPFData $ SPFDpi f)
-InterpSPFDfromPi {x} {y} f sx ey pix = (() ** \ex, eq => pix $ Element0 ex eq)
+InterpSPFDfromPi {x} {y} f sx ey pix =
+  (() ** \ex, eq => pix $ rewrite sym eq in SFS ex ())
 
 ----------------------------------------
 ----------------------------------------
@@ -1764,9 +1766,9 @@ public export
 spfdPostcompSigmaToPushoutPos {x} {y} {z} myz f =
   SPFDm
     (\ez, epdm =>
-      rewrite sym $ snd0 $ fst epdm in
-      SFS (fst0 $ fst epdm) (snd epdm (fst0 $ fst epdm) Refl))
-    (\ez, epdm, ex, efd => ((fst0 (fst epdm) ** Refl) ** efd))
+      rewrite sym $ sfsEq $ fst epdm in
+      SFS (sfsFst $ fst epdm) (snd epdm (sfsFst $ fst epdm) Refl))
+    (\ez, epdm, ex, efd => ((sfsFst (fst epdm) ** Refl) ** efd))
 
 public export
 spfdPostcompSigmaFromPushoutPos : {x, y, z : Type} ->
@@ -1775,7 +1777,8 @@ spfdPostcompSigmaFromPushoutPos : {x, y, z : Type} ->
 spfdPostcompSigmaFromPushoutPos {x} {y} {z} myz f =
   SPFDm
     (\ez, ep =>
-      (Element0 (sfsFst ep) (sfsEq ep) **
+      rewrite sym (sfsEq ep) in
+      (SFS (sfsFst ep) () **
        \ey, xeq => rewrite sym xeq in sfsSnd ep))
     (\ez, ep, ex, efd => rewrite snd (fst efd) in snd efd)
 
@@ -1809,8 +1812,8 @@ public export
   SPFnt {dom=x} {cod=z} (spfdPostcompPi myz f) (spfPiPos myz f)
 spfdPostcompPiToPiPos {x} {y} {z} myz f =
   SPFDm
-    (\ez, efp, ey => snd efp (fst0 ey) (snd0 ey))
-    (\ez, efp, ex, efd => ((fst0 (fst efd) ** snd0 (fst efd)) ** snd efd))
+    (\ez, efp, ey => snd efp (sfsFst ey) (sfsEq ey))
+    (\ez, efp, ex, efd => ((sfsFst (fst efd) ** sfsEq (fst efd)) ** snd efd))
 
 public export
 spfdPostcompPiFromPiPos : {x, y, z : Type} ->
@@ -1818,8 +1821,9 @@ spfdPostcompPiFromPiPos : {x, y, z : Type} ->
   SPFnt {dom=x} {cod=z} (spfPiPos myz f) (spfdPostcompPi myz f)
 spfdPostcompPiFromPiPos {x} {y} {z} myz f =
   SPFDm
-    (\ez, efp => (() ** \ey, ezeq => efp $ Element0 ey ezeq))
-    (\ez, efp, ex, efd => (Element0 (fst $ fst efd) (snd $ fst efd) ** snd efd))
+    (\ez, efp => (() ** \ey, ezeq => efp $ rewrite sym ezeq in SFS ey ()))
+    (\ez, efp, ex, efd =>
+      rewrite sym $ snd (fst efd) in (SFS (fst $ fst efd) () ** snd efd))
 
 -- Precomposition with base change is the same as what we have
 -- called pushing out along direction.

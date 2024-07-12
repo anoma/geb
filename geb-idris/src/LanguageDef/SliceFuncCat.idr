@@ -413,28 +413,28 @@ spMap {c} {sl} slsa slsb mab ec pia eslc = mab (ec ** eslc) $ pia eslc
 -- This is the category-theory-style version of `SlicePiF`, based on
 -- fibrations.
 public export
-SliceFibPiF : {c, d : Type} -> (0 f : c -> d) -> SliceFunctor c d
+SliceFibPiF : {c, d : Type} -> (f : c -> d) -> SliceFunctor c d
 SliceFibPiF {c} {d} f =
   -- An explicit way of spelling this out would be:
   -- \sc : SliceObj c, ed : d =>
-  --  (ep : PreImage {a=c} {b=d} f ed) -> sc $ fst0 ep
-  SlicePiF {c=d} (\ed => PreImage {a=c} {b=d} f ed)
+  --  (ep : WPreImage {a=c} {b=d} f ed) -> sc $ fst0 ep
+  SlicePiF {c=d} (\ed => WPreImage {a=c} {b=d} f ed)
   . BaseChangeF
       {c}
-      {d=(Sigma {a=d} $ \ed => PreImage {a=c} {b=d} f ed)}
-      (\ed => fst0 $ snd ed)
+      {d=(Sigma {a=d} $ \ed => WPreImage {a=c} {b=d} f ed)}
+      (\ed => sfsFst $ snd ed)
 
 public export
 sfpMap : {c, d : Type} -> {0 f : c -> d} ->
   SliceFMap (SliceFibPiF {c} {d} f)
 sfpMap {c} {d} {f} sca scb =
-  spMap {c=d} {sl=(\ed => PreImage {a=c} {b=d} f ed)}
-    (\edc => sca $ fst0 $ snd edc)
-    (\edc => scb $ fst0 $ snd edc)
+  spMap {c=d} {sl=(\ed => WPreImage {a=c} {b=d} f ed)}
+    (\edc => sca $ sfsFst $ snd edc)
+    (\edc => scb $ sfsFst $ snd edc)
   . bcMap
     {c}
-    {d=(Sigma {a=d} $ \ed => PreImage {a=c} {b=d} f ed)}
-    {f=(\ed => fst0 $ snd ed)}
+    {d=(Sigma {a=d} $ \ed => WPreImage {a=c} {b=d} f ed)}
+    {f=(\ed => sfsFst $ snd ed)}
     sca
     scb
 
@@ -443,11 +443,13 @@ sfpMap {c} {d} {f} sca scb =
 public export
 sfsIntroPi : {0 c, d : Type} -> (0 f : c -> d) ->
   {sc : SliceObj c} -> {sd : SliceObj d} ->
-  (mdc : SliceMorphism {a=d} sd (\ed => PreImage {a=c} {b=d} f ed)) ->
+  (mdc : SliceMorphism {a=d} sd (\ed => WPreImage {a=c} {b=d} f ed)) ->
   (mdep : Pi {a=d} $ SliceFibPiF f sc) ->
   SliceMorphism {a=d} sd (SliceFibSigmaF f sc)
 sfsIntroPi {c} {d} f {sc} {sd} mdc mdep ed esd =
-  let med = mdc ed esd in rewrite sym (snd0 med) in SFS (fst0 med) $ mdep ed med
+  let med = mdc ed esd in
+  rewrite sym (sfsEq med) in
+  SFS (sfsFst med) $ mdep ed med
 
 -----------------------
 ----- Pi as W-type ----
@@ -459,12 +461,13 @@ SFPasWTF {c} {d} f = MkWTF {dom=c} {cod=d} d c id f id
 
 sfpToWTF : {c, d : Type} -> (0 f : c -> d) ->
   SliceNatTrans (SliceFibPiF {c} {d} f) (InterpWTF $ SFPasWTF f)
-sfpToWTF {c} {d} f sc ed pisc = (Element0 ed Refl ** pisc)
+sfpToWTF {c} {d} f sc ed pisc =
+  (Element0 ed Refl ** \(Element0 ec eq) => pisc $ rewrite sym eq in SFS ec ())
 
 sfpFromWTF : {c, d : Type} -> (0 f : c -> d) ->
   SliceNatTrans (InterpWTF $ SFPasWTF f) (SliceFibPiF {c} {d} f)
 sfpFromWTF {c} {d} f sc ed (Element0 ec eq ** scd) =
-  replace {p=(SliceFibPiF f sc)} eq scd
+  replace {p=(SliceFibPiF f sc)} eq $ \(SFS ec ()) => scd $ Element0 ec Refl
 
 0 SPasWTF : {c : Type} -> (sl : SliceObj c) -> WTypeFunc (Sigma sl) c
 SPasWTF {c} sl = SFPasWTF {c=(Sigma sl)} {d=c} DPair.fst
