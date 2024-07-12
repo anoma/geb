@@ -2128,6 +2128,17 @@ SPFpoCellToWType {w} {w'} {z} {z'} bcl bcr f g spfc =
     (SPFpoCellToWTypeCommAssign bcl bcr f g spfc)
 
 public export
+0 SPFntToWType : {w, z : Type} ->
+  {f, g : SPFData w z} ->
+  SPFnt {dom=w} {cod=z} f g ->
+  WTypeNT {w} {z} (SPFDasWTF f) (SPFDasWTF g)
+SPFntToWType {w} {z} {f} {g} spnt =
+  SPFpoCellToWType {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f g $
+    SPFDm
+      (\ez, (SFS ez ep) => spOnPos spnt ez ep)
+      (\ez, (SFS ez ep), ew, egd => SFS ew $ spOnDir spnt ez ep ew egd)
+
+public export
 spocVid : {w, z : Type} -> (f : SPFData w z) ->
   SPFpoCell {w} {w'=w} {z} {z'=z} Prelude.id Prelude.id f f
 spocVid {w} {z} f =
