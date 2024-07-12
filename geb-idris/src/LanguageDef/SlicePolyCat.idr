@@ -2409,6 +2409,21 @@ SPFDataFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
 SPFDataFromDep {b} {dom} {cod} spfdd =
   SPFD (uncurry $ spfddPos spfdd) (SPFdirFromDep $ spfddDir spfdd)
 
+-- Now we see that an `SPFdepData` is simply a `b`-indexed dependent family
+-- of `SPFData`s.
+public export
+SPFDataFamFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  SPFdepData {b} dom cod -> Pi {a=b} (\eb => SPFData (dom eb) (cod eb))
+SPFDataFamFromDep {b} {dom} {cod} spfdd eb =
+  SPFD (spfddPos spfdd eb) (spfddDir spfdd eb)
+
+public export
+SPFDepFromDataFam : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
+  Pi {a=b} (\eb => SPFData (dom eb) (cod eb)) ->
+  SPFdepData {b} dom cod
+SPFDepFromDataFam {b} {dom} {cod} fam =
+  SPFDD (\eb => spfdPos (fam eb)) (\eb => spfdDir (fam eb))
+
 -- The signature that this form of SPFD allows us to write makes the domain
 -- and codomain themselves both dependent on a common type (`b`), thus allowing
 -- us to express a _relationship_ between the dependent types of the domain
