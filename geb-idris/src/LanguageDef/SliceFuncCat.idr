@@ -136,6 +136,27 @@ sfsMap : {c, d : Type} -> {0 f : c -> d} ->
 sfsMap {c} {d} {f} sca scb mab eb ssa =
   case ssa of SFS ea esa => SFS {c} {d} {f} {sc=scb} ea $ mab ea esa
 
+-- This is the unit of the dependent-sum/base-change adjunction
+-- in category-theoretic style.  As such it is the constructor for
+-- `SliceFibSigmaF`.
+sfsIntro : {0 c, d : Type} -> (0 f : c -> d) ->
+  SliceNatTrans {x=c} {y=c}
+    (SliceIdF c)
+    (BaseChangeF f . SliceFibSigmaF {c} f)
+sfsIntro {c} {d} f sc ec esc = SFS {sc} {f} ec esc
+
+-- This is the right adjunct of the dependent-sum/base-change adjunction
+-- in category-theoretic style.  As such it is the destructor for
+-- `SliceFibSigmaF`.
+public export
+sfsElim : {c, d : Type} -> (0 f : c -> d) ->
+  {0 sa : SliceObj c} -> {0 sb : SliceObj d} ->
+  SliceMorphism {a=c} sa (BaseChangeF f sb) ->
+  SliceMorphism {a=d} (SliceFibSigmaF {c} f sa) sb
+sfsElim {c} {d} f {sa} {sb} m ed sfs =
+  rewrite sym (sfsEq sfs) in
+  m (sfsFst sfs) (sfsSnd sfs)
+
 --------------------------
 ----- Sigma as W-type ----
 --------------------------
