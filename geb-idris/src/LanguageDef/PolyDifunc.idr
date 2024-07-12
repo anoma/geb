@@ -70,18 +70,18 @@ PDiToSPFdepData : (pdid : PDiData) ->
   SPFdepData {b=(PDiPos1 pdid)} (PDiDir1 pdid) (const Unit)
 PDiToSPFdepData pdid = MlDirichSlToSPFDD {ar=(pdiT1 pdid)} $ pdiF pdid
 
+-- For each position of `T1`, we have a dependent polynomial functor from
+-- the slice category of that position's direction to `Type` (which is
+-- equivalent to the slice category of `Type` over `Unit`).
 public export
 PDiToSPFData : (pdid : PDiData) ->
   (i : PDiPos1 pdid) -> SPFData (PDiDir1 pdid i) Unit
 PDiToSPFData pdid i = SPFD (\() => PDiPos2 pdid i) (\() => PDiDir2 pdid i)
 
+-- This is the interpretation of the above family of `SPFData`s.
 public export
 InterpPDiSPF : (pdid : PDiData) ->
-  (i : PDiPos1 pdid) ->
-  -- For each position of `T1`, we have a dependent polynomial functor from
-  -- the slice category of that position's direction to `Type` (which is
-  -- equivalent to the slice category of `Type` over `Unit`).
-  SliceObj (PDiDir1 pdid i) -> Type
+  (i : PDiPos1 pdid) -> SliceObj (PDiDir1 pdid i) -> Type
 InterpPDiSPF pdid i sl = InterpSPFdepDataEl (PDiToSPFdepData pdid) i sl ()
 
 -- See the formula for `T` in the `Proposition 2.10` section of
