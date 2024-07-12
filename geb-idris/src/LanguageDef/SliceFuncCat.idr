@@ -326,6 +326,14 @@ WPre : {a, b : Type} -> {0 f : a -> b} -> {eb : b} -> (ea : a) ->
 WPre {a} {b} {f} {eb} ea {eq} = rewrite sym eq in SFS ea ()
 
 public export
+WPreDec : {a, b : Type} -> {deq : DecEq b} ->
+  {f : a -> b} -> {eb : b} ->
+  (ea : a) -> Either (WPreImage {a} {b} f eb) (Not (f ea = eb))
+WPreDec {a} {b} {deq} {f} {eb} ea = case decEq (f ea) eb of
+  Yes eq => Left $ WPre {a} {b} {f} {eb} ea {eq}
+  No neq => Right neq
+
+public export
 WDiagElem : {a : Type} -> SliceObj (a, a)
 WDiagElem {a} = WPreImage {a} {b=(a, a)} (ProductNTUnit {a})
 
