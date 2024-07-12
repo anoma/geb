@@ -443,7 +443,7 @@ sfpMap {c} {d} {f} sca scb =
 public export
 sfsIntroPi : {0 c, d : Type} -> (0 f : c -> d) ->
   {sc : SliceObj c} -> {sd : SliceObj d} ->
-  (mdc : SliceMorphism {a=d} sd (\ed => WPreImage {a=c} {b=d} f ed)) ->
+  (mdc : SliceMorphism {a=d} sd (WPreImage {a=c} {b=d} f)) ->
   (mdep : Pi {a=d} $ SliceFibPiF f sc) ->
   SliceMorphism {a=d} sd (SliceFibSigmaF f sc)
 sfsIntroPi {c} {d} f {sc} {sd} mdc mdep ed esd =
