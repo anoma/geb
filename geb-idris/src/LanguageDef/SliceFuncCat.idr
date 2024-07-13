@@ -347,6 +347,12 @@ WSliceFromCSlice {c} x =
   WPreImage {a=(CSliceObjDomain x)} {b=c} (CSliceObjMap x)
 
 public export
+WCSliceComp : {c : Type} ->
+  (x : CSliceObj c) -> SliceObj (CSliceObjDomain x) -> SliceObj c
+WCSliceComp {c} x =
+  SliceFibSigmaF {c=(CSliceObjDomain {c} x)} {d=c} $ CSliceObjMap {c} x
+
+public export
 WDiagElem : {a : Type} -> SliceObj (a, a)
 WDiagElem {a} = WPreImage {a} {b=(a, a)} (ProductNTUnit {a})
 

@@ -84,6 +84,31 @@ InterpPDiSPF : (pdid : PDiData) ->
   (i : PDiPos1 pdid) -> SliceObj (PDiDir1 pdid i) -> Type
 InterpPDiSPF pdid i sl = InterpSPFdepDataEl (PDiToSPFdepData pdid) i sl ()
 
+-- The interpretation of the application to first parameter of the
+-- curried form of the dependent profunctor (AKA presheaf on the
+-- twisted-arrow category) specified by a `PDiData`, returning a
+-- slice polynomial functor over the selected direction.
+public export
+InterpPDi1SPF : (pdid : PDiData) ->
+  (x : Type) -> (idf : InterpDirichFunc (pdiT1 pdid) x) ->
+  SPFData (idfDir {p=(pdiT1 pdid)} idf) Unit
+InterpPDi1SPF pdid x idf = PDiToSPFData pdid (idfPos {p=(pdiT1 pdid)} idf)
+
+public export
+InterpPDi1 : (pdid : PDiData) ->
+  (x : Type) -> (idf : InterpDirichFunc (pdiT1 pdid) x) ->
+  idfDirSl {p=(pdiT1 pdid)} idf -> Type
+InterpPDi1 pdid x idf = InterpPDiSPF pdid (idfPos {p=(pdiT1 pdid)} idf)
+
+public export
+InterpPDi : (pdid : PDiData) -> (x : Type) -> (y : SliceObj x) -> Type
+InterpPDi pdid x y =
+  (ix : InterpDirichFunc (pdiT1 pdid) x **
+   InterpPDi1 pdid x ix
+   $ WCSliceComp
+    {c=(idfDir {p=(pdiT1 pdid)} {a=x} ix)}
+    (idfCSl {p=(pdiT1 pdid)} {a=x} ix) y)
+
 -- See the formula for `T` in the `Proposition 2.10` section of
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
 
