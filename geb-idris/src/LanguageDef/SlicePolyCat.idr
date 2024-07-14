@@ -2437,6 +2437,8 @@ SPFDataFromDep {b} {dom} {cod} spfdd =
 -- category whose objects are the terms of `b` to the category of slice
 -- polynomial functors whose domain and codomain are slices of `dom eb`
 -- and `cod eb` respectively for each `eb : b`.
+--
+-- This is forgetful, compared to `InterpSPFdepDataEl`.
 public export
 InterpSPFdepData : {b : Type} -> {dom, cod : SliceObj b} ->
   SPFdepData {b} dom cod ->
@@ -2452,6 +2454,7 @@ InterpSPFdepDataEl : {b : Type} -> {dom, cod : SliceObj b} ->
 InterpSPFdepDataEl {b} {dom} {cod} spfdd eb =
   InterpSPFData {dom=(dom eb)} {cod=(cod eb)} (SPFDataFamFromDep spfdd eb)
 
+-- This is forgetful, compared to `InterpSPFdepDataMapEl`.
 public export
 InterpSPFdepDataMap : {b : Type} -> {dom, cod : SliceObj b} ->
   (spfdd : SPFdepData {b} dom cod) ->
@@ -2478,6 +2481,7 @@ record SPFdepNT {0 b : Type} {dom, cod : SliceObj b}
     spfddDir g eb ec (spdOnPos eb ec ep) ed ->
     spfddDir f eb ec ep ed
 
+-- This is forgetful, using the forgetful `SPFdataFromDep`.
 public export
 SPFntFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
   {0 f, g : SPFdepData {b} dom cod} ->
@@ -2488,6 +2492,7 @@ SPFntFromDep {b} {dom} {cod} {f} {g} alpha =
     (\(eb ** ec), efp, (_ ** ed), (SPFdd _ _ _ _ dd) =>
       SPFdd eb ec efp ed $ spdOnDir alpha eb ec efp ed dd)
 
+-- This is forgetful, compared to `InterpSPFdepNTel`.
 public export
 InterpSPFdepNT : {b : Type} -> {dom, cod : SliceObj b} ->
   (f, g : SPFdepData {b} dom cod) ->
@@ -2567,6 +2572,8 @@ SPFdepPoCell : {b : Type} -> {w, w', z, z' : SliceObj b} ->
 SPFdepPoCell {w} {w'} {z} {z'} bcl bcr f g =
   SPFdepNT {dom=w'} {cod=z'} (spfDepPushout bcl bcr f) g
 
+-- This is forgetful, like `SPFDataFromDep`, which it uses,
+-- compared to `SPFpoCellDepFromFam`.
 public export
 SPFpoCellFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
   (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
@@ -2592,7 +2599,7 @@ SPFpoCellFromDep {w} {w'} {z} {z'} bcl bcr f g spfc =
 -- simply `b`-indexed dependent families of cells.
 
 public export
-SPFcellDepFromFam : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+SPFpoCellDepFromFam : {b : Type} -> {w, w', z, z' : SliceObj b} ->
   (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
   (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
   SPFdepPoCell bcl bcr f g ->
@@ -2600,10 +2607,10 @@ SPFcellDepFromFam : {b : Type} -> {w, w', z, z' : SliceObj b} ->
     (bcl eb) (bcr eb)
     (SPFDataFamFromDep f eb)
     (SPFDataFamFromDep g eb))
-SPFcellDepFromFam {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntFamFromDep
+SPFpoCellDepFromFam {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntFamFromDep
 
 public export
-SPFcellFamFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+SPFpoCellFamFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
   (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
   (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
   Pi {a=b} (\eb => SPFpoCell {w=(w eb)} {w'=(w' eb)} {z=(z eb)} {z'=(z' eb)}
@@ -2611,4 +2618,4 @@ SPFcellFamFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
     (SPFDataFamFromDep f eb)
     (SPFDataFamFromDep g eb)) ->
   SPFdepPoCell bcl bcr f g
-SPFcellFamFromDep {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntDepFromFam
+SPFpoCellFamFromDep {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntDepFromFam
