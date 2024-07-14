@@ -2406,15 +2406,18 @@ record SPFdepData {0 b : Type} (dom, cod : SliceObj b) where
 -- Now we see that an `SPFdepData` is simply a `b`-indexed dependent family
 -- of `SPFData`s.
 public export
+SPFDataFam : {b : Type} -> (dom, cod : SliceObj b) -> Type
+SPFDataFam {b} dom cod = Pi {a=b} (\eb => SPFData (dom eb) (cod eb))
+
+public export
 SPFDataFamFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  SPFdepData {b} dom cod -> Pi {a=b} (\eb => SPFData (dom eb) (cod eb))
+  SPFdepData {b} dom cod -> SPFDataFam {b} dom cod
 SPFDataFamFromDep {b} {dom} {cod} spfdd eb =
   SPFD (spfddPos spfdd eb) (spfddDir spfdd eb)
 
 public export
 SPFDepFromDataFam : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
-  Pi {a=b} (\eb => SPFData (dom eb) (cod eb)) ->
-  SPFdepData {b} dom cod
+  SPFDataFam {b} dom cod -> SPFdepData {b} dom cod
 SPFDepFromDataFam {b} {dom} {cod} fam =
   SPFDD (\eb => spfdPos (fam eb)) (\eb => spfdDir (fam eb))
 
@@ -2508,21 +2511,23 @@ InterpSPFdepNT {b} {dom} {cod} f g alpha =
 -- transformations.
 
 public export
+SPFdepNTfam : {b : Type} -> {dom, cod : SliceObj b} ->
+  (f, g : SPFDataFam {b} dom cod) -> Type
+SPFdepNTfam {b} {dom} {cod} f g =
+  Pi {a=b} (\eb => SPFnt {dom=(dom eb)} {cod=(cod eb)} (f eb) (g eb))
+
+public export
 SPFntFamFromDep : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
   {f, g : SPFdepData {b} dom cod} ->
   SPFdepNT {b} {dom} {cod} f g ->
-  Pi {a=b} (\eb => SPFnt {dom=(dom eb)} {cod=(cod eb)}
-    (SPFDataFamFromDep f eb)
-    (SPFDataFamFromDep g eb))
+  SPFdepNTfam {b} {dom} {cod} (SPFDataFamFromDep f) (SPFDataFamFromDep g)
 SPFntFamFromDep {b} {dom} {cod} {f} {g} alpha eb =
   SPFDm (spdOnPos alpha eb) (spdOnDir alpha eb)
 
 public export
 SPFntDepFromFam : {0 b : Type} -> {0 dom, cod : SliceObj b} ->
   {f, g : SPFdepData {b} dom cod} ->
-  Pi {a=b} (\eb => SPFnt {dom=(dom eb)} {cod=(cod eb)}
-    (SPFDataFamFromDep f eb)
-    (SPFDataFamFromDep g eb)) ->
+  SPFdepNTfam {b} {dom} {cod} (SPFDataFamFromDep f) (SPFDataFamFromDep g) ->
   SPFdepNT {b} {dom} {cod} f g
 SPFntDepFromFam {b} {dom} {cod} {f} {g} fam =
   SPFdnt (\eb => spOnPos (fam eb)) (\eb => spOnDir (fam eb))
@@ -2599,23 +2604,31 @@ SPFpoCellFromDep {w} {w'} {z} {z'} bcl bcr f g spfc =
 -- simply `b`-indexed dependent families of cells.
 
 public export
+SPFpoCellFam : {b : Type} -> {w, w', z, z' : SliceObj b} ->
+  (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
+  (f : SPFDataFam w z) -> (g : SPFDataFam w' z') ->
+  Type
+SPFpoCellFam {b} {w} {w'} {z} {z'} bcl bcr f g =
+  Pi {a=b} $
+    \eb =>
+      SPFpoCell
+        {w=(w eb)} {w'=(w' eb)} {z=(z eb)} {z'=(z' eb)}
+        (bcl eb) (bcr eb) (f eb) (g eb)
+
+public export
 SPFpoCellDepFromFam : {b : Type} -> {w, w', z, z' : SliceObj b} ->
   (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
   (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
   SPFdepPoCell bcl bcr f g ->
-  Pi {a=b} (\eb => SPFpoCell {w=(w eb)} {w'=(w' eb)} {z=(z eb)} {z'=(z' eb)}
-    (bcl eb) (bcr eb)
-    (SPFDataFamFromDep f eb)
-    (SPFDataFamFromDep g eb))
+  SPFpoCellFam {b} {w} {w'} {z} {z'} bcl bcr
+    (SPFDataFamFromDep f) (SPFDataFamFromDep g)
 SPFpoCellDepFromFam {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntFamFromDep
 
 public export
 SPFpoCellFamFromDep : {b : Type} -> {w, w', z, z' : SliceObj b} ->
   (bcl : SliceMorphism {a=b} w w') -> (bcr : SliceMorphism {a=b} z z') ->
   (f : SPFdepData w z) -> (g : SPFdepData w' z') ->
-  Pi {a=b} (\eb => SPFpoCell {w=(w eb)} {w'=(w' eb)} {z=(z eb)} {z'=(z' eb)}
-    (bcl eb) (bcr eb)
-    (SPFDataFamFromDep f eb)
-    (SPFDataFamFromDep g eb)) ->
+  SPFpoCellFam {b} {w} {w'} {z} {z'} bcl bcr
+    (SPFDataFamFromDep f) (SPFDataFamFromDep g) ->
   SPFdepPoCell bcl bcr f g
 SPFpoCellFamFromDep {b} {w} {w'} {z} {z'} bcl bcr f g = SPFntDepFromFam
