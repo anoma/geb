@@ -84,7 +84,7 @@ InterpPDiSPF : (pdid : PDiData) ->
   (i : PDiPos1 pdid) -> SliceObj (PDiDir1 pdid i) -> Type
 InterpPDiSPF pdid i sl = InterpSPFdepDataEl (PDiToSPFdepData pdid) i sl ()
 
--- The interpretation of the application to first parameter of the
+-- The interpretation of the application to the first parameter of the
 -- curried form of the dependent profunctor (AKA presheaf on the
 -- twisted-arrow category) specified by a `PDiData`, returning a
 -- slice polynomial functor over the selected direction.
@@ -109,72 +109,45 @@ InterpPDi pdid x y =
     {c=(idfDir {p=(pdiT1 pdid)} {a=x} ix)}
     (idfCSl {p=(pdiT1 pdid)} {a=x} ix) y)
 
--- See the formula for `T` in the `Proposition 2.10` section of
--- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
+public export
+InterpPDiu : (pdid : PDiData) -> (x : Type) -> SliceFunctor x Unit
+InterpPDiu pdid x y () = InterpPDi pdid x y
 
 public export
-PDiToParamPolyFuncPos : PDiData -> Type -> Type
-PDiToParamPolyFuncPos pdid = InterpDirichFunc (pdiT1 pdid)
+PDiLmapu : (pdid : PDiData) -> (x, x' : Type) -> (m : x' -> x) ->
+  SliceNatTrans {x=x'} {y=Unit}
+    (InterpPDiu pdid x . SliceFibSigmaF m)
+    (InterpPDiu pdid x')
+PDiLmapu pdid x x' m y' () =
+  dpBimap (dpMapSnd $ \_ => (|>) m)
+  $ \i1 => dpMapSnd $ \p2, i2, d1, d2 =>
+    let sfs1 = i2 d1 d2 in rewrite sym (sfsEq sfs1) in
+    let sfs2 = sfsSnd sfs1 in rewrite sym (sfsEq sfs2) in
+    SFS (sfsFst sfs2) (sfsSnd sfs2)
 
 public export
-PDiToParamPolyFuncDirPos : (pdid : PDiData) -> (x : Type) ->
-  PDiToParamPolyFuncPos pdid x -> Type
-PDiToParamPolyFuncDirPos pdid x elt1 = mdsOnPos (pdiF pdid) (fst elt1)
+PDiLmap : (pdid : PDiData) -> (x, x' : Type) -> (m : x' -> x) ->
+  (y' : SliceObj x') ->
+  InterpPDi pdid x (SliceFibSigmaF m y') -> InterpPDi pdid x' y'
+PDiLmap pdid x x' m y' = PDiLmapu pdid x x' m y' ()
 
 public export
-PDiToParamPolyFuncDirDir : (pdid : PDiData) -> (x : Type) ->
-  (pi : PDiToParamPolyFuncPos pdid x) ->
-  PDiToParamPolyFuncDirPos pdid x pi -> Type
-PDiToParamPolyFuncDirDir pdid x elt1 pi =
-  Sigma {a=x} $ mdsDir (pdiF pdid) (fst elt1) pi . snd elt1
+PDiRmap : (pdid : PDiData) -> (x : Type) -> (y, y' : SliceObj x) ->
+  SliceMorphism {a=x} y y' ->
+  InterpPDi pdid x y -> InterpPDi pdid x y'
+PDiRmap pdid x y y' m =
+  dpMapSnd
+  $ \i1 => dpMapSnd $ \p2, i2, d1, d2 =>
+    let sfs = i2 d1 d2 in rewrite sym (sfsEq sfs) in
+    SFS (sfsFst sfs) (m (sfsFst sfs) (sfsSnd sfs))
 
 public export
-PDiToParamPolyFuncDirArena : (pdid : PDiData) -> (x : Type) ->
-  PDiToParamPolyFuncPos pdid x -> MLArena
-PDiToParamPolyFuncDirArena pdid x elt1 =
-  (PDiToParamPolyFuncDirPos pdid x elt1 ** PDiToParamPolyFuncDirDir pdid x elt1)
-
-public export
-PDiToParamPolyFuncDir : (pdid : PDiData) -> (x : Type) ->
-  PDiToParamPolyFuncPos pdid x -> Type
-PDiToParamPolyFuncDir pdid x elt1 =
-  pfPDir (PDiToParamPolyFuncDirArena pdid x elt1)
-
-public export
-PDiToParamPolyFunc : PDiData -> Type -> PolyFunc
-PDiToParamPolyFunc pdid x =
-  (PDiToParamPolyFuncPos pdid x ** PDiToParamPolyFuncDir pdid x)
-
-public export
-PDiToProfunctor : PDiData -> Type -> Type -> Type
-PDiToProfunctor = InterpPolyFunc .* PDiToParamPolyFunc
-
-public export
-PDiLmap : (pdid : PDiData) -> (x, x' : Type) -> (x' -> x) ->
-  PolyNatTrans
-    (PDiToParamPolyFunc pdid x)
-    (PDiToParamPolyFunc pdid x')
-PDiLmap pdid x x' m =
-  (dpMapSnd (\_ => (|>) m) ** \_ => dpMapSnd $ \_ => dpBimap m $ \_ => id)
-
-public export
-PDiToProfLmap : (pdid : PDiData) ->
-  IntEndoLmapSig TypeObj TypeMor (PDiToProfunctor pdid)
-PDiToProfLmap pdid s t a mas =
-  InterpPolyNT {p=(PDiToParamPolyFunc pdid s)} {q=(PDiToParamPolyFunc pdid a)}
-    (PDiLmap pdid s a mas) t
-
-public export
-PDiToProfRmap : (pdid : PDiData) ->
-  IntEndoRmapSig TypeObj TypeMor (PDiToProfunctor pdid)
-PDiToProfRmap pdid s t b mtb = dpMapSnd $ \_ => (.) mtb
-
-public export
-PDiToProfDimap : (pdid : PDiData) ->
-  IntEndoDimapSig TypeObj TypeMor (PDiToProfunctor pdid)
-PDiToProfDimap pdid =
-  IntEndoDimapFromLRmaps TypeObj TypeMor (PDiToProfunctor pdid)
-    (PDiToProfLmap pdid) (PDiToProfRmap pdid)
+PDiDimap : (pdid : PDiData) ->
+  (x, x' : Type) -> (y : SliceObj x) -> (y' : SliceObj x') ->
+  (mx : x' -> x) -> (my : SliceMorphism {a=x} y (SliceFibSigmaF mx y')) ->
+  InterpPDi pdid x y -> InterpPDi pdid x' y'
+PDiDimap pdid x x' y y' mx my =
+  PDiLmap pdid x x' mx y' . PDiRmap pdid x y (SliceFibSigmaF mx y') my
 
 -- We can define a functor from `Type` to the category of Dirichlet
 -- functors by defining a slice functor between the Dirichlet-functor
