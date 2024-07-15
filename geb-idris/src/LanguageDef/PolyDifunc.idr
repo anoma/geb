@@ -104,10 +104,7 @@ public export
 InterpPDi : (pdid : PDiData) -> (x : Type) -> (y : SliceObj x) -> Type
 InterpPDi pdid x y =
   (ix : InterpDirichFunc (pdiT1 pdid) x **
-   InterpPDi1 pdid x ix
-   $ WCSliceComp
-    {c=(idfDir {p=(pdiT1 pdid)} {a=x} ix)}
-    (idfCSl {p=(pdiT1 pdid)} {a=x} ix) y)
+   InterpPDi1 pdid x ix $ SliceFibSigmaF (snd ix) y)
 
 public export
 InterpPDiu : (pdid : PDiData) -> (x : Type) -> SliceFunctor x Unit
