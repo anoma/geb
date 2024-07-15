@@ -119,7 +119,7 @@ PDiLmapu : (pdid : PDiData) -> (x, x' : Type) -> (m : x' -> x) ->
     (InterpPDiu pdid x . SliceFibSigmaF m)
     (InterpPDiu pdid x')
 PDiLmapu pdid x x' m y' () =
-  dpBimap (dpMapSnd $ \_ => (|>) m)
+  dpBimap (InterpDFMap (pdiT1 pdid) m)
   $ \i1 => dpMapSnd $ \p2, i2, d1, d2 =>
     let sfs1 = i2 d1 d2 in rewrite sym (sfsEq sfs1) in
     let sfs2 = sfsSnd sfs1 in rewrite sym (sfsEq sfs2) in
