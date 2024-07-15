@@ -101,6 +101,38 @@ InterpPDi1 : (pdid : PDiData) ->
 InterpPDi1 pdid x idf = InterpPDiSPF pdid (idfPos {p=(pdiT1 pdid)} idf)
 
 public export
+InterpPDi2SPF : (pdid : PDiData) ->
+  (x : Type) -> (idf : InterpDirichFunc (pdiT1 pdid) x) ->
+  SPFData x Unit
+InterpPDi2SPF pdid x idf = spfdPrecompSigma (snd idf) (InterpPDi1SPF pdid x idf)
+
+public export
+InterpPDi2u : (pdid : PDiData) ->
+  (x : Type) -> (idf : InterpDirichFunc (pdiT1 pdid) x) ->
+  SliceFunctor x Unit
+InterpPDi2u pdid x idf = InterpSPFData $ InterpPDi2SPF pdid x idf
+
+public export
+InterpPDi2SPFmap : (pdid : PDiData) ->
+  (x : Type) -> (idf : InterpDirichFunc (pdiT1 pdid) x) ->
+  SliceFMap (InterpPDi2u pdid x idf)
+InterpPDi2SPFmap pdid x idf = InterpSPFDataMap $ InterpPDi2SPF pdid x idf
+
+public export
+InterpPDi2 : (pdid : PDiData) ->
+  (x : Type) -> (idf : InterpDirichFunc (pdiT1 pdid) x) ->
+  SliceObj x -> Type
+InterpPDi2 pdid x idf y = InterpPDi2u pdid x idf y ()
+
+public export
+InterpPDi2map : (pdid : PDiData) ->
+  (x : Type) -> (idf : InterpDirichFunc (pdiT1 pdid) x) ->
+  (y, y' : SliceObj x) ->
+  SliceMorphism {a=x} y y' ->
+  InterpPDi2 pdid x idf y -> InterpPDi2 pdid x idf y'
+InterpPDi2map pdid x idf y y' m = InterpPDi2SPFmap pdid x idf y y' m ()
+
+public export
 InterpPDi : (pdid : PDiData) -> (x : Type) -> (y : SliceObj x) -> Type
 InterpPDi pdid x y =
   (ix : InterpDirichFunc (pdiT1 pdid) x **
