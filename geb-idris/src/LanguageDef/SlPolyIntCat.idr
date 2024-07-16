@@ -44,3 +44,13 @@ public export
 IntCodChangeFAsGenElF : {cat : IntCatSig} -> {x, y : icObj cat} ->
   IntCodChangeF cat x y -> IntGenElF cat x y
 IntCodChangeFAsGenElF {cat} {x} {y} = dpMapSnd
+
+-- We can define a notion of "commutation with reparameterization" on
+-- a codomain-change function.  See for example
+-- https://arbital.com/p/gen_elt/ .
+public export
+IntCodChangeFCommutes : {cat : IntCatSig} -> {x, y : icObj cat} ->
+  IntCodChangeF cat x y -> Type
+IntCodChangeFCommutes {cat} {x} {y} f =
+  (a, b : icObj cat) -> (elx : icMor cat a x) -> (u : icMor cat b a) ->
+  f b (icComp cat b a x elx u) = icComp cat b a y (f a elx) u
