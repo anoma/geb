@@ -24,9 +24,9 @@ IntGenEl cat = Sigma {a=(icObj cat)} . flip (icMor cat)
 -- The above definition turns out to be precisely
 -- `InterpSLEFamObj {c=(icObj cat)} (icObj cat ** icMor cat)`.
 public export
-IntGenElAsSLEFam : (cat : IntCatSig) ->
+IntGenElAsSLEFamObj : (cat : IntCatSig) ->
   (IntGenEl cat = InterpSLEFamObj {c=(icObj cat)} (icObj cat ** icMor cat))
-IntGenElAsSLEFam cat = Refl
+IntGenElAsSLEFamObj cat = Refl
 
 -- A (metalanguage) function on generalized elements of an internal category.
 public export
