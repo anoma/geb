@@ -326,16 +326,15 @@ slefmComp {c} = ifemComp (SliceMor c) $ \x, y, z => SliceComp c x y z
 -- `InterpSLEFamObj` and `InterpSLEFamMor` comprise a functor from
 -- `SliceEFamObj c` to `SliceObj c` (for any `c : Type`).
 
-export
+public export
 InterpSLEFamObj : {c : Type} -> SliceEFamObj c -> SliceObj c
-InterpSLEFamObj {c} (xpos ** xdir) = Sigma {a=xpos} . flip xdir
+InterpSLEFamObj {c} x = Sigma {a=(fst x)} . flip (snd x)
 
-export
+public export
 InterpSLEFamMor : {c : Type} -> {x, y : SliceEFamObj c} ->
   SliceEFamMor {c} x y ->
   SliceMorphism {a=c} (InterpSLEFamObj x) (InterpSLEFamObj y)
-InterpSLEFamMor {c} {x=(xpos ** xdir)} {y=(ypos ** ydir)} (onpos ** ondir) ec =
-  dpBimap onpos (\exp => ondir exp ec)
+InterpSLEFamMor {c} {x} {y} mor ec = dpBimap (fst mor) (\exp => snd mor exp ec)
 
 -------------------------------------
 -------------------------------------
