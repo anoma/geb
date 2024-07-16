@@ -54,3 +54,8 @@ IntCodChangeFCommutes : {cat : IntCatSig} -> {x, y : icObj cat} ->
 IntCodChangeFCommutes {cat} {x} {y} f =
   (a, b : icObj cat) -> (elx : icMor cat a x) -> (u : icMor cat b a) ->
   FunExtEq (f b (icComp cat b a x elx u)) (icComp cat b a y (f a elx) u)
+
+public export
+CommutingCodChangeF : (cat : IntCatSig) -> IntMorSig (icObj cat)
+CommutingCodChangeF cat x y =
+  Sigma {a=(IntCodChangeF cat x y)} (IntCodChangeFCommutes {cat} {x} {y})
