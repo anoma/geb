@@ -616,6 +616,40 @@ public export
 DirichSlObj : MLDirichCatObj -> Type
 DirichSlObj = IntUFamObj . DirichRepSlObj
 
+public export
+dirichSlObjTotPos : {b : MLDirichCatObj} -> DirichSlObj b -> Type
+dirichSlObjTotPos {b} = DPair.fst
+
+public export
+dirichSlObjTotDir : {b : MLDirichCatObj} -> (sl : DirichSlObj b) ->
+  SliceObj (dirichSlObjTotPos {b} sl)
+dirichSlObjTotDir {b} sl i = dirichRepSlObjTotDir {b} (snd sl i) ()
+
+public export
+dirichSlObjTot : {b : MLDirichCatObj} -> DirichSlObj b -> MLDirichCatObj
+dirichSlObjTot {b} sl =
+  (dirichSlObjTotPos {b} sl ** dirichSlObjTotDir {b} sl)
+
+public export
+dirichSlObjOnPos : {b : MLDirichCatObj} -> (sl : DirichSlObj b) ->
+  dirichSlObjTotPos {b} sl -> dfPos b
+dirichSlObjOnPos {b} sl i = dirichRepSlObjOnPos {b} (snd sl i) ()
+
+public export
+dirichSlObjOnDir : {b : MLDirichCatObj} -> (sl : DirichSlObj b) ->
+  (i : dirichSlObjTotPos {b} sl) ->
+  dirichSlObjTotDir {b} sl i -> dfDir b (dirichSlObjOnPos {b} sl i)
+dirichSlObjOnDir {b} sl i = dirichRepSlObjOnDir {b} (snd sl i) ()
+
+public export
+dirichSlObjProj : {b : MLDirichCatObj} -> (sl : DirichSlObj b) ->
+  DirichNatTrans (dirichSlObjTot {b} sl) b
+dirichSlObjProj {b} sl = (dirichSlObjOnPos {b} sl ** dirichSlObjOnDir {b} sl)
+
+public export
+dirichSlObjToC : {b : MLDirichCatObj} -> DirichSlObj b -> CDFSliceObj b
+dirichSlObjToC {b} sl = (dirichSlObjTot {b} sl ** dirichSlObjProj {b} sl)
+
 -----------------
 ---- Objects ----
 -----------------
