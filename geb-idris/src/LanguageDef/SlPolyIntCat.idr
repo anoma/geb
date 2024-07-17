@@ -16,15 +16,10 @@ import LanguageDef.IntUCofamCat
 -----------------------------------------------------------------------------
 
 -- A "generalized element" of an object of a category is simply
--- a morphism into that category.
+-- a morphism into that object.
 public export
 IntGenEl : (cat : IntCatSig) -> SliceObj (icObj cat)
 IntGenEl cat = Sigma {a=(icObj cat)} . flip (icMor cat)
-
-public export
-IntGenElEFamObj : (cat : IntCatSig) ->
-  (IntGenEl cat = InterpSLEFamObj {c=(icObj cat)} (icObj cat ** icMor cat))
-IntGenElEFamObj cat = Refl
 
 -- The above definition turns out to be precisely
 -- `InterpSLEFamObj {c=(icObj cat)} (icObj cat ** icMor cat)`.
