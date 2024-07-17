@@ -1002,8 +1002,18 @@ dfHomObjPos : MLDirichCatObj -> MLDirichCatObj -> Type
 dfHomObjPos p q = dfPos (dfHomObj p q)
 
 public export
+dfHomObjPosIsHom : (p, q : MLDirichCatObj) ->
+  dfHomObjPos p q = (dfPos p -> dfPos q)
+dfHomObjPosIsHom p q = Refl
+
+public export
 dfHomObjDir : (p, q : MLDirichCatObj) -> dfHomObjPos p q -> Type
 dfHomObjDir p q = dfDir (dfHomObj p q)
+
+public export
+dfHomObjDirIsHom : (p, q : MLDirichCatObj) -> (i : dfHomObjPos p q) ->
+  dfHomObjDir p q i = SliceMorphism {a=(dfPos p)} (dfDir p) (dfDir q . i)
+dfHomObjDirIsHom p q i = Refl
 
 public export
 dfEvalPos : (p, q : MLDirichCatObj) ->
