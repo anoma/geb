@@ -135,8 +135,8 @@ InterpPDi2map pdid x idf y y' m = InterpPDi2SPFmap pdid x idf y y' m ()
 public export
 InterpPDi : (pdid : PDiData) -> (x : Type) -> (y : SliceObj x) -> Type
 InterpPDi pdid x y =
-  (ix : InterpDirichFunc (pdiT1 pdid) x **
-   InterpPDi1 pdid x ix $ SliceFibSigmaF (snd ix) y)
+  Sigma {a=(InterpDirichFunc (pdiT1 pdid) x)}
+  $ \ix => InterpPDi1 pdid x ix $ SliceFibSigmaF (snd ix) y
 
 public export
 InterpPDiu : (pdid : PDiData) -> (x : Type) -> SliceFunctor x Unit
