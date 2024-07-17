@@ -6,6 +6,7 @@ import Library.IdrisAlgebra
 import LanguageDef.QType
 import public LanguageDef.InternalCat
 import public LanguageDef.SliceFuncCat
+import public LanguageDef.IntUFamCat
 
 %default total
 
@@ -553,6 +554,67 @@ DFSliceMorphFromCDomMorEq {p=(ppos ** pdir)}
 ---- Slice categories of Dirichlet functors (in dependent-type style) ----
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
+
+-----------------------------
+---- From representables ----
+-----------------------------
+
+-- A Dirichlet natural transformation from a representable is a choice
+-- of a position of the ("base") functor being sliced over, together with a
+-- function from the directions of the representable to the directions
+-- of the base at the chosen position.  That is precisely the output of
+-- the application of the base functor to the representing object of the
+-- slice.  Consequently, a Dirichlet natural transformation from a representable
+-- to an arbitrary Dirichlet functor is given precisely by an object of the
+-- category of elements of the base functor.
+public export
+DirichRepSlObj : MLDirichCatObj -> Type
+DirichRepSlObj = DirichCatElObj
+
+public export
+dirichRepSlObjTotPos : {b : MLDirichCatObj} -> DirichRepSlObj b -> Type
+dirichRepSlObjTotPos {b} sl = Unit
+
+public export
+dirichRepSlObjTotDir : {b : MLDirichCatObj} -> (sl : DirichRepSlObj b) ->
+  SliceObj (dirichRepSlObjTotPos {b} sl)
+dirichRepSlObjTotDir {b} sl _ = DirichCatElBaseT b sl
+
+public export
+dirichRepSlObjTot : {b : MLDirichCatObj} -> DirichRepSlObj b -> MLDirichCatObj
+dirichRepSlObjTot {b} sl =
+  (dirichRepSlObjTotPos {b} sl ** dirichRepSlObjTotDir {b} sl)
+
+public export
+dirichRepSlObjOnPos : {b : MLDirichCatObj} -> (sl : DirichRepSlObj b) ->
+  dirichRepSlObjTotPos {b} sl -> dfPos b
+dirichRepSlObjOnPos {b} sl _ = DPair.fst sl
+
+public export
+dirichRepSlObjOnDir : {b : MLDirichCatObj} -> (sl : DirichRepSlObj b) ->
+  (i : dirichRepSlObjTotPos {b} sl) ->
+  dirichRepSlObjTotDir {b} sl i -> dfDir b (dirichRepSlObjOnPos {b} sl i)
+dirichRepSlObjOnDir {b} sl _ = DPair.fst
+
+public export
+dirichRepSlObjProj : {b : MLDirichCatObj} -> (sl : DirichRepSlObj b) ->
+  DirichNatTrans (dirichRepSlObjTot {b} sl) b
+dirichRepSlObjProj {b} sl =
+  (dirichRepSlObjOnPos {b} sl ** dirichRepSlObjOnDir {b} sl)
+
+public export
+dirichRepSlObjToC : {b : MLDirichCatObj} -> DirichRepSlObj b -> CDFSliceObj b
+dirichRepSlObjToC {b} sl =
+  (dirichRepSlObjTot {b} sl ** dirichRepSlObjProj {b} sl)
+
+-- A Dirichlet functor is a coproduct of representables, so a natural
+-- transformation from a Dirichlet functor is a product of natural
+-- transformations from representables.  Hence, a slice of a Dirichlet
+-- functor is determined by a product (a family) of objects of the
+-- category of elements of that base functor.
+public export
+DirichSlObj : MLDirichCatObj -> Type
+DirichSlObj = IntUFamObj . DirichRepSlObj
 
 -----------------
 ---- Objects ----
