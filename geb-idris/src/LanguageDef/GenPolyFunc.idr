@@ -296,7 +296,7 @@ public export
 PRAdepDirDom : {b : MLDirichCatObj} -> (domsl, codsl : MlDirichSlObj b) ->
   (pos : MlDirichSlOfSl {ar=b} codsl) -> MlDirichSlObj b
 PRAdepDirDom {b} domsl codsl pos =
-  dfSlParProductArena domsl (PRAdepBase {b} codsl pos)
+  dfSlParProduct domsl (PRAdepBase {b} codsl pos)
 
 public export
 0 PRAdepDirType : {0 b : MLDirichCatObj} ->
