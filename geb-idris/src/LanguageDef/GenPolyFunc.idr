@@ -256,12 +256,12 @@ PRAdirType dom cod pos = MlDirichSlObj (PRAdirDom dom cod pos)
 public export
 record PRAData (dom, cod : MLDirichCatObj) where
   constructor PRAD
-  pradPos : MlDirichSlObj cod
-  pradDir : PRAdirType dom cod pradPos
+  pradT1 : MlDirichSlObj cod
+  pradET : PRAdirType dom cod pradT1
 
 public export
 PRADbase : {dom, cod : MLDirichCatObj} -> PRAData dom cod -> MLDirichCatObj
-PRADbase {dom} {cod} prad = PRAbase cod $ pradPos prad
+PRADbase {dom} {cod} prad = PRAbase cod $ pradT1 prad
 
 -- See the formula for `T` in the `Proposition 2.10` section of
 -- https://ncatlab.org/nlab/show/parametric+right+adjoint#generic_morphisms .
@@ -269,19 +269,19 @@ public export
 InterpPRAdataOmap : {dom, cod : MLDirichCatObj} ->
   PRAData dom cod -> MlDirichSlFunc dom cod
 InterpPRAdataOmap {dom} {cod} prad =
-  mlDirichSlSigma {p=cod} (pradPos prad)
-  . mlDirichSlSigmaPiFR {p=dom} {q=(PRADbase {dom} {cod} prad)} (pradDir prad)
+  mlDirichSlSigma {p=cod} (pradT1 prad)
+  . mlDirichSlSigmaPiFR {p=dom} {q=(PRADbase {dom} {cod} prad)} (pradET prad)
 
 public export
 InterpPRAdataFmap : {dom, cod : MLDirichCatObj} ->
   (prad : PRAData dom cod) ->
   MlDirichSlFMap {ar=dom} {ar'=cod} (InterpPRAdataOmap prad)
 InterpPRAdataFmap {dom} {cod} prad x y =
-  mlDirichSlSigmaMap {p=cod} (pradPos prad)
-    (mlDirichSlSigmaPiFR (pradDir prad) x)
-    (mlDirichSlSigmaPiFR (pradDir prad) y)
+  mlDirichSlSigmaMap {p=cod} (pradT1 prad)
+    (mlDirichSlSigmaPiFR (pradET prad) x)
+    (mlDirichSlSigmaPiFR (pradET prad) y)
   . mlDirichSlSigmaPiFRMap {p=dom} {q=(PRADbase {dom} {cod} prad)}
-    (pradDir prad)
+    (pradET prad)
     x
     y
 
