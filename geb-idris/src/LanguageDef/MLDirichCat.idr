@@ -1308,6 +1308,39 @@ dfSlFromInit : {b : MLDirichCatObj} ->
 dfSlFromInit {b} sl =
   MDSM (dfSlFromInitOnPos {b} sl) (dfSlFromInitOnDir {b} sl)
 
+-------------------------
+---- Terminal object ----
+-------------------------
+
+public export
+dfSlTerminalPos : (b : MLDirichCatObj) -> MlSlArProjOnPos b
+dfSlTerminalPos b bi = Unit
+
+public export
+dfSlTerminalDir : (b : MLDirichCatObj) -> MlDirichSlDir b (dfSlTerminalPos b)
+dfSlTerminalDir b bi u bd = Unit
+
+public export
+dfSlTerminal : (b : MLDirichCatObj) -> MlDirichSlObj b
+dfSlTerminal b = MDSobj (dfSlTerminalPos b) (dfSlTerminalDir b)
+
+public export
+dfSlToTermOnPos : {b : MLDirichCatObj} ->
+  (sl : MlDirichSlObj b) -> MlDirichSlMorOnPos {ar=b} sl (dfSlTerminal b)
+dfSlToTermOnPos {b} sl i j = ()
+
+public export
+dfSlToTermOnDir : {b : MLDirichCatObj} ->
+  (sl : MlDirichSlObj b) ->
+  MlDirichSlMorOnDir {ar=b} sl (dfSlTerminal b) (dfSlToTermOnPos {b} sl)
+dfSlToTermOnDir {b} sl i j bd sd = ()
+
+public export
+dfSlToTerm : {b : MLDirichCatObj} ->
+  (sl : MlDirichSlObj b) -> MlDirichSlMor {ar=b} sl (dfSlTerminal b)
+dfSlToTerm {b} sl =
+  MDSM (dfSlToTermOnPos {b} sl) (dfSlToTermOnDir {b} sl)
+
 -------------------
 ---- Coproduct ----
 -------------------
