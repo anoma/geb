@@ -1385,6 +1385,25 @@ dfSlInjL : {b : MLDirichCatObj} ->
 dfSlInjL {b} p q =
   MDSM (dfSlInjLOnPos {b} p q) (dfSlInjLOnDir {b} p q)
 
+public export
+dfSlInjROnPos : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlMorOnPos {ar=b} q (dfSlCoproduct {b} p q)
+dfSlInjROnPos {b} p q bi = Right
+
+public export
+dfSlInjROnDir : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlMorOnDir {ar=b} q (dfSlCoproduct {b} p q)
+    (dfSlInjROnPos {b} p q)
+dfSlInjROnDir {b} p q bi qi bd = Prelude.id
+
+public export
+dfSlInjR : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) -> MlDirichSlMor {ar=b} q (dfSlCoproduct p q)
+dfSlInjR {b} p q =
+  MDSM (dfSlInjROnPos {b} p q) (dfSlInjROnDir {b} p q)
+
 --------------------------
 ---- Parallel product ----
 --------------------------
