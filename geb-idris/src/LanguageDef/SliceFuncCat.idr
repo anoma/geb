@@ -412,21 +412,12 @@ WMatchingSnd {a} {b} ea sl dp =
 ----------------------
 
 public export
-SlicePiEndoF : {c : Type} -> (sl : SliceObj c) -> SliceEndofunctor c
-SlicePiEndoF {c} = SliceHom {a=c}
+SliceIntHomF : {c : Type} -> (sl : SliceObj c) -> SliceEndofunctor c
+SliceIntHomF {c} = SliceHom {a=c}
 
 public export
-speMap : {c : Type} -> {0 sl : SliceObj c} -> SliceFMap (SlicePiEndoF {c} sl)
+speMap : {c : Type} -> {0 sl : SliceObj c} -> SliceFMap (SliceIntHomF {c} sl)
 speMap {c} {sl} x y mxy ec = (.) (mxy ec)
-
-public export
-SlicePiFfromEndo : {c : Type} -> (sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
-SlicePiFfromEndo {c} sl = SlicePiEndoF {c} sl . SliceSigmaF sl
-
-public export
-spfeMap : {c : Type} -> {sl : SliceObj c} -> SliceFMap (SlicePiFfromEndo {c} sl)
-spfeMap {c} {sl} x y =
-  speMap {c} {sl} (SliceSigmaF sl x) (SliceSigmaF sl y) . ssMap {c} {sl} x y
 
 ---------------------------
 ---------------------------
