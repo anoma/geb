@@ -651,6 +651,16 @@ public export
 BaseChangeF : {a, b : Type} -> (b -> a) -> SliceFunctor a b
 BaseChangeF f sla = sla . f
 
+-- The pullback functor from `Type` itself to the slice category
+-- over the given object.
+public export
+PullbackToSl : (a : Type) -> Type -> SliceObj a
+PullbackToSl a x = const x
+
+public export
+PullbackToSlF : (a : Type) -> SliceFunctor Unit a
+PullbackToSlF a x = PullbackToSl a (x ())
+
 public export
 Equalizer : {a : Type} -> {0 b : Type} -> (0 f, g : a -> b) -> Type
 Equalizer {a} {b} f g = Subset0 a (\x : a => f x = g x)
