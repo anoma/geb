@@ -278,16 +278,20 @@ DirichVertCartFactIsCorrect fext
 -- hold with "slice" replaced by "coslice".)
 
 public export
-DirichCatElObjPos : (p : MLDirichCatObj) -> dfPos p -> Type
-DirichCatElObjPos p = SliceObj . dfDir {p}
+DirichCatElObjDir : (p : MLDirichCatObj) -> dfPos p -> Type
+DirichCatElObjDir p = SliceObj . dfDir {p}
 
 public export
-DirichCatElObjPosPair : (p : MLDirichCatObj) -> dfPos p -> Type
-DirichCatElObjPosPair p = ProductMonad . DirichCatElObjPos p
+DirichCatElObjDirPair : (p : MLDirichCatObj) -> dfPos p -> Type
+DirichCatElObjDirPair p = ProductMonad . DirichCatElObjDir p
 
 public export
 DirichCatElObj : MLDirichCatObj -> Type
-DirichCatElObj p = Sigma {a=(dfPos p)} $ DirichCatElObjPos p
+DirichCatElObj p = Sigma {a=(dfPos p)} $ DirichCatElObjDir p
+
+public export
+DirichCatElObjPos : {p : MLDirichCatObj} -> DirichCatElObj p -> dfPos p
+DirichCatElObjPos {p} = DPair.fst
 
 public export
 DirichCatElObjPair : MLDirichCatObj -> Type
@@ -310,7 +314,7 @@ DirichCatElPosMor p i = SliceMorphism {a=(dfDir p i)}
 public export
 DirichCatElMorTotPos : (p : MLDirichCatObj) -> dfPos p -> Type
 DirichCatElMorTotPos p i =
-  Sigma {a=(DirichCatElObjPosPair p i)} $
+  Sigma {a=(DirichCatElObjDirPair p i)} $
     \xy => DirichCatElPosMor p i (fst xy) (snd xy)
 
 public export
@@ -323,7 +327,7 @@ DirichCatElMorPos {p} m = fst m
 
 public export
 DirichCatElMorBaseObj : {p : MLDirichCatObj} -> DirichCatElMorTot p -> Type
-DirichCatElMorBaseObj {p} = DirichCatElObjPos p . DirichCatElMorPos {p}
+DirichCatElMorBaseObj {p} = DirichCatElObjDir p . DirichCatElMorPos {p}
 
 public export
 DirichCatElMorBaseObjPair : {p : MLDirichCatObj} -> DirichCatElMorTot p -> Type
@@ -411,7 +415,7 @@ DirichNTCatElFMap {p} {q} (onpos ** ondir) (pi ** slx) (pi ** sly)
 -- definition makes sense then it ought to agree with `MlDirichSlObj`.
 public export
 DirichDirichCatElArPos : (p : MLDirichCatObj) -> dfPos p -> Type
-DirichDirichCatElArPos p i = (pos : Type ** pos -> DirichCatElObjPos p i)
+DirichDirichCatElArPos p i = (pos : Type ** pos -> DirichCatElObjDir p i)
 
 public export
 DirichDirichCatElAr : MLDirichCatObj -> Type
