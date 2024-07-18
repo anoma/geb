@@ -405,6 +405,29 @@ WMatchingSnd {a} {b} ea sl dp =
   Exists {type=(WDiagElem (fst dp, ea))} $
     \eqa => sl $ replace {p=b} (WDiagElemEqualizes eqa) $ snd dp
 
+----------------------
+----------------------
+---- Internal hom ----
+----------------------
+----------------------
+
+public export
+SlicePiEndoF : {c : Type} -> (sl : SliceObj c) -> SliceEndofunctor c
+SlicePiEndoF {c} = SliceHom {a=c}
+
+public export
+speMap : {c : Type} -> {0 sl : SliceObj c} -> SliceFMap (SlicePiEndoF {c} sl)
+speMap {c} {sl} x y mxy ec = (.) (mxy ec)
+
+public export
+SlicePiFfromEndo : {c : Type} -> (sl : SliceObj c) -> SliceFunctor (Sigma {a=c} sl) c
+SlicePiFfromEndo {c} sl = SlicePiEndoF {c} sl . SliceSigmaF sl
+
+public export
+spfeMap : {c : Type} -> {sl : SliceObj c} -> SliceFMap (SlicePiFfromEndo {c} sl)
+spfeMap {c} {sl} x y =
+  speMap {c} {sl} (SliceSigmaF sl x) (SliceSigmaF sl y) . ssMap {c} {sl} x y
+
 ---------------------------
 ---------------------------
 ---- Dependent product ----
