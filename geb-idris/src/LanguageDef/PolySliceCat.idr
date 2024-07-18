@@ -153,72 +153,6 @@ record MlPolySlObj (ar : MLArena) where
 --------------------------------------------------------------------
 
 public export
-mlDirichSlObjTotPos : {ar : MLArena} -> MlDirichSlObj ar -> Type
-mlDirichSlObjTotPos {ar} sl = MlSlArTotPos {ar} $ mdsOnPos sl
-
-public export
-mlDirichSlObjTotDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
-  mlDirichSlObjTotPos {ar} sl -> Type
-mlDirichSlObjTotDir {ar} sl ij =
-  Sigma {a=(pfDir {p=ar} $ fst ij)} $ mdsDir sl (fst ij) (snd ij)
-
-public export
-mlDirichSlObjTot : {ar : MLArena} -> MlDirichSlObj ar -> MLArena
-mlDirichSlObjTot {ar} sl =
-  (mlDirichSlObjTotPos {ar} sl ** mlDirichSlObjTotDir {ar} sl)
-
-public export
-mlDirichSlObjProjOnPos : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
-  mlDirichSlObjTotPos sl -> pfPos ar
-mlDirichSlObjProjOnPos {ar} sl = DPair.fst
-
-public export
-mlDirichSlObjProjOnDir : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
-  (i : mlDirichSlObjTotPos sl) ->
-  mlDirichSlObjTotDir {ar} sl i -> pfDir {p=ar} (mlDirichSlObjProjOnPos sl i)
-mlDirichSlObjProjOnDir {ar} sl _ = DPair.fst
-
-public export
-mlDirichSlObjProj : {ar : MLArena} -> (sl : MlDirichSlObj ar) ->
-  MLDirichCatMor (mlDirichSlObjTot {ar} sl) ar
-mlDirichSlObjProj {ar} sl =
-  (mlDirichSlObjProjOnPos {ar} sl ** mlDirichSlObjProjOnDir {ar} sl)
-
-public export
-mlDirichSlObjToC : {ar : MLArena} -> MlDirichSlObj ar -> CDFSliceObj ar
-mlDirichSlObjToC {ar} sl =
-  (mlDirichSlObjTot {ar} sl ** mlDirichSlObjProj {ar} sl)
-
-public export
-mlDirichSlOnPosFromC : {ar : MLArena} -> CDFSliceObj ar -> MlSlArProjOnPos ar
-mlDirichSlOnPosFromC {ar} sl i = PreImage (fst $ snd sl) i
-
-public export
-mlDirichSlDirFromCBase : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
-  MlDirichSlDir ar (mlDirichSlOnPosFromC {ar} sl)
-mlDirichSlDirFromCBase {ar} sl i j bd = snd (fst sl) (fst0 j)
-
-public export
-mlDirichSlDirFromCProp : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
-  (i : pfPos ar) -> (j : mlDirichSlOnPosFromC {ar} sl i) ->
-  (bd : pfDir {p=ar} i) -> SliceObj (mlDirichSlDirFromCBase {ar} sl i j bd)
-mlDirichSlDirFromCProp {ar} sl i j bd sld =
-  snd (snd sl) (fst0 j) sld = replace {p=(pfDir {p=ar})} (sym $ snd0 j) bd
-
-public export
-mlDirichSlDirFromC : {ar : MLArena} -> (sl : CDFSliceObj ar) ->
-  MlDirichSlDir ar (mlDirichSlOnPosFromC {ar} sl)
-mlDirichSlDirFromC {ar} sl i j bd =
-  Subset0
-    (mlDirichSlDirFromCBase {ar} sl i j bd)
-    (mlDirichSlDirFromCProp {ar} sl i j bd)
-
-public export
-mlDirichSlObjFromC : {ar : MLArena} -> CDFSliceObj ar -> MlDirichSlObj ar
-mlDirichSlObjFromC {ar} sl =
-  MDSobj (mlDirichSlOnPosFromC {ar} sl) (mlDirichSlDirFromC {ar} sl)
-
-public export
 mlPolySlObjTotPos : {ar : MLArena} -> MlPolySlObj ar -> Type
 mlPolySlObjTotPos {ar} p = MlSlArTotPos {ar} $ mpsOnPos p
 
@@ -362,34 +296,6 @@ mlPolySlOfSlFromP {ar} {cod=cod@(MPSobj _ _ _)} m =
 ---- Slice morphism definition ----
 -----------------------------------
 
--- The morphisms of slice categories correspond to morphisms of the
--- base category which commute with the projections.
-
--- When we take the dependent-type view in the Dirichlet-functor category, the
--- commutativity conditions are hidden in the type-checking of dependent
--- functions.
-
-public export
-MlDirichSlMorOnPos : {ar : MLArena} ->
-  MlDirichSlObj ar -> MlDirichSlObj ar -> Type
-MlDirichSlMorOnPos {ar} dom cod =
-  SliceMorphism {a=(pfPos ar)} (mdsOnPos dom) (mdsOnPos cod)
-
-public export
-MlDirichSlMorOnDir : {ar : MLArena} -> (dom, cod : MlDirichSlObj ar) ->
-  MlDirichSlMorOnPos {ar} dom cod -> Type
-MlDirichSlMorOnDir {ar} dom cod onpos =
-  (i : pfPos ar) -> (j : mdsOnPos dom i) ->
-    SliceMorphism {a=(pfDir {p=ar} i)}
-      (mdsDir dom i j)
-      (mdsDir cod i $ onpos i j)
-
-public export
-record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
-  constructor MDSM
-  mdsmOnPos : MlDirichSlMorOnPos {ar} dom cod
-  mdsmOnDir : MlDirichSlMorOnDir {ar} dom cod mdsmOnPos
-
 public export
 MlPolySlMorOnPos : {ar : MLArena} ->
   MlPolySlObj ar -> MlPolySlObj ar -> Type
@@ -423,23 +329,6 @@ record MlPolySlMor {ar : MLArena} (dom, cod : MlPolySlObj ar) where
 ------------------------------------------------------------------------
 
 public export
-mlDirichSlMorId : {ar : MLArena} -> (p : MlDirichSlObj ar) ->
-  MlDirichSlMor {ar} p p
-mlDirichSlMorId {ar} p =
-  MDSM
-    (sliceId $ mdsOnPos p)
-    (\i, j => sliceId $ mdsDir p i j)
-
-public export
-mlDirichSlMorComp : {ar : MLArena} -> {p, q, r : MlDirichSlObj ar} ->
-  MlDirichSlMor {ar} q r -> MlDirichSlMor {ar} p q -> MlDirichSlMor {ar} p r
-mlDirichSlMorComp {ar} {p} {q} {r} m' m =
-  MDSM
-    (sliceComp (mdsmOnPos m') (mdsmOnPos m))
-    (\i, j, bd, md =>
-      mdsmOnDir m' i (mdsmOnPos m i j) bd $ mdsmOnDir m i j bd md)
-
-public export
 mlPolySlMorId : {ar : MLArena} -> (p : MlPolySlObj ar) ->
   MlPolySlMor {ar} p p
 mlPolySlMorId {ar} p =
@@ -463,74 +352,6 @@ mlPolySlMorComp {ar} {p} {q} {r} m' m =
 ----------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style morphisms ----
 ----------------------------------------------------------------------
-
-public export
-mlDirichSlMorToCBase : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
-  MlDirichSlMor dom cod ->
-  MLDirichCatMor (fst (mlDirichSlObjToC dom)) (fst (mlDirichSlObjToC cod))
-mlDirichSlMorToCBase {ar=(bpos ** bdir)}
-  {dom=(MDSobj donpos ddir)} {cod=(MDSobj conpos cdir)} (MDSM onpos ondir) =
-    (\ij => (fst ij ** onpos (fst ij) (snd ij)) **
-     \(i ** j), (d ** dd) => (d ** ondir i j d dd))
-
-public export
-mlDirichSlMorToD : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
-  MlDirichSlMor dom cod -> DFSliceMorph {p=ar} (mlDirichSlObjToC cod)
-mlDirichSlMorToD {ar=ar@(bpos ** bdir)}
-  {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
-  mor@(MDSM onpos ondir) =
-    (fst (mlDirichSlObjToC dom) ** mlDirichSlMorToCBase {ar} {dom} {cod} mor)
-
-public export
-0 mlDirichSlMorToCD : {ar : MLArena} -> {dom, cod : MlDirichSlObj ar} ->
-  MlDirichSlMor dom cod ->
-  CDFSliceMorph ar (mlDirichSlObjToC dom) (mlDirichSlObjToC cod)
-mlDirichSlMorToCD {ar=(ppos ** pdir)}
-  {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
-  mor@(MDSM monpos mondir)
-      with
-        (DFSliceMorphToC {p=(ppos ** pdir)} {cod=(mlDirichSlObjToC cod)}
-          (mlDirichSlMorToD {dom} {cod} mor))
-  mlDirichSlMorToCD {ar=(ppos ** pdir)}
-    {dom=dom@(MDSobj donpos ddir)} {cod=cod@(MDSobj conpos cdir)}
-    mor@(MDSM monpos mondir)
-      | Element0 dmnt@(dmonpos ** dmondir) (Evidence0 opeq odeq) =
-        Element0
-         dmnt
-         (Evidence0
-            opeq
-            $ \i : (DPair ppos donpos),
-               d : (DPair (pdir (fst i)) (ddir (fst i) (snd i))) =>
-                trans (odeq i d)
-                $ case i of (i' ** j') => case d of (d' ** dd') => Refl)
-
-public export
-mlDirichSlMorFromD : {ar : MLArena} -> {cod : CDFSliceObj ar} ->
-  (mor : DFSliceMorph {p=ar} cod) ->
-  MlDirichSlMor
-    (mlDirichSlObjFromC {ar} $ DFSliceMorphDom {p=ar} {cod} mor)
-    (mlDirichSlObjFromC cod)
-mlDirichSlMorFromD {ar=(ppos ** pdir)}
-  {cod=((ctot ** cproj) ** (conpos ** condir))}
-  ((mpos ** mdir) ** (monpos ** mondir)) =
-    MDSM
-      (\i, (Element0 j peq) => Element0 (monpos j) peq)
-      (\i, (Element0 j peq), pd, (Element0 md deq) =>
-        Element0 (mondir j md) deq)
-
-public export
-0 mlDirichSlMorFromCD : {ar : MLArena} -> {dom, cod : CDFSliceObj ar} ->
-  (mor : CDFSliceMorph ar dom cod) ->
-  MlDirichSlMor (mlDirichSlObjFromC {ar} dom) (mlDirichSlObjFromC {ar} cod)
-mlDirichSlMorFromCD {ar=(ppos ** pdir)}
-  {dom=((dtot ** dproj) ** (donpos ** dondir))}
-  {cod=((ctot ** cproj) ** (conpos ** condir))}
-  (Element0 (monpos ** mondir) (Evidence0 opeq odeq)) =
-    MDSM
-      (\i, (Element0 j peq) => Element0 (monpos j) $ trans (sym $ opeq j) peq)
-      (\i, (Element0 j peq), pd, (Element0 md deq) =>
-        Element0 (mondir j md) $
-          trans (odeq j md) $ rewrite sym (opeq j) in deq)
 
 public export
 mlPolySlMorOnPos : {ar : MLArena} -> {dom, cod : MlPolySlObj ar} ->
