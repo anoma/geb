@@ -1361,27 +1361,27 @@ dfSlCoproductDir {b} p q bi pqi bd =
     Right qi => mdsDir q bi qi bd
 
 public export
-dfSlCoproductArena : {b : MLDirichCatObj} ->
+dfSlCoproduct : {b : MLDirichCatObj} ->
   MlDirichSlObj b -> MlDirichSlObj b -> MlDirichSlObj b
-dfSlCoproductArena {b} p q =
+dfSlCoproduct {b} p q =
   MDSobj (dfSlCoproductPos {b} p q) (dfSlCoproductDir {b} p q)
 
 public export
 dfSlInjLOnPos : {b : MLDirichCatObj} ->
   (p, q : MlDirichSlObj b) ->
-  MlDirichSlMorOnPos {ar=b} p (dfSlCoproductArena {b} p q)
+  MlDirichSlMorOnPos {ar=b} p (dfSlCoproduct {b} p q)
 dfSlInjLOnPos {b} p q bi = Left
 
 public export
 dfSlInjLOnDir : {b : MLDirichCatObj} ->
   (p, q : MlDirichSlObj b) ->
-  MlDirichSlMorOnDir {ar=b} p (dfSlCoproductArena {b} p q)
+  MlDirichSlMorOnDir {ar=b} p (dfSlCoproduct {b} p q)
     (dfSlInjLOnPos {b} p q)
 dfSlInjLOnDir {b} p q bi pi bd = Prelude.id
 
 public export
 dfSlInjL : {b : MLDirichCatObj} ->
-  (p, q : MlDirichSlObj b) -> MlDirichSlMor {ar=b} p (dfSlCoproductArena p q)
+  (p, q : MlDirichSlObj b) -> MlDirichSlMor {ar=b} p (dfSlCoproduct p q)
 dfSlInjL {b} p q =
   MDSM (dfSlInjLOnPos {b} p q) (dfSlInjLOnDir {b} p q)
 
@@ -1403,7 +1403,7 @@ dfSlParProductDir {b} p q bi pqi bd =
   Pair (mdsDir p bi (fst pqi) bd) (mdsDir q bi (snd pqi) bd)
 
 public export
-dfSlParProductArena : {b : MLDirichCatObj} ->
+dfSlParProduct : {b : MLDirichCatObj} ->
   MlDirichSlObj b -> MlDirichSlObj b -> MlDirichSlObj b
-dfSlParProductArena {b} p q =
+dfSlParProduct {b} p q =
   MDSobj (dfSlParProductPos {b} p q) (dfSlParProductDir {b} p q)
