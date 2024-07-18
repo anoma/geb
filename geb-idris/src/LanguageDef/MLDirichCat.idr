@@ -1091,18 +1091,17 @@ dfCurry {p} {q} {r} alpha =
 public export
 dfSlCoproductPos : {b : MLDirichCatObj} ->
   MlDirichSlObj b -> MlDirichSlObj b -> MlSlArProjOnPos b
-dfSlCoproductPos {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir) bi =
-  Either (ppos bi) (qpos bi)
+dfSlCoproductPos {b} p q bi =
+  Either (mdsOnPos p bi) (mdsOnPos q bi)
 
 public export
 dfSlCoproductDir : {b : MLDirichCatObj} ->
   (p, q : MlDirichSlObj b) ->
   MlDirichSlDir b (dfSlCoproductPos {b} p q)
-dfSlCoproductDir {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir) =
-  \bi : bpos, pqi, bd : bdir bi =>
-    case pqi of
-      Left pi => pdir bi pi bd
-      Right qi => qdir bi qi bd
+dfSlCoproductDir {b} p q bi pqi bd =
+  case pqi of
+    Left pi => mdsDir p bi pi bd
+    Right qi => mdsDir q bi qi bd
 
 public export
 dfSlCoproductArena : {b : MLDirichCatObj} ->
@@ -1117,16 +1116,15 @@ dfSlCoproductArena {b} p q =
 public export
 dfSlParProductPos : {b : MLDirichCatObj} ->
   MlDirichSlObj b -> MlDirichSlObj b -> MlSlArProjOnPos b
-dfSlParProductPos {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir) bi =
-  Pair (ppos bi) (qpos bi)
+dfSlParProductPos {b} p q bi =
+  Pair (mdsOnPos p bi) (mdsOnPos q bi)
 
 public export
 dfSlParProductDir : {b : MLDirichCatObj} ->
   (p, q : MlDirichSlObj b) ->
   MlDirichSlDir b (dfSlParProductPos {b} p q)
-dfSlParProductDir {b=(bpos ** bdir)} (MDSobj ppos pdir) (MDSobj qpos qdir) =
-  \bi : bpos, (pi, qi), bd : bdir bi =>
-    Pair (pdir bi pi bd) (qdir bi qi bd)
+dfSlParProductDir {b} p q bi pqi bd =
+  Pair (mdsDir p bi (fst pqi) bd) (mdsDir q bi (snd pqi) bd)
 
 public export
 dfSlParProductArena : {b : MLDirichCatObj} ->
