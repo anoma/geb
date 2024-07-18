@@ -1404,6 +1404,35 @@ dfSlInjR : {b : MLDirichCatObj} ->
 dfSlInjR {b} p q =
   MDSM (dfSlInjROnPos {b} p q) (dfSlInjROnDir {b} p q)
 
+public export
+dfSlCaseOnPos : {b : MLDirichCatObj} -> {p, q, r : MlDirichSlObj b} ->
+  MlDirichSlMorOnPos {ar=b} p r ->
+  MlDirichSlMorOnPos {ar=b} q r ->
+  MlDirichSlMorOnPos {ar=b} (dfSlCoproduct {b} p q) r
+dfSlCaseOnPos {b} {p} {q} {r} mpr mqr bi = eitherElim (mpr bi) (mqr bi)
+
+public export
+dfSlCaseOnDir : {b : MLDirichCatObj} -> {p, q, r : MlDirichSlObj b} ->
+  {mpir : MlDirichSlMorOnPos {ar=b} p r} ->
+  {mqir : MlDirichSlMorOnPos {ar=b} q r} ->
+  MlDirichSlMorOnDir {ar=b} p r mpir ->
+  MlDirichSlMorOnDir {ar=b} q r mqir ->
+  MlDirichSlMorOnDir {ar=b} (dfSlCoproduct {b} p q) r
+    (dfSlCaseOnPos {b} {p} {q} {r} mpir mqir)
+dfSlCaseOnDir {b} {p} {q} {r} {mpir} {mqir} mpdr mqdr bi pqi bd pqd =
+  case pqi of
+    Left pi => mpdr bi pi bd pqd
+    Right qi => mqdr bi qi bd pqd
+
+public export
+dfSlCase : {b : MLDirichCatObj} -> {p, q, r : MlDirichSlObj b} ->
+  MlDirichSlMor {ar=b} p r -> MlDirichSlMor {ar=b} q r ->
+  MlDirichSlMor {ar=b} (dfSlCoproduct {b} p q) r
+dfSlCase {b} {p} {q} {r} mpr mqr =
+  MDSM
+    (dfSlCaseOnPos {b} {p} {q} {r} (mdsmOnPos mpr) (mdsmOnPos mqr))
+    (dfSlCaseOnDir {b} {p} {q} {r} (mdsmOnDir mpr) (mdsmOnDir mqr))
+
 --------------------------
 ---- Parallel product ----
 --------------------------
