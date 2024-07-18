@@ -650,6 +650,27 @@ public export
 dirichSlObjToC : {b : MLDirichCatObj} -> DirichSlObj b -> CDFSliceObj b
 dirichSlObjToC {b} sl = (dirichSlObjTot {b} sl ** dirichSlObjProj {b} sl)
 
+public export
+dirichSlObjTotPosFromC : {b : MLDirichCatObj} -> CDFSliceObj b -> Type
+dirichSlObjTotPosFromC {b} sl = DPair.fst $ DPair.fst sl
+
+public export
+dirichSlObjTotDirFromC : {b : MLDirichCatObj} -> (sl : CDFSliceObj b) ->
+  SliceObj (dirichSlObjTotPosFromC {b} sl)
+dirichSlObjTotDirFromC {b} sl = DPair.snd (DPair.fst sl)
+
+public export
+dirichSlObjElFromC : {b : MLDirichCatObj} -> (sl : CDFSliceObj b) ->
+  dirichSlObjTotPosFromC {b} sl -> DirichRepSlObj b
+dirichSlObjElFromC {b} sl i =
+  (fst (snd sl) i **
+   WPreImage {a=(dirichSlObjTotDirFromC {b} sl i)} $ snd (snd sl) i)
+
+public export
+dirichSlObjFromC : {b : MLDirichCatObj} -> CDFSliceObj b -> DirichSlObj b
+dirichSlObjFromC {b} sl =
+  (dirichSlObjTotPosFromC {b} sl ** dirichSlObjElFromC {b} sl)
+
 -----------------
 ---- Objects ----
 -----------------
