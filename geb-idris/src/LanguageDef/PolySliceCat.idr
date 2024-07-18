@@ -641,14 +641,43 @@ mlPolySlMorTot {ar} {dom} {cod} =
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
+public export
+InterpMlDirichSlObjGenElBase : {ar : MLDirichCatObj} ->
+  (sl : MlDirichSlObj ar) -> (ty : Type) -> (idf : InterpDirichFunc ar ty) ->
+  mdsOnPos sl (idfPos {p=ar} idf) -> SliceObj ty
+InterpMlDirichSlObjGenElBase {ar} sl ty idf =
+  BaseChangeF (snd idf) . mdsDir sl (fst idf)
+
+public export
+InterpMlDirichSlObjGenElPullback : {ar : MLDirichCatObj} ->
+  (sl : MlDirichSlObj ar) -> (ty : Type) -> (idf : InterpDirichFunc ar ty) ->
+  mdsOnPos sl (idfPos {p=ar} idf) -> SliceObj ty
+InterpMlDirichSlObjGenElPullback {ar} sl ty idf j el =
+  PullbackToSl ty (InterpMlDirichSlObjGenElBase {ar} sl ty idf j el) el
+
 -- This interprets an object in a slice category of Dirichlet functors
 -- as an object in the category of presheaves over the category of elements
 -- of the base functor.
+--
+-- As described in https://ncatlab.org/nlab/show/generalized+element#in_toposes,
+-- this global element (i.e. morphism from the terminal object) of the slice
+-- category of `Type` over `ty` corresponds to a generalized element of
+-- `InterpMlDirichSlObjGenElPullback {ar} sl ty j`, with domain `ty`.
+public export
+InterpMlDirichSlObjDirMap : {ar : MLDirichCatObj} ->
+  (sl : MlDirichSlObj ar) -> (ty : Type) -> (idf : InterpDirichFunc ar ty) ->
+  SliceObj (mdsOnPos sl (idfPos {p=ar} idf))
+InterpMlDirichSlObjDirMap {ar} sl ty idf j =
+  SliceMorphism {a=ty}
+    (SliceObjTerminal ty)
+    (InterpMlDirichSlObjGenElPullback {ar} sl ty idf j)
+
 public export
 InterpMlDirichSlObj : {ar : MLDirichCatObj} ->
   MlDirichSlObj ar -> (ty : Type) -> SliceObj $ InterpDirichFunc ar ty
-InterpMlDirichSlObj {ar=(_ ** _)} (MDSobj slpos sldir) ty (i ** bd) =
-  (j : slpos i ** SliceMorphism {a=ty} (SliceObjTerminal ty) (sldir i j . bd))
+InterpMlDirichSlObj {ar} sl ty idf =
+  Sigma {a=(mdsOnPos sl (idfPos {p=ar} idf))} $
+    InterpMlDirichSlObjDirMap {ar} sl ty idf
 
 public export
 InterpMlDirichSlObjF : {ar : MLDirichCatObj} ->
