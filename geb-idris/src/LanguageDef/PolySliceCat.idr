@@ -648,7 +648,7 @@ public export
 InterpMlDirichSlObj : {ar : MLDirichCatObj} ->
   MlDirichSlObj ar -> (ty : Type) -> SliceObj $ InterpDirichFunc ar ty
 InterpMlDirichSlObj {ar=(_ ** _)} (MDSobj slpos sldir) ty (i ** bd) =
-  (j : slpos i ** Pi {a=ty} $ sldir i j . bd)
+  (j : slpos i ** SliceMorphism {a=ty} (SliceObjTerminal ty) (sldir i j . bd))
 
 public export
 InterpMlDirichSlObjF : {ar : MLDirichCatObj} ->
@@ -701,7 +701,7 @@ InterpMlDirichSlMor {ar=(bpos ** bdir)}
   {dom=(MDSobj dpos ddir)} {cod=(MDSobj cpos cdir)}
   (MDSM monpos mondir) ty (i ** bd) dpd =
     (monpos i (fst dpd) **
-     \elty => mondir i (fst dpd) (bd elty) $ snd dpd elty)
+     \elty, _ => mondir i (fst dpd) (bd elty) $ snd dpd elty ())
 
 -- This interprets an object in a slice category of polynomial functors
 -- as an object in the category of copresheaves over the category of elements
