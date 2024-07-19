@@ -111,6 +111,19 @@ TypeMorToCodChangeF : {x, y : Type} ->
 TypeMorToCodChangeF f = (\_ => (.) f ** \_, _, _, _ => Refl)
 
 public export
+0 TypeMorFromToCodChangeFid : {x, y : Type} ->
+  (f : CommutingCodChangeF TypeCat x y) ->
+  FunExtEq (fst f) (fst $ TypeMorToCodChangeF $ TypeMorFromCodChangeF f)
+TypeMorFromToCodChangeFid {x} {y} f fext =
+  funExt $ \z => funExt $ \mzx => snd f x z id mzx
+
+public export
+0 TypeMorToFromCodChangeFid : {x, y : Type} ->
+  (f : x -> y) ->
+  FunExtEq f (TypeMorFromCodChangeF $ TypeMorToCodChangeF f)
+TypeMorToFromCodChangeFid {x} {y} f fext = Refl
+
+public export
 TypeMorFromDomChangeF : {x, y : Type} ->
   CommutingDomChangeF TypeCat x y -> y -> x
 TypeMorFromDomChangeF {x} {y} f = fst f x id
