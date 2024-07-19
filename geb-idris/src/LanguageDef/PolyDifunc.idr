@@ -182,12 +182,12 @@ public export
 PDiDimapDP : (pdid : PDiData) ->
   (x : Type) -> (y, x' : SliceObj x) ->
   (y' : SliceObj $ Sigma {a=x} x') ->
-  (m1 : (ex : x) -> y ex -> x' ex) ->
-  (m2 : (ex : x) -> (ey : y ex) -> y' (ex ** m1 ex ey)) ->
-  InterpPDi pdid x y -> InterpPDi pdid (Sigma x') y'
-PDiDimapDP pdid x y x' y' m1 m2 =
+  (lm : (ex : x) -> y ex -> x' ex) ->
+  (rm : (ex : x) -> (ey : y ex) -> y' (ex ** lm ex ey)) ->
+  InterpPDi pdid x y -> InterpPDi pdid (Sigma {a=x} x') y'
+PDiDimapDP pdid x y x' y' lm rm =
   PDiDimap pdid x (Sigma x') y y' DPair.fst $
-    \ex, ey => SFS (ex ** m1 ex ey) (m2 ex ey)
+    \ex, ey => SFS (ex ** lm ex ey) (rm ex ey)
 
 -- We can define a functor from `Type` to the category of Dirichlet
 -- functors by defining a slice functor between the Dirichlet-functor
