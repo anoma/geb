@@ -679,6 +679,10 @@ dirichSlObjFromC {b} sl =
 ---- Objects ----
 -----------------
 
+public export
+DirichFamCatObj : Type -> Type
+DirichFamCatObj x = x -> MLDirichCatObj
+
 -- The natural transformations of both polynomial and Dirichlet functors have
 -- on-positions functions from the domain to the codomain.  Thus, the
 -- on-positions function of a natural transformation between either of those
@@ -693,6 +697,10 @@ MlSlArProjOnPos = SliceObj . dfPos
 public export
 MlSlArTotPos : {ar : MLDirichCatObj} -> MlSlArProjOnPos ar -> Type
 MlSlArTotPos {ar} onpos = Sigma {a=(dfPos ar)} onpos
+
+public export
+MlDirichSlPosDir : (x : Type) -> (sl, sl' : SliceObj x) -> Type
+MlDirichSlPosDir x sl sl' = (i : x) -> sl i -> sl' i -> Type
 
 -- Consequently, the directions of the slice object's domain are a slice
 -- of the sum of the fibers.
@@ -711,7 +719,7 @@ MlSlArTotPos {ar} onpos = Sigma {a=(dfPos ar)} onpos
 -- Thus we can express the directions as follows:
 public export
 MlDirichSlDir : (ar : MLDirichCatObj) -> MlSlArProjOnPos ar -> Type
-MlDirichSlDir ar onpos = (i : dfPos ar) -> onpos i -> dfDir ar i -> Type
+MlDirichSlDir ar onpos = MlDirichSlPosDir (dfPos ar) onpos (dfDir ar)
 
 public export
 record MlDirichSlObj (ar : MLDirichCatObj) where
