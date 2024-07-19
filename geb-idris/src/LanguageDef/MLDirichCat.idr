@@ -699,14 +699,34 @@ MlSlArTotPos : {ar : MLDirichCatObj} -> MlSlArProjOnPos ar -> Type
 MlSlArTotPos {ar} onpos = Sigma {a=(dfPos ar)} onpos
 
 public export
+MlDirichSlPosDirSlP : (x : Type) -> (sl, sl' : SliceObj x) -> SliceObj x
+MlDirichSlPosDirSlP x sl sl' = SliceObj . SliceProduct {a=x} sl sl'
+
+-- Equivalent to `MlDirichSlPosDirSlP`.
+public export
 MlDirichSlPosDirSl : (x : Type) -> (sl, sl' : SliceObj x) -> SliceObj x
 MlDirichSlPosDirSl x sl sl' i = sl i -> sl' i -> Type
+
+public export
+MlDirichSlPosDirSlToP : (x : Type) -> (sl, sl' : SliceObj x) ->
+  SliceMorphism {a=x}
+    (MlDirichSlPosDirSl x sl sl')
+    (MlDirichSlPosDirSlP x sl sl')
+MlDirichSlPosDirSlToP x sl sl' i = uncurry
+
+public export
+MlDirichSlPosDirSlFromP : (x : Type) -> (sl, sl' : SliceObj x) ->
+  SliceMorphism {a=x}
+    (MlDirichSlPosDirSlP x sl sl')
+    (MlDirichSlPosDirSl x sl sl')
+MlDirichSlPosDirSlFromP x sl sl' i = curry
 
 public export
 MlDirichSlPosDirM : (x : Type) -> (sl, sl' : SliceObj x) -> Type
 MlDirichSlPosDirM x sl sl' =
   SliceMorphism {a=x} (SliceObjTerminal x) (MlDirichSlPosDirSl x sl sl')
 
+-- Equivalent to `MlDirichSlPosDirM`.
 public export
 MlDirichSlPosDir : (x : Type) -> (sl, sl' : SliceObj x) -> Type
 MlDirichSlPosDir x sl sl' = Pi {a=x} $ MlDirichSlPosDirSl x sl sl'
