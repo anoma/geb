@@ -196,39 +196,30 @@ PDiDimapDP pdid x y x' y' lm rm =
 -- elements are (equivalent to) `Type` and the category of Dirichlet functors
 -- on `Type`, respectively.
 public export
-PRAdataFromPDi : PDiData -> PRAData MLDirichCat.dfRepVoid MLDirichCat.dfRepUnit
-PRAdataFromPDi pdid =
-  PRAD
-    (MDSobj (\_ => fst (pdiT1 pdid)) (\_, x, _ => snd (pdiT1 pdid) x))
-    (MDSobj
-      (\el => mdsOnPos (pdiF pdid) $ snd $ snd el)
-      (\_, _, dd => void $ fst dd))
+TypeDirichData : Type
+TypeDirichData = PRAData MLDirichCat.dfRepVoid MLDirichCat.dfRepUnit
 
 public export
-InterpPRAdataOmapFromPDi : (pdi : PDiData) ->
+InterpPRAdataOmapFromPDi : TypeDirichData ->
   MlDirichSlFunc MLDirichCat.dfRepVoid MLDirichCat.dfRepUnit
-InterpPRAdataOmapFromPDi = InterpPRAdataOmap . PRAdataFromPDi
+InterpPRAdataOmapFromPDi = InterpPRAdataOmap
 
 public export
-InterpPDiPRAdataOmap : (pdi : PDiData) -> Type -> MLDirichCatObj
-InterpPDiPRAdataOmap pdi =
-  dfSlRepUnitToDirich . InterpPRAdataOmapFromPDi pdi . dfTypeToSlRepVoid
+InterpPDiPRAdataOmap : (tdd : TypeDirichData) -> Type -> MLDirichCatObj
+InterpPDiPRAdataOmap tdd =
+  dfSlRepUnitToDirich . InterpPRAdataOmapFromPDi tdd . dfTypeToSlRepVoid
 
 public export
-InterpPDiDataOmap : (pdi : PDiData) -> Type -> Type -> Type
-InterpPDiDataOmap pdi x y = InterpDirichFunc (InterpPDiPRAdataOmap pdi y) x
+InterpPDiDataOmap : (tdd : TypeDirichData) -> Type -> Type -> Type
+InterpPDiDataOmap tdd x y = InterpDirichFunc (InterpPDiPRAdataOmap tdd y) x
 
 public export
-InterpPDiDataDimap : (pdi : PDiData) ->
-  IntEndoDimapSig TypeObj TypeMor (InterpPDiDataOmap pdi)
-InterpPDiDataDimap (PDiD (bpos ** bdir) (MDSobj slonpos sldir)) s t a b mas mtb
-  ((bi ** mit) ** msi) =
-    ((bi ** \sli => mtb $ mit (() ** snd sli)) **
-     \ea => (fst (msi $ mas ea) ** \_, _, v => void v))
-
--- Note that uses of `mdsDir` have disappeared -- so in this case,
--- polymorphism requires that the profunctor depend only on a slice
--- of the positions of `T1`.
+InterpPDiDataDimap : (tdd : TypeDirichData) ->
+  IntEndoDimapSig TypeObj TypeMor (InterpPDiDataOmap tdd)
+InterpPDiDataDimap (PRAD (MDSobj x slx) (MDSobj slsx _)) s t a b mas mtb
+  ((ex ** mxt) ** msx) =
+    ((ex ** \(() ** eslx) => mtb $ mxt (() ** eslx)) **
+     \ea => (fst (msx $ mas ea) ** \_, _, v => void v))
 
 ----------------------------------------------
 ----------------------------------------------
