@@ -1594,3 +1594,76 @@ dfSlMkProd {b} {p} {q} {r} mpq mpr =
   MDSM
     (dfSlMkProdOnPos {b} {p} {q} {r} (mdsmOnPos mpq) (mdsmOnPos mpr))
     (dfSlMkProdOnDir {b} {p} {q} {r} (mdsmOnDir mpq) (mdsmOnDir mpr))
+
+---------------------
+---- Hom-objects ----
+---------------------
+
+public export
+dfSlHomObjPos : {b : MLDirichCatObj} ->
+  MlDirichSlObj b -> MlDirichSlObj b -> MlSlArProjOnPos b
+dfSlHomObjPos {b} p q bi = mdsOnPos p bi -> mdsOnPos q bi
+
+public export
+dfSlHomObjDir : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlDir b (dfSlHomObjPos {b} p q)
+dfSlHomObjDir {b} p q bi slp bd =
+  SliceMorphism {a=(mdsOnPos p bi)}
+    (flip (mdsDir p bi) bd)
+    (flip (mdsDir q bi) bd . slp)
+
+public export
+dfSlHomObj : {b : MLDirichCatObj} ->
+  MlDirichSlObj b -> MlDirichSlObj b -> MlDirichSlObj b
+dfSlHomObj {b} p sl =
+  MDSobj (dfSlHomObjPos {b} p sl) (dfSlHomObjDir {b} p sl)
+
+public export
+dfSlRepEvalOnPos : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlMorOnPos {ar=b} (dfSlParProduct {b} (dfSlHomObj {b} p q) p) q
+dfSlRepEvalOnPos {b} p q bi slp = fst slp $ snd slp
+
+public export
+dfSlRepEvalOnDir : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlMorOnDir {ar=b}
+    (dfSlParProduct {b} (dfSlHomObj {b} p q) p)
+    q
+    (dfSlRepEvalOnPos {b} p q)
+dfSlRepEvalOnDir {b} p q bi slp bd sld = fst sld (snd slp) $ snd sld
+
+public export
+dfSlRepEval : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlMor {ar=b} (dfSlParProduct {b} (dfSlHomObj {b} p q) p) q
+dfSlRepEval {b} p q =
+  MDSM (dfSlRepEvalOnPos {b} p q) (dfSlRepEvalOnDir {b} p q)
+
+public export
+dfSlRepCurryOnPos : {b : MLDirichCatObj} ->
+  {p, q, r : MlDirichSlObj b} ->
+  MlDirichSlMor {ar=b} (dfSlParProduct {b} p q) r ->
+  MlDirichSlMorOnPos {ar=b} p (dfSlHomObj {b} q r)
+dfSlRepCurryOnPos {b} {p} {q} {r} m bi pi qi =
+  mdsmOnPos m bi (pi, qi)
+
+public export
+dfSlRepCurryOnDir : {b : MLDirichCatObj} ->
+  {p, q, r : MlDirichSlObj b} ->
+  (m : MlDirichSlMor {ar=b} (dfSlParProduct {b} p q) r) ->
+  MlDirichSlMorOnDir {ar=b} p (dfSlHomObj {b} q r)
+    (dfSlRepCurryOnPos {b} {p} {q} {r} m)
+dfSlRepCurryOnDir {b} {p} {q} {r} m bi pi bd pd qi qd =
+  mdsmOnDir m bi (pi, qi) bd (pd, qd)
+
+public export
+dfSlRepCurry : {b : MLDirichCatObj} ->
+  {p, q, r : MlDirichSlObj b} ->
+  MlDirichSlMor {ar=b} (dfSlParProduct {b} p q) r ->
+  MlDirichSlMor {ar=b} p (dfSlHomObj {b} q r)
+dfSlRepCurry {b} {p} {q} {r} m =
+  MDSM
+    (dfSlRepCurryOnPos {b} {p} {q} {r} m)
+    (dfSlRepCurryOnDir {b} {p} {q} {r} m)
