@@ -99,3 +99,23 @@ public export
 CommutingDomChangeF : (cat : IntCatSig) -> IntMorSig (icObj cat)
 CommutingDomChangeF cat x y =
   Sigma {a=(IntDomChangeF cat x y)} (IntDomChangeFCommutes {cat} {x} {y})
+
+public export
+TypeMorFromCodChangeF : {x, y : Type} ->
+  CommutingCodChangeF TypeCat x y -> x -> y
+TypeMorFromCodChangeF {x} {y} f = fst f x id
+
+public export
+TypeMorToCodChangeF : {x, y : Type} ->
+  (x -> y) -> CommutingCodChangeF TypeCat x y
+TypeMorToCodChangeF f = (\_ => (.) f ** \_, _, _, _ => Refl)
+
+public export
+TypeMorFromDomChangeF : {x, y : Type} ->
+  CommutingDomChangeF TypeCat x y -> y -> x
+TypeMorFromDomChangeF {x} {y} f = fst f x id
+
+public export
+TypeMorToDomChangeF : {x, y : Type} ->
+  (y -> x) -> CommutingDomChangeF TypeCat x y
+TypeMorToDomChangeF f = (\_ => (|>) f ** \_, _, _, _ => Refl)
