@@ -869,9 +869,9 @@ record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
   mdsmOnPos : MlDirichSlMorOnPos {ar} dom cod
   mdsmOnDir : MlDirichSlMorOnDir {ar} dom cod mdsmOnPos
 
-------------------------------------------------------------------------
----- Categorial operations in polynomial/Dirichlet slice categories ----
-------------------------------------------------------------------------
+-------------------------------------------------------------
+---- Categorial operations in Dirichlet slice categories ----
+-------------------------------------------------------------
 
 public export
 mlDirichSlMorId : {ar : MLArena} -> (p : MlDirichSlObj ar) ->
