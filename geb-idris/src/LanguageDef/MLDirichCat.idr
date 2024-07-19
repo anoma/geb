@@ -1455,3 +1455,68 @@ dfSlParProduct : {b : MLDirichCatObj} ->
   MlDirichSlObj b -> MlDirichSlObj b -> MlDirichSlObj b
 dfSlParProduct {b} p q =
   MDSobj (dfSlParProductPos {b} p q) (dfSlParProductDir {b} p q)
+
+public export
+dfSlProj1OnPos : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlMorOnPos {ar=b} (dfSlParProduct {b} p q) p
+dfSlProj1OnPos {b} p q bi = fst
+
+public export
+dfSlProj1OnDir : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlMorOnDir {ar=b} (dfSlParProduct {b} p q) p
+    (dfSlProj1OnPos {b} p q)
+dfSlProj1OnDir {b} p q bi pi bd = fst
+
+public export
+dfSlProj1 : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) -> MlDirichSlMor {ar=b} (dfSlParProduct p q) p
+dfSlProj1 {b} p q =
+  MDSM (dfSlProj1OnPos {b} p q) (dfSlProj1OnDir {b} p q)
+
+public export
+dfSlProj2OnPos : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlMorOnPos {ar=b} (dfSlParProduct {b} p q) q
+dfSlProj2OnPos {b} p q bi = snd
+
+public export
+dfSlProj2OnDir : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) ->
+  MlDirichSlMorOnDir {ar=b} (dfSlParProduct {b} p q) q
+    (dfSlProj2OnPos {b} p q)
+dfSlProj2OnDir {b} p q bi pi bd = snd
+
+public export
+dfSlProj2 : {b : MLDirichCatObj} ->
+  (p, q : MlDirichSlObj b) -> MlDirichSlMor {ar=b} (dfSlParProduct p q) q
+dfSlProj2 {b} p q =
+  MDSM (dfSlProj2OnPos {b} p q) (dfSlProj2OnDir {b} p q)
+
+public export
+dfSlMkProdOnPos : {b : MLDirichCatObj} -> {p, q, r : MlDirichSlObj b} ->
+  MlDirichSlMorOnPos {ar=b} p q ->
+  MlDirichSlMorOnPos {ar=b} p r ->
+  MlDirichSlMorOnPos {ar=b} p (dfSlParProduct {b} q r)
+dfSlMkProdOnPos {b} {p} {q} {r} mpq mpr bi pi = (mpq bi pi, mpr bi pi)
+
+public export
+dfSlMkProdOnDir : {b : MLDirichCatObj} -> {p, q, r : MlDirichSlObj b} ->
+  {mpiq : MlDirichSlMorOnPos {ar=b} p q} ->
+  {mpir : MlDirichSlMorOnPos {ar=b} p r} ->
+  MlDirichSlMorOnDir {ar=b} p q mpiq ->
+  MlDirichSlMorOnDir {ar=b} p r mpir ->
+  MlDirichSlMorOnDir {ar=b} p (dfSlParProduct {b} q r)
+    (dfSlMkProdOnPos {b} {p} {q} {r} mpiq mpir)
+dfSlMkProdOnDir {b} {p} {q} {r} {mpiq} {mpir} mpdq mpdr bi pqi bd pqd =
+  (mpdq bi pqi bd pqd, mpdr bi pqi bd pqd)
+
+public export
+dfSlMkProd : {b : MLDirichCatObj} -> {p, q, r : MlDirichSlObj b} ->
+  MlDirichSlMor {ar=b} p q -> MlDirichSlMor {ar=b} p r ->
+  MlDirichSlMor {ar=b} p (dfSlParProduct {b} q r)
+dfSlMkProd {b} {p} {q} {r} mpq mpr =
+  MDSM
+    (dfSlMkProdOnPos {b} {p} {q} {r} (mdsmOnPos mpq) (mdsmOnPos mpr))
+    (dfSlMkProdOnDir {b} {p} {q} {r} (mdsmOnDir mpq) (mdsmOnDir mpr))
