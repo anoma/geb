@@ -1605,15 +1605,14 @@ dfSlMkProd {b} {p} {q} {r} mpq mpr =
 public export
 dfSlRepHomObjPos : {b : MLDirichCatObj} ->
   DirichCatElObj b -> MlDirichSlObj b -> MlSlArProjOnPos b
-dfSlRepHomObjPos {b} p sl bi = (mdsOnPos sl $ fst p, mdsOnPos sl bi)
+dfSlRepHomObjPos {b} p sl bi = (DirichSlObjOmapPos {ar=b} sl p, mdsOnPos sl bi)
 
 public export
 dfSlRepHomObjDir : {b : MLDirichCatObj} ->
   (p : DirichCatElObj b) -> (sl : MlDirichSlObj b) ->
   MlDirichSlDir b (dfSlRepHomObjPos {b} p sl)
 dfSlRepHomObjDir {b} p sl bi slp bd =
-  (SliceMorphism {a=(snd b $ fst p)} (snd p) (mdsDir sl (fst p) (fst slp)),
-   mdsDir sl bi (snd slp) bd)
+  (DirichSlObjOmapDir {ar=b} sl p (fst slp), mdsDir sl bi (snd slp) bd)
 
 public export
 dfSlRepHomObj : {b : MLDirichCatObj} ->
@@ -1657,7 +1656,8 @@ dfSlRepCurryOnPos : {b : MLDirichCatObj} ->
     sl
     (dfSlRepHomObj {b} p sl')
 dfSlRepCurryOnPos {b} p (MDSobj slpos sldir) (MDSobj slpos' sldir') (MDSM monpos mondir) bi slp =
-  (monpos (fst p) (?dfSlRepCurryOnPos_hole_1, ?dfSlRepCurryOnPos_hole_2), monpos bi (slp, ?dfSlRepCurryOnPos_hole_3))
+  (monpos (fst p) (?dfSlRepCurryOnPos_hole_1, ?dfSlRepCurryOnPos_hole_2),
+   monpos bi (slp, ?dfSlRepCurryOnPos_hole_3))
 
 public export
 dfSlRepCurryOnDir : {b : MLDirichCatObj} ->
