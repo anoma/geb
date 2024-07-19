@@ -180,13 +180,13 @@ PDiDimap pdid x x' y y' mx my =
 
 public export
 PDiDimapDP : (pdid : PDiData) ->
-  (x : Type) -> (y, mx : SliceObj x) ->
-  (y' : SliceObj $ Sigma {a=x} mx) ->
-  (m1 : (ex : x) -> y ex -> mx ex) ->
+  (x : Type) -> (y, x' : SliceObj x) ->
+  (y' : SliceObj $ Sigma {a=x} x') ->
+  (m1 : (ex : x) -> y ex -> x' ex) ->
   (m2 : (ex : x) -> (ey : y ex) -> y' (ex ** m1 ex ey)) ->
-  InterpPDi pdid x y -> InterpPDi pdid (Sigma mx) y'
-PDiDimapDP pdid x y mx y' m1 m2 =
-  PDiDimap pdid x (Sigma mx) y y' DPair.fst $
+  InterpPDi pdid x y -> InterpPDi pdid (Sigma x') y'
+PDiDimapDP pdid x y x' y' m1 m2 =
+  PDiDimap pdid x (Sigma x') y y' DPair.fst $
     \ex, ey => SFS (ex ** m1 ex ey) (m2 ex ey)
 
 -- We can define a functor from `Type` to the category of Dirichlet
