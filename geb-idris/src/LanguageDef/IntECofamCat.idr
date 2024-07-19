@@ -77,6 +77,16 @@ IntECofamIsEFamOp : {c : Type} -> (mor : IntDifunctorSig c) ->
   IntECofamMor {c} mor dom cod = IntEFamMor {c} (IntOpCatMor c mor) dom cod
 IntECofamIsEFamOp {c} mor dom cod = Refl
 
+-- The category of existential cofamilies of existential cofamilies of
+-- a given category is the same as the category of existential families
+-- of universal families of that category.
+export
+IntECofamECofamIsEFamUFam : {c : Type} -> (mor : IntDifunctorSig c) ->
+  (dom, cod : IntECofamObj (IntECofamObj c)) ->
+  IntECofamMor {c=(IntECofamObj c)} (IntECofamMor {c} mor) dom cod =
+  IntEFamMor {c=(IntUFamObj c)} (IntUFamMor {c} mor) dom cod
+IntECofamECofamIsEFamUFam {c} mor dom cod = Refl
+
 public export
 IntPolyCatObj : Type -> Type
 IntPolyCatObj = IntArena
