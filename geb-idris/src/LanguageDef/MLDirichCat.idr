@@ -703,6 +703,11 @@ MlDirichSlPosDirSl : (x : Type) -> (sl, sl' : SliceObj x) -> SliceObj x
 MlDirichSlPosDirSl x sl sl' i = sl i -> sl' i -> Type
 
 public export
+MlDirichSlPosDirM : (x : Type) -> (sl, sl' : SliceObj x) -> Type
+MlDirichSlPosDirM x sl sl' =
+  SliceMorphism {a=x} (SliceObjTerminal x) (MlDirichSlPosDirSl x sl sl')
+
+public export
 MlDirichSlPosDir : (x : Type) -> (sl, sl' : SliceObj x) -> Type
 MlDirichSlPosDir x sl sl' = Pi {a=x} $ MlDirichSlPosDirSl x sl sl'
 
