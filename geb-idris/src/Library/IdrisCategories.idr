@@ -1035,6 +1035,16 @@ sliceToTerminal : (sl : SliceObj a) -> SliceMorphism {a} sl (SliceObjTerminal a)
 sliceToTerminal {a} sl = \_, _ => ()
 
 public export
+sliceTerminalToPi : (sl : SliceObj a) ->
+  SliceMorphism {a} (SliceObjTerminal a) sl -> Pi {a} sl
+sliceTerminalToPi {a} sl m ea = m ea ()
+
+public export
+sliceTerminalFromPi : (sl : SliceObj a) ->
+  Pi {a} sl -> SliceMorphism {a} (SliceObjTerminal a) sl
+sliceTerminalFromPi {a} sl pi i () = pi i
+
+public export
 SliceObjCoproduct : SliceObj a -> SliceObj a -> SliceObj a
 SliceObjCoproduct sa sa' ea = Either (sa ea) (sa' ea)
 
