@@ -571,6 +571,12 @@ DFSliceMorphFromCDomMorEq {p=(ppos ** pdir)}
 -- slice.  Consequently, a Dirichlet natural transformation from a representable
 -- to an arbitrary Dirichlet functor is given precisely by an object of the
 -- category of elements of the base functor.
+--
+-- Another way of seeing this is that a slice object in the category of
+-- Dirichlet functors is a presheaf (specifically, a Dirichlet presheaf, i.e.
+-- a sum of contravariant representables) over the category of elements of
+-- the Dirichlet functor being sliced over, and a representable presheaf on a
+-- category is determined by one object of that category.
 public export
 DirichRepSlObj : MLDirichCatObj -> Type
 DirichRepSlObj = DirichCatElObj
@@ -755,6 +761,11 @@ record MlDirichSlObj (ar : MLDirichCatObj) where
   constructor MDSobj
   mdsOnPos : MlSlArProjOnPos ar
   mdsDir : MlDirichSlDir ar mdsOnPos
+
+public export
+MlDirichRepSlObj : {ar : MLDirichCatObj} ->
+  DirichRepSlObj ar -> MlDirichSlObj ar
+MlDirichRepSlObj {ar} el = MDSobj (\_ => snd ar $ fst el) (\i, d, _ => snd el d)
 
 --------------------------------------------------------------------
 ---- Equivalence of dependent-type and categorial-style objects ----
@@ -1557,3 +1568,92 @@ dfSlMkProd {b} {p} {q} {r} mpq mpr =
   MDSM
     (dfSlMkProdOnPos {b} {p} {q} {r} (mdsmOnPos mpq) (mdsmOnPos mpr))
     (dfSlMkProdOnDir {b} {p} {q} {r} (mdsmOnDir mpq) (mdsmOnDir mpr))
+
+---------------------
+---- Hom-objects ----
+---------------------
+
+-- We begin with hom-objects from representable Dirichlet slice functors to
+-- general Dirichlet slice functors.
+
+public export
+dfSlRepHomObjPos : {b : MLDirichCatObj} ->
+  DirichCatElObj b -> MlDirichSlObj b -> MlSlArProjOnPos b
+dfSlRepHomObjPos {b} p sl bi = (mdsOnPos sl $ fst p, mdsOnPos sl bi)
+
+public export
+dfSlRepHomObjDir : {b : MLDirichCatObj} ->
+  (p : DirichCatElObj b) -> (sl : MlDirichSlObj b) ->
+  MlDirichSlDir b (dfSlRepHomObjPos {b} p sl)
+dfSlRepHomObjDir {b} p sl bi slp bd =
+  (SliceMorphism {a=(snd b $ fst p)} (snd p) (mdsDir sl (fst p) (fst slp)),
+   mdsDir sl bi (snd slp) bd)
+
+public export
+dfSlRepHomObj : {b : MLDirichCatObj} ->
+  DirichCatElObj b -> MlDirichSlObj b -> MlDirichSlObj b
+dfSlRepHomObj {b} p sl =
+  MDSobj (dfSlRepHomObjPos {b} p sl) (dfSlRepHomObjDir {b} p sl)
+
+public export
+dfSlRepEvalOnPos : {b : MLDirichCatObj} ->
+  (p : DirichCatElObj b) -> (sl : MlDirichSlObj b) ->
+  MlDirichSlMorOnPos {ar=b}
+    (dfSlParProduct {b} (dfSlRepHomObj {b} p sl) (MlDirichRepSlObj {ar=b} p))
+    sl
+dfSlRepEvalOnPos {b} p sl bi slp = snd $ fst slp
+
+public export
+dfSlRepEvalOnDir : {b : MLDirichCatObj} ->
+  (p : DirichCatElObj b) -> (sl : MlDirichSlObj b) ->
+  MlDirichSlMorOnDir {ar=b}
+    (dfSlParProduct {b} (dfSlRepHomObj {b} p sl) (MlDirichRepSlObj {ar=b} p))
+    sl
+    (dfSlRepEvalOnPos {b} p sl)
+dfSlRepEvalOnDir {b} p sl bi slp bd sld = snd $ fst sld
+
+public export
+dfSlRepEval : {b : MLDirichCatObj} ->
+  (p : DirichCatElObj b) -> (sl : MlDirichSlObj b) ->
+  MlDirichSlMor {ar=b}
+    (dfSlParProduct {b} (dfSlRepHomObj {b} p sl) (MlDirichRepSlObj {ar=b} p))
+    sl
+dfSlRepEval {b} p sl =
+  MDSM (dfSlRepEvalOnPos {b} p sl) (dfSlRepEvalOnDir {b} p sl)
+
+public export
+dfSlRepCurryOnPos : {b : MLDirichCatObj} ->
+  (p : DirichCatElObj b) -> (sl, sl' : MlDirichSlObj b) ->
+  MlDirichSlMor {ar=b}
+    (dfSlParProduct {b} sl (MlDirichRepSlObj {ar=b} p))
+    sl' ->
+  MlDirichSlMorOnPos {ar=b}
+    sl
+    (dfSlRepHomObj {b} p sl')
+dfSlRepCurryOnPos {b} p (MDSobj slpos sldir) (MDSobj slpos' sldir') (MDSM monpos mondir) bi slp =
+  (monpos (fst p) (?dfSlRepCurryOnPos_hole_1, ?dfSlRepCurryOnPos_hole_2), monpos bi (slp, ?dfSlRepCurryOnPos_hole_3))
+
+public export
+dfSlRepCurryOnDir : {b : MLDirichCatObj} ->
+  (p : DirichCatElObj b) -> (sl, sl' : MlDirichSlObj b) ->
+  (m : MlDirichSlMor {ar=b}
+    (dfSlParProduct {b} sl (MlDirichRepSlObj {ar=b} p))
+    sl') ->
+  MlDirichSlMorOnDir {ar=b}
+    sl
+    (dfSlRepHomObj {b} p sl')
+    (dfSlRepCurryOnPos {b} p sl sl' m)
+dfSlRepCurryOnDir {b} p (MDSobj slpos sldir) (MDSobj slpos' sldir') (MDSM monpos mondir) bi slp bdi sld =
+  (\bdp, pd => ?dfSlRepCurryOnDir_hole_1, mondir ?dfSlRepCurryOnDir_hole_2 (slp, ?dfSlRepCurryOnDir_hole_3) bdi (sld, ?dfSlRepCurryOnDir_hole_4))
+
+public export
+dfSlRepCurry : {b : MLDirichCatObj} ->
+  (p : DirichCatElObj b) -> (sl, sl' : MlDirichSlObj b) ->
+  MlDirichSlMor {ar=b}
+    (dfSlParProduct {b} sl (MlDirichRepSlObj {ar=b} p))
+    sl' ->
+  MlDirichSlMor {ar=b}
+    sl
+    (dfSlRepHomObj {b} p sl')
+dfSlRepCurry {b} p sl sl' m =
+  MDSM (dfSlRepCurryOnPos {b} p sl sl' m) (dfSlRepCurryOnDir {b} p sl sl' m)
