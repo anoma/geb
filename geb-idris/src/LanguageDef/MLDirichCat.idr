@@ -699,8 +699,12 @@ MlSlArTotPos : {ar : MLDirichCatObj} -> MlSlArProjOnPos ar -> Type
 MlSlArTotPos {ar} onpos = Sigma {a=(dfPos ar)} onpos
 
 public export
+MlDirichSlPosDirSl : (x : Type) -> (sl, sl' : SliceObj x) -> SliceObj x
+MlDirichSlPosDirSl x sl sl' i = sl i -> sl' i -> Type
+
+public export
 MlDirichSlPosDir : (x : Type) -> (sl, sl' : SliceObj x) -> Type
-MlDirichSlPosDir x sl sl' = (i : x) -> sl i -> sl' i -> Type
+MlDirichSlPosDir x sl sl' = Pi {a=x} $ MlDirichSlPosDirSl x sl sl'
 
 -- Consequently, the directions of the slice object's domain are a slice
 -- of the sum of the fibers.
