@@ -962,6 +962,32 @@ mlDirichSlMorFromCD {ar=(ppos ** pdir)}
         Element0 (mondir j md) $
           trans (odeq j md) $ rewrite sym (opeq j) in deq)
 
+-----------------------------------------------
+---- Dirichlet slice objects as presheaves ----
+-----------------------------------------------
+
+-- A Dirichlet slice object is equivalent to a Dirichlet functor over
+-- the base object's category of elements, so we can apply it to an
+-- object or a morphism of that category of elements.
+
+public export
+DirichSlObjOmapPos : {ar : MLDirichCatObj} ->
+  MlDirichSlObj ar -> DirichCatElObj ar -> Type
+DirichSlObjOmapPos {ar} sl el = mdsOnPos sl (fst el)
+
+public export
+DirichSlObjOmapDir : {ar : MLDirichCatObj} ->
+  (sl : MlDirichSlObj ar) -> (el : DirichCatElObj ar) ->
+  DirichSlObjOmapPos {ar} sl el -> Type
+DirichSlObjOmapDir {ar} sl el i =
+  SliceMorphism {a=(snd ar $ fst el)} (snd el) (mdsDir sl (fst el) i)
+
+public export
+DirichSlObjOmap : {ar : MLDirichCatObj} ->
+  MlDirichSlObj ar -> DirichCatElObj ar -> Type
+DirichSlObjOmap {ar} sl el =
+  Sigma {a=(DirichSlObjOmapPos {ar} sl el)} (DirichSlObjOmapDir {ar} sl el)
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 ---- Universal morphisms in the category of Dirichlet functors on `Type` ----
