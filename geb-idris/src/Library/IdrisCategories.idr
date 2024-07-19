@@ -361,6 +361,7 @@ SliceFunExtEq {a} {s} {s'} f g = (e : a) -> FunExtEq (f e) (g e)
 -- on `a` _through_ (the total space of) `x`.  Because it's specifically
 -- the identity that we're factoring, we may also view it as a function
 -- out of `a` with a left inverse (which of course points back to `a`).
+-- In particular, that means that that function is a monomorphism.
 --
 -- We call this `IdFactW` because it is a factorization of the identity
 -- using W-types.
