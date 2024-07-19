@@ -178,6 +178,16 @@ PDiDimap : (pdid : PDiData) ->
 PDiDimap pdid x x' y y' mx my =
   PDiLmap pdid x x' mx y' . PDiRmap pdid x y (SliceFibSigmaF mx y') my
 
+public export
+PDiDimapDP : (pdid : PDiData) ->
+  (x : Type) -> (y, mx : SliceObj x) ->
+  (y' : SliceObj $ Sigma {a=x} mx) ->
+  (my : (ex : x) -> (ey : y ex) -> (em : mx ex ** y' (ex ** em))) ->
+  InterpPDi pdid x y -> InterpPDi pdid (Sigma mx) y'
+PDiDimapDP pdid x y mx y' my =
+  PDiDimap pdid x (Sigma mx) y y' DPair.fst $
+    \ex, ey => let em = my ex ey in SFS (ex ** fst em) (snd em)
+
 -- We can define a functor from `Type` to the category of Dirichlet
 -- functors by defining a slice functor between the Dirichlet-functor
 -- slice categories over `dfRepVoid` and `dfRepUnit`, because, as explained
