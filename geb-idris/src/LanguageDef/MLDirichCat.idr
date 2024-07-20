@@ -267,6 +267,10 @@ DirichVertCartFactIsCorrect fext
 -----------------------------------------------
 -----------------------------------------------
 
+---------------------------------
+---- Cartesian-slice objects ----
+---------------------------------
+
 public export
 DirichCartSlObj : MLDirichCatObj -> Type
 DirichCartSlObj = SliceObj . dfPos
@@ -292,6 +296,76 @@ DirichCartSlOnDir : {b : MLDirichCatObj} ->
     (DirichCartSlDir {b} p)
     (dfDir b . DirichCartSlOnPos {b} p)
 DirichCartSlOnDir {b} p i = id {a=(DirichCartSlDir {b} p i)}
+
+-----------------------------------
+---- Cartesian-slice morphisms ----
+-----------------------------------
+
+public export
+DirichCartSlMor : {b : MLDirichCatObj} ->
+  DirichCartSlObj b -> DirichCartSlObj b -> Type
+DirichCartSlMor {b} = SliceMorphism {a=(dfPos b)}
+
+public export
+DirichCartSlId : {b : MLDirichCatObj} ->
+  (p : DirichCartSlObj b) -> DirichCartSlMor {b} p p
+DirichCartSlId = sliceId
+
+public export
+DirichCartSlComp : {b : MLDirichCatObj} ->
+  {p, q, r : DirichCartSlObj b} ->
+  DirichCartSlMor {b} q r -> DirichCartSlMor {b} p q -> DirichCartSlMor {b} p r
+DirichCartSlComp = sliceComp
+
+--------------------------------
+---- Vertical-slice objects ----
+--------------------------------
+
+public export
+DirichVertSlObj : MLDirichCatObj -> Type
+DirichVertSlObj = SliceObj . dfTot
+
+public export
+DirichVertSlTotPos : {b : MLDirichCatObj} -> DirichVertSlObj b -> Type
+DirichVertSlTotPos {b} p = dfPos b
+
+public export
+DirichVertSlOnPos : {b : MLDirichCatObj} -> (p : DirichVertSlObj b) ->
+  DirichVertSlTotPos {b} p -> dfPos b
+DirichVertSlOnPos {b} p = id
+
+public export
+DirichVertSlDir : {b : MLDirichCatObj} ->
+  (p : DirichVertSlObj b) -> DirichVertSlTotPos {b} p -> Type
+DirichVertSlDir {b} p i = Sigma {a=(dfDir b i)} $ DPair.curry p i
+
+public export
+DirichVertSlOnDir : {b : MLDirichCatObj} ->
+  (p : DirichVertSlObj b) ->
+  SliceMorphism {a=(DirichVertSlTotPos {b} p)}
+    (DirichVertSlDir {b} p)
+    (dfDir b . DirichVertSlOnPos {b} p)
+DirichVertSlOnDir {b} p i = DPair.fst
+
+----------------------------------
+---- Vertical-slice morphisms ----
+----------------------------------
+
+public export
+DirichVertSlMor : {b : MLDirichCatObj} ->
+  DirichVertSlObj b -> DirichVertSlObj b -> Type
+DirichVertSlMor {b} = SliceMorphism {a=(dfTot b)}
+
+public export
+DirichVertSlId : {b : MLDirichCatObj} ->
+  (p : DirichVertSlObj b) -> DirichVertSlMor {b} p p
+DirichVertSlId = sliceId
+
+public export
+DirichVertSlComp : {b : MLDirichCatObj} ->
+  {p, q, r : DirichVertSlObj b} ->
+  DirichVertSlMor {b} q r -> DirichVertSlMor {b} p q -> DirichVertSlMor {b} p r
+DirichVertSlComp = sliceComp
 
 ------------------------------------------------------
 ------------------------------------------------------
