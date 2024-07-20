@@ -261,6 +261,38 @@ DirichVertCartFactIsCorrect fext
   {p=(ppos ** pdir)} {q=(qpos ** qdir)} (onpos ** ondir) =
     dpEq12 Refl $ funExt $ \i => Refl
 
+-----------------------------------------------
+-----------------------------------------------
+---- Factored slices of Dirichlet functors ----
+-----------------------------------------------
+-----------------------------------------------
+
+public export
+DirichCartSlObj : MLDirichCatObj -> Type
+DirichCartSlObj = SliceObj . dfPos
+
+public export
+DirichCartSlTotPos : {b : MLDirichCatObj} -> DirichCartSlObj b -> Type
+DirichCartSlTotPos {b} = Sigma {a=(dfPos b)}
+
+public export
+DirichCartSlOnPos : {b : MLDirichCatObj} -> (p : DirichCartSlObj b) ->
+  DirichCartSlTotPos {b} p -> dfPos b
+DirichCartSlOnPos {b} p = DPair.fst
+
+public export
+DirichCartSlDir : {b : MLDirichCatObj} ->
+  (p : DirichCartSlObj b) -> DirichCartSlTotPos {b} p -> Type
+DirichCartSlDir {b} p = dfDir b . DirichCartSlOnPos {b} p
+
+public export
+DirichCartSlOnDir : {b : MLDirichCatObj} ->
+  (p : DirichCartSlObj b) ->
+  SliceMorphism {a=(DirichCartSlTotPos {b} p)}
+    (DirichCartSlDir {b} p)
+    (dfDir b . DirichCartSlOnPos {b} p)
+DirichCartSlOnDir {b} p i = id {a=(DirichCartSlDir {b} p i)}
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Categories of elements of Dirichlet functors ----
