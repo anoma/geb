@@ -145,3 +145,17 @@ public export
   (f : x -> y) ->
   FunExtEq f (TypeMorFromDomChangeF $ TypeMorToDomChangeF f)
 TypeMorToFromDomChangeFid {x} {y} f fext = Refl
+
+public export
+TypeSlSectToGenEl : (u, x : Type) ->
+  SliceMorphism {a=u} (SliceObjTerminal u) (PullbackToSl u x) ->
+  IntGenEl TypeCat x
+TypeSlSectToGenEl u x esu = (u ** flip esu ())
+
+public export
+TypeSlSectFromGenEl : (x : Type) ->
+  (el : IntGenEl TypeCat x) ->
+  SliceMorphism {a=(fst el)}
+    (SliceObjTerminal (fst el))
+    (PullbackToSl (fst el) x)
+TypeSlSectFromGenEl x (u ** proj) eu () = proj eu
