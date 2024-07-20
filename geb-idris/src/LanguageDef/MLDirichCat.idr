@@ -428,8 +428,7 @@ DirichFactSlVertObj = DPair.snd
 public export
 DirichFactSlEmbed : {b : MLDirichCatObj} -> DirichFactSlObj b -> MLDirichCatObj
 DirichFactSlEmbed {b} p =
-  DirichVertSlEmbed {b=(DirichCartSlEmbed {b} $ DirichFactSlCartObj {b} p)} $
-    DirichFactSlVertObj {b} p
+  DirichVertSlEmbed {b=(DirichFactSlIntEmbed {b} p)} $ DirichFactSlVertObj {b} p
 
 public export
 DirichFactSlTotPos : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
