@@ -421,6 +421,12 @@ DirichFactSlIntEmbed : {b : MLDirichCatObj} ->
 DirichFactSlIntEmbed {b} = DirichCartSlEmbed {b} . DirichFactSlCartObj {b}
 
 public export
+DirichFactSlIntProjL : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) ->
+  DirichNatTrans (DirichFactSlIntEmbed {b} p) b
+DirichFactSlIntProjL {b} p = DirichCartSlProj {b} (DirichFactSlCartObj {b} p)
+
+public export
 DirichFactSlVertObj : {b : MLDirichCatObj} ->
   (p : DirichFactSlObj b) -> DirichFactSlIntObj b (DirichFactSlCartObj {b} p)
 DirichFactSlVertObj = DPair.snd
@@ -431,13 +437,32 @@ DirichFactSlEmbed {b} p =
   DirichVertSlEmbed {b=(DirichFactSlIntEmbed {b} p)} $ DirichFactSlVertObj {b} p
 
 public export
+DirichFactSlIntProjR : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) ->
+  DirichNatTrans (DirichFactSlEmbed {b} p) (DirichFactSlIntEmbed {b} p)
+DirichFactSlIntProjR {b} p =
+  DirichVertSlProj {b=(DirichFactSlIntEmbed {b} p)} $ DirichFactSlVertObj {b} p
+
+public export
 DirichFactSlTotPos : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
 DirichFactSlTotPos {b} = dfPos . DirichFactSlEmbed {b}
 
 public export
+DirichFactSlProj : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
+  DirichNatTrans (DirichFactSlEmbed {b} p) b
+DirichFactSlProj {b} p =
+  dntVCatComp
+    {p=(DirichFactSlEmbed {b} p)}
+    {q=(DirichFactSlIntEmbed {b} p)}
+    {r=b}
+    (DirichFactSlIntProjL {b} p)
+    (DirichFactSlIntProjR {b} p)
+
+public export
 DirichFactSlOnPos : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
   DirichFactSlTotPos {b} p -> dfPos b
-DirichFactSlOnPos {b} p = DPair.fst
+DirichFactSlOnPos {b} p =
+  dntOnPos {p=(DirichFactSlEmbed {b} p)} {q=b} (DirichFactSlProj {b} p)
 
 public export
 DirichFactSlDir : {b : MLDirichCatObj} ->
@@ -450,16 +475,16 @@ DirichFactSlOnDir : {b : MLDirichCatObj} ->
   SliceMorphism {a=(DirichFactSlTotPos {b} p)}
     (DirichFactSlDir {b} p)
     (dfDir b . DirichFactSlOnPos {b} p)
-DirichFactSlOnDir {b} p i = DPair.fst
+DirichFactSlOnDir {b} p =
+  dntOnDir {p=(DirichFactSlEmbed {b} p)} {q=b} (DirichFactSlProj {b} p)
 
 public export
 DirichFactSlTot : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
 DirichFactSlTot {b} p = dfTot (DirichFactSlEmbed {b} p)
 
-public export
-DirichFactSlProj : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
-  DirichNatTrans (DirichFactSlEmbed {b} p) b
-DirichFactSlProj {b} p = (DirichFactSlOnPos {b} p ** DirichFactSlOnDir {b} p)
+----------------------------------
+---- Factored-slice morphisms ----
+----------------------------------
 
 ------------------------------------------------------
 ------------------------------------------------------
