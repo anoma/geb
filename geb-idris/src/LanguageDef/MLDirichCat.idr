@@ -297,6 +297,19 @@ DirichCartSlOnDir : {b : MLDirichCatObj} ->
     (dfDir b . DirichCartSlOnPos {b} p)
 DirichCartSlOnDir {b} p i = id {a=(DirichCartSlDir {b} p i)}
 
+public export
+DirichCartSlEmbed : {b : MLDirichCatObj} -> DirichCartSlObj b -> MLDirichCatObj
+DirichCartSlEmbed {b} p = (DirichCartSlTotPos {b} p ** DirichCartSlDir {b} p)
+
+public export
+DirichCartSlTot : {b : MLDirichCatObj} -> DirichCartSlObj b -> Type
+DirichCartSlTot {b} p = dfTot (DirichCartSlEmbed {b} p)
+
+public export
+DirichCartSlProj : {b : MLDirichCatObj} -> (p : DirichCartSlObj b) ->
+  DirichNatTrans (DirichCartSlEmbed {b} p) b
+DirichCartSlProj {b} p = (DirichCartSlOnPos {b} p ** DirichCartSlOnDir {b} p)
+
 -----------------------------------
 ---- Cartesian-slice morphisms ----
 -----------------------------------
@@ -347,6 +360,19 @@ DirichVertSlOnDir : {b : MLDirichCatObj} ->
     (dfDir b . DirichVertSlOnPos {b} p)
 DirichVertSlOnDir {b} p i = DPair.fst
 
+public export
+DirichVertSlEmbed : {b : MLDirichCatObj} -> DirichVertSlObj b -> MLDirichCatObj
+DirichVertSlEmbed {b} p = (DirichVertSlTotPos {b} p ** DirichVertSlDir {b} p)
+
+public export
+DirichVertSlTot : {b : MLDirichCatObj} -> DirichVertSlObj b -> Type
+DirichVertSlTot {b} p = dfTot (DirichVertSlEmbed {b} p)
+
+public export
+DirichVertSlProj : {b : MLDirichCatObj} -> (p : DirichVertSlObj b) ->
+  DirichNatTrans (DirichVertSlEmbed {b} p) b
+DirichVertSlProj {b} p = (DirichVertSlOnPos {b} p ** DirichVertSlOnDir {b} p)
+
 ----------------------------------
 ---- Vertical-slice morphisms ----
 ----------------------------------
@@ -366,6 +392,70 @@ DirichVertSlComp : {b : MLDirichCatObj} ->
   {p, q, r : DirichVertSlObj b} ->
   DirichVertSlMor {b} q r -> DirichVertSlMor {b} p q -> DirichVertSlMor {b} p r
 DirichVertSlComp = sliceComp
+
+--------------------------------
+---- Factored-slice objects ----
+--------------------------------
+
+-- These are the objects of the slice categories of Dirichlet functors
+-- (which are equivalent to Dirichlet presheaves on categories of elements
+-- of Dirichlet functors), expressed in terms of vertical-Cartesian factoring.
+
+-- The intermediate object of a factored slice of a Dirichlet functor.
+public export
+DirichFactSlIntObj : (b : MLDirichCatObj) -> DirichCartSlObj b -> Type
+DirichFactSlIntObj b = DirichVertSlObj . DirichCartSlEmbed {b}
+
+public export
+DirichFactSlObj : MLDirichCatObj -> Type
+DirichFactSlObj b = Sigma {a=(DirichCartSlObj b)} (DirichFactSlIntObj b)
+
+public export
+DirichFactSlCartObj : {b : MLDirichCatObj} ->
+  DirichFactSlObj b -> DirichCartSlObj b
+DirichFactSlCartObj = DPair.fst
+
+public export
+DirichFactSlVertObj : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> DirichFactSlIntObj b (DirichFactSlCartObj {b} p)
+DirichFactSlVertObj = DPair.snd
+
+public export
+DirichFactSlEmbed : {b : MLDirichCatObj} -> DirichFactSlObj b -> MLDirichCatObj
+DirichFactSlEmbed {b} p =
+  DirichVertSlEmbed {b=(DirichCartSlEmbed {b} $ DirichFactSlCartObj {b} p)} $
+    DirichFactSlVertObj {b} p
+
+public export
+DirichFactSlTotPos : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
+DirichFactSlTotPos {b} = dfPos . DirichFactSlEmbed {b}
+
+public export
+DirichFactSlOnPos : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
+  DirichFactSlTotPos {b} p -> dfPos b
+DirichFactSlOnPos {b} p = DPair.fst
+
+public export
+DirichFactSlDir : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> DirichFactSlTotPos {b} p -> Type
+DirichFactSlDir {b} p = dfDir (DirichFactSlEmbed {b} p)
+
+public export
+DirichFactSlOnDir : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) ->
+  SliceMorphism {a=(DirichFactSlTotPos {b} p)}
+    (DirichFactSlDir {b} p)
+    (dfDir b . DirichFactSlOnPos {b} p)
+DirichFactSlOnDir {b} p i = DPair.fst
+
+public export
+DirichFactSlTot : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
+DirichFactSlTot {b} p = dfTot (DirichFactSlEmbed {b} p)
+
+public export
+DirichFactSlProj : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
+  DirichNatTrans (DirichFactSlEmbed {b} p) b
+DirichFactSlProj {b} p = (DirichFactSlOnPos {b} p ** DirichFactSlOnDir {b} p)
 
 ------------------------------------------------------
 ------------------------------------------------------
