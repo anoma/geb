@@ -416,6 +416,11 @@ DirichFactSlCartObj : {b : MLDirichCatObj} ->
 DirichFactSlCartObj = DPair.fst
 
 public export
+DirichFactSlIntEmbed : {b : MLDirichCatObj} ->
+  DirichFactSlObj b -> MLDirichCatObj
+DirichFactSlIntEmbed {b} = DirichCartSlEmbed {b} . DirichFactSlCartObj {b}
+
+public export
 DirichFactSlVertObj : {b : MLDirichCatObj} ->
   (p : DirichFactSlObj b) -> DirichFactSlIntObj b (DirichFactSlCartObj {b} p)
 DirichFactSlVertObj = DPair.snd
