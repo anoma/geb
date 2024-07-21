@@ -448,6 +448,11 @@ DirichFactSlTotPos : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
 DirichFactSlTotPos {b} = dfPos . DirichFactSlEmbed {b}
 
 public export
+DirichFactSlTotDir : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
+  SliceObj (DirichFactSlTotPos {b} p)
+DirichFactSlTotDir {b} p = dfDir (DirichFactSlEmbed {b} p)
+
+public export
 DirichFactSlProj : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
   DirichNatTrans (DirichFactSlEmbed {b} p) b
 DirichFactSlProj {b} p =
@@ -498,7 +503,7 @@ public export
 DirichSlBaseChangeDir : {b : MLDirichCatObj} ->
   (p : DirichFactSlObj b) -> {x : SliceObj (dfPos b)} ->
   (f : SliceMorphism {a=(dfPos b)} x (DirichFactSlCartObj {b} p)) ->
-  SliceObj (dfTot $ DirichCartSlEmbed {b} $ DirichSlBaseChangePos {b} p {x} f)
+  SliceObj (DirichCartSlTot {b} $ DirichSlBaseChangePos {b} p {x} f)
 DirichSlBaseChangeDir {b} p {x} f = snd p . dpBimap (dpMapSnd f) (\_ => id)
 
 public export
@@ -538,6 +543,95 @@ public export
 DirichFactSlMorIntObj : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
   DirichFactSlCartMor {b} p q -> DirichFactSlObj b
 DirichFactSlMorIntObj {b} p q = DirichSlBaseChange {b} q {x=(fst p)}
+
+-- The intermediate object has the same positions as the domain,
+-- and the on-positions function constitutes a Cartesian morphism
+-- from it to the codomain.  Thus, a vertical-slice morphism from
+-- the domain to it will form a general-slice morphism from the
+-- domain to the codomain.
+public export
+DirichFactSlVertMorSl : {b : MLDirichCatObj} -> (dom : DirichFactSlObj b) -> Type
+DirichFactSlVertMorSl {b} dom =
+  DPair (DirichFactSlTotPos {b} dom) (dfDir b . fst)
+
+public export
+DirichFactSlVertMorDom : {b : MLDirichCatObj} -> (p : DirichFactSlObj b) ->
+  SliceObj (DirichFactSlVertMorSl {b} p)
+DirichFactSlVertMorDom {b} = snd
+
+public export
+DirichFactSlVertMorCod : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
+  DirichFactSlCartMor {b} p q ->
+  SliceObj (DirichFactSlVertMorSl {b} p)
+DirichFactSlVertMorCod {b} p q m = snd q . dpBimap (dpMapSnd m) (\_ => id)
+
+public export
+DirichFactSlVertMor : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
+  DirichFactSlCartMor {b} p q -> Type
+DirichFactSlVertMor {b} p q m =
+  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
+    (DirichFactSlVertMorDom {b} p)
+    (DirichFactSlVertMorCod {b} p q m)
+
+public export
+DirichFactSlMor : {b : MLDirichCatObj} ->
+  DirichFactSlObj b -> DirichFactSlObj b -> Type
+DirichFactSlMor {b} p q =
+  DPair (DirichFactSlCartMor {b} p q) (DirichFactSlVertMor {b} p q)
+
+public export
+DirichFactSlIdOnPos : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> SliceMorphism {a=(dfPos b)} (fst p) (fst p)
+DirichFactSlIdOnPos {b} p = sliceId {a=(dfPos b)} (fst p)
+
+public export
+DirichFactSlIdOnDir : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) ->
+  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
+    (DirichFactSlVertMorDom {b} p)
+    (DirichFactSlVertMorCod {b} p p (DirichFactSlIdOnPos {b} p))
+DirichFactSlIdOnDir {b} p itot = case itot of ((bi ** pi) ** bd) => id
+
+public export
+DirichFactSlId : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> DirichFactSlMor {b} p p
+DirichFactSlId {b} p =
+  (DirichFactSlIdOnPos {b} p ** DirichFactSlIdOnDir {b} p)
+
+public export
+DirichFactSlCompOnPos : {b : MLDirichCatObj} ->
+  {p, q, r : DirichFactSlObj b} ->
+  DirichFactSlMor {b} q r -> DirichFactSlMor {b} p q ->
+  SliceMorphism {a=(dfPos b)} (fst p) (fst r)
+DirichFactSlCompOnPos {b} {p} {q} {r} g f = sliceComp (fst g) (fst f)
+
+public export
+DirichFactSlCompOnDirInt : {b : MLDirichCatObj} ->
+  {p, q, r : DirichFactSlObj b} ->
+  (g : DirichFactSlMor {b} q r) -> (f : DirichFactSlMor {b} p q) ->
+  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
+    (DirichFactSlVertMorCod {b} p q (fst f))
+    (DirichFactSlVertMorCod {b} p r (DirichFactSlCompOnPos {b} {p} {q} {r} g f))
+DirichFactSlCompOnDirInt {b} {p} {q} {r} g f i =
+  snd g ((fst (fst i) ** fst f (fst $ fst i) (snd $ fst i)) ** snd i)
+
+public export
+DirichFactSlCompOnDir : {b : MLDirichCatObj} ->
+  {p, q, r : DirichFactSlObj b} ->
+  (g : DirichFactSlMor {b} q r) -> (f : DirichFactSlMor {b} p q) ->
+  SliceMorphism {a=(DirichFactSlVertMorSl {b} p)}
+    (DirichFactSlVertMorDom {b} p)
+    (DirichFactSlVertMorCod {b} p r (DirichFactSlCompOnPos {b} {p} {q} {r} g f))
+DirichFactSlCompOnDir {b} {p} {q} {r} g f =
+  sliceComp (DirichFactSlCompOnDirInt {b} {p} {q} {r} g f) (snd f)
+
+public export
+DirichFactSlComp : {b : MLDirichCatObj} ->
+  {p, q, r : DirichFactSlObj b} ->
+  DirichFactSlMor {b} q r -> DirichFactSlMor {b} p q -> DirichFactSlMor {b} p r
+DirichFactSlComp {b} {p} {q} {r} g f =
+  (DirichFactSlCompOnPos {b} {p} {q} {r} g f **
+   DirichFactSlCompOnDir {b} {p} {q} {r} g f)
 
 ------------------------------------------------------
 ------------------------------------------------------
