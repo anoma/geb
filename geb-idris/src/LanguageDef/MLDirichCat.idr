@@ -486,6 +486,19 @@ DirichFactSlTot {b} p = dfTot (DirichFactSlEmbed {b} p)
 ---- Factored-slice morphisms ----
 ----------------------------------
 
+-- The vertical-Cartesian factoring of both the projections of slice
+-- objects and the total-space morphisms of slice morphisms, together
+-- with the commutativity condition on slice morphisms, require that
+-- a general slice morphism must be able to be factored into a
+-- Cartesian-slice morphism followed by a vertical-slice morphism.
+
+-- The type of the Cartesian component of a slice morphism.
+public export
+DirichFactSlCartMor : {b : MLDirichCatObj} ->
+  DirichFactSlObj b -> DirichFactSlObj b -> Type
+DirichFactSlCartMor {b} p q =
+  DirichCartSlMor {b} (DirichFactSlCartObj {b} p) (DirichFactSlCartObj {b} q)
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Categories of elements of Dirichlet functors ----
