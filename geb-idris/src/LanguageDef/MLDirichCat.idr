@@ -486,18 +486,58 @@ DirichFactSlTot {b} p = dfTot (DirichFactSlEmbed {b} p)
 ---- Factored-slice morphisms ----
 ----------------------------------
 
--- The vertical-Cartesian factoring of both the projections of slice
--- objects and the total-space morphisms of slice morphisms, together
--- with the commutativity condition on slice morphisms, require that
--- a general slice morphism must be able to be factored into a
--- Cartesian-slice morphism followed by a vertical-slice morphism.
+-- The slice analogue of `arBaseChangeArena`.
+public export
+DirichSlBaseChangePos : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> {x : SliceObj (dfPos b)} ->
+  SliceMorphism {a=(dfPos b)} x (DirichFactSlCartObj {b} p) ->
+  SliceObj (dfPos b)
+DirichSlBaseChangePos {b} p {x} f = x
 
--- The type of the Cartesian component of a slice morphism.
+public export
+DirichSlBaseChangeDir : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> {x : SliceObj (dfPos b)} ->
+  (f : SliceMorphism {a=(dfPos b)} x (DirichFactSlCartObj {b} p)) ->
+  SliceObj (dfTot $ DirichCartSlEmbed {b} $ DirichSlBaseChangePos {b} p {x} f)
+DirichSlBaseChangeDir {b} p {x} f = snd p . dpBimap (dpMapSnd f) (\_ => id)
+
+public export
+DirichSlBaseChange : {b : MLDirichCatObj} ->
+  (p : DirichFactSlObj b) -> {x : SliceObj (dfPos b)} ->
+  SliceMorphism {a=(dfPos b)} x (DirichFactSlCartObj {b} p) ->
+  DirichFactSlObj b
+DirichSlBaseChange {b} p {x} f =
+  (DirichSlBaseChangePos {b} p {x} f ** DirichSlBaseChangeDir {b} p {x} f)
+
+-- Because vertical morphisms do not change position, the only
+-- position change between the positions of the domain and the
+-- positions of the intermediate object of the codomain comes
+-- from a single natural transformation -- the Cartesian component
+-- of the total-space morphism of the slice category.  So the
+-- first thing we choose in defining a slice morphism is an
+-- on-positions function from the domain to the codomain (whose
+-- codomain is also equal to the positions of the intermediate
+-- object of the codomain projection, because the on-positions
+-- component of the vertical component of that projection is
+-- the identity).
+
+-- The type of the on-positions function of a slice morphism.
 public export
 DirichFactSlCartMor : {b : MLDirichCatObj} ->
   DirichFactSlObj b -> DirichFactSlObj b -> Type
 DirichFactSlCartMor {b} p q =
   DirichCartSlMor {b} (DirichFactSlCartObj {b} p) (DirichFactSlCartObj {b} q)
+
+-- Because the positions of the domain and codomain are equal to those
+-- of the intermediate objects of their respective projections, the
+-- on-positions function which determines a Cartesian slice morphism
+-- of their intermediate objects also determines an (identical) slice
+-- morphism between the positions of the domain and codomain themselves.
+-- That in turn induces a base change on the codomain.
+public export
+DirichFactSlMorIntObj : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
+  DirichFactSlCartMor {b} p q -> DirichFactSlObj b
+DirichFactSlMorIntObj {b} p q = DirichSlBaseChange {b} q {x=(fst p)}
 
 ------------------------------------------------------
 ------------------------------------------------------
