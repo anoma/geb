@@ -1241,6 +1241,49 @@ record MlDirichSlMor {ar : MLArena} (dom, cod : MlDirichSlObj ar) where
   mdsmOnPos : MlDirichSlMorOnPos {ar} dom cod
   mdsmOnDir : MlDirichSlMorOnDir {ar} dom cod mdsmOnPos
 
+public export
+MlDirichSlObjToFact : {ar : MLArena} -> MlDirichSlObj ar -> DirichFactSlObj ar
+MlDirichSlObjToFact {ar} p =
+  (mdsOnPos p ** \bd => mdsDir p (fst $ fst bd) (snd $ fst bd) (snd bd))
+
+public export
+MlDirichFactToSlObj : {ar : MLArena} -> DirichFactSlObj ar -> MlDirichSlObj ar
+MlDirichFactToSlObj {ar} p =
+  MDSobj (fst p) (\bi, pi, bd => snd p ((bi ** pi) ** bd))
+
+public export
+MlDirichSlMorToFact : {ar : MLArena} -> {p, q : MlDirichSlObj ar} ->
+  MlDirichSlMor {ar} p q ->
+  DirichFactSlMor {b=ar}
+    (MlDirichSlObjToFact {ar} p)
+    (MlDirichSlObjToFact {ar} q)
+MlDirichSlMorToFact {ar} {p} {q} m =
+  (mdsmOnPos m ** \i => mdsmOnDir m (fst $ fst i) (snd $ fst i) (snd i))
+
+public export
+MlDirichSlMorFromFact : {ar : MLArena} -> {p, q : MlDirichSlObj ar} ->
+  DirichFactSlMor {b=ar}
+    (MlDirichSlObjToFact {ar} p)
+    (MlDirichSlObjToFact {ar} q) ->
+  MlDirichSlMor {ar} p q
+MlDirichSlMorFromFact {ar} {p} {q} m =
+  MDSM (fst m) (\i, j, d => snd m ((i ** j) ** d))
+
+public export
+MlDirichFactToSlMor : {ar : MLArena} -> {p, q : DirichFactSlObj ar} ->
+  DirichFactSlMor {b=ar} p q ->
+  MlDirichSlMor {ar} (MlDirichFactToSlObj {ar} p) (MlDirichFactToSlObj {ar} q)
+MlDirichFactToSlMor {ar} {p} {q} m =
+  MDSM (fst m) (\i, j, d => snd m ((i ** j) ** d))
+
+public export
+MlDirichFactFromSlMor : {ar : MLArena} -> {p, q : DirichFactSlObj ar} ->
+  MlDirichSlMor {ar}
+    (MlDirichFactToSlObj {ar} p) (MlDirichFactToSlObj {ar} q) ->
+  DirichFactSlMor {b=ar} p q
+MlDirichFactFromSlMor {ar} {p} {q} m =
+  (mdsmOnPos m ** \((bi ** pi) ** bd), pd => mdsmOnDir m bi pi bd pd)
+
 -------------------------------------------------------------
 ---- Categorial operations in Dirichlet slice categories ----
 -------------------------------------------------------------
