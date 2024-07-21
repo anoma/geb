@@ -563,7 +563,7 @@ public export
 DirichFactSlVertMorCod : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
   DirichFactSlCartMor {b} p q ->
   SliceObj (DirichFactSlVertMorSl {b} p)
-DirichFactSlVertMorCod {b} p q m = snd q . dpBimap (dpMapSnd m) (\_ => id)
+DirichFactSlVertMorCod {b} p q m = DirichSlBaseChangeDir {b} q {x=(fst p)} m
 
 public export
 DirichFactSlVertMor : {b : MLDirichCatObj} -> (p, q : DirichFactSlObj b) ->
