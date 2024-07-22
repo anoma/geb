@@ -387,16 +387,19 @@ DirichCartSlTerminal : (b : MLDirichCatObj) -> DirichCartSlObj b
 DirichCartSlTerminal b = DirichCartSlPullback {b} $ MLDirichCatObjTerminal
 
 public export
+DirichCartSlSection : (b, p : MLDirichCatObj) -> Type
+DirichCartSlSection b p =
+  DirichCartSlMor {b} (DirichCartSlTerminal b) (DirichCartSlPullback {b} p)
+
+public export
 DirichCartSlSectionToGenEl : {b, p : MLDirichCatObj} ->
-  DirichCartSlMor {b} (DirichCartSlTerminal b) (DirichCartSlPullback {b} p) ->
-  MLDirichCatMor b p
+  DirichCartSlSection b p -> MLDirichCatMor b p
 DirichCartSlSectionToGenEl {b} {p} m =
   (\bi => fst (m bi (() ** \_ => ())) ** \bi => snd (m bi (() ** \_ => ())))
 
 public export
 DirichCartGenElToSlSection : {b, p : MLDirichCatObj} ->
-  MLDirichCatMor b p ->
-  DirichCartSlMor {b} (DirichCartSlTerminal b) (DirichCartSlPullback {b} p)
+  MLDirichCatMor b p -> DirichCartSlSection b p
 DirichCartGenElToSlSection {b} {p} alpha bi termobj =
   (fst alpha bi ** snd alpha bi)
 
