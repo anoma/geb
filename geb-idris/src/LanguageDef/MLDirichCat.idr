@@ -297,6 +297,8 @@ DirichCartSlOnDir : {b : MLDirichCatObj} ->
     (dfDir b . DirichCartSlOnPos {b} p)
 DirichCartSlOnDir {b} p i = id {a=(DirichCartSlDir {b} p i)}
 
+-- We can embed a Cartesian-slice Dirichlet functor into the base
+-- category of Dirichlet functors on `Type`.
 public export
 DirichCartSlEmbed : {b : MLDirichCatObj} -> DirichCartSlObj b -> MLDirichCatObj
 DirichCartSlEmbed {b} p = (DirichCartSlTotPos {b} p ** DirichCartSlDir {b} p)
@@ -309,6 +311,16 @@ public export
 DirichCartSlProj : {b : MLDirichCatObj} -> (p : DirichCartSlObj b) ->
   DirichNatTrans (DirichCartSlEmbed {b} p) b
 DirichCartSlProj {b} p = (DirichCartSlOnPos {b} p ** DirichCartSlOnDir {b} p)
+
+-- We can promote a Dirichlet functor in the base category of Dirichlet
+-- functors on `Type` into any Cartesian-slice Dirichlet-functor category.
+-- This is the logical functor called "pullback" and denoted `U*` at
+-- https://ncatlab.org/nlab/show/generalized+element#in_toposes .
+public export
+DirichCartSlPullback : {b : MLDirichCatObj} ->
+  MLDirichCatObj -> DirichCartSlObj b
+DirichCartSlPullback {b} p bi =
+  (pi : DPair.fst p ** DPair.snd b bi -> DPair.snd p pi)
 
 -----------------------------------
 ---- Cartesian-slice morphisms ----
@@ -329,6 +341,37 @@ DirichCartSlComp : {b : MLDirichCatObj} ->
   {p, q, r : DirichCartSlObj b} ->
   DirichCartSlMor {b} q r -> DirichCartSlMor {b} p q -> DirichCartSlMor {b} p r
 DirichCartSlComp = sliceComp
+
+-- Now we show that the "embed" and "pullback" functors are adjoint --
+-- in fact, they are special cases of `sigma` and `base-change`, between
+-- `MLDirichCatObj` and `DirichCartSlObj b` for any `b`.  (The more general
+-- cases are between `DirichCartSlObj b` and `DirichCartSlObj b'` for
+-- any `b` and `b'`).
+public export
+DirichCartSlEmbedPullbackLeftAdjoint : {b : MLDirichCatObj} ->
+  DirichCartSlObj b -> MLDirichCatObj
+DirichCartSlEmbedPullbackLeftAdjoint = DirichCartSlEmbed
+
+public export
+DirichCartSlEmbedPullbackRightAdjoint : {b : MLDirichCatObj} ->
+  MLDirichCatObj -> DirichCartSlObj b
+DirichCartSlEmbedPullbackRightAdjoint = DirichCartSlPullback
+
+public export
+DirichCartSlEmbedPullbackLeftAdjunct : {b : MLDirichCatObj} ->
+  (p : DirichCartSlObj b) -> (q : MLDirichCatObj) ->
+  DirichNatTrans (DirichCartSlEmbedPullbackLeftAdjoint {b} p) q ->
+  DirichCartSlMor {b} p (DirichCartSlEmbedPullbackRightAdjoint {b} q)
+DirichCartSlEmbedPullbackLeftAdjunct p q alpha bi pi =
+  (fst alpha (bi ** pi) ** snd alpha (bi ** pi))
+
+public export
+DirichCartSlEmbedPullbackRightAdjunct : {b : MLDirichCatObj} ->
+  (p : DirichCartSlObj b) -> (q : MLDirichCatObj) ->
+  DirichCartSlMor {b} p (DirichCartSlEmbedPullbackRightAdjoint {b} q) ->
+  DirichNatTrans (DirichCartSlEmbedPullbackLeftAdjoint {b} p) q
+DirichCartSlEmbedPullbackRightAdjunct p q m =
+  (\pi => fst (m (fst pi) (snd pi)) ** \pi => snd (m (fst pi) (snd pi)))
 
 --------------------------------
 ---- Vertical-slice objects ----
