@@ -267,6 +267,11 @@ DirichVertCartFactIsCorrect fext
 -----------------------------------------------
 -----------------------------------------------
 
+-- The terminal object of the base category of Dirichlet functors.
+public export
+MLDirichCatObjTerminal : MLDirichCatObj
+MLDirichCatObjTerminal = (Unit ** \_ => Unit)
+
 ---------------------------------
 ---- Cartesian-slice objects ----
 ---------------------------------
@@ -372,6 +377,28 @@ DirichCartSlEmbedPullbackRightAdjunct : {b : MLDirichCatObj} ->
   DirichNatTrans (DirichCartSlEmbedPullbackLeftAdjoint {b} p) q
 DirichCartSlEmbedPullbackRightAdjunct p q m =
   (\pi => fst (m (fst pi) (snd pi)) ** \pi => snd (m (fst pi) (snd pi)))
+
+-- We now show the correspondence between global elements (sections) in
+-- Dirichlet-Cartesian slice categories and Cartesian morphisms (generalized
+-- elements) in the base category, as described at
+-- https://ncatlab.org/nlab/show/generalized+element#in_toposes .
+public export
+DirichCartSlTerminal : (b : MLDirichCatObj) -> DirichCartSlObj b
+DirichCartSlTerminal b = DirichCartSlPullback {b} $ MLDirichCatObjTerminal
+
+public export
+DirichCartSlSectionToGenEl : {b, p : MLDirichCatObj} ->
+  DirichCartSlMor {b} (DirichCartSlTerminal b) (DirichCartSlPullback {b} p) ->
+  MLDirichCatMor b p
+DirichCartSlSectionToGenEl {b} {p} m =
+  (\bi => fst (m bi (() ** \_ => ())) ** \bi => snd (m bi (() ** \_ => ())))
+
+public export
+DirichCartGenElToSlSection : {b, p : MLDirichCatObj} ->
+  MLDirichCatMor b p ->
+  DirichCartSlMor {b} (DirichCartSlTerminal b) (DirichCartSlPullback {b} p)
+DirichCartGenElToSlSection {b} {p} alpha bi termobj =
+  (fst alpha bi ** snd alpha bi)
 
 --------------------------------
 ---- Vertical-slice objects ----
