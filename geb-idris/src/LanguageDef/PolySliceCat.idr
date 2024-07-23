@@ -178,24 +178,24 @@ public export
 PolyVertSlMor : {b : MLPolyCatObj} ->
   PolyVertSlObj b -> PolyVertSlObj b -> Type
 PolyVertSlMor {b} p q =
-  (bi : dfPos b) ->
-  (ondir : fst q bi -> fst p bi **
-   (bd : dfDir b bi) -> snd p bi bd = ondir (snd q bi bd))
+  (ondir : (bi : dfPos b) -> fst q bi -> fst p bi **
+   (bi : dfPos b) -> (bd : dfDir b bi) -> snd p bi bd = ondir bi (snd q bi bd))
 
 public export
 PolyVertSlId : {b : MLPolyCatObj} ->
   (p : PolyVertSlObj b) -> PolyVertSlMor {b} p p
-PolyVertSlId {b} p bi = (Prelude.id ** \_ => Refl)
+PolyVertSlId {b} p = (sliceId (fst p) ** \_, _ => Refl)
 
 public export
 PolyVertSlComp : {b : MLPolyCatObj} ->
   {p, q, r : PolyVertSlObj b} ->
   PolyVertSlMor {b} q r -> PolyVertSlMor {b} p q -> PolyVertSlMor {b} p r
-PolyVertSlComp {b} {p} {q} {r} beta alpha bi =
-  (fst (alpha bi) . fst (beta bi) **
-   \bd => trans
-    (snd (alpha bi) bd)
-    (cong (fst $ alpha bi) (snd (beta bi) bd)))
+PolyVertSlComp {b} {p} {q} {r} beta alpha =
+  (sliceComp (fst alpha) (fst beta) **
+   \bi, bd =>
+    trans
+      (snd alpha bi bd)
+      (cong (fst alpha bi) $ snd beta bi bd))
 
 ------------------------------------------------------
 ------------------------------------------------------
