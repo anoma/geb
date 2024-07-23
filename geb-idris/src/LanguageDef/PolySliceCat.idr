@@ -179,8 +179,8 @@ PolyVertSlMor : {b : MLPolyCatObj} ->
   PolyVertSlObj b -> PolyVertSlObj b -> Type
 PolyVertSlMor {b} p q =
   (bi : dfPos b) ->
-  (ondir : fst p bi -> fst q bi **
-   (bd : dfDir b bi) -> ondir (snd p bi bd) = snd q bi bd)
+  (ondir : fst q bi -> fst p bi **
+   (bd : dfDir b bi) -> snd p bi bd = ondir (snd q bi bd))
 
 public export
 PolyVertSlId : {b : MLPolyCatObj} ->
@@ -192,10 +192,10 @@ PolyVertSlComp : {b : MLPolyCatObj} ->
   {p, q, r : PolyVertSlObj b} ->
   PolyVertSlMor {b} q r -> PolyVertSlMor {b} p q -> PolyVertSlMor {b} p r
 PolyVertSlComp {b} {p} {q} {r} beta alpha bi =
-  (fst (beta bi) . fst (alpha bi) **
+  (fst (alpha bi) . fst (beta bi) **
    \bd => trans
-    (cong (fst $ beta bi) (snd (alpha bi) bd))
-    (snd (beta bi) bd))
+    (snd (alpha bi) bd)
+    (cong (fst $ alpha bi) (snd (beta bi) bd)))
 
 ------------------------------------------------------
 ------------------------------------------------------
