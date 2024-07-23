@@ -170,6 +170,30 @@ PolyVertSlProj : {b : MLPolyCatObj} -> (p : PolyVertSlObj b) ->
   PolyNatTrans (PolyVertSlEmbed {b} p) b
 PolyVertSlProj {b} p = (PolyVertSlOnPos {b} p ** PolyVertSlOnDir {b} p)
 
+---------------------------------------------
+---- Polynomial vertical-slice morphisms ----
+---------------------------------------------
+
+public export
+PolyVertSlMor : {b : MLPolyCatObj} ->
+  PolyVertSlObj b -> PolyVertSlObj b -> Type
+PolyVertSlMor {b} p q =
+  (ondir : SliceMorphism {a=(dfPos b)} (fst p) (fst q) **
+   (bi : dfPos b) -> (bd : dfDir b bi) -> ondir bi (snd p bi bd) = snd q bi bd)
+
+public export
+PolyVertSlId : {b : MLPolyCatObj} ->
+  (p : PolyVertSlObj b) -> PolyVertSlMor {b} p p
+PolyVertSlId {b} p = (sliceId (fst p) ** \_, _ => Refl)
+
+public export
+PolyVertSlComp : {b : MLPolyCatObj} ->
+  {p, q, r : PolyVertSlObj b} ->
+  PolyVertSlMor {b} q r -> PolyVertSlMor {b} p q -> PolyVertSlMor {b} p r
+PolyVertSlComp {b} {p} {q} {r} beta alpha =
+  (sliceComp (fst beta) (fst alpha) **
+   \bi, bd => trans (cong (fst beta bi) $ snd alpha bi bd) (snd beta bi bd))
+
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Slices over arenas (in dependent-type style) ----
