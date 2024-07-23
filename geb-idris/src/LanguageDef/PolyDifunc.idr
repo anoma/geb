@@ -139,6 +139,10 @@ InterpPDi pdid x y =
   $ \ix => InterpPDi1 pdid x ix $ SliceFibSigmaF (snd ix) y
 
 public export
+InterpPDiDiag : (pdid : PDiData) -> (x : Type) -> Type
+InterpPDiDiag pdid x = InterpPDi pdid x (SliceObjTerminal x)
+
+public export
 InterpPDiu : (pdid : PDiData) -> (x : Type) -> SliceFunctor x Unit
 InterpPDiu pdid x y () = InterpPDi pdid x y
 
