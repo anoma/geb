@@ -862,6 +862,13 @@ DirichNTCatElFMap {p} {q} (onpos ** ondir) (pi ** slx) (pi ** sly)
 -- are an example) on the category of elements of a presheaf is as an object
 -- of the slice category of presheaves over the base presheaf, so if this
 -- definition makes sense then it ought to agree with `MlDirichSlObj`.
+
+-- The projection of a Dirichlet functor on the category of elements at a
+-- particular position is a Dirichlet functor on a slice object, which is
+-- the category of elements of a _representable_ Dirichlet functor, so it
+-- is a slice of a Dirichlet functor over a representable.  That consists
+-- of a type of positions together with, for each position, a slice of
+-- the base object of the representable.
 public export
 DirichDirichCatElArPos : (p : MLDirichCatObj) -> dfPos p -> Type
 DirichDirichCatElArPos p i = (pos : Type ** pos -> DirichCatElObjDir p i)
@@ -1327,6 +1334,17 @@ public export
 MlDirichFactToSlObj : {ar : MLArena} -> DirichFactSlObj ar -> MlDirichSlObj ar
 MlDirichFactToSlObj {ar} p =
   MDSobj (fst p) (\bi, pi, bd => snd p ((bi ** pi) ** bd))
+
+public export
+MlDirichSlObjToDirichCatElAr : {ar : MLArena} ->
+  MlDirichSlObj ar -> DirichDirichCatElAr ar
+MlDirichSlObjToDirichCatElAr {ar} sl bi = (mdsOnPos sl bi ** mdsDir sl bi)
+
+public export
+MlDirichCatElArToSlObj : {ar : MLArena} ->
+  DirichDirichCatElAr ar -> MlDirichSlObj ar
+MlDirichCatElArToSlObj {ar} sl =
+  MDSobj (\bi => fst $ sl bi) (\bi => snd $ sl bi)
 
 public export
 MlDirichSlMorToFact : {ar : MLArena} -> {p, q : MlDirichSlObj ar} ->
