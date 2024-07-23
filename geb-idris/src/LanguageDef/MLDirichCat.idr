@@ -403,9 +403,9 @@ DirichCartGenElToSlSection : {b, p : MLDirichCatObj} ->
 DirichCartGenElToSlSection {b} {p} alpha bi termobj =
   (fst alpha bi ** snd alpha bi)
 
---------------------------------
----- Vertical-slice objects ----
---------------------------------
+------------------------------------------
+---- Dirichlet vertical-slice objects ----
+------------------------------------------
 
 public export
 DirichVertSlObj : MLDirichCatObj -> Type
@@ -446,9 +446,9 @@ DirichVertSlProj : {b : MLDirichCatObj} -> (p : DirichVertSlObj b) ->
   DirichNatTrans (DirichVertSlEmbed {b} p) b
 DirichVertSlProj {b} p = (DirichVertSlOnPos {b} p ** DirichVertSlOnDir {b} p)
 
-----------------------------------
----- Vertical-slice morphisms ----
-----------------------------------
+--------------------------------------------
+---- Dirichlet vertical-slice morphisms ----
+--------------------------------------------
 
 public export
 DirichVertSlMor : {b : MLDirichCatObj} ->
@@ -466,9 +466,9 @@ DirichVertSlComp : {b : MLDirichCatObj} ->
   DirichVertSlMor {b} q r -> DirichVertSlMor {b} p q -> DirichVertSlMor {b} p r
 DirichVertSlComp = sliceComp
 
---------------------------------
----- Factored-slice objects ----
---------------------------------
+------------------------------------------
+---- Factored-Dirichlet-slice objects ----
+------------------------------------------
 
 -- These are the objects of the slice categories of Dirichlet functors
 -- (which are equivalent to Dirichlet presheaves on categories of elements
@@ -560,9 +560,9 @@ public export
 DirichFactSlTot : {b : MLDirichCatObj} -> DirichFactSlObj b -> Type
 DirichFactSlTot {b} p = dfTot (DirichFactSlEmbed {b} p)
 
-----------------------------------
----- Factored-slice morphisms ----
-----------------------------------
+--------------------------------------------
+---- Factored-Dirichlet-slice morphisms ----
+--------------------------------------------
 
 -- The slice analogue of `arBaseChangeArena`.
 public export
