@@ -180,7 +180,7 @@ PolyVertSlMor : {b : MLPolyCatObj} ->
 PolyVertSlMor {b} p q =
   (bi : dfPos b) ->
   (ondir : fst p bi -> fst q bi **
-   (bd : dfDir b bi)  -> ondir (snd p bi bd) = snd q bi bd)
+   (bd : dfDir b bi) -> ondir (snd p bi bd) = snd q bi bd)
 
 public export
 PolyVertSlId : {b : MLPolyCatObj} ->
