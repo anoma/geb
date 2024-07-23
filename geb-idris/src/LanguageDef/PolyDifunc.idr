@@ -189,6 +189,34 @@ PDiDimapDP pdid x y x' y' lm rm =
   PDiDimap pdid x (Sigma x') y y' DPair.fst $
     \ex, ey => SFS (ex ** lm ex ey) (rm ex ey)
 
+-- Suppose we want to write a restricted version of `dimap` that is only
+-- required to operate on diagonal elements.  Diagonal elements are those
+-- where `x ~=~ y` and `x' ~=~ y'`, which may be represented either by
+-- the `y`s being slices whose values are `const Unit` (the terminal objects
+-- of the slice category over `x`, which is the `id` morphism on `x` in
+-- categorial style), or, if we take a twisted-arrow viewpoint, the morphism
+-- being the identity.
+--
+-- Note that the parameters `x`, `x'`, and `m` constitute a monomorphism
+-- from `x` to `Sigma {a=x} x'`, where the proof that it is a monomorphism
+-- is the exhibition of a left inverse, namely the projection from
+-- `Sigma {a=x} x'` to `x`.
+--
+-- Note also that `Pi {a=x} x'` may equivalently be viewed as
+-- `SliceMorphism {a=x} (SliceObjTerminal x) x'` -- that is, it is
+-- a section, or global element (or "point"), of `x'`.  See
+-- https://ncatlab.org/nlab/show/generalized+element#in_toposes.
+public export
+PDiDiagMap : (pdid : PDiData) ->
+  (x : Type) -> (x' : SliceObj x) -> Pi {a=x} x' ->
+  InterpPDi pdid x (SliceObjTerminal x) ->
+  InterpPDi pdid (Sigma {a=x} x') (SliceObjTerminal $ Sigma {a=x} x')
+PDiDiagMap pdid x x' m =
+  PDiDimapDP pdid
+    x (SliceObjTerminal x) x' (SliceObjTerminal $ Sigma {a=x} x')
+    (\ex, u => m ex)
+    (\_, _ => ())
+
 -- We can define a functor from `Type` to the category of Dirichlet
 -- functors by defining a slice functor between the Dirichlet-functor
 -- slice categories over `dfRepVoid` and `dfRepUnit`, because, as explained
