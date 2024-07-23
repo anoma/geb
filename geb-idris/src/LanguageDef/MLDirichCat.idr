@@ -408,8 +408,12 @@ DirichCartGenElToSlSection {b} {p} alpha bi termobj =
 ------------------------------------------
 
 public export
+DirichBaseEmbed : MLDirichCatObj -> MLDirichCatObj
+DirichBaseEmbed b = (dfTot b ** SliceObjTerminal $ dfTot b)
+
+public export
 DirichVertSlObj : MLDirichCatObj -> Type
-DirichVertSlObj = SliceObj . dfTot
+DirichVertSlObj = DirichCartSlObj . DirichBaseEmbed
 
 public export
 DirichVertSlTotPos : {b : MLDirichCatObj} -> DirichVertSlObj b -> Type
@@ -453,7 +457,7 @@ DirichVertSlProj {b} p = (DirichVertSlOnPos {b} p ** DirichVertSlOnDir {b} p)
 public export
 DirichVertSlMor : {b : MLDirichCatObj} ->
   DirichVertSlObj b -> DirichVertSlObj b -> Type
-DirichVertSlMor {b} = SliceMorphism {a=(dfTot b)}
+DirichVertSlMor {b} = DirichCartSlMor {b=(DirichBaseEmbed b)}
 
 public export
 DirichVertSlId : {b : MLDirichCatObj} ->
