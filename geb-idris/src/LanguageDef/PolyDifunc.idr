@@ -244,6 +244,10 @@ PDiDiagMap pdid x x' m =
     (\ex, u => m ex)
     (\_, _ => ())
 
+public export
+PDiDiagElemObj : PDiData -> Type
+PDiDiagElemObj = Sigma {a=Type} . InterpPDiDiag
+
 ---------------------------------------------------
 ---------------------------------------------------
 ---- Self-representation of Dirichlet functors ----
