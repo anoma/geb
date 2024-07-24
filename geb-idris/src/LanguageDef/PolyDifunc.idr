@@ -19,6 +19,10 @@ import public LanguageDef.IntDisheafCat
 -------------------------------------------
 -------------------------------------------
 
+-------------------------------
+---- Polydifunctor objects ----
+-------------------------------
+
 {-
  - We might view a polydifunctor as a functor from
  - `Type` to `[op(Type), Type`]`.  As such, we could define it as a parametric
@@ -65,6 +69,10 @@ public export
 PDiTot1 : (pdid : PDiData) -> Type
 PDiTot1 = dfTot . pdiT1
 
+-----------------------------------------------------------------
+---- Polydifunctors as families of slice polynomial functors ----
+-----------------------------------------------------------------
+
 public export
 PDiToSPFdepData : (pdid : PDiData) ->
   SPFdepData {b=(PDiPos1 pdid)} (PDiDir1 pdid) (const Unit)
@@ -77,6 +85,10 @@ public export
 PDiToSPFData : (pdid : PDiData) ->
   (i : PDiPos1 pdid) -> SPFData (PDiDir1 pdid i) Unit
 PDiToSPFData pdid = SPFDataFamFromDep (PDiToSPFdepData pdid)
+
+------------------------------------------
+---- Interpretation of polydifunctors ----
+------------------------------------------
 
 -- This is the interpretation of the above family of `SPFData`s.
 public export
@@ -134,17 +146,16 @@ InterpPDi2map pdid x idf y y' m = InterpPDi2SPFmap pdid x idf y y' m ()
 
 public export
 InterpPDi : (pdid : PDiData) -> (x : Type) -> (y : SliceObj x) -> Type
-InterpPDi pdid x y =
-  Sigma {a=(InterpDirichFunc (pdiT1 pdid) x)}
-  $ \ix => InterpPDi1 pdid x ix $ SliceFibSigmaF (snd ix) y
-
-public export
-InterpPDiDiag : (pdid : PDiData) -> (x : Type) -> Type
-InterpPDiDiag pdid x = InterpPDi pdid x (SliceObjTerminal x)
+InterpPDi pdid x =
+  Sigma {a=(InterpDirichFunc (pdiT1 pdid) x)} . flip (InterpPDi2 pdid x)
 
 public export
 InterpPDiu : (pdid : PDiData) -> (x : Type) -> SliceFunctor x Unit
 InterpPDiu pdid x y () = InterpPDi pdid x y
+
+---------------------------------------------------
+---- Morphism-map components of polydifunctors ----
+---------------------------------------------------
 
 public export
 PDiLmapu : (pdid : PDiData) -> (x, x' : Type) -> (m : x' -> x) ->
@@ -153,10 +164,16 @@ PDiLmapu : (pdid : PDiData) -> (x, x' : Type) -> (m : x' -> x) ->
     (InterpPDiu pdid x')
 PDiLmapu pdid x x' m y' () =
   dpBimap (InterpDFMap (pdiT1 pdid) m)
-  $ \i1 => dpMapSnd $ \p2, i2, d1, d2 =>
-    let sfs1 = i2 d1 d2 in rewrite sym (sfsEq sfs1) in
-    let sfs2 = sfsSnd sfs1 in rewrite sym (sfsEq sfs2) in
-    SFS (sfsFst sfs2) (sfsSnd sfs2)
+  $ \(i1 ** i2), ((ep ** dm1) ** dm2) =>
+    ((ep **
+     \ex, d1 =>
+        let sfs = dm2 (sfsFst $ dm1 ex d1) ((ex ** d1) ** Refl) in
+        rewrite sym (sfsEq $ dm1 ex d1) in
+        rewrite sym (sfsEq sfs) in
+        SFS (sfsFst sfs) ()) **
+     \ex', ((ex ** d1) ** xeq) =>
+      rewrite sym xeq in
+      sfsSnd $ dm2 (sfsFst $ dm1 ex d1) ((ex ** d1) ** Refl))
 
 public export
 PDiLmap : (pdid : PDiData) -> (x, x' : Type) -> (m : x' -> x) ->
@@ -169,10 +186,7 @@ PDiRmap : (pdid : PDiData) -> (x : Type) -> (y, y' : SliceObj x) ->
   SliceMorphism {a=x} y y' ->
   InterpPDi pdid x y -> InterpPDi pdid x y'
 PDiRmap pdid x y y' m =
-  dpMapSnd
-  $ \i1 => dpMapSnd $ \p2, i2, d1, d2 =>
-    let sfs = i2 d1 d2 in rewrite sym (sfsEq sfs) in
-    SFS (sfsFst sfs) (m (sfsFst sfs) (sfsSnd sfs))
+  dpMapSnd $ \i1 => dpMapSnd $ \p2, i2, d1, d2 => m d1 $ i2 d1 d2
 
 public export
 PDiDimap : (pdid : PDiData) ->
@@ -193,6 +207,10 @@ PDiDimapDP pdid x y x' y' lm rm =
   PDiDimap pdid x (Sigma x') y y' DPair.fst $
     \ex, ey => SFS (ex ** lm ex ey) (rm ex ey)
 
+-----------------------------------------------------------
+---- Categories of diagonal elements of polydifunctors ----
+-----------------------------------------------------------
+
 -- Suppose we want to write a restricted version of `dimap` that is only
 -- required to operate on diagonal elements.  Diagonal elements are those
 -- where `x ~=~ y` and `x' ~=~ y'`, which may be represented either by
@@ -210,6 +228,11 @@ PDiDimapDP pdid x y x' y' lm rm =
 -- `SliceMorphism {a=x} (SliceObjTerminal x) x'` -- that is, it is
 -- a section, or global element (or "point"), of `x'`.  See
 -- https://ncatlab.org/nlab/show/generalized+element#in_toposes.
+
+public export
+InterpPDiDiag : (pdid : PDiData) -> (x : Type) -> Type
+InterpPDiDiag pdid x = InterpPDi pdid x (SliceObjTerminal x)
+
 public export
 PDiDiagMap : (pdid : PDiData) ->
   (x : Type) -> (x' : SliceObj x) -> Pi {a=x} x' ->
@@ -220,6 +243,12 @@ PDiDiagMap pdid x x' m =
     x (SliceObjTerminal x) x' (SliceObjTerminal $ Sigma {a=x} x')
     (\ex, u => m ex)
     (\_, _ => ())
+
+---------------------------------------------------
+---------------------------------------------------
+---- Self-representation of Dirichlet functors ----
+---------------------------------------------------
+---------------------------------------------------
 
 -- We can define a functor from `Type` to the category of Dirichlet
 -- functors by defining a slice functor between the Dirichlet-functor
