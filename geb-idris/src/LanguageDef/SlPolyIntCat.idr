@@ -28,12 +28,16 @@ public export
 IntGenQuant : (cat : IntCatSig) -> SliceObj (icObj cat)
 IntGenQuant cat = Sigma {a=(icObj cat)} . icMor cat
 
--- A (metalanguage) function on generalized elements of an internal category.
+-- A (metalanguage) function on generalized elements of an internal category
+-- (meaning, a function from generalized elements of `x` to generalized
+-- elements of `y`).
 public export
 IntGenElF : (cat : IntCatSig) -> IntMorSig (icObj cat)
 IntGenElF cat x y = IntGenEl cat x -> IntGenEl cat y
 
--- A (metalanguage) function on generalized quantities of an internal category.
+-- A (metalanguage) function on generalized quantities of an internal category
+-- (meaning, a function from generalized quantities of `x` to generalized
+-- quantities of `y`).
 public export
 IntGenQuantF : (cat : IntCatSig) -> IntMorSig (icObj cat)
 IntGenQuantF cat x y = IntGenQuant cat x -> IntGenQuant cat y
