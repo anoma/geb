@@ -248,6 +248,14 @@ public export
 PDiDiagElemObj : PDiData -> Type
 PDiDiagElemObj = Sigma {a=Type} . InterpPDiDiag
 
+public export
+data PDiDiagElemMor : (pdid : PDiData) -> IntMorSig (PDiDiagElemObj pdid) where
+  PDEM : {pdid : PDiData} -> {x : Type} -> {x' : SliceObj x} ->
+    (el : InterpPDiDiag pdid x) -> (m : Pi {a=x} x') ->
+    PDiDiagElemMor pdid
+      (x ** el)
+      (Sigma {a=x} x' ** PDiDiagMap pdid x x' m el)
+
 ---------------------------------------------------
 ---------------------------------------------------
 ---- Self-representation of Dirichlet functors ----
