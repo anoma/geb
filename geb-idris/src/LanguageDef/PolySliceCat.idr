@@ -120,83 +120,6 @@ PFSliceMorphFromCDomMorEq {p=(ppos ** pdir)}
   {dtot} {dproj} {ctot} {cproj} (Element0 alpha nteq) =
     nteq
 
-------------------------------------------------------------
-------------------------------------------------------------
----- Factorized slice categories of polynomial functors ----
-------------------------------------------------------------
-------------------------------------------------------------
-
--------------------------------------------
----- Polynomial vertical-slice objects ----
--------------------------------------------
-
-public export
-PolyVertSlObj : MLPolyCatObj -> Type
-PolyVertSlObj b =
-  (sldir : SliceObj (dfPos b) ** SliceMorphism {a=(dfPos b)} (dfDir b) sldir)
-
-public export
-PolyVertSlTotPos : {b : MLPolyCatObj} -> PolyVertSlObj b -> Type
-PolyVertSlTotPos {b} p = dfPos b
-
-public export
-PolyVertSlOnPos : {b : MLPolyCatObj} -> (p : PolyVertSlObj b) ->
-  PolyVertSlTotPos {b} p -> dfPos b
-PolyVertSlOnPos {b} p = id
-
-public export
-PolyVertSlDir : {b : MLPolyCatObj} ->
-  (p : PolyVertSlObj b) -> PolyVertSlTotPos {b} p -> Type
-PolyVertSlDir {b} p = DPair.fst p
-
-public export
-PolyVertSlOnDir : {b : MLPolyCatObj} ->
-  (p : PolyVertSlObj b) ->
-  SliceMorphism {a=(PolyVertSlTotPos {b} p)}
-    (dfDir b . PolyVertSlOnPos {b} p)
-    (PolyVertSlDir {b} p)
-PolyVertSlOnDir {b} p i = snd p i
-
-public export
-PolyVertSlEmbed : {b : MLPolyCatObj} -> PolyVertSlObj b -> MLPolyCatObj
-PolyVertSlEmbed {b} p = (PolyVertSlTotPos {b} p ** PolyVertSlDir {b} p)
-
-public export
-PolyVertSlTot : {b : MLPolyCatObj} -> PolyVertSlObj b -> Type
-PolyVertSlTot {b} p = dfTot (PolyVertSlEmbed {b} p)
-
-public export
-PolyVertSlProj : {b : MLPolyCatObj} -> (p : PolyVertSlObj b) ->
-  PolyNatTrans (PolyVertSlEmbed {b} p) b
-PolyVertSlProj {b} p = (PolyVertSlOnPos {b} p ** PolyVertSlOnDir {b} p)
-
----------------------------------------------
----- Polynomial vertical-slice morphisms ----
----------------------------------------------
-
-public export
-PolyVertSlMor : {b : MLPolyCatObj} ->
-  PolyVertSlObj b -> PolyVertSlObj b -> Type
-PolyVertSlMor {b} p q =
-  (ondir : (bi : dfPos b) -> fst q bi -> fst p bi **
-   (bi : dfPos b) -> (bd : dfDir b bi) -> snd p bi bd = ondir bi (snd q bi bd))
-
-public export
-PolyVertSlId : {b : MLPolyCatObj} ->
-  (p : PolyVertSlObj b) -> PolyVertSlMor {b} p p
-PolyVertSlId {b} p = (sliceId (fst p) ** \_, _ => Refl)
-
-public export
-PolyVertSlComp : {b : MLPolyCatObj} ->
-  {p, q, r : PolyVertSlObj b} ->
-  PolyVertSlMor {b} q r -> PolyVertSlMor {b} p q -> PolyVertSlMor {b} p r
-PolyVertSlComp {b} {p} {q} {r} beta alpha =
-  (sliceComp (fst alpha) (fst beta) **
-   \bi, bd =>
-    trans
-      (snd alpha bi bd)
-      (cong (fst alpha bi) $ snd beta bi bd))
-
 ------------------------------------------------------
 ------------------------------------------------------
 ---- Slices over arenas (in dependent-type style) ----
@@ -464,6 +387,83 @@ mlPolySlMorFromP {ar} {cod} m =
 ------------------------------------------------------------------
 ---- Translation between slice morphisms and slices-of-slices ----
 ------------------------------------------------------------------
+
+------------------------------------------------------------
+------------------------------------------------------------
+---- Factorized slice categories of polynomial functors ----
+------------------------------------------------------------
+------------------------------------------------------------
+
+-------------------------------------------
+---- Polynomial vertical-slice objects ----
+-------------------------------------------
+
+public export
+PolyVertSlObj : MLPolyCatObj -> Type
+PolyVertSlObj b =
+  (sldir : SliceObj (dfPos b) ** SliceMorphism {a=(dfPos b)} (dfDir b) sldir)
+
+public export
+PolyVertSlTotPos : {b : MLPolyCatObj} -> PolyVertSlObj b -> Type
+PolyVertSlTotPos {b} p = dfPos b
+
+public export
+PolyVertSlOnPos : {b : MLPolyCatObj} -> (p : PolyVertSlObj b) ->
+  PolyVertSlTotPos {b} p -> dfPos b
+PolyVertSlOnPos {b} p = id
+
+public export
+PolyVertSlDir : {b : MLPolyCatObj} ->
+  (p : PolyVertSlObj b) -> PolyVertSlTotPos {b} p -> Type
+PolyVertSlDir {b} p = DPair.fst p
+
+public export
+PolyVertSlOnDir : {b : MLPolyCatObj} ->
+  (p : PolyVertSlObj b) ->
+  SliceMorphism {a=(PolyVertSlTotPos {b} p)}
+    (dfDir b . PolyVertSlOnPos {b} p)
+    (PolyVertSlDir {b} p)
+PolyVertSlOnDir {b} p i = snd p i
+
+public export
+PolyVertSlEmbed : {b : MLPolyCatObj} -> PolyVertSlObj b -> MLPolyCatObj
+PolyVertSlEmbed {b} p = (PolyVertSlTotPos {b} p ** PolyVertSlDir {b} p)
+
+public export
+PolyVertSlTot : {b : MLPolyCatObj} -> PolyVertSlObj b -> Type
+PolyVertSlTot {b} p = dfTot (PolyVertSlEmbed {b} p)
+
+public export
+PolyVertSlProj : {b : MLPolyCatObj} -> (p : PolyVertSlObj b) ->
+  PolyNatTrans (PolyVertSlEmbed {b} p) b
+PolyVertSlProj {b} p = (PolyVertSlOnPos {b} p ** PolyVertSlOnDir {b} p)
+
+---------------------------------------------
+---- Polynomial vertical-slice morphisms ----
+---------------------------------------------
+
+public export
+PolyVertSlMor : {b : MLPolyCatObj} ->
+  PolyVertSlObj b -> PolyVertSlObj b -> Type
+PolyVertSlMor {b} p q =
+  (ondir : (bi : dfPos b) -> fst q bi -> fst p bi **
+   (bi : dfPos b) -> (bd : dfDir b bi) -> snd p bi bd = ondir bi (snd q bi bd))
+
+public export
+PolyVertSlId : {b : MLPolyCatObj} ->
+  (p : PolyVertSlObj b) -> PolyVertSlMor {b} p p
+PolyVertSlId {b} p = (sliceId (fst p) ** \_, _ => Refl)
+
+public export
+PolyVertSlComp : {b : MLPolyCatObj} ->
+  {p, q, r : PolyVertSlObj b} ->
+  PolyVertSlMor {b} q r -> PolyVertSlMor {b} p q -> PolyVertSlMor {b} p r
+PolyVertSlComp {b} {p} {q} {r} beta alpha =
+  (sliceComp (fst alpha) (fst beta) **
+   \bi, bd =>
+    trans
+      (snd alpha bi bd)
+      (cong (fst alpha bi) $ snd beta bi bd))
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
